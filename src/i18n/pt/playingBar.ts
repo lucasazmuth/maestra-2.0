@@ -1,0 +1,16 @@
+export const playingBar = {
+  'Now playing view': 'Visualização do que está tocando',
+  Lyrics: 'Letras',
+  Queue: 'Fila',
+  'Connect to a device': 'Conectar a um dispositivo',
+  Mute: 'Silenciar',
+  Unmute: 'Ativar som',
+  'Full Screen': 'Tela Cheia',
+  'Now playing': 'Tocando agora',
+  Next: 'Próxima',
+  Experience: 'Experiência',
+  Description: 'Descrição',
+  Images: 'Imagens',
+  'Current device': 'Dispositivo atual',
+  'Exit full screen': 'Sair da tela cheia',
+};

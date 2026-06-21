@@ -1,0 +1,59 @@
+.legal-page {
+  padding: 24px;
+  max-width: 760px;
+}
+
+.legal-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 20px;
+  transition: color 0.15s;
+
+  &:hover { color: #fff; }
+}
+
+.legal-title {
+  font-family: 'SpotifyMixUITitle';
+  font-weight: 800;
+  font-size: 32px;
+  color: #fff;
+  margin: 0 0 6px;
+}
+
+.legal-updated {
+  color: #8a8a8a;
+  font-size: 13px;
+  margin: 0 0 28px;
+}
+
+.legal-content {
+  color: #d6d6d6;
+  font-size: 15px;
+  line-height: 1.75;
+
+  h2 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 28px 0 8px;
+  }
+  h3 {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 20px 0 6px;
+  }
+  p { margin: 0 0 14px; }
+  strong { color: #fff; font-weight: 700; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  a { color: #af2896; }
+}

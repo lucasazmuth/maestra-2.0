@@ -1,0 +1,121 @@
+// Empty state do Plano de Ação — mesmo formato da tela de feature bloqueada (LockedFeature):
+// painel com gradiente, ícone verde, título, lista de benefícios com checks e CTA verde.
+// Aqui o CTA inicia o wizard de planejamento (em vez de levar à assinatura).
+
+// Afasta o anel aurora das bordas do card: assim o brilho do topo não fica atrás da topbar
+// (nem o de baixo atrás do banner) e o efeito circulando aparece inteiro.
+.empty :global(.aurora-glow) {
+  inset: 10px;
+}
+
+.empty {
+  position: relative; // âncora do glow na borda da página
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 100%;
+  border-radius: 16px;
+  padding: 32px 24px;
+  box-sizing: border-box;
+  // Mesmo fundo da tela de criação de artista (/criar-artista).
+  background: radial-gradient(120% 90% at 50% 0%, #15101f 0%, #08080c 55%, #050507 100%);
+
+  // Compacta pra caber inteiro na tela (e o anel circular ficar 100% visível), sem rolar.
+  @media (max-width: 600px) {
+    padding: 16px;
+  }
+}
+
+// Sem card: avatar, texto e botão "flutuando" sobre a aurora.
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 680px;
+  width: 100%;
+}
+
+.avatar {
+  margin-bottom: 26px;
+  animation: emptyFadeUp 0.4s ease both;
+
+  @media (max-width: 600px) {
+    margin-bottom: 14px;
+  }
+}
+
+// Saudação "digitada" pela Nyta — letras BEM grandes. min-height reserva linhas pra não pular o layout.
+.greeting {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-size: 38px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.28;
+  letter-spacing: -0.01em;
+  margin: 0 0 36px;
+  min-height: 150px;
+
+  @media (max-width: 600px) {
+    font-size: 26px;
+    min-height: 120px;
+    margin: 0 0 20px;
+  }
+}
+
+// Cursor piscando enquanto a Nyta "digita".
+.caret {
+  display: inline-block;
+  width: 3px;
+  height: 1.05em;
+  margin-left: 4px;
+  vertical-align: text-bottom;
+  background: #af2896;
+  border-radius: 2px;
+  animation: emptyCaret 0.9s steps(1) infinite;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #af2896;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  // Some até a Nyta terminar de falar; aí entra suave.
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease, background-color 0.15s ease;
+
+  &:hover {
+    background-color: #c13fa8;
+  }
+}
+
+.ctaVisible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+
+  &:hover { transform: translateY(0) scale(1.04); }
+  &:active { transform: translateY(0) scale(1); }
+}
+
+@keyframes emptyCaret {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+@keyframes emptyFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

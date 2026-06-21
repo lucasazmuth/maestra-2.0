@@ -1,0 +1,85 @@
+.header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 12px 11px 14px;
+  // Faixa com a identidade da Nyta (gradiente magenta → azul, bem sutil) sobre o fundo escuro.
+  background: linear-gradient(135deg, rgba(175, 40, 150, 0.22), rgba(80, 155, 245, 0.14)), #161616;
+  border-bottom: 1px solid #282828;
+  flex-shrink: 0;
+}
+
+// Cabeçalho como "pega" de arraste (desktop).
+.draggable {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  letter-spacing: 0.2px;
+}
+
+.subtitle {
+  color: #b3b3b3;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #b3b3b3;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}

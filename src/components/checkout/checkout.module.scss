@@ -1,0 +1,279 @@
+// Kit de checkout no padrão Adobe/Behance, porém em tema ESCURO da Maestra.
+// Usado pela cobrança única (ProfileUnlock) e pela assinatura PRO (Subscription).
+// Paleta: fundo #0b0b11, cards #15151c, borda sutil, texto #fff, verde #af2896.
+
+$green: #af2896;
+$card: #15151c;
+$cardBorder: rgba(255, 255, 255, 0.08);
+$muted: #9a9aa5;
+$muted2: #6f6f78;
+
+// ─── Layout 2 colunas ─────────────────────────────────────────────────────────
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 384px;
+  gap: 24px;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  align-items: start;
+  text-align: left;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  // Inputs antd no padrão escuro (sobrepõe o tema claro padrão do antd).
+  :global(.ant-input),
+  :global(.ant-input-affix-wrapper),
+  :global(.ant-select-selector),
+  :global(textarea.ant-input) {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: #fff !important;
+    box-shadow: none !important;
+  }
+  :global(.ant-input) { padding: 14px 15px !important; font-size: 15px !important; }
+  :global(.ant-input-affix-wrapper) { padding: 12px 15px !important; align-items: center; }
+  :global(.ant-input-affix-wrapper .ant-input) { padding: 0 !important; background: transparent !important; border: none !important; }
+  :global(.ant-input-prefix) { margin-inline-end: 11px; }
+  :global(.ant-input::placeholder),
+  :global(textarea.ant-input::placeholder) { color: $muted2 !important; }
+  :global(.ant-input:hover),
+  :global(.ant-input:focus),
+  :global(.ant-input-affix-wrapper:hover),
+  :global(.ant-input-affix-wrapper-focused),
+  :global(.ant-select:not(.ant-select-disabled):hover .ant-select-selector),
+  :global(.ant-select-focused .ant-select-selector) {
+    border-color: $green !important;
+    box-shadow: 0 0 0 1px rgba(175, 40, 150, 0.25) !important;
+  }
+  :global(.ant-select-lg .ant-select-selector) { height: 50px !important; padding: 0 15px !important; display: flex; align-items: center; }
+  :global(.ant-select-selection-item) { color: #fff !important; font-weight: 600; }
+  :global(.ant-select-arrow) { color: $muted !important; }
+  :global(.ant-input-status-error),
+  :global(.ant-input-affix-wrapper-status-error) { border-color: #ff5a5f !important; }
+}
+
+.main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.aside { position: sticky; top: 16px; }
+
+@media (max-width: 900px) {
+  .aside { position: static; }
+}
+
+// ─── Linha da conta (email) ─────────────────────────────────────────────────────
+.account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: $card;
+  border: 1px solid $cardBorder;
+  border-radius: 14px;
+}
+.accountCheck {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(175, 40, 150, 0.14); color: $green; font-size: 15px;
+}
+.accountEmail { font-size: 15px; font-weight: 600; color: #fff; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.accountChevron { color: $muted; flex-shrink: 0; }
+
+// ─── Bloco principal (form) ─────────────────────────────────────────────────────
+.panel {
+  background: $card;
+  border: 1px solid $cardBorder;
+  border-radius: 16px;
+  padding: 22px;
+}
+.panelHead { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.panelHeadIcon {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.07); color: #fff; font-size: 18px;
+}
+.panelTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 20px; color: #fff; line-height: 1.2; }
+
+// ─── Métodos de pagamento (radio rows) ──────────────────────────────────────────
+.methods { display: flex; flex-direction: column; gap: 12px; }
+.method {
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  &:hover { border-color: rgba(255, 255, 255, 0.2); }
+}
+.methodOn { border-color: $green; background: rgba(175, 40, 150, 0.05); }
+.methodHead {
+  width: 100%;
+  display: flex; align-items: center; gap: 12px;
+  padding: 15px 16px;
+  background: none; border: none; cursor: pointer; color: inherit; text-align: left;
+}
+.methodRadio {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex; align-items: center; justify-content: center;
+  .methodOn & { border-color: $green; }
+  &::after { content: ''; width: 9px; height: 9px; border-radius: 50%; background: transparent; }
+  .methodOn &::after { background: $green; }
+}
+.methodLabel { font-size: 15px; font-weight: 700; color: #fff; flex: 1; display: flex; align-items: center; gap: 9px; }
+.methodBrands { display: flex; align-items: center; gap: 6px; color: #fff; }
+.methodBrands svg { font-size: 28px; }
+.methodBody { padding: 0 16px 18px; }
+
+// ─── Bandeiras + formulário de cartão ───────────────────────────────────────────
+.cardBrandsRow { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
+.cardBrandsRow svg { font-size: 30px; color: #fff; opacity: 0.92; }
+
+.fieldStack { display: flex; flex-direction: column; gap: 13px; }
+.field { display: flex; flex-direction: column; min-width: 0; }
+.fieldRow { display: flex; gap: 12px; > * { flex: 1; min-width: 0; } }
+.fieldLabel {
+  display: block; color: $muted; font-size: 12px;
+  letter-spacing: 0.03em; text-transform: uppercase; margin-bottom: 6px;
+}
+.fieldIcon { color: $muted; font-size: 16px; display: block; }
+.fieldError { color: #ff6b6f; font-size: 12px; margin-top: 5px; }
+
+// CPF travado (já vinculado à conta) — visual "disabled" informativo.
+.lockedField {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 13px 15px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025); border: 1.5px solid rgba(255, 255, 255, 0.07);
+}
+.lockedFieldLabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: $muted2; }
+.lockedFieldValue { font-size: 15px; color: $muted; font-variant-numeric: tabular-nums; }
+
+// PIX dentro do método
+.pixNote { font-size: 14px; color: $muted; line-height: 1.5; }
+
+// ─── Carrinho (coluna direita) ──────────────────────────────────────────────────
+.cart {
+  background: $card;
+  border: 1px solid $cardBorder;
+  border-radius: 16px;
+  padding: 22px;
+}
+.cartTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 20px; color: #fff; margin-bottom: 16px; }
+.cartSelectRow {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid $cardBorder;
+}
+.cartSelectLabel { font-size: 13px; color: $muted; }
+.cartSelectValue { font-size: 14px; font-weight: 600; color: #fff; }
+
+.cartItem { display: flex; align-items: center; gap: 13px; padding: 4px 0 16px; }
+.cartItemIcon {
+  width: 46px; height: 46px; border-radius: 11px; flex-shrink: 0; object-fit: cover;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.07); color: #fff; font-size: 20px; overflow: hidden;
+}
+.cartItemMain { flex: 1; min-width: 0; }
+.cartItemName { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.25; }
+.cartItemSub { font-size: 12.5px; color: $green; margin-top: 2px; font-weight: 600; }
+.cartItemSubMuted { color: $muted; font-weight: 400; }
+.cartItemPrice { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; align-self: flex-start; }
+
+.cartIncludes {
+  list-style: none; margin: 0 0 4px; padding: 14px 0; border-top: 1px solid $cardBorder;
+  display: flex; flex-direction: column; gap: 9px;
+  li { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; color: #cfcfd4; line-height: 1.4; }
+}
+.cartIncludesIcon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
+  border-radius: 50%;
+  background: rgba(175, 40, 150, 0.13);
+  color: $green;
+  font-size: 11px;
+  svg { stroke-width: 3; }
+}
+
+.cartRow {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-top: 1px solid $cardBorder; font-size: 14px; color: #cfcfd4;
+}
+.cartRowStrong { color: #fff; font-weight: 700; }
+
+// Timeline de cobrança (bolinhas conectadas), igual à Adobe.
+.timeline { position: relative; padding: 14px 0 2px; border-top: 1px solid $cardBorder; }
+.timelineRow { display: flex; align-items: flex-start; gap: 12px; position: relative; padding-bottom: 16px; &:last-child { padding-bottom: 0; } }
+.timelineMarker { position: relative; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; padding-top: 3px; }
+.timelineDot { width: 13px; height: 13px; border-radius: 50%; border: 2px solid $green; background: $green; z-index: 1; }
+.timelineDotOpen { background: transparent; border-color: rgba(255, 255, 255, 0.3); }
+.timelineLine { position: absolute; top: 14px; bottom: -8px; width: 2px; background: rgba(255, 255, 255, 0.14); }
+.timelineMain { flex: 1; min-width: 0; }
+.timelineTop { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.timelineLabel { font-size: 15px; font-weight: 700; color: #fff; }
+.timelineLabelMuted { font-weight: 600; color: #cfcfd4; }
+.timelineValue { font-size: 14px; font-weight: 700; color: #fff; white-space: nowrap; }
+.timelineHint { font-size: 12.5px; color: $muted; margin-top: 2px; }
+
+// Checkbox + texto legal
+.cartCheck { display: flex; align-items: flex-start; gap: 10px; margin: 18px 0 12px; cursor: pointer; }
+.cartCheckBox {
+  width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; margin-top: 1px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3); background: transparent;
+  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cartCheckBoxOn { background: $green; border-color: $green; }
+.cartCheckLabel { font-size: 13px; color: #cfcfd4; line-height: 1.45; }
+.cartLegal { font-size: 12px; color: $muted; line-height: 1.5; margin: 0 0 16px;
+  a { color: #cfcfd4; text-decoration: underline; } strong { color: #cfcfd4; }
+}
+
+.payBtn {
+  width: 100%; border: none; border-radius: 9999px; cursor: pointer;
+  padding: 15px 24px; font-size: 16px; font-weight: 800; color: #fff; background: $green;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: transform 0.12s ease, opacity 0.15s ease;
+  &:hover:not(:disabled) { transform: translateY(-1px); }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+.secure { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 12px; color: $muted; font-size: 12.5px; }
+.errorMsg {
+  margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 13px;
+  background: rgba(255, 90, 95, 0.12); border: 1px solid rgba(255, 90, 95, 0.3); color: #ffb3b5;
+}
+
+// ─── Comparação de benefícios (Grátis vs PRO) ───────────────────────────────────
+.compareWrap { width: 100%; max-width: 980px; margin: 0 auto; }
+.compareHeadline { text-align: center; margin-bottom: 26px; }
+.compareTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: clamp(26px, 4vw, 38px); color: #fff; line-height: 1.1; }
+.compareSub { font-size: 15px; color: $muted; margin-top: 10px; b { color: $green; } }
+
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; @media (max-width: 760px) { grid-template-columns: 1fr; } }
+.compareCol { background: $card; border: 1px solid $cardBorder; border-radius: 18px; padding: 26px; position: relative; }
+.compareColPro { border-color: rgba(175, 40, 150, 0.45); box-shadow: 0 0 0 1px rgba(175, 40, 150, 0.25), 0 16px 50px rgba(0, 0, 0, 0.4); }
+.proBadge {
+  position: absolute; top: -11px; left: 26px; padding: 4px 12px; border-radius: 9999px;
+  background: $green; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
+}
+.compareColName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; color: #fff; }
+.compareColNamePro { color: $green; }
+.compareColDesc { font-size: 13.5px; color: $muted; line-height: 1.5; margin: 6px 0 18px; min-height: 40px; }
+.comparePrice { display: flex; align-items: baseline; gap: 4px; margin-bottom: 18px; }
+.comparePriceValue { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 40px; color: #fff; line-height: 1; }
+.comparePriceUnit { font-size: 14px; color: $muted; }
+.comparePriceNote { font-size: 12.5px; color: $muted; margin: -12px 0 18px; }
+
+// Seletor Mensal/Anual (card PRO)
+.billingToggle { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid $cardBorder; border-radius: 9999px; }
+.billingOpt { display: inline-flex; align-items: center; gap: 6px; border: none; background: transparent; color: $muted; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 9999px; cursor: pointer; transition: background 0.2s, color 0.2s; }
+.billingOptOn { background: $green; color: #fff; }
+.billingSave { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 9999px; background: rgba(255, 255, 255, 0.22); color: #fff; letter-spacing: 0.02em; }
+.billingOpt:not(.billingOptOn) .billingSave { background: rgba(175, 40, 150, 0.2); color: $green; }
+.compareGroup { margin-bottom: 18px; }
+.compareGroupHead { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+.compareGroupIcon { color: $green; font-size: 17px; display: flex; }
+.compareGroupTitle { font-size: 14.5px; font-weight: 700; color: #fff; }
+.compareList { list-style: none; margin: 0; padding: 0 0 0 2px; display: flex; flex-direction: column; gap: 7px; }
+.compareList li { position: relative; padding-left: 18px; font-size: 13.5px; color: #cfcfd4; line-height: 1.45; }
+.compareList li::before { content: ''; position: absolute; left: 3px; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: $muted; }
+.compareColPro .compareList li::before { background: $green; }
+.compareCta { margin-top: 22px; }

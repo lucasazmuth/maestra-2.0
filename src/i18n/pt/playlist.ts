@@ -1,0 +1,18 @@
+export const playlist = {
+  'Public playlist': 'Playlist pública',
+  songs: 'músicas',
+  Name: 'Nome',
+  Filter: 'Filtrar',
+  'Date Added': 'Data de Adição',
+  'Add to playlist': 'Adicionar à playlist',
+  'Remove from this playlist': 'Remover desta playlist',
+  'Added to playlist': 'Adicionado à playlist',
+  'Added to queue': 'Adicionado à fila',
+  'Removed from playlist': 'Removido da playlist',
+  'Add to queue': 'Adicionar à fila',
+  'Go to album': 'Ir para o álbum',
+  'Go to artist': 'Ir para o artista',
+  Title: 'Título',
+  Album: 'Álbum',
+  Artist: 'Artista',
+};

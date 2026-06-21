@@ -1,0 +1,155 @@
+// NytaChatPage — full-screen chat layout (100%, sem header padrão da app).
+// BEM naming: .nyta-chat-page, .nyta-chat-page__header, etc.
+
+// Override Main-section overflow when Nyta chat is mounted (scroll must stay inside MessageList only)
+.Main-section:has(.nyta-chat-page) {
+  overflow: hidden !important;
+}
+
+.nyta-chat-page {
+  // Mesma coluna central do chat do wizard (.wizard--chat): mensagens e input
+  // acompanham o tamanho da tela e travam em 760px nas telas largas.
+  --nyta-col: 760px;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #121212;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  // ── Slot: Header (topo fixo) ──────────────────────────────────────────────
+  &__header {
+    flex: none;
+  }
+
+  // ── Error banner (Req 8.11) ───────────────────────────────────────────────
+  &__error-banner {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 16px;
+    padding: 10px 14px;
+    background: rgba(255, 75, 75, 0.1);
+    border: 1px solid rgba(255, 75, 75, 0.3);
+    border-radius: 8px;
+    color: #ff6b6b;
+    font-size: 13px;
+    line-height: 1.4;
+    animation: nytaChatFadeUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  &__error-text {
+    flex: 1;
+  }
+
+  &__error-dismiss {
+    flex: none;
+    background: none;
+    border: none;
+    color: #ff6b6b;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  // ── Module unavailable warning (Req 3.6) ──────────────────────────────────
+  &__module-warning {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 16px 4px;
+    padding: 8px 12px;
+    background: rgba(255, 193, 7, 0.08);
+    border: 1px solid rgba(255, 193, 7, 0.25);
+    border-radius: 8px;
+    color: #ffc107;
+    font-size: 12px;
+    line-height: 1.4;
+    animation: nytaChatFadeUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  &__module-warning-text {
+    flex: 1;
+  }
+
+  // ── Slot: MessageList (meio, scrollable) ──────────────────────────────────
+  &__messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  // ── Slot: InputBar (rodapé fixo) ──────────────────────────────────────────
+  &__input {
+    flex: none;
+  }
+
+  // ── Greeting bubble (empty state) ─────────────────────────────────────────
+  &__greeting {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 0;
+    padding: 32px 16px;
+    text-align: center;
+  }
+
+  &__greeting-bubble {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: 560px;
+    animation: nytaChatFadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+
+    .nyta-bubble {
+      background: #1f1f1f;
+      color: #fff;
+      border-radius: 16px 16px 16px 4px;
+      padding: 16px 20px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+  }
+}
+
+// A UI compartilhada do chat (keyframes, .nyta-input-bar, .nyta-send, .nyta-avatar, .nyta-row,
+// .nyta-bubble, .nyta-typing) foi extraída para components/nytaChatUI.scss — importada por
+// MessageList.scss, que carrega tanto nesta página quanto no modal flutuante. Aqui ficam apenas
+// os estilos específicos da PÁGINA /nyta.
+
+// ── Mobile (específico da página) ───────────────────────────────────────────
+@media (max-width: 768px) {
+  .nyta-chat-page {
+    &__messages {
+      padding: 12px;
+    }
+
+    &__greeting {
+      padding: 24px 12px;
+    }
+
+    &__greeting-bubble {
+      max-width: 100%;
+    }
+  }
+}

@@ -1,0 +1,168 @@
+// ToolConfirmationCard — card UI for confirming/cancelling tool calls.
+// BEM naming: .tool-confirmation-card
+
+.tool-confirmation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  max-width: 360px;
+  animation: toolCardFadeIn 0.25s ease both;
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  &__action-label {
+    color: #888;
+    font-weight: 500;
+  }
+
+  &__action-name {
+    color: #fff;
+    font-weight: 600;
+  }
+
+  // ── Summary ───────────────────────────────────────────────────────────────
+  &__summary {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #aaa;
+    word-break: break-word;
+  }
+
+  // ── Arguments ─────────────────────────────────────────────────────────────
+  &__args {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    background: #141414;
+    border-radius: 8px;
+    border: 1px solid #222;
+  }
+
+  &__arg {
+    display: flex;
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  &__arg-label {
+    color: #888;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  &__arg-value {
+    color: #ddd;
+    word-break: break-word;
+  }
+
+  // ── Error message ─────────────────────────────────────────────────────────
+  &__error {
+    font-size: 12px;
+    color: #ff6b6b;
+    padding: 6px 10px;
+    background: rgba(255, 75, 75, 0.08);
+    border: 1px solid rgba(255, 75, 75, 0.2);
+    border-radius: 6px;
+  }
+
+  // ── Status indicators ─────────────────────────────────────────────────────
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 8px 0 2px;
+
+    &--executing {
+      color: #f0c040;
+    }
+
+    &--success {
+      color: #af2896;
+    }
+
+    &--cancelled {
+      color: #888;
+    }
+  }
+
+  &__spinner {
+    animation: toolCardSpin 0.8s linear infinite;
+  }
+
+  // ── Action buttons ────────────────────────────────────────────────────────
+  &__actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 4px;
+  }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+
+    &:hover {
+      transform: scale(1.02);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &--confirm {
+      background: #af2896;
+      color: #000;
+    }
+
+    &--cancel {
+      background: #333;
+      color: #ccc;
+    }
+  }
+}
+
+@keyframes toolCardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toolCardSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ── Mobile ────────────────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .tool-confirmation-card {
+    max-width: 100%;
+  }
+}

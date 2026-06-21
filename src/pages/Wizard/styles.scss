@@ -1,0 +1,1488 @@
+// Wizard — animações e classes do redesign. Segue os timings/easings do design system
+// (cubic-bezier(0.4,0,0.2,1), 200–650ms) e a paleta Encore (#121212/#181818/#af2896).
+
+// ---- Keyframes -------------------------------------------------------------------------------
+
+@keyframes wizFadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wizSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Troca de objetivo na priorização: fade + leve subida, pra o usuário perceber que mudou.
+@keyframes wizObjSwap {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Pulso de destaque no texto do objetivo ao trocar (flash magenta breve).
+@keyframes wizObjFlash {
+  0% {
+    background: rgba(175, 40, 150, 0);
+  }
+  35% {
+    background: rgba(175, 40, 150, 0.28);
+  }
+  100% {
+    background: rgba(175, 40, 150, 0);
+  }
+}
+
+@keyframes wizPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  70% {
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes wizGradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes wizPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.85;
+  }
+}
+
+@keyframes wizBarGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+// Bolha de resposta entrando (quiz)
+@keyframes wizPillIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Check da opção selecionada
+@keyframes wizCheckPop {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// Revelação do ranking (priorização)
+@keyframes wizRankReveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ---- Shell -----------------------------------------------------------------------------------
+
+.wizard {
+  padding: 24px;
+  position: relative;
+
+  .wiz-progress-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    margin-bottom: 20px;
+
+    .wiz-progress-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: #af2896;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  // Conteúdo da etapa: entrada animada + cascata nos filhos diretos
+  .wiz-step {
+    animation: wizFadeSlideUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+
+    > .wiz-stagger {
+      animation: wizFadeSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+      @for $i from 1 through 12 {
+        &:nth-child(#{$i}) {
+          animation-delay: #{$i * 60}ms;
+        }
+      }
+    }
+  }
+}
+
+// Rótulo dos "atos" (usado no drawer de etapas)
+.wiz-stepper-act {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+// Navegação compacta: linha "Etapa X de 9 · Nome" que abre o drawer
+.wiz-step-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 4px 0;
+  color: #b3b3b3;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #fff;
+  }
+
+  // O chevron acompanha a cor do texto e fica alinhado, sem caixa de foco do navegador.
+  svg {
+    flex: none;
+    color: inherit;
+    opacity: 0.85;
+  }
+
+  &:focus-visible {
+    color: #fff;
+  }
+}
+
+// Folha de etapas (conteúdo do drawer): coluna estreita centralizada
+.wiz-steps-sheet {
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.wiz-step-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #282828;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  // O estado visual vem do status (não do disabled): concluída clara, atual em
+  // destaque verde, futura esmaecida.
+  &--done {
+    color: #fff;
+  }
+
+  &--current {
+    background: rgba(175, 40, 150, 0.12);
+    color: #af2896;
+  }
+
+  &--locked {
+    color: #555;
+  }
+
+  .wiz-step-nav-item-icon {
+    display: inline-flex;
+    width: 16px;
+    min-width: 16px;
+    justify-content: center;
+  }
+}
+
+.wiz-step-status-pill {
+  border-radius: 9999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(175, 40, 150, 0.18);
+  color: #af2896;
+  white-space: nowrap;
+
+  &--done {
+    background: rgba(255, 255, 255, 0.08);
+    color: #b3b3b3;
+  }
+}
+
+// Trunca textos longos em 2 linhas (descrições de estratégia etc.)
+.wiz-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Botão de IA (pill gradiente com sparkles)
+.wiz-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #16161b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.22);
+    transform: scale(1.03);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(1);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+// ---- Loading de IA ---------------------------------------------------------------------------
+
+.wiz-ai-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 380px;
+  border-radius: 16px;
+  padding: 40px 24px;
+  background: linear-gradient(135deg, rgba(175, 40, 150, 0.25), rgba(80, 155, 245, 0.25), rgba(175, 40, 150, 0.18));
+  background-size: 300% 300%;
+  animation: wizGradientMove 6s ease infinite;
+
+  .wiz-ai-icon {
+    font-size: 44px;
+    color: #fff;
+    animation: wizPulse 1.6s ease-in-out infinite;
+    margin-bottom: 18px;
+    display: flex;
+  }
+
+  h3 {
+    color: #fff;
+    font-family: 'SpotifyMixUITitle', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    margin: 0 0 8px;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 14px;
+    margin: 0;
+    min-height: 22px;
+    animation: wizFadeSlideUp 0.4s ease both;
+  }
+}
+
+// ---- Quiz (modo foco, bolhas de resposta) ------------------------------------------------------
+
+.wiz-quiz-question {
+  animation: wizSlideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.wiz-quiz-counter {
+  color: #b3b3b3;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.wiz-quiz-title {
+  color: #fff;
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-weight: 800;
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.25;
+  margin: 0 0 18px;
+  max-width: 720px;
+}
+
+.wiz-option-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 720px;
+}
+
+.wiz-option-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 9999px;
+  padding: 12px 22px;
+  background: #2a2a2a;
+  border: 1px solid transparent;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  animation: wizPillIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s, color 0.2s,
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: #fff;
+    transform: scale(1.04);
+  }
+
+  &:active {
+    transform: scale(1);
+  }
+
+  .wiz-option-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #b3b3b3;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .wiz-option-check {
+    display: inline-flex;
+    animation: wizCheckPop 0.25s cubic-bezier(0.3, 0, 0.7, 1) both;
+  }
+
+  &--selected {
+    background: #af2896;
+    color: #fff;
+    font-weight: 700;
+
+    &:hover {
+      border-color: transparent;
+    }
+  }
+
+  &--pulse {
+    animation: wizPulse 0.4s ease-in-out both;
+  }
+
+  &--custom {
+    background: transparent;
+    border: 1px dashed #555;
+    color: #b3b3b3;
+
+    &:hover {
+      border-color: #fff;
+      color: #fff;
+    }
+  }
+}
+
+.wiz-quiz-custom {
+  animation: wizFadeSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.wiz-custom-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+  max-width: 720px;
+  animation: wizFadeSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+
+  .wiz-custom-input {
+    flex: 1;
+    min-width: 0;
+    background: #2a2a2a;
+    border: 1px solid #404040;
+    border-radius: 9999px;
+    padding: 12px 20px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s;
+
+    &::placeholder {
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    &:focus {
+      border-color: #af2896;
+    }
+  }
+}
+
+// Dropdown de cidade (Visão Q6) — alinhado ao padrão de inputs do wizard (pílula, dark).
+.wiz-city-select.ant-select {
+  .ant-select-selector {
+    background: #2a2a2a !important;
+    border: 1px solid #404040 !important;
+    border-radius: 9999px !important;
+    min-height: 46px !important;
+    padding: 4px 18px !important;
+    display: flex;
+    align-items: center;
+    transition: border-color 0.2s;
+  }
+
+  .ant-select-selection-search {
+    inset-inline-start: 18px;
+    inset-inline-end: 18px;
+  }
+
+  .ant-select-selection-item,
+  .ant-select-selection-placeholder {
+    line-height: 38px !important;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .ant-select-selection-placeholder {
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  &.ant-select-focused .ant-select-selector,
+  &:hover .ant-select-selector {
+    border-color: #af2896 !important;
+    box-shadow: none !important;
+  }
+
+  .ant-select-arrow {
+    inset-inline-end: 18px;
+    color: #9a9a9a;
+  }
+}
+
+.wiz-city-dropdown.ant-select-dropdown {
+  background: #282828;
+  border: 1px solid #3e3e3e;
+  border-radius: 12px;
+  padding: 6px;
+
+  .ant-select-item {
+    border-radius: 8px;
+    color: #e8e8e8;
+    font-weight: 500;
+  }
+
+  .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+    background: #3a3a3a;
+  }
+
+  .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background: rgba(175, 40, 150, 0.22);
+    color: #fff;
+    font-weight: 700;
+  }
+}
+
+.wiz-chat-bubble {
+  background: #282828;
+  border-radius: 16px 16px 16px 4px;
+  padding: 18px 20px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+// ---- Identidade (hero de página de artista) ----------------------------------------------------
+
+.wiz-hero {
+  position: relative;
+  border-radius: 12px;
+  padding: 48px 32px 28px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  min-height: 230px;
+  transition: background 0.8s ease;
+  overflow: hidden;
+
+  .wiz-hero-img {
+    width: 160px;
+    height: 160px;
+    min-width: 160px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
+    animation: wizPopIn 0.5s cubic-bezier(0.3, 0, 0.7, 1) both;
+  }
+
+  .wiz-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  h1 {
+    font-family: 'SpotifyMixUITitle', sans-serif;
+    font-weight: 800;
+    font-size: clamp(40px, 6vw, 72px);
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin: 4px 0 8px;
+    line-height: 1.05;
+  }
+
+  .wiz-hero-stats {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 15px;
+    margin: 0;
+  }
+}
+
+.wiz-genre-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  background: #2a2a2a;
+  border: 1px solid transparent;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  animation: wizPillIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+
+  &:hover {
+    border-color: #fff;
+    transform: scale(1.04);
+  }
+
+  &--active {
+    background: #af2896;
+    color: #fff;
+    font-weight: 700;
+  }
+}
+
+// ---- Objetivos (sugestões da IA em chips) ------------------------------------------------------
+
+.wiz-suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px dashed rgba(175, 40, 150, 0.7);
+  color: #d0aaff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  animation: wizPillIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+
+  &:hover {
+    border-color: #509bf5;
+    color: #fff;
+    background: rgba(80, 155, 245, 0.12);
+    transform: scale(1.04);
+  }
+}
+
+// ---- Cards / slots ---------------------------------------------------------------------------
+
+.wiz-slot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #181818;
+  border-radius: 8px;
+  padding: 14px 16px;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    background: #282828;
+
+    .wiz-slot-del {
+      opacity: 1;
+    }
+  }
+
+  .wiz-slot-rank {
+    font-family: 'SpotifyMixUITitle', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    color: #af2896;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  .wiz-slot-del {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+}
+
+.wiz-pop {
+  animation: wizPopIn 0.4s cubic-bezier(0.3, 0, 0.7, 1) both;
+}
+
+// ---- Análise SWOT (chips removíveis) -----------------------------------------------------------
+
+.wiz-swot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9999px;
+  padding: 7px 14px;
+  background: #1f1f1f;
+  color: #d0d0d0;
+  font-size: 13px;
+  animation: wizPillIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #2a2a2a;
+
+    .wiz-swot-chip-del {
+      opacity: 1;
+    }
+  }
+
+  .wiz-swot-chip-del {
+    opacity: 0;
+    display: inline-flex;
+    background: transparent;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.15s, color 0.15s;
+
+    &:hover {
+      color: #fff;
+    }
+  }
+}
+
+// ---- Estratégias ------------------------------------------------------------------------------
+
+.wiz-strategy-card {
+  background: #181818;
+  border-radius: 10px;
+  padding: 18px;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
+
+  &:hover {
+    transform: scale(1.015);
+    background: #1f1f1f;
+  }
+}
+
+.wiz-strategy-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.wiz-task-type-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 2px 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #b3b3b3;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// ---- Priorização (escala tocável 0–10 + ranking reveal) ----------------------------------------
+
+.wiz-scale {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.wiz-scale-dot {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    color: #fff;
+  }
+
+  &--preview {
+    background: rgba(175, 40, 150, 0.35);
+  }
+
+  &--filled {
+    background: #af2896;
+    color: #fff;
+  }
+
+  &--tip {
+    transform: scale(1.2);
+    color: #fff;
+  }
+}
+
+.wiz-scale-value {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  color: #af2896;
+  min-width: 32px;
+  text-align: right;
+}
+
+.wiz-rank-item {
+  animation: wizRankReveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+// Barra de score (priorização/resultado)
+.wiz-score-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+
+  > div {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #af2896, #509bf5);
+    transform-origin: left;
+    animation: wizBarGrow 0.9s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+}
+
+// ---- Cronograma (timeline vertical) ------------------------------------------------------------
+
+// Timeline do cronograma — mesmo design do Plano de Ação (.ap-tl): linha verde e
+// pontos NEUTROS (círculo cinza), sem cor por tipo.
+.wiz-timeline {
+  position: relative;
+  margin-top: 4px;
+  padding-left: 32px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 18px;
+    bottom: 22px;
+    width: 2px;
+    background: linear-gradient(180deg, #af2896, rgba(175, 40, 150, 0.12));
+  }
+}
+
+.wiz-timeline-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 9px 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -32px;
+    top: 10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #535353;
+    background: #181818;
+    box-sizing: border-box;
+  }
+
+  &:hover {
+    .wiz-timeline-del {
+      opacity: 1;
+    }
+  }
+
+  .wiz-timeline-del {
+    opacity: 0;
+    background: transparent;
+    border: none;
+    color: #777;
+    cursor: pointer;
+    padding: 2px;
+    transition: opacity 0.15s, color 0.15s;
+
+    &:hover {
+      color: #e91429;
+    }
+  }
+}
+
+.wiz-date-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+// ---- Mobile (o público-alvo do wizard) ---------------------------------------------------------
+
+@media (max-width: 768px) {
+  .wizard {
+    // Mais respiro no topo pra o header (título + "Salvar e sair") não colar na borda do card.
+    padding: 22px 14px 12px;
+
+    .wiz-title {
+      font-size: 17px !important;
+    }
+  }
+
+  .wiz-hero {
+    min-height: auto;
+    padding: 20px 16px 16px;
+    gap: 16px;
+
+    .wiz-hero-img {
+      width: 96px;
+      height: 96px;
+      min-width: 96px;
+    }
+
+    .wiz-hero-stats {
+      font-size: 13px;
+    }
+  }
+
+  .wiz-option-pill {
+    padding: 12px 16px;
+    font-size: 14px;
+
+    // Atalhos de teclado não existem no touch
+    .wiz-option-kbd {
+      display: none;
+    }
+  }
+
+  // 11 bolinhas (0–10) precisam caber em ~360px
+  .wiz-scale {
+    gap: 4px;
+  }
+
+  .wiz-scale-dot {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    font-size: 10px;
+  }
+
+  .wiz-slot {
+    padding: 10px 12px;
+    gap: 12px;
+
+    .wiz-slot-rank {
+      font-size: 20px;
+      min-width: 28px;
+    }
+  }
+}
+
+// ---- Chat da Nyta (wizard conversacional) ------------------------------------------------------
+
+.nyta-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: var(--wiz-col);
+  margin: 0 auto;
+  padding-bottom: 16px;
+}
+
+.nyta-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #af2896, #509bf5);
+  color: #fff;
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-weight: 800;
+  user-select: none;
+}
+
+.nyta-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+
+  &--user {
+    justify-content: flex-end;
+  }
+}
+
+.nyta-bubble {
+  background: #1f1f1f;
+  color: #fff;
+  border-radius: 16px 16px 16px 4px;
+  padding: 12px 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 78%;
+
+  &--user {
+    background: #af2896;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 16px 16px 4px 16px;
+  }
+}
+
+// Markdown renderizado dentro das bolhas/cards: remove margens externas e mantém
+// o espaçamento natural entre parágrafos, títulos e listas das falas e do resumo.
+.nyta-md {
+  > :first-child { margin-top: 0; }
+  > :last-child { margin-bottom: 0; }
+
+  p { margin: 0 0 8px; }
+  p:last-child { margin-bottom: 0; }
+  strong { font-weight: 700; color: #fff; }
+
+  h1, h2, h3, h4 {
+    font-size: 15px;
+    font-weight: 800;
+    margin: 14px 0 6px;
+    color: #fff;
+  }
+  h1:first-child, h2:first-child, h3:first-child { margin-top: 0; }
+
+  ul, ol { margin: 0 0 8px; padding-left: 20px; }
+  li { margin: 2px 0; }
+
+  a { color: #af2896; }
+}
+
+.nyta-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 14px 16px;
+
+  span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #777;
+    animation: nytaDot 1.2s ease-in-out infinite;
+
+    &:nth-child(2) { animation-delay: 0.15s; }
+    &:nth-child(3) { animation-delay: 0.3s; }
+  }
+}
+
+@keyframes nytaDot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+// Widget interativo do beat atual: alinhado à coluna da Nyta (depois do avatar)
+.nyta-widget-slot {
+  margin-left: 42px;
+  animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+  max-width: calc(100% - 42px);
+}
+
+// Input fixo no rodapé do chat (fora da área de scroll — só a conversa rola).
+// Escopado em .nyta-chat: a página do chat livre da Nyta usa as mesmas classes
+// com outra estrutura (NytaChat/styles.scss) — sem o escopo, estes estilos vazam.
+.nyta-chat .nyta-input-bar {
+  flex: none;
+  display: flex;
+  // flex-direction/border explícitos: o CSS global da página do chat livre
+  // (NytaChat/styles.scss) define column + border-top na mesma classe.
+  flex-direction: row;
+  border-top: none;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0 4px;
+  width: 100%;
+  max-width: var(--wiz-col);
+  margin: 0 auto;
+  background: #121212;
+
+  // Mesmo visual do campo do chat livre da Nyta (NytaChat/styles.scss):
+  // arredondado, fundo escuro e foco verde — um único padrão nos dois chats.
+  textarea {
+    flex: 1;
+    resize: none;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    line-height: 20px;
+    padding: 9px 14px;
+    box-shadow: none;
+
+    &::placeholder {
+      color: #888;
+    }
+
+    &:hover {
+      border-color: #444;
+    }
+
+    &:focus,
+    &.ant-input-focused {
+      border-color: #af2896;
+      box-shadow: none;
+    }
+  }
+}
+
+.nyta-chat .nyta-send {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #af2896;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s;
+
+  &:hover:not(:disabled) { transform: scale(1.06); }
+  &:disabled { opacity: 0.4; cursor: default; }
+}
+
+// Cards de conteúdo dentro do chat (SWOT, estratégias, timeline, resumo)
+.nyta-card {
+  background: #181818;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.nyta-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+// Hero compacto do artista dentro do chat
+.nyta-hero-mini {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  img {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  h3 {
+    color: #fff;
+    font-family: 'SpotifyMixUITitle', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    margin: 0;
+  }
+
+  p {
+    color: #b3b3b3;
+    font-size: 13px;
+    margin: 2px 0 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .nyta-bubble { max-width: 88%; }
+  .nyta-widget-slot { margin-left: 0; max-width: 100%; }
+}
+
+.nyta-spin {
+  animation: nytaSpin 0.9s linear infinite;
+}
+
+@keyframes nytaSpin {
+  to { transform: rotate(360deg); }
+}
+
+// Layout do wizard conversacional: cabeçalho fixo, SÓ a conversa rola, input fixo no rodapé.
+.wizard--chat {
+  // Largura confortável da coluna de conversa. Cabeçalho, thread e input compartilham
+  // a mesma coluna centralizada, então tudo se alinha e acompanha o tamanho da tela.
+  --wiz-col: 760px;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+// Coluna central reutilizável: 100% em telas estreitas, travada na largura máxima nas largas.
+.wiz-col {
+  width: 100%;
+  max-width: var(--wiz-col);
+  margin: 0 auto;
+}
+
+.wiz-chat-head {
+  flex: none;
+  background: #121212;
+  padding-bottom: 12px;
+}
+
+.nyta-chat {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nyta-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// ---- Coluna de resultados (3ª coluna do app, irmã da navbar e da página) --------------------
+// Mesmo container da navbar (#121212, cantos arredondados, altura cheia), encaixada à direita.
+.wiz-artifacts {
+  flex: none;
+  width: 320px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #121212;
+  border-radius: 8px;
+  overflow: hidden;
+  animation: wizSlideInRight 0.28s ease both;
+}
+
+@media (max-width: 1240px) {
+  .wiz-artifacts {
+    width: 280px;
+  }
+}
+
+.wiz-artifacts-head {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid #232323;
+}
+
+.wiz-artifacts-title {
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  font-family: SpotifyMixUITitle;
+}
+
+.wiz-artifacts-sub {
+  color: #7a7a7a;
+  font-size: 11.5px;
+  margin-top: 2px;
+}
+
+.wiz-artifacts-close {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  color: #9a9a9a;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: #232323;
+    color: #fff;
+  }
+}
+
+.wiz-artifacts-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.wiz-art-empty {
+  color: #6b7280;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 8px 2px;
+}
+
+// Cada etapa: nome + artefato, separados por um divisor sutil. Sem ícones, sem cores.
+.wiz-art-step {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #1f1f1f;
+
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+}
+
+.wiz-art-step-name {
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.wiz-art-now {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.wiz-art-step-body {
+  margin-top: 8px;
+}
+
+// Texto corrido (visão, missão, valores, conclusão).
+.wiz-art-text {
+  margin: 0;
+  color: #b3b3b3;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+// Linhas "rótulo · valor" (gênero, cidade, referências, SWOT, cronograma).
+.wiz-art-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #cfcfcf;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.wiz-art-k {
+  color: #6b7280;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+
+// Listas (objetivos, estratégias, prioridades) — numeração neutra padrão.
+.wiz-art-list {
+  margin: 0;
+  padding-left: 16px;
+
+  li {
+    color: #b3b3b3;
+    font-size: 12.5px;
+    line-height: 1.45;
+    margin-bottom: 5px;
+  }
+}
+
+.wiz-art-muted {
+  color: #6b7280;
+  list-style: none;
+}
+
+// ---- Brilho de "avanço de etapa" -------------------------------------------------------------
+// Luz aurora (mesma do AiGlow) percorrendo o contorno do painel do wizard, disparada a cada
+// vez que o usuário passa de etapa. Usa a máscara para virar um anel só na borda.
+@property --wizGlowAngle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.wiz-step-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 3px; // espessura do anel
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0;
+  background: conic-gradient(
+    from var(--wizGlowAngle),
+    transparent 0deg,
+    transparent 140deg,
+    #af2896 195deg,
+    #ffffff 255deg,
+    #509bf5 300deg,
+    #af2896 335deg,
+    transparent 360deg
+  );
+  // só o anel de 3px aparece (gradiente recortado na borda)
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 10px rgba(175, 40, 150, 0.4));
+}
+
+.wiz-step-glow--on {
+  animation: wizGlowSpin 1.25s linear 2, wizGlowFade 2.5s ease-out forwards;
+}
+
+@keyframes wizGlowSpin {
+  to {
+    --wizGlowAngle: 360deg;
+  }
+}
+
+@keyframes wizGlowFade {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wiz-step-glow--on {
+    animation: wizGlowFade 1.2s ease-out forwards;
+  }
+}

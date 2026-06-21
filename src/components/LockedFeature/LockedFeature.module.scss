@@ -1,0 +1,85 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+  width: 100%;
+  padding: 32px 16px;
+  // Mesmo fundo premium da tela de boas-vindas.
+  background: radial-gradient(120% 90% at 50% 0%, #15101f 0%, #08080c 55%, #050507 100%);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+}
+
+.icon {
+  font-size: 48px;
+  color: #fff; // mesma cor do título
+  margin-bottom: 16px;
+}
+
+.title {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 32px;
+  line-height: 1.2;
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+  }
+}
+
+.benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 40px;
+  width: 100%;
+  text-align: left;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    color: #b3b3b3;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+}
+
+.checkIcon {
+  color: #af2896;
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cta {
+  background-color: #af2896;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  white-space: nowrap;
+
+  &:hover {
+    transform: scale(1.04);
+    background-color: #c13fa8;
+  }
+
+  &:active {
+    transform: scale(1);
+  }
+}

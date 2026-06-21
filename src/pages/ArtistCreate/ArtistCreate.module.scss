@@ -1,0 +1,1203 @@
+// Criação de artista — MESMA estética da /welcome (Maestra falando, tela cheia,
+// uma etapa por vez: fala grande centralizada + interação abaixo).
+
+.page {
+  min-height: 100vh;
+  background: radial-gradient(120% 90% at 50% 0%, #15101f 0%, #08080c 55%, #050507 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 64px;
+}
+
+// ─── Pílula da marca (igual /welcome) ─────────────────────────────────────────
+.pillWrap {
+  position: relative;
+  display: inline-flex;
+  margin-bottom: 8px;
+}
+
+@property --acAngle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.pillGlow {
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from var(--acAngle),
+    transparent 0deg, transparent 150deg,
+    #af2896 200deg, #ffffff 255deg, #509bf5 300deg, #af2896 335deg, transparent 360deg
+  );
+  filter: blur(6px);
+  opacity: 0.9;
+  animation: acAngleSpin 4s linear infinite;
+}
+
+.pill {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 28px;
+  border-radius: 9999px;
+  background: #0a0a0e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pillLogo { width: 26px; height: 26px; }
+
+.pillText {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pillManager { color: #d264bb; }
+
+.back {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  background: none;
+  border: none;
+  color: #b3b3b3;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { color: #fff; }
+}
+
+// ─── Progresso ─────────────────────────────────────────────────────────────────
+.progress {
+  display: flex;
+  gap: 7px;
+  margin: 18px 0 28px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  transition: background 0.3s, width 0.3s;
+}
+
+.dotOn { background: #af2896; }
+.dotDone { background: rgba(175, 40, 150, 0.5); }
+
+// ─── Etapa (uma por vez, centralizada) ────────────────────────────────────────
+.step {
+  width: 100%;
+  max-width: 720px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  animation: acStepIn 0.45s ease both;
+}
+
+// Etapas largas (checkout 2 colunas, diagnóstico) — precisam de bem mais
+// largura que as etapas de fala, e o filho deve esticar (não centralizar
+// encolhido). A largura final fica por conta do conteúdo (max-width próprio).
+.stepWide {
+  max-width: 1120px;
+  align-items: stretch;
+  text-align: left;
+}
+
+// A fala da Maestra — grande e centralizada, igual ao greeting da /welcome.
+.line {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-weight: 800;
+  font-size: 30px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: #fff;
+  max-width: 640px;
+  min-height: 96px;
+  margin: 8px 0 28px;
+
+  @media (max-width: 600px) {
+    font-size: 23px;
+  }
+}
+
+// Variante para falas ESTÁTICAS (sem typewriter, ex.: tela de desbloqueio):
+// remove a altura mínima reservada pro efeito de digitação e aproxima do conteúdo.
+.lineCompact {
+  min-height: 0;
+  margin: 40px 0 24px;
+}
+
+.caret {
+  display: inline-block;
+  width: 3px;
+  height: 1.05em;
+  margin-left: 4px;
+  vertical-align: text-bottom;
+  background: #af2896;
+  border-radius: 2px;
+  animation: acCaret 0.9s steps(1) infinite;
+}
+
+// Container da interação — só aparece quando a fala termina de digitar.
+.interaction {
+  width: 100%;
+  max-width: 520px;
+  animation: acFadeUp 0.4s ease both;
+}
+
+// ─── Campo de busca (limpo, estilo /welcome) ──────────────────────────────────
+.results {
+  margin-top: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #181818;
+  border-radius: 14px;
+  padding: 6px;
+  text-align: left;
+}
+
+// Aviso inline quando o artista já existe (substitui o toast que passava batido).
+.dupeNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(224, 161, 60, 0.1);
+  border: 1px solid rgba(224, 161, 60, 0.35);
+  text-align: left;
+  animation: acFadeUp 0.25s ease both;
+}
+.dupeNoticeIcon { color: #e0a13c; font-size: 19px; flex-shrink: 0; margin-top: 1px; }
+.dupeNoticeText {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #e8d9bf;
+  strong { color: #fff; font-weight: 700; }
+}
+.dupeNoticeBtn {
+  flex-shrink: 0;
+  align-self: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  border-radius: 9999px;
+  padding: 8px 15px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s ease;
+
+  &:hover { background: rgba(255, 255, 255, 0.18); }
+}
+
+.resultItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover { background: #282828; }
+
+  img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  color: #9a9aa5;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 14px;
+
+  &:hover { color: #fff; }
+}
+
+// ─── Quiz: opções limpas, sutis ───────────────────────────────────────────────
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #fff;
+  border-radius: 14px;
+  padding: 17px 22px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(175, 40, 150, 0.55);
+    transform: translateY(-1px);
+  }
+}
+
+// ─── Diagnóstico — editorial, SEM card pesado (flutua no fundo) ────────────────
+.diagWrap {
+  width: 100%;
+  max-width: 540px;
+  text-align: left;
+}
+
+// Cabeçalho do artista no diagnóstico — esta tela é "printável" (o artista compartilha).
+.diagArtist {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.diagArtistAvatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.diagArtistName {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-weight: 800;
+  font-size: 21px;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.diagArtistTag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8a8a92;
+  margin-top: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.diagStage {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #af2896;
+  margin-bottom: 14px;
+}
+
+.diagHeadline {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1.28;
+  color: #fff;
+  margin: 0 0 26px;
+}
+
+// Métricas como faixa de stats com fios finos — nada de caixinhas.
+.diagMetrics {
+  display: flex;
+  margin: 0 0 26px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.metric {
+  flex: 1;
+  text-align: center;
+  padding: 16px 8px;
+
+  & + & { border-left: 1px solid rgba(255, 255, 255, 0.08); }
+}
+
+.metricValue { font-size: 24px; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
+.metricLabel { font-size: 11px; color: #8a8a92; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+// Mini gráfico de cidades (dados Chartmetric) — barras limpas, sem caixa.
+.cityChart {
+  margin: 0 0 28px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.cityChartLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a8a92;
+  margin-bottom: 14px;
+}
+
+.cityRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+
+.cityName {
+  width: 116px;
+  font-size: 14px;
+  color: #fff;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cityBarTrack {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.cityBar {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #af2896, #d264bb);
+  animation: acBarGrow 0.7s ease both;
+}
+
+.cityVal {
+  width: 64px;
+  text-align: right;
+  font-size: 13px;
+  color: #b3b3b3;
+  flex-shrink: 0;
+}
+
+.diagBullets {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.diagBullets li {
+  display: flex;
+  gap: 12px;
+  color: #cfcfd4;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.bulletDot { color: #af2896; flex-shrink: 0; }
+
+// Oportunidade: fio de acento à esquerda, sem caixa colorida.
+.diagOpp {
+  border-left: 2px solid #af2896;
+  padding: 2px 0 2px 18px;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: #fff;
+}
+
+.diagOppLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #af2896;
+  margin-bottom: 6px;
+}
+
+// ─── Resumo do que está sendo desbloqueado (artista + benefícios) ─────────────
+.payArtist {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+}
+
+.payArtistAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.payArtistName {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.payArtistSub {
+  font-size: 13px;
+  color: #8a8a92;
+  margin-top: 3px;
+}
+
+// O que o usuário desbloqueia — lista de cards EXPANSÍVEIS (acordeão) que explicam
+// cada benefício e quebram objeções. Cada card abre revelando os detalhes.
+.payFeaturesHead {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.payFeaturesTitle {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #cfcfd4;
+}
+.payFeaturesHint { font-size: 12px; color: #6f6f78; }
+
+.payFeatures {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.payFeature {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  transition: border-color 0.2s ease, background 0.2s ease;
+
+  &:hover { border-color: rgba(175, 40, 150, 0.22); }
+}
+
+.payFeatureOpen {
+  background: rgba(175, 40, 150, 0.05);
+  border-color: rgba(175, 40, 150, 0.3);
+}
+
+.payFeatureHead {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.payFeatureText { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+
+.payFeatureChevron {
+  flex-shrink: 0;
+  color: #8a8a92;
+  font-size: 18px;
+  transition: transform 0.25s ease, color 0.2s ease;
+
+  .payFeatureOpen & { transform: rotate(180deg); color: #af2896; }
+}
+
+// Corpo expansível — truque grid 0fr↔1fr (anima a altura sem max-height fixo).
+.payFeatureBody {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+
+  .payFeatureOpen & { grid-template-rows: 1fr; }
+}
+.payFeatureBodyInner { overflow: hidden; }
+
+.payFeatureIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 18px;
+  flex-shrink: 0;
+
+  .payFeatureOpen & { background: rgba(175, 40, 150, 0.16); color: #af2896; }
+}
+
+.payFeatureTitle { font-size: 14.5px; font-weight: 700; color: #fff; line-height: 1.25; }
+.payFeatureDesc { font-size: 12.5px; color: #8a8a92; line-height: 1.35; }
+.payFeatureDetails {
+  margin: 0 14px;
+  padding: 12px 0 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 13px;
+  line-height: 1.55;
+  color: #b3b3b3;
+}
+
+// ─── Pagamento — campos flutuando, sem card ───────────────────────────────────
+.payWrap {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+
+  // Inputs/Select no padrão da tela (escuro, borda sutil, foco verde) — sobrepõe o
+  // tema padrão do antd que destoava (cinza claro com cara de "outro sistema").
+  :global(.ant-input),
+  :global(.ant-input-affix-wrapper),
+  :global(.ant-select-selector),
+  :global(.ant-input-number),
+  :global(textarea.ant-input) {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.09) !important;
+    border-radius: 14px !important;
+    color: #fff !important;
+    box-shadow: none !important;
+  }
+
+  :global(.ant-input) {
+    padding: 15px 16px !important;
+    font-size: 15px !important;
+  }
+
+  // Campos com ícone (prefix) — o wrapper recebe o fundo/borda e o input interno
+  // fica transparente, pra não duplicar a moldura.
+  :global(.ant-input-affix-wrapper) {
+    padding: 13px 16px !important;
+    align-items: center;
+  }
+  :global(.ant-input-affix-wrapper .ant-input) {
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  :global(.ant-input-prefix) { margin-inline-end: 11px; }
+
+  :global(.ant-input::placeholder),
+  :global(textarea.ant-input::placeholder) { color: #6f6f78 !important; }
+
+  :global(.ant-input:hover),
+  :global(.ant-input:focus),
+  :global(.ant-input-focused),
+  :global(.ant-select:not(.ant-select-disabled):hover .ant-select-selector),
+  :global(.ant-select-focused .ant-select-selector) {
+    border-color: #af2896 !important;
+    box-shadow: 0 0 0 1px rgba(175, 40, 150, 0.25) !important;
+  }
+
+  // Select de parcelamento — altura e alinhamento iguais aos inputs.
+  :global(.ant-select-lg .ant-select-selector) {
+    height: 54px !important;
+    padding: 0 16px !important;
+    display: flex;
+    align-items: center;
+  }
+  :global(.ant-select-selection-item) { color: #fff !important; font-size: 15px; font-weight: 600; }
+  :global(.ant-select-selection-placeholder) { color: #6f6f78 !important; }
+  :global(.ant-select-arrow) { color: #8a8a92 !important; }
+}
+
+.fieldLabel {
+  display: block;
+  color: #8a8a92;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+
+// Formulário de cartão — campos rotulados e espaçados de forma consistente.
+.cardForm { display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; min-width: 0; }
+.fieldRow {
+  display: flex;
+  gap: 12px;
+
+  > * { flex: 1; min-width: 0; }
+}
+.fieldIcon { color: #8a8a92; font-size: 16px; display: block; }
+
+.method { display: flex; gap: 10px; }
+
+.methodBtn {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  padding: 14px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+
+  &:hover { background: rgba(255, 255, 255, 0.07); transform: translateY(-1px); }
+}
+
+.methodBtnOn {
+  background: rgba(175, 40, 150, 0.1);
+  border-color: #af2896;
+  box-shadow: 0 0 0 1px rgba(175, 40, 150, 0.35), 0 6px 22px rgba(175, 40, 150, 0.12);
+}
+
+.methodIcon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #cfcfd4;
+}
+
+// Selo de pagamento seguro (Asaas) — discreto, abaixo do CTA.
+.secureNote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 12px;
+  color: #6f6f78;
+  font-size: 12px;
+
+  svg { flex-shrink: 0; }
+}
+
+// CTA verde grande (igual /welcome)
+.cta {
+  width: auto;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #af2896;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 15px 30px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 34px rgba(175, 40, 150, 0.28);
+  transition: transform 0.15s, background 0.2s;
+
+  &:hover:not(:disabled) { background: #c13fa8; transform: translateY(-1px); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  @media (max-width: 600px) {
+    font-size: 14px;
+    padding: 13px 22px;
+    gap: 6px;
+  }
+}
+
+.ctaGhost {
+  background: none;
+  border: none;
+  color: #9a9aa5;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+
+  &:hover { color: #fff; }
+}
+
+.analyzing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #b3b3b3;
+  font-size: 15px;
+}
+
+.qrWrap { text-align: center; }
+.qrImg { width: 220px; height: 220px; border-radius: 8px; background: #fff; padding: 8px; }
+
+.errorMsg { color: #ff6b6b; font-size: 13px; }
+
+// ─── Diagnóstico REAL (página de entrega) ─────────────────────────────────────
+.realWrap {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+// SEÇÃO 1 — Hero
+.realHero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.realHeroAvatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; flex-shrink: 0; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); }
+.realHeroTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; line-height: 1.2; color: #fff; margin: 0; }
+.realHeroSub { font-size: 13px; color: #8a8a92; margin: 6px 0 0; }
+.heroShareBtn {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cfcfd4;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+  &:hover:not(:disabled) { background: rgba(175, 40, 150, 0.18); border-color: #af2896; color: #fff; transform: translateY(-1px); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// SEÇÃO 2 — Card do perfil (o momento "uau")
+.realProfileCard {
+  position: relative;
+  border-radius: 20px;
+  margin-bottom: 28px;
+  padding: 26px 24px;
+  background: radial-gradient(120% 120% at 0% 0%, rgba(175, 40, 150, 0.12), rgba(255, 255, 255, 0.03) 60%);
+  border: 1px solid rgba(175, 40, 150, 0.28);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.realProfileKicker { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #af2896; margin-bottom: 10px; }
+.realProfileName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 38px; line-height: 1; color: #fff; margin: 0 0 14px; letter-spacing: -0.01em; }
+.realProfileDesc { font-size: 15px; line-height: 1.5; color: #d4d4d8; margin: 0 0 20px; }
+// Padrão REAL — legenda limpa, SEM caixas: letra grande em serifa itálica
+// (assinatura visual da metodologia) + palavra em caixa-alta discreta. A cor da
+// letra indica o estado (verde = alta, cinza = baixa).
+.realPattern { margin-top: 20px; }
+.realPatternHead { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.realPatternHeadLabel { font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #9a9aa5; }
+.realPatternInfo {
+  display: inline-flex; align-items: center; color: #6f6f78; cursor: help;
+  transition: color 0.15s ease;
+  &:hover, &:focus-visible { color: #af2896; outline: none; }
+}
+.realPatternRow { display: flex; flex-wrap: wrap; gap: 14px 40px; }
+.realPatternItem { display: flex; align-items: baseline; gap: 11px; }
+.realPatternLetter {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+.realPatternLetterHigh { color: #af2896; }
+.realPatternLetterLow { color: #71717a; }
+.realPatternWord {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #b8b8be;
+}
+
+// SEÇÃO 3 — 4 dimensões
+.dimGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 28px;
+
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+}
+// Estado da dimensão → cor consistente (anel, status, nível, acento da frase).
+.stHigh { --st: #af2896; }
+.stLow { --st: #e0a13c; }
+.stNeutral { --st: #8a8a92; }
+
+.dimCard {
+  position: relative;
+  padding: 22px 20px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+}
+
+// Cabeçalho: monograma com anel de estado + nome editorial + status.
+.dimTop { display: flex; align-items: center; gap: 13px; margin-bottom: 16px; }
+.dimMono {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 20px;
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+}
+.dimTitleWrap { flex: 1; min-width: 0; }
+.dimTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 17px; color: #fff; line-height: 1.05; }
+.dimSub { font-size: 11.5px; color: #7e7e88; margin-top: 2px; letter-spacing: 0.02em; }
+.dimStatus { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--st); white-space: nowrap; }
+
+// Medidor qualitativo (fino e discreto — não é barra de progresso genérica).
+.dimLevel { height: 3px; border-radius: 9999px; background: rgba(255, 255, 255, 0.06); overflow: hidden; margin-bottom: 18px; }
+.dimLevelFill { height: 100%; border-radius: 9999px; background: var(--st); animation: acBarGrow 0.8s ease 0.3s both; transform-origin: left; }
+
+// Stat sheet: fios finos, valor em destaque (não é "card box").
+.dimStats { display: flex; flex-direction: column; }
+.dimStatRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+  &:first-child { border-top: none; padding-top: 0; }
+}
+.dimStatLabel { font-size: 12.5px; color: #9a9aa3; }
+.dimStatValue { font-size: 16px; color: #fff; font-weight: 800; text-align: right; letter-spacing: -0.01em; }
+
+.dimPhrase {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #b0b0b8;
+  margin: 16px 0 0;
+  padding-left: 13px;
+  border-left: 2px solid color-mix(in srgb, var(--st) 70%, transparent);
+}
+
+// SEÇÃO 4 — Insights
+.insightsBlock {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+.insightsTitle { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; margin-bottom: 14px; }
+.insightsList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 13px; }
+.insightsList li { display: flex; gap: 11px; font-size: 14.5px; line-height: 1.5; color: #d4d4d8; }
+.insightDot { color: #af2896; flex-shrink: 0; font-weight: 800; }
+
+// SEÇÃO 5 — CTA
+.ctaBlock { text-align: center; margin-bottom: 28px; }
+// white-space/text-wrap/overflow sobrescrevem o `h3` global (App.scss: nowrap + ellipsis), que
+// senão impede a quebra e corta o título em telas estreitas.
+.ctaTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: clamp(24px, 3.4vw, 36px); line-height: 1.18; letter-spacing: -0.01em; color: #fff; margin: 0 0 18px; white-space: normal; text-wrap: wrap; overflow: visible; text-overflow: clip; }
+.ctaParagraph { font-size: 13.5px; line-height: 1.65; color: #b8b8be; margin: 0 auto 26px; max-width: 500px; }
+
+// Efeito "digitando": empilhamento via grid — fantasma reserva o tamanho do texto completo, o
+// texto visível ocupa a mesma célula (sem position:absolute, não corta em telas estreitas).
+// grid-template-columns: minmax(0,1fr) força a coluna a preencher o container (texto quebra),
+// em vez de auto/max-content (que colocaria tudo numa linha só e cortaria em telas estreitas).
+.twWrap { display: grid; grid-template-columns: minmax(0, 1fr); }
+.twWrap > * { grid-area: 1 / 1; min-width: 0; }
+.twGhost { visibility: hidden; }
+
+// Caret do efeito "digitando"
+.twCaret { display: inline-block; width: 2px; height: 1em; margin-left: 3px; background: #af2896; vertical-align: text-bottom; animation: twBlink 0.85s steps(1) infinite; }
+@keyframes twBlink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+// Botão do CTA "surgindo" depois que o texto termina de digitar
+.ctaReveal { opacity: 0; transform: translateY(14px) scale(0.96); transition: opacity 0.5s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1); pointer-events: none; }
+.ctaRevealOn { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .ctaReveal { transition: opacity 0.2s ease; transform: none; }
+}
+.ctaMicrocopy { font-size: 12px; color: #7a7a82; line-height: 1.5; margin: 14px auto 0; max-width: 420px; }
+
+// SEÇÃO 6 — Método (colapsável)
+.methodBlock { border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 8px; }
+.methodToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9a9aa5;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 2px;
+
+  &:hover { color: #fff; }
+}
+.methodChevron { transition: transform 0.2s ease; }
+.methodChevronOpen { transform: rotate(180deg); transition: transform 0.2s ease; }
+.methodBody { font-size: 13px; line-height: 1.6; color: #8a8a92; margin: 0 2px 8px; }
+
+// ─── Enriquecimentos do diagnóstico ───────────────────────────────────────────
+// Reveal em etapas (entrega): cada seção sobe com fade, escalonada por animationDelay.
+.reveal { animation: realReveal 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+@keyframes realReveal { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+// O nome do perfil "estampa" ao aparecer.
+.stamp { animation: realStamp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.18s both; }
+@keyframes realStamp { 0% { opacity: 0; transform: scale(1.18); } 60% { opacity: 1; transform: scale(0.98); } 100% { transform: scale(1); } }
+
+// As bolinhas R·E·A·L pulam em sequência.
+.dotPop { display: inline-block; animation: realDotPop 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes realDotPop { 0% { opacity: 0; transform: scale(0); } 70% { transform: scale(1.4); } 100% { opacity: 1; transform: scale(1); } }
+
+// Medidor qualitativo por dimensão (não expõe o z).
+.dimMeter { height: 5px; border-radius: 9999px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+.dimMeterFill { height: 100%; border-radius: 9999px; animation: acBarGrow 0.8s ease 0.3s both; transform-origin: left; }
+.meterHigh { background: linear-gradient(90deg, #af2896, #d264bb); }
+.meterLow { background: linear-gradient(90deg, #f5b15a, #c8862f); }
+.meterNeutral { background: rgba(255, 255, 255, 0.22); }
+
+// Mapa dos 16 perfis (onde você está — aspiração).
+.profileMap {
+  width: 100%;
+  margin: 0 auto 28px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 18px 16px;
+}
+.profileMapTitle { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; margin-bottom: 14px; }
+.mapRow { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
+.mapRow + .mapRow { border-top: 1px solid rgba(255, 255, 255, 0.05); }
+.mapTier { width: 56px; flex-shrink: 0; font-size: 11px; color: #6f6f78; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.mapChips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mapChip {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a8a92;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.mapChipOn {
+  color: #fff;
+  background: #af2896;
+  border-color: #af2896;
+  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(175, 40, 150, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .stamp, .dotPop, .dimMeterFill { animation: none !important; opacity: 1 !important; transform: none !important; }
+}
+
+// ─── Compartilhar / baixar diagnóstico ────────────────────────────────────────
+.shareActions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+
+  &:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.24); }
+  &:disabled { opacity: 0.55; cursor: wait; }
+}
+
+// CTA fixo no rodapé — aparece só depois de rolar além do card do perfil.
+.stickyCta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(to top, #08080c 30%, rgba(8, 8, 12, 0.92) 70%, rgba(8, 8, 12, 0));
+  animation: stickyUp 0.32s ease both;
+  pointer-events: none;
+
+  .cta { pointer-events: auto; max-width: 520px; width: 100%; }
+}
+@keyframes stickyUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+// Conteúdo capturável renderizado fora da tela (cartão/deck). 0×0 + overflow:hidden
+// para NÃO inflar o scroll da página (o deck tem milhares de px de altura); os nós
+// internos mantêm tamanho real e seguem capturáveis pelo html-to-image.
+.shareStage { position: fixed; left: 0; top: 0; width: 0; height: 0; overflow: hidden; pointer-events: none; }
+.shareCard {
+  width: 540px;
+  padding: 46px 44px 36px;
+  background: radial-gradient(130% 100% at 50% 0%, #1b1430 0%, #0a0a0e 62%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+}
+.shareBrand { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; margin-bottom: 34px; }
+.shareBrandLogo { width: 26px; height: 26px; }
+.shareAvatar { width: 124px; height: 124px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 24px; box-shadow: 0 12px 44px rgba(0, 0, 0, 0.55); }
+.shareKicker { text-align: center; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: #af2896; font-weight: 800; margin-bottom: 12px; }
+.shareName { font-family: 'SpotifyMixUITitle', sans-serif; text-align: center; font-size: 66px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; margin-bottom: 22px; }
+.shareTagline { text-align: center; font-size: 17px; line-height: 1.5; color: #cfcfd4; margin: 0 auto 34px; max-width: 420px; }
+.sharePattern { display: flex; justify-content: center; gap: 26px; margin-bottom: 36px; }
+.sharePatternItem { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.sharePatternLetter { font-family: 'SpotifyMixUITitle', sans-serif; font-size: 22px; font-weight: 800; }
+.sharePatternDot { width: 14px; height: 14px; border-radius: 50%; }
+.shareFooter { text-align: center; font-size: 13px; color: #8a8a92; letter-spacing: 0.04em; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 22px; }
+
+// ─── Documento de apresentação (deck PDF, páginas A4 794×1123) ─────────────────
+.docRoot { font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; }
+.docPage {
+  width: 794px;
+  height: 1123px;
+  background: radial-gradient(120% 80% at 50% 0%, #15101f 0%, #0a0a0e 55%);
+  color: #fff;
+  padding: 60px 64px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.docHeader { display: flex; align-items: center; justify-content: space-between; padding-bottom: 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.docBrand { display: flex; align-items: center; gap: 9px; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 17px; }
+.docBrandLogo { width: 22px; height: 22px; }
+.docHeaderLabel { font-size: 11px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #af2896; }
+.docBody { flex: 1; display: flex; flex-direction: column; padding-top: 40px; }
+.docFooter { display: flex; justify-content: space-between; font-size: 12px; color: #6f6f78; letter-spacing: 0.04em; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+
+// Capa
+.docCover { justify-content: space-between; align-items: center; text-align: center; }
+.docCoverBrand { display: flex; align-items: center; gap: 10px; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 20px; }
+.docCoverCenter { display: flex; flex-direction: column; align-items: center; }
+.docCoverAvatar { width: 180px; height: 180px; border-radius: 50%; object-fit: cover; box-shadow: 0 16px 60px rgba(0, 0, 0, 0.6); margin-bottom: 30px; }
+.docCoverKicker { font-size: 14px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #af2896; margin-bottom: 14px; }
+.docCoverName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 64px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 22px; }
+.docCoverProfile { font-size: 20px; color: #cfcfd4; strong { color: #af2896; font-weight: 800; } }
+.docCoverFoot { font-size: 13px; color: #7a7a82; letter-spacing: 0.04em; }
+
+// Página do perfil
+.docProfileKicker { font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #af2896; margin-bottom: 14px; }
+.docProfileName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 92px; line-height: 0.95; letter-spacing: -0.03em; margin-bottom: 24px; }
+.docProfileDesc { font-size: 20px; line-height: 1.5; color: #d4d4d8; margin: 0 0 36px; max-width: 600px; }
+.docPattern { display: flex; flex-wrap: wrap; gap: 18px 48px; padding: 26px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 38px; }
+.docPatternItem { display: flex; align-items: baseline; gap: 13px; }
+.docPatternLetter { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 700; font-size: 36px; line-height: 1; }
+.docPatternWord { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #b8b8be; }
+.docInsightsTitle { font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; margin-bottom: 16px; }
+.docInsights { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; }
+.docInsights li { position: relative; padding-left: 22px; font-size: 18px; line-height: 1.5; color: #cfcfd4; &::before { content: '▸'; position: absolute; left: 0; color: #af2896; } }
+
+.docSectionTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 40px; line-height: 1.1; margin-bottom: 34px; letter-spacing: -0.01em; }
+
+// Dimensões (doc)
+.docDimGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.docDimCard { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 18px; padding: 24px; }
+.docDimHead { display: flex; align-items: center; gap: 13px; margin-bottom: 18px; }
+.docDimMono { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: #fff; display: flex; align-items: center; justify-content: center; font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 700; font-size: 23px; flex-shrink: 0; }
+.docDimName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 20px; }
+.docDimSub { font-size: 13px; color: #8a8a92; margin-top: 2px; }
+.docDimStatus { margin-left: auto; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.docDimStats { display: flex; flex-direction: column; margin-bottom: 16px; }
+.docDimRow { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); font-size: 14px; color: #9a9aa3; &:first-child { border-top: none; } strong { color: #fff; font-size: 17px; font-weight: 800; } }
+.docDimPhrase { font-size: 13.5px; line-height: 1.5; color: #b0b0b8; padding-left: 14px; border-left: 2px solid; }
+
+// Cidades (doc)
+.docCities { display: flex; flex-direction: column; gap: 18px; margin-bottom: 30px; }
+.docCityRow { display: flex; align-items: center; gap: 18px; }
+.docCityName { width: 200px; font-size: 18px; color: #fff; flex-shrink: 0; }
+.docCityTrack { flex: 1; height: 12px; background: rgba(255, 255, 255, 0.06); border-radius: 9999px; overflow: hidden; }
+.docCityBar { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #af2896, #d264bb); }
+.docCityVal { width: 90px; text-align: right; font-size: 16px; color: #cfcfd4; font-weight: 700; flex-shrink: 0; }
+.docNote { font-size: 15px; line-height: 1.6; color: #8a8a92; margin-top: auto; }
+
+// Mapa (doc)
+.docMap { display: flex; flex-direction: column; }
+.docMapRow { display: flex; align-items: center; gap: 18px; padding: 14px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); &:first-child { border-top: none; } }
+.docMapTier { width: 90px; flex-shrink: 0; font-size: 13px; color: #6f6f78; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+.docMapChips { display: flex; flex-wrap: wrap; gap: 10px; }
+.docMapChip { font-size: 16px; font-weight: 700; color: #8a8a92; padding: 8px 18px; border-radius: 9999px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); }
+.docMapChipOn { color: #fff; background: #af2896; border-color: #af2896; font-weight: 800; }
+
+// Método (doc)
+.docMethodIntro { font-size: 18px; line-height: 1.55; color: #cfcfd4; margin: 0 0 32px; }
+.docMethodGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 30px; }
+.docMethodCard { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 22px; }
+.docMethodLetter { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: rgba(175, 40, 150, 0.12); color: #af2896; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 14px; }
+.docMethodName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 7px; }
+.docMethodDesc { font-size: 14.5px; line-height: 1.5; color: #9a9aa3; }
+
+// CTA (doc)
+.docCta { justify-content: space-between; align-items: center; text-align: center; }
+.docCtaCenter { display: flex; flex-direction: column; align-items: center; max-width: 600px; }
+.docCtaKicker { font-size: 14px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #af2896; margin-bottom: 18px; }
+.docCtaTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 52px; line-height: 1.08; letter-spacing: -0.02em; margin-bottom: 26px; }
+.docCtaText { font-size: 19px; line-height: 1.6; color: #cfcfd4; margin: 0 0 40px; }
+.docCtaButton { background: #af2896; color: #fff; font-weight: 800; font-size: 22px; padding: 20px 44px; border-radius: 9999px; box-shadow: 0 14px 44px rgba(175, 40, 150, 0.3); }
+
+@keyframes acBarGrow { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); transform-origin: left; } }
+@keyframes acAngleSpin { to { --acAngle: 360deg; } }
+@keyframes acFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes acStepIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes acCaret { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pillGlow { animation: none; }
+}

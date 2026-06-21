@@ -1,0 +1,28 @@
+{
+  "name": "spotify-for-artists-clone",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@radix-ui/themes": "^3.2.1",
+    "lucide-react": "^0.462.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^6.23.0",
+    "react-toastify": "^11.0.5",
+    "tailwindcss": "^3.4.1",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.2",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.49",
+    "vite": "^7.1.6"
+  }
+}

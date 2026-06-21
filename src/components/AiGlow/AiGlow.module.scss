@@ -1,0 +1,55 @@
+// Luz "aurora" que percorre o contorno de um botão de IA. Usada via <AiGlow> (wrapper).
+// O glow é irmão do conteúdo (não filho), então funciona independente de stacking context
+// do botão (hover com transform, etc.).
+
+@property --aiGlowAngle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.wrap {
+  position: relative;
+  display: inline-flex;
+  border-radius: 9999px;
+}
+
+.glow {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  // Arco brilhante (magenta → branco → azul → verde) num trecho do círculo; o resto é
+  // transparente. Ao girar o ângulo, o arco viaja ao redor do contorno do botão.
+  background: conic-gradient(
+    from var(--aiGlowAngle),
+    transparent 0deg,
+    transparent 150deg,
+    #af2896 200deg,
+    #ffffff 255deg,
+    #509bf5 300deg,
+    #af2896 335deg,
+    transparent 360deg
+  );
+  filter: blur(6px);
+  z-index: 0;
+  pointer-events: none;
+  animation: aiGlowTravel 4s linear infinite;
+}
+
+// O conteúdo (botão) fica acima do glow; o fundo dele cobre o centro → só a borda brilha.
+.wrap > :not(.glow) {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes aiGlowTravel {
+  to {
+    --aiGlowAngle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow {
+    animation: none;
+  }
+}

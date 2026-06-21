@@ -1,0 +1,139 @@
+// Tela de autenticação em split-screen: formulário à esquerda, hero de marca à direita.
+// Segue o tema dark do app (#000/#121212) e o gradiente roxo→azul da Maestra.
+
+// Animação do equalizer da logo (usada no hover do ícone da marca).
+@keyframes eqBounce {
+  0%,
+  100% {
+    transform: scaleY(0.6);
+  }
+  50% {
+    transform: scaleY(1.5);
+  }
+}
+
+// Acessibilidade: quem prefere menos movimento não vê a animação.
+@media (prefers-reduced-motion: reduce) {
+  .brand svg:hover g line {
+    animation: none;
+  }
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  background: #000;
+  color: #fff;
+}
+
+.formCol {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  overflow-y: auto;
+}
+
+.formInner {
+  width: 100%;
+  max-width: 400px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 32px;
+
+  svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  // Equalizer "vivo": ao passar o mouse no ícone, as 5 barras dançam (cada uma com
+  // ritmo/atraso próprio para parecer um equalizador de música).
+  svg g line {
+    transform-box: fill-box;
+    transform-origin: center bottom;
+  }
+  svg:hover g line {
+    animation: eqBounce 0.8s ease-in-out infinite;
+  }
+  svg:hover g line:nth-child(1) { animation-duration: 0.70s; animation-delay: 0s; }
+  svg:hover g line:nth-child(2) { animation-duration: 0.95s; animation-delay: 0.12s; }
+  svg:hover g line:nth-child(3) { animation-duration: 0.60s; animation-delay: 0.05s; }
+  svg:hover g line:nth-child(4) { animation-duration: 0.90s; animation-delay: 0.18s; }
+  svg:hover g line:nth-child(5) { animation-duration: 0.75s; animation-delay: 0.08s; }
+
+  .brandName {
+    font-family: 'SpotifyMixUITitle', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    line-height: 1;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  .brandAccent {
+    color: #d264bb;
+  }
+}
+
+.eyebrow {
+  font-size: 13px;
+  color: #b3b3b3;
+  margin: 0 0 12px;
+}
+
+.social {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.socialBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #1f1f1f;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+
+  &:hover {
+    background: #282828;
+    border-color: #3a3a3a;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  color: #6b7280;
+  font-size: 13px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #2a2a2a;
+  }
+}
+

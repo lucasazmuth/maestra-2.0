@@ -1,0 +1,115 @@
+.banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  padding: 28px 24px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #1e0a3c 0%, #2a1250 40%, #1a3a5c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+// Shimmer decorativo sutil no fundo do card
+.banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 60% 80% at 80% 20%,
+    rgba(175, 40, 150, 0.08) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(175, 40, 150, 0.15);
+  color: #af2896;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.title {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.price {
+  margin: 8px 0 16px;
+}
+
+.priceValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.pricePeriod {
+  font-size: 14px;
+  color: #b3b3b3;
+  margin-left: 2px;
+}
+
+.benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #fff;
+    line-height: 1.4;
+  }
+}
+
+.checkIcon {
+  font-size: 16px;
+  color: #af2896;
+  flex-shrink: 0;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 28px;
+  background-color: #af2896;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+
+  &:hover {
+    background-color: #c13fa8;
+    transform: scale(1.03);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}

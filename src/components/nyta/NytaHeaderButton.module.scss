@@ -1,0 +1,73 @@
+// Botão da Nyta no cabeçalho — pílula só com o rótulo "Nyta", no gradiente da marca
+// (magenta → azul) e brilho pulsante sutil, destacando-o do sino/avatar (neutros).
+.button {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  gap: 7px;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  cursor: pointer;
+  background: #16161b;
+  transition: transform 0.15s ease, border-color 0.2s ease;
+
+  &:hover:not(.disabled) {
+    transform: scale(1.04);
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+
+  &:active:not(.disabled) {
+    transform: scale(0.97);
+  }
+}
+
+.label {
+  line-height: 1;
+}
+
+// Desktop mostra " Assistente"; mobile (cabeçalho apertado) troca por " AI".
+.labelExtra {
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.labelShort {
+  display: none;
+
+  @media (max-width: 768px) {
+    display: inline;
+  }
+}
+
+@media (max-width: 768px) {
+  .button {
+    padding: 0 12px;
+  }
+}
+
+// Modal aberto: borda branca reforçando o estado ligado.
+.active {
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+// Sem acesso (paywall): mantém a identidade, mas apagado e travado.
+.disabled {
+  opacity: 0.6;
+  filter: grayscale(0.4);
+  cursor: pointer; // clicável: abre o paywall (Assinar Pro)
+  animation: none;
+  box-shadow: none;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}

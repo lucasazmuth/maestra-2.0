@@ -1,0 +1,263 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+// Réplica fiel da landing standalone (maestra-landing): clean, preto/branco, Inter, sem gradiente,
+// mínimo de borda, magenta (#af2896) só nos CTAs.
+
+$mag: #af2896;
+$magHover: #c13fa8;
+$mag2: #d264bb;
+$g200: #e5e7eb;
+$g300: #d1d5db;
+$g400: #9ca3af;
+$g500: #6b7280;
+$line: rgba(255, 255, 255, 0.1);
+$card: #0c0c0c;
+
+.page {
+  background: #000;
+  color: #fff;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+// ─── Botões ──────────────────────────────────────────────────────────────────
+.btnPrimary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: $mag; color: #fff; border: none; border-radius: 9999px; font-weight: 700; cursor: pointer;
+  text-decoration: none; transition: background 0.2s;
+  &:hover { background: $magHover; }
+}
+.btnOutline {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 9999px;
+  font-weight: 700; cursor: pointer; text-decoration: none; transition: border-color 0.2s, background 0.2s;
+  &:hover { border-color: #fff; background: rgba(255, 255, 255, 0.05); }
+}
+.btnLink { background: none; border: none; color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none; &:hover { color: $g300; } }
+
+// ─── Header ──────────────────────────────────────────────────────────────────
+.header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; border-bottom: 1px solid transparent; transition: background 0.3s, border-color 0.3s; }
+.headerScrolled { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px); border-bottom-color: $line; }
+.headerInner { max-width: 80rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; }
+.brandLogo { width: 28px; height: 28px; flex-shrink: 0; }
+.brandText { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+.nav { display: flex; align-items: center; gap: 32px; }
+.navLink { color: $g300; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: none; border: none; &:hover { color: #fff; } }
+.actions { display: flex; align-items: center; gap: 20px; }
+.headerCta { font-size: 14px; padding: 10px 24px; }
+
+// ─── Hero ────────────────────────────────────────────────────────────────────
+.hero { background: #000; padding: 160px 20px 80px; }
+.heroInner { max-width: 56rem; margin: 0 auto; text-align: center; }
+.kicker { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: $g400; margin-bottom: 24px; }
+.heroTitle { font-size: 3rem; font-weight: 700; line-height: 1.05; letter-spacing: -0.025em; margin: 0 0 24px; }
+.heroSub { font-size: 1.125rem; line-height: 1.65; color: $g300; max-width: 42rem; margin: 0 auto 40px; }
+.heroCtas { display: flex; flex-direction: row; gap: 12px; justify-content: center; }
+.heroCta { font-size: 16px; padding: 14px 32px; }
+.heroNote { font-size: 14px; color: $g500; margin-top: 20px; }
+.heroShot {
+  max-width: 64rem; margin: 64px auto 0; border-radius: 12px; border: 1px solid $line; overflow: hidden;
+  aspect-ratio: 16 / 9; background: $card; display: flex; align-items: center; justify-content: center;
+}
+.heroShotText { color: #4b4b4b; font-size: 14px; }
+
+// ─── Features intro ──────────────────────────────────────────────────────────
+.introWrap { background: #000; padding: 80px 20px 16px; }
+.introInner { max-width: 42rem; margin: 0 auto; text-align: center; }
+.introKicker { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: $g400; margin-bottom: 16px; }
+.introTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 20px; }
+.introSub { font-size: 1.125rem; line-height: 1.6; color: $g300; margin: 0; }
+
+// ─── Feature ─────────────────────────────────────────────────────────────────
+.feature { background: #000; padding: 56px 20px; }
+.featureGrid { max-width: 72rem; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+.featureVisual { border-radius: 12px; border: 1px solid $line; background: $card; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; }
+.featureGlyph { color: rgba(255, 255, 255, 0.15); }
+.featureBadge { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: $g400; margin-bottom: 16px; }
+.featureTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 20px; }
+.featureDesc { font-size: 1.125rem; line-height: 1.6; color: $g300; margin: 0 0 28px; }
+.featureList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; }
+.featureItem { display: flex; align-items: flex-start; gap: 12px; color: $g200; }
+.featureItem svg { color: $mag; flex-shrink: 0; margin-top: 2px; }
+.reverse .featureVisual { order: 2; }
+.reverse .featureBody { order: 1; }
+
+// ─── Planos ──────────────────────────────────────────────────────────────────
+.plans { background: #000; padding: 80px 20px; }
+.plansInner { max-width: 64rem; margin: 0 auto; }
+.plansHead { text-align: center; margin-bottom: 40px; }
+.plansTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 28px; }
+.toggle { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.05); }
+.toggleBtn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 9999px; border: none; background: transparent; color: $g300; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s, color 0.2s; &:hover { color: #fff; } }
+.toggleBtnOn { background: $mag; color: #fff; &:hover { color: #fff; } }
+.toggleSave { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 9999px; background: rgba(175, 40, 150, 0.2); color: $mag2; }
+.toggleBtnOn .toggleSave { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.planGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.planCard { position: relative; border-radius: 16px; border: 1px solid $line; background: $card; padding: 28px; display: flex; flex-direction: column; }
+.planCardPro { border-color: rgba(175, 40, 150, 0.4); }
+.planBadge { position: absolute; top: -12px; left: 28px; background: $mag; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 4px 12px; border-radius: 9999px; }
+.planName { font-size: 1.5rem; font-weight: 700; margin: 0 0 4px; }
+.planNamePro { color: $mag2; }
+.planDesc { font-size: 14px; color: $g400; margin: 0 0 24px; }
+.planPrice { display: flex; align-items: baseline; gap: 8px; }
+.planPrice strong { font-size: 2.25rem; font-weight: 700; }
+.planUnit { font-size: 14px; color: $g400; }
+.planNote { font-size: 13px; color: $g500; margin: 4px 0 0; height: 20px; }
+.planPriceFree { font-size: 2.25rem; font-weight: 700; margin-bottom: 28px; }
+.planList { list-style: none; padding: 0; margin: 0 0 32px; display: flex; flex-direction: column; gap: 14px; flex-grow: 1; }
+.planItem { display: flex; align-items: flex-start; gap: 12px; font-size: 15px; color: $g200; }
+.planItem svg { flex-shrink: 0; margin-top: 2px; }
+.planItemFree svg { color: $g500; }
+.planItemPro svg { color: $mag; }
+.planCtaOutline { display: block; text-align: center; padding: 12px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; font-weight: 700; text-decoration: none; cursor: pointer; background: none; transition: border-color 0.2s, background 0.2s; &:hover { border-color: #fff; background: rgba(255, 255, 255, 0.05); } }
+.planCtaPrimary { display: block; text-align: center; padding: 12px; border-radius: 9999px; background: $mag; color: #fff; font-weight: 700; text-decoration: none; cursor: pointer; border: none; transition: background 0.2s; &:hover { background: $magHover; } }
+.planCancel { font-size: 12px; color: $g500; margin: 16px 0 0; text-align: center; }
+.planSpacer { height: 28px; }
+
+// ─── FAQ ─────────────────────────────────────────────────────────────────────
+.faq { background: #000; padding: 80px 20px; }
+.faqInner { max-width: 42rem; margin: 0 auto; }
+.faqHead { text-align: center; margin-bottom: 40px; }
+.faqTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+.faqList { border-top: 1px solid $line; border-bottom: 1px solid $line; }
+.faqItem { border-top: 1px solid $line; &:first-child { border-top: none; } }
+.faqBtn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: none; border: none; color: #fff; text-align: left; padding: 20px 0; cursor: pointer; }
+.faqQ { font-weight: 600; font-size: 16px; }
+.faqChevron { flex-shrink: 0; color: $g400; transition: transform 0.2s; }
+.faqChevronOpen { transform: rotate(180deg); }
+.faqA { color: $g300; line-height: 1.6; margin: -4px 0 0; padding: 0 0 20px; }
+
+// ─── CTA band ────────────────────────────────────────────────────────────────
+.ctaBand { background: #000; padding: 96px 20px; border-top: 1px solid $line; }
+.ctaBandInner { max-width: 42rem; margin: 0 auto; text-align: center; }
+.ctaBandTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 20px; }
+.ctaBandSub { font-size: 1.125rem; line-height: 1.6; color: $g300; margin: 0 0 36px; }
+.ctaBandBtn { font-size: 16px; padding: 14px 36px; }
+
+// ─── Footer ──────────────────────────────────────────────────────────────────
+.footer { background: #000; border-top: 1px solid $line; padding: 56px 20px 40px; }
+.footerInner { max-width: 72rem; margin: 0 auto; }
+.footerTop { display: flex; justify-content: space-between; gap: 40px; margin-bottom: 48px; flex-wrap: wrap; }
+.footerBrand { max-width: 20rem; }
+.footerTag { font-size: 14px; color: $g400; line-height: 1.6; margin: 16px 0 0; }
+.footerCols { display: grid; grid-template-columns: repeat(3, auto); gap: 40px; }
+.footerCol { display: flex; flex-direction: column; gap: 12px; }
+.footerColTitle { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: $g400; margin-bottom: 8px; }
+.footerLink { font-size: 14px; color: $g300; text-decoration: none; background: none; border: none; text-align: left; padding: 0; cursor: pointer; &:hover { color: #fff; } }
+.footerSocial { width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); display: inline-flex; align-items: center; justify-content: center; color: #fff; transition: background 0.2s; &:hover { background: rgba(255, 255, 255, 0.2); } }
+.footerBottom { padding-top: 24px; border-top: 1px solid $line; font-size: 14px; color: $g500; }
+
+// ─── Responsivo ──────────────────────────────────────────────────────────────
+@media (min-width: 768px) {
+  .heroTitle { font-size: 4.5rem; }
+  .heroSub { font-size: 1.25rem; }
+  .introTitle, .plansTitle, .faqTitle, .ctaBandTitle { font-size: 3rem; }
+  .featureTitle { font-size: 2.25rem; }
+  .headerInner, .hero, .feature, .plans, .faq, .ctaBand, .introWrap, .footer { padding-left: 32px; padding-right: 32px; }
+}
+
+@media (max-width: 1023px) {
+  .featureGrid { grid-template-columns: 1fr; gap: 48px; }
+  .reverse .featureVisual { order: 0; }
+  .reverse .featureBody { order: 0; }
+}
+
+@media (max-width: 767px) {
+  .featureTitle { font-size: 1.875rem; }
+  .planGrid { grid-template-columns: 1fr; }
+  .footerTop { flex-direction: column; }
+}
+
+@media (max-width: 640px) {
+  .nav { display: none; }
+  .heroCtas { flex-direction: column; }
+  .entrar { display: none; }
+}
+
+// ─── Hero: prova social (avatares) ───────────────────────────────────────────
+.avatars { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 24px; }
+.avatarRow { display: flex; align-items: center; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; border: 2.5px solid #000; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; margin-left: -8px; &:first-child { margin-left: 0; } }
+.avatarsText { font-size: 14px; color: $g400; font-weight: 500; max-width: 280px; }
+
+// ─── Hero: caixa de prompt da Nyta ───────────────────────────────────────────
+.promptWrap { max-width: 720px; margin: 40px auto 0; }
+.promptBox {
+  background: $card; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s; text-align: left;
+  &:focus-within { border-color: rgba(175, 40, 150, 0.6); box-shadow: 0 0 0 4px rgba(175, 40, 150, 0.12); }
+}
+.promptInput {
+  width: 100%; min-height: 76px; resize: none; background: transparent; border: none; outline: none;
+  color: #fff; font-family: inherit; font-size: 16px; line-height: 1.5; padding: 16px 16px 4px;
+  &::placeholder { color: $g500; }
+}
+.promptBar { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 8px; }
+.nytaPill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: $mag2; background: rgba(175, 40, 150, 0.12); border-radius: 9999px; padding: 5px 12px; }
+.promptSubmit {
+  width: 40px; height: 40px; border-radius: 50%; border: none; background: $mag; color: #fff; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s, opacity 0.2s;
+  &:hover { background: $magHover; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 720px; margin: 16px auto 0; }
+.chip {
+  display: inline-flex; align-items: center; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.04);
+  color: $g400; border-radius: 9999px; padding: 7px 14px; font-size: 13px; cursor: pointer; transition: all 0.2s;
+  &:hover { border-color: rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.08); color: $g200; }
+}
+.heroSecondary { margin-top: 24px; font-size: 14px; }
+.heroSecondaryLink { color: $g300; text-decoration: none; cursor: pointer; background: none; border: none; font: inherit; &:hover { color: #fff; text-decoration: underline; } }
+
+// ─── Stats (count-up) ────────────────────────────────────────────────────────
+.stats { background: #000; padding: 24px 20px; border-top: 1px solid $line; border-bottom: 1px solid $line; }
+.statsInner { max-width: 72rem; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 32px; }
+.statsLead { font-size: 14px; font-weight: 600; color: #fff; max-width: 220px; line-height: 1.4; }
+.statsLead span { color: $mag2; }
+.statsGroup { display: flex; gap: 56px; flex-wrap: wrap; }
+.statNum { font-size: 1.75rem; font-weight: 700; color: #fff; line-height: 1.2; }
+.statLabel { font-size: 14px; color: $g400; margin-top: 2px; }
+
+// ─── Como funciona (4 passos) ────────────────────────────────────────────────
+.how { background: #000; padding: 80px 20px; }
+.howInner { max-width: 72rem; margin: 0 auto; }
+.howHead { max-width: 38rem; margin-bottom: 48px; }
+.howTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 0; }
+.howGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+.howStep { position: relative; }
+.howNum { font-size: 2.5rem; font-weight: 800; color: rgba(255, 255, 255, 0.12); line-height: 1; margin-bottom: 16px; }
+.howStep h3 { font-size: 18px; font-weight: 700; margin: 0 0 8px; color: #fff; }
+.howStep p { font-size: 14px; line-height: 1.6; color: $g400; margin: 0; }
+.howLine { position: absolute; top: 18px; left: calc(2.5rem + 16px); right: -28px; height: 1px; background: $line; }
+
+// ─── Carrossel de artistas / depoimentos ─────────────────────────────────────
+.tcar { background: #000; padding: 80px 0; }
+.tcarHead { max-width: 42rem; margin: 0 auto 40px; padding: 0 20px; text-align: center; }
+.tcarTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+.tcarTrack { display: flex; gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 20px 16px; scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
+.tcard { min-width: 320px; max-width: 320px; scroll-snap-align: center; border: 1px solid $line; background: $card; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; }
+.tcardStars { display: flex; gap: 2px; color: $mag; margin-bottom: 12px; }
+.tcardQuote { font-size: 15px; line-height: 1.6; color: $g200; margin: 0 0 20px; flex-grow: 1; }
+.tcardWho { display: flex; align-items: center; gap: 12px; }
+.tcardName { font-size: 14px; font-weight: 700; color: #fff; }
+.tcardRole { font-size: 13px; color: $g500; }
+.tcarNote { max-width: 72rem; margin: 8px auto 0; padding: 0 20px; font-size: 12px; color: $g500; text-align: center; }
+
+@media (min-width: 768px) {
+  .stats, .how { padding-left: 32px; padding-right: 32px; }
+  .howTitle, .tcarTitle { font-size: 3rem; }
+  .statNum { font-size: 2rem; }
+}
+
+@media (max-width: 900px) {
+  .howGrid { grid-template-columns: repeat(2, 1fr); gap: 36px 28px; }
+  .howLine { display: none; }
+}
+
+@media (max-width: 560px) {
+  .howGrid { grid-template-columns: 1fr; }
+  .statsGroup { gap: 32px; }
+}
