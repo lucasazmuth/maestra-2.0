@@ -28,7 +28,8 @@ export const PhaseCard: FC<{
   onAdvance: () => void;
   footer?: ReactNode; // conteúdo extra renderizado dentro do card (ex.: resumo executivo no Plano de Ação)
   hideFocus?: boolean; // oculta Foco/Evite (Plano de Ação libera espaço pras estratégias)
-}> = ({ artist, taskCounts, advancing, onAdvance, footer, hideFocus }) => {
+  onOpenPlan?: () => void; // se passado, mostra link "Ver plano de ação" (só no Dashboard; dentro do próprio Plano seria redundante)
+}> = ({ artist, taskCounts, advancing, onAdvance, footer, hideFocus, onOpenPlan }) => {
   const phase = artist.content?.phase || 1;
   const info = getPhaseInfo(phase);
   const label = artist.content?.phaseLabel || info.label;
@@ -89,9 +90,31 @@ export const PhaseCard: FC<{
           </button>
         </Popconfirm>
       ) : (
-        <p style={{ color: '#6b7280', fontSize: 13, margin: '16px 0 0' }}>
-          Conclua todas as tarefas do plano de ação para avançar de fase.
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
+          <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>
+            Conclua todas as tarefas do plano de ação para avançar de fase.
+          </p>
+          {onOpenPlan && (
+            <button
+              onClick={onOpenPlan}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                color: '#d264bb',
+                fontWeight: 700,
+                fontSize: 14,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Ver plano de ação <FiArrowRight />
+            </button>
+          )}
+        </div>
       )}
 
       {footer}

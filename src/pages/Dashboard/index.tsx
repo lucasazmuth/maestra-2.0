@@ -185,7 +185,7 @@ const Dashboard: FC = () => {
           ctaTo='/criar-artista'
         />
       ) : hasPlan ? (
-        <PhaseCard artist={artist} taskCounts={taskCounts} advancing={advancing} onAdvance={advancePhase} hideFocus />
+        <PhaseCard artist={artist} taskCounts={taskCounts} advancing={advancing} onAdvance={advancePhase} hideFocus onOpenPlan={() => navigate(`/artists/${artist.id}/action-plan`)} />
       ) : (
         <div style={{ position: 'relative', background: '#181818', borderRadius: 12, padding: 24, marginBottom: 24, textAlign: 'center' }}>
           <span className='aurora-glow aurora-glow--on' aria-hidden />
