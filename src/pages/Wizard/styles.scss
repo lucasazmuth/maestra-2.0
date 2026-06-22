@@ -1271,13 +1271,29 @@
 .wiz-artifacts {
   flex: none;
   width: 320px;
-  height: 100%;
+  // Mesma altura LIMITADA do .Main-section (irmão no flex-row): assim o corpo rola internamente
+  // quando há muitas etapas, em vez de estourar a viewport. O height:100% não resolvia, porque a
+  // cadeia Row/Col (AntD) não propaga altura definida.
+  height: calc(100vh - 86px);
   display: flex;
   flex-direction: column;
   background: #121212;
   border-radius: 8px;
   overflow: hidden;
   animation: wizSlideInRight 0.28s ease both;
+
+  @media (max-width: 768px) {
+    height: calc(100vh - 64px);
+  }
+}
+
+// Com o banner promo no rodapé, reserva a MESMA altura extra que o .Main-section.
+.main-container.has-bottom-banner .wiz-artifacts {
+  height: calc(100vh - 86px - 76px);
+
+  @media (max-width: 768px) {
+    height: calc(100vh - 64px - 84px);
+  }
 }
 
 @media (max-width: 1240px) {

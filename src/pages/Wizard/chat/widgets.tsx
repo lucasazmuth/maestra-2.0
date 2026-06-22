@@ -1,4 +1,5 @@
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import { DatePicker, Input, Select, message } from 'antd';
 import dayjs from 'dayjs';
@@ -8,6 +9,7 @@ import { listGenres } from '../../../services/db/genres';
 import { searchCities } from '../../../services/db/cities';
 import { TASK_OWNER_SELF, MAX_OBJECTIVES } from '../../../constants/maestra';
 import { AiButton, ghostBtn, primaryBtn } from '../components';
+import { SuccessConfetti } from '../../../components/SuccessConfetti';
 import { normalizeQuizQuestion } from '../types';
 import {
   ADJETIVO_SEEDS,
@@ -392,67 +394,107 @@ export const VisionAdjetivoChoice: FC<{ onConfirm: (value: string) => void }> = 
 
 // ---- Referências de posicionamento (3 horizontes — Metodologia v2, Q5) -------------------------
 
-const HORIZON_FIELDS: { key: keyof ReferenceHorizonsData; label: string }[] = [
-  { key: 'curto', label: 'Curto prazo (1 ano)' },
-  { key: 'medio', label: 'Médio prazo (3 anos)' },
-  { key: 'longo', label: 'Longo prazo (+5 anos)' },
+const HORIZON_FIELDS: { key: keyof ReferenceHorizonsData; label: string; question: string }[] = [
+  { key: 'curto', label: 'Curto prazo · 1 ano', question: 'Daqui a 1 ano, com quais artistas você quer estar disputando espaço?' },
+  { key: 'medio', label: 'Médio prazo · 3 anos', question: 'E em 3 anos, com quem você quer dividir palco e playlist?' },
+  { key: 'longo', label: 'Longo prazo · +5 anos', question: 'Lá na frente, +5 anos: qual o tamanho do sonho? Com quem você quer estar lado a lado?' },
 ];
 
+// Uma pergunta por vez (stepper): cada horizonte (curto/médio/longo) usa o MESMO formato dos outros
+// seletores do wizard (MultiChoiceCard) — pills selecionáveis dos relacionados no Spotify + campo pra
+// escrever o seu. Mantém o contrato {curto,medio,longo} (strings), montado no fim.
 export const ReferenceHorizons: FC<{
-  // Sugestões de artistas parecidos (Chartmetric) — clicar preenche o campo em foco.
   similar?: { name: string }[];
   onConfirm: (h: ReferenceHorizonsData) => void;
 }> = ({ similar, onConfirm }) => {
-  const [vals, setVals] = useState<ReferenceHorizonsData>({});
-  const [focus, setFocus] = useState<keyof ReferenceHorizonsData>('curto');
-  const set = (k: keyof ReferenceHorizonsData, v: string) => setVals((s) => ({ ...s, [k]: v }));
-  const appendSuggestion = (name: string) =>
-    setVals((s) => {
-      const cur = (s[focus] || '').trim();
-      const next = cur ? `${cur}, ${name}` : name;
-      return { ...s, [focus]: next };
+  const [step, setStep] = useState(0);
+  const [sel, setSel] = useState<Record<string, string[]>>({ curto: [], medio: [], longo: [] });
+  const [own, setOwn] = useState('');
+
+  const field = HORIZON_FIELDS[step];
+  const chosen = sel[field.key] || [];
+  const isLast = step === HORIZON_FIELDS.length - 1;
+  const suggestions = Array.from(new Set((similar || []).map((a) => a.name))).slice(0, 12);
+  const customPills = chosen.filter((c) => !suggestions.includes(c));
+
+  const parseNames = (txt: string) => txt.split(',').map((x) => x.trim()).filter(Boolean);
+  const toggle = (name: string) =>
+    setSel((s) => {
+      const cur = s[field.key] || [];
+      return { ...s, [field.key]: cur.includes(name) ? cur.filter((x) => x !== name) : [...cur, name] };
     });
-  const anyFilled = HORIZON_FIELDS.some((f) => (vals[f.key] || '').trim());
+  const mergeOwn = (base: Record<string, string[]>) => {
+    const ns = parseNames(own);
+    if (!ns.length) return base;
+    const cur = base[field.key] || [];
+    const merged = [...cur];
+    ns.forEach((p) => { if (!merged.some((x) => x.toLowerCase() === p.toLowerCase())) merged.push(p); });
+    return { ...base, [field.key]: merged };
+  };
+  const addOwn = () => { if (!own.trim()) return; setSel((s) => mergeOwn(s)); setOwn(''); };
+  // O que estiver digitado também conta ao avançar (sem precisar clicar em Adicionar antes).
+  const canNext = chosen.length > 0 || !!own.trim();
+  const next = () => {
+    if (!canNext) return;
+    const s2 = mergeOwn(sel);
+    if (own.trim()) { setSel(s2); setOwn(''); }
+    if (isLast) onConfirm({ curto: s2.curto.join(', '), medio: s2.medio.join(', '), longo: s2.longo.join(', ') });
+    else setStep((n) => n + 1);
+  };
+
   return (
     <div className='nyta-card'>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {HORIZON_FIELDS.map((f) => (
-          <div key={f.key}>
-            <div style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{f.label}</div>
-            <Input
-              placeholder='Com quem você quer disputar espaço…'
-              value={vals[f.key] || ''}
-              onFocus={() => setFocus(f.key)}
-              onFocusCapture={() => setFocus(f.key)}
-              onChange={(e) => set(f.key, e.target.value)}
-            />
-          </div>
+      {/* Progresso (3 horizontes) */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        {HORIZON_FIELDS.map((f, i) => (
+          <div key={f.key} style={{ height: 4, flex: 1, borderRadius: 2, background: i <= step ? '#af2896' : '#3a3a3a', transition: 'background .25s' }} />
         ))}
       </div>
-      {!!similar?.length && (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ color: '#7d7d7d', fontSize: 12, marginBottom: 6 }}>
-            Sugestões de artistas parecidos (toque para adicionar ao campo em foco):
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {similar.slice(0, 10).map((a) => (
-              <button key={a.name} className='wiz-genre-chip' onClick={() => appendSuggestion(a.name)}>
-                <FiPlus size={12} style={{ marginRight: 4 }} />
-                {a.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+
+      <div style={{ color: '#7d7d7d', fontSize: 12, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 6 }}>
+        Passo {step + 1} de {HORIZON_FIELDS.length} · {field.label}
+      </div>
+      <div style={{ color: '#fff', fontSize: 16, fontWeight: 700, lineHeight: 1.4, marginBottom: 14 }}>{field.question}</div>
+
+      {/* Seletor (mesmo formato do MultiChoiceCard): pills dos relacionados no Spotify + os seus. */}
+      <div style={{ color: '#7d7d7d', fontSize: 12, marginBottom: 8 }}>Toque nos artistas relacionados no Spotify ou escreva o seu abaixo:</div>
+      <div className='wiz-option-grid'>
+        {suggestions.map((name, i) => {
+          const active = chosen.includes(name);
+          return (
+            <button
+              key={name}
+              className={`wiz-option-pill${active ? ' wiz-option-pill--selected' : ''}`}
+              style={{ animationDelay: `${i * 40}ms` }}
+              onClick={() => toggle(name)}
+            >
+              {active && <span className='wiz-option-check'><FiCheck size={14} /></span>}
+              {name}
+            </button>
+          );
+        })}
+        {customPills.map((c) => (
+          <button key={c} className='wiz-option-pill wiz-option-pill--selected' onClick={() => toggle(c)} title='Toque para remover'>
+            <span className='wiz-option-check'><FiCheck size={14} /></span>
+            {c}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <Input placeholder='Escreva o seu artista…' value={own} onChange={(e) => setOwn(e.target.value)} onPressEnter={addOwn} />
+        <button style={{ ...ghostBtn, padding: '8px 14px' }} onClick={addOwn}><FiPlus /></button>
+      </div>
+
       <div className='nyta-card-actions'>
-        <button style={ghostBtn} onClick={() => onConfirm({})}>
-          Pular
-        </button>
+        {step > 0 && (
+          <button style={ghostBtn} onClick={() => setStep((n) => Math.max(0, n - 1))}>Voltar</button>
+        )}
         <button
-          style={{ ...primaryBtn, marginLeft: 'auto', opacity: anyFilled ? 1 : 0.6 }}
-          onClick={() => onConfirm(vals)}
+          style={{ ...primaryBtn, marginLeft: 'auto', opacity: canNext ? 1 : 0.5 }}
+          disabled={!canNext}
+          onClick={next}
         >
-          Continuar
+          {isLast ? 'Concluir' : 'Próximo'}
         </button>
       </div>
     </div>
@@ -1494,13 +1536,17 @@ const stratComplete = (s: Strategy, objCount: number) =>
 export const PriorityScale: FC<{
   strategies: Strategy[];
   objectives: string[];
-  onConfirm: (strategies: Strategy[]) => void;
+  // Confirma a priorização entregando as estratégias pontuadas + os ids das que o artista escolheu
+  // para virar tarefas (plano de ação). As não selecionadas ficam salvas sem tarefas.
+  onConfirm: (strategies: Strategy[], selectedIds: string[]) => void;
   // Notas sugeridas pela IA: mapa id da estratégia → { índice do objetivo → nota }.
   onSuggest?: () => Promise<Record<string, { byObjective: Record<number, number> }>>;
   // Fala da Nyta após o artista escolher como priorizar (resposta do método).
   onAnnounce?: (texts: string[]) => void;
 }> = ({ strategies, objectives, onConfirm, onSuggest, onAnnounce }) => {
   const [list, setList] = useState<Strategy[]>(strategies);
+  // Seleção do modal de destaque: quais estratégias viram tarefas (começa vazia — o artista escolhe).
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const alreadyScored = strategies.some((s) => stratComplete(s, objectives.length));
   const [idx, setIdx] = useState(() => {
     const i = strategies.findIndex((s) => !stratComplete(s, objectives.length));
@@ -1597,60 +1643,127 @@ export const PriorityScale: FC<{
   const revealed = idx >= list.length;
 
   if (revealed) {
-    const ranked = list
-      .map((s) => ({
-        ...s,
-        finalScore: Array.from({ length: objectives.length }, (_, i) => (s.objectiveScores || {})[i] || 0).reduce((a, b) => a + b, 0),
-      }))
-      .sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0));
-    return (
-      <div className='nyta-card'>
-        <div style={{ color: '#fff', fontWeight: 800, fontSize: 16, marginBottom: 4 }}>Sua ordem de prioridade</div>
-        <div style={{ color: '#b3b3b3', fontSize: 12.5, marginBottom: 12 }}>
-          Da mais importante para a menos. Quer mudar? Toque em "Ajustar".
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {ranked.map((s, i) => {
-            // Cadência limitada: com muitas estratégias (até ~32) o stagger total fica curto (~700ms),
-            // pra a lista não parecer um "card em branco carregando".
-            const step = Math.min(120, 700 / Math.max(ranked.length, 1));
-            return (
-            <div key={s.id} className='wiz-slot wiz-rank-item' style={{ animationDelay: `${i * step}ms`, padding: '10px 12px' }}>
-              <span className='wiz-slot-rank' style={{ fontSize: 20, minWidth: 28 }}>{String(i + 1).padStart(2, '0')}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-                  <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{s.title}</span>
-                  <span style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
-                    {Math.round(((s.finalScore || 0) / Math.max(maxScore, 1)) * 100)}%
-                  </span>
-                </div>
-                <div className='wiz-score-bar'>
-                  <div style={{ width: `${((s.finalScore || 0) / Math.max(maxScore, 1)) * 100}%`, animationDelay: `${i * step + 150}ms` }} />
-                </div>
-              </div>
+    const scored = list.map((s) => ({
+      ...s,
+      finalScore: Array.from({ length: objectives.length }, (_, i) => (s.objectiveScores || {})[i] || 0).reduce((a, b) => a + b, 0),
+    }));
+    const ranked = scored.slice().sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0));
+    const toggleSel = (id: string) =>
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.has(id) ? next.delete(id) : next.add(id);
+        return next;
+      });
+    const count = selected.size;
+
+    // Modal de destaque (overlay sobre a tela, fora do scroll do chat) com confetes. O artista
+    // SELECIONA quais estratégias viram tarefas; só as escolhidas geram o plano de ação.
+    return createPortal(
+      <div
+        style={{
+          position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.72)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box',
+        }}
+      >
+        <SuccessConfetti />
+        <div
+          style={{
+            position: 'relative', width: '100%', maxWidth: 600, maxHeight: '88vh',
+            background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 16,
+            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            animation: 'wizPillIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both',
+          }}
+        >
+          <div style={{ padding: '22px 22px 12px' }}>
+            <div style={{ fontFamily: 'SpotifyMixUITitle', color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>
+              Sua ordem de prioridade está pronta
             </div>
-            );
-          })}
+            <div style={{ color: '#b3b3b3', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
+              Da mais importante para a menos. <b style={{ color: '#fff' }}>Selecione as estratégias</b> que você
+              quer transformar em tarefas agora — as outras ficam guardadas pra depois.
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '4px 22px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {ranked.map((s, i) => {
+              const on = selected.has(s.id);
+              const pct = Math.round(((s.finalScore || 0) / Math.max(maxScore, 1)) * 100);
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => toggleSel(s.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', cursor: 'pointer',
+                    background: on ? 'rgba(175,40,150,0.12)' : '#202020',
+                    border: `1px solid ${on ? '#af2896' : 'transparent'}`,
+                    borderRadius: 10, padding: '10px 12px', transition: 'background .15s, border-color .15s',
+                  }}
+                >
+                  <span style={{ color: on ? '#d264bb' : '#7d7d7d', fontWeight: 800, fontSize: 18, minWidth: 26 }}>
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <span
+                    aria-hidden
+                    style={{
+                      flexShrink: 0, width: 22, height: 22, borderRadius: 6,
+                      border: `2px solid ${on ? '#af2896' : '#4a4a4a'}`, background: on ? '#af2896' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                    }}
+                  >
+                    {on && <FiCheck size={14} />}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                      <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{s.title}</span>
+                      <span style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{pct}%</span>
+                    </span>
+                    <span className='wiz-score-bar' style={{ display: 'block' }}>
+                      <span style={{ display: 'block', width: `${pct}%`, height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, #af2896, #509bf5)' }} />
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{ padding: '12px 22px 18px', borderTop: '1px solid #232323' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <span style={{ color: '#b3b3b3', fontSize: 12.5 }}>
+                <b style={{ color: '#fff' }}>{count}</b> de {ranked.length} selecionada{count === 1 ? '' : 's'}
+              </span>
+              <button
+                style={{ background: 'none', border: 'none', color: '#af2896', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                onClick={() => setSelected(count === ranked.length ? new Set() : new Set(ranked.map((s) => s.id)))}
+              >
+                {count === ranked.length ? 'Limpar' : 'Selecionar todas'}
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                style={ghostBtn}
+                onClick={() => {
+                  // Refazer priorização: volta pra tela de escolha (Me ajuda, Nyta / pontuar à mão),
+                  // limpando as notas e a seleção — não joga direto na pontuação manual.
+                  setSelected(new Set());
+                  setList(strategies.map((s) => ({ ...s, objectiveScores: undefined, finalScore: undefined })));
+                  setIdx(0);
+                  setChose(false);
+                }}
+              >
+                Refazer priorização
+              </button>
+              <button
+                style={{ ...primaryBtn, marginLeft: 'auto', opacity: count ? 1 : 0.5 }}
+                disabled={!count}
+                onClick={() => onConfirm(scored, Array.from(selected))}
+              >
+                Gerar plano de ação
+              </button>
+            </div>
+          </div>
         </div>
-        <div className='nyta-card-actions'>
-          <button style={ghostBtn} onClick={() => setIdx(0)}>
-            Ajustar
-          </button>
-          <button
-            style={{ ...primaryBtn, marginLeft: 'auto' }}
-            onClick={() =>
-              onConfirm(
-                list.map((s) => ({
-                  ...s,
-                  finalScore: Array.from({ length: objectives.length }, (_, i) => (s.objectiveScores || {})[i] || 0).reduce((a, b) => a + b, 0),
-                }))
-              )
-            }
-          >
-            Confirmar
-          </button>
-        </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
@@ -2034,19 +2147,12 @@ export const FinalSummaryCard: FC<{
   summary: string;
   concluded: boolean;
   onFinish: () => void;
-  // Regenera o resumo (zera o executiveSummary e re-roda a IA). Some após concluir.
-  onRegenerate?: () => void;
-}> = ({ summary, concluded, onFinish, onRegenerate }) => (
+}> = ({ summary, concluded, onFinish }) => (
   <div className='nyta-card'>
     <div className='nyta-md' style={{ color: '#d0d0d0', lineHeight: 1.7, fontSize: 14 }}>
       <ReactMarkdown>{summary}</ReactMarkdown>
     </div>
     <div className='nyta-card-actions'>
-      {!concluded && onRegenerate && (
-        <button style={ghostBtn} onClick={onRegenerate}>
-          <FiRefreshCw size={13} style={{ marginRight: 6 }} /> Regenerar resumo
-        </button>
-      )}
       <button style={{ ...primaryBtn, marginLeft: 'auto' }} onClick={onFinish}>
         {concluded ? 'Ir para o painel' : 'Concluir e liberar o painel'}
       </button>

@@ -19,7 +19,6 @@ import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assig
 import { getPhaseInfo, TASK_OWNER_SELF } from '../../constants/maestra';
 import { listMembers } from '../../services/db/members';
 import * as wizardAi from '../../services/wizardAi';
-import { upsertTaskEvent, deleteTaskEvent } from '../../services/taskEventSync';
 import type { ActionTask, ArtistContent, ArtistMember, Strategy } from '../../interfaces/maestra';
 import './actionPlan.scss';
 
@@ -39,7 +38,7 @@ const ActionPlan: FC = () => {
   const user = useAppSelector((s) => s.auth.user);
 
   // Gerir tarefas exige PRO; avançar de fase exige edição do plano (dono pago ou PRO).
-  const { manageTasks, editPlanning } = useArtistCapabilities(artist);
+  const { manageTasks, editPlanning, useNytaConsultora } = useArtistCapabilities(artist);
   const content = artist?.content;
   const objectives = useMemo<string[]>(() => content?.objectives || [], [content]);
   const strategies = useMemo<Strategy[]>(() => content?.strategies || [], [content]);
@@ -127,7 +126,7 @@ const ActionPlan: FC = () => {
   }, [artist?.id]);
 
   const commit = async (mut: (ss: Strategy[]) => Strategy[]) => {
-    if (!artist || !manageTasks) return; // gestão de tarefas é recurso PRO
+    if (!artist || !manageTasks) return; // gestão de tarefas: livre no plano gratuito (dono do perfil)
     const next: ArtistContent = { ...artist.content, strategies: mut(artist.content.strategies || []) };
     // Otimista: atualiza a UI na hora; persiste em segundo plano.
     dispatch(artistsActions.setArtistContentLocal({ id: artist.id, content: next }));
@@ -144,25 +143,20 @@ const ActionPlan: FC = () => {
 
   const patchTask = (sid: string, tid: string, patch: Partial<ActionTask>) => {
     commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).map((t) => (t.id === tid ? { ...t, ...patch } : t)) })));
-    // Reflete na Agenda quando muda algo que o evento carrega (data/título/status).
-    if (artist && ('deadline' in patch || 'description' in patch || 'status' in patch)) {
-      const cur = (artist.content.strategies || []).find((s) => s.id === sid)?.tasks?.find((t) => t.id === tid);
-      if (cur) upsertTaskEvent(artist.id, { ...cur, ...patch }).catch(() => {});
-    }
   };
   const toggleDone = (sid: string, t: ActionTask) => patchTask(sid, t.id, { status: isDone(t) ? 'todo' : 'done' });
   const delTask = (sid: string, tid: string) => {
     commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).filter((t) => t.id !== tid) })));
-    deleteTaskEvent(tid).catch(() => {});
   };
   const addTask = (sid: string, task: SuggTask) => {
     // Toda tarefa nova nasce sob responsabilidade do dono do perfil (pode ser reatribuída).
     const nt: ActionTask = { id: uid(), status: 'todo', owner: TASK_OWNER_SELF, description: task.description, type: task.type, deadline: task.deadline };
     commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: [...(s.tasks || []), nt] })));
-    if (artist && nt.deadline) upsertTaskEvent(artist.id, nt).catch(() => {});
   };
 
   const askNyta = async (s: Strategy) => {
+    // "Pedir ideias pra Nyta" usa a Nyta IA → recurso PRO. Sem PRO, leva pra assinatura.
+    if (!useNytaConsultora) { navigate('/assinatura'); return; }
     setLoadingSugg(s.id);
     try {
       const identity = content?.identity || { name: artist?.name };
@@ -264,25 +258,6 @@ const ActionPlan: FC = () => {
         </button>
       </div>
 
-      {!manageTasks && (
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', marginBottom: 16,
-            background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.28)', borderRadius: 12,
-          }}
-        >
-          <span style={{ color: '#cdbcff', fontSize: 14 }}>
-            Somente leitura. Assine o <strong>PRO</strong> para gerenciar as tarefas do plano.
-          </span>
-          <button
-            onClick={() => navigate('/assinatura')}
-            style={{ marginLeft: 'auto', background: '#af2896', border: 'none', color: '#fff', padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
-          >
-            Assinar PRO
-          </button>
-        </div>
-      )}
-
       {/* FASE — mesmo card do Dashboard (design system): progresso, Foco/Evite e avançar de fase.
           O resumo executivo (modo básico) entra DENTRO do card, abaixo do Foco/Evite. */}
       <PhaseCard
@@ -317,7 +292,7 @@ const ActionPlan: FC = () => {
         <AdvancedPlan
           content={content!}
           ranked={ranked}
-          crud={{ today, canManage: manageTasks, toggleDone, patchTask, delTask, addTask, askNyta, sugg, setSugg, loadingSugg, composer, setComposer, assignees }}
+          crud={{ today, canManage: manageTasks, canUseNyta: useNytaConsultora, toggleDone, patchTask, delTask, addTask, askNyta, sugg, setSugg, loadingSugg, composer, setComposer, assignees }}
         />
         </>
       ) : (
@@ -409,7 +384,7 @@ const ActionPlan: FC = () => {
                     </div>
                   )}
 
-                  {/* ADICIONAR / NYTA — só com PRO (evita o botão de IA gerar custo p/ não-PRO) */}
+                  {/* ADICIONAR (livre no FREE) / Pedir ideias pra Nyta (PRO — gate em onAskNyta). */}
                   {manageTasks && (
                     <TaskComposer
                       strategy={s}
@@ -417,6 +392,7 @@ const ActionPlan: FC = () => {
                       loading={loadingSugg === s.id}
                       suggestions={suggestions}
                       accent
+                      canUseNyta={useNytaConsultora}
                       onOpen={() => setComposer(s.id)}
                       onClose={() => { setComposer(null); setSugg((pp) => ({ ...pp, [s.id]: [] })); }}
                       onAdd={(t) => addTask(s.id, t)}

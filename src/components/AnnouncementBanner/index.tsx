@@ -55,6 +55,10 @@ export interface DeriveStatusBannerInput {
   status: 'active' | 'overdue' | 'cancelled' | 'pending' | 'none';
   initialized: boolean;
   gracePeriodEndsAt: string | null;
+  // Há um asaas_subscription_id de verdade? A linha em asaas_subscriptions também é criada no
+  // pagamento ÚNICO do perfil (só pra guardar o customer), e nasce com status 'pending' por
+  // default — mas SEM assinatura. Sem subscription_id, não tratamos como assinatura pendente.
+  hasSubscriptionId: boolean;
   pathname: string;
   paywallDisabled: boolean;
   now?: number; // defaults to Date.now() when not provided
@@ -65,21 +69,25 @@ export interface DeriveStatusBannerInput {
  * Extracted from useStatusBanner for testability.
  */
 export function deriveStatusBanner(input: DeriveStatusBannerInput): StatusBannerKind | null {
-  const { status, initialized, gracePeriodEndsAt, pathname, paywallDisabled, now = Date.now() } = input;
+  const { status, initialized, gracePeriodEndsAt, hasSubscriptionId, pathname, paywallDisabled, now = Date.now() } = input;
 
   if (paywallDisabled) return null;
   if (!initialized) return null;
   if (pathname.startsWith('/assinatura') || pathname.startsWith('/pagamento')) return null;
 
+  // 'pending' SEM subscription_id é fantasma (a linha é só o customer do pagamento único) → 'none'.
+  // Só sobrescreve o caso pending — active/overdue/cancelled passam intactos (não esconder ativa).
+  const effectiveStatus = (status === 'pending' && !hasSubscriptionId) ? 'none' : status;
+
   if (
-    status === 'overdue' &&
+    effectiveStatus === 'overdue' &&
     gracePeriodEndsAt &&
     now < new Date(gracePeriodEndsAt).getTime()
   ) {
     return 'grace';
   }
-  if (status === 'pending') return 'pending';
-  if (status === 'none' || status === 'cancelled') {
+  if (effectiveStatus === 'pending') return 'pending';
+  if (effectiveStatus === 'none' || effectiveStatus === 'cancelled') {
     // Banner promo só aparece nas rotas de detalhe do artista (/artists/:id/...)
     const artistDetailMatch = /^\/artists\/[^/]+/.test(pathname) && pathname !== '/artists';
     if (artistDetailMatch) return 'promo';
@@ -93,12 +101,14 @@ export function useStatusBanner(): StatusBannerKind | null {
   const status = useAppSelector((s) => s.subscription.status);
   const initialized = useAppSelector((s) => s.subscription.initialized);
   const gracePeriodEndsAt = useAppSelector((s) => s.subscription.gracePeriodEndsAt);
+  const asaasSubscriptionId = useAppSelector((s) => s.subscription.asaasSubscriptionId);
   const { pathname } = useLocation();
 
   return deriveStatusBanner({
     status,
     initialized,
     gracePeriodEndsAt,
+    hasSubscriptionId: !!asaasSubscriptionId,
     pathname,
     paywallDisabled: PAYWALL_DISABLED,
   });

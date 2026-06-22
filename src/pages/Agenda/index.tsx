@@ -5,13 +5,10 @@ import { FiPlus, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
-import { useAppDispatch } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import { EventModal } from '../../components/EventModal';
 import { EVENT_TYPES } from '../../constants/maestra';
 import * as eventsDb from '../../services/db/events';
-import { applyEventDateToTasks } from '../../services/taskEventSync';
 import type { AgendaEvent } from '../../interfaces/maestra';
 
 type View = 'month' | 'list';
@@ -40,7 +37,6 @@ const Agenda: FC = () => {
   const { artist } = useArtist();
   const artistId = artist?.id;
   const { canEdit } = useArtistCapabilities(artist);
-  const dispatch = useAppDispatch();
 
   const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,16 +46,6 @@ const Agenda: FC = () => {
   const [editing, setEditing] = useState<AgendaEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>();
   const [showTasks, setShowTasks] = useState(true);
-
-  // Reflete no Plano de Ação a data (ou remoção) de um evento que veio de uma tarefa.
-  const syncEventToTask = (taskId: string | null | undefined, newDate: string | null) => {
-    if (!taskId || !artist) return;
-    const next = applyEventDateToTasks(artist.content.strategies || [], taskId, newDate);
-    if (!next) return;
-    const content = { ...artist.content, strategies: next };
-    dispatch(artistsActions.setArtistContentLocal({ id: artist.id, content }));
-    dispatch(artistsActions.updateArtistContent({ id: artist.id, content }));
-  };
 
   useEffect(() => {
     if (!artistId) return;
@@ -106,15 +92,10 @@ const Agenda: FC = () => {
       next[idx] = e;
       return next;
     });
-    // Evento que veio de uma tarefa: propaga a nova data de volta para o Plano de Ação.
-    if (e.task_id) syncEventToTask(e.task_id, e.date);
   };
 
   const onDeleted = (id: string) => {
-    const removed = events.find((x) => x.id === id);
     setEvents((prev) => prev.filter((x) => x.id !== id));
-    // Excluiu o evento de uma tarefa: a tarefa permanece, mas fica sem data.
-    if (removed?.task_id) syncEventToTask(removed.task_id, null);
   };
 
   const openCreate = (date?: string) => {

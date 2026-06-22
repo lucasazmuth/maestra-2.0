@@ -243,11 +243,11 @@ export type OpenTextField = 'oQueFalam' | 'entrega' | 'paraQuem';
 export const GUIDED_OPENTEXT: Record<OpenTextField, { opener: string; followups: string[] }> = {
   oQueFalam: {
     opener: 'Que palavras você gostaria de ouvir alguém usar pra te descrever?',
-    followups: ['E como você quer que as pessoas se sintam com a sua música?'],
+    followups: ['Se alguém indicasse o seu trabalho pra outra pessoa, o que você gostaria que falassem de você?'],
   },
   entrega: {
     opener: 'Pensa numa pessoa que te ouve: o que ela sente quando escuta a sua música?',
-    followups: ['E que diferença isso faz na vida dela?'],
+    followups: ['Em poucas palavras, que tipo de experiência a sua música oferece? (ex.: energia, acolhimento, nostalgia, pista de dança)'],
   },
   paraQuem: {
     opener: 'Pensa em quem mais se conecta com a sua música hoje. Quem são essas pessoas?',

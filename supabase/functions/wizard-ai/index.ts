@@ -302,7 +302,10 @@ async function saveGeneratedPlan(
 function identityContext(identity?: any): string {
   if (!identity) return '';
   const loc = identity.city ? `${identity.city}${identity.state ? `, ${identity.state}` : ''}` : '';
-  return `IDENTIDADE DO ARTISTA:\n- Nome: ${identity.name || ''}\n- Genero musical: ${identity.genre || ''}\n- Estagio: ${identity.stage || ''}\n- Local: ${loc}\n- Bio: ${identity.bio || ''}\n- Visao: ${identity.vision || ''}\n- Missao: ${identity.mission || ''}\n- Valores: ${(identity.values || []).join(', ')}\n- Reconhecimento (etiquetas): ${(identity.recognitionTags || []).join(', ')}`;
+  // A flexão de gênero (como o artista pediu para ser tratado) entra AQUI, no bloco de identidade,
+  // para que TODA geração que usa identityContext (objetivos, estratégias, SWOT, perguntas
+  // adaptativas, resumo final, tarefas, etc.) respeite o gênero — não só visão/missão.
+  return `IDENTIDADE DO ARTISTA:\n- Nome: ${identity.name || ''}\n- Genero musical: ${identity.genre || ''}\n- Estagio: ${identity.stage || ''}\n- Local: ${loc}\n- Bio: ${identity.bio || ''}\n- Visao: ${identity.vision || ''}\n- Missao: ${identity.mission || ''}\n- Valores: ${(identity.values || []).join(', ')}\n- Reconhecimento (etiquetas): ${(identity.recognitionTags || []).join(', ')}${flexionContext(identity.gender)}`;
 }
 
 // Flexão de gênero gramatical do artista (PT). Injetado nas falas/gerações em primeira/segunda
@@ -583,7 +586,7 @@ async function handleAction(body: RequestBody): Promise<any> {
       // (o que de fato funcionou na consultoria), calibradas ao porte/estagio deste artista.
       const similarPlans = await searchSimilarPlans(identity, spotify, { matchCount: 4 });
       const references = formatReferenceContext(similarPlans);
-      const prompt = `Voce e uma consultora de carreira amigavel conversando com um artista LEIGO. Internamente, esta pergunta cruza ${LABEL[t]} (modelo SO/ST/WO/WT), mas o ARTISTA NAO PODE VER NADA DISSO.\n${identityContext(identity)}${spotifyContext(spotify)}${calibrationContext(spotify)}${platform}\nSWOT DO ARTISTA: ${JSON.stringify(swot)}\nOBJETIVOS: ${(objectives || []).join('; ') || 'n/d'}${references}\n\nJA PERGUNTOU:\n${qa || '(esta e a primeira)'}\n\nGere a PROXIMA pergunta (numero ${i + 1} de 6), cruzando itens ESPECIFICOS da SWOT que ainda NAO foram usados.\n\nMOLDE desta pergunta (preencha os colchetes com itens REAIS da SWOT e adapte para soar natural): "${MOLDE[t]}"\nEXEMPLO so de tom (NAO copie o conteudo, so o jeito de falar): "${EXEMPLO[t]}"\n\nREGRAS DE LINGUAGEM (cruciais):\n- Portugues do Brasil com ACENTUACAO CORRETA E COMPLETA. Escreva TODOS os acentos (á é í ó ú â ê ô ã õ ç): \"você\" nao \"voce\", \"música\" nao \"musica\", \"é\" nao \"e\", \"está\" nao \"esta\", \"público\" nao \"publico\". NUNCA omita um acento.\n- Tom de conversa, caloroso e direto. Frase curta e fluida, do jeito que um consultor gente boa falaria pessoalmente. Maximo 2 frases.\n- Ao citar uma fraqueza, fale com LEVEZA e respeito: "um ponto que da pra melhorar", "ainda falta", "da pra desenvolver". PROIBIDO construcoes secas ou acusatorias como "Voce tem falta de", "Voce e fraco em", "Sua fraqueza e".\n- Use linguagem NEUTRA de genero quando possivel.\n- PROIBIDO: siglas (SO/ST/WO/WT), os termos Ataque/Defesa/Reforco/Sobrevivencia, SWOT, cruzamento, analise. PROIBIDO travessao (use virgula ou ponto).\n- PROIBIDO cruzamento circular (cruzar um item com a acao derivada dele) e repetir cruzamentos ja feitos.\n- 4 a 5 opcoes curtas (max 10 palavras), caminhos concretos e praticos para ESTE artista; quando houver planos reais de referencia, inspire as opcoes nas estrategias desses artistas similares, adaptando ao porte e estagio dele (nunca copie literalmente); nao repita opcoes ja usadas.\nRetorne JSON: { \"question\": \"...\", \"options\": [\"...\", \"...\"], \"multi\": false }`;
+      const prompt = `Voce e uma consultora de carreira amigavel conversando com um artista LEIGO. Internamente, esta pergunta cruza ${LABEL[t]} (modelo SO/ST/WO/WT), mas o ARTISTA NAO PODE VER NADA DISSO.\n${identityContext(identity)}${spotifyContext(spotify)}${calibrationContext(spotify)}${platform}\nSWOT DO ARTISTA: ${JSON.stringify(swot)}\nOBJETIVOS: ${(objectives || []).join('; ') || 'n/d'}${references}\n\nJA PERGUNTOU:\n${qa || '(esta e a primeira)'}\n\nGere a PROXIMA pergunta (numero ${i + 1} de 6), cruzando itens ESPECIFICOS da SWOT que ainda NAO foram usados.\n\nMOLDE desta pergunta (preencha os colchetes com itens REAIS da SWOT e adapte para soar natural): "${MOLDE[t]}"\nEXEMPLO so de tom (NAO copie o conteudo, so o jeito de falar): "${EXEMPLO[t]}"\n\nREGRAS DE LINGUAGEM (cruciais):\n- Portugues do Brasil com ACENTUACAO CORRETA E COMPLETA. Escreva TODOS os acentos (á é í ó ú â ê ô ã õ ç): \"você\" nao \"voce\", \"música\" nao \"musica\", \"é\" nao \"e\", \"está\" nao \"esta\", \"público\" nao \"publico\". NUNCA omita um acento.\n- Tom de conversa, caloroso e direto. Frase curta e fluida, do jeito que um consultor gente boa falaria pessoalmente. Maximo 2 frases.\n- Ao citar uma fraqueza, fale com LEVEZA e respeito: "um ponto que da pra melhorar", "ainda falta", "da pra desenvolver". PROIBIDO construcoes secas ou acusatorias como "Voce tem falta de", "Voce e fraco em", "Sua fraqueza e".\n- Concordancia de genero: siga a FLEXAO DE GENERO indicada na identidade ao se referir ao artista (ex.: "pronta"/"pronto"/"pronte"); use linguagem neutra apenas se nenhum genero foi definido.\n- PROIBIDO: siglas (SO/ST/WO/WT), os termos Ataque/Defesa/Reforco/Sobrevivencia, SWOT, cruzamento, analise. PROIBIDO travessao (use virgula ou ponto).\n- PROIBIDO cruzamento circular (cruzar um item com a acao derivada dele) e repetir cruzamentos ja feitos.\n- 4 a 5 opcoes curtas (max 10 palavras), caminhos concretos e praticos para ESTE artista; quando houver planos reais de referencia, inspire as opcoes nas estrategias desses artistas similares, adaptando ao porte e estagio dele (nunca copie literalmente); nao repita opcoes ja usadas.\nRetorne JSON: { \"question\": \"...\", \"options\": [\"...\", \"...\"], \"multi\": false }`;
       return await callGroqJson(SYSTEM, prompt);
     }
 
@@ -615,8 +618,10 @@ async function handleAction(body: RequestBody): Promise<any> {
 
     case 'assembleVision': {
       const vp = visionParts || {};
+      // Alcance 'cidade' = a cidade de origem que o artista já informou (ex.: "no Rio de Janeiro
+      // e região"). As REGRAS DE PORTUGUÊS abaixo corrigem a preposição/contração ("em Rio" → "no Rio").
       const ondeMap: Record<string, string> = {
-        cidade: 'na cidade e região de origem',
+        cidade: identity?.city ? `${String(identity.city)} e região` : 'na cidade e região de origem',
         capitais: 'nas principais capitais e centros urbanos',
         nacional: 'nacionalmente, no Brasil',
         nicho_intl: 'internacionalmente, dentro do nicho',
@@ -677,7 +682,16 @@ Responda APENAS o texto, sem aspas.`;
         paraQuem: 'Escreva em POUCAS PALAVRAS PARA QUEM é a entrega do artista (o público que recebe). NÃO comece com "para" (a frase final já adiciona). Ex.: "o público que busca memória afetiva", "a juventude da periferia", "quem curte uma boa pista de dança".',
         negocio: 'Escreva em UMA frase o que essa carreira precisa GERAR financeiramente (ex.: viver da música, renda extra, sustentar uma equipe).',
       };
-      const prompt = `${guide[f] || guide.story}${flexionContext(identity?.gender)}\n${identityContext(identity)}\nRESPOSTAS DO ARTISTA ÀS PERGUNTAS-GUIA:\n${qa}\nRegras: use SOMENTE o que as respostas trazem (NUNCA invente fatos, números, cidades ou conquistas). Linguagem simples, sem travessão, sem clichê. Responda APENAS o texto, sem aspas nem rótulos.`;
+      // Cerca por campo: cada etapa da metodologia trata de UMA coisa. Sem isto, o modelo se apoia
+      // no contexto (que lista Visão/Missão) e invade a etapa vizinha (visão vira missão, etc.).
+      const scope: Record<string, string> = {
+        story: 'FOCO EXCLUSIVO: a trajetória/história. PROIBIDO falar de visão de futuro, missão, objetivos, metas ou dinheiro.',
+        oQueFalam: 'FOCO EXCLUSIVO: como o artista quer ser PERCEBIDO/descrito (reputação, características, o que falam dele). PROIBIDO falar do que a música faz sentir ou entrega (isso é missão), de público-alvo, de metas, números ou objetivos.',
+        entrega: 'FOCO EXCLUSIVO: a sensação/experiência que a música ENTREGA a quem ouve. PROIBIDO falar de PARA QUEM é (vem na próxima etapa), de como o artista quer ser visto, de objetivos/metas ou de dinheiro.',
+        paraQuem: 'FOCO EXCLUSIVO: PARA QUEM é a entrega (o público que recebe). PROIBIDO descrever a sensação entregue, objetivos, metas ou dinheiro.',
+        negocio: 'FOCO EXCLUSIVO: o que a carreira precisa gerar financeiramente. PROIBIDO falar de estética, propósito artístico ou objetivos de marketing.',
+      };
+      const prompt = `${guide[f] || guide.story}\n${scope[f] || ''}${flexionContext(identity?.gender)}\n${identityContext(identity)}\nRESPOSTAS DO ARTISTA ÀS PERGUNTAS-GUIA:\n${qa}\nRegras: use SOMENTE o que as respostas trazem (NUNCA invente fatos, números, cidades ou conquistas). Mantenha-se ESTRITAMENTE no FOCO EXCLUSIVO indicado acima, sem invadir outras etapas da metodologia (visão, missão, objetivos). Linguagem simples, sem travessão, sem clichê. Responda APENAS o texto, sem aspas nem rótulos.`;
       const text = await callGroq(SYSTEM, prompt, false);
       return { text: text.trim().replace(/^["']|["']$/g, '') };
     }

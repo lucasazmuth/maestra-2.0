@@ -11,7 +11,8 @@ import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assig
 
 export interface TaskCrud {
   today: string;
-  canManage: boolean; // gestão de tarefas (PRO); quando false, tudo somente-leitura
+  canManage: boolean; // pode gerenciar tarefas (livre no plano gratuito p/ o dono); false = leitura
+  canUseNyta: boolean; // "Pedir ideias pra Nyta" (IA) é recurso PRO
   toggleDone: (sid: string, t: ActionTask) => void;
   patchTask: (sid: string, tid: string, patch: Partial<ActionTask>) => void;
   delTask: (sid: string, tid: string) => void;
@@ -278,6 +279,7 @@ export const AdvancedPlan: FC<{ content: ArtistContent; ranked: Strategy[]; crud
                       loading={crud.loadingSugg === s.id}
                       suggestions={crud.sugg[s.id]}
                       accent={false}
+                      canUseNyta={crud.canUseNyta}
                       onOpen={() => crud.setComposer(s.id)}
                       onClose={() => { crud.setComposer(null); crud.setSugg((pp) => ({ ...pp, [s.id]: [] })); }}
                       onAdd={(t) => crud.addTask(s.id, t)}

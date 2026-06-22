@@ -59,7 +59,7 @@ function formatDate(dateStr: string | null): string {
 const SubscriptionManagement: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { status, nextDueDate, value, gracePeriodEndsAt, loading, error } =
+  const { status, nextDueDate, value, gracePeriodEndsAt, asaasSubscriptionId, loading, error } =
     useAppSelector((s) => s.subscription);
 
   const [cancelling, setCancelling] = useState(false);
@@ -97,7 +97,12 @@ const SubscriptionManagement: FC = () => {
 
   const canCancel = status === 'active' || status === 'overdue';
   // Tem uma assinatura para mostrar dados (ativa/atrasada/pendente). none/cancelada → card de upsell.
-  const hasPlan = status === 'active' || status === 'overdue' || status === 'pending';
+  // 'pending' só conta como assinatura se houver asaas_subscription_id: a linha do pagamento ÚNICO
+  // do perfil também nasce 'pending' (sem subscription_id) e NÃO deve aparecer como plano Pro.
+  const hasPlan =
+    status === 'active' ||
+    status === 'overdue' ||
+    (status === 'pending' && !!asaasSubscriptionId);
 
   return (
     <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>

@@ -55,14 +55,14 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
 const FAQ_ITEMS: { q: string; a: string }[] = [
   { q: 'O que é o diagnóstico REAL?', a: 'É uma análise da sua carreira em 4 dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que você nos conta. O resultado é um dos 16 perfis de carreira e um retrato claro de onde você está.' },
   { q: 'Preciso pagar para ver o diagnóstico?', a: 'Não. O diagnóstico é grátis. O Maestra PRO é que libera o plano de ação completo, a Nyta IA e a gestão (catálogo, agenda e equipe).' },
-  { q: 'O que está incluído no Maestra PRO?', a: 'Edição em todos os perfis que você acessa, gestão de tarefas do plano de ação, Nyta IA ilimitada, catálogo de faixas ilimitado e acesso a todos os perfis da conta.' },
+  { q: 'O que está incluído no Maestra PRO?', a: 'Edição em todos os perfis que você acessa, Nyta IA ilimitada, catálogo de faixas ilimitado e acesso a todos os perfis da conta. (A gestão das tarefas do seu plano de ação é livre, no plano gratuito.)' },
   { q: 'Quanto custa?', a: 'R$ 39,90 por mês, ou R$ 335,16 no plano anual (cerca de 30% de desconto). Cancele quando quiser.' },
   { q: 'Como faço o pagamento?', a: 'Cartão de crédito (com renovação automática) ou PIX. Tudo processado com segurança via Asaas.' },
   { q: 'Posso cancelar quando quiser?', a: 'Sim. Você cancela a qualquer momento pela sua conta, sem burocracia.' },
 ];
 
-const FREE_ITEMS = ['Veja o diagnóstico e o plano de ação', 'Visualize catálogo, agenda e equipe', 'Apenas leitura, sem edição'];
-const PRO_ITEMS = ['Gestão de tarefas do plano de ação', 'Edição em todos os perfis que você acessa', 'Nyta IA com chat ilimitado', 'Catálogo de faixas ilimitado', 'Acesso a todos os perfis da conta'];
+const FREE_ITEMS = ['Veja o diagnóstico e o plano de ação', 'Gerencie as tarefas do seu plano de ação', 'Visualize catálogo, agenda e equipe'];
+const PRO_ITEMS = ['Edição em todos os perfis que você acessa', 'Nyta IA com chat ilimitado', 'Catálogo de faixas ilimitado', 'Acesso a todos os perfis da conta'];
 
 const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -396,6 +396,11 @@ const Footer: FC = () => {
               <span className={styles.footerColTitle}>Conta</span>
               <button className={styles.footerLink} onClick={() => navigate('/login')}>Entrar</button>
               <button className={styles.footerLink} onClick={() => navigate('/signup')}>Criar conta</button>
+            </div>
+            <div className={styles.footerCol}>
+              <span className={styles.footerColTitle}>Legal</span>
+              <button className={styles.footerLink} onClick={() => navigate('/legal/termos')}>Termos de uso</button>
+              <button className={styles.footerLink} onClick={() => navigate('/legal/privacidade')}>Política de privacidade</button>
             </div>
             <div className={styles.footerCol}>
               <span className={styles.footerColTitle}>Social</span>

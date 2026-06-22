@@ -106,30 +106,6 @@ const personalizeName = (title: string, name?: string, gender?: ArtistIdentity['
   return title.replace(/do\/da \[nome\]/g, `${namePreposition(n, gender)} ${n}`).replace(/\[nome\]/g, n);
 };
 
-// Camada 4 — força como alavanca: prefixo determinístico inserido no título da estratégia quando
-// uma força FOCADA (não-transversal) a potencializa (Matriz C). Máximo uma força por estratégia
-// (a primeira da matriz). Mapa por id da força interna (1–20); transversais não têm entrada.
-const FORCE_LEVER: Record<number, string> = {
-  2: 'Alavancando seu repertório autoral',
-  3: 'Alavancando sua produção musical',
-  4: 'Alavancando seu show pronto',
-  5: 'Alavancando sua presença de palco',
-  6: 'Alavancando sua agenda de shows',
-  7: 'Alavancando sua gestão comercial',
-  11: 'Alavancando seu posicionamento',
-  12: 'Alavancando sua identidade visual',
-  13: 'Alavancando seu material de divulgação',
-  14: 'Alavancando sua rede de contatos',
-  15: 'Alavancando sua presença digital',
-  16: 'Alavancando sua assessoria de imprensa',
-  18: 'Alavancando sua distribuição',
-  19: 'Alavancando seu conhecimento do mercado',
-  20: 'Alavancando sua estrutura jurídica',
-};
-const applyForceLever = (title: string, forceIds: number[]): string => {
-  const fId = forceIds.find((id) => FORCE_LEVER[id]);
-  return fId ? `${FORCE_LEVER[fId]} — ${title}` : title;
-};
 
 // Resultado intermediário da geração, antes de virar Strategy.
 interface GenItem {
@@ -187,13 +163,15 @@ export const generateStrategies = (
       opportunities: g.fromOpportunity.map(opportunityLabel).filter(Boolean),
       strengths: forceLabels,
     };
-    // Camada 4 — força como alavanca inserida no próprio título; força focada → tipo SO (ataque).
+    // A estratégia LIDERA o título (texto da própria estratégia). A força focada vira tipo SO
+    // (ataque) e aparece em swotRefs.strengths ("Responde a: Forças"), NÃO como prefixo no título
+    // (evita o "Alavancando [força] — [estratégia]" que confundia, já que a força está logo abaixo).
     const baseTitle = personalizeName(bank?.title || g.bankId, identity.name, identity.gender);
     return {
       id: uid(),
       bankId: g.bankId,
       type: forceLabels.length ? 'SO' : 'WO',
-      title: applyForceLever(baseTitle, g.fromForce),
+      title: baseTitle,
       swotRefs,
       tasks: [],
       score: 0,

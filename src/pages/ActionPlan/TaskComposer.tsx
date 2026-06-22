@@ -1,5 +1,5 @@
 import { FC, ReactNode, useEffect, useState } from 'react';
-import { FiPlus } from 'react-icons/fi';
+import { FiPlus, FiLock } from 'react-icons/fi';
 import type { Strategy } from '../../interfaces/maestra';
 import { AiGlow } from '../../components/AiGlow';
 import { TaskCategory, TaskDate } from './TaskControls';
@@ -30,6 +30,9 @@ interface Props {
   loading: boolean;
   suggestions?: SuggTask[];
   accent?: boolean;
+  // "Pedir ideias pra Nyta" (IA) é recurso PRO. Sem PRO, o botão vira cadeado e o onAskNyta do
+  // pai leva pra assinatura (não dispara a IA).
+  canUseNyta?: boolean;
   onOpen: () => void;
   onClose: () => void;
   onAdd: (task: SuggTask) => void;
@@ -43,6 +46,7 @@ export const TaskComposer: FC<Props> = ({
   loading,
   suggestions,
   accent = true,
+  canUseNyta = true,
   onOpen,
   onClose,
   onAdd,
@@ -160,9 +164,16 @@ export const TaskComposer: FC<Props> = ({
       </div>
       <div className="ap-composer-row">
         <button className={`ap-btn ap-btn--primary${sm}`} disabled={!text.trim()} onClick={submit}>Adicionar</button>
-        {wrapAi(
-          <button className={nytaBtn} disabled={loading} onClick={() => { setMode('nyta'); onAskNyta(); }}>
-            Pedir ideias {accent ? 'pra' : 'à'} Nyta
+        {canUseNyta ? (
+          wrapAi(
+            <button className={nytaBtn} disabled={loading} onClick={() => { setMode('nyta'); onAskNyta(); }}>
+              Pedir ideias {accent ? 'pra' : 'à'} Nyta
+            </button>
+          )
+        ) : (
+          // Sem PRO: não dispara a IA — o onAskNyta do pai leva pra assinatura.
+          <button className={nytaBtn} onClick={onAskNyta} title="Recurso do Maestra PRO">
+            <FiLock size={13} style={{ marginRight: 6 }} /> Pedir ideias {accent ? 'pra' : 'à'} Nyta
           </button>
         )}
         <button className={`ap-btn ap-btn--ghost${sm}`} onClick={onClose}>Fechar</button>

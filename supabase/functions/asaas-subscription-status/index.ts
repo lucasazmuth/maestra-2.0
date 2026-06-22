@@ -73,15 +73,26 @@ serve(async (req) => {
       )
     }
 
+    // A linha em asaas_subscriptions guarda o asaas_customer_id, que também é criado no fluxo
+    // de pagamento ÚNICO do perfil (R$199,90), via asaas-create-customer. Nesse caso a linha
+    // nasce só com o customer_id e herda o DEFAULT da tabela (status='pending', value=0) — mas
+    // NÃO existe assinatura recorrente. Uma assinatura real (PIX/cartão) SEMPRE grava o
+    // asaas_subscription_id ao ficar 'pending'. Então 'pending' SEM subscription_id é fantasma →
+    // 'none' (senão o pagamento único vira "assinatura Pro pendente" no banner + Configurações).
+    // IMPORTANTE: só sobrescreve o caso pending-fantasma. active/overdue/cancelled passam intactos
+    // — uma assinatura ativa pode, em casos de borda, não ter o subscription_id, e não pode sumir.
+    const isPhantomPending = subscription.status === 'pending' && !subscription.asaas_subscription_id
+    const effectiveStatus = isPhantomPending ? 'none' : subscription.status
+
     // Return subscription data
     return new Response(
       JSON.stringify({
-        status: subscription.status,
+        status: effectiveStatus,
         asaasCustomerId: subscription.asaas_customer_id,
         asaasSubscriptionId: subscription.asaas_subscription_id,
-        nextDueDate: subscription.next_due_date,
-        value: subscription.value,
-        gracePeriodEndsAt: subscription.grace_period_ends_at,
+        nextDueDate: isPhantomPending ? null : subscription.next_due_date,
+        value: isPhantomPending ? null : subscription.value,
+        gracePeriodEndsAt: isPhantomPending ? null : subscription.grace_period_ends_at,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

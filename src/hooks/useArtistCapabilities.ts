@@ -41,7 +41,9 @@ export function deriveArtistCapabilities(args: {
     canEdit,
     viewPlanning: isPaid,
     editPlanning: isPaid && canEdit,
-    manageTasks: isPaid && isPro,
+    // Gestão de tarefas do plano de ação é LIVRE no plano gratuito (perfil pago): segue a mesma
+    // regra do editPlanning (dono do perfil ou conta PRO). Não exige mais a assinatura PRO.
+    manageTasks: isPaid && canEdit,
     useNytaMaestra: isPaid && canEdit,
     useNytaConsultora: isPro,
     maxCatalogTracks,

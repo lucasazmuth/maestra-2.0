@@ -81,8 +81,8 @@ describe('generateStrategies (Nyta_Etapa_Estrategias_v3)', () => {
     const s1 = strategies.find((s) => s.bankId === '1');
     expect(s1?.type).toBe('SO');
     expect(s1?.swotRefs?.strengths).toContain('Agenda de shows');
-    // Camada 4: a força entra como alavanca no próprio título.
-    expect(s1?.title).toContain('Alavancando sua agenda de shows —');
+    // A força aparece em swotRefs.strengths ("Responde a:"), NÃO mais como prefixo no título.
+    expect(s1?.title).not.toContain('Alavancando');
   });
 });
 

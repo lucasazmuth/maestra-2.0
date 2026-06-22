@@ -1,13 +1,12 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, message } from 'antd';
-import dayjs from 'dayjs';
 import { FiArrowUp } from 'react-icons/fi';
 
 import * as wizardAi from '../../../services/wizardAi';
-import { syncTasksToEvents } from '../../../services/taskEventSync';
 import { supabase } from '../../../lib/supabase';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
+import { WIZARD_TOTAL_STEPS } from '../../../constants/maestra';
 import { NytaBubble, TypingIndicator, UserBubble, WidgetSlot } from './ChatMessage';
 import { GUIDED_OPENTEXT, SAY, type OpenTextField } from './nytaPersona';
 import { buildOpening, nextBeat, type PrepareAction, type WidgetSpec } from './script';
@@ -15,6 +14,7 @@ import {
   GENDER_OPTIONS,
   MISSION_FINANCIAL_OPTIONS,
   STAGE_OPTIONS,
+  VISION_ONDE_OPTIONS,
   deriveRecognitionTags,
   missionFinancialSuffix,
   seedValues,
@@ -37,13 +37,12 @@ import {
   StageChoice,
   StrategyCards,
   SwotBoardCard,
-  PlanScheduleSetup,
   SwotChecklist,
   SwotInternalCard,
   TextPromptHelper,
-  TimelineCard,
   ValueChips,
   VisionAdjetivoChoice,
+  VisionOndeChoice,
   VisionPorQuemChoice,
   VisionReviewCard,
   VisionSubstantivoChoice,
@@ -341,16 +340,6 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       } else if (action === 'generateStrategies') {
         // Determinístico (Matrizes A/B/C + banco de 53). Sem LLM.
         patch = { strategies: engine.generateStrategies(d.swotInputs || {}, id) };
-      } else if (action === 'schedule') {
-        // Plano de ação determinístico: passo a passo canônico por estratégia, distribuído no tempo
-        // por prioridade em cascata (datas sugeridas a partir do início + duração escolhidos).
-        patch = {
-          strategies: engine.seedScheduledPlan(
-            d.strategies || [],
-            d.planStart || dayjs().format('YYYY-MM-DD'),
-            d.planMonths || 12
-          ),
-        };
       } else if (action === 'summary') {
         patch = {
           executiveSummary: await wizardAi.createFinalResult(
@@ -496,6 +485,15 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
             onConfirm={(city, state) => {
               pushUser([city, state].filter(Boolean).join(', '));
               patchIdentity({ city, state });
+            }}
+          />
+        );
+      case 'visionOnde':
+        return (
+          <VisionOndeChoice
+            onConfirm={(value) => {
+              pushUser(labelOf(VISION_ONDE_OPTIONS, value));
+              patchVisionParts({ onde: value });
             }}
           />
         );
@@ -658,50 +656,27 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
             objectives={draft.objectives || []}
             onSuggest={async () => engine.suggestScores(draft.strategies || [], draft.objectives || [])}
             onAnnounce={(texts) => say(texts)}
-            onConfirm={(strategies) => {
+            onConfirm={(scored, selectedIds) => {
               pushUser('Prioridades definidas');
-              persist({ strategies }, 8);
-            }}
-          />
-        );
-      case 'planSetup':
-        return (
-          <PlanScheduleSetup
-            onConfirm={(planStart, planMonths) => {
-              pushUser(`Começar em ${dayjs(planStart).format('DD/MM/YYYY')} · ${planMonths} meses`);
-              persist({ planStart, planMonths });
-            }}
-          />
-        );
-      case 'timeline':
-        return (
-          <TimelineCard
-            strategies={draft.strategies || []}
-            onChange={(strategies) => setDraft((d) => ({ ...d, strategies }))}
-            onConfirm={() => {
-              pushUser('Cronograma aprovado');
-              const strategies = draftRef.current.strategies || [];
-              persist({ strategies }, 9);
-              // Sincroniza as tarefas datadas com a Agenda (cria os eventos em lote). Fire-and-forget:
-              // falha aqui não pode travar o wizard — o artista pode re-sincronizar editando o plano.
-              syncTasksToEvents(artist.id, strategies).catch(() => {});
+              // Só as estratégias selecionadas ganham tarefas (plano de ação, sem datas). As demais
+              // ficam salvas sem tarefas. Avança direto pro Resumo (passo 8) — não há mais cronograma.
+              const sel = new Set(selectedIds);
+              const withTasks = scored.map((s) =>
+                sel.has(s.id) ? { ...s, tasks: engine.buildActionPlan(s) } : { ...s, tasks: [] }
+              );
+              persist({ strategies: withTasks }, 8);
             }}
           />
         );
       case 'final': {
-        const concluded = (draft.step ?? 0) >= 10;
+        const concluded = (draft.step ?? 0) >= WIZARD_TOTAL_STEPS;
         return (
           <FinalSummaryCard
             summary={draft.executiveSummary || ''}
             concluded={concluded}
-            onRegenerate={() => {
-              pushUser('Regerar resumo');
-              preparingRef.current = null;
-              persist({ executiveSummary: '' });
-            }}
             onFinish={async () => {
               if (!concluded) {
-                await persist({}, 10);
+                await persist({}, WIZARD_TOTAL_STEPS);
                 try {
                   const { data } = await supabase
                     .from('artists')
@@ -709,7 +684,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
                     .eq('id', artist.id)
                     .single();
                   const savedStep = (data?.content as ArtistContent | null)?.step ?? 0;
-                  if (savedStep < 10) await persist({}, 10);
+                  if (savedStep < WIZARD_TOTAL_STEPS) await persist({}, WIZARD_TOTAL_STEPS);
                 } catch {
                   /* verificação é best-effort; o persist acima já passou pela fila */
                 }

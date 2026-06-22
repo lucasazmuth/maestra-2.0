@@ -62,9 +62,17 @@ const buildVisionFormulaPrefix = (id: ArtistIdentity, vp: VisionParts): string =
   const fem = id.gender === 'ela';
   const reconhecid = flex(id.gender, { m: 'reconhecido', f: 'reconhecida', n: 'reconhecide' });
   const artigo = flex(id.gender, { m: 'um', f: 'uma', n: 'um' });
-  // [região geográfica] derivada da cidade/UF (a pergunta de alcance geográfico não existe na v2),
-  // com preposição+artigo corretos ("no Rio de Janeiro e região").
-  const regiao = id.city ? `${cityPhrase(id.city)} e região` : '';
+  // [ONDE] vem do alcance geográfico (Q1, vp.onde). A opção 'cidade' usa a cidade de origem já
+  // informada ("no Rio de Janeiro e região"); as demais usam a frase do alcance escolhido.
+  const ONDE_PHRASE: Record<string, string> = {
+    capitais: 'nas principais capitais e centros urbanos',
+    nacional: 'nacionalmente, no Brasil',
+    nicho_intl: 'internacionalmente, dentro do nicho',
+    internacional: 'internacionalmente',
+  };
+  const regiao = vp.onde === 'cidade'
+    ? (id.city ? `${cityPhrase(id.city)} e região` : 'na cidade e região de origem')
+    : (ONDE_PHRASE[vp.onde || ''] || '');
   const porFontes = recognitionPorLabel(id.recognitionTags);
   // Concordância de gênero: no feminino, flexiona substantivo e adjetivo ("uma artista autêntica").
   const subs = fem ? feminize(vp.substantivo || '') : vp.substantivo || '';
@@ -98,6 +106,7 @@ export type WidgetSpec =
   | { kind: 'textHelp'; field: 'oQueFalam' | 'entrega' | 'paraQuem' }
   | { kind: 'referenceHorizons' }
   | { kind: 'cityInput' }
+  | { kind: 'visionOnde' }
   | { kind: 'visionPorQuem' }
   | { kind: 'visionSubstantivo' }
   | { kind: 'visionAdjetivo' }
@@ -112,8 +121,6 @@ export type WidgetSpec =
   | { kind: 'swotBoard' }
   | { kind: 'strategies' }
   | { kind: 'priority' }
-  | { kind: 'planSetup' }
-  | { kind: 'timeline' }
   | { kind: 'final' }
   | { kind: 'retry' };
 
@@ -121,7 +128,6 @@ export type PrepareAction =
   | 'assembleVision'
   | 'assembleMission'
   | 'generateStrategies'
-  | 'schedule'
   | 'summary';
 
 export interface Beat {
@@ -135,11 +141,6 @@ export interface Beat {
   autoPersistStep?: number;
 }
 
-// Metodologia v2: o plano de ação semeia tarefas canônicas com PRAZOS SUGERIDOS (cascata por
-// prioridade, a partir do início + duração escolhidos). O gate verifica a EXISTÊNCIA de tarefas,
-// não a presença de prazos específicos (senão entraria em loop re-gerando o plano indefinidamente).
-const hasSchedule = (draft: ArtistContent) =>
-  (draft.strategies || []).some((s) => (s.tasks || []).length > 0);
 
 export function nextBeat(draft: ArtistContent): Beat {
   const step = draft.step ?? 0;
@@ -179,6 +180,10 @@ export function nextBeat(draft: ArtistContent): Beat {
     // por isso o `say` fica vazio aqui — o orquestrador injeta o mapa de referências entre as falas.
     if (!id.city)
       return { stage: 'vision.city', say: [], widget: { kind: 'cityInput' } };
+    // Q1 alcance geográfico (até onde quer chegar) — vem DEPOIS da cidade de origem e antes do
+    // "por quem". Alimenta o [ONDE] da visão e a etiqueta internacional (deriveRecognitionTags).
+    if (!vp.onde)
+      return { stage: 'vision.onde', say: SAY.visionOnde(), widget: { kind: 'visionOnde' } };
     if (!vp.porQuem?.length)
       return { stage: 'vision.porQuem', say: SAY.visionPorQuem(), widget: { kind: 'visionPorQuem' } };
     if (!vp.substantivo) {
@@ -255,18 +260,8 @@ export function nextBeat(draft: ArtistContent): Beat {
   if (step === 7)
     return { stage: 'priority', say: SAY.priorityIntro(), widget: { kind: 'priority' } };
 
-  // STEP 8 — Plano de Ação / Cronograma
-  if (step === 8) {
-    // Antes de semear as tarefas, pergunta início + duração (Metodologia v2): o cronograma nasce
-    // com datas sugeridas, distribuídas por prioridade em cascata.
-    if (!draft.planStart || !draft.planMonths)
-      return { stage: 'schedule.setup', say: SAY.scheduleSetupIntro(), widget: { kind: 'planSetup' } };
-    if (!hasSchedule(draft))
-      return { stage: 'schedule.prepare', say: SAY.preparing(), widget: null, prepare: 'schedule' };
-    return { stage: 'schedule.review', say: SAY.scheduleReady(), widget: { kind: 'timeline' } };
-  }
-
-  // step >= 9: resumo + conclusão (e revisita pós-conclusão)
+  // STEP 8 — Resumo + conclusão (e revisita pós-conclusão). As tarefas já nasceram na seleção do
+  // modal de prioridades (etapa 7); não há mais etapa de cronograma/datas.
   if (!draft.executiveSummary)
     return { stage: 'final.prepare', say: SAY.preparing(), widget: null, prepare: 'summary' };
   return { stage: 'final', say: [], widget: { kind: 'final' } };
@@ -325,6 +320,5 @@ export const STEP_LABELS = [
   'Diagnóstico',
   'Estratégias',
   'Prioridades',
-  'Plano de ação',
   'Seu plano',
 ] as const;

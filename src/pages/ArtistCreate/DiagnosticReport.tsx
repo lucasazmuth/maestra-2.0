@@ -457,7 +457,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             <p className={styles.ctaParagraph}>
               <Typewriter text={CTA_SUB} active={titleDone} speed={9} onDone={() => setSubDone(true)} />
             </p>
-            <button className={`${styles.cta} ${styles.ctaReveal} ${subDone ? styles.ctaRevealOn : ''}`} onClick={onContinue}>
+            <button className={`${styles.cta} ${styles.ctaReveal} ${ctaInView ? styles.ctaRevealOn : ''}`} onClick={onContinue}>
               Começar meu planejamento com a Nyta <FiArrowRight />
             </button>
           </>

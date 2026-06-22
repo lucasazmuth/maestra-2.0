@@ -155,6 +155,10 @@ const AppRoutes: FC = () => {
       <Route path='/login' element={<PublicOnly><Login /></PublicOnly>} />
       <Route path='/signup' element={<PublicOnly><Signup /></PublicOnly>} />
 
+      {/* Páginas legais (Termos / Privacidade): públicas e standalone — acessíveis da landing
+          por quem ainda não tem conta. Conteúdo único em src/constants/legal.ts. */}
+      <Route path='/legal/:slug' element={<Legal />} />
+
       <Route element={<RequireAuth />}>
         {/* Boas-vindas pós-cadastro: autenticada, mas em tela cheia (sem o layout do app). */}
         <Route path='/welcome' element={<Welcome />} />
@@ -194,7 +198,6 @@ const AppRoutes: FC = () => {
           <Route path='/notifications' element={<Notifications />} />
           <Route path='/settings' element={<Settings />} />
           <Route path='/pagamentos' element={<Payments />} />
-          <Route path='/legal/:slug' element={<Legal />} />
           <Route element={<RequireAdmin />}>
             <Route path='/admin/knowledge-base' element={<AdminKnowledgeBase />} />
           </Route>

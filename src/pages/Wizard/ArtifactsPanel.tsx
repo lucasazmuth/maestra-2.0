@@ -73,27 +73,23 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
           {d.strategies.length > 6 && <li className='wiz-art-muted'>+{d.strategies.length - 6}</li>}
         </ol>
       ) : null;
-    case 7: { // Prioridades — top 3
+    case 7: { // Prioridades — top 3 + nº de estratégias que viraram plano de ação
       const ranked = (d.strategies || []).filter((s) => typeof s.finalScore === 'number');
       if (!ranked.length) return null;
       const top = ranked.slice().sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0)).slice(0, 3);
+      const withTasks = (d.strategies || []).filter((s) => (s.tasks?.length || 0) > 0).length;
       return (
-        <ol className='wiz-art-list'>
-          {top.map((s) => (
-            <li key={s.id}>{s.title}</li>
-          ))}
-        </ol>
+        <>
+          <ol className='wiz-art-list'>
+            {top.map((s) => (
+              <li key={s.id}>{s.title}</li>
+            ))}
+          </ol>
+          {withTasks > 0 && <div className='wiz-art-muted'>{withTasks} no plano de ação</div>}
+        </>
       );
     }
-    case 8: { // Plano de ação / cronograma
-      const tasks = (d.strategies || []).reduce((n, s) => n + (s.tasks?.length || 0), 0);
-      const rows: [string, string][] = [];
-      if (d.planStart) rows.push(['Início', d.planStart.split('-').reverse().join('/')]);
-      if (d.planMonths) rows.push(['Prazo', `${d.planMonths} meses`]);
-      if (tasks) rows.push(['Tarefas', String(tasks)]);
-      return rows.length ? <Meta rows={rows} /> : null;
-    }
-    case 9: // Seu plano
+    case 8: // Seu plano
       return d.executiveSummary ? <div className='wiz-art-text'>Plano concluído</div> : null;
     default:
       return null;

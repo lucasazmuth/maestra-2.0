@@ -11,7 +11,9 @@ import type {
 // v3 (metodologia Nyta) reescreve quase todas as etapas; planos de versões anteriores são
 // arquivados em phaseHistory e refeitos no método novo (migração forçada). Por isso a conclusão
 // passa a EXIGIR a versão atual: quem concluiu numa escala antiga reabre o wizard no método novo.
-export const WIZARD_TOTAL_STEPS = 10;
+// 9 etapas (Metodologia v2): a antiga etapa de Cronograma (início + datas) foi removida — as tarefas
+// nascem na seleção do modal de prioridades (sem datas geradas por IA).
+export const WIZARD_TOTAL_STEPS = 9;
 // v5 = Metodologia v2 (geração determinística: objetivos/estratégias/priorização/plano de ação).
 // O bump força a migração: planos das versões anteriores são arquivados em phaseHistory e refeitos.
 export const WIZARD_VERSION = 5;

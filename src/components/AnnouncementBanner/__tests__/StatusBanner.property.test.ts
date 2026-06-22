@@ -47,6 +47,7 @@ describe('Feature: maestra-pro-banner-and-benefits, Property 1: Banner PRO nunca
             status: 'active',
             initialized,
             gracePeriodEndsAt,
+            hasSubscriptionId: true,
             pathname,
             paywallDisabled,
           };
@@ -81,6 +82,7 @@ describe('Feature: maestra-pro-banner-and-benefits, Property 1: Banner PRO nunca
             status: 'active',
             initialized: true,
             gracePeriodEndsAt,
+            hasSubscriptionId: true,
             pathname: pathname || '/',
             paywallDisabled: false,
             now,
@@ -94,5 +96,48 @@ describe('Feature: maestra-pro-banner-and-benefits, Property 1: Banner PRO nunca
       ),
       { numRuns: 100 }
     );
+  });
+});
+
+/**
+ * Regressão: pagamento ÚNICO do perfil não pode parecer "assinatura Pro pendente".
+ *
+ * A linha em asaas_subscriptions criada pelo pagamento único (só com customer_id) tem
+ * status='pending' por default, mas SEM asaas_subscription_id. Nesse caso o banner de
+ * "Pagamento em análise" (kind 'pending') NÃO deve aparecer.
+ */
+describe('Regressão: pending sem asaas_subscription_id não vira banner pending', () => {
+  test('status pending + hasSubscriptionId=false nunca retorna "pending"', () => {
+    fc.assert(
+      fc.property(
+        fc.stringMatching(/^\/[a-z0-9\-/]{0,40}$/).filter(
+          (p) => !p.startsWith('/assinatura') && !p.startsWith('/pagamento')
+        ),
+        (pathname) => {
+          const result = deriveStatusBanner({
+            status: 'pending',
+            initialized: true,
+            gracePeriodEndsAt: null,
+            hasSubscriptionId: false,
+            pathname: pathname || '/',
+            paywallDisabled: false,
+          });
+          expect(result).not.toBe('pending');
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  test('status pending + hasSubscriptionId=true retorna "pending" (assinatura real)', () => {
+    const result = deriveStatusBanner({
+      status: 'pending',
+      initialized: true,
+      gracePeriodEndsAt: null,
+      hasSubscriptionId: true,
+      pathname: '/artists/123/wizard',
+      paywallDisabled: false,
+    });
+    expect(result).toBe('pending');
   });
 });
