@@ -31,10 +31,8 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
       <div className={styles.formCol}>
         <div className={styles.formInner}>
           <div className={styles.brand}>
+            {/* Só a logo (o SVG já tem aria-label "Maestra Manager"). */}
             <MaestraLogo />
-            <div className={styles.brandName}>
-              Maestra <span className={styles.brandAccent}>Manager</span>
-            </div>
           </div>
 
           <p className={styles.eyebrow}>Acesse com:</p>

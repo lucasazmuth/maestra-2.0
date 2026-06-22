@@ -44,12 +44,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
   margin-bottom: 32px;
 
   svg {
-    width: 44px;
-    height: 44px;
+    width: 72px;
+    height: 72px;
   }
 
   // Equalizer "vivo": ao passar o mouse no ícone, as 5 barras dançam (cada uma com
@@ -66,19 +65,6 @@
   svg:hover g line:nth-child(3) { animation-duration: 0.60s; animation-delay: 0.05s; }
   svg:hover g line:nth-child(4) { animation-duration: 0.90s; animation-delay: 0.18s; }
   svg:hover g line:nth-child(5) { animation-duration: 0.75s; animation-delay: 0.08s; }
-
-  .brandName {
-    font-family: 'SpotifyMixUITitle', sans-serif;
-    font-weight: 800;
-    font-size: 28px;
-    line-height: 1;
-    color: #fff;
-    white-space: nowrap;
-  }
-
-  .brandAccent {
-    color: #d264bb;
-  }
 }
 
 .eyebrow {
