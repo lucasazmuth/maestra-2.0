@@ -159,7 +159,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
   // Sequência do CTA "digitando": dispara ao rolar até o bloco; título → subtítulo → botão surge.
   const [ctaInView, setCtaInView] = useState(false);
   const [titleDone, setTitleDone] = useState(false);
-  const [subDone, setSubDone] = useState(false);
+  const [, setSubDone] = useState(false);
 
   // Embute a foto do Spotify como dataURL (evita canvas "tainted" por CORS na captura).
   useEffect(() => {
