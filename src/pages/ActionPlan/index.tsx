@@ -1,7 +1,6 @@
 import { FC, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message, Popover } from 'antd';
-import ReactMarkdown from 'react-markdown';
 import { FiCheck, FiChevronDown, FiLayers, FiList, FiTarget } from 'react-icons/fi';
 
 import { useArtist } from '../../hooks/useArtist';
@@ -11,6 +10,7 @@ import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { RealProfileSummary } from '../../components/RealProfileSummary';
+import { PhaseSummary } from '../../components/PhaseSummary';
 import { PhaseCard } from '../Dashboard/sections';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import AdvancedPlan from './AdvancedPlan';
@@ -58,7 +58,6 @@ const ActionPlan: FC = () => {
   const [mode, setMode] = useState<'basic' | 'advanced'>(
     () => (localStorage.getItem('maestra_ap_mode') === 'advanced' ? 'advanced' : 'basic')
   );
-  const [summaryOpen, setSummaryOpen] = useState(false); // resumo executivo expandido no modo básico
   const toggleMode = () => {
     const next = mode === 'basic' ? 'advanced' : 'basic';
     setMode(next);
@@ -259,30 +258,15 @@ const ActionPlan: FC = () => {
       </div>
 
       {/* FASE — mesmo card do Dashboard (design system): progresso, Foco/Evite e avançar de fase.
-          O resumo executivo (modo básico) entra DENTRO do card, abaixo do Foco/Evite. */}
+          O resumo executivo ("Onde X está hoje") só aparece no modo "Ver dados completos"; no
+          modo "Ver menos" (básico) o card fica resumido, sem o resumo. */}
       <PhaseCard
         artist={artist}
         taskCounts={taskCounts}
         advancing={advancing}
         onAdvance={advancePhase}
         hideFocus
-        footer={
-          content?.executiveSummary ? (
-            <div className={`ap-phase-summary${summaryOpen ? ' is-open' : ''}`}>
-              <div className="ap-phase-summary-body">
-                <ReactMarkdown>{content.executiveSummary.replace(/([^\n])\n(?!\n)/g, '$1\n\n')}</ReactMarkdown>
-              </div>
-              <button
-                className="ap-phase-summary-toggle"
-                onClick={() => setSummaryOpen((o) => !o)}
-                title={summaryOpen ? 'Minimizar' : 'Ver resumo completo'}
-                aria-label={summaryOpen ? 'Minimizar resumo' : 'Ver resumo completo'}
-              >
-                <FiChevronDown size={18} />
-              </button>
-            </div>
-          ) : undefined
-        }
+        footer={mode === 'advanced' && content?.executiveSummary ? <PhaseSummary text={content.executiveSummary} /> : undefined}
       />
 
       {mode === 'advanced' ? (

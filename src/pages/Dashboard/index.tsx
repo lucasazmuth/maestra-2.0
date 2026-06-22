@@ -18,6 +18,7 @@ import * as wizardAi from '../../services/wizardAi';
 import type { ArtistContent, Strategy } from '../../interfaces/maestra';
 import { RealProfileSummary } from '../../components/RealProfileSummary';
 import { MetricsEvolution } from '../../components/MetricsEvolution';
+import { PhaseSummary } from '../../components/PhaseSummary';
 import { ConnectSpotify, PhaseCard, PhaseHistory } from './sections';
 import { DashboardOverview } from './overview';
 
@@ -187,7 +188,15 @@ const Dashboard: FC = () => {
           ctaTo='/criar-artista'
         />
       ) : hasPlan ? (
-        <PhaseCard artist={artist} taskCounts={taskCounts} advancing={advancing} onAdvance={advancePhase} hideFocus onOpenPlan={() => navigate(`/artists/${artist.id}/action-plan`)} />
+        <PhaseCard
+          artist={artist}
+          taskCounts={taskCounts}
+          advancing={advancing}
+          onAdvance={advancePhase}
+          hideFocus
+          onOpenPlan={() => navigate(`/artists/${artist.id}/action-plan`)}
+          footer={artist.content?.executiveSummary ? <PhaseSummary text={artist.content.executiveSummary} /> : undefined}
+        />
       ) : (
         <div style={{ position: 'relative', background: '#181818', borderRadius: 12, padding: 24, marginBottom: 24, textAlign: 'center' }}>
           <span className='aurora-glow aurora-glow--on' aria-hidden />

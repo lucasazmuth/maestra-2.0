@@ -1,0 +1,43 @@
+/* ---- Resumo executivo: prévia colapsável DENTRO do card da fase ---- */
+.phase-summary {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.phase-summary-body {
+  max-height: 76px;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+  color: #d6d6d6;
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent);
+  mask-image: linear-gradient(180deg, #000 45%, transparent);
+
+  p { margin: 0 0 12px; }
+  p:last-child { margin-bottom: 0; }
+  strong { color: #fff; font-weight: 700; }
+}
+.phase-summary.is-open .phase-summary-body {
+  max-height: 1600px;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.phase-summary-toggle {
+  display: flex;
+  margin: 12px auto 0;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #333;
+  background: rgba(255, 255, 255, 0.04);
+  color: #b3b3b3;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover { background: rgba(255, 255, 255, 0.09); color: #fff; border-color: #af2896; }
+  svg { transition: transform 0.3s ease; }
+}
+.phase-summary.is-open .phase-summary-toggle svg { transform: rotate(180deg); }
