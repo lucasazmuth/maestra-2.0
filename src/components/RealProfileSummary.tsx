@@ -12,7 +12,9 @@ const DIMS: { k: 'r' | 'e' | 'a' | 'l'; letter: string }[] = [
 
 const clean = (s: string) => s.replace(/\s*—\s*/g, ', ');
 
-export const RealProfileSummary: FC<{ artist: Artist; style?: React.CSSProperties }> = ({ artist, style }) => {
+// `hideLabel` oculta o rótulo "Diagnóstico de carreira" interno — usado quando o card já está sob
+// um cabeçalho de seção (ex.: Dashboard), pra não duplicar o título.
+export const RealProfileSummary: FC<{ artist: Artist; style?: React.CSSProperties; hideLabel?: boolean }> = ({ artist, style, hideLabel }) => {
   const navigate = useNavigate();
   const ri = artist.content?.realIndex;
   if (!ri?.profile) return null;
@@ -29,10 +31,12 @@ export const RealProfileSummary: FC<{ artist: Artist; style?: React.CSSPropertie
         ...style,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#af2896' }}>
-          Diagnóstico de carreira
-        </span>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: hideLabel ? 'flex-end' : 'space-between', gap: 12 }}>
+        {!hideLabel && (
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#af2896' }}>
+            Diagnóstico de carreira
+          </span>
+        )}
         <button
           onClick={() => navigate(`/artists/${artist.id}/diagnostico`)}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#9a9aa5', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: 0 }}

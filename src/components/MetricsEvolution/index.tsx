@@ -6,6 +6,8 @@ import type { MetricsSnapshot } from '../../interfaces/maestra';
 
 export interface MetricsEvolutionProps {
   artistId: string;
+  // Oculta o rótulo interno "Evolução de métricas" quando o card já está sob um cabeçalho de seção.
+  hideLabel?: boolean;
 }
 
 /** Métricas numéricas que exibimos no painel de evolução. */
@@ -21,7 +23,7 @@ const METRIC_LABELS: Record<string, string> = {
  * de um artista. Indicadores visuais ↑ (verde) / ↓ (vermelho), variação absoluta e percentual.
  * Estado vazio: "Sem dados de evolução disponíveis".
  */
-export const MetricsEvolution: FC<MetricsEvolutionProps> = ({ artistId }) => {
+export const MetricsEvolution: FC<MetricsEvolutionProps> = ({ artistId, hideLabel }) => {
   const [loading, setLoading] = useState(true);
   const [snapshots, setSnapshots] = useState<MetricsSnapshot[]>([]);
 
@@ -72,18 +74,20 @@ export const MetricsEvolution: FC<MetricsEvolutionProps> = ({ artistId }) => {
           border: '1px solid #282828',
         }}
       >
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 800,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: '#b3b3b3',
-          }}
-        >
-          Evolução de métricas
-        </span>
-        <p style={{ color: '#8a8a92', fontSize: 14, margin: '12px 0 0' }}>
+        {!hideLabel && (
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: '#b3b3b3',
+            }}
+          >
+            Evolução de métricas
+          </span>
+        )}
+        <p style={{ color: '#8a8a92', fontSize: 14, margin: hideLabel ? 0 : '12px 0 0' }}>
           Sem dados de evolução disponíveis
         </p>
       </section>
@@ -107,18 +111,20 @@ export const MetricsEvolution: FC<MetricsEvolutionProps> = ({ artistId }) => {
         marginBottom: 24,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 800,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: '#af2896',
-          }}
-        >
-          Evolução de métricas
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: hideLabel ? 'flex-end' : 'space-between', marginBottom: 16 }}>
+        {!hideLabel && (
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: '#af2896',
+            }}
+          >
+            Evolução de métricas
+          </span>
+        )}
         {periodDays != null && (
           <span style={{ fontSize: 12, color: '#8a8a92' }}>
             Últimos {periodDays} dias
