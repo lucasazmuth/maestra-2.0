@@ -210,16 +210,16 @@ const Dashboard: FC = () => {
       {/* Visão geral + Acesso rápido só no perfil pago (não pago → recursos travados) */}
       {viewPlanning && (
         <>
-
-
-          {/* Diagnóstico REAL — resumo do perfil de carreira (só se houver Índice REAL salvo) */}
-          <RealProfileSummary artist={artist} />
-
           {/* Evolução de métricas — deltas entre os 2 últimos snapshots */}
           <MetricsEvolution artistId={artist.id} />
 
           {/* 1. Visão geral — tarefas, eventos, catálogos e equipe */}
           <DashboardOverview artist={artist} />
+
+          {/* Diagnóstico REAL — resumo do perfil de carreira (só se houver Índice REAL salvo).
+              Fica mais abaixo de propósito: o foco pós-criação do perfil é o planejamento, então o
+              card de Fase manda no topo e o diagnóstico não disputa o primeiro clique. */}
+          <RealProfileSummary artist={artist} />
 
           {/* 2. Acesso rápido */}
           <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '24px 0 12px' }}>Acesso rápido</h2>
