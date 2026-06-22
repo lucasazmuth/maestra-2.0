@@ -1,6 +1,6 @@
 import { FC, ReactNode, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
-import { FaFacebook } from 'react-icons/fa';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser } from 'react-icons/fi';
 
 import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
@@ -23,7 +23,7 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
 
   // Login social ainda não disponível: apenas avisa, sem redirecionar.
   const social = () =>
-    setSocialNote('Login com Google e Facebook em breve. Por enquanto, entre com e-mail e senha.');
+    setSocialNote('Login com Google em breve. Por enquanto, entre com e-mail e senha.');
 
   return (
     <div className={styles.page}>
@@ -31,17 +31,16 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
       <div className={styles.formCol}>
         <div className={styles.formInner}>
           <div className={styles.brand}>
-            {/* Só a logo (o SVG já tem aria-label "Maestra Manager"). */}
-            <MaestraLogo />
+            {/* Logo clicável → volta para a landing page. */}
+            <Link to='/' className={styles.brandLink} aria-label='Ir para a página inicial'>
+              <MaestraLogo />
+            </Link>
           </div>
 
           <p className={styles.eyebrow}>Acesse com:</p>
           <div className={styles.social}>
             <button type='button' className={styles.socialBtn} onClick={social}>
               <FcGoogle /> Google
-            </button>
-            <button type='button' className={styles.socialBtn} onClick={social}>
-              <FaFacebook color='#1877F2' /> Facebook
             </button>
           </div>
           {socialNote && (

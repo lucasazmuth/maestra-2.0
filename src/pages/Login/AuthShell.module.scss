@@ -67,6 +67,11 @@
   svg:hover g line:nth-child(5) { animation-duration: 0.75s; animation-delay: 0.08s; }
 }
 
+.brandLink {
+  display: inline-flex;
+  line-height: 0;
+}
+
 .eyebrow {
   font-size: 13px;
   color: #b3b3b3;
@@ -75,7 +80,7 @@
 
 .social {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
   margin-bottom: 20px;
 }
