@@ -127,12 +127,12 @@ async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any):
       const v = Number(last?.value);
       return Number.isFinite(v) ? v : null;
     };
-    // engagement_rate vem em FRAÇÃO (0.0353 = 3,53%); o motor usa %, então ×100.
+    // engagement_rate já vem em PORCENTAGEM (validado: Liniker IG 4,35% / Pabllo 0,37%). Sem ×100.
     const engRate = async (endpoint: string): Promise<number | null> => {
       const d = await getJson(`/api/artist/${cmId}/${endpoint}`);
       const o = d?.obj ?? d;
       const er = Number(o?.engagement_rate ?? (Array.isArray(o) ? o[0]?.engagement_rate : null));
-      return Number.isFinite(er) ? er * 100 : null;
+      return Number.isFinite(er) ? er : null;
     };
 
     await sleep(200); const yt_monthly_views = await statLatest("youtube_artist", "monthly_views");
