@@ -133,6 +133,8 @@ interface Props {
   chartmetric?: Chartmetric | null;
   artistName?: string;
   artistImage?: string | null;
+  // Perfil criado sem Spotify (artista iniciante): ajusta a copy (sem prometer dados de plataforma).
+  noSpotify?: boolean;
   onContinue?: () => void;
   // CTA flutuante (sticky) ao rolar — só na criação; na tela /diagnostico fica desligado.
   enableStickyCta?: boolean;
@@ -142,7 +144,7 @@ interface Props {
 
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
 // Determinística: consome o realIndex calculado no backend (sem IA).
-export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, onContinue, enableStickyCta = true, showPlanningCta = true }) => {
+export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true }) => {
   const [methodOpen, setMethodOpen] = useState(false);
   const { profile, pattern, inputs, earningsUnknown } = realIndex;
   const name = artistName || 'seu artista';
@@ -257,7 +259,11 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
         <img className={styles.realHeroAvatar} src={artistImage || ARTISTS_DEFAULT_IMAGE} alt={name} />
         <div>
           <h2 className={styles.realHeroTitle}>Seu diagnóstico de carreira está pronto, {name}.</h2>
-          <p className={styles.realHeroSub}>Baseado nos seus dados reais: Spotify, redes sociais e o que você nos contou.</p>
+          <p className={styles.realHeroSub}>
+            {noSpotify
+              ? 'Baseado no que você nos contou. Quando você conectar o Spotify, a gente atualiza com seus números de plataforma.'
+              : 'Baseado nos seus dados reais: Spotify, redes sociais e o que você nos contou.'}
+          </p>
         </div>
         <button
           className={styles.heroShareBtn}

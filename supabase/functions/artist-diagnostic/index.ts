@@ -254,9 +254,10 @@ serve(async (req) => {
       if (selfDup) return reusedResponse(selfDup);
     }
 
-    if (!spotifyId) return json({ error: "Conecte o Spotify para gerar o diagnóstico." }, 400);
-
-    const chartmetric = await chartmetricSummary(spotifyId, supabaseAdmin);
+    // Sem Spotify (artista iniciante): não consulta a Chartmetric. O motor já trata a ausência
+    // de dados de API como z mínimo (opção B) → tende a Beginner / R·A baixos, refletindo que a
+    // carreira digital ainda não começou. Com Spotify, puxa o resumo da Chartmetric normalmente.
+    const chartmetric = spotifyId ? await chartmetricSummary(spotifyId, supabaseAdmin) : null;
     const realIndex = computeRealIndex(quiz || {}, chartmetric || {});
     const diagnostic = buildDiagnostic(realIndex, chartmetric || {});
 
@@ -265,10 +266,12 @@ serve(async (req) => {
       realIndex, diagnostic, quizDiagnostic: { answers: quiz || {}, completedAt: nowIso },
     };
     if (chartmetric) content.chartmetricProfile = chartmetric;
-    content.spotifyProfile = {
-      spotify_artist_id: spotifyId, name: artistName,
-      image: spotify?.image ?? undefined, followers: spotify?.followers ?? undefined, fetched_at: nowIso,
-    };
+    if (spotifyId) {
+      content.spotifyProfile = {
+        spotify_artist_id: spotifyId, name: artistName,
+        image: spotify?.image ?? undefined, followers: spotify?.followers ?? undefined, fetched_at: nowIso,
+      };
+    }
 
     const { data: artist, error: createError } = await supabaseAdmin
       .from("artists")

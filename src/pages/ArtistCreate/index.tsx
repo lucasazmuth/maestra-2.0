@@ -56,6 +56,10 @@ const ArtistCreate: FC = () => {
   // Aviso inline quando o artista buscado já existe (mesmo usuário).
   const [notice, setNotice] = useState<{ name: string } | null>(null);
   const chosen = useRef<{ name: string; spotifyArtistId: string | null; followers: number | null; image: string | null }>({ name: '', spotifyArtistId: null, followers: null, image: null });
+  // Caminho "ainda estou iniciando": cria o perfil sem Spotify (artista em começo de carreira).
+  const [noSpotify, setNoSpotify] = useState(false);
+  const [manualName, setManualName] = useState('');
+  const introLineRef = useRef('');
 
   // Quiz
   const [quizIndex, setQuizIndex] = useState(0);
@@ -90,9 +94,10 @@ const ArtistCreate: FC = () => {
     if (intro.current) return;
     intro.current = true;
     const hasArtists = artists.some((a) => a.role !== 'member');
-    say(hasArtists
+    introLineRef.current = hasArtists
       ? 'Bora criar outro perfil de artista. Qual a gente vai trabalhar? Busca no Spotify que eu já trago os dados.'
-      : 'Vamos criar um perfil de artista. Qual a gente vai trabalhar? Busca no Spotify que eu já trago os dados.');
+      : 'Vamos criar um perfil de artista. Qual a gente vai trabalhar? Busca no Spotify que eu já trago os dados.';
+    say(introLineRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -174,6 +179,29 @@ const ArtistCreate: FC = () => {
     setQuery('');
     setResults([]);
     startQuiz(r.name, r.id, r.followers ?? null, r.image ?? null);
+  };
+
+  // Entra no modo "ainda estou iniciando" (sem Spotify): pede só o nome artístico.
+  const chooseNoSpotify = () => {
+    setNoSpotify(true);
+    setQuery('');
+    setResults([]);
+    setNotice(null);
+    say('Sem problema nenhum — todo mundo começa em algum lugar. Vou montar seu diagnóstico com a sua realidade de hoje, e o Spotify a gente conecta depois. Como é o seu nome artístico?');
+  };
+
+  // Volta ao modo de busca no Spotify.
+  const backToSpotify = () => {
+    setNoSpotify(false);
+    setManualName('');
+    say(introLineRef.current);
+  };
+
+  // Confirma o nome digitado e segue pro quiz, sem Spotify (spotifyArtistId = null).
+  const confirmManualName = () => {
+    const n = manualName.trim();
+    if (!n) return;
+    startQuiz(n, null, null, null);
   };
 
   const answerQuiz = (option: string) => {
@@ -263,39 +291,82 @@ const ArtistCreate: FC = () => {
                   </div>
                 )}
 
-                <Input
-                  autoFocus
-                  size='large'
-                  style={{ height: 56, fontSize: 16, borderRadius: 14, background: '#1a1a1a' }}
-                  placeholder='Busque o artista no Spotify…'
-                  value={query}
-                  onChange={(e) => { setQuery(e.target.value); if (notice) setNotice(null); }}
-                  prefix={<SpotifyLottie size={24} style={{ marginRight: 4 }} />}
-                  disabled={!allowed || rlLoading}
-                />
-                {(searching || results.length > 0) && (
-                  <div className={styles.results}>
-                    {searching && <div style={{ textAlign: 'center', padding: 16 }}><Spin /></div>}
-                    {!searching && results.map((r) => (
-                      <button key={r.id} className={styles.resultItem} onClick={() => handleSelectSpotify(r)}>
-                        <img src={r.image || ARTISTS_DEFAULT_IMAGE} alt={r.name} />
-                        <div>
-                          <div style={{ color: '#fff', fontWeight: 600 }}>{r.name}</div>
-                          {r.followers != null && <div style={{ color: '#b3b3b3', fontSize: 12 }}>{r.followers.toLocaleString('pt-BR')} seguidores</div>}
+                {/* Modo busca no Spotify (padrão) */}
+                {!noSpotify && (
+                  <>
+                    <Input
+                      autoFocus
+                      size='large'
+                      style={{ height: 56, fontSize: 16, borderRadius: 14, background: '#1a1a1a' }}
+                      placeholder='Busque o artista no Spotify…'
+                      value={query}
+                      onChange={(e) => { setQuery(e.target.value); if (notice) setNotice(null); }}
+                      prefix={<SpotifyLottie size={24} style={{ marginRight: 4 }} />}
+                      disabled={!allowed || rlLoading}
+                    />
+                    {(searching || results.length > 0) && (
+                      <div className={styles.results}>
+                        {searching && <div style={{ textAlign: 'center', padding: 16 }}><Spin /></div>}
+                        {!searching && results.map((r) => (
+                          <button key={r.id} className={styles.resultItem} onClick={() => handleSelectSpotify(r)}>
+                            <img src={r.image || ARTISTS_DEFAULT_IMAGE} alt={r.name} />
+                            <div>
+                              <div style={{ color: '#fff', fontWeight: 600 }}>{r.name}</div>
+                              {r.followers != null && <div style={{ color: '#b3b3b3', fontSize: 12 }}>{r.followers.toLocaleString('pt-BR')} seguidores</div>}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {notice && (
+                      <div className={styles.dupeNotice}>
+                        <FiAlertCircle className={styles.dupeNoticeIcon} />
+                        <div className={styles.dupeNoticeText}>
+                          Você já tem <strong>{notice.name}</strong> nos seus perfis. Não dá pra criar de novo, mas você pode abrir o que já existe.
                         </div>
+                        <button className={styles.dupeNoticeBtn} onClick={() => navigate('/artists')}>Ver meus perfis</button>
+                      </div>
+                    )}
+
+                    {allowed && !rlLoading && (
+                      <button className={styles.linkBtn} onClick={chooseNoSpotify}>
+                        Ainda estou iniciando, não tenho perfil no Spotify
                       </button>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
 
-                {notice && (
-                  <div className={styles.dupeNotice}>
-                    <FiAlertCircle className={styles.dupeNoticeIcon} />
-                    <div className={styles.dupeNoticeText}>
-                      Você já tem <strong>{notice.name}</strong> nos seus perfis. Não dá pra criar de novo, mas você pode abrir o que já existe.
-                    </div>
-                    <button className={styles.dupeNoticeBtn} onClick={() => navigate('/artists')}>Ver meus perfis</button>
-                  </div>
+                {/* Modo sem Spotify: só o nome artístico */}
+                {noSpotify && (
+                  <>
+                    <Input
+                      autoFocus
+                      size='large'
+                      style={{ height: 56, fontSize: 16, borderRadius: 14, background: '#1a1a1a' }}
+                      placeholder='Seu nome artístico'
+                      value={manualName}
+                      onChange={(e) => setManualName(e.target.value)}
+                      onPressEnter={confirmManualName}
+                      disabled={!allowed || rlLoading}
+                    />
+                    <button
+                      disabled={!manualName.trim() || !allowed || rlLoading}
+                      onClick={confirmManualName}
+                      style={{
+                        marginTop: 12, width: '100%',
+                        background: 'linear-gradient(135deg, #af2896, #6d3bd1)',
+                        border: 'none', color: '#fff', padding: '14px 24px', borderRadius: 9999,
+                        fontWeight: 700, fontSize: 16, cursor: 'pointer',
+                        opacity: (!manualName.trim() || !allowed || rlLoading) ? 0.6 : 1,
+                      }}
+                    >
+                      Continuar
+                    </button>
+                    <button className={styles.linkBtn} onClick={backToSpotify}>
+                      Tenho Spotify, quero buscar
+                    </button>
+                  </>
                 )}
               </>
             )}
@@ -322,6 +393,7 @@ const ArtistCreate: FC = () => {
                   chartmetric={chartmetric}
                   artistName={chosen.current.name}
                   artistImage={chosen.current.image}
+                  noSpotify={!chosen.current.spotifyArtistId}
                   onContinue={goToUnlock}
                 />
               ) : (
