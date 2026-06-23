@@ -230,12 +230,13 @@ async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any):
       const v = Number(last?.value);
       return Number.isFinite(v) ? v : null;
     };
-    // audience-stats → engagement_rate. ⚠️ assume %; calibrar com dado real (pode vir como fração).
+    // audience-stats → engagement_rate. A Chartmetric devolve FRAÇÃO (0.0353 = 3,53%); o motor usa
+    // %, então ×100. (Confirmado com dado real do Pabllo Vittar: ig 0.3705 / yt 0.0353 / tt 0.2735.)
     const engRate = async (endpoint: string): Promise<number | null> => {
       const d = await getJson(`/api/artist/${cmId}/${endpoint}`);
       const o = d?.obj ?? d;
       const er = Number(o?.engagement_rate ?? (Array.isArray(o) ? o[0]?.engagement_rate : null));
-      return Number.isFinite(er) ? er : null;
+      return Number.isFinite(er) ? er * 100 : null;
     };
 
     await sleep(200); const yt_monthly_views = await statLatest("youtube_artist", "monthly_views");
@@ -248,14 +249,21 @@ async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any):
     const plData = await getJson(`/api/artist/${cmId}/spotify/current/playlists?limit=50`);
     const editorial_playlists = (() => {
       try {
-        const arr = Array.isArray(plData?.obj) ? plData.obj : Array.isArray(plData) ? plData : (plData?.obj?.data ?? []);
-        const ed = (Array.isArray(arr) ? arr : []).filter((p: any) => p?.editorial === true);
-        return new Set(ed.map((p: any) => p?.id ?? p?.playlist_id ?? JSON.stringify(p))).size;
+        // Shape real (ref. enrich): obj = [{ playlist: {id,name,editorial,...}, track }]. Conta as
+        // editoriais distintas (o editorial fica em item.playlist.editorial, não no item).
+        const arr = Array.isArray(plData?.obj) ? plData.obj : Array.isArray(plData) ? plData : [];
+        const ids = new Set<any>();
+        for (const item of (Array.isArray(arr) ? arr : [])) {
+          const pl = item?.playlist ?? item;
+          if (pl?.editorial) ids.add(pl.id ?? pl.playlist_id ?? pl.name);
+        }
+        return ids.size;
       } catch { return null; }
     })();
-    // Airplay de rádio (soma de plays). Shape complexo (tuplas por país) → soma defensiva.
+    // Airplay de rádio (soma de plays). `since` é OBRIGATÓRIO (sem ele → 400). Janela de 180 dias.
     await sleep(200);
-    const apData = await getJson(`/api/radio/artist/${cmId}/airplay-totals`);
+    const apSince = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10);
+    const apData = await getJson(`/api/radio/artist/${cmId}/airplay-totals?since=${apSince}`);
     const radio_airplay = (() => {
       try {
         const o = apData?.obj ?? apData;
