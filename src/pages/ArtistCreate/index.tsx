@@ -290,7 +290,7 @@ const ArtistCreate: FC = () => {
         ))}
       </div>
 
-      <div className={styles.step} key={`${step}-${quizIndex}`}>
+      <div className={`${styles.step} ${step === 'diagnostico' ? styles.stepWide : ''}`} key={`${step}-${quizIndex}`}>
         {step !== 'diagnostico' && (
           <p className={styles.line}>
             {typed}
@@ -299,7 +299,7 @@ const ArtistCreate: FC = () => {
         )}
 
         {(showInteraction || step === 'diagnostico') && (
-          <div className={styles.interaction}>
+          <div className={`${styles.interaction} ${step === 'diagnostico' ? styles.interactionWide : ''}`}>
             {/* PERFIL — Spotify obrigatório (o diagnóstico REAL precisa dos dados da API) */}
             {step === 'perfil' && (
               <>
@@ -463,7 +463,7 @@ const ArtistCreate: FC = () => {
 
             {/* ANALISANDO */}
             {step === 'analisando' && (
-              <div className={styles.analyzing}><Spin /> Analisando o perfil e cruzando os dados do quiz…</div>
+              <div className={styles.analyzing}><Spin size='large' /> Analisando o perfil e cruzando os dados do quiz…</div>
             )}
 
             {/* DIAGNÓSTICO (Índice REAL) */}

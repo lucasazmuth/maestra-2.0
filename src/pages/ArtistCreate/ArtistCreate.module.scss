@@ -158,6 +158,12 @@
   animation: acFadeUp 0.4s ease both;
 }
 
+// Diagnóstico precisa de largura cheia (o .realWrap tem o próprio max-width: 1080px + margin auto).
+// Sem isso, o card grid fica espremido em 520px e a responsividade quebra entre seções.
+.interactionWide {
+  max-width: none;
+}
+
 // ─── Campo de busca (limpo, estilo /welcome) ──────────────────────────────────
 .results {
   margin-top: 10px;
@@ -760,10 +766,15 @@
 
 .analyzing {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 16px;
   color: #b3b3b3;
   font-size: 15px;
+  text-align: center;
+  padding: 64px 0;
+  animation: acFadeUp 0.4s ease both;
 }
 
 .qrWrap { text-align: center; }
@@ -852,11 +863,11 @@
 // SEÇÃO 3 — 4 dimensões
 .dimGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  // auto-fit: 2 colunas quando há largura, 1 quando aperta — responsivo sem breakpoint fixo
+  // (resolve a inconsistência entre seções).
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 12px;
   margin-bottom: 28px;
-
-  @media (max-width: 480px) { grid-template-columns: 1fr; }
 }
 // Estado da dimensão → cor consistente (anel, status, nível, acento da frase).
 .stHigh { --st: #af2896; }
