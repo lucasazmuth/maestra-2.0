@@ -66,7 +66,8 @@ NUNCA chame create_strategy antes de passar por todos os passos e ter o aval do 
 - Nunca invente dados que não estão no contexto.
 
 ## Formato
-- Respostas concisas. Listas quando listar informações. Sem textos longos desnecessários.`;
+- Respostas concisas. Sem textos longos desnecessários.
+- SEMPRE que apresentar itens (objetivos, tarefas, opções, passos), use uma lista markdown NUMERADA: cada item numa linha própria começando com número e ponto ("1. ", "2. ", "3. " …). NUNCA liste itens como texto corrido nem como linhas soltas sem o número — o app depende disso pra renderizar a numeração que o artista lê.`;
 
 // Schemas das ferramentas SEM artist_id: o servidor é a única fonte desse valor.
 const NYTA_TOOLS = [
