@@ -1,8 +1,9 @@
 # Diagnóstico REAL v2 — Pontos para a Anita decidir
 
 **Para:** Anita Carvalho · **De:** time de produto/dev · **Data:** jun/2026
-**Atualização:** suas respostas foram aplicadas e validadas com dados reais (Liniker, Marina, Luísa
-Sonza). Resumo das aplicações + 1 ponto novo no fim ("Parte 5").
+**Atualização (rodada 2 APLICADA):** todas as suas respostas das rodadas 1 e 2 estão no ar (edge v24) e
+validadas com dados reais. Inclui o **híbrido shows×cachê** no E, **playlists >10**, e o **TikTok views
+descartado** (acumulado, não fluxo — sua decisão). Histórico abaixo; nada pendente do seu lado.
 
 O motor REAL v2 (do seu doc *Motor REAL Consolidado*) já está **no ar e funcionando** — testado com
 artistas reais. Este documento lista só o que **falta você decidir/calibrar**. Cada ponto tem o que
