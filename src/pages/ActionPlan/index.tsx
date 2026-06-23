@@ -50,6 +50,7 @@ const ActionPlan: FC = () => {
 
   // openId === undefined → a estratégia em foco fica aberta sozinha; clicar abre outra.
   const [openId, setOpenId] = useState<string | undefined>(undefined);
+  const [showExtra, setShowExtra] = useState(false); // "Mais estratégias": revela as sem tarefa
   const [, setSaving] = useState(false);
   const [composer, setComposer] = useState<string | null>(null);
   const [sugg, setSugg] = useState<Record<string, SuggTask[]>>({});
@@ -236,7 +237,13 @@ const ActionPlan: FC = () => {
   });
   const totalTasks = info.reduce((a, p) => a + p.total, 0);
   const doneTasks = info.reduce((a, p) => a + p.done, 0);
-  const focusIdx = info.findIndex((p) => !p.complete); // -1 = todas as estratégias concluídas
+  // Por padrão mostra só as estratégias que o artista PRIORIZOU (geraram tarefa). As demais (sem
+  // tarefa) ficam atrás do botão "Mais estratégias" pra não misturar e confundir.
+  const withTasks = info.filter((p) => p.total > 0);
+  const extra = info.filter((p) => p.total === 0);
+  const hasFilter = withTasks.length > 0 && extra.length > 0;
+  const displayed = !hasFilter ? info : showExtra ? [...withTasks, ...extra] : withTasks;
+  const focusIdx = displayed.findIndex((p) => p.total > 0 && !p.complete); // -1 = todas concluídas
 
   // Contagem no formato do PhaseCard (mesma fonte do Dashboard) — barra de progresso + avançar de fase.
   const allTasks = ranked.flatMap((s) => (s.tasks || []).filter(isActive));
@@ -282,9 +289,16 @@ const ActionPlan: FC = () => {
       ) : (
       <>
       {/* ESTRATÉGIAS — em ordem de prioridade (a "etapa atual" do artista) */}
-      <h2 className="ap-section-title">Estratégias por prioridade</h2>
-      <div className="ap-strats">
-        {info.map((p, idx) => {
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <h2 className="ap-section-title" style={{ margin: 0 }}>Estratégias por prioridade</h2>
+        {hasFilter && (
+          <button className="ap-btn ap-btn--ghost" onClick={() => setShowExtra((v) => !v)}>
+            {showExtra ? 'Mostrar menos' : `Mais estratégias (${extra.length})`}
+          </button>
+        )}
+      </div>
+      <div className="ap-strats" style={{ marginTop: 16 }}>
+        {displayed.map((p, idx) => {
           const s = p.s;
           const state = p.complete ? 'done' : idx === focusIdx ? 'current' : 'next';
           const isOpen = openId === undefined ? state === 'current' : openId === s.id;
