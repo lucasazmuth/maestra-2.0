@@ -2,6 +2,7 @@ import { FC, ReactNode } from 'react';
 import { FiX } from 'react-icons/fi';
 
 import { STEP_LABELS } from './chat/script';
+import { stripEmDash } from './clean';
 import type { ArtistContent } from '../../interfaces/maestra';
 
 // Coluna lateral de resultados do Planejamento Estratégico: lista limpa do que já foi produzido
@@ -41,16 +42,16 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
       return rows.length ? <Meta rows={rows} /> : null;
     }
     case 1: // Visão
-      return id.vision ? <p className='wiz-art-text'>{id.vision}</p> : null;
+      return id.vision ? <p className='wiz-art-text'>{stripEmDash(id.vision)}</p> : null;
     case 2: // Missão
-      return id.mission ? <p className='wiz-art-text'>{id.mission}</p> : null;
+      return id.mission ? <p className='wiz-art-text'>{stripEmDash(id.mission)}</p> : null;
     case 3: // Valores
       return id.values?.length ? <div className='wiz-art-text'>{id.values.join(' · ')}</div> : null;
     case 4: // Objetivos
       return d.objectives?.length ? (
         <ol className='wiz-art-list'>
           {d.objectives.map((o, k) => (
-            <li key={k}>{o}</li>
+            <li key={k}>{stripEmDash(o)}</li>
           ))}
         </ol>
       ) : null;
@@ -68,7 +69,7 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
       return d.strategies?.length ? (
         <ol className='wiz-art-list'>
           {d.strategies.slice(0, 6).map((s) => (
-            <li key={s.id}>{s.title}</li>
+            <li key={s.id}>{stripEmDash(s.title)}</li>
           ))}
           {d.strategies.length > 6 && <li className='wiz-art-muted'>+{d.strategies.length - 6}</li>}
         </ol>
@@ -82,7 +83,7 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
         <>
           <ol className='wiz-art-list'>
             {top.map((s) => (
-              <li key={s.id}>{s.title}</li>
+              <li key={s.id}>{stripEmDash(s.title)}</li>
             ))}
           </ol>
           {withTasks > 0 && <div className='wiz-art-muted'>{withTasks} no plano de ação</div>}

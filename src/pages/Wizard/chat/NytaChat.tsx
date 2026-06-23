@@ -600,6 +600,8 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
         return (
           <SwotChecklist
             items={SWOT_OPPORTUNITIES}
+            title='Oportunidades'
+            accent='#3b82f6'
             confirmLabel='Continuar'
             onConfirm={(ids) => {
               pushUser(`${ids.length} oportunidade${ids.length === 1 ? '' : 's'} marcada${ids.length === 1 ? '' : 's'}`);
@@ -612,6 +614,8 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
         return (
           <SwotChecklist
             items={SWOT_THREATS}
+            title='Ameaças'
+            accent='#f59e0b'
             confirmLabel='Concluir diagnóstico'
             onConfirm={(ids) => {
               pushUser(`${ids.length} ameaça${ids.length === 1 ? '' : 's'} marcada${ids.length === 1 ? '' : 's'}`);

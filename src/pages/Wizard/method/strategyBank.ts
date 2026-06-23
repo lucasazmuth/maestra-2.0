@@ -441,7 +441,7 @@ export const STRATEGY_BANK: BankStrategy[] = [
     id: '26',
     order: 12,
     category: 'Gestão comercial / Venda de shows',
-    title: 'Estruturar a venda de shows: identificar o tipo de cliente ideal, preparar material de venda específico, ativar prospecção estruturada com metas e acompanhamento, e criar fluxo de atendimento (pré e pós-venda) — seja por conta própria ou via parceria com booker / agente comercial',
+    title: 'Estruturar a venda de shows: identificar o tipo de cliente ideal, preparar material de venda específico, ativar prospecção estruturada com metas e acompanhamento, e criar fluxo de atendimento (pré e pós-venda), seja por conta própria ou via parceria com booker / agente comercial',
     tasks: [
       'Definir o tipo de cliente ideal para o seu show',
       'Listar os tipos de contratante (casas, prefeituras, corporativo, particular)',
