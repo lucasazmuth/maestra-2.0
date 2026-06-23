@@ -324,11 +324,11 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       const d = draftRef.current;
       const id = d.identity || {};
       if (action === 'assembleVision') {
-        // [região] derivada da cidade (a pergunta de alcance geográfico foi removida na v2).
-        const vpVision = {
-          ...(id.visionParts || {}),
-          onde: id.city ? `em ${id.city} e região` : id.visionParts?.onde,
-        };
+        // `onde` = ALCANCE que o artista escolheu na pergunta "até onde quer chegar" (cidade/
+        // capitais/nacional/nicho_intl/internacional). O edge resolve 'cidade' → cidade de ORIGEM
+        // (id.city); os demais → alcance maior. NUNCA sobrescrever com id.city: a cidade é a origem
+        // (de onde parte), não o alcance. (Bug antigo: forçava a cidade mesmo com alcance nacional.)
+        const vpVision = id.visionParts || {};
         const text = await wizardAi.assembleVision(id, vpVision, id.recognitionTags || []);
         patch = { identity: { ...id, vision: text } };
       } else if (action === 'assembleMission') {
