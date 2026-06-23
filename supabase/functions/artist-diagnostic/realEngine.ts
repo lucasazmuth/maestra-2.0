@@ -151,6 +151,9 @@ export const CUTS = {
     cnpj: { pf: 0.0, mei: 0.6, ltda: 1.0 },                     // [SPEC]
     empresario: { nao: 0.0, proprio: 0.3, parente: 0.7, mercado: 1.0 }, // [SPEC]
     investHealthyRatio: 0.30, // [SPEC-ish] reinvestir até ~30% do faturamento = saudável
+    // [SPEC-intent] "Fonte não-musical derruba o E mesmo com faturamento alto" (mede: a MÚSICA
+    // sustenta?). Teto que impede o E de acender quando a renda principal é fora da música.
+    naoMusicalCap: 0.69,
   },
   // ── Boletim 0–100 ──
   boletim: { zLo: -2, zHi: 2.5 }, // [PROPOSTA] z∈[-2,2.5] → 0–100 linear
@@ -285,7 +288,10 @@ export function computeRealIndexV2(input: RealInputsV2): RealIndexV2 {
   const s4 = CUTS.e.cnpj[input.cnpj] ?? 0;
   const s5 = CUTS.e.empresario[input.empresario] ?? 0;
   const w = CUTS.e.weights;
-  const eScore = w.faturamento * s1 + w.fonte * s2 + w.investimento * s3 + w.cnpj * s4 + w.empresario * s5;
+  const eRaw = w.faturamento * s1 + w.fonte * s2 + w.investimento * s3 + w.cnpj * s4 + w.empresario * s5;
+  // Fonte não-musical "derruba" o E: o E mede se a MÚSICA sustenta, então mesmo com estrutura alta
+  // (LTDA, empresário, investimento) ele não acende quando a renda principal vem de fora da música.
+  const eScore = input.fonteRenda === 'nao_musical' ? Math.min(eRaw, CUTS.e.naoMusicalCap) : eRaw;
   const eHigh = eScore >= CUTS.e.highFrom;
   const eSignals = [
     { key: 'faturamento', label: 'Faturamento mensal', score: round2(s1), weight: w.faturamento },
