@@ -2,7 +2,7 @@ import { FC, ReactNode } from 'react';
 
 import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
 import type { RealIndex } from '../../interfaces/maestra';
-import type { Chartmetric } from './DiagnosticReport';
+import { v2InputsView, type Chartmetric } from './DiagnosticReport';
 import { DIM_META, DIM_PHRASE, PROFILE_MAP, clean, fmtNum } from './realCopy';
 import styles from './ArtistCreate.module.scss';
 
@@ -29,7 +29,11 @@ const Page: FC<{ n: number; total: number; kicker?: string; children: ReactNode 
 
 // Documento de apresentação (deck multipágina) do diagnóstico REAL — capturado em PDF.
 export const DiagnosticDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => {
-  const { profile, pattern, inputs, earningsUnknown } = realIndex;
+  const riAny = realIndex as any;
+  const isV2 = riAny.version === 2;
+  const { profile, pattern } = realIndex;
+  const earningsUnknown: boolean = isV2 ? false : riAny.earningsUnknown;
+  const inputs = isV2 ? v2InputsView(riAny.inputs) : riAny.inputs;
   const cities = chartmetric?.top_cities;
   const countries = chartmetric?.audience?.top_countries;
   const playlists = chartmetric?.playlists;
@@ -49,8 +53,8 @@ export const DiagnosticDoc: FC<Props> = ({ realIndex, chartmetric, artistName, a
     ],
     e: [{ label: 'Faturamento mensal', value: earningsUnknown ? 'Não informado' : inputs.faturamento }],
     a: [
-      { label: 'Shows pagos (12m)', value: inputs.shows_pagos },
-      { label: 'Maior público', value: inputs.maior_publico },
+      { label: isV2 ? 'Shows por mês' : 'Shows pagos (12m)', value: inputs.shows_pagos },
+      { label: isV2 ? 'Público médio/show' : 'Maior público', value: inputs.maior_publico },
       { label: 'Seguidores Spotify', value: inputs.sp_followers != null ? fmtNum(inputs.sp_followers) : '–' },
     ],
     l: [

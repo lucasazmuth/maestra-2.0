@@ -142,11 +142,35 @@ interface Props {
   showPlanningCta?: boolean;
 }
 
+// Rótulos dos níveis de prêmios/imprensa do motor v2 (índice → texto p/ a exibição).
+const PREMIO_LABELS = ['Nunca fui indicada nem premiada', 'Já fui indicada (sem ganhar)', 'Prêmio local/regional', 'Prêmio nacional', 'Prêmio internacional'];
+const IMPRENSA_LABELS = ['Nunca apareci na mídia', 'Repercussão local/regional', 'Repercussão nacional', 'Repercussão internacional'];
+const fmtBRL = (n: number) => (Number.isFinite(n) ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : '—');
+
+// Normaliza os `inputs` do motor v2 (números/enums) para o shape que a tela já consome (v1).
+// Reutilizado pelo PDF (DiagnosticDoc). eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const v2InputsView = (ri: any) => ({
+  monthly_listeners: ri?.spotifyListeners ?? null,
+  sp_followers: ri?.spotifyFollowers ?? null,
+  social: { instagram: ri?.igFollowers ?? null, tiktok: ri?.tiktokFollowers ?? null, youtube: ri?.youtubeMonthlyViews ?? null },
+  faturamento: fmtBRL(Number(ri?.faturamento ?? 0)),
+  shows_pagos: String(ri?.showsPerMonth ?? 0),
+  maior_publico: String(ri?.avgAudience ?? 0),
+  premios: PREMIO_LABELS[ri?.premios] ?? '—',
+  imprensa: IMPRENSA_LABELS[ri?.imprensa] ?? '—',
+});
+
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
-// Determinística: consome o realIndex calculado no backend (sem IA).
+// Determinística: consome o realIndex calculado no backend (sem IA). Suporta v1 (antigo) e v2.
 export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true }) => {
   const [methodOpen, setMethodOpen] = useState(false);
-  const { profile, pattern, inputs, earningsUnknown } = realIndex;
+  // v2 (motor REAL Consolidado) tem `version: 2` + `boletim`; v1 mantém o shape antigo.
+  const riAny = realIndex as any;
+  const isV2 = riAny.version === 2;
+  const { profile, pattern } = realIndex;
+  const boletim: Record<'r' | 'e' | 'a' | 'l', number> | null = isV2 ? riAny.boletim : null;
+  const earningsUnknown: boolean = isV2 ? false : riAny.earningsUnknown;
+  const inputs = isV2 ? v2InputsView(riAny.inputs) : riAny.inputs;
   const name = artistName || 'seu artista';
   const cities = chartmetric?.top_cities;
 
@@ -239,8 +263,8 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
     ],
     e: [{ label: 'Faturamento mensal médio', value: earningsUnknown ? 'Não informado' : inputs.faturamento }],
     a: [
-      { label: 'Shows pagos (12 meses)', value: inputs.shows_pagos },
-      { label: 'Maior público ao vivo', value: inputs.maior_publico },
+      { label: isV2 ? 'Shows por mês' : 'Shows pagos (12 meses)', value: inputs.shows_pagos },
+      { label: isV2 ? 'Público médio por show' : 'Maior público ao vivo', value: inputs.maior_publico },
       { label: 'Seguidores no Spotify', num: inputs.sp_followers ?? null },
     ],
     l: [
@@ -327,10 +351,10 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
                   <div className={styles.dimTitle}>{title}</div>
                   <div className={styles.dimSub}>{sub}</div>
                 </div>
-                <span className={styles.dimStatus}>{neutral ? 'Não informado' : high ? 'Alto' : 'Baixo'}</span>
+                <span className={styles.dimStatus}>{neutral ? 'Não informado' : high ? 'Alto' : 'Baixo'}{isV2 && boletim ? ` · ${boletim[d.key]}/100` : ''}</span>
               </div>
               <div className={styles.dimLevel}>
-                <div className={styles.dimLevelFill} style={{ width: high && !neutral ? '100%' : '34%' }} />
+                <div className={styles.dimLevelFill} style={{ width: isV2 && boletim ? `${boletim[d.key]}%` : (high && !neutral ? '100%' : '34%') }} />
               </div>
               <div className={styles.dimStats}>
                 {dataLines[d.key].map((l) => (

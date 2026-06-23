@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { logChartmetricCall } from "./chartmetric-log.ts";
+import { computeRealIndexV2, type RealInputsV2 } from "./realEngine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -125,6 +126,41 @@ function buildDiagnostic(ri: any, cm: any): Record<string, unknown> {
 
 const fmtNum = (n: number) => (n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1).replace(".", ",")} mi` : n >= 1000 ? `${Math.round(n / 1000)} mil` : String(n));
 
+// Monta o RealInputsV2 do motor a partir das respostas (quizV2) + resumo Chartmetric.
+// Campos de API ainda não buscados (vídeo, Deezer, engajamento, playlists, airplay) vão como null
+// → o motor os trata como ausência de sub-item (Fase C completa: licença + endpoints extras).
+// deno-lint-ignore no-explicit-any
+function buildRealInputsV2(qz: any, cm: any, spotifyConnected: boolean): RealInputsV2 {
+  const mp = cm?.multiplatform ?? {};
+  const n = (v: any) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
+  const num0 = (v: any) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
+  const oneOf = <T extends string>(v: any, allowed: T[], fallback: T): T => (allowed.includes(v) ? v : fallback);
+  return {
+    spotifyConnected,
+    spotifyListeners: n(cm?.monthly_listeners),
+    igFollowers: n(mp.instagram),
+    tiktokFollowers: n(mp.tiktok),
+    youtubeMonthlyViews: null,
+    tiktokVideoViews: null,
+    spotifyFollowers: n(cm?.sp_followers),
+    deezerFans: null,
+    igEngagement: null,
+    youtubeEngagement: null,
+    tiktokEngagement: null,
+    editorialPlaylists: null,
+    radioAirplay: null,
+    showsPerMonth: Math.max(0, Math.round(num0(qz?.showsPerMonth))),
+    avgAudience: Math.max(0, Math.round(num0(qz?.avgAudience))),
+    faturamento: Math.max(0, num0(qz?.faturamento)),
+    fonteRenda: oneOf(qz?.fonteRenda, ["musical", "nao_musical"], "musical"),
+    investimento: Math.max(0, num0(qz?.investimento)),
+    cnpj: oneOf(qz?.cnpj, ["pf", "mei", "ltda"], "pf"),
+    empresario: oneOf(qz?.empresario, ["nao", "proprio", "parente", "mercado"], "nao"),
+    premios: Math.max(0, Math.min(4, Math.round(num0(qz?.premios)))),
+    imprensa: Math.max(0, Math.min(3, Math.round(num0(qz?.imprensa)))),
+  };
+}
+
 // Busca resumo básico do Chartmetric (get-ids + meta). Loga cada chamada (custo de crédito).
 // O artista ainda não existe aqui, então artist_id no log fica null.
 // deno-lint-ignore no-explicit-any
@@ -196,7 +232,7 @@ serve(async (req) => {
     if (userErr || !user) return json({ error: "Não autorizado" }, 401);
 
     const body = await req.json();
-    const { name, spotifyArtistId, spotify, quiz } = body;
+    const { name, spotifyArtistId, spotify, quizV2 } = body;
     if (!name || typeof name !== "string" || name.trim().length < 1) return json({ error: "name é obrigatório" }, 400);
     const artistName = name.trim();
     const spotifyId = (spotifyArtistId && typeof spotifyArtistId === "string") ? spotifyArtistId : null;
@@ -258,12 +294,13 @@ serve(async (req) => {
     // de dados de API como z mínimo (opção B) → tende a Beginner / R·A baixos, refletindo que a
     // carreira digital ainda não começou. Com Spotify, puxa o resumo da Chartmetric normalmente.
     const chartmetric = spotifyId ? await chartmetricSummary(spotifyId, supabaseAdmin) : null;
-    const realIndex = computeRealIndex(quiz || {}, chartmetric || {});
+    const realInputs = buildRealInputsV2(quizV2 || {}, chartmetric, !!spotifyId);
+    const realIndex = computeRealIndexV2(realInputs);
     const diagnostic = buildDiagnostic(realIndex, chartmetric || {});
 
     const nowIso = new Date().toISOString();
     const content: Record<string, unknown> = {
-      realIndex, diagnostic, quizDiagnostic: { answers: quiz || {}, completedAt: nowIso },
+      realIndex, diagnostic, quizDiagnostic: { answers: quizV2 || {}, completedAt: nowIso },
     };
     if (chartmetric) content.chartmetricProfile = chartmetric;
     if (spotifyId) {

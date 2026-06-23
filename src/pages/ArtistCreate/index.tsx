@@ -1,6 +1,6 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, Spin } from 'antd';
+import { Input, InputNumber, Spin } from 'antd';
 import { FiAlertCircle } from 'react-icons/fi';
 import { useDebounce } from 'use-debounce';
 
@@ -22,14 +22,55 @@ type Step = 'perfil' | 'quiz' | 'analisando' | 'diagnostico';
 const REDUCE_MOTION =
   typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-// Quiz do Índice REAL (5 perguntas de autorrelato). As OPÇÕES são os buckets das
-// tabelas de z-score do backend — devem casar exatamente com as chaves em artist-diagnostic.
-const QUIZ: { key: string; q: (n: string) => string; options: string[] }[] = [
-  { key: 'faturamento', q: () => 'Qual seu faturamento bruto mensal médio com música? (média dos últimos 12 meses, incluindo o digital)', options: ['Não faturei', 'Menos de R$ 1.000', 'R$ 1.000 a R$ 5.000', 'R$ 5.000 a R$ 10.000', 'R$ 10.000 a R$ 20.000', 'R$ 20.000 a R$ 50.000', 'Acima de R$ 50.000', 'Não sei'] },
-  { key: 'shows_pagos', q: () => 'Quantos shows pagos você realizou nos últimos 12 meses?', options: ['Nenhum', '1 a 5', '6 a 15', '16 a 30', '31 a 60', 'Mais de 60'] },
-  { key: 'maior_publico', q: () => 'Qual o maior público para o qual você já se apresentou?', options: ['Nunca me apresentei', 'Até 100', '100 a 500', '500 a 2.000', '2.000 a 10.000', 'Mais de 10.000'] },
-  { key: 'premios', q: () => 'Qual o maior reconhecimento em premiações que você já teve?', options: ['Nunca tive indicação nem prêmio', 'Já tive indicação, sem ganhar', 'Ganhei prêmio nacional', 'Ganhei prêmio internacional'] },
-  { key: 'imprensa', q: () => 'Qual o maior alcance de mídia (imprensa, rádio, TV) que o seu trabalho já teve?', options: ['Nunca apareci na mídia', 'Repercussão em mídia local/regional', 'Repercussão em mídia nacional', 'Repercussão em mídia internacional'] },
+// Roteiro do Diagnóstico REAL v2 (autorrelato). As chaves casam com os campos de RealInputsV2
+// consumidos pelo motor (src/services/realEngine). Campos abertos (inteiro/monetário) + selects
+// cujos `value` já são os enums/níveis que o motor espera.
+type QuizFieldType = 'int' | 'currency' | 'select';
+interface QuizDef {
+  key: 'showsPerMonth' | 'avgAudience' | 'faturamento' | 'fonteRenda' | 'investimento' | 'cnpj' | 'empresario' | 'premios' | 'imprensa';
+  q: string;
+  type: QuizFieldType;
+  placeholder?: string;
+  options?: { label: string; value: string | number }[];
+}
+const QUIZ: QuizDef[] = [
+  { key: 'showsPerMonth', type: 'int', q: 'Quantos shows você costuma fazer por mês?', placeholder: 'Ex: 4' },
+  { key: 'avgAudience', type: 'int', q: 'Qual o público médio dos seus shows?', placeholder: 'Ex: 300' },
+  { key: 'faturamento', type: 'currency', q: 'Qual seu faturamento bruto mensal médio com música? (média dos últimos 12 meses, incluindo shows)', placeholder: 'R$ 0' },
+  { key: 'fonteRenda', type: 'select', q: 'Qual é a sua principal fonte de renda hoje?', options: [
+    { label: 'Shows', value: 'musical' },
+    { label: 'Publicidade / patrocínio', value: 'musical' },
+    { label: 'Venda de produtos', value: 'musical' },
+    { label: 'Direitos (autorais, conexos, fonográficos)', value: 'musical' },
+    { label: 'Editais', value: 'musical' },
+    { label: 'Aulas e cursos', value: 'musical' },
+    { label: 'Uma fonte fora da música', value: 'nao_musical' },
+  ] },
+  { key: 'investimento', type: 'currency', q: 'Nos últimos 12 meses, quanto você investiu na sua carreira?', placeholder: 'R$ 0' },
+  { key: 'cnpj', type: 'select', q: 'Você tem CNPJ para suas atividades musicais?', options: [
+    { label: 'Não, atuo como pessoa física', value: 'pf' },
+    { label: 'Sim, MEI', value: 'mei' },
+    { label: 'Sim, outra modalidade (LTDA, EIRELI…)', value: 'ltda' },
+  ] },
+  { key: 'empresario', type: 'select', q: 'Você tem empresário/a?', options: [
+    { label: 'Não tenho', value: 'nao' },
+    { label: 'Eu mesma cumpro esse papel', value: 'proprio' },
+    { label: 'Sim, alguém da família ou de amizade', value: 'parente' },
+    { label: 'Sim, um profissional do mercado', value: 'mercado' },
+  ] },
+  { key: 'premios', type: 'select', q: 'Qual o maior reconhecimento em premiações que você já teve?', options: [
+    { label: 'Nunca fui indicada nem premiada', value: 0 },
+    { label: 'Já fui indicada (sem ganhar)', value: 1 },
+    { label: 'Já ganhei prêmio local/regional', value: 2 },
+    { label: 'Já ganhei prêmio nacional', value: 3 },
+    { label: 'Já ganhei prêmio internacional', value: 4 },
+  ] },
+  { key: 'imprensa', type: 'select', q: 'Qual o maior alcance de imprensa e TV que o seu trabalho já teve?', options: [
+    { label: 'Nunca apareci na mídia', value: 0 },
+    { label: 'Repercussão local/regional', value: 1 },
+    { label: 'Repercussão nacional', value: 2 },
+    { label: 'Repercussão internacional', value: 3 },
+  ] },
 ];
 
 const STEP_INDEX: Record<Step, number> = {
@@ -63,7 +104,11 @@ const ArtistCreate: FC = () => {
 
   // Quiz
   const [quizIndex, setQuizIndex] = useState(0);
-  const answers = useRef<Record<string, string>>({});
+  const answers = useRef<Record<string, string | number>>({});
+  const [fieldVal, setFieldVal] = useState<number | null>(null); // valor do campo aberto atual
+
+  // Zera o campo aberto ao trocar de pergunta.
+  useEffect(() => { setFieldVal(null); }, [quizIndex, step]);
 
   // Diagnóstico (Índice REAL)
   const [realIndex, setRealIndex] = useState<RealIndex | null>(null);
@@ -125,7 +170,7 @@ const ArtistCreate: FC = () => {
             name: chosen.current.name,
             spotifyArtistId: chosen.current.spotifyArtistId,
             spotify: { followers: chosen.current.followers, image: chosen.current.image },
-            quiz: answers.current,
+            quizV2: answers.current,
           },
         });
         if (error) throw error;
@@ -156,7 +201,7 @@ const ArtistCreate: FC = () => {
     chosen.current = { name, spotifyArtistId, followers, image };
     setQuizIndex(0);
     setStep('quiz');
-    say(QUIZ[0].q(name));
+    say(QUIZ[0].q);
   };
 
   const handleSelectSpotify = async (r: SpotifyArtistSearchResult) => {
@@ -204,12 +249,12 @@ const ArtistCreate: FC = () => {
     startQuiz(n, null, null, null);
   };
 
-  const answerQuiz = (option: string) => {
-    answers.current[QUIZ[quizIndex].key] = option;
+  const answerQuiz = (value: string | number) => {
+    answers.current[QUIZ[quizIndex].key] = value;
     if (quizIndex + 1 < QUIZ.length) {
       const next = quizIndex + 1;
       setQuizIndex(next);
-      say(QUIZ[next].q(chosen.current.name));
+      say(QUIZ[next].q);
     } else {
       setStep('analisando');
       say(`Deixa eu cruzar esses dados e montar um diagnóstico de ${chosen.current.name}…`);
@@ -373,11 +418,47 @@ const ArtistCreate: FC = () => {
 
             {/* QUIZ */}
             {step === 'quiz' && (
-              <div className={styles.options}>
-                {QUIZ[quizIndex].options.map((o) => (
-                  <button key={o} className={styles.option} onClick={() => answerQuiz(o)}>{o}</button>
-                ))}
-              </div>
+              QUIZ[quizIndex].type === 'select' ? (
+                <div className={styles.options}>
+                  {QUIZ[quizIndex].options!.map((o) => (
+                    <button key={o.label} className={styles.option} onClick={() => answerQuiz(o.value)}>{o.label}</button>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <InputNumber
+                    autoFocus
+                    size='large'
+                    min={0}
+                    precision={0}
+                    controls={false}
+                    style={{ width: '100%', height: 56, fontSize: 16, borderRadius: 14, background: '#1a1a1a', display: 'flex', alignItems: 'center' }}
+                    value={fieldVal}
+                    onChange={(v) => setFieldVal((v as number | null) ?? null)}
+                    placeholder={QUIZ[quizIndex].placeholder}
+                    onPressEnter={() => { if (fieldVal != null) answerQuiz(fieldVal); }}
+                    {...(QUIZ[quizIndex].type === 'currency'
+                      ? {
+                          prefix: 'R$',
+                          formatter: (val?: string | number) => `${val ?? ''}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
+                          parser: ((val?: string) => (val ? Number(val.replace(/\D/g, '')) : 0)) as any,
+                        }
+                      : {})}
+                  />
+                  <button
+                    disabled={fieldVal == null}
+                    onClick={() => { if (fieldVal != null) answerQuiz(fieldVal); }}
+                    style={{
+                      marginTop: 12, width: '100%',
+                      background: 'linear-gradient(135deg, #af2896, #6d3bd1)',
+                      border: 'none', color: '#fff', padding: '14px 24px', borderRadius: 9999,
+                      fontWeight: 700, fontSize: 16, cursor: 'pointer', opacity: fieldVal == null ? 0.6 : 1,
+                    }}
+                  >
+                    Continuar
+                  </button>
+                </div>
+              )
             )}
 
             {/* ANALISANDO */}
