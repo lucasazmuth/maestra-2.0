@@ -66,7 +66,13 @@ function buildRealInputsV2(qz: any, cm: any, spotifyConnected: boolean): RealInp
 // Busca resumo do Chartmetric (get-ids + meta + 6 campos extras do motor v2). Loga cada chamada.
 // O artista ainda não existe aqui, então artist_id no log fica null.
 // deno-lint-ignore no-explicit-any
-async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any): Promise<Record<string, unknown> | null> {
+// rawSink (opcional): acumula o JSON CRU de cada chamada {endpoint, payload}. O handler persiste
+// isso em artist_chartmetric_raw depois de criar o artista — nada se perde e não re-busca (Nyta).
+async function chartmetricSummary(
+  spotifyArtistId: string,
+  supabaseAdmin?: any,
+  rawSink?: Array<{ endpoint: string; payload: unknown }>,
+): Promise<Record<string, unknown> | null> {
   if (!CHARTMETRIC_REFRESH_TOKEN) return null;
   const log = (endpoint: string, ok: boolean, status: number | null, started: number) => {
     if (supabaseAdmin) {
@@ -87,7 +93,9 @@ async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any):
     const idsRes = await fetch(`https://api.chartmetric.com/api/artist/spotify/${spotifyArtistId}/get-ids`, auth);
     log(`/api/artist/spotify/${spotifyArtistId}/get-ids`, idsRes.ok, idsRes.status, t0);
     if (!idsRes.ok) return null;
-    const idsObj = (await idsRes.json())?.obj;
+    const idsJson = await idsRes.json();
+    rawSink?.push({ endpoint: `/api/artist/spotify/:id/get-ids`, payload: idsJson });
+    const idsObj = idsJson?.obj;
     const row = Array.isArray(idsObj) ? idsObj[0] : idsObj;
     const cmId = row?.cm_artist ?? row?.chartmetric_id ?? null;
     if (!cmId) return null;
@@ -95,7 +103,9 @@ async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any):
     const metaRes = await fetch(`https://api.chartmetric.com/api/artist/${cmId}`, auth);
     log(`/api/artist/${cmId}`, metaRes.ok, metaRes.status, t0);
     if (!metaRes.ok) return { cm_artist_id: cmId, fetched_at: new Date().toISOString() };
-    const meta = (await metaRes.json())?.obj ?? {};
+    const metaJson = await metaRes.json();
+    rawSink?.push({ endpoint: `/api/artist/:id`, payload: metaJson });
+    const meta = metaJson?.obj ?? {};
     const cms = meta.cm_statistics ?? {};
     const num = (v: any) => (v == null || v === "" ? null : Number(v));
     const cities = (cms.sp_where_people_listen ?? []).slice(0, 5).map((c: any) => ({ name: c.name, country: c.code2, listeners: c.listeners }));
@@ -117,7 +127,9 @@ async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any):
       try {
         const r = await fetch(`https://api.chartmetric.com${path}`, auth);
         log(tmpl(path.split("?")[0]), r.ok, r.status, t);
-        return r.ok ? await r.json() : null;
+        const body = r.ok ? await r.json() : null;
+        if (body != null) rawSink?.push({ endpoint: tmpl(path.split("?")[0]), payload: body });
+        return body;
       } catch { log(tmpl(path.split("?")[0]), false, null, t); return null; }
     };
     const statLatest = async (source: string, field: string): Promise<number | null> => {
@@ -156,6 +168,37 @@ async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any):
         return ids.size;
       } catch { return null; }
     })();
+    // Resumo de playlists (top 10 por seguidores) — MESMO parser do enrich, a partir do plData que
+    // já buscamos (sem chamada extra). Assim a seção "Sua presença nas plataformas" já aparece na
+    // entrega do diagnóstico grátis; o enrich (pós-pago) refresca + soma similar/países.
+    const playlists = (() => {
+      try {
+        const arr = Array.isArray(plData?.obj) ? plData.obj : Array.isArray(plData) ? plData : [];
+        const byId = new Map<any, any>();
+        for (const item of (Array.isArray(arr) ? arr : [])) {
+          const pl = item?.playlist;
+          if (!pl?.name) continue;
+          const id = pl.id ?? pl.playlist_id ?? pl.name;
+          if (!byId.has(id)) byId.set(id, { name: pl.name, followers: Number(pl.followers) || 0, curator: pl.curator_name ?? pl.owner_name ?? null, editorial: !!pl.editorial });
+        }
+        const top = [...byId.values()].sort((a, b) => b.followers - a.followers).slice(0, 10);
+        return top.length ? { count: byId.size, reach: top.reduce((s, p) => s + p.followers, 0), top } : null;
+      } catch { return null; }
+    })();
+    // Artistas de referência (neighboring) — +1 chamada, mas o dado entra já no diagnóstico grátis
+    // (decisão: "já temos o dado, então exibir"). O enrich pós-pago refresca pelo mesmo endpoint.
+    await sleep(200);
+    const nbData = await getJson(`/api/artist/${cmId}/neighboring-artists?limit=12`);
+    const similar = (() => {
+      try {
+        const arr = Array.isArray(nbData?.obj) ? nbData.obj : Array.isArray(nbData) ? nbData : [];
+        const list = (Array.isArray(arr) ? arr : [])
+          .map((a: any) => ({ name: a?.name, image: a?.image_url ?? null }))
+          .filter((a: any) => a.name)
+          .slice(0, 12);
+        return list.length ? list : null;
+      } catch { return null; }
+    })();
     // Airplay de rádio (soma de plays). `since` é OBRIGATÓRIO (sem ele → 400). Janela de 180 dias.
     await sleep(200);
     const apSince = new Date(Date.now() - 180 * 864e5).toISOString().slice(0, 10);
@@ -182,6 +225,7 @@ async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any):
       genre, genres, sp_followers: num(cms.sp_followers), top_cities: cities,
       multiplatform: { instagram: num(cms.ins_followers), tiktok: num(cms.tiktok_followers), youtube: num(cms.ycs_subscribers) },
       yt_monthly_views, deezer_fans, ig_engagement, yt_engagement, tt_engagement, editorial_playlists, radio_airplay,
+      playlists, similar,
       enriched: false, fetched_at: new Date().toISOString(),
     };
   } catch (e) { console.error("chartmetricSummary:", (e as Error).message); return null; }
@@ -255,7 +299,8 @@ serve(async (req) => {
 
     // Sem Spotify (artista iniciante): não consulta a Chartmetric. O motor trata a ausência de dados
     // de API como z mínimo (opção B). Com Spotify, puxa o resumo + os 6 campos extras da Fase C.
-    const chartmetric = spotifyId ? await chartmetricSummary(spotifyId, supabaseAdmin) : null;
+    const cmRaw: Array<{ endpoint: string; payload: unknown }> = [];
+    const chartmetric = spotifyId ? await chartmetricSummary(spotifyId, supabaseAdmin, cmRaw) : null;
     const realInputs = buildRealInputsV2(quizV2 || {}, chartmetric, !!spotifyId);
     const realIndex = computeRealIndexV2(realInputs);
     const diagnostic = buildDiagnostic(realIndex, chartmetric || {});
@@ -277,6 +322,19 @@ serve(async (req) => {
       .insert({ user_id: user.id, name: artistName, content, spotify_artist_id: spotifyId, is_locked: true })
       .select("id").single();
     if (createError || !artist) { console.error("Error creating artist:", createError); return json({ error: "Erro ao criar o perfil" }, 500); }
+
+    // Persiste o JSON CRU de cada chamada Chartmetric (1 linha por endpoint). Fire-and-forget:
+    // nunca derruba a criação do perfil. Serve de contexto pro Nyta e evita re-buscar (custo).
+    if (cmRaw.length) {
+      const cmId = (chartmetric as any)?.cm_artist_id ?? null;
+      const rows = cmRaw.map((it) => ({
+        artist_id: artist.id, cm_artist_id: cmId, endpoint: it.endpoint,
+        payload: it.payload, source: "diagnostic", fetched_at: nowIso,
+      }));
+      try {
+        await supabaseAdmin.from("artist_chartmetric_raw").upsert(rows, { onConflict: "artist_id,endpoint" });
+      } catch (e) { console.error("save chartmetric raw:", (e as Error)?.message); }
+    }
 
     return json({ artistId: artist.id, reused: false, locked: true, realIndex, diagnostic, chartmetric });
   } catch (error: any) { console.error("artist-diagnostic error:", error?.message); return json({ error: "Erro interno" }, 500); }

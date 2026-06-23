@@ -137,6 +137,21 @@ serve(async (req) => {
       if (fetched[i] == null) deepUnavailable[k] = new Date().toISOString();
       else delete deepUnavailable[k];
     });
+
+    // Persiste o JSON CRU dos endpoints profundos (1 linha por endpoint). Fire-and-forget: nunca
+    // derruba o enrich. Complementa o que o diagnóstico já salvou — contexto pro Nyta, sem re-buscar.
+    const rawRows = activeKeys
+      .filter((k) => r[k] != null)
+      .map((k) => ({
+        artist_id: artistId, cm_artist_id: cmId,
+        endpoint: DEEP_ENDPOINTS[k].split("?")[0].replace(String(cmId), ":id"),
+        payload: r[k], source: "enrich", fetched_at: new Date().toISOString(),
+      }));
+    if (rawRows.length) {
+      try {
+        await supabaseAdmin.from("artist_chartmetric_raw").upsert(rawRows, { onConflict: "artist_id,endpoint" });
+      } catch (e) { console.error("save chartmetric raw (enrich):", (e as Error)?.message); }
+    }
     // Parsing DEFENSIVO — NUNCA pode lançar (senão o enrich não salva e re-roda em loop).
     const asArray = (x: any): any[] => (Array.isArray(x) ? x : []);
     const lastPoint = (series: any) => (Array.isArray(series) && series.length ? series[series.length - 1] : null);
