@@ -64,11 +64,25 @@ Mapeadas a partir do `Chartmetric Developer API.yaml`. **8 chamadas** por diagn�
 > **TikTok video views:** indisponível na API (`stat/tiktok` só tem `followers, likes`) → fica `null`,
 > o motor exclui o sub-item. O componente de vídeo do R usa só YouTube.
 
-### Calibrações descobertas com dado real (Pabllo Vittar)
-1. **engagement_rate** vem em **fração** (0.0353 = 3,53%) → o edge multiplica por 100.
+### Calibrações descobertas com dado real (Pabllo Vittar, Liniker, Marina Sena)
+1. **engagement_rate** já vem em **porcentagem** — **sem ×100** (validado: Marina IG 6,30% / TikTok
+   9,26%; Liniker IG 4,35%; Pabllo IG 0,37%). O ×100 inicial gerava 434% e foi removido (v21).
 2. **playlists editoriais**: o flag `editorial` está em `item.playlist.editorial` (aninhado) → parser
-   corrigido (dedup por id da playlist).
+   corrigido. Validado: Liniker 15, Marina 10.
 3. **airplay-totals**: o param **`since` é obrigatório** (sem ele → HTTP 400) → janela de 180 dias.
+   Agora retorna 200; pode vir `null` para artistas sem airplay de rádio rastreado (MPB/indie) — o
+   motor exclui o sub-item (best-effort).
+4. **YouTube views / Deezer fans**: populam quando o artista tem a fonte (Marina: Deezer 215k); `null`
+   quando não há dado (Liniker: ambos null) — o motor exclui o sub-item.
+
+### Validação end-to-end (deploy v21)
+| Artista | Perfil | Engagement | Playlists | Status |
+|---|---|---|---|---|
+| Liniker (com Spotify) | Icon | ✅ (após fix) | 15 | ✅ |
+| Marina Sena (com Spotify) | Icon | ig 6,3% · tt 9,3% (z=0,6, alto) | 10 | ✅ |
+| Teste V2 (sem Spotify) | Beginner | opção B (z mínimo) | — | ✅ |
+
+**8 endpoints retornam 200** (todos os da licença funcionam). Só TikTok video views é indisponível.
 
 ---
 
