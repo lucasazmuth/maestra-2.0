@@ -6,12 +6,18 @@ import { NytaAvatar } from './nytaPersona';
 // Bolhas do chat da Nyta. A da Nyta entra pela esquerda com avatar;
 // a do usuário pela direita, em verde Spotify.
 
+// Remove travessões (—) de TODA fala da Nyta — roteiro estático e texto gerado pela IA.
+// Vira vírgula (uso apositivo/parentético); não altera o conteúdo das perguntas (metodologia),
+// só a pontuação. Único ponto de render das falas da Nyta, então cobre as 10 etapas de uma vez.
+const stripEmDash = (s: string): string =>
+  s.replace(/\s*—\s*/g, ', ').replace(/,\s*,/g, ',');
+
 // Renderiza markdown quando o conteúdo é texto (negrito, listas, títulos das falas
 // e do resumo). Conteúdo já em JSX (ex.: o hero do artista) passa direto.
 export const ChatMarkdown: FC<{ children: ReactNode }> = ({ children }) =>
   typeof children === 'string' ? (
     <div className='nyta-md'>
-      <ReactMarkdown>{children}</ReactMarkdown>
+      <ReactMarkdown>{stripEmDash(children)}</ReactMarkdown>
     </div>
   ) : (
     <>{children}</>
