@@ -104,8 +104,9 @@ export const CUTS = {
     edges: [10_000, 50_000, 200_000, 1_000_000, 5_000_000, 20_000_000],
     zs: [-1.2, -0.7, -0.2, 0.5, 1.2, 1.9, 2.5],
   },
-  tiktokViews: { // [SPEC] views/mês (média 3m) — alto ≈ 20M
-    edges: [50_000, 250_000, 1_000_000, 5_000_000, 20_000_000, 100_000_000],
+  tiktokViews: { // [PROPOSTA] `tiktok_top_video_views` é CUMULATIVO (Luísa 15 bi), não mensal —
+    // recalibrado p/ escala cumulativa; alto ≈ >200M. Anita: confirmar métrica + corte.
+    edges: [1_000_000, 10_000_000, 50_000_000, 200_000_000, 1_000_000_000, 5_000_000_000],
     zs: [-1.2, -0.7, -0.2, 0.4, 1.1, 1.8, 2.5],
   },
   // ── A ──
