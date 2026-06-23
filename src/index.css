@@ -360,6 +360,14 @@ menu {
   padding: 0;
 }
 
+/* Listas dentro das falas da Nyta (chat) precisam dos marcadores de volta — o reset acima
+   zera list-style. Global de propósito: cobre o chat do Wizard (.nyta-md) E o modal flutuante,
+   que renderiza markdown direto em .nyta-bubble. Ex.: a Nyta listar os objetivos numerados
+   (1. 2. 3.) na criação de estratégia. */
+.nyta-bubble ol, .nyta-md ol { list-style: decimal; padding-left: 22px; margin: 0 0 8px; }
+.nyta-bubble ul, .nyta-md ul { list-style: disc; padding-left: 22px; margin: 0 0 8px; }
+.nyta-bubble li, .nyta-md li { margin: 2px 0; }
+
 /*
 Reset default styling for dialogs.
 */
