@@ -43,7 +43,7 @@ function buildRealInputsV2(qz: any, cm: any, spotifyConnected: boolean): RealInp
     igFollowers: n(mp.instagram),
     tiktokFollowers: n(mp.tiktok),
     youtubeMonthlyViews: n(cm?.yt_monthly_views),
-    tiktokVideoViews: null, // indisponível na API (stat/tiktok só tem followers/likes)
+    tiktokVideoViews: n(cm?.tiktok_top_video_views), // opção D: vem da meta se a licença cobrir
     spotifyFollowers: n(cm?.sp_followers),
     deezerFans: n(cm?.deezer_fans),
     igEngagement: n(cm?.ig_engagement),
@@ -181,6 +181,8 @@ async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any):
       monthly_listeners_rank: num(cms.sp_monthly_listeners_rank), career_rank: num(meta.cm_artist_rank),
       genre, genres, sp_followers: num(cms.sp_followers), top_cities: cities,
       multiplatform: { instagram: num(cms.ins_followers), tiktok: num(cms.tiktok_followers), youtube: num(cms.ycs_subscribers) },
+      // tiktok_top_video_views vem da meta (sem chamada extra) — popula se a licença cobrir (opção D).
+      tiktok_top_video_views: num(cms.tiktok_top_video_views),
       yt_monthly_views, deezer_fans, ig_engagement, yt_engagement, tt_engagement, editorial_playlists, radio_airplay,
       enriched: false, fetched_at: new Date().toISOString(),
     };

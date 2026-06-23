@@ -47,13 +47,12 @@ describe('Motor REAL v2', () => {
     const high = computeRealIndexV2(base({ faturamento: 100_000, fonteRenda: 'musical', investimento: 120_000, cnpj: 'ltda', empresario: 'mercado' }));
     expect(high.pattern.e).toBe(true);
     expect(high.components.e.score).toBeGreaterThanOrEqual(0.70);
-    // Faturamento alto vindo de fonte NÃO-musical não basta p/ acender o E (mede "a música sustenta?").
+    // Faturamento alto sozinho, de fonte NÃO-musical, não basta (fonte = 0,0 no sinal de 20%).
     const naoMusical = computeRealIndexV2(base({ faturamento: 100_000, fonteRenda: 'nao_musical' }));
     expect(naoMusical.pattern.e).toBe(false);
-    // Gate da fonte: mesmo com estrutura cheia (LTDA + empresário + investimento), não-musical NÃO acende.
+    // SEM teto (decisão da Anita): não-musical com estrutura cheia (LTDA+empresário+investimento) pode acender.
     const naoMusicalFull = computeRealIndexV2(base({ faturamento: 100_000, fonteRenda: 'nao_musical', investimento: 120_000, cnpj: 'ltda', empresario: 'mercado' }));
-    expect(naoMusicalFull.pattern.e).toBe(false);
-    expect(naoMusicalFull.components.e.score).toBeLessThan(0.70);
+    expect(naoMusicalFull.pattern.e).toBe(true);
   });
 
   it('L: as 2 componentes de API sozinhas NÃO bastam (precisa de júri/imprensa)', () => {
