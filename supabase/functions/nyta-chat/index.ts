@@ -34,12 +34,14 @@ const NYTA_SYSTEM_PROMPT = `Você é a Nyta, a inteligência da Maestra Manager:
 - create_strategy (cria uma NOVA estratégia no Plano de Ação, COM tarefas — use SÓ após conduzir o protocolo abaixo)
 
 ## PROTOCOLO — Criar nova estratégia (create_strategy)
-Quando o artista quiser criar uma nova estratégia (ex.: "quero criar uma nova estratégia"), CONDUZA a conversa ANTES de chamar a ferramenta — não crie de imediato:
-1. Identifique QUAL OBJETIVO do plano a estratégia serve (os objetivos do artista estão em DADOS DO ARTISTA).
-2. Entenda a AÇÃO concreta — o que a estratégia faz na prática.
-3. PROPONHA um título conciso (verbo no infinitivo) e de 3 a 7 TAREFAS concretas (verbo no infinitivo), e ALINHE a PRIORIDADE com o artista (alta, média ou baixa).
-4. Só então chame create_strategy com title, tasks, objective e priority. A criação aparece como um card de CONFIRMAÇÃO para o artista aprovar.
-NUNCA chame create_strategy sem antes propor título + tarefas e ter o aval do artista.
+Quando o artista quiser criar uma nova estratégia, conduza UM PASSO POR MENSAGEM. O artista é LEIGO: NUNCA junte várias perguntas numa mensagem só. Faça uma pergunta curta, ESPERE a resposta, e só então vá pro próximo passo.
+
+- PASSO 1 (Objetivo): pergunte qual objetivo do plano essa estratégia serve e LISTE os objetivos do artista como opções numeradas em markdown (estão em DADOS DO ARTISTA, "Objetivos do plano"), pra ele responder só o número. Se não houver objetivos listados, peça em uma frase livre. NADA além disso nesta mensagem.
+- PASSO 2 (Ação): só depois da resposta, pergunte em UMA frase qual a ação concreta que a estratégia vai realizar na prática.
+- PASSO 3 (Proposta): com base nas respostas, PROPONHA um título (verbo no infinitivo) e de 3 a 7 tarefas (verbo no infinitivo) numa lista markdown, e pergunte se ele aprova ou quer ajustar.
+- PASSO 4 (Prioridade): por fim, pergunte a prioridade em UMA frase, dando as 3 opções: **alta** (vai pro topo da lista), **média** ou **baixa** (vai pro fim).
+- PASSO 5: só quando tudo estiver definido, chame create_strategy com title, tasks, objective e priority — aparece o card de CONFIRMAÇÃO final pro artista aprovar.
+NUNCA chame create_strategy antes de passar por todos os passos e ter o aval do artista. Uma pergunta por mensagem, sempre.
 
 ## REGRAS CRÍTICAS
 
@@ -511,6 +513,8 @@ interface ArtistContext {
   quiz: Record<string, unknown> | null;
   diagnostic: Record<string, unknown> | null;
   realIndex: Record<string, unknown> | null;
+  // Objetivos do plano (content.objectives) — o artista escolhe um ao criar estratégia.
+  objectives: string[];
   // Último snapshot de métricas do artista (coletado pelo ChatMetrics)
   metricsSnapshot: MetricsSnapshot | null;
 }
@@ -536,18 +540,19 @@ async function fetchArtistContext(artistId: string, authHeader: string): Promise
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
   });
-  const ctx: ArtistContext = { bio: null, catalogItems: [], events: [], teamMembers: [], actionPlan: [], chartmetric: null, quiz: null, diagnostic: null, realIndex: null, metricsSnapshot: null };
+  const ctx: ArtistContext = { bio: null, catalogItems: [], events: [], teamMembers: [], actionPlan: [], chartmetric: null, quiz: null, diagnostic: null, realIndex: null, objectives: [], metricsSnapshot: null };
   const unavailableModules: string[] = [];
 
   try {
     const { data: a } = await supabase.from("artists").select("content").eq("id", artistId).maybeSingle();
     if (a?.content) {
-      const c = a.content as { identity?: { bio?: string }; strategies?: PlanStrategy[]; chartmetricProfile?: Record<string, unknown>; quizDiagnostic?: { answers?: Record<string, unknown> }; diagnostic?: Record<string, unknown>; realIndex?: Record<string, unknown> };
+      const c = a.content as { identity?: { bio?: string }; strategies?: PlanStrategy[]; chartmetricProfile?: Record<string, unknown>; quizDiagnostic?: { answers?: Record<string, unknown> }; diagnostic?: Record<string, unknown>; realIndex?: Record<string, unknown>; objectives?: unknown[] };
       if (c?.identity?.bio) ctx.bio = c.identity.bio.substring(0, 500);
       if (c?.chartmetricProfile) ctx.chartmetric = c.chartmetricProfile;
       if (c?.quizDiagnostic?.answers) ctx.quiz = c.quizDiagnostic.answers;
       if (c?.diagnostic) ctx.diagnostic = c.diagnostic;
       if (c?.realIndex) ctx.realIndex = c.realIndex;
+      if (Array.isArray(c?.objectives)) ctx.objectives = (c.objectives as unknown[]).filter((o): o is string => typeof o === "string" && o.trim().length > 0);
       if (Array.isArray(c?.strategies)) {
         ctx.actionPlan = c.strategies.map((s) => ({
           strategy: s.title || "Estratégia",
@@ -764,6 +769,10 @@ function formatArtistContext(ctx: ArtistContext): string {
   if (ctx.quiz) {
     const entries = Object.entries(ctx.quiz).filter(([, v]) => v != null && String(v).trim());
     if (entries.length) t += `\n- Quiz inicial do artista: ${entries.map(([k, v]) => `${k}: ${v}`).join("; ")}.`;
+  }
+  if (ctx.objectives?.length) {
+    t += "\n- Objetivos do plano (o artista escolhe UM ao criar estratégia):";
+    ctx.objectives.forEach((o, i) => { t += `\n  ${i + 1}. ${o}`; });
   }
   if (ctx.metricsSnapshot) {
     const ms = ctx.metricsSnapshot;
