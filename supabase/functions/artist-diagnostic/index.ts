@@ -140,15 +140,15 @@ function buildRealInputsV2(qz: any, cm: any, spotifyConnected: boolean): RealInp
     spotifyListeners: n(cm?.monthly_listeners),
     igFollowers: n(mp.instagram),
     tiktokFollowers: n(mp.tiktok),
-    youtubeMonthlyViews: null,
-    tiktokVideoViews: null,
+    youtubeMonthlyViews: n(cm?.yt_monthly_views),
+    tiktokVideoViews: null, // indisponível na API (stat/tiktok só tem followers/likes)
     spotifyFollowers: n(cm?.sp_followers),
-    deezerFans: null,
-    igEngagement: null,
-    youtubeEngagement: null,
-    tiktokEngagement: null,
-    editorialPlaylists: null,
-    radioAirplay: null,
+    deezerFans: n(cm?.deezer_fans),
+    igEngagement: n(cm?.ig_engagement),
+    youtubeEngagement: n(cm?.yt_engagement),
+    tiktokEngagement: n(cm?.tt_engagement),
+    editorialPlaylists: n(cm?.editorial_playlists),
+    radioAirplay: n(cm?.radio_airplay),
     showsPerMonth: Math.max(0, Math.round(num0(qz?.showsPerMonth))),
     avgAudience: Math.max(0, Math.round(num0(qz?.avgAudience))),
     faturamento: Math.max(0, num0(qz?.faturamento)),
@@ -209,11 +209,76 @@ async function chartmetricSummary(spotifyArtistId: string, supabaseAdmin?: any):
       } catch (_e) { /* ignora */ }
       return [...new Set(out)].slice(0, 3);
     })();
+    // ── Campos extras do motor v2 (Fase C). Cada um é defensivo (falha → null) e logado.
+    // Decisão: tudo no diagnóstico grátis. ~6 chamadas a mais. TikTok video views NÃO existe na
+    // API (stat/tiktok só tem followers/likes) → fica null (o motor exclui o sub-item).
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const tmpl = (p: string) => p.replace(String(cmId), ":id");
+    const getJson = async (path: string): Promise<any> => {
+      const t = Date.now();
+      try {
+        const r = await fetch(`https://api.chartmetric.com${path}`, auth);
+        log(tmpl(path.split("?")[0]), r.ok, r.status, t);
+        return r.ok ? await r.json() : null;
+      } catch { log(tmpl(path.split("?")[0]), false, null, t); return null; }
+    };
+    // stat/{source}?field=X → série temporal; pega o último value.
+    const statLatest = async (source: string, field: string): Promise<number | null> => {
+      const d = await getJson(`/api/artist/${cmId}/stat/${source}?field=${field}`);
+      const series = d?.obj?.[field] ?? (Array.isArray(d?.obj) ? d.obj : null);
+      const last = Array.isArray(series) && series.length ? series[series.length - 1] : null;
+      const v = Number(last?.value);
+      return Number.isFinite(v) ? v : null;
+    };
+    // audience-stats → engagement_rate. ⚠️ assume %; calibrar com dado real (pode vir como fração).
+    const engRate = async (endpoint: string): Promise<number | null> => {
+      const d = await getJson(`/api/artist/${cmId}/${endpoint}`);
+      const o = d?.obj ?? d;
+      const er = Number(o?.engagement_rate ?? (Array.isArray(o) ? o[0]?.engagement_rate : null));
+      return Number.isFinite(er) ? er : null;
+    };
+
+    await sleep(200); const yt_monthly_views = await statLatest("youtube_artist", "monthly_views");
+    await sleep(200); const deezer_fans = await statLatest("deezer", "fans");
+    await sleep(200); const ig_engagement = await engRate("instagram-audience-stats");
+    await sleep(200); const yt_engagement = await engRate("youtube-audience-stats");
+    await sleep(200); const tt_engagement = await engRate("tiktok-audience-stats");
+    // Playlists editoriais (mesmo endpoint do enrich) → conta as com editorial=true (dedup por id).
+    await sleep(200);
+    const plData = await getJson(`/api/artist/${cmId}/spotify/current/playlists?limit=50`);
+    const editorial_playlists = (() => {
+      try {
+        const arr = Array.isArray(plData?.obj) ? plData.obj : Array.isArray(plData) ? plData : (plData?.obj?.data ?? []);
+        const ed = (Array.isArray(arr) ? arr : []).filter((p: any) => p?.editorial === true);
+        return new Set(ed.map((p: any) => p?.id ?? p?.playlist_id ?? JSON.stringify(p))).size;
+      } catch { return null; }
+    })();
+    // Airplay de rádio (soma de plays). Shape complexo (tuplas por país) → soma defensiva.
+    await sleep(200);
+    const apData = await getJson(`/api/radio/artist/${cmId}/airplay-totals`);
+    const radio_airplay = (() => {
+      try {
+        const o = apData?.obj ?? apData;
+        if (o == null) return null;
+        if (Number.isFinite(Number(o?.total))) return Number(o.total);
+        const arr = Array.isArray(o) ? o : (Array.isArray(o?.data) ? o.data : []);
+        let sum = 0, found = false;
+        for (const item of arr) {
+          const info = Array.isArray(item) ? item[0] : item;
+          const p = Number(info?.plays ?? info?.count);
+          if (Number.isFinite(p)) { sum += p; found = true; }
+        }
+        return found ? sum : null;
+      } catch { return null; }
+    })();
+
     return {
       cm_artist_id: cmId, monthly_listeners: num(cms.sp_monthly_listeners),
       monthly_listeners_rank: num(cms.sp_monthly_listeners_rank), career_rank: num(meta.cm_artist_rank),
       genre, genres, sp_followers: num(cms.sp_followers), top_cities: cities,
       multiplatform: { instagram: num(cms.ins_followers), tiktok: num(cms.tiktok_followers), youtube: num(cms.ycs_subscribers) },
+      // Fase C (motor v2):
+      yt_monthly_views, deezer_fans, ig_engagement, yt_engagement, tt_engagement, editorial_playlists, radio_airplay,
       enriched: false, fetched_at: new Date().toISOString(),
     };
   } catch (e) { console.error("chartmetricSummary:", (e as Error).message); return null; }
