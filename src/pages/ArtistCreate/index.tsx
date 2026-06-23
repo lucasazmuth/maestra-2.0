@@ -27,16 +27,20 @@ const REDUCE_MOTION =
 // cujos `value` já são os enums/níveis que o motor espera.
 type QuizFieldType = 'int' | 'currency' | 'select';
 interface QuizDef {
-  key: 'showsPerMonth' | 'avgAudience' | 'faturamento' | 'fonteRenda' | 'investimento' | 'cnpj' | 'empresario' | 'premios' | 'imprensa';
+  key: 'showsPerMonth' | 'avgAudience' | 'cache' | 'faturamentoForaShows' | 'fonteRenda' | 'investimento' | 'cnpj' | 'empresario' | 'premios' | 'imprensa';
   q: string;
   type: QuizFieldType;
   placeholder?: string;
   options?: { label: string; value: string | number }[];
+  // Pula a pergunta quando a condição é verdadeira (ex.: cachê só se faz shows).
+  skipIf?: (a: Record<string, string | number>) => boolean;
 }
+// Receita do E = (shows × cachê) + renda fora shows (híbrido c). Sem pergunta de faixa de faturamento.
 const QUIZ: QuizDef[] = [
   { key: 'showsPerMonth', type: 'int', q: 'Quantos shows você costuma fazer por mês?', placeholder: 'Ex: 4' },
   { key: 'avgAudience', type: 'int', q: 'Qual o público médio dos seus shows?', placeholder: 'Ex: 300' },
-  { key: 'faturamento', type: 'currency', q: 'Qual seu faturamento bruto mensal médio com música? (média dos últimos 12 meses, incluindo shows)', placeholder: 'R$ 0' },
+  { key: 'cache', type: 'currency', q: 'Qual o seu cachê médio por show?', placeholder: 'R$ 0', skipIf: (a) => Number(a.showsPerMonth) <= 0 },
+  { key: 'faturamentoForaShows', type: 'currency', q: 'Qual sua renda mensal média com música, FORA os shows? (streaming, direitos, aulas, publi…)', placeholder: 'R$ 0' },
   { key: 'fonteRenda', type: 'select', q: 'Qual é a sua principal fonte de renda hoje?', options: [
     { label: 'Shows', value: 'musical' },
     { label: 'Publicidade / patrocínio', value: 'musical' },
@@ -249,10 +253,17 @@ const ArtistCreate: FC = () => {
     startQuiz(n, null, null, null);
   };
 
+  // Próximo índice pulando perguntas condicionais (ex.: cachê quando shows = 0).
+  const nextQuizIndex = (from: number) => {
+    let i = from;
+    while (i < QUIZ.length && QUIZ[i].skipIf?.(answers.current)) i += 1;
+    return i;
+  };
+
   const answerQuiz = (value: string | number) => {
     answers.current[QUIZ[quizIndex].key] = value;
-    if (quizIndex + 1 < QUIZ.length) {
-      const next = quizIndex + 1;
+    const next = nextQuizIndex(quizIndex + 1);
+    if (next < QUIZ.length) {
       setQuizIndex(next);
       say(QUIZ[next].q);
     } else {

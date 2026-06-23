@@ -33,8 +33,7 @@ export interface RealInputsV2 {
   spotifyListeners: number | null;      // R c1
   igFollowers: number | null;           // R c2
   tiktokFollowers: number | null;       // R c2
-  youtubeMonthlyViews: number | null;   // R c3
-  tiktokVideoViews: number | null;      // R c3 (média móvel 3m — o fetch já entrega suavizado)
+  youtubeMonthlyViews: number | null;   // R c3 (só YouTube — TikTok views descartado: é acumulado)
   spotifyFollowers: number | null;      // A c1
   deezerFans: number | null;            // A c1
   igEngagement: number | null;          // A c2 (taxa %, 0..100)
@@ -43,9 +42,10 @@ export interface RealInputsV2 {
   editorialPlaylists: number | null;    // L c3 (contagem)
   radioAirplay: number | null;          // L c4 (execuções/airplay)
   // ── Autorrelato (sempre presentes) ──
-  showsPerMonth: number;                // A c3 — pergunta "por mês"; reescalono ×12 p/ a tabela anual
+  showsPerMonth: number;                // A c3 + E (receita de shows). Pergunta "por mês"; ×12 p/ a tabela anual
   avgAudience: number;                  // A c4 — público médio por show
-  faturamento: number;                  // E s1 — R$/mês (média 12m)
+  cache: number;                        // E — cachê médio por show (R$); receita_shows = shows × cache
+  faturamentoForaShows: number;         // E — resto da renda musical (R$/mês: streaming, direitos, aulas…)
   fonteRenda: FonteRenda;               // E s2
   investimento: number;                 // E s3 — R$ nos últimos 12m
   cnpj: Cnpj;                           // E s4
@@ -106,11 +106,7 @@ export const CUTS = {
     edges: [10_000, 50_000, 200_000, 1_000_000, 5_000_000, 20_000_000],
     zs: [-1.2, -0.7, -0.2, 0.5, 1.2, 1.9, 2.5],
   },
-  tiktokViews: { // [PROPOSTA] `tiktok_top_video_views` é CUMULATIVO (Luísa 15 bi), não mensal —
-    // recalibrado p/ escala cumulativa; alto ≈ >200M. Anita: confirmar métrica + corte.
-    edges: [1_000_000, 10_000_000, 50_000_000, 200_000_000, 1_000_000_000, 5_000_000_000],
-    zs: [-1.2, -0.7, -0.2, 0.4, 1.1, 1.8, 2.5],
-  },
+  // (TikTok views removido — `tiktok_top_video_views` é acumulado, não fluxo mensal. Decisão Anita.)
   // ── A ──
   musicFollowers: { // [PROPOSTA] Spotify followers; alto ≈ >250k
     edges: [1_000, 10_000, 50_000, 250_000, 1_000_000, 5_000_000],
@@ -138,9 +134,9 @@ export const CUTS = {
   premiosHighFrom: 3,                    // alto = nacional ou internacional
   imprensaZ: [-1.0, 0.0, 1.0, 2.0],      // níveis 0..3
   imprensaHighFrom: 2,                   // alto = nacional ou internacional
-  editorialPlaylists: { // [PROPOSTA] contagem de playlists editoriais; alto ≈ ≥3
-    edges: [0, 1, 3, 10, 30],
-    zs: [-1.2, -0.4, 0.1, 0.8, 1.6, 2.4],
+  editorialPlaylists: { // contagem de playlists editoriais; alto = >10 (Anita rodada 2)
+    edges: [1, 3, 10, 30, 100],
+    zs: [-1.2, -0.6, -0.2, 0.4, 1.4, 2.4],
   },
   radioAirplay: { // [PROPOSTA — alta incerteza] total de execuções; alto ≈ >50
     edges: [0, 10, 50, 200, 1_000],
@@ -244,10 +240,7 @@ export function computeRealIndexV2(input: RealInputsV2): RealIndexV2 {
       apiZ(input.igFollowers, CUTS.socialFollowers, sp),
       apiZ(input.tiktokFollowers, CUTS.socialFollowers, sp),
     ])),
-    comp('videoViews', 'Consumo de vídeo (YouTube + TikTok)', componentZ([
-      apiZ(input.youtubeMonthlyViews, CUTS.youtubeViews, sp),
-      apiZ(input.tiktokVideoViews, CUTS.tiktokViews, sp),
-    ])),
+    comp('videoViews', 'Consumo de vídeo (YouTube)', apiZ(input.youtubeMonthlyViews, CUTS.youtubeViews, sp)),
   ];
   const rHigh = rComps.filter((c) => c.high).length >= COMBO.r;
 
@@ -284,9 +277,12 @@ export function computeRealIndexV2(input: RealInputsV2): RealIndexV2 {
   const lHigh = lCount >= COMBO.l && lHasJury;
 
   // ── E: 5 sinais ponderados (0–1), alto se ≥ 0,70 ──
-  const s1 = bucketScore(Math.max(0, input.faturamento), CUTS.e.faturamento.edges, CUTS.e.faturamento.scores);
+  // Híbrido c (Anita rodada 2): receita total = (shows/mês × cachê) + faturamento fora shows.
+  // Substitui a faixa de faturamento autodeclarada — entra na mesma tabela de faixas.
+  const receitaTotal = Math.max(0, input.showsPerMonth) * Math.max(0, input.cache) + Math.max(0, input.faturamentoForaShows);
+  const s1 = bucketScore(receitaTotal, CUTS.e.faturamento.edges, CUTS.e.faturamento.scores);
   const s2 = CUTS.e.fonte[input.fonteRenda] ?? 0;
-  const s3 = investimentoScore(Math.max(0, input.investimento), Math.max(0, input.faturamento));
+  const s3 = investimentoScore(Math.max(0, input.investimento), receitaTotal);
   const s4 = CUTS.e.cnpj[input.cnpj] ?? 0;
   const s5 = CUTS.e.empresario[input.empresario] ?? 0;
   const w = CUTS.e.weights;

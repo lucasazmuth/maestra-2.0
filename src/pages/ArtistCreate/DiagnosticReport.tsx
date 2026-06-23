@@ -153,7 +153,7 @@ export const v2InputsView = (ri: any) => ({
   monthly_listeners: ri?.spotifyListeners ?? null,
   sp_followers: ri?.spotifyFollowers ?? null,
   social: { instagram: ri?.igFollowers ?? null, tiktok: ri?.tiktokFollowers ?? null, youtube: ri?.youtubeMonthlyViews ?? null },
-  faturamento: fmtBRL(Number(ri?.faturamento ?? 0)),
+  faturamento: fmtBRL(Number(ri?.showsPerMonth ?? 0) * Number(ri?.cache ?? 0) + Number(ri?.faturamentoForaShows ?? 0)),
   shows_pagos: String(ri?.showsPerMonth ?? 0),
   maior_publico: String(ri?.avgAudience ?? 0),
   premios: PREMIO_LABELS[ri?.premios] ?? '—',

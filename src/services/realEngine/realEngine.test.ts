@@ -3,10 +3,10 @@ import { computeRealIndexV2, type RealInputsV2 } from './index';
 // Base "tudo baixo" (perfil Beginner). Cada teste sobrescreve só o que importa.
 const base = (over: Partial<RealInputsV2> = {}): RealInputsV2 => ({
   spotifyConnected: true,
-  spotifyListeners: 0, igFollowers: 0, tiktokFollowers: 0, youtubeMonthlyViews: 0, tiktokVideoViews: 0,
+  spotifyListeners: 0, igFollowers: 0, tiktokFollowers: 0, youtubeMonthlyViews: 0,
   spotifyFollowers: 0, deezerFans: 0, igEngagement: 0, youtubeEngagement: 0, tiktokEngagement: 0,
   editorialPlaylists: 0, radioAirplay: 0,
-  showsPerMonth: 0, avgAudience: 0, faturamento: 0, fonteRenda: 'musical', investimento: 0,
+  showsPerMonth: 0, avgAudience: 0, cache: 0, faturamentoForaShows: 0, fonteRenda: 'musical', investimento: 0,
   cnpj: 'pf', empresario: 'nao', premios: 0, imprensa: 0,
   ...over,
 });
@@ -20,7 +20,7 @@ describe('Motor REAL v2', () => {
   });
 
   it('sem Spotify (opção B): componentes de API ficam baixos', () => {
-    const ri = computeRealIndexV2(base({ spotifyConnected: false, spotifyListeners: null, igFollowers: null, tiktokFollowers: null, youtubeMonthlyViews: null, tiktokVideoViews: null }));
+    const ri = computeRealIndexV2(base({ spotifyConnected: false, spotifyListeners: null, igFollowers: null, tiktokFollowers: null, youtubeMonthlyViews: null }));
     expect(ri.pattern.r).toBe(false);
     // todos os componentes de R baixos mesmo com valores nulos (z mínimo)
     expect(ri.components.r.every((c) => !c.high)).toBe(true);
@@ -30,11 +30,11 @@ describe('Motor REAL v2', () => {
   it('Icon (1111): quatro dimensões altas', () => {
     const ri = computeRealIndexV2(base({
       spotifyListeners: 2_000_000, igFollowers: 1_000_000, tiktokFollowers: 1_000_000,
-      youtubeMonthlyViews: 10_000_000, tiktokVideoViews: 50_000_000,
+      youtubeMonthlyViews: 10_000_000,
       spotifyFollowers: 1_000_000, deezerFans: 300_000,
       igEngagement: 8, youtubeEngagement: 8, tiktokEngagement: 8,
       showsPerMonth: 10, avgAudience: 5_000,
-      faturamento: 100_000, fonteRenda: 'musical', investimento: 120_000, cnpj: 'ltda', empresario: 'mercado',
+      faturamentoForaShows: 100_000, fonteRenda: 'musical', investimento: 120_000, cnpj: 'ltda', empresario: 'mercado',
       premios: 4, imprensa: 3, editorialPlaylists: 20, radioAirplay: 500,
     }));
     expect(ri.pattern).toEqual({ r: true, e: true, a: true, l: true });
@@ -43,15 +43,18 @@ describe('Motor REAL v2', () => {
   });
 
   it('E acende só com score ≥ 0,70 (5 sinais ponderados)', () => {
-    // Faturamento alto + musical + CNPJ LTDA + empresário do mercado + investimento saudável.
-    const high = computeRealIndexV2(base({ faturamento: 100_000, fonteRenda: 'musical', investimento: 120_000, cnpj: 'ltda', empresario: 'mercado' }));
+    // Receita alta (fora shows) + musical + CNPJ LTDA + empresário do mercado + investimento saudável.
+    const high = computeRealIndexV2(base({ faturamentoForaShows: 100_000, fonteRenda: 'musical', investimento: 120_000, cnpj: 'ltda', empresario: 'mercado' }));
     expect(high.pattern.e).toBe(true);
     expect(high.components.e.score).toBeGreaterThanOrEqual(0.70);
-    // Faturamento alto sozinho, de fonte NÃO-musical, não basta (fonte = 0,0 no sinal de 20%).
-    const naoMusical = computeRealIndexV2(base({ faturamento: 100_000, fonteRenda: 'nao_musical' }));
+    // Receita = shows × cachê (híbrido c): 8 shows/mês × R$5.000 = R$40k/mês.
+    const viaShows = computeRealIndexV2(base({ showsPerMonth: 8, cache: 5_000, fonteRenda: 'musical', investimento: 60_000, cnpj: 'ltda', empresario: 'mercado' }));
+    expect(viaShows.components.e.signals.find((s) => s.key === 'faturamento')!.score).toBeGreaterThan(0.5);
+    // Receita alta de fonte NÃO-musical não basta (fonte = 0,0 no sinal de 20%).
+    const naoMusical = computeRealIndexV2(base({ faturamentoForaShows: 100_000, fonteRenda: 'nao_musical' }));
     expect(naoMusical.pattern.e).toBe(false);
-    // SEM teto (decisão da Anita): não-musical com estrutura cheia (LTDA+empresário+investimento) pode acender.
-    const naoMusicalFull = computeRealIndexV2(base({ faturamento: 100_000, fonteRenda: 'nao_musical', investimento: 120_000, cnpj: 'ltda', empresario: 'mercado' }));
+    // SEM teto (decisão da Anita): não-musical com estrutura cheia pode acender.
+    const naoMusicalFull = computeRealIndexV2(base({ faturamentoForaShows: 100_000, fonteRenda: 'nao_musical', investimento: 120_000, cnpj: 'ltda', empresario: 'mercado' }));
     expect(naoMusicalFull.pattern.e).toBe(true);
   });
 
@@ -83,7 +86,7 @@ describe('Motor REAL v2', () => {
   });
 
   it('boletim 0–100 e linha de corte presentes', () => {
-    const ri = computeRealIndexV2(base({ faturamento: 100_000, fonteRenda: 'musical', investimento: 120_000, cnpj: 'ltda', empresario: 'mercado' }));
+    const ri = computeRealIndexV2(base({ faturamentoForaShows: 100_000, fonteRenda: 'musical', investimento: 120_000, cnpj: 'ltda', empresario: 'mercado' }));
     expect(ri.boletim.e).toBeGreaterThanOrEqual(70);
     expect(ri.cutLine.e).toBe(70);
     for (const k of ['r', 'a', 'l'] as const) {
