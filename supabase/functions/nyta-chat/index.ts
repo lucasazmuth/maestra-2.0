@@ -31,6 +31,15 @@ const NYTA_SYSTEM_PROMPT = `Você é a Nyta, a inteligência da Maestra Manager:
 - create_event, update_event, delete_event
 - create_team_member, update_team_member, remove_team_member
 - update_plan_task (muda o status de tarefas do plano de ação — as tarefas estão listadas em DADOS DO ARTISTA)
+- create_strategy (cria uma NOVA estratégia no Plano de Ação, COM tarefas — use SÓ após conduzir o protocolo abaixo)
+
+## PROTOCOLO — Criar nova estratégia (create_strategy)
+Quando o artista quiser criar uma nova estratégia (ex.: "quero criar uma nova estratégia"), CONDUZA a conversa ANTES de chamar a ferramenta — não crie de imediato:
+1. Identifique QUAL OBJETIVO do plano a estratégia serve (os objetivos do artista estão em DADOS DO ARTISTA).
+2. Entenda a AÇÃO concreta — o que a estratégia faz na prática.
+3. PROPONHA um título conciso (verbo no infinitivo) e de 3 a 7 TAREFAS concretas (verbo no infinitivo), e ALINHE a PRIORIDADE com o artista (alta, média ou baixa).
+4. Só então chame create_strategy com title, tasks, objective e priority. A criação aparece como um card de CONFIRMAÇÃO para o artista aprovar.
+NUNCA chame create_strategy sem antes propor título + tarefas e ter o aval do artista.
 
 ## REGRAS CRÍTICAS
 
@@ -239,6 +248,38 @@ const NYTA_TOOLS = [
           },
         },
         required: ["task_query", "status"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_strategy",
+      description:
+        "Cria uma NOVA estratégia no Plano de Ação do artista, já com tarefas. Use SÓ depois de conduzir o protocolo: entender o objetivo que ela serve, a ação concreta, propor título + tarefas e alinhar a prioridade. Aparece como card de confirmação para o artista aprovar.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: {
+            type: "string",
+            description: "Título da estratégia, conciso e começando com verbo no infinitivo (ex.: 'Estruturar a venda de shows').",
+          },
+          tasks: {
+            type: "array",
+            items: { type: "string" },
+            description: "De 3 a 7 tarefas concretas (verbo no infinitivo), na ordem de execução.",
+          },
+          objective: {
+            type: "string",
+            description: "Qual objetivo do plano essa estratégia serve (opcional).",
+          },
+          priority: {
+            type: "string",
+            enum: ["alta", "media", "baixa"],
+            description: "Prioridade alinhada com o artista: alta vai pro topo da lista, baixa pro fim.",
+          },
+        },
+        required: ["title", "tasks", "priority"],
       },
     },
   },
@@ -1203,6 +1244,41 @@ async function executeTool(
         if (uErr) return { success: false, summary: `Falha: ${uErr.message}` };
         const statusLabel = newStatus === "done" ? "concluída" : newStatus === "in_progress" ? "em andamento" : "a fazer";
         return { success: true, summary: `Tarefa "${matches[0].task.description}" marcada como ${statusLabel}.` };
+      }
+      case "create_strategy": {
+        // Cria uma estratégia nova em artists.content.strategies, com tarefas. A Nyta já conduziu
+        // o protocolo (objetivo → ação → título/tarefas → prioridade). finalScore posiciona na lista.
+        const title = ((args.title as string) || "").trim();
+        const tasksIn = Array.isArray(args.tasks) ? (args.tasks as unknown[]) : [];
+        const taskDescs = tasksIn.map((t) => String(t).trim()).filter(Boolean);
+        const priority = ((args.priority as string) || "media").toLowerCase();
+        if (!title) return { success: false, summary: "title obrigatório." };
+        if (taskDescs.length === 0) return { success: false, summary: "Pelo menos uma tarefa é obrigatória." };
+        const { data: row, error: fErr } = await admin
+          .from("artists").select("content").eq("id", artistId).single();
+        if (fErr || !row) return { success: false, summary: "Artista não encontrado." };
+        const content = (row.content || {}) as { strategies?: Array<Record<string, unknown>> };
+        const strategies = Array.isArray(content.strategies) ? content.strategies : [];
+        const scores = strategies.map((s) => Number(s?.finalScore) || 0);
+        const maxS = scores.length ? Math.max(...scores) : 10;
+        const minS = scores.length ? Math.min(...scores) : 0;
+        const finalScore = priority === "alta" ? maxS + 1 : priority === "baixa" ? Math.max(0.5, minS - 1) : ((maxS + minS) / 2) || 5;
+        const uid = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+        const newStrat = {
+          id: uid(),
+          type: "SO",
+          title,
+          custom: true,
+          tasks: taskDescs.map((d) => ({ id: uid(), description: d, status: "todo" })),
+          finalScore,
+          priorityRationale: args.objective ? `Criada com a Nyta para: ${String(args.objective).trim()}.` : "Criada com a Nyta.",
+        };
+        content.strategies = [...strategies, newStrat];
+        const { error: uErr } = await admin
+          .from("artists").update({ content, updated_at: new Date().toISOString() }).eq("id", artistId);
+        if (uErr) return { success: false, summary: `Falha ao salvar: ${uErr.message}` };
+        const pLabel = priority === "alta" ? "alta" : priority === "baixa" ? "baixa" : "média";
+        return { success: true, summary: `Estratégia "${title}" criada com ${taskDescs.length} tarefa(s), prioridade ${pLabel}. Já aparece no Plano de Ação.` };
       }
       default:
         return { success: false, summary: `Ferramenta '${toolName}' desconhecida.` };

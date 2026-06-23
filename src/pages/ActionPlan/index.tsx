@@ -1,7 +1,9 @@
 import { FC, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message, Popover } from 'antd';
-import { FiCheck, FiChevronDown, FiLayers, FiList, FiTarget } from 'react-icons/fi';
+import { FiCheck, FiChevronDown, FiLayers, FiList, FiPlus, FiTarget } from 'react-icons/fi';
+
+import { useNytaModal } from '../../hooks/useNytaModal';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
@@ -51,6 +53,7 @@ const ActionPlan: FC = () => {
   // openId === undefined → a estratégia em foco fica aberta sozinha; clicar abre outra.
   const [openId, setOpenId] = useState<string | undefined>(undefined);
   const [showExtra, setShowExtra] = useState(false); // "Mais estratégias": revela as sem tarefa
+  const { openWithPrompt } = useNytaModal(); // botão "Nova estratégia" abre a Nyta com o protocolo
   const [, setSaving] = useState(false);
   const [composer, setComposer] = useState<string | null>(null);
   const [sugg, setSugg] = useState<Record<string, SuggTask[]>>({});
@@ -289,13 +292,18 @@ const ActionPlan: FC = () => {
       ) : (
       <>
       {/* ESTRATÉGIAS — em ordem de prioridade (a "etapa atual" do artista) */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <h2 className="ap-section-title" style={{ margin: 0 }}>Estratégias por prioridade</h2>
-        {hasFilter && (
-          <button className="ap-btn ap-btn--ghost" onClick={() => setShowExtra((v) => !v)}>
-            {showExtra ? 'Mostrar menos' : `Mais estratégias (${extra.length})`}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button className="ap-btn ap-btn--ghost" onClick={() => openWithPrompt('Quero criar uma nova estratégia')}>
+            <FiPlus size={14} /> Nova estratégia
           </button>
-        )}
+          {hasFilter && (
+            <button className="ap-btn ap-btn--ghost" onClick={() => setShowExtra((v) => !v)}>
+              {showExtra ? 'Mostrar menos' : `Mais estratégias (${extra.length})`}
+            </button>
+          )}
+        </div>
       </div>
       <div className="ap-strats" style={{ marginTop: 16 }}>
         {displayed.map((p, idx) => {
