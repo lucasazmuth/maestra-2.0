@@ -1,9 +1,11 @@
 import { FC, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message, Popover } from 'antd';
-import { FiCheck, FiChevronDown, FiLayers, FiList, FiPlus, FiTarget } from 'react-icons/fi';
+import { createPortal } from 'react-dom';
+import { FiArchive, FiCheck, FiChevronDown, FiLayers, FiList, FiPlus, FiTarget, FiX } from 'react-icons/fi';
 
 import { useNytaModal } from '../../hooks/useNytaModal';
+import { buildActionPlan } from '../Wizard/method/engines';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
@@ -33,6 +35,65 @@ const isActive = (t: ActionTask) => t.status !== 'archived';
 
 interface SuggTask { description: string; type?: string; deadline?: string }
 
+// Modal "Arquivadas": estratégias que o artista NÃO priorizou (sem tarefa). Ele seleciona quais
+// trazer pro plano — ao confirmar, cada uma ganha as tarefas do banco e entra na lista principal.
+const ArchiveModal: FC<{
+  items: { id: string; title: string }[];
+  onConfirm: (ids: string[]) => void;
+  onClose: () => void;
+}> = ({ items, onConfirm, onClose }) => {
+  const [sel, setSel] = useState<string[]>([]);
+  const toggle = (id: string) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  return createPortal(
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box' }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: '100%', maxWidth: 720, maxHeight: '86vh', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 16, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      >
+        <div style={{ padding: '22px 22px 12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ fontFamily: 'SpotifyMixUITitle', color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>Estratégias arquivadas</div>
+            <button onClick={onClose} aria-label="Fechar" style={{ background: 'none', border: 'none', color: '#9a9a9a', cursor: 'pointer', display: 'inline-flex', padding: 4 }}><FiX size={20} /></button>
+          </div>
+          <div style={{ color: '#b3b3b3', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
+            Estratégias que você não priorizou. Selecione as que quer <b style={{ color: '#fff' }}>trazer pro plano</b> — elas ganham tarefas e entram na lista principal, saindo do arquivo.
+          </div>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '4px 22px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {items.map((it) => {
+            const on = sel.includes(it.id);
+            return (
+              <button
+                key={it.id}
+                onClick={() => toggle(it.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', background: on ? 'rgba(175,40,150,0.12)' : '#202020', border: `1px solid ${on ? '#af2896' : 'transparent'}`, borderRadius: 12, padding: '14px 16px', transition: 'background .15s, border-color .15s' }}
+              >
+                <span aria-hidden style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: `2px solid ${on ? '#af2896' : '#4a4a4a'}`, background: on ? '#af2896' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>{on && <FiCheck size={14} />}</span>
+                <span style={{ color: '#fff', fontWeight: 600, fontSize: 14.5, lineHeight: 1.4 }}>{it.title}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ padding: '12px 22px 18px', borderTop: '1px solid #232323', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ color: '#7a7a7a', fontSize: 13 }}>{sel.length} selecionada{sel.length === 1 ? '' : 's'}</span>
+          <button className="ap-btn ap-btn--ghost" style={{ marginLeft: 'auto' }} onClick={onClose}>Cancelar</button>
+          <button
+            disabled={!sel.length}
+            onClick={() => onConfirm(sel)}
+            style={{ border: 'none', borderRadius: 9999, padding: '10px 20px', fontWeight: 700, fontSize: 13.5, cursor: sel.length ? 'pointer' : 'not-allowed', color: '#fff', background: 'linear-gradient(135deg, #af2896, #6d3bd1)', opacity: sel.length ? 1 : 0.5 }}
+          >
+            Trazer pro plano{sel.length ? ` (${sel.length})` : ''}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
 const ActionPlan: FC = () => {
   const { artist } = useArtist();
   const dispatch = useAppDispatch();
@@ -52,7 +113,7 @@ const ActionPlan: FC = () => {
 
   // openId === undefined → a estratégia em foco fica aberta sozinha; clicar abre outra.
   const [openId, setOpenId] = useState<string | undefined>(undefined);
-  const [showExtra, setShowExtra] = useState(false); // "Mais estratégias": revela as sem tarefa
+  const [archiveOpen, setArchiveOpen] = useState(false); // modal "Arquivadas": traz estratégia pro plano
   const { openWithPrompt } = useNytaModal(); // botão "Nova estratégia" abre a Nyta com o protocolo
   const [, setSaving] = useState(false);
   const [composer, setComposer] = useState<string | null>(null);
@@ -157,6 +218,15 @@ const ActionPlan: FC = () => {
     commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: [...(s.tasks || []), nt] })));
   };
 
+  // "Arquivadas" → trazer pro plano: semeia as tarefas do banco (buildActionPlan) nas selecionadas.
+  // Como passam a ter tarefa, saem do arquivo e entram na lista principal (na prioridade salva).
+  const activateArchived = (ids: string[]) => {
+    if (!ids.length) return;
+    commit((ss) => ss.map((s) => (ids.includes(s.id) ? { ...s, tasks: buildActionPlan(s) } : s)));
+    setArchiveOpen(false);
+    message.success(ids.length === 1 ? 'Estratégia trazida pro plano de ação.' : `${ids.length} estratégias trazidas pro plano de ação.`);
+  };
+
   const askNyta = async (s: Strategy) => {
     // "Pedir ideias pra Nyta" usa a Nyta IA → recurso PRO. Sem PRO, leva pra assinatura.
     if (!useNytaConsultora) { navigate('/assinatura'); return; }
@@ -240,12 +310,13 @@ const ActionPlan: FC = () => {
   });
   const totalTasks = info.reduce((a, p) => a + p.total, 0);
   const doneTasks = info.reduce((a, p) => a + p.done, 0);
-  // Por padrão mostra só as estratégias que o artista PRIORIZOU (geraram tarefa). As demais (sem
-  // tarefa) ficam atrás do botão "Mais estratégias" pra não misturar e confundir.
+  // A lista principal mostra só as estratégias que o artista PRIORIZOU (geraram tarefa). As demais
+  // (sem tarefa) ficam ARQUIVADAS — acessíveis pelo botão/modal "Arquivadas", de onde o artista
+  // traz pro plano (ganham tarefas e entram na lista). Não aparecem soltas embaixo (confundia).
   const withTasks = info.filter((p) => p.total > 0);
-  const extra = info.filter((p) => p.total === 0);
-  const hasFilter = withTasks.length > 0 && extra.length > 0;
-  const displayed = !hasFilter ? info : showExtra ? [...withTasks, ...extra] : withTasks;
+  const archived = info.filter((p) => p.total === 0);
+  const hasArchive = withTasks.length > 0 && archived.length > 0;
+  const displayed = withTasks.length ? withTasks : info; // sem nenhuma priorizada, mostra tudo
   const focusIdx = displayed.findIndex((p) => p.total > 0 && !p.complete); // -1 = todas concluídas
 
   // Contagem no formato do PhaseCard (mesma fonte do Dashboard) — barra de progresso + avançar de fase.
@@ -298,9 +369,9 @@ const ActionPlan: FC = () => {
           <button className="ap-btn ap-btn--ghost" onClick={() => openWithPrompt('Quero criar uma nova estratégia')}>
             <FiPlus size={14} /> Nova estratégia
           </button>
-          {hasFilter && (
-            <button className="ap-btn ap-btn--ghost" onClick={() => setShowExtra((v) => !v)}>
-              {showExtra ? 'Mostrar menos' : `Mais estratégias (${extra.length})`}
+          {hasArchive && (
+            <button className="ap-btn ap-btn--ghost" onClick={() => setArchiveOpen(true)}>
+              <FiArchive size={14} /> Arquivadas ({archived.length})
             </button>
           )}
         </div>
@@ -416,6 +487,14 @@ const ActionPlan: FC = () => {
       {/* Consultora da Nyta (mesma seção do rodapé do Dashboard) no lugar do texto simples de objetivos */}
       <NytaDashboardHero />
       </>
+      )}
+
+      {archiveOpen && (
+        <ArchiveModal
+          items={archived.map((p) => ({ id: p.s.id, title: p.s.title }))}
+          onConfirm={activateArchived}
+          onClose={() => setArchiveOpen(false)}
+        />
       )}
     </div>
   );
