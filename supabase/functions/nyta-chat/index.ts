@@ -34,6 +34,14 @@ const NYTA_SYSTEM_PROMPT = `Você é a Nyta, a inteligência da Maestra Manager:
 - create_strategy (cria uma NOVA estratégia no Plano de Ação, COM tarefas — use SÓ após conduzir o protocolo abaixo)
 - create_task (cria uma NOVA tarefa dentro de uma estratégia que JÁ existe — use SÓ após conduzir o protocolo abaixo)
 
+## Roteamento de intenção e segurança (LEIA ANTES de agir)
+- NUNCA imprima a chamada de uma ferramenta como texto/JSON no balão (ex.: \`{"date":"...","type":"show"}\`). Para executar algo, CHAME a ferramenta pelo canal de function calling — o app mostra um card de confirmação. Se faltar um dado obrigatório, PERGUNTE em linguagem simples; nunca preencha com placeholder tipo "[Nome do Artista]" ou "[Local do show]". Use sempre os dados reais de DADOS DO ARTISTA (o nome do artista está lá).
+- UMA ação por vez. Se o artista pedir duas coisas ("cria a música X E marca um show"), faça a primeira (um card), e só depois de resolvida trate a segunda.
+- Perguntas sobre o que JÁ existe ("o que eu faço hoje?", "qual minha primeira tarefa?", "to perdido, por onde começo?", "como tá meu plano?") são para RESPONDER a partir de DADOS DO ARTISTA — NÃO entre no protocolo de criar estratégia/tarefa. Só entre nesses protocolos quando o artista deixar CLARO que quer CRIAR algo novo ("quero criar uma estratégia/tarefa nova").
+  - Ao indicar "a primeira tarefa" ou "por onde começar", use a estratégia priorizada no topo (a que a tela mostra como "Comece por aqui" — a de maior prioridade entre as que têm tarefa), não a primeira da ordem crua.
+- Se o artista pedir para APAGAR o plano todo / várias estratégias de uma vez, explique com gentileza que isso não dá pra fazer pelo chat e que ele pode remover item a item na tela do Plano de Ação. NUNCA peça "IDs" ao artista nem mostre exemplos técnicos.
+- A qualquer momento que o artista mudar de assunto no meio de um protocolo, ABANDONE o protocolo e atenda o novo pedido.
+
 ## PROTOCOLO — Criar tarefa numa estratégia (create_task)
 Quando o artista quiser criar uma tarefa para uma estratégia (ex.: 'Quero criar uma tarefa para a estratégia "X"'), a estratégia JÁ vem no pedido — não pergunte qual é. Conduza UM PASSO POR MENSAGEM:
 - PASSO 1 (Ação): pergunte em UMA frase curta qual a ação concreta que ele quer adicionar. Se ele não souber, proponha de 1 a 3 opções como LISTA NUMERADA em markdown e peça pra responder o número (ou descrever a dele).
@@ -534,6 +542,7 @@ interface MetricsSnapshot {
 }
 
 interface ArtistContext {
+  name: string | null;
   bio: string | null;
   // IDs reais entram no contexto para o modelo conseguir chamar update/delete
   // sem inventar identificadores (são dados do próprio artista, sem vazamento).
@@ -563,6 +572,7 @@ interface PlanStrategy {
   id?: string;
   title?: string;
   tasks?: PlanTask[];
+  finalScore?: number;
 }
 
 interface FetchArtistContextResult {
@@ -574,13 +584,14 @@ async function fetchArtistContext(artistId: string, authHeader: string): Promise
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
   });
-  const ctx: ArtistContext = { bio: null, catalogItems: [], events: [], teamMembers: [], actionPlan: [], chartmetric: null, quiz: null, diagnostic: null, realIndex: null, objectives: [], metricsSnapshot: null };
+  const ctx: ArtistContext = { name: null, bio: null, catalogItems: [], events: [], teamMembers: [], actionPlan: [], chartmetric: null, quiz: null, diagnostic: null, realIndex: null, objectives: [], metricsSnapshot: null };
   const unavailableModules: string[] = [];
 
   try {
     const { data: a } = await supabase.from("artists").select("content").eq("id", artistId).maybeSingle();
     if (a?.content) {
-      const c = a.content as { identity?: { bio?: string }; strategies?: PlanStrategy[]; chartmetricProfile?: Record<string, unknown>; quizDiagnostic?: { answers?: Record<string, unknown> }; diagnostic?: Record<string, unknown>; realIndex?: Record<string, unknown>; objectives?: unknown[] };
+      const c = a.content as { identity?: { bio?: string; name?: string }; strategies?: PlanStrategy[]; chartmetricProfile?: Record<string, unknown>; quizDiagnostic?: { answers?: Record<string, unknown> }; diagnostic?: Record<string, unknown>; realIndex?: Record<string, unknown>; objectives?: unknown[] };
+      if (c?.identity?.name && typeof c.identity.name === "string") ctx.name = c.identity.name.trim() || null;
       if (c?.identity?.bio) ctx.bio = c.identity.bio.substring(0, 500);
       if (c?.chartmetricProfile) ctx.chartmetric = c.chartmetricProfile;
       if (c?.quizDiagnostic?.answers) ctx.quiz = c.quizDiagnostic.answers;
@@ -588,7 +599,15 @@ async function fetchArtistContext(artistId: string, authHeader: string): Promise
       if (c?.realIndex) ctx.realIndex = c.realIndex;
       if (Array.isArray(c?.objectives)) ctx.objectives = (c.objectives as unknown[]).filter((o): o is string => typeof o === "string" && o.trim().length > 0);
       if (Array.isArray(c?.strategies)) {
-        ctx.actionPlan = c.strategies.map((s) => ({
+        // Ordena igual à tela do Plano de Ação: as priorizadas (com tarefa) primeiro, e por
+        // finalScore desc — assim a 1ª da lista é o "Comece por aqui" que o artista vê.
+        const ordered = [...c.strategies].sort((a, b) => {
+          const at = (a.tasks?.length || 0) > 0 ? 1 : 0;
+          const bt = (b.tasks?.length || 0) > 0 ? 1 : 0;
+          if (at !== bt) return bt - at;
+          return (Number(b?.finalScore) || 0) - (Number(a?.finalScore) || 0);
+        });
+        ctx.actionPlan = ordered.map((s) => ({
           strategy: s.title || "Estratégia",
           tasks: (s.tasks || []).map((t) => ({
             description: t.description || "",
@@ -772,6 +791,7 @@ function truncateToTokenBudget(t: string, max: number): string {
 function formatArtistContext(ctx: ArtistContext): string {
   if (!ctx) return "";
   let t = "";
+  if (ctx.name) t += `\n- Nome do artista (use este nome real, nunca placeholder): ${ctx.name}`;
   if (ctx.bio) t += `\n- Bio: ${ctx.bio}`;
   // Dados de plataforma (Chartmetric) — fonte real, a Nyta já sabe disso, não precisa perguntar.
   if (ctx.chartmetric) {
