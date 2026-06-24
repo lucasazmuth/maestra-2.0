@@ -64,8 +64,17 @@ export const MessageList: FC<MessageListProps> = ({
     const newCount = messages.length;
     const hadNewMessages = newCount > prevMessageCountRef.current;
     prevMessageCountRef.current = newCount;
+    if (!hadNewMessages) return;
 
-    if (hadNewMessages && !userScrolledUpRef.current) {
+    // Se a última mensagem é do PRÓPRIO usuário (ele acabou de enviar), SEMPRE rola pro fim —
+    // é intenção explícita, mesmo que ele estivesse com a lista rolada pra cima lendo histórico.
+    const last = messages[messages.length - 1];
+    if (last?.role === 'user') {
+      userScrolledUpRef.current = false;
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    if (!userScrolledUpRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);

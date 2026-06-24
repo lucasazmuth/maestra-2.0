@@ -142,8 +142,10 @@ const nytaChatSlice = createSlice({
 
     // Cada artista tem sua própria conversa (nyta_conversations por artist_id):
     // ao trocar de artista o estado inteiro é descartado para o thread não vazar.
-    resetConversation() {
-      return initialState;
+    resetConversation(state) {
+      // O limite diário é por USUÁRIO/dia, não por conversa — preserva o rateLimitInfo ao
+      // resetar a conversa (senão o contador "zerava" visualmente e parecia liberar o limite).
+      return { ...initialState, rateLimitInfo: state.rateLimitInfo };
     },
 
     prependMessages(state, action: PayloadAction<NytaChatMessage[]>) {

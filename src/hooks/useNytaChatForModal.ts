@@ -381,6 +381,14 @@ export function useNytaChatForModal(): UseNytaChatForModalReturn {
     async (text: string) => {
       if (!artistId || !text.trim()) return;
 
+      // Guarda do limite diário NA ORIGEM: vale pra QUALQUER entrada (input do chat, chips do
+      // Dashboard, "Nova estratégia/tarefa" do Plano de Ação). Sem isso, as entradas externas
+      // (openWithPrompt) mandavam a mensagem otimista mesmo no limite — parecia um bypass.
+      // O servidor já bloqueia (429), mas aqui evitamos a mensagem-fantasma e o reset visual.
+      if (rateLimitInfo && rateLimitInfo.count >= rateLimitInfo.limit) {
+        return;
+      }
+
       dispatch(setError(null));
 
       const userMsgId = uid();
@@ -435,7 +443,7 @@ export function useNytaChatForModal(): UseNytaChatForModalReturn {
       dispatch(updateMessage({ id: userMsgId, status: 'sent' }));
       await processStream(response, assistantMsgId);
     },
-    [artistId, dispatch, postToNytaChat, handleErrorResponse, processStream]
+    [artistId, dispatch, postToNytaChat, handleErrorResponse, processStream, rateLimitInfo]
   );
 
   // ─── confirmTool ──────────────────────────────────────────────────────────
