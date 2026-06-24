@@ -425,6 +425,13 @@ export function useNytaChatForModal(): UseNytaChatForModalReturn {
         return;
       }
 
+      // Contador de uso diário (header da resposta) → selo "X/limite" ao vivo no header.
+      const dc = response.headers.get('X-Daily-Count');
+      const dl = response.headers.get('X-Daily-Limit');
+      if (dc != null && dl != null) {
+        dispatch(setRateLimitInfo({ count: Number(dc), limit: Number(dl), resetAt: null }));
+      }
+
       dispatch(updateMessage({ id: userMsgId, status: 'sent' }));
       await processStream(response, assistantMsgId);
     },

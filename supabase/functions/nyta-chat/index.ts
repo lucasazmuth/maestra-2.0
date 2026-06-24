@@ -12,6 +12,8 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
     "Authorization, Content-Type, apikey, x-client-info, x-supabase-api-version",
+  // Permite o front ler o contador de uso diário da resposta.
+  "Access-Control-Expose-Headers": "X-Daily-Count, X-Daily-Limit",
 };
 
 // IMPORTANTE: o artist_id NÃO é exposto nas ferramentas — o servidor injeta o da
@@ -402,33 +404,43 @@ function validateMessageAction(request: NytaChatRequest): Response | null {
 
 const DAILY_MESSAGE_LIMIT = 100;
 
-async function checkRateLimit(userId: string, artistId: string, authHeader: string): Promise<Response | null> {
+// Limite diário RESILIENTE ao "Limpar histórico": o contador vive na conversa
+// (nyta_conversations.daily_count), não nas mensagens — então deletar o histórico NÃO zera o
+// limite. Lê o contador do dia, bloqueia se já no limite, senão incrementa. Retorna o novo
+// contador pro front mostrar "X/limite". (Read-then-write: race irrelevante p/ 1 usuário.)
+async function checkAndBumpDailyLimit(
+  conversationId: string,
+  authHeader: string,
+): Promise<{ response?: Response; count: number }> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
   });
   const now = new Date();
   const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const todayISO = todayUTC.toISOString();
+  const todayDate = todayUTC.toISOString().split("T")[0]; // YYYY-MM-DD
   const tomorrowUTC = new Date(todayUTC);
   tomorrowUTC.setUTCDate(tomorrowUTC.getUTCDate() + 1);
   const resetAt = tomorrowUTC.toISOString();
-  const { data: conversation, error: convError } = await supabase
+
+  const { data: conv, error } = await supabase
     .from("nyta_conversations")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("artist_id", artistId)
-    .maybeSingle();
-  if (convError) return jsonResponse({ error: "service_unavailable" }, 503);
-  if (!conversation) return null;
-  const { count, error: countError } = await supabase
-    .from("nyta_messages")
-    .select("*", { count: "exact", head: true })
-    .eq("conversation_id", conversation.id)
-    .eq("role", "user")
-    .gte("created_at", todayISO);
-  if (countError) return jsonResponse({ error: "service_unavailable" }, 503);
-  if ((count ?? 0) >= DAILY_MESSAGE_LIMIT) return jsonResponse({ error: "rate_limit_exceeded", resetAt }, 429);
-  return null;
+    .select("daily_count, daily_count_date")
+    .eq("id", conversationId)
+    .single();
+  // Fail-open: se não conseguir ler, não bloqueia (não vamos travar o chat por um erro de leitura).
+  if (error || !conv) return { count: 0 };
+
+  const isToday = conv.daily_count_date === todayDate;
+  const current = isToday ? (conv.daily_count ?? 0) : 0;
+  if (current >= DAILY_MESSAGE_LIMIT) {
+    return { response: jsonResponse({ error: "rate_limit_exceeded", resetAt }, 429), count: current };
+  }
+  const next = current + 1;
+  await supabase
+    .from("nyta_conversations")
+    .update({ daily_count: next, daily_count_date: todayDate })
+    .eq("id", conversationId);
+  return { count: next };
 }
 
 async function validateSubscription(userId: string): Promise<Response | null> {
@@ -923,7 +935,8 @@ function streamGroqResponse(
   // false no follow-up pós-confirmação: o modelo só relata o resultado, sem poder
   // emendar outra tool call (evita cards de confirmação duplicados/alucinados).
   allowTools: boolean = true,
-  unavailableModules: string[] = []
+  unavailableModules: string[] = [],
+  dailyCount: number | null = null
 ): Response {
   const enc = new TextEncoder();
   const stream = new ReadableStream({
@@ -1042,6 +1055,10 @@ function streamGroqResponse(
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       "Connection": "keep-alive",
+      // Contador de uso diário pro front mostrar "X/limite" ao vivo no header do chat.
+      ...(dailyCount != null
+        ? { "X-Daily-Count": String(dailyCount), "X-Daily-Limit": String(DAILY_MESSAGE_LIMIT) }
+        : {}),
       ...CORS_HEADERS,
     },
   });
@@ -1431,11 +1448,12 @@ Deno.serve(async (req: Request) => {
       const sErr = await validateSubscription(userId);
       if (sErr) return sErr;
       const ah = req.headers.get("Authorization")!;
-      const rl = await checkRateLimit(userId, r.artist_id!, ah);
-      if (rl) return rl;
+      // Conversa primeiro: o limite diário é contado nela (resiliente ao "Limpar histórico").
       const conv = await getOrCreateConversation(userId, r.artist_id!, ah);
       if (conv instanceof Response) return conv;
       const { conversationId } = conv;
+      const rl = await checkAndBumpDailyLimit(conversationId, ah);
+      if (rl.response) return rl.response;
       const pm = await persistUserMessage(conversationId, r.message!, ah);
       if (pm instanceof Response) return pm;
       // Sem busca na base de conhecimento aqui: o chat livre só enxerga o artista
@@ -1444,7 +1462,7 @@ Deno.serve(async (req: Request) => {
       const rag = buildRAGContext(actx);
       const ctx = await loadConversationContext(conversationId, ah);
       if (ctx instanceof Response) return ctx;
-      return streamGroqResponse(ctx.messages, conversationId, ah, rag, true, unavailableModules);
+      return streamGroqResponse(ctx.messages, conversationId, ah, rag, true, unavailableModules, rl.count);
     }
     case "confirm": {
       const cErr = validateConfirmAction(r);
