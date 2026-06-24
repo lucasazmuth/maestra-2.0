@@ -72,6 +72,8 @@ const ENUM_VALUES_PT: Record<string, string> = {
   mastering: 'Masterização', ready: 'Pronta', released: 'Lançada',
   // status de evento
   scheduled: 'Agendado', confirmed: 'Confirmado', cancelled: 'Cancelado', completed: 'Concluído',
+  // status de tarefa do plano de ação
+  todo: 'A fazer', in_progress: 'Em andamento', done: 'Concluída', archived: 'Arquivada',
   // tipo de evento
   show: 'Show', reuniao: 'Reunião', estudio: 'Estúdio', ensaio: 'Ensaio', entrevista: 'Entrevista', outro: 'Outro',
 };
