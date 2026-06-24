@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Tooltip, message } from 'antd';
-import { FiChevronDown, FiArrowRight, FiDownload, FiShare2, FiHelpCircle } from 'react-icons/fi';
+import { FiChevronDown, FiArrowRight, FiDownload, FiShare2, FiHelpCircle, FiRefreshCw, FiLock } from 'react-icons/fi';
 
 import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
@@ -140,6 +140,10 @@ interface Props {
   enableStickyCta?: boolean;
   // Mostra o CTA "Começar planejamento" + a copy. Some quando o artista já tem plano (só PDF/share).
   showPlanningCta?: boolean;
+  // "Refazer diagnóstico" (só na /diagnostico): quando passado, vira um botão no cabeçalho. Se
+  // redoLocked, mostra cadeado (recurso PRO). Na criação fica undefined (botão não aparece).
+  onRedo?: () => void;
+  redoLocked?: boolean;
 }
 
 // Rótulos dos níveis de prêmios/imprensa do motor v2 (índice → texto p/ a exibição).
@@ -162,7 +166,7 @@ export const v2InputsView = (ri: any) => ({
 
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
 // Determinística: consome o realIndex calculado no backend (sem IA). Suporta v1 (antigo) e v2.
-export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true }) => {
+export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false }) => {
   const [methodOpen, setMethodOpen] = useState(false);
   // v2 (motor REAL Consolidado) tem `version: 2` + `boletim`; v1 mantém o shape antigo.
   const riAny = realIndex as any;
@@ -289,16 +293,16 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
               : 'Baseado nos seus dados reais: Spotify, redes sociais e o que você nos contou.'}
           </p>
         </div>
-        <button
-          className={styles.heroShareBtn}
-          onClick={handleShare}
-          disabled={busy}
-          aria-label="Compartilhar diagnóstico"
-          title="Compartilhar"
-          data-noexport="1"
-        >
-          <FiShare2 size={18} />
-        </button>
+        {onRedo && (
+          <button
+            className={styles.heroRedoBtn}
+            onClick={onRedo}
+            title={redoLocked ? 'Recurso PRO — assine para refazer' : 'Refaça o quiz e atualize seu perfil REAL'}
+            data-noexport="1"
+          >
+            {redoLocked ? <FiLock size={15} /> : <FiRefreshCw size={15} />} Refazer diagnóstico
+          </button>
+        )}
       </div>
 
       {/* SEÇÃO 2 — O perfil REAL */}
@@ -496,6 +500,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
         )}
         <div className={styles.shareActions} data-noexport="1">
           <button className={styles.shareBtn} onClick={handleDownloadPdf} disabled={busy}><FiDownload size={15} /> {busy ? 'Gerando…' : 'Baixar diagnóstico (PDF)'}</button>
+          <button className={styles.shareBtn} onClick={handleShare} disabled={busy} aria-label="Compartilhar diagnóstico"><FiShare2 size={15} /> Compartilhar</button>
         </div>
         {showPlanningCta && <p className={styles.ctaMicrocopy}>Seu diagnóstico REAL fica salvo. Você pode refazê-lo a qualquer momento para acompanhar a evolução da carreira.</p>}
       </div>

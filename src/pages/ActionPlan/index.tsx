@@ -2,7 +2,7 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message, Popover } from 'antd';
 import { createPortal } from 'react-dom';
-import { FiArchive, FiCheck, FiChevronDown, FiHelpCircle, FiLayers, FiList, FiPlus, FiX } from 'react-icons/fi';
+import { FiArchive, FiCheck, FiChevronDown, FiHelpCircle, FiPlus, FiX } from 'react-icons/fi';
 
 import { useNytaModal } from '../../hooks/useNytaModal';
 import { buildActionPlan } from '../Wizard/method/engines';
@@ -13,15 +13,11 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
-import { RealProfileSummary } from '../../components/RealProfileSummary';
-import { PhaseSummary } from '../../components/PhaseSummary';
-import { PhaseCard } from '../Dashboard/sections';
+import { TaskProgress } from '../../components/RealCareerCard';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
-import AdvancedPlan from './AdvancedPlan';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
-import { getPhaseInfo, TASK_OWNER_SELF } from '../../constants/maestra';
+import { TASK_OWNER_SELF } from '../../constants/maestra';
 import { listMembers } from '../../services/db/members';
-import * as wizardAi from '../../services/wizardAi';
 import type { ActionTask, ArtistContent, ArtistMember, Strategy } from '../../interfaces/maestra';
 import './actionPlan.scss';
 
@@ -32,7 +28,6 @@ const isDone = (t: ActionTask) => t.status === 'done';
 const isActive = (t: ActionTask) => t.status !== 'archived';
 // fmtDate vive em TaskControls/TaskComposer (componentes que exibem datas).
 
-interface SuggTask { description: string; type?: string; deadline?: string }
 
 // Modal "Arquivadas": estratégias que o artista NÃO priorizou (sem tarefa). Ele seleciona quais
 // trazer pro plano — ao confirmar, cada uma ganha as tarefas do banco e entra na lista principal.
@@ -99,8 +94,8 @@ const ActionPlan: FC = () => {
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
 
-  // Gerir tarefas exige PRO; avançar de fase exige edição do plano (dono pago ou PRO).
-  const { manageTasks, editPlanning, useNytaConsultora } = useArtistCapabilities(artist);
+  // Gerir tarefas exige PRO. (Editar o dossiê — fundamentos/objetivos etc. — agora é no Perfil.)
+  const { manageTasks } = useArtistCapabilities(artist);
   const content = artist?.content;
   const objectives = useMemo<string[]>(() => content?.objectives || [], [content]);
   const strategies = useMemo<Strategy[]>(() => content?.strategies || [], [content]);
@@ -115,19 +110,6 @@ const ActionPlan: FC = () => {
   const [archiveOpen, setArchiveOpen] = useState(false); // modal "Arquivadas": traz estratégia pro plano
   const { openWithPrompt } = useNytaModal(); // botão "Nova estratégia" abre a Nyta com o protocolo
   const [, setSaving] = useState(false);
-  const [composer, setComposer] = useState<string | null>(null);
-  const [sugg, setSugg] = useState<Record<string, SuggTask[]>>({});
-  const [loadingSugg, setLoadingSugg] = useState<string | null>(null);
-  // Modo de visualização: 'basic' (foco em executar) | 'advanced' (dossiê completo). Persiste a preferência.
-  const [mode, setMode] = useState<'basic' | 'advanced'>(
-    () => (localStorage.getItem('maestra_ap_mode') === 'advanced' ? 'advanced' : 'basic')
-  );
-  const toggleMode = () => {
-    const next = mode === 'basic' ? 'advanced' : 'basic';
-    setMode(next);
-    localStorage.setItem('maestra_ap_mode', next);
-  };
-  const [advancing, setAdvancing] = useState(false);
 
   // Equipe ativa do artista — alimenta o seletor de responsável das tarefas.
   const [members, setMembers] = useState<ArtistMember[]>([]);
@@ -211,12 +193,6 @@ const ActionPlan: FC = () => {
   const delTask = (sid: string, tid: string) => {
     commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).filter((t) => t.id !== tid) })));
   };
-  const addTask = (sid: string, task: SuggTask) => {
-    // Toda tarefa nova nasce sob responsabilidade do dono do perfil (pode ser reatribuída).
-    const nt: ActionTask = { id: uid(), status: 'todo', owner: TASK_OWNER_SELF, description: task.description, type: task.type, deadline: task.deadline };
-    commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: [...(s.tasks || []), nt] })));
-  };
-
   // "Arquivadas" → trazer pro plano: semeia as tarefas do banco (buildActionPlan) nas selecionadas.
   // Como passam a ter tarefa, saem do arquivo e entram na lista principal (na prioridade salva).
   const activateArchived = (ids: string[]) => {
@@ -224,68 +200,6 @@ const ActionPlan: FC = () => {
     commit((ss) => ss.map((s) => (ids.includes(s.id) ? { ...s, tasks: buildActionPlan(s) } : s)));
     setArchiveOpen(false);
     message.success(ids.length === 1 ? 'Estratégia trazida pro plano de ação.' : `${ids.length} estratégias trazidas pro plano de ação.`);
-  };
-
-  const askNyta = async (s: Strategy) => {
-    // "Pedir ideias pra Nyta" usa a Nyta IA → recurso PRO. Sem PRO, leva pra assinatura.
-    if (!useNytaConsultora) { navigate('/assinatura'); return; }
-    setLoadingSugg(s.id);
-    try {
-      const identity = content?.identity || { name: artist?.name };
-      const tasks = await wizardAi.suggestTasks(s, objectives, identity, content?.spotifyProfile);
-      setSugg((p) => ({ ...p, [s.id]: tasks }));
-      if (!tasks.length) message.info('A Nyta não trouxe ideias agora. Tenta de novo num instante.');
-    } finally {
-      setLoadingSugg(null);
-    }
-  };
-
-  // Avançar de fase: arquiva o ciclo atual no histórico, incrementa a fase, gera o novo
-  // rótulo via IA, zera o planejamento e reabre o wizard em Objetivos. Mesma mecânica do
-  // Dashboard (PhaseCard.onAdvance) — a fonte de verdade é única.
-  const advancePhase = async () => {
-    if (advancing || !artist || !editPlanning) return;
-    setAdvancing(true);
-    try {
-      const c = artist.content || {};
-      const ph = c.phase || 1;
-      const np = ph + 1;
-      const snapshot = {
-        phase: ph,
-        phaseLabel: c.phaseLabel || getPhaseInfo(ph).label,
-        objectives: c.objectives,
-        strategies: c.strategies,
-        swotAnalysis: c.swotAnalysis,
-        snapshotAt: new Date().toISOString(),
-      };
-      let nextLabel = getPhaseInfo(np).label;
-      try {
-        const ai = await wizardAi.generatePhaseLabel(c.identity || { name: artist.name }, np);
-        if (ai?.trim()) nextLabel = ai.trim();
-      } catch { /* mantém o fallback */ }
-      const next: ArtistContent = {
-        ...c,
-        phase: np,
-        phaseLabel: nextLabel,
-        phaseHistory: [...(c.phaseHistory || []), snapshot],
-        objectives: [],
-        swotQuizQuestions: [],
-        swotQuizAnswers: {},
-        swotAnalysis: undefined,
-        strategyQuizQuestions: [],
-        strategyQuizAnswers: {},
-        strategies: [],
-        executiveSummary: undefined,
-        step: 1, // reabre o wizard em Objetivos (identidade é transversal)
-      };
-      await dispatch(artistsActions.updateArtistContent({ id: artist.id, content: next })).unwrap();
-      message.success(`Nova fase iniciada: ${nextLabel}`);
-      navigate(`/artists/${artist.id}/wizard`);
-    } catch {
-      message.error('Não consegui avançar de fase agora. Tenta de novo.');
-    } finally {
-      setAdvancing(false);
-    }
   };
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
@@ -318,7 +232,7 @@ const ActionPlan: FC = () => {
   const displayed = withTasks.length ? withTasks : info; // sem nenhuma priorizada, mostra tudo
   const focusIdx = displayed.findIndex((p) => p.total > 0 && !p.complete); // -1 = todas concluídas
 
-  // Contagem no formato do PhaseCard (mesma fonte do Dashboard) — barra de progresso + avançar de fase.
+  // Contagem das tarefas (mesma fonte do Dashboard) — alimenta a barra de progresso do RealCareerCard.
   const allTasks = ranked.flatMap((s) => (s.tasks || []).filter(isActive));
   const taskCounts = {
     todo: allTasks.filter((t) => !t.status || t.status === 'todo').length,
@@ -329,38 +243,18 @@ const ActionPlan: FC = () => {
 
   return (
     <div className="ap">
-      {/* CABEÇALHO — título + alternância de modo (básico ↔ avançado) */}
+      {/* CABEÇALHO — só o título (o dossiê/REAL mudou-se para a página de Perfil) */}
       <div className="ap-top">
         <h1 className="ap-top-title">Plano de Ação</h1>
-        <button className="ap-btn ap-btn--ghost" onClick={toggleMode}>
-          {mode === 'basic' ? <><FiLayers size={14} /> Ver dados completos</> : <><FiList size={14} /> Ver menos</>}
-        </button>
       </div>
 
-      {/* FASE — mesmo card do Dashboard (design system): progresso, Foco/Evite e avançar de fase.
-          O resumo executivo ("Onde X está hoje") só aparece no modo "Ver dados completos"; no
-          modo "Ver menos" (básico) o card fica resumido, sem o resumo. */}
-      <PhaseCard
-        artist={artist}
-        taskCounts={taskCounts}
-        advancing={advancing}
-        onAdvance={advancePhase}
-        hideFocus
-        footer={mode === 'advanced' && content?.executiveSummary ? <PhaseSummary text={content.executiveSummary} /> : undefined}
-      />
+      {/* Progresso das tarefas (só execução; a FASE REAL agora vive no Perfil). */}
+      <div style={{ background: 'radial-gradient(120% 130% at 0% 0%, rgba(175,40,150,0.10), #181818 60%)', border: '1px solid rgba(175,40,150,0.22)', borderRadius: 14, padding: 22, marginBottom: 24 }}>
+        <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#af2896' }}>Progresso do plano</span>
+        <h2 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 24, color: '#fff', margin: '6px 0 0', lineHeight: 1.1 }}>Suas tarefas</h2>
+        <TaskProgress counts={taskCounts} />
+      </div>
 
-      {mode === 'advanced' ? (
-        <>
-        {/* Diagnóstico REAL — perfil de carreira, no modo "ver dados completos" */}
-        <RealProfileSummary artist={artist} style={{ marginTop: 4 }} />
-        <AdvancedPlan
-          content={content!}
-          ranked={ranked}
-          crud={{ today, canManage: manageTasks, canUseNyta: useNytaConsultora, toggleDone, patchTask, delTask, addTask, askNyta, sugg, setSugg, loadingSugg, composer, setComposer, assignees }}
-        />
-        </>
-      ) : (
-      <>
       {/* ESTRATÉGIAS — em ordem de prioridade (a "etapa atual" do artista) */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <h2 className="ap-section-title" style={{ margin: 0 }}>Estratégias por prioridade</h2>
@@ -479,8 +373,6 @@ const ActionPlan: FC = () => {
 
       {/* Consultora da Nyta (mesma seção do rodapé do Dashboard) no lugar do texto simples de objetivos */}
       <NytaDashboardHero />
-      </>
-      )}
 
       {archiveOpen && (
         <ArchiveModal

@@ -5,6 +5,7 @@ import {
   FiGrid,
   FiCalendar,
   FiMusic,
+  FiUser,
   FiUsers,
   FiCheckSquare,
   FiChevronLeft,
@@ -101,6 +102,7 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
   // o wizard é acessado via criação de artista e "Avançar de fase"; o Perfil virou a home (Dashboard).
   const modules = [
     { icon: <FiGrid />, label: t('Dashboard', { defaultValue: 'Dashboard' }), suffix: '', locked: false },
+    { icon: <FiUser />, label: t('Profile', { defaultValue: 'Perfil' }), suffix: 'perfil', locked: !viewPlanning },
     {
       icon: <FiCheckSquare />,
       label: t('Action Plan', { defaultValue: 'Plano de Ação' }),
@@ -109,6 +111,7 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
     },
     { icon: <FiMusic />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog', locked: false },
     { icon: <FiCalendar />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda', locked: false },
+    // Equipe fica só no menu web/tablet (sidebar); no mobile o acesso é pelo Acesso rápido do Dashboard.
     { icon: <FiUsers />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team', locked: !viewPlanning },
   ];
 

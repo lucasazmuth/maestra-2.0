@@ -502,15 +502,6 @@ export const improveVisionMissionText = async (
   return stripDashes(String(data?.text || ''));
 };
 
-// Rótulo criativo da fase
-export const generatePhaseLabel = async (
-  identity: ArtistIdentity,
-  phase: number
-): Promise<string> => {
-  const data = await callWizardAI({ action: 'generatePhaseLabel', identity, phase });
-  return stripDashes(String(data?.text || ''));
-};
-
 // Plano de Ação: a Nyta sugere as próximas tarefas concretas dentro de uma estratégia,
 // direcionando o artista pro melhor caminho. Fail-safe: erro → [].
 export const suggestTasks = async (

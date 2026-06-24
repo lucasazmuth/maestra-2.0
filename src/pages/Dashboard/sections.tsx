@@ -1,126 +1,14 @@
-import { FC, ReactNode, useState } from 'react';
-import { Input, Popconfirm, Spin, message } from 'antd';
+import { FC, useState } from 'react';
+import { Input, Spin, message } from 'antd';
 import { FaSpotify } from 'react-icons/fa6';
-import { FiArrowRight } from 'react-icons/fi';
 
 import { useAppDispatch } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
-import { getPhaseInfo } from '../../constants/maestra';
 import { searchSpotifyArtists, buildSpotifyProfileAndCatalog } from '../../services/spotifyArtist';
 import { supabase } from '../../lib/supabase';
 import type { Artist, ArtistContent, SwotAnalysis } from '../../interfaces/maestra';
 
 // Seções da home do artista (Dashboard). Antes viviam na tela Perfil — foram fundidas aqui.
-
-interface TaskCounts {
-  todo: number;
-  inProgress: number;
-  done: number;
-  total: number;
-}
-
-// ---- Card de Fase de Carreira ------------------------------------------------------------------
-
-export const PhaseCard: FC<{
-  artist: Artist;
-  taskCounts: TaskCounts;
-  advancing: boolean;
-  onAdvance: () => void;
-  footer?: ReactNode; // conteúdo extra renderizado dentro do card (ex.: resumo executivo no Plano de Ação)
-  hideFocus?: boolean; // oculta Foco/Evite (Plano de Ação libera espaço pras estratégias)
-  onOpenPlan?: () => void; // se passado, mostra link "Ver plano de ação" (só no Dashboard; dentro do próprio Plano seria redundante)
-}> = ({ artist, taskCounts, advancing, onAdvance, footer, hideFocus, onOpenPlan }) => {
-  const phase = artist.content?.phase || 1;
-  const info = getPhaseInfo(phase);
-  const label = artist.content?.phaseLabel || info.label;
-  const pct = taskCounts.total ? Math.round((taskCounts.done / taskCounts.total) * 100) : 0;
-  const complete = taskCounts.total > 0 && taskCounts.done === taskCounts.total;
-
-  return (
-    <div style={{ background: 'linear-gradient(180deg, #1f1f1f, #121212)', borderRadius: 12, padding: 24, marginBottom: 24 }}>
-      <div style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700 }}>FASE {phase}</div>
-      <h2 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '4px 0 16px', fontFamily: 'SpotifyMixUITitle' }}>
-        {label}
-      </h2>
-
-      {/* Progresso = % de tarefas concluídas da fase */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-          <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: '#af2896', transition: 'width .4s cubic-bezier(0.4,0,0.2,1)' }} />
-        </div>
-        <span style={{ color: '#af2896', fontWeight: 800, fontSize: 14, minWidth: 42, textAlign: 'right' }}>{pct}%</span>
-      </div>
-
-      {!hideFocus && (
-        <>
-          <p style={{ color: '#fff', margin: '0 0 4px' }}>
-            <strong>Foco:</strong> {info.focus}
-          </p>
-          <p style={{ color: '#b3b3b3', margin: 0 }}>
-            <strong>Evite:</strong> {info.antiFocus}
-          </p>
-        </>
-      )}
-
-      {complete ? (
-        <Popconfirm
-          title='Avançar de fase?'
-          description={`O plano atual será arquivado no histórico e um novo ciclo começa para a fase ${phase + 1}.`}
-          okText='Avançar'
-          cancelText='Cancelar'
-          onConfirm={onAdvance}
-        >
-          <button
-            disabled={advancing}
-            style={{
-              marginTop: 16,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: '#af2896',
-              border: 'none',
-              color: '#fff',
-              padding: '10px 24px',
-              borderRadius: 9999,
-              cursor: 'pointer',
-              fontWeight: 700,
-            }}
-          >
-            {advancing ? 'Avançando…' : 'Avançar de fase'} <FiArrowRight />
-          </button>
-        </Popconfirm>
-      ) : (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
-          <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>
-            Conclua todas as tarefas do plano de ação para avançar de fase.
-          </p>
-          {onOpenPlan && (
-            <button
-              onClick={onOpenPlan}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                color: '#d264bb',
-                fontWeight: 700,
-                fontSize: 14,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Ver plano de ação <FiArrowRight />
-            </button>
-          )}
-        </div>
-      )}
-
-      {footer}
-    </div>
-  );
-};
 
 // ---- Resumo SWOT -------------------------------------------------------------------------------
 
@@ -143,26 +31,13 @@ export const SwotSummary: FC<{ swot?: SwotAnalysis }> = ({ swot }) => (
   </>
 );
 
-// ---- Resumo executivo + histórico de fases -----------------------------------------------------
+// ---- Resumo executivo --------------------------------------------------------------------------
 
 export const ExecutiveSummary: FC<{ text: string }> = ({ text }) => (
   <>
     <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '24px 0 12px' }}>Resumo executivo</h2>
     <div style={{ background: '#181818', borderRadius: 8, padding: 16, color: '#d0d0d0', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
       {text}
-    </div>
-  </>
-);
-
-export const PhaseHistory: FC<{ history: NonNullable<ArtistContent['phaseHistory']> }> = ({ history }) => (
-  <>
-    <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '24px 0 12px' }}>Histórico de fases</h2>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {history.map((h, i) => (
-        <div key={i} style={{ background: '#181818', borderRadius: 8, padding: 12, color: '#b3b3b3', fontSize: 13 }}>
-          Fase {h.phase} — {h.phaseLabel} ({new Date(h.snapshotAt).toLocaleDateString('pt-BR')})
-        </div>
-      ))}
     </div>
   </>
 );

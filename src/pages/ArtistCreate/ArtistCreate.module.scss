@@ -818,6 +818,23 @@
   &:hover:not(:disabled) { background: rgba(175, 40, 150, 0.18); border-color: #af2896; color: #fff; transform: translateY(-1px); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
+.heroRedoBtn {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 9999px;
+  background: rgba(175, 40, 150, 0.12);
+  border: 1px solid rgba(175, 40, 150, 0.35);
+  color: #d264bb;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+  &:hover { background: rgba(175, 40, 150, 0.22); border-color: #af2896; color: #fff; transform: translateY(-1px); }
+}
 
 // SEÇÃO 2 — Card do perfil (o momento "uau")
 .realProfileCard {

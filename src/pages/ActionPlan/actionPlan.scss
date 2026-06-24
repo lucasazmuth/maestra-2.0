@@ -577,6 +577,50 @@
 .ap-adv-objs li { display: flex; gap: 14px; align-items: baseline; color: #e0e0e0; font-size: 14.5px; line-height: 1.55; }
 .ap-adv-objnum { color: #6f6f6f; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 22px; }
 
+/* Edição inline do dossiê (visão/missão/valores/bio/objetivos/gênero) */
+.ap-adv-editable { position: relative; display: flex; align-items: flex-start; gap: 8px; }
+.ap-adv-editable > p, .ap-adv-editable > .ap-adv-chips, .ap-adv-editable > .ap-adv-objs { flex: 1; min-width: 0; }
+.ap-adv-muted { color: #6f6f6f; font-style: italic; }
+.ap-adv-pencil {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; margin-top: 4px;
+  border: none; border-radius: 7px; background: rgba(255, 255, 255, 0.06);
+  color: #9a9a9a; cursor: pointer; transition: color .15s, background-color .15s;
+  &:hover { color: #fff; background: rgba(175, 40, 150, 0.22); }
+}
+.ap-adv-editbox { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.ap-adv-edit-area, .ap-adv-edit-input {
+  width: 100%; box-sizing: border-box; resize: none;
+  background: #1a1a1a; border: 1px solid #3a3a3a; border-radius: 9px;
+  color: #fff; font-size: 14.5px; line-height: 1.5; padding: 9px 12px; font-family: inherit;
+  &:focus { outline: none; border-color: #af2896; }
+}
+.ap-adv-edit-row { display: flex; align-items: center; gap: 8px; }
+.ap-adv-row-del {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border: none; border-radius: 7px; background: rgba(255,255,255,0.05);
+  color: #9a9a9a; cursor: pointer; &:hover { color: #f87171; background: rgba(233,20,41,0.12); }
+}
+.ap-adv-row-add, .ap-adv-edit-save, .ap-adv-edit-cancel {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: none; border-radius: 9999px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.ap-adv-row-add { align-self: flex-start; background: rgba(255,255,255,0.07); color: #cfcfcf; &:hover { background: rgba(255,255,255,0.12); } }
+.ap-adv-edit-actions { display: flex; gap: 8px; margin-top: 2px; }
+.ap-adv-edit-save { background: #af2896; color: #fff; &:hover { filter: brightness(1.08); } }
+.ap-adv-edit-cancel { background: rgba(255,255,255,0.08); color: #b3b3b3; &:hover { color: #fff; } }
+.ap-adv-note { color: #7a7a7a; font-size: 12.5px; line-height: 1.5; margin: 10px 0 0; max-width: 620px; }
+.ap-adv-ref-sub { display: block; color: #9a9a9a; font-size: 12px; margin-bottom: 4px; }
+
+// Mapa de referências: quadrantes 2×2 com hub central (desktop). No mobile vira 1 coluna empilhada
+// e o hub some (o "mapa mental" 2×2 não cabe; a lista vertical fica mais legível).
+.ap-adv-refmap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 640px) {
+  .ap-adv-refmap { grid-template-columns: 1fr; }
+  .ap-adv-refmap-hub { display: none; }
+}
+
 /* SWOT */
 .ap-adv-swot {
   display: grid;

@@ -1,5 +1,5 @@
 import { FC, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Input, InputNumber, Spin } from 'antd';
 import { FiAlertCircle } from 'react-icons/fi';
 import { useDebounce } from 'use-debounce';
@@ -13,6 +13,7 @@ import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { SpotifyLottie } from '../../components/SpotifyLottie';
 import type { RealIndex } from '../../interfaces/maestra';
 import { useCanCreateArtist } from '../../hooks/useCanCreateArtist';
+import { useEntitlements } from '../../hooks/useEntitlements';
 import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import { DiagnosticReport, type Chartmetric } from './DiagnosticReport';
 import styles from './ArtistCreate.module.scss';
@@ -88,6 +89,22 @@ const ArtistCreate: FC = () => {
   const artists = useAppSelector((s) => s.artists.items);
   const { canCreate: allowed, reason: rateLimitReason, pendingCount, cooldownRemainingSeconds, loading: rlLoading, error: rlError, retry: rlRetry } = useCanCreateArtist();
 
+  // Modo "Refazer diagnóstico" (PRO): rota própria /artists/:id/diagnostico/refazer. Pula a busca
+  // do Spotify, pré-carrega os dados salvos do artista + as respostas anteriores do quiz e recalcula
+  // no edge (redoArtistId), sem criar perfil nem mexer no plano. Em /criar-artista, :id é undefined.
+  const { id: redoArtistId } = useParams();
+  const redo = !!redoArtistId;
+  const redoArtist = redoArtistId ? artists.find((a) => a.id === redoArtistId) : undefined;
+  const { isPro } = useEntitlements();
+  const subInitialized = useAppSelector((s) => s.subscription.initialized);
+
+  // Refazer diagnóstico é recurso PRO — o edge também valida (403). Aqui evitamos o beco sem saída
+  // de rodar o quiz todo pra só barrar no fim: não-PRO é mandado pra /assinatura na entrada. Só
+  // age após o status carregar (`initialized`), senão um PRO seria expulso no load inicial.
+  useEffect(() => {
+    if (redo && subInitialized && !isPro) navigate('/assinatura', { replace: true });
+  }, [redo, subInitialized, isPro, navigate]);
+
   const [step, setStep] = useState<Step>('perfil');
   const [line, setLine] = useState('');     // fala atual da Maestra
   const [typed, setTyped] = useState('');   // efeito de digitação
@@ -111,8 +128,35 @@ const ArtistCreate: FC = () => {
   const answers = useRef<Record<string, string | number>>({});
   const [fieldVal, setFieldVal] = useState<number | null>(null); // valor do campo aberto atual
 
-  // Zera o campo aberto ao trocar de pergunta.
-  useEffect(() => { setFieldVal(null); }, [quizIndex, step]);
+  // Ao trocar de pergunta: pré-carrega a resposta anterior (modo redo) ou zera (criação).
+  useEffect(() => {
+    const cur = step === 'quiz' ? QUIZ[quizIndex] : null;
+    if (cur && cur.type !== 'select') {
+      const prev = answers.current[cur.key];
+      setFieldVal(typeof prev === 'number' ? prev : null);
+    } else {
+      setFieldVal(null);
+    }
+  }, [quizIndex, step]);
+
+  // Refazer diagnóstico: semeia os dados salvos do artista + as respostas anteriores e começa no
+  // quiz (pula o "perfil"). Só age enquanto está no perfil; ao achar o artista, troca pra quiz.
+  // Se a lista vier vazia (deep-link), dispara o fetch e re-tenta quando carregar.
+  useEffect(() => {
+    if (!redo || step !== 'perfil') return;
+    if (!redoArtist) { if (user?.id) dispatch(artistsActions.fetchArtists(user.id)); return; }
+    chosen.current = {
+      name: redoArtist.name,
+      spotifyArtistId: redoArtist.content?.spotifyProfile?.spotify_artist_id ?? null,
+      followers: redoArtist.content?.spotifyProfile?.followers ?? null,
+      image: redoArtist.content?.spotifyProfile?.image ?? null,
+    };
+    answers.current = { ...(redoArtist.content?.quizDiagnostic?.answers || {}) };
+    setQuizIndex(0);
+    setStep('quiz');
+    say(QUIZ[0].q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [redo, redoArtist, step]);
 
   // Diagnóstico (Índice REAL)
   const [realIndex, setRealIndex] = useState<RealIndex | null>(null);
@@ -137,10 +181,10 @@ const ArtistCreate: FC = () => {
     return () => window.clearInterval(id);
   }, [line]);
 
-  // Saudação inicial
+  // Saudação inicial (só na criação — no modo "Refazer diagnóstico" o seeding leva direto ao quiz).
   const intro = useRef(false);
   useEffect(() => {
-    if (intro.current) return;
+    if (intro.current || redo) return;
     intro.current = true;
     const hasArtists = artists.some((a) => a.role !== 'member');
     introLineRef.current = hasArtists
@@ -169,19 +213,22 @@ const ArtistCreate: FC = () => {
     let active = true;
     (async () => {
       try {
+        // Redo (PRO): recalcula no edge reusando o Chartmetric salvo. Criação: cria/reusa o perfil.
         const { data, error } = await supabase.functions.invoke('artist-diagnostic', {
-          body: {
-            name: chosen.current.name,
-            spotifyArtistId: chosen.current.spotifyArtistId,
-            spotify: { followers: chosen.current.followers, image: chosen.current.image },
-            quizV2: answers.current,
-          },
+          body: redo
+            ? { redoArtistId, quizV2: answers.current }
+            : {
+                name: chosen.current.name,
+                spotifyArtistId: chosen.current.spotifyArtistId,
+                spotify: { followers: chosen.current.followers, image: chosen.current.image },
+                quizV2: answers.current,
+              },
         });
         if (error) throw error;
         const d = data as { artistId: string; locked?: boolean; reused?: boolean; realIndex: RealIndex | null; chartmetric: Chartmetric | null };
         if (!active) return;
         createdRef.current = { artistId: d.artistId, locked: d.locked !== false };
-        // Atualiza a lista pra refletir o novo perfil (pendente) em /artists.
+        // Atualiza a lista pra refletir o perfil (novo/pendente na criação, atualizado no redo).
         if (user?.id) dispatch(artistsActions.fetchArtists(user.id));
         // Perfil reaproveitado já PAGO → segue direto pro app (sem mostrar diagnóstico de novo).
         if (d.reused && d.locked === false) {
@@ -273,6 +320,8 @@ const ArtistCreate: FC = () => {
   };
 
   const goToUnlock = () => {
+    // Redo: o perfil já é pago — volta pro diagnóstico atualizado (nada de desbloqueio).
+    if (redo) { navigate(`/artists/${redoArtistId}/diagnostico`); return; }
     const created = createdRef.current;
     // O artista já viu o diagnóstico aqui no chat → abre o desbloqueio direto no pagamento.
     if (created) navigate(`/artists/${created.artistId}/desbloquear`, { state: { skipDiagnostic: true } });
@@ -285,7 +334,7 @@ const ArtistCreate: FC = () => {
 
   return (
     <div className={styles.page}>
-      <button className={styles.back} onClick={() => navigate('/artists')}>Sair</button>
+      <button className={styles.back} onClick={() => navigate(redo ? `/artists/${redoArtistId}/diagnostico` : '/artists')}>{redo ? 'Voltar' : 'Sair'}</button>
 
       <div className={styles.pillWrap}>
         <div className={styles.pillGlow} aria-hidden />
@@ -487,6 +536,8 @@ const ArtistCreate: FC = () => {
                   artistImage={chosen.current.image}
                   noSpotify={!chosen.current.spotifyArtistId}
                   onContinue={goToUnlock}
+                  showPlanningCta={!redo}
+                  enableStickyCta={!redo}
                 />
               ) : (
                 <div className={styles.diagWrap} style={{ textAlign: 'center' }}>
