@@ -18,7 +18,6 @@ import { PhaseSummary } from '../../components/PhaseSummary';
 import { PhaseCard } from '../Dashboard/sections';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import AdvancedPlan from './AdvancedPlan';
-import TaskComposer from './TaskComposer';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
 import { getPhaseInfo, TASK_OWNER_SELF } from '../../constants/maestra';
 import { listMembers } from '../../services/db/members';
@@ -381,7 +380,6 @@ const ActionPlan: FC = () => {
           const s = p.s;
           const state = p.complete ? 'done' : idx === focusIdx ? 'current' : 'next';
           const isOpen = openId === undefined ? state === 'current' : openId === s.id;
-          const suggestions = sugg[s.id];
           const goal = topObjective(s);
 
           return (
@@ -427,7 +425,7 @@ const ActionPlan: FC = () => {
               {isOpen && (
                 <div className="ap-strat-body">
                   {/* TAREFAS — linha do tempo (diferencial do modo básico) */}
-                  {p.ts.length === 0 && <div className="ap-empty-tasks">Nenhuma tarefa ainda. Adicione abaixo ou peça ideias pra Nyta.</div>}
+                  {p.ts.length === 0 && <div className="ap-empty-tasks">Nenhuma tarefa ainda. Crie a primeira com a Nyta no botão abaixo.</div>}
                   {p.ts.length > 0 && (
                     <div className="ap-tl">
                       {p.ts.map((t, ti) => {
@@ -461,21 +459,16 @@ const ActionPlan: FC = () => {
                     </div>
                   )}
 
-                  {/* ADICIONAR (livre no FREE) / Pedir ideias pra Nyta (PRO — gate em onAskNyta). */}
+                  {/* "Nova tarefa" abre o chat da Nyta pra criar a tarefa NESTA estratégia (guiado + confirmação). */}
                   {manageTasks && (
-                    <TaskComposer
-                      strategy={s}
-                      open={composer === s.id}
-                      loading={loadingSugg === s.id}
-                      suggestions={suggestions}
-                      accent
-                      canUseNyta={useNytaConsultora}
-                      onOpen={() => setComposer(s.id)}
-                      onClose={() => { setComposer(null); setSugg((pp) => ({ ...pp, [s.id]: [] })); }}
-                      onAdd={(t) => addTask(s.id, t)}
-                      onAskNyta={() => askNyta(s)}
-                      onUseSugg={(i) => { addTask(s.id, suggestions![i]); setSugg((pp) => ({ ...pp, [s.id]: (pp[s.id] || []).filter((_, j) => j !== i) })); }}
-                    />
+                    <div className="ap-add">
+                      <button
+                        className="ap-btn ap-btn--ghost ap-btn--accent"
+                        onClick={() => openWithPrompt(`Quero criar uma tarefa para a estratégia "${s.title}"`)}
+                      >
+                        <FiPlus size={15} /> Nova tarefa
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

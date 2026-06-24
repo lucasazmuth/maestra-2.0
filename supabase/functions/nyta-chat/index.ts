@@ -32,6 +32,13 @@ const NYTA_SYSTEM_PROMPT = `Você é a Nyta, a inteligência da Maestra Manager:
 - create_team_member, update_team_member, remove_team_member
 - update_plan_task (muda o status de tarefas do plano de ação — as tarefas estão listadas em DADOS DO ARTISTA)
 - create_strategy (cria uma NOVA estratégia no Plano de Ação, COM tarefas — use SÓ após conduzir o protocolo abaixo)
+- create_task (cria uma NOVA tarefa dentro de uma estratégia que JÁ existe — use SÓ após conduzir o protocolo abaixo)
+
+## PROTOCOLO — Criar tarefa numa estratégia (create_task)
+Quando o artista quiser criar uma tarefa para uma estratégia (ex.: 'Quero criar uma tarefa para a estratégia "X"'), a estratégia JÁ vem no pedido — não pergunte qual é. Conduza UM PASSO POR MENSAGEM:
+- PASSO 1 (Ação): pergunte em UMA frase curta qual a ação concreta que ele quer adicionar. Se ele não souber, proponha de 1 a 3 opções como LISTA NUMERADA em markdown e peça pra responder o número (ou descrever a dele).
+- PASSO 2: quando a tarefa estiver clara (verbo no infinitivo), chame create_task com strategy_query (um trecho do título da estratégia citada) e description. Aparece o card de CONFIRMAÇÃO pro artista aprovar.
+NUNCA chame create_task antes de ter a ação definida. Uma pergunta por mensagem.
 
 ## PROTOCOLO — Criar nova estratégia (create_strategy)
 Quando o artista quiser criar uma nova estratégia, conduza UM PASSO POR MENSAGEM. O artista é LEIGO: NUNCA junte várias perguntas numa mensagem só. Faça uma pergunta curta, ESPERE a resposta, e só então vá pro próximo passo.
@@ -287,6 +294,28 @@ const NYTA_TOOLS = [
           },
         },
         required: ["title", "tasks", "priority"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_task",
+      description:
+        "Cria uma NOVA tarefa dentro de uma estratégia que JÁ existe no Plano de Ação. Use depois de entender com o artista qual a ação concreta. Identifique a estratégia por um trecho do título (strategy_query). Aparece como card de confirmação para o artista aprovar.",
+      parameters: {
+        type: "object",
+        properties: {
+          strategy_query: {
+            type: "string",
+            description: "Trecho do título da estratégia onde a tarefa entra (ex.: 'prospecção de shows'). Deve casar com uma estratégia listada em DADOS DO ARTISTA.",
+          },
+          description: {
+            type: "string",
+            description: "A tarefa, concreta e começando com verbo no infinitivo (ex.: 'mapear casas de show da região').",
+          },
+        },
+        required: ["strategy_query", "description"],
       },
     },
   },
@@ -1293,6 +1322,34 @@ async function executeTool(
         if (uErr) return { success: false, summary: `Falha ao salvar: ${uErr.message}` };
         const pLabel = priority === "alta" ? "alta" : priority === "baixa" ? "baixa" : "média";
         return { success: true, summary: `Estratégia "${title}" criada com ${taskDescs.length} tarefa(s), prioridade ${pLabel}. Já aparece no Plano de Ação.` };
+      }
+      case "create_task": {
+        // Adiciona UMA tarefa a uma estratégia já existente (artists.content.strategies). A estratégia
+        // é localizada por trecho do título; a Nyta já conduziu o protocolo (ação definida).
+        const strategyQuery = ((args.strategy_query as string) || "").trim().toLowerCase();
+        const desc = ((args.description as string) || "").trim();
+        if (!strategyQuery) return { success: false, summary: "strategy_query obrigatório." };
+        if (!desc) return { success: false, summary: "description obrigatória." };
+        const { data: row, error: fErr } = await admin
+          .from("artists").select("content").eq("id", artistId).single();
+        if (fErr || !row) return { success: false, summary: "Artista não encontrado." };
+        const content = (row.content || {}) as { strategies?: PlanStrategy[] };
+        const strategies = Array.isArray(content.strategies) ? content.strategies : [];
+        const matches = strategies.filter((s) => (s.title || "").toLowerCase().includes(strategyQuery));
+        if (matches.length === 0) {
+          return { success: false, summary: `Nenhuma estratégia do plano contém "${args.strategy_query}".` };
+        }
+        if (matches.length > 1) {
+          const opts = matches.slice(0, 3).map((m) => `"${m.title}"`).join(", ");
+          return { success: false, summary: `Mais de uma estratégia corresponde a "${args.strategy_query}": ${opts}. Especifique melhor.` };
+        }
+        const uid = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+        const target = matches[0];
+        target.tasks = [...(target.tasks || []), { id: uid(), description: desc, status: "todo" }];
+        const { error: uErr } = await admin
+          .from("artists").update({ content, updated_at: new Date().toISOString() }).eq("id", artistId);
+        if (uErr) return { success: false, summary: `Falha ao salvar: ${uErr.message}` };
+        return { success: true, summary: `Tarefa "${desc}" adicionada à estratégia "${target.title}".` };
       }
       default:
         return { success: false, summary: `Ferramenta '${toolName}' desconhecida.` };

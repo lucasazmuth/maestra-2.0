@@ -33,6 +33,7 @@
 }
 .ap-btn--primary { background: #af2896; color: #fff; &:hover:not(:disabled) { transform: scale(1.04); } }
 .ap-btn--ghost { background: rgba(255, 255, 255, 0.1); color: #fff; &:hover:not(:disabled) { transform: scale(1.04); } }
+.ap-btn--accent { background: rgba(175, 40, 150, 0.16); color: #f0b6e2; &:hover:not(:disabled) { background: rgba(175, 40, 150, 0.26); transform: scale(1.04); } }
 .ap-btn--ai {
   background: #16161b;
   border: 1px solid rgba(255, 255, 255, 0.1);
