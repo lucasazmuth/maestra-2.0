@@ -60,6 +60,7 @@ const ARG_LABELS_PT: Record<string, string> = {
   bpm: 'BPM',
   isrc: 'ISRC',
   upc: 'UPC',
+  access_levels: 'Acesso',
 };
 
 // Valores de enum que chegam em "código" → rótulo amigável (status de catálogo/evento, tipo, prioridade).
