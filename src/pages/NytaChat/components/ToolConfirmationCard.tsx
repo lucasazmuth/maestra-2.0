@@ -81,6 +81,11 @@ const ENUM_VALUES_PT: Record<string, string> = {
 // Só traduz enum quando a CHAVE é de enum — evita trocar um título tipo "Show" ou "Released".
 const ENUM_KEYS = new Set(['status', 'type', 'priority']);
 
+// Chaves internas que não interessam ao artista (artist_id é injetado pelo servidor; os *_id
+// são UUIDs de roteamento). Escondidas do card — a ação + os campos com sentido já bastam,
+// e a conversa deixa claro de qual item se trata.
+const HIDDEN_ARG_KEYS = new Set(['artist_id', 'id', 'item_id', 'event_id', 'member_id']);
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const SUMMARY_MAX_CHARS = 200;
@@ -120,7 +125,7 @@ function formatArgValue(value: unknown, key?: string): string {
 export function buildActionSummary(name: string, args: Record<string, unknown>): string {
   const actionName = translateToolName(name);
   const argParts = Object.entries(args)
-    .filter(([key]) => key !== 'artist_id')
+    .filter(([key]) => !HIDDEN_ARG_KEYS.has(key))
     .filter(([, val]) => !Array.isArray(val)) // listas (ex.: tarefas) vão no detalhe, não no resumo
     .map(([key, val]) => `${translateArgLabel(key)}: ${formatArgValue(val, key)}`)
     .join(', ');
@@ -203,7 +208,7 @@ export const ToolConfirmationCard: FC<ToolConfirmationCardProps> = ({
   const summary = buildActionSummary(name, args);
 
   // Filter out artist_id from displayed arguments
-  const displayArgs = Object.entries(args).filter(([key]) => key !== 'artist_id');
+  const displayArgs = Object.entries(args).filter(([key]) => !HIDDEN_ARG_KEYS.has(key));
 
   // ─── Render status indicator ──────────────────────────────────────────────
 
