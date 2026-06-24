@@ -668,7 +668,9 @@ async function fetchArtistContext(artistId: string, authHeader: string): Promise
       .from("artist_members")
       .select("id, name, email, status")
       .eq("artist_id", artistId)
-      .eq("status", "active");
+      // inclui 'pending': membro recém-adicionado pela Nyta nasce 'pending' (convite não aceito);
+      // sem isso ele fica invisível ao chat e não dá pra atualizar/remover quem você acabou de criar.
+      .in("status", ["active", "pending"]);
     if (members) {
       ctx.teamMembers = members.map((m) => ({
         id: m.id,
