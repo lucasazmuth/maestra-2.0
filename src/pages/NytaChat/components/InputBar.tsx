@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { FiArrowUp } from 'react-icons/fi';
+import { FiArrowUp, FiClock } from 'react-icons/fi';
 
 import type { PendingToolCall, RateLimitInfo } from '../../../store/slices/nytaChat';
 
@@ -129,21 +129,30 @@ export const InputBar: FC<InputBarProps> = ({
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
+  // No limite diário: em vez do input bloqueado (que só ocupa espaço) + vários avisos,
+  // mostramos UM card limpo, com a contagem e quando volta.
+  if (isRateLimited && rateLimitInfo) {
+    return (
+      <div className="nyta-input-bar nyta-input-bar--limited">
+        <div className="nyta-rate-limit-card">
+          <span className="nyta-rate-limit-card__icon">
+            <FiClock size={18} />
+          </span>
+          <div className="nyta-rate-limit-card__body">
+            <span className="nyta-rate-limit-card__title">
+              Você usou suas {rateLimitInfo.limit} mensagens de hoje
+            </span>
+            <span className="nyta-rate-limit-card__sub">
+              {countdown ? `Volta em ${countdown}` : 'Volta amanhã'} · {rateLimitInfo.count}/{rateLimitInfo.limit}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="nyta-input-bar">
-      {isRateLimited && rateLimitInfo && (
-        <div className="nyta-input-bar__rate-limit">
-          <span className="nyta-input-bar__rate-limit-text">
-            {rateLimitInfo.count}/{rateLimitInfo.limit} mensagens usadas hoje
-          </span>
-          {countdown && (
-            <span className="nyta-input-bar__rate-limit-countdown">
-              Redefine em {countdown}
-            </span>
-          )}
-        </div>
-      )}
-
       <div className="nyta-input-bar__row">
         <textarea
           ref={textareaRef}

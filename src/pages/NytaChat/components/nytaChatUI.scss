@@ -94,6 +94,57 @@
     font-size: 12px;
   }
 
+  // No limite diário: card único (sem input), centralizado.
+  &--limited {
+    padding: 14px 16px;
+  }
+
+  .nyta-rate-limit-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: var(--nyta-col, 100%);
+    margin: 0 auto;
+    box-sizing: border-box;
+    padding: 14px 16px;
+    background: rgba(175, 40, 150, 0.1);
+    border: 1px solid rgba(175, 40, 150, 0.28);
+    border-radius: 12px;
+
+    &__icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(175, 40, 150, 0.18);
+      color: #d264bb;
+    }
+
+    &__body {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    &__title {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    &__sub {
+      color: #b3b3b3;
+      font-size: 12.5px;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
   // Rodapé: aviso (fonte pequena, centralizado) + contador de caracteres à direita.
   &__footer {
     display: flex;

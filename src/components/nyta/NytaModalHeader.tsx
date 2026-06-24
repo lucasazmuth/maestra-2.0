@@ -7,17 +7,21 @@ import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
 import styles from './NytaModalHeader.module.scss';
 
 interface NytaModalHeaderProps {
-  artistName: string;
   onClear: () => void;
   onClose: () => void;
+  // Contador de uso diário (X/limite). Quando informado, mostra um selo discreto no header
+  // pro artista acompanhar quanto falta pro limite diário.
+  dailyCount?: number | null;
+  dailyLimit?: number | null;
   // Inicia o arraste do modal (desktop). Indefinido no mobile (tela cheia, sem arraste).
   onDragStart?: (e: ReactPointerEvent) => void;
 }
 
 export const NytaModalHeader: FC<NytaModalHeaderProps> = ({
-  artistName,
   onClear,
   onClose,
+  dailyCount,
+  dailyLimit,
   onDragStart,
 }) => {
   const isMobile = useIsMobile();
@@ -32,12 +36,19 @@ export const NytaModalHeader: FC<NytaModalHeaderProps> = ({
         <NytaAvatar size={30} />
         <div className={styles.titles}>
           <span className={styles.title}>Nyta IA</span>
-          {artistName && <span className={styles.subtitle}>{artistName}</span>}
         </div>
       </div>
 
       {/* Não inicia arraste ao clicar nos botões de ação. */}
       <div className={styles.actions} onPointerDown={(e) => e.stopPropagation()}>
+        {typeof dailyCount === 'number' && typeof dailyLimit === 'number' && (
+          <span
+            className={`${styles.usage}${dailyCount >= dailyLimit ? ` ${styles.usageFull}` : ''}`}
+            title="Mensagens usadas hoje"
+          >
+            {dailyCount}/{dailyLimit}
+          </span>
+        )}
         <Popconfirm
           title="Limpar histórico?"
           description="Esta ação não pode ser desfeita."

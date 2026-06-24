@@ -21,6 +21,9 @@ export interface MessageListProps {
   onLoadOlder: () => void;
   onConfirmTool?: (toolCallId: string) => void;
   onCancelTool?: (toolCallId: string) => void;
+  // No limite diário, o card do InputBar já explica — não mostramos o balão de erro da
+  // mensagem que não passou (evita "erro em cima de erro").
+  suppressErrorBubbles?: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -38,6 +41,7 @@ export const MessageList: FC<MessageListProps> = ({
   onLoadOlder,
   onConfirmTool,
   onCancelTool,
+  suppressErrorBubbles = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -169,6 +173,12 @@ export const MessageList: FC<MessageListProps> = ({
 
       {/* Messages */}
       {messages.map((msg) => {
+        // No limite diário: não renderiza a mensagem que falhou (user + assistant em erro) —
+        // o card do InputBar já comunica. Evita "erro em cima de erro".
+        if (suppressErrorBubbles && msg.status === 'error') {
+          return null;
+        }
+
         // Remove markup de tool-call que alguns modelos vazam como texto (ver sanitizeNytaContent).
         const content =
           msg.role === 'assistant' ? sanitizeNytaContent(msg.content) : msg.content || '';

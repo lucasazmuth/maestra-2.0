@@ -60,6 +60,28 @@
   gap: 2px;
 }
 
+// Selo discreto de uso diário (ex.: "12/100") ao lado dos botões.
+.usage {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #b3b3b3;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+// Quando bateu o limite, fica em vermelho discreto.
+.usageFull {
+  background: rgba(233, 20, 41, 0.16);
+  color: #f87171;
+}
+
 .iconButton {
   display: flex;
   align-items: center;

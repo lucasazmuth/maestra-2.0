@@ -224,10 +224,13 @@ export const NytaFloatingModal: FC = () => {
   const hasAccess = PAYWALL_DISABLED || entitlements.isPro;
   const showLockedView =
     !hasAccess || error === 'subscription_required';
+  // No limite diário, o card do InputBar já comunica tudo — suprimimos o banner de topo
+  // e os balões de erro da mensagem que não passou, pra não mostrar 3 erros ao mesmo tempo.
+  const isRateLimited =
+    !!rateLimitInfo && rateLimitInfo.count >= rateLimitInfo.limit;
   const showErrorBanner =
-    error && error !== 'subscription_required';
+    error && error !== 'subscription_required' && !isRateLimited;
   const hasMessages = messages.length > 0;
-  const artistName = moduleContext.artistName || '';
 
   // ─── Don't render anything if never opened ─────────────────────────────────
 
@@ -259,9 +262,10 @@ export const NytaFloatingModal: FC = () => {
     >
       {/* Header */}
       <NytaModalHeader
-        artistName={artistName}
         onClear={clearConversation}
         onClose={close}
+        dailyCount={rateLimitInfo?.count ?? null}
+        dailyLimit={rateLimitInfo?.limit ?? null}
         onDragStart={handleDragStart}
       />
 
@@ -295,6 +299,7 @@ export const NytaFloatingModal: FC = () => {
             onLoadOlder={loadOlderMessages}
             onConfirmTool={confirmTool}
             onCancelTool={cancelTool}
+            suppressErrorBubbles={isRateLimited}
           />
           <div className={styles.inputWrapper}>
             <InputBar
