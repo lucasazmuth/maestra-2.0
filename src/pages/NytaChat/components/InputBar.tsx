@@ -17,8 +17,11 @@ const MAX_ROWS = 4;
 function formatCountdown(resetAt: string): string {
   const diff = new Date(resetAt).getTime() - Date.now();
   if (diff <= 0) return '0m';
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.ceil((diff % (1000 * 60 * 60)) / (1000 * 60));
+  // Arredonda pra cima no TOTAL de minutos e só então separa h/min — senão o arredondamento
+  // dos minutos podia dar "60m" (ex.: "7h 60m" em vez de "8h 0m").
+  const totalMinutes = Math.ceil(diff / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
   if (hours > 0) return `${hours}h ${minutes}m`;
   return `${minutes}m`;
 }
