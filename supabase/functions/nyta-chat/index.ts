@@ -860,18 +860,24 @@ function formatArtistContext(ctx: ArtistContext): string {
     ctx.catalogItems.forEach((i) => {
       t += `\n  • ${i.title} (${i.status}) [id: ${i.id}]`;
     });
+  } else {
+    t += "\n- Catálogo: NENHUM item. Não invente músicas/itens; para atualizar/remover algo, ele precisa existir aqui.";
   }
   if (ctx.events.length) {
     t += "\n- Eventos:";
     ctx.events.forEach((e) => {
       t += `\n  • ${e.title} — ${e.date} (${e.type}) [id: ${e.id}]`;
     });
+  } else {
+    t += "\n- Eventos/agenda: NENHUM evento agendado. Se pedirem para remarcar/atualizar um show, diga que não há nenhum na agenda e ofereça CRIAR. NUNCA invente um id de evento.";
   }
   if (ctx.teamMembers.length) {
     t += "\n- Equipe:";
     ctx.teamMembers.forEach((m) => {
       t += `\n  • ${m.name} (${m.email}) [id: ${m.id}]`;
     });
+  } else {
+    t += "\n- Equipe: NENHUM membro cadastrado.";
   }
   if (ctx.actionPlan?.length) {
     t += "\n- Plano de ação (estratégias e tarefas — use update_plan_task para mudar o status):";
