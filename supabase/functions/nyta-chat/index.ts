@@ -46,6 +46,7 @@ const NYTA_SYSTEM_PROMPT = `Você é a Nyta, a inteligência da Maestra Manager:
 - Se o artista pedir para APAGAR o plano todo / várias estratégias de uma vez, explique com gentileza que isso não dá pra fazer pelo chat e que ele pode remover item a item na tela do Plano de Ação. NUNCA peça "IDs" ao artista nem mostre exemplos técnicos.
 - A qualquer momento que o artista mudar de assunto no meio de um protocolo, ABANDONE o protocolo e atenda o novo pedido.
 - NUNCA cite termos internos do sistema na conversa (ex.: "DADOS DO ARTISTA", nomes de ferramentas, IDs, formato de data). Fale como consultora: "no seu plano", "nas suas estratégias". E NÃO narre seu raciocínio interno (ex.: cálculo de datas, "como o sistema não fornece..."): resolva por trás e responda só o resultado, ou faça uma pergunta curta se faltar dado.
+- Ao LISTAR itens pro artista (catálogo, agenda, equipe), mostre só nome + status/data em português (ex.: "Cidade Cinza — em mixagem"). NUNCA inclua o "[id: ...]" na resposta: o id entre colchetes é SÓ pra você usar internamente em update/remove, jamais para exibir.
 - Ao adicionar alguém à equipe, registre o PAPEL/função que o artista mencionar (empresário, produtor, assessor, DJ, etc.) no campo \`access_levels\`.
 - QUANDO VOCÊ CHAMA UMA FERRAMENTA de criar/atualizar/remover, a ação NÃO está feita — ela só acontece quando o artista clicar em "Confirmar" no card. Então fale SEMPRE no futuro/condicional: "Vou marcar o show…, confirme no card abaixo" / "Posso criar…". NUNCA fale no passado ("show marcado", "criei", "pronto", "foi feito") — senão você mente e ainda envenena o histórico.
 - NÃO assuma que algo proposto num card que o artista NÃO confirmou (ou que ele cancelou) virou realidade — mesmo que VOCÊ tenha mencionado antes na conversa. A ÚNICA verdade sobre o que existe é a lista do contexto. Se o item não está lá, ele NÃO existe: diga que não encontrou e ofereça criar/ajudar.
@@ -799,6 +800,12 @@ function truncateToTokenBudget(t: string, max: number): string {
   return tr + "…";
 }
 
+// Status em PT para o contexto, pra Nyta não listar item com status cru em inglês.
+const CAT_STATUS_PT: Record<string, string> = {
+  composition: "composição", production: "produção", mixing: "mixagem",
+  mastering: "masterização", ready: "pronta", released: "lançada",
+};
+
 function formatArtistContext(ctx: ArtistContext): string {
   if (!ctx) return "";
   let t = "";
@@ -859,7 +866,7 @@ function formatArtistContext(ctx: ArtistContext): string {
   if (ctx.catalogItems.length) {
     t += "\n- Catálogo:";
     ctx.catalogItems.forEach((i) => {
-      t += `\n  • ${i.title} (${i.status}) [id: ${i.id}]`;
+      t += `\n  • ${i.title} (${CAT_STATUS_PT[i.status] || i.status}) [id: ${i.id}]`;
     });
   } else {
     t += "\n- Catálogo: NENHUM item. Não invente músicas/itens; para atualizar/remover algo, ele precisa existir aqui.";
