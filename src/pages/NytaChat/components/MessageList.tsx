@@ -173,8 +173,27 @@ export const MessageList: FC<MessageListProps> = ({
         const content =
           msg.role === 'assistant' ? sanitizeNytaContent(msg.content) : msg.content || '';
 
-        // Skip empty assistant messages (tool_call-only, sanitizado para vazio, ou placeholder).
+        // Mensagens de assistant vazias: normalmente são tool-call (o card aparece à parte) ou
+        // placeholder de streaming — essas pulamos. MAS se a msg TINHA texto e foi sanitizada a
+        // vazio (ex.: o modelo respondeu só com um bloco JSON que removemos) e NÃO é tool-call,
+        // mostramos um fallback em vez de sumir silenciosamente (senão o chat parece travado).
         if (msg.role === 'assistant' && !content && msg.status !== 'error') {
+          const isToolCall = !!msg.toolCalls?.length;
+          const hadRawText = !!(msg.content && msg.content.trim());
+          if (!isToolCall && hadRawText) {
+            return (
+              <div
+                key={msg.id}
+                className="nyta-message-list__item nyta-message-list__item--assistant"
+              >
+                <NytaBubble>
+                  <span style={{ opacity: 0.75 }}>
+                    Hmm, não consegui formular essa resposta direito. Pode reformular o pedido?
+                  </span>
+                </NytaBubble>
+              </div>
+            );
+          }
           return null;
         }
 

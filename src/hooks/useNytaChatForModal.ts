@@ -601,6 +601,12 @@ export function useNytaChatForModal(): UseNytaChatForModalReturn {
     if (!artistId) return;
 
     dispatch(setError(null));
+    // Limpa a UI IMEDIATAMENTE (otimista). Isso evita uma race: se o DELETE no banco
+    // demorasse e o clearMessages só rodasse DEPOIS, ele apagaria uma mensagem que o
+    // artista mandou logo após clicar em "Limpar" — a resposta sumia (chat parecia travado).
+    // Limpando antes, um envio seguinte já parte de um estado limpo e não é afetado.
+    dispatch(clearMessages());
+    const cutoff = new Date().toISOString();
 
     try {
       let convId = conversationId;
@@ -611,25 +617,22 @@ export function useNytaChatForModal(): UseNytaChatForModalReturn {
           .eq('artist_id', artistId)
           .maybeSingle();
 
-        if (!conv) {
-          dispatch(clearMessages());
-          return;
-        }
+        if (!conv) return;
         convId = conv.id;
+        dispatch(setConversationId(convId));
       }
 
+      // Apaga só o que existia ANTES do clear: uma mensagem nova enviada em seguida
+      // (created_at > cutoff) é preservada no banco.
       const { error: deleteError } = await supabase
         .from('nyta_messages')
         .delete()
-        .eq('conversation_id', convId);
+        .eq('conversation_id', convId)
+        .lte('created_at', cutoff);
 
       if (deleteError) {
         dispatch(setError('Erro ao limpar conversa.'));
-        return;
       }
-
-      dispatch(clearMessages());
-      dispatch(setConversationId(convId));
     } catch {
       dispatch(setError('Erro ao limpar conversa.'));
     }
