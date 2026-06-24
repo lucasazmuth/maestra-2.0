@@ -21,12 +21,17 @@ const LEAKED_TOOL_JSON =
 // Partial no fim do stream: objeto JSON aberto e ainda sem fechar.
 const LEAKED_TOOL_JSON_TRAILING = /\{\s*"(?:date|type|title|location|status|description)"\s*:[^{}]*$/;
 
+// IDs internos: o contexto lista itens como "Aurora (mixagem) [id: <uuid>]" e o modelo às vezes
+// ecoa o "[id: ...]" pro artista. Removemos esse marcador (id/ref + uuid) do texto visível.
+const LEAKED_ID_TAG = /\s*\[(?:id|ref)\s*:\s*[0-9a-fA-F-]{6,}\]/g;
+
 export const sanitizeNytaContent = (raw: string | null | undefined): string => {
   if (!raw) return '';
   const hasFunction = raw.includes('<function');
   const maybeJson = raw.includes('{') && raw.includes('":');
+  const maybeId = raw.includes('[id:') || raw.includes('[ref:');
   // Atalho: nada a fazer se não houver nenhum dos marcadores.
-  if (!hasFunction && !maybeJson) return raw;
+  if (!hasFunction && !maybeJson && !maybeId) return raw;
 
   let out = raw;
   if (hasFunction) {
@@ -34,6 +39,9 @@ export const sanitizeNytaContent = (raw: string | null | undefined): string => {
   }
   if (maybeJson) {
     out = out.replace(LEAKED_TOOL_JSON, '').replace(LEAKED_TOOL_JSON_TRAILING, '');
+  }
+  if (maybeId) {
+    out = out.replace(LEAKED_ID_TAG, '');
   }
   return out
     // Normaliza espaços/linhas em branco deixados pela remoção.
