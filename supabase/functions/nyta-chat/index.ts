@@ -402,19 +402,28 @@ function validateMessageAction(request: NytaChatRequest): Response | null {
   return null;
 }
 
-const DAILY_MESSAGE_LIMIT = 100;
+// Fallback se a tabela nyta_plan_limits não responder. O limite REAL é configurável por plano lá.
+const DAILY_MESSAGE_LIMIT_FALLBACK = 100;
 
-// Limite diário RESILIENTE ao "Limpar histórico": o contador vive na conversa
-// (nyta_conversations.daily_count), não nas mensagens — então deletar o histórico NÃO zera o
-// limite. Lê o contador do dia, bloqueia se já no limite, senão incrementa. Retorna o novo
-// contador pro front mostrar "X/limite". (Read-then-write: race irrelevante p/ 1 usuário.)
+// Limite diário POR PLANO, configurável sem deploy (tabela nyta_plan_limits) e RESILIENTE ao
+// "Limpar histórico": o contador vive na conversa (nyta_conversations.daily_count), não nas
+// mensagens — deletar o histórico NÃO zera o limite. Lê o limite do plano + o contador do dia,
+// bloqueia se atingiu, senão incrementa. Retorna contador + limite pro front mostrar "X/limite".
 async function checkAndBumpDailyLimit(
   conversationId: string,
-  authHeader: string,
-): Promise<{ response?: Response; count: number }> {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
+  plan: string = "pro",
+): Promise<{ response?: Response; count: number; limit: number }> {
+  // Service role: o incremento é operação do servidor e não pode depender da RLS do usuário
+  // (com o client do usuário o UPDATE em nyta_conversations era negado e o contador não subia).
+  // O conversationId já é da conversa do próprio usuário (resolvida com o auth dele).
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  // Limite do plano — mude o valor na tabela nyta_plan_limits e vale na hora (sem deploy).
+  let limit = DAILY_MESSAGE_LIMIT_FALLBACK;
+  const { data: pl } = await supabase
+    .from("nyta_plan_limits").select("daily_limit").eq("plan", plan).maybeSingle();
+  if (pl && typeof pl.daily_limit === "number") limit = pl.daily_limit;
+
   const now = new Date();
   const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const todayDate = todayUTC.toISOString().split("T")[0]; // YYYY-MM-DD
@@ -428,19 +437,19 @@ async function checkAndBumpDailyLimit(
     .eq("id", conversationId)
     .single();
   // Fail-open: se não conseguir ler, não bloqueia (não vamos travar o chat por um erro de leitura).
-  if (error || !conv) return { count: 0 };
+  if (error || !conv) return { count: 0, limit };
 
   const isToday = conv.daily_count_date === todayDate;
   const current = isToday ? (conv.daily_count ?? 0) : 0;
-  if (current >= DAILY_MESSAGE_LIMIT) {
-    return { response: jsonResponse({ error: "rate_limit_exceeded", resetAt }, 429), count: current };
+  if (current >= limit) {
+    return { response: jsonResponse({ error: "rate_limit_exceeded", resetAt }, 429), count: current, limit };
   }
   const next = current + 1;
   await supabase
     .from("nyta_conversations")
     .update({ daily_count: next, daily_count_date: todayDate })
     .eq("id", conversationId);
-  return { count: next };
+  return { count: next, limit };
 }
 
 async function validateSubscription(userId: string): Promise<Response | null> {
@@ -936,7 +945,8 @@ function streamGroqResponse(
   // emendar outra tool call (evita cards de confirmação duplicados/alucinados).
   allowTools: boolean = true,
   unavailableModules: string[] = [],
-  dailyCount: number | null = null
+  dailyCount: number | null = null,
+  dailyLimit: number | null = null
 ): Response {
   const enc = new TextEncoder();
   const stream = new ReadableStream({
@@ -1057,7 +1067,7 @@ function streamGroqResponse(
       "Connection": "keep-alive",
       // Contador de uso diário pro front mostrar "X/limite" ao vivo no header do chat.
       ...(dailyCount != null
-        ? { "X-Daily-Count": String(dailyCount), "X-Daily-Limit": String(DAILY_MESSAGE_LIMIT) }
+        ? { "X-Daily-Count": String(dailyCount), "X-Daily-Limit": String(dailyLimit ?? DAILY_MESSAGE_LIMIT_FALLBACK) }
         : {}),
       ...CORS_HEADERS,
     },
@@ -1452,7 +1462,7 @@ Deno.serve(async (req: Request) => {
       const conv = await getOrCreateConversation(userId, r.artist_id!, ah);
       if (conv instanceof Response) return conv;
       const { conversationId } = conv;
-      const rl = await checkAndBumpDailyLimit(conversationId, ah);
+      const rl = await checkAndBumpDailyLimit(conversationId);
       if (rl.response) return rl.response;
       const pm = await persistUserMessage(conversationId, r.message!, ah);
       if (pm instanceof Response) return pm;
@@ -1462,7 +1472,7 @@ Deno.serve(async (req: Request) => {
       const rag = buildRAGContext(actx);
       const ctx = await loadConversationContext(conversationId, ah);
       if (ctx instanceof Response) return ctx;
-      return streamGroqResponse(ctx.messages, conversationId, ah, rag, true, unavailableModules, rl.count);
+      return streamGroqResponse(ctx.messages, conversationId, ah, rag, true, unavailableModules, rl.count, rl.limit);
     }
     case "confirm": {
       const cErr = validateConfirmAction(r);
