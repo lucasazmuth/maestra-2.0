@@ -2,7 +2,7 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message, Popover } from 'antd';
 import { createPortal } from 'react-dom';
-import { FiArchive, FiCheck, FiChevronDown, FiLayers, FiList, FiPlus, FiTarget, FiX } from 'react-icons/fi';
+import { FiArchive, FiCheck, FiChevronDown, FiHelpCircle, FiLayers, FiList, FiPlus, FiX } from 'react-icons/fi';
 
 import { useNytaModal } from '../../hooks/useNytaModal';
 import { buildActionPlan } from '../Wizard/method/engines';
@@ -416,7 +416,7 @@ const ActionPlan: FC = () => {
                       title="Por que essa estratégia?"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <FiTarget size={13} />
+                      <FiHelpCircle size={15} />
                     </span>
                   </Popover>
                 )}
