@@ -646,14 +646,18 @@ async function fetchArtistContext(artistId: string, authHeader: string): Promise
 
   try {
     const today = new Date().toISOString().split("T")[0];
-    const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    // Janela de 1 ano (não só 30 dias): senão um show marcado p/ daqui 2 meses fica invisível
+    // ao chat e a Nyta não consegue remarcar/remover por não ter o id no contexto. Limite p/
+    // não estourar o contexto.
+    const oneYearFromNow = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
     const { data: events } = await supabase
       .from("events")
       .select("id, title, date, type")
       .eq("artist_id", artistId)
       .gte("date", today)
-      .lte("date", thirtyDaysFromNow)
-      .order("date", { ascending: true });
+      .lte("date", oneYearFromNow)
+      .order("date", { ascending: true })
+      .limit(40);
     if (events) ctx.events = events.map((e) => ({ id: e.id, title: e.title, date: e.date, type: e.type }));
   } catch {
     unavailableModules.push("agenda");
