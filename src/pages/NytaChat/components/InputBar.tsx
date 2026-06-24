@@ -33,6 +33,8 @@ export interface InputBarProps {
   disabled: boolean;
   rateLimitInfo: RateLimitInfo | null;
   pendingToolCalls: PendingToolCall[];
+  // Leva o artista pra tela de planos (CTA "Mais limite" quando atinge o limite diário).
+  onUpgrade?: () => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -42,6 +44,7 @@ export const InputBar: FC<InputBarProps> = ({
   disabled,
   rateLimitInfo,
   pendingToolCalls,
+  onUpgrade,
 }) => {
   const [value, setValue] = useState('');
   const [countdown, setCountdown] = useState('');
@@ -146,6 +149,15 @@ export const InputBar: FC<InputBarProps> = ({
               {countdown ? `Volta em ${countdown}` : 'Volta amanhã'} · {rateLimitInfo.count}/{rateLimitInfo.limit}
             </span>
           </div>
+          {onUpgrade && (
+            <button
+              type="button"
+              className="nyta-rate-limit-card__cta"
+              onClick={onUpgrade}
+            >
+              Mais limite
+            </button>
+          )}
         </div>
       </div>
     );

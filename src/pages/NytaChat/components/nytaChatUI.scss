@@ -143,6 +143,26 @@
       font-size: 12.5px;
       font-variant-numeric: tabular-nums;
     }
+
+    &__cta {
+      flex-shrink: 0;
+      margin-left: auto;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, #af2896, #6d3bd1);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, filter 0.15s ease;
+
+      &:hover {
+        filter: brightness(1.08);
+        transform: scale(1.03);
+      }
+    }
   }
 
   // Rodapé: aviso (fonte pequena, centralizado) + contador de caracteres à direita.

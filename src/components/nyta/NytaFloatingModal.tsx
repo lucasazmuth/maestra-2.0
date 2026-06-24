@@ -307,6 +307,7 @@ export const NytaFloatingModal: FC = () => {
               disabled={isStreaming}
               rateLimitInfo={rateLimitInfo}
               pendingToolCalls={pendingToolCalls}
+              onUpgrade={handleNavigateToPlans}
             />
           </div>
         </div>
@@ -343,6 +344,7 @@ export const NytaFloatingModal: FC = () => {
               disabled={isStreaming}
               rateLimitInfo={rateLimitInfo}
               pendingToolCalls={pendingToolCalls}
+              onUpgrade={handleNavigateToPlans}
             />
           </div>
         </div>
