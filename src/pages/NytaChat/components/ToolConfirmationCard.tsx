@@ -19,6 +19,8 @@ const TOOL_NAME_PT: Record<string, string> = {
   remove_team_member: 'Remover membro da equipe',
   update_strategy_task: 'Atualizar tarefa estratégica',
   update_plan_task: 'Atualizar tarefa do plano de ação',
+  create_strategy: 'Criar estratégia',
+  create_task: 'Criar tarefa',
 };
 
 // ─── Argument Label Translation ───────────────────────────────────────────────
@@ -44,6 +46,15 @@ const ARG_LABELS_PT: Record<string, string> = {
   notes: 'Notas',
   priority: 'Prioridade',
   due_date: 'Data de entrega',
+  objective: 'Objetivo',
+  tasks: 'Tarefas',
+};
+
+// Valores de enum que chegam em "código" (ex.: prioridade) → rótulo amigável.
+const ENUM_VALUES_PT: Record<string, string> = {
+  alta: 'Alta',
+  media: 'Média',
+  baixa: 'Baixa',
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -72,8 +83,10 @@ function translateArgLabel(key: string): string {
  */
 function formatArgValue(value: unknown): string {
   if (value === null || value === undefined) return '—';
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return ENUM_VALUES_PT[value] || value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  // Arrays viram texto legível (sem colchetes/aspas do JSON).
+  if (Array.isArray(value)) return value.map((v) => formatArgValue(v)).join(', ');
   return JSON.stringify(value);
 }
 
@@ -84,6 +97,7 @@ export function buildActionSummary(name: string, args: Record<string, unknown>):
   const actionName = translateToolName(name);
   const argParts = Object.entries(args)
     .filter(([key]) => key !== 'artist_id')
+    .filter(([, val]) => !Array.isArray(val)) // listas (ex.: tarefas) vão no detalhe, não no resumo
     .map(([key, val]) => `${translateArgLabel(key)}: ${formatArgValue(val)}`)
     .join(', ');
 
@@ -231,9 +245,17 @@ export const ToolConfirmationCard: FC<ToolConfirmationCardProps> = ({
               <span className="tool-confirmation-card__arg-label">
                 {translateArgLabel(key)}:
               </span>
-              <span className="tool-confirmation-card__arg-value">
-                {formatArgValue(val)}
-              </span>
+              {Array.isArray(val) ? (
+                <ul className="tool-confirmation-card__arg-list">
+                  {(val as unknown[]).map((item, i) => (
+                    <li key={i}>{formatArgValue(item)}</li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="tool-confirmation-card__arg-value">
+                  {formatArgValue(val)}
+                </span>
+              )}
             </div>
           ))}
         </div>

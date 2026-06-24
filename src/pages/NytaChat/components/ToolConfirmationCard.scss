@@ -69,6 +69,19 @@
     word-break: break-word;
   }
 
+  // Listas (ex.: tarefas) — itens limpos, sem colchetes/aspas do JSON.
+  &__arg-list {
+    margin: 2px 0 0;
+    padding: 0 0 0 18px;
+    list-style: disc;
+    color: #ddd;
+
+    li {
+      margin: 2px 0;
+      word-break: break-word;
+    }
+  }
+
   // ── Error message ─────────────────────────────────────────────────────────
   &__error {
     font-size: 12px;
