@@ -48,14 +48,35 @@ const ARG_LABELS_PT: Record<string, string> = {
   due_date: 'Data de entrega',
   objective: 'Objetivo',
   tasks: 'Tarefas',
+  start_time: 'Horário',
+  end_time: 'Término',
+  release_date: 'Lançamento',
+  item_id: 'Item',
+  event_id: 'Evento',
+  member_id: 'Membro',
+  lyrics: 'Letra',
+  duration: 'Duração',
+  key: 'Tom',
+  bpm: 'BPM',
+  isrc: 'ISRC',
+  upc: 'UPC',
 };
 
-// Valores de enum que chegam em "código" (ex.: prioridade) → rótulo amigável.
+// Valores de enum que chegam em "código" → rótulo amigável (status de catálogo/evento, tipo, prioridade).
 const ENUM_VALUES_PT: Record<string, string> = {
-  alta: 'Alta',
-  media: 'Média',
-  baixa: 'Baixa',
+  // prioridade
+  alta: 'Alta', media: 'Média', baixa: 'Baixa',
+  // status de catálogo
+  composition: 'Composição', production: 'Produção', mixing: 'Mixagem',
+  mastering: 'Masterização', ready: 'Pronta', released: 'Lançada',
+  // status de evento
+  scheduled: 'Agendado', confirmed: 'Confirmado', cancelled: 'Cancelado', completed: 'Concluído',
+  // tipo de evento
+  show: 'Show', reuniao: 'Reunião', estudio: 'Estúdio', ensaio: 'Ensaio', entrevista: 'Entrevista', outro: 'Outro',
 };
+
+// Só traduz enum quando a CHAVE é de enum — evita trocar um título tipo "Show" ou "Released".
+const ENUM_KEYS = new Set(['status', 'type', 'priority']);
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -81,9 +102,9 @@ function translateArgLabel(key: string): string {
 /**
  * Format an argument value for display. Handles primitives and objects.
  */
-function formatArgValue(value: unknown): string {
+function formatArgValue(value: unknown, key?: string): string {
   if (value === null || value === undefined) return '—';
-  if (typeof value === 'string') return ENUM_VALUES_PT[value] || value;
+  if (typeof value === 'string') return (key && ENUM_KEYS.has(key) && ENUM_VALUES_PT[value]) || value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   // Arrays viram texto legível (sem colchetes/aspas do JSON).
   if (Array.isArray(value)) return value.map((v) => formatArgValue(v)).join(', ');
@@ -98,7 +119,7 @@ export function buildActionSummary(name: string, args: Record<string, unknown>):
   const argParts = Object.entries(args)
     .filter(([key]) => key !== 'artist_id')
     .filter(([, val]) => !Array.isArray(val)) // listas (ex.: tarefas) vão no detalhe, não no resumo
-    .map(([key, val]) => `${translateArgLabel(key)}: ${formatArgValue(val)}`)
+    .map(([key, val]) => `${translateArgLabel(key)}: ${formatArgValue(val, key)}`)
     .join(', ');
 
   const full = argParts ? `${actionName} — ${argParts}` : actionName;
@@ -253,7 +274,7 @@ export const ToolConfirmationCard: FC<ToolConfirmationCardProps> = ({
                 </ul>
               ) : (
                 <span className="tool-confirmation-card__arg-value">
-                  {formatArgValue(val)}
+                  {formatArgValue(val, key)}
                 </span>
               )}
             </div>
