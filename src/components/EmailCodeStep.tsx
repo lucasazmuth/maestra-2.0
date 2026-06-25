@@ -135,6 +135,7 @@ export const EmailCodeStep: FC<{ email: string; onVerified: () => void; resendOn
         Confirme seu e-mail digitando o código de 6 dígitos que enviamos para <strong style={{ color: '#fff' }}>{email}</strong>.
       </p>
       <PinInput value={code} onChange={setCode} onComplete={runVerify} />
+      <p style={{ color: '#8a8a92', fontSize: 12.5, margin: '-6px 0 0', textAlign: 'center' }}>O código expira em 1 hora.</p>
       {error && <div style={{ color: '#e91429', fontSize: 13, textAlign: 'center' }}>{error}</div>}
       {info && <div style={{ color: '#af2896', fontSize: 13, textAlign: 'center' }}>{info}</div>}
       <AuthSubmit loading={loading} label="Confirmar e entrar" />
