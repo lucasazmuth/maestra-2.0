@@ -20,8 +20,12 @@ const Signup: FC = () => {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    // Validação básica no cliente (nome é obrigatório; e-mail/senha o Supabase também valida).
+    if (!name.trim()) { setError('Informe seu nome.'); return; }
+    if (!email.trim()) { setError('Informe seu e-mail.'); return; }
+    if (password.length < 6) { setError('A senha precisa ter ao menos 6 caracteres.'); return; }
+    setLoading(true);
     try {
       const res = await dispatch(
         authActions.signUp({ email: email.trim(), password, name: name.trim() })
