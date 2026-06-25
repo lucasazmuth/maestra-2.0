@@ -62,7 +62,8 @@ const AuthListener: FC = () => {
     dispatch(authActions.bootstrapSession());
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      dispatch(authActions.setSession({ session: session ?? null }));
+      // E-mail não confirmado não conta como logado (precisa do código de verificação no cadastro).
+      dispatch(authActions.setSession({ session: authActions.confirmedOrNull(session ?? null) }));
     });
 
     return () => sub.subscription.unsubscribe();

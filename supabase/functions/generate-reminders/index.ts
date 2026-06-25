@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { sendBrevoEmail, emailLayout } from "./brevo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -102,6 +103,49 @@ function hoursFromNow(hours: number): string {
   const d = new Date();
   d.setHours(d.getHours() + hours);
   return d.toISOString();
+}
+
+// ── E-mail dos lembretes (Brevo) ─────────────────────────────────────────────
+// Além da notificação in-app, manda e-mail. Cache de e-mail por user_id (colaboradores se repetem
+// entre artistas). Fail-safe: erro de e-mail nunca derruba a geração de lembretes.
+const emailCache = new Map<string, string | null>();
+
+async function getRecipientEmail(
+  supabase: ReturnType<typeof createClient>,
+  userId: string
+): Promise<string | null> {
+  if (emailCache.has(userId)) return emailCache.get(userId)!;
+  try {
+    const { data } = await supabase.auth.admin.getUserById(userId);
+    const email = data?.user?.email ?? null;
+    emailCache.set(userId, email);
+    return email;
+  } catch {
+    emailCache.set(userId, null);
+    return null;
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+}
+
+async function sendReminderEmails(
+  supabase: ReturnType<typeof createClient>,
+  recipients: Recipient[],
+  title: string,
+  message: string
+): Promise<void> {
+  const html = emailLayout({
+    title,
+    bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;white-space:pre-line;">${escapeHtml(message)}</p>
+    <p style="color:#8a8a92;font-size:13px;">Abra a Maestra Manager para ver os detalhes.</p>`,
+  });
+  for (const r of recipients) {
+    const email = await getRecipientEmail(supabase, r.user_id);
+    if (!email) continue;
+    await sendBrevoEmail({ to: email, subject: `${title} — Maestra Manager`, html });
+  }
 }
 
 // ─── Core Logic ──────────────────────────────────────────────────────────────
@@ -269,51 +313,44 @@ async function generateTaskReminders(
   recipients: Recipient[],
   nowISO: string
 ): Promise<number> {
-  // Tasks are stored in strategic_plans.strategies JSONB
-  const { data: plans } = await supabase
-    .from("strategic_plans")
-    .select("strategies")
-    .eq("artist_id", artist.id)
-    .eq("status", "active");
+  // O plano de ação real do app vive em artists.content.strategies (blob JSON), NÃO em
+  // strategic_plans (tabela legada/vazia). Ler da fonte certa, senão nenhum lembrete de tarefa sai.
+  const { data: artistRow } = await supabase
+    .from("artists")
+    .select("content")
+    .eq("id", artist.id)
+    .maybeSingle();
 
-  if (!plans || plans.length === 0) return 0;
+  const strategies = (artistRow?.content as {
+    strategies?: Array<{
+      title?: string;
+      tasks?: Array<{ id?: string; description?: string; deadline?: string; status?: string; isCompleted?: boolean }>;
+    }>;
+  } | null)?.strategies;
+
+  if (!Array.isArray(strategies) || strategies.length === 0) return 0;
 
   const deadline72h = hoursFromNow(TASK_DEADLINE_HOURS);
   const tasksApproaching: TaskWithDeadline[] = [];
 
-  for (const plan of plans) {
-    const strategies = plan.strategies as Array<{
-      title?: string;
-      tasks?: Array<{
-        id?: string;
-        description?: string;
-        deadline?: string;
-        status?: string;
-        isCompleted?: boolean;
-      }>;
-    }> | null;
+  for (const strategy of strategies) {
+    if (!Array.isArray(strategy.tasks)) continue;
+    for (const task of strategy.tasks) {
+      if (!task.deadline || !task.id) continue;
+      if (task.status === "done" || task.isCompleted) continue;
 
-    if (!Array.isArray(strategies)) continue;
+      const deadlineDate = new Date(task.deadline);
+      const nowDate = new Date(nowISO);
 
-    for (const strategy of strategies) {
-      if (!Array.isArray(strategy.tasks)) continue;
-      for (const task of strategy.tasks) {
-        if (!task.deadline || !task.id) continue;
-        if (task.status === "done" || task.isCompleted) continue;
-
-        const deadlineDate = new Date(task.deadline);
-        const nowDate = new Date(nowISO);
-
-        // Task is due within 72h and hasn't passed yet
-        if (deadlineDate > nowDate && deadlineDate <= new Date(deadline72h)) {
-          tasksApproaching.push({
-            id: task.id,
-            description: task.description || "Tarefa sem descrição",
-            deadline: task.deadline,
-            status: task.status || "todo",
-            strategy_title: strategy.title || "Estratégia",
-          });
-        }
+      // Task is due within 72h and hasn't passed yet
+      if (deadlineDate > nowDate && deadlineDate <= new Date(deadline72h)) {
+        tasksApproaching.push({
+          id: task.id,
+          description: task.description || "Tarefa sem descrição",
+          deadline: task.deadline,
+          status: task.status || "todo",
+          strategy_title: strategy.title || "Estratégia",
+        });
       }
     }
   }
@@ -354,6 +391,12 @@ async function generateTaskReminders(
       console.error(`Failed to insert task reminders for ${task.id}:`, error);
     } else {
       insertedCount += notifications.length;
+      await sendReminderEmails(
+        supabase,
+        recipients,
+        `Tarefa vencendo: ${task.description.substring(0, 60)}`,
+        `A tarefa "${task.description}" da estratégia "${task.strategy_title}" vence em ${task.deadline}. Artista: ${artist.name}.`
+      );
     }
   }
 
@@ -427,6 +470,12 @@ async function generateEventReminders(
       console.error(`Failed to insert event reminders for ${event.id}:`, error);
     } else {
       insertedCount += notifications.length;
+      await sendReminderEmails(
+        supabase,
+        recipients,
+        `Evento em breve: ${event.title.substring(0, 60)}`,
+        `O evento "${event.title}" está programado para ${event.date}${event.start_time ? ` às ${event.start_time}` : ""}. Artista: ${artist.name}.`
+      );
     }
   }
 
@@ -546,6 +595,8 @@ async function generateMetricReminders(
     return 0;
   }
 
+  await sendReminderEmails(supabase, recipients, `Marco de evolução: ${artist.name}`, message);
+
   return notifications.length;
 }
 
@@ -609,27 +660,25 @@ async function cancelCompletedItemReminders(
     const toCancelIds: string[] = [];
 
     for (const [artistId, reminders] of byArtist) {
-      const { data: plans } = await supabase
-        .from("strategic_plans")
-        .select("strategies")
-        .eq("artist_id", artistId)
-        .eq("status", "active");
+      // Mesma fonte do app: artists.content.strategies (não strategic_plans).
+      const { data: artistRow } = await supabase
+        .from("artists")
+        .select("content")
+        .eq("id", artistId)
+        .maybeSingle();
 
-      if (!plans) continue;
+      const strategies = (artistRow?.content as {
+        strategies?: Array<{ tasks?: Array<{ id?: string; status?: string; isCompleted?: boolean }> }>;
+      } | null)?.strategies;
+      if (!Array.isArray(strategies)) continue;
 
       // Build a set of completed task IDs
       const completedTaskIds = new Set<string>();
-      for (const plan of plans) {
-        const strategies = plan.strategies as Array<{
-          tasks?: Array<{ id?: string; status?: string; isCompleted?: boolean }>;
-        }> | null;
-        if (!Array.isArray(strategies)) continue;
-        for (const strategy of strategies) {
-          if (!Array.isArray(strategy.tasks)) continue;
-          for (const task of strategy.tasks) {
-            if (task.id && (task.status === "done" || task.isCompleted)) {
-              completedTaskIds.add(task.id);
-            }
+      for (const strategy of strategies) {
+        if (!Array.isArray(strategy.tasks)) continue;
+        for (const task of strategy.tasks) {
+          if (task.id && (task.status === "done" || task.isCompleted)) {
+            completedTaskIds.add(task.id);
           }
         }
       }
