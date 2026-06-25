@@ -1,53 +1,23 @@
-import { FC, useMemo, useState } from 'react';
+import { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { message } from 'antd';
-import ColorThiefRaw from 'colorthief';
 import { FiTarget, FiMusic, FiCalendar, FiUsers } from 'react-icons/fi';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
-import { useAppDispatch } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import { DashboardEmptyState } from '../../components/DashboardEmptyState';
 
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
-import { getPhaseInfo } from '../../constants/maestra';
-import * as wizardAi from '../../services/wizardAi';
-import type { ArtistContent, Strategy } from '../../interfaces/maestra';
-import { RealProfileSummary } from '../../components/RealProfileSummary';
+import { ArtistHero } from '../../components/ArtistHero';
 import { MetricsEvolution } from '../../components/MetricsEvolution';
-import { PhaseSummary } from '../../components/PhaseSummary';
-import { ConnectSpotify, PhaseCard, PhaseHistory } from './sections';
+import { ConnectSpotify } from './sections';
 import { DashboardOverview } from './overview';
-
-// O typedef de colorthief resolve pra versão node (sem construtor); no browser o webpack usa
-// o build construível. Cast pro tipo de browser.
-const ColorThief = ColorThiefRaw as unknown as {
-  new (): { getColor: (img: HTMLImageElement) => [number, number, number] };
-};
 
 const Dashboard: FC = () => {
   const { artist, loading } = useArtist();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   // Planejamento liberado só no perfil pago (cobrança única R$199,90).
   const { viewPlanning } = useArtistCapabilities(artist);
-  const [advancing, setAdvancing] = useState(false);
-  // Cor dominante da foto do artista (estilo Spotify) — extraída no onLoad da imagem.
-  const [heroColor, setHeroColor] = useState<string | null>(null);
-
-  const taskCounts = useMemo(() => {
-    const strategies: Strategy[] = artist?.content?.strategies || [];
-    const all = strategies.flatMap((s) => s.tasks || []);
-    return {
-      todo: all.filter((t) => t.status === 'todo').length,
-      inProgress: all.filter((t) => t.status === 'in_progress').length,
-      done: all.filter((t) => t.status === 'done').length,
-      total: all.length,
-    };
-  }, [artist]);
 
   if (loading && !artist) {
     return <Spinner loading>{null as any}</Spinner>;
@@ -58,8 +28,6 @@ const Dashboard: FC = () => {
 
   const sp = artist.content?.spotifyProfile;
   const hasPlan = !!artist.content?.strategies?.length;
-  // Só monta a seção "Diagnóstico de carreira" se houver Índice REAL salvo (senão o card é null).
-  const hasDiagnostic = !!artist.content?.realIndex?.profile;
 
   const quickLinks = [
     { icon: <FiTarget />, label: 'Plano de Ação', to: 'action-plan' },
@@ -68,118 +36,16 @@ const Dashboard: FC = () => {
     { icon: <FiUsers />, label: 'Equipe', to: 'team' },
   ];
 
-  // Avançar de fase: arquiva o ciclo atual, incrementa a fase (infinita), gera rótulo via IA,
-  // reseta o planejamento e reabre o wizard em Objetivos para replanejar a nova fase.
-  const advancePhase = async () => {
-    if (advancing) return;
-    if (!(taskCounts.total > 0 && taskCounts.done === taskCounts.total)) {
-      message.warning('Conclua todas as tarefas do plano para avançar de fase.');
-      return;
-    }
-    setAdvancing(true);
-    try {
-      const content = artist.content || {};
-      const phase = content.phase || 1;
-      const nextPhase = phase + 1;
-
-      const snapshot = {
-        phase,
-        phaseLabel: content.phaseLabel || getPhaseInfo(phase).label,
-        objectives: content.objectives,
-        strategies: content.strategies,
-        swotAnalysis: content.swotAnalysis,
-        snapshotAt: new Date().toISOString(),
-      };
-
-      let nextLabel = getPhaseInfo(nextPhase).label;
-      try {
-        const ai = await wizardAi.generatePhaseLabel(content.identity || { name: artist.name }, nextPhase);
-        if (ai?.trim()) nextLabel = ai.trim();
-      } catch {
-        /* mantém o fallback */
-      }
-
-      const next: ArtistContent = {
-        ...content,
-        phase: nextPhase,
-        phaseLabel: nextLabel,
-        phaseHistory: [...(content.phaseHistory || []), snapshot],
-        // novo ciclo de planejamento (a identidade é transversal e permanece)
-        objectives: [],
-        swotQuizQuestions: [],
-        swotQuizAnswers: {},
-        swotAnalysis: undefined,
-        strategyQuizQuestions: [],
-        strategyQuizAnswers: {},
-        strategies: [],
-        executiveSummary: undefined,
-        step: 1, // reabre o wizard em Objetivos (pula Identidade)
-      };
-
-      await dispatch(artistsActions.updateArtistContent({ id: artist.id, content: next })).unwrap();
-      message.success(`Nova fase iniciada: ${nextLabel}`);
-      navigate(`/artists/${artist.id}/wizard`);
-    } catch {
-      message.error('Erro ao avançar de fase');
-    } finally {
-      setAdvancing(false);
-    }
-  };
 
   return (
     <div style={{ padding: 24 }}>
-      {/* Hero com stats do Spotify */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          gap: 24,
-          padding: 24,
-          borderRadius: 12,
-          background: heroColor
-            ? `linear-gradient(180deg, rgba(${heroColor}, 0.55) 0%, #121212 92%)`
-            : 'linear-gradient(180deg, #1f1f1f 0%, #121212 100%)',
-          transition: 'background 0.5s ease',
-          marginBottom: 24,
-        }}
-      >
-        <img
-          src={sp?.image || ARTISTS_DEFAULT_IMAGE}
-          alt={artist.name}
-          crossOrigin="anonymous"
-          onLoad={(e) => {
-            try {
-              const [r, g, b] = new ColorThief().getColor(e.currentTarget);
-              setHeroColor(`${r}, ${g}, ${b}`);
-            } catch {
-              /* imagem sem CORS / não decodificada — mantém o fundo padrão */
-            }
-          }}
-          style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}
-        />
-        <div>
-          <div style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700 }}>ARTISTA</div>
-          <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 40, color: '#fff', margin: '4px 0 8px' }}>
-            {artist.name}
-          </h1>
-          <div style={{ display: 'flex', gap: 16, color: '#b3b3b3', fontSize: 14 }}>
-            {sp ? (
-              <>
-                {sp.followers != null && <span>{sp.followers.toLocaleString('pt-BR')} seguidores</span>}
-                {sp.popularity != null && <span>Popularidade {sp.popularity}/100</span>}
-                {sp.track_count != null && <span>{sp.track_count} faixas</span>}
-              </>
-            ) : (
-              <span>Carregando…</span>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Cabeçalho do artista (foto + nome + stats) */}
+      <ArtistHero artist={artist} />
 
       {/* Conectar ao Spotify se o artista ainda não está vinculado */}
       {!sp?.spotify_artist_id && <ConnectSpotify artist={artist} />}
 
-      {/* Corpo: perfil não pago → upsell; pago com plano → card de fase; pago sem plano → iniciar */}
+      {/* Corpo: perfil não pago → upsell; pago sem plano → iniciar. A FASE REAL agora vive no Perfil. */}
       {!viewPlanning ? (
         <DashboardEmptyState
           title='Desbloqueie este perfil'
@@ -187,17 +53,7 @@ const Dashboard: FC = () => {
           ctaLabel='Desbloquear — R$ 199,90'
           ctaTo='/criar-artista'
         />
-      ) : hasPlan ? (
-        <PhaseCard
-          artist={artist}
-          taskCounts={taskCounts}
-          advancing={advancing}
-          onAdvance={advancePhase}
-          hideFocus
-          onOpenPlan={() => navigate(`/artists/${artist.id}/action-plan`)}
-          footer={artist.content?.executiveSummary ? <PhaseSummary text={artist.content.executiveSummary} /> : undefined}
-        />
-      ) : (
+      ) : hasPlan ? null : (
         <div style={{ position: 'relative', background: '#181818', borderRadius: 12, padding: 24, marginBottom: 24, textAlign: 'center' }}>
           <span className='aurora-glow aurora-glow--on' aria-hidden />
           <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>
@@ -224,13 +80,7 @@ const Dashboard: FC = () => {
           {/* 1. Visão geral — junto da Fase no topo (foco pós-criação = planejamento) */}
           <DashboardOverview artist={artist} />
 
-          {/* 2. Seção: Diagnóstico de carreira (cabeçalho próprio; card sem o rótulo interno) */}
-          {hasDiagnostic && (
-            <>
-              <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '24px 0 12px' }}>Diagnóstico de carreira</h2>
-              <RealProfileSummary artist={artist} hideLabel />
-            </>
-          )}
+          {/* O diagnóstico REAL agora é o card de fase no topo (RealCareerCard) — sem seção duplicada. */}
 
           {/* 3. Seção: Evolução de métricas */}
           <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '24px 0 12px' }}>Evolução de métricas</h2>
@@ -272,7 +122,6 @@ const Dashboard: FC = () => {
       <NytaDashboardHero />
 
       {/* 3. Histórico de fases */}
-      {hasPlan && !!artist.content?.phaseHistory?.length && <PhaseHistory history={artist.content.phaseHistory} />}
     </div>
   );
 };

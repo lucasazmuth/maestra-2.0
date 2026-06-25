@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiGrid, FiCheckSquare, FiMusic, FiCalendar, FiUsers } from 'react-icons/fi';
+import { FiGrid, FiUser, FiCheckSquare, FiMusic, FiCalendar } from 'react-icons/fi';
 
 // Navbar inferior (tab bar) do mobile: substitui a sidebar (oculta em telas < 768px).
 // Mesmos módulos da sidebar. Só aparece quando há um artista no contexto (rota /artists/:id…).
@@ -22,10 +22,10 @@ export const MobileNav: FC = () => {
 
   const items = [
     { icon: <FiGrid />, label: t('Home', { defaultValue: 'Início' }), suffix: '' },
+    { icon: <FiUser />, label: t('Profile', { defaultValue: 'Perfil' }), suffix: 'perfil' },
     { icon: <FiCheckSquare />, label: t('Plan', { defaultValue: 'Plano' }), suffix: 'action-plan' },
     { icon: <FiMusic />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog' },
     { icon: <FiCalendar />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda' },
-    { icon: <FiUsers />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team' },
   ];
 
   const isActive = (suffix: string) =>

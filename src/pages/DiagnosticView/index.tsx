@@ -5,6 +5,7 @@ import { FiArrowLeft } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
+import { useEntitlements } from '../../hooks/useEntitlements';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 import styles from '../ArtistCreate/ArtistCreate.module.scss';
 
@@ -22,7 +23,15 @@ const DiagnosticView: FC = () => {
     if (!loaded && user?.id) dispatch(artistsActions.fetchArtists(user.id));
   }, [loaded, user?.id, dispatch]);
 
+  const { isPro } = useEntitlements();
   const realIndex = artist?.content?.realIndex ?? null;
+
+  // Refazer diagnóstico (recurso PRO): reabre o quiz REAL pré-preenchido e recalcula o perfil.
+  // Quem não é PRO vê o cadeado e vai pra /assinatura.
+  const onRedo = () => {
+    if (isPro) navigate(`/artists/${id}/diagnostico/refazer`);
+    else navigate('/assinatura');
+  };
   const cm = artist?.content?.chartmetricProfile;
   const chartmetric: Chartmetric | null = cm
     ? {
@@ -62,6 +71,8 @@ const DiagnosticView: FC = () => {
           onContinue={() => navigate(`/artists/${id}/wizard`)}
           enableStickyCta={false}
           showPlanningCta={!artist?.content?.strategies?.length}
+          onRedo={onRedo}
+          redoLocked={!isPro}
         />
       ) : (
         <div style={{ background: '#181818', borderRadius: 12, padding: 32, textAlign: 'center', color: '#b3b3b3' }}>

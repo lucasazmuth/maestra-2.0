@@ -244,7 +244,48 @@ serve(async (req) => {
     if (userErr || !user) return json({ error: "Não autorizado" }, 401);
 
     const body = await req.json();
-    const { name, spotifyArtistId, spotify, quizV2 } = body;
+    const { name, spotifyArtistId, spotify, quizV2, redoArtistId } = body;
+
+    // ── REDO: re-diagnóstico de um perfil existente (recurso PRO no front). Reusa o Chartmetric
+    // já salvo (NÃO re-busca — o enrich tem TTL próprio) + as novas respostas do quiz; recalcula o
+    // Índice REAL e atualiza só realIndex/diagnostic/quizDiagnostic. Não mexe em estratégias,
+    // identidade nem plano. Sem rate-limit de criação (não cria perfil). ──
+    if (redoArtistId && typeof redoArtistId === "string") {
+      // Gate PRO (mesma regra do asaas-subscription-status / useEntitlements): refazer o
+      // diagnóstico é recurso da assinatura PRO. 'pending' sem subscription_id é pagamento único
+      // (fantasma) → não conta como PRO. active, ou overdue dentro da carência, valem.
+      const { data: sub } = await supabaseAdmin
+        .from("asaas_subscriptions")
+        .select("status, asaas_subscription_id, grace_period_ends_at")
+        .eq("user_id", user.id).maybeSingle();
+      const phantom = sub?.status === "pending" && !sub?.asaas_subscription_id;
+      const subStatus = !sub || phantom ? "none" : sub.status;
+      const isPro = subStatus === "active"
+        || (subStatus === "overdue" && !!sub?.grace_period_ends_at && Date.now() <= new Date(sub!.grace_period_ends_at).getTime());
+      if (!isPro) return json({ error: "subscription_required", reason: "pro_required" }, 403);
+
+      const { data: existing, error: exErr } = await supabaseAdmin
+        .from("artists").select("id, content, spotify_artist_id")
+        .eq("id", redoArtistId).eq("user_id", user.id).maybeSingle();
+      if (exErr || !existing) return json({ error: "Perfil não encontrado" }, 404);
+      const prevContent = (existing.content || {}) as Record<string, any>;
+      const chartmetric = prevContent.chartmetricProfile ?? null;
+      const realInputs = buildRealInputsV2(quizV2 || {}, chartmetric, !!existing.spotify_artist_id);
+      const realIndex = computeRealIndexV2(realInputs);
+      const diagnostic = buildDiagnostic(realIndex, chartmetric || {});
+      const nowIso = new Date().toISOString();
+      const newContent = {
+        ...prevContent,
+        realIndex, diagnostic,
+        quizDiagnostic: { answers: quizV2 || {}, completedAt: nowIso },
+      };
+      const { error: upErr } = await supabaseAdmin
+        .from("artists").update({ content: newContent })
+        .eq("id", redoArtistId).eq("user_id", user.id);
+      if (upErr) { console.error("redo update:", upErr); return json({ error: "Erro ao salvar o re-diagnóstico" }, 500); }
+      return json({ artistId: redoArtistId, redo: true, reused: false, locked: false, realIndex, diagnostic, chartmetric });
+    }
+
     if (!name || typeof name !== "string" || name.trim().length < 1) return json({ error: "name é obrigatório" }, 400);
     const artistName = name.trim();
     const spotifyId = (spotifyArtistId && typeof spotifyArtistId === "string") ? spotifyArtistId : null;

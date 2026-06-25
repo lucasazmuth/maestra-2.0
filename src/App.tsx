@@ -35,6 +35,7 @@ const Landing = lazy(() => import('./pages/Landing'));
 const Page404 = lazy(() => import('./pages/404'));
 const Artists = lazy(() => import('./pages/Artists'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Profile = lazy(() => import('./pages/Profile'));
 const Catalog = lazy(() => import('./pages/Catalog'));
 const Agenda = lazy(() => import('./pages/Agenda'));
 const Team = lazy(() => import('./pages/Team'));
@@ -180,10 +181,13 @@ const AppRoutes: FC = () => {
           <Route element={<RequireArtistPaid />}>
             <Route path='/artists/:id/wizard/*' element={<Wizard />} />
             <Route path='/artists/:id' element={<Dashboard />} />
+            <Route path='/artists/:id/perfil' element={<Profile />} />
             <Route path='/artists/:id/catalog' element={<Catalog />} />
             <Route path='/artists/:id/agenda' element={<Agenda />} />
             <Route path='/artists/:id/action-plan' element={<ActionPlan />} />
             <Route path='/artists/:id/diagnostico' element={<DiagnosticView />} />
+            {/* Refazer diagnóstico (PRO): reaproveita a tela de quiz/diagnóstico em modo "redo" */}
+            <Route path='/artists/:id/diagnostico/refazer' element={<ArtistCreate />} />
             <Route path='/artists/:id/team' element={<Team />} />
           </Route>
           {/* /profile foi fundido na home do artista (Dashboard) */}
