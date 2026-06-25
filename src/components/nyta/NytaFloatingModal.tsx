@@ -40,7 +40,7 @@ const clampToViewport = (left: number, top: number, w: number, h: number): Coord
 
 export const NytaFloatingModal: FC = () => {
   const navigate = useNavigate();
-  const { isOpen, close, moduleContext } = useNytaModal();
+  const { isOpen, close } = useNytaModal();
   const pendingPrompt = useNytaModalStore((s) => s.pendingPrompt);
   const clearPendingPrompt = useNytaModalStore((s) => s.clearPendingPrompt);
   const entitlements = useEntitlements();
