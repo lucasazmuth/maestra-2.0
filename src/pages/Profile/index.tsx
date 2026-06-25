@@ -1,5 +1,7 @@
 import { FC, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
+import { FiArrowRight } from 'react-icons/fi';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
@@ -20,10 +22,14 @@ import '../ActionPlan/actionPlan.scss';
 const Profile: FC = () => {
   const { artist } = useArtist();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { editPlanning } = useArtistCapabilities(artist);
 
   const content = artist?.content;
   const strategies = useMemo<Strategy[]>(() => content?.strategies || [], [content]);
+  // O dossiê (Fundamentos/Referências/Objetivos/SWOT/Prioridade) só nasce com o planejamento
+  // estratégico (wizard → estratégias). Sem ele, mostramos um CTA pra criar — nada de campos vazios.
+  const hasPlan = strategies.length > 0;
   // Estratégias em ordem de prioridade (finalScore desc) — alimenta "Prioridade das estratégias".
   const ranked = useMemo(
     () => [...strategies].sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0)),
@@ -64,17 +70,39 @@ const Profile: FC = () => {
       {/* FASE de carreira REAL (sem barra de progresso — progresso é do Plano de Ação). */}
       <RealCareerCard artist={artist} taskCounts={taskCounts} showProgress={false} />
 
-      {/* Resumo executivo ("Onde X está hoje"). */}
-      {content?.executiveSummary && <PhaseSummary text={content.executiveSummary} />}
+      {hasPlan ? (
+        <>
+          {/* Resumo executivo ("Onde X está hoje"). */}
+          {content?.executiveSummary && <PhaseSummary text={content.executiveSummary} />}
 
-      {/* Dossiê: Fundamentos, Mapa de referências, Objetivos, SWOT, Prioridade das estratégias.
-          Sem `crud` → a seção editável de "Estratégias"/tarefas (do Plano de Ação) não aparece. */}
-      <AdvancedPlan
-        content={content!}
-        ranked={ranked}
-        onSaveContent={saveContent}
-        canEdit={editPlanning}
-      />
+          {/* Dossiê: Fundamentos, Mapa de referências, Objetivos, SWOT, Prioridade das estratégias.
+              Sem `crud` → a seção editável de "Estratégias"/tarefas (do Plano de Ação) não aparece. */}
+          <AdvancedPlan
+            content={content!}
+            ranked={ranked}
+            onSaveContent={saveContent}
+            canEdit={editPlanning}
+          />
+        </>
+      ) : (
+        // Sem planejamento ainda: o dossiê não existe — direciona pra criar com a Nyta.
+        <div style={{ position: 'relative', overflow: 'hidden', background: '#181818', borderRadius: 12, padding: 32, textAlign: 'center' }}>
+          <span className="aurora-glow aurora-glow--on" aria-hidden />
+          <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>
+            Monte seu planejamento estratégico
+          </h2>
+          <p style={{ color: '#b3b3b3', margin: '0 auto 18px', lineHeight: 1.5, maxWidth: 520 }}>
+            É no planejamento com a Nyta que nascem os fundamentos do seu perfil: visão, missão,
+            valores, objetivos, referências e a análise SWOT. Crie o seu para preencher esta página.
+          </p>
+          <button
+            onClick={() => navigate(`/artists/${artist.id}/action-plan`)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#af2896', border: 'none', color: '#fff', padding: '12px 28px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 15 }}
+          >
+            Criar planejamento estratégico <FiArrowRight />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
