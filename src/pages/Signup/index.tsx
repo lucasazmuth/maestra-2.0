@@ -28,6 +28,14 @@ const Signup: FC = () => {
       const res = await dispatch(
         authActions.signUp({ email: email.trim(), password, name: name.trim() })
       ).unwrap();
+      // Anti-enumeração do Supabase: se o e-mail JÁ tem conta, o signUp "passa" mas devolve um usuário
+      // com `identities` vazio e NÃO envia código. Tratar como "já cadastrado" (senão mostraria o passo
+      // do código esperando um e-mail que nunca chega).
+      if (res.user && Array.isArray(res.user.identities) && res.user.identities.length === 0) {
+        setError('Esse e-mail já tem uma conta. Faça login ou use "Esqueci minha senha".');
+        setLoading(false);
+        return;
+      }
       // Gate pela CONFIRMAÇÃO do e-mail (não pela sessão): o Supabase pode devolver uma sessão mesmo
       // sem confirmar — mas o usuário precisa passar pelo código antes de entrar.
       if (res.user?.email_confirmed_at) {
