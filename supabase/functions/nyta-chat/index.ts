@@ -99,6 +99,17 @@ NUNCA chame create_strategy antes de passar por todos os passos e ter o aval do 
 - Respostas concisas. Sem textos longos desnecessários.
 - SEMPRE que apresentar itens (objetivos, tarefas, opções, passos), use uma lista markdown NUMERADA: cada item numa linha própria começando com número e ponto ("1. ", "2. ", "3. " …). NUNCA liste itens como texto corrido nem como linhas soltas sem o número — o app depende disso pra renderizar a numeração que o artista lê.`;
 
+// Diretiva injetada QUANDO O ARTISTA AINDA NÃO TEM PLANEJAMENTO ESTRATÉGICO (sem plano de ação).
+// Nesse estado as ferramentas são DESLIGADas (nenhuma ação possível) e a Nyta só pode direcionar o
+// artista a fazer o planejamento guiado primeiro — ele precisa passar por ele antes de qualquer ação.
+const NYTA_NO_PLAN_DIRECTIVE = `
+
+## ⚠️ ESTE ARTISTA AINDA NÃO TEM PLANEJAMENTO ESTRATÉGICO
+Ele ainda NÃO criou o planejamento estratégico (não há plano de ação). NESTE ESTADO, sua ÚNICA função é orientá-lo, de forma acolhedora e direta, a CRIAR o planejamento estratégico — o assistente guiado da Maestra na aba "Plano de Ação" do menu (botão "Iniciar planejamento").
+- NÃO crie nem ofereça criar estratégias, tarefas, eventos, itens de catálogo, nem qualquer outra coisa. NÃO conduza NENHUM protocolo de criação.
+- NÃO pergunte objetivos nem comece a montar estratégia pelo chat — isso é feito SÓ no planejamento guiado.
+- Se ele perguntar o "próximo passo", pedir ajuda ou qualquer ação, responda que o primeiro passo é fazer o planejamento estratégico e direcione pra aba "Plano de Ação". Ele precisa passar pelo planejamento ANTES de qualquer outra ação.`;
+
 // Schemas das ferramentas SEM artist_id: o servidor é a única fonte desse valor.
 const NYTA_TOOLS = [
   {
@@ -947,7 +958,10 @@ function streamGroqResponse(
   allowTools: boolean = true,
   unavailableModules: string[] = [],
   dailyCount: number | null = null,
-  dailyLimit: number | null = null
+  dailyLimit: number | null = null,
+  // Sem planejamento estratégico (sem plano de ação): desliga TODAS as ferramentas e injeta a
+  // diretiva que limita a Nyta a direcionar o artista pro planejamento guiado — nenhuma ação.
+  hasPlan: boolean = true
 ): Response {
   const enc = new TextEncoder();
   const stream = new ReadableStream({
@@ -967,8 +981,10 @@ function streamGroqResponse(
       }, GROQ_TIMEOUT_MS);
       try {
         const today = new Date().toISOString().split("T")[0];
-        const sysPrompt = NYTA_SYSTEM_PROMPT + `\n\n## Data atual: ${today}` + (ragCtx || "");
+        const sysPrompt = NYTA_SYSTEM_PROMPT + `\n\n## Data atual: ${today}` + (ragCtx || "") + (hasPlan ? "" : NYTA_NO_PLAN_DIRECTIVE);
         const msgs = [{ role: "system", content: sysPrompt }, ...convMsgs];
+        // Sem plano: nenhuma ferramenta — a Nyta só pode direcionar pro planejamento guiado.
+        const toolsEnabled = allowTools && hasPlan;
         const resp = await fetch(GROQ_API_URL, {
           method: "POST",
           headers: { "Authorization": `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
@@ -976,7 +992,7 @@ function streamGroqResponse(
             model: GROQ_MODEL,
             messages: msgs,
             stream: true,
-            ...(allowTools ? { tools: NYTA_TOOLS } : {}),
+            ...(toolsEnabled ? { tools: NYTA_TOOLS } : {}),
           }),
           signal: ac.signal,
         });
@@ -1471,9 +1487,12 @@ Deno.serve(async (req: Request) => {
       // atual. Planos de exemplo de outros artistas jamais entram neste contexto.
       const { context: actx, unavailableModules } = await fetchArtistContext(r.artist_id!, ah);
       const rag = buildRAGContext(actx);
+      // Tem planejamento estratégico? (plano de ação com ao menos 1 estratégia). Sem ele, a Nyta
+      // não executa NENHUMA ação — só direciona o artista a fazer o planejamento guiado primeiro.
+      const hasPlan = actx.actionPlan.length > 0;
       const ctx = await loadConversationContext(conversationId, ah);
       if (ctx instanceof Response) return ctx;
-      return streamGroqResponse(ctx.messages, conversationId, ah, rag, true, unavailableModules, rl.count, rl.limit);
+      return streamGroqResponse(ctx.messages, conversationId, ah, rag, true, unavailableModules, rl.count, rl.limit, hasPlan);
     }
     case "confirm": {
       const cErr = validateConfirmAction(r);
