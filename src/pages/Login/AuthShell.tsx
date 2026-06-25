@@ -11,6 +11,12 @@ export const authError = (err: any): string => {
   if (msg.includes('invalid login')) return 'E-mail ou senha incorretos.';
   if (msg.includes('already registered') || msg.includes('already exists'))
     return 'Este e-mail já está cadastrado. Faça login.';
+  if (msg.includes('not confirmed')) return 'E-mail ainda não confirmado.';
+  // Rate limit ANTES do genérico de "email" — senão "email rate limit exceeded" virava "e-mail inválido".
+  if (msg.includes('rate limit') || msg.includes('for security purposes') || msg.includes('too many'))
+    return 'Muitas tentativas em pouco tempo. Aguarde um instante e tente de novo.';
+  if (msg.includes('otp') || msg.includes('expired') || (msg.includes('token') && msg.includes('invalid')))
+    return 'Código inválido ou expirado. Toque em "Reenviar código".';
   if (msg.includes('provider is not enabled') || msg.includes('not enabled'))
     return 'Login social indisponível no momento. Use e-mail e senha.';
   if (msg.includes('password')) return 'A senha precisa ter ao menos 6 caracteres.';

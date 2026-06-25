@@ -5,6 +5,7 @@ import { useAppDispatch } from '../../store/store';
 import { authActions } from '../../store/slices/auth';
 import { supabase } from '../../lib/supabase';
 import { AuthShell, AuthField, AuthSubmit, authError } from './AuthShell';
+import { EmailCodeStep } from '../../components/EmailCodeStep';
 
 const Login: FC = () => {
   const dispatch = useAppDispatch();
@@ -14,6 +15,8 @@ const Login: FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  // Usuário que se cadastrou mas nunca confirmou o e-mail: o login cai aqui pra confirmar com código.
+  const [needsVerify, setNeedsVerify] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +27,12 @@ const Login: FC = () => {
       await dispatch(authActions.signIn({ email: email.trim(), password })).unwrap();
       navigate('/artists', { replace: true });
     } catch (err: any) {
+      // E-mail ainda não confirmado → manda pro passo do código (o EmailCodeStep reenvia ao abrir).
+      if ((err?.message || '').toLowerCase().includes('not confirmed')) {
+        setNeedsVerify(true);
+        setLoading(false);
+        return;
+      }
       setError(authError(err));
       setLoading(false);
     }
@@ -45,6 +54,14 @@ const Login: FC = () => {
       setError(authError(err));
     }
   };
+
+  if (needsVerify) {
+    return (
+      <AuthShell>
+        <EmailCodeStep email={email.trim()} resendOnMount onVerified={() => navigate('/artists', { replace: true })} />
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
