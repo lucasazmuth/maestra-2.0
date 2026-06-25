@@ -1,10 +1,77 @@
-import { FC, useState } from 'react';
+import { FC, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAppDispatch } from '../../store/store';
 import { supabase } from '../../lib/supabase';
 import { authActions } from '../../store/slices/auth';
 import { AuthShell, AuthField, AuthSubmit, authError } from '../Login/AuthShell';
+
+// Campo de PIN: 6 caixas (1 dígito cada) com auto-avanço, backspace e colar o código inteiro.
+// `onComplete` dispara quando as 6 caixas estão preenchidas (auto-submit). Só aceita dígitos.
+const PIN_LEN = 6;
+const PinInput: FC<{ value: string; onChange: (v: string) => void; onComplete?: (v: string) => void }> = ({ value, onChange, onComplete }) => {
+  const refs = useRef<Array<HTMLInputElement | null>>([]);
+  const chars = Array.from({ length: PIN_LEN }, (_, i) => value[i] ?? '');
+
+  const emit = (arr: string[]) => {
+    const v = arr.join('');
+    onChange(v);
+    if (v.length === PIN_LEN && !arr.includes('')) onComplete?.(v);
+  };
+
+  const handleInput = (i: number, raw: string) => {
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return;
+    const arr = [...chars];
+    let j = i;
+    for (const d of digits.split('')) { if (j < PIN_LEN) { arr[j] = d; j += 1; } } // distribui (colar)
+    emit(arr);
+    refs.current[Math.min(j, PIN_LEN - 1)]?.focus();
+  };
+
+  const handleKey = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      const arr = [...chars];
+      if (arr[i]) { arr[i] = ''; emit(arr); }
+      else if (i > 0) { arr[i - 1] = ''; emit(arr); refs.current[i - 1]?.focus(); }
+    } else if (e.key === 'ArrowLeft' && i > 0) refs.current[i - 1]?.focus();
+    else if (e.key === 'ArrowRight' && i < PIN_LEN - 1) refs.current[i + 1]?.focus();
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, PIN_LEN);
+    if (!digits) return;
+    e.preventDefault();
+    emit(Array.from({ length: PIN_LEN }, (_, i) => digits[i] ?? ''));
+    refs.current[Math.min(digits.length, PIN_LEN - 1)]?.focus();
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }} onPaste={handlePaste}>
+      {chars.map((c, i) => (
+        <input
+          key={i}
+          ref={(el) => { refs.current[i] = el; }}
+          value={c}
+          onChange={(e) => handleInput(i, e.target.value)}
+          onKeyDown={(e) => handleKey(i, e)}
+          onFocus={(e) => e.currentTarget.select()}
+          inputMode="numeric"
+          autoComplete={i === 0 ? 'one-time-code' : 'off'}
+          autoFocus={i === 0}
+          maxLength={1}
+          aria-label={`Dígito ${i + 1} do código`}
+          style={{
+            width: 46, height: 56, textAlign: 'center', fontSize: 22, fontWeight: 700,
+            color: '#fff', background: '#1f1f1f', border: `1px solid ${c ? '#af2896' : '#2a2a2a'}`,
+            borderRadius: 10, outline: 'none', transition: 'border-color .15s',
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 const Signup: FC = () => {
   const dispatch = useAppDispatch();
@@ -54,14 +121,13 @@ const Signup: FC = () => {
     }
   };
 
-  const onVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Verifica o código (OTP) — usado pelo submit e pelo auto-submit do PIN (6 dígitos preenchidos).
+  const runVerify = async (token: string) => {
+    if (token.length < PIN_LEN || loading) return;
     setLoading(true);
     setError(null);
     try {
-      await dispatch(
-        authActions.verifySignupOtp({ email: email.trim(), token: code.trim() })
-      ).unwrap();
+      await dispatch(authActions.verifySignupOtp({ email: email.trim(), token })).unwrap();
       navigate('/welcome', { replace: true });
     } catch (err: any) {
       setError(authError(err) || 'Código inválido ou expirado.');
@@ -96,13 +162,13 @@ const Signup: FC = () => {
           </p>
         }
       >
-        <form onSubmit={onVerify} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p style={{ color: '#b3b3b3', fontSize: 14, margin: '0 0 4px', lineHeight: 1.5 }}>
+        <form onSubmit={(e) => { e.preventDefault(); runVerify(code); }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <p style={{ color: '#b3b3b3', fontSize: 14, margin: '0 0 4px', lineHeight: 1.5, textAlign: 'center' }}>
             Confirme seu e-mail digitando o código de 6 dígitos que enviamos para <strong style={{ color: '#fff' }}>{email.trim()}</strong>.
           </p>
-          <AuthField type='text' placeholder='Código de 6 dígitos' value={code} onChange={setCode} autoFocus />
-          {error && <div style={{ color: '#e91429', fontSize: 13 }}>{error}</div>}
-          {info && <div style={{ color: '#af2896', fontSize: 13 }}>{info}</div>}
+          <PinInput value={code} onChange={setCode} onComplete={runVerify} />
+          {error && <div style={{ color: '#e91429', fontSize: 13, textAlign: 'center' }}>{error}</div>}
+          {info && <div style={{ color: '#af2896', fontSize: 13, textAlign: 'center' }}>{info}</div>}
           <AuthSubmit loading={loading} label='Confirmar e entrar' />
         </form>
       </AuthShell>
