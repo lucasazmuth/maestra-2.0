@@ -103,8 +103,12 @@ export const EmailCodeStep: FC<{ email: string; onVerified: () => void; resendOn
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Guard SÍNCRONO: o auto-submit (PIN completo) e o clique no botão podiam disparar 2 verificações
+  // quase juntas — cada uma gasta uma tentativa do código e a 2ª batia no token já usado/travado.
+  const verifyingRef = useRef(false);
   const runVerify = async (token: string) => {
-    if (token.length < PIN_LEN || loading) return;
+    if (token.length < PIN_LEN || verifyingRef.current) return;
+    verifyingRef.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -113,6 +117,7 @@ export const EmailCodeStep: FC<{ email: string; onVerified: () => void; resendOn
     } catch (err: any) {
       setError(authError(err) || 'Código inválido ou expirado.');
       setLoading(false);
+      verifyingRef.current = false;
     }
   };
 

@@ -54,18 +54,15 @@ export const signUp = createAsyncThunk(
 );
 
 /** Confirma o e-mail do cadastro com o CÓDIGO (OTP) recebido por e-mail (via Brevo). Em sucesso,
- *  já devolve a sessão (usuário logado). O tipo varia entre versões do Supabase ('email' no
- *  moderno, 'signup' no legado) — tenta um e cai pro outro. */
+ *  já devolve a sessão (usuário logado). UMA única chamada com `type: 'email'` (o código de 6
+ *  dígitos do e-mail é um OTP de e-mail). Antes tentava 'email' E 'signup' — isso DOBRAVA o
+ *  contador de tentativas do Supabase e travava o código ("inválido ou expirado") rápido. */
 export const verifySignupOtp = createAsyncThunk(
   'auth/verifySignupOtp',
   async ({ email, token }: { email: string; token: string }) => {
-    let res = await supabase.auth.verifyOtp({ email, token, type: 'email' });
-    if (res.error) {
-      const retry = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
-      if (!retry.error) res = retry;
-    }
-    if (res.error) throw res.error;
-    return { session: res.data.session ?? null, user: res.data.user ?? null };
+    const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+    if (error) throw error;
+    return { session: data.session ?? null, user: data.user ?? null };
   }
 );
 
