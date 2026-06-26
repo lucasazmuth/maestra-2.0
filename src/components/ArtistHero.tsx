@@ -53,15 +53,6 @@ export const ArtistHero: FC<{ artist: Artist }> = ({ artist }) => {
           {artist.name}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: '#b3b3b3', fontSize: 14, flexWrap: 'wrap' }}>
-          {sp ? (
-            <>
-              {sp.followers != null && <span>{sp.followers.toLocaleString('pt-BR')} seguidores</span>}
-              {sp.popularity != null && <span>Popularidade {sp.popularity}/100</span>}
-              {sp.track_count != null && <span>{sp.track_count} faixas</span>}
-            </>
-          ) : (
-            <span>Carregando…</span>
-          )}
           {/* Fase do diagnóstico REAL (um dos 16 perfis), quando o artista já tem diagnóstico. */}
           {realPhase && (
             <span
