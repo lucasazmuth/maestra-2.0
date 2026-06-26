@@ -320,6 +320,17 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
 
       {/* SEÇÃO 2 — O perfil REAL */}
       <div ref={profileRef} className={`${styles.realProfileCard} ${styles.reveal}`} style={{ animationDelay: '0.1s' }}>
+        {/* Refazer diagnóstico: sutil, no canto do card (não exportado no PDF/share). */}
+        {onRedo && (
+          <button
+            onClick={onRedo}
+            data-noexport="1"
+            title={redoLocked ? 'Recurso PRO — assine para refazer' : 'Refaça o quiz e atualize seu perfil REAL'}
+            style={{ position: 'absolute', top: 18, right: 18, zIndex: 2, display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: '#b3b3b3', padding: '7px 14px', borderRadius: 9999, cursor: 'pointer', fontSize: 12.5, fontWeight: 700 }}
+          >
+            {redoLocked ? <FiLock size={13} /> : <FiRefreshCw size={13} />} Refazer
+          </button>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
           <RealBadge tier={realTier} label={PROFILE_ABBR[profile.name] || profile.name.slice(0, 2)} size={72} />
           <div>

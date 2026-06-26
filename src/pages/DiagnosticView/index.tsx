@@ -1,7 +1,6 @@
 import { FC, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Spin } from 'antd';
-import { FiArrowLeft, FiRefreshCw, FiLock } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
@@ -56,27 +55,11 @@ const DiagnosticView: FC = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <button
-        onClick={() => navigate(`/artists/${id}`)}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: '#b3b3b3', fontWeight: 700, fontSize: 14, cursor: 'pointer', padding: 0, marginBottom: 16 }}
-      >
-        <FiArrowLeft size={16} /> Voltar
-      </button>
-
       {realIndex && (
         <PageHeader
           kicker="Crescimento"
           title="Diagnóstico REAL"
           subtitle="Sua fase de carreira atual, com base nos seus dados reais. Refaça o diagnóstico quando evoluir."
-          action={
-            <button
-              className={styles.heroRedoBtn}
-              onClick={onRedo}
-              title={!isPro ? 'Recurso PRO — assine para refazer' : 'Refaça o quiz e atualize seu perfil REAL'}
-            >
-              {!isPro ? <FiLock size={15} /> : <FiRefreshCw size={15} />} Refazer diagnóstico
-            </button>
-          }
         />
       )}
 
@@ -89,6 +72,7 @@ const DiagnosticView: FC = () => {
           onContinue={() => navigate(`/artists/${id}/wizard`)}
           enableStickyCta={false}
           showPlanningCta={!artist?.content?.strategies?.length}
+          onRedo={onRedo}
           redoLocked={!isPro}
           hideHero
         />
