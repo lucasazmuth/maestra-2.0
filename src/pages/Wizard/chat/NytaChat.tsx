@@ -1,6 +1,6 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, message } from 'antd';
+import { App, Input } from 'antd';
 import { FiArrowUp } from 'react-icons/fi';
 
 import * as wizardAi from '../../../services/wizardAi';
@@ -89,6 +89,7 @@ interface NytaChatProps {
 }
 
 export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity, sp, persist }) => {
+  const { message } = App.useApp(); // `message` estático é no-op dentro do <App> do antd
   const navigate = useNavigate();
   const [thread, setThread] = useState<ChatItem[]>([]);
   const [typing, setTyping] = useState(false);

@@ -1,6 +1,6 @@
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { message } from 'antd';
+import { App } from 'antd';
 import { FiChevronDown } from 'react-icons/fi';
 
 import './styles.scss';
@@ -24,6 +24,7 @@ import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 // migração; a condução da conversa (beats, widgets, IA) vive em chat/NytaChat.
 
 const Wizard: FC = () => {
+  const { message } = App.useApp(); // `message` estático é no-op dentro do <App> do antd
   const { artist } = useArtist();
   const artistsLoaded = useAppSelector((s) => s.artists.loaded);
   const dispatch = useAppDispatch();
