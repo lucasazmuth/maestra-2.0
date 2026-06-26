@@ -5,7 +5,11 @@ import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 import type { Artist } from '../../interfaces/maestra';
 import { RealBadge, altasForPattern, tierForPattern } from '../RealBadge';
 import { PRODUCT_THEME as PRODUCTS } from '../productTheme';
+import { DiagnosticoIcon, PlanejamentoIcon, PlanoAcaoIcon } from '../Icons/system';
 import './journey.scss';
+
+// Fonte-assinatura do REAL (mesma dos R·E·A·L do diagnóstico) — id visual do produto.
+const realFont: React.CSSProperties = { fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: 'italic', fontWeight: 700, textTransform: 'none', letterSpacing: '0.01em', fontSize: 12.5 };
 
 // Hub "Jornada Maestra" (home do Dashboard): o ciclo de crescimento como 3 etapas conectadas —
 // REAL (onde estou) → Planejamento (para onde vou) → Plano de Ação (como chego) → ↺ re-diagnóstico.
@@ -15,7 +19,7 @@ const kicker: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpaci
 const stageTitle: React.CSSProperties = { fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 18, color: '#fff', margin: '2px 0 0', lineHeight: 1.15 };
 const sub: React.CSSProperties = { color: '#8a8a92', fontSize: 12.5, margin: '2px 0 0' };
 
-const StageCard: FC<{ accent: string; bg: string; children: ReactNode }> = ({ accent, bg, children }) => (
+const StageCard: FC<{ accent: string; bg: string; icon: ReactNode; children: ReactNode }> = ({ accent, bg, icon, children }) => (
   <div
     className="journey-stage"
     style={{
@@ -34,6 +38,16 @@ const StageCard: FC<{ accent: string; bg: string; children: ReactNode }> = ({ ac
       gap: 12,
     }}
   >
+    {/* Ícone do produto (a "logo" de cada serviço) num chip na cor do produto. */}
+    <span
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+        background: `rgba(${accent},0.14)`, border: `1px solid rgba(${accent},0.30)`, color: `rgb(${accent})`,
+      }}
+    >
+      {icon}
+    </span>
     {children}
   </div>
 );
@@ -96,9 +110,9 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
 
       <div className="journey-row">
         {/* 1 — REAL · Diagnóstico (onde estou) */}
-        <StageCard accent={REAL} bg={PRODUCTS.real.bg}>
+        <StageCard accent={REAL} bg={PRODUCTS.real.bg} icon={<DiagnosticoIcon size={24} />}>
           <div>
-            <div style={{ ...kicker, color: `rgb(${REAL})` }}>1 · REAL · Diagnóstico</div>
+            <div style={{ ...kicker, color: `rgb(${REAL})` }}>1 · <span style={realFont}>REAL</span> · Diagnóstico</div>
             <div style={stageTitle}>Onde você está</div>
           </div>
           {ri?.profile ? (
@@ -123,7 +137,7 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
         <Connector />
 
         {/* 2 — Planejamento (para onde vou) */}
-        <StageCard accent={PLAN} bg={PRODUCTS.planning.bg}>
+        <StageCard accent={PLAN} bg={PRODUCTS.planning.bg} icon={<PlanejamentoIcon size={24} />}>
           <div>
             <div style={{ ...kicker, color: `rgb(${PLAN})` }}>2 · Planejamento</div>
             <div style={stageTitle}>Para onde vai</div>
@@ -147,7 +161,7 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
         <Connector />
 
         {/* 3 — Plano de Ação (como chego) */}
-        <StageCard accent={ACTION} bg={PRODUCTS.action.bg}>
+        <StageCard accent={ACTION} bg={PRODUCTS.action.bg} icon={<PlanoAcaoIcon size={24} />}>
           <div>
             <div style={{ ...kicker, color: `rgb(${ACTION})` }}>3 · Plano de Ação</div>
             <div style={stageTitle}>Como chegar lá</div>
