@@ -24,15 +24,10 @@ const profilesByAltas = (() => {
 // Fração 0..1 de um nível N na linha (marco N fica em N/4).
 const levelFrac = (n: number) => n / 4;
 
-// Posição (fração) de uma fase: marcos 0 e 4 são fases únicas (ficam no marco); os níveis 1–3 têm
-// várias fases, distribuídas DENTRO do segmento [N, N+1] (você alcançou N, rumo a N+1).
-const phaseFrac = (altas: number, idxInGroup: number, groupLen: number) => {
-  if (altas <= 0) return 0;
-  if (altas >= 4) return 1;
-  const a = levelFrac(altas);
-  const b = levelFrac(altas + 1);
-  return a + (b - a) * ((idxInGroup + 1) / (groupLen + 1));
-};
+// Posição (fração) de uma fase: o 1º perfil do nível N fica NO marco N (N/4) — o marco já o
+// representa; os demais perfis do nível se espalham no segmento [N, N+1] (você alcançou N, rumo a N+1).
+const phaseFrac = (altas: number, idxInGroup: number, groupLen: number) =>
+  levelFrac(altas) + (idxInGroup / Math.max(groupLen, 1)) * 0.25;
 
 export const RealLevelLadder: FC<{ ri: RealIndex; badgeSize?: number }> = ({ ri, badgeSize = 32 }) => {
   const { altas, atTop, driver } = realProgression(ri);
@@ -49,18 +44,15 @@ export const RealLevelLadder: FC<{ ri: RealIndex; badgeSize?: number }> = ({ ri,
     return phaseFrac(curAltas, idx < 0 ? 0 : idx, group.length);
   }, [ri]);
 
-  // As bolinhas das fases dos níveis 1–3 (Beginner=marco 0 e Icon=marco 4 ficam nos marcos).
+  // As bolinhas das fases dos níveis 1–3 — exceto o 1º perfil de cada grupo, que já é o próprio marco.
   const dots = useMemo(
     () =>
       [1, 2, 3].flatMap((lvl) => {
         const group = profilesByAltas[lvl] || [];
         const color = `rgb(${TIER_ACCENT[tierForAltas(lvl)]})`;
-        return group.map((name, idx) => ({
-          name,
-          lvl,
-          color,
-          frac: phaseFrac(lvl, idx, group.length),
-        }));
+        return group.flatMap((name, idx) =>
+          idx === 0 ? [] : [{ name, lvl, color, frac: phaseFrac(lvl, idx, group.length) }]
+        );
       }),
     []
   );
@@ -104,7 +96,8 @@ export const RealLevelLadder: FC<{ ri: RealIndex; badgeSize?: number }> = ({ ri,
           {LEVELS.map((n) => {
             const frac = levelFrac(n);
             const cur = isCurrent(frac);
-            const nodeName = n === 0 ? 'Beginner' : n === 4 ? 'Icon' : null;
+            // O marco representa o 1º perfil do nível (Beginner / Influencer / Digital / Hit / Icon).
+            const nodeName = profilesByAltas[n]?.[0] || null;
             return (
               <div
                 key={n}
