@@ -3,9 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiRefreshCw, FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 
 import type { Artist } from '../../interfaces/maestra';
-import { RealBadge, altasForPattern, tierForPattern, TIER_ACCENT } from '../RealBadge';
+import { RealBadge, altasForPattern, tierForPattern } from '../RealBadge';
 import { RealLevelLadder } from '../RealLevelLadder';
+import gradReal from './gradients/real.svg';
+import gradPlanning from './gradients/planning.svg';
+import gradAction from './gradients/action.svg';
 import './journey.scss';
+
+// Identidade visual de cada produto do ciclo (cor + gradiente de fundo próprio).
+const PRODUCTS = {
+  real: { accent: '46, 196, 122', bg: gradReal },        // verde
+  planning: { accent: '74, 140, 255', bg: gradPlanning }, // azul
+  action: { accent: '205, 70, 175', bg: gradAction },     // magenta
+};
 
 // Hub "Jornada Maestra" (home do Dashboard): o ciclo de crescimento como 3 etapas conectadas —
 // REAL (onde estou) → Planejamento (para onde vou) → Plano de Ação (como chego) → ↺ re-diagnóstico.
@@ -15,18 +25,23 @@ const kicker: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpaci
 const stageTitle: React.CSSProperties = { fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 18, color: '#fff', margin: '2px 0 0', lineHeight: 1.15 };
 const sub: React.CSSProperties = { color: '#8a8a92', fontSize: 12.5, margin: '2px 0 0' };
 
-const StageCard: FC<{ accent: string; children: ReactNode }> = ({ accent, children }) => (
+const StageCard: FC<{ accent: string; bg: string; children: ReactNode }> = ({ accent, bg, children }) => (
   <div
     className="journey-stage"
     style={{
       position: 'relative',
-      background: `radial-gradient(120% 130% at 0% 0%, rgba(${accent},0.10), #161616 62%)`,
-      border: `1px solid rgba(${accent},0.28)`,
-      borderRadius: 14,
-      padding: 18,
+      // Gradiente do produto por trás de um scrim escuro: vira um brilho sutil, não um fundo gritante.
+      backgroundColor: '#0c0c0e',
+      backgroundImage: `linear-gradient(158deg, rgba(11,11,13,0.55) 0%, rgba(11,11,13,0.82) 52%, rgba(11,11,13,0.94) 100%), url(${bg})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      border: `1px solid rgba(${accent},0.30)`,
+      boxShadow: `0 12px 32px -16px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)`,
+      borderRadius: 16,
+      padding: 20,
       display: 'flex',
       flexDirection: 'column',
-      gap: 10,
+      gap: 12,
     }}
   >
     {children}
@@ -71,9 +86,10 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
   const hasPlan = !!artist.content?.strategies?.length;
 
   const tier = ri?.pattern ? tierForPattern(ri.pattern) : 'standard';
-  const realAccent = ri?.pattern ? TIER_ACCENT[tier] : '175, 40, 150';
-  const MAGENTA = '175, 40, 150';
-  const PURPLE = '109, 59, 209';
+  // Cores fixas de cada produto (a placa/escada lá dentro continuam na cor do tier).
+  const REAL = PRODUCTS.real.accent;
+  const PLAN = PRODUCTS.planning.accent;
+  const ACTION = PRODUCTS.action.accent;
 
   // Progresso das tarefas (mesma fonte do Plano de Ação): ativas (não arquivadas), concluídas.
   const allTasks = (artist.content?.strategies || []).flatMap((s) => (s.tasks || []).filter((t) => t.status !== 'archived'));
@@ -90,9 +106,9 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
 
       <div className="journey-row">
         {/* 1 — REAL · Diagnóstico (onde estou) */}
-        <StageCard accent={realAccent}>
+        <StageCard accent={REAL} bg={PRODUCTS.real.bg}>
           <div>
-            <div style={{ ...kicker, color: `rgb(${realAccent})` }}>1 · REAL · Diagnóstico</div>
+            <div style={{ ...kicker, color: `rgb(${REAL})` }}>1 · REAL · Diagnóstico</div>
             <div style={stageTitle}>Onde você está</div>
           </div>
           {ri?.profile ? (
@@ -105,12 +121,12 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
                 </div>
               </div>
               <RealLevelLadder ri={ri} badgeSize={26} />
-              <StageCta accent={realAccent} label="Ver diagnóstico" onClick={() => go('diagnostico')} ghost />
+              <StageCta accent={REAL} label="Ver diagnóstico" onClick={() => go('diagnostico')} ghost />
             </>
           ) : (
             <>
               <p style={{ ...sub, fontSize: 13, color: '#cfcfd4' }}>Descubra sua fase de carreira (entre 16 perfis) com dados reais.</p>
-              <StageCta accent={realAccent} label="Fazer diagnóstico" onClick={() => go('diagnostico')} />
+              <StageCta accent={REAL} label="Fazer diagnóstico" onClick={() => go('diagnostico')} />
             </>
           )}
         </StageCard>
@@ -118,9 +134,9 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
         <Connector />
 
         {/* 2 — Planejamento (para onde vou) */}
-        <StageCard accent={MAGENTA}>
+        <StageCard accent={PLAN} bg={PRODUCTS.planning.bg}>
           <div>
-            <div style={{ ...kicker, color: `rgb(${MAGENTA})` }}>2 · Planejamento</div>
+            <div style={{ ...kicker, color: `rgb(${PLAN})` }}>2 · Planejamento</div>
             <div style={stageTitle}>Para onde vai</div>
           </div>
           {hasPlan ? (
@@ -129,12 +145,12 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
                 <FiCheckCircle size={18} /> Planejamento criado
               </div>
               <p style={sub}>Visão, missão, objetivos e estratégias definidos.</p>
-              <StageCta accent={MAGENTA} label="Ver planejamento" onClick={() => go('perfil')} ghost />
+              <StageCta accent={PLAN} label="Ver planejamento" onClick={() => go('perfil')} ghost />
             </>
           ) : (
             <>
               <p style={{ ...sub, fontSize: 13, color: '#cfcfd4' }}>Defina visão, missão, objetivos e estratégias com a Nyta.</p>
-              <StageCta accent={MAGENTA} label="Criar planejamento" onClick={() => go('action-plan')} />
+              <StageCta accent={PLAN} label="Criar planejamento" onClick={() => go('action-plan')} />
             </>
           )}
         </StageCard>
@@ -142,26 +158,26 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
         <Connector />
 
         {/* 3 — Plano de Ação (como chego) */}
-        <StageCard accent={PURPLE}>
+        <StageCard accent={ACTION} bg={PRODUCTS.action.bg}>
           <div>
-            <div style={{ ...kicker, color: `rgb(${PURPLE})` }}>3 · Plano de Ação</div>
+            <div style={{ ...kicker, color: `rgb(${ACTION})` }}>3 · Plano de Ação</div>
             <div style={stageTitle}>Como chegar lá</div>
           </div>
           {hasPlan ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-                  <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: `rgb(${PURPLE})`, transition: 'width .4s' }} />
+                  <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: `rgb(${ACTION})`, transition: 'width .4s' }} />
                 </div>
-                <span style={{ color: `rgb(${PURPLE})`, fontWeight: 800, fontSize: 14 }}>{pct}%</span>
+                <span style={{ color: `rgb(${ACTION})`, fontWeight: 800, fontSize: 14 }}>{pct}%</span>
               </div>
               <p style={sub}>{total ? `${done} de ${total} tarefas concluídas.` : 'Adicione tarefas às suas estratégias.'}</p>
-              <StageCta accent={PURPLE} label="Abrir plano" onClick={() => go('action-plan')} ghost />
+              <StageCta accent={ACTION} label="Abrir plano" onClick={() => go('action-plan')} ghost />
             </>
           ) : (
             <>
               <p style={{ ...sub, fontSize: 13, color: '#cfcfd4' }}>Execute suas estratégias em tarefas e acompanhe o progresso.</p>
-              <StageCta accent={PURPLE} label="Abrir plano" onClick={() => go('action-plan')} ghost />
+              <StageCta accent={ACTION} label="Abrir plano" onClick={() => go('action-plan')} ghost />
             </>
           )}
         </StageCard>
