@@ -713,7 +713,8 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
                 }
                 message.success('Planejamento concluído! Painel liberado.');
               }
-              navigate(`/artists/${artist.id}`);
+              // Vai direto pro Plano de Ação (com o plano já exibido), não pro dashboard.
+              navigate(`/artists/${artist.id}/action-plan`);
             }}
           />
         );
