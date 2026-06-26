@@ -1,6 +1,6 @@
 import { FC, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowRight, FiRefreshCw, FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
+import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 
 import type { Artist } from '../../interfaces/maestra';
 import { RealBadge, altasForPattern, tierForPattern } from '../RealBadge';
@@ -180,28 +180,6 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
           )}
         </StageCard>
       </div>
-
-      {/* Loop: fecha o ciclo (executar → re-diagnosticar → subir de fase) */}
-      {ri?.profile && hasPlan && (
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-            marginTop: 10, padding: '12px 16px', borderRadius: 12,
-            background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.12)',
-          }}
-        >
-          <FiRotateCcw size={18} style={{ color: '#8a8a92', flexShrink: 0 }} />
-          <span style={{ color: '#cfcfd4', fontSize: 13.5 }}>
-            Executou o plano e cresceu? <b style={{ color: '#fff' }}>Refaça o REAL</b> pra ver sua fase subir.
-          </span>
-          <button
-            onClick={() => navigate(`/artists/${artist.id}/diagnostico/refazer`)}
-            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '7px 14px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
-          >
-            <FiRefreshCw size={14} /> Refazer diagnóstico
-          </button>
-        </div>
-      )}
     </section>
   );
 };
