@@ -888,9 +888,10 @@
   gap: 12px;
   margin-bottom: 28px;
 }
-// Estado da dimensão → cor consistente (anel, status, nível, acento da frase).
+// Estado da dimensão → segue a cor do tier da placa (gamificação), pra ficar coerente com o brasão.
+// Alto = cor sólida do tier; baixo = mesma cor mais suave (ainda não conquistado).
 .stHigh { --st: rgb(var(--real-accent, 175, 40, 150)); }
-.stLow { --st: #e0a13c; }
+.stLow { --st: rgba(var(--real-accent, 175, 40, 150), 0.5); }
 .stNeutral { --st: #8a8a92; }
 
 .dimCard {
