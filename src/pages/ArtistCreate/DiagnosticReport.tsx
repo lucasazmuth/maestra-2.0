@@ -321,7 +321,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
       {/* SEÇÃO 2 — O perfil REAL */}
       <div ref={profileRef} className={`${styles.realProfileCard} ${styles.reveal}`} style={{ animationDelay: '0.1s' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
-          <RealBadge tier={realTier} label={PROFILE_ABBR[profile.name] || profile.name.slice(0, 2)} size={52} />
+          <RealBadge tier={realTier} label={PROFILE_ABBR[profile.name] || profile.name.slice(0, 2)} size={72} />
           <div>
             <span className={styles.realProfileKicker}>Seu perfil de carreira</span>
             <h3 className={`${styles.realProfileName} ${styles.stamp}`} style={{ margin: 0 }}>{profile.name}</h3>

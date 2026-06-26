@@ -108,7 +108,7 @@ export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '10px 0 12px', flexWrap: 'wrap' }}>
-        <RealBadge tier={tier} label={PROFILE_ABBR[ri.profile.name] || ri.profile.name.slice(0, 2)} size={56} />
+        <RealBadge tier={tier} label={PROFILE_ABBR[ri.profile.name] || ri.profile.name.slice(0, 2)} size={76} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <h2 style={{ ...titleStyle, margin: 0 }}>{ri.profile.name}</h2>
           <span style={{ fontSize: 13, color: '#8a8a92' }}>Seu perfil entre os 16</span>
