@@ -4,7 +4,6 @@ import { FiArrowRight, FiRefreshCw, FiCheckCircle, FiRotateCcw } from 'react-ico
 
 import type { Artist } from '../../interfaces/maestra';
 import { RealBadge, altasForPattern, tierForPattern } from '../RealBadge';
-import { RealLevelLadder } from '../RealLevelLadder';
 import gradReal from './gradients/real.svg';
 import gradPlanning from './gradients/planning.svg';
 import gradAction from './gradients/action.svg';
@@ -120,7 +119,6 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
                   <div style={{ color: '#8a8a92', fontSize: 12 }}>fase atual · entre os 16</div>
                 </div>
               </div>
-              <RealLevelLadder ri={ri} badgeSize={26} />
               <StageCta accent={REAL} label="Ver diagnóstico" onClick={() => go('diagnostico')} ghost />
             </>
           ) : (
