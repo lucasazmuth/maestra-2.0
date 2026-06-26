@@ -8,7 +8,6 @@ import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { useAppDispatch } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
-import { ArtistHero } from '../../components/ArtistHero';
 import { RealCareerCard } from '../../components/RealCareerCard';
 import { PhaseSummary } from '../../components/PhaseSummary';
 import AdvancedPlan from '../ActionPlan/AdvancedPlan';
@@ -65,7 +64,14 @@ const Profile: FC = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <ArtistHero artist={artist} />
+      {/* Cabeçalho próprio (não o ArtistHero do Dashboard) — identifica a página como produto. */}
+      <div style={{ marginBottom: 22 }}>
+        <span style={{ color: '#af2896', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Crescimento</span>
+        <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: '2px 0 0' }}>Planejamento estratégico</h1>
+        <p style={{ color: '#8a8a92', fontSize: 13.5, margin: '6px 0 0' }}>
+          Visão, missão, valores, objetivos e estratégias de {artist.name}.
+        </p>
+      </div>
 
       {/* FASE de carreira REAL (sem barra de progresso — progresso é do Plano de Ação). */}
       <RealCareerCard artist={artist} taskCounts={taskCounts} showProgress={false} />

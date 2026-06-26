@@ -145,6 +145,10 @@ interface Props {
   // redoLocked, mostra cadeado (recurso PRO). Na criação fica undefined (botão não aparece).
   onRedo?: () => void;
   redoLocked?: boolean;
+  // Cabeçalho: na CRIAÇÃO é a copy de "está pronto" (entrega); na tela /diagnostico (revisita) o
+  // DiagnosticView passa um título de página próprio ("Diagnóstico REAL"), pra não parecer a criação.
+  heroTitle?: string;
+  heroSub?: string;
 }
 
 // Rótulos dos níveis de prêmios/imprensa do motor v2 (índice → texto p/ a exibição).
@@ -167,7 +171,7 @@ export const v2InputsView = (ri: any) => ({
 
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
 // Determinística: consome o realIndex calculado no backend (sem IA). Suporta v1 (antigo) e v2.
-export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false }) => {
+export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub }) => {
   const [methodOpen, setMethodOpen] = useState(false);
   // v2 (motor REAL Consolidado) tem `version: 2` + `boletim`; v1 mantém o shape antigo.
   const riAny = realIndex as any;
@@ -290,11 +294,12 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
       <div className={`${styles.realHero} ${styles.reveal}`} style={{ animationDelay: '0s' }}>
         <img className={styles.realHeroAvatar} src={artistImage || ARTISTS_DEFAULT_IMAGE} alt={name} />
         <div>
-          <h2 className={styles.realHeroTitle}>Seu diagnóstico de carreira está pronto, {name}.</h2>
+          <h2 className={styles.realHeroTitle}>{heroTitle || `Seu diagnóstico de carreira está pronto, ${name}.`}</h2>
           <p className={styles.realHeroSub}>
-            {noSpotify
-              ? 'Baseado no que você nos contou. Quando você conectar o Spotify, a gente atualiza com seus números de plataforma.'
-              : 'Baseado nos seus dados reais: Spotify, redes sociais e o que você nos contou.'}
+            {heroSub
+              || (noSpotify
+                ? 'Baseado no que você nos contou. Quando você conectar o Spotify, a gente atualiza com seus números de plataforma.'
+                : 'Baseado nos seus dados reais: Spotify, redes sociais e o que você nos contou.')}
           </p>
         </div>
         {onRedo && (

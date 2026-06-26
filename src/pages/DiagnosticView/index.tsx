@@ -73,6 +73,9 @@ const DiagnosticView: FC = () => {
           showPlanningCta={!artist?.content?.strategies?.length}
           onRedo={onRedo}
           redoLocked={!isPro}
+          // Tela de REVISITA (não a criação): cabeçalho de página próprio.
+          heroTitle="Diagnóstico REAL"
+          heroSub="Sua fase de carreira atual, com base nos seus dados reais. Refaça o diagnóstico quando evoluir."
         />
       ) : (
         <div style={{ background: '#181818', borderRadius: 12, padding: 32, textAlign: 'center', color: '#b3b3b3' }}>
