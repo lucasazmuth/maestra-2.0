@@ -405,9 +405,8 @@ const HORIZON_FIELDS: { key: keyof ReferenceHorizonsData; label: string; questio
 // seletores do wizard (MultiChoiceCard) — pills selecionáveis dos relacionados no Spotify + campo pra
 // escrever o seu. Mantém o contrato {curto,medio,longo} (strings), montado no fim.
 export const ReferenceHorizons: FC<{
-  similar?: { name: string }[];
   onConfirm: (h: ReferenceHorizonsData) => void;
-}> = ({ similar, onConfirm }) => {
+}> = ({ onConfirm }) => {
   const [step, setStep] = useState(0);
   const [sel, setSel] = useState<Record<string, string[]>>({ curto: [], medio: [], longo: [] });
   const [own, setOwn] = useState('');
@@ -415,8 +414,9 @@ export const ReferenceHorizons: FC<{
   const field = HORIZON_FIELDS[step];
   const chosen = sel[field.key] || [];
   const isLast = step === HORIZON_FIELDS.length - 1;
-  const suggestions = Array.from(new Set((similar || []).map((a) => a.name))).slice(0, 12);
-  const customPills = chosen.filter((c) => !suggestions.includes(c));
+  // Removidas as sugestões do Spotify (vinham internacionais/irrelevantes p/ artista BR). Só o que
+  // o artista digita — mostrado como pills removíveis.
+  const customPills = chosen;
 
   const parseNames = (txt: string) => txt.split(',').map((x) => x.trim()).filter(Boolean);
   const toggle = (name: string) =>
@@ -457,30 +457,19 @@ export const ReferenceHorizons: FC<{
       </div>
       <div style={{ color: '#fff', fontSize: 16, fontWeight: 700, lineHeight: 1.4, marginBottom: 14 }}>{field.question}</div>
 
-      {/* Seletor (mesmo formato do MultiChoiceCard): pills dos relacionados no Spotify + os seus. */}
-      <div style={{ color: '#7d7d7d', fontSize: 12, marginBottom: 8 }}>Toque nos artistas relacionados no Spotify ou escreva o seu abaixo:</div>
-      <div className='wiz-option-grid'>
-        {suggestions.map((name, i) => {
-          const active = chosen.includes(name);
-          return (
-            <button
-              key={name}
-              className={`wiz-option-pill${active ? ' wiz-option-pill--selected' : ''}`}
-              style={{ animationDelay: `${i * 40}ms` }}
-              onClick={() => toggle(name)}
-            >
-              {active && <span className='wiz-option-check'><FiCheck size={14} /></span>}
-              {name}
+      {/* Só o campo de digitar. O artista escreve os nomes (vírgula separa vários); cada um vira uma
+          pill removível. (Removidas as sugestões do Spotify — vinham internacionais/irrelevantes.) */}
+      <div style={{ color: '#7d7d7d', fontSize: 12, marginBottom: 8 }}>Escreva os nomes que você quer (separe por vírgula).</div>
+      {customPills.length > 0 && (
+        <div className='wiz-option-grid'>
+          {customPills.map((c) => (
+            <button key={c} className='wiz-option-pill wiz-option-pill--selected' onClick={() => toggle(c)} title='Toque para remover'>
+              <span className='wiz-option-check'><FiCheck size={14} /></span>
+              {c}
             </button>
-          );
-        })}
-        {customPills.map((c) => (
-          <button key={c} className='wiz-option-pill wiz-option-pill--selected' onClick={() => toggle(c)} title='Toque para remover'>
-            <span className='wiz-option-check'><FiCheck size={14} /></span>
-            {c}
-          </button>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
         <Input placeholder='Escreva o seu artista…' value={own} onChange={(e) => setOwn(e.target.value)} onPressEnter={addOwn} />
         <button style={{ ...ghostBtn, padding: '8px 14px' }} onClick={addOwn}><FiPlus /></button>

@@ -469,7 +469,6 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       case 'referenceHorizons':
         return (
           <ReferenceHorizons
-            similar={draft.chartmetricProfile?.similar}
             onConfirm={(h: ReferenceHorizonsData) => {
               const filled = [h.curto, h.medio, h.longo].filter(Boolean).join('; ');
               pushUser(filled || 'Pular');
