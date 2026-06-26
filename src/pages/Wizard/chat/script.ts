@@ -80,7 +80,9 @@ const buildVisionFormulaPrefix = (id: ArtistIdentity, vp: VisionParts): string =
   let s = `${name} quer ser ${reconhecid}`;
   if (regiao) s += ` ${regiao}`;
   if (porFontes) s += `, ${porFontes}`;
-  s += `, como ${artigo} ${subs}${adj ? ` ${adj}` : ''} que…`;
+  // Termina com uma "linha de preenchimento" (em vez de reticências) pra deixar claro pro usuário
+  // leigo que a frase continua com a resposta dele: "…que ____________".
+  s += `, como ${artigo} ${subs}${adj ? ` ${adj}` : ''} que ____________`;
   return s;
 };
 
