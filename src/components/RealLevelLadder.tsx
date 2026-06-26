@@ -58,9 +58,11 @@ export const RealLevelLadder: FC<{ ri: RealIndex; badgeSize?: number }> = ({ ri,
   );
 
   const dotSize = 11;
-  const topPad = 26; // espaço pro tooltip acima
-  const trackY = topPad + badgeSize / 2;
-  const height = topPad + badgeSize + 22;
+  const badgeHalf = badgeSize / 2 + 3; // +3 = padding do anel em volta da placa
+  const topRoom = 26; // espaço pro tooltip acima das placas
+  const trackY = topRoom + badgeHalf; // linha no centro vertical das placas/bolinhas
+  const labelY = trackY + badgeHalf + 7; // "Você está aqui" com folga abaixo das placas
+  const height = labelY + 14;
   const isCurrent = (frac: number) => Math.abs(frac - currentFrac) < 0.001;
 
   return (
@@ -103,7 +105,7 @@ export const RealLevelLadder: FC<{ ri: RealIndex; badgeSize?: number }> = ({ ri,
                 key={n}
                 onMouseEnter={() => nodeName && setHover({ name: nodeName, frac, color: `rgb(${TIER_ACCENT[tierForAltas(n)]})` })}
                 onMouseLeave={() => setHover((h) => (h?.name === nodeName ? null : h))}
-                style={{ position: 'absolute', left: `${frac * 100}%`, top: topPad, transform: 'translateX(-50%)', zIndex: cur ? 5 : 3, opacity: n <= altas ? 1 : 0.5 }}
+                style={{ position: 'absolute', left: `${frac * 100}%`, top: trackY, transform: 'translate(-50%, -50%)', zIndex: cur ? 5 : 3, opacity: n <= altas ? 1 : 0.5 }}
               >
                 <span
                   style={{ display: 'inline-flex', borderRadius: '50%', padding: 3, boxShadow: cur ? `0 0 0 2px rgb(${accent})` : 'none', cursor: nodeName ? 'pointer' : 'default' }}
@@ -115,7 +117,7 @@ export const RealLevelLadder: FC<{ ri: RealIndex; badgeSize?: number }> = ({ ri,
           })}
 
           {/* "Você está aqui" sob a posição atual */}
-          <span style={{ position: 'absolute', left: `${currentFrac * 100}%`, top: topPad + badgeSize + 2, transform: 'translateX(-50%)', fontSize: 10, fontWeight: 800, color: `rgb(${accent})`, whiteSpace: 'nowrap' }}>
+          <span style={{ position: 'absolute', left: `${currentFrac * 100}%`, top: labelY, transform: 'translateX(-50%)', fontSize: 10, fontWeight: 800, color: `rgb(${accent})`, whiteSpace: 'nowrap' }}>
             Você está aqui
           </span>
 
@@ -123,7 +125,7 @@ export const RealLevelLadder: FC<{ ri: RealIndex; badgeSize?: number }> = ({ ri,
           {hover && (
             <span
               style={{
-                position: 'absolute', left: `${hover.frac * 100}%`, top: topPad - 22, transform: 'translateX(-50%)',
+                position: 'absolute', left: `${hover.frac * 100}%`, top: trackY - badgeHalf - 24, transform: 'translateX(-50%)',
                 padding: '3px 9px', borderRadius: 7, background: '#0d0d0f', border: `1px solid ${hover.color}`,
                 color: '#fff', fontSize: 11.5, fontWeight: 700, whiteSpace: 'nowrap', zIndex: 6, pointerEvents: 'none',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
