@@ -14,10 +14,19 @@ export const PROFILE_ABBR: Record<string, string> = {
   Outlier: 'Ou', Moneymaker: 'Mo', Bet: 'Bt', Paradox: 'Pa', Cult: 'Cu', Beginner: 'Be',
 };
 
-// Tier pela quantidade de R·E·A·L altas: 0–1 = standard, 2 = advance, 3 = pro, 4 = premium.
-export const tierForPattern = (p?: { r: boolean; e: boolean; a: boolean; l: boolean } | null): RealTier => {
-  const altas = p ? [p.r, p.e, p.a, p.l].filter(Boolean).length : 0;
-  return altas >= 4 ? 'premium' : altas === 3 ? 'pro' : altas === 2 ? 'advance' : 'standard';
+// Tier pelo nº de R·E·A·L altas (0–4). 0–1 = standard, 2 = advance, 3 = pro, 4 = premium.
+export const tierForAltas = (altas: number): RealTier =>
+  altas >= 4 ? 'premium' : altas === 3 ? 'pro' : altas === 2 ? 'advance' : 'standard';
+
+export const tierForPattern = (p?: { r: boolean; e: boolean; a: boolean; l: boolean } | null): RealTier =>
+  tierForAltas(p ? [p.r, p.e, p.a, p.l].filter(Boolean).length : 0);
+
+// Cor de acento por tier (string "r, g, b" pra usar em rgba()), pra o card/chrome combinar com a placa.
+export const TIER_ACCENT: Record<RealTier, string> = {
+  standard: '32, 178, 110', // verde
+  advance: '76, 125, 255',  // azul
+  pro: '168, 176, 184',     // prata
+  premium: '230, 178, 58',  // ouro
 };
 
 // SVGs originais (placas), com a glifo "CL" trocada por um <text>{{LABEL}}</text> no centro do círculo.

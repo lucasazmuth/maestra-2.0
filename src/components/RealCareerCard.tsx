@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 
 import type { Artist } from '../interfaces/maestra';
-import { RealBadge, PROFILE_ABBR, tierForPattern } from './RealBadge';
+import { RealBadge, PROFILE_ABBR, tierForPattern, TIER_ACCENT } from './RealBadge';
 
 // Card unificado de "fase de carreira": o perfil REAL (1 dos 16) é a FASE do artista — sobe de
 // nível quando ele re-diagnostica — e logo abaixo a barra de progresso das tarefas do plano.
@@ -88,17 +88,26 @@ export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?
     );
   }
 
+  // O card segue a cor do tier da placa (verde/azul/prata/ouro) pra ficar coerente com a gamificação.
+  const tier = tierForPattern(ri.pattern);
+  const accent = TIER_ACCENT[tier];
+  const tierCard: CSSProperties = {
+    ...card,
+    background: `radial-gradient(120% 130% at 0% 0%, rgba(${accent},0.12), #181818 60%)`,
+    border: `1px solid rgba(${accent},0.28)`,
+  };
+
   return (
-    <section style={{ ...card, ...style }}>
+    <section style={{ ...tierCard, ...style }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <span style={kicker}>Sua fase de carreira</span>
+        <span style={{ ...kicker, color: `rgb(${accent})` }}>Sua fase de carreira</span>
         <button onClick={() => navigate(`/artists/${artist.id}/diagnostico`)} style={linkBtn}>
           Ver completo <FiArrowRight size={14} />
         </button>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '10px 0 12px', flexWrap: 'wrap' }}>
-        <RealBadge tier={tierForPattern(ri.pattern)} label={PROFILE_ABBR[ri.profile.name] || ri.profile.name.slice(0, 2)} size={56} />
+        <RealBadge tier={tier} label={PROFILE_ABBR[ri.profile.name] || ri.profile.name.slice(0, 2)} size={56} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <h2 style={{ ...titleStyle, margin: 0 }}>{ri.profile.name}</h2>
           <span style={{ fontSize: 13, color: '#8a8a92' }}>Seu perfil entre os 16</span>
@@ -114,7 +123,7 @@ export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?
           const high = ri.pattern[d.k];
           return (
             <div key={d.k} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: 'italic', fontWeight: 700, fontSize: 26, lineHeight: 1, letterSpacing: '0.01em', color: high ? '#af2896' : '#71717a' }}>{d.letter}</span>
+              <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: 'italic', fontWeight: 700, fontSize: 26, lineHeight: 1, letterSpacing: '0.01em', color: high ? `rgb(${accent})` : '#71717a' }}>{d.letter}</span>
               <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: high ? '#cfcfd4' : '#8a8a92' }}>{high ? 'Alto' : 'Baixo'}</span>
             </div>
           );
