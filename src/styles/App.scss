@@ -1181,6 +1181,26 @@ a {
   }
 }
 
+// Aura pulsante do avatar da Nyta (vida de IA). Sempre ativa, sutil; mais rápida quando "pensando".
+.nyta-avatar--glow {
+  position: relative;
+  animation: nytaAura 3.2s ease-in-out infinite;
+}
+.nyta-avatar--glow.nyta-avatar--thinking {
+  animation-duration: 1.1s;
+}
+@keyframes nytaAura {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(175, 40, 150, 0.35), 0 0 8px 1px rgba(124, 92, 255, 0.28);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(175, 40, 150, 0), 0 0 16px 4px rgba(124, 92, 255, 0.55);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nyta-avatar--glow { animation: none; box-shadow: 0 0 10px 2px rgba(124, 92, 255, 0.35); }
+}
+
 // Avatar da Nyta "processando": as 5 frequências animam como equalizador (sem hover).
 .nyta-avatar--thinking .maestra-logo-live g line {
   animation: maestraEq 0.8s ease-in-out infinite;

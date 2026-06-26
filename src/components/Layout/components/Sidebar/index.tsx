@@ -11,8 +11,8 @@ import {
   AgendaIcon,
   EquipeIcon,
   ArtistasIcon,
-  nytaAvatar,
 } from '../../../Icons/system';
+import { NytaAvatar } from '../../../../pages/Wizard/chat/nytaPersona';
 
 import { useAppSelector } from '../../../../store/store';
 import { useArtistCapabilities } from '../../../../hooks/useArtistCapabilities';
@@ -224,7 +224,7 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
             ? <div style={{ color: '#6f6f78', fontSize: 11, padding: '10px 12px 4px', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('Assistant', { defaultValue: 'Assistente' })}</div>
             : <div style={{ height: 1, background: '#282828', margin: '6px 8px' }} />
           }
-          <NavItem icon={<img src={nytaAvatar} alt="Nyta" style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover' }} />} label={t('Nyta AI', { defaultValue: 'Nyta IA' })} collapsed={collapsed} onClick={openNyta} />
+          <NavItem icon={<NytaAvatar size={26} />} label={t('Nyta AI', { defaultValue: 'Nyta IA' })} collapsed={collapsed} onClick={openNyta} />
         </>
       ) : (
         <>
