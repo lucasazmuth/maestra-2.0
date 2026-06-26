@@ -16,6 +16,7 @@ const ColorThief = ColorThiefRaw as unknown as {
 export const ArtistHero: FC<{ artist: Artist }> = ({ artist }) => {
   const [heroColor, setHeroColor] = useState<string | null>(null);
   const sp = artist.content?.spotifyProfile;
+  const realPhase = artist.content?.realIndex?.profile?.name;
 
   return (
     <div
@@ -51,7 +52,7 @@ export const ArtistHero: FC<{ artist: Artist }> = ({ artist }) => {
         <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 40, color: '#fff', margin: '4px 0 8px' }}>
           {artist.name}
         </h1>
-        <div style={{ display: 'flex', gap: 16, color: '#b3b3b3', fontSize: 14, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: '#b3b3b3', fontSize: 14, flexWrap: 'wrap' }}>
           {sp ? (
             <>
               {sp.followers != null && <span>{sp.followers.toLocaleString('pt-BR')} seguidores</span>}
@@ -60,6 +61,27 @@ export const ArtistHero: FC<{ artist: Artist }> = ({ artist }) => {
             </>
           ) : (
             <span>Carregando…</span>
+          )}
+          {/* Fase do diagnóstico REAL (um dos 16 perfis), quando o artista já tem diagnóstico. */}
+          {realPhase && (
+            <span
+              title="Fase de carreira pelo diagnóstico REAL"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '3px 12px',
+                borderRadius: 9999,
+                background: 'rgba(175, 40, 150, 0.18)',
+                border: '1px solid rgba(210, 100, 187, 0.55)',
+                color: '#e7a6d8',
+                fontWeight: 700,
+                fontSize: 13,
+              }}
+            >
+              <span style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: 'italic', color: '#d264bb' }}>REAL</span>
+              {realPhase}
+            </span>
           )}
         </div>
       </div>
