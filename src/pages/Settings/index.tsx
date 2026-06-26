@@ -1,7 +1,8 @@
 import { ChangeEvent, FC, ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, Popconfirm, message } from 'antd';
-import { FiFileText, FiShield, FiLifeBuoy, FiExternalLink, FiChevronRight, FiEdit2, FiCamera, FiClock } from 'react-icons/fi';
+import { FiFileText, FiShield, FiLifeBuoy, FiExternalLink, FiChevronRight, FiCamera, FiClock } from 'react-icons/fi';
+import { EditIcon } from '../../components/Icons/system';
 
 import { supabase } from '../../lib/supabase';
 import { useAppSelector } from '../../store/store';
@@ -91,7 +92,7 @@ const Settings: FC = () => {
               onClick={startEditing}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', borderRadius: 9999, padding: '7px 16px', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
             >
-              <FiEdit2 size={14} /> Editar
+              <EditIcon size={16} /> Editar
             </button>
           )}
         </div>

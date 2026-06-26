@@ -22,6 +22,9 @@ import { ReactComponent as AddSvg } from '../../assets/icons/add.svg';
 import { ReactComponent as MoreSvg } from '../../assets/icons/more.svg';
 import { ReactComponent as UploadSvg } from '../../assets/icons/upload.svg';
 import { ReactComponent as DownloadSvg } from '../../assets/icons/download.svg';
+import { ReactComponent as EditSvg } from '../../assets/icons/edit.svg';
+import { ReactComponent as AgendaSvg } from '../../assets/icons/agenda.svg';
+import { ReactComponent as FiltrosSvg } from '../../assets/icons/filtros.svg';
 
 // Avatar colorido da Nyta (imagem, não traço): importado como URL.
 export { default as nytaAvatar } from '../../assets/icons/nyta-avatar.svg';
@@ -48,7 +51,10 @@ export const BuscarIcon = make(BuscarSvg);
 export const FiltroIcon = make(FiltroSvg);
 export const ListaIcon = make(ListaSvg, '4 4 33 33');
 export const ReordenarIcon = make(ReordenarSvg, '6 10 30 19');
-export const AddIcon = make(AddSvg, '4 4 33 33');
+export const AddIcon = make(AddSvg, '10 10 21 21');
 export const MoreIcon = make(MoreSvg, '8 16 25 9');
 export const UploadIcon = make(UploadSvg);
 export const DownloadIcon = make(DownloadSvg);
+export const EditIcon = make(EditSvg, '9 7 24 24');
+export const AgendaIcon = make(AgendaSvg);
+export const FiltrosIcon = make(FiltrosSvg, '7 9 28 28');

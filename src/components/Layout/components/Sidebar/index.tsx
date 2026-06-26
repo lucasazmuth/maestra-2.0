@@ -1,13 +1,14 @@
 import { FC, Fragment, memo, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiCalendar, FiPlus, FiLock, FiDatabase, FiChevronLeft } from 'react-icons/fi';
+import { FiPlus, FiLock, FiDatabase, FiChevronLeft } from 'react-icons/fi';
 import {
   DashboardIcon,
   DiagnosticoIcon,
   PlanejamentoIcon,
   PlanoAcaoIcon,
   CatalogoIcon,
+  AgendaIcon,
   EquipeIcon,
   ArtistasIcon,
   nytaAvatar,
@@ -119,7 +120,7 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
       label: t('Operations', { defaultValue: 'Operação' }),
       items: [
         { icon: <CatalogoIcon />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog', locked: false },
-        { icon: <FiCalendar />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda', locked: false },
+        { icon: <AgendaIcon />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda', locked: false },
         { icon: <EquipeIcon />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team', locked: !viewPlanning },
       ],
     },

@@ -1,5 +1,3 @@
-<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="20" height="20" rx="3" transform="matrix(1 0 0 -1 9.82617 31.3298)" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-<path d="M11.8262 11.3298H27.8262C27.8262 9.67298 26.483 8.32983 24.8262 8.32983H14.8262C13.1693 8.32983 11.8262 9.67298 11.8262 11.3298Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-<path d="M15.8262 21.3298H19.8262M23.8262 21.3298H19.8262M19.8262 21.3298V17.3298M19.8262 21.3298V25.3298" stroke="currentColor" stroke-width="2.02054" stroke-linecap="round" stroke-linejoin="round"/>
+<svg viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M20.2055 13.0619V20.2056M20.2055 27.3493V20.2056M20.2055 20.2056L13.0618 20.2056M20.2055 20.2056H27.3491" stroke="currentColor" stroke-width="2.02054" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

@@ -1,5 +1,6 @@
 import { Dispatch, FC, ReactNode, SetStateAction, useState } from 'react';
-import { FiCheck, FiEdit2, FiX, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiCheck, FiX, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { EditIcon } from '../../components/Icons/system';
 import type { ActionTask, ArtistContent, ArtistReferences, Strategy } from '../../interfaces/maestra';
 import TaskComposer, { SuggTask } from './TaskComposer';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
@@ -23,7 +24,7 @@ const EditableText: FC<{ value: string; placeholder: string; canEdit: boolean; o
   return (
     <div className="ap-adv-editable">
       <p>{value || <span className="ap-adv-muted">{placeholder}</span>}</p>
-      {canEdit && <button className="ap-adv-pencil" onClick={() => { setDraft(value); setEditing(true); }} aria-label="Editar"><FiEdit2 size={13} /></button>}
+      {canEdit && <button className="ap-adv-pencil" onClick={() => { setDraft(value); setEditing(true); }} aria-label="Editar"><EditIcon size={15} /></button>}
     </div>
   );
 };
@@ -40,7 +41,7 @@ const EditableList: FC<{ items: string[]; chips?: boolean; canEdit: boolean; onS
         ) : (
           <ol className="ap-adv-objs">{items.map((o, i) => <li key={i}><span className="ap-adv-objnum">{String(i + 1).padStart(2, '0')}</span><span>{o}</span></li>)}</ol>
         )}
-        {canEdit && <button className="ap-adv-pencil" onClick={() => { setDraft(items); setEditing(true); }} aria-label="Editar"><FiEdit2 size={13} /></button>}
+        {canEdit && <button className="ap-adv-pencil" onClick={() => { setDraft(items); setEditing(true); }} aria-label="Editar"><EditIcon size={15} /></button>}
       </div>
     );
   }
@@ -189,7 +190,7 @@ const ReferenceMap: FC<{ references?: ArtistReferences; canEdit?: boolean; onSav
   return (
     <div style={{ position: 'relative' }}>
       {canEdit && (
-        <button className="ap-adv-pencil" onClick={() => { setDraft(refs); setEditing(true); }} aria-label="Editar referências" style={{ position: 'absolute', top: -2, right: -2, zIndex: 2 }}><FiEdit2 size={13} /></button>
+        <button className="ap-adv-pencil" onClick={() => { setDraft(refs); setEditing(true); }} aria-label="Editar referências" style={{ position: 'absolute', top: -2, right: -2, zIndex: 2 }}><EditIcon size={15} /></button>
       )}
       <div className="ap-adv-refmap">
         {REF_QUADRANTS.map((q) => {

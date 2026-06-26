@@ -1,7 +1,7 @@
 import { FC, ReactNode, useEffect, useState } from 'react';
 import { message, Popconfirm } from 'antd';
-import { FiRefreshCw, FiEdit2, FiTrash2, FiLock } from 'react-icons/fi';
-import { AddIcon } from '../../components/Icons/system';
+import { FiRefreshCw, FiTrash2, FiLock } from 'react-icons/fi';
+import { AddIcon, EditIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
 
@@ -444,7 +444,7 @@ const Catalog: FC = () => {
                         }}
                         style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer' }}
                       >
-                        <FiEdit2 />
+                        <EditIcon size={18} />
                       </button>
                       <Popconfirm title='Excluir faixa?' onConfirm={() => onDelete(it.id)} okText='Sim' cancelText='Não'>
                         <button
