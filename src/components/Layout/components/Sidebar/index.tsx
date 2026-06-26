@@ -1,21 +1,24 @@
-import { FC, memo, useEffect, useState } from 'react';
+import { FC, Fragment, memo, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   FiGrid,
   FiCalendar,
   FiMusic,
-  FiUser,
   FiUsers,
   FiCheckSquare,
   FiChevronLeft,
   FiPlus,
   FiLock,
   FiDatabase,
+  FiActivity,
+  FiTarget,
+  FiMessageCircle,
 } from 'react-icons/fi';
 
 import { useAppSelector } from '../../../../store/store';
 import { useArtistCapabilities } from '../../../../hooks/useArtistCapabilities';
+import { useNytaModal } from '../../../../hooks/useNytaModal';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
 import { supabase } from '../../../../lib/supabase';
 
@@ -73,6 +76,7 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
   const currentArtist = artists.find((a) => a.id === artistId);
   // Plano de Ação e Equipe ficam travados até o perfil ser pago (cobrança única R$199,90).
   const { viewPlanning } = useArtistCapabilities(currentArtist);
+  const { open: openNyta } = useNytaModal(); // item "Nyta IA" abre o modal do assistente
 
   // Check admin status
   const [isAdmin, setIsAdmin] = useState(false);
@@ -98,21 +102,30 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
     return location.pathname.startsWith(`/artists/${artistId}/${suffix}`);
   };
 
-  // O wizard ("Planejamento Estratégico") e o antigo "Perfil" não são itens de navbar:
-  // o wizard é acessado via criação de artista e "Avançar de fase"; o Perfil virou a home (Dashboard).
-  const modules = [
-    { icon: <FiGrid />, label: t('Dashboard', { defaultValue: 'Dashboard' }), suffix: '', locked: false },
-    { icon: <FiUser />, label: t('Profile', { defaultValue: 'Perfil' }), suffix: 'perfil', locked: !viewPlanning },
+  // Os 7 produtos agrupados por propósito (mapa do sistema): CRESCIMENTO (o ciclo REAL →
+  // Planejamento → Plano de Ação) e OPERAÇÃO (dia a dia). "Planejamento" é o antigo "Perfil"
+  // (a rota /perfil é o dossiê do plano). Nyta é renderizada à parte (abre o modal).
+  const groups: { label: string | null; items: { icon: React.ReactNode; label: string; suffix: string; locked: boolean }[] }[] = [
     {
-      icon: <FiCheckSquare />,
-      label: t('Action Plan', { defaultValue: 'Plano de Ação' }),
-      suffix: 'action-plan',
-      locked: !viewPlanning,
+      label: null,
+      items: [{ icon: <FiGrid />, label: t('Dashboard', { defaultValue: 'Dashboard' }), suffix: '', locked: false }],
     },
-    { icon: <FiMusic />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog', locked: false },
-    { icon: <FiCalendar />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda', locked: false },
-    // Equipe fica só no menu web/tablet (sidebar); no mobile o acesso é pelo Acesso rápido do Dashboard.
-    { icon: <FiUsers />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team', locked: !viewPlanning },
+    {
+      label: t('Growth', { defaultValue: 'Crescimento' }),
+      items: [
+        { icon: <FiActivity />, label: t('REAL Diagnostic', { defaultValue: 'Diagnóstico REAL' }), suffix: 'diagnostico', locked: false },
+        { icon: <FiTarget />, label: t('Planning', { defaultValue: 'Planejamento' }), suffix: 'perfil', locked: !viewPlanning },
+        { icon: <FiCheckSquare />, label: t('Action Plan', { defaultValue: 'Plano de Ação' }), suffix: 'action-plan', locked: !viewPlanning },
+      ],
+    },
+    {
+      label: t('Operations', { defaultValue: 'Operação' }),
+      items: [
+        { icon: <FiMusic />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog', locked: false },
+        { icon: <FiCalendar />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda', locked: false },
+        { icon: <FiUsers />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team', locked: !viewPlanning },
+      ],
+    },
   ];
 
   return (
@@ -189,17 +202,31 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
             </div>
           )}
           <div style={{ height: 1, background: '#282828', margin: '4px 8px 8px' }} />
-          {modules.map((m) => (
-            <NavItem
-              key={m.suffix || 'dashboard'}
-              icon={m.icon}
-              label={m.label}
-              collapsed={collapsed}
-              active={isActive(m.suffix)}
-              locked={m.locked}
-              onClick={() => navigate(`/artists/${artistId}${m.suffix ? `/${m.suffix}` : ''}`)}
-            />
+          {groups.map((g, gi) => (
+            <Fragment key={g.label || `g${gi}`}>
+              {g.label && (collapsed
+                ? gi > 0 && <div style={{ height: 1, background: '#282828', margin: '6px 8px' }} />
+                : <div style={{ color: '#6f6f78', fontSize: 11, padding: '10px 12px 4px', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{g.label}</div>
+              )}
+              {g.items.map((m) => (
+                <NavItem
+                  key={m.suffix || 'dashboard'}
+                  icon={m.icon}
+                  label={m.label}
+                  collapsed={collapsed}
+                  active={isActive(m.suffix)}
+                  locked={m.locked}
+                  onClick={() => navigate(`/artists/${artistId}${m.suffix ? `/${m.suffix}` : ''}`)}
+                />
+              ))}
+            </Fragment>
           ))}
+          {/* Assistente — Nyta abre o modal (mesmo do botão flutuante do header) */}
+          {!collapsed
+            ? <div style={{ color: '#6f6f78', fontSize: 11, padding: '10px 12px 4px', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('Assistant', { defaultValue: 'Assistente' })}</div>
+            : <div style={{ height: 1, background: '#282828', margin: '6px 8px' }} />
+          }
+          <NavItem icon={<FiMessageCircle />} label={t('Nyta AI', { defaultValue: 'Nyta IA' })} collapsed={collapsed} onClick={openNyta} />
         </>
       ) : (
         <>

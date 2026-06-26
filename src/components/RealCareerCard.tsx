@@ -4,6 +4,7 @@ import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 
 import type { Artist } from '../interfaces/maestra';
 import { RealBadge, PROFILE_ABBR, tierForPattern, TIER_ACCENT } from './RealBadge';
+import { RealLevelLadder } from './RealLevelLadder';
 
 // Card unificado de "fase de carreira": o perfil REAL (1 dos 16) é a FASE do artista — sobe de
 // nível quando ele re-diagnostica — e logo abaixo a barra de progresso das tarefas do plano.
@@ -128,6 +129,17 @@ export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?
             </div>
           );
         })}
+      </div>
+
+      {/* Escada de níveis (fase atual + próximo + o que falta) — a gamificação do REAL. */}
+      <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid rgba(${accent},0.18)` }}>
+        <RealLevelLadder ri={ri} />
+        <button
+          onClick={() => navigate(`/artists/${artist.id}/action-plan`)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 12, background: 'transparent', border: `1px solid rgba(${accent},0.5)`, color: `rgb(${accent})`, padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+        >
+          Como subir? Execute seu Plano de Ação <FiArrowRight size={14} />
+        </button>
       </div>
 
       {showProgress && <TaskProgress counts={taskCounts} />}

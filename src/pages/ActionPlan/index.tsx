@@ -2,7 +2,7 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message, Popover } from 'antd';
 import { createPortal } from 'react-dom';
-import { FiArchive, FiCheck, FiChevronDown, FiHelpCircle, FiPlus, FiX } from 'react-icons/fi';
+import { FiArchive, FiCheck, FiChevronDown, FiHelpCircle, FiPlus, FiRefreshCw, FiX } from 'react-icons/fi';
 
 import { useNytaModal } from '../../hooks/useNytaModal';
 import { buildActionPlan } from '../Wizard/method/engines';
@@ -253,6 +253,19 @@ const ActionPlan: FC = () => {
         <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#af2896' }}>Progresso do plano</span>
         <h2 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 24, color: '#fff', margin: '6px 0 0', lineHeight: 1.1 }}>Suas tarefas</h2>
         <TaskProgress counts={taskCounts} />
+
+        {/* Loop com o REAL: executar tarefas → crescer → refazer o diagnóstico → subir de fase. */}
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ color: '#b3b3b3', fontSize: 13.5, lineHeight: 1.5 }}>
+            Concluir tarefas faz sua carreira evoluir. Quando avançar, <b style={{ color: '#fff' }}>refaça o REAL</b> pra ver sua fase subir.
+          </span>
+          <button
+            onClick={() => navigate(`/artists/${artist.id}/diagnostico/refazer`)}
+            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(175,40,150,0.5)', color: '#d264bb', padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+          >
+            <FiRefreshCw size={14} /> Refazer diagnóstico
+          </button>
+        </div>
       </div>
 
       {/* ESTRATÉGIAS — em ordem de prioridade (a "etapa atual" do artista) */}
