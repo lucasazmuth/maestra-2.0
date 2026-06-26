@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import { DatePicker, Input, Select, message } from 'antd';
 import dayjs from 'dayjs';
-import { FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
+import { FiAlertCircle, FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
 
 import { listGenres } from '../../../services/db/genres';
 import { searchCities } from '../../../services/db/cities';
@@ -243,14 +243,19 @@ export const VisionOndeChoice: FC<{ onConfirm: (value: string) => void }> = ({ o
 export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> = ({ onConfirm }) => {
   const [sel, setSel] = useState<string[]>([]);
   const [own, setOwn] = useState('');
+  const [warn, setWarn] = useState(false); // aviso inline ao tentar passar do limite
   const MAX = 2;
+  // O aviso some sozinho depois de alguns segundos (mas continua aparecendo se insistir).
+  useEffect(() => {
+    if (!warn) return;
+    const t = setTimeout(() => setWarn(false), 4000);
+    return () => clearTimeout(t);
+  }, [warn]);
+  const hitLimit = () => { setWarn(true); message.warning('Você pode escolher até 2 opções. Desmarque uma para trocar.'); };
   const toggle = (label: string) =>
     setSel((s) => {
-      if (s.includes(label)) return s.filter((x) => x !== label);
-      if (s.length >= MAX) {
-        message.info('Escolha no máximo 2.');
-        return s;
-      }
+      if (s.includes(label)) { setWarn(false); return s.filter((x) => x !== label); }
+      if (s.length >= MAX) { hitLimit(); return s; }
       return [...s, label];
     });
   const addOwn = () => {
@@ -258,17 +263,16 @@ export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> 
     if (!t) return;
     setSel((s) => {
       if (s.some((x) => x.toLowerCase() === t.toLowerCase())) return s;
-      if (s.length >= MAX) {
-        message.info('Você já tem 2 marcados, desmarque um para incluir o seu.');
-        return s;
-      }
+      if (s.length >= MAX) { hitLimit(); return s; }
       return [...s, t];
     });
     setOwn('');
   };
   const custom = sel.filter((s) => !VISION_PORQUEM_OPTIONS.some((o) => o.label === s));
+  const atMax = sel.length >= MAX;
   return (
     <div className='nyta-card'>
+      <div style={{ color: '#7d7d7d', fontSize: 12, marginBottom: 8 }}>Escolha até 2 opções (as que mais traduzem o que você sente).</div>
       <div className='wiz-option-grid'>
         {VISION_PORQUEM_OPTIONS.map((o, i) => {
           const active = sel.includes(o.label);
@@ -303,8 +307,14 @@ export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> 
           <FiPlus />
         </button>
       </div>
+      {warn && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, padding: '10px 12px', borderRadius: 10, background: 'rgba(245, 158, 11, .12)', border: '1px solid rgba(245, 158, 11, .35)', color: '#f59e0b', fontSize: 13 }}>
+          <FiAlertCircle size={16} style={{ flexShrink: 0 }} />
+          Você pode escolher até 2 opções. Desmarque uma para trocar.
+        </div>
+      )}
       <div className='nyta-card-actions'>
-        <span style={{ color: '#b3b3b3', fontSize: 13, alignSelf: 'center' }}>{sel.length}/{MAX}</span>
+        <span style={{ color: atMax ? '#f59e0b' : '#b3b3b3', fontSize: 13, fontWeight: atMax ? 700 : 400, alignSelf: 'center' }}>{sel.length}/{MAX}</span>
         <button
           style={{ ...primaryBtn, marginLeft: 'auto', opacity: sel.length ? 1 : 0.5 }}
           disabled={!sel.length}
