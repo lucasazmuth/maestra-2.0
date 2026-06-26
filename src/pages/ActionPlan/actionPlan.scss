@@ -829,7 +829,7 @@
 }
 
 /* Gráfico de prioridade das estratégias (barras horizontais, em ordem de ranking) */
-.ap-adv-rank { display: flex; flex-direction: column; gap: 10px; max-width: 720px; }
+.ap-adv-rank { display: flex; flex-direction: column; gap: 10px; }
 .ap-adv-rank-row { display: flex; align-items: center; gap: 12px; }
 .ap-adv-rank-num { color: #6f6f6f; font-size: 12px; font-weight: 800; min-width: 22px; font-variant-numeric: tabular-nums; }
 .ap-adv-rank-main { flex: 1; min-width: 0; }
