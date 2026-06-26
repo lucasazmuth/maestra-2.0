@@ -3,6 +3,7 @@ import ColorThiefRaw from 'colorthief';
 
 import { ARTISTS_DEFAULT_IMAGE } from '../constants/spotify';
 import type { Artist } from '../interfaces/maestra';
+import { RealBadge, PROFILE_ABBR, tierForPattern, TIER_ACCENT } from './RealBadge';
 
 // Cabeçalho do artista (foto + nome + stats do Spotify) com gradiente extraído da cor dominante
 // da foto (estilo Spotify). Compartilhado entre o Dashboard e a página de Perfil.
@@ -16,7 +17,10 @@ const ColorThief = ColorThiefRaw as unknown as {
 export const ArtistHero: FC<{ artist: Artist }> = ({ artist }) => {
   const [heroColor, setHeroColor] = useState<string | null>(null);
   const sp = artist.content?.spotifyProfile;
-  const realPhase = artist.content?.realIndex?.profile?.name;
+  const ri = artist.content?.realIndex;
+  const realPhase = ri?.profile?.name;
+  const tier = ri?.pattern ? tierForPattern(ri.pattern) : 'standard';
+  const accent = TIER_ACCENT[tier];
 
   return (
     <div
@@ -53,25 +57,25 @@ export const ArtistHero: FC<{ artist: Artist }> = ({ artist }) => {
           {artist.name}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: '#b3b3b3', fontSize: 14, flexWrap: 'wrap' }}>
-          {/* Fase do diagnóstico REAL (um dos 16 perfis), quando o artista já tem diagnóstico. */}
-          {realPhase && (
+          {/* Tag da fase REAL com a identidade nova: a placa (cor do tier) + nome do perfil. */}
+          {realPhase && ri?.pattern && (
             <span
               title="Fase de carreira pelo diagnóstico REAL"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '3px 12px',
+                gap: 8,
+                padding: '4px 14px 4px 4px',
                 borderRadius: 9999,
-                background: 'rgba(175, 40, 150, 0.18)',
-                border: '1px solid rgba(210, 100, 187, 0.55)',
-                color: '#e7a6d8',
-                fontWeight: 700,
-                fontSize: 13,
+                background: `rgba(${accent}, 0.14)`,
+                border: `1px solid rgba(${accent}, 0.5)`,
               }}
             >
-              <span style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: 'italic', color: '#d264bb' }}>REAL</span>
-              {realPhase}
+              <RealBadge tier={tier} label={PROFILE_ABBR[realPhase] || realPhase.slice(0, 2)} size={24} />
+              <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: 'italic', fontSize: 13, color: `rgb(${accent})` }}>REAL</span>
+                <span style={{ color: '#fff', fontWeight: 700, fontSize: 13.5 }}>{realPhase}</span>
+              </span>
             </span>
           )}
         </div>

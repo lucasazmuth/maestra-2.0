@@ -8,7 +8,7 @@ import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import type { RealIndex } from '../../interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
 import DiagnosticDoc from './DiagnosticDoc';
-import { RealBadge, tierForAltas } from '../../components/RealBadge';
+import { RealBadge, tierForAltas, tierForPattern, TIER_ACCENT, PROFILE_ABBR } from '../../components/RealBadge';
 import styles from './ArtistCreate.module.scss';
 
 export interface Chartmetric {
@@ -173,6 +173,9 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
   const riAny = realIndex as any;
   const isV2 = riAny.version === 2;
   const { profile, pattern } = realIndex;
+  // Acento da página segue a fase REAL (tier da placa) — coerente com a identidade de gamificação.
+  const realTier = tierForPattern(pattern);
+  const realAccent = TIER_ACCENT[realTier];
   const boletim: Record<'r' | 'e' | 'a' | 'l', number> | null = isV2 ? riAny.boletim : null;
   const earningsUnknown: boolean = isV2 ? false : riAny.earningsUnknown;
   const inputs = isV2 ? v2InputsView(riAny.inputs) : riAny.inputs;
@@ -282,7 +285,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
     row.num != null ? <CountUp value={row.num} /> : (row.value ?? '–');
 
   return (
-    <div className={styles.realWrap}>
+    <div className={styles.realWrap} style={{ ['--real-accent' as string]: realAccent } as React.CSSProperties}>
       {/* SEÇÃO 1 — Hero */}
       <div className={`${styles.realHero} ${styles.reveal}`} style={{ animationDelay: '0s' }}>
         <img className={styles.realHeroAvatar} src={artistImage || ARTISTS_DEFAULT_IMAGE} alt={name} />
@@ -308,8 +311,13 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
 
       {/* SEÇÃO 2 — O perfil REAL */}
       <div ref={profileRef} className={`${styles.realProfileCard} ${styles.reveal}`} style={{ animationDelay: '0.1s' }}>
-        <span className={styles.realProfileKicker}>Seu perfil de carreira</span>
-        <h3 className={`${styles.realProfileName} ${styles.stamp}`}>{profile.name}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
+          <RealBadge tier={realTier} label={PROFILE_ABBR[profile.name] || profile.name.slice(0, 2)} size={52} />
+          <div>
+            <span className={styles.realProfileKicker}>Seu perfil de carreira</span>
+            <h3 className={`${styles.realProfileName} ${styles.stamp}`} style={{ margin: 0 }}>{profile.name}</h3>
+          </div>
+        </div>
         <p className={styles.realProfileDesc}>{clean(profile.description)}</p>
         <div className={styles.realPattern}>
           <div className={styles.realPatternHead}>
