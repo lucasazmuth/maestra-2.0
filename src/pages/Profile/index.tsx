@@ -82,7 +82,7 @@ const Profile: FC = () => {
 
       {/* Loop do ciclo: executou o plano → refaz o REAL → sobe de fase. */}
       {artist.content?.realIndex?.profile && (
-        <RedoRealBanner onRedo={onRedo} locked={!isPro} marginTop={0} />
+        <RedoRealBanner onRedo={onRedo} locked={!isPro} marginTop={0} marginBottom={24} />
       )}
 
       {hasPlan ? (

@@ -76,7 +76,7 @@ const DiagnosticView: FC = () => {
           showPlanningCta={!artist?.content?.strategies?.length}
           hideHero
           // Banner do loop logo abaixo do card "Seu perfil de carreira".
-          belowProfile={<RedoRealBanner onRedo={onRedo} locked={!isPro} marginTop={18} />}
+          belowProfile={<RedoRealBanner onRedo={onRedo} locked={!isPro} marginTop={0} marginBottom={28} />}
         />
       ) : (
         <div style={{ background: '#181818', borderRadius: 12, padding: 32, textAlign: 'center', color: '#b3b3b3' }}>

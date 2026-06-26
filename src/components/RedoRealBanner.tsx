@@ -3,12 +3,12 @@ import { FiRotateCcw, FiRefreshCw, FiLock } from 'react-icons/fi';
 
 // Banner do loop de crescimento: "Executou o plano e cresceu? Refaça o REAL pra ver sua fase subir."
 // Reusado no Diagnóstico REAL e no Planejamento. `locked` mostra o cadeado (recurso PRO).
-export const RedoRealBanner: FC<{ onRedo: () => void; locked?: boolean; marginTop?: number }> = ({ onRedo, locked, marginTop = 16 }) => (
+export const RedoRealBanner: FC<{ onRedo: () => void; locked?: boolean; marginTop?: number; marginBottom?: number }> = ({ onRedo, locked, marginTop = 16, marginBottom = 0 }) => (
   <div
     data-noexport="1"
     style={{
       display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-      marginTop, padding: '14px 18px', borderRadius: 12,
+      marginTop, marginBottom, padding: '14px 18px', borderRadius: 12,
       background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.12)',
     }}
   >
