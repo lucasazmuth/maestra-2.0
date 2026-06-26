@@ -397,23 +397,11 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
 
   // ---- Texto livre do input -------------------------------------------------------------------
 
-  // Gate de qualidade (fail-open): valida a resposta digitada antes de guardar. Se a IA reprovar
-  // (lixo / não-resposta / fora do tema), a Nyta pede pra reescrever e o input fica aberto pra
-  // tentar de novo — sem travar (erro de rede/IA libera a resposta). Aprova respostas curtas válidas.
-  const validateThenStore = async (
-    question: string,
-    kind: string,
-    answer: string,
-    store: (text: string) => void
-  ) => {
+  // Texto aberto da visão/missão (oQueFalam, entrega, paraQuem): guarda direto o que o artista
+  // escreveu. (Antes havia um gate de IA que, na prática, reprovava respostas VÁLIDAS e re-perguntava
+  // algo que o artista já tinha respondido. A etapa de revisão da missão é a rede de segurança.)
+  const storeOpenAnswer = (answer: string, store: (text: string) => void) => {
     pushUser(answer);
-    setTyping(true);
-    const { ok, reask } = await wizardAi.validateAnswer(question, answer, kind);
-    setTyping(false);
-    if (!ok) {
-      say([reask || 'Hmm, não consegui aproveitar bem essa resposta. Pode tentar de novo, com um pouco mais de detalhe?']);
-      return;
-    }
     store(answer);
   };
 
@@ -441,15 +429,15 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       return;
     }
     if (stage === 'vision.oQueFalam') {
-      await validateThenStore('O que você quer que falem de você / como quer ser percebido (complete o "que…")', 'oQueFalam', text, (t) => patchVisionParts({ oQueFalam: t }));
+      storeOpenAnswer(text, (t) => patchVisionParts({ oQueFalam: t }));
       return;
     }
     if (stage === 'mission.entrega') {
-      await validateThenStore('O que a sua música entrega, oferece ou proporciona?', 'entrega', text, (t) => patchMissionParts({ entrega: t }));
+      storeOpenAnswer(text, (t) => patchMissionParts({ entrega: t }));
       return;
     }
     if (stage === 'mission.paraQuem') {
-      await validateThenStore('Para quem é essa entrega? Quem recebe isso?', 'paraQuem', text, (t) => patchMissionParts({ paraQuem: t }));
+      storeOpenAnswer(text, (t) => patchMissionParts({ paraQuem: t }));
       return;
     }
 
