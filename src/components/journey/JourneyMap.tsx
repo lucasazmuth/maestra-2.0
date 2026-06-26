@@ -5,6 +5,7 @@ import { FiArrowRight, FiRefreshCw, FiCheckCircle, FiRotateCcw } from 'react-ico
 import type { Artist } from '../../interfaces/maestra';
 import { RealBadge, PROFILE_ABBR, tierForPattern, TIER_ACCENT } from '../RealBadge';
 import { RealLevelLadder } from '../RealLevelLadder';
+import './journey.scss';
 
 // Hub "Jornada Maestra" (home do Dashboard): o ciclo de crescimento como 3 etapas conectadas —
 // REAL (onde estou) → Planejamento (para onde vou) → Plano de Ação (como chego) → ↺ re-diagnóstico.
@@ -16,9 +17,8 @@ const sub: React.CSSProperties = { color: '#8a8a92', fontSize: 12.5, margin: '2p
 
 const StageCard: FC<{ accent: string; children: ReactNode }> = ({ accent, children }) => (
   <div
+    className="journey-stage"
     style={{
-      flex: '1 1 240px',
-      minWidth: 240,
       position: 'relative',
       background: `radial-gradient(120% 130% at 0% 0%, rgba(${accent},0.10), #161616 62%)`,
       border: `1px solid rgba(${accent},0.28)`,
@@ -56,9 +56,9 @@ const StageCta: FC<{ accent: string; label: string; onClick: () => void; ghost?:
   </button>
 );
 
-// Seta entre etapas (some/vira ↓ quando empilha — controlado por CSS via classe).
+// Seta entre etapas (vira ↓ quando empilha no mobile — controlado por journey.scss).
 const Connector: FC = () => (
-  <div className="journey-connector" aria-hidden style={{ display: 'flex', alignItems: 'center', color: '#5a5a63', flexShrink: 0 }}>
+  <div className="journey-connector" aria-hidden>
     <FiArrowRight size={22} />
   </div>
 );
@@ -88,7 +88,7 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
         <span style={{ color: '#8a8a92', fontSize: 13 }}>o ciclo que faz sua carreira evoluir</span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'stretch', gap: 10, flexWrap: 'wrap' }}>
+      <div className="journey-row">
         {/* 1 — REAL · Diagnóstico (onde estou) */}
         <StageCard accent={realAccent}>
           <div>

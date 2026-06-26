@@ -1,0 +1,42 @@
+// Layout responsivo do hub "Sua jornada". Largo: 3 etapas lado a lado com seta "→".
+// Estreito (≤ 900px): empilha na vertical e a seta gira pra "↓" (fluxo claro no mobile).
+
+.journey-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.journey-stage {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.journey-connector {
+  display: flex;
+  align-items: center;
+  color: #5a5a63;
+  flex-shrink: 0;
+
+  svg {
+    transition: transform 0.2s ease;
+  }
+}
+
+@media (max-width: 900px) {
+  .journey-row {
+    flex-direction: column;
+  }
+
+  .journey-stage {
+    width: 100%;
+  }
+
+  .journey-connector {
+    align-self: center;
+
+    svg {
+      transform: rotate(90deg);
+    }
+  }
+}
