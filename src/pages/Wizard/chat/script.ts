@@ -1,7 +1,7 @@
 import { SAY } from './nytaPersona';
 import { getPhaseInfo } from '../../../constants/maestra';
 import { flex } from './wizardData';
-import type { ArtistContent, ArtistIdentity, RecognitionTag, VisionParts } from '../../../interfaces/maestra';
+import type { ArtistContent, ArtistIdentity, ArtistStage, RecognitionTag, VisionParts } from '../../../interfaces/maestra';
 
 // Rótulo legível das fontes de reconhecimento (Visão Q2) para o reflexo da Q8.
 const FONTE_LABEL: Record<RecognitionTag, string> = {
@@ -139,6 +139,21 @@ export interface Beat {
   acceptsText?: boolean;
   // dados completos mas step atrasado (recuperação de queda) → orquestrador persiste
   autoPersistStep?: number;
+  // valor derivado automaticamente (ex.: estágio vindo do diagnóstico REAL) → orquestrador persiste
+  // SEM avançar de step, e o beat é re-resolvido pulando a pergunta correspondente.
+  autoPersistPatch?: Partial<ArtistContent>;
+}
+
+// Deriva o "momento da carreira" a partir do diagnóstico REAL (nº de dimensões R·E·A·L altas) —
+// evita perguntar de novo algo que o diagnóstico já respondeu. 0 altas = começando … 4 = consolidada.
+export function stageFromReal(ri: ArtistContent['realIndex']): ArtistStage | null {
+  const p = ri?.pattern;
+  if (!p) return null;
+  const highs = [p.r, p.e, p.a, p.l].filter(Boolean).length;
+  if (highs <= 0) return 'comecando';
+  if (highs === 1) return 'lancando';
+  if (highs === 2) return 'vivendo';
+  return 'consolidada'; // 3–4 altas
 }
 
 
@@ -159,8 +174,13 @@ export function nextBeat(draft: ArtistContent): Beat {
       const say = cmGenres.length ? SAY.askGenreConfirm(cmGenres.join(', ')) : SAY.askGenreMusical();
       return { stage: 'identity.genre', say, widget: { kind: 'genre' } };
     }
-    if (!id.stage)
+    if (!id.stage) {
+      // Se o artista já fez o diagnóstico REAL, o "momento da carreira" vem dele — não perguntamos.
+      const derived = stageFromReal(draft.realIndex);
+      if (derived)
+        return { stage: 'identity.stage', say: [], widget: null, autoPersistPatch: { identity: { ...id, stage: derived } } };
       return { stage: 'identity.stage', say: SAY.askStage(), widget: { kind: 'stage' } };
+    }
     // Mapa de referências — uma frente por turno (Metodologia v2, Q5).
     const refs = id.references || {};
     if (refs.artisticas == null)

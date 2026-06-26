@@ -165,6 +165,13 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       return;
     }
 
+    // Valor derivado (ex.: estágio a partir do REAL): persiste sem avançar step e re-resolve o beat,
+    // pulando a pergunta. (Sem widget/say — invisível pro usuário.)
+    if (beat.autoPersistPatch) {
+      persist(beat.autoPersistPatch);
+      return;
+    }
+
     if (beat.stage !== stageRef.current) {
       stageRef.current = beat.stage;
       setWidget(null);
