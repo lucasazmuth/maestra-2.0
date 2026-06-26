@@ -432,8 +432,24 @@ export const ReferenceHorizons: FC<{
     ns.forEach((p) => { if (!merged.some((x) => x.toLowerCase() === p.toLowerCase())) merged.push(p); });
     return { ...base, [field.key]: merged };
   };
-  const addOwn = () => { if (!own.trim()) return; setSel((s) => mergeOwn(s)); setOwn(''); };
-  // O que estiver digitado também conta ao avançar (sem precisar clicar em Adicionar antes).
+  const addNames = (names: string[]) =>
+    setSel((s) => {
+      const cur = s[field.key] || [];
+      const merged = [...cur];
+      names.forEach((p) => { if (p && !merged.some((x) => x.toLowerCase() === p.toLowerCase())) merged.push(p); });
+      return { ...s, [field.key]: merged };
+    });
+  // Sem botão "+": o campo é a única forma de adicionar. Enter adiciona o que está escrito; digitar
+  // vírgula também (o trecho após a última vírgula continua no campo).
+  const addOwn = () => { if (!own.trim()) return; addNames(parseNames(own)); setOwn(''); };
+  const onInputChange = (raw: string) => {
+    if (!raw.includes(',')) { setOwn(raw); return; }
+    const parts = raw.split(',');
+    const trailing = parts.pop() ?? '';
+    addNames(parts.map((x) => x.trim()).filter(Boolean));
+    setOwn(trailing);
+  };
+  // O que estiver digitado também conta ao avançar (sem precisar adicionar antes).
   const canNext = chosen.length > 0 || !!own.trim();
   const next = () => {
     if (!canNext) return;
@@ -459,9 +475,9 @@ export const ReferenceHorizons: FC<{
 
       {/* Só o campo de digitar. O artista escreve os nomes (vírgula separa vários); cada um vira uma
           pill removível. (Removidas as sugestões do Spotify — vinham internacionais/irrelevantes.) */}
-      <div style={{ color: '#7d7d7d', fontSize: 12, marginBottom: 8 }}>Escreva os nomes que você quer (separe por vírgula).</div>
+      <div style={{ color: '#7d7d7d', fontSize: 12, marginBottom: 8 }}>Digite um nome e tecle Enter para adicionar. Toque numa pill pra remover.</div>
       {customPills.length > 0 && (
-        <div className='wiz-option-grid'>
+        <div className='wiz-option-grid' style={{ marginBottom: 4 }}>
           {customPills.map((c) => (
             <button key={c} className='wiz-option-pill wiz-option-pill--selected' onClick={() => toggle(c)} title='Toque para remover'>
               <span className='wiz-option-check'><FiCheck size={14} /></span>
@@ -470,10 +486,13 @@ export const ReferenceHorizons: FC<{
           ))}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-        <Input placeholder='Escreva o seu artista…' value={own} onChange={(e) => setOwn(e.target.value)} onPressEnter={addOwn} />
-        <button style={{ ...ghostBtn, padding: '8px 14px' }} onClick={addOwn}><FiPlus /></button>
-      </div>
+      <Input
+        style={{ marginTop: 8 }}
+        placeholder='Digite um nome e tecle Enter…'
+        value={own}
+        onChange={(e) => onInputChange(e.target.value)}
+        onPressEnter={addOwn}
+      />
 
       <div className='nyta-card-actions'>
         {step > 0 && (
