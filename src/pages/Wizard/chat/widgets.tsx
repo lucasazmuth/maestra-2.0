@@ -1,7 +1,7 @@
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
-import { App, DatePicker, Input, Select, message } from 'antd';
+import { App, DatePicker, Input, Select } from 'antd';
 import dayjs from 'dayjs';
 import { FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
 
@@ -244,7 +244,6 @@ export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> 
   // contexto pra o toast realmente aparecer — mesmo padrão do bloqueio de criar perfil.
   const { message: toast } = App.useApp();
   const [sel, setSel] = useState<string[]>([]);
-  const [own, setOwn] = useState('');
   const MAX = 2;
   // Ao tentar passar de 2, mostra um toast. Checa FORA do updater (sem efeito colateral no reducer).
   // `key` fixa evita empilhar vários toasts iguais em cliques repetidos (atualiza o mesmo).
@@ -253,13 +252,10 @@ export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> 
     if (!sel.includes(label) && sel.length >= MAX) { warnLimit(); return; }
     setSel((s) => (s.includes(label) ? s.filter((x) => x !== label) : [...s, label]));
   };
-  const addOwn = () => {
-    const t = own.trim();
-    if (!t) return;
-    if (sel.some((x) => x.toLowerCase() === t.toLowerCase())) { setOwn(''); return; }
+  const addOwn = (t: string) => {
+    if (sel.some((x) => x.toLowerCase() === t.toLowerCase())) return;
     if (sel.length >= MAX) { warnLimit(); return; }
     setSel((s) => [...s, t]);
-    setOwn('');
   };
   const custom = sel.filter((s) => !VISION_PORQUEM_OPTIONS.some((o) => o.label === s));
   const atMax = sel.length >= MAX;
@@ -294,12 +290,7 @@ export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> 
           </button>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-        <Input placeholder='Escrever do meu jeito…' value={own} onChange={(e) => setOwn(e.target.value)} onPressEnter={addOwn} />
-        <button style={{ ...ghostBtn, padding: '8px 14px' }} onClick={addOwn}>
-          <FiPlus />
-        </button>
-      </div>
+      <AddOwnField placeholder='Escrever do meu jeito…' label='Escrever do meu jeito' onAdd={addOwn} />
       <div className='nyta-card-actions'>
         <span style={{ color: atMax ? '#f59e0b' : '#b3b3b3', fontSize: 13, fontWeight: atMax ? 700 : 400, alignSelf: 'center' }}>{sel.length}/{MAX}</span>
         <button
@@ -314,6 +305,47 @@ export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> 
   );
 };
 
+// Campo "escrever o meu" COLAPSADO: por padrão mostra só um botão "+"; ao clicar, abre o input
+// (autofocus). Some de volta após adicionar (ou se sair vazio). Evita o campo competir visualmente
+// com as opções (usuário leigo achava que o campo era a ação principal). Usado em todos os widgets
+// de escolha com opção de adicionar o próprio item.
+const AddOwnField: FC<{ placeholder: string; label: string; onAdd: (value: string) => void }> = ({ placeholder, label, onAdd }) => {
+  const [open, setOpen] = useState(false);
+  const [val, setVal] = useState('');
+  const commit = () => {
+    const t = val.trim();
+    if (t) onAdd(t);
+    setVal('');
+    setOpen(false);
+  };
+  if (!open) {
+    return (
+      <button
+        type='button'
+        onClick={() => setOpen(true)}
+        style={{ ...ghostBtn, marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px' }}
+      >
+        <FiPlus size={15} /> {label}
+      </button>
+    );
+  }
+  return (
+    <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+      <Input
+        autoFocus
+        placeholder={placeholder}
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onPressEnter={commit}
+        onBlur={() => { if (!val.trim()) setOpen(false); }}
+      />
+      <button style={{ ...ghostBtn, padding: '8px 14px' }} onClick={commit}>
+        <FiPlus />
+      </button>
+    </div>
+  );
+};
+
 // Múltipla escolha (chips) + campo livre. Junta os escolhidos numa string (ex.: "cantor e compositor").
 const MultiChoiceCard: FC<{
   options: string[];
@@ -322,14 +354,9 @@ const MultiChoiceCard: FC<{
   onConfirm: (joined: string) => void;
 }> = ({ options, placeholder, joiner = ' e ', onConfirm }) => {
   const [sel, setSel] = useState<string[]>([]);
-  const [own, setOwn] = useState('');
   const toggle = (o: string) => setSel((s) => (s.includes(o) ? s.filter((x) => x !== o) : [...s, o]));
-  const addOwn = () => {
-    const t = own.trim();
-    if (!t) return;
+  const addOwn = (t: string) =>
     setSel((s) => (s.some((x) => x.toLowerCase() === t.toLowerCase()) ? s : [...s, t]));
-    setOwn('');
-  };
   const custom = sel.filter((s) => !options.includes(s));
   return (
     <div className='nyta-card'>
@@ -361,12 +388,7 @@ const MultiChoiceCard: FC<{
           </button>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-        <Input placeholder={placeholder} value={own} onChange={(e) => setOwn(e.target.value)} onPressEnter={addOwn} />
-        <button style={{ ...ghostBtn, padding: '8px 14px' }} onClick={addOwn}>
-          <FiPlus />
-        </button>
-      </div>
+      <AddOwnField placeholder={placeholder} label='Escrever o meu' onAdd={addOwn} />
       <div className='nyta-card-actions'>
         <button
           style={{ ...primaryBtn, marginLeft: 'auto', opacity: sel.length ? 1 : 0.5 }}
@@ -814,9 +836,9 @@ export const ValueChips: FC<{
   seed?: string[];
   onConfirm: (values: string[]) => void;
 }> = ({ seed, onConfirm }) => {
+  const { message: toast } = App.useApp(); // `message` estático é no-op dentro do <App>
   const [options, setOptions] = useState<string[]>(() => (seed?.length ? seed : seedValues()).slice(0, 12));
   const [selected, setSelected] = useState<string[]>([]);
-  const [own, setOwn] = useState('');
   const MAX = 5;
   const MIN = 3;
 
@@ -824,27 +846,24 @@ export const ValueChips: FC<{
     setSelected((sel) => {
       if (sel.includes(v)) return sel.filter((x) => x !== v);
       if (sel.length >= MAX) {
-        message.info(`Máximo de ${MAX} valores.`);
+        toast.warning(`Máximo de ${MAX} valores.`);
         return sel;
       }
       return [...sel, v];
     });
 
-  const addOwn = () => {
-    const t = own.trim();
-    if (!t) return;
+  const addOwn = (t: string) => {
     setOptions((opts) =>
       opts.some((o) => o.toLowerCase() === t.toLowerCase()) ? opts : [...opts, t]
     );
     setSelected((sel) => {
       if (sel.some((s) => s.toLowerCase() === t.toLowerCase())) return sel;
       if (sel.length >= MAX) {
-        message.info(`Você já tem ${MAX} marcados, desmarque um para incluir o seu.`);
+        toast.warning(`Você já tem ${MAX} marcados, desmarque um para incluir o seu.`);
         return sel;
       }
       return [...sel, t];
     });
-    setOwn('');
   };
 
   return (
@@ -864,17 +883,7 @@ export const ValueChips: FC<{
           );
         })}
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-        <Input
-          placeholder='Escrever meu próprio valor…'
-          value={own}
-          onChange={(e) => setOwn(e.target.value)}
-          onPressEnter={addOwn}
-        />
-        <button style={{ ...ghostBtn, padding: '8px 14px' }} onClick={addOwn}>
-          <FiPlus />
-        </button>
-      </div>
+      <AddOwnField placeholder='Escrever meu próprio valor…' label='Escrever meu valor' onAdd={addOwn} />
       <div className='nyta-card-actions'>
         <span style={{ color: '#b3b3b3', fontSize: 13, alignSelf: 'center' }}>
           {selected.length}/{MAX}
@@ -899,33 +908,30 @@ export const ObjectiveChips: FC<{
   missionParts: MissionParts;
   onConfirm: (objectives: string[]) => void;
 }> = ({ identity, missionParts, onConfirm }) => {
+  const { message: toast } = App.useApp(); // `message` estático é no-op dentro do <App>
   // Universo determinístico oferecido pela Nyta (Fontes 1–4, dedup). Sem IA, sem rede.
   const universe = useMemo(() => generateObjectives(identity, missionParts), [identity, missionParts]);
   const [options, setOptions] = useState<string[]>(universe);
   // Começa com até MAX_OBJECTIVES marcados (o artista tira/troca o que quiser).
   const [selected, setSelected] = useState<string[]>(universe.slice(0, MAX_OBJECTIVES));
-  const [own, setOwn] = useState('');
 
   const toggle = (o: string) =>
     setSelected((sel) => {
       if (sel.includes(o)) return sel.filter((x) => x !== o);
       if (sel.length >= MAX_OBJECTIVES) {
-        message.info(`O limite é ${MAX_OBJECTIVES}, pra manter foco. Desmarque um pra trocar.`);
+        toast.warning(`O limite é ${MAX_OBJECTIVES}, pra manter foco. Desmarque um pra trocar.`);
         return sel;
       }
       return [...sel, o];
     });
 
-  const addOwn = () => {
-    const t = own.trim();
-    if (!t) return;
+  const addOwn = (t: string) => {
     if (selected.length >= MAX_OBJECTIVES) {
-      message.info(`O limite é ${MAX_OBJECTIVES}, pra manter foco. Qual desses você gostaria de trocar?`);
+      toast.warning(`O limite é ${MAX_OBJECTIVES}, pra manter foco. Qual desses você gostaria de trocar?`);
       return;
     }
     setOptions((s) => (s.some((x) => x.toLowerCase() === t.toLowerCase()) ? s : [...s, t]));
     setSelected((sel) => (sel.some((x) => x.toLowerCase() === t.toLowerCase()) ? sel : [...sel, t]));
-    setOwn('');
   };
 
   return (
@@ -950,17 +956,7 @@ export const ObjectiveChips: FC<{
           );
         })}
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-        <Input
-          placeholder='Acrescentar um objetivo…'
-          value={own}
-          onChange={(e) => setOwn(e.target.value)}
-          onPressEnter={addOwn}
-        />
-        <button style={{ ...ghostBtn, padding: '8px 14px' }} onClick={addOwn}>
-          <FiPlus />
-        </button>
-      </div>
+      <AddOwnField placeholder='Acrescentar um objetivo…' label='Acrescentar objetivo' onAdd={addOwn} />
       <div className='nyta-card-actions'>
         <span style={{ color: '#b3b3b3', fontSize: 13, alignSelf: 'center' }}>
           {selected.length}/{MAX_OBJECTIVES}
