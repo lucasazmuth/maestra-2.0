@@ -1,11 +1,12 @@
 import { FC, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Spin } from 'antd';
-import { FiArrowLeft } from 'react-icons/fi';
+import { FiArrowLeft, FiRefreshCw, FiLock } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { useEntitlements } from '../../hooks/useEntitlements';
+import { PageHeader } from '../../components/PageHeader';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 import styles from '../ArtistCreate/ArtistCreate.module.scss';
 
@@ -62,6 +63,23 @@ const DiagnosticView: FC = () => {
         <FiArrowLeft size={16} /> Voltar
       </button>
 
+      {realIndex && (
+        <PageHeader
+          kicker="Crescimento"
+          title="Diagnóstico REAL"
+          subtitle="Sua fase de carreira atual, com base nos seus dados reais. Refaça o diagnóstico quando evoluir."
+          action={
+            <button
+              className={styles.heroRedoBtn}
+              onClick={onRedo}
+              title={!isPro ? 'Recurso PRO — assine para refazer' : 'Refaça o quiz e atualize seu perfil REAL'}
+            >
+              {!isPro ? <FiLock size={15} /> : <FiRefreshCw size={15} />} Refazer diagnóstico
+            </button>
+          }
+        />
+      )}
+
       {realIndex ? (
         <DiagnosticReport
           realIndex={realIndex}
@@ -71,11 +89,8 @@ const DiagnosticView: FC = () => {
           onContinue={() => navigate(`/artists/${id}/wizard`)}
           enableStickyCta={false}
           showPlanningCta={!artist?.content?.strategies?.length}
-          onRedo={onRedo}
           redoLocked={!isPro}
-          // Tela de REVISITA (não a criação): cabeçalho de página próprio.
-          heroTitle="Diagnóstico REAL"
-          heroSub="Sua fase de carreira atual, com base nos seus dados reais. Refaça o diagnóstico quando evoluir."
+          hideHero
         />
       ) : (
         <div style={{ background: '#181818', borderRadius: 12, padding: 32, textAlign: 'center', color: '#b3b3b3' }}>

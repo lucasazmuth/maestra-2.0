@@ -14,6 +14,7 @@ import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { TaskProgress } from '../../components/RealCareerCard';
+import { PageHeader } from '../../components/PageHeader';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
 import { TASK_OWNER_SELF } from '../../constants/maestra';
@@ -243,10 +244,12 @@ const ActionPlan: FC = () => {
 
   return (
     <div className="ap">
-      {/* CABEÇALHO — só o título (o dossiê/REAL mudou-se para a página de Perfil) */}
-      <div className="ap-top">
-        <h1 className="ap-top-title">Plano de Ação</h1>
-      </div>
+      {/* CABEÇALHO padronizado (mesmo padrão de Diagnóstico/Planejamento — grupo CRESCIMENTO). */}
+      <PageHeader
+        kicker="Crescimento"
+        title="Plano de Ação"
+        subtitle="Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase."
+      />
 
       {/* Progresso das tarefas (só execução; a FASE REAL agora vive no Perfil). */}
       <div style={{ background: 'radial-gradient(120% 130% at 0% 0%, rgba(175,40,150,0.10), #181818 60%)', border: '1px solid rgba(175,40,150,0.22)', borderRadius: 14, padding: 22, marginBottom: 24 }}>
