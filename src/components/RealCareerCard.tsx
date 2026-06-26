@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 
 import type { Artist } from '../interfaces/maestra';
+import { RealBadge, PROFILE_ABBR, tierForPattern } from './RealBadge';
 
 // Card unificado de "fase de carreira": o perfil REAL (1 dos 16) é a FASE do artista — sobe de
 // nível quando ele re-diagnostica — e logo abaixo a barra de progresso das tarefas do plano.
@@ -96,9 +97,12 @@ export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?
         </button>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, margin: '10px 0 12px', flexWrap: 'wrap' }}>
-        <h2 style={titleStyle}>{ri.profile.name}</h2>
-        <span style={{ fontSize: 13, color: '#8a8a92' }}>Seu perfil entre os 16</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '10px 0 12px', flexWrap: 'wrap' }}>
+        <RealBadge tier={tierForPattern(ri.pattern)} label={PROFILE_ABBR[ri.profile.name] || ri.profile.name.slice(0, 2)} size={56} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <h2 style={{ ...titleStyle, margin: 0 }}>{ri.profile.name}</h2>
+          <span style={{ fontSize: 13, color: '#8a8a92' }}>Seu perfil entre os 16</span>
+        </div>
       </div>
 
       <p style={{ fontSize: 14, lineHeight: 1.5, color: '#cfcfd4', margin: '0 0 14px', maxWidth: 560 }}>
