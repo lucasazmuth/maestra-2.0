@@ -1,9 +1,9 @@
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
-import { DatePicker, Input, Select, message } from 'antd';
+import { App, DatePicker, Input, Select, message } from 'antd';
 import dayjs from 'dayjs';
-import { FiAlertCircle, FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
+import { FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
 
 import { listGenres } from '../../../services/db/genres';
 import { searchCities } from '../../../services/db/cities';
@@ -241,31 +241,25 @@ export const VisionOndeChoice: FC<{ onConfirm: (value: string) => void }> = ({ o
 
 // Q2 — múltipla escolha, teto 2 (+ campo livre). Devolve os rótulos escolhidos (etiquetas derivadas fora).
 export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> = ({ onConfirm }) => {
+  // O `message` estático do antd é no-op dentro do <App> (não renderiza). Pega a instância do
+  // contexto pra o toast realmente aparecer — mesmo padrão do bloqueio de criar perfil.
+  const { message: toast } = App.useApp();
   const [sel, setSel] = useState<string[]>([]);
   const [own, setOwn] = useState('');
-  const [warn, setWarn] = useState(false); // aviso inline ao tentar passar do limite
   const MAX = 2;
-  // O aviso some sozinho depois de alguns segundos (mas continua aparecendo se insistir).
-  useEffect(() => {
-    if (!warn) return;
-    const t = setTimeout(() => setWarn(false), 4000);
-    return () => clearTimeout(t);
-  }, [warn]);
-  const hitLimit = () => { setWarn(true); message.warning('Você pode escolher até 2 opções. Desmarque uma para trocar.'); };
-  const toggle = (label: string) =>
-    setSel((s) => {
-      if (s.includes(label)) { setWarn(false); return s.filter((x) => x !== label); }
-      if (s.length >= MAX) { hitLimit(); return s; }
-      return [...s, label];
-    });
+  // Ao tentar passar de 2, mostra um toast. Checa FORA do updater (sem efeito colateral no reducer).
+  // `key` fixa evita empilhar vários toasts iguais em cliques repetidos (atualiza o mesmo).
+  const warnLimit = () => toast.warning({ content: 'Você pode escolher até 2 opções. Desmarque uma para trocar.', key: 'vision-porquem-max' });
+  const toggle = (label: string) => {
+    if (!sel.includes(label) && sel.length >= MAX) { warnLimit(); return; }
+    setSel((s) => (s.includes(label) ? s.filter((x) => x !== label) : [...s, label]));
+  };
   const addOwn = () => {
     const t = own.trim();
     if (!t) return;
-    setSel((s) => {
-      if (s.some((x) => x.toLowerCase() === t.toLowerCase())) return s;
-      if (s.length >= MAX) { hitLimit(); return s; }
-      return [...s, t];
-    });
+    if (sel.some((x) => x.toLowerCase() === t.toLowerCase())) { setOwn(''); return; }
+    if (sel.length >= MAX) { warnLimit(); return; }
+    setSel((s) => [...s, t]);
     setOwn('');
   };
   const custom = sel.filter((s) => !VISION_PORQUEM_OPTIONS.some((o) => o.label === s));
@@ -307,12 +301,6 @@ export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> 
           <FiPlus />
         </button>
       </div>
-      {warn && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, padding: '10px 12px', borderRadius: 10, background: 'rgba(245, 158, 11, .12)', border: '1px solid rgba(245, 158, 11, .35)', color: '#f59e0b', fontSize: 13 }}>
-          <FiAlertCircle size={16} style={{ flexShrink: 0 }} />
-          Você pode escolher até 2 opções. Desmarque uma para trocar.
-        </div>
-      )}
       <div className='nyta-card-actions'>
         <span style={{ color: atMax ? '#f59e0b' : '#b3b3b3', fontSize: 13, fontWeight: atMax ? 700 : 400, alignSelf: 'center' }}>{sel.length}/{MAX}</span>
         <button
