@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 
 import type { Artist } from '../interfaces/maestra';
-import { RealBadge, PROFILE_ABBR, tierForPattern, TIER_ACCENT } from './RealBadge';
+import { RealBadge, altasForPattern, tierForPattern, TIER_ACCENT } from './RealBadge';
 import { RealLevelLadder } from './RealLevelLadder';
 
 // Card unificado de "fase de carreira": o perfil REAL (1 dos 16) é a FASE do artista — sobe de
@@ -108,7 +108,7 @@ export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '10px 0 12px', flexWrap: 'wrap' }}>
-        <RealBadge tier={tier} label={PROFILE_ABBR[ri.profile.name] || ri.profile.name.slice(0, 2)} size={76} />
+        <RealBadge tier={tier} label={String(altasForPattern(ri.pattern))} size={76} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <h2 style={{ ...titleStyle, margin: 0 }}>{ri.profile.name}</h2>
           <span style={{ fontSize: 13, color: '#8a8a92' }}>Seu perfil entre os 16</span>

@@ -3,7 +3,7 @@ import ColorThiefRaw from 'colorthief';
 
 import { ARTISTS_DEFAULT_IMAGE } from '../constants/spotify';
 import type { Artist } from '../interfaces/maestra';
-import { RealBadge, PROFILE_ABBR, tierForPattern, TIER_ACCENT } from './RealBadge';
+import { RealBadge, altasForPattern, tierForPattern, TIER_ACCENT } from './RealBadge';
 
 // Cabeçalho do artista (foto + nome + stats do Spotify) com gradiente extraído da cor dominante
 // da foto (estilo Spotify). Compartilhado entre o Dashboard e a página de Perfil.
@@ -71,7 +71,7 @@ export const ArtistHero: FC<{ artist: Artist }> = ({ artist }) => {
                 border: `1px solid rgba(${accent}, 0.5)`,
               }}
             >
-              <RealBadge tier={tier} label={PROFILE_ABBR[realPhase] || realPhase.slice(0, 2)} size={24} />
+              <RealBadge tier={tier} label={String(altasForPattern(ri.pattern))} size={24} />
               <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: 'italic', fontSize: 13, color: `rgb(${accent})` }}>REAL</span>
                 <span style={{ color: '#fff', fontWeight: 700, fontSize: 13.5 }}>{realPhase}</span>

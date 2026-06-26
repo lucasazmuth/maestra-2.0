@@ -8,7 +8,7 @@ import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import type { RealIndex } from '../../interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
 import DiagnosticDoc from './DiagnosticDoc';
-import { RealBadge, tierForAltas, tierForPattern, TIER_ACCENT, PROFILE_ABBR } from '../../components/RealBadge';
+import { RealBadge, tierForAltas, tierForPattern, TIER_ACCENT, altasForPattern } from '../../components/RealBadge';
 import styles from './ArtistCreate.module.scss';
 
 export interface Chartmetric {
@@ -332,7 +332,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
           </button>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
-          <RealBadge tier={realTier} label={PROFILE_ABBR[profile.name] || profile.name.slice(0, 2)} size={72} />
+          <RealBadge tier={realTier} label={String(altasForPattern(pattern))} size={72} />
           <div>
             <span className={styles.realProfileKicker}>Seu perfil de carreira</span>
             <h3 className={`${styles.realProfileName} ${styles.stamp}`} style={{ margin: 0 }}>{profile.name}</h3>

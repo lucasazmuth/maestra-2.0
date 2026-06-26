@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiRefreshCw, FiCheckCircle, FiRotateCcw } from 'react-icons/fi';
 
 import type { Artist } from '../../interfaces/maestra';
-import { RealBadge, PROFILE_ABBR, tierForPattern, TIER_ACCENT } from '../RealBadge';
+import { RealBadge, altasForPattern, tierForPattern, TIER_ACCENT } from '../RealBadge';
 import { RealLevelLadder } from '../RealLevelLadder';
 import './journey.scss';
 
@@ -98,7 +98,7 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
           {ri?.profile ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <RealBadge tier={tier} label={PROFILE_ABBR[ri.profile.name] || ri.profile.name.slice(0, 2)} size={42} />
+                <RealBadge tier={tier} label={String(altasForPattern(ri.pattern))} size={42} />
                 <div>
                   <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, lineHeight: 1.1 }}>{ri.profile.name}</div>
                   <div style={{ color: '#8a8a92', fontSize: 12 }}>fase atual · entre os 16</div>

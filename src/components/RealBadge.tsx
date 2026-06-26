@@ -19,8 +19,12 @@ export const PROFILE_ABBR: Record<string, string> = {
 export const tierForAltas = (altas: number): RealTier =>
   altas >= 4 ? 'premium' : altas === 3 ? 'pro' : altas === 2 ? 'advance' : altas === 1 ? 'standard' : 'base';
 
+// Nº de dimensões R·E·A·L altas (0–4) — é o "nível" exibido dentro da placa.
+export const altasForPattern = (p?: { r: boolean; e: boolean; a: boolean; l: boolean } | null): number =>
+  p ? [p.r, p.e, p.a, p.l].filter(Boolean).length : 0;
+
 export const tierForPattern = (p?: { r: boolean; e: boolean; a: boolean; l: boolean } | null): RealTier =>
-  tierForAltas(p ? [p.r, p.e, p.a, p.l].filter(Boolean).length : 0);
+  tierForAltas(altasForPattern(p));
 
 // Cor de acento por tier (string "r, g, b" pra usar em rgba()), pra o card/chrome combinar com a placa.
 export const TIER_ACCENT: Record<RealTier, string> = {
@@ -49,6 +53,9 @@ export const RealBadge: FC<{ tier: RealTier; label: string; size?: number }> = (
       .replace(/id="([^"]+)"/g, `id="$1_${uid}"`)
       .replace(/url\(#([^)]+)\)/g, `url(#$1_${uid})`)
       .replace(/<svg width="[\d.]+" height="[\d.]+"/, '<svg width="100%" height="100%"')
+      // Recentraliza a placa: o SVG reserva espaço pra sombra embaixo, então o brasão fica alto.
+      // Sobe o minY (negativo) ~11% da altura pra centralizar o brasão no quadro.
+      .replace(/viewBox="0 0 ([\d.]+) ([\d.]+)"/, (_m, w, h) => `viewBox="0 ${(-parseFloat(h) * 0.11).toFixed(2)} ${w} ${h}"`)
       .replace(/\{\{LABEL\}\}/g, label);
   }, [tier, isBase, label, uid]);
   return (
