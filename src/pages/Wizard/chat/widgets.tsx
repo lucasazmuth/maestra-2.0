@@ -1354,7 +1354,6 @@ export const SwotBoardCard: FC<{
   onConfirm: (swot: SwotAnalysis, userEdits: string[]) => void;
 }> = ({ swot, onConfirm }) => {
   const [board, setBoard] = useState<SwotAnalysis>(swot);
-  const [inputs, setInputs] = useState<Record<string, string>>({});
 
   const update = (key: keyof SwotAnalysis, list: string[]) =>
     setBoard((b) => ({ ...b, [key]: list }));
@@ -1375,13 +1374,6 @@ export const SwotBoardCard: FC<{
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
         {SWOT_COLS.map((c) => {
           const items = board[c.key] || [];
-          const addItem = () => {
-            const v = (inputs[c.key] || '').trim();
-            if (!v) return;
-            update(c.key, [...items, v]);
-            setInputs((s) => ({ ...s, [c.key]: '' }));
-          };
-          const canAdd = !!(inputs[c.key] || '').trim();
           return (
             <div key={c.key} style={{ background: '#121212', borderRadius: 8, padding: 12, borderTop: `3px solid ${c.color}` }}>
               <div style={{ color: c.color, fontWeight: 800, fontSize: 14, marginBottom: 8 }}>
@@ -1398,36 +1390,7 @@ export const SwotBoardCard: FC<{
                   </span>
                 ))}
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <Input
-                  size='small'
-                  placeholder='Adicionar…'
-                  value={inputs[c.key] || ''}
-                  onChange={(e) => setInputs((s) => ({ ...s, [c.key]: e.target.value }))}
-                  onPressEnter={addItem}
-                />
-                <button
-                  title='Adicionar'
-                  aria-label='Adicionar'
-                  onClick={addItem}
-                  disabled={!canAdd}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    width: 30,
-                    borderRadius: 8,
-                    border: `1px solid ${canAdd ? c.color : '#2a2a2a'}`,
-                    background: canAdd ? c.color : 'transparent',
-                    color: canAdd ? '#000' : '#6b7280',
-                    cursor: canAdd ? 'pointer' : 'not-allowed',
-                    transition: 'background .15s ease, border-color .15s ease, color .15s ease',
-                  }}
-                >
-                  <FiPlus size={16} />
-                </button>
-              </div>
+              <AddOwnField placeholder='Adicionar…' label='Adicionar' onAdd={(v) => update(c.key, [...items, v])} />
             </div>
           );
         })}
@@ -1700,7 +1663,7 @@ export const PriorityScale: FC<{
               Sua ordem de prioridade está pronta
             </div>
             <div style={{ color: '#b3b3b3', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
-              Da mais importante para a menos. <b style={{ color: '#fff' }}>Selecione as estratégias</b> que você
+              Da mais importante para a menos. <b style={{ color: '#fff' }}>Selecione até 10 estratégias</b> que você
               quer transformar em tarefas agora, as outras ficam guardadas pra depois.
             </div>
           </div>
