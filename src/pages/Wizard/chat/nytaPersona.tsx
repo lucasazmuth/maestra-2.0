@@ -138,7 +138,9 @@ export const SAY = {
     'Pode ser entretenimento, memória afetiva, representatividade, reflexão, pista de dança. Não tem resposta certa, tem a sua, e quanto mais clara, melhor. A gente vai por partes.',
     'Primeiro, uma coisa só: o que você entrega, oferece ou proporciona?',
   ],
-  missionParaQuem: () => ['Agora a segunda parte: e pra quem? Quem recebe isso que você entrega?'],
+  missionParaQuem: () => [
+    'Agora a segunda parte: e pra quem? Quem recebe isso que você entrega? Pensa no perfil do seu público — por exemplo: "jovens de 18 a 30 anos", "quem curte MPB" ou "ouvintes de rock alternativo".',
+  ],
   missionFinancial: () => [
     'Isso é lindo e verdadeiro. E agora eu preciso te lembrar de uma coisa que quase todo artista esquece nessa hora: isso também é um negócio.',
     'Pra sua missão se sustentar, ela precisa incluir o que essa carreira tem que gerar pra você. Qual dessas opções se aplica melhor pra você?',
