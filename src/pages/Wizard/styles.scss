@@ -651,6 +651,7 @@
 .wiz-genre-chip {
   display: inline-flex;
   align-items: center;
+  gap: 7px;
   border-radius: 9999px;
   padding: 6px 14px;
   background: #2a2a2a;
@@ -662,15 +663,37 @@
   animation: wizPillIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
   transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
 
+  // Mesmo indicador radio dos pills de opção: deixa claro que o chip é SELECIONÁVEL (vazio) /
+  // escolhido (preenchido). Sem isso, parecia uma lista de itens já adicionados.
+  &::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid #707070;
+    background: transparent;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
   &:hover {
     border-color: #fff;
     transform: scale(1.04);
+
+    &::before {
+      border-color: #fff;
+    }
   }
 
   &--active {
     background: #af2896;
     color: #fff;
     font-weight: 700;
+
+    &::before {
+      border-color: #fff;
+      background: radial-gradient(circle, #fff 0 4px, transparent 5px);
+    }
   }
 }
 

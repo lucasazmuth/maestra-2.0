@@ -94,7 +94,6 @@ export const GenreChips: FC<{
                 style={{ animationDelay: `${Math.min(i * 25, 600)}ms` }}
                 onClick={() => toggle(g)}
               >
-                {active && <FiCheck size={13} style={{ marginRight: 5 }} />}
                 {g}
               </button>
             );
@@ -860,7 +859,6 @@ export const ValueChips: FC<{
               style={{ animationDelay: `${Math.min(i * 30, 500)}ms` }}
               onClick={() => toggle(v)}
             >
-              {active && <FiCheck size={13} style={{ marginRight: 5 }} />}
               {v}
             </button>
           );
