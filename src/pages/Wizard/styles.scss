@@ -429,9 +429,26 @@
     font-weight: 700;
   }
 
+  // Indicador de seleção (radio): círculo sempre visível à esquerda — deixa CLARO que o item é
+  // selecionável. Vazio = não escolhido; preenchido = escolhido. Vale pra todos os widgets de opção.
+  &::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #707070;
+    background: transparent;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  &:hover::before {
+    border-color: #fff;
+  }
+
+  // O ícone de check inline antigo some — o círculo ::before já comunica a seleção.
   .wiz-option-check {
-    display: inline-flex;
-    animation: wizCheckPop 0.25s cubic-bezier(0.3, 0, 0.7, 1) both;
+    display: none;
   }
 
   &--selected {
@@ -439,8 +456,17 @@
     color: #fff;
     font-weight: 700;
 
+    &::before {
+      border-color: #fff;
+      background: radial-gradient(circle, #fff 0 5px, transparent 6px);
+    }
+
     &:hover {
       border-color: transparent;
+
+      &::before {
+        border-color: #fff;
+      }
     }
   }
 
