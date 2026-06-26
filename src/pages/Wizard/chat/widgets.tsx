@@ -81,6 +81,7 @@ export const GenreChips: FC<{
 
   return (
     <div className='nyta-card'>
+      <div className='wiz-card-title'>Seu estilo musical</div>
       {options === null ? (
         <p style={{ color: '#b3b3b3', margin: 0, fontSize: 14 }}>Carregando gêneros…</p>
       ) : (
@@ -126,11 +127,13 @@ const SingleChoiceCard: FC<{
   options: { value: string; label: string }[];
   onConfirm: (value: string) => void;
   custom?: { placeholder: string };
-}> = ({ options, onConfirm, custom }) => {
+  title?: string;
+}> = ({ options, onConfirm, custom, title }) => {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   return (
     <div className='nyta-card'>
+      {title && <div className='wiz-card-title'>{title}</div>}
       <div className='wiz-option-grid'>
         {options.map((o, i) => (
           <button
@@ -232,6 +235,7 @@ export const StageChoice: FC<{ onConfirm: (s: ArtistStage) => void }> = ({ onCon
 
 export const VisionOndeChoice: FC<{ onConfirm: (value: string) => void }> = ({ onConfirm }) => (
   <SingleChoiceCard
+    title='Até onde você quer chegar'
     options={VISION_ONDE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
     onConfirm={onConfirm}
     custom={{ placeholder: 'Outro alcance…' }}
@@ -261,6 +265,7 @@ export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> 
   const atMax = sel.length >= MAX;
   return (
     <div className='nyta-card'>
+      <div className='wiz-card-title'>Seus sinais de reconhecimento</div>
       <div style={{ color: '#7d7d7d', fontSize: 12, marginBottom: 8 }}>Escolha até 2 opções (as que mais traduzem o que você sente).</div>
       <div className='wiz-option-grid'>
         {VISION_PORQUEM_OPTIONS.map((o, i) => {
@@ -350,9 +355,10 @@ const AddOwnField: FC<{ placeholder: string; label: string; onAdd: (value: strin
 const MultiChoiceCard: FC<{
   options: string[];
   placeholder: string;
+  title?: string;
   joiner?: string;
   onConfirm: (joined: string) => void;
-}> = ({ options, placeholder, joiner = ' e ', onConfirm }) => {
+}> = ({ options, placeholder, title, joiner = ' e ', onConfirm }) => {
   const [sel, setSel] = useState<string[]>([]);
   const toggle = (o: string) => setSel((s) => (s.includes(o) ? s.filter((x) => x !== o) : [...s, o]));
   const addOwn = (t: string) =>
@@ -360,6 +366,7 @@ const MultiChoiceCard: FC<{
   const custom = sel.filter((s) => !options.includes(s));
   return (
     <div className='nyta-card'>
+      {title && <div className='wiz-card-title'>{title}</div>}
       <div className='wiz-option-grid'>
         {options.map((o, i) => {
           const active = sel.includes(o);
@@ -404,12 +411,12 @@ const MultiChoiceCard: FC<{
 
 // Q3 — substantivo (múltipla escolha flexionada + campo livre).
 export const VisionSubstantivoChoice: FC<{ gender?: ArtistGender; onConfirm: (value: string) => void }> = ({ gender, onConfirm }) => (
-  <MultiChoiceCard options={SUBSTANTIVO_OPTIONS.map((s) => flex(gender, s))} placeholder='Como você se define…' onConfirm={onConfirm} />
+  <MultiChoiceCard title='Como você se define' options={SUBSTANTIVO_OPTIONS.map((s) => flex(gender, s))} placeholder='Como você se define…' onConfirm={onConfirm} />
 );
 
 // Q4 — atributo (múltipla escolha seedada + campo livre).
 export const VisionAdjetivoChoice: FC<{ onConfirm: (value: string) => void }> = ({ onConfirm }) => (
-  <MultiChoiceCard options={ADJETIVO_SEEDS} placeholder='Escreva o seu atributo…' onConfirm={onConfirm} />
+  <MultiChoiceCard title='Seu atributo' options={ADJETIVO_SEEDS} placeholder='Escreva o seu atributo…' onConfirm={onConfirm} />
 );
 
 // ---- Referências de posicionamento (3 horizontes — Metodologia v2, Q5) -------------------------
@@ -480,6 +487,7 @@ export const ReferenceHorizons: FC<{
 
   return (
     <div className='nyta-card'>
+      <div className='wiz-card-title'>Referências de posicionamento</div>
       {/* Progresso (3 horizontes) */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
         {HORIZON_FIELDS.map((f, i) => (
@@ -726,6 +734,7 @@ export const CityInputCard: FC<{
 
 export const MissionFinancialChoice: FC<{ onConfirm: (tier: MissionFinancialTier) => void }> = ({ onConfirm }) => (
   <div className='nyta-card'>
+    <div className='wiz-card-title'>O retorno que você quer</div>
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {MISSION_FINANCIAL_OPTIONS.map((o, i) => (
         <button
@@ -938,6 +947,7 @@ export const ObjectiveChips: FC<{
 
   return (
     <div className='nyta-card'>
+      <div className='wiz-card-title'>Seus objetivos</div>
       <div className='wiz-option-grid'>
         {options.map((s, i) => {
           const active = selected.includes(s);
