@@ -139,7 +139,7 @@ export const SAY = {
     'Primeiro, uma coisa só: o que você entrega, oferece ou proporciona?',
   ],
   missionParaQuem: () => [
-    'Agora a segunda parte: e pra quem? Quem recebe isso que você entrega? Pensa no perfil do seu público — por exemplo: "jovens de 18 a 30 anos", "quem curte MPB" ou "ouvintes de rock alternativo".',
+    'Agora a segunda parte: e pra quem? Quem recebe isso que você entrega? Não precisa ser idade ou estilo musical — pensa em quem se conecta com isso por identificação ou por um momento de vida. Por exemplo: "quem precisa se sentir representado", "quem tá recomeçando depois de uma queda" ou "quem cresceu na mesma realidade que você".',
   ],
   missionFinancial: () => [
     'Isso é lindo e verdadeiro. E agora eu preciso te lembrar de uma coisa que quase todo artista esquece nessa hora: isso também é um negócio.',
