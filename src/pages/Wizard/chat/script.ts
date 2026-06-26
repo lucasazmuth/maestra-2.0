@@ -105,7 +105,6 @@ export type WidgetSpec =
   | { kind: 'gender' }
   | { kind: 'genre' }
   | { kind: 'stage' }
-  | { kind: 'textHelp'; field: 'oQueFalam' | 'entrega' | 'paraQuem' }
   | { kind: 'referenceHorizons' }
   | { kind: 'cityInput' }
   | { kind: 'visionOnde' }
@@ -219,7 +218,7 @@ export function nextBeat(draft: ArtistContent): Beat {
     if (!vp.adjetivo)
       return { stage: 'vision.adjetivo', say: SAY.visionAdjetivo(), widget: { kind: 'visionAdjetivo' } };
     if (!vp.oQueFalam)
-      return { stage: 'vision.oQueFalam', say: SAY.visionOQueFalam(buildVisionFormulaPrefix(id, vp)), widget: { kind: 'textHelp', field: 'oQueFalam' }, acceptsText: true };
+      return { stage: 'vision.oQueFalam', say: SAY.visionOQueFalam(buildVisionFormulaPrefix(id, vp)), widget: null, acceptsText: true };
     if (!(id.vision || '').trim())
       return { stage: 'vision.assemble', say: SAY.preparing(), widget: null, prepare: 'assembleVision' };
     return { stage: 'vision.review', say: SAY.visionReview(), widget: { kind: 'visionReview' } };
@@ -228,9 +227,9 @@ export function nextBeat(draft: ArtistContent): Beat {
   // STEP 2 — Missão (dois tempos: entrega + para quem → tier financeiro → montagem)
   if (step === 2) {
     if (!mp.entrega)
-      return { stage: 'mission.entrega', say: SAY.missionEntrega(id.name || 'você'), widget: { kind: 'textHelp', field: 'entrega' }, acceptsText: true };
+      return { stage: 'mission.entrega', say: SAY.missionEntrega(id.name || 'você'), widget: null, acceptsText: true };
     if (!mp.paraQuem)
-      return { stage: 'mission.paraQuem', say: SAY.missionParaQuem(), widget: { kind: 'textHelp', field: 'paraQuem' }, acceptsText: true };
+      return { stage: 'mission.paraQuem', say: SAY.missionParaQuem(), widget: null, acceptsText: true };
     if (!mp.financialTier)
       return { stage: 'mission.financial', say: SAY.missionFinancial(), widget: { kind: 'missionFinancial' } };
     if (!(id.mission || '').trim())

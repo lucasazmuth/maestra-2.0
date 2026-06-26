@@ -39,7 +39,6 @@ import {
   SwotBoardCard,
   SwotChecklist,
   SwotInternalCard,
-  TextPromptHelper,
   ValueChips,
   VisionAdjetivoChoice,
   VisionOndeChoice,
@@ -455,8 +454,6 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   const renderWidget = () => {
     if (!widget) return null;
     switch (widget.kind) {
-      case 'textHelp':
-        return <TextPromptHelper onStart={() => startGuided(widget.field)} />;
       case 'gender':
         return (
           <GenderChoice
