@@ -96,6 +96,9 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   const [input, setInput] = useState('');
   // O campo de texto só aparece quando o beat pede digitação (acceptsText).
   const [inputOn, setInputOn] = useState(false);
+  // `speaking` = a Nyta ainda está falando (fila de falas rodando). Enquanto isso, a barra de input
+  // fica escondida — pra ninguém enviar resposta no meio do "discurso" dela.
+  const [speaking, setSpeaking] = useState(false);
   const [nonce, setNonce] = useState(0);
   // "Me ajuda a responder": a Nyta pergunta, o artista responde, e ela formula a resposta.
   const [guided, setGuided] = useState<{
@@ -127,6 +130,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   // Fila de falas da Nyta: "pensando" (•••) curto → revela o texto letra a letra (efeito streaming),
   // em ordem. Cada fala só termina quando o texto inteiro apareceu, então a próxima começa.
   const say = (texts: string[]) => {
+    setSpeaking(true);
     const run = queueRef.current.then(async () => {
       for (const text of texts) {
         setTyping(true);
@@ -146,11 +150,14 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       }
     });
     queueRef.current = run;
+    // Só o ÚLTIMO say da fila libera o input (se outro entrou na frente, ele que limpa).
+    run.then(() => { if (queueRef.current === run) setSpeaking(false); });
     return run;
   };
 
   // Injeta o card do mapa de referências inline (na fila, para respeitar a ordem das falas).
   const sayMap = (refs: ArtistIdentity['references']) => {
+    setSpeaking(true);
     const run = queueRef.current.then(async () => {
       setTyping(true);
       await sleep(500);
@@ -159,6 +166,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       await sleep(120);
     });
     queueRef.current = run;
+    run.then(() => { if (queueRef.current === run) setSpeaking(false); });
     return run;
   };
 
@@ -244,9 +252,10 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     userScrolledUpRef.current = !isNearBottom();
   };
 
+  // Foca o input quando ele REALMENTE aparece (depois que a Nyta terminou de falar).
   useEffect(() => {
-    if (inputOn) inputRef.current?.focus?.();
-  }, [inputOn]);
+    if (inputOn && !speaking && !typing) inputRef.current?.focus?.();
+  }, [inputOn, speaking, typing]);
 
   // ---- Atualização de campos da identidade (persistidas a cada passo, sem avançar step) --------
 
@@ -802,7 +811,8 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
         </div>
       </div>
 
-      {inputOn && (
+      {/* Só libera o input quando a Nyta TERMINOU de falar (não está na fila nem digitando). */}
+      {inputOn && !speaking && !typing && (
         <div className='nyta-input-bar'>
           <Input.TextArea
             ref={inputRef}
