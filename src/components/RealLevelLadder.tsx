@@ -61,8 +61,8 @@ export const RealLevelLadder: FC<{ ri: RealIndex; badgeSize?: number }> = ({ ri,
   const badgeHalf = badgeSize / 2 + 3; // +3 = padding do anel em volta da placa
   const topRoom = 26; // espaço pro tooltip acima das placas
   const trackY = topRoom + badgeHalf; // linha no centro vertical das placas/bolinhas
-  const labelY = trackY + badgeHalf + 7; // "Você está aqui" com folga abaixo das placas
-  const height = labelY + 14;
+  const labelY = trackY + badgeHalf + 8; // "Você está aqui" com folga abaixo das placas
+  const height = labelY + 18;
   const isCurrent = (frac: number) => Math.abs(frac - currentFrac) < 0.001;
 
   return (
@@ -137,7 +137,7 @@ export const RealLevelLadder: FC<{ ri: RealIndex; badgeSize?: number }> = ({ ri,
         </div>
       </div>
 
-      <p style={{ fontSize: 13, lineHeight: 1.5, color: '#cfcfd4', margin: '6px 0 0' }}>
+      <p style={{ fontSize: 13, lineHeight: 1.5, color: '#cfcfd4', margin: '16px 0 0' }}>
         {atTop ? (
           <>Topo da escada — agora é <b style={{ color: '#fff' }}>manter e escalar</b> as quatro frentes.</>
         ) : driver ? (
