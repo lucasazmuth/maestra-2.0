@@ -1,7 +1,8 @@
 import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Tooltip, message } from 'antd';
-import { FiChevronDown, FiArrowRight, FiDownload, FiShare2, FiHelpCircle, FiRefreshCw, FiLock } from 'react-icons/fi';
+import { FiChevronDown, FiArrowRight, FiShare2, FiHelpCircle, FiRefreshCw, FiLock } from 'react-icons/fi';
+import { DownloadIcon } from '../../components/Icons/system';
 
 import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
@@ -533,7 +534,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
           <h3 className={styles.ctaTitle}>Baixe ou compartilhe seu diagnóstico</h3>
         )}
         <div className={styles.shareActions} data-noexport="1">
-          <button className={styles.shareBtn} onClick={handleDownloadPdf} disabled={busy}><FiDownload size={15} /> {busy ? 'Gerando…' : 'Baixar diagnóstico (PDF)'}</button>
+          <button className={styles.shareBtn} onClick={handleDownloadPdf} disabled={busy}><DownloadIcon size={18} /> {busy ? 'Gerando…' : 'Baixar diagnóstico (PDF)'}</button>
           <button className={styles.shareBtn} onClick={handleShare} disabled={busy} aria-label="Compartilhar diagnóstico"><FiShare2 size={15} /> Compartilhar</button>
         </div>
         {showPlanningCta && <p className={styles.ctaMicrocopy}>Seu diagnóstico REAL fica salvo. Você pode refazê-lo a qualquer momento para acompanhar a evolução da carreira.</p>}

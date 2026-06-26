@@ -1,6 +1,7 @@
 import { FC, ReactNode, useEffect, useState } from 'react';
 import { message, Popconfirm } from 'antd';
-import { FiPlus, FiRefreshCw, FiEdit2, FiTrash2, FiLock } from 'react-icons/fi';
+import { FiRefreshCw, FiEdit2, FiTrash2, FiLock } from 'react-icons/fi';
+import { AddIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
 
@@ -207,7 +208,7 @@ const Catalog: FC = () => {
                 opacity: canAdd ? 1 : 0.5,
               }}
             >
-              <FiPlus /> Nova faixa
+              <AddIcon size={18} /> Nova faixa
             </button>
           </div>
         )}
