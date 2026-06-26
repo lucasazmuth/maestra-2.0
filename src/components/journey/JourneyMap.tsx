@@ -24,13 +24,14 @@ const StageCard: FC<{ accent: string; bg: string; icon: ReactNode; children: Rea
     className="journey-stage"
     style={{
       position: 'relative',
+      overflow: 'hidden',
       // Gradiente do produto por trás de um scrim escuro: vira um brilho sutil, não um fundo gritante.
       backgroundColor: '#0c0c0e',
       backgroundImage: `linear-gradient(158deg, rgba(11,11,13,0.55) 0%, rgba(11,11,13,0.82) 52%, rgba(11,11,13,0.94) 100%), url(${bg})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
-      border: `1px solid rgba(${accent},0.30)`,
-      boxShadow: `0 12px 32px -16px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)`,
+      border: '1px solid rgba(255,255,255,0.06)',
+      boxShadow: '0 12px 32px -16px rgba(0,0,0,0.7)',
       borderRadius: 16,
       padding: 20,
       display: 'flex',
@@ -38,15 +39,23 @@ const StageCard: FC<{ accent: string; bg: string; icon: ReactNode; children: Rea
       gap: 12,
     }}
   >
-    {/* Ícone do produto (a "logo" de cada serviço) num chip na cor do produto. */}
+    {/* Ícone decorativo integrado ao fundo — grande e translúcido no lado direito do card. */}
     <span
+      aria-hidden
       style={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-        background: `rgba(${accent},0.14)`, border: `1px solid rgba(${accent},0.30)`, color: `rgb(${accent})`,
+        position: 'absolute',
+        right: -10,
+        bottom: -15,
+        color: `rgb(${accent})`,
+        opacity: 0.10,
+        pointerEvents: 'none',
+        lineHeight: 0,
       }}
     >
-      {icon}
+      {/* Renderiza o ícone num tamanho grande, como parte visual do background */}
+      <span style={{ display: 'block', width: 130, height: 130 }}>
+        {icon}
+      </span>
     </span>
     {children}
   </div>
@@ -110,7 +119,7 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
 
       <div className="journey-row">
         {/* 1 — REAL · Diagnóstico (onde estou) */}
-        <StageCard accent={REAL} bg={PRODUCTS.real.bg} icon={<DiagnosticoIcon size={24} />}>
+        <StageCard accent={REAL} bg={PRODUCTS.real.bg} icon={<DiagnosticoIcon size={130} />}>
           <div>
             <div style={{ ...kicker, color: `rgb(${REAL})` }}>1 · <span style={realFont}>REAL</span> · Diagnóstico</div>
             <div style={stageTitle}>Onde você está</div>
@@ -137,7 +146,7 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
         <Connector />
 
         {/* 2 — Planejamento (para onde vou) */}
-        <StageCard accent={PLAN} bg={PRODUCTS.planning.bg} icon={<PlanejamentoIcon size={24} />}>
+        <StageCard accent={PLAN} bg={PRODUCTS.planning.bg} icon={<PlanejamentoIcon size={130} />}>
           <div>
             <div style={{ ...kicker, color: `rgb(${PLAN})` }}>2 · Planejamento</div>
             <div style={stageTitle}>Para onde vai</div>
@@ -161,7 +170,7 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
         <Connector />
 
         {/* 3 — Plano de Ação (como chego) */}
-        <StageCard accent={ACTION} bg={PRODUCTS.action.bg} icon={<PlanoAcaoIcon size={24} />}>
+        <StageCard accent={ACTION} bg={PRODUCTS.action.bg} icon={<PlanoAcaoIcon size={130} />}>
           <div>
             <div style={{ ...kicker, color: `rgb(${ACTION})` }}>3 · Plano de Ação</div>
             <div style={stageTitle}>Como chegar lá</div>
