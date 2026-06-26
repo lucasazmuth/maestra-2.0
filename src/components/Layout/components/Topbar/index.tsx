@@ -2,7 +2,8 @@ import { memo } from 'react';
 import { Dropdown, Space, type MenuProps } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiBell, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiLogOut } from 'react-icons/fi';
+import { NotificationIcon, ConfigIcon } from '../../../Icons/system';
 
 import ForwardBackwardsButton from '../Navbar/ForwardBackwardsButton';
 import { NytaHeaderButton } from '../../../nyta/NytaHeaderButton';
@@ -35,7 +36,7 @@ export const Topbar = memo(() => {
     { type: 'divider' },
     {
       key: 'settings',
-      icon: <FiSettings />,
+      icon: <ConfigIcon size={16} />,
       label: t('Settings', { defaultValue: 'Configurações' }),
       onClick: () => navigate('/settings'),
     },
@@ -98,7 +99,7 @@ export const Topbar = memo(() => {
             justifyContent: 'center',
           }}
         >
-          <FiBell size={18} />
+          <NotificationIcon size={22} />
         </button>
 
         <Dropdown menu={{ items }} trigger={['click']} placement='bottomRight'>

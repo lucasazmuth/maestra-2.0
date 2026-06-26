@@ -1,20 +1,17 @@
 import { FC, Fragment, memo, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { FiCalendar, FiPlus, FiLock, FiDatabase, FiChevronLeft } from 'react-icons/fi';
 import {
-  FiGrid,
-  FiCalendar,
-  FiMusic,
-  FiUsers,
-  FiCheckSquare,
-  FiChevronLeft,
-  FiPlus,
-  FiLock,
-  FiDatabase,
-  FiActivity,
-  FiTarget,
-  FiMessageCircle,
-} from 'react-icons/fi';
+  DashboardIcon,
+  DiagnosticoIcon,
+  PlanejamentoIcon,
+  PlanoAcaoIcon,
+  CatalogoIcon,
+  EquipeIcon,
+  ArtistasIcon,
+  nytaAvatar,
+} from '../../../Icons/system';
 
 import { useAppSelector } from '../../../../store/store';
 import { useArtistCapabilities } from '../../../../hooks/useArtistCapabilities';
@@ -108,22 +105,22 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
   const groups: { label: string | null; items: { icon: React.ReactNode; label: string; suffix: string; locked: boolean }[] }[] = [
     {
       label: null,
-      items: [{ icon: <FiGrid />, label: t('Dashboard', { defaultValue: 'Dashboard' }), suffix: '', locked: false }],
+      items: [{ icon: <DashboardIcon />, label: t('Dashboard', { defaultValue: 'Dashboard' }), suffix: '', locked: false }],
     },
     {
       label: t('Growth', { defaultValue: 'Crescimento' }),
       items: [
-        { icon: <FiActivity />, label: t('REAL Diagnostic', { defaultValue: 'Diagnóstico REAL' }), suffix: 'diagnostico', locked: false },
-        { icon: <FiTarget />, label: t('Planning', { defaultValue: 'Planejamento' }), suffix: 'perfil', locked: !viewPlanning },
-        { icon: <FiCheckSquare />, label: t('Action Plan', { defaultValue: 'Plano de Ação' }), suffix: 'action-plan', locked: !viewPlanning },
+        { icon: <DiagnosticoIcon />, label: t('REAL Diagnostic', { defaultValue: 'Diagnóstico REAL' }), suffix: 'diagnostico', locked: false },
+        { icon: <PlanejamentoIcon />, label: t('Planning', { defaultValue: 'Planejamento' }), suffix: 'perfil', locked: !viewPlanning },
+        { icon: <PlanoAcaoIcon />, label: t('Action Plan', { defaultValue: 'Plano de Ação' }), suffix: 'action-plan', locked: !viewPlanning },
       ],
     },
     {
       label: t('Operations', { defaultValue: 'Operação' }),
       items: [
-        { icon: <FiMusic />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog', locked: false },
+        { icon: <CatalogoIcon />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog', locked: false },
         { icon: <FiCalendar />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda', locked: false },
-        { icon: <FiUsers />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team', locked: !viewPlanning },
+        { icon: <EquipeIcon />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team', locked: !viewPlanning },
       ],
     },
   ];
@@ -226,12 +223,12 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
             ? <div style={{ color: '#6f6f78', fontSize: 11, padding: '10px 12px 4px', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t('Assistant', { defaultValue: 'Assistente' })}</div>
             : <div style={{ height: 1, background: '#282828', margin: '6px 8px' }} />
           }
-          <NavItem icon={<FiMessageCircle />} label={t('Nyta AI', { defaultValue: 'Nyta IA' })} collapsed={collapsed} onClick={openNyta} />
+          <NavItem icon={<img src={nytaAvatar} alt="Nyta" style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover' }} />} label={t('Nyta AI', { defaultValue: 'Nyta IA' })} collapsed={collapsed} onClick={openNyta} />
         </>
       ) : (
         <>
           <NavItem
-            icon={<FiGrid />}
+            icon={<ArtistasIcon />}
             label={t('Artists', { defaultValue: 'Artistas' })}
             collapsed={collapsed}
             active={location.pathname === '/artists'}

@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiGrid, FiActivity, FiTarget, FiCheckSquare, FiMusic } from 'react-icons/fi';
+import { SystemHomeIcon, DiagnosticoIcon, PlanejamentoIcon, PlanoAcaoIcon, CatalogoIcon } from '../../../Icons/system';
 
 // Navbar inferior (tab bar) do mobile: substitui a sidebar (oculta em telas < 768px).
 // Mesmos módulos da sidebar. Só aparece quando há um artista no contexto (rota /artists/:id…).
@@ -23,11 +23,11 @@ export const MobileNav: FC = () => {
   // Tab bar alinhada ao ciclo de crescimento (REAL → Planejamento → Plano). Agenda/Equipe ficam no
   // Dashboard (Ferramentas) + sidebar web. "Planejamento" = rota /perfil (dossiê do plano).
   const items = [
-    { icon: <FiGrid />, label: t('Home', { defaultValue: 'Início' }), suffix: '' },
-    { icon: <FiActivity />, label: t('REAL', { defaultValue: 'REAL' }), suffix: 'diagnostico' },
-    { icon: <FiTarget />, label: t('Planning', { defaultValue: 'Plano estratégico' }), suffix: 'perfil' },
-    { icon: <FiCheckSquare />, label: t('Plan', { defaultValue: 'Plano de ação' }), suffix: 'action-plan' },
-    { icon: <FiMusic />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog' },
+    { icon: <SystemHomeIcon size={24} />, label: t('Home', { defaultValue: 'Início' }), suffix: '' },
+    { icon: <DiagnosticoIcon size={24} />, label: t('REAL', { defaultValue: 'REAL' }), suffix: 'diagnostico' },
+    { icon: <PlanejamentoIcon size={24} />, label: t('Planning', { defaultValue: 'Plano estratégico' }), suffix: 'perfil' },
+    { icon: <PlanoAcaoIcon size={24} />, label: t('Plan', { defaultValue: 'Plano de ação' }), suffix: 'action-plan' },
+    { icon: <CatalogoIcon size={24} />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog' },
   ];
 
   const isActive = (suffix: string) =>
