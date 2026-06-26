@@ -1042,6 +1042,23 @@
     font-weight: 600;
     border-radius: 16px 16px 4px 16px;
   }
+
+  // Cursor piscando enquanto a fala é "digitada" (efeito streaming, tipo ChatGPT).
+  &--streaming .nyta-md > :last-child::after {
+    content: '';
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    margin-left: 3px;
+    vertical-align: text-bottom;
+    background: #d264bb;
+    animation: nytaCaretBlink 1s steps(1) infinite;
+  }
+}
+
+@keyframes nytaCaretBlink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
 }
 
 // Markdown renderizado dentro das bolhas/cards: remove margens externas e mantém

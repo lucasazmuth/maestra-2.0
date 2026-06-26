@@ -18,10 +18,10 @@ export const ChatMarkdown: FC<{ children: ReactNode }> = ({ children }) =>
     <>{children}</>
   );
 
-export const NytaBubble: FC<{ children: ReactNode }> = ({ children }) => (
+export const NytaBubble: FC<{ children: ReactNode; streaming?: boolean }> = ({ children, streaming }) => (
   <div className='nyta-row'>
     <NytaAvatar />
-    <div className='nyta-bubble'>
+    <div className={`nyta-bubble${streaming ? ' nyta-bubble--streaming' : ''}`}>
       <ChatMarkdown>{children}</ChatMarkdown>
     </div>
   </div>

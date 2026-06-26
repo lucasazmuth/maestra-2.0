@@ -71,7 +71,14 @@ interface ChatItem {
   hero?: boolean;
   // Card do mapa de referências exibido inline (Metodologia v2, Q6).
   refMap?: ArtistIdentity['references'];
+  // true enquanto a fala está sendo "digitada" letra a letra (cursor piscando).
+  streaming?: boolean;
 }
+
+// Efeito máquina de escrever (cara de streaming, tipo ChatGPT). Rápido por padrão; em falas longas
+// revela mais caracteres por tique pra não arrastar. Cosmético — não toca em dados/edge.
+const TYPE_MS = 14; // tempo por tique
+const charsPerTick = (len: number) => (len > 220 ? 3 : len > 110 ? 2 : 1);
 
 interface NytaChatProps {
   artist: Artist;
@@ -118,15 +125,25 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
 
   const pushUser = (text: string) => setThread((t) => [...t, { id: uid(), role: 'user', text }]);
 
-  // Fila de falas da Nyta: digitando → mensagem, em ordem, com cadência proporcional ao texto.
+  // Fila de falas da Nyta: "pensando" (•••) curto → revela o texto letra a letra (efeito streaming),
+  // em ordem. Cada fala só termina quando o texto inteiro apareceu, então a próxima começa.
   const say = (texts: string[]) => {
     const run = queueRef.current.then(async () => {
       for (const text of texts) {
         setTyping(true);
-        await sleep(Math.min(400 + text.length * 5, 1200));
+        await sleep(Math.min(300 + text.length * 2, 700)); // beat curto de "pensando" antes de digitar
         setTyping(false);
-        setThread((t) => [...t, { id: uid(), role: 'nyta', text }]);
-        await sleep(120);
+        const id = uid();
+        setThread((t) => [...t, { id, role: 'nyta', text: '', streaming: true }]);
+        const step = charsPerTick(text.length);
+        for (let i = step; i < text.length; i += step) {
+          const shown = text.slice(0, i);
+          setThread((t) => t.map((m) => (m.id === id ? { ...m, text: shown } : m)));
+          await sleep(TYPE_MS);
+        }
+        // garante o texto completo + tira o cursor
+        setThread((t) => t.map((m) => (m.id === id ? { ...m, text, streaming: false } : m)));
+        await sleep(140);
       }
     });
     queueRef.current = run;
@@ -772,7 +789,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
                 </div>
               </WidgetSlot>
             ) : (
-              <NytaBubble key={item.id}>{item.text}</NytaBubble>
+              <NytaBubble key={item.id} streaming={item.streaming}>{item.text}</NytaBubble>
             )
           )}
           {typing && <TypingIndicator />}
