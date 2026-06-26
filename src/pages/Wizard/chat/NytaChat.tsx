@@ -233,10 +233,12 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
 
   useEffect(() => {
     if (userScrolledUpRef.current) return;
+    // `speaking` entra aqui: quando a Nyta termina e a barra de input reaparece, o .nyta-scroll
+    // encolhe — sem re-scroll a última mensagem ficava escondida atrás do campo.
     const id = requestAnimationFrame(() => scrollToBottom(true));
     return () => cancelAnimationFrame(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [thread, typing, widget, inputOn]);
+  }, [thread, typing, widget, inputOn, speaking]);
 
   useEffect(() => {
     const content = threadRef.current;
