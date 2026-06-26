@@ -7,7 +7,12 @@ import {
 
 import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
 import { useAppSelector } from '../../store/store';
+import { PRODUCT_THEME } from '../../components/productTheme';
 import styles from './Landing.module.scss';
+
+// Cores extras (produtos que não fazem parte do ciclo REAL→Planejamento→Plano).
+const NYTA_ACCENT = '124, 92, 255';   // violeta
+const GESTAO_ACCENT = '46, 196, 178'; // teal
 
 // Preços (estáticos na landing). Se mudarem, atualize aqui.
 const MONTHLY = 39.9;
@@ -21,30 +26,42 @@ const NAV = [
   { label: 'FAQ', id: 'faq' },
 ];
 
-const FEATURES: { badge: string; title: string; desc: string; items: string[]; glyph: ReactNode; reverse?: boolean }[] = [
+const FEATURES: { badge: string; title: string; desc: string; items: string[]; glyph: ReactNode; accent: string; bg?: string; reverse?: boolean }[] = [
   {
     badge: 'Diagnóstico REAL',
+    accent: PRODUCT_THEME.real.accent, bg: PRODUCT_THEME.real.bg,
     title: 'Saiba exatamente onde sua carreira está',
     desc: 'Um raio-X da sua carreira em quatro dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que só você sabe.',
     items: ['Índice REAL calculado a partir de dados reais, não achismo', 'Descubra qual dos 16 perfis de carreira é o seu', 'Onde seus ouvintes estão, playlists e referências'],
     glyph: <FiActivity size={88} />,
   },
   {
-    badge: 'Plano de ação', reverse: true,
-    title: 'Um plano construído com método, não com sorte',
-    desc: 'A metodologia da Anita Carvalho, destilada de mais de 30 anos de carreira e 313 planejamentos reais, transforma o diagnóstico em um plano de ação executável.',
-    items: ['Estratégias priorizadas pro seu momento', 'Cronograma e modelagem financeira', 'Construído por você, guiado pela metodologia'],
+    badge: 'Planejamento estratégico', reverse: true,
+    accent: PRODUCT_THEME.planning.accent, bg: PRODUCT_THEME.planning.bg,
+    title: 'Do diagnóstico à estratégia certa',
+    desc: 'A metodologia da Anita Carvalho, destilada de mais de 30 anos de carreira e 313 planejamentos reais, transforma seu diagnóstico em um planejamento completo — com as estratégias certas pro seu momento.',
+    items: ['Visão, missão e objetivos da carreira', 'Estratégias priorizadas pelo seu momento', 'Análise SWOT e mapa de referências'],
     glyph: <FiTarget size={88} />,
   },
   {
-    badge: 'Nyta IA',
+    badge: 'Plano de ação',
+    accent: PRODUCT_THEME.action.accent, bg: PRODUCT_THEME.action.bg,
+    title: 'Execute o plano, tarefa por tarefa',
+    desc: 'O planejamento vira um plano executável: cada estratégia quebrada em tarefas, com progresso, prazos e responsáveis. Você sai do "o que fazer" pro "feito".',
+    items: ['Estratégias viram tarefas acompanháveis', 'Progresso, prazos e responsáveis', 'Cronograma e modelagem financeira'],
+    glyph: <FiZap size={88} />,
+  },
+  {
+    badge: 'Nyta IA', reverse: true,
+    accent: NYTA_ACCENT,
     title: 'Uma consultora de IA ao seu lado',
     desc: 'A Nyta IA acompanha sua carreira em todos os módulos: tira dúvidas, sugere caminhos e ajuda a executar o plano, sempre no contexto dos seus dados.',
     items: ['Chat de IA ilimitado', 'Recomendações sob o contexto da sua carreira', 'Presente no diagnóstico, no plano e na gestão'],
     glyph: <FiMessageCircle size={88} />,
   },
   {
-    badge: 'Gestão completa', reverse: true,
+    badge: 'Gestão completa',
+    accent: GESTAO_ACCENT,
     title: 'Catálogo, agenda e equipe num lugar só',
     desc: 'Centralize a operação da sua carreira: organize suas faixas, acompanhe shows e lançamentos e traga sua equipe pra dentro.',
     items: ['Catálogo de faixas ilimitado', 'Agenda de shows e lançamentos', 'Acesso a todos os perfis da conta'],
@@ -220,10 +237,10 @@ const Stats: FC = () => {
 
 // ─── Como funciona (4 passos) ────────────────────────────────────────────────
 const STEPS = [
-  { n: '01', t: 'Diagnóstico REAL', d: 'Conecte seus dados e responda o que só você sabe. Em minutos, o retrato da sua carreira em 4 dimensões.' },
-  { n: '02', t: 'Plano de ação', d: 'A metodologia transforma o diagnóstico em estratégias priorizadas, com cronograma e modelagem financeira.' },
-  { n: '03', t: 'Execução com a Nyta', d: 'A Nyta IA acompanha cada passo: tira dúvidas, sugere caminhos e ajuda a executar o plano no contexto dos seus dados.' },
-  { n: '04', t: 'Crescimento', d: 'Gerencie catálogo, agenda e equipe num só lugar e acompanhe a evolução da carreira ao longo do tempo.' },
+  { n: '01', t: 'Diagnóstico REAL', accent: PRODUCT_THEME.real.accent, d: 'Conecte seus dados e responda o que só você sabe. Em minutos, o retrato da sua carreira em 4 dimensões.' },
+  { n: '02', t: 'Planejamento estratégico', accent: PRODUCT_THEME.planning.accent, d: 'O diagnóstico vira um plano: visão, missão, objetivos e as estratégias certas pro seu momento — priorizadas.' },
+  { n: '03', t: 'Plano de ação', accent: PRODUCT_THEME.action.accent, d: 'As estratégias viram tarefas com progresso, prazos e responsáveis. Do "o que fazer" pro "feito".' },
+  { n: '04', t: 'Evolua e refaça', accent: NYTA_ACCENT, d: 'Execute, cresça e refaça o REAL pra ver sua fase subir. A Nyta IA acompanha cada passo do ciclo.' },
 ];
 
 const HowItWorks: FC = () => (
@@ -235,7 +252,7 @@ const HowItWorks: FC = () => (
       </div>
       <div className={styles.howGrid}>
         {STEPS.map((s, i) => (
-          <div key={s.n} className={styles.howStep}>
+          <div key={s.n} className={styles.howStep} style={{ ['--accent' as string]: s.accent } as React.CSSProperties}>
             {i < STEPS.length - 1 && <span className={styles.howLine} />}
             <div className={styles.howNum}>{s.n}</div>
             <h3>{s.t}</h3>
@@ -283,9 +300,14 @@ const Testimonials: FC = () => (
 
 // ─── Feature ─────────────────────────────────────────────────────────────────
 const Feature: FC<{ data: typeof FEATURES[number] }> = ({ data }) => (
-  <section className={`${styles.feature} ${data.reverse ? styles.reverse : ''}`}>
+  <section className={`${styles.feature} ${data.reverse ? styles.reverse : ''}`} style={{ ['--accent' as string]: data.accent } as React.CSSProperties}>
     <div className={styles.featureGrid}>
-      <div className={styles.featureVisual}><span className={styles.featureGlyph}>{data.glyph}</span></div>
+      <div
+        className={styles.featureVisual}
+        style={data.bg ? { backgroundImage: `linear-gradient(158deg, rgba(11,11,13,0.5) 0%, rgba(11,11,13,0.88) 100%), url(${data.bg})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+      >
+        <span className={styles.featureGlyph}>{data.glyph}</span>
+      </div>
       <div className={styles.featureBody}>
         <span className={styles.featureBadge}>{data.badge}</span>
         <h2 className={styles.featureTitle}>{data.title}</h2>
