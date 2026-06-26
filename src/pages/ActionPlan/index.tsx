@@ -15,6 +15,7 @@ import { Spinner } from '../../components/spinner/spinner';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { TaskProgress } from '../../components/RealCareerCard';
 import { PageHeader } from '../../components/PageHeader';
+import { PRODUCT_THEME, pageBg } from '../../components/productTheme';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
 import { TASK_OWNER_SELF } from '../../constants/maestra';
@@ -243,7 +244,7 @@ const ActionPlan: FC = () => {
   };
 
   return (
-    <div className="ap">
+    <div className="ap" style={{ minHeight: '100%', ...pageBg(PRODUCT_THEME.action.accent) }}>
       {/* CABEÇALHO padronizado (mesmo padrão de Diagnóstico/Planejamento — grupo CRESCIMENTO). */}
       <PageHeader
         kicker="Crescimento"

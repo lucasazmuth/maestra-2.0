@@ -5,10 +5,13 @@ import { FiArrowRight } from 'react-icons/fi';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
+import { useEntitlements } from '../../hooks/useEntitlements';
 import { useAppDispatch } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import { PageHeader } from '../../components/PageHeader';
+import { RedoRealBanner } from '../../components/RedoRealBanner';
+import { PRODUCT_THEME, pageBg } from '../../components/productTheme';
 import { RealCareerCard } from '../../components/RealCareerCard';
 import { PhaseSummary } from '../../components/PhaseSummary';
 import AdvancedPlan from '../ActionPlan/AdvancedPlan';
@@ -24,6 +27,7 @@ const Profile: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { editPlanning } = useArtistCapabilities(artist);
+  const { isPro } = useEntitlements();
 
   const content = artist?.content;
   const strategies = useMemo<Strategy[]>(() => content?.strategies || [], [content]);
@@ -63,8 +67,10 @@ const Profile: FC = () => {
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
+  const onRedo = () => navigate(isPro ? `/artists/${artist.id}/diagnostico/refazer` : '/assinatura');
+
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: 24, minHeight: '100%', ...pageBg(PRODUCT_THEME.planning.accent) }}>
       <PageHeader
         kicker="Crescimento"
         title="Planejamento estratégico"
@@ -73,6 +79,11 @@ const Profile: FC = () => {
 
       {/* FASE de carreira REAL (sem barra de progresso — progresso é do Plano de Ação). */}
       <RealCareerCard artist={artist} taskCounts={taskCounts} showProgress={false} />
+
+      {/* Loop do ciclo: executou o plano → refaz o REAL → sobe de fase. */}
+      {artist.content?.realIndex?.profile && (
+        <RedoRealBanner onRedo={onRedo} locked={!isPro} marginTop={0} />
+      )}
 
       {hasPlan ? (
         <>

@@ -4,17 +4,8 @@ import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 
 import type { Artist } from '../../interfaces/maestra';
 import { RealBadge, altasForPattern, tierForPattern } from '../RealBadge';
-import gradReal from './gradients/real.svg';
-import gradPlanning from './gradients/planning.svg';
-import gradAction from './gradients/action.svg';
+import { PRODUCT_THEME as PRODUCTS } from '../productTheme';
 import './journey.scss';
-
-// Identidade visual de cada produto do ciclo (cor + gradiente de fundo próprio).
-const PRODUCTS = {
-  real: { accent: '46, 196, 122', bg: gradReal },        // verde
-  planning: { accent: '74, 140, 255', bg: gradPlanning }, // azul
-  action: { accent: '205, 70, 175', bg: gradAction },     // magenta
-};
 
 // Hub "Jornada Maestra" (home do Dashboard): o ciclo de crescimento como 3 etapas conectadas —
 // REAL (onde estou) → Planejamento (para onde vou) → Plano de Ação (como chego) → ↺ re-diagnóstico.

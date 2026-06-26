@@ -1,12 +1,13 @@
 import { FC, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Spin } from 'antd';
-import { FiRotateCcw, FiRefreshCw, FiLock } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { useEntitlements } from '../../hooks/useEntitlements';
 import { PageHeader } from '../../components/PageHeader';
+import { RedoRealBanner } from '../../components/RedoRealBanner';
+import { PRODUCT_THEME, pageBg } from '../../components/productTheme';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 import styles from '../ArtistCreate/ArtistCreate.module.scss';
 
@@ -55,7 +56,7 @@ const DiagnosticView: FC = () => {
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ padding: 24, minHeight: '100%', ...pageBg(PRODUCT_THEME.real.accent) }}>
       {realIndex && (
         <PageHeader
           kicker="Crescimento"
@@ -74,33 +75,12 @@ const DiagnosticView: FC = () => {
           enableStickyCta={false}
           showPlanningCta={!artist?.content?.strategies?.length}
           hideHero
+          // Banner do loop logo abaixo do card "Seu perfil de carreira".
+          belowProfile={<RedoRealBanner onRedo={onRedo} locked={!isPro} marginTop={18} />}
         />
       ) : (
         <div style={{ background: '#181818', borderRadius: 12, padding: 32, textAlign: 'center', color: '#b3b3b3' }}>
           Este perfil ainda não tem um diagnóstico REAL salvo.
-        </div>
-      )}
-
-      {/* Loop do ciclo: executou o plano → refaz o REAL → sobe de fase. */}
-      {realIndex && (
-        <div
-          style={{
-            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-            marginTop: 24, padding: '14px 18px', borderRadius: 12,
-            background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.12)',
-          }}
-        >
-          <FiRotateCcw size={18} style={{ color: '#8a8a92', flexShrink: 0 }} />
-          <span style={{ color: '#cfcfd4', fontSize: 13.5 }}>
-            Executou o plano e cresceu? <b style={{ color: '#fff' }}>Refaça o REAL</b> pra ver sua fase subir.
-          </span>
-          <button
-            onClick={onRedo}
-            title={isPro ? 'Refaça o quiz e atualize seu perfil REAL' : 'Recurso PRO — assine para refazer'}
-            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '7px 14px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
-          >
-            {isPro ? <FiRefreshCw size={14} /> : <FiLock size={14} />} Refazer diagnóstico
-          </button>
         </div>
       )}
     </div>

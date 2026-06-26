@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Tooltip, message } from 'antd';
 import { FiChevronDown, FiArrowRight, FiDownload, FiShare2, FiHelpCircle, FiRefreshCw, FiLock } from 'react-icons/fi';
@@ -151,6 +151,8 @@ interface Props {
   heroSub?: string;
   // Esconde o hero interno (avatar + título + refazer) — a /diagnostico usa o PageHeader padrão.
   hideHero?: boolean;
+  // Conteúdo opcional renderizado logo ABAIXO do card "Seu perfil de carreira" (ex.: banner de refazer).
+  belowProfile?: ReactNode;
 }
 
 // Rótulos dos níveis de prêmios/imprensa do motor v2 (índice → texto p/ a exibição).
@@ -173,7 +175,7 @@ export const v2InputsView = (ri: any) => ({
 
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
 // Determinística: consome o realIndex calculado no backend (sem IA). Suporta v1 (antigo) e v2.
-export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false }) => {
+export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, belowProfile }) => {
   const [methodOpen, setMethodOpen] = useState(false);
   // v2 (motor REAL Consolidado) tem `version: 2` + `boletim`; v1 mantém o shape antigo.
   const riAny = realIndex as any;
@@ -368,6 +370,8 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
           </div>
         </div>
       </div>
+
+      {belowProfile}
 
       {/* SEÇÃO 3 — As 4 dimensões em detalhe */}
       <div className={`${styles.dimGrid} ${styles.reveal}`} style={{ animationDelay: '0.18s' }}>
