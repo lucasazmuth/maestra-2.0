@@ -8,6 +8,7 @@ import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import type { RealIndex } from '../../interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
 import DiagnosticDoc from './DiagnosticDoc';
+import { RealBadge, tierForAltas } from '../../components/RealBadge';
 import styles from './ArtistCreate.module.scss';
 
 export interface Chartmetric {
@@ -82,12 +83,12 @@ const DIM_META: { key: 'r' | 'e' | 'a' | 'l'; letter: string; name: string }[] =
 ];
 
 // Mapa dos 16 perfis por "andar" (nº de dimensões altas), do Icon (4) ao Beginner (0).
-const PROFILE_MAP: { tier: string; names: string[] }[] = [
-  { tier: '4 altas', names: ['Icon'] },
-  { tier: '3 altas', names: ['Hit', 'Spotlight', 'Underpaid', 'Analog'] },
-  { tier: '2 altas', names: ['Digital', 'Potential', 'Hype', 'Rising', 'Outlier', 'Bet'] },
-  { tier: '1 alta', names: ['Influencer', 'Moneymaker', 'Paradox', 'Cult'] },
-  { tier: '0 altas', names: ['Beginner'] },
+const PROFILE_MAP: { altas: number; tier: string; names: string[] }[] = [
+  { altas: 4, tier: '4 altas', names: ['Icon'] },
+  { altas: 3, tier: '3 altas', names: ['Hit', 'Spotlight', 'Underpaid', 'Analog'] },
+  { altas: 2, tier: '2 altas', names: ['Digital', 'Potential', 'Hype', 'Rising', 'Outlier', 'Bet'] },
+  { altas: 1, tier: '1 alta', names: ['Influencer', 'Moneymaker', 'Paradox', 'Cult'] },
+  { altas: 0, tier: '0 altas', names: ['Beginner'] },
 ];
 
 const CTA_TITLE = 'Você sabe onde está. Agora precisa saber para onde ir, e como.';
@@ -459,6 +460,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
         <div className={styles.profileMapTitle}>Sua posição entre os 16 perfis</div>
         {PROFILE_MAP.map((row) => (
           <div key={row.tier} className={styles.mapRow}>
+            <RealBadge tier={tierForAltas(row.altas)} label={String(row.altas)} size={38} />
             <span className={styles.mapTier}>{row.tier}</span>
             <div className={styles.mapChips}>
               {row.names.map((nm) => (
