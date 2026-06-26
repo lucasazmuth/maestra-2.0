@@ -138,7 +138,7 @@ const SingleChoiceCard: FC<{
         {options.map((o, i) => (
           <button
             key={o.value}
-            className='wiz-option-pill'
+            className='wiz-option-pill wiz-option-pill--single'
             style={{ animationDelay: `${i * 50}ms` }}
             onClick={() => onConfirm(o.value)}
           >
@@ -739,7 +739,7 @@ export const MissionFinancialChoice: FC<{ onConfirm: (tier: MissionFinancialTier
       {MISSION_FINANCIAL_OPTIONS.map((o, i) => (
         <button
           key={o.value}
-          className='wiz-option-pill'
+          className='wiz-option-pill wiz-option-pill--single'
           style={{ textAlign: 'left', animationDelay: `${i * 50}ms` }}
           onClick={() => onConfirm(o.value)}
         >

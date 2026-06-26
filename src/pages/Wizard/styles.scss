@@ -439,24 +439,34 @@
 
   // Indicador de seleção (radio): círculo sempre visível à esquerda — deixa CLARO que o item é
   // selecionável. Vazio = não escolhido; preenchido = escolhido. Vale pra todos os widgets de opção.
+  // Indicador de seleção. PADRÃO = CHECKBOX (quadrado arredondado) p/ MÚLTIPLA escolha.
+  // Variante --single = RADIO (círculo) p/ escolha ÚNICA. Marcado = magenta + check (multi) /
+  // ponto branco (single). Padronizado com o checklist do SWOT.
   &::before {
     content: '';
     flex: 0 0 auto;
     width: 16px;
     height: 16px;
-    border-radius: 50%;
+    border-radius: 5px;
     border: 2px solid #707070;
-    background: transparent;
-    transition: border-color 0.2s, background 0.2s;
+    background-color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 11px;
+    transition: border-color 0.2s, background-color 0.2s;
   }
 
   &:hover::before {
     border-color: #fff;
   }
 
-  // O ícone de check inline antigo some — o círculo ::before já comunica a seleção.
+  // O ícone de check inline antigo some — o ::before já comunica a seleção.
   .wiz-option-check {
     display: none;
+  }
+
+  &--single::before {
+    border-radius: 50%; // escolha única = radio
   }
 
   &--selected {
@@ -466,16 +476,18 @@
 
     &::before {
       border-color: #fff;
-      background: radial-gradient(circle, #fff 0 4px, transparent 5px);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
     }
 
-    &:hover {
-      border-color: transparent;
-
-      &::before {
-        border-color: #fff;
-      }
+    &:hover::before {
+      border-color: #fff;
     }
+  }
+
+  // Radio (single) selecionado: ponto branco, sem check.
+  &--single#{&}--selected::before {
+    background-image: none;
+    background: radial-gradient(circle, #fff 0 4px, transparent 5px);
   }
 
   &--pulse {
@@ -486,6 +498,11 @@
     background: transparent;
     border: 1px dashed #555;
     color: #b3b3b3;
+
+    // "Outro" é ação (abre campo), não uma opção selecionável → sem checkbox/radio.
+    &::before {
+      display: none;
+    }
 
     &:hover {
       border-color: #fff;
@@ -671,17 +688,19 @@
   animation: wizPillIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
   transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
 
-  // Mesmo indicador radio dos pills de opção: deixa claro que o chip é SELECIONÁVEL (vazio) /
-  // escolhido (preenchido). Sem isso, parecia uma lista de itens já adicionados.
+  // Valores/Gênero são MÚLTIPLA escolha → CHECKBOX quadrado (padronizado com option-pill/SWOT).
   &::before {
     content: '';
     flex: 0 0 auto;
     width: 15px;
     height: 15px;
-    border-radius: 50%;
+    border-radius: 5px;
     border: 2px solid #707070;
-    background: transparent;
-    transition: border-color 0.2s, background 0.2s;
+    background-color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 10px;
+    transition: border-color 0.2s, background-color 0.2s;
   }
 
   &:hover {
@@ -700,7 +719,7 @@
 
     &::before {
       border-color: #fff;
-      background: radial-gradient(circle, #fff 0 4px, transparent 5px);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
     }
   }
 }
