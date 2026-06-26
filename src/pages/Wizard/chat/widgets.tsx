@@ -842,11 +842,12 @@ export const ValueChips: FC<{
   const MAX = 5;
   const MIN = 3;
 
+  const limitMsg = `Você já selecionou ${MAX} valores. Remova um para escolher outro.`;
   const toggle = (v: string) =>
     setSelected((sel) => {
       if (sel.includes(v)) return sel.filter((x) => x !== v);
       if (sel.length >= MAX) {
-        toast.warning(`Máximo de ${MAX} valores.`);
+        toast.warning(limitMsg);
         return sel;
       }
       return [...sel, v];
@@ -859,7 +860,7 @@ export const ValueChips: FC<{
     setSelected((sel) => {
       if (sel.some((s) => s.toLowerCase() === t.toLowerCase())) return sel;
       if (sel.length >= MAX) {
-        toast.warning(`Você já tem ${MAX} marcados, desmarque um para incluir o seu.`);
+        toast.warning(limitMsg);
         return sel;
       }
       return [...sel, t];
@@ -868,6 +869,7 @@ export const ValueChips: FC<{
 
   return (
     <div className='nyta-card'>
+      <div className='wiz-card-title'>Seus valores</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {options.map((v, i) => {
           const active = selected.includes(v);

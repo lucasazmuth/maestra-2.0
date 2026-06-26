@@ -389,16 +389,24 @@
   max-width: 720px;
 }
 
+// Título opcional no topo de um card de interação (ex.: "Seus valores"). Pequeno e coerente.
+.wiz-card-title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
 .wiz-option-pill {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   border-radius: 9999px;
-  padding: 12px 22px;
+  padding: 8px 16px;
   background: #2a2a2a;
   border: 1px solid transparent;
   color: #fff;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
@@ -434,8 +442,8 @@
   &::before {
     content: '';
     flex: 0 0 auto;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     border: 2px solid #707070;
     background: transparent;
@@ -458,7 +466,7 @@
 
     &::before {
       border-color: #fff;
-      background: radial-gradient(circle, #fff 0 5px, transparent 6px);
+      background: radial-gradient(circle, #fff 0 4px, transparent 5px);
     }
 
     &:hover {
