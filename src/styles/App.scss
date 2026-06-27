@@ -575,7 +575,36 @@ h3 {
   display: none;
 }
 
+// Chip do artista no header só existe no mobile (no desktop o artista aparece na sidebar).
+.topbar-artist {
+  display: none;
+}
+
 @media (max-width: $desktop-breakpoint) {
+  // No header mobile: troca as setas de navegação pelo chip do artista atual.
+  .topbar-navarrows {
+    display: none !important;
+  }
+  .topbar-artist {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    max-width: 150px;
+    padding: 3px 12px 3px 3px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+    cursor: pointer;
+  }
+  .topbar-artist-name {
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .mobile-nav {
     position: fixed;
     left: 0;

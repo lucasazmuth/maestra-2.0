@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Dropdown, Space, type MenuProps } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FiLogOut } from 'react-icons/fi';
 import { NotificationIcon, ConfigIcon } from '../../../Icons/system';
@@ -15,7 +15,13 @@ import { ReactComponent as MaestraLogo } from '../../../../assets/maestra-logo.s
 export const Topbar = memo(() => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [t] = useTranslation(['navigation']);
+
+  // Artista do contexto atual (rota /artists/:id…) — usado no chip do header mobile, pra o usuário
+  // sempre saber de quem são os dados que está vendo (no mobile a sidebar com o artista some).
+  const artistId = pathname.match(/^\/artists\/([^/]+)/)?.[1];
+  const currentArtist = useAppSelector((s) => (artistId ? s.artists.items.find((a) => a.id === artistId) : undefined));
 
   const user = useAppSelector((s) => s.auth.user);
   const meta = (user?.user_metadata || {}) as Record<string, any>;
@@ -76,8 +82,26 @@ export const Topbar = memo(() => {
             }
           }}
         />
-        <ForwardBackwardsButton flip />
-        <ForwardBackwardsButton flip={false} />
+        <span className='topbar-navarrows' style={{ display: 'inline-flex', gap: 8 }}>
+          <ForwardBackwardsButton flip />
+          <ForwardBackwardsButton flip={false} />
+        </span>
+
+        {/* Chip do artista atual — só aparece no mobile (a sidebar com o artista some lá). */}
+        {currentArtist && (
+          <button
+            className='topbar-artist'
+            onClick={() => navigate('/artists')}
+            title={`${currentArtist.name} — trocar de artista`}
+          >
+            <img
+              src={currentArtist.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE}
+              alt={currentArtist.name}
+              style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+            />
+            <span className='topbar-artist-name'>{currentArtist.name}</span>
+          </button>
+        )}
       </Space>
 
       <Space size={16} align='center'>
