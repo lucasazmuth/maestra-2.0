@@ -659,48 +659,45 @@ h3 {
     line-height: 1;
   }
 
-  // Bottom sheet "Mais" — módulos que não cabem na tab bar.
+  // Menu "Mais" — popover ancorado ACIMA da tab "Mais" (a navbar continua visível).
   .mobile-more-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 100;
-    background: rgba(0, 0, 0, 0.5);
+    z-index: 99; // abaixo da navbar (100): a barra continua visível/clara, só o conteúdo escurece
+    background: rgba(0, 0, 0, 0.4);
     animation: moreFade 0.18s ease;
   }
-  // Bottom sheet completo: sobe da borda inferior cobrindo a navbar (não flutua acima dela).
   .mobile-more-sheet {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 101;
-    background: #161616;
-    border-top: 1px solid #2a2a2a;
-    border-radius: 18px 18px 0 0;
-    padding: 6px 12px calc(16px + env(safe-area-inset-bottom, 0px));
-    box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.6);
-    animation: moreUp 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+    right: 8px;
+    bottom: calc(56px + 8px + env(safe-area-inset-bottom, 0px)); // logo acima da navbar
+    z-index: 101; // acima da navbar
+    width: 232px;
+    max-width: calc(100vw - 16px);
+    background: #1d1d1d;
+    border: 1px solid #2f2f2f;
+    border-radius: 14px;
+    padding: 6px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    transform-origin: bottom right;
+    animation: morePop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .mobile-more-handle {
-    width: 36px;
-    height: 4px;
-    border-radius: 2px;
-    background: #3a3a3a;
-    margin: 4px auto 8px;
+    display: none; // não é mais um bottom sheet com "alça"
   }
   .mobile-more-item {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 13px;
     width: 100%;
     background: none;
     border: none;
     cursor: pointer;
     text-align: left;
     color: #cfcfd4;
-    font-size: 15px;
+    font-size: 14.5px;
     font-weight: 600;
-    padding: 13px 10px;
+    padding: 12px 12px;
     border-radius: 10px;
 
     &--active {
@@ -715,7 +712,7 @@ h3 {
   .mobile-more-item--active .mobile-more-ic {
     color: #fff;
   }
-  @keyframes moreUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes morePop { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
   @keyframes moreFade { from { opacity: 0; } to { opacity: 1; } }
 
   // ArtistHero: no mobile empilha (foto em cima, centralizado) e reduz o título.
