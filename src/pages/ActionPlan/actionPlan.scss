@@ -854,3 +854,11 @@
 .ap-adv-history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 .ap-adv-history li { color: #d6d6d6; font-size: 14px; }
 .ap-adv-history li span { color: #8a8a8a; font-size: 12px; margin-left: 8px; }
+
+/* Mobile: o card "Progresso do plano" enxuto (não toma a tela toda) */
+@media (max-width: 768px) {
+  .ap-progress-card { padding: 16px !important; margin-bottom: 16px !important; }
+  .ap-progress-title { font-size: 19px !important; }
+  /* Linha do loop (refaça o REAL) sai no mobile — o nudge já vive no Diagnóstico. */
+  .ap-progress-loop { display: none !important; }
+}

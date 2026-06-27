@@ -253,13 +253,13 @@ const ActionPlan: FC = () => {
       />
 
       {/* Progresso das tarefas (só execução; a FASE REAL agora vive no Perfil). */}
-      <div style={{ background: 'radial-gradient(120% 130% at 0% 0%, rgba(175,40,150,0.10), #181818 60%)', border: '1px solid rgba(175,40,150,0.22)', borderRadius: 14, padding: 22, marginBottom: 24 }}>
+      <div className="ap-progress-card" style={{ background: 'radial-gradient(120% 130% at 0% 0%, rgba(175,40,150,0.10), #181818 60%)', border: '1px solid rgba(175,40,150,0.22)', borderRadius: 14, padding: 22, marginBottom: 24 }}>
         <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#af2896' }}>Progresso do plano</span>
-        <h2 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 24, color: '#fff', margin: '6px 0 0', lineHeight: 1.1 }}>Suas tarefas</h2>
+        <h2 className="ap-progress-title" style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 24, color: '#fff', margin: '6px 0 0', lineHeight: 1.1 }}>Suas tarefas</h2>
         <TaskProgress counts={taskCounts} />
 
         {/* Loop com o REAL: executar tarefas → crescer → refazer o diagnóstico → subir de fase. */}
-        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div className="ap-progress-loop" style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ color: '#b3b3b3', fontSize: 13.5, lineHeight: 1.5 }}>
             Concluir tarefas faz sua carreira evoluir. Quando avançar, <b style={{ color: '#fff' }}>refaça o REAL</b> pra ver sua fase subir.
           </span>
