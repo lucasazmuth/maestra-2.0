@@ -41,7 +41,7 @@ export const AppLayout: FC = memo(() => {
   const hasMobileNav = /^\/artists\/[^/]+/.test(location.pathname);
   // Reserva do banner é justa por viewport (desktop ~1 linha = 78px; mobile 2 linhas = 92px) pra
   // não sobrar espaço preto abaixo dele. No mobile soma a tab bar (56px).
-  const bottomReserve = (bannerKind ? (isMobile ? 84 : 76) : 0) + (isMobile && hasMobileNav ? 56 : 0);
+  const bottomReserve = (bannerKind ? (isMobile ? 84 : 76) : 0) + (isMobile && hasMobileNav ? 86 : 0);
 
   // Carrega o status da assinatura uma vez ao autenticar, de forma global —
   // assim o banner e (futuramente) os entitlements refletem a realidade sem
