@@ -585,6 +585,10 @@ h3 {
   .topbar-navarrows {
     display: none !important;
   }
+  // Com artista selecionado, esconde a logo (o chip do artista já volta pra /artists).
+  .topbar-logo--hide-mobile {
+    display: none !important;
+  }
   .topbar-artist {
     display: inline-flex !important;
     align-items: center;

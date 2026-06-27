@@ -69,7 +69,7 @@ export const Topbar = memo(() => {
         <MaestraLogo
           width={36}
           height={36}
-          className='maestra-logo-live'
+          className={`maestra-logo-live topbar-logo${currentArtist ? ' topbar-logo--hide-mobile' : ''}`}
           role='button'
           aria-label='Ir para Seus artistas'
           tabIndex={0}
