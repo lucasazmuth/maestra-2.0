@@ -667,18 +667,19 @@ h3 {
     background: rgba(0, 0, 0, 0.5);
     animation: moreFade 0.18s ease;
   }
+  // Bottom sheet completo: sobe da borda inferior cobrindo a navbar (não flutua acima dela).
   .mobile-more-sheet {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 56px;
+    bottom: 0;
     z-index: 101;
-    background: #141414;
-    border-top: 1px solid #232323;
-    border-radius: 16px 16px 0 0;
-    padding: 6px 12px 14px;
-    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.5);
-    animation: moreUp 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #161616;
+    border-top: 1px solid #2a2a2a;
+    border-radius: 18px 18px 0 0;
+    padding: 6px 12px calc(16px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.6);
+    animation: moreUp 0.26s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .mobile-more-handle {
     width: 36px;
