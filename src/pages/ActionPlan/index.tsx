@@ -16,6 +16,7 @@ import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState'
 import { TaskProgress } from '../../components/RealCareerCard';
 import { PageHeader } from '../../components/PageHeader';
 import { PRODUCT_THEME, pageBg } from '../../components/productTheme';
+import { PlanoAcaoIcon } from '../../components/Icons/system';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
 import { TASK_OWNER_SELF } from '../../constants/maestra';
@@ -252,8 +253,27 @@ const ActionPlan: FC = () => {
         subtitle="Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase."
       />
 
-      {/* Progresso das tarefas (só execução; a FASE REAL agora vive no Perfil). */}
-      <div className="ap-progress-card" style={{ background: 'radial-gradient(120% 130% at 0% 0%, rgba(175,40,150,0.10), #181818 60%)', border: '1px solid rgba(175,40,150,0.22)', borderRadius: 14, padding: 22, marginBottom: 24 }}>
+      {/* Progresso das tarefas — mesmo fundo do card de Plano de Ação na jornada (gradiente + ícone). */}
+      <div
+        className="ap-progress-card"
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          backgroundColor: '#0c0c0e',
+          backgroundImage: `linear-gradient(158deg, rgba(11,11,13,0.55) 0%, rgba(11,11,13,0.82) 52%, rgba(11,11,13,0.94) 100%), url(${PRODUCT_THEME.action.bg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          border: `1px solid rgba(${PRODUCT_THEME.action.accent},0.28)`,
+          boxShadow: '0 12px 32px -16px rgba(0,0,0,0.7)',
+          borderRadius: 14,
+          padding: 22,
+          marginBottom: 24,
+        }}
+      >
+        {/* Ícone decorativo do produto, grande e translúcido no canto (igual ao card da jornada). */}
+        <span aria-hidden style={{ position: 'absolute', right: -12, bottom: -18, color: `rgb(${PRODUCT_THEME.action.accent})`, opacity: 0.1, pointerEvents: 'none', lineHeight: 0 }}>
+          <span style={{ display: 'block', width: 150, height: 150 }}><PlanoAcaoIcon size={150} /></span>
+        </span>
         <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#af2896' }}>Progresso do plano</span>
         <h2 className="ap-progress-title" style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 24, color: '#fff', margin: '6px 0 0', lineHeight: 1.1 }}>Suas tarefas</h2>
         <TaskProgress counts={taskCounts} />
