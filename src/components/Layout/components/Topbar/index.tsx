@@ -97,7 +97,7 @@ export const Topbar = memo(() => {
             <img
               src={currentArtist.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE}
               alt={currentArtist.name}
-              style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
             />
             <span className='topbar-artist-name'>{currentArtist.name}</span>
           </button>
