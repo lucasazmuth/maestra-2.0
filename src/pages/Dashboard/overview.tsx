@@ -1,6 +1,7 @@
 import { CSSProperties, FC, ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiCheckSquare, FiCalendar, FiMusic, FiUsers, FiChevronRight } from 'react-icons/fi';
+import { FiChevronRight } from 'react-icons/fi';
+import { PlanoAcaoIcon, AgendaIcon, CatalogoIcon, EquipeIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 
 import { listEvents } from '../../services/db/events';
@@ -98,7 +99,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
       <h2 style={sectionTitle}>Visão geral</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16 }}>
         {/* Próximas tarefas — timeline */}
-        <Panel icon={<FiCheckSquare size={16} />} title="Próximas tarefas" action={{ label: 'Plano de ação', onClick: () => go('action-plan') }}>
+        <Panel icon={<PlanoAcaoIcon size={18} />} title="Próximas tarefas" action={{ label: 'Plano de ação', onClick: () => go('action-plan') }}>
           {upcomingTasks.length === 0 ? (
             <Empty text="Nenhuma tarefa pendente." />
           ) : (
@@ -171,7 +172,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
         </Panel>
 
         {/* Próximos eventos */}
-        <Panel icon={<FiCalendar size={16} />} title="Próximos eventos" action={{ label: 'Agenda', onClick: () => go('agenda') }}>
+        <Panel icon={<AgendaIcon size={18} />} title="Próximos eventos" action={{ label: 'Agenda', onClick: () => go('agenda') }}>
           {upcomingEvents.length === 0 ? (
             <Empty text="Nenhum evento agendado." />
           ) : (
@@ -213,7 +214,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
         </Panel>
 
         {/* Catálogo (sistema) — itens manuais (aba "Faixas / Rascunho" da página de Catálogo) */}
-        <Panel icon={<FiMusic size={16} />} title="Faixas / Rascunho" action={{ label: 'Catálogo', onClick: () => go('catalog') }}>
+        <Panel icon={<CatalogoIcon size={18} />} title="Faixas / Rascunho" action={{ label: 'Catálogo', onClick: () => go('catalog') }}>
           {items.length === 0 ? (
             <Empty text="Nenhuma faixa no catálogo ainda." />
           ) : (
@@ -233,7 +234,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
         </Panel>
 
         {/* Equipe atual */}
-        <Panel icon={<FiUsers size={16} />} title="Equipe atual" action={{ label: 'Equipe', onClick: () => go('team') }}>
+        <Panel icon={<EquipeIcon size={18} />} title="Equipe atual" action={{ label: 'Equipe', onClick: () => go('team') }}>
           {activeMembers.length === 0 ? (
             <Empty text="Nenhum membro na equipe ainda." />
           ) : (
