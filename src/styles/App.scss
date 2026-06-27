@@ -589,6 +589,12 @@ h3 {
   .topbar-logo--hide-mobile {
     display: none !important;
   }
+  // Colapsa também o wrapper .ant-space-item dos itens ocultos (logo/setas), senão o gap da Space
+  // deixa um espaço fantasma à esquerda — o chip do artista alinha à borda (16px, igual ao avatar).
+  .ant-space-item:has(> .topbar-navarrows),
+  .ant-space-item:has(> .topbar-logo--hide-mobile) {
+    display: none !important;
+  }
   .topbar-artist {
     display: inline-flex !important;
     align-items: center;
