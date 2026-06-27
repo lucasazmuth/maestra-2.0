@@ -68,7 +68,9 @@ export const TaskProgress: FC<{ counts: TaskCounts }> = ({ counts }) => {
   );
 };
 
-export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?: CSSProperties; showProgress?: boolean }> = ({ artist, taskCounts, style, showProgress = true }) => {
+// `compact` (ex.: tela de Planejamento, onde o destaque é o dossiê) reduz o card à fase + a escada,
+// escondendo a descrição, as letras R·E·A·L e o CTA do Plano de Ação.
+export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?: CSSProperties; showProgress?: boolean; compact?: boolean }> = ({ artist, taskCounts, style, showProgress = true, compact = false }) => {
   const navigate = useNavigate();
   const ri = artist.content?.realIndex;
 
@@ -115,31 +117,37 @@ export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?
         </div>
       </div>
 
-      <p style={{ fontSize: 14, lineHeight: 1.5, color: '#cfcfd4', margin: '0 0 14px', maxWidth: 560 }}>
-        {clean(ri.profile.description)}
-      </p>
+      {!compact && (
+        <p style={{ fontSize: 14, lineHeight: 1.5, color: '#cfcfd4', margin: '0 0 14px', maxWidth: 560 }}>
+          {clean(ri.profile.description)}
+        </p>
+      )}
 
-      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-        {DIMS.map((d) => {
-          const high = ri.pattern[d.k];
-          return (
-            <div key={d.k} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: 'italic', fontWeight: 700, fontSize: 26, lineHeight: 1, letterSpacing: '0.01em', color: high ? `rgb(${accent})` : '#71717a' }}>{d.letter}</span>
-              <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: high ? '#cfcfd4' : '#8a8a92' }}>{high ? 'Alto' : 'Baixo'}</span>
-            </div>
-          );
-        })}
-      </div>
+      {!compact && (
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+          {DIMS.map((d) => {
+            const high = ri.pattern[d.k];
+            return (
+              <div key={d.k} style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: 'italic', fontWeight: 700, fontSize: 26, lineHeight: 1, letterSpacing: '0.01em', color: high ? `rgb(${accent})` : '#71717a' }}>{d.letter}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: high ? '#cfcfd4' : '#8a8a92' }}>{high ? 'Alto' : 'Baixo'}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Escada de níveis (fase atual + próximo + o que falta) — a gamificação do REAL. */}
-      <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid rgba(${accent},0.18)` }}>
+      <div style={{ marginTop: compact ? 4 : 18, paddingTop: compact ? 0 : 16, borderTop: compact ? 'none' : `1px solid rgba(${accent},0.18)` }}>
         <RealLevelLadder ri={ri} />
-        <button
-          onClick={() => navigate(`/artists/${artist.id}/action-plan`)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 12, background: 'transparent', border: `1px solid rgba(${accent},0.5)`, color: `rgb(${accent})`, padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
-        >
-          Como subir? Execute seu Plano de Ação <FiArrowRight size={14} />
-        </button>
+        {!compact && (
+          <button
+            onClick={() => navigate(`/artists/${artist.id}/action-plan`)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 12, background: 'transparent', border: `1px solid rgba(${accent},0.5)`, color: `rgb(${accent})`, padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+          >
+            Como subir? Execute seu Plano de Ação <FiArrowRight size={14} />
+          </button>
+        )}
       </div>
 
       {showProgress && <TaskProgress counts={taskCounts} />}

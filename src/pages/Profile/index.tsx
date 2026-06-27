@@ -78,7 +78,7 @@ const Profile: FC = () => {
       />
 
       {/* FASE de carreira REAL (sem barra de progresso — progresso é do Plano de Ação). */}
-      <RealCareerCard artist={artist} taskCounts={taskCounts} showProgress={false} />
+      <RealCareerCard artist={artist} taskCounts={taskCounts} showProgress={false} compact />
 
       {/* Loop do ciclo: executou o plano → refaz o REAL → sobe de fase. */}
       {artist.content?.realIndex?.profile && (
