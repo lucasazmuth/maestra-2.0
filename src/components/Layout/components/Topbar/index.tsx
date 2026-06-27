@@ -97,7 +97,7 @@ export const Topbar = memo(() => {
             <img
               src={currentArtist.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE}
               alt={currentArtist.name}
-              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+              style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
             />
             <span className='topbar-artist-name'>{currentArtist.name}</span>
           </button>
@@ -140,7 +140,7 @@ export const Topbar = memo(() => {
             <img
               src={avatar}
               alt={displayName}
-              style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
+              style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
             />
           </button>
         </Dropdown>
