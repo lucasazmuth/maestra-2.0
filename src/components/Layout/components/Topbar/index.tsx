@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Dropdown, Space, type MenuProps } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiLogOut } from 'react-icons/fi';
+import { FiLogOut, FiChevronDown } from 'react-icons/fi';
 import { NotificationIcon, ConfigIcon } from '../../../Icons/system';
 
 import ForwardBackwardsButton from '../Navbar/ForwardBackwardsButton';
@@ -100,6 +100,7 @@ export const Topbar = memo(() => {
               style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
             />
             <span className='topbar-artist-name'>{currentArtist.name}</span>
+            <FiChevronDown size={15} style={{ color: '#9a9aa5', flexShrink: 0 }} />
           </button>
         )}
       </Space>

@@ -599,14 +599,16 @@ h3 {
     display: inline-flex !important;
     align-items: center;
     gap: 8px;
-    max-width: 150px;
-    padding: 2px 12px 2px 2px;
+    max-width: 168px;
+    padding: 2px 8px 2px 2px;
     background: rgba(255, 255, 255, 0.07);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 9999px;
     cursor: pointer;
   }
   .topbar-artist-name {
+    min-width: 0;
+    flex: 0 1 auto;
     color: #fff;
     font-size: 13px;
     font-weight: 700;
