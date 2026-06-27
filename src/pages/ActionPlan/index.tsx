@@ -259,11 +259,11 @@ const ActionPlan: FC = () => {
         style={{
           position: 'relative',
           overflow: 'hidden',
-          backgroundColor: '#0c0c0e',
-          backgroundImage: `linear-gradient(158deg, rgba(11,11,13,0.55) 0%, rgba(11,11,13,0.82) 52%, rgba(11,11,13,0.94) 100%), url(${PRODUCT_THEME.action.bg})`,
+          backgroundColor: '#0e0e10',
+          backgroundImage: `linear-gradient(158deg, rgba(12,12,14,0.74) 0%, rgba(12,12,14,0.90) 52%, rgba(12,12,14,0.97) 100%), url(${PRODUCT_THEME.action.bg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          border: `1px solid rgba(${PRODUCT_THEME.action.accent},0.28)`,
+          border: `1px solid rgba(${PRODUCT_THEME.action.accent},0.16)`,
           boxShadow: '0 12px 32px -16px rgba(0,0,0,0.7)',
           borderRadius: 14,
           padding: 22,
@@ -271,7 +271,7 @@ const ActionPlan: FC = () => {
         }}
       >
         {/* Ícone decorativo do produto, grande e translúcido no canto (igual ao card da jornada). */}
-        <span aria-hidden style={{ position: 'absolute', right: -12, bottom: -18, color: `rgb(${PRODUCT_THEME.action.accent})`, opacity: 0.1, pointerEvents: 'none', lineHeight: 0 }}>
+        <span aria-hidden style={{ position: 'absolute', right: -12, bottom: -18, color: `rgb(${PRODUCT_THEME.action.accent})`, opacity: 0.06, pointerEvents: 'none', lineHeight: 0 }}>
           <span style={{ display: 'block', width: 150, height: 150 }}><PlanoAcaoIcon size={150} /></span>
         </span>
         <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#af2896' }}>Progresso do plano</span>

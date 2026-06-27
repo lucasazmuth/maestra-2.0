@@ -16,7 +16,7 @@ export const PRODUCT_THEME = {
 // fixo no viewport. Dá coerência cromática entre Dashboard e as páginas, sem atrapalhar a leitura.
 export const pageBg = (accent: string): CSSProperties => ({
   backgroundColor: '#0a0a0c',
-  backgroundImage: `radial-gradient(120% 55% at 50% -8%, rgba(${accent},0.16) 0%, rgba(${accent},0.06) 38%, transparent 68%)`,
+  backgroundImage: `radial-gradient(120% 50% at 50% -10%, rgba(${accent},0.10) 0%, rgba(${accent},0.035) 36%, transparent 64%)`,
   backgroundAttachment: 'fixed',
   backgroundRepeat: 'no-repeat',
 });
