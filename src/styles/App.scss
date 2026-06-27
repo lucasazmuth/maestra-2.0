@@ -620,6 +620,83 @@ h3 {
     line-height: 1;
   }
 
+  // Bottom sheet "Mais" — módulos que não cabem na tab bar.
+  .mobile-more-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.5);
+    animation: moreFade 0.18s ease;
+  }
+  .mobile-more-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 56px;
+    z-index: 101;
+    background: #141414;
+    border-top: 1px solid #232323;
+    border-radius: 16px 16px 0 0;
+    padding: 6px 12px 14px;
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.5);
+    animation: moreUp 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .mobile-more-handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: #3a3a3a;
+    margin: 4px auto 8px;
+  }
+  .mobile-more-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: #cfcfd4;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 13px 10px;
+    border-radius: 10px;
+
+    &--active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+  }
+  .mobile-more-ic {
+    display: flex;
+    color: #b3b3b3;
+  }
+  .mobile-more-item--active .mobile-more-ic {
+    color: #fff;
+  }
+  @keyframes moreUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes moreFade { from { opacity: 0; } to { opacity: 1; } }
+
+  // ArtistHero: no mobile empilha (foto em cima, centralizado) e reduz o título.
+  .artist-hero {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center;
+    gap: 14px !important;
+    padding: 20px !important;
+  }
+  .artist-hero-img {
+    width: 96px !important;
+    height: 96px !important;
+  }
+  .artist-hero-name {
+    font-size: 26px !important;
+  }
+  .artist-hero-meta {
+    justify-content: center;
+  }
+
   // A barra (56px) entra na reserva de altura do conteúdo, somada ao banner (84px no mobile) quando houver.
   .main-container.has-mobile-nav .Main-section {
     height: calc(100vh - 64px - 56px);
