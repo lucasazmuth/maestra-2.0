@@ -2,7 +2,7 @@ import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Tooltip, message } from 'antd';
 import { FiChevronDown, FiArrowRight, FiShare2, FiHelpCircle, FiRefreshCw, FiLock } from 'react-icons/fi';
-import { DownloadIcon } from '../../components/Icons/system';
+import { DownloadIcon, DiagnosticoIcon } from '../../components/Icons/system';
 
 import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
@@ -323,6 +323,10 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
 
       {/* SEÇÃO 2 — O perfil REAL */}
       <div ref={profileRef} className={`${styles.realProfileCard} ${styles.reveal}`} style={{ animationDelay: '0.1s' }}>
+        {/* Ícone decorativo do REAL, grande e translúcido no canto (segue a cor do tier). */}
+        <span data-noexport="1" aria-hidden style={{ position: 'absolute', right: -14, bottom: -20, color: 'rgb(var(--real-accent, 175, 40, 150))', opacity: 0.08, pointerEvents: 'none', lineHeight: 0 }}>
+          <span style={{ display: 'block', width: 170, height: 170 }}><DiagnosticoIcon size={170} /></span>
+        </span>
         {/* Refazer diagnóstico: sutil, no canto do card (não exportado no PDF/share). */}
         {onRedo && (
           <button
