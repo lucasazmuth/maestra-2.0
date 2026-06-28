@@ -472,7 +472,8 @@
 .cityBar {
   height: 100%;
   border-radius: 9999px;
-  background: linear-gradient(90deg, #af2896, #d264bb);
+  // Segue a cor do perfil (tier 0–4) via --real-accent.
+  background: linear-gradient(90deg, rgb(var(--real-accent, 175, 40, 150)), rgba(var(--real-accent, 175, 40, 150), 0.72));
   animation: acBarGrow 0.7s ease both;
 }
 
@@ -501,11 +502,11 @@
   line-height: 1.5;
 }
 
-.bulletDot { color: #af2896; flex-shrink: 0; }
+.bulletDot { color: rgb(var(--real-accent, 175, 40, 150)); flex-shrink: 0; }
 
 // Oportunidade: fio de acento à esquerda, sem caixa colorida.
 .diagOpp {
-  border-left: 2px solid #af2896;
+  border-left: 2px solid rgb(var(--real-accent, 175, 40, 150));
   padding: 2px 0 2px 18px;
   font-size: 15.5px;
   line-height: 1.5;
@@ -518,7 +519,7 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #af2896;
+  color: rgb(var(--real-accent, 175, 40, 150));
   margin-bottom: 6px;
 }
 
@@ -1074,7 +1075,7 @@
 .insightsTitle { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; margin-bottom: 14px; }
 .insightsList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 13px; }
 .insightsList li { display: flex; gap: 11px; font-size: 14.5px; line-height: 1.5; color: #d4d4d8; }
-.insightDot { color: #af2896; flex-shrink: 0; font-weight: 800; }
+.insightDot { color: rgb(var(--real-accent, 175, 40, 150)); flex-shrink: 0; font-weight: 800; }
 
 // SEÇÃO 5 — CTA
 .ctaBlock { text-align: center; margin-bottom: 28px; }
@@ -1092,7 +1093,7 @@
 .twGhost { visibility: hidden; }
 
 // Caret do efeito "digitando"
-.twCaret { display: inline-block; width: 2px; height: 1em; margin-left: 3px; background: #af2896; vertical-align: text-bottom; animation: twBlink 0.85s steps(1) infinite; }
+.twCaret { display: inline-block; width: 2px; height: 1em; margin-left: 3px; background: rgb(var(--real-accent, 175, 40, 150)); vertical-align: text-bottom; animation: twBlink 0.85s steps(1) infinite; }
 @keyframes twBlink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
 
 // Botão do CTA "surgindo" depois que o texto termina de digitar
@@ -1169,11 +1170,11 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 .mapChipOn {
-  color: #fff;
-  background: #af2896;
-  border-color: #af2896;
+  color: #000;
+  background: rgb(var(--real-accent, 175, 40, 150));
+  border-color: rgb(var(--real-accent, 175, 40, 150));
   font-weight: 800;
-  box-shadow: 0 4px 16px rgba(175, 40, 150, 0.3);
+  box-shadow: 0 4px 16px rgba(var(--real-accent, 175, 40, 150), 0.3);
 }
 
 @media (prefers-reduced-motion: reduce) {

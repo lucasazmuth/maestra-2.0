@@ -449,7 +449,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
                   <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
                     <span style={{ color: '#71717a', width: 18, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>
                     <span style={{ color: '#fff', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
-                    {p.editorial && <span style={{ fontSize: 10, fontWeight: 700, color: '#af2896', border: '1px solid rgba(175,40,150,0.4)', borderRadius: 4, padding: '1px 5px' }}>Editorial</span>}
+                    {p.editorial && <span style={{ fontSize: 10, fontWeight: 700, color: 'rgb(var(--real-accent, 175, 40, 150))', border: '1px solid rgba(var(--real-accent, 175, 40, 150), 0.4)', borderRadius: 4, padding: '1px 5px' }}>Editorial</span>}
                     {p.followers != null && <span style={{ color: '#8a8a92', fontVariantNumeric: 'tabular-nums' }}>{fmtNum(p.followers)}</span>}
                   </div>
                 ))}
