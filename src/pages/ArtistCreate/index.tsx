@@ -419,8 +419,8 @@ const ArtistCreate: FC = () => {
                   </div>
                 )}
 
-                {/* Modo busca no Spotify (padrão) */}
-                {!noSpotify && (
+                {/* Modo busca no Spotify (padrão) — só quando pode criar; senão fica só o aviso acima. */}
+                {allowed && !noSpotify && (
                   <>
                     <Input
                       autoFocus
@@ -466,7 +466,7 @@ const ArtistCreate: FC = () => {
                 )}
 
                 {/* Modo sem Spotify: só o nome artístico */}
-                {noSpotify && (
+                {allowed && noSpotify && (
                   <>
                     <Input
                       autoFocus
