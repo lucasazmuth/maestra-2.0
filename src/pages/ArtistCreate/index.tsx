@@ -1,7 +1,7 @@
-import { FC, Fragment, useEffect, useRef, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Input, InputNumber, Spin } from 'antd';
-import { FiAlertCircle, FiCheck } from 'react-icons/fi';
+import { FiAlertCircle } from 'react-icons/fi';
 import { useDebounce } from 'use-debounce';
 
 import { DiagnosticoIcon } from '../../components/Icons/system';
@@ -16,6 +16,7 @@ import { useCanCreateArtist } from '../../hooks/useCanCreateArtist';
 import { useEntitlements } from '../../hooks/useEntitlements';
 import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import { DiagnosticReport, type Chartmetric } from './DiagnosticReport';
+import { FlowHeader } from './FlowHeader';
 import styles from './ArtistCreate.module.scss';
 
 type Step = 'perfil' | 'intro' | 'quiz' | 'analisando' | 'diagnostico';
@@ -82,10 +83,6 @@ const STEP_INDEX: Record<Step, number> = {
   perfil: 0, intro: 1, quiz: 1, analisando: 2, diagnostico: 2,
 };
 
-// Macro-fluxo exibido no header (orienta o usuário na jornada inteira da criação):
-// Criar perfil → Diagnóstico REAL → Planejamento Estratégico. O passo interno 'perfil' = fase 0;
-// todo o resto (intro/quiz/análise/diagnóstico) = fase 1; o Planejamento (fase 2) é fora desta tela.
-const FLOW_PHASES = ['Criar perfil', 'Diagnóstico REAL', 'Planejamento Estratégico'] as const;
 
 const ArtistCreate: FC = () => {
   const dispatch = useAppDispatch();
@@ -372,23 +369,8 @@ const ArtistCreate: FC = () => {
           </div>
         </>
       ) : (
-        // Header do macro-fluxo (estilo Spotify, abas de texto): Criar perfil · Diagnóstico REAL · Pagamento.
-        <nav className={styles.flow} aria-label="Etapas da criação">
-          {FLOW_PHASES.map((label, i) => {
-            const state = i < macroPhase ? 'done' : i === macroPhase ? 'current' : 'upcoming';
-            return (
-              <Fragment key={label}>
-                {i > 0 && <span className={styles.flowSep} aria-hidden>·</span>}
-                <span className={`${styles.flowSeg} ${state === 'done' ? styles.flowDone : state === 'current' ? styles.flowCurrent : ''}`}>
-                  {state === 'done' && <FiCheck className={styles.flowCheck} size={13} />}
-                  {label === 'Diagnóstico REAL'
-                    ? <>Diagnóstico&nbsp;<span className={styles.flowReal}>REAL</span></>
-                    : label}
-                </span>
-              </Fragment>
-            );
-          })}
-        </nav>
+        // Header do macro-fluxo (estilo Spotify): Criar perfil · Diagnóstico REAL · Planejamento Estratégico.
+        <FlowHeader phase={macroPhase} />
       )}
 
       <div className={`${styles.step} ${step === 'diagnostico' ? styles.stepWide : ''}`} key={`${step}-${quizIndex}`}>

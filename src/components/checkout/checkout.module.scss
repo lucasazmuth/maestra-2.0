@@ -1,8 +1,8 @@
 // Kit de checkout no padrão Adobe/Behance, porém em tema ESCURO da Maestra.
 // Usado pela cobrança única (ProfileUnlock) e pela assinatura PRO (Subscription).
-// Paleta: fundo #0b0b11, cards #15151c, borda sutil, texto #fff, verde #af2896.
+// Paleta: fundo #0b0b11, cards #15151c, borda sutil, texto #fff, verde #2ec47a.
 
-$green: #af2896;
+$green: #2ec47a;
 $card: #15151c;
 $cardBorder: rgba(255, 255, 255, 0.08);
 $muted: #9a9aa5;
@@ -47,7 +47,7 @@ $muted2: #6f6f78;
   :global(.ant-select:not(.ant-select-disabled):hover .ant-select-selector),
   :global(.ant-select-focused .ant-select-selector) {
     border-color: $green !important;
-    box-shadow: 0 0 0 1px rgba(175, 40, 150, 0.25) !important;
+    box-shadow: 0 0 0 1px rgba(46, 196, 122, 0.25) !important;
   }
   :global(.ant-select-lg .ant-select-selector) { height: 50px !important; padding: 0 15px !important; display: flex; align-items: center; }
   :global(.ant-select-selection-item) { color: #fff !important; font-weight: 600; }
@@ -76,7 +76,7 @@ $muted2: #6f6f78;
 .accountCheck {
   width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(175, 40, 150, 0.14); color: $green; font-size: 15px;
+  background: rgba(46, 196, 122, 0.14); color: $green; font-size: 15px;
 }
 .accountEmail { font-size: 15px; font-weight: 600; color: #fff; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .accountChevron { color: $muted; flex-shrink: 0; }
@@ -105,7 +105,7 @@ $muted2: #6f6f78;
   transition: border-color 0.18s ease, background 0.18s ease;
   &:hover { border-color: rgba(255, 255, 255, 0.2); }
 }
-.methodOn { border-color: $green; background: rgba(175, 40, 150, 0.05); }
+.methodOn { border-color: $green; background: rgba(46, 196, 122, 0.05); }
 .methodHead {
   width: 100%;
   display: flex; align-items: center; gap: 12px;
@@ -187,7 +187,7 @@ $muted2: #6f6f78;
   display: inline-flex; align-items: center; justify-content: center;
   width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
   border-radius: 50%;
-  background: rgba(175, 40, 150, 0.13);
+  background: rgba(46, 196, 122, 0.13);
   color: $green;
   font-size: 11px;
   svg { stroke-width: 3; }
@@ -229,10 +229,10 @@ $muted2: #6f6f78;
 
 .payBtn {
   width: 100%; border: none; border-radius: 9999px; cursor: pointer;
-  padding: 15px 24px; font-size: 16px; font-weight: 800; color: #fff; background: $green;
+  padding: 15px 24px; font-size: 16px; font-weight: 800; color: #000; background: $green;
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  transition: transform 0.12s ease, opacity 0.15s ease;
-  &:hover:not(:disabled) { transform: translateY(-1px); }
+  transition: transform 0.12s ease, background 0.18s ease, opacity 0.15s ease;
+  &:hover:not(:disabled) { background: #34d98a; transform: scale(1.015); }
   &:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .secure { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 12px; color: $muted; font-size: 12.5px; }
@@ -249,7 +249,7 @@ $muted2: #6f6f78;
 
 .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; @media (max-width: 760px) { grid-template-columns: 1fr; } }
 .compareCol { background: $card; border: 1px solid $cardBorder; border-radius: 18px; padding: 26px; position: relative; }
-.compareColPro { border-color: rgba(175, 40, 150, 0.45); box-shadow: 0 0 0 1px rgba(175, 40, 150, 0.25), 0 16px 50px rgba(0, 0, 0, 0.4); }
+.compareColPro { border-color: rgba(46, 196, 122, 0.45); box-shadow: 0 0 0 1px rgba(46, 196, 122, 0.25), 0 16px 50px rgba(0, 0, 0, 0.4); }
 .proBadge {
   position: absolute; top: -11px; left: 26px; padding: 4px 12px; border-radius: 9999px;
   background: $green; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
@@ -267,7 +267,7 @@ $muted2: #6f6f78;
 .billingOpt { display: inline-flex; align-items: center; gap: 6px; border: none; background: transparent; color: $muted; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 9999px; cursor: pointer; transition: background 0.2s, color 0.2s; }
 .billingOptOn { background: $green; color: #fff; }
 .billingSave { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 9999px; background: rgba(255, 255, 255, 0.22); color: #fff; letter-spacing: 0.02em; }
-.billingOpt:not(.billingOptOn) .billingSave { background: rgba(175, 40, 150, 0.2); color: $green; }
+.billingOpt:not(.billingOptOn) .billingSave { background: rgba(46, 196, 122, 0.2); color: $green; }
 .compareGroup { margin-bottom: 18px; }
 .compareGroupHead { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
 .compareGroupIcon { color: $green; font-size: 17px; display: flex; }

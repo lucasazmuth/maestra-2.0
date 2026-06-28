@@ -3,7 +3,6 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Input, Spin, Select } from 'antd';
 import { FiArrowLeft } from 'react-icons/fi';
 
-import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { supabase } from '../../lib/supabase';
 import { artistsActions } from '../../store/slices/artists';
@@ -11,6 +10,7 @@ import { createAsaasCustomer, clearError } from '../../store/slices/subscription
 import { createArtistCharge, pollArtistPurchase } from '../../store/slices/artistPurchases';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
+import { FlowHeader } from '../ArtistCreate/FlowHeader';
 import { PaymentSuccessScreen } from '../../components/PaymentSuccessScreen';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
 import {
@@ -208,13 +208,9 @@ const ProfileUnlock: FC = () => {
     <div className={styles.page}>
       <button className={styles.back} onClick={() => navigate('/artists')}>Sair</button>
 
-      <div className={styles.pillWrap}>
-        <div className={styles.pillGlow} aria-hidden />
-        <div className={styles.pill}>
-          <MaestraLogo className={`${styles.pillLogo} maestra-logo-live`} />
-          <span className={styles.pillText}>Maestra <span className={styles.pillManager}>Manager</span></span>
-        </div>
-      </div>
+      {/* Header do macro-fluxo (mesmo de /criar-artista): no diagnóstico a fase atual é "Diagnóstico
+          REAL"; no pagamento avança pra "Planejamento Estratégico". */}
+      <FlowHeader phase={step === 'pagamento' ? 2 : 1} />
 
       <div className={`${styles.step} ${(step === 'pagamento' || step === 'diagnostico') ? styles.stepWide : ''}`}>
         {step === 'diagnostico' && (

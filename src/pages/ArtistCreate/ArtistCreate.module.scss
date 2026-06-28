@@ -48,6 +48,10 @@
   box-shadow: 0 0 0 1px rgba(46, 196, 122, 0.25) !important;
 }
 
+// Spinner ("Analisando…" e telas de carregamento) no verde, não no magenta do tema antd.
+.page :global(.ant-spin-dot-item) { background-color: #2ec47a !important; }
+.page :global(.ant-spin-text) { color: #2ec47a !important; }
+
 // ─── Pílula da marca (igual /welcome) ─────────────────────────────────────────
 .pillWrap {
   position: relative;
