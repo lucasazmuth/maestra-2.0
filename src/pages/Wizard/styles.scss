@@ -1352,8 +1352,8 @@
   flex: none;
   position: relative;
   z-index: 2;
-  // Tom azul sutil no topo (id do Planejamento) sobre o fundo do app.
-  background: linear-gradient(180deg, rgba(74, 140, 255, 0.07) 0%, #121212 72%);
+  // Sem caixa/tom colorido: o header fica chapado no fundo do chat.
+  background: transparent;
   padding-bottom: 12px;
 }
 

@@ -168,8 +168,7 @@ const Wizard: FC = () => {
       <div className='wiz-chat-head'>
         <div className='wiz-col'>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-            <h1 className='wiz-title' style={{ display: 'flex', alignItems: 'center', gap: 9, fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 22, color: '#fff', margin: 0 }}>
-              <PlanejamentoIcon size={22} style={{ color: '#4a8cff', flexShrink: 0 }} />
+            <h1 className='wiz-title' style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 22, color: '#fff', margin: 0 }}>
               Planejamento Estratégico
             </h1>
             <button
