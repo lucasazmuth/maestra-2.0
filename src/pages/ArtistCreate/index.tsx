@@ -4,7 +4,6 @@ import { Input, InputNumber, Spin } from 'antd';
 import { FiAlertCircle } from 'react-icons/fi';
 import { useDebounce } from 'use-debounce';
 
-import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
 import { DiagnosticoIcon } from '../../components/Icons/system';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { supabase } from '../../lib/supabase';
@@ -353,7 +352,6 @@ const ArtistCreate: FC = () => {
 
       <div className={styles.pillWrap}>
         <div className={styles.pill}>
-          <MaestraLogo className={`${styles.pillLogo} maestra-logo-live`} />
           <span className={styles.pillText}>
             {realEnv
               ? <>Diagnóstico <span className={styles.pillReal}>REAL</span></>
