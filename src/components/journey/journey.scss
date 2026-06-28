@@ -17,6 +17,11 @@
   }
 }
 
+.journey-link {
+  transition: color 0.18s ease, gap 0.18s ease;
+  &:hover { color: #fff; gap: 9px; }
+}
+
 .journey-connector {
   display: flex;
   align-items: center;
