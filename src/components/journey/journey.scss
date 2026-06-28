@@ -1,52 +1,65 @@
-// Layout responsivo do hub "Sua jornada". Largo: 3 etapas lado a lado com seta "→".
-// Estreito (≤ 900px): empilha na vertical e a seta gira pra "↓" (fluxo claro no mobile).
+// "Sua jornada": stepper inline dentro de UM painel. Largo: 3 etapas + seta "→".
+// Estreito (≤ 620px): empilha na vertical e a seta gira pra "↓".
 
 .journey-row {
   display: flex;
-  align-items: stretch;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 6px;
 }
 
-.journey-stage {
+// Cada etapa: coluna clicável (indicador + nome + detalhe), sem caixa própria.
+.journey-node {
   flex: 1 1 0;
   min-width: 0;
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 9px;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.18s ease;
 
-  &:hover {
-    transform: translateY(-3px);
-  }
+  &:hover { background: rgba(255, 255, 255, 0.03); }
+  &:hover .journey-node-name { color: #fff; }
 }
 
-.journey-link {
-  transition: color 0.18s ease, gap 0.18s ease;
-  &:hover { color: #fff; gap: 9px; }
+.journey-node-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: color 0.18s ease;
 }
 
+// Seta entre etapas, alinhada com o centro do indicador (30px ÷ 2 ≈ 15 − ½ ícone).
 .journey-connector {
   display: flex;
   align-items: center;
-  color: #5a5a63;
+  color: #4a4a52;
   flex-shrink: 0;
-
-  svg {
-    transition: transform 0.2s ease;
-  }
+  margin-top: 13px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 620px) {
   .journey-row {
     flex-direction: column;
+    gap: 4px;
   }
 
-  .journey-stage {
+  .journey-node {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    text-align: left;
     width: 100%;
   }
 
   .journey-connector {
     align-self: center;
-
-    svg {
-      transform: rotate(90deg);
-    }
+    margin-top: 0;
+    svg { transform: rotate(90deg); }
   }
 }
