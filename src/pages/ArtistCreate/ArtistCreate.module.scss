@@ -40,7 +40,10 @@
 .page :global(.ant-input-focused),
 .page :global(.ant-input-number:hover),
 .page :global(.ant-input-number-focused),
-.page :global(.ant-input-number:focus-within) {
+.page :global(.ant-input-number:focus-within),
+.page :global(.ant-input-number-affix-wrapper:hover),
+.page :global(.ant-input-number-affix-wrapper-focused),
+.page :global(.ant-input-number-affix-wrapper:focus-within) {
   border-color: #2ec47a !important;
   box-shadow: 0 0 0 1px rgba(46, 196, 122, 0.25) !important;
 }
