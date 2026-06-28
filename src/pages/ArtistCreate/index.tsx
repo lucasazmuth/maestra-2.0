@@ -83,9 +83,9 @@ const STEP_INDEX: Record<Step, number> = {
 };
 
 // Macro-fluxo exibido no header (orienta o usuário na jornada inteira da criação):
-// Criar perfil → Diagnóstico REAL → Pagamento. O passo interno 'perfil' = fase 0; todo o resto
-// (intro/quiz/análise/diagnóstico) = fase 1; o Pagamento (fase 2) acontece fora desta tela.
-const FLOW_PHASES = ['Criar perfil', 'Diagnóstico REAL', 'Pagamento'] as const;
+// Criar perfil → Diagnóstico REAL → Planejamento Estratégico. O passo interno 'perfil' = fase 0;
+// todo o resto (intro/quiz/análise/diagnóstico) = fase 1; o Planejamento (fase 2) é fora desta tela.
+const FLOW_PHASES = ['Criar perfil', 'Diagnóstico REAL', 'Planejamento Estratégico'] as const;
 
 const ArtistCreate: FC = () => {
   const dispatch = useAppDispatch();
