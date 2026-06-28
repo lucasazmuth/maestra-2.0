@@ -67,16 +67,15 @@ export const ArtistHero: FC<{ artist: Artist }> = ({ artist }) => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
-                padding: '4px 14px 4px 4px',
+                padding: '3px 13px 3px 3px',
                 borderRadius: 9999,
-                background: `rgba(${accent}, 0.14)`,
-                border: `1px solid rgba(${accent}, 0.5)`,
+                background: 'rgba(255, 255, 255, 0.08)',
               }}
             >
-              <RealBadge tier={tier} label={String(altasForPattern(ri.pattern))} size={24} />
+              <RealBadge tier={tier} label={String(altasForPattern(ri.pattern))} size={22} />
               <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
-                <span style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: 'italic', fontSize: 13, color: `rgb(${accent})` }}>REAL</span>
-                <span style={{ color: '#fff', fontWeight: 700, fontSize: 13.5 }}>{realPhase}</span>
+                <span style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: 'italic', fontSize: 12.5, color: `rgb(${accent})` }}>REAL</span>
+                <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>{realPhase}</span>
               </span>
             </span>
           )}

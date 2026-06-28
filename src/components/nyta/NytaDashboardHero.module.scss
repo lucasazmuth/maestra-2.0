@@ -22,6 +22,7 @@
 
 .kicker {
   display: block;
+  text-align: center;
   color: #c9b8ff;
   font-size: 13px;
   font-weight: 600;
@@ -30,6 +31,7 @@
 }
 
 .title {
+  text-align: center;
   color: #fff;
   font-family: 'SpotifyMixUITitle', sans-serif;
   font-size: 27px;
@@ -39,9 +41,11 @@
 }
 
 .subtitle {
+  text-align: center;
   color: rgba(255, 255, 255, 0.58);
   font-size: 15px;
-  margin: 0 0 22px;
+  margin: 0 auto 22px;
+  max-width: 560px;
 }
 
 // ── Campo de busca ──────────────────────────────────────────────
