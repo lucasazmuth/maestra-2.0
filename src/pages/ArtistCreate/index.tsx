@@ -332,19 +332,26 @@ const ArtistCreate: FC = () => {
   // ─── Render ─────────────────────────────────────────────────────────────────
   const showInteraction = !typing;
   const dotIndex = STEP_INDEX[step];
+  // A identidade do Diagnóstico REAL (verde + "Maestra REAL" + estrela) só entra DEPOIS de selecionar
+  // o perfil. No 1º passo ('perfil') é o ambiente neutro da Maestra, pra não parecer que já começou o diagnóstico.
+  const realEnv = step !== 'perfil';
 
   return (
-    <div className={styles.page}>
-      {/* Ícone do REAL grande e translúcido no fundo — identidade do ambiente de diagnóstico. */}
-      <span className={styles.pageGlyph} aria-hidden><DiagnosticoIcon size={300} /></span>
+    <div className={`${styles.page} ${realEnv ? styles.pageReal : ''}`}>
+      {/* Ícone do REAL grande e translúcido no fundo — só no ambiente do diagnóstico. */}
+      {realEnv && <span className={styles.pageGlyph} aria-hidden><DiagnosticoIcon size={300} /></span>}
 
       <button className={styles.back} onClick={() => navigate(redo ? `/artists/${redoArtistId}/diagnostico` : '/artists')}>{redo ? 'Voltar' : 'Sair'}</button>
 
       <div className={styles.pillWrap}>
-        <div className={styles.pillGlow} aria-hidden />
         <div className={styles.pill}>
           <MaestraLogo className={`${styles.pillLogo} maestra-logo-live`} />
-          <span className={styles.pillText}>Maestra <span className={styles.pillReal}>REAL</span></span>
+          <span className={styles.pillText}>
+            Maestra{' '}
+            {realEnv
+              ? <span className={styles.pillReal}>REAL</span>
+              : <span className={styles.pillManager}>Manager</span>}
+          </span>
         </div>
       </div>
 
@@ -514,7 +521,7 @@ const ArtistCreate: FC = () => {
                     onClick={() => { if (fieldVal != null) answerQuiz(fieldVal); }}
                     style={{
                       marginTop: 12, width: '100%',
-                      background: 'linear-gradient(135deg, #af2896, #6d3bd1)',
+                      background: 'linear-gradient(135deg, #2ec47a, #1f9e6b)',
                       border: 'none', color: '#fff', padding: '14px 24px', borderRadius: 9999,
                       fontWeight: 700, fontSize: 16, cursor: 'pointer', opacity: fieldVal == null ? 0.6 : 1,
                     }}

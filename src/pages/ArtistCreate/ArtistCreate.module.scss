@@ -5,13 +5,18 @@
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  // Identidade do Diagnóstico REAL: glow verde no topo sobre quase-preto.
-  background: radial-gradient(120% 90% at 50% 0%, rgba(46, 196, 122, 0.12) 0%, #0a0d0b 46%, #050507 100%);
+  // Ambiente neutro da Maestra (1º passo: selecionar o perfil).
+  background: radial-gradient(120% 90% at 50% 0%, #15101f 0%, #08080c 55%, #050507 100%);
   color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 32px 24px 64px;
+}
+
+// Ambiente do Diagnóstico REAL (após selecionar o perfil): glow verde sobre quase-preto.
+.pageReal {
+  background: radial-gradient(120% 90% at 50% 0%, rgba(46, 196, 122, 0.12) 0%, #0a0d0b 46%, #050507 100%);
 }
 
 // Ícone do REAL grande e translúcido no fundo (id visual do ambiente).
@@ -25,14 +30,25 @@
   line-height: 0;
 }
 
-// Foco dos inputs do ambiente (busca, etc.) no verde do REAL (sobrepõe o magenta do tema antd).
-.page :global(.ant-input-affix-wrapper:hover),
-.page :global(.ant-input-affix-wrapper-focused),
-.page :global(.ant-input:hover),
-.page :global(.ant-input:focus),
-.page :global(.ant-input-focused) {
+// Foco dos inputs no verde do REAL — só no ambiente do diagnóstico (sobrepõe o magenta do tema antd).
+.pageReal :global(.ant-input-affix-wrapper:hover),
+.pageReal :global(.ant-input-affix-wrapper-focused),
+.pageReal :global(.ant-input:hover),
+.pageReal :global(.ant-input:focus),
+.pageReal :global(.ant-input-focused),
+.pageReal :global(.ant-input-number:hover),
+.pageReal :global(.ant-input-number-focused),
+.pageReal :global(.ant-input-number:focus-within) {
   border-color: #2ec47a !important;
   box-shadow: 0 0 0 1px rgba(46, 196, 122, 0.25) !important;
+}
+
+// CTA principal (Continuar/Refazer) no ambiente do diagnóstico: verde do REAL.
+.pageReal .cta {
+  background: #2ec47a;
+  box-shadow: 0 10px 34px rgba(46, 196, 122, 0.28);
+
+  &:hover:not(:disabled) { background: #34d98a; }
 }
 
 // ─── Pílula da marca (igual /welcome) ─────────────────────────────────────────
@@ -40,26 +56,6 @@
   position: relative;
   display: inline-flex;
   margin-bottom: 8px;
-}
-
-@property --acAngle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
-.pillGlow {
-  position: absolute;
-  inset: -2px;
-  border-radius: 9999px;
-  background: conic-gradient(
-    from var(--acAngle),
-    transparent 0deg, transparent 150deg,
-    #2ec47a 200deg, #ffffff 255deg, #67e0ac 300deg, #2ec47a 335deg, transparent 360deg
-  );
-  filter: blur(6px);
-  opacity: 0.9;
-  animation: acAngleSpin 4s linear infinite;
 }
 
 .pill {
@@ -84,7 +80,9 @@
   white-space: nowrap;
 }
 
-// "REAL" na pílula: assinatura serifada (Georgia itálico) + verde do produto.
+// Pílula no ambiente neutro (1º passo): "Manager" magenta da marca.
+.pillManager { color: #d264bb; }
+// "REAL" na pílula (ambiente do diagnóstico): assinatura serifada (Georgia itálico) + verde do produto.
 .pillReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; color: #37d995; }
 
 .back {
@@ -116,8 +114,11 @@
   transition: background 0.3s, width 0.3s;
 }
 
-.dotOn { background: #2ec47a; }
-.dotDone { background: rgba(46, 196, 122, 0.5); }
+.dotOn { background: #af2896; }
+.dotDone { background: rgba(175, 40, 150, 0.5); }
+// No ambiente do diagnóstico, as bolinhas seguem o verde do REAL.
+.pageReal .dotOn { background: #2ec47a; }
+.pageReal .dotDone { background: rgba(46, 196, 122, 0.5); }
 
 // ─── Etapa (uma por vez, centralizada) ────────────────────────────────────────
 .step {
@@ -172,10 +173,12 @@
   height: 1.05em;
   margin-left: 4px;
   vertical-align: text-bottom;
-  background: #2ec47a;
+  background: #af2896;
   border-radius: 2px;
   animation: acCaret 0.9s steps(1) infinite;
 }
+// No ambiente do diagnóstico, o cursor segue o verde do REAL.
+.pageReal .caret { background: #2ec47a; }
 
 // Container da interação — só aparece quando a fala termina de digitar.
 .interaction {
