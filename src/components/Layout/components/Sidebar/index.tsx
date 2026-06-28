@@ -16,6 +16,7 @@ import { NytaAvatar } from '../../../../pages/Wizard/chat/nytaPersona';
 
 import { useAppSelector } from '../../../../store/store';
 import { useArtistCapabilities } from '../../../../hooks/useArtistCapabilities';
+import { useJourneyState } from '../../../../hooks/useJourneyState';
 import { useNytaModal } from '../../../../hooks/useNytaModal';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
 import { supabase } from '../../../../lib/supabase';
@@ -31,11 +32,12 @@ const NavItem: FC<{
   active?: boolean;
   collapsed?: boolean;
   locked?: boolean;
+  lockedHint?: string;
   onClick: () => void;
-}> = ({ icon, label, active, collapsed, locked, onClick }) => (
+}> = ({ icon, label, active, collapsed, locked, lockedHint, onClick }) => (
   <button
     onClick={onClick}
-    title={collapsed ? label : undefined}
+    title={locked && lockedHint ? lockedHint : (collapsed ? label : undefined)}
     style={{
       display: 'flex',
       alignItems: 'center',
@@ -74,6 +76,9 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
   const currentArtist = artists.find((a) => a.id === artistId);
   // Plano de Ação e Equipe ficam travados até o perfil ser pago (cobrança única R$199,90).
   const { viewPlanning } = useArtistCapabilities(currentArtist);
+  // Cadeia guiada: o Plano de Ação só "abre" depois do planejamento; "Planejamento" leva ao
+  // assistente (criar) enquanto não há plano, ou ao dossiê depois.
+  const { hasPlan } = useJourneyState(currentArtist);
   const { open: openNyta } = useNytaModal(); // item "Nyta IA" abre o modal do assistente
 
   // Check admin status
@@ -103,25 +108,29 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
   // Os 7 produtos agrupados por propósito (mapa do sistema): CRESCIMENTO (o ciclo REAL →
   // Planejamento → Plano de Ação) e OPERAÇÃO (dia a dia). "Planejamento" é o antigo "Perfil"
   // (a rota /perfil é o dossiê do plano). Nyta é renderizada à parte (abre o modal).
-  const groups: { label: string | null; items: { icon: React.ReactNode; label: string; suffix: string; locked: boolean }[] }[] = [
+  // "Planejamento" adapta o destino: sem plano → assistente (criar); com plano → dossiê.
+  // "Plano de Ação" fica com cadeado até o plano existir e leva ao assistente quando travado.
+  const planningTo = hasPlan ? 'perfil' : 'wizard';
+  const actionUnlocked = viewPlanning && hasPlan;
+  const groups: { label: string | null; items: { icon: React.ReactNode; label: string; navTo: string; active: boolean; locked: boolean; lockedHint?: string }[] }[] = [
     {
       label: null,
-      items: [{ icon: <DashboardIcon />, label: t('Dashboard', { defaultValue: 'Dashboard' }), suffix: '', locked: false }],
+      items: [{ icon: <DashboardIcon />, label: t('Dashboard', { defaultValue: 'Dashboard' }), navTo: '', active: isActive(''), locked: false }],
     },
     {
       label: t('Growth', { defaultValue: 'Crescimento' }),
       items: [
-        { icon: <DiagnosticoIcon />, label: t('REAL Diagnostic', { defaultValue: 'Diagnóstico REAL' }), suffix: 'diagnostico', locked: false },
-        { icon: <PlanejamentoIcon />, label: t('Planning', { defaultValue: 'Planejamento' }), suffix: 'perfil', locked: !viewPlanning },
-        { icon: <PlanoAcaoIcon />, label: t('Action Plan', { defaultValue: 'Plano de Ação' }), suffix: 'action-plan', locked: !viewPlanning },
+        { icon: <DiagnosticoIcon />, label: t('REAL Diagnostic', { defaultValue: 'Diagnóstico REAL' }), navTo: 'diagnostico', active: isActive('diagnostico'), locked: false },
+        { icon: <PlanejamentoIcon />, label: t('Planning', { defaultValue: 'Planejamento' }), navTo: planningTo, active: isActive('perfil') || isActive('wizard'), locked: !viewPlanning },
+        { icon: <PlanoAcaoIcon />, label: t('Action Plan', { defaultValue: 'Plano de Ação' }), navTo: actionUnlocked ? 'action-plan' : 'wizard', active: isActive('action-plan'), locked: !actionUnlocked, lockedHint: t('Create your planning first', { defaultValue: 'Crie seu planejamento primeiro' }) },
       ],
     },
     {
       label: t('Operations', { defaultValue: 'Operação' }),
       items: [
-        { icon: <CatalogoIcon />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog', locked: false },
-        { icon: <AgendaIcon />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda', locked: false },
-        { icon: <EquipeIcon />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team', locked: !viewPlanning },
+        { icon: <CatalogoIcon />, label: t('Catalog', { defaultValue: 'Catálogo' }), navTo: 'catalog', active: isActive('catalog'), locked: false },
+        { icon: <AgendaIcon />, label: t('Agenda', { defaultValue: 'Agenda' }), navTo: 'agenda', active: isActive('agenda'), locked: false },
+        { icon: <EquipeIcon />, label: t('Team', { defaultValue: 'Equipe' }), navTo: 'team', active: isActive('team'), locked: !viewPlanning },
       ],
     },
   ];
@@ -208,13 +217,14 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
               )}
               {g.items.map((m) => (
                 <NavItem
-                  key={m.suffix || 'dashboard'}
+                  key={m.label}
                   icon={m.icon}
                   label={m.label}
                   collapsed={collapsed}
-                  active={isActive(m.suffix)}
+                  active={m.active}
                   locked={m.locked}
-                  onClick={() => navigate(`/artists/${artistId}${m.suffix ? `/${m.suffix}` : ''}`)}
+                  lockedHint={m.lockedHint}
+                  onClick={() => navigate(`/artists/${artistId}${m.navTo ? `/${m.navTo}` : ''}`)}
                 />
               ))}
             </Fragment>

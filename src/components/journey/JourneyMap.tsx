@@ -1,6 +1,6 @@
 import { FC, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
+import { FiArrowRight, FiCheckCircle, FiLock } from 'react-icons/fi';
 
 import type { Artist } from '../../interfaces/maestra';
 import { RealBadge, altasForPattern, tierForPattern } from '../RealBadge';
@@ -162,7 +162,7 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
           ) : (
             <>
               <p style={{ ...sub, fontSize: 13, color: '#cfcfd4' }}>Defina visão, missão, objetivos e estratégias com a Nyta.</p>
-              <StageCta accent={PLAN} label="Criar planejamento" onClick={() => go('action-plan')} />
+              <StageCta accent={PLAN} label="Criar planejamento" onClick={() => go('wizard')} />
             </>
           )}
         </StageCard>
@@ -188,8 +188,11 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
             </>
           ) : (
             <>
-              <p style={{ ...sub, fontSize: 13, color: '#cfcfd4' }}>Execute suas estratégias em tarefas e acompanhe o progresso.</p>
-              <StageCta accent={ACTION} label="Abrir plano" onClick={() => go('action-plan')} ghost />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#8a8a92', fontSize: 13, fontWeight: 600 }}>
+                <FiLock size={15} /> Disponível após o planejamento
+              </div>
+              <p style={sub}>Aqui suas estratégias viram tarefas do dia a dia.</p>
+              <StageCta accent={PLAN} label="Criar planejamento primeiro" onClick={() => go('wizard')} ghost />
             </>
           )}
         </StageCard>

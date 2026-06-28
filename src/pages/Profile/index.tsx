@@ -111,8 +111,8 @@ const Profile: FC = () => {
             valores, objetivos, referências e a análise SWOT. Crie o seu para preencher esta página.
           </p>
           <button
-            onClick={() => navigate(`/artists/${artist.id}/action-plan`)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#af2896', border: 'none', color: '#fff', padding: '12px 28px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 15 }}
+            onClick={() => navigate(`/artists/${artist.id}/wizard`)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#2ec47a', color: '#000', border: 'none', padding: '12px 28px', borderRadius: 9999, cursor: 'pointer', fontWeight: 800, fontSize: 15 }}
           >
             Criar planejamento estratégico <FiArrowRight />
           </button>

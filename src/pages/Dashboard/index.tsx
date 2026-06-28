@@ -9,6 +9,7 @@ import { DashboardEmptyState } from '../../components/DashboardEmptyState';
 import { ArtistHero } from '../../components/ArtistHero';
 import { MetricsEvolution } from '../../components/MetricsEvolution';
 import { JourneyMap } from '../../components/journey/JourneyMap';
+import { NextStepCard } from '../../components/journey/NextStepCard';
 import { ConnectSpotify } from './sections';
 import { DashboardOverview } from './overview';
 
@@ -40,13 +41,16 @@ const Dashboard: FC = () => {
           title='Desbloqueie este perfil'
           description='Pague uma vez (R$ 199,90) e libere o planejamento estratégico com a Nyta, o plano salvo para sempre e o compartilhamento com colaboradores.'
           ctaLabel='Desbloquear — R$ 199,90'
-          ctaTo='/criar-artista'
+          ctaTo={`/artists/${artist.id}/desbloquear`}
         />
       )}
 
       {/* Visão geral + Ferramentas só no perfil pago (não pago → recursos travados) */}
       {viewPlanning && (
         <>
+          {/* Âncora diária: UM próximo passo claro conforme o estágio do ciclo */}
+          <NextStepCard artist={artist} />
+
           {/* Mapa da jornada (REAL → Planejamento → Plano de Ação → ↺) — a home que orienta o ciclo */}
           <JourneyMap artist={artist} />
 
