@@ -5,8 +5,8 @@
   min-height: 100vh;
   position: relative;
   overflow: hidden;
-  // Ambiente neutro da Maestra (1º passo: selecionar o perfil).
-  background: radial-gradient(120% 90% at 50% 0%, #15101f 0%, #08080c 55%, #050507 100%);
+  // Base Spotify: quase-preto chapado.
+  background: #121212;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -14,9 +14,9 @@
   padding: 32px 24px 64px;
 }
 
-// Ambiente do Diagnóstico REAL (após selecionar o perfil): glow verde sobre quase-preto.
+// Ambiente do Diagnóstico REAL (após selecionar o perfil): leve brilho verde no topo + estrela ao fundo.
 .pageReal {
-  background: radial-gradient(120% 90% at 50% 0%, rgba(46, 196, 122, 0.12) 0%, #0a0d0b 46%, #050507 100%);
+  background: radial-gradient(120% 55% at 50% -8%, rgba(46, 196, 122, 0.06) 0%, transparent 55%), #121212;
 }
 
 // Ícone do REAL grande e translúcido no fundo (id visual do ambiente).
@@ -30,25 +30,19 @@
   line-height: 0;
 }
 
-// Foco dos inputs no verde do REAL — só no ambiente do diagnóstico (sobrepõe o magenta do tema antd).
-.pageReal :global(.ant-input-affix-wrapper:hover),
-.pageReal :global(.ant-input-affix-wrapper-focused),
-.pageReal :global(.ant-input:hover),
-.pageReal :global(.ant-input:focus),
-.pageReal :global(.ant-input-focused),
-.pageReal :global(.ant-input-number:hover),
-.pageReal :global(.ant-input-number-focused),
-.pageReal :global(.ant-input-number:focus-within) {
+// Foco dos inputs no verde (sobrepõe o magenta do tema antd) — toda a tela.
+.page :global(.ant-input-affix-wrapper:hover),
+.page :global(.ant-input-affix-wrapper:focus-within),
+.page :global(.ant-input-affix-wrapper-focused),
+.page :global(.ant-input:hover),
+.page :global(.ant-input:focus),
+.page :global(.ant-input:focus-within),
+.page :global(.ant-input-focused),
+.page :global(.ant-input-number:hover),
+.page :global(.ant-input-number-focused),
+.page :global(.ant-input-number:focus-within) {
   border-color: #2ec47a !important;
   box-shadow: 0 0 0 1px rgba(46, 196, 122, 0.25) !important;
-}
-
-// CTA principal (Continuar/Refazer) no ambiente do diagnóstico: verde do REAL.
-.pageReal .cta {
-  background: #2ec47a;
-  box-shadow: 0 10px 34px rgba(46, 196, 122, 0.28);
-
-  &:hover:not(:disabled) { background: #34d98a; }
 }
 
 // ─── Pílula da marca (igual /welcome) ─────────────────────────────────────────
@@ -99,81 +93,62 @@
   &:hover { color: #fff; }
 }
 
-// ─── Header de macro-fluxo: Criar perfil → Diagnóstico REAL → Pagamento ─────────
+// ─── Header de macro-fluxo (abas de texto, estilo Spotify) ──────────────────────
+// Criar perfil · Diagnóstico REAL · Pagamento — a etapa atual em branco com traço verde.
 .flow {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin: 6px 0 30px;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  margin: 4px 0 36px;
   max-width: 100%;
 }
 
-.flowItem { display: inline-flex; align-items: center; gap: 9px; }
-
-.flowDot {
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
+.flowSeg {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-  flex-shrink: 0;
-  border: 1.5px solid rgba(255, 255, 255, 0.16);
-  color: #7a7a85;
-  background: transparent;
-  transition: background 0.3s, border-color 0.3s, color 0.3s;
-}
-
-.flowLabel {
+  gap: 6px;
+  position: relative;
+  padding: 2px 0;
   font-size: 14px;
   font-weight: 700;
-  color: #7a7a85;
+  letter-spacing: 0.01em;
   white-space: nowrap;
-  transition: color 0.3s;
+  color: #6a6a6a;
+  transition: color 0.25s;
 }
+
+.flowSep { color: #4d4d4d; font-size: 14px; margin: 0 14px; }
 
 .flowReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; }
+.flowCheck { color: #2ec47a; flex-shrink: 0; }
 
-.flowLine {
-  width: 40px;
-  min-width: 16px;
-  height: 2px;
-  border-radius: 2px;
-  flex-shrink: 1;
-  background: rgba(255, 255, 255, 0.14);
-  transition: background 0.3s;
-}
-.flowLineDone { background: var(--flow-accent); }
-
-// Etapa atual: bolinha preenchida na cor do ambiente + rótulo em branco.
+// Etapa atual: branca + traço verde embaixo (estilo "aba" do Spotify).
 .flowCurrent {
-  .flowDot { background: var(--flow-accent); border-color: var(--flow-accent); color: #fff; }
-  .flowLabel { color: #fff; }
+  color: #fff;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -7px;
+    height: 2px;
+    border-radius: 2px;
+    background: #2ec47a;
+  }
 }
 
-// Etapa concluída: bolinha preenchida (check) + rótulo apagado.
-.flowDone {
-  .flowDot { background: var(--flow-accent); border-color: var(--flow-accent); color: #fff; }
-  .flowLabel { color: #b3b3b3; }
-}
+// Etapa concluída: cinza claro + check verde.
+.flowDone { color: #b3b3b3; }
 
 @media (max-width: 560px) {
-  .flow { gap: 7px; }
-  .flowItem { gap: 6px; }
-  .flowLabel { font-size: 12px; }
-  .flowDot { width: 22px; height: 22px; font-size: 11px; }
-  .flowLine { width: 18px; }
+  .flowSeg { font-size: 12.5px; }
+  .flowSep { margin: 0 9px; }
 }
 
-// Telas bem estreitas: só a etapa atual mostra o rótulo; as outras ficam só com a bolinha.
-@media (max-width: 440px) {
-  .flowItem:not(.flowCurrent) .flowLabel { display: none; }
-}
-
-// ─── Progresso ─────────────────────────────────────────────────────────────────
+// ─── Progresso (só no "refazer diagnóstico") ───────────────────────────────────
 .progress {
   display: flex;
   gap: 7px;
@@ -188,11 +163,8 @@
   transition: background 0.3s, width 0.3s;
 }
 
-.dotOn { background: #af2896; }
-.dotDone { background: rgba(175, 40, 150, 0.5); }
-// No ambiente do diagnóstico, as bolinhas seguem o verde do REAL.
-.pageReal .dotOn { background: #2ec47a; }
-.pageReal .dotDone { background: rgba(46, 196, 122, 0.5); }
+.dotOn { background: #2ec47a; }
+.dotDone { background: rgba(46, 196, 122, 0.5); }
 
 // ─── Etapa (uma por vez, centralizada) ────────────────────────────────────────
 .step {
@@ -247,12 +219,10 @@
   height: 1.05em;
   margin-left: 4px;
   vertical-align: text-bottom;
-  background: #af2896;
+  background: #2ec47a;
   border-radius: 2px;
   animation: acCaret 0.9s steps(1) infinite;
 }
-// No ambiente do diagnóstico, o cursor segue o verde do REAL.
-.pageReal .caret { background: #2ec47a; }
 
 // Container da interação — só aparece quando a fala termina de digitar.
 .interaction {
@@ -365,7 +335,7 @@
 
   &:hover {
     background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(175, 40, 150, 0.55);
+    border-color: rgba(46, 196, 122, 0.55);
     transform: translateY(-1px);
   }
 }
@@ -861,19 +831,21 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #af2896;
-  color: #fff;
+  // Botão Spotify: verde vibrante, texto preto, sem gradiente.
+  background: #2ec47a;
+  color: #000;
   border: none;
   border-radius: 9999px;
-  padding: 15px 30px;
+  padding: 15px 32px;
   font-size: 16px;
   font-weight: 800;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 10px 34px rgba(175, 40, 150, 0.28);
-  transition: transform 0.15s, background 0.2s;
+  transition: transform 0.12s ease, background 0.2s ease, filter 0.2s ease;
 
-  &:hover:not(:disabled) { background: #c13fa8; transform: translateY(-1px); }
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
+  &:hover:not(:disabled) { background: #34d98a; transform: scale(1.035); }
+  &:active:not(:disabled) { transform: scale(0.99); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 
   @media (max-width: 600px) {
     font-size: 14px;

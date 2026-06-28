@@ -349,7 +349,6 @@ const ArtistCreate: FC = () => {
   const realEnv = step !== 'perfil';
   // Fase do macro-fluxo do header: 0 = Criar perfil, 1 = Diagnóstico REAL (Pagamento fica fora desta tela).
   const macroPhase = step === 'perfil' ? 0 : 1;
-  const flowAccent = realEnv ? '#2ec47a' : '#af2896';
 
   return (
     <div className={`${styles.page} ${realEnv ? styles.pageReal : ''}`}>
@@ -373,21 +372,19 @@ const ArtistCreate: FC = () => {
           </div>
         </>
       ) : (
-        // Header do macro-fluxo: Criar perfil → Diagnóstico REAL → Pagamento.
-        <nav className={styles.flow} style={{ '--flow-accent': flowAccent } as React.CSSProperties} aria-label="Etapas da criação">
+        // Header do macro-fluxo (estilo Spotify, abas de texto): Criar perfil · Diagnóstico REAL · Pagamento.
+        <nav className={styles.flow} aria-label="Etapas da criação">
           {FLOW_PHASES.map((label, i) => {
             const state = i < macroPhase ? 'done' : i === macroPhase ? 'current' : 'upcoming';
             return (
               <Fragment key={label}>
-                {i > 0 && <span className={`${styles.flowLine} ${i <= macroPhase ? styles.flowLineDone : ''}`} aria-hidden />}
-                <div className={`${styles.flowItem} ${state === 'done' ? styles.flowDone : state === 'current' ? styles.flowCurrent : ''}`}>
-                  <span className={styles.flowDot}>{state === 'done' ? <FiCheck size={13} /> : i + 1}</span>
-                  <span className={styles.flowLabel}>
-                    {label === 'Diagnóstico REAL'
-                      ? <>Diagnóstico <span className={styles.flowReal}>REAL</span></>
-                      : label}
-                  </span>
-                </div>
+                {i > 0 && <span className={styles.flowSep} aria-hidden>·</span>}
+                <span className={`${styles.flowSeg} ${state === 'done' ? styles.flowDone : state === 'current' ? styles.flowCurrent : ''}`}>
+                  {state === 'done' && <FiCheck className={styles.flowCheck} size={13} />}
+                  {label === 'Diagnóstico REAL'
+                    ? <>Diagnóstico&nbsp;<span className={styles.flowReal}>REAL</span></>
+                    : label}
+                </span>
               </Fragment>
             );
           })}
@@ -502,13 +499,8 @@ const ArtistCreate: FC = () => {
                     <button
                       disabled={!manualName.trim() || !allowed || rlLoading}
                       onClick={confirmManualName}
-                      style={{
-                        marginTop: 12, width: '100%',
-                        background: 'linear-gradient(135deg, #af2896, #6d3bd1)',
-                        border: 'none', color: '#fff', padding: '14px 24px', borderRadius: 9999,
-                        fontWeight: 700, fontSize: 16, cursor: 'pointer',
-                        opacity: (!manualName.trim() || !allowed || rlLoading) ? 0.6 : 1,
-                      }}
+                      className={styles.cta}
+                      style={{ marginTop: 12, width: '100%' }}
                     >
                       Continuar
                     </button>
@@ -563,12 +555,8 @@ const ArtistCreate: FC = () => {
                   <button
                     disabled={fieldVal == null}
                     onClick={() => { if (fieldVal != null) answerQuiz(fieldVal); }}
-                    style={{
-                      marginTop: 12, width: '100%',
-                      background: 'linear-gradient(135deg, #2ec47a, #1f9e6b)',
-                      border: 'none', color: '#fff', padding: '14px 24px', borderRadius: 9999,
-                      fontWeight: 700, fontSize: 16, cursor: 'pointer', opacity: fieldVal == null ? 0.6 : 1,
-                    }}
+                    className={styles.cta}
+                    style={{ marginTop: 12, width: '100%' }}
                   >
                     Continuar
                   </button>
