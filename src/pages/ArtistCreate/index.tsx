@@ -19,7 +19,7 @@ import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import { DiagnosticReport, type Chartmetric } from './DiagnosticReport';
 import styles from './ArtistCreate.module.scss';
 
-type Step = 'perfil' | 'quiz' | 'analisando' | 'diagnostico';
+type Step = 'perfil' | 'intro' | 'quiz' | 'analisando' | 'diagnostico';
 
 const REDUCE_MOTION =
   typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -80,7 +80,7 @@ const QUIZ: QuizDef[] = [
 ];
 
 const STEP_INDEX: Record<Step, number> = {
-  perfil: 0, quiz: 1, analisando: 2, diagnostico: 2,
+  perfil: 0, intro: 1, quiz: 1, analisando: 2, diagnostico: 2,
 };
 
 const ArtistCreate: FC = () => {
@@ -249,8 +249,16 @@ const ArtistCreate: FC = () => {
   }, [step]);
 
   // ─── Handlers de fluxo ──────────────────────────────────────────────────────
-  const startQuiz = (name: string, spotifyArtistId: string | null, followers: number | null, image: string | null = null) => {
+  // Após escolher o artista, entra na transição ('intro'): aqui o ambiente já vira o do Diagnóstico
+  // REAL e a Maestra confirma de quem é o diagnóstico antes de começar as perguntas.
+  const selectArtist = (name: string, spotifyArtistId: string | null, followers: number | null, image: string | null = null) => {
     chosen.current = { name, spotifyArtistId, followers, image };
+    setStep('intro');
+    say(`Boa! Vamos criar o diagnóstico de ${name}. Vou te fazer algumas perguntas rápidas pra entender a sua realidade de hoje.`);
+  };
+
+  // Começa o quiz de fato (botão da transição).
+  const beginQuiz = () => {
     setQuizIndex(0);
     setStep('quiz');
     say(QUIZ[0].q);
@@ -275,7 +283,7 @@ const ArtistCreate: FC = () => {
     setNotice(null);
     setQuery('');
     setResults([]);
-    startQuiz(r.name, r.id, r.followers ?? null, r.image ?? null);
+    selectArtist(r.name, r.id, r.followers ?? null, r.image ?? null);
   };
 
   // Entra no modo "ainda estou iniciando" (sem Spotify): pede só o nome artístico.
@@ -298,7 +306,7 @@ const ArtistCreate: FC = () => {
   const confirmManualName = () => {
     const n = manualName.trim();
     if (!n) return;
-    startQuiz(n, null, null, null);
+    selectArtist(n, null, null, null);
   };
 
   // Próximo índice pulando perguntas condicionais (ex.: cachê quando shows = 0).
@@ -347,10 +355,9 @@ const ArtistCreate: FC = () => {
         <div className={styles.pill}>
           <MaestraLogo className={`${styles.pillLogo} maestra-logo-live`} />
           <span className={styles.pillText}>
-            Maestra{' '}
             {realEnv
-              ? <span className={styles.pillReal}>REAL</span>
-              : <span className={styles.pillManager}>Manager</span>}
+              ? <>Diagnóstico <span className={styles.pillReal}>REAL</span></>
+              : <>Maestra <span className={styles.pillManager}>Manager</span></>}
           </span>
         </div>
       </div>
@@ -485,6 +492,17 @@ const ArtistCreate: FC = () => {
                   </>
                 )}
               </>
+            )}
+
+            {/* TRANSIÇÃO — confirma de quem é o diagnóstico antes de começar o quiz */}
+            {step === 'intro' && (
+              <div className={styles.intro}>
+                {chosen.current.image && (
+                  <img src={chosen.current.image} alt={chosen.current.name} className={styles.introAvatar} />
+                )}
+                <div className={styles.introName}>{chosen.current.name}</div>
+                <button className={styles.cta} onClick={beginQuiz}>Começar diagnóstico</button>
+              </div>
             )}
 
             {/* QUIZ */}

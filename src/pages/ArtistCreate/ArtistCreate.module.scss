@@ -755,6 +755,31 @@
 }
 
 // CTA verde grande (igual /welcome)
+// ─── Transição (intro): "Vamos criar o diagnóstico de ___" ────────────────────
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.introAvatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(46, 196, 122, 0.5);
+  box-shadow: 0 0 0 5px rgba(46, 196, 122, 0.12);
+}
+
+.introName {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-weight: 800;
+  font-size: 26px;
+  line-height: 1.15;
+  color: #fff;
+}
+
 .cta {
   width: auto;
   max-width: 100%;
