@@ -224,21 +224,21 @@ const Artists: FC = () => {
                   {a.role !== 'member' && a.is_locked ? (
                     <span
                       style={{
-                        display: 'inline-block', marginTop: 6, padding: '3px 10px', borderRadius: 9999,
-                        background: 'rgba(80,155,245,0.14)', border: '1px solid rgba(80,155,245,0.4)',
-                        color: '#7db4f7', fontSize: 12, fontWeight: 700,
+                        display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 7,
+                        color: '#a0a0aa', fontSize: 12.5, fontWeight: 600,
                       }}
                     >
+                      <span aria-hidden style={{ width: 6, height: 6, borderRadius: '50%', background: '#509bf5', flexShrink: 0 }} />
                       Pagamento pendente
                     </span>
                   ) : !isOnboardingComplete(a) ? (
                     <span
                       style={{
-                        display: 'inline-block', marginTop: 6, padding: '3px 10px', borderRadius: 9999,
-                        background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.35)',
-                        color: '#f5b15a', fontSize: 12, fontWeight: 700,
+                        display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 7,
+                        color: '#a0a0aa', fontSize: 12.5, fontWeight: 600,
                       }}
                     >
+                      <span aria-hidden style={{ width: 6, height: 6, borderRadius: '50%', background: '#e0a13c', flexShrink: 0 }} />
                       Planejamento pendente
                     </span>
                   ) : null}
