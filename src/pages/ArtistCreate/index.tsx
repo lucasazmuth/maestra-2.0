@@ -1,7 +1,7 @@
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, Fragment, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Input, InputNumber, Spin } from 'antd';
-import { FiAlertCircle } from 'react-icons/fi';
+import { FiAlertCircle, FiCheck } from 'react-icons/fi';
 import { useDebounce } from 'use-debounce';
 
 import { DiagnosticoIcon } from '../../components/Icons/system';
@@ -81,6 +81,11 @@ const QUIZ: QuizDef[] = [
 const STEP_INDEX: Record<Step, number> = {
   perfil: 0, intro: 1, quiz: 1, analisando: 2, diagnostico: 2,
 };
+
+// Macro-fluxo exibido no header (orienta o usuário na jornada inteira da criação):
+// Criar perfil → Diagnóstico REAL → Pagamento. O passo interno 'perfil' = fase 0; todo o resto
+// (intro/quiz/análise/diagnóstico) = fase 1; o Pagamento (fase 2) acontece fora desta tela.
+const FLOW_PHASES = ['Criar perfil', 'Diagnóstico REAL', 'Pagamento'] as const;
 
 const ArtistCreate: FC = () => {
   const dispatch = useAppDispatch();
@@ -342,6 +347,9 @@ const ArtistCreate: FC = () => {
   // A identidade do Diagnóstico REAL (verde + "Maestra REAL" + estrela) só entra DEPOIS de selecionar
   // o perfil. No 1º passo ('perfil') é o ambiente neutro da Maestra, pra não parecer que já começou o diagnóstico.
   const realEnv = step !== 'perfil';
+  // Fase do macro-fluxo do header: 0 = Criar perfil, 1 = Diagnóstico REAL (Pagamento fica fora desta tela).
+  const macroPhase = step === 'perfil' ? 0 : 1;
+  const flowAccent = realEnv ? '#2ec47a' : '#af2896';
 
   return (
     <div className={`${styles.page} ${realEnv ? styles.pageReal : ''}`}>
@@ -350,21 +358,41 @@ const ArtistCreate: FC = () => {
 
       <button className={styles.back} onClick={() => navigate(redo ? `/artists/${redoArtistId}/diagnostico` : '/artists')}>{redo ? 'Voltar' : 'Sair'}</button>
 
-      <div className={styles.pillWrap}>
-        <div className={styles.pill}>
-          <span className={styles.pillText}>
-            {realEnv
-              ? <>Diagnóstico <span className={styles.pillReal}>REAL</span></>
-              : <>Maestra <span className={styles.pillManager}>Manager</span></>}
-          </span>
-        </div>
-      </div>
-
-      <div className={styles.progress}>
-        {[0, 1, 2].map((i) => (
-          <span key={i} className={`${styles.dot} ${i === dotIndex ? styles.dotOn : i < dotIndex ? styles.dotDone : ''}`} />
-        ))}
-      </div>
+      {redo ? (
+        // Refazer diagnóstico (PRO): não passa por Criar perfil nem Pagamento — mantém a pílula + dots.
+        <>
+          <div className={styles.pillWrap}>
+            <div className={styles.pill}>
+              <span className={styles.pillText}>Diagnóstico <span className={styles.pillReal}>REAL</span></span>
+            </div>
+          </div>
+          <div className={styles.progress}>
+            {[0, 1, 2].map((i) => (
+              <span key={i} className={`${styles.dot} ${i === dotIndex ? styles.dotOn : i < dotIndex ? styles.dotDone : ''}`} />
+            ))}
+          </div>
+        </>
+      ) : (
+        // Header do macro-fluxo: Criar perfil → Diagnóstico REAL → Pagamento.
+        <nav className={styles.flow} style={{ '--flow-accent': flowAccent } as React.CSSProperties} aria-label="Etapas da criação">
+          {FLOW_PHASES.map((label, i) => {
+            const state = i < macroPhase ? 'done' : i === macroPhase ? 'current' : 'upcoming';
+            return (
+              <Fragment key={label}>
+                {i > 0 && <span className={`${styles.flowLine} ${i <= macroPhase ? styles.flowLineDone : ''}`} aria-hidden />}
+                <div className={`${styles.flowItem} ${state === 'done' ? styles.flowDone : state === 'current' ? styles.flowCurrent : ''}`}>
+                  <span className={styles.flowDot}>{state === 'done' ? <FiCheck size={13} /> : i + 1}</span>
+                  <span className={styles.flowLabel}>
+                    {label === 'Diagnóstico REAL'
+                      ? <>Diagnóstico <span className={styles.flowReal}>REAL</span></>
+                      : label}
+                  </span>
+                </div>
+              </Fragment>
+            );
+          })}
+        </nav>
+      )}
 
       <div className={`${styles.step} ${step === 'diagnostico' ? styles.stepWide : ''}`} key={`${step}-${quizIndex}`}>
         {step !== 'diagnostico' && (

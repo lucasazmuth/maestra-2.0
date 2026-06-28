@@ -99,6 +99,80 @@
   &:hover { color: #fff; }
 }
 
+// ─── Header de macro-fluxo: Criar perfil → Diagnóstico REAL → Pagamento ─────────
+.flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 6px 0 30px;
+  max-width: 100%;
+}
+
+.flowItem { display: inline-flex; align-items: center; gap: 9px; }
+
+.flowDot {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  color: #7a7a85;
+  background: transparent;
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
+}
+
+.flowLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #7a7a85;
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+
+.flowReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; }
+
+.flowLine {
+  width: 40px;
+  min-width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  flex-shrink: 1;
+  background: rgba(255, 255, 255, 0.14);
+  transition: background 0.3s;
+}
+.flowLineDone { background: var(--flow-accent); }
+
+// Etapa atual: bolinha preenchida na cor do ambiente + rótulo em branco.
+.flowCurrent {
+  .flowDot { background: var(--flow-accent); border-color: var(--flow-accent); color: #fff; }
+  .flowLabel { color: #fff; }
+}
+
+// Etapa concluída: bolinha preenchida (check) + rótulo apagado.
+.flowDone {
+  .flowDot { background: var(--flow-accent); border-color: var(--flow-accent); color: #fff; }
+  .flowLabel { color: #b3b3b3; }
+}
+
+@media (max-width: 560px) {
+  .flow { gap: 7px; }
+  .flowItem { gap: 6px; }
+  .flowLabel { font-size: 12px; }
+  .flowDot { width: 22px; height: 22px; font-size: 11px; }
+  .flowLine { width: 18px; }
+}
+
+// Telas bem estreitas: só a etapa atual mostra o rótulo; as outras ficam só com a bolinha.
+@media (max-width: 440px) {
+  .flowItem:not(.flowCurrent) .flowLabel { display: none; }
+}
+
 // ─── Progresso ─────────────────────────────────────────────────────────────────
 .progress {
   display: flex;
