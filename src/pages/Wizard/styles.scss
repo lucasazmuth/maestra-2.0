@@ -139,6 +139,8 @@
 .wizard {
   padding: 24px;
   position: relative;
+  // Identidade do Planejamento Estratégico: glow azul sutil no topo do ambiente.
+  background: radial-gradient(110% 42% at 50% 0%, rgba(74, 140, 255, 0.09) 0%, rgba(74, 140, 255, 0.03) 38%, transparent 62%);
 
   .wiz-progress-track {
     height: 4px;
@@ -150,7 +152,7 @@
     .wiz-progress-fill {
       height: 100%;
       border-radius: 2px;
-      background: #af2896;
+      background: #4a8cff; // azul do produto Planejamento
       transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
@@ -168,6 +170,18 @@
       }
     }
   }
+}
+
+// Ícone de Planejamento grande e translúcido no fundo (id visual do ambiente, azul).
+.wiz-glyph {
+  position: absolute;
+  bottom: 78px;
+  right: -48px;
+  color: #4a8cff;
+  opacity: 0.05;
+  pointer-events: none;
+  line-height: 0;
+  z-index: 0;
 }
 
 // Rótulo dos "atos" (usado no drawer de etapas)
@@ -1336,7 +1350,10 @@
 
 .wiz-chat-head {
   flex: none;
-  background: #121212;
+  position: relative;
+  z-index: 2;
+  // Tom azul sutil no topo (id do Planejamento) sobre o fundo do app.
+  background: linear-gradient(180deg, rgba(74, 140, 255, 0.07) 0%, #121212 72%);
   padding-bottom: 12px;
 }
 

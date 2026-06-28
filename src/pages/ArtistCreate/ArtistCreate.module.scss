@@ -3,12 +3,36 @@
 
 .page {
   min-height: 100vh;
-  background: radial-gradient(120% 90% at 50% 0%, #15101f 0%, #08080c 55%, #050507 100%);
+  position: relative;
+  overflow: hidden;
+  // Identidade do Diagnóstico REAL: glow verde no topo sobre quase-preto.
+  background: radial-gradient(120% 90% at 50% 0%, rgba(46, 196, 122, 0.12) 0%, #0a0d0b 46%, #050507 100%);
   color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 32px 24px 64px;
+}
+
+// Ícone do REAL grande e translúcido no fundo (id visual do ambiente).
+.pageGlyph {
+  position: absolute;
+  right: -52px;
+  bottom: 36px;
+  color: #2ec47a;
+  opacity: 0.05;
+  pointer-events: none;
+  line-height: 0;
+}
+
+// Foco dos inputs do ambiente (busca, etc.) no verde do REAL (sobrepõe o magenta do tema antd).
+.page :global(.ant-input-affix-wrapper:hover),
+.page :global(.ant-input-affix-wrapper-focused),
+.page :global(.ant-input:hover),
+.page :global(.ant-input:focus),
+.page :global(.ant-input-focused) {
+  border-color: #2ec47a !important;
+  box-shadow: 0 0 0 1px rgba(46, 196, 122, 0.25) !important;
 }
 
 // ─── Pílula da marca (igual /welcome) ─────────────────────────────────────────
@@ -31,7 +55,7 @@
   background: conic-gradient(
     from var(--acAngle),
     transparent 0deg, transparent 150deg,
-    #af2896 200deg, #ffffff 255deg, #509bf5 300deg, #af2896 335deg, transparent 360deg
+    #2ec47a 200deg, #ffffff 255deg, #67e0ac 300deg, #2ec47a 335deg, transparent 360deg
   );
   filter: blur(6px);
   opacity: 0.9;
@@ -60,7 +84,8 @@
   white-space: nowrap;
 }
 
-.pillManager { color: #d264bb; }
+// "REAL" na pílula: assinatura serifada (Georgia itálico) + verde do produto.
+.pillReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; color: #37d995; }
 
 .back {
   position: absolute;
@@ -91,8 +116,8 @@
   transition: background 0.3s, width 0.3s;
 }
 
-.dotOn { background: #af2896; }
-.dotDone { background: rgba(175, 40, 150, 0.5); }
+.dotOn { background: #2ec47a; }
+.dotDone { background: rgba(46, 196, 122, 0.5); }
 
 // ─── Etapa (uma por vez, centralizada) ────────────────────────────────────────
 .step {
@@ -147,7 +172,7 @@
   height: 1.05em;
   margin-left: 4px;
   vertical-align: text-bottom;
-  background: #af2896;
+  background: #2ec47a;
   border-radius: 2px;
   animation: acCaret 0.9s steps(1) infinite;
 }
@@ -633,10 +658,12 @@
   :global(.ant-input:hover),
   :global(.ant-input:focus),
   :global(.ant-input-focused),
+  :global(.ant-input-affix-wrapper:hover),
+  :global(.ant-input-affix-wrapper-focused),
   :global(.ant-select:not(.ant-select-disabled):hover .ant-select-selector),
   :global(.ant-select-focused .ant-select-selector) {
-    border-color: #af2896 !important;
-    box-shadow: 0 0 0 1px rgba(175, 40, 150, 0.25) !important;
+    border-color: #2ec47a !important;
+    box-shadow: 0 0 0 1px rgba(46, 196, 122, 0.25) !important;
   }
 
   // Select de parcelamento — altura e alinhamento iguais aos inputs.
@@ -695,9 +722,9 @@
 }
 
 .methodBtnOn {
-  background: rgba(175, 40, 150, 0.1);
-  border-color: #af2896;
-  box-shadow: 0 0 0 1px rgba(175, 40, 150, 0.35), 0 6px 22px rgba(175, 40, 150, 0.12);
+  background: rgba(46, 196, 122, 0.1);
+  border-color: #2ec47a;
+  box-shadow: 0 0 0 1px rgba(46, 196, 122, 0.35), 0 6px 22px rgba(46, 196, 122, 0.12);
 }
 
 .methodIcon {

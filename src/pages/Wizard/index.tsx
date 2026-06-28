@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { App } from 'antd';
 import { FiChevronDown } from 'react-icons/fi';
 
+import { PlanejamentoIcon } from '../../components/Icons/system';
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
@@ -157,6 +158,9 @@ const Wizard: FC = () => {
 
   return (
     <div className='wizard wizard--chat'>
+      {/* Ícone de Planejamento grande e translúcido no fundo — identidade do ambiente (azul). */}
+      <span className='wiz-glyph' aria-hidden><PlanejamentoIcon size={300} /></span>
+
       {/* Brilho aurora na borda ao avançar de etapa (re-monta via key pra re-tocar a animação) */}
       {stepGlow > 0 && <span key={stepGlow} className='wiz-step-glow wiz-step-glow--on' aria-hidden />}
 
@@ -164,7 +168,8 @@ const Wizard: FC = () => {
       <div className='wiz-chat-head'>
         <div className='wiz-col'>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-            <h1 className='wiz-title' style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 22, color: '#fff', margin: 0 }}>
+            <h1 className='wiz-title' style={{ display: 'flex', alignItems: 'center', gap: 9, fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 22, color: '#fff', margin: 0 }}>
+              <PlanejamentoIcon size={22} style={{ color: '#4a8cff', flexShrink: 0 }} />
               Planejamento Estratégico
             </h1>
             <button

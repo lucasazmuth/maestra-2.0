@@ -5,6 +5,7 @@ import { FiAlertCircle } from 'react-icons/fi';
 import { useDebounce } from 'use-debounce';
 
 import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
+import { DiagnosticoIcon } from '../../components/Icons/system';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { supabase } from '../../lib/supabase';
 import { artistsActions } from '../../store/slices/artists';
@@ -334,13 +335,16 @@ const ArtistCreate: FC = () => {
 
   return (
     <div className={styles.page}>
+      {/* Ícone do REAL grande e translúcido no fundo — identidade do ambiente de diagnóstico. */}
+      <span className={styles.pageGlyph} aria-hidden><DiagnosticoIcon size={300} /></span>
+
       <button className={styles.back} onClick={() => navigate(redo ? `/artists/${redoArtistId}/diagnostico` : '/artists')}>{redo ? 'Voltar' : 'Sair'}</button>
 
       <div className={styles.pillWrap}>
         <div className={styles.pillGlow} aria-hidden />
         <div className={styles.pill}>
           <MaestraLogo className={`${styles.pillLogo} maestra-logo-live`} />
-          <span className={styles.pillText}>Maestra <span className={styles.pillManager}>Manager</span></span>
+          <span className={styles.pillText}>Maestra <span className={styles.pillReal}>REAL</span></span>
         </div>
       </div>
 
