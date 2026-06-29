@@ -3,7 +3,7 @@
 
 .journey-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
 }
 
@@ -40,7 +40,6 @@
   align-items: center;
   color: #4a4a52;
   flex-shrink: 0;
-  margin-top: 13px;
 }
 
 @media (max-width: 620px) {
