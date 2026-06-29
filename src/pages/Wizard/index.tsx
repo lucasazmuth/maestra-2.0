@@ -3,7 +3,6 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { App } from 'antd';
 import { FiChevronDown } from 'react-icons/fi';
 
-import { PlanejamentoIcon } from '../../components/Icons/system';
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
@@ -158,9 +157,6 @@ const Wizard: FC = () => {
 
   return (
     <div className='wizard wizard--chat'>
-      {/* Ícone de Planejamento grande e translúcido no fundo — identidade do ambiente (azul). */}
-      <span className='wiz-glyph' aria-hidden><PlanejamentoIcon size={300} /></span>
-
       {/* Brilho aurora na borda ao avançar de etapa (re-monta via key pra re-tocar a animação) */}
       {stepGlow > 0 && <span key={stepGlow} className='wiz-step-glow wiz-step-glow--on' aria-hidden />}
 
