@@ -1,6 +1,6 @@
 import { FC, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowRight, FiCheck } from 'react-icons/fi';
+import { FiArrowRight, FiCheck, FiCompass } from 'react-icons/fi';
 
 import type { Artist } from '../../interfaces/maestra';
 import { PRODUCT_THEME as PRODUCTS } from '../productTheme';
@@ -56,30 +56,29 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
 
   const nameColor = (nd: Node) => (nd.current ? `rgb(${nd.accent})` : nd.done ? '#e6e6ea' : MUTED);
 
+  // Mesmo padrão dos painéis do dashboard ("Visão geral"): card #181818, cabeçalho ícone + título.
   return (
-    <section style={{ marginBottom: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
-        <h2 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 20, color: '#fff', margin: 0 }}>Sua jornada</h2>
-        <span style={{ color: '#8a8a92', fontSize: 13 }}>onde você está no ciclo</span>
+    <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 24, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <span style={{ color: '#b3b3b3', display: 'flex' }}><FiCompass size={18} /></span>
+        <h3 style={{ color: '#fff', fontSize: 16, fontWeight: 700, margin: 0, flex: 1, fontFamily: 'SpotifyMixUITitle' }}>Sua jornada</h3>
       </div>
 
-      <div style={{ background: '#0e0e10', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '24px 20px' }}>
-        <div className="journey-row">
-          {nodes.map((nd, i) => (
-            <Fragment key={nd.n}>
-              {i > 0 && (
-                <div className="journey-connector" aria-hidden>
-                  <FiArrowRight size={18} />
-                </div>
-              )}
-              <button className="journey-node" onClick={() => go(nd.to)}>
-                <StepDot n={nd.n} done={nd.done} current={nd.current} accent={nd.accent} />
-                <span className="journey-node-name" style={{ color: nameColor(nd) }}>{nd.label}</span>
-                <span style={{ fontSize: 12, color: '#8a8a92' }}>{nd.detail}</span>
-              </button>
-            </Fragment>
-          ))}
-        </div>
+      <div className="journey-row">
+        {nodes.map((nd, i) => (
+          <Fragment key={nd.n}>
+            {i > 0 && (
+              <div className="journey-connector" aria-hidden>
+                <FiArrowRight size={18} />
+              </div>
+            )}
+            <button className="journey-node" onClick={() => go(nd.to)}>
+              <StepDot n={nd.n} done={nd.done} current={nd.current} accent={nd.accent} />
+              <span className="journey-node-name" style={{ color: nameColor(nd) }}>{nd.label}</span>
+              <span style={{ fontSize: 12, color: '#8a8a92' }}>{nd.detail}</span>
+            </button>
+          </Fragment>
+        ))}
       </div>
     </section>
   );
