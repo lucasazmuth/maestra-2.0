@@ -25,12 +25,15 @@ export const PREMIOS_LABELS_V3 = ['Nenhum', 'Local / regional', 'Indicação nac
 export const PAGANTE_LABELS: Record<string, string> = { ate50: 'Até 50%', '51-69': '51–69%', '70-94': '70–94%', '95-100': '95–100%' };
 export const FREQ_LABELS: Record<string, string> = { esporadico: 'Esporádica', lancamento: 'Em lançamentos', perene: 'Perene' };
 
-// Linha de status do boletim (§9): "Aceso · faltam X" / "Faltam X para acender · Y para Top Icon".
-export const dimStatusText = (score: number, acende: boolean): string => {
-  const toTop = Math.max(0, 100 - Math.round(score));
-  if (acende) return toTop > 0 ? `Aceso · faltam ${toTop} pts para Top Icon` : 'Top Icon · pleno';
-  const toOn = Math.max(0, 70 - Math.round(score));
-  return `Faltam ${toOn} pts para acender · ${toTop} pts para Top Icon`;
+// Linha de status do boletim (§9): "Top Tier" (excelência) / "Aceso · faltam X para Top Tier" /
+// "Faltam X para acender · Y para Top Tier". `topTier` vem do flag do motor (dimTopIcon).
+export const dimStatusText = (score: number, acende: boolean, topTier = false): string => {
+  const s = Math.round(score);
+  const toTop = Math.max(0, 100 - s);
+  if (topTier) return 'Top Tier · nível de excelência desta dimensão';
+  if (acende) return toTop > 0 ? `Aceso · faltam ${toTop} pts para Top Tier` : 'Top Tier · pleno';
+  const toOn = Math.max(0, 70 - s);
+  return `Faltam ${toOn} pts para acender · ${toTop} pts para Top Tier`;
 };
 
 // Padrão R·E·A·L (alto/baixo) por nome de perfil — derivado da chave de 4 bits do motor.

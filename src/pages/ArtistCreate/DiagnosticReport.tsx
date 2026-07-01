@@ -11,6 +11,7 @@ import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '
 import DiagnosticDoc from './DiagnosticDoc';
 import { RealBadge, tierForAltas, tierForPattern, TIER_ACCENT, altasForPattern } from '../../components/RealBadge';
 import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS } from './realCopy';
+import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from './realNarrative';
 import styles from './ArtistCreate.module.scss';
 
 export interface Chartmetric {
@@ -188,11 +189,12 @@ const EngagementGrid: FC<{ engagement: any }> = ({ engagement }) => {
   );
 };
 
-// Card de dimensão V3: régua acende/top-icon + nota 0–100 + sub-métricas do mock.
+// Card de dimensão V3: régua acende/top-tier + nota 0–100 + sub-métricas + narrativa "o que isso revela".
 const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, cm }) => {
   const meta = DIM_META.find((m) => m.key === dk)!;
   const [title, sub] = meta.name.split(' · ');
   const high = !!ri.pattern[dk];
+  const top = !!ri.dimTopIcon?.[dk];
   const score = Math.max(0, Math.min(100, Math.round(Number(ri.boletim?.[dk] ?? 0))));
   const inputs = ri.inputs || {};
   const rev = ri.revenue || {};
@@ -226,16 +228,16 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
           <div className={styles.dimSub}>{sub}</div>
         </div>
         <div className={styles.dimScoreWrap}>
-          <span className={`${styles.dimBadge} ${high ? styles.dimBadgeHigh : styles.dimBadgeLow}`}>{high ? 'Alto' : 'Baixo'}</span>
+          <span className={`${styles.dimBadge} ${top ? styles.dimBadgeTop : high ? styles.dimBadgeHigh : styles.dimBadgeLow}`}>{top ? 'Top Tier' : high ? 'Alto' : 'Baixo'}</span>
           <span className={styles.dimScore}>{score}<span className={styles.dimScoreMax}>/100</span></span>
         </div>
       </div>
       <div className={styles.ruler}>
         <div className={styles.rulerFill} style={{ width: `${score}%` }} />
         <span className={styles.rulerMark} style={{ left: '70%' }} data-label="acende" />
-        <span className={styles.rulerMark} style={{ left: '100%' }} data-label="top icon" />
+        <span className={styles.rulerMark} style={{ left: '100%' }} data-label="top tier" />
       </div>
-      <div className={styles.dimStatusLine}>{dimStatusText(score, high)}</div>
+      <div className={styles.dimStatusLine}>{dimStatusText(score, high, top)}</div>
       <div className={styles.dimStats}>
         {rows.map((l) => (
           <div key={l.label} className={styles.dimStatRow}>
@@ -270,6 +272,18 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
         );
       })()}
       {dk === 'a' && <EngagementGrid engagement={ri.engagement} />}
+      {(() => {
+        const nar = dimNarrative(dk, ri);
+        return (
+          <div className={styles.dimReveal}>
+            <div className={styles.dimRevealHead}>O que isso revela</div>
+            <div className={styles.dimRevealLead}>{nar.headline}</div>
+            {nar.paras.map((p, i) => (
+              <p key={i} className={styles.dimRevealPara}><strong>{p.lead}</strong> {p.body}</p>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 };
@@ -702,16 +716,37 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
         {showPlanningCta && <p className={styles.ctaMicrocopy}>Seu diagnóstico REAL fica salvo. Você pode refazê-lo a qualquer momento para acompanhar a evolução da carreira.</p>}
       </div>
 
-      {/* SEÇÃO 6 — Rodapé colapsável */}
+      {/* SEÇÃO 6 — Quem assina (autoria da metodologia) */}
+      <div className={`${styles.signBlock} ${styles.reveal}`} style={{ animationDelay: '0.46s' }}>
+        <div className={styles.signKicker}>Quem assina</div>
+        <div className={styles.signName}>{QUEM_ASSINA.name}</div>
+        <div className={styles.signRole}>{QUEM_ASSINA.role}</div>
+        {QUEM_ASSINA.paras.map((p, i) => <p key={i} className={styles.signPara}>{p}</p>)}
+        <p className={styles.signHighlight}>{QUEM_ASSINA.highlight}</p>
+      </div>
+
+      {/* SEÇÃO 7 — Rodapé colapsável: como nasce o diagnóstico */}
       <div className={styles.methodBlock}>
         <button className={styles.methodToggle} onClick={() => setMethodOpen((v) => !v)}>
-          Como calculamos o seu diagnóstico
+          {METODOLOGIA.title}
           <FiChevronDown className={methodOpen ? styles.methodChevronOpen : styles.methodChevron} />
         </button>
         {methodOpen && (
-          <p className={styles.methodBody}>
-            O índice REAL foi criado por Anita Carvalho a partir de mais de 30 anos de experiência em gestão de carreiras musicais e da análise de 313 planejamentos estratégicos reais. Ele mede quatro dimensões (Reach, Earnings, Audience e Legitimacy), combinando dados reais do Spotify e das suas redes sociais com o que você nos contou sobre shows, faturamento e reconhecimento. O resultado é um dos 16 perfis de carreira possíveis, cada um com sua própria leitura estratégica.
-          </p>
+          <div className={styles.methodBody}>
+            {METODOLOGIA.intro.map((p, i) => <p key={i}>{p}</p>)}
+            <div className={styles.methodDims}>
+              {METODOLOGIA.dims.map((d) => (
+                <div key={d.l} className={styles.methodDim}>
+                  <span className={styles.methodDimLetter}>{d.l}</span>
+                  <div>
+                    <div className={styles.methodDimName}>{d.t}</div>
+                    <div className={styles.methodDimDesc}>{d.d}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p>{METODOLOGIA.outro}</p>
+          </div>
         )}
       </div>
 

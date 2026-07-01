@@ -991,10 +991,10 @@
 // SEÇÃO 3 — 4 dimensões
 .dimGrid {
   display: grid;
-  // auto-fit: 2 colunas quando há largura, 1 quando aperta — responsivo sem breakpoint fixo
-  // (resolve a inconsistência entre seções).
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 12px;
+  // V3: cada dimensão vira um card completo (nota + régua + métricas + "o que isso revela"),
+  // então empilhamos em coluna única — a narrativa não caberia bem em 2 colunas.
+  grid-template-columns: 1fr;
+  gap: 14px;
   margin-bottom: 28px;
 }
 // Estado da dimensão → segue a cor do tier da placa (gamificação), pra ficar coerente com o brasão.
@@ -1124,7 +1124,26 @@
 }
 .methodChevron { transition: transform 0.2s ease; }
 .methodChevronOpen { transform: rotate(180deg); transition: transform 0.2s ease; }
-.methodBody { font-size: 13px; line-height: 1.6; color: #8a8a92; margin: 0 2px 8px; }
+.methodBody { font-size: 13px; line-height: 1.6; color: #8a8a92; margin: 0 2px 8px; p { margin: 0 0 10px; } }
+.methodDims { display: flex; flex-direction: column; gap: 12px; margin: 14px 0; }
+.methodDim { display: flex; gap: 12px; }
+.methodDimLetter { flex-shrink: 0; width: 24px; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 18px; color: rgb(var(--real-accent, 175, 40, 150)); line-height: 1.2; }
+.methodDimName { font-size: 13px; font-weight: 800; color: #d7d7dc; margin-bottom: 2px; }
+.methodDimDesc { font-size: 12.5px; line-height: 1.55; color: #8a8a92; }
+
+// ─── "O que isso revela" (narrativa por dimensão, on-screen) ───────────────────
+.dimReveal { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.dimRevealHead { font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #6f6f78; margin-bottom: 8px; }
+.dimRevealLead { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 10px; letter-spacing: -0.01em; }
+.dimRevealPara { font-size: 13px; line-height: 1.6; color: #b8b8c0; margin: 0 0 8px; strong { color: #e6e6ea; font-weight: 700; } &:last-child { margin-bottom: 0; } }
+
+// ─── Quem assina (autoria, on-screen) ──────────────────────────────────────────
+.signBlock { background: #181818; border: 1px solid #282828; border-radius: 14px; padding: 22px; margin-bottom: 28px; }
+.signKicker { font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(var(--real-accent, 175, 40, 150)); margin-bottom: 10px; }
+.signName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; color: #fff; letter-spacing: -0.01em; }
+.signRole { font-size: 12.5px; font-weight: 700; color: #9a9aa5; margin: 2px 0 14px; }
+.signPara { font-size: 13px; line-height: 1.6; color: #b0b0b8; margin: 0 0 10px; }
+.signHighlight { font-size: 13.5px; line-height: 1.55; color: #e6e6ea; font-weight: 700; margin: 4px 0 0; }
 
 // ─── Enriquecimentos do diagnóstico ───────────────────────────────────────────
 // Reveal em etapas (entrega): cada seção sobe com fade, escalonada por animationDelay.
@@ -1351,6 +1370,84 @@
 .docCtaText { font-size: 19px; line-height: 1.6; color: #cfcfd4; margin: 0 0 40px; }
 .docCtaButton { background: #af2896; color: #fff; font-weight: 800; font-size: 22px; padding: 20px 44px; border-radius: 9999px; box-shadow: 0 14px 44px rgba(175, 40, 150, 0.3); }
 
+// ─── PDF V3: página por dimensão ───────────────────────────────────────────────
+.docPatternSub { display: block; font-size: 12px; color: #7a7a82; margin-top: 2px; }
+
+.docDimHead2 { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 22px; }
+.docDimLetter2 { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 52px; line-height: 0.9; flex-shrink: 0; }
+.docDimTitleWrap2 { flex: 1; padding-top: 4px; }
+.docDimTitle2 { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 30px; letter-spacing: -0.01em; }
+.docDimTitleSub2 { color: #9a9aa3; font-weight: 700; }
+.docDimTag2 { font-size: 15px; color: #9a9aa3; margin-top: 6px; }
+.docDimScoreWrap2 { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.docDimBadge2 { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 12px; border-radius: 9999px; }
+.docDimScore2 { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 44px; line-height: 1; color: #fff; letter-spacing: -0.02em; }
+.docDimScoreMax2 { font-size: 18px; color: #6f6f78; font-weight: 700; }
+
+.docRuler2 { position: relative; height: 10px; border-radius: 9999px; background: rgba(255, 255, 255, 0.08); margin: 8px 0 32px; }
+.docRulerFill2 { height: 100%; border-radius: 9999px; }
+.docRulerMark2 {
+  position: absolute; top: -4px; width: 2px; height: 18px; border-radius: 2px; background: rgba(255, 255, 255, 0.4); transform: translateX(-50%);
+  &::after { content: attr(data-label); position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #7a7a82; white-space: nowrap; }
+}
+.docDimStatus2 { font-size: 15px; font-weight: 800; color: #cfcfd4; margin-bottom: 24px; }
+
+.docDimMetrics2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; margin-bottom: 4px; }
+.docDimMetric2 {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  span { font-size: 15px; color: #9a9aa3; }
+  strong { font-size: 17px; font-weight: 800; color: #fff; }
+}
+
+.docSubBlock2 { margin-top: 18px; }
+.docSubTitle2 { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #6f6f78; margin-bottom: 10px; }
+.docCompRow2 { display: flex; flex-wrap: wrap; gap: 24px; }
+.docCompItem2 { display: flex; flex-direction: column; }
+.docCompPct2 { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 26px; color: #fff; line-height: 1; }
+.docCompLabel2 { font-size: 13px; color: #9a9aa3; margin-top: 4px; }
+.docHealthRow2 { display: flex; gap: 44px; margin-bottom: 12px; }
+.docHealthItem2 {
+  display: flex; flex-direction: column;
+  span { font-size: 13px; color: #9a9aa3; }
+  strong { font-size: 20px; font-weight: 800; color: #fff; margin-top: 3px; }
+}
+.docPills2 { display: flex; gap: 10px; }
+.docPillOn2 { font-size: 13px; font-weight: 800; color: #04140c; background: #21b26e; padding: 5px 14px; border-radius: 9999px; }
+.docPillOff2 { font-size: 13px; font-weight: 800; color: #cfcfd4; background: rgba(255, 255, 255, 0.08); padding: 5px 14px; border-radius: 9999px; }
+.docEngRow2 {
+  display: flex; align-items: baseline; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  span { font-size: 15px; color: #cfcfd4; }
+  strong { font-size: 15px; font-weight: 800; }
+}
+
+.docReveal2 { margin-top: 24px; padding: 20px 22px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); }
+.docRevealTitle2 { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #af2896; margin-bottom: 10px; }
+.docRevealLead2 { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; color: #fff; margin-bottom: 12px; letter-spacing: -0.01em; }
+.docRevealPara2 { font-size: 15px; line-height: 1.55; color: #c4c4cc; margin: 0 0 10px; strong { color: #fff; font-weight: 800; } &:last-child { margin-bottom: 0; } }
+
+// ─── PDF V3: 16 perfis agrupados ───────────────────────────────────────────────
+.docMap2 { display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px; }
+.docMap2Row { display: flex; align-items: center; gap: 16px; }
+.docMap2Tier { display: flex; align-items: center; gap: 10px; width: 120px; flex-shrink: 0; font-size: 14px; font-weight: 800; color: #cfcfd4; }
+.docMap2Chips { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+.docMap2Chip { display: flex; flex-direction: column; gap: 5px; padding: 8px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); }
+.docMap2ChipOn { background: rgba(175, 40, 150, 0.16); border-color: #af2896; }
+.docMap2Name { font-size: 14px; font-weight: 800; color: #fff; }
+.docMap2Dots { display: flex; gap: 4px; }
+.docMap2Dot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; color: #5a5a64; border: 1px solid rgba(255, 255, 255, 0.14); }
+.docMap2DotOn { color: #04140c; background: #af2896; border-color: #af2896; }
+.docTopTierNote {
+  display: flex; align-items: flex-start; gap: 14px; margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 14px; line-height: 1.55; color: #9a9aa3;
+  strong { color: #f5c451; }
+}
+.docTopTierSeal { flex-shrink: 0; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #1a1206; background: linear-gradient(120deg, #f5c451, #e0a13c); padding: 4px 10px; border-radius: 8px; }
+
+// ─── PDF V3: quem assina ───────────────────────────────────────────────────────
+.docSignName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 44px; letter-spacing: -0.01em; margin-bottom: 6px; }
+.docSignRole { font-size: 16px; font-weight: 700; color: #af2896; margin-bottom: 28px; }
+.docSignPara { font-size: 16.5px; line-height: 1.65; color: #cfcfd4; margin: 0 0 16px; }
+.docSignHighlight { font-size: 18px; line-height: 1.5; color: #fff; font-weight: 800; margin-top: 8px; }
+
 @keyframes acBarGrow { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); transform-origin: left; } }
 @keyframes acAngleSpin { to { --acAngle: 360deg; } }
 @keyframes acFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -1366,10 +1463,11 @@
 .dimBadge { font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 9999px; }
 .dimBadgeHigh { color: #000; background: rgb(var(--real-accent, 175, 40, 150)); }
 .dimBadgeLow { color: #c9c9d0; background: rgba(255, 255, 255, 0.08); }
+.dimBadgeTop { color: #1a1206; background: linear-gradient(120deg, #f5c451 0%, #e0a13c 100%); box-shadow: 0 0 0 1px rgba(245, 196, 81, 0.35), 0 4px 14px -6px rgba(224, 161, 60, 0.7); }
 .dimScore { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; color: #fff; line-height: 1; letter-spacing: -0.02em; }
 .dimScoreMax { font-size: 12px; color: #6f6f78; font-weight: 700; }
 
-// Régua de 0–100 com marcadores fixos: acende (70) e top icon (100).
+// Régua de 0–100 com marcadores fixos: acende (70) e top tier (100).
 .ruler {
   position: relative;
   height: 8px;
