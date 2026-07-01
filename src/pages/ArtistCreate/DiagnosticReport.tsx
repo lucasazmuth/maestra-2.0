@@ -10,6 +10,7 @@ import type { RealIndex } from '../../interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
 import DiagnosticDoc from './DiagnosticDoc';
 import { RealBadge, tierForAltas, tierForPattern, TIER_ACCENT, altasForPattern } from '../../components/RealBadge';
+import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS } from './realCopy';
 import styles from './ArtistCreate.module.scss';
 
 export interface Chartmetric {
@@ -130,6 +131,149 @@ const Typewriter: FC<{ text: string; active: boolean; speed?: number; onDone?: (
   );
 };
 
+// ── V3: componentes do boletim (definidos no escopo de módulo p/ não remontar a cada render) ──
+type DimK = 'r' | 'e' | 'a' | 'l';
+const SRC_LABELS: Record<string, string> = { streaming: 'Streaming', direitos: 'Direitos', publi: 'Publicidade', aulas: 'Aulas', editais: 'Editais', venda: 'Venda / merch', outros: 'Outros' };
+const PIE_COLORS = ['#1db954', '#4c7dff', '#e0a13c', '#af2896', '#21b26e', '#9b8cff', '#d65a5a'];
+
+// Pizza de composição da receita (Shows × cachê + cada fonte musical). §5.4 / §9.4.
+const RevenuePie: FC<{ revenue: any }> = ({ revenue }) => {
+  const segs: { label: string; value: number }[] = [];
+  if (Number(revenue?.shows) > 0) segs.push({ label: 'Shows', value: Number(revenue.shows) });
+  Object.entries(revenue?.sources || {}).forEach(([k, v]) => { if (Number(v) > 0) segs.push({ label: SRC_LABELS[k] || k, value: Number(v) }); });
+  const total = segs.reduce((s, x) => s + x.value, 0);
+  if (!total) return <div className={styles.pieEmpty}>Composição da receita: sem dados informados.</div>;
+  let acc = 0;
+  const stops = segs.map((s, i) => {
+    const from = (acc / total) * 100; acc += s.value; const to = (acc / total) * 100;
+    return `${PIE_COLORS[i % PIE_COLORS.length]} ${from}% ${to}%`;
+  }).join(', ');
+  return (
+    <div className={styles.pieBlock}>
+      <div className={styles.pieBlockTitle}>Composição da receita</div>
+      <div className={styles.pieWrap}>
+        <div className={styles.pieDisc} style={{ background: `conic-gradient(${stops})` }} />
+        <div className={styles.pieLegend}>
+          {segs.map((s, i) => (
+            <div key={s.label} className={styles.pieLegendRow}>
+              <span className={styles.pieDot} style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+              <span className={styles.pieLegendLabel}>{s.label}</span>
+              <span className={styles.pieLegendVal}>{Math.round((s.value / total) * 100)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Engajamento por rede (mostra as 3, com a leitura do corte). §6.3 / §9.4.
+const EngagementGrid: FC<{ engagement: any }> = ({ engagement }) => {
+  const nets: [string, string][] = [['Instagram', 'instagram'], ['TikTok', 'tiktok'], ['YouTube', 'youtube']];
+  return (
+    <div className={styles.engGrid}>
+      <div className={styles.engGridTitle}>Engajamento por rede</div>
+      {nets.map(([label, key]) => {
+        const e = engagement?.[key];
+        return (
+          <div key={key} className={styles.engRow}>
+            <span className={styles.engNet}>{label}</span>
+            {e
+              ? <span className={`${styles.engVal} ${e.above ? styles.engAbove : styles.engBelow}`}>{fmtPct(e.value)} {e.above ? 'acima' : 'abaixo'} do corte ({fmtPct(e.cut)})</span>
+              : <span className={styles.engVal}>—</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// Card de dimensão V3: régua acende/top-icon + nota 0–100 + sub-métricas do mock.
+const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, cm }) => {
+  const meta = DIM_META.find((m) => m.key === dk)!;
+  const [title, sub] = meta.name.split(' · ');
+  const high = !!ri.pattern[dk];
+  const score = Math.max(0, Math.min(100, Math.round(Number(ri.boletim?.[dk] ?? 0))));
+  const inputs = ri.inputs || {};
+  const rev = ri.revenue || {};
+  const rows: { label: string; num?: number | null; value?: string }[] =
+    dk === 'r' ? [
+      { label: 'Ouvintes Spotify', num: cm?.monthly_listeners ?? inputs.spotifyListeners ?? null },
+      { label: 'Instagram', num: inputs.igFollowers ?? null },
+      { label: 'TikTok', num: inputs.tiktokFollowers ?? null },
+      { label: 'YouTube mensal', num: inputs.youtubeMonthlyViews ?? null },
+    ] : dk === 'e' ? [
+      { label: 'Receita mensal', value: fmtBRL(Number(rev.total ?? 0)) },
+      { label: 'Shows / mês', value: String(inputs.showsPerMonth ?? 0) },
+      { label: 'Cachê médio', value: fmtBRL(Number(inputs.cache ?? 0)) },
+    ] : dk === 'a' ? [
+      { label: 'Shows / mês', value: String(inputs.showsPerMonth ?? 0) },
+      { label: '% público pagante', value: inputs.fazBilheteria ? (PAGANTE_LABELS[inputs.pagantePct] ?? '—') : 'Não faz bilheteria' },
+      { label: 'Seguidores Spotify', num: inputs.spotifyFollowers ?? null },
+      { label: 'Fãs Deezer', num: inputs.deezerFans ?? null },
+    ] : [
+      { label: 'Prêmios', value: PREMIOS_LABELS_V3[Number(inputs.premios ?? 0)] ?? '—' },
+      { label: 'Imprensa', value: inputs.imprensaRepercussao ? (FREQ_LABELS[inputs.imprensaFrequencia] ?? 'Sim') : 'Não' },
+      { label: 'Playlists editoriais', value: String(inputs.editorialPlaylists ?? cm?.playlists?.count ?? 0) },
+      { label: 'Execução em rádio', value: Number(inputs.radioAirplay) > 0 ? 'Sim' : 'Não' },
+    ];
+  return (
+    <div className={`${styles.dimCard} ${high ? styles.stHigh : styles.stLow}`}>
+      <div className={styles.dimTop}>
+        <span className={styles.dimMono}>{meta.letter}</span>
+        <div className={styles.dimTitleWrap}>
+          <div className={styles.dimTitle}>{title}</div>
+          <div className={styles.dimSub}>{sub}</div>
+        </div>
+        <div className={styles.dimScoreWrap}>
+          <span className={`${styles.dimBadge} ${high ? styles.dimBadgeHigh : styles.dimBadgeLow}`}>{high ? 'Alto' : 'Baixo'}</span>
+          <span className={styles.dimScore}>{score}<span className={styles.dimScoreMax}>/100</span></span>
+        </div>
+      </div>
+      <div className={styles.ruler}>
+        <div className={styles.rulerFill} style={{ width: `${score}%` }} />
+        <span className={styles.rulerMark} style={{ left: '70%' }} data-label="acende" />
+        <span className={styles.rulerMark} style={{ left: '100%' }} data-label="top icon" />
+      </div>
+      <div className={styles.dimStatusLine}>{dimStatusText(score, high)}</div>
+      <div className={styles.dimStats}>
+        {rows.map((l) => (
+          <div key={l.label} className={styles.dimStatRow}>
+            <span className={styles.dimStatLabel}>{l.label}</span>
+            <span className={styles.dimStatValue}>{l.num != null ? <CountUp value={l.num} /> : (l.value ?? '—')}</span>
+          </div>
+        ))}
+      </div>
+      {dk === 'e' && <RevenuePie revenue={rev} />}
+      {dk === 'e' && (!inputs.temCnpj || !inputs.temEmpresario) && (
+        <div className={styles.eBadges}>
+          {!inputs.temCnpj && <span className={styles.eBadge}>Sem CNPJ</span>}
+          {!inputs.temEmpresario && <span className={styles.eBadge}>Sem empresário</span>}
+        </div>
+      )}
+      {dk === 'e' && (() => {
+        // Saúde financeira (12 meses): faturamento bruto anual × investimento informado → saldo.
+        // Investimento é exibição/diagnóstico (§5.4) — não entra no índice.
+        const fat = Math.round(Number(rev.total ?? 0) * 12);
+        const inv = Math.round(Number(inputs.investimento ?? 0));
+        const saldo = fat - inv;
+        const money = (n: number) => `R$ ${fmtNum(Math.abs(n))}`;
+        return (
+          <div className={styles.healthBlock}>
+            <div className={styles.healthTitle}>Saúde financeira · 12 meses</div>
+            <div className={styles.healthGrid}>
+              <div className={styles.healthItem}><span className={styles.healthLabel}>Faturamento</span><span className={styles.healthVal}>{money(fat)}</span></div>
+              <div className={styles.healthItem}><span className={styles.healthLabel}>Investimento</span><span className={styles.healthVal}>{money(inv)}</span></div>
+              <div className={styles.healthItem}><span className={styles.healthLabel}>Saldo</span><span className={`${styles.healthVal} ${saldo >= 0 ? styles.healthPos : styles.healthNeg}`}>{saldo >= 0 ? '+' : '−'}{money(saldo)}</span></div>
+            </div>
+          </div>
+        );
+      })()}
+      {dk === 'a' && <EngagementGrid engagement={ri.engagement} />}
+    </div>
+  );
+};
+
 interface Props {
   realIndex: RealIndex;
   chartmetric?: Chartmetric | null;
@@ -159,7 +303,6 @@ interface Props {
 // Rótulos dos níveis de prêmios/imprensa do motor v2 (índice → texto p/ a exibição).
 const PREMIO_LABELS = ['Nunca fui indicada nem premiada', 'Já fui indicada (sem ganhar)', 'Prêmio local/regional', 'Prêmio nacional', 'Prêmio internacional'];
 const IMPRENSA_LABELS = ['Nunca apareci na mídia', 'Repercussão local/regional', 'Repercussão nacional', 'Repercussão internacional'];
-const fmtBRL = (n: number) => (Number.isFinite(n) ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : '—');
 
 // Normaliza os `inputs` do motor v2 (números/enums) para o shape que a tela já consome (v1).
 // Reutilizado pelo PDF (DiagnosticDoc). eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -181,6 +324,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
   // v2 (motor REAL Consolidado) tem `version: 2` + `boletim`; v1 mantém o shape antigo.
   const riAny = realIndex as any;
   const isV2 = riAny.version === 2;
+  const isV3 = riAny.version === 3;
   const { profile, pattern } = realIndex;
   // Acento da página segue a fase REAL (tier da placa) — coerente com a identidade de gamificação.
   const realTier = tierForPattern(pattern);
@@ -380,40 +524,42 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
 
       {/* SEÇÃO 3 — As 4 dimensões em detalhe */}
       <div className={`${styles.dimGrid} ${styles.reveal}`} style={{ animationDelay: '0.18s' }}>
-        {DIM_META.map((d) => {
-          const high = pattern[d.key];
-          const neutral = d.key === 'e' && earningsUnknown;
-          const stateClass = neutral ? styles.stNeutral : high ? styles.stHigh : styles.stLow;
-          const [title, sub] = d.name.split(' · ');
-          return (
-            <div key={d.key} className={`${styles.dimCard} ${stateClass}`}>
-              <div className={styles.dimTop}>
-                <span className={styles.dimMono}>{d.letter}</span>
-                <div className={styles.dimTitleWrap}>
-                  <div className={styles.dimTitle}>{title}</div>
-                  <div className={styles.dimSub}>{sub}</div>
-                </div>
-                <span className={styles.dimStatus}>{neutral ? 'Não informado' : high ? 'Alto' : 'Baixo'}{isV2 && boletim ? ` · ${boletim[d.key]}/100` : ''}</span>
-              </div>
-              <div className={styles.dimLevel}>
-                <div className={styles.dimLevelFill} style={{ width: isV2 && boletim ? `${boletim[d.key]}%` : (high && !neutral ? '100%' : '34%') }} />
-              </div>
-              <div className={styles.dimStats}>
-                {dataLines[d.key].map((l) => (
-                  <div key={l.label} className={styles.dimStatRow}>
-                    <span className={styles.dimStatLabel}>{l.label}</span>
-                    <span className={styles.dimStatValue}>{renderValue(l)}</span>
+        {isV3
+          ? DIM_META.map((d) => <DimCardV3 key={d.key} dk={d.key} ri={riAny} cm={chartmetric ?? null} />)
+          : DIM_META.map((d) => {
+              const high = pattern[d.key];
+              const neutral = d.key === 'e' && earningsUnknown;
+              const stateClass = neutral ? styles.stNeutral : high ? styles.stHigh : styles.stLow;
+              const [title, sub] = d.name.split(' · ');
+              return (
+                <div key={d.key} className={`${styles.dimCard} ${stateClass}`}>
+                  <div className={styles.dimTop}>
+                    <span className={styles.dimMono}>{d.letter}</span>
+                    <div className={styles.dimTitleWrap}>
+                      <div className={styles.dimTitle}>{title}</div>
+                      <div className={styles.dimSub}>{sub}</div>
+                    </div>
+                    <span className={styles.dimStatus}>{neutral ? 'Não informado' : high ? 'Alto' : 'Baixo'}{isV2 && boletim ? ` · ${boletim[d.key]}/100` : ''}</span>
                   </div>
-                ))}
-              </div>
-              <p className={styles.dimPhrase}>
-                {neutral
-                  ? 'Você não informou o faturamento. Sem esse dado, consideramos E como baixo para o cálculo.'
-                  : high ? DIM_PHRASE[d.key].high : DIM_PHRASE[d.key].low}
-              </p>
-            </div>
-          );
-        })}
+                  <div className={styles.dimLevel}>
+                    <div className={styles.dimLevelFill} style={{ width: isV2 && boletim ? `${boletim[d.key]}%` : (high && !neutral ? '100%' : '34%') }} />
+                  </div>
+                  <div className={styles.dimStats}>
+                    {dataLines[d.key].map((l) => (
+                      <div key={l.label} className={styles.dimStatRow}>
+                        <span className={styles.dimStatLabel}>{l.label}</span>
+                        <span className={styles.dimStatValue}>{renderValue(l)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className={styles.dimPhrase}>
+                    {neutral
+                      ? 'Você não informou o faturamento. Sem esse dado, consideramos E como baixo para o cálculo.'
+                      : high ? DIM_PHRASE[d.key].high : DIM_PHRASE[d.key].low}
+                  </p>
+                </div>
+              );
+            })}
       </div>
 
       {/* SEÇÃO EXTRA — Onde seus ouvintes estão (dado real do Chartmetric) */}
@@ -500,9 +646,21 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             <RealBadge tier={tierForAltas(row.altas)} label={String(row.altas)} size={38} />
             <span className={styles.mapTier}>{row.tier}</span>
             <div className={styles.mapChips}>
-              {row.names.map((nm) => (
-                <span key={nm} className={`${styles.mapChip} ${nm === profile.name ? styles.mapChipOn : ''}`}>{nm}</span>
-              ))}
+              {row.names.map((nm) => {
+                const bits = PROFILE_BITS[nm];
+                return (
+                  <span key={nm} className={`${styles.mapChip} ${nm === profile.name ? styles.mapChipOn : ''}`}>
+                    <span className={styles.mapChipName}>{nm}</span>
+                    {bits && (
+                      <span className={styles.mapChipDots}>
+                        {(['r', 'e', 'a', 'l'] as const).map((k) => (
+                          <span key={k} className={`${styles.mapDot} ${bits[k] ? styles.mapDotOn : ''}`}>{k.toUpperCase()}</span>
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                );
+              })}
             </div>
           </div>
         ))}

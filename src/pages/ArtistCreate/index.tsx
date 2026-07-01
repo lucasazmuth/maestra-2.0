@@ -12,6 +12,7 @@ import { searchSpotifyArtists, type SpotifyArtistSearchResult } from '../../serv
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { SpotifyLottie } from '../../components/SpotifyLottie';
 import type { RealIndex } from '../../interfaces/maestra';
+import type { ImprensaTipo, ImprensaPorte } from '../../services/realEngine';
 import { useCanCreateArtist } from '../../hooks/useCanCreateArtist';
 import { useEntitlements } from '../../hooks/useEntitlements';
 import { formatRemainingTime } from '../../utils/rateLimitCalc';
@@ -24,58 +25,82 @@ type Step = 'perfil' | 'intro' | 'quiz' | 'analisando' | 'diagnostico';
 const REDUCE_MOTION =
   typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-// Roteiro do Diagnóstico REAL v2 (autorrelato). As chaves casam com os campos de RealInputsV2
-// consumidos pelo motor (src/services/realEngine). Campos abertos (inteiro/monetário) + selects
-// cujos `value` já são os enums/níveis que o motor espera.
-type QuizFieldType = 'int' | 'currency' | 'select';
+// Roteiro do Diagnóstico REAL v3 (autorrelato). As chaves casam com os campos de RealInputsV3
+// consumidos pelo motor (src/services/realEngine) e mapeados no edge (buildRealInputsV3).
+type QuizValue = string | number | boolean;
+type QuizFieldType = 'int' | 'currency' | 'select' | 'revenue' | 'matrix';
+type QuizKey =
+  | 'showsPerMonth' | 'cache' | 'revenueSources' | 'investimento'
+  | 'temCnpj' | 'temEmpresario' | 'premios'
+  | 'imprensaRepercussao' | 'imprensaMatrix' | 'imprensaFrequencia'
+  | 'fazBilheteria' | 'pagantePct';
 interface QuizDef {
-  key: 'showsPerMonth' | 'avgAudience' | 'cache' | 'faturamentoForaShows' | 'fonteRenda' | 'investimento' | 'cnpj' | 'empresario' | 'premios' | 'imprensa';
+  key: QuizKey;
   q: string;
   type: QuizFieldType;
   placeholder?: string;
-  options?: { label: string; value: string | number }[];
+  options?: { label: string; value: QuizValue }[];
   // Pula a pergunta quando a condição é verdadeira (ex.: cachê só se faz shows).
-  skipIf?: (a: Record<string, string | number>) => boolean;
+  skipIf?: (a: Record<string, any>) => boolean;
 }
-// Receita do E = (shows × cachê) + renda fora shows (híbrido c). Sem pergunta de faixa de faturamento.
+
+// Fontes da composição de receita fora-shows (§5.4) — a soma alimenta o E; as partes, a pizza.
+const REVENUE_SOURCES: { key: string; label: string }[] = [
+  { key: 'streaming', label: 'Streaming (Spotify, Deezer, YouTube…)' },
+  { key: 'direitos', label: 'Direitos (autorais, conexos, fonográficos)' },
+  { key: 'publi', label: 'Publicidade e patrocínio' },
+  { key: 'aulas', label: 'Aulas e cursos' },
+  { key: 'editais', label: 'Editais e prêmios em dinheiro' },
+  { key: 'venda', label: 'Venda de produtos e merch' },
+  { key: 'outros', label: 'Outras fontes musicais' },
+];
+
+// Matriz de imprensa (§7.3) — tipo de veículo × porte. O usuário marca onde já apareceu.
+const IMPRENSA_TIPOS: { key: ImprensaTipo; label: string }[] = [
+  { key: 'imprensa', label: 'Imprensa (jornal, revista, portal)' },
+  { key: 'tv', label: 'Veículos de TV' },
+  { key: 'influenciadores', label: 'Influenciadores do nicho musical' },
+  { key: 'youtube', label: 'Canais no YouTube' },
+  { key: 'podcasts', label: 'Podcasts' },
+  { key: 'blogs', label: 'Blogs especializados' },
+];
+const IMPRENSA_PORTES: { key: ImprensaPorte; label: string }[] = [
+  { key: 'pequeno', label: 'Pequeno' },
+  { key: 'medio', label: 'Médio' },
+  { key: 'grande', label: 'Grande' },
+];
+
+const SIM_NAO: { label: string; value: QuizValue }[] = [{ label: 'Sim', value: true }, { label: 'Não', value: false }];
+
+// Receita do E = (shows × cachê) + soma das fontes fora shows. Estrutura (CNPJ/empresário) modula.
 const QUIZ: QuizDef[] = [
   { key: 'showsPerMonth', type: 'int', q: 'Quantos shows você costuma fazer por mês?', placeholder: 'Ex: 4' },
-  { key: 'avgAudience', type: 'int', q: 'Qual o público médio dos seus shows?', placeholder: 'Ex: 300' },
-  { key: 'cache', type: 'currency', q: 'Qual o seu cachê médio por show?', placeholder: 'R$ 0', skipIf: (a) => Number(a.showsPerMonth) <= 0 },
-  { key: 'faturamentoForaShows', type: 'currency', q: 'Qual sua renda mensal média com música, FORA os shows? (streaming, direitos, aulas, publi…)', placeholder: 'R$ 0' },
-  { key: 'fonteRenda', type: 'select', q: 'Qual é a sua principal fonte de renda hoje?', options: [
-    { label: 'Shows', value: 'musical' },
-    { label: 'Publicidade / patrocínio', value: 'musical' },
-    { label: 'Venda de produtos', value: 'musical' },
-    { label: 'Direitos (autorais, conexos, fonográficos)', value: 'musical' },
-    { label: 'Editais', value: 'musical' },
-    { label: 'Aulas e cursos', value: 'musical' },
-    { label: 'Uma fonte fora da música', value: 'nao_musical' },
-  ] },
-  { key: 'investimento', type: 'currency', q: 'Nos últimos 12 meses, quanto você investiu na sua carreira?', placeholder: 'R$ 0' },
-  { key: 'cnpj', type: 'select', q: 'Você tem CNPJ para suas atividades musicais?', options: [
-    { label: 'Não, atuo como pessoa física', value: 'pf' },
-    { label: 'Sim, MEI', value: 'mei' },
-    { label: 'Sim, outra modalidade (LTDA, EIRELI…)', value: 'ltda' },
-  ] },
-  { key: 'empresario', type: 'select', q: 'Você tem empresário/a?', options: [
-    { label: 'Não tenho', value: 'nao' },
-    { label: 'Eu mesma cumpro esse papel', value: 'proprio' },
-    { label: 'Sim, alguém da família ou de amizade', value: 'parente' },
-    { label: 'Sim, um profissional do mercado', value: 'mercado' },
-  ] },
+  { key: 'cache', type: 'currency', q: 'Qual o seu cachê médio por show?', placeholder: '0', skipIf: (a) => Number(a.showsPerMonth) <= 0 },
+  { key: 'revenueSources', type: 'revenue', q: 'Fora os shows, quanto você fatura por mês com música em cada fonte? (pode deixar em zero o que não se aplica)' },
+  { key: 'investimento', type: 'currency', q: 'Nos últimos 12 meses, quanto você investiu na sua carreira?', placeholder: '0' },
+  { key: 'temCnpj', type: 'select', q: 'Você tem CNPJ para suas atividades musicais?', options: SIM_NAO },
+  { key: 'temEmpresario', type: 'select', q: 'Você tem empresário/a?', options: SIM_NAO },
   { key: 'premios', type: 'select', q: 'Qual o maior reconhecimento em premiações que você já teve?', options: [
     { label: 'Nunca fui indicada nem premiada', value: 0 },
-    { label: 'Já fui indicada (sem ganhar)', value: 1 },
-    { label: 'Já ganhei prêmio local/regional', value: 2 },
-    { label: 'Já ganhei prêmio nacional', value: 3 },
-    { label: 'Já ganhei prêmio internacional', value: 4 },
+    { label: 'Indicação ou prêmio local/regional', value: 1 },
+    { label: 'Indicação a prêmio nacional', value: 2 },
+    { label: 'Ganhei prêmio nacional', value: 3 },
+    { label: 'Indicação a prêmio internacional', value: 4 },
+    { label: 'Ganhei prêmio internacional', value: 5 },
   ] },
-  { key: 'imprensa', type: 'select', q: 'Qual o maior alcance de imprensa e TV que o seu trabalho já teve?', options: [
-    { label: 'Nunca apareci na mídia', value: 0 },
-    { label: 'Repercussão local/regional', value: 1 },
-    { label: 'Repercussão nacional', value: 2 },
-    { label: 'Repercussão internacional', value: 3 },
+  { key: 'imprensaRepercussao', type: 'select', q: 'Você já teve repercussão de mídia (imprensa, blogs, TV, influenciadores, podcasts) com seu trabalho musical?', options: SIM_NAO },
+  { key: 'imprensaMatrix', type: 'matrix', q: 'Onde seu trabalho já apareceu? Marque os tipos e portes de veículo.', skipIf: (a) => !a.imprensaRepercussao },
+  { key: 'imprensaFrequencia', type: 'select', q: 'Com que frequência seu trabalho aparece na mídia?', skipIf: (a) => !a.imprensaRepercussao, options: [
+    { label: 'Esporadicamente', value: 'esporadico' },
+    { label: 'Nos períodos de lançamento', value: 'lancamento' },
+    { label: 'Com frequência, de forma perene', value: 'perene' },
+  ] },
+  { key: 'fazBilheteria', type: 'select', q: 'Você faz shows de bilheteria em que seja a atração principal?', options: SIM_NAO },
+  { key: 'pagantePct', type: 'select', q: 'Em média, qual % do público dos seus shows é pagante?', skipIf: (a) => !a.fazBilheteria, options: [
+    { label: 'Até 50%', value: 'ate50' },
+    { label: '51% a 69%', value: '51-69' },
+    { label: '70% a 94%', value: '70-94' },
+    { label: '95% a 100%', value: '95-100' },
   ] },
 ];
 
@@ -127,19 +152,29 @@ const ArtistCreate: FC = () => {
 
   // Quiz
   const [quizIndex, setQuizIndex] = useState(0);
-  const answers = useRef<Record<string, string | number>>({});
-  const [fieldVal, setFieldVal] = useState<number | null>(null); // valor do campo aberto atual
+  const answers = useRef<Record<string, any>>({});
+  const [fieldVal, setFieldVal] = useState<number | null>(null);        // campo aberto (int/currency)
+  const [revenueVal, setRevenueVal] = useState<Record<string, number>>({}); // passo de composição de receita
+  const [matrixVal, setMatrixVal] = useState<Set<string>>(new Set());   // células "tipo:porte" marcadas
 
   // Ao trocar de pergunta: pré-carrega a resposta anterior (modo redo) ou zera (criação).
   useEffect(() => {
     const cur = step === 'quiz' ? QUIZ[quizIndex] : null;
-    if (cur && cur.type !== 'select') {
-      const prev = answers.current[cur.key];
+    if (!cur) { setFieldVal(null); return; }
+    const prev = answers.current[cur.key];
+    if (cur.type === 'int' || cur.type === 'currency') {
       setFieldVal(typeof prev === 'number' ? prev : null);
+    } else if (cur.type === 'revenue') {
+      setRevenueVal(prev && typeof prev === 'object' && !Array.isArray(prev) ? { ...prev } : {});
+    } else if (cur.type === 'matrix') {
+      setMatrixVal(new Set(Array.isArray(prev) ? prev.map((c: any) => `${c.tipo}:${c.porte}`) : []));
     } else {
       setFieldVal(null);
     }
   }, [quizIndex, step]);
+
+  const toggleMatrix = (id: string) =>
+    setMatrixVal((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
 
   // Refazer diagnóstico: semeia os dados salvos do artista + as respostas anteriores e começa no
   // quiz (pula o "perfil"). Só age enquanto está no perfil; ao achar o artista, troca pra quiz.
@@ -218,12 +253,12 @@ const ArtistCreate: FC = () => {
         // Redo (PRO): recalcula no edge reusando o Chartmetric salvo. Criação: cria/reusa o perfil.
         const { data, error } = await supabase.functions.invoke('artist-diagnostic', {
           body: redo
-            ? { redoArtistId, quizV2: answers.current }
+            ? { redoArtistId, quizV3: answers.current }
             : {
                 name: chosen.current.name,
                 spotifyArtistId: chosen.current.spotifyArtistId,
                 spotify: { followers: chosen.current.followers, image: chosen.current.image },
-                quizV2: answers.current,
+                quizV3: answers.current,
               },
         });
         if (error) throw error;
@@ -317,7 +352,7 @@ const ArtistCreate: FC = () => {
     return i;
   };
 
-  const answerQuiz = (value: string | number) => {
+  const answerQuiz = (value: unknown) => {
     answers.current[QUIZ[quizIndex].key] = value;
     const next = nextQuizIndex(quizIndex + 1);
     if (next < QUIZ.length) {
@@ -506,14 +541,94 @@ const ArtistCreate: FC = () => {
             )}
 
             {/* QUIZ */}
-            {step === 'quiz' && (
-              QUIZ[quizIndex].type === 'select' ? (
-                <div className={styles.options}>
-                  {QUIZ[quizIndex].options!.map((o) => (
-                    <button key={o.label} className={styles.option} onClick={() => answerQuiz(o.value)}>{o.label}</button>
-                  ))}
-                </div>
-              ) : (
+            {step === 'quiz' && (() => {
+              const cur = QUIZ[quizIndex];
+              const currencyProps = {
+                prefix: 'R$',
+                formatter: (val?: string | number) => `${val ?? ''}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
+                parser: ((val?: string) => (val ? Number(val.replace(/\D/g, '')) : 0)) as any,
+              };
+
+              // Sim/Não e selects (níveis/enums): botões de opção.
+              if (cur.type === 'select') {
+                return (
+                  <div className={styles.options}>
+                    {cur.options!.map((o) => (
+                      <button key={String(o.value)} className={styles.option} onClick={() => answerQuiz(o.value)}>{o.label}</button>
+                    ))}
+                  </div>
+                );
+              }
+
+              // Composição de receita fora-shows: um R$ por fonte (soma alimenta o E; partes, a pizza).
+              if (cur.type === 'revenue') {
+                return (
+                  <div className={styles.revenueForm}>
+                    {REVENUE_SOURCES.map((s) => (
+                      <div key={s.key} className={styles.revenueRow}>
+                        <span className={styles.revenueLabel}>{s.label}</span>
+                        <InputNumber
+                          size='large'
+                          min={0}
+                          precision={0}
+                          controls={false}
+                          className={styles.revenueInput}
+                          value={revenueVal[s.key] ?? null}
+                          onChange={(v) => setRevenueVal((p) => ({ ...p, [s.key]: Math.max(0, Number(v) || 0) }))}
+                          placeholder='0'
+                          {...currencyProps}
+                        />
+                      </div>
+                    ))}
+                    <button className={styles.cta} style={{ marginTop: 14, width: '100%' }} onClick={() => answerQuiz({ ...revenueVal })}>
+                      Continuar
+                    </button>
+                  </div>
+                );
+              }
+
+              // Imprensa: lista de tipos; em cada um, pílulas rotuladas de porte (multi-seleção).
+              if (cur.type === 'matrix') {
+                return (
+                  <div className={styles.matrixWrap}>
+                    <p className={styles.matrixHelp}>Marque o porte do veículo onde seu trabalho já apareceu. Pode marcar mais de um por tipo — e pular os tipos onde nunca apareceu.</p>
+                    <div className={styles.matrixList}>
+                      {IMPRENSA_TIPOS.map((t) => (
+                        <div key={t.key} className={styles.matrixTypeRow}>
+                          <span className={styles.matrixTypeName}>{t.label}</span>
+                          <div className={styles.porteChips}>
+                            {IMPRENSA_PORTES.map((p) => {
+                              const id = `${t.key}:${p.key}`;
+                              const on = matrixVal.has(id);
+                              return (
+                                <button
+                                  key={id}
+                                  type='button'
+                                  aria-pressed={on}
+                                  className={`${styles.porteChip} ${on ? styles.porteChipOn : ''}`}
+                                  onClick={() => toggleMatrix(id)}
+                                >
+                                  {p.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      className={styles.cta}
+                      style={{ marginTop: 16, width: '100%' }}
+                      onClick={() => answerQuiz(Array.from(matrixVal).map((id) => { const [tipo, porte] = id.split(':'); return { tipo, porte }; }))}
+                    >
+                      Continuar
+                    </button>
+                  </div>
+                );
+              }
+
+              // int / currency: campo numérico aberto.
+              return (
                 <div>
                   <InputNumber
                     autoFocus
@@ -524,15 +639,9 @@ const ArtistCreate: FC = () => {
                     style={{ width: '100%', height: 56, fontSize: 16, borderRadius: 14, background: '#1a1a1a', display: 'flex', alignItems: 'center' }}
                     value={fieldVal}
                     onChange={(v) => setFieldVal((v as number | null) ?? null)}
-                    placeholder={QUIZ[quizIndex].placeholder}
+                    placeholder={cur.placeholder}
                     onPressEnter={() => { if (fieldVal != null) answerQuiz(fieldVal); }}
-                    {...(QUIZ[quizIndex].type === 'currency'
-                      ? {
-                          prefix: 'R$',
-                          formatter: (val?: string | number) => `${val ?? ''}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
-                          parser: ((val?: string) => (val ? Number(val.replace(/\D/g, '')) : 0)) as any,
-                        }
-                      : {})}
+                    {...(cur.type === 'currency' ? currencyProps : {})}
                   />
                   <button
                     disabled={fieldVal == null}
@@ -543,8 +652,8 @@ const ArtistCreate: FC = () => {
                     Continuar
                   </button>
                 </div>
-              )
-            )}
+              );
+            })()}
 
             {/* ANALISANDO */}
             {step === 'analisando' && (
