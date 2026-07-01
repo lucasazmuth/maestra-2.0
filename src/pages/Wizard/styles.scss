@@ -1207,7 +1207,9 @@
   border-top: none;
   align-items: center;
   gap: 8px;
-  padding: 12px 0 4px;
+  // 22px laterais espelham o padding do .nyta-scroll (posto pra não cortar o glow do avatar):
+  // mantém a barra de input alinhada com a coluna de mensagens.
+  padding: 12px 22px 4px;
   width: 100%;
   max-width: var(--wiz-col);
   margin: 0 auto;
@@ -1358,6 +1360,9 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  // overflow-y:auto faz o x virar 'auto' também → corta o box-shadow (glow) do avatar da Nyta,
+  // que fica colado na borda esquerda. Padding lateral dá folga pro glow caber sem cortar.
+  padding: 0 22px;
   -ms-overflow-style: none;
   scrollbar-width: none;
 
