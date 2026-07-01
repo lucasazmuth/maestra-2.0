@@ -94,19 +94,28 @@ $card: #0c0c0c;
 // ─── Planos ──────────────────────────────────────────────────────────────────
 .plans { background: #000; padding: 80px 20px; }
 .plansInner { max-width: 64rem; margin: 0 auto; }
-.plansHead { text-align: center; margin-bottom: 40px; }
-.plansTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 28px; }
-.toggle { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.05); }
+.plansHead { text-align: center; margin-bottom: 44px; }
+.plansTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 16px; }
+.plansSub { font-size: 1.0625rem; line-height: 1.6; color: $g300; max-width: 40rem; margin: 0 auto; }
+// Toggle mensal/anual: vive DENTRO do card do PRO (só a assinatura tem essa escolha).
+.toggle { display: inline-flex; align-self: flex-start; align-items: center; gap: 4px; margin: 2px 0 18px; padding: 4px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.05); }
 .toggleBtn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 9999px; border: none; background: transparent; color: $g300; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s, color 0.2s; &:hover { color: #fff; } }
 .toggleBtnOn { background: $mag; color: #fff; &:hover { color: #fff; } }
 .toggleSave { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 9999px; background: rgba(175, 40, 150, 0.2); color: $mag2; }
 .toggleBtnOn .toggleSave { background: rgba(255, 255, 255, 0.2); color: #fff; }
-.planGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.planGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start; }
 .planCard { position: relative; border-radius: 16px; border: 1px solid $line; background: $card; padding: 28px; display: flex; flex-direction: column; }
-.planCardPro { border-color: rgba(175, 40, 150, 0.4); }
+.planCardHero { border-color: rgba(175, 40, 150, 0.55); }
+.planCardPro { border-color: rgba(124, 92, 255, 0.4); }
 .planBadge { position: absolute; top: -12px; left: 28px; background: $mag; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 4px 12px; border-radius: 9999px; }
+.planBadgePro { position: absolute; top: -12px; left: 28px; background: #7c5cff; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 4px 12px; border-radius: 9999px; }
+// Chip do TIPO de cobrança no topo de cada card — o que impede o usuário de se sentir enganado.
+.planKind { display: inline-block; align-self: flex-start; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 5px 11px; border-radius: 9999px; margin-bottom: 16px; }
+.planKindFree { color: #a7b0ba; background: rgba(255, 255, 255, 0.06); }
+.planKindOnce { color: $mag2; background: rgba(175, 40, 150, 0.16); }
+.planKindSub { color: #b9a9ff; background: rgba(124, 92, 255, 0.18); }
 .planName { font-size: 1.5rem; font-weight: 700; margin: 0 0 4px; }
-.planNamePro { color: $mag2; }
+.planNamePro { color: #b9a9ff; }
 .planDesc { font-size: 14px; color: $g400; margin: 0 0 24px; }
 .planPrice { display: flex; align-items: baseline; gap: 8px; }
 .planPrice strong { font-size: 2.25rem; font-weight: 700; }
@@ -122,6 +131,9 @@ $card: #0c0c0c;
 .planCtaPrimary { display: block; text-align: center; padding: 12px; border-radius: 9999px; background: $mag; color: #fff; font-weight: 700; text-decoration: none; cursor: pointer; border: none; transition: background 0.2s; &:hover { background: $magHover; } }
 .planCancel { font-size: 12px; color: $g500; margin: 16px 0 0; text-align: center; }
 .planSpacer { height: 28px; }
+.plansFootnote { max-width: 52rem; margin: 32px auto 0; text-align: center; font-size: 14px; line-height: 1.7; color: $g400; strong { color: $g200; font-weight: 700; } }
+// 3 cards só no desktop largo; abaixo disso empilha centralizado pra leitura.
+@media (max-width: 960px) { .planGrid { grid-template-columns: 1fr; max-width: 26rem; margin-left: auto; margin-right: auto; } }
 
 // ─── FAQ ─────────────────────────────────────────────────────────────────────
 .faq { background: #000; padding: 80px 20px; }

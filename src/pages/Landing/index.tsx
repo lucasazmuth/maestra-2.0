@@ -15,6 +15,9 @@ const NYTA_ACCENT = '124, 92, 255';   // violeta
 const GESTAO_ACCENT = '46, 196, 178'; // teal
 
 // Preços (estáticos na landing). Se mudarem, atualize aqui.
+// PLAN_ONCE = desbloqueio do planejamento POR PERFIL (cobrança única, vitalícia).
+// MONTHLY/ANNUAL = assinatura Maestra PRO (nível conta). São eixos independentes.
+const PLAN_ONCE = 199.9;
 const MONTHLY = 39.9;
 const ANNUAL = 335.16;
 const fmt = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -80,8 +83,9 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
   { q: 'Posso cancelar quando quiser?', a: 'Sim. Você cancela a qualquer momento pela sua conta, sem burocracia.' },
 ];
 
-const FREE_ITEMS = ['Veja o diagnóstico e o plano de ação', 'Gerencie as tarefas do seu plano de ação', 'Visualize catálogo, agenda e equipe'];
-const PRO_ITEMS = ['Edição em todos os perfis que você acessa', 'Nyta IA (até 100 interações por dia)', 'Catálogo de faixas ilimitado', 'Acesso a todos os perfis da conta'];
+const FREE_ITEMS = ['Diagnóstico REAL completo nas 4 dimensões', 'Descubra qual dos 16 perfis é o seu', 'Sem cartão de crédito pra começar'];
+const PLAN_ITEMS = ['Planejamento estratégico completo com a Nyta', 'Plano de ação com metas e cronograma', 'Análise de audiência: ouvintes e cidades', 'Catálogo, agenda e equipe', 'Acesso vitalício ao perfil e ao plano'];
+const PRO_ITEMS = ['Nyta IA (consultora, até 100 interações por dia)', 'Edição em todos os perfis que você acessa', 'Catálogo de faixas ilimitado', 'Acesso a todos os perfis da conta'];
 
 const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -355,6 +359,9 @@ const Feature: FC<{ data: typeof FEATURES[number] }> = ({ data }) => {
 };
 
 // ─── Plans ───────────────────────────────────────────────────────────────────
+// Dois modelos de cobrança são coisas diferentes e a UI deixa isso explícito (pra ninguém se
+// sentir enganado): o Planejamento é PAGAMENTO ÚNICO por perfil (vitalício); o PRO é ASSINATURA.
+// O toggle Mensal/Anual vive DENTRO do card do PRO — só a assinatura tem essa escolha.
 const Plans: FC = () => {
   const navigate = useNavigate();
   const [annual, setAnnual] = useState(false);
@@ -363,37 +370,63 @@ const Plans: FC = () => {
       <div className={styles.plansInner}>
         <div className={styles.plansHead}>
           <span className={styles.introKicker}>Planos</span>
-          <h2 className={styles.plansTitle}>Comece grátis, evolua quando quiser</h2>
-          <div className={styles.toggle}>
-            <button className={`${styles.toggleBtn} ${!annual ? styles.toggleBtnOn : ''}`} onClick={() => setAnnual(false)}>Mensal</button>
-            <button className={`${styles.toggleBtn} ${annual ? styles.toggleBtnOn : ''}`} onClick={() => setAnnual(true)}>
-              Anual <span className={styles.toggleSave}>-{discount}%</span>
-            </button>
-          </div>
+          <h2 className={styles.plansTitle}>Preço claro, sem pegadinha</h2>
+          <p className={styles.plansSub}>O diagnóstico é grátis. Você paga uma vez para desbloquear o planejamento de cada artista, e o Maestra PRO é uma assinatura opcional.</p>
         </div>
+
         <div className={styles.planGrid}>
+          {/* Grátis — o diagnóstico */}
           <div className={styles.planCard}>
-            <h3 className={styles.planName}>Grátis</h3>
-            <p className={styles.planDesc}>O essencial para acompanhar o plano e a carreira.</p>
+            <span className={`${styles.planKind} ${styles.planKindFree}`}>Grátis pra sempre</span>
+            <h3 className={styles.planName}>Diagnóstico REAL</h3>
+            <p className={styles.planDesc}>Crie o perfil e receba o retrato completo da carreira.</p>
             <div className={styles.planPriceFree}>R$ 0</div>
             <ul className={styles.planList}>
               {FREE_ITEMS.map((f) => <li key={f} className={`${styles.planItem} ${styles.planItemFree}`}><FiCheck size={18} /> <span>{f}</span></li>)}
             </ul>
             <button className={styles.planCtaOutline} onClick={() => navigate('/signup')}>Criar conta grátis</button>
           </div>
+
+          {/* Planejamento — pagamento único por perfil (o principal desbloqueio) */}
+          <div className={`${styles.planCard} ${styles.planCardHero}`}>
+            <span className={styles.planBadge}>Desbloqueio do artista</span>
+            <span className={`${styles.planKind} ${styles.planKindOnce}`} style={{ marginTop: 4 }}>Pagamento único · vitalício</span>
+            <h3 className={styles.planName}>Planejamento estratégico</h3>
+            <p className={styles.planDesc}>Pague uma vez e o planejamento, o plano de ação e a gestão desse artista ficam seus pra sempre.</p>
+            <div className={styles.planPrice}><strong>{fmt(PLAN_ONCE)}</strong><span className={styles.planUnit}>uma vez</span></div>
+            <p className={styles.planNote}>por artista · sem mensalidade</p>
+            <ul className={styles.planList}>
+              {PLAN_ITEMS.map((f) => <li key={f} className={`${styles.planItem} ${styles.planItemPro}`}><FiCheck size={18} /> <span>{f}</span></li>)}
+            </ul>
+            <button className={styles.planCtaPrimary} onClick={() => navigate('/signup')}>Fazer diagnóstico grátis</button>
+            <p className={styles.planCancel}>Você só paga quando decidir desbloquear.</p>
+          </div>
+
+          {/* Maestra PRO — assinatura (opcional), com o toggle mensal/anual próprio */}
           <div className={`${styles.planCard} ${styles.planCardPro}`}>
-            <span className={styles.planBadge}>PRO</span>
+            <span className={styles.planBadgePro}>PRO</span>
+            <span className={`${styles.planKind} ${styles.planKindSub}`}>Assinatura · opcional</span>
             <h3 className={`${styles.planName} ${styles.planNamePro}`}>Maestra PRO</h3>
-            <p className={styles.planDesc}>Ferramentas para executar o plano e crescer mais rápido.</p>
+            <p className={styles.planDesc}>A Nyta IA e as ferramentas pra gerenciar vários artistas.</p>
+            <div className={styles.toggle}>
+              <button className={`${styles.toggleBtn} ${!annual ? styles.toggleBtnOn : ''}`} onClick={() => setAnnual(false)}>Mensal</button>
+              <button className={`${styles.toggleBtn} ${annual ? styles.toggleBtnOn : ''}`} onClick={() => setAnnual(true)}>
+                Anual <span className={styles.toggleSave}>-{discount}%</span>
+              </button>
+            </div>
             <div className={styles.planPrice}><strong>{fmt(annual ? ANNUAL : MONTHLY)}</strong><span className={styles.planUnit}>{annual ? '/ano' : '/mês'}</span></div>
-            <p className={styles.planNote}>{annual ? `equivale a ${fmt(ANNUAL / 12)}/mês` : ''}</p>
+            <p className={styles.planNote}>{annual ? `equivale a ${fmt(ANNUAL / 12)}/mês` : 'cobrança recorrente'}</p>
             <ul className={styles.planList}>
               {PRO_ITEMS.map((f) => <li key={f} className={`${styles.planItem} ${styles.planItemPro}`}><FiCheck size={18} /> <span>{f}</span></li>)}
             </ul>
-            <button className={styles.planCtaPrimary} onClick={() => navigate('/signup')}>Começar grátis</button>
+            <button className={styles.planCtaPrimary} onClick={() => navigate('/signup')}>Assinar o PRO</button>
             <p className={styles.planCancel}>Cancele quando quiser.</p>
           </div>
         </div>
+
+        <p className={styles.plansFootnote}>
+          <strong>Como se combinam:</strong> o <strong>diagnóstico</strong> é sempre grátis. O <strong>planejamento</strong> é um pagamento único por artista, vitalício, sem mensalidade. O <strong>Maestra PRO</strong> é uma assinatura opcional que adiciona a Nyta IA e o gerenciamento de vários perfis à sua conta.
+        </p>
       </div>
     </section>
   );
