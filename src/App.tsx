@@ -32,6 +32,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Welcome from './pages/Welcome';
 const Landing = lazy(() => import('./pages/Landing'));
+const DiagnosticoReal = lazy(() => import('./pages/DiagnosticoReal'));
 const Page404 = lazy(() => import('./pages/404'));
 const Artists = lazy(() => import('./pages/Artists'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -153,6 +154,10 @@ const AppRoutes: FC = () => {
       {/* Landing pública (porta de entrada): header/footer próprios, sem AppLayout.
           Renderiza pra todos — o header adapta os CTAs pelo estado de login. */}
       <Route path='/' element={<Landing />} />
+
+      {/* Página institucional do Diagnóstico REAL: pública e standalone (reusa header/footer
+          da landing), acessível a quem ainda não tem conta. */}
+      <Route path='/diagnostico-real' element={<DiagnosticoReal />} />
 
       <Route path='/login' element={<PublicOnly><Login /></PublicOnly>} />
       <Route path='/signup' element={<PublicOnly><Signup /></PublicOnly>} />

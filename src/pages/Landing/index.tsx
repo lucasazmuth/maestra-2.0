@@ -1,5 +1,5 @@
 import { FC, ReactNode, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   FiArrowRight, FiArrowUp, FiCheck, FiChevronDown, FiActivity, FiTarget, FiMessageCircle, FiGrid,
   FiInstagram, FiZap, FiStar,
@@ -26,7 +26,7 @@ const NAV = [
   { label: 'FAQ', id: 'faq' },
 ];
 
-const FEATURES: { badge: string; title: string; desc: string; items: string[]; glyph: ReactNode; accent: string; bg?: string; reverse?: boolean }[] = [
+const FEATURES: { badge: string; title: string; desc: string; items: string[]; glyph: ReactNode; accent: string; bg?: string; reverse?: boolean; to?: string; toLabel?: string }[] = [
   {
     badge: 'Diagnóstico REAL',
     accent: PRODUCT_THEME.real.accent, bg: PRODUCT_THEME.real.bg,
@@ -34,6 +34,7 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
     desc: 'Um raio-X da sua carreira em quatro dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que só você sabe.',
     items: ['Índice REAL calculado a partir de dados reais, não achismo', 'Descubra qual dos 16 perfis de carreira é o seu', 'Onde seus ouvintes estão, playlists e referências'],
     glyph: <FiActivity size={88} />,
+    to: '/diagnostico-real', toLabel: 'Entenda o Índice REAL',
   },
   {
     badge: 'Planejamento estratégico', reverse: true,
@@ -83,9 +84,33 @@ const PRO_ITEMS = ['Edição em todos os perfis que você acessa', 'Nyta IA com 
 
 const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-// ─── Header ──────────────────────────────────────────────────────────────────
-const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
+// Navegação por seção que também funciona fora da landing (ex.: /diagnostico-real):
+// se a seção existe na página atual, rola até ela; senão volta pra landing pedindo o scroll.
+const useSectionNav = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  return (id: string) => () => {
+    if (location.pathname === '/') document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else navigate('/', { state: { scrollTo: id } });
+  };
+};
+
+// Clique na marca: topo da landing (rola se já estiver nela, senão navega pra home).
+const useGoHome = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (location.pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' });
+    else navigate('/');
+  };
+};
+
+// ─── Header ──────────────────────────────────────────────────────────────────
+export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
+  const navigate = useNavigate();
+  const goToSection = useSectionNav();
+  const goHome = useGoHome();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 12);
@@ -95,11 +120,11 @@ const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   return (
     <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}>
       <div className={styles.headerInner}>
-        <a className={styles.brand} href="#top" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+        <a className={styles.brand} href="#top" onClick={goHome}>
           <MaestraLogo className={styles.brandLogo} /> <span className={styles.brandText}>Maestra Manager</span>
         </a>
         <nav className={styles.nav}>
-          {NAV.map((n) => <button key={n.id} className={styles.navLink} onClick={scrollTo(n.id)}>{n.label}</button>)}
+          {NAV.map((n) => <button key={n.id} className={styles.navLink} onClick={goToSection(n.id)}>{n.label}</button>)}
         </nav>
         <div className={styles.actions}>
           {loggedIn ? (
@@ -299,26 +324,34 @@ const Testimonials: FC = () => (
 );
 
 // ─── Feature ─────────────────────────────────────────────────────────────────
-const Feature: FC<{ data: typeof FEATURES[number] }> = ({ data }) => (
-  <section className={`${styles.feature} ${data.reverse ? styles.reverse : ''}`} style={{ ['--accent' as string]: data.accent } as React.CSSProperties}>
-    <div className={styles.featureGrid}>
-      <div
-        className={styles.featureVisual}
-        style={data.bg ? { backgroundImage: `linear-gradient(158deg, rgba(11,11,13,0.5) 0%, rgba(11,11,13,0.88) 100%), url(${data.bg})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
-      >
-        <span className={styles.featureGlyph}>{data.glyph}</span>
+const Feature: FC<{ data: typeof FEATURES[number] }> = ({ data }) => {
+  const navigate = useNavigate();
+  return (
+    <section className={`${styles.feature} ${data.reverse ? styles.reverse : ''}`} style={{ ['--accent' as string]: data.accent } as React.CSSProperties}>
+      <div className={styles.featureGrid}>
+        <div
+          className={styles.featureVisual}
+          style={data.bg ? { backgroundImage: `linear-gradient(158deg, rgba(11,11,13,0.5) 0%, rgba(11,11,13,0.88) 100%), url(${data.bg})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+        >
+          <span className={styles.featureGlyph}>{data.glyph}</span>
+        </div>
+        <div className={styles.featureBody}>
+          <span className={styles.featureBadge}>{data.badge}</span>
+          <h2 className={styles.featureTitle}>{data.title}</h2>
+          <p className={styles.featureDesc}>{data.desc}</p>
+          <ul className={styles.featureList}>
+            {data.items.map((it) => <li key={it} className={styles.featureItem}><FiCheck size={20} /> <span>{it}</span></li>)}
+          </ul>
+          {data.to && (
+            <button className={styles.featureLink} onClick={() => navigate(data.to as string)}>
+              {data.toLabel ?? 'Saiba mais'} <FiArrowRight size={16} />
+            </button>
+          )}
+        </div>
       </div>
-      <div className={styles.featureBody}>
-        <span className={styles.featureBadge}>{data.badge}</span>
-        <h2 className={styles.featureTitle}>{data.title}</h2>
-        <p className={styles.featureDesc}>{data.desc}</p>
-        <ul className={styles.featureList}>
-          {data.items.map((it) => <li key={it} className={styles.featureItem}><FiCheck size={20} /> <span>{it}</span></li>)}
-        </ul>
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 // ─── Plans ───────────────────────────────────────────────────────────────────
 const Plans: FC = () => {
@@ -395,14 +428,16 @@ const Faq: FC = () => {
 };
 
 // ─── Footer ──────────────────────────────────────────────────────────────────
-const Footer: FC = () => {
+export const Footer: FC = () => {
   const navigate = useNavigate();
+  const goToSection = useSectionNav();
+  const goHome = useGoHome();
   return (
     <footer className={styles.footer}>
       <div className={styles.footerInner}>
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
-            <a className={styles.brand} href="#top" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+            <a className={styles.brand} href="#top" onClick={goHome}>
               <MaestraLogo className={styles.brandLogo} /> <span className={styles.brandText}>Maestra Manager</span>
             </a>
             <p className={styles.footerTag}>A plataforma que diagnostica, planeja e acompanha a sua carreira na música.</p>
@@ -410,9 +445,10 @@ const Footer: FC = () => {
           <div className={styles.footerCols}>
             <div className={styles.footerCol}>
               <span className={styles.footerColTitle}>Produto</span>
-              <button className={styles.footerLink} onClick={scrollTo('recursos')}>Recursos</button>
-              <button className={styles.footerLink} onClick={scrollTo('planos')}>Planos</button>
-              <button className={styles.footerLink} onClick={scrollTo('faq')}>FAQ</button>
+              <button className={styles.footerLink} onClick={goToSection('recursos')}>Recursos</button>
+              <button className={styles.footerLink} onClick={() => navigate('/diagnostico-real')}>Diagnóstico REAL</button>
+              <button className={styles.footerLink} onClick={goToSection('planos')}>Planos</button>
+              <button className={styles.footerLink} onClick={goToSection('faq')}>FAQ</button>
             </div>
             <div className={styles.footerCol}>
               <span className={styles.footerColTitle}>Conta</span>
@@ -439,12 +475,19 @@ const Footer: FC = () => {
 // ─── Landing ─────────────────────────────────────────────────────────────────
 const Landing: FC = () => {
   const loggedIn = useAppSelector((s) => !!s.auth.user);
+  const location = useLocation();
 
   useEffect(() => {
     const prev = document.title;
     document.title = 'Maestra Manager · sua carreira musical, com método';
     return () => { document.title = prev; };
   }, []);
+
+  // Chegando de outra página (ex.: /diagnostico-real) com uma seção pedida: rola até ela.
+  useEffect(() => {
+    const target = (location.state as { scrollTo?: string } | null)?.scrollTo;
+    if (target) requestAnimationFrame(() => document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }, [location.state]);
 
   return (
     <div className={styles.page}>

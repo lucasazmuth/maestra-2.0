@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+// Página dedicada ao Diagnóstico REAL. Mesmo design system da landing (preto/branco, Inter,
+// magenta só nos CTAs, mínimo de borda). O accent do produto (verde REAL) vem via --accent.
+
+$mag: #af2896;
+$g200: #e5e7eb;
+$g300: #d1d5db;
+$g400: #9ca3af;
+$g500: #6b7280;
+$line: rgba(255, 255, 255, 0.1);
+$card: #0c0c0c;
+$accent: var(--accent, 46, 196, 122);
+
+.page {
+  background: #000;
+  color: #fff;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+// Kicker compartilhado (mesmo padrão da landing).
+.introKicker { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: $g400; margin-bottom: 16px; }
+
+// ─── Hero ──────────────────────────────────────────────────────────────────
+.hero {
+  padding: 160px 20px 72px;
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(#{$accent}, 0.10) 0%, rgba(#{$accent}, 0.03) 40%, transparent 66%),
+    #000;
+}
+.heroInner { max-width: 52rem; margin: 0 auto; text-align: center; }
+.kicker { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgb(#{$accent}); margin-bottom: 20px; }
+.heroTitle { font-size: 2.5rem; font-weight: 700; line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 24px; }
+.accent { color: rgb(#{$accent}); }
+.heroLead { font-size: 1.125rem; line-height: 1.65; color: $g300; max-width: 40rem; margin: 0 auto 36px; }
+.heroCta { font-size: 16px; padding: 14px 32px; }
+
+// ─── Dimensões (resumo) ─────────────────────────────────────────────────────
+.dims { background: #000; padding: 8px 20px 24px; }
+.dimsGrid { max-width: 72rem; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.dimCard { border: 1px solid $line; border-radius: 14px; background: $card; padding: 24px; }
+.dimLetter { display: block; font-size: 2rem; font-weight: 800; line-height: 1; color: rgb(#{$accent}); margin-bottom: 14px; }
+.dimName { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+.dimShort { font-size: 14px; line-height: 1.55; color: $g400; margin: 0; }
+
+// ─── Callout ────────────────────────────────────────────────────────────────
+.calloutWrap { background: #000; padding: 40px 20px; }
+.callout {
+  max-width: 72rem; margin: 0 auto; border-radius: 18px; padding: 40px;
+  border: 1px solid rgba(#{$accent}, 0.35);
+  background: linear-gradient(135deg, rgba(#{$accent}, 0.08) 0%, rgba(255, 255, 255, 0.02) 60%);
+}
+.calloutTitle { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 16px; }
+.calloutBody { font-size: 1.0625rem; line-height: 1.65; color: $g300; margin: 0; max-width: 48rem; }
+
+// ─── Como funciona ──────────────────────────────────────────────────────────
+.how { background: #000; padding: 40px 20px 48px; }
+.howInner { max-width: 72rem; margin: 0 auto; }
+.howCols { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; margin-top: 8px; }
+.howCol h3 { font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0 0 14px; }
+.howCol p { font-size: 1rem; line-height: 1.65; color: $g300; margin: 0; }
+
+// ─── Números ────────────────────────────────────────────────────────────────
+.stats { background: #000; padding: 40px 20px; border-top: 1px solid $line; border-bottom: 1px solid $line; }
+.statsInner { max-width: 72rem; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+.stat { text-align: center; }
+.statNum { font-size: 2.5rem; font-weight: 800; color: rgb(#{$accent}); line-height: 1; }
+.statLabel { font-size: 14px; color: $g400; margin-top: 10px; }
+
+// ─── O que o REAL mede (detalhado) ──────────────────────────────────────────
+.measure { background: #000; padding: 72px 20px; }
+.measureInner { max-width: 60rem; margin: 0 auto; }
+.measureHead { margin-bottom: 40px; }
+.measureTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 0; }
+.dimRows { border-top: 1px solid $line; }
+.dimRow { display: flex; gap: 24px; padding: 28px 0; border-bottom: 1px solid $line; }
+.dimRowLetter { flex-shrink: 0; font-size: 1.75rem; font-weight: 800; line-height: 1.1; color: rgb(#{$accent}); width: 40px; }
+.dimRowBody { flex: 1; }
+.dimRowName { font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0 0 10px; }
+.dimRowSub { font-weight: 500; color: $g400; }
+.dimRowDesc { font-size: 1rem; line-height: 1.65; color: $g300; margin: 0; }
+
+// ─── Os 16 perfis ───────────────────────────────────────────────────────────
+.profiles { background: #000; padding: 8px 20px 72px; }
+.profilesInner { max-width: 72rem; margin: 0 auto; }
+.profilesHead { max-width: 42rem; margin-bottom: 36px; }
+.profilesIntro { font-size: 1.0625rem; line-height: 1.65; color: $g300; margin: 0 0 20px; }
+.legend { display: flex; flex-wrap: wrap; gap: 24px; }
+.legendItem { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: $g400; }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.dotOn { background: rgb(#{$accent}); }
+.dotOff { border: 1px solid rgba(255, 255, 255, 0.25); }
+
+.profileGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.profileCard { border: 1px solid $line; border-radius: 14px; background: $card; padding: 20px; }
+.profileName { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 14px; }
+.profileBits { display: flex; gap: 8px; }
+.bit {
+  width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; font-style: italic;
+}
+.bitOn { background: rgb(#{$accent}); color: #06130c; }
+.bitOff { border: 1px solid rgba(255, 255, 255, 0.18); color: $g500; }
+
+// ─── CTA band ───────────────────────────────────────────────────────────────
+.ctaBand { background: #000; padding: 96px 20px; border-top: 1px solid $line; }
+.ctaBandInner { max-width: 42rem; margin: 0 auto; text-align: center; }
+.ctaBandTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 20px; }
+.ctaBandSub { font-size: 1.125rem; line-height: 1.6; color: $g300; margin: 0 0 36px; }
+.ctaBandBtn { font-size: 16px; padding: 14px 36px; }
+
+// ─── Responsivo ─────────────────────────────────────────────────────────────
+@media (min-width: 768px) {
+  .heroTitle { font-size: 3.25rem; }
+  .measureTitle, .ctaBandTitle { font-size: 3rem; }
+  .hero, .dims, .calloutWrap, .how, .stats, .measure, .profiles, .ctaBand { padding-left: 32px; padding-right: 32px; }
+}
+
+@media (max-width: 900px) {
+  .dimsGrid { grid-template-columns: repeat(2, 1fr); }
+  .profileGrid { grid-template-columns: repeat(2, 1fr); }
+  .statsInner { grid-template-columns: repeat(2, 1fr); gap: 28px; }
+  .howCols { grid-template-columns: 1fr; gap: 32px; }
+}
+
+@media (max-width: 560px) {
+  .heroTitle { font-size: 2rem; }
+  .dimsGrid { grid-template-columns: 1fr; }
+  .profileGrid { grid-template-columns: 1fr; }
+  .callout { padding: 28px; }
+}
