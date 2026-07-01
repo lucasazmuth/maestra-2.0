@@ -585,9 +585,14 @@ h3 {
   .topbar-navarrows {
     display: none !important;
   }
-  // Colapsa o wrapper .ant-space-item das setas ocultas, senão o gap da Space
+  // Com artista selecionado, esconde a marca no mobile (o chip do artista assume o header).
+  .topbar-brand--hide-mobile {
+    display: none !important;
+  }
+  // Colapsa os wrappers .ant-space-item dos itens ocultos (setas/marca), senão o gap da Space
   // deixa um espaço fantasma à esquerda — o chip do artista alinha à borda (16px, igual ao avatar).
-  .ant-space-item:has(> .topbar-navarrows) {
+  .ant-space-item:has(> .topbar-navarrows),
+  .ant-space-item:has(> .topbar-brand--hide-mobile) {
     display: none !important;
   }
   .topbar-artist {

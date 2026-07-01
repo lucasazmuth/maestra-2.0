@@ -10,6 +10,7 @@ import { NytaHeaderButton } from '../../../nyta/NytaHeaderButton';
 import { useAppDispatch, useAppSelector } from '../../../../store/store';
 import { authActions } from '../../../../store/slices/auth';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
+import { Wordmark } from '../../../Wordmark';
 
 export const Topbar = memo(() => {
   const dispatch = useAppDispatch();
@@ -64,7 +65,34 @@ export const Topbar = memo(() => {
         padding: '0 16px',
       }}
     >
-      <Space size={8} align='center'>
+      <Space size={12} align='center'>
+        {/* Marca no header (no lugar da antiga logo). Clique volta para "Seus artistas". */}
+        <span
+          className={`topbar-brand${currentArtist ? ' topbar-brand--hide-mobile' : ''}`}
+          role='button'
+          tabIndex={0}
+          aria-label='Ir para Seus artistas'
+          onClick={() => navigate('/artists')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigate('/artists');
+            }
+          }}
+          style={{ cursor: 'pointer', display: 'inline-flex' }}
+        >
+          <Wordmark
+            style={{
+              fontFamily: "'SpotifyMixUITitle', sans-serif",
+              fontWeight: 800,
+              fontSize: 19,
+              color: '#fff',
+              letterSpacing: '0.2px',
+              whiteSpace: 'nowrap',
+            }}
+          />
+        </span>
+
         <span className='topbar-navarrows' style={{ display: 'inline-flex', gap: 8 }}>
           <ForwardBackwardsButton flip />
           <ForwardBackwardsButton flip={false} />
