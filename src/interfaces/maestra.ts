@@ -209,8 +209,10 @@ export interface ChartmetricProfile {
 }
 
 // Quiz de criação (shows/faturamento/lançamentos/equipe) salvo no perfil.
+// Respostas podem ser strings, números, booleanos ou estruturas (matriz de imprensa, composição
+// de receita) a partir do diagnóstico V3 — por isso `any` no valor.
 export interface QuizDiagnostic {
-  answers: Record<string, string>;
+  answers: Record<string, any>;
   completedAt: string; // ISO
 }
 
@@ -226,25 +228,26 @@ export interface ArtistDiagnostic {
 
 // Índice REAL (metodologia Anita Carvalho): classifica o artista em 1 de 16 perfis
 // a partir de 4 dimensões — Reach, Earnings, Audience, Legitimacy. Determinístico.
+// Tipo permissivo p/ suportar v1 (z-scores), v2 (boletim via z) e v3 (boletim §9 + TOP ICON).
 export interface RealIndex {
+  version?: number; // 3 = motor V3
   profile: { key: string; name: string; description: string; insights: string[] };
-  // padrão R·E·A·L binarizado (true = alto, z ≥ 0).
+  // padrão R·E·A·L binarizado (true = alto).
   pattern: { r: boolean; e: boolean; a: boolean; l: boolean };
-  // z-scores por dimensão (lógica interna — NÃO exibidos ao artista).
-  dimensions: { r: number; e: number; a: number; l: number };
-  realScore: number; // média dos z (display/ranking — não exibido)
-  earningsUnknown?: boolean; // artista respondeu "Não sei" no faturamento
-  // Dados brutos para o relatório (o "espelho") + contexto da Nyta.
-  inputs: {
-    faturamento: string;
-    shows_pagos: string;
-    maior_publico: string;
-    premios: string;
-    imprensa: string;
-    monthly_listeners?: number | null;
-    sp_followers?: number | null;
-    social?: { instagram?: number | null; tiktok?: number | null; youtube?: number | null };
-  };
+  // ── V3 (§9) ──
+  boletim?: { r: number; e: number; a: number; l: number };   // 0–100 por dimensão
+  cutLine?: { r: number; e: number; a: number; l: number };   // linha de acender (= 70 na V3)
+  topIcon?: boolean;                                          // flag global (§8.2)
+  dimTopIcon?: { r: boolean; e: boolean; a: boolean; l: boolean };
+  components?: any;                                           // detalhamento por dimensão
+  revenue?: { shows: number; foraShows: number; total: number; sources: Record<string, number> };
+  engagement?: Record<'instagram' | 'tiktok' | 'youtube', { value: number; cut: number; above: boolean } | null>;
+  // ── legado (v1) ──
+  dimensions?: { r: number; e: number; a: number; l: number };
+  realScore?: number;
+  earningsUnknown?: boolean;
+  // Dados brutos para o relatório (o "espelho") + contexto da Nyta. Shape varia por versão.
+  inputs: Record<string, any>;
   computedAt: string; // ISO
 }
 

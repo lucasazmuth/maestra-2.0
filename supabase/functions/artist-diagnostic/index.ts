@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { logChartmetricCall } from "./chartmetric-log.ts";
-import { computeRealIndexV2, type RealInputsV2 } from "./realEngine.ts";
+import { computeRealIndexV3, type RealInputsV3, type ImprensaCell, type Frequencia, type PaganteFaixa, type RevenueSources } from "./realEngine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,13 +30,30 @@ function buildDiagnostic(ri: any, cm: any): Record<string, unknown> {
   };
 }
 
-// Monta o RealInputsV2 do motor a partir das respostas (quizV2) + resumo Chartmetric.
+// Monta o RealInputsV3 do motor a partir das respostas (quizV3) + resumo Chartmetric.
 // deno-lint-ignore no-explicit-any
-function buildRealInputsV2(qz: any, cm: any, spotifyConnected: boolean): RealInputsV2 {
+function buildRealInputsV3(qz: any, cm: any, spotifyConnected: boolean): RealInputsV3 {
   const mp = cm?.multiplatform ?? {};
   const n = (v: any) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
   const num0 = (v: any) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
-  const oneOf = <T extends string>(v: any, allowed: T[], fallback: T): T => (allowed.includes(v) ? v : fallback);
+  const oneOf = <T extends string>(v: any, allowed: readonly T[], fallback: T | null): T | null =>
+    (allowed.includes(v as T) ? (v as T) : fallback);
+  const bool = (v: any) => v === true || v === "true" || v === "sim" || v === 1 || v === "1";
+  // Composição da receita fora-shows: aceita objeto {fonte: R$} (quizV3) ou número único (compat).
+  const sources: RevenueSources = (qz?.revenueSources && typeof qz.revenueSources === "object")
+    ? Object.fromEntries(Object.entries(qz.revenueSources).map(([k, v]) => [k, Math.max(0, num0(v))]))
+    : {};
+  const foraShows = Object.keys(sources).length
+    ? Object.values(sources).reduce((s, v) => s + (Number(v) || 0), 0)
+    : Math.max(0, num0(qz?.faturamentoForaShows));
+  // Imprensa: matriz de células {tipo,porte}. Aceita também forma achatada ["tipo:porte", ...].
+  const matrix: ImprensaCell[] = Array.isArray(qz?.imprensaMatrix)
+    ? qz.imprensaMatrix.map((c: any) => {
+        if (c && typeof c === "object" && c.tipo && c.porte) return { tipo: c.tipo, porte: c.porte };
+        if (typeof c === "string" && c.includes(":")) { const [tipo, porte] = c.split(":"); return { tipo, porte }; }
+        return null;
+      }).filter(Boolean) as ImprensaCell[]
+    : [];
   return {
     spotifyConnected,
     spotifyListeners: n(cm?.monthly_listeners),
@@ -51,15 +68,18 @@ function buildRealInputsV2(qz: any, cm: any, spotifyConnected: boolean): RealInp
     editorialPlaylists: n(cm?.editorial_playlists),
     radioAirplay: n(cm?.radio_airplay),
     showsPerMonth: Math.max(0, Math.round(num0(qz?.showsPerMonth))),
-    avgAudience: Math.max(0, Math.round(num0(qz?.avgAudience))),
     cache: Math.max(0, num0(qz?.cache)),
-    faturamentoForaShows: Math.max(0, num0(qz?.faturamentoForaShows)),
-    fonteRenda: oneOf(qz?.fonteRenda, ["musical", "nao_musical"], "musical"),
+    faturamentoForaShows: Math.max(0, foraShows),
+    revenueSources: sources,
     investimento: Math.max(0, num0(qz?.investimento)),
-    cnpj: oneOf(qz?.cnpj, ["pf", "mei", "ltda"], "pf"),
-    empresario: oneOf(qz?.empresario, ["nao", "proprio", "parente", "mercado"], "nao"),
-    premios: Math.max(0, Math.min(4, Math.round(num0(qz?.premios)))),
-    imprensa: Math.max(0, Math.min(3, Math.round(num0(qz?.imprensa)))),
+    temCnpj: bool(qz?.temCnpj),
+    temEmpresario: bool(qz?.temEmpresario),
+    premios: Math.max(0, Math.min(5, Math.round(num0(qz?.premios)))),
+    imprensaRepercussao: bool(qz?.imprensaRepercussao),
+    imprensaMatrix: matrix,
+    imprensaFrequencia: (oneOf(qz?.imprensaFrequencia, ["esporadico", "lancamento", "perene"] as const, "lancamento") as Frequencia),
+    fazBilheteria: bool(qz?.fazBilheteria),
+    pagantePct: oneOf(qz?.pagantePct, ["ate50", "51-69", "70-94", "95-100"] as const, null) as PaganteFaixa | null,
   };
 }
 
@@ -244,7 +264,9 @@ serve(async (req) => {
     if (userErr || !user) return json({ error: "Não autorizado" }, 401);
 
     const body = await req.json();
-    const { name, spotifyArtistId, spotify, quizV2, redoArtistId } = body;
+    const { name, spotifyArtistId, spotify, redoArtistId } = body;
+    // O front envia o quiz V3; aceitamos `quizV2` por compatibilidade de transição.
+    const quiz = body.quizV3 ?? body.quizV2 ?? {};
 
     // ── REDO: re-diagnóstico de um perfil existente (recurso PRO no front). Reusa o Chartmetric
     // já salvo (NÃO re-busca — o enrich tem TTL próprio) + as novas respostas do quiz; recalcula o
@@ -270,14 +292,14 @@ serve(async (req) => {
       if (exErr || !existing) return json({ error: "Perfil não encontrado" }, 404);
       const prevContent = (existing.content || {}) as Record<string, any>;
       const chartmetric = prevContent.chartmetricProfile ?? null;
-      const realInputs = buildRealInputsV2(quizV2 || {}, chartmetric, !!existing.spotify_artist_id);
-      const realIndex = computeRealIndexV2(realInputs);
+      const realInputs = buildRealInputsV3(quiz, chartmetric, !!existing.spotify_artist_id);
+      const realIndex = computeRealIndexV3(realInputs);
       const diagnostic = buildDiagnostic(realIndex, chartmetric || {});
       const nowIso = new Date().toISOString();
       const newContent = {
         ...prevContent,
         realIndex, diagnostic,
-        quizDiagnostic: { answers: quizV2 || {}, completedAt: nowIso },
+        quizDiagnostic: { answers: quiz, completedAt: nowIso },
       };
       const { error: upErr } = await supabaseAdmin
         .from("artists").update({ content: newContent })
@@ -342,13 +364,13 @@ serve(async (req) => {
     // de API como z mínimo (opção B). Com Spotify, puxa o resumo + os 6 campos extras da Fase C.
     const cmRaw: Array<{ endpoint: string; payload: unknown }> = [];
     const chartmetric = spotifyId ? await chartmetricSummary(spotifyId, supabaseAdmin, cmRaw) : null;
-    const realInputs = buildRealInputsV2(quizV2 || {}, chartmetric, !!spotifyId);
-    const realIndex = computeRealIndexV2(realInputs);
+    const realInputs = buildRealInputsV3(quiz, chartmetric, !!spotifyId);
+    const realIndex = computeRealIndexV3(realInputs);
     const diagnostic = buildDiagnostic(realIndex, chartmetric || {});
 
     const nowIso = new Date().toISOString();
     const content: Record<string, unknown> = {
-      realIndex, diagnostic, quizDiagnostic: { answers: quizV2 || {}, completedAt: nowIso },
+      realIndex, diagnostic, quizDiagnostic: { answers: quiz, completedAt: nowIso },
     };
     if (chartmetric) content.chartmetricProfile = chartmetric;
     if (spotifyId) {

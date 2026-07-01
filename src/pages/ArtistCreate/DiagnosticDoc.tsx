@@ -3,7 +3,7 @@ import { FC, ReactNode } from 'react';
 import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
 import type { RealIndex } from '../../interfaces/maestra';
 import { v2InputsView, type Chartmetric } from './DiagnosticReport';
-import { DIM_META, DIM_PHRASE, PROFILE_MAP, clean, fmtNum } from './realCopy';
+import { DIM_META, DIM_PHRASE, PROFILE_MAP, clean, fmtNum, fmtBRL, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS } from './realCopy';
 import styles from './ArtistCreate.module.scss';
 
 interface Props {
@@ -31,9 +31,12 @@ const Page: FC<{ n: number; total: number; kicker?: string; children: ReactNode 
 export const DiagnosticDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => {
   const riAny = realIndex as any;
   const isV2 = riAny.version === 2;
+  const isV3 = riAny.version === 3;
   const { profile, pattern } = realIndex;
-  const earningsUnknown: boolean = isV2 ? false : riAny.earningsUnknown;
+  const earningsUnknown: boolean = (isV2 || isV3) ? false : riAny.earningsUnknown;
   const inputs = isV2 ? v2InputsView(riAny.inputs) : riAny.inputs;
+  const v3 = isV3 ? (riAny.inputs || {}) : {};
+  const v3rev = isV3 ? (riAny.revenue || {}) : {};
   const cities = chartmetric?.top_cities;
   const countries = chartmetric?.audience?.top_countries;
   const playlists = chartmetric?.playlists;
@@ -44,7 +47,37 @@ export const DiagnosticDoc: FC<Props> = ({ realIndex, chartmetric, artistName, a
   const hasPlatform = !!(playlists?.top?.length || countries?.length || similar?.length);
   const TOTAL = hasPlatform ? 8 : 7;
 
-  const dimData: Record<string, { label: string; value: string }[]> = {
+  const dimData: Record<string, { label: string; value: string }[]> = isV3 ? {
+    r: [
+      { label: 'Ouvintes mensais', value: chartmetric?.monthly_listeners != null ? fmtNum(chartmetric.monthly_listeners) : (v3.spotifyListeners != null ? fmtNum(v3.spotifyListeners) : '–') },
+      ...(v3.igFollowers != null ? [{ label: 'Instagram', value: fmtNum(v3.igFollowers) }] : []),
+      ...(v3.tiktokFollowers != null ? [{ label: 'TikTok', value: fmtNum(v3.tiktokFollowers) }] : []),
+      ...(v3.youtubeMonthlyViews != null ? [{ label: 'YouTube mensal', value: fmtNum(v3.youtubeMonthlyViews) }] : []),
+    ],
+    e: (() => {
+      const fat = Math.round(Number(v3rev.total ?? 0) * 12);
+      const inv = Math.round(Number(v3.investimento ?? 0));
+      const saldo = fat - inv;
+      const money = (n: number) => `R$ ${fmtNum(Math.abs(n))}`;
+      return [
+        { label: 'Receita mensal', value: fmtBRL(Number(v3rev.total ?? 0)) },
+        { label: 'Shows por mês', value: String(v3.showsPerMonth ?? 0) },
+        { label: 'Cachê médio', value: fmtBRL(Number(v3.cache ?? 0)) },
+        { label: 'Faturamento (12m)', value: money(fat) },
+        { label: 'Investimento (12m)', value: money(inv) },
+        { label: 'Saldo (12m)', value: `${saldo >= 0 ? '+' : '−'}${money(saldo)}` },
+      ];
+    })(),
+    a: [
+      { label: 'Shows por mês', value: String(v3.showsPerMonth ?? 0) },
+      { label: '% público pagante', value: v3.fazBilheteria ? (PAGANTE_LABELS[v3.pagantePct] ?? '–') : 'Não faz bilheteria' },
+      { label: 'Seguidores Spotify', value: v3.spotifyFollowers != null ? fmtNum(v3.spotifyFollowers) : '–' },
+    ],
+    l: [
+      { label: 'Prêmios', value: PREMIOS_LABELS_V3[Number(v3.premios ?? 0)] ?? '–' },
+      { label: 'Imprensa', value: v3.imprensaRepercussao ? (FREQ_LABELS[v3.imprensaFrequencia] ?? 'Sim') : 'Não' },
+    ],
+  } : {
     r: [
       { label: 'Ouvintes mensais', value: chartmetric?.monthly_listeners != null ? fmtNum(chartmetric.monthly_listeners) : (inputs.monthly_listeners != null ? fmtNum(inputs.monthly_listeners) : '–') },
       ...(inputs.social?.instagram != null ? [{ label: 'Instagram', value: fmtNum(inputs.social.instagram) }] : []),

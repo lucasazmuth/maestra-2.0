@@ -1,4 +1,5 @@
 // Dados e textos compartilhados do diagnóstico REAL (usados na tela e no PDF de apresentação).
+import { PROFILES } from '../../services/realEngine';
 
 export type DimKey = 'r' | 'e' | 'a' | 'l';
 
@@ -9,8 +10,35 @@ export const fmtNum = (n: number): string => {
   return String(n);
 };
 
+// Moeda BR sem centavos (R$ 1.800).
+export const fmtBRL = (n: number): string =>
+  Number.isFinite(n) ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : '—';
+
+// Porcentagem BR (4.2 → "4,2%").
+export const fmtPct = (n: number): string => `${Number(n).toFixed(1).replace('.', ',')}%`;
+
 // Remove travessões dos textos vindos do banco — leitura mais humana.
 export const clean = (s: string) => s.replace(/\s*—\s*/g, ', ');
+
+// Rótulos do autorrelato V3 (índice → texto para a exibição).
+export const PREMIOS_LABELS_V3 = ['Nenhum', 'Local / regional', 'Indicação nacional', 'Prêmio nacional', 'Indicação internacional', 'Prêmio internacional'];
+export const PAGANTE_LABELS: Record<string, string> = { ate50: 'Até 50%', '51-69': '51–69%', '70-94': '70–94%', '95-100': '95–100%' };
+export const FREQ_LABELS: Record<string, string> = { esporadico: 'Esporádica', lancamento: 'Em lançamentos', perene: 'Perene' };
+
+// Linha de status do boletim (§9): "Aceso · faltam X" / "Faltam X para acender · Y para Top Icon".
+export const dimStatusText = (score: number, acende: boolean): string => {
+  const toTop = Math.max(0, 100 - Math.round(score));
+  if (acende) return toTop > 0 ? `Aceso · faltam ${toTop} pts para Top Icon` : 'Top Icon · pleno';
+  const toOn = Math.max(0, 70 - Math.round(score));
+  return `Faltam ${toOn} pts para acender · ${toTop} pts para Top Icon`;
+};
+
+// Padrão R·E·A·L (alto/baixo) por nome de perfil — derivado da chave de 4 bits do motor.
+// Usado no mapa dos 16 perfis (bolinhas cheias/vazias por dimensão).
+export const PROFILE_BITS: Record<string, { r: boolean; e: boolean; a: boolean; l: boolean }> =
+  Object.fromEntries(Object.entries(PROFILES).map(([key, def]) => [
+    def.name, { r: key[0] === '1', e: key[1] === '1', a: key[2] === '1', l: key[3] === '1' },
+  ]));
 
 export const DIM_META: { key: DimKey; letter: string; name: string; full: string; sub: string }[] = [
   { key: 'r', letter: 'R', name: 'Reach · Alcance', full: 'Reach', sub: 'Alcance' },
