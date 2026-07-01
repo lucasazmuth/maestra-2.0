@@ -233,7 +233,8 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
         </div>
       </div>
       <div className={styles.ruler}>
-        <div className={styles.rulerFill} style={{ width: `${score}%` }} />
+        {/* Top Tier (flag do motor): a barra enche até o selo em dourado, pra não contradizer o selo. */}
+        <div className={styles.rulerFill} style={top ? { width: '100%', background: 'linear-gradient(90deg,#f5c451,#e0a13c)' } : { width: `${score}%` }} />
         <span className={styles.rulerMark} style={{ left: '70%' }} data-label="acende" />
         <span className={styles.rulerMark} style={{ left: '100%' }} data-label="top tier" />
       </div>

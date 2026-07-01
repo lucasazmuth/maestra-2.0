@@ -120,7 +120,8 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
       </div>
 
       <div className={styles.docRuler2}>
-        <div className={styles.docRulerFill2} style={{ width: `${score}%`, background: color }} />
+        {/* Top Tier: a barra enche até o selo (dourado), coerente com o selo do motor. */}
+        <div className={styles.docRulerFill2} style={top ? { width: '100%', background: 'linear-gradient(90deg,#f5c451,#e0a13c)' } : { width: `${score}%`, background: color }} />
         <span className={styles.docRulerMark2} style={{ left: '70%' }} data-label="acende" />
         <span className={styles.docRulerMark2} style={{ left: '100%' }} data-label="top tier" />
       </div>
