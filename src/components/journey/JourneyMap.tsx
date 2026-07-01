@@ -1,6 +1,6 @@
 import { FC, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowRight, FiCheck, FiCompass } from 'react-icons/fi';
+import { FiArrowRight, FiCheck } from 'react-icons/fi';
 
 import type { Artist } from '../../interfaces/maestra';
 import { PRODUCT_THEME as PRODUCTS } from '../productTheme';
@@ -28,7 +28,14 @@ const StepDot: FC<{ n: number; done?: boolean; current?: boolean; accent: string
   </span>
 );
 
-interface Node { n: number; label: string; detail: string; accent: string; done: boolean; current: boolean; to: string; }
+interface Node { n: number; label: string; desc: string; detail: string; accent: string; done: boolean; current: boolean; to: string; }
+
+// Conceito de cada etapa do ciclo (evergreen): onde você está → para onde vai → onde executa.
+const DESC: Record<number, string> = {
+  1: 'Onde você está hoje.',
+  2: 'Para onde você vai, e como chegar.',
+  3: 'Onde você executa, tarefa a tarefa.',
+};
 
 export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
   const navigate = useNavigate();
@@ -49,20 +56,17 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
   const current = !s1done ? 1 : !s2done ? 2 : 3;
 
   const nodes: Node[] = [
-    { n: 1, label: 'Diagnóstico REAL', detail: hasDiagnostic ? ri!.profile!.name : 'a fazer', accent: PRODUCTS.real.accent, done: s1done, current: current === 1, to: 'diagnostico' },
-    { n: 2, label: 'Planejamento', detail: s2done ? 'concluído' : current === 2 ? 'a criar' : 'a fazer', accent: PRODUCTS.planning.accent, done: s2done, current: current === 2, to: hasPlan ? 'perfil' : 'wizard' },
-    { n: 3, label: 'Plano de Ação', detail: hasPlan ? `${pct}% concluído` : 'bloqueado', accent: PRODUCTS.action.accent, done: s3done, current: current === 3, to: hasPlan ? 'action-plan' : 'wizard' },
+    { n: 1, label: 'Diagnóstico REAL', desc: DESC[1], detail: hasDiagnostic ? ri!.profile!.name : 'a fazer', accent: PRODUCTS.real.accent, done: s1done, current: current === 1, to: 'diagnostico' },
+    { n: 2, label: 'Planejamento', desc: DESC[2], detail: s2done ? 'concluído' : current === 2 ? 'a criar' : 'a fazer', accent: PRODUCTS.planning.accent, done: s2done, current: current === 2, to: hasPlan ? 'perfil' : 'wizard' },
+    { n: 3, label: 'Plano de Ação', desc: DESC[3], detail: hasPlan ? `${pct}% concluído` : 'bloqueado', accent: PRODUCTS.action.accent, done: s3done, current: current === 3, to: hasPlan ? 'action-plan' : 'wizard' },
   ];
 
   const nameColor = (nd: Node) => (nd.current ? `rgb(${nd.accent})` : nd.done ? '#e6e6ea' : MUTED);
 
-  // Mesmo padrão dos painéis do dashboard ("Visão geral"): card #181818, cabeçalho ícone + título.
+  // Fora de card: "Sua jornada" é um título de seção (igual "Visão geral"), com o stepper solto embaixo.
   return (
-    <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 24, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-        <span style={{ color: '#b3b3b3', display: 'flex' }}><FiCompass size={18} /></span>
-        <h3 style={{ color: '#fff', fontSize: 16, fontWeight: 700, margin: 0, flex: 1, fontFamily: 'SpotifyMixUITitle' }}>Sua jornada</h3>
-      </div>
+    <div style={{ marginBottom: 8 }}>
+      <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '24px 0 14px' }}>Sua jornada</h2>
 
       <div className="journey-row">
         {nodes.map((nd, i) => (
@@ -74,13 +78,16 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
             )}
             <button className="journey-node" onClick={() => go(nd.to)}>
               <StepDot n={nd.n} done={nd.done} current={nd.current} accent={nd.accent} />
-              <span className="journey-node-name" style={{ color: nameColor(nd) }}>{nd.label}</span>
-              <span style={{ fontSize: 12, color: '#8a8a92' }}>{nd.detail}</span>
+              <span className="journey-node-body">
+                <span className="journey-node-name" style={{ color: nameColor(nd) }}>{nd.label}</span>
+                <span className="journey-node-desc">{nd.desc}</span>
+                <span className="journey-node-status" style={nd.current ? { color: `rgb(${nd.accent})` } : undefined}>{nd.detail}</span>
+              </span>
             </button>
           </Fragment>
         ))}
       </div>
-    </section>
+    </div>
   );
 };
 

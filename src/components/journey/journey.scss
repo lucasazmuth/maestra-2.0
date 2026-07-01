@@ -27,11 +27,36 @@
   &:hover .journey-node-name { color: #fff; }
 }
 
+// Bloco de texto do nó: nome + descrição (conceito) + status, empilhados.
+.journey-node-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
 .journey-node-name {
   font-size: 13.5px;
   font-weight: 800;
   white-space: nowrap;
   transition: color 0.18s ease;
+}
+
+// Descrição de conceito (evergreen): "onde você está / para onde vai / onde executa".
+.journey-node-desc {
+  font-size: 12px;
+  line-height: 1.35;
+  color: #9a9aa3;
+  max-width: 15rem;
+}
+
+// Status dinâmico (perfil / a criar / % concluído): menor e mais discreto que a descrição.
+.journey-node-status {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #6f6f78;
 }
 
 // Seta entre etapas, alinhada com o centro do indicador (30px ÷ 2 ≈ 15 − ½ ícone).
@@ -55,6 +80,9 @@
     text-align: left;
     width: 100%;
   }
+
+  .journey-node-body { align-items: flex-start; }
+  .journey-node-desc { max-width: none; }
 
   .journey-connector {
     align-self: center;
