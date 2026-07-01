@@ -63,7 +63,8 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
 
   const nameColor = (nd: Node) => (nd.current ? `rgb(${nd.accent})` : nd.done ? '#e6e6ea' : MUTED);
 
-  // Fora de card: "Sua jornada" é um título de seção (igual "Visão geral"), com o stepper solto embaixo.
+  // "Sua jornada": título de seção FORA do card (igual "Visão geral"); cada etapa é um CARD próprio,
+  // tingido na cor do produto (verde/azul/magenta). Fica muito melhor no mobile (cards empilhados).
   return (
     <div style={{ marginBottom: 8 }}>
       <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '24px 0 14px' }}>Sua jornada</h2>
@@ -76,7 +77,11 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
                 <FiArrowRight size={18} />
               </div>
             )}
-            <button className="journey-node" onClick={() => go(nd.to)}>
+            <button
+              className={`journey-node${nd.current ? ' journey-node--current' : ''}`}
+              style={{ ['--acc' as string]: nd.accent } as React.CSSProperties}
+              onClick={() => go(nd.to)}
+            >
               <StepDot n={nd.n} done={nd.done} current={nd.current} accent={nd.accent} />
               <span className="journey-node-body">
                 <span className="journey-node-name" style={{ color: nameColor(nd) }}>{nd.label}</span>

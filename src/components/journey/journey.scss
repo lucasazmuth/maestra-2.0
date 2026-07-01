@@ -3,11 +3,11 @@
 
 .journey-row {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: stretch; // cards de altura igual
+  gap: 8px;
 }
 
-// Cada etapa: coluna clicável (indicador + nome + detalhe), sem caixa própria.
+// Cada etapa é um CARD próprio, tingido na cor do produto via --acc (fallback cinza neutro).
 .journey-node {
   flex: 1 1 0;
   min-width: 0;
@@ -15,16 +15,25 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 9px;
-  padding: 6px 4px;
-  background: transparent;
-  border: none;
-  border-radius: 10px;
+  gap: 10px;
+  padding: 18px 16px;
+  border-radius: 14px;
+  background: rgba(var(--acc, 116, 116, 126), 0.06);
+  border: 1px solid rgba(var(--acc, 116, 116, 126), 0.2);
   cursor: pointer;
-  transition: background 0.18s ease;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 
-  &:hover { background: rgba(255, 255, 255, 0.03); }
+  &:hover {
+    background: rgba(var(--acc, 116, 116, 126), 0.12);
+    border-color: rgba(var(--acc, 116, 116, 126), 0.42);
+    transform: translateY(-1px);
+  }
   &:hover .journey-node-name { color: #fff; }
+}
+// Etapa atual: card um pouco mais aceso.
+.journey-node--current {
+  background: rgba(var(--acc), 0.11);
+  border-color: rgba(var(--acc), 0.5);
 }
 
 // Bloco de texto do nó: nome + descrição (conceito) + status, empilhados.
@@ -70,7 +79,7 @@
 @media (max-width: 620px) {
   .journey-row {
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
   }
 
   .journey-node {
