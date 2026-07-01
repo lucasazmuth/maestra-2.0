@@ -91,6 +91,37 @@ $card: #0c0c0c;
 .reverse .featureVisual { order: 2; }
 .reverse .featureBody { order: 1; }
 
+// ─── Fundadora (Anita) ─────────────────────────────────────────────────────────
+.founder { background: #000; padding: 88px 20px; border-top: 1px solid $line; }
+.founderInner { max-width: 68rem; margin: 0 auto; }
+.founderHead { text-align: center; margin-bottom: 52px; }
+.founderTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 14px 0 0; }
+.founderGrid { display: grid; grid-template-columns: 300px 1fr; gap: 60px; align-items: start; }
+.founderAside { position: sticky; top: 100px; text-align: center; }
+.founderPhoto {
+  width: 100%; aspect-ratio: 1 / 1; border-radius: 20px; overflow: hidden; margin-bottom: 20px;
+  display: flex; align-items: flex-end; justify-content: center;
+  // A foto é um recorte (fundo removido) sobre este gradiente sutil.
+  background: linear-gradient(155deg, #3a2140 0%, #1a1420 60%, #101014 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+.founderName { font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
+.founderRole { font-size: 13.5px; color: $g400; margin-top: 6px; line-height: 1.5; }
+.founderStory { max-width: 44rem; }
+.founderPara {
+  font-size: 1.0625rem; line-height: 1.78; color: $g300; margin: 0 0 20px;
+  &:first-child::first-letter { font-size: 3rem; font-weight: 700; color: #fff; float: left; line-height: 0.9; margin: 4px 10px 0 0; }
+  &:last-child { margin-bottom: 0; }
+}
+
+@media (max-width: 900px) {
+  .founderGrid { grid-template-columns: 1fr; gap: 32px; }
+  .founderAside { position: static; display: flex; flex-direction: column; align-items: center; }
+  .founderPhoto { width: 200px; aspect-ratio: 1 / 1; }
+  .founderStory { max-width: none; }
+}
+
 // ─── Planos ──────────────────────────────────────────────────────────────────
 .plans { background: #000; padding: 80px 20px; }
 .plansInner { max-width: 64rem; margin: 0 auto; }

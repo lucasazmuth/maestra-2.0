@@ -1,11 +1,13 @@
 import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  FiArrowRight, FiArrowUp, FiCheck, FiChevronDown, FiActivity, FiTarget, FiMessageCircle, FiGrid,
+  FiArrowRight, FiArrowUp, FiCheck, FiChevronDown, FiMessageCircle, FiGrid,
   FiInstagram, FiZap, FiStar,
 } from 'react-icons/fi';
 
 import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
+import anitaPhoto from '../../assets/anita.png';
+import { DiagnosticoIcon, PlanejamentoIcon, PlanoAcaoIcon } from '../../components/Icons/system';
 import { useAppSelector } from '../../store/store';
 import { PRODUCT_THEME } from '../../components/productTheme';
 import styles from './Landing.module.scss';
@@ -36,7 +38,7 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
     title: 'Saiba exatamente onde sua carreira está',
     desc: 'Um raio-X da sua carreira em quatro dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que só você sabe.',
     items: ['Índice REAL calculado a partir de dados reais, não achismo', 'Descubra qual dos 16 perfis de carreira é o seu', 'Onde seus ouvintes estão, playlists e referências'],
-    glyph: <FiActivity size={88} />,
+    glyph: <DiagnosticoIcon size={88} />,
     to: '/diagnostico-real', toLabel: 'Entenda o Índice REAL',
   },
   {
@@ -45,7 +47,7 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
     title: 'Do diagnóstico à estratégia certa',
     desc: 'A metodologia da Anita Carvalho, destilada de mais de 30 anos de carreira e 313 planejamentos reais, transforma seu diagnóstico em um planejamento completo — com as estratégias certas pro seu momento.',
     items: ['Visão, missão e objetivos da carreira', 'Estratégias priorizadas pelo seu momento', 'Análise SWOT e mapa de referências'],
-    glyph: <FiTarget size={88} />,
+    glyph: <PlanejamentoIcon size={88} />,
   },
   {
     badge: 'Plano de ação',
@@ -53,7 +55,7 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
     title: 'Execute o plano, tarefa por tarefa',
     desc: 'O planejamento vira um plano executável: cada estratégia quebrada em tarefas, com progresso, prazos e responsáveis. Você sai do "o que fazer" pro "feito".',
     items: ['Estratégias viram tarefas acompanháveis', 'Progresso, prazos e responsáveis', 'Cronograma e modelagem financeira'],
-    glyph: <FiZap size={88} />,
+    glyph: <PlanoAcaoIcon size={88} />,
   },
   {
     badge: 'Nyta IA', reverse: true,
@@ -358,6 +360,36 @@ const Feature: FC<{ data: typeof FEATURES[number] }> = ({ data }) => {
   );
 };
 
+// ─── Fundadora (história da Anita) ───────────────────────────────────────────
+// Carta da fundadora, sem travessões (a pedido). A foto entra em `anitaPhoto` quando o arquivo existir.
+const ANITA_STORY = [
+  'Tenho mais de 30 anos no mercado da música, e durante todos eles ouvi a mesma pergunta, vinda de artistas dos mais diferentes tamanhos: "qual o caminho pra chegar onde eu quero?". Por muito tempo, tudo que eu tinha pra oferecer eram alguns conselhos genéricos. Isso me incomodava, porque eu sou filha de um compositor que nunca alcançou o reconhecimento que merecia, e que, na época, eu não soube como ajudar. Sem o que sei hoje, vi de perto o que acontece quando o talento existe mas falta um caminho. Essa ausência virou o motor da minha vida profissional.',
+  'No mestrado, transformei essa inquietação em método: um processo de planejamento estratégico que apliquei, ao longo dos últimos anos, em mais de 300 consultorias individuais. Ali eu tive a confirmação do que suspeitava: o artista não precisa só de incentivo; precisa de um norte e de um mapa para chegar até ele. O método funcionava. O problema era de alcance: consultoria individual é cara, e por mais que eu desse aulas gratuitas e distribuísse a planilha do método de graça, muitos artistas ainda travavam na hora de aplicar sozinhos. Foi aí que veio o estalo: e se a inteligência artificial pudesse traduzir a minha metodologia, e a minha forma de pensar e a minha experiência profissional, numa ferramenta acessível a qualquer artista, em qualquer lugar do mundo? A Maestra Manager nasceu dessa motivação, sustentada por uma hipótese que carrego como bandeira: talento não basta; é preciso gestão.',
+  'A Maestra pega tudo que aprendi em mais de 300 consultorias e transforma num roteiro guiado, que conduz o artista do seu mapa de referências até um plano de ação concreto, passo a passo, do jeito que eu faria pessoalmente. É uma metodologia proprietária, testada e aprovada, que nenhuma outra plataforma oferece. E há ainda o REAL, o diagnóstico que mostra ao artista, com objetividade, onde sua carreira está hoje: ele nasceu diretamente da minha pesquisa de doutorado, e é o que permite que cada plano comece não de um achismo, mas de um retrato honesto da realidade. Construí a Maestra para o artista em qualquer estágio que queira evoluir, mas, acima de tudo, para quem está começando, sem estrutura profissional por trás nem dinheiro para montar uma equipe. Para quem o meu pai foi, um dia.',
+  'Nada disso seria possível sozinha. Construí a Maestra em parceria com Lucas Azmuth, produtor musical de diversos nomes da música urbana, fundador da Banca Records e empreendedor digital. Conheci o Lucas quando ele me convidou para ser embaixadora de outra de suas iniciativas, e desde então nutro profunda admiração pelo seu olhar inovador. Quando tive a ideia da Maestra, ele foi minha escolha natural: é quem traduz a minha inteligência em sistema, e quem trouxe à ferramenta uma contribuição que só quem vive os dois mundos, a música e a tecnologia, poderia trazer. Juntos, transformamos um método que cabia numa sala de consultoria em algo que agora cabe na palma da mão de qualquer artista.',
+];
+
+const Founder: FC = () => (
+  <section className={styles.founder} id="fundadora">
+    <div className={styles.founderInner}>
+      <div className={styles.founderHead}>
+        <span className={styles.introKicker}>Quem está por trás</span>
+        <h2 className={styles.founderTitle}>A história por trás da Maestra</h2>
+      </div>
+      <div className={styles.founderGrid}>
+        <aside className={styles.founderAside}>
+          <div className={styles.founderPhoto}><img src={anitaPhoto} alt="Anita Carvalho" /></div>
+          <div className={styles.founderName}>Anita Carvalho</div>
+          <div className={styles.founderRole}>Criadora do Índice REAL · Fundadora da Maestra Manager</div>
+        </aside>
+        <div className={styles.founderStory}>
+          {ANITA_STORY.map((p, i) => <p key={i} className={styles.founderPara}>{p}</p>)}
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
 // ─── Plans ───────────────────────────────────────────────────────────────────
 // Dois modelos de cobrança são coisas diferentes e a UI deixa isso explícito (pra ninguém se
 // sentir enganado): o Planejamento é PAGAMENTO ÚNICO por perfil (vitalício); o PRO é ASSINATURA.
@@ -370,7 +402,7 @@ const Plans: FC = () => {
       <div className={styles.plansInner}>
         <div className={styles.plansHead}>
           <span className={styles.introKicker}>Planos</span>
-          <h2 className={styles.plansTitle}>Preço claro, sem pegadinha</h2>
+          <h2 className={styles.plansTitle}>Preços transparentes, sem surpresas</h2>
           <p className={styles.plansSub}>O diagnóstico é grátis. Você paga uma vez para desbloquear o planejamento de cada artista, e o Maestra PRO é uma assinatura opcional.</p>
         </div>
 
@@ -531,12 +563,13 @@ const Landing: FC = () => {
       <HowItWorks />
       <div className={styles.introWrap} id="recursos">
         <div className={styles.introInner}>
-          <span className={styles.introKicker}>O que você ganha</span>
+          <span className={styles.introKicker}>Recursos</span>
           <h2 className={styles.introTitle}>Do diagnóstico à execução</h2>
           <p className={styles.introSub}>Tudo o que sua carreira precisa pra sair do achismo e entrar no método.</p>
         </div>
       </div>
       {FEATURES.map((f) => <Feature key={f.badge} data={f} />)}
+      <Founder />
       <Testimonials />
       <Plans />
       <Faq />
