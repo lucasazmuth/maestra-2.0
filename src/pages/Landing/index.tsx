@@ -71,6 +71,7 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
 ];
 
 const FAQ_ITEMS: { q: string; a: string }[] = [
+  { q: 'O que é a Maestra Manager?', a: 'A Maestra Manager é uma plataforma de gestão de carreira musical. Num só lugar, ela reúne o diagnóstico da sua carreira (o Índice REAL), o planejamento estratégico, o plano de ação para executar e a gestão do dia a dia (catálogo, agenda e equipe), tudo com o apoio da Nyta, a consultora de IA. A ideia é simples: tirar a carreira do achismo e colocar no método, com dados e estratégia.' },
   { q: 'O que é o diagnóstico REAL?', a: 'É uma análise da sua carreira em 4 dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que você nos conta. O resultado é um dos 16 perfis de carreira e um retrato claro de onde você está.' },
   { q: 'Preciso pagar para ver o diagnóstico?', a: 'Não. O diagnóstico é grátis. O Maestra PRO é que libera o plano de ação completo, a Nyta IA e a gestão (catálogo, agenda e equipe).' },
   { q: 'O que está incluído no Maestra PRO?', a: 'Edição em todos os perfis que você acessa, Nyta IA ilimitada, catálogo de faixas ilimitado e acesso a todos os perfis da conta. (A gestão das tarefas do seu plano de ação é livre, no plano gratuito.)' },
