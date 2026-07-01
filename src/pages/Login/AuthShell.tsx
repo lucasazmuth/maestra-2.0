@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser } from 'react-icons/fi';
 
-import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
+import { Wordmark } from '../../components/Wordmark';
 import styles from './AuthShell.module.scss';
 
 export const authError = (err: any): string => {
@@ -39,7 +39,7 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
           <div className={styles.brand}>
             {/* Logo clicável → volta para a landing page. */}
             <Link to='/' className={styles.brandLink} aria-label='Ir para a página inicial'>
-              <MaestraLogo />
+              <Wordmark className={styles.brandWordmark} />
             </Link>
           </div>
 

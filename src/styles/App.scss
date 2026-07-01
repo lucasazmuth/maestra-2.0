@@ -585,14 +585,9 @@ h3 {
   .topbar-navarrows {
     display: none !important;
   }
-  // Com artista selecionado, esconde a logo (o chip do artista já volta pra /artists).
-  .topbar-logo--hide-mobile {
-    display: none !important;
-  }
-  // Colapsa também o wrapper .ant-space-item dos itens ocultos (logo/setas), senão o gap da Space
+  // Colapsa o wrapper .ant-space-item das setas ocultas, senão o gap da Space
   // deixa um espaço fantasma à esquerda — o chip do artista alinha à borda (16px, igual ao avatar).
-  .ant-space-item:has(> .topbar-navarrows),
-  .ant-space-item:has(> .topbar-logo--hide-mobile) {
+  .ant-space-item:has(> .topbar-navarrows) {
     display: none !important;
   }
   .topbar-artist {
@@ -1262,47 +1257,6 @@ a {
   }
 }
 
-// ─── Logo "viva" (equalizer no hover) — reutilizável (header, etc.) ─────────────
-@keyframes maestraEq {
-  0%,
-  100% {
-    transform: scaleY(0.6);
-  }
-  50% {
-    transform: scaleY(1.5);
-  }
-}
-
-.maestra-logo-live {
-  g line {
-    transform-box: fill-box;
-    transform-origin: center bottom;
-  }
-  &:hover g line {
-    animation: maestraEq 0.8s ease-in-out infinite;
-  }
-  &:hover g line:nth-child(1) {
-    animation-duration: 0.7s;
-    animation-delay: 0s;
-  }
-  &:hover g line:nth-child(2) {
-    animation-duration: 0.95s;
-    animation-delay: 0.12s;
-  }
-  &:hover g line:nth-child(3) {
-    animation-duration: 0.6s;
-    animation-delay: 0.05s;
-  }
-  &:hover g line:nth-child(4) {
-    animation-duration: 0.9s;
-    animation-delay: 0.18s;
-  }
-  &:hover g line:nth-child(5) {
-    animation-duration: 0.75s;
-    animation-delay: 0.08s;
-  }
-}
-
 // Aura pulsante do avatar da Nyta (vida de IA). Sempre ativa, sutil; mais rápida quando "pensando".
 .nyta-avatar--glow {
   position: relative;
@@ -1321,38 +1275,6 @@ a {
 }
 @media (prefers-reduced-motion: reduce) {
   .nyta-avatar--glow { animation: none; box-shadow: 0 0 10px 2px rgba(124, 92, 255, 0.35); }
-}
-
-// Avatar da Nyta "processando": as 5 frequências animam como equalizador (sem hover).
-.nyta-avatar--thinking .maestra-logo-live g line {
-  animation: maestraEq 0.8s ease-in-out infinite;
-}
-.nyta-avatar--thinking .maestra-logo-live g line:nth-child(1) {
-  animation-duration: 0.7s;
-  animation-delay: 0s;
-}
-.nyta-avatar--thinking .maestra-logo-live g line:nth-child(2) {
-  animation-duration: 0.95s;
-  animation-delay: 0.12s;
-}
-.nyta-avatar--thinking .maestra-logo-live g line:nth-child(3) {
-  animation-duration: 0.6s;
-  animation-delay: 0.05s;
-}
-.nyta-avatar--thinking .maestra-logo-live g line:nth-child(4) {
-  animation-duration: 0.9s;
-  animation-delay: 0.18s;
-}
-.nyta-avatar--thinking .maestra-logo-live g line:nth-child(5) {
-  animation-duration: 0.75s;
-  animation-delay: 0.08s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .maestra-logo-live:hover g line,
-  .nyta-avatar--thinking .maestra-logo-live g line {
-    animation: none;
-  }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@ import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
-import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
+import { Wordmark } from '../../components/Wordmark';
 import styles from './Welcome.module.scss';
 
 // Canal do YouTube da Maestra (tutorial).
@@ -44,10 +44,7 @@ const Welcome: FC = () => {
       <div className={styles.pillWrap}>
         <div className={styles.pillGlow} aria-hidden />
         <div className={styles.pill}>
-          <MaestraLogo className={`${styles.pillLogo} maestra-logo-live`} />
-          <span className={styles.pillText}>
-            Maestra <span className={styles.pillManager}>Manager</span>
-          </span>
+          <Wordmark className={styles.pillText} />
         </div>
       </div>
 

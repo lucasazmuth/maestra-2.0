@@ -1,8 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Popconfirm, message, Spin } from 'antd';
-import { FiCheck, FiArrowRight } from 'react-icons/fi';
-import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
+import { FiCheck, FiArrowRight, FiAward } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import {
@@ -248,7 +247,7 @@ const SubscriptionManagement: FC = () => {
                 boxShadow: '0 10px 28px rgba(175,40,150,0.22)',
               }}
             >
-              <MaestraLogo style={{ width: 30, height: 30 }} />
+              <FiAward size={26} color='#e07fce' />
             </span>
             <div>
               <div style={{ color: '#fff', fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em' }}>

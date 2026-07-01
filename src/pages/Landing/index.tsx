@@ -5,7 +5,7 @@ import {
   FiInstagram, FiZap, FiStar,
 } from 'react-icons/fi';
 
-import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
+import { Wordmark } from '../../components/Wordmark';
 import anitaPhoto from '../../assets/anita.png';
 import { DiagnosticoIcon, PlanejamentoIcon, PlanoAcaoIcon } from '../../components/Icons/system';
 import { useAppSelector } from '../../store/store';
@@ -129,7 +129,7 @@ export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
     <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}>
       <div className={styles.headerInner}>
         <a className={styles.brand} href="#top" onClick={goHome}>
-          <MaestraLogo className={styles.brandLogo} /> <span className={styles.brandText}>Maestra Manager</span>
+          <Wordmark className={styles.brandText} />
         </a>
         <nav className={styles.nav}>
           {NAV.map((n) => <button key={n.id} className={styles.navLink} onClick={goToSection(n.id)}>{n.label}</button>)}
@@ -505,7 +505,7 @@ export const Footer: FC = () => {
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
             <a className={styles.brand} href="#top" onClick={goHome}>
-              <MaestraLogo className={styles.brandLogo} /> <span className={styles.brandText}>Maestra Manager</span>
+              <Wordmark className={styles.brandText} />
             </a>
             <p className={styles.footerTag}>A plataforma que diagnostica, planeja e acompanha a sua carreira na música.</p>
           </div>

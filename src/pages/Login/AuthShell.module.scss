@@ -45,31 +45,19 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 32px;
-
-  svg {
-    width: 72px;
-    height: 72px;
-  }
-
-  // Equalizer "vivo": ao passar o mouse no ícone, as 5 barras dançam (cada uma com
-  // ritmo/atraso próprio para parecer um equalizador de música).
-  svg g line {
-    transform-box: fill-box;
-    transform-origin: center bottom;
-  }
-  svg:hover g line {
-    animation: eqBounce 0.8s ease-in-out infinite;
-  }
-  svg:hover g line:nth-child(1) { animation-duration: 0.70s; animation-delay: 0s; }
-  svg:hover g line:nth-child(2) { animation-duration: 0.95s; animation-delay: 0.12s; }
-  svg:hover g line:nth-child(3) { animation-duration: 0.60s; animation-delay: 0.05s; }
-  svg:hover g line:nth-child(4) { animation-duration: 0.90s; animation-delay: 0.18s; }
-  svg:hover g line:nth-child(5) { animation-duration: 0.75s; animation-delay: 0.08s; }
 }
 
 .brandLink {
   display: inline-flex;
-  line-height: 0;
+  text-decoration: none;
+}
+
+.brandWordmark {
+  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-weight: 800;
+  font-size: 28px;
+  color: #fff;
+  letter-spacing: -0.01em;
 }
 
 .eyebrow {

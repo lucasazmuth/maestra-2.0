@@ -1,6 +1,6 @@
 import { CSSProperties, FC, ReactNode } from 'react';
 
-import { ReactComponent as MaestraLogo } from '../assets/maestra-logo.svg';
+import { Wordmark } from './Wordmark';
 import { SuccessConfetti } from './SuccessConfetti';
 
 interface Props {
@@ -32,10 +32,7 @@ export const PaymentSuccessScreen: FC<Props> = ({ title, subtitle, description, 
     <SuccessConfetti fullscreen />
 
     <div style={{ maxWidth: 480, width: '100%' }}>
-      <MaestraLogo
-        className='maestra-logo-live'
-        style={{ width: 88, height: 88, display: 'block', margin: '0 auto 28px' }}
-      />
+      <Wordmark style={{ display: 'block', fontFamily: "'SpotifyMixUITitle', sans-serif", fontWeight: 800, fontSize: 30, color: '#fff', letterSpacing: '-0.01em', margin: '0 auto 28px' }} />
 
       <h1
         style={{

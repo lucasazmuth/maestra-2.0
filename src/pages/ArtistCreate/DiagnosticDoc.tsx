@@ -1,6 +1,6 @@
 import { FC, ReactNode } from 'react';
 
-import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
+import { Wordmark } from '../../components/Wordmark';
 import type { RealIndex } from '../../interfaces/maestra';
 import { RealBadge, tierForAltas } from '../../components/RealBadge';
 import { v2InputsView, type Chartmetric } from './DiagnosticReport';
@@ -24,7 +24,7 @@ interface Props {
 const Page: FC<{ n: number; total: number; kicker?: string; children: ReactNode }> = ({ n, total, kicker, children }) => (
   <div className={styles.docPage} data-docpage>
     <div className={styles.docHeader}>
-      <span className={styles.docBrand}><MaestraLogo className={styles.docBrandLogo} /> Maestra Manager</span>
+      <span className={styles.docBrand}><Wordmark /></span>
       {kicker && <span className={styles.docHeaderLabel}>{kicker}</span>}
     </div>
     <div className={styles.docBody}>{children}</div>
@@ -202,7 +202,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
     <div className={styles.docRoot}>
       {/* 1 — CAPA */}
       <div className={`${styles.docPage} ${styles.docCover}`} data-docpage>
-        <div className={styles.docCoverBrand}><MaestraLogo className={styles.docBrandLogo} /> Maestra Manager</div>
+        <div className={styles.docCoverBrand}><Wordmark /></div>
         <div className={styles.docCoverCenter}>
           <img className={styles.docCoverAvatar} src={avatarSrc} alt="" crossOrigin="anonymous" />
           <div className={styles.docCoverKicker}>Diagnóstico de carreira</div>
@@ -354,7 +354,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
 
       {/* O PRÓXIMO PASSO (CTA) */}
       <div className={`${styles.docPage} ${styles.docCta}`} data-docpage>
-        <div className={styles.docCoverBrand}><MaestraLogo className={styles.docBrandLogo} /> Maestra Manager</div>
+        <div className={styles.docCoverBrand}><Wordmark /></div>
         <div className={styles.docCtaCenter}>
           <div className={styles.docCtaKicker}>O próximo passo</div>
           <div className={styles.docCtaTitle}>Você sabe onde está. Agora, para onde ir.</div>
@@ -406,7 +406,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
   return (
     <div className={styles.docRoot}>
       <div className={`${styles.docPage} ${styles.docCover}`} data-docpage>
-        <div className={styles.docCoverBrand}><MaestraLogo className={styles.docBrandLogo} /> Maestra Manager</div>
+        <div className={styles.docCoverBrand}><Wordmark /></div>
         <div className={styles.docCoverCenter}>
           <img className={styles.docCoverAvatar} src={avatarSrc} alt="" crossOrigin="anonymous" />
           <div className={styles.docCoverKicker}>Diagnóstico de carreira</div>
@@ -554,7 +554,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
       )}
 
       <div className={`${styles.docPage} ${styles.docCta}`} data-docpage>
-        <div className={styles.docCoverBrand}><MaestraLogo className={styles.docBrandLogo} /> Maestra Manager</div>
+        <div className={styles.docCoverBrand}><Wordmark /></div>
         <div className={styles.docCtaCenter}>
           <div className={styles.docCtaKicker}>O próximo passo</div>
           <div className={styles.docCtaTitle}>Você sabe onde está. Agora, para onde ir.</div>

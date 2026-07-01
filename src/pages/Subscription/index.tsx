@@ -1,7 +1,6 @@
 import { FC, useEffect, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiArrowRight, FiTarget, FiMessageCircle, FiGrid, FiAward } from 'react-icons/fi';
-import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { createAsaasCustomer, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, clearError, type BillingCycle } from '../../store/slices/subscription';
@@ -161,7 +160,7 @@ const SubscriptionPage: FC = () => {
       return (
         <div style={{ padding: 24 }}>
           <div style={proCard}>
-            <span style={proBadge}><MaestraLogo style={{ width: 34, height: 34 }} /></span>
+            <span style={proBadge}><FiAward size={30} color='#e07fce' /></span>
             <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#d264bb', marginBottom: 10 }}>Assinatura ativa</span>
             <div style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 12 }}>Você já é Maestra PRO</div>
             <p style={{ color: '#cfcfd4', fontSize: 14.5, lineHeight: 1.55, margin: '0 0 26px', maxWidth: 400 }}>

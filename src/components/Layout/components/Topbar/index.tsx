@@ -10,7 +10,6 @@ import { NytaHeaderButton } from '../../../nyta/NytaHeaderButton';
 import { useAppDispatch, useAppSelector } from '../../../../store/store';
 import { authActions } from '../../../../store/slices/auth';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
-import { ReactComponent as MaestraLogo } from '../../../../assets/maestra-logo.svg';
 
 export const Topbar = memo(() => {
   const dispatch = useAppDispatch();
@@ -66,22 +65,6 @@ export const Topbar = memo(() => {
       }}
     >
       <Space size={8} align='center'>
-        <MaestraLogo
-          width={36}
-          height={36}
-          className={`maestra-logo-live topbar-logo${currentArtist ? ' topbar-logo--hide-mobile' : ''}`}
-          role='button'
-          aria-label='Ir para Seus artistas'
-          tabIndex={0}
-          style={{ cursor: 'pointer' }}
-          onClick={() => navigate('/artists')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              navigate('/artists');
-            }
-          }}
-        />
         <span className='topbar-navarrows' style={{ display: 'inline-flex', gap: 8 }}>
           <ForwardBackwardsButton flip />
           <ForwardBackwardsButton flip={false} />

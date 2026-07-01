@@ -4,7 +4,7 @@ import { Tooltip, message } from 'antd';
 import { FiChevronDown, FiArrowRight, FiShare2, FiHelpCircle, FiRefreshCw, FiLock } from 'react-icons/fi';
 import { DownloadIcon, DiagnosticoIcon } from '../../components/Icons/system';
 
-import { ReactComponent as MaestraLogo } from '../../assets/maestra-logo.svg';
+import { Wordmark } from '../../components/Wordmark';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import type { RealIndex } from '../../interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
@@ -771,7 +771,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
       {/* Cartão de compartilhamento — fora da tela, capturado como PNG */}
       <div className={styles.shareStage} aria-hidden data-noexport="1">
         <div ref={shareRef} className={styles.shareCard}>
-          <div className={styles.shareBrand}><MaestraLogo className={styles.shareBrandLogo} /> Maestra Manager</div>
+          <div className={styles.shareBrand}><Wordmark /></div>
           <img className={styles.shareAvatar} src={avatarSrc} alt="" crossOrigin="anonymous" />
           <div className={styles.shareKicker}>Diagnóstico de carreira</div>
           <div className={styles.shareName}>{profile.name}</div>

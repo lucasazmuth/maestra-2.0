@@ -1,13 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
-  <rect width="120" height="120" rx="26" fill="#121212"/>
-  <g transform="translate(0,-6)">
-    <path d="M30 78 V30 L60 58 L90 30 V78" fill="none" stroke="#af2896" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
-    <g stroke="#d264bb" stroke-width="8" stroke-linecap="round">
-      <line x1="33" x2="33" y1="95" y2="106"/>
-      <line x1="46.5" x2="46.5" y1="87" y2="106"/>
-      <line x1="60" x2="60" y1="80" y2="106"/>
-      <line x1="73.5" x2="73.5" y1="87" y2="106"/>
-      <line x1="87" x2="87" y1="95" y2="106"/>
-    </g>
-  </g>
+  <defs>
+    <linearGradient id="m" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c13da6"/>
+      <stop offset="1" stop-color="#7d47d8"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="#121212"/>
+  <path d="M33 90 V32 L60 60 L87 32 V90" fill="none" stroke="url(#m)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

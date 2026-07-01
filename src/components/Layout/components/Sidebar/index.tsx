@@ -2,6 +2,7 @@ import { FC, Fragment, memo, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FiPlus, FiLock, FiDatabase, FiChevronLeft } from 'react-icons/fi';
+import { Wordmark } from '../../../Wordmark';
 import {
   DashboardIcon,
   DiagnosticoIcon,
@@ -159,7 +160,7 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
             letterSpacing: 0.3,
           }}
         >
-          Maestra Manager
+          <Wordmark />
         </div>
       )}
 

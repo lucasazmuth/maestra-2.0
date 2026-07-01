@@ -71,8 +71,6 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.pillLogo { width: 26px; height: 26px; }
-
 .pillText {
   font-family: 'SpotifyMixUITitle', sans-serif;
   font-weight: 800;
@@ -81,8 +79,6 @@
   white-space: nowrap;
 }
 
-// Pílula no ambiente neutro (1º passo): "Manager" magenta da marca.
-.pillManager { color: #d264bb; }
 // "REAL" na pílula (ambiente do diagnóstico): assinatura serifada (Georgia itálico) + verde do produto.
 .pillReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; color: #37d995; }
 
@@ -1276,7 +1272,6 @@
   font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
 }
 .shareBrand { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; margin-bottom: 34px; }
-.shareBrandLogo { width: 26px; height: 26px; }
 .shareAvatar { width: 124px; height: 124px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 24px; box-shadow: 0 12px 44px rgba(0, 0, 0, 0.55); }
 .shareKicker { text-align: center; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: #af2896; font-weight: 800; margin-bottom: 12px; }
 .shareName { font-family: 'SpotifyMixUITitle', sans-serif; text-align: center; font-size: 66px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; margin-bottom: 22px; }
@@ -1302,7 +1297,6 @@
 }
 .docHeader { display: flex; align-items: center; justify-content: space-between; padding-bottom: 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 .docBrand { display: flex; align-items: center; gap: 9px; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 17px; }
-.docBrandLogo { width: 22px; height: 22px; }
 .docHeaderLabel { font-size: 11px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #af2896; }
 .docBody { flex: 1; display: flex; flex-direction: column; padding-top: 40px; }
 .docFooter { display: flex; justify-content: space-between; font-size: 12px; color: #6f6f78; letter-spacing: 0.04em; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
