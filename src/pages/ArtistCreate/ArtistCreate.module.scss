@@ -910,6 +910,12 @@
 .realHeroAvatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; flex-shrink: 0; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); }
 .realHeroTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; line-height: 1.2; color: #fff; margin: 0; }
 .realHeroSub { font-size: 13px; color: #8a8a92; margin: 6px 0 0; }
+
+// Headline de conversão no passo de pagamento (ProfileUnlock), acima do checkout.
+.unlockHead { max-width: 680px; margin: 0 0 30px; }
+.unlockHeadTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 2rem; line-height: 1.1; letter-spacing: -0.02em; color: #fff; margin: 0 0 12px; }
+.unlockHeadSub { font-size: 1.0625rem; line-height: 1.6; color: #b3b3b3; margin: 0; }
+@media (max-width: 640px) { .unlockHeadTitle { font-size: 1.6rem; } .unlockHeadSub { font-size: 1rem; } }
 .heroShareBtn {
   margin-left: auto;
   flex-shrink: 0;

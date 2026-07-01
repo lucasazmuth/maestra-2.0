@@ -233,7 +233,8 @@ const ProfileUnlock: FC = () => {
         )}
 
         {step === 'pagamento' && (
-          <div style={{ width: '100%', paddingTop: 4 }}>
+          // Mesmo frame (1080px centralizado) do checkout, pra headline/"Voltar"/colunas alinharem.
+          <div style={{ width: '100%', maxWidth: 1080, margin: '0 auto', paddingTop: 4 }}>
             {realIndex && (
               <div style={{ textAlign: 'right', marginBottom: 18 }}>
                 <button
@@ -244,6 +245,17 @@ const ProfileUnlock: FC = () => {
                 </button>
               </div>
             )}
+
+            {/* Headline de conversão: puxa o momentum do diagnóstico pro plano, com as âncoras de
+                valor (vitalício, pagamento único) logo antes do formulário. */}
+            <div className={styles.unlockHead}>
+              <h1 className={styles.unlockHeadTitle}>
+                Comece hoje o planejamento{artist?.name ? ` de ${artist.name}` : ' estratégico'}.
+              </h1>
+              <p className={styles.unlockHeadSub}>
+                Você já tem o diagnóstico REAL da carreira. O próximo passo é o plano de ação: metas, estratégias e cronograma, construídos com a Nyta e a metodologia que já orientou centenas de artistas. Acesso vitalício ao perfil, num pagamento único.
+              </p>
+            </div>
 
             <CheckoutLayout
               main={
