@@ -5,13 +5,21 @@ import { FiFileText, FiShield, FiLifeBuoy, FiExternalLink, FiChevronRight, FiCam
 import { EditIcon } from '../../components/Icons/system';
 
 import { supabase } from '../../lib/supabase';
-import { useAppSelector } from '../../store/store';
+import { useAppDispatch, useAppSelector } from '../../store/store';
+import { cancelSubscription } from '../../store/slices/subscription';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import SubscriptionManagement from './SubscriptionManagement';
 
 const Settings: FC = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
+  // Estado da assinatura (o SubscriptionManagement abaixo já busca no mount).
+  const {
+    status: subStatus,
+    asaasCustomerId,
+    asaasSubscriptionId,
+  } = useAppSelector((s) => s.subscription);
 
   const meta = (user?.user_metadata || {}) as Record<string, any>;
   const savedName = meta.full_name || meta.name || '';
@@ -71,11 +79,49 @@ const Settings: FC = () => {
     { label: 'Falar com o suporte', icon: <FiLifeBuoy size={16} />, href: `mailto:${SUPPORT_EMAIL}` },
   ];
 
-  // Cancelar cadastro: sem endpoint self-service de exclusão, registramos o pedido com o suporte.
-  const requestAccountDeletion = () => {
-    const subject = encodeURIComponent('Cancelamento de cadastro');
-    const body = encodeURIComponent(`Solicito o cancelamento do meu cadastro na Maestra Manager (${user?.email || ''}).`);
-    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+  // Assinatura que ainda gera cobrança recorrente na Asaas (precisa ser encerrada junto).
+  const hasBillableSubscription = subStatus === 'active' || subStatus === 'overdue' || subStatus === 'pending';
+  const [deleting, setDeleting] = useState(false);
+
+  // Cancelar cadastro: 1) encerra a assinatura na Asaas (se houver) pra não seguir cobrando;
+  // 2) grava o pedido em account_deletion_requests (data + contexto, p/ auditoria LGPD);
+  // 3) sem endpoint self-service de exclusão, o pedido segue pro suporte por e-mail.
+  const requestAccountDeletion = async () => {
+    if (!user) return;
+    setDeleting(true);
+    try {
+      let subscriptionCancelled = false;
+      if (hasBillableSubscription) {
+        try {
+          await dispatch(cancelSubscription()).unwrap();
+          subscriptionCancelled = true;
+          message.success('Assinatura cancelada.');
+        } catch {
+          message.error(
+            'Não consegui cancelar sua assinatura automaticamente. Cancele a assinatura (acima) antes de cancelar o cadastro.'
+          );
+          return;
+        }
+      }
+
+      // Trilha de auditoria — não bloqueia o pedido se falhar, mas fica no console.
+      const { error: auditError } = await supabase.from('account_deletion_requests').insert({
+        user_id: user.id,
+        email: user.email,
+        subscription_status: subStatus,
+        asaas_customer_id: asaasCustomerId,
+        asaas_subscription_id: asaasSubscriptionId,
+        subscription_cancelled: subscriptionCancelled,
+      });
+      if (auditError) console.error('Falha ao registrar pedido de cancelamento:', auditError);
+
+      message.success('Pedido de cancelamento registrado.');
+      const subject = encodeURIComponent('Cancelamento de cadastro');
+      const body = encodeURIComponent(`Solicito o cancelamento do meu cadastro na Maestra Manager (${user.email || ''}).`);
+      window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -199,25 +245,31 @@ const Settings: FC = () => {
         </p>
         <Popconfirm
           title='Cancelar cadastro?'
-          description='Sua conta e seus dados serão removidos. Esta ação é permanente.'
+          description={
+            hasBillableSubscription
+              ? 'Sua assinatura Maestra PRO será cancelada e sua conta e seus dados serão removidos. Esta ação é permanente.'
+              : 'Sua conta e seus dados serão removidos. Esta ação é permanente.'
+          }
           okText='Sim, cancelar cadastro'
-          okButtonProps={{ danger: true }}
+          okButtonProps={{ danger: true, loading: deleting }}
           cancelText='Voltar'
           onConfirm={requestAccountDeletion}
         >
           <button
+            disabled={deleting}
             style={{
               background: 'transparent',
               border: '1px solid #e91429',
               color: '#e91429',
               borderRadius: 9999,
               padding: '9px 18px',
-              cursor: 'pointer',
+              cursor: deleting ? 'wait' : 'pointer',
               fontWeight: 700,
               fontSize: 14,
+              opacity: deleting ? 0.6 : 1,
             }}
           >
-            Cancelar cadastro
+            {deleting ? 'Cancelando…' : 'Cancelar cadastro'}
           </button>
         </Popconfirm>
       </section>
