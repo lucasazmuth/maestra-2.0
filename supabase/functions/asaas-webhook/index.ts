@@ -27,9 +27,20 @@ const PAYMENT_EVENTS = new Set([
   "PAYMENT_UPDATED",
 ]);
 
+// Falha/recusa de cartão de crédito. Se acontecem na 1ª cobrança de uma assinatura
+// que ainda está "pending", a assinatura ficava presa em "análise" pra sempre e o
+// usuário não conseguia tentar outro cartão. Nesses eventos, cancelamos e liberamos.
+const CARD_FAILURE_EVENTS = new Set([
+  "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED", // cartão recusado na captura (ex.: sem limite)
+  "PAYMENT_REPROVED_BY_RISK_ANALYSIS",   // reprovado na análise de risco
+  "PAYMENT_REFUNDED",                    // estornado
+  "PAYMENT_CHARGEBACK_REQUESTED",        // chargeback aberto
+]);
+
 // All event types we handle (subscription status changes + payment-only events)
 const HANDLED_EVENTS = new Set([
   ...Object.keys(EVENT_STATUS_MAP),
+  ...CARD_FAILURE_EVENTS,
   "PAYMENT_DELETED",
   "PAYMENT_CREATED",
   "PAYMENT_UPDATED",
@@ -145,6 +156,9 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    // Usados só p/ cancelar a assinatura na Asaas quando o cartão é recusado (path /v3).
+    const asaasApiKey = Deno.env.get("ASAAS_API_KEY");
+    const asaasBaseUrl = Deno.env.get("ASAAS_API_URL") || "https://api-sandbox.asaas.com";
 
     // ─── 4. Idempotency Check ─────────────────────────────────────────────────
     const { data: existingEvent, error: idempotencyError } = await supabaseAdmin
@@ -208,8 +222,9 @@ Deno.serve(async (req: Request) => {
               .eq("id", purchase.artist_id);
             if (unlockError) console.error("Error unlocking artist:", unlockError);
           }
-        } else if (eventType === "PAYMENT_OVERDUE" || eventType === "PAYMENT_DELETED") {
-          // Cobrança vencida/removida sem confirmação → marca como falha (mantém pendente travado).
+        } else if (eventType === "PAYMENT_OVERDUE" || eventType === "PAYMENT_DELETED" || CARD_FAILURE_EVENTS.has(eventType)) {
+          // Vencida/removida/cartão recusado sem confirmação → marca como falha.
+          // (failed libera nova tentativa: o create-artist-charge só bloqueia em 'received'.)
           if (purchase.status === "pending") {
             await supabaseAdmin
               .from("artist_purchases")
@@ -294,6 +309,37 @@ Deno.serve(async (req: Request) => {
     }
 
     const userId = subscriptionRecord.user_id as string;
+
+    // ─── 5b. Falha/recusa de cartão na 1ª cobrança ────────────────────────────
+    // Se a assinatura ainda está "pending" (nunca ativou) e o cartão foi recusado/
+    // reprovado, ela ficaria presa em "análise" pra sempre e a trava anti-duplicidade
+    // impediria o usuário de tentar outro cartão. Cancela (Asaas + local) e libera o
+    // retry — o gate da /assinatura reabre e o create-subscription deixa criar de novo.
+    if (CARD_FAILURE_EVENTS.has(eventType) && subscriptionRecord.status === "pending") {
+      const subId = subscriptionRecord.asaas_subscription_id as string | null;
+      if (subId && asaasApiKey) {
+        try {
+          await fetch(`${asaasBaseUrl}/v3/subscriptions/${subId}`, {
+            method: "DELETE",
+            headers: { "access_token": asaasApiKey, "Content-Type": "application/json" },
+          });
+        } catch (delErr) {
+          console.warn("Falha ao cancelar assinatura recusada na Asaas:", (delErr as { message?: string })?.message);
+        }
+      }
+      await supabaseAdmin
+        .from("asaas_subscriptions")
+        .update({ status: "cancelled", updated_at: new Date().toISOString() })
+        .eq("id", subscriptionRecord.id);
+      await supabaseAdmin.from("asaas_webhook_events").insert({
+        event_id: eventId, event_type: eventType, payload, processed_at: new Date().toISOString(),
+      });
+      console.log(`Webhook: cartão recusado em assinatura pending → cancelada (user=${userId}, event=${eventType})`);
+      return new Response(
+        JSON.stringify({ message: "ok" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // ─── 6. Update subscription status (only for events that change subscription status) ─
     // SÓ atualiza o status da ASSINATURA quando o evento é realmente de assinatura
