@@ -1,15 +1,11 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { supabase } from '../../lib/supabase';
+import { readEdgeFunctionError } from '../../lib/edgeError';
 import type { PixData } from './subscription';
 
 // Cobrança única (R$199,90) de um artista JÁ EXISTENTE (criado no diagnóstico).
 // A confirmação apenas DESBLOQUEIA o perfil (artists.is_locked → false).
-
-function categorizeError(error: { message?: string } | null | undefined, fallback: string): string {
-  const msg = error?.message || '';
-  return msg && msg.length <= 200 ? msg : fallback;
-}
 
 export interface ArtistPurchaseEntry {
   status: 'idle' | 'pending' | 'received' | 'failed';
@@ -71,7 +67,7 @@ export const createArtistCharge = createAsyncThunk(
       body: payload,
     });
     if (error) {
-      return rejectWithValue({ message: categorizeError(error, 'Erro ao criar a cobrança do perfil') });
+      return rejectWithValue({ message: await readEdgeFunctionError(error, 'Erro ao criar a cobrança do perfil') });
     }
     const d = data as { purchaseId: string; artistId?: string; status?: string; pixData?: PixData | null };
     return {

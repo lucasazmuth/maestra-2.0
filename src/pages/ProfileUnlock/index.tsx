@@ -264,7 +264,7 @@ const ProfileUnlock: FC = () => {
                   <CheckoutPanel title="Insira as informações de pagamento para começar">
                     <div style={{ marginBottom: 16 }}><CpfField form={form} /></div>
                     <PaymentMethods
-                      methods={['CREDIT', 'DEBIT', 'PIX']}
+                      methods={['CREDIT', 'PIX']}
                       value={method}
                       onChange={setMethod}
                       renderBody={(m) => (m === 'PIX'

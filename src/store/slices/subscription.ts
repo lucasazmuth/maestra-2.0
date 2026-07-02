@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { supabase } from '../../lib/supabase';
+import { readEdgeFunctionError } from '../../lib/edgeError';
 
 // ─── Error Helpers ────────────────────────────────────────────────────────────
 
@@ -163,7 +164,7 @@ export const createAsaasCustomer = createAsyncThunk(
 
     if (error) {
       return rejectWithValue(
-        categorizeEdgeFunctionError(error, 'Erro ao criar cliente no Asaas')
+        await readEdgeFunctionError(error, 'Erro ao criar cliente no Asaas')
       );
     }
 
@@ -204,7 +205,7 @@ export const createSubscription = createAsyncThunk(
 
     if (error) {
       return rejectWithValue(
-        categorizeEdgeFunctionError(error, 'Erro ao criar assinatura')
+        await readEdgeFunctionError(error, 'Erro ao criar assinatura')
       );
     }
 
