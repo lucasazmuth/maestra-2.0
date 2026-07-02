@@ -110,9 +110,25 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Extract subscription identifier from payload
-    const subscriptionId = (paymentData?.subscription as string) || (payload.subscription as string) || null;
-    const customerId = (paymentData?.customer as string) || (payload.customer as string) || null;
+    // Extract subscription identifier from payload.
+    // Eventos de PAGAMENTO trazem payment.subscription como STRING (id).
+    // Eventos de ASSINATURA (SUBSCRIPTION_DELETED/INACTIVATED) trazem payload.subscription
+    // como OBJETO ({id, customer, ...}) — sem tratar isso, o id virava um objeto, a busca
+    // no banco não casava e o cancelamento nunca era aplicado (evento só ficava na auditoria).
+    const subscriptionObj =
+      payload.subscription && typeof payload.subscription === "object"
+        ? (payload.subscription as Record<string, unknown>)
+        : undefined;
+    const subscriptionId =
+      (paymentData?.subscription as string) ||
+      (typeof payload.subscription === "string" ? (payload.subscription as string) : null) ||
+      (subscriptionObj?.id as string) ||
+      null;
+    const customerId =
+      (paymentData?.customer as string) ||
+      (subscriptionObj?.customer as string) ||
+      (payload.customer as string) ||
+      null;
 
     if (!subscriptionId && !customerId) {
       console.error("Missing subscription/customer identifier in webhook payload", {
