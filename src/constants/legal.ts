@@ -62,7 +62,7 @@ Por se tratar de contratação à distância, você pode **desistir da compra no
 É vedado, entre outros: (i) usar a Plataforma para fins ilícitos ou que violem direitos de terceiros; (ii) inserir conteúdo ilegal, difamatório ou que infrinja direitos autorais; (iii) tentar acessar áreas restritas, burlar controles de segurança ou realizar engenharia reversa; (iv) sobrecarregar, automatizar indevidamente ou prejudicar o funcionamento da Plataforma; (v) compartilhar credenciais ou revender o acesso sem autorização.
 
 ## 10. Integrações de terceiros
-A Plataforma pode integrar serviços de terceiros (por exemplo, **Spotify** e **Chartmetric**) para obter dados públicos e métricas de audiência. O uso desses serviços sujeita-se também aos respectivos termos e políticas. Não nos responsabilizamos por indisponibilidades, alterações ou imprecisões de dados originados de terceiros.
+A Plataforma pode integrar serviços de terceiros para obter dados públicos e métricas de audiência (por exemplo, plataformas de streaming que você conecta). O uso desses serviços sujeita-se também aos respectivos termos e políticas. Não nos responsabilizamos por indisponibilidades, alterações ou imprecisões de dados originados de terceiros.
 
 ## 11. Inteligência artificial (Nyta)
 - A Nyta é assistida por modelos de linguagem de terceiro, aos quais são enviadas as informações do Perfil de Artista necessárias para gerar as respostas.
@@ -102,16 +102,16 @@ Para exercer seus direitos ou tirar dúvidas sobre privacidade, fale com o nosso
 Tratamos apenas os dados necessários para operar a Plataforma:
 
 - **Cadastro e conta:** nome, e-mail, senha (armazenada de forma criptografada — nunca em texto puro) e código de verificação (OTP).
-- **Pagamento e faturamento:** CPF/CNPJ, nome do titular, telefone, CEP e endereço (logradouro, bairro, cidade, UF), identificadores da Asaas, status e histórico de cobranças. **Os dados do cartão (número, validade, CVV) são transmitidos diretamente à Asaas e NÃO são armazenados por nós.**
+- **Pagamento e faturamento:** CPF/CNPJ, nome do titular, telefone, CEP e endereço (logradouro, bairro, cidade, UF), identificadores atribuídos pela instituição de pagamento, status e histórico de cobranças. **Os dados do cartão (número, validade, CVV) são transmitidos diretamente à instituição de pagamento e NÃO são armazenados por nós.**
 - **Conteúdo do artista:** identidade e bio do artista, catálogo (faixas, letras, ISRC/UPC, metadados), agenda/eventos, plano de ação, diagnóstico e respostas de quiz.
 - **Equipe:** nome, e-mail e função dos membros que você convida.
-- **Integrações:** identificador público do artista no Spotify e métricas de audiência obtidas via Chartmetric.
+- **Integrações:** identificador público do artista em plataformas de streaming que você conecta e métricas de audiência obtidas de provedor especializado.
 - **Assistente Nyta:** o conteúdo das conversas com a Nyta e contadores de uso.
 - **Arquivos:** avatar, capas e áudios que você faz upload.
 - **Dados técnicos:** informações de sessão/autenticação e registros de acesso, para segurança e funcionamento (Marco Civil da Internet).
 
 ## 3. Origem dos dados
-Os dados são: (i) **fornecidos por você** (cadastro, pagamento, conteúdo); (ii) **gerados pelo uso** (conversas, análises, registros); ou (iii) **obtidos de fontes de terceiros** integradas por você (dados públicos do Spotify e métricas do Chartmetric).
+Os dados são: (i) **fornecidos por você** (cadastro, pagamento, conteúdo); (ii) **gerados pelo uso** (conversas, análises, registros); ou (iii) **obtidos de fontes de terceiros** integradas por você (dados públicos de plataformas de streaming e métricas de audiência musical).
 
 ## 4. Finalidades e bases legais (LGPD, art. 7º e 10)
 - **Executar o contrato** (criar e manter a conta, processar pagamentos, entregar os recursos contratados) — art. 7º, V.
@@ -120,16 +120,16 @@ Os dados são: (i) **fornecidos por você** (cadastro, pagamento, conteúdo); (i
 - **Consentimento**, quando aplicável (por exemplo, comunicações não essenciais) — art. 7º, I, podendo ser revogado a qualquer tempo.
 
 ## 5. Compartilhamento com suboperadores
-Não vendemos seus dados. Compartilhamos apenas o necessário com prestadores que atuam como **operadores**, sob obrigações contratuais de confidencialidade e segurança:
+Não vendemos seus dados. Compartilhamos apenas o necessário com prestadores que atuam como **operadores**, sob obrigações contratuais de confidencialidade e segurança, descritos abaixo por categoria de finalidade:
 
-- **Supabase** — banco de dados, autenticação, hospedagem e armazenamento de arquivos (dados de conta, conteúdo do artista e arquivos; exceto dados de cartão).
-- **Asaas** — processamento de pagamentos (PIX, cartão, boleto): CPF/CNPJ, nome, e-mail, telefone, endereço e dados de cartão.
-- **Brevo** — envio de e-mails transacionais (verificação, convites, avisos): nome, e-mail e código de verificação.
-- **Chartmetric** — métricas e analytics de audiência musical: identificador público do artista.
-- **Spotify** — leitura de dados públicos do artista: identificador público do artista.
-- **GROQ (modelo Llama)** — geração das respostas da assistente Nyta: contexto do Perfil de Artista e a mensagem enviada.
+- **Infraestrutura em nuvem, banco de dados, autenticação e armazenamento** — hospedagem e operação da Plataforma (dados de conta, conteúdo do artista e arquivos; exceto dados de cartão).
+- **Instituição/gateway de pagamento** — processamento de pagamentos (PIX, cartão, boleto): CPF/CNPJ, nome, e-mail, telefone, endereço e dados de cartão.
+- **Provedor de e-mail transacional** — envio de mensagens de verificação, convites e avisos: nome, e-mail e código de verificação.
+- **Provedor de métricas e analytics de audiência musical** — enriquecimento dos dados de carreira: identificador público do artista.
+- **Plataformas de streaming musical** — leitura de dados públicos do artista que você conecta.
+- **Provedor de inteligência artificial (modelos de linguagem)** — geração das respostas da assistente Nyta: contexto do Perfil de Artista e a mensagem enviada.
 
-Também poderemos compartilhar dados para **cumprir a lei**, atender **autoridades competentes** ou **defender nossos direitos**, sempre nos limites legais.
+**Mediante solicitação**, informamos ao titular os operadores específicos com os quais seus dados foram compartilhados (LGPD, art. 18, VII). Também poderemos compartilhar dados para **cumprir a lei**, atender **autoridades competentes** ou **defender nossos direitos**, sempre nos limites legais.
 
 ## 6. Transferência internacional
 Alguns suboperadores podem processar dados **fora do Brasil**. Nesses casos, adotamos salvaguardas adequadas e observamos os requisitos dos arts. 33 a 36 da LGPD para a transferência internacional.
