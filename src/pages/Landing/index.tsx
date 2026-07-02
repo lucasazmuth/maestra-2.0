@@ -10,6 +10,7 @@ import anitaPhoto from '../../assets/anita.png';
 import { DiagnosticoIcon, PlanejamentoIcon, PlanoAcaoIcon } from '../../components/Icons/system';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { fetchPlanConfig } from '../../store/slices/subscription';
+import { usePlanPrices, fmtBRL } from '../../hooks/usePlanPrices';
 import { PRODUCT_THEME } from '../../components/productTheme';
 import styles from './Landing.module.scss';
 
@@ -17,24 +18,9 @@ import styles from './Landing.module.scss';
 const NYTA_ACCENT = '124, 92, 255';   // violeta
 const GESTAO_ACCENT = '46, 196, 178'; // teal
 
-// Preços dinâmicos (via asaas_plan_config; RLS permite leitura anônima). Estes são
-// só FALLBACKS enquanto a config carrega (ou se a leitura falhar).
-// PLAN_ONCE = desbloqueio do planejamento POR PERFIL (cobrança única, vitalícia).
-// MONTHLY/ANNUAL = assinatura Maestra PRO (nível conta). São eixos independentes.
-const FALLBACK_ONCE = 199.9;
-const FALLBACK_MONTHLY = 39.9;
-const FALLBACK_ANNUAL = 335.16;
-const fmt = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-// Preços da config (com fallback) — compartilhado entre os cards de planos e o FAQ.
-const usePlanPrices = () => {
-  const plan = useAppSelector((s) => s.subscription.plan);
-  const once = plan?.profileUnlockValue ?? FALLBACK_ONCE;
-  const monthly = plan?.monthlyValue ?? FALLBACK_MONTHLY;
-  const annual = plan?.annualValue ?? FALLBACK_ANNUAL;
-  const discountPct = monthly > 0 ? Math.round((1 - annual / (monthly * 12)) * 100) : 0;
-  return { once, monthly, annual, discountPct };
-};
+// Preços dinâmicos via hook compartilhado (usePlanPrices lê asaas_plan_config).
+// `fmt` = alias do formatador de moeda compartilhado.
+const fmt = fmtBRL;
 
 const NAV = [
   { label: 'Recursos', id: 'recursos' },

@@ -2,6 +2,7 @@ import { FC } from 'react';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
+import { usePlanPrices } from '../../hooks/usePlanPrices';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { Spinner } from '../../components/spinner/spinner';
 import { DashboardEmptyState } from '../../components/DashboardEmptyState';
@@ -15,8 +16,9 @@ import { DashboardOverview } from './overview';
 
 const Dashboard: FC = () => {
   const { artist, loading } = useArtist();
-  // Planejamento liberado só no perfil pago (cobrança única R$199,90).
+  // Planejamento liberado só no perfil pago (cobrança única, valor dinâmico via config).
   const { viewPlanning } = useArtistCapabilities(artist);
+  const { onceFmt } = usePlanPrices();
 
   if (loading && !artist) {
     return <Spinner loading>{null as any}</Spinner>;
@@ -39,8 +41,8 @@ const Dashboard: FC = () => {
       {!viewPlanning && (
         <DashboardEmptyState
           title='Desbloqueie este perfil'
-          description='Pague uma vez (R$ 199,90) e libere o planejamento estratégico com a Nyta, o plano salvo para sempre e o compartilhamento com colaboradores.'
-          ctaLabel='Desbloquear — R$ 199,90'
+          description={`Pague uma vez (${onceFmt}) e libere o planejamento estratégico com a Nyta, o plano salvo para sempre e o compartilhamento com colaboradores.`}
+          ctaLabel={`Desbloquear — ${onceFmt}`}
           ctaTo={`/artists/${artist.id}/desbloquear`}
         />
       )}

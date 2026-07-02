@@ -13,7 +13,7 @@ import { StatusBanner, useStatusBanner } from '../AnnouncementBanner';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { getLibraryCollapsed, uiActions } from '../../store/slices/ui';
-import { fetchSubscriptionStatus } from '../../store/slices/subscription';
+import { fetchSubscriptionStatus, fetchPlanConfig } from '../../store/slices/subscription';
 import { PAYWALL_DISABLED } from '../../constants/maestra';
 import useIsMobile from '../../utils/isMobile';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
@@ -51,6 +51,12 @@ export const AppLayout: FC = memo(() => {
       dispatch(fetchSubscriptionStatus());
     }
   }, [userId, dispatch]);
+
+  // Preços do produto (config dinâmica) — carregados uma vez pra alimentar os
+  // upsells/paywalls do app (Dashboard, LockedFeature, banners) sem hardcode.
+  useEffect(() => {
+    dispatch(fetchPlanConfig());
+  }, [dispatch]);
 
   useEffect(() => {
     const onResize = () => {

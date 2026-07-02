@@ -19,12 +19,14 @@ export interface LockedFeatureConfig {
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 
+// O preço NÃO fica no label (é dinâmico via config) — o componente compõe
+// "{label} — {preço}" a partir do `kind`.
 const UNLOCK_PROFILE: LockedFeatureConfig['cta'] = {
-  label: 'Desbloquear este perfil — R$ 199,90',
+  label: 'Desbloquear este perfil',
   kind: 'unlock-profile',
 };
 const SUBSCRIBE_PRO: LockedFeatureConfig['cta'] = {
-  label: 'Assine o PRO — R$ 39,90/mês',
+  label: 'Assine o PRO',
   kind: 'subscribe-pro',
 };
 

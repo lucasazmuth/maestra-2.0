@@ -1,6 +1,7 @@
 import { FC } from 'react';
 import { FiCheck, FiZap } from 'react-icons/fi';
 
+import { usePlanPrices } from '../../hooks/usePlanPrices';
 import styles from './ProUpsellBanner.module.scss';
 
 interface ProUpsellBannerProps {
@@ -37,7 +38,9 @@ const BENEFITS = [
  *
  * Validates: Requirements 2.1, 2.2, 2.3
  */
-export const ProUpsellBanner: FC<ProUpsellBannerProps> = ({ onSubscribe }) => (
+export const ProUpsellBanner: FC<ProUpsellBannerProps> = ({ onSubscribe }) => {
+  const { monthlyFmt } = usePlanPrices();
+  return (
   <section
     className={styles.banner}
     aria-label="Promoção Maestra PRO"
@@ -53,7 +56,7 @@ export const ProUpsellBanner: FC<ProUpsellBannerProps> = ({ onSubscribe }) => (
     <h2 className={styles.title}>Maestra PRO</h2>
 
     <div className={styles.price}>
-      <span className={styles.priceValue}>R$39,90</span>
+      <span className={styles.priceValue}>{monthlyFmt}</span>
       <span className={styles.pricePeriod}>/mês</span>
     </div>
 
@@ -69,9 +72,10 @@ export const ProUpsellBanner: FC<ProUpsellBannerProps> = ({ onSubscribe }) => (
     <button
       className={styles.cta}
       onClick={onSubscribe}
-      aria-label="Assinar Maestra PRO por R$39,90 por mês"
+      aria-label={`Assinar Maestra PRO por ${monthlyFmt} por mês`}
     >
       Assinar agora
     </button>
   </section>
-);
+  );
+};

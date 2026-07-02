@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Modal } from 'antd';
 import { FiCheck } from 'react-icons/fi';
 import { UpsellContext, UPSELL_CONFIG } from './config';
+import { usePlanPrices } from '../../hooks/usePlanPrices';
 import styles from './UpsellModal.module.scss';
 
 interface UpsellModalProps {
@@ -23,6 +24,7 @@ export const UpsellModal: FC<UpsellModalProps> = ({
   limit,
 }) => {
   const navigate = useNavigate();
+  const { monthlyFmt } = usePlanPrices();
   const config = UPSELL_CONFIG[context];
   const Icon = config.icon;
 
@@ -66,7 +68,7 @@ export const UpsellModal: FC<UpsellModalProps> = ({
             ))}
           </ul>
           <div className={styles.price}>
-            <span className={styles.priceValue}>R$ 39,90</span>
+            <span className={styles.priceValue}>{monthlyFmt}</span>
             <span className={styles.pricePeriod}>/mês</span>
           </div>
         </>
