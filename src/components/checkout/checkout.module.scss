@@ -236,6 +236,11 @@ $muted2: #6f6f78;
   &:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .secure { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 12px; color: $muted; font-size: 12.5px; }
+// Razão social/CNPJ que aparecem na fatura do cartão e no extrato do pagador.
+.receiverNote {
+  margin-top: 8px; text-align: center; color: $muted; font-size: 11.5px; line-height: 1.5;
+  strong { color: #cfcfd4; font-weight: 700; }
+}
 .errorMsg {
   margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 13px;
   background: rgba(255, 90, 95, 0.12); border: 1px solid rgba(255, 90, 95, 0.3); color: #ffb3b5;

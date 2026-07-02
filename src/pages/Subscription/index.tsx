@@ -252,7 +252,7 @@ const SubscriptionPage: FC = () => {
             item={{
               icon: <span style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 13, color: '#af2896' }}>PRO</span>,
               name: 'Maestra PRO',
-              sub: <span>Edição + IA consultora · {cycleLabel}</span>,
+              sub: <span>Edição + Nyta IA · {cycleLabel}</span>,
               price: `${priceFmt}${unit}`,
             }}
             rows={[

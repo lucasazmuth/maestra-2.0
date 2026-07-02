@@ -121,6 +121,13 @@ export const CartSummary: FC<Props> = ({
     </button>
 
     <div className={styles.secure}><FiLock size={12} /> Compra segura · processada via Asaas</div>
+
+    {/* Razão social por trás da Maestra: é o nome que aparece na fatura do cartão / extrato. */}
+    <div className={styles.receiverNote}>
+      Na fatura do cartão e no extrato, a cobrança aparece como
+      <br />
+      <strong>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
+    </div>
   </div>
 );
 
