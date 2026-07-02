@@ -250,12 +250,34 @@ serve(async (req) => {
 
     // 5. Handle response based on billing type
     if (isCreditCard) {
-      // Credit card: immediate charge — subscription is active right away
+      // NÃO assumir cobrança imediata: em produção a operadora pode deixar a 1ª
+      // cobrança do cartão em análise (PENDING). Confere o status real do pagamento
+      // e só ativa se já está CONFIRMED/RECEIVED; senão fica "pending" e o webhook
+      // (PAYMENT_CONFIRMED) ativa quando o débito cair. Antes: marcava "active"
+      // direto e o usuário virava Pro sem o cartão ter sido debitado.
+      let firstPaymentStatus: string | null = null;
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const payResp = await fetch(`${asaasApiUrl}/v3/payments?subscription=${asaasSubscriptionId}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json", "access_token": asaasApiKey },
+        });
+        if (payResp.ok) {
+          const payJson = await payResp.json();
+          firstPaymentStatus = payJson?.data?.[0]?.status || null;
+        }
+      } catch (_e) {
+        // Sem resposta da Asaas → trata como pendente (o webhook resolve depois).
+      }
+
+      const isPaid = firstPaymentStatus === "CONFIRMED" || firstPaymentStatus === "RECEIVED";
+      const cardStatus = isPaid ? "active" : "pending";
+
       const { error: updateError } = await supabaseAdmin
         .from("asaas_subscriptions")
         .update({
           asaas_subscription_id: asaasSubscriptionId,
-          status: "active",
+          status: cardStatus,
           value: planValue,
           cycle: asaasCycle,
           billing_type: "CREDIT_CARD",
@@ -272,7 +294,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           subscriptionId: asaasSubscriptionId,
-          status: "active",
+          status: cardStatus,
+          paymentStatus: firstPaymentStatus,
         }),
         {
           status: 200,

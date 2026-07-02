@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiArrowRight, FiTarget, FiMessageCircle, FiGrid, FiAward } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
-import { createAsaasCustomer, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, clearError, type BillingCycle } from '../../store/slices/subscription';
+import { createAsaasCustomer, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, pollPaymentStatus, clearError, type BillingCycle } from '../../store/slices/subscription';
 import {
   CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField,
   CartSummary, BenefitsCompare, useCheckoutForm, type PayMethod, type BenefitGroup,
@@ -57,6 +57,9 @@ const SubscriptionPage: FC = () => {
   const [method, setMethod] = useState<PayMethod>('PIX');
   const [cycle, setCycle] = useState<BillingCycle>('MONTHLY');
   const [formError, setFormError] = useState('');
+  // Cartão em análise pela operadora: mantém o CTA em "Processando…" enquanto
+  // aguardamos a confirmação (polling) — o Pro só libera com o débito confirmado.
+  const [confirmingCard, setConfirmingCard] = useState(false);
   const form = useCheckoutForm();
 
   const isCard = method === 'CREDIT';
@@ -124,10 +127,25 @@ const SubscriptionPage: FC = () => {
         },
       }));
       if (createSubscription.rejected.match(result)) return;
-      const p = result.payload as { resume?: boolean; alreadyActive?: boolean };
+      const p = result.payload as { resume?: boolean; alreadyActive?: boolean; status?: string };
       if (p.alreadyActive) { navigate('/settings'); return; }
       if (p.resume) { navigate('/pagamento'); return; }
-      navigate('/assinatura/sucesso');
+
+      // Débito já confirmado pela operadora → sucesso direto.
+      if (p.status === 'active') { navigate('/assinatura/sucesso'); return; }
+
+      // Cartão em análise (PENDING na Asaas): espera a confirmação real antes de
+      // liberar o Pro — o webhook ativa quando o débito cai e o polling detecta.
+      setConfirmingCard(true);
+      const poll = await dispatch(pollPaymentStatus());
+      setConfirmingCard(false);
+      if (pollPaymentStatus.fulfilled.match(poll)) {
+        navigate('/assinatura/sucesso');
+        return;
+      }
+      // Não confirmou no tempo limite: segue em análise. O acesso libera sozinho
+      // quando a operadora aprovar (webhook); o /settings mostra o banner de pendência.
+      setFormError('Pagamento em análise pela operadora do cartão. Seu acesso Pro será liberado automaticamente assim que for aprovado.');
     }
   };
 
@@ -277,7 +295,7 @@ const SubscriptionPage: FC = () => {
               : <>Ao assinar, você autoriza a cobrança automática de {priceFmt} {isAnnual ? 'por ano' : 'por mês'} até cancelar. Cancele quando quiser pela sua conta. Você concorda com os Termos de uso e a Política de privacidade.</>}
             ctaLabel={isPix ? 'Pagar com PIX' : 'Concordar e assinar'}
             onCta={handleSubmit}
-            loading={loading}
+            loading={loading || confirmingCard}
             disabled={!!form.validate(isCard)}
             error={formError || error || undefined}
           />
