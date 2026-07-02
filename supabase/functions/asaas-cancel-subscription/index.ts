@@ -45,24 +45,23 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client with user's JWT to get user context
-    const supabaseUser = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
+    // Create admin client for database operations
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Get the authenticated user
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    // Valida o JWT do usuário passando o token EXPLICITAMENTE (mesmo padrão do
+    // asaas-create-subscription). O padrão anterior — client anon com o header e
+    // auth.getUser() sem argumento — falha nesta versão do supabase-js em edge
+    // function ("Auth session missing") e devolvia 401 pra todo mundo.
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: "Não autorizado" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Create admin client for database operations
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
 
     // 1. Look up user's subscription in asaas_subscriptions
     const { data: subscription, error: fetchError } = await supabaseAdmin
