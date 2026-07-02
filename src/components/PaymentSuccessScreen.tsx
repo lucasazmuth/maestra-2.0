@@ -1,6 +1,5 @@
 import { CSSProperties, FC, ReactNode } from 'react';
 
-import { Wordmark } from './Wordmark';
 import { SuccessConfetti } from './SuccessConfetti';
 
 interface Props {
@@ -25,15 +24,13 @@ const wrap: CSSProperties = {
 };
 
 // Tela cheia de sucesso de pagamento — usada na assinatura (Maestra Pro) e no pagamento único
-// (desbloqueio do perfil). Fundo escuro limpo, logo centralizada, confete e CTA. Sem sidebar/chrome.
+// (desbloqueio do perfil). Fundo escuro limpo, confete e CTA — só o título dá as boas-vindas.
 export const PaymentSuccessScreen: FC<Props> = ({ title, subtitle, description, ctaLabel, onCta }) => (
   <div style={wrap}>
     {/* Estouro de confete sobre a tela (toca uma vez e some). */}
     <SuccessConfetti fullscreen />
 
     <div style={{ maxWidth: 480, width: '100%' }}>
-      <Wordmark style={{ display: 'block', fontFamily: "'SpotifyMixUITitle', sans-serif", fontWeight: 800, fontSize: 30, color: '#fff', letterSpacing: '-0.01em', margin: '0 auto 28px' }} />
-
       <h1
         style={{
           fontFamily: 'SpotifyMixUITitle',

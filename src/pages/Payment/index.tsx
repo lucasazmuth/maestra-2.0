@@ -462,6 +462,13 @@ const PaymentPage: FC = () => {
             <span>Expira em {formatCountdown(secondsRemaining ?? 0)}</span>
           )}
         </div>
+
+        {/* Recebedor: no app do banco aparece a razão social da empresa por trás da Maestra. */}
+        <p style={{ color: '#8a8a8a', fontSize: 12.5, lineHeight: 1.5, textAlign: 'center', margin: '14px 0 0' }}>
+          O pagamento aparecerá no seu banco em nome de
+          <br />
+          <strong style={{ color: '#b3b3b3', fontWeight: 700 }}>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
+        </p>
       </div>
 
       {/* Copy-paste section */}

@@ -321,6 +321,11 @@ const ProfileUnlock: FC = () => {
               <div className={`${styles.payWrap} ${styles.qrWrap}`} style={{ alignItems: 'center' }}>
                 <img className={styles.qrImg} src={`data:image/png;base64,${pixData.qrCode}`} alt='QR Code PIX' />
                 {pixData.copyPaste && <Input.TextArea value={pixData.copyPaste} readOnly autoSize />}
+                {/* Recebedor: no app do banco aparece a razão social da empresa por trás da Maestra. */}
+                <p style={{ color: '#8a8a8a', fontSize: 12.5, lineHeight: 1.5, textAlign: 'center', margin: 0 }}>
+                  O pagamento aparecerá no seu banco em nome de{' '}
+                  <strong style={{ color: '#b3b3b3', fontWeight: 700 }}>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
+                </p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#b3b3b3' }}>
                   <Spin size='small' /> Aguardando confirmação…
                 </div>

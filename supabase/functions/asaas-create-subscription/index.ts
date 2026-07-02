@@ -137,6 +137,8 @@ serve(async (req) => {
       cycle: asaasCycle,
       value: planValue,
       nextDueDate: nextDueDate,
+      // Aparece nas cobranças do painel Asaas e nos comprovantes do assinante.
+      description: isAnnual ? "Maestra PRO — Assinatura anual" : "Maestra PRO — Assinatura mensal",
     };
 
     // For credit card, include card data and holder info
