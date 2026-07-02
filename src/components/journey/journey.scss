@@ -7,7 +7,8 @@
   gap: 8px;
 }
 
-// Cada etapa é um CARD próprio, tingido na cor do produto via --acc (fallback cinza neutro).
+// Cada etapa é um CARD próprio. Fundo neutro #181818 (igual aos cards de tarefas/eventos);
+// a cor do produto (--acc) vive só na borda e no indicador, pra manter a identidade da etapa.
 .journey-node {
   flex: 1 1 0;
   min-width: 0;
@@ -18,21 +19,20 @@
   gap: 10px;
   padding: 18px 16px;
   border-radius: 14px;
-  background: rgba(var(--acc, 116, 116, 126), 0.06);
+  background: #181818;
   border: 1px solid rgba(var(--acc, 116, 116, 126), 0.2);
   cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 
   &:hover {
-    background: rgba(var(--acc, 116, 116, 126), 0.12);
+    background: #1f1f1f;
     border-color: rgba(var(--acc, 116, 116, 126), 0.42);
     transform: translateY(-1px);
   }
   &:hover .journey-node-name { color: #fff; }
 }
-// Etapa atual: card um pouco mais aceso.
+// Etapa atual: mesmo fundo, borda da cor do produto mais acesa.
 .journey-node--current {
-  background: rgba(var(--acc), 0.11);
   border-color: rgba(var(--acc), 0.5);
 }
 

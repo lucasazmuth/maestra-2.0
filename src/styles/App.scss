@@ -19,6 +19,13 @@
 @use './Artist.scss';
 @use './Devices.scss';
 
+// Timeline das tarefas (plano de ação + "Próximas tarefas" do dashboard).
+// Fica no global porque o dashboard usa a animação sem carregar o CSS da página
+// de Plano de Ação — senão as tarefas nasciam com opacity:0 e ficavam invisíveis
+// até visitar aquela página (que carregava os keyframes).
+@keyframes apTlLine { to { transform: scaleY(1); } }
+@keyframes apTlItem { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+
 .ant-drawer-body {
   background-color: $background-color;
 }
