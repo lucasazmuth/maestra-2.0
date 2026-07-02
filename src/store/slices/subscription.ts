@@ -186,6 +186,7 @@ export const createSubscription = createAsyncThunk(
     customerId: string;
     billingType?: 'PIX' | 'CREDIT_CARD';
     cycle?: BillingCycle;
+    couponCode?: string;
     creditCard?: {
       holderName: string;
       number: string;

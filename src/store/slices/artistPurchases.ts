@@ -45,6 +45,7 @@ export const createArtistCharge = createAsyncThunk(
       billingType?: 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD';
       // Parcelamento (somente cartão de CRÉDITO); 1 ou ausente = à vista.
       installmentCount?: number;
+      couponCode?: string;
       creditCard?: {
         holderName: string;
         number: string;

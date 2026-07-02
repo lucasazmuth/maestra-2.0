@@ -139,6 +139,32 @@ $muted2: #6f6f78;
 .fieldIcon { color: $muted; font-size: 16px; display: block; }
 .fieldError { color: #ff6b6f; font-size: 12px; margin-top: 5px; }
 
+// ─── Cupom de desconto ────────────────────────────────────────────────────────
+.couponRow {
+  display: flex; gap: 10px; align-items: stretch;
+  > :first-child { flex: 1; min-width: 0; }
+}
+.couponBtn {
+  flex-shrink: 0; padding: 0 20px; border-radius: 10px; cursor: pointer;
+  border: 1px solid $cardBorder; background: rgba(255, 255, 255, 0.06);
+  color: #fff; font-weight: 700; font-size: 14px;
+  transition: background 0.15s ease, opacity 0.15s ease;
+  &:hover:not(:disabled) { background: rgba(255, 255, 255, 0.11); }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+.couponApplied {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 11px 12px; border-radius: 10px;
+  background: rgba(46, 196, 122, 0.12); border: 1px solid rgba(46, 196, 122, 0.35);
+  color: $green; font-size: 13px; font-weight: 700;
+  span { display: inline-flex; align-items: center; gap: 7px; }
+  button {
+    display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
+    background: none; border: none; color: $muted; font-size: 12px; cursor: pointer;
+    &:hover { color: #fff; }
+  }
+}
+
 // CPF travado (já vinculado à conta) — visual "disabled" informativo.
 .lockedField {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;

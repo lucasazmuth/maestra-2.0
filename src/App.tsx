@@ -47,6 +47,7 @@ const Wizard = lazy(() => import('./pages/Wizard'));
 const ActionPlan = lazy(() => import('./pages/ActionPlan'));
 const DiagnosticView = lazy(() => import('./pages/DiagnosticView'));
 const AdminKnowledgeBase = lazy(() => import('./pages/Admin/KnowledgeBase'));
+const AdminCoupons = lazy(() => import('./pages/Admin/Coupons'));
 const SubscriptionPage = lazy(() => import('./pages/Subscription'));
 const SubscriptionSuccessPage = lazy(() => import('./pages/SubscriptionSuccess'));
 const PaymentPage = lazy(() => import('./pages/Payment'));
@@ -210,6 +211,7 @@ const AppRoutes: FC = () => {
           <Route path='/pagamentos' element={<Payments />} />
           <Route element={<RequireAdmin />}>
             <Route path='/admin/knowledge-base' element={<AdminKnowledgeBase />} />
+            <Route path='/admin/cupons' element={<AdminCoupons />} />
           </Route>
           <Route path='*' element={<Page404 />} />
         </Route>

@@ -14,9 +14,10 @@ import { FlowHeader } from '../ArtistCreate/FlowHeader';
 import { PaymentSuccessScreen } from '../../components/PaymentSuccessScreen';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
 import {
-  CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField,
+  CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField, CouponField,
   CartSummary, useCheckoutForm, type PayMethod,
 } from '../../components/checkout';
+import { useCoupon } from '../../hooks/useCoupon';
 import styles from '../ArtistCreate/ArtistCreate.module.scss';
 
 type Step = 'diagnostico' | 'pagamento' | 'pix' | 'done';
@@ -73,6 +74,7 @@ const ProfileUnlock: FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [pixData, setPixData] = useState<{ qrCode: string | null; copyPaste: string | null } | null>(null);
   const form = useCheckoutForm();
+  const coupon = useCoupon();
 
   // Garante a lista carregada (acesso direto pela URL).
   useEffect(() => {
@@ -158,6 +160,7 @@ const ProfileUnlock: FC = () => {
         artistId: id,
         customerId,
         billingType,
+        ...(coupon.couponCode ? { couponCode: coupon.couponCode } : {}),
         // Parcelamento só vale no crédito; débito e PIX são sempre à vista.
         ...(billingType === 'CREDIT_CARD' && installments > 1 ? { installmentCount: installments } : {}),
         ...(isCard ? {
@@ -203,10 +206,12 @@ const ProfileUnlock: FC = () => {
     return <div className={styles.page}><div className={styles.analyzing}><Spin /> Carregando…</div></div>;
   }
 
-  // Total exibido: parcelado (crédito) ou à vista.
+  // Desconto do cupom sobre o preço do perfil (recomputado; backend reconfirma).
+  const { amount: couponDiscount, final: discountedPrice } = coupon.discountFor(priceValue);
+  // Total exibido: parcelado (crédito) ou à vista, já com desconto.
   const installmentTotal = method === 'CREDIT' && installments > 1
-    ? `${installments}x de ${fmtBRL(priceValue / installments)}`
-    : PRICE;
+    ? `${installments}x de ${fmtBRL(discountedPrice / installments)}`
+    : fmtBRL(discountedPrice);
 
   const ctaLabel = method === 'PIX' ? 'Gerar código PIX' : 'Concordar e pagar';
 
@@ -296,20 +301,33 @@ const ProfileUnlock: FC = () => {
               }
               aside={
                 <CartSummary
-                  topSlot={method === 'CREDIT' ? (
-                    <div style={{ marginBottom: 24 }}>
-                      <Select
-                        value={installments}
-                        onChange={setInstallments}
-                        size="large"
-                        style={{ width: '100%' }}
-                        options={Array.from({ length: maxInstallments }, (_, i) => i + 1).map((n) => ({
-                          value: n,
-                          label: n === 1 ? `À vista · ${fmtBRL(priceValue)}` : `${n}x de ${fmtBRL(priceValue / n)} sem juros`,
-                        }))}
+                  topSlot={
+                    <div style={{ marginBottom: 20 }}>
+                      <CouponField
+                        value={coupon.input}
+                        onChange={coupon.setInput}
+                        onApply={() => coupon.apply('one_time', priceValue, method === 'CREDIT' ? installments : undefined)}
+                        onClear={coupon.clear}
+                        loading={coupon.loading}
+                        error={coupon.error}
+                        appliedLabel={coupon.labelFor(priceValue)}
                       />
+                      {method === 'CREDIT' && (
+                        <div style={{ marginTop: 16 }}>
+                          <Select
+                            value={installments}
+                            onChange={setInstallments}
+                            size="large"
+                            style={{ width: '100%' }}
+                            options={Array.from({ length: maxInstallments }, (_, i) => i + 1).map((n) => ({
+                              value: n,
+                              label: n === 1 ? `À vista · ${fmtBRL(discountedPrice)}` : `${n}x de ${fmtBRL(discountedPrice / n)} sem juros`,
+                            }))}
+                          />
+                        </div>
+                      )}
                     </div>
-                  ) : undefined}
+                  }
                   item={{
                     icon: artistImage,
                     name: `Planejamento — ${artist?.name || 'seu artista'}`,
@@ -319,6 +337,7 @@ const ProfileUnlock: FC = () => {
                   includes={INCLUDES}
                   rows={[
                     { label: 'Subtotal', value: PRICE },
+                    ...(coupon.applied ? [{ label: `Cupom ${coupon.applied.code}`, value: `−${fmtBRL(couponDiscount)}` }] : []),
                     { label: 'Total', value: installmentTotal, strong: true },
                   ]}
                   legal={<>Pagamento único pelo acesso a este perfil. O perfil e o plano ficam seus pra sempre. A Nyta IA contínua é um plano à parte. Ao continuar, você concorda com os Termos de uso e a Política de privacidade.</>}

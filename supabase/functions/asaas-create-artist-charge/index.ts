@@ -12,6 +12,53 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+// ─── Cupom de desconto (helper DUPLICADO da function validate-coupon) ──────────
+const MIN_CHARGE = 5;
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+async function validateCoupon(
+  // deno-lint-ignore no-explicit-any
+  supabaseAdmin: any,
+  opts: { code: string; format: "one_time" | "subscription"; value: number; installments?: number },
+): Promise<
+  // deno-lint-ignore no-explicit-any
+  | { ok: true; coupon: any; discountPercent: number; discountAmount: number; finalValue: number }
+  | { ok: false; error: string }
+> {
+  const code = (opts.code || "").trim().toUpperCase();
+  if (!code) return { ok: false, error: "Informe um cupom." };
+  const { data: coupon, error } = await supabaseAdmin
+    .from("discount_coupons").select("*").eq("code", code).eq("is_active", true).maybeSingle();
+  if (error) return { ok: false, error: "Não foi possível validar o cupom." };
+  if (!coupon) return { ok: false, error: "Cupom inválido." };
+  const now = Date.now();
+  if (coupon.starts_at && now < new Date(coupon.starts_at).getTime()) return { ok: false, error: "Este cupom ainda não está válido." };
+  if (coupon.ends_at && now > new Date(coupon.ends_at).getTime()) return { ok: false, error: "Cupom expirado." };
+  if (coupon.applies_to !== "both" && coupon.applies_to !== opts.format) {
+    const alvo = opts.format === "subscription" ? "assinatura" : "pagamento único";
+    return { ok: false, error: `Este cupom não vale para ${alvo}.` };
+  }
+  if (coupon.max_uses != null && Number(coupon.uses_count) >= Number(coupon.max_uses)) return { ok: false, error: "Este cupom já atingiu o limite de usos." };
+  const percent = Number(coupon.discount_percent);
+  const discountAmount = round2(opts.value * (percent / 100));
+  const finalValue = round2(opts.value - discountAmount);
+  const perCharge = opts.installments && opts.installments > 1 ? finalValue / opts.installments : finalValue;
+  if (perCharge < MIN_CHARGE) return { ok: false, error: "Com este cupom o valor fica abaixo do mínimo de R$ 5,00." };
+  return { ok: true, coupon, discountPercent: percent, discountAmount, finalValue };
+}
+
+// deno-lint-ignore no-explicit-any
+async function bumpCouponUse(supabaseAdmin: any, code: string | null) {
+  if (!code) return;
+  try {
+    const { data } = await supabaseAdmin.from("discount_coupons").select("uses_count").eq("code", code).maybeSingle();
+    const next = (Number(data?.uses_count) || 0) + 1;
+    await supabaseAdmin.from("discount_coupons").update({ uses_count: next, updated_at: new Date().toISOString() }).eq("code", code);
+  } catch (e) {
+    console.warn("bumpCouponUse:", (e as { message?: string })?.message);
+  }
+}
+
 async function fetchPixQrCode(asaasApiUrl: string, asaasApiKey: string, paymentId: string) {
   const empty = { qrCode: null, copyPaste: null, expiresAt: null };
   try {
@@ -54,7 +101,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { artistId, customerId, billingType, creditCard, creditCardHolderInfo, installmentCount } = body;
+    const { artistId, customerId, billingType, creditCard, creditCardHolderInfo, installmentCount, couponCode } = body;
     if (!artistId || typeof artistId !== "string") return json({ error: "artistId é obrigatório", field: "artistId" }, 400);
     if (!customerId || typeof customerId !== "string") return json({ error: "customerId é obrigatório", field: "customerId" }, 400);
     const isCreditCard = billingType === "CREDIT_CARD";
@@ -62,6 +109,19 @@ serve(async (req) => {
     const isCard = isCreditCard || isDebitCard;
     // Parcelamento só no crédito; limita 1..12 por segurança.
     const installments = isCreditCard && Number(installmentCount) > 1 ? Math.min(12, Math.floor(Number(installmentCount))) : 1;
+
+    // Cupom (opcional): re-valida no servidor e aplica o desconto ao valor cobrado.
+    // Checa o mínimo por parcela. Sem cupom → fluxo idêntico ao de antes.
+    let chargeValue = profileValue;
+    let appliedCouponCode: string | null = null;
+    let discountAmount = 0;
+    if (couponCode) {
+      const cp = await validateCoupon(supabaseAdmin, { code: couponCode, format: "one_time", value: profileValue, installments });
+      if (!cp.ok) return json({ error: cp.error, field: "coupon" }, 400);
+      chargeValue = cp.finalValue;
+      discountAmount = cp.discountAmount;
+      appliedCouponCode = cp.coupon.code;
+    }
 
     // O artista precisa existir, ser do usuário e estar pendente.
     const { data: artist, error: artistError } = await supabaseAdmin
@@ -85,7 +145,7 @@ serve(async (req) => {
     const nowIso = new Date().toISOString();
     const { data: purchaseRow, error: purchaseInsertError } = await supabaseAdmin
       .from("artist_purchases")
-      .insert({ artist_id: artistId, user_id: user.id, artist_name: artist.name, amount: profileValue, billing_type: billingValue, status: "pending", created_at: nowIso, updated_at: nowIso })
+      .insert({ artist_id: artistId, user_id: user.id, artist_name: artist.name, amount: chargeValue, billing_type: billingValue, coupon_code: appliedCouponCode, discount_amount: discountAmount || null, status: "pending", created_at: nowIso, updated_at: nowIso })
       .select().single();
     if (purchaseInsertError || !purchaseRow) { console.error("purchase insert:", purchaseInsertError); return json({ error: "Erro interno" }, 500); }
 
@@ -94,9 +154,9 @@ serve(async (req) => {
     // Parcelamento (crédito): Asaas divide o total pelas parcelas. Senão, valor à vista.
     if (installments > 1) {
       paymentPayload.installmentCount = installments;
-      paymentPayload.totalValue = profileValue;
+      paymentPayload.totalValue = chargeValue;
     } else {
-      paymentPayload.value = profileValue;
+      paymentPayload.value = chargeValue;
     }
     if (isCard) {
       if (!creditCard || !creditCardHolderInfo) return json({ error: "Dados do cartão são obrigatórios" }, 400);
@@ -127,6 +187,8 @@ serve(async (req) => {
     const asaasPaymentId = paymentData.id as string;
     const paidNow = paymentData.status === "CONFIRMED" || paymentData.status === "RECEIVED";
     await supabaseAdmin.from("artist_purchases").update({ asaas_payment_id: asaasPaymentId, updated_at: new Date().toISOString() }).eq("id", purchaseRow.id);
+    // Cobrança criada com sucesso na Asaas → conta o uso do cupom.
+    await bumpCouponUse(supabaseAdmin, appliedCouponCode);
 
     if (isCard) {
       if (paidNow) {

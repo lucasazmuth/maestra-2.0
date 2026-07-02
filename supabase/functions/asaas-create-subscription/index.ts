@@ -6,6 +6,57 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ─── Cupom de desconto (helper DUPLICADO da function validate-coupon) ──────────
+// Deno não importa fora do dir da function, então a lógica é copiada (mesmo
+// padrão do realEngine). NUNCA confia no valor do cliente: aqui o `value` é o
+// resolvido pela config (fonte da verdade).
+const MIN_CHARGE = 5;
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+async function validateCoupon(
+  // deno-lint-ignore no-explicit-any
+  supabaseAdmin: any,
+  opts: { code: string; format: "one_time" | "subscription"; value: number; installments?: number },
+): Promise<
+  // deno-lint-ignore no-explicit-any
+  | { ok: true; coupon: any; discountPercent: number; discountAmount: number; finalValue: number }
+  | { ok: false; error: string }
+> {
+  const code = (opts.code || "").trim().toUpperCase();
+  if (!code) return { ok: false, error: "Informe um cupom." };
+  const { data: coupon, error } = await supabaseAdmin
+    .from("discount_coupons").select("*").eq("code", code).eq("is_active", true).maybeSingle();
+  if (error) return { ok: false, error: "Não foi possível validar o cupom." };
+  if (!coupon) return { ok: false, error: "Cupom inválido." };
+  const now = Date.now();
+  if (coupon.starts_at && now < new Date(coupon.starts_at).getTime()) return { ok: false, error: "Este cupom ainda não está válido." };
+  if (coupon.ends_at && now > new Date(coupon.ends_at).getTime()) return { ok: false, error: "Cupom expirado." };
+  if (coupon.applies_to !== "both" && coupon.applies_to !== opts.format) {
+    const alvo = opts.format === "subscription" ? "assinatura" : "pagamento único";
+    return { ok: false, error: `Este cupom não vale para ${alvo}.` };
+  }
+  if (coupon.max_uses != null && Number(coupon.uses_count) >= Number(coupon.max_uses)) return { ok: false, error: "Este cupom já atingiu o limite de usos." };
+  const percent = Number(coupon.discount_percent);
+  const discountAmount = round2(opts.value * (percent / 100));
+  const finalValue = round2(opts.value - discountAmount);
+  const perCharge = opts.installments && opts.installments > 1 ? finalValue / opts.installments : finalValue;
+  if (perCharge < MIN_CHARGE) return { ok: false, error: "Com este cupom o valor fica abaixo do mínimo de R$ 5,00." };
+  return { ok: true, coupon, discountPercent: percent, discountAmount, finalValue };
+}
+
+// Incrementa o contador de usos do cupom (best-effort; max_uses é limite suave).
+// deno-lint-ignore no-explicit-any
+async function bumpCouponUse(supabaseAdmin: any, code: string | null) {
+  if (!code) return;
+  try {
+    const { data } = await supabaseAdmin.from("discount_coupons").select("uses_count").eq("code", code).maybeSingle();
+    const next = (Number(data?.uses_count) || 0) + 1;
+    await supabaseAdmin.from("discount_coupons").update({ uses_count: next, updated_at: new Date().toISOString() }).eq("code", code);
+  } catch (e) {
+    console.warn("bumpCouponUse:", (e as { message?: string })?.message);
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -62,7 +113,7 @@ serve(async (req) => {
 
     // Parse request body
     const body = await req.json();
-    const { customerId, billingType, creditCard, creditCardHolderInfo, cycle } = body;
+    const { customerId, billingType, creditCard, creditCardHolderInfo, cycle, couponCode } = body;
 
     if (!customerId || typeof customerId !== "string") {
       return new Response(
@@ -124,7 +175,25 @@ serve(async (req) => {
       );
     }
     const asaasCycle = isAnnual ? "YEARLY" : "MONTHLY";
-    const planValue = isAnnual ? Number(planConfig.annual_value) : Number(planConfig.monthly_value);
+    const fullValue = isAnnual ? Number(planConfig.annual_value) : Number(planConfig.monthly_value);
+
+    // 1c. Cupom (opcional): re-valida no servidor e aplica o desconto ao valor
+    //     recorrente (vale em todas as cobranças). Sem cupom → fluxo idêntico ao de antes.
+    let planValue = fullValue;
+    let appliedCouponCode: string | null = null;
+    let discountAmount = 0;
+    if (couponCode) {
+      const cp = await validateCoupon(supabaseAdmin, { code: couponCode, format: "subscription", value: fullValue });
+      if (!cp.ok) {
+        return new Response(
+          JSON.stringify({ error: cp.error, field: "coupon" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      planValue = cp.finalValue;
+      discountAmount = cp.discountAmount;
+      appliedCouponCode = cp.coupon.code;
+    }
 
     // 2. Calculate nextDueDate (today's date in YYYY-MM-DD format)
     const today = new Date();
@@ -281,6 +350,8 @@ serve(async (req) => {
           value: planValue,
           cycle: asaasCycle,
           billing_type: "CREDIT_CARD",
+          coupon_code: appliedCouponCode,
+          discount_amount: discountAmount || null,
           started_at: new Date().toISOString(),
           next_due_date: new Date(nextDueDate).toISOString(),
           updated_at: new Date().toISOString(),
@@ -290,6 +361,8 @@ serve(async (req) => {
       if (updateError) {
         console.error("Error updating subscription in DB:", updateError);
       }
+
+      await bumpCouponUse(supabaseAdmin, appliedCouponCode);
 
       return new Response(
         JSON.stringify({
@@ -314,6 +387,8 @@ serve(async (req) => {
         value: planValue,
         cycle: asaasCycle,
         billing_type: "PIX",
+        coupon_code: appliedCouponCode,
+        discount_amount: discountAmount || null,
         started_at: new Date().toISOString(),
         next_due_date: new Date(nextDueDate).toISOString(),
         updated_at: new Date().toISOString(),
@@ -324,6 +399,8 @@ serve(async (req) => {
       console.error("Error updating subscription in DB:", updateError);
       // Don't fail the request - subscription was created in Asaas
     }
+
+    await bumpCouponUse(supabaseAdmin, appliedCouponCode);
 
     // 7. Fetch the first payment to get PIX QR Code data
     let pixData: { qrCode: string | null; copyPaste: string | null; expiresAt: string | null } = {

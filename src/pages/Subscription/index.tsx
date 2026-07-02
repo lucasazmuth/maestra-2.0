@@ -5,9 +5,10 @@ import { FiArrowLeft, FiArrowRight, FiTarget, FiMessageCircle, FiGrid, FiAward }
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { createAsaasCustomer, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, pollPaymentStatus, clearError, type BillingCycle } from '../../store/slices/subscription';
 import {
-  CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField,
+  CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField, CouponField,
   CartSummary, BenefitsCompare, useCheckoutForm, type PayMethod, type BenefitGroup,
 } from '../../components/checkout';
+import { useCoupon } from '../../hooks/useCoupon';
 
 // Fallback enquanto a config do plano não carregou do Supabase (asaas_plan_config).
 const FALLBACK_MONTHLY = 39.9;
@@ -61,6 +62,7 @@ const SubscriptionPage: FC = () => {
   // aguardamos a confirmação (polling) — o Pro só libera com o débito confirmado.
   const [confirmingCard, setConfirmingCard] = useState(false);
   const form = useCheckoutForm();
+  const coupon = useCoupon();
 
   const isCard = method === 'CREDIT';
   const isPix = method === 'PIX';
@@ -82,6 +84,9 @@ const SubscriptionPage: FC = () => {
   const cycleLabel = isAnnual ? 'Anual' : 'Mensal';
   const unit = isAnnual ? '/ano' : '/mês';
   const priceFmt = fmtBRL(currentValue);
+  // Desconto do cupom sobre o valor do ciclo atual (recomputado; backend reconfirma).
+  const { amount: couponDiscount, final: totalValue } = coupon.discountFor(currentValue);
+  const totalFmt = fmtBRL(totalValue);
   const everyWord = isAnnual ? 'a cada 12 meses' : 'a cada mês';
 
   const handleSubmit = async () => {
@@ -98,8 +103,10 @@ const SubscriptionPage: FC = () => {
     }
     const customerId = (customerResult.payload as { customerId: string }).customerId;
 
+    const couponCode = coupon.couponCode ?? undefined;
+
     if (method === 'PIX') {
-      const result = await dispatch(createSubscription({ customerId, billingType: 'PIX', cycle }));
+      const result = await dispatch(createSubscription({ customerId, billingType: 'PIX', cycle, couponCode }));
       if (createSubscription.rejected.match(result)) return;
       // Rede de segurança: a edge barrou duplicidade.
       const p = result.payload as { resume?: boolean; alreadyActive?: boolean };
@@ -114,6 +121,7 @@ const SubscriptionPage: FC = () => {
         customerId,
         billingType: 'CREDIT_CARD',
         cycle,
+        couponCode,
         creditCard: {
           holderName: form.cardName.trim(),
           number: form.cardNumber.replace(/\D/g, ''),
@@ -267,6 +275,19 @@ const SubscriptionPage: FC = () => {
           <CartSummary
             selectLabel="Assinatura"
             selectValue={cycleLabel}
+            topSlot={
+              <div style={{ marginBottom: 20 }}>
+                <CouponField
+                  value={coupon.input}
+                  onChange={coupon.setInput}
+                  onApply={() => coupon.apply('subscription', currentValue)}
+                  onClear={coupon.clear}
+                  loading={coupon.loading}
+                  error={coupon.error}
+                  appliedLabel={coupon.labelFor(currentValue)}
+                />
+              </div>
+            }
             item={{
               icon: <span style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 13, color: '#af2896' }}>PRO</span>,
               name: 'Maestra PRO',
@@ -278,12 +299,15 @@ const SubscriptionPage: FC = () => {
               ...(isAnnual && annualValue
                 ? [{ label: `Economia (${discountPct}%)`, value: `−${fmtBRL(monthlyValue * 12 - annualValue)}` }]
                 : []),
+              ...(coupon.applied
+                ? [{ label: `Cupom ${coupon.applied.code}`, value: `−${fmtBRL(couponDiscount)}` }]
+                : []),
             ]}
             timeline={[
-              { label: 'Total hoje', value: priceFmt },
+              { label: 'Total hoje', value: totalFmt },
               {
                 label: `${isPix ? 'Próxima cobrança em' : 'Renova em'} ${isAnnual ? addMonths(12) : addMonths(1)}`,
-                value: `${priceFmt}${unit}`,
+                value: `${totalFmt}${unit}`,
                 open: true,
                 hint: isPix
                   ? `Geramos uma nova cobrança PIX ${everyWord}. Cancele quando quiser pela sua conta.`
@@ -291,8 +315,8 @@ const SubscriptionPage: FC = () => {
               },
             ]}
             legal={isPix
-              ? <>Você receberá uma cobrança PIX de {priceFmt} {everyWord} enquanto a assinatura estiver ativa. Cancele quando quiser pela sua conta. Você concorda com os Termos de uso e a Política de privacidade.</>
-              : <>Ao assinar, você autoriza a cobrança automática de {priceFmt} {isAnnual ? 'por ano' : 'por mês'} até cancelar. Cancele quando quiser pela sua conta. Você concorda com os Termos de uso e a Política de privacidade.</>}
+              ? <>Você receberá uma cobrança PIX de {totalFmt} {everyWord} enquanto a assinatura estiver ativa. Cancele quando quiser pela sua conta. Você concorda com os Termos de uso e a Política de privacidade.</>
+              : <>Ao assinar, você autoriza a cobrança automática de {totalFmt} {isAnnual ? 'por ano' : 'por mês'} até cancelar. Cancele quando quiser pela sua conta. Você concorda com os Termos de uso e a Política de privacidade.</>}
             ctaLabel={isPix ? 'Pagar com PIX' : 'Concordar e assinar'}
             onCta={handleSubmit}
             loading={loading || confirmingCard}
