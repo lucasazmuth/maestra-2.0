@@ -72,7 +72,7 @@ const Settings: FC = () => {
   };
 
   // Links institucionais (ajuste as URLs/e-mail reais da plataforma).
-  const SUPPORT_EMAIL = 'suporte@maestramanager.com';
+  const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
   const supportLinks: { label: string; icon: ReactNode; to?: string; href?: string }[] = [
     { label: 'Termos de uso', icon: <FiFileText size={16} />, to: '/legal/termos' },
     { label: 'Política de privacidade', icon: <FiShield size={16} />, to: '/legal/privacidade' },

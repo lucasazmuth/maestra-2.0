@@ -43,7 +43,7 @@ A plataforma é fornecida "como está". Não garantimos resultados específicos 
 Estes termos podem ser atualizados. Mudanças relevantes serão comunicadas, e a data de atualização acima será revisada.
 
 ## 9. Contato
-Dúvidas sobre estes termos? Fale com a gente em **suporte@maestramanager.com**.`,
+Dúvidas sobre estes termos? Fale com a gente em **maestra@musicrioacademy.com.br**.`,
   },
   privacidade: {
     title: 'Política de Privacidade',
@@ -76,6 +76,6 @@ Mantemos seus dados enquanto a conta estiver ativa ou conforme exigido por obrig
 Esta política pode ser atualizada. A data de atualização acima reflete a versão vigente.
 
 ## 8. Contato
-Para exercer seus direitos ou tirar dúvidas, escreva para **suporte@maestramanager.com**.`,
+Para exercer seus direitos ou tirar dúvidas, escreva para **maestra@musicrioacademy.com.br**.`,
   },
 };
