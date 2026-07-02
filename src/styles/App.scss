@@ -34,21 +34,14 @@ body {
   overscroll-behavior: none !important;
 }
 
+// Fonte de marca VARIÁVEL: uma única face cobrindo 100–900 (o arquivo é o
+// "…Variable…woff2"). Sem o range, o browser tratava a variável como peso fixo,
+// então `font-weight: 400` (o "Manager") não afinava — chegava a parecer mais
+// pesado que o "Maestra". Com o range, cada peso pedido reflete no eixo `wght`.
 @font-face {
   font-family: SpotifyMixUITitle;
-  src: url(https://encore.scdn.co/fonts/SpotifyMixUITitleVariable-8769ccfde3379b7ebcadd9529b49d0cc.woff2);
-}
-
-@font-face {
-  font-family: SpotifyMixUITitle;
-  font-weight: bold;
-  src: url(https://encore.scdn.co/fonts/SpotifyMixUITitle-Bold-37290f1de77f297fcc26d71e9afcf43f.woff2);
-}
-
-@font-face {
-  font-family: SpotifyMixUITitle;
-  font-weight: bolder;
-  src: url(https://encore.scdn.co/fonts/SpotifyMixUITitle-Extrabold-ba6c73cd7f82c81e49cf2204017803ed.woff2);
+  font-weight: 100 900;
+  src: url(https://encore.scdn.co/fonts/SpotifyMixUITitleVariable-8769ccfde3379b7ebcadd9529b49d0cc.woff2) format('woff2');
 }
 
 @font-face {

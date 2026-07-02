@@ -130,7 +130,7 @@ export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
     <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}>
       <div className={styles.headerInner}>
         <a className={styles.brand} href="#top" onClick={goHome}>
-          <Wordmark className={styles.brandText} />
+          <Wordmark className={styles.brandText} beta />
         </a>
         <nav className={styles.nav}>
           {NAV.map((n) => <button key={n.id} className={styles.navLink} onClick={goToSection(n.id)}>{n.label}</button>)}

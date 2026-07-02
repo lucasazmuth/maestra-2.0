@@ -39,7 +39,7 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
           <div className={styles.brand}>
             {/* Logo clicável → volta para a landing page. */}
             <Link to='/' className={styles.brandLink} aria-label='Ir para a página inicial'>
-              <Wordmark className={styles.brandWordmark} />
+              <Wordmark className={styles.brandWordmark} beta />
             </Link>
           </div>
 

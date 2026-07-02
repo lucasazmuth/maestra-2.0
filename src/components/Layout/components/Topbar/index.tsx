@@ -82,6 +82,7 @@ export const Topbar = memo(() => {
           style={{ cursor: 'pointer', display: 'inline-flex' }}
         >
           <Wordmark
+            beta
             style={{
               fontFamily: "'SpotifyMixUITitle', sans-serif",
               fontWeight: 800,
