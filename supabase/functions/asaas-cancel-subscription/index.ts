@@ -33,8 +33,9 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const asaasApiKey = Deno.env.get("ASAAS_API_KEY");
-    // Mesmo padrão das demais functions do Asaas: base do domínio + /api/v3 na chamada.
-    const asaasBaseUrl = Deno.env.get("ASAAS_API_URL") || "https://sandbox.asaas.com";
+    // API da Asaas: produção https://api.asaas.com, sandbox https://api-sandbox.asaas.com.
+    // Path /v3 (SEM /api) — api.asaas.com responde 404 para /api/v3.
+    const asaasBaseUrl = Deno.env.get("ASAAS_API_URL") || "https://api-sandbox.asaas.com";
 
     if (!asaasApiKey) {
       console.error("ASAAS_API_KEY not configured");
@@ -86,7 +87,7 @@ serve(async (req) => {
     if (!asaasSubscriptionId && subscription.asaas_customer_id) {
       try {
         const listResp = await fetch(
-          `${asaasBaseUrl}/api/v3/subscriptions?customer=${subscription.asaas_customer_id}`,
+          `${asaasBaseUrl}/v3/subscriptions?customer=${subscription.asaas_customer_id}`,
           { headers: { "access_token": asaasApiKey, "Content-Type": "application/json" } }
         );
         if (listResp.ok) {
@@ -113,7 +114,7 @@ serve(async (req) => {
       let asaasResponse: Response;
       try {
         asaasResponse = await fetch(
-          `${asaasBaseUrl}/api/v3/subscriptions/${asaasSubscriptionId}`,
+          `${asaasBaseUrl}/v3/subscriptions/${asaasSubscriptionId}`,
           {
             method: "DELETE",
             headers: {

@@ -37,7 +37,9 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const asaasApiKey = Deno.env.get("ASAAS_API_KEY");
-    const asaasApiUrl = Deno.env.get("ASAAS_API_URL") || "https://sandbox.asaas.com";
+    // API da Asaas: produção https://api.asaas.com, sandbox https://api-sandbox.asaas.com.
+    // Path /v3 (SEM /api) — api.asaas.com responde 404 para /api/v3.
+    const asaasApiUrl = Deno.env.get("ASAAS_API_URL") || "https://api-sandbox.asaas.com";
 
     if (!asaasApiKey) return json({ error: "Erro interno de configuração" }, 500);
 
@@ -72,7 +74,7 @@ serve(async (req) => {
 
     // Busca as cobranças da assinatura no Asaas.
     const payResp = await asaasGet(
-      `${asaasApiUrl}/api/v3/payments?subscription=${sub.asaas_subscription_id}&limit=20`,
+      `${asaasApiUrl}/v3/payments?subscription=${sub.asaas_subscription_id}&limit=20`,
       asaasApiKey,
     );
     if (!payResp || !payResp.ok) {
@@ -102,7 +104,7 @@ serve(async (req) => {
     }
 
     // QR atual da cobrança em aberto.
-    const qrResp = await asaasGet(`${asaasApiUrl}/api/v3/payments/${target.id}/pixQrCode`, asaasApiKey);
+    const qrResp = await asaasGet(`${asaasApiUrl}/v3/payments/${target.id}/pixQrCode`, asaasApiKey);
     if (!qrResp || !qrResp.ok) {
       return json({ status: "pending", pixData: null, value, cycle });
     }

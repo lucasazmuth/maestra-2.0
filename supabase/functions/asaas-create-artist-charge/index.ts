@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // Cobrança única (R$199,90) de um artista JÁ EXISTENTE (criado no diagnóstico).
-// Confirmação do pagamento (webhook) apenas DESBLOQUEIA (is_locked=false). Endpoints /api/v3.
+// Confirmação do pagamento (webhook) apenas DESBLOQUEIA (is_locked=false). Endpoints /v3.
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -15,7 +15,7 @@ const json = (body: unknown, status = 200) =>
 async function fetchPixQrCode(asaasApiUrl: string, asaasApiKey: string, paymentId: string) {
   const empty = { qrCode: null, copyPaste: null, expiresAt: null };
   try {
-    const res = await fetch(`${asaasApiUrl}/api/v3/payments/${paymentId}/pixQrCode`, { method: "GET", headers: { "Content-Type": "application/json", access_token: asaasApiKey } });
+    const res = await fetch(`${asaasApiUrl}/v3/payments/${paymentId}/pixQrCode`, { method: "GET", headers: { "Content-Type": "application/json", access_token: asaasApiKey } });
     if (!res.ok) return empty;
     const data = await res.json();
     return { qrCode: data.encodedImage || null, copyPaste: data.payload || null, expiresAt: data.expirationDate || null };
@@ -29,7 +29,9 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const asaasApiKey = Deno.env.get("ASAAS_API_KEY");
-    const asaasApiUrl = Deno.env.get("ASAAS_API_URL") || "https://sandbox.asaas.com";
+    // API da Asaas: produção https://api.asaas.com, sandbox https://api-sandbox.asaas.com.
+    // Path /v3 (SEM /api) — api.asaas.com responde 404 para /api/v3.
+    const asaasApiUrl = Deno.env.get("ASAAS_API_URL") || "https://api-sandbox.asaas.com";
     const profileValue = Number(Deno.env.get("ASAAS_ARTIST_PROFILE_VALUE") || "199.90");
     if (!asaasApiKey) return json({ error: "Erro interno de configuração" }, 500);
 
@@ -92,7 +94,7 @@ serve(async (req) => {
 
     let paymentResponse: Response;
     try {
-      paymentResponse = await fetch(`${asaasApiUrl}/api/v3/payments`, { method: "POST", headers: { "Content-Type": "application/json", access_token: asaasApiKey }, body: JSON.stringify(paymentPayload) });
+      paymentResponse = await fetch(`${asaasApiUrl}/v3/payments`, { method: "POST", headers: { "Content-Type": "application/json", access_token: asaasApiKey }, body: JSON.stringify(paymentPayload) });
     } catch (fe: any) {
       await supabaseAdmin.from("artist_purchases").delete().eq("id", purchaseRow.id);
       return json({ error: "Serviço de pagamento indisponível" }, 502);

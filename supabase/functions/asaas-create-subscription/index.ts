@@ -24,8 +24,9 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const asaasApiKey = Deno.env.get("ASAAS_API_KEY");
-    // Mesmo padrão do asaas-create-customer: base + /api/v3. O sandbox serve a API em /api/v3.
-    const asaasApiUrl = Deno.env.get("ASAAS_API_URL") || "https://sandbox.asaas.com";
+    // API da Asaas: produção https://api.asaas.com, sandbox https://api-sandbox.asaas.com.
+    // Path /v3 (SEM /api) — api.asaas.com responde 404 para /api/v3.
+    const asaasApiUrl = Deno.env.get("ASAAS_API_URL") || "https://api-sandbox.asaas.com";
 
     if (!asaasApiKey) {
       console.error("ASAAS_API_KEY not configured");
@@ -169,7 +170,7 @@ serve(async (req) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      subscriptionResponse = await fetch(`${asaasApiUrl}/api/v3/subscriptions`, {
+      subscriptionResponse = await fetch(`${asaasApiUrl}/v3/subscriptions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -315,7 +316,7 @@ serve(async (req) => {
       const paymentsTimeoutId = setTimeout(() => paymentsController.abort(), 30000);
 
       const paymentsResponse = await fetch(
-        `${asaasApiUrl}/api/v3/payments?subscription=${asaasSubscriptionId}`,
+        `${asaasApiUrl}/v3/payments?subscription=${asaasSubscriptionId}`,
         {
           method: "GET",
           headers: {
@@ -340,7 +341,7 @@ serve(async (req) => {
           const pixTimeoutId = setTimeout(() => pixController.abort(), 30000);
 
           const pixResponse = await fetch(
-            `${asaasApiUrl}/api/v3/payments/${paymentId}/pixQrCode`,
+            `${asaasApiUrl}/v3/payments/${paymentId}/pixQrCode`,
             {
               method: "GET",
               headers: {
