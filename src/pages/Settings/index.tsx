@@ -6,6 +6,7 @@ import { EditIcon } from '../../components/Icons/system';
 
 import { supabase } from '../../lib/supabase';
 import { useAppDispatch, useAppSelector } from '../../store/store';
+import { authActions } from '../../store/slices/auth';
 import { cancelSubscription } from '../../store/slices/subscription';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import SubscriptionManagement from './SubscriptionManagement';
@@ -115,10 +116,16 @@ const Settings: FC = () => {
       });
       if (auditError) console.error('Falha ao registrar pedido de cancelamento:', auditError);
 
-      message.success('Pedido de cancelamento registrado.');
+      message.success('Pedido de cancelamento registrado. Você será desconectado.');
+
+      // Notifica o suporte SEM navegar o app (location.href para mailto congela a SPA).
       const subject = encodeURIComponent('Cancelamento de cadastro');
       const body = encodeURIComponent(`Solicito o cancelamento do meu cadastro na Maestra Manager (${user.email || ''}).`);
-      window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+      window.open(`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`, '_blank');
+
+      // Conta em processo de exclusão não fica logada: encerra a sessão e volta pro login.
+      await dispatch(authActions.signOut());
+      navigate('/login', { replace: true });
     } finally {
       setDeleting(false);
     }
