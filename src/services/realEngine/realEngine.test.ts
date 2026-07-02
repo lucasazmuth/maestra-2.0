@@ -18,7 +18,7 @@ const base = (over: Partial<RealInputsV3> = {}): RealInputsV3 => ({
 const R_ON: Partial<RealInputsV3> = { spotifyListeners: 20_000_000, igFollowers: 2_000_000, tiktokFollowers: 2_000_000, youtubeMonthlyViews: 30_000_000 };
 const E_ON: Partial<RealInputsV3> = { showsPerMonth: 4, cache: 4_000, temCnpj: true, temEmpresario: true }; // 16k/mês
 const A_ON: Partial<RealInputsV3> = { spotifyListeners: 100_000, spotifyFollowers: 30_000, igEngagement: 5, showsPerMonth: 10, fazBilheteria: true, pagantePct: '70-94' };
-const L_ON: Partial<RealInputsV3> = { premios: 2, imprensaRepercussao: true, imprensaMatrix: [{ tipo: 'imprensa', porte: 'grande' }], imprensaFrequencia: 'perene', editorialPlaylists: 3 };
+const L_ON: Partial<RealInputsV3> = { premios: 3, imprensaRepercussao: true, imprensaMatrix: [{ tipo: 'imprensa', porte: 'grande' }], imprensaFrequencia: 'perene', editorialPlaylists: 3 };
 
 describe('Motor REAL v3', () => {
   it('tudo baixo → Beginner (0000)', () => {
@@ -99,7 +99,7 @@ describe('Motor REAL v3', () => {
   it('L renormaliza quando não há airplay (não pune MPB/indie sem rádio)', () => {
     // prêmio internacional (1,0) + imprensa forte + playlists, SEM rádio rastreado.
     const ri = computeRealIndexV3(base({
-      premios: 4, imprensaRepercussao: true, imprensaMatrix: [{ tipo: 'imprensa', porte: 'grande' }], imprensaFrequencia: 'perene',
+      premios: 5, imprensaRepercussao: true, imprensaMatrix: [{ tipo: 'imprensa', porte: 'grande' }], imprensaFrequencia: 'perene',
       editorialPlaylists: 3, radioAirplay: null,
     }));
     expect(ri.components.l.radio.bin).toBeNull();
@@ -109,7 +109,7 @@ describe('Motor REAL v3', () => {
   it('caso de calibração §9.3: artista muito legitimado deve acender o L', () => {
     // indicação a prêmio internacional (nota 0,95) + imprensa grande perene + playlists editoriais.
     const ri = computeRealIndexV3(base({
-      premios: 4,
+      premios: 5,
       imprensaRepercussao: true, imprensaMatrix: [{ tipo: 'imprensa', porte: 'grande' }, { tipo: 'tv', porte: 'grande' }], imprensaFrequencia: 'perene',
       editorialPlaylists: 4, radioAirplay: 200,
     }));
@@ -125,7 +125,7 @@ describe('Motor REAL v3', () => {
       igEngagement: 8, youtubeEngagement: 8, tiktokEngagement: 20,
       showsPerMonth: 40, cache: 6_000, temCnpj: true, temEmpresario: true,
       fazBilheteria: true, pagantePct: '95-100',
-      premios: 5, imprensaRepercussao: true, imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }], imprensaFrequencia: 'perene',
+      premios: 6, imprensaRepercussao: true, imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }], imprensaFrequencia: 'perene',
       editorialPlaylists: 10, radioAirplay: 500,
     }));
     expect(ri.pattern).toEqual({ r: true, e: true, a: true, l: true });
@@ -145,7 +145,7 @@ describe('Motor REAL v3', () => {
       base(), base(R_ON), base(E_ON), base(A_ON), base(L_ON),
       base({ ...R_ON, ...E_ON }), base({ ...A_ON, ...L_ON }),
       base({ showsPerMonth: 4, cache: 2_000 }), // E borderline baixo
-      base({ premios: 2, imprensaRepercussao: true, imprensaMatrix: [{ tipo: 'blogs', porte: 'pequeno' }], imprensaFrequencia: 'esporadico' }),
+      base({ premios: 3, imprensaRepercussao: true, imprensaMatrix: [{ tipo: 'blogs', porte: 'pequeno' }], imprensaFrequencia: 'esporadico' }),
     ];
     for (const c of cases) {
       const ri = computeRealIndexV3(c as RealInputsV3);
@@ -223,7 +223,7 @@ describe('Motor REAL v3', () => {
   it('QA: L NÃO acende sem sinal de plataforma, mesmo com nota_L ≥ 0,70 (trava §7.1/§7.5)', () => {
     // prêmio internacional + imprensa máxima, SEM playlist e SEM rádio → nota_L alta, mas apagado.
     const semPlataforma = computeRealIndexV3(base({
-      premios: 5, imprensaRepercussao: true, imprensaFrequencia: 'perene', imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }],
+      premios: 6, imprensaRepercussao: true, imprensaFrequencia: 'perene', imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }],
       editorialPlaylists: 0, radioAirplay: null,
     }));
     expect(semPlataforma.components.l.notaL).toBeGreaterThanOrEqual(0.70);
@@ -231,7 +231,7 @@ describe('Motor REAL v3', () => {
     expect(semPlataforma.boletim.l).toBeLessThan(70); // invariante §9.1 preservada
     // basta 1 playlist editorial para destravar.
     const comPlaylist = computeRealIndexV3(base({
-      premios: 5, imprensaRepercussao: true, imprensaFrequencia: 'perene', imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }],
+      premios: 6, imprensaRepercussao: true, imprensaFrequencia: 'perene', imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }],
       editorialPlaylists: 1, radioAirplay: null,
     }));
     expect(comPlaylist.pattern.l).toBe(true);
@@ -248,7 +248,7 @@ describe('Motor REAL v3', () => {
     expect(a.pattern.a).toBe(false);
     expect(a.dimTopIcon.a).toBe(false);
     // L: prêmio internacional mas sem plataforma → L não acende → lTopIcon false.
-    const l = computeRealIndexV3(base({ premios: 5, editorialPlaylists: 0, radioAirplay: null }));
+    const l = computeRealIndexV3(base({ premios: 6, editorialPlaylists: 0, radioAirplay: null }));
     expect(l.pattern.l).toBe(false);
     expect(l.dimTopIcon.l).toBe(false);
   });
@@ -280,7 +280,7 @@ describe('Motor REAL v3', () => {
         faturamentoForaShows: Math.floor(Math.random() * 60000),
         investimento: Math.floor(Math.random() * 120000),
         temCnpj: Math.random() < 0.5, temEmpresario: Math.random() < 0.5,
-        premios: Math.floor(Math.random() * 6),
+        premios: Math.floor(Math.random() * 7),
         imprensaRepercussao: Math.random() < 0.6,
         imprensaMatrix: Array.from({ length: Math.floor(Math.random() * 4) }, () => ({ tipo: pick(tipos), porte: pick(portes) })),
         imprensaFrequencia: pick(['esporadico', 'lancamento', 'perene'] as const),

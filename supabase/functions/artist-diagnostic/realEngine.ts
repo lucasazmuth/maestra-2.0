@@ -55,7 +55,7 @@ export interface RealInputsV3 {
   investimento: number;                 // diagnóstico (§5.4) — NÃO entra no índice
   temCnpj: boolean;                     // E (modulador)
   temEmpresario: boolean;               // E (modulador)
-  premios: number;                      // L c1 — nível 0..5
+  premios: number;                      // L c1 — nível 0..6
   imprensaRepercussao: boolean;         // L c2 — P8 (filtro)
   imprensaMatrix: ImprensaCell[];       // L c2 — P9 (células tipo×porte marcadas)
   imprensaFrequencia: Frequencia;       // L c2 — P10 (multiplicador)
@@ -133,7 +133,9 @@ export const CUTS = {
   // ── E (§5) ──
   e: { receitaAcende: 11_250, receitaTopIcon: 50_000, descontoEmpresario: 0.10, descontoCnpj: 0.05 }, // [SPEC]
   // ── L (§7) ──
-  premiosNota: [0.0, 0.3, 0.7, 0.85, 0.95, 1.0], // [SPEC] níveis 0..5
+  // Níveis 0..6: 0=nunca, 1=indicação local, 2=ganhou local, 3=indicação nacional,
+  // 4=ganhou nacional, 5=indicação internacional, 6=ganhou internacional.
+  premiosNota: [0.0, 0.3, 0.5, 0.7, 0.85, 0.95, 1.0],
   premiosHighFrom: 0.70,                          // alto = indicação nacional (§7.2)
   premiosTopIconFrom: 0.95,                        // top icon = indicação/vitória internacional (§7.6)
   imprensaWeights: { // [SPEC] §7.3 — pesos por tipo × porte [pequeno, médio, grande]
@@ -267,7 +269,7 @@ export function computeRealIndexV3(input: RealInputsV3): RealIndexV3 {
   const eTopIcon = receitaEfetiva >= CUTS.e.receitaTopIcon;
 
   // ── L: soma ponderada com renormalização (§7) ──
-  const premioLvl = clamp(Math.round(input.premios), 0, 5);
+  const premioLvl = clamp(Math.round(input.premios), 0, 6);
   const notaPremios = CUTS.premiosNota[premioLvl];
   const premiosHigh = notaPremios >= CUTS.premiosHighFrom;
   const premiosTopIcon = notaPremios >= CUTS.premiosTopIconFrom;
