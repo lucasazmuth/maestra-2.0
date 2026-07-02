@@ -8,7 +8,8 @@ import {
 import { Wordmark } from '../../components/Wordmark';
 import anitaPhoto from '../../assets/anita.png';
 import { DiagnosticoIcon, PlanejamentoIcon, PlanoAcaoIcon } from '../../components/Icons/system';
-import { useAppSelector } from '../../store/store';
+import { useAppDispatch, useAppSelector } from '../../store/store';
+import { fetchPlanConfig } from '../../store/slices/subscription';
 import { PRODUCT_THEME } from '../../components/productTheme';
 import styles from './Landing.module.scss';
 
@@ -16,14 +17,24 @@ import styles from './Landing.module.scss';
 const NYTA_ACCENT = '124, 92, 255';   // violeta
 const GESTAO_ACCENT = '46, 196, 178'; // teal
 
-// Preços (estáticos na landing). Se mudarem, atualize aqui.
+// Preços dinâmicos (via asaas_plan_config; RLS permite leitura anônima). Estes são
+// só FALLBACKS enquanto a config carrega (ou se a leitura falhar).
 // PLAN_ONCE = desbloqueio do planejamento POR PERFIL (cobrança única, vitalícia).
 // MONTHLY/ANNUAL = assinatura Maestra PRO (nível conta). São eixos independentes.
-const PLAN_ONCE = 199.9;
-const MONTHLY = 39.9;
-const ANNUAL = 335.16;
+const FALLBACK_ONCE = 199.9;
+const FALLBACK_MONTHLY = 39.9;
+const FALLBACK_ANNUAL = 335.16;
 const fmt = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const discount = Math.round((1 - ANNUAL / (MONTHLY * 12)) * 100);
+
+// Preços da config (com fallback) — compartilhado entre os cards de planos e o FAQ.
+const usePlanPrices = () => {
+  const plan = useAppSelector((s) => s.subscription.plan);
+  const once = plan?.profileUnlockValue ?? FALLBACK_ONCE;
+  const monthly = plan?.monthlyValue ?? FALLBACK_MONTHLY;
+  const annual = plan?.annualValue ?? FALLBACK_ANNUAL;
+  const discountPct = monthly > 0 ? Math.round((1 - annual / (monthly * 12)) * 100) : 0;
+  return { once, monthly, annual, discountPct };
+};
 
 const NAV = [
   { label: 'Recursos', id: 'recursos' },
@@ -75,16 +86,20 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
   },
 ];
 
-const FAQ_ITEMS: { q: string; a: string }[] = [
-  { q: 'O que é a Maestra Manager?', a: 'A Maestra Manager é uma plataforma de gestão de carreira musical. Num só lugar, ela reúne o diagnóstico da sua carreira (o Índice REAL), o planejamento estratégico, o plano de ação para executar e a gestão do dia a dia (catálogo, agenda e equipe), tudo com o apoio da Nyta, a consultora de IA. A ideia é simples: tirar a carreira do achismo e colocar no método, com dados e estratégia.' },
-  { q: 'O que é o diagnóstico REAL?', a: 'É uma análise da sua carreira em 4 dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que você nos conta. O resultado é um dos 16 perfis de carreira e um retrato claro de onde você está.' },
-  { q: 'Preciso pagar para ver o diagnóstico?', a: 'Não, o diagnóstico REAL é sempre grátis. Para desbloquear o planejamento estratégico e a gestão de um artista é que existe um pagamento único por perfil, com acesso vitalício.' },
-  { q: 'Como funciona a cobrança?', a: 'São dois modelos independentes. O diagnóstico é grátis. O planejamento de cada artista é um pagamento único de R$ 199,90 (acesso vitalício ao perfil, sem mensalidade). E o Maestra PRO é uma assinatura opcional de R$ 39,90 por mês, que adiciona a Nyta IA e o gerenciamento de vários perfis à sua conta.' },
-  { q: 'O que está incluído no Maestra PRO?', a: 'A Nyta IA (até 100 interações por dia), edição em todos os perfis que você acessa, catálogo de faixas ilimitado e acesso a todos os perfis da conta. É uma assinatura, à parte do desbloqueio de cada perfil.' },
-  { q: 'Quanto custa?', a: 'O diagnóstico é grátis. O planejamento é um pagamento único de R$ 199,90 por artista (vitalício). O Maestra PRO, opcional, custa R$ 39,90 por mês ou R$ 335,16 no plano anual (cerca de 30% de desconto). Cancele quando quiser.' },
-  { q: 'Como faço o pagamento?', a: 'Cartão de crédito (com renovação automática) ou PIX. Tudo processado com segurança via Asaas.' },
-  { q: 'Posso cancelar quando quiser?', a: 'Sim. Você cancela a qualquer momento pela sua conta, sem burocracia.' },
-];
+// FAQ com os preços interpolados (dinâmicos). `once/monthly/annual` vêm da config.
+const buildFaqItems = (once: number, monthly: number, annual: number): { q: string; a: string }[] => {
+  const discountPct = monthly > 0 ? Math.round((1 - annual / (monthly * 12)) * 100) : 0;
+  return [
+    { q: 'O que é a Maestra Manager?', a: 'A Maestra Manager é uma plataforma de gestão de carreira musical. Num só lugar, ela reúne o diagnóstico da sua carreira (o Índice REAL), o planejamento estratégico, o plano de ação para executar e a gestão do dia a dia (catálogo, agenda e equipe), tudo com o apoio da Nyta, a consultora de IA. A ideia é simples: tirar a carreira do achismo e colocar no método, com dados e estratégia.' },
+    { q: 'O que é o diagnóstico REAL?', a: 'É uma análise da sua carreira em 4 dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que você nos conta. O resultado é um dos 16 perfis de carreira e um retrato claro de onde você está.' },
+    { q: 'Preciso pagar para ver o diagnóstico?', a: 'Não, o diagnóstico REAL é sempre grátis. Para desbloquear o planejamento estratégico e a gestão de um artista é que existe um pagamento único por perfil, com acesso vitalício.' },
+    { q: 'Como funciona a cobrança?', a: `São dois modelos independentes. O diagnóstico é grátis. O planejamento de cada artista é um pagamento único de ${fmt(once)} (acesso vitalício ao perfil, sem mensalidade). E o Maestra PRO é uma assinatura opcional de ${fmt(monthly)} por mês, que adiciona a Nyta IA e o gerenciamento de vários perfis à sua conta.` },
+    { q: 'O que está incluído no Maestra PRO?', a: 'A Nyta IA (até 100 interações por dia), edição em todos os perfis que você acessa, catálogo de faixas ilimitado e acesso a todos os perfis da conta. É uma assinatura, à parte do desbloqueio de cada perfil.' },
+    { q: 'Quanto custa?', a: `O diagnóstico é grátis. O planejamento é um pagamento único de ${fmt(once)} por artista (vitalício). O Maestra PRO, opcional, custa ${fmt(monthly)} por mês ou ${fmt(annual)} no plano anual (cerca de ${discountPct}% de desconto). Cancele quando quiser.` },
+    { q: 'Como faço o pagamento?', a: 'Cartão de crédito (com renovação automática) ou PIX. Tudo processado com segurança via Asaas.' },
+    { q: 'Posso cancelar quando quiser?', a: 'Sim. Você cancela a qualquer momento pela sua conta, sem burocracia.' },
+  ];
+};
 
 const FREE_ITEMS = ['Diagnóstico REAL completo nas 4 dimensões', 'Descubra qual dos 16 perfis é o seu', 'Sem cartão de crédito pra começar'];
 const PLAN_ITEMS = ['Planejamento estratégico completo com a Nyta', 'Plano de ação com metas e cronograma', 'Análise de audiência: ouvintes e cidades', 'Catálogo, agenda e equipe', 'Acesso vitalício ao perfil e ao plano'];
@@ -398,6 +413,7 @@ const Founder: FC = () => (
 const Plans: FC = () => {
   const navigate = useNavigate();
   const [annual, setAnnual] = useState(false);
+  const { once, monthly, annual: annualPrice, discountPct } = usePlanPrices();
   return (
     <section className={styles.plans} id="planos">
       <div className={styles.plansInner}>
@@ -426,7 +442,7 @@ const Plans: FC = () => {
             <span className={`${styles.planKind} ${styles.planKindOnce}`} style={{ marginTop: 4 }}>Pagamento único · vitalício</span>
             <h3 className={styles.planName}>Planejamento estratégico</h3>
             <p className={styles.planDesc}>Pague uma vez e o planejamento, o plano de ação e a gestão desse artista ficam seus pra sempre.</p>
-            <div className={styles.planPrice}><strong>{fmt(PLAN_ONCE)}</strong><span className={styles.planUnit}>uma vez</span></div>
+            <div className={styles.planPrice}><strong>{fmt(once)}</strong><span className={styles.planUnit}>uma vez</span></div>
             <p className={styles.planNote}>por artista · sem mensalidade</p>
             <ul className={styles.planList}>
               {PLAN_ITEMS.map((f) => <li key={f} className={`${styles.planItem} ${styles.planItemPro}`}><FiCheck size={18} /> <span>{f}</span></li>)}
@@ -444,11 +460,11 @@ const Plans: FC = () => {
             <div className={styles.toggle}>
               <button className={`${styles.toggleBtn} ${!annual ? styles.toggleBtnOn : ''}`} onClick={() => setAnnual(false)}>Mensal</button>
               <button className={`${styles.toggleBtn} ${annual ? styles.toggleBtnOn : ''}`} onClick={() => setAnnual(true)}>
-                Anual <span className={styles.toggleSave}>-{discount}%</span>
+                Anual <span className={styles.toggleSave}>-{discountPct}%</span>
               </button>
             </div>
-            <div className={styles.planPrice}><strong>{fmt(annual ? ANNUAL : MONTHLY)}</strong><span className={styles.planUnit}>{annual ? '/ano' : '/mês'}</span></div>
-            <p className={styles.planNote}>{annual ? `equivale a ${fmt(ANNUAL / 12)}/mês` : 'cobrança recorrente'}</p>
+            <div className={styles.planPrice}><strong>{fmt(annual ? annualPrice : monthly)}</strong><span className={styles.planUnit}>{annual ? '/ano' : '/mês'}</span></div>
+            <p className={styles.planNote}>{annual ? `equivale a ${fmt(annualPrice / 12)}/mês` : 'cobrança recorrente'}</p>
             <ul className={styles.planList}>
               {PRO_ITEMS.map((f) => <li key={f} className={`${styles.planItem} ${styles.planItemPro}`}><FiCheck size={18} /> <span>{f}</span></li>)}
             </ul>
@@ -468,6 +484,8 @@ const Plans: FC = () => {
 // ─── FAQ ─────────────────────────────────────────────────────────────────────
 const Faq: FC = () => {
   const [open, setOpen] = useState<number | null>(0);
+  const { once, monthly, annual } = usePlanPrices();
+  const faqItems = buildFaqItems(once, monthly, annual);
   return (
     <section className={styles.faq} id="faq">
       <div className={styles.faqInner}>
@@ -476,7 +494,7 @@ const Faq: FC = () => {
           <h2 className={styles.faqTitle}>Perguntas frequentes</h2>
         </div>
         <div className={styles.faqList}>
-          {FAQ_ITEMS.map((item, i) => {
+          {faqItems.map((item, i) => {
             const isOpen = open === i;
             return (
               <div key={item.q} className={styles.faqItem}>
@@ -543,6 +561,12 @@ export const Footer: FC = () => {
 const Landing: FC = () => {
   const loggedIn = useAppSelector((s) => !!s.auth.user);
   const location = useLocation();
+  const dispatch = useAppDispatch();
+
+  // Preços dinâmicos (config compartilhada). RLS permite leitura anônima na landing pública.
+  useEffect(() => {
+    dispatch(fetchPlanConfig());
+  }, [dispatch]);
 
   useEffect(() => {
     const prev = document.title;
