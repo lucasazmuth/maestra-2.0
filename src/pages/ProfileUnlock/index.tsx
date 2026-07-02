@@ -24,7 +24,10 @@ type Step = 'diagnostico' | 'pagamento' | 'pix' | 'done';
 const PRICE_VALUE = 199.9;
 const fmtBRL = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const PRICE = fmtBRL(PRICE_VALUE);
-const MAX_INSTALLMENTS = 12;
+// Asaas exige no mínimo R$5,00 por parcela no cartão de crédito — nunca oferecer
+// um parcelamento que caia abaixo disso (senão a cobrança volta 400 invalid_value).
+const MIN_INSTALLMENT_VALUE = 5;
+const MAX_INSTALLMENTS = Math.max(1, Math.min(12, Math.floor(PRICE_VALUE / MIN_INSTALLMENT_VALUE)));
 
 // O que o pagamento único libera (checklist curta no resumo).
 const INCLUDES = [
