@@ -241,6 +241,8 @@ export const resumePayment = createAsyncThunk(
 
     return data as {
       status: SubscriptionState['status'];
+      // 'CREDIT_CARD' quando a assinatura pendente é de cartão (em análise, sem QR).
+      billingType?: string | null;
       pixData?: PixData | null;
       value?: number | null;
       cycle?: string | null;

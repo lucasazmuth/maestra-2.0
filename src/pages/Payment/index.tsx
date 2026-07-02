@@ -206,6 +206,9 @@ const PaymentPage: FC = () => {
   const [connectivityError, setConnectivityError] = useState(false);
   const [resuming, setResuming] = useState(false);
   const [resumeFailed, setResumeFailed] = useState(false);
+  // Assinatura de CARTÃO pendente: a 1ª cobrança está em análise na operadora —
+  // não há QR pra mostrar; exibimos o estado de análise e aguardamos o webhook.
+  const [cardAnalysis, setCardAnalysis] = useState(false);
 
   const pollingStarted = useRef(false);
   const resumeTried = useRef(false);
@@ -229,6 +232,8 @@ const PaymentPage: FC = () => {
         setResuming(false);
         if (res.status === 'active') { setPaymentConfirmed(true); return; }  // já pago → sucesso
         if (res.status === 'none') { navigate('/assinatura', { replace: true }); return; }
+        // Cartão em análise: não existe QR — mostra o estado de análise (não é erro).
+        if (res.billingType === 'CREDIT_CARD') { setCardAnalysis(true); return; }
         // pending: se veio QR, entra no Redux e renderiza; se não, mostra estado de falha.
         if (!res.pixData?.qrCode) setResumeFailed(true);
       })
@@ -237,6 +242,17 @@ const PaymentPage: FC = () => {
         navigate('/assinatura', { replace: true });
       });
   }, [pixData, paymentConfirmed, status, dispatch, navigate]);
+
+  // ─── Cartão em análise: polling até a operadora confirmar (webhook → active) ─
+  useEffect(() => {
+    if (!cardAnalysis) return;
+    let alive = true;
+    dispatch(pollPaymentStatus())
+      .unwrap()
+      .then(() => { if (alive) setPaymentConfirmed(true); })
+      .catch(() => { /* segue em análise; o acesso libera sozinho depois */ });
+    return () => { alive = false; };
+  }, [cardAnalysis, dispatch]);
 
   // ─── Inject keyframes ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -343,6 +359,26 @@ const PaymentPage: FC = () => {
         <div style={{ ...styles.card, ...styles.successContainer }}>
           <div style={styles.successText}>Recuperando seu pagamento…</div>
           <div style={{ color: '#b3b3b3', fontSize: 14 }}>Buscando o PIX da sua assinatura.</div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Cartão em análise pela operadora (sem QR; sucesso vem via webhook) ──
+  if (cardAnalysis && !paymentConfirmed) {
+    return (
+      <div style={styles.container}>
+        <div style={{ ...styles.card, ...styles.errorContainer }}>
+          <ClockCircleOutlined style={{ fontSize: 48, color: '#af2896' }} />
+          <div style={{ ...styles.errorText, color: '#fff' }}>Pagamento em análise</div>
+          <div style={styles.errorHint}>
+            A operadora do cartão está processando o débito — isso pode levar alguns
+            minutos. Assim que for aprovado, seu acesso Pro é liberado automaticamente.
+            Pode fechar esta tela e continuar usando o app.
+          </div>
+          <button onClick={() => navigate('/artists', { replace: true })} style={styles.retryBtn}>
+            Voltar ao painel
+          </button>
         </div>
       </div>
     );

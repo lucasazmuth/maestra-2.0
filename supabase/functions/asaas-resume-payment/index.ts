@@ -83,13 +83,21 @@ serve(async (req) => {
     const payJson = await payResp.json().catch(() => ({}));
     const payments: any[] = Array.isArray(payJson.data) ? payJson.data : [];
 
-    // Já pago em algum ciclo → marca ativa e retorna.
+    // Já pago em algum ciclo → marca ativa e retorna (vale pra PIX e cartão).
     if (payments.some((p) => PAID.includes(p.status))) {
       await supabaseAdmin
         .from("asaas_subscriptions")
         .update({ status: "active", updated_at: new Date().toISOString() })
         .eq("user_id", user.id);
       return json({ status: "active" });
+    }
+
+    // Assinatura de CARTÃO pendente: não existe QR pra retomar — a 1ª cobrança
+    // está em análise na operadora. Devolve o billingType pro front mostrar a
+    // tela de "pagamento em análise" (antes caía no erro "não foi possível
+    // recuperar o PIX", mesmo o usuário tendo pago com cartão).
+    if (sub.billing_type === "CREDIT_CARD") {
+      return json({ status: sub.status, billingType: "CREDIT_CARD", pixData: null, value, cycle });
     }
 
     // Cobrança PIX em aberto (PENDING primeiro, depois OVERDUE).
