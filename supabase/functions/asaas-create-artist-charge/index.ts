@@ -143,14 +143,24 @@ serve(async (req) => {
 
     const billingValue = billingType === "CREDIT_CARD" ? "CREDIT_CARD" : billingType === "DEBIT_CARD" ? "DEBIT_CARD" : "PIX";
     const nowIso = new Date().toISOString();
+    // Endereço de cobrança (só no cartão, resolvido via ViaCEP no front). PIX não tem CEP → null.
+    const billing = isCard && creditCardHolderInfo ? {
+      cep: creditCardHolderInfo.postalCode || null,
+      address: creditCardHolderInfo.address || null,
+      province: creditCardHolderInfo.province || null,
+      city: creditCardHolderInfo.city || null,
+      uf: creditCardHolderInfo.uf || null,
+    } : { cep: null, address: null, province: null, city: null, uf: null };
     const { data: purchaseRow, error: purchaseInsertError } = await supabaseAdmin
       .from("artist_purchases")
-      .insert({ artist_id: artistId, user_id: user.id, artist_name: artist.name, amount: chargeValue, billing_type: billingValue, coupon_code: appliedCouponCode, discount_amount: discountAmount || null, status: "pending", created_at: nowIso, updated_at: nowIso })
+      .insert({ artist_id: artistId, user_id: user.id, artist_name: artist.name, amount: chargeValue, billing_type: billingValue, coupon_code: appliedCouponCode, discount_amount: discountAmount || null, ...billing, status: "pending", created_at: nowIso, updated_at: nowIso })
       .select().single();
     if (purchaseInsertError || !purchaseRow) { console.error("purchase insert:", purchaseInsertError); return json({ error: "Erro interno" }, 500); }
 
     const dueDate = nowIso.split("T")[0];
-    const paymentPayload: Record<string, unknown> = { customer: customerId, billingType: billingValue, dueDate, description: `Maestra — Perfil de artista (${artist.name})`, externalReference: `purchase:${purchaseRow.id}` };
+    // Descrição da cobrança (aparece no painel/comprovante Asaas). Com cupom, anexa o código no fim.
+    const chargeDescription = `Maestra — Perfil de artista (${artist.name})${appliedCouponCode ? ` · Cupom ${appliedCouponCode}` : ""}`;
+    const paymentPayload: Record<string, unknown> = { customer: customerId, billingType: billingValue, dueDate, description: chargeDescription, externalReference: `purchase:${purchaseRow.id}` };
     // Parcelamento (crédito): Asaas divide o total pelas parcelas. Senão, valor à vista.
     if (installments > 1) {
       paymentPayload.installmentCount = installments;
@@ -161,7 +171,17 @@ serve(async (req) => {
     if (isCard) {
       if (!creditCard || !creditCardHolderInfo) return json({ error: "Dados do cartão são obrigatórios" }, 400);
       paymentPayload.creditCard = { holderName: creditCard.holderName, number: creditCard.number, expiryMonth: creditCard.expiryMonth, expiryYear: creditCard.expiryYear, ccv: creditCard.ccv };
-      paymentPayload.creditCardHolderInfo = { name: creditCardHolderInfo.name, email: creditCardHolderInfo.email || user.email, cpfCnpj: creditCardHolderInfo.cpfCnpj, postalCode: creditCardHolderInfo.postalCode, addressNumber: creditCardHolderInfo.addressNumber || "0", phone: creditCardHolderInfo.phone };
+      // address/province vêm do ViaCEP (resolvido no front) — compõem o endereço do titular no Asaas.
+      paymentPayload.creditCardHolderInfo = {
+        name: creditCardHolderInfo.name,
+        email: creditCardHolderInfo.email || user.email,
+        cpfCnpj: creditCardHolderInfo.cpfCnpj,
+        postalCode: creditCardHolderInfo.postalCode,
+        addressNumber: creditCardHolderInfo.addressNumber || "0",
+        phone: creditCardHolderInfo.phone,
+        ...(creditCardHolderInfo.address ? { address: creditCardHolderInfo.address } : {}),
+        ...(creditCardHolderInfo.province ? { province: creditCardHolderInfo.province } : {}),
+      };
     }
 
     let paymentResponse: Response;

@@ -1,6 +1,6 @@
 import { FC, ReactNode } from 'react';
-import { Spin } from 'antd';
-import { FiLock, FiCheck } from 'react-icons/fi';
+import { Spin, Tooltip } from 'antd';
+import { FiLock, FiCheck, FiAlertCircle } from 'react-icons/fi';
 import { LoadingOutlined } from '@ant-design/icons';
 
 import styles from './checkout.module.scss';
@@ -34,7 +34,10 @@ interface Props {
   ctaLabel: string;
   onCta: () => void;
   loading?: boolean;
-  disabled?: boolean;
+  /** Motivo pelo qual o pagamento ainda não pode ser feito (ex.: "CPF é obrigatório").
+   *  Quando presente, o botão fica "apagado" mas CLICÁVEL — no hover mostra o tooltip e,
+   *  ao clicar, o onCta valida e exibe o erro (o usuário sempre esquece o CPF no PIX). */
+  disabledReason?: string;
   error?: string;
 }
 
@@ -42,7 +45,7 @@ interface Props {
 // opcional, texto legal e CTA primário (estilo Adobe, tema escuro).
 export const CartSummary: FC<Props> = ({
   title = 'Seu carrinho', selectLabel, selectValue, topSlot, item, includes, rows, timeline,
-  checkbox, legal, ctaLabel, onCta, loading, disabled, error,
+  checkbox, legal, ctaLabel, onCta, loading, disabledReason, error,
 }) => (
   <div className={styles.cart}>
     <div className={styles.cartTitle}>{title}</div>
@@ -112,13 +115,29 @@ export const CartSummary: FC<Props> = ({
 
     {legal && <div className={styles.cartLegal}>{legal}</div>}
 
-    {error && <div className={styles.errorMsg}>{error}</div>}
+    {error && (
+      <div className={styles.errorMsg} role="alert">
+        <FiAlertCircle className={styles.errorMsgIcon} />
+        <span>{error}</span>
+      </div>
+    )}
 
-    <button className={styles.payBtn} onClick={onCta} disabled={disabled || loading} style={legal || checkbox ? undefined : { marginTop: 18 }}>
-      {loading
-        ? <><Spin indicator={<LoadingOutlined style={{ color: '#fff' }} spin />} size="small" /> Processando…</>
-        : ctaLabel}
-    </button>
+    <Tooltip title={disabledReason && !loading ? disabledReason : ''}>
+      <button
+        className={styles.payBtn}
+        onClick={onCta}
+        disabled={loading}
+        aria-disabled={!!disabledReason}
+        style={{
+          ...(legal || checkbox ? {} : { marginTop: 18 }),
+          ...(disabledReason && !loading ? { opacity: 0.55 } : {}),
+        }}
+      >
+        {loading
+          ? <><Spin indicator={<LoadingOutlined style={{ color: '#fff' }} spin />} size="small" /> Processando…</>
+          : ctaLabel}
+      </button>
+    </Tooltip>
 
     <div className={styles.secure}><FiLock size={12} /> Compra segura · processada via Asaas</div>
 

@@ -200,6 +200,10 @@ export const createSubscription = createAsyncThunk(
       cpfCnpj: string;
       postalCode: string;
       addressNumber?: string;
+      address?: string;
+      province?: string;
+      city?: string;
+      uf?: string;
       phone: string;
     };
   }, { rejectWithValue }) => {

@@ -4,4 +4,4 @@ export { CouponField } from './CouponField';
 export { PaymentMethods, type PayMethod } from './PaymentMethods';
 export { CartSummary, type CartTimelineItem } from './CartSummary';
 export { BenefitsCompare, type BenefitGroup } from './BenefitsCompare';
-export { useCheckoutForm, type CheckoutForm } from './useCheckoutForm';
+export { useCheckoutForm, focusFirstInvalidField, type CheckoutForm } from './useCheckoutForm';

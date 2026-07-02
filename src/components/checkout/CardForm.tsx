@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Input } from 'antd';
+import { Input, Spin } from 'antd';
 import { FiCreditCard, FiUser, FiCalendar, FiLock, FiSmartphone, FiMapPin } from 'react-icons/fi';
 import { FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover } from 'react-icons/fa';
 
@@ -110,14 +110,25 @@ export const CardForm: FC<{ form: CheckoutForm; showBrands?: boolean }> = ({ for
           <label className={styles.fieldLabel}>CEP</label>
           <Input
             prefix={<FiMapPin className={styles.fieldIcon} />}
+            suffix={form.cepLoading ? <Spin size="small" /> : null}
             value={form.cep}
             onChange={(ev) => form.setCep(formatCep(ev.target.value))}
             placeholder="00000-000"
             inputMode="numeric"
             size="large"
-            status={e.cep ? 'error' : undefined}
+            status={e.cep || form.cepLookupError ? 'error' : undefined}
           />
-          {e.cep && <span className={styles.fieldError}>{e.cep}</span>}
+          {(e.cep || form.cepLookupError) && (
+            <span className={styles.fieldError}>{e.cep || form.cepLookupError}</span>
+          )}
+          {/* Endereço resolvido pelo ViaCEP — confirmação visual de que o CEP é válido. */}
+          {!form.cepLookupError && form.resolvedAddress?.localidade && (
+            <span className={styles.fieldHint}>
+              {[form.resolvedAddress.bairro, `${form.resolvedAddress.localidade} – ${form.resolvedAddress.uf}`]
+                .filter(Boolean)
+                .join(', ')}
+            </span>
+          )}
         </div>
       </div>
     </div>

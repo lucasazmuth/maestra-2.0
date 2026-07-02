@@ -15,7 +15,7 @@ import { PaymentSuccessScreen } from '../../components/PaymentSuccessScreen';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
 import {
   CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField, CouponField,
-  CartSummary, useCheckoutForm, type PayMethod,
+  CartSummary, useCheckoutForm, focusFirstInvalidField, type PayMethod,
 } from '../../components/checkout';
 import { useCoupon } from '../../hooks/useCoupon';
 import styles from '../ArtistCreate/ArtistCreate.module.scss';
@@ -141,8 +141,9 @@ const ProfileUnlock: FC = () => {
 
   const handlePay = async () => {
     if (!id) return;
-    const err = form.validate(isCard);
-    if (err) { setPayError(err); return; }
+    // Formulário incompleto: marca os campos vazios de vermelho e foca o primeiro,
+    // em vez de mostrar o card de erro (o campo perto é mais direto pro usuário).
+    if (form.validate(isCard)) { form.markSubmitted(isCard); focusFirstInvalidField(); return; }
     setPayError('');
     dispatch(clearError());
     setSubmitting(true);
@@ -174,6 +175,8 @@ const ProfileUnlock: FC = () => {
           creditCardHolderInfo: {
             name: userName, email: userEmail, cpfCnpj: rawCpf,
             postalCode: form.cep.replace(/\D/g, ''), phone: form.phone.replace(/\D/g, ''),
+            // Endereço resolvido pelo ViaCEP (compõe o endereço do titular no Asaas + salvo na compra).
+            ...(form.resolvedAddress ? { address: form.resolvedAddress.logradouro, province: form.resolvedAddress.bairro, city: form.resolvedAddress.localidade, uf: form.resolvedAddress.uf } : {}),
           },
         } : {}),
       }));
@@ -340,11 +343,11 @@ const ProfileUnlock: FC = () => {
                     ...(coupon.applied ? [{ label: `Cupom ${coupon.applied.code}`, value: `−${fmtBRL(couponDiscount)}` }] : []),
                     { label: 'Total', value: installmentTotal, strong: true },
                   ]}
-                  legal={<>Pagamento único pelo acesso a este perfil. O perfil e o plano ficam seus pra sempre. A Nyta IA contínua é um plano à parte. Ao continuar, você concorda com os Termos de uso e a Política de privacidade.</>}
+                  legal={<>Pagamento único pelo acesso a este perfil. O perfil e o plano ficam seus pra sempre. A Nyta IA contínua é um plano à parte. Ao continuar, você concorda com os <a href="/legal/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a href="/legal/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</>}
                   ctaLabel={ctaLabel}
                   onCta={handlePay}
                   loading={submitting}
-                  disabled={!!form.validate(isCard)}
+                  disabledReason={form.validate(isCard) || undefined}
                   error={payError}
                 />
               }
@@ -357,6 +360,16 @@ const ProfileUnlock: FC = () => {
             <p className={`${styles.line} ${styles.lineCompact}`}>Escaneia o PIX abaixo. Assim que cair, eu te levo direto pro planejamento.</p>
             <div className={styles.interaction}>
               <div className={`${styles.payWrap} ${styles.qrWrap}`} style={{ alignItems: 'center' }}>
+                {/* Valor a pagar em destaque — PIX é sempre à vista, já com o desconto do cupom. */}
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ color: '#9a9aa5', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Valor a pagar</div>
+                  <div style={{ color: '#fff', fontSize: 30, fontWeight: 800, lineHeight: 1.15, marginTop: 2 }}>{fmtBRL(discountedPrice)}</div>
+                  {coupon.applied && (
+                    <div style={{ color: '#47d18e', fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+                      Cupom {coupon.applied.code} · −{fmtBRL(couponDiscount)}
+                    </div>
+                  )}
+                </div>
                 <img className={styles.qrImg} src={`data:image/png;base64,${pixData.qrCode}`} alt='QR Code PIX' />
                 {pixData.copyPaste && <Input.TextArea value={pixData.copyPaste} readOnly autoSize />}
                 {/* Recebedor: no app do banco aparece a razão social da empresa por trás da Maestra. */}

@@ -207,7 +207,8 @@ serve(async (req) => {
       value: planValue,
       nextDueDate: nextDueDate,
       // Aparece nas cobranças do painel Asaas e nos comprovantes do assinante.
-      description: isAnnual ? "Maestra PRO — Assinatura anual" : "Maestra PRO — Assinatura mensal",
+      // Com cupom aplicado, anexa o código no fim da descrição.
+      description: `${isAnnual ? "Maestra PRO — Assinatura anual" : "Maestra PRO — Assinatura mensal"}${appliedCouponCode ? ` · Cupom ${appliedCouponCode}` : ""}`,
     };
 
     // For credit card, include card data and holder info
@@ -232,6 +233,9 @@ serve(async (req) => {
         postalCode: creditCardHolderInfo.postalCode,
         addressNumber: creditCardHolderInfo.addressNumber || "0",
         phone: creditCardHolderInfo.phone,
+        // address/province vêm do ViaCEP (resolvido no front) — compõem o endereço do titular.
+        ...(creditCardHolderInfo.address ? { address: creditCardHolderInfo.address } : {}),
+        ...(creditCardHolderInfo.province ? { province: creditCardHolderInfo.province } : {}),
       };
     }
 
@@ -352,6 +356,12 @@ serve(async (req) => {
           billing_type: "CREDIT_CARD",
           coupon_code: appliedCouponCode,
           discount_amount: discountAmount || null,
+          // Endereço de cobrança do cartão (resolvido via ViaCEP no front).
+          cep: creditCardHolderInfo.postalCode || null,
+          address: creditCardHolderInfo.address || null,
+          province: creditCardHolderInfo.province || null,
+          city: creditCardHolderInfo.city || null,
+          uf: creditCardHolderInfo.uf || null,
           started_at: new Date().toISOString(),
           next_due_date: new Date(nextDueDate).toISOString(),
           updated_at: new Date().toISOString(),

@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { createAsaasCustomer, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, pollPaymentStatus, clearError, type BillingCycle } from '../../store/slices/subscription';
 import {
   CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField, CouponField,
-  CartSummary, BenefitsCompare, useCheckoutForm, type PayMethod, type BenefitGroup,
+  CartSummary, BenefitsCompare, useCheckoutForm, focusFirstInvalidField, type PayMethod, type BenefitGroup,
 } from '../../components/checkout';
 import { useCoupon } from '../../hooks/useCoupon';
 
@@ -91,7 +91,9 @@ const SubscriptionPage: FC = () => {
 
   const handleSubmit = async () => {
     const err = form.validate(isCard);
-    if (err) { setFormError(err); return; }
+    // Formulário incompleto: marca os campos vazios de vermelho e foca o primeiro
+    // (em vez do card de erro). O card fica só pros erros do backend (Asaas).
+    if (err) { form.markSubmitted(isCard); focusFirstInvalidField(); return; }
     setFormError('');
     dispatch(clearError());
 
@@ -132,6 +134,8 @@ const SubscriptionPage: FC = () => {
         creditCardHolderInfo: {
           name: userName, email: userEmail, cpfCnpj: rawCpfCnpj,
           postalCode: form.cep.replace(/\D/g, ''), phone: form.phone.replace(/\D/g, ''),
+          // Endereço resolvido pelo ViaCEP (compõe o endereço do titular no Asaas + salvo na assinatura).
+          ...(form.resolvedAddress ? { address: form.resolvedAddress.logradouro, province: form.resolvedAddress.bairro, city: form.resolvedAddress.localidade, uf: form.resolvedAddress.uf } : {}),
         },
       }));
       if (createSubscription.rejected.match(result)) return;
@@ -315,12 +319,12 @@ const SubscriptionPage: FC = () => {
               },
             ]}
             legal={isPix
-              ? <>Você receberá uma cobrança PIX de {totalFmt} {everyWord} enquanto a assinatura estiver ativa. Cancele quando quiser pela sua conta. Você concorda com os Termos de uso e a Política de privacidade.</>
-              : <>Ao assinar, você autoriza a cobrança automática de {totalFmt} {isAnnual ? 'por ano' : 'por mês'} até cancelar. Cancele quando quiser pela sua conta. Você concorda com os Termos de uso e a Política de privacidade.</>}
+              ? <>Você receberá uma cobrança PIX de {totalFmt} {everyWord} enquanto a assinatura estiver ativa. Cancele quando quiser pela sua conta. Você concorda com os <a href="/legal/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a href="/legal/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</>
+              : <>Ao assinar, você autoriza a cobrança automática de {totalFmt} {isAnnual ? 'por ano' : 'por mês'} até cancelar. Cancele quando quiser pela sua conta. Você concorda com os <a href="/legal/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a href="/legal/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</>}
             ctaLabel={isPix ? 'Pagar com PIX' : 'Concordar e assinar'}
             onCta={handleSubmit}
             loading={loading || confirmingCard}
-            disabled={!!form.validate(isCard)}
+            disabledReason={form.validate(isCard) || undefined}
             error={formError || error || undefined}
           />
         }

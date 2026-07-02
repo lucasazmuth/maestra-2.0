@@ -138,6 +138,7 @@ $muted2: #6f6f78;
 }
 .fieldIcon { color: $muted; font-size: 16px; display: block; }
 .fieldError { color: #ff6b6f; font-size: 12px; margin-top: 5px; }
+.fieldHint { color: $muted; font-size: 12px; margin-top: 5px; display: block; }
 
 // ─── Cupom de desconto ────────────────────────────────────────────────────────
 .couponRow {
@@ -249,6 +250,7 @@ $muted2: #6f6f78;
 }
 .cartCheckBoxOn { background: $green; border-color: $green; }
 .cartCheckLabel { font-size: 13px; color: #cfcfd4; line-height: 1.45; }
+.cartLegal a { color: #cfcfd4; text-decoration: underline; font-weight: 600; &:hover { color: #fff; } }
 .cartLegal { font-size: 12px; color: $muted; line-height: 1.5; margin: 0 0 16px;
   a { color: #cfcfd4; text-decoration: underline; } strong { color: #cfcfd4; }
 }
@@ -268,9 +270,11 @@ $muted2: #6f6f78;
   strong { color: #cfcfd4; font-weight: 700; }
 }
 .errorMsg {
-  margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; font-size: 13px;
-  background: rgba(255, 90, 95, 0.12); border: 1px solid rgba(255, 90, 95, 0.3); color: #ffb3b5;
+  display: flex; align-items: flex-start; gap: 8px; text-align: left;
+  margin: 6px 0 16px; padding: 11px 13px; border-radius: 10px; font-size: 13px; line-height: 1.45;
+  background: rgba(255, 90, 95, 0.1); border: 1px solid rgba(255, 90, 95, 0.28); color: #ffb3b5;
 }
+.errorMsgIcon { flex-shrink: 0; margin-top: 1px; font-size: 15px; color: #ff5a5f; }
 
 // ─── Comparação de benefícios (Grátis vs PRO) ───────────────────────────────────
 .compareWrap { width: 100%; max-width: 980px; margin: 0 auto; }
