@@ -58,6 +58,8 @@ export interface PlanConfig {
   monthlyValue: number;
   annualValue: number | null;
   annualEnabled: boolean;
+  // Valor do pagamento único (desbloqueio de perfil). Mesma config, editável sem deploy.
+  profileUnlockValue: number | null;
 }
 
 export interface SubscriptionState {
@@ -130,7 +132,7 @@ export const fetchPlanConfig = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     const { data, error } = await supabase
       .from('asaas_plan_config')
-      .select('name, monthly_value, annual_value, annual_enabled')
+      .select('name, monthly_value, annual_value, annual_enabled, profile_unlock_value')
       .eq('is_active', true)
       .limit(1)
       .maybeSingle();
@@ -144,6 +146,7 @@ export const fetchPlanConfig = createAsyncThunk(
       monthlyValue: Number(data.monthly_value),
       annualValue: data.annual_value != null ? Number(data.annual_value) : null,
       annualEnabled: !!data.annual_enabled,
+      profileUnlockValue: data.profile_unlock_value != null ? Number(data.profile_unlock_value) : null,
     } as PlanConfig;
   }
 );

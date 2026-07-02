@@ -32,7 +32,6 @@ serve(async (req) => {
     // API da Asaas: produção https://api.asaas.com, sandbox https://api-sandbox.asaas.com.
     // Path /v3 (SEM /api) — api.asaas.com responde 404 para /api/v3.
     const asaasApiUrl = Deno.env.get("ASAAS_API_URL") || "https://api-sandbox.asaas.com";
-    const profileValue = Number(Deno.env.get("ASAAS_ARTIST_PROFILE_VALUE") || "199.90");
     if (!asaasApiKey) return json({ error: "Erro interno de configuração" }, 500);
 
     const authHeader = req.headers.get("Authorization");
@@ -40,6 +39,19 @@ serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, { auth: { autoRefreshToken: false, persistSession: false } });
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(authHeader.replace("Bearer ", ""));
     if (userError || !user) return json({ error: "Não autorizado" }, 401);
+
+    // Preço do pagamento único: dinâmico via asaas_plan_config (mesma config da
+    // assinatura, editável sem deploy). Fallback: secret ASAAS_ARTIST_PROFILE_VALUE, senão 199.90.
+    let profileValue = Number(Deno.env.get("ASAAS_ARTIST_PROFILE_VALUE") || "199.90");
+    {
+      const { data: cfg } = await supabaseAdmin
+        .from("asaas_plan_config")
+        .select("profile_unlock_value")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+      if (cfg?.profile_unlock_value != null) profileValue = Number(cfg.profile_unlock_value);
+    }
 
     const body = await req.json();
     const { artistId, customerId, billingType, creditCard, creditCardHolderInfo, installmentCount } = body;

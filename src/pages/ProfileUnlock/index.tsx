@@ -6,7 +6,7 @@ import { FiArrowLeft } from 'react-icons/fi';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { supabase } from '../../lib/supabase';
 import { artistsActions } from '../../store/slices/artists';
-import { createAsaasCustomer, clearError } from '../../store/slices/subscription';
+import { createAsaasCustomer, fetchPlanConfig, clearError } from '../../store/slices/subscription';
 import { createArtistCharge, pollArtistPurchase } from '../../store/slices/artistPurchases';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
@@ -21,13 +21,13 @@ import styles from '../ArtistCreate/ArtistCreate.module.scss';
 
 type Step = 'diagnostico' | 'pagamento' | 'pix' | 'done';
 
-const PRICE_VALUE = 199.9;
 const fmtBRL = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const PRICE = fmtBRL(PRICE_VALUE);
+// Valor do pagamento único vem da config (asaas_plan_config.profile_unlock_value),
+// editável sem deploy — igual ao preço da assinatura. Fallback só se a config falhar.
+const FALLBACK_PROFILE_VALUE = 199.9;
 // Asaas exige no mínimo R$5,00 por parcela no cartão de crédito — nunca oferecer
 // um parcelamento que caia abaixo disso (senão a cobrança volta 400 invalid_value).
 const MIN_INSTALLMENT_VALUE = 5;
-const MAX_INSTALLMENTS = Math.max(1, Math.min(12, Math.floor(PRICE_VALUE / MIN_INSTALLMENT_VALUE)));
 
 // O que o pagamento único libera (checklist curta no resumo).
 const INCLUDES = [
@@ -49,6 +49,12 @@ const ProfileUnlock: FC = () => {
   const user = useAppSelector((s) => s.auth.user);
   const artist = useAppSelector((s) => s.artists.items.find((a) => a.id === id));
   const loaded = useAppSelector((s) => s.artists.loaded);
+  const plan = useAppSelector((s) => s.subscription.plan);
+
+  // Preço do pagamento único (dinâmico via config). Enquanto carrega, usa o fallback.
+  const priceValue = plan?.profileUnlockValue ?? FALLBACK_PROFILE_VALUE;
+  const PRICE = fmtBRL(priceValue);
+  const maxInstallments = Math.max(1, Math.min(12, Math.floor(priceValue / MIN_INSTALLMENT_VALUE)));
 
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
   const userEmail = user?.email || '';
@@ -62,7 +68,7 @@ const ProfileUnlock: FC = () => {
 
   // Pagamento — default: PIX (aprovação na hora). Parcelamento só aparece no crédito.
   const [method, setMethod] = useState<PayMethod>('PIX');
-  const [installments, setInstallments] = useState(MAX_INSTALLMENTS);
+  const [installments, setInstallments] = useState(12);
   const [payError, setPayError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [pixData, setPixData] = useState<{ qrCode: string | null; copyPaste: string | null } | null>(null);
@@ -72,6 +78,16 @@ const ProfileUnlock: FC = () => {
   useEffect(() => {
     if (!loaded && user?.id) dispatch(artistsActions.fetchArtists(user.id));
   }, [loaded, user?.id, dispatch]);
+
+  // Carrega o preço dinâmico (config compartilhada com a assinatura).
+  useEffect(() => {
+    dispatch(fetchPlanConfig());
+  }, [dispatch]);
+
+  // Clampa o parcelamento ao máximo válido quando o preço (config) carrega.
+  useEffect(() => {
+    setInstallments((n) => Math.min(Math.max(1, n), maxInstallments));
+  }, [maxInstallments]);
 
   // Ao trocar de etapa (ex.: diagnóstico → checkout), volta ao topo pra o usuário
   // ver a tela desde o começo.
@@ -189,7 +205,7 @@ const ProfileUnlock: FC = () => {
 
   // Total exibido: parcelado (crédito) ou à vista.
   const installmentTotal = method === 'CREDIT' && installments > 1
-    ? `${installments}x de ${fmtBRL(PRICE_VALUE / installments)}`
+    ? `${installments}x de ${fmtBRL(priceValue / installments)}`
     : PRICE;
 
   const ctaLabel = method === 'PIX' ? 'Gerar código PIX' : 'Concordar e pagar';
@@ -287,9 +303,9 @@ const ProfileUnlock: FC = () => {
                         onChange={setInstallments}
                         size="large"
                         style={{ width: '100%' }}
-                        options={Array.from({ length: MAX_INSTALLMENTS }, (_, i) => i + 1).map((n) => ({
+                        options={Array.from({ length: maxInstallments }, (_, i) => i + 1).map((n) => ({
                           value: n,
-                          label: n === 1 ? `À vista · ${fmtBRL(PRICE_VALUE)}` : `${n}x de ${fmtBRL(PRICE_VALUE / n)} sem juros`,
+                          label: n === 1 ? `À vista · ${fmtBRL(priceValue)}` : `${n}x de ${fmtBRL(priceValue / n)} sem juros`,
                         }))}
                       />
                     </div>
