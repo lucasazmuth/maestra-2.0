@@ -1463,6 +1463,8 @@ export const PriorityScale: FC<{
   const [objIdx, setObjIdx] = useState(0);
   const [advancing, setAdvancing] = useState(false);
   const [hoverVal, setHoverVal] = useState<number | null>(null);
+  // X do modal de ordem pronta: MINIMIZA (mantém notas e seleção) e deixa um card no chat pra reabrir.
+  const [minimized, setMinimized] = useState(false);
 
   // Deixar a Maestra priorizar: busca as notas sugeridas, preenche e mostra a ordem pronta.
   const runAi = async () => {
@@ -1557,6 +1559,23 @@ export const PriorityScale: FC<{
       });
     const count = selected.size;
 
+    // Minimizado (X do modal): card compacto no chat pra reabrir quando quiser — nada se perde.
+    if (minimized) {
+      return (
+        <div className='nyta-card'>
+          <div style={{ color: '#fff', fontWeight: 800, fontSize: 15, marginBottom: 6 }}>
+            Sua ordem de prioridade está pronta
+          </div>
+          <div style={{ color: '#b3b3b3', fontSize: 13, lineHeight: 1.5, marginBottom: 14 }}>
+            {count > 0
+              ? `${count} estratégia${count === 1 ? '' : 's'} selecionada${count === 1 ? '' : 's'} até agora.`
+              : 'Reabra pra escolher as estratégias que viram tarefas.'}
+          </div>
+          <button style={primaryBtn} onClick={() => setMinimized(false)}>Ver ordem de prioridade</button>
+        </div>
+      );
+    }
+
     // Modal de destaque (overlay sobre a tela, fora do scroll do chat) com confetes. O artista
     // SELECIONA quais estratégias viram tarefas; só as escolhidas geram o plano de ação.
     return createPortal(
@@ -1575,7 +1594,20 @@ export const PriorityScale: FC<{
             animation: 'wizPillIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both',
           }}
         >
-          <div style={{ padding: '22px 22px 12px' }}>
+          {/* Fechar (minimiza; mantém notas e seleção). */}
+          <button
+            onClick={() => setMinimized(true)}
+            title='Fechar'
+            aria-label='Fechar'
+            style={{
+              position: 'absolute', top: 14, right: 14, zIndex: 2,
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: '#8a8a8a', padding: 6, borderRadius: 8, lineHeight: 0,
+            }}
+          >
+            <FiX size={18} />
+          </button>
+          <div style={{ padding: '22px 44px 12px 22px' }}>
             <div style={{ fontFamily: 'SpotifyMixUITitle', color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>
               Sua ordem de prioridade está pronta
             </div>
