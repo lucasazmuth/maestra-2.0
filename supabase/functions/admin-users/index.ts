@@ -144,11 +144,23 @@ async function remove(admin: Admin, callerId: string, userId: string) {
 
   // A ORDEM importa: apaga os artistas PRIMEIRO. O trigger fn_track_artist_deletion grava em
   // artist_deletions usando o user_id — e isso precisa acontecer com o usuário ainda presente
-  // (senão viola a FK). Só depois limpamos as tabelas sem ON DELETE CASCADE pra auth.users.
+  // (senão viola a FK). Só depois limpamos as tabelas cujo FK pra auth.users é NO ACTION
+  // (as com ON DELETE CASCADE somem sozinhas no deleteUser). Se QUALQUER uma dessas ficar pra
+  // trás, o deleteUser falha com "Database error deleting user". Os filhos dessas tabelas
+  // (whatsapp_messages, chat_messages, crm_quote_items etc.) são todos CASCADE, então cair a
+  // linha-pai já os limpa.
   await admin.from("artists").delete().eq("user_id", userId);
-  for (const t of ["artist_deletions", "account_deletion_requests", "artist_members", "nyta_conversations"]) {
+
+  // Tabelas NO ACTION que apontam pro dono via `user_id`.
+  for (const t of ["artist_deletions", "account_deletion_requests", "artist_members", "nyta_conversations", "whatsapp_instances"]) {
     await admin.from(t).delete().eq("user_id", userId);
   }
+  // Tabelas NO ACTION com nome de coluna diferente (dono OU só "ator" do registro).
+  await admin.from("whatsapp_instance_assignments").delete().eq("assigned_by_user_id", userId);
+  await admin.from("chats").delete().eq("created_by", userId);
+  await admin.from("crm_quotes").delete().eq("created_by", userId);
+  // updated_by só marca quem editou por último (pode ser registro de outra pessoa) → zera a ref.
+  await admin.from("crm_quotes").update({ updated_by: null }).eq("updated_by", userId);
 
   const { error } = await admin.auth.admin.deleteUser(userId);
   if (error) {
