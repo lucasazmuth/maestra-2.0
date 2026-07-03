@@ -704,7 +704,17 @@ const ArtistCreate: FC = () => {
                   enableStickyCta={!redo}
                 />
               ) : (
-                <div className={styles.diagWrap} style={{ textAlign: 'center' }}>
+                <div
+                  className={styles.diagWrap}
+                  style={{
+                    margin: '64px auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                  }}
+                >
                   <p style={{ color: '#cfcfd4', marginBottom: 18 }}>
                     {diagError ? 'Não consegui gerar seu diagnóstico agora. Tente novamente em instantes.' : 'Carregando…'}
                   </p>
