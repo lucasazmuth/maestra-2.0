@@ -47,7 +47,7 @@ const Login: FC = () => {
     }
     try {
       await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/login`,
+        redirectTo: `${window.location.origin}/redefinir-senha`,
       });
       setInfo('Enviamos um link de recuperação para o seu e-mail.');
     } catch (err: any) {

@@ -33,6 +33,7 @@ import Signup from './pages/Signup';
 import Welcome from './pages/Welcome';
 const Landing = lazy(() => import('./pages/Landing'));
 const DiagnosticoReal = lazy(() => import('./pages/DiagnosticoReal'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Page404 = lazy(() => import('./pages/404'));
 const Artists = lazy(() => import('./pages/Artists'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -163,6 +164,11 @@ const AppRoutes: FC = () => {
 
       <Route path='/login' element={<PublicOnly><Login /></PublicOnly>} />
       <Route path='/signup' element={<PublicOnly><Signup /></PublicOnly>} />
+
+      {/* Redefinir senha: aberta pelo link do e-mail de recuperação (tokens no hash). Pública e
+          FORA de PublicOnly de propósito — a própria tela estabelece uma sessão de recovery, e
+          PublicOnly redirecionaria pra /artists assim que ela entrasse, sem deixar trocar a senha. */}
+      <Route path='/redefinir-senha' element={<ResetPassword />} />
 
       {/* Páginas legais (Termos / Privacidade): públicas e standalone — acessíveis da landing
           por quem ainda não tem conta. Conteúdo único em src/constants/legal.ts. */}
