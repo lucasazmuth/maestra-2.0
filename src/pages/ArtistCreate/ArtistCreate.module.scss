@@ -319,6 +319,54 @@
 }
 
 // ─── Quiz: opções limpas, sutis ───────────────────────────────────────────────
+// Progresso do quiz (micro): "Pergunta X de N" + barra fina verde, pra o usuário saber quanto falta.
+.quizProgress {
+  width: 100%;
+  margin-bottom: 20px;
+}
+.quizProgressLabel {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #9a9aa5;
+  margin-bottom: 8px;
+}
+.quizBar {
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.quizBarFill {
+  display: block;
+  height: 100%;
+  background: #2ec47a;
+  border-radius: 9999px;
+  transition: width 0.35s ease;
+}
+
+// Botão "Voltar" sutil no rodapé do quiz.
+.quizBackWrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+.quizBackBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6f6f78;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  transition: color 0.15s ease, background 0.15s ease;
+  &:hover { color: #cfcfd4; background: rgba(255, 255, 255, 0.05); }
+}
+
 .options {
   display: flex;
   flex-direction: column;

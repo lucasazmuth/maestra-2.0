@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Input, InputNumber, Spin } from 'antd';
-import { FiAlertCircle } from 'react-icons/fi';
+import { FiAlertCircle, FiArrowLeft } from 'react-icons/fi';
 import { useDebounce } from 'use-debounce';
 
 import { DiagnosticoIcon } from '../../components/Icons/system';
@@ -365,6 +365,20 @@ const ArtistCreate: FC = () => {
     }
   };
 
+  // Índice ANTERIOR pulando as perguntas condicionais que não se aplicam (espelha o nextQuizIndex).
+  const prevQuizIndex = (from: number) => {
+    let i = from;
+    while (i >= 0 && QUIZ[i].skipIf?.(answers.current)) i -= 1;
+    return i;
+  };
+
+  const goBackQuiz = () => {
+    const prev = prevQuizIndex(quizIndex - 1);
+    if (prev < 0) return;
+    setQuizIndex(prev);
+    say(QUIZ[prev].q);
+  };
+
   const goToUnlock = () => {
     // Redo: o perfil já é pago — volta pro diagnóstico atualizado (nada de desbloqueio).
     if (redo) { navigate(`/artists/${redoArtistId}/diagnostico`); return; }
@@ -382,6 +396,14 @@ const ArtistCreate: FC = () => {
   const realEnv = step !== 'perfil';
   // Fase do macro-fluxo do header: 0 = Criar perfil, 1 = Diagnóstico REAL (Pagamento fica fora desta tela).
   const macroPhase = step === 'perfil' ? 0 : 1;
+
+  // Progresso do quiz (micro): posição entre as perguntas VISÍVEIS (respeitando os skips atuais),
+  // pra o usuário saber quanto falta. E se dá pra voltar pra pergunta anterior.
+  const quizVisible = QUIZ.map((_, i) => i).filter((i) => !QUIZ[i].skipIf?.(answers.current));
+  const quizPos = Math.max(0, quizVisible.indexOf(quizIndex));
+  const quizTotal = quizVisible.length || QUIZ.length;
+  const quizPct = Math.round(((quizPos + 1) / quizTotal) * 100);
+  const canGoBack = step === 'quiz' && prevQuizIndex(quizIndex - 1) >= 0;
 
   return (
     <div className={`${styles.page} ${realEnv ? styles.pageReal : ''}`}>
@@ -542,6 +564,13 @@ const ArtistCreate: FC = () => {
             )}
 
             {/* QUIZ */}
+            {step === 'quiz' && (
+              <div className={styles.quizProgress}>
+                <div className={styles.quizProgressLabel}>Pergunta {quizPos + 1} de {quizTotal}</div>
+                <div className={styles.quizBar}><span className={styles.quizBarFill} style={{ width: `${quizPct}%` }} /></div>
+              </div>
+            )}
+
             {step === 'quiz' && (() => {
               const cur = QUIZ[quizIndex];
               const currencyProps = {
@@ -690,6 +719,15 @@ const ArtistCreate: FC = () => {
           </div>
         )}
       </div>
+
+      {/* Voltar pra pergunta anterior — sutil, no rodapé (só durante o quiz e se houver anterior). */}
+      {canGoBack && (
+        <div className={styles.quizBackWrap}>
+          <button className={styles.quizBackBtn} onClick={goBackQuiz}>
+            <FiArrowLeft size={15} /> Voltar
+          </button>
+        </div>
+      )}
     </div>
   );
 };
