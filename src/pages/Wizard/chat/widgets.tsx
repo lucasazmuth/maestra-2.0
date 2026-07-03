@@ -595,11 +595,11 @@ export const ReferenceMapCard: FC<{ references?: ArtistIdentity['references'] }>
     const anchorR = dist + 22;
     const ax = HUB.x + Math.cos(baseAngle) * anchorR;
     const ay = HUB.y + Math.sin(baseAngle) * anchorR;
-    const spacing = 16;
+    const spacing = 17;
     items.forEach((it, i) => {
       const t = items.length > 1 ? i - (items.length - 1) / 2 : 0;
-      const ix = clamp(ax + Math.cos(perpAngle) * t * spacing, 6, 94);
-      const iy = clamp(ay + Math.sin(perpAngle) * t * spacing, 6, 94);
+      const ix = clamp(ax + Math.cos(perpAngle) * t * spacing, 8, 92);
+      const iy = clamp(ay + Math.sin(perpAngle) * t * spacing, 8, 92);
       nodes.push({ x: ix, y: iy, label: it, color: q.color, kind: 'item' });
       lines.push({ x1: q.x, y1: q.y, x2: ix, y2: iy, color: `${q.color}80` });
     });
@@ -629,7 +629,8 @@ export const ReferenceMapCard: FC<{ references?: ArtistIdentity['references'] }>
         {nodes.map((n, i) => {
           const isHub = n.kind === 'hub';
           const isCat = n.kind === 'cat';
-          const size = isHub ? '20%' : isCat ? '26%' : '14%';
+          // Categorias pouco maiores que os itens (não dominam o mapa); itens com fôlego pra ler.
+          const size = isHub ? '18%' : isCat ? '20%' : '16%';
           return (
             <div
               key={i}
@@ -645,12 +646,12 @@ export const ReferenceMapCard: FC<{ references?: ArtistIdentity['references'] }>
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
-                padding: '6%',
+                padding: '4%',
                 background: isHub || isCat ? n.color : '#0e0e0e',
                 border: isHub || isCat ? 'none' : `1.5px solid ${n.color}`,
                 color: isHub ? '#fff' : isCat ? '#0b0b0b' : n.color,
                 fontWeight: isHub || isCat ? 800 : 700,
-                fontSize: isHub ? 9.5 : isCat ? 8.5 : 8.5,
+                fontSize: isHub ? 9 : isCat ? 8 : 8.5,
                 letterSpacing: isHub || isCat ? 0.3 : 0,
                 textTransform: isHub || isCat ? 'uppercase' : 'none',
                 lineHeight: 1.15,
