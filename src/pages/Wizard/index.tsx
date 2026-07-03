@@ -147,6 +147,16 @@ const Wizard: FC = () => {
     return run;
   };
 
+  // Publica um persist ESTÁVEL pra coluna de resultados (edição inline dos entregáveis).
+  // A função `persist` é recriada a cada render; o wrapper via ref sempre chama a mais recente.
+  const persistFnRef = useRef(persist);
+  persistFnRef.current = persist;
+  useEffect(() => {
+    wizardPanel.setPersist((patch) => persistFnRef.current(patch));
+    return () => wizardPanel.setPersist(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!artist) {
     if (artistsLoaded) return <Navigate to='/artists' replace />;
     return <Spinner loading>{null as any}</Spinner>;

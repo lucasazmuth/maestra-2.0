@@ -131,6 +131,7 @@ export const AppLayout: FC = memo(() => {
                   artistName={wizardPanel.artistName}
                   progress={wizardPanel.progress}
                   onClose={() => wizardPanel.setOpen(false)}
+                  onEdit={wizardPanel.persist ?? undefined}
                 />
               )}
             </div>

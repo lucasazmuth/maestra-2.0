@@ -10,7 +10,11 @@ interface WizardPanelState {
   content: ArtistContent;
   artistName: string;
   progress: number;
+  // Persistência publicada pelo Wizard: permite à coluna editar entregáveis (visão, missão…)
+  // gravando pelo MESMO caminho do chat (fila de persist + updateArtistContent).
+  persist: ((patch: Partial<ArtistContent>) => Promise<void>) | null;
   setData: (d: { content: ArtistContent; artistName: string; progress: number }) => void;
+  setPersist: (fn: ((patch: Partial<ArtistContent>) => Promise<void>) | null) => void;
   setOpen: (open: boolean) => void;
   toggle: () => void;
   activate: () => void;
@@ -23,9 +27,11 @@ export const useWizardPanelStore = create<WizardPanelState>((set) => ({
   content: {},
   artistName: '',
   progress: 0,
+  persist: null,
   setData: (d) => set(d),
+  setPersist: (fn) => set({ persist: fn }),
   setOpen: (open) => set({ open }),
   toggle: () => set((s) => ({ open: !s.open })),
   activate: () => set({ active: true }),
-  deactivate: () => set({ active: false }),
+  deactivate: () => set({ active: false, persist: null }),
 }));

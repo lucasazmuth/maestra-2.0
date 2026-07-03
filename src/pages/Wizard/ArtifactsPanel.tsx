@@ -1,9 +1,9 @@
-import { FC, ReactNode } from 'react';
-import { FiX } from 'react-icons/fi';
+import { FC, ReactNode, useState } from 'react';
+import { FiCheck, FiEdit3, FiX } from 'react-icons/fi';
 
 import { STEP_LABELS } from './chat/script';
 import { stripEmDash } from './clean';
-import type { ArtistContent } from '../../interfaces/maestra';
+import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 
 // Coluna lateral de resultados do Planejamento Estratégico: lista limpa do que já foi produzido
 // (visão, missão, valores, objetivos, SWOT, estratégias, cronograma) conforme a Nyta os gera —
@@ -97,13 +97,92 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
   }
 };
 
+// Etapas com edição inline pelo painel (as demais — objetivos, SWOT, estratégias, prioridades —
+// são derivadas pelos motores da metodologia e só mudam refazendo a etapa no chat).
+const EDITABLE_STEPS = new Set([0, 1, 2, 3]);
+
+// Formulário compacto de edição de uma seção. Monta o patch de identity e entrega ao onSave.
+const SectionEditor: FC<{
+  i: number;
+  draft: ArtistContent;
+  onCancel: () => void;
+  onSave: (patch: Partial<ArtistContent>) => Promise<void> | void;
+}> = ({ i, draft, onCancel, onSave }) => {
+  const id = draft.identity || {};
+  const [genre, setGenre] = useState(id.genre || '');
+  const [city, setCity] = useState(id.city || '');
+  const [uf, setUf] = useState(id.state || '');
+  const [text, setText] = useState(i === 1 ? id.vision || '' : i === 2 ? id.mission || '' : (id.values || []).join('\n'));
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    const identity: ArtistIdentity = { ...id };
+    if (i === 0) {
+      identity.genre = genre.trim();
+      identity.city = city.trim();
+      identity.state = uf.trim().toUpperCase();
+    } else if (i === 1) identity.vision = text.trim();
+    else if (i === 2) identity.mission = text.trim();
+    else if (i === 3) identity.values = text.split('\n').map((v) => v.trim()).filter(Boolean);
+    setSaving(true);
+    try {
+      await onSave({ identity });
+      onCancel();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className='wiz-art-edit'>
+      {i === 0 ? (
+        <>
+          <label className='wiz-art-edit-label'>Gênero</label>
+          <input className='wiz-art-edit-input' value={genre} onChange={(e) => setGenre(e.target.value)} />
+          <div className='wiz-art-edit-row'>
+            <div style={{ flex: 1 }}>
+              <label className='wiz-art-edit-label'>Cidade</label>
+              <input className='wiz-art-edit-input' value={city} onChange={(e) => setCity(e.target.value)} />
+            </div>
+            <div style={{ width: 56 }}>
+              <label className='wiz-art-edit-label'>UF</label>
+              <input className='wiz-art-edit-input' value={uf} maxLength={2} onChange={(e) => setUf(e.target.value.toUpperCase())} />
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <textarea
+            className='wiz-art-edit-area'
+            rows={i === 3 ? 4 : 3}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          {i === 3 && <div className='wiz-art-edit-hint'>Um valor por linha.</div>}
+        </>
+      )}
+      <div className='wiz-art-edit-actions'>
+        <button className='wiz-art-edit-save' disabled={saving} onClick={save}>
+          <FiCheck size={12} /> {saving ? 'Salvando…' : 'Salvar'}
+        </button>
+        <button className='wiz-art-edit-cancel' disabled={saving} onClick={onCancel}>
+          <FiX size={12} /> Cancelar
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const ArtifactsPanel: FC<{
   draft: ArtistContent;
   artistName: string;
   progress: number;
   onClose: () => void;
-}> = ({ draft, artistName, progress, onClose }) => {
+  // Quando presente, habilita a edição inline dos entregáveis (lápis sutil por seção).
+  onEdit?: (patch: Partial<ArtistContent>) => Promise<void> | void;
+}> = ({ draft, artistName, progress, onClose, onEdit }) => {
   const cur = Math.min(draft.step ?? 0, STEP_LABELS.length - 1);
+  const [editing, setEditing] = useState<number | null>(null);
   // Só mostra o que já foi alcançado (etapas até a atual) — coluna "até aqui", sem o roteiro futuro.
   const visible = STEP_LABELS.map((label, i) => ({ label, i, art: artifactFor(i, draft) })).filter(
     (s) => s.i <= cur
@@ -131,8 +210,24 @@ export const ArtifactsPanel: FC<{
             <div className='wiz-art-step-name'>
               {i + 1}. {label}
               {i === cur && <span className='wiz-art-now'> · agora</span>}
+              {onEdit && EDITABLE_STEPS.has(i) && !!art && editing !== i && (
+                <button
+                  className='wiz-art-pencil'
+                  onClick={() => setEditing(i)}
+                  title={`Editar ${label.toLowerCase()}`}
+                  aria-label={`Editar ${label.toLowerCase()}`}
+                >
+                  <FiEdit3 size={12} />
+                </button>
+              )}
             </div>
-            {art && <div className='wiz-art-step-body'>{art}</div>}
+            {editing === i && onEdit ? (
+              <div className='wiz-art-step-body'>
+                <SectionEditor i={i} draft={draft} onCancel={() => setEditing(null)} onSave={onEdit} />
+              </div>
+            ) : (
+              art && <div className='wiz-art-step-body'>{art}</div>
+            )}
           </div>
         ))}
       </div>
