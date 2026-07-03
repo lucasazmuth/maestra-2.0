@@ -1,9 +1,10 @@
 import { FC, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { Input, Table, Tag, Modal, Spin, message, type TableColumnsType } from 'antd';
-import { FiSearch, FiUser } from 'react-icons/fi';
+import { Input, Table, Tag, Modal, Spin, message, Button, Popconfirm, type TableColumnsType } from 'antd';
+import { FiSearch, FiUser, FiTrash2 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import { supabase } from '../../lib/supabase';
+import { readEdgeFunctionError } from '../../lib/edgeError';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 interface UserRow {
@@ -53,6 +54,7 @@ const AdminUsers: FC = () => {
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -73,6 +75,18 @@ const AdminUsers: FC = () => {
     setDetail((data as UserDetail) || null);
     setDetailLoading(false);
   }, []);
+
+  const removeUser = useCallback(async () => {
+    if (!detail) return;
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke('admin-users', { body: { action: 'delete', userId: detail.account.id } });
+    setDeleting(false);
+    if (error) { message.error(await readEdgeFunctionError(error, 'Não foi possível excluir a conta.')); return; }
+    if (data?.error) { message.error(data.error); return; }
+    message.success('Conta excluída.');
+    setModalOpen(false);
+    load();
+  }, [detail, load]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -147,9 +161,21 @@ const AdminUsers: FC = () => {
       <Modal
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
-        footer={null}
         width={760}
         title={<span style={{ color: '#fff', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8 }}><FiUser /> {detail?.account.name || 'Usuário'}</span>}
+        footer={detail ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Popconfirm
+              title="Excluir esta conta?"
+              description={<span style={{ display: 'inline-block', maxWidth: 300 }}>Remove o usuário e todos os dados dele (perfis, assinatura, pagamentos). Não dá pra desfazer.</span>}
+              okText="Excluir" okButtonProps={{ danger: true, loading: deleting }} cancelText="Cancelar"
+              onConfirm={removeUser}
+            >
+              <Button danger icon={<FiTrash2 />} loading={deleting}>Excluir conta</Button>
+            </Popconfirm>
+            <Button onClick={() => setModalOpen(false)}>Fechar</Button>
+          </div>
+        ) : null}
       >
         {detailLoading || !detail ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}><Spin /></div>

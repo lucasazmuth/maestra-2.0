@@ -47,9 +47,8 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return json({ error: "JSON inválido" }, 400); }
 
   try {
-    if (body.action === "detail") {
-      return await detail(admin, body.userId || "");
-    }
+    if (body.action === "delete") return await remove(admin, caller.id, body.userId || "");
+    if (body.action === "detail") return await detail(admin, body.userId || "");
     return await list(admin);
   } catch (e) {
     console.error("[admin-users] erro:", (e as Error)?.message);
@@ -131,4 +130,30 @@ async function detail(admin: Admin, userId: string) {
     subscription: subRes.data || null,
     purchases: purchasesRes.data || [],
   });
+}
+
+// Exclui uma conta DE VERDADE (auth + dados). O resto cai por CASCADE; antes
+// limpamos as FKs que são NO ACTION pra auth.users (senão a exclusão trava).
+// Trava: não exclui a própria conta do admin nem outro administrador.
+async function remove(admin: Admin, callerId: string, userId: string) {
+  if (!userId) return json({ error: "userId é obrigatório" }, 400);
+  if (userId === callerId) return json({ error: "Você não pode excluir a própria conta." }, 400);
+
+  const { data: adm } = await admin.from("platform_admins").select("id").eq("user_id", userId).maybeSingle();
+  if (adm) return json({ error: "Não é possível excluir um administrador." }, 400);
+
+  // A ORDEM importa: apaga os artistas PRIMEIRO. O trigger fn_track_artist_deletion grava em
+  // artist_deletions usando o user_id — e isso precisa acontecer com o usuário ainda presente
+  // (senão viola a FK). Só depois limpamos as tabelas sem ON DELETE CASCADE pra auth.users.
+  await admin.from("artists").delete().eq("user_id", userId);
+  for (const t of ["artist_deletions", "account_deletion_requests", "artist_members", "nyta_conversations"]) {
+    await admin.from(t).delete().eq("user_id", userId);
+  }
+
+  const { error } = await admin.auth.admin.deleteUser(userId);
+  if (error) {
+    console.error("[admin-users] deleteUser:", error.message);
+    return json({ error: `Falha ao excluir: ${error.message}` }, 500);
+  }
+  return json({ ok: true });
 }
