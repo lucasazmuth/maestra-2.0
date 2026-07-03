@@ -597,36 +597,36 @@ export const ReferenceMapCard: FC<{ references?: ArtistIdentity['references'] }>
   const byPos = (p: 'tl' | 'tr' | 'bl' | 'br') => REF_QUADRANTS.find((q) => q.pos === p)!;
   return (
     <div style={{ marginBottom: 12 }}>
-      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13, marginBottom: 10 }}>Seu mapa de referências</div>
-      <div style={{ position: 'relative' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <Quadrant q={byPos('tl')} />
-          <Quadrant q={byPos('tr')} />
-          <Quadrant q={byPos('bl')} />
-          <Quadrant q={byPos('br')} />
-        </div>
-        {/* Hub central do mapa mental */}
+      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13, marginBottom: 14 }}>Seu mapa de referências</div>
+      {/* Hub do mapa mental: fica ACIMA da grade (fluxo normal, nunca sobrepõe o conteúdo dos
+          quadrantes — antes era um selo absoluto centralizado que cobria itens curtos). As linhas
+          se ramificam pra baixo, uma pra cada coluna, reforçando a leitura de "mapa mental". */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
         <div
-          aria-hidden
           style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
             background: '#16a34a',
             color: '#fff',
             fontWeight: 800,
             fontSize: 11,
             letterSpacing: 0.5,
-            padding: '7px 13px',
+            padding: '7px 14px',
             borderRadius: 9999,
-            border: '3px solid #0b0b0b',
             whiteSpace: 'nowrap',
-            pointerEvents: 'none',
           }}
         >
           REFERÊNCIAS
         </div>
+      </div>
+      <svg viewBox="0 0 100 22" preserveAspectRatio="none" aria-hidden style={{ display: 'block', width: '100%', height: 22 }}>
+        <path d="M50,0 L50,11 M50,11 L25,22 M50,11 L75,22" fill="none" stroke="#2a2a2a" strokeWidth={1.5} />
+        <circle cx={25} cy={22} r={1.6} fill="#2a2a2a" />
+        <circle cx={75} cy={22} r={1.6} fill="#2a2a2a" />
+      </svg>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <Quadrant q={byPos('tl')} />
+        <Quadrant q={byPos('tr')} />
+        <Quadrant q={byPos('bl')} />
+        <Quadrant q={byPos('br')} />
       </div>
     </div>
   );
