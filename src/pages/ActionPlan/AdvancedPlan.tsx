@@ -2,14 +2,16 @@ import { Dispatch, FC, ReactNode, SetStateAction, useState } from 'react';
 import { FiCheck, FiX, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { EditIcon } from '../../components/Icons/system';
 import { ReferenceMindMap } from '../../components/ReferenceMindMap';
-import type { ActionTask, ArtistContent, ArtistReferences, Strategy } from '../../interfaces/maestra';
+import type { ActionTask, ArtistContent, ArtistReferences, Strategy, SwotAnalysis } from '../../interfaces/maestra';
 import TaskComposer, { SuggTask } from './TaskComposer';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
 
 // Texto editável inline (visão/missão/bio/gênero): mostra o valor + lápis; ao editar vira textarea
-// com Salvar/Cancelar. Salvar chama onSave com o texto novo.
-const EditableText: FC<{ value: string; placeholder: string; canEdit: boolean; onSave: (v: string) => void }> = ({ value, placeholder, canEdit, onSave }) => {
-  const [editing, setEditing] = useState(false);
+// com Salvar/Cancelar. Salvar chama onSave com o texto novo. `autoEdit` abre já em modo de edição
+// (usado pelo fluxo "+ Adicionar bio", que só existe quando o campo ainda não tem valor nenhum);
+// `onCancel` avisa o pai quando o usuário desiste (pra esconder o campo de novo, se estava vazio).
+const EditableText: FC<{ value: string; placeholder: string; canEdit: boolean; onSave: (v: string) => void; autoEdit?: boolean; onCancel?: () => void }> = ({ value, placeholder, canEdit, onSave, autoEdit, onCancel }) => {
+  const [editing, setEditing] = useState(!!autoEdit);
   const [draft, setDraft] = useState(value);
   if (editing) {
     return (
@@ -17,7 +19,7 @@ const EditableText: FC<{ value: string; placeholder: string; canEdit: boolean; o
         <textarea className="ap-adv-edit-area" value={draft} autoFocus rows={3} onChange={(e) => setDraft(e.target.value)} />
         <div className="ap-adv-edit-actions">
           <button className="ap-adv-edit-save" onClick={() => { onSave(draft.trim()); setEditing(false); }}><FiCheck size={13} /> Salvar</button>
-          <button className="ap-adv-edit-cancel" onClick={() => { setDraft(value); setEditing(false); }}><FiX size={13} /> Cancelar</button>
+          <button className="ap-adv-edit-cancel" onClick={() => { setDraft(value); setEditing(false); onCancel?.(); }}><FiX size={13} /> Cancelar</button>
         </div>
       </div>
     );
@@ -30,8 +32,9 @@ const EditableText: FC<{ value: string; placeholder: string; canEdit: boolean; o
   );
 };
 
-// Lista editável (valores como chips, objetivos numerados): editar item, remover, adicionar.
-const EditableList: FC<{ items: string[]; chips?: boolean; canEdit: boolean; onSave: (items: string[]) => void }> = ({ items, chips, canEdit, onSave }) => {
+// Lista editável (valores como chips, objetivos numerados, SWOT com marcador): editar item,
+// remover, adicionar.
+const EditableList: FC<{ items: string[]; chips?: boolean; bullets?: boolean; canEdit: boolean; onSave: (items: string[]) => void }> = ({ items, chips, bullets, canEdit, onSave }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string[]>(items);
   if (!editing) {
@@ -39,6 +42,12 @@ const EditableList: FC<{ items: string[]; chips?: boolean; canEdit: boolean; onS
       <div className="ap-adv-editable">
         {chips ? (
           <div className="ap-adv-chips">{items.map((v, i) => <span className="ap-adv-chip" key={i}>{v}</span>)}</div>
+        ) : bullets ? (
+          items.length ? (
+            <ul className="ap-adv-list">{items.map((it, i) => <li key={i}>{it}</li>)}</ul>
+          ) : (
+            <div className="ap-adv-empty">Sem itens</div>
+          )
         ) : (
           <ol className="ap-adv-objs">{items.map((o, i) => <li key={i}><span className="ap-adv-objnum">{String(i + 1).padStart(2, '0')}</span><span>{o}</span></li>)}</ol>
         )}
@@ -94,18 +103,10 @@ const Section: FC<{ title: string; children: ReactNode }> = ({ title, children }
   </section>
 );
 
-const SwotCol: FC<{ label: string; items?: string[] }> = ({ label, items }) => (
+const SwotCol: FC<{ label: string; items: string[]; canEdit: boolean; onSave: (items: string[]) => void }> = ({ label, items, canEdit, onSave }) => (
   <div className="ap-adv-swot-col">
     <div className="ap-adv-swot-label">{label}</div>
-    {items?.length ? (
-      <ul className="ap-adv-list">
-        {items.map((it, i) => (
-          <li key={i}>{it}</li>
-        ))}
-      </ul>
-    ) : (
-      <div className="ap-adv-empty">Sem itens</div>
-    )}
+    <EditableList items={items} bullets canEdit={canEdit} onSave={onSave} />
   </div>
 );
 
@@ -201,6 +202,15 @@ export const AdvancedPlan: FC<{
   const saveId = (patch: Partial<ArtistContent['identity']>) => onSaveContent?.({ identity: { ...id, ...patch } });
   const hasIdentity = !!(id.genre || id.vision || id.mission || id.bio || id.values?.length);
   const hasReferences = refHasItems(id.references);
+  // Bio nunca é gerada pela Nyta (não existe pergunta pra ela no wizard) — diferente de
+  // Gênero/Visão/Missão/Valores. Por isso só aparece quando já tem conteúdo OU quando o
+  // próprio artista pede pra adicionar (em vez de um "Sem bio" sempre visível, como se
+  // fosse um item do plano que ficou faltando).
+  const [addingBio, setAddingBio] = useState(false);
+  const saveSwot = (key: keyof SwotAnalysis, items: string[]) =>
+    onSaveContent?.({
+      swotAnalysis: { strengths: [], weaknesses: [], opportunities: [], threats: [], ...(swot || {}), [key]: items },
+    });
 
   return (
     <div className="ap-adv">
@@ -225,12 +235,21 @@ export const AdvancedPlan: FC<{
                 <EditableText value={id.mission || ''} placeholder="Sem missão definida" canEdit={canEditId} onSave={(v) => saveId({ mission: v })} />
               </div>
             )}
-            {(id.bio || canEditId) && (
+            {id.bio || addingBio ? (
               <div className="ap-adv-block">
                 <span className="ap-adv-field-label">Bio</span>
-                <EditableText value={id.bio || ''} placeholder="Sem bio" canEdit={canEditId} onSave={(v) => saveId({ bio: v })} />
+                <EditableText
+                  value={id.bio || ''}
+                  placeholder="Escreva uma bio…"
+                  canEdit={canEditId}
+                  autoEdit={addingBio && !id.bio}
+                  onSave={(v) => { saveId({ bio: v }); setAddingBio(false); }}
+                  onCancel={() => setAddingBio(false)}
+                />
               </div>
-            )}
+            ) : canEditId ? (
+              <button className="ap-adv-row-add" onClick={() => setAddingBio(true)}><FiPlus size={13} /> Adicionar bio</button>
+            ) : null}
             {(!!id.values?.length || canEditId) && (
               <div className="ap-adv-block">
                 <span className="ap-adv-field-label">Valores</span>
@@ -254,13 +273,13 @@ export const AdvancedPlan: FC<{
         </Section>
       )}
 
-      {swot && (
+      {(swot || canEditId) && (
         <Section title="Análise SWOT">
           <div className="ap-adv-swot">
-            <SwotCol label="Forças" items={swot.strengths} />
-            <SwotCol label="Fraquezas" items={swot.weaknesses} />
-            <SwotCol label="Oportunidades" items={swot.opportunities} />
-            <SwotCol label="Ameaças" items={swot.threats} />
+            <SwotCol label="Forças" items={swot?.strengths || []} canEdit={canEditId} onSave={(v) => saveSwot('strengths', v)} />
+            <SwotCol label="Fraquezas" items={swot?.weaknesses || []} canEdit={canEditId} onSave={(v) => saveSwot('weaknesses', v)} />
+            <SwotCol label="Oportunidades" items={swot?.opportunities || []} canEdit={canEditId} onSave={(v) => saveSwot('opportunities', v)} />
+            <SwotCol label="Ameaças" items={swot?.threats || []} canEdit={canEditId} onSave={(v) => saveSwot('threats', v)} />
           </div>
         </Section>
       )}
