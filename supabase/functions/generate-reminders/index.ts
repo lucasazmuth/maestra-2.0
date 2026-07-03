@@ -139,12 +139,12 @@ async function sendReminderEmails(
   const html = emailLayout({
     title,
     bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;white-space:pre-line;">${escapeHtml(message)}</p>
-    <p style="color:#8a8a92;font-size:13px;">Abra a Maestra Manager para ver os detalhes.</p>`,
+    <p style="color:#8a8a92;font-size:13px;">Abra a Maestra pra ver os detalhes.</p>`,
   });
   for (const r of recipients) {
     const email = await getRecipientEmail(supabase, r.user_id);
     if (!email) continue;
-    await sendBrevoEmail({ to: email, subject: `${title} — Maestra Manager`, html });
+    await sendBrevoEmail({ to: email, subject: title, html });
   }
 }
 
@@ -376,8 +376,8 @@ async function generateTaskReminders(
       user_id: r.user_id,
       artist_id: artist.id,
       type: "reminder",
-      title: `Tarefa vencendo: ${task.description.substring(0, 60)}`,
-      message: `A tarefa "${task.description}" da estratégia "${task.strategy_title}" vence em ${task.deadline}. Artista: ${artist.name}.`,
+      title: `Tarefa vence em breve: ${task.description.substring(0, 60)}`,
+      message: `A tarefa "${task.description}" (estratégia "${task.strategy_title}") do ${artist.name} vence em ${task.deadline}. Dá um gás pra não deixar passar.`,
       source: "auto_task" as const,
       reference_type: "task" as const,
       reference_id: task.id,
@@ -394,8 +394,8 @@ async function generateTaskReminders(
       await sendReminderEmails(
         supabase,
         recipients,
-        `Tarefa vencendo: ${task.description.substring(0, 60)}`,
-        `A tarefa "${task.description}" da estratégia "${task.strategy_title}" vence em ${task.deadline}. Artista: ${artist.name}.`
+        `Tarefa vence em breve: ${task.description.substring(0, 60)}`,
+        `A tarefa "${task.description}" (estratégia "${task.strategy_title}") do ${artist.name} vence em ${task.deadline}. Dá um gás pra não deixar passar.`
       );
     }
   }
@@ -455,8 +455,8 @@ async function generateEventReminders(
       user_id: r.user_id,
       artist_id: artist.id,
       type: "reminder",
-      title: `Evento em breve: ${event.title.substring(0, 60)}`,
-      message: `O evento "${event.title}" está programado para ${event.date}${event.start_time ? ` às ${event.start_time}` : ""}. Artista: ${artist.name}.`,
+      title: `Seu evento é amanhã: ${event.title.substring(0, 60)}`,
+      message: `"${event.title}" do ${artist.name} é ${event.date}${event.start_time ? ` às ${event.start_time}` : ""}. Tá tudo pronto pra brilhar?`,
       source: "auto_event" as const,
       reference_type: "event" as const,
       reference_id: event.id,
@@ -473,8 +473,8 @@ async function generateEventReminders(
       await sendReminderEmails(
         supabase,
         recipients,
-        `Evento em breve: ${event.title.substring(0, 60)}`,
-        `O evento "${event.title}" está programado para ${event.date}${event.start_time ? ` às ${event.start_time}` : ""}. Artista: ${artist.name}.`
+        `Seu evento é amanhã: ${event.title.substring(0, 60)}`,
+        `"${event.title}" do ${artist.name} é ${event.date}${event.start_time ? ` às ${event.start_time}` : ""}. Tá tudo pronto pra brilhar?`
       );
     }
   }
@@ -570,13 +570,13 @@ async function generateMetricReminders(
 
   if (existing && existing.length > 0) return 0;
 
-  const message = `Marcos de evolução detectados para ${artist.name}:\n${milestonesHit.join("\n")}`;
+  const message = `Marcos de evolução do ${artist.name}:\n${milestonesHit.join("\n")}\n\nContinua nesse ritmo!`;
 
   const notifications: NotificationInsert[] = recipients.map((r) => ({
     user_id: r.user_id,
     artist_id: artist.id,
     type: "milestone",
-    title: `Marco de evolução: ${artist.name}`,
+    title: `${artist.name} tá crescendo!`,
     message,
     source: "auto_metric" as const,
     reference_type: "metric_snapshot" as const,
@@ -595,7 +595,7 @@ async function generateMetricReminders(
     return 0;
   }
 
-  await sendReminderEmails(supabase, recipients, `Marco de evolução: ${artist.name}`, message);
+  await sendReminderEmails(supabase, recipients, `${artist.name} tá crescendo!`, message);
 
   return notifications.length;
 }

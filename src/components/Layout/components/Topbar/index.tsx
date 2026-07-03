@@ -1,9 +1,10 @@
-import { memo } from 'react';
-import { Dropdown, Space, type MenuProps } from 'antd';
+import { memo, useEffect, useState } from 'react';
+import { Badge, Dropdown, Space, type MenuProps } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FiLogOut, FiChevronDown } from 'react-icons/fi';
 import { NotificationIcon, ConfigIcon } from '../../../Icons/system';
+import { countUnread } from '../../../../services/db/notifications';
 
 import ForwardBackwardsButton from '../Navbar/ForwardBackwardsButton';
 import { NytaHeaderButton } from '../../../nyta/NytaHeaderButton';
@@ -24,6 +25,17 @@ export const Topbar = memo(() => {
   const currentArtist = useAppSelector((s) => (artistId ? s.artists.items.find((a) => a.id === artistId) : undefined));
 
   const user = useAppSelector((s) => s.auth.user);
+
+  // Contador de notificações não-lidas (badge no sino). Recarrega ao trocar de rota,
+  // pra o número cair depois que o usuário abre /notifications e marca como lidas.
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    if (!user?.id) { setUnread(0); return; }
+    let alive = true;
+    countUnread(user.id).then((n) => { if (alive) setUnread(n); }).catch(() => {});
+    return () => { alive = false; };
+  }, [user?.id, pathname]);
+
   const meta = (user?.user_metadata || {}) as Record<string, any>;
   const displayName = meta.full_name || meta.name || user?.email || 'Usuário';
   const avatar = meta.avatar_url || meta.picture || ARTISTS_DEFAULT_IMAGE;
@@ -120,24 +132,26 @@ export const Topbar = memo(() => {
       <Space size={16} align='center'>
         <NytaHeaderButton />
 
-        <button
-          onClick={() => navigate('/notifications')}
-          title={t('Notifications', { defaultValue: 'Notificações' })}
-          style={{
-            background: '#000',
-            border: 'none',
-            cursor: 'pointer',
-            color: '#b3b3b3',
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <NotificationIcon size={22} />
-        </button>
+        <Badge count={unread} size='small' overflowCount={99} offset={[-4, 4]}>
+          <button
+            onClick={() => navigate('/notifications')}
+            title={t('Notifications', { defaultValue: 'Notificações' })}
+            style={{
+              background: '#000',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#b3b3b3',
+              width: 36,
+              height: 36,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <NotificationIcon size={22} />
+          </button>
+        </Badge>
 
         <Dropdown menu={{ items }} trigger={['click']} placement='bottomRight'>
           <button

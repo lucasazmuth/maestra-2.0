@@ -60,7 +60,7 @@ export function emailLayout(opts: { title: string; bodyHtml: string }): string {
     <div style="font-weight:800;font-size:20px;color:#af2896;letter-spacing:.5px;margin-bottom:24px;">Maestra Manager</div>
     <h1 style="font-size:20px;line-height:1.3;color:#fff;margin:0 0 12px;">${opts.title}</h1>
     ${opts.bodyHtml}
-    <div style="margin-top:32px;color:#6b7280;font-size:12px;border-top:1px solid #222;padding-top:16px;">Maestra Manager — gestão de carreira musical.</div>
+    <div style="margin-top:32px;color:#6b7280;font-size:12px;border-top:1px solid #222;padding-top:16px;">Maestra Manager · gestão de carreira musical.</div>
   </div>
 </body></html>`;
 }
@@ -70,4 +70,9 @@ export function otpBlock(code: string): string {
   return `<div style="margin:20px 0;text-align:center;">
     <div style="display:inline-block;background:#161616;border:1px solid rgba(175,40,150,.35);border-radius:12px;padding:16px 28px;font-size:32px;font-weight:800;letter-spacing:10px;color:#fff;">${code}</div>
   </div>`;
+}
+
+// Botão CTA roxo padrão dos e-mails (usado pelos nudges de ativação).
+export function ctaButton(label: string, url: string): string {
+  return `<p style="margin:24px 0;"><a href="${url}" style="display:inline-block;background:#af2896;color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">${label}</a></p>`;
 }

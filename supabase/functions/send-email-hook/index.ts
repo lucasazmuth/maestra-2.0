@@ -35,38 +35,39 @@ function buildEmail(d: EmailData, name: string): { subject: string; html: string
       // Senha: fluxo por link (a tela de redefinição lê o token da URL).
       const link = verifyLink(d);
       return {
-        subject: "Redefinição de senha — Maestra Manager",
+        subject: "Redefinir sua senha",
         html: emailLayout({
           title: "Redefinir sua senha",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Recebemos um pedido para redefinir a senha da sua conta. Clique no botão abaixo:</p>
+          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Recebemos um pedido pra redefinir a senha da sua conta. Clique no botão abaixo.</p>
           <p style="margin:20px 0;"><a href="${link}" style="display:inline-block;background:#af2896;color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Redefinir senha</a></p>
-          <p style="color:#8a8a92;font-size:13px;">Se você não pediu isso, pode ignorar este e-mail.</p>`,
+          <p style="color:#8a8a92;font-size:13px;">Se não foi você, pode ignorar. Sua senha continua a mesma.</p>`,
         }),
       };
     }
     case "invite":
       return {
-        subject: "Você foi convidado para a Maestra Manager",
+        subject: "Seu convite pra Maestra chegou",
         html: emailLayout({
-          title: "Você recebeu um convite",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Use o código abaixo para concluir seu acesso à Maestra Manager:</p>${otpBlock(code)}
-          <p style="color:#8a8a92;font-size:13px;">O código expira em alguns minutos.</p>`,
+          title: "Seu convite chegou",
+          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Você foi convidado(a) pra Maestra Manager. Use o código abaixo pra concluir seu acesso:</p>${otpBlock(code)}
+          <p style="color:#8a8a92;font-size:13px;">Expira em alguns minutos.</p>`,
         }),
       };
     case "email_change":
       return {
-        subject: "Confirme seu novo e-mail — Maestra Manager",
+        subject: "Confirme seu novo e-mail",
         html: emailLayout({
-          title: "Confirme a troca de e-mail",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Use o código abaixo para confirmar seu novo e-mail:</p>${otpBlock(code)}`,
+          title: "Confirme seu novo e-mail",
+          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Quase lá! Use o código abaixo pra confirmar seu novo e-mail:</p>${otpBlock(code)}`,
         }),
       };
     case "magiclink":
       return {
-        subject: "Seu código de acesso — Maestra Manager",
+        subject: "Seu código de acesso",
         html: emailLayout({
           title: "Acesse sua conta",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Use o código abaixo para entrar:</p>${otpBlock(code)}`,
+          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Use o código abaixo pra entrar na Maestra:</p>${otpBlock(code)}
+          <p style="color:#8a8a92;font-size:13px;">Expira em alguns minutos.</p>`,
         }),
       };
     case "signup":
@@ -74,11 +75,11 @@ function buildEmail(d: EmailData, name: string): { subject: string; html: string
     default:
       // Cadastro / confirmação de e-mail: CÓDIGO de 6 dígitos.
       return {
-        subject: "Seu código de verificação — Maestra Manager",
+        subject: "Confirme seu e-mail na Maestra",
         html: emailLayout({
           title: "Confirme seu e-mail",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Bem-vindo(a)! Use o código abaixo para confirmar seu e-mail e ativar sua conta:</p>${otpBlock(code)}
-          <p style="color:#8a8a92;font-size:13px;">O código expira em alguns minutos. Se não foi você, ignore este e-mail.</p>`,
+          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Que bom ter você aqui. Use o código abaixo pra confirmar seu e-mail e ativar sua conta:</p>${otpBlock(code)}
+          <p style="color:#8a8a92;font-size:13px;">Ele expira em alguns minutos. Se não foi você, é só ignorar.</p>`,
         }),
       };
   }

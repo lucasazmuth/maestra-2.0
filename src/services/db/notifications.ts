@@ -70,6 +70,17 @@ export const fetchArtistNames = async (
   return map;
 };
 
+/** Conta as notificações não-lidas do usuário (para o badge do sino). */
+export const countUnread = async (userId: string): Promise<number> => {
+  const { count, error } = await supabase
+    .from(TABLE)
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('read', false);
+  if (error) throw error;
+  return count || 0;
+};
+
 export const markAsRead = async (id: string): Promise<void> => {
   const { error } = await supabase.from(TABLE).update({ read: true }).eq('id', id);
   if (error) throw error;
