@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import { useAppDispatch } from '../../store/store';
 import { authActions } from '../../store/slices/auth';
-import { supabase } from '../../lib/supabase';
 import { AuthShell, AuthField, AuthSubmit, authError } from './AuthShell';
 import { EmailCodeStep } from '../../components/EmailCodeStep';
 
@@ -14,7 +13,6 @@ const Login: FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   // Usuário que se cadastrou mas nunca confirmou o e-mail: o login cai aqui pra confirmar com código.
   const [needsVerify, setNeedsVerify] = useState(false);
 
@@ -22,7 +20,6 @@ const Login: FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setInfo(null);
     try {
       await dispatch(authActions.signIn({ email: email.trim(), password })).unwrap();
       navigate('/artists', { replace: true });
@@ -38,22 +35,8 @@ const Login: FC = () => {
     }
   };
 
-  const onForgot = async () => {
-    setError(null);
-    setInfo(null);
-    if (!email.trim()) {
-      setError('Informe seu e-mail acima para recuperar a senha.');
-      return;
-    }
-    try {
-      await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/redefinir-senha`,
-      });
-      setInfo('Enviamos um link de recuperação para o seu e-mail.');
-    } catch (err: any) {
-      setError(authError(err));
-    }
-  };
+  // Recuperação de senha tem tela própria (/esqueci-senha). Leva o e-mail já digitado.
+  const onForgot = () => navigate('/esqueci-senha', { state: { email: email.trim() } });
 
   if (needsVerify) {
     return (
@@ -78,7 +61,6 @@ const Login: FC = () => {
         <AuthField type='email' placeholder='E-mail' value={email} onChange={setEmail} autoFocus />
         <AuthField type='password' placeholder='Senha' value={password} onChange={setPassword} />
         {error && <div style={{ color: '#e91429', fontSize: 13 }}>{error}</div>}
-        {info && <div style={{ color: '#af2896', fontSize: 13 }}>{info}</div>}
         <AuthSubmit loading={loading} label='Entrar' />
       </form>
       <button

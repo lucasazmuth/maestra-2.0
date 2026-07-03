@@ -34,6 +34,7 @@ import Welcome from './pages/Welcome';
 const Landing = lazy(() => import('./pages/Landing'));
 const DiagnosticoReal = lazy(() => import('./pages/DiagnosticoReal'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Page404 = lazy(() => import('./pages/404'));
 const Artists = lazy(() => import('./pages/Artists'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -165,6 +166,9 @@ const AppRoutes: FC = () => {
 
       <Route path='/login' element={<PublicOnly><Login /></PublicOnly>} />
       <Route path='/signup' element={<PublicOnly><Signup /></PublicOnly>} />
+      {/* Recuperação de senha (passo 1): tela própria pra digitar o e-mail e disparar o link.
+          O link do e-mail cai em /redefinir-senha (passo 2, troca a senha de fato). */}
+      <Route path='/esqueci-senha' element={<PublicOnly><ForgotPassword /></PublicOnly>} />
 
       {/* Redefinir senha: aberta pelo link do e-mail de recuperação (tokens no hash). Pública e
           FORA de PublicOnly de propósito — a própria tela estabelece uma sessão de recovery, e
