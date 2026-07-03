@@ -542,19 +542,30 @@ export const ReferenceHorizons: FC<{
 const splitRefItems = (s?: string): string[] =>
   (s || '').split(/[,;\n·]+/).map((x) => x.trim()).filter(Boolean);
 
-// Quadrantes do mapa mental (posições no grid 2x2 + cor do cabeçalho).
+// Quadrantes do mapa mental — posição LÓGICA (espaço 0–100 x 0–100, igual ao viewBox do SVG das
+// linhas, então nó e linha nunca desalinham) + cor. Topo: Posicionamento / Artísticas.
+// Rodapé: Comunicação com o público / Carreira — como pedido, com o hub no centro.
 const REF_QUADRANTS: {
   key: 'posicionamento' | 'artisticas' | 'comunicacao' | 'gestao';
   label: string;
   color: string;
-  pos: 'tl' | 'tr' | 'bl' | 'br';
+  x: number;
+  y: number;
 }[] = [
-  { key: 'posicionamento', label: 'Posicionamento', color: '#3b82f6', pos: 'tl' },
-  { key: 'artisticas', label: 'Artísticas', color: '#eab308', pos: 'tr' },
-  { key: 'comunicacao', label: 'Comunicação com o público', color: '#f97316', pos: 'bl' },
-  { key: 'gestao', label: 'Carreira', color: '#ef4444', pos: 'br' },
+  { key: 'posicionamento', label: 'Posicionamento', color: '#3b82f6', x: 30, y: 30 },
+  { key: 'artisticas', label: 'Artísticas', color: '#eab308', x: 70, y: 30 },
+  { key: 'comunicacao', label: 'Comunicação com o público', color: '#f97316', x: 30, y: 70 },
+  { key: 'gestao', label: 'Carreira', color: '#ef4444', x: 70, y: 70 },
 ];
 
+const HUB = { x: 50, y: 50 };
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
+// Mapa mental de verdade: hub central + um nó-círculo por categoria (posicionado como pedido:
+// Posicionamento/Artísticas no topo, Comunicação/Carreira no rodapé) + um satélite por item
+// dessa categoria, todos ligados por linhas pontilhadas. Nós e linhas dividem o MESMO espaço
+// lógico 0–100 (via viewBox idêntico), então a posição nunca desalinha da linha nem sobrepõe
+// texto — diferente da versão anterior (grid 2x2 + selo absoluto no meio).
 export const ReferenceMapCard: FC<{ references?: ArtistIdentity['references'] }> = ({ references }) => {
   const refs = references || {};
   const pos = refs.posicionamento || {};
@@ -562,71 +573,95 @@ export const ReferenceMapCard: FC<{ references?: ArtistIdentity['references'] }>
     if (key === 'posicionamento') return [pos.curto, pos.medio, pos.longo].flatMap(splitRefItems);
     return splitRefItems(refs[key as 'artisticas' | 'comunicacao' | 'gestao']);
   };
-  const Quadrant: FC<{ q: (typeof REF_QUADRANTS)[number] }> = ({ q }) => {
-    const items = itemsFor(q.key);
-    return (
-      <div style={{ background: '#0e0e0e', border: `1px solid ${q.color}40`, borderRadius: 10, overflow: 'hidden' }}>
-        <div
-          style={{
-            background: q.color,
-            color: '#0b0b0b',
-            fontWeight: 800,
-            fontSize: 11,
-            letterSpacing: 0.4,
-            textTransform: 'uppercase',
-            padding: '6px 10px',
-            textAlign: 'center',
-          }}
-        >
-          {q.label}
-        </div>
-        <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 3, minHeight: 58 }}>
-          {items.length ? (
-            items.map((it, i) => (
-              <span key={i} style={{ color: '#e8e8e8', fontSize: 12.5, borderBottom: '1px solid #1a1a1a', paddingBottom: 3 }}>
-                {it}
-              </span>
-            ))
-          ) : (
-            <span style={{ color: '#6b7280', fontSize: 12 }}>—</span>
-          )}
-        </div>
-      </div>
-    );
-  };
-  const byPos = (p: 'tl' | 'tr' | 'bl' | 'br') => REF_QUADRANTS.find((q) => q.pos === p)!;
+
+  type MapNode = { x: number; y: number; label: string; color: string; kind: 'hub' | 'cat' | 'item' };
+  const nodes: MapNode[] = [{ ...HUB, label: 'Referências', color: '#16a34a', kind: 'hub' }];
+  const lines: { x1: number; y1: number; x2: number; y2: number; color: string }[] = [];
+
+  REF_QUADRANTS.forEach((q) => {
+    nodes.push({ x: q.x, y: q.y, label: q.label, color: q.color, kind: 'cat' });
+    lines.push({ x1: HUB.x, y1: HUB.y, x2: q.x, y2: q.y, color: '#3a3a3a' });
+
+    // Satélites: um por item. Ficam num "trilho" PERPENDICULAR ao eixo hub→categoria, ancorado
+    // logo depois da categoria (não mais na mesma reta radial) — assim não se acumulam no canto
+    // do quadro nem colam na categoria, mesmo quando ela já está perto da borda.
+    const items = itemsFor(q.key).slice(0, 4);
+    if (!items.length) return;
+    const dx = q.x - HUB.x;
+    const dy = q.y - HUB.y;
+    const dist = Math.hypot(dx, dy);
+    const baseAngle = Math.atan2(dy, dx);
+    const perpAngle = baseAngle + Math.PI / 2;
+    const anchorR = dist + 22;
+    const ax = HUB.x + Math.cos(baseAngle) * anchorR;
+    const ay = HUB.y + Math.sin(baseAngle) * anchorR;
+    const spacing = 16;
+    items.forEach((it, i) => {
+      const t = items.length > 1 ? i - (items.length - 1) / 2 : 0;
+      const ix = clamp(ax + Math.cos(perpAngle) * t * spacing, 6, 94);
+      const iy = clamp(ay + Math.sin(perpAngle) * t * spacing, 6, 94);
+      nodes.push({ x: ix, y: iy, label: it, color: q.color, kind: 'item' });
+      lines.push({ x1: q.x, y1: q.y, x2: ix, y2: iy, color: `${q.color}80` });
+    });
+  });
+
   return (
     <div style={{ marginBottom: 12 }}>
-      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13, marginBottom: 14 }}>Seu mapa de referências</div>
-      {/* Hub do mapa mental: fica ACIMA da grade (fluxo normal, nunca sobrepõe o conteúdo dos
-          quadrantes — antes era um selo absoluto centralizado que cobria itens curtos). As linhas
-          se ramificam pra baixo, uma pra cada coluna, reforçando a leitura de "mapa mental". */}
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <div
-          style={{
-            background: '#16a34a',
-            color: '#fff',
-            fontWeight: 800,
-            fontSize: 11,
-            letterSpacing: 0.5,
-            padding: '7px 14px',
-            borderRadius: 9999,
-            whiteSpace: 'nowrap',
-          }}
+      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13, marginBottom: 10 }}>Seu mapa de referências</div>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 480, margin: '0 auto', aspectRatio: '1 / 1' }}>
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
         >
-          REFERÊNCIAS
-        </div>
-      </div>
-      <svg viewBox="0 0 100 22" preserveAspectRatio="none" aria-hidden style={{ display: 'block', width: '100%', height: 22 }}>
-        <path d="M50,0 L50,11 M50,11 L25,22 M50,11 L75,22" fill="none" stroke="#2a2a2a" strokeWidth={1.5} />
-        <circle cx={25} cy={22} r={1.6} fill="#2a2a2a" />
-        <circle cx={75} cy={22} r={1.6} fill="#2a2a2a" />
-      </svg>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <Quadrant q={byPos('tl')} />
-        <Quadrant q={byPos('tr')} />
-        <Quadrant q={byPos('bl')} />
-        <Quadrant q={byPos('br')} />
+          {lines.map((l, i) => (
+            <line
+              key={i}
+              x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2}
+              stroke={l.color}
+              strokeWidth={1}
+              strokeDasharray="2 3"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+        </svg>
+        {nodes.map((n, i) => {
+          const isHub = n.kind === 'hub';
+          const isCat = n.kind === 'cat';
+          const size = isHub ? '20%' : isCat ? '26%' : '14%';
+          return (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                left: `${n.x}%`,
+                top: `${n.y}%`,
+                transform: 'translate(-50%, -50%)',
+                width: size,
+                aspectRatio: '1 / 1',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: '6%',
+                background: isHub || isCat ? n.color : '#0e0e0e',
+                border: isHub || isCat ? 'none' : `1.5px solid ${n.color}`,
+                color: isHub ? '#fff' : isCat ? '#0b0b0b' : n.color,
+                fontWeight: isHub || isCat ? 800 : 700,
+                fontSize: isHub ? 9.5 : isCat ? 8.5 : 8.5,
+                letterSpacing: isHub || isCat ? 0.3 : 0,
+                textTransform: isHub || isCat ? 'uppercase' : 'none',
+                lineHeight: 1.15,
+                zIndex: isHub ? 3 : isCat ? 2 : 1,
+                boxSizing: 'border-box',
+              }}
+            >
+              {n.label}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
