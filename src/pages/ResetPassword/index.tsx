@@ -36,15 +36,20 @@ const ResetPassword: FC = () => {
       return;
     }
 
-    supabase.auth.setSession({ access_token, refresh_token }).then(({ error: sessionError }) => {
-      if (sessionError) {
-        setStatus('invalid');
-        return;
-      }
-      // Tira os tokens da barra de endereço (não deixar visível/reaproveitável).
-      window.history.replaceState(null, '', window.location.pathname);
-      setStatus('ready');
-    });
+    supabase.auth.setSession({ access_token, refresh_token })
+      .then(({ error: sessionError }) => {
+        if (sessionError) {
+          setStatus('invalid');
+          return;
+        }
+        // Tira os tokens da barra de endereço (não deixar visível/reaproveitável).
+        window.history.replaceState(null, '', window.location.pathname);
+        setStatus('ready');
+      })
+      // Token malformado/truncado faz o setSession LANÇAR (ex.: decodeJWT estoura) em vez de
+      // resolver com { error }. Sem este catch, a promise rejeitada deixava a tela travada no
+      // spinner. Qualquer falha cai no mesmo estado de "link inválido".
+      .catch(() => setStatus('invalid'));
   }, []);
 
   const onSubmit = async (e: React.FormEvent) => {

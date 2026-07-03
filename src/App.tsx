@@ -12,6 +12,7 @@ import {
   Route,
   BrowserRouter as Router,
   Routes,
+  useLocation,
   useNavigate,
   useParams,
 } from 'react-router-dom';
@@ -58,6 +59,35 @@ const PaymentPage = lazy(() => import('./pages/Payment'));
 const ArtistCreate = lazy(() => import('./pages/ArtistCreate'));
 const ProfileUnlock = lazy(() => import('./pages/ProfileUnlock'));
 const Payments = lazy(() => import('./pages/Payments'));
+
+// ---- Recovery hash guard -------------------------------------------------------------------
+
+/**
+ * O link de "redefinir senha" do Supabase devolve os tokens no HASH da URL
+ * (#access_token=...&type=recovery). O ideal é o Supabase redirecionar direto pra
+ * /redefinir-senha, mas se a URL de redirect não estiver na allowlist do Auth ele cai no
+ * Site URL (o domínio raiz) — e o token acaba na landing (/), que não sabe tratá-lo.
+ *
+ * Este guard roda em QUALQUER rota: se achar um token de recovery no hash e não estivermos
+ * já em /redefinir-senha, reencaminha pra lá preservando o hash. Assim o fluxo funciona
+ * independentemente da config de redirect do Supabase (belt-and-suspenders).
+ */
+const isRecoveryHash = (hash: string): boolean =>
+  hash.includes('access_token=') && hash.includes('type=recovery');
+
+const RecoveryHashGuard: FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname !== '/redefinir-senha' && isRecoveryHash(window.location.hash)) {
+      // Preserva o hash (tokens) ao trocar de rota — a ResetPassword lê de window.location.hash.
+      navigate(`/redefinir-senha${window.location.hash}`, { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  return null;
+};
 
 // ---- Auth ----------------------------------------------------------------------------------
 
@@ -245,6 +275,7 @@ const RootComponent: FC = () => {
   return (
     <Router>
       <AuthListener />
+      <RecoveryHashGuard />
       <Suspense fallback={<Spinner loading>{null as any}</Spinner>}>
         <AppRoutes />
       </Suspense>
