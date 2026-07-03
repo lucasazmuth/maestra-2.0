@@ -1,6 +1,6 @@
 import { FC, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowRight, FiCheck } from 'react-icons/fi';
+import { FiArrowRight } from 'react-icons/fi';
 
 import type { Artist } from '../../interfaces/maestra';
 import { PRODUCT_THEME as PRODUCTS } from '../productTheme';
@@ -11,22 +11,6 @@ import './journey.scss';
 // do dia mora no card "Seu próximo passo". Só a etapa ATUAL recebe cor; o resto fica neutro.
 
 const MUTED = '#74747e';
-
-// Indicador da etapa: concluída (✓ verde), atual (preenchida na cor) ou futura (contorno).
-const StepDot: FC<{ n: number; done?: boolean; current?: boolean; accent: string }> = ({ n, done, current, accent }) => (
-  <span
-    style={{
-      width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 13, fontWeight: 800,
-      background: done ? 'rgba(94,194,126,0.15)' : current ? `rgb(${accent})` : 'transparent',
-      border: done ? '1px solid rgba(94,194,126,0.45)' : current ? 'none' : '1.5px solid rgba(255,255,255,0.16)',
-      color: done ? '#5ec27e' : current ? '#fff' : MUTED,
-    }}
-  >
-    {done ? <FiCheck size={15} /> : n}
-  </span>
-);
 
 interface Node { n: number; label: string; desc: string; detail: string; accent: string; done: boolean; current: boolean; to: string; }
 
@@ -82,7 +66,6 @@ export const JourneyMap: FC<{ artist: Artist }> = ({ artist }) => {
               style={{ ['--acc' as string]: nd.accent } as React.CSSProperties}
               onClick={() => go(nd.to)}
             >
-              <StepDot n={nd.n} done={nd.done} current={nd.current} accent={nd.accent} />
               <span className="journey-node-body">
                 <span className="journey-node-name" style={{ color: nameColor(nd) }}>{nd.label}</span>
                 <span className="journey-node-desc">{nd.desc}</span>
