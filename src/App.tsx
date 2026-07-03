@@ -48,6 +48,7 @@ const Wizard = lazy(() => import('./pages/Wizard'));
 const ActionPlan = lazy(() => import('./pages/ActionPlan'));
 const DiagnosticView = lazy(() => import('./pages/DiagnosticView'));
 const AdminKnowledgeBase = lazy(() => import('./pages/Admin/KnowledgeBase'));
+const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
 const AdminCoupons = lazy(() => import('./pages/Admin/Coupons'));
 const AdminUsers = lazy(() => import('./pages/Admin/Users'));
 const SubscriptionPage = lazy(() => import('./pages/Subscription'));
@@ -217,6 +218,7 @@ const AppRoutes: FC = () => {
           <Route path='/settings' element={<Settings />} />
           <Route path='/pagamentos' element={<Payments />} />
           <Route element={<RequireAdmin />}>
+            <Route path='/admin/dashboard' element={<AdminDashboard />} />
             <Route path='/admin/knowledge-base' element={<AdminKnowledgeBase />} />
             <Route path='/admin/cupons' element={<AdminCoupons />} />
             <Route path='/admin/usuarios' element={<AdminUsers />} />
