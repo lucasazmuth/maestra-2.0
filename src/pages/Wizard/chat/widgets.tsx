@@ -10,6 +10,7 @@ import { searchCities } from '../../../services/db/cities';
 import { TASK_OWNER_SELF, MAX_OBJECTIVES } from '../../../constants/maestra';
 import { AiButton, ghostBtn, primaryBtn } from '../components';
 import { SuccessConfetti } from '../../../components/SuccessConfetti';
+import { ReferenceMindMap } from '../../../components/ReferenceMindMap';
 import { normalizeQuizQuestion } from '../types';
 import {
   ADJETIVO_SEEDS,
@@ -538,135 +539,15 @@ export const ReferenceHorizons: FC<{
 };
 
 // ---- Mapa de referências (mind-map — Metodologia v2, Q6/Q13) -----------------------------------
+// A renderização vive em src/components/ReferenceMindMap (compartilhada com o Plano de Ação
+// avançado); aqui só o card do chat com o título.
 
-const splitRefItems = (s?: string): string[] =>
-  (s || '').split(/[,;\n·]+/).map((x) => x.trim()).filter(Boolean);
-
-// Quadrantes do mapa mental — posição LÓGICA (espaço 0–100 x 0–100, igual ao viewBox do SVG das
-// linhas, então nó e linha nunca desalinham) + cor. Topo: Posicionamento / Artísticas.
-// Rodapé: Comunicação com o público / Carreira — como pedido, com o hub no centro.
-const REF_QUADRANTS: {
-  key: 'posicionamento' | 'artisticas' | 'comunicacao' | 'gestao';
-  label: string;
-  color: string;
-  x: number;
-  y: number;
-}[] = [
-  { key: 'posicionamento', label: 'Posicionamento', color: '#3b82f6', x: 30, y: 30 },
-  { key: 'artisticas', label: 'Artísticas', color: '#eab308', x: 70, y: 30 },
-  { key: 'comunicacao', label: 'Comunicação com o público', color: '#f97316', x: 30, y: 70 },
-  { key: 'gestao', label: 'Carreira', color: '#ef4444', x: 70, y: 70 },
-];
-
-const HUB = { x: 50, y: 50 };
-const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
-
-// Mapa mental de verdade: hub central + um nó-círculo por categoria (posicionado como pedido:
-// Posicionamento/Artísticas no topo, Comunicação/Carreira no rodapé) + um satélite por item
-// dessa categoria, todos ligados por linhas pontilhadas. Nós e linhas dividem o MESMO espaço
-// lógico 0–100 (via viewBox idêntico), então a posição nunca desalinha da linha nem sobrepõe
-// texto — diferente da versão anterior (grid 2x2 + selo absoluto no meio).
-export const ReferenceMapCard: FC<{ references?: ArtistIdentity['references'] }> = ({ references }) => {
-  const refs = references || {};
-  const pos = refs.posicionamento || {};
-  const itemsFor = (key: (typeof REF_QUADRANTS)[number]['key']): string[] => {
-    if (key === 'posicionamento') return [pos.curto, pos.medio, pos.longo].flatMap(splitRefItems);
-    return splitRefItems(refs[key as 'artisticas' | 'comunicacao' | 'gestao']);
-  };
-
-  type MapNode = { x: number; y: number; label: string; color: string; kind: 'hub' | 'cat' | 'item' };
-  const nodes: MapNode[] = [{ ...HUB, label: 'Referências', color: '#16a34a', kind: 'hub' }];
-  const lines: { x1: number; y1: number; x2: number; y2: number; color: string }[] = [];
-
-  REF_QUADRANTS.forEach((q) => {
-    nodes.push({ x: q.x, y: q.y, label: q.label, color: q.color, kind: 'cat' });
-    lines.push({ x1: HUB.x, y1: HUB.y, x2: q.x, y2: q.y, color: '#3a3a3a' });
-
-    // Satélites: um por item. Ficam num "trilho" PERPENDICULAR ao eixo hub→categoria, ancorado
-    // logo depois da categoria (não mais na mesma reta radial) — assim não se acumulam no canto
-    // do quadro nem colam na categoria, mesmo quando ela já está perto da borda.
-    const items = itemsFor(q.key).slice(0, 4);
-    if (!items.length) return;
-    const dx = q.x - HUB.x;
-    const dy = q.y - HUB.y;
-    const dist = Math.hypot(dx, dy);
-    const baseAngle = Math.atan2(dy, dx);
-    const perpAngle = baseAngle + Math.PI / 2;
-    const anchorR = dist + 22;
-    const ax = HUB.x + Math.cos(baseAngle) * anchorR;
-    const ay = HUB.y + Math.sin(baseAngle) * anchorR;
-    const spacing = 17;
-    items.forEach((it, i) => {
-      const t = items.length > 1 ? i - (items.length - 1) / 2 : 0;
-      const ix = clamp(ax + Math.cos(perpAngle) * t * spacing, 8, 92);
-      const iy = clamp(ay + Math.sin(perpAngle) * t * spacing, 8, 92);
-      nodes.push({ x: ix, y: iy, label: it, color: q.color, kind: 'item' });
-      lines.push({ x1: q.x, y1: q.y, x2: ix, y2: iy, color: `${q.color}80` });
-    });
-  });
-
-  return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ color: '#fff', fontWeight: 800, fontSize: 13, marginBottom: 10 }}>Seu mapa de referências</div>
-      <div style={{ position: 'relative', width: '100%', maxWidth: 480, margin: '0 auto', aspectRatio: '1 / 1' }}>
-        <svg
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          aria-hidden
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-        >
-          {lines.map((l, i) => (
-            <line
-              key={i}
-              x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2}
-              stroke={l.color}
-              strokeWidth={1}
-              strokeDasharray="2 3"
-              vectorEffect="non-scaling-stroke"
-            />
-          ))}
-        </svg>
-        {nodes.map((n, i) => {
-          const isHub = n.kind === 'hub';
-          const isCat = n.kind === 'cat';
-          // Categorias pouco maiores que os itens (não dominam o mapa); itens com fôlego pra ler.
-          const size = isHub ? '18%' : isCat ? '20%' : '16%';
-          return (
-            <div
-              key={i}
-              style={{
-                position: 'absolute',
-                left: `${n.x}%`,
-                top: `${n.y}%`,
-                transform: 'translate(-50%, -50%)',
-                width: size,
-                aspectRatio: '1 / 1',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                padding: '4%',
-                background: isHub || isCat ? n.color : '#0e0e0e',
-                border: isHub || isCat ? 'none' : `1.5px solid ${n.color}`,
-                color: isHub ? '#fff' : isCat ? '#0b0b0b' : n.color,
-                fontWeight: isHub || isCat ? 800 : 700,
-                fontSize: isHub ? 9 : isCat ? 8 : 8.5,
-                letterSpacing: isHub || isCat ? 0.3 : 0,
-                textTransform: isHub || isCat ? 'uppercase' : 'none',
-                lineHeight: 1.15,
-                zIndex: isHub ? 3 : isCat ? 2 : 1,
-                boxSizing: 'border-box',
-              }}
-            >
-              {n.label}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+export const ReferenceMapCard: FC<{ references?: ArtistIdentity['references'] }> = ({ references }) => (
+  <div style={{ marginBottom: 12 }}>
+    <div style={{ color: '#fff', fontWeight: 800, fontSize: 13, marginBottom: 10 }}>Seu mapa de referências</div>
+    <ReferenceMindMap references={references} />
+  </div>
+);
 
 // ---- Cidade/UF + mapa de referências (Metodologia v2, Q6) --------------------------------------
 

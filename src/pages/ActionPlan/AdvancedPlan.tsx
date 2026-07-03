@@ -1,6 +1,7 @@
 import { Dispatch, FC, ReactNode, SetStateAction, useState } from 'react';
 import { FiCheck, FiX, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { EditIcon } from '../../components/Icons/system';
+import { ReferenceMindMap } from '../../components/ReferenceMindMap';
 import type { ActionTask, ArtistContent, ArtistReferences, Strategy } from '../../interfaces/maestra';
 import TaskComposer, { SuggTask } from './TaskComposer';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
@@ -108,17 +109,7 @@ const SwotCol: FC<{ label: string; items?: string[] }> = ({ label, items }) => (
   </div>
 );
 
-// Mapa de referências (mesmo quadro mental do wizard): 4 quadrantes coloridos + hub central.
-const splitRefItems = (s?: string): string[] =>
-  (s || '').split(/[,;\n·]+/).map((x) => x.trim()).filter(Boolean);
-
-const REF_QUADRANTS: { key: 'posicionamento' | 'artisticas' | 'comunicacao' | 'gestao'; label: string; color: string }[] = [
-  { key: 'posicionamento', label: 'Posicionamento', color: '#3b82f6' },
-  { key: 'artisticas', label: 'Artísticas', color: '#eab308' },
-  { key: 'comunicacao', label: 'Comunicação com o público', color: '#f97316' },
-  { key: 'gestao', label: 'Carreira', color: '#ef4444' },
-];
-
+// Mapa de referências: renderização compartilhada em src/components/ReferenceMindMap.
 const refHasItems = (refs?: ArtistReferences): boolean => {
   if (!refs) return false;
   const pos = refs.posicionamento || {};
@@ -139,7 +130,6 @@ const REF_POS_FIELDS: { key: 'curto' | 'medio' | 'longo'; label: string }[] = [
 
 const ReferenceMap: FC<{ references?: ArtistReferences; canEdit?: boolean; onSave?: (refs: ArtistReferences) => void }> = ({ references, canEdit, onSave }) => {
   const refs = references || {};
-  const pos = refs.posicionamento || {};
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<ArtistReferences>(refs);
 
@@ -183,58 +173,13 @@ const ReferenceMap: FC<{ references?: ArtistReferences; canEdit?: boolean; onSav
     );
   }
 
-  const itemsFor = (key: (typeof REF_QUADRANTS)[number]['key']): string[] =>
-    key === 'posicionamento'
-      ? [pos.curto, pos.medio, pos.longo].flatMap(splitRefItems)
-      : splitRefItems(refs[key as 'artisticas' | 'comunicacao' | 'gestao']);
+  // Visual único do sistema (mind-map radial) — mesmo componente do wizard/Nyta chat.
   return (
     <div style={{ position: 'relative' }}>
       {canEdit && (
         <button className="ap-adv-pencil" onClick={() => { setDraft(refs); setEditing(true); }} aria-label="Editar referências" style={{ position: 'absolute', top: -2, right: -2, zIndex: 2 }}><EditIcon size={15} /></button>
       )}
-      <div className="ap-adv-refmap">
-        {REF_QUADRANTS.map((q) => {
-          const items = itemsFor(q.key);
-          return (
-            <div key={q.key} style={{ background: '#0e0e0e', border: `1px solid ${q.color}40`, borderRadius: 10, overflow: 'hidden' }}>
-              <div style={{ background: q.color, color: '#0b0b0b', fontWeight: 800, fontSize: 11, letterSpacing: 0.4, textTransform: 'uppercase', padding: '6px 10px', textAlign: 'center' }}>
-                {q.label}
-              </div>
-              <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 3, minHeight: 58 }}>
-                {items.length ? (
-                  items.map((it, i) => (
-                    <span key={i} style={{ color: '#e8e8e8', fontSize: 12.5, borderBottom: '1px solid #1a1a1a', paddingBottom: 3 }}>{it}</span>
-                  ))
-                ) : (
-                  <span style={{ color: '#6b7280', fontSize: 12 }}>—</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div
-        aria-hidden
-        className="ap-adv-refmap-hub"
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: '#16a34a',
-          color: '#fff',
-          fontWeight: 800,
-          fontSize: 11,
-          letterSpacing: 0.5,
-          padding: '7px 13px',
-          borderRadius: 9999,
-          border: '3px solid #0b0b0b',
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
-        }}
-      >
-        REFERÊNCIAS
-      </div>
+      <ReferenceMindMap references={refs} />
     </div>
   );
 };
