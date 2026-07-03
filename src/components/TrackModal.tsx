@@ -1,5 +1,7 @@
-import { FC, useEffect, useState } from 'react';
-import { Modal, Input, Select, DatePicker, Tabs, message } from 'antd';
+import { FC, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Modal, Input, Select, DatePicker, Tabs, message, Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
+import { FiUploadCloud, FiMusic, FiTrash2, FiCheckCircle } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import type { CatalogItem, Split, MusicGenre } from '../interfaces/maestra';
@@ -94,6 +96,90 @@ const SplitEditor: FC<{
         </span>
       </div>
     </div>
+  );
+};
+
+// Ações "Trocar"/"Remover" do estado preenchido.
+const ghostBtn: CSSProperties = {
+  background: 'transparent', border: '1px solid #3a3a3a', color: '#fff',
+  borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 600,
+  cursor: 'pointer', whiteSpace: 'nowrap',
+};
+
+// Campo de upload estilizado (dropzone + clique) no tema escuro, com estados de
+// envio, preview (miniatura) e ações Trocar/Remover — substitui o <input file> cru.
+const UploadField: FC<{
+  accept: string;
+  hint: string;
+  uploading: boolean;
+  hasValue: boolean;
+  fileName?: string | null;
+  thumb?: ReactNode;
+  onFile: (f: File) => void;
+  onClear: () => void;
+}> = ({ accept, hint, uploading, hasValue, fileName, thumb, onFile, onClear }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [drag, setDrag] = useState(false);
+  const pick = () => inputRef.current?.click();
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type='file'
+        accept={accept}
+        style={{ display: 'none' }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }}
+      />
+      {hasValue && !uploading ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#1f1f1f', border: '1px solid #2f2f2f', borderRadius: 10, padding: 10 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 8, background: '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, color: '#e07fce' }}>
+            {thumb}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ color: '#fff', fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {fileName || 'Arquivo enviado'}
+            </div>
+            <div style={{ color: '#1db954', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+              <FiCheckCircle size={12} /> Enviado
+            </div>
+          </div>
+          <button type='button' onClick={pick} style={ghostBtn}>Trocar</button>
+          <button type='button' onClick={onClear} style={{ ...ghostBtn, color: '#ff6b6f', padding: '6px 10px' }} aria-label='Remover'>
+            <FiTrash2 size={15} />
+          </button>
+        </div>
+      ) : (
+        <div
+          onClick={uploading ? undefined : pick}
+          onDragOver={(e) => { e.preventDefault(); if (!uploading) setDrag(true); }}
+          onDragLeave={() => setDrag(false)}
+          onDrop={(e) => { e.preventDefault(); setDrag(false); if (uploading) return; const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
+          style={{
+            border: `1.5px dashed ${drag ? '#af2896' : '#3a3a3a'}`,
+            background: drag ? 'rgba(175,40,150,0.08)' : '#181818',
+            borderRadius: 10, padding: '20px 16px', textAlign: 'center',
+            cursor: uploading ? 'default' : 'pointer', transition: 'border-color .15s, background .15s',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+          }}
+        >
+          {uploading ? (
+            <>
+              <Spin indicator={<LoadingOutlined style={{ fontSize: 22, color: '#af2896' }} spin />} />
+              <div style={{ color: '#b3b3b3', fontSize: 13 }}>Enviando…</div>
+            </>
+          ) : (
+            <>
+              <FiUploadCloud size={26} color='#af2896' />
+              <div style={{ color: '#fff', fontSize: 13.5, fontWeight: 600 }}>
+                Arraste aqui ou <span style={{ color: '#e07fce' }}>clique para escolher</span>
+              </div>
+              <div style={{ color: '#7a7a7a', fontSize: 12 }}>{hint}</div>
+            </>
+          )}
+        </div>
+      )}
+    </>
   );
 };
 
@@ -253,16 +339,19 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                   <Input placeholder='Tom' value={draft.key || ''} onChange={(e) => set({ key: e.target.value })} />
                 </div>
                 <div>
-                  <label style={{ color: '#b3b3b3', fontSize: 13 }}>Capa</label>
-                  <input
-                    type='file'
+                  <label style={{ color: '#b3b3b3', fontSize: 13, display: 'block', marginBottom: 6 }}>Capa</label>
+                  <UploadField
                     accept='image/*'
-                    onChange={(e) => e.target.files?.[0] && handleUpload('cover', e.target.files[0])}
+                    hint='PNG ou JPG'
+                    uploading={uploading === 'cover'}
+                    hasValue={!!draft.cover_image}
+                    fileName={draft.cover_image_name}
+                    thumb={draft.cover_image
+                      ? <img src={draft.cover_image} alt='capa' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <FiUploadCloud size={18} />}
+                    onFile={(f) => handleUpload('cover', f)}
+                    onClear={() => set({ cover_image: null, cover_image_name: null })}
                   />
-                  {uploading === 'cover' && <span style={{ color: '#b3b3b3' }}> enviando…</span>}
-                  {draft.cover_image && (
-                    <img src={draft.cover_image} alt='capa' style={{ height: 48, marginLeft: 8, borderRadius: 4 }} />
-                  )}
                 </div>
               </div>
             ),
@@ -306,13 +395,17 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
             label: 'Áudio',
             children: (
               <div>
-                <label style={{ color: '#b3b3b3', fontSize: 13 }}>Arquivo de áudio</label>
-                <input
-                  type='file'
+                <label style={{ color: '#b3b3b3', fontSize: 13, display: 'block', marginBottom: 6 }}>Arquivo de áudio</label>
+                <UploadField
                   accept='audio/*'
-                  onChange={(e) => e.target.files?.[0] && handleUpload('audio', e.target.files[0])}
+                  hint='MP3, WAV ou outro formato de áudio'
+                  uploading={uploading === 'audio'}
+                  hasValue={!!draft.audio_file}
+                  fileName={draft.audio_file_name}
+                  thumb={<FiMusic size={20} />}
+                  onFile={(f) => handleUpload('audio', f)}
+                  onClear={() => set({ audio_file: null, audio_file_name: null })}
                 />
-                {uploading === 'audio' && <div style={{ color: '#b3b3b3' }}>enviando…</div>}
                 {draft.audio_file && (
                   <audio controls src={draft.audio_file} style={{ width: '100%', marginTop: 12 }} />
                 )}
