@@ -11,8 +11,9 @@ import nytaLottie from '../../../assets/nyta-lottie.json';
 // Nome de exibição global da assistente.
 export const NYTA_NAME = 'Nyta';
 
-// Avatar da Nyta: animação Lottie (o "AI logo") tocando em loop dentro do círculo. Ao "pensar"
-// (`state='thinking'`) acelera. Renderizado via lottie-web (mesmo padrão do SpotifyLottie).
+// Avatar da Nyta: a animação Lottie (o "AI logo") tocando em loop. SEM container — sem clip circular,
+// sem fundo e sem overflow: o orb aparece solto (o glow dele já esvai pra transparente nas bordas).
+// Ao "pensar" (`state='thinking'`) acelera. Renderizado via lottie-web (padrão do SpotifyLottie).
 export type NytaAvatarState = 'idle' | 'thinking';
 
 export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ size = 32, state = 'idle' }) => {
@@ -29,7 +30,7 @@ export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ siz
       autoplay: true,
       // deno/CRA importa o JSON como objeto — o lottie aceita direto.
       animationData: nytaLottie as unknown as Record<string, unknown>,
-      rendererSettings: { preserveAspectRatio: 'xMidYMid slice' },
+      rendererSettings: { preserveAspectRatio: 'xMidYMid meet' },
     });
     animRef.current = anim;
     return () => { anim.destroy(); animRef.current = null; };
@@ -43,9 +44,8 @@ export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ siz
   return (
     <span
       className={`nyta-avatar${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
-      // Fundo escuro próprio: o vidro é translúcido, então SEM isso ele "puxava" o roxo/gradiente
-      // do fundo do app por trás. Com um dark neutro, fica só o vidro, sem gradiente colorido atrás.
-      style={{ width: size, height: size, minWidth: size, borderRadius: '50%', overflow: 'hidden', display: 'inline-flex', background: '#16151b' }}
+      // Sem container: sem clip circular, sem fundo, sem overflow. O orb aparece solto.
+      style={{ width: size, height: size, minWidth: size, display: 'inline-flex' }}
       aria-hidden
     >
       <span ref={ref} style={{ width: '100%', height: '100%', display: 'block' }} />
