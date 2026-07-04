@@ -44,11 +44,16 @@ export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ siz
   return (
     <span
       className={`nyta-avatar${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
-      // Exatamente o arquivo enviado: sem fundo (transparente) e sem plate. É a animação pura.
-      style={{ width: size, height: size, minWidth: size, display: 'inline-flex' }}
+      // Arquivo EXATO do design, com zoom: a bolha de VIDRO (menor que o disco colorido na comp)
+      // é ampliada até preencher o círculo do avatar; o disco de gradiente, maior, fica cortado
+      // pelo clip circular. Sem fundo/plate — o clip é transparente.
+      style={{ width: size, height: size, minWidth: size, display: 'inline-flex', borderRadius: '50%', overflow: 'hidden' }}
       aria-hidden
     >
-      <span ref={ref} style={{ width: '100%', height: '100%', display: 'block' }} />
+      {/* 1.86 = 700 (comp) ÷ 376 (diâmetro da bolha de vidro): o aro do vidro cai EXATO na borda
+          do círculo — a bolha preenche o avatar inteiro e o disco colorido (400px) fica fora do
+          recorte, aparecendo só ATRAVÉS do vidro. */}
+      <span ref={ref} style={{ width: '100%', height: '100%', display: 'block', transform: 'scale(1.86)', transformOrigin: '50% 50%' }} />
     </span>
   );
 };
