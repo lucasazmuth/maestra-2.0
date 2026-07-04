@@ -43,7 +43,9 @@ export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ siz
   return (
     <span
       className={`nyta-avatar${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
-      style={{ width: size, height: size, minWidth: size, borderRadius: '50%', overflow: 'hidden', display: 'inline-flex' }}
+      // Fundo escuro próprio: o vidro é translúcido, então SEM isso ele "puxava" o roxo/gradiente
+      // do fundo do app por trás. Com um dark neutro, fica só o vidro, sem gradiente colorido atrás.
+      style={{ width: size, height: size, minWidth: size, borderRadius: '50%', overflow: 'hidden', display: 'inline-flex', background: '#16151b' }}
       aria-hidden
     >
       <span ref={ref} style={{ width: '100%', height: '100%', display: 'block' }} />
