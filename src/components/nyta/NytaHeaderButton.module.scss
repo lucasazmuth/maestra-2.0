@@ -30,35 +30,8 @@
   }
 }
 
-// Cadeado (paywall) sobreposto no canto inferior direito do avatar.
-.lockBadge {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: #1a1a20;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #cfcfd4;
-}
-
 // Modal aberto: anel branco sutil reforçando o estado ligado.
 .active {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
   border-radius: 50%;
-}
-
-// Sem acesso (paywall): avatar apagado, mas clicável (abre o Assinar Pro).
-.disabled {
-  opacity: 0.6;
-  filter: grayscale(0.4);
-  cursor: pointer;
-
-  &:hover {
-    opacity: 0.8;
-  }
 }
