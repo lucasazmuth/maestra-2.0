@@ -27,7 +27,7 @@ Build já configurado em `vercel.json` (`vite build` → `dist/`).
 
 ## O que ajustar
 
-- **URL do app:** `src/config.ts` → `APP_URL`. Hoje aponta pra `https://app.maestramanager.com.br`.
+- **URL do app:** `src/config.ts` → `APP_URL`. Aponta pra `https://www.maestramanager.com`.
   Os botões "Começar grátis" / "Entrar" levam pra `${APP_URL}/signup` e `${APP_URL}/login`.
 - **Preços:** `src/components/Plans.tsx` (`MONTHLY`, `ANNUAL`) — estáticos aqui.
 - **Prints do produto:** Hero e Features usam placeholders. Troque por `<img src="...">` reais
