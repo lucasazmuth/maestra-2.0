@@ -627,12 +627,15 @@ h3 {
     display: flex;
     height: 62px;
     padding: 0 6px;
-    background: rgba(18, 18, 20, 0.9);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    // Vidro translúcido: o conteúdo passa POR TRÁS da navbar (visível pelo blur), em vez de um
+    // bloco preto sólido. Opacidade baixa + blur forte mantém os rótulos legíveis sobre qualquer
+    // conteúdo (inclusive capas coloridas).
+    background: rgba(18, 18, 22, 0.55);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 22px;
-    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.4);
   }
 
   .mobile-nav-item {
