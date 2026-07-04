@@ -13,7 +13,7 @@
 // Por rodada, envia no máximo UM nudge por candidato (o passo mais avançado devido).
 //
 // Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, BREVO_API_KEY, BREVO_SENDER,
-//          APP_URL (base absoluta pros links dos e-mails, ex.: https://app.maestramanager.com),
+//          APP_URL (base absoluta pros links dos e-mails, ex.: https://www.maestramanager.com),
 //          CRON_SECRET (opcional; se setado, exige header x-cron-secret).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
@@ -21,7 +21,7 @@ import { sendBrevoEmail, emailLayout, ctaButton } from "./brevo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const APP_URL = (Deno.env.get("APP_URL") || "https://app.maestramanager.com").replace(/\/+$/, "");
+const APP_URL = (Deno.env.get("APP_URL") || "https://www.maestramanager.com").replace(/\/+$/, "");
 const CRON_SECRET = Deno.env.get("CRON_SECRET") || "";
 
 const CORS = {
