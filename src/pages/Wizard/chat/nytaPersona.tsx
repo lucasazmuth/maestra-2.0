@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import { nytaAvatar } from '../../../components/Icons/system';
 
 // Identidade visual e verbal da Nyta — a inteligência da Maestra Manager.
 // As falas são templadas (custo zero por turno) e seguem o tom de voz do método
@@ -9,17 +8,21 @@ import { nytaAvatar } from '../../../components/Icons/system';
 // Nome de exibição global da assistente.
 export const NYTA_NAME = 'Nyta';
 
-// Avatar da Nyta: o rosto da assistente num círculo, com uma aura pulsante (vida de IA). Quando ela
-// está processando (`state='thinking'`), a aura pulsa mais rápido.
+// Avatar da Nyta: um "orb" vivo (energia teal→azul girando + brilho pulsando por dentro), com uma
+// aura ao redor. Puro CSS (escala com `size`, sem imagem). Quando ela está processando
+// (`state='thinking'`), o movimento interno e a aura aceleram.
 export type NytaAvatarState = 'idle' | 'thinking';
 
 export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ size = 32, state = 'idle' }) => (
   <span
     className={`nyta-avatar nyta-avatar--glow${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
-    style={{ width: size, height: size, minWidth: size, borderRadius: '50%', background: '#16141c', overflow: 'hidden' }}
+    style={{ width: size, height: size, minWidth: size, borderRadius: '50%', overflow: 'hidden' }}
     aria-hidden
   >
-    <img src={nytaAvatar} alt="" width={size} height={size} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+    <span className='nyta-orb'>
+      <span className='nyta-orb-swirl' />
+      <span className='nyta-orb-spark' />
+    </span>
   </span>
 );
 
