@@ -82,18 +82,25 @@
 // "REAL" na pílula (ambiente do diagnóstico): assinatura serifada (Georgia itálico) + verde do produto.
 .pillReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; color: #37d995; }
 
+// Botão de sair/voltar — ícone discreto num círculo, fixo no canto superior direito.
 .back {
   position: absolute;
-  top: 28px;
-  right: 28px;
-  background: none;
-  border: none;
+  top: 20px;
+  right: 20px;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #b3b3b3;
-  font-size: 14px;
-  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 
-  &:hover { color: #fff; }
+  &:hover { background: rgba(255, 255, 255, 0.12); color: #fff; border-color: rgba(255, 255, 255, 0.2); }
 }
 
 // ─── Header de macro-fluxo (abas de texto, estilo Spotify) ──────────────────────
@@ -151,16 +158,24 @@
 .flowDone { color: #b3b3b3; }
 
 @media (max-width: 560px) {
-  // "Sair" ganha sua própria linha no topo-direita e o stepper desce pra não colidir com ele
-  // (antes ficavam na mesma altura e se sobrepunham, deixando o "Sair" jogado sobre as etapas).
-  .back { top: 14px; right: 16px; font-size: 13px; }
+  .back { top: 14px; right: 14px; }
   // Rótulos curtos numa única linha (sem quebra) — corrige o wrap que jogava
-  // "Planejamento Estratégico" pra baixo deixando um "·" solto.
-  .flow { flex-wrap: nowrap; gap: 0; margin-top: 40px; }
+  // "Planejamento Estratégico" pra baixo deixando um "·" solto. margin-top clareia o ícone de sair.
+  .flow { flex-wrap: nowrap; gap: 0; margin-top: 12px; }
   .flowSeg { font-size: 12.5px; }
   .flowSep { margin: 0 8px; }
   .flowFull { display: none; }
   .flowShort { display: inline; }
+
+  // Matriz de imprensa: no mobile empilha e CENTRALIZA (nome em cima, chips centralizados
+  // embaixo) — antes o nome ficava à esquerda e os chips escapavam pra direita.
+  .matrixTypeRow { flex-direction: column; align-items: center; gap: 10px; }
+  .matrixTypeName { flex: none; min-width: 0; text-align: center; }
+  .porteChips { justify-content: center; }
+
+  // Composição de receita: rótulo acima do campo, tudo centralizado.
+  .revenueRow { flex-direction: column; align-items: stretch; gap: 6px; }
+  .revenueLabel { text-align: center; }
 }
 
 // ─── Progresso (só no "refazer diagnóstico") ───────────────────────────────────

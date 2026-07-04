@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Input, InputNumber, Spin } from 'antd';
-import { FiAlertCircle, FiArrowLeft } from 'react-icons/fi';
+import { FiAlertCircle, FiArrowLeft, FiX } from 'react-icons/fi';
 import { useDebounce } from 'use-debounce';
 
 import { DiagnosticoIcon } from '../../components/Icons/system';
@@ -419,7 +419,14 @@ const ArtistCreate: FC = () => {
       {/* Ícone do REAL grande e translúcido no fundo — só no ambiente do diagnóstico. */}
       {realEnv && <span className={styles.pageGlyph} aria-hidden><DiagnosticoIcon size={300} /></span>}
 
-      <button className={styles.back} onClick={() => navigate(redo ? `/artists/${redoArtistId}/diagnostico` : '/artists')}>{redo ? 'Voltar' : 'Sair'}</button>
+      <button
+        className={styles.back}
+        onClick={() => navigate(redo ? `/artists/${redoArtistId}/diagnostico` : '/artists')}
+        aria-label={redo ? 'Voltar' : 'Sair'}
+        title={redo ? 'Voltar' : 'Sair'}
+      >
+        {redo ? <FiArrowLeft size={20} /> : <FiX size={20} />}
+      </button>
 
       {redo ? (
         // Refazer diagnóstico (PRO): não passa por Criar perfil nem Pagamento — mantém a pílula + dots.
@@ -575,10 +582,14 @@ const ArtistCreate: FC = () => {
             {/* QUIZ */}
             {step === 'quiz' && (() => {
               const cur = QUIZ[quizIndex];
+              // Só dígitos: o parser remove qualquer não-número (bloqueia texto colado/digitado) e
+              // inputMode='numeric' abre o teclado numérico no mobile. Aplicado a TODO campo de valor.
+              const stripNonDigits = ((val?: string) => (val ? val.replace(/[^\d]/g, '') : '')) as any;
+              const numProps = { inputMode: 'numeric' as const, parser: stripNonDigits };
               const currencyProps = {
+                ...numProps,
                 prefix: 'R$',
                 formatter: (val?: string | number) => `${val ?? ''}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
-                parser: ((val?: string) => (val ? Number(val.replace(/\D/g, '')) : 0)) as any,
               };
 
               // Sim/Não e selects (níveis/enums): botões de opção.
@@ -673,7 +684,7 @@ const ArtistCreate: FC = () => {
                     onChange={(v) => setFieldVal((v as number | null) ?? null)}
                     placeholder={cur.placeholder}
                     onPressEnter={() => { if (fieldVal != null) answerQuiz(fieldVal); }}
-                    {...(cur.type === 'currency' ? currencyProps : {})}
+                    {...(cur.type === 'currency' ? currencyProps : numProps)}
                   />
                   <button
                     disabled={fieldVal == null}
