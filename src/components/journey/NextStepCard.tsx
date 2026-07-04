@@ -41,8 +41,8 @@ export const NextStepCard: FC<{ artist: Artist }> = ({ artist }) => {
             gap: 10,
           }}
         >
-          {/* Ícone decorativo grande, integrado ao fundo */}
-          <span aria-hidden style={{ position: 'absolute', right: -18, bottom: -28, color: `rgb(${accent})`, opacity: 0.1, pointerEvents: 'none', lineHeight: 0 }}>
+          {/* Ícone decorativo grande, integrado ao fundo — cinza bem sutil (neutro, não compete com o accent do kicker/botão) */}
+          <span aria-hidden style={{ position: 'absolute', right: -18, bottom: -28, color: 'rgba(255,255,255,0.05)', pointerEvents: 'none', lineHeight: 0 }}>
             <span style={{ display: 'block', width: 168, height: 168 }}>{iconForStage(next.stage, 168)}</span>
           </span>
 
