@@ -151,9 +151,12 @@
 .flowDone { color: #b3b3b3; }
 
 @media (max-width: 560px) {
+  // "Sair" ganha sua própria linha no topo-direita e o stepper desce pra não colidir com ele
+  // (antes ficavam na mesma altura e se sobrepunham, deixando o "Sair" jogado sobre as etapas).
+  .back { top: 14px; right: 16px; font-size: 13px; }
   // Rótulos curtos numa única linha (sem quebra) — corrige o wrap que jogava
   // "Planejamento Estratégico" pra baixo deixando um "·" solto.
-  .flow { flex-wrap: nowrap; gap: 0; }
+  .flow { flex-wrap: nowrap; gap: 0; margin-top: 40px; }
   .flowSeg { font-size: 12.5px; }
   .flowSep { margin: 0 8px; }
   .flowFull { display: none; }
@@ -329,28 +332,21 @@
 
 // ─── Quiz: opções limpas, sutis ───────────────────────────────────────────────
 // Progresso do quiz (micro): "Pergunta X de N" + barra fina verde, pra o usuário saber quanto falta.
-.quizProgress {
-  width: 100%;
-  margin-bottom: 20px;
+// Barra de progresso do quiz — faixa fina no topo absoluto da página (acima do stepper).
+.topProgress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  z-index: 5;
 }
-.quizProgressLabel {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #9a9aa5;
-  margin-bottom: 8px;
-}
-.quizBar {
-  height: 4px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-}
-.quizBarFill {
+.topProgressFill {
   display: block;
   height: 100%;
   background: #2ec47a;
-  border-radius: 9999px;
+  border-radius: 0 3px 3px 0;
   transition: width 0.35s ease;
 }
 

@@ -397,16 +397,25 @@ const ArtistCreate: FC = () => {
   // Fase do macro-fluxo do header: 0 = Criar perfil, 1 = Diagnóstico REAL (Pagamento fica fora desta tela).
   const macroPhase = step === 'perfil' ? 0 : 1;
 
-  // Progresso do quiz (micro): posição entre as perguntas VISÍVEIS (respeitando os skips atuais),
-  // pra o usuário saber quanto falta. E se dá pra voltar pra pergunta anterior.
-  const quizVisible = QUIZ.map((_, i) => i).filter((i) => !QUIZ[i].skipIf?.(answers.current));
-  const quizPos = Math.max(0, quizVisible.indexOf(quizIndex));
-  const quizTotal = quizVisible.length || QUIZ.length;
-  const quizPct = Math.round(((quizPos + 1) / quizTotal) * 100);
+  // Progresso do quiz: baseado na posição ABSOLUTA na trilha (quizIndex / QUIZ.length), não na
+  // contagem de perguntas visíveis — esta muda conforme as respostas abrem/fecham perguntas
+  // condicionais (o antigo "de 9" virava "de 13" e a barra até recuava). Como o índice só avança
+  // (pulando os skips) ou volta pelo "Voltar", a barra é monotônica; na última pergunta, 100%.
+  const isLastQuiz = step === 'quiz' && nextQuizIndex(quizIndex + 1) >= QUIZ.length;
+  const quizPct = step === 'quiz'
+    ? (isLastQuiz ? 100 : Math.round(((quizIndex + 1) / QUIZ.length) * 100))
+    : 0;
   const canGoBack = step === 'quiz' && prevQuizIndex(quizIndex - 1) >= 0;
 
   return (
     <div className={`${styles.page} ${realEnv ? styles.pageReal : ''}`}>
+      {/* Barra de progresso do quiz no topo absoluto da página (só durante as perguntas). */}
+      {step === 'quiz' && (
+        <div className={styles.topProgress} aria-hidden>
+          <span className={styles.topProgressFill} style={{ width: `${quizPct}%` }} />
+        </div>
+      )}
+
       {/* Ícone do REAL grande e translúcido no fundo — só no ambiente do diagnóstico. */}
       {realEnv && <span className={styles.pageGlyph} aria-hidden><DiagnosticoIcon size={300} /></span>}
 
@@ -564,13 +573,6 @@ const ArtistCreate: FC = () => {
             )}
 
             {/* QUIZ */}
-            {step === 'quiz' && (
-              <div className={styles.quizProgress}>
-                <div className={styles.quizProgressLabel}>Pergunta {quizPos + 1} de {quizTotal}</div>
-                <div className={styles.quizBar}><span className={styles.quizBarFill} style={{ width: `${quizPct}%` }} /></div>
-              </div>
-            )}
-
             {step === 'quiz' && (() => {
               const cur = QUIZ[quizIndex];
               const currencyProps = {

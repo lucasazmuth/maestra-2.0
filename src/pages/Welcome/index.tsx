@@ -6,9 +6,6 @@ import { Wordmark } from '../../components/Wordmark';
 import { AuroraBackdrop } from '../../components/AuroraBackdrop';
 import styles from './Welcome.module.scss';
 
-// Canal do YouTube da Maestra (tutorial).
-const YOUTUBE_URL = 'https://www.youtube.com/channel/UCoqTUfW8kpK7AV_iWVjUrQg';
-
 const REDUCE_MOTION =
   typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -35,10 +32,6 @@ const Welcome: FC = () => {
   }, []);
 
   const goToArtists = () => navigate('/artists', { replace: true });
-  const startTutorial = () => {
-    window.open(YOUTUBE_URL, '_blank', 'noopener,noreferrer');
-    goToArtists();
-  };
 
   return (
     <div className={styles.page}>
@@ -56,9 +49,6 @@ const Welcome: FC = () => {
       </p>
 
       <div className={`${styles.actions} ${done ? styles.actionsVisible : ''}`}>
-        <button type='button' className={styles.skip} onClick={startTutorial} disabled={!done}>
-          Ver tutorial
-        </button>
         <button type='button' className={styles.cta} onClick={goToArtists} disabled={!done}>
           Começar <FiArrowRight />
         </button>
