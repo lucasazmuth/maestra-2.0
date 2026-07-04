@@ -127,6 +127,10 @@
 .flowReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; }
 .flowCheck { color: #2ec47a; flex-shrink: 0; }
 
+// Rótulo completo (desktop) x curto (mobile) — trocados por breakpoint.
+.flowFull { display: inline; }
+.flowShort { display: none; }
+
 // Etapa atual: branca + traço verde embaixo (estilo "aba" do Spotify).
 .flowCurrent {
   color: #fff;
@@ -147,8 +151,13 @@
 .flowDone { color: #b3b3b3; }
 
 @media (max-width: 560px) {
+  // Rótulos curtos numa única linha (sem quebra) — corrige o wrap que jogava
+  // "Planejamento Estratégico" pra baixo deixando um "·" solto.
+  .flow { flex-wrap: nowrap; gap: 0; }
   .flowSeg { font-size: 12.5px; }
-  .flowSep { margin: 0 9px; }
+  .flowSep { margin: 0 8px; }
+  .flowFull { display: none; }
+  .flowShort { display: inline; }
 }
 
 // ─── Progresso (só no "refazer diagnóstico") ───────────────────────────────────
