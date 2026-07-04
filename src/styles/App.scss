@@ -1290,22 +1290,40 @@ a {
   }
 }
 
-// A logo ORIGINAL da Nyta, agora viva: gira devagar (o anel interno se mexe). Acelera ao "pensar".
-.nyta-avatar-img {
-  animation: nytaAvatarSpin 9s linear infinite;
-  transform-origin: 50% 50%;
-  will-change: transform;
+// Partes internas da logo da Nyta, animadas (é o "desenho" que se mexe, não a logo girando).
+// Anel verde: uma energia "fluindo" ao redor (dash) + um pulso sutil de escala.
+.nyta-green {
+  transform-box: fill-box;
+  transform-origin: center;
+  stroke-dasharray: 96 42;
+  animation: nytaGreenFlow 3.6s linear infinite, nytaGreenPulse 3s ease-in-out infinite;
 }
-.nyta-avatar--thinking .nyta-avatar-img {
-  animation-duration: 2.4s;
+@keyframes nytaGreenFlow {
+  to { stroke-dashoffset: -138; } // ~circunferência (2π·22)
 }
-@keyframes nytaAvatarSpin {
-  to { transform: rotate(360deg); }
+@keyframes nytaGreenPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
+
+// Traços vermelhos: piscam e sobem/descem de leve (as "linhas variando").
+.nyta-red {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: nytaRed 1.7s ease-in-out infinite;
+}
+@keyframes nytaRed {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.82; }
+  50% { transform: translateY(-1.4px) scale(1.1); opacity: 1; }
+}
+
+// "Pensando": a energia flui e os traços variam mais rápido.
+.nyta-avatar--thinking .nyta-green { animation-duration: 1.3s, 1.2s; }
+.nyta-avatar--thinking .nyta-red { animation-duration: 0.7s; }
 
 @media (prefers-reduced-motion: reduce) {
   .nyta-avatar--glow { animation: none; box-shadow: 0 0 10px 2px rgba(124, 92, 255, 0.35); }
-  .nyta-avatar-img { animation: none; }
+  .nyta-green, .nyta-red { animation: none; }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

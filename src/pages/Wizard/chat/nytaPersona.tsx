@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import { nytaAvatar } from '../../../components/Icons/system';
 
 // Identidade visual e verbal da Nyta — a inteligência da Maestra Manager.
 // As falas são templadas (custo zero por turno) e seguem o tom de voz do método
@@ -9,25 +8,37 @@ import { nytaAvatar } from '../../../components/Icons/system';
 // Nome de exibição global da assistente.
 export const NYTA_NAME = 'Nyta';
 
-// Avatar da Nyta: a logo original num círculo, agora VIVA — a logo gira lentamente (o anel interno
-// se mexe) e uma aura pulsa ao redor. Quando ela está processando (`state='thinking'`), o giro e a
-// aura aceleram.
+// Avatar da Nyta: a MESMA logo (círculo azul + anel verde + traços vermelhos), agora em SVG vetorial
+// pra dar vida às PARTES internas: o anel verde tem uma energia "fluindo" (stroke-dashoffset) e pulsa
+// de leve; os traços vermelhos piscam/mexem. Ao "pensar" (`state='thinking'`), tudo acelera. Toda a
+// animação está no CSS (App.scss), respeitando prefers-reduced-motion.
 export type NytaAvatarState = 'idle' | 'thinking';
 
 export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ size = 32, state = 'idle' }) => (
   <span
     className={`nyta-avatar nyta-avatar--glow${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
-    style={{ width: size, height: size, minWidth: size, borderRadius: '50%', background: '#16141c', overflow: 'hidden' }}
+    style={{ width: size, height: size, minWidth: size, borderRadius: '50%', overflow: 'hidden' }}
     aria-hidden
   >
-    <img
-      className='nyta-avatar-img'
-      src={nytaAvatar}
-      alt=""
-      width={size}
-      height={size}
-      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-    />
+    <svg viewBox='0 0 100 100' width={size} height={size} style={{ display: 'block' }}>
+      <defs>
+        <radialGradient id='nytaBg' cx='34' cy='30' r='74' gradientUnits='userSpaceOnUse'>
+          <stop offset='0' stopColor='#27d6c2' />
+          <stop offset='0.42' stopColor='#1289cb' />
+          <stop offset='0.75' stopColor='#0a54c4' />
+          <stop offset='1' stopColor='#0a2a66' />
+        </radialGradient>
+      </defs>
+      <circle cx='50' cy='50' r='50' fill='url(#nytaBg)' />
+      {/* Anel verde: energia que flui (dash) + pulso */}
+      <circle className='nyta-green' cx='50' cy='54' r='22' fill='none' stroke='#39e38a' strokeWidth='6' strokeLinecap='round' />
+      {/* Traços vermelhos: piscam e mexem de leve */}
+      <g className='nyta-red' fill='none' stroke='#ff3b3b' strokeWidth='3.4' strokeLinecap='round'>
+        <path d='M43 40 q1 -8 4 -12' />
+        <path d='M48 41 q1 -9 4 -13' />
+        <path d='M53 40 q1 -8 4 -12' />
+      </g>
+    </svg>
   </span>
 );
 
