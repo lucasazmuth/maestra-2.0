@@ -42,9 +42,11 @@ export const AppLayout: FC = memo(() => {
   // módulos do artista. Reserva a altura dela (56px) no mobile, somada à do banner quando houver.
   const location = useLocation();
   const hasMobileNav = /^\/artists\/[^/]+/.test(location.pathname);
-  // Reserva do banner é justa por viewport (desktop ~1 linha = 78px; mobile 2 linhas = 92px) pra
-  // não sobrar espaço preto abaixo dele. No mobile soma a tab bar (56px).
-  const bottomReserve = (bannerKind ? (isMobile ? 84 : 76) : 0) + (isMobile && hasMobileNav ? 86 : 0);
+  // A navbar mobile é uma barra fixa SOBREPOSTA (o conteúdo passa por baixo dela, via padding-bottom
+  // da .Main-section, e aparece atrás do gradiente translúcido). Por isso NÃO reservamos altura pra
+  // ela aqui — só pro banner de pagamento, que é uma barra sólida. Reserva do banner é justa por
+  // viewport (desktop ~1 linha = 76px; mobile 2 linhas = 84px).
+  const bottomReserve = bannerKind ? (isMobile ? 84 : 76) : 0;
 
   // Carrega o status da assinatura uma vez ao autenticar, de forma global —
   // assim o banner e (futuramente) os entitlements refletem a realidade sem

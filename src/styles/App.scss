@@ -617,25 +617,21 @@ h3 {
     text-overflow: ellipsis;
   }
 
-  // Navbar flutuante (ilha) com cantos arredondados, descolada das bordas.
+  // Barra inferior full-width, colada nas bordas (sem ilha flutuante). Gradiente vertical:
+  // translúcido no topo -> sólido #111 embaixo. O conteúdo aparece suave atrás da borda de cima
+  // (onde o gradiente é transparente) e some no sólido, onde ficam os ícones/rótulos. Segue o
+  // design mobile-menu.svg.
   .mobile-nav {
     position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 100;
     display: flex;
-    height: 62px;
-    padding: 0 6px;
-    // Vidro translúcido: o conteúdo passa POR TRÁS da navbar (visível pelo blur), em vez de um
-    // bloco preto sólido. Opacidade baixa + blur forte mantém os rótulos legíveis sobre qualquer
-    // conteúdo (inclusive capas coloridas).
-    background: rgba(18, 18, 22, 0.55);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 22px;
-    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.4);
+    align-items: flex-end;
+    height: 88px;
+    padding: 0 6px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, rgba(17, 17, 17, 0) 0%, rgba(17, 17, 17, 0.85) 42%, #111111 72%);
   }
 
   .mobile-nav-item {
@@ -681,7 +677,7 @@ h3 {
   .mobile-more-sheet {
     position: fixed;
     right: 12px;
-    bottom: calc(62px + 12px + 8px + env(safe-area-inset-bottom, 0px)); // logo acima da navbar flutuante
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px)); // logo acima da barra inferior (88px)
     z-index: 101; // acima da navbar
     width: 232px;
     max-width: calc(100vw - 16px);
