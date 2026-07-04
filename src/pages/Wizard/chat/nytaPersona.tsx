@@ -288,4 +288,3 @@ export const GUIDED_OPENTEXT: Record<OpenTextField, { opener: string; followups:
     followups: ['Tem algo em comum entre elas? Idade, lugar, gosto, um momento de vida?'],
   },
 };
-
