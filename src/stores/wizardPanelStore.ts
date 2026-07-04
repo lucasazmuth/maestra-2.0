@@ -23,7 +23,8 @@ interface WizardPanelState {
 
 export const useWizardPanelStore = create<WizardPanelState>((set) => ({
   active: false,
-  open: true,
+  // Nasce FECHADA: o usuário abre pelo botão "Etapa X de 9 · …" no cabeçalho do chat.
+  open: false,
   content: {},
   artistName: '',
   progress: 0,
@@ -32,6 +33,8 @@ export const useWizardPanelStore = create<WizardPanelState>((set) => ({
   setPersist: (fn) => set({ persist: fn }),
   setOpen: (open) => set({ open }),
   toggle: () => set((s) => ({ open: !s.open })),
-  activate: () => set({ active: true }),
+  // Reset de open no mount: cada abertura da página começa com a coluna oculta,
+  // mesmo que o usuário a tenha deixado aberta numa visita anterior da sessão.
+  activate: () => set({ active: true, open: false }),
   deactivate: () => set({ active: false, persist: null }),
 }));
