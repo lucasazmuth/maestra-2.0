@@ -755,6 +755,11 @@ h3 {
     height: calc(100vh - 64px - 84px);
     padding-bottom: 90px;
   }
+  // Wizard em tela cheia no mobile (topbar oculto): a .Main-section ocupa toda a altura da
+  // viewport (o wizard tem cabeçalho próprio). Vale mais que a regra acima por vir depois.
+  .main-container.topbar-hidden .Main-section {
+    height: 100vh;
+  }
 }
 
 .transition {

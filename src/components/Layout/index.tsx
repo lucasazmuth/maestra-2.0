@@ -42,6 +42,10 @@ export const AppLayout: FC = memo(() => {
   // módulos do artista. Reserva a altura dela (56px) no mobile, somada à do banner quando houver.
   const location = useLocation();
   const hasMobileNav = /^\/artists\/[^/]+/.test(location.pathname);
+  // No mobile, o Planejamento Estratégico (wizard) vira "tela cheia": escondemos o topbar do app
+  // pra o chat ocupar toda a altura (o wizard já tem cabeçalho próprio com título e "Salvar e sair").
+  const isWizardChat = /^\/artists\/[^/]+\/wizard/.test(location.pathname);
+  const hideTopbar = isMobile && isWizardChat;
   // A navbar mobile é uma barra fixa SOBREPOSTA (o conteúdo passa por baixo dela, via padding-bottom
   // da .Main-section, e aparece atrás do gradiente translúcido). Por isso NÃO reservamos altura pra
   // ela aqui — só pro banner de pagamento, que é uma barra sólida. Reserva do banner é justa por
@@ -85,7 +89,7 @@ export const AppLayout: FC = memo(() => {
     <>
       <LanguageModal />
 
-      <div className={`main-container${bannerKind ? ' has-bottom-banner' : ''}${hasMobileNav ? ' has-mobile-nav' : ''}`}>
+      <div className={`main-container${bannerKind ? ' has-bottom-banner' : ''}${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}`}>
         <Row
           wrap
           justify='end'
@@ -96,9 +100,11 @@ export const AppLayout: FC = memo(() => {
           // esticar — o topbar fica nos 56px e o conteúdo preenche o resto.
           style={{ overflow: 'hidden', alignContent: 'flex-start', height: bottomReserve ? `calc(100% - ${bottomReserve}px)` : '100%' }}
         >
-          <Col span={24}>
-            <Topbar />
-          </Col>
+          {!hideTopbar && (
+            <Col span={24}>
+              <Topbar />
+            </Col>
+          )}
 
           <Col span={24}>
             {/* navbar + página (grupo redimensionável) e, à direita, a coluna de resultados do

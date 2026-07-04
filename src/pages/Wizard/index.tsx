@@ -175,7 +175,7 @@ const Wizard: FC = () => {
         <div className='wiz-col'>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <h1 className='wiz-title' style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 22, color: '#fff', margin: 0 }}>
-              Planejamento Estratégico
+              Criar planejamento estratégico
             </h1>
             <button
               title='Seu progresso fica salvo a cada etapa'

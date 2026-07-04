@@ -1198,50 +1198,48 @@
 // Input fixo no rodapé do chat (fora da área de scroll — só a conversa rola).
 // Escopado em .nyta-chat: a página do chat livre da Nyta usa as mesmas classes
 // com outra estrutura (NytaChat/styles.scss) — sem o escopo, estes estilos vazam.
+// Mesmo visual do campo da tela inicial (NytaDashboardHero): um "pill" translúcido único
+// envolvendo o textarea (transparente) + botão de enviar com gradiente roxo. Um só padrão
+// nos três lugares (hero da home, chat livre da Nyta e este wizard).
 .nyta-chat .nyta-input-bar {
   flex: none;
   display: flex;
-  // flex-direction/border explícitos: o CSS global da página do chat livre
-  // (NytaChat/styles.scss) define column + border-top na mesma classe.
   flex-direction: row;
-  border-top: none;
   align-items: center;
-  gap: 8px;
-  // 22px laterais espelham o padding do .nyta-scroll (posto pra não cortar o glow do avatar):
-  // mantém a barra de input alinhada com a coluna de mensagens.
-  padding: 12px 22px 4px;
-  width: 100%;
+  gap: 10px;
+  // Centralizado, com folga das bordas no mobile e teto de largura no desktop (= coluna do chat).
+  width: calc(100% - 32px);
   max-width: var(--wiz-col);
-  margin: 0 auto;
-  background: #121212;
+  margin: 8px auto 14px;
+  background: rgba(18, 18, 28, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 6px 6px 6px 18px;
+  backdrop-filter: blur(6px);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
-  // Mesmo visual do campo do chat livre da Nyta (NytaChat/styles.scss):
-  // arredondado, fundo escuro e foco verde — um único padrão nos dois chats.
+  &:focus-within {
+    border-color: rgba(168, 140, 255, 0.6);
+    box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.15);
+  }
+
   textarea {
     flex: 1;
     resize: none;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 12px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
     color: #fff;
     font-size: 15px;
     line-height: 20px;
-    padding: 9px 14px;
+    padding: 9px 0;
     box-shadow: none;
+    outline: none;
 
-    &::placeholder {
-      color: #888;
-    }
-
-    &:hover {
-      border-color: #444;
-    }
-
+    &::placeholder { color: rgba(255, 255, 255, 0.45); }
+    &:hover,
     &:focus,
-    &.ant-input-focused {
-      border-color: #af2896;
-      box-shadow: none;
-    }
+    &.ant-input-focused { border: none; box-shadow: none; }
   }
 }
 
@@ -1253,14 +1251,15 @@
   width: 40px;
   height: 40px;
   min-width: 40px;
-  border-radius: 50%;
+  border-radius: 10px;
   border: none;
-  background: #af2896;
+  background: linear-gradient(135deg, #7c5cff, #5b8cf5);
   color: #fff;
   cursor: pointer;
-  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s;
+  transition: filter 0.15s ease, transform 0.1s ease;
 
-  &:hover:not(:disabled) { transform: scale(1.06); }
+  &:hover:not(:disabled) { filter: brightness(1.1); }
+  &:active:not(:disabled) { transform: scale(0.95); }
   &:disabled { opacity: 0.4; cursor: default; }
 }
 
