@@ -44,13 +44,11 @@ export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ siz
   return (
     <span
       className={`nyta-avatar${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
-      // Sem plate/fundo (transparente). O overflow só recorta o halo/glow externo do orb pra ele
-      // PREENCHER a área do avatar — o mount interno é ampliado (o orb ocupa toda a caixa, sem a
-      // borda de gradiente/halo em volta).
-      style={{ width: size, height: size, minWidth: size, display: 'inline-flex', borderRadius: '50%', overflow: 'hidden' }}
+      // Animação crua: sem clip circular, sem fundo, sem overflow e sem zoom. É só o arquivo enviado.
+      style={{ width: size, height: size, minWidth: size, display: 'inline-flex' }}
       aria-hidden
     >
-      <span ref={ref} style={{ width: '100%', height: '100%', display: 'block', transform: 'scale(1.5)', transformOrigin: '50% 50%' }} />
+      <span ref={ref} style={{ width: '100%', height: '100%', display: 'block' }} />
     </span>
   );
 };
