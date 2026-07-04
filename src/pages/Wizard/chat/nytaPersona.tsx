@@ -50,10 +50,11 @@ export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ siz
       style={{ width: size, height: size, minWidth: size, display: 'inline-flex', borderRadius: '50%', overflow: 'hidden' }}
       aria-hidden
     >
-      {/* 1.86 = 700 (comp) ÷ 376 (diâmetro da bolha de vidro): o aro do vidro cai EXATO na borda
-          do círculo — a bolha preenche o avatar inteiro e o disco colorido (400px) fica fora do
-          recorte, aparecendo só ATRAVÉS do vidro. */}
-      <span ref={ref} style={{ width: '100%', height: '100%', display: 'block', transform: 'scale(1.86)', transformOrigin: '50% 50%' }} />
+      {/* Zoom pra bolha de VIDRO (376px na comp de 700, com ~4px de offset vertical) preencher o
+          círculo do avatar por inteiro: 1.91 cobre as 4 bordas (1.86 deixava um fio do disco
+          colorido embaixo, por causa do offset). O disco de gradiente fica fora do recorte,
+          aparecendo só ATRAVÉS do vidro. */}
+      <span ref={ref} style={{ width: '100%', height: '100%', display: 'block', transform: 'scale(1.91)', transformOrigin: '50% 50%' }} />
     </span>
   );
 };
