@@ -1,8 +1,10 @@
 // Tela de boas-vindas pós-cadastro: pill com brilho aurora animado + CTA do tutorial.
 
 .page {
+  position: relative;
   min-height: 100vh;
-  background: radial-gradient(120% 90% at 50% 0%, #15101f 0%, #08080c 55%, #050507 100%);
+  // Base escura; o brilho premium vem do <AuroraBackdrop> (camada fixa atrás do conteúdo).
+  background: #050507;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -15,6 +17,7 @@
 // ─── Pill com brilho aurora ─────────────────────────────────────────────────────
 .pillWrap {
   position: relative;
+  z-index: 1; // acima do AuroraBackdrop (z-index 0)
   display: inline-flex;
   margin-bottom: 52px;
   animation: welcomeFadeUp 0.5s ease both;
@@ -98,6 +101,8 @@
 
 // ─── Saudação digitada (boas-vindas da Maestra) ──────────────────────────────────
 .greeting {
+  position: relative;
+  z-index: 1; // acima do AuroraBackdrop
   font-family: 'SpotifyMixUITitle', sans-serif;
   font-weight: 800;
   font-size: 34px;
@@ -127,6 +132,8 @@
 
 // ─── Ações (entram quando a Nyta termina de falar) ───────────────────────────────
 .actions {
+  position: relative;
+  z-index: 1; // acima do AuroraBackdrop
   display: flex;
   align-items: center;
   gap: 24px;

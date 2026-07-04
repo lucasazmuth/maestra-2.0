@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
 import { Wordmark } from '../../components/Wordmark';
+import { AuroraBackdrop } from '../../components/AuroraBackdrop';
 import styles from './Welcome.module.scss';
 
 // Canal do YouTube da Maestra (tutorial).
@@ -41,6 +42,7 @@ const Welcome: FC = () => {
 
   return (
     <div className={styles.page}>
+      <AuroraBackdrop />
       <div className={styles.pillWrap}>
         <div className={styles.pillGlow} aria-hidden />
         <div className={styles.pill}>

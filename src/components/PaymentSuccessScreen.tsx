@@ -1,6 +1,7 @@
 import { CSSProperties, FC, ReactNode } from 'react';
 
 import { SuccessConfetti } from './SuccessConfetti';
+import { AuroraBackdrop } from './AuroraBackdrop';
 
 interface Props {
   title: string;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const wrap: CSSProperties = {
+  position: 'relative',
   minHeight: '100vh',
   width: '100%',
   background: '#0a0a0a',
@@ -27,10 +29,12 @@ const wrap: CSSProperties = {
 // (desbloqueio do perfil). Fundo escuro limpo, confete e CTA — só o título dá as boas-vindas.
 export const PaymentSuccessScreen: FC<Props> = ({ title, subtitle, description, ctaLabel, onCta }) => (
   <div style={wrap}>
+    {/* Fundo gradiente premium atrás de tudo. */}
+    <AuroraBackdrop />
     {/* Estouro de confete sobre a tela (toca uma vez e some). */}
     <SuccessConfetti fullscreen />
 
-    <div style={{ maxWidth: 480, width: '100%' }}>
+    <div style={{ position: 'relative', zIndex: 1, maxWidth: 480, width: '100%' }}>
       <h1
         style={{
           fontFamily: 'SpotifyMixUITitle',
