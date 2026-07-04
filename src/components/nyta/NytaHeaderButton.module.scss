@@ -1,7 +1,14 @@
 // Botão da Nyta no cabeçalho — pílula só com o rótulo "Nyta", no gradiente da marca
 // (magenta → azul) e brilho pulsante sutil, destacando-o do sino/avatar (neutros).
+// SÓ NO MOBILE: no desktop a Nyta já vive na sidebar (item com avatar), então o botão
+// no header é redundante — escondê-lo deixa a topbar mais clean.
 .button {
-  display: inline-flex;
+  display: none;
+
+  @media (max-width: 768px) {
+    display: inline-flex;
+  }
+
   align-items: center;
   box-sizing: border-box;
   gap: 7px;
