@@ -7,8 +7,9 @@
   gap: 8px;
 }
 
-// Cada etapa é um CARD próprio. Fundo neutro #181818 (igual aos cards de tarefas/eventos);
-// a cor do produto (--acc) vive só na borda e no indicador, pra manter a identidade da etapa.
+// Cada etapa é um CARD próprio. Fundo neutro #181818 e borda neutra sutil — mesmo visual limpo
+// dos cards de "Próximas tarefas"/"Próximos eventos". A cor do produto (--acc) vive só no TEXTO
+// (nome/status da etapa atual), não na borda, pra não poluir.
 .journey-node {
   flex: 1 1 0;
   min-width: 0;
@@ -20,20 +21,20 @@
   padding: 18px 16px;
   border-radius: 14px;
   background: #181818;
-  border: 1px solid rgba(var(--acc, 116, 116, 126), 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 
   &:hover {
     background: #1f1f1f;
-    border-color: rgba(var(--acc, 116, 116, 126), 0.42);
+    border-color: rgba(255, 255, 255, 0.16);
     transform: translateY(-1px);
   }
   &:hover .journey-node-name { color: #fff; }
 }
-// Etapa atual: mesmo fundo, borda da cor do produto mais acesa.
+// Etapa atual: mesmo fundo, borda neutra um tom acima (o destaque de cor fica no texto).
 .journey-node--current {
-  border-color: rgba(var(--acc), 0.5);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 // Bloco de texto do nó: nome + descrição (conceito) + status, empilhados.

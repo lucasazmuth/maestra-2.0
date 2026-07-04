@@ -5,13 +5,13 @@ import { FiLock } from 'react-icons/fi';
 import { useNytaModal } from '../../hooks/useNytaModal';
 import { useEntitlements } from '../../hooks/useEntitlements';
 import { PAYWALL_DISABLED } from '../../constants/maestra';
-import { AiGlow } from '../AiGlow';
+import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
 import styles from './NytaHeaderButton.module.scss';
 
 /**
- * Botão permanente no cabeçalho que abre/fecha o modal da Nyta.
- * Pílula com o ROSTO da Nyta + rótulo "Nyta IA" (autoexplicativo) e gradiente da marca.
- * Sem acesso (paywall), mostra um cadeado no lugar do rosto e fica travado.
+ * Botão da Nyta no cabeçalho — SÓ NO MOBILE (no desktop a Nyta vive na sidebar).
+ * Mostra apenas o avatar da Nyta ao lado do sino, mais limpo que a antiga pílula "Nyta IA".
+ * Sem acesso (paywall), sobrepõe um cadeado no avatar e fica travado (clique abre o Assinar Pro).
  */
 export const NytaHeaderButton: FC = () => {
   const { isOpen, toggle, open } = useNytaModal();
@@ -41,23 +41,20 @@ export const NytaHeaderButton: FC = () => {
     .filter(Boolean)
     .join(' ');
 
-  const button = (
+  return (
     <button
       onClick={handleClick}
       aria-label="Nyta"
       title={isLocked ? 'Maestra · Assine o Pro para usar a Nyta IA' : 'Maestra · Nyta IA'}
       className={classNames}
     >
-      {isLocked && <FiLock size={14} />}
-      {/* Nome padronizado "Nyta IA" em desktop e mobile. */}
-      <span className={styles.label}>
-        Nyta
-        <span className={styles.labelExtra}> IA</span>
-        <span className={styles.labelShort}> IA</span>
-      </span>
+      <NytaAvatar size={32} />
+      {/* Sem acesso: cadeado sobreposto no canto do avatar. */}
+      {isLocked && (
+        <span className={styles.lockBadge} aria-hidden>
+          <FiLock size={9} />
+        </span>
+      )}
     </button>
   );
-
-  // Sem acesso (paywall): pílula travada (cadeado, sem brilho) que abre o modal de assinatura.
-  return isLocked ? button : <AiGlow>{button}</AiGlow>;
 };

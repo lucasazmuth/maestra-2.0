@@ -1,7 +1,6 @@
-// Botão da Nyta no cabeçalho — pílula só com o rótulo "Nyta", no gradiente da marca
-// (magenta → azul) e brilho pulsante sutil, destacando-o do sino/avatar (neutros).
-// SÓ NO MOBILE: no desktop a Nyta já vive na sidebar (item com avatar), então o botão
-// no header é redundante — escondê-lo deixa a topbar mais clean.
+// Botão da Nyta no cabeçalho — SÓ NO MOBILE (no desktop a Nyta vive na sidebar, então aqui é
+// redundante e fica oculto). Mostra apenas o avatar da Nyta, circular, ao lado do sino — bem mais
+// limpo que a antiga pílula com o rótulo "Nyta IA".
 .button {
   display: none;
 
@@ -9,70 +8,55 @@
     display: inline-flex;
   }
 
+  position: relative;
   align-items: center;
+  justify-content: center;
   box-sizing: border-box;
-  gap: 7px;
-  height: 36px;
-  padding: 0 18px;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
   cursor: pointer;
-  background: #16161b;
-  transition: transform 0.15s ease, border-color 0.2s ease;
+  transition: transform 0.15s ease;
 
   &:hover:not(.disabled) {
-    transform: scale(1.04);
-    border-color: rgba(255, 255, 255, 0.22);
+    transform: scale(1.06);
   }
 
   &:active:not(.disabled) {
-    transform: scale(0.97);
+    transform: scale(0.95);
   }
 }
 
-.label {
-  line-height: 1;
+// Cadeado (paywall) sobreposto no canto inferior direito do avatar.
+.lockBadge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #1a1a20;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #cfcfd4;
 }
 
-// Desktop mostra " Assistente"; mobile (cabeçalho apertado) troca por " AI".
-.labelExtra {
-  @media (max-width: 768px) {
-    display: none;
-  }
-}
-
-.labelShort {
-  display: none;
-
-  @media (max-width: 768px) {
-    display: inline;
-  }
-}
-
-@media (max-width: 768px) {
-  .button {
-    padding: 0 12px;
-  }
-}
-
-// Modal aberto: borda branca reforçando o estado ligado.
+// Modal aberto: anel branco sutil reforçando o estado ligado.
 .active {
-  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
 }
 
-// Sem acesso (paywall): mantém a identidade, mas apagado e travado.
+// Sem acesso (paywall): avatar apagado, mas clicável (abre o Assinar Pro).
 .disabled {
   opacity: 0.6;
   filter: grayscale(0.4);
-  cursor: pointer; // clicável: abre o paywall (Assinar Pro)
-  animation: none;
-  box-shadow: none;
+  cursor: pointer;
 
   &:hover {
     opacity: 0.8;
