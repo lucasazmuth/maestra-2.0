@@ -44,8 +44,10 @@ export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ siz
   return (
     <span
       className={`nyta-avatar${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
-      // Animação crua: sem clip circular, sem fundo, sem overflow e sem zoom. É só o arquivo enviado.
-      style={{ width: size, height: size, minWidth: size, display: 'inline-flex' }}
+      // O vidro da animação é translúcido: sem um fundo próprio, ele "pega" a cor do que está atrás
+      // (ex.: a aurora roxa do modal), virando um círculo colorido. Um dark neutro (some no escuro do
+      // app) mata isso — fica só o vidro. Clip só pra ele ficar redondo.
+      style={{ width: size, height: size, minWidth: size, display: 'inline-flex', borderRadius: '50%', overflow: 'hidden', background: '#0e0d11' }}
       aria-hidden
     >
       <span ref={ref} style={{ width: '100%', height: '100%', display: 'block' }} />
