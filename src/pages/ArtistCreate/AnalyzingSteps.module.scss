@@ -1,0 +1,79 @@
+// Animação "pensante" do Diagnóstico REAL — lista de passos que sobe em loop dentro de uma janela
+// com bordas esmaecidas (foco no centro). BEM clean: sem card, sem borda, só o texto e o ícone.
+
+.wrap {
+  --rowH: 56px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 40px 0;
+  animation: analyzeFade 0.4s ease both;
+}
+
+// Janela de 5 linhas: a do meio (índice 2) fica no centro exato. A máscara deixa só o centro
+// nítido e apaga topo/base, criando o foco de "item atual".
+.window {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  height: calc(var(--rowH) * 5);
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.1) 22%,
+    #000 50%,
+    rgba(0, 0, 0, 0.1) 78%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.1) 22%,
+    #000 50%,
+    rgba(0, 0, 0, 0.1) 78%,
+    transparent 100%
+  );
+}
+
+.track {
+  display: flex;
+  flex-direction: column;
+  // deslocamento inicial: sobe 2 linhas pra que o 1º item nasça no centro da janela.
+  margin-top: calc(var(--rowH) * 2);
+  will-change: transform;
+}
+
+.row {
+  height: var(--rowH);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+.icon {
+  display: flex;
+  font-size: 20px;
+  color: #7fb99b; // verde suave (identidade do REAL), discreto
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 16.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #fff; // branco no centro; a máscara esmaece nas pontas
+}
+
+@keyframes analyzeFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// Respeita "reduzir movimento": sem scroll (a máscara ainda dá o visual de foco central).
+@media (prefers-reduced-motion: reduce) {
+  .track { transition: none !important; }
+}

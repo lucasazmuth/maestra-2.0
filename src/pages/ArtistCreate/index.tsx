@@ -18,6 +18,7 @@ import { useEntitlements } from '../../hooks/useEntitlements';
 import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import { DiagnosticReport, type Chartmetric } from './DiagnosticReport';
 import { FlowHeader } from './FlowHeader';
+import { AnalyzingSteps } from './AnalyzingSteps';
 import styles from './ArtistCreate.module.scss';
 
 type Step = 'perfil' | 'intro' | 'quiz' | 'analisando' | 'diagnostico';
@@ -698,10 +699,8 @@ const ArtistCreate: FC = () => {
               );
             })()}
 
-            {/* ANALISANDO */}
-            {step === 'analisando' && (
-              <div className={styles.analyzing}><Spin size='large' /> Analisando o perfil e cruzando os dados do quiz…</div>
-            )}
+            {/* ANALISANDO — lista "pensante" (passos que sobem em loop, foco no centro). */}
+            {step === 'analisando' && <AnalyzingSteps />}
 
             {/* DIAGNÓSTICO (Índice REAL) */}
             {step === 'diagnostico' && (
