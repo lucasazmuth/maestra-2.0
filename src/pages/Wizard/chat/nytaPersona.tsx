@@ -1,4 +1,7 @@
-import { FC } from 'react';
+import { FC, useEffect, useRef } from 'react';
+import lottie, { type AnimationItem } from 'lottie-web';
+
+import nytaLottie from '../../../assets/nyta-lottie.json';
 
 // Identidade visual e verbal da Nyta — a inteligência da Maestra Manager.
 // As falas são templadas (custo zero por turno) e seguem o tom de voz do método
@@ -8,39 +11,45 @@ import { FC } from 'react';
 // Nome de exibição global da assistente.
 export const NYTA_NAME = 'Nyta';
 
-// Avatar da Nyta: a MESMA logo (círculo azul + anel verde + traços vermelhos), agora em SVG vetorial
-// pra dar vida às PARTES internas: o anel verde tem uma energia "fluindo" (stroke-dashoffset) e pulsa
-// de leve; os traços vermelhos piscam/mexem. Ao "pensar" (`state='thinking'`), tudo acelera. Toda a
-// animação está no CSS (App.scss), respeitando prefers-reduced-motion.
+// Avatar da Nyta: animação Lottie (o "AI logo") tocando em loop dentro do círculo. Ao "pensar"
+// (`state='thinking'`) acelera. Renderizado via lottie-web (mesmo padrão do SpotifyLottie).
 export type NytaAvatarState = 'idle' | 'thinking';
 
-export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ size = 32, state = 'idle' }) => (
-  <span
-    className={`nyta-avatar nyta-avatar--glow${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
-    style={{ width: size, height: size, minWidth: size, borderRadius: '50%', overflow: 'hidden' }}
-    aria-hidden
-  >
-    <svg viewBox='0 0 100 100' width={size} height={size} style={{ display: 'block' }}>
-      <defs>
-        <radialGradient id='nytaBg' cx='40' cy='36' r='72' gradientUnits='userSpaceOnUse'>
-          <stop offset='0' stopColor='#2ad6c4' />
-          <stop offset='0.45' stopColor='#159ad2' />
-          <stop offset='0.8' stopColor='#1a72d6' />
-          <stop offset='1' stopColor='#175fc4' />
-        </radialGradient>
-      </defs>
-      <circle cx='50' cy='50' r='50' fill='url(#nytaBg)' />
-      {/* Anel verde: energia que flui (dash) + pulso */}
-      <circle className='nyta-green' cx='50' cy='54' r='22' fill='none' stroke='#39e38a' strokeWidth='6' strokeLinecap='round' />
-      {/* Traços vermelhos: piscam e mexem de leve */}
-      <g className='nyta-red' fill='none' stroke='#ff3b3b' strokeWidth='3.4' strokeLinecap='round'>
-        <path d='M43 40 q1 -8 4 -12' />
-        <path d='M48 41 q1 -9 4 -13' />
-        <path d='M53 40 q1 -8 4 -12' />
-      </g>
-    </svg>
-  </span>
-);
+export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ size = 32, state = 'idle' }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const animRef = useRef<AnimationItem | null>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const anim = lottie.loadAnimation({
+      container: el,
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      // deno/CRA importa o JSON como objeto — o lottie aceita direto.
+      animationData: nytaLottie as unknown as Record<string, unknown>,
+      rendererSettings: { preserveAspectRatio: 'xMidYMid slice' },
+    });
+    animRef.current = anim;
+    return () => { anim.destroy(); animRef.current = null; };
+  }, []);
+
+  // Acelera o loop quando a Nyta está "pensando".
+  useEffect(() => {
+    animRef.current?.setSpeed(state === 'thinking' ? 1.7 : 1);
+  }, [state]);
+
+  return (
+    <span
+      className={`nyta-avatar${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
+      style={{ width: size, height: size, minWidth: size, borderRadius: '50%', overflow: 'hidden', display: 'inline-flex' }}
+      aria-hidden
+    >
+      <span ref={ref} style={{ width: '100%', height: '100%', display: 'block' }} />
+    </span>
+  );
+};
 
 // Sorteia uma variação para a fala não soar robótica.
 export const pick = (variants: string[]): string =>

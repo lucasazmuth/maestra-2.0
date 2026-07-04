@@ -1273,57 +1273,10 @@ a {
   }
 }
 
-// Aura pulsante do avatar da Nyta (vida de IA). Sempre ativa, sutil; mais rápida quando "pensando".
-.nyta-avatar--glow {
-  position: relative;
-  animation: nytaAura 3.2s ease-in-out infinite;
-}
-.nyta-avatar--glow.nyta-avatar--thinking {
-  animation-duration: 1.1s;
-}
-@keyframes nytaAura {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(175, 40, 150, 0.35), 0 0 8px 1px rgba(124, 92, 255, 0.28);
-  }
-  50% {
-    box-shadow: 0 0 0 3px rgba(175, 40, 150, 0), 0 0 16px 4px rgba(124, 92, 255, 0.55);
-  }
-}
-
-// Partes internas da logo da Nyta, animadas (é o "desenho" que se mexe, não a logo girando).
-// Anel verde: uma energia "fluindo" ao redor (dash) + um pulso sutil de escala.
-.nyta-green {
-  transform-box: fill-box;
-  transform-origin: center;
-  stroke-dasharray: 96 42;
-  animation: nytaGreenFlow 3.6s linear infinite, nytaGreenPulse 3s ease-in-out infinite;
-}
-@keyframes nytaGreenFlow {
-  to { stroke-dashoffset: -138; } // ~circunferência (2π·22)
-}
-@keyframes nytaGreenPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-// Traços vermelhos: piscam e sobem/descem de leve (as "linhas variando").
-.nyta-red {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: nytaRed 1.7s ease-in-out infinite;
-}
-@keyframes nytaRed {
-  0%, 100% { transform: translateY(0) scale(1); opacity: 0.82; }
-  50% { transform: translateY(-1.4px) scale(1.1); opacity: 1; }
-}
-
-// "Pensando": a energia flui e os traços variam mais rápido.
-.nyta-avatar--thinking .nyta-green { animation-duration: 1.3s, 1.2s; }
-.nyta-avatar--thinking .nyta-red { animation-duration: 0.7s; }
-
-@media (prefers-reduced-motion: reduce) {
-  .nyta-avatar--glow { animation: none; box-shadow: 0 0 10px 2px rgba(124, 92, 255, 0.35); }
-  .nyta-green, .nyta-red { animation: none; }
+// O avatar da Nyta é uma animação Lottie (renderizada no componente NytaAvatar). O clip circular e o
+// tamanho vêm de estilos inline; o SVG do lottie preenche o container.
+.nyta-avatar svg {
+  display: block;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
