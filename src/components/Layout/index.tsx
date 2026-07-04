@@ -90,7 +90,11 @@ export const AppLayout: FC = memo(() => {
           wrap
           justify='end'
           gutter={[8, 8]}
-          style={{ overflow: 'hidden', height: bottomReserve ? `calc(100% - ${bottomReserve}px)` : '100%' }}
+          // alignContent flex-start: sem isso, o align-content padrão (stretch) do flex-wrap estica a
+          // linha do topbar (56px) pra preencher a altura cheia do Row, criando um vão extra ABAIXO da
+          // barra e deixando os ícones "colados no topo". Com flex-start as linhas empacotam sem
+          // esticar — o topbar fica nos 56px e o conteúdo preenche o resto.
+          style={{ overflow: 'hidden', alignContent: 'flex-start', height: bottomReserve ? `calc(100% - ${bottomReserve}px)` : '100%' }}
         >
           <Col span={24}>
             <Topbar />
