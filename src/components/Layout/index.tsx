@@ -41,7 +41,14 @@ export const AppLayout: FC = memo(() => {
   // No mobile a sidebar é oculta; uma tab bar no rodapé (in-flow, abaixo do banner) navega entre os
   // módulos do artista. Reserva a altura dela (56px) no mobile, somada à do banner quando houver.
   const location = useLocation();
-  const hasMobileNav = /^\/artists\/[^/]+/.test(location.pathname);
+  // A tab bar aparece nas rotas de artista E nas telas globais (Configurações, Notificações,
+  // Assinatura…) quando há um artista atual no store — o mesmo critério do MobileNav. Excluímos a
+  // lista "Seus artistas" e a área admin. Mantém a reserva de espaço (padding-bottom) em sincronia
+  // com o que o MobileNav de fato renderiza, senão o conteúdo ficaria atrás da barra.
+  const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
+  const routeArtistId = /^\/artists\/([^/]+)/.exec(location.pathname)?.[1];
+  const navExcluded = location.pathname === '/artists' || location.pathname.startsWith('/admin');
+  const hasMobileNav = !!(routeArtistId ?? currentArtistId) && !navExcluded;
   // No mobile, o Planejamento Estratégico (wizard) vira "tela cheia": escondemos o topbar do app
   // pra o chat ocupar toda a altura (o wizard já tem cabeçalho próprio com título e "Salvar e sair").
   const isWizardChat = /^\/artists\/[^/]+\/wizard/.test(location.pathname);

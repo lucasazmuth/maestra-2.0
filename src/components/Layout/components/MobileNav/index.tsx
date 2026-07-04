@@ -5,15 +5,23 @@ import {
   SystemHomeIcon, PlanoAcaoIcon, CatalogoIcon, AgendaIcon, MoreIcon,
   DiagnosticoIcon, PlanejamentoIcon, EquipeIcon,
 } from '../../../Icons/system';
+import { useAppSelector } from '../../../../store/store';
 
 // Navbar inferior (tab bar) do mobile: substitui a sidebar (oculta em telas < 768px).
 // 4 atalhos principais + "Mais" (bottom sheet) com o restante dos módulos.
-// Só aparece quando há um artista no contexto (rota /artists/:id…).
+// Aparece sempre que há um artista no contexto — seja pela rota /artists/:id… ou, em telas
+// "globais" (Configurações, Notificações, Assinatura…), pelo artista atual guardado no store.
+// Assim o usuário não fica "preso" sem navegação ao abrir os ajustes.
 
 const matchArtistId = (pathname: string): string | undefined => {
   const m = pathname.match(/^\/artists\/([^/]+)/);
   return m ? m[1] : undefined;
 };
+
+// Rotas sem contexto de artista: a lista "Seus artistas" (o seletor) e a área admin.
+// Nelas a tab bar não faz sentido, mesmo havendo um artista atual no store.
+const isNavExcludedRoute = (pathname: string): boolean =>
+  pathname === '/artists' || pathname.startsWith('/admin');
 
 type Item = { icon: ReactNode; label: string; suffix: string };
 
@@ -22,10 +30,13 @@ export const MobileNav: FC = () => {
   const location = useLocation();
   const [t] = useTranslation(['navigation']);
   const [moreOpen, setMoreOpen] = useState(false);
-  const artistId = matchArtistId(location.pathname);
+  // Artista pela rota; senão o atual (setado ao visitar qualquer módulo do artista) — assim a
+  // navbar segue visível em /settings, /notifications, /assinatura etc.
+  const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
+  const artistId = matchArtistId(location.pathname) ?? currentArtistId;
 
-  // Sem artista no contexto (ex.: lista "Seus artistas") não há o que navegar por módulo.
-  if (!artistId) return null;
+  // Sem artista no contexto, ou numa rota excluída (lista/admin), não há o que navegar por módulo.
+  if (!artistId || isNavExcludedRoute(location.pathname)) return null;
 
   // Atalhos principais (mais usados no dia a dia).
   const main: Item[] = [
