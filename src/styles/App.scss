@@ -666,6 +666,19 @@ h3 {
     line-height: 1;
   }
 
+  // Item central da Nyta: o avatar (30px) fica um pouco maior que os ícones (24px) e "levanta"
+  // sutilmente, marcando o centro da barra como a ação-herói (abrir a Nyta).
+  .mobile-nav-item--nyta {
+    color: #cfcfd4; // rótulo "Nyta" um tom acima dos demais mesmo inativo
+  }
+  .mobile-nav-nyta-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -4px; // eleva o avatar acima da linha dos ícones vizinhos
+    filter: drop-shadow(0 2px 6px rgba(148, 74, 255, 0.35)); // brilho sutil da paleta da Nyta
+  }
+
   // Menu "Mais" — popover ancorado ACIMA da tab "Mais" (a navbar continua visível).
   .mobile-more-backdrop {
     position: fixed;

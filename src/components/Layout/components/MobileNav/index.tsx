@@ -6,12 +6,15 @@ import {
   DiagnosticoIcon, PlanejamentoIcon, EquipeIcon,
 } from '../../../Icons/system';
 import { useAppSelector } from '../../../../store/store';
+import { useNytaModal } from '../../../../hooks/useNytaModal';
+import { NytaAvatar } from '../../../../pages/Wizard/chat/nytaPersona';
 
 // Navbar inferior (tab bar) do mobile: substitui a sidebar (oculta em telas < 768px).
-// 4 atalhos principais + "Mais" (bottom sheet) com o restante dos módulos.
+// Layout: Início · Plano de ação · [Nyta IA] · Agenda · Mais. O centro é o avatar da Nyta (abre o
+// modal do assistente). "Mais" (popover) guarda o restante: Catálogo, Diagnóstico REAL, Plano
+// estratégico e Equipe.
 // Aparece sempre que há um artista no contexto — seja pela rota /artists/:id… ou, em telas
 // "globais" (Configurações, Notificações, Assinatura…), pelo artista atual guardado no store.
-// Assim o usuário não fica "preso" sem navegação ao abrir os ajustes.
 
 const matchArtistId = (pathname: string): string | undefined => {
   const m = pathname.match(/^\/artists\/([^/]+)/);
@@ -30,6 +33,7 @@ export const MobileNav: FC = () => {
   const location = useLocation();
   const [t] = useTranslation(['navigation']);
   const [moreOpen, setMoreOpen] = useState(false);
+  const { open: openNyta, isOpen: nytaOpen } = useNytaModal();
   // Artista pela rota; senão o atual (setado ao visitar qualquer módulo do artista) — assim a
   // navbar segue visível em /settings, /notifications, /assinatura etc.
   const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
@@ -38,15 +42,17 @@ export const MobileNav: FC = () => {
   // Sem artista no contexto, ou numa rota excluída (lista/admin), não há o que navegar por módulo.
   if (!artistId || isNavExcludedRoute(location.pathname)) return null;
 
-  // Atalhos principais (mais usados no dia a dia).
-  const main: Item[] = [
+  // Atalhos das pontas (mais usados no dia a dia). O centro (Nyta) é renderizado à parte.
+  const left: Item[] = [
     { icon: <SystemHomeIcon size={24} />, label: t('Home', { defaultValue: 'Início' }), suffix: '' },
     { icon: <PlanoAcaoIcon size={24} />, label: t('Plan', { defaultValue: 'Plano de ação' }), suffix: 'action-plan' },
-    { icon: <CatalogoIcon size={24} />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog' },
+  ];
+  const right: Item[] = [
     { icon: <AgendaIcon size={24} />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda' },
   ];
   // Restante dos módulos, dentro do "Mais".
   const more: Item[] = [
+    { icon: <CatalogoIcon size={22} />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog' },
     { icon: <DiagnosticoIcon size={22} />, label: t('REAL Diagnostic', { defaultValue: 'Diagnóstico REAL' }), suffix: 'diagnostico' },
     { icon: <PlanejamentoIcon size={22} />, label: t('Planning', { defaultValue: 'Plano estratégico' }), suffix: 'perfil' },
     { icon: <EquipeIcon size={22} />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team' },
@@ -63,9 +69,29 @@ export const MobileNav: FC = () => {
     navigate(`/artists/${artistId}${suffix ? `/${suffix}` : ''}`);
   };
 
+  const goNyta = () => {
+    setMoreOpen(false);
+    openNyta();
+  };
+
+  const renderItem = (it: Item) => {
+    const active = isActive(it.suffix);
+    return (
+      <button
+        key={it.suffix || 'home'}
+        className={`mobile-nav-item${active ? ' mobile-nav-item--active' : ''}`}
+        aria-current={active ? 'page' : undefined}
+        onClick={() => go(it.suffix)}
+      >
+        <span className='mobile-nav-icon'>{it.icon}</span>
+        <span className='mobile-nav-label'>{it.label}</span>
+      </button>
+    );
+  };
+
   return (
     <>
-      {/* Bottom sheet "Mais" */}
+      {/* Menu "Mais" */}
       {moreOpen && <div className='mobile-more-backdrop' onClick={() => setMoreOpen(false)} />}
       {moreOpen && (
         <div className='mobile-more-sheet' role='menu'>
@@ -84,21 +110,21 @@ export const MobileNav: FC = () => {
       )}
 
       <nav className='mobile-nav' aria-label='Navegação'>
-        {main.map((it) => {
-          const active = isActive(it.suffix);
-          return (
-            <button
-              key={it.suffix || 'home'}
-              className={`mobile-nav-item${active ? ' mobile-nav-item--active' : ''}`}
-              aria-current={active ? 'page' : undefined}
-              onClick={() => go(it.suffix)}
-            >
-              <span className='mobile-nav-icon'>{it.icon}</span>
-              <span className='mobile-nav-label'>{it.label}</span>
-            </button>
-          );
-        })}
-        {/* Mais — abre o sheet com os módulos restantes */}
+        {left.map(renderItem)}
+
+        {/* Nyta IA — centro da barra: o avatar abre o modal do assistente. */}
+        <button
+          className={`mobile-nav-item mobile-nav-item--nyta${nytaOpen ? ' mobile-nav-item--active' : ''}`}
+          aria-label='Nyta IA'
+          onClick={goNyta}
+        >
+          <span className='mobile-nav-nyta-avatar'><NytaAvatar size={30} /></span>
+          <span className='mobile-nav-label'>Nyta</span>
+        </button>
+
+        {right.map(renderItem)}
+
+        {/* Mais — abre o popover com os módulos restantes */}
         <button
           className={`mobile-nav-item${moreOpen || moreActive ? ' mobile-nav-item--active' : ''}`}
           aria-haspopup='menu'

@@ -7,7 +7,6 @@ import { NotificationIcon, ConfigIcon } from '../../../Icons/system';
 import { countUnread } from '../../../../services/db/notifications';
 
 import ForwardBackwardsButton from '../Navbar/ForwardBackwardsButton';
-import { NytaHeaderButton } from '../../../nyta/NytaHeaderButton';
 import { useAppDispatch, useAppSelector } from '../../../../store/store';
 import { authActions } from '../../../../store/slices/auth';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
@@ -130,8 +129,6 @@ export const Topbar = memo(() => {
       </Space>
 
       <Space size={16} align='center'>
-        <NytaHeaderButton />
-
         <Badge count={unread} size='small' overflowCount={99} offset={[-4, 4]}>
           <button
             onClick={() => navigate('/notifications')}
