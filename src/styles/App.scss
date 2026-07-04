@@ -742,12 +742,19 @@ h3 {
     justify-content: center;
   }
 
-  // A navbar flutuante ocupa ~86px (62 altura + 12 margem inferior + 12 respiro) na reserva de altura.
+  // A navbar é uma ilha FLUTUANTE (translúcida + blur). Em vez de cortar a altura da .Main-section
+  // pra reservar o espaço dela — o que deixava uma faixa preta morta atrás do pill — damos altura
+  // cheia e usamos padding-bottom. Assim o conteúdo rola POR TRÁS da navbar (visível pelo blur) e o
+  // último item ainda limpa o pill. 90px = 62 (altura) + 12 (margem) + respiro.
   .main-container.has-mobile-nav .Main-section {
-    height: calc(100vh - 64px - 86px);
+    height: calc(100vh - 64px);
+    padding-bottom: 90px;
   }
+  // Com banner de pagamento (barra sólida no rodapé), a .Main-section para acima dele; o pill
+  // flutua logo acima do banner, então o padding-bottom continua reservando a folga do pill.
   .main-container.has-mobile-nav.has-bottom-banner .Main-section {
-    height: calc(100vh - 64px - 84px - 86px);
+    height: calc(100vh - 64px - 84px);
+    padding-bottom: 90px;
   }
 }
 
