@@ -172,10 +172,6 @@
   .matrixTypeRow { flex-direction: column; align-items: center; gap: 10px; }
   .matrixTypeName { flex: none; min-width: 0; text-align: center; }
   .porteChips { justify-content: center; }
-
-  // Composição de receita: rótulo acima do campo, tudo centralizado.
-  .revenueRow { flex-direction: column; align-items: stretch; gap: 6px; }
-  .revenueLabel { text-align: center; }
 }
 
 // ─── Progresso (só no "refazer diagnóstico") ───────────────────────────────────
@@ -1631,13 +1627,15 @@
 .engBelow { color: #b0b0b8; }
 
 // ═══════════════════ Quiz V3 — widgets (composição de receita + matriz de imprensa) ═══════════════════
-.revenueForm { display: flex; flex-direction: column; gap: 10px; }
-.revenueRow { display: flex; align-items: center; gap: 12px; }
-.revenueLabel { flex: 1; min-width: 0; font-size: 13.5px; color: #d4d4dc; }
+// Composição de receita: cada fonte é um bloco — rótulo em cima, campo R$ full-width embaixo.
+// Empilhado (não lado a lado) pra rótulos longos ("Direitos (autorais, conexos…)") não brigarem
+// com o campo. Vale em desktop e mobile — consistente e limpo.
+.revenueForm { display: flex; flex-direction: column; gap: 16px; }
+.revenueRow { display: flex; flex-direction: column; gap: 7px; }
+.revenueLabel { font-size: 13.5px; color: #d4d4dc; }
 .revenueInput {
-  width: 150px;
-  flex-shrink: 0;
-  height: 44px;
+  width: 100%;
+  height: 48px;
   border-radius: 11px;
   background: #1a1a1a;
   display: flex;

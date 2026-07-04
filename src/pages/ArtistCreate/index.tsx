@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Input, InputNumber, Spin } from 'antd';
 import { FiAlertCircle, FiArrowLeft, FiX } from 'react-icons/fi';
@@ -583,10 +583,15 @@ const ArtistCreate: FC = () => {
             {/* QUIZ */}
             {step === 'quiz' && (() => {
               const cur = QUIZ[quizIndex];
-              // Só dígitos: o parser remove qualquer não-número (bloqueia texto colado/digitado) e
-              // inputMode='numeric' abre o teclado numérico no mobile. Aplicado a TODO campo de valor.
+              // Só dígitos: o parser limpa o que for colado e o onKeyDown bloqueia a digitação de
+              // qualquer caractere não-numérico (letras, símbolos, espaço) — teclas de controle
+              // (Backspace, setas, Tab, Enter, Delete) e atalhos (Ctrl/Cmd+V etc.) seguem livres.
+              // inputMode='numeric' ainda abre o teclado numérico no mobile. Vale p/ TODO campo de valor.
               const stripNonDigits = ((val?: string) => (val ? val.replace(/[^\d]/g, '') : '')) as any;
-              const numProps = { inputMode: 'numeric' as const, parser: stripNonDigits };
+              const blockNonNumericKey = (e: ReactKeyboardEvent) => {
+                if (e.key.length === 1 && !/[0-9]/.test(e.key) && !e.ctrlKey && !e.metaKey) e.preventDefault();
+              };
+              const numProps = { inputMode: 'numeric' as const, parser: stripNonDigits, onKeyDown: blockNonNumericKey };
               const currencyProps = {
                 ...numProps,
                 prefix: 'R$',
