@@ -22,11 +22,11 @@ export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ siz
   >
     <svg viewBox='0 0 100 100' width={size} height={size} style={{ display: 'block' }}>
       <defs>
-        <radialGradient id='nytaBg' cx='34' cy='30' r='74' gradientUnits='userSpaceOnUse'>
-          <stop offset='0' stopColor='#27d6c2' />
-          <stop offset='0.42' stopColor='#1289cb' />
-          <stop offset='0.75' stopColor='#0a54c4' />
-          <stop offset='1' stopColor='#0a2a66' />
+        <radialGradient id='nytaBg' cx='40' cy='36' r='72' gradientUnits='userSpaceOnUse'>
+          <stop offset='0' stopColor='#2ad6c4' />
+          <stop offset='0.45' stopColor='#159ad2' />
+          <stop offset='0.8' stopColor='#1a72d6' />
+          <stop offset='1' stopColor='#175fc4' />
         </radialGradient>
       </defs>
       <circle cx='50' cy='50' r='50' fill='url(#nytaBg)' />
