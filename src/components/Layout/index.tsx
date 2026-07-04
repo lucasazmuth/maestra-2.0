@@ -29,7 +29,10 @@ export const AppLayout: FC = memo(() => {
   const libraryCollapsed = useAppSelector(getLibraryCollapsed);
   const isMobile = useIsMobile();
   const [isTablet, setIsTablet] = useState(false);
-  const bannerKind = useStatusBanner();
+  const rawBannerKind = useStatusBanner();
+  // No mobile o banner promocional ("Assine o Maestra Pro") toma espaço demais e não é crítico —
+  // escondemos só ele. Os avisos de pagamento (grace/pending) continuam aparecendo no mobile.
+  const bannerKind = rawBannerKind === 'promo' && isMobile ? null : rawBannerKind;
   const userId = useAppSelector((s) => s.auth.user?.id);
   // Coluna de resultados do Planejamento Estratégico (publicada pelo Wizard via store global):
   // aparece como 3ª coluna, irmã da navbar e da página, só enquanto o wizard está montado.
