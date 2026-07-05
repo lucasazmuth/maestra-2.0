@@ -1214,6 +1214,11 @@
   max-width: var(--wiz-col);
   // Folga igual em cima e embaixo — o campo fica equilibrado no rodapé do chat.
   margin: 10px auto 10px;
+
+  // Mobile: mesmo recuo enxuto das mensagens (14px = padding do .wizard). Full width do .nyta-chat.
+  @media (max-width: 768px) {
+    width: 100%;
+  }
   background: rgba(18, 14, 26, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
@@ -1378,15 +1383,14 @@
     display: none;
   }
 
-  // Mobile: a área de rolagem vai de borda a borda (margem negativa anula os 14px do .wizard).
-  // O recuo das mensagens continua o mesmo (36px), mas agora vem do PADDING do próprio scroll —
-  // que é rolável ao toque. Antes as laterais (os 14px do wizard) eram zona morta: o dedo não
-  // rolava a lista se passasse por ali.
+  // Mobile: a área de rolagem vai de borda a borda (margem negativa anula os 14px do .wizard),
+  // então o toque rola em qualquer lugar. O recuo das mensagens é enxuto (14px, igual ao header) —
+  // o avatar não tem glow, então não precisa da folga grande que existia antes.
   @media (max-width: 768px) {
     margin-left: -14px;
     margin-right: -14px;
-    padding-left: 36px;
-    padding-right: 36px;
+    padding-left: 14px;
+    padding-right: 14px;
   }
 }
 
