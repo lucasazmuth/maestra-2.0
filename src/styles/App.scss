@@ -445,7 +445,9 @@ h3 {
   // ele caber inteiro — botão incluído — sem sobrar espaço preto abaixo.
   &.has-bottom-banner {
     .Main-section {
-      height: calc(100vh - 86px - 76px);
+      // Mesma reserva de banner (64px) que a sidebar usa — antes era 76px, deixando o conteúdo
+      // 12px mais curto que a coluna esquerda (folgas inferiores desiguais em relação ao banner).
+      height: calc(100vh - 86px - 64px);
 
       @media (max-width: $desktop-breakpoint) {
         height: calc(100vh - 64px - 84px);
