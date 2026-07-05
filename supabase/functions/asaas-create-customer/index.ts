@@ -116,8 +116,51 @@ Deno.serve(async (req: Request) => {
       console.log(`Customer ${existingRecord.asaas_customer_id} no longer valid, creating new`);
     }
 
-    // Create customer on Asaas
     const cpfCnpjDigits = (cpfCnpj || "").replace(/\D/g, "");
+
+    // Rede de segurança contra clientes DUPLICADOS: se não reaproveitamos por linha local,
+    // procura no Asaas por CPF/CNPJ ANTES de criar um novo. Assim, se a linha local sumiu
+    // (limpeza de dados, restore de banco, corrida/duplo-clique no checkout) mas o cliente já
+    // existe no Asaas, a gente reaproveita ele e re-vincula a linha — em vez de criar um 2º
+    // cliente pro mesmo CPF. O Asaas NÃO deduplica sozinho, então esse passo é essencial.
+    try {
+      const lookupRes = await fetch(
+        `${asaasApiUrl}/v3/customers?cpfCnpj=${cpfCnpjDigits}`,
+        { headers: { "access_token": asaasApiKey } }
+      );
+      if (lookupRes.ok) {
+        const lookupData = await lookupRes.json();
+        // deno-lint-ignore no-explicit-any
+        const match = (lookupData?.data || []).find((c: any) => c && !c.deleted);
+        if (match?.id) {
+          console.log(`Reusing Asaas customer found by cpfCnpj: ${match.id}`);
+          await supabaseAdmin
+            .from("asaas_subscriptions")
+            .upsert(
+              {
+                user_id: user.id,
+                asaas_customer_id: match.id,
+                // Trocou de cliente → zera o vínculo de assinatura antigo (que era do cliente sumido).
+                asaas_subscription_id: existingRecord ? null : undefined,
+                status: "pending",
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "user_id" }
+            );
+          return new Response(
+            JSON.stringify({ customerId: match.id }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      } else {
+        console.warn(`cpfCnpj lookup returned ${lookupRes.status}`);
+      }
+    } catch (lookupErr: any) {
+      // Falha na busca não pode travar o cadastro — cai pro fluxo de criação normal.
+      console.warn("cpfCnpj lookup failed:", lookupErr?.message);
+    }
+
+    // Create customer on Asaas
     let asaasResponse: Response;
     try {
       asaasResponse = await fetch(`${asaasApiUrl}/v3/customers`, {
