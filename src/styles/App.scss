@@ -634,6 +634,14 @@ h3 {
     background: linear-gradient(180deg, rgba(17, 17, 17, 0) 0%, rgba(17, 17, 17, 0.85) 42%, #111111 72%);
   }
 
+  // Com o banner de pagamento no rodapé (84px reservados na base), a navbar SOBE pra ficar logo
+  // acima dele — senão a barra fixa (bottom:0) cobria o banner. O banner fica no rodapé; a nav
+  // encosta em cima. Sem safe-area embaixo (a nav não está mais na borda da tela).
+  .main-container.has-bottom-banner .mobile-nav {
+    bottom: 84px;
+    padding-bottom: 12px;
+  }
+
   .mobile-nav-item {
     flex: 1;
     display: flex;
@@ -766,7 +774,9 @@ h3 {
   // flutua logo acima do banner, então o padding-bottom continua reservando a folga do pill.
   .main-container.has-mobile-nav.has-bottom-banner .Main-section {
     height: calc(100vh - 64px - 84px);
-    padding-bottom: 90px;
+    // A nav agora sobe pra cima do banner e passa a cobrir os ~88px de baixo do conteúdo,
+    // então o padding precisa limpar a nav inteira (antes ela ficava sobre o banner).
+    padding-bottom: 102px;
   }
   // Wizard em tela cheia no mobile (topbar oculto): a .Main-section ocupa toda a altura da
   // viewport (o wizard tem cabeçalho próprio). Vale mais que a regra acima por vir depois.
