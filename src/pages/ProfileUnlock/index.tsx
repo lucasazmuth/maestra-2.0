@@ -266,7 +266,7 @@ const ProfileUnlock: FC = () => {
           // Mesmo frame (1080px centralizado) do checkout, pra headline/"Voltar"/colunas alinharem.
           <div style={{ width: '100%', maxWidth: 1080, margin: '0 auto', paddingTop: 4 }}>
             {realIndex && (
-              <div style={{ textAlign: 'right', marginBottom: 18 }}>
+              <div style={{ textAlign: 'left', marginBottom: 18 }}>
                 <button
                   onClick={() => setStep('diagnostico')}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: '#9a9aa5', fontWeight: 700, fontSize: 14, cursor: 'pointer', padding: 0 }}
