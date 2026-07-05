@@ -1,7 +1,7 @@
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { App } from 'antd';
-import { FiChevronDown, FiArrowLeft } from 'react-icons/fi';
+import { FiChevronDown, FiArrowLeft, FiRotateCcw } from 'react-icons/fi';
 
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
@@ -24,7 +24,7 @@ import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 // migração; a condução da conversa (beats, widgets, IA) vive em chat/NytaChat.
 
 const Wizard: FC = () => {
-  const { message } = App.useApp(); // `message` estático é no-op dentro do <App> do antd
+  const { message, modal } = App.useApp(); // `message`/`modal` estáticos são no-op fora do <App> do antd
   const { artist } = useArtist();
   const artistsLoaded = useAppSelector((s) => s.artists.loaded);
   const dispatch = useAppDispatch();
@@ -173,6 +173,25 @@ const Wizard: FC = () => {
   const [canGoBack, setCanGoBack] = useState(false);
   const goBackRef = useRef<() => void>(() => {});
 
+  // "Recomeçar do zero": limpa TODAS as respostas do wizard (mantém os insumos pesados — diagnóstico,
+  // Spotify, Chartmetric — e o nome) e volta pro step 0. O NytaChat zera thread/histórico e reabre
+  // na 1ª pergunta pela ref (sem re-montar — evita corrida em que a instância antiga grava trilha).
+  const HEAVY_INPUT_FIELDS = ['chartmetricProfile', 'quizDiagnostic', 'diagnostic', 'realIndex', 'spotifyProfile', 'spotifyCatalog'] as const;
+  const resetRef = useRef<(cleared: ArtistContent) => void>(() => {});
+  const resetPlanning = () => {
+    const base = draftRef.current;
+    const cleared: ArtistContent = {
+      language: base.language,
+      wizardVersion: base.wizardVersion,
+      identity: { name: base.identity?.name || artist?.name },
+      step: 0,
+    };
+    for (const k of HEAVY_INPUT_FIELDS) {
+      if (base[k] !== undefined) (cleared as Record<string, unknown>)[k] = base[k];
+    }
+    resetRef.current(cleared);
+  };
+
   // Publica um persist ESTÁVEL pra coluna de resultados (edição inline dos entregáveis).
   // A função `persist` é recriada a cada render; o wrapper via ref sempre chama a mais recente.
   const persistFnRef = useRef(persist);
@@ -190,6 +209,21 @@ const Wizard: FC = () => {
 
   const step = Math.min(draft.step ?? 0, WIZARD_TOTAL_STEPS - 1);
   const progress = Math.round((Math.min(draft.step ?? 0, WIZARD_TOTAL_STEPS) / WIZARD_TOTAL_STEPS) * 100);
+  // Só oferece "recomeçar" quando há alguma resposta (senão não há o que zerar).
+  const hasProgress = (draft.step ?? 0) > 0 || !!draft.identity?.gender;
+
+  const confirmReset = () => {
+    modal.confirm({
+      title: 'Recomeçar o planejamento do zero?',
+      content:
+        'Isso apaga TODAS as respostas do planejamento estratégico e volta para a primeira pergunta. ' +
+        'Seus dados de diagnóstico e do Spotify são mantidos. Essa ação não pode ser desfeita.',
+      okText: 'Sim, recomeçar',
+      okButtonProps: { danger: true },
+      cancelText: 'Cancelar',
+      onOk: () => resetPlanning(),
+    });
+  };
 
   return (
     <div className='wizard wizard--chat'>
@@ -204,6 +238,17 @@ const Wizard: FC = () => {
               Criar planejamento estratégico
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              {/* Recomeçar do zero — só aparece quando há progresso; pede confirmação (destrutivo). */}
+              {hasProgress && (
+                <button
+                  className='wiz-back-btn'
+                  title='Recomeçar o planejamento do zero'
+                  aria-label='Recomeçar o planejamento'
+                  onClick={confirmReset}
+                >
+                  <FiRotateCcw size={17} />
+                </button>
+              )}
               {/* Voltar à pergunta anterior — só aparece depois da 1ª pergunta respondida. */}
               {canGoBack && (
                 <button
@@ -263,6 +308,7 @@ const Wizard: FC = () => {
           restore={restore}
           onBackChange={setCanGoBack}
           goBackRef={goBackRef}
+          resetRef={resetRef}
         />
       )}
     </div>

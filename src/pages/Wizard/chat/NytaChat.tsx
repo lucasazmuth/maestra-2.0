@@ -120,9 +120,11 @@ interface NytaChatProps {
   onBackChange: (canGoBack: boolean) => void;
   // O shell chama goBackRef.current() ao clicar em "voltar".
   goBackRef: React.MutableRefObject<() => void>;
+  // O shell chama resetRef.current(cleared) ao confirmar "recomeçar do zero".
+  resetRef: React.MutableRefObject<(cleared: ArtistContent) => void>;
 }
 
-export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity, sp, persist, restore, onBackChange, goBackRef }) => {
+export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity, sp, persist, restore, onBackChange, goBackRef, resetRef }) => {
   const { message } = App.useApp(); // `message` estático é no-op dentro do <App> do antd
   const navigate = useNavigate();
   const [thread, setThread] = useState<ChatItem[]>([]);
@@ -254,6 +256,27 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     restore({ ...snap.draft, wizardBackTrail: historyRef.current.map(toStoredEntry) });
   };
   goBackRef.current = goBack;
+
+  // "Recomeçar do zero": zera todo o estado do chat (thread, histórico, beat) e reabre na abertura
+  // + 1ª pergunta, com o draft limpo. Auto-contido (sem re-montar) pra não haver instância antiga
+  // gravando trilha por cima. `cleared` vem do shell (mantém insumos pesados + nome, step 0).
+  const doReset = (cleared: ArtistContent) => {
+    queueRef.current = Promise.resolve(); // descarta qualquer fala em andamento
+    historyRef.current = [];
+    pendingSnapshotRef.current = null;
+    stageRef.current = '';
+    preparingRef.current = null;
+    setGuided(null);
+    setInput('');
+    setWidget(null);
+    setInputOn(false);
+    refreshBackAvail();
+    setThread([{ id: uid(), role: 'nyta', hero: true }]);
+    say(buildOpening(cleared, artist.name));
+    // Restaura o draft limpo → o beat useEffect apresenta a 1ª pergunta (fila após a abertura).
+    restore(cleared);
+  };
+  resetRef.current = doReset;
 
   const pushUser = (text: string) => setThread((t) => [...t, { id: uid(), role: 'user', text }]);
 
