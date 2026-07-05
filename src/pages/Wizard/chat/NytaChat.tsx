@@ -55,6 +55,7 @@ import type {
   ReferenceHorizons as ReferenceHorizonsData,
   SpotifyProfile,
   VisionParts,
+  WizardBackTrailEntry,
 } from '../../../interfaces/maestra';
 
 // Orquestrador do wizard conversacional (metodologia Nyta): mantém o thread, resolve o próximo
@@ -79,15 +80,32 @@ interface ChatItem {
 const TYPE_MS = 14; // tempo por tique
 const charsPerTick = (len: number) => (len > 220 ? 3 : len > 110 ? 2 : 1);
 
-// Foto do estado de uma pergunta respondível: o suficiente pra REVIVER exatamente aquela pergunta
-// (draft que resolve pra ela + thread com a fala até ali + widget/input). Usado no "voltar".
+// Foto do estado de uma pergunta respondível: o suficiente pra REVIVER aquela pergunta (draft que
+// resolve pra ela + widget/input). `thread` guarda a conversa exata da sessão atual (restauração
+// perfeita); quando é `null`, a foto veio da trilha PERSISTIDA (reload/outra sessão) e a pergunta
+// é re-apresentada do zero, pois o thread daquele momento não existe mais.
 interface BeatSnapshot {
   draft: ArtistContent;
-  thread: ChatItem[];
+  thread: ChatItem[] | null;
   stage: string;
   widget: WidgetSpec | null;
   inputOn: boolean;
 }
+
+// Campos PESADOS de input (não são respostas do wizard): ficam FORA da trilha persistida pra não
+// inchar o content; ao restaurar, são reidratados do draft atual (são estáveis durante o wizard).
+const HEAVY_FIELDS = ['chartmetricProfile', 'quizDiagnostic', 'diagnostic', 'realIndex', 'spotifyProfile', 'spotifyCatalog'] as const;
+const stripForTrail = (d: ArtistContent): ArtistContent => {
+  const out: Record<string, unknown> = { ...d };
+  for (const k of HEAVY_FIELDS) delete out[k];
+  delete out.wizardBackTrail; // nunca aninha a trilha dentro dela mesma
+  return out as ArtistContent;
+};
+const pickHeavy = (d: ArtistContent): Partial<ArtistContent> => {
+  const out: Record<string, unknown> = {};
+  for (const k of HEAVY_FIELDS) if (d[k as keyof ArtistContent] !== undefined) out[k] = d[k as keyof ArtistContent];
+  return out as Partial<ArtistContent>;
+};
 
 interface NytaChatProps {
   artist: Artist;
@@ -151,18 +169,47 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   const pendingSnapshotRef = useRef<BeatSnapshot | null>(null); // foto da pergunta ATUAL
   const threadValRef = useRef<ChatItem[]>([]);
   const speakingRef = useRef(false);
+  const seededRef = useRef(false);
   const refreshBackAvail = () => onBackChange(historyRef.current.length > 0 && !speakingRef.current);
 
-  const threadForSnapshot = useRef<ChatItem[]>([]);
-  useEffect(() => { threadValRef.current = thread; threadForSnapshot.current = thread; }, [thread]);
+  useEffect(() => { threadValRef.current = thread; }, [thread]);
   useEffect(() => { speakingRef.current = speaking; refreshBackAvail(); /* eslint-disable-next-line */ }, [speaking]);
 
-  // Arquiva a foto da pergunta atual (se houver outra) e tira a foto da pergunta recém-apresentada.
+  const toStoredEntry = (s: BeatSnapshot): WizardBackTrailEntry => ({
+    draft: stripForTrail(s.draft),
+    stage: s.stage,
+    widget: s.widget,
+    inputOn: s.inputOn,
+  });
+  // Persiste a trilha atual no draft → sobrevive a reload / outra sessão.
+  const persistTrail = () => { persist({ wizardBackTrail: historyRef.current.map(toStoredEntry) }); };
+
+  // Semeia a trilha da sessão a partir do que foi persistido (perguntas de sessões anteriores).
+  useEffect(() => {
+    if (seededRef.current) return;
+    seededRef.current = true;
+    const trail = draft.wizardBackTrail;
+    if (trail && trail.length) {
+      const heavy = pickHeavy(draftRef.current);
+      historyRef.current = trail.map((e) => ({
+        draft: { ...heavy, ...(e.draft as ArtistContent) }, // reidrata os campos pesados
+        thread: null, // veio da persistência → re-apresenta ao voltar
+        stage: e.stage,
+        widget: (e.widget as WidgetSpec | null) ?? null,
+        inputOn: !!e.inputOn,
+      }));
+      refreshBackAvail();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Arquiva a foto da pergunta anterior (persistindo a trilha) e tira a foto da recém-apresentada.
   const captureBeat = (stage: string, widgetVal: WidgetSpec | null, acceptsText: boolean) => {
     const prev = pendingSnapshotRef.current;
     if (prev && prev.stage !== stage) {
       historyRef.current = [...historyRef.current, prev];
       refreshBackAvail();
+      persistTrail();
     }
     pendingSnapshotRef.current = {
       draft: draftRef.current,
@@ -179,18 +226,28 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     if (!hist.length) return;
     const snap = hist[hist.length - 1];
     historyRef.current = hist.slice(0, -1);
-    // Re-arma o beat pra ESTA pergunta sem re-falar nem re-preparar (o thread já vem restaurado).
-    stageRef.current = snap.stage;
-    preparingRef.current = snap.stage;
-    pendingSnapshotRef.current = snap;
     setGuided(null);
     setInput('');
-    setThread(snap.thread);
-    setWidget(snap.widget);
-    setInputOn(snap.inputOn);
+    if (snap.thread) {
+      // Sessão atual: restauração perfeita (thread + widget), sem re-falar.
+      stageRef.current = snap.stage;
+      preparingRef.current = snap.stage;
+      pendingSnapshotRef.current = snap;
+      setThread(snap.thread);
+      setWidget(snap.widget);
+      setInputOn(snap.inputOn);
+    } else {
+      // Trilha persistida (reload/outra sessão): re-apresenta a pergunta do zero.
+      stageRef.current = '__back__';
+      preparingRef.current = null;
+      pendingSnapshotRef.current = null;
+      setWidget(null);
+      setInputOn(false);
+      setThread([{ id: uid(), role: 'nyta', hero: true }]);
+    }
     refreshBackAvail();
-    // Substitui o draft inteiro (remove a resposta dada) → o beat se re-resolve pra esta pergunta.
-    restore(snap.draft);
+    // Substitui o draft inteiro (remove a resposta + reduz a trilha) → o beat se re-resolve pra cá.
+    restore({ ...snap.draft, wizardBackTrail: historyRef.current.map(toStoredEntry) });
   };
   goBackRef.current = goBack;
 

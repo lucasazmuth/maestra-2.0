@@ -280,11 +280,25 @@ export interface PhaseHistoryEntry {
   snapshotAt: string;
 }
 
+// Uma "foto" da trilha de voltar do wizard: o estado das respostas ANTES de uma pergunta ser
+// respondida, o suficiente pra revivê-la ao clicar em "voltar". O `draft` vem sem os campos
+// pesados de input (chartmetric/diagnóstico/spotify) — reidratados do draft atual ao restaurar.
+export interface WizardBackTrailEntry {
+  draft: ArtistContent;
+  stage: string;
+  // WidgetSpec do chat — tipado solto aqui pra não acoplar a interface de dados ao componente.
+  widget: unknown;
+  inputOn: boolean;
+}
+
 export interface ArtistContent {
   language?: 'pt' | 'en';
   step?: number;
   // Ausente/1 = escala antiga de 7 etapas; 2 = escala atual de 9 etapas.
   wizardVersion?: number;
+  // Trilha do "voltar à pergunta anterior" — persistida pra funcionar após reload/entre sessões.
+  // Gerada pelo próprio motor de beats (nunca diverge do nextBeat); limpa ao concluir o plano.
+  wizardBackTrail?: WizardBackTrailEntry[];
   phase?: number;
   phaseLabel?: string;
   phaseHistory?: PhaseHistoryEntry[];
