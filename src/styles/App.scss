@@ -787,12 +787,18 @@ h3 {
   // (o campo de resposta), então NÃO leva o padding-bottom grande das telas que rolam — senão
   // sobra um vão enorme abaixo do input. Em vez disso a altura para logo acima da nav+banner e o
   // input encosta neles pela sua própria margem.
+  // margin-top:0 — sem o topbar, o -10px base da .Main-section (pra encaixar sob a barra) só
+  // empurrava tudo pra cima, deixando 10px de sobra ENTRE o fim do chat e a navbar (rodapé
+  // desproporcional: 10px em cima do input x 20px embaixo). Zerando, o fim do chat encosta na
+  // nav e a folga do input (10px) fica igual em cima e embaixo.
   .main-container.topbar-hidden.has-mobile-nav .Main-section {
     height: calc(100vh - 88px);
+    margin-top: 0;
     padding-bottom: 0;
   }
   .main-container.topbar-hidden.has-mobile-nav.has-bottom-banner .Main-section {
     height: calc(100vh - 88px - 84px);
+    margin-top: 0;
     padding-bottom: 0;
   }
 }
