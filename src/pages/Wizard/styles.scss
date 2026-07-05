@@ -1377,6 +1377,17 @@
   &::-webkit-scrollbar {
     display: none;
   }
+
+  // Mobile: a área de rolagem vai de borda a borda (margem negativa anula os 14px do .wizard).
+  // O recuo das mensagens continua o mesmo (36px), mas agora vem do PADDING do próprio scroll —
+  // que é rolável ao toque. Antes as laterais (os 14px do wizard) eram zona morta: o dedo não
+  // rolava a lista se passasse por ali.
+  @media (max-width: 768px) {
+    margin-left: -14px;
+    margin-right: -14px;
+    padding-left: 36px;
+    padding-right: 36px;
+  }
 }
 
 // ---- Coluna de resultados (3ª coluna do app, irmã da navbar e da página) --------------------
