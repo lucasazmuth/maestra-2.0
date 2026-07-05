@@ -783,6 +783,18 @@ h3 {
   .main-container.topbar-hidden .Main-section {
     height: 100vh;
   }
+  // Wizard em tela cheia COM a navbar (e o banner, quando houver): o wizard tem rodapé próprio
+  // (o campo de resposta), então NÃO leva o padding-bottom grande das telas que rolam — senão
+  // sobra um vão enorme abaixo do input. Em vez disso a altura para logo acima da nav+banner e o
+  // input encosta neles pela sua própria margem.
+  .main-container.topbar-hidden.has-mobile-nav .Main-section {
+    height: calc(100vh - 88px);
+    padding-bottom: 0;
+  }
+  .main-container.topbar-hidden.has-mobile-nav.has-bottom-banner .Main-section {
+    height: calc(100vh - 88px - 84px);
+    padding-bottom: 0;
+  }
 }
 
 .transition {
