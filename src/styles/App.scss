@@ -629,9 +629,11 @@ h3 {
     z-index: 100;
     display: flex;
     align-items: flex-end;
-    height: 88px;
-    padding: 0 6px calc(12px + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, rgba(17, 17, 17, 0) 0%, rgba(17, 17, 17, 0.85) 42%, #111111 72%);
+    // 64px: os itens ocupam a base e sobra pouca folga no topo (~15px do gradiente). Antes eram
+    // 88px, deixando ~39px de vazio acima dos ícones — que aparecia como "espaço a mais" no topo.
+    height: 64px;
+    padding: 0 6px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, rgba(17, 17, 17, 0) 0%, rgba(17, 17, 17, 0.85) 48%, #111111 78%);
   }
 
   // Com o banner de pagamento no rodapé (84px reservados na base), a navbar SOBE pra ficar logo
@@ -639,7 +641,7 @@ h3 {
   // encosta em cima. Sem safe-area embaixo (a nav não está mais na borda da tela).
   .main-container.has-bottom-banner .mobile-nav {
     bottom: 84px;
-    padding-bottom: 12px;
+    padding-bottom: 10px;
   }
 
   .mobile-nav-item {
@@ -765,18 +767,18 @@ h3 {
   // A navbar é uma ilha FLUTUANTE (translúcida + blur). Em vez de cortar a altura da .Main-section
   // pra reservar o espaço dela — o que deixava uma faixa preta morta atrás do pill — damos altura
   // cheia e usamos padding-bottom. Assim o conteúdo rola POR TRÁS da navbar (visível pelo blur) e o
-  // último item ainda limpa o pill. 90px = 62 (altura) + 12 (margem) + respiro.
+  // último item ainda limpa a navbar (64px de altura) + respiro.
   .main-container.has-mobile-nav .Main-section {
     height: calc(100vh - 64px);
-    padding-bottom: 90px;
+    padding-bottom: 74px;
   }
   // Com banner de pagamento (barra sólida no rodapé), a .Main-section para acima dele; o pill
   // flutua logo acima do banner, então o padding-bottom continua reservando a folga do pill.
   .main-container.has-mobile-nav.has-bottom-banner .Main-section {
     height: calc(100vh - 64px - 84px);
-    // A nav agora sobe pra cima do banner e passa a cobrir os ~88px de baixo do conteúdo,
+    // A nav sobe pra cima do banner e passa a cobrir os ~64px de baixo do conteúdo,
     // então o padding precisa limpar a nav inteira (antes ela ficava sobre o banner).
-    padding-bottom: 102px;
+    padding-bottom: 78px;
   }
   // Wizard em tela cheia no mobile (topbar oculto): a .Main-section ocupa toda a altura da
   // viewport (o wizard tem cabeçalho próprio). Vale mais que a regra acima por vir depois.
@@ -792,12 +794,12 @@ h3 {
   // desproporcional: 10px em cima do input x 20px embaixo). Zerando, o fim do chat encosta na
   // nav e a folga do input (10px) fica igual em cima e embaixo.
   .main-container.topbar-hidden.has-mobile-nav .Main-section {
-    height: calc(100vh - 88px);
+    height: calc(100vh - 64px);
     margin-top: 0;
     padding-bottom: 0;
   }
   .main-container.topbar-hidden.has-mobile-nav.has-bottom-banner .Main-section {
-    height: calc(100vh - 88px - 84px);
+    height: calc(100vh - 64px - 84px);
     margin-top: 0;
     padding-bottom: 0;
   }

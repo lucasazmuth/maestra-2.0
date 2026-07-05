@@ -102,12 +102,14 @@ export const ReferenceMindMap: FC<{ references?: ArtistReferences }> = ({ refere
         const isCat = n.kind === 'cat';
         // Categorias pouco maiores que os itens (não dominam o mapa); itens com fôlego pra ler.
         const size = isHub ? '18%' : isCat ? '20%' : '16%';
-        // Fonte proporcional ao container (1cqw = 1% da largura do mapa), com piso legível.
+        // Fonte proporcional ao container (1cqw = 1% da largura do mapa). O piso é baixo pra que,
+        // no mapa pequeno do mobile (~270px), os rótulos longos ("Comunicação com o público")
+        // caibam no círculo em vez de estourar. No desktop o cqw atinge o teto (não muda nada).
         const fontSize = isHub
-          ? 'clamp(7px, 1.9cqw, 9px)'
+          ? 'clamp(5.5px, 1.9cqw, 9px)'
           : isCat
-            ? 'clamp(6.5px, 1.7cqw, 8px)'
-            : 'clamp(7px, 1.8cqw, 8.5px)';
+            ? 'clamp(5px, 1.7cqw, 8px)'
+            : 'clamp(5.5px, 1.8cqw, 8.5px)';
         return (
           <div
             key={i}
