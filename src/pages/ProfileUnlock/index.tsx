@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Input, Spin, Select } from 'antd';
-import { FiArrowLeft } from 'react-icons/fi';
+import { FiArrowLeft, FiX } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { supabase } from '../../lib/supabase';
@@ -233,11 +233,14 @@ const ProfileUnlock: FC = () => {
 
   return (
     <div className={styles.page}>
-      <button className={styles.back} onClick={() => navigate('/artists')}>Sair</button>
-
-      {/* Header do macro-fluxo (mesmo de /criar-artista): no diagnóstico a fase atual é "Diagnóstico
-          REAL"; no pagamento avança pra "Planejamento Estratégico". */}
-      <FlowHeader phase={step === 'pagamento' ? 2 : 1} />
+      {/* Cabeçalho numa única linha (mesmo de /criar-artista): etapas à esquerda, sair (X) à direita.
+          No diagnóstico a fase atual é "Diagnóstico REAL"; no pagamento avança pra "Planejamento". */}
+      <div className={styles.topBar}>
+        <FlowHeader phase={step === 'pagamento' ? 2 : 1} />
+        <button className={styles.back} onClick={() => navigate('/artists')} aria-label="Sair" title="Sair">
+          <FiX size={20} />
+        </button>
+      </div>
 
       <div className={`${styles.step} ${(step === 'pagamento' || step === 'diagnostico') ? styles.stepWide : ''}`}>
         {step === 'diagnostico' && (
