@@ -24,6 +24,12 @@
   // Compacta pra caber inteiro na tela (e o anel circular ficar 100% visível), sem rolar.
   @media (max-width: 600px) {
     padding: 16px;
+    // O fundo precisa chegar ATÉ a navbar. Como a .Main-section reserva ~78px de padding-bottom
+    // (pra rolagem limpar a nav), o min-height:100% parava ~24px acima da nav, deixando um vão
+    // preto. Aqui o card estica além do content box (fica atrás da nav) e o margin negativo anula
+    // essa sobra no fluxo — então enche o vão sem criar rolagem.
+    min-height: calc(100% + 78px);
+    margin-bottom: -78px;
   }
 }
 
