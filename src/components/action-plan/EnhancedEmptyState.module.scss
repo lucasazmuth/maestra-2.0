@@ -6,6 +6,12 @@
 // (nem o de baixo atrás do banner) e o efeito circulando aparece inteiro.
 .empty :global(.aurora-glow) {
   inset: 10px;
+
+  // Mobile: o card estica atrás da navbar (pra encher o fundo), então o anel de baixo precisa
+  // subir bastante pra não ficar escondido atrás da nav — fica logo ACIMA dela, visível.
+  @media (max-width: 600px) {
+    inset: 10px 10px 66px;
+  }
 }
 
 .empty {
