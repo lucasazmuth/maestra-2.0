@@ -173,7 +173,11 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   const refreshBackAvail = () => onBackChange(historyRef.current.length > 0 && !speakingRef.current);
 
   useEffect(() => { threadValRef.current = thread; }, [thread]);
-  useEffect(() => { speakingRef.current = speaking; refreshBackAvail(); /* eslint-disable-next-line */ }, [speaking]);
+  useEffect(() => {
+    speakingRef.current = speaking;
+    refreshBackAvail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speaking]);
 
   const toStoredEntry = (s: BeatSnapshot): WizardBackTrailEntry => ({
     draft: stripForTrail(s.draft),
