@@ -1207,8 +1207,10 @@
   flex-direction: row;
   align-items: center;
   gap: 10px;
-  // Centralizado, com folga das bordas no mobile e teto de largura no desktop (= coluna do chat).
-  width: calc(100% - 32px);
+  // Alinhado à coluna das mensagens: o mesmo recuo lateral do .nyta-scroll (padding 22px), pra o
+  // campo bater com os avatares/balões — antes ele era 6px mais largo de cada lado (16 vs 22) e
+  // ficava desencaixado. Teto de largura no desktop (= coluna do chat).
+  width: calc(100% - 44px);
   max-width: var(--wiz-col);
   // Folga igual em cima e embaixo — o campo fica equilibrado no rodapé do chat.
   margin: 10px auto 10px;
