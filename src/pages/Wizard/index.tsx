@@ -1,7 +1,7 @@
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { App } from 'antd';
-import { FiChevronDown } from 'react-icons/fi';
+import { FiChevronDown, FiArrowLeft } from 'react-icons/fi';
 
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
@@ -147,6 +147,32 @@ const Wizard: FC = () => {
     return run;
   };
 
+  // Restaura um draft ANTERIOR por inteiro (usado pelo "voltar à pergunta anterior"). Diferente do
+  // persist normal, aqui o step PODE regredir e campos podem sumir — é uma substituição completa.
+  // Vai pela mesma fila serializada, pra não competir com gravações em andamento.
+  const restore = (content: ArtistContent): Promise<void> => {
+    const run = persistQueueRef.current.then(async () => {
+      if (!artist) return;
+      draftRef.current = content;
+      setDraft(content);
+      try {
+        await dispatch(artistsActions.updateArtistContent({ id: artist.id, content })).unwrap();
+      } catch {
+        try {
+          await dispatch(artistsActions.updateArtistContent({ id: artist.id, content })).unwrap();
+        } catch {
+          message.error('Erro ao voltar — verifique sua conexão');
+        }
+      }
+    });
+    persistQueueRef.current = run;
+    return run;
+  };
+
+  // "Voltar à pergunta anterior": o NytaChat avisa quando dá pra voltar e expõe a ação via ref.
+  const [canGoBack, setCanGoBack] = useState(false);
+  const goBackRef = useRef<() => void>(() => {});
+
   // Publica um persist ESTÁVEL pra coluna de resultados (edição inline dos entregáveis).
   // A função `persist` é recriada a cada render; o wrapper via ref sempre chama a mais recente.
   const persistFnRef = useRef(persist);
@@ -177,9 +203,21 @@ const Wizard: FC = () => {
             <h1 className='wiz-title' style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 22, color: '#fff', margin: 0 }}>
               Criar planejamento estratégico
             </h1>
-            <button
-              title='Seu progresso fica salvo a cada etapa'
-              disabled={exiting}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              {/* Voltar à pergunta anterior — só aparece depois da 1ª pergunta respondida. */}
+              {canGoBack && (
+                <button
+                  className='wiz-back-btn'
+                  title='Voltar à pergunta anterior'
+                  aria-label='Voltar à pergunta anterior'
+                  onClick={() => goBackRef.current()}
+                >
+                  <FiArrowLeft size={18} />
+                </button>
+              )}
+              <button
+                title='Seu progresso fica salvo a cada etapa'
+                disabled={exiting}
               onClick={async () => {
                 // Espera qualquer gravação pendente terminar ANTES de navegar, para que
                 // sair da tela nunca cancele um save em andamento (perda de progresso).
@@ -192,8 +230,9 @@ const Wizard: FC = () => {
               }}
               style={{ ...ghostBtn, padding: '8px 16px', fontSize: 13, whiteSpace: 'nowrap', opacity: exiting ? 0.6 : 1 }}
             >
-              {exiting ? 'Salvando…' : 'Salvar e sair'}
-            </button>
+                {exiting ? 'Salvando…' : 'Salvar e sair'}
+              </button>
+            </div>
           </div>
 
           <div className='wiz-progress-track' style={{ marginTop: 12, marginBottom: 10 }}>
@@ -221,6 +260,9 @@ const Wizard: FC = () => {
           identity={identity}
           sp={sp}
           persist={persist}
+          restore={restore}
+          onBackChange={setCanGoBack}
+          goBackRef={goBackRef}
         />
       )}
     </div>

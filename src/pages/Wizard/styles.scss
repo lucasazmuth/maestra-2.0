@@ -184,6 +184,25 @@
 }
 
 // Navegação compacta: linha "Etapa X de 9 · Nome" que abre o drawer
+// Botão "voltar à pergunta anterior" — ícone discreto ao lado do "Salvar e sair".
+.wiz-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+
+  &:hover { background: rgba(255, 255, 255, 0.18); }
+  &:active { transform: scale(0.94); }
+}
+
 .wiz-step-nav {
   display: inline-flex;
   align-items: center;

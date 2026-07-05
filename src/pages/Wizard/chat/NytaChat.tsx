@@ -79,6 +79,16 @@ interface ChatItem {
 const TYPE_MS = 14; // tempo por tique
 const charsPerTick = (len: number) => (len > 220 ? 3 : len > 110 ? 2 : 1);
 
+// Foto do estado de uma pergunta respondível: o suficiente pra REVIVER exatamente aquela pergunta
+// (draft que resolve pra ela + thread com a fala até ali + widget/input). Usado no "voltar".
+interface BeatSnapshot {
+  draft: ArtistContent;
+  thread: ChatItem[];
+  stage: string;
+  widget: WidgetSpec | null;
+  inputOn: boolean;
+}
+
 interface NytaChatProps {
   artist: Artist;
   draft: ArtistContent;
@@ -86,9 +96,15 @@ interface NytaChatProps {
   identity: ArtistIdentity;
   sp?: SpotifyProfile;
   persist: (patch: Partial<ArtistContent>, nextStep?: number) => Promise<void>;
+  // Substitui o draft inteiro (permite REGREDIR step/remover respostas) — usado pelo "voltar".
+  restore: (content: ArtistContent) => Promise<void>;
+  // Informa ao shell (cabeçalho) se dá pra voltar à pergunta anterior.
+  onBackChange: (canGoBack: boolean) => void;
+  // O shell chama goBackRef.current() ao clicar em "voltar".
+  goBackRef: React.MutableRefObject<() => void>;
 }
 
-export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity, sp, persist }) => {
+export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity, sp, persist, restore, onBackChange, goBackRef }) => {
   const { message } = App.useApp(); // `message` estático é no-op dentro do <App> do antd
   const navigate = useNavigate();
   const [thread, setThread] = useState<ChatItem[]>([]);
@@ -125,6 +141,58 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   useEffect(() => {
     draftRef.current = draft;
   }, [draft]);
+
+  // ---- "Voltar à pergunta anterior" -----------------------------------------------------------
+  // Pilha de fotos das perguntas respondíveis já deixadas pra trás. Cada avanço arquiva a pergunta
+  // anterior; o "voltar" restaura a última (draft + thread + widget), fazendo o beat se re-resolver
+  // pra ela. Só perguntas respondíveis viram foto — os beats de IA/derivados (prepare/autoPersist)
+  // não têm resposta pra voltar.
+  const historyRef = useRef<BeatSnapshot[]>([]);
+  const pendingSnapshotRef = useRef<BeatSnapshot | null>(null); // foto da pergunta ATUAL
+  const threadValRef = useRef<ChatItem[]>([]);
+  const speakingRef = useRef(false);
+  const refreshBackAvail = () => onBackChange(historyRef.current.length > 0 && !speakingRef.current);
+
+  const threadForSnapshot = useRef<ChatItem[]>([]);
+  useEffect(() => { threadValRef.current = thread; threadForSnapshot.current = thread; }, [thread]);
+  useEffect(() => { speakingRef.current = speaking; refreshBackAvail(); /* eslint-disable-next-line */ }, [speaking]);
+
+  // Arquiva a foto da pergunta atual (se houver outra) e tira a foto da pergunta recém-apresentada.
+  const captureBeat = (stage: string, widgetVal: WidgetSpec | null, acceptsText: boolean) => {
+    const prev = pendingSnapshotRef.current;
+    if (prev && prev.stage !== stage) {
+      historyRef.current = [...historyRef.current, prev];
+      refreshBackAvail();
+    }
+    pendingSnapshotRef.current = {
+      draft: draftRef.current,
+      thread: threadValRef.current,
+      stage,
+      widget: widgetVal,
+      inputOn: acceptsText,
+    };
+  };
+
+  const goBack = () => {
+    if (speakingRef.current) return; // não volta no meio de uma fala
+    const hist = historyRef.current;
+    if (!hist.length) return;
+    const snap = hist[hist.length - 1];
+    historyRef.current = hist.slice(0, -1);
+    // Re-arma o beat pra ESTA pergunta sem re-falar nem re-preparar (o thread já vem restaurado).
+    stageRef.current = snap.stage;
+    preparingRef.current = snap.stage;
+    pendingSnapshotRef.current = snap;
+    setGuided(null);
+    setInput('');
+    setThread(snap.thread);
+    setWidget(snap.widget);
+    setInputOn(snap.inputOn);
+    refreshBackAvail();
+    // Substitui o draft inteiro (remove a resposta dada) → o beat se re-resolve pra esta pergunta.
+    restore(snap.draft);
+  };
+  goBackRef.current = goBack;
 
   const pushUser = (text: string) => setThread((t) => [...t, { id: uid(), role: 'user', text }]);
 
@@ -202,16 +270,22 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       setWidget(null);
       setGuided(null);
       setInputOn(beat.acceptsText === true);
+      // Respondível = tem widget ou aceita texto. Só essas viram foto pro "voltar".
+      const answerable = beat.widget != null || beat.acceptsText === true;
       if (beat.stage === 'vision.city') {
         // Metodologia v2, Q6: o mapa de referências aparece inline ("Aqui está o que produzimos
         // até agora:") ANTES do card de cidade, separados — para não confundir o usuário.
         const refs = draftRef.current.identity?.references;
         say(SAY.visionCityIntro());
         sayMap(refs);
-        say(SAY.visionCityAsk()).then(() => setWidget({ kind: 'cityInput' }));
+        say(SAY.visionCityAsk()).then(() => {
+          setWidget({ kind: 'cityInput' });
+          captureBeat('vision.city', { kind: 'cityInput' }, false);
+        });
       } else {
         say(beat.say).then(() => {
           if (beat.widget) setWidget(beat.widget);
+          if (answerable) captureBeat(beat.stage, beat.widget ?? null, beat.acceptsText === true);
         });
       }
     }
