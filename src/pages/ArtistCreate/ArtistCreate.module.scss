@@ -82,12 +82,19 @@
 // "REAL" na pílula (ambiente do diagnóstico): assinatura serifada (Georgia itálico) + verde do produto.
 .pillReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; color: #37d995; }
 
-// Botão de sair/voltar — ícone discreto num círculo, fixo no canto superior direito.
+// Cabeçalho numa única linha: etapas à esquerda + botão de sair à direita.
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 4px 0 32px;
+}
+
+// Botão de sair/voltar — ícone discreto num círculo, empurrado pra direita da linha.
 .back {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 6;
+  margin-left: auto; // gruda na direita mesmo quando é o único item (refazer)
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -104,15 +111,14 @@
 }
 
 // ─── Header de macro-fluxo (abas de texto, estilo Spotify) ──────────────────────
-// Criar perfil · Diagnóstico REAL · Pagamento — a etapa atual em branco com traço verde.
+// Criar perfil · Diagnóstico REAL · Planejamento — etapas à ESQUERDA, atual em branco c/ traço.
 .flow {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 2px 0;
-  margin: 4px 0 36px;
-  max-width: 100%;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 0;
+  min-width: 0;
 }
 
 .flowSeg {
@@ -158,12 +164,9 @@
 .flowDone { color: #b3b3b3; }
 
 @media (max-width: 560px) {
-  .back { top: 14px; right: 14px; }
-  // Rótulos curtos numa única linha (sem quebra) — corrige o wrap que jogava
-  // "Planejamento Estratégico" pra baixo deixando um "·" solto. margin-top clareia o ícone de sair.
-  .flow { flex-wrap: nowrap; gap: 0; margin-top: 12px; }
+  // Rótulos curtos (Perfil · Diagnóstico · Planejamento) pra caber na linha ao lado do "X".
   .flowSeg { font-size: 12.5px; }
-  .flowSep { margin: 0 8px; }
+  .flowSep { margin: 0 7px; }
   .flowFull { display: none; }
   .flowShort { display: inline; }
 

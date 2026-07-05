@@ -420,16 +420,20 @@ const ArtistCreate: FC = () => {
       {/* Ícone do REAL grande e translúcido no fundo — só no ambiente do diagnóstico. */}
       {realEnv && <span className={styles.pageGlyph} aria-hidden><DiagnosticoIcon size={300} /></span>}
 
-      <button
-        className={styles.back}
-        onClick={() => navigate(redo ? `/artists/${redoArtistId}/diagnostico` : '/artists')}
-        aria-label={redo ? 'Voltar' : 'Sair'}
-        title={redo ? 'Voltar' : 'Sair'}
-      >
-        {redo ? <FiArrowLeft size={20} /> : <FiX size={20} />}
-      </button>
+      {/* Cabeçalho numa ÚNICA linha: etapas à esquerda, botão de sair (X) à direita. */}
+      <div className={styles.topBar}>
+        {!redo && <FlowHeader phase={macroPhase} />}
+        <button
+          className={styles.back}
+          onClick={() => navigate(redo ? `/artists/${redoArtistId}/diagnostico` : '/artists')}
+          aria-label={redo ? 'Voltar' : 'Sair'}
+          title={redo ? 'Voltar' : 'Sair'}
+        >
+          {redo ? <FiArrowLeft size={20} /> : <FiX size={20} />}
+        </button>
+      </div>
 
-      {redo ? (
+      {redo && (
         // Refazer diagnóstico (PRO): não passa por Criar perfil nem Pagamento — mantém a pílula + dots.
         <>
           <div className={styles.pillWrap}>
@@ -443,9 +447,6 @@ const ArtistCreate: FC = () => {
             ))}
           </div>
         </>
-      ) : (
-        // Header do macro-fluxo (estilo Spotify): Criar perfil · Diagnóstico REAL · Planejamento Estratégico.
-        <FlowHeader phase={macroPhase} />
       )}
 
       <div className={`${styles.step} ${step === 'diagnostico' ? styles.stepWide : ''}`} key={`${step}-${quizIndex}`}>
