@@ -125,7 +125,7 @@ export const SAY = {
     'Vamos para os bastidores: quais artistas você considera que têm (ou tiveram) uma carreira muito bem administrada? Na hora de responder, pense no "porquê". (Aqui não é sobre a música em si — é sobre as escolhas de carreira: como construíram e sustentaram o trabalho ao longo do tempo.)',
   ],
   refPosicionamento: () => [
-    'Agora, uma referência que pode ser mais desafiadora: a de POSICIONAMENTO. Daqui a 3 anos, com quem você quer estar disputando espaço? Quando alguém for contratar um artista pra um festival, um evento ou uma playlist, entre quais nomes você quer que o seu apareça?',
+    'Agora, uma referência que pode ser mais desafiadora: a de POSICIONAMENTO. Daqui a alguns anos, com quem você quer estar disputando espaço? Quando alguém for contratar um artista pra um festival, um evento ou uma playlist, entre quais nomes você quer que o seu apareça?',
     'Em outras palavras: quem serão seus concorrentes de mercado? Vamos pensar em três degraus — curto, médio e longo prazo.',
   ],
 
