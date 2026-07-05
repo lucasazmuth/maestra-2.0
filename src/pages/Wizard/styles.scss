@@ -1210,7 +1210,8 @@
   // Centralizado, com folga das bordas no mobile e teto de largura no desktop (= coluna do chat).
   width: calc(100% - 32px);
   max-width: var(--wiz-col);
-  margin: 8px auto 14px;
+  // Folga igual em cima e embaixo — o campo fica equilibrado no rodapé do chat.
+  margin: 10px auto 10px;
   background: rgba(18, 14, 26, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
@@ -1332,6 +1333,10 @@
   height: 100%;
   box-sizing: border-box;
   overflow: hidden;
+  // O input é o rodapé do chat: seu próprio margin dá a folga inferior. Sem esta linha, os
+  // 24px de padding-bottom do .wizard SOMAVAM com o margin do input (~38px embaixo x 8px em
+  // cima), deixando o campo "jogado" com espaço maior no rodapé.
+  padding-bottom: 0;
 }
 
 // Coluna central reutilizável: 100% em telas estreitas, travada na largura máxima nas largas.
