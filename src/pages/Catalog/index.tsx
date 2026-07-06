@@ -198,9 +198,9 @@ const Catalog: FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
-                background: '#af2896',
+                background: '#BE81EC',
                 border: 'none',
-                color: '#fff',
+                color: '#1A1A1A',
                 padding: '10px 20px',
                 borderRadius: 9999,
                 cursor: canAdd ? 'pointer' : 'not-allowed',
@@ -235,7 +235,7 @@ const Catalog: FC = () => {
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify color='#af2896' />} />
+        <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify color='#BE81EC' />} />
         <TabButton id='manual' label='Faixas / Rascunho' />
       </div>
 
@@ -259,12 +259,12 @@ const Catalog: FC = () => {
                     padding: 8,
                     borderRadius: 6,
                     cursor: 'pointer',
-                    background: playingTrackId === t.id ? 'rgba(175, 40, 150,0.08)' : 'transparent',
+                    background: playingTrackId === t.id ? 'rgba(190, 129, 236,0.08)' : 'transparent',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.background =
-                      playingTrackId === t.id ? 'rgba(175, 40, 150,0.08)' : 'transparent')
+                      playingTrackId === t.id ? 'rgba(190, 129, 236,0.08)' : 'transparent')
                   }
                 >
                   <button
@@ -279,7 +279,7 @@ const Catalog: FC = () => {
                       minWidth: 36,
                       borderRadius: '50%',
                       border: 'none',
-                      background: '#af2896',
+                      background: '#BE81EC',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -339,9 +339,9 @@ const Catalog: FC = () => {
               <button
                 onClick={() => navigate('/assinatura')}
                 style={{
-                  background: '#af2896',
+                  background: '#BE81EC',
                   border: 'none',
-                  color: '#fff',
+                  color: '#1A1A1A',
                   padding: '8px 16px',
                   borderRadius: 9999,
                   cursor: 'pointer',
@@ -379,12 +379,12 @@ const Catalog: FC = () => {
                     padding: 8,
                     borderRadius: 6,
                     cursor: 'pointer',
-                    background: localTrackId === it.id ? 'rgba(175, 40, 150,0.08)' : 'transparent',
+                    background: localTrackId === it.id ? 'rgba(190, 129, 236,0.08)' : 'transparent',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.background =
-                      localTrackId === it.id ? 'rgba(175, 40, 150,0.08)' : 'transparent')
+                      localTrackId === it.id ? 'rgba(190, 129, 236,0.08)' : 'transparent')
                   }
                 >
                   <button
@@ -400,7 +400,7 @@ const Catalog: FC = () => {
                       minWidth: 36,
                       borderRadius: '50%',
                       border: 'none',
-                      background: it.audio_file ? '#af2896' : '#2a2a2a',
+                      background: it.audio_file ? '#BE81EC' : '#2a2a2a',
                       cursor: it.audio_file ? 'pointer' : 'not-allowed',
                       opacity: it.audio_file ? 1 : 0.5,
                       display: 'flex',

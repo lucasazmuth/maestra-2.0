@@ -1,8 +1,8 @@
 /* Plano de Ação — a FASE atual (ciclo de planejamento) e suas ESTRATÉGIAS em ordem de
    prioridade, cada uma com sua árvore de tarefas. Concluir todas as tarefas fecha a fase e
    libera o CTA de avançar para o próximo ciclo. Design system do clone (Encore/Spotify):
-   bg #121212, card #181818, hover #282828, texto secundário #b3b3b3, verde #af2896,
-   gradiente de IA #af2896→#509bf5, botões pílula com scale(1.04). Pouco texto, muita clareza. */
+   bg #121212, card #181818, hover #282828, texto secundário #b3b3b3, verde #BE81EC,
+   gradiente de IA #BE81EC→#509bf5, botões pílula com scale(1.04). Pouco texto, muita clareza. */
 
 .ap {
   padding: 24px;
@@ -31,9 +31,9 @@
   &:active { transform: scale(0.98); }
   &:disabled { opacity: 0.5; cursor: default; transform: none; }
 }
-.ap-btn--primary { background: #af2896; color: #fff; &:hover:not(:disabled) { transform: scale(1.04); } }
+.ap-btn--primary { background: #BE81EC; color: #1A1A1A; &:hover:not(:disabled) { transform: scale(1.04); } }
 .ap-btn--ghost { background: rgba(255, 255, 255, 0.1); color: #fff; &:hover:not(:disabled) { transform: scale(1.04); } }
-.ap-btn--accent { background: rgba(175, 40, 150, 0.16); color: #f0b6e2; &:hover:not(:disabled) { background: rgba(175, 40, 150, 0.26); transform: scale(1.04); } }
+.ap-btn--accent { background: rgba(190, 129, 236, 0.16); color: #f0b6e2; &:hover:not(:disabled) { background: rgba(190, 129, 236, 0.26); transform: scale(1.04); } }
 .ap-btn--ai {
   background: #16161b;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -106,8 +106,8 @@
   font-size: 13px;
   font-weight: 700;
 
-  &--current { background: #af2896; color: #fff; }
-  &--done { background: rgba(175, 40, 150, 0.15); color: #af2896; }
+  &--current { background: #BE81EC; color: #1A1A1A; }
+  &--done { background: rgba(190, 129, 236, 0.15); color: #BE81EC; }
   &--next { background: rgba(255, 255, 255, 0.08); color: #b3b3b3; }
 }
 
@@ -118,9 +118,9 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #af2896;
+  color: #BE81EC;
 }
-.ap-strat--done .ap-strat-kicker { color: #af2896; }
+.ap-strat--done .ap-strat-kicker { color: #BE81EC; }
 .ap-strat--next .ap-strat-kicker { color: #8a8a8a; }
 
 .ap-strat-title { font-size: 15px; font-weight: 700; line-height: 1.35; color: #fff; }
@@ -140,7 +140,7 @@
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 
-  &:hover { background: rgba(255, 255, 255, 0.08); color: #af2896; }
+  &:hover { background: rgba(255, 255, 255, 0.08); color: #BE81EC; }
 }
 
 /* Popover do objetivo — escopado pra escapar do estilo global azul de .ant-popover.
@@ -164,7 +164,7 @@
   color: #8a8a8a;
   white-space: nowrap;
 }
-.ap-strat--current .ap-strat-count { color: #af2896; }
+.ap-strat--current .ap-strat-count { color: #BE81EC; }
 
 .ap-chevron {
   color: #b3b3b3;
@@ -197,7 +197,7 @@
   line-height: 1.45;
 
   b { color: #fff; font-weight: 700; }
-  svg { color: #af2896; min-width: 14px; }
+  svg { color: #BE81EC; min-width: 14px; }
 }
 
 /* ---- Tarefas em linha do tempo (diferencial do modo básico) ---- */
@@ -212,7 +212,7 @@
     top: 18px;
     bottom: 22px;
     width: 2px;
-    background: linear-gradient(180deg, #af2896, rgba(175, 40, 150, 0.12));
+    background: linear-gradient(180deg, #BE81EC, rgba(190, 129, 236, 0.12));
     // Desenha o caminho de cima pra baixo ao aparecer (mostra a ordem das tarefas).
     transform: scaleY(0);
     transform-origin: top;
@@ -264,8 +264,8 @@
   color: transparent;
   transition: transform 33ms ease, background-color 0.15s, border-color 0.15s;
 
-  &:hover { border-color: #af2896; transform: scale(1.1); }
-  &.is-done { background: #af2896; border-color: #af2896; color: #fff; }
+  &:hover { border-color: #BE81EC; transform: scale(1.1); }
+  &.is-done { background: #BE81EC; border-color: #BE81EC; color: #1A1A1A; }
   &.is-overdue { border-color: #e91429; }
 }
 
@@ -345,12 +345,12 @@
   font-family: inherit;
   transition: border-color 0.15s, color 0.15s, background-color 0.15s;
 
-  &:hover { border-color: #af2896; color: #af2896; }
+  &:hover { border-color: #BE81EC; color: #BE81EC; }
   &.is-assigned {
     border-style: solid;
     border-color: transparent;
-    background: #af289622;
-    color: #af2896;
+    background: #BE81EC22;
+    color: #BE81EC;
   }
   .ap-owner-ini { font-size: 10px; font-weight: 800; letter-spacing: 0.3px; }
 }
@@ -390,7 +390,7 @@
   font-family: inherit;
   outline: none;
 
-  &:focus { border-color: #af2896; }
+  &:focus { border-color: #BE81EC; }
   &::placeholder { color: #888; }
 }
 
@@ -431,7 +431,7 @@
     border-radius: 50%;
     display: grid;
     place-items: center;
-    background: linear-gradient(135deg, #af2896, #509bf5);
+    background: linear-gradient(135deg, #BE81EC, #509bf5);
     color: #fff;
     font-weight: 800;
     font-size: 11px;
@@ -457,8 +457,8 @@
     height: 24px;
     min-width: 24px;
     border-radius: 50%;
-    background: rgba(175, 40, 150, 0.15);
-    color: #af2896;
+    background: rgba(190, 129, 236, 0.15);
+    color: #BE81EC;
     display: grid;
     place-items: center;
     margin-top: 1px;
@@ -510,8 +510,8 @@
     height: 20px;
     min-width: 20px;
     border-radius: 5px;
-    background: rgba(175, 40, 150, 0.15);
-    color: #af2896;
+    background: rgba(190, 129, 236, 0.15);
+    color: #BE81EC;
     font-size: 11px;
     font-weight: 700;
     display: grid;
@@ -587,14 +587,14 @@
   width: 26px; height: 26px; margin-top: 4px;
   border: none; border-radius: 7px; background: rgba(255, 255, 255, 0.06);
   color: #9a9a9a; cursor: pointer; transition: color .15s, background-color .15s;
-  &:hover { color: #fff; background: rgba(175, 40, 150, 0.22); }
+  &:hover { color: #fff; background: rgba(190, 129, 236, 0.22); }
 }
 .ap-adv-editbox { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .ap-adv-edit-area, .ap-adv-edit-input {
   width: 100%; box-sizing: border-box; resize: none;
   background: #1a1a1a; border: 1px solid #3a3a3a; border-radius: 9px;
   color: #fff; font-size: 14.5px; line-height: 1.5; padding: 9px 12px; font-family: inherit;
-  &:focus { outline: none; border-color: #af2896; }
+  &:focus { outline: none; border-color: #BE81EC; }
 }
 .ap-adv-edit-row { display: flex; align-items: center; gap: 8px; }
 .ap-adv-row-del {
@@ -608,7 +608,7 @@
 }
 .ap-adv-row-add { align-self: flex-start; background: rgba(255,255,255,0.07); color: #cfcfcf; &:hover { background: rgba(255,255,255,0.12); } }
 .ap-adv-edit-actions { display: flex; gap: 8px; margin-top: 2px; }
-.ap-adv-edit-save { background: #af2896; color: #fff; &:hover { filter: brightness(1.08); } }
+.ap-adv-edit-save { background: #BE81EC; color: #1A1A1A; &:hover { filter: brightness(1.08); } }
 .ap-adv-edit-cancel { background: rgba(255,255,255,0.08); color: #b3b3b3; &:hover { color: #fff; } }
 .ap-adv-note { color: #7a7a7a; font-size: 12.5px; line-height: 1.5; margin: 10px 0 0; max-width: 620px; }
 .ap-adv-ref-sub { display: block; color: #9a9a9a; font-size: 12px; margin-bottom: 4px; }
@@ -695,8 +695,8 @@
   color: transparent;
   transition: transform 33ms ease, background-color 0.15s, border-color 0.15s;
 
-  &:hover { border-color: #af2896; transform: scale(1.1); }
-  &.is-done { background: #af2896; border-color: #af2896; color: #fff; }
+  &:hover { border-color: #BE81EC; transform: scale(1.1); }
+  &.is-done { background: #BE81EC; border-color: #BE81EC; color: #1A1A1A; }
 }
 
 .ap-adv-task-desc {
@@ -760,12 +760,12 @@
   font-family: inherit;
   transition: border-color 0.15s, color 0.15s, background-color 0.15s;
 
-  &:hover { border-color: #af2896; color: #af2896; }
+  &:hover { border-color: #BE81EC; color: #BE81EC; }
   &.is-assigned {
     border-style: solid;
     border-color: transparent;
-    background: #af289622;
-    color: #af2896;
+    background: #BE81EC22;
+    color: #BE81EC;
   }
   .ap-owner-ini { font-size: 9px; font-weight: 800; letter-spacing: 0.2px; }
 }
@@ -825,7 +825,7 @@
   h1, h2, h3 { color: #fff; font-size: 15px; font-weight: 800; margin: 18px 0 6px; }
   ul, ol { margin: 0 0 14px; padding-left: 20px; }
   li { margin-bottom: 4px; }
-  a { color: #af2896; }
+  a { color: #BE81EC; }
 }
 
 /* Gráfico de prioridade das estratégias (barras horizontais, em ordem de ranking) */
@@ -833,9 +833,9 @@
 .ap-adv-rank-row { display: flex; align-items: center; gap: 12px; }
 .ap-adv-rank-num { color: #6f6f6f; font-size: 12px; font-weight: 800; min-width: 22px; font-variant-numeric: tabular-nums; }
 .ap-adv-rank-main { flex: 1; min-width: 0; }
-.ap-adv-rank-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
-.ap-adv-rank-title { color: #e8e8e8; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ap-adv-rank-pct { color: #af2896; font-size: 12px; font-weight: 700; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.ap-adv-rank-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.ap-adv-rank-title { color: #e8e8e8; font-size: 13px; font-weight: 600; line-height: 1.45; white-space: normal; overflow-wrap: anywhere; }
+.ap-adv-rank-pct { color: #BE81EC; font-size: 12px; font-weight: 700; flex-shrink: 0; font-variant-numeric: tabular-nums; }
 .ap-adv-rank-bar {
   height: 6px;
   border-radius: 4px;
@@ -845,7 +845,7 @@
   > div {
     height: 100%;
     border-radius: 4px;
-    background: linear-gradient(90deg, rgba(175, 40, 150, 0.55), #af2896);
+    background: linear-gradient(90deg, rgba(190, 129, 236, 0.55), #BE81EC);
     transition: width 0.4s ease;
   }
 }

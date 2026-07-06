@@ -11,7 +11,7 @@ import type { NotificationItem, NotificationSource } from '../../interfaces/maes
 
 const typeColor: Record<string, string> = {
   info: '#3b82f6',
-  success: '#af2896',
+  success: '#BE81EC',
   warning: '#f59e0b',
   error: '#e91429',
 };
@@ -345,7 +345,7 @@ const Notifications: FC = () => {
                         )}
                       </div>
                       {!n.read && (
-                        <span style={{ color: '#af2896', fontSize: 11, fontWeight: 700 }}>
+                        <span style={{ color: '#BE81EC', fontSize: 11, fontWeight: 700 }}>
                           NOVO
                         </span>
                       )}

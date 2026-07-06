@@ -59,7 +59,7 @@ const ForgotPassword: FC = () => {
             style={{
               width: 60, height: 60, borderRadius: '50%', margin: '4px auto 18px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(175, 40, 150, 0.14)', color: '#c65fb0',
+              background: 'rgba(190, 129, 236, 0.14)', color: '#c65fb0',
             }}
           >
             <FiMail size={28} />
@@ -80,8 +80,8 @@ const ForgotPassword: FC = () => {
             onClick={resend}
             disabled={loading}
             style={{
-              width: '100%', background: 'linear-gradient(135deg, #af2896, #6d3bd1)', border: 'none',
-              color: '#fff', padding: '13px 24px', borderRadius: 9999, fontWeight: 700, fontSize: 15,
+              width: '100%', background: '#BE81EC', border: 'none',
+              color: '#1A1A1A', padding: '13px 24px', borderRadius: 9999, fontWeight: 700, fontSize: 15,
               cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1,
             }}
           >

@@ -7,9 +7,9 @@ import { AiGlow } from '../../components/AiGlow';
 // ---- Botões padrão ---------------------------------------------------------------------------
 
 export const primaryBtn: CSSProperties = {
-  background: '#af2896',
+  background: '#BE81EC',
   border: 'none',
-  color: '#fff',
+  color: '#1A1A1A',
   padding: '10px 24px',
   borderRadius: 9999,
   cursor: 'pointer',

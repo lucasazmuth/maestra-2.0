@@ -61,7 +61,7 @@ const PinInput: FC<{ value: string; onChange: (v: string) => void; onComplete?: 
           aria-label={`Dígito ${i + 1} do código`}
           style={{
             width: 46, height: 56, textAlign: 'center', fontSize: 22, fontWeight: 700,
-            color: '#fff', background: '#1f1f1f', border: `1px solid ${c ? '#af2896' : '#2a2a2a'}`,
+            color: '#1A1A1A', background: '#1f1f1f', border: `1px solid ${c ? '#BE81EC' : '#2a2a2a'}`,
             borderRadius: 10, outline: 'none', transition: 'border-color .15s',
           }}
         />
@@ -142,7 +142,7 @@ export const EmailCodeStep: FC<{ email: string; onVerified: () => void; resendOn
       <PinInput value={code} onChange={setCode} onComplete={runVerify} />
       <p style={{ color: '#8a8a92', fontSize: 12.5, margin: '-6px 0 0', textAlign: 'center' }}>O código expira em 1 hora.</p>
       {error && <div style={{ color: '#e91429', fontSize: 13, textAlign: 'center' }}>{error}</div>}
-      {info && <div style={{ color: '#af2896', fontSize: 13, textAlign: 'center' }}>{info}</div>}
+      {info && <div style={{ color: '#BE81EC', fontSize: 13, textAlign: 'center' }}>{info}</div>}
       <AuthSubmit loading={loading} label="Confirmar e entrar" />
       <p style={{ color: '#b3b3b3', fontSize: 14, marginTop: 4, textAlign: 'center' }}>
         Não recebeu?{' '}

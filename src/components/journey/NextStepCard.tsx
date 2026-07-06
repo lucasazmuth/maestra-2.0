@@ -24,6 +24,12 @@ export const NextStepCard: FC<{ artist: Artist }> = ({ artist }) => {
   const navigate = useNavigate();
   const { next } = useJourneyState(artist);
   const accent = next.accent;
+  // Tinta do texto do botão conforme o brilho do accent: escura em accents claros
+  // (ex.: roxo da marca), branca em accents escuros (verde/azul dos outros passos).
+  const ink = (() => {
+    const [r, g, b] = accent.split(',').map((n) => parseInt(n.trim(), 10));
+    return r * 0.299 + g * 0.587 + b * 0.114 > 150 ? '#1a1a1a' : '#fff';
+  })();
 
   return (
     <section style={{ marginBottom: 24 }}>
@@ -64,7 +70,7 @@ export const NextStepCard: FC<{ artist: Artist }> = ({ artist }) => {
               gap: 8,
               background: `rgb(${accent})`,
               border: 'none',
-              color: '#fff',
+              color: ink,
               padding: '11px 22px',
               borderRadius: 9999,
               cursor: 'pointer',

@@ -108,7 +108,7 @@ export const EventModal: FC<Props> = ({
             <button
               onClick={handleSave}
               disabled={saving}
-              style={{ background: '#af2896', border: 'none', color: '#fff', borderRadius: 9999, padding: '6px 20px', cursor: 'pointer', fontWeight: 700 }}
+              style={{ background: '#BE81EC', border: 'none', color: '#1A1A1A', borderRadius: 9999, padding: '6px 20px', cursor: 'pointer', fontWeight: 700 }}
             >
               {saving ? 'Salvando…' : 'Salvar'}
             </button>

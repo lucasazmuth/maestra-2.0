@@ -84,7 +84,7 @@
   height: 1.05em;
   margin-left: 4px;
   vertical-align: text-bottom;
-  background: #af2896;
+  background: #BE81EC;
   border-radius: 2px;
   animation: emptyCaret 0.9s steps(1) infinite;
 }
@@ -93,8 +93,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: #af2896;
-  color: #fff;
+  background-color: #BE81EC;
+  color: #1A1A1A;
   border: none;
   border-radius: 9999px;
   padding: 14px 32px;
@@ -109,7 +109,7 @@
   transition: opacity 0.35s ease, transform 0.35s ease, background-color 0.15s ease;
 
   &:hover {
-    background-color: #c13fa8;
+    background-color: #A95FE0;
   }
 }
 

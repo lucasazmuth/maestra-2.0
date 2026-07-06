@@ -126,7 +126,7 @@ const Agenda: FC = () => {
         {canEdit && (
           <button
             onClick={() => openCreate()}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#af2896', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#BE81EC', border: 'none', color: '#1A1A1A', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
           >
             <FiPlus /> Compromisso
           </button>
@@ -216,11 +216,11 @@ const Agenda: FC = () => {
                       borderRadius: 8,
                       padding: 6,
                       cursor: 'pointer',
-                      border: isToday ? '1px solid #af2896' : '1px solid transparent',
+                      border: isToday ? '1px solid #BE81EC' : '1px solid transparent',
                       opacity: inMonth ? 1 : 0.5,
                     }}
                   >
-                    <div style={{ color: isToday ? '#af2896' : '#b3b3b3', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+                    <div style={{ color: isToday ? '#BE81EC' : '#b3b3b3', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
                       {d.date()}
                     </div>
                     {dayEvents.slice(0, 3).map((e) => (

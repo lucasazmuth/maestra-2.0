@@ -1,0 +1,177 @@
+// Página "Music Rio Academy" — a escola por trás da Maestra.
+// Reusa o chrome da landing (Header/Footer) e os tokens do site: fundo preto, Inter,
+// roxo da marca #BE81EC. Espelha o layout "Versão 2 — Desenvolvida" do material da MRA.
+
+$brand: #be81ec;
+$brandHover: #a95fe0;
+$line: rgba(255, 255, 255, 0.1);
+
+.page {
+  background: #000;
+  color: #fff;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.main {
+  max-width: 72rem;
+  margin: 0 auto;
+  // padding-top generoso pra limpar o header fixo e dar respiro (mesmo padrão da Diagnóstico REAL).
+  padding: 140px 20px 80px;
+
+  @media (min-width: 768px) {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+// ─── Cabeçalho ───────────────────────────────────────────────────────────────
+.head { margin-bottom: 48px; }
+
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: $brand;
+  margin: 0 0 16px;
+}
+
+.title {
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  max-width: 20ch;
+  margin: 0 0 20px;
+
+  span { color: $brand; }
+
+  @media (max-width: 640px) { font-size: 2rem; }
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #b8b8bf;
+  max-width: 60ch;
+  margin: 0;
+}
+
+// ─── Estatísticas ────────────────────────────────────────────────────────────
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: $line;
+  border: 1px solid $line;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 48px;
+
+  @media (max-width: 640px) { grid-template-columns: 1fr 1fr; }
+}
+
+.statCell {
+  background: #0a0a0c;
+  padding: 24px 20px;
+}
+
+.statNum {
+  font-size: 2rem;
+  font-weight: 800;
+  color: $brand;
+  line-height: 1;
+  margin: 0 0 8px;
+}
+
+.statLabel {
+  font-size: 0.82rem;
+  color: #8a8a92;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+// ─── Cards ───────────────────────────────────────────────────────────────────
+.cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 48px;
+
+  @media (max-width: 640px) { grid-template-columns: 1fr; }
+}
+
+.card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: #0a0a0c;
+  padding: 26px 24px;
+
+  &::before {
+    content: '';
+    display: block;
+    width: 26px;
+    height: 3px;
+    border-radius: 2px;
+    background: $brand;
+    margin-bottom: 18px;
+  }
+}
+
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 10px;
+}
+
+.cardBody {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: #9a9aa2;
+  margin: 0;
+}
+
+// ─── Faixa final (fundadora + CTA) ───────────────────────────────────────────
+.footerBand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid $line;
+  padding-top: 32px;
+  flex-wrap: wrap;
+}
+
+.footerText {
+  font-size: 0.95rem;
+  color: #8a8a92;
+  max-width: 54ch;
+  line-height: 1.65;
+  margin: 0;
+
+  strong { color: #e6e6ea; font-weight: 600; }
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: $brand;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-decoration: none;
+  padding: 13px 26px;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.15s;
+
+  &:hover { background: $brandHover; transform: translateY(-1px); }
+}

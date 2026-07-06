@@ -23,7 +23,7 @@ export const SwotSummary: FC<{ swot?: SwotAnalysis }> = ({ swot }) => (
   <>
     <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '24px 0 12px' }}>Análise SWOT</h2>
     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-      <StatBox label='Forças' value={swot?.strengths?.length || 0} color='#af2896' />
+      <StatBox label='Forças' value={swot?.strengths?.length || 0} color='#BE81EC' />
       <StatBox label='Fraquezas' value={swot?.weaknesses?.length || 0} color='#e91429' />
       <StatBox label='Oportunidades' value={swot?.opportunities?.length || 0} color='#3b82f6' />
       <StatBox label='Ameaças' value={swot?.threats?.length || 0} color='#f59e0b' />
@@ -54,7 +54,7 @@ export const ConnectSpotify: FC<{ artist: Artist }> = ({ artist }) => {
   return (
     <div style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 24, border: '1px solid #282828' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <FaSpotify color='#af2896' size={22} />
+        <FaSpotify color='#BE81EC' size={22} />
         <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>Conectar ao Spotify</h2>
       </div>
       <p style={{ color: '#b3b3b3', fontSize: 13, margin: '0 0 12px' }}>
@@ -64,7 +64,7 @@ export const ConnectSpotify: FC<{ artist: Artist }> = ({ artist }) => {
       {!linking ? (
         <button
           onClick={() => setLinking(true)}
-          style={{ background: '#af2896', border: 'none', color: '#fff', padding: '8px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+          style={{ background: '#BE81EC', border: 'none', color: '#1A1A1A', padding: '8px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
         >
           Buscar no Spotify
         </button>
@@ -75,7 +75,7 @@ export const ConnectSpotify: FC<{ artist: Artist }> = ({ artist }) => {
             placeholder='Nome do artista no Spotify'
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            prefix={<FaSpotify color='#af2896' />}
+            prefix={<FaSpotify color='#BE81EC' />}
             onPressEnter={async () => {
               if (!query.trim()) return;
               setSearching(true);

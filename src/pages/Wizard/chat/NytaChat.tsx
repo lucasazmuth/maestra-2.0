@@ -815,7 +815,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
           <SwotBoardCard
             swot={draft.swotAnalysis!}
             onConfirm={(board, userEdits) => {
-              pushUser('Inventário confirmado');
+              pushUser('SWOT fechada!');
               persist({ swotAnalysis: board, swotUserEdits: userEdits }, 6);
             }}
           />
@@ -826,7 +826,6 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
             strategies={draft.strategies || []}
             onConfirm={(strategies) => {
               pushUser('Estratégias aprovadas');
-              say(SAY.strategiesThreatNote());
               persist({ strategies }, 7);
             }}
           />

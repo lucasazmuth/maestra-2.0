@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     title: `${inviterName} te convidou pra gerenciar ${artist.name}`,
     bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${inviterName} quer você no time do <strong style="color:#fff;">${artist.name}</strong> na Maestra Manager.</p>
     <p style="color:#cfcfd4;line-height:1.6;">Entre (ou crie sua conta) com este mesmo e-mail e o convite aparece pra você aceitar.</p>
-    ${loginLink ? `<p style="margin:20px 0;"><a href="${loginLink}" style="display:inline-block;background:#af2896;color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Acessar a Maestra</a></p>` : ""}`,
+    ${loginLink ? `<p style="margin:20px 0;"><a href="${loginLink}" style="display:inline-block;background:#BE81EC;color:#1A1A1A;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Acessar a Maestra</a></p>` : ""}`,
   });
 
   const res = await sendBrevoEmail({ to: member.email, toName: member.name || undefined, subject: `${inviterName} te convidou pra gerenciar ${artist.name}`, html });

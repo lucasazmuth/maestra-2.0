@@ -19,7 +19,7 @@ import { PRODUCT_THEME, pageBg } from '../../components/productTheme';
 import { PlanoAcaoIcon } from '../../components/Icons/system';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
-import { TASK_OWNER_SELF } from '../../constants/maestra';
+import { TASK_OWNER_SELF, isOnboardingComplete } from '../../constants/maestra';
 import { listMembers } from '../../services/db/members';
 import type { ActionTask, ArtistContent, ArtistMember, Strategy } from '../../interfaces/maestra';
 import './actionPlan.scss';
@@ -66,9 +66,9 @@ const ArchiveModal: FC<{
               <button
                 key={it.id}
                 onClick={() => toggle(it.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', background: on ? 'rgba(175,40,150,0.12)' : '#202020', border: `1px solid ${on ? '#af2896' : 'transparent'}`, borderRadius: 12, padding: '14px 16px', transition: 'background .15s, border-color .15s' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', background: on ? 'rgba(190,129,236,0.12)' : '#202020', border: `1px solid ${on ? '#BE81EC' : 'transparent'}`, borderRadius: 12, padding: '14px 16px', transition: 'background .15s, border-color .15s' }}
               >
-                <span aria-hidden style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: `2px solid ${on ? '#af2896' : '#4a4a4a'}`, background: on ? '#af2896' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>{on && <FiCheck size={14} />}</span>
+                <span aria-hidden style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: `2px solid ${on ? '#BE81EC' : '#4a4a4a'}`, background: on ? '#BE81EC' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1A1A1A' }}>{on && <FiCheck size={14} />}</span>
                 <span style={{ color: '#fff', fontWeight: 600, fontSize: 14.5, lineHeight: 1.4 }}>{it.title}</span>
               </button>
             );
@@ -80,7 +80,7 @@ const ArchiveModal: FC<{
           <button
             disabled={!sel.length}
             onClick={() => onConfirm(sel)}
-            style={{ border: 'none', borderRadius: 9999, padding: '10px 20px', fontWeight: 700, fontSize: 13.5, cursor: sel.length ? 'pointer' : 'not-allowed', color: '#fff', background: 'linear-gradient(135deg, #af2896, #6d3bd1)', opacity: sel.length ? 1 : 0.5 }}
+            style={{ border: 'none', borderRadius: 9999, padding: '10px 20px', fontWeight: 700, fontSize: 13.5, cursor: sel.length ? 'pointer' : 'not-allowed', color: '#1A1A1A', background: '#BE81EC', opacity: sel.length ? 1 : 0.5 }}
           >
             Trazer pro plano{sel.length ? ` (${sel.length})` : ''}
           </button>
@@ -207,7 +207,9 @@ const ActionPlan: FC = () => {
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
-  if (!strategies.length) {
+  // Só libera o Plano de Ação quando o wizard foi CONCLUÍDO (Finalizar). Ter estratégias geradas mas
+  // não ter selecionado quais viram tarefa (step 7) nem finalizado (step 8) → volta pro wizard.
+  if (!isOnboardingComplete(artist)) {
     // Sem wrapper .ap: ocupa a tela toda (full-bleed), igual à tela de feature bloqueada.
     return (
       <EnhancedEmptyState
@@ -253,16 +255,13 @@ const ActionPlan: FC = () => {
         subtitle="Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase."
       />
 
-      {/* Progresso das tarefas — mesmo fundo do card de Plano de Ação na jornada (gradiente + ícone). */}
+      {/* Progresso das tarefas — card escuro simples (sem gradiente de fundo). */}
       <div
         className="ap-progress-card"
         style={{
           position: 'relative',
           overflow: 'hidden',
-          backgroundColor: '#0e0e10',
-          backgroundImage: `linear-gradient(158deg, rgba(12,12,14,0.74) 0%, rgba(12,12,14,0.90) 52%, rgba(12,12,14,0.97) 100%), url(${PRODUCT_THEME.action.bg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundColor: '#141416',
           border: `1px solid rgba(${PRODUCT_THEME.action.accent},0.16)`,
           boxShadow: '0 12px 32px -16px rgba(0,0,0,0.7)',
           borderRadius: 14,
@@ -274,7 +273,7 @@ const ActionPlan: FC = () => {
         <span aria-hidden style={{ position: 'absolute', right: -12, bottom: -18, color: `rgb(${PRODUCT_THEME.action.accent})`, opacity: 0.06, pointerEvents: 'none', lineHeight: 0 }}>
           <span style={{ display: 'block', width: 150, height: 150 }}><PlanoAcaoIcon size={150} /></span>
         </span>
-        <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#af2896' }}>Progresso do plano</span>
+        <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#BE81EC' }}>Progresso do plano</span>
         <h2 className="ap-progress-title" style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 24, color: '#fff', margin: '6px 0 0', lineHeight: 1.1 }}>Suas tarefas</h2>
         <TaskProgress counts={taskCounts} />
 
@@ -285,7 +284,7 @@ const ActionPlan: FC = () => {
           </span>
           <button
             onClick={() => navigate(`/artists/${artist.id}/diagnostico/refazer`)}
-            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(175,40,150,0.5)', color: '#d264bb', padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(190,129,236,0.5)', color: '#D3A6F2', padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
           >
             <FiRefreshCw size={14} /> Refazer diagnóstico
           </button>

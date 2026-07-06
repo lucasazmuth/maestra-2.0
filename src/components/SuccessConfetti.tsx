@@ -9,7 +9,7 @@ interface Props {
 }
 
 // Cores de celebração — base na marca (magenta/roxo) + acentos quentes pra leitura no escuro.
-const COLORS = ['#af2896', '#d264bb', '#ffffff', '#ffd54a', '#5b8def', '#ff7ac6'];
+const COLORS = ['#BE81EC', '#D3A6F2', '#ffffff', '#ffd54a', '#5b8def', '#ff7ac6'];
 
 interface Piece {
   x: number;

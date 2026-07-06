@@ -1,11 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 // Réplica fiel da landing standalone (maestra-landing): clean, preto/branco, Inter, sem gradiente,
-// mínimo de borda, magenta (#af2896) só nos CTAs.
+// mínimo de borda, magenta (#BE81EC) só nos CTAs.
 
-$mag: #af2896;
-$magHover: #c13fa8;
-$mag2: #d264bb;
+$mag: #BE81EC;
+$magHover: #A95FE0;
+$mag2: #D3A6F2;
 $g200: #e5e7eb;
 $g300: #d1d5db;
 $g400: #9ca3af;
@@ -25,7 +25,7 @@ $card: #0c0c0c;
 // ─── Botões ──────────────────────────────────────────────────────────────────
 .btnPrimary {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  background: $mag; color: #fff; border: none; border-radius: 9999px; font-weight: 700; cursor: pointer;
+  background: $mag; color: #1a1a1a; border: none; border-radius: 9999px; font-weight: 700; cursor: pointer;
   text-decoration: none; transition: background 0.2s;
   &:hover { background: $magHover; }
 }
@@ -73,22 +73,49 @@ $card: #0c0c0c;
 // ─── Feature ─────────────────────────────────────────────────────────────────
 .feature { background: #000; padding: 56px 20px; }
 .featureGrid { max-width: 72rem; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-.featureVisual { border-radius: 12px; border: 1px solid rgba(var(--accent, 175, 40, 150), 0.35); background: $card; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 16px 40px -22px rgba(0, 0, 0, 0.7); }
-.featureGlyph { color: rgba(var(--accent, 175, 40, 150), 0.92); }
-.featureBadge { display: block; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--accent, 175, 40, 150)); margin-bottom: 16px; }
+// "Ícone solto": sem card/gradiente/borda — o ícone 3D flutua direto sobre o preto.
+.featureVisual { aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; }
+.featureGlyph { color: rgba(var(--accent, 190, 129, 236), 0.92); display: flex; width: 100%; align-items: center; justify-content: center; }
+.featureGlyph img { width: min(70%, 240px); height: auto; display: block; filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.5)); }
+.featureBadge { display: block; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--accent, 190, 129, 236)); margin-bottom: 16px; }
 .featureTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 20px; }
 .featureDesc { font-size: 1.125rem; line-height: 1.6; color: $g300; margin: 0 0 28px; }
 .featureList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; }
 .featureItem { display: flex; align-items: flex-start; gap: 12px; color: $g200; }
-.featureItem svg { color: rgb(var(--accent, 175, 40, 150)); flex-shrink: 0; margin-top: 2px; }
+.featureItem svg { color: rgb(var(--accent, 190, 129, 236)); flex-shrink: 0; margin-top: 2px; }
 .featureLink {
   display: inline-flex; align-items: center; gap: 8px; margin-top: 28px; padding: 0;
   background: none; border: none; cursor: pointer; font: inherit; font-weight: 700; font-size: 15px;
-  color: rgb(var(--accent, 175, 40, 150)); transition: gap 0.2s, opacity 0.2s;
+  color: rgb(var(--accent, 190, 129, 236)); transition: gap 0.2s, opacity 0.2s;
   &:hover { gap: 12px; opacity: 0.85; }
 }
 .reverse .featureVisual { order: 2; }
 .reverse .featureBody { order: 1; }
+
+// ─── Escola por trás da Maestra (teaser → /music-rio-academy) ─────────────────
+.mra { background: #000; padding: 72px 20px; border-top: 1px solid $line; }
+.mraInner {
+  max-width: 68rem; margin: 0 auto;
+  display: grid; grid-template-columns: 1.3fr 1fr; gap: 56px; align-items: center;
+}
+@media (max-width: 900px) { .mraInner { grid-template-columns: 1fr; gap: 32px; } }
+.mraTitle { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; margin: 14px 0 16px; max-width: 20ch; }
+.mraText { font-size: 1.05rem; line-height: 1.7; color: $g300; margin: 0 0 26px; max-width: 52ch;
+  strong { color: #fff; font-weight: 600; } }
+.mraCta {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: $mag; color: #1a1a1a; border: none; border-radius: 9999px;
+  font-weight: 800; font-size: 15px; cursor: pointer; padding: 13px 26px;
+  transition: background 0.2s, transform 0.15s;
+  &:hover { background: $magHover; transform: translateY(-1px); }
+}
+.mraStats {
+  display: grid; grid-template-columns: 1fr; gap: 1px;
+  background: $line; border: 1px solid $line; border-radius: 14px; overflow: hidden;
+}
+.mraStat { background: $card; padding: 20px 22px; display: flex; align-items: baseline; gap: 12px; }
+.mraStatNum { font-size: 1.7rem; font-weight: 800; color: $mag; line-height: 1; min-width: 5rem; }
+.mraStatLabel { font-size: 0.9rem; color: $g400; }
 
 // ─── Fundadora (Anita) ─────────────────────────────────────────────────────────
 .founder { background: #000; padding: 88px 20px; border-top: 1px solid $line; }
@@ -107,7 +134,25 @@ $card: #0c0c0c;
 }
 .founderName { font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
 .founderRole { font-size: 13.5px; color: $g400; margin-top: 6px; line-height: 1.5; }
+.founderSocial { width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); display: inline-flex; align-items: center; justify-content: center; color: #fff; margin-top: 16px; transition: background 0.2s, color 0.2s; &:hover { background: rgba(190, 129, 236, 0.2); color: $mag2; } }
 .founderStory { max-width: 44rem; }
+// Recolhido por padrão: mostra ~2 blocos e esmaece o resto; expande no clique.
+.founderTextClamp {
+  max-height: 340px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+}
+.founderMore {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 20px; padding: 0;
+  background: none; border: none; cursor: pointer;
+  color: $mag; font-weight: 700; font-size: 15px;
+  transition: color 0.15s;
+  &:hover { color: $magHover; }
+  svg { transition: transform 0.2s ease; }
+}
+.founderMoreOpen { transform: rotate(180deg); }
 .founderPara {
   font-size: 1.0625rem; line-height: 1.78; color: $g300; margin: 0 0 20px;
   &:first-child::first-letter { font-size: 3rem; font-weight: 700; color: #fff; float: left; line-height: 0.9; margin: 4px 10px 0 0; }
@@ -130,19 +175,19 @@ $card: #0c0c0c;
 // Toggle mensal/anual: vive DENTRO do card do PRO (só a assinatura tem essa escolha).
 .toggle { display: inline-flex; align-self: flex-start; align-items: center; gap: 4px; margin: 2px 0 18px; padding: 4px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.05); }
 .toggleBtn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 9999px; border: none; background: transparent; color: $g300; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s, color 0.2s; &:hover { color: #fff; } }
-.toggleBtnOn { background: $mag; color: #fff; &:hover { color: #fff; } }
-.toggleSave { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 9999px; background: rgba(175, 40, 150, 0.2); color: $mag2; }
+.toggleBtnOn { background: $mag; color: #1a1a1a; &:hover { color: #1a1a1a; } }
+.toggleSave { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 9999px; background: rgba(190, 129, 236, 0.2); color: $mag2; }
 .toggleBtnOn .toggleSave { background: rgba(255, 255, 255, 0.2); color: #fff; }
 .planGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start; }
 .planCard { position: relative; border-radius: 16px; border: 1px solid $line; background: $card; padding: 28px; display: flex; flex-direction: column; }
-.planCardHero { border-color: rgba(175, 40, 150, 0.55); }
+.planCardHero { border-color: rgba(190, 129, 236, 0.55); }
 .planCardPro { border-color: rgba(124, 92, 255, 0.4); }
-.planBadge { position: absolute; top: -12px; left: 28px; background: $mag; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 4px 12px; border-radius: 9999px; }
+.planBadge { position: absolute; top: -12px; left: 28px; background: $mag; color: #1a1a1a; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 4px 12px; border-radius: 9999px; }
 .planBadgePro { position: absolute; top: -12px; left: 28px; background: #7c5cff; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 4px 12px; border-radius: 9999px; }
 // Chip do TIPO de cobrança no topo de cada card — o que impede o usuário de se sentir enganado.
 .planKind { display: inline-block; align-self: flex-start; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 5px 11px; border-radius: 9999px; margin-bottom: 16px; }
 .planKindFree { color: #a7b0ba; background: rgba(255, 255, 255, 0.06); }
-.planKindOnce { color: $mag2; background: rgba(175, 40, 150, 0.16); }
+.planKindOnce { color: $mag2; background: rgba(190, 129, 236, 0.16); }
 .planKindSub { color: #b9a9ff; background: rgba(124, 92, 255, 0.18); }
 .planName { font-size: 1.5rem; font-weight: 700; margin: 0 0 4px; }
 .planNamePro { color: #b9a9ff; }
@@ -158,12 +203,12 @@ $card: #0c0c0c;
 .planItemFree svg { color: $g500; }
 .planItemPro svg { color: $mag; }
 .planCtaOutline { display: block; text-align: center; padding: 12px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; font-weight: 700; text-decoration: none; cursor: pointer; background: none; transition: border-color 0.2s, background 0.2s; &:hover { border-color: #fff; background: rgba(255, 255, 255, 0.05); } }
-.planCtaPrimary { display: block; text-align: center; padding: 12px; border-radius: 9999px; background: $mag; color: #fff; font-weight: 700; text-decoration: none; cursor: pointer; border: none; transition: background 0.2s; &:hover { background: $magHover; } }
+.planCtaPrimary { display: block; text-align: center; padding: 12px; border-radius: 9999px; background: $mag; color: #1a1a1a; font-weight: 700; text-decoration: none; cursor: pointer; border: none; transition: background 0.2s; &:hover { background: $magHover; } }
 .planCancel { font-size: 12px; color: $g500; margin: 16px 0 0; text-align: center; }
 .planSpacer { height: 28px; }
 .plansFootnote { max-width: 52rem; margin: 32px auto 0; text-align: center; font-size: 14px; line-height: 1.7; color: $g400; strong { color: $g200; font-weight: 700; } }
 // 3 cards só no desktop largo; abaixo disso empilha centralizado pra leitura.
-@media (max-width: 960px) { .planGrid { grid-template-columns: 1fr; max-width: 26rem; margin-left: auto; margin-right: auto; } }
+@media (max-width: 960px) { .planGrid { grid-template-columns: minmax(0, 1fr); max-width: 26rem; margin-left: auto; margin-right: auto; } }
 
 // ─── FAQ ─────────────────────────────────────────────────────────────────────
 .faq { background: #000; padding: 80px 20px; }
@@ -196,7 +241,10 @@ $card: #0c0c0c;
 .footerColTitle { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: $g400; margin-bottom: 8px; }
 .footerLink { font-size: 14px; color: $g300; text-decoration: none; background: none; border: none; text-align: left; padding: 0; cursor: pointer; &:hover { color: #fff; } }
 .footerSocial { width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); display: inline-flex; align-items: center; justify-content: center; color: #fff; transition: background 0.2s; &:hover { background: rgba(255, 255, 255, 0.2); } }
-.footerBottom { padding-top: 24px; border-top: 1px solid $line; font-size: 14px; color: $g500; }
+.footerBottom { padding-top: 24px; border-top: 1px solid $line; font-size: 14px; color: $g500; display: flex; flex-direction: column; gap: 4px; }
+.footerBy { color: $g300; font-weight: 600; }
+.footerByDim { color: $g500; font-weight: 400; }
+.footerByLink { background: none; border: none; padding: 0; font: inherit; font-weight: 700; color: $mag; cursor: pointer; &:hover { color: $magHover; } }
 
 // ─── Responsivo ──────────────────────────────────────────────────────────────
 @media (min-width: 768px) {
@@ -208,14 +256,17 @@ $card: #0c0c0c;
 }
 
 @media (max-width: 1023px) {
-  .featureGrid { grid-template-columns: 1fr; gap: 48px; }
+  .featureGrid { grid-template-columns: 1fr; gap: 32px; }
+  // Em 1 coluna, sem o box 4/3 gigante: o ícone só ocupa a própria altura + um respiro.
+  .featureVisual { aspect-ratio: auto; padding: 8px 0; }
+  .featureGlyph img { width: 180px; }
   .reverse .featureVisual { order: 0; }
   .reverse .featureBody { order: 0; }
 }
 
 @media (max-width: 767px) {
   .featureTitle { font-size: 1.875rem; }
-  .planGrid { grid-template-columns: 1fr; }
+  .planGrid { grid-template-columns: minmax(0, 1fr); }
   .footerTop { flex-direction: column; }
 }
 
@@ -236,7 +287,7 @@ $card: #0c0c0c;
 .promptBox {
   background: $card; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 6px;
   transition: border-color 0.2s, box-shadow 0.2s; text-align: left;
-  &:focus-within { border-color: rgba(175, 40, 150, 0.6); box-shadow: 0 0 0 4px rgba(175, 40, 150, 0.12); }
+  &:focus-within { border-color: rgba(190, 129, 236, 0.6); box-shadow: 0 0 0 4px rgba(190, 129, 236, 0.12); }
 }
 .promptInput {
   width: 100%; min-height: 76px; resize: none; background: transparent; border: none; outline: none;
@@ -244,9 +295,9 @@ $card: #0c0c0c;
   &::placeholder { color: $g500; }
 }
 .promptBar { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 8px; }
-.nytaPill { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: $mag2; background: rgba(175, 40, 150, 0.12); border-radius: 9999px; padding: 5px 12px; }
+.nytaPill { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: $mag2; }
 .promptSubmit {
-  width: 40px; height: 40px; border-radius: 50%; border: none; background: $mag; color: #fff; cursor: pointer;
+  width: 40px; height: 40px; border-radius: 50%; border: none; background: $mag; color: #1a1a1a; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s, opacity 0.2s;
   &:hover { background: $magHover; }
   &:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -276,7 +327,7 @@ $card: #0c0c0c;
 .howTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 0; }
 .howGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
 .howStep { position: relative; }
-.howNum { font-size: 2.5rem; font-weight: 800; color: rgb(var(--accent, 175, 40, 150)); line-height: 1; margin-bottom: 16px; }
+.howNum { font-size: 2.5rem; font-weight: 800; color: #fff; line-height: 1; margin-bottom: 16px; }
 .howStep h3 { font-size: 18px; font-weight: 700; margin: 0 0 8px; color: #fff; }
 .howStep p { font-size: 14px; line-height: 1.6; color: $g400; margin: 0; }
 .howLine { position: absolute; top: 18px; left: calc(2.5rem + 16px); right: -28px; height: 1px; background: $line; }

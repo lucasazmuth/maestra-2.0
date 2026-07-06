@@ -57,9 +57,9 @@ export const PaymentSuccessScreen: FC<Props> = ({ title, subtitle, description, 
         onClick={onCta}
         style={{
           marginTop: description ? 0 : 28,
-          background: '#af2896',
+          background: '#BE81EC',
           border: 'none',
-          color: '#fff',
+          color: '#1A1A1A',
           borderRadius: 9999,
           padding: '15px 44px',
           fontSize: 16,

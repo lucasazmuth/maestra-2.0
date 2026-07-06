@@ -18,7 +18,7 @@ export const STRATEGY_META: Record<StrategyType, StrategyMeta> = {
   SO: {
     label: 'Ataque — Forças + Oportunidades',
     short: 'Ataque',
-    color: '#af2896',
+    color: '#BE81EC',
     icon: <LuRocket />,
   },
   ST: {

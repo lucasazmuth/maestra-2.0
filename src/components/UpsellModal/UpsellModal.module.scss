@@ -25,7 +25,7 @@
 
 .icon {
   font-size: 32px;
-  color: #af2896;
+  color: #BE81EC;
 }
 
 .title {
@@ -63,7 +63,7 @@
 
 .checkIcon {
   font-size: 16px;
-  color: #af2896;
+  color: #BE81EC;
   flex-shrink: 0;
 }
 
@@ -94,8 +94,8 @@
 .ctaPrimary {
   width: 100%;
   padding: 14px 32px;
-  background-color: #af2896;
-  color: #fff;
+  background-color: #BE81EC;
+  color: #1A1A1A;
   font-size: 15px;
   font-weight: 700;
   border: none;
@@ -104,7 +104,7 @@
   transition: background-color 0.2s ease, transform 0.1s ease;
 
   &:hover {
-    background-color: #c13fa8;
+    background-color: #A95FE0;
     transform: scale(1.02);
   }
 

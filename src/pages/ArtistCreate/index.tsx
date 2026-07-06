@@ -4,7 +4,6 @@ import { Input, InputNumber, Spin } from 'antd';
 import { FiAlertCircle, FiArrowLeft, FiX } from 'react-icons/fi';
 import { useDebounce } from 'use-debounce';
 
-import { DiagnosticoIcon } from '../../components/Icons/system';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { supabase } from '../../lib/supabase';
 import { artistsActions } from '../../store/slices/artists';
@@ -19,6 +18,8 @@ import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import { DiagnosticReport, type Chartmetric } from './DiagnosticReport';
 import { FlowHeader } from './FlowHeader';
 import { AnalyzingSteps } from './AnalyzingSteps';
+import { Wordmark } from '../../components/Wordmark';
+import realStar from '../../assets/feature-real.png';
 import styles from './ArtistCreate.module.scss';
 
 type Step = 'perfil' | 'intro' | 'quiz' | 'analisando' | 'diagnostico';
@@ -330,7 +331,7 @@ const ArtistCreate: FC = () => {
     setQuery('');
     setResults([]);
     setNotice(null);
-    say('Sem problema nenhum — todo mundo começa em algum lugar. Vou montar seu diagnóstico com a sua realidade de hoje, e o Spotify a gente conecta depois. Como é o seu nome artístico?');
+    say('Sem problema nenhum, todo mundo começa em algum lugar. Vou montar seu diagnóstico com a sua realidade de hoje, e o Spotify a gente conecta depois. Como é o seu nome artístico?');
   };
 
   // Volta ao modo de busca no Spotify.
@@ -418,10 +419,11 @@ const ArtistCreate: FC = () => {
       )}
 
       {/* Ícone do REAL grande e translúcido no fundo — só no ambiente do diagnóstico. */}
-      {realEnv && <span className={styles.pageGlyph} aria-hidden><DiagnosticoIcon size={300} /></span>}
+      {realEnv && <span className={styles.pageGlyph} aria-hidden><img src={realStar} alt="" width={340} height={340} /></span>}
 
-      {/* Cabeçalho numa ÚNICA linha: etapas à esquerda, botão de sair (X) à direita. */}
+      {/* Cabeçalho numa ÚNICA linha: marca à esquerda (aparece em prints), progresso enxuto e X. */}
       <div className={styles.topBar}>
+        <Wordmark className={styles.brand} beta />
         {!redo && <FlowHeader phase={macroPhase} />}
         <button
           className={styles.back}

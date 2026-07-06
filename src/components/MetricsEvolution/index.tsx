@@ -104,8 +104,8 @@ export const MetricsEvolution: FC<MetricsEvolutionProps> = ({ artistId, hideLabe
     <section
       style={{
         position: 'relative',
-        background: 'radial-gradient(120% 130% at 100% 0%, rgba(175, 40, 150,0.06), #181818 60%)',
-        border: '1px solid rgba(175, 40, 150,0.15)',
+        background: 'radial-gradient(120% 130% at 100% 0%, rgba(190, 129, 236,0.06), #181818 60%)',
+        border: '1px solid rgba(190, 129, 236,0.15)',
         borderRadius: 14,
         padding: 20,
         marginBottom: 24,
@@ -119,7 +119,7 @@ export const MetricsEvolution: FC<MetricsEvolutionProps> = ({ artistId, hideLabe
               fontWeight: 800,
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: '#af2896',
+              color: '#BE81EC',
             }}
           >
             Evolução de métricas
@@ -145,7 +145,7 @@ export const MetricsEvolution: FC<MetricsEvolutionProps> = ({ artistId, hideLabe
 
           const isPositive = delta.abs > 0;
           const isNeutral = delta.abs === 0;
-          const color = isNeutral ? '#8a8a92' : isPositive ? '#af2896' : '#f44336';
+          const color = isNeutral ? '#8a8a92' : isPositive ? '#BE81EC' : '#f44336';
           const arrow = isNeutral ? '—' : isPositive ? '↑' : '↓';
           const Icon = isPositive ? FiTrendingUp : FiTrendingDown;
 

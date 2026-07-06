@@ -23,8 +23,8 @@ export const RealProfileSummary: FC<{ artist: Artist; style?: React.CSSPropertie
     <section
       style={{
         position: 'relative',
-        background: 'radial-gradient(120% 130% at 0% 0%, rgba(175, 40, 150,0.08), #181818 60%)',
-        border: '1px solid rgba(175, 40, 150,0.2)',
+        background: 'radial-gradient(120% 130% at 0% 0%, rgba(190, 129, 236,0.08), #181818 60%)',
+        border: '1px solid rgba(190, 129, 236,0.2)',
         borderRadius: 14,
         padding: 20,
         marginBottom: 24,
@@ -33,7 +33,7 @@ export const RealProfileSummary: FC<{ artist: Artist; style?: React.CSSPropertie
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: hideLabel ? 'flex-end' : 'space-between', gap: 12 }}>
         {!hideLabel && (
-          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#af2896' }}>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#BE81EC' }}>
             Diagnóstico de carreira
           </span>
         )}
@@ -61,7 +61,7 @@ export const RealProfileSummary: FC<{ artist: Artist; style?: React.CSSPropertie
           const high = ri.pattern[d.k];
           return (
             <div key={d.k} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', background: high ? '#af2896' : '#5a5a64', flexShrink: 0 }} />
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: high ? '#BE81EC' : '#5a5a64', flexShrink: 0 }} />
               <span style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{d.letter}</span>
               <span style={{ fontSize: 12.5, color: high ? '#cfcfd4' : '#8a8a92' }}>{high ? 'Alto' : 'Baixo'}</span>
             </div>

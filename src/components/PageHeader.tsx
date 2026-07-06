@@ -11,7 +11,7 @@ export const PageHeader: FC<{
   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 22 }}>
     <div style={{ minWidth: 0 }}>
       {kicker && (
-        <span style={{ color: '#af2896', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{kicker}</span>
+        <span style={{ color: '#BE81EC', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{kicker}</span>
       )}
       <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: kicker ? '2px 0 0' : 0, lineHeight: 1.1 }}>{title}</h1>
       {subtitle && <p style={{ color: '#8a8a92', fontSize: 13.5, margin: '6px 0 0', maxWidth: 660, lineHeight: 1.5 }}>{subtitle}</p>}

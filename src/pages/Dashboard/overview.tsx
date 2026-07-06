@@ -104,7 +104,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
             <Empty text="Nenhuma tarefa pendente." />
           ) : (
             <div style={{ position: 'relative' }}>
-              <div style={{ position: 'absolute', left: 9, top: 18, bottom: 22, width: 2, background: 'linear-gradient(180deg, #af2896, rgba(175, 40, 150,0.12))', transformOrigin: 'top', ...(REDUCE_MOTION ? {} : { transform: 'scaleY(0)', animation: 'apTlLine .9s cubic-bezier(0.4,0,0.2,1) .1s forwards' }) }} />
+              <div style={{ position: 'absolute', left: 9, top: 18, bottom: 22, width: 2, background: 'linear-gradient(180deg, #BE81EC, rgba(190, 129, 236,0.12))', transformOrigin: 'top', ...(REDUCE_MOTION ? {} : { transform: 'scaleY(0)', animation: 'apTlLine .9s cubic-bezier(0.4,0,0.2,1) .1s forwards' }) }} />
               {upcomingTasks.map(({ t, strat, stratId }, i) => {
                 const od = !!(t.deadline && t.deadline < today);
                 return (
@@ -128,7 +128,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
                         padding: 0,
                         transition: 'transform 33ms ease, background-color 0.15s, border-color 0.15s',
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#af2896'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#BE81EC'; e.currentTarget.style.transform = 'scale(1.1)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#535353'; e.currentTarget.style.transform = 'scale(1)'; }}
                     />
                     {t.deadline && (
@@ -197,7 +197,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
         </Panel>
 
         {/* Lançamentos (Spotify) */}
-        <Panel icon={<FaSpotify size={16} color="#af2896" />} title="Lançamentos" action={{ label: 'Catálogo', onClick: () => go('catalog') }}>
+        <Panel icon={<FaSpotify size={16} color="#BE81EC" />} title="Lançamentos" action={{ label: 'Catálogo', onClick: () => go('catalog') }}>
           {spItems.length === 0 ? (
             <Empty text="Conecte o Spotify para ver seus lançamentos publicados." />
           ) : (

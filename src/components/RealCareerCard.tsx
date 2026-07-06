@@ -25,16 +25,16 @@ const clean = (s: string) => s.replace(/\s*—\s*/g, ', ');
 
 const card: CSSProperties = {
   position: 'relative',
-  background: 'radial-gradient(120% 130% at 0% 0%, rgba(175,40,150,0.10), #181818 60%)',
-  border: '1px solid rgba(175,40,150,0.22)',
+  background: 'radial-gradient(120% 130% at 0% 0%, rgba(190,129,236,0.10), #181818 60%)',
+  border: '1px solid rgba(190,129,236,0.22)',
   borderRadius: 14,
   padding: 22,
   marginBottom: 24,
 };
-const kicker: CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#af2896' };
+const kicker: CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#BE81EC' };
 const titleStyle: CSSProperties = { fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 34, color: '#fff', margin: 0, lineHeight: 1, letterSpacing: '-0.01em' };
 const linkBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#9a9aa5', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: 0 };
-const ctaBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 8, background: '#af2896', border: 'none', color: '#fff', padding: '10px 22px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 };
+const ctaBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 8, background: '#BE81EC', border: 'none', color: '#1A1A1A', padding: '10px 22px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 };
 
 // Barra de progresso das tarefas + estado (concluído / vazio). Exportada pra o Plano de Ação
 // reusar a barra fora do card (a "fase" REAL saiu de lá).
@@ -47,9 +47,9 @@ export const TaskProgress: FC<{ counts: TaskCounts }> = ({ counts }) => {
     <div style={{ marginTop: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-          <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: '#af2896', transition: 'width .4s cubic-bezier(0.4,0,0.2,1)' }} />
+          <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: '#BE81EC', transition: 'width .4s cubic-bezier(0.4,0,0.2,1)' }} />
         </div>
-        <span style={{ color: '#af2896', fontWeight: 800, fontSize: 14, minWidth: 42, textAlign: 'right' }}>{pct}%</span>
+        <span style={{ color: '#BE81EC', fontWeight: 800, fontSize: 14, minWidth: 42, textAlign: 'right' }}>{pct}%</span>
       </div>
       {complete ? (
         <p style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#5ec27e', fontSize: 14, fontWeight: 700, margin: '12px 0 0' }}>
@@ -109,13 +109,17 @@ export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?
         </button>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '10px 0 12px', flexWrap: 'wrap' }}>
-        <RealBadge tier={tier} label={String(altasForPattern(ri.pattern))} size={76} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <h2 style={{ ...titleStyle, margin: 0 }}>{ri.profile.name}</h2>
-          <span style={{ fontSize: 13, color: '#8a8a92' }}>Seu perfil entre os 16</span>
+      {/* No modo compacto (Planejamento) escondemos o ícone + fase em destaque pra NÃO competir
+          com a tela do REAL — ali fica só a timeline (a escada de níveis). */}
+      {!compact && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '10px 0 12px', flexWrap: 'wrap' }}>
+          <RealBadge tier={tier} label={String(altasForPattern(ri.pattern))} size={76} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <h2 style={{ ...titleStyle, margin: 0 }}>{ri.profile.name}</h2>
+            <span style={{ fontSize: 13, color: '#8a8a92' }}>Seu perfil entre os 16</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {!compact && (
         <p style={{ fontSize: 14, lineHeight: 1.5, color: '#cfcfd4', margin: '0 0 14px', maxWidth: 560 }}>
@@ -138,7 +142,7 @@ export const RealCareerCard: FC<{ artist: Artist; taskCounts: TaskCounts; style?
       )}
 
       {/* Escada de níveis (fase atual + próximo + o que falta) — a gamificação do REAL. */}
-      <div style={{ marginTop: compact ? 4 : 18, paddingTop: compact ? 0 : 16, borderTop: compact ? 'none' : `1px solid rgba(${accent},0.18)` }}>
+      <div style={{ marginTop: compact ? 16 : 18, paddingTop: compact ? 0 : 16, borderTop: compact ? 'none' : `1px solid rgba(${accent},0.18)` }}>
         <RealLevelLadder ri={ri} />
         {!compact && (
           <button

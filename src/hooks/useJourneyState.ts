@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import type { Artist } from '../interfaces/maestra';
 import { PRODUCT_THEME } from '../components/productTheme';
+import { isOnboardingComplete } from '../constants/maestra';
 import { useArtistCapabilities } from './useArtistCapabilities';
 
 // Estágio do ciclo de crescimento do artista. Uma fonte única de verdade pro "cada produto libera
@@ -44,7 +45,12 @@ export function useJourneyState(artist?: Artist | null): JourneyState {
     const paid = !!viewPlanning && !!isPaid;
     const hasDiagnostic = !!c?.realIndex?.profile;
     const strategies = c?.strategies || [];
-    const hasPlan = strategies.length > 0;
+    // "Plano pronto" = wizard CONCLUÍDO (Finalizar clicado, step >= total). NÃO basta ter
+    // estratégias geradas (step 6): faltam a seleção que vira tarefa (step 7) e o resumo (step 8).
+    // Sem isto, sair do wizard após gerar as estratégias fazia o app pular direto pro plano de ação.
+    const hasPlan = isOnboardingComplete(artist);
+    // Já começou o planejamento (mesmo sem concluir) → CTA vira "continuar", não "criar".
+    const resumingPlan = !hasPlan && ((c?.step ?? 0) > 0 || strategies.length > 0);
 
     const allTasks = strategies.flatMap((s) => (s.tasks || []).filter((t) => t.status !== 'archived'));
     const tasksTotal = allTasks.length;
@@ -61,12 +67,19 @@ export function useJourneyState(artist?: Artist | null): JourneyState {
         ctaLabel: 'Ver diagnóstico',
       };
     } else if (!hasPlan) {
-      next = {
-        stage: 'plan', kicker: 'Planejamento', accent: PLAN, to: 'wizard',
-        title: 'Crie seu planejamento com a Nyta',
-        desc: 'Defina visão, missão, objetivos e estratégias — o mapa da sua carreira.',
-        ctaLabel: 'Criar planejamento',
-      };
+      next = resumingPlan
+        ? {
+            stage: 'plan', kicker: 'Planejamento', accent: PLAN, to: 'wizard',
+            title: 'Continue seu planejamento com a Nyta',
+            desc: 'Você parou no meio. Volte pra escolher as estratégias e finalizar o plano.',
+            ctaLabel: 'Continuar planejamento',
+          }
+        : {
+            stage: 'plan', kicker: 'Planejamento', accent: PLAN, to: 'wizard',
+            title: 'Crie seu planejamento com a Nyta',
+            desc: 'Defina visão, missão, objetivos e estratégias — o mapa da sua carreira.',
+            ctaLabel: 'Criar planejamento',
+          };
     } else if (tasksPending > 0 || tasksTotal === 0) {
       next = {
         stage: 'tasks', kicker: 'Plano de Ação', accent: ACTION, to: 'action-plan',

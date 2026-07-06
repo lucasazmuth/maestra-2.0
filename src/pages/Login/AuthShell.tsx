@@ -125,9 +125,9 @@ export const AuthSubmit: FC<{ loading: boolean; label: string }> = ({ loading, l
     style={{
       marginTop: 8,
       width: '100%',
-      background: 'linear-gradient(135deg, #af2896, #6d3bd1)',
+      background: '#BE81EC',
       border: 'none',
-      color: '#fff',
+      color: '#1A1A1A',
       padding: '14px 24px',
       borderRadius: 9999,
       fontWeight: 700,

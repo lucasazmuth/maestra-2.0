@@ -2,9 +2,10 @@ import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Tooltip, message } from 'antd';
 import { FiChevronDown, FiArrowRight, FiShare2, FiHelpCircle, FiRefreshCw, FiLock } from 'react-icons/fi';
-import { DownloadIcon, DiagnosticoIcon } from '../../components/Icons/system';
+import { DownloadIcon } from '../../components/Icons/system';
 
 import { Wordmark } from '../../components/Wordmark';
+import realStar from '../../assets/feature-real.png';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import type { RealIndex } from '../../interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
@@ -135,7 +136,7 @@ const Typewriter: FC<{ text: string; active: boolean; speed?: number; onDone?: (
 // ── V3: componentes do boletim (definidos no escopo de módulo p/ não remontar a cada render) ──
 type DimK = 'r' | 'e' | 'a' | 'l';
 const SRC_LABELS: Record<string, string> = { streaming: 'Streaming', direitos: 'Direitos', publi: 'Publicidade', aulas: 'Aulas', editais: 'Editais', venda: 'Venda / merch', outros: 'Outros' };
-const PIE_COLORS = ['#1db954', '#4c7dff', '#e0a13c', '#af2896', '#21b26e', '#9b8cff', '#d65a5a'];
+const PIE_COLORS = ['#1db954', '#4c7dff', '#e0a13c', '#BE81EC', '#21b26e', '#9b8cff', '#d65a5a'];
 
 // Pizza de composição da receita (Shows × cachê + cada fonte musical). §5.4 / §9.4.
 const RevenuePie: FC<{ revenue: any }> = ({ revenue }) => {
@@ -482,9 +483,9 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
 
       {/* SEÇÃO 2 — O perfil REAL */}
       <div ref={profileRef} className={`${styles.realProfileCard} ${styles.reveal}`} style={{ animationDelay: '0.1s' }}>
-        {/* Ícone decorativo do REAL, grande e translúcido no canto (segue a cor do tier). */}
-        <span data-noexport="1" aria-hidden style={{ position: 'absolute', right: -14, bottom: -20, color: 'rgb(var(--real-accent, 175, 40, 150))', opacity: 0.08, pointerEvents: 'none', lineHeight: 0 }}>
-          <span style={{ display: 'block', width: 170, height: 170 }}><DiagnosticoIcon size={170} /></span>
+        {/* Estrela 3D do REAL, grande e translúcida no canto (tintada pro roxo da marca). */}
+        <span data-noexport="1" aria-hidden style={{ position: 'absolute', right: -14, bottom: -20, opacity: 0.09, pointerEvents: 'none', lineHeight: 0 }}>
+          <img src={realStar} alt="" width={185} height={185} style={{ display: 'block', filter: 'hue-rotate(122deg) saturate(1.05)' }} />
         </span>
         {/* Refazer diagnóstico: sutil, no canto do card (não exportado no PDF/share). */}
         {onRedo && (
@@ -610,7 +611,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
                   <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
                     <span style={{ color: '#71717a', width: 18, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>
                     <span style={{ color: '#fff', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
-                    {p.editorial && <span style={{ fontSize: 10, fontWeight: 700, color: 'rgb(var(--real-accent, 175, 40, 150))', border: '1px solid rgba(var(--real-accent, 175, 40, 150), 0.4)', borderRadius: 4, padding: '1px 5px' }}>Editorial</span>}
+                    {p.editorial && <span style={{ fontSize: 10, fontWeight: 700, color: 'rgb(var(--real-accent, 190, 129, 236))', border: '1px solid rgba(var(--real-accent, 190, 129, 236), 0.4)', borderRadius: 4, padding: '1px 5px' }}>Editorial</span>}
                     {p.followers != null && <span style={{ color: '#8a8a92', fontVariantNumeric: 'tabular-nums' }}>{fmtNum(p.followers)}</span>}
                   </div>
                 ))}
@@ -780,7 +781,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             {DIM_META.map((d) => (
               <div key={d.key} className={styles.sharePatternItem}>
                 <span className={styles.sharePatternLetter}>{d.letter}</span>
-                <span className={styles.sharePatternDot} style={{ background: pattern[d.key] ? '#af2896' : '#5a5a64' }} />
+                <span className={styles.sharePatternDot} style={{ background: pattern[d.key] ? '#BE81EC' : '#5a5a64' }} />
               </div>
             ))}
           </div>

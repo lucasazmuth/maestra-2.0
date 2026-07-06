@@ -1,7 +1,7 @@
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { App } from 'antd';
-import { FiChevronDown, FiArrowLeft, FiRotateCcw } from 'react-icons/fi';
+import { FiChevronDown, FiArrowLeft, FiRotateCcw, FiX } from 'react-icons/fi';
 
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
@@ -10,7 +10,6 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import { WIZARD_TOTAL_STEPS } from '../../constants/maestra';
-import { ghostBtn } from './components';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { migrateWizardContent } from './migration';
 import { NytaChat } from './chat/NytaChat';
@@ -208,7 +207,6 @@ const Wizard: FC = () => {
   }
 
   const step = Math.min(draft.step ?? 0, WIZARD_TOTAL_STEPS - 1);
-  const progress = Math.round((Math.min(draft.step ?? 0, WIZARD_TOTAL_STEPS) / WIZARD_TOTAL_STEPS) * 100);
   // Só oferece "recomeçar" quando há alguma resposta (senão não há o que zerar).
   const hasProgress = (draft.step ?? 0) > 0 || !!draft.identity?.gender;
 
@@ -261,27 +259,25 @@ const Wizard: FC = () => {
                 </button>
               )}
               <button
-                title='Seu progresso fica salvo a cada etapa'
+                className='wiz-back-btn'
+                title='Salvar e sair — seu progresso fica salvo a cada etapa'
+                aria-label='Salvar e sair'
                 disabled={exiting}
-              onClick={async () => {
-                // Espera qualquer gravação pendente terminar ANTES de navegar, para que
-                // sair da tela nunca cancele um save em andamento (perda de progresso).
-                setExiting(true);
-                try {
-                  await persistQueueRef.current;
-                } finally {
-                  navigate(`/artists/${artist.id}`);
-                }
-              }}
-              style={{ ...ghostBtn, padding: '8px 16px', fontSize: 13, whiteSpace: 'nowrap', opacity: exiting ? 0.6 : 1 }}
-            >
-                {exiting ? 'Salvando…' : 'Salvar e sair'}
+                onClick={async () => {
+                  // Espera qualquer gravação pendente terminar ANTES de navegar, para que
+                  // sair da tela nunca cancele um save em andamento (perda de progresso).
+                  setExiting(true);
+                  try {
+                    await persistQueueRef.current;
+                  } finally {
+                    navigate(`/artists/${artist.id}`);
+                  }
+                }}
+                style={{ opacity: exiting ? 0.6 : 1 }}
+              >
+                <FiX size={18} />
               </button>
             </div>
-          </div>
-
-          <div className='wiz-progress-track' style={{ marginTop: 12, marginBottom: 10 }}>
-            <div className='wiz-progress-fill' style={{ width: `${progress}%` }} />
           </div>
 
           {/* Mostra/esconde a coluna de resultados (no AppLayout). Sem modal. */}

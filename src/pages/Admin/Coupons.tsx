@@ -250,7 +250,7 @@ const styles: Record<string, CSSProperties> = {
   empty: { color: '#6f6f78', padding: '20px 0', textAlign: 'center' },
   row: { display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderTop: '1px solid #262626' },
   code: { fontWeight: 800, color: '#fff', fontSize: 15, letterSpacing: '0.02em' },
-  badge: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 700, background: 'rgba(175,40,150,0.16)', color: '#e07fce' },
+  badge: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 700, background: 'rgba(190,129,236,0.16)', color: '#e07fce' },
   badgeMuted: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: '#cfcfd4' },
   meta: { color: '#8a8a8a', fontSize: 12.5, marginTop: 5 },
 };

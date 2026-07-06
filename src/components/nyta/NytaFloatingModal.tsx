@@ -19,7 +19,7 @@ import styles from './NytaFloatingModal.module.scss';
 // ─── Greeting text (empty state) ──────────────────────────────────────────────
 
 const GREETING_TEXT =
-  'Oi! Eu sou a Nyta, sua consultora estratégica aqui na Maestra. ' +
+  'Oi! Eu sou a Nyta, sua assistente estratégica aqui na Maestra. ' +
   'Pode me perguntar qualquer coisa sobre seu planejamento, catálogo, agenda ou equipe — ' +
   'e eu também posso executar ações por você, sempre com sua confirmação. Como posso te ajudar?';
 

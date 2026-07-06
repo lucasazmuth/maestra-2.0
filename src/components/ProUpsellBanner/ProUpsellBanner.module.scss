@@ -15,7 +15,7 @@
   inset: 0;
   background: radial-gradient(
     ellipse 60% 80% at 80% 20%,
-    rgba(175, 40, 150, 0.08) 0%,
+    rgba(190, 129, 236, 0.08) 0%,
     transparent 70%
   );
   pointer-events: none;
@@ -32,8 +32,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(175, 40, 150, 0.15);
-  color: #af2896;
+  background: rgba(190, 129, 236, 0.15);
+  color: #BE81EC;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -86,7 +86,7 @@
 
 .checkIcon {
   font-size: 16px;
-  color: #af2896;
+  color: #BE81EC;
   flex-shrink: 0;
 }
 
@@ -95,8 +95,8 @@
   align-items: center;
   gap: 6px;
   padding: 12px 28px;
-  background-color: #af2896;
-  color: #fff;
+  background-color: #BE81EC;
+  color: #1A1A1A;
   font-size: 15px;
   font-weight: 700;
   border: none;
@@ -105,7 +105,7 @@
   transition: background-color 0.2s ease, transform 0.1s ease;
 
   &:hover {
-    background-color: #c13fa8;
+    background-color: #A95FE0;
     transform: scale(1.03);
   }
 

@@ -156,7 +156,16 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
             collapsed={collapsed}
             onClick={() => navigate('/artists')}
           />
-          {!collapsed && (
+          {collapsed ? (
+            // Colapsado (tablet): só o avatar do artista, centralizado como os ícones.
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0', marginBottom: 2 }} title={currentArtist.name}>
+              <img
+                src={currentArtist.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE}
+                alt={currentArtist.name}
+                style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }}
+              />
+            </div>
+          ) : (
             <div
               style={{
                 display: 'flex',

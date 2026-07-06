@@ -182,7 +182,7 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
               if (audioRef.current) audioRef.current.currentTime = v;
               setTime(v);
             }}
-            style={{ flex: 1, accentColor: '#af2896', height: 4, cursor: 'pointer' }}
+            style={{ flex: 1, accentColor: '#BE81EC', height: 4, cursor: 'pointer' }}
           />
           <span style={{ color: '#b3b3b3', fontSize: 11, minWidth: 34 }}>{fmt(duration)}</span>
         </div>
@@ -212,7 +212,7 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
             setVolume(Number(e.target.value));
             setMuted(false);
           }}
-          style={{ width: 100, accentColor: '#af2896', height: 4, cursor: 'pointer' }}
+          style={{ width: 100, accentColor: '#BE81EC', height: 4, cursor: 'pointer' }}
         />
         <button title='Fechar player' style={{ ...ctrlBtn, marginLeft: 6 }} onClick={onClose}>
           <CloseIcon />

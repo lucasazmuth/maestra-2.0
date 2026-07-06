@@ -28,7 +28,7 @@ export const NytaDashboardHero: FC = () => {
   return (
     <section className={styles.hero}>
       <div className={styles.inner}>
-        <span className={styles.kicker}>Nyta · sua consultora</span>
+        <span className={styles.kicker}>Nyta · sua assistente</span>
 
         <h2 className={styles.title}>Como posso te ajudar hoje?</h2>
         <p className={styles.subtitle}>

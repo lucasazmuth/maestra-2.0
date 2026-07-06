@@ -34,6 +34,7 @@ import Signup from './pages/Signup';
 import Welcome from './pages/Welcome';
 const Landing = lazy(() => import('./pages/Landing'));
 const DiagnosticoReal = lazy(() => import('./pages/DiagnosticoReal'));
+const MusicRioAcademy = lazy(() => import('./pages/MusicRioAcademy'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Page404 = lazy(() => import('./pages/404'));
@@ -194,6 +195,10 @@ const AppRoutes: FC = () => {
           da landing), acessível a quem ainda não tem conta. */}
       <Route path='/diagnostico-real' element={<DiagnosticoReal />} />
 
+      {/* Music Rio Academy: escola por trás da Maestra. Pública e standalone (reusa header/footer
+          da landing). Conteúdo institucional linkado a partir da seção-teaser da landing. */}
+      <Route path='/music-rio-academy' element={<MusicRioAcademy />} />
+
       <Route path='/login' element={<PublicOnly><Login /></PublicOnly>} />
       <Route path='/signup' element={<PublicOnly><Signup /></PublicOnly>} />
       {/* Recuperação de senha (passo 1): tela própria pra digitar o e-mail e disparar o link.
@@ -293,7 +298,10 @@ function App() {
         algorithm: theme.darkAlgorithm,
         token: {
           fontFamily: 'SpotifyMixUI',
-          colorPrimary: '#af2896',
+          colorPrimary: '#BE81EC',
+          // Texto sobre superfícies sólidas na cor primária (botões type="primary" etc.):
+          // escuro, no padrão Spotify (fill claro + tinta quase-preta).
+          colorTextLightSolid: '#1A1A1A',
           colorBgContainer: '#2a2a2a',
           colorBgElevated: '#282828',
           colorBorder: '#3e3e3e',

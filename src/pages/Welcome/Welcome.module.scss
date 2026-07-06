@@ -40,10 +40,10 @@
     from var(--auroraAngle),
     transparent 0deg,
     transparent 150deg,
-    #af2896 200deg,
+    #BE81EC 200deg,
     #ffffff 255deg,
     #509bf5 300deg,
-    #af2896 335deg,
+    #BE81EC 335deg,
     transparent 360deg
   );
   filter: blur(6px);
@@ -125,7 +125,7 @@
   height: 1.05em;
   margin-left: 4px;
   vertical-align: text-bottom;
-  background: #af2896;
+  background: #BE81EC;
   border-radius: 2px;
   animation: welcomeCaret 0.9s steps(1) infinite;
 }
@@ -191,21 +191,21 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #af2896;
-  color: #fff;
+  background: #BE81EC;
+  color: #1A1A1A;
   border: none;
   border-radius: 9999px;
   padding: 14px 30px;
   font-size: 16px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 10px 34px rgba(175, 40, 150, 0.28);
+  box-shadow: 0 10px 34px rgba(190, 129, 236, 0.28);
   transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
 
   &:hover {
-    background: #c13fa8;
+    background: #A95FE0;
     transform: translateY(-1px);
-    box-shadow: 0 12px 40px rgba(175, 40, 150, 0.4);
+    box-shadow: 0 12px 40px rgba(190, 129, 236, 0.4);
   }
 }
 

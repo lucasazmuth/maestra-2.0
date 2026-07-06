@@ -91,7 +91,7 @@ const SplitEditor: FC<{
         >
           + Adicionar
         </button>
-        <span style={{ color: total === 100 ? '#af2896' : '#b3b3b3', fontSize: 13 }}>
+        <span style={{ color: total === 100 ? '#BE81EC' : '#b3b3b3', fontSize: 13 }}>
           Total: {total}%
         </span>
       </div>
@@ -156,8 +156,8 @@ const UploadField: FC<{
           onDragLeave={() => setDrag(false)}
           onDrop={(e) => { e.preventDefault(); setDrag(false); if (uploading) return; const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
           style={{
-            border: `1.5px dashed ${drag ? '#af2896' : '#3a3a3a'}`,
-            background: drag ? 'rgba(175,40,150,0.08)' : '#181818',
+            border: `1.5px dashed ${drag ? '#BE81EC' : '#3a3a3a'}`,
+            background: drag ? 'rgba(190,129,236,0.08)' : '#181818',
             borderRadius: 10, padding: '20px 16px', textAlign: 'center',
             cursor: uploading ? 'default' : 'pointer', transition: 'border-color .15s, background .15s',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
@@ -165,12 +165,12 @@ const UploadField: FC<{
         >
           {uploading ? (
             <>
-              <Spin indicator={<LoadingOutlined style={{ fontSize: 22, color: '#af2896' }} spin />} />
+              <Spin indicator={<LoadingOutlined style={{ fontSize: 22, color: '#BE81EC' }} spin />} />
               <div style={{ color: '#b3b3b3', fontSize: 13 }}>Enviando…</div>
             </>
           ) : (
             <>
-              <FiUploadCloud size={26} color='#af2896' />
+              <FiUploadCloud size={26} color='#BE81EC' />
               <div style={{ color: '#fff', fontSize: 13.5, fontWeight: 600 }}>
                 Arraste aqui ou <span style={{ color: '#e07fce' }}>clique para escolher</span>
               </div>
@@ -274,7 +274,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
       title={<span style={{ color: '#fff', fontWeight: 700 }}>{item ? 'Editar faixa' : 'Nova faixa'}</span>}
       okText={saving ? 'Salvando…' : 'Salvar'}
       onOk={handleSave}
-      okButtonProps={{ loading: saving, style: { background: '#af2896', color: '#fff' } }}
+      okButtonProps={{ loading: saving, style: { background: '#BE81EC', color: '#1A1A1A' } }}
     >
       <Tabs
         items={[
@@ -428,8 +428,8 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                     onClick={addNote}
                     disabled={!noteText.trim()}
                     style={{
-                      background: '#af2896',
-                      color: '#fff',
+                      background: '#BE81EC',
+                      color: '#1A1A1A',
                       border: 'none',
                       borderRadius: 8,
                       padding: '8px 16px',

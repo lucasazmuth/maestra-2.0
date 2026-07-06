@@ -39,7 +39,7 @@ function buildEmail(d: EmailData, name: string): { subject: string; html: string
         html: emailLayout({
           title: "Redefinir sua senha",
           bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Recebemos um pedido pra redefinir a senha da sua conta. Clique no botão abaixo.</p>
-          <p style="margin:20px 0;"><a href="${link}" style="display:inline-block;background:#af2896;color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Redefinir senha</a></p>
+          <p style="margin:20px 0;"><a href="${link}" style="display:inline-block;background:#BE81EC;color:#1A1A1A;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Redefinir senha</a></p>
           <p style="color:#8a8a92;font-size:13px;">Se não foi você, pode ignorar. Sua senha continua a mesma.</p>`,
         }),
       };

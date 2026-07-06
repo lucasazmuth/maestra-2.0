@@ -9,7 +9,7 @@ import * as membersDb from '../../services/db/members';
 import type { ArtistMember, AccessLevel } from '../../interfaces/maestra';
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  active: { label: 'Ativo', color: '#af2896' },
+  active: { label: 'Ativo', color: '#BE81EC' },
   pending: { label: 'Pendente', color: '#f59e0b' },
   rejected: { label: 'Recusado', color: '#e91429' },
 };
@@ -91,7 +91,7 @@ const Team: FC = () => {
         {isOwner && (
           <button
             onClick={() => setOpen(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#af2896', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#BE81EC', border: 'none', color: '#1A1A1A', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
           >
             <FiPlus /> Convidar membro
           </button>
@@ -129,9 +129,9 @@ const Team: FC = () => {
                           key={opt.id}
                           onClick={() => toggleLevel(m, opt.id)}
                           style={{
-                            background: active ? '#af289622' : 'rgba(255,255,255,0.06)',
-                            color: active ? '#af2896' : '#b3b3b3',
-                            border: `1px solid ${active ? '#af2896' : 'transparent'}`,
+                            background: active ? '#BE81EC22' : 'rgba(255,255,255,0.06)',
+                            color: active ? '#BE81EC' : '#b3b3b3',
+                            border: `1px solid ${active ? '#BE81EC' : 'transparent'}`,
                             borderRadius: 9999,
                             padding: '4px 12px',
                             cursor: 'pointer',
@@ -159,7 +159,7 @@ const Team: FC = () => {
         title={<span style={{ color: '#fff', fontWeight: 700 }}>Convidar membro</span>}
         okText={saving ? 'Convidando…' : 'Convidar'}
         onOk={invite}
-        okButtonProps={{ loading: saving, style: { background: '#af2896', color: '#fff' } }}
+        okButtonProps={{ loading: saving, style: { background: '#BE81EC', color: '#1A1A1A' } }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <Input placeholder='E-mail *' value={email} onChange={(e) => setEmail(e.target.value)} />

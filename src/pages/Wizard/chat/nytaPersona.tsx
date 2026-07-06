@@ -151,7 +151,7 @@ export const SAY = {
   ],
   // Reflexo da fonte de reconhecimento (Metodologia v2, Q8).
   visionPorQuemReflect: (fontes: string) => [
-    `Entendido. Isso significa que você almeja o reconhecimento principalmente de: ${fontes}.`,
+    `Entendido. Isso significa que você almeja o reconhecimento principalmente ${fontes}.`,
   ],
   visionSubstantivo: () => ['Continuando. E como você prefere ser chamado?'],
   visionAdjetivo: () => [
@@ -163,7 +163,7 @@ export const SAY = {
     `Complete a frase: ${formulaPrefix}`,
   ],
   visionReview: () => [
-    'Só um instante, montando isso… Então olha como ficou a sua visão. Faz sentido pra você, ou quer ajustar?',
+    'Olha como ficou a sua visão. Faz sentido pra você, ou quer ajustar?',
   ],
 
   // --- Missão (Metodologia v2, Q12) ------------------------------------------------------------
@@ -175,7 +175,7 @@ export const SAY = {
     'Primeiro, uma coisa só: o que você entrega, oferece ou proporciona?',
   ],
   missionParaQuem: () => [
-    'Agora a segunda parte: e pra quem? Quem recebe isso que você entrega? Pensa num grupo definido pelo que ele busca, vive ou valoriza. Por exemplo: "jovens urbanos que celebram a vida", "quem busca esperança e mudança" ou "o grande público que quer sair da zona de conforto".',
+    'Agora a segunda parte: e pra quem? Quem recebe isso que você entrega? Pensa num grupo definido pelo que ele busca, vive ou valoriza. Por exemplo: "jovens urbanos que celebram a vida", "quem busca esperança e mudança" ou "o grande público".',
   ],
   missionFinancial: () => [
     'Isso é lindo e verdadeiro. E agora eu preciso te lembrar de uma coisa que quase todo artista esquece nessa hora: isso também é um negócio.',
@@ -210,11 +210,11 @@ export const SAY = {
     'Pronto. O lado de dentro tá mapeado. Suas forças, o que precisa melhorar e o que não se aplica. Esse é o seu chão.',
     'Agora a gente sai de casa. O que existe lá fora, no mercado, na cena, no momento, que pode te ajudar a chegar onde você quer? E o que pode atrapalhar?',
     'Antes da gente começar a identificar suas oportunidades, uma coisa importante: oportunidade não é exclusividade sua. Ela existe pra qualquer artista, e o que muda é o que cada um faz com ela. E o que você consegue fazer depende justamente do interno, que a gente acabou de mapear.',
-    'Da lista abaixo, escolha as oportunidades que se aplicam ao seu projeto. Pensa com calma nessa etapa: quanto mais oportunidades você considerar, mais o leque de estratégias vai se abrir lá na frente.',
+    'Da lista abaixo, escolha as oportunidades que realmente se aplicam ao seu projeto. E aqui vale um cuidado: não é sobre marcar muitas, é sobre marcar as certas. Cada oportunidade que você escolhe aqui vira estratégia lá na frente, e estratégia é trabalho, é tempo, é energia da sua equipe. Se você marca tudo, chega na hora de priorizar com uma lista tão grande que não dá pra executar, e aí trava. Melhor poucas e reais do que muitas no papel. Pensa no que faz sentido pro seu momento agora.',
   ],
   swotAmeacasIntro: () => [
     'Pronto. Oportunidades mapeadas. Agora a outra ponta: as ameaças.',
-    'Ameaça é o que existe no ambiente em volta e atrapalha qualquer artista, não só você. Da lista abaixo, escolha as ameaças que se aplicam ao seu caso.',
+    'Ameaça é tudo que existe no ambiente em volta e pode atrapalhar, e que não depende de você: mudança no mercado, excesso de concorrência, uma plataforma que muda as regras, um cenário econômico difícil. Não é sobre ter medo, é sobre enxergar com clareza. Nem toda ameaça vira uma estratégia, e tudo bem: algumas você não vai poder resolver agora, mas precisa mapear pra deixar no radar. O que você reconhece aqui, você acompanha e se prepara pra enfrentar. O que você ignora é o que te pega de surpresa. Da lista abaixo, escolha as ameaças que se aplicam ao seu caso, com honestidade.',
   ],
   swotReady: () => [
     'Diagnóstico fechado. Dá uma olhada na sua Matriz SWOT. Tire o que não combina e acrescente o que faltar.',
@@ -231,11 +231,6 @@ export const SAY = {
     'Estratégia é o como. Não é onde você quer chegar (isso é objetivo). É a ação concreta que move você até lá: verbo no infinitivo, específica, exequível.',
     'Cruzei o que você marcou como fraqueza com o que enxerga como oportunidade e já criei algumas estratégias pra você. Dá uma olhada e me diz o que faz sentido manter, o que sai e o que falta.',
   ],
-  // Nota sobre ameaças (Estrategias_v3 §6) — exibida ao fechar as estratégias.
-  strategiesThreatNote: () => [
-    'Suas ameaças não viram estratégias diretamente — são fatores externos que não dependem de você. Mas ficam no plano pra te lembrar de manter o radar ligado: anteceder o que pode atrapalhar é parte da estratégia, mesmo sem ação 1-pra-1.',
-  ],
-
   // --- Priorização (Nyta_Matriz_Priorizacao_v2) ------------------------------------------------
   priorityIntro: () => [
     'Olha o tamanho dessa lista. É aqui que a maioria dos artistas se perde. Até agora, quase tudo que a gente conversou você já tinha na cabeça. Eu só te ajudei a organizar. Essas estratégias provavelmente não são novidade pra você: em algum momento já passaram pela sua cabeça. A novidade, o pulo do gato, começa agora: como priorizar?',

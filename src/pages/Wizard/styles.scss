@@ -1,5 +1,5 @@
 // Wizard — animações e classes do redesign. Segue os timings/easings do design system
-// (cubic-bezier(0.4,0,0.2,1), 200–650ms) e a paleta Encore (#121212/#181818/#af2896).
+// (cubic-bezier(0.4,0,0.2,1), 200–650ms) e a paleta Encore (#121212/#181818/#BE81EC).
 
 // ---- Keyframes -------------------------------------------------------------------------------
 
@@ -40,13 +40,13 @@
 // Pulso de destaque no texto do objetivo ao trocar (flash magenta breve).
 @keyframes wizObjFlash {
   0% {
-    background: rgba(175, 40, 150, 0);
+    background: rgba(190, 129, 236, 0);
   }
   35% {
-    background: rgba(175, 40, 150, 0.28);
+    background: rgba(190, 129, 236, 0.28);
   }
   100% {
-    background: rgba(175, 40, 150, 0);
+    background: rgba(190, 129, 236, 0);
   }
 }
 
@@ -85,15 +85,6 @@
   50% {
     transform: scale(1.12);
     opacity: 0.85;
-  }
-}
-
-@keyframes wizBarGrow {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
   }
 }
 
@@ -140,7 +131,7 @@
   padding: 24px;
   position: relative;
   // Identidade do Planejamento Estratégico: glow azul sutil no topo do ambiente.
-  background: radial-gradient(110% 42% at 50% 0%, rgba(74, 140, 255, 0.09) 0%, rgba(74, 140, 255, 0.03) 38%, transparent 62%);
+  background: radial-gradient(110% 42% at 50% 0%, rgba(190, 129, 236, 0.09) 0%, rgba(190, 129, 236, 0.03) 38%, transparent 62%);
 
   .wiz-progress-track {
     height: 4px;
@@ -152,7 +143,7 @@
     .wiz-progress-fill {
       height: 100%;
       border-radius: 2px;
-      background: #4a8cff; // azul do produto Planejamento
+      background: #BE81EC; // azul do produto Planejamento
       transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
@@ -271,8 +262,8 @@
   }
 
   &--current {
-    background: rgba(175, 40, 150, 0.12);
-    color: #af2896;
+    background: rgba(190, 129, 236, 0.12);
+    color: #BE81EC;
   }
 
   &--locked {
@@ -292,8 +283,8 @@
   padding: 2px 10px;
   font-size: 11px;
   font-weight: 700;
-  background: rgba(175, 40, 150, 0.18);
-  color: #af2896;
+  background: rgba(190, 129, 236, 0.18);
+  color: #BE81EC;
   white-space: nowrap;
 
   &--done {
@@ -308,6 +299,55 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+// ---- Item da lista de priorização (modal "Sua ordem de prioridade") -------------------------
+// Desktop: linha única [nº] [check] [título flex] [%]. Mobile: empilha — nº/check/% no topo e o
+// título em largura TOTAL embaixo (antes o título ficava espremido numa coluna de ~2 palavras).
+.wiz-prio-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 18px 20px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.wiz-prio-num { font-weight: 800; font-size: 22px; min-width: 32px; flex-shrink: 0; }
+.wiz-prio-check {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.wiz-prio-title { flex: 1 1 auto; min-width: 0; font-weight: 700; font-size: 16px; line-height: 1.45; overflow-wrap: anywhere; }
+.wiz-prio-pct {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .wiz-prio-item {
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    padding: 14px 16px;
+  }
+  // Título ocupa a linha inteira, abaixo do cabeçalho (nº · check · %).
+  .wiz-prio-title { order: 3; flex: 1 1 100%; font-size: 15px; }
+  .wiz-prio-num { font-size: 18px; min-width: 0; }
+  .wiz-prio-pct { margin-left: auto; } // empurra o % pro fim da linha do cabeçalho
 }
 
 // Botão de IA (pill gradiente com sparkles)
@@ -351,7 +391,7 @@
   min-height: 380px;
   border-radius: 16px;
   padding: 40px 24px;
-  background: linear-gradient(135deg, rgba(175, 40, 150, 0.25), rgba(80, 155, 245, 0.25), rgba(175, 40, 150, 0.18));
+  background: linear-gradient(135deg, rgba(190, 129, 236, 0.25), rgba(80, 155, 245, 0.25), rgba(190, 129, 236, 0.18));
   background-size: 300% 300%;
   animation: wizGradientMove 6s ease infinite;
 
@@ -493,8 +533,8 @@
   }
 
   &--selected {
-    background: #af2896;
-    color: #fff;
+    background: #BE81EC;
+    color: #1A1A1A;
     font-weight: 700;
 
     &::before {
@@ -565,7 +605,7 @@
     }
 
     &:focus {
-      border-color: #af2896;
+      border-color: #BE81EC;
     }
   }
 }
@@ -602,7 +642,7 @@
 
   &.ant-select-focused .ant-select-selector,
   &:hover .ant-select-selector {
-    border-color: #af2896 !important;
+    border-color: #BE81EC !important;
     box-shadow: none !important;
   }
 
@@ -629,7 +669,7 @@
   }
 
   .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
-    background: rgba(175, 40, 150, 0.22);
+    background: rgba(190, 129, 236, 0.22);
     color: #fff;
     font-weight: 700;
   }
@@ -736,8 +776,8 @@
   }
 
   &--active {
-    background: #af2896;
-    color: #fff;
+    background: #BE81EC;
+    color: #1A1A1A;
     font-weight: 700;
 
     &::before {
@@ -756,7 +796,7 @@
   border-radius: 9999px;
   padding: 8px 16px;
   background: transparent;
-  border: 1px dashed rgba(175, 40, 150, 0.7);
+  border: 1px dashed rgba(190, 129, 236, 0.7);
   color: #d0aaff;
   font-size: 13px;
   font-weight: 600;
@@ -795,7 +835,7 @@
     font-family: 'SpotifyMixUITitle', sans-serif;
     font-weight: 800;
     font-size: 26px;
-    color: #af2896;
+    color: #BE81EC;
     min-width: 36px;
     text-align: center;
   }
@@ -908,12 +948,12 @@
   }
 
   &--preview {
-    background: rgba(175, 40, 150, 0.35);
+    background: rgba(190, 129, 236, 0.35);
   }
 
   &--filled {
-    background: #af2896;
-    color: #fff;
+    background: #BE81EC;
+    color: #1A1A1A;
   }
 
   &--tip {
@@ -926,29 +966,13 @@
   font-family: 'SpotifyMixUITitle', sans-serif;
   font-weight: 800;
   font-size: 22px;
-  color: #af2896;
+  color: #BE81EC;
   min-width: 32px;
   text-align: right;
 }
 
 .wiz-rank-item {
   animation: wizRankReveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-// Barra de score (priorização/resultado)
-.wiz-score-bar {
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-
-  > div {
-    height: 100%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, #af2896, #509bf5);
-    transform-origin: left;
-    animation: wizBarGrow 0.9s cubic-bezier(0.4, 0, 0.2, 1) both;
-  }
 }
 
 // ---- Cronograma (timeline vertical) ------------------------------------------------------------
@@ -967,7 +991,7 @@
     top: 18px;
     bottom: 22px;
     width: 2px;
-    background: linear-gradient(180deg, #af2896, rgba(175, 40, 150, 0.12));
+    background: linear-gradient(180deg, #BE81EC, rgba(190, 129, 236, 0.12));
   }
 }
 
@@ -1108,7 +1132,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, #af2896, #509bf5);
+  background: linear-gradient(135deg, #BE81EC, #509bf5);
   color: #fff;
   font-family: 'SpotifyMixUITitle', sans-serif;
   font-weight: 800;
@@ -1136,8 +1160,8 @@
   max-width: 78%;
 
   &--user {
-    background: #af2896;
-    color: #fff;
+    background: #BE81EC;
+    color: #1A1A1A;
     font-weight: 600;
     border-radius: 16px 16px 4px 16px;
   }
@@ -1150,7 +1174,7 @@
     height: 1em;
     margin-left: 3px;
     vertical-align: text-bottom;
-    background: #d264bb;
+    background: #D3A6F2;
     animation: nytaCaretBlink 1s steps(1) infinite;
   }
 }
@@ -1181,7 +1205,7 @@
   ul, ol { margin: 0 0 8px; padding-left: 20px; }
   li { margin: 2px 0; }
 
-  a { color: #af2896; }
+  a { color: #BE81EC; }
 }
 
 .nyta-typing {
@@ -1639,7 +1663,7 @@
   outline: none;
 
   &:focus {
-    border-color: #4a8cff66;
+    border-color: #BE81EC66;
   }
 }
 
@@ -1708,8 +1732,11 @@
 
 .wiz-step-glow {
   position: absolute;
-  inset: 0;
-  border-radius: 16px;
+  // Recuado da borda: o .wizard preenche a área de rolagem (.Main-section, overflow:scroll) e um
+  // inset:0 deixava o anel rente à linha de corte inferior — o overflow comia o arco de baixo no
+  // desktop. Alguns px pra dentro (cabe na folga do padding:24px) mantêm o contorno inteiro visível.
+  inset: 8px;
+  border-radius: 12px;
   padding: 3px; // espessura do anel
   pointer-events: none;
   z-index: 60;
@@ -1718,10 +1745,10 @@
     from var(--wizGlowAngle),
     transparent 0deg,
     transparent 140deg,
-    #af2896 195deg,
+    #BE81EC 195deg,
     #ffffff 255deg,
     #509bf5 300deg,
-    #af2896 335deg,
+    #BE81EC 335deg,
     transparent 360deg
   );
   // só o anel de 3px aparece (gradiente recortado na borda)
@@ -1729,7 +1756,7 @@
   -webkit-mask-composite: xor;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 10px rgba(175, 40, 150, 0.4));
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 10px rgba(190, 129, 236, 0.4));
 }
 
 .wiz-step-glow--on {

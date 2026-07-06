@@ -57,10 +57,10 @@ export function emailLayout(opts: { title: string; bodyHtml: string }): string {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;background:#0b0b0b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#e8e8e8;">
   <div style="max-width:480px;margin:0 auto;padding:32px 24px;">
-    <div style="font-size:20px;letter-spacing:.5px;color:#af2896;margin-bottom:24px;"><span style="font-weight:800;">Maestra</span> <span style="font-weight:400;">Manager</span><span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#c2c2cc;vertical-align:super;margin-left:5px;">Beta</span></div>
+    <div style="font-size:20px;letter-spacing:.5px;color:#BE81EC;margin-bottom:24px;"><span style="font-weight:800;">Maestra</span> <span style="font-weight:400;">Manager</span><span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#c2c2cc;vertical-align:super;margin-left:5px;">Beta</span></div>
     <h1 style="font-size:20px;line-height:1.3;color:#fff;margin:0 0 12px;">${opts.title}</h1>
     ${opts.bodyHtml}
-    <div style="margin-top:32px;color:#6b7280;font-size:12px;border-top:1px solid #222;padding-top:16px;">Maestra Manager · gestão de carreira musical.</div>
+    <div style="margin-top:32px;color:#6b7280;font-size:12px;border-top:1px solid #222;padding-top:16px;line-height:1.6;"><div style="color:#9a9aa2;font-weight:600;">Maestra Manager <span style="color:#6b7280;font-weight:400;">by</span> Music Rio Academy</div><div>© ${new Date().getFullYear()} MUSIC RIO ACADEMY LTDA · CNPJ 22.826.985/0001-41. Todos os direitos reservados.</div></div>
   </div>
 </body></html>`;
 }
@@ -68,11 +68,11 @@ export function emailLayout(opts: { title: string; bodyHtml: string }): string {
 // Bloco visual de código OTP (6 dígitos grandes, espaçados).
 export function otpBlock(code: string): string {
   return `<div style="margin:20px 0;text-align:center;">
-    <div style="display:inline-block;background:#161616;border:1px solid rgba(175,40,150,.35);border-radius:12px;padding:16px 28px;font-size:32px;font-weight:800;letter-spacing:10px;color:#fff;">${code}</div>
+    <div style="display:inline-block;background:#161616;border:1px solid rgba(190,129,236,.35);border-radius:12px;padding:16px 28px;font-size:32px;font-weight:800;letter-spacing:10px;color:#fff;">${code}</div>
   </div>`;
 }
 
 // Botão CTA roxo padrão dos e-mails (usado pelos nudges de ativação).
 export function ctaButton(label: string, url: string): string {
-  return `<p style="margin:24px 0;"><a href="${url}" style="display:inline-block;background:#af2896;color:#fff;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">${label}</a></p>`;
+  return `<p style="margin:24px 0;"><a href="${url}" style="display:inline-block;background:#BE81EC;color:#1A1A1A;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">${label}</a></p>`;
 }

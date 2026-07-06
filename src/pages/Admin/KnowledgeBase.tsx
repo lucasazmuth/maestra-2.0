@@ -335,7 +335,7 @@ const styles = {
   modalSection: { marginBottom: 20 } as React.CSSProperties,
   modalSectionTitle: { color: '#fff', fontSize: 14, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 } as React.CSSProperties,
   modalItem: { color: '#b3b3b3', fontSize: 13, lineHeight: 1.6 } as React.CSSProperties,
-  strategyCard: { background: '#1a1a1a', borderRadius: 8, padding: 12, marginBottom: 8, borderLeft: '3px solid #af2896' } as React.CSSProperties,
+  strategyCard: { background: '#1a1a1a', borderRadius: 8, padding: 12, marginBottom: 8, borderLeft: '3px solid #BE81EC' } as React.CSSProperties,
 };
 
 // ---- Component ----
@@ -474,7 +474,7 @@ const KnowledgeBase: FC = () => {
 
   const tabs = [
     { key: 'pending' as const, label: 'Aguardando', icon: <FiClock />, count: pendingPlans.length, color: '#f59e0b' },
-    { key: 'approved' as const, label: 'Aprovados', icon: <FiCheckCircle />, count: approvedPlans.length, color: '#af2896' },
+    { key: 'approved' as const, label: 'Aprovados', icon: <FiCheckCircle />, count: approvedPlans.length, color: '#BE81EC' },
     { key: 'import' as const, label: 'Importar XLS', icon: <FiUploadCloud />, count: parsedPlans.length, color: '#3b82f6' },
     { key: 'rejected' as const, label: 'Rejeitados', icon: <FiXCircle />, count: rejectedPlans.length, color: '#e91429' },
   ];
@@ -493,7 +493,7 @@ const KnowledgeBase: FC = () => {
       {/* Stats */}
       <div style={styles.statsRow}>
         <div style={styles.statCard}>
-          <div style={{ ...styles.statValue, color: '#af2896' }}>{approvedPlans.length}</div>
+          <div style={{ ...styles.statValue, color: '#BE81EC' }}>{approvedPlans.length}</div>
           <div style={styles.statLabel}>Na base (treinados)</div>
         </div>
         <div style={styles.statCard}>
@@ -539,19 +539,19 @@ const KnowledgeBase: FC = () => {
                 <Space>
                   <Button size="small" onClick={() => setParsedPlans([])} style={{ color: '#b3b3b3' }}>Limpar</Button>
                   <Button type="primary" icon={<CloudUploadOutlined />} loading={importing} onClick={importAll}
-                    style={{ background: '#af2896', borderColor: '#af2896', color: '#fff', fontWeight: 700, borderRadius: 9999 }}>
+                    style={{ background: '#BE81EC', borderColor: '#BE81EC', color: '#1A1A1A', fontWeight: 700, borderRadius: 9999 }}>
                     Importar Todos ({parsedPlans.length})
                   </Button>
                 </Space>
               </div>
-              {importing && <Progress percent={importProgress} strokeColor="#af2896" trailColor="#282828" style={{ marginBottom: 12 }} />}
+              {importing && <Progress percent={importProgress} strokeColor="#BE81EC" trailColor="#282828" style={{ marginBottom: 12 }} />}
               {parsedPlans.map((plan) => (
                 <div key={plan.key} style={{ ...styles.card, background: '#1a1a1a', display: 'flex', alignItems: 'center', gap: 16, padding: 14 }}>
                   <FiFileText style={{ fontSize: 24, color: '#3b82f6', flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>{plan.artist || plan.fileName}</div>
                     <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
-                      <span style={styles.badge('#af2896')}>{plan.objectives.length} obj</span>
+                      <span style={styles.badge('#BE81EC')}>{plan.objectives.length} obj</span>
                       <span style={styles.badge('#3b82f6')}>{plan.strategies.length} est</span>
                       <span style={styles.badge('#f59e0b')}>SWOT {plan.strengths.length + plan.weaknesses.length}</span>
                       {plan.fullContent.includes('PLANO DE AÇÃO') && <span style={styles.badge('#a855f7')}>Ações</span>}
@@ -604,7 +604,7 @@ const KnowledgeBase: FC = () => {
                       {plan.title}
                     </div>
                     <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center' }}>
-                      <span style={styles.badge('#af2896')}>{plan.segment}</span>
+                      <span style={styles.badge('#BE81EC')}>{plan.segment}</span>
                       <span style={styles.badge('#3b82f6')}>{plan.artist_size}</span>
                       <span style={styles.badge('#a855f7')}>{plan.career_stage}</span>
                       <span style={{ color: '#555', fontSize: 11 }}>•</span>
@@ -616,8 +616,8 @@ const KnowledgeBase: FC = () => {
                     {plan.status === 'pending' && (
                       <>
                         <button onClick={() => approvePlan(plan.id)} title="Aprovar"
-                          style={{ background: '#af289620', border: 'none', borderRadius: 6, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                          <CheckOutlined style={{ color: '#af2896', fontSize: 14 }} />
+                          style={{ background: '#BE81EC20', border: 'none', borderRadius: 6, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                          <CheckOutlined style={{ color: '#BE81EC', fontSize: 14 }} />
                         </button>
                         <button onClick={() => rejectPlan(plan.id)} title="Rejeitar"
                           style={{ background: '#e9142920', border: 'none', borderRadius: 6, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -687,7 +687,7 @@ const PlanPreviewContent: FC<{ plan: ParsedPlan }> = ({ plan }) => (
     {(plan.strengths.length > 0 || plan.weaknesses.length > 0) && (
       <Section title="Análise SWOT">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <SwotBox label="Forças" items={plan.strengths} color="#af2896" />
+          <SwotBox label="Forças" items={plan.strengths} color="#BE81EC" />
           <SwotBox label="Fraquezas" items={plan.weaknesses} color="#e91429" />
           <SwotBox label="Oportunidades" items={plan.opportunities} color="#3b82f6" />
           <SwotBox label="Ameaças" items={plan.threats} color="#f59e0b" />
@@ -709,7 +709,7 @@ const PlanPreviewContent: FC<{ plan: ParsedPlan }> = ({ plan }) => (
 const StoredPlanDetail: FC<{ plan: StoredPlan }> = ({ plan }) => (
   <div>
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-      <span style={styles.badge('#af2896')}>{plan.segment}</span>
+      <span style={styles.badge('#BE81EC')}>{plan.segment}</span>
       <span style={styles.badge('#3b82f6')}>{plan.artist_size}</span>
       <span style={styles.badge('#a855f7')}>{plan.career_stage}</span>
       <span style={styles.badge('#f59e0b')}>{plan.source}</span>

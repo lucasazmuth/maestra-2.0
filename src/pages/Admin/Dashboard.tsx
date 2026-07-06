@@ -84,7 +84,7 @@ const AdminDashboard: FC = () => {
           hint={`${revenue.purchases.count + revenue.subscriptionPayments.count} pagamento(s) confirmados`}
         />
         <StatCard
-          icon={<FiCreditCard />} accent="#af2896"
+          icon={<FiCreditCard />} accent="#BE81EC"
           label="MRR (assinaturas ativas)" value={fmtBRL(subs.mrr)}
           hint={`${subs.active} assinatura(s) ativa(s)`}
         />
@@ -113,7 +113,7 @@ const AdminDashboard: FC = () => {
           hint={`${artists.paid} pago(s) · ${artists.locked} bloqueado(s)`}
         />
         <StatCard
-          icon={<FiCreditCard />} accent="#af2896"
+          icon={<FiCreditCard />} accent="#BE81EC"
           label="Assinaturas" value={String(subs.active)}
           hint={[
             subs.overdue ? `${subs.overdue} em atraso` : null,
@@ -155,7 +155,7 @@ const AdminDashboard: FC = () => {
               thisMonth={revenue.purchases.thisMonth} grand={revenue.total}
             />
             <SourceRow
-              label="Assinaturas PRO" color="#af2896"
+              label="Assinaturas PRO" color="#BE81EC"
               total={revenue.subscriptionPayments.total} count={revenue.subscriptionPayments.count}
               thisMonth={revenue.subscriptionPayments.thisMonth} grand={revenue.total}
             />

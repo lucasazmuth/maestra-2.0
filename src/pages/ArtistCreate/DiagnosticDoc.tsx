@@ -220,7 +220,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
         <div className={styles.docPattern}>
           {DIM_META.map((d) => (
             <div key={d.key} className={styles.docPatternItem}>
-              <span className={styles.docPatternLetter} style={{ color: ri.pattern?.[d.key] ? '#af2896' : '#71717a' }}>{d.letter}</span>
+              <span className={styles.docPatternLetter} style={{ color: ri.pattern?.[d.key] ? '#BE81EC' : '#71717a' }}>{d.letter}</span>
               <span className={styles.docPatternWord}>{d.full}</span>
               <span className={styles.docPatternSub}>{d.sub}</span>
             </div>
@@ -265,7 +265,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
               <div className={styles.docSubTitle2} style={{ marginBottom: 12 }}>Playlists onde sua música está{playlists.count ? ` · ${playlists.count} no total` : ''}</div>
               {playlists.top.slice(0, 8).map((p, i) => (
                 <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderTop: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                  {p.editorial && <span style={{ fontSize: 10, fontWeight: 800, color: '#af2896', letterSpacing: '0.06em' }}>EDITORIAL</span>}
+                  {p.editorial && <span style={{ fontSize: 10, fontWeight: 800, color: '#BE81EC', letterSpacing: '0.06em' }}>EDITORIAL</span>}
                   <span style={{ color: '#fff', flex: 1, fontSize: 16, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
                   {p.followers != null && <span style={{ color: '#9a9aa3', fontSize: 14, fontWeight: 700 }}>{fmtNum(p.followers)}</span>}
                 </div>
@@ -423,7 +423,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
         <div className={styles.docPattern}>
           {DIM_META.map((d) => (
             <div key={d.key} className={styles.docPatternItem}>
-              <span className={styles.docPatternLetter} style={{ color: pattern[d.key] ? '#af2896' : '#71717a' }}>{d.letter}</span>
+              <span className={styles.docPatternLetter} style={{ color: pattern[d.key] ? '#BE81EC' : '#71717a' }}>{d.letter}</span>
               <span className={styles.docPatternWord}>{d.full}</span>
             </div>
           ))}
@@ -440,7 +440,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
           {DIM_META.map((d) => {
             const high = pattern[d.key];
             const neutral = d.key === 'e' && earningsUnknown;
-            const color = neutral ? '#8a8a92' : high ? '#af2896' : '#e0a13c';
+            const color = neutral ? '#8a8a92' : high ? '#BE81EC' : '#e0a13c';
             return (
               <div key={d.key} className={styles.docDimCard}>
                 <div className={styles.docDimHead}>
@@ -533,7 +533,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
                 <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderTop: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
                   <span style={{ color: '#6f6f78', width: 24, textAlign: 'right', fontSize: 16, fontWeight: 700 }}>{i + 1}</span>
                   <span style={{ color: '#fff', flex: 1, fontSize: 17, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
-                  {p.editorial && <span style={{ fontSize: 12, fontWeight: 800, color: '#af2896', letterSpacing: '0.04em' }}>EDITORIAL</span>}
+                  {p.editorial && <span style={{ fontSize: 12, fontWeight: 800, color: '#BE81EC', letterSpacing: '0.04em' }}>EDITORIAL</span>}
                   {p.followers != null && <span style={{ color: '#9a9aa3', fontSize: 15, fontWeight: 700, minWidth: 70, textAlign: 'right' }}>{fmtNum(p.followers)}</span>}
                 </div>
               ))}

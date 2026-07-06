@@ -1,6 +1,8 @@
 import { FC, useEffect, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiArrowRight, FiTarget, FiMessageCircle, FiGrid, FiAward } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiTarget, FiGrid, FiAward } from 'react-icons/fi';
+
+import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { createAsaasCustomer, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, pollPaymentStatus, clearError, type BillingCycle } from '../../store/slices/subscription';
@@ -21,8 +23,8 @@ const PRO_GROUPS: BenefitGroup[] = [
     items: ['Gestão de tarefas do plano de ação', 'Edição em todos os perfis que você acessa'],
   },
   {
-    icon: <FiMessageCircle />, title: 'IA consultora ao seu lado',
-    items: ['Nyta Consultora — chat de IA ilimitado', 'Recomendações sob o contexto da sua carreira'],
+    icon: <NytaAvatar size={20} />, title: 'Assistente de IA ao seu lado',
+    items: ['Nyta Assistente — chat de IA ilimitado', 'Recomendações sob o contexto da sua carreira'],
   },
   {
     icon: <FiGrid />, title: 'Gestão completa',
@@ -164,7 +166,7 @@ const SubscriptionPage: FC = () => {
   if (view === 'benefits') {
     // Gate por status: não deixa quem já tem assinatura (ativa) ou pendência re-assinar (duplicar).
     const gateCard: CSSProperties = { maxWidth: 560, margin: '0 auto', background: '#181818', border: '1px solid #282828', borderRadius: 16, padding: 32, textAlign: 'center' };
-    const btnPrimary: CSSProperties = { background: '#af2896', border: 'none', color: '#fff', borderRadius: 9999, padding: '12px 30px', fontSize: 14, fontWeight: 800, cursor: 'pointer' };
+    const btnPrimary: CSSProperties = { background: '#BE81EC', border: 'none', color: '#1A1A1A', borderRadius: 9999, padding: '12px 30px', fontSize: 14, fontWeight: 800, cursor: 'pointer' };
     const btnGhost: CSSProperties = { background: 'none', border: 'none', color: '#9a9aa5', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 12 };
 
     if (!initialized) {
@@ -174,24 +176,24 @@ const SubscriptionPage: FC = () => {
       const proCard: CSSProperties = {
         maxWidth: 520, margin: '0 auto', borderRadius: 20, padding: '44px 32px',
         display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-        background: 'radial-gradient(120% 120% at 50% 0%, rgba(175,40,150,0.18) 0%, rgba(175,40,150,0.04) 45%, rgba(255,255,255,0.02) 100%)',
-        border: '1px solid rgba(175,40,150,0.32)',
+        background: 'radial-gradient(120% 120% at 50% 0%, rgba(190,129,236,0.18) 0%, rgba(190,129,236,0.04) 45%, rgba(255,255,255,0.02) 100%)',
+        border: '1px solid rgba(190,129,236,0.32)',
       };
       const proBadge: CSSProperties = {
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 60, height: 60,
-        borderRadius: 18, marginBottom: 22, background: 'rgba(175,40,150,0.14)',
-        border: '1px solid rgba(175,40,150,0.35)', boxShadow: '0 12px 32px rgba(175,40,150,0.25)',
+        borderRadius: 18, marginBottom: 22, background: 'rgba(190,129,236,0.14)',
+        border: '1px solid rgba(190,129,236,0.35)', boxShadow: '0 12px 32px rgba(190,129,236,0.25)',
       };
       const btnPrimaryArrow: CSSProperties = {
-        display: 'inline-flex', alignItems: 'center', gap: 8, background: '#af2896', border: 'none', color: '#fff',
+        display: 'inline-flex', alignItems: 'center', gap: 8, background: '#BE81EC', border: 'none', color: '#1A1A1A',
         borderRadius: 9999, padding: '13px 32px', fontSize: 14, fontWeight: 800, cursor: 'pointer',
-        boxShadow: '0 10px 30px rgba(175,40,150,0.32)', transition: 'transform 0.15s, background 0.2s',
+        boxShadow: '0 10px 30px rgba(190,129,236,0.32)', transition: 'transform 0.15s, background 0.2s',
       };
       return (
         <div style={{ padding: 24 }}>
           <div style={proCard}>
             <span style={proBadge}><FiAward size={30} color='#e07fce' /></span>
-            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#d264bb', marginBottom: 10 }}>Assinatura ativa</span>
+            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#D3A6F2', marginBottom: 10 }}>Assinatura ativa</span>
             <div style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 12 }}>Você já é Maestra PRO</div>
             <p style={{ color: '#cfcfd4', fontSize: 14.5, lineHeight: 1.55, margin: '0 0 26px', maxWidth: 400 }}>
               Edição completa, Nyta IA e todos os perfis da conta liberados.
@@ -199,8 +201,8 @@ const SubscriptionPage: FC = () => {
             <button
               style={btnPrimaryArrow}
               onClick={() => navigate('/settings')}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#c13fa8'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#af2896'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#A95FE0'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#BE81EC'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               Gerenciar assinatura <FiArrowRight size={16} />
             </button>
@@ -225,7 +227,7 @@ const SubscriptionPage: FC = () => {
       <div style={{ padding: 24 }}>
         <BenefitsCompare
           headline="Faça mais com o Maestra PRO"
-          sub={<>Edição completa e a <b>Nyta Consultora</b> em todos os seus perfis.</>}
+          sub={<>Edição completa e a <b>Nyta Assistente</b> em todos os seus perfis.</>}
           free={{ name: 'Grátis', desc: 'O essencial para acompanhar o plano e a carreira.', price: 'R$ 0', groups: FREE_GROUPS }}
           pro={{
             name: 'Maestra PRO',
@@ -293,7 +295,7 @@ const SubscriptionPage: FC = () => {
               </div>
             }
             item={{
-              icon: <span style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 13, color: '#af2896' }}>PRO</span>,
+              icon: <span style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 13, color: '#BE81EC' }}>PRO</span>,
               name: 'Maestra PRO',
               sub: <span>Edição + Nyta IA · {cycleLabel}</span>,
               price: `${priceFmt}${unit}`,
