@@ -232,16 +232,21 @@ const Wizard: FC = () => {
       <div className='wiz-chat-head'>
         <div className='wiz-col'>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-            {/* Meta-linha no topo: etapa (abre o painel de resultados) à esquerda, ações à direita. */}
-            <button
-              className='wiz-step-nav'
-              onClick={() => wizardPanel.toggle()}
-              title='Ver seus resultados'
-              aria-expanded={wizardPanel.open}
-            >
-              Etapa {step + 1} de {STEP_LABELS.length} · {STEP_LABELS[step]}
-              <FiChevronDown size={14} style={{ transform: wizardPanel.open ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease' }} />
-            </button>
+            {/* Coluna à esquerda: título em cima, etapa (abre o painel de resultados) embaixo. */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+              <h1 className='wiz-title' style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 22, color: '#fff', margin: 0 }}>
+                Criar planejamento estratégico
+              </h1>
+              <button
+                className='wiz-step-nav'
+                onClick={() => wizardPanel.toggle()}
+                title='Ver seus resultados'
+                aria-expanded={wizardPanel.open}
+              >
+                Etapa {step + 1} de {STEP_LABELS.length} · {STEP_LABELS[step]}
+                <FiChevronDown size={14} style={{ transform: wizardPanel.open ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease' }} />
+              </button>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               {/* Recomeçar do zero — só aparece quando há progresso; pede confirmação (destrutivo). */}
               {hasProgress && (
@@ -286,11 +291,6 @@ const Wizard: FC = () => {
               </button>
             </div>
           </div>
-
-          {/* Título grande abaixo da meta-linha (etapa + ações). */}
-          <h1 className='wiz-title' style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 22, color: '#fff', margin: '8px 0 0' }}>
-            Criar planejamento estratégico
-          </h1>
         </div>
       </div>
 
