@@ -8,11 +8,11 @@ import anitaPhoto from '../../assets/anita.png';
 import styles from './EventNiteroi.module.scss';
 
 // Landing dedicada do Workshop da Anita Carvalho (Niterói Música), acessada pelo QR do cartaz.
-// Pública (sem auth) — reusa Header/Footer da Landing. Exibe a chamada do evento + o cupom
-// NITEROI50 (50% OFF no desbloqueio do perfil) com um cronômetro de urgência.
+// Pública (sem auth) — reusa Header/Footer da Landing. HOOK PRINCIPAL: o Diagnóstico REAL GRÁTIS
+// (isca pra atrair os artistas do evento). O cupom NITEROI50 (50% no desbloqueio do plano) entra
+// como BÔNUS pra quem depois quiser o plano completo, com um cronômetro de urgência.
 const COUPON = 'NITEROI50';
 // Prazo da oferta = ends_at do cupom no banco: 13/07/2026 23:59 BRT (= 14/07 02:59 UTC).
-// Ponto ÚNICO de verdade do timer — trocar aqui se o prazo mudar (e o ends_at no banco junto).
 const OFFER_ENDS_AT = Date.parse('2026-07-14T02:59:00Z');
 
 const EVENT_META = [
@@ -23,9 +23,9 @@ const EVENT_META = [
 ];
 
 const STEPS = [
-  { n: '01', title: 'Crie sua conta grátis', body: 'Leva menos de um minuto — só e-mail e senha.' },
-  { n: '02', title: 'Monte o perfil do artista', body: 'Busca no Spotify e a Maestra já traz o Diagnóstico REAL com dados reais.' },
-  { n: '03', title: 'Aplique o cupom no desbloqueio', body: `No desbloqueio do perfil, use ${COUPON} e leve 50% OFF.` },
+  { n: '01', title: 'Rode seu Diagnóstico REAL', body: 'Crie a conta, busca o artista no Spotify e a Maestra já traz sua fase de carreira com dados reais. De graça.' },
+  { n: '02', title: 'Veja onde você está', body: 'Seu perfil entre os 16, o Índice REAL (alcance, receita, audiência e legitimidade) e o que destrava o próximo nível.' },
+  { n: '03', title: 'Bônus: 50% no plano', body: `Gostou? Use ${COUPON} no desbloqueio e leve o planejamento estratégico + plano de ação com 50% OFF.` },
 ];
 
 function remaining(nowMs: number) {
@@ -47,7 +47,7 @@ const EventNiteroi: FC = () => {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    document.title = 'Workshop Anita Carvalho · Niterói Música · Maestra Manager';
+    document.title = 'Diagnóstico REAL grátis · Workshop Anita Carvalho · Maestra Manager';
     window.scrollTo(0, 0);
   }, []);
 
@@ -59,6 +59,9 @@ const EventNiteroi: FC = () => {
 
   const t = remaining(now);
   const expired = t.s <= 0;
+
+  // Leva o artista direto pro Diagnóstico REAL grátis: logado → criar artista; senão → cadastro.
+  const startDiagnostic = () => navigate(loggedIn ? '/criar-artista' : '/signup');
 
   const copyCode = async () => {
     // Clipboard API moderna; com fallback legado (execCommand) pros webviews de app
@@ -91,17 +94,24 @@ const EventNiteroi: FC = () => {
       <Header loggedIn={loggedIn} />
 
       <main className={styles.main}>
-        {/* ─── HERO ─── */}
+        {/* ─── HERO: Diagnóstico REAL grátis (isca) ─── */}
         <section className={styles.hero}>
           <div className={styles.heroText}>
             <p className={styles.eyebrow}>Workshop · Niterói Música</p>
             <h1 className={styles.title}>
-              Você veio aprender com a <span>Anita</span>. Agora leve o método pra dentro da sua carreira.
+              Descubra onde sua carreira <span>REALmente</span> está.
             </h1>
             <p className={styles.subtitle}>
-              A Maestra Manager transforma a metodologia da Anita Carvalho em um plano real pra sua
-              carreira: diagnóstico com dados reais, planejamento estratégico e plano de ação.
+              Faça o <strong>Diagnóstico REAL</strong> da sua carreira, de graça e sem cartão. A Maestra
+              cruza seus dados do Spotify e das redes e te mostra sua fase de carreira, com o método
+              da Anita Carvalho.
             </p>
+            <div className={styles.heroCta}>
+              <button className={styles.ctaPrimary} onClick={startDiagnostic}>
+                Fazer meu diagnóstico grátis <FiArrowRight />
+              </button>
+              <button className={styles.ctaGhost} onClick={() => navigate('/login')}>Já tenho conta</button>
+            </div>
             <ul className={styles.metaRow}>
               {EVENT_META.map((m) => (
                 <li key={m.label} className={styles.metaChip}>
@@ -117,13 +127,14 @@ const EventNiteroi: FC = () => {
           </figure>
         </section>
 
-        {/* ─── OFERTA ─── */}
+        {/* ─── BÔNUS: cupom 50% no plano completo ─── */}
         <section className={styles.offer}>
           <span className={styles.offerGlow} aria-hidden />
-          <p className={styles.offerBadge}>Oferta de quem esteve no workshop</p>
-          <h2 className={styles.offerTitle}><span>50% OFF</span> no seu primeiro perfil</h2>
+          <p className={styles.offerBadge}>Bônus de quem veio ao workshop</p>
+          <h2 className={styles.offerTitle}><span>50% OFF</span> no plano completo</h2>
           <p className={styles.offerSub}>
-            Desbloqueie o Diagnóstico REAL e o planejamento estratégico de um artista pela metade do preço.
+            Depois do diagnóstico grátis, desbloqueie o planejamento estratégico e o plano de ação
+            pela metade do preço.
           </p>
 
           <div className={styles.couponRow}>
@@ -135,10 +146,10 @@ const EventNiteroi: FC = () => {
           </div>
 
           {expired ? (
-            <p className={styles.timerExpired}>Oferta encerrada — mas você ainda pode começar seu diagnóstico.</p>
+            <p className={styles.timerExpired}>Bônus encerrado, mas o Diagnóstico REAL continua grátis.</p>
           ) : (
-            <div className={styles.timer} role="timer" aria-label="Tempo restante da oferta">
-              <span className={styles.timerLabel}>A oferta encerra em</span>
+            <div className={styles.timer} role="timer" aria-label="Tempo restante do bônus">
+              <span className={styles.timerLabel}>O bônus encerra em</span>
               <div className={styles.timerBoxes}>
                 <TimerBox v={t.d} l="dias" />
                 <TimerBox v={t.h} l="horas" />
@@ -148,18 +159,12 @@ const EventNiteroi: FC = () => {
             </div>
           )}
 
-          <div className={styles.ctaRow}>
-            <button className={styles.ctaPrimary} onClick={() => navigate('/signup')}>
-              Criar conta grátis <FiArrowRight />
-            </button>
-            <button className={styles.ctaGhost} onClick={() => navigate('/login')}>Já tenho conta</button>
-          </div>
-          <p className={styles.ctaMicro}>Use o código <strong>{COUPON}</strong> no desbloqueio do perfil.</p>
+          <p className={styles.ctaMicro}>Use <strong>{COUPON}</strong> no desbloqueio do perfil.</p>
         </section>
 
         {/* ─── COMO FUNCIONA ─── */}
         <section className={styles.how}>
-          <h2 className={styles.sectionTitle}>Como usar seu desconto</h2>
+          <h2 className={styles.sectionTitle}>Como funciona</h2>
           <div className={styles.steps}>
             {STEPS.map((s) => (
               <div key={s.n} className={styles.step}>

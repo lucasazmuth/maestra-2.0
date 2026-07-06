@@ -68,6 +68,16 @@ $line: rgba(255, 255, 255, 0.1);
   color: #b8b8bf;
   max-width: 52ch;
   margin: 0;
+
+  strong { color: #fff; font-weight: 700; }
+}
+
+// CTA principal do hero (Diagnóstico REAL grátis).
+.heroCta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 28px 0 0;
 }
 
 .metaRow {
