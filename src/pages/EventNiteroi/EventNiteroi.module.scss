@@ -102,30 +102,38 @@ $line: rgba(255, 255, 255, 0.1);
 }
 .metaIcon { color: $brand; display: inline-flex; line-height: 0; }
 
-.heroPhoto {
-  margin: 0;
+// Sparkle 3D do REAL no hero (tintado pro roxo da marca) + glow atrás.
+.heroGlyph {
   flex-shrink: 0;
+  position: relative;
+  width: 380px;
+  height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  img {
-    width: 320px;
-    max-width: 100%;
-    aspect-ratio: 4 / 5;
-    object-fit: cover;
-    border-radius: 18px;
-    border: 1px solid rgba(190, 129, 236, 0.3);
-    box-shadow: 0 24px 60px -24px rgba(190, 129, 236, 0.5);
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 8%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(190, 129, 236, 0.4) 0%, transparent 62%);
+    filter: blur(28px);
   }
 
-  figcaption {
-    font-size: 0.8rem;
-    color: #8a8a92;
-    margin-top: 10px;
-    text-align: center;
+  img {
+    position: relative;
+    width: 300px;
+    max-width: 100%;
+    // asset vem verde (id da landing); tintamos pro roxo da marca.
+    filter: hue-rotate(122deg) saturate(1.05);
   }
 
   @media (max-width: 860px) {
     align-self: center;
-    img { width: 240px; }
+    width: 280px;
+    height: 280px;
+    img { width: 220px; }
   }
 }
 
@@ -345,11 +353,45 @@ $line: rgba(255, 255, 255, 0.1);
   border-top: 1px solid $line;
   padding-top: 40px;
 }
+.aboutGrid {
+  display: flex;
+  gap: 36px;
+  align-items: flex-start;
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+.aboutPhoto {
+  margin: 0;
+  flex-shrink: 0;
+
+  img {
+    width: 260px;
+    max-width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 16px;
+    border: 1px solid rgba(190, 129, 236, 0.3);
+    box-shadow: 0 20px 50px -24px rgba(190, 129, 236, 0.5);
+  }
+
+  figcaption {
+    font-size: 0.8rem;
+    color: #8a8a92;
+    margin-top: 10px;
+    text-align: center;
+  }
+}
+.aboutText { flex: 1; min-width: 0; }
 .aboutBody {
   color: #b8b8bf;
   line-height: 1.75;
   max-width: 62ch;
   margin: 0 0 16px;
 
+  &:last-child { margin-bottom: 0; }
   strong { color: #e6e6ea; font-weight: 600; }
 }

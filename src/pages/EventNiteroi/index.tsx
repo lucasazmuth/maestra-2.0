@@ -5,6 +5,7 @@ import { FiCalendar, FiClock, FiMapPin, FiTag, FiCopy, FiCheck, FiArrowRight } f
 import { Header, Footer } from '../Landing';
 import { useAppSelector } from '../../store/store';
 import anitaPhoto from '../../assets/anita.png';
+import realStar from '../../assets/feature-real.png';
 import styles from './EventNiteroi.module.scss';
 
 // Landing dedicada do Workshop da Anita Carvalho (Niterói Música), acessada pelo QR do cartaz.
@@ -121,10 +122,10 @@ const EventNiteroi: FC = () => {
               ))}
             </ul>
           </div>
-          <figure className={styles.heroPhoto}>
-            <img src={anitaPhoto} alt="Anita Carvalho" />
-            <figcaption>Anita Carvalho · 30 anos de mercado</figcaption>
-          </figure>
+          {/* Sparkle 3D do Diagnóstico REAL (tintado pro roxo da marca) — reforça o hook do grátis. */}
+          <div className={styles.heroGlyph} aria-hidden>
+            <img src={realStar} alt="" />
+          </div>
         </section>
 
         {/* ─── BÔNUS: cupom 50% no plano completo ─── */}
@@ -179,15 +180,23 @@ const EventNiteroi: FC = () => {
         {/* ─── SOBRE ─── */}
         <section className={styles.about}>
           <h2 className={styles.sectionTitle}>Sobre o encontro</h2>
-          <p className={styles.aboutBody}>
-            O Workshop <strong>Cultura, Mercado e Carreira na Música</strong> é uma oportunidade pra pensar
-            sua carreira de forma estratégica, entender melhor o mercado e fortalecer seus projetos.
-          </p>
-          <p className={styles.aboutBody}>
-            O encontro é conduzido por <strong>Anita Carvalho</strong>, consultora com mais de 30 anos de
-            experiência e responsável por mais de 300 projetos ao lado de Diogo Nogueira, Ivan Lins, Barão
-            Vermelho, Paula Lima, Jorge Aragão e Jorge Vercillo, entre outros grandes nomes da música brasileira.
-          </p>
+          <div className={styles.aboutGrid}>
+            <figure className={styles.aboutPhoto}>
+              <img src={anitaPhoto} alt="Anita Carvalho" />
+              <figcaption>Anita Carvalho · 30 anos de mercado</figcaption>
+            </figure>
+            <div className={styles.aboutText}>
+              <p className={styles.aboutBody}>
+                O Workshop <strong>Cultura, Mercado e Carreira na Música</strong> é uma oportunidade pra pensar
+                sua carreira de forma estratégica, entender melhor o mercado e fortalecer seus projetos.
+              </p>
+              <p className={styles.aboutBody}>
+                O encontro é conduzido por <strong>Anita Carvalho</strong>, consultora com mais de 30 anos de
+                experiência e responsável por mais de 300 projetos ao lado de Diogo Nogueira, Ivan Lins, Barão
+                Vermelho, Paula Lima, Jorge Aragão e Jorge Vercillo, entre outros grandes nomes da música brasileira.
+              </p>
+            </div>
+          </div>
         </section>
       </main>
 
