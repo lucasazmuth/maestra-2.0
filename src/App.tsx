@@ -35,6 +35,7 @@ import Welcome from './pages/Welcome';
 const Landing = lazy(() => import('./pages/Landing'));
 const DiagnosticoReal = lazy(() => import('./pages/DiagnosticoReal'));
 const MusicRioAcademy = lazy(() => import('./pages/MusicRioAcademy'));
+const EventNiteroi = lazy(() => import('./pages/EventNiteroi'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Page404 = lazy(() => import('./pages/404'));
@@ -198,6 +199,10 @@ const AppRoutes: FC = () => {
       {/* Music Rio Academy: escola por trás da Maestra. Pública e standalone (reusa header/footer
           da landing). Conteúdo institucional linkado a partir da seção-teaser da landing. */}
       <Route path='/music-rio-academy' element={<MusicRioAcademy />} />
+
+      {/* Landing do Workshop da Anita (Niterói Música): pública, acessada pelo QR do cartaz.
+          Exibe a chamada do evento + cupom NITEROI50 (50% OFF no desbloqueio) com cronômetro. */}
+      <Route path='/niteroi' element={<EventNiteroi />} />
 
       <Route path='/login' element={<PublicOnly><Login /></PublicOnly>} />
       <Route path='/signup' element={<PublicOnly><Signup /></PublicOnly>} />

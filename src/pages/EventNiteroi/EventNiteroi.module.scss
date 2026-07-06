@@ -1,0 +1,345 @@
+// Landing do Workshop da Anita (Niterói Música). Reusa o chrome da Landing (Header/Footer) e os
+// tokens do site: fundo preto, Inter, roxo da marca #BE81EC. Mesma base da página Music Rio Academy.
+
+$brand: #be81ec;
+$brand-hover: #a95fe0;
+$brand-2: #d3a6f2;
+$ink: #1a1a1a;
+$line: rgba(255, 255, 255, 0.1);
+
+.page {
+  background: #000;
+  color: #fff;
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.main {
+  max-width: 62rem;
+  margin: 0 auto;
+  // padding-top generoso limpa o header fixo (mesmo padrão da MRA / Diagnóstico REAL).
+  padding: 140px 20px 80px;
+
+  @media (min-width: 768px) {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+// ─── Hero ─────────────────────────────────────────────────────────────────────
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 44px;
+
+  @media (max-width: 860px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 28px;
+  }
+}
+
+.heroText { flex: 1; min-width: 0; }
+
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: $brand;
+  margin: 0 0 16px;
+}
+
+.title {
+  font-size: clamp(2rem, 4.6vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  margin: 0 0 18px;
+
+  span { color: $brand; }
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: #b8b8bf;
+  max-width: 52ch;
+  margin: 0;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 26px 0 0;
+}
+
+.metaChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.9rem;
+  color: #d4d4d8;
+}
+.metaIcon { color: $brand; display: inline-flex; line-height: 0; }
+
+.heroPhoto {
+  margin: 0;
+  flex-shrink: 0;
+
+  img {
+    width: 320px;
+    max-width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 1px solid rgba(190, 129, 236, 0.3);
+    box-shadow: 0 24px 60px -24px rgba(190, 129, 236, 0.5);
+  }
+
+  figcaption {
+    font-size: 0.8rem;
+    color: #8a8a92;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  @media (max-width: 860px) {
+    align-self: center;
+    img { width: 240px; }
+  }
+}
+
+// ─── Card de oferta ───────────────────────────────────────────────────────────
+.offer {
+  position: relative;
+  overflow: hidden;
+  margin: 64px 0;
+  padding: 44px 32px;
+  border-radius: 20px;
+  background: #0c0a12;
+  border: 1px solid rgba(190, 129, 236, 0.35);
+  box-shadow: 0 0 70px -18px rgba(190, 129, 236, 0.45);
+  text-align: center;
+
+  @media (max-width: 560px) { padding: 32px 20px; }
+}
+
+.offerGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 80% at 50% 0%, rgba(190, 129, 236, 0.18) 0%, transparent 60%);
+}
+
+.offerBadge {
+  position: relative;
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: $brand-2;
+  margin: 0 0 14px;
+}
+
+.offerTitle {
+  position: relative;
+  font-size: clamp(2rem, 5.4vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 12px;
+
+  span { color: $brand; }
+}
+
+.offerSub {
+  position: relative;
+  color: #cfcfd4;
+  line-height: 1.6;
+  max-width: 44ch;
+  margin: 0 auto 26px;
+}
+
+.couponRow {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 26px;
+}
+
+.couponCode {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(190, 129, 236, 0.14);
+  border: 1px dashed $brand;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: 0.12em;
+  padding: 14px 26px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  svg { color: $brand; font-size: 1.05rem; }
+  &:hover { background: rgba(190, 129, 236, 0.22); }
+}
+.couponHint { font-size: 0.82rem; color: #9a9aa2; }
+
+.timer {
+  position: relative;
+  margin-bottom: 28px;
+}
+.timerLabel {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9a9aa2;
+  margin-bottom: 10px;
+}
+.timerBoxes {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.timerBox {
+  min-width: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #17151c;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 8px;
+
+  @media (max-width: 400px) { min-width: 52px; }
+}
+.timerVal {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.timerUnit {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8a8a92;
+  margin-top: 5px;
+}
+.timerExpired {
+  position: relative;
+  color: $brand-2;
+  font-weight: 600;
+  margin: 0 0 24px;
+}
+
+.ctaRow {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.ctaPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: $brand;
+  color: $ink;
+  border: none;
+  border-radius: 9999px;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 14px 28px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+
+  &:hover { background: $brand-hover; transform: translateY(-1px); }
+}
+.ctaGhost {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 14px 24px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+
+  &:hover { border-color: #fff; background: rgba(255, 255, 255, 0.05); }
+}
+.ctaMicro {
+  position: relative;
+  font-size: 0.85rem;
+  color: #8a8a92;
+  margin: 0;
+
+  strong { color: $brand-2; font-weight: 700; }
+}
+
+// ─── Como funciona ────────────────────────────────────────────────────────────
+.sectionTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0 0 24px;
+}
+
+.how { margin: 64px 0; }
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+
+  @media (max-width: 720px) { grid-template-columns: 1fr; }
+}
+.step {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: #0a0a0c;
+  padding: 24px 22px;
+
+  h3 { font-size: 1rem; margin: 0 0 8px; color: #fff; }
+  p { font-size: 0.92rem; color: #9a9aa2; line-height: 1.6; margin: 0; }
+}
+.stepNum {
+  display: inline-block;
+  color: $brand;
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+// ─── Sobre ────────────────────────────────────────────────────────────────────
+.about {
+  margin: 64px 0 0;
+  border-top: 1px solid $line;
+  padding-top: 40px;
+}
+.aboutBody {
+  color: #b8b8bf;
+  line-height: 1.75;
+  max-width: 62ch;
+  margin: 0 0 16px;
+
+  strong { color: #e6e6ea; font-weight: 600; }
+}
