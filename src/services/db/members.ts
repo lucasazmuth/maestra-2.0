@@ -61,16 +61,22 @@ export const removeMember = async (id: string): Promise<void> => {
 
 // ---- Convites pendentes (lado do convidado) ------------------------------------------------
 
-export interface PendingInvite extends ArtistMember {
-  artists?: { name: string; content: any; user_id: string } | null;
+// Convite pendente já com nome/imagem/gênero do artista (via RPC SECURITY DEFINER, pois o
+// convidado ainda NÃO é membro e a RLS bloqueia o join direto na tabela artists).
+export interface PendingInvite {
+  id: string;
+  artist_id: string;
+  access_levels: AccessLevel[];
+  status: string;
+  created_at: string;
+  artist_name: string | null;
+  artist_image: string | null;
+  artist_genre: string | null;
 }
 
-export const fetchPendingInvites = async (email: string): Promise<PendingInvite[]> => {
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select('*, artists(name, content, user_id)')
-    .eq('email', email)
-    .eq('status', 'pending');
+// A RPC filtra pelo e-mail do próprio usuário logado (auth.jwt) — nenhum parâmetro necessário.
+export const fetchPendingInvites = async (): Promise<PendingInvite[]> => {
+  const { data, error } = await supabase.rpc('get_pending_invites');
   if (error) throw error;
   return (data || []) as PendingInvite[];
 };

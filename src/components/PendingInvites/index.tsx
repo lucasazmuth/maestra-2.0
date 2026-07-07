@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from 'react';
-import { message } from 'antd';
+import { Popconfirm, message } from 'antd';
 import { FiCheck, FiX, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
 import { useAppSelector, useAppDispatch } from '../../store/store';
@@ -18,11 +18,10 @@ const PendingInvites: FC = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
-    const email = user?.email;
-    if (!email) return;
+    if (!user?.email) return; // a RPC filtra pelo e-mail do usuário logado
     setLoading(true);
     membersDb
-      .fetchPendingInvites(email)
+      .fetchPendingInvites()
       .then(setInvites)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -33,7 +32,7 @@ const PendingInvites: FC = () => {
     try {
       await membersDb.acceptInvite(invite.id, user.id, user.user_metadata?.full_name || '');
       setInvites((prev) => prev.filter((i) => i.id !== invite.id));
-      message.success(`Você entrou na equipe de ${invite.artists?.name || 'artista'}!`);
+      message.success(`Você entrou na equipe de ${invite.artist_name || 'artista'}!`);
       dispatch(artistsActions.fetchArtists(user.id));
     } catch {
       message.error('Erro ao aceitar convite');
@@ -51,11 +50,11 @@ const PendingInvites: FC = () => {
   };
 
   const getImage = (invite: PendingInvite): string => {
-    return invite.artists?.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE;
+    return invite.artist_image || ARTISTS_DEFAULT_IMAGE;
   };
 
   const getGenre = (invite: PendingInvite): string | undefined => {
-    return invite.artists?.content?.identity?.genre;
+    return invite.artist_genre || undefined;
   };
 
   const getAccessLabels = (levels: AccessLevel[]): string[] => {
@@ -100,7 +99,7 @@ const PendingInvites: FC = () => {
               >
                 <img
                   src={image}
-                  alt={inv.artists?.name || 'Artista'}
+                  alt={inv.artist_name || 'Artista'}
                   style={{
                     width: 48,
                     height: 48,
@@ -112,7 +111,7 @@ const PendingInvites: FC = () => {
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>
-                    {inv.artists?.name || 'Artista'}
+                    {inv.artist_name || 'Artista'}
                   </div>
                   <div style={{ color: '#b3b3b3', fontSize: 13 }}>
                     Você foi convidado para a equipe
@@ -163,36 +162,44 @@ const PendingInvites: FC = () => {
                 >
                   <FiCheck size={18} strokeWidth={3} />
                 </button>
-                <button
-                  onClick={() => reject(inv)}
-                  title='Recusar convite'
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: '50%',
-                    border: '1px solid #404040',
-                    background: 'transparent',
-                    color: '#b3b3b3',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    transition: 'transform .1s, color .15s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.08)';
-                    e.currentTarget.style.color = '#e91429';
-                    e.currentTarget.style.borderColor = '#e91429';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.color = '#b3b3b3';
-                    e.currentTarget.style.borderColor = '#404040';
-                  }}
+                <Popconfirm
+                  title="Recusar convite?"
+                  description={`Você não vai mais poder acessar a equipe de ${inv.artist_name || 'este artista'}.`}
+                  okText="Recusar"
+                  cancelText="Cancelar"
+                  okButtonProps={{ danger: true }}
+                  onConfirm={() => reject(inv)}
                 >
-                  <FiX size={18} />
-                </button>
+                  <button
+                    title='Recusar convite'
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: '50%',
+                      border: '1px solid #404040',
+                      background: 'transparent',
+                      color: '#b3b3b3',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      transition: 'transform .1s, color .15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.08)';
+                      e.currentTarget.style.color = '#e91429';
+                      e.currentTarget.style.borderColor = '#e91429';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.color = '#b3b3b3';
+                      e.currentTarget.style.borderColor = '#404040';
+                    }}
+                  >
+                    <FiX size={18} />
+                  </button>
+                </Popconfirm>
               </div>
 
               {/* Expanded details */}
