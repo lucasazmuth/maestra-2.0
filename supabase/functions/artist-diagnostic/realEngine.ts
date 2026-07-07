@@ -214,8 +214,14 @@ export function computeRealIndexV3(input: RealInputsV3): RealIndexV3 {
     ])),
     zComp('videoViews', 'Consumo de vídeo (YouTube)', apiZ(input.youtubeMonthlyViews, CUTS.youtubeViews, sp)),
   ];
-  const rHigh = rComps.every((c) => c.high);
-  const rTopIcon = rComps.every((c) => c.topicon);
+  // Opção A (decisão da metodologia — Anita): um canal AUSENTE (ex.: artista sem YouTube) sai da
+  // conta e o R é reponderado sobre as frentes que EXISTEM — mesma lógica já usada dentro do social
+  // (IG+TikTok). Canal presente com número ruim CONTINUA contando; só o realmente ausente (z nulo)
+  // é ignorado. Fallback: se nada estiver presente, usa todos (R apagado/0, sem divisão por zero).
+  const rPresent = rComps.filter((c) => !c.absent);
+  const rEffective = rPresent.length ? rPresent : rComps;
+  const rHigh = rEffective.every((c) => c.high);
+  const rTopIcon = rEffective.every((c) => c.topicon);
 
   // ── A: 4 componentes (25%), acende com os 4 altos (§6) ──
   // c1 conversão (followers/listeners)
@@ -331,7 +337,7 @@ export function computeRealIndexV3(input: RealInputsV3): RealIndexV3 {
     version: 3,
     profile: { key, name: def.name, description: def.description, insights: def.insights },
     pattern,
-    boletim: { r: countBoletim(rComps, rHigh), e: boletimE, a: countBoletim(aComps, aHigh), l: boletimL },
+    boletim: { r: countBoletim(rEffective, rHigh), e: boletimE, a: countBoletim(aComps, aHigh), l: boletimL },
     cutLine: { r: 70, e: 70, a: 70, l: 70 },
     topIcon,
     dimTopIcon: { r: rTopIcon, e: eTopIcon, a: aTopIcon, l: lTopIcon },

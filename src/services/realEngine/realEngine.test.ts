@@ -52,6 +52,23 @@ describe('Motor REAL v3', () => {
     expect(three.dimTopIcon.r).toBe(true); // todos no P95
   });
 
+  it('R reponderа canal AUSENTE (opção A): sem YouTube acende com ouvintes + social altos', () => {
+    // YouTube AUSENTE (null) sai da conta → R = média das 2 frentes presentes (ambas altas) → acende.
+    const semYt = computeRealIndexV3(base({
+      spotifyListeners: 20_000_000, igFollowers: 2_000_000, tiktokFollowers: 2_000_000,
+      youtubeMonthlyViews: null,
+    }));
+    expect(semYt.pattern.r).toBe(true);
+    expect(semYt.boletim.r).toBeGreaterThanOrEqual(70);
+
+    // Contraste: YouTube PRESENTE mas ruim NÃO é ignorado (só o ausente sai) → R apagado.
+    const ytRuim = computeRealIndexV3(base({
+      spotifyListeners: 20_000_000, igFollowers: 2_000_000, tiktokFollowers: 2_000_000,
+      youtubeMonthlyViews: 1_000,
+    }));
+    expect(ytRuim.pattern.r).toBe(false);
+  });
+
   // ── E ──
   it('E acende com receita_efetiva ≥ 11.250 e o modulador derruba o caso de borda', () => {
     // 4 shows × R$3.000 = R$12.000; com CNPJ+empresário modulador 1.0 → acende.
