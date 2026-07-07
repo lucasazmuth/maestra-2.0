@@ -702,17 +702,51 @@ h3 {
     min-width: 0 !important;
     gap: 6px;
   }
+  // Progresso = linha fina no rodapé (ref. Group 5.svg): 2px, SEM thumb, preenchido #E0E0E0
+  // sobre trilho #DBDBDB a 21%. O preenchido é feito por gradiente com a var --pct.
   .local-player-bar .lpb-progress-mobile {
     display: block;
     position: absolute;
-    bottom: 5px;
-    left: 12px;
-    right: 12px;
+    bottom: 6px;
+    left: 10px;
+    right: 10px;
     width: auto;
-    height: 3px;
+    height: 2px;
     margin: 0;
-    accent-color: #be81ec;
+    padding: 0;
     cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 2px;
+    background: linear-gradient(
+      to right,
+      #e0e0e0 0,
+      #e0e0e0 var(--pct, 0%),
+      rgba(219, 219, 219, 0.21) var(--pct, 0%),
+      rgba(219, 219, 219, 0.21) 100%
+    );
+    &::-webkit-slider-runnable-track {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      height: 2px;
+    }
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 0;
+      height: 0;
+    }
+    &::-moz-range-track {
+      background: transparent;
+      height: 2px;
+    }
+    &::-moz-range-thumb {
+      width: 0;
+      height: 0;
+      border: none;
+      background: transparent;
+    }
   }
 
   .mobile-nav-item {

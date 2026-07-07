@@ -103,7 +103,8 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
         gap: 16,
       }}
     >
-      {/* Progresso slim no topo da barra — só mobile (no desktop o progresso fica inline no centro). */}
+      {/* Progresso slim no rodapé — só mobile (no desktop o progresso fica inline no centro).
+          Linha fina sem thumb: o preenchido (--pct) é feito via gradiente no CSS. */}
       <input
         className='lpb-progress-mobile'
         type='range'
@@ -117,6 +118,7 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
           setTime(v);
         }}
         aria-label='Progresso do áudio'
+        style={{ ['--pct' as string]: duration ? `${(time / duration) * 100}%` : '0%' }}
       />
       <audio
         ref={audioRef}
