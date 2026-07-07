@@ -178,17 +178,18 @@ const Catalog: FC = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <h1 className='catalog-title' style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: 0 }}>
           Catálogo
         </h1>
         {/* Contador + "Nova faixa" só pra quem pode editar o catálogo (dono ou PRO). Colaborador
             sem PRO vê o catálogo em somente-leitura: sem contador de limite e sem CTA que abriria
             um upsell de "limite atingido" enganoso (ele está em 0/10; o bloqueio é de permissão). */}
         {tab === 'manual' && canEditCatalog && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
             {maxTracks !== Infinity && <TrackCounter currentCount={currentCount} maxTracks={maxTracks} />}
             <button
+              className='catalog-add-btn'
               onClick={() => {
                 if (!canAdd) {
                   setUpsellOpen(true);
@@ -209,6 +210,8 @@ const Catalog: FC = () => {
                 cursor: canAdd ? 'pointer' : 'not-allowed',
                 fontWeight: 700,
                 opacity: canAdd ? 1 : 0.5,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
               }}
             >
               <AddIcon size={18} /> Nova faixa

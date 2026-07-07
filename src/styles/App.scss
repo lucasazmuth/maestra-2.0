@@ -758,6 +758,15 @@ h3 {
     padding-bottom: 10px;
   }
 
+  // Header do Catálogo no mobile: título menor e botão "Nova faixa" que não quebra linha
+  // (!important porque os tamanhos vêm de estilo inline no componente).
+  .catalog-title {
+    font-size: 22px !important;
+  }
+  .catalog-add-btn {
+    padding: 8px 14px !important;
+  }
+
   // ── Player do catálogo no mobile ──────────────────────────────────────────────
   // Card FLUTUANTE acima da navbar (ref. Home.svg): #333842 (já no base), cantos 10px, 8px de
   // margem lateral, ~61px. Navbar = 64px; com o banner (84px) a navbar sobe, o card sobe junto.
