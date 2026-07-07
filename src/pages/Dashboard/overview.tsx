@@ -31,7 +31,7 @@ const sectionTitle: CSSProperties = { color: '#fff', fontSize: 20, fontWeight: 7
 const Panel: FC<{ icon: ReactNode; title: string; action?: { label: string; onClick: () => void }; children: ReactNode }> = ({
   icon, title, action, children,
 }) => (
-  <section style={{ background: '#181818', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
+  <section style={{ background: '#181818', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
       <span style={{ color: '#b3b3b3', display: 'flex' }}>{icon}</span>
       <h3 style={{ color: '#fff', fontSize: 16, fontWeight: 700, margin: 0, flex: 1, fontFamily: 'SpotifyMixUITitle' }}>{title}</h3>

@@ -22,6 +22,14 @@ const Artists: FC = () => {
   const artists = useAppSelector((s) => s.artists.items);
   const loading = useAppSelector((s) => s.artists.loading);
 
+  // Título contextual: "Seus artistas" (plural) soa estranho pra quem tem 0 ou 1 perfil
+  // (o caso comum é o artista independente com o próprio perfil). Ajusta pela quantidade.
+  const heading = artists.length === 0
+    ? 'Comece por aqui'
+    : artists.length === 1
+      ? 'Seu artista'
+      : 'Seus artistas';
+
   useEffect(() => {
     if (user?.id) dispatch(artistsActions.fetchArtists(user.id));
   }, [user?.id, dispatch]);
@@ -87,7 +95,7 @@ const Artists: FC = () => {
             margin: 0,
           }}
         >
-          Seus artistas
+          {heading}
         </h1>
         <button
           onClick={handleCreate}
