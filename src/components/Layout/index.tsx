@@ -10,6 +10,7 @@ import { MobileNav } from './components/MobileNav';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
 import { StatusBanner, useStatusBanner } from '../AnnouncementBanner';
+import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { getLibraryCollapsed, uiActions } from '../../store/slices/ui';
@@ -30,9 +31,17 @@ export const AppLayout: FC = memo(() => {
   const isMobile = useIsMobile();
   const [isTablet, setIsTablet] = useState(false);
   const rawBannerKind = useStatusBanner();
+  // Com o player do catálogo aberto, ele ASSUME o lugar do banner no rodapé — então o banner some
+  // enquanto o player está no ar. Sem depender de `isMobile` (o breakpoint do JS ≠ do CSS deixava
+  // o banner visível numa faixa de largura, e o player sobrepunha em vez de substituir).
+  const playerOpen = useLocalPlayerStore((s) => s.open);
   // No mobile o banner promocional ("Assine o Maestra Pro") toma espaço demais e não é crítico —
   // escondemos só ele. Os avisos de pagamento (grace/pending) continuam aparecendo no mobile.
-  const bannerKind = rawBannerKind === 'promo' && isMobile ? null : rawBannerKind;
+  const bannerKind = playerOpen
+    ? null
+    : rawBannerKind === 'promo' && isMobile
+    ? null
+    : rawBannerKind;
   const userId = useAppSelector((s) => s.auth.user?.id);
   // Coluna de resultados do Planejamento Estratégico (publicada pelo Wizard via store global):
   // aparece como 3ª coluna, irmã da navbar e da página, só enquanto o wizard está montado.

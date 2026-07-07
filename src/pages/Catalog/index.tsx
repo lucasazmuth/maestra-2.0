@@ -14,6 +14,7 @@ import { UpsellModal } from '../../components/UpsellModal';
 import { Spinner } from '../../components/spinner/spinner';
 import { SpotifyEmbedPlayer } from '../../components/SpotifyEmbedPlayer';
 import { LocalPlayerBar, type LocalTrack } from '../../components/LocalPlayerBar';
+import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import { TrackModal } from '../../components/TrackModal';
 import { CATALOG_STATUS, formatMs, isActiveCatalogStatus } from '../../constants/maestra';
 import * as catalogDb from '../../services/db/catalog';
@@ -72,6 +73,13 @@ const Catalog: FC = () => {
   const [editing, setEditing] = useState<CatalogItem | null>(null);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const [localTrackId, setLocalTrackId] = useState<string | null>(null);
+
+  // Player aberto → o Layout esconde o banner "Assine Pro" (o player ocupa o lugar dele).
+  const setPlayerOpen = useLocalPlayerStore((s) => s.setOpen);
+  useEffect(() => {
+    setPlayerOpen(!!localTrackId);
+    return () => setPlayerOpen(false); // ao sair do Catálogo, libera o banner de volta
+  }, [localTrackId, setPlayerOpen]);
 
   const { canAdd, currentCount, maxTracks, isReadOnlyMode } = useCanAddTrack(
     items.filter((i) => isActiveCatalogStatus(i.status)).length,

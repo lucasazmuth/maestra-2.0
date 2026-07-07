@@ -577,16 +577,18 @@ h3 {
 // Desktop: controles + progresso + volume à ESQUERDA, capa + info no MEIO, fechar à direita.
 .local-player-bar {
   position: fixed;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
+  // Mesma geometria EXATA do banner "Assine Pro" (que ele substitui): 7px de margem, 68px, radius 8.
+  left: 7px;
+  right: 7px;
+  bottom: 7px;
+  min-height: 68px;
   z-index: 1000;
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 12px 20px;
+  padding: 10px 20px; // 48 (capa) + 20 = 68px, mesma altura do banner
   background: #333842;
-  border-radius: 12px;
+  border-radius: 8px;
 
   .lpb-controls {
     flex: 0 0 auto;
@@ -680,11 +682,6 @@ h3 {
   display: none;
 }
 
-// Com o banner de pagamento no rodapé (desktop), o card sobe pra ficar acima dele (~68px + folga).
-.main-container.has-bottom-banner .local-player-bar {
-  bottom: 84px;
-}
-
 .mobile-nav {
   display: none;
 }
@@ -774,6 +771,7 @@ h3 {
     left: 8px;
     right: 8px;
     bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px);
+    min-height: 0; // no mobile o card é compacto (não os 68px do desktop)
     border-radius: 10px;
     gap: 12px; // mesmo ritmo dos controles, pra não colar o volume no "próxima"
     padding: 9px 12px;
