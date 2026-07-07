@@ -66,7 +66,9 @@ export const AppLayout: FC = memo(() => {
   // da .Main-section, e aparece atrás do gradiente translúcido). Por isso NÃO reservamos altura pra
   // ela aqui — só pro banner de pagamento, que é uma barra sólida. Reserva do banner é justa por
   // viewport (desktop ~1 linha = 76px; mobile 2 linhas = 84px).
-  const bottomReserve = bannerKind ? (isMobile ? 84 : 76) : 0;
+  // Reserva a altura do rodapé pro conteúdo não colar no card. Com o player no lugar do banner
+  // (desktop), reserva o mesmo espaço (76px) — senão o player fica sem respiro no topo.
+  const bottomReserve = bannerKind ? (isMobile ? 84 : 76) : playerOpen && !isMobile ? 76 : 0;
 
   // Carrega o status da assinatura uma vez ao autenticar, de forma global —
   // assim o banner e (futuramente) os entitlements refletem a realidade sem

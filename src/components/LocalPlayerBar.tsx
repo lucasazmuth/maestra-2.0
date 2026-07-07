@@ -8,6 +8,7 @@ import {
   VolumeMuteIcon,
   CloseIcon,
 } from './Icons';
+import { useLocalPlayerStore } from '../stores/localPlayerStore';
 
 // Player fixo no rodapé (estilo barra do Spotify) para faixas cadastradas no sistema
 // (audio_file no bucket `catalog`). Controles: anterior/play/pause/próxima, progresso e volume.
@@ -46,7 +47,11 @@ const ctrlBtn: React.CSSProperties = {
 
 export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, onClose }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
+  // `playing` é do store (fonte da verdade) — assim a LINHA do catálogo mostra play/pause em
+  // sincronia e pode pausar/retomar a faixa atual.
+  const playing = useLocalPlayerStore((s) => s.playing);
+  const setPlaying = useLocalPlayerStore((s) => s.setPlaying);
+  const setStoreCurrentId = useLocalPlayerStore((s) => s.setCurrentId);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -54,6 +59,11 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
 
   const index = tracks.findIndex((t) => t.id === currentId);
   const track = tracks[index];
+
+  // Publica a faixa atual no store (a lista usa pra sincronizar o botão play/pause).
+  useEffect(() => {
+    setStoreCurrentId(currentId);
+  }, [currentId, setStoreCurrentId]);
 
   // (Re)carrega e toca quando a faixa muda.
   useEffect(() => {
@@ -67,6 +77,14 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [track?.id]);
 
+  // Sincroniza o <audio> com o `playing` do store (toggles vindos da lista OU do player).
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !audio.src) return;
+    if (playing && audio.paused) audio.play().catch(() => {});
+    else if (!playing && !audio.paused) audio.pause();
+  }, [playing]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (audio) audio.volume = muted ? 0 : volume;
@@ -78,16 +96,7 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
     onChangeTrack(tracks[next].id);
   };
 
-  const togglePlay = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (audio.paused) {
-      audio.play().then(() => setPlaying(true)).catch(() => {});
-    } else {
-      audio.pause();
-      setPlaying(false);
-    }
-  };
+  const togglePlay = () => setPlaying(!playing);
 
   if (!track) return null;
 
@@ -117,6 +126,8 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
       />
       <audio
         ref={audioRef}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onEnded={() => (tracks.length > 1 ? goTo(1) : setPlaying(false))}

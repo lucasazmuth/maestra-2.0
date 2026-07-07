@@ -81,6 +81,11 @@ const Catalog: FC = () => {
     return () => setPlayerOpen(false); // ao sair do Catálogo, libera o banner de volta
   }, [localTrackId, setPlayerOpen]);
 
+  // Estado do player (fonte da verdade) pra a LINHA mostrar play/pause em sincronia e pausar/retomar.
+  const playerCurrentId = useLocalPlayerStore((s) => s.currentId);
+  const playerPlaying = useLocalPlayerStore((s) => s.playing);
+  const togglePlayer = useLocalPlayerStore((s) => s.togglePlaying);
+
   const { canAdd, currentCount, maxTracks, isReadOnlyMode } = useCanAddTrack(
     items.filter((i) => isActiveCatalogStatus(i.status)).length,
     artist
@@ -401,34 +406,50 @@ const Catalog: FC = () => {
                       localTrackId === it.id ? 'rgba(190, 129, 236,0.08)' : 'transparent')
                   }
                 >
-                  <button
-                    title={it.audio_file ? 'Tocar' : 'Sem áudio'}
-                    disabled={!it.audio_file}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (it.audio_file) openLocal(localTrackId === it.id ? null : it.id);
-                    }}
-                    style={{
-                      width: 36,
-                      height: 36,
-                      minWidth: 36,
-                      borderRadius: '50%',
-                      border: 'none',
-                      background: it.audio_file ? '#BE81EC' : '#2a2a2a',
-                      cursor: it.audio_file ? 'pointer' : 'not-allowed',
-                      opacity: it.audio_file ? 1 : 0.5,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform .1s',
-                    }}
-                    onMouseDown={(e) => it.audio_file && (e.currentTarget.style.transform = 'scale(0.92)')}
-                    onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                  >
-                    <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#000' }}>
-                      <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
-                    </svg>
-                  </button>
+                  {(() => {
+                    // Espelha o player: se ESTA faixa é a do player, mostra pausar/tocar conforme
+                    // o estado e o clique pausa/retoma; senão, o clique inicia esta faixa.
+                    const isCurrent = localTrackId === it.id && playerCurrentId === it.id;
+                    const isPlaying = isCurrent && playerPlaying;
+                    return (
+                      <button
+                        title={!it.audio_file ? 'Sem áudio' : isPlaying ? 'Pausar' : 'Tocar'}
+                        disabled={!it.audio_file}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!it.audio_file) return;
+                          if (isCurrent) togglePlayer(); // já no player → pausa/retoma
+                          else openLocal(it.id); // começa esta faixa
+                        }}
+                        style={{
+                          width: 36,
+                          height: 36,
+                          minWidth: 36,
+                          borderRadius: '50%',
+                          border: 'none',
+                          background: it.audio_file ? '#BE81EC' : '#2a2a2a',
+                          cursor: it.audio_file ? 'pointer' : 'not-allowed',
+                          opacity: it.audio_file ? 1 : 0.5,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'transform .1s',
+                        }}
+                        onMouseDown={(e) => it.audio_file && (e.currentTarget.style.transform = 'scale(0.92)')}
+                        onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                      >
+                        {isPlaying ? (
+                          <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#000' }}>
+                            <path d='M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z' />
+                          </svg>
+                        ) : (
+                          <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#000' }}>
+                            <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })()}
                   <img
                     src={it.cover_image || `${process.env.PUBLIC_URL}/images/playlist.png`}
                     alt=''
