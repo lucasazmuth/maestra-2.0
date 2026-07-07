@@ -71,7 +71,6 @@ export const MetricsEvolution: FC<MetricsEvolutionProps> = ({ artistId, hideLabe
           borderRadius: 14,
           padding: 20,
           marginBottom: 24,
-          border: '1px solid #282828',
         }}
       >
         {!hideLabel && (
