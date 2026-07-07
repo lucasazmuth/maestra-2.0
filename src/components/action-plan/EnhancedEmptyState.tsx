@@ -9,8 +9,10 @@ const REDUCE_MOTION =
 
 // Empty state conversacional: a Nyta "fala" (efeito de digitação) convidando o artista a
 // iniciar o planejamento; ao terminar, surge a ação. Objetivo: intuitivo e acolhedor.
-const EnhancedEmptyState: FC<EnhancedEmptyStateProps> = ({ artistName, onStartWizard }) => {
-  const greeting = `Oi${artistName ? `, ${artistName}` : ''}! Eu sou a Nyta, sua estrategista de carreira. Bora montar, juntos, um plano sob medida pra você?`;
+const EnhancedEmptyState: FC<EnhancedEmptyStateProps> = ({ artistName, onStartWizard, canStart = true }) => {
+  const greeting = canStart
+    ? `Oi${artistName ? `, ${artistName}` : ''}! Eu sou a Nyta, sua estrategista de carreira. Bora montar, juntos, um plano sob medida pra você?`
+    : `Oi${artistName ? `, ${artistName}` : ''}! Eu sou a Nyta. O planejamento deste artista ainda não foi criado. Assim que o titular do perfil montar o plano, ele aparece aqui pra você acompanhar.`;
 
   const [typed, setTyped] = useState(REDUCE_MOTION ? greeting : '');
   const done = typed.length >= greeting.length;
@@ -44,13 +46,15 @@ const EnhancedEmptyState: FC<EnhancedEmptyStateProps> = ({ artistName, onStartWi
           {!done && <span className={styles.caret} aria-hidden />}
         </p>
 
-        <button
-          className={`${styles.cta} ${done ? styles.ctaVisible : ''}`}
-          onClick={onStartWizard}
-          disabled={!done}
-        >
-          Sim, iniciar meu planejamento
-        </button>
+        {canStart && (
+          <button
+            className={`${styles.cta} ${done ? styles.ctaVisible : ''}`}
+            onClick={onStartWizard}
+            disabled={!done}
+          >
+            Sim, iniciar meu planejamento
+          </button>
+        )}
       </div>
     </div>
   );

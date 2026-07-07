@@ -98,7 +98,7 @@ const ActionPlan: FC = () => {
   const user = useAppSelector((s) => s.auth.user);
 
   // Gerir tarefas exige PRO. (Editar o dossiê — fundamentos/objetivos etc. — agora é no Perfil.)
-  const { manageTasks } = useArtistCapabilities(artist);
+  const { manageTasks, editPlanning } = useArtistCapabilities(artist);
   const content = artist?.content;
   const objectives = useMemo<string[]>(() => content?.objectives || [], [content]);
   const strategies = useMemo<Strategy[]>(() => content?.strategies || [], [content]);
@@ -216,6 +216,7 @@ const ActionPlan: FC = () => {
         artistId={artist.id}
         artistName={content?.identity?.name || artist.name || ''}
         onStartWizard={() => navigate(`/artists/${artist.id}/wizard`)}
+        canStart={editPlanning}
       />
     );
   }
