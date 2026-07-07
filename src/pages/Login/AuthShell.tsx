@@ -4,6 +4,8 @@ import { FcGoogle } from 'react-icons/fc';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser } from 'react-icons/fi';
 
 import { Wordmark } from '../../components/Wordmark';
+import { useAppDispatch } from '../../store/store';
+import { authActions } from '../../store/slices/auth';
 import styles from './AuthShell.module.scss';
 
 export const authError = (err: any): string => {
@@ -25,11 +27,27 @@ export const authError = (err: any): string => {
 };
 
 export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ children, footer }) => {
+  const dispatch = useAppDispatch();
   const [socialNote, setSocialNote] = useState<string | null>(null);
+  const [socialLoading, setSocialLoading] = useState(false);
 
-  // Login social ainda não disponível: apenas avisa, sem redirecionar.
-  const social = () =>
-    setSocialNote('Login com Google em breve. Por enquanto, entre com e-mail e senha.');
+  // Dispara o OAuth do Google: o Supabase redireciona pro Google e volta em /auth/callback.
+  const social = async () => {
+    setSocialNote(null);
+    setSocialLoading(true);
+    try {
+      await dispatch(authActions.signInWithProvider('google')).unwrap();
+      // Sucesso: o navegador está sendo redirecionado pro Google; não há mais nada a fazer aqui.
+    } catch (err: any) {
+      setSocialLoading(false);
+      const msg = String(err?.message || '').toLowerCase();
+      setSocialNote(
+        msg.includes('not enabled') || msg.includes('provider')
+          ? 'Login com Google indisponível no momento. Use e-mail e senha.'
+          : 'Não foi possível iniciar o login com Google. Tente novamente.'
+      );
+    }
+  };
 
   return (
     <div className={styles.page}>
@@ -45,8 +63,14 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
 
           <p className={styles.eyebrow}>Acesse com:</p>
           <div className={styles.social}>
-            <button type='button' className={styles.socialBtn} onClick={social}>
-              <FcGoogle /> Google
+            <button
+              type='button'
+              className={styles.socialBtn}
+              onClick={social}
+              disabled={socialLoading}
+              style={socialLoading ? { opacity: 0.7, cursor: 'wait' } : undefined}
+            >
+              <FcGoogle /> {socialLoading ? 'Redirecionando…' : 'Google'}
             </button>
           </div>
           {socialNote && (

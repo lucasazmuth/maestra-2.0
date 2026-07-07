@@ -83,7 +83,9 @@ export const signInWithProvider = createAsyncThunk(
   async (provider: 'google' | 'facebook') => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: window.location.origin },
+      // Volta numa rota dedicada que troca o ?code= por sessão (PKCE). Mantemos
+      // detectSessionInUrl:false no client global por causa do fluxo de recovery.
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (error) throw error;
     return data;

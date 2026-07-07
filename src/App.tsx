@@ -38,6 +38,7 @@ const MusicRioAcademy = lazy(() => import('./pages/MusicRioAcademy'));
 const EventNiteroi = lazy(() => import('./pages/EventNiteroi'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const Page404 = lazy(() => import('./pages/404'));
 const Artists = lazy(() => import('./pages/Artists'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -77,14 +78,25 @@ const Payments = lazy(() => import('./pages/Payments'));
 const isRecoveryHash = (hash: string): boolean =>
   hash.includes('access_token=') && hash.includes('type=recovery');
 
+// Retorno do login social (Google) no fluxo IMPLICIT: os tokens voltam no hash
+// (#access_token=...&refresh_token=...), SEM type=recovery. Igual ao recovery, se a URL de
+// redirect não estiver na allowlist do Supabase o retorno cai no Site URL (a landing /) — então
+// capturamos em qualquer rota e reencaminhamos pra /auth/callback, que estabelece a sessão.
+const isOAuthHash = (hash: string): boolean =>
+  hash.includes('access_token=') && !hash.includes('type=recovery');
+
 const RecoveryHashGuard: FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname !== '/redefinir-senha' && isRecoveryHash(window.location.hash)) {
+    const hash = window.location.hash;
+    if (location.pathname !== '/redefinir-senha' && isRecoveryHash(hash)) {
       // Preserva o hash (tokens) ao trocar de rota — a ResetPassword lê de window.location.hash.
-      navigate(`/redefinir-senha${window.location.hash}`, { replace: true });
+      navigate(`/redefinir-senha${hash}`, { replace: true });
+    } else if (location.pathname !== '/auth/callback' && isOAuthHash(hash)) {
+      // Preserva o hash até a rota de callback, que lê os tokens e faz o setSession.
+      navigate(`/auth/callback${hash}`, { replace: true });
     }
   }, [location.pathname, navigate]);
 
@@ -214,6 +226,10 @@ const AppRoutes: FC = () => {
           FORA de PublicOnly de propósito — a própria tela estabelece uma sessão de recovery, e
           PublicOnly redirecionaria pra /artists assim que ela entrasse, sem deixar trocar a senha. */}
       <Route path='/redefinir-senha' element={<ResetPassword />} />
+
+      {/* Retorno do login social (Google). FORA de PublicOnly de propósito: a troca do ?code=
+          por sessão precisa rodar antes de qualquer guardião redirecionar. */}
+      <Route path='/auth/callback' element={<AuthCallback />} />
 
       {/* Páginas legais (Termos / Privacidade): públicas e standalone — acessíveis da landing
           por quem ainda não tem conta. Conteúdo único em src/constants/legal.ts. */}
