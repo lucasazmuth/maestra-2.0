@@ -766,7 +766,7 @@ h3 {
     right: 8px;
     bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px);
     border-radius: 10px;
-    gap: 10px;
+    gap: 12px; // mesmo ritmo dos controles, pra não colar o volume no "próxima"
     padding: 9px 12px;
     overflow: hidden; // respeita os cantos arredondados / linha de progresso
   }
@@ -786,7 +786,7 @@ h3 {
   }
   .local-player-bar .lpb-controls {
     order: 1;
-    gap: 14px;
+    gap: 12px;
   }
   .local-player-bar .lpb-play {
     width: 36px;

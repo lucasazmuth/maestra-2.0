@@ -424,8 +424,8 @@ const Catalog: FC = () => {
                     style={{ width: 44, height: 44, borderRadius: 4, objectFit: 'cover' }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#fff', fontWeight: 600 }}>{it.title}</div>
-                    <div style={{ color: '#b3b3b3', fontSize: 13 }}>{it.genre || '—'}</div>
+                    <div style={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.title}</div>
+                    <div style={{ color: '#b3b3b3', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.genre || '—'}</div>
                   </div>
                   {it.assignee?.name && (
                     <span
