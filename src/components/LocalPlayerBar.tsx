@@ -93,12 +93,8 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
 
   return (
     <div
+      className='local-player-bar'
       style={{
-        position: 'fixed',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 1000,
         background: '#000',
         borderTop: '1px solid #1f1f1f',
         padding: '10px 16px',
@@ -107,6 +103,21 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
         gap: 16,
       }}
     >
+      {/* Progresso slim no topo da barra — só mobile (no desktop o progresso fica inline no centro). */}
+      <input
+        className='lpb-progress-mobile'
+        type='range'
+        min={0}
+        max={duration || 0}
+        step={0.5}
+        value={time}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          if (audioRef.current) audioRef.current.currentTime = v;
+          setTime(v);
+        }}
+        aria-label='Progresso do áudio'
+      />
       <audio
         ref={audioRef}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
@@ -115,7 +126,7 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
       />
 
       {/* Esquerda: faixa atual */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '25%', minWidth: 160 }}>
+      <div className='lpb-left' style={{ display: 'flex', alignItems: 'center', gap: 12, width: '25%', minWidth: 160 }}>
         <img
           src={track.cover || `${process.env.PUBLIC_URL}/images/playlist.png`}
           alt=''
@@ -141,7 +152,7 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
       </div>
 
       {/* Centro: controles + progresso */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+      <div className='lpb-center' style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
           <button title='Anterior' style={ctrlBtn} onClick={() => goTo(-1)} disabled={tracks.length < 2}>
             <SkipBack />
@@ -167,7 +178,7 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
             <SkipNext />
           </button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', maxWidth: 560 }}>
+        <div className='lpb-progress' style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', maxWidth: 560 }}>
           <span style={{ color: '#b3b3b3', fontSize: 11, minWidth: 34, textAlign: 'right' }}>
             {fmt(time)}
           </span>
@@ -190,6 +201,7 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
 
       {/* Direita: volume + fechar */}
       <div
+        className='lpb-right'
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -203,6 +215,7 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
           {muted || volume === 0 ? <VolumeMuteIcon /> : <VolumeIcon />}
         </button>
         <input
+          className='lpb-volume'
           type='range'
           min={0}
           max={1}

@@ -573,6 +573,19 @@ h3 {
 
 // ── Tab bar do mobile (rodapé, in-flow abaixo do banner) ─────────────────────
 // A sidebar é oculta no mobile; esta barra navega entre os módulos do artista.
+// Player de faixas do catálogo (barra fixa estilo Spotify). No desktop ocupa o rodapé inteiro.
+.local-player-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+// A linha de progresso no topo só existe no mobile (no desktop o progresso é inline no centro).
+.lpb-progress-mobile {
+  display: none;
+}
+
 .mobile-nav {
   display: none;
 }
@@ -644,6 +657,62 @@ h3 {
   .main-container.has-bottom-banner .mobile-nav {
     bottom: 84px;
     padding-bottom: 10px;
+  }
+
+  // ── Player do catálogo no mobile ──────────────────────────────────────────────
+  // Card FLUTUANTE acima da navbar (ref. Home.svg): #333842, cantos 10px, 8px de margem
+  // lateral, ~61px. Navbar = 64px; com o banner (84px) a navbar sobe, o card sobe junto.
+  // !important onde compete com estilo INLINE (background/border-top do desktop).
+  .local-player-bar {
+    left: 8px;
+    right: 8px;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px);
+    border-radius: 10px;
+    background: #333842 !important;
+    border-top: none !important;
+    gap: 10px;
+    padding: 9px 12px;
+    overflow: hidden; // respeita os cantos arredondados
+  }
+  .main-container.has-bottom-banner .local-player-bar {
+    bottom: calc(148px + env(safe-area-inset-bottom, 0px) + 8px);
+  }
+  // Colunas flexíveis (o 25%/min-width 160 estourava a largura no mobile).
+  .local-player-bar .lpb-left {
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 1 1 auto;
+  }
+  .local-player-bar .lpb-left img {
+    width: 43px !important;
+    height: 43px !important;
+    border-radius: 3px !important;
+  }
+  .local-player-bar .lpb-center {
+    flex: 0 0 auto !important;
+  }
+  // No compacto: o progresso inline (tempos + range) e o slider de volume somem;
+  // o progresso vira uma linha fina no RODAPÉ do card (igual à referência).
+  .local-player-bar .lpb-progress,
+  .local-player-bar .lpb-volume {
+    display: none !important;
+  }
+  .local-player-bar .lpb-right {
+    width: auto !important;
+    min-width: 0 !important;
+    gap: 6px;
+  }
+  .local-player-bar .lpb-progress-mobile {
+    display: block;
+    position: absolute;
+    bottom: 5px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    height: 3px;
+    margin: 0;
+    accent-color: #be81ec;
+    cursor: pointer;
   }
 
   .mobile-nav-item {
