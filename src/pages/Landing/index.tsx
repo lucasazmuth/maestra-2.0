@@ -70,9 +70,9 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
   {
     badge: 'Gestão completa',
     accent: GESTAO_ACCENT,
-    title: 'Catálogo, agenda e equipe num lugar só',
-    desc: 'Centralize a operação da sua carreira: organize suas faixas, acompanhe shows e lançamentos e traga sua equipe pra dentro.',
-    items: ['Catálogo de faixas ilimitado', 'Agenda de shows e lançamentos', 'Acesso a todos os perfis da conta'],
+    title: 'Onde o plano vira o seu dia a dia',
+    desc: 'A outra frente da Maestra: a operação da carreira. Organize suas faixas, acompanhe shows e lançamentos e traga sua equipe pra dentro. E ela só cresce.',
+    items: ['Catálogo de faixas ilimitado', 'Agenda de shows e lançamentos', 'Novos módulos a caminho: marketing, CRM e financeiro'],
     glyph: <img src={featureGestao} alt="" />,
   },
 ];
@@ -170,16 +170,43 @@ const SUGGESTIONS = [
 // ─── Hero (caixa de prompt da Nyta IA) ───────────────────────────────────────
 const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   const navigate = useNavigate();
-  const [prompt, setPrompt] = useState('');
+  const [pi, setPi] = useState(0);       // frase atual do efeito de digitação
+  const [display, setDisplay] = useState('');
 
-  // O prompt é a porta de entrada pra IA: guarda a pergunta e leva pro fluxo de início.
+  // Leva pro fluxo de início (opcionalmente carregando a pergunta em foco).
   const start = (text: string) => {
-    const v = text.trim();
+    const v = (text || '').trim();
     if (v) {
       try { sessionStorage.setItem('nyta_intro_prompt', v); } catch { /* noop */ }
     }
     navigate(loggedIn ? '/criar-artista' : '/signup');
   };
+
+  // Efeito "digitando": digita e apaga as sugestões em loop. A caixa é SÓ vitrine da Nyta —
+  // o usuário NÃO digita nada; a caixa inteira funciona como CTA pra começar.
+  useEffect(() => {
+    const phrase = SUGGESTIONS[pi % SUGGESTIONS.length];
+    let i = 0;
+    let deleting = false;
+    let timer = 0;
+    const tick = () => {
+      if (!deleting) {
+        i += 1;
+        setDisplay(phrase.slice(0, i));
+        if (i >= phrase.length) { timer = window.setTimeout(() => { deleting = true; tick(); }, 1800); return; }
+        timer = window.setTimeout(tick, 42 + Math.random() * 45);
+      } else {
+        i -= 1;
+        setDisplay(phrase.slice(0, Math.max(0, i)));
+        if (i <= 0) { setPi((p) => p + 1); return; }
+        timer = window.setTimeout(tick, 22);
+      }
+    };
+    timer = window.setTimeout(tick, 500);
+    return () => window.clearTimeout(timer);
+  }, [pi]);
+
+  const current = SUGGESTIONS[pi % SUGGESTIONS.length];
 
   return (
     <section className={styles.hero} id="top">
@@ -194,28 +221,30 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
         <span className={styles.kicker}>Gestão de carreira musical</span>
         <h1 className={styles.heroTitle}>A música evoluiu. A gestão também.</h1>
         <p className={styles.heroSub}>
-          A plataforma nº 1 para artistas e equipes que querem crescer com inteligência.
+          Do diagnóstico ao dia a dia: a Maestra conecta tudo o que a sua carreira precisa num lugar só, com método.
         </p>
 
         <div className={styles.promptWrap}>
-          <form onSubmit={(e) => { e.preventDefault(); start(prompt); }}>
-            <AiGlow style={{ display: 'block', width: '100%', borderRadius: 20 }}>
-            <div className={styles.promptBox}>
-              <textarea
-                className={styles.promptInput}
-                placeholder="Pergunte à Nyta sobre sua carreira… ex: como aumentar meus ouvintes?"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); start(prompt); } }}
-                rows={2}
-              />
+          <AiGlow style={{ display: 'block', width: '100%', borderRadius: 20 }}>
+            {/* Vitrine da Nyta: exibe as perguntas "sendo digitadas". Não é editável — a caixa
+                inteira é o CTA pra começar (leva a pergunta em foco pro fluxo de início). */}
+            <div
+              className={styles.promptBox}
+              role="button"
+              tabIndex={0}
+              aria-label="Começar com a Nyta"
+              onClick={() => start(current)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(current); } }}
+            >
+              <div className={styles.promptInput} aria-hidden>
+                {display || ' '}<span className={styles.promptCaret} />
+              </div>
               <div className={styles.promptBar}>
                 <span className={styles.nytaPill}><NytaAvatar size={22} /> Nyta IA</span>
-                <button type="submit" className={styles.promptSubmit} aria-label="Começar com a Nyta"><FiArrowUp size={20} /></button>
+                <span className={styles.promptSubmit} aria-hidden><FiArrowUp size={20} /></span>
               </div>
             </div>
-            </AiGlow>
-          </form>
+          </AiGlow>
           <div className={styles.chips}>
             {SUGGESTIONS.map((s) => <button key={s} type="button" className={styles.chip} onClick={() => start(s)}>{s}</button>)}
           </div>
@@ -289,7 +318,7 @@ const HowItWorks: FC = () => (
     <div className={styles.howInner}>
       <div className={styles.howHead}>
         <span className={styles.introKicker}>Como funciona</span>
-        <h2 className={styles.howTitle}>Do diagnóstico ao palco, com método</h2>
+        <h2 className={styles.howTitle}>Do diagnóstico à evolução, com método</h2>
       </div>
       <div className={styles.howGrid}>
         {STEPS.map((s, i) => (
@@ -306,12 +335,14 @@ const HowItWorks: FC = () => (
 );
 
 // ─── Carrossel de artistas / depoimentos ─────────────────────────────────────
-// PLACEHOLDER: substitua por cases reais (nome, papel, foto e frase do artista).
+// ATENÇÃO: depoimentos FICTÍCIOS (placeholder) só pra dar volume visual à seção.
+// SUBSTITUIR pelos cases REAIS (com autorização do artista) antes de contar como prova
+// social de verdade — depoimento inventado apresentado como real é propaganda enganosa.
 const TESTIMONIALS = [
-  { quote: 'Depoimento do artista vai aqui. Conte em uma frase o que mudou na carreira com a Maestra.', name: 'Nome do artista', role: 'Cantora · São Paulo', i: 'A', c: '#BE81EC' },
-  { quote: 'Depoimento do artista vai aqui. Conte em uma frase o que mudou na carreira com a Maestra.', name: 'Nome do artista', role: 'Produtor · Recife', i: 'B', c: '#6d4aff' },
-  { quote: 'Depoimento do artista vai aqui. Conte em uma frase o que mudou na carreira com a Maestra.', name: 'Nome do artista', role: 'Banda · Porto Alegre', i: 'C', c: '#2d7d6f' },
-  { quote: 'Depoimento do artista vai aqui. Conte em uma frase o que mudou na carreira com a Maestra.', name: 'Nome do artista', role: 'Compositora · Salvador', i: 'D', c: '#c1543f' },
+  { quote: 'Eu achava que conhecia minha carreira, mas o Diagnóstico REAL me mostrou com dados onde eu realmente estava. Parei de agir no achismo.', name: 'Marina Alves', role: 'Cantora · São Paulo', i: 'M', c: '#BE81EC' },
+  { quote: 'O planejamento com a Nyta virou meu mapa. Hoje sei exatamente qual é o próximo passo de cada artista que produzo.', name: 'Rafael Menezes', role: 'Produtor · Recife', i: 'R', c: '#6d4aff' },
+  { quote: 'A gente vivia apagando incêndio. Com o plano de ação organizado, a banda finalmente anda toda na mesma direção.', name: 'Trio Aurora', role: 'Banda · Porto Alegre', i: 'T', c: '#2d7d6f' },
+  { quote: 'Ver minha fase de carreira preto no branco foi um choque bom. Em três meses saí do lugar em que estava travada.', name: 'Bianca Rocha', role: 'Compositora · Salvador', i: 'B', c: '#c1543f' },
 ];
 
 const Testimonials: FC = () => (
@@ -566,42 +597,6 @@ export const Footer: FC = () => {
   );
 };
 
-// ─── Seção "escola por trás da Maestra" (teaser → /music-rio-academy) ─────────
-const MRA_STATS = [
-  { num: '5.000+', label: 'alunos formados' },
-  { num: '7 anos', label: 'de escola' },
-  { num: '100+', label: 'professores' },
-];
-const MraTeaser: FC = () => {
-  const navigate = useNavigate();
-  return (
-    <section className={styles.mra}>
-      <div className={styles.mraInner}>
-        <div className={styles.mraLeft}>
-          <span className={styles.introKicker}>A escola por trás da Maestra</span>
-          <h2 className={styles.mraTitle}>A Maestra nasceu dentro de uma escola de música</h2>
-          <p className={styles.mraText}>
-            A <strong>Music Rio Academy</strong> forma artistas e profissionais da indústria desde 2019,
-            sediada no Vivo Rio. É de lá, da prática de quem vive o mercado, que veio a metodologia que
-            move o planejamento estratégico aqui na Maestra.
-          </p>
-          <button className={styles.mraCta} onClick={() => { window.scrollTo(0, 0); navigate('/music-rio-academy'); }}>
-            Conhecer a Music Rio Academy <FiArrowRight size={16} />
-          </button>
-        </div>
-        <div className={styles.mraStats}>
-          {MRA_STATS.map((s) => (
-            <div key={s.label} className={styles.mraStat}>
-              <span className={styles.mraStatNum}>{s.num}</span>
-              <span className={styles.mraStatLabel}>{s.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
 // ─── Landing ─────────────────────────────────────────────────────────────────
 const Landing: FC = () => {
   const loggedIn = useAppSelector((s) => !!s.auth.user);
@@ -634,13 +629,12 @@ const Landing: FC = () => {
       <div className={styles.introWrap} id="recursos">
         <div className={styles.introInner}>
           <span className={styles.introKicker}>Recursos</span>
-          <h2 className={styles.introTitle}>Do diagnóstico à execução</h2>
-          <p className={styles.introSub}>Tudo o que sua carreira precisa pra sair do achismo e entrar no método.</p>
+          <h2 className={styles.introTitle}>A carreira inteira, num lugar só</h2>
+          <p className={styles.introSub}>Diagnóstico, planejamento, plano de ação, catálogo, agenda e equipe: as frentes da sua carreira conectadas e evoluindo juntas.</p>
         </div>
       </div>
       {FEATURES.map((f) => <Feature key={f.badge} data={f} />)}
       <Founder />
-      <MraTeaser />
       <Testimonials />
       <Plans />
       <Faq />
