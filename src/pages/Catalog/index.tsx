@@ -1,7 +1,7 @@
 import { FC, ReactNode, useEffect, useState } from 'react';
 import { message } from 'antd';
-import { FiRefreshCw, FiLock } from 'react-icons/fi';
-import { AddIcon, EditIcon } from '../../components/Icons/system';
+import { FiRefreshCw, FiLock, FiMoreVertical } from 'react-icons/fi';
+import { AddIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
 
@@ -445,9 +445,9 @@ const Catalog: FC = () => {
                         setEditing(it);
                         setModalOpen(true);
                       }}
-                      style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer' }}
+                      style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                     >
-                      <EditIcon size={18} />
+                      <FiMoreVertical size={18} />
                     </button>
                   )}
                 </div>
