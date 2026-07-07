@@ -1,6 +1,6 @@
 import { FC, ReactNode, useEffect, useState } from 'react';
-import { message, Popconfirm } from 'antd';
-import { FiRefreshCw, FiTrash2, FiLock } from 'react-icons/fi';
+import { message } from 'antd';
+import { FiRefreshCw, FiLock } from 'react-icons/fi';
 import { AddIcon, EditIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useNavigate } from 'react-router-dom';
@@ -437,28 +437,18 @@ const Catalog: FC = () => {
                   )}
                   <StatusBadge status={it.status} />
                   {canEditTracks && (
-                    <>
-                      <button
-                        title='Editar'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditing(it);
-                          setModalOpen(true);
-                        }}
-                        style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer' }}
-                      >
-                        <EditIcon size={18} />
-                      </button>
-                      <Popconfirm title='Excluir faixa?' onConfirm={() => onDelete(it.id)} okText='Sim' cancelText='Não'>
-                        <button
-                          title='Excluir'
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer' }}
-                        >
-                          <FiTrash2 />
-                        </button>
-                      </Popconfirm>
-                    </>
+                    // Só o Editar na linha; o Excluir foi movido pra DENTRO do modal (tela mais limpa).
+                    <button
+                      title='Editar'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditing(it);
+                        setModalOpen(true);
+                      }}
+                      style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer' }}
+                    >
+                      <EditIcon size={18} />
+                    </button>
                   )}
                 </div>
               ))}
@@ -477,6 +467,7 @@ const Catalog: FC = () => {
           currentUserName={currentUserName}
           onClose={() => setModalOpen(false)}
           onSaved={onSaved}
+          onDelete={onDelete}
         />
       )}
 

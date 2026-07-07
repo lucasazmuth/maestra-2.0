@@ -1,5 +1,5 @@
 import { FC, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { Modal, Input, Select, DatePicker, Tabs, App, Spin } from 'antd';
+import { Modal, Input, Select, DatePicker, Tabs, App, Spin, Button, Popconfirm } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { FiUploadCloud, FiMusic, FiTrash2, FiCheckCircle, FiPlay, FiPause } from 'react-icons/fi';
 import dayjs from 'dayjs';
@@ -18,6 +18,7 @@ interface Props {
   currentUserName: string;
   onClose: () => void;
   onSaved: (item: CatalogItem) => void;
+  onDelete?: (id: string) => Promise<void> | void; // exclui a faixa (só na edição)
 }
 
 const emptyDraft = (): Partial<CatalogItem> => ({
@@ -260,11 +261,25 @@ const AudioPreview: FC<{ src: string; fileName?: string | null; onFile: (f: File
   );
 };
 
-export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOptions, currentUserName, onClose, onSaved }) => {
+export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOptions, currentUserName, onClose, onSaved, onDelete }) => {
   // message do contexto <App> do antd — o `message` estático é no-op aqui (toasts não apareciam).
   const { message } = App.useApp();
   const [draft, setDraft] = useState<Partial<CatalogItem>>(emptyDraft());
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!item || !onDelete) return;
+    setDeleting(true);
+    try {
+      await onDelete(item.id);
+      onClose();
+    } catch (e: any) {
+      message.error(e?.message || 'Erro ao excluir');
+    } finally {
+      setDeleting(false);
+    }
+  };
   const [uploading, setUploading] = useState<'cover' | 'audio' | null>(null);
   const [noteText, setNoteText] = useState('');
 
@@ -351,9 +366,34 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
       width={640}
       destroyOnClose
       title={<span style={{ color: '#fff', fontWeight: 700 }}>{item ? 'Editar faixa' : 'Nova faixa'}</span>}
-      okText={saving ? 'Salvando…' : 'Salvar'}
-      onOk={handleSave}
-      okButtonProps={{ loading: saving, style: { background: '#BE81EC', color: '#1A1A1A' } }}
+      footer={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Excluir vive AQUI (não na linha do catálogo) — só na edição de uma faixa existente. */}
+          {item && onDelete && (
+            <Popconfirm
+              title='Excluir faixa?'
+              description='Esta ação não pode ser desfeita.'
+              okText='Excluir'
+              cancelText='Cancelar'
+              okButtonProps={{ danger: true }}
+              onConfirm={handleDelete}
+            >
+              <Button danger type='text' icon={<FiTrash2 />} loading={deleting} title='Excluir faixa' aria-label='Excluir faixa' />
+            </Popconfirm>
+          )}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+            <Button onClick={onClose}>Cancelar</Button>
+            <Button
+              type='primary'
+              loading={saving}
+              onClick={handleSave}
+              style={{ background: '#BE81EC', color: '#1A1A1A' }}
+            >
+              {saving ? 'Salvando…' : 'Salvar'}
+            </Button>
+          </div>
+        </div>
+      }
     >
       <Tabs
         items={[
