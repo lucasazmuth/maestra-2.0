@@ -36,7 +36,7 @@ const isTaskEvent = (e: AgendaEvent) => e.type === 'task' || e.source === 'actio
 const Agenda: FC = () => {
   const { artist } = useArtist();
   const artistId = artist?.id;
-  const { canEdit } = useArtistCapabilities(artist);
+  const { canEditAgenda: canEdit } = useArtistCapabilities(artist);
 
   const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [loading, setLoading] = useState(false);

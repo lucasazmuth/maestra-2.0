@@ -364,6 +364,11 @@ export interface Artist {
   updated_at?: string;
   // preenchido quando o usuário é membro (não dono)
   role?: 'owner' | 'member';
+  // Preenchidos SÓ para perfis onde o usuário é membro (não dono):
+  //   access_levels → o que o dono concedeu no convite (governa o que o membro pode editar);
+  //   owner_is_pro  → se o DONO do perfil é PRO (define o limite de faixas do perfil).
+  access_levels?: AccessLevel[];
+  owner_is_pro?: boolean;
 }
 
 // Cobrança única (R$199,90) de criação/desbloqueio de um perfil de artista.

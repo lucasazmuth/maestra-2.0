@@ -78,9 +78,9 @@ const Catalog: FC = () => {
     artist
   );
   // Colaborador sem PRO entra em somente-leitura (não edita catálogo).
-  const { canEdit } = useArtistCapabilities(artist);
+  const { canEditCatalog } = useArtistCapabilities(artist);
   // Se isReadOnlyMode (pós-downgrade: faixas > 10 sem PRO), edição e exclusão ficam bloqueadas.
-  const canEditTracks = canEdit && !isReadOnlyMode;
+  const canEditTracks = canEditCatalog && !isReadOnlyMode;
   const [upsellOpen, setUpsellOpen] = useState(false);
 
   const artistId = artist?.id;
@@ -182,7 +182,10 @@ const Catalog: FC = () => {
         <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: 0 }}>
           Catálogo
         </h1>
-        {tab === 'manual' && (
+        {/* Contador + "Nova faixa" só pra quem pode editar o catálogo (dono ou PRO). Colaborador
+            sem PRO vê o catálogo em somente-leitura: sem contador de limite e sem CTA que abriria
+            um upsell de "limite atingido" enganoso (ele está em 0/10; o bloqueio é de permissão). */}
+        {tab === 'manual' && canEditCatalog && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             {maxTracks !== Infinity && <TrackCounter currentCount={currentCount} maxTracks={maxTracks} />}
             <button
@@ -356,7 +359,7 @@ const Catalog: FC = () => {
           )}
           {!items.length ? (
             <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>
-              Nenhuma faixa no catálogo ainda. Cadastre a primeira.
+              {canEditCatalog ? 'Nenhuma faixa no catálogo ainda. Cadastre a primeira.' : 'Nenhuma faixa no catálogo ainda.'}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

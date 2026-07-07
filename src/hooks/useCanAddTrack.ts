@@ -73,14 +73,14 @@ export function deriveCanAddTrack(
  * @param artist - Artista em contexto (para checar permissão de edição)
  */
 export function useCanAddTrack(currentCount: number, artist?: Artist | null): CanAddTrackResult {
-  const { maxCatalogTracks, canEdit } = useArtistCapabilities(artist);
+  const { maxCatalogTracks, canEditCatalog } = useArtistCapabilities(artist);
 
   return useMemo(() => {
     const base = deriveCanAddTrack(currentCount, maxCatalogTracks);
-    if (!canEdit) {
+    if (!canEditCatalog) {
       // Somente-leitura: não pode adicionar, e não é caso de upsell de limite.
       return { ...base, canAdd: false, shouldShowUpsell: false };
     }
     return base;
-  }, [currentCount, maxCatalogTracks, canEdit]);
+  }, [currentCount, maxCatalogTracks, canEditCatalog]);
 }

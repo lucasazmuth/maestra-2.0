@@ -29,8 +29,11 @@ jest.mock('../../../hooks/useArtist', () => ({
 // Mock useEntitlements with controllable return value
 let mockMaxCatalogTracks = 10;
 jest.mock('../../../hooks/useEntitlements', () => ({
+  FREE_MAX_CATALOG_TRACKS: 10,
   useEntitlements: () => ({
     plan: mockMaxCatalogTracks === Infinity ? 'pro' : 'free',
+    // isPro governa o limite (o hook de capacidades deriva maxCatalogTracks de isPro).
+    isPro: mockMaxCatalogTracks === Infinity,
     maxArtists: mockMaxCatalogTracks === Infinity ? Infinity : 1,
     maxCatalogTracks: mockMaxCatalogTracks,
     planning: mockMaxCatalogTracks === Infinity,

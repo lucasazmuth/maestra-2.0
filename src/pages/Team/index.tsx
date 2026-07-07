@@ -3,6 +3,7 @@ import { Modal, Input, Checkbox, message, Popconfirm } from 'antd';
 import { FiPlus, FiTrash2 } from 'react-icons/fi';
 
 import { useArtist } from '../../hooks/useArtist';
+import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { Spinner } from '../../components/spinner/spinner';
 import { MVP_ACCESS_LEVEL_OPTIONS, MVP_ACCESS_LEVELS } from '../../constants/maestra';
 import * as membersDb from '../../services/db/members';
@@ -25,6 +26,8 @@ const Team: FC = () => {
   const [name, setName] = useState('');
   const [levels, setLevels] = useState<AccessLevel[]>(['plan']);
   const [saving, setSaving] = useState(false);
+  // Hook antes de qualquer early return (regras dos hooks). Aceita artist undefined.
+  const { canManageTeam } = useArtistCapabilities(artist);
 
   useEffect(() => {
     if (!artistId) return;
@@ -38,11 +41,12 @@ const Team: FC = () => {
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
-  // Só o dono do perfil gerencia colaboradores (compartilhar é benefício do perfil pago).
+  // Convidar: dono OU membro com nível 'team'/'full' (canManageTeam, calculado acima). Remover/
+  // alterar níveis continuam SÓ do dono (o RLS de UPDATE/DELETE em artist_members é do owner).
   const isOwner = artist.role !== 'member';
 
   const invite = async () => {
-    if (!isOwner) return;
+    if (!canManageTeam) return;
     if (!email.trim() || !artistId) {
       message.warning('Informe o e-mail');
       return;
@@ -88,7 +92,7 @@ const Team: FC = () => {
         <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: 0 }}>
           Equipe
         </h1>
-        {isOwner && (
+        {canManageTeam && (
           <button
             onClick={() => setOpen(true)}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#BE81EC', border: 'none', color: '#1A1A1A', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
@@ -115,11 +119,13 @@ const Team: FC = () => {
                       <div style={{ color: '#b3b3b3', fontSize: 13 }}>{m.email}</div>
                     </div>
                     <span style={{ color: st.color, fontSize: 12, fontWeight: 700 }}>{st.label}</span>
-                    <Popconfirm title='Remover membro?' onConfirm={() => remove(m.id)} okText='Sim' cancelText='Não'>
-                      <button style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer' }}>
-                        <FiTrash2 />
-                      </button>
-                    </Popconfirm>
+                    {isOwner && (
+                      <Popconfirm title='Remover membro?' onConfirm={() => remove(m.id)} okText='Sim' cancelText='Não'>
+                        <button style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer' }}>
+                          <FiTrash2 />
+                        </button>
+                      </Popconfirm>
+                    )}
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
                     {MVP_ACCESS_LEVEL_OPTIONS.map((opt) => {
@@ -127,14 +133,15 @@ const Team: FC = () => {
                       return (
                         <button
                           key={opt.id}
-                          onClick={() => toggleLevel(m, opt.id)}
+                          onClick={isOwner ? () => toggleLevel(m, opt.id) : undefined}
+                          disabled={!isOwner}
                           style={{
                             background: active ? '#BE81EC22' : 'rgba(255,255,255,0.06)',
                             color: active ? '#BE81EC' : '#b3b3b3',
                             border: `1px solid ${active ? '#BE81EC' : 'transparent'}`,
                             borderRadius: 9999,
                             padding: '4px 12px',
-                            cursor: 'pointer',
+                            cursor: isOwner ? 'pointer' : 'default',
                             fontSize: 12,
                             fontWeight: 700,
                           }}
