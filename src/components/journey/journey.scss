@@ -21,20 +21,19 @@
   padding: 18px 16px;
   border-radius: 14px;
   background: #181818;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid transparent; // sem borda visível (igual aos cards de "Visão geral"); transparent só evita salto de layout no hover
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  transition: background 0.18s ease, transform 0.18s ease;
 
   &:hover {
     background: #1f1f1f;
-    border-color: rgba(255, 255, 255, 0.16);
     transform: translateY(-1px);
   }
   &:hover .journey-node-name { color: #fff; }
 }
-// Etapa atual: mesmo fundo, borda neutra um tom acima (o destaque de cor fica no texto).
+// Etapa atual: mesmo fundo, sem borda (o destaque de cor fica no texto).
 .journey-node--current {
-  border-color: rgba(255, 255, 255, 0.16);
+  background: #1c1c1c;
 }
 
 // Bloco de texto do nó: nome + descrição (conceito) + status, empilhados.
