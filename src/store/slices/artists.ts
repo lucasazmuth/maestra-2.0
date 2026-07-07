@@ -132,6 +132,14 @@ const artistsSlice = createSlice({
       const idx = state.items.findIndex((a) => a.id === action.payload.id);
       if (idx !== -1) state.items[idx] = { ...state.items[idx], content: action.payload.content };
     },
+    // Destrave OTIMISTA pós-pagamento: marca o perfil como PAGO (is_locked=false) na hora.
+    // Sem isso, ao clicar no botão da tela de sucesso o RequireArtistPaid podia rebater pro
+    // /desbloquear (checkout) enquanto o fetchArtists de reconciliação não chegava — risco de
+    // o usuário pagar duas vezes. O pagamento já foi confirmado quando isto é disparado.
+    markArtistPaidLocal(state, action: PayloadAction<{ id: string }>) {
+      const idx = state.items.findIndex((a) => a.id === action.payload.id);
+      if (idx !== -1) state.items[idx] = { ...state.items[idx], is_locked: false };
+    },
   },
   extraReducers: (builder) => {
     builder

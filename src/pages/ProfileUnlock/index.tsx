@@ -130,6 +130,10 @@ const ProfileUnlock: FC = () => {
     method === 'PIX' ? 'PIX' : method === 'CREDIT' ? 'CREDIT_CARD' : 'DEBIT_CARD';
 
   const finish = async (artistId: string) => {
+    // Destrave OTIMISTA antes de tudo: o pagamento já foi confirmado, então marca o perfil como
+    // pago no Redux na hora. Garante que o botão da tela de sucesso ("Iniciar planejamento") não
+    // rebata pro checkout (RequireArtistPaid) enquanto o fetchArtists abaixo não reconcilia.
+    dispatch(artistsActions.markArtistPaidLocal({ id: artistId }));
     // Mostra a tela de sucesso (confete). A navegação pro planejamento fica no botão.
     setStep('done');
     // Enriquecimento profundo do Chartmetric (pós-pago) — non-blocking, alimenta a Nyta.
