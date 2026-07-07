@@ -573,17 +573,116 @@ h3 {
 
 // ── Tab bar do mobile (rodapé, in-flow abaixo do banner) ─────────────────────
 // A sidebar é oculta no mobile; esta barra navega entre os módulos do artista.
-// Player de faixas do catálogo (barra fixa estilo Spotify). No desktop ocupa o rodapé inteiro.
+// Player de faixas do catálogo — card flutuante #333842 arredondado (ref. Frame 75/Home.svg).
+// Desktop: controles + progresso + volume à ESQUERDA, capa + info no MEIO, fechar à direita.
 .local-player-bar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 20px;
+  background: #333842;
+  border-radius: 12px;
+
+  .lpb-controls {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .lpb-play {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lpb-progress {
+    flex: 1 1 auto;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .lpb-time {
+    flex: 0 0 auto;
+    min-width: 36px;
+    color: #b3b3b3;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    &:first-child { text-align: right; }
+  }
+  .lpb-seek {
+    flex: 1;
+    height: 4px;
+    accent-color: #e0e0e0;
+    cursor: pointer;
+  }
+  .lpb-volume {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .lpb-volume-slider {
+    width: 100px;
+    height: 4px;
+    accent-color: #e0e0e0;
+    cursor: pointer;
+  }
+  .lpb-track {
+    flex: 0 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: 8px;
+  }
+  .lpb-cover {
+    flex: 0 0 auto;
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    object-fit: cover;
+  }
+  .lpb-meta { min-width: 0; }
+  .lpb-title {
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lpb-sub {
+    color: #b3b3b3;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lpb-close {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
 }
-// A linha de progresso no topo só existe no mobile (no desktop o progresso é inline no centro).
+// A linha de progresso no rodapé só existe no mobile (no desktop o progresso é inline).
 .lpb-progress-mobile {
   display: none;
+}
+
+// Com o banner de pagamento no rodapé (desktop), o card sobe pra ficar acima dele (~68px + folga).
+.main-container.has-bottom-banner .local-player-bar {
+  bottom: 84px;
 }
 
 .mobile-nav {
@@ -660,47 +759,48 @@ h3 {
   }
 
   // ── Player do catálogo no mobile ──────────────────────────────────────────────
-  // Card FLUTUANTE acima da navbar (ref. Home.svg): #333842, cantos 10px, 8px de margem
-  // lateral, ~61px. Navbar = 64px; com o banner (84px) a navbar sobe, o card sobe junto.
-  // !important onde compete com estilo INLINE (background/border-top do desktop).
+  // Card FLUTUANTE acima da navbar (ref. Home.svg): #333842 (já no base), cantos 10px, 8px de
+  // margem lateral, ~61px. Navbar = 64px; com o banner (84px) a navbar sobe, o card sobe junto.
   .local-player-bar {
     left: 8px;
     right: 8px;
     bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px);
     border-radius: 10px;
-    background: #333842 !important;
-    border-top: none !important;
     gap: 10px;
     padding: 9px 12px;
-    overflow: hidden; // respeita os cantos arredondados
+    overflow: hidden; // respeita os cantos arredondados / linha de progresso
   }
   .main-container.has-bottom-banner .local-player-bar {
     bottom: calc(148px + env(safe-area-inset-bottom, 0px) + 8px);
   }
-  // Colunas flexíveis (o 25%/min-width 160 estourava a largura no mobile).
-  .local-player-bar .lpb-left {
-    width: auto !important;
-    min-width: 0 !important;
+  // Reordena o layout plano no compacto: capa/título 1º, depois controles, volume (só ícone) e X.
+  .local-player-bar .lpb-track {
+    order: -1;
     flex: 1 1 auto;
+    margin-left: 0;
   }
-  .local-player-bar .lpb-left img {
-    width: 43px !important;
-    height: 43px !important;
-    border-radius: 3px !important;
+  .local-player-bar .lpb-cover {
+    width: 43px;
+    height: 43px;
+    border-radius: 3px;
   }
-  .local-player-bar .lpb-center {
-    flex: 0 0 auto !important;
+  .local-player-bar .lpb-controls {
+    order: 1;
+    gap: 14px;
   }
-  // No compacto: o progresso inline (tempos + range) e o slider de volume somem;
-  // o progresso vira uma linha fina no RODAPÉ do card (igual à referência).
+  .local-player-bar .lpb-play {
+    width: 36px;
+    height: 36px;
+  }
+  .local-player-bar .lpb-volume { order: 2; }
+  .local-player-bar .lpb-close {
+    order: 3;
+    margin-left: 0;
+  }
+  // No compacto somem: o progresso inline (tempos + range) e o slider de volume.
   .local-player-bar .lpb-progress,
-  .local-player-bar .lpb-volume {
-    display: none !important;
-  }
-  .local-player-bar .lpb-right {
-    width: auto !important;
-    min-width: 0 !important;
-    gap: 6px;
+  .local-player-bar .lpb-volume-slider {
+    display: none;
   }
   // Progresso = linha fina no rodapé (ref. Group 5.svg): 2px, SEM thumb, preenchido #E0E0E0
   // sobre trilho #DBDBDB a 21%. O preenchido é feito por gradiente com a var --pct.
