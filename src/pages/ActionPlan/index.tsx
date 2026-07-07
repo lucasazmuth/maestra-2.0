@@ -173,8 +173,10 @@ const ActionPlan: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artist?.id]);
 
-  const commit = async (mut: (ss: Strategy[]) => Strategy[]) => {
-    if (!artist || !manageTasks) return; // gestão de tarefas: livre no plano gratuito (dono do perfil)
+  // cap: capacidade exigida. Edições estruturais (add/editar/excluir) exigem manageTasks (PRO);
+  // acompanhar progresso (marcar feito) usa editPlanning (dono do perfil pago, sem PRO).
+  const commit = async (mut: (ss: Strategy[]) => Strategy[], cap: boolean = manageTasks) => {
+    if (!artist || !cap) return;
     const next: ArtistContent = { ...artist.content, strategies: mut(artist.content.strategies || []) };
     // Otimista: atualiza a UI na hora; persiste em segundo plano.
     dispatch(artistsActions.setArtistContentLocal({ id: artist.id, content: next }));
@@ -192,7 +194,13 @@ const ActionPlan: FC = () => {
   const patchTask = (sid: string, tid: string, patch: Partial<ActionTask>) => {
     commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).map((t) => (t.id === tid ? { ...t, ...patch } : t)) })));
   };
-  const toggleDone = (sid: string, t: ActionTask) => patchTask(sid, t.id, { status: isDone(t) ? 'todo' : 'done' });
+  // Marcar como concluída é ACOMPANHAR (não estrutural): liberado pra quem cria/acessa o plano
+  // (dono do perfil sem PRO; membro com nível+PRO), via editPlanning em vez de manageTasks.
+  const toggleDone = (sid: string, t: ActionTask) =>
+    commit(
+      (ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).map((x) => (x.id === t.id ? { ...x, status: isDone(t) ? 'todo' : 'done' } : x)) })),
+      editPlanning
+    );
   const delTask = (sid: string, tid: string) => {
     commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).filter((t) => t.id !== tid) })));
   };
@@ -283,12 +291,14 @@ const ActionPlan: FC = () => {
           <span style={{ color: '#b3b3b3', fontSize: 13.5, lineHeight: 1.5 }}>
             Concluir tarefas faz sua carreira evoluir. Quando avançar, <b style={{ color: '#fff' }}>refaça o REAL</b> pra ver sua fase subir.
           </span>
-          <button
-            onClick={() => navigate(`/artists/${artist.id}/diagnostico/refazer`)}
-            style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(190,129,236,0.5)', color: '#D3A6F2', padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
-          >
-            <FiRefreshCw size={14} /> Refazer diagnóstico
-          </button>
+          {manageTasks && (
+            <button
+              onClick={() => navigate(`/artists/${artist.id}/diagnostico/refazer`)}
+              style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(190,129,236,0.5)', color: '#D3A6F2', padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+            >
+              <FiRefreshCw size={14} /> Refazer diagnóstico
+            </button>
+          )}
         </div>
       </div>
 
@@ -296,9 +306,11 @@ const ActionPlan: FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <h2 className="ap-section-title" style={{ margin: 0 }}>Estratégias por prioridade</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button className="ap-btn ap-btn--ghost" onClick={() => openWithPrompt('Quero criar uma nova estratégia')}>
-            <FiPlus size={14} /> Nova estratégia
-          </button>
+          {manageTasks && (
+            <button className="ap-btn ap-btn--ghost" onClick={() => openWithPrompt('Quero criar uma nova estratégia')}>
+              <FiPlus size={14} /> Nova estratégia
+            </button>
+          )}
           {hasArchive && (
             <button className="ap-btn ap-btn--ghost" onClick={() => setArchiveOpen(true)}>
               <FiArchive size={14} /> Arquivadas ({archived.length})
@@ -367,8 +379,8 @@ const ActionPlan: FC = () => {
                             <button
                               className={`ap-tl-dot${done ? ' is-done' : ''}${od ? ' is-overdue' : ''}`}
                               title={done ? 'Concluída' : 'Marcar como concluída'}
-                              onClick={manageTasks ? () => toggleDone(s.id, t) : undefined}
-                              style={{ cursor: manageTasks ? 'pointer' : 'default' }}
+                              onClick={editPlanning ? () => toggleDone(s.id, t) : undefined}
+                              style={{ cursor: editPlanning ? 'pointer' : 'default' }}
                             >
                               {done && <FiCheck size={13} />}
                             </button>

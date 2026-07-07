@@ -49,8 +49,13 @@ export function deriveArtistCapabilities(args: {
   const canEditAgenda = isOwner || has('agenda');
   const canManageTeam = isOwner || has('team');
 
-  // Planejamento/tarefas seguem a regra atual (dono ou PRO). Fora do escopo desta mudança.
-  const canEditPlanning = isOwner || isPro;
+  // Planejamento — dois níveis:
+  //   editPlanning = CRIAR o plano + acompanhar (marcar tarefa feita). O DONO já pagou o perfil
+  //     (sem PRO); o MEMBRO precisa do nível 'plan'/'full' + PRO (o RLS de artists já exige PRO).
+  //   manageTasks  = edições AVANÇADAS (adicionar estratégia/tarefa, editar/excluir campos,
+  //     refazer diagnóstico): PRO obrigatório pra TODOS (inclusive dono); membro também precisa do nível.
+  const hasPlan = has('plan');
+  const canPlan = isOwner || (hasPlan && isPro);
 
   // Limite de faixas é do PERFIL: o dono PRO libera ilimitado pra todos que editam.
   const profilePro = PAYWALL_DISABLED ? true : isOwner ? isPro : !!ownerIsPro;
@@ -61,10 +66,10 @@ export function deriveArtistCapabilities(args: {
     canEditCatalog,
     canEditAgenda,
     canManageTeam,
-    viewPlanning: isPaid,
-    editPlanning: isPaid && canEditPlanning,
-    manageTasks: isPaid && canEditPlanning,
-    useNytaMaestra: isPaid && canEditPlanning,
+    viewPlanning: isPaid, // qualquer membro do perfil pago vê o planejamento (somente-leitura)
+    editPlanning: isPaid && canPlan,
+    manageTasks: isPaid && isPro && (isOwner || hasPlan),
+    useNytaMaestra: isPaid && canPlan,
     useNytaConsultora: isPro,
     maxCatalogTracks: profilePro ? Infinity : FREE_MAX_CATALOG_TRACKS,
   };

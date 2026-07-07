@@ -7,17 +7,23 @@
 import { deriveArtistCapabilities } from '../useArtistCapabilities';
 
 describe('deriveArtistCapabilities', () => {
-  test('dono de perfil pago SEM PRO: edita operação e plano; tarefas/Consultora seguem regra', () => {
+  test('dono de perfil pago SEM PRO: cria plano e edita operação; edições avançadas exigem PRO', () => {
     const c = deriveArtistCapabilities({ isPro: false, isPaid: true, isOwner: true });
     expect(c.canEditCatalog).toBe(true);
     expect(c.canEditAgenda).toBe(true);
     expect(c.canManageTeam).toBe(true);
     expect(c.viewPlanning).toBe(true);
-    expect(c.editPlanning).toBe(true);
-    expect(c.manageTasks).toBe(true);
-    expect(c.useNytaMaestra).toBe(true);
+    expect(c.editPlanning).toBe(true); // criar/acompanhar plano: dono já pagou o perfil
+    expect(c.manageTasks).toBe(false); // adicionar estratégia/tarefa, refazer diag: exige PRO
     expect(c.useNytaConsultora).toBe(false); // Consultora = PRO da conta
     expect(c.maxCatalogTracks).toBe(10); // dono sem PRO → limite do grátis
+  });
+
+  test('dono de perfil pago COM PRO: libera edições avançadas do plano', () => {
+    const c = deriveArtistCapabilities({ isPro: true, isPaid: true, isOwner: true });
+    expect(c.editPlanning).toBe(true);
+    expect(c.manageTasks).toBe(true);
+    expect(c.maxCatalogTracks).toBe(Infinity);
   });
 
   test('colaborador SEM nível em perfil pago: operação somente-leitura', () => {
@@ -27,6 +33,22 @@ describe('deriveArtistCapabilities', () => {
     expect(c.canEditAgenda).toBe(false);
     expect(c.canManageTeam).toBe(false);
     expect(c.editPlanning).toBe(false);
+  });
+
+  test('membro planejamento: vê sempre; edita só com nível "plan"/"full" + PRO', () => {
+    // Membro com nível 'plan' mas SEM PRO → vê, mas não edita.
+    const planSemPro = deriveArtistCapabilities({ isPro: false, isPaid: true, isOwner: false, accessLevels: ['plan'] });
+    expect(planSemPro.viewPlanning).toBe(true);
+    expect(planSemPro.editPlanning).toBe(false);
+    expect(planSemPro.manageTasks).toBe(false);
+    // Membro com nível 'plan' + PRO → cria/edita.
+    const planComPro = deriveArtistCapabilities({ isPro: true, isPaid: true, isOwner: false, accessLevels: ['plan'] });
+    expect(planComPro.editPlanning).toBe(true);
+    expect(planComPro.manageTasks).toBe(true);
+    // Membro PRO mas SEM nível 'plan'/'full' (só catalog) → não edita planejamento.
+    const proSemNivel = deriveArtistCapabilities({ isPro: true, isPaid: true, isOwner: false, accessLevels: ['catalog'] });
+    expect(proSemNivel.editPlanning).toBe(false);
+    expect(proSemNivel.manageTasks).toBe(false);
   });
 
   test('colaborador com nível "catalog": edita SÓ catálogo (respeita o convite)', () => {
