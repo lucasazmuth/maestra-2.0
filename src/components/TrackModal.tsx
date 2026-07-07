@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { Modal, Input, Select, DatePicker, Tabs, message, Spin } from 'antd';
+import { Modal, Input, Select, DatePicker, Tabs, App, Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
-import { FiUploadCloud, FiMusic, FiTrash2, FiCheckCircle } from 'react-icons/fi';
+import { FiUploadCloud, FiMusic, FiTrash2, FiCheckCircle, FiPlay, FiPause } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import type { CatalogItem, Split, MusicGenre } from '../interfaces/maestra';
@@ -183,7 +183,86 @@ const UploadField: FC<{
   );
 };
 
+// Player de áudio no visual do sistema (substitui o <audio controls> cru do navegador):
+// botão play/pause no lugar do ícone, barra de progresso e tempo, + Trocar/Remover.
+const fmtTime = (s: number) => {
+  if (!isFinite(s) || s < 0) return '0:00';
+  const m = Math.floor(s / 60);
+  const ss = Math.floor(s % 60);
+  return `${m}:${String(ss).padStart(2, '0')}`;
+};
+
+const AudioPreview: FC<{ src: string; fileName?: string | null; onFile: (f: File) => void; onClear: () => void }> = ({ src, fileName, onFile, onClear }) => {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [cur, setCur] = useState(0);
+  const [dur, setDur] = useState(0);
+
+  const toggle = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) a.play(); else a.pause();
+  };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#1f1f1f', border: '1px solid #2f2f2f', borderRadius: 10, padding: 10 }}>
+      <audio
+        ref={audioRef}
+        src={src}
+        preload='metadata'
+        style={{ display: 'none' }}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+        onTimeUpdate={(e) => setCur(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => setDur(e.currentTarget.duration)}
+      />
+      <input
+        ref={inputRef}
+        type='file'
+        accept='audio/*'
+        style={{ display: 'none' }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }}
+      />
+      <button
+        type='button'
+        onClick={toggle}
+        aria-label={playing ? 'Pausar' : 'Reproduzir'}
+        style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: '#BE81EC', color: '#1A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+      >
+        {playing ? <FiPause size={18} /> : <FiPlay size={18} style={{ marginLeft: 2 }} />}
+      </button>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ color: '#fff', fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {fileName || 'Áudio enviado'}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+          <span style={{ color: '#b3b3b3', fontSize: 11, fontVariantNumeric: 'tabular-nums', minWidth: 32 }}>{fmtTime(cur)}</span>
+          <input
+            type='range'
+            min={0}
+            max={dur || 0}
+            step={0.1}
+            value={Math.min(cur, dur || 0)}
+            onChange={(e) => { const a = audioRef.current; const v = Number(e.target.value); if (a) a.currentTime = v; setCur(v); }}
+            aria-label='Progresso do áudio'
+            style={{ flex: 1, accentColor: '#BE81EC', height: 4, cursor: 'pointer' }}
+          />
+          <span style={{ color: '#7a7a7a', fontSize: 11, fontVariantNumeric: 'tabular-nums', minWidth: 32, textAlign: 'right' }}>{fmtTime(dur)}</span>
+        </div>
+      </div>
+      <button type='button' onClick={() => inputRef.current?.click()} style={ghostBtn}>Trocar</button>
+      <button type='button' onClick={onClear} style={{ ...ghostBtn, color: '#ff6b6f', padding: '6px 10px' }} aria-label='Remover'>
+        <FiTrash2 size={15} />
+      </button>
+    </div>
+  );
+};
+
 export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOptions, currentUserName, onClose, onSaved }) => {
+  // message do contexto <App> do antd — o `message` estático é no-op aqui (toasts não apareciam).
+  const { message } = App.useApp();
   const [draft, setDraft] = useState<Partial<CatalogItem>>(emptyDraft());
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<'cover' | 'audio' | null>(null);
@@ -226,7 +305,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
 
   const handleSave = async () => {
     if (!draft.title?.trim()) {
-      message.warning('Informe o título');
+      message.warning('Informe o título da faixa (aba Informações) antes de salvar.');
       return;
     }
     setSaving(true);
@@ -396,18 +475,23 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
             children: (
               <div>
                 <label style={{ color: '#b3b3b3', fontSize: 13, display: 'block', marginBottom: 6 }}>Arquivo de áudio</label>
-                <UploadField
-                  accept='audio/*'
-                  hint='MP3, WAV ou outro formato de áudio'
-                  uploading={uploading === 'audio'}
-                  hasValue={!!draft.audio_file}
-                  fileName={draft.audio_file_name}
-                  thumb={<FiMusic size={20} />}
-                  onFile={(f) => handleUpload('audio', f)}
-                  onClear={() => set({ audio_file: null, audio_file_name: null })}
-                />
-                {draft.audio_file && (
-                  <audio controls src={draft.audio_file} style={{ width: '100%', marginTop: 12 }} />
+                {draft.audio_file && uploading !== 'audio' ? (
+                  <AudioPreview
+                    src={draft.audio_file}
+                    fileName={draft.audio_file_name}
+                    onFile={(f) => handleUpload('audio', f)}
+                    onClear={() => set({ audio_file: null, audio_file_name: null })}
+                  />
+                ) : (
+                  <UploadField
+                    accept='audio/*'
+                    hint='MP3, WAV ou outro formato de áudio'
+                    uploading={uploading === 'audio'}
+                    hasValue={false}
+                    thumb={<FiMusic size={20} />}
+                    onFile={(f) => handleUpload('audio', f)}
+                    onClear={() => set({ audio_file: null, audio_file_name: null })}
+                  />
                 )}
               </div>
             ),
