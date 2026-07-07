@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Play,
   Pause,
@@ -47,11 +47,13 @@ const ctrlBtn: React.CSSProperties = {
 
 export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, onClose }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  // `playing` é do store (fonte da verdade) — assim a LINHA do catálogo mostra play/pause em
-  // sincronia e pode pausar/retomar a faixa atual.
+  // `playing` no store apenas REFLETE o <audio> (via eventos) — pra a LINHA do catálogo exibir e
+  // controlar em sincronia. O controle do áudio é IMPERATIVO (togglePlay) — sem efeito que
+  // "sincroniza" playing→áudio (isso criava loop play/pause).
   const playing = useLocalPlayerStore((s) => s.playing);
   const setPlaying = useLocalPlayerStore((s) => s.setPlaying);
   const setStoreCurrentId = useLocalPlayerStore((s) => s.setCurrentId);
+  const setStoreToggle = useLocalPlayerStore((s) => s.setToggle);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -60,30 +62,35 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
   const index = tracks.findIndex((t) => t.id === currentId);
   const track = tracks[index];
 
-  // Publica a faixa atual no store (a lista usa pra sincronizar o botão play/pause).
+  // Play/pause imperativo do <audio> (os eventos play/pause atualizam o store `playing`).
+  const togglePlay = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) audio.play().catch(() => {});
+    else audio.pause();
+  }, []);
+
+  // Publica no store: faixa atual (pra a lista sincronizar) e a função de toggle (pra a lista
+  // controlar o mesmo <audio>). Limpa o toggle ao desmontar.
   useEffect(() => {
     setStoreCurrentId(currentId);
   }, [currentId, setStoreCurrentId]);
+  useEffect(() => {
+    setStoreToggle(togglePlay);
+    return () => setStoreToggle(null);
+  }, [togglePlay, setStoreToggle]);
 
-  // (Re)carrega e toca quando a faixa muda.
+  // (Re)carrega e toca quando a faixa muda (o evento onPlay atualiza o store).
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !track) return;
     audio.src = track.url;
     audio.volume = muted ? 0 : volume;
-    audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    audio.play().catch(() => {});
     setTime(0);
     setDuration(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [track?.id]);
-
-  // Sincroniza o <audio> com o `playing` do store (toggles vindos da lista OU do player).
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !audio.src) return;
-    if (playing && audio.paused) audio.play().catch(() => {});
-    else if (!playing && !audio.paused) audio.pause();
-  }, [playing]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -95,8 +102,6 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
     const next = (index + dir + tracks.length) % tracks.length;
     onChangeTrack(tracks[next].id);
   };
-
-  const togglePlay = () => setPlaying(!playing);
 
   if (!track) return null;
 

@@ -81,10 +81,11 @@ const Catalog: FC = () => {
     return () => setPlayerOpen(false); // ao sair do Catálogo, libera o banner de volta
   }, [localTrackId, setPlayerOpen]);
 
-  // Estado do player (fonte da verdade) pra a LINHA mostrar play/pause em sincronia e pausar/retomar.
+  // Estado do player (reflete o <audio>) pra a LINHA mostrar play/pause em sincronia; `togglePlayer`
+  // é a função do player que controla o mesmo <audio> (pausar/retomar a faixa atual).
   const playerCurrentId = useLocalPlayerStore((s) => s.currentId);
   const playerPlaying = useLocalPlayerStore((s) => s.playing);
-  const togglePlayer = useLocalPlayerStore((s) => s.togglePlaying);
+  const togglePlayer = useLocalPlayerStore((s) => s.toggle);
 
   const { canAdd, currentCount, maxTracks, isReadOnlyMode } = useCanAddTrack(
     items.filter((i) => isActiveCatalogStatus(i.status)).length,
@@ -418,7 +419,7 @@ const Catalog: FC = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!it.audio_file) return;
-                          if (isCurrent) togglePlayer(); // já no player → pausa/retoma
+                          if (isCurrent) togglePlayer?.(); // já no player → pausa/retoma
                           else openLocal(it.id); // começa esta faixa
                         }}
                         style={{
