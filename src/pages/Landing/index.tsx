@@ -8,7 +8,7 @@ import {
 import { Wordmark } from '../../components/Wordmark';
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { AiGlow } from '../../components/AiGlow';
-import anitaPhoto from '../../assets/anita.png';
+import anitaPhoto from '../../assets/anita.jpg';
 import featureReal from '../../assets/feature-real.png';
 import featurePlanning from '../../assets/feature-planning.png';
 import featureAction from '../../assets/feature-action.png';

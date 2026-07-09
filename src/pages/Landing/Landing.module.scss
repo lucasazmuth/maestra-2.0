@@ -100,12 +100,12 @@ $card: #0c0c0c;
 .founderGrid { display: grid; grid-template-columns: 300px 1fr; gap: 60px; align-items: start; }
 .founderAside { position: sticky; top: 100px; text-align: center; }
 .founderPhoto {
-  width: 100%; aspect-ratio: 1 / 1; border-radius: 20px; overflow: hidden; margin-bottom: 20px;
+  width: 100%; aspect-ratio: 3 / 4; border-radius: 20px; overflow: hidden; margin-bottom: 20px;
   display: flex; align-items: flex-end; justify-content: center;
-  // A foto é um recorte (fundo removido) sobre este gradiente sutil.
   background: linear-gradient(155deg, #3a2140 0%, #1a1420 60%, #101014 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  // object-position: top pra o enquadramento não cortar a testa (foto retrato).
+  img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
 }
 .founderName { font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
 .founderRole { font-size: 13.5px; color: $g400; margin-top: 6px; line-height: 1.5; }
@@ -137,7 +137,7 @@ $card: #0c0c0c;
 @media (max-width: 900px) {
   .founderGrid { grid-template-columns: 1fr; gap: 32px; }
   .founderAside { position: static; display: flex; flex-direction: column; align-items: center; }
-  .founderPhoto { width: 200px; aspect-ratio: 1 / 1; }
+  .founderPhoto { width: 220px; aspect-ratio: 3 / 4; }
   .founderStory { max-width: none; }
 }
 

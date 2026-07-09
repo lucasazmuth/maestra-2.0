@@ -4,7 +4,7 @@ import { FiCalendar, FiClock, FiMapPin, FiTag, FiCopy, FiCheck, FiArrowRight } f
 
 import { Header, Footer } from '../Landing';
 import { useAppSelector } from '../../store/store';
-import anitaPhoto from '../../assets/anita.png';
+import anitaPhoto from '../../assets/anita.jpg';
 import realStar from '../../assets/feature-real.png';
 import styles from './EventNiteroi.module.scss';
 
