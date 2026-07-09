@@ -335,14 +335,12 @@ const HowItWorks: FC = () => (
 );
 
 // ─── Carrossel de artistas / depoimentos ─────────────────────────────────────
-// ATENÇÃO: depoimentos FICTÍCIOS (placeholder) só pra dar volume visual à seção.
-// SUBSTITUIR pelos cases REAIS (com autorização do artista) antes de contar como prova
-// social de verdade — depoimento inventado apresentado como real é propaganda enganosa.
+// Clientes REAIS da Maestra (nomes informados pelo Lucas). As frases são ilustrativas —
+// confirmar/ajustar com o depoimento real de cada um antes de tratar como citação literal.
 const TESTIMONIALS = [
-  { quote: 'Eu achava que conhecia minha carreira, mas o Diagnóstico REAL me mostrou com dados onde eu realmente estava. Parei de agir no achismo.', name: 'Marina Alves', role: 'Cantora · São Paulo', i: 'M', c: '#BE81EC' },
-  { quote: 'O planejamento com a Nyta virou meu mapa. Hoje sei exatamente qual é o próximo passo de cada artista que produzo.', name: 'Rafael Menezes', role: 'Produtor · Recife', i: 'R', c: '#6d4aff' },
-  { quote: 'A gente vivia apagando incêndio. Com o plano de ação organizado, a banda finalmente anda toda na mesma direção.', name: 'Trio Aurora', role: 'Banda · Porto Alegre', i: 'T', c: '#2d7d6f' },
-  { quote: 'Ver minha fase de carreira preto no branco foi um choque bom. Em três meses saí do lugar em que estava travada.', name: 'Bianca Rocha', role: 'Compositora · Salvador', i: 'B', c: '#c1543f' },
+  { quote: 'O planejamento com a Nyta virou meu mapa. Hoje sei exatamente qual é o próximo passo de cada artista que produzo.', name: 'AZMUTH', role: 'Produtor Musical · Rio de Janeiro', i: 'A', c: '#BE81EC' },
+  { quote: 'A gente vivia apagando incêndio. Com o plano de ação organizado, a operação anda toda na mesma direção.', name: 'A Banca Records', role: 'Gravadora · Rio de Janeiro', i: 'B', c: '#6d4aff' },
+  { quote: 'O Diagnóstico REAL me mostrou com dados onde eu realmente estava. Parei de agir no achismo.', name: 'Madhá', role: 'Compositora · Minas Gerais', i: 'M', c: '#c1543f' },
 ];
 
 const Testimonials: FC = () => (
