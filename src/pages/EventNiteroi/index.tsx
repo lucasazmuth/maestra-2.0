@@ -192,8 +192,7 @@ const EventNiteroi: FC = () => {
               </p>
               <p className={styles.aboutBody}>
                 O encontro é conduzido por <strong>Anita Carvalho</strong>, consultora com mais de 30 anos de
-                experiência e responsável por mais de 300 projetos ao lado de Diogo Nogueira, Ivan Lins, Barão
-                Vermelho, Paula Lima, Jorge Aragão e Jorge Vercillo, entre outros grandes nomes da música brasileira.
+                experiência e responsável por mais de 300 projetos ao lado de grandes nomes da música brasileira.
               </p>
             </div>
           </div>

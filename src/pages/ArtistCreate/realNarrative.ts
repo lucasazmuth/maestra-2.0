@@ -185,7 +185,6 @@ export const QUEM_ASSINA = {
   role: 'Criadora do Índice REAL · Fundadora da Maestra Manager',
   paras: [
     'Anita Carvalho é empresária artística, consultora e pesquisadora do mercado da música, com foco em gestão de carreiras. Doutoranda em Economia Criativa pela ESPM, atua há mais de 30 anos no setor.',
-    'Sócia da Música & Mídia Produções, está atualmente à frente das carreiras de Fafá de Belém, Karinah, Bangalafumenga, Loulou Gilberto e Yassir Chediak. Ao longo da trajetória, esteve à frente das carreiras de Beth Carvalho, Baby do Brasil e Mariene de Castro, e colaborou com nomes como Ivan Lins, Barão Vermelho e Jorge Aragão.',
     'É autora da Pesquisa de Empresariamento Artístico, estudo longitudinal publicado desde 2017, hoje em sua quinta edição, e de artigos e publicações nacionais e internacionais sobre o setor. Já atendeu mais de 300 artistas em planejamento estratégico de carreira.',
   ],
   highlight: 'O Índice REAL nasce dessa trajetória: a prática de mercado encontrando o rigor da pesquisa.',
