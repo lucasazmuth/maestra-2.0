@@ -6,6 +6,7 @@ import { useAppSelector } from '../../store/store';
 import { Spinner } from '../../components/spinner/spinner';
 import * as notifsDb from '../../services/db/notifications';
 import type { NotificationItem, NotificationSource } from '../../interfaces/maestra';
+import { supabase } from '../../lib/supabase';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,8 @@ const sourceConfig: Record<string, { icon: string; label: string; color: string 
   auto_task: { icon: '📋', label: 'Tarefa', color: '#f59e0b' },
   auto_event: { icon: '📅', label: 'Evento', color: '#8b5cf6' },
   auto_metric: { icon: '📊', label: 'Métrica', color: '#06b6d4' },
+  activation: { icon: '🚀', label: 'Ativação', color: '#BE81EC' },
+  weekly: { icon: '📈', label: 'Resumo semanal', color: '#22c55e' },
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -126,6 +129,31 @@ const Notifications: FC = () => {
       })
       .catch(() => message.error('Erro ao carregar notificações'))
       .finally(() => setLoading(false));
+  }, [user?.id]);
+
+  // Mantém a lista viva enquanto a tela está aberta. O RLS da tabela continua
+  // limitando os eventos ao próprio usuário.
+  useEffect(() => {
+    if (!user?.id) return undefined;
+    const channel = supabase
+      .channel(`notifications-page:${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        async (payload) => {
+          const notification = payload.new as NotificationItem;
+          setItems((prev) => (prev.some((item) => item.id === notification.id) ? prev : [notification, ...prev]));
+          if (notification.artist_id) {
+            const names = await notifsDb.fetchArtistNames([notification.artist_id]);
+            setArtistNames((prev) => ({ ...prev, ...names }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   // Load more

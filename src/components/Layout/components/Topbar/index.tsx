@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FiLogOut, FiChevronDown } from 'react-icons/fi';
 import { NotificationIcon, ConfigIcon } from '../../../Icons/system';
 import { countUnread } from '../../../../services/db/notifications';
+import { supabase } from '../../../../lib/supabase';
 
 import ForwardBackwardsButton from '../Navbar/ForwardBackwardsButton';
 import { useAppDispatch, useAppSelector } from '../../../../store/store';
@@ -32,7 +33,18 @@ export const Topbar = memo(() => {
     if (!user?.id) { setUnread(0); return; }
     let alive = true;
     countUnread(user.id).then((n) => { if (alive) setUnread(n); }).catch(() => {});
-    return () => { alive = false; };
+    const channel = supabase
+      .channel(`notifications-badge:${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => { countUnread(user.id).then((n) => { if (alive) setUnread(n); }).catch(() => {}); }
+      )
+      .subscribe();
+    return () => {
+      alive = false;
+      void supabase.removeChannel(channel);
+    };
   }, [user?.id, pathname]);
 
   const meta = (user?.user_metadata || {}) as Record<string, any>;

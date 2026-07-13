@@ -1,7 +1,7 @@
-import { ChangeEvent, FC, ReactNode, useState } from 'react';
+import { ChangeEvent, FC, ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, Popconfirm, message } from 'antd';
-import { FiFileText, FiShield, FiLifeBuoy, FiExternalLink, FiChevronRight, FiCamera, FiClock } from 'react-icons/fi';
+import { FiFileText, FiShield, FiLifeBuoy, FiExternalLink, FiChevronRight, FiCamera, FiClock, FiBell } from 'react-icons/fi';
 import { EditIcon } from '../../components/Icons/system';
 
 import { supabase } from '../../lib/supabase';
@@ -10,6 +10,7 @@ import { authActions } from '../../store/slices/auth';
 import { cancelSubscription } from '../../store/slices/subscription';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import SubscriptionManagement from './SubscriptionManagement';
+import { disableWebPush, enableWebPush, hasWebPushSubscription, isWebPushSupported } from '../../services/pushNotifications';
 
 const Settings: FC = () => {
   const navigate = useNavigate();
@@ -31,6 +32,42 @@ const Settings: FC = () => {
   const [avatar, setAvatar] = useState<string>(savedAvatar);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    const supported = isWebPushSupported();
+    setPushSupported(supported);
+    if (!user?.id || !supported) return () => { alive = false; };
+    hasWebPushSubscription().then((enabled) => {
+      if (alive) setPushEnabled(enabled);
+    }).catch(() => { if (alive) setPushEnabled(false); });
+    return () => { alive = false; };
+  }, [user?.id]);
+
+  const togglePush = async () => {
+    if (!user?.id || pushBusy) return;
+    setPushBusy(true);
+    try {
+      if (pushEnabled) {
+        await disableWebPush(user.id);
+        setPushEnabled(false);
+        message.success('Avisos desativados neste dispositivo.');
+      } else {
+        await enableWebPush(user.id);
+        setPushEnabled(true);
+        message.success('Avisos ativados neste dispositivo.');
+      }
+    } catch (error) {
+      if ((error as Error)?.message !== 'push_permission_denied') {
+        message.error('Não foi possível alterar os avisos neste dispositivo.');
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  };
 
   const startEditing = () => {
     setName(savedName);
@@ -190,6 +227,51 @@ const Settings: FC = () => {
               </button>
             </div>
           </>
+        )}
+      </section>
+
+      <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ color: '#BE81EC', display: 'flex' }}><FiBell size={20} /></span>
+          <div style={{ flex: 1 }}>
+            <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>Notificações no dispositivo</h2>
+            <p style={{ color: '#9b9ba3', fontSize: 13, lineHeight: 1.45, margin: '6px 0 0' }}>
+              Receba lembretes da Maestra mesmo quando o app estiver fechado.
+            </p>
+          </div>
+          {pushSupported && (
+            <button
+              type='button'
+              role='switch'
+              aria-checked={pushEnabled}
+              aria-label='Notificações no dispositivo'
+              onClick={togglePush}
+              disabled={pushBusy}
+              style={{
+                width: 48,
+                height: 28,
+                padding: 3,
+                border: 0,
+                borderRadius: 999,
+                background: pushEnabled ? '#BE81EC' : '#3a3a3a',
+                cursor: pushBusy ? 'wait' : 'pointer',
+                opacity: pushBusy ? 0.6 : 1,
+                transition: 'background .2s ease',
+              }}
+            >
+              <span style={{ display: 'block', width: 22, height: 22, borderRadius: '50%', background: '#fff', transform: pushEnabled ? 'translateX(20px)' : 'translateX(0)', transition: 'transform .2s ease' }} />
+            </button>
+          )}
+        </div>
+        {!pushSupported && (
+          <p style={{ color: '#6f6f78', fontSize: 12, margin: '12px 0 0' }}>
+            Seu navegador não oferece notificações push para este dispositivo.
+          </p>
+        )}
+        {pushSupported && Notification.permission === 'denied' && (
+          <p style={{ color: '#f59e0b', fontSize: 12, margin: '12px 0 0' }}>
+            As notificações foram bloqueadas no navegador. Reative-as nas permissões do site.
+          </p>
         )}
       </section>
 

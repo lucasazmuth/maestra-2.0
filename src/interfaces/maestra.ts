@@ -492,7 +492,7 @@ export interface MetricsSnapshot {
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error';
 
-export type NotificationSource = 'manual' | 'auto_task' | 'auto_event' | 'auto_metric';
+export type NotificationSource = 'manual' | 'auto_task' | 'auto_event' | 'auto_metric' | 'activation' | 'weekly';
 
 export interface NotificationItem {
   id: string;
