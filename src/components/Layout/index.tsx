@@ -19,6 +19,7 @@ import { PAYWALL_DISABLED } from '../../constants/maestra';
 import useIsMobile from '../../utils/isMobile';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { ArtifactsPanel } from '../../pages/Wizard/ArtifactsPanel';
+import { enableWebPush, hasWebPushSubscription, isWebPushSupported } from '../../services/pushNotifications';
 
 export interface LayoutContext {
   container: RefObject<HTMLDivElement | null>;
@@ -43,6 +44,26 @@ export const AppLayout: FC = memo(() => {
     ? null
     : rawBannerKind;
   const userId = useAppSelector((s) => s.auth.user?.id);
+
+  // Solicita push automaticamente na primeira entrada autenticada. O navegador
+  // pode bloquear pedidos sem gesto do usuário; nesse caso, Configurações é o
+  // fallback oficial para ativar manualmente.
+  useEffect(() => {
+    if (!userId || !isWebPushSupported() || Notification.permission !== 'default') return undefined;
+    const promptKey = `maestra-push-prompted:${userId}`;
+    if (localStorage.getItem(promptKey)) return undefined;
+    localStorage.setItem(promptKey, '1');
+
+    const timer = window.setTimeout(() => {
+      hasWebPushSubscription()
+        .then((enabled) => {
+          if (!enabled) return enableWebPush(userId).catch(() => undefined);
+          return undefined;
+        })
+        .catch(() => undefined);
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [userId]);
   // Coluna de resultados do Planejamento Estratégico (publicada pelo Wizard via store global):
   // aparece como 3ª coluna, irmã da navbar e da página, só enquanto o wizard está montado.
   const wizardPanel = useWizardPanelStore();
