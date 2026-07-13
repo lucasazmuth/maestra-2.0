@@ -19,7 +19,7 @@ import { PAYWALL_DISABLED } from '../../constants/maestra';
 import useIsMobile from '../../utils/isMobile';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { ArtifactsPanel } from '../../pages/Wizard/ArtifactsPanel';
-import { enableWebPush, hasWebPushSubscription, isWebPushSupported } from '../../services/pushNotifications';
+import { enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
 
 export interface LayoutContext {
   container: RefObject<HTMLDivElement | null>;
@@ -49,16 +49,19 @@ export const AppLayout: FC = memo(() => {
   // pode bloquear pedidos sem gesto do usuário; nesse caso, Configurações é o
   // fallback oficial para ativar manualmente.
   useEffect(() => {
-    if (!userId || !isWebPushSupported() || Notification.permission !== 'default') return undefined;
-    const promptKey = `maestra-push-prompted:${userId}`;
-    if (localStorage.getItem(promptKey)) return undefined;
-    localStorage.setItem(promptKey, '1');
+    if (!userId || !isWebPushSupported()) return undefined;
 
     const timer = window.setTimeout(() => {
-      hasWebPushSubscription()
-        .then((enabled) => {
-          if (!enabled) return enableWebPush(userId).catch(() => undefined);
-          return undefined;
+      syncWebPushSubscription(userId)
+        .then((synced) => {
+          if (synced || Notification.permission !== 'default') return undefined;
+          const promptKey = `maestra-push-prompted:${userId}`;
+          if (localStorage.getItem(promptKey)) return undefined;
+          localStorage.setItem(promptKey, '1');
+          return hasWebPushSubscription().then((enabled) => {
+            if (!enabled) return enableWebPush(userId).catch(() => undefined);
+            return undefined;
+          });
         })
         .catch(() => undefined);
     }, 600);
