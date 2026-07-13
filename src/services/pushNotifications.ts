@@ -25,6 +25,38 @@ export const hasWebPushSubscription = async (): Promise<boolean> => {
   return !!subscription;
 };
 
+const saveSubscription = async (userId: string, subscription: PushSubscription): Promise<void> => {
+  const json = subscription.toJSON();
+  if (!json.endpoint || !json.keys?.p256dh || !json.keys.auth) throw new Error('invalid_push_subscription');
+
+  const { error } = await supabase.from('push_subscriptions').upsert(
+    {
+      user_id: userId,
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth,
+      expiration_time: json.expirationTime ?? null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'endpoint' }
+  );
+  if (error) throw error;
+};
+
+/**
+ * Reassocia a inscrição deste navegador ao usuário atual.
+ * A inscrição pertence ao dispositivo/browser, e pode ter sido criada por outra
+ * conta antes de um logout. O endpoint é único no banco, então o upsert atualiza
+ * com segurança o user_id sem pedir permissão novamente.
+ */
+export const syncWebPushSubscription = async (userId: string): Promise<boolean> => {
+  if (!isWebPushSupported() || Notification.permission !== 'granted') return false;
+  const subscription = await (await getRegistration()).pushManager.getSubscription();
+  if (!subscription) return false;
+  await saveSubscription(userId, subscription);
+  return true;
+};
+
 export const disableWebPush = async (userId: string): Promise<void> => {
   if (!isWebPushSupported()) return;
   const registration = await getRegistration();
@@ -47,23 +79,9 @@ export const enableWebPush = async (userId: string): Promise<void> => {
   if (permission !== 'granted') throw new Error('push_permission_denied');
 
   const registration = await getRegistration();
-  const subscription = await registration.pushManager.subscribe({
+  const subscription = await registration.pushManager.getSubscription() || await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: decodeBase64Url(VAPID_PUBLIC_KEY) as BufferSource,
   });
-  const json = subscription.toJSON();
-  if (!json.endpoint || !json.keys?.p256dh || !json.keys.auth) throw new Error('invalid_push_subscription');
-
-  const { error } = await supabase.from('push_subscriptions').upsert(
-    {
-      user_id: userId,
-      endpoint: json.endpoint,
-      p256dh: json.keys.p256dh,
-      auth: json.keys.auth,
-      expiration_time: json.expirationTime ?? null,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'endpoint' }
-  );
-  if (error) throw error;
+  await saveSubscription(userId, subscription);
 };
