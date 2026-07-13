@@ -10,7 +10,7 @@ import { authActions } from '../../store/slices/auth';
 import { cancelSubscription } from '../../store/slices/subscription';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import SubscriptionManagement from './SubscriptionManagement';
-import { disableWebPush, enableWebPush, hasWebPushSubscription, isWebPushSupported } from '../../services/pushNotifications';
+import { disableWebPush, enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
 
 const Settings: FC = () => {
   const navigate = useNavigate();
@@ -41,7 +41,10 @@ const Settings: FC = () => {
     const supported = isWebPushSupported();
     setPushSupported(supported);
     if (!user?.id || !supported) return () => { alive = false; };
-    hasWebPushSubscription().then((enabled) => {
+    syncWebPushSubscription(user.id).then((synced) => {
+      if (synced) return true;
+      return hasWebPushSubscription();
+    }).then((enabled) => {
       if (alive) setPushEnabled(enabled);
     }).catch(() => { if (alive) setPushEnabled(false); });
     return () => { alive = false; };

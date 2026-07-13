@@ -1,7 +1,7 @@
 import { FC, Fragment, memo, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiPlus, FiLock, FiDatabase, FiChevronLeft, FiTag, FiUsers, FiBarChart2 } from 'react-icons/fi';
+import { FiPlus, FiLock, FiDatabase, FiChevronLeft, FiTag, FiUsers, FiBarChart2, FiBell } from 'react-icons/fi';
 import {
   DashboardIcon,
   DiagnosticoIcon,
@@ -307,6 +307,13 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
             collapsed={collapsed}
             active={location.pathname === '/admin/usuarios'}
             onClick={() => navigate('/admin/usuarios')}
+          />
+          <NavItem
+            icon={<FiBell />}
+            label="Enviar push"
+            collapsed={collapsed}
+            active={location.pathname === '/admin/push'}
+            onClick={() => navigate('/admin/push')}
           />
         </>
       )}

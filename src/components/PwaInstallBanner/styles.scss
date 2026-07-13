@@ -45,6 +45,13 @@
   font-weight: 800;
 }
 
+.pwa-install-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+  align-items: center;
+}
+
 .pwa-install-close {
   display: grid;
   flex: 0 0 28px;
@@ -64,5 +71,6 @@
     padding: 10px;
   }
 
+  .pwa-install-actions { flex-wrap: wrap; justify-content: flex-end; }
   .pwa-install-action { padding: 8px 11px; }
 }
