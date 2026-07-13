@@ -19,7 +19,6 @@ import { PAYWALL_DISABLED } from '../../constants/maestra';
 import useIsMobile from '../../utils/isMobile';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { ArtifactsPanel } from '../../pages/Wizard/ArtifactsPanel';
-import { PwaInstallBanner } from '../PwaInstallBanner';
 
 export interface LayoutContext {
   container: RefObject<HTMLDivElement | null>;
@@ -124,10 +123,6 @@ export const AppLayout: FC = memo(() => {
               <Topbar />
             </Col>
           )}
-
-          <Col span={24}>
-            <PwaInstallBanner />
-          </Col>
 
           <Col span={24}>
             {/* navbar + página (grupo redimensionável) e, à direita, a coluna de resultados do
