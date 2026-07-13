@@ -2,7 +2,7 @@ import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   FiArrowRight, FiArrowUp, FiCheck, FiChevronDown,
-  FiInstagram, FiStar,
+  FiDownload, FiInstagram, FiShare, FiStar,
 } from 'react-icons/fi';
 
 import { Wordmark } from '../../components/Wordmark';
@@ -17,6 +17,7 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { fetchPlanConfig } from '../../store/slices/subscription';
 import { usePlanPrices, fmtBRL } from '../../hooks/usePlanPrices';
 import { PRODUCT_THEME } from '../../components/productTheme';
+import { usePwaInstall } from '../../components/PwaInstallBanner';
 import styles from './Landing.module.scss';
 
 // Cores extras (produtos que não fazem parte do ciclo REAL→Planejamento→Plano).
@@ -548,6 +549,7 @@ export const Footer: FC = () => {
   const navigate = useNavigate();
   const goToSection = useSectionNav();
   const goHome = useGoHome();
+  const { visible: pwaVisible, ios: pwaIOS, install: installPwa, dismiss: dismissPwa } = usePwaInstall();
   return (
     <footer className={styles.footer}>
       <div className={styles.footerInner}>
@@ -557,6 +559,17 @@ export const Footer: FC = () => {
               <Wordmark className={styles.brandText} />
             </a>
             <p className={styles.footerTag}>A plataforma que diagnostica, planeja e acompanha a sua carreira na música.</p>
+            {pwaVisible && (
+              <div className={styles.footerPwa}>
+                <div className={styles.footerPwaIcon}>{pwaIOS ? <FiShare size={17} /> : <FiDownload size={17} />}</div>
+                <div className={styles.footerPwaCopy}>
+                  <strong>Instale a Maestra</strong>
+                  <span>{pwaIOS ? 'Compartilhar → Adicionar à Tela de Início' : 'Tenha acesso rápido pelo celular ou computador'}</span>
+                </div>
+                {!pwaIOS && <button className={styles.footerPwaAction} onClick={installPwa}>Instalar</button>}
+                <button className={styles.footerPwaClose} onClick={dismissPwa} aria-label='Fechar aviso de instalação'>×</button>
+              </div>
+            )}
           </div>
           <div className={styles.footerCols}>
             <div className={styles.footerCol}>

@@ -39,6 +39,16 @@ const CORS = {
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
+function hasServiceRole(req: Request): boolean {
+  const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") || "";
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1] || ""));
+    return payload?.role === "service_role";
+  } catch {
+    return false;
+  }
+}
+
 // deno-lint-ignore no-explicit-any
 type Admin = any;
 
@@ -265,14 +275,25 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (CRON_SECRET && req.headers.get("x-cron-secret") !== CRON_SECRET) return json({ error: "forbidden" }, 403);
 
+  const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+  const testArtistId = typeof body?.test_artist_id === "string" ? body.test_artist_id : null;
+  const testUserId = typeof body?.test_user_id === "string" ? body.test_user_id : null;
+  if (testArtistId || testUserId) {
+    if (!testArtistId || !testUserId || !hasServiceRole(req)) {
+      return json({ error: "test_mode_requires_service_role_and_ids" }, 403);
+    }
+  }
+
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
   const weekRef = isoWeekRef(new Date());
   let emails = 0, notifs = 0, artistsDone = 0, skipped = 0;
 
   try {
-    const { data: artists, error } = await admin
+    let artistsQuery = admin
       .from("artists")
       .select("id, user_id, name, is_locked, content");
+    if (testArtistId) artistsQuery = artistsQuery.eq("id", testArtistId);
+    const { data: artists, error } = await artistsQuery;
     if (error) throw error;
 
     for (const a of artists || []) {
@@ -289,7 +310,11 @@ Deno.serve(async (req) => {
 
       const report = buildReport(content, snap);
       const artistName = a.name || "seu artista";
-      const recipients = await getRecipients(admin, a);
+      const allRecipients = await getRecipients(admin, a);
+      if (testUserId && !allRecipients.includes(testUserId)) {
+        return json({ error: "test_user_is_not_an_artist_recipient" }, 400);
+      }
+      const recipients = testUserId ? [testUserId] : allRecipients;
       let sentForArtist = false;
 
       for (const userId of recipients) {

@@ -211,6 +211,13 @@ $card: #0c0c0c;
 .footerTop { display: flex; justify-content: space-between; gap: 40px; margin-bottom: 48px; flex-wrap: wrap; }
 .footerBrand { max-width: 20rem; }
 .footerTag { font-size: 14px; color: $g400; line-height: 1.6; margin: 16px 0 0; }
+.footerPwa { display: flex; align-items: center; gap: 10px; margin-top: 20px; max-width: 360px; padding: 10px; border: 1px solid rgba(190, 129, 236, .3); border-radius: 12px; background: rgba(92, 45, 125, .2); }
+.footerPwaIcon { display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px; border-radius: 8px; color: #1a1024; background: #c486ef; }
+.footerPwaCopy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
+.footerPwaCopy strong { color: #fff; font-size: 12px; }
+.footerPwaCopy span { color: $g400; font-size: 11px; line-height: 1.35; }
+.footerPwaAction { flex: 0 0 auto; border: 0; border-radius: 999px; padding: 7px 10px; background: #c486ef; color: #1a1024; cursor: pointer; font-size: 11px; font-weight: 800; }
+.footerPwaClose { flex: 0 0 auto; border: 0; padding: 2px 4px; background: transparent; color: $g400; cursor: pointer; font-size: 18px; line-height: 1; }
 .footerCols { display: grid; grid-template-columns: repeat(3, auto); gap: 40px; }
 .footerCol { display: flex; flex-direction: column; gap: 12px; }
 .footerColTitle { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: $g400; margin-bottom: 8px; }
