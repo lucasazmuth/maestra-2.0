@@ -8,10 +8,12 @@ import { create } from 'zustand';
 // áudio direto (evita loop de feedback play/pause).
 interface LocalPlayerState {
   open: boolean;
+  tracks: import('../components/LocalPlayerBar').LocalTrack[];
   currentId: string | null;
   playing: boolean;
   toggle: (() => void) | null; // registrada pelo LocalPlayerBar; a linha do catálogo chama
   setOpen: (v: boolean) => void;
+  setTracks: (tracks: import('../components/LocalPlayerBar').LocalTrack[]) => void;
   setCurrentId: (id: string | null) => void;
   setPlaying: (v: boolean) => void;
   setToggle: (fn: (() => void) | null) => void;
@@ -19,10 +21,12 @@ interface LocalPlayerState {
 
 export const useLocalPlayerStore = create<LocalPlayerState>((set) => ({
   open: false,
+  tracks: [],
   currentId: null,
   playing: false,
   toggle: null,
   setOpen: (v) => set({ open: v }),
+  setTracks: (tracks) => set({ tracks }),
   setCurrentId: (id) => set({ currentId: id }),
   setPlaying: (v) => set({ playing: v }),
   setToggle: (fn) => set({ toggle: fn }),

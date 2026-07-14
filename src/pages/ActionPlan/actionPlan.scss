@@ -138,6 +138,7 @@
   border-radius: 50%;
   color: #6f6f6f;
   cursor: pointer;
+  order: 1;
   transition: background 0.15s, color 0.15s;
 
   &:hover { background: rgba(255, 255, 255, 0.08); color: #BE81EC; }
@@ -163,8 +164,26 @@
   font-weight: 700;
   color: #8a8a8a;
   white-space: nowrap;
+  order: 2;
 }
 .ap-strat--current .ap-strat-count { color: #BE81EC; }
+
+.ap-strat-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #8a8a8a;
+  cursor: pointer;
+  // No lado direito, a leitura fica: objetivo, progresso e mais opções.
+  order: 3;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover, &:focus-visible { background: rgba(255, 255, 255, 0.08); color: #fff; outline: none; }
+}
 
 .ap-chevron {
   color: #b3b3b3;
@@ -172,6 +191,7 @@
   font-size: 20px;
   display: flex;
 }
+.ap-chevron--leading { order: 0; }
 .ap-strat.is-open .ap-chevron { transform: rotate(180deg); }
 
 .ap-strat-body {

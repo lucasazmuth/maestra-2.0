@@ -17,13 +17,13 @@ const typeColor: Record<string, string> = {
   error: '#e91429',
 };
 
-/** Icons/labels for automated reminder sources */
-const sourceConfig: Record<string, { icon: string; label: string; color: string }> = {
-  auto_task: { icon: '📋', label: 'Tarefa', color: '#f59e0b' },
-  auto_event: { icon: '📅', label: 'Evento', color: '#8b5cf6' },
-  auto_metric: { icon: '📊', label: 'Métrica', color: '#06b6d4' },
-  activation: { icon: '🚀', label: 'Ativação', color: '#BE81EC' },
-  weekly: { icon: '📈', label: 'Resumo semanal', color: '#22c55e' },
+/** Labels for automated reminder sources */
+const sourceConfig: Record<string, { label: string; color: string }> = {
+  auto_task: { label: 'Tarefa', color: '#f59e0b' },
+  auto_event: { label: 'Evento', color: '#8b5cf6' },
+  auto_metric: { label: 'Métrica', color: '#06b6d4' },
+  activation: { label: 'Ativação', color: '#BE81EC' },
+  weekly: { label: 'Resumo semanal', color: '#22c55e' },
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -91,7 +91,6 @@ const SourceBadge: FC<{ source?: NotificationSource }> = ({ source }) => {
       }}
       aria-label={`Lembrete: ${config.label}`}
     >
-      <span aria-hidden="true">{config.icon}</span>
       {config.label}
     </span>
   );
@@ -260,9 +259,6 @@ const Notifications: FC = () => {
                       borderBottom: '1px solid #282828',
                     }}
                   >
-                    <span style={{ fontSize: 18 }} aria-hidden="true">
-                      🎤
-                    </span>
                     <h2
                       style={{
                         color: '#fff',
@@ -298,9 +294,6 @@ const Notifications: FC = () => {
                       borderBottom: '1px solid #282828',
                     }}
                   >
-                    <span style={{ fontSize: 18 }} aria-hidden="true">
-                      🔔
-                    </span>
                     <h2
                       style={{
                         color: '#fff',

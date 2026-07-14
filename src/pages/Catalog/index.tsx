@@ -3,7 +3,7 @@ import { message } from 'antd';
 import { FiRefreshCw, FiLock, FiMoreVertical } from 'react-icons/fi';
 import { AddIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useAppDispatch, useAppSelector } from '../../store/store';
@@ -13,7 +13,7 @@ import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { UpsellModal } from '../../components/UpsellModal';
 import { Spinner } from '../../components/spinner/spinner';
 import { SpotifyEmbedPlayer } from '../../components/SpotifyEmbedPlayer';
-import { LocalPlayerBar, type LocalTrack } from '../../components/LocalPlayerBar';
+import type { LocalTrack } from '../../components/LocalPlayerBar';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import { TrackModal } from '../../components/TrackModal';
 import { CATALOG_STATUS, formatMs, isActiveCatalogStatus } from '../../constants/maestra';
@@ -59,6 +59,7 @@ const TrackCounter: FC<{ currentCount: number; maxTracks: number }> = ({ current
 
 const Catalog: FC = () => {
   const { artist } = useArtist();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const refreshing = useAppSelector((s) => s.artists.refreshing);
@@ -72,18 +73,15 @@ const Catalog: FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogItem | null>(null);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
-  const [localTrackId, setLocalTrackId] = useState<string | null>(null);
 
-  // Player aberto → o Layout esconde o banner "Assine Pro" (o player ocupa o lugar dele).
+  // O player vive no Layout para continuar tocando durante a navegação entre módulos.
   const setPlayerOpen = useLocalPlayerStore((s) => s.setOpen);
-  useEffect(() => {
-    setPlayerOpen(!!localTrackId);
-    return () => setPlayerOpen(false); // ao sair do Catálogo, libera o banner de volta
-  }, [localTrackId, setPlayerOpen]);
+  const setPlayerTracks = useLocalPlayerStore((s) => s.setTracks);
+  const playerCurrentId = useLocalPlayerStore((s) => s.currentId);
+  const setPlayerCurrentId = useLocalPlayerStore((s) => s.setCurrentId);
 
   // Estado do player (reflete o <audio>) pra a LINHA mostrar play/pause em sincronia; `togglePlayer`
   // é a função do player que controla o mesmo <audio> (pausar/retomar a faixa atual).
-  const playerCurrentId = useLocalPlayerStore((s) => s.currentId);
   const playerPlaying = useLocalPlayerStore((s) => s.playing);
   const togglePlayer = useLocalPlayerStore((s) => s.toggle);
 
@@ -96,6 +94,10 @@ const Catalog: FC = () => {
   // Se isReadOnlyMode (pós-downgrade: faixas > 10 sem PRO), edição e exclusão ficam bloqueadas.
   const canEditTracks = canEditCatalog && !isReadOnlyMode;
   const [upsellOpen, setUpsellOpen] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.catalogTab === 'manual') setTab('manual');
+  }, [location.state]);
 
   const artistId = artist?.id;
   const spotifyCatalog = artist?.content?.spotifyCatalog;
@@ -113,12 +115,20 @@ const Catalog: FC = () => {
 
   // Os dois players são mutuamente exclusivos.
   const openEmbed = (id: string | null) => {
-    setLocalTrackId(null);
+    setPlayerOpen(false);
+    setPlayerCurrentId(null);
     setPlayingTrackId(id);
   };
   const openLocal = (id: string | null) => {
     setPlayingTrackId(null);
-    setLocalTrackId(id);
+    if (id) {
+      setPlayerTracks(localTracks);
+      setPlayerCurrentId(id);
+      setPlayerOpen(true);
+    } else {
+      setPlayerOpen(false);
+      setPlayerCurrentId(null);
+    }
   };
 
   useEffect(() => {
@@ -386,7 +396,7 @@ const Catalog: FC = () => {
                   title={it.audio_file ? 'Ouvir aqui' : (canEditTracks ? 'Sem áudio — clique para editar' : 'Sem áudio')}
                   onClick={() => {
                     if (it.audio_file) {
-                      openLocal(localTrackId === it.id ? null : it.id);
+                      openLocal(playerCurrentId === it.id ? null : it.id);
                     } else if (canEditTracks) {
                       setEditing(it);
                       setModalOpen(true);
@@ -399,18 +409,18 @@ const Catalog: FC = () => {
                     padding: 8,
                     borderRadius: 6,
                     cursor: 'pointer',
-                    background: localTrackId === it.id ? 'rgba(190, 129, 236,0.08)' : 'transparent',
+                    background: playerCurrentId === it.id ? 'rgba(190, 129, 236,0.08)' : 'transparent',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.background =
-                      localTrackId === it.id ? 'rgba(190, 129, 236,0.08)' : 'transparent')
+                      playerCurrentId === it.id ? 'rgba(190, 129, 236,0.08)' : 'transparent')
                   }
                 >
                   {(() => {
                     // Espelha o player: se ESTA faixa é a do player, mostra pausar/tocar conforme
                     // o estado e o clique pausa/retoma; senão, o clique inicia esta faixa.
-                    const isCurrent = localTrackId === it.id && playerCurrentId === it.id;
+                    const isCurrent = playerCurrentId === it.id;
                     const isPlaying = isCurrent && playerPlaying;
                     return (
                       <button
@@ -513,16 +523,8 @@ const Catalog: FC = () => {
       {playingTrackId && (
         <SpotifyEmbedPlayer trackId={playingTrackId} onClose={() => setPlayingTrackId(null)} />
       )}
-      {localTrackId && (
-        <LocalPlayerBar
-          tracks={localTracks}
-          currentId={localTrackId}
-          onChangeTrack={setLocalTrackId}
-          onClose={() => setLocalTrackId(null)}
-        />
-      )}
       {/* Espaço para o player fixo não cobrir as últimas linhas */}
-      {(playingTrackId || localTrackId) && <div style={{ height: 110 }} />}
+      {playingTrackId && <div style={{ height: 110 }} />}
     </div>
   );
 };

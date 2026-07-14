@@ -1,7 +1,7 @@
 import { IconType } from 'react-icons';
-import { FiUser, FiMusic } from 'react-icons/fi';
+import { FiCheckSquare, FiMusic, FiUser } from 'react-icons/fi';
 
-export type UpsellContext = 'artist-limit' | 'catalog-limit';
+export type UpsellContext = 'artist-limit' | 'catalog-limit' | 'action-plan';
 
 export interface UpsellConfig {
   title: string;
@@ -32,5 +32,15 @@ export const UPSELL_CONFIG: Record<UpsellContext, UpsellConfig> = {
       'Relatórios de royalties detalhados',
     ],
     icon: FiMusic,
+  },
+  'action-plan': {
+    title: 'Assine o Maestra Pro',
+    description: 'Desbloqueie a edição e a gestão completa do seu Plano de Ação.',
+    benefits: [
+      'Adicionar tarefas e estratégias',
+      'Editar prazos, categorias e responsáveis',
+      'Acompanhar seu plano com a Nyta IA',
+    ],
+    icon: FiCheckSquare,
   },
 };

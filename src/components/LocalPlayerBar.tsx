@@ -26,6 +26,7 @@ interface Props {
   currentId: string;
   onChangeTrack: (id: string) => void;
   onClose: () => void;
+  onTrackClick?: () => void;
 }
 
 const fmt = (s: number): string => {
@@ -45,7 +46,7 @@ const ctrlBtn: React.CSSProperties = {
   padding: 4,
 };
 
-export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, onClose }) => {
+export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, onClose, onTrackClick }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // `playing` no store apenas REFLETE o <audio> (via eventos) — pra a LINHA do catálogo exibir e
   // controlar em sincronia. O controle do áudio é IMPERATIVO (togglePlay) — sem efeito que
@@ -178,13 +179,19 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
       </div>
 
       {/* Faixa: capa + info (meio no desktop, começo no mobile) */}
-      <div className='lpb-track'>
+      <button
+        type='button'
+        className='lpb-track'
+        onClick={onTrackClick}
+        aria-label={`Abrir faixa ${track.title} no catálogo`}
+        title='Abrir no Catálogo'
+      >
         <img className='lpb-cover' src={track.cover || `${process.env.PUBLIC_URL}/images/playlist.png`} alt='' />
         <div className='lpb-meta'>
           <div className='lpb-title'>{track.title}</div>
           {track.subtitle && <div className='lpb-sub'>{track.subtitle}</div>}
         </div>
-      </div>
+      </button>
 
       {/* Fechar */}
       <button className='lpb-close' title='Fechar player' style={ctrlBtn} onClick={onClose}>

@@ -1,10 +1,12 @@
-import { FC, PointerEvent as ReactPointerEvent } from 'react';
-import { Popconfirm } from 'antd';
-import { FiTrash2, FiX, FiArrowLeft } from 'react-icons/fi';
+import { FC, PointerEvent as ReactPointerEvent, useState } from 'react';
+import { Dropdown, Popconfirm } from 'antd';
+import { FiMoreVertical, FiTrash2, FiX, FiArrowLeft, FiLifeBuoy } from 'react-icons/fi';
 
 import useIsMobile from '../../utils/isMobile';
 import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
 import styles from './NytaModalHeader.module.scss';
+
+const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
 
 interface NytaModalHeaderProps {
   onClear: () => void;
@@ -26,6 +28,11 @@ export const NytaModalHeader: FC<NytaModalHeaderProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const draggable = !isMobile && !!onDragStart;
+  const [clearOpen, setClearOpen] = useState(false);
+
+  const openSupport = () => {
+    window.open(`mailto:${SUPPORT_EMAIL}?subject=Suporte%20Nyta%20IA`, '_blank');
+  };
 
   return (
     <div
@@ -50,17 +57,31 @@ export const NytaModalHeader: FC<NytaModalHeaderProps> = ({
           </span>
         )}
         <Popconfirm
+          open={clearOpen}
           title="Limpar histórico?"
           description="Esta ação não pode ser desfeita."
           okText="Limpar"
           cancelText="Cancelar"
           okButtonProps={{ danger: true }}
           placement="bottomRight"
-          onConfirm={onClear}
+          onOpenChange={setClearOpen}
+          onConfirm={() => { setClearOpen(false); onClear(); }}
         >
-          <button className={styles.iconButton} aria-label="Limpar histórico">
-            <FiTrash2 size={18} />
-          </button>
+          <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            menu={{
+              items: [
+                { key: 'clear', label: 'Limpar histórico', icon: <FiTrash2 size={15} />, danger: true },
+                { key: 'support', label: 'Falar com o suporte', icon: <FiLifeBuoy size={15} /> },
+              ],
+              onClick: ({ key }) => key === 'clear' ? setClearOpen(true) : openSupport(),
+            }}
+          >
+            <button className={styles.iconButton} aria-label="Mais opções" title="Mais opções">
+              <FiMoreVertical size={18} />
+            </button>
+          </Dropdown>
         </Popconfirm>
 
         <button

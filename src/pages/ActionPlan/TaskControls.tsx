@@ -36,12 +36,11 @@ export interface Assignee {
   label: string;
 }
 
-// Iniciais p/ o avatar (1–2 letras). "Lucas Andrade" → "LA"; "joao@x.com" → "J".
+// Letra p/ o avatar (uma letra, mantendo o chip limpo). "Lucas Andrade" → "L"; "joao@x.com" → "J".
 const initials = (label: string): string => {
   const clean = label.split('@')[0].trim();
   const parts = clean.split(/[\s._-]+/).filter(Boolean);
-  const ini = (parts[0]?.[0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '');
-  return ini.toUpperCase() || '?';
+  return (parts[0]?.[0] || '?').toUpperCase();
 };
 
 const fmtDate = (d?: string): string =>
@@ -53,7 +52,9 @@ export const TaskDate: FC<{
   className: string;
   placeholder?: string;
   onChange: (d?: string) => void;
-}> = ({ value, overdue, className, placeholder = 'Sem prazo', onChange }) => {
+  disabled?: boolean;
+  onBlocked?: () => void;
+}> = ({ value, overdue, className, placeholder = 'Sem prazo', onChange, disabled = false, onBlocked }) => {
   const [editing, setEditing] = useState(false);
 
   if (editing) {
@@ -76,17 +77,32 @@ export const TaskDate: FC<{
     <button
       type="button"
       className={`${className}${overdue ? ' is-overdue' : ''}`}
-      title="Definir prazo"
-      onClick={() => setEditing(true)}
+      title={disabled ? 'Recurso exclusivo do Maestra Pro' : 'Definir prazo'}
+      aria-disabled={disabled}
+      onClick={() => disabled ? onBlocked?.() : setEditing(true)}
     >
       {value ? fmtDate(value) : placeholder}
     </button>
   );
 };
 
-export const TaskCategory: FC<{ value?: string; className: string; onChange: (v: string) => void }> = ({ value, className, onChange }) => {
+export const TaskCategory: FC<{
+  value?: string;
+  className: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+  onBlocked?: () => void;
+}> = ({ value, className, onChange, disabled = false, onBlocked }) => {
   const current = value || 'acoes';
   const label = TASK_TYPES.find((o) => o.v === current)?.label || 'Ações';
+  const button = <button
+    type="button"
+    className={className}
+    title={disabled ? 'Recurso exclusivo do Maestra Pro' : 'Mudar categoria'}
+    aria-disabled={disabled}
+    onClick={disabled ? onBlocked : undefined}
+  >{label}</button>;
+  if (disabled) return button;
   return (
     <Dropdown
       trigger={['click']}
@@ -97,7 +113,7 @@ export const TaskCategory: FC<{ value?: string; className: string; onChange: (v:
         onClick: ({ key }) => onChange(key),
       }}
     >
-      <button type="button" className={className} title="Mudar categoria">{label}</button>
+      {button}
     </Dropdown>
   );
 };
@@ -107,9 +123,21 @@ export const TaskOwner: FC<{
   assignees: Assignee[];
   className: string;
   onChange: (v?: string) => void;
-}> = ({ value, assignees, className, onChange }) => {
+  disabled?: boolean;
+  onBlocked?: () => void;
+}> = ({ value, assignees, className, onChange, disabled = false, onBlocked }) => {
   // Se o responsável gravado não está mais na lista (membro removido), mostra o valor cru.
   const current = value ? assignees.find((a) => a.value === value) || { value, label: value } : undefined;
+  const button = <button
+    type="button"
+    className={`${className}${current ? ' is-assigned' : ''}`}
+    title={disabled ? 'Recurso exclusivo do Maestra Pro' : (current ? `Responsável: ${current.label}` : 'Atribuir responsável')}
+    aria-disabled={disabled}
+    onClick={disabled ? onBlocked : undefined}
+  >
+    {current ? <span className="ap-owner-ini">{initials(current.label)}</span> : <FiPlus size={13} />}
+  </button>;
+  if (disabled) return button;
   return (
     <Dropdown
       trigger={['click']}
@@ -123,13 +151,7 @@ export const TaskOwner: FC<{
         onClick: ({ key }) => onChange(key === '__none__' ? undefined : key),
       }}
     >
-      <button
-        type="button"
-        className={`${className}${current ? ' is-assigned' : ''}`}
-        title={current ? `Responsável: ${current.label}` : 'Atribuir responsável'}
-      >
-        {current ? <span className="ap-owner-ini">{initials(current.label)}</span> : <FiPlus size={13} />}
-      </button>
+      {button}
     </Dropdown>
   );
 };
@@ -154,7 +176,9 @@ export const AutoTextarea: FC<{
   className: string;
   defaultValue: string;
   onCommit: (v: string) => void;
-}> = ({ className, defaultValue, onCommit }) => {
+  disabled?: boolean;
+  onBlocked?: () => void;
+}> = ({ className, defaultValue, onCommit, disabled = false, onBlocked }) => {
   const ref = useRef<HTMLTextAreaElement>(null);
 
   const resize = useCallback(() => {
@@ -193,6 +217,9 @@ export const AutoTextarea: FC<{
       className={className}
       defaultValue={defaultValue}
       rows={1}
+      readOnly={disabled}
+      aria-disabled={disabled}
+      onFocus={disabled ? onBlocked : undefined}
       onInput={resize}
       onBlur={(e) => {
         const v = e.currentTarget.value.trim();

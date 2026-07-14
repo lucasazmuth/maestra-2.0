@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState, type FC, type RefObject } from 'react';
 
 import { Col, Row } from 'antd';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import { Topbar } from './components/Topbar';
@@ -11,6 +11,7 @@ import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
 import { StatusBanner, useStatusBanner } from '../AnnouncementBanner';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
+import { LocalPlayerBar } from '../LocalPlayerBar';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { getLibraryCollapsed, uiActions } from '../../store/slices/ui';
@@ -18,6 +19,7 @@ import { fetchSubscriptionStatus, fetchPlanConfig } from '../../store/slices/sub
 import { PAYWALL_DISABLED } from '../../constants/maestra';
 import useIsMobile from '../../utils/isMobile';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
+import { useNytaModal } from '../../hooks/useNytaModal';
 import { ArtifactsPanel } from '../../pages/Wizard/ArtifactsPanel';
 import { enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
 
@@ -32,13 +34,28 @@ export const AppLayout: FC = memo(() => {
   const isMobile = useIsMobile();
   const [isTablet, setIsTablet] = useState(false);
   const rawBannerKind = useStatusBanner();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isOpen: nytaOpen } = useNytaModal();
   // Com o player do catálogo aberto, ele ASSUME o lugar do banner no rodapé — então o banner some
   // enquanto o player está no ar. Sem depender de `isMobile` (o breakpoint do JS ≠ do CSS deixava
   // o banner visível numa faixa de largura, e o player sobrepunha em vez de substituir).
   const playerOpen = useLocalPlayerStore((s) => s.open);
+  const playerTracks = useLocalPlayerStore((s) => s.tracks);
+  const playerCurrentId = useLocalPlayerStore((s) => s.currentId);
+  const setPlayerOpen = useLocalPlayerStore((s) => s.setOpen);
+  const setPlayerCurrentId = useLocalPlayerStore((s) => s.setCurrentId);
+  // A lista inicial de perfis não tem contexto de reprodução. No mobile, a Nyta ocupa a tela
+  // inteira; manter o player visível por cima dela quebraria esse fluxo. Nas demais telas o player
+  // continua global e o áudio segue tocando durante a navegação.
+  // A lista global de perfis não tem contexto de reprodução. Normalize a barra final
+  // para manter a regra válida tanto em /artists quanto em /artists/.
+  const isArtistsList = location.pathname.replace(/\/+$/, '') === '/artists';
+  const playerHidden = isArtistsList || (isMobile && nytaOpen);
+  const playerVisible = playerOpen && !playerHidden;
   // No mobile o banner promocional ("Assine o Maestra Pro") toma espaço demais e não é crítico —
   // escondemos só ele. Os avisos de pagamento (grace/pending) continuam aparecendo no mobile.
-  const bannerKind = playerOpen
+  const bannerKind = playerVisible
     ? null
     : rawBannerKind === 'promo' && isMobile
     ? null
@@ -73,14 +90,13 @@ export const AppLayout: FC = memo(() => {
   const showWizardPanel = wizardPanel.active && wizardPanel.open && !isMobile;
   // No mobile a sidebar é oculta; uma tab bar no rodapé (in-flow, abaixo do banner) navega entre os
   // módulos do artista. Reserva a altura dela (56px) no mobile, somada à do banner quando houver.
-  const location = useLocation();
   // A tab bar aparece nas rotas de artista E nas telas globais (Configurações, Notificações,
   // Assinatura…) quando há um artista atual no store — o mesmo critério do MobileNav. Excluímos a
   // lista "Seus artistas" e a área admin. Mantém a reserva de espaço (padding-bottom) em sincronia
   // com o que o MobileNav de fato renderiza, senão o conteúdo ficaria atrás da barra.
   const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
   const routeArtistId = /^\/artists\/([^/]+)/.exec(location.pathname)?.[1];
-  const navExcluded = location.pathname === '/artists' || location.pathname.startsWith('/admin');
+  const navExcluded = isArtistsList || location.pathname.startsWith('/admin');
   const hasMobileNav = !!(routeArtistId ?? currentArtistId) && !navExcluded;
   // No mobile, o Planejamento Estratégico (wizard) vira "tela cheia": escondemos o topbar do app
   // pra o chat ocupar toda a altura (o wizard já tem cabeçalho próprio com título e "Salvar e sair").
@@ -92,7 +108,16 @@ export const AppLayout: FC = memo(() => {
   // viewport (desktop ~1 linha = 76px; mobile 2 linhas = 84px).
   // Reserva a altura do rodapé pro conteúdo não colar no card. Com o player no lugar do banner
   // (desktop), reserva o mesmo espaço (76px) — senão o player fica sem respiro no topo.
-  const bottomReserve = bannerKind ? (isMobile ? 84 : 76) : playerOpen && !isMobile ? 76 : 0;
+  const bottomReserve = bannerKind ? (isMobile ? 84 : 76) : playerVisible && !isMobile ? 76 : 0;
+
+  // Entrar numa das exceções deve fechar o player, não apenas escondê-lo: desmontar o áudio
+  // interrompe a reprodução e evita que ela continue tocando sem um controle visível.
+  useEffect(() => {
+    if (playerOpen && playerHidden) {
+      setPlayerOpen(false);
+      setPlayerCurrentId(null);
+    }
+  }, [playerHidden, playerOpen, setPlayerCurrentId, setPlayerOpen]);
 
   // Carrega o status da assinatura uma vez ao autenticar, de forma global —
   // assim o banner e (futuramente) os entitlements refletem a realidade sem
@@ -202,6 +227,23 @@ export const AppLayout: FC = memo(() => {
       </div>
 
       <NytaFloatingModal />
+
+      {playerVisible && playerCurrentId && playerTracks.length > 0 && (
+        <LocalPlayerBar
+          tracks={playerTracks}
+          currentId={playerCurrentId}
+          onChangeTrack={setPlayerCurrentId}
+          onTrackClick={() => {
+            if (currentArtistId) {
+              navigate(`/artists/${currentArtistId}/catalog`, { state: { catalogTab: 'manual' } });
+            }
+          }}
+          onClose={() => {
+            setPlayerOpen(false);
+            setPlayerCurrentId(null);
+          }}
+        />
+      )}
     </>
   );
 });
