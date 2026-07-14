@@ -65,7 +65,8 @@ const Catalog: FC = () => {
   const refreshing = useAppSelector((s) => s.artists.refreshing);
   const user = useAppSelector((s) => s.auth.user);
 
-  const [tab, setTab] = useState<Tab>('spotify');
+  // O catálogo abre primeiro nas faixas/rascunhos, que é a área de trabalho principal.
+  const [tab, setTab] = useState<Tab>('manual');
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [genres, setGenres] = useState<MusicGenre[]>([]);
   const [members, setMembers] = useState<ArtistMember[]>([]);
@@ -265,8 +266,8 @@ const Catalog: FC = () => {
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify color='#BE81EC' />} />
         <TabButton id='manual' label='Faixas / Rascunho' />
+        <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify color='#BE81EC' />} />
       </div>
 
       {tab === 'spotify' ? (

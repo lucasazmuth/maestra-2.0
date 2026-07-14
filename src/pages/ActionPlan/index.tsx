@@ -1,6 +1,6 @@
 import { FC, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dropdown, message, Popover } from 'antd';
+import { App, Dropdown, message, Popover } from 'antd';
 import { createPortal } from 'react-dom';
 import { FiArchive, FiCheck, FiChevronDown, FiHelpCircle, FiMoreVertical, FiPlus, FiRefreshCw, FiX } from 'react-icons/fi';
 
@@ -93,6 +93,7 @@ const ArchiveModal: FC<{
 };
 
 const ActionPlan: FC = () => {
+  const { message: toast } = App.useApp();
   const { artist } = useArtist();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -199,11 +200,14 @@ const ActionPlan: FC = () => {
   };
   // Marcar como concluída é ACOMPANHAR (não estrutural): liberado pra quem cria/acessa o plano
   // (dono do perfil sem PRO; membro com nível+PRO), via editPlanning em vez de manageTasks.
-  const toggleDone = (sid: string, t: ActionTask) =>
-    commit(
-      (ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).map((x) => (x.id === t.id ? { ...x, status: isDone(t) ? 'todo' : 'done' } : x)) })),
+  const toggleDone = (sid: string, t: ActionTask) => {
+    const nextDone = !isDone(t);
+    void commit(
+      (ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).map((x) => (x.id === t.id ? { ...x, status: nextDone ? 'done' : 'todo' } : x)) })),
       editPlanning
     );
+    toast.success(nextDone ? 'Tarefa concluída.' : 'Tarefa reaberta.');
+  };
   const delTask = (sid: string, tid: string) => {
     commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).filter((t) => t.id !== tid) })));
   };
@@ -270,9 +274,8 @@ const ActionPlan: FC = () => {
 
   return (
     <div className="ap" style={{ minHeight: '100%', ...pageBg(PRODUCT_THEME.action.accent) }}>
-      {/* CABEÇALHO padronizado (mesmo padrão de Diagnóstico/Planejamento — grupo CRESCIMENTO). */}
+      {/* Cabeçalho limpo, alinhado ao padrão da Agenda. */}
       <PageHeader
-        kicker="Crescimento"
         title="Plano de Ação"
         subtitle="Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase."
       />
@@ -295,7 +298,7 @@ const ActionPlan: FC = () => {
         <span aria-hidden style={{ position: 'absolute', right: -10, bottom: -28, opacity: 0.18, pointerEvents: 'none', lineHeight: 0 }}>
           <img src={featureAction} alt="" style={{ display: 'block', width: 210, height: 'auto', filter: 'drop-shadow(0 18px 30px rgba(0,0,0,0.45))' }} />
         </span>
-        <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#BE81EC' }}>Progresso do plano</span>
+        <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b3b3b3' }}>Progresso do plano</span>
         <h2 className="ap-progress-title" style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 24, color: '#fff', margin: '6px 0 0', lineHeight: 1.1 }}>Suas tarefas</h2>
         <TaskProgress counts={taskCounts} />
 

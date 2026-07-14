@@ -755,7 +755,7 @@ h3 {
     // 88px, deixando ~39px de vazio acima dos ícones — que aparecia como "espaço a mais" no topo.
     height: 64px;
     padding: 0 6px calc(10px + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, rgba(17, 17, 17, 0) 0%, rgba(17, 17, 17, 0.85) 48%, #111111 78%);
+    background: linear-gradient(180deg, rgba(17, 17, 17, 0.32) 0%, rgba(17, 17, 17, 0.92) 48%, #111111 78%);
   }
 
   // Com o banner de pagamento no rodapé (84px reservados na base), a navbar SOBE pra ficar logo
@@ -985,6 +985,11 @@ h3 {
   }
   .artist-hero-meta {
     justify-content: center;
+  }
+  .dashboard-artist-hero { display: none; }
+  .next-step-section {
+    margin-top: 16px !important;
+    margin-bottom: 0 !important;
   }
 
   // A navbar é uma ilha FLUTUANTE (translúcida + blur). Em vez de cortar a altura da .Main-section

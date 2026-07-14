@@ -31,8 +31,11 @@ const Dashboard: FC = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      {/* Cabeçalho do artista (foto + nome + stats) */}
-      <ArtistHero artist={artist} />
+      {/* No mobile, o artista já aparece no chip do topo; o hero completo fica redundante
+          e disputa atenção com o próximo passo. No desktop ele continua visível. */}
+      <div className='dashboard-artist-hero'>
+        <ArtistHero artist={artist} />
+      </div>
 
       {/* Conectar ao Spotify se o artista ainda não está vinculado */}
       {!sp?.spotify_artist_id && <ConnectSpotify artist={artist} />}

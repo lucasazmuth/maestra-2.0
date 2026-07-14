@@ -59,7 +59,6 @@ const DiagnosticView: FC = () => {
     <div style={{ padding: 24, minHeight: '100%', ...pageBg(PRODUCT_THEME.real.accent) }}>
       {realIndex && (
         <PageHeader
-          kicker="Crescimento"
           title="Diagnóstico REAL"
           subtitle="Sua fase de carreira atual, com base nos seus dados reais. Refaça o diagnóstico quando evoluir."
         />

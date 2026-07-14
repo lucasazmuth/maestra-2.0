@@ -1,6 +1,7 @@
 import { CSSProperties, FC, ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiChevronRight } from 'react-icons/fi';
+import { App } from 'antd';
+import { FiChevronRight, FiPause, FiPlay } from 'react-icons/fi';
 import { PlanoAcaoIcon, AgendaIcon, CatalogoIcon, EquipeIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 
@@ -13,6 +14,8 @@ import { TASK_TYPES } from '../ActionPlan/TaskComposer';
 import { EVENT_TYPES, CATALOG_STATUS, ACCESS_LEVELS } from '../../constants/maestra';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import type { AgendaEvent, Artist, ArtistContent, ArtistMember, CatalogItem, Strategy } from '../../interfaces/maestra';
+import type { LocalTrack } from '../../components/LocalPlayerBar';
+import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 
 // Respeita o "reduzir movimento" do sistema (a timeline anima só quando permitido).
 const REDUCE_MOTION =
@@ -53,6 +56,7 @@ const Panel: FC<{ icon: ReactNode; title: string; action?: { label: string; onCl
 const Empty: FC<{ text: string }> = ({ text }) => <div style={{ color: '#6f6f6f', fontSize: 13, padding: '6px 0' }}>{text}</div>;
 
 export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
+  const { message: toast } = App.useApp();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [events, setEvents] = useState<AgendaEvent[]>([]);
@@ -72,6 +76,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
     };
     dispatch(artistsActions.setArtistContentLocal({ id: artist.id, content: next }));
     dispatch(artistsActions.updateArtistContent({ id: artist.id, content: next }));
+    toast.success(currentStatus === 'done' ? 'Tarefa reaberta.' : 'Tarefa concluída.');
   };
 
   useEffect(() => {
@@ -93,6 +98,34 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
   const spAlbums = artist.content?.spotifyCatalog?.albums || [];
   const spItems: any[] = spTracks.length ? spTracks : spAlbums;
   const activeMembers = members.filter((m) => m.status === 'active');
+
+  // Usa o mesmo player global da tela de Catálogo para a faixa continuar tocando
+  // enquanto o usuário navega pelos módulos do artista.
+  const playerCurrentId = useLocalPlayerStore((s) => s.currentId);
+  const playerPlaying = useLocalPlayerStore((s) => s.playing);
+  const togglePlayer = useLocalPlayerStore((s) => s.toggle);
+  const setPlayerOpen = useLocalPlayerStore((s) => s.setOpen);
+  const setPlayerTracks = useLocalPlayerStore((s) => s.setTracks);
+  const setPlayerCurrentId = useLocalPlayerStore((s) => s.setCurrentId);
+  const localTracks: LocalTrack[] = items
+    .filter((i) => !!i.audio_file)
+    .map((i) => ({
+      id: i.id,
+      title: i.title,
+      subtitle: i.genre || undefined,
+      cover: i.cover_image,
+      url: i.audio_file as string,
+    }));
+  const openLocalTrack = (item: CatalogItem) => {
+    if (!item.audio_file) return;
+    if (playerCurrentId === item.id) {
+      togglePlayer?.();
+      return;
+    }
+    setPlayerTracks(localTracks);
+    setPlayerCurrentId(item.id);
+    setPlayerOpen(true);
+  };
 
   return (
     <>
@@ -221,7 +254,35 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
             items.slice(0, 5).map((it) => {
               const st = (CATALOG_STATUS as any)[it.status] || { label: it.status, color: '#6b7280' };
               return (
-                <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
+                <div
+                  key={it.id}
+                  onClick={() => openLocalTrack(it)}
+                  title={it.audio_file ? 'Ouvir aqui' : 'Sem áudio'}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', cursor: it.audio_file ? 'pointer' : 'default' }}
+                >
+                  <button
+                    type='button'
+                    title={!it.audio_file ? 'Sem áudio' : playerCurrentId === it.id && playerPlaying ? 'Pausar' : 'Tocar'}
+                    disabled={!it.audio_file}
+                    onClick={(e) => { e.stopPropagation(); openLocalTrack(it); }}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      minWidth: 32,
+                      border: 'none',
+                      borderRadius: '50%',
+                      background: it.audio_file ? '#BE81EC' : '#2a2a2a',
+                      color: '#1A1A1A',
+                      opacity: it.audio_file ? 1 : 0.5,
+                      cursor: it.audio_file ? 'pointer' : 'not-allowed',
+                      display: 'grid',
+                      placeItems: 'center',
+                      padding: 0,
+                    }}
+                  >
+                    {playerCurrentId === it.id && playerPlaying ? <FiPause size={14} /> : <FiPlay size={14} />}
+                  </button>
+                  <img src={it.cover_image || `${process.env.PUBLIC_URL}/images/playlist.png`} alt='' style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: '#fff', fontSize: 13.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
                     {it.release_date && <div style={{ color: '#8a8a8a', fontSize: 11.5 }}>{fmtDate(it.release_date)}</div>}

@@ -32,7 +32,7 @@ export const NextStepCard: FC<{ artist: Artist }> = ({ artist }) => {
   })();
 
   return (
-    <section style={{ marginBottom: 24 }}>
+    <section className="next-step-section" style={{ marginBottom: 24 }}>
       <AiGlow style={{ display: 'block', width: '100%', borderRadius: 18 }}>
         <div
           style={{

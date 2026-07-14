@@ -76,7 +76,6 @@ const Profile: FC = () => {
   return (
     <div style={{ padding: 24, minHeight: '100%', ...pageBg(PRODUCT_THEME.planning.accent) }}>
       <PageHeader
-        kicker="Crescimento"
         title="Planejamento estratégico"
         subtitle={`Visão, missão, valores, objetivos e estratégias de ${artist.name}.`}
       />

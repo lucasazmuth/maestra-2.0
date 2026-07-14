@@ -1,14 +1,14 @@
 import { FC, ReactNode } from 'react';
 
-// Cabeçalho padrão das páginas de produto (kicker do grupo + título + subtítulo + ação opcional).
-// Padroniza Diagnóstico, Planejamento e Plano de Ação (e demais) pra cada tela se identificar igual.
+// Cabeçalho padrão das páginas de produto (título + subtítulo + ação opcional).
+// Mantém o mesmo alinhamento limpo da Agenda em Diagnóstico, Planejamento e Plano de Ação.
 export const PageHeader: FC<{
   kicker?: string;
   title: string;
   subtitle?: string;
   action?: ReactNode;
 }> = ({ kicker, title, subtitle, action }) => (
-  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 22 }}>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
     <div style={{ minWidth: 0 }}>
       {kicker && (
         <span style={{ color: '#BE81EC', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{kicker}</span>

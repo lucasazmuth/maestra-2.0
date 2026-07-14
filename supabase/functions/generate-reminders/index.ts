@@ -377,7 +377,7 @@ async function generateTaskReminders(
       artist_id: artist.id,
       type: "reminder",
       title: `Tarefa vence em breve: ${task.description.substring(0, 60)}`,
-      message: `A tarefa "${task.description}" (estratégia "${task.strategy_title}") do ${artist.name} vence em ${task.deadline}. Dá um gás pra não deixar passar.`,
+      message: `A tarefa "${task.description}" (estratégia "${task.strategy_title}") de ${artist.name} vence em ${task.deadline}. Dá um gás pra não deixar passar.`,
       source: "auto_task" as const,
       reference_type: "task" as const,
       reference_id: task.id,
@@ -395,7 +395,7 @@ async function generateTaskReminders(
         supabase,
         recipients,
         `Tarefa vence em breve: ${task.description.substring(0, 60)}`,
-        `A tarefa "${task.description}" (estratégia "${task.strategy_title}") do ${artist.name} vence em ${task.deadline}. Dá um gás pra não deixar passar.`
+        `A tarefa "${task.description}" (estratégia "${task.strategy_title}") de ${artist.name} vence em ${task.deadline}. Dá um gás pra não deixar passar.`
       );
     }
   }
@@ -456,7 +456,7 @@ async function generateEventReminders(
       artist_id: artist.id,
       type: "reminder",
       title: `Seu evento é amanhã: ${event.title.substring(0, 60)}`,
-      message: `"${event.title}" do ${artist.name} é ${event.date}${event.start_time ? ` às ${event.start_time}` : ""}. Tá tudo pronto pra brilhar?`,
+      message: `"${event.title}" de ${artist.name} é ${event.date}${event.start_time ? ` às ${event.start_time}` : ""}. Tudo certo para esse compromisso?`,
       source: "auto_event" as const,
       reference_type: "event" as const,
       reference_id: event.id,
@@ -474,7 +474,7 @@ async function generateEventReminders(
         supabase,
         recipients,
         `Seu evento é amanhã: ${event.title.substring(0, 60)}`,
-        `"${event.title}" do ${artist.name} é ${event.date}${event.start_time ? ` às ${event.start_time}` : ""}. Tá tudo pronto pra brilhar?`
+        `"${event.title}" de ${artist.name} é ${event.date}${event.start_time ? ` às ${event.start_time}` : ""}. Tudo certo para esse compromisso?`
       );
     }
   }
