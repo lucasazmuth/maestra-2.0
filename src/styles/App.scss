@@ -775,6 +775,24 @@ h3 {
     padding: 8px 14px !important;
   }
 
+  // Ações da central de notificações: no mobile ficam em uma linha própria, sem
+  // comprimir os botões ao lado do título.
+  .notifications-header {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    row-gap: 12px;
+  }
+  .notifications-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .notifications-action {
+    min-height: 36px;
+    padding: 8px 14px !important;
+    white-space: nowrap;
+    font-size: 12px !important;
+  }
+
   // ── Player do catálogo no mobile ──────────────────────────────────────────────
   // Card FLUTUANTE acima da navbar (ref. Home.svg): #333842 (já no base), cantos 10px, 8px de
   // margem lateral, ~61px. Navbar = 64px; com o banner (84px) a navbar sobe, o card sobe junto.

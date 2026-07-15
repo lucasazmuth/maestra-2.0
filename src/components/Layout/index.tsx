@@ -37,6 +37,15 @@ export const AppLayout: FC = memo(() => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isOpen: nytaOpen } = useNytaModal();
+
+  // O conteúdo rola dentro de .Main-section (não no body). Como o layout permanece
+  // montado entre as rotas, sem este reset a nova tela herdava a posição da anterior.
+  useEffect(() => {
+    const page = container.current;
+    page?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname, location.search]);
+
   // Com o player do catálogo aberto, ele ASSUME o lugar do banner no rodapé — então o banner some
   // enquanto o player está no ar. Sem depender de `isMobile` (o breakpoint do JS ≠ do CSS deixava
   // o banner visível numa faixa de largura, e o player sobrepunha em vez de substituir).

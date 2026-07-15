@@ -5,26 +5,10 @@ import dayjs from 'dayjs';
 import { useAppSelector } from '../../store/store';
 import { Spinner } from '../../components/spinner/spinner';
 import * as notifsDb from '../../services/db/notifications';
-import type { NotificationItem, NotificationSource } from '../../interfaces/maestra';
+import type { NotificationItem } from '../../interfaces/maestra';
 import { supabase } from '../../lib/supabase';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const typeColor: Record<string, string> = {
-  info: '#3b82f6',
-  success: '#BE81EC',
-  warning: '#f59e0b',
-  error: '#e91429',
-};
-
-/** Labels for automated reminder sources */
-const sourceConfig: Record<string, { label: string; color: string }> = {
-  auto_task: { label: 'Tarefa', color: '#f59e0b' },
-  auto_event: { label: 'Evento', color: '#8b5cf6' },
-  auto_metric: { label: 'Métrica', color: '#06b6d4' },
-  activation: { label: 'Ativação', color: '#BE81EC' },
-  weekly: { label: 'Resumo semanal', color: '#22c55e' },
-};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -68,33 +52,6 @@ function groupByArtist(
     notifications,
   }));
 }
-
-// ─── Source Badge Component ───────────────────────────────────────────────────
-
-const SourceBadge: FC<{ source?: NotificationSource }> = ({ source }) => {
-  if (!source || source === 'manual') return null;
-  const config = sourceConfig[source];
-  if (!config) return null;
-
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontSize: 11,
-        fontWeight: 600,
-        color: config.color,
-        background: `${config.color}1a`,
-        borderRadius: 4,
-        padding: '2px 6px',
-      }}
-      aria-label={`Lembrete: ${config.label}`}
-    >
-      {config.label}
-    </span>
-  );
-};
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
@@ -208,6 +165,7 @@ const Notifications: FC = () => {
   return (
     <div style={{ padding: 24 }}>
       <div
+        className="notifications-header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -216,6 +174,7 @@ const Notifications: FC = () => {
         }}
       >
         <h1
+          className="notifications-title"
           style={{
             fontFamily: 'SpotifyMixUITitle',
             fontWeight: 800,
@@ -227,11 +186,11 @@ const Notifications: FC = () => {
           Notificações
         </h1>
         {!!items.length && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={markAll} style={ghostBtn}>
+          <div className="notifications-actions" style={{ display: 'flex', gap: 8 }}>
+            <button className="notifications-action" onClick={markAll} style={ghostBtn}>
               Marcar todas como lidas
             </button>
-            <button onClick={clearAll} style={{ ...ghostBtn, color: '#e91429' }}>
+            <button className="notifications-action" onClick={clearAll} style={{ ...ghostBtn, color: '#e91429' }}>
               Limpar
             </button>
           </div>
@@ -331,17 +290,6 @@ const Notifications: FC = () => {
                         cursor: n.read ? 'default' : 'pointer',
                       }}
                     >
-                      <div
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: typeColor[n.type] || '#3b82f6',
-                          marginTop: 6,
-                          flexShrink: 0,
-                        }}
-                        aria-hidden="true"
-                      />
                       <div style={{ flex: 1 }}>
                         <div
                           style={{
@@ -352,7 +300,6 @@ const Notifications: FC = () => {
                           }}
                         >
                           <span style={{ color: '#fff', fontWeight: 700 }}>{n.title}</span>
-                          <SourceBadge source={n.source} />
                         </div>
                         {n.message && (
                           <div style={{ color: '#b3b3b3', fontSize: 13, marginTop: 2 }}>
