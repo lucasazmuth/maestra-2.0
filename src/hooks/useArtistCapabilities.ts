@@ -13,7 +13,7 @@ import { useEntitlements, FREE_MAX_CATALOG_TRACKS } from './useEntitlements';
 //   editar catálogo   → dono OU membro com nível 'catalog'/'full'
 //   editar agenda     → dono OU membro com nível 'agenda'/'full'
 //   gerir equipe      → dono OU membro com nível 'team'/'full'
-//   editar planejamento / Maestra / tarefas → perfil pago E (dono OU PRO)  [inalterado]
+//   editar tarefas existentes → perfil pago E (dono OU membro com nível 'plan'/'full')
 //   Nyta Consultora (chat)                  → PRO (nível conta)
 //   limite de faixas  → POR PERFIL: 10 no grátis, ilimitado se o DONO do perfil é PRO
 //
@@ -50,12 +50,12 @@ export function deriveArtistCapabilities(args: {
   const canManageTeam = isOwner || has('team');
 
   // Planejamento — dois níveis:
-  //   editPlanning = CRIAR o plano + acompanhar (marcar tarefa feita). O DONO já pagou o perfil
-  //     (sem PRO); o MEMBRO precisa do nível 'plan'/'full' + PRO (o RLS de artists já exige PRO).
+  //   editPlanning = manter tarefas existentes (prazo, título, checkbox, categoria e responsável).
+  //     O PRO não é exigido para essa manutenção; o membro precisa do nível 'plan'/'full'.
   //   manageTasks  = edições AVANÇADAS (adicionar estratégia/tarefa, editar/excluir campos,
   //     refazer diagnóstico): PRO obrigatório pra TODOS (inclusive dono); membro também precisa do nível.
   const hasPlan = has('plan');
-  const canPlan = isOwner || (hasPlan && isPro);
+  const canPlan = isOwner || hasPlan;
 
   // Limite de faixas é do PERFIL: o dono PRO libera ilimitado pra todos que editam.
   const profilePro = PAYWALL_DISABLED ? true : isOwner ? isPro : !!ownerIsPro;

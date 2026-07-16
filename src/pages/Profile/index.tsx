@@ -56,7 +56,7 @@ const Profile: FC = () => {
   }, [strategies]);
 
   // Salva edições do dossiê (visão/missão/valores/bio/objetivos/gênero/referências). Merge raso +
-  // persistência otimista. Gate: editar o planejamento exige dono pago/PRO (`editPlanning`).
+  // persistência otimista. Gate: editar o planejamento exige perfil desbloqueado e permissão.
   const saveContent = async (patch: Partial<ArtistContent>) => {
     if (!artist || !editPlanning) return;
     const next: ArtistContent = { ...artist.content, ...patch };

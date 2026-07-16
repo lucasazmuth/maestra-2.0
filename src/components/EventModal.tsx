@@ -14,6 +14,9 @@ interface Props {
   onClose: () => void;
   onSaved: (e: AgendaEvent) => void;
   onDeleted?: (id: string) => void;
+  onDeleteEvent?: (event: AgendaEvent) => Promise<void>;
+  deleteLabel?: string;
+  deleteConfirmTitle?: string;
 }
 
 const empty = (date?: string): Partial<AgendaEvent> => ({
@@ -31,6 +34,9 @@ export const EventModal: FC<Props> = ({
   onClose,
   onSaved,
   onDeleted,
+  onDeleteEvent,
+  deleteLabel = 'Excluir',
+  deleteConfirmTitle = 'Excluir evento?',
 }) => {
   const [draft, setDraft] = useState<Partial<AgendaEvent>>(empty(defaultDate));
   const [saving, setSaving] = useState(false);
@@ -74,11 +80,15 @@ export const EventModal: FC<Props> = ({
   const handleDelete = async () => {
     if (!event) return;
     try {
-      await eventsDb.deleteEvent(event.id);
-      onDeleted?.(event.id);
+      if (onDeleteEvent) {
+        await onDeleteEvent(event);
+      } else {
+        await eventsDb.deleteEvent(event.id);
+        onDeleted?.(event.id);
+      }
       onClose();
-    } catch {
-      message.error('Erro ao excluir');
+    } catch (error: any) {
+      message.error(error?.message || 'Erro ao excluir');
     }
   };
 
@@ -94,9 +104,9 @@ export const EventModal: FC<Props> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <div>
             {event && (
-              <Popconfirm title='Excluir evento?' onConfirm={handleDelete} okText='Sim' cancelText='Não'>
+              <Popconfirm title={deleteConfirmTitle} onConfirm={handleDelete} okText='Sim' cancelText='Não'>
                 <button style={{ background: 'transparent', border: 'none', color: '#e91429', cursor: 'pointer', fontWeight: 700 }}>
-                  Excluir
+                  {deleteLabel}
                 </button>
               </Popconfirm>
             )}

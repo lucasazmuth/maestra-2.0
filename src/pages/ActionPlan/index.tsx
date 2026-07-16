@@ -2,7 +2,7 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { App, Dropdown, message, Popover } from 'antd';
 import { createPortal } from 'react-dom';
-import { FiArchive, FiCheck, FiChevronDown, FiHelpCircle, FiMoreVertical, FiPlus, FiRefreshCw, FiX } from 'react-icons/fi';
+import { FiArchive, FiCheck, FiChevronDown, FiHelpCircle, FiLock, FiMoreVertical, FiPlus, FiRefreshCw, FiX } from 'react-icons/fi';
 
 import { useNytaModal } from '../../hooks/useNytaModal';
 import { buildActionPlan } from '../Wizard/method/engines';
@@ -22,6 +22,7 @@ import featureAction from '../../assets/feature-action.png';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
 import { TASK_OWNER_SELF, isOnboardingComplete } from '../../constants/maestra';
 import { listMembers } from '../../services/db/members';
+import * as eventsDb from '../../services/db/events';
 import type { ActionTask, ArtistContent, ArtistMember, Strategy } from '../../interfaces/maestra';
 import './actionPlan.scss';
 
@@ -177,8 +178,9 @@ const ActionPlan: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artist?.id]);
 
-  // cap: capacidade exigida. Edições estruturais (add/editar/excluir) exigem manageTasks (PRO);
-  // acompanhar progresso (marcar feito) usa editPlanning (dono do perfil pago, sem PRO).
+  // Edições da tarefa e acompanhamento usam editPlanning: manter tarefas existentes
+  // não exige assinatura PRO; criação/remoção de estruturas continua usando manageTasks.
+  // Criação/remoção de estruturas continua usando manageTasks (PRO).
   const commit = async (mut: (ss: Strategy[]) => Strategy[], cap: boolean = manageTasks) => {
     if (!artist || !cap) return;
     const next: ArtistContent = { ...artist.content, strategies: mut(artist.content.strategies || []) };
@@ -195,17 +197,35 @@ const ActionPlan: FC = () => {
     }
   };
 
+  const syncTaskEvent = (strategy: Strategy, task: ActionTask, patch: Partial<ActionTask>) => {
+    if (!artist || (!Object.prototype.hasOwnProperty.call(patch, 'deadline') && !Object.prototype.hasOwnProperty.call(patch, 'description') && !Object.prototype.hasOwnProperty.call(patch, 'status'))) return;
+    const nextTask = { ...task, ...patch };
+    void eventsDb.syncActionPlanTaskEvent({
+      artistId: artist.id,
+      taskId: task.id,
+      title: nextTask.description,
+      strategyTitle: strategy.title,
+      deadline: nextTask.deadline,
+      completed: nextTask.status === 'done',
+    }).catch(() => toast.error('A tarefa foi salva, mas não consegui atualizar a Agenda.'));
+  };
+
   const patchTask = (sid: string, tid: string, patch: Partial<ActionTask>) => {
-    commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).map((t) => (t.id === tid ? { ...t, ...patch } : t)) })));
+    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
+    const task = strategy?.tasks?.find((t) => t.id === tid);
+    commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).map((t) => (t.id === tid ? { ...t, ...patch } : t)) })), editPlanning);
+    if (strategy && task) syncTaskEvent(strategy, task, patch);
   };
   // Marcar como concluída é ACOMPANHAR (não estrutural): liberado pra quem cria/acessa o plano
-  // (dono do perfil sem PRO; membro com nível+PRO), via editPlanning em vez de manageTasks.
+  // (dono do perfil ou membro com nível plan), via editPlanning em vez de manageTasks.
   const toggleDone = (sid: string, t: ActionTask) => {
     const nextDone = !isDone(t);
     void commit(
       (ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).map((x) => (x.id === t.id ? { ...x, status: nextDone ? 'done' : 'todo' } : x)) })),
       editPlanning
     );
+    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
+    if (strategy) syncTaskEvent(strategy, t, { status: nextDone ? 'done' : 'todo' });
     toast.success(nextDone ? 'Tarefa concluída.' : 'Tarefa reaberta.');
   };
   const delTask = (sid: string, tid: string) => {
@@ -327,7 +347,7 @@ const ActionPlan: FC = () => {
             onClick={() => manageTasks ? openWithPrompt('Quero criar uma nova estratégia') : showProRequired()}
             title={!manageTasks ? 'Recurso exclusivo do Maestra Pro' : undefined}
           >
-              <FiPlus size={14} /> Nova estratégia
+              {!manageTasks ? <FiLock size={14} /> : <FiPlus size={14} />} Nova estratégia
           </button>
           {hasArchive && (
             <button
@@ -335,7 +355,7 @@ const ActionPlan: FC = () => {
               onClick={() => manageTasks ? setArchiveOpen(true) : showProRequired()}
               title={!manageTasks ? 'Recurso exclusivo do Maestra Pro' : undefined}
             >
-              <FiArchive size={14} /> Arquivadas ({archived.length})
+              {!manageTasks ? <FiLock size={14} /> : <FiArchive size={14} />} Arquivadas ({archived.length})
             </button>
           )}
         </div>
@@ -433,8 +453,8 @@ const ActionPlan: FC = () => {
                             <button
                               className={`ap-tl-dot${done ? ' is-done' : ''}${od ? ' is-overdue' : ''}`}
                               title={done ? 'Concluída' : 'Marcar como concluída'}
-                              onClick={editPlanning ? () => toggleDone(s.id, t) : undefined}
-                              style={{ cursor: editPlanning ? 'pointer' : 'default' }}
+                              onClick={() => editPlanning ? toggleDone(s.id, t) : showProRequired()}
+                              style={{ cursor: 'pointer' }}
                             >
                               {done && <FiCheck size={13} />}
                             </button>
@@ -442,7 +462,7 @@ const ActionPlan: FC = () => {
                               className="ap-date"
                               value={t.deadline}
                               overdue={od}
-                              disabled={!manageTasks}
+                              disabled={!editPlanning}
                               onBlocked={showProRequired}
                               onChange={(d) => patchTask(s.id, t.id, { deadline: d })}
                             />
@@ -451,14 +471,14 @@ const ActionPlan: FC = () => {
                                 key={t.description}
                                 className="ap-task-desc"
                                 defaultValue={t.description}
-                                disabled={!manageTasks}
+                                disabled={!editPlanning}
                                 onBlocked={showProRequired}
                                 onCommit={(v) => patchTask(s.id, t.id, { description: v })}
                               />
                               <TaskCategory
                                 className="ap-type"
                                 value={t.type}
-                                disabled={!manageTasks}
+                                disabled={!editPlanning}
                                 onBlocked={showProRequired}
                                 onChange={(v) => patchTask(s.id, t.id, { type: v })}
                               />
@@ -467,7 +487,7 @@ const ActionPlan: FC = () => {
                               className="ap-owner"
                               value={t.owner}
                               assignees={assignees}
-                              disabled={!manageTasks}
+                              disabled={!editPlanning}
                               onBlocked={showProRequired}
                               onChange={(o) => patchTask(s.id, t.id, { owner: o })}
                             />
@@ -485,7 +505,7 @@ const ActionPlan: FC = () => {
                       onClick={() => manageTasks ? openWithPrompt(`Quero criar uma tarefa para a estratégia "${s.title}"`) : showProRequired()}
                       title={!manageTasks ? 'Recurso exclusivo do Maestra Pro' : undefined}
                     >
-                      <FiPlus size={15} /> Nova tarefa
+                      {!manageTasks ? <FiLock size={15} /> : <FiPlus size={15} />} Nova tarefa
                     </button>
                   </div>
                 </div>

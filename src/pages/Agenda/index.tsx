@@ -1,15 +1,18 @@
 import { FC, useEffect, useMemo, useState } from 'react';
 import { message } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import { FiPlus, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiCheck, FiChevronLeft, FiChevronRight, FiPlus } from 'react-icons/fi';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
+import { useAppDispatch } from '../../store/store';
+import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import { EventModal } from '../../components/EventModal';
 import { EVENT_TYPES } from '../../constants/maestra';
 import * as eventsDb from '../../services/db/events';
-import type { AgendaEvent } from '../../interfaces/maestra';
+import type { AgendaEvent, ArtistContent } from '../../interfaces/maestra';
+import './agenda.scss';
 
 type View = 'month' | 'list';
 
@@ -33,10 +36,14 @@ const navBtn: React.CSSProperties = {
 
 const isTaskEvent = (e: AgendaEvent) => e.type === 'task' || e.source === 'action_plan';
 
+const calendarTitle = (title: string, maxLength = 28) =>
+  title.length > maxLength ? `${title.slice(0, maxLength).trimEnd()}…` : title;
+
 const Agenda: FC = () => {
   const { artist } = useArtist();
+  const dispatch = useAppDispatch();
   const artistId = artist?.id;
-  const { canEditAgenda: canEdit } = useArtistCapabilities(artist);
+  const { canEditAgenda: canEdit, editPlanning } = useArtistCapabilities(artist);
 
   const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -98,6 +105,39 @@ const Agenda: FC = () => {
     setEvents((prev) => prev.filter((x) => x.id !== id));
   };
 
+  const deleteAgendaEvent = async (event: AgendaEvent) => {
+    if (!artist) throw new Error('Artista não encontrado.');
+
+    if (!isTaskEvent(event) || !event.task_id) {
+      await eventsDb.deleteEvent(event.id);
+      onDeleted(event.id);
+      return;
+    }
+
+    if (!editPlanning) throw new Error('Você não tem permissão para editar tarefas deste artista.');
+
+    let found = false;
+    const content: ArtistContent = {
+      ...artist.content,
+      strategies: (artist.content.strategies || []).map((strategy) => ({
+        ...strategy,
+        tasks: (strategy.tasks || []).map((task) => {
+          if (task.id !== event.task_id) return task;
+          found = true;
+          // Remover o evento da Agenda não apaga a tarefa: somente retira seu prazo.
+          return { ...task, deadline: undefined };
+        }),
+      })),
+    };
+
+    if (!found) throw new Error('Não encontrei a tarefa vinculada a este evento.');
+
+    await dispatch(artistsActions.updateArtistContent({ id: artist.id, content })).unwrap();
+    await eventsDb.deleteEvent(event.id);
+    onDeleted(event.id);
+    message.success('Prazo removido da tarefa e evento excluído.');
+  };
+
   const openCreate = (date?: string) => {
     if (!canEdit) return; // colaborador sem PRO: somente-leitura
     setEditing(null);
@@ -108,6 +148,76 @@ const Agenda: FC = () => {
     if (!canEdit) return;
     setEditing(e);
     setModalOpen(true);
+  };
+
+  // Eventos vindos do Plano de Ação podem ser concluídos sem abrir o modal.
+  // A tarefa é a fonte de verdade; o evento espelha apenas seu status na Agenda.
+  const toggleTaskEvent = async (event: AgendaEvent) => {
+    if (!artist || !event.task_id) return;
+    if (!editPlanning) {
+      message.error('Você não tem permissão para editar tarefas deste artista.');
+      return;
+    }
+
+    let found = false;
+    const nextStatus = event.status === 'completed' ? 'todo' : 'done';
+    const content: ArtistContent = {
+      ...artist.content,
+      strategies: (artist.content.strategies || []).map((strategy) => ({
+        ...strategy,
+        tasks: (strategy.tasks || []).map((task) => {
+          if (task.id !== event.task_id) return task;
+          found = true;
+          return { ...task, status: nextStatus };
+        }),
+      })),
+    };
+
+    if (!found) {
+      message.error('Não encontrei a tarefa vinculada a este evento.');
+      return;
+    }
+
+    const completed = nextStatus === 'done';
+    try {
+      await dispatch(artistsActions.updateArtistContent({ id: artist.id, content })).unwrap();
+      const savedEvent = await eventsDb.updateEvent(event.id, { status: completed ? 'completed' : 'scheduled' });
+      onSaved(savedEvent);
+      message.success(completed ? 'Tarefa concluída.' : 'Tarefa reaberta.');
+    } catch {
+      message.error('Não consegui atualizar a tarefa agora.');
+    }
+  };
+
+  const taskCheckbox = (event: AgendaEvent) => {
+    const completed = event.status === 'completed';
+    return (
+      <button
+        type="button"
+        aria-label={completed ? 'Reabrir tarefa' : 'Concluir tarefa'}
+        title={completed ? 'Reabrir tarefa' : 'Concluir tarefa'}
+        onClick={(clickEvent) => {
+          clickEvent.stopPropagation();
+          void toggleTaskEvent(event);
+        }}
+        style={{
+          width: 16,
+          height: 16,
+          minWidth: 16,
+          padding: 0,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 4,
+          border: `1.5px solid ${typeColor(event.type)}`,
+          background: completed ? typeColor(event.type) : 'transparent',
+          color: '#15121c',
+          cursor: 'pointer',
+        }}
+      >
+        {completed && <FiCheck size={12} strokeWidth={3} />}
+      </button>
+    );
   };
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
@@ -133,8 +243,8 @@ const Agenda: FC = () => {
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div className="agenda-toolbar">
+        <div className="agenda-toolbar-filters">
           {(['month', 'list'] as View[]).map((v) => (
             <button
               key={v}
@@ -176,11 +286,11 @@ const Agenda: FC = () => {
           )}
         </div>
         {view === 'month' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#fff' }}>
+          <div className="agenda-toolbar-navigation">
             <button onClick={() => setCursor(cursor.subtract(1, 'month'))} style={navBtn}>
               <FiChevronLeft />
             </button>
-            <span style={{ fontWeight: 700, minWidth: 160, textAlign: 'center', textTransform: 'capitalize' }}>
+            <span className="agenda-toolbar-month">
               {cursor.format('MMMM [de] YYYY')}
             </span>
             <button onClick={() => setCursor(cursor.add(1, 'month'))} style={navBtn}>
@@ -193,14 +303,14 @@ const Agenda: FC = () => {
       <Spinner loading={loading && !events.length}>
         {view === 'month' ? (
           <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginBottom: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, marginBottom: 6 }}>
               {WEEKDAYS.map((w) => (
                 <div key={w} style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700, textAlign: 'center' }}>
                   {w}
                 </div>
               ))}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6 }}>
               {monthDays.map((d) => {
                 const key = d.format('YYYY-MM-DD');
                 const dayEvents = byDate[key] || [];
@@ -238,13 +348,29 @@ const Agenda: FC = () => {
                           borderRadius: 4,
                           fontSize: 11,
                           marginBottom: 3,
-                          whiteSpace: 'nowrap',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          minWidth: 0,
                           overflow: 'hidden',
-                          textOverflow: 'ellipsis',
                         }}
                       >
-                        {e.start_time ? e.start_time.slice(0, 5) + ' ' : ''}
-                        {e.title}
+                        {isTaskEvent(e) && taskCheckbox(e)}
+                        <span
+                          title={e.title}
+                          style={{
+                            minWidth: 0,
+                            flex: 1,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            textDecoration: e.status === 'completed' ? 'line-through' : undefined,
+                            opacity: e.status === 'completed' ? 0.7 : 1,
+                          }}
+                        >
+                          {e.start_time ? e.start_time.slice(0, 5) + ' ' : ''}
+                          {calendarTitle(e.title)}
+                        </span>
                       </div>
                     ))}
                     {dayEvents.length > 3 && (
@@ -267,8 +393,9 @@ const Agenda: FC = () => {
                   style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 12, borderRadius: 8, background: '#181818', cursor: 'pointer' }}
                 >
                   <div style={{ width: 4, height: 40, borderRadius: 2, background: typeColor(e.type) }} />
+                  {isTaskEvent(e) && taskCheckbox(e)}
                   <div style={{ flex: 1 }}>
-                    <div style={{ color: '#fff', fontWeight: 700 }}>{e.title}</div>
+                    <div style={{ color: '#fff', fontWeight: 700, textDecoration: e.status === 'completed' ? 'line-through' : undefined, opacity: e.status === 'completed' ? 0.65 : 1 }}>{e.title}</div>
                     <div style={{ color: '#b3b3b3', fontSize: 13 }}>
                       {dayjs(e.date).format('DD/MM/YYYY')}
                       {e.start_time ? ` · ${e.start_time.slice(0, 5)}` : ''}
@@ -292,6 +419,9 @@ const Agenda: FC = () => {
           onClose={() => setModalOpen(false)}
           onSaved={onSaved}
           onDeleted={onDeleted}
+          onDeleteEvent={deleteAgendaEvent}
+          deleteLabel={editing && isTaskEvent(editing) ? 'Remover prazo' : 'Excluir'}
+          deleteConfirmTitle={editing && isTaskEvent(editing) ? 'Remover o prazo da tarefa e excluir o evento?' : 'Excluir evento?'}
         />
       )}
     </div>

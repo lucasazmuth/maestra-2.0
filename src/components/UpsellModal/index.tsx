@@ -41,6 +41,9 @@ export const UpsellModal: FC<UpsellModalProps> = ({
     <Modal
       open={open}
       onCancel={onClose}
+      // Não devolve o foco ao controle que abriu o modal: no modo somente leitura,
+      // o campo bloqueado abre o upsell ao receber foco e isso criava um loop ao fechar.
+      focusTriggerAfterClose={false}
       footer={null}
       centered
       className={styles.modal}

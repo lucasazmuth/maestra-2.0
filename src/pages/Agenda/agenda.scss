@@ -1,0 +1,53 @@
+.agenda-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.agenda-toolbar-filters,
+.agenda-toolbar-navigation {
+  display: flex;
+  align-items: center;
+}
+
+.agenda-toolbar-filters {
+  gap: 8px;
+}
+
+.agenda-toolbar-navigation {
+  gap: 12px;
+  color: #fff;
+}
+
+.agenda-toolbar-month {
+  min-width: 160px;
+  text-align: center;
+  text-transform: capitalize;
+  font-weight: 700;
+}
+
+@media (max-width: 680px) {
+  .agenda-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .agenda-toolbar-filters {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .agenda-toolbar-navigation {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .agenda-toolbar-month {
+    min-width: 0;
+    flex: 1;
+  }
+}

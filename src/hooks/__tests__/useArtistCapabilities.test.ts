@@ -1,7 +1,7 @@
 /**
  * Unit tests for deriveArtistCapabilities.
  * Modelo: operação (catálogo/agenda/equipe) por access_levels do membro; planejamento/tarefas por
- * (dono ou PRO); limite de faixas POR PERFIL (dono PRO → ilimitado).
+ * (dono ou membro com nível plan); limite de faixas POR PERFIL (dono PRO → ilimitado).
  */
 
 import { deriveArtistCapabilities } from '../useArtistCapabilities';
@@ -35,13 +35,13 @@ describe('deriveArtistCapabilities', () => {
     expect(c.editPlanning).toBe(false);
   });
 
-  test('membro planejamento: vê sempre; edita só com nível "plan"/"full" + PRO', () => {
-    // Membro com nível 'plan' mas SEM PRO → vê, mas não edita.
+  test('membro planejamento: vê e edita tarefas existentes com nível "plan"/"full", mesmo sem PRO', () => {
+    // Membro com nível 'plan' mas SEM PRO → vê e edita tarefas existentes.
     const planSemPro = deriveArtistCapabilities({ isPro: false, isPaid: true, isOwner: false, accessLevels: ['plan'] });
     expect(planSemPro.viewPlanning).toBe(true);
-    expect(planSemPro.editPlanning).toBe(false);
+    expect(planSemPro.editPlanning).toBe(true);
     expect(planSemPro.manageTasks).toBe(false);
-    // Membro com nível 'plan' + PRO → cria/edita.
+    // Membro com nível 'plan' + PRO → também pode criar/gerir estruturas.
     const planComPro = deriveArtistCapabilities({ isPro: true, isPaid: true, isOwner: false, accessLevels: ['plan'] });
     expect(planComPro.editPlanning).toBe(true);
     expect(planComPro.manageTasks).toBe(true);

@@ -98,7 +98,9 @@ export const EVENT_TYPES: Record<EventType, { label: string; color: string }> = 
   studio: { label: 'Estúdio', color: '#3b82f6' },
   meeting: { label: 'Reunião', color: '#BE81EC' },
   interview: { label: 'Entrevista', color: '#ec4899' },
-  task: { label: 'Tarefa', color: '#16a34a' },
+  // Roxo mais profundo para diferenciar tarefas dos compromissos,
+  // mantendo a leitura dentro da paleta visual da Maestra.
+  task: { label: 'Tarefa', color: '#8B5CF6' },
   other: { label: 'Outro', color: '#6b7280' },
 };
 

@@ -6,6 +6,7 @@ import { PlanoAcaoIcon, AgendaIcon, CatalogoIcon, EquipeIcon } from '../../compo
 import { FaSpotify } from 'react-icons/fa6';
 
 import { listEvents } from '../../services/db/events';
+import { syncActionPlanTaskEvent } from '../../services/db/events';
 import { listCatalogItems } from '../../services/db/catalog';
 import { listMembers } from '../../services/db/members';
 import { useAppDispatch } from '../../store/store';
@@ -16,6 +17,8 @@ import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import type { AgendaEvent, Artist, ArtistContent, ArtistMember, CatalogItem, Strategy } from '../../interfaces/maestra';
 import type { LocalTrack } from '../../components/LocalPlayerBar';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
+import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
+import { UpsellModal } from '../../components/UpsellModal';
 
 // Respeita o "reduzir movimento" do sistema (a timeline anima só quando permitido).
 const REDUCE_MOTION =
@@ -59,23 +62,42 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
   const { message: toast } = App.useApp();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { editPlanning } = useArtistCapabilities(artist);
+  const [proModalOpen, setProModalOpen] = useState(false);
   const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [members, setMembers] = useState<ArtistMember[]>([]);
   const go = (to: string) => navigate(`/artists/${artist.id}/${to}`);
 
   const toggleDone = (strategyId: string, taskId: string, currentStatus: string) => {
+    if (!editPlanning) {
+      setProModalOpen(true);
+      return;
+    }
     const strategies: Strategy[] = artist.content?.strategies || [];
+    const strategy = strategies.find((s) => s.id === strategyId);
+    const task = strategy?.tasks?.find((t) => t.id === taskId);
+    const nextStatus = currentStatus === 'done' ? 'todo' : 'done';
     const next: ArtistContent = {
       ...artist.content,
       strategies: strategies.map((s) =>
         s.id !== strategyId
           ? s
-          : { ...s, tasks: (s.tasks || []).map((t) => (t.id === taskId ? { ...t, status: currentStatus === 'done' ? 'todo' : 'done' } : t)) }
+          : { ...s, tasks: (s.tasks || []).map((t) => (t.id === taskId ? { ...t, status: nextStatus } : t)) }
       ),
     };
     dispatch(artistsActions.setArtistContentLocal({ id: artist.id, content: next }));
     dispatch(artistsActions.updateArtistContent({ id: artist.id, content: next }));
+    if (strategy && task) {
+      void syncActionPlanTaskEvent({
+        artistId: artist.id,
+        taskId: task.id,
+        title: task.description,
+        strategyTitle: strategy.title,
+        deadline: task.deadline,
+        completed: nextStatus === 'done',
+      }).catch(() => toast.error('A tarefa foi salva, mas não consegui atualizar a Agenda.'));
+    }
     toast.success(currentStatus === 'done' ? 'Tarefa reaberta.' : 'Tarefa concluída.');
   };
 
@@ -315,6 +337,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
           )}
         </Panel>
       </div>
+      <UpsellModal open={proModalOpen} context='action-plan' onClose={() => setProModalOpen(false)} />
     </>
   );
 };
