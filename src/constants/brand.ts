@@ -1,7 +1,11 @@
-// Tokens de marca (estilo Spotify: fill sólido roxo + texto escuro por dentro).
-// Fonte única pra código TS/inline; o espelho em SCSS está em src/styles/variables.scss.
-export const BRAND = '#BE81EC'; // primária (rgb 190, 129, 236)
-export const BRAND_HOVER = '#A95FE0'; // hover: fill mais fundo
-export const BRAND_2 = '#D3A6F2'; // tom claro auxiliar (accents/gradiente)
-export const BRAND_INK = '#1A1A1A'; // texto/ícone sobre o fill roxo (o "preto" do Spotify)
-export const BRAND_RGB = '190, 129, 236'; // pra rgba(`rgba(${BRAND_RGB}, .x)`)
+// Tokens oficiais da identidade Maestra. O espelho SCSS está em styles/variables.scss.
+export const BRAND = '#9A4FD1';
+export const BRAND_HOVER = '#8442B6';
+export const BRAND_2 = '#C97EF3';
+export const BRAND_ON_PRIMARY = '#FFFFFF';
+export const BRAND_ONYX = '#0A0A0A';
+export const BRAND_BONE = '#F5F4F2';
+export const BRAND_RGB = '154, 79, 209';
+
+/** @deprecated Use BRAND_ON_PRIMARY para conteúdo sobre o violeta. */
+export const BRAND_INK = BRAND_ON_PRIMARY;

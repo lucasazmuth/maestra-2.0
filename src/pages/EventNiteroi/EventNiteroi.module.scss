@@ -1,17 +1,17 @@
 // Landing do Workshop da Anita (Niterói Música). Reusa o chrome da Landing (Header/Footer) e os
-// tokens do site: fundo preto, Inter, roxo da marca #BE81EC. Mesma base da página Music Rio Academy.
+// tokens do site: fundo preto, Inter, roxo da marca #9A4FD1. Mesma base da página Music Rio Academy.
 
-$brand: #be81ec;
-$brand-hover: #a95fe0;
-$brand-2: #d3a6f2;
-$ink: #1a1a1a;
+$brand: #9a4fd1;
+$brand-hover: #8442b6;
+$brand-2: #c97ef3;
+$ink: #fff;
 $line: rgba(255, 255, 255, 0.1);
 
 .page {
   background: #000;
   color: #fff;
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -44,6 +44,7 @@ $line: rgba(255, 255, 255, 0.1);
 .heroText { flex: 1; min-width: 0; }
 
 .eyebrow {
+  font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -117,7 +118,7 @@ $line: rgba(255, 255, 255, 0.1);
     position: absolute;
     inset: 8%;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(190, 129, 236, 0.4) 0%, transparent 62%);
+    background: radial-gradient(circle, rgba(154, 79, 209, 0.4) 0%, transparent 62%);
     filter: blur(28px);
   }
 
@@ -145,8 +146,8 @@ $line: rgba(255, 255, 255, 0.1);
   padding: 44px 32px;
   border-radius: 20px;
   background: #0c0a12;
-  border: 1px solid rgba(190, 129, 236, 0.35);
-  box-shadow: 0 0 70px -18px rgba(190, 129, 236, 0.45);
+  border: 1px solid rgba(154, 79, 209, 0.35);
+  box-shadow: 0 0 70px -18px rgba(154, 79, 209, 0.45);
   text-align: center;
 
   @media (max-width: 560px) { padding: 32px 20px; }
@@ -156,7 +157,7 @@ $line: rgba(255, 255, 255, 0.1);
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(120% 80% at 50% 0%, rgba(190, 129, 236, 0.18) 0%, transparent 60%);
+  background: radial-gradient(120% 80% at 50% 0%, rgba(154, 79, 209, 0.18) 0%, transparent 60%);
 }
 
 .offerBadge {
@@ -201,7 +202,7 @@ $line: rgba(255, 255, 255, 0.1);
   display: inline-flex;
   align-items: center;
   gap: 16px;
-  background: rgba(190, 129, 236, 0.14);
+  background: rgba(154, 79, 209, 0.14);
   border: 1px dashed $brand;
   color: #fff;
   font-weight: 800;
@@ -213,7 +214,7 @@ $line: rgba(255, 255, 255, 0.1);
   transition: background 0.15s;
 
   svg { color: $brand; font-size: 1.05rem; }
-  &:hover { background: rgba(190, 129, 236, 0.22); }
+  &:hover { background: rgba(154, 79, 209, 0.22); }
 }
 .couponHint { font-size: 0.82rem; color: #9a9aa2; }
 
@@ -374,8 +375,8 @@ $line: rgba(255, 255, 255, 0.1);
     aspect-ratio: 4 / 5;
     object-fit: cover;
     border-radius: 16px;
-    border: 1px solid rgba(190, 129, 236, 0.3);
-    box-shadow: 0 20px 50px -24px rgba(190, 129, 236, 0.5);
+    border: 1px solid rgba(154, 79, 209, 0.3);
+    box-shadow: 0 20px 50px -24px rgba(154, 79, 209, 0.5);
   }
 
   figcaption {

@@ -166,7 +166,7 @@ const SubscriptionPage: FC = () => {
   if (view === 'benefits') {
     // Gate por status: não deixa quem já tem assinatura (ativa) ou pendência re-assinar (duplicar).
     const gateCard: CSSProperties = { maxWidth: 560, margin: '0 auto', background: '#181818', border: '1px solid #282828', borderRadius: 16, padding: 32, textAlign: 'center' };
-    const btnPrimary: CSSProperties = { background: '#BE81EC', border: 'none', color: '#1A1A1A', borderRadius: 9999, padding: '12px 30px', fontSize: 14, fontWeight: 800, cursor: 'pointer' };
+    const btnPrimary: CSSProperties = { background: '#9A4FD1', border: 'none', color: '#FFFFFF', borderRadius: 9999, padding: '12px 30px', fontSize: 14, fontWeight: 800, cursor: 'pointer' };
     const btnGhost: CSSProperties = { background: 'none', border: 'none', color: '#9a9aa5', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 12 };
 
     if (!initialized) {
@@ -176,24 +176,24 @@ const SubscriptionPage: FC = () => {
       const proCard: CSSProperties = {
         maxWidth: 520, margin: '0 auto', borderRadius: 20, padding: '44px 32px',
         display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-        background: 'radial-gradient(120% 120% at 50% 0%, rgba(190,129,236,0.18) 0%, rgba(190,129,236,0.04) 45%, rgba(255,255,255,0.02) 100%)',
-        border: '1px solid rgba(190,129,236,0.32)',
+        background: 'radial-gradient(120% 120% at 50% 0%, rgba(154, 79, 209,0.18) 0%, rgba(154, 79, 209,0.04) 45%, rgba(255,255,255,0.02) 100%)',
+        border: '1px solid rgba(154, 79, 209,0.32)',
       };
       const proBadge: CSSProperties = {
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 60, height: 60,
-        borderRadius: 18, marginBottom: 22, background: 'rgba(190,129,236,0.14)',
-        border: '1px solid rgba(190,129,236,0.35)', boxShadow: '0 12px 32px rgba(190,129,236,0.25)',
+        borderRadius: 18, marginBottom: 22, background: 'rgba(154, 79, 209,0.14)',
+        border: '1px solid rgba(154, 79, 209,0.35)', boxShadow: '0 12px 32px rgba(154, 79, 209,0.25)',
       };
       const btnPrimaryArrow: CSSProperties = {
-        display: 'inline-flex', alignItems: 'center', gap: 8, background: '#BE81EC', border: 'none', color: '#1A1A1A',
+        display: 'inline-flex', alignItems: 'center', gap: 8, background: '#9A4FD1', border: 'none', color: '#FFFFFF',
         borderRadius: 9999, padding: '13px 32px', fontSize: 14, fontWeight: 800, cursor: 'pointer',
-        boxShadow: '0 10px 30px rgba(190,129,236,0.32)', transition: 'transform 0.15s, background 0.2s',
+        boxShadow: '0 10px 30px rgba(154, 79, 209,0.32)', transition: 'transform 0.15s, background 0.2s',
       };
       return (
         <div style={{ padding: 24 }}>
           <div style={proCard}>
             <span style={proBadge}><FiAward size={30} color='#e07fce' /></span>
-            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#D3A6F2', marginBottom: 10 }}>Assinatura ativa</span>
+            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#C97EF3', marginBottom: 10 }}>Assinatura ativa</span>
             <div style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 12 }}>Você já é Maestra PRO</div>
             <p style={{ color: '#cfcfd4', fontSize: 14.5, lineHeight: 1.55, margin: '0 0 26px', maxWidth: 400 }}>
               Edição completa, Nyta IA e todos os perfis da conta liberados.
@@ -201,8 +201,8 @@ const SubscriptionPage: FC = () => {
             <button
               style={btnPrimaryArrow}
               onClick={() => navigate('/settings')}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#A95FE0'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#BE81EC'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#8442B6'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#9A4FD1'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               Gerenciar assinatura <FiArrowRight size={16} />
             </button>
@@ -295,7 +295,7 @@ const SubscriptionPage: FC = () => {
               </div>
             }
             item={{
-              icon: <span style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 13, color: '#BE81EC' }}>PRO</span>,
+              icon: <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, color: '#9A4FD1' }}>PRO</span>,
               name: 'Maestra PRO',
               sub: <span>Edição + Nyta IA · {cycleLabel}</span>,
               price: `${priceFmt}${unit}`,

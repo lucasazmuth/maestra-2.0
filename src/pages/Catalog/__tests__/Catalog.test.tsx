@@ -83,6 +83,30 @@ jest.mock('../../../components/LocalPlayerBar', () => ({
   LocalPlayerBar: () => null,
 }));
 
+// Keep this integration test focused on catalog behavior. CRA's Jest SVG
+// transform and icon bundles emit legacy React elements under React 19.
+jest.mock('../../../components/Icons/system', () => ({
+  AddIcon: () => <span aria-hidden="true">+</span>,
+}));
+
+jest.mock('react-icons/fi', () => ({
+  FiRefreshCw: () => null,
+  FiLock: () => null,
+  FiMoreVertical: () => null,
+}));
+
+jest.mock('react-icons/fa6', () => ({
+  FaSpotify: () => null,
+}));
+
+jest.mock('../../../components/spinner/spinner', () => ({
+  Spinner: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+jest.mock('../../../services/db/members', () => ({
+  listMembers: () => Promise.resolve([]),
+}));
+
 // Mock PAYWALL_DISABLED to false for tests
 jest.mock('../../../constants/maestra', () => {
   const actual = jest.requireActual('../../../constants/maestra');

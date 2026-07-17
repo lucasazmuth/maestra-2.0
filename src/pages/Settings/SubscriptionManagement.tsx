@@ -21,7 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  active: '#BE81EC',
+  active: '#9A4FD1',
   overdue: '#f5a623',
   cancelled: '#e91429',
   pending: '#b3b3b3',
@@ -228,8 +228,8 @@ const SubscriptionManagement: FC = () => {
             borderRadius: 16,
             padding: 24,
             background:
-              'radial-gradient(120% 120% at 0% 0%, rgba(190,129,236,0.20) 0%, rgba(190,129,236,0.05) 42%, rgba(255,255,255,0.02) 100%)',
-            border: '1px solid rgba(190,129,236,0.32)',
+              'radial-gradient(120% 120% at 0% 0%, rgba(154, 79, 209,0.20) 0%, rgba(154, 79, 209,0.05) 42%, rgba(255,255,255,0.02) 100%)',
+            border: '1px solid rgba(154, 79, 209,0.32)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -242,9 +242,9 @@ const SubscriptionManagement: FC = () => {
                 height: 48,
                 borderRadius: 14,
                 flexShrink: 0,
-                background: 'rgba(190,129,236,0.14)',
-                border: '1px solid rgba(190,129,236,0.35)',
-                boxShadow: '0 10px 28px rgba(190,129,236,0.22)',
+                background: 'rgba(154, 79, 209,0.14)',
+                border: '1px solid rgba(154, 79, 209,0.35)',
+                boxShadow: '0 10px 28px rgba(154, 79, 209,0.22)',
               }}
             >
               <FiAward size={26} color='#e07fce' />
@@ -277,8 +277,8 @@ const SubscriptionManagement: FC = () => {
                     height: 22,
                     borderRadius: '50%',
                     flexShrink: 0,
-                    background: 'rgba(190,129,236,0.18)',
-                    color: '#D3A6F2',
+                    background: 'rgba(154, 79, 209,0.18)',
+                    color: '#C97EF3',
                   }}
                 >
                   <FiCheck size={13} />
@@ -294,23 +294,23 @@ const SubscriptionManagement: FC = () => {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              background: '#BE81EC',
+              background: '#9A4FD1',
               border: 'none',
-              color: '#1A1A1A',
+              color: '#FFFFFF',
               borderRadius: 9999,
               padding: '12px 30px',
               fontSize: 14,
               fontWeight: 800,
               cursor: 'pointer',
-              boxShadow: '0 10px 30px rgba(190,129,236,0.32)',
+              boxShadow: '0 10px 30px rgba(154, 79, 209,0.32)',
               transition: 'background 0.2s, transform 0.15s',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#A95FE0';
+              e.currentTarget.style.background = '#8442B6';
               e.currentTarget.style.transform = 'translateY(-1px)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#BE81EC';
+              e.currentTarget.style.background = '#9A4FD1';
               e.currentTarget.style.transform = 'translateY(0)';
             }}
           >

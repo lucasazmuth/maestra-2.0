@@ -5,7 +5,7 @@ import {
   FiDownload, FiInstagram, FiShare, FiStar,
 } from 'react-icons/fi';
 
-import { Wordmark } from '../../components/Wordmark';
+import { MaestraBrand } from '../../components/MaestraBrand';
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { AiGlow } from '../../components/AiGlow';
 import anitaPhoto from '../../assets/anita.jpg';
@@ -82,7 +82,7 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
 const buildFaqItems = (once: number, monthly: number, annual: number): { q: string; a: string }[] => {
   const discountPct = monthly > 0 ? Math.round((1 - annual / (monthly * 12)) * 100) : 0;
   return [
-    { q: 'O que é a Maestra Manager?', a: 'A Maestra Manager é uma plataforma de gestão de carreira musical. Num só lugar, ela reúne o diagnóstico da sua carreira (o Índice REAL), o planejamento estratégico, o plano de ação para executar e a gestão do dia a dia (catálogo, agenda e equipe), tudo com o apoio da Nyta, a assistente de IA. A ideia é simples: tirar a carreira do achismo e colocar no método, com dados e estratégia.' },
+    { q: 'O que é a Maestra?', a: 'A Maestra é uma plataforma de gestão de carreira musical. Num só lugar, ela reúne o diagnóstico da sua carreira (o Índice REAL), o planejamento estratégico, o plano de ação para executar e a gestão do dia a dia (catálogo, agenda e equipe), tudo com o apoio da Nyta, a assistente de IA. A ideia é simples: tirar a carreira do achismo e colocar no método, com dados e estratégia.' },
     { q: 'O que é o diagnóstico REAL?', a: 'É uma análise da sua carreira em 4 dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que você nos conta. O resultado é um dos 16 perfis de carreira e um retrato claro de onde você está.' },
     { q: 'Preciso pagar para ver o diagnóstico?', a: 'Não, o diagnóstico REAL é sempre grátis. Para desbloquear o planejamento estratégico e a gestão de um artista é que existe um pagamento único por perfil, com acesso vitalício.' },
     { q: 'Como funciona a cobrança?', a: `São dois modelos independentes. O diagnóstico é grátis. O planejamento de cada artista é um pagamento único de ${fmt(once)} (acesso vitalício ao perfil, sem mensalidade). E o Maestra PRO é uma assinatura opcional de ${fmt(monthly)} por mês, que adiciona a Nyta IA e o gerenciamento de vários perfis à sua conta.` },
@@ -136,7 +136,7 @@ export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
     <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}>
       <div className={styles.headerInner}>
         <a className={styles.brand} href="#top" onClick={goHome}>
-          <Wordmark className={styles.brandText} beta />
+          <MaestraBrand variant='lockup' tone='light' className={styles.brandText} beta />
         </a>
         <nav className={styles.nav}>
           {NAV.map((n) => <button key={n.id} className={styles.navLink} onClick={goToSection(n.id)}>{n.label}</button>)}
@@ -158,7 +158,7 @@ export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
 
 // Avatares de prova social (iniciais + cor, sem fotos falsas).
 const AVATARS = [
-  { i: 'L', c: '#BE81EC' }, { i: 'M', c: '#6d4aff' }, { i: 'A', c: '#2d7d6f' },
+  { i: 'L', c: '#9A4FD1' }, { i: 'M', c: '#6d4aff' }, { i: 'A', c: '#2d7d6f' },
   { i: 'R', c: '#c1543f' }, { i: 'J', c: '#3f6fc1' },
 ];
 const SUGGESTIONS = [
@@ -339,7 +339,7 @@ const HowItWorks: FC = () => (
 // Clientes REAIS da Maestra (nomes informados pelo Lucas). As frases são ilustrativas —
 // confirmar/ajustar com o depoimento real de cada um antes de tratar como citação literal.
 const TESTIMONIALS = [
-  { quote: 'O planejamento com a Nyta virou meu mapa. Hoje sei exatamente qual é o próximo passo de cada artista que produzo.', name: 'AZMUTH', role: 'Produtor Musical · Rio de Janeiro', i: 'A', c: '#BE81EC' },
+  { quote: 'O planejamento com a Nyta virou meu mapa. Hoje sei exatamente qual é o próximo passo de cada artista que produzo.', name: 'AZMUTH', role: 'Produtor Musical · Rio de Janeiro', i: 'A', c: '#9A4FD1' },
   { quote: 'A gente vivia apagando incêndio. Com o plano de ação organizado, a operação anda toda na mesma direção.', name: 'A Banca Records', role: 'Gravadora · Rio de Janeiro', i: 'B', c: '#6d4aff' },
   { quote: 'O Diagnóstico REAL me mostrou com dados onde eu realmente estava. Parei de agir no achismo.', name: 'Madhá', role: 'Compositora · Minas Gerais', i: 'M', c: '#c1543f' },
 ];
@@ -400,7 +400,7 @@ const Feature: FC<{ data: typeof FEATURES[number] }> = ({ data }) => {
 // Carta da fundadora, sem travessões (a pedido). A foto entra em `anitaPhoto` quando o arquivo existir.
 const ANITA_STORY = [
   'Tenho mais de 30 anos no mercado da música, e durante todos eles ouvi a mesma pergunta, vinda de artistas dos mais diferentes tamanhos: "qual o caminho pra chegar onde eu quero?". Por muito tempo, tudo que eu tinha pra oferecer eram alguns conselhos genéricos. Isso me incomodava, porque eu sou filha de um compositor que nunca alcançou o reconhecimento que merecia, e que, na época, eu não soube como ajudar. Sem o que sei hoje, vi de perto o que acontece quando o talento existe mas falta um caminho. Essa ausência virou o motor da minha vida profissional.',
-  'No mestrado, transformei essa inquietação em método: um processo de planejamento estratégico que apliquei, ao longo dos últimos anos, em mais de 300 consultorias individuais. Ali eu tive a confirmação do que suspeitava: o artista não precisa só de incentivo; precisa de um norte e de um mapa para chegar até ele. O método funcionava. O problema era de alcance: consultoria individual é cara, e por mais que eu desse aulas gratuitas e distribuísse a planilha do método de graça, muitos artistas ainda travavam na hora de aplicar sozinhos. Foi aí que veio o estalo: e se a inteligência artificial pudesse traduzir a minha metodologia, e a minha forma de pensar e a minha experiência profissional, numa ferramenta acessível a qualquer artista, em qualquer lugar do mundo? A Maestra Manager nasceu dessa motivação, sustentada por uma hipótese que carrego como bandeira: talento não basta; é preciso gestão.',
+  'No mestrado, transformei essa inquietação em método: um processo de planejamento estratégico que apliquei, ao longo dos últimos anos, em mais de 300 consultorias individuais. Ali eu tive a confirmação do que suspeitava: o artista não precisa só de incentivo; precisa de um norte e de um mapa para chegar até ele. O método funcionava. O problema era de alcance: consultoria individual é cara, e por mais que eu desse aulas gratuitas e distribuísse a planilha do método de graça, muitos artistas ainda travavam na hora de aplicar sozinhos. Foi aí que veio o estalo: e se a inteligência artificial pudesse traduzir a minha metodologia, e a minha forma de pensar e a minha experiência profissional, numa ferramenta acessível a qualquer artista, em qualquer lugar do mundo? A Maestra nasceu dessa motivação, sustentada por uma hipótese que carrego como bandeira: talento não basta; é preciso gestão.',
   'A Maestra pega tudo que aprendi em mais de 300 consultorias e transforma num roteiro guiado, que conduz o artista do seu mapa de referências até um plano de ação concreto, passo a passo, do jeito que eu faria pessoalmente. É uma metodologia proprietária, testada e aprovada, que nenhuma outra plataforma oferece. E há ainda o REAL, o diagnóstico que mostra ao artista, com objetividade, onde sua carreira está hoje: ele nasceu diretamente da minha pesquisa de doutorado, e é o que permite que cada plano comece não de um achismo, mas de um retrato honesto da realidade. Construí a Maestra para o artista em qualquer estágio que queira evoluir, mas, acima de tudo, para quem está começando, sem estrutura profissional por trás nem dinheiro para montar uma equipe. Para quem o meu pai foi, um dia.',
   'Nada disso seria possível sozinha. Construí a Maestra em parceria com Azmuth, produtor musical de diversos nomes da música urbana, fundador da Banca Records e empreendedor digital. Conheci o Azmuth quando ele me convidou para ser embaixadora de outra de suas iniciativas, e desde então nutro profunda admiração pelo seu olhar inovador. Quando tive a ideia da Maestra, ele foi minha escolha natural: é quem traduz a minha inteligência em sistema, e quem trouxe à ferramenta uma contribuição que só quem vive os dois mundos, a música e a tecnologia, poderia trazer. Juntos, transformamos um método que cabia numa sala de consultoria em algo que agora cabe na palma da mão de qualquer artista.',
 ];
@@ -418,7 +418,7 @@ const Founder: FC = () => {
         <aside className={styles.founderAside}>
           <div className={styles.founderPhoto}><img src={anitaPhoto} alt="Anita Carvalho" /></div>
           <div className={styles.founderName}>Anita Carvalho</div>
-          <div className={styles.founderRole}>Criadora do Índice REAL · Fundadora da Maestra Manager</div>
+          <div className={styles.founderRole}>Criadora do Índice REAL · Fundadora da Maestra</div>
           <a className={styles.founderSocial} href="https://www.instagram.com/anitacarvalho_/" target="_blank" rel="noreferrer" aria-label="Instagram da Anita Carvalho">
             <FiInstagram size={18} />
           </a>
@@ -556,7 +556,7 @@ export const Footer: FC = () => {
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
             <a className={styles.brand} href="#top" onClick={goHome}>
-              <Wordmark className={styles.brandText} />
+              <MaestraBrand variant='lockup' tone='light' className={styles.brandText} />
             </a>
             <p className={styles.footerTag}>A plataforma que diagnostica, planeja e acompanha a sua carreira na música.</p>
             {pwaVisible && (
@@ -598,7 +598,7 @@ export const Footer: FC = () => {
         </div>
         <div className={styles.footerBottom}>
           <span className={styles.footerBy}>
-            Maestra Manager <span className={styles.footerByDim}>by</span>{' '}
+            Maestra <span className={styles.footerByDim}>by</span>{' '}
             <button className={styles.footerByLink} onClick={() => { window.scrollTo(0, 0); navigate('/music-rio-academy'); }}>Music Rio Academy</button>
           </span>
           <span>© {new Date().getFullYear()} MUSIC RIO ACADEMY LTDA · CNPJ 22.826.985/0001-41. Todos os direitos reservados.</span>
@@ -621,7 +621,7 @@ const Landing: FC = () => {
 
   useEffect(() => {
     const prev = document.title;
-    document.title = 'Maestra Manager · sua carreira musical, com método';
+    document.title = 'Maestra · sua carreira musical, com método';
     return () => { document.title = prev; };
   }, []);
 

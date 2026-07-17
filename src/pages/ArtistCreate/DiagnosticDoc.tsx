@@ -1,6 +1,6 @@
 import { FC, ReactNode } from 'react';
 
-import { Wordmark } from '../../components/Wordmark';
+import { MaestraBrand } from '../../components/MaestraBrand';
 import type { RealIndex } from '../../interfaces/maestra';
 import { RealBadge, tierForAltas } from '../../components/RealBadge';
 import { v2InputsView, type Chartmetric } from './DiagnosticReport';
@@ -24,7 +24,7 @@ interface Props {
 const Page: FC<{ n: number; total: number; kicker?: string; children: ReactNode }> = ({ n, total, kicker, children }) => (
   <div className={styles.docPage} data-docpage>
     <div className={styles.docHeader}>
-      <span className={styles.docBrand}><Wordmark /></span>
+      <span className={styles.docBrand}><MaestraBrand variant='wordmark' tone='light' /></span>
       {kicker && <span className={styles.docHeaderLabel}>{kicker}</span>}
     </div>
     <div className={styles.docBody}>{children}</div>
@@ -202,7 +202,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
     <div className={styles.docRoot}>
       {/* 1 — CAPA */}
       <div className={`${styles.docPage} ${styles.docCover}`} data-docpage>
-        <div className={styles.docCoverBrand}><Wordmark /></div>
+        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='light' /></div>
         <div className={styles.docCoverCenter}>
           <img className={styles.docCoverAvatar} src={avatarSrc} alt="" crossOrigin="anonymous" />
           <div className={styles.docCoverKicker}>Diagnóstico de carreira</div>
@@ -220,7 +220,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
         <div className={styles.docPattern}>
           {DIM_META.map((d) => (
             <div key={d.key} className={styles.docPatternItem}>
-              <span className={styles.docPatternLetter} style={{ color: ri.pattern?.[d.key] ? '#BE81EC' : '#71717a' }}>{d.letter}</span>
+              <span className={styles.docPatternLetter} style={{ color: ri.pattern?.[d.key] ? '#9A4FD1' : '#71717a' }}>{d.letter}</span>
               <span className={styles.docPatternWord}>{d.full}</span>
               <span className={styles.docPatternSub}>{d.sub}</span>
             </div>
@@ -265,7 +265,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
               <div className={styles.docSubTitle2} style={{ marginBottom: 12 }}>Playlists onde sua música está{playlists.count ? ` · ${playlists.count} no total` : ''}</div>
               {playlists.top.slice(0, 8).map((p, i) => (
                 <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderTop: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                  {p.editorial && <span style={{ fontSize: 10, fontWeight: 800, color: '#BE81EC', letterSpacing: '0.06em' }}>EDITORIAL</span>}
+                  {p.editorial && <span style={{ fontSize: 10, fontWeight: 800, color: '#9A4FD1', letterSpacing: '0.06em' }}>EDITORIAL</span>}
                   <span style={{ color: '#fff', flex: 1, fontSize: 16, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
                   {p.followers != null && <span style={{ color: '#9a9aa3', fontSize: 14, fontWeight: 700 }}>{fmtNum(p.followers)}</span>}
                 </div>
@@ -354,7 +354,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
 
       {/* O PRÓXIMO PASSO (CTA) */}
       <div className={`${styles.docPage} ${styles.docCta}`} data-docpage>
-        <div className={styles.docCoverBrand}><Wordmark /></div>
+        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='light' /></div>
         <div className={styles.docCtaCenter}>
           <div className={styles.docCtaKicker}>O próximo passo</div>
           <div className={styles.docCtaTitle}>Você sabe onde está. Agora, para onde ir.</div>
@@ -406,7 +406,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
   return (
     <div className={styles.docRoot}>
       <div className={`${styles.docPage} ${styles.docCover}`} data-docpage>
-        <div className={styles.docCoverBrand}><Wordmark /></div>
+        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='light' /></div>
         <div className={styles.docCoverCenter}>
           <img className={styles.docCoverAvatar} src={avatarSrc} alt="" crossOrigin="anonymous" />
           <div className={styles.docCoverKicker}>Diagnóstico de carreira</div>
@@ -423,7 +423,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
         <div className={styles.docPattern}>
           {DIM_META.map((d) => (
             <div key={d.key} className={styles.docPatternItem}>
-              <span className={styles.docPatternLetter} style={{ color: pattern[d.key] ? '#BE81EC' : '#71717a' }}>{d.letter}</span>
+              <span className={styles.docPatternLetter} style={{ color: pattern[d.key] ? '#9A4FD1' : '#71717a' }}>{d.letter}</span>
               <span className={styles.docPatternWord}>{d.full}</span>
             </div>
           ))}
@@ -440,7 +440,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
           {DIM_META.map((d) => {
             const high = pattern[d.key];
             const neutral = d.key === 'e' && earningsUnknown;
-            const color = neutral ? '#8a8a92' : high ? '#BE81EC' : '#e0a13c';
+            const color = neutral ? '#8a8a92' : high ? '#9A4FD1' : '#e0a13c';
             return (
               <div key={d.key} className={styles.docDimCard}>
                 <div className={styles.docDimHead}>
@@ -533,7 +533,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
                 <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderTop: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
                   <span style={{ color: '#6f6f78', width: 24, textAlign: 'right', fontSize: 16, fontWeight: 700 }}>{i + 1}</span>
                   <span style={{ color: '#fff', flex: 1, fontSize: 17, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
-                  {p.editorial && <span style={{ fontSize: 12, fontWeight: 800, color: '#BE81EC', letterSpacing: '0.04em' }}>EDITORIAL</span>}
+                  {p.editorial && <span style={{ fontSize: 12, fontWeight: 800, color: '#9A4FD1', letterSpacing: '0.04em' }}>EDITORIAL</span>}
                   {p.followers != null && <span style={{ color: '#9a9aa3', fontSize: 15, fontWeight: 700, minWidth: 70, textAlign: 'right' }}>{fmtNum(p.followers)}</span>}
                 </div>
               ))}
@@ -554,7 +554,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
       )}
 
       <div className={`${styles.docPage} ${styles.docCta}`} data-docpage>
-        <div className={styles.docCoverBrand}><Wordmark /></div>
+        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='light' /></div>
         <div className={styles.docCtaCenter}>
           <div className={styles.docCtaKicker}>O próximo passo</div>
           <div className={styles.docCtaTitle}>Você sabe onde está. Agora, para onde ir.</div>

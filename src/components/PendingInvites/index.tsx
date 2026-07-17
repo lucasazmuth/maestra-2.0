@@ -148,8 +148,8 @@ const PendingInvites: FC = () => {
                     height: 38,
                     borderRadius: '50%',
                     border: 'none',
-                    background: '#BE81EC',
-                    color: '#1A1A1A',
+                    background: '#9A4FD1',
+                    color: '#FFFFFF',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -228,8 +228,8 @@ const PendingInvites: FC = () => {
                           <span
                             key={label}
                             style={{
-                              background: 'rgba(190, 129, 236, 0.12)',
-                              color: '#BE81EC',
+                              background: 'rgba(154, 79, 209, 0.12)',
+                              color: '#9A4FD1',
                               borderRadius: 9999,
                               padding: '2px 10px',
                               fontSize: 12,

@@ -160,7 +160,7 @@ const Settings: FC = () => {
 
       // Notifica o suporte SEM navegar o app (location.href para mailto congela a SPA).
       const subject = encodeURIComponent('Cancelamento de cadastro');
-      const body = encodeURIComponent(`Solicito o cancelamento do meu cadastro na Maestra Manager (${user.email || ''}).`);
+      const body = encodeURIComponent(`Solicito o cancelamento do meu cadastro na Maestra (${user.email || ''}).`);
       window.open(`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`, '_blank');
 
       // Conta em processo de exclusão não fica logada: encerra a sessão e volta pro login.
@@ -173,7 +173,7 @@ const Settings: FC = () => {
 
   return (
     <div style={{ padding: 24, maxWidth: 640 }}>
-      <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: '0 0 24px' }}>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 24px' }}>
         Configurações
       </h1>
 
@@ -217,7 +217,7 @@ const Settings: FC = () => {
               <button
                 onClick={saveProfile}
                 disabled={saving || uploading}
-                style={{ background: '#BE81EC', border: 'none', color: '#1A1A1A', borderRadius: 9999, padding: '8px 20px', cursor: 'pointer', fontWeight: 700, opacity: saving || uploading ? 0.6 : 1 }}
+                style={{ background: '#9A4FD1', border: 'none', color: '#FFFFFF', borderRadius: 9999, padding: '8px 20px', cursor: 'pointer', fontWeight: 700, opacity: saving || uploading ? 0.6 : 1 }}
               >
                 {saving ? 'Salvando…' : 'Salvar'}
               </button>
@@ -235,7 +235,7 @@ const Settings: FC = () => {
 
       <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: '#BE81EC', display: 'flex' }}><FiBell size={20} /></span>
+          <span style={{ color: '#9A4FD1', display: 'flex' }}><FiBell size={20} /></span>
           <div style={{ flex: 1 }}>
             <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>Notificações no dispositivo</h2>
             <p style={{ color: '#9b9ba3', fontSize: 13, lineHeight: 1.45, margin: '6px 0 0' }}>
@@ -256,7 +256,7 @@ const Settings: FC = () => {
                 padding: 3,
                 border: 0,
                 borderRadius: 999,
-                background: pushEnabled ? '#BE81EC' : '#3a3a3a',
+                background: pushEnabled ? '#9A4FD1' : '#3a3a3a',
                 cursor: pushBusy ? 'wait' : 'pointer',
                 opacity: pushBusy ? 0.6 : 1,
                 transition: 'background .2s ease',

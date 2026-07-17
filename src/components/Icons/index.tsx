@@ -945,8 +945,8 @@ export const AddedToLibrary = (props: any) => (
     viewBox='0 0 24 24'
     width='24'
     height='24'
-    stroke='#BE81EC'
-    fill='#BE81EC'
+    stroke='#9A4FD1'
+    fill='#9A4FD1'
     strokeWidth='0'
     {...props}
   >
@@ -1076,7 +1076,7 @@ export const UnfollowIcon = (props: any) => {
       role='img'
       aria-hidden='true'
       viewBox='0 0 16 16'
-      fill='#BE81EC'
+      fill='#9A4FD1'
       className='hoverable-icon expand-icon'
       style={SongExtraControlStyle}
     >
@@ -1093,7 +1093,7 @@ export const AddIcon = (props: any) => {
       role='img'
       aria-hidden='true'
       viewBox='0 0 16 16'
-      fill='#BE81EC'
+      fill='#9A4FD1'
       className='hoverable-icon expand-icon'
       style={SongExtraControlStyle}
     >
@@ -1109,7 +1109,7 @@ export const NewPlaylistIcon = (props: any) => {
       role='img'
       aria-hidden='true'
       viewBox='0 0 16 16'
-      fill='#BE81EC'
+      fill='#9A4FD1'
       className='hoverable-icon expand-icon'
       style={SongExtraControlStyle}
     >
@@ -1124,7 +1124,7 @@ export const ArrowDownIcon = () => (
     role='img'
     aria-hidden='true'
     viewBox='0 0 16 16'
-    fill='#BE81EC'
+    fill='#9A4FD1'
     className='hoverable-icon expand-icon'
     style={SongExtraControlStyle}
   >
@@ -1138,7 +1138,7 @@ export const ArrowUpIcon = () => (
     role='img'
     aria-hidden='true'
     viewBox='0 0 16 16'
-    fill='#BE81EC'
+    fill='#9A4FD1'
     className='hoverable-icon expand-icon'
     style={SongExtraControlStyle}
   >
@@ -1152,7 +1152,7 @@ export const GridIconLegacy = (props: any) => (
     role='img'
     aria-hidden='true'
     viewBox='0 0 16 16'
-    fill='#BE81EC'
+    fill='#9A4FD1'
     className='hoverable-icon expand-icon'
     style={{ ...SongExtraControlStyle, ...(props.style || {}) }}
   >

@@ -16,7 +16,7 @@ const Payments: FC = () => {
       >
         <FiArrowLeft size={16} /> Configurações
       </button>
-      <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: 0 }}>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: 0 }}>
         Pagamentos
       </h1>
       <PaymentHistory />

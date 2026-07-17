@@ -1,0 +1,46 @@
+.root {
+  position: relative;
+  display: inline-flex;
+  height: 1em;
+  flex: none;
+  align-items: center;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.light { color: #fff; }
+.dark { color: #0a0a0a; }
+
+.graphic {
+  display: block;
+  width: auto;
+  height: 100%;
+  flex: none;
+  overflow: visible;
+}
+
+.symbolGraphic { aspect-ratio: 1; }
+.wordmarkGraphic { aspect-ratio: 620 / 121; }
+
+.lockup { gap: 0.28em; }
+.lockup .wordmarkGraphic { height: 0.68em; }
+
+.beta {
+  align-self: flex-start;
+  margin: 0.35em 0 0 0.65em;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8a8a92;
+  font-family: var(--font-body, 'Inter', Arial, sans-serif);
+  font-size: 0.24em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dark .beta {
+  color: #6f6f78;
+}

@@ -1,16 +1,16 @@
 // Página "Music Rio Academy" — a escola por trás da Maestra.
 // Reusa o chrome da landing (Header/Footer) e os tokens do site: fundo preto, Inter,
-// roxo da marca #BE81EC. Espelha o layout "Versão 2 — Desenvolvida" do material da MRA.
+// roxo da marca #9A4FD1. Espelha o layout "Versão 2 — Desenvolvida" do material da MRA.
 
-$brand: #be81ec;
-$brandHover: #a95fe0;
+$brand: #9a4fd1;
+$brandHover: #8442b6;
 $line: rgba(255, 255, 255, 0.1);
 
 .page {
   background: #000;
   color: #fff;
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -31,6 +31,7 @@ $line: rgba(255, 255, 255, 0.1);
 .head { margin-bottom: 48px; }
 
 .eyebrow {
+  font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -163,7 +164,7 @@ $line: rgba(255, 255, 255, 0.1);
   align-items: center;
   gap: 8px;
   background: $brand;
-  color: #1a1a1a;
+  color: #fff;
   border: none;
   border-radius: 9999px;
   font-size: 0.92rem;

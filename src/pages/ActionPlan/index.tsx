@@ -54,7 +54,7 @@ const ArchiveModal: FC<{
       >
         <div style={{ padding: '22px 22px 12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-            <div style={{ fontFamily: 'SpotifyMixUITitle', color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>Estratégias arquivadas</div>
+            <div style={{ fontFamily: 'var(--font-display)', color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>Estratégias arquivadas</div>
             <button onClick={onClose} aria-label="Fechar" style={{ background: 'none', border: 'none', color: '#9a9a9a', cursor: 'pointer', display: 'inline-flex', padding: 4 }}><FiX size={20} /></button>
           </div>
           <div style={{ color: '#b3b3b3', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
@@ -68,9 +68,9 @@ const ArchiveModal: FC<{
               <button
                 key={it.id}
                 onClick={() => toggle(it.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', background: on ? 'rgba(190,129,236,0.12)' : '#202020', border: `1px solid ${on ? '#BE81EC' : 'transparent'}`, borderRadius: 12, padding: '14px 16px', transition: 'background .15s, border-color .15s' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', background: on ? 'rgba(154, 79, 209,0.12)' : '#202020', border: `1px solid ${on ? '#9A4FD1' : 'transparent'}`, borderRadius: 12, padding: '14px 16px', transition: 'background .15s, border-color .15s' }}
               >
-                <span aria-hidden style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: `2px solid ${on ? '#BE81EC' : '#4a4a4a'}`, background: on ? '#BE81EC' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1A1A1A' }}>{on && <FiCheck size={14} />}</span>
+                <span aria-hidden style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: `2px solid ${on ? '#9A4FD1' : '#4a4a4a'}`, background: on ? '#9A4FD1' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF' }}>{on && <FiCheck size={14} />}</span>
                 <span style={{ color: '#fff', fontWeight: 600, fontSize: 14.5, lineHeight: 1.4 }}>{it.title}</span>
               </button>
             );
@@ -82,7 +82,7 @@ const ArchiveModal: FC<{
           <button
             disabled={!sel.length}
             onClick={() => onConfirm(sel)}
-            style={{ border: 'none', borderRadius: 9999, padding: '10px 20px', fontWeight: 700, fontSize: 13.5, cursor: sel.length ? 'pointer' : 'not-allowed', color: '#1A1A1A', background: '#BE81EC', opacity: sel.length ? 1 : 0.5 }}
+            style={{ border: 'none', borderRadius: 9999, padding: '10px 20px', fontWeight: 700, fontSize: 13.5, cursor: sel.length ? 'pointer' : 'not-allowed', color: '#FFFFFF', background: '#9A4FD1', opacity: sel.length ? 1 : 0.5 }}
           >
             Trazer pro plano{sel.length ? ` (${sel.length})` : ''}
           </button>
@@ -319,7 +319,7 @@ const ActionPlan: FC = () => {
           <img src={featureAction} alt="" style={{ display: 'block', width: 210, height: 'auto', filter: 'drop-shadow(0 18px 30px rgba(0,0,0,0.45))' }} />
         </span>
         <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b3b3b3' }}>Progresso do plano</span>
-        <h2 className="ap-progress-title" style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 24, color: '#fff', margin: '6px 0 0', lineHeight: 1.1 }}>Suas tarefas</h2>
+        <h2 className="ap-progress-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, color: '#fff', margin: '6px 0 0', lineHeight: 1.1 }}>Suas tarefas</h2>
         <TaskProgress counts={taskCounts} />
 
         {/* Loop com o REAL: executar tarefas → crescer → refazer o diagnóstico → subir de fase. */}
@@ -330,7 +330,7 @@ const ActionPlan: FC = () => {
           {manageTasks && (
             <button
               onClick={() => navigate(`/artists/${artist.id}/diagnostico/refazer`)}
-              style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(190,129,236,0.5)', color: '#D3A6F2', padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+              style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(154, 79, 209,0.5)', color: '#C97EF3', padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
             >
               <FiRefreshCw size={14} /> Refazer diagnóstico
             </button>

@@ -11,6 +11,7 @@ import PendingInvites from '../../components/PendingInvites';
 import { Spinner } from '../../components/spinner/spinner';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { isOnboardingComplete } from '../../constants/maestra';
+import styles from './Artists.module.scss';
 
 const Artists: FC = () => {
   const dispatch = useAppDispatch();
@@ -77,40 +78,14 @@ const Artists: FC = () => {
   }, [params, setParams, navigate]);
 
   return (
-    <div style={{ padding: 24 }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 24,
-        }}
-      >
-        <h1
-          style={{
-            fontFamily: 'SpotifyMixUITitle',
-            fontWeight: 800,
-            fontSize: 32,
-            color: '#fff',
-            margin: 0,
-          }}
-        >
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>
           {heading}
         </h1>
         <button
           onClick={handleCreate}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            background: '#BE81EC',
-            border: 'none',
-            color: '#1A1A1A',
-            padding: '10px 20px',
-            borderRadius: 9999,
-            cursor: 'pointer',
-            fontWeight: 700,
-          }}
+          className={styles.createButton}
         >
           <FiPlus /> Criar artista
         </button>
@@ -132,19 +107,14 @@ const Artists: FC = () => {
             <p>Crie seu primeiro perfil de artista para começar.</p>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: 20,
-            }}
-          >
+          <div className={styles.grid}>
             {artists.map((a) => {
               const sp = a.content?.spotifyProfile;
               const canDelete = a.role !== 'member';
               return (
                 <div
                   key={a.id}
+                  className={styles.card}
                   role='button'
                   tabIndex={0}
                   onClick={() => navigate(routeFor(a))}
@@ -189,6 +159,7 @@ const Artists: FC = () => {
                     >
                       <button
                         data-del
+                        className={styles.deleteButton}
                         title='Excluir artista'
                         onClick={(e) => e.stopPropagation()}
                         style={{
@@ -219,6 +190,7 @@ const Artists: FC = () => {
                   <img
                     src={sp?.image || ARTISTS_DEFAULT_IMAGE}
                     alt={a.name}
+                    className={styles.artistImage}
                     style={{
                       width: '100%',
                       aspectRatio: '1',
@@ -228,7 +200,7 @@ const Artists: FC = () => {
                       boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                     }}
                   />
-                  <div style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>{a.name}</div>
+                  <div className={styles.artistName}>{a.name}</div>
                   {a.role !== 'member' && a.is_locked ? (
                     <span
                       style={{

@@ -51,12 +51,12 @@ const SubscriptionGuardWrapper: FC = () => {
       <Link
         to='/assinatura'
         style={{
-          color: '#BE81EC',
+          color: '#9A4FD1',
           textDecoration: 'none',
           fontWeight: 600,
           fontSize: '1rem',
           padding: '10px 24px',
-          border: '1px solid #BE81EC',
+          border: '1px solid #9A4FD1',
           borderRadius: '24px',
           transition: 'all 0.2s',
         }}

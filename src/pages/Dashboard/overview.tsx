@@ -26,7 +26,7 @@ const REDUCE_MOTION =
 
 // Painéis de visão geral do Dashboard: timeline das próximas tarefas, próximos eventos,
 // catálogo do Spotify, catálogo cadastrado e equipe atual. Mesmo vocabulário visual do
-// Dashboard (cards #181818, títulos SpotifyMixUITitle). Cada painel busca seus próprios dados.
+// Dashboard (cards #181818, títulos Inter). Cada painel busca seus próprios dados.
 
 const todayStr = () => new Date().toISOString().split('T')[0];
 const fmtDate = (d?: string | null): string =>
@@ -40,7 +40,7 @@ const Panel: FC<{ icon: ReactNode; title: string; action?: { label: string; onCl
   <section style={{ background: '#181818', borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column' }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
       <span style={{ color: '#b3b3b3', display: 'flex' }}>{icon}</span>
-      <h3 style={{ color: '#fff', fontSize: 16, fontWeight: 700, margin: 0, flex: 1, fontFamily: 'SpotifyMixUITitle' }}>{title}</h3>
+      <h3 style={{ color: '#fff', fontSize: 16, fontWeight: 700, margin: 0, flex: 1, fontFamily: 'var(--font-display)' }}>{title}</h3>
       {action && (
         <button
           onClick={action.onClick}
@@ -159,7 +159,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
             <Empty text="Nenhuma tarefa pendente." />
           ) : (
             <div style={{ position: 'relative' }}>
-              <div style={{ position: 'absolute', left: 9, top: 18, bottom: 22, width: 2, background: 'linear-gradient(180deg, #BE81EC, rgba(190, 129, 236,0.12))', transformOrigin: 'top', ...(REDUCE_MOTION ? {} : { transform: 'scaleY(0)', animation: 'apTlLine .9s cubic-bezier(0.4,0,0.2,1) .1s forwards' }) }} />
+              <div style={{ position: 'absolute', left: 9, top: 18, bottom: 22, width: 2, background: 'linear-gradient(180deg, #9A4FD1, rgba(154, 79, 209,0.12))', transformOrigin: 'top', ...(REDUCE_MOTION ? {} : { transform: 'scaleY(0)', animation: 'apTlLine .9s cubic-bezier(0.4,0,0.2,1) .1s forwards' }) }} />
               {upcomingTasks.map(({ t, strat, stratId }, i) => {
                 const od = !!(t.deadline && t.deadline < today);
                 return (
@@ -183,7 +183,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
                         padding: 0,
                         transition: 'transform 33ms ease, background-color 0.15s, border-color 0.15s',
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#BE81EC'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#9A4FD1'; e.currentTarget.style.transform = 'scale(1.1)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#535353'; e.currentTarget.style.transform = 'scale(1)'; }}
                     />
                     {t.deadline && (
@@ -252,7 +252,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
         </Panel>
 
         {/* Lançamentos (Spotify) */}
-        <Panel icon={<FaSpotify size={16} color="#BE81EC" />} title="Lançamentos" action={{ label: 'Catálogo', onClick: () => go('catalog') }}>
+        <Panel icon={<FaSpotify size={16} color="#9A4FD1" />} title="Lançamentos" action={{ label: 'Catálogo', onClick: () => go('catalog') }}>
           {spItems.length === 0 ? (
             <Empty text="Conecte o Spotify para ver seus lançamentos publicados." />
           ) : (
@@ -293,8 +293,8 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
                       minWidth: 32,
                       border: 'none',
                       borderRadius: '50%',
-                      background: it.audio_file ? '#BE81EC' : '#2a2a2a',
-                      color: '#1A1A1A',
+                      background: it.audio_file ? '#9A4FD1' : '#2a2a2a',
+                      color: '#FFFFFF',
                       opacity: it.audio_file ? 1 : 0.5,
                       cursor: it.audio_file ? 'pointer' : 'not-allowed',
                       display: 'grid',

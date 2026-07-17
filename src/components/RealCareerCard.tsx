@@ -25,16 +25,16 @@ const clean = (s: string) => s.replace(/\s*—\s*/g, ', ');
 
 const card: CSSProperties = {
   position: 'relative',
-  background: 'radial-gradient(120% 130% at 0% 0%, rgba(190,129,236,0.10), #181818 60%)',
-  border: '1px solid rgba(190,129,236,0.22)',
+  background: 'radial-gradient(120% 130% at 0% 0%, rgba(154, 79, 209,0.10), #181818 60%)',
+  border: '1px solid rgba(154, 79, 209,0.22)',
   borderRadius: 14,
   padding: 22,
   marginBottom: 24,
 };
-const kicker: CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#BE81EC' };
-const titleStyle: CSSProperties = { fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 34, color: '#fff', margin: 0, lineHeight: 1, letterSpacing: '-0.01em' };
+const kicker: CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9A4FD1' };
+const titleStyle: CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 34, color: '#fff', margin: 0, lineHeight: 1, letterSpacing: '-0.01em' };
 const linkBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#9a9aa5', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: 0 };
-const ctaBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 8, background: '#BE81EC', border: 'none', color: '#1A1A1A', padding: '10px 22px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 };
+const ctaBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 8, background: '#9A4FD1', border: 'none', color: '#FFFFFF', padding: '10px 22px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 };
 
 // Barra de progresso das tarefas + estado (concluído / vazio). Exportada pra o Plano de Ação
 // reusar a barra fora do card (a "fase" REAL saiu de lá).
@@ -47,9 +47,9 @@ export const TaskProgress: FC<{ counts: TaskCounts }> = ({ counts }) => {
     <div style={{ marginTop: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-          <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: '#BE81EC', transition: 'width .4s cubic-bezier(0.4,0,0.2,1)' }} />
+          <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: '#9A4FD1', transition: 'width .4s cubic-bezier(0.4,0,0.2,1)' }} />
         </div>
-        <span style={{ color: '#BE81EC', fontWeight: 800, fontSize: 14, minWidth: 42, textAlign: 'right' }}>{pct}%</span>
+        <span style={{ color: '#9A4FD1', fontWeight: 800, fontSize: 14, minWidth: 42, textAlign: 'right' }}>{pct}%</span>
       </div>
       {complete ? (
         <p style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#5ec27e', fontSize: 14, fontWeight: 700, margin: '12px 0 0' }}>

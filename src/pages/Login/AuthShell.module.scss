@@ -53,7 +53,7 @@
 }
 
 .brandWordmark {
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   font-size: 28px;
   color: #fff;
@@ -61,6 +61,7 @@
 }
 
 .eyebrow {
+  font-family: var(--font-mono);
   font-size: 13px;
   color: #b3b3b3;
   margin: 0 0 12px;
@@ -115,4 +116,3 @@
     background: #2a2a2a;
   }
 }
-

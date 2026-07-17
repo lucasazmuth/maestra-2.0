@@ -16,7 +16,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
   termos: {
     title: 'Termos de Uso',
     updatedAt: '2026-07-02',
-    content: `Estes Termos de Uso ("Termos") regem o acesso e a utilização da plataforma **Maestra Manager** ("Maestra", "Plataforma"), disponibilizada por **MUSIC RIO ACADEMY LTDA**, inscrita no CNPJ sob o nº 22.826.985/0001-41, com sede na Rua Riposeira, nº 1286, São Conrado, Rio de Janeiro/RJ, CEP 22.610-380 ("nós", "nosso"). Ao criar uma conta ou utilizar a Plataforma, você ("Usuário", "você") declara ter lido, compreendido e aceito integralmente estes Termos. **Se não concordar, não utilize a Plataforma.**
+    content: `Estes Termos de Uso ("Termos") regem o acesso e a utilização da plataforma **Maestra** ("Maestra", "Plataforma"), disponibilizada por **MUSIC RIO ACADEMY LTDA**, inscrita no CNPJ sob o nº 22.826.985/0001-41, com sede na Rua Riposeira, nº 1286, São Conrado, Rio de Janeiro/RJ, CEP 22.610-380 ("nós", "nosso"). Ao criar uma conta ou utilizar a Plataforma, você ("Usuário", "você") declara ter lido, compreendido e aceito integralmente estes Termos. **Se não concordar, não utilize a Plataforma.**
 
 ## 1. Definições
 - **Plataforma / Maestra:** o software de gestão e planejamento estratégico de carreira artística, incluindo a assistente de inteligência artificial "Nyta" e os módulos de perfil, diagnóstico, catálogo, agenda, plano de ação e equipe.
@@ -96,7 +96,7 @@ Dúvidas sobre estes Termos: **maestra@musicrioacademy.com.br**.`,
   privacidade: {
     title: 'Política de Privacidade',
     updatedAt: '2026-07-02',
-    content: `Esta Política de Privacidade descreve como a **MUSIC RIO ACADEMY LTDA**, CNPJ 22.826.985/0001-41, com sede na Rua Riposeira, nº 1286, São Conrado, Rio de Janeiro/RJ, CEP 22.610-380 ("nós", "Controladora"), trata os dados pessoais dos usuários da plataforma **Maestra Manager**, em conformidade com a **Lei Geral de Proteção de Dados (Lei 13.709/2018 — LGPD)**.
+    content: `Esta Política de Privacidade descreve como a **MUSIC RIO ACADEMY LTDA**, CNPJ 22.826.985/0001-41, com sede na Rua Riposeira, nº 1286, São Conrado, Rio de Janeiro/RJ, CEP 22.610-380 ("nós", "Controladora"), trata os dados pessoais dos usuários da plataforma **Maestra**, em conformidade com a **Lei Geral de Proteção de Dados (Lei 13.709/2018 — LGPD)**.
 
 ## 1. Encarregado (DPO) e contato
 Para exercer seus direitos ou tirar dúvidas sobre privacidade, fale com o nosso Encarregado pelo tratamento de dados: **maestra@musicrioacademy.com.br**.

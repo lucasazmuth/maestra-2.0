@@ -19,7 +19,7 @@ interface PayItem {
 }
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  paid: { label: 'Pago', color: '#BE81EC' },
+  paid: { label: 'Pago', color: '#9A4FD1' },
   pending: { label: 'Pendente', color: '#f5b15a' },
   failed: { label: 'Falhou', color: '#ff6b6b' },
   overdue: { label: 'Vencido', color: '#ff6b6b' },

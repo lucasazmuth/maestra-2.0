@@ -10,7 +10,7 @@ import * as membersDb from '../../services/db/members';
 import type { ArtistMember, AccessLevel } from '../../interfaces/maestra';
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  active: { label: 'Ativo', color: '#BE81EC' },
+  active: { label: 'Ativo', color: '#9A4FD1' },
   pending: { label: 'Pendente', color: '#f59e0b' },
   rejected: { label: 'Recusado', color: '#e91429' },
 };
@@ -89,13 +89,13 @@ const Team: FC = () => {
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: 0 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: 0 }}>
           Equipe
         </h1>
         {canManageTeam && (
           <button
             onClick={() => setOpen(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#BE81EC', border: 'none', color: '#1A1A1A', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#9A4FD1', border: 'none', color: '#FFFFFF', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
           >
             <FiPlus /> Convidar membro
           </button>
@@ -136,9 +136,9 @@ const Team: FC = () => {
                           onClick={isOwner ? () => toggleLevel(m, opt.id) : undefined}
                           disabled={!isOwner}
                           style={{
-                            background: active ? '#BE81EC22' : 'rgba(255,255,255,0.06)',
-                            color: active ? '#BE81EC' : '#b3b3b3',
-                            border: `1px solid ${active ? '#BE81EC' : 'transparent'}`,
+                            background: active ? '#9A4FD122' : 'rgba(255,255,255,0.06)',
+                            color: active ? '#9A4FD1' : '#b3b3b3',
+                            border: `1px solid ${active ? '#9A4FD1' : 'transparent'}`,
                             borderRadius: 9999,
                             padding: '4px 12px',
                             cursor: isOwner ? 'pointer' : 'default',
@@ -166,7 +166,7 @@ const Team: FC = () => {
         title={<span style={{ color: '#fff', fontWeight: 700 }}>Convidar membro</span>}
         okText={saving ? 'Convidando…' : 'Convidar'}
         onOk={invite}
-        okButtonProps={{ loading: saving, style: { background: '#BE81EC', color: '#1A1A1A' } }}
+        okButtonProps={{ loading: saving, style: { background: '#9A4FD1', color: '#FFFFFF' } }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <Input placeholder='E-mail *' value={email} onChange={(e) => setEmail(e.target.value)} />

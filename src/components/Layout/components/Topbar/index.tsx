@@ -11,7 +11,7 @@ import ForwardBackwardsButton from '../Navbar/ForwardBackwardsButton';
 import { useAppDispatch, useAppSelector } from '../../../../store/store';
 import { authActions } from '../../../../store/slices/auth';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
-import { Wordmark } from '../../../Wordmark';
+import { MaestraBrand } from '../../../MaestraBrand';
 
 export const Topbar = memo(() => {
   const dispatch = useAppDispatch();
@@ -104,14 +104,12 @@ export const Topbar = memo(() => {
           }}
           style={{ cursor: 'pointer', display: 'inline-flex' }}
         >
-          <Wordmark
+          <MaestraBrand
+            variant='lockup'
+            tone='light'
             beta
             style={{
-              fontFamily: "'SpotifyMixUITitle', sans-serif",
-              fontWeight: 800,
-              fontSize: 19,
-              color: '#fff',
-              letterSpacing: '0.2px',
+              fontSize: 25,
               whiteSpace: 'nowrap',
             }}
           />

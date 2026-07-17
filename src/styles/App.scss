@@ -34,31 +34,40 @@ body {
   overscroll-behavior: none !important;
 }
 
-// Fonte de marca VARIÁVEL: uma única face cobrindo 100–900 (o arquivo é o
-// "…Variable…woff2"). Sem o range, o browser tratava a variável como peso fixo,
-// então `font-weight: 400` (o "Manager") não afinava — chegava a parecer mais
-// pesado que o "Maestra". Com o range, cada peso pedido reflete no eixo `wght`.
-@font-face {
-  font-family: SpotifyMixUITitle;
-  font-weight: 100 900;
-  src: url(https://encore.scdn.co/fonts/SpotifyMixUITitleVariable-8769ccfde3379b7ebcadd9529b49d0cc.woff2) format('woff2');
-}
-
-@font-face {
-  font-family: SpotifyMixUI;
-  src: url(https://encore.scdn.co/fonts/SpotifyMixUI-Regular-cc3b1de388efa4cbca6c75cebc24585e.woff2);
-}
-
-@font-face {
-  font-family: SpotifyMixUI;
-  font-weight: bold;
-  src: url(https://encore.scdn.co/fonts/SpotifyMixUI-Bold-4264b799009b1db5c491778b1bc8e5b7.woff2);
+:root {
+  color-scheme: dark;
+  --maestra-violet: #9a4fd1;
+  --maestra-violet-hover: #8442b6;
+  --maestra-lavender: #c97ef3;
+  --maestra-onyx: #0a0a0a;
+  --maestra-bone: #f5f4f2;
+  --maestra-white: #fff;
+  --font-display: 'Inter Variable', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Inter Variable', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
 }
 
 html,
 body {
-  font-family: SpotifyMixUI, CircularSp-Arab, CircularSp-Hebr, CircularSp-Cyrl, CircularSp-Grek,
-    CircularSp-Deva, var(sans-serif) !important;
+  background: var(--maestra-onyx);
+  color: var(--maestra-bone);
+  font-family: var(--font-body) !important;
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-weight: 750;
+}
+
+h1 {
+  letter-spacing: -0.025em;
+}
+
+.maestra-kicker {
+  font-family: var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 /* hide scrollbar but allow scrolling */
@@ -218,7 +227,7 @@ h3 {
     color: white !important;
 
     &.active {
-      color: #BE81EC !important;
+      color: #9A4FD1 !important;
     }
   }
 
@@ -456,7 +465,7 @@ h3 {
   }
 }
 
-// Banner no rodapé (estilo "Testar o Premium de graça" do Spotify).
+// Banner de anúncio no rodapé.
 // Container 3 independente: mesmo espaçamento visual (gap 8px) e border-radius
 // que os containers da sidebar (1) e página (2).
 .announcement-banner {
@@ -470,8 +479,8 @@ h3 {
   margin-top: 8px;
 
   &--promo {
-    background: linear-gradient(90deg, #BE81EC, #509bf5);
-    color: #1a1a1a;
+    background: linear-gradient(90deg, #9A4FD1, #509bf5);
+    color: #fff;
   }
 
   &--warning {
@@ -1387,8 +1396,8 @@ a {
   .login-container {
     border-radius: 2px;
     padding: 12px 24px 10px 15px;
-    background-image: -webkit-gradient(linear, left top, right top, from(#BE81EC), to(#509bf5));
-    background-image: linear-gradient(90deg, #BE81EC, #509bf5);
+    background-image: -webkit-gradient(linear, left top, right top, from(#9A4FD1), to(#509bf5));
+    background-image: linear-gradient(90deg, #9A4FD1, #509bf5);
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
@@ -1591,17 +1600,17 @@ a {
     from var(--auroraGlowAngle),
     transparent 0deg,
     transparent 140deg,
-    #BE81EC 195deg,
+    #9A4FD1 195deg,
     #ffffff 255deg,
     #509bf5 300deg,
-    #BE81EC 335deg,
+    #9A4FD1 335deg,
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 10px rgba(190, 129, 236, 0.4));
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 10px rgba(154, 79, 209, 0.4));
 }
 
 .aurora-glow--on {
@@ -1627,18 +1636,18 @@ a {
   }
 }
 
-// Botão primário do antd (type="primary" sem estilo inline): garante o fill roxo da marca
-// com texto escuro por dentro (padrão Spotify), independentemente da geração de estilo por
+// Botão primário do Ant Design: garante o fill e o contraste da marca, independentemente da
+// geração de estilo por
 // variante do antd. Os seletores :where() do antd têm especificidade 0, então estas regras vencem.
 .ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost) {
-  background: #be81ec;
-  color: #1a1a1a;
-  border-color: #be81ec;
+  background: #9a4fd1;
+  color: #fff;
+  border-color: #9a4fd1;
 
   &:hover,
   &:focus {
-    background: #a95fe0 !important;
-    color: #1a1a1a !important;
-    border-color: #a95fe0 !important;
+    background: #8442b6 !important;
+    color: #fff !important;
+    border-color: #8442b6 !important;
   }
 }

@@ -37,7 +37,7 @@ export const PaymentSuccessScreen: FC<Props> = ({ title, subtitle, description, 
     <div style={{ position: 'relative', zIndex: 1, maxWidth: 480, width: '100%' }}>
       <h1
         style={{
-          fontFamily: 'SpotifyMixUITitle',
+          fontFamily: 'var(--font-display)',
           fontWeight: 800,
           fontSize: 30,
           color: '#fff',
@@ -57,9 +57,9 @@ export const PaymentSuccessScreen: FC<Props> = ({ title, subtitle, description, 
         onClick={onCta}
         style={{
           marginTop: description ? 0 : 28,
-          background: '#BE81EC',
+          background: '#9A4FD1',
           border: 'none',
-          color: '#1A1A1A',
+          color: '#FFFFFF',
           borderRadius: 9999,
           padding: '15px 44px',
           fontSize: 16,

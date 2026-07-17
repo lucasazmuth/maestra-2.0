@@ -60,10 +60,10 @@ Deno.serve(async (req) => {
 
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, vapidPrivateKey);
   const payload = JSON.stringify({
-    title: notification.title || "Maestra Manager",
+    title: notification.title || "Maestra",
     body: notification.message || "Você tem uma nova notificação.",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
+    icon: "/logo192.png",
+    badge: "/favicon32.png",
     tag: `notification-${notification.id}`,
     data: { url: notification.link || "/notifications" },
   });

@@ -176,9 +176,9 @@ const Notifications: FC = () => {
         <h1
           className="notifications-title"
           style={{
-            fontFamily: 'SpotifyMixUITitle',
+            fontFamily: 'var(--font-display)',
             fontWeight: 800,
-            fontSize: 32,
+            fontSize: 'clamp(24px, 3vw, 28px)',
             color: '#fff',
             margin: 0,
           }}
@@ -313,7 +313,7 @@ const Notifications: FC = () => {
                         )}
                       </div>
                       {!n.read && (
-                        <span style={{ color: '#BE81EC', fontSize: 11, fontWeight: 700 }}>
+                        <span style={{ color: '#9A4FD1', fontSize: 11, fontWeight: 700 }}>
                           NOVO
                         </span>
                       )}

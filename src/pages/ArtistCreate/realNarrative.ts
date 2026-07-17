@@ -182,7 +182,7 @@ export const METODOLOGIA = {
 
 export const QUEM_ASSINA = {
   name: 'Anita Carvalho',
-  role: 'Criadora do Índice REAL · Fundadora da Maestra Manager',
+  role: 'Criadora do Índice REAL · Fundadora da Maestra',
   paras: [
     'Anita Carvalho é empresária artística, consultora e pesquisadora do mercado da música, com foco em gestão de carreiras. Doutoranda em Economia Criativa pela ESPM, atua há mais de 30 anos no setor.',
     'É autora da Pesquisa de Empresariamento Artístico, estudo longitudinal publicado desde 2017, hoje em sua quinta edição, e de artigos e publicações nacionais e internacionais sobre o setor. Já atendeu mais de 300 artistas em planejamento estratégico de carreira.',

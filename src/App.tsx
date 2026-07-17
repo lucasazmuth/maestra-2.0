@@ -316,15 +316,15 @@ function App() {
     <ConfigProvider
       locale={ptBR}
       theme={{
-        // Tema escuro coerente com o design Spotify/Encore (inputs, selects, modais,
+        // Tema escuro da Maestra (inputs, selects, modais,
         // drawers, datepickers etc. deixam de renderizar no claro padrão do antd).
         algorithm: theme.darkAlgorithm,
         token: {
-          fontFamily: 'SpotifyMixUI',
-          colorPrimary: '#BE81EC',
+          fontFamily: "'Inter Variable', Inter, 'Helvetica Neue', Arial, sans-serif",
+          colorPrimary: '#9A4FD1',
           // Texto sobre superfícies sólidas na cor primária (botões type="primary" etc.):
-          // escuro, no padrão Spotify (fill claro + tinta quase-preta).
-          colorTextLightSolid: '#1A1A1A',
+          // branco para manter contraste AA sobre o Deep Violet.
+          colorTextLightSolid: '#FFFFFF',
           colorBgContainer: '#2a2a2a',
           colorBgElevated: '#282828',
           colorBorder: '#3e3e3e',

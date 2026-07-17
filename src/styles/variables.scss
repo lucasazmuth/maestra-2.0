@@ -4,16 +4,18 @@ $desktop-small-breakpoint: 900px;
 
 // color palette
 
-$background-color: #121212;
+$background-color: #0a0a0a;
 
 $container-border-radius: 10px;
 
 $text-primary-color: white;
 $text-secondary-color: #b3b3b3;
 
-// Marca (estilo Spotify: fill sólido roxo + texto escuro por dentro).
-$brand: #be81ec; // primária (rgb 190, 129, 236)
-$brand-hover: #a95fe0; // hover: fill mais fundo
-$brand-2: #d3a6f2; // tom claro auxiliar (accents/gradiente)
-$brand-ink: #1a1a1a; // texto/ícone sobre o fill roxo (o "preto" do Spotify)
-$brand-rgb: 190, 129, 236; // pra rgba(var) quando útil
+// Identidade Maestra.
+$brand: #9a4fd1;
+$brand-hover: #8442b6;
+$brand-2: #c97ef3;
+$brand-ink: #ffffff;
+$brand-onyx: #0a0a0a;
+$brand-bone: #f5f4f2;
+$brand-rgb: 154, 79, 209;

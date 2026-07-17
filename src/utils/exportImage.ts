@@ -53,7 +53,7 @@ export async function downloadNodePdf(node: HTMLElement, fileName: string): Prom
 
 // Remove temporariamente as folhas de estilo CROSS-ORIGIN (font-awesome/CDN) do documento.
 // O html-to-image quebra ao tentar buscar/parsear o @font-face do font-awesome (SecurityError em
-// cssRules + insertRule inválido). Sem elas, ele embute só as fontes locais (SpotifyMix) — mantendo
+// cssRules + insertRule inválido). Sem elas, ele embute só as fontes locais da Maestra — mantendo
 // a tipografia da marca no PDF. Retorna uma função que restaura tudo.
 function suspendCrossOriginStylesheets(): () => void {
   const removed: { el: Element; parent: Node; next: Node | null }[] = [];

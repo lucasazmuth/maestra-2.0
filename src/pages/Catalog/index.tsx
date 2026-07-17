@@ -204,7 +204,7 @@ const Catalog: FC = () => {
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <h1 className='catalog-title' style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: 0 }}>
+        <h1 className='catalog-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: 0 }}>
           Catálogo
         </h1>
         {/* Contador + "Nova faixa" só pra quem pode editar o catálogo (dono ou PRO). Colaborador
@@ -227,9 +227,9 @@ const Catalog: FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
-                background: '#BE81EC',
+                background: '#9A4FD1',
                 border: 'none',
-                color: '#1A1A1A',
+                color: '#FFFFFF',
                 padding: '10px 20px',
                 borderRadius: 9999,
                 cursor: canAdd ? 'pointer' : 'not-allowed',
@@ -267,7 +267,7 @@ const Catalog: FC = () => {
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         <TabButton id='manual' label='Faixas / Rascunho' />
-        <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify color='#BE81EC' />} />
+        <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify color='#9A4FD1' />} />
       </div>
 
       {tab === 'spotify' ? (
@@ -290,12 +290,12 @@ const Catalog: FC = () => {
                     padding: 8,
                     borderRadius: 6,
                     cursor: 'pointer',
-                    background: playingTrackId === t.id ? 'rgba(190, 129, 236,0.08)' : 'transparent',
+                    background: playingTrackId === t.id ? 'rgba(154, 79, 209,0.08)' : 'transparent',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.background =
-                      playingTrackId === t.id ? 'rgba(190, 129, 236,0.08)' : 'transparent')
+                      playingTrackId === t.id ? 'rgba(154, 79, 209,0.08)' : 'transparent')
                   }
                 >
                   <button
@@ -310,7 +310,7 @@ const Catalog: FC = () => {
                       minWidth: 36,
                       borderRadius: '50%',
                       border: 'none',
-                      background: '#BE81EC',
+                      background: '#9A4FD1',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -370,9 +370,9 @@ const Catalog: FC = () => {
               <button
                 onClick={() => navigate('/assinatura')}
                 style={{
-                  background: '#BE81EC',
+                  background: '#9A4FD1',
                   border: 'none',
-                  color: '#1A1A1A',
+                  color: '#FFFFFF',
                   padding: '8px 16px',
                   borderRadius: 9999,
                   cursor: 'pointer',
@@ -410,12 +410,12 @@ const Catalog: FC = () => {
                     padding: 8,
                     borderRadius: 6,
                     cursor: 'pointer',
-                    background: playerCurrentId === it.id ? 'rgba(190, 129, 236,0.08)' : 'transparent',
+                    background: playerCurrentId === it.id ? 'rgba(154, 79, 209,0.08)' : 'transparent',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.background =
-                      playerCurrentId === it.id ? 'rgba(190, 129, 236,0.08)' : 'transparent')
+                      playerCurrentId === it.id ? 'rgba(154, 79, 209,0.08)' : 'transparent')
                   }
                 >
                   {(() => {
@@ -439,7 +439,7 @@ const Catalog: FC = () => {
                           minWidth: 36,
                           borderRadius: '50%',
                           border: 'none',
-                          background: it.audio_file ? '#BE81EC' : '#2a2a2a',
+                          background: it.audio_file ? '#9A4FD1' : '#2a2a2a',
                           cursor: it.audio_file ? 'pointer' : 'not-allowed',
                           opacity: it.audio_file ? 1 : 0.5,
                           display: 'flex',

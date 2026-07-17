@@ -1,8 +1,8 @@
 // Kit de checkout no padrão Adobe/Behance, porém em tema ESCURO da Maestra.
 // Usado pela cobrança única (ProfileUnlock) e pela assinatura PRO (Subscription).
-// Paleta: fundo #0b0b11, cards #15151c, borda sutil, texto #fff, roxo da marca #be81ec (texto escuro nos fills).
+// Paleta: fundo #0b0b11, cards #15151c, borda sutil, texto #fff, roxo da marca #9a4fd1 (texto escuro nos fills).
 
-$green: #be81ec;
+$green: #9a4fd1;
 $card: #15151c;
 $cardBorder: rgba(255, 255, 255, 0.08);
 $muted: #9a9aa5;
@@ -47,7 +47,7 @@ $muted2: #6f6f78;
   :global(.ant-select:not(.ant-select-disabled):hover .ant-select-selector),
   :global(.ant-select-focused .ant-select-selector) {
     border-color: $green !important;
-    box-shadow: 0 0 0 1px rgba(190, 129, 236, 0.25) !important;
+    box-shadow: 0 0 0 1px rgba(154, 79, 209, 0.25) !important;
   }
   :global(.ant-select-lg .ant-select-selector) { height: 50px !important; padding: 0 15px !important; display: flex; align-items: center; }
   :global(.ant-select-selection-item) { color: #fff !important; font-weight: 600; }
@@ -76,7 +76,7 @@ $muted2: #6f6f78;
 .accountCheck {
   width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(190, 129, 236, 0.14); color: $green; font-size: 15px;
+  background: rgba(154, 79, 209, 0.14); color: $green; font-size: 15px;
 }
 .accountEmail { font-size: 15px; font-weight: 600; color: #fff; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .accountChevron { color: $muted; flex-shrink: 0; }
@@ -94,7 +94,7 @@ $muted2: #6f6f78;
   display: flex; align-items: center; justify-content: center;
   background: rgba(255, 255, 255, 0.07); color: #fff; font-size: 18px;
 }
-.panelTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 20px; color: #fff; line-height: 1.2; }
+.panelTitle { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: #fff; line-height: 1.2; }
 
 // ─── Métodos de pagamento (radio rows) ──────────────────────────────────────────
 .methods { display: flex; flex-direction: column; gap: 12px; }
@@ -105,7 +105,7 @@ $muted2: #6f6f78;
   transition: border-color 0.18s ease, background 0.18s ease;
   &:hover { border-color: rgba(255, 255, 255, 0.2); }
 }
-.methodOn { border-color: $green; background: rgba(190, 129, 236, 0.05); }
+.methodOn { border-color: $green; background: rgba(154, 79, 209, 0.05); }
 .methodHead {
   width: 100%;
   display: flex; align-items: center; gap: 12px;
@@ -156,7 +156,7 @@ $muted2: #6f6f78;
 .couponApplied {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 11px 12px; border-radius: 10px;
-  background: rgba(190, 129, 236, 0.12); border: 1px solid rgba(190, 129, 236, 0.35);
+  background: rgba(154, 79, 209, 0.12); border: 1px solid rgba(154, 79, 209, 0.35);
   color: $green; font-size: 13px; font-weight: 700;
   span { display: inline-flex; align-items: center; gap: 7px; }
   button {
@@ -185,7 +185,7 @@ $muted2: #6f6f78;
   border-radius: 16px;
   padding: 22px;
 }
-.cartTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 20px; color: #fff; margin-bottom: 16px; }
+.cartTitle { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: #fff; margin-bottom: 16px; }
 .cartSelectRow {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid $cardBorder;
@@ -214,7 +214,7 @@ $muted2: #6f6f78;
   display: inline-flex; align-items: center; justify-content: center;
   width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
   border-radius: 50%;
-  background: rgba(190, 129, 236, 0.13);
+  background: rgba(154, 79, 209, 0.13);
   color: $green;
   font-size: 11px;
   svg { stroke-width: 3; }
@@ -260,7 +260,7 @@ $muted2: #6f6f78;
   padding: 15px 24px; font-size: 16px; font-weight: 800; color: #1a1a1a; background: $green;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   transition: transform 0.12s ease, background 0.18s ease, opacity 0.15s ease;
-  &:hover:not(:disabled) { background: #a95fe0; transform: scale(1.015); }
+  &:hover:not(:disabled) { background: #8442b6; transform: scale(1.015); }
   &:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .secure { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 12px; color: $muted; font-size: 12.5px; }
@@ -279,21 +279,21 @@ $muted2: #6f6f78;
 // ─── Comparação de benefícios (Grátis vs PRO) ───────────────────────────────────
 .compareWrap { width: 100%; max-width: 980px; margin: 0 auto; }
 .compareHeadline { text-align: center; margin-bottom: 26px; }
-.compareTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: clamp(26px, 4vw, 38px); color: #fff; line-height: 1.1; }
+.compareTitle { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 4vw, 38px); color: #fff; line-height: 1.1; }
 .compareSub { font-size: 15px; color: $muted; margin-top: 10px; b { color: $green; } }
 
 .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; @media (max-width: 760px) { grid-template-columns: 1fr; } }
 .compareCol { background: $card; border: 1px solid $cardBorder; border-radius: 18px; padding: 26px; position: relative; }
-.compareColPro { border-color: rgba(190, 129, 236, 0.45); box-shadow: 0 0 0 1px rgba(190, 129, 236, 0.25), 0 16px 50px rgba(0, 0, 0, 0.4); }
+.compareColPro { border-color: rgba(154, 79, 209, 0.45); box-shadow: 0 0 0 1px rgba(154, 79, 209, 0.25), 0 16px 50px rgba(0, 0, 0, 0.4); }
 .proBadge {
   position: absolute; top: -11px; left: 26px; padding: 4px 12px; border-radius: 9999px;
   background: $green; color: #1a1a1a; font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
 }
-.compareColName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; color: #fff; }
+.compareColName { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: #fff; }
 .compareColNamePro { color: $green; }
 .compareColDesc { font-size: 13.5px; color: $muted; line-height: 1.5; margin: 6px 0 18px; min-height: 40px; }
 .comparePrice { display: flex; align-items: baseline; gap: 4px; margin-bottom: 18px; }
-.comparePriceValue { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 40px; color: #fff; line-height: 1; }
+.comparePriceValue { font-family: var(--font-display); font-weight: 800; font-size: 40px; color: #fff; line-height: 1; }
 .comparePriceUnit { font-size: 14px; color: $muted; }
 .comparePriceNote { font-size: 12.5px; color: $muted; margin: -12px 0 18px; }
 
@@ -302,7 +302,7 @@ $muted2: #6f6f78;
 .billingOpt { display: inline-flex; align-items: center; gap: 6px; border: none; background: transparent; color: $muted; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 9999px; cursor: pointer; transition: background 0.2s, color 0.2s; }
 .billingOptOn { background: $green; color: #1a1a1a; }
 .billingSave { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 9999px; background: rgba(255, 255, 255, 0.22); color: #fff; letter-spacing: 0.02em; }
-.billingOpt:not(.billingOptOn) .billingSave { background: rgba(190, 129, 236, 0.2); color: $green; }
+.billingOpt:not(.billingOptOn) .billingSave { background: rgba(154, 79, 209, 0.2); color: $green; }
 .compareGroup { margin-bottom: 18px; }
 .compareGroupHead { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
 .compareGroupIcon { color: $green; font-size: 17px; display: flex; }

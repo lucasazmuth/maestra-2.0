@@ -1,8 +1,19 @@
-/* Maestra Manager: online-first service worker.
+/* Maestra: online-first service worker.
  * Supabase, Spotify and other API requests are intentionally never cached here.
  */
-const CACHE_NAME = 'maestra-shell-v1';
-const SHELL_URLS = ['./', './index.html', './manifest.json', './favicon.ico', './logo192.png', './logo512.png'];
+const CACHE_NAME = 'maestra-shell-v2';
+const SHELL_URLS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './favicon.svg',
+  './favicon.ico',
+  './favicon16.png',
+  './favicon32.png',
+  './apple-touch-icon.png',
+  './logo192.png',
+  './logo512.png',
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -63,14 +74,14 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch (_) {
-    data = { title: 'Maestra Manager', body: 'Você tem uma nova notificação.' };
+    data = { title: 'Maestra', body: 'Você tem uma nova notificação.' };
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Maestra Manager', {
+    self.registration.showNotification(data.title || 'Maestra', {
       body: data.body || 'Você tem uma nova notificação.',
-      icon: data.icon || '/icons/icon-192.png',
-      badge: data.badge || '/icons/icon-192.png',
+      icon: data.icon || '/logo192.png',
+      badge: data.badge || '/favicon32.png',
       tag: data.tag || 'maestra-notification',
       data: data.data || { url: '/notifications' },
     })

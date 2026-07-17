@@ -54,7 +54,7 @@ const AdminPush: FC = () => {
           <h1 style={styles.title}>Enviar push</h1>
           <p style={styles.sub}>Envie uma notificação personalizada para um usuário ou para toda a base.</p>
         </div>
-        <FiBell size={30} color="#BE81EC" />
+        <FiBell size={30} color="#9A4FD1" />
       </div>
 
       <Alert
@@ -100,7 +100,7 @@ const AdminPush: FC = () => {
 const styles: Record<string, CSSProperties> = {
   page: { padding: 24, maxWidth: 760 },
   heading: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 22 },
-  title: { fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: '0 0 6px' },
+  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 6px' },
   sub: { color: '#9a9aa5', fontSize: 14, lineHeight: 1.5, margin: 0 },
   panel: { background: '#1c1c1e', border: '1px solid #2a2a2a', borderRadius: 12, padding: 20 },
   label: { display: 'block', color: '#e6e6ea', fontSize: 13, fontWeight: 700, margin: '0 0 7px' },

@@ -12,6 +12,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const APP_URL = (Deno.env.get("APP_URL") || "https://www.maestramanager.com").replace(/\/+$/, "");
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -23,9 +24,9 @@ const CORS = {
 function page(title: string, message: string): string {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head>
-<body style="margin:0;background:#0b0b0b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#e8e8e8;">
+<body style="margin:0;background:#0A0A0A;font-family:Inter,'Helvetica Neue',Arial,sans-serif;color:#F5F4F2;">
   <div style="max-width:480px;margin:0 auto;padding:64px 24px;text-align:center;">
-    <div style="font-size:20px;letter-spacing:.5px;color:#BE81EC;margin-bottom:32px;"><span style="font-weight:800;">Maestra</span> <span style="font-weight:400;">Manager</span></div>
+    <img src="${APP_URL}/brand/maestra-wordmark-light.png" width="154" alt="Maestra" style="display:block;width:154px;max-width:70%;height:auto;margin:0 auto 32px;">
     <h1 style="font-size:22px;line-height:1.3;color:#fff;margin:0 0 12px;">${title}</h1>
     <p style="color:#cfcfd4;line-height:1.6;margin:0;">${message}</p>
   </div>

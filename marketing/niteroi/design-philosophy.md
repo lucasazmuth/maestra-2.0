@@ -1,0 +1,13 @@
+# Nocturne Signal
+
+**A philosophy of luminous restraint on an infinite dark field.**
+
+Nocturne Signal begins with darkness — not as absence, but as depth. A near-black plane, dense and velvet, becomes the stage on which a single frequency of light is allowed to speak. From this void rises one luminous hue, a considered violet, deployed with the discipline of someone who understands that a beacon only reads as a beacon when everything around it agrees to stay quiet. Light here is precious, rationed, and therefore meaningful. The composition is the work of painstaking calibration: every glow feathered by hand, every edge resolved to the sub-pixel, the product of deep expertise rather than convenience.
+
+Space is the primary instrument. Vast, unhurried margins let the eye breathe and confer gravity on the few elements permitted to exist. Nothing crowds; nothing competes. Hierarchy is achieved through scale and silence — a single monumental gesture anchoring the field, small clinical labels orbiting it like annotations in a master's notebook. The rhythm is that of a held breath: tension between the enormous and the whisper-fine, resolved with the patience of a craftsman who reworked the spacing a hundred times until it felt inevitable.
+
+Typography is treated as architecture, not ornament. A confident grotesque carries weight where the composition demands presence; a precise monospace marks the coordinates, the codes, the signals meant to be read and acted upon — its mechanical evenness lending the authority of an instrument panel. Letters are tracked and set with meticulous attention, sized so that a giant statement and a murmured footnote share the same page without conflict. Text is minimal by conviction: only what must be spoken is spoken, and it is placed with the exactness of a typesetter at the top of the craft.
+
+Material sensibility is quiet but total. The dark field carries a faint grain of depth; the violet blooms softly at its source and decays into nothing, never hard-clipped, never garish. A single sculptural accent may catch the light like a struck match. Contrast is dramatic yet controlled — luminous against void — so that the eye is drawn, inevitably, to the one place that matters. This is the look of countless hours: master-level execution where restraint is the loudest statement.
+
+The result should read as an artifact — something engineered, observed, and resolved, as if a fleeting moment of attention had been mapped and made permanent. Nocturne Signal is not decoration on darkness; it is the discipline of making a single point of light impossible to ignore, and doing so with the flawless, laboured precision of a hand that has done this ten thousand times.

@@ -3,7 +3,7 @@ import lottie, { type AnimationItem } from 'lottie-web';
 
 import nytaLottie from '../../../assets/nyta-lottie.json';
 
-// Identidade visual e verbal da Nyta — a inteligência da Maestra Manager.
+// Identidade visual e verbal da Nyta — a inteligência da Maestra.
 // As falas são templadas (custo zero por turno) e seguem o tom de voz do método
 // (Doc 1): direta com firmeza carinhosa, empoderadora, "a gente" com naturalidade.
 // A IA gera só o conteúdo estratégico (visão/missão montadas, objetivos, estratégias).

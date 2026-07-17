@@ -55,7 +55,7 @@ export const NextStepCard: FC<{ artist: Artist }> = ({ artist }) => {
           <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: `rgb(${accent})` }}>
             Seu próximo passo · {next.kicker}
           </div>
-          <h2 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 24, color: '#fff', margin: 0, lineHeight: 1.18, maxWidth: 560 }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, color: '#fff', margin: 0, lineHeight: 1.18, maxWidth: 560 }}>
             {next.title}
           </h2>
           <p style={{ color: '#cfcfd4', fontSize: 14, margin: 0, maxWidth: 540, lineHeight: 1.5 }}>{next.desc}</p>

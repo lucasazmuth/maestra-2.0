@@ -31,6 +31,16 @@ beforeAll(() => {
       dispatchEvent: jest.fn(),
     })),
   });
+
+  Object.defineProperty(window, 'scrollTo', {
+    writable: true,
+    value: jest.fn(),
+  });
+
+  Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+    configurable: true,
+    value: jest.fn(),
+  });
 });
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
@@ -85,6 +95,18 @@ jest.mock('react-resizable-panels', () => ({
   Panel: ({ children }: any) => <div>{children}</div>,
   PanelGroup: ({ children }: any) => <div>{children}</div>,
   PanelResizeHandle: () => <div />,
+}));
+
+// lottie-web reads a real canvas context at import time, which JSDOM does not
+// provide. Layout behavior does not depend on animation rendering.
+jest.mock('lottie-web', () => ({
+  __esModule: true,
+  default: {
+    loadAnimation: jest.fn(() => ({
+      destroy: jest.fn(),
+      setSpeed: jest.fn(),
+    })),
+  },
 }));
 
 // Mock antd grid components to avoid responsiveObserver issues in jsdom

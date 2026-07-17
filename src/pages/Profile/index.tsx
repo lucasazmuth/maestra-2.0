@@ -122,7 +122,7 @@ const Profile: FC = () => {
           </p>
           <button
             onClick={() => navigate(`/artists/${artist.id}/wizard`)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#BE81EC', color: '#1A1A1A', border: 'none', padding: '12px 28px', borderRadius: 9999, cursor: 'pointer', fontWeight: 800, fontSize: 15 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#9A4FD1', color: '#FFFFFF', border: 'none', padding: '12px 28px', borderRadius: 9999, cursor: 'pointer', fontWeight: 800, fontSize: 15 }}
           >
             {resumingPlan ? 'Continuar planejamento' : 'Criar planejamento estratégico'} <FiArrowRight />
           </button>

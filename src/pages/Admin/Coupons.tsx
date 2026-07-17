@@ -242,7 +242,7 @@ const Field: FC<{ label: string; children: React.ReactNode }> = ({ label, childr
 
 const styles: Record<string, CSSProperties> = {
   page: { padding: 24, maxWidth: 1000 },
-  title: { fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: '0 0 6px' },
+  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 6px' },
   sub: { color: '#9a9aa5', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
   card: { background: '#181818', borderRadius: 12, padding: 20, marginBottom: 18 },
   cardHead: { display: 'flex', alignItems: 'center', gap: 8, color: '#fff', fontSize: 16, marginBottom: 16 },
@@ -250,7 +250,7 @@ const styles: Record<string, CSSProperties> = {
   empty: { color: '#6f6f78', padding: '20px 0', textAlign: 'center' },
   row: { display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderTop: '1px solid #262626' },
   code: { fontWeight: 800, color: '#fff', fontSize: 15, letterSpacing: '0.02em' },
-  badge: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 700, background: 'rgba(190,129,236,0.16)', color: '#e07fce' },
+  badge: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 700, background: 'rgba(154, 79, 209,0.16)', color: '#e07fce' },
   badgeMuted: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: '#cfcfd4' },
   meta: { color: '#8a8a8a', fontSize: 12.5, marginTop: 5 },
 };

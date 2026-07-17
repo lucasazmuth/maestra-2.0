@@ -4,7 +4,7 @@ import { Tooltip, message } from 'antd';
 import { FiChevronDown, FiArrowRight, FiShare2, FiHelpCircle, FiRefreshCw, FiLock } from 'react-icons/fi';
 import { DownloadIcon } from '../../components/Icons/system';
 
-import { Wordmark } from '../../components/Wordmark';
+import { MaestraBrand } from '../../components/MaestraBrand';
 import realStar from '../../assets/feature-real.png';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import type { RealIndex } from '../../interfaces/maestra';
@@ -136,7 +136,7 @@ const Typewriter: FC<{ text: string; active: boolean; speed?: number; onDone?: (
 // ── V3: componentes do boletim (definidos no escopo de módulo p/ não remontar a cada render) ──
 type DimK = 'r' | 'e' | 'a' | 'l';
 const SRC_LABELS: Record<string, string> = { streaming: 'Streaming', direitos: 'Direitos', publi: 'Publicidade', aulas: 'Aulas', editais: 'Editais', venda: 'Venda / merch', outros: 'Outros' };
-const PIE_COLORS = ['#1db954', '#4c7dff', '#e0a13c', '#BE81EC', '#21b26e', '#9b8cff', '#d65a5a'];
+const PIE_COLORS = ['#1db954', '#4c7dff', '#e0a13c', '#9A4FD1', '#21b26e', '#9b8cff', '#d65a5a'];
 
 // Pizza de composição da receita (Shows × cachê + cada fonte musical). §5.4 / §9.4.
 const RevenuePie: FC<{ revenue: any }> = ({ revenue }) => {
@@ -611,7 +611,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
                   <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
                     <span style={{ color: '#71717a', width: 18, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>
                     <span style={{ color: '#fff', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
-                    {p.editorial && <span style={{ fontSize: 10, fontWeight: 700, color: 'rgb(var(--real-accent, 190, 129, 236))', border: '1px solid rgba(var(--real-accent, 190, 129, 236), 0.4)', borderRadius: 4, padding: '1px 5px' }}>Editorial</span>}
+                    {p.editorial && <span style={{ fontSize: 10, fontWeight: 700, color: 'rgb(var(--real-accent, 154, 79, 209))', border: '1px solid rgba(var(--real-accent, 154, 79, 209), 0.4)', borderRadius: 4, padding: '1px 5px' }}>Editorial</span>}
                     {p.followers != null && <span style={{ color: '#8a8a92', fontVariantNumeric: 'tabular-nums' }}>{fmtNum(p.followers)}</span>}
                   </div>
                 ))}
@@ -772,7 +772,9 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
       {/* Cartão de compartilhamento — fora da tela, capturado como PNG */}
       <div className={styles.shareStage} aria-hidden data-noexport="1">
         <div ref={shareRef} className={styles.shareCard}>
-          <div className={styles.shareBrand}><Wordmark /></div>
+          <div className={styles.shareBrand}>
+            <MaestraBrand variant='wordmark' tone='light' />
+          </div>
           <img className={styles.shareAvatar} src={avatarSrc} alt="" crossOrigin="anonymous" />
           <div className={styles.shareKicker}>Diagnóstico de carreira</div>
           <div className={styles.shareName}>{profile.name}</div>
@@ -781,7 +783,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             {DIM_META.map((d) => (
               <div key={d.key} className={styles.sharePatternItem}>
                 <span className={styles.sharePatternLetter}>{d.letter}</span>
-                <span className={styles.sharePatternDot} style={{ background: pattern[d.key] ? '#BE81EC' : '#5a5a64' }} />
+                <span className={styles.sharePatternDot} style={{ background: pattern[d.key] ? '#9A4FD1' : '#5a5a64' }} />
               </div>
             ))}
           </div>

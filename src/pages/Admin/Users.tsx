@@ -263,7 +263,7 @@ const KV: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => 
 
 const styles: Record<string, CSSProperties> = {
   page: { padding: 24, maxWidth: 1100 },
-  title: { fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: '0 0 6px' },
+  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 6px' },
   sub: { color: '#9a9aa5', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
   sectionHead: { color: '#fff', fontSize: 14, fontWeight: 700, marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #262626' },
   kvGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 },

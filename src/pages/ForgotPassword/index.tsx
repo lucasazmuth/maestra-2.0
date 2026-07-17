@@ -59,12 +59,12 @@ const ForgotPassword: FC = () => {
             style={{
               width: 60, height: 60, borderRadius: '50%', margin: '4px auto 18px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(190, 129, 236, 0.14)', color: '#c65fb0',
+              background: 'rgba(154, 79, 209, 0.14)', color: '#c65fb0',
             }}
           >
             <FiMail size={28} />
           </div>
-          <h2 style={{ color: '#fff', fontSize: 21, fontWeight: 800, margin: '0 0 10px', fontFamily: 'SpotifyMixUITitle, sans-serif' }}>
+          <h2 style={{ color: '#fff', fontSize: 21, fontWeight: 800, margin: '0 0 10px', fontFamily: 'var(--font-display)' }}>
             Confira seu e-mail
           </h2>
           <p style={{ color: '#cfcfd4', fontSize: 14.5, lineHeight: 1.6, margin: '0 0 6px' }}>
@@ -80,8 +80,8 @@ const ForgotPassword: FC = () => {
             onClick={resend}
             disabled={loading}
             style={{
-              width: '100%', background: '#BE81EC', border: 'none',
-              color: '#1A1A1A', padding: '13px 24px', borderRadius: 9999, fontWeight: 700, fontSize: 15,
+              width: '100%', background: '#9A4FD1', border: 'none',
+              color: '#FFFFFF', padding: '13px 24px', borderRadius: 9999, fontWeight: 700, fontSize: 15,
               cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1,
             }}
           >
@@ -107,7 +107,7 @@ const ForgotPassword: FC = () => {
   // ── Passo 1: digitar o e-mail ─────────────────────────────────────────────
   return (
     <AuthShell>
-      <h2 style={{ color: '#fff', fontSize: 21, fontWeight: 800, margin: '0 0 8px', fontFamily: 'SpotifyMixUITitle, sans-serif' }}>
+      <h2 style={{ color: '#fff', fontSize: 21, fontWeight: 800, margin: '0 0 8px', fontFamily: 'var(--font-display)' }}>
         Esqueceu sua senha?
       </h2>
       <p style={{ color: '#9a9aa5', fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>

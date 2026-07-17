@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser } from 'react-icons/fi';
 
-import { Wordmark } from '../../components/Wordmark';
+import { MaestraBrand } from '../../components/MaestraBrand';
 import { useAppDispatch } from '../../store/store';
 import { authActions } from '../../store/slices/auth';
 import styles from './AuthShell.module.scss';
@@ -57,7 +57,7 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
           <div className={styles.brand}>
             {/* Logo clicável → volta para a landing page. */}
             <Link to='/' className={styles.brandLink} aria-label='Ir para a página inicial'>
-              <Wordmark className={styles.brandWordmark} beta />
+              <MaestraBrand variant='lockup' tone='light' className={styles.brandWordmark} beta />
             </Link>
           </div>
 
@@ -149,9 +149,9 @@ export const AuthSubmit: FC<{ loading: boolean; label: string }> = ({ loading, l
     style={{
       marginTop: 8,
       width: '100%',
-      background: '#BE81EC',
+      background: '#9A4FD1',
       border: 'none',
-      color: '#1A1A1A',
+      color: '#FFFFFF',
       padding: '14px 24px',
       borderRadius: 9999,
       fontWeight: 700,

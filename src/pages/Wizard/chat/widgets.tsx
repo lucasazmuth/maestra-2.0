@@ -493,7 +493,7 @@ export const ReferenceHorizons: FC<{
       {/* Progresso (3 horizontes) */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
         {HORIZON_FIELDS.map((f, i) => (
-          <div key={f.key} style={{ height: 4, flex: 1, borderRadius: 2, background: i <= step ? '#BE81EC' : '#3a3a3a', transition: 'background .25s' }} />
+          <div key={f.key} style={{ height: 4, flex: 1, borderRadius: 2, background: i <= step ? '#9A4FD1' : '#3a3a3a', transition: 'background .25s' }} />
         ))}
       </div>
 
@@ -969,7 +969,7 @@ export const QuizOptions: FC<{
   return (
     <div>
       {headerExtra}
-      <p style={{ color: '#BE81EC', fontSize: 13, fontWeight: 700, margin: '0 0 10px' }}>
+      <p style={{ color: '#9A4FD1', fontSize: 13, fontWeight: 700, margin: '0 0 10px' }}>
         Escolha uma ou mais, ou escreva a sua
       </p>
       <div className='wiz-option-grid'>
@@ -1087,7 +1087,7 @@ export const SwotInternalCard: FC<{
   const total = SWOT_INTERNAL.length;
   const item = SWOT_INTERNAL[idx];
   const options: [InternalClass, string, string][] = [
-    ['forte', 'É um ponto forte', '#BE81EC'],
+    ['forte', 'É um ponto forte', '#9A4FD1'],
     ['melhorar', 'Preciso melhorar nisso', '#e9a21a'],
     ['na', 'Não se aplica', '#6b7280'],
   ];
@@ -1106,7 +1106,7 @@ export const SwotInternalCard: FC<{
   return (
     <div className='nyta-card'>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 8 }}>
-        <span style={{ color: '#BE81EC', fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+        <span style={{ color: '#9A4FD1', fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase' }}>
           Diagnóstico interno
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
@@ -1123,7 +1123,7 @@ export const SwotInternalCard: FC<{
         </span>
       </div>
       <div style={{ height: 3, borderRadius: 3, background: '#1f1f1f', marginBottom: 14, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${barPct}%`, background: '#BE81EC', borderRadius: 3, transition: 'width .3s ease' }} />
+        <div style={{ height: '100%', width: `${barPct}%`, background: '#9A4FD1', borderRadius: 3, transition: 'width .3s ease' }} />
       </div>
       <div key={idx} style={{ animation: 'wizSlideInRight .28s ease both' }}>
         <p style={{ fontSize: 16.5, marginBottom: 4, lineHeight: 1.35, color: '#fff', fontWeight: 700 }}>{stripEmDash(item.label)}</p>
@@ -1190,7 +1190,7 @@ export const SwotChecklist: FC<{
   onConfirm: (ids: number[]) => void;
   title?: string;
   accent?: string;
-}> = ({ items, confirmLabel, onConfirm, title, accent = '#BE81EC' }) => {
+}> = ({ items, confirmLabel, onConfirm, title, accent = '#9A4FD1' }) => {
   const [sel, setSel] = useState<number[]>([]);
   const toggle = (id: number) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   return (
@@ -1213,8 +1213,8 @@ export const SwotChecklist: FC<{
                 gap: 12,
                 width: '100%',
                 textAlign: 'left',
-                border: `1px solid ${active ? '#BE81EC' : '#2a2a2a'}`,
-                background: active ? 'rgba(190, 129, 236, 0.12)' : '#121212',
+                border: `1px solid ${active ? '#9A4FD1' : '#2a2a2a'}`,
+                background: active ? 'rgba(154, 79, 209, 0.12)' : '#121212',
                 color: '#e8e8e8',
                 borderRadius: 10,
                 fontSize: 14,
@@ -1235,7 +1235,7 @@ export const SwotChecklist: FC<{
                   borderRadius: 6,
                   flexShrink: 0,
                   border: active ? 'none' : '1.5px solid #3a3a3a',
-                  background: active ? '#BE81EC' : 'transparent',
+                  background: active ? '#9A4FD1' : 'transparent',
                   color: '#000',
                 }}
               >
@@ -1261,7 +1261,7 @@ export const SwotChecklist: FC<{
 // ---- Inventário SWOT editável ------------------------------------------------------------------
 
 const SWOT_COLS: { key: keyof SwotAnalysis; label: string; color: string }[] = [
-  { key: 'strengths', label: 'Forças', color: '#BE81EC' },
+  { key: 'strengths', label: 'Forças', color: '#9A4FD1' },
   { key: 'weaknesses', label: 'Fraquezas', color: '#e91429' },
   { key: 'opportunities', label: 'Oportunidades', color: '#3b82f6' },
   { key: 'threats', label: 'Ameaças', color: '#f59e0b' },
@@ -1375,7 +1375,7 @@ export const StrategyCards: FC<{
               )}
               {refsLine && (
                 <p style={{ color: '#6b7280', fontSize: 11.5, margin: '8px 0 0', lineHeight: 1.5 }}>
-                  <span style={{ color: '#BE81EC', fontWeight: 700 }}>Responde a:</span> {refsLine}
+                  <span style={{ color: '#9A4FD1', fontWeight: 700 }}>Responde a:</span> {refsLine}
                 </p>
               )}
             </div>
@@ -1426,7 +1426,7 @@ const Typewriter: FC<{ text: string; speed?: number }> = ({ text: rawText, speed
 
 const SCALE = Array.from({ length: 11 }, (_, i) => i); // 0..10
 // Cor da nota (vermelho → âmbar → verde) e palavra de apoio, pra dar leitura visual ao 0–10.
-const scoreColor = (n: number): string => (n <= 3 ? '#e0564f' : n <= 6 ? '#e9a21a' : '#BE81EC');
+const scoreColor = (n: number): string => (n <= 3 ? '#e0564f' : n <= 6 ? '#e9a21a' : '#9A4FD1');
 const scoreWord = (n?: number): string =>
   typeof n !== 'number' ? 'Toque numa nota' : n === 0 ? 'Não ajuda em nada' : n <= 3 ? 'Ajuda pouco' : n <= 6 ? 'Ajuda' : n <= 9 ? 'Ajuda bastante' : 'Ajuda muito';
 
@@ -1615,7 +1615,7 @@ export const PriorityScale: FC<{
             <FiX size={18} />
           </button>
           <div style={{ padding: '22px 44px 12px 22px' }}>
-            <div style={{ fontFamily: 'SpotifyMixUITitle', color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>
+            <div style={{ fontFamily: 'var(--font-display)', color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>
               Sua ordem de prioridade está pronta
             </div>
             <div style={{ color: '#b3b3b3', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
@@ -1634,17 +1634,17 @@ export const PriorityScale: FC<{
                   onClick={() => toggleSel(s.id)}
                   className="wiz-prio-item"
                   style={{
-                    background: on ? 'rgba(190,129,236,0.12)' : '#202020',
-                    border: `1px solid ${on ? '#BE81EC' : 'transparent'}`,
+                    background: on ? 'rgba(154, 79, 209,0.12)' : '#202020',
+                    border: `1px solid ${on ? '#9A4FD1' : 'transparent'}`,
                   }}
                 >
-                  <span className="wiz-prio-num" style={{ color: on ? '#D3A6F2' : '#7d7d7d' }}>
+                  <span className="wiz-prio-num" style={{ color: on ? '#C97EF3' : '#7d7d7d' }}>
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <span
                     aria-hidden
                     className="wiz-prio-check"
-                    style={{ border: `2px solid ${on ? '#BE81EC' : '#4a4a4a'}`, background: on ? '#BE81EC' : 'transparent' }}
+                    style={{ border: `2px solid ${on ? '#9A4FD1' : '#4a4a4a'}`, background: on ? '#9A4FD1' : 'transparent' }}
                   >
                     {on && <FiCheck size={14} />}
                   </span>
@@ -1654,8 +1654,8 @@ export const PriorityScale: FC<{
                   <span
                     className="wiz-prio-pct"
                     style={{
-                      color: on ? '#D3A6F2' : '#9a9a9a',
-                      background: on ? 'rgba(190,129,236,0.16)' : 'rgba(255,255,255,0.06)',
+                      color: on ? '#C97EF3' : '#9a9a9a',
+                      background: on ? 'rgba(154, 79, 209,0.16)' : 'rgba(255,255,255,0.06)',
                     }}
                   >
                     {pct}%
@@ -1671,7 +1671,7 @@ export const PriorityScale: FC<{
                 <b style={{ color: '#fff' }}>{count}</b> de {ranked.length} selecionada{count === 1 ? '' : 's'}
               </span>
               <button
-                style={{ background: 'none', border: 'none', color: '#BE81EC', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                style={{ background: 'none', border: 'none', color: '#9A4FD1', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}
                 onClick={() => setSelected(count === ranked.length ? new Set() : new Set(ranked.map((s) => s.id)))}
               >
                 {count === ranked.length ? 'Limpar' : 'Selecionar todas'}
@@ -1764,7 +1764,7 @@ export const PriorityScale: FC<{
         </span>
       </div>
       <div style={{ height: 3, borderRadius: 3, background: '#1f1f1f', marginBottom: 14, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${(answeredSoFar / (list.length * totalObj)) * 100}%`, background: '#BE81EC', borderRadius: 3, transition: 'width .3s ease' }} />
+        <div style={{ height: '100%', width: `${(answeredSoFar / (list.length * totalObj)) * 100}%`, background: '#9A4FD1', borderRadius: 3, transition: 'width .3s ease' }} />
       </div>
 
       {/* UMA pergunta por vez: re-monta por key pra deslizar entrando */}
@@ -1932,8 +1932,8 @@ export const PlanScheduleSetup: FC<{
                 alignItems: 'flex-start',
                 gap: 2,
                 textAlign: 'left',
-                border: `1px solid ${active ? '#BE81EC' : '#2a2a2a'}`,
-                background: active ? 'rgba(190, 129, 236, 0.12)' : '#121212',
+                border: `1px solid ${active ? '#9A4FD1' : '#2a2a2a'}`,
+                background: active ? 'rgba(154, 79, 209, 0.12)' : '#121212',
                 color: '#e8e8e8',
                 borderRadius: 10,
                 padding: '12px 14px',
@@ -2010,7 +2010,7 @@ export const TimelineCard: FC<{
           return (
             <div key={s.id}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <span className='wiz-slot-rank' style={{ minWidth: 'auto', fontSize: 18, color: '#BE81EC' }}>#{si + 1}</span>
+                <span className='wiz-slot-rank' style={{ minWidth: 'auto', fontSize: 18, color: '#9A4FD1' }}>#{si + 1}</span>
                 <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, flex: 1 }}>{stripEmDash(s.title)}</span>
               </div>
               <div className='wiz-timeline'>

@@ -56,7 +56,7 @@ export const CATALOG_STATUS: Record<CatalogStatus, { label: string; color: strin
   production: { label: 'Produção', color: '#f59e0b' },
   mixing: { label: 'Mixagem', color: '#3b82f6' },
   mastering: { label: 'Masterização', color: '#a855f7' },
-  released: { label: 'Lançado', color: '#BE81EC' },
+  released: { label: 'Lançado', color: '#9A4FD1' },
 };
 
 export const CATALOG_STATUS_OPTIONS = (Object.keys(CATALOG_STATUS) as CatalogStatus[]).map(
@@ -96,7 +96,7 @@ export const EVENT_TYPES: Record<EventType, { label: string; color: string }> = 
   release: { label: 'Lançamento', color: '#a855f7' },
   rehearsal: { label: 'Ensaio', color: '#f59e0b' },
   studio: { label: 'Estúdio', color: '#3b82f6' },
-  meeting: { label: 'Reunião', color: '#BE81EC' },
+  meeting: { label: 'Reunião', color: '#9A4FD1' },
   interview: { label: 'Entrevista', color: '#ec4899' },
   // Roxo mais profundo para diferenciar tarefas dos compromissos,
   // mantendo a leitura dentro da paleta visual da Maestra.
@@ -111,7 +111,7 @@ export const EVENT_TYPE_OPTIONS = (Object.keys(EVENT_TYPES) as EventType[]).map(
 
 export const EVENT_STATUS: Record<EventStatus, { label: string; color: string }> = {
   scheduled: { label: 'Agendado', color: '#3b82f6' },
-  completed: { label: 'Concluído', color: '#BE81EC' },
+  completed: { label: 'Concluído', color: '#9A4FD1' },
   cancelled: { label: 'Cancelado', color: '#e91429' },
 };
 

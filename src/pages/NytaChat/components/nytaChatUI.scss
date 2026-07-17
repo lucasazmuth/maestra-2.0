@@ -121,8 +121,8 @@
     margin: 0 auto;
     box-sizing: border-box;
     padding: 14px 16px;
-    background: rgba(190, 129, 236, 0.1);
-    border: 1px solid rgba(190, 129, 236, 0.28);
+    background: rgba(154, 79, 209, 0.1);
+    border: 1px solid rgba(154, 79, 209, 0.28);
     border-radius: 12px;
 
     &__icon {
@@ -133,8 +133,8 @@
       width: 34px;
       height: 34px;
       border-radius: 50%;
-      background: rgba(190, 129, 236, 0.18);
-      color: #D3A6F2;
+      background: rgba(154, 79, 209, 0.18);
+      color: #C97EF3;
     }
 
     &__body {
@@ -163,8 +163,8 @@
       padding: 8px 14px;
       border: none;
       border-radius: 9999px;
-      background: #BE81EC;
-      color: #1A1A1A;
+      background: #9A4FD1;
+      color: #FFFFFF;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
@@ -237,9 +237,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, #BE81EC, #509bf5);
+  background: linear-gradient(135deg, #9A4FD1, #509bf5);
   color: #fff;
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   user-select: none;
 }
@@ -316,15 +316,15 @@
   h3 { font-size: 15px; }
 
   blockquote {
-    border-left: 3px solid #BE81EC;
+    border-left: 3px solid #9A4FD1;
     margin: 8px 0;
     padding: 4px 12px;
     color: #ccc;
   }
 
   &--user {
-    background: #BE81EC;
-    color: #1A1A1A;
+    background: #9A4FD1;
+    color: #FFFFFF;
     font-weight: 600;
     border-radius: 16px 16px 4px 16px;
   }

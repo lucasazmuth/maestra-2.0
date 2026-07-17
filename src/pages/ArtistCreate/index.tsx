@@ -18,7 +18,7 @@ import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import { DiagnosticReport, type Chartmetric } from './DiagnosticReport';
 import { FlowHeader } from './FlowHeader';
 import { AnalyzingSteps } from './AnalyzingSteps';
-import { Wordmark } from '../../components/Wordmark';
+import { MaestraBrand } from '../../components/MaestraBrand';
 import realStar from '../../assets/feature-real.png';
 import styles from './ArtistCreate.module.scss';
 
@@ -423,7 +423,7 @@ const ArtistCreate: FC = () => {
 
       {/* Cabeçalho numa ÚNICA linha: marca à esquerda (aparece em prints), progresso enxuto e X. */}
       <div className={styles.topBar}>
-        <Wordmark className={styles.brand} beta />
+        <MaestraBrand variant='lockup' tone='light' className={styles.brand} beta />
         {!redo && <FlowHeader phase={macroPhase} />}
         <button
           className={styles.back}

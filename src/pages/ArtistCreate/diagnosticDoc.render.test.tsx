@@ -3,9 +3,18 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { dimNarrative } from './realNarrative';
 
-// RealBadge renderiza SVGs com <use>/gradientes que o mock de SVG do jest não representa bem
-// (não é bug de runtime — no browser funciona). Mockamos só para a verificação estrutural do deck.
-jest.mock('../../assets/maestra-logo.svg', () => ({ __esModule: true, default: 'logo.svg', ReactComponent: () => null }));
+// SVGs são mockados apenas na verificação estrutural do deck; a renderização vetorial é coberta
+// pelos testes dedicados do MaestraBrand e pela validação visual dos arquivos exportados.
+jest.mock('../../assets/brand/maestra-symbol.svg', () => ({
+  __esModule: true,
+  default: 'maestra-symbol.svg',
+  ReactComponent: () => <svg data-testid="maestra-symbol" />,
+}));
+jest.mock('../../assets/brand/maestra-wordmark.svg', () => ({
+  __esModule: true,
+  default: 'maestra-wordmark.svg',
+  ReactComponent: () => <svg data-testid="maestra-wordmark" />,
+}));
 jest.mock('../../components/RealBadge', () => ({
   RealBadge: () => null,
   tierForAltas: () => 'standard',
@@ -94,5 +103,10 @@ describe('DiagnosticDoc V3 (deck do PDF)', () => {
     expect(html).toContain('Como nasce o seu diagnóstico');
     expect(html).toContain('Anita Carvalho');
     expect(html).toContain('Top Tier');
+  });
+  it('usa o wordmark vetorial oficial da Maestra', () => {
+    expect(html).toContain('data-brand-variant="wordmark"');
+    expect(html).toContain('data-testid="maestra-wordmark"');
+    expect(html).not.toContain('Maestra Manager');
   });
 });

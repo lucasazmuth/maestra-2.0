@@ -1,9 +1,11 @@
 {
-  "name": "spotify-client",
+  "name": "maestra",
   "version": "2.0.7",
   "private": true,
   "dependencies": {
     "@ant-design/pro-form": "^2.32.0",
+    "@fontsource-variable/inter": "5.2.8",
+    "@fontsource-variable/jetbrains-mono": "5.2.8",
     "@google/genai": "^1.52.0",
     "@supabase/supabase-js": "^2.108.1",
     "ajv": "^8.20.0",
@@ -45,6 +47,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build && cp build/index.html build/404.html",
+    "brand:check": "node scripts/check-brand-residue.mjs",
+    "edge:check": "node scripts/check-edge-functions.mjs",
+    "emails:preview": "node scripts/render-email-preview.mjs",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build"

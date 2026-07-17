@@ -55,7 +55,7 @@ export const ArtistHero: FC<{ artist: Artist }> = ({ artist }) => {
       />
       <div>
         <div style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700 }}>ARTISTA</div>
-        <h1 className="artist-hero-name" style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 40, color: '#fff', margin: '4px 0 8px' }}>
+        <h1 className="artist-hero-name" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 40, color: '#fff', margin: '4px 0 8px' }}>
           {artist.name}
         </h1>
         <div className="artist-hero-meta" style={{ display: 'flex', alignItems: 'center', gap: 16, color: '#b3b3b3', fontSize: 14, flexWrap: 'wrap' }}>

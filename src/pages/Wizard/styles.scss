@@ -1,5 +1,5 @@
 // Wizard — animações e classes do redesign. Segue os timings/easings do design system
-// (cubic-bezier(0.4,0,0.2,1), 200–650ms) e a paleta Encore (#121212/#181818/#BE81EC).
+// (cubic-bezier(0.4,0,0.2,1), 200–650ms) e a paleta Encore (#121212/#181818/#9A4FD1).
 
 // ---- Keyframes -------------------------------------------------------------------------------
 
@@ -40,13 +40,13 @@
 // Pulso de destaque no texto do objetivo ao trocar (flash magenta breve).
 @keyframes wizObjFlash {
   0% {
-    background: rgba(190, 129, 236, 0);
+    background: rgba(154, 79, 209, 0);
   }
   35% {
-    background: rgba(190, 129, 236, 0.28);
+    background: rgba(154, 79, 209, 0.28);
   }
   100% {
-    background: rgba(190, 129, 236, 0);
+    background: rgba(154, 79, 209, 0);
   }
 }
 
@@ -131,7 +131,7 @@
   padding: 24px;
   position: relative;
   // Identidade do Planejamento Estratégico: glow azul sutil no topo do ambiente.
-  background: radial-gradient(110% 42% at 50% 0%, rgba(190, 129, 236, 0.09) 0%, rgba(190, 129, 236, 0.03) 38%, transparent 62%);
+  background: radial-gradient(110% 42% at 50% 0%, rgba(154, 79, 209, 0.09) 0%, rgba(154, 79, 209, 0.03) 38%, transparent 62%);
 
   .wiz-progress-track {
     height: 4px;
@@ -143,7 +143,7 @@
     .wiz-progress-fill {
       height: 100%;
       border-radius: 2px;
-      background: #BE81EC; // azul do produto Planejamento
+      background: #9A4FD1; // azul do produto Planejamento
       transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
@@ -262,8 +262,8 @@
   }
 
   &--current {
-    background: rgba(190, 129, 236, 0.12);
-    color: #BE81EC;
+    background: rgba(154, 79, 209, 0.12);
+    color: #9A4FD1;
   }
 
   &--locked {
@@ -283,8 +283,8 @@
   padding: 2px 10px;
   font-size: 11px;
   font-weight: 700;
-  background: rgba(190, 129, 236, 0.18);
-  color: #BE81EC;
+  background: rgba(154, 79, 209, 0.18);
+  color: #9A4FD1;
   white-space: nowrap;
 
   &--done {
@@ -391,7 +391,7 @@
   min-height: 380px;
   border-radius: 16px;
   padding: 40px 24px;
-  background: linear-gradient(135deg, rgba(190, 129, 236, 0.25), rgba(80, 155, 245, 0.25), rgba(190, 129, 236, 0.18));
+  background: linear-gradient(135deg, rgba(154, 79, 209, 0.25), rgba(80, 155, 245, 0.25), rgba(154, 79, 209, 0.18));
   background-size: 300% 300%;
   animation: wizGradientMove 6s ease infinite;
 
@@ -405,7 +405,7 @@
 
   h3 {
     color: #fff;
-    font-family: 'SpotifyMixUITitle', sans-serif;
+    font-family: var(--font-display);
     font-weight: 800;
     font-size: 24px;
     margin: 0 0 8px;
@@ -437,7 +437,7 @@
 
 .wiz-quiz-title {
   color: #fff;
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(22px, 3vw, 32px);
   line-height: 1.25;
@@ -533,8 +533,8 @@
   }
 
   &--selected {
-    background: #BE81EC;
-    color: #1A1A1A;
+    background: #9A4FD1;
+    color: #FFFFFF;
     font-weight: 700;
 
     &::before {
@@ -605,7 +605,7 @@
     }
 
     &:focus {
-      border-color: #BE81EC;
+      border-color: #9A4FD1;
     }
   }
 }
@@ -642,7 +642,7 @@
 
   &.ant-select-focused .ant-select-selector,
   &:hover .ant-select-selector {
-    border-color: #BE81EC !important;
+    border-color: #9A4FD1 !important;
     box-shadow: none !important;
   }
 
@@ -669,7 +669,7 @@
   }
 
   .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
-    background: rgba(190, 129, 236, 0.22);
+    background: rgba(154, 79, 209, 0.22);
     color: #fff;
     font-weight: 700;
   }
@@ -720,7 +720,7 @@
   }
 
   h1 {
-    font-family: 'SpotifyMixUITitle', sans-serif;
+    font-family: var(--font-display);
     font-weight: 800;
     font-size: clamp(40px, 6vw, 72px);
     letter-spacing: -0.02em;
@@ -776,8 +776,8 @@
   }
 
   &--active {
-    background: #BE81EC;
-    color: #1A1A1A;
+    background: #9A4FD1;
+    color: #FFFFFF;
     font-weight: 700;
 
     &::before {
@@ -796,7 +796,7 @@
   border-radius: 9999px;
   padding: 8px 16px;
   background: transparent;
-  border: 1px dashed rgba(190, 129, 236, 0.7);
+  border: 1px dashed rgba(154, 79, 209, 0.7);
   color: #d0aaff;
   font-size: 13px;
   font-weight: 600;
@@ -832,10 +832,10 @@
   }
 
   .wiz-slot-rank {
-    font-family: 'SpotifyMixUITitle', sans-serif;
+    font-family: var(--font-display);
     font-weight: 800;
     font-size: 26px;
-    color: #BE81EC;
+    color: #9A4FD1;
     min-width: 36px;
     text-align: center;
   }
@@ -948,12 +948,12 @@
   }
 
   &--preview {
-    background: rgba(190, 129, 236, 0.35);
+    background: rgba(154, 79, 209, 0.35);
   }
 
   &--filled {
-    background: #BE81EC;
-    color: #1A1A1A;
+    background: #9A4FD1;
+    color: #FFFFFF;
   }
 
   &--tip {
@@ -963,10 +963,10 @@
 }
 
 .wiz-scale-value {
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   font-size: 22px;
-  color: #BE81EC;
+  color: #9A4FD1;
   min-width: 32px;
   text-align: right;
 }
@@ -991,7 +991,7 @@
     top: 18px;
     bottom: 22px;
     width: 2px;
-    background: linear-gradient(180deg, #BE81EC, rgba(190, 129, 236, 0.12));
+    background: linear-gradient(180deg, #9A4FD1, rgba(154, 79, 209, 0.12));
   }
 }
 
@@ -1132,9 +1132,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, #BE81EC, #509bf5);
+  background: linear-gradient(135deg, #9A4FD1, #509bf5);
   color: #fff;
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   user-select: none;
 }
@@ -1160,8 +1160,8 @@
   max-width: 78%;
 
   &--user {
-    background: #BE81EC;
-    color: #1A1A1A;
+    background: #9A4FD1;
+    color: #FFFFFF;
     font-weight: 600;
     border-radius: 16px 16px 4px 16px;
   }
@@ -1174,7 +1174,7 @@
     height: 1em;
     margin-left: 3px;
     vertical-align: text-bottom;
-    background: #D3A6F2;
+    background: #C97EF3;
     animation: nytaCaretBlink 1s steps(1) infinite;
   }
 }
@@ -1205,7 +1205,7 @@
   ul, ol { margin: 0 0 8px; padding-left: 20px; }
   li { margin: 2px 0; }
 
-  a { color: #BE81EC; }
+  a { color: #9A4FD1; }
 }
 
 .nyta-typing {
@@ -1346,7 +1346,7 @@
 
   h3 {
     color: #fff;
-    font-family: 'SpotifyMixUITitle', sans-serif;
+    font-family: var(--font-display);
     font-weight: 800;
     font-size: 20px;
     margin: 0;
@@ -1487,7 +1487,7 @@
   color: #fff;
   font-weight: 800;
   font-size: 15px;
-  font-family: SpotifyMixUITitle;
+  font-family: var(--font-display);
 }
 
 .wiz-artifacts-sub {
@@ -1663,7 +1663,7 @@
   outline: none;
 
   &:focus {
-    border-color: #BE81EC66;
+    border-color: #9A4FD166;
   }
 }
 
@@ -1745,10 +1745,10 @@
     from var(--wizGlowAngle),
     transparent 0deg,
     transparent 140deg,
-    #BE81EC 195deg,
+    #9A4FD1 195deg,
     #ffffff 255deg,
     #509bf5 300deg,
-    #BE81EC 335deg,
+    #9A4FD1 335deg,
     transparent 360deg
   );
   // só o anel de 3px aparece (gradiente recortado na borda)
@@ -1756,7 +1756,7 @@
   -webkit-mask-composite: xor;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 10px rgba(190, 129, 236, 0.4));
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 10px rgba(154, 79, 209, 0.4));
 }
 
 .wiz-step-glow--on {

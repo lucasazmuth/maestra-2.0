@@ -2,7 +2,7 @@ import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
-import { Wordmark } from '../../components/Wordmark';
+import { MaestraBrand } from '../../components/MaestraBrand';
 import { AuroraBackdrop } from '../../components/AuroraBackdrop';
 import styles from './Welcome.module.scss';
 
@@ -39,7 +39,7 @@ const Welcome: FC = () => {
       <div className={styles.pillWrap}>
         <div className={styles.pillGlow} aria-hidden />
         <div className={styles.pill}>
-          <Wordmark className={styles.pillText} />
+          <MaestraBrand variant='lockup' tone='light' className={styles.pillText} />
         </div>
       </div>
 

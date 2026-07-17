@@ -14,7 +14,7 @@ const styles = {
     margin: '0 auto',
   } as React.CSSProperties,
   title: {
-    fontFamily: 'SpotifyMixUITitle',
+    fontFamily: 'var(--font-display)',
     fontWeight: 800,
     fontSize: 28,
     color: '#fff',
@@ -71,10 +71,10 @@ const styles = {
     whiteSpace: 'nowrap' as const,
   } as React.CSSProperties,
   copyBtn: {
-    background: '#BE81EC',
+    background: '#9A4FD1',
     border: 'none',
     borderRadius: 8,
-    color: '#1A1A1A',
+    color: '#FFFFFF',
     padding: '10px 16px',
     fontSize: 14,
     fontWeight: 700,
@@ -115,7 +115,7 @@ const styles = {
     width: 8,
     height: 8,
     borderRadius: '50%',
-    background: '#BE81EC',
+    background: '#9A4FD1',
     animation: 'pulse 1.4s infinite ease-in-out',
   } as React.CSSProperties,
   pollingText: {
@@ -131,7 +131,7 @@ const styles = {
     textAlign: 'center' as const,
   } as React.CSSProperties,
   successText: {
-    color: '#BE81EC',
+    color: '#9A4FD1',
     fontSize: 18,
     fontWeight: 700,
   } as React.CSSProperties,
@@ -153,10 +153,10 @@ const styles = {
     fontSize: 13,
   } as React.CSSProperties,
   retryBtn: {
-    background: '#BE81EC',
+    background: '#9A4FD1',
     border: 'none',
     borderRadius: 8,
-    color: '#1A1A1A',
+    color: '#FFFFFF',
     padding: '12px 24px',
     fontSize: 14,
     fontWeight: 700,
@@ -369,7 +369,7 @@ const PaymentPage: FC = () => {
     return (
       <div style={styles.container}>
         <div style={{ ...styles.card, ...styles.errorContainer }}>
-          <ClockCircleOutlined style={{ fontSize: 48, color: '#BE81EC' }} />
+          <ClockCircleOutlined style={{ fontSize: 48, color: '#9A4FD1' }} />
           <div style={{ ...styles.errorText, color: '#fff' }}>Pagamento em análise</div>
           <div style={styles.errorHint}>
             A operadora do cartão está processando o débito — isso pode levar alguns
@@ -412,7 +412,7 @@ const PaymentPage: FC = () => {
     return (
       <div style={styles.container}>
         <div style={{ ...styles.card, ...styles.successContainer }}>
-          <CheckCircleFilled style={{ fontSize: 56, color: '#BE81EC' }} />
+          <CheckCircleFilled style={{ fontSize: 56, color: '#9A4FD1' }} />
           <div style={styles.successText}>Bem-vindo ao Maestra Pro!</div>
           <div style={{ color: '#b3b3b3', fontSize: 14, lineHeight: 1.5 }}>
             Pagamento confirmado com sucesso.<br />

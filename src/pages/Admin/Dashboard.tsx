@@ -84,7 +84,7 @@ const AdminDashboard: FC = () => {
           hint={`${revenue.purchases.count + revenue.subscriptionPayments.count} pagamento(s) confirmados`}
         />
         <StatCard
-          icon={<FiCreditCard />} accent="#BE81EC"
+          icon={<FiCreditCard />} accent="#9A4FD1"
           label="MRR (assinaturas ativas)" value={fmtBRL(subs.mrr)}
           hint={`${subs.active} assinatura(s) ativa(s)`}
         />
@@ -113,7 +113,7 @@ const AdminDashboard: FC = () => {
           hint={`${artists.paid} pago(s) · ${artists.locked} bloqueado(s)`}
         />
         <StatCard
-          icon={<FiCreditCard />} accent="#BE81EC"
+          icon={<FiCreditCard />} accent="#9A4FD1"
           label="Assinaturas" value={String(subs.active)}
           hint={[
             subs.overdue ? `${subs.overdue} em atraso` : null,
@@ -155,7 +155,7 @@ const AdminDashboard: FC = () => {
               thisMonth={revenue.purchases.thisMonth} grand={revenue.total}
             />
             <SourceRow
-              label="Assinaturas PRO" color="#BE81EC"
+              label="Assinaturas PRO" color="#9A4FD1"
               total={revenue.subscriptionPayments.total} count={revenue.subscriptionPayments.count}
               thisMonth={revenue.subscriptionPayments.thisMonth} grand={revenue.total}
             />
@@ -205,7 +205,7 @@ const StatCard: FC<{ icon: ReactNode; accent: string; label: string; value: stri
       </span>
       {label}
     </div>
-    <div style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 30, color: '#fff', lineHeight: 1.1 }}>{value}</div>
+    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 30, color: '#fff', lineHeight: 1.1 }}>{value}</div>
     {hint && <div style={{ color: '#8a8a8a', fontSize: 12.5 }}>{hint}</div>}
   </div>
 );
@@ -230,7 +230,7 @@ const SourceRow: FC<{ label: string; color: string; total: number; count: number
 
 const styles: Record<string, CSSProperties> = {
   page: { padding: 24, maxWidth: 1100 },
-  title: { fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: '0 0 6px' },
+  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 6px' },
   sub: { color: '#9a9aa5', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
   cardsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14, marginBottom: 14 },
   card: { background: '#1c1c1e', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 },

@@ -92,7 +92,7 @@ const SplitEditor: FC<{
         >
           + Adicionar
         </button>
-        <span style={{ color: total === 100 ? '#BE81EC' : '#b3b3b3', fontSize: 13 }}>
+        <span style={{ color: total === 100 ? '#9A4FD1' : '#b3b3b3', fontSize: 13 }}>
           Total: {total}%
         </span>
       </div>
@@ -157,8 +157,8 @@ const UploadField: FC<{
           onDragLeave={() => setDrag(false)}
           onDrop={(e) => { e.preventDefault(); setDrag(false); if (uploading) return; const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
           style={{
-            border: `1.5px dashed ${drag ? '#BE81EC' : '#3a3a3a'}`,
-            background: drag ? 'rgba(190,129,236,0.08)' : '#181818',
+            border: `1.5px dashed ${drag ? '#9A4FD1' : '#3a3a3a'}`,
+            background: drag ? 'rgba(154, 79, 209,0.08)' : '#181818',
             borderRadius: 10, padding: '20px 16px', textAlign: 'center',
             cursor: uploading ? 'default' : 'pointer', transition: 'border-color .15s, background .15s',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
@@ -166,12 +166,12 @@ const UploadField: FC<{
         >
           {uploading ? (
             <>
-              <Spin indicator={<LoadingOutlined style={{ fontSize: 22, color: '#BE81EC' }} spin />} />
+              <Spin indicator={<LoadingOutlined style={{ fontSize: 22, color: '#9A4FD1' }} spin />} />
               <div style={{ color: '#b3b3b3', fontSize: 13 }}>Enviando…</div>
             </>
           ) : (
             <>
-              <FiUploadCloud size={26} color='#BE81EC' />
+              <FiUploadCloud size={26} color='#9A4FD1' />
               <div style={{ color: '#fff', fontSize: 13.5, fontWeight: 600 }}>
                 Arraste aqui ou <span style={{ color: '#e07fce' }}>clique para escolher</span>
               </div>
@@ -230,7 +230,7 @@ const AudioPreview: FC<{ src: string; fileName?: string | null; onFile: (f: File
         type='button'
         onClick={toggle}
         aria-label={playing ? 'Pausar' : 'Reproduzir'}
-        style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: '#BE81EC', color: '#1A1A1A', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+        style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', background: '#9A4FD1', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
       >
         {playing ? <FiPause size={18} /> : <FiPlay size={18} style={{ marginLeft: 2 }} />}
       </button>
@@ -248,7 +248,7 @@ const AudioPreview: FC<{ src: string; fileName?: string | null; onFile: (f: File
             value={Math.min(cur, dur || 0)}
             onChange={(e) => { const a = audioRef.current; const v = Number(e.target.value); if (a) a.currentTime = v; setCur(v); }}
             aria-label='Progresso do áudio'
-            style={{ flex: 1, accentColor: '#BE81EC', height: 4, cursor: 'pointer' }}
+            style={{ flex: 1, accentColor: '#9A4FD1', height: 4, cursor: 'pointer' }}
           />
           <span style={{ color: '#7a7a7a', fontSize: 11, fontVariantNumeric: 'tabular-nums', minWidth: 32, textAlign: 'right' }}>{fmtTime(dur)}</span>
         </div>
@@ -387,7 +387,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
               type='primary'
               loading={saving}
               onClick={handleSave}
-              style={{ background: '#BE81EC', color: '#1A1A1A' }}
+              style={{ background: '#9A4FD1', color: '#FFFFFF' }}
             >
               {saving ? 'Salvando…' : 'Salvar'}
             </Button>
@@ -552,8 +552,8 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                     onClick={addNote}
                     disabled={!noteText.trim()}
                     style={{
-                      background: '#BE81EC',
-                      color: '#1A1A1A',
+                      background: '#9A4FD1',
+                      color: '#FFFFFF',
                       border: 'none',
                       borderRadius: 8,
                       padding: '8px 16px',

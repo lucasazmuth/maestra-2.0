@@ -61,7 +61,7 @@
 
 // Saudação "digitada" pela Nyta — letras BEM grandes. min-height reserva linhas pra não pular o layout.
 .greeting {
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-size: 38px;
   font-weight: 800;
   color: #fff;
@@ -84,7 +84,7 @@
   height: 1.05em;
   margin-left: 4px;
   vertical-align: text-bottom;
-  background: #BE81EC;
+  background: #9A4FD1;
   border-radius: 2px;
   animation: emptyCaret 0.9s steps(1) infinite;
 }
@@ -93,8 +93,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: #BE81EC;
-  color: #1A1A1A;
+  background-color: #9A4FD1;
+  color: #FFFFFF;
   border: none;
   border-radius: 9999px;
   padding: 14px 32px;
@@ -109,7 +109,7 @@
   transition: opacity 0.35s ease, transform 0.35s ease, background-color 0.15s ease;
 
   &:hover {
-    background-color: #A95FE0;
+    background-color: #8442B6;
   }
 }
 

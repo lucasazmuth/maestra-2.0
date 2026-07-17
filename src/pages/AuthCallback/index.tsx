@@ -61,7 +61,7 @@ const AuthCallback: FC = () => {
           <button
             onClick={() => navigate('/login', { replace: true })}
             style={{
-              background: '#BE81EC', color: '#1A1A1A', border: 'none', borderRadius: 9999,
+              background: '#9A4FD1', color: '#FFFFFF', border: 'none', borderRadius: 9999,
               padding: '10px 22px', fontWeight: 700, cursor: 'pointer',
             }}
           >

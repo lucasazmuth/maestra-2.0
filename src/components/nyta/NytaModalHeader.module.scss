@@ -6,7 +6,7 @@
   gap: 8px;
   padding: 11px 12px 11px 14px;
   // Faixa com a identidade da Nyta (gradiente magenta → azul, bem sutil) sobre o fundo escuro.
-  background: linear-gradient(135deg, rgba(190, 129, 236, 0.22), rgba(80, 155, 245, 0.14)), #161616;
+  background: linear-gradient(135deg, rgba(154, 79, 209, 0.22), rgba(80, 155, 245, 0.14)), #161616;
   border-bottom: 1px solid #282828;
   flex-shrink: 0;
 }
@@ -40,7 +40,7 @@
   color: #fff;
   font-size: 14px;
   font-weight: 800;
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   letter-spacing: 0.2px;
 }
 

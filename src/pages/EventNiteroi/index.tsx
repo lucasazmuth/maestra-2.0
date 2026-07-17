@@ -48,7 +48,7 @@ const EventNiteroi: FC = () => {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    document.title = 'Diagnóstico REAL grátis · Workshop Anita Carvalho · Maestra Manager';
+    document.title = 'Diagnóstico REAL grátis · Workshop Anita Carvalho · Maestra';
     window.scrollTo(0, 0);
   }, []);
 

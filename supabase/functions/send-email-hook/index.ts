@@ -39,7 +39,7 @@ function buildEmail(d: EmailData, name: string): { subject: string; html: string
         html: emailLayout({
           title: "Redefinir sua senha",
           bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Recebemos um pedido pra redefinir a senha da sua conta. Clique no botão abaixo.</p>
-          <p style="margin:20px 0;"><a href="${link}" style="display:inline-block;background:#BE81EC;color:#1A1A1A;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Redefinir senha</a></p>
+          <p style="margin:20px 0;"><a href="${link}" style="display:inline-block;background:#9A4FD1;color:#FFFFFF;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Redefinir senha</a></p>
           <p style="color:#8a8a92;font-size:13px;">Se não foi você, pode ignorar. Sua senha continua a mesma.</p>`,
         }),
       };
@@ -49,7 +49,7 @@ function buildEmail(d: EmailData, name: string): { subject: string; html: string
         subject: "Seu convite pra Maestra chegou",
         html: emailLayout({
           title: "Seu convite chegou",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Você foi convidado(a) pra Maestra Manager. Use o código abaixo pra concluir seu acesso:</p>${otpBlock(code)}
+          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Você foi convidado(a) pra Maestra. Use o código abaixo pra concluir seu acesso:</p>${otpBlock(code)}
           <p style="color:#8a8a92;font-size:13px;">Expira em alguns minutos.</p>`,
         }),
       };

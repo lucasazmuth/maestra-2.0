@@ -111,7 +111,7 @@ const ResetPassword: FC = () => {
   if (status === 'done') {
     return (
       <AuthShell>
-        <p style={{ color: '#BE81EC', fontSize: 14, textAlign: 'center', margin: '4px 0' }}>
+        <p style={{ color: '#9A4FD1', fontSize: 14, textAlign: 'center', margin: '4px 0' }}>
           Senha atualizada! Redirecionando para o login…
         </p>
       </AuthShell>

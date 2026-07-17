@@ -1,11 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+// Landing integrada à identidade institucional da Maestra.
 
-// Réplica fiel da landing standalone (maestra-landing): clean, preto/branco, Inter, sem gradiente,
-// mínimo de borda, magenta (#BE81EC) só nos CTAs.
-
-$mag: #BE81EC;
-$magHover: #A95FE0;
-$mag2: #D3A6F2;
+$mag: #9A4FD1;
+$magHover: #8442B6;
+$mag2: #C97EF3;
 $g200: #e5e7eb;
 $g300: #d1d5db;
 $g400: #9ca3af;
@@ -17,7 +14,7 @@ $card: #0c0c0c;
   background: #000;
   color: #fff;
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -25,7 +22,7 @@ $card: #0c0c0c;
 // ─── Botões ──────────────────────────────────────────────────────────────────
 .btnPrimary {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  background: $mag; color: #1a1a1a; border: none; border-radius: 9999px; font-weight: 700; cursor: pointer;
+  background: $mag; color: #fff; border: none; border-radius: 9999px; font-weight: 700; cursor: pointer;
   text-decoration: none; transition: background 0.2s;
   &:hover { background: $magHover; }
 }
@@ -42,16 +39,16 @@ $card: #0c0c0c;
 .headerScrolled { background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px); border-bottom-color: $line; }
 .headerInner { max-width: 80rem; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; }
-.brandText { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+.brandText { font-size: 25px; }
 .nav { display: flex; align-items: center; gap: 32px; }
 .navLink { color: $g300; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: none; border: none; &:hover { color: #fff; } }
 .actions { display: flex; align-items: center; gap: 20px; }
-.headerCta { font-size: 14px; padding: 10px 24px; }
+.headerCta { min-height: 44px; font-size: 14px; padding: 10px 24px; white-space: nowrap; }
 
 // ─── Hero ────────────────────────────────────────────────────────────────────
 .hero { background: #000; padding: 160px 20px 80px; }
 .heroInner { max-width: 56rem; margin: 0 auto; text-align: center; }
-.kicker { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: $g400; margin-bottom: 24px; }
+.kicker { display: inline-block; font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: $g400; margin-bottom: 24px; }
 .heroTitle { font-size: 3rem; font-weight: 700; line-height: 1.05; letter-spacing: -0.025em; margin: 0 0 24px; }
 .heroSub { font-size: 1.125rem; line-height: 1.65; color: $g300; max-width: 42rem; margin: 0 auto 40px; }
 .heroCtas { display: flex; flex-direction: row; gap: 12px; justify-content: center; }
@@ -66,7 +63,7 @@ $card: #0c0c0c;
 // ─── Features intro ──────────────────────────────────────────────────────────
 .introWrap { background: #000; padding: 80px 20px 16px; }
 .introInner { max-width: 42rem; margin: 0 auto; text-align: center; }
-.introKicker { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: $g400; margin-bottom: 16px; }
+.introKicker { display: block; font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: $g400; margin-bottom: 16px; }
 .introTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 20px; }
 .introSub { font-size: 1.125rem; line-height: 1.6; color: $g300; margin: 0; }
 
@@ -75,18 +72,18 @@ $card: #0c0c0c;
 .featureGrid { max-width: 72rem; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
 // "Ícone solto": sem card/gradiente/borda — o ícone 3D flutua direto sobre o preto.
 .featureVisual { aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; }
-.featureGlyph { color: rgba(var(--accent, 190, 129, 236), 0.92); display: flex; width: 100%; align-items: center; justify-content: center; }
+.featureGlyph { color: rgba(var(--accent, 154, 79, 209), 0.92); display: flex; width: 100%; align-items: center; justify-content: center; }
 .featureGlyph img { width: min(70%, 240px); height: auto; display: block; filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.5)); }
-.featureBadge { display: block; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--accent, 190, 129, 236)); margin-bottom: 16px; }
+.featureBadge { display: block; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--accent, 154, 79, 209)); margin-bottom: 16px; }
 .featureTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 0 0 20px; }
 .featureDesc { font-size: 1.125rem; line-height: 1.6; color: $g300; margin: 0 0 28px; }
 .featureList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; }
 .featureItem { display: flex; align-items: flex-start; gap: 12px; color: $g200; }
-.featureItem svg { color: rgb(var(--accent, 190, 129, 236)); flex-shrink: 0; margin-top: 2px; }
+.featureItem svg { color: rgb(var(--accent, 154, 79, 209)); flex-shrink: 0; margin-top: 2px; }
 .featureLink {
   display: inline-flex; align-items: center; gap: 8px; margin-top: 28px; padding: 0;
   background: none; border: none; cursor: pointer; font: inherit; font-weight: 700; font-size: 15px;
-  color: rgb(var(--accent, 190, 129, 236)); transition: gap 0.2s, opacity 0.2s;
+  color: rgb(var(--accent, 154, 79, 209)); transition: gap 0.2s, opacity 0.2s;
   &:hover { gap: 12px; opacity: 0.85; }
 }
 .reverse .featureVisual { order: 2; }
@@ -109,7 +106,7 @@ $card: #0c0c0c;
 }
 .founderName { font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
 .founderRole { font-size: 13.5px; color: $g400; margin-top: 6px; line-height: 1.5; }
-.founderSocial { width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); display: inline-flex; align-items: center; justify-content: center; color: #fff; margin-top: 16px; transition: background 0.2s, color 0.2s; &:hover { background: rgba(190, 129, 236, 0.2); color: $mag2; } }
+.founderSocial { width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); display: inline-flex; align-items: center; justify-content: center; color: #fff; margin-top: 16px; transition: background 0.2s, color 0.2s; &:hover { background: rgba(154, 79, 209, 0.2); color: $mag2; } }
 .founderStory { max-width: 44rem; }
 // Recolhido por padrão: mostra ~2 blocos e esmaece o resto; expande no clique.
 .founderTextClamp {
@@ -150,19 +147,19 @@ $card: #0c0c0c;
 // Toggle mensal/anual: vive DENTRO do card do PRO (só a assinatura tem essa escolha).
 .toggle { display: inline-flex; align-self: flex-start; align-items: center; gap: 4px; margin: 2px 0 18px; padding: 4px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.05); }
 .toggleBtn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 9999px; border: none; background: transparent; color: $g300; font-size: 14px; font-weight: 700; cursor: pointer; transition: background 0.2s, color 0.2s; &:hover { color: #fff; } }
-.toggleBtnOn { background: $mag; color: #1a1a1a; &:hover { color: #1a1a1a; } }
-.toggleSave { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 9999px; background: rgba(190, 129, 236, 0.2); color: $mag2; }
+.toggleBtnOn { background: $mag; color: #fff; &:hover { color: #fff; } }
+.toggleSave { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 9999px; background: rgba(154, 79, 209, 0.2); color: $mag2; }
 .toggleBtnOn .toggleSave { background: rgba(255, 255, 255, 0.2); color: #fff; }
 .planGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start; }
 .planCard { position: relative; border-radius: 16px; border: 1px solid $line; background: $card; padding: 28px; display: flex; flex-direction: column; }
-.planCardHero { border-color: rgba(190, 129, 236, 0.55); }
+.planCardHero { border-color: rgba(154, 79, 209, 0.55); }
 .planCardPro { border-color: rgba(124, 92, 255, 0.4); }
-.planBadge { position: absolute; top: -12px; left: 28px; background: $mag; color: #1a1a1a; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 4px 12px; border-radius: 9999px; }
+.planBadge { position: absolute; top: -12px; left: 28px; background: $mag; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 4px 12px; border-radius: 9999px; }
 .planBadgePro { position: absolute; top: -12px; left: 28px; background: #7c5cff; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; padding: 4px 12px; border-radius: 9999px; }
 // Chip do TIPO de cobrança no topo de cada card — o que impede o usuário de se sentir enganado.
 .planKind { display: inline-block; align-self: flex-start; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 5px 11px; border-radius: 9999px; margin-bottom: 16px; }
 .planKindFree { color: #a7b0ba; background: rgba(255, 255, 255, 0.06); }
-.planKindOnce { color: $mag2; background: rgba(190, 129, 236, 0.16); }
+.planKindOnce { color: $mag2; background: rgba(154, 79, 209, 0.16); }
 .planKindSub { color: #b9a9ff; background: rgba(124, 92, 255, 0.18); }
 .planName { font-size: 1.5rem; font-weight: 700; margin: 0 0 4px; }
 .planNamePro { color: #b9a9ff; }
@@ -178,7 +175,7 @@ $card: #0c0c0c;
 .planItemFree svg { color: $g500; }
 .planItemPro svg { color: $mag; }
 .planCtaOutline { display: block; text-align: center; padding: 12px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; font-weight: 700; text-decoration: none; cursor: pointer; background: none; transition: border-color 0.2s, background 0.2s; &:hover { border-color: #fff; background: rgba(255, 255, 255, 0.05); } }
-.planCtaPrimary { display: block; text-align: center; padding: 12px; border-radius: 9999px; background: $mag; color: #1a1a1a; font-weight: 700; text-decoration: none; cursor: pointer; border: none; transition: background 0.2s; &:hover { background: $magHover; } }
+.planCtaPrimary { display: block; text-align: center; padding: 12px; border-radius: 9999px; background: $mag; color: #fff; font-weight: 700; text-decoration: none; cursor: pointer; border: none; transition: background 0.2s; &:hover { background: $magHover; } }
 .planCancel { font-size: 12px; color: $g500; margin: 16px 0 0; text-align: center; }
 .planSpacer { height: 28px; }
 .plansFootnote { max-width: 52rem; margin: 32px auto 0; text-align: center; font-size: 14px; line-height: 1.7; color: $g400; strong { color: $g200; font-weight: 700; } }
@@ -211,7 +208,7 @@ $card: #0c0c0c;
 .footerTop { display: flex; justify-content: space-between; gap: 40px; margin-bottom: 48px; flex-wrap: wrap; }
 .footerBrand { max-width: 20rem; }
 .footerTag { font-size: 14px; color: $g400; line-height: 1.6; margin: 16px 0 0; }
-.footerPwa { display: flex; align-items: center; gap: 10px; margin-top: 20px; max-width: 360px; padding: 10px; border: 1px solid rgba(190, 129, 236, .3); border-radius: 12px; background: rgba(92, 45, 125, .2); }
+.footerPwa { display: flex; align-items: center; gap: 10px; margin-top: 20px; max-width: 360px; padding: 10px; border: 1px solid rgba(154, 79, 209, .3); border-radius: 12px; background: rgba(92, 45, 125, .2); }
 .footerPwaIcon { display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px; border-radius: 8px; color: #1a1024; background: #c486ef; }
 .footerPwaCopy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
 .footerPwaCopy strong { color: #fff; font-size: 12px; }
@@ -258,6 +255,12 @@ $card: #0c0c0c;
   .entrar { display: none; }
 }
 
+@media (max-width: 380px) {
+  .headerInner { padding: 12px; }
+  .brandText { font-size: 21px; }
+  .headerCta { font-size: 12px; padding: 8px 14px; }
+}
+
 // ─── Hero: prova social (avatares) ───────────────────────────────────────────
 .avatars { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 24px; }
 .avatarRow { display: flex; align-items: center; }
@@ -269,7 +272,7 @@ $card: #0c0c0c;
 .promptBox {
   background: $card; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 6px;
   transition: border-color 0.2s, box-shadow 0.2s; text-align: left; cursor: pointer; outline: none;
-  &:focus-within, &:hover { border-color: rgba(190, 129, 236, 0.6); box-shadow: 0 0 0 4px rgba(190, 129, 236, 0.12); }
+  &:focus-within, &:hover { border-color: rgba(154, 79, 209, 0.6); box-shadow: 0 0 0 4px rgba(154, 79, 209, 0.12); }
 }
 // Vitrine (efeito de digitação) — mesma aparência do input antigo, mas não editável.
 .promptInput {
@@ -285,7 +288,7 @@ $card: #0c0c0c;
 .promptBar { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 8px; }
 .nytaPill { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: $mag2; }
 .promptSubmit {
-  width: 40px; height: 40px; border-radius: 50%; border: none; background: $mag; color: #1a1a1a; cursor: pointer;
+  width: 40px; height: 40px; border-radius: 50%; border: none; background: $mag; color: #fff; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s, opacity 0.2s;
   &:hover { background: $magHover; }
   &:disabled { opacity: 0.4; cursor: not-allowed; }

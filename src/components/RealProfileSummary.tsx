@@ -23,8 +23,8 @@ export const RealProfileSummary: FC<{ artist: Artist; style?: React.CSSPropertie
     <section
       style={{
         position: 'relative',
-        background: 'radial-gradient(120% 130% at 0% 0%, rgba(190, 129, 236,0.08), #181818 60%)',
-        border: '1px solid rgba(190, 129, 236,0.2)',
+        background: 'radial-gradient(120% 130% at 0% 0%, rgba(154, 79, 209,0.08), #181818 60%)',
+        border: '1px solid rgba(154, 79, 209,0.2)',
         borderRadius: 14,
         padding: 20,
         marginBottom: 24,
@@ -33,7 +33,7 @@ export const RealProfileSummary: FC<{ artist: Artist; style?: React.CSSPropertie
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: hideLabel ? 'flex-end' : 'space-between', gap: 12 }}>
         {!hideLabel && (
-          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#BE81EC' }}>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9A4FD1' }}>
             Diagnóstico de carreira
           </span>
         )}
@@ -46,7 +46,7 @@ export const RealProfileSummary: FC<{ artist: Artist; style?: React.CSSPropertie
       </div>
 
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, margin: '10px 0 14px', flexWrap: 'wrap' }}>
-        <h3 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 34, color: '#fff', margin: 0, lineHeight: 1, letterSpacing: '-0.01em' }}>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 34, color: '#fff', margin: 0, lineHeight: 1, letterSpacing: '-0.01em' }}>
           {ri.profile.name}
         </h3>
         <span style={{ fontSize: 13, color: '#8a8a92' }}>Seu perfil entre os 16</span>
@@ -61,7 +61,7 @@ export const RealProfileSummary: FC<{ artist: Artist; style?: React.CSSPropertie
           const high = ri.pattern[d.k];
           return (
             <div key={d.k} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', background: high ? '#BE81EC' : '#5a5a64', flexShrink: 0 }} />
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: high ? '#9A4FD1' : '#5a5a64', flexShrink: 0 }} />
               <span style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>{d.letter}</span>
               <span style={{ fontSize: 12.5, color: high ? '#cfcfd4' : '#8a8a92' }}>{high ? 'Alto' : 'Baixo'}</span>
             </div>

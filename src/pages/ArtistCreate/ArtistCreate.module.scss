@@ -16,7 +16,7 @@
 
 // Ambiente do Diagnóstico REAL (após selecionar o perfil): leve brilho verde no topo + estrela ao fundo.
 .pageReal {
-  background: radial-gradient(120% 55% at 50% -8%, rgba(190, 129, 236, 0.06) 0%, transparent 55%), #121212;
+  background: radial-gradient(120% 55% at 50% -8%, rgba(154, 79, 209, 0.06) 0%, transparent 55%), #121212;
 }
 
 // Estrela 3D do REAL grande e translúcida no fundo (id visual do ambiente).
@@ -33,7 +33,7 @@
     display: block;
     width: 340px;
     height: auto;
-    // verde (~150°) → roxo #BE81EC (~275°); realça um tico a saturação.
+    // verde (~150°) → roxo #9A4FD1 (~275°); realça um tico a saturação.
     filter: hue-rotate(122deg) saturate(1.05);
   }
 }
@@ -52,13 +52,13 @@
 .page :global(.ant-input-number-affix-wrapper:hover),
 .page :global(.ant-input-number-affix-wrapper-focused),
 .page :global(.ant-input-number-affix-wrapper:focus-within) {
-  border-color: #BE81EC !important;
-  box-shadow: 0 0 0 1px rgba(190, 129, 236, 0.25) !important;
+  border-color: #9A4FD1 !important;
+  box-shadow: 0 0 0 1px rgba(154, 79, 209, 0.25) !important;
 }
 
 // Spinner ("Analisando…" e telas de carregamento) no verde, não no magenta do tema antd.
-.page :global(.ant-spin-dot-item) { background-color: #BE81EC !important; }
-.page :global(.ant-spin-text) { color: #BE81EC !important; }
+.page :global(.ant-spin-dot-item) { background-color: #9A4FD1 !important; }
+.page :global(.ant-spin-text) { color: #9A4FD1 !important; }
 
 // ─── Pílula da marca (igual /welcome) ─────────────────────────────────────────
 .pillWrap {
@@ -80,7 +80,7 @@
 }
 
 .pillText {
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   font-size: 22px;
   line-height: 1;
@@ -88,7 +88,7 @@
 }
 
 // "REAL" na pílula (ambiente do diagnóstico): assinatura serifada (Georgia itálico) + verde do produto.
-.pillReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; color: #BE81EC; }
+.pillReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; color: #9A4FD1; }
 
 // Cabeçalho numa única linha: etapas à esquerda + botão de sair à direita.
 .topBar {
@@ -149,9 +149,9 @@
   transition: width 0.3s ease, background 0.3s ease;
 }
 // Etapa concluída: cheio, roxo.
-.flowDotDone { background: #BE81EC; }
+.flowDotDone { background: #9A4FD1; }
 // Etapa atual: vira uma "pílula" alongada roxa (destaque claro de onde você está).
-.flowDotCur { width: 22px; background: #BE81EC; }
+.flowDotCur { width: 22px; background: #9A4FD1; }
 
 .flowLabel {
   font-size: 14px;
@@ -198,8 +198,8 @@
   transition: background 0.3s, width 0.3s;
 }
 
-.dotOn { background: #BE81EC; }
-.dotDone { background: rgba(190, 129, 236, 0.5); }
+.dotOn { background: #9A4FD1; }
+.dotDone { background: rgba(154, 79, 209, 0.5); }
 
 // ─── Etapa (uma por vez, centralizada) ────────────────────────────────────────
 .step {
@@ -225,7 +225,7 @@
 
 // A fala da Maestra — grande e centralizada, igual ao greeting da /welcome.
 .line {
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   font-size: 30px;
   line-height: 1.3;
@@ -254,7 +254,7 @@
   height: 1.05em;
   margin-left: 4px;
   vertical-align: text-bottom;
-  background: #BE81EC;
+  background: #9A4FD1;
   border-radius: 2px;
   animation: acCaret 0.9s steps(1) infinite;
 }
@@ -365,7 +365,7 @@
 .topProgressFill {
   display: block;
   height: 100%;
-  background: #BE81EC;
+  background: #9A4FD1;
   border-radius: 0 3px 3px 0;
   transition: width 0.35s ease;
 }
@@ -411,7 +411,7 @@
 
   &:hover {
     background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(190, 129, 236, 0.55);
+    border-color: rgba(154, 79, 209, 0.55);
     transform: translateY(-1px);
   }
 }
@@ -441,7 +441,7 @@
 }
 
 .diagArtistName {
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   font-size: 21px;
   color: #fff;
@@ -463,12 +463,12 @@
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #BE81EC;
+  color: #9A4FD1;
   margin-bottom: 14px;
 }
 
 .diagHeadline {
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-size: 25px;
   font-weight: 800;
   line-height: 1.28;
@@ -542,7 +542,7 @@
   height: 100%;
   border-radius: 9999px;
   // Segue a cor do perfil (tier 0–4) via --real-accent.
-  background: linear-gradient(90deg, rgb(var(--real-accent, 190, 129, 236)), rgba(var(--real-accent, 190, 129, 236), 0.72));
+  background: linear-gradient(90deg, rgb(var(--real-accent, 154, 79, 209)), rgba(var(--real-accent, 154, 79, 209), 0.72));
   animation: acBarGrow 0.7s ease both;
 }
 
@@ -571,11 +571,11 @@
   line-height: 1.5;
 }
 
-.bulletDot { color: rgb(var(--real-accent, 190, 129, 236)); flex-shrink: 0; }
+.bulletDot { color: rgb(var(--real-accent, 154, 79, 209)); flex-shrink: 0; }
 
 // Oportunidade: fio de acento à esquerda, sem caixa colorida.
 .diagOpp {
-  border-left: 2px solid rgb(var(--real-accent, 190, 129, 236));
+  border-left: 2px solid rgb(var(--real-accent, 154, 79, 209));
   padding: 2px 0 2px 18px;
   font-size: 15.5px;
   line-height: 1.5;
@@ -588,7 +588,7 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgb(var(--real-accent, 190, 129, 236));
+  color: rgb(var(--real-accent, 154, 79, 209));
   margin-bottom: 6px;
 }
 
@@ -615,7 +615,7 @@
 }
 
 .payArtistName {
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   font-size: 18px;
   color: #fff;
@@ -665,12 +665,12 @@
   overflow: hidden;
   transition: border-color 0.2s ease, background 0.2s ease;
 
-  &:hover { border-color: rgba(190, 129, 236, 0.22); }
+  &:hover { border-color: rgba(154, 79, 209, 0.22); }
 }
 
 .payFeatureOpen {
-  background: rgba(190, 129, 236, 0.05);
-  border-color: rgba(190, 129, 236, 0.3);
+  background: rgba(154, 79, 209, 0.05);
+  border-color: rgba(154, 79, 209, 0.3);
 }
 
 .payFeatureHead {
@@ -694,7 +694,7 @@
   font-size: 18px;
   transition: transform 0.25s ease, color 0.2s ease;
 
-  .payFeatureOpen & { transform: rotate(180deg); color: #BE81EC; }
+  .payFeatureOpen & { transform: rotate(180deg); color: #9A4FD1; }
 }
 
 // Corpo expansível — truque grid 0fr↔1fr (anima a altura sem max-height fixo).
@@ -719,7 +719,7 @@
   font-size: 18px;
   flex-shrink: 0;
 
-  .payFeatureOpen & { background: rgba(190, 129, 236, 0.16); color: #BE81EC; }
+  .payFeatureOpen & { background: rgba(154, 79, 209, 0.16); color: #9A4FD1; }
 }
 
 .payFeatureTitle { font-size: 14.5px; font-weight: 700; color: #fff; line-height: 1.25; }
@@ -786,8 +786,8 @@
   :global(.ant-input-affix-wrapper-focused),
   :global(.ant-select:not(.ant-select-disabled):hover .ant-select-selector),
   :global(.ant-select-focused .ant-select-selector) {
-    border-color: #BE81EC !important;
-    box-shadow: 0 0 0 1px rgba(190, 129, 236, 0.25) !important;
+    border-color: #9A4FD1 !important;
+    box-shadow: 0 0 0 1px rgba(154, 79, 209, 0.25) !important;
   }
 
   // Select de parcelamento — altura e alinhamento iguais aos inputs.
@@ -846,9 +846,9 @@
 }
 
 .methodBtnOn {
-  background: rgba(190, 129, 236, 0.1);
-  border-color: #BE81EC;
-  box-shadow: 0 0 0 1px rgba(190, 129, 236, 0.35), 0 6px 22px rgba(190, 129, 236, 0.12);
+  background: rgba(154, 79, 209, 0.1);
+  border-color: #9A4FD1;
+  box-shadow: 0 0 0 1px rgba(154, 79, 209, 0.35), 0 6px 22px rgba(154, 79, 209, 0.12);
 }
 
 .methodIcon {
@@ -889,12 +889,12 @@
   height: 96px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(190, 129, 236, 0.5);
-  box-shadow: 0 0 0 5px rgba(190, 129, 236, 0.12);
+  border: 2px solid rgba(154, 79, 209, 0.5);
+  box-shadow: 0 0 0 5px rgba(154, 79, 209, 0.12);
 }
 
 .introName {
-  font-family: 'SpotifyMixUITitle', sans-serif;
+  font-family: var(--font-display);
   font-weight: 800;
   font-size: 26px;
   line-height: 1.15;
@@ -909,8 +909,8 @@
   justify-content: center;
   gap: 8px;
   // Botão padrão da marca: roxo sólido, texto escuro, sem gradiente (igual landing/sistema).
-  background: #BE81EC;
-  color: #1A1A1A;
+  background: #9A4FD1;
+  color: #FFFFFF;
   border: none;
   border-radius: 9999px;
   padding: 15px 32px;
@@ -920,7 +920,7 @@
   cursor: pointer;
   transition: transform 0.12s ease, background 0.2s ease, filter 0.2s ease;
 
-  &:hover:not(:disabled) { background: #A95FE0; transform: scale(1.035); }
+  &:hover:not(:disabled) { background: #8442B6; transform: scale(1.035); }
   &:active:not(:disabled) { transform: scale(0.99); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -977,12 +977,12 @@
   margin-bottom: 28px;
 }
 .realHeroAvatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; flex-shrink: 0; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); }
-.realHeroTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; line-height: 1.2; color: #fff; margin: 0; }
+.realHeroTitle { font-family: var(--font-display); font-weight: 800; font-size: 22px; line-height: 1.2; color: #fff; margin: 0; }
 .realHeroSub { font-size: 13px; color: #8a8a92; margin: 6px 0 0; }
 
 // Headline de conversão no passo de pagamento (ProfileUnlock), acima do checkout.
 .unlockHead { max-width: 680px; margin: 0 0 30px; }
-.unlockHeadTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 2rem; line-height: 1.1; letter-spacing: -0.02em; color: #fff; margin: 0 0 12px; }
+.unlockHeadTitle { font-family: var(--font-display); font-weight: 800; font-size: 2rem; line-height: 1.1; letter-spacing: -0.02em; color: #fff; margin: 0 0 12px; }
 .unlockHeadSub { font-size: 1.0625rem; line-height: 1.6; color: #b3b3b3; margin: 0; }
 @media (max-width: 640px) { .unlockHeadTitle { font-size: 1.6rem; } .unlockHeadSub { font-size: 1rem; } }
 .heroShareBtn {
@@ -999,7 +999,7 @@
   color: #cfcfd4;
   cursor: pointer;
   transition: background 0.2s, color 0.2s, transform 0.15s;
-  &:hover:not(:disabled) { background: rgba(190, 129, 236, 0.18); border-color: #BE81EC; color: #fff; transform: translateY(-1px); }
+  &:hover:not(:disabled) { background: rgba(154, 79, 209, 0.18); border-color: #9A4FD1; color: #fff; transform: translateY(-1px); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 .heroRedoBtn {
@@ -1010,14 +1010,14 @@
   gap: 8px;
   padding: 9px 18px;
   border-radius: 9999px;
-  background: rgba(190, 129, 236, 0.12);
-  border: 1px solid rgba(190, 129, 236, 0.35);
-  color: #D3A6F2;
+  background: rgba(154, 79, 209, 0.12);
+  border: 1px solid rgba(154, 79, 209, 0.35);
+  color: #C97EF3;
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
-  &:hover { background: rgba(190, 129, 236, 0.22); border-color: #BE81EC; color: #fff; transform: translateY(-1px); }
+  &:hover { background: rgba(154, 79, 209, 0.22); border-color: #9A4FD1; color: #fff; transform: translateY(-1px); }
 }
 
 // SEÇÃO 2 — Card do perfil (o momento "uau")
@@ -1027,13 +1027,13 @@
   margin-bottom: 28px;
   padding: 26px 24px;
   // Acento segue a fase REAL via --real-accent (triplet "r,g,b" setado no .realWrap); fallback magenta.
-  background: radial-gradient(120% 120% at 0% 0%, rgba(var(--real-accent, 190, 129, 236), 0.12), rgba(255, 255, 255, 0.03) 60%);
-  border: 1px solid rgba(var(--real-accent, 190, 129, 236), 0.28);
+  background: radial-gradient(120% 120% at 0% 0%, rgba(var(--real-accent, 154, 79, 209), 0.12), rgba(255, 255, 255, 0.03) 60%);
+  border: 1px solid rgba(var(--real-accent, 154, 79, 209), 0.28);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
   overflow: hidden;
 }
-.realProfileKicker { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(var(--real-accent, 190, 129, 236)); margin-bottom: 10px; }
-.realProfileName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 38px; line-height: 1; color: #fff; margin: 0 0 14px; letter-spacing: -0.01em; }
+.realProfileKicker { display: block; font-family: var(--font-mono); font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(var(--real-accent, 154, 79, 209)); margin-bottom: 10px; }
+.realProfileName { font-family: var(--font-display); font-weight: 800; font-size: 38px; line-height: 1; color: #fff; margin: 0 0 14px; letter-spacing: -0.01em; }
 .realProfileDesc { font-size: 15px; line-height: 1.5; color: #d4d4d8; margin: 0 0 20px; }
 // Padrão REAL — legenda limpa, SEM caixas: letra grande em serifa itálica
 // (assinatura visual da metodologia) + palavra em caixa-alta discreta. A cor da
@@ -1044,7 +1044,7 @@
 .realPatternInfo {
   display: inline-flex; align-items: center; color: #6f6f78; cursor: help;
   transition: color 0.15s ease;
-  &:hover, &:focus-visible { color: #BE81EC; outline: none; }
+  &:hover, &:focus-visible { color: #9A4FD1; outline: none; }
 }
 .realPatternRow { display: flex; flex-wrap: wrap; gap: 14px 40px; }
 .realPatternItem { display: flex; align-items: baseline; gap: 11px; }
@@ -1056,7 +1056,7 @@
   line-height: 1;
   letter-spacing: 0.01em;
 }
-.realPatternLetterHigh { color: rgb(var(--real-accent, 190, 129, 236)); }
+.realPatternLetterHigh { color: rgb(var(--real-accent, 154, 79, 209)); }
 .realPatternLetterLow { color: #71717a; }
 .realPatternWord {
   font-size: 12px; font-weight: 700; text-transform: uppercase;
@@ -1074,8 +1074,8 @@
 }
 // Estado da dimensão → segue a cor do tier da placa (gamificação), pra ficar coerente com o brasão.
 // Alto = cor sólida do tier; baixo = mesma cor mais suave (ainda não conquistado).
-.stHigh { --st: rgb(var(--real-accent, 190, 129, 236)); }
-.stLow { --st: rgba(var(--real-accent, 190, 129, 236), 0.5); }
+.stHigh { --st: rgb(var(--real-accent, 154, 79, 209)); }
+.stLow { --st: rgba(var(--real-accent, 154, 79, 209), 0.5); }
 .stNeutral { --st: #8a8a92; }
 
 .dimCard {
@@ -1107,7 +1107,7 @@
   background: rgba(255, 255, 255, 0.05);
 }
 .dimTitleWrap { flex: 1; min-width: 0; }
-.dimTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 17px; color: #fff; line-height: 1.05; }
+.dimTitle { font-family: var(--font-display); font-weight: 800; font-size: 17px; color: #fff; line-height: 1.05; }
 .dimSub { font-size: 11.5px; color: #7e7e88; margin-top: 2px; letter-spacing: 0.02em; }
 .dimStatus { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--st); white-space: nowrap; }
 
@@ -1150,13 +1150,13 @@
 .insightsTitle { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #fff; margin-bottom: 14px; }
 .insightsList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 13px; }
 .insightsList li { display: flex; gap: 11px; font-size: 14.5px; line-height: 1.5; color: #d4d4d8; }
-.insightDot { color: rgb(var(--real-accent, 190, 129, 236)); flex-shrink: 0; font-weight: 800; }
+.insightDot { color: rgb(var(--real-accent, 154, 79, 209)); flex-shrink: 0; font-weight: 800; }
 
 // SEÇÃO 5 — CTA
 .ctaBlock { text-align: center; margin-bottom: 28px; }
 // white-space/text-wrap/overflow sobrescrevem o `h3` global (App.scss: nowrap + ellipsis), que
 // senão impede a quebra e corta o título em telas estreitas.
-.ctaTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: clamp(24px, 3.4vw, 36px); line-height: 1.18; letter-spacing: -0.01em; color: #fff; margin: 0 0 18px; white-space: normal; text-wrap: wrap; overflow: visible; text-overflow: clip; }
+.ctaTitle { font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 3.4vw, 36px); line-height: 1.18; letter-spacing: -0.01em; color: #fff; margin: 0 0 18px; white-space: normal; text-wrap: wrap; overflow: visible; text-overflow: clip; }
 .ctaParagraph { font-size: 13.5px; line-height: 1.65; color: #b8b8be; margin: 0 auto 26px; max-width: 500px; }
 
 // Efeito "digitando": empilhamento via grid — fantasma reserva o tamanho do texto completo, o
@@ -1168,7 +1168,7 @@
 .twGhost { visibility: hidden; }
 
 // Caret do efeito "digitando"
-.twCaret { display: inline-block; width: 2px; height: 1em; margin-left: 3px; background: rgb(var(--real-accent, 190, 129, 236)); vertical-align: text-bottom; animation: twBlink 0.85s steps(1) infinite; }
+.twCaret { display: inline-block; width: 2px; height: 1em; margin-left: 3px; background: rgb(var(--real-accent, 154, 79, 209)); vertical-align: text-bottom; animation: twBlink 0.85s steps(1) infinite; }
 @keyframes twBlink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
 
 // Botão do CTA "surgindo" depois que o texto termina de digitar
@@ -1202,7 +1202,7 @@
 .methodBody { font-size: 13px; line-height: 1.6; color: #8a8a92; margin: 0 2px 8px; p { margin: 0 0 10px; } }
 .methodDims { display: flex; flex-direction: column; gap: 12px; margin: 14px 0; }
 .methodDim { display: flex; gap: 12px; }
-.methodDimLetter { flex-shrink: 0; width: 24px; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 18px; color: rgb(var(--real-accent, 190, 129, 236)); line-height: 1.2; }
+.methodDimLetter { flex-shrink: 0; width: 24px; font-family: var(--font-display); font-weight: 800; font-size: 18px; color: rgb(var(--real-accent, 154, 79, 209)); line-height: 1.2; }
 .methodDimName { font-size: 13px; font-weight: 800; color: #d7d7dc; margin-bottom: 2px; }
 .methodDimDesc { font-size: 12.5px; line-height: 1.55; color: #8a8a92; }
 
@@ -1214,8 +1214,8 @@
 
 // ─── Quem assina (autoria, on-screen) ──────────────────────────────────────────
 .signBlock { background: #181818; border: 1px solid #282828; border-radius: 14px; padding: 22px; margin-bottom: 28px; }
-.signKicker { font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(var(--real-accent, 190, 129, 236)); margin-bottom: 10px; }
-.signName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; color: #fff; letter-spacing: -0.01em; }
+.signKicker { font-family: var(--font-mono); font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(var(--real-accent, 154, 79, 209)); margin-bottom: 10px; }
+.signName { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: #fff; letter-spacing: -0.01em; }
 .signRole { font-size: 12.5px; font-weight: 700; color: #9a9aa5; margin: 2px 0 14px; }
 .signPara { font-size: 13px; line-height: 1.6; color: #b0b0b8; margin: 0 0 10px; }
 .signHighlight { font-size: 13.5px; line-height: 1.55; color: #e6e6ea; font-weight: 700; margin: 4px 0 0; }
@@ -1236,7 +1236,7 @@
 // Medidor qualitativo por dimensão (não expõe o z).
 .dimMeter { height: 5px; border-radius: 9999px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
 .dimMeterFill { height: 100%; border-radius: 9999px; animation: acBarGrow 0.8s ease 0.3s both; transform-origin: left; }
-.meterHigh { background: linear-gradient(90deg, #BE81EC, #D3A6F2); }
+.meterHigh { background: linear-gradient(90deg, #9A4FD1, #C97EF3); }
 .meterLow { background: linear-gradient(90deg, #f5b15a, #c8862f); }
 .meterNeutral { background: rgba(255, 255, 255, 0.22); }
 
@@ -1279,15 +1279,15 @@
 }
 .mapDotOn {
   color: #000;
-  background: rgb(var(--real-accent, 190, 129, 236));
-  border-color: rgb(var(--real-accent, 190, 129, 236));
+  background: rgb(var(--real-accent, 154, 79, 209));
+  border-color: rgb(var(--real-accent, 154, 79, 209));
 }
 .mapChipOn {
   color: #fff;
-  background: rgba(var(--real-accent, 190, 129, 236), 0.18);
-  border-color: rgb(var(--real-accent, 190, 129, 236));
+  background: rgba(var(--real-accent, 154, 79, 209), 0.18);
+  border-color: rgb(var(--real-accent, 154, 79, 209));
   font-weight: 800;
-  box-shadow: 0 4px 16px rgba(var(--real-accent, 190, 129, 236), 0.25);
+  box-shadow: 0 4px 16px rgba(var(--real-accent, 154, 79, 209), 0.25);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1342,21 +1342,21 @@
   background: radial-gradient(130% 100% at 50% 0%, #1b1430 0%, #0a0a0e 62%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #fff;
-  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-body);
 }
-.shareBrand { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; margin-bottom: 34px; }
+.shareBrand { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--font-display); font-weight: 800; font-size: 22px; margin-bottom: 34px; }
 .shareAvatar { width: 124px; height: 124px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 24px; box-shadow: 0 12px 44px rgba(0, 0, 0, 0.55); }
-.shareKicker { text-align: center; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: #BE81EC; font-weight: 800; margin-bottom: 12px; }
-.shareName { font-family: 'SpotifyMixUITitle', sans-serif; text-align: center; font-size: 66px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; margin-bottom: 22px; }
+.shareKicker { text-align: center; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: #9A4FD1; font-weight: 800; margin-bottom: 12px; }
+.shareName { font-family: var(--font-display); text-align: center; font-size: 66px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; margin-bottom: 22px; }
 .shareTagline { text-align: center; font-size: 17px; line-height: 1.5; color: #cfcfd4; margin: 0 auto 34px; max-width: 420px; }
 .sharePattern { display: flex; justify-content: center; gap: 26px; margin-bottom: 36px; }
 .sharePatternItem { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.sharePatternLetter { font-family: 'SpotifyMixUITitle', sans-serif; font-size: 22px; font-weight: 800; }
+.sharePatternLetter { font-family: var(--font-display); font-size: 22px; font-weight: 800; }
 .sharePatternDot { width: 14px; height: 14px; border-radius: 50%; }
 .shareFooter { text-align: center; font-size: 13px; color: #8a8a92; letter-spacing: 0.04em; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 22px; }
 
 // ─── Documento de apresentação (deck PDF, páginas A4 794×1123) ─────────────────
-.docRoot { font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; }
+.docRoot { font-family: var(--font-body); }
 .docPage {
   width: 794px;
   height: 1123px;
@@ -1369,24 +1369,24 @@
   overflow: hidden;
 }
 .docHeader { display: flex; align-items: center; justify-content: space-between; padding-bottom: 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-.docBrand { display: flex; align-items: center; gap: 9px; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 17px; }
-.docHeaderLabel { font-size: 11px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #BE81EC; }
+.docBrand { display: flex; align-items: center; gap: 9px; font-family: var(--font-display); font-weight: 800; font-size: 17px; }
+.docHeaderLabel { font-size: 11px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #9A4FD1; }
 .docBody { flex: 1; display: flex; flex-direction: column; padding-top: 40px; }
 .docFooter { display: flex; justify-content: space-between; font-size: 12px; color: #6f6f78; letter-spacing: 0.04em; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
 
 // Capa
 .docCover { justify-content: space-between; align-items: center; text-align: center; }
-.docCoverBrand { display: flex; align-items: center; gap: 10px; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 20px; }
+.docCoverBrand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 800; font-size: 20px; }
 .docCoverCenter { display: flex; flex-direction: column; align-items: center; }
 .docCoverAvatar { width: 180px; height: 180px; border-radius: 50%; object-fit: cover; box-shadow: 0 16px 60px rgba(0, 0, 0, 0.6); margin-bottom: 30px; }
-.docCoverKicker { font-size: 14px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #BE81EC; margin-bottom: 14px; }
-.docCoverName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 64px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 22px; }
-.docCoverProfile { font-size: 20px; color: #cfcfd4; strong { color: #BE81EC; font-weight: 800; } }
+.docCoverKicker { font-family: var(--font-mono); font-size: 14px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #9A4FD1; margin-bottom: 14px; }
+.docCoverName { font-family: var(--font-display); font-weight: 800; font-size: 64px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 22px; }
+.docCoverProfile { font-size: 20px; color: #cfcfd4; strong { color: #9A4FD1; font-weight: 800; } }
 .docCoverFoot { font-size: 13px; color: #7a7a82; letter-spacing: 0.04em; }
 
 // Página do perfil
-.docProfileKicker { font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #BE81EC; margin-bottom: 14px; }
-.docProfileName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 92px; line-height: 0.95; letter-spacing: -0.03em; margin-bottom: 24px; }
+.docProfileKicker { font-family: var(--font-mono); font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #9A4FD1; margin-bottom: 14px; }
+.docProfileName { font-family: var(--font-display); font-weight: 800; font-size: 92px; line-height: 0.95; letter-spacing: -0.03em; margin-bottom: 24px; }
 .docProfileDesc { font-size: 20px; line-height: 1.5; color: #d4d4d8; margin: 0 0 36px; max-width: 600px; }
 .docPattern { display: flex; flex-wrap: wrap; gap: 18px 48px; padding: 26px 0; border-top: 1px solid rgba(255, 255, 255, 0.08); border-bottom: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 38px; }
 .docPatternItem { display: flex; align-items: baseline; gap: 13px; }
@@ -1394,16 +1394,16 @@
 .docPatternWord { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #b8b8be; }
 .docInsightsTitle { font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; margin-bottom: 16px; }
 .docInsights { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 16px; }
-.docInsights li { position: relative; padding-left: 22px; font-size: 18px; line-height: 1.5; color: #cfcfd4; &::before { content: '▸'; position: absolute; left: 0; color: #BE81EC; } }
+.docInsights li { position: relative; padding-left: 22px; font-size: 18px; line-height: 1.5; color: #cfcfd4; &::before { content: '▸'; position: absolute; left: 0; color: #9A4FD1; } }
 
-.docSectionTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 40px; line-height: 1.1; margin-bottom: 34px; letter-spacing: -0.01em; }
+.docSectionTitle { font-family: var(--font-display); font-weight: 800; font-size: 40px; line-height: 1.1; margin-bottom: 34px; letter-spacing: -0.01em; }
 
 // Dimensões (doc)
 .docDimGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .docDimCard { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 18px; padding: 24px; }
 .docDimHead { display: flex; align-items: center; gap: 13px; margin-bottom: 18px; }
 .docDimMono { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: #fff; display: flex; align-items: center; justify-content: center; font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 700; font-size: 23px; flex-shrink: 0; }
-.docDimName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 20px; }
+.docDimName { font-family: var(--font-display); font-weight: 800; font-size: 20px; }
 .docDimSub { font-size: 13px; color: #8a8a92; margin-top: 2px; }
 .docDimStatus { margin-left: auto; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
 .docDimStats { display: flex; flex-direction: column; margin-bottom: 16px; }
@@ -1415,7 +1415,7 @@
 .docCityRow { display: flex; align-items: center; gap: 18px; }
 .docCityName { width: 200px; font-size: 18px; color: #fff; flex-shrink: 0; }
 .docCityTrack { flex: 1; height: 12px; background: rgba(255, 255, 255, 0.06); border-radius: 9999px; overflow: hidden; }
-.docCityBar { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #BE81EC, #D3A6F2); }
+.docCityBar { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #9A4FD1, #C97EF3); }
 .docCityVal { width: 90px; text-align: right; font-size: 16px; color: #cfcfd4; font-weight: 700; flex-shrink: 0; }
 .docNote { font-size: 15px; line-height: 1.6; color: #8a8a92; margin-top: auto; }
 
@@ -1425,36 +1425,36 @@
 .docMapTier { width: 90px; flex-shrink: 0; font-size: 13px; color: #6f6f78; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
 .docMapChips { display: flex; flex-wrap: wrap; gap: 10px; }
 .docMapChip { font-size: 16px; font-weight: 700; color: #8a8a92; padding: 8px 18px; border-radius: 9999px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.07); }
-.docMapChipOn { color: #1A1A1A; background: #BE81EC; border-color: #BE81EC; font-weight: 800; }
+.docMapChipOn { color: #FFFFFF; background: #9A4FD1; border-color: #9A4FD1; font-weight: 800; }
 
 // Método (doc)
 .docMethodIntro { font-size: 18px; line-height: 1.55; color: #cfcfd4; margin: 0 0 32px; }
 .docMethodGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 30px; }
 .docMethodCard { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 22px; }
-.docMethodLetter { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: rgba(190, 129, 236, 0.12); color: #BE81EC; font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 14px; }
-.docMethodName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 7px; }
+.docMethodLetter { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: rgba(154, 79, 209, 0.12); color: #9A4FD1; font-family: var(--font-display); font-weight: 800; font-size: 18px; margin-bottom: 14px; }
+.docMethodName { font-family: var(--font-display); font-weight: 800; font-size: 18px; margin-bottom: 7px; }
 .docMethodDesc { font-size: 14.5px; line-height: 1.5; color: #9a9aa3; }
 
 // CTA (doc)
 .docCta { justify-content: space-between; align-items: center; text-align: center; }
 .docCtaCenter { display: flex; flex-direction: column; align-items: center; max-width: 600px; }
-.docCtaKicker { font-size: 14px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #BE81EC; margin-bottom: 18px; }
-.docCtaTitle { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 52px; line-height: 1.08; letter-spacing: -0.02em; margin-bottom: 26px; }
+.docCtaKicker { font-family: var(--font-mono); font-size: 14px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #9A4FD1; margin-bottom: 18px; }
+.docCtaTitle { font-family: var(--font-display); font-weight: 800; font-size: 52px; line-height: 1.08; letter-spacing: -0.02em; margin-bottom: 26px; }
 .docCtaText { font-size: 19px; line-height: 1.6; color: #cfcfd4; margin: 0 0 40px; }
-.docCtaButton { background: #BE81EC; color: #1A1A1A; font-weight: 800; font-size: 22px; padding: 20px 44px; border-radius: 9999px; box-shadow: 0 14px 44px rgba(190, 129, 236, 0.3); }
+.docCtaButton { background: #9A4FD1; color: #FFFFFF; font-weight: 800; font-size: 22px; padding: 20px 44px; border-radius: 9999px; box-shadow: 0 14px 44px rgba(154, 79, 209, 0.3); }
 
 // ─── PDF V3: página por dimensão ───────────────────────────────────────────────
 .docPatternSub { display: block; font-size: 12px; color: #7a7a82; margin-top: 2px; }
 
 .docDimHead2 { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 22px; }
-.docDimLetter2 { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 52px; line-height: 0.9; flex-shrink: 0; }
+.docDimLetter2 { font-family: var(--font-display); font-weight: 800; font-size: 52px; line-height: 0.9; flex-shrink: 0; }
 .docDimTitleWrap2 { flex: 1; padding-top: 4px; }
-.docDimTitle2 { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 30px; letter-spacing: -0.01em; }
+.docDimTitle2 { font-family: var(--font-display); font-weight: 800; font-size: 30px; letter-spacing: -0.01em; }
 .docDimTitleSub2 { color: #9a9aa3; font-weight: 700; }
 .docDimTag2 { font-size: 15px; color: #9a9aa3; margin-top: 6px; }
 .docDimScoreWrap2 { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
 .docDimBadge2 { font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 12px; border-radius: 9999px; }
-.docDimScore2 { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 44px; line-height: 1; color: #fff; letter-spacing: -0.02em; }
+.docDimScore2 { font-family: var(--font-display); font-weight: 800; font-size: 44px; line-height: 1; color: #fff; letter-spacing: -0.02em; }
 .docDimScoreMax2 { font-size: 18px; color: #6f6f78; font-weight: 700; }
 
 .docRuler2 { position: relative; height: 10px; border-radius: 9999px; background: rgba(255, 255, 255, 0.08); margin: 8px 0 32px; }
@@ -1476,7 +1476,7 @@
 .docSubTitle2 { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #6f6f78; margin-bottom: 10px; }
 .docCompRow2 { display: flex; flex-wrap: wrap; gap: 24px; }
 .docCompItem2 { display: flex; flex-direction: column; }
-.docCompPct2 { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 26px; color: #fff; line-height: 1; }
+.docCompPct2 { font-family: var(--font-display); font-weight: 800; font-size: 26px; color: #fff; line-height: 1; }
 .docCompLabel2 { font-size: 13px; color: #9a9aa3; margin-top: 4px; }
 .docHealthRow2 { display: flex; gap: 44px; margin-bottom: 12px; }
 .docHealthItem2 {
@@ -1494,8 +1494,8 @@
 }
 
 .docReveal2 { margin-top: 24px; padding: 20px 22px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); }
-.docRevealTitle2 { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #BE81EC; margin-bottom: 10px; }
-.docRevealLead2 { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; color: #fff; margin-bottom: 12px; letter-spacing: -0.01em; }
+.docRevealTitle2 { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #9A4FD1; margin-bottom: 10px; }
+.docRevealLead2 { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: #fff; margin-bottom: 12px; letter-spacing: -0.01em; }
 .docRevealPara2 { font-size: 15px; line-height: 1.55; color: #c4c4cc; margin: 0 0 10px; strong { color: #fff; font-weight: 800; } &:last-child { margin-bottom: 0; } }
 
 // ─── PDF V3: 16 perfis agrupados ───────────────────────────────────────────────
@@ -1504,11 +1504,11 @@
 .docMap2Tier { display: flex; align-items: center; gap: 10px; width: 120px; flex-shrink: 0; font-size: 14px; font-weight: 800; color: #cfcfd4; }
 .docMap2Chips { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
 .docMap2Chip { display: flex; flex-direction: column; gap: 5px; padding: 8px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); }
-.docMap2ChipOn { background: rgba(190, 129, 236, 0.16); border-color: #BE81EC; }
+.docMap2ChipOn { background: rgba(154, 79, 209, 0.16); border-color: #9A4FD1; }
 .docMap2Name { font-size: 14px; font-weight: 800; color: #fff; }
 .docMap2Dots { display: flex; gap: 4px; }
 .docMap2Dot { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; color: #5a5a64; border: 1px solid rgba(255, 255, 255, 0.14); }
-.docMap2DotOn { color: #04140c; background: #BE81EC; border-color: #BE81EC; }
+.docMap2DotOn { color: #04140c; background: #9A4FD1; border-color: #9A4FD1; }
 .docTopTierNote {
   display: flex; align-items: flex-start; gap: 14px; margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 14px; line-height: 1.55; color: #9a9aa3;
   strong { color: #f5c451; }
@@ -1516,8 +1516,8 @@
 .docTopTierSeal { flex-shrink: 0; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #1a1206; background: linear-gradient(120deg, #f5c451, #e0a13c); padding: 4px 10px; border-radius: 8px; }
 
 // ─── PDF V3: quem assina ───────────────────────────────────────────────────────
-.docSignName { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 44px; letter-spacing: -0.01em; margin-bottom: 6px; }
-.docSignRole { font-size: 16px; font-weight: 700; color: #BE81EC; margin-bottom: 28px; }
+.docSignName { font-family: var(--font-display); font-weight: 800; font-size: 44px; letter-spacing: -0.01em; margin-bottom: 6px; }
+.docSignRole { font-size: 16px; font-weight: 700; color: #9A4FD1; margin-bottom: 28px; }
 .docSignPara { font-size: 16.5px; line-height: 1.65; color: #cfcfd4; margin: 0 0 16px; }
 .docSignHighlight { font-size: 18px; line-height: 1.5; color: #fff; font-weight: 800; margin-top: 8px; }
 
@@ -1534,10 +1534,10 @@
 // ═══════════════════ Diagnóstico REAL V3 — boletim (régua + sub-métricas) ═══════════════════
 .dimScoreWrap { display: flex; flex-direction: row; align-items: center; gap: 10px; flex-shrink: 0; }
 .dimBadge { font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 9999px; }
-.dimBadgeHigh { color: #000; background: rgb(var(--real-accent, 190, 129, 236)); }
+.dimBadgeHigh { color: #000; background: rgb(var(--real-accent, 154, 79, 209)); }
 .dimBadgeLow { color: #c9c9d0; background: rgba(255, 255, 255, 0.08); }
 .dimBadgeTop { color: #1a1206; background: linear-gradient(120deg, #f5c451 0%, #e0a13c 100%); box-shadow: 0 0 0 1px rgba(245, 196, 81, 0.35), 0 4px 14px -6px rgba(224, 161, 60, 0.7); }
-.dimScore { font-family: 'SpotifyMixUITitle', sans-serif; font-weight: 800; font-size: 22px; color: #fff; line-height: 1; letter-spacing: -0.02em; }
+.dimScore { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: #fff; line-height: 1; letter-spacing: -0.02em; }
 .dimScoreMax { font-size: 12px; color: #6f6f78; font-weight: 700; }
 
 // Régua de 0–100 com marcadores fixos: acende (70) e top tier (100).
@@ -1578,7 +1578,7 @@
     white-space: nowrap;
   }
   // o marcador de 100% encosta na borda: ancora o rótulo à direita p/ não vazar.
-  &[style*="100%"] { background: rgba(var(--real-accent, 190, 129, 236), 0.9); }
+  &[style*="100%"] { background: rgba(var(--real-accent, 154, 79, 209), 0.9); }
   &[style*="100%"]::after { left: auto; right: 0; transform: none; }
 }
 .dimStatusLine { font-size: 12px; font-weight: 700; color: #b0b0b8; margin: 0 0 14px; }
@@ -1678,7 +1678,7 @@
   &:hover { background: rgba(255, 255, 255, 0.09); }
 }
 .porteChipOn {
-  background: rgb(var(--real-accent, 190, 129, 236));
-  border-color: rgb(var(--real-accent, 190, 129, 236));
+  background: rgb(var(--real-accent, 154, 79, 209));
+  border-color: rgb(var(--real-accent, 154, 79, 209));
   color: #000;
 }

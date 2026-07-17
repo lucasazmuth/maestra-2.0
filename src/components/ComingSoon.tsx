@@ -4,9 +4,9 @@ export const ComingSoon: FC<{ title: string; subtitle?: string }> = ({ title, su
   <div style={{ padding: 24 }}>
     <h1
       style={{
-        fontFamily: 'SpotifyMixUITitle',
+        fontFamily: 'var(--font-display)',
         fontWeight: 800,
-        fontSize: 32,
+        fontSize: 'clamp(24px, 3vw, 28px)',
         color: '#fff',
         margin: '0 0 8px',
       }}

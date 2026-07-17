@@ -207,7 +207,7 @@ function renderBody(r: Report, artistName: string, greetName: string, artistId: 
   const card = (inner: string) =>
     `<div style="background:#161616;border:1px solid #262626;border-radius:12px;padding:16px 18px;margin:14px 0;">${inner}</div>`;
   const label = (t: string) =>
-    `<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#BE81EC;margin-bottom:8px;">${t}</div>`;
+    `<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9A4FD1;margin-bottom:8px;">${t}</div>`;
 
   const hi = greetName ? `Olá, ${escapeHtml(greetName)}! ` : "";
   const parts: string[] = [];
@@ -224,7 +224,7 @@ function renderBody(r: Report, artistName: string, greetName: string, artistId: 
         const w = Math.max(0, Math.min(100, v));
         return `<div style="margin-top:10px;">
           <div style="display:flex;justify-content:space-between;font-size:12px;color:#cfcfd4;margin-bottom:4px;"><span>${name}</span><span style="color:#fff;font-weight:600;">${w}/100</span></div>
-          <div style="height:6px;background:#2a2a2a;border-radius:9999px;overflow:hidden;"><div style="height:6px;width:${w}%;background:#BE81EC;border-radius:9999px;"></div></div>
+          <div style="height:6px;background:#2a2a2a;border-radius:9999px;overflow:hidden;"><div style="height:6px;width:${w}%;background:#9A4FD1;border-radius:9999px;"></div></div>
         </div>`;
       }).join("");
     phaseInner += `<div style="margin-top:12px;">${bars}</div>`;
@@ -234,8 +234,8 @@ function renderBody(r: Report, artistName: string, greetName: string, artistId: 
   // 2) Progresso do plano
   let planInner = label("Seu plano de ação");
   if (r.total > 0) {
-    planInner += `<div style="font-size:16px;color:#fff;font-weight:600;">${r.done} de ${r.total} tarefas concluídas <span style="color:#BE81EC;">(${r.pct}%)</span></div>
-      <div style="height:8px;background:#2a2a2a;border-radius:9999px;overflow:hidden;margin-top:10px;"><div style="height:8px;width:${r.pct}%;background:#BE81EC;border-radius:9999px;"></div></div>`;
+    planInner += `<div style="font-size:16px;color:#fff;font-weight:600;">${r.done} de ${r.total} tarefas concluídas <span style="color:#9A4FD1;">(${r.pct}%)</span></div>
+      <div style="height:8px;background:#2a2a2a;border-radius:9999px;overflow:hidden;margin-top:10px;"><div style="height:8px;width:${r.pct}%;background:#9A4FD1;border-radius:9999px;"></div></div>`;
     if (r.planComplete) {
       planInner += `<p style="color:#cfcfd4;line-height:1.6;margin:12px 0 0;">Você concluiu todas as tarefas do plano. Hora de refazer o diagnóstico e evoluir pro próximo nível.</p>`;
     } else if (r.focusTitle) {

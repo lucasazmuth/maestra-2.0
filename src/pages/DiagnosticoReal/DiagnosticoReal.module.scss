@@ -3,7 +3,7 @@
 // Página dedicada ao Diagnóstico REAL. Mesmo design system da landing (preto/branco, Inter,
 // magenta só nos CTAs, mínimo de borda). O accent do produto (verde REAL) vem via --accent.
 
-$mag: #BE81EC;
+$mag: #9A4FD1;
 $g200: #e5e7eb;
 $g300: #d1d5db;
 $g400: #9ca3af;
@@ -16,13 +16,13 @@ $accent: var(--accent, 46, 196, 122);
   background: #000;
   color: #fff;
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
 // Kicker compartilhado (mesmo padrão da landing).
-.introKicker { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: $g400; margin-bottom: 16px; }
+.introKicker { display: block; font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: $g400; margin-bottom: 16px; }
 
 // ─── Hero ──────────────────────────────────────────────────────────────────
 .hero {
@@ -32,7 +32,7 @@ $accent: var(--accent, 46, 196, 122);
     #000;
 }
 .heroInner { max-width: 52rem; margin: 0 auto; text-align: center; }
-.kicker { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgb(#{$accent}); margin-bottom: 20px; }
+.kicker { display: inline-block; font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgb(#{$accent}); margin-bottom: 20px; }
 .heroTitle { font-size: 2.5rem; font-weight: 700; line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 24px; }
 .accent { color: rgb(#{$accent}); }
 .heroLead { font-size: 1.125rem; line-height: 1.65; color: $g300; max-width: 40rem; margin: 0 auto 36px; }

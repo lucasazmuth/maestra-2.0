@@ -230,13 +230,13 @@ const Agenda: FC = () => {
   return (
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'SpotifyMixUITitle', fontWeight: 800, fontSize: 32, color: '#fff', margin: 0 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: 0 }}>
           Agenda
         </h1>
         {canEdit && (
           <button
             onClick={() => openCreate()}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#BE81EC', border: 'none', color: '#1A1A1A', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#9A4FD1', border: 'none', color: '#FFFFFF', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
           >
             <FiPlus /> Compromisso
           </button>
@@ -326,11 +326,11 @@ const Agenda: FC = () => {
                       borderRadius: 8,
                       padding: 6,
                       cursor: 'pointer',
-                      border: isToday ? '1px solid #BE81EC' : '1px solid transparent',
+                      border: isToday ? '1px solid #9A4FD1' : '1px solid transparent',
                       opacity: inMonth ? 1 : 0.5,
                     }}
                   >
-                    <div style={{ color: isToday ? '#BE81EC' : '#b3b3b3', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+                    <div style={{ color: isToday ? '#9A4FD1' : '#b3b3b3', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
                       {d.date()}
                     </div>
                     {dayEvents.slice(0, 3).map((e) => (

@@ -37,7 +37,7 @@
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 
-  &:hover { background: rgba(255, 255, 255, 0.09); color: #fff; border-color: #BE81EC; }
+  &:hover { background: rgba(255, 255, 255, 0.09); color: #fff; border-color: #9A4FD1; }
   svg { transition: transform 0.3s ease; }
 }
 .phase-summary.is-open .phase-summary-toggle svg { transform: rotate(180deg); }

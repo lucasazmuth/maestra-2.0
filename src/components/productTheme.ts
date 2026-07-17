@@ -8,8 +8,8 @@ import gradAction from './journey/gradients/action.svg';
 // Compartilhado entre os cards da jornada (Dashboard) e o fundo das páginas de cada produto.
 export const PRODUCT_THEME = {
   real: { accent: '46, 196, 122', bg: gradReal },        // verde — REAL · Diagnóstico
-  planning: { accent: '190, 129, 236', bg: gradPlanning }, // roxo da marca — Planejamento
-  action: { accent: '190, 129, 236', bg: gradAction },     // roxo da marca — Plano de Ação
+  planning: { accent: '154, 79, 209', bg: gradPlanning }, // roxo da marca — Planejamento
+  action: { accent: '154, 79, 209', bg: gradAction },     // roxo da marca — Plano de Ação
 };
 
 // Fundo sutil da página: um glow radial no topo, na cor do produto (mesma cor dos cards da jornada),

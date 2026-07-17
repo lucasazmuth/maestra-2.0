@@ -58,7 +58,7 @@ const DiagnosticoReal: FC = () => {
 
   useEffect(() => {
     const prev = document.title;
-    document.title = 'Diagnóstico REAL · Maestra Manager';
+    document.title = 'Diagnóstico REAL · Maestra';
     window.scrollTo({ top: 0 });
     return () => { document.title = prev; };
   }, []);
@@ -75,7 +75,7 @@ const DiagnosticoReal: FC = () => {
           <span className={styles.kicker}>Diagnóstico REAL</span>
           <h1 className={styles.heroTitle}>O retrato <span className={styles.accent}>honesto</span> de uma carreira musical.</h1>
           <p className={styles.heroLead}>
-            O Índice REAL é o motor de diagnóstico da Maestra Manager. Ele lê a carreira de um artista por quatro
+            O Índice REAL é o motor de diagnóstico da Maestra. Ele lê a carreira de um artista por quatro
             dimensões objetivas e devolve, em segundos, onde ela realmente está, não onde parece estar. É o ponto de
             partida de todo planejamento na plataforma.
           </p>

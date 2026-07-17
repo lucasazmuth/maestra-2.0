@@ -11,7 +11,7 @@ import { createArtistCharge, pollArtistPurchase } from '../../store/slices/artis
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 import { FlowHeader } from '../ArtistCreate/FlowHeader';
-import { Wordmark } from '../../components/Wordmark';
+import { MaestraBrand } from '../../components/MaestraBrand';
 import { PaymentSuccessScreen } from '../../components/PaymentSuccessScreen';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
 import {
@@ -241,7 +241,7 @@ const ProfileUnlock: FC = () => {
       {/* Cabeçalho numa única linha (mesmo de /criar-artista): etapas à esquerda, sair (X) à direita.
           No diagnóstico a fase atual é "Diagnóstico REAL"; no pagamento avança pra "Planejamento". */}
       <div className={styles.topBar}>
-        <Wordmark className={styles.brand} beta />
+        <MaestraBrand variant='lockup' tone='light' className={styles.brand} beta />
         <FlowHeader phase={step === 'pagamento' ? 2 : 1} />
         <button className={styles.back} onClick={() => navigate('/artists')} aria-label="Sair" title="Sair">
           <FiX size={20} />
