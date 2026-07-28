@@ -1,0 +1,446 @@
+.modal {
+  :global(.ant-modal-content) {
+    overflow: hidden;
+    padding: 0;
+    background: #181818;
+    border: 1px solid #303034;
+    border-radius: 16px;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.66);
+  }
+
+  :global(.ant-modal-header) {
+    margin: 0;
+    padding: 22px 56px 18px 24px;
+    background:
+      linear-gradient(135deg, rgba(154, 79, 209, 0.18), rgba(80, 155, 245, 0.08)),
+      #181818;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  :global(.ant-modal-title) {
+    color: #fff;
+  }
+
+  :global(.ant-modal-close) {
+    top: 18px;
+    right: 18px;
+    color: #b3b3b3;
+  }
+
+  :global(.ant-modal-close:hover) {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  :global(.ant-modal-body) {
+    padding: 0 24px 22px;
+  }
+
+  :global(.ant-modal-footer) {
+    margin: 0;
+    padding: 14px 20px;
+    background: #141414;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  :global(.ant-tabs-nav) {
+    margin-bottom: 20px;
+  }
+
+  :global(.ant-tabs-tab) {
+    padding: 15px 2px 12px;
+    color: #929292;
+    font-weight: 700;
+  }
+
+  :global(.ant-tabs-tab:hover),
+  :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+    color: #fff !important;
+  }
+
+  :global(.ant-tabs-ink-bar) {
+    background: #9a4fd1;
+  }
+
+  :global(.ant-tabs-nav::before) {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  :global(.ant-input),
+  :global(.ant-picker),
+  :global(.ant-select-selector) {
+    color: #fff !important;
+    background: #111 !important;
+    border-color: #37373c !important;
+  }
+
+  :global(.ant-input:focus),
+  :global(.ant-input-focused),
+  :global(.ant-picker-focused),
+  :global(.ant-select-focused .ant-select-selector) {
+    border-color: #9a4fd1 !important;
+    box-shadow: 0 0 0 2px rgba(154, 79, 209, 0.14) !important;
+  }
+
+  :global(.ant-picker-input > input),
+  :global(.ant-select-selection-item),
+  :global(.ant-select-selection-placeholder) {
+    color: #fff !important;
+  }
+
+  :global(.ant-btn-primary) {
+    color: #fff;
+    background: #9a4fd1;
+    box-shadow: none;
+  }
+
+  :global(.ant-btn-primary:hover:not(:disabled)) {
+    background: #8442b6 !important;
+  }
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.kicker {
+  color: #c97ef3;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  overflow: hidden;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strategy {
+  overflow: hidden;
+  color: #929292;
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.general {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.general label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.general label > span {
+  color: #a8a8aa;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fieldWide {
+  width: 100%;
+}
+
+.descriptionInput {
+  padding: 11px 12px;
+  line-height: 1.5;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.fieldGrid :global(.ant-select),
+.fieldGrid :global(.ant-picker) {
+  width: 100%;
+}
+
+.comments {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.commentsTabLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.commentsTabLabel > span {
+  display: grid;
+  place-items: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  color: #fff;
+  background: rgba(154, 79, 209, 0.42);
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.commentAvatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  color: #fff;
+  background: rgba(154, 79, 209, 0.28);
+  border: 1px solid rgba(201, 126, 243, 0.28);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+  overflow: hidden;
+}
+
+.commentAvatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.commentContent {
+  min-width: 0;
+  flex: 1;
+  padding: 10px 12px;
+  background: #202020;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px 12px 12px;
+}
+
+.commentMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.commentMetaRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.commentMeta strong {
+  color: #fff;
+  font-size: 12px;
+}
+
+.commentMeta time {
+  color: #777;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.commentActions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  opacity: 0.55;
+  transition: opacity 150ms ease;
+}
+
+.comment:hover .commentActions,
+.comment:focus-within .commentActions {
+  opacity: 1;
+}
+
+.commentActions :global(.ant-btn) {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0;
+  color: #929292;
+}
+
+.commentActions :global(.ant-btn:hover:not(.ant-btn-dangerous)) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.commentContent p {
+  margin: 6px 0 0;
+  color: #d7d7d7;
+  font-size: 13.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.commentInput {
+  padding: 11px 12px;
+  line-height: 1.5;
+}
+
+.commentEdit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.commentEditActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.emptyComments {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 26px 20px;
+  color: #707070;
+  text-align: center;
+}
+
+.emptyComments strong {
+  color: #d2d2d2;
+  font-size: 14px;
+}
+
+.emptyComments span {
+  max-width: 390px;
+  color: #858585;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.commentComposer {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.commentComposerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 9px;
+}
+
+.commentComposerFooter > span {
+  color: #707070;
+  font-size: 10.5px;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .modal {
+    :global(.ant-modal) {
+      max-width: calc(100vw - 20px);
+      margin: 10px auto;
+      padding-bottom: 0;
+    }
+
+    :global(.ant-modal-header) {
+      padding: 18px 50px 16px 18px;
+    }
+
+    :global(.ant-modal-body) {
+      padding: 0 18px 18px;
+    }
+
+    :global(.ant-modal-footer) {
+      padding: 12px 14px;
+    }
+  }
+
+  .fieldGrid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .footerActions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .footerActions :global(.ant-btn) {
+    flex: 1;
+  }
+
+  .commentComposerFooter {
+    align-items: flex-end;
+  }
+
+  .commentComposerFooter > span {
+    max-width: 165px;
+  }
+
+  .commentActions {
+    opacity: 1;
+  }
+
+  .commentMeta {
+    align-items: flex-start;
+  }
+
+  .commentMetaRight {
+    align-items: flex-end;
+    flex-direction: column;
+  }
+}

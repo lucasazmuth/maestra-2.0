@@ -1,10 +1,12 @@
 import { FC, useEffect, useState } from 'react';
-import { Modal, Input, Select, DatePicker, TimePicker, Popconfirm, message } from 'antd';
+import { Modal, Input, Select, DatePicker, TimePicker, Popconfirm, message, Button } from 'antd';
+import { FiTrash2 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import type { AgendaEvent } from '../interfaces/maestra';
 import { EVENT_TYPE_OPTIONS, EVENT_STATUS } from '../constants/maestra';
 import * as eventsDb from '../services/db/events';
+import modalStyles from './StandardModal.module.scss';
 
 interface Props {
   open: boolean;
@@ -98,75 +100,107 @@ export const EventModal: FC<Props> = ({
       onCancel={onClose}
       centered
       width={520}
-      destroyOnClose
-      title={<span style={{ color: '#fff', fontWeight: 700 }}>{event ? 'Editar compromisso' : 'Novo compromisso'}</span>}
+      destroyOnHidden
+      rootClassName={modalStyles.modal}
+      title={
+        <div className={modalStyles.heading}>
+          <span className={modalStyles.kicker}>Agenda</span>
+          <span className={modalStyles.title}>
+            {draft.title?.trim() || (event ? 'Editar compromisso' : 'Novo compromisso')}
+          </span>
+          <span className={modalStyles.subtitle}>
+            {event
+              ? 'Atualize data, horário e detalhes do compromisso.'
+              : 'Adicione um compromisso à agenda do artista.'}
+          </span>
+        </div>
+      }
       footer={
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <div>
-            {event && (
-              <Popconfirm title={deleteConfirmTitle} onConfirm={handleDelete} okText='Sim' cancelText='Não'>
-                <button style={{ background: 'transparent', border: 'none', color: '#e91429', cursor: 'pointer', fontWeight: 700 }}>
-                  {deleteLabel}
-                </button>
-              </Popconfirm>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer', fontWeight: 700, padding: '6px 14px' }}>
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              style={{ background: '#9A4FD1', border: 'none', color: '#FFFFFF', borderRadius: 9999, padding: '6px 20px', cursor: 'pointer', fontWeight: 700 }}
+        <div className={modalStyles.footer}>
+          {event && (
+            <Popconfirm
+              title={deleteConfirmTitle}
+              description='Esta ação não pode ser desfeita.'
+              onConfirm={handleDelete}
+              okText='Excluir'
+              cancelText='Cancelar'
+              okButtonProps={{ danger: true }}
             >
-              {saving ? 'Salvando…' : 'Salvar'}
-            </button>
+              <Button className={modalStyles.dangerButton} danger type='text' icon={<FiTrash2 />}>
+                {deleteLabel}
+              </Button>
+            </Popconfirm>
+          )}
+          <div className={modalStyles.footerActions}>
+            <Button onClick={onClose}>Cancelar</Button>
+            <Button type='primary' onClick={handleSave} loading={saving}>
+              Salvar
+            </Button>
           </div>
         </div>
       }
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <Input placeholder='Título *' value={draft.title} onChange={(e) => set({ title: e.target.value })} />
-        <div style={{ display: 'flex', gap: 12 }}>
-          <Select
-            style={{ flex: 1 }}
-            placeholder='Tipo'
-            value={draft.type}
-            options={EVENT_TYPE_OPTIONS.map((t) => ({ value: t.id, label: t.label }))}
-            onChange={(v) => set({ type: v })}
-          />
-          <Select
-            style={{ flex: 1 }}
-            placeholder='Status'
-            value={draft.status}
-            options={Object.entries(EVENT_STATUS).map(([id, v]) => ({ value: id, label: v.label }))}
-            onChange={(v) => set({ status: v })}
-          />
+      <div className={modalStyles.form}>
+        <label className={modalStyles.field}>
+          <span>Título</span>
+          <Input placeholder='Título do compromisso' value={draft.title} onChange={(e) => set({ title: e.target.value })} />
+        </label>
+        <div className={modalStyles.fieldGrid}>
+          <label className={modalStyles.field}>
+            <span>Tipo</span>
+            <Select
+              placeholder='Tipo'
+              value={draft.type}
+              options={EVENT_TYPE_OPTIONS.map((t) => ({ value: t.id, label: t.label }))}
+              onChange={(v) => set({ type: v })}
+            />
+          </label>
+          <label className={modalStyles.field}>
+            <span>Status</span>
+            <Select
+              placeholder='Status'
+              value={draft.status}
+              options={Object.entries(EVENT_STATUS).map(([id, v]) => ({ value: id, label: v.label }))}
+              onChange={(v) => set({ status: v })}
+            />
+          </label>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <DatePicker
-            style={{ flex: 1 }}
-            value={draft.date ? dayjs(draft.date) : null}
-            onChange={(d) => set({ date: d ? d.format('YYYY-MM-DD') : undefined })}
-          />
-          <TimePicker
-            style={{ flex: 1 }}
-            format='HH:mm'
-            placeholder='Início'
-            value={draft.start_time ? dayjs(draft.start_time, 'HH:mm:ss') : null}
-            onChange={(t) => set({ start_time: t ? t.format('HH:mm:ss') : null })}
-          />
-          <TimePicker
-            style={{ flex: 1 }}
-            format='HH:mm'
-            placeholder='Fim'
-            value={draft.end_time ? dayjs(draft.end_time, 'HH:mm:ss') : null}
-            onChange={(t) => set({ end_time: t ? t.format('HH:mm:ss') : null })}
-          />
+        <div className={modalStyles.fieldGridThree}>
+          <label className={modalStyles.field}>
+            <span>Data</span>
+            <DatePicker
+              placeholder='Selecione a data'
+              value={draft.date ? dayjs(draft.date) : null}
+              onChange={(d) => set({ date: d ? d.format('YYYY-MM-DD') : undefined })}
+            />
+          </label>
+          <label className={modalStyles.field}>
+            <span>Início</span>
+            <TimePicker
+              format='HH:mm'
+              placeholder='Início'
+              value={draft.start_time ? dayjs(draft.start_time, 'HH:mm:ss') : null}
+              onChange={(t) => set({ start_time: t ? t.format('HH:mm:ss') : null })}
+            />
+          </label>
+          <label className={modalStyles.field}>
+            <span>Fim</span>
+            <TimePicker
+              format='HH:mm'
+              placeholder='Fim'
+              value={draft.end_time ? dayjs(draft.end_time, 'HH:mm:ss') : null}
+              onChange={(t) => set({ end_time: t ? t.format('HH:mm:ss') : null })}
+            />
+          </label>
         </div>
-        <Input placeholder='Local' value={draft.location || ''} onChange={(e) => set({ location: e.target.value })} />
-        <Input.TextArea rows={3} placeholder='Descrição' value={draft.description || ''} onChange={(e) => set({ description: e.target.value })} />
+        <label className={modalStyles.field}>
+          <span>Local</span>
+          <Input placeholder='Local do compromisso' value={draft.location || ''} onChange={(e) => set({ location: e.target.value })} />
+        </label>
+        <label className={modalStyles.field}>
+          <span>Descrição</span>
+          <Input.TextArea rows={3} placeholder='Adicione informações importantes' value={draft.description || ''} onChange={(e) => set({ description: e.target.value })} />
+        </label>
       </div>
     </Modal>
   );

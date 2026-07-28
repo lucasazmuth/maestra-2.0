@@ -8,6 +8,7 @@ import type { CatalogItem, Split, MusicGenre } from '../interfaces/maestra';
 import { CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '../constants/maestra';
 import { uploadFile, CATALOG_BUCKET } from '../lib/storage';
 import * as catalogDb from '../services/db/catalog';
+import modalStyles from './StandardModal.module.scss';
 
 interface Props {
   open: boolean;
@@ -364,10 +365,23 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
       onCancel={onClose}
       centered
       width={640}
-      destroyOnClose
-      title={<span style={{ color: '#fff', fontWeight: 700 }}>{item ? 'Editar faixa' : 'Nova faixa'}</span>}
+      destroyOnHidden
+      rootClassName={modalStyles.modal}
+      title={
+        <div className={modalStyles.heading}>
+          <span className={modalStyles.kicker}>Faixa</span>
+          <span className={modalStyles.title}>
+            {draft.title?.trim() || (item ? 'Editar faixa' : 'Nova faixa')}
+          </span>
+          <span className={modalStyles.subtitle}>
+            {item
+              ? 'Atualize informações, arquivos e créditos do catálogo.'
+              : 'Organize informações, arquivos e créditos da nova faixa.'}
+          </span>
+        </div>
+      }
       footer={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className={modalStyles.footer}>
           {/* Excluir vive AQUI (não na linha do catálogo) — só na edição de uma faixa existente. */}
           {item && onDelete && (
             <Popconfirm
@@ -378,87 +392,116 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
               okButtonProps={{ danger: true }}
               onConfirm={handleDelete}
             >
-              <Button danger type='text' icon={<FiTrash2 />} loading={deleting} title='Excluir faixa' aria-label='Excluir faixa' />
+              <Button
+                className={modalStyles.dangerButton}
+                danger
+                type='text'
+                icon={<FiTrash2 />}
+                loading={deleting}
+              >
+                Excluir faixa
+              </Button>
             </Popconfirm>
           )}
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <div className={modalStyles.footerActions}>
             <Button onClick={onClose}>Cancelar</Button>
-            <Button
-              type='primary'
-              loading={saving}
-              onClick={handleSave}
-              style={{ background: '#9A4FD1', color: '#FFFFFF' }}
-            >
-              {saving ? 'Salvando…' : 'Salvar'}
+            <Button type='primary' loading={saving} onClick={handleSave}>
+              Salvar
             </Button>
           </div>
         </div>
       }
     >
       <Tabs
+        className={modalStyles.tabs}
         items={[
           {
             key: 'info',
             label: 'Informações',
             children: (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <Input
-                  placeholder='Título *'
-                  value={draft.title}
-                  onChange={(e) => set({ title: e.target.value })}
-                />
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <Select
-                    style={{ flex: 1 }}
-                    placeholder='Status'
-                    value={draft.status}
-                    options={CATALOG_STATUS_OPTIONS.map((s) => ({ value: s.id, label: s.label }))}
-                    onChange={(v) => set({ status: v })}
-                  />
-                  <Select
-                    style={{ flex: 1 }}
-                    placeholder='Gênero'
-                    allowClear
-                    showSearch
-                    optionFilterProp='label'
-                    value={draft.genre || undefined}
-                    options={genres.map((g) => ({ value: g.name, label: g.name }))}
-                    onChange={(v) => set({ genre: v })}
-                  />
-                </div>
-                <Select
-                  style={{ width: '100%' }}
-                  placeholder='Responsável'
-                  allowClear
-                  value={draft.assignee?.id}
-                  options={assigneeOptions.map((o) => ({ value: o.id, label: o.name }))}
-                  onChange={(v) => {
-                    const o = assigneeOptions.find((x) => x.id === v);
-                    set({ assignee: o ? { id: o.id, name: o.name } : null });
-                  }}
-                />
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <DatePicker
-                    style={{ flex: 1 }}
-                    placeholder='Data de lançamento'
-                    value={draft.release_date ? dayjs(draft.release_date) : null}
-                    onChange={(d) => set({ release_date: d ? d.format('YYYY-MM-DD') : null })}
-                  />
+              <div className={modalStyles.form} style={{ paddingTop: 0 }}>
+                <label className={modalStyles.field}>
+                  <span>Título</span>
                   <Input
-                    style={{ flex: 1 }}
-                    placeholder='Duração (ex.: 3:24)'
-                    value={draft.duration || ''}
-                    onChange={(e) => set({ duration: e.target.value })}
+                    placeholder='Título da faixa'
+                    value={draft.title}
+                    onChange={(e) => set({ title: e.target.value })}
                   />
+                </label>
+                <div className={modalStyles.fieldGrid}>
+                  <label className={modalStyles.field}>
+                    <span>Status</span>
+                    <Select
+                      placeholder='Status'
+                      value={draft.status}
+                      options={CATALOG_STATUS_OPTIONS.map((s) => ({ value: s.id, label: s.label }))}
+                      onChange={(v) => set({ status: v })}
+                    />
+                  </label>
+                  <label className={modalStyles.field}>
+                    <span>Gênero</span>
+                    <Select
+                      placeholder='Gênero'
+                      allowClear
+                      showSearch
+                      optionFilterProp='label'
+                      value={draft.genre || undefined}
+                      options={genres.map((g) => ({ value: g.name, label: g.name }))}
+                      onChange={(v) => set({ genre: v })}
+                    />
+                  </label>
                 </div>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <Input placeholder='ISRC' value={draft.isrc || ''} onChange={(e) => set({ isrc: e.target.value })} />
-                  <Input placeholder='UPC' value={draft.upc || ''} onChange={(e) => set({ upc: e.target.value })} />
-                  <Input placeholder='BPM' value={draft.bpm || ''} onChange={(e) => set({ bpm: e.target.value })} />
-                  <Input placeholder='Tom' value={draft.key || ''} onChange={(e) => set({ key: e.target.value })} />
+                <label className={modalStyles.field}>
+                  <span>Responsável</span>
+                  <Select
+                    placeholder='Selecione o responsável'
+                    allowClear
+                    value={draft.assignee?.id}
+                    options={assigneeOptions.map((o) => ({ value: o.id, label: o.name }))}
+                    onChange={(v) => {
+                      const o = assigneeOptions.find((x) => x.id === v);
+                      set({ assignee: o ? { id: o.id, name: o.name } : null });
+                    }}
+                  />
+                </label>
+                <div className={modalStyles.fieldGrid}>
+                  <label className={modalStyles.field}>
+                    <span>Data de lançamento</span>
+                    <DatePicker
+                      placeholder='Selecione a data'
+                      value={draft.release_date ? dayjs(draft.release_date) : null}
+                      onChange={(d) => set({ release_date: d ? d.format('YYYY-MM-DD') : null })}
+                    />
+                  </label>
+                  <label className={modalStyles.field}>
+                    <span>Duração</span>
+                    <Input
+                      placeholder='Ex.: 3:24'
+                      value={draft.duration || ''}
+                      onChange={(e) => set({ duration: e.target.value })}
+                    />
+                  </label>
                 </div>
-                <div>
-                  <label style={{ color: '#b3b3b3', fontSize: 13, display: 'block', marginBottom: 6 }}>Capa</label>
+                <div className={modalStyles.fieldGridFour}>
+                  <label className={modalStyles.field}>
+                    <span>ISRC</span>
+                    <Input placeholder='ISRC' value={draft.isrc || ''} onChange={(e) => set({ isrc: e.target.value })} />
+                  </label>
+                  <label className={modalStyles.field}>
+                    <span>UPC</span>
+                    <Input placeholder='UPC' value={draft.upc || ''} onChange={(e) => set({ upc: e.target.value })} />
+                  </label>
+                  <label className={modalStyles.field}>
+                    <span>BPM</span>
+                    <Input placeholder='BPM' value={draft.bpm || ''} onChange={(e) => set({ bpm: e.target.value })} />
+                  </label>
+                  <label className={modalStyles.field}>
+                    <span>Tom</span>
+                    <Input placeholder='Tom' value={draft.key || ''} onChange={(e) => set({ key: e.target.value })} />
+                  </label>
+                </div>
+                <label className={modalStyles.field}>
+                  <span>Capa</span>
                   <UploadField
                     accept='image/*'
                     hint='PNG ou JPG'
@@ -471,7 +514,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                     onFile={(f) => handleUpload('cover', f)}
                     onClear={() => set({ cover_image: null, cover_image_name: null })}
                   />
-                </div>
+                </label>
               </div>
             ),
           },

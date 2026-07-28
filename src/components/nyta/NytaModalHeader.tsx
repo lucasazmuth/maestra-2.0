@@ -1,12 +1,10 @@
 import { FC, PointerEvent as ReactPointerEvent, useState } from 'react';
 import { Dropdown, Popconfirm } from 'antd';
-import { FiMoreVertical, FiTrash2, FiX, FiArrowLeft, FiLifeBuoy } from 'react-icons/fi';
+import { FiMoreVertical, FiTrash2, FiX, FiArrowLeft } from 'react-icons/fi';
 
 import useIsMobile from '../../utils/isMobile';
 import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
 import styles from './NytaModalHeader.module.scss';
-
-const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
 
 interface NytaModalHeaderProps {
   onClear: () => void;
@@ -28,10 +26,12 @@ export const NytaModalHeader: FC<NytaModalHeaderProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const draggable = !isMobile && !!onDragStart;
+  const [menuOpen, setMenuOpen] = useState(false);
   const [clearOpen, setClearOpen] = useState(false);
 
-  const openSupport = () => {
-    window.open(`mailto:${SUPPORT_EMAIL}?subject=Suporte%20Nyta%20IA`, '_blank');
+  const handleClearClick = () => {
+    setMenuOpen(false);
+    setClearOpen(true);
   };
 
   return (
@@ -57,6 +57,7 @@ export const NytaModalHeader: FC<NytaModalHeaderProps> = ({
           </span>
         )}
         <Popconfirm
+          trigger={[]}
           open={clearOpen}
           title="Limpar histórico?"
           description="Esta ação não pode ser desfeita."
@@ -70,12 +71,16 @@ export const NytaModalHeader: FC<NytaModalHeaderProps> = ({
           <Dropdown
             trigger={['click']}
             placement="bottomRight"
+            open={menuOpen}
+            onOpenChange={(open) => {
+              setMenuOpen(open);
+              if (open) setClearOpen(false);
+            }}
             menu={{
               items: [
                 { key: 'clear', label: 'Limpar histórico', icon: <FiTrash2 size={15} />, danger: true },
-                { key: 'support', label: 'Falar com o suporte', icon: <FiLifeBuoy size={15} /> },
               ],
-              onClick: ({ key }) => key === 'clear' ? setClearOpen(true) : openSupport(),
+              onClick: handleClearClick,
             }}
           >
             <button className={styles.iconButton} aria-label="Mais opções" title="Mais opções">

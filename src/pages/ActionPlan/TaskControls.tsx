@@ -25,7 +25,8 @@ export const TASK_TYPES: { v: string; label: string }[] = [
 //  • TaskDate — pílula que abre o calendário (antd DatePicker) ao clicar.
 //  • TaskCategory — chip que abre um dropdown (estilo menu) para escolher a categoria.
 //  • TaskOwner — avatar/+ que abre um dropdown para atribuir o responsável.
-//  • TaskDelete — lixeira com confirmação (Popconfirm).
+//  • TaskDelete — lixeira com confirmação usada no modo avançado; no modo básico a exclusão
+//    fica dentro do modal de detalhes da tarefa.
 // Recebem `className` para herdar o visual de cada modo.
 
 // Pessoa atribuível a uma tarefa: o dono do perfil ou um membro ativo da equipe.
@@ -168,10 +169,7 @@ export const TaskDelete: FC<{ className: string; size?: number; onDelete: () => 
   </Popconfirm>
 );
 
-// Textarea que cresce com o conteúdo (sem barra de rolagem). Recalcula a altura ao montar,
-// ao editar e — crucial — sempre que a LARGURA muda (ex.: ao surgir o avatar de responsável,
-// que estreita a coluna e faz o texto quebrar numa linha a mais). É uncontrolled (defaultValue):
-// quem usa passa `key` quando a descrição muda por fora, para remontar com o novo valor.
+// Mantido para superfícies legadas que ainda usam edição inline.
 export const AutoTextarea: FC<{
   className: string;
   defaultValue: string;
@@ -188,27 +186,25 @@ export const AutoTextarea: FC<{
     el.style.height = `${el.scrollHeight}px`;
   }, []);
 
-  // Antes da pintura: garante a altura certa na montagem e quando o valor inicial muda.
   useLayoutEffect(() => { resize(); }, [defaultValue, resize]);
 
-  // Reage a mudanças de LARGURA (só largura — comparamos para não recalcular à toa). Cobre o caso
-  // de a coluna estreitar depois da renderização inicial. O recálculo é adiado para o próximo frame
-  // (rAF): muda a altura FORA do ciclo de entrega do observer, evitando o aviso benigno
-  // "ResizeObserver loop completed with undelivered notifications".
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    let lastW = el.clientWidth;
-    let raf = 0;
-    const ro = new ResizeObserver(() => {
-      const w = el.clientWidth;
-      if (w === lastW) return;
-      lastW = w;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(resize);
+    let lastWidth = el.clientWidth;
+    let animationFrame = 0;
+    const observer = new ResizeObserver(() => {
+      const width = el.clientWidth;
+      if (width === lastWidth) return;
+      lastWidth = width;
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(resize);
     });
-    ro.observe(el);
-    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+    observer.observe(el);
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      observer.disconnect();
+    };
   }, [resize]);
 
   return (
@@ -221,10 +217,10 @@ export const AutoTextarea: FC<{
       aria-disabled={disabled}
       onFocus={disabled ? onBlocked : undefined}
       onInput={resize}
-      onBlur={(e) => {
-        const v = e.currentTarget.value.trim();
-        if (v && v !== defaultValue) onCommit(v);
-        else if (!v) e.currentTarget.value = defaultValue;
+      onBlur={(event) => {
+        const value = event.currentTarget.value.trim();
+        if (value && value !== defaultValue) onCommit(value);
+        else if (!value) event.currentTarget.value = defaultValue;
         resize();
       }}
     />

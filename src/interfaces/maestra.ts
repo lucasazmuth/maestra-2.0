@@ -57,6 +57,16 @@ export type ActionTaskType =
   | 'show'
   | 'acoes';
 
+export interface TaskComment {
+  id: string;
+  body: string;
+  authorId?: string;
+  authorName: string;
+  authorAvatarUrl?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface ActionTask {
   id: string;
   description: string;
@@ -64,6 +74,7 @@ export interface ActionTask {
   owner?: string; // id/email do responsável (resolvido via artist_members)
   deadline?: string; // YYYY-MM-DD
   status: TaskStatus;
+  comments?: TaskComment[];
 }
 
 export interface Strategy {

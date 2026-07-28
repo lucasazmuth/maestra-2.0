@@ -19,7 +19,8 @@ import { PRODUCT_THEME, pageBg } from '../../components/productTheme';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { UpsellModal } from '../../components/UpsellModal';
 import featureAction from '../../assets/feature-action.png';
-import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
+import { TaskDate, TaskCategory, TaskOwner, type Assignee } from './TaskControls';
+import { TaskDetailModal } from './TaskDetailModal';
 import { TASK_OWNER_SELF, isOnboardingComplete } from '../../constants/maestra';
 import { listMembers } from '../../services/db/members';
 import * as eventsDb from '../../services/db/events';
@@ -115,6 +116,7 @@ const ActionPlan: FC = () => {
   const [openId, setOpenId] = useState<string | undefined>(undefined);
   const [archiveOpen, setArchiveOpen] = useState(false); // modal "Arquivadas": traz estratégia pro plano
   const [proModalOpen, setProModalOpen] = useState(false);
+  const [selectedTaskRef, setSelectedTaskRef] = useState<{ strategyId: string; taskId: string } | null>(null);
   const { openWithPrompt } = useNytaModal(); // botão "Nova estratégia" abre a Nyta com o protocolo
   const [, setSaving] = useState(false);
   const showProRequired = () => setProModalOpen(true);
@@ -141,6 +143,24 @@ const ActionPlan: FC = () => {
       .forEach((m) => list.push({ value: m.email, label: m.name || m.email }));
     return list;
   }, [artist?.user_id, user, members]);
+
+  const selectedStrategy = useMemo(
+    () => strategies.find((strategy) => strategy.id === selectedTaskRef?.strategyId),
+    [strategies, selectedTaskRef?.strategyId]
+  );
+  const selectedTask = useMemo(
+    () => selectedStrategy?.tasks?.find((task) => task.id === selectedTaskRef?.taskId),
+    [selectedStrategy, selectedTaskRef?.taskId]
+  );
+  const commenterName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email ||
+    'Usuário';
+  const commenterAvatarUrl =
+    user?.user_metadata?.avatar_url ||
+    user?.user_metadata?.picture ||
+    undefined;
 
   // Objetivo que a estratégia MAIS avança — o de maior score na priorização (etapa 7).
   // Serve de contexto sutil no cabeçalho ("por que essa estratégia importa").
@@ -229,7 +249,59 @@ const ActionPlan: FC = () => {
     toast.success(nextDone ? 'Tarefa concluída.' : 'Tarefa reaberta.');
   };
   const delTask = (sid: string, tid: string) => {
+    const strategy = artist?.content?.strategies?.find((s) => s.id === sid);
+    const task = strategy?.tasks?.find((t) => t.id === tid);
     commit((ss) => ss.map((s) => (s.id !== sid ? s : { ...s, tasks: (s.tasks || []).filter((t) => t.id !== tid) })));
+    if (strategy && task?.deadline) syncTaskEvent(strategy, task, { deadline: undefined });
+    setSelectedTaskRef(null);
+    toast.success('Tarefa excluída.');
+  };
+  const addTaskComment = (sid: string, tid: string, body: string) => {
+    if (!editPlanning) { showProRequired(); return; }
+    const task = artist?.content?.strategies
+      ?.find((strategy) => strategy.id === sid)
+      ?.tasks?.find((item) => item.id === tid);
+    if (!task) return;
+    patchTask(sid, tid, {
+      comments: [
+        ...(task.comments || []),
+        {
+          id: uid(),
+          body,
+          authorId: user?.id,
+          authorName: commenterName,
+          authorAvatarUrl: commenterAvatarUrl,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    });
+    toast.success('Comentário adicionado.');
+  };
+  const editTaskComment = (sid: string, tid: string, commentId: string, body: string) => {
+    if (!editPlanning && !manageTasks) { showProRequired(); return; }
+    const task = artist?.content?.strategies
+      ?.find((strategy) => strategy.id === sid)
+      ?.tasks?.find((item) => item.id === tid);
+    if (!task) return;
+    patchTask(sid, tid, {
+      comments: (task.comments || []).map((comment) => (
+        comment.id === commentId
+          ? { ...comment, body, updatedAt: new Date().toISOString() }
+          : comment
+      )),
+    });
+    toast.success('Comentário atualizado.');
+  };
+  const deleteTaskComment = (sid: string, tid: string, commentId: string) => {
+    if (!editPlanning && !manageTasks) { showProRequired(); return; }
+    const task = artist?.content?.strategies
+      ?.find((strategy) => strategy.id === sid)
+      ?.tasks?.find((item) => item.id === tid);
+    if (!task) return;
+    patchTask(sid, tid, {
+      comments: (task.comments || []).filter((comment) => comment.id !== commentId),
+    });
+    toast.success('Comentário excluído.');
   };
   // "Arquivadas" → trazer pro plano: semeia as tarefas do banco (buildActionPlan) nas selecionadas.
   // Como passam a ter tarefa, saem do arquivo e entram na lista principal (na prioridade salva).
@@ -315,7 +387,7 @@ const ActionPlan: FC = () => {
         }}
       >
         {/* Ícone decorativo do produto, grande e translúcido no canto (igual ao card da jornada). */}
-        <span aria-hidden style={{ position: 'absolute', right: -10, bottom: -28, opacity: 0.18, pointerEvents: 'none', lineHeight: 0 }}>
+        <span aria-hidden style={{ position: 'absolute', right: -10, bottom: -28, opacity: 0.08, pointerEvents: 'none', lineHeight: 0 }}>
           <img src={featureAction} alt="" style={{ display: 'block', width: 210, height: 'auto', filter: 'drop-shadow(0 18px 30px rgba(0,0,0,0.45))' }} />
         </span>
         <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b3b3b3' }}>Progresso do plano</span>
@@ -467,14 +539,14 @@ const ActionPlan: FC = () => {
                               onChange={(d) => patchTask(s.id, t.id, { deadline: d })}
                             />
                             <div className="ap-tl-body">
-                              <AutoTextarea
-                                key={t.description}
+                              <button
+                                type="button"
                                 className="ap-task-desc"
-                                defaultValue={t.description}
-                                disabled={!editPlanning}
-                                onBlocked={showProRequired}
-                                onCommit={(v) => patchTask(s.id, t.id, { description: v })}
-                              />
+                                title="Abrir detalhes da tarefa"
+                                onClick={() => setSelectedTaskRef({ strategyId: s.id, taskId: t.id })}
+                              >
+                                {t.description}
+                              </button>
                               <TaskCategory
                                 className="ap-type"
                                 value={t.type}
@@ -491,7 +563,15 @@ const ActionPlan: FC = () => {
                               onBlocked={showProRequired}
                               onChange={(o) => patchTask(s.id, t.id, { owner: o })}
                             />
-                            {manageTasks && <TaskDelete className="ap-task-del" onDelete={() => delTask(s.id, t.id)} />}
+                            <button
+                              type="button"
+                              className="ap-task-more"
+                              aria-label="Mais opções da tarefa"
+                              title="Abrir detalhes da tarefa"
+                              onClick={() => setSelectedTaskRef({ strategyId: s.id, taskId: t.id })}
+                            >
+                              <FiMoreVertical size={17} />
+                            </button>
                           </div>
                         );
                       })}
@@ -517,6 +597,40 @@ const ActionPlan: FC = () => {
 
       {/* Consultora da Nyta (mesma seção do rodapé do Dashboard) no lugar do texto simples de objetivos */}
       <NytaDashboardHero />
+
+      <TaskDetailModal
+        open={!!selectedTaskRef}
+        task={selectedTask}
+        strategyTitle={selectedStrategy?.title}
+        assignees={assignees}
+        canEdit={editPlanning}
+        canDelete={manageTasks}
+        currentUserId={user?.id}
+        currentUserName={commenterName}
+        currentUserAvatarUrl={commenterAvatarUrl}
+        onClose={() => setSelectedTaskRef(null)}
+        onSave={(patch) => {
+          if (!selectedTaskRef) return;
+          patchTask(selectedTaskRef.strategyId, selectedTaskRef.taskId, patch);
+          toast.success('Tarefa atualizada.');
+        }}
+        onAddComment={(body) => {
+          if (!selectedTaskRef) return;
+          addTaskComment(selectedTaskRef.strategyId, selectedTaskRef.taskId, body);
+        }}
+        onEditComment={(commentId, body) => {
+          if (!selectedTaskRef) return;
+          editTaskComment(selectedTaskRef.strategyId, selectedTaskRef.taskId, commentId, body);
+        }}
+        onDeleteComment={(commentId) => {
+          if (!selectedTaskRef) return;
+          deleteTaskComment(selectedTaskRef.strategyId, selectedTaskRef.taskId, commentId);
+        }}
+        onDelete={() => {
+          if (!selectedTaskRef) return;
+          delTask(selectedTaskRef.strategyId, selectedTaskRef.taskId);
+        }}
+      />
 
       {archiveOpen && (
         <ArchiveModal

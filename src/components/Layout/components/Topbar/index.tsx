@@ -2,7 +2,7 @@ import { memo, useEffect, useState } from 'react';
 import { Badge, Dropdown, Space, type MenuProps } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiLogOut, FiChevronDown } from 'react-icons/fi';
+import { FiLogOut, FiChevronDown, FiLifeBuoy } from 'react-icons/fi';
 import { NotificationIcon, ConfigIcon } from '../../../Icons/system';
 import { countUnread } from '../../../../services/db/notifications';
 import { supabase } from '../../../../lib/supabase';
@@ -12,6 +12,8 @@ import { useAppDispatch, useAppSelector } from '../../../../store/store';
 import { authActions } from '../../../../store/slices/auth';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
 import { MaestraBrand } from '../../../MaestraBrand';
+
+const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
 
 export const Topbar = memo(() => {
   const dispatch = useAppDispatch();
@@ -68,6 +70,12 @@ export const Topbar = memo(() => {
       icon: <ConfigIcon size={16} />,
       label: t('Settings', { defaultValue: 'Configurações' }),
       onClick: () => navigate('/settings'),
+    },
+    {
+      key: 'support',
+      icon: <FiLifeBuoy size={16} />,
+      label: 'Falar com o suporte',
+      onClick: () => window.open(`mailto:${SUPPORT_EMAIL}?subject=Suporte%20Maestra`, '_blank'),
     },
     { type: 'divider' },
     {
@@ -162,6 +170,8 @@ export const Topbar = memo(() => {
 
         <Dropdown menu={{ items }} trigger={['click']} placement='bottomRight'>
           <button
+            aria-label={`Menu do usuário ${displayName}`}
+            title="Abrir menu do usuário"
             style={{
               background: '#000',
               border: 'none',

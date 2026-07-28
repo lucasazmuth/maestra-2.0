@@ -299,17 +299,25 @@
 .ap-tl-item.is-done .ap-task-desc { color: #6f6f6f; text-decoration: line-through; }
 
 .ap-task-desc {
+  display: block;
   font-size: 14px;
   line-height: 1.45;
   color: #ededed;
   border: none;
   background: transparent;
   width: 100%;
-  resize: none;
-  overflow: hidden; /* altura é auto-ajustada via JS — nunca mostra barra de rolagem */
   font-family: inherit;
   padding: 0;
-  &:focus { outline: none; }
+  text-align: left;
+  cursor: pointer;
+  transition: color 150ms ease;
+
+  &:hover { color: #fff; }
+  &:focus-visible {
+    outline: 2px solid rgba(154, 79, 209, 0.72);
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
 }
 
 /* Pílula de prazo — abre o calendário ao clicar */
@@ -377,16 +385,27 @@
   .ap-owner-ini { font-size: 10px; font-weight: 800; letter-spacing: 0.3px; }
 }
 
-.ap-task-del {
+.ap-task-more {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
   background: transparent;
   border: none;
   color: #6f6f6f;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
+  padding: 0;
+  border-radius: 7px;
   display: flex;
   align-items: center;
-  &:hover { color: #ff6b6b; }
+  justify-content: center;
+  transition: color 0.15s, background-color 0.15s;
+
+  &:hover,
+  &:focus-visible {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+  }
 }
 
 .ap-empty-tasks { font-size: 13px; color: #8a8a8a; padding: 10px 0; }

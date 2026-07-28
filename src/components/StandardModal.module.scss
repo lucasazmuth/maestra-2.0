@@ -1,0 +1,254 @@
+.modal {
+  :global(.ant-modal-content) {
+    overflow: hidden;
+    padding: 0;
+    background: #181818;
+    border: 1px solid #303034;
+    border-radius: 16px;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.66);
+  }
+
+  :global(.ant-modal-header) {
+    margin: 0;
+    padding: 22px 56px 18px 24px;
+    background:
+      linear-gradient(135deg, rgba(154, 79, 209, 0.18), rgba(80, 155, 245, 0.08)),
+      #181818;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  :global(.ant-modal-title) {
+    color: #fff;
+  }
+
+  :global(.ant-modal-close) {
+    top: 18px;
+    right: 18px;
+    color: #b3b3b3;
+  }
+
+  :global(.ant-modal-close:hover) {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  :global(.ant-modal-body) {
+    padding: 0 24px 22px;
+  }
+
+  :global(.ant-modal-footer) {
+    margin: 0;
+    padding: 14px 20px;
+    background: #141414;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  :global(.ant-tabs-nav) {
+    margin-bottom: 20px;
+  }
+
+  :global(.ant-tabs-tab) {
+    padding: 15px 2px 12px;
+    color: #929292;
+    font-weight: 700;
+  }
+
+  :global(.ant-tabs-tab:hover),
+  :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
+    color: #fff !important;
+  }
+
+  :global(.ant-tabs-ink-bar) {
+    background: #9a4fd1;
+  }
+
+  :global(.ant-tabs-nav::before) {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  :global(.ant-input),
+  :global(.ant-picker),
+  :global(.ant-select-selector) {
+    color: #fff !important;
+    background: #111 !important;
+    border-color: #37373c !important;
+  }
+
+  :global(.ant-input:focus),
+  :global(.ant-input-focused),
+  :global(.ant-picker-focused),
+  :global(.ant-select-focused .ant-select-selector) {
+    border-color: #9a4fd1 !important;
+    box-shadow: 0 0 0 2px rgba(154, 79, 209, 0.14) !important;
+  }
+
+  :global(.ant-picker-input > input),
+  :global(.ant-select-selection-item),
+  :global(.ant-select-selection-placeholder) {
+    color: #fff !important;
+  }
+
+  :global(.ant-btn-primary) {
+    color: #fff;
+    background: #9a4fd1;
+    box-shadow: none;
+  }
+
+  :global(.ant-btn-primary:hover:not(:disabled)) {
+    background: #8442b6 !important;
+  }
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.kicker {
+  color: #c97ef3;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title,
+.subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.subtitle {
+  color: #929292;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 20px;
+}
+
+.tabs {
+  padding-top: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.field > span {
+  color: #a8a8aa;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.field :global(.ant-select),
+.field :global(.ant-picker) {
+  width: 100%;
+}
+
+.fieldGrid,
+.fieldGridThree,
+.fieldGridFour {
+  display: grid;
+  gap: 16px;
+}
+
+.fieldGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fieldGridThree {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fieldGridFour {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.dangerButton {
+  padding-inline: 4px;
+}
+
+@media (max-width: 640px) {
+  .modal {
+    :global(.ant-modal) {
+      max-width: calc(100vw - 20px);
+      margin: 10px auto;
+      padding-bottom: 0;
+    }
+
+    :global(.ant-modal-header) {
+      padding: 18px 50px 16px 18px;
+    }
+
+    :global(.ant-modal-body) {
+      max-height: calc(100dvh - 210px);
+      overflow-y: auto;
+      padding: 0 18px 18px;
+    }
+
+    :global(.ant-modal-footer) {
+      padding: 12px 14px;
+    }
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .fieldGrid,
+  .fieldGridThree,
+  .fieldGridFour {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .footerActions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .footerActions :global(.ant-btn) {
+    flex: 1;
+  }
+
+  .dangerButton {
+    align-self: flex-start;
+  }
+}
