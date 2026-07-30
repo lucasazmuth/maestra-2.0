@@ -1,33 +1,49 @@
 import { FC, useEffect, useState } from 'react';
-import { Modal, Input, Checkbox, message, Popconfirm } from 'antd';
-import { FiPlus, FiTrash2 } from 'react-icons/fi';
+import { Button, Input, Modal, Popconfirm, message } from 'antd';
+import { FiMail, FiMoreHorizontal, FiPlus, FiTrash2, FiUser } from 'react-icons/fi';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { Spinner } from '../../components/spinner/spinner';
-import { MVP_ACCESS_LEVEL_OPTIONS, MVP_ACCESS_LEVELS } from '../../constants/maestra';
+import modalStyles from '../../components/StandardModal.module.scss';
+import { MVP_ACCESS_LEVEL_OPTIONS } from '../../constants/maestra';
 import * as membersDb from '../../services/db/members';
 import type { ArtistMember, AccessLevel } from '../../interfaces/maestra';
+import styles from './Team.module.scss';
 
-const statusLabel: Record<string, { label: string; color: string }> = {
-  active: { label: 'Ativo', color: '#9A4FD1' },
-  pending: { label: 'Pendente', color: '#f59e0b' },
-  rejected: { label: 'Recusado', color: '#e91429' },
+const statusLabel: Record<string, string> = {
+  active: 'Ativo',
+  pending: 'Pendente',
+  rejected: 'Recusado',
+};
+
+const initials = (member: ArtistMember) => {
+  const source = member.name?.trim() || member.email.split('@')[0] || '?';
+  return source
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
 };
 
 const Team: FC = () => {
   const { artist } = useArtist();
   const artistId = artist?.id;
+  const { canManageTeam } = useArtistCapabilities(artist);
 
   const [members, setMembers] = useState<ArtistMember[]>([]);
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [levels, setLevels] = useState<AccessLevel[]>(['plan']);
   const [saving, setSaving] = useState(false);
-  // Hook antes de qualquer early return (regras dos hooks). Aceita artist undefined.
-  const { canManageTeam } = useArtistCapabilities(artist);
+
+  const [selectedMember, setSelectedMember] = useState<ArtistMember | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editLevels, setEditLevels] = useState<AccessLevel[]>([]);
+  const [editingSaving, setEditingSaving] = useState(false);
 
   useEffect(() => {
     if (!artistId) return;
@@ -41,9 +57,17 @@ const Team: FC = () => {
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
-  // Convidar: dono OU membro com nível 'team'/'full' (canManageTeam, calculado acima). Remover/
-  // alterar níveis continuam SÓ do dono (o RLS de UPDATE/DELETE em artist_members é do owner).
+  // RLS mantém UPDATE/DELETE exclusivos do dono. Membros com permissão de equipe
+  // podem convidar, mas não alterar ou remover outras pessoas.
   const isOwner = artist.role !== 'member';
+
+  const toggleAccessLevel = (
+    current: AccessLevel[],
+    level: AccessLevel,
+    setter: (next: AccessLevel[]) => void
+  ) => {
+    setter(current.includes(level) ? current.filter((item) => item !== level) : [...current, level]);
+  };
 
   const invite = async () => {
     if (!canManageTeam) return;
@@ -53,131 +77,282 @@ const Team: FC = () => {
     }
     setSaving(true);
     try {
-      const m = await membersDb.inviteMember({ artistId, email: email.trim(), name: name.trim(), accessLevels: levels });
-      setMembers((prev) => [...prev, m]);
-      setOpen(false);
+      const member = await membersDb.inviteMember({
+        artistId,
+        email: email.trim(),
+        name: name.trim(),
+        accessLevels: levels,
+      });
+      setMembers((current) => [...current, member]);
+      setInviteOpen(false);
       setEmail('');
       setName('');
       setLevels(['plan']);
-    } catch (e: any) {
-      message.error(e?.message || 'Erro ao convidar');
+    } catch (error: any) {
+      message.error(error?.message || 'Erro ao convidar');
     } finally {
       setSaving(false);
     }
   };
 
-  const remove = async (id: string) => {
+  const openMember = (member: ArtistMember) => {
+    setSelectedMember(member);
+    setEditName(member.name || '');
+    setEditLevels(member.access_levels || []);
+  };
+
+  const saveMember = async () => {
+    if (!selectedMember || !isOwner) return;
+    setEditingSaving(true);
     try {
-      await membersDb.removeMember(id);
-      setMembers((prev) => prev.filter((m) => m.id !== id));
+      const updated = await membersDb.updateMember(selectedMember.id, {
+        name: editName.trim(),
+        access_levels: editLevels,
+      });
+      setMembers((current) => current.map((member) => (member.id === updated.id ? updated : member)));
+      setSelectedMember(null);
+      message.success('Membro atualizado');
+    } catch {
+      message.error('Erro ao atualizar membro');
+    } finally {
+      setEditingSaving(false);
+    }
+  };
+
+  const removeMember = async () => {
+    if (!selectedMember || !isOwner) return;
+    try {
+      await membersDb.removeMember(selectedMember.id);
+      setMembers((current) => current.filter((member) => member.id !== selectedMember.id));
+      setSelectedMember(null);
+      message.success('Membro removido');
     } catch {
       message.error('Erro ao remover');
     }
   };
 
-  const toggleLevel = async (m: ArtistMember, level: AccessLevel) => {
-    const has = m.access_levels?.includes(level);
-    const next = has ? m.access_levels.filter((l) => l !== level) : [...(m.access_levels || []), level];
-    try {
-      const updated = await membersDb.updateMember(m.id, { access_levels: next });
-      setMembers((prev) => prev.map((x) => (x.id === m.id ? updated : x)));
-    } catch {
-      message.error('Erro ao atualizar permissões');
-    }
-  };
-
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: 0 }}>
-          Equipe
-        </h1>
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <div>
+          <h1>Equipe</h1>
+          <p>Gerencie quem participa da operação e o que cada pessoa pode acessar.</p>
+        </div>
         {canManageTeam && (
-          <button
-            onClick={() => setOpen(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#9A4FD1', border: 'none', color: '#FFFFFF', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
-          >
-            <FiPlus /> Convidar membro
+          <button type="button" className={styles.inviteButton} onClick={() => setInviteOpen(true)}>
+            <FiPlus aria-hidden="true" />
+            Convidar membro
           </button>
         )}
       </div>
 
       <Spinner loading={loading && !members.length}>
         {!members.length ? (
-          <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>
-            Nenhum membro na equipe. Convide colaboradores por e-mail.
+          <div className={styles.empty}>
+            <FiUser aria-hidden="true" />
+            <strong>Sua equipe começa aqui</strong>
+            <span>Convide colaboradores por e-mail e defina os acessos de cada pessoa.</span>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {members.map((m) => {
-              const st = statusLabel[m.status] || { label: m.status, color: '#b3b3b3' };
-              return (
-                <div key={m.id} style={{ background: '#181818', borderRadius: 8, padding: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ color: '#fff', fontWeight: 700 }}>{m.name || m.email}</div>
-                      <div style={{ color: '#b3b3b3', fontSize: 13 }}>{m.email}</div>
-                    </div>
-                    <span style={{ color: st.color, fontSize: 12, fontWeight: 700 }}>{st.label}</span>
-                    {isOwner && (
-                      <Popconfirm title='Remover membro?' onConfirm={() => remove(m.id)} okText='Sim' cancelText='Não'>
-                        <button style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer' }}>
-                          <FiTrash2 />
-                        </button>
-                      </Popconfirm>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-                    {MVP_ACCESS_LEVEL_OPTIONS.map((opt) => {
-                      const active = m.access_levels?.includes(opt.id);
-                      return (
-                        <button
-                          key={opt.id}
-                          onClick={isOwner ? () => toggleLevel(m, opt.id) : undefined}
-                          disabled={!isOwner}
-                          style={{
-                            background: active ? '#9A4FD122' : 'rgba(255,255,255,0.06)',
-                            color: active ? '#9A4FD1' : '#b3b3b3',
-                            border: `1px solid ${active ? '#9A4FD1' : 'transparent'}`,
-                            borderRadius: 9999,
-                            padding: '4px 12px',
-                            cursor: isOwner ? 'pointer' : 'default',
-                            fontSize: 12,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+          <div className={styles.memberList}>
+            {members.map((member) => (
+              <article className={styles.memberCard} key={member.id}>
+                <span className={styles.avatar} aria-hidden="true">{initials(member)}</span>
+                <div className={styles.memberIdentity}>
+                  <strong>{member.name || member.email.split('@')[0]}</strong>
+                  <span>{member.email}</span>
                 </div>
-              );
-            })}
+                <div className={styles.accessSummary} aria-label="Acessos concedidos">
+                  {(member.access_levels || []).slice(0, 3).map((level) => {
+                    const option = MVP_ACCESS_LEVEL_OPTIONS.find((item) => item.id === level);
+                    return option ? <span key={level}>{option.label}</span> : null;
+                  })}
+                  {(member.access_levels?.length || 0) > 3 && (
+                    <span>+{(member.access_levels?.length || 0) - 3}</span>
+                  )}
+                  {!member.access_levels?.length && <span>Sem acessos</span>}
+                </div>
+                <span className={styles.status} data-status={member.status}>
+                  <i aria-hidden="true" />
+                  {statusLabel[member.status] || member.status}
+                </span>
+                <button
+                  type="button"
+                  className={styles.moreButton}
+                  aria-label={`Mais opções de ${member.name || member.email}`}
+                  onClick={() => openMember(member)}
+                >
+                  <FiMoreHorizontal aria-hidden="true" />
+                </button>
+              </article>
+            ))}
           </div>
         )}
       </Spinner>
 
       <Modal
-        open={open}
-        onCancel={() => setOpen(false)}
+        open={!!selectedMember}
+        onCancel={() => setSelectedMember(null)}
         centered
-        destroyOnClose
-        title={<span style={{ color: '#fff', fontWeight: 700 }}>Convidar membro</span>}
-        okText={saving ? 'Convidando…' : 'Convidar'}
-        onOk={invite}
-        okButtonProps={{ loading: saving, style: { background: '#9A4FD1', color: '#FFFFFF' } }}
+        width={580}
+        destroyOnHidden
+        rootClassName={modalStyles.modal}
+        title={
+          <div className={modalStyles.heading}>
+            <span className={modalStyles.kicker}>Membro da equipe</span>
+            <span className={modalStyles.title}>{selectedMember?.name || selectedMember?.email}</span>
+            <span className={modalStyles.subtitle}>Revise os dados e os acessos desta pessoa.</span>
+          </div>
+        }
+        footer={
+          <div className={styles.modalFooter}>
+            {isOwner && (
+              <Popconfirm
+                title="Remover membro?"
+                description="Esta pessoa perderá o acesso ao perfil do artista."
+                okText="Remover"
+                cancelText="Cancelar"
+                okButtonProps={{ danger: true }}
+                onConfirm={removeMember}
+              >
+                <Button type="text" danger icon={<FiTrash2 />}>Excluir membro</Button>
+              </Popconfirm>
+            )}
+            <div>
+              <Button onClick={() => setSelectedMember(null)}>{isOwner ? 'Cancelar' : 'Fechar'}</Button>
+              {isOwner && (
+                <Button type="primary" loading={editingSaving} onClick={saveMember}>
+                  Salvar alterações
+                </Button>
+              )}
+            </div>
+          </div>
+        }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <Input placeholder='E-mail *' value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Input placeholder='Nome (opcional)' value={name} onChange={(e) => setName(e.target.value)} />
-          <div>
-            <div style={{ color: '#b3b3b3', fontSize: 13, marginBottom: 8 }}>Níveis de acesso</div>
-            <Checkbox.Group
-              value={levels}
-              onChange={(v) => setLevels(v as AccessLevel[])}
-              options={MVP_ACCESS_LEVEL_OPTIONS.map((o) => ({ label: MVP_ACCESS_LEVELS[o.id as keyof typeof MVP_ACCESS_LEVELS], value: o.id }))}
-            />
+        {selectedMember && (
+          <div className={styles.modalBody}>
+            <div className={styles.memberOverview}>
+              <span className={styles.modalAvatar} aria-hidden="true">{initials(selectedMember)}</span>
+              <div>
+                <span className={styles.status} data-status={selectedMember.status}>
+                  <i aria-hidden="true" />
+                  {statusLabel[selectedMember.status] || selectedMember.status}
+                </span>
+                <small>Convidado para este perfil</small>
+              </div>
+            </div>
+
+            <div className={styles.fieldGrid}>
+              <label>
+                <span>Nome</span>
+                <Input
+                  prefix={<FiUser aria-hidden="true" />}
+                  value={editName}
+                  disabled={!isOwner}
+                  placeholder="Nome do membro"
+                  onChange={(event) => setEditName(event.target.value)}
+                />
+              </label>
+              <label>
+                <span>E-mail</span>
+                <Input prefix={<FiMail aria-hidden="true" />} value={selectedMember.email} disabled />
+              </label>
+            </div>
+
+            <div className={styles.permissionSection}>
+              <div>
+                <strong>Níveis de acesso</strong>
+                <span>Escolha os módulos que esta pessoa poderá utilizar.</span>
+              </div>
+              <div className={styles.permissionGrid}>
+                {MVP_ACCESS_LEVEL_OPTIONS.map((option) => {
+                  const active = editLevels.includes(option.id);
+                  return (
+                    <button
+                      type="button"
+                      key={option.id}
+                      className={active ? styles.permissionActive : styles.permission}
+                      aria-pressed={active}
+                      disabled={!isOwner}
+                      onClick={() => toggleAccessLevel(editLevels, option.id, setEditLevels)}
+                    >
+                      <span>{option.label}</span>
+                      <i aria-hidden="true" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={inviteOpen}
+        onCancel={() => setInviteOpen(false)}
+        centered
+        width={580}
+        destroyOnHidden
+        rootClassName={modalStyles.modal}
+        title={
+          <div className={modalStyles.heading}>
+            <span className={modalStyles.kicker}>Equipe</span>
+            <span className={modalStyles.title}>Convidar membro</span>
+            <span className={modalStyles.subtitle}>Envie um convite e defina os acessos iniciais.</span>
+          </div>
+        }
+        footer={
+          <div className={styles.inviteFooter}>
+            <Button onClick={() => setInviteOpen(false)}>Cancelar</Button>
+            <Button type="primary" loading={saving} onClick={invite}>
+              {saving ? 'Convidando…' : 'Enviar convite'}
+            </Button>
+          </div>
+        }
+      >
+        <div className={styles.modalBody}>
+          <div className={styles.fieldGrid}>
+            <label>
+              <span>Nome</span>
+              <Input
+                prefix={<FiUser aria-hidden="true" />}
+                placeholder="Nome do convidado"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+            </label>
+            <label>
+              <span>E-mail *</span>
+              <Input
+                prefix={<FiMail aria-hidden="true" />}
+                placeholder="nome@exemplo.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </label>
+          </div>
+          <div className={styles.permissionSection}>
+            <div>
+              <strong>Níveis de acesso</strong>
+              <span>Você poderá alterar estes acessos depois.</span>
+            </div>
+            <div className={styles.permissionGrid}>
+              {MVP_ACCESS_LEVEL_OPTIONS.map((option) => {
+                const active = levels.includes(option.id);
+                return (
+                  <button
+                    type="button"
+                    key={option.id}
+                    className={active ? styles.permissionActive : styles.permission}
+                    aria-pressed={active}
+                    onClick={() => toggleAccessLevel(levels, option.id, setLevels)}
+                  >
+                    <span>{option.label}</span>
+                    <i aria-hidden="true" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </Modal>

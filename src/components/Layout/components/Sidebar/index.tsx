@@ -1,7 +1,7 @@
 import { FC, Fragment, memo, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiPlus, FiLock, FiDatabase, FiChevronLeft, FiTag, FiUsers, FiBarChart2, FiBell } from 'react-icons/fi';
+import { FiPlus, FiLock, FiDatabase, FiChevronLeft, FiTag, FiUsers, FiBarChart2, FiBell, FiStar } from 'react-icons/fi';
 import {
   DashboardIcon,
   DiagnosticoIcon,
@@ -288,6 +288,13 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
             onClick={() => navigate('/admin/dashboard')}
           />
           <NavItem
+            icon={<ArtistasIcon />}
+            label="Perfis de artistas"
+            collapsed={collapsed}
+            active={location.pathname.startsWith('/admin/artistas')}
+            onClick={() => navigate('/admin/artistas')}
+          />
+          <NavItem
             icon={<FiDatabase />}
             label="Base de Conhecimento"
             collapsed={collapsed}
@@ -307,6 +314,13 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
             collapsed={collapsed}
             active={location.pathname === '/admin/usuarios'}
             onClick={() => navigate('/admin/usuarios')}
+          />
+          <NavItem
+            icon={<FiStar />}
+            label="Avaliações"
+            collapsed={collapsed}
+            active={location.pathname === '/admin/avaliacoes'}
+            onClick={() => navigate('/admin/avaliacoes')}
           />
           <NavItem
             icon={<FiBell />}

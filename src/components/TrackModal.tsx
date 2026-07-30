@@ -37,12 +37,22 @@ const SplitEditor: FC<{
 }> = ({ splits, onChange }) => {
   const total = splits.reduce((acc, s) => acc + (Number(s.percentage) || 0), 0);
   return (
-    <div>
+    <div className={modalStyles.splitEditor}>
+      {!!splits.length && (
+        <div className={modalStyles.splitHeader} aria-hidden="true">
+          <span>Nome</span>
+          <span>Função</span>
+          <span>Percentual</span>
+          <span />
+        </div>
+      )}
       {splits.map((s, i) => (
-        <div key={s.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <div key={s.id} className={modalStyles.splitRow}>
           <Input
-            placeholder='Nome'
+            className={modalStyles.splitName}
+            placeholder='Nome do participante'
             value={s.name}
+            aria-label={`Nome do participante ${i + 1}`}
             onChange={(e) => {
               const next = splits.slice();
               next[i] = { ...s, name: e.target.value };
@@ -50,9 +60,10 @@ const SplitEditor: FC<{
             }}
           />
           <Select
-            style={{ width: 160 }}
-            placeholder='Função'
+            className={modalStyles.splitRole}
+            placeholder='Selecione a função'
             value={s.role || undefined}
+            aria-label={`Função do participante ${i + 1}`}
             options={SPLIT_ROLES.map((r) => ({ value: r, label: r }))}
             onChange={(v) => {
               const next = splits.slice();
@@ -61,40 +72,47 @@ const SplitEditor: FC<{
             }}
           />
           <Input
+            className={modalStyles.splitPercentage}
             type='number'
-            style={{ width: 90 }}
             suffix='%'
             value={s.percentage}
+            min={0}
+            max={100}
+            aria-label={`Percentual do participante ${i + 1}`}
             onChange={(e) => {
               const next = splits.slice();
-              next[i] = { ...s, percentage: Number(e.target.value) };
+              const value = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+              next[i] = { ...s, percentage: value };
               onChange(next);
             }}
           />
           <button
+            type='button'
+            className={modalStyles.splitRemove}
+            aria-label={`Remover ${s.name || `participante ${i + 1}`}`}
+            title='Remover participante'
             onClick={() => onChange(splits.filter((x) => x.id !== s.id))}
-            style={{ background: 'transparent', border: 'none', color: '#e91429', cursor: 'pointer' }}
           >
-            ✕
+            <FiTrash2 size={15} />
           </button>
         </div>
       ))}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {!splits.length && (
+        <div className={modalStyles.splitEmpty}>Nenhum participante adicionado.</div>
+      )}
+      <div className={modalStyles.splitFooter}>
         <button
+          type='button'
+          className={modalStyles.splitAdd}
           onClick={() => onChange([...splits, { id: uid(), name: '', role: '', percentage: 0 }])}
-          style={{
-            background: 'transparent',
-            border: '1px solid #444',
-            color: '#fff',
-            borderRadius: 9999,
-            padding: '4px 12px',
-            cursor: 'pointer',
-          }}
         >
-          + Adicionar
+          + Adicionar participante
         </button>
-        <span style={{ color: total === 100 ? '#9A4FD1' : '#b3b3b3', fontSize: 13 }}>
-          Total: {total}%
+        <span
+          className={modalStyles.splitTotal}
+          style={{ color: total === 100 ? '#2ec47a' : total > 100 ? '#ff6b6f' : '#b3b3b3' }}
+        >
+          Total <strong>{total}%</strong>
         </span>
       </div>
     </div>
@@ -534,16 +552,22 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
             key: 'splits',
             label: 'Splits',
             children: (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                <div>
-                  <h4 style={{ color: '#fff' }}>Composição (obra)</h4>
+              <div className={modalStyles.splitSections}>
+                <div className={modalStyles.splitSection}>
+                  <div className={modalStyles.splitSectionTitle}>
+                    <strong>Composição</strong>
+                    <span>Créditos autorais da obra</span>
+                  </div>
                   <SplitEditor
                     splits={draft.composition_splits || []}
                     onChange={(s) => set({ composition_splits: s })}
                   />
                 </div>
-                <div>
-                  <h4 style={{ color: '#fff' }}>Gravação (fonograma)</h4>
+                <div className={modalStyles.splitSection}>
+                  <div className={modalStyles.splitSectionTitle}>
+                    <strong>Gravação</strong>
+                    <span>Créditos do fonograma</span>
+                  </div>
                   <SplitEditor
                     splits={draft.recording_splits || []}
                     onChange={(s) => set({ recording_splits: s })}

@@ -1,8 +1,9 @@
 import { ChangeEvent, FC, ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, Popconfirm, message } from 'antd';
-import { FiFileText, FiShield, FiLifeBuoy, FiExternalLink, FiChevronRight, FiCamera, FiClock, FiBell } from 'react-icons/fi';
+import { FiFileText, FiShield, FiLifeBuoy, FiExternalLink, FiChevronRight, FiCamera, FiClock, FiBell, FiStar } from 'react-icons/fi';
 import { EditIcon } from '../../components/Icons/system';
+import { PlatformReviewModal } from '../../components/PlatformReviewModal';
 
 import { supabase } from '../../lib/supabase';
 import { useAppDispatch, useAppSelector } from '../../store/store';
@@ -35,6 +36,7 @@ const Settings: FC = () => {
   const [pushSupported, setPushSupported] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -114,7 +116,8 @@ const Settings: FC = () => {
 
   // Links institucionais (ajuste as URLs/e-mail reais da plataforma).
   const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
-  const supportLinks: { label: string; icon: ReactNode; to?: string; href?: string }[] = [
+  const supportLinks: { label: string; icon: ReactNode; to?: string; href?: string; action?: () => void }[] = [
+    { label: 'Avaliar a Maestra', icon: <FiStar size={16} />, action: () => setReviewOpen(true) },
     { label: 'Termos de uso', icon: <FiFileText size={16} />, to: '/legal/termos' },
     { label: 'Política de privacidade', icon: <FiShield size={16} />, to: '/legal/privacidade' },
     { label: 'Falar com o suporte', icon: <FiLifeBuoy size={16} />, href: `mailto:${SUPPORT_EMAIL}` },
@@ -314,11 +317,22 @@ const Settings: FC = () => {
             <>
               <span style={{ color: '#8a8a8a', display: 'flex' }}>{l.icon}</span>
               <span style={{ flex: 1 }}>{l.label}</span>
-              {l.to ? <FiChevronRight size={16} color='#6b7280' /> : <FiExternalLink size={15} color='#6b7280' />}
+              {l.href ? <FiExternalLink size={15} color='#6b7280' /> : <FiChevronRight size={16} color='#6b7280' />}
             </>
           );
-          return l.to ? (
-            <div key={l.label} role='button' tabIndex={0} style={rowStyle} onClick={() => navigate(l.to!)}>
+          return l.to || l.action ? (
+            <div
+              key={l.label}
+              role='button'
+              tabIndex={0}
+              style={rowStyle}
+              onClick={() => l.action ? l.action() : navigate(l.to!)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                l.action ? l.action() : navigate(l.to!);
+              }}
+            >
               {inner}
             </div>
           ) : (
@@ -365,6 +379,7 @@ const Settings: FC = () => {
           </button>
         </Popconfirm>
       </section>
+      <PlatformReviewModal open={reviewOpen} onClose={() => setReviewOpen(false)} />
     </div>
   );
 };

@@ -1,10 +1,12 @@
 import { FC, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { Input, Table, Tag, Modal, Spin, message, Button, Popconfirm, type TableColumnsType } from 'antd';
-import { FiSearch, FiUser, FiTrash2 } from 'react-icons/fi';
+import { Input, Table, Tag, Modal, Spin, message, Button, Popconfirm, Progress, type TableColumnsType } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { FiActivity, FiArrowRight, FiCalendar, FiMessageCircle, FiMusic, FiSearch, FiTarget, FiTrash2, FiUser } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import { supabase } from '../../lib/supabase';
 import { readEdgeFunctionError } from '../../lib/edgeError';
+import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 interface UserRow {
@@ -31,6 +33,23 @@ interface UserDetail {
   subscription: DetailSub | null;
   purchases: DetailPurchase[];
 }
+type Activity = 'active' | 'recent' | 'inactive' | 'never';
+interface ArtistUsageDetail {
+  artist: {
+    id: string;
+    image: string | null;
+    lastActivityAt: string | null;
+    activity: Activity;
+    adoption: { used: number; total: number; percent: number };
+  };
+  real: { available: boolean; profileName: string; score: number | null };
+  planning: { completed: boolean; strategies: number };
+  actionPlan: { total: number; done: number; progress: number };
+  catalog: { total: number };
+  events: { total: number; upcoming: number };
+  team: { total: number; active: number };
+  nyta: { userMessages: number };
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const fmtDate = (iso?: string | null) => (iso ? dayjs(iso).format('DD/MM/YYYY HH:mm') : '—');
@@ -47,7 +66,15 @@ const subColor = (s: string): string =>
 const purchaseColor = (s: string): string =>
   ({ received: 'green', pending: 'blue', failed: 'red' } as Record<string, string>)[s] || 'default';
 
+const ACTIVITY: Record<Activity, { label: string; color: string }> = {
+  active: { label: 'Ativo · 7 dias', color: 'green' },
+  recent: { label: 'Recente · 30 dias', color: 'blue' },
+  inactive: { label: 'Inativo · +30 dias', color: 'default' },
+  never: { label: 'Sem atividade', color: 'default' },
+};
+
 const AdminUsers: FC = () => {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -55,6 +82,8 @@ const AdminUsers: FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [artistUsage, setArtistUsage] = useState<Record<string, ArtistUsageDetail>>({});
+  const [artistUsageLoading, setArtistUsageLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,12 +98,30 @@ const AdminUsers: FC = () => {
   const openDetail = useCallback(async (userId: string) => {
     setModalOpen(true);
     setDetail(null);
+    setArtistUsage({});
     setDetailLoading(true);
     const { data, error } = await supabase.functions.invoke('admin-users', { body: { action: 'detail', userId } });
     if (error) message.error('Não foi possível carregar o detalhe.');
-    setDetail((data as UserDetail) || null);
+    const userDetail = (data as UserDetail) || null;
+    setDetail(userDetail);
     setDetailLoading(false);
+
+    if (!userDetail?.artists.length) return;
+    setArtistUsageLoading(true);
+    const usageResults = await Promise.all(userDetail.artists.map(async (artist) => {
+      const result = await supabase.functions.invoke('admin-artists', {
+        body: { action: 'detail', artistId: artist.id },
+      });
+      return result.error ? null : [artist.id, result.data as ArtistUsageDetail] as const;
+    }));
+    setArtistUsage(Object.fromEntries(usageResults.filter((item): item is readonly [string, ArtistUsageDetail] => !!item)));
+    setArtistUsageLoading(false);
   }, []);
+
+  const openArtist = useCallback((artistId: string) => {
+    setModalOpen(false);
+    navigate(`/admin/artistas/${artistId}`);
+  }, [navigate]);
 
   const removeUser = useCallback(async () => {
     if (!detail) return;
@@ -161,7 +208,7 @@ const AdminUsers: FC = () => {
       <Modal
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
-        width={760}
+        width={880}
         title={<span style={{ color: '#fff', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8 }}><FiUser /> {detail?.account.name || 'Usuário'}</span>}
         footer={detail ? (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -218,13 +265,85 @@ const AdminUsers: FC = () => {
                 <div style={styles.empty}>Nenhum perfil criado.</div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {detail.artists.map((a) => (
-                    <div key={a.id} style={styles.rowItem}>
-                      <span style={{ color: '#fff', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</span>
-                      <Tag color={a.is_locked ? 'default' : 'green'}>{a.is_locked ? 'Bloqueado' : 'Pago'}</Tag>
-                      <span style={{ color: '#8a8a8a', fontSize: 12.5, width: 92, textAlign: 'right' }}>{fmtDay(a.created_at)}</span>
-                    </div>
-                  ))}
+                  {detail.artists.map((a) => {
+                    const usage = artistUsage[a.id];
+                    return (
+                      <button key={a.id} type="button" style={styles.artistItem} onClick={() => openArtist(a.id)}>
+                        <div style={styles.artistItemHeader}>
+                          <img
+                            src={usage?.artist.image || ARTISTS_DEFAULT_IMAGE}
+                            alt=""
+                            style={styles.artistImage}
+                          />
+                          <div style={styles.artistIdentity}>
+                            <strong style={styles.artistName}>{a.name}</strong>
+                            <span style={styles.artistCreated}>Criado em {fmtDay(a.created_at)}</span>
+                          </div>
+                          <Tag color={a.is_locked ? 'default' : 'green'}>{a.is_locked ? 'Bloqueado' : 'Desbloqueado'}</Tag>
+                          {usage && <Tag color={ACTIVITY[usage.artist.activity].color}>{ACTIVITY[usage.artist.activity].label}</Tag>}
+                          <FiArrowRight style={{ color: '#a7a7af', fontSize: 18, flexShrink: 0 }} />
+                        </div>
+
+                        {artistUsageLoading && !usage ? (
+                          <div style={styles.artistUsageLoading}><Spin size="small" /> Carregando sinais de uso…</div>
+                        ) : usage ? (
+                          <>
+                            <div style={styles.usageMetrics}>
+                              <UsageMetric
+                                icon={<FiActivity />}
+                                label="Diagnóstico REAL"
+                                value={usage.real.available ? `${usage.real.profileName}${usage.real.score == null ? '' : ` · ${usage.real.score}`}` : 'Não realizado'}
+                                active={usage.real.available}
+                              />
+                              <UsageMetric
+                                icon={<FiTarget />}
+                                label="Planejamento"
+                                value={usage.planning.completed ? `${usage.planning.strategies} estratégias` : 'Não concluído'}
+                                active={usage.planning.completed}
+                              />
+                              <UsageMetric
+                                icon={<FiTarget />}
+                                label="Plano de ação"
+                                value={`${usage.actionPlan.done}/${usage.actionPlan.total} tarefas`}
+                                active={usage.actionPlan.total > 0}
+                              />
+                              <UsageMetric
+                                icon={<FiMusic />}
+                                label="Catálogo"
+                                value={`${usage.catalog.total} faixa(s)`}
+                                active={usage.catalog.total > 0}
+                              />
+                              <UsageMetric
+                                icon={<FiCalendar />}
+                                label="Agenda"
+                                value={`${usage.events.total} evento(s) · ${usage.events.upcoming} futuro(s)`}
+                                active={usage.events.total > 0}
+                              />
+                              <UsageMetric
+                                icon={<FiMessageCircle />}
+                                label="Nyta"
+                                value={`${usage.nyta.userMessages} pergunta(s)`}
+                                active={usage.nyta.userMessages > 0}
+                              />
+                            </div>
+                            <div style={styles.adoptionRow}>
+                              <span>Adoção do produto</span>
+                              <Progress
+                                percent={usage.artist.adoption.percent}
+                                showInfo={false}
+                                strokeColor="#9A4FD1"
+                                style={{ flex: 1, margin: 0 }}
+                              />
+                              <strong>{usage.artist.adoption.percent}%</strong>
+                              <small>Última atividade: {fmtDate(usage.artist.lastActivityAt)}</small>
+                            </div>
+                          </>
+                        ) : (
+                          <div style={styles.artistUsageLoading}>Detalhes de uso indisponíveis.</div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </section>
@@ -261,6 +380,16 @@ const KV: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => 
   </div>
 );
 
+const UsageMetric: FC<{ icon: React.ReactNode; label: string; value: string; active: boolean }> = ({ icon, label, value, active }) => (
+  <div style={styles.usageMetric}>
+    <span style={{ ...styles.usageIcon, color: active ? '#c97ef3' : '#66666f' }}>{icon}</span>
+    <div>
+      <span style={styles.usageLabel}>{label}</span>
+      <strong style={{ ...styles.usageValue, color: active ? '#f3f3f5' : '#777780' }}>{value}</strong>
+    </div>
+  </div>
+);
+
 const styles: Record<string, CSSProperties> = {
   page: { padding: 24, maxWidth: 1100 },
   title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 6px' },
@@ -268,6 +397,19 @@ const styles: Record<string, CSSProperties> = {
   sectionHead: { color: '#fff', fontSize: 14, fontWeight: 700, marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #262626' },
   kvGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 },
   rowItem: { display: 'flex', alignItems: 'center', gap: 10, background: '#1f1f1f', border: '1px solid #2a2a2a', borderRadius: 8, padding: '9px 12px' },
+  artistItem: { width: '100%', display: 'flex', flexDirection: 'column', gap: 13, padding: 14, textAlign: 'left', color: 'inherit', background: '#191919', border: '1px solid #303035', borderRadius: 10, cursor: 'pointer' },
+  artistItemHeader: { display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 },
+  artistImage: { width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', background: '#262626', flexShrink: 0 },
+  artistIdentity: { display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 },
+  artistName: { color: '#fff', fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  artistCreated: { color: '#85858e', fontSize: 12 },
+  artistUsageLoading: { display: 'flex', alignItems: 'center', gap: 8, minHeight: 48, color: '#85858e', fontSize: 13, borderTop: '1px solid #28282d', paddingTop: 12 },
+  usageMetrics: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, borderTop: '1px solid #28282d', paddingTop: 12 },
+  usageMetric: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, padding: '8px 9px', background: '#121212', borderRadius: 7 },
+  usageIcon: { display: 'flex', fontSize: 16, flexShrink: 0 },
+  usageLabel: { display: 'block', color: '#777780', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 2 },
+  usageValue: { display: 'block', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  adoptionRow: { display: 'flex', alignItems: 'center', gap: 10, color: '#9999a2', fontSize: 12, borderTop: '1px solid #28282d', paddingTop: 11 },
   empty: { color: '#6f6f78', fontSize: 13, padding: '4px 0' },
 };
 

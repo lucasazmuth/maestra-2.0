@@ -1,8 +1,8 @@
-import { memo, useEffect, useState } from 'react';
+import { lazy, memo, Suspense, useEffect, useState } from 'react';
 import { Badge, Dropdown, Space, type MenuProps } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiLogOut, FiChevronDown, FiLifeBuoy } from 'react-icons/fi';
+import { FiLogOut, FiChevronDown, FiLifeBuoy, FiStar } from 'react-icons/fi';
 import { NotificationIcon, ConfigIcon } from '../../../Icons/system';
 import { countUnread } from '../../../../services/db/notifications';
 import { supabase } from '../../../../lib/supabase';
@@ -14,6 +14,9 @@ import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
 import { MaestraBrand } from '../../../MaestraBrand';
 
 const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
+const PlatformReviewModal = lazy(() =>
+  import('../../../PlatformReviewModal').then((module) => ({ default: module.PlatformReviewModal }))
+);
 
 export const Topbar = memo(() => {
   const dispatch = useAppDispatch();
@@ -31,6 +34,7 @@ export const Topbar = memo(() => {
   // Contador de notificações não-lidas (badge no sino). Recarrega ao trocar de rota,
   // pra o número cair depois que o usuário abre /notifications e marca como lidas.
   const [unread, setUnread] = useState(0);
+  const [reviewOpen, setReviewOpen] = useState(false);
   useEffect(() => {
     if (!user?.id) { setUnread(0); return; }
     let alive = true;
@@ -77,6 +81,12 @@ export const Topbar = memo(() => {
       label: 'Falar com o suporte',
       onClick: () => window.open(`mailto:${SUPPORT_EMAIL}?subject=Suporte%20Maestra`, '_blank'),
     },
+    {
+      key: 'review',
+      icon: <FiStar size={16} />,
+      label: 'Avaliar a Maestra',
+      onClick: () => setReviewOpen(true),
+    },
     { type: 'divider' },
     {
       key: 'logout',
@@ -87,6 +97,7 @@ export const Topbar = memo(() => {
   ];
 
   return (
+    <>
     <div
       style={{
         height: 56,
@@ -190,6 +201,10 @@ export const Topbar = memo(() => {
         </Dropdown>
       </Space>
     </div>
+    <Suspense fallback={null}>
+      {reviewOpen && <PlatformReviewModal open onClose={() => setReviewOpen(false)} />}
+    </Suspense>
+    </>
   );
 });
 

@@ -5,7 +5,7 @@
  * Validates: Requirements 2, 3, 4, 5 from catalog-track-limit spec.
  */
 
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
@@ -93,6 +93,9 @@ jest.mock('react-icons/fi', () => ({
   FiRefreshCw: () => null,
   FiLock: () => null,
   FiMoreVertical: () => null,
+  FiCheck: () => null,
+  FiSearch: () => null,
+  FiSliders: () => null,
 }));
 
 jest.mock('react-icons/fa6', () => ({
@@ -286,6 +289,47 @@ describe('Catalog Page - Track Limit Integration', () => {
       await waitFor(() => {
         expect(screen.getByText('6/10 faixas')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Catalog filters', () => {
+    it('keeps search compact and exposes advanced filters inside a popover', async () => {
+      mockCatalogItems = [
+        makeCatalogItem({ id: 'track-samba', title: 'Meu Samba', genre: 'Samba', status: 'composition' }),
+        makeCatalogItem({ id: 'track-rock', title: 'Noite Rock', genre: 'Rock', status: 'released' }),
+      ];
+
+      renderCatalog();
+
+      await waitFor(() => {
+        expect(screen.getByText('Meu Samba')).toBeInTheDocument();
+        expect(screen.getByText('Noite Rock')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByPlaceholderText('Buscar no catálogo')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
+
+      const filters = screen.getByRole('dialog', { name: 'Filtros do catálogo' });
+      expect(within(filters).getByPlaceholderText('Buscar no catálogo')).toBeInTheDocument();
+      expect(within(filters).getByText('Status')).toBeInTheDocument();
+      expect(within(filters).getByText('Áudio')).toBeInTheDocument();
+      expect(within(filters).getByText('Ordenar')).toBeInTheDocument();
+
+      fireEvent.click(within(filters).getByRole('button', { name: 'Lançado' }));
+      expect(screen.queryByText('Meu Samba')).not.toBeInTheDocument();
+      expect(screen.getByText('Noite Rock')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Filtros 1' })).toBeInTheDocument();
+
+      fireEvent.click(within(filters).getByRole('button', { name: 'Limpar' }));
+
+      fireEvent.change(
+        within(filters).getByPlaceholderText('Buscar no catálogo'),
+        { target: { value: 'samba' } }
+      );
+
+      expect(screen.getByText('Meu Samba')).toBeInTheDocument();
+      expect(screen.queryByText('Noite Rock')).not.toBeInTheDocument();
+      expect(screen.queryByText('1 de 2 faixa(s)')).not.toBeInTheDocument();
     });
   });
 });

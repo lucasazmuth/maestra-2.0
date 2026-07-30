@@ -1,5 +1,5 @@
-import { FC, ReactNode, useEffect, useState } from 'react';
-import { message } from 'antd';
+import { FC, ReactNode, useEffect, useMemo, useState } from 'react';
+import { Button, message } from 'antd';
 import { FiRefreshCw, FiLock, FiMoreVertical } from 'react-icons/fi';
 import { AddIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
@@ -16,13 +16,23 @@ import { SpotifyEmbedPlayer } from '../../components/SpotifyEmbedPlayer';
 import type { LocalTrack } from '../../components/LocalPlayerBar';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import { TrackModal } from '../../components/TrackModal';
+import {
+  FilterChip,
+  FilterChips,
+  FilterSection,
+  FilterSortList,
+  FilterSortOption,
+  FilterToolbar,
+} from '../../components/FilterToolbar';
 import { CATALOG_STATUS, formatMs, isActiveCatalogStatus } from '../../constants/maestra';
 import * as catalogDb from '../../services/db/catalog';
 import * as genresDb from '../../services/db/genres';
 import * as membersDb from '../../services/db/members';
 import type { CatalogItem, MusicGenre, ArtistMember } from '../../interfaces/maestra';
+import styles from './Catalog.module.scss';
 
 type Tab = 'spotify' | 'manual';
+type SortOption = 'updated-desc' | 'created-desc' | 'title-asc' | 'release-asc';
 
 const StatusBadge: FC<{ status: string }> = ({ status }) => {
   const cfg = (CATALOG_STATUS as any)[status] || { label: status, color: '#6b7280' };
@@ -74,6 +84,13 @@ const Catalog: FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogItem | null>(null);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [genreFilter, setGenreFilter] = useState('all');
+  const [assigneeFilter, setAssigneeFilter] = useState('all');
+  const [audioFilter, setAudioFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<SortOption>('updated-desc');
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
 
   // O player vive no Layout para continuar tocando durante a navegação entre módulos.
   const setPlayerOpen = useLocalPlayerStore((s) => s.setOpen);
@@ -102,6 +119,15 @@ const Catalog: FC = () => {
 
   const artistId = artist?.id;
   const spotifyCatalog = artist?.content?.spotifyCatalog;
+
+  useEffect(() => {
+    setSearch('');
+    setStatusFilter('all');
+    setGenreFilter('all');
+    setAssigneeFilter('all');
+    setAudioFilter('all');
+    setSortBy('updated-desc');
+  }, [artistId]);
 
   // Fila do player local: faixas cadastradas que têm áudio.
   const localTracks: LocalTrack[] = items
@@ -154,6 +180,74 @@ const Catalog: FC = () => {
       .map((m) => ({ id: (m.user_id || m.id) as string, name: m.name || m.email })),
   ];
 
+  const availableGenres = useMemo(() => (
+    Array.from(new Set(items.map((item) => item.genre?.trim()).filter((value): value is string => !!value)))
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  ), [items]);
+
+  const availableAssignees = useMemo(() => {
+    const entries = items
+      .filter((item) => !!item.assignee?.id)
+      .map((item) => [item.assignee!.id, item.assignee!.name] as const);
+    return Array.from(new Map(entries).entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    const normalized = search.trim().toLocaleLowerCase('pt-BR');
+    const timestamp = (item: CatalogItem, field: 'updated' | 'created') => {
+      const value = field === 'updated' ? item.updated_at || item.created_at : item.created_at;
+      return value ? Date.parse(value) || 0 : 0;
+    };
+
+    return items
+      .filter((item) => {
+        const searchable = [
+          item.title,
+          item.genre,
+          item.isrc,
+          item.upc,
+          item.assignee?.name,
+        ].filter(Boolean).join(' ').toLocaleLowerCase('pt-BR');
+        const matchesSearch = !normalized || searchable.includes(normalized);
+        const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+        const matchesGenre = genreFilter === 'all' || item.genre === genreFilter;
+        const matchesAssignee = assigneeFilter === 'all' || item.assignee?.id === assigneeFilter;
+        const matchesAudio =
+          audioFilter === 'all' ||
+          (audioFilter === 'with-audio' ? !!item.audio_file : !item.audio_file);
+        return matchesSearch && matchesStatus && matchesGenre && matchesAssignee && matchesAudio;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'title-asc') return a.title.localeCompare(b.title, 'pt-BR');
+        if (sortBy === 'created-desc') return timestamp(b, 'created') - timestamp(a, 'created');
+        if (sortBy === 'release-asc') {
+          if (!a.release_date) return 1;
+          if (!b.release_date) return -1;
+          return a.release_date.localeCompare(b.release_date);
+        }
+        return timestamp(b, 'updated') - timestamp(a, 'updated');
+      });
+  }, [assigneeFilter, audioFilter, genreFilter, items, search, sortBy, statusFilter]);
+
+  const activeFilterCount = [
+    statusFilter !== 'all',
+    genreFilter !== 'all',
+    assigneeFilter !== 'all',
+    audioFilter !== 'all',
+    sortBy !== 'updated-desc',
+  ].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setSearch('');
+    setStatusFilter('all');
+    setGenreFilter('all');
+    setAssigneeFilter('all');
+    setAudioFilter('all');
+    setSortBy('updated-desc');
+  };
+
   // Se não houver catálogo Spotify, abre na aba manual.
   useEffect(() => {
     if (artist && !spotifyCatalog?.tracks?.length) setTab('manual');
@@ -199,6 +293,113 @@ const Catalog: FC = () => {
     >
       {icon}{label}
     </button>
+  );
+
+  const catalogFilterControls = (
+    <FilterToolbar
+      searchValue={search}
+      onSearchChange={setSearch}
+      searchPlaceholder="Buscar no catálogo"
+      searchPlacement="popover"
+      title="Filtros do catálogo"
+      subtitle="Busque e refine o catálogo"
+      activeCount={activeFilterCount}
+      onClear={clearFilters}
+      open={filterPopoverOpen}
+      onOpenChange={setFilterPopoverOpen}
+    >
+      <FilterSection label="Status">
+        <FilterChips>
+          <FilterChip selected={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>
+            Todos
+          </FilterChip>
+          {Object.entries(CATALOG_STATUS).map(([value, config]) => (
+            <FilterChip
+              key={value}
+              selected={statusFilter === value}
+              onClick={() => setStatusFilter(value)}
+            >
+              {config.label}
+            </FilterChip>
+          ))}
+        </FilterChips>
+      </FilterSection>
+
+      {!!availableGenres.length && (
+        <FilterSection label="Gênero">
+          <FilterChips>
+            <FilterChip selected={genreFilter === 'all'} onClick={() => setGenreFilter('all')}>
+              Todos
+            </FilterChip>
+            {availableGenres.map((genre) => (
+              <FilterChip
+                key={genre}
+                selected={genreFilter === genre}
+                onClick={() => setGenreFilter(genre)}
+              >
+                {genre}
+              </FilterChip>
+            ))}
+          </FilterChips>
+        </FilterSection>
+      )}
+
+      {!!availableAssignees.length && (
+        <FilterSection label="Responsável">
+          <FilterChips>
+            <FilterChip selected={assigneeFilter === 'all'} onClick={() => setAssigneeFilter('all')}>
+              Todos
+            </FilterChip>
+            {availableAssignees.map((assignee) => (
+              <FilterChip
+                key={assignee.id}
+                selected={assigneeFilter === assignee.id}
+                onClick={() => setAssigneeFilter(assignee.id)}
+              >
+                {assignee.name}
+              </FilterChip>
+            ))}
+          </FilterChips>
+        </FilterSection>
+      )}
+
+      <FilterSection label="Áudio">
+        <FilterChips>
+          {[
+            { value: 'all', label: 'Todos' },
+            { value: 'with-audio', label: 'Com áudio' },
+            { value: 'without-audio', label: 'Sem áudio' },
+          ].map((option) => (
+            <FilterChip
+              key={option.value}
+              selected={audioFilter === option.value}
+              onClick={() => setAudioFilter(option.value)}
+            >
+              {option.label}
+            </FilterChip>
+          ))}
+        </FilterChips>
+      </FilterSection>
+
+      <FilterSection label="Ordenar">
+        <FilterSortList>
+          {[
+            { value: 'updated-desc', label: 'Atualizadas recentemente' },
+            { value: 'created-desc', label: 'Criadas recentemente' },
+            { value: 'title-asc', label: 'Título de A–Z' },
+            { value: 'release-asc', label: 'Data de lançamento' },
+          ].map((option) => (
+            <FilterSortOption
+              key={option.value}
+              selected={sortBy === option.value}
+              onClick={() => setSortBy(option.value as SortOption)}
+            >
+              {option.label}
+            </FilterSortOption>
+          ))}
+        </FilterSortList>
+      </FilterSection>
+    </FilterToolbar>
   );
 
   return (
@@ -265,9 +466,10 @@ const Catalog: FC = () => {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
         <TabButton id='manual' label='Faixas / Rascunho' />
         <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify color='#9A4FD1' />} />
+        {tab === 'manual' && !!items.length && catalogFilterControls}
       </div>
 
       {tab === 'spotify' ? (
@@ -389,9 +591,15 @@ const Catalog: FC = () => {
             <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>
               {canEditCatalog ? 'Nenhuma faixa no catálogo ainda. Cadastre a primeira.' : 'Nenhuma faixa no catálogo ainda.'}
             </div>
+          ) : !filteredItems.length ? (
+            <div className={styles.noResults}>
+              <strong>Nenhuma faixa encontrada</strong>
+              <span>Ajuste os filtros ou limpe a busca para visualizar o catálogo.</span>
+              <Button onClick={clearFilters}>Limpar filtros</Button>
+            </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {items.map((it) => (
+              {filteredItems.map((it) => (
                 <div
                   key={it.id}
                   title={it.audio_file ? 'Ouvir aqui' : (canEditTracks ? 'Sem áudio — clique para editar' : 'Sem áudio')}

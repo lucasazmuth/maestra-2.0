@@ -1,0 +1,22 @@
+.noResults {
+  display: flex;
+  align-items: center;
+  min-height: 220px;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  color: #74747e;
+  border: 1px dashed #303036;
+  border-radius: 11px;
+  text-align: center;
+}
+
+.noResults strong {
+  color: #d8d8dd;
+  font-size: 14px;
+}
+
+.noResults span {
+  margin-bottom: 8px;
+  font-size: 12.5px;
+}

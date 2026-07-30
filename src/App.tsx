@@ -56,6 +56,8 @@ const AdminKnowledgeBase = lazy(() => import('./pages/Admin/KnowledgeBase'));
 const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
 const AdminCoupons = lazy(() => import('./pages/Admin/Coupons'));
 const AdminUsers = lazy(() => import('./pages/Admin/Users'));
+const AdminArtists = lazy(() => import('./pages/Admin/Artists'));
+const AdminReviews = lazy(() => import('./pages/Admin/Reviews'));
 const AdminPush = lazy(() => import('./pages/Admin/Push'));
 const SubscriptionPage = lazy(() => import('./pages/Subscription'));
 const SubscriptionSuccessPage = lazy(() => import('./pages/SubscriptionSuccess'));
@@ -283,6 +285,9 @@ const AppRoutes: FC = () => {
             <Route path='/admin/knowledge-base' element={<AdminKnowledgeBase />} />
             <Route path='/admin/cupons' element={<AdminCoupons />} />
             <Route path='/admin/usuarios' element={<AdminUsers />} />
+            <Route path='/admin/artistas' element={<AdminArtists />} />
+            <Route path='/admin/artistas/:artistId' element={<AdminArtists />} />
+            <Route path='/admin/avaliacoes' element={<AdminReviews />} />
             <Route path='/admin/push' element={<AdminPush />} />
           </Route>
           <Route path='*' element={<Page404 />} />

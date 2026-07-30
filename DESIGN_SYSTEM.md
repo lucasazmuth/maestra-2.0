@@ -100,6 +100,26 @@ Use fundo transparente ou superfície escura, texto branco e borda discreta. O h
 
 Cards usam contraste de superfície, não uma profusão de bordas. Campos precisam de rótulo persistente, placeholder secundário e foco violeta. Erro continua vermelho; sucesso e o Diagnóstico REAL mantêm seus verdes semânticos.
 
+### Busca e filtros de listas
+
+Use `src/components/FilterToolbar` em Catálogo, Equipe, Agenda e demais listas do produto.
+
+- A busca usa uma pill escura, ícone à esquerda e largura limitada; não estique o campo até a borda da área de conteúdo.
+- Quando a lista já possui abas em pills, posicione `Filtros` na mesma fileira e use `searchPlacement="popover"` para manter a busca dentro do painel, sem criar uma segunda barra.
+- O botão `Filtros` é uma pill adjacente e exibe somente a quantidade de filtros ativos.
+- Os filtros abrem em popover ancorado. Não use modal nem uma grade permanente de selects para filtragem de listas.
+- Opções curtas usam `FilterChip`; ordenação usa `FilterSortOption`.
+- A seleção é imediata. Mostre `Limpar` somente quando houver filtros ativos.
+- Contagens de resultados não ocupam a barra principal; apresente-as apenas quando forem relevantes para a tarefa.
+- Em mobile, preserve busca e botão na mesma linha sempre que houver largura suficiente; o popover deve respeitar as margens da viewport.
+
+Primitivos disponíveis:
+
+- `FilterToolbar`;
+- `FilterSection`;
+- `FilterChips` e `FilterChip`;
+- `FilterSortList` e `FilterSortOption`.
+
 ### Títulos
 
 Títulos estruturais usam Inter em caixa normal. Caixa alta fica reservada a kickers, categorias, indicadores e metadados curtos. Títulos de card e textos de tarefa também usam caixa normal. Evite tracking amplo em parágrafos.
