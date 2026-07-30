@@ -254,7 +254,7 @@ export const NytaFloatingModal: FC = () => {
   return (
     <div
       ref={panelRef}
-      className={containerClassName}
+      className={`${containerClassName} nyta-reference-modal`}
       style={panelStyle}
       role="dialog"
       aria-label="Nyta"

@@ -228,8 +228,8 @@ const Agenda: FC = () => {
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div className="agenda-page agenda-reference-page" style={{ padding: 24 }}>
+      <div className="agenda-page-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: 0 }}>
           Agenda
         </h1>
@@ -302,15 +302,15 @@ const Agenda: FC = () => {
 
       <Spinner loading={loading && !events.length}>
         {view === 'month' ? (
-          <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, marginBottom: 6 }}>
+          <div className="agenda-month-view">
+            <div className="agenda-weekdays" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, marginBottom: 6 }}>
               {WEEKDAYS.map((w) => (
-                <div key={w} style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700, textAlign: 'center' }}>
+                <div key={w}>
                   {w}
                 </div>
               ))}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6 }}>
+            <div className="agenda-month-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6 }}>
               {monthDays.map((d) => {
                 const key = d.format('YYYY-MM-DD');
                 const dayEvents = byDate[key] || [];
@@ -319,6 +319,7 @@ const Agenda: FC = () => {
                 return (
                   <div
                     key={key}
+                    className={`agenda-day${inMonth ? '' : ' agenda-day-outside'}${isToday ? ' agenda-day-today' : ''}`}
                     onClick={() => openCreate(key)}
                     style={{
                       minHeight: 96,
@@ -330,12 +331,13 @@ const Agenda: FC = () => {
                       opacity: inMonth ? 1 : 0.5,
                     }}
                   >
-                    <div style={{ color: isToday ? '#9A4FD1' : '#b3b3b3', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
+                    <div className="agenda-day-number">
                       {d.date()}
                     </div>
                     {dayEvents.slice(0, 3).map((e) => (
                       <div
                         key={e.id}
+                        className="agenda-event-chip"
                         onClick={(ev) => {
                           ev.stopPropagation();
                           openEdit(e);
@@ -384,11 +386,12 @@ const Agenda: FC = () => {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {!upcoming.length ? (
-              <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>Nenhum evento agendado.</div>
+              <div className="agenda-empty" style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>Nenhum evento agendado.</div>
             ) : (
               upcoming.map((e) => (
                 <div
                   key={e.id}
+                  className="agenda-list-item"
                   onClick={() => openEdit(e)}
                   style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 12, borderRadius: 8, background: '#181818', cursor: 'pointer' }}
                 >

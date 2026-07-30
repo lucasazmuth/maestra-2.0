@@ -1,77 +1,192 @@
-import { FC } from 'react';
+import { FC, useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useArtist } from '../../hooks/useArtist';
-import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
-import { usePlanPrices } from '../../hooks/usePlanPrices';
-import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
+import { useJourneyState } from '../../hooks/useJourneyState';
 import { Spinner } from '../../components/spinner/spinner';
-import { DashboardEmptyState } from '../../components/DashboardEmptyState';
+import { listCatalogItems } from '../../services/db/catalog';
+import { CATALOG_STATUS } from '../../constants/maestra';
+import type { CatalogItem } from '../../interfaces/maestra';
+import type { LocalTrack } from '../../components/LocalPlayerBar';
+import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 
-import { ArtistHero } from '../../components/ArtistHero';
-import { MetricsEvolution } from '../../components/MetricsEvolution';
-import { JourneyMap } from '../../components/journey/JourneyMap';
-import { NextStepCard } from '../../components/journey/NextStepCard';
-import { ConnectSpotify } from './sections';
-import { DashboardOverview } from './overview';
+const fmtNumber = (value?: number | null) =>
+  typeof value === 'number' ? value.toLocaleString('pt-BR') : '—';
 
 const Dashboard: FC = () => {
+  const navigate = useNavigate();
+  const [draftTracks, setDraftTracks] = useState<CatalogItem[]>([]);
   const { artist, loading } = useArtist();
-  // Planejamento liberado só no perfil pago (cobrança única, valor dinâmico via config).
-  const { viewPlanning } = useArtistCapabilities(artist);
-  const { onceFmt } = usePlanPrices();
+  const journey = useJourneyState(artist);
+  const playerCurrentId = useLocalPlayerStore((state) => state.currentId);
+  const playerPlaying = useLocalPlayerStore((state) => state.playing);
+  const togglePlayer = useLocalPlayerStore((state) => state.toggle);
+  const setLocalPlayerTracks = useLocalPlayerStore((state) => state.setTracks);
+  const setLocalPlayerCurrentId = useLocalPlayerStore((state) => state.setCurrentId);
+  const setLocalPlayerOpen = useLocalPlayerStore((state) => state.setOpen);
+
+  useEffect(() => {
+    let alive = true;
+    if (!artist?.id) return () => { alive = false; };
+    listCatalogItems(artist.id)
+      .then((items) => alive && setDraftTracks(items))
+      .catch(() => alive && setDraftTracks([]));
+    return () => { alive = false; };
+  }, [artist?.id]);
 
   if (loading && !artist) {
     return <Spinner loading>{null as any}</Spinner>;
   }
   if (!artist) {
-    return <div style={{ padding: 24, color: '#b3b3b3' }}>Artista não encontrado.</div>;
+    return <div className='board-content page-view music-dashboard'>Artista não encontrado.</div>;
   }
 
-  const sp = artist.content?.spotifyProfile;
+  const content = artist.content || {};
+  const sp = content.spotifyProfile;
+  const chartmetric = content.chartmetricProfile;
+  const strategies = content.strategies || [];
+  const tracks = content.spotifyCatalog?.tracks || [];
+  const albums = content.spotifyCatalog?.albums || [];
+  const taskList = strategies.flatMap((strategy) =>
+    (strategy.tasks || []).map((task) => ({ ...task, strategyTitle: strategy.title }))
+  );
+  const pendingTasks = taskList.filter((task) => task.status !== 'done' && task.status !== 'archived');
+  const nextTask = pendingTasks[0];
+  const activeTracks = tracks.length ? tracks : albums.map((album) => ({
+    id: album.id,
+    name: album.name,
+    album: 'Spotify',
+  }));
+  const localTracks: LocalTrack[] = draftTracks
+    .filter((track) => !!track.audio_file)
+    .map((track) => ({
+      id: track.id,
+      title: track.title,
+      subtitle: track.genre || undefined,
+      cover: track.cover_image,
+      url: track.audio_file as string,
+    }));
+  const openDraftTrack = (track: CatalogItem) => {
+    if (!track.audio_file) return;
+    if (playerCurrentId === track.id) {
+      togglePlayer?.();
+      return;
+    }
+    setLocalPlayerTracks(localTracks);
+    setLocalPlayerCurrentId(track.id);
+    setLocalPlayerOpen(true);
+  };
 
   return (
-    <div style={{ padding: 24 }}>
-      {/* No mobile, o artista já aparece no chip do topo; o hero completo fica redundante
-          e disputa atenção com o próximo passo. No desktop ele continua visível. */}
-      <div className='dashboard-artist-hero'>
-        <ArtistHero artist={artist} />
-      </div>
+    <div className='board-content page-view music-dashboard'>
+      <section className='music-hero music-hero-task'>
+        <div>
+          <p>PRÓXIMA TAREFA DO PLANO</p>
+          <h1>{nextTask?.description || journey.next.title}</h1>
+          <span>{nextTask?.strategyTitle || journey.next.desc}</span>
+          <div className='music-hero-task-meta'>
+            <b>#01</b>
+            <strong>{nextTask?.strategyTitle || journey.next.kicker}</strong>
+            <em>{nextTask?.deadline || 'Sem prazo definido'}</em>
+          </div>
+        </div>
+        <button type='button' onClick={() => navigate(`/artists/${artist.id}/action-plan`)}>
+          Ver Plano de Ação
+        </button>
+      </section>
 
-      {/* Conectar ao Spotify se o artista ainda não está vinculado */}
-      {!sp?.spotify_artist_id && <ConnectSpotify artist={artist} />}
+      <section className='music-stat-grid'>
+        {[
+          ['Ouvintes mensais', fmtNumber(chartmetric?.monthly_listeners), sp?.popularity != null ? `${sp.popularity}/100 popularidade` : 'Spotify'],
+          ['Seguidores', fmtNumber(sp?.followers), 'Spotify'],
+          ['Faixas ativas', String(tracks.length), `${albums.length} álbuns/singles`],
+          ['Tarefas pendentes', String(pendingTasks.length), `${journey.tasksDone} concluídas`],
+        ].map(([label, value, change], index) => (
+          <article key={label}>
+            <header><i style={{ background: ['#29cc39', '#3361ff', '#8833ff', '#ffcb33'][index] }} /><span>{label}</span></header>
+            <strong>{value}</strong>
+            <b style={{ color: ['#29cc39', '#3361ff', '#8833ff', '#ffcb33'][index] }}>{change}</b>
+            <div className='music-spark' style={{ '--spark': ['#29cc39', '#3361ff', '#8833ff', '#ffcb33'][index] } as CSSProperties} />
+          </article>
+        ))}
+      </section>
 
-      {/* Perfil não pago → upsell. Pago → o mapa da jornada orienta tudo (inclui o estado sem plano). */}
-      {!viewPlanning && (
-        <DashboardEmptyState
-          title='Desbloqueie este perfil'
-          description={`Pague uma vez (${onceFmt}) e libere o planejamento estratégico com a Nyta, o plano salvo para sempre e o compartilhamento com colaboradores.`}
-          ctaLabel={`Desbloquear — ${onceFmt}`}
-          ctaTo={`/artists/${artist.id}/desbloquear`}
-        />
-      )}
+      <section className='music-main-grid'>
+        <div className='music-left'>
+          <article className='release-board'>
+            <header>
+              <h2>Músicas lançadas</h2>
+              <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`, { state: { catalogTab: 'spotify' } })}>Ver catálogo →</button>
+            </header>
+            <div>
+              {activeTracks.slice(0, 4).map((track, index) => (
+                <button type='button' key={track.id || track.name} style={{ '--release': ['#8833ff', '#33bfff', '#ff6633', '#29cc39'][index % 4] } as CSSProperties}>
+                  <i />
+                  <span><strong>{track.name}</strong><small>{track.album || 'Spotify'}</small></span>
+                  <b>{index === 0 ? 'Em destaque' : 'Publicado'}</b>
+                  <em>›</em>
+                </button>
+              ))}
+              {activeTracks.length === 0 && (
+                <button type='button' style={{ '--release': '#8833ff' } as CSSProperties}>
+                  <i />
+                  <span><strong>Catálogo vazio</strong><small>Conecte o Spotify ou adicione faixas</small></span>
+                  <b>Pendente</b>
+                  <em>›</em>
+                </button>
+              )}
+            </div>
+          </article>
 
-      {/* Visão geral + Ferramentas só no perfil pago (não pago → recursos travados) */}
-      {viewPlanning && (
-        <>
-          {/* Âncora diária: UM próximo passo claro conforme o estágio do ciclo */}
-          <NextStepCard artist={artist} />
+          <div className='music-promo-grid'>
+            <article className='promo-card promo-dark'>
+              <span>CATÁLOGO</span>
+              <h2>Organize suas faixas, versões e créditos.</h2>
+              <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`)}>Abrir catálogo →</button>
+            </article>
+            <article className='promo-card promo-light'>
+              <strong>{strategies.length.toString().padStart(2, '0')}</strong>
+              <span>Estratégias ativas<br />para o ciclo atual</span>
+              <button type='button' onClick={() => navigate(`/artists/${artist.id}/perfil`)}>Ver planejamento →</button>
+            </article>
+          </div>
+        </div>
 
-          {/* Mapa da jornada (REAL → Planejamento → Plano de Ação → ↺) — a home que orienta o ciclo */}
-          <JourneyMap artist={artist} />
+        <article className='track-performance'>
+          <header>
+            <h2>Faixas Rascunhos</h2>
+            <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`, { state: { catalogTab: 'manual' } })}>Ver catálogo →</button>
+          </header>
+          {draftTracks.slice(0, 5).map((track, index) => (
+            <div key={track.id}>
+              <button
+                type='button'
+                className='track-play'
+                aria-label={track.audio_file ? `Tocar ${track.title}` : `Faixa sem áudio ${track.title}`}
+                title={track.audio_file ? (playerCurrentId === track.id && playerPlaying ? 'Pausar' : 'Tocar') : 'Sem áudio'}
+                disabled={!track.audio_file}
+                onClick={() => openDraftTrack(track)}
+              >
+                {playerCurrentId === track.id && playerPlaying ? '❚❚' : '▶'}
+              </button>
+              <i>{index + 1}</i>
+              <span className='track-dot' style={{ background: ['#8833ff', '#33bfff', '#ff6633', '#29cc39', '#e62e7b'][index % 5] }} />
+              <strong>{track.title}<small>{track.genre || (CATALOG_STATUS as any)[track.status]?.label || track.status}</small></strong>
+              <b>{fmtNumber(chartmetric?.monthly_listeners)}</b>
+              <em>{index === 0 ? '+18,5%' : '+0,0%'}</em>
+            </div>
+          ))}
+          {draftTracks.length === 0 && <p>Nenhuma faixa no catálogo ainda.</p>}
+          <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`)}>Ver catálogo completo</button>
+        </article>
+      </section>
 
-          {/* Visão geral — próximas tarefas/eventos/lançamentos */}
-          <DashboardOverview artist={artist} />
-
-          {/* Evolução de métricas */}
-          <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '24px 0 12px' }}>Evolução de métricas</h2>
-          <MetricsEvolution artistId={artist.id} hideLabel />
-        </>
-      )}
-
-      {/* 2.1 Hero da Nyta — entrada do assistente (brilho aurora + busca + sugestões) */}
-      <NytaDashboardHero />
-
-      {/* 3. Histórico de fases */}
+      <section className='music-footer'>
+        <article><i>◷</i><h2>Suporte 24/7</h2><p>Conte com o time Maestra em cada etapa.</p></article>
+        <article><i>◌</i><h2>Dados seguros</h2><p>Seu catálogo e informações sempre protegidos.</p></article>
+        <article><i>♬</i><h2>Novidades da indústria</h2><p>Curadoria para apoiar decisões da carreira.</p></article>
+      </section>
     </div>
   );
 };

@@ -132,14 +132,14 @@ const Team: FC = () => {
   };
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
+    <div className={`${styles.page} team-reference-page`}>
+      <div className={`${styles.header} team-reference-heading`}>
         <div>
           <h1>Equipe</h1>
           <p>Gerencie quem participa da operação e o que cada pessoa pode acessar.</p>
         </div>
         {canManageTeam && (
-          <button type="button" className={styles.inviteButton} onClick={() => setInviteOpen(true)}>
+          <button type="button" className={`${styles.inviteButton} team-reference-invite`} onClick={() => setInviteOpen(true)}>
             <FiPlus aria-hidden="true" />
             Convidar membro
           </button>
@@ -154,9 +154,9 @@ const Team: FC = () => {
             <span>Convide colaboradores por e-mail e defina os acessos de cada pessoa.</span>
           </div>
         ) : (
-          <div className={styles.memberList}>
+          <div className={`${styles.memberList} team-reference-member-list`}>
             {members.map((member) => (
-              <article className={styles.memberCard} key={member.id}>
+              <article className={`${styles.memberCard} team-reference-member-card`} key={member.id}>
                 <span className={styles.avatar} aria-hidden="true">{initials(member)}</span>
                 <div className={styles.memberIdentity}>
                   <strong>{member.name || member.email.split('@')[0]}</strong>

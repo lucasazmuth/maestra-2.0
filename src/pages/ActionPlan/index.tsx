@@ -14,8 +14,6 @@ import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { TaskProgress } from '../../components/RealCareerCard';
-import { PageHeader } from '../../components/PageHeader';
-import { PRODUCT_THEME, pageBg } from '../../components/productTheme';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { UpsellModal } from '../../components/UpsellModal';
 import featureAction from '../../assets/feature-action.png';
@@ -365,27 +363,17 @@ const ActionPlan: FC = () => {
   };
 
   return (
-    <div className="ap" style={{ minHeight: '100%', ...pageBg(PRODUCT_THEME.action.accent) }}>
-      {/* Cabeçalho limpo, alinhado ao padrão da Agenda. */}
-      <PageHeader
-        title="Plano de Ação"
-        subtitle="Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase."
-      />
+    <div className="ap action-plan-page">
+      <header className="module-page-heading">
+        <div>
+          <p>EXECUÇÃO DIÁRIA</p>
+          <h1>Plano de Ação</h1>
+          <span>Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase.</span>
+        </div>
+      </header>
 
       {/* Progresso das tarefas — card escuro simples (sem gradiente de fundo). */}
-      <div
-        className="ap-progress-card"
-        style={{
-          position: 'relative',
-          overflow: 'hidden',
-          backgroundColor: '#141416',
-          border: `1px solid rgba(${PRODUCT_THEME.action.accent},0.16)`,
-          boxShadow: '0 12px 32px -16px rgba(0,0,0,0.7)',
-          borderRadius: 14,
-          padding: 22,
-          marginBottom: 24,
-        }}
-      >
+      <div className="ap-progress-card">
         {/* Ícone decorativo do produto, grande e translúcido no canto (igual ao card da jornada). */}
         <span aria-hidden style={{ position: 'absolute', right: -10, bottom: -28, opacity: 0.08, pointerEvents: 'none', lineHeight: 0 }}>
           <img src={featureAction} alt="" style={{ display: 'block', width: 210, height: 'auto', filter: 'drop-shadow(0 18px 30px rgba(0,0,0,0.45))' }} />

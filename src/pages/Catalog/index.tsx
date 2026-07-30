@@ -115,6 +115,7 @@ const Catalog: FC = () => {
 
   useEffect(() => {
     if (location.state?.catalogTab === 'manual') setTab('manual');
+    if (location.state?.catalogTab === 'spotify') setTab('spotify');
   }, [location.state]);
 
   const artistId = artist?.id;
@@ -403,16 +404,13 @@ const Catalog: FC = () => {
   );
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <h1 className='catalog-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: 0 }}>
-          Catálogo
-        </h1>
-        {/* Contador + "Nova faixa" só pra quem pode editar o catálogo (dono ou PRO). Colaborador
-            sem PRO vê o catálogo em somente-leitura: sem contador de limite e sem CTA que abriria
-            um upsell de "limite atingido" enganoso (ele está em 0/10; o bloqueio é de permissão). */}
+    <div className='catalog-page catalog-reference-page'>
+      <div className='catalog-page-heading'>
+        <div>
+          <h1>Catálogo</h1>
+        </div>
         {tab === 'manual' && canEditCatalog && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+          <div className='catalog-heading-actions'>
             {maxTracks !== Infinity && <TrackCounter currentCount={currentCount} maxTracks={maxTracks} />}
             <button
               className='catalog-add-btn'
@@ -424,56 +422,24 @@ const Catalog: FC = () => {
                 setEditing(null);
                 setModalOpen(true);
               }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                background: '#9A4FD1',
-                border: 'none',
-                color: '#FFFFFF',
-                padding: '10px 20px',
-                borderRadius: 9999,
-                cursor: canAdd ? 'pointer' : 'not-allowed',
-                fontWeight: 700,
-                opacity: canAdd ? 1 : 0.5,
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-              }}
             >
               <AddIcon size={18} /> Nova faixa
             </button>
           </div>
         )}
         {tab === 'spotify' && (
-          <button
-            onClick={() => artistId && dispatch(artistsActions.refreshSpotifyProfile({ id: artistId, force: true }))}
-            disabled={refreshing}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: 'rgba(255,255,255,0.1)',
-              border: 'none',
-              color: '#fff',
-              padding: '10px 20px',
-              borderRadius: 9999,
-              cursor: 'pointer',
-              fontWeight: 700,
-            }}
-          >
+          <button className='catalog-refresh-btn' onClick={() => artistId && dispatch(artistsActions.refreshSpotifyProfile({ id: artistId, force: true }))} disabled={refreshing}>
             <FiRefreshCw /> {refreshing ? 'Atualizando…' : 'Atualizar do Spotify'}
           </button>
         )}
       </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+      <div className='catalog-tabs'>
         <TabButton id='manual' label='Faixas / Rascunho' />
         <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify color='#9A4FD1' />} />
         {tab === 'manual' && !!items.length && catalogFilterControls}
       </div>
-
       {tab === 'spotify' ? (
-        <div>
+        <div className='catalog-reference-list'>
           {!spotifyCatalog?.tracks?.length ? (
             <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>
               Nenhum lançamento publicado no Spotify vinculado a este artista.
@@ -587,6 +553,7 @@ const Catalog: FC = () => {
               </button>
             </div>
           )}
+          <div className='catalog-reference-list'>
           {!items.length ? (
             <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>
               {canEditCatalog ? 'Nenhuma faixa no catálogo ainda. Cadastre a primeira.' : 'Nenhuma faixa no catálogo ainda.'}
@@ -706,6 +673,7 @@ const Catalog: FC = () => {
               ))}
             </div>
           )}
+          </div>
         </Spinner>
       )}
 
