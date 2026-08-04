@@ -639,135 +639,47 @@
   }
 }
 
-/* Planning reference: the strategic workspace uses the deep-blue editorial canvas. */
-.task-app:not(.public-app) .planning-page {
-  background: #0d2146;
-  border-color: #263e69;
-  color: #dbe7ff;
-}
+.workspace-mobile-nav { display: none; }
 
-.task-app:not(.public-app) .planning-page .module-page-heading {
-  border-color: #29446f;
-}
-
-.task-app:not(.public-app) .planning-page .module-page-heading p,
-.task-app:not(.public-app) .planning-page .planning-stage-card header span,
-.task-app:not(.public-app) .planning-page .planning-next header span,
-.task-app:not(.public-app) .planning-page .planning-references > header p,
-.task-app:not(.public-app) .planning-page .planning-objectives > header p,
-.task-app:not(.public-app) .planning-page .planning-swot > header p,
-.task-app:not(.public-app) .planning-page .planning-strategies > header p,
-.task-app:not(.public-app) .planning-page .planning-intro-card p,
-.task-app:not(.public-app) .planning-page .planning-focus p {
-  color: #9eb5dc;
-}
-
-.task-app:not(.public-app) .planning-page .module-page-heading h1,
-.task-app:not(.public-app) .planning-page .planning-references > header h2,
-.task-app:not(.public-app) .planning-page .planning-objectives > header h2,
-.task-app:not(.public-app) .planning-page .planning-swot > header h2,
-.task-app:not(.public-app) .planning-page .planning-strategies > header h2 {
-  color: #f3f7ff;
-}
-
-.task-app:not(.public-app) .planning-page .module-page-heading span,
-.task-app:not(.public-app) .planning-page .planning-references > header span,
-.task-app:not(.public-app) .planning-page .planning-objectives > header span,
-.task-app:not(.public-app) .planning-page .planning-swot > header span,
-.task-app:not(.public-app) .planning-page .planning-strategies > header span {
-  color: #9eb1d0;
-}
-
-.task-app:not(.public-app) .planning-page .planning-stage-card,
-.task-app:not(.public-app) .planning-page .planning-overview-grid article,
-.task-app:not(.public-app) .planning-page .planning-next,
-.task-app:not(.public-app) .planning-page .fundamentals-grid article,
-.task-app:not(.public-app) .planning-page .planning-objectives ol,
-.task-app:not(.public-app) .planning-page .planning-swot article,
-.task-app:not(.public-app) .planning-page .planning-strategies > div,
-.task-app:not(.public-app) .planning-page .reference-map {
-  border-color: #29446f;
-  background: #142b53;
-  box-shadow: none;
-}
-
-.task-app:not(.public-app) .planning-page .planning-stage-card > p,
-.task-app:not(.public-app) .planning-page .planning-stage-name,
-.task-app:not(.public-app) .planning-page .planning-next > div,
-.task-app:not(.public-app) .planning-page .fundamentals-grid strong,
-.task-app:not(.public-app) .planning-page .planning-objectives li span,
-.task-app:not(.public-app) .planning-page .planning-swot ul,
-.task-app:not(.public-app) .planning-page .planning-strategies strong,
-.task-app:not(.public-app) .planning-page .planning-note {
-  color: #c1d0e8;
-}
-
-.task-app:not(.public-app) .planning-page .planning-overview-grid strong,
-.task-app:not(.public-app) .planning-page .planning-stage-card header button,
-.task-app:not(.public-app) .planning-page .planning-strategies em {
-  color: #65a0ff;
-}
-
-.task-app:not(.public-app) .planning-page .planning-focus {
-  background: linear-gradient(135deg, #265ee8, #4f82ff);
-}
-
-.task-app:not(.public-app) .planning-page .planning-intro-card {
-  background: #193b82;
-}
-
-.task-app:not(.public-app) .planning-page .planning-next > div,
-.task-app:not(.public-app) .planning-page .planning-objectives li,
-.task-app:not(.public-app) .planning-page .planning-strategies > div article {
-  border-color: #29446f;
-}
-
-.task-app:not(.public-app) .planning-page .planning-next > div strong,
-.task-app:not(.public-app) .planning-page .planning-next > div b,
-.task-app:not(.public-app) .planning-page .planning-objectives li b {
-  color: #d5e2f8;
-}
-
-.task-app:not(.public-app) .planning-page .career-line::before {
-  background: #466087;
-}
-
-.task-app:not(.public-app) .planning-page .career-line b {
-  border-color: #52719f;
-  background: #1b3763;
-  color: #b8cbed;
-  box-shadow: 0 0 0 1px #29446f;
-}
-
-.task-app:not(.public-app) .planning-page .career-line b.career-highlight {
-  border-color: #4f82ff;
-  background: #3361ff;
-  color: #fff;
-}
-
-.task-app:not(.public-app) .planning-page .career-current {
-  color: #a9bcdb;
-}
-
-.task-app:not(.public-app) .planning-page .planning-focus > span,
-.task-app:not(.public-app) .planning-page .planning-next > div strong,
-.task-app:not(.public-app) .planning-page .fundamentals-grid strong {
+.planning-page .planning-focus > span,
+.planning-page .planning-next > div strong,
+.planning-page .fundamentals-grid strong {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
 }
 
-.task-app:not(.public-app) .planning-page .planning-focus > span { -webkit-line-clamp: 3; }
-.task-app:not(.public-app) .planning-page .planning-next > div strong { -webkit-line-clamp: 2; }
-.task-app:not(.public-app) .planning-page .fundamentals-grid strong { -webkit-line-clamp: 4; }
+.planning-page .planning-focus > span { -webkit-line-clamp: 3; }
+.planning-page .planning-next > div strong { -webkit-line-clamp: 2; }
+.planning-page .fundamentals-grid strong { -webkit-line-clamp: 4; }
 
-@media (max-width: 700px) {
-  .task-app:not(.public-app) .planning-page {
-    background: #0d2146;
-  }
+/* Match the Novo Gsap planning palette after the later workspace overrides. */
+.planning-page .planning-stage-card,
+.planning-page .planning-overview-grid article,
+.planning-page .planning-next,
+.planning-page .fundamentals-grid article,
+.planning-page .planning-objectives ol,
+.planning-page .planning-swot article,
+.planning-page .planning-strategies > div,
+.planning-page .reference-map {
+  background: #fff;
 }
 
-.workspace-mobile-nav { display: none; }
+.planning-page .planning-stage-card {
+  border: 1px solid #dce7fb;
+  background: linear-gradient(135deg, #f7f9ff 0%, #edf3ff 100%);
+  box-shadow: 0 10px 24px rgba(73, 103, 165, .09);
+}
+
+.planning-page .planning-focus {
+  background: linear-gradient(135deg, #3361ff, #7398ff);
+  color: #fff;
+}
+
+.planning-page .planning-intro-card {
+  background: linear-gradient(135deg, #172548, #2856b8);
+  color: #fff;
+}
 .header-nyta-action { display: none; }
 .mobile-page-action { display: none; }
 
@@ -1051,7 +963,7 @@
 .diagnostic-dimension-card ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .diagnostic-dimension-card li { position: relative; padding-left: 15px; color: #7f8fab; font-size: 12px; line-height: 1.45; }
 .diagnostic-dimension-card li::before { position: absolute; top: 8px; left: 0; width: 5px; height: 5px; border-radius: 50%; background: #3361ff; content: ''; }
-.diagnostic-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .9fr); gap: 18px; }
+.diagnostic-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .diagnostic-panel, .diagnostic-method, .diagnostic-profile-map { padding: 25px; border: 1px solid #e1e7f0; border-radius: 8px; background: #fff; box-shadow: 0 7px 17px rgba(124,145,185,.05); }
 .diagnostic-panel h2, .diagnostic-method h2, .diagnostic-profile-map h2 { margin: 8px 0 0; color: #52668d; font-size: 21px; letter-spacing: 0; }
 .diagnostic-cities > div { display: grid; gap: 14px; margin-top: 24px; }
@@ -1072,19 +984,16 @@
 .diagnostic-method span { color: #52668d; font-size: 12px; font-weight: 900; }
 .diagnostic-method article p { margin: 0; color: #8b9bb5; font-size: 11px; font-weight: 800; }
 .diagnostic-profile-ladder { display: grid; gap: 0; margin-top: 18px; }
-.diagnostic-profile-row { display: grid; grid-template-columns: 42px 72px minmax(0, 1fr); gap: 13px; align-items: center; padding: 13px 0; border-top: 1px solid #edf1f6; }
+.diagnostic-profile-row { display: grid; grid-template-columns: 38px 72px minmax(0, 1fr); gap: 13px; align-items: center; padding: 13px 0; border-top: 1px solid #edf1f6; }
 .diagnostic-profile-row:first-child { border-top: 0; }
-.diagnostic-level { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 10px; background: #f2f5fb; color: #52668d; font-size: 12px; font-weight: 900; }
-.diagnostic-level-4 { background: #fff4cd; color: #c58b00; }
-.diagnostic-level-3 { background: #eff4fb; color: #73849f; }
-.diagnostic-level-2 { background: #edf3ff; color: #3361ff; }
-.diagnostic-level-1 { background: #e9fbf1; color: #19a654; }
-.diagnostic-level-0 { background: #f6f7fa; color: #6a7486; }
 .diagnostic-profile-row > b { color: #7b8ca8; font-size: 11px; font-weight: 900; text-transform: uppercase; }
-.diagnostic-profile-row > div { display: flex; flex-wrap: wrap; gap: 8px; }
-.diagnostic-profile-row span:not(.diagnostic-level) { display: grid; gap: 7px; min-width: 92px; padding: 9px 11px; border: 1px solid #e1e7f0; border-radius: 8px; color: #8292ad; font-size: 11px; font-weight: 900; }
-.diagnostic-profile-row span.active { border-color: #9fb4ff; background: #fff; color: #52668d; box-shadow: 0 10px 20px rgba(68, 88, 126, .12); }
-.diagnostic-profile-row small { color: #a8b5c9; font-size: 8px; font-weight: 900; letter-spacing: 2px; }
+.diagnostic-profile-row > div { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.diagnostic-profile-row > div > span { display: grid; gap: 7px; min-width: 92px; padding: 9px 11px; border: 1px solid #e1e7f0; border-radius: 8px; color: #8292ad; font-size: 11px; font-weight: 900; }
+.diagnostic-profile-row > div > span.active { border-color: #9fb4ff; background: #fff; color: #52668d; box-shadow: 0 10px 20px rgba(68, 88, 126, .12); }
+.diagnostic-profile-row strong { font-size: 11px; font-weight: 900; }
+.diagnostic-profile-row small { display: flex; gap: 3px; }
+.diagnostic-profile-row small i { display: grid; width: 15px; height: 15px; place-items: center; border: 1px solid #e1e7f0; border-radius: 50%; color: #a8b5c9; font-size: 7px; font-style: normal; font-weight: 900; letter-spacing: 0; }
+.diagnostic-profile-row small i.on { border-color: #3361ff; background: #3361ff; color: #fff; }
 .diagnostic-reveal { padding: 25px; border: 1px solid #e1e7f0; border-radius: 8px; background: #fff; box-shadow: 0 7px 17px rgba(124,145,185,.05); }
 .diagnostic-reveal div { display: grid; gap: 12px; margin-top: 16px; }
 .diagnostic-reveal p:not(header p) { margin: 0; color: #627594; font-size: 14px; line-height: 1.6; }
@@ -1257,7 +1166,7 @@
 .planning-stage-card > p { margin: 32px 0 0; color: #6c7f9f; font-size: 13px; }.planning-stage-card > p strong { color: #3361ff; }
 .planning-overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 16px; }
 .planning-overview-grid article { min-height: 118px; padding: 21px; overflow: hidden; }.planning-overview-grid strong { display: block; color: #3361ff; font-size: 34px; letter-spacing: -1px; }.planning-overview-grid span { display: block; margin-top: 8px; color: #7c8eae; font-size: 11px; font-weight: 800; }
-.planning-general-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: 17px; margin-top: 17px; }.planning-focus, .planning-next { min-height: 270px; }.planning-focus { padding: 28px; background: linear-gradient(135deg, #3361ff, #7398ff); color: #fff; }.planning-focus p { color: #dce7ff; }.planning-focus h2 { margin: 30px 0 10px; font-size: 29px; letter-spacing: -1px; }.planning-focus > span { display: block; max-width: 320px; color: #dce7ff; font-size: 12px; line-height: 1.55; }.planning-focus > div { height: 7px; margin-top: 42px; overflow: hidden; border-radius: 6px; background: rgba(255,255,255,.25); }.planning-focus > div i { display: block; width: 68%; height: 100%; border-radius: inherit; background: #fff; }.planning-focus small { display: block; margin-top: 12px; color: #dbe6ff; font-size: 10px; }
+.planning-general-grid { display: grid; grid-template-columns: 1.08fr .92fr; gap: 17px; margin-top: 17px; }.planning-focus, .planning-next { min-height: 270px; }.planning-focus { padding: 28px; background: linear-gradient(135deg, #3361ff, #7398ff); color: #fff; }.planning-focus p { color: #dce7ff; }.planning-focus h2 { margin: 30px 0 10px; font-size: 29px; letter-spacing: -1px; }.planning-focus > span { display: block; max-width: 320px; color: #dce7ff; font-size: 12px; line-height: 1.55; }.planning-focus > div:not(.planning-focus-summary) { height: 7px; margin-top: 42px; overflow: hidden; border-radius: 6px; background: rgba(255,255,255,.25); }.planning-focus > div:not(.planning-focus-summary) i { display: block; width: 68%; height: 100%; border-radius: inherit; background: #fff; }.planning-focus small { display: block; margin-top: 12px; color: #dbe6ff; font-size: 10px; }
 .planning-next { padding-top: 20px; }.planning-next header { padding: 0 23px 13px; }.planning-next header button { display: grid; width: 27px; height: 27px; place-items: center; border: 0; border-radius: 50%; background: #edf2ff; color: #3361ff; font-size: 18px; }.planning-next > div { display: grid; grid-template-columns: 26px minmax(0, 1fr) 15px; gap: 10px; align-items: center; margin: 0 18px; padding: 15px 5px; border-top: 1px solid #edf1f5; }.planning-next > div i { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; background: #edf2fb; color: #8091ac; font-size: 9px; font-style: normal; font-weight: 800; }.planning-next > div strong { color: #60749a; font-size: 11px; }.planning-next > div b { color: #abb8cb; font-size: 18px; font-weight: 400; }
 .planning-fundamentals { display: grid; gap: 18px; }.planning-intro-card { padding: 30px; background: linear-gradient(135deg, #172548, #284f9e); color: #fff; }.planning-intro-card p { color: #bccdff; }.planning-intro-card h2 { max-width: 550px; margin: 0; font-size: 29px; letter-spacing: -.8px; }.planning-intro-card span { display: block; max-width: 560px; margin-top: 13px; color: #d1dcf5; font-size: 13px; line-height: 1.55; }.fundamentals-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }.fundamentals-grid article { min-height: 150px; padding: 25px; }.fundamentals-grid span { display: block; color: #9ba9bf; font-size: 10px; font-weight: 800; letter-spacing: 1px; }.fundamentals-grid strong { display: block; max-width: 440px; margin-top: 18px; color: #5b6f94; font-size: 16px; line-height: 1.45; }
 .planning-references > header, .planning-objectives > header, .planning-swot > header, .planning-strategies > header { display: flex; align-items: end; justify-content: space-between; gap: 22px; margin-bottom: 22px; }.reference-map { position: relative; min-height: 490px; overflow: hidden; border-radius: 10px; background: radial-gradient(circle at center, #f7f9fd, #fff); box-shadow: 0 7px 17px rgba(124,145,185,.07); }.reference-map::before, .reference-map::after { position: absolute; top: 50%; left: 50%; width: 2px; height: 360px; background: repeating-linear-gradient(to bottom, #d8e1ef 0 5px, transparent 5px 12px); content: ''; transform-origin: center; }.reference-map::before { transform: translate(-50%, -50%) rotate(45deg); }.reference-map::after { transform: translate(-50%, -50%) rotate(-45deg); }.reference-center, .reference-node, .reference-chip { position: absolute; z-index: 1; display: grid; place-items: center; border-radius: 50%; text-align: center; font-style: normal; font-weight: 800; }.reference-center { top: 50%; left: 50%; width: 125px; height: 125px; background: #29aa58; color: #fff; font-size: 13px; transform: translate(-50%, -50%); }.reference-node { width: 130px; height: 130px; color: #fff; font-size: 12px; line-height: 1.2; }.node-positioning { top: 66px; left: calc(50% - 165px); background: #3f7eee; }.node-artistic { top: 66px; left: calc(50% + 35px); background: #f5bd0b; color: #26324c; }.node-communication { bottom: 57px; left: calc(50% - 165px); background: #ff7a14; }.node-career { right: calc(50% - 165px); bottom: 57px; background: #f34750; }.reference-chip { width: 63px; height: 63px; border: 2px solid #4384ef; background: #fff; color: #3361ff; font-size: 10px; }.chip-one { top: 45px; left: calc(50% - 260px); }.chip-two { top: 120px; left: calc(50% - 305px); }.chip-three { top: 113px; left: calc(50% - 207px); }
@@ -5244,8 +5153,49 @@
 }
 
 .career-line::before {
+  z-index: 0;
   height: 3px;
   background: #dfe6f2;
+}
+
+.career-line::after {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 2px;
+  width: var(--career-progress, 0%);
+  height: 3px;
+  border-radius: 4px;
+  background: #3361ff;
+  content: '';
+  transform: translateY(-50%);
+}
+
+.career-marker-group {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: 39px;
+  height: 39px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 39px;
+  opacity: .42;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.career-marker-group.career-reached {
+  opacity: 1;
+}
+
+.career-marker-group.career-current-marker {
+  transform: scale(1.12);
+  filter: drop-shadow(0 5px 8px rgba(51,97,255,.22));
+}
+
+.career-marker-group > span {
+  display: inline-flex;
+  line-height: 0;
 }
 
 .career-line b {
@@ -5256,9 +5206,15 @@
 }
 
 .career-current {
+  position: absolute;
   top: 34px;
+  left: 50%;
   color: #6f83a5;
   font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translateX(-50%);
 }
 
 .planning-stage-card > p {
@@ -5317,11 +5273,34 @@
   letter-spacing: 0;
 }
 
-.planning-focus > span {
-  font-size: 12px;
+.planning-focus-summary {
+  flex: 0 1 122px;
+  min-height: 0;
+  max-width: 350px;
+  max-height: 122px;
+  overflow-y: auto;
+  padding-right: 8px;
+  color: #e6edff;
+  font-size: 14px;
+  line-height: 1.5;
+  scrollbar-color: rgba(255,255,255,.5) transparent;
+  scrollbar-width: thin;
 }
 
-.planning-focus > div {
+.planning-focus-summary p {
+  margin: 0;
+  color: #fff;
+}
+
+.planning-focus-summary strong {
+  display: block;
+  margin-bottom: 7px;
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.planning-focus > div:not(.planning-focus-summary) {
   height: 6px;
   margin-top: auto;
 }
@@ -7260,6 +7239,487 @@
   .task-app:not(.public-app) .catalog-reference-page .catalog-tabs {
     width: 100%;
     overflow-x: auto;
+  }
+}
+
+/* GSAP light action-plan surface: keep the tactical interactions, restore the reference palette. */
+.task-app:not(.public-app) .action-plan-page {
+  min-height: 0;
+  padding: 34px 28px 54px;
+  border: 0;
+  border-radius: 0;
+  background: #f7f8fb;
+  color: #52668d;
+}
+
+.task-app:not(.public-app) .action-plan-page .module-page-heading {
+  margin-bottom: 22px;
+  border-color: #e5eaf2;
+}
+
+.task-app:not(.public-app) .action-plan-page .module-page-heading p,
+.task-app:not(.public-app) .action-plan-page .ap-progress-card > span:not([aria-hidden]) {
+  color: #9aa9c2 !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .module-page-heading h1 {
+  color: #52668d;
+}
+
+.task-app:not(.public-app) .action-plan-page .module-page-heading span {
+  color: #90a0ba;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-progress-card {
+  position: relative;
+  margin: 0 0 28px;
+  overflow: hidden;
+  border: 1px solid #e1e7f0 !important;
+  border-radius: 10px !important;
+  padding: 25px 28px !important;
+  background: #fff !important;
+  box-shadow: 0 7px 17px rgba(124,145,185,.07) !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-progress-title {
+  color: #52668d !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .task-progress-track {
+  background: #e8edf5 !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .task-progress-fill {
+  background: linear-gradient(90deg, #7136cf, #9b55df) !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .task-progress-percent {
+  color: #803bc9 !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .task-progress-message {
+  color: #8e9eb7 !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-progress-loop {
+  border-color: #edf1f5 !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-progress-loop > span {
+  color: #7d8eab !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-progress-loop > span b {
+  color: #5e7197 !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-progress-loop button {
+  border-color: #d3c0e9 !important;
+  color: #7d40bd !important;
+}
+
+.task-app:not(.public-app) .action-plan-page .action-overview-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.task-app:not(.public-app) .action-plan-page .action-overview-actions > span {
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: #edf2fb;
+  color: #7183a3;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.task-app:not(.public-app) .action-plan-page .action-overview-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: none;
+  border: 1px solid #e1e7f0;
+  border-radius: 22px;
+  padding: 8px 12px;
+  background: #fff;
+  color: #6b7e9f;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-section-title {
+  color: #52668d;
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.task-app:not(.public-app) .action-plan-page > div[style*="justify-content"] {
+  margin-bottom: 14px;
+}
+
+.task-app:not(.public-app) .action-plan-page > div[style*="justify-content"] .ap-btn--ghost:first-child {
+  border: 0;
+  background: #3361ff;
+  color: #fff;
+  box-shadow: 0 7px 16px rgba(51,97,255,.18);
+}
+
+.task-app:not(.public-app) .action-plan-page > div[style*="justify-content"] .ap-btn--ghost:last-child {
+  border: 1px solid #e1e7f0;
+  background: #fff;
+  color: #6b7e9f;
+  box-shadow: none;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strats {
+  margin-top: 0 !important;
+  gap: 12px;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat {
+  border: 1px solid #e1e7f0;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 7px 17px rgba(124,145,185,.07);
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat--current {
+  background: #f8f9ff;
+  box-shadow: inset 3px 0 0 #3361ff, 0 7px 17px rgba(124,145,185,.07);
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat-head {
+  padding: 18px 20px;
+  color: #52668d;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat-head:hover {
+  background: #f7f9fd;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat-badge--current {
+  background: #8f4bd5;
+  color: #fff;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat-badge--done {
+  background: #f0e8f8;
+  color: #803bc9;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat-badge--next {
+  background: #edf2fb;
+  color: #8091ac;
+}
+
+.task-app:not(.public-app) .action-plan-page .action-strategy-scroll > button strong {
+  display: block;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat-title {
+  color: #52668d;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat--done .ap-strat-title {
+  color: #8c9bb2;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat-kicker,
+.task-app:not(.public-app) .action-plan-page .ap-strat-count {
+  color: #803bc9;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat--next .ap-strat-kicker,
+.task-app:not(.public-app) .action-plan-page .ap-strat--next .ap-strat-count {
+  color: #8fa0ba;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-chevron,
+.task-app:not(.public-app) .action-plan-page .ap-strat-more,
+.task-app:not(.public-app) .action-plan-page .ap-strat-goal-btn {
+  color: #8a9ab4;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat-body {
+  border-top: 1px solid #e5eaf2;
+  background: #f8fafc;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-tl::before {
+  background: linear-gradient(180deg, #9b55df, rgba(155,85,223,.12));
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-tl-dot {
+  border-color: #c4cddd;
+  background: #fff;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-strat--current .ap-tl-dot:not(.is-done) {
+  background: #fff;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-task-desc {
+  color: #5e7197;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-date {
+  color: #60749a;
+  background: #edf2fb;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-type {
+  color: #7183a1;
+  background: #edf1f6;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-owner {
+  border-color: #c4cddd;
+  color: #8091ac;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-task-more {
+  color: #8a9ab4;
+}
+
+.task-app:not(.public-app) .action-plan-page .ap-task-more:hover,
+.task-app:not(.public-app) .action-plan-page .ap-task-more:focus-visible {
+  color: #52668d;
+  background: #eaf0ff;
+}
+
+.task-app:not(.public-app) .action-plan-page .action-task-check {
+  display: grid;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: #8c9bb2;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .15s ease, filter .15s ease;
+}
+
+.task-app:not(.public-app) .action-plan-page .action-task-check:hover,
+.task-app:not(.public-app) .action-plan-page .action-task-check:focus-visible {
+  color: #3361ff;
+  filter: drop-shadow(0 0 4px rgba(51, 97, 255, .2));
+}
+
+.task-app:not(.public-app) .action-plan-page .action-task-check.is-done {
+  color: #8f4bd5;
+}
+
+.task-app:not(.public-app) .action-plan-page .action-task-register > header button {
+  display: inline-flex;
+  width: auto;
+  min-width: max-content;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Ant Design renders these menus at document level. Keep their surfaces aligned
+   with the light GSAP action-plan cards instead of the legacy dark theme. */
+.action-plan-dropdown,
+.action-plan-select-dropdown,
+.action-plan-picker {
+  z-index: 1400;
+}
+
+.action-plan-dropdown .ant-dropdown-menu,
+.action-plan-select-dropdown .ant-select-dropdown,
+.action-plan-picker .ant-picker-panel-container {
+  border: 1px solid #dfe7f1;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 16px 34px rgba(61, 82, 120, .16), 0 3px 10px rgba(61, 82, 120, .08);
+}
+
+.action-plan-dropdown .ant-dropdown-menu {
+  min-width: 190px;
+  padding: 6px;
+}
+
+.action-plan-dropdown .ant-dropdown-menu-item,
+.action-plan-dropdown .ant-dropdown-menu-item-divider,
+.action-plan-select-dropdown .ant-select-item {
+  color: #52688f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.action-plan-dropdown .ant-dropdown-menu-item,
+.action-plan-select-dropdown .ant-select-item {
+  min-height: 34px;
+  border-radius: 7px;
+}
+
+.action-plan-dropdown .ant-dropdown-menu-item:hover,
+.action-plan-dropdown .ant-dropdown-menu-item-active,
+.action-plan-select-dropdown .ant-select-item-option-active,
+.action-plan-select-dropdown .ant-select-item-option-selected {
+  background: #eef3ff;
+  color: #3361ff;
+}
+
+.action-plan-dropdown .ant-dropdown-menu-item-selected,
+.action-plan-select-dropdown .ant-select-item-option-selected {
+  background: #e8efff;
+  color: #3361ff;
+}
+
+.action-plan-dropdown .ant-dropdown-menu-item-divider {
+  background: #edf1f7;
+}
+
+.action-plan-select-dropdown .ant-select-dropdown {
+  overflow: hidden;
+  padding: 5px;
+}
+
+.action-plan-select-dropdown .ant-select-item-option-content {
+  color: inherit;
+}
+
+.action-plan-picker .ant-picker-panel-container {
+  overflow: hidden;
+}
+
+.action-plan-picker .ant-picker-header,
+.action-plan-picker .ant-picker-content th,
+.action-plan-picker .ant-picker-cell,
+.action-plan-picker .ant-picker-header-view,
+.action-plan-picker .ant-picker-header button {
+  color: #60749a;
+}
+
+.action-plan-picker .ant-picker-header {
+  border-bottom-color: #edf1f7;
+}
+
+.action-plan-picker .ant-picker-content th {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
+.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+  border-color: #3361ff;
+  background: #3361ff;
+  color: #fff;
+}
+
+.action-plan-picker .ant-picker-cell:hover .ant-picker-cell-inner {
+  background: #eef3ff;
+}
+
+@media (max-width: 700px) {
+  .task-app:not(.public-app) .action-plan-page {
+    padding: 24px 18px 48px;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .ap-progress-card {
+    padding: 20px !important;
+  }
+}
+
+/* The shell keeps the left artist rail visible, so the content column becomes
+   narrow before the viewport itself reaches the mobile breakpoint. */
+@media (max-width: 1300px) {
+  .task-app:not(.public-app) .action-plan-page {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-task-register {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-task-register > header > div {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-task-register h3 {
+    max-width: 100%;
+    margin-right: 8px;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-task-register-table > header,
+  .task-app:not(.public-app) .action-plan-page .action-task-register-table article {
+    grid-template-columns: minmax(190px, 1.65fr) 64px minmax(86px, .9fr) 76px 70px 28px;
+    gap: 8px;
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+}
+
+@media (max-width: 760px) {
+  .task-app:not(.public-app) .action-plan-page .action-strategy-overview > header {
+    display: block;
+    padding: 16px;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-overview-actions {
+    margin-top: 12px;
+    justify-content: space-between;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-strategy-scroll {
+    grid-auto-columns: minmax(230px, 82vw);
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-task-register > header {
+    align-items: stretch;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-task-register > header button {
+    width: 100%;
+    margin-top: 14px;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-task-register-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-task-register-table > header,
+  .task-app:not(.public-app) .action-plan-page .action-task-register-table article {
+    min-width: 650px;
+  }
+}
+
+@media (max-width: 520px) {
+  .task-app:not(.public-app) .action-plan-page .action-task-register-table > header,
+  .task-app:not(.public-app) .action-plan-page .action-task-register-table article {
+    min-width: 610px;
   }
 }
 

@@ -6,8 +6,11 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { useEntitlements } from '../../hooks/useEntitlements';
 import type { RealIndex } from '../../interfaces/maestra';
+import { RealBadge, tierForAltas } from '../../components/RealBadge';
+import { PROFILE_BITS, PROFILE_MAP } from '../ArtistCreate/realCopy';
+import { dimNarrative } from '../ArtistCreate/realNarrative';
 
-const PROFILE_ORDER = ['Beginner', 'Cult', 'Paradox', 'Moneymaker', 'Influencer', 'Bet', 'Outlier', 'Rising', 'Hype', 'Potential', 'Digital', 'Analog', 'Underpaid', 'Spotlight', 'Hit', 'Icon'];
+const PROFILE_ORDER = PROFILE_MAP.flatMap((row) => row.names).reverse();
 const DIMENSIONS = [
   { letter: 'R', key: 'r', title: 'Reach', label: 'Alcance', metricLabel: 'ouvintes mensais', short: 'Alcance digital ainda em construção.', details: ['Ouvintes Spotify', 'Seguidores Spotify'] },
   { letter: 'E', key: 'e', title: 'Earnings', label: 'Receita', metricLabel: 'receita mapeada', short: 'A receita da música ainda está em construção.', details: ['Receita total', 'Shows / mês'] },
@@ -50,16 +53,46 @@ const DiagnosticView: FC = () => {
   const dimensions = useMemo(() => {
     if (!realIndex) return [];
     const inputs = realIndex.inputs as any;
-    const scores = DIMENSIONS.map((dimension) => ({ ...dimension, score: scoreOf(realIndex, dimension.key), status: realIndex.pattern[dimension.key] ? 'Alto' : 'Baixo' }));
+    const scores = DIMENSIONS.map((dimension) => {
+      const score = scoreOf(realIndex, dimension.key);
+      const high = realIndex.pattern[dimension.key];
+      const top = !!realIndex.dimTopIcon?.[dimension.key];
+      return {
+        ...dimension,
+        score,
+        status: top ? 'Top Tier' : high ? 'Alto' : 'Baixo',
+        statusText: top ? 'Top Tier · nível de excelência desta dimensão' : high ? `Aceso · faltam ${Math.max(0, 100 - score)} pts para Top Tier` : `Faltam ${Math.max(0, 70 - score)} pts para acender · ${Math.max(0, 100 - score)} pts para Top Tier`,
+        narrative: dimNarrative(dimension.key, realIndex),
+      };
+    });
     const values: Record<string, string> = {
       'Ouvintes Spotify': number(chartmetric?.monthly_listeners ?? inputs?.monthly_listeners ?? inputs?.spotifyListeners),
+      Instagram: number(inputs?.igFollowers ?? inputs?.instagramFollowers),
+      TikTok: number(inputs?.tiktokFollowers),
+      'YouTube mensal': number(inputs?.youtubeMonthlyViews),
       'Seguidores Spotify': number(inputs?.sp_followers ?? inputs?.spotifyFollowers),
-      'Receita total': realIndex.revenue?.total != null ? `R$ ${number(realIndex.revenue.total)}` : '—',
+      'Receita mensal': realIndex.revenue?.total != null ? `R$ ${number(realIndex.revenue.total)}` : '—',
       'Shows / mês': number(inputs?.shows_pagos ?? inputs?.showsPerMonth),
-      'Prêmios': inputs?.premios || '—',
-      'Imprensa': inputs?.imprensa || '—',
+      'Cachê médio': inputs?.cache != null ? `R$ ${number(inputs.cache)}` : '—',
+      '% público pagante': inputs?.fazBilheteria ? (inputs?.pagantePct || '—') : 'Não faz bilheteria',
+      'Fãs Deezer': number(inputs?.deezerFans),
+      'Prêmios': ['Nenhum', 'Local / regional', 'Indicação nacional', 'Prêmio nacional', 'Indicação internacional', 'Prêmio internacional'][Number(inputs?.premios)] || '—',
+      'Imprensa': inputs?.imprensaRepercussao ? (inputs?.imprensaFrequencia === 'perene' ? 'Perene' : 'Em lançamentos') : 'Não',
+      'Playlists editoriais': number(inputs?.editorialPlaylists ?? chartmetric?.playlists?.count),
+      'Execução em rádio': Number(inputs?.radioAirplay) > 0 ? 'Sim' : 'Não',
     };
-    return scores.map((dimension) => ({ ...dimension, metric: dimension.key === 'r' ? values['Ouvintes Spotify'] : dimension.key === 'e' ? values['Receita total'] : dimension.key === 'a' ? values['Seguidores Spotify'] : values.Imprensa, detailValues: dimension.details.map((label) => [label, values[label] || '—']), insights: realIndex.profile.insights.slice(0, 3) }));
+    return scores.map((dimension) => ({
+      ...dimension,
+      metric: dimension.key === 'r' ? values['Ouvintes Spotify'] : dimension.key === 'e' ? values['Receita mensal'] : dimension.key === 'a' ? values['Shows / mês'] : values.Imprensa,
+      detailValues: dimension.key === 'r'
+        ? ['Ouvintes Spotify', 'Instagram', 'TikTok', 'YouTube mensal'].map((label) => [label, values[label] || '—'])
+        : dimension.key === 'e'
+          ? ['Receita mensal', 'Shows / mês', 'Cachê médio'].map((label) => [label, values[label] || '—'])
+          : dimension.key === 'a'
+            ? ['Shows / mês', '% público pagante', 'Seguidores Spotify', 'Fãs Deezer'].map((label) => [label, values[label] || '—'])
+            : ['Prêmios', 'Imprensa', 'Playlists editoriais', 'Execução em rádio'].map((label) => [label, values[label] || '—']),
+      insights: realIndex.profile.insights.slice(0, 3),
+    }));
   }, [chartmetric, realIndex]);
 
   if (!loaded) return <div style={{ padding: 24 }}><div className='analyzing'><Spin /> Carregando…</div></div>;
@@ -103,11 +136,15 @@ const DiagnosticView: FC = () => {
           <article className='diagnostic-dimension-card' key={dimension.letter}>
             <header><i>{dimension.letter}</i><div><p>{dimension.title}</p><h2>{dimension.label}</h2></div><em>{dimension.status}</em></header>
             <DiagnosticScore score={dimension.score} />
-            <p className='diagnostic-gap'>Dados reais do diagnóstico e sinais de evolução desta dimensão.</p>
+            <p className='diagnostic-gap'>{dimension.statusText}</p>
             <div className='diagnostic-dimension-metric'><strong>{dimension.metric}</strong><span>{dimension.metricLabel}</span></div>
             <div className='diagnostic-detail-list'>{dimension.detailValues.map(([label, value]) => <span key={label}><b>{label}</b><strong>{value}</strong></span>)}</div>
-            <div className='diagnostic-reveal-block'><b>O que isso revela</b><strong>{dimension.short}</strong><p>{realIndex.profile.description}</p></div>
-            <ul>{dimension.insights.map((insight) => <li key={insight}>{insight}</li>)}</ul>
+            <div className='diagnostic-reveal-block'>
+              <b>O que isso revela</b>
+              <strong>{dimension.narrative.headline}</strong>
+              {dimension.narrative.paras[0] && <p><b>{dimension.narrative.paras[0].lead}</b> {dimension.narrative.paras[0].body}</p>}
+            </div>
+            <ul>{dimension.narrative.paras.slice(1).map((paragraph) => <li key={paragraph.lead}><b>{paragraph.lead}</b> {paragraph.body}</li>)}</ul>
           </article>
         ))}
       </section>
@@ -117,7 +154,28 @@ const DiagnosticView: FC = () => {
         <article className='diagnostic-panel diagnostic-next'><header><p>Sua presença nas plataformas</p><h2>Principais sinais de referência</h2></header><div className='diagnostic-platform-row'><span>Spotify</span><i /><strong>{number(chartmetric?.monthly_listeners)}</strong></div><h3>Artistas de referência</h3><div className='diagnostic-artist-tags'>{similar.map((item) => <span key={item.name}>{item.name}</span>)}</div></article>
       </section>
 
-      <section className='diagnostic-profile-map' aria-label='Mapa de perfis'><header><p>Sua posição entre os 16 perfis</p></header><div className='diagnostic-profile-ladder'>{[4, 3, 2, 1, 0].map((level) => <div className='diagnostic-profile-row' key={level}><span className={`diagnostic-level diagnostic-level-${level}`}>{level}</span><b>{level} altas</b><div>{PROFILE_ORDER.filter((_, index) => Math.round(index / 4) === 4 - level).map((profile) => <span className={profile === realIndex.profile.name ? 'active' : ''} key={profile}>{profile}<small>R E A L</small></span>)}</div></div>)}</div></section>
+      <section className='diagnostic-profile-map' aria-label='Mapa de perfis'>
+        <header><p>Sua posição entre os 16 perfis</p></header>
+        <div className='diagnostic-profile-ladder'>
+          {PROFILE_MAP.map((row) => (
+            <div className='diagnostic-profile-row' key={row.tier}>
+              <RealBadge tier={tierForAltas(Number(row.tier[0]))} label={row.tier[0]} size={34} />
+              <b>{row.tier}</b>
+              <div>
+                {row.names.map((profile) => {
+                  const bits = PROFILE_BITS[profile];
+                  return (
+                    <span className={profile === realIndex.profile.name ? 'active' : ''} key={profile}>
+                      <strong>{profile}</strong>
+                      <small>{(['r', 'e', 'a', 'l'] as const).map((key) => <i className={bits?.[key] ? 'on' : ''} key={key}>{key.toUpperCase()}</i>)}</small>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className='diagnostic-reveal'><header><p>O que o seu diagnóstico revela</p></header><div>{realIndex.profile.insights.map((note) => <p key={note}>› {note}</p>)}</div></section>
       <section className='diagnostic-method'><header><p>Como nasce o seu diagnóstico</p><span>O Índice REAL cruza dados de alcance, receita, público real e legitimação para mostrar onde a carreira está hoje e o que precisa crescer.</span></header><div>{dimensions.map((dimension) => <article key={dimension.title}><strong>{dimension.letter}</strong><span>{dimension.title} · {dimension.label}</span><p>{dimension.short}</p></article>)}</div></section>

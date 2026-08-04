@@ -1,8 +1,8 @@
 import { FC, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { App, Dropdown, message, Popover } from 'antd';
+import { App, message } from 'antd';
 import { createPortal } from 'react-dom';
-import { FiArchive, FiCheck, FiChevronDown, FiHelpCircle, FiLock, FiMoreVertical, FiPlus, FiRefreshCw, FiX } from 'react-icons/fi';
+import { FiArchive, FiCheck, FiCheckCircle, FiCircle, FiLock, FiMoreVertical, FiPlus, FiX } from 'react-icons/fi';
 
 import { useNytaModal } from '../../hooks/useNytaModal';
 import { buildActionPlan } from '../Wizard/method/engines';
@@ -13,10 +13,8 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
-import { TaskProgress } from '../../components/RealCareerCard';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { UpsellModal } from '../../components/UpsellModal';
-import featureAction from '../../assets/feature-action.png';
 import { TaskDate, TaskCategory, TaskOwner, type Assignee } from './TaskControls';
 import { TaskDetailModal } from './TaskDetailModal';
 import { TASK_OWNER_SELF, isOnboardingComplete } from '../../constants/maestra';
@@ -102,7 +100,6 @@ const ActionPlan: FC = () => {
   // Gerir tarefas exige PRO. (Editar o dossiê — fundamentos/objetivos etc. — agora é no Perfil.)
   const { manageTasks, editPlanning } = useArtistCapabilities(artist);
   const content = artist?.content;
-  const objectives = useMemo<string[]>(() => content?.objectives || [], [content]);
   const strategies = useMemo<Strategy[]>(() => content?.strategies || [], [content]);
   // As estratégias do plano em ORDEM DE PRIORIDADE (finalScore desc); fallback mantém a ordem salva.
   const ranked = useMemo(
@@ -159,20 +156,6 @@ const ActionPlan: FC = () => {
     user?.user_metadata?.avatar_url ||
     user?.user_metadata?.picture ||
     undefined;
-
-  // Objetivo que a estratégia MAIS avança — o de maior score na priorização (etapa 7).
-  // Serve de contexto sutil no cabeçalho ("por que essa estratégia importa").
-  const topObjective = (s: Strategy): string | undefined => {
-    const scores = s.objectiveScores;
-    if (!scores || !objectives.length) return undefined;
-    let bestIdx = -1;
-    let best = 0; // score 0 não conta como "ajuda"
-    for (const [k, v] of Object.entries(scores)) {
-      const i = Number(k);
-      if (typeof v === 'number' && v > best && objectives[i]) { best = v; bestIdx = i; }
-    }
-    return bestIdx >= 0 ? objectives[bestIdx] : undefined;
-  };
 
   const today = todayStr();
 
@@ -310,16 +293,6 @@ const ActionPlan: FC = () => {
     setArchiveOpen(false);
     message.success(ids.length === 1 ? 'Estratégia trazida pro plano de ação.' : `${ids.length} estratégias trazidas pro plano de ação.`);
   };
-  const archiveStrategy = (sid: string) => {
-    if (!manageTasks) { showProRequired(); return; }
-    commit((ss) => ss.map((s) => s.id !== sid ? s : {
-      ...s,
-      tasks: (s.tasks || []).map((t) => ({ ...t, status: 'archived' as const })),
-    }));
-    setOpenId('__none__');
-    message.success('Estratégia arquivada. Você pode reativá-la em Arquivadas.');
-  };
-
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
   // Só libera o Plano de Ação quando o wizard foi CONCLUÍDO (Finalizar). Ter estratégias geradas mas
@@ -342,8 +315,6 @@ const ActionPlan: FC = () => {
     const done = ts.filter(isDone).length;
     return { s, ts, done, total: ts.length, complete: ts.length > 0 && done === ts.length };
   });
-  const totalTasks = info.reduce((a, p) => a + p.total, 0);
-  const doneTasks = info.reduce((a, p) => a + p.done, 0);
   // A lista principal mostra só as estratégias que o artista PRIORIZOU (geraram tarefa). As demais
   // (sem tarefa) ficam ARQUIVADAS — acessíveis pelo botão/modal "Arquivadas", de onde o artista
   // traz pro plano (ganham tarefas e entram na lista). Não aparecem soltas embaixo (confundia).
@@ -352,15 +323,8 @@ const ActionPlan: FC = () => {
   const hasArchive = withTasks.length > 0 && archived.length > 0;
   const displayed = withTasks.length ? withTasks : info; // sem nenhuma priorizada, mostra tudo
   const focusIdx = displayed.findIndex((p) => p.total > 0 && !p.complete); // -1 = todas concluídas
-
-  // Contagem das tarefas (mesma fonte do Dashboard) — alimenta a barra de progresso do RealCareerCard.
-  const allTasks = ranked.flatMap((s) => (s.tasks || []).filter(isActive));
-  const taskCounts = {
-    todo: allTasks.filter((t) => !t.status || t.status === 'todo').length,
-    inProgress: allTasks.filter((t) => t.status === 'in_progress').length,
-    done: doneTasks,
-    total: totalTasks,
-  };
+  const activePlanId = openId && openId !== '__none__' ? openId : displayed[focusIdx >= 0 ? focusIdx : 0]?.s.id;
+  const activePlan = displayed.find((p) => p.s.id === activePlanId) || displayed[0];
 
   return (
     <div className="ap action-plan-page">
@@ -372,216 +336,67 @@ const ActionPlan: FC = () => {
         </div>
       </header>
 
-      {/* Progresso das tarefas — card escuro simples (sem gradiente de fundo). */}
-      <div className="ap-progress-card">
-        {/* Ícone decorativo do produto, grande e translúcido no canto (igual ao card da jornada). */}
-        <span aria-hidden style={{ position: 'absolute', right: -10, bottom: -28, opacity: 0.08, pointerEvents: 'none', lineHeight: 0 }}>
-          <img src={featureAction} alt="" style={{ display: 'block', width: 210, height: 'auto', filter: 'drop-shadow(0 18px 30px rgba(0,0,0,0.45))' }} />
-        </span>
-        <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#b3b3b3' }}>Progresso do plano</span>
-        <h2 className="ap-progress-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, color: '#fff', margin: '6px 0 0', lineHeight: 1.1 }}>Suas tarefas</h2>
-        <TaskProgress counts={taskCounts} />
-
-        {/* Loop com o REAL: executar tarefas → crescer → refazer o diagnóstico → subir de fase. */}
-        <div className="ap-progress-loop" style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ color: '#b3b3b3', fontSize: 13.5, lineHeight: 1.5 }}>
-            Concluir tarefas faz sua carreira evoluir. Quando avançar, <b style={{ color: '#fff' }}>refaça o REAL</b> pra ver sua fase subir.
-          </span>
-          {manageTasks && (
-            <button
-              onClick={() => navigate(`/artists/${artist.id}/diagnostico/refazer`)}
-              style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(154, 79, 209,0.5)', color: '#C97EF3', padding: '8px 16px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
-            >
-              <FiRefreshCw size={14} /> Refazer diagnóstico
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ESTRATÉGIAS — em ordem de prioridade (a "etapa atual" do artista) */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <h2 className="ap-section-title" style={{ margin: 0 }}>Estratégias por prioridade</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            className="ap-btn ap-btn--ghost"
-            onClick={() => manageTasks ? openWithPrompt('Quero criar uma nova estratégia') : showProRequired()}
-            title={!manageTasks ? 'Recurso exclusivo do Maestra Pro' : undefined}
-          >
-              {!manageTasks ? <FiLock size={14} /> : <FiPlus size={14} />} Nova estratégia
-          </button>
-          {hasArchive && (
-            <button
-              className="ap-btn ap-btn--ghost"
-              onClick={() => manageTasks ? setArchiveOpen(true) : showProRequired()}
-              title={!manageTasks ? 'Recurso exclusivo do Maestra Pro' : undefined}
-            >
-              {!manageTasks ? <FiLock size={14} /> : <FiArchive size={14} />} Arquivadas ({archived.length})
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="ap-strats" style={{ marginTop: 16 }}>
-        {displayed.map((p, idx) => {
-          const s = p.s;
-          const state = p.complete ? 'done' : idx === focusIdx ? 'current' : 'next';
-          const isOpen = openId === undefined ? state === 'current' : openId === s.id;
-          const goal = topObjective(s);
-
-          return (
-            <div id={`strat-${s.id}`} className={`ap-strat ap-strat--${state}${isOpen ? ' is-open' : ''}`} key={s.id}>
-              <button className="ap-strat-head" onClick={() => setOpenId(isOpen ? '__none__' : s.id)}>
-                <FiChevronDown className="ap-chevron ap-chevron--leading" aria-hidden="true" />
-                <span className={`ap-strat-badge ap-strat-badge--${state}`}>
-                  {state === 'done' ? <FiCheck size={16} /> : idx + 1}
-                </span>
-                <span className="ap-strat-main">
-                  <span className="ap-strat-kicker">
-                    {state === 'done' ? 'Concluída' : state === 'current' ? 'Comece por aqui' : 'Em seguida'}
-                  </span>
-                  <span className="ap-strat-title">{s.title}</span>
-                </span>
-                {goal && (
-                  <Popover
-                    trigger="click"
-                    placement="bottomRight"
-                    overlayClassName="ap-goal-popover"
-                    overlayStyle={{ maxWidth: 280 }}
-                    content={
-                      <span style={{ fontSize: 13, color: '#b3b3b3', lineHeight: 1.45 }}>
-                        Essa estratégia ajuda a conquistar o objetivo{' '}
-                        <strong style={{ color: '#fff' }}>“{goal}”</strong>.
-                      </span>
-                    }
-                  >
-                    <span
-                      className="ap-strat-goal-btn"
-                      role="button"
-                      tabIndex={0}
-                      title="Por que essa estratégia?"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <FiHelpCircle size={15} />
-                    </span>
-                  </Popover>
-                )}
-                <Dropdown
-                  trigger={['click']}
-                  placement="bottomRight"
-                  menu={{
-                    items: [
-                      { key: 'task', label: 'Nova tarefa', icon: <FiPlus size={14} /> },
-                      { key: 'archive', label: 'Arquivar estratégia', icon: <FiArchive size={14} /> },
-                    ],
-                    onClick: ({ key }) => {
-                      if (key === 'task') {
-                        if (manageTasks) openWithPrompt(`Quero criar uma tarefa para a estratégia "${s.title}"`);
-                        else showProRequired();
-                      } else if (manageTasks) {
-                        archiveStrategy(s.id);
-                      } else {
-                        showProRequired();
-                      }
-                    },
-                  }}
-                >
-                  <span
-                    className="ap-strat-more"
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Mais opções da estratégia"
-                    title={!manageTasks ? 'Recurso exclusivo do Maestra Pro' : 'Mais opções'}
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
-                  >
-                    <FiMoreVertical size={18} />
-                  </span>
-                </Dropdown>
-                <span className="ap-strat-count">{p.done}/{p.total}</span>
+      <section className="action-strategy-overview" aria-label="Estratégias do plano">
+        <header>
+          <div><p>ESTRATÉGIAS DO PLANO</p><h3>Ranking de execução</h3></div>
+          <div className="action-overview-actions">
+            <span>{displayed.length} estratégias</span>
+            {hasArchive && <button type="button" onClick={() => manageTasks ? setArchiveOpen(true) : showProRequired()}><FiArchive size={13} /> Arquivadas ({archived.length})</button>}
+          </div>
+        </header>
+        <div className="action-strategy-scroll">
+          {displayed.map((p, idx) => {
+            const progress = p.total ? Math.round((p.done / p.total) * 100) : 0;
+            return (
+              <button type="button" className={p.s.id === activePlan?.s.id ? 'active' : ''} key={p.s.id} onClick={() => setOpenId(p.s.id)}>
+                <span>ESTRATÉGIA #{String(idx + 1).padStart(2, '0')}</span>
+                <strong>{p.s.title}</strong>
+                <small>{p.complete ? 'Concluída' : `${p.done} de ${p.total} tarefas`}</small>
+                <i><b style={{ width: `${progress}%` }} /></i>
+                <em>{progress}%</em>
               </button>
+            );
+          })}
+        </div>
+      </section>
 
-              {isOpen && (
-                <div className="ap-strat-body">
-                  {/* TAREFAS — linha do tempo (diferencial do modo básico) */}
-                  {p.ts.length === 0 && <div className="ap-empty-tasks">Nenhuma tarefa ainda. Crie a primeira com a Nyta no botão abaixo.</div>}
-                  {p.ts.length > 0 && (
-                    <div className="ap-tl">
-                      {p.ts.map((t, ti) => {
-                        const done = isDone(t);
-                        const od = !!(t.deadline && t.deadline < today && !done);
-                        return (
-                          <div className={`ap-tl-item${done ? ' is-done' : ''}`} key={t.id || `${s.id}-${ti}`}>
-                            <button
-                              className={`ap-tl-dot${done ? ' is-done' : ''}${od ? ' is-overdue' : ''}`}
-                              title={done ? 'Concluída' : 'Marcar como concluída'}
-                              onClick={() => editPlanning ? toggleDone(s.id, t) : showProRequired()}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              {done && <FiCheck size={13} />}
-                            </button>
-                            <TaskDate
-                              className="ap-date"
-                              value={t.deadline}
-                              overdue={od}
-                              disabled={!editPlanning}
-                              onBlocked={showProRequired}
-                              onChange={(d) => patchTask(s.id, t.id, { deadline: d })}
-                            />
-                            <div className="ap-tl-body">
-                              <button
-                                type="button"
-                                className="ap-task-desc"
-                                title="Abrir detalhes da tarefa"
-                                onClick={() => setSelectedTaskRef({ strategyId: s.id, taskId: t.id })}
-                              >
-                                {t.description}
-                              </button>
-                              <TaskCategory
-                                className="ap-type"
-                                value={t.type}
-                                disabled={!editPlanning}
-                                onBlocked={showProRequired}
-                                onChange={(v) => patchTask(s.id, t.id, { type: v })}
-                              />
-                            </div>
-                            <TaskOwner
-                              className="ap-owner"
-                              value={t.owner}
-                              assignees={assignees}
-                              disabled={!editPlanning}
-                              onBlocked={showProRequired}
-                              onChange={(o) => patchTask(s.id, t.id, { owner: o })}
-                            />
-                            <button
-                              type="button"
-                              className="ap-task-more"
-                              aria-label="Mais opções da tarefa"
-                              title="Abrir detalhes da tarefa"
-                              onClick={() => setSelectedTaskRef({ strategyId: s.id, taskId: t.id })}
-                            >
-                              <FiMoreVertical size={17} />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* "Nova tarefa" abre o chat da Nyta pra criar a tarefa NESTA estratégia (guiado + confirmação). */}
-                  <div className="ap-add">
-                    <button
-                      className="ap-btn ap-btn--ghost ap-btn--accent"
-                      onClick={() => manageTasks ? openWithPrompt(`Quero criar uma tarefa para a estratégia "${s.title}"`) : showProRequired()}
-                      title={!manageTasks ? 'Recurso exclusivo do Maestra Pro' : undefined}
-                    >
-                      {!manageTasks ? <FiLock size={15} /> : <FiPlus size={15} />} Nova tarefa
-                    </button>
-                  </div>
+      {activePlan && (
+        <section className="action-active-strategy">
+          <div className="action-strategy-grid">
+            <section className="action-task-register">
+              <header>
+                <div><p>ESTRATÉGIA #{String(displayed.findIndex((p) => p.s.id === activePlan.s.id) + 1).padStart(2, '0')}</p><h3>Tarefas</h3></div>
+                <button type="button" onClick={() => manageTasks ? openWithPrompt(`Quero criar uma tarefa para a estratégia "${activePlan.s.title}"`) : showProRequired()}>
+                  {!manageTasks ? <FiLock size={14} /> : <FiPlus size={14} />} Adicionar tarefa
+                </button>
+              </header>
+              {activePlan.ts.length === 0 ? (
+                <div className="ap-empty-tasks">Nenhuma tarefa ainda. Crie a primeira com a Nyta no botão acima.</div>
+              ) : (
+                <div className="action-task-register-table">
+                  <header><span>Tarefa</span><span>Tipo</span><span>Responsável</span><span>Prazo</span><span>Status</span><span /></header>
+                  {activePlan.ts.map((t, index) => {
+                    const done = isDone(t);
+                    const overdue = !!(t.deadline && t.deadline < today && !done);
+                    const statusLabel = done ? 'Concluída' : t.status === 'in_progress' ? 'Em andamento' : 'A fazer';
+                    const statusClass = done ? 'priority-normal' : overdue ? 'priority-alta' : t.status === 'in_progress' ? 'priority-média' : 'priority-normal';
+                    return (
+                      <article key={t.id || `${activePlan.s.id}-${index}`} className={done ? '' : index === 0 ? 'selected' : ''}>
+                    <span className="action-task-title"><button type="button" className={`action-task-check${done ? ' is-done' : ''}`} title={done ? 'Reabrir tarefa' : 'Concluir tarefa'} onClick={() => editPlanning ? toggleDone(activePlan.s.id, t) : showProRequired()}>{done ? <FiCheckCircle size={25} /> : <FiCircle size={25} />}</button><strong>{t.description}<small>{t.comments?.length ? `${t.comments.length} comentário${t.comments.length === 1 ? '' : 's'}` : 'Abrir detalhes da tarefa'}</small></strong></span>
+                        <TaskCategory className="ap-type" value={t.type} disabled={!editPlanning} onBlocked={showProRequired} onChange={(v) => patchTask(activePlan.s.id, t.id, { type: v })} />
+                        <span><TaskOwner className="ap-owner" value={t.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(o) => patchTask(activePlan.s.id, t.id, { owner: o })} /></span>
+                        <TaskDate className="ap-date" value={t.deadline} overdue={overdue} disabled={!editPlanning} onBlocked={showProRequired} onChange={(d) => patchTask(activePlan.s.id, t.id, { deadline: d })} />
+                        <b className={statusClass}>{statusLabel}</b>
+                        <button type="button" className="action-task-more" aria-label="Abrir detalhes da tarefa" onClick={() => setSelectedTaskRef({ strategyId: activePlan.s.id, taskId: t.id })}><FiMoreVertical size={17} /></button>
+                      </article>
+                    );
+                  })}
                 </div>
               )}
-            </div>
-          );
-        })}
-      </div>
+            </section>
+          </div>
+        </section>
+      )}
 
       {/* Consultora da Nyta (mesma seção do rodapé do Dashboard) no lugar do texto simples de objetivos */}
       <NytaDashboardHero />

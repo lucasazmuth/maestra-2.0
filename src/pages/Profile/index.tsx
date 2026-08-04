@@ -1,8 +1,11 @@
 import { FC, useMemo, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FiArrowRight } from 'react-icons/fi';
+import ReactMarkdown from 'react-markdown';
 
 import { useArtist } from '../../hooks/useArtist';
 import { Spinner } from '../../components/spinner/spinner';
+import { RealBadge, altasForPattern, tierForAltas } from '../../components/RealBadge';
 import type { SwotAnalysis } from '../../interfaces/maestra';
 
 import '../ActionPlan/actionPlan.scss';
@@ -35,7 +38,8 @@ const Profile: FC = () => {
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
   const phase = content?.realIndex?.profile?.name || content?.phaseLabel || 'Beginner';
-  const phaseNumber = Math.max(1, Math.min(16, content?.phase || 1));
+  const careerLevel = altasForPattern(content?.realIndex?.pattern);
+  const careerProgress = (careerLevel / 4) * 100;
   const references = identity?.references;
   const referenceChips = [references?.artisticas, references?.comunicacao, references?.gestao].filter(Boolean) as string[];
   const totalTasks = strategies.reduce((total, strategy) => total + (strategy.tasks?.length || 0), 0);
@@ -56,9 +60,16 @@ const Profile: FC = () => {
       <section className="planning-general">
         <article className="planning-stage-card">
           <header><span>SUA FASE DE CARREIRA</span><button type="button" onClick={() => navigate(`/artists/${artist.id}/diagnostico`)}>Ver completo →</button></header>
-          <div className="career-line">
-            <i className="career-current">Você está aqui</i>
-            {Array.from({ length: 4 }, (_, index) => <span key={index} className="career-marker-group"><b className={index + 1 === phaseNumber ? 'career-highlight' : ''}>{index + 1}</b>{index < 3 && <em />}</span>)}
+          <div className="career-line" style={{ '--career-progress': `${careerProgress}%` } as CSSProperties}>
+            {Array.from({ length: 5 }, (_, level) => {
+              const isCurrent = level === careerLevel;
+              return (
+                <span key={level} className={`career-marker-group${level <= careerLevel ? ' career-reached' : ''}${isCurrent ? ' career-current-marker' : ''}`}>
+                  <RealBadge tier={tierForAltas(level)} label={String(level)} size={39} />
+                  {isCurrent && <i className="career-current">Você está aqui</i>}
+                </span>
+              );
+            })}
           </div>
           <p>Para subir de nível, eleve o <strong>alcance</strong> e transforme o planejamento em lançamentos consistentes.</p>
           <small className="planning-stage-name">Fase atual: <strong>{phase}</strong></small>
@@ -71,8 +82,8 @@ const Profile: FC = () => {
         </section>
 
         <section className="planning-general-grid">
-          <article className="planning-focus"><p>FOCO DO CICLO</p><h2>Próximos marcos</h2><span>{content?.executiveSummary || 'Organize as prioridades da carreira para os próximos lançamentos.'}</span><div><i style={{ width: `${capacity}%` }} /></div><small>Atualizado com os dados do planejamento</small></article>
-          <article className="planning-next"><header><span>PRÓXIMOS PASSOS</span><button type="button" onClick={() => navigate(`/artists/${artist.id}/action-plan`)}>＋</button></header>{(nextSteps.length ? nextSteps : ['Definir próximos objetivos', 'Organizar as estratégias', 'Acompanhar as entregas']).map((item, index) => <div key={item}><i>{String(index + 1).padStart(2, '0')}</i><strong>{item}</strong><b>›</b></div>)}</article>
+          <article className="planning-focus"><p>FOCO DO CICLO</p><h2>Próximos marcos</h2><div className="planning-focus-summary"><ReactMarkdown>{content?.executiveSummary || 'Organize as prioridades da carreira para os próximos lançamentos.'}</ReactMarkdown></div><div><i style={{ width: `${capacity}%` }} /></div><small>Atualizado com os dados do planejamento</small></article>
+          <article className="planning-next"><header><span>PRÓXIMOS PASSOS</span><button type="button" aria-label="Ir para o plano de ação" onClick={() => navigate(`/artists/${artist.id}/action-plan`)}><FiArrowRight aria-hidden="true" /></button></header>{(nextSteps.length ? nextSteps : ['Definir próximos objetivos', 'Organizar as estratégias', 'Acompanhar as entregas']).map((item, index) => <div key={item}><i>{String(index + 1).padStart(2, '0')}</i><strong>{item}</strong><b>›</b></div>)}</article>
         </section>
       </section>
 
@@ -92,7 +103,7 @@ const Profile: FC = () => {
 
       <section className="planning-swot"><header><p>LEITURA DO CENÁRIO</p><h2>Análise SWOT</h2><span>Forças, fragilidades e oportunidades que orientam o posicionamento da carreira.</span></header><div>{swot.map(([title, items], index) => <article key={title} style={{ '--swot-color': swotColors[index] } as CSSProperties}><h3>{title}</h3><ul>{(items.length ? items : ['Nenhum item informado.']).map((item) => <li key={item}>{item}</li>)}</ul></article>)}</div></section>
 
-      <section className="planning-strategies"><header><div><p>PLANO PRIORIZADO</p><h2>Estratégias</h2><span>Prioridades organizadas por impacto para o crescimento sustentável da carreira.</span></div><button type="button" onClick={() => navigate(`/artists/${artist.id}/action-plan`)}>＋ Nova estratégia</button></header><div>{strategies.map((strategy, index) => { const progress = Math.max(0, Math.min(100, strategy.finalScore ? Math.round((strategy.finalScore / 40) * 100) : 0)); return <article key={strategy.id}><b>{String(index + 1).padStart(2, '0')}</b><section><strong>{strategy.title}</strong><i><span style={{ width: `${progress}%` }} /></i></section><em>{progress}%</em></article>; })}</div></section>
+      <section className="planning-strategies"><header><div><p>PLANO PRIORIZADO</p><h2>Estratégias</h2><span>Prioridades organizadas por impacto para o crescimento sustentável da carreira.</span></div></header><div>{strategies.map((strategy, index) => { const progress = Math.max(0, Math.min(100, strategy.finalScore ? Math.round((strategy.finalScore / 40) * 100) : 0)); return <article key={strategy.id}><b>{String(index + 1).padStart(2, '0')}</b><section><strong>{strategy.title}</strong><i><span style={{ width: `${progress}%` }} /></i></section><em>{progress}%</em></article>; })}</div></section>
     </div>
   );
 };

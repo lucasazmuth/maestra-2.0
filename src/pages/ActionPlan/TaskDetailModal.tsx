@@ -335,6 +335,8 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
                   <label>
                     <span>Status</span>
                     <Select
+                      className="action-plan-select"
+                      popupClassName="action-plan-select-dropdown"
                       value={status}
                       options={statusOptions}
                       disabled={!canEdit}
@@ -344,6 +346,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
                   <label>
                     <span>Prazo</span>
                     <DatePicker
+                      popupClassName="action-plan-picker"
                       value={deadline ? dayjs(deadline) : null}
                       format="DD/MM/YYYY"
                       placeholder="Sem prazo"
@@ -355,6 +358,8 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
                   <label>
                     <span>Categoria</span>
                     <Select
+                      className="action-plan-select"
+                      popupClassName="action-plan-select-dropdown"
                       value={type}
                       options={TASK_TYPES.map((option) => ({ value: option.v, label: option.label }))}
                       disabled={!canEdit}
@@ -364,6 +369,8 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
                   <label>
                     <span>Responsável</span>
                     <Select
+                      className="action-plan-select"
+                      popupClassName="action-plan-select-dropdown"
                       value={owner}
                       options={assignees.map((assignee) => ({
                         value: assignee.value,
