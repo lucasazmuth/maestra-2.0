@@ -19,7 +19,7 @@ const SubscriptionGuardWrapper: FC = () => {
 
   // Enquanto está carregando o status da assinatura pela primeira vez
   if (loading && status === 'none') {
-    return <Spinner loading>{null as any}</Spinner>;
+    return <Spinner loading global>{null as any}</Spinner>;
   }
 
   // Se tem acesso, renderiza os filhos normalmente

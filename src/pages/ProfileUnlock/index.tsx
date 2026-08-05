@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Input, Spin, Select } from 'antd';
-import { FiArrowLeft, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiChevronDown, FiX } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { supabase } from '../../lib/supabase';
@@ -11,7 +11,6 @@ import { createArtistCharge, pollArtistPurchase } from '../../store/slices/artis
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 import { FlowHeader } from '../ArtistCreate/FlowHeader';
-import { MaestraBrand } from '../../components/MaestraBrand';
 import { PaymentSuccessScreen } from '../../components/PaymentSuccessScreen';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
 import {
@@ -33,11 +32,11 @@ const MIN_INSTALLMENT_VALUE = 5;
 
 // O que o pagamento único libera (checklist curta no resumo).
 const INCLUDES = [
-  'Planejamento estratégico completo com a Nyta',
+  'Planejamento estratégico',
   'Plano de ação com metas e cronograma',
   'Análise de audiência: ouvintes e cidades',
   'Catálogo, agenda e equipe',
-  'Acesso vitalício ao perfil e ao plano',
+  'Acesso vitalício ao perfil',
 ];
 
 // Tela de desbloqueio do perfil (criado no diagnóstico, ainda NÃO pago).
@@ -237,11 +236,22 @@ const ProfileUnlock: FC = () => {
   }
 
   return (
-    <div className={styles.page}>
+  <div className={`${styles.page} ${step === 'diagnostico' ? styles.pageReal : ''} ${step === 'pagamento' ? styles.pageCheckout : ''}`}>
       {/* Cabeçalho numa única linha (mesmo de /criar-artista): etapas à esquerda, sair (X) à direita.
           No diagnóstico a fase atual é "Diagnóstico REAL"; no pagamento avança pra "Planejamento". */}
       <div className={styles.topBar}>
-        <MaestraBrand variant='lockup' tone='light' className={styles.brand} beta />
+        <a
+          className={styles.brand}
+          href='/artists'
+          onClick={(event) => {
+            event.preventDefault();
+            navigate('/artists');
+          }}
+          aria-label='Voltar para seus perfis'
+        >
+          <span className='brand-logo-mark' aria-hidden='true' />
+          Maestra
+        </a>
         <FlowHeader phase={step === 'pagamento' ? 2 : 1} />
         <button className={styles.back} onClick={() => navigate('/artists')} aria-label="Sair" title="Sair">
           <FiX size={20} />
@@ -275,7 +285,7 @@ const ProfileUnlock: FC = () => {
               <div style={{ textAlign: 'left', marginBottom: 18 }}>
                 <button
                   onClick={() => setStep('diagnostico')}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: '#9a9aa5', fontWeight: 700, fontSize: 14, cursor: 'pointer', padding: 0 }}
+                  className={styles.unlockBack}
                 >
                   <FiArrowLeft size={16} /> Voltar ao diagnóstico
                 </button>
@@ -293,7 +303,7 @@ const ProfileUnlock: FC = () => {
               </p>
             </div>
 
-            <CheckoutLayout
+            <CheckoutLayout tone="light"
               main={
                 <>
                   <AccountRow email={userEmail} />
@@ -304,7 +314,7 @@ const ProfileUnlock: FC = () => {
                       value={method}
                       onChange={setMethod}
                       renderBody={(m) => (m === 'PIX'
-                        ? <p style={{ fontSize: 14, color: '#9a9aa5', lineHeight: 1.55, margin: 0 }}>Ao continuar, geramos um código PIX pra você pagar na hora. O acesso libera assim que o pagamento cair.</p>
+                        ? <p className={styles.unlockPixNote}>Ao continuar, geramos um código PIX pra você pagar na hora. O acesso libera assim que o pagamento cair.</p>
                         : <CardForm form={form} />
                       )}
                     />
@@ -331,6 +341,8 @@ const ProfileUnlock: FC = () => {
                             onChange={setInstallments}
                             size="large"
                             style={{ width: '100%' }}
+                            popupClassName="checkout-installments-dropdown"
+                            suffixIcon={<FiChevronDown aria-hidden="true" />}
                             options={Array.from({ length: maxInstallments }, (_, i) => i + 1).map((n) => ({
                               value: n,
                               label: n === 1 ? `À vista · ${fmtBRL(discountedPrice)}` : `${n}x de ${fmtBRL(discountedPrice / n)} sem juros`,

@@ -8,8 +8,6 @@ import { Spinner } from '../../components/spinner/spinner';
 import { listCatalogItems } from '../../services/db/catalog';
 import { CATALOG_STATUS } from '../../constants/maestra';
 import type { CatalogItem } from '../../interfaces/maestra';
-import type { LocalTrack } from '../../components/LocalPlayerBar';
-import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 
 const fmtNumber = (value?: number | null) =>
   typeof value === 'number' ? value.toLocaleString('pt-BR') : '—';
@@ -19,12 +17,6 @@ const Dashboard: FC = () => {
   const [draftTracks, setDraftTracks] = useState<CatalogItem[]>([]);
   const { artist, loading } = useArtist();
   const journey = useJourneyState(artist);
-  const playerCurrentId = useLocalPlayerStore((state) => state.currentId);
-  const playerPlaying = useLocalPlayerStore((state) => state.playing);
-  const togglePlayer = useLocalPlayerStore((state) => state.toggle);
-  const setLocalPlayerTracks = useLocalPlayerStore((state) => state.setTracks);
-  const setLocalPlayerCurrentId = useLocalPlayerStore((state) => state.setCurrentId);
-  const setLocalPlayerOpen = useLocalPlayerStore((state) => state.setOpen);
 
   useEffect(() => {
     let alive = true;
@@ -58,26 +50,6 @@ const Dashboard: FC = () => {
     name: album.name,
     album: 'Spotify',
   }));
-  const localTracks: LocalTrack[] = draftTracks
-    .filter((track) => !!track.audio_file)
-    .map((track) => ({
-      id: track.id,
-      title: track.title,
-      subtitle: track.genre || undefined,
-      cover: track.cover_image,
-      url: track.audio_file as string,
-    }));
-  const openDraftTrack = (track: CatalogItem) => {
-    if (!track.audio_file) return;
-    if (playerCurrentId === track.id) {
-      togglePlayer?.();
-      return;
-    }
-    setLocalPlayerTracks(localTracks);
-    setLocalPlayerCurrentId(track.id);
-    setLocalPlayerOpen(true);
-  };
-
   return (
     <div className='board-content page-view music-dashboard'>
       <section className='music-hero music-hero-task'>
@@ -155,21 +127,11 @@ const Dashboard: FC = () => {
 
         <article className='track-performance'>
           <header>
-            <h2>Faixas Rascunhos</h2>
-            <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`, { state: { catalogTab: 'manual' } })}>Ver catálogo →</button>
+            <h2>Performance do catálogo</h2>
+            <span>Ouvintes&nbsp;&nbsp;&nbsp;&nbsp;Crescimento</span>
           </header>
           {draftTracks.slice(0, 5).map((track, index) => (
             <div key={track.id}>
-              <button
-                type='button'
-                className='track-play'
-                aria-label={track.audio_file ? `Tocar ${track.title}` : `Faixa sem áudio ${track.title}`}
-                title={track.audio_file ? (playerCurrentId === track.id && playerPlaying ? 'Pausar' : 'Tocar') : 'Sem áudio'}
-                disabled={!track.audio_file}
-                onClick={() => openDraftTrack(track)}
-              >
-                {playerCurrentId === track.id && playerPlaying ? '❚❚' : '▶'}
-              </button>
               <i>{index + 1}</i>
               <span className='track-dot' style={{ background: ['#8833ff', '#33bfff', '#ff6633', '#29cc39', '#e62e7b'][index % 5] }} />
               <strong>{track.title}<small>{track.genre || (CATALOG_STATUS as any)[track.status]?.label || track.status}</small></strong>

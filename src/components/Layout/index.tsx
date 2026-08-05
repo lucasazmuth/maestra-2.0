@@ -20,12 +20,16 @@ import { useNytaModal } from '../../hooks/useNytaModal';
 import { ArtifactsPanel } from '../../pages/Wizard/ArtifactsPanel';
 import { enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { SearchIcon } from '../Icons';
+import { FiArrowRight } from 'react-icons/fi';
 import {
   AgendaIcon,
   CatalogoIcon,
   DashboardIcon,
   DiagnosticoIcon,
   EquipeIcon,
+  MarketingIcon,
+  NotificationIcon,
   PlanejamentoIcon,
   PlanoAcaoIcon,
   SystemHomeIcon,
@@ -130,6 +134,9 @@ export const AppLayout: FC = memo(() => {
   const artists = useAppSelector((s) => s.artists.items);
   const routeArtistId = pathArtistId(location.pathname);
   const currentArtist = routeArtistId ? artists.find((artist) => artist.id === routeArtistId) : undefined;
+  const isNytaPage = location.pathname.endsWith('/nyta');
+  const isNotificationsPage = location.pathname === '/notifications';
+  const openNytaPage = () => routeArtistId ? navigate(`/artists/${routeArtistId}/nyta`) : openNyta();
   const { viewPlanning } = useArtistCapabilities(currentArtist);
   const journey = useJourneyState(currentArtist);
   const currentArtistImage = currentArtist?.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE;
@@ -233,10 +240,9 @@ export const AppLayout: FC = memo(() => {
 
   const planningTo = journey.hasPlan ? 'perfil' : 'wizard';
   const actionUnlocked = viewPlanning && journey.hasPlan;
-  const displayName = (user?.user_metadata as Record<string, any> | undefined)?.full_name
-    || (user?.user_metadata as Record<string, any> | undefined)?.name
-    || user?.email
-    || 'Usuário';
+  const userMetadata = (user?.user_metadata || {}) as Record<string, any>;
+  const displayName = userMetadata.full_name || userMetadata.name || user?.email || 'Usuário';
+  const userAvatar = userMetadata.avatar_url || userMetadata.picture || ARTISTS_DEFAULT_IMAGE;
   const topNavigation = (home = false) => (
     <header className='top-navigation'>
       <a className='constructor' href='/artists' onClick={(event) => {
@@ -254,27 +260,29 @@ export const AppLayout: FC = memo(() => {
         </nav>
       )}
       <label className='global-search'>
-        <span>⌕</span>
-        <input placeholder='Search Products, Orders and Clients' aria-label='Busca global' />
-        <b>›</b>
+        <span className='global-search-icon' aria-hidden='true'><SearchIcon size={18} /></span>
+        <input placeholder={home ? 'Buscar perfil ou artista' : 'Pesquisar na Maestra'} aria-label='Busca global' />
+        <span className='global-search-arrow' aria-hidden='true'><FiArrowRight size={18} /></span>
       </label>
       <div className='account'>
-        <span className='account-icon'>●</span>
+        <span className='account-icon'>
+          <img src={userAvatar} alt='' />
+        </span>
         <strong>{displayName}</strong>
       </div>
       {routeArtistId && (
-        <button className='round-control header-nyta-action' aria-label='Abrir Nyta IA' type='button' onClick={openNyta}>
-          ✦
+        <button className='round-control header-nyta-action' aria-label='Abrir Nyta IA' type='button' onClick={openNytaPage}>
+          <NytaAvatar size={34} />
         </button>
       )}
-      <button className='round-control notification' aria-label='Notificações' type='button' onClick={() => navigate('/notifications')}>
-        ♟
-      </button>
       {home && (
         <button className='round-control' aria-label='Configurações' type='button' onClick={() => navigate('/settings')}>
           ⚙
         </button>
       )}
+      <button className='round-control notification' aria-label='Notificações' type='button' onClick={() => navigate('/notifications')}>
+        <NotificationIcon size={19} />
+      </button>
     </header>
   );
 
@@ -292,7 +300,7 @@ export const AppLayout: FC = memo(() => {
           <>
         {!hideTopbar && topNavigation(false)}
         <div
-          className={`app-layout${showWizardPanel ? ' module-layout' : ''}`}
+          className={`app-layout${showWizardPanel || isNytaPage || isNotificationsPage ? ' module-layout' : ''}`}
           style={{ bottom: bottomReserve ? `${bottomReserve}px` : 0 }}
         >
           <aside className='app-rail' aria-label='Atalhos'>
@@ -301,9 +309,9 @@ export const AppLayout: FC = memo(() => {
                 <SystemHomeIcon size={20} />
               </button>
               <button type='button' className={location.pathname === '/notifications' ? 'rail-active rail-notification' : 'rail-notification'} aria-label='Notificações' onClick={() => navigate('/notifications')}>
-                ♟
+                <NotificationIcon size={19} />
               </button>
-              <button type='button' className='rail-nyta' aria-label='Abrir Nyta IA' onClick={openNyta}>
+              <button type='button' className={`rail-nyta${isNytaPage ? ' rail-active' : ''}`} aria-label='Abrir Nyta IA' onClick={openNytaPage}>
                 <b>Nyta IA</b>
               </button>
             </div>
@@ -311,14 +319,14 @@ export const AppLayout: FC = memo(() => {
             <div className='rail-people'>
               {artists.slice(0, 4).map((artist) => (
                 artist.content?.spotifyProfile?.image
-                  ? <span key={artist.id} className='avatar avatar-big avatar-image' role='button' tabIndex={0} onClick={() => navigate(`/artists/${artist.id}`)}><img src={artist.content.spotifyProfile.image} alt={artist.name} /></span>
-                  : <span key={artist.id} className='avatar avatar-big' role='button' tabIndex={0} onClick={() => navigate(`/artists/${artist.id}`)}>{firstInitials(artist.name)}</span>
+                  ? <span key={artist.id} className={`avatar avatar-big avatar-image${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(`/artists/${artist.id}`)}><img src={artist.content.spotifyProfile.image} alt={artist.name} /></span>
+                  : <span key={artist.id} className={`avatar avatar-big${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(`/artists/${artist.id}`)}>{firstInitials(artist.name)}</span>
               ))}
               <button type='button'>＋</button>
             </div>
           </aside>
 
-          {currentArtist && (
+          {currentArtist && !isNytaPage && !isNotificationsPage && (
             <aside className='profile-panel' aria-label='Detalhes do artista'>
               <div
                 className='portrait-wrap'
@@ -345,7 +353,7 @@ export const AppLayout: FC = memo(() => {
                 <ProfileMenuButton active={isActive('catalog')} icon={<CatalogoIcon size={22} />} label='Catálogo' onClick={() => goArtist('catalog')} />
                 <ProfileMenuButton active={isActive('agenda')} icon={<AgendaIcon size={22} />} label='Agenda' onClick={() => goArtist('agenda')} />
                 <ProfileMenuButton active={isActive('team')} icon={<EquipeIcon size={22} />} label='Equipe' locked={!viewPlanning} onClick={() => goArtist('team')} />
-                <ProfileMenuButton active={false} icon={<NytaAvatar size={24} />} label={<span>Marketing<small style={{ display: 'block', fontSize: 8 }}>(Em breve)</small></span>} onClick={openNyta} />
+                <ProfileMenuButton active={isActive('marketing')} icon={<MarketingIcon size={22} />} label={<span>Marketing<small style={{ display: 'block', fontSize: 8 }}>(Em breve)</small></span>} onClick={() => goArtist('marketing')} />
               </div>
 
               <button type='button' className='social-links' onClick={() => goArtist('diagnostico')}>

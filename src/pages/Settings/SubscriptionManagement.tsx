@@ -104,7 +104,7 @@ const SubscriptionManagement: FC = () => {
     (status === 'pending' && !!asaasSubscriptionId);
 
   return (
-    <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
+    <section className='settings-subscription-card' style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
       <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginTop: 0, marginBottom: 16 }}>
         Assinatura
       </h2>

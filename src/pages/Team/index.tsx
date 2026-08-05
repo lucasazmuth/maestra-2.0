@@ -60,6 +60,9 @@ const Team: FC = () => {
   // RLS mantém UPDATE/DELETE exclusivos do dono. Membros com permissão de equipe
   // podem convidar, mas não alterar ou remover outras pessoas.
   const isOwner = artist.role !== 'member';
+  const activeMembers = members.filter((member) => member.status === 'active').length;
+  const pendingMembers = members.filter((member) => member.status === 'pending').length;
+  const configuredAccesses = members.reduce((total, member) => total + (member.access_levels?.length || 0), 0);
 
   const toggleAccessLevel = (
     current: AccessLevel[],
@@ -132,14 +135,15 @@ const Team: FC = () => {
   };
 
   return (
-    <div className={`${styles.page} team-reference-page`}>
-      <div className={`${styles.header} team-reference-heading`}>
+    <div className={styles.page}>
+      <div className={styles.header}>
         <div>
+          <p className={styles.eyebrow}>Time do artista</p>
           <h1>Equipe</h1>
-          <p>Gerencie quem participa da operação e o que cada pessoa pode acessar.</p>
+          <span>Gerencie quem participa da operação e o que cada pessoa pode acessar.</span>
         </div>
         {canManageTeam && (
-          <button type="button" className={`${styles.inviteButton} team-reference-invite`} onClick={() => setInviteOpen(true)}>
+          <button type="button" className={styles.inviteButton} onClick={() => setInviteOpen(true)}>
             <FiPlus aria-hidden="true" />
             Convidar membro
           </button>
@@ -154,13 +158,27 @@ const Team: FC = () => {
             <span>Convide colaboradores por e-mail e defina os acessos de cada pessoa.</span>
           </div>
         ) : (
-          <div className={`${styles.memberList} team-reference-member-list`}>
+          <>
+            <section className={styles.summary} aria-label="Resumo da equipe">
+              <span><b>{String(activeMembers).padStart(2, '0')}</b>Pessoas ativas</span>
+              <span><b>{String(pendingMembers).padStart(2, '0')}</b>Convites pendentes</span>
+              <span><b>{String(configuredAccesses).padStart(2, '0')}</b>Acessos configurados</span>
+            </section>
+            <div className={styles.memberList}>
+              <header className={styles.listHeader}>
+                <span>Membro</span>
+                <span>Acessos</span>
+                <span>Status</span>
+                <span aria-hidden="true" />
+              </header>
             {members.map((member) => (
-              <article className={`${styles.memberCard} team-reference-member-card`} key={member.id}>
-                <span className={styles.avatar} aria-hidden="true">{initials(member)}</span>
-                <div className={styles.memberIdentity}>
-                  <strong>{member.name || member.email.split('@')[0]}</strong>
-                  <span>{member.email}</span>
+              <article className={styles.memberCard} key={member.id}>
+                <div className={styles.memberCell}>
+                  <span className={styles.avatar} aria-hidden="true">{initials(member)}</span>
+                  <div className={styles.memberIdentity}>
+                    <strong>{member.name || member.email.split('@')[0]}</strong>
+                    <span>{member.email}</span>
+                  </div>
                 </div>
                 <div className={styles.accessSummary} aria-label="Acessos concedidos">
                   {(member.access_levels || []).slice(0, 3).map((level) => {
@@ -186,7 +204,8 @@ const Team: FC = () => {
                 </button>
               </article>
             ))}
-          </div>
+            </div>
+          </>
         )}
       </Spinner>
 

@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown';
 
 import { useArtist } from '../../hooks/useArtist';
 import { Spinner } from '../../components/spinner/spinner';
-import { RealBadge, altasForPattern, tierForAltas } from '../../components/RealBadge';
 import type { SwotAnalysis } from '../../interfaces/maestra';
 
 import '../ActionPlan/actionPlan.scss';
@@ -37,9 +36,6 @@ const Profile: FC = () => {
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
-  const phase = content?.realIndex?.profile?.name || content?.phaseLabel || 'Beginner';
-  const careerLevel = altasForPattern(content?.realIndex?.pattern);
-  const careerProgress = (careerLevel / 4) * 100;
   const references = identity?.references;
   const referenceChips = [references?.artisticas, references?.comunicacao, references?.gestao].filter(Boolean) as string[];
   const totalTasks = strategies.reduce((total, strategy) => total + (strategy.tasks?.length || 0), 0);
@@ -58,22 +54,10 @@ const Profile: FC = () => {
       </header>
 
       <section className="planning-general">
-        <article className="planning-stage-card">
-          <header><span>SUA FASE DE CARREIRA</span><button type="button" onClick={() => navigate(`/artists/${artist.id}/diagnostico`)}>Ver completo →</button></header>
-          <div className="career-line" style={{ '--career-progress': `${careerProgress}%` } as CSSProperties}>
-            {Array.from({ length: 5 }, (_, level) => {
-              const isCurrent = level === careerLevel;
-              return (
-                <span key={level} className={`career-marker-group${level <= careerLevel ? ' career-reached' : ''}${isCurrent ? ' career-current-marker' : ''}`}>
-                  <RealBadge tier={tierForAltas(level)} label={String(level)} size={39} />
-                  {isCurrent && <i className="career-current">Você está aqui</i>}
-                </span>
-              );
-            })}
-          </div>
-          <p>Para subir de nível, eleve o <strong>alcance</strong> e transforme o planejamento em lançamentos consistentes.</p>
-          <small className="planning-stage-name">Fase atual: <strong>{phase}</strong></small>
-        </article>
+        <section className="planning-general-grid planning-primary-grid">
+          <article className="planning-focus"><p>FOCO DO CICLO</p><h2>Próximos marcos</h2><div className="planning-focus-summary"><ReactMarkdown>{content?.executiveSummary || 'Organize as prioridades da carreira para os próximos lançamentos.'}</ReactMarkdown></div><div><i style={{ width: `${capacity}%` }} /></div><small>Atualizado com os dados do planejamento</small></article>
+          <article className="planning-next"><header><span>PRÓXIMOS PASSOS</span><button type="button" aria-label="Ir para o plano de ação" onClick={() => navigate(`/artists/${artist.id}/action-plan`)}><FiArrowRight aria-hidden="true" /></button></header>{(nextSteps.length ? nextSteps : ['Definir próximos objetivos', 'Organizar as estratégias', 'Acompanhar as entregas']).map((item, index) => <div key={item}><i>{String(index + 1).padStart(2, '0')}</i><strong>{item}</strong><b>›</b></div>)}</article>
+        </section>
 
         <section className="planning-overview-grid">
           <article><strong>{String(strategies.length).padStart(2, '0')}</strong><span>Frentes estratégicas</span></article>
@@ -81,14 +65,10 @@ const Profile: FC = () => {
           <article><strong>{capacity}%</strong><span>Capacidade planejada</span></article>
         </section>
 
-        <section className="planning-general-grid">
-          <article className="planning-focus"><p>FOCO DO CICLO</p><h2>Próximos marcos</h2><div className="planning-focus-summary"><ReactMarkdown>{content?.executiveSummary || 'Organize as prioridades da carreira para os próximos lançamentos.'}</ReactMarkdown></div><div><i style={{ width: `${capacity}%` }} /></div><small>Atualizado com os dados do planejamento</small></article>
-          <article className="planning-next"><header><span>PRÓXIMOS PASSOS</span><button type="button" aria-label="Ir para o plano de ação" onClick={() => navigate(`/artists/${artist.id}/action-plan`)}><FiArrowRight aria-hidden="true" /></button></header>{(nextSteps.length ? nextSteps : ['Definir próximos objetivos', 'Organizar as estratégias', 'Acompanhar as entregas']).map((item, index) => <div key={item}><i>{String(index + 1).padStart(2, '0')}</i><strong>{item}</strong><b>›</b></div>)}</article>
-        </section>
       </section>
 
       <section className="planning-fundamentals">
-        <article className="planning-intro-card"><p>IDENTIDADE ARTÍSTICA</p><h2>Fundamentos que orientam cada decisão.</h2><span>Um retrato claro do que o artista representa, para quem cria e onde quer chegar.</span></article>
+        <article className="planning-intro-card"><div className="planning-intro-copy"><p>IDENTIDADE ARTÍSTICA</p><h2>Fundamentos que orientam cada decisão.</h2></div><span>Um retrato claro do que o artista representa, para quem cria e onde quer chegar.</span></article>
         <div className="fundamentals-grid">
           <article><span>GÊNERO</span><strong>{identity?.genre || 'Não informado'}</strong></article>
           <article><span>VISÃO</span><strong>{identity?.vision || 'Ainda não definida.'}</strong></article>

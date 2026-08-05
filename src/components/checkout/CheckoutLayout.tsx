@@ -5,8 +5,8 @@ import styles from './checkout.module.scss';
 
 // Layout de checkout em 2 colunas (form à esquerda, resumo/"carrinho" à direita),
 // no padrão Adobe/Behance. Empilha no mobile.
-export const CheckoutLayout: FC<{ main: ReactNode; aside: ReactNode }> = ({ main, aside }) => (
-  <div className={styles.layout}>
+export const CheckoutLayout: FC<{ main: ReactNode; aside: ReactNode; tone?: 'dark' | 'light' }> = ({ main, aside, tone = 'dark' }) => (
+  <div className={`${styles.layout} ${tone === 'light' ? styles.light : ''}`}>
     <div className={styles.main}>{main}</div>
     <div className={styles.aside}>{aside}</div>
   </div>

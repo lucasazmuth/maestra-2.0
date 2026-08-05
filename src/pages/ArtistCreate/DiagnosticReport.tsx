@@ -488,7 +488,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
           <img src={realStar} alt="" width={185} height={185} style={{ display: 'block', filter: 'hue-rotate(122deg) saturate(1.05)' }} />
         </span>
         {/* Refazer diagnóstico: sutil, no canto do card (não exportado no PDF/share). */}
-        {onRedo && (
+        {onRedo && !hideHero && (
           <button
             onClick={onRedo}
             data-noexport="1"
@@ -523,7 +523,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
               const high = pattern[d.key];
               const word = d.name.split(' · ')[0];
               return (
-                <div key={d.key} className={styles.realPatternItem}>
+                <div key={d.key} className={`${styles.realPatternItem} ${high ? styles.realPatternItemHigh : styles.realPatternItemLow}`}>
                   <span
                     className={`${styles.realPatternLetter} ${high ? styles.realPatternLetterHigh : styles.realPatternLetterLow} ${styles.dotPop}`}
                     style={{ animationDelay: `${0.5 + i * 0.14}s` }}
@@ -597,22 +597,22 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
       )}
 
       {/* SEÇÃO EXTRA — Presença nas plataformas (enriquecimento Chartmetric, só pós-pago) */}
-      {(!!chartmetric?.playlists?.top?.length || !!chartmetric?.audience?.top_countries?.length || !!chartmetric?.similar?.length) && (
-        <div className={styles.reveal} style={{ animationDelay: '0.27s', marginBottom: 28, background: '#181818', borderRadius: 14, padding: 20, border: '1px solid #282828' }}>
-          <div className={styles.cityChartLabel} style={{ marginBottom: 16 }}>Sua presença nas plataformas</div>
+      {(!!chartmetric?.playlists?.top?.length || !!chartmetric?.audience?.top_countries?.length) && (
+        <div className={`${styles.platformPresence} ${styles.reveal}`} style={{ animationDelay: '0.27s', marginBottom: 28 }}>
+          <div className={styles.cityChartLabel}>Sua presença nas plataformas</div>
 
           {!!chartmetric?.playlists?.top?.length && (
-            <div style={{ marginBottom: (chartmetric?.audience?.top_countries?.length || chartmetric?.similar?.length) ? 22 : 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#b3b3b3', marginBottom: 10 }}>
+            <div className={styles.platformSection}>
+              <div className={styles.platformSectionTitle}>
                 Playlists onde sua música está{chartmetric.playlists.count ? ` · ${chartmetric.playlists.count} no total` : ''}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div className={styles.platformList}>
                 {chartmetric.playlists.top.slice(0, 10).map((p, i) => (
-                  <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }}>
-                    <span style={{ color: '#71717a', width: 18, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>
-                    <span style={{ color: '#fff', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
-                    {p.editorial && <span style={{ fontSize: 10, fontWeight: 700, color: 'rgb(var(--real-accent, 154, 79, 209))', border: '1px solid rgba(var(--real-accent, 154, 79, 209), 0.4)', borderRadius: 4, padding: '1px 5px' }}>Editorial</span>}
-                    {p.followers != null && <span style={{ color: '#8a8a92', fontVariantNumeric: 'tabular-nums' }}>{fmtNum(p.followers)}</span>}
+                  <div key={`${p.name}-${i}`} className={styles.platformPlaylistRow}>
+                    <span className={styles.platformRank}>{i + 1}</span>
+                    <span className={styles.platformName}>{p.name}</span>
+                    {p.editorial && <span className={styles.platformEditorial}>Editorial</span>}
+                    {p.followers != null && <span className={styles.platformFollowers}>{fmtNum(p.followers)}</span>}
                   </div>
                 ))}
               </div>
@@ -620,8 +620,8 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
           )}
 
           {!!chartmetric?.audience?.top_countries?.length && (
-            <div style={{ marginBottom: chartmetric?.similar?.length ? 22 : 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#b3b3b3', marginBottom: 10 }}>Principais países</div>
+            <div className={styles.platformSection}>
+              <div className={styles.platformSectionTitle}>Principais países</div>
               {chartmetric.audience.top_countries.slice(0, 6).map((c) => {
                 const max = chartmetric!.audience!.top_countries![0].listeners || 1;
                 const pct = Math.max(6, Math.round(((c.listeners || 0) / max) * 100));
@@ -633,22 +633,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
                   </div>
                 );
               })}
-            </div>
-          )}
-
-          {!!chartmetric?.similar?.length && (
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#b3b3b3', marginBottom: 10 }}>Artistas de referência</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {chartmetric.similar.filter((a) => a.name?.toLowerCase() !== (name || '').toLowerCase()).slice(0, 12).map((a) => (
-                  <span key={a.name} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#222', borderRadius: 9999, padding: '4px 12px 4px 4px', fontSize: 12, fontWeight: 600, color: '#e0e0e0' }}>
-                    {a.image
-                      ? <img src={a.image} alt="" crossOrigin="anonymous" style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover' }} />
-                      : <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#333', display: 'inline-block' }} />}
-                    {a.name}
-                  </span>
-                ))}
-              </div>
             </div>
           )}
         </div>

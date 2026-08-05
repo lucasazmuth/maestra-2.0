@@ -37,18 +37,14 @@ type SortOption = 'updated-desc' | 'created-desc' | 'title-asc' | 'release-asc';
 const StatusBadge: FC<{ status: string }> = ({ status }) => {
   const cfg = (CATALOG_STATUS as any)[status] || { label: status, color: '#6b7280' };
   return (
-    <span
+    <em
       style={{
         background: `${cfg.color}22`,
         color: cfg.color,
-        padding: '2px 10px',
-        borderRadius: 9999,
-        fontSize: 12,
-        fontWeight: 700,
       }}
     >
       {cfg.label}
-    </span>
+    </em>
   );
 };
 
@@ -240,6 +236,9 @@ const Catalog: FC = () => {
     sortBy !== 'updated-desc',
   ].filter(Boolean).length;
 
+  const draftCount = items.filter((item) => item.status !== 'released').length;
+  const productionCount = items.filter((item) => ['recording', 'production', 'mixing', 'mastering'].includes(item.status)).length;
+
   const clearFilters = () => {
     setSearch('');
     setStatusFilter('all');
@@ -407,7 +406,9 @@ const Catalog: FC = () => {
     <div className='catalog-page catalog-reference-page'>
       <div className='catalog-page-heading'>
         <div>
-          <h1>Catálogo</h1>
+          <p>CATÁLOGO DO ARTISTA</p>
+          <h1>Faixas e rascunhos</h1>
+          <span>Organize as músicas em preparação e acompanhe cada etapa antes do lançamento.</span>
         </div>
         {tab === 'manual' && canEditCatalog && (
           <div className='catalog-heading-actions'>
@@ -433,6 +434,11 @@ const Catalog: FC = () => {
           </button>
         )}
       </div>
+      <section className='catalog-summary' aria-label='Resumo do catálogo'>
+        <span><b>{String(draftCount).padStart(2, '0')}</b>Rascunhos ativos</span>
+        <span><b>{String(productionCount).padStart(2, '0')}</b>Em produção</span>
+        <span><b>{String(items.length).padStart(2, '0')}</b>Faixas visíveis</span>
+      </section>
       <div className='catalog-tabs'>
         <TabButton id='manual' label='Faixas / Rascunho' />
         <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify color='#9A4FD1' />} />
@@ -565,10 +571,14 @@ const Catalog: FC = () => {
               <Button onClick={clearFilters}>Limpar filtros</Button>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div className='catalog-track-table'>
+              <header><span>Faixa</span><span>Tipo</span><span>Status</span><span>Próximo marco</span><span /></header>
               {filteredItems.map((it) => (
-                <div
+                <article
                   key={it.id}
+                  className='catalog-track-row'
+                  role='button'
+                  tabIndex={0}
                   title={it.audio_file ? 'Ouvir aqui' : (canEditTracks ? 'Sem áudio — clique para editar' : 'Sem áudio')}
                   onClick={() => {
                     if (it.audio_file) {
@@ -578,21 +588,15 @@ const Catalog: FC = () => {
                       setModalOpen(true);
                     }
                   }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 14,
-                    padding: 8,
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    background: playerCurrentId === it.id ? 'rgba(154, 79, 209,0.08)' : 'transparent',
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      if (it.audio_file) openLocal(playerCurrentId === it.id ? null : it.id);
+                      else if (canEditTracks) { setEditing(it); setModalOpen(true); }
+                    }
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background =
-                      playerCurrentId === it.id ? 'rgba(154, 79, 209,0.08)' : 'transparent')
-                  }
                 >
+                  <span>
                   {(() => {
                     // Espelha o player: se ESTA faixa é a do player, mostra pausar/tocar conforme
                     // o estado e o clique pausa/retoma; senão, o clique inicia esta faixa.
@@ -600,6 +604,7 @@ const Catalog: FC = () => {
                     const isPlaying = isCurrent && playerPlaying;
                     return (
                       <button
+                        className='catalog-track-play'
                         title={!it.audio_file ? 'Sem áudio' : isPlaying ? 'Pausar' : 'Tocar'}
                         disabled={!it.audio_file}
                         onClick={(e) => {
@@ -608,68 +613,40 @@ const Catalog: FC = () => {
                           if (isCurrent) togglePlayer?.(); // já no player → pausa/retoma
                           else openLocal(it.id); // começa esta faixa
                         }}
-                        style={{
-                          width: 36,
-                          height: 36,
-                          minWidth: 36,
-                          borderRadius: '50%',
-                          border: 'none',
-                          background: it.audio_file ? '#9A4FD1' : '#2a2a2a',
-                          cursor: it.audio_file ? 'pointer' : 'not-allowed',
-                          opacity: it.audio_file ? 1 : 0.5,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'transform .1s',
-                        }}
-                        onMouseDown={(e) => it.audio_file && (e.currentTarget.style.transform = 'scale(0.92)')}
-                        onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                       >
                         {isPlaying ? (
-                          <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#000' }}>
+                          <svg viewBox='0 0 16 16'>
                             <path d='M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z' />
                           </svg>
                         ) : (
-                          <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#000' }}>
+                          <svg viewBox='0 0 16 16'>
                             <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
                           </svg>
                         )}
                       </button>
                     );
                   })()}
-                  <img
-                    src={it.cover_image || `${process.env.PUBLIC_URL}/images/playlist.png`}
-                    alt=''
-                    style={{ width: 44, height: 44, borderRadius: 4, objectFit: 'cover' }}
-                  />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.title}</div>
-                    <div style={{ color: '#b3b3b3', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.genre || '—'}</div>
-                  </div>
-                  {it.assignee?.name && (
-                    <span
-                      title={`Responsável: ${it.assignee.name}`}
-                      style={{ color: '#b3b3b3', fontSize: 12, maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                    >
-                      {it.assignee.name}
-                    </span>
-                  )}
-                  <StatusBadge status={it.status} />
-                  {canEditTracks && (
-                    // Só o Editar na linha; o Excluir foi movido pra DENTRO do modal (tela mais limpa).
+                    <strong>{it.title}<small>Versão principal · Maestra Studio</small></strong>
+                  </span>
+                  <span>{it.genre || '—'}</span>
+                  <span><StatusBadge status={it.status} /></span>
+                  <span>{it.release_date ? new Date(`${it.release_date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '—'}</span>
+                  {canEditTracks ? (
                     <button
+                      className='catalog-track-more'
                       title='Editar'
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditing(it);
                         setModalOpen(true);
                       }}
-                      style={{ background: 'transparent', border: 'none', color: '#b3b3b3', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                     >
                       <FiMoreVertical size={18} />
                     </button>
+                  ) : (
+                    <span className='catalog-track-more-placeholder' aria-hidden='true' />
                   )}
-                </div>
+                </article>
               ))}
             </div>
           )}

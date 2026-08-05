@@ -53,6 +53,12 @@ export const RealBadge: FC<{ tier: RealTier; label: string; size?: number }> = (
       .replace(/id="([^"]+)"/g, `id="$1_${uid}"`)
       .replace(/url\(#([^)]+)\)/g, `url(#$1_${uid})`)
       .replace(/<svg width="[\d.]+" height="[\d.]+"/, '<svg width="100%" height="100%"')
+      // O baseline "central" muda sutilmente entre engines de renderização. "middle" fixa
+      // o algarismo no centro geométrico e a compensação mínima preserva o centro óptico.
+      .replace(
+        /dominant-baseline="central"/g,
+        'dominant-baseline="middle" alignment-baseline="middle" dy="-0.04em"',
+      )
       // Recentraliza a placa: o SVG reserva espaço pra sombra embaixo, então o brasão fica alto.
       // Sobe o minY (negativo) ~11% da altura pra centralizar o brasão no quadro.
       .replace(/viewBox="0 0 ([\d.]+) ([\d.]+)"/, (_m, w, h) => `viewBox="0 ${(-parseFloat(h) * 0.11).toFixed(2)} ${w} ${h}"`)
