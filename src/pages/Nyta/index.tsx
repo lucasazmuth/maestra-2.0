@@ -5,7 +5,7 @@ import { useArtist } from '../../hooks/useArtist';
 import { useNytaChatForModal } from '../../hooks/useNytaChatForModal';
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 
-const GREETING = 'Oi! Eu sou a Nyta, sua assistente estratégica aqui na Maestra. Posso ajudar com planejamento, catálogo, agenda e equipe. Como posso te ajudar?';
+const GREETING = 'Oi! Eu sou a Nyta, sua assistente estratégica aqui na Maestra. Posso ajudar com planejamento, músicas, agenda e equipe. Como posso te ajudar?';
 
 const formatTime = (value: string) => new Intl.DateTimeFormat('pt-BR', {
   hour: '2-digit',

@@ -72,8 +72,8 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
     badge: 'Gestão completa',
     accent: GESTAO_ACCENT,
     title: 'Onde o plano vira o seu dia a dia',
-    desc: 'A outra frente da Maestra: a operação da carreira. Organize suas faixas, acompanhe shows e lançamentos e traga sua equipe pra dentro. E ela só cresce.',
-    items: ['Catálogo de faixas ilimitado', 'Agenda de shows e lançamentos', 'Novos módulos a caminho: marketing, CRM e financeiro'],
+    desc: 'A outra frente da Maestra: a operação da carreira. Organize suas músicas, acompanhe shows e lançamentos e traga sua equipe pra dentro. E ela só cresce.',
+    items: ['Músicas ilimitadas', 'Agenda de shows e lançamentos', 'Novos módulos a caminho: marketing, CRM e financeiro'],
     glyph: <img src={featureGestao} alt="" />,
   },
 ];
@@ -82,11 +82,11 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
 const buildFaqItems = (once: number, monthly: number, annual: number): { q: string; a: string }[] => {
   const discountPct = monthly > 0 ? Math.round((1 - annual / (monthly * 12)) * 100) : 0;
   return [
-    { q: 'O que é a Maestra?', a: 'A Maestra é uma plataforma de gestão de carreira musical. Num só lugar, ela reúne o diagnóstico da sua carreira (o Índice REAL), o planejamento estratégico, o plano de ação para executar e a gestão do dia a dia (catálogo, agenda e equipe), tudo com o apoio da Nyta, a assistente de IA. A ideia é simples: tirar a carreira do achismo e colocar no método, com dados e estratégia.' },
+    { q: 'O que é a Maestra?', a: 'A Maestra é uma plataforma de gestão de carreira musical. Num só lugar, ela reúne o diagnóstico da sua carreira (o Índice REAL), o planejamento estratégico, o plano de ação para executar e a gestão do dia a dia (músicas, agenda e equipe), tudo com o apoio da Nyta, a assistente de IA. A ideia é simples: tirar a carreira do achismo e colocar no método, com dados e estratégia.' },
     { q: 'O que é o diagnóstico REAL?', a: 'É uma análise da sua carreira em 4 dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que você nos conta. O resultado é um dos 16 perfis de carreira e um retrato claro de onde você está.' },
     { q: 'Preciso pagar para ver o diagnóstico?', a: 'Não, o diagnóstico REAL é sempre grátis. Para desbloquear o planejamento estratégico e a gestão de um artista é que existe um pagamento único por perfil, com acesso vitalício.' },
     { q: 'Como funciona a cobrança?', a: `São dois modelos independentes. O diagnóstico é grátis. O planejamento de cada artista é um pagamento único de ${fmt(once)} (acesso vitalício ao perfil, sem mensalidade). E o Maestra PRO é uma assinatura opcional de ${fmt(monthly)} por mês, que adiciona a Nyta IA e o gerenciamento de vários perfis à sua conta.` },
-    { q: 'O que está incluído no Maestra PRO?', a: 'A Nyta IA (até 100 interações por dia), edição em todos os perfis que você acessa, catálogo de faixas ilimitado e acesso a todos os perfis da conta. É uma assinatura, à parte do desbloqueio de cada perfil.' },
+    { q: 'O que está incluído no Maestra PRO?', a: 'A Nyta IA (até 100 interações por dia), edição em todos os perfis que você acessa, músicas ilimitadas e acesso a todos os perfis da conta. É uma assinatura, à parte do desbloqueio de cada perfil.' },
     { q: 'Quanto custa?', a: `O diagnóstico é grátis. O planejamento é um pagamento único de ${fmt(once)} por artista (vitalício). O Maestra PRO, opcional, custa ${fmt(monthly)} por mês ou ${fmt(annual)} no plano anual (cerca de ${discountPct}% de desconto). Cancele quando quiser.` },
     { q: 'Como faço o pagamento?', a: 'Cartão de crédito (com renovação automática) ou PIX. Tudo processado com segurança via Asaas.' },
     { q: 'Posso cancelar quando quiser?', a: 'Sim. Você cancela a qualquer momento pela sua conta, sem burocracia.' },
@@ -94,8 +94,8 @@ const buildFaqItems = (once: number, monthly: number, annual: number): { q: stri
 };
 
 const FREE_ITEMS = ['Diagnóstico REAL completo nas 4 dimensões', 'Descubra qual dos 16 perfis é o seu', 'Sem cartão de crédito pra começar'];
-const PLAN_ITEMS = ['Planejamento estratégico completo com a Nyta', 'Plano de ação com metas e cronograma', 'Análise de audiência: ouvintes e cidades', 'Catálogo, agenda e equipe', 'Acesso vitalício ao perfil e ao plano'];
-const PRO_ITEMS = ['Nyta IA (assistente, até 100 interações por dia)', 'Edição em todos os perfis que você acessa', 'Catálogo de faixas ilimitado', 'Acesso a todos os perfis da conta'];
+const PLAN_ITEMS = ['Planejamento estratégico completo com a Nyta', 'Plano de ação com metas e cronograma', 'Análise de audiência: ouvintes e cidades', 'Músicas, agenda e equipe', 'Acesso vitalício ao perfil e ao plano'];
+const PRO_ITEMS = ['Nyta IA (assistente, até 100 interações por dia)', 'Edição em todos os perfis que você acessa', 'Músicas ilimitadas', 'Acesso a todos os perfis da conta'];
 
 const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -641,7 +641,7 @@ const Landing: FC = () => {
         <div className={styles.introInner}>
           <span className={styles.introKicker}>Recursos</span>
           <h2 className={styles.introTitle}>A carreira inteira, num lugar só</h2>
-          <p className={styles.introSub}>Diagnóstico, planejamento, plano de ação, catálogo, agenda e equipe: as frentes da sua carreira conectadas e evoluindo juntas.</p>
+          <p className={styles.introSub}>Diagnóstico, planejamento, plano de ação, músicas, agenda e equipe: as frentes da sua carreira conectadas e evoluindo juntas.</p>
         </div>
       </div>
       {FEATURES.map((f) => <Feature key={f.badge} data={f} />)}

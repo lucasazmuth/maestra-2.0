@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import './styles/App.scss';
+import './styles/local-player-unified.scss';
 
 import i18next from 'i18next';
 import { FC, Suspense, lazy, useEffect, useState } from 'react';
@@ -42,6 +43,7 @@ const Artists = lazy(() => import('./pages/Artists'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Catalog = lazy(() => import('./pages/Catalog'));
+const ProjectSpace = lazy(() => import('./pages/Catalog/ProjectSpace'));
 const Agenda = lazy(() => import('./pages/Agenda'));
 const Team = lazy(() => import('./pages/Team'));
 const Marketing = lazy(() => import('./pages/Marketing'));
@@ -239,6 +241,7 @@ const AppRoutes: FC = () => {
             <Route path='/artists/:id' element={<Dashboard />} />
             <Route path='/artists/:id/perfil' element={<Profile />} />
             <Route path='/artists/:id/catalog' element={<Catalog />} />
+            <Route path='/artists/:id/catalog/projects/:projectId' element={<ProjectSpace />} />
             <Route path='/artists/:id/agenda' element={<Agenda />} />
             <Route path='/artists/:id/action-plan' element={<ActionPlan />} />
             <Route path='/artists/:id/diagnostico' element={<DiagnosticView />} />

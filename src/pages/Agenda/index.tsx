@@ -262,7 +262,7 @@ const Agenda: FC = () => {
             <header><h2>Tarefas</h2>{canEdit && <button type="button" className="calendar-add-task" aria-label="Adicionar compromisso" onClick={() => openCreate()}><FiPlus /></button>}</header>
             <nav><button className="calendar-active" type="button">Não agendadas</button><button type="button" onClick={() => setShowTasks((current) => !current)}>Atrasadas</button></nav>
             <p>Ordenar por <b>Prioridade</b></p>
-            {hasTaskEvents && unscheduledTasks.map((event) => <button className="calendar-task" type="button" key={event.id} onClick={() => openEdit(event)}><i style={{ background: typeColor(event.type) }} />{calendarTitle(event.title, 48)}</button>)}
+            {hasTaskEvents && unscheduledTasks.map((event) => <button className="calendar-task" type="button" key={event.id} onClick={() => openEdit(event)}>{taskCheckbox(event)}<i style={{ background: typeColor(event.type) }} />{calendarTitle(event.title, 48)}</button>)}
             {!unscheduledTasks.length && <p className="agenda-empty">Nenhuma tarefa pendente.</p>}
           </aside>
         </div> : calendarView === 'month' ? <section className="agenda-month-board" aria-label="Calendário mensal">

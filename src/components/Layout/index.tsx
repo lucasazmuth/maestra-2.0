@@ -11,7 +11,6 @@ import { LocalPlayerBar } from '../LocalPlayerBar';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { uiActions } from '../../store/slices/ui';
-import { authActions } from '../../store/slices/auth';
 import { fetchSubscriptionStatus, fetchPlanConfig } from '../../store/slices/subscription';
 import { PAYWALL_DISABLED } from '../../constants/maestra';
 import useIsMobile from '../../utils/isMobile';
@@ -41,8 +40,6 @@ import { useJourneyState } from '../../hooks/useJourneyState';
 export interface LayoutContext {
   container: RefObject<HTMLDivElement | null>;
 }
-
-const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
 
 const REAL_CAREER_STAGES = [
   'Beginner',
@@ -245,44 +242,48 @@ export const AppLayout: FC = memo(() => {
   const userAvatar = userMetadata.avatar_url || userMetadata.picture || ARTISTS_DEFAULT_IMAGE;
   const topNavigation = (home = false) => (
     <header className='top-navigation'>
-      <a className='constructor' href='/artists' onClick={(event) => {
-        event.preventDefault();
-        navigate('/artists');
-      }}>
-        <span className='brand-logo-mark' aria-hidden='true' />
-        Maestra
-      </a>
-      {home && (
-        <nav className='site-links'>
-          <a href='#board'>Baixar App</a>
-          <a href='#board'>Planos</a>
-          <a href='#board'>Suporte</a>
-        </nav>
-      )}
+      <div className='top-navigation-left'>
+        <a className='constructor' href='/artists' onClick={(event) => {
+          event.preventDefault();
+          navigate('/artists');
+        }}>
+          <span className='brand-logo-mark' aria-hidden='true' />
+          Maestra
+        </a>
+        {home && (
+          <nav className='site-links'>
+            <a href='#board'>Baixar App</a>
+            <a href='#board'>Planos</a>
+            <a href='#board'>Suporte</a>
+          </nav>
+        )}
+      </div>
       <label className='global-search'>
         <span className='global-search-icon' aria-hidden='true'><SearchIcon size={18} /></span>
         <input placeholder={home ? 'Buscar perfil ou artista' : 'Pesquisar na Maestra'} aria-label='Busca global' />
         <span className='global-search-arrow' aria-hidden='true'><FiArrowRight size={18} /></span>
       </label>
-      <div className='account'>
-        <span className='account-icon'>
-          <img src={userAvatar} alt='' />
-        </span>
-        <strong>{displayName}</strong>
+      <div className='top-navigation-right'>
+        <div className='account'>
+          <span className='account-icon'>
+            <img src={userAvatar} alt='' />
+          </span>
+          <strong>{displayName}</strong>
+        </div>
+        {routeArtistId && (
+          <button className='round-control header-nyta-action' aria-label='Abrir Nyta IA' type='button' onClick={openNytaPage}>
+            <NytaAvatar size={34} />
+          </button>
+        )}
+        {home && (
+          <button className='round-control' aria-label='Configurações' type='button' onClick={() => navigate('/settings')}>
+            ⚙
+          </button>
+        )}
+        <button className='round-control notification' aria-label='Notificações' type='button' onClick={() => navigate('/notifications')}>
+          <NotificationIcon size={19} />
+        </button>
       </div>
-      {routeArtistId && (
-        <button className='round-control header-nyta-action' aria-label='Abrir Nyta IA' type='button' onClick={openNytaPage}>
-          <NytaAvatar size={34} />
-        </button>
-      )}
-      {home && (
-        <button className='round-control' aria-label='Configurações' type='button' onClick={() => navigate('/settings')}>
-          ⚙
-        </button>
-      )}
-      <button className='round-control notification' aria-label='Notificações' type='button' onClick={() => navigate('/notifications')}>
-        <NotificationIcon size={19} />
-      </button>
     </header>
   );
 
@@ -300,7 +301,7 @@ export const AppLayout: FC = memo(() => {
           <>
         {!hideTopbar && topNavigation(false)}
         <div
-          className={`app-layout${showWizardPanel || isNytaPage || isNotificationsPage ? ' module-layout' : ''}`}
+          className={`app-layout${showWizardPanel || isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist ? ' app-layout-no-profile' : ''}`}
           style={{ bottom: bottomReserve ? `${bottomReserve}px` : 0 }}
         >
           <aside className='app-rail' aria-label='Atalhos'>
@@ -350,7 +351,7 @@ export const AppLayout: FC = memo(() => {
                 <ProfileMenuButton active={isActive('diagnostico')} icon={<DiagnosticoIcon size={22} />} label='Diagnóstico Real' onClick={() => goArtist('diagnostico')} />
                 <ProfileMenuButton active={isActive('perfil') || isActive('wizard')} icon={<PlanejamentoIcon size={22} />} label='Planejamento' locked={!viewPlanning} onClick={() => goArtist(planningTo)} />
                 <ProfileMenuButton active={isActive('action-plan')} icon={<PlanoAcaoIcon size={22} />} label='Plano de Ação' locked={!actionUnlocked} onClick={() => goArtist(actionUnlocked ? 'action-plan' : 'wizard')} />
-                <ProfileMenuButton active={isActive('catalog')} icon={<CatalogoIcon size={22} />} label='Catálogo' onClick={() => goArtist('catalog')} />
+                <ProfileMenuButton active={isActive('catalog')} icon={<CatalogoIcon size={22} />} label='Músicas' onClick={() => goArtist('catalog')} />
                 <ProfileMenuButton active={isActive('agenda')} icon={<AgendaIcon size={22} />} label='Agenda' onClick={() => goArtist('agenda')} />
                 <ProfileMenuButton active={isActive('team')} icon={<EquipeIcon size={22} />} label='Equipe' locked={!viewPlanning} onClick={() => goArtist('team')} />
                 <ProfileMenuButton active={isActive('marketing')} icon={<MarketingIcon size={22} />} label={<span>Marketing<small style={{ display: 'block', fontSize: 8 }}>(Em breve)</small></span>} onClick={() => goArtist('marketing')} />
@@ -398,6 +399,9 @@ export const AppLayout: FC = memo(() => {
             if (currentArtistId) {
               navigate(`/artists/${currentArtistId}/catalog`, { state: { catalogTab: 'manual' } });
             }
+          }}
+          onOpenFullView={(track) => {
+            if (track.fullViewUrl) navigate(track.fullViewUrl);
           }}
           onClose={() => {
             setPlayerOpen(false);

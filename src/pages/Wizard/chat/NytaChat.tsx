@@ -931,7 +931,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
                     {!!sp?.spotify_artist_id && (
                       <p>
                         Dados reais do Spotify
-                        {sp?.track_count ? ` · ${sp.track_count} faixas` : ''}
+                        {sp?.track_count ? ` · ${sp.track_count} músicas` : ''}
                       </p>
                     )}
                   </div>

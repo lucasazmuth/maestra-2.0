@@ -348,3 +348,155 @@
     margin-left: auto;
   }
 }
+
+// Fallback para o bundle antigo da Agenda ainda visto em algumas sessões locais.
+// Ele renderiza `agenda-toolbar` com styles inline escuros; estes overrides
+// forçam o mesmo canvas claro/clean da referência GSAP enquanto o chunk novo entra.
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) {
+  min-height: 1040px;
+  padding: 0 0 38px !important;
+  background: #fafbfc !important;
+  color: #52668d !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) > div:first-child {
+  min-height: 72px;
+  margin: 0 !important;
+  padding: 0 28px;
+  border-bottom: 1px solid #e9edf4;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) > div:first-child h1 {
+  color: #52668d !important;
+  font-family: var(--font-body) !important;
+  font-size: 22px !important;
+  letter-spacing: -0.02em;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) > div:first-child button {
+  min-height: 34px;
+  padding: 0 14px !important;
+  border-radius: 7px !important;
+  background: #3361ff !important;
+  box-shadow: 0 7px 16px rgba(51, 97, 255, .18);
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar {
+  display: grid;
+  grid-template-columns: 255px minmax(360px, 1fr) auto;
+  align-items: center;
+  height: 56px;
+  margin: 0 !important;
+  border-bottom: 1px solid #e9edf4;
+  background: #fafbfc;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-filters {
+  height: 100%;
+  gap: 0;
+  padding: 0 24px;
+  border-right: 1px solid #e9edf4;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-filters > button,
+.task-app:not(.public-app) .agenda-toolbar-navigation > button {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #7f91b0 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-filters > button:first-child,
+.task-app:not(.public-app) .agenda-toolbar-filters > button:hover,
+.task-app:not(.public-app) .agenda-toolbar-navigation > button:hover {
+  color: #3361ff !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-filters > button:first-child {
+  background: transparent !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-navigation {
+  justify-content: center;
+  gap: 18px;
+  color: #6d80a5 !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-navigation > button {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-month {
+  min-width: 180px;
+  color: #6d80a5 !important;
+  font-size: 11px !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div {
+  padding: 24px 28px 0;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:first-child {
+  margin-bottom: 8px !important;
+  gap: 7px !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:first-child > div {
+  color: #92a0b8 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:last-child {
+  gap: 7px !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:last-child > div {
+  min-height: 104px !important;
+  padding: 11px !important;
+  border: 1px solid #e7ecf4 !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  box-shadow: 0 7px 17px rgba(124, 145, 185, .04);
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:last-child > div:hover {
+  border-color: #b9c9ec !important;
+  background: #f8faff !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:last-child > div > div:first-child {
+  color: #63779c !important;
+  font-size: 12px !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:last-child > div [style*="background"] {
+  border-left: 3px solid #3361ff !important;
+  background: #f2f5ff !important;
+  color: #63779c !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+}
+
+@media (max-width: 960px) {
+  .task-app:not(.public-app) .agenda-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .task-app:not(.public-app) .agenda-toolbar-filters,
+  .task-app:not(.public-app) .agenda-toolbar-navigation {
+    min-height: 52px;
+    border-right: 0;
+    border-bottom: 1px solid #e9edf4;
+  }
+}

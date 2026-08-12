@@ -1,0 +1,102 @@
+.page {
+  padding: 52px 40px;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.heading h1 {
+  color: #52668d;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 276px);
+  gap: 26px;
+  max-width: none;
+}
+
+.grid .card {
+  display: block;
+  min-height: 350px;
+  padding: 22px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: #53668d;
+  text-align: center;
+  box-shadow: 0 7px 17px rgba(124, 145, 185, 0.08);
+  transition: 0.2s ease;
+}
+
+.grid .card:hover {
+  background: #fff;
+  box-shadow: 0 13px 27px rgba(107, 129, 170, 0.14);
+  transform: translateY(-4px);
+}
+
+.grid .card:focus-visible {
+  outline: 3px solid rgba(154, 79, 209, 0.22);
+  outline-offset: 3px;
+}
+
+.grid .card > img {
+  display: block;
+  width: 170px;
+  height: 170px;
+  margin: 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.grid .card > strong {
+  display: block;
+  margin-top: 23px;
+  overflow: hidden;
+  color: #53668d;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grid .card > span {
+  display: block;
+  margin-top: 6px;
+  color: #97a6be;
+  font-size: 15px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .heading {
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .heading h1 {
+    font-size: 28px;
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .grid .card {
+    min-height: 300px;
+    padding: 22px;
+  }
+
+  .grid .card > img {
+    width: 140px;
+    height: 140px;
+  }
+}

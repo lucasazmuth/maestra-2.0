@@ -582,22 +582,24 @@ h3 {
 
 // ── Tab bar do mobile (rodapé, in-flow abaixo do banner) ─────────────────────
 // A sidebar é oculta no mobile; esta barra navega entre os módulos do artista.
-// Player de faixas do catálogo — card flutuante #333842 arredondado (ref. Frame 75/Home.svg).
-// Desktop: controles + progresso + volume à ESQUERDA, capa + info no MEIO, fechar à direita.
+// Player de músicas — barra de trabalho integrada ao rodapé do app.
+// Desktop: controles + progresso + volume à ESQUERDA, faixa no centro e ações à direita.
 .local-player-bar {
   position: fixed;
-  // Mesma geometria EXATA do banner "Assine Pro" (que ele substitui): 7px de margem, 68px, radius 8.
-  left: 7px;
-  right: 7px;
-  bottom: 7px;
-  min-height: 68px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 76px;
   z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 10px 20px; // 48 (capa) + 20 = 68px, mesma altura do banner
-  background: #333842;
-  border-radius: 8px;
+  gap: 18px;
+  padding: 12px 36px;
+  color: #3d5786;
+  background: #ffffff;
+  border-top: 1px solid #d9e5f8;
+  border-radius: 0;
+  box-shadow: 0 -12px 30px rgba(48, 84, 145, 0.11);
 
   .lpb-controls {
     flex: 0 0 auto;
@@ -611,11 +613,17 @@ h3 {
     height: 40px;
     border-radius: 50%;
     border: none;
-    background: #fff;
+    color: #fff;
+    background: #2f61f5;
+    box-shadow: 0 8px 16px rgba(47, 97, 245, 0.2);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  .lpb-play:disabled {
+    opacity: 0.55;
+    cursor: default;
   }
   .lpb-progress {
     flex: 1 1 auto;
@@ -627,7 +635,7 @@ h3 {
   .lpb-time {
     flex: 0 0 auto;
     min-width: 36px;
-    color: #b3b3b3;
+    color: #7185aa;
     font-size: 11px;
     font-variant-numeric: tabular-nums;
     &:first-child { text-align: right; }
@@ -635,7 +643,7 @@ h3 {
   .lpb-seek {
     flex: 1;
     height: 4px;
-    accent-color: #e0e0e0;
+    accent-color: #2f61f5;
     cursor: pointer;
   }
   .lpb-volume {
@@ -647,7 +655,7 @@ h3 {
   .lpb-volume-slider {
     width: 100px;
     height: 4px;
-    accent-color: #e0e0e0;
+    accent-color: #2f61f5;
     cursor: pointer;
   }
   .lpb-track {
@@ -666,7 +674,7 @@ h3 {
     border-radius: 6px;
   }
   .lpb-track:hover, .lpb-track:focus-visible {
-    background: rgba(255, 255, 255, 0.08);
+    background: #f1f6ff;
     outline: none;
   }
   .lpb-cover {
@@ -678,7 +686,7 @@ h3 {
   }
   .lpb-meta { min-width: 0; }
   .lpb-title {
-    color: #fff;
+    color: #294c83;
     font-weight: 600;
     font-size: 14px;
     white-space: nowrap;
@@ -686,7 +694,7 @@ h3 {
     text-overflow: ellipsis;
   }
   .lpb-sub {
-    color: #b3b3b3;
+    color: #7185aa;
     font-size: 12px;
     white-space: nowrap;
     overflow: hidden;
@@ -696,10 +704,106 @@ h3 {
     flex: 0 0 auto;
     margin-left: auto;
   }
+  .lpb-expand {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px !important;
+    color: #2f61f5;
+    background: #edf3ff !important;
+  }
+  .lpb-expand:hover,
+  .lpb-expand:focus-visible {
+    color: #1f4fd9;
+    background: #dfeaff !important;
+    outline: 2px solid rgba(47, 97, 245, .35);
+  }
 }
 // A linha de progresso no rodapé só existe no mobile (no desktop o progresso é inline).
 .lpb-progress-mobile {
   display: none;
+}
+
+// Espaço JAM mantém a mesma barra global para que a reprodução seja contínua
+// entre a lista de músicas, o projeto e a visualização completa.
+body.jam-project-space .local-player-bar {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 76px;
+  padding: 12px 36px;
+  gap: 18px;
+  color: #3d5786;
+  background: #ffffff;
+  border-top: 1px solid #d9e5f8;
+  border-radius: 0;
+  box-shadow: 0 -12px 30px rgba(48, 84, 145, 0.11);
+
+  .lpb-controls button,
+  .lpb-close,
+  .lpb-volume button {
+    color: #49638f !important;
+    background: transparent !important;
+    border-radius: 8px;
+    transition: background-color 0.16s ease, color 0.16s ease;
+  }
+
+  .lpb-controls button:not(.lpb-play):hover:not(:disabled),
+  .lpb-controls button:not(.lpb-play):focus-visible:not(:disabled),
+  .lpb-close:hover,
+  .lpb-close:focus-visible,
+  .lpb-volume button:hover,
+  .lpb-volume button:focus-visible {
+    color: #294c83 !important;
+    background: #edf3ff !important;
+    outline: 2px solid rgba(47, 97, 245, 0.28);
+    outline-offset: 2px;
+  }
+
+  .lpb-play {
+    color: #ffffff !important;
+    background: #2f61f5 !important;
+    box-shadow: 0 8px 16px rgba(47, 97, 245, 0.2);
+  }
+
+  .lpb-play:hover:not(:disabled),
+  .lpb-play:focus-visible:not(:disabled) {
+    color: #ffffff !important;
+    background: #1f4fd9 !important;
+    outline: 2px solid rgba(47, 97, 245, 0.32);
+    outline-offset: 2px;
+  }
+
+  .lpb-time,
+  .lpb-sub {
+    color: #7185aa;
+  }
+
+  .lpb-title {
+    color: #294c83;
+  }
+
+  .lpb-track:hover,
+  .lpb-track:focus-visible {
+    background: #f1f6ff;
+  }
+
+  .lpb-seek,
+  .lpb-volume-slider {
+    accent-color: #2f61f5;
+  }
+
+  .lpb-expand {
+    color: #2f61f5;
+    background: #edf3ff !important;
+  }
+
+  .lpb-expand:hover,
+  .lpb-expand:focus-visible {
+    color: #1f4fd9;
+    background: #dfeaff !important;
+    outline-color: rgba(47, 97, 245, 0.35);
+  }
 }
 
 .mobile-nav {
@@ -802,21 +906,42 @@ h3 {
     font-size: 12px !important;
   }
 
-  // ── Player do catálogo no mobile ──────────────────────────────────────────────
-  // Card FLUTUANTE acima da navbar (ref. Home.svg): #333842 (já no base), cantos 10px, 8px de
-  // margem lateral, ~61px. Navbar = 64px; com o banner (84px) a navbar sobe, o card sobe junto.
+  // ── Player de músicas no mobile ──────────────────────────────────────────────
+  // Mantém a barra contínua no rodapé, sem as margens do player legado.
   .local-player-bar {
-    left: 8px;
-    right: 8px;
-    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px);
-    min-height: 0; // no mobile o card é compacto (não os 68px do desktop)
-    border-radius: 10px;
-    gap: 12px; // mesmo ritmo dos controles, pra não colar o volume no "próxima"
-    padding: 9px 12px;
-    overflow: hidden; // respeita os cantos arredondados / linha de progresso
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 68px;
+    border-radius: 0;
+    gap: 12px;
+    padding: 9px 14px;
+    overflow: hidden;
+  }
+
+  body.jam-project-space .local-player-bar {
+    left: 0;
+    right: 0;
+    bottom: 0 !important;
+    min-height: 68px;
+    padding: 9px 14px;
+    border-radius: 0;
+
+    .lpb-progress-mobile {
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: linear-gradient(
+        to right,
+        #2f61f5 0,
+        #2f61f5 var(--pct, 0%),
+        #dce7fa var(--pct, 0%),
+        #dce7fa 100%
+      );
+    }
   }
   .main-container.has-bottom-banner .local-player-bar {
-    bottom: calc(148px + env(safe-area-inset-bottom, 0px) + 8px);
+    bottom: 0;
   }
   // Reordena o layout plano no compacto: capa/título 1º, depois controles, volume (só ícone) e X.
   .local-player-bar .lpb-track {
@@ -842,19 +967,23 @@ h3 {
     order: 3;
     margin-left: 0;
   }
+  .local-player-bar .lpb-expand {
+    order: 2;
+    width: 32px;
+    height: 32px;
+  }
   // No compacto somem: o progresso inline (tempos + range) e o slider de volume.
   .local-player-bar .lpb-progress,
   .local-player-bar .lpb-volume-slider {
     display: none;
   }
-  // Progresso = linha fina no rodapé (ref. Group 5.svg): 2px, SEM thumb, preenchido #E0E0E0
-  // sobre trilho #DBDBDB a 21%. O preenchido é feito por gradiente com a var --pct.
+  // Progresso = linha fina no rodapé. O preenchido é feito por gradiente com a var --pct.
   .local-player-bar .lpb-progress-mobile {
     display: block;
     position: absolute;
-    bottom: 2px; // rente à borda inferior do card (não flutuando perto da capa)
-    left: 10px;
-    right: 10px;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: auto;
     height: 2px;
     margin: 0;
@@ -865,10 +994,10 @@ h3 {
     border-radius: 2px;
     background: linear-gradient(
       to right,
-      #e0e0e0 0,
-      #e0e0e0 var(--pct, 0%),
-      rgba(219, 219, 219, 0.21) var(--pct, 0%),
-      rgba(219, 219, 219, 0.21) 100%
+      #2f61f5 0,
+      #2f61f5 var(--pct, 0%),
+      #dce7fa var(--pct, 0%),
+      #dce7fa 100%
     );
     &::-webkit-slider-runnable-track {
       -webkit-appearance: none;

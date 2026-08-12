@@ -128,7 +128,7 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
     {
       label: t('Operations', { defaultValue: 'Operação' }),
       items: [
-        { icon: <CatalogoIcon />, label: t('Catalog', { defaultValue: 'Catálogo' }), navTo: 'catalog', active: isActive('catalog'), locked: false },
+        { icon: <CatalogoIcon />, label: t('Catalog', { defaultValue: 'Músicas' }), navTo: 'catalog', active: isActive('catalog'), locked: false },
         { icon: <AgendaIcon />, label: t('Agenda', { defaultValue: 'Agenda' }), navTo: 'agenda', active: isActive('agenda'), locked: false },
         { icon: <EquipeIcon />, label: t('Team', { defaultValue: 'Equipe' }), navTo: 'team', active: isActive('team'), locked: !viewPlanning },
       ],

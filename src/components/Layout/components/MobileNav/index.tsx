@@ -52,7 +52,7 @@ export const MobileNav: FC = () => {
   ];
   // Restante dos módulos, dentro do "Mais".
   const more: Item[] = [
-    { icon: <CatalogoIcon size={22} />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog' },
+    { icon: <CatalogoIcon size={22} />, label: t('Catalog', { defaultValue: 'Músicas' }), suffix: 'catalog' },
     { icon: <DiagnosticoIcon size={22} />, label: t('REAL Diagnostic', { defaultValue: 'Diagnóstico REAL' }), suffix: 'diagnostico' },
     { icon: <PlanejamentoIcon size={22} />, label: t('Planning', { defaultValue: 'Plano estratégico' }), suffix: 'perfil' },
     { icon: <EquipeIcon size={22} />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team' },

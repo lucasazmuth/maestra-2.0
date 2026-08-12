@@ -11,12 +11,18 @@ interface LocalPlayerState {
   tracks: import('../components/LocalPlayerBar').LocalTrack[];
   currentId: string | null;
   playing: boolean;
+  time: number;
+  duration: number;
   toggle: (() => void) | null; // registrada pelo LocalPlayerBar; a linha do catálogo chama
+  seek: ((time: number) => void) | null;
   setOpen: (v: boolean) => void;
   setTracks: (tracks: import('../components/LocalPlayerBar').LocalTrack[]) => void;
   setCurrentId: (id: string | null) => void;
   setPlaying: (v: boolean) => void;
+  setTime: (time: number) => void;
+  setDuration: (duration: number) => void;
   setToggle: (fn: (() => void) | null) => void;
+  setSeek: (fn: ((time: number) => void) | null) => void;
 }
 
 export const useLocalPlayerStore = create<LocalPlayerState>((set) => ({
@@ -24,10 +30,16 @@ export const useLocalPlayerStore = create<LocalPlayerState>((set) => ({
   tracks: [],
   currentId: null,
   playing: false,
+  time: 0,
+  duration: 0,
   toggle: null,
+  seek: null,
   setOpen: (v) => set({ open: v }),
   setTracks: (tracks) => set({ tracks }),
-  setCurrentId: (id) => set({ currentId: id }),
+  setCurrentId: (id) => set({ currentId: id, time: 0, duration: 0 }),
   setPlaying: (v) => set({ playing: v }),
+  setTime: (time) => set({ time }),
+  setDuration: (duration) => set({ duration }),
   setToggle: (fn) => set({ toggle: fn }),
+  setSeek: (fn) => set({ seek: fn }),
 }));

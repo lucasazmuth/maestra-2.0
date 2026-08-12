@@ -157,7 +157,7 @@ export const StatusBanner: FC<{ kind: StatusBannerKind }> = ({ kind }) => {
     <AnnouncementBanner
       variant='promo'
       title='Assine o Maestra Pro'
-      description='Chat com a Nyta IA, acompanhamento do plano de ação, notificações, catálogo ilimitado e muito mais.'
+      description='Chat com a Nyta IA, acompanhamento do plano de ação, notificações, músicas ilimitadas e muito mais.'
       ctaLabel='Assinar agora'
       onCta={() => navigate('/assinatura')}
     />

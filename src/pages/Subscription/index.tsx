@@ -28,14 +28,14 @@ const PRO_GROUPS: BenefitGroup[] = [
   },
   {
     icon: <FiGrid />, title: 'Gestão completa',
-    items: ['Catálogo de faixas ilimitado', 'Acesso a todos os perfis da conta'],
+    items: ['Músicas ilimitadas', 'Acesso a todos os perfis da conta'],
   },
 ];
 
 const FREE_GROUPS: BenefitGroup[] = [
   {
     icon: <FiAward />, title: 'Acompanhe a carreira',
-    items: ['Veja o diagnóstico e o plano de ação', 'Visualize catálogo, agenda e equipe', 'Apenas leitura, sem edição'],
+    items: ['Veja o diagnóstico e o plano de ação', 'Visualize músicas, agenda e equipe', 'Apenas leitura, sem edição'],
   },
 ];
 

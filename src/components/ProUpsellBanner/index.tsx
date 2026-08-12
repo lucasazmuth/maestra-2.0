@@ -27,7 +27,7 @@ export function shouldShowProUpsellBanner(input: ProUpsellVisibilityInput): bool
 
 const BENEFITS = [
   'Nyta IA em todos os módulos',
-  'Catálogo ilimitado',
+  'Músicas ilimitadas',
   'Acompanhamento de evolução automatizado',
   'Lembretes inteligentes',
 ] as const;

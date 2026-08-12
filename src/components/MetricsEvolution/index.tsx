@@ -15,7 +15,7 @@ const METRIC_LABELS: Record<string, string> = {
   monthly_listeners: 'Ouvintes mensais',
   followers: 'Seguidores',
   popularity: 'Popularidade',
-  track_count: 'Faixas',
+  track_count: 'Músicas',
 };
 
 /**

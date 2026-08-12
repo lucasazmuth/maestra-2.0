@@ -13,18 +13,10 @@ import DiagnosticDoc from './DiagnosticDoc';
 import { RealBadge, tierForAltas, tierForPattern, TIER_ACCENT, altasForPattern } from '../../components/RealBadge';
 import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS } from './realCopy';
 import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from './realNarrative';
+import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import styles from './ArtistCreate.module.scss';
 
-export interface Chartmetric {
-  monthly_listeners?: number | null;
-  monthly_listeners_rank?: number | null;
-  career_rank?: number | null;
-  top_cities?: { name: string; country: string; listeners: number }[];
-  // Dados de enriquecimento (pós-pago) — opcionais, exibidos só quando existem.
-  audience?: { top_countries?: { name: string; code?: string | null; listeners?: number | null }[] } | null;
-  playlists?: { count?: number; reach?: number; top?: { name: string; followers?: number; curator?: string | null; editorial?: boolean }[] } | null;
-  similar?: { name: string; image?: string | null }[] | null;
-}
+export type { Chartmetric } from './diagnosticShared';
 
 // Formata números grandes em PT-BR (ex.: 2465588 → "2,5 mi").
 export const fmtNum = (n: number): string => {
@@ -315,23 +307,6 @@ interface Props {
   // Conteúdo opcional renderizado logo ABAIXO do card "Seu perfil de carreira" (ex.: banner de refazer).
   belowProfile?: ReactNode;
 }
-
-// Rótulos dos níveis de prêmios/imprensa do motor v2 (índice → texto p/ a exibição).
-const PREMIO_LABELS = ['Nunca fui indicada nem premiada', 'Já fui indicada (sem ganhar)', 'Prêmio local/regional', 'Prêmio nacional', 'Prêmio internacional'];
-const IMPRENSA_LABELS = ['Nunca apareci na mídia', 'Repercussão local/regional', 'Repercussão nacional', 'Repercussão internacional'];
-
-// Normaliza os `inputs` do motor v2 (números/enums) para o shape que a tela já consome (v1).
-// Reutilizado pelo PDF (DiagnosticDoc). eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const v2InputsView = (ri: any) => ({
-  monthly_listeners: ri?.spotifyListeners ?? null,
-  sp_followers: ri?.spotifyFollowers ?? null,
-  social: { instagram: ri?.igFollowers ?? null, tiktok: ri?.tiktokFollowers ?? null, youtube: ri?.youtubeMonthlyViews ?? null },
-  faturamento: fmtBRL(Number(ri?.showsPerMonth ?? 0) * Number(ri?.cache ?? 0) + Number(ri?.faturamentoForaShows ?? 0)),
-  shows_pagos: String(ri?.showsPerMonth ?? 0),
-  maior_publico: String(ri?.avgAudience ?? 0),
-  premios: PREMIO_LABELS[ri?.premios] ?? '—',
-  imprensa: IMPRENSA_LABELS[ri?.imprensa] ?? '—',
-});
 
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
 // Determinística: consome o realIndex calculado no backend (sem IA). Suporta v1 (antigo) e v2.

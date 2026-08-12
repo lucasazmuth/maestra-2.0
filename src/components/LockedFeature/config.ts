@@ -46,7 +46,7 @@ export const LOCKED_FEATURE_CONFIG: Record<LockedFeatureKey, LockedFeatureConfig
     title: 'Gestão de Equipe',
     benefits: [
       'Convide colaboradores para o perfil',
-      'Eles acompanham planejamento, catálogo e agenda',
+      'Eles acompanham planejamento, músicas e agenda',
       'Compartilhamento incluso no perfil completo',
     ],
     cta: UNLOCK_PROFILE,
@@ -66,7 +66,7 @@ export const LOCKED_FEATURE_CONFIG: Record<LockedFeatureKey, LockedFeatureConfig
     title: 'Nyta — Assistente',
     benefits: [
       'Chat inteligente que executa ações no seu perfil',
-      'Crie tarefas, eventos e gerencie catálogo por conversa',
+      'Crie tarefas, eventos e gerencie músicas por conversa',
       'Análises e recomendações personalizadas com IA',
     ],
     cta: SUBSCRIBE_PRO,

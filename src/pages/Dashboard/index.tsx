@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useArtist } from '../../hooks/useArtist';
 import { useJourneyState } from '../../hooks/useJourneyState';
 import { Spinner } from '../../components/spinner/spinner';
-import { listCatalogItems } from '../../services/db/catalog';
+import { listCatalogProjectItems } from '../../services/db/catalog';
 import { CATALOG_STATUS } from '../../constants/maestra';
 import type { CatalogItem } from '../../interfaces/maestra';
 
@@ -21,7 +21,7 @@ const Dashboard: FC = () => {
   useEffect(() => {
     let alive = true;
     if (!artist?.id) return () => { alive = false; };
-    listCatalogItems(artist.id)
+    listCatalogProjectItems(artist.id)
       .then((items) => alive && setDraftTracks(items))
       .catch(() => alive && setDraftTracks([]));
     return () => { alive = false; };
@@ -50,6 +50,20 @@ const Dashboard: FC = () => {
     name: album.name,
     album: 'Spotify',
   }));
+  const performanceRows = [
+    ...draftTracks.map((track) => ({
+      id: track.id,
+      title: track.title,
+      type: track.genre || (CATALOG_STATUS as any)[track.status]?.label || track.status,
+    })),
+    ...activeTracks
+      .filter((track) => !draftTracks.some((draft) => draft.title?.toLowerCase() === track.name?.toLowerCase()))
+      .map((track) => ({
+        id: track.id || track.name,
+        title: track.name,
+        type: track.album || 'Spotify',
+      })),
+  ].slice(0, 5);
   return (
     <div className='board-content page-view music-dashboard'>
       <section className='music-hero music-hero-task'>
@@ -72,7 +86,7 @@ const Dashboard: FC = () => {
         {[
           ['Ouvintes mensais', fmtNumber(chartmetric?.monthly_listeners), sp?.popularity != null ? `${sp.popularity}/100 popularidade` : 'Spotify'],
           ['Seguidores', fmtNumber(sp?.followers), 'Spotify'],
-          ['Faixas ativas', String(tracks.length), `${albums.length} álbuns/singles`],
+          ['Músicas ativas', String(tracks.length), `${albums.length} álbuns/singles`],
           ['Tarefas pendentes', String(pendingTasks.length), `${journey.tasksDone} concluídas`],
         ].map(([label, value, change], index) => (
           <article key={label}>
@@ -89,7 +103,7 @@ const Dashboard: FC = () => {
           <article className='release-board'>
             <header>
               <h2>Músicas lançadas</h2>
-              <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`, { state: { catalogTab: 'spotify' } })}>Ver catálogo →</button>
+              <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`, { state: { catalogTab: 'spotify' } })}>Ver músicas →</button>
             </header>
             <div>
               {activeTracks.slice(0, 4).map((track, index) => (
@@ -103,7 +117,7 @@ const Dashboard: FC = () => {
               {activeTracks.length === 0 && (
                 <button type='button' style={{ '--release': '#8833ff' } as CSSProperties}>
                   <i />
-                  <span><strong>Catálogo vazio</strong><small>Conecte o Spotify ou adicione faixas</small></span>
+                  <span><strong>Sem músicas</strong><small>Conecte o Spotify ou adicione músicas</small></span>
                   <b>Pendente</b>
                   <em>›</em>
                 </button>
@@ -113,9 +127,9 @@ const Dashboard: FC = () => {
 
           <div className='music-promo-grid'>
             <article className='promo-card promo-dark'>
-              <span>CATÁLOGO</span>
-              <h2>Organize suas faixas, versões e créditos.</h2>
-              <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`)}>Abrir catálogo →</button>
+              <span>MÚSICAS</span>
+              <h2>Organize suas músicas, versões e créditos.</h2>
+              <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`)}>Abrir músicas →</button>
             </article>
             <article className='promo-card promo-light'>
               <strong>{strategies.length.toString().padStart(2, '0')}</strong>
@@ -127,26 +141,26 @@ const Dashboard: FC = () => {
 
         <article className='track-performance'>
           <header>
-            <h2>Performance do catálogo</h2>
+            <h2>Performance das músicas</h2>
             <span>Ouvintes&nbsp;&nbsp;&nbsp;&nbsp;Crescimento</span>
           </header>
-          {draftTracks.slice(0, 5).map((track, index) => (
-            <div key={track.id}>
+          {performanceRows.map((track, index) => (
+            <div key={track.id || track.title}>
               <i>{index + 1}</i>
               <span className='track-dot' style={{ background: ['#8833ff', '#33bfff', '#ff6633', '#29cc39', '#e62e7b'][index % 5] }} />
-              <strong>{track.title}<small>{track.genre || (CATALOG_STATUS as any)[track.status]?.label || track.status}</small></strong>
+              <strong>{track.title}<small>{track.type}</small></strong>
               <b>{fmtNumber(chartmetric?.monthly_listeners)}</b>
               <em>{index === 0 ? '+18,5%' : '+0,0%'}</em>
             </div>
           ))}
-          {draftTracks.length === 0 && <p>Nenhuma faixa no catálogo ainda.</p>}
-          <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`)}>Ver catálogo completo</button>
+          {performanceRows.length === 0 && <p>Nenhuma música cadastrada ainda.</p>}
+          <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`)}>Ver músicas</button>
         </article>
       </section>
 
       <section className='music-footer'>
         <article><i>◷</i><h2>Suporte 24/7</h2><p>Conte com o time Maestra em cada etapa.</p></article>
-        <article><i>◌</i><h2>Dados seguros</h2><p>Seu catálogo e informações sempre protegidos.</p></article>
+        <article><i>◌</i><h2>Dados seguros</h2><p>Suas músicas e informações sempre protegidas.</p></article>
         <article><i>♬</i><h2>Novidades da indústria</h2><p>Curadoria para apoiar decisões da carreira.</p></article>
       </section>
     </div>

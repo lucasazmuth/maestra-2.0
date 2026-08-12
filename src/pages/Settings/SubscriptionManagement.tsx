@@ -30,7 +30,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const PRO_BENEFITS = [
   'Nyta IA em todos os módulos',
-  'Catálogo ilimitado',
+  'Músicas ilimitadas',
   'Acompanhamento de evolução automatizado',
   'Lembretes inteligentes',
 ];

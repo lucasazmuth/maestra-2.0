@@ -8,6 +8,7 @@ import { useCanCreateArtist } from '../../hooks/useCanCreateArtist';
 import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import { Spinner } from '../../components/spinner/spinner';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import styles from './Artists.module.scss';
 
 const Artists: FC = () => {
   const dispatch = useAppDispatch();
@@ -66,8 +67,8 @@ const Artists: FC = () => {
   }, [params, setParams, navigate]);
 
   return (
-    <main className='profile-home-content'>
-      <header>
+    <main className={`profile-home-content ${styles.page}`}>
+      <header className={styles.heading}>
         <h1>Seus perfis</h1>
         <button
           type='button'
@@ -80,11 +81,12 @@ const Artists: FC = () => {
 
       <Spinner loading={loading && !artists.length}>
         {artists.length > 0 && (
-          <div className='home-profile-directory'>
+          <div className={`home-profile-directory ${styles.grid}`}>
             {artists.map((a) => {
               const sp = a.content?.spotifyProfile;
               return (
                 <button
+                  className={styles.card}
                   type='button'
                   key={a.id}
                   onClick={() => navigate(routeFor(a))}

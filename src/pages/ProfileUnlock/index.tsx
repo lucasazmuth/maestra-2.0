@@ -35,7 +35,7 @@ const INCLUDES = [
   'Planejamento estratégico',
   'Plano de ação com metas e cronograma',
   'Análise de audiência: ouvintes e cidades',
-  'Catálogo, agenda e equipe',
+  'Músicas, agenda e equipe',
   'Acesso vitalício ao perfil',
 ];
 
