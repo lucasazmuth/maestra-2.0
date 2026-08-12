@@ -9,6 +9,10 @@
 //   • artist_purchases com status 'received' (desbloqueio de perfil, pagamento único)
 //   • asaas_payments com status 'confirmed' ou 'received' (cobranças da assinatura)
 // Data do pagamento: paid_at / payment_date; fallback created_at.
+//
+// Perfis liberados por Pass Access entram em artist_purchases como 'received' de valor 0.
+// Eles NÃO contam como pagamento: somar zero não muda o faturamento, mas contá-los inflaria
+// "pagamentos confirmados" e qualquer ticket médio tirado dele. Vão num contador à parte.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -98,9 +102,13 @@ Deno.serve(async (req) => {
     const paid: Pay[] = [];
     let pendingCount = 0;
 
+    let accessPassCount = 0;
     for (const p of purchases) {
       const date = p.paid_at || p.created_at;
       if (p.status === "received") {
+        // Presente (Pass Access) não é venda: fica fora de `paid` pra não contaminar
+        // contagem de pagamentos, série mensal e lista de últimos pagamentos.
+        if (p.billing_type === "ACCESS_PASS") { accessPassCount++; continue; }
         paid.push({ kind: "purchase", label: p.artist_name || "Perfil de artista", email: emailById.get(p.user_id) || "", amount: Number(p.amount) || 0, billing_type: p.billing_type, status: p.status, date, coupon: p.coupon_code || null });
       } else if (p.status === "pending") pendingCount++;
     }
@@ -150,6 +158,7 @@ Deno.serve(async (req) => {
         purchases: { count: purchasesPaid.length, total: sum(purchasesPaid), thisMonth: sum(purchasesPaid.filter((p) => inMonth(p, thisMonth))) },
         subscriptionPayments: { count: subPaymentsPaid.length, total: sum(subPaymentsPaid), thisMonth: sum(subPaymentsPaid.filter((p) => inMonth(p, thisMonth))) },
         pendingCount,
+        accessPassCount,
         monthly,
       },
       recentPayments: recent,
