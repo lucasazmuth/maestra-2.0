@@ -73,6 +73,8 @@ const ProfileUnlock: FC = () => {
   const [installments, setInstallments] = useState(12);
   const [payError, setPayError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // Resgate de Pass Access em andamento (compartilha o spinner do campo de cupom).
+  const [redeeming, setRedeeming] = useState(false);
   const [pixData, setPixData] = useState<{ qrCode: string | null; copyPaste: string | null } | null>(null);
   const form = useCheckoutForm();
   const coupon = useCoupon();
@@ -142,6 +144,34 @@ const ProfileUnlock: FC = () => {
       supabase.functions.invoke('artist-enrich-chartmetric', { body: { artistId } }).catch(() => {});
     }
     if (user?.id) await dispatch(artistsActions.fetchArtists(user.id));
+  };
+
+  // Um campo só para cupom e Pass Access: o usuário não precisa saber qual dos dois tem
+  // em mãos. Tenta primeiro como pass — se o código não estiver na tabela de passes, a
+  // function responde 404 sem consumir nada, e aí seguimos pela validação de cupom.
+  const handleApplyCode = async () => {
+    if (!id) return;
+    const code = coupon.input.trim();
+    if (!code) return;
+
+    setRedeeming(true);
+    setPayError('');
+    try {
+      const { data } = await supabase.functions.invoke('redeem-access-pass', {
+        body: { code, artistId: id },
+      });
+      if (data?.ok) {
+        // Pass válido: perfil já liberado no backend, vai direto pra tela de sucesso.
+        await finish(id);
+        return;
+      }
+    } catch {
+      /* não é um pass (ou a chamada falhou) — tenta como cupom de desconto */
+    } finally {
+      setRedeeming(false);
+    }
+
+    await coupon.apply('one_time', priceValue, method === 'CREDIT' ? installments : undefined);
   };
 
   const handlePay = async () => {
@@ -318,9 +348,9 @@ const ProfileUnlock: FC = () => {
                       <CouponField
                         value={coupon.input}
                         onChange={coupon.setInput}
-                        onApply={() => coupon.apply('one_time', priceValue, method === 'CREDIT' ? installments : undefined)}
+                        onApply={handleApplyCode}
                         onClear={coupon.clear}
-                        loading={coupon.loading}
+                        loading={coupon.loading || redeeming}
                         error={coupon.error}
                         appliedLabel={coupon.labelFor(priceValue)}
                       />
