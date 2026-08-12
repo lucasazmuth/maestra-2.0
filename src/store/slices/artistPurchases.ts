@@ -84,9 +84,15 @@ export const createArtistCharge = createAsyncThunk(
   }
 );
 
+// A cada 4 voltas do poll (~20s) confirma direto na Asaas em vez de só reler a tabela.
+// A tabela local só muda quando o webhook chega; se ele estiver mudo (fila pausada, como
+// em 08/08/2026), o poll giraria os 10 min inteiros com o pagamento já compensado.
+const RECONCILE_EVERY = 4;
+
 /**
- * Aguarda a confirmação do pagamento (webhook marca received e desbloqueia o perfil).
- * Poll resiliente: 5s, até 10min, tolerando erros isolados. Retorna o artistId.
+ * Aguarda a confirmação do pagamento. Duas fontes: a tabela local (atualizada pelo webhook)
+ * e, periodicamente, a própria Asaas via asaas-reconcile-purchase — que também desbloqueia
+ * o perfil. Poll resiliente: 5s, até 10min, tolerando erros isolados. Retorna o artistId.
  */
 export const pollArtistPurchase = createAsyncThunk(
   'artistPurchases/poll',
@@ -96,6 +102,7 @@ export const pollArtistPurchase = createAsyncThunk(
     const maxMs = 10 * 60 * 1000;
     const start = Date.now();
     let consecutiveErrors = 0;
+    let round = 0;
 
     while (Date.now() - start < maxMs) {
       if (signal.aborted) return rejectWithValue({ purchaseId, message: 'Cancelado' });
@@ -118,6 +125,21 @@ export const pollArtistPurchase = createAsyncThunk(
         }
         if (data && data.status === 'failed') {
           return rejectWithValue({ purchaseId, message: 'O pagamento não foi confirmado.' });
+        }
+      }
+
+      round += 1;
+      if (round % RECONCILE_EVERY === 0) {
+        // Falha aqui (Asaas fora, rede) não interrompe o poll: segue pela tabela local.
+        try {
+          const { data: rec } = await supabase.functions.invoke('asaas-reconcile-purchase', {
+            body: { purchaseId },
+          });
+          if (rec?.status === 'received' && rec?.artistId) {
+            return { purchaseId, artistId: rec.artistId as string };
+          }
+        } catch {
+          /* ignora — próxima volta tenta de novo */
         }
       }
 
