@@ -110,6 +110,36 @@ serve(async (req) => {
       console.error(`Pass ${redeemed.id} liberou o perfil ${artistId} mas o registro da compra falhou:`, purchaseError);
     }
 
+    // Cobrança pendente do mesmo perfil vira dinheiro jogado fora: o QR Code do PIX
+    // continua válido na Asaas depois do pass, e quem pagasse estaria pagando por um
+    // perfil já liberado. Cancela na Asaas e marca localmente.
+    const asaasApiKey = Deno.env.get("ASAAS_API_KEY");
+    const asaasApiUrl = Deno.env.get("ASAAS_API_URL") || "https://api-sandbox.asaas.com";
+    const { data: pendentes } = await supabaseAdmin
+      .from("artist_purchases")
+      .select("id, asaas_payment_id")
+      .eq("artist_id", artistId)
+      .eq("status", "pending")
+      .not("asaas_payment_id", "is", null);
+
+    for (const pend of pendentes || []) {
+      if (asaasApiKey) {
+        try {
+          await fetch(`${asaasApiUrl}/v3/payments/${pend.asaas_payment_id}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json", access_token: asaasApiKey },
+          });
+        } catch (delErr) {
+          // Falhar aqui não pode desfazer o resgate: o perfil já está liberado.
+          console.warn("Falha ao cancelar cobrança pendente na Asaas:", (delErr as { message?: string })?.message);
+        }
+      }
+      await supabaseAdmin
+        .from("artist_purchases")
+        .update({ status: "cancelled", updated_at: nowIso })
+        .eq("id", pend.id);
+    }
+
     console.log(`Access pass resgatado: pass=${redeemed.id}, user=${user.id}, artist=${artistId}`);
     return json({ ok: true, artistId });
   } catch (err) {

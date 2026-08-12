@@ -75,6 +75,8 @@ const ProfileUnlock: FC = () => {
   const [submitting, setSubmitting] = useState(false);
   // Resgate de Pass Access em andamento (compartilha o spinner do campo de cupom).
   const [redeeming, setRedeeming] = useState(false);
+  // Perfil liberado por pass, não por cobrança — muda a copy da tela de sucesso.
+  const [unlockedViaPass, setUnlockedViaPass] = useState(false);
   const [pixData, setPixData] = useState<{ qrCode: string | null; copyPaste: string | null } | null>(null);
   const form = useCheckoutForm();
   const coupon = useCoupon();
@@ -162,6 +164,7 @@ const ProfileUnlock: FC = () => {
       });
       if (data?.ok) {
         // Pass válido: perfil já liberado no backend, vai direto pra tela de sucesso.
+        setUnlockedViaPass(true);
         await finish(id);
         return;
       }
@@ -257,7 +260,9 @@ const ProfileUnlock: FC = () => {
   if (step === 'done') {
     return (
       <PaymentSuccessScreen
-        title='Pagamento confirmado!'
+        // Liberado por Pass Access não passou por cobrança nenhuma — falar em "pagamento"
+        // aqui faria o aluno presenteado achar que foi cobrado.
+        title={unlockedViaPass ? 'Pass Access confirmado!' : 'Pagamento confirmado!'}
         subtitle='Seu planejamento estratégico está liberado.'
         description='A Nyta já vai te guiar, passo a passo, na construção do seu plano.'
         ctaLabel='Iniciar planejamento →'
