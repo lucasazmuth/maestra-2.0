@@ -1641,10 +1641,12 @@
     inset: 28px 29px 30px auto;
     border: 1px solid #e6ebf3;
     border-radius: 15px;
-    // Só contorno, sem preenchimento — mesmo tratamento do `.wizard`. O fundo sólido fica
-    // apenas na regra base, que é o que o mobile usa: lá a coluna vira folha de tela cheia
-    // sobreposta ao chat (inset:0), e transparente deixaria a conversa aparecer por trás.
-    background: transparent;
+    // Mesmo canvas do rail e do `.board-shell` — os três blocos da tela compartilham a
+    // superfície e só o contorno os separa. O `--wz-canvas` (#fafbfc) daqui ficava um tom
+    // acima do menu, e era isso que fazia a coluna parecer um cartão branco à parte.
+    // O fundo sólido fica só na regra base, que é a que o mobile usa: lá a coluna vira folha
+    // de tela cheia sobreposta ao chat (inset:0), e transparência deixaria a conversa vazar.
+    background: var(--canvas, #f7f8fb);
   }
 
   .app-layout:has(.wiz-artifacts) .board-shell {

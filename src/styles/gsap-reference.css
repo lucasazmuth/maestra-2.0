@@ -829,6 +829,12 @@
 .profile-panel { background: var(--canvas); }
 .rail-people { margin-top: auto; }
 
+/* Mesmo canvas do rail/painel acima, declarado de propósito: o `.board-shell` original define
+   #fafbfc (um tom acima), e o resultado igual ao rail vinha por acidente de cascata, não por
+   intenção — bastava mexer na ordem das regras pra os cartões voltarem a destoar do menu.
+   Superfície = canvas; quem separa os blocos é só o contorno. */
+.board-shell { background: var(--canvas); }
+
 /* Preserve the menu-card outlines while preventing horizontal scrolling. */
 @media (min-width: 1301px) { .profile-panel { width: 368px; padding-right: 60px; padding-left: 58px; }.board-shell { margin-left: 469px; } }
 @media (min-width: 1301px) { .module-layout .board-shell { margin-left: 130px; } }
