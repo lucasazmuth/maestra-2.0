@@ -270,13 +270,18 @@ Deno.serve(async (req: Request) => {
       subscriptionRecord = data;
     }
 
-    // Fallback: look up by customer_id
+    // Fallback: look up by customer_id.
+    // asaas_customer_id NÃO é único: um mesmo cliente da Asaas pode estar vinculado a
+    // vários usuários. Por isso não dá pra usar .maybeSingle() aqui — com 2+ linhas ele
+    // retorna erro, a função respondia 500 e a Asaas pausava a FILA INTEIRA (incidente de
+    // 08/08: 5 dias sem processar pagamento nenhum, perfis pagos sem liberar).
+    // Com múltiplas linhas o vínculo é ambíguo — casar pelo cliente poderia ativar o Pro
+    // do usuário errado —, então não escolhemos nenhuma: registra e segue sem assinatura.
     if (!subscriptionRecord && customerId) {
       const { data, error } = await supabaseAdmin
         .from("asaas_subscriptions")
         .select("*")
-        .eq("asaas_customer_id", customerId)
-        .maybeSingle();
+        .eq("asaas_customer_id", customerId);
 
       if (error) {
         console.error("Error looking up subscription by customer_id:", error);
@@ -285,7 +290,17 @@ Deno.serve(async (req: Request) => {
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      subscriptionRecord = data;
+
+      if (data && data.length === 1) {
+        subscriptionRecord = data[0];
+      } else if (data && data.length > 1) {
+        console.warn("Ambiguous customer_id (múltiplos usuários no mesmo cliente Asaas) — sem match de assinatura", {
+          eventId,
+          eventType,
+          customerId,
+          matches: data.length,
+        });
+      }
     }
 
     if (!subscriptionRecord) {

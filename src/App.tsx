@@ -57,6 +57,7 @@ const DiagnosticView = lazy(() => import('./pages/DiagnosticView'));
 const AdminKnowledgeBase = lazy(() => import('./pages/Admin/KnowledgeBase'));
 const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
 const AdminCoupons = lazy(() => import('./pages/Admin/Coupons'));
+const AdminAccessPasses = lazy(() => import('./pages/Admin/AccessPasses'));
 const AdminUsers = lazy(() => import('./pages/Admin/Users'));
 const AdminArtists = lazy(() => import('./pages/Admin/Artists'));
 const AdminReviews = lazy(() => import('./pages/Admin/Reviews'));
@@ -264,6 +265,7 @@ const AppRoutes: FC = () => {
             <Route path='/admin/dashboard' element={<AdminDashboard />} />
             <Route path='/admin/knowledge-base' element={<AdminKnowledgeBase />} />
             <Route path='/admin/cupons' element={<AdminCoupons />} />
+            <Route path='/admin/pass-access' element={<AdminAccessPasses />} />
             <Route path='/admin/usuarios' element={<AdminUsers />} />
             <Route path='/admin/artistas' element={<AdminArtists />} />
             <Route path='/admin/artistas/:artistId' element={<AdminArtists />} />
