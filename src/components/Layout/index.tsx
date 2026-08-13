@@ -186,11 +186,12 @@ export const AppLayout: FC = memo(() => {
   // pra o chat ocupar toda a altura (o wizard já tem cabeçalho próprio com título e "Salvar e sair").
   const isWizardChat = /^\/artists\/[^/]+\/wizard/.test(location.pathname);
   const hideTopbar = isMobile && isWizardChat;
-  // No wizard, ENQUANTO o planejamento não estiver concluído, o rail de atalhos e o painel
-  // de perfil (Dashboard/Diagnóstico/Plano de Ação/…) somem — só a conversa da Nyta fica
-  // visível, pra não competir com módulos que ainda não fazem sentido pro artista abrir. Uma
-  // vez concluído, o menu volta a aparecer normalmente (inclusive se o usuário reabrir o
-  // wizard depois, pra revisar uma etapa).
+  // No wizard, ENQUANTO o planejamento não estiver concluído, o painel de perfil
+  // (Dashboard/Diagnóstico/Plano de Ação/…) some — só a conversa da Nyta fica em foco, pra
+  // não competir com módulos que ainda não fazem sentido pro artista abrir. O rail (Início/
+  // Notificações/Nyta/trocar de artista) continua visível: é o único caminho de volta pra
+  // "Seus perfis". Uma vez concluído, o painel volta a aparecer normalmente (inclusive se o
+  // usuário reabrir o wizard depois, pra revisar uma etapa).
   const hideSideNavForWizard = isWizardChat && !!currentArtist && !isOnboardingComplete(currentArtist);
   // A navbar mobile é uma barra fixa SOBREPOSTA (o conteúdo passa por baixo dela, via padding-bottom
   // da .Main-section, e aparece atrás do gradiente translúcido). Por isso NÃO reservamos altura pra
@@ -314,33 +315,36 @@ export const AppLayout: FC = memo(() => {
             a coluna de resultados à direita — com a classe, o card ficava embaixo do perfil.
             A folga da coluna de resultados vem do `.wiz-artifacts` (pages/Wizard/styles.scss). */}
         <div
-          className={`app-layout${isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist ? ' app-layout-no-profile' : ''}${hideSideNavForWizard ? ' wizard-immersive' : ''}`}
+          className={`app-layout${isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist || hideSideNavForWizard ? ' app-layout-no-profile' : ''}`}
           style={{ bottom: bottomReserve ? `${bottomReserve}px` : 0 }}
         >
-          {!hideSideNavForWizard && (
-            <aside className='app-rail' aria-label='Atalhos'>
-              <div className='rail-actions'>
-                <button type='button' aria-label='Tela inicial' onClick={() => navigate('/artists')}>
-                  <SystemHomeIcon size={20} />
-                </button>
-                <button type='button' className={location.pathname === '/notifications' ? 'rail-active rail-notification' : 'rail-notification'} aria-label='Notificações' onClick={() => navigate('/notifications')}>
-                  <NotificationIcon size={19} />
-                </button>
-                <button type='button' className={`rail-nyta${isNytaPage ? ' rail-active' : ''}`} aria-label='Abrir Nyta IA' onClick={openNytaPage}>
-                  <b>Nyta IA</b>
-                </button>
-              </div>
+          {/* O rail (Início/Notificações/Nyta/trocar de artista) fica sempre visível — inclusive
+              sem plano concluído, é o único caminho pra voltar pra "Seus perfis". Só o painel
+              de perfil (Dashboard/Diagnóstico/Plano de Ação/…) some nesse caso, via
+              hideSideNavForWizard acima — reaproveita a mesma classe app-layout-no-profile já
+              usada em Nyta/Notificações pra colapsar a margem que seria dele. */}
+          <aside className='app-rail' aria-label='Atalhos'>
+            <div className='rail-actions'>
+              <button type='button' aria-label='Tela inicial' onClick={() => navigate('/artists')}>
+                <SystemHomeIcon size={20} />
+              </button>
+              <button type='button' className={location.pathname === '/notifications' ? 'rail-active rail-notification' : 'rail-notification'} aria-label='Notificações' onClick={() => navigate('/notifications')}>
+                <NotificationIcon size={19} />
+              </button>
+              <button type='button' className={`rail-nyta${isNytaPage ? ' rail-active' : ''}`} aria-label='Abrir Nyta IA' onClick={openNytaPage}>
+                <b>Nyta IA</b>
+              </button>
+            </div>
 
-              <div className='rail-people'>
-                {artists.slice(0, 4).map((artist) => (
-                  artist.content?.spotifyProfile?.image
-                    ? <span key={artist.id} className={`avatar avatar-big avatar-image${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(`/artists/${artist.id}`)}><img src={artist.content.spotifyProfile.image} alt={artist.name} /></span>
-                    : <span key={artist.id} className={`avatar avatar-big${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(`/artists/${artist.id}`)}>{firstInitials(artist.name)}</span>
-                ))}
-                <button type='button'>＋</button>
-              </div>
-            </aside>
-          )}
+            <div className='rail-people'>
+              {artists.slice(0, 4).map((artist) => (
+                artist.content?.spotifyProfile?.image
+                  ? <span key={artist.id} className={`avatar avatar-big avatar-image${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(`/artists/${artist.id}`)}><img src={artist.content.spotifyProfile.image} alt={artist.name} /></span>
+                  : <span key={artist.id} className={`avatar avatar-big${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(`/artists/${artist.id}`)}>{firstInitials(artist.name)}</span>
+              ))}
+              <button type='button'>＋</button>
+            </div>
+          </aside>
 
           {currentArtist && !isNytaPage && !isNotificationsPage && !hideSideNavForWizard && (
             <aside className='profile-panel' aria-label='Detalhes do artista'>
