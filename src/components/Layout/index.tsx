@@ -3,6 +3,7 @@ import { memo, useEffect, useRef, type FC, type ReactNode, type RefObject, type 
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { MobileNav } from './components/MobileNav';
+import { AdminMenu } from './components/AdminMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
 import { StatusBanner, useStatusBanner } from '../AnnouncementBanner';
@@ -283,6 +284,7 @@ export const AppLayout: FC = memo(() => {
             ⚙
           </button>
         )}
+        <AdminMenu />
         <button className='round-control notification' aria-label='Notificações' type='button' onClick={() => navigate('/notifications')}>
           <NotificationIcon size={19} />
         </button>
