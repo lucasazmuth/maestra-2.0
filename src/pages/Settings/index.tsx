@@ -184,20 +184,21 @@ const Settings: FC = () => {
         </div>
       </header>
 
-      <section className='settings-profile-card' style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>Perfil</h2>
+      {/* Duas linhas fixas (cabeçalho + corpo), em vez do antigo truque de flex único com
+          h2 { order: -1; margin: auto } — aquilo colocava "Perfil", o avatar e (no modo de
+          edição) o campo Nome disputando a MESMA linha, e quebrava de forma estranha em
+          telas estreitas (avatar caindo pra baixo, fora do centro). */}
+      <section className='settings-profile-card'>
+        <div className='settings-profile-header'>
+          <h2>Perfil</h2>
           {!editing && (
-            <button
-              onClick={startEditing}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', borderRadius: 9999, padding: '7px 16px', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
-            >
+            <button className='settings-edit-btn' onClick={startEditing}>
               <EditIcon size={16} /> Editar
             </button>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: editing ? 18 : 0 }}>
+        <div className='settings-profile-body'>
           {editing ? (
             <label style={{ position: 'relative', width: 64, height: 64, cursor: uploading ? 'wait' : 'pointer', flexShrink: 0 }}>
               <img src={avatar} alt='avatar' style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', opacity: uploading ? 0.5 : 1 }} />
@@ -210,31 +211,31 @@ const Settings: FC = () => {
             <img src={savedAvatar} alt='avatar' style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }} />
           )}
           <div>
-            {!editing && <div className='settings-profile-name' style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>{savedName || 'Sem nome'}</div>}
-            <div className='settings-profile-email' style={{ color: '#b3b3b3', fontSize: 13 }}>{user?.email}</div>
-            {editing && <div style={{ color: '#98a6bd', fontSize: 12, marginTop: 4 }}>Toque na foto para trocar</div>}
+            {!editing && <div className='settings-profile-name'>{savedName || 'Sem nome'}</div>}
+            <div className='settings-profile-email'>{user?.email}</div>
+            {editing && <div className='settings-profile-hint'>Toque na foto para trocar</div>}
           </div>
         </div>
 
         {editing && (
-          <>
-            <label style={{ color: '#8e9eb8', fontSize: 12.5, fontWeight: 700 }}>Nome</label>
-            {/* className settings-name-input: o Input do antd nasce escuro em todo o app
-                (ConfigProvider usa theme.darkAlgorithm globalmente) — precisa de override
-                pontual pra combinar com o card claro. Ver regra em gsap-reference.css. */}
-            <Input
-              className='settings-name-input'
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder='Seu nome'
-              style={{ marginTop: 6 }}
-            />
-            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <div className='settings-profile-form'>
+            <div className='settings-profile-field'>
+              <label>Nome</label>
+              {/* className settings-name-input: o Input do antd nasce escuro em todo o app
+                  (ConfigProvider usa theme.darkAlgorithm globalmente) — precisa de override
+                  pontual pra combinar com o card claro. Ver regra em gsap-reference.css. */}
+              <Input
+                className='settings-name-input'
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder='Seu nome'
+              />
+            </div>
+            <div className='settings-profile-actions'>
               <button
                 className='settings-save-btn'
                 onClick={saveProfile}
                 disabled={saving || uploading}
-                style={{ borderRadius: 9999, padding: '8px 20px', cursor: 'pointer', fontWeight: 700, opacity: saving || uploading ? 0.6 : 1 }}
               >
                 {saving ? 'Salvando…' : 'Salvar'}
               </button>
@@ -242,12 +243,11 @@ const Settings: FC = () => {
                 className='settings-cancel-btn'
                 onClick={() => setEditing(false)}
                 disabled={saving}
-                style={{ borderRadius: 9999, padding: '8px 20px', cursor: 'pointer', fontWeight: 700 }}
               >
                 Cancelar
               </button>
             </div>
-          </>
+          </div>
         )}
       </section>
 

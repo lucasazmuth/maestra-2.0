@@ -27,24 +27,39 @@
 .settings-link-card,
 .settings-support-card,
 .settings-danger-card { border: 1px solid #e5eaf2; border-radius: 10px !important; background: #fff !important; box-shadow: 0 7px 17px rgba(124, 145, 185, .06); }
-.settings-profile-card { display: flex; align-items: center; gap: 18px; margin-top: 34px; padding: 24px !important; }
-.settings-profile-card > div:first-child { display: contents; }
-.settings-profile-card h2 { order: -1; margin: 0 auto 0 0 !important; color: #52668d !important; font-size: 18px !important; }
+/* Duas linhas fixas — cabeçalho (título + Editar) e corpo (avatar + informações) — no
+   lugar do antigo truque `display:flex` único + `h2 { order:-1; margin:auto }`: aquilo
+   colocava "Perfil", o avatar e o campo Nome disputando a MESMA linha, e quebrava de
+   forma estranha em telas estreitas (avatar caindo fora do centro). */
+.settings-profile-card { display: block !important; margin-top: 34px; padding: 24px !important; }
+.settings-profile-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.settings-profile-card h2 { margin: 0 !important; color: #52668d !important; font-size: 18px !important; }
+/* Editar do lado direito do cabeçalho (justify-content:space-between acima cuida disso);
+   fica de fora do fluxo do avatar/nome, então não quebra mais junto com eles. */
+.settings-edit-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #dce4f0; border-radius: 21px; padding: 7px 16px; background: #fff; color: #5a70a0; font-weight: 700; font-size: 13px; cursor: pointer; }
+.settings-edit-btn:hover { border-color: #3361ff; color: #3361ff; }
+/* Corpo: avatar + informações centralizados verticalmente entre si (align-items:center) —
+   nunca mais brigando de espaço com o cabeçalho. */
+.settings-profile-body { display: flex; align-items: center; gap: 18px; margin-top: 20px; }
 .settings-profile-card img { width: 64px !important; height: 64px !important; border: 0; }
-.settings-profile-name { color: #52668d !important; font-size: 18px !important; }
-.settings-profile-email { color: #8e9eb8 !important; }
-.settings-profile-card button { border: 1px solid #dce4f0 !important; border-radius: 21px !important; background: #fff !important; color: #5a70a0 !important; box-shadow: none !important; }
+.settings-profile-name { color: #52668d; font-size: 15px; font-weight: 700; }
+.settings-profile-email { color: #8e9eb8; font-size: 13px; }
+.settings-profile-hint { margin-top: 4px; color: #98a6bd; font-size: 12px; }
+.settings-profile-form { display: flex; align-items: center; gap: 16px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #edf1f7; }
+.settings-profile-field { display: flex; flex-direction: column; gap: 6px; }
+.settings-profile-field label { color: #8e9eb8; font-size: 12.5px; font-weight: 700; }
 /* O antd Input nasce ESCURO em todo o app (ConfigProvider usa theme.darkAlgorithm
-   globalmente) — o campo "Nome" precisa de override pontual pra combinar com o card claro.
-   Especificidade (classe+classe) já vence a regra genérica acima sem precisar de ordem. */
-.settings-profile-card .settings-name-input { border: 1px solid #dce4f0 !important; border-radius: 10px !important; background: #fff !important; color: #52668d !important; box-shadow: none !important; }
-.settings-profile-card .settings-name-input::placeholder { color: #b7c3d8 !important; }
-.settings-profile-card .settings-name-input:hover,
-.settings-profile-card .settings-name-input:focus { border-color: #3361ff !important; box-shadow: 0 0 0 3px rgba(51, 97, 255, .12) !important; }
-/* Salvar/Cancelar caiam na regra genérica de botão acima ficam idênticos (dois contornos
-   brancos) — sem hierarquia entre ação primária e secundária. */
-.settings-profile-card .settings-save-btn { border: none !important; background: #3361ff !important; color: #fff !important; box-shadow: 0 8px 18px rgba(51, 97, 255, .22) !important; }
-.settings-profile-card .settings-cancel-btn { border: 1px solid #dce4f0 !important; background: #fff !important; color: #7b8eaf !important; }
+   globalmente) — o campo "Nome" precisa de override pontual pra combinar com o card claro. */
+.settings-name-input { border: 1px solid #dce4f0 !important; border-radius: 10px !important; background: #fff !important; color: #52668d !important; box-shadow: none !important; }
+.settings-name-input::placeholder { color: #b7c3d8 !important; }
+.settings-name-input:hover,
+.settings-name-input:focus { border-color: #3361ff !important; box-shadow: 0 0 0 3px rgba(51, 97, 255, .12) !important; }
+.settings-profile-actions { display: flex; gap: 8px; align-self: flex-end; }
+.settings-save-btn,
+.settings-cancel-btn { border-radius: 9999px; padding: 8px 20px; font-weight: 700; cursor: pointer; }
+.settings-save-btn { border: none; background: #3361ff; color: #fff; box-shadow: 0 8px 18px rgba(51, 97, 255, .22); }
+.settings-save-btn:disabled { opacity: .6; cursor: wait; }
+.settings-cancel-btn { border: 1px solid #dce4f0; background: #fff; color: #7b8eaf; }
 .settings-notification-card { margin-top: 18px; padding: 24px !important; }
 .settings-notification-card h2 { color: #5b6f94 !important; font-size: 16px !important; }
 .settings-notification-card p { color: #98a6bd !important; }
@@ -70,8 +85,11 @@
 @media (max-width: 700px) {
   .task-app .settings-page { padding: 24px 16px 118px; }
   .settings-heading h1 { font-size: 27px; }
-  .settings-profile-card { align-items: flex-start; flex-wrap: wrap; }
-  .settings-profile-card h2 { width: 100%; }
+  /* Card virou display:block (duas linhas fixas); em telas estreitas o corpo do formulário
+     (rótulo + input + botões, tudo em row) apertaria — empilha em coluna. */
+  .settings-profile-form { flex-direction: column; align-items: stretch; }
+  .settings-profile-field { width: 100%; }
+  .settings-profile-actions { align-self: flex-start; }
 }
 * { box-sizing: border-box; } body { margin: 0; min-width: 320px; background: var(--canvas); color: var(--text); font-family: 'Nunito Sans', Arial, sans-serif; } a { color: inherit; text-decoration: none; } button, input { font: inherit; } button { cursor: pointer; }
 .task-app { min-height: 100vh; background: var(--canvas); }.top-navigation { height: 93px; display: flex; align-items: center; gap: 22px; padding: 0 25px; border-bottom: 1px solid #edf0f5; }.menu-button, .round-control { display: grid; flex: 0 0 auto; width: 51px; height: 51px; place-items: center; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 6px 14px rgba(98, 112, 143, .07); color: #b2bed1; }.menu-button span { font-size: 17px; transform: scaleX(1.2); }.constructor { display: inline-flex; align-items: center; gap: 10px; margin-right: 42px; color: #52668d; font-size: 24px; font-weight: 800; letter-spacing: 0; }.brand-logo-mark { display: inline-block; flex: 0 0 auto; width: 22px; height: 22px; background: currentColor; -webkit-mask: url("../assets/gsap-reference/maestra-logo.svg") center / contain no-repeat; mask: url("../assets/gsap-reference/maestra-logo.svg") center / contain no-repeat; }.site-links { display: flex; gap: 29px; align-items: center; }.site-links a { color: #778ab0; font-size: 12px; font-weight: 800; white-space: nowrap; }.global-search { display: flex; align-items: center; width: min(31vw, 432px); height: 51px; margin-left: auto; padding: 0 21px; border-radius: 28px; background: #fff; box-shadow: 0 6px 14px rgba(98, 112, 143, .06); color: #c0cbe0; }.global-search span { font-size: 25px; transform: rotate(-20deg); }.global-search input, .board-tabs input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: #65779a; font-size: 11px; font-weight: 700; }.global-search input::placeholder, .board-tabs input::placeholder { color: #b7c3d8; }.global-search b { color: #9aabc6; font-size: 23px; }.account { display: flex; align-items: center; gap: 12px; margin-left: 32px; color: #62759a; font-size: 12px; white-space: nowrap; }.account-icon { display: grid; width: 20px; height: 20px; place-items: center; border-radius: 50%; background: #bdc8da; color: #fff; font-size: 8px; }.round-control { width: 51px; height: 51px; font-size: 22px; }.notification { position: relative; font-size: 17px; }.notification::before { content: ''; position: absolute; top: 0; right: 7px; width: 10px; height: 10px; border: 2px solid var(--canvas); border-radius: 50%; background: #e62e7b; }
