@@ -834,6 +834,11 @@
    intenção — bastava mexer na ordem das regras pra os cartões voltarem a destoar do menu.
    Superfície = canvas; quem separa os blocos é só o contorno. */
 .board-shell { background: var(--canvas); }
+/* A `.Main-section` (rolagem interna, vinda do App.scss do design antigo) desenhava a própria
+   superfície por cima do `.board-shell` — era ela, e não o shell, que deixava o container do
+   meio mais claro que o menu e a coluna de resultados. Sem cor própria, o canvas do shell
+   aparece e os três blocos ficam na mesma superfície. */
+.task-app .board-shell > .Main-section { background: transparent; }
 
 /* Preserve the menu-card outlines while preventing horizontal scrolling. */
 @media (min-width: 1301px) { .profile-panel { width: 368px; padding-right: 60px; padding-left: 58px; }.board-shell { margin-left: 469px; } }

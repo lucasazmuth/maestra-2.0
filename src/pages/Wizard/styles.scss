@@ -1450,6 +1450,19 @@
   background: #fff !important;
   color: var(--wz-ink) !important;
   box-shadow: none !important;
+  // O tamanho padrão do antd (29px de altura, fonte 12px) fica apertado pra campos que são o
+  // foco da etapa — e abaixo dos ~44px recomendados como alvo de toque. Aqui o campo é a
+  // resposta principal da pergunta, então merece o mesmo peso do resto do cartão.
+  min-height: 44px !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+// TextArea cresce com autoSize; o min-height acima serviria de piso, mas o padding vertical
+// dobrado deixaria as linhas largas demais — aqui a altura vem do número de linhas.
+.nyta-card textarea.ant-input {
+  min-height: 76px !important;
+  padding: 12px 14px !important;
 }
 .nyta-card .ant-input::placeholder { color: var(--wz-faint) !important; }
 .nyta-card .ant-input:hover,
