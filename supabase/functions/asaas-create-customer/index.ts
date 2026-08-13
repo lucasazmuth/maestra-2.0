@@ -130,8 +130,18 @@ Deno.serve(async (req: Request) => {
       );
       if (lookupRes.ok) {
         const lookupData = await lookupRes.json();
-        // deno-lint-ignore no-explicit-any
-        const match = (lookupData?.data || []).find((c: any) => c && !c.deleted);
+        // O resultado da busca NÃO pode ser aceito às cegas: pegar o primeiro item da lista
+        // assume que a Asaas aplicou o filtro de cpfCnpj. Quando ela devolve outros registros,
+        // o primeiro é o cliente de OUTRA pessoa e o usuário passa a compartilhar o cadastro
+        // dela. Foi o que aconteceu até 12/08 — 10 usuários grudados no mesmo cus_, cobranças
+        // emitidas no cliente errado e o webhook quebrando por vínculo ambíguo.
+        // Só reaproveita quando o CPF/CNPJ do registro realmente confere.
+        const match = (lookupData?.data || []).find(
+          // deno-lint-ignore no-explicit-any
+          (c: any) =>
+            c && !c.deleted &&
+            String(c.cpfCnpj || "").replace(/\D/g, "") === cpfCnpjDigits
+        );
         if (match?.id) {
           console.log(`Reusing Asaas customer found by cpfCnpj: ${match.id}`);
           await supabaseAdmin

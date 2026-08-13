@@ -16,6 +16,7 @@ interface Stats {
     purchases: { count: number; total: number; thisMonth: number };
     subscriptionPayments: { count: number; total: number; thisMonth: number };
     pendingCount: number;
+    accessPassCount: number;
     monthly: Array<{ month: string; total: number }>;
   };
   recentPayments: Array<{
@@ -81,7 +82,8 @@ const AdminDashboard: FC = () => {
         <StatCard
           icon={<FiTrendingUp />} accent="#2ec47a"
           label="Faturamento total" value={fmtBRL(revenue.total)}
-          hint={`${revenue.purchases.count + revenue.subscriptionPayments.count} pagamento(s) confirmados`}
+          hint={`${revenue.purchases.count + revenue.subscriptionPayments.count} pagamento(s) confirmados`
+            + (revenue.accessPassCount ? ` · ${revenue.accessPassCount} via Pass Access` : '')}
         />
         <StatCard
           icon={<FiCreditCard />} accent="#9A4FD1"
@@ -110,7 +112,7 @@ const AdminDashboard: FC = () => {
         <StatCard
           icon={<FiMusic />} accent="#af68d8"
           label="Perfis de artista" value={String(artists.total)}
-          hint={`${artists.paid} pago(s) · ${artists.locked} bloqueado(s)`}
+          hint={`${artists.paid} liberado(s) · ${artists.locked} bloqueado(s)`}
         />
         <StatCard
           icon={<FiCreditCard />} accent="#9A4FD1"
