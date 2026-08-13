@@ -1,9 +1,9 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spin } from 'antd';
 
 import { supabase } from '../../lib/supabase';
 import { AuthShell, AuthField, AuthSubmit, authError } from '../Login/AuthShell';
+import { Spinner } from '../../components/spinner/spinner';
 
 // Tela de "definir nova senha", aberta pelo link do e-mail de recuperação.
 //
@@ -81,9 +81,7 @@ const ResetPassword: FC = () => {
   if (status === 'checking') {
     return (
       <AuthShell>
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0' }}>
-          <Spin />
-        </div>
+        <Spinner loading section>{null as any}</Spinner>
       </AuthShell>
     );
   }

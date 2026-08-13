@@ -1,9 +1,10 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Popconfirm, message, Spin } from 'antd';
+import { Popconfirm, message } from 'antd';
 import { FiCheck, FiArrowRight, FiAward } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
+import { Spinner } from '../../components/spinner/spinner';
 import {
   fetchSubscriptionStatus,
   cancelSubscription,
@@ -109,9 +110,7 @@ const SubscriptionManagement: FC = () => {
       <h2>Assinatura</h2>
 
       {loading && !cancelling ? (
-        <div style={{ textAlign: 'center', padding: 20 }}>
-          <Spin />
-        </div>
+        <Spinner loading section>{null as any}</Spinner>
       ) : hasPlan ? (
         <>
           <div className='settings-subscription-list'>

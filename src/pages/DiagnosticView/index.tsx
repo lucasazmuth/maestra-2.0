@@ -1,6 +1,6 @@
 import { FC, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Spin } from 'antd';
+
 import { FiLock, FiRefreshCw } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
@@ -8,6 +8,7 @@ import { artistsActions } from '../../store/slices/artists';
 import { useEntitlements } from '../../hooks/useEntitlements';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 import reportStyles from '../ArtistCreate/ArtistCreate.module.scss';
+import { Spinner } from '../../components/spinner/spinner';
 
 const DiagnosticView: FC = () => {
   const dispatch = useAppDispatch();
@@ -37,7 +38,7 @@ const DiagnosticView: FC = () => {
   }, []);
 
   if (!loaded) {
-    return <div className={reportStyles.pageReal} style={{ padding: 24 }}><Spin /> Carregando...</div>;
+    return <div className={reportStyles.pageReal}><Spinner loading>{null as any}</Spinner></div>;
   }
 
   const realIndex = artist?.content?.realIndex;

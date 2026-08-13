@@ -1,9 +1,10 @@
 import { FC, ReactNode, useCallback, useEffect, useState, type CSSProperties } from 'react';
-import { Input, InputNumber, Button, Popconfirm, message, Spin, Empty } from 'antd';
+import { Input, InputNumber, Button, Popconfirm, message, Empty } from 'antd';
 import { FiKey, FiPlus, FiCopy, FiSlash } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import { supabase } from '../../lib/supabase';
+import { Spinner } from '../../components/spinner/spinner';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 interface Pass {
@@ -153,7 +154,7 @@ const AdminAccessPasses: FC = () => {
       <div style={styles.card}>
         <div style={styles.cardHead}><strong>Códigos</strong></div>
         {loading ? (
-          <div style={styles.empty}><Spin /></div>
+          <Spinner loading section>{null as any}</Spinner>
         ) : passes.length === 0 ? (
           <Empty description="Nenhum código gerado ainda." />
         ) : (

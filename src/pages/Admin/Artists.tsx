@@ -1,5 +1,5 @@
 import { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Input, Progress, Select, Spin, Table, Tabs, Tag, message, type TableColumnsType } from 'antd';
+import { Alert, Button, Input, Progress, Select, Table, Tabs, Tag, message, type TableColumnsType } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   FiActivity,
@@ -21,6 +21,7 @@ import dayjs from 'dayjs';
 import { supabase } from '../../lib/supabase';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import styles from './Artists.module.scss';
+import { Spinner } from '../../components/spinner/spinner';
 
 type Activity = 'active' | 'recent' | 'inactive' | 'never';
 
@@ -405,7 +406,7 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
   }, [artistId, nytaHistoryLoading]);
 
   if (loading && !detail) {
-    return <div className={styles.loading}><Spin size="large" /></div>;
+    return <div className={styles.loading}><Spinner loading>{null as any}</Spinner></div>;
   }
 
   if (failed || !detail) {

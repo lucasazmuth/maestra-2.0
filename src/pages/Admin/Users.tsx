@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { supabase } from '../../lib/supabase';
 import { readEdgeFunctionError } from '../../lib/edgeError';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { Spinner } from '../../components/spinner/spinner';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 interface UserRow {
@@ -225,7 +226,7 @@ const AdminUsers: FC = () => {
         ) : null}
       >
         {detailLoading || !detail ? (
-          <div style={{ textAlign: 'center', padding: '40px 0' }}><Spin /></div>
+          <Spinner loading section>{null as any}</Spinner>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Conta */}

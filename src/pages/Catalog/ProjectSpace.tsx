@@ -14,6 +14,7 @@ import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import type { LocalTrack } from '../../components/LocalPlayerBar';
 import WaveSurferWaveform from './WaveSurferWaveform';
 import styles from './ProjectSpace.module.scss';
+import { Spinner } from '../../components/spinner/spinner';
 
 const stages: { value: CatalogVersionStage; label: string }[] = [
   { value: 'guia', label: 'Guia' }, { value: 'beat', label: 'Beat' }, { value: 'instrumental', label: 'Instrumental' },
@@ -321,7 +322,7 @@ const ProjectSpace: FC = () => {
     finally { setChatSending(false); }
   };
 
-  if (loading) return <div className={styles.loading}><Spin /></div>;
+  if (loading) return <div className={styles.loading}><Spinner loading>{null as any}</Spinner></div>;
   if (!project) return <div className={styles.empty}>Espaço JAM não encontrado.</div>;
 
   return (

@@ -15,7 +15,9 @@
     z-index: 9999;
     width: 100vw;
     min-height: 100dvh;
-    background: #080808;
+    // Claro como o resto do app: a tela cheia preta (#080808) era herança do design antigo e
+    // dava um "flash" escuro entre navegações, justamente no carregamento inicial.
+    background: #fff;
   }
 }
 
@@ -33,9 +35,9 @@
   animation: maestra-loader-breathe 1.55s ease-in-out infinite;
 }
 
-.spinner-container.global .maestra-loader-mark img {
-  filter: brightness(0) invert(1);
-}
+// (Removido) O `filter: brightness(0) invert(1)` pintava a marca de branco pra vencer o fundo
+// preto. Com o fundo claro, a marca usa a própria cor (#526B96) — o mesmo cinza-azulado do
+// texto do app, então o loader deixa de destoar do resto.
 
 @keyframes maestra-loader-breathe {
   0%, 100% { opacity: .55; transform: scale(.88); }

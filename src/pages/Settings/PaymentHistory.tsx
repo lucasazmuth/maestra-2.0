@@ -1,9 +1,10 @@
 import { FC, useEffect, useState } from 'react';
-import { Spin } from 'antd';
+
 import { FiRefreshCw, FiUser } from 'react-icons/fi';
 
 import { supabase } from '../../lib/supabase';
 import { useAppSelector } from '../../store/store';
+import { Spinner } from '../../components/spinner/spinner';
 
 // Histórico de pagamentos do usuário: assinatura (asaas_payments) + perfis avulsos
 // (artist_purchases), unificados e ordenados por data. RLS já restringe ao próprio usuário.
@@ -117,7 +118,7 @@ const PaymentHistory: FC = () => {
       <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginTop: 0, marginBottom: 16 }}>Histórico de pagamentos</h2>
 
       {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 16 }}><Spin /></div>
+        <Spinner loading section>{null as any}</Spinner>
       ) : items.length === 0 ? (
         <p style={{ color: '#8a8a8a', fontSize: 13, margin: 0 }}>Você ainda não tem pagamentos registrados.</p>
       ) : (

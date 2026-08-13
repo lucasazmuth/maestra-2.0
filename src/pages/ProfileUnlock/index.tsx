@@ -19,6 +19,7 @@ import {
 } from '../../components/checkout';
 import { useCoupon } from '../../hooks/useCoupon';
 import styles from '../ArtistCreate/ArtistCreate.module.scss';
+import { Spinner } from '../../components/spinner/spinner';
 
 type Step = 'diagnostico' | 'pagamento' | 'pix' | 'done';
 
@@ -243,7 +244,7 @@ const ProfileUnlock: FC = () => {
   };
 
   if (!loaded) {
-    return <div className={styles.page}><div className={styles.analyzing}><Spin /> Carregando…</div></div>;
+    return <div className={styles.page}><Spinner loading>{null as any}</Spinner></div>;
   }
 
   // Desconto do cupom sobre o preço do perfil (recomputado; backend reconfirma).
