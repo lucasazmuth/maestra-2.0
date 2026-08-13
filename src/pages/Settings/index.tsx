@@ -120,7 +120,7 @@ const Settings: FC = () => {
     { label: 'Avaliar a Maestra', icon: <FiStar size={16} />, action: () => setReviewOpen(true) },
     { label: 'Termos de uso', icon: <FiFileText size={16} />, to: '/legal/termos' },
     { label: 'Política de privacidade', icon: <FiShield size={16} />, to: '/legal/privacidade' },
-    { label: 'Falar com o suporte', icon: <FiLifeBuoy size={16} />, href: `mailto:${SUPPORT_EMAIL}` },
+    { label: 'Falar com o suporte', icon: <FiLifeBuoy size={16} />, to: '/suporte' },
   ];
 
   // Assinatura que ainda gera cobrança recorrente na Asaas (precisa ser encerrada junto).
