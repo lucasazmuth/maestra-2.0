@@ -1,12 +1,11 @@
 import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  FiBarChart2, FiBell, FiDatabase, FiFileText, FiGrid, FiKey, FiLifeBuoy,
+  FiBarChart2, FiBell, FiDatabase, FiGrid, FiKey, FiLifeBuoy,
   FiSettings, FiStar, FiTag, FiUsers,
 } from 'react-icons/fi';
 
 import { useIsPlatformAdmin } from '../../../../hooks/useIsPlatformAdmin';
-import { SUPPORT_EMAIL } from '../../../../constants/legal';
 import styles from './SystemMenu.module.scss';
 
 // Menu do sistema no topo da aplicação. Reúne o que não pertence a um perfil de artista:
@@ -28,8 +27,7 @@ interface Item {
 
 const GENERAL: Item[] = [
   { label: 'Configurações', path: '/settings', icon: <FiSettings /> },
-  { label: 'Termos de uso', path: '/legal/termos', icon: <FiFileText /> },
-  { label: 'Falar com o suporte', href: `mailto:${SUPPORT_EMAIL}?subject=Suporte%20Maestra`, icon: <FiLifeBuoy /> },
+  { label: 'Suporte', path: '/suporte', icon: <FiLifeBuoy /> },
 ];
 
 const ADMIN: Item[] = [

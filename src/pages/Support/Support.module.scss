@@ -1,0 +1,103 @@
+// Tela de suporte. Paleta clara da referência GSAP (src/styles/gsap-reference.css):
+// superfície branca, contorno #e8edf5, ação #3361ff.
+
+// Dois canais só: grid próprio em vez do .settings-grid global, que é de 3–4 colunas e
+// deixaria os cartões espremidos num canto com o resto da linha vazio.
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  max-width: 760px;
+  margin-top: 34px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 26px;
+  border: 1px solid #edf1f7;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 7px 17px rgba(124, 145, 185, 0.07);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+
+.card:hover {
+  border-color: #dbe5ff;
+  box-shadow: 0 14px 30px rgba(107, 129, 170, 0.14);
+  transform: translateY(-2px);
+}
+
+.card:focus-visible {
+  outline: 3px solid rgba(51, 97, 255, 0.22);
+  outline-offset: 2px;
+}
+
+.icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 11px;
+  background: #edf2ff;
+  color: #3361ff;
+  font-size: 21px;
+}
+
+// Verde do WhatsApp: o canal é reconhecido pela cor, e isso ajuda a diferenciar à primeira vista.
+.iconWhatsapp {
+  background: #e7f8ee;
+  color: #1faa5a;
+}
+
+.title {
+  margin: 20px 0 7px;
+  color: #52668d;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.desc {
+  margin: 0;
+  color: #98a6bd;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.value {
+  margin-top: 16px;
+  color: #5b6f94;
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+  color: #3361ff;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.note {
+  max-width: 760px;
+  margin-top: 26px;
+  color: #98a6bd;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 24px;
+  }
+}

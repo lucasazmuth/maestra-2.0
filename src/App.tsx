@@ -49,6 +49,7 @@ const Team = lazy(() => import('./pages/Team'));
 const Marketing = lazy(() => import('./pages/Marketing'));
 const Nyta = lazy(() => import('./pages/Nyta'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Support = lazy(() => import('./pages/Support'));
 const Legal = lazy(() => import('./pages/Legal'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const Wizard = lazy(() => import('./pages/Wizard'));
@@ -260,6 +261,7 @@ const AppRoutes: FC = () => {
           <Route path='/pagamento' element={<PaymentPage />} />
           <Route path='/notifications' element={<Notifications />} />
           <Route path='/settings' element={<Settings />} />
+          <Route path='/suporte' element={<Support />} />
           <Route path='/pagamentos' element={<Payments />} />
           <Route element={<RequireAdmin />}>
             <Route path='/admin/dashboard' element={<AdminDashboard />} />
