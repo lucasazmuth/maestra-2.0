@@ -1,13 +1,16 @@
 import { FC, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { App } from 'antd';
+import { App, Popconfirm } from 'antd';
+import { FiTrash2 } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { useCanCreateArtist } from '../../hooks/useCanCreateArtist';
 import { formatRemainingTime } from '../../utils/rateLimitCalc';
+import PendingInvites from '../../components/PendingInvites';
 import { Spinner } from '../../components/spinner/spinner';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { isOnboardingComplete } from '../../constants/maestra';
 import styles from './Artists.module.scss';
 
 const Artists: FC = () => {
@@ -79,25 +82,77 @@ const Artists: FC = () => {
       </header>
       <p>Escolha um perfil para abrir seu espaço de trabalho.</p>
 
+      <PendingInvites />
+
       <Spinner loading={loading && !artists.length}>
         {artists.length > 0 && (
           <div className={`home-profile-directory ${styles.grid}`}>
             {artists.map((a) => {
               const sp = a.content?.spotifyProfile;
+              const owner = a.role !== 'member';
+              // Estado do perfil, na ordem em que importa pro usuário: cobrança em aberto trava
+              // tudo; sem plano, o próximo passo é o planejamento.
+              const status = owner && a.is_locked
+                ? { tone: styles.statusLocked, label: 'Pagamento pendente' }
+                : !isOnboardingComplete(a)
+                ? { tone: styles.statusPlan, label: 'Planejamento não iniciado' }
+                : null;
+
               return (
-                <button
-                  className={styles.card}
-                  type='button'
-                  key={a.id}
-                  onClick={() => navigate(routeFor(a))}
-                >
-                  <img
-                    src={sp?.image || ARTISTS_DEFAULT_IMAGE}
-                    alt={a.name}
-                  />
-                  <strong>{a.name}</strong>
-                  <span>{a.role === 'member' ? 'Membro' : 'Administrador'}</span>
-                </button>
+                // O card é um <button>; excluir precisa ser um controle irmão, e não aninhado
+                // (button dentro de button é HTML inválido e o clique não isola).
+                <div className={styles.cardWrap} key={a.id}>
+                  <button
+                    className={styles.card}
+                    type='button'
+                    onClick={() => navigate(routeFor(a))}
+                  >
+                    <img
+                      src={sp?.image || ARTISTS_DEFAULT_IMAGE}
+                      alt={a.name}
+                    />
+                    <strong>{a.name}</strong>
+                    <span>{a.role === 'member' ? 'Membro' : 'Administrador'}</span>
+                    {status && (
+                      <em className={`${styles.status} ${status.tone}`}>
+                        <i aria-hidden />
+                        {status.label}
+                      </em>
+                    )}
+                    {sp?.followers != null && (
+                      <span className={styles.followers}>
+                        {sp.followers.toLocaleString('pt-BR')} seguidores
+                      </span>
+                    )}
+                  </button>
+
+                  {owner && (
+                    <Popconfirm
+                      title='Excluir artista?'
+                      description='Essa ação não pode ser desfeita.'
+                      okText='Excluir'
+                      cancelText='Cancelar'
+                      okButtonProps={{ danger: true }}
+                      onConfirm={async () => {
+                        try {
+                          await dispatch(artistsActions.deleteArtist(a.id)).unwrap();
+                          message.success('Perfil excluído');
+                        } catch {
+                          message.error('Erro ao excluir o perfil');
+                        }
+                      }}
+                    >
+                      <button
+                        type='button'
+                        className={styles.deleteButton}
+                        title='Excluir artista'
+                        aria-label={`Excluir ${a.name}`}
+                      >
+                        <FiTrash2 size={15} />
+                      </button>
+                    </Popconfirm>
+                  )}
+                </div>
               );
             })}
           </div>

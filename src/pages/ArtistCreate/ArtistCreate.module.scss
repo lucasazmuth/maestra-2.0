@@ -203,6 +203,29 @@
     white-space: nowrap;
   }
 
+  // Duas ações no cabeçalho: só uma pode ser primária.
+  .headerActions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .diagnosticPageHeader .headerGhost {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid #dce4f0;
+    background: #fff;
+    box-shadow: none;
+    color: #5b6f94;
+  }
+
+  .diagnosticPageHeader .headerGhost:hover {
+    border-color: #3361ff;
+    color: #3361ff;
+  }
+
   background: radial-gradient(120% 55% at 50% -8%, rgba(154, 79, 209, 0.06) 0%, transparent 55%), #121212;
 }
 

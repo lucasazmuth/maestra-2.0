@@ -9,7 +9,11 @@ import { MVP_ACCESS_LEVELS } from '../../constants/maestra';
 import * as membersDb from '../../services/db/members';
 import type { PendingInvite } from '../../services/db/members';
 import type { AccessLevel } from '../../interfaces/maestra';
+import styles from './PendingInvites.module.scss';
 
+// Convites de equipe pendentes, listados no topo de "Seus perfis". É o ÚNICO caminho do app para
+// aceitar ou recusar um convite (membersDb.acceptInvite/rejectInvite não são chamados em mais
+// lugar nenhum) — sem esta lista renderizada, quem é convidado não consegue entrar na equipe.
 const PendingInvites: FC = () => {
   const user = useAppSelector((s) => s.auth.user);
   const dispatch = useAppDispatch();
@@ -66,176 +70,77 @@ const PendingInvites: FC = () => {
   if (loading || !invites.length) return null;
 
   return (
-    <div style={{ marginBottom: 28 }}>
-      <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>
-        Convites pendentes
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <section className={styles.wrap} aria-label='Convites pendentes'>
+      <h2 className={styles.title}>Convites pendentes</h2>
+      <div className={styles.list}>
         {invites.map((inv) => {
           const isExpanded = expanded === inv.id;
-          const image = getImage(inv);
-          const genre = getGenre(inv);
           const accessLabels = getAccessLabels(inv.access_levels);
+          const genre = getGenre(inv);
 
           return (
-            <div
-              key={inv.id}
-              style={{
-                background: '#181818',
-                border: '1px solid #2a2a2a',
-                borderRadius: 12,
-                overflow: 'hidden',
-                transition: 'border-color .2s',
-              }}
-            >
-              {/* Header row */}
-              <div
-                style={{
-                  padding: 16,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                }}
-              >
-                <img
-                  src={image}
-                  alt={inv.artist_name || 'Artista'}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-                  }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>
-                    {inv.artist_name || 'Artista'}
-                  </div>
-                  <div style={{ color: '#b3b3b3', fontSize: 13 }}>
-                    Você foi convidado para a equipe
-                  </div>
+            <article key={inv.id} className={styles.card}>
+              <div className={styles.row}>
+                <img className={styles.avatar} src={getImage(inv)} alt={inv.artist_name || 'Artista'} />
+
+                <div className={styles.info}>
+                  <div className={styles.name}>{inv.artist_name || 'Artista'}</div>
+                  <div className={styles.sub}>Você foi convidado para a equipe</div>
                 </div>
 
-                {/* Expand / collapse */}
                 <button
+                  type='button'
+                  className={styles.toggle}
                   onClick={() => setExpanded(isExpanded ? null : inv.id)}
                   title='Ver detalhes'
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    border: 'none',
-                    background: 'rgba(255,255,255,0.06)',
-                    color: '#b3b3b3',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
+                  aria-expanded={isExpanded}
                 >
                   {isExpanded ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
                 </button>
 
-                {/* Actions */}
                 <button
+                  type='button'
+                  className={styles.accept}
                   onClick={() => accept(inv)}
                   title='Aceitar convite'
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: '50%',
-                    border: 'none',
-                    background: '#9A4FD1',
-                    color: '#FFFFFF',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    transition: 'transform .1s',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                  aria-label={`Aceitar convite de ${inv.artist_name || 'artista'}`}
                 >
                   <FiCheck size={18} strokeWidth={3} />
                 </button>
+
                 <Popconfirm
-                  title="Recusar convite?"
+                  title='Recusar convite?'
                   description={`Você não vai mais poder acessar a equipe de ${inv.artist_name || 'este artista'}.`}
-                  okText="Recusar"
-                  cancelText="Cancelar"
+                  okText='Recusar'
+                  cancelText='Cancelar'
                   okButtonProps={{ danger: true }}
                   onConfirm={() => reject(inv)}
                 >
                   <button
+                    type='button'
+                    className={styles.reject}
                     title='Recusar convite'
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: '50%',
-                      border: '1px solid #404040',
-                      background: 'transparent',
-                      color: '#b3b3b3',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      transition: 'transform .1s, color .15s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.08)';
-                      e.currentTarget.style.color = '#e91429';
-                      e.currentTarget.style.borderColor = '#e91429';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.color = '#b3b3b3';
-                      e.currentTarget.style.borderColor = '#404040';
-                    }}
+                    aria-label={`Recusar convite de ${inv.artist_name || 'artista'}`}
                   >
                     <FiX size={18} />
                   </button>
                 </Popconfirm>
               </div>
 
-              {/* Expanded details */}
               {isExpanded && (
-                <div
-                  style={{
-                    padding: '0 16px 16px',
-                    borderTop: '1px solid #2a2a2a',
-                    paddingTop: 14,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 10,
-                  }}
-                >
+                <div className={styles.details}>
                   {genre && (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <span style={{ color: '#6b7280', fontSize: 13, minWidth: 80 }}>Gênero</span>
-                      <span style={{ color: '#fff', fontSize: 13 }}>{genre}</span>
+                    <div className={styles.detailRow}>
+                      <span className={styles.key}>Gênero</span>
+                      <span className={styles.value}>{genre}</span>
                     </div>
                   )}
                   {accessLabels.length > 0 && (
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                      <span style={{ color: '#6b7280', fontSize: 13, minWidth: 80 }}>Acesso</span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    <div className={styles.detailRow}>
+                      <span className={styles.key}>Acesso</span>
+                      <div className={styles.chips}>
                         {accessLabels.map((label) => (
-                          <span
-                            key={label}
-                            style={{
-                              background: 'rgba(154, 79, 209, 0.12)',
-                              color: '#9A4FD1',
-                              borderRadius: 9999,
-                              padding: '2px 10px',
-                              fontSize: 12,
-                              fontWeight: 600,
-                            }}
-                          >
+                          <span key={label} className={styles.chip}>
                             {label}
                           </span>
                         ))}
@@ -243,9 +148,9 @@ const PendingInvites: FC = () => {
                     </div>
                   )}
                   {inv.created_at && (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <span style={{ color: '#6b7280', fontSize: 13, minWidth: 80 }}>Enviado</span>
-                      <span style={{ color: '#b3b3b3', fontSize: 13 }}>
+                    <div className={styles.detailRow}>
+                      <span className={styles.key}>Enviado</span>
+                      <span className={styles.value}>
                         {new Date(inv.created_at).toLocaleDateString('pt-BR', {
                           day: '2-digit',
                           month: 'short',
@@ -256,11 +161,11 @@ const PendingInvites: FC = () => {
                   )}
                 </div>
               )}
-            </div>
+            </article>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 };
 

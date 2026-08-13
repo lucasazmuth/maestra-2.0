@@ -20,8 +20,14 @@
   max-width: none;
 }
 
+// Envolve o card pra ancorar o botão de excluir, que não pode ser filho do <button> do card.
+.cardWrap {
+  position: relative;
+}
+
 .grid .card {
   display: block;
+  width: 100%;
   min-height: 350px;
   padding: 22px;
   border: 0;
@@ -73,6 +79,87 @@
   font-size: 15px;
   line-height: 1.25;
   text-align: center;
+}
+
+// Selo de estado do perfil (cobrança em aberto / planejamento não iniciado).
+.grid .card > .status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.grid .card > .status > i {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.statusLocked {
+  color: #3361ff;
+}
+
+.statusPlan {
+  color: #b0720f;
+}
+
+.grid .card > .followers {
+  margin-top: 6px;
+  color: #97a6be;
+  font-size: 13px;
+}
+
+// Seletor com o .cardWrap na frente de propósito: a referência GSAP tem uma regra global
+// `.home-profile-directory button { min-height: 350px; padding: 22px }`, feita pro card do perfil,
+// que também alcança este botão. Sem ganhar em especificidade — e sem zerar min-height/padding —
+// o "excluir" virava um retângulo de 44×350 em cima do card.
+.cardWrap .deleteButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  display: flex;
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e8edf5;
+  border-radius: 50%;
+  background: #fff;
+  color: #b9c5d9;
+  cursor: pointer;
+  opacity: 0;
+  box-shadow: 0 4px 10px rgba(98, 112, 143, 0.1);
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.cardWrap:hover .deleteButton,
+.cardWrap .deleteButton:focus-visible {
+  opacity: 1;
+}
+
+.cardWrap .deleteButton:hover {
+  border-color: #f13131;
+  color: #f13131;
+}
+
+.cardWrap .deleteButton:focus-visible {
+  outline: 3px solid rgba(241, 49, 49, 0.22);
+  outline-offset: 2px;
+}
+
+// Sem hover (touch) ele precisa estar sempre visível, senão excluir some no mobile.
+@media (hover: none) {
+  .cardWrap .deleteButton {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 700px) {
