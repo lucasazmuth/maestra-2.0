@@ -27,10 +27,13 @@ const Artists: FC = () => {
     if (user?.id) dispatch(artistsActions.fetchArtists(user.id));
   }, [user?.id, dispatch]);
 
-  // Para onde cada card leva: não-pago → desbloqueio; pago → dashboard (o
-  // planejamento é opcional e acessível pelo menu).
-  const routeFor = (a: { id: string; is_locked?: boolean; role?: string }) => {
+  // Para onde cada card leva, na ordem em que os bloqueios importam: cobrança em aberto
+  // trava tudo; sem planejamento concluído, manda direto pro wizard (mesmo critério do selo
+  // "Planejamento não iniciado" no card, via isOnboardingComplete) — só depois disso o
+  // dashboard fica acessível.
+  const routeFor = (a: Parameters<typeof isOnboardingComplete>[0] & { id: string; is_locked?: boolean; role?: string }) => {
     if (a.role !== 'member' && a.is_locked) return `/artists/${a.id}/desbloquear`;
+    if (!isOnboardingComplete(a)) return `/artists/${a.id}/wizard`;
     return `/artists/${a.id}`;
   };
 

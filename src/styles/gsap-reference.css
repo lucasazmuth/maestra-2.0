@@ -157,6 +157,10 @@
   .app-rail { position: fixed; z-index: 80; top: 93px; bottom: 0; left: 0; width: 101px; }
   .profile-panel { position: fixed; z-index: 70; top: 93px; bottom: 0; left: 101px; width: 359px; overflow-y: auto; }
   .board-shell { margin: 0 29px 0 460px; scroll-margin-top: 121px; }
+  /* Wizard imersivo: sem plano concluído, o rail e o painel de perfil não são renderizados
+     (Layout/index.tsx) — sem isso o board-shell manteria os 460px de margem reservados pra
+     eles, deixando um vão vazio à esquerda do chat. */
+  .wizard-immersive .board-shell { margin-left: 29px; }
 }
 
 @media (min-width: 701px) and (max-width: 1300px) {
@@ -164,6 +168,7 @@
   .profile-panel { left: 82px; width: 282px; padding-right: 13px; padding-left: 13px; }
   .board-shell { margin-left: 364px; }
   .module-layout .board-shell { margin-left: 111px; }
+  .wizard-immersive .board-shell { margin-left: 29px; }
 }
 
 @media (min-width: 1001px) and (max-width: 1300px) {
@@ -832,6 +837,7 @@
 /* Preserve the menu-card outlines while preventing horizontal scrolling. */
 @media (min-width: 1301px) { .profile-panel { width: 368px; padding-right: 60px; padding-left: 58px; }.board-shell { margin-left: 469px; } }
 @media (min-width: 1301px) { .module-layout .board-shell { margin-left: 130px; } }
+@media (min-width: 1301px) { .wizard-immersive .board-shell { margin-left: 29px; } }
 @media (min-width: 701px) { .profile-panel { overflow-x: hidden; overflow-y: auto; } }
 .profile-panel { scrollbar-width: thin; scrollbar-color: #b7c1d0 transparent; }
 .profile-panel::-webkit-scrollbar { width: 7px; }
