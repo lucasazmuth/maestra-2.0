@@ -3,7 +3,7 @@ import { memo, useEffect, useRef, type FC, type ReactNode, type RefObject, type 
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { MobileNav } from './components/MobileNav';
-import { AdminMenu } from './components/AdminMenu';
+import { SystemMenu } from './components/SystemMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
 import { StatusBanner, useStatusBanner } from '../AnnouncementBanner';
@@ -279,15 +279,13 @@ export const AppLayout: FC = memo(() => {
             <NytaAvatar size={34} />
           </button>
         )}
-        {home && (
-          <button className='round-control' aria-label='Configurações' type='button' onClick={() => navigate('/settings')}>
-            ⚙
-          </button>
-        )}
-        <AdminMenu />
         <button className='round-control notification' aria-label='Notificações' type='button' onClick={() => navigate('/notifications')}>
           <NotificationIcon size={19} />
         </button>
+        {/* Último da linha: reúne configurações, termos e suporte (e o /admin, para admin).
+            O antigo botão de engrenagem virou o item "Configurações" daqui dentro — além de
+            duplicar o destino, ele só existia na home, sumindo no resto do app. */}
+        <SystemMenu />
       </div>
     </header>
   );

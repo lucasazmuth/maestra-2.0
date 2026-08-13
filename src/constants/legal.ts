@@ -1,3 +1,7 @@
+// Canal de suporte ao usuário. Estava copiado em Settings e na Topbar; o menu do topo
+// seria a terceira cópia, e um endereço errado em um dos lugares só apareceria em produção.
+export const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
+
 // Conteúdo das páginas legais (Termos de Uso e Política de Privacidade).
 // Edite livremente: título, data de atualização (updatedAt, formato ISO AAAA-MM-DD) e o
 // texto (Markdown). As páginas em /legal/:slug renderizam tudo a partir daqui.

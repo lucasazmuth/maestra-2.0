@@ -12,6 +12,7 @@ import { cancelSubscription } from '../../store/slices/subscription';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import SubscriptionManagement from './SubscriptionManagement';
 import { disableWebPush, enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
+import { SUPPORT_EMAIL } from '../../constants/legal';
 
 const Settings: FC = () => {
   const navigate = useNavigate();
@@ -115,7 +116,6 @@ const Settings: FC = () => {
   };
 
   // Links institucionais (ajuste as URLs/e-mail reais da plataforma).
-  const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
   const supportLinks: { label: string; icon: ReactNode; to?: string; href?: string; action?: () => void }[] = [
     { label: 'Avaliar a Maestra', icon: <FiStar size={16} />, action: () => setReviewOpen(true) },
     { label: 'Termos de uso', icon: <FiFileText size={16} />, to: '/legal/termos' },

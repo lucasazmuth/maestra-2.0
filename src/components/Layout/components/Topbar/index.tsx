@@ -12,8 +12,8 @@ import { useAppDispatch, useAppSelector } from '../../../../store/store';
 import { authActions } from '../../../../store/slices/auth';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
 import { MaestraBrand } from '../../../MaestraBrand';
+import { SUPPORT_EMAIL } from '../../../../constants/legal';
 
-const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
 const PlatformReviewModal = lazy(() =>
   import('../../../PlatformReviewModal').then((module) => ({ default: module.PlatformReviewModal }))
 );

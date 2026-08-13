@@ -1,4 +1,4 @@
-// Menu de produtos/admin no topo. Paleta clara da referência GSAP
+// Menu do sistema no topo. Paleta clara da referência GSAP
 // (src/styles/gsap-reference.css): superfície branca, contorno #e8edf5, ação #3361ff.
 
 .wrap {
@@ -54,6 +54,13 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+// Separa visualmente Geral de Administração: são grupos com alcances diferentes.
+.panelTitleSpaced {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #edf1f7;
 }
 
 // Duas colunas: com 8 itens, uma lista única ficaria alta demais e passaria do rodapé.
