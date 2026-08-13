@@ -60,28 +60,70 @@
 .settings-save-btn { border: none; background: #3361ff; color: #fff; box-shadow: 0 8px 18px rgba(51, 97, 255, .22); }
 .settings-save-btn:disabled { opacity: .6; cursor: wait; }
 .settings-cancel-btn { border: 1px solid #dce4f0; background: #fff; color: #7b8eaf; }
+/* Daqui em diante: classNames explícitas, não mais os seletores por atributo tipo
+   `div[style*='justify-content']` que ficaram acima — aquilo casava a REGRA com o texto
+   literal de um inline style, e quebrava silenciosamente assim que o JSX mudasse uma
+   vírgula. Ficam registrados como referência histórica, sem uso nas seções abaixo. */
+
 .settings-notification-card { margin-top: 18px; padding: 24px !important; }
-.settings-notification-card h2 { color: #5b6f94 !important; font-size: 16px !important; }
-.settings-notification-card p { color: #98a6bd !important; }
-.settings-notification-card span[style*='color: #9A4FD1'] { color: #3361ff !important; }
+.settings-notification-row { display: flex; align-items: center; gap: 14px; }
+.settings-notification-icon { display: flex; flex-shrink: 0; color: #3361ff; }
+.settings-notification-copy { flex: 1; min-width: 0; }
+.settings-notification-card h2 { margin: 0; color: #52668d; font-size: 16px; font-weight: 800; }
+.settings-notification-copy p { margin: 6px 0 0; color: #98a6bd; font-size: 13px; line-height: 1.5; }
+.settings-notification-note { margin: 14px 0 0; color: #aebbd0; font-size: 12px; }
+.settings-notification-warn { margin: 14px 0 0; padding: 10px 14px; border-radius: 8px; background: #fff7e8; color: #b0720f; font-size: 12px; font-weight: 700; }
+.settings-switch { position: relative; flex-shrink: 0; width: 48px; height: 28px; padding: 3px; border: 0; border-radius: 999px; background: #dde3ee; cursor: pointer; transition: background .2s ease; }
+.settings-switch-on { background: #3361ff; }
+.settings-switch:disabled { opacity: .6; cursor: wait; }
+.settings-switch-thumb { display: block; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(15, 23, 42, .15); transition: transform .2s ease; }
+.settings-switch-on .settings-switch-thumb { transform: translateX(20px); }
+
 .settings-subscription-card { margin-top: 18px; padding: 24px !important; }
-.settings-subscription-card h2 { color: #52668d !important; font-size: 18px !important; }
-.settings-subscription-card div[style*='justify-content'] > span:first-child { color: #98a6bd !important; }
-.settings-subscription-card div[style*='justify-content'] > span:last-child { color: #52668d !important; }
-.settings-subscription-card div[style*='border-top'] { border-color: #edf1f5 !important; }
+.settings-subscription-card h2 { margin: 0 0 16px; color: #52668d; font-size: 18px; font-weight: 800; }
+.settings-subscription-list { display: flex; flex-direction: column; gap: 12px; }
+.settings-subscription-row { display: flex; justify-content: space-between; align-items: center; }
+.settings-subscription-row .label { color: #98a6bd; font-size: 14px; }
+.settings-subscription-row .value { color: #52668d; font-size: 14px; font-weight: 700; }
+.settings-subscription-status { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
+.settings-subscription-status i { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: currentColor; font-style: normal; }
+.settings-subscription-grace { color: #d9822b !important; }
+.settings-subscription-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid #edf1f7; }
+.settings-cancel-sub-btn { border: 1px solid #f13131; border-radius: 9999px; padding: 8px 24px; background: #fff; color: #f13131; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .15s, color .15s; }
+.settings-cancel-sub-btn:hover:not(:disabled) { background: #f13131; color: #fff; }
+.settings-cancel-sub-btn:disabled { opacity: .6; cursor: not-allowed; }
+/* Upsell (sem plano): accent próprio mesmo dentro do card claro, pra "Maestra Pro" continuar
+   se destacando como CTA — mesmo azul de #3361ff usado no resto do design (a versão antiga
+   usava roxo #9A4FD1, cor que aqui fica reservada pro assistente Nyta). */
+.settings-upsell { border-radius: 16px; padding: 24px; background: radial-gradient(120% 120% at 0% 0%, rgba(51, 97, 255, .10) 0%, rgba(51, 97, 255, .03) 42%, transparent 100%); border: 1px solid rgba(51, 97, 255, .18); }
+.settings-upsell-head { display: flex; align-items: center; gap: 14px; }
+.settings-upsell-icon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: rgba(51, 97, 255, .12); border: 1px solid rgba(51, 97, 255, .24); box-shadow: 0 10px 24px rgba(51, 97, 255, .14); color: #3361ff; }
+.settings-upsell-title { color: #33415e; font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
+.settings-upsell-subtitle { margin-top: 2px; color: #7b8eaf; font-size: 13px; }
+.settings-upsell-desc { margin: 16px 0 18px; color: #5b6f94; font-size: 13.5px; line-height: 1.6; }
+.settings-upsell-benefits { display: flex; flex-direction: column; gap: 11px; margin-bottom: 22px; }
+.settings-upsell-benefit { display: flex; align-items: center; gap: 11px; color: #52668d; font-size: 14px; }
+.settings-upsell-benefit i { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; background: rgba(51, 97, 255, .14); color: #3361ff; font-style: normal; }
+.settings-upsell-cta { display: inline-flex; align-items: center; gap: 8px; border: none; border-radius: 9999px; padding: 12px 30px; background: #3361ff; color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 28px rgba(51, 97, 255, .28); transition: background .15s, transform .15s; }
+.settings-upsell-cta:hover { background: #2650e0; transform: translateY(-1px); }
+
 .settings-link-card,
-.settings-support-card,
-.settings-danger-card { margin-top: 18px !important; padding: 8px 24px !important; }
-.settings-link-card [role='button'],
-.settings-support-card [role='button'],
-.settings-support-card a { color: #5b6f94 !important; }
-.settings-link-card span[style*='color: #8a8a8a'],
-.settings-support-card span[style*='color: #8a8a8a'] { color: #3361ff !important; }
-.settings-support-card h2,
-.settings-danger-card h2 { color: #52668d !important; }
-.settings-danger-card { padding: 24px !important; }
-.settings-danger-card p { color: #8e9eb8 !important; }
-.settings-danger-card button { border-radius: 21px !important; }
+.settings-support-card { margin-top: 18px !important; padding: 8px 24px !important; }
+.settings-support-card h2 { margin: 16px 0 4px; color: #52668d; font-size: 18px; font-weight: 800; }
+.settings-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid #edf1f7; color: #52668d; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+.settings-link-card .settings-row:first-child,
+.settings-support-card .settings-row:first-child { border-top: 0; }
+.settings-row:hover { color: #3361ff; }
+.settings-row-icon { display: flex; flex-shrink: 0; color: #3361ff; }
+.settings-row-label { flex: 1; min-width: 0; }
+.settings-row-chevron { flex-shrink: 0; color: #aebbd0; }
+
+.settings-danger-card { margin-top: 18px !important; padding: 24px !important; }
+.settings-danger-card h2 { margin: 0 0 6px; color: #52668d; font-size: 18px; font-weight: 800; }
+.settings-danger-card p { margin: 0 0 14px; color: #8e9eb8; font-size: 13px; line-height: 1.5; }
+.settings-danger-btn { border: 1px solid #f13131; border-radius: 9999px; padding: 9px 18px; background: #fff; color: #f13131; font-weight: 700; font-size: 14px; cursor: pointer; }
+.settings-danger-btn:hover:not(:disabled) { background: #fef2f2; }
+.settings-danger-btn:disabled { opacity: .6; cursor: wait; }
 @media (max-width: 700px) {
   .task-app .settings-page { padding: 24px 16px 118px; }
   .settings-heading h1 { font-size: 27px; }
