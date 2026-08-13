@@ -219,7 +219,10 @@ const Artists: FC = () => {
                       }}
                     >
                       <span aria-hidden style={{ width: 6, height: 6, borderRadius: '50%', background: '#e0a13c', flexShrink: 0 }} />
-                      Planejamento pendente
+                      {/* "pendente" aqui era lido como cobrança em aberto — o estado logo
+                          acima ("Pagamento pendente") usa a mesma palavra. Este fala do
+                          wizard, então nomeia a ação que falta. */}
+                      Planejamento não iniciado
                     </span>
                   ) : null}
                   <div style={{ color: '#b3b3b3', fontSize: 13, marginTop: 4 }}>
