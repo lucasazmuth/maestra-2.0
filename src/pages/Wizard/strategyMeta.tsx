@@ -18,25 +18,25 @@ export const STRATEGY_META: Record<StrategyType, StrategyMeta> = {
   SO: {
     label: 'Ataque — Forças + Oportunidades',
     short: 'Ataque',
-    color: '#9A4FD1',
+    color: 'var(--wz-blue)',
     icon: <LuRocket />,
   },
   ST: {
     label: 'Defesa — Forças + Ameaças',
     short: 'Defesa',
-    color: '#f59e0b',
+    color: 'var(--wz-warn)',
     icon: <FiShield />,
   },
   WO: {
     label: 'Reforço — Fraquezas + Oportunidades',
     short: 'Reforço',
-    color: '#3b82f6',
+    color: '#29cc39',
     icon: <FiTrendingUp />,
   },
   WT: {
     label: 'Sobrevivência — Fraquezas + Ameaças',
     short: 'Sobrevivência',
-    color: '#e91429',
+    color: 'var(--wz-danger)',
     icon: <FiAlertTriangle />,
   },
 };
@@ -54,7 +54,7 @@ export const StrategyLegend = () => (
       gap: 10,
       marginBottom: 12,
       fontSize: 11,
-      color: '#b3b3b3',
+      color: 'var(--wz-muted)',
     }}
   >
     {(Object.keys(STRATEGY_META) as StrategyType[]).map((t) => {
@@ -62,7 +62,7 @@ export const StrategyLegend = () => (
       return (
         <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: m.color }} />
-          <strong style={{ color: '#fff' }}>{t}</strong> {m.short}
+          <strong style={{ color: 'var(--wz-ink)' }}>{t}</strong> {m.short}
         </span>
       );
     })}

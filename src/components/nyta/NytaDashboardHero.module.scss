@@ -1,19 +1,14 @@
-// Hero da Nyta no Dashboard — entrada do assistente com "brilho aurora" no topo
-// (azul → roxo → rosa) fundindo no escuro, título grande, campo de busca e card do agente.
+// Entrada da Nyta no mesmo sistema claro das superfícies do plano de ação.
 
 .hero {
   position: relative;
   margin-top: 32px;
-  border-radius: 16px;
+  border: 1px solid #dfe7f1;
+  border-radius: 10px;
   overflow: hidden;
-  padding: 56px 24px 36px;
-  // Aurora na paleta do avatar da Nyta (bolha iridescente): rosa #fcbbfb sobre violeta #8400ff
-  // sobre ciano #8bfcf8, fundindo no escuro.
-  background:
-    radial-gradient(46% 42% at 50% -2%, rgba(252, 187, 251, 0.20) 0%, rgba(252, 187, 251, 0) 60%),
-    radial-gradient(78% 55% at 50% -2%, rgba(148, 74, 255, 0.26) 0%, rgba(148, 74, 255, 0) 66%),
-    radial-gradient(130% 85% at 50% -8%, rgba(96, 178, 240, 0.20) 0%, rgba(96, 178, 240, 0) 72%),
-    linear-gradient(180deg, #12101c 0%, #0b0b11 100%);
+  padding: 40px 24px 28px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(79, 101, 141, .07);
 }
 
 .inner {
@@ -25,7 +20,7 @@
   font-family: var(--font-mono);
   display: block;
   text-align: center;
-  color: #c9b8ff;
+  color: #8f4bd5;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -34,7 +29,7 @@
 
 .title {
   text-align: center;
-  color: #fff;
+  color: #52688f;
   font-family: var(--font-display);
   font-size: 27px;
   font-weight: 800;
@@ -44,7 +39,7 @@
 
 .subtitle {
   text-align: center;
-  color: rgba(255, 255, 255, 0.58);
+  color: #8192ad;
   font-size: 15px;
   margin: 0 auto 22px;
   max-width: 560px;
@@ -55,18 +50,16 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(18, 14, 26, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #dfe7f1;
+  border-radius: 9px;
   padding: 6px 6px 6px 18px;
-  backdrop-filter: blur(6px);
   margin-bottom: 24px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
-  // Foco na paleta do avatar da Nyta (bolha iridescente: violeta).
   &:focus-within {
-    border-color: rgba(178, 124, 255, 0.6);
-    box-shadow: 0 0 0 3px rgba(148, 74, 255, 0.16);
+    border-color: #9bb5ec;
+    box-shadow: 0 0 0 3px rgba(51, 97, 255, .1);
   }
 }
 
@@ -76,12 +69,12 @@
   background: transparent;
   border: none;
   outline: none;
-  color: #fff;
+  color: #52688f;
   font-size: 15px;
   font-family: inherit;
   padding: 12px 0;
 
-  &::placeholder { color: rgba(255, 255, 255, 0.45); }
+  &::placeholder { color: #a4b1c5; }
 }
 
 .send {
@@ -92,22 +85,21 @@
   height: 40px;
   flex-shrink: 0;
   border: none;
-  border-radius: 10px;
-  // Gradiente da bolha: rosa → violeta → ciano (iridescente).
-  background: linear-gradient(135deg, #e18df7 0%, #8f5cff 55%, #5fb9f0 100%);
+  border-radius: 8px;
+  background: #3361ff;
   color: #fff;
   cursor: pointer;
   transition: filter 0.15s ease, transform 0.1s ease;
 
-  &:hover { filter: brightness(1.1); }
+  &:hover { background: #2853e3; }
   &:active { transform: scale(0.95); }
 }
 
 // ── Card do agente ──────────────────────────────────────────────
 .agent {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 14px;
+  background: #f7f9fc;
+  border: 1px solid #e1e7f0;
+  border-radius: 9px;
   padding: 18px;
 }
 
@@ -118,11 +110,11 @@
   margin-bottom: 12px;
 }
 
-.agentName { display: block; color: #fff; font-weight: 700; font-size: 14px; line-height: 1.2; }
-.agentRole { display: block; color: rgba(255, 255, 255, 0.5); font-size: 12px; }
+.agentName { display: block; color: #52688f; font-weight: 700; font-size: 14px; line-height: 1.2; }
+.agentRole { display: block; color: #8b9bb5; font-size: 12px; }
 
 .agentGreeting {
-  color: rgba(255, 255, 255, 0.82);
+  color: #60749a;
   font-size: 14px;
   line-height: 1.55;
   margin: 0 0 12px;
@@ -130,7 +122,7 @@
 
 .agentLabel {
   display: block;
-  color: rgba(255, 255, 255, 0.55);
+  color: #8b9bb5;
   font-size: 13px;
   margin-bottom: 12px;
 }
@@ -141,23 +133,24 @@
   font-family: inherit;
   font-size: 13.5px;
   text-align: left;
-  color: #e8e4ff;
-  background: rgba(124, 92, 255, 0.12);
-  border: 1px solid rgba(124, 92, 255, 0.28);
-  border-radius: 9999px;
+  color: #52688f;
+  background: #fff;
+  border: 1px solid #cfc0ed;
+  border-radius: 8px;
   padding: 10px 16px;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease;
 
   &:hover {
-    background: rgba(124, 92, 255, 0.22);
-    border-color: rgba(124, 92, 255, 0.5);
+    background: #f4effd;
+    border-color: #9a70d2;
+    color: #7c3fc0;
   }
 }
 
 .disclaimer {
   text-align: center;
-  color: rgba(255, 255, 255, 0.4);
+  color: #9aa8be;
   font-size: 12.5px;
   margin: 24px 0 0;
 }

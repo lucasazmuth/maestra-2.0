@@ -457,6 +457,93 @@ export interface CatalogItem {
   recording_splits?: Split[];
   created_at?: string;
   updated_at?: string;
+  /** Compatibilidade durante a migração para projetos/versões. */
+  project_id?: string;
+  version_id?: string;
+  version_number?: number;
+  version_stage?: string | null;
+  version_status?: string | null;
+  version_author_id?: string | null;
+  version_author_name?: string | null;
+  version_created_at?: string | null;
+}
+
+export type CatalogProjectStatus = CatalogStatus | 'archived' | 'on_hold' | string;
+export type CatalogVersionStage = 'guia' | 'beat' | 'instrumental' | 'voz' | 'stems' | 'mix' | 'master' | 'referencia' | 'outro' | string;
+
+export interface CatalogProject {
+  id: string;
+  artist_id: string;
+  title: string;
+  status: CatalogProjectStatus;
+  genre?: string | null;
+  bpm?: string | null;
+  key?: string | null;
+  cover_image?: string | null;
+  cover_image_name?: string | null;
+  assignee?: { id: string; name: string } | null;
+  release_date?: string | null;
+  primary_version_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  versions?: CatalogVersion[];
+}
+
+export interface CatalogVersion {
+  id: string;
+  project_id: string;
+  version_number: number;
+  stage: CatalogVersionStage;
+  title?: string | null;
+  status: string;
+  audio_file?: string | null;
+  audio_file_name?: string | null;
+  duration?: string | null;
+  bpm?: string | null;
+  key?: string | null;
+  genre?: string | null;
+  lyrics?: string | null;
+  author_id?: string | null;
+  author_name?: string | null;
+  author_avatar?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  files?: CatalogVersionFile[];
+  comments?: CatalogVersionComment[];
+}
+
+export interface CatalogVersionFile {
+  id: string;
+  version_id: string;
+  name: string;
+  file_url: string;
+  file_type?: string | null;
+  kind?: string | null;
+  created_at?: string;
+}
+
+export interface CatalogVersionComment {
+  id: string;
+  version_id: string;
+  author_id?: string | null;
+  author_name: string;
+  author_avatar?: string | null;
+  text: string;
+  time_seconds?: number | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/** Conversa geral do Espaço JAM. Diferente dos comentários, não pertence a uma versão/timestamp. */
+export interface CatalogProjectMessage {
+  id: string;
+  project_id: string;
+  author_id?: string | null;
+  author_name: string;
+  author_avatar?: string | null;
+  text: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // ---- Agenda --------------------------------------------------------------------------------

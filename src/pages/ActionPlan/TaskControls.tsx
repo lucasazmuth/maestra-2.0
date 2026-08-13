@@ -67,6 +67,7 @@ export const TaskDate: FC<{
         value={value ? dayjs(value) : undefined}
         format="DD/MM/YYYY"
         placeholder="Escolha a data"
+        popupClassName="action-plan-picker"
         style={{ width: 150 }}
         onChange={(d) => { onChange(d ? d.format('YYYY-MM-DD') : undefined); setEditing(false); }}
         onOpenChange={(o) => { if (!o) setEditing(false); }}
@@ -107,6 +108,7 @@ export const TaskCategory: FC<{
   return (
     <Dropdown
       trigger={['click']}
+      overlayClassName="action-plan-dropdown"
       menu={{
         items: TASK_TYPES.map((o) => ({ key: o.v, label: o.label })),
         selectable: true,
@@ -142,6 +144,7 @@ export const TaskOwner: FC<{
   return (
     <Dropdown
       trigger={['click']}
+      overlayClassName="action-plan-dropdown"
       menu={{
         items: [
           ...assignees.map((a) => ({ key: a.value, label: a.label })),

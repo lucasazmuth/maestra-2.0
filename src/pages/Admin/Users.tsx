@@ -309,8 +309,8 @@ const AdminUsers: FC = () => {
                               />
                               <UsageMetric
                                 icon={<FiMusic />}
-                                label="Catálogo"
-                                value={`${usage.catalog.total} faixa(s)`}
+                                label="Músicas"
+                                value={`${usage.catalog.total} música(s)`}
                                 active={usage.catalog.total > 0}
                               />
                               <UsageMetric

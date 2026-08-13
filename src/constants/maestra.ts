@@ -30,7 +30,7 @@ export const TASK_OWNER_SELF = 'owner';
 export const NYTA_SUGGESTIONS = [
   'Qual é o meu próximo passo no plano de ação?',
   'Qual deve ser o meu foco esta semana?',
-  'Analise meu catálogo e me dê ideias',
+  'Analise minhas músicas e me dê ideias',
   'Resuma minha agenda dos próximos dias',
 ];
 
@@ -119,7 +119,7 @@ export const ACCESS_LEVELS: Record<AccessLevel, string> = {
   plan: 'Plano de ação',
   team: 'Equipe',
   finance: 'Financeiro',
-  catalog: 'Catálogo',
+  catalog: 'Músicas',
   agenda: 'Agenda',
   releases: 'Lançamentos',
   full: 'Acesso completo',
@@ -129,7 +129,7 @@ export const ACCESS_LEVELS: Record<AccessLevel, string> = {
 export const MVP_ACCESS_LEVELS: Pick<typeof ACCESS_LEVELS, 'plan' | 'team' | 'catalog' | 'agenda' | 'full'> = {
   plan: 'Plano de ação',
   team: 'Equipe',
-  catalog: 'Catálogo',
+  catalog: 'Músicas',
   agenda: 'Agenda',
   full: 'Acesso completo',
 };
@@ -158,7 +158,7 @@ export const CAREER_PHASES: Record<number, CareerPhase> = {
   },
   2: {
     label: 'Estruturação',
-    focus: 'Montar bases: equipe, catálogo, processos e plano.',
+    focus: 'Montar bases: equipe, músicas, processos e plano.',
     antiFocus: 'Evite escalar antes de ter estrutura mínima.',
   },
   3: {

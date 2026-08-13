@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import './styles/App.scss';
+import './styles/local-player-unified.scss';
 
 import i18next from 'i18next';
 import { FC, Suspense, lazy, useEffect, useState } from 'react';
@@ -14,7 +15,6 @@ import {
   Routes,
   useLocation,
   useNavigate,
-  useParams,
 } from 'react-router-dom';
 
 import { Provider } from 'react-redux';
@@ -26,7 +26,6 @@ import { supabase } from './lib/supabase';
 import { Spinner } from './components/spinner/spinner';
 import { AppLayout } from './components/Layout';
 import { RequireArtistPaid } from './components/RequireArtistPaid';
-import { useNytaModalStore } from './stores/nytaModalStore';
 
 // Pages
 import Login from './pages/Login';
@@ -44,8 +43,11 @@ const Artists = lazy(() => import('./pages/Artists'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Catalog = lazy(() => import('./pages/Catalog'));
+const ProjectSpace = lazy(() => import('./pages/Catalog/ProjectSpace'));
 const Agenda = lazy(() => import('./pages/Agenda'));
 const Team = lazy(() => import('./pages/Team'));
+const Marketing = lazy(() => import('./pages/Marketing'));
+const Nyta = lazy(() => import('./pages/Nyta'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Legal = lazy(() => import('./pages/Legal'));
 const Notifications = lazy(() => import('./pages/Notifications'));
@@ -131,7 +133,7 @@ const RequireAuth: FC = () => {
   const requesting = useAppSelector((s) => s.auth.requesting);
 
   if (requesting && user === undefined) {
-    return <Spinner loading>{null as any}</Spinner>;
+    return <Spinner loading global>{null as any}</Spinner>;
   }
   if (!user) return <Navigate to='/login' replace />;
   return <Outlet />;
@@ -166,31 +168,9 @@ const RequireAdmin: FC = () => {
       });
   }, [user, session]);
 
-  if (isAdmin === null) return <Spinner loading>{null as any}</Spinner>;
+  if (isAdmin === null) return <Spinner loading global>{null as any}</Spinner>;
   if (!isAdmin) return <Navigate to='/artists' replace />;
   return <Outlet />;
-};
-
-// ---- Nyta Chat Redirect (legacy route) ---------------------------------------------------
-
-/**
- * Redireciona /artists/:id/nyta para o dashboard do artista e abre o Floating Modal.
- * Envolvido em try/catch para não bloquear o dashboard se o modal falhar ao abrir.
- */
-const NytaChatRedirect: FC = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    navigate(`/artists/${id}`, { replace: true });
-    try {
-      useNytaModalStore.getState().open();
-    } catch (err) {
-      console.error('Failed to open Nyta modal after redirect:', err);
-    }
-  }, [id, navigate]);
-
-  return null;
 };
 
 // ---- Routes --------------------------------------------------------------------------------
@@ -262,18 +242,18 @@ const AppRoutes: FC = () => {
             <Route path='/artists/:id' element={<Dashboard />} />
             <Route path='/artists/:id/perfil' element={<Profile />} />
             <Route path='/artists/:id/catalog' element={<Catalog />} />
+            <Route path='/artists/:id/catalog/projects/:projectId' element={<ProjectSpace />} />
             <Route path='/artists/:id/agenda' element={<Agenda />} />
             <Route path='/artists/:id/action-plan' element={<ActionPlan />} />
             <Route path='/artists/:id/diagnostico' element={<DiagnosticView />} />
             {/* Refazer diagnóstico (PRO): reaproveita a tela de quiz/diagnóstico em modo "redo" */}
             <Route path='/artists/:id/diagnostico/refazer' element={<ArtistCreate />} />
             <Route path='/artists/:id/team' element={<Team />} />
+            <Route path='/artists/:id/marketing' element={<Marketing />} />
+            <Route path='/artists/:id/nyta' element={<Nyta />} />
           </Route>
           {/* /profile foi fundido na home do artista (Dashboard) */}
           <Route path='/artists/:id/profile' element={<Navigate to='..' relative='path' replace />} />
-
-          {/* ── Nyta Chat — redirects to dashboard + opens floating modal ── */}
-          <Route path='/artists/:id/nyta' element={<NytaChatRedirect />} />
 
           {/* ── Rotas sem gate (infra) ── */}
           <Route path='/assinatura' element={<SubscriptionPage />} />
@@ -311,7 +291,7 @@ const RootComponent: FC = () => {
     <Router>
       <AuthListener />
       <RecoveryHashGuard />
-      <Suspense fallback={<Spinner loading>{null as any}</Spinner>}>
+      <Suspense fallback={<Spinner loading global>{null as any}</Spinner>}>
         <AppRoutes />
       </Suspense>
     </Router>

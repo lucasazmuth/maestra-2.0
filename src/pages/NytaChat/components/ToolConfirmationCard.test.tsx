@@ -147,7 +147,7 @@ describe('ToolConfirmationCard', () => {
       />
     );
 
-    expect(screen.getByText('Criar item no catálogo')).toBeInTheDocument();
+    expect(screen.getByText('Criar item em Músicas')).toBeInTheDocument();
   });
 
   it('renders card for team tool calls', () => {
@@ -213,7 +213,7 @@ describe('ToolConfirmationCard', () => {
 describe('translateToolName', () => {
   it('translates known tool names', () => {
     expect(translateToolName('create_event')).toBe('Criar evento');
-    expect(translateToolName('update_catalog_item')).toBe('Atualizar item no catálogo');
+    expect(translateToolName('update_catalog_item')).toBe('Atualizar item em Músicas');
     expect(translateToolName('update_plan_task')).toBe('Atualizar tarefa do plano de ação');
   });
 

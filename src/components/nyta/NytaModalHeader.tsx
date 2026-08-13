@@ -36,7 +36,7 @@ export const NytaModalHeader: FC<NytaModalHeaderProps> = ({
 
   return (
     <div
-      className={`${styles.header}${draggable ? ` ${styles.draggable}` : ''}`}
+      className={`${styles.header} nyta-reference-header${draggable ? ` ${styles.draggable}` : ''}`}
       onPointerDown={draggable ? onDragStart : undefined}
     >
       <div className={styles.brand}>

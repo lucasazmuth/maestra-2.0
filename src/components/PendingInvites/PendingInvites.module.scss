@@ -1,0 +1,192 @@
+// Convites pendentes no topo de "Seus perfis". Paleta clara da referência GSAP
+// (src/styles/gsap-reference.css): cartão branco, contorno #e8edf5, ação #3361ff.
+
+.wrap {
+  margin-bottom: 34px;
+}
+
+.title {
+  margin: 0 0 14px;
+  color: #52668d;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid #e8edf5;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 7px 17px rgba(124, 145, 185, 0.07);
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  border-color: #dce4f0;
+  box-shadow: 0 12px 27px rgba(107, 129, 170, 0.12);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 5px 12px rgba(77, 98, 141, 0.14);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  color: #52668d;
+  font-size: 15px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sub {
+  margin-top: 2px;
+  color: #8e9eb8;
+  font-size: 13px;
+}
+
+.toggle,
+.accept,
+.reject {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.toggle:active,
+.accept:active,
+.reject:active {
+  transform: scale(0.94);
+}
+
+.toggle:focus-visible,
+.accept:focus-visible,
+.reject:focus-visible {
+  outline: 3px solid rgba(51, 97, 255, 0.22);
+  outline-offset: 2px;
+}
+
+.toggle {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e8edf5;
+  background: #fff;
+  color: #9aabc4;
+}
+
+.toggle:hover {
+  background: #eef3fb;
+  color: #3361ff;
+}
+
+// Aceitar é a ação primária: sólida, na cor de ação da referência.
+.accept {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #3361ff;
+  background: #3361ff;
+  color: #fff;
+  box-shadow: 0 7px 16px rgba(51, 97, 255, 0.22);
+}
+
+.accept:hover {
+  filter: brightness(1.08);
+}
+
+// Recusar é destrutivo, então fica neutro até o hover — não compete com o aceitar.
+.reject {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #dce4f0;
+  background: #fff;
+  color: #9aabc4;
+}
+
+.reject:hover {
+  border-color: #f13131;
+  color: #f13131;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  border-top: 1px solid #edf1f7;
+}
+
+.detailRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.key {
+  min-width: 80px;
+  flex-shrink: 0;
+  color: #9aa9c2;
+  font-size: 13px;
+}
+
+.value {
+  color: #52668d;
+  font-size: 13px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  border-radius: 9999px;
+  padding: 2px 10px;
+  background: #eaf0ff;
+  color: #3361ff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+// Mobile: o bloco de ações desce pra própria linha, senão nome e botões se espremem.
+@media (max-width: 560px) {
+  .row {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .info {
+    flex: 1 0 calc(100% - 62px);
+  }
+
+  .toggle {
+    margin-left: auto;
+  }
+}

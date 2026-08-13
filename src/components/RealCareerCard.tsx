@@ -44,23 +44,23 @@ export const TaskProgress: FC<{ counts: TaskCounts }> = ({ counts }) => {
   const noTasks = counts.total === 0;
 
   return (
-    <div style={{ marginTop: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-          <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: '#9A4FD1', transition: 'width .4s cubic-bezier(0.4,0,0.2,1)' }} />
+    <div className="task-progress" style={{ marginTop: 18 }}>
+      <div className="task-progress-row" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="task-progress-track" style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+          <div className="task-progress-fill" style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: '#9A4FD1', transition: 'width .4s cubic-bezier(0.4,0,0.2,1)' }} />
         </div>
-        <span style={{ color: '#9A4FD1', fontWeight: 800, fontSize: 14, minWidth: 42, textAlign: 'right' }}>{pct}%</span>
+        <span className="task-progress-percent" style={{ color: '#9A4FD1', fontWeight: 800, fontSize: 14, minWidth: 42, textAlign: 'right' }}>{pct}%</span>
       </div>
       {complete ? (
-        <p style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#5ec27e', fontSize: 14, fontWeight: 700, margin: '12px 0 0' }}>
+        <p className="task-progress-message" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#5ec27e', fontSize: 14, fontWeight: 700, margin: '12px 0 0' }}>
           <FiCheckCircle size={16} /> Concluído — crie novas tarefas ou estratégias para continuar evoluindo.
         </p>
       ) : noTasks ? (
-        <p style={{ color: '#6b7280', fontSize: 13, margin: '12px 0 0' }}>
+        <p className="task-progress-message" style={{ color: '#6b7280', fontSize: 13, margin: '12px 0 0' }}>
           Adicione tarefas às suas estratégias para acompanhar o progresso.
         </p>
       ) : (
-        <p style={{ color: '#9a9aa5', fontSize: 13, margin: '12px 0 0' }}>
+        <p className="task-progress-message" style={{ color: '#9a9aa5', fontSize: 13, margin: '12px 0 0' }}>
           {counts.done} de {counts.total} tarefas concluídas.
         </p>
       )}

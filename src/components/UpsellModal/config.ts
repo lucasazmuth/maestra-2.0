@@ -23,11 +23,11 @@ export const UPSELL_CONFIG: Record<UpsellContext, UpsellConfig> = {
     icon: FiUser,
   },
   'catalog-limit': {
-    title: 'Limite de faixas atingido',
+    title: 'Limite de músicas atingido',
     description:
-      'No plano gratuito, você pode cadastrar até 10 faixas. Assine o Pro para catálogo ilimitado.',
+      'No plano gratuito, você pode cadastrar até 10 músicas. Assine o Pro para Músicas ilimitadas.',
     benefits: [
-      'Catálogo ilimitado',
+      'Músicas ilimitadas',
       'Splits e contratos automatizados',
       'Relatórios de royalties detalhados',
     ],

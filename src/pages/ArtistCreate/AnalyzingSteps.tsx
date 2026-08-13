@@ -21,7 +21,7 @@ const STEPS = [
 
 const STEP_MS = 1500; // tempo que cada item "descansa" no centro antes de subir
 
-export const AnalyzingSteps: FC = () => {
+export const AnalyzingSteps: FC<{ light?: boolean }> = ({ light = false }) => {
   const [offset, setOffset] = useState(0);
   const [animate, setAnimate] = useState(true);
 
@@ -46,7 +46,7 @@ export const AnalyzingSteps: FC = () => {
   }, [offset, animate]);
 
   return (
-    <div className={styles.wrap} role='status' aria-label='Analisando os dados do seu diagnóstico'>
+    <div className={`${styles.wrap}${light ? ` ${styles.light}` : ''}`} role='status' aria-label='Analisando os dados do seu diagnóstico'>
       <div className={styles.window}>
         <div
           className={styles.track}

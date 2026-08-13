@@ -14,8 +14,218 @@
   padding: 32px 24px 64px;
 }
 
+// Criação de perfil segue a superfície clara do gsap-app. O diagnóstico passa a
+// usar .pageReal logo após a escolha do artista e mantém sua ambientação própria.
+.page:not(.pageReal) {
+  background: #f7f8fb;
+  color: #61749a;
+  padding: 0 24px 64px;
+
+  .topBar {
+    max-width: 1180px;
+    min-height: 94px;
+    margin: 0 0 72px;
+    padding: 0 4px;
+    border-bottom: 1px solid #e7ecf5;
+  }
+
+  .brand { color: #52668d !important; }
+
+  .back {
+    width: 42px;
+    height: 42px;
+    background: #fff;
+    border-color: #dfe6f1;
+    color: #61749a;
+    box-shadow: 0 8px 20px rgba(46, 72, 117, 0.08);
+
+    &:hover { background: #f1f5fb; border-color: #c9d6e8; color: #3361ff; }
+  }
+
+  .flowDot { background: #d8e1ee; }
+  .flowDotDone,
+  .flowDotCur { background: #3361ff; }
+  .flowLabel { color: #52668d; }
+
+  .step { max-width: 760px; }
+
+  .line {
+    max-width: 700px;
+    min-height: 0;
+    margin: 0 0 28px;
+    color: #52668d;
+    font-size: 38px;
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
+
+  .caret { background: #3361ff; }
+
+  .interaction {
+    max-width: 560px;
+    padding: 8px;
+  }
+
+  .searchInput {
+    height: 60px;
+    padding: 0 18px;
+    border: 1px solid #d8e1ee;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(46, 72, 117, 0.06);
+
+    :global(.ant-input) {
+      color: #52668d;
+      font-size: 16px;
+      background: transparent;
+    }
+
+    :global(.ant-input::placeholder) { color: #91a1bd; }
+  }
+
+  :global(.ant-input-affix-wrapper:hover),
+  :global(.ant-input-affix-wrapper:focus-within),
+  :global(.ant-input-affix-wrapper-focused) {
+    border-color: #3361ff !important;
+    box-shadow: 0 0 0 3px rgba(51, 97, 255, 0.12), 0 10px 24px rgba(46, 72, 117, 0.06) !important;
+  }
+
+  .results {
+    margin-top: 12px;
+    padding: 6px;
+    background: #fff;
+    border: 1px solid #dfe6f1;
+    border-radius: 10px;
+    box-shadow: 0 14px 30px rgba(46, 72, 117, 0.1);
+  }
+
+  .resultItem {
+    padding: 12px;
+    border-radius: 8px;
+
+    &:hover { background: #f0f4fb; }
+  }
+
+  .resultName { color: #52668d; font-weight: 700; }
+  .resultFollowers { margin-top: 2px; color: #8495b3; font-size: 12px; }
+
+  .linkBtn {
+    color: #3361ff;
+    font-weight: 700;
+
+    &:hover { color: #244ce0; }
+  }
+
+  .dupeNotice {
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid #f0d9a7;
+    border-left: 3px solid #d89a20;
+    border-radius: 8px;
+    background: #fffdf8;
+    box-shadow: none;
+  }
+
+  .dupeNoticeIcon { color: #c98712; font-size: 18px; }
+  .dupeNoticeText { color: #61749a; font-size: 13px; strong { color: #52668d; } }
+  .dupeNoticeBtn {
+    padding: 7px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #3361ff;
+    font-size: 12px;
+    &:hover { background: transparent; color: #244ce0; text-decoration: underline; }
+  }
+}
+
+@media (max-width: 640px) {
+  .page:not(.pageReal) {
+    padding: 0 16px 40px;
+
+    .topBar { min-height: 76px; margin-bottom: 52px; }
+    .flow { margin-left: auto; }
+    .line { font-size: 28px; }
+    .interaction { padding: 0; }
+  }
+}
+
 // Ambiente do Diagnóstico REAL (após selecionar o perfil): leve brilho verde no topo + estrela ao fundo.
 .pageReal {
+  .diagnosticPageHeader {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 28px;
+    padding-top: 34px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #e1e7f0;
+  }
+
+  .diagnosticPageHeader p {
+    margin: 0 0 8px;
+    color: #93a3bc;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .diagnosticPageHeader h1 {
+    margin: 0;
+    color: #52668d;
+    font-size: 30px;
+    letter-spacing: 0;
+  }
+
+  .diagnosticPageHeader span {
+    display: block;
+    max-width: 680px;
+    margin-top: 9px;
+    color: #91a0b9;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .diagnosticPageHeader button {
+    min-height: 42px;
+    flex: 0 0 auto;
+    padding: 0 17px;
+    border: 0;
+    border-radius: 7px;
+    background: #3361ff;
+    box-shadow: 0 10px 21px rgba(51, 97, 255, 0.18);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  // Duas ações no cabeçalho: só uma pode ser primária.
+  .headerActions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .diagnosticPageHeader .headerGhost {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid #dce4f0;
+    background: #fff;
+    box-shadow: none;
+    color: #5b6f94;
+  }
+
+  .diagnosticPageHeader .headerGhost:hover {
+    border-color: #3361ff;
+    color: #3361ff;
+  }
+
   background: radial-gradient(120% 55% at 50% -8%, rgba(154, 79, 209, 0.06) 0%, transparent 55%), #121212;
 }
 
@@ -56,9 +266,9 @@
   box-shadow: 0 0 0 1px rgba(154, 79, 209, 0.25) !important;
 }
 
-// Spinner ("Analisando…" e telas de carregamento) no verde, não no magenta do tema antd.
-.page :global(.ant-spin-dot-item) { background-color: #9A4FD1 !important; }
-.page :global(.ant-spin-text) { color: #9A4FD1 !important; }
+// Spinner da busca segue o azul institucional, sem herdar o roxo do tema Ant.
+.page :global(.ant-spin-dot-item) { background-color: #3361ff !important; }
+.page :global(.ant-spin-text) { color: #3361ff !important; }
 
 // ─── Pílula da marca (igual /welcome) ─────────────────────────────────────────
 .pillWrap {
@@ -120,12 +330,25 @@
 
 // ─── Marca (aparece em prints do usuário) ──────────────────────────────────────
 .brand {
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
-  font-size: 16px;
+  gap: 10px;
+  font-size: 24px;
   font-weight: 800;
-  letter-spacing: -0.01em;
-  color: #fff;
+  letter-spacing: 0;
+  color: #52668d;
+  text-decoration: none;
   white-space: nowrap;
+
+  &:hover,
+  &:focus,
+  &:visited { color: #52668d; text-decoration: none; }
+
+  :global(.brand-logo-mark) {
+    width: 22px;
+    height: 22px;
+  }
 }
 
 // ─── Progresso enxuto: dots + nome de SÓ a etapa atual ──────────────────────────
@@ -969,6 +1192,204 @@
   text-align: left;
 }
 
+// ─── Novo design: fluxo REAL ──────────────────────────────────────────────────
+// Criação e refação compartilham esta superfície clara para que o diagnóstico não
+// reintroduza o ambiente escuro do fluxo anterior.
+.pageReal {
+  background: #f7f8fb;
+  color: #52668d;
+  padding: 0 24px 64px;
+  overflow-y: auto;
+
+  .topBar {
+    max-width: 1180px;
+    min-height: 94px;
+    margin: 0 0 64px;
+    padding: 0 4px;
+    border-bottom: 1px solid #e7ecf5;
+  }
+
+  .brand { color: #52668d !important; }
+  .back {
+    width: 42px;
+    height: 42px;
+    color: #61749a;
+    background: #fff;
+    border-color: #dfe6f1;
+    box-shadow: 0 8px 20px rgba(46, 72, 117, .08);
+    &:hover { color: #3361ff; background: #f1f5fb; border-color: #c9d6e8; }
+  }
+
+  .flowDot { background: #d8e1ee; }
+  .flowDotDone, .flowDotCur { background: #3361ff; }
+  .flowLabel, .pillText { color: #52668d; }
+  .pill { padding: 10px 18px; background: #fff; border-color: #dfe6f1; box-shadow: 0 8px 20px rgba(46, 72, 117, .08); }
+  .pillReal { color: #3361ff; }
+  .progress { margin: -42px 0 30px; }
+  .dot { background: #d8e1ee; }
+  .dotOn { background: #3361ff; }
+  .dotDone { background: rgba(51, 97, 255, .5); }
+
+  .line { color: #52668d; font-size: 38px; line-height: 1.2; letter-spacing: 0; }
+  .caret, .topProgressFill { background: #3361ff; }
+  .topProgress { background: #e7ecf5; }
+  .quizBackBtn { color: #61749a; &:hover { color: #3361ff; background: #edf2ff; } }
+
+  .introAvatar { border-color: #7f9fff; box-shadow: 0 0 0 5px #e8efff; }
+  .introName { color: #52668d; }
+  .cta { background: #3361ff; border-radius: 10px; box-shadow: 0 10px 20px rgba(51, 97, 255, .18); &:hover:not(:disabled) { background: #244ce0; } }
+  .linkBtn, .ctaGhost { color: #3361ff; &:hover { color: #244ce0; } }
+
+  .options { gap: 10px; }
+  .option {
+    color: #52668d;
+    background: #fff;
+    border-color: #dfe6f1;
+    box-shadow: 0 8px 18px rgba(46, 72, 117, .05);
+    &:hover { color: #3361ff; background: #f6f8ff; border-color: #9db6ff; }
+  }
+
+  :global(.ant-input),
+  :global(.ant-input-number),
+  :global(.ant-input-number-affix-wrapper),
+  :global(.ant-input-affix-wrapper) {
+    color: #52668d !important;
+    background: #fff !important;
+    border-color: #d8e1ee !important;
+    box-shadow: 0 8px 18px rgba(46, 72, 117, .05) !important;
+  }
+  :global(.ant-input-number-input) {
+    color: #52668d !important;
+    background: transparent !important;
+  }
+  :global(.ant-input-number-affix-wrapper .ant-input-number) {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  :global(.ant-input::placeholder),
+  :global(.ant-input-number-input::placeholder) {
+    color: #91a1bd !important;
+    opacity: 1;
+  }
+  .revenueForm { gap: 14px; }
+  .revenueRow { gap: 8px; }
+  .revenueLabel { color: #61749a; font-weight: 700; }
+  .revenueInput {
+    height: 56px;
+    border: 1px solid #d8e1ee !important;
+    border-radius: 10px;
+    background: #fff !important;
+    box-shadow: 0 8px 18px rgba(46, 72, 117, .05) !important;
+  }
+  .revenueInput :global(.ant-input-number-input-wrap) { background: transparent; }
+  .revenueInput :global(.ant-input-number-prefix) {
+    color: #52668d;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .matrixHelp { color: #788bad; }
+  .matrixList { gap: 10px; }
+  .matrixTypeRow {
+    align-items: center;
+    gap: 12px 16px;
+    padding: 14px 16px;
+    border: 1px solid #dfe6f1;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 6px 14px rgba(46, 72, 117, .04);
+  }
+  .matrixTypeName { color: #52668d; font-size: 13px; }
+  .porteChips { gap: 7px; }
+  .porteChip {
+    min-width: 70px;
+    padding: 8px 12px;
+    border-color: #d8e1ee;
+    border-radius: 8px;
+    background: #f8faff;
+    color: #61749a;
+    font-size: 12px;
+    &:hover { border-color: #9db6ff; background: #edf2ff; color: #3361ff; }
+  }
+  .porteChipOn {
+    border-color: #3361ff;
+    background: #3361ff;
+    color: #fff;
+    &:hover { border-color: #244ce0; background: #244ce0; color: #fff; }
+  }
+  :global(.ant-input:hover),
+  :global(.ant-input:focus),
+  :global(.ant-input-number:hover),
+  :global(.ant-input-number-focused),
+  :global(.ant-input-number-affix-wrapper:hover),
+  :global(.ant-input-number-affix-wrapper-focused),
+  :global(.ant-input-affix-wrapper:hover),
+  :global(.ant-input-affix-wrapper-focused) {
+    border-color: #3361ff !important;
+    box-shadow: 0 0 0 3px rgba(51, 97, 255, .12) !important;
+  }
+
+  .realHero { padding-bottom: 24px; border-bottom: 1px solid #e1e8f3; }
+  .realHeroAvatar { box-shadow: 0 6px 18px rgba(46, 72, 117, .16); }
+  .realHeroTitle, .unlockHeadTitle, .realProfileName, .dimTitle, .dimStatValue, .payFeatureTitle { color: #52668d; }
+  .realHeroSub, .unlockHeadSub, .realProfileDesc, .dimPhrase, .dimStatLabel, .dimSub, .payFeatureDesc, .payFeatureDetails { color: #788bad; }
+  .heroRedoBtn { color: #3361ff; background: #edf2ff; border-color: #cbd9ff; &:hover { color: #244ce0; background: #e3ebff; border-color: #9db6ff; } }
+
+  .realProfileCard {
+    background: #fff;
+    border-color: #d9e3f2;
+    box-shadow: 0 12px 28px rgba(46, 72, 117, .07);
+  }
+  .realProfileKicker, .realPatternHeadLabel { color: #8495b3; }
+  .realPatternWord { color: #61749a; }
+  .realPatternLetterLow { color: #9babc4; }
+  .realPatternInfo { color: #8495b3; &:hover, &:focus-visible { color: #3361ff; } }
+  .dimCard { background: #fff; border-color: #dfe6f1; box-shadow: 0 8px 18px rgba(46, 72, 117, .04); }
+  .dimMono { color: #52668d; background: #f1f5fb; border-color: #d8e1ee; }
+  .dimLevel { background: #e9eef7; }
+  .dimStatRow { border-color: #e9eef7; }
+
+  .realProfileCard > button[data-noexport] {
+    background: #edf2ff !important;
+    border-color: #cbd9ff !important;
+    color: #3361ff !important;
+  }
+  .realProfileCard > button[data-noexport]:hover { background: #e3ebff !important; color: #244ce0 !important; }
+  .insightsTitle, .profileMapTitle, .methodDimName, .dimRevealLead, .signName, .signHighlight { color: #52668d; }
+  .insightsList li, .methodBody, .methodDimDesc, .dimRevealPara, .signPara { color: #61749a; }
+  .dimRevealPara strong { color: #52668d; }
+  .signRole, .dimRevealHead, .mapTier, .profileMapHint { color: #8495b3; }
+  .profileMap { border-color: #e1e8f3; }
+  .mapRow { border-color: #e9eef7; }
+  .mapChip { color: #61749a; background: #f8faff; border-color: #d8e1ee; }
+  .mapChipOn { color: #fff; background: #3361ff; border-color: #3361ff; }
+  .methodBlock { border-color: #e1e8f3; }
+  .methodDimLetter, .signKicker { color: #3361ff; }
+  .ctaTitle { color: #52668d; }
+  .ctaParagraph, .ctaMicrocopy { color: #788bad; }
+  .downloadBtn, .shareBtn { color: #3361ff; border-color: #cbd9ff; background: #fff; }
+  .downloadBtn:hover, .shareBtn:hover { color: #244ce0; border-color: #9db6ff; background: #edf2ff; }
+
+  .payArtist { border-color: #e1e8f3; }
+  .payArtistName, .payFeaturesTitle { color: #52668d; }
+  .payArtistSub, .payFeaturesHint { color: #8495b3; }
+  .payFeature { background: #fff; border-color: #dfe6f1; }
+  .payFeatureOpen { background: #f6f8ff; border-color: #9db6ff; }
+  .payFeatureIcon { color: #3361ff; background: #edf2ff; }
+  .payFeatureOpen .payFeatureIcon { color: #3361ff; background: #e1eaff; }
+  .payFeatureDetails { border-color: #e9eef7; }
+}
+
+@media (max-width: 640px) {
+  .pageReal {
+    padding: 0 16px 40px;
+    .topBar { min-height: 76px; margin-bottom: 52px; }
+    .line { font-size: 28px; }
+    .realHero { align-items: flex-start; }
+    .heroRedoBtn { padding: 8px 10px; font-size: 12px; }
+  }
+}
+
 // SEÇÃO 1 — Hero
 .realHero {
   display: flex;
@@ -984,6 +1405,16 @@
 .unlockHead { max-width: 680px; margin: 0 0 30px; }
 .unlockHeadTitle { font-family: var(--font-display); font-weight: 800; font-size: 2rem; line-height: 1.1; letter-spacing: -0.02em; color: #fff; margin: 0 0 12px; }
 .unlockHeadSub { font-size: 1.0625rem; line-height: 1.6; color: #b3b3b3; margin: 0; }
+.pageCheckout {
+  .unlockHeadTitle { color: #52668d; }
+  .unlockHeadSub { color: #7185aa; }
+}
+.unlockBack {
+  display: inline-flex; align-items: center; gap: 8px; padding: 0; border: none; background: none;
+  color: #61749a; font-size: 14px; font-weight: 700; cursor: pointer; transition: color 0.15s ease;
+  &:hover { color: #3361ff; }
+}
+.unlockPixNote { margin: 0; color: #7185aa; font-size: 14px; line-height: 1.55; }
 @media (max-width: 640px) { .unlockHeadTitle { font-size: 1.6rem; } .unlockHeadSub { font-size: 1rem; } }
 .heroShareBtn {
   margin-left: auto;
@@ -1102,12 +1533,12 @@
   font-style: italic;
   font-weight: 700;
   font-size: 20px;
-  color: #fff;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.05);
+  color: #52668d;
+  border: 1.5px solid #52668d;
+  background: #eef3ff;
 }
 .dimTitleWrap { flex: 1; min-width: 0; }
-.dimTitle { font-family: var(--font-display); font-weight: 800; font-size: 17px; color: #fff; line-height: 1.05; }
+.dimTitle { font-family: var(--font-display); font-weight: 800; font-size: 17px; color: #52668d; line-height: 1.05; }
 .dimSub { font-size: 11.5px; color: #7e7e88; margin-top: 2px; letter-spacing: 0.02em; }
 .dimStatus { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--st); white-space: nowrap; }
 
@@ -1128,7 +1559,7 @@
   &:first-child { border-top: none; padding-top: 0; }
 }
 .dimStatLabel { font-size: 12.5px; color: #9a9aa3; }
-.dimStatValue { font-size: 16px; color: #fff; font-weight: 800; text-align: right; letter-spacing: -0.01em; }
+.dimStatValue { font-size: 16px; color: #52668d; font-weight: 800; text-align: right; letter-spacing: -0.01em; }
 
 .dimPhrase {
   font-size: 12.5px;
@@ -1207,10 +1638,10 @@
 .methodDimDesc { font-size: 12.5px; line-height: 1.55; color: #8a8a92; }
 
 // ─── "O que isso revela" (narrativa por dimensão, on-screen) ───────────────────
-.dimReveal { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.dimReveal { margin-top: 16px; padding-top: 14px; border-top: 1px solid #52668d; }
 .dimRevealHead { font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #6f6f78; margin-bottom: 8px; }
-.dimRevealLead { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 10px; letter-spacing: -0.01em; }
-.dimRevealPara { font-size: 13px; line-height: 1.6; color: #b8b8c0; margin: 0 0 8px; strong { color: #e6e6ea; font-weight: 700; } &:last-child { margin-bottom: 0; } }
+.dimRevealLead { font-size: 15px; font-weight: 800; color: #52668d; margin-bottom: 10px; letter-spacing: -0.01em; }
+.dimRevealPara { font-size: 13px; line-height: 1.6; color: #52668d; margin: 0 0 8px; strong { color: #52668d; font-weight: 700; } &:last-child { margin-bottom: 0; } }
 
 // ─── Quem assina (autoria, on-screen) ──────────────────────────────────────────
 .signBlock { background: #181818; border: 1px solid #282828; border-radius: 14px; padding: 22px; margin-bottom: 28px; }
@@ -1321,14 +1752,28 @@
   right: 0;
   bottom: 0;
   z-index: 40;
-  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  padding: 18px 20px calc(18px + env(safe-area-inset-bottom));
   display: flex;
   justify-content: center;
-  background: linear-gradient(to top, #08080c 30%, rgba(8, 8, 12, 0.92) 70%, rgba(8, 8, 12, 0));
+  border-top: 1px solid rgba(219, 228, 241, 0.9);
+  background: linear-gradient(to top, #f7f8fb 42%, rgba(247, 248, 251, 0.94) 74%, rgba(247, 248, 251, 0));
+  box-shadow: 0 -10px 24px rgba(67, 86, 123, 0.04);
   animation: stickyUp 0.32s ease both;
   pointer-events: none;
 
-  .cta { pointer-events: auto; max-width: 520px; width: 100%; }
+  .cta {
+    width: min(100%, 520px);
+    max-width: 520px;
+    min-height: 50px;
+    pointer-events: auto;
+    border-radius: 9px;
+    background: #3361ff;
+    box-shadow: 0 10px 21px rgba(51, 97, 255, 0.2);
+    color: #fff;
+    font-size: 14px;
+
+    &:hover:not(:disabled) { background: #244ce0; }
+  }
 }
 @keyframes stickyUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
@@ -1537,7 +1982,7 @@
 .dimBadgeHigh { color: #000; background: rgb(var(--real-accent, 154, 79, 209)); }
 .dimBadgeLow { color: #c9c9d0; background: rgba(255, 255, 255, 0.08); }
 .dimBadgeTop { color: #1a1206; background: linear-gradient(120deg, #f5c451 0%, #e0a13c 100%); box-shadow: 0 0 0 1px rgba(245, 196, 81, 0.35), 0 4px 14px -6px rgba(224, 161, 60, 0.7); }
-.dimScore { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: #fff; line-height: 1; letter-spacing: -0.02em; }
+.dimScore { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: #52668d; line-height: 1; letter-spacing: -0.02em; }
 .dimScoreMax { font-size: 12px; color: #6f6f78; font-weight: 700; }
 
 // Régua de 0–100 com marcadores fixos: acende (70) e top tier (100).
@@ -1681,4 +2126,203 @@
   background: rgb(var(--real-accent, 154, 79, 209));
   border-color: rgb(var(--real-accent, 154, 79, 209));
   color: #000;
+}
+
+// A entrega do REAL tambem e reutilizada na area logada. Mantemos estas regras
+// no final do arquivo para que o tema claro prevaleca sobre os estilos da
+// experiencia imersiva escura de criacao.
+.pageReal {
+  .realHeroTitle,
+  .unlockHeadTitle,
+  .realProfileName,
+  .dimTitle,
+  .dimScore,
+  .dimStatValue,
+  .insightsTitle,
+  .profileMapTitle,
+  .methodDimName,
+  .dimRevealLead,
+  .dimRevealPara,
+  .signName,
+  .signHighlight,
+  .ctaTitle {
+    color: #52668d !important;
+  }
+
+  .realHeroSub,
+  .unlockHeadSub,
+  .dimSub,
+  .dimPhrase,
+  .dimStatLabel,
+  .dimStatusLine,
+  .insightsList li,
+  .methodBody,
+  .methodDimDesc,
+  .signPara,
+  .ctaParagraph,
+  .ctaMicrocopy,
+  .signRole,
+  .dimRevealHead,
+  .mapTier,
+  .profileMapHint,
+  .cityName,
+  .cityVal,
+  .platformFollowers,
+  .platformRank {
+    color: #61749a !important;
+  }
+
+  .realProfileDesc {
+    color: #52668d !important;
+  }
+
+  .realProfileCard,
+  .dimCard,
+  .cityChart,
+  .platformPresence,
+  .profileMap,
+  .insightsBlock,
+  .signBlock {
+    background: #ffffff !important;
+    border-color: #dbe4f1 !important;
+    box-shadow: 0 10px 24px rgba(67, 86, 123, 0.07) !important;
+  }
+
+  .realProfileCard {
+    background: linear-gradient(135deg, #ffffff, #f4f7fd) !important;
+  }
+
+  .realPatternItem { opacity: 0.42; }
+  .realPatternItemHigh { opacity: 1; }
+  .realPatternItemHigh .realPatternWord {
+    color: #52668d !important;
+    font-weight: 800;
+  }
+  .realPatternItemLow .realPatternWord { color: #9baac0 !important; }
+  .realPatternLetterHigh { color: rgb(var(--real-accent, 51, 97, 255)) !important; }
+  .realPatternLetterLow { color: #b6c2d3 !important; }
+
+  .dimCard { border-radius: 14px; }
+
+  .dimMono {
+    color: #52668d !important;
+    background: #eef3ff !important;
+    border-color: #52668d !important;
+  }
+
+  .dimStatRow,
+  .pieBlock,
+  .healthBlock,
+  .engGrid,
+  .methodBlock {
+    border-color: #e4ebf5 !important;
+  }
+
+  .dimReveal {
+    border-color: #52668d !important;
+  }
+
+  .dimRevealPara strong { color: #52668d !important; }
+
+  .ruler,
+  .dimLevel,
+  .cityBarTrack {
+    background: #e8eef7 !important;
+  }
+
+  .cityBar {
+    background: #3361ff !important;
+  }
+
+  .rulerMark::after { color: #8495b3 !important; }
+  .rulerMark { background: #b9c6d9 !important; }
+  .dimStatusLine { font-weight: 700; }
+
+  .cityChartLabel,
+  .platformSectionTitle,
+  .healthTitle,
+  .engGridTitle,
+  .pieBlockTitle {
+    color: #7184a5 !important;
+  }
+
+  .platformPresence {
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .platformSection + .platformSection {
+    border-top: 1px solid #e4ebf5;
+    margin-top: 18px;
+    padding-top: 18px;
+  }
+
+  .platformSectionTitle {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .platformList { display: flex; flex-direction: column; gap: 6px; }
+
+  .platformPlaylistRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    font-size: 13px;
+  }
+
+  .platformRank {
+    width: 18px;
+    flex: 0 0 18px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .platformName {
+    min-width: 0;
+    flex: 1;
+    color: #52668d;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .platformEditorial {
+    flex: 0 0 auto;
+    border: 1px solid rgba(var(--real-accent, 51, 97, 255), 0.35);
+    border-radius: 4px;
+    color: rgb(var(--real-accent, 51, 97, 255));
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+  }
+
+  .platformFollowers {
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .profileMap,
+  .insightsBlock,
+  .signBlock { border-radius: 14px; }
+
+  .mapRow { border-color: #e9eef6 !important; }
+  .mapChip { color: #61749a !important; background: #f7f9fd !important; }
+  .mapChipOn { background: #eaf0ff !important; border-color: #9db7ff !important; }
+  .mapChipName { color: #52668d !important; }
+  .mapDot { color: #7184a5 !important; background: #e3eaf5 !important; }
+  .mapDotOn { color: #ffffff !important; background: #52668d !important; }
+
+  .methodToggle { color: #61749a !important; }
+  .methodToggle:hover { color: #3361ff !important; }
+
+  .healthItem {
+    background: #f7f9fd !important;
+    border-color: #e4ebf5 !important;
+  }
+  .healthLabel, .engNet, .pieLegendLabel { color: #61749a !important; }
+  .healthVal, .pieLegendVal { color: #52668d !important; }
+  .engVal { color: #7184a5 !important; }
 }

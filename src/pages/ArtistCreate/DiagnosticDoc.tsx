@@ -3,7 +3,7 @@ import { FC, ReactNode } from 'react';
 import { MaestraBrand } from '../../components/MaestraBrand';
 import type { RealIndex } from '../../interfaces/maestra';
 import { RealBadge, tierForAltas } from '../../components/RealBadge';
-import { v2InputsView, type Chartmetric } from './DiagnosticReport';
+import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import {
   DIM_META, DIM_PHRASE, PROFILE_MAP, PROFILE_BITS, clean, fmtNum, fmtBRL, fmtPct,
   PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText,

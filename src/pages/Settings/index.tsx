@@ -175,12 +175,16 @@ const Settings: FC = () => {
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 640 }}>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 24px' }}>
-        Configurações
-      </h1>
+    <div className='settings-page'>
+      <header className='settings-heading'>
+        <div>
+          <p>CONTA DO USUÁRIO</p>
+          <h1>Configurações pessoais</h1>
+          <span>Gerencie seus dados, acesso e preferências de uso na Maestra.</span>
+        </div>
+      </header>
 
-      <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
+      <section className='settings-profile-card' style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>Perfil</h2>
           {!editing && (
@@ -206,8 +210,8 @@ const Settings: FC = () => {
             <img src={savedAvatar} alt='avatar' style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }} />
           )}
           <div>
-            {!editing && <div style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>{savedName || 'Sem nome'}</div>}
-            <div style={{ color: '#b3b3b3', fontSize: 13 }}>{user?.email}</div>
+            {!editing && <div className='settings-profile-name' style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>{savedName || 'Sem nome'}</div>}
+            <div className='settings-profile-email' style={{ color: '#b3b3b3', fontSize: 13 }}>{user?.email}</div>
             {editing && <div style={{ color: '#6b7280', fontSize: 12, marginTop: 4 }}>Toque na foto para trocar</div>}
           </div>
         </div>
@@ -236,7 +240,7 @@ const Settings: FC = () => {
         )}
       </section>
 
-      <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
+      <section className='settings-notification-card' style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ color: '#9A4FD1', display: 'flex' }}><FiBell size={20} /></span>
           <div style={{ flex: 1 }}>
@@ -284,7 +288,7 @@ const Settings: FC = () => {
       <SubscriptionManagement />
 
       {/* Atalho para o histórico de pagamentos (página dedicada) */}
-      <section style={{ background: '#181818', borderRadius: 12, padding: '8px 20px', marginTop: 20 }}>
+      <section className='settings-link-card' style={{ background: '#181818', borderRadius: 12, padding: '8px 20px', marginTop: 20 }}>
         <div
           role='button'
           tabIndex={0}
@@ -299,7 +303,7 @@ const Settings: FC = () => {
       </section>
 
       {/* Suporte e termos */}
-      <section style={{ background: '#181818', borderRadius: 12, padding: '8px 20px', marginTop: 20 }}>
+      <section className='settings-support-card' style={{ background: '#181818', borderRadius: 12, padding: '8px 20px', marginTop: 20 }}>
         <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: '12px 0 4px' }}>Suporte e termos</h2>
         {supportLinks.map((l, i) => {
           const rowStyle = {
@@ -344,7 +348,7 @@ const Settings: FC = () => {
       </section>
 
       {/* Conta */}
-      <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginTop: 20 }}>
+      <section className='settings-danger-card' style={{ background: '#181818', borderRadius: 12, padding: 20, marginTop: 20 }}>
         <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginTop: 0, marginBottom: 6 }}>Conta</h2>
         <p style={{ color: '#8a8a8a', fontSize: 13, margin: '0 0 14px', lineHeight: 1.5 }}>
           Cancelar o cadastro encerra sua conta e remove seus dados. Esta ação é permanente e não pode ser desfeita.

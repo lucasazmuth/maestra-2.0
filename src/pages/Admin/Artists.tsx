@@ -422,7 +422,7 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
     ['REAL', artist.adoption.areas.real],
     ['Planejamento', artist.adoption.areas.planning],
     ['Plano de ação', artist.adoption.areas.actionPlan],
-    ['Catálogo', artist.adoption.areas.catalog],
+    ['Músicas', artist.adoption.areas.catalog],
     ['Agenda', artist.adoption.areas.events],
     ['Equipe', artist.adoption.areas.team],
     ['Nyta', artist.adoption.areas.nyta],
@@ -562,10 +562,10 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
     },
     {
       key: 'catalog',
-      label: `Catálogo (${detail.catalog.total})`,
+      label: `Músicas (${detail.catalog.total})`,
       children: detail.catalog.total ? (
         <section className={`${styles.panel} ${styles.tabPanel}`}>
-          <SectionTitle title="Faixas cadastradas" subtitle="Status e última atualização das faixas adicionadas ao catálogo da Maestra." />
+          <SectionTitle title="Músicas cadastradas" subtitle="Status e última atualização das músicas adicionadas." />
           <div className={styles.chips}>{Object.entries(detail.catalog.byStatus).map(([status, count]) => <Tag key={status}>{CATALOG_STATUS[status] || status}: {count}</Tag>)}</div>
           <div className={styles.list}>
             {detail.catalog.items.map((item) => (
@@ -577,7 +577,7 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
             ))}
           </div>
         </section>
-      ) : <EmptyModule title="Nenhuma faixa cadastrada" />,
+      ) : <EmptyModule title="Nenhuma música cadastrada" />,
     },
     {
       key: 'events',

@@ -85,7 +85,7 @@ export const GenreChips: FC<{
     <div className='nyta-card'>
       <div className='wiz-card-title'>Seu estilo musical</div>
       {options === null ? (
-        <p style={{ color: '#b3b3b3', margin: 0, fontSize: 14 }}>Carregando gêneros…</p>
+        <p style={{ color: 'var(--wz-muted)', margin: 0, fontSize: 14 }}>Carregando gêneros…</p>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {allGenres.map((g, i) => {
@@ -105,7 +105,7 @@ export const GenreChips: FC<{
       )}
       <div className='nyta-card-actions'>
         {!!selected.length && (
-          <span style={{ color: '#b3b3b3', fontSize: 13, alignSelf: 'center' }}>
+          <span style={{ color: 'var(--wz-muted)', fontSize: 13, alignSelf: 'center' }}>
             {selected.length} selecionado{selected.length > 1 ? 's' : ''}
           </span>
         )}
@@ -191,9 +191,9 @@ export const ExplainMore: FC = () => {
         onClick={() => setOpen((o) => !o)}
         style={{
           background: 'transparent',
-          border: '1px solid #2a2a2a',
+          border: '1px solid var(--wz-line-2)',
           borderRadius: 9999,
-          color: '#b3b3b3',
+          color: 'var(--wz-muted)',
           fontSize: 12.5,
           fontWeight: 600,
           padding: '6px 14px',
@@ -205,7 +205,7 @@ export const ExplainMore: FC = () => {
       {open && (
         <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {SAY.explainMore().map((p, i) => (
-            <p key={i} style={{ color: '#b3b3b3', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+            <p key={i} style={{ color: 'var(--wz-muted)', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
               {p}
             </p>
           ))}
@@ -268,7 +268,7 @@ export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> 
   return (
     <div className='nyta-card'>
       <div className='wiz-card-title'>Seus sinais de reconhecimento</div>
-      <div style={{ color: '#7d7d7d', fontSize: 12, marginBottom: 8 }}>Escolha até 2 opções (as que mais traduzem o que você sente).</div>
+      <div style={{ color: 'var(--wz-muted)', fontSize: 12, marginBottom: 8 }}>Escolha até 2 opções (as que mais traduzem o que você sente).</div>
       <div className='wiz-option-grid'>
         {VISION_PORQUEM_OPTIONS.map((o, i) => {
           const active = sel.includes(o.label);
@@ -299,7 +299,7 @@ export const VisionPorQuemChoice: FC<{ onConfirm: (labels: string[]) => void }> 
       </div>
       <AddOwnField placeholder='Escrever do meu jeito…' label='Escrever do meu jeito' onAdd={addOwn} />
       <div className='nyta-card-actions'>
-        <span style={{ color: atMax ? '#f59e0b' : '#b3b3b3', fontSize: 13, fontWeight: atMax ? 700 : 400, alignSelf: 'center' }}>{sel.length}/{MAX}</span>
+        <span style={{ color: atMax ? 'var(--wz-warn)' : 'var(--wz-muted)', fontSize: 13, fontWeight: atMax ? 700 : 400, alignSelf: 'center' }}>{sel.length}/{MAX}</span>
         <button
           style={{ ...primaryBtn, marginLeft: 'auto', opacity: sel.length ? 1 : 0.5 }}
           disabled={!sel.length}
@@ -493,18 +493,18 @@ export const ReferenceHorizons: FC<{
       {/* Progresso (3 horizontes) */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
         {HORIZON_FIELDS.map((f, i) => (
-          <div key={f.key} style={{ height: 4, flex: 1, borderRadius: 2, background: i <= step ? '#9A4FD1' : '#3a3a3a', transition: 'background .25s' }} />
+          <div key={f.key} style={{ height: 4, flex: 1, borderRadius: 2, background: i <= step ? 'var(--wz-blue)' : 'var(--wz-line)', transition: 'background .25s' }} />
         ))}
       </div>
 
-      <div style={{ color: '#7d7d7d', fontSize: 12, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 6 }}>
+      <div style={{ color: 'var(--wz-muted)', fontSize: 12, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', marginBottom: 6 }}>
         Passo {step + 1} de {HORIZON_FIELDS.length} · {field.label}
       </div>
-      <div style={{ color: '#fff', fontSize: 16, fontWeight: 700, lineHeight: 1.4, marginBottom: 14 }}>{field.question}</div>
+      <div style={{ color: 'var(--wz-ink)', fontSize: 16, fontWeight: 700, lineHeight: 1.4, marginBottom: 14 }}>{field.question}</div>
 
       {/* Só o campo de digitar. O artista escreve os nomes (vírgula separa vários); cada um vira uma
           pill removível. (Removidas as sugestões do Spotify — vinham internacionais/irrelevantes.) */}
-      <div style={{ color: '#7d7d7d', fontSize: 12, marginBottom: 8 }}>Digite um nome e tecle Enter para adicionar. Toque numa pill pra remover.</div>
+      <div style={{ color: 'var(--wz-muted)', fontSize: 12, marginBottom: 8 }}>Digite um nome e tecle Enter para adicionar. Toque numa pill pra remover.</div>
       {customPills.length > 0 && (
         <div className='wiz-option-grid' style={{ marginBottom: 4 }}>
           {customPills.map((c) => (
@@ -545,7 +545,7 @@ export const ReferenceHorizons: FC<{
 
 export const ReferenceMapCard: FC<{ references?: ArtistIdentity['references'] }> = ({ references }) => (
   <div style={{ marginBottom: 12 }}>
-    <div style={{ color: '#fff', fontWeight: 800, fontSize: 13, marginBottom: 10 }}>Seu mapa de referências</div>
+    <div style={{ color: 'var(--wz-ink)', fontWeight: 800, fontSize: 13, marginBottom: 10 }}>Seu mapa de referências</div>
     <ReferenceMindMap references={references} />
   </div>
 );
@@ -621,7 +621,7 @@ export const CityInputCard: FC<{
       )}
       <div className='nyta-card-actions' style={{ alignItems: 'center' }}>
         <button
-          style={{ background: 'none', border: 'none', color: '#7a7a7a', fontSize: 12, cursor: 'pointer', padding: 0 }}
+          style={{ background: 'none', border: 'none', color: 'var(--wz-muted)', fontSize: 12, cursor: 'pointer', padding: 0 }}
           onClick={() => {
             setManual((m) => !m);
             setCity('');
@@ -636,7 +636,7 @@ export const CityInputCard: FC<{
             marginLeft: 'auto',
             ...(city.trim()
               ? {}
-              : { background: '#2a2a2a', color: '#6b7280', cursor: 'not-allowed' }),
+              : { background: 'var(--wz-line-2)', color: 'var(--wz-faint)', cursor: 'not-allowed' }),
           }}
           disabled={!city.trim()}
           onClick={() => city.trim() && onConfirm(city.trim(), state.trim())}
@@ -676,13 +676,13 @@ const ReviewCard: FC<{ title: string; text: string; onConfirm: (text: string) =>
   useEffect(() => setVal(text), [text]);
   return (
     <div className='nyta-card'>
-      <div style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+      <div style={{ color: 'var(--wz-muted)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
         {title}
       </div>
       {editing ? (
         <Input.TextArea autoSize={{ minRows: 2, maxRows: 6 }} value={val} onChange={(e) => setVal(e.target.value)} autoFocus />
       ) : (
-        <p style={{ color: '#fff', fontSize: 15, lineHeight: 1.6, margin: 0, fontWeight: 600 }}>{val}</p>
+        <p style={{ color: 'var(--wz-ink)', fontSize: 15, lineHeight: 1.6, margin: 0, fontWeight: 600 }}>{val}</p>
       )}
       <div className='nyta-card-actions'>
         <button style={ghostBtn} onClick={() => setEditing((e) => !e)}>
@@ -714,7 +714,7 @@ export const TextPromptHelper: FC<{
     <AiButton small onClick={onStart}>
       Me ajuda a responder
     </AiButton>
-    <p style={{ color: '#6b7280', fontSize: 12, margin: '8px 0 0' }}>
+    <p style={{ color: 'var(--wz-faint)', fontSize: 12, margin: '8px 0 0' }}>
       A Nyta te faz umas perguntas e monta a resposta. Ou escreva do seu jeito no campo abaixo.
     </p>
   </div>
@@ -735,7 +735,7 @@ export const ProposalPick: FC<{
       {editing ? (
         <Input.TextArea autoSize={{ minRows: 2, maxRows: 6 }} value={val} onChange={(e) => setVal(e.target.value)} autoFocus />
       ) : (
-        <p style={{ color: '#fff', fontSize: 15, lineHeight: 1.6, margin: 0, fontWeight: 600 }}>{val}</p>
+        <p style={{ color: 'var(--wz-ink)', fontSize: 15, lineHeight: 1.6, margin: 0, fontWeight: 600 }}>{val}</p>
       )}
       <div className='nyta-card-actions' style={{ flexWrap: 'wrap', gap: 8 }}>
         <button style={ghostBtn} onClick={onRedo}>
@@ -814,7 +814,7 @@ export const ValueChips: FC<{
       </div>
       <AddOwnField placeholder='Escrever meu próprio valor…' label='Escrever meu valor' onAdd={addOwn} />
       <div className='nyta-card-actions'>
-        <span style={{ color: '#b3b3b3', fontSize: 13, alignSelf: 'center' }}>
+        <span style={{ color: 'var(--wz-muted)', fontSize: 13, alignSelf: 'center' }}>
           {selected.length}/{MAX}
           {selected.length < MIN && `, escolha ao menos ${MIN}`}
         </span>
@@ -888,7 +888,7 @@ export const ObjectiveChips: FC<{
       </div>
       <AddOwnField placeholder='Acrescentar um objetivo…' label='Acrescentar objetivo' onAdd={addOwn} />
       <div className='nyta-card-actions'>
-        <span style={{ color: '#b3b3b3', fontSize: 13, alignSelf: 'center' }}>
+        <span style={{ color: 'var(--wz-muted)', fontSize: 13, alignSelf: 'center' }}>
           {selected.length}/{MAX_OBJECTIVES}
         </span>
         <button
@@ -957,7 +957,7 @@ export const QuizOptions: FC<{
 
   if (!q.options.length) {
     return (
-      <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>
+      <p style={{ color: 'var(--wz-faint)', fontSize: 13, margin: 0 }}>
         Responda no campo de mensagem abaixo.
       </p>
     );
@@ -969,7 +969,7 @@ export const QuizOptions: FC<{
   return (
     <div>
       {headerExtra}
-      <p style={{ color: '#9A4FD1', fontSize: 13, fontWeight: 700, margin: '0 0 10px' }}>
+      <p style={{ color: 'var(--wz-blue)', fontSize: 13, fontWeight: 700, margin: '0 0 10px' }}>
         Escolha uma ou mais, ou escreva a sua
       </p>
       <div className='wiz-option-grid'>
@@ -1047,7 +1047,7 @@ export const QuizOptions: FC<{
             </button>
           </div>
           {customError && (
-            <p style={{ color: '#f59e0b', fontSize: 13, margin: '8px 2px 0', maxWidth: 720 }}>
+            <p style={{ color: 'var(--wz-warn)', fontSize: 13, margin: '8px 2px 0', maxWidth: 720 }}>
               {customError}
             </p>
           )}
@@ -1087,9 +1087,10 @@ export const SwotInternalCard: FC<{
   const total = SWOT_INTERNAL.length;
   const item = SWOT_INTERNAL[idx];
   const options: [InternalClass, string, string][] = [
-    ['forte', 'É um ponto forte', '#9A4FD1'],
-    ['melhorar', 'Preciso melhorar nisso', '#e9a21a'],
-    ['na', 'Não se aplica', '#6b7280'],
+    ['forte', 'É um ponto forte', 'var(--wz-blue)'],
+    ['melhorar', 'Preciso melhorar nisso', 'var(--wz-warn)'],
+    // Neutro escuro (não o --wz-faint): quando vira preenchimento, precisa carregar texto branco.
+    ['na', 'Não se aplica', 'var(--wz-text)'],
   ];
   const answer = (val: InternalClass) => {
     if (advancing) return;
@@ -1106,28 +1107,28 @@ export const SwotInternalCard: FC<{
   return (
     <div className='nyta-card'>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 8 }}>
-        <span style={{ color: '#9A4FD1', fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+        <span style={{ color: 'var(--wz-blue)', fontSize: 11, fontWeight: 800, letterSpacing: 0.6, textTransform: 'uppercase' }}>
           Diagnóstico interno
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          <span style={{ color: '#7a7a7a', fontSize: 12, fontWeight: 600 }}>{idx + 1} de {total}</span>
+          <span style={{ color: 'var(--wz-muted)', fontSize: 12, fontWeight: 600 }}>{idx + 1} de {total}</span>
           {idx > 0 && (
             <button
               disabled={advancing}
               onClick={() => setIdx((i) => Math.max(0, i - 1))}
-              style={{ background: 'none', border: 'none', color: '#7a7a7a', fontSize: 12, cursor: 'pointer', padding: 0 }}
+              style={{ background: 'none', border: 'none', color: 'var(--wz-muted)', fontSize: 12, cursor: 'pointer', padding: 0 }}
             >
               ← Voltar
             </button>
           )}
         </span>
       </div>
-      <div style={{ height: 3, borderRadius: 3, background: '#1f1f1f', marginBottom: 14, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${barPct}%`, background: '#9A4FD1', borderRadius: 3, transition: 'width .3s ease' }} />
+      <div style={{ height: 3, borderRadius: 3, background: 'var(--wz-line)', marginBottom: 14, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${barPct}%`, background: 'var(--wz-blue)', borderRadius: 3, transition: 'width .3s ease' }} />
       </div>
       <div key={idx} style={{ animation: 'wizSlideInRight .28s ease both' }}>
-        <p style={{ fontSize: 16.5, marginBottom: 4, lineHeight: 1.35, color: '#fff', fontWeight: 700 }}>{stripEmDash(item.label)}</p>
-        <p style={{ fontSize: 13.5, marginBottom: 14, lineHeight: 1.45, color: '#9a9a9a' }}>{stripEmDash(item.question)}</p>
+        <p style={{ fontSize: 16.5, marginBottom: 4, lineHeight: 1.35, color: 'var(--wz-ink)', fontWeight: 700 }}>{stripEmDash(item.label)}</p>
+        <p style={{ fontSize: 13.5, marginBottom: 14, lineHeight: 1.45, color: 'var(--wz-muted)' }}>{stripEmDash(item.question)}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {options.map(([val, label, color]) => {
             const active = internal[item.id] === val;
@@ -1143,9 +1144,9 @@ export const SwotInternalCard: FC<{
                   gap: 8,
                   width: '100%',
                   textAlign: 'left',
-                  border: `1px solid ${active ? color : '#2a2a2a'}`,
-                  background: active ? color : '#121212',
-                  color: active ? '#000' : '#e8e8e8',
+                  border: `1px solid ${active ? color : 'var(--wz-line-2)'}`,
+                  background: active ? color : 'var(--wz-surface-2)',
+                  color: active ? '#fff' : 'var(--wz-text)',
                   borderRadius: 10,
                   fontSize: 13.5,
                   fontWeight: 600,
@@ -1166,7 +1167,7 @@ export const SwotInternalCard: FC<{
                     height: 18,
                     borderRadius: '50%',
                     flexShrink: 0,
-                    border: active ? 'none' : '1.5px solid #3a3a3a',
+                    border: active ? 'none' : '1.5px solid var(--wz-faint)',
                     background: active ? 'rgba(0,0,0,0.18)' : 'transparent',
                   }}
                 >
@@ -1190,7 +1191,7 @@ export const SwotChecklist: FC<{
   onConfirm: (ids: number[]) => void;
   title?: string;
   accent?: string;
-}> = ({ items, confirmLabel, onConfirm, title, accent = '#9A4FD1' }) => {
+}> = ({ items, confirmLabel, onConfirm, title, accent = 'var(--wz-blue)' }) => {
   const [sel, setSel] = useState<number[]>([]);
   const toggle = (id: number) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   return (
@@ -1213,9 +1214,9 @@ export const SwotChecklist: FC<{
                 gap: 12,
                 width: '100%',
                 textAlign: 'left',
-                border: `1px solid ${active ? '#9A4FD1' : '#2a2a2a'}`,
-                background: active ? 'rgba(154, 79, 209, 0.12)' : '#121212',
-                color: '#e8e8e8',
+                border: `1px solid ${active ? 'var(--wz-blue)' : 'var(--wz-line-2)'}`,
+                background: active ? 'var(--wz-blue-soft)' : 'var(--wz-surface-2)',
+                color: 'var(--wz-text)',
                 borderRadius: 10,
                 fontSize: 14,
                 fontWeight: 500,
@@ -1234,9 +1235,9 @@ export const SwotChecklist: FC<{
                   height: 20,
                   borderRadius: 6,
                   flexShrink: 0,
-                  border: active ? 'none' : '1.5px solid #3a3a3a',
-                  background: active ? '#9A4FD1' : 'transparent',
-                  color: '#000',
+                  border: active ? 'none' : '1.5px solid var(--wz-faint)',
+                  background: active ? 'var(--wz-blue)' : 'transparent',
+                  color: '#fff',
                 }}
               >
                 {active && <FiCheck size={14} />}
@@ -1247,7 +1248,7 @@ export const SwotChecklist: FC<{
         })}
       </div>
       <div className='nyta-card-actions'>
-        <span style={{ color: '#7a7a7a', fontSize: 13, alignSelf: 'center' }}>
+        <span style={{ color: 'var(--wz-muted)', fontSize: 13, alignSelf: 'center' }}>
           {sel.length} selecionada{sel.length === 1 ? '' : 's'}
         </span>
         <button style={{ ...primaryBtn, marginLeft: 'auto' }} onClick={() => onConfirm(sel)}>
@@ -1261,10 +1262,10 @@ export const SwotChecklist: FC<{
 // ---- Inventário SWOT editável ------------------------------------------------------------------
 
 const SWOT_COLS: { key: keyof SwotAnalysis; label: string; color: string }[] = [
-  { key: 'strengths', label: 'Forças', color: '#9A4FD1' },
-  { key: 'weaknesses', label: 'Fraquezas', color: '#e91429' },
-  { key: 'opportunities', label: 'Oportunidades', color: '#3b82f6' },
-  { key: 'threats', label: 'Ameaças', color: '#f59e0b' },
+  { key: 'strengths', label: 'Forças', color: 'var(--wz-blue)' },
+  { key: 'weaknesses', label: 'Fraquezas', color: 'var(--wz-danger)' },
+  { key: 'opportunities', label: 'Oportunidades', color: '#29cc39' },
+  { key: 'threats', label: 'Ameaças', color: 'var(--wz-warn)' },
 ];
 
 export const SwotBoardCard: FC<{
@@ -1293,9 +1294,9 @@ export const SwotBoardCard: FC<{
         {SWOT_COLS.map((c) => {
           const items = board[c.key] || [];
           return (
-            <div key={c.key} style={{ background: '#121212', borderRadius: 8, padding: 12, borderTop: `3px solid ${c.color}` }}>
+            <div key={c.key} style={{ background: 'var(--wz-surface-2)', borderRadius: 8, padding: 12, borderTop: `3px solid ${c.color}` }}>
               <div style={{ color: c.color, fontWeight: 800, fontSize: 14, marginBottom: 8 }}>
-                {c.label} <span style={{ color: '#6b7280', fontWeight: 700 }}>({items.length})</span>
+                {c.label} <span style={{ color: 'var(--wz-faint)', fontWeight: 700 }}>({items.length})</span>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                 {items.map((item, i) => (
@@ -1344,7 +1345,7 @@ export const StrategyCards: FC<{
     <div className='nyta-card'>
       <div
         style={{
-          color: '#b3b3b3',
+          color: 'var(--wz-muted)',
           fontSize: 12,
           fontWeight: 700,
           textTransform: 'uppercase',
@@ -1352,9 +1353,9 @@ export const StrategyCards: FC<{
           marginBottom: 4,
         }}
       >
-        Suas estratégias <span style={{ color: '#6b7280' }}>({strategies.length})</span>
+        Suas estratégias <span style={{ color: 'var(--wz-faint)' }}>({strategies.length})</span>
       </div>
-      <p style={{ color: '#7d7d7d', fontSize: 12.5, margin: '0 0 12px', lineHeight: 1.45 }}>
+      <p style={{ color: 'var(--wz-muted)', fontSize: 12.5, margin: '0 0 12px', lineHeight: 1.45 }}>
         Construídas a partir do seu diagnóstico, cruzando suas forças, fraquezas e oportunidades.
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1364,18 +1365,18 @@ export const StrategyCards: FC<{
             <div
               key={s.id}
               title={refsLine || undefined}
-              style={{ position: 'relative', background: '#1f1f1f', border: '1px solid #2a2a2a', borderRadius: 8, padding: '14px 16px' }}
+              style={{ position: 'relative', background: 'var(--wz-surface)', border: '1px solid var(--wz-line-2)', borderRadius: 8, padding: '14px 16px' }}
             >
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{stripEmDash(s.title)}</div>
+              <div style={{ color: 'var(--wz-ink)', fontWeight: 700, fontSize: 14 }}>{stripEmDash(s.title)}</div>
               {s.description && (
-                <p style={{ color: '#b3b3b3', fontSize: 13, margin: '6px 0 0', lineHeight: 1.55 }}>{s.description}</p>
+                <p style={{ color: 'var(--wz-muted)', fontSize: 13, margin: '6px 0 0', lineHeight: 1.55 }}>{s.description}</p>
               )}
               {s.why && (
-                <p style={{ color: '#7d7d7d', fontSize: 12, margin: '8px 0 0', lineHeight: 1.5 }}>{s.why}</p>
+                <p style={{ color: 'var(--wz-muted)', fontSize: 12, margin: '8px 0 0', lineHeight: 1.5 }}>{s.why}</p>
               )}
               {refsLine && (
-                <p style={{ color: '#6b7280', fontSize: 11.5, margin: '8px 0 0', lineHeight: 1.5 }}>
-                  <span style={{ color: '#9A4FD1', fontWeight: 700 }}>Responde a:</span> {refsLine}
+                <p style={{ color: 'var(--wz-faint)', fontSize: 11.5, margin: '8px 0 0', lineHeight: 1.5 }}>
+                  <span style={{ color: 'var(--wz-blue)', fontWeight: 700 }}>Responde a:</span> {refsLine}
                 </p>
               )}
             </div>
@@ -1426,7 +1427,7 @@ const Typewriter: FC<{ text: string; speed?: number }> = ({ text: rawText, speed
 
 const SCALE = Array.from({ length: 11 }, (_, i) => i); // 0..10
 // Cor da nota (vermelho → âmbar → verde) e palavra de apoio, pra dar leitura visual ao 0–10.
-const scoreColor = (n: number): string => (n <= 3 ? '#e0564f' : n <= 6 ? '#e9a21a' : '#9A4FD1');
+const scoreColor = (n: number): string => (n <= 3 ? 'var(--wz-danger)' : n <= 6 ? 'var(--wz-warn)' : 'var(--wz-blue)');
 const scoreWord = (n?: number): string =>
   typeof n !== 'number' ? 'Toque numa nota' : n === 0 ? 'Não ajuda em nada' : n <= 3 ? 'Ajuda pouco' : n <= 6 ? 'Ajuda' : n <= 9 ? 'Ajuda bastante' : 'Ajuda muito';
 
@@ -1503,10 +1504,10 @@ export const PriorityScale: FC<{
   if (!chose) {
     return (
       <div className='nyta-card'>
-        <div style={{ color: '#fff', fontWeight: 800, fontSize: 16, marginBottom: 6 }}>
+        <div style={{ color: 'var(--wz-ink)', fontWeight: 800, fontSize: 16, marginBottom: 6 }}>
           Como você quer priorizar?
         </div>
-        <div style={{ color: '#b3b3b3', fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>
+        <div style={{ color: 'var(--wz-muted)', fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>
           São {list.length} estratégias. Não dá pra fazer tudo ao mesmo tempo, então a gente
           coloca em ordem de importância, começando pelas que mais te aproximam dos seus objetivos.
         </div>
@@ -1525,7 +1526,7 @@ export const PriorityScale: FC<{
             onClick={goManual}
           >
             <span style={{ fontWeight: 700 }}>Eu prefiro priorizar por conta própria</span>
-            <span style={{ fontWeight: 500, fontSize: 12, color: '#9a9a9a' }}>
+            <span style={{ fontWeight: 500, fontSize: 12, color: 'var(--wz-muted)' }}>
               Você decide a importância de cada uma, no seu ritmo
             </span>
           </button>
@@ -1537,7 +1538,7 @@ export const PriorityScale: FC<{
   if (booting) {
     return (
       <div className='nyta-card'>
-        <div style={{ color: '#b3b3b3', fontSize: 14, padding: '8px 2px' }}>
+        <div style={{ color: 'var(--wz-muted)', fontSize: 14, padding: '8px 2px' }}>
           Organizando suas estratégias por ordem de importância…
         </div>
       </div>
@@ -1564,10 +1565,10 @@ export const PriorityScale: FC<{
     if (minimized) {
       return (
         <div className='nyta-card'>
-          <div style={{ color: '#fff', fontWeight: 800, fontSize: 15, marginBottom: 6 }}>
+          <div style={{ color: 'var(--wz-ink)', fontWeight: 800, fontSize: 15, marginBottom: 6 }}>
             Sua ordem de prioridade está pronta
           </div>
-          <div style={{ color: '#b3b3b3', fontSize: 13, lineHeight: 1.5, marginBottom: 14 }}>
+          <div style={{ color: 'var(--wz-muted)', fontSize: 13, lineHeight: 1.5, marginBottom: 14 }}>
             {count > 0
               ? `${count} estratégia${count === 1 ? '' : 's'} selecionada${count === 1 ? '' : 's'} até agora.`
               : 'Reabra pra escolher as estratégias que viram tarefas.'}
@@ -1596,7 +1597,7 @@ export const PriorityScale: FC<{
         <div
           style={{
             position: 'relative', flex: 1, minWidth: 0,
-            background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 16,
+            background: 'var(--wz-surface)', border: '1px solid var(--wz-line-2)', borderRadius: 16,
             display: 'flex', flexDirection: 'column', overflow: 'hidden',
             animation: 'wizPillIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both',
           }}
@@ -1609,17 +1610,17 @@ export const PriorityScale: FC<{
             style={{
               position: 'absolute', top: 14, right: 14, zIndex: 2,
               background: 'transparent', border: 'none', cursor: 'pointer',
-              color: '#8a8a8a', padding: 6, borderRadius: 8, lineHeight: 0,
+              color: 'var(--wz-faint)', padding: 6, borderRadius: 8, lineHeight: 0,
             }}
           >
             <FiX size={18} />
           </button>
           <div style={{ padding: '22px 44px 12px 22px' }}>
-            <div style={{ fontFamily: 'var(--font-display)', color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>
+            <div style={{ fontFamily: 'var(--font-display)', color: 'var(--wz-ink)', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>
               Sua ordem de prioridade está pronta
             </div>
-            <div style={{ color: '#b3b3b3', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
-              Da mais importante para a menos. <b style={{ color: '#fff' }}>Selecione até 10 estratégias</b> que você
+            <div style={{ color: 'var(--wz-muted)', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
+              Da mais importante para a menos. <b style={{ color: 'var(--wz-ink)' }}>Selecione até 10 estratégias</b> que você
               quer transformar em tarefas agora, as outras ficam guardadas pra depois.
             </div>
           </div>
@@ -1634,28 +1635,28 @@ export const PriorityScale: FC<{
                   onClick={() => toggleSel(s.id)}
                   className="wiz-prio-item"
                   style={{
-                    background: on ? 'rgba(154, 79, 209,0.12)' : '#202020',
-                    border: `1px solid ${on ? '#9A4FD1' : 'transparent'}`,
+                    background: on ? 'var(--wz-blue-soft)' : 'var(--wz-surface-2)',
+                    border: `1px solid ${on ? 'var(--wz-blue)' : 'transparent'}`,
                   }}
                 >
-                  <span className="wiz-prio-num" style={{ color: on ? '#C97EF3' : '#7d7d7d' }}>
+                  <span className="wiz-prio-num" style={{ color: on ? 'var(--wz-blue)' : 'var(--wz-muted)' }}>
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <span
                     aria-hidden
                     className="wiz-prio-check"
-                    style={{ border: `2px solid ${on ? '#9A4FD1' : '#4a4a4a'}`, background: on ? '#9A4FD1' : 'transparent' }}
+                    style={{ border: `2px solid ${on ? 'var(--wz-blue)' : 'var(--wz-faint)'}`, background: on ? 'var(--wz-blue)' : 'transparent' }}
                   >
                     {on && <FiCheck size={14} />}
                   </span>
-                  <span className="wiz-prio-title" style={{ color: '#fff' }}>
+                  <span className="wiz-prio-title" style={{ color: 'var(--wz-ink)' }}>
                     {stripEmDash(s.title)}
                   </span>
                   <span
                     className="wiz-prio-pct"
                     style={{
-                      color: on ? '#C97EF3' : '#9a9a9a',
-                      background: on ? 'rgba(154, 79, 209,0.16)' : 'rgba(255,255,255,0.06)',
+                      color: on ? 'var(--wz-blue)' : 'var(--wz-muted)',
+                      background: on ? 'var(--wz-blue-soft)' : 'var(--wz-surface-2)',
                     }}
                   >
                     {pct}%
@@ -1665,13 +1666,13 @@ export const PriorityScale: FC<{
             })}
           </div>
 
-          <div style={{ padding: '12px 22px 18px', borderTop: '1px solid #232323' }}>
+          <div style={{ padding: '12px 22px 18px', borderTop: '1px solid var(--wz-line)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-              <span style={{ color: '#b3b3b3', fontSize: 12.5 }}>
-                <b style={{ color: '#fff' }}>{count}</b> de {ranked.length} selecionada{count === 1 ? '' : 's'}
+              <span style={{ color: 'var(--wz-muted)', fontSize: 12.5 }}>
+                <b style={{ color: 'var(--wz-ink)' }}>{count}</b> de {ranked.length} selecionada{count === 1 ? '' : 's'}
               </span>
               <button
-                style={{ background: 'none', border: 'none', color: '#9A4FD1', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                style={{ background: 'none', border: 'none', color: 'var(--wz-blue)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', padding: 0 }}
                 onClick={() => setSelected(count === ranked.length ? new Set() : new Set(ranked.map((s) => s.id)))}
               >
                 {count === ranked.length ? 'Limpar' : 'Selecionar todas'}
@@ -1756,34 +1757,34 @@ export const PriorityScale: FC<{
     <div className='nyta-card'>
       {/* Cabeçalho: estratégia atual + progresso global */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-        <span style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <span style={{ color: 'var(--wz-muted)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           Estratégia {idx + 1} de {list.length}
         </span>
-        <span style={{ color: '#7a7a7a', fontSize: 12, fontWeight: 600 }}>
+        <span style={{ color: 'var(--wz-muted)', fontSize: 12, fontWeight: 600 }}>
           {answeredSoFar + 1} de {list.length * totalObj}
         </span>
       </div>
-      <div style={{ height: 3, borderRadius: 3, background: '#1f1f1f', marginBottom: 14, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${(answeredSoFar / (list.length * totalObj)) * 100}%`, background: '#9A4FD1', borderRadius: 3, transition: 'width .3s ease' }} />
+      <div style={{ height: 3, borderRadius: 3, background: 'var(--wz-line)', marginBottom: 14, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${(answeredSoFar / (list.length * totalObj)) * 100}%`, background: 'var(--wz-blue)', borderRadius: 3, transition: 'width .3s ease' }} />
       </div>
 
       {/* UMA pergunta por vez: re-monta por key pra deslizar entrando */}
       {/* A estratégia (key=idx) só desliza quando MUDA de estratégia; o título fica estável. */}
       <div key={idx} style={{ animation: 'wizSlideInRight .28s ease both' }}>
-        <div style={{ background: '#121212', borderRadius: 12, padding: '16px 16px 18px' }}>
-          <div style={{ color: '#fff', fontSize: 18, fontWeight: 800, marginBottom: 12, lineHeight: 1.25 }}>
+        <div style={{ background: 'var(--wz-surface-2)', borderRadius: 12, padding: '16px 16px 18px' }}>
+          <div style={{ color: 'var(--wz-ink)', fontSize: 18, fontWeight: 800, marginBottom: 12, lineHeight: 1.25 }}>
             {stripEmDash(strategy.title)}
           </div>
-          <div style={{ height: 1, background: '#222', margin: '0 0 12px' }} />
+          <div style={{ height: 1, background: 'var(--wz-line)', margin: '0 0 12px' }} />
           {/* O objetivo (key=objIdx) anima a cada troca: fade-sobe + flash magenta, pra o usuário
               perceber que o objetivo mudou mesmo com a estratégia parada. */}
           <div key={objIdx} style={{ animation: 'wizObjSwap .32s ease both' }}>
-            <div style={{ color: '#6b7280', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 4 }}>
+            <div style={{ color: 'var(--wz-faint)', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 4 }}>
               OBJETIVO {objIdx + 1} DE {totalObj}
             </div>
-            <div style={{ color: '#b3b3b3', fontSize: 15, marginBottom: 16, lineHeight: 1.5, minHeight: 46 }}>
+            <div style={{ color: 'var(--wz-muted)', fontSize: 15, marginBottom: 16, lineHeight: 1.5, minHeight: 46 }}>
               Ajuda a conquistar o objetivo{' '}
-              <strong style={{ color: '#fff', fontSize: 17 }}>
+              <strong style={{ color: 'var(--wz-ink)', fontSize: 17 }}>
                 “<Typewriter text={objectives[objIdx] || ''} />”
               </strong>
               ?
@@ -1811,8 +1812,8 @@ export const PriorityScale: FC<{
                     height: h,
                     borderRadius: 6,
                     border: 'none',
-                    background: filled ? scoreColor(typeof shownVal === 'number' ? shownVal : n) : '#242424',
-                    color: filled ? 'rgba(0,0,0,0.65)' : '#666',
+                    background: filled ? scoreColor(typeof shownVal === 'number' ? shownVal : n) : 'var(--wz-line)',
+                    color: filled ? '#fff' : 'var(--wz-faint)',
                     fontSize: 11,
                     fontWeight: 800,
                     cursor: advancing ? 'default' : 'pointer',
@@ -1828,7 +1829,7 @@ export const PriorityScale: FC<{
               );
             })}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: '#6b7280', fontSize: 11, marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--wz-faint)', fontSize: 11, marginBottom: 12 }}>
             <span>0 · não ajuda</span>
             <span>10 · ajuda muito</span>
           </div>
@@ -1839,14 +1840,14 @@ export const PriorityScale: FC<{
               style={{
                 fontSize: 26,
                 fontWeight: 800,
-                color: typeof shownVal === 'number' ? scoreColor(shownVal) : '#3a3a3a',
+                color: typeof shownVal === 'number' ? scoreColor(shownVal) : 'var(--wz-faint)',
                 lineHeight: 1,
                 minWidth: 34,
               }}
             >
               {typeof shownVal === 'number' ? shownVal : '–'}
             </span>
-            <span style={{ color: typeof shownVal === 'number' ? '#fff' : '#6b7280', fontSize: 14, fontWeight: 600 }}>
+            <span style={{ color: typeof shownVal === 'number' ? 'var(--wz-ink)' : 'var(--wz-faint)', fontSize: 14, fontWeight: 600 }}>
               {scoreWord(shownVal)}
             </span>
           </div>
@@ -1860,7 +1861,7 @@ export const PriorityScale: FC<{
           </button>
         )}
         {!allComplete && (
-          <span style={{ color: '#7a7a7a', fontSize: 12, marginLeft: 'auto' }}>
+          <span style={{ color: 'var(--wz-muted)', fontSize: 12, marginLeft: 'auto' }}>
             Pontue todos os objetivos pra avançar.
           </span>
         )}
@@ -1897,13 +1898,13 @@ export const PlanScheduleSetup: FC<{
   const [months, setMonths] = useState(12);
   return (
     <div className='nyta-card'>
-      <div style={{ marginBottom: 4, color: '#fff', fontWeight: 800, fontSize: 16 }}>Quando você quer começar?</div>
-      <p style={{ color: '#b3b3b3', fontSize: 12.5, margin: '0 0 16px', lineHeight: 1.45 }}>
+      <div style={{ marginBottom: 4, color: 'var(--wz-ink)', fontWeight: 800, fontSize: 16 }}>Quando você quer começar?</div>
+      <p style={{ color: 'var(--wz-muted)', fontSize: 12.5, margin: '0 0 16px', lineHeight: 1.45 }}>
         Com a data de início e o prazo, eu já distribuo as tarefas pelo período, começando pelas
         estratégias mais prioritárias. Você ajusta tudo depois.
       </p>
 
-      <div style={{ color: '#7a7a7a', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+      <div style={{ color: 'var(--wz-muted)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
         Data de início
       </div>
       <DatePicker
@@ -1916,7 +1917,7 @@ export const PlanScheduleSetup: FC<{
         onChange={(d) => d && setStart(d)}
       />
 
-      <div style={{ color: '#7a7a7a', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
+      <div style={{ color: 'var(--wz-muted)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
         Em quanto tempo quer realizar
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
@@ -1932,17 +1933,17 @@ export const PlanScheduleSetup: FC<{
                 alignItems: 'flex-start',
                 gap: 2,
                 textAlign: 'left',
-                border: `1px solid ${active ? '#9A4FD1' : '#2a2a2a'}`,
-                background: active ? 'rgba(154, 79, 209, 0.12)' : '#121212',
-                color: '#e8e8e8',
+                border: `1px solid ${active ? 'var(--wz-blue)' : 'var(--wz-line-2)'}`,
+                background: active ? 'var(--wz-blue-soft)' : 'var(--wz-surface-2)',
+                color: 'var(--wz-text)',
                 borderRadius: 10,
                 padding: '12px 14px',
                 cursor: 'pointer',
                 transition: 'background .15s ease, border-color .15s ease',
               }}
             >
-              <span style={{ fontWeight: 700, fontSize: 14, color: active ? '#fff' : '#e8e8e8' }}>{o.label}</span>
-              <span style={{ fontSize: 11.5, color: '#7a7a7a' }}>{o.hint}</span>
+              <span style={{ fontWeight: 700, fontSize: 14, color: active ? 'var(--wz-blue)' : 'var(--wz-text)' }}>{o.label}</span>
+              <span style={{ fontSize: 11.5, color: 'var(--wz-muted)' }}>{o.hint}</span>
             </button>
           );
         })}
@@ -2010,8 +2011,8 @@ export const TimelineCard: FC<{
           return (
             <div key={s.id}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <span className='wiz-slot-rank' style={{ minWidth: 'auto', fontSize: 18, color: '#9A4FD1' }}>#{si + 1}</span>
-                <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, flex: 1 }}>{stripEmDash(s.title)}</span>
+                <span className='wiz-slot-rank' style={{ minWidth: 'auto', fontSize: 18, color: 'var(--wz-blue)' }}>#{si + 1}</span>
+                <span style={{ color: 'var(--wz-ink)', fontWeight: 700, fontSize: 13, flex: 1 }}>{stripEmDash(s.title)}</span>
               </div>
               <div className='wiz-timeline'>
                 {tasks.map((t) => (
@@ -2050,7 +2051,7 @@ export const TimelineCard: FC<{
                       />
                     ) : (
                       <span
-                        style={{ color: '#d0d0d0', fontSize: 13, flex: 1, cursor: 'text', lineHeight: '22px' }}
+                        style={{ color: 'var(--wz-text)', fontSize: 13, flex: 1, cursor: 'text', lineHeight: '22px' }}
                         onClick={() => setEditingDesc(t.id)}
                       >
                         {t.description}
@@ -2063,7 +2064,7 @@ export const TimelineCard: FC<{
                 ))}
                 <button
                   onClick={() => addTask(s.id)}
-                  style={{ background: 'transparent', border: '1px dashed #444', borderRadius: 9999, color: '#b3b3b3', fontSize: 12, fontWeight: 600, padding: '4px 12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 2 }}
+                  style={{ background: 'transparent', border: '1px dashed var(--wz-faint)', borderRadius: 9999, color: 'var(--wz-muted)', fontSize: 12, fontWeight: 600, padding: '4px 12px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 2 }}
                 >
                   <FiPlus size={12} /> Adicionar tarefa
                 </button>
@@ -2089,7 +2090,7 @@ export const FinalSummaryCard: FC<{
   onFinish: () => void;
 }> = ({ summary, concluded, onFinish }) => (
   <div className='nyta-card'>
-    <div className='nyta-md' style={{ color: '#d0d0d0', lineHeight: 1.7, fontSize: 14 }}>
+    <div className='nyta-md' style={{ color: 'var(--wz-text)', lineHeight: 1.7, fontSize: 14 }}>
       <ReactMarkdown>{summary}</ReactMarkdown>
     </div>
     <div className='nyta-card-actions'>

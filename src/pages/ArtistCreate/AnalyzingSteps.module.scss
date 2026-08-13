@@ -68,6 +68,11 @@
   color: #fff; // branco no centro; a máscara esmaece nas pontas
 }
 
+.light {
+  .icon { color: #3361ff; }
+  .label { color: #52668d; }
+}
+
 @keyframes analyzeFade {
   from { opacity: 0; }
   to { opacity: 1; }

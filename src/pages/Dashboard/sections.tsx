@@ -58,7 +58,7 @@ export const ConnectSpotify: FC<{ artist: Artist }> = ({ artist }) => {
         <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>Conectar ao Spotify</h2>
       </div>
       <p style={{ color: '#b3b3b3', fontSize: 13, margin: '0 0 12px' }}>
-        Vincule ao perfil do Spotify para carregar métricas, seguidores e catálogo automaticamente.
+        Vincule ao perfil do Spotify para carregar métricas, seguidores e músicas automaticamente.
       </p>
 
       {!linking ? (

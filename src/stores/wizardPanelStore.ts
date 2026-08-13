@@ -8,33 +8,31 @@ interface WizardPanelState {
   active: boolean; // o Wizard está montado (mostra/esconde a coluna no layout)
   open: boolean; // o usuário deixou a coluna visível
   content: ArtistContent;
-  artistName: string;
-  progress: number;
   // Persistência publicada pelo Wizard: permite à coluna editar entregáveis (visão, missão…)
   // gravando pelo MESMO caminho do chat (fila de persist + updateArtistContent).
   persist: ((patch: Partial<ArtistContent>) => Promise<void>) | null;
-  setData: (d: { content: ArtistContent; artistName: string; progress: number }) => void;
+  setData: (d: { content: ArtistContent }) => void;
   setPersist: (fn: ((patch: Partial<ArtistContent>) => Promise<void>) | null) => void;
   setOpen: (open: boolean) => void;
   toggle: () => void;
-  activate: () => void;
+  // `open` inicial é decidido por quem monta o Wizard: no desktop a coluna nasce aberta; no
+  // mobile ela é uma folha de tela cheia e nascer aberta esconderia a própria conversa.
+  activate: (open: boolean) => void;
   deactivate: () => void;
 }
 
 export const useWizardPanelStore = create<WizardPanelState>((set) => ({
   active: false,
-  // Nasce FECHADA: o usuário abre pelo botão "Etapa X de 9 · …" no cabeçalho do chat.
   open: false,
   content: {},
-  artistName: '',
-  progress: 0,
   persist: null,
   setData: (d) => set(d),
   setPersist: (fn) => set({ persist: fn }),
   setOpen: (open) => set({ open }),
   toggle: () => set((s) => ({ open: !s.open })),
-  // Reset de open no mount: cada abertura da página começa com a coluna oculta,
-  // mesmo que o usuário a tenha deixado aberta numa visita anterior da sessão.
-  activate: () => set({ active: true, open: false }),
+  // Reset de `open` no mount: cada entrada na tela do wizard recomeça do padrão de quem montou,
+  // sem herdar o que o usuário fez numa visita anterior da sessão. Dentro da visita, fechar é
+  // decisão dele e nada reabre a coluna sozinho.
+  activate: (open) => set({ active: true, open }),
   deactivate: () => set({ active: false, persist: null }),
 }));

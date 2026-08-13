@@ -1,6 +1,6 @@
 /**
  * Unit tests for Catalog page integration with track limit feature.
- * Tests: TrackCounter display, Nova Faixa button states, UpsellModal trigger, counter update.
+ * Tests: TrackCounter display, Nova Música button states, UpsellModal trigger, counter update.
  *
  * Validates: Requirements 2, 3, 4, 5 from catalog-track-limit spec.
  */
@@ -171,7 +171,7 @@ describe('Catalog Page - Track Limit Integration', () => {
     mockListGenres.mockImplementation(() => Promise.resolve([]));
   });
 
-  describe('5.1: Free user with 5 tracks sees counter "5/10 faixas" and enabled button', () => {
+  describe('5.1: Free user with 5 tracks sees counter "5/10 músicas" and enabled button', () => {
     it('shows counter with correct count and enabled button style', async () => {
       mockCatalogItems = Array.from({ length: 5 }, (_, i) =>
         makeCatalogItem({ id: `track-${i}`, title: `Track ${i}` })
@@ -182,15 +182,15 @@ describe('Catalog Page - Track Limit Integration', () => {
       // Wait for items to load and the manual tab to become active
       // (component auto-switches to manual when no spotify tracks)
       await waitFor(() => {
-        expect(screen.getByText('5/10 faixas')).toBeInTheDocument();
+        expect(screen.getByText('5/10 músicas')).toBeInTheDocument();
       });
 
       // Counter should not be in red (not at limit)
-      const counter = screen.getByText('5/10 faixas');
+      const counter = screen.getByText('5/10 músicas');
       expect(counter).toHaveStyle({ color: '#b3b3b3' });
 
-      // Nova faixa button should be enabled (full opacity, pointer cursor)
-      const button = screen.getByRole('button', { name: /nova faixa/i });
+      // Nova música button should be enabled (full opacity, pointer cursor)
+      const button = screen.getByRole('button', { name: /nova música/i });
       expect(button).toHaveStyle({ opacity: 1, cursor: 'pointer' });
     });
   });
@@ -205,15 +205,15 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       // Wait for counter to appear
       await waitFor(() => {
-        expect(screen.getByText('10/10 faixas')).toBeInTheDocument();
+        expect(screen.getByText('10/10 músicas')).toBeInTheDocument();
       });
 
       // Counter should be red
-      const counter = screen.getByText('10/10 faixas');
+      const counter = screen.getByText('10/10 músicas');
       expect(counter).toHaveStyle({ color: '#e53e3e' });
 
       // Button should have disabled style
-      const button = screen.getByRole('button', { name: /nova faixa/i });
+      const button = screen.getByRole('button', { name: /nova música/i });
       expect(button).toHaveStyle({ opacity: 0.5, cursor: 'not-allowed' });
 
       // Clicking the button should open UpsellModal, not TrackModal
@@ -238,14 +238,14 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       // Wait for content to load (manual tab auto-activates)
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /nova faixa/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /nova música/i })).toBeInTheDocument();
       });
 
       // Counter should NOT be visible (maxTracks === Infinity)
-      expect(screen.queryByText(/\d+\/\d+ faixas/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/\d+\/\d+ músicas/i)).not.toBeInTheDocument();
 
       // Button should be fully enabled
-      const button = screen.getByRole('button', { name: /nova faixa/i });
+      const button = screen.getByRole('button', { name: /nova música/i });
       expect(button).toHaveStyle({ opacity: 1, cursor: 'pointer' });
 
       // Clicking should open TrackModal, not UpsellModal
@@ -268,11 +268,11 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       // Wait for initial counter
       await waitFor(() => {
-        expect(screen.getByText('5/10 faixas')).toBeInTheDocument();
+        expect(screen.getByText('5/10 músicas')).toBeInTheDocument();
       });
 
       // Open the TrackModal by clicking the button
-      const button = screen.getByRole('button', { name: /nova faixa/i });
+      const button = screen.getByRole('button', { name: /nova música/i });
       fireEvent.click(button);
 
       await waitFor(() => {
@@ -287,7 +287,7 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       // Counter should update to 6/10
       await waitFor(() => {
-        expect(screen.getByText('6/10 faixas')).toBeInTheDocument();
+        expect(screen.getByText('6/10 músicas')).toBeInTheDocument();
       });
     });
   });
@@ -306,11 +306,11 @@ describe('Catalog Page - Track Limit Integration', () => {
         expect(screen.getByText('Noite Rock')).toBeInTheDocument();
       });
 
-      expect(screen.queryByPlaceholderText('Buscar no catálogo')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('Buscar em Músicas')).not.toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
 
-      const filters = screen.getByRole('dialog', { name: 'Filtros do catálogo' });
-      expect(within(filters).getByPlaceholderText('Buscar no catálogo')).toBeInTheDocument();
+      const filters = screen.getByRole('dialog', { name: 'Filtros de Músicas' });
+      expect(within(filters).getByPlaceholderText('Buscar em Músicas')).toBeInTheDocument();
       expect(within(filters).getByText('Status')).toBeInTheDocument();
       expect(within(filters).getByText('Áudio')).toBeInTheDocument();
       expect(within(filters).getByText('Ordenar')).toBeInTheDocument();
@@ -323,13 +323,13 @@ describe('Catalog Page - Track Limit Integration', () => {
       fireEvent.click(within(filters).getByRole('button', { name: 'Limpar' }));
 
       fireEvent.change(
-        within(filters).getByPlaceholderText('Buscar no catálogo'),
+        within(filters).getByPlaceholderText('Buscar em Músicas'),
         { target: { value: 'samba' } }
       );
 
       expect(screen.getByText('Meu Samba')).toBeInTheDocument();
       expect(screen.queryByText('Noite Rock')).not.toBeInTheDocument();
-      expect(screen.queryByText('1 de 2 faixa(s)')).not.toBeInTheDocument();
+      expect(screen.queryByText('1 de 2 música(s)')).not.toBeInTheDocument();
     });
   });
 });

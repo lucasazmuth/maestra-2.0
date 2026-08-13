@@ -1,6 +1,7 @@
 import { FC, useEffect, useMemo, useState, useCallback } from 'react';
 import { message } from 'antd';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 
 import { useAppSelector } from '../../store/store';
 import { Spinner } from '../../components/spinner/spinner';
@@ -57,6 +58,7 @@ function groupByArtist(
 
 const Notifications: FC = () => {
   const user = useAppSelector((s) => s.auth.user);
+  const navigate = useNavigate();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -64,28 +66,28 @@ const Notifications: FC = () => {
   const [hasMore, setHasMore] = useState(false);
   const [artistNames, setArtistNames] = useState<Record<string, string>>({});
 
-  // Fetch first page
-  useEffect(() => {
+  const loadFirstPage = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
     setPage(0);
-    notifsDb
-      .listNotificationsPaginated(user.id, 0)
-      .then(async (result) => {
-        setItems(result.items);
-        setHasMore(result.hasMore);
-        // Fetch artist names for grouping
-        const artistIds = Array.from(
-          new Set(result.items.map((n) => n.artist_id).filter(Boolean) as string[])
-        );
-        if (artistIds.length) {
-          const names = await notifsDb.fetchArtistNames(artistIds);
-          setArtistNames(names);
-        }
-      })
-      .catch(() => message.error('Erro ao carregar notificações'))
-      .finally(() => setLoading(false));
+    try {
+      const result = await notifsDb.listNotificationsPaginated(user.id, 0);
+      setItems(result.items);
+      setHasMore(result.hasMore);
+      const artistIds = Array.from(
+        new Set(result.items.map((n) => n.artist_id).filter(Boolean) as string[])
+      );
+      setArtistNames(artistIds.length ? await notifsDb.fetchArtistNames(artistIds) : {});
+    } catch {
+      message.error('Erro ao carregar notificações');
+    } finally {
+      setLoading(false);
+    }
   }, [user?.id]);
+
+  useEffect(() => {
+    void loadFirstPage();
+  }, [loadFirstPage]);
 
   // Mantém a lista viva enquanto a tela está aberta. O RLS da tabela continua
   // limitando os eventos ao próprio usuário.
@@ -143,197 +145,100 @@ const Notifications: FC = () => {
   }, [user?.id, page, loadingMore, artistNames]);
 
   const markRead = async (id: string) => {
-    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    await notifsDb.markAsRead(id).catch(() => {});
+    try {
+      await notifsDb.markAsRead(id);
+      setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    } catch {
+      message.error('Não foi possível marcar a notificação como lida');
+    }
   };
 
   const markAll = async () => {
     if (!user?.id) return;
-    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
-    await notifsDb.markAllAsRead(user.id).catch(() => {});
+    try {
+      await notifsDb.markAllAsRead(user.id);
+      setItems((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch {
+      message.error('Não foi possível marcar as notificações como lidas');
+    }
   };
 
   const clearAll = async () => {
     if (!user?.id) return;
-    setItems([]);
-    await notifsDb.clearNotifications(user.id).catch(() => {});
+    if (!window.confirm('Limpar todas as notificações? Esta ação não pode ser desfeita.')) return;
+    try {
+      await notifsDb.clearNotifications(user.id);
+      setItems([]);
+      setArtistNames({});
+      setHasMore(false);
+    } catch {
+      message.error('Não foi possível limpar as notificações');
+    }
+  };
+
+  const openNotification = async (notification: NotificationItem) => {
+    if (!notification.read) await markRead(notification.id);
+    if (notification.link?.startsWith('/')) navigate(notification.link);
   };
 
   // Group notifications by artist
   const groups = useMemo(() => groupByArtist(items, artistNames), [items, artistNames]);
 
   return (
-    <div style={{ padding: 24 }}>
-      <div
-        className="notifications-header"
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 20,
-        }}
-      >
-        <h1
-          className="notifications-title"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            fontSize: 'clamp(24px, 3vw, 28px)',
-            color: '#fff',
-            margin: 0,
-          }}
-        >
-          Notificações
-        </h1>
+    <div className="rail-page page-view notifications-page">
+      <header>
+        <div>
+          <p>CENTRAL DO USUÁRIO</p>
+          <h1>Notificações</h1>
+          <span>Acompanhe avisos da sua conta, agenda e atividades recentes.</span>
+        </div>
         {!!items.length && (
-          <div className="notifications-actions" style={{ display: 'flex', gap: 8 }}>
-            <button className="notifications-action" onClick={markAll} style={ghostBtn}>
-              Marcar todas como lidas
-            </button>
-            <button className="notifications-action" onClick={clearAll} style={{ ...ghostBtn, color: '#e91429' }}>
-              Limpar
-            </button>
+          <div className="notifications-actions">
+            <button type="button" onClick={markAll}>Marcar tudo como lido</button>
+            <button type="button" className="notifications-clear" onClick={clearAll}>Limpar</button>
           </div>
         )}
-      </div>
+      </header>
 
       <Spinner loading={loading && !items.length}>
         {!items.length ? (
-          <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>
-            Nenhuma notificação.
-          </div>
+          <div className="notifications-empty">Nenhuma notificação.</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="notifications-groups">
             {groups.map((group) => (
               <section key={group.artistId} aria-label={`Notificações de ${group.artistName}`}>
-                {/* Group header (only show if there are automated notifications) */}
-                {group.artistId !== '__general__' && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      marginBottom: 10,
-                      paddingBottom: 6,
-                      borderBottom: '1px solid #282828',
-                    }}
-                  >
-                    <h2
-                      style={{
-                        color: '#fff',
-                        fontSize: 16,
-                        fontWeight: 700,
-                        margin: 0,
-                      }}
-                    >
-                      {group.artistName}
-                    </h2>
-                    <span
-                      style={{
-                        color: '#6b7280',
-                        fontSize: 12,
-                        marginLeft: 'auto',
-                      }}
-                    >
-                      {group.notifications.length}{' '}
-                      {group.notifications.length === 1 ? 'lembrete' : 'lembretes'}
-                    </span>
-                  </div>
-                )}
-
-                {/* General group header */}
-                {group.artistId === '__general__' && groups.length > 1 && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      marginBottom: 10,
-                      paddingBottom: 6,
-                      borderBottom: '1px solid #282828',
-                    }}
-                  >
-                    <h2
-                      style={{
-                        color: '#fff',
-                        fontSize: 16,
-                        fontWeight: 700,
-                        margin: 0,
-                      }}
-                    >
-                      Geral
-                    </h2>
-                  </div>
-                )}
-
-                {/* Notification items */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <header className="notifications-group-heading">
+                  <h2>{group.artistName}</h2>
+                  <span>{group.notifications.length} {group.notifications.length === 1 ? 'lembrete' : 'lembretes'}</span>
+                </header>
+                <div className="notifications-list">
                   {group.notifications.map((n) => (
-                    <div
+                    <button
+                      type="button"
                       key={n.id}
-                      onClick={() => !n.read && markRead(n.id)}
-                      role={n.read ? undefined : 'button'}
-                      tabIndex={n.read ? undefined : 0}
-                      onKeyDown={(e) => {
-                        if (!n.read && (e.key === 'Enter' || e.key === ' ')) {
-                          e.preventDefault();
-                          markRead(n.id);
-                        }
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 12,
-                        padding: 14,
-                        borderRadius: 8,
-                        background: n.read ? '#141414' : '#1f1f1f',
-                        cursor: n.read ? 'default' : 'pointer',
-                      }}
+                      className={n.read ? 'is-read' : 'is-unread'}
+                      onClick={() => void openNotification(n)}
+                      aria-label={`${n.title}${n.read ? '' : ', não lida'}`}
                     >
-                      <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 8,
-                            flexWrap: 'wrap',
-                          }}
-                        >
-                          <span style={{ color: '#fff', fontWeight: 700 }}>{n.title}</span>
-                        </div>
-                        {n.message && (
-                          <div style={{ color: '#b3b3b3', fontSize: 13, marginTop: 2 }}>
-                            {n.message}
-                          </div>
-                        )}
-                        {n.created_at && (
-                          <div style={{ color: '#6b7280', fontSize: 12, marginTop: 4 }}>
-                            {dayjs(n.created_at).format('DD/MM/YYYY HH:mm')}
-                          </div>
-                        )}
+                      <i aria-hidden="true">♟</i>
+                      <div>
+                        <h3>{n.title}</h3>
+                        {n.message && <p>{n.message}</p>}
                       </div>
-                      {!n.read && (
-                        <span style={{ color: '#9A4FD1', fontSize: 11, fontWeight: 700 }}>
-                          NOVO
-                        </span>
-                      )}
-                    </div>
+                      <time>{n.created_at ? dayjs(n.created_at).format('DD/MM/YYYY HH:mm') : 'Agora'}</time>
+                      {!n.read && <b>Novo</b>}
+                    </button>
                   ))}
                 </div>
               </section>
             ))}
 
-            {/* Pagination: Load More */}
             {hasMore && (
-              <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <div className="notifications-more">
                 <button
+                  type="button"
                   onClick={loadMore}
                   disabled={loadingMore}
-                  style={{
-                    ...ghostBtn,
-                    opacity: loadingMore ? 0.5 : 1,
-                    cursor: loadingMore ? 'not-allowed' : 'pointer',
-                  }}
                 >
                   {loadingMore ? 'Carregando...' : 'Carregar mais'}
                 </button>
@@ -344,17 +249,6 @@ const Notifications: FC = () => {
       </Spinner>
     </div>
   );
-};
-
-const ghostBtn: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.1)',
-  border: 'none',
-  color: '#fff',
-  borderRadius: 9999,
-  padding: '8px 16px',
-  cursor: 'pointer',
-  fontWeight: 700,
-  fontSize: 13,
 };
 
 export default Notifications;

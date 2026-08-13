@@ -16,7 +16,7 @@ import { MessageList } from './components/MessageList';
 
 const GREETING_TEXT =
   'Oi! Eu sou a Nyta, sua assistente estratégica aqui na Maestra. ' +
-  'Pode me perguntar qualquer coisa sobre seu planejamento, catálogo, agenda ou equipe — ' +
+  'Pode me perguntar qualquer coisa sobre seu planejamento, músicas, agenda ou equipe — ' +
   'e eu também posso executar ações por você, sempre com sua confirmação. Como posso te ajudar?';
 
 // ─── Component ────────────────────────────────────────────────────────────────

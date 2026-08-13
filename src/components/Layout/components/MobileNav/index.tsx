@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   SystemHomeIcon, PlanoAcaoIcon, CatalogoIcon, AgendaIcon, MoreIcon,
-  DiagnosticoIcon, PlanejamentoIcon, EquipeIcon,
+  DiagnosticoIcon, PlanejamentoIcon, EquipeIcon, MarketingIcon,
 } from '../../../Icons/system';
 import { useAppSelector } from '../../../../store/store';
 import { useNytaModal } from '../../../../hooks/useNytaModal';
@@ -33,7 +33,7 @@ export const MobileNav: FC = () => {
   const location = useLocation();
   const [t] = useTranslation(['navigation']);
   const [moreOpen, setMoreOpen] = useState(false);
-  const { open: openNyta, isOpen: nytaOpen } = useNytaModal();
+  const { isOpen: nytaOpen } = useNytaModal();
   // Artista pela rota; senão o atual (setado ao visitar qualquer módulo do artista) — assim a
   // navbar segue visível em /settings, /notifications, /assinatura etc.
   const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
@@ -52,10 +52,11 @@ export const MobileNav: FC = () => {
   ];
   // Restante dos módulos, dentro do "Mais".
   const more: Item[] = [
-    { icon: <CatalogoIcon size={22} />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog' },
+    { icon: <CatalogoIcon size={22} />, label: t('Catalog', { defaultValue: 'Músicas' }), suffix: 'catalog' },
     { icon: <DiagnosticoIcon size={22} />, label: t('REAL Diagnostic', { defaultValue: 'Diagnóstico REAL' }), suffix: 'diagnostico' },
     { icon: <PlanejamentoIcon size={22} />, label: t('Planning', { defaultValue: 'Plano estratégico' }), suffix: 'perfil' },
     { icon: <EquipeIcon size={22} />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team' },
+    { icon: <MarketingIcon size={22} />, label: t('Marketing', { defaultValue: 'Marketing' }), suffix: 'marketing' },
   ];
 
   const isActive = (suffix: string) =>
@@ -71,7 +72,7 @@ export const MobileNav: FC = () => {
 
   const goNyta = () => {
     setMoreOpen(false);
-    openNyta();
+    navigate(`/artists/${artistId}/nyta`);
   };
 
   const renderItem = (it: Item) => {
@@ -114,7 +115,7 @@ export const MobileNav: FC = () => {
 
         {/* Nyta IA — centro da barra: o avatar abre o modal do assistente. */}
         <button
-          className={`mobile-nav-item mobile-nav-item--nyta${nytaOpen ? ' mobile-nav-item--active' : ''}`}
+          className={`mobile-nav-item mobile-nav-item--nyta${nytaOpen || location.pathname.endsWith('/nyta') ? ' mobile-nav-item--active' : ''}`}
           aria-label='Nyta IA'
           onClick={goNyta}
         >

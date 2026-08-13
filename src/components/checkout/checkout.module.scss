@@ -125,10 +125,6 @@ $muted2: #6f6f78;
 .methodBrands svg { font-size: 28px; }
 .methodBody { padding: 0 16px 18px; }
 
-// ─── Bandeiras + formulário de cartão ───────────────────────────────────────────
-.cardBrandsRow { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
-.cardBrandsRow svg { font-size: 30px; color: #fff; opacity: 0.92; }
-
 .fieldStack { display: flex; flex-direction: column; gap: 13px; }
 .field { display: flex; flex-direction: column; min-width: 0; }
 .fieldRow { display: flex; gap: 12px; > * { flex: 1; min-width: 0; } }
@@ -312,3 +308,157 @@ $muted2: #6f6f78;
 .compareList li::before { content: ''; position: absolute; left: 3px; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: $muted; }
 .compareColPro .compareList li::before { background: $green; }
 .compareCta { margin-top: 22px; }
+
+// Variante clara usada no desbloqueio do planejamento. Mantém o kit de checkout
+// reutilizável, mas acompanha a superfície clara do novo produto.
+.light {
+  color: #52668d;
+
+  :global(.ant-input),
+  :global(.ant-input-number),
+  :global(.ant-input-number-affix-wrapper),
+  :global(.ant-select-selector) {
+    background: #fff !important;
+    border-color: #d5e0f0 !important;
+    color: #52668d !important;
+  }
+  :global(.ant-input::placeholder), :global(.ant-input-number-input::placeholder) { color: #91a1bb !important; }
+  :global(.ant-input:hover), :global(.ant-input:focus),
+  :global(.ant-input-number:hover), :global(.ant-input-number-focused),
+  :global(.ant-input-number-affix-wrapper:hover), :global(.ant-input-number-affix-wrapper-focused),
+  :global(.ant-select-focused .ant-select-selector), :global(.ant-select-selector:hover) {
+    border-color: #3361ff !important;
+    box-shadow: 0 0 0 3px rgba(51, 97, 255, 0.12) !important;
+  }
+  :global(.ant-input-number-input), :global(.ant-select-selection-item) { color: #52668d !important; }
+  :global(.ant-select-arrow), :global(.ant-input-prefix) { color: #7890b4 !important; }
+
+  // Nos Inputs com prefixo, o contorno pertence ao wrapper do Ant Design. Sem
+  // esta regra, os campos do cartão se confundem com a superfície do painel.
+  .field {
+    :global(.ant-input-affix-wrapper),
+    :global(.ant-input-number-affix-wrapper),
+    :global(.ant-input-number),
+    :global(.ant-select-selector) {
+      min-height: 46px;
+      background: #fff !important;
+      border: 1.5px solid #aebfda !important;
+      border-radius: 10px !important;
+      box-shadow: 0 1px 3px rgba(51, 72, 110, 0.05);
+    }
+
+    :global(.ant-input-affix-wrapper:hover),
+    :global(.ant-input-affix-wrapper-focused),
+    :global(.ant-input-number-affix-wrapper:hover),
+    :global(.ant-input-number-affix-wrapper-focused),
+    :global(.ant-input-number:hover),
+    :global(.ant-input-number-focused),
+    :global(.ant-select-focused .ant-select-selector),
+    :global(.ant-select-selector:hover) {
+      border-color: #3361ff !important;
+      box-shadow: 0 0 0 3px rgba(51, 97, 255, 0.12) !important;
+    }
+  }
+
+  .account, .panel, .cart {
+    background: #fff;
+    border-color: #d9e3f1;
+    box-shadow: 0 10px 26px rgba(51, 72, 110, 0.06);
+  }
+  .accountCheck, .panelHeadIcon, .cartItemIcon, .cartIncludesIcon { background: #edf2ff; color: #3361ff; }
+  .accountEmail, .panelTitle, .methodLabel, .cartTitle, .cartItemName,
+  .cartItemPrice, .cartRowStrong, .timelineLabel, .timelineValue { color: #52668d; }
+  .fieldLabel, .fieldIcon, .fieldHint, .cartSelectLabel, .lockedFieldLabel,
+  .pixNote, .secure, .receiverNote, .timelineHint { color: #7185aa; }
+
+  .method { border-color: #d8e2f1; }
+  .method:hover { border-color: #aac0ef; }
+  .methodOn { border-color: #3361ff; background: #f5f8ff; }
+  .methodRadio { border-color: #9aafce; }
+  .methodOn .methodRadio { border-color: #3361ff; }
+  .methodOn .methodRadio::after { background: #3361ff; }
+  .methodBrands { color: #52668d; }
+
+  .couponBtn { border-color: #d5e0f0; background: #fff; color: #52668d; }
+  .couponBtn:hover:not(:disabled) { background: #edf2ff; }
+  .couponRow {
+    gap: 12px;
+
+    :global(.ant-input-affix-wrapper) {
+      min-height: 48px;
+      background: #fff !important;
+      border: 1px solid #aebfda !important;
+      border-radius: 10px !important;
+      box-shadow: 0 2px 6px rgba(51, 72, 110, 0.06);
+    }
+
+    :global(.ant-input-affix-wrapper:hover),
+    :global(.ant-input-affix-wrapper-focused) {
+      border-color: #3361ff !important;
+      box-shadow: 0 0 0 3px rgba(51, 97, 255, 0.12) !important;
+    }
+  }
+  .couponBtn {
+    min-width: 94px;
+    min-height: 48px;
+    border-color: #d5e0f0;
+    background: #f5f8ff;
+  }
+  .couponBtn:disabled { opacity: 1; color: #91a1bb; background: #f7f9fc; }
+  .couponApplied { background: #edf2ff; border-color: #b9cdf9; color: #3361ff; }
+  .couponApplied button { color: #7185aa; }
+  .couponApplied button:hover { color: #3361ff; }
+  .lockedField { background: #f8faff; border-color: #d9e3f1; }
+  .lockedFieldValue { color: #52668d; }
+
+  .cartSelectRow, .cartIncludes, .cartRow, .timeline { border-color: #e2e9f4; }
+  .cartItemSub { color: #3361ff; }
+  .cartItemSubMuted, .cartIncludes li, .cartRow, .timelineLabelMuted, .cartCheckLabel { color: #61749a; }
+  .timelineDot { border-color: #3361ff; background: #3361ff; }
+  .timelineDotOpen { background: #fff; border-color: #9aafce; }
+  .timelineLine { background: #d8e3f3; }
+  .cartCheckBox { border-color: #9aafce; color: #fff; }
+  .cartCheckBoxOn { background: #3361ff; border-color: #3361ff; }
+  .cartLegal, .cartLegal a, .cartLegal strong { color: #61749a; }
+  .cartLegal a:hover { color: #3361ff; }
+
+  .payBtn {
+    background: #3361ff; color: #fff; border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(51, 97, 255, 0.2);
+  }
+  .payBtn:hover:not(:disabled) { background: #244ce0; }
+  .receiverNote strong { color: #52668d; }
+  .errorMsg { background: #fff1f2; border-color: #fecdd3; color: #c32645; }
+  .errorMsgIcon { color: #dc3152; }
+}
+
+// O menu do Select é renderizado fora do layout do checkout pelo Ant Design.
+// Esta classe é fornecida pelo popupClassName na tela de desbloqueio.
+:global(.checkout-installments-dropdown) {
+  padding: 6px !important;
+  background: #fff !important;
+  border: 1px solid #aebfda !important;
+  border-radius: 10px !important;
+  box-shadow: 0 12px 28px rgba(51, 72, 110, 0.16) !important;
+
+  :global(.ant-select-item) {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px !important;
+    border-radius: 7px;
+    color: #52668d !important;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  :global(.ant-select-item-option-active:not(.ant-select-item-option-disabled)),
+  :global(.ant-select-item-option-selected:not(.ant-select-item-option-disabled)) {
+    background: #edf2ff !important;
+    color: #2b56d8 !important;
+  }
+
+  :global(.ant-select-item-option-selected .ant-select-item-option-state) {
+    color: #3361ff !important;
+  }
+}

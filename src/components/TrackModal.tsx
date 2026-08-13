@@ -339,7 +339,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
 
   const handleSave = async () => {
     if (!draft.title?.trim()) {
-      message.warning('Informe o título da faixa (aba Informações) antes de salvar.');
+      message.warning('Informe o título da música (aba Informações) antes de salvar.');
       return;
     }
     setSaving(true);
@@ -387,23 +387,23 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
       rootClassName={modalStyles.modal}
       title={
         <div className={modalStyles.heading}>
-          <span className={modalStyles.kicker}>Faixa</span>
+          <span className={modalStyles.kicker}>Música</span>
           <span className={modalStyles.title}>
-            {draft.title?.trim() || (item ? 'Editar faixa' : 'Nova faixa')}
+            {draft.title?.trim() || (item ? 'Editar música' : 'Nova música')}
           </span>
           <span className={modalStyles.subtitle}>
             {item
-              ? 'Atualize informações, arquivos e créditos do catálogo.'
-              : 'Organize informações, arquivos e créditos da nova faixa.'}
+              ? 'Atualize informações, arquivos e créditos de Músicas.'
+              : 'Organize informações, arquivos e créditos da nova música.'}
           </span>
         </div>
       }
       footer={
         <div className={modalStyles.footer}>
-          {/* Excluir vive AQUI (não na linha do catálogo) — só na edição de uma faixa existente. */}
+          {/* Excluir vive AQUI (não na linha de músicas) — só na edição de uma música existente. */}
           {item && onDelete && (
             <Popconfirm
-              title='Excluir faixa?'
+              title='Excluir música?'
               description='Esta ação não pode ser desfeita.'
               okText='Excluir'
               cancelText='Cancelar'
@@ -417,7 +417,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                 icon={<FiTrash2 />}
                 loading={deleting}
               >
-                Excluir faixa
+                Excluir música
               </Button>
             </Popconfirm>
           )}
@@ -441,7 +441,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                 <label className={modalStyles.field}>
                   <span>Título</span>
                   <Input
-                    placeholder='Título da faixa'
+                    placeholder='Título da música'
                     value={draft.title}
                     onChange={(e) => set({ title: e.target.value })}
                   />
@@ -635,7 +635,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                 </div>
                 {(draft.history || []).length === 0 ? (
                   <div style={{ color: '#888', fontSize: 13, padding: '8px 0' }}>
-                    Nenhuma observação ainda. As anotações são salvas junto com a faixa.
+                    Nenhuma observação ainda. As anotações são salvas junto com a música.
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

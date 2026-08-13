@@ -1,7 +1,6 @@
 import { FC } from 'react';
 import { Input, Spin } from 'antd';
 import { FiCreditCard, FiUser, FiCalendar, FiLock, FiSmartphone, FiMapPin } from 'react-icons/fi';
-import { FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover } from 'react-icons/fa';
 
 import { formatCardNumber, formatExpiry, formatPhone, formatCep, formatCpfCnpj } from '../../utils/asaasForm';
 import type { CheckoutForm } from './useCheckoutForm';
@@ -25,17 +24,11 @@ export const CpfField: FC<{ form: CheckoutForm }> = ({ form }) => (
   </div>
 );
 
-// Formulário de cartão — campos rotulados, com ícones e bandeiras (estilo Adobe).
-export const CardForm: FC<{ form: CheckoutForm; showBrands?: boolean }> = ({ form, showBrands = true }) => {
+// Formulário de cartão — as bandeiras ficam no cabeçalho do método de pagamento.
+export const CardForm: FC<{ form: CheckoutForm; brands?: unknown }> = ({ form }) => {
   const e = form.fieldErrors;
   return (
     <div className={styles.fieldStack}>
-      {showBrands && (
-        <div className={styles.cardBrandsRow}>
-          <FaCcVisa /><FaCcMastercard /><FaCcAmex /><FaCcDiscover />
-        </div>
-      )}
-
       <div className={styles.field}>
         <label className={styles.fieldLabel}>Número do cartão</label>
         <Input
