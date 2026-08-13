@@ -8,7 +8,7 @@ import { FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icon
 import { listGenres } from '../../../services/db/genres';
 import { searchCities } from '../../../services/db/cities';
 import { TASK_OWNER_SELF, MAX_OBJECTIVES } from '../../../constants/maestra';
-import { AiButton, ghostBtn, primaryBtn } from '../components';
+import { AiButton, disabledBtn, ghostBtn, primaryBtn } from '../components';
 import { SuccessConfetti } from '../../../components/SuccessConfetti';
 import { AiGlow } from '../../../components/AiGlow';
 import { ReferenceMindMap } from '../../../components/ReferenceMindMap';
@@ -636,7 +636,7 @@ export const CityInputCard: FC<{
             marginLeft: 'auto',
             ...(city.trim()
               ? {}
-              : { background: 'var(--wz-line-2)', color: 'var(--wz-faint)', cursor: 'not-allowed' }),
+              : disabledBtn),
           }}
           disabled={!city.trim()}
           onClick={() => city.trim() && onConfirm(city.trim(), state.trim())}

@@ -19,6 +19,17 @@ export const primaryBtn: CSSProperties = {
   boxShadow: '0 7px 16px rgba(51, 97, 255, 0.18)',
 };
 
+// Estado desabilitado do primaryBtn. Precisa apagar TAMBÉM a borda e a sombra: sobrescrever
+// só `background`/`color` deixava o botão cinza com contorno e halo azuis — parecia um botão
+// ativo mal pintado. Espalhe depois do primaryBtn: `{ ...primaryBtn, ...disabledBtn }`.
+export const disabledBtn: CSSProperties = {
+  background: 'var(--wz-line-2)',
+  border: '1px solid var(--wz-line-2)',
+  color: 'var(--wz-faint)',
+  boxShadow: 'none',
+  cursor: 'not-allowed',
+};
+
 export const ghostBtn: CSSProperties = {
   background: 'var(--wz-surface)',
   border: '1px solid var(--wz-line-2)',

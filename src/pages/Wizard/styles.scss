@@ -738,6 +738,14 @@
     inset-inline-end: 18px;
   }
 
+  // O campo onde o usuário DIGITA. Sem cor explícita ele herdava o branco do darkAlgorithm do
+  // antd, então o texto sumia enquanto se buscava a cidade e só reaparecia depois de escolher
+  // (aí quem pinta é o .ant-select-selection-item, que já tinha cor).
+  .ant-select-selection-search-input {
+    color: var(--wz-ink) !important;
+    font-weight: 600;
+  }
+
   .ant-select-selection-item,
   .ant-select-selection-placeholder {
     line-height: 38px !important;
@@ -773,6 +781,14 @@
     border-radius: 8px;
     color: #61749a;
     font-weight: 500;
+  }
+
+  // Estados sem opção casada (buscando / "sem resultados"): o antd os renderiza fora do
+  // .ant-select-item, então ficavam com o texto branco do tema escuro sobre o menu claro —
+  // era o "fica branco e depois volta ao normal" enquanto a lista filtrava.
+  .ant-select-item-empty,
+  .ant-empty-description {
+    color: #8e9eb8;
   }
 
   .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
