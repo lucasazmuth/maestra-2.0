@@ -65,18 +65,20 @@ const Wizard: FC = () => {
   }, [draft.step]);
 
   // Liga/desliga a coluna de resultados no AppLayout enquanto o Wizard está montado.
+  // Ela nasce ABERTA no desktop (é o acompanhamento do plano, não um extra a descobrir). No
+  // mobile não: lá a coluna vira folha de tela cheia e abriria por cima da própria conversa —
+  // o breakpoint é o mesmo do CSS (.wiz-artifacts). Fechar segue sendo escolha do usuário.
   useEffect(() => {
-    wizardPanel.activate();
+    wizardPanel.activate(window.matchMedia('(min-width: 769px)').matches);
     return () => wizardPanel.deactivate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Publica draft + nome + progresso para a coluna renderizada no AppLayout.
+  // Publica o draft para a coluna renderizada no AppLayout.
   useEffect(() => {
-    const prog = Math.round((Math.min(draft.step ?? 0, WIZARD_TOTAL_STEPS) / WIZARD_TOTAL_STEPS) * 100);
-    wizardPanel.setData({ content: draft, artistName: artist?.name || '', progress: prog });
+    wizardPanel.setData({ content: draft });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, artist?.name]);
+  }, [draft]);
 
   // Fila serializada de gravações: uma por vez, em ordem. Sem isso, requests
   // concorrentes chegam fora de ordem no Supabase e a última a aterrissar vence —
@@ -212,6 +214,9 @@ const Wizard: FC = () => {
 
   const confirmReset = () => {
     modal.confirm({
+      // O antd roda em darkAlgorithm no app inteiro; aqui o diálogo precisa acompanhar o
+      // wizard claro. `.wiz-confirm` repinta só esta caixa (styles.scss).
+      className: 'wiz-confirm',
       title: 'Recomeçar o planejamento do zero?',
       content:
         'Isso apaga TODAS as respostas do planejamento estratégico e volta para a primeira pergunta. ' +
@@ -234,7 +239,8 @@ const Wizard: FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             {/* Coluna à esquerda: título em cima, etapa (abre o painel de resultados) embaixo. */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-              <h1 className='wiz-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, color: '#fff', margin: 0 }}>
+              {/* Cor/tamanho vêm de `.wiz-title` (styles.scss) — a tipografia acompanha a viewport. */}
+              <h1 className='wiz-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
                 Criar planejamento estratégico
               </h1>
               <button
@@ -243,7 +249,14 @@ const Wizard: FC = () => {
                 title='Ver seus resultados'
                 aria-expanded={wizardPanel.open}
               >
-                Etapa {step + 1} de {STEP_LABELS.length} · {STEP_LABELS[step]}
+                {/* Nome do artista trunca sozinho quando é longo; a etapa nunca some.
+                    O {' '} é semântico, não visual (o espaço visual vem do `gap`): sem ele o
+                    nome acessível do botão sai colado — "A Banca Records- Etapa 1 de 9". */}
+                <span className='wiz-step-nav-artist'>{artist.name}</span>{' '}
+                <span className='wiz-step-nav-sep' aria-hidden>-</span>{' '}
+                <span className='wiz-step-nav-step'>
+                  Etapa {step + 1} de {STEP_LABELS.length} · {STEP_LABELS[step]}
+                </span>
                 <FiChevronDown size={14} style={{ transform: wizardPanel.open ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease' }} />
               </button>
             </div>

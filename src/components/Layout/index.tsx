@@ -167,8 +167,11 @@ export const AppLayout: FC = memo(() => {
   }, [userId]);
   // Coluna de resultados do Planejamento Estratégico (publicada pelo Wizard via store global):
   // aparece como 3ª coluna, irmã da navbar e da página, só enquanto o wizard está montado.
+  // No mobile não há largura pra uma terceira coluna: o CSS (.wiz-artifacts) a transforma numa
+  // folha de tela cheia. Ela PRECISA montar lá também — o botão "Etapa X de 9" do cabeçalho do
+  // wizard é o único caminho pros resultados, e no mobile ele não abria nada.
   const wizardPanel = useWizardPanelStore();
-  const showWizardPanel = wizardPanel.active && wizardPanel.open && !isMobile;
+  const showWizardPanel = wizardPanel.active && wizardPanel.open;
   // No mobile a sidebar é oculta; uma tab bar no rodapé (in-flow, abaixo do banner) navega entre os
   // módulos do artista. Reserva a altura dela (56px) no mobile, somada à do banner quando houver.
   // A tab bar aparece nas rotas de artista E nas telas globais (Configurações, Notificações,
@@ -300,8 +303,12 @@ export const AppLayout: FC = memo(() => {
         ) : (
           <>
         {!hideTopbar && topNavigation(false)}
+        {/* `module-layout` encosta a página no rail (margin-left ~130px) porque significa "sem
+            coluna de perfil". O wizard NÃO é esse caso: ele mantém o perfil à esquerda e só ganha
+            a coluna de resultados à direita — com a classe, o card ficava embaixo do perfil.
+            A folga da coluna de resultados vem do `.wiz-artifacts` (pages/Wizard/styles.scss). */}
         <div
-          className={`app-layout${showWizardPanel || isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist ? ' app-layout-no-profile' : ''}`}
+          className={`app-layout${isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist ? ' app-layout-no-profile' : ''}`}
           style={{ bottom: bottomReserve ? `${bottomReserve}px` : 0 }}
         >
           <aside className='app-rail' aria-label='Atalhos'>
@@ -372,8 +379,6 @@ export const AppLayout: FC = memo(() => {
           {showWizardPanel && (
             <ArtifactsPanel
               draft={wizardPanel.content}
-              artistName={wizardPanel.artistName}
-              progress={wizardPanel.progress}
               onClose={() => wizardPanel.setOpen(false)}
               onEdit={wizardPanel.persist ?? undefined}
             />

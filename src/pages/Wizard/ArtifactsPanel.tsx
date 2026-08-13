@@ -175,12 +175,10 @@ const SectionEditor: FC<{
 
 export const ArtifactsPanel: FC<{
   draft: ArtistContent;
-  artistName: string;
-  progress: number;
   onClose: () => void;
   // Quando presente, habilita a edição inline dos entregáveis (lápis sutil por seção).
   onEdit?: (patch: Partial<ArtistContent>) => Promise<void> | void;
-}> = ({ draft, artistName, progress, onClose, onEdit }) => {
+}> = ({ draft, onClose, onEdit }) => {
   const cur = Math.min(draft.step ?? 0, STEP_LABELS.length - 1);
   const [editing, setEditing] = useState<number | null>(null);
   // Só mostra o que já foi alcançado (etapas até a atual) — coluna "até aqui", sem o roteiro futuro.
@@ -192,10 +190,7 @@ export const ArtifactsPanel: FC<{
   return (
     <aside className='wiz-artifacts'>
       <div className='wiz-artifacts-head'>
-        <div>
-          <div className='wiz-artifacts-title'>Seu plano até aqui</div>
-          <div className='wiz-artifacts-sub'>{artistName} · {progress}% concluído</div>
-        </div>
+        <div className='wiz-artifacts-title'>Seu plano até aqui</div>
         <button className='wiz-artifacts-close' onClick={onClose} title='Fechar' aria-label='Fechar'>
           <FiX size={16} />
         </button>
