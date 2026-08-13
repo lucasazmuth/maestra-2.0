@@ -161,7 +161,10 @@
 .wizard {
   padding: 24px;
   position: relative;
-  background: var(--wz-canvas);
+  // Sem preenchimento próprio: o `.board-shell` em volta já dá o fundo e o contorno. Com um
+  // --wz-canvas (#fafbfc) aqui em cima do canvas da página (#f7f8fb), a diferença de um tom
+  // criava um retângulo claro visível dentro do cartão.
+  background: transparent;
   color: var(--wz-text);
 
   .wiz-progress-track {
@@ -1638,6 +1641,10 @@
     inset: 28px 29px 30px auto;
     border: 1px solid #e6ebf3;
     border-radius: 15px;
+    // Só contorno, sem preenchimento — mesmo tratamento do `.wizard`. O fundo sólido fica
+    // apenas na regra base, que é o que o mobile usa: lá a coluna vira folha de tela cheia
+    // sobreposta ao chat (inset:0), e transparente deixaria a conversa aparecer por trás.
+    background: transparent;
   }
 
   .app-layout:has(.wiz-artifacts) .board-shell {
