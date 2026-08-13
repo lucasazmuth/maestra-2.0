@@ -212,26 +212,37 @@ const Settings: FC = () => {
           <div>
             {!editing && <div className='settings-profile-name' style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>{savedName || 'Sem nome'}</div>}
             <div className='settings-profile-email' style={{ color: '#b3b3b3', fontSize: 13 }}>{user?.email}</div>
-            {editing && <div style={{ color: '#6b7280', fontSize: 12, marginTop: 4 }}>Toque na foto para trocar</div>}
+            {editing && <div style={{ color: '#98a6bd', fontSize: 12, marginTop: 4 }}>Toque na foto para trocar</div>}
           </div>
         </div>
 
         {editing && (
           <>
-            <label style={{ color: '#b3b3b3', fontSize: 13 }}>Nome</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder='Seu nome' style={{ marginTop: 6 }} />
+            <label style={{ color: '#8e9eb8', fontSize: 12.5, fontWeight: 700 }}>Nome</label>
+            {/* className settings-name-input: o Input do antd nasce escuro em todo o app
+                (ConfigProvider usa theme.darkAlgorithm globalmente) — precisa de override
+                pontual pra combinar com o card claro. Ver regra em gsap-reference.css. */}
+            <Input
+              className='settings-name-input'
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder='Seu nome'
+              style={{ marginTop: 6 }}
+            />
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               <button
+                className='settings-save-btn'
                 onClick={saveProfile}
                 disabled={saving || uploading}
-                style={{ background: '#9A4FD1', border: 'none', color: '#FFFFFF', borderRadius: 9999, padding: '8px 20px', cursor: 'pointer', fontWeight: 700, opacity: saving || uploading ? 0.6 : 1 }}
+                style={{ borderRadius: 9999, padding: '8px 20px', cursor: 'pointer', fontWeight: 700, opacity: saving || uploading ? 0.6 : 1 }}
               >
                 {saving ? 'Salvando…' : 'Salvar'}
               </button>
               <button
+                className='settings-cancel-btn'
                 onClick={() => setEditing(false)}
                 disabled={saving}
-                style={{ background: 'transparent', border: '1px solid #3a3a3a', color: '#b3b3b3', borderRadius: 9999, padding: '8px 20px', cursor: 'pointer', fontWeight: 700 }}
+                style={{ borderRadius: 9999, padding: '8px 20px', cursor: 'pointer', fontWeight: 700 }}
               >
                 Cancelar
               </button>

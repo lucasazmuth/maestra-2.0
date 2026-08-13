@@ -10,6 +10,11 @@
 .top-navigation .global-search input { font-size: 12px; line-height: 1; }
 .top-navigation .notification { margin-left: auto !important; }
 
+/* App.scss (design antigo) tem uma regra global `a:hover { color: #fff }` — certa em fundo
+   escuro, mas some o texto sobre o fundo claro daqui. Precisa de mais especificidade que
+   `a:hover` (tag+pseudo) pra vencer, não !important: a classe já resolve. */
+.site-links a:hover { color: var(--blue); text-decoration: none; }
+
 /* Settings follows the shared GSAP reference page structure. */
 .task-app .settings-page { min-height: 100%; padding: 52px; background: #fafbfc; }
 .settings-heading { display: flex; align-items: end; justify-content: space-between; gap: 22px; }
@@ -29,6 +34,17 @@
 .settings-profile-name { color: #52668d !important; font-size: 18px !important; }
 .settings-profile-email { color: #8e9eb8 !important; }
 .settings-profile-card button { border: 1px solid #dce4f0 !important; border-radius: 21px !important; background: #fff !important; color: #5a70a0 !important; box-shadow: none !important; }
+/* O antd Input nasce ESCURO em todo o app (ConfigProvider usa theme.darkAlgorithm
+   globalmente) — o campo "Nome" precisa de override pontual pra combinar com o card claro.
+   Especificidade (classe+classe) já vence a regra genérica acima sem precisar de ordem. */
+.settings-profile-card .settings-name-input { border: 1px solid #dce4f0 !important; border-radius: 10px !important; background: #fff !important; color: #52668d !important; box-shadow: none !important; }
+.settings-profile-card .settings-name-input::placeholder { color: #b7c3d8 !important; }
+.settings-profile-card .settings-name-input:hover,
+.settings-profile-card .settings-name-input:focus { border-color: #3361ff !important; box-shadow: 0 0 0 3px rgba(51, 97, 255, .12) !important; }
+/* Salvar/Cancelar caiam na regra genérica de botão acima ficam idênticos (dois contornos
+   brancos) — sem hierarquia entre ação primária e secundária. */
+.settings-profile-card .settings-save-btn { border: none !important; background: #3361ff !important; color: #fff !important; box-shadow: 0 8px 18px rgba(51, 97, 255, .22) !important; }
+.settings-profile-card .settings-cancel-btn { border: 1px solid #dce4f0 !important; background: #fff !important; color: #7b8eaf !important; }
 .settings-notification-card { margin-top: 18px; padding: 24px !important; }
 .settings-notification-card h2 { color: #5b6f94 !important; font-size: 16px !important; }
 .settings-notification-card p { color: #98a6bd !important; }

@@ -1,6 +1,10 @@
 import { FC } from 'react';
-import { FiArrowRight, FiMail, FiMessageCircle } from 'react-icons/fi';
+import { FiArrowRight } from 'react-icons/fi';
 
+// Logos oficiais do Gmail e do WhatsApp: mantêm as cores da marca (não viram currentColor
+// como os ícones do sistema), porque são marca de terceiro e precisam ser reconhecíveis.
+import { ReactComponent as GmailSvg } from '../../assets/icons/gmail.svg';
+import { ReactComponent as WhatsappSvg } from '../../assets/icons/whatsapp.svg';
 import { SUPPORT_EMAIL, SUPPORT_WHATSAPP, SUPPORT_WHATSAPP_DISPLAY } from '../../constants/legal';
 import styles from './Support.module.scss';
 
@@ -28,7 +32,7 @@ const Support: FC = () => {
           className={styles.card}
           onClick={() => open(`mailto:${SUPPORT_EMAIL}?subject=Suporte%20Maestra`)}
         >
-          <span className={styles.icon} aria-hidden><FiMail /></span>
+          <span className={styles.icon} aria-hidden><GmailSvg width={22} height={22} /></span>
           <h2 className={styles.title}>E-mail</h2>
           <p className={styles.desc}>
             Melhor para dúvidas com detalhes, prints ou algo que precise de registro.
@@ -42,7 +46,7 @@ const Support: FC = () => {
           className={styles.card}
           onClick={() => open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent('Olá! Preciso de ajuda com a Maestra.')}`)}
         >
-          <span className={`${styles.icon} ${styles.iconWhatsapp}`} aria-hidden><FiMessageCircle /></span>
+          <span className={`${styles.icon} ${styles.iconWhatsapp}`} aria-hidden><WhatsappSvg width={22} height={22} /></span>
           <h2 className={styles.title}>WhatsApp</h2>
           <p className={styles.desc}>
             Melhor para resolver rápido, quando você precisa de uma resposta na hora.

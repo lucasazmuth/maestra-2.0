@@ -258,7 +258,7 @@ export const AppLayout: FC = memo(() => {
           <nav className='site-links'>
             <a href='#board'>Baixar App</a>
             <a href='#board'>Planos</a>
-            <a href='#board'>Suporte</a>
+            <a href='/suporte' onClick={(event) => { event.preventDefault(); navigate('/suporte'); }}>Suporte</a>
           </nav>
         )}
       </div>
