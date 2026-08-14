@@ -17,6 +17,9 @@ interface Props {
   genres: MusicGenre[];
   assigneeOptions: { id: string; name: string }[];
   currentUserName: string;
+  // Autoria da versão criada/atualizada (o "quem subiu esta faixa" que aparece no Espaço Jam).
+  currentUserId?: string | null;
+  currentUserAvatar?: string | null;
   onClose: () => void;
   onSaved: (item: CatalogItem) => void;
   onDelete?: (id: string) => Promise<void> | void; // exclui a faixa (só na edição)
@@ -280,7 +283,7 @@ const AudioPreview: FC<{ src: string; fileName?: string | null; onFile: (f: File
   );
 };
 
-export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOptions, currentUserName, onClose, onSaved, onDelete }) => {
+export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOptions, currentUserName, currentUserId, currentUserAvatar, onClose, onSaved, onDelete }) => {
   // message do contexto <App> do antd — o `message` estático é no-op aqui (toasts não apareciam).
   const { message } = App.useApp();
   const [draft, setDraft] = useState<Partial<CatalogItem>>(emptyDraft());
@@ -365,9 +368,17 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
         assignee: draft.assignee || null,
         history: draft.history || [],
       };
-      const saved = item
-        ? await catalogDb.updateCatalogItem(item.id, payload)
-        : await catalogDb.createCatalogItem(payload);
+      // Grava a MÚSICA como projeto (+ a V1 dela). Antes isto ia pra `catalog_items`, a tabela
+      // legada, e um espelho posterior tentava criar o projeto — mas falhava e era engolido,
+      // então a música sumia no reload. Ver saveCatalogProjectFromForm.
+      const saved = await catalogDb.saveCatalogProjectFromForm(
+        {
+          ...payload,
+          id: item?.project_id || item?.id,
+          versionId: item?.version_id,
+        },
+        { id: currentUserId, name: currentUserName, avatar: currentUserAvatar },
+      );
       onSaved(saved);
       onClose();
     } catch (e: any) {

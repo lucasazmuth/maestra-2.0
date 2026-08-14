@@ -973,6 +973,8 @@ const Catalog: FC = () => {
           genres={genres}
           assigneeOptions={assigneeOptions}
           currentUserName={currentUserName}
+          currentUserId={user?.id || null}
+          currentUserAvatar={currentUserAvatar}
           onClose={() => setModalOpen(false)}
           onSaved={onSaved}
           onDelete={onDelete}

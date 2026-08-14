@@ -10,7 +10,11 @@ import type {
 
 const TABLE = 'catalog_items';
 
-const PROJECT_SELECT = `*, versions:catalog_versions(*, files:catalog_version_files(*), comments:catalog_version_comments(*))`;
+// O embed precisa dizer QUAL chave estrangeira usar: existem duas entre projeto e versão —
+// catalog_versions.project_id (as versões do projeto) e catalog_projects.primary_version_id (a
+// versão principal). Sem o `!catalog_versions_project_id_fkey`, o PostgREST considera o vínculo
+// ambíguo, recusa a query inteira e a lista de músicas volta vazia.
+const PROJECT_SELECT = `*, versions:catalog_versions!catalog_versions_project_id_fkey(*, files:catalog_version_files(*), comments:catalog_version_comments(*))`;
 
 const isMissingTable = (error: any) =>
   error?.code === '42P01' || error?.code === 'PGRST205' || /does not exist|relation .* not found/i.test(error?.message || '');
@@ -113,48 +117,103 @@ export const deleteCatalogItem = async (id: string): Promise<void> => {
   if (error) throw error;
 };
 
-/** Garante que uma faixa criada pelo modal legado também apareça no novo catálogo de projetos. */
-export const syncCatalogItemToProject = async (
-  item: CatalogItem,
+/**
+ * Salva a MÚSICA a partir do formulário: o projeto é a música, e a V1 é a primeira faixa dela.
+ *
+ * O modal antes gravava em `catalog_items` (tabela legada) e um passo separado tentava espelhar
+ * o resultado em projeto+versão. Esse espelho falhava sempre ao criar: montava o projeto já com
+ * `primary_version_id` apontando pra uma versão que só nasceria na linha seguinte, e a FK
+ * recusava. Como a falha era engolida por um `.catch()` vazio, a música aparecia na tela e
+ * sumia no reload — nunca tinha existido como projeto.
+ *
+ * Aqui a ordem é a correta: grava o projeto, cria/atualiza a versão, e só então aponta a versão
+ * principal. É esta função que o modal usa, tanto pra criar quanto pra editar.
+ */
+export const saveCatalogProjectFromForm = async (
+  input: {
+    id?: string;              // projeto existente (edição)
+    versionId?: string;       // versão a atualizar (edição)
+    artist_id: string;
+  } & Partial<CatalogItem>,
   author?: { id?: string | null; name?: string | null; avatar?: string | null }
-): Promise<void> => {
-  const { error: projectError } = await supabase.from('catalog_projects').upsert({
-    id: item.id,
-    artist_id: item.artist_id,
-    title: item.title,
-    status: item.status,
-    genre: item.genre,
-    bpm: item.bpm,
-    key: item.key,
-    cover_image: item.cover_image,
-    cover_image_name: item.cover_image_name,
-    assignee: item.assignee,
-    release_date: item.release_date,
-    primary_version_id: item.id,
-    created_at: item.created_at,
-    updated_at: item.updated_at,
-  }, { onConflict: 'id' });
-  if (projectError) throw projectError;
-  const { error: versionError } = await supabase.from('catalog_versions').upsert({
-    id: item.id,
-    project_id: item.id,
-    version_number: 1,
-    stage: 'guia',
-    status: item.status,
-    audio_file: item.audio_file,
-    audio_file_name: item.audio_file_name,
-    duration: item.duration,
-    bpm: item.bpm,
-    key: item.key,
-    genre: item.genre,
-    lyrics: item.lyrics,
-    author_id: author?.id || null,
-    author_name: author?.name || null,
-    author_avatar: author?.avatar || null,
-    created_at: item.created_at,
-    updated_at: item.updated_at,
-  }, { onConflict: 'id' });
-  if (versionError) throw versionError;
+): Promise<CatalogItem> => {
+  const now = new Date().toISOString();
+  // Campos da MÚSICA (o projeto): identidade, capa, responsável, data de lançamento.
+  const projectPayload = {
+    artist_id: input.artist_id,
+    title: input.title || 'Sem título',
+    status: input.status || 'composition',
+    genre: input.genre ?? null,
+    bpm: input.bpm ?? null,
+    key: input.key ?? null,
+    cover_image: input.cover_image ?? null,
+    cover_image_name: input.cover_image_name ?? null,
+    assignee: input.assignee ?? null,
+    release_date: input.release_date || null,
+    updated_at: now,
+  };
+
+  let project: CatalogProject;
+  if (input.id) {
+    const { data, error } = await supabase
+      .from('catalog_projects').update(projectPayload).eq('id', input.id).select('*').single();
+    if (error) throw error;
+    project = data as CatalogProject;
+  } else {
+    const { data, error } = await supabase
+      .from('catalog_projects').insert(projectPayload).select('*').single();
+    if (error) throw error;
+    project = data as CatalogProject;
+  }
+
+  // Campos da FAIXA (a versão): áudio, duração e letra pertencem à gravação, não à música.
+  const versionPayload = {
+    status: input.status || 'composition',
+    audio_file: input.audio_file ?? null,
+    audio_file_name: input.audio_file_name ?? null,
+    duration: input.duration ?? null,
+    bpm: input.bpm ?? null,
+    key: input.key ?? null,
+    genre: input.genre ?? null,
+    lyrics: input.lyrics ?? null,
+    updated_at: now,
+  };
+
+  let version: CatalogVersion;
+  const targetVersionId = input.versionId || project.primary_version_id;
+  if (targetVersionId) {
+    const { data, error } = await supabase
+      .from('catalog_versions').update(versionPayload).eq('id', targetVersionId).select('*').single();
+    if (error) throw error;
+    version = data as CatalogVersion;
+  } else {
+    const { data, error } = await supabase
+      .from('catalog_versions')
+      .insert({
+        ...versionPayload,
+        project_id: project.id,
+        version_number: 1,
+        stage: 'guia',
+        author_id: author?.id || null,
+        author_name: author?.name || null,
+        author_avatar: author?.avatar || null,
+      })
+      .select('*').single();
+    if (error) throw error;
+    version = data as CatalogVersion;
+  }
+
+  // Só agora a versão existe e pode ser apontada como principal.
+  if (project.primary_version_id !== version.id) {
+    const { data, error } = await supabase
+      .from('catalog_projects')
+      .update({ primary_version_id: version.id, updated_at: now })
+      .eq('id', project.id).select('*').single();
+    if (error) throw error;
+    project = data as CatalogProject;
+  }
+
+  return catalogProjectToItem(project, version);
 };
 
 export const listCatalogProjects = async (artistId: string): Promise<CatalogProject[]> => {
