@@ -90,7 +90,7 @@ const Dashboard: FC = () => {
           // player hoje bate em 429 QUOTA_EXCEEDED. O campo ficava nulo em quase todos os
           // artistas e o card exibia um traço mudo, que lê como "não tem seguidores". A
           // Chartmetric é a mesma fonte que o Diagnóstico REAL já usa pra esse número.
-          ['Seguidores', fmtNumber(chartmetric?.sp_followers ?? sp?.followers), 'Spotify via Chartmetric'],
+          ['Seguidores', fmtNumber(chartmetric?.sp_followers ?? sp?.followers), 'Spotify'],
           ['Músicas ativas', String(tracks.length), `${albums.length} álbuns/singles`],
           ['Tarefas pendentes', String(pendingTasks.length), `${journey.tasksDone} concluídas`],
         ].map(([label, value, change], index) => (
