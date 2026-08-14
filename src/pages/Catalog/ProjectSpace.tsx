@@ -365,7 +365,10 @@ const ProjectSpace: FC = () => {
           <div className={styles.metaStrip}>
             <label><span>BPM</span><Input disabled={!canUpdateProject} value={project.bpm || ''} placeholder='—' onChange={(event) => setProject({ ...project, bpm: event.target.value })} /></label>
             <label><span>Tom</span><Input disabled={!canUpdateProject} value={project.key || ''} placeholder='—' onChange={(event) => setProject({ ...project, key: event.target.value })} /></label>
-            <label><span>Gênero</span><Input disabled={!canUpdateProject} value={project.genre || ''} placeholder='—' onChange={(event) => setProject({ ...project, genre: event.target.value })} /></label>
+            {/* Mesma lista de gêneros da ficha da música: aqui era um campo livre, então cada
+                pessoa escrevia de um jeito ("Trap", "trap", "Hip Hop/Trap") e o mesmo gênero
+                virava três nos filtros. */}
+            <label><span>Gênero</span><Select disabled={!canUpdateProject} value={project.genre || undefined} placeholder='—' allowClear showSearch optionFilterProp='label' suffixIcon={null} options={genres.map((genre) => ({ value: genre.name, label: genre.name }))} onChange={(genre) => setProject({ ...project, genre: genre || null })} /></label>
             {/* A data de lançamento também vive na ficha da música (TrackModal); aqui ela fica à
                 mão junto de BPM, tom e gênero, e usa o mesmo autosave da faixa. */}
             <label><span>Lançamento</span><DatePicker disabled={!canUpdateProject} value={project.release_date ? dayjs(project.release_date) : null} format='DD/MM/YYYY' placeholder='—' suffixIcon={null} allowClear onChange={(date) => setProject({ ...project, release_date: date ? date.format('YYYY-MM-DD') : null })} /></label>
