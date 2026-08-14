@@ -203,7 +203,11 @@ export const ArtifactsPanel: FC<{
   return (
     <aside className='wiz-artifacts'>
       <div className='wiz-artifacts-head'>
-        <div className='wiz-artifacts-title'>Seu plano até aqui</div>
+        {/* A etapa atual vive aqui — saiu do cabeçalho do chat pra não ficar repetida em dois
+            lugares. `cur` já vem clampado ao total de etapas. */}
+        <div className='wiz-artifacts-title'>
+          Etapa {cur + 1} de {STEP_LABELS.length} · {STEP_LABELS[cur]}
+        </div>
         {/* 18px = mesmo tamanho dos ícones do cabeçalho do wizard (voltar/recomeçar). */}
         <button className='wiz-artifacts-close' onClick={onClose} title='Fechar' aria-label='Fechar'>
           <FiX size={18} />

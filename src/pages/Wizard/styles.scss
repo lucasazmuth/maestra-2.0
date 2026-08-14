@@ -245,6 +245,31 @@
   }
 }
 
+// Estado ligado do botão que mostra/oculta a coluna de resultados: sem isso o ícone fica
+// igual estando o painel aberto ou fechado, e o botão não informa nada.
+.wiz-back-btn--on {
+  background: var(--wz-blue-soft);
+  border-color: var(--wz-blue);
+  color: var(--wz-blue);
+}
+
+// Identificação no cabeçalho: avatar + título do planejamento.
+.wiz-head-id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.wiz-head-avatar {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 5px 12px rgba(77, 98, 141, 0.14);
+}
+
 .wiz-step-nav {
   display: inline-flex;
   align-items: center;

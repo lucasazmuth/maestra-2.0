@@ -1,7 +1,7 @@
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { App } from 'antd';
-import { FiChevronDown, FiArrowLeft, FiRotateCcw } from 'react-icons/fi';
+import { FiArrowLeft, FiRotateCcw, FiSidebar } from 'react-icons/fi';
 
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
@@ -9,14 +9,13 @@ import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
-import { WIZARD_TOTAL_STEPS } from '../../constants/maestra';
+import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { migrateWizardContent } from './migration';
 import { NytaChat } from './chat/NytaChat';
 import { supabase } from '../../lib/supabase';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
 import { setWizardPlatformContext, clearWizardPlatformContext } from '../../services/wizardAi';
-import { STEP_LABELS } from './chat/script';
 import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 
 // Shell do Planejamento Estratégico conversacional: é dono do draft, da persistência e da
@@ -118,6 +117,8 @@ const Wizard: FC = () => {
   useEffect(() => () => clearWizardPlatformContext(), []);
 
   const sp = draft.spotifyProfile;
+  // Avatar do perfil no cabeçalho (identifica de quem é o plano, já que o nome saiu da linha de baixo).
+  const artistImage = sp?.image || ARTISTS_DEFAULT_IMAGE;
   const identity: ArtistIdentity = useMemo(
     () => draft.identity || { name: artist?.name },
     [draft.identity, artist?.name]
@@ -207,7 +208,6 @@ const Wizard: FC = () => {
     return <Spinner loading>{null as any}</Spinner>;
   }
 
-  const step = Math.min(draft.step ?? 0, WIZARD_TOTAL_STEPS - 1);
   // Só oferece "recomeçar" quando há alguma resposta (senão não há o que zerar).
   const hasProgress = (draft.step ?? 0) > 0 || !!draft.identity?.gender;
 
@@ -236,28 +236,14 @@ const Wizard: FC = () => {
       <div className='wiz-chat-head'>
         <div className='wiz-col'>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-            {/* Coluna à esquerda: título em cima, etapa (abre o painel de resultados) embaixo. */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+            {/* Identificação enxuta: avatar do perfil + título. A etapa saiu daqui e passou a
+                ser o título do painel de resultados — só um lugar diz em que etapa se está. */}
+            <div className='wiz-head-id'>
+              <img className='wiz-head-avatar' src={artistImage} alt='' aria-hidden />
               {/* Cor/tamanho vêm de `.wiz-title` (styles.scss) — a tipografia acompanha a viewport. */}
               <h1 className='wiz-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-                Criar planejamento estratégico
+                Planejamento estratégico
               </h1>
-              <button
-                className='wiz-step-nav'
-                onClick={() => wizardPanel.toggle()}
-                title='Ver seus resultados'
-                aria-expanded={wizardPanel.open}
-              >
-                {/* Nome do artista trunca sozinho quando é longo; a etapa nunca some.
-                    O {' '} é semântico, não visual (o espaço visual vem do `gap`): sem ele o
-                    nome acessível do botão sai colado — "A Banca Records- Etapa 1 de 9". */}
-                <span className='wiz-step-nav-artist'>{artist.name}</span>{' '}
-                <span className='wiz-step-nav-sep' aria-hidden>-</span>{' '}
-                <span className='wiz-step-nav-step'>
-                  Etapa {step + 1} de {STEP_LABELS.length} · {STEP_LABELS[step]}
-                </span>
-                <FiChevronDown size={14} style={{ transform: wizardPanel.open ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease' }} />
-              </button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               {/* Voltar à pergunta anterior — só aparece depois da 1ª pergunta respondida.
@@ -284,6 +270,18 @@ const Wizard: FC = () => {
                   <FiRotateCcw size={17} />
                 </button>
               )}
+              {/* Mostrar/ocultar a coluna de resultados. Antes o gatilho era a própria linha
+                  "Etapa X de 9" — que saiu do cabeçalho —, então vira um botão explícito, no
+                  mesmo desenho dos outros controles. */}
+              <button
+                className={`wiz-back-btn${wizardPanel.open ? ' wiz-back-btn--on' : ''}`}
+                title={wizardPanel.open ? 'Ocultar seu plano' : 'Ver seu plano'}
+                aria-label={wizardPanel.open ? 'Ocultar seu plano' : 'Ver seu plano'}
+                aria-expanded={wizardPanel.open}
+                onClick={() => wizardPanel.toggle()}
+              >
+                <FiSidebar size={17} />
+              </button>
             </div>
           </div>
         </div>
