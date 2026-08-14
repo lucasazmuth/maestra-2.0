@@ -1,0 +1,759 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/ysmq38",
+    "id": "ysmq38",
+    "slide": 7,
+    "layoutId": "5f818911-157d-4897-9b0e-d33b11130df9",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#050707",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "5f818911-157d-4897-9b0e-d33b11130df9",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9gnep4v6",
+      "id": "1",
+      "bbox": [
+        72,
+        58,
+        940,
+        94
+      ],
+      "geometry": "rect",
+      "text": "Sua equipe ganha uma visão única da operação do artista.",
+      "textPreview": "Sua equipe ganha uma visão única da operação do artista.",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Sua equipe ganha uma visão única da operação"
+          },
+          {
+            "index": 2,
+            "text": "do artista."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Sua equipe ganha uma visão única da operação do artista.",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Sua equipe ganha uma visão única da operação do artista.",
+              "fontSize": 38,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mdwve9wf",
+      "id": "2",
+      "bbox": [
+        74,
+        132,
+        830,
+        48
+      ],
+      "geometry": "rect",
+      "text": "Catálogo, agenda, equipe e plano de ação ficam no mesmo lugar para reduzir dispersão e aumentar cadência.",
+      "textPreview": "Catálogo, agenda, equipe e plano de ação ficam no mesmo lugar para reduzir dispersão e aumentar cadência.",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "fontSize": 19,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Catálogo, agenda, equipe e plano de ação ficam no mesmo lugar para reduzir dispersão e"
+          },
+          {
+            "index": 2,
+            "text": "aumentar cadência."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Catálogo, agenda, equipe e plano de ação ficam no mesmo lugar para reduzir dispersão e aumentar cadência.",
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Catálogo, agenda, equipe e plano de ação ficam no mesmo lugar para reduzir dispersão e aumentar cadência.",
+              "fontSize": 19,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/6xknmh0b",
+      "id": "3",
+      "bbox": [
+        82,
+        226,
+        230,
+        164
+      ],
+      "geometry": "roundRect",
+      "alt": "Plano de ação",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 12195"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "923ac3cd-d1e3-4bdb-a133-67f9651bdd65",
+        "contentType": "image/png",
+        "byteLength": 272862
+      }
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kbudcze9",
+      "id": "4",
+      "bbox": [
+        82,
+        414,
+        230,
+        34
+      ],
+      "geometry": "rect",
+      "text": "Plano de ação",
+      "textPreview": "Plano de ação",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Plano de ação"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Plano de ação",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Plano de ação",
+              "fontSize": 22,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/kv25k725",
+      "id": "5",
+      "bbox": [
+        378,
+        226,
+        230,
+        164
+      ],
+      "geometry": "roundRect",
+      "alt": "Catálogo",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 12195"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "a3b0dcaf-f7dc-4f9e-a275-f5400190f398",
+        "contentType": "image/png",
+        "byteLength": 265955
+      }
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y9cvapwj",
+      "id": "6",
+      "bbox": [
+        378,
+        414,
+        230,
+        34
+      ],
+      "geometry": "rect",
+      "text": "Catálogo",
+      "textPreview": "Catálogo",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Catálogo"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Catálogo",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Catálogo",
+              "fontSize": 22,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/yt0nixkz",
+      "id": "7",
+      "bbox": [
+        674,
+        226,
+        230,
+        164
+      ],
+      "geometry": "roundRect",
+      "alt": "Agenda",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 12195"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "7d32acb5-d70b-4107-bed6-2329791a7203",
+        "contentType": "image/png",
+        "byteLength": 150715
+      }
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/47yxo3et",
+      "id": "8",
+      "bbox": [
+        674,
+        414,
+        230,
+        34
+      ],
+      "geometry": "rect",
+      "text": "Agenda",
+      "textPreview": "Agenda",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Agenda"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Agenda",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Agenda",
+              "fontSize": 22,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/4rm5wri9",
+      "id": "9",
+      "bbox": [
+        970,
+        226,
+        230,
+        164
+      ],
+      "geometry": "roundRect",
+      "alt": "Equipe",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 12195"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "ce115f68-c452-42ee-9b06-8a0c68992291",
+        "contentType": "image/png",
+        "byteLength": 117906
+      }
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1k76hov6",
+      "id": "10",
+      "bbox": [
+        970,
+        414,
+        230,
+        34
+      ],
+      "geometry": "rect",
+      "text": "Equipe",
+      "textPreview": "Equipe",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Equipe"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Equipe",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Equipe",
+              "fontSize": 22,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0je5ojel",
+      "id": "11",
+      "bbox": [
+        196,
+        548,
+        820,
+        52
+      ],
+      "geometry": "rect",
+      "text": "Em vez de uma entrega pontual, a parceria vira um sistema de acompanhamento contínuo.",
+      "textPreview": "Em vez de uma entrega pontual, a parceria vira um sistema de acompanhamento contínuo.",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "fontSize": 23,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Em vez de uma entrega pontual, a parceria vira um sistema de"
+          },
+          {
+            "index": 2,
+            "text": "acompanhamento contínuo."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Em vez de uma entrega pontual, a parceria vira um sistema de acompanhamento contínuo.",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "color": "#AAB9B2",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Em vez de uma entrega pontual, a parceria vira um sistema de acompanhamento contínuo.",
+              "fontSize": 23,
+              "color": "#AAB9B2",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fi54fed0",
+      "id": "12",
+      "bbox": [
+        72,
+        666,
+        220,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Maestra Manager",
+      "textPreview": "Maestra Manager",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#71847D",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Maestra Manager"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Maestra Manager",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#71847D",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Maestra Manager",
+              "fontSize": 12,
+              "color": "#71847D",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ehwnm9wv",
+      "id": "13",
+      "bbox": [
+        1166,
+        660,
+        48,
+        28
+      ],
+      "geometry": "rect",
+      "text": "07",
+      "textPreview": "07",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#71847D",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "07"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "07",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#71847D",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "07",
+              "fontSize": 14,
+              "color": "#71847D",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

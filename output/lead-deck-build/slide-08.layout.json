@@ -1,0 +1,987 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/xrlp86",
+    "id": "xrlp86",
+    "slide": 8,
+    "layoutId": "5f818911-157d-4897-9b0e-d33b11130df9",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#050707",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "5f818911-157d-4897-9b0e-d33b11130df9",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qpcbu1kr",
+      "id": "1",
+      "bbox": [
+        72,
+        58,
+        940,
+        94
+      ],
+      "geometry": "rect",
+      "text": "Um piloto pode provar valor sem exigir uma grande implantação.",
+      "textPreview": "Um piloto pode provar valor sem exigir uma grande implantação.",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Um piloto pode provar valor sem exigir uma"
+          },
+          {
+            "index": 2,
+            "text": "grande implantação."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Um piloto pode provar valor sem exigir uma grande implantação.",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Um piloto pode provar valor sem exigir uma grande implantação.",
+              "fontSize": 38,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dc3u5gj2",
+      "id": "2",
+      "bbox": [
+        74,
+        132,
+        830,
+        48
+      ],
+      "geometry": "rect",
+      "text": "Começamos com um recorte controlado, acompanhamos uso e decidimos a próxima escala com evidência.",
+      "textPreview": "Começamos com um recorte controlado, acompanhamos uso e decidimos a próxima escala com evidência.",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "fontSize": 19,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Começamos com um recorte controlado, acompanhamos uso e decidimos a próxima escala"
+          },
+          {
+            "index": 2,
+            "text": "com evidência."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Começamos com um recorte controlado, acompanhamos uso e decidimos a próxima escala com evidência.",
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Começamos com um recorte controlado, acompanhamos uso e decidimos a próxima escala com evidência.",
+              "fontSize": 19,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/crutwb2h",
+      "id": "3",
+      "bbox": [
+        82,
+        232,
+        238,
+        198
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#102219",
+      "lineColor": "#2C403A",
+      "lineWidth": 1
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zelc7q18",
+      "id": "4",
+      "bbox": [
+        106,
+        260,
+        190,
+        34
+      ],
+      "geometry": "rect",
+      "text": "Recorte",
+      "textPreview": "Recorte",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "color": "#71F2A6",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Recorte"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Recorte",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "color": "#71F2A6",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Recorte",
+              "fontSize": 25,
+              "color": "#71F2A6",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/edcbylkn",
+      "id": "5",
+      "bbox": [
+        106,
+        322,
+        184,
+        80
+      ],
+      "geometry": "rect",
+      "text": "Selecionar uma turma, roster ou comunidade inicial.",
+      "textPreview": "Selecionar uma turma, roster ou comunidade inicial.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Selecionar uma"
+          },
+          {
+            "index": 2,
+            "text": "turma, roster ou"
+          },
+          {
+            "index": 3,
+            "text": "comunidade inicial."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Selecionar uma turma, roster ou comunidade inicial.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Selecionar uma turma, roster ou comunidade inicial.",
+              "fontSize": 18,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1gnu90je",
+      "id": "6",
+      "bbox": [
+        374,
+        232,
+        238,
+        198
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#0B1210",
+      "lineColor": "#2C403A",
+      "lineWidth": 1
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0fet0v2t",
+      "id": "7",
+      "bbox": [
+        398,
+        260,
+        190,
+        34
+      ],
+      "geometry": "rect",
+      "text": "Ativação",
+      "textPreview": "Ativação",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "color": "#25D7B9",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Ativação"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Ativação",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "color": "#25D7B9",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Ativação",
+              "fontSize": 25,
+              "color": "#25D7B9",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ni5cbq14",
+      "id": "8",
+      "bbox": [
+        398,
+        322,
+        184,
+        80
+      ],
+      "geometry": "rect",
+      "text": "Artistas fazem diagnóstico e primeiro plano guiado.",
+      "textPreview": "Artistas fazem diagnóstico e primeiro plano guiado.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Artistas fazem"
+          },
+          {
+            "index": 2,
+            "text": "diagnóstico e"
+          },
+          {
+            "index": 3,
+            "text": "primeiro plano"
+          },
+          {
+            "index": 4,
+            "text": "guiado."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Artistas fazem diagnóstico e primeiro plano guiado.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Artistas fazem diagnóstico e primeiro plano guiado.",
+              "fontSize": 18,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mhwb2lkz",
+      "id": "9",
+      "bbox": [
+        666,
+        232,
+        238,
+        198
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#0B1210",
+      "lineColor": "#2C403A",
+      "lineWidth": 1
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/czitwrep",
+      "id": "10",
+      "bbox": [
+        690,
+        260,
+        190,
+        34
+      ],
+      "geometry": "rect",
+      "text": "Acompanhamento",
+      "textPreview": "Acompanhamento",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "color": "#B7F66B",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Acompanham"
+          },
+          {
+            "index": 2,
+            "text": "ento"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Acompanhamento",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "color": "#B7F66B",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Acompanhamento",
+              "fontSize": 25,
+              "color": "#B7F66B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xkra5wfu",
+      "id": "11",
+      "bbox": [
+        690,
+        322,
+        184,
+        80
+      ],
+      "geometry": "rect",
+      "text": "Observar adesão, tarefas criadas e uso recorrente.",
+      "textPreview": "Observar adesão, tarefas criadas e uso recorrente.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Observar adesão,"
+          },
+          {
+            "index": 2,
+            "text": "tarefas criadas e"
+          },
+          {
+            "index": 3,
+            "text": "uso recorrente."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Observar adesão, tarefas criadas e uso recorrente.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Observar adesão, tarefas criadas e uso recorrente.",
+              "fontSize": 18,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ax0bu1wj",
+      "id": "12",
+      "bbox": [
+        958,
+        232,
+        238,
+        198
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#0B1210",
+      "lineColor": "#2C403A",
+      "lineWidth": 1
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/by9s36x4",
+      "id": "13",
+      "bbox": [
+        982,
+        260,
+        190,
+        34
+      ],
+      "geometry": "rect",
+      "text": "Escala",
+      "textPreview": "Escala",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "fontSize": 25,
+        "typeface": "+mn-lt",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Escala"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Escala",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Escala",
+              "fontSize": 25,
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kn2t0bel",
+      "id": "14",
+      "bbox": [
+        982,
+        322,
+        184,
+        80
+      ],
+      "geometry": "rect",
+      "text": "Definir modelo de continuidade com base nos aprendizados.",
+      "textPreview": "Definir modelo de continuidade com base nos aprendizados.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Definir modelo de"
+          },
+          {
+            "index": 2,
+            "text": "continuidade com"
+          },
+          {
+            "index": 3,
+            "text": "base nos"
+          },
+          {
+            "index": 4,
+            "text": "aprendizados."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Definir modelo de continuidade com base nos aprendizados.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Definir modelo de continuidade com base nos aprendizados.",
+              "fontSize": 18,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/loba9gv6",
+      "id": "15",
+      "bbox": [
+        156,
+        542,
+        900,
+        52
+      ],
+      "geometry": "rect",
+      "text": "O piloto pode ser ajustado ao seu contexto: distribuição, label, aceleração, comunidade, educação ou programa de desenvolvimento artístico.",
+      "textPreview": "O piloto pode ser ajustado ao seu contexto: distribuição, label, aceleração, comunidade, educação ou programa de desenvolvimento artístico.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "O piloto pode ser ajustado ao seu contexto: distribuição, label, aceleração, comunidade,"
+          },
+          {
+            "index": 2,
+            "text": "educação ou programa de desenvolvimento artístico."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "O piloto pode ser ajustado ao seu contexto: distribuição, label, aceleração, comunidade, educação ou programa de desenvolvimento artístico.",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#AAB9B2",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "O piloto pode ser ajustado ao seu contexto: distribuição, label, aceleração, comunidade, educação ou programa de desenvolvimento artístico.",
+              "fontSize": 20,
+              "color": "#AAB9B2",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yl0by1wf",
+      "id": "16",
+      "bbox": [
+        72,
+        666,
+        220,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Maestra Manager",
+      "textPreview": "Maestra Manager",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#71847D",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Maestra Manager"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Maestra Manager",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#71847D",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Maestra Manager",
+              "fontSize": 12,
+              "color": "#71847D",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zm9s76d0",
+      "id": "17",
+      "bbox": [
+        1166,
+        660,
+        48,
+        28
+      ],
+      "geometry": "rect",
+      "text": "08",
+      "textPreview": "08",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#71847D",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "08"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "08",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#71847D",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "08",
+              "fontSize": 14,
+              "color": "#71847D",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

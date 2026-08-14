@@ -1,0 +1,751 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/x32nok",
+    "id": "x32nok",
+    "slide": 2,
+    "layoutId": "5f818911-157d-4897-9b0e-d33b11130df9",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#050707",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "5f818911-157d-4897-9b0e-d33b11130df9",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jqlcrqhg",
+      "id": "1",
+      "bbox": [
+        72,
+        58,
+        940,
+        94
+      ],
+      "geometry": "rect",
+      "text": "O desafio é acompanhar evolução, não apenas atrair artistas.",
+      "textPreview": "O desafio é acompanhar evolução, não apenas atrair artistas.",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "O desafio é acompanhar evolução, não apenas"
+          },
+          {
+            "index": 2,
+            "text": "atrair artistas."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "O desafio é acompanhar evolução, não apenas atrair artistas.",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "O desafio é acompanhar evolução, não apenas atrair artistas.",
+              "fontSize": 38,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4red0vy1",
+      "id": "2",
+      "bbox": [
+        74,
+        132,
+        830,
+        48
+      ],
+      "geometry": "rect",
+      "text": "Quando a base cresce, orientação individual vira gargalo e os planos se perdem entre ferramentas, conversas e planilhas.",
+      "textPreview": "Quando a base cresce, orientação individual vira gargalo e os planos se perdem entre ferramentas, conversas e planilhas.",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "fontSize": 19,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Quando a base cresce, orientação individual vira gargalo e os planos se perdem entre"
+          },
+          {
+            "index": 2,
+            "text": "ferramentas, conversas e planilhas."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Quando a base cresce, orientação individual vira gargalo e os planos se perdem entre ferramentas, conversas e planilhas.",
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Quando a base cresce, orientação individual vira gargalo e os planos se perdem entre ferramentas, conversas e planilhas.",
+              "fontSize": 19,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5snut0zm",
+      "id": "3",
+      "bbox": [
+        94,
+        227,
+        58,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6twv25g7",
+      "id": "4",
+      "bbox": [
+        184,
+        220,
+        286,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Visibilidade",
+      "textPreview": "Visibilidade",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "fontSize": 30,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Visibilidade"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Visibilidade",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Visibilidade",
+              "fontSize": 30,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ru5wvahc",
+      "id": "5",
+      "bbox": [
+        520,
+        222,
+        560,
+        58
+      ],
+      "geometry": "rect",
+      "text": "Entender em que estágio cada artista está e o que precisa destravar primeiro.",
+      "textPreview": "Entender em que estágio cada artista está e o que precisa destravar primeiro.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Entender em que estágio cada artista está e o que"
+          },
+          {
+            "index": 2,
+            "text": "precisa destravar primeiro."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Entender em que estágio cada artista está e o que precisa destravar primeiro.",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Entender em que estágio cada artista está e o que precisa destravar primeiro.",
+              "fontSize": 22,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sved4fyx",
+      "id": "6",
+      "bbox": [
+        94,
+        343,
+        58,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#25D7B9",
+      "lineColor": "#25D7B9",
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/twnexkzi",
+      "id": "7",
+      "bbox": [
+        184,
+        336,
+        286,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Prioridade",
+      "textPreview": "Prioridade",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "fontSize": 30,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Prioridade"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Prioridade",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Prioridade",
+              "fontSize": 30,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/exwv6pg3",
+      "id": "8",
+      "bbox": [
+        520,
+        338,
+        560,
+        58
+      ],
+      "geometry": "rect",
+      "text": "Transformar diagnóstico em ações concretas, com foco no próximo ciclo de carreira.",
+      "textPreview": "Transformar diagnóstico em ações concretas, com foco no próximo ciclo de carreira.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Transformar diagnóstico em ações concretas, com"
+          },
+          {
+            "index": 2,
+            "text": "foco no próximo ciclo de carreira."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Transformar diagnóstico em ações concretas, com foco no próximo ciclo de carreira.",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Transformar diagnóstico em ações concretas, com foco no próximo ciclo de carreira.",
+              "fontSize": 22,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fipwzaho",
+      "id": "9",
+      "bbox": [
+        94,
+        459,
+        58,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#B7F66B",
+      "lineColor": "#B7F66B",
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7yt0rmpg",
+      "id": "10",
+      "bbox": [
+        184,
+        452,
+        286,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Ritmo",
+      "textPreview": "Ritmo",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "fontSize": 30,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Ritmo"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Ritmo",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Ritmo",
+              "fontSize": 30,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6xkzyh8v",
+      "id": "11",
+      "bbox": [
+        520,
+        454,
+        560,
+        58
+      ],
+      "geometry": "rect",
+      "text": "Manter uma cadência de execução sem depender de consultoria manual em cada interação.",
+      "textPreview": "Manter uma cadência de execução sem depender de consultoria manual em cada interação.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Manter uma cadência de execução sem depender de"
+          },
+          {
+            "index": 2,
+            "text": "consultoria manual em cada interação."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Manter uma cadência de execução sem depender de consultoria manual em cada interação.",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Manter uma cadência de execução sem depender de consultoria manual em cada interação.",
+              "fontSize": 22,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/t0bitw7m",
+      "id": "12",
+      "bbox": [
+        72,
+        666,
+        220,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Maestra Manager",
+      "textPreview": "Maestra Manager",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#71847D",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Maestra Manager"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Maestra Manager",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#71847D",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Maestra Manager",
+              "fontSize": 12,
+              "color": "#71847D",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8z2h0rq1",
+      "id": "13",
+      "bbox": [
+        1166,
+        660,
+        48,
+        28
+      ],
+      "geometry": "rect",
+      "text": "02",
+      "textPreview": "02",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#71847D",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "02"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "02",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#71847D",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "02",
+              "fontSize": 14,
+              "color": "#71847D",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

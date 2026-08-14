@@ -1,0 +1,273 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/zs0fym",
+    "id": "zs0fym",
+    "slide": 1,
+    "layoutId": "5f818911-157d-4897-9b0e-d33b11130df9",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#050707",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "5f818911-157d-4897-9b0e-d33b11130df9",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/ah8b2xk3",
+      "id": "1",
+      "bbox": [
+        72,
+        72,
+        300,
+        58
+      ],
+      "alt": "Logo Maestra",
+      "contentType": "image/png",
+      "imageFit": "contain",
+      "asset": {
+        "assetId": "2b409f03-543d-4006-9c05-015331a8d746",
+        "contentType": "image/png",
+        "byteLength": 9244
+      }
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/43y50fet",
+      "id": "2",
+      "bbox": [
+        72,
+        190,
+        750,
+        174
+      ],
+      "geometry": "rect",
+      "text": "Desenvolva artistas com método, dados e acompanhamento contínuo",
+      "textPreview": "Desenvolva artistas com método, dados e acompanhamento contínuo",
+      "resolvedFontSize": 53,
+      "resolvedTextStyle": {
+        "fontSize": 53,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Desenvolva artistas com"
+          },
+          {
+            "index": 2,
+            "text": "método, dados e"
+          },
+          {
+            "index": 3,
+            "text": "acompanhamento contínuo"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Desenvolva artistas com método, dados e acompanhamento contínuo",
+          "resolvedTextStyle": {
+            "fontSize": 53,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Desenvolva artistas com método, dados e acompanhamento contínuo",
+              "fontSize": 53,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5476tkfe",
+      "id": "3",
+      "bbox": [
+        76,
+        390,
+        646,
+        88
+      ],
+      "geometry": "rect",
+      "text": "Maestra combina diagnóstico de carreira, planejamento guiado por IA e gestão operacional para transformar intenção em plano de ação.",
+      "textPreview": "Maestra combina diagnóstico de carreira, planejamento guiado por IA e gestão operacional para transformar intenção em plano de ação.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Maestra combina diagnóstico de carreira, planejamento"
+          },
+          {
+            "index": 2,
+            "text": "guiado por IA e gestão operacional para transformar"
+          },
+          {
+            "index": 3,
+            "text": "intenção em plano de ação."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Maestra combina diagnóstico de carreira, planejamento guiado por IA e gestão operacional para transformar intenção em plano de ação.",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Maestra combina diagnóstico de carreira, planejamento guiado por IA e gestão operacional para transformar intenção em plano de ação.",
+              "fontSize": 24,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qpgn2pwz",
+      "id": "4",
+      "bbox": [
+        76,
+        520,
+        190,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/y58b6xkz",
+      "id": "5",
+      "bbox": [
+        816,
+        116,
+        350,
+        448
+      ],
+      "geometry": "roundRect",
+      "alt": "Dashboard de acompanhamento de artista na Maestra",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 5714"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "85d9ba10-6794-4107-b850-262dfb6151d8",
+        "contentType": "image/png",
+        "byteLength": 258804
+      }
+    }
+  ],
+  "composeRuns": []
+}

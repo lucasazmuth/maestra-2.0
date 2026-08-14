@@ -1,0 +1,652 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/wpsjxe",
+    "id": "wpsjxe",
+    "slide": 6,
+    "layoutId": "5f818911-157d-4897-9b0e-d33b11130df9",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#050707",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "5f818911-157d-4897-9b0e-d33b11130df9",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "ccfbf41d-247d-4cc2-8492-f454cb66c29e",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pk32tg3e",
+      "id": "1",
+      "bbox": [
+        72,
+        58,
+        940,
+        94
+      ],
+      "geometry": "rect",
+      "text": "Nyta IA mantém o plano vivo entre uma reunião e outra.",
+      "textPreview": "Nyta IA mantém o plano vivo entre uma reunião e outra.",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Nyta IA mantém o plano vivo entre uma reunião e"
+          },
+          {
+            "index": 2,
+            "text": "outra."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Nyta IA mantém o plano vivo entre uma reunião e outra.",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Nyta IA mantém o plano vivo entre uma reunião e outra.",
+              "fontSize": 38,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2hs3y143",
+      "id": "2",
+      "bbox": [
+        74,
+        132,
+        830,
+        48
+      ],
+      "geometry": "rect",
+      "text": "A assistente trabalha com o contexto do perfil, do planejamento e da rotina do artista.",
+      "textPreview": "A assistente trabalha com o contexto do perfil, do planejamento e da rotina do artista.",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "fontSize": 19,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "A assistente trabalha com o contexto do perfil, do planejamento e da rotina do artista."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "A assistente trabalha com o contexto do perfil, do planejamento e da rotina do artista.",
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "A assistente trabalha com o contexto do perfil, do planejamento e da rotina do artista.",
+              "fontSize": 19,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/mtkbyl8v",
+      "id": "3",
+      "bbox": [
+        92,
+        198,
+        510,
+        354
+      ],
+      "geometry": "roundRect",
+      "alt": "Assistente Nyta IA aberto dentro da plataforma",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 5650"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "d02cb1d9-f5a7-4f1d-9263-fab55bfa9b88",
+        "contentType": "image/png",
+        "byteLength": 346684
+      }
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0falwrmx",
+      "id": "4",
+      "bbox": [
+        690,
+        222,
+        420,
+        40
+      ],
+      "geometry": "rect",
+      "text": "Apoio recorrente",
+      "textPreview": "Apoio recorrente",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "fontSize": 30,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Apoio recorrente"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Apoio recorrente",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Apoio recorrente",
+              "fontSize": 30,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1gj2pw3i",
+      "id": "5",
+      "bbox": [
+        696,
+        314,
+        8,
+        8
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ets3u14r",
+      "id": "6",
+      "bbox": [
+        718,
+        304,
+        430,
+        48
+      ],
+      "geometry": "rect",
+      "text": "Responde dúvidas com base no contexto da carreira.",
+      "textPreview": "Responde dúvidas com base no contexto da carreira.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Responde dúvidas com base no contexto da"
+          },
+          {
+            "index": 2,
+            "text": "carreira."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Responde dúvidas com base no contexto da carreira.",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Responde dúvidas com base no contexto da carreira.",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fu1kn6lc",
+      "id": "7",
+      "bbox": [
+        696,
+        372,
+        8,
+        8
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#25D7B9",
+      "lineColor": "#25D7B9",
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/srqlsrm1",
+      "id": "8",
+      "bbox": [
+        718,
+        362,
+        430,
+        48
+      ],
+      "geometry": "rect",
+      "text": "Sugere caminhos de marketing, gestão e execução.",
+      "textPreview": "Sugere caminhos de marketing, gestão e execução.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Sugere caminhos de marketing, gestão e"
+          },
+          {
+            "index": 2,
+            "text": "execução."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Sugere caminhos de marketing, gestão e execução.",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Sugere caminhos de marketing, gestão e execução.",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dsj2lw3m",
+      "id": "9",
+      "bbox": [
+        696,
+        430,
+        8,
+        8
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#B7F66B",
+      "lineColor": "#B7F66B",
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5w3q5cne",
+      "id": "10",
+      "bbox": [
+        718,
+        420,
+        430,
+        48
+      ],
+      "geometry": "rect",
+      "text": "Ajuda a criar tarefas, eventos e itens de catálogo.",
+      "textPreview": "Ajuda a criar tarefas, eventos e itens de catálogo.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Ajuda a criar tarefas, eventos e itens de"
+          },
+          {
+            "index": 2,
+            "text": "catálogo."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Ajuda a criar tarefas, eventos e itens de catálogo.",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Ajuda a criar tarefas, eventos e itens de catálogo.",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4bupc7mt",
+      "id": "11",
+      "bbox": [
+        72,
+        666,
+        220,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Maestra Manager",
+      "textPreview": "Maestra Manager",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#71847D",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Maestra Manager"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Maestra Manager",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#71847D",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Maestra Manager",
+              "fontSize": 12,
+              "color": "#71847D",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3a183m58",
+      "id": "12",
+      "bbox": [
+        1166,
+        660,
+        48,
+        28
+      ],
+      "geometry": "rect",
+      "text": "06",
+      "textPreview": "06",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#71847D",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "06"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "06",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#71847D",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "06",
+              "fontSize": 14,
+              "color": "#71847D",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

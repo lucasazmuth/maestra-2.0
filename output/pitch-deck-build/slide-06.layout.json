@@ -1,0 +1,648 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/i5dlyy",
+    "id": "i5dlyy",
+    "slide": 6,
+    "layoutId": "d6e2cd81-e062-41b6-9ad0-d317c293ebd6",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "029c0239-d818-4649-9b2d-641ab2748b11",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#050707",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "d6e2cd81-e062-41b6-9ad0-d317c293ebd6",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "029c0239-d818-4649-9b2d-641ab2748b11",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "029c0239-d818-4649-9b2d-641ab2748b11",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qts7mpk7",
+      "id": "1",
+      "bbox": [
+        72,
+        58,
+        920,
+        92
+      ],
+      "geometry": "rect",
+      "text": "Nyta IA acompanha a operação com contexto, não respostas genéricas.",
+      "textPreview": "Nyta IA acompanha a operação com contexto, não respostas genéricas.",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Nyta IA acompanha a operação com contexto,"
+          },
+          {
+            "index": 2,
+            "text": "não respostas genéricas."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Nyta IA acompanha a operação com contexto, não respostas genéricas.",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Nyta IA acompanha a operação com contexto, não respostas genéricas.",
+              "fontSize": 38,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dwj6x4jy",
+      "id": "2",
+      "bbox": [
+        74,
+        128,
+        840,
+        42
+      ],
+      "geometry": "rect",
+      "text": "O assistente trabalha dentro do perfil do artista e pode apoiar decisões e tarefas do dia a dia.",
+      "textPreview": "O assistente trabalha dentro do perfil do artista e pode apoiar decisões e tarefas do dia a dia.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "O assistente trabalha dentro do perfil do artista e pode apoiar decisões e tarefas do dia a dia."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "O assistente trabalha dentro do perfil do artista e pode apoiar decisões e tarefas do dia a dia.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "O assistente trabalha dentro do perfil do artista e pode apoiar decisões e tarefas do dia a dia.",
+              "fontSize": 18,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/t43id036",
+      "id": "3",
+      "bbox": [
+        96,
+        188,
+        520,
+        372
+      ],
+      "geometry": "roundRect",
+      "alt": "Assistente Nyta IA aberto no produto",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 5376"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "28d3fdf7-50e3-4990-8dd2-53e6fff5a0d6",
+        "contentType": "image/png",
+        "byteLength": 346684
+      }
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zyloze14",
+      "id": "4",
+      "bbox": [
+        704,
+        218,
+        420,
+        44
+      ],
+      "geometry": "rect",
+      "text": "O que o parceiro ganha",
+      "textPreview": "O que o parceiro ganha",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "fontSize": 30,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "O que o parceiro ganha"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "O que o parceiro ganha",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "O que o parceiro ganha",
+              "fontSize": 30,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/exs7q9kj",
+      "id": "5",
+      "bbox": [
+        708,
+        313,
+        7,
+        7
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/10361oju",
+      "id": "6",
+      "bbox": [
+        728,
+        304,
+        430,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Suporte recorrente para dúvidas, marketing e execução",
+      "textPreview": "Suporte recorrente para dúvidas, marketing e execução",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Suporte recorrente para dúvidas, marketing e"
+          },
+          {
+            "index": 2,
+            "text": "execução"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Suporte recorrente para dúvidas, marketing e execução",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Suporte recorrente para dúvidas, marketing e execução",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0zupsjip",
+      "id": "7",
+      "bbox": [
+        708,
+        375,
+        7,
+        7
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/v2hona1k",
+      "id": "8",
+      "bbox": [
+        728,
+        366,
+        430,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Memória do perfil, plano, tarefas e agenda",
+      "textPreview": "Memória do perfil, plano, tarefas e agenda",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Memória do perfil, plano, tarefas e agenda"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Memória do perfil, plano, tarefas e agenda",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Memória do perfil, plano, tarefas e agenda",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/u18ne5kz",
+      "id": "9",
+      "bbox": [
+        708,
+        437,
+        7,
+        7
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kjm5sjix",
+      "id": "10",
+      "bbox": [
+        728,
+        428,
+        430,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Ações operacionais: criar tarefas, eventos e itens de catálogo",
+      "textPreview": "Ações operacionais: criar tarefas, eventos e itens de catálogo",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Ações operacionais: criar tarefas, eventos e"
+          },
+          {
+            "index": 2,
+            "text": "itens de catálogo"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Ações operacionais: criar tarefas, eventos e itens de catálogo",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Ações operacionais: criar tarefas, eventos e itens de catálogo",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5kfmloji",
+      "id": "11",
+      "bbox": [
+        72,
+        666,
+        240,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Maestra Manager",
+      "textPreview": "Maestra Manager",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#6F837B",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Maestra Manager"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Maestra Manager",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#6F837B",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Maestra Manager",
+              "fontSize": 12,
+              "color": "#6F837B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ih4nqt07",
+      "id": "12",
+      "bbox": [
+        1164,
+        660,
+        48,
+        28
+      ],
+      "geometry": "rect",
+      "text": "06",
+      "textPreview": "06",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#6F837B",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "06"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "06",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#6F837B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "06",
+              "fontSize": 14,
+              "color": "#6F837B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

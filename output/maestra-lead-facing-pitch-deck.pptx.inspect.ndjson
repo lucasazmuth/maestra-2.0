@@ -1,0 +1,136 @@
+{"kind":"deck","id":"pr/albd1x","name":"Deck"}
+{"kind":"layout","layoutId":"ccfbf41d-247d-4cc2-8492-f454cb66c29e","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"5f818911-157d-4897-9b0e-d33b11130df9","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/zs0fym","slide":1,"title":"Desenvolva artistas com método, dados e acompanhamento contínuo","textShapes":2}
+{"kind":"textbox","id":"sh/43y50fet","slide":1,"text":"Desenvolva artistas com método, dados e acompanhamento contínuo","textPreview":"Desenvolva artistas com método, dados e acompanhamento contínuo","textChars":63,"textLines":1,"bbox":[72,190,750,174]}
+{"kind":"textbox","id":"sh/5476tkfe","slide":1,"text":"Maestra combina diagnóstico de carreira, planejamento guiado por IA e gestão operacional para transformar intenção em plano de ação.","textPreview":"Maestra combina diagnóstico de carreira, planejamento guiado por IA e gestão operacional para transformar intenção em plano de ação.","textChars":132,"textLines":1,"bbox":[76,390,646,88]}
+{"kind":"shape","id":"sh/qpgn2pwz","slide":1,"bbox":[76,520,190,4]}
+{"kind":"image","id":"im/ah8b2xk3","slide":1,"name":"","alt":"Logo Maestra","bbox":[72,72,300,58]}
+{"kind":"image","id":"im/y58b6xkz","slide":1,"name":"","geometry":"roundRect","alt":"Dashboard de acompanhamento de artista na Maestra","bbox":[816,116,350,448]}
+{"kind":"notes","id":"nt/zs0fym","slide":1,"text":"Abrir a reunião com a promessa de valor para o cliente: desenvolvimento de artistas com método e continuidade.\n\n[Sources]\n- public/brand/maestra-wordmark-light.png\n- prints-registro-v2/02-maestra-manager/02-dashboard.png\n- README.md"}
+{"kind":"slide","id":"sl/x32nok","slide":2,"title":"O desafio é acompanhar evolução, não apenas atrair artistas.","textShapes":10}
+{"kind":"textbox","id":"sh/jqlcrqhg","slide":2,"text":"O desafio é acompanhar evolução, não apenas atrair artistas.","textPreview":"O desafio é acompanhar evolução, não apenas atrair artistas.","textChars":60,"textLines":1,"bbox":[72,58,940,94]}
+{"kind":"textbox","id":"sh/4red0vy1","slide":2,"text":"Quando a base cresce, orientação individual vira gargalo e os planos se perdem entre ferramentas, conversas e planilhas.","textPreview":"Quando a base cresce, orientação individual vira gargalo e os planos se perdem entre ferramentas, conversas e planilhas.","textChars":120,"textLines":1,"bbox":[74,132,830,48]}
+{"kind":"shape","id":"sh/5snut0zm","slide":2,"bbox":[94,227,58,4]}
+{"kind":"textbox","id":"sh/6twv25g7","slide":2,"text":"Visibilidade","textPreview":"Visibilidade","textChars":12,"textLines":1,"bbox":[184,220,286,40]}
+{"kind":"textbox","id":"sh/ru5wvahc","slide":2,"text":"Entender em que estágio cada artista está e o que precisa destravar primeiro.","textPreview":"Entender em que estágio cada artista está e o que precisa destravar primeiro.","textChars":77,"textLines":1,"bbox":[520,222,560,58]}
+{"kind":"shape","id":"sh/sved4fyx","slide":2,"bbox":[94,343,58,4]}
+{"kind":"textbox","id":"sh/twnexkzi","slide":2,"text":"Prioridade","textPreview":"Prioridade","textChars":10,"textLines":1,"bbox":[184,336,286,40]}
+{"kind":"textbox","id":"sh/exwv6pg3","slide":2,"text":"Transformar diagnóstico em ações concretas, com foco no próximo ciclo de carreira.","textPreview":"Transformar diagnóstico em ações concretas, com foco no próximo ciclo de carreira.","textChars":82,"textLines":1,"bbox":[520,338,560,58]}
+{"kind":"shape","id":"sh/fipwzaho","slide":2,"bbox":[94,459,58,4]}
+{"kind":"textbox","id":"sh/7yt0rmpg","slide":2,"text":"Ritmo","textPreview":"Ritmo","textChars":5,"textLines":1,"bbox":[184,452,286,40]}
+{"kind":"textbox","id":"sh/6xkzyh8v","slide":2,"text":"Manter uma cadência de execução sem depender de consultoria manual em cada interação.","textPreview":"Manter uma cadência de execução sem depender de consultoria manual em cada interação.","textChars":85,"textLines":1,"bbox":[520,454,560,58]}
+{"kind":"textbox","id":"sh/t0bitw7m","slide":2,"text":"Maestra Manager","textPreview":"Maestra Manager","textChars":15,"textLines":1,"bbox":[72,666,220,24]}
+{"kind":"textbox","id":"sh/8z2h0rq1","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1166,660,48,28]}
+{"kind":"notes","id":"nt/x32nok","slide":2,"text":"Este slide abre a dor do lead, sem falar da operação interna do BD.\n\n[Sources]\n- MODELO-DE-NEGOCIO.md, seção 2"}
+{"kind":"slide","id":"sl/jlzfq1","slide":3,"title":"A Maestra entrega uma jornada completa para cada artista.","textShapes":14}
+{"kind":"textbox","id":"sh/a9gv6947","slide":3,"text":"A Maestra entrega uma jornada completa para cada artista.","textPreview":"A Maestra entrega uma jornada completa para cada artista.","textChars":57,"textLines":1,"bbox":[72,58,940,94]}
+{"kind":"textbox","id":"sh/xcre1o3y","slide":3,"text":"Do primeiro diagnóstico ao acompanhamento diário, tudo fica conectado em um mesmo ambiente.","textPreview":"Do primeiro diagnóstico ao acompanhamento diário, tudo fica conectado em um mesmo ambiente.","textChars":91,"textLines":1,"bbox":[74,132,830,48]}
+{"kind":"shape","id":"sh/wbid8jmd","slide":3,"bbox":[102,226,88,88]}
+{"kind":"textbox","id":"sh/nmpcve5w","slide":3,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[102,244,88,50]}
+{"kind":"textbox","id":"sh/2lgv294b","slide":3,"text":"Diagnóstico REAL","textPreview":"Diagnóstico REAL","textChars":16,"textLines":1,"bbox":[62,356,260,36]}
+{"kind":"textbox","id":"sh/987ux43m","slide":3,"text":"Leitura inicial da carreira em alcance, receita, audiência e legitimidade.","textPreview":"Leitura inicial da carreira em alcance, receita, audiência e legitimidade.","textChars":74,"textLines":1,"bbox":[44,410,300,98]}
+{"kind":"shape","id":"sh/o7yd4jm1","slide":3,"bbox":[462,226,88,88]}
+{"kind":"textbox","id":"sh/fi5cru5k","slide":3,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[462,244,88,50]}
+{"kind":"textbox","id":"sh/ehwvyp4z","slide":3,"text":"Plano guiado","textPreview":"Plano guiado","textChars":12,"textLines":1,"bbox":[422,356,260,36]}
+{"kind":"textbox","id":"sh/oryh83ql","slide":3,"text":"Objetivos, SWOT, estratégias, prioridades e cronograma em linguagem simples.","textPreview":"Objetivos, SWOT, estratégias, prioridades e cronograma em linguagem simples.","textChars":76,"textLines":1,"bbox":[404,410,300,98]}
+{"kind":"shape","id":"sh/9cryh8r6","slide":3,"bbox":[822,226,88,88]}
+{"kind":"textbox","id":"sh/mpgz6t8v","slide":3,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[822,244,88,50]}
+{"kind":"textbox","id":"sh/nqpgfy9g","slide":3,"text":"Execução assistida","textPreview":"Execução assistida","textChars":18,"textLines":1,"bbox":[782,356,260,36]}
+{"kind":"textbox","id":"sh/0nyx4jqp","slide":3,"text":"Tarefas, agenda, catálogo, equipe e apoio da Nyta IA no dia a dia.","textPreview":"Tarefas, agenda, catálogo, equipe e apoio da Nyta IA no dia a dia.","textChars":66,"textLines":1,"bbox":[764,410,300,98]}
+{"kind":"textbox","id":"sh/1o7ydora","slide":3,"text":"Resultado: sua organização acompanha uma trilha consistente, enquanto o artista recebe orientação prática.","textPreview":"Resultado: sua organização acompanha uma trilha consistente, enquanto o artista recebe orientação prática.","textChars":106,"textLines":1,"bbox":[178,586,860,42]}
+{"kind":"textbox","id":"sh/elgf298j","slide":3,"text":"Maestra Manager","textPreview":"Maestra Manager","textChars":15,"textLines":1,"bbox":[72,666,220,24]}
+{"kind":"textbox","id":"sh/zmpgbe94","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1166,660,48,28]}
+{"kind":"notes","id":"nt/jlzfq1","slide":3,"text":"Mostrar a jornada como produto de valor para o lead, não como arquitetura interna.\n\n[Sources]\n- MODELO-DE-NEGOCIO.md, seções 3 e 4\n- maestra-landing/src/pages/Home.tsx"}
+{"kind":"slide","id":"sl/tl2p0f","slide":4,"title":"O Diagnóstico REAL cria uma base comum para decidir o próximo passo.","textShapes":9}
+{"kind":"textbox","id":"sh/ilgz6dkr","slide":4,"text":"O Diagnóstico REAL cria uma base comum para decidir o próximo passo.","textPreview":"O Diagnóstico REAL cria uma base comum para decidir o próximo passo.","textChars":68,"textLines":1,"bbox":[72,58,940,94]}
+{"kind":"textbox","id":"sh/5o7ihs3i","slide":4,"text":"O artista entende onde está. Sua equipe entende onde apoiar.","textPreview":"O artista entende onde está. Sua equipe entende onde apoiar.","textChars":60,"textLines":1,"bbox":[74,132,830,48]}
+{"kind":"textbox","id":"sh/rq90j2l8","slide":4,"text":"Quatro dimensões acionáveis","textPreview":"Quatro dimensões acionáveis","textChars":27,"textLines":1,"bbox":[738,216,420,44]}
+{"kind":"shape","id":"sh/qpgzaxkn","slide":4,"bbox":[744,314,8,8]}
+{"kind":"textbox","id":"sh/dsrilc3e","slide":4,"text":"Alcance e descoberta","textPreview":"Alcance e descoberta","textChars":20,"textLines":1,"bbox":[766,304,380,48]}
+{"kind":"shape","id":"sh/srihc72t","slide":4,"bbox":[744,368,8,8]}
+{"kind":"textbox","id":"sh/fu90n2lk","slide":4,"text":"Sinais de monetização","textPreview":"Sinais de monetização","textChars":21,"textLines":1,"bbox":[766,358,380,48]}
+{"kind":"shape","id":"sh/et0jehkz","slide":4,"bbox":[744,422,8,8]}
+{"kind":"textbox","id":"sh/8zedczi1","slide":4,"text":"Audiência e engajamento","textPreview":"Audiência e engajamento","textChars":23,"textLines":1,"bbox":[766,412,380,48]}
+{"kind":"shape","id":"sh/90ne5kzm","slide":4,"bbox":[744,476,8,8]}
+{"kind":"textbox","id":"sh/mxcvap0b","slide":4,"text":"Legitimidade de mercado","textPreview":"Legitimidade de mercado","textChars":23,"textLines":1,"bbox":[766,466,380,48]}
+{"kind":"textbox","id":"sh/7y5w3uhg","slide":4,"text":"Maestra Manager","textPreview":"Maestra Manager","textChars":15,"textLines":1,"bbox":[72,666,220,24]}
+{"kind":"textbox","id":"sh/wnedgzid","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1166,660,48,28]}
+{"kind":"image","id":"im/xcruh0fe","slide":4,"name":"","geometry":"roundRect","alt":"Resultado do Diagnóstico REAL no produto","bbox":[76,202,594,340]}
+{"kind":"notes","id":"nt/tl2p0f","slide":4,"text":"Explicar que o diagnóstico cria linguagem comum para priorização e acompanhamento.\n\n[Sources]\n- docs/DIAGNOSTICO_REAL_V2.md, seções 1 e 2\n- prints-registro-v2/01-diagnostico-real/03-resultado-perfil.png"}
+{"kind":"slide","id":"sl/5j1v4w","slide":5,"title":"O plano sai pronto para execução, não fica parado como relatório.","textShapes":8}
+{"kind":"textbox","id":"sh/p0j2xojq","slide":5,"text":"O plano sai pronto para execução, não fica parado como relatório.","textPreview":"O plano sai pronto para execução, não fica parado como relatório.","textChars":65,"textLines":1,"bbox":[72,58,940,94]}
+{"kind":"textbox","id":"sh/2x8j290f","slide":5,"text":"A Maestra conduz o raciocínio estratégico e transforma respostas em tarefas, prazos e prioridades.","textPreview":"A Maestra conduz o raciocínio estratégico e transforma respostas em tarefas, prazos e prioridades.","textChars":98,"textLines":1,"bbox":[74,132,830,48]}
+{"kind":"textbox","id":"sh/c3a183ih","slide":5,"text":"Para o artista","textPreview":"Para o artista","textChars":14,"textLines":1,"bbox":[86,230,310,36]}
+{"kind":"shape","id":"sh/xoj218j2","slide":5,"bbox":[90,314,8,8]}
+{"kind":"textbox","id":"sh/a1sj6t0b","slide":5,"text":"Clareza sobre objetivos, posicionamento e próximos passos.","textPreview":"Clareza sobre objetivos, posicionamento e próximos passos.","textChars":58,"textLines":1,"bbox":[112,304,510,48]}
+{"kind":"textbox","id":"sh/b21kzy1w","slide":5,"text":"Para sua organização","textPreview":"Para sua organização","textChars":20,"textLines":1,"bbox":[86,404,390,38]}
+{"kind":"shape","id":"sh/kru1c3id","slide":5,"bbox":[90,488,8,8]}
+{"kind":"textbox","id":"sh/ls3258zy","slide":5,"text":"Uma visão estruturada do que cada artista precisa para evoluir.","textPreview":"Uma visão estruturada do que cada artista precisa para evoluir.","textChars":63,"textLines":1,"bbox":[112,478,520,48]}
+{"kind":"textbox","id":"sh/hof6l8bi","slide":5,"text":"Maestra Manager","textPreview":"Maestra Manager","textChars":15,"textLines":1,"bbox":[72,666,220,24]}
+{"kind":"textbox","id":"sh/gn65s3ux","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1166,660,48,28]}
+{"kind":"image","id":"im/m587m1of","slide":5,"name":"","geometry":"roundRect","alt":"Tela de planejamento estratégico da Maestra","bbox":[718,190,450,336]}
+{"kind":"notes","id":"nt/5j1v4w","slide":5,"text":"Este slide conecta a experiência do artista ao valor operacional para o cliente.\n\n[Sources]\n- MODELO-DE-NEGOCIO.md, seção 4\n- maestra-landing/src/pages/Home.tsx\n- prints-registro-v2/02-maestra-manager/03-planejamento.png"}
+{"kind":"slide","id":"sl/wpsjxe","slide":6,"title":"Nyta IA mantém o plano vivo entre uma reunião e outra.","textShapes":8}
+{"kind":"textbox","id":"sh/pk32tg3e","slide":6,"text":"Nyta IA mantém o plano vivo entre uma reunião e outra.","textPreview":"Nyta IA mantém o plano vivo entre uma reunião e outra.","textChars":54,"textLines":1,"bbox":[72,58,940,94]}
+{"kind":"textbox","id":"sh/2hs3y143","slide":6,"text":"A assistente trabalha com o contexto do perfil, do planejamento e da rotina do artista.","textPreview":"A assistente trabalha com o contexto do perfil, do planejamento e da rotina do artista.","textChars":87,"textLines":1,"bbox":[74,132,830,48]}
+{"kind":"textbox","id":"sh/0falwrmx","slide":6,"text":"Apoio recorrente","textPreview":"Apoio recorrente","textChars":16,"textLines":1,"bbox":[690,222,420,40]}
+{"kind":"shape","id":"sh/1gj2pw3i","slide":6,"bbox":[696,314,8,8]}
+{"kind":"textbox","id":"sh/ets3u14r","slide":6,"text":"Responde dúvidas com base no contexto da carreira.","textPreview":"Responde dúvidas com base no contexto da carreira.","textChars":50,"textLines":1,"bbox":[718,304,430,48]}
+{"kind":"shape","id":"sh/fu1kn6lc","slide":6,"bbox":[696,372,8,8]}
+{"kind":"textbox","id":"sh/srqlsrm1","slide":6,"text":"Sugere caminhos de marketing, gestão e execução.","textPreview":"Sugere caminhos de marketing, gestão e execução.","textChars":48,"textLines":1,"bbox":[718,362,430,48]}
+{"kind":"shape","id":"sh/dsj2lw3m","slide":6,"bbox":[696,430,8,8]}
+{"kind":"textbox","id":"sh/5w3q5cne","slide":6,"text":"Ajuda a criar tarefas, eventos e itens de catálogo.","textPreview":"Ajuda a criar tarefas, eventos e itens de catálogo.","textChars":51,"textLines":1,"bbox":[718,420,430,48]}
+{"kind":"textbox","id":"sh/4bupc7mt","slide":6,"text":"Maestra Manager","textPreview":"Maestra Manager","textChars":15,"textLines":1,"bbox":[72,666,220,24]}
+{"kind":"textbox","id":"sh/3a183m58","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1166,660,48,28]}
+{"kind":"image","id":"im/mtkbyl8v","slide":6,"name":"","geometry":"roundRect","alt":"Assistente Nyta IA aberto dentro da plataforma","bbox":[92,198,510,354]}
+{"kind":"notes","id":"nt/wpsjxe","slide":6,"text":"Reposicionar a IA como continuidade de acompanhamento, não como chatbot genérico.\n\n[Sources]\n- docs/FREEMIUM-E-NYTA.md, seção 3\n- prints-registro-v2/03-nyta/02-assistente-pro-aberta.png"}
+{"kind":"slide","id":"sl/ysmq38","slide":7,"title":"Sua equipe ganha uma visão única da operação do artista.","textShapes":9}
+{"kind":"textbox","id":"sh/9gnep4v6","slide":7,"text":"Sua equipe ganha uma visão única da operação do artista.","textPreview":"Sua equipe ganha uma visão única da operação do artista.","textChars":56,"textLines":1,"bbox":[72,58,940,94]}
+{"kind":"textbox","id":"sh/mdwve9wf","slide":7,"text":"Catálogo, agenda, equipe e plano de ação ficam no mesmo lugar para reduzir dispersão e aumentar cadência.","textPreview":"Catálogo, agenda, equipe e plano de ação ficam no mesmo lugar para reduzir dispersão e aumentar cadência.","textChars":105,"textLines":1,"bbox":[74,132,830,48]}
+{"kind":"textbox","id":"sh/kbudcze9","slide":7,"text":"Plano de ação","textPreview":"Plano de ação","textChars":13,"textLines":1,"bbox":[82,414,230,34]}
+{"kind":"textbox","id":"sh/y9cvapwj","slide":7,"text":"Catálogo","textPreview":"Catálogo","textChars":8,"textLines":1,"bbox":[378,414,230,34]}
+{"kind":"textbox","id":"sh/47yxo3et","slide":7,"text":"Agenda","textPreview":"Agenda","textChars":6,"textLines":1,"bbox":[674,414,230,34]}
+{"kind":"textbox","id":"sh/1k76hov6","slide":7,"text":"Equipe","textPreview":"Equipe","textChars":6,"textLines":1,"bbox":[970,414,230,34]}
+{"kind":"textbox","id":"sh/0je5ojel","slide":7,"text":"Em vez de uma entrega pontual, a parceria vira um sistema de acompanhamento contínuo.","textPreview":"Em vez de uma entrega pontual, a parceria vira um sistema de acompanhamento contínuo.","textChars":85,"textLines":1,"bbox":[196,548,820,52]}
+{"kind":"textbox","id":"sh/fi54fed0","slide":7,"text":"Maestra Manager","textPreview":"Maestra Manager","textChars":15,"textLines":1,"bbox":[72,666,220,24]}
+{"kind":"textbox","id":"sh/ehwnm9wv","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1166,660,48,28]}
+{"kind":"image","id":"im/6xknmh0b","slide":7,"name":"","geometry":"roundRect","alt":"Plano de ação","bbox":[82,226,230,164]}
+{"kind":"image","id":"im/kv25k725","slide":7,"name":"","geometry":"roundRect","alt":"Catálogo","bbox":[378,226,230,164]}
+{"kind":"image","id":"im/yt0nixkz","slide":7,"name":"","geometry":"roundRect","alt":"Agenda","bbox":[674,226,230,164]}
+{"kind":"image","id":"im/4rm5wri9","slide":7,"name":"","geometry":"roundRect","alt":"Equipe","bbox":[970,226,230,164]}
+{"kind":"notes","id":"nt/ysmq38","slide":7,"text":"Mostrar os módulos operacionais como continuidade natural do diagnóstico e do plano.\n\n[Sources]\n- MODELO-DE-NEGOCIO.md, seção 4\n- prints-registro-v2/02-maestra-manager/04-plano-de-acao.png\n- prints-registro-v2/02-maestra-manager/06-catalogo-lancamentos.png\n- prints-registro-v2/02-maestra-manager/07-agenda.png\n- prints-registro-v2/02-maestra-manager/08-equipe.png"}
+{"kind":"slide","id":"sl/xrlp86","slide":8,"title":"Um piloto pode provar valor sem exigir uma grande implantação.","textShapes":13}
+{"kind":"textbox","id":"sh/qpcbu1kr","slide":8,"text":"Um piloto pode provar valor sem exigir uma grande implantação.","textPreview":"Um piloto pode provar valor sem exigir uma grande implantação.","textChars":62,"textLines":1,"bbox":[72,58,940,94]}
+{"kind":"textbox","id":"sh/dc3u5gj2","slide":8,"text":"Começamos com um recorte controlado, acompanhamos uso e decidimos a próxima escala com evidência.","textPreview":"Começamos com um recorte controlado, acompanhamos uso e decidimos a próxima escala com evidência.","textChars":97,"textLines":1,"bbox":[74,132,830,48]}
+{"kind":"shape","id":"sh/crutwb2h","slide":8,"bbox":[82,232,238,198]}
+{"kind":"textbox","id":"sh/zelc7q18","slide":8,"text":"Recorte","textPreview":"Recorte","textChars":7,"textLines":1,"bbox":[106,260,190,34]}
+{"kind":"textbox","id":"sh/edcbylkn","slide":8,"text":"Selecionar uma turma, roster ou comunidade inicial.","textPreview":"Selecionar uma turma, roster ou comunidade inicial.","textChars":51,"textLines":1,"bbox":[106,322,184,80]}
+{"kind":"shape","id":"sh/1gnu90je","slide":8,"bbox":[374,232,238,198]}
+{"kind":"textbox","id":"sh/0fet0v2t","slide":8,"text":"Ativação","textPreview":"Ativação","textChars":8,"textLines":1,"bbox":[398,260,190,34]}
+{"kind":"textbox","id":"sh/ni5cbq14","slide":8,"text":"Artistas fazem diagnóstico e primeiro plano guiado.","textPreview":"Artistas fazem diagnóstico e primeiro plano guiado.","textChars":51,"textLines":1,"bbox":[398,322,184,80]}
+{"kind":"shape","id":"sh/mhwb2lkz","slide":8,"bbox":[666,232,238,198]}
+{"kind":"textbox","id":"sh/czitwrep","slide":8,"text":"Acompanhamento","textPreview":"Acompanhamento","textChars":14,"textLines":1,"bbox":[690,260,190,34]}
+{"kind":"textbox","id":"sh/xkra5wfu","slide":8,"text":"Observar adesão, tarefas criadas e uso recorrente.","textPreview":"Observar adesão, tarefas criadas e uso recorrente.","textChars":50,"textLines":1,"bbox":[690,322,184,80]}
+{"kind":"shape","id":"sh/ax0bu1wj","slide":8,"bbox":[958,232,238,198]}
+{"kind":"textbox","id":"sh/by9s36x4","slide":8,"text":"Escala","textPreview":"Escala","textChars":6,"textLines":1,"bbox":[982,260,190,34]}
+{"kind":"textbox","id":"sh/kn2t0bel","slide":8,"text":"Definir modelo de continuidade com base nos aprendizados.","textPreview":"Definir modelo de continuidade com base nos aprendizados.","textChars":57,"textLines":1,"bbox":[982,322,184,80]}
+{"kind":"textbox","id":"sh/loba9gv6","slide":8,"text":"O piloto pode ser ajustado ao seu contexto: distribuição, label, aceleração, comunidade, educação ou programa de desenvolvimento artístico.","textPreview":"O piloto pode ser ajustado ao seu contexto: distribuição, label, aceleração, comunidade, educação ou programa de desenvolvimento artístico.","textChars":139,"textLines":1,"bbox":[156,542,900,52]}
+{"kind":"textbox","id":"sh/yl0by1wf","slide":8,"text":"Maestra Manager","textPreview":"Maestra Manager","textChars":15,"textLines":1,"bbox":[72,666,220,24]}
+{"kind":"textbox","id":"sh/zm9s76d0","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1166,660,48,28]}
+{"kind":"notes","id":"nt/xrlp86","slide":8,"text":"Usar este slide para levar a conversa a um desenho de piloto concreto.\n\n[Sources]\n- MODELO-DE-NEGOCIO.md, seções 5 e 11"}
+{"kind":"slide","id":"sl/dappcd","slide":9,"title":"Vamos desenhar o piloto?","textShapes":8}
+{"kind":"textbox","id":"sh/5wju5g32","slide":9,"text":"Vamos desenhar o piloto?","textPreview":"Vamos desenhar o piloto?","textChars":24,"textLines":1,"bbox":[72,198,660,74]}
+{"kind":"textbox","id":"sh/4vatcb2h","slide":9,"text":"Três decisões já colocam a parceria em movimento:","textPreview":"Três decisões já colocam a parceria em movimento:","textChars":49,"textLines":1,"bbox":[76,312,620,38]}
+{"kind":"shape","id":"sh/ry1c7ql8","slide":9,"bbox":[86,404,8,8]}
+{"kind":"textbox","id":"sh/qxsbelkn","slide":9,"text":"Qual grupo de artistas entra primeiro?","textPreview":"Qual grupo de artistas entra primeiro?","textChars":38,"textLines":1,"bbox":[108,394,600,48]}
+{"kind":"shape","id":"sh/d03u903y","slide":9,"bbox":[86,462,8,8]}
+{"kind":"textbox","id":"sh/czutgv2d","slide":9,"text":"Que evolução queremos medir nesse ciclo?","textPreview":"Que evolução queremos medir nesse ciclo?","textChars":40,"textLines":1,"bbox":[108,452,600,48]}
+{"kind":"shape","id":"sh/72hsv6lo","slide":9,"bbox":[86,520,8,8]}
+{"kind":"textbox","id":"sh/618b21k3","slide":9,"text":"Quem acompanha a ativação e os próximos passos?","textPreview":"Quem acompanha a ativação e os próximos passos?","textChars":47,"textLines":1,"bbox":[108,510,600,48]}
+{"kind":"textbox","id":"sh/l0nud8v2","slide":9,"text":"maestramanager.com","textPreview":"maestramanager.com","textChars":18,"textLines":1,"bbox":[86,614,350,34]}
+{"kind":"textbox","id":"sh/yxcb2tcr","slide":9,"text":"Maestra Manager","textPreview":"Maestra Manager","textChars":15,"textLines":1,"bbox":[72,666,220,24]}
+{"kind":"textbox","id":"sh/zy5cbydc","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1166,660,48,28]}
+{"kind":"image","id":"im/zup4bi54","slide":9,"name":"","alt":"Logo Maestra","bbox":[72,72,270,54]}
+{"kind":"image","id":"im/nedcnuhg","slide":9,"name":"","geometry":"roundRect","alt":"Lista de artistas no Manager","bbox":[822,174,348,378]}
+{"kind":"notes","id":"nt/dappcd","slide":9,"text":"Fechar pedindo uma decisão prática, não apenas feedback geral.\n\n[Sources]\n- maestra-landing/src/config.ts\n- prints-registro-v2/02-maestra-manager/01-artistas.png"}

@@ -9506,3 +9506,32 @@ body:has(.track-detail-backdrop) .local-player-bar {
   outline: 2px solid #3361ff;
   outline-offset: 2px;
 }
+
+/* Lista de músicas do dashboard (antes "Performance das músicas"). O <em> da última coluna era
+   o "+18,5%" verde de crescimento; agora carrega o selo de status do catálogo, com as cores
+   vindo inline do próprio status (ver statusStyle no Dashboard). */
+.track-performance > div .track-status {
+  justify-self: start;
+  padding: 4px 9px;
+  border-radius: 20px;
+  color: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* As linhas abrem o espaço do projeto, igual às do módulo Músicas. */
+.track-performance > div[role='button'] {
+  cursor: pointer;
+  transition: background .14s ease;
+}
+
+.track-performance > div[role='button']:hover {
+  background: #f6f8fd;
+}
+
+.track-performance > div[role='button']:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: -2px;
+}

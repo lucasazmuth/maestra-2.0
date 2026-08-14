@@ -14,6 +14,13 @@ import type { CatalogItem } from '../../interfaces/maestra';
 const fmtNumber = (value?: number | null) =>
   typeof value === 'number' ? value.toLocaleString('pt-BR') : '—';
 
+// Mesmo tratamento do selo de status do módulo Músicas: a cor do próprio status, com o fundo
+// numa transparência dela (o `22` é o alpha em hex).
+const statusStyle = (status: string) => {
+  const cfg = (CATALOG_STATUS as any)[status] || { color: '#6b7280' };
+  return { background: `${cfg.color}22`, color: cfg.color };
+};
+
 const Dashboard: FC = () => {
   const navigate = useNavigate();
   const [draftTracks, setDraftTracks] = useState<CatalogItem[]>([]);
@@ -61,18 +68,20 @@ const Dashboard: FC = () => {
     album_image: album.image,
     spotify_url: album.spotify_url,
   }));
-  // "Performance das músicas" mostra o catálogo cadastrado na plataforma — a MESMA lista (e
-  // ordem: mais recém-atualizada primeiro) que o módulo Músicas exibe por padrão — em vez do
-  // blend com faixas do Spotify que havia aqui antes. Álbum/single só publicado no Spotify e
-  // nunca cadastrado como projeto no catálogo não aparece; é essa a distinção que o módulo
-  // Músicas também faz.
-  const performanceRows = draftTracks
-    .map((track) => ({
-      id: track.id,
-      title: track.title,
-      type: track.genre || (CATALOG_STATUS as any)[track.status]?.label || track.status,
-    }))
-    .slice(0, 5);
+  // O card lista o catálogo cadastrado na plataforma — a MESMA lista, ordem (mais recém-
+  // atualizada primeiro) e colunas que o módulo Músicas mostra. Álbum/single só publicado no
+  // Spotify e nunca cadastrado como projeto não aparece; é a mesma distinção que o módulo faz.
+  const catalogRows = draftTracks.slice(0, 5).map((track) => ({
+    id: track.id,
+    projectId: track.project_id || track.id,
+    title: track.title,
+    version: `V${track.version_number || 1} · ${track.version_stage || 'guia'}`,
+    genre: track.genre || '—',
+    status: track.status,
+    milestone: track.release_date
+      ? new Date(`${track.release_date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+      : '—',
+  }));
   return (
     <div className='board-content page-view music-dashboard'>
       <section className='music-hero music-hero-task'>
@@ -170,21 +179,40 @@ const Dashboard: FC = () => {
           </div>
         </div>
 
+        {/* Este card se chamava "Performance das músicas" e mostrava ouvintes/crescimento, mas os
+            números eram decorativos: o mesmo total de ouvintes MENSAIS do artista repetido em
+            toda linha e um "+18,5%" fixo no primeiro item. Não existe métrica por faixa nos
+            dados hoje, então o card passa a ser o que de fato consegue mostrar — o catálogo,
+            com as colunas do módulo Músicas. */}
         <article className='track-performance'>
           <header>
-            <h2>Performance das músicas</h2>
-            <span>Ouvintes&nbsp;&nbsp;&nbsp;&nbsp;Crescimento</span>
+            <h2>Músicas</h2>
+            <span>Tipo&nbsp;&nbsp;&nbsp;&nbsp;Status</span>
           </header>
-          {performanceRows.map((track, index) => (
-            <div key={track.id || track.title}>
+          {catalogRows.map((track, index) => (
+            <div
+              key={track.id}
+              role='button'
+              tabIndex={0}
+              title='Abrir espaço do projeto'
+              onClick={() => navigate(`/artists/${artist.id}/catalog/projects/${track.projectId}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate(`/artists/${artist.id}/catalog/projects/${track.projectId}`);
+                }
+              }}
+            >
               <i>{index + 1}</i>
               <span className='track-dot' style={{ background: ['#8833ff', '#33bfff', '#ff6633', '#29cc39', '#e62e7b'][index % 5] }} />
-              <strong>{track.title}<small>{track.type}</small></strong>
-              <b>{fmtNumber(chartmetric?.monthly_listeners)}</b>
-              <em>{index === 0 ? '+18,5%' : '+0,0%'}</em>
+              <strong>{track.title}<small>{track.version}</small></strong>
+              <b>{track.genre}</b>
+              <em className='track-status' style={statusStyle(track.status)}>
+                {(CATALOG_STATUS as any)[track.status]?.label || track.status}
+              </em>
             </div>
           ))}
-          {performanceRows.length === 0 && <p>Nenhuma música cadastrada ainda.</p>}
+          {catalogRows.length === 0 && <p>Nenhuma música cadastrada ainda.</p>}
           <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`)}>Ver músicas</button>
         </article>
       </section>

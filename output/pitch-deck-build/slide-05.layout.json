@@ -1,0 +1,708 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/w8g8k5",
+    "id": "w8g8k5",
+    "slide": 5,
+    "layoutId": "d6e2cd81-e062-41b6-9ad0-d317c293ebd6",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "029c0239-d818-4649-9b2d-641ab2748b11",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#050707",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "d6e2cd81-e062-41b6-9ad0-d317c293ebd6",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "029c0239-d818-4649-9b2d-641ab2748b11",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "029c0239-d818-4649-9b2d-641ab2748b11",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i5s3et0z",
+      "id": "1",
+      "bbox": [
+        72,
+        58,
+        920,
+        92
+      ],
+      "geometry": "rect",
+      "text": "O planejamento transforma diagnóstico em plano executável.",
+      "textPreview": "O planejamento transforma diagnóstico em plano executável.",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "O planejamento transforma diagnóstico em plano"
+          },
+          {
+            "index": 2,
+            "text": "executável."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "O planejamento transforma diagnóstico em plano executável.",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "O planejamento transforma diagnóstico em plano executável.",
+              "fontSize": 38,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5s3298zq",
+      "id": "2",
+      "bbox": [
+        74,
+        128,
+        840,
+        42
+      ],
+      "geometry": "rect",
+      "text": "A metodologia conduz identidade, objetivos, SWOT, estratégias, priorização e cronograma.",
+      "textPreview": "A metodologia conduz identidade, objetivos, SWOT, estratégias, priorização e cronograma.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "A metodologia conduz identidade, objetivos, SWOT, estratégias, priorização e cronograma."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "A metodologia conduz identidade, objetivos, SWOT, estratégias, priorização e cronograma.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "A metodologia conduz identidade, objetivos, SWOT, estratégias, priorização e cronograma.",
+              "fontSize": 18,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/lo7mxk7i",
+      "id": "3",
+      "bbox": [
+        700,
+        178,
+        476,
+        360
+      ],
+      "geometry": "roundRect",
+      "alt": "Planejamento estratégico na Maestra",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 5556"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "cdf6c183-6a63-4613-a5d5-01281755779d",
+        "contentType": "image/png",
+        "byteLength": 215540
+      }
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/v21k3yh8",
+      "id": "4",
+      "bbox": [
+        78,
+        214,
+        510,
+        52
+      ],
+      "geometry": "rect",
+      "text": "Da conversa guiada ao plano de ação",
+      "textPreview": "Da conversa guiada ao plano de ação",
+      "resolvedFontSize": 31,
+      "resolvedTextStyle": {
+        "fontSize": 31,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Da conversa guiada ao plano de"
+          },
+          {
+            "index": 2,
+            "text": "ação"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Da conversa guiada ao plano de ação",
+          "resolvedTextStyle": {
+            "fontSize": 31,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Da conversa guiada ao plano de ação",
+              "fontSize": 31,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/u1s3at03",
+      "id": "5",
+      "bbox": [
+        84,
+        315,
+        7,
+        7
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/h4j25oze",
+      "id": "6",
+      "bbox": [
+        104,
+        306,
+        490,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Estratégias priorizadas para o momento da carreira",
+      "textPreview": "Estratégias priorizadas para o momento da carreira",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Estratégias priorizadas para o momento da carreira"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Estratégias priorizadas para o momento da carreira",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Estratégias priorizadas para o momento da carreira",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/g3alc3it",
+      "id": "7",
+      "bbox": [
+        84,
+        377,
+        7,
+        7
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7yhkzehc",
+      "id": "8",
+      "bbox": [
+        104,
+        368,
+        490,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Cronograma e tarefas com vínculo ao objetivo",
+      "textPreview": "Cronograma e tarefas com vínculo ao objetivo",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Cronograma e tarefas com vínculo ao objetivo"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Cronograma e tarefas com vínculo ao objetivo",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Cronograma e tarefas com vínculo ao objetivo",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6x83690r",
+      "id": "9",
+      "bbox": [
+        84,
+        439,
+        7,
+        7
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/orutwbap",
+      "id": "10",
+      "bbox": [
+        104,
+        430,
+        490,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Método próprio traduzido para linguagem simples",
+      "textPreview": "Método próprio traduzido para linguagem simples",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Método próprio traduzido para linguagem simples"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Método próprio traduzido para linguagem simples",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Método próprio traduzido para linguagem simples",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pc3u5gba",
+      "id": "11",
+      "bbox": [
+        84,
+        524,
+        520,
+        62
+      ],
+      "geometry": "rect",
+      "text": "Base conceitual citada na landing: metodologia da Anita Carvalho, com mais de 30 anos de carreira e 313 planejamentos reais.",
+      "textPreview": "Base conceitual citada na landing: metodologia da Anita Carvalho, com mais de 30 anos de carreira e 313 planejamentos reais.",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#88A097",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Base conceitual citada na landing: metodologia da Anita Carvalho,"
+          },
+          {
+            "index": 2,
+            "text": "com mais de 30 anos de carreira e 313 planejamentos reais."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Base conceitual citada na landing: metodologia da Anita Carvalho, com mais de 30 anos de carreira e 313 planejamentos reais.",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#88A097",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Base conceitual citada na landing: metodologia da Anita Carvalho, com mais de 30 anos de carreira e 313 planejamentos reais.",
+              "fontSize": 16,
+              "color": "#88A097",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2psbulsz",
+      "id": "12",
+      "bbox": [
+        72,
+        666,
+        240,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Maestra Manager",
+      "textPreview": "Maestra Manager",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#6F837B",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Maestra Manager"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Maestra Manager",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#6F837B",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Maestra Manager",
+              "fontSize": 12,
+              "color": "#6F837B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3q1c3qtk",
+      "id": "13",
+      "bbox": [
+        1164,
+        660,
+        48,
+        28
+      ],
+      "geometry": "rect",
+      "text": "05",
+      "textPreview": "05",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#6F837B",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "05"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "05",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#6F837B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "05",
+              "fontSize": 14,
+              "color": "#6F837B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

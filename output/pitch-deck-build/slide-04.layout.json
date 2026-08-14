@@ -1,0 +1,717 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/k1vg2d",
+    "id": "k1vg2d",
+    "slide": 4,
+    "layoutId": "d6e2cd81-e062-41b6-9ad0-d317c293ebd6",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "029c0239-d818-4649-9b2d-641ab2748b11",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#050707",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "d6e2cd81-e062-41b6-9ad0-d317c293ebd6",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "029c0239-d818-4649-9b2d-641ab2748b11",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "029c0239-d818-4649-9b2d-641ab2748b11",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d0b2x4ne",
+      "id": "1",
+      "bbox": [
+        72,
+        58,
+        920,
+        92
+      ],
+      "geometry": "rect",
+      "text": "O Diagnóstico REAL cria uma leitura inicial comum para artista e parceiro.",
+      "textPreview": "O Diagnóstico REAL cria uma leitura inicial comum para artista e parceiro.",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "O Diagnóstico REAL cria uma leitura inicial"
+          },
+          {
+            "index": 2,
+            "text": "comum para artista e parceiro."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "O Diagnóstico REAL cria uma leitura inicial comum para artista e parceiro.",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "O Diagnóstico REAL cria uma leitura inicial comum para artista e parceiro.",
+              "fontSize": 38,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qxkj29on",
+      "id": "2",
+      "bbox": [
+        74,
+        128,
+        840,
+        42
+      ],
+      "geometry": "rect",
+      "text": "A carreira é avaliada em quatro dimensões e traduzida em um perfil acionável.",
+      "textPreview": "A carreira é avaliada em quatro dimensões e traduzida em um perfil acionável.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "A carreira é avaliada em quatro dimensões e traduzida em um perfil acionável."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "A carreira é avaliada em quatro dimensões e traduzida em um perfil acionável.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "A carreira é avaliada em quatro dimensões e traduzida em um perfil acionável.",
+              "fontSize": 18,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/y9cnapcf",
+      "id": "3",
+      "bbox": [
+        72,
+        198,
+        610,
+        348
+      ],
+      "geometry": "roundRect",
+      "alt": "Resultado do Diagnóstico REAL",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 5747"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "b1b1badb-d29c-415d-9180-12f45694bf0e",
+        "contentType": "image/png",
+        "byteLength": 226864
+      }
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/4vi10z6h",
+      "id": "4",
+      "bbox": [
+        752,
+        214,
+        360,
+        58
+      ],
+      "geometry": "rect",
+      "text": "R · E · A · L",
+      "textPreview": "R · E · A · L",
+      "resolvedFontSize": 42,
+      "resolvedTextStyle": {
+        "fontSize": 42,
+        "typeface": "+mn-lt",
+        "color": "#71F2A6",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "R · E · A · L"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "R · E · A · L",
+          "resolvedTextStyle": {
+            "fontSize": 42,
+            "color": "#71F2A6",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "R · E · A · L",
+              "fontSize": 42,
+              "color": "#71F2A6",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pwb2t4n2",
+      "id": "5",
+      "bbox": [
+        756,
+        315,
+        7,
+        7
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2t0jypor",
+      "id": "6",
+      "bbox": [
+        776,
+        306,
+        410,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Reach: alcance e descoberta",
+      "textPreview": "Reach: alcance e descoberta",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Reach: alcance e descoberta"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Reach: alcance e descoberta",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Reach: alcance e descoberta",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3u9kru5c",
+      "id": "7",
+      "bbox": [
+        756,
+        371,
+        7,
+        7
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ormlcjm1",
+      "id": "8",
+      "bbox": [
+        776,
+        362,
+        410,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Earnings: sinais de monetização",
+      "textPreview": "Earnings: sinais de monetização",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Earnings: sinais de monetização"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Earnings: sinais de monetização",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Earnings: sinais de monetização",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9sv25onm",
+      "id": "9",
+      "bbox": [
+        756,
+        427,
+        7,
+        7
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pwzq9wvu",
+      "id": "10",
+      "bbox": [
+        776,
+        418,
+        410,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Audience: base e engajamento",
+      "textPreview": "Audience: base e engajamento",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Audience: base e engajamento"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Audience: base e engajamento",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Audience: base e engajamento",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ovq90re9",
+      "id": "11",
+      "bbox": [
+        756,
+        483,
+        7,
+        7
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3ux87md4",
+      "id": "12",
+      "bbox": [
+        776,
+        474,
+        410,
+        44
+      ],
+      "geometry": "rect",
+      "text": "Legitimacy: validação de mercado",
+      "textPreview": "Legitimacy: validação de mercado",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Legitimacy: validação de mercado"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Legitimacy: validação de mercado",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#EAF7F0",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Legitimacy: validação de mercado",
+              "fontSize": 20,
+              "color": "#EAF7F0",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2to7yhwj",
+      "id": "13",
+      "bbox": [
+        72,
+        666,
+        240,
+        24
+      ],
+      "geometry": "rect",
+      "text": "Maestra Manager",
+      "textPreview": "Maestra Manager",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#6F837B",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Maestra Manager"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Maestra Manager",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#6F837B",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Maestra Manager",
+              "fontSize": 12,
+              "color": "#6F837B",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1sfq5cvy",
+      "id": "14",
+      "bbox": [
+        1164,
+        660,
+        48,
+        28
+      ],
+      "geometry": "rect",
+      "text": "04",
+      "textPreview": "04",
+      "resolvedFontSize": 14,
+      "resolvedTextStyle": {
+        "fontSize": 14,
+        "typeface": "+mn-lt",
+        "color": "#6F837B",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "04"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "04",
+          "resolvedTextStyle": {
+            "fontSize": 14,
+            "color": "#6F837B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "04",
+              "fontSize": 14,
+              "color": "#6F837B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

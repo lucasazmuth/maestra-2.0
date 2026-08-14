@@ -1,0 +1,273 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/a4mi8e",
+    "id": "a4mi8e",
+    "slide": 1,
+    "layoutId": "d6e2cd81-e062-41b6-9ad0-d317c293ebd6",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "029c0239-d818-4649-9b2d-641ab2748b11",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#050707",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "d6e2cd81-e062-41b6-9ad0-d317c293ebd6",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "029c0239-d818-4649-9b2d-641ab2748b11",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "029c0239-d818-4649-9b2d-641ab2748b11",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/jqds321o",
+      "id": "1",
+      "bbox": [
+        72,
+        70,
+        300,
+        60
+      ],
+      "alt": "Logo Maestra",
+      "contentType": "image/png",
+      "imageFit": "contain",
+      "asset": {
+        "assetId": "31b64e90-6853-4214-9c60-8e324431fba2",
+        "contentType": "image/png",
+        "byteLength": 9244
+      }
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pov21g7i",
+      "id": "2",
+      "bbox": [
+        72,
+        184,
+        680,
+        168
+      ],
+      "geometry": "rect",
+      "text": "A camada de estratégia para desenvolver artistas em escala",
+      "textPreview": "A camada de estratégia para desenvolver artistas em escala",
+      "resolvedFontSize": 52,
+      "resolvedTextStyle": {
+        "fontSize": 52,
+        "typeface": "+mn-lt",
+        "color": "#EAF7F0",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "A camada de estratégia"
+          },
+          {
+            "index": 2,
+            "text": "para desenvolver artistas"
+          },
+          {
+            "index": 3,
+            "text": "em escala"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "A camada de estratégia para desenvolver artistas em escala",
+          "resolvedTextStyle": {
+            "fontSize": 52,
+            "color": "#EAF7F0",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "A camada de estratégia para desenvolver artistas em escala",
+              "fontSize": 52,
+              "color": "#EAF7F0",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/onml8b6x",
+      "id": "3",
+      "bbox": [
+        76,
+        376,
+        610,
+        96
+      ],
+      "geometry": "rect",
+      "text": "Diagnóstico, planejamento, IA e gestão em uma plataforma para parceiros que precisam acompanhar muitos artistas sem perder método.",
+      "textPreview": "Diagnóstico, planejamento, IA e gestão em uma plataforma para parceiros que precisam acompanhar muitos artistas sem perder método.",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#AAB9B2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Diagnóstico, planejamento, IA e gestão em uma"
+          },
+          {
+            "index": 2,
+            "text": "plataforma para parceiros que precisam acompanhar"
+          },
+          {
+            "index": 3,
+            "text": "muitos artistas sem perder método."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Diagnóstico, planejamento, IA e gestão em uma plataforma para parceiros que precisam acompanhar muitos artistas sem perder método.",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#AAB9B2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Diagnóstico, planejamento, IA e gestão em uma plataforma para parceiros que precisam acompanhar muitos artistas sem perder método.",
+              "fontSize": 24,
+              "color": "#AAB9B2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fidkvmp0",
+      "id": "4",
+      "bbox": [
+        76,
+        516,
+        180,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#71F2A6",
+      "lineColor": "#71F2A6",
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/vmtszi1s",
+      "id": "5",
+      "bbox": [
+        770,
+        95,
+        420,
+        500
+      ],
+      "geometry": "roundRect",
+      "alt": "Dashboard de artista na Maestra",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 4762"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "ef537ced-ac88-4003-abe5-10cdbe330ecd",
+        "contentType": "image/png",
+        "byteLength": 258804
+      }
+    }
+  ],
+  "composeRuns": []
+}
