@@ -204,3 +204,16 @@ export const formatMs = (ms?: number): string => {
   const s = total % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 };
+
+// Etapas herdadas das versões (guia, mix, master…). O modal da versão não pede mais a etapa —
+// o título livre descreve melhor a gravação —, mas as versões antigas foram criadas sem título
+// e o rótulo da etapa é o nome que elas têm. Compartilhado pelo Espaço Jam e pela ficha da
+// música, senão a mesma versão aparece como "Guia" num lugar e "Versão 1" no outro.
+export const CATALOG_VERSION_STAGES: { value: string; label: string }[] = [
+  { value: 'guia', label: 'Guia' }, { value: 'beat', label: 'Beat' }, { value: 'instrumental', label: 'Instrumental' },
+  { value: 'voz', label: 'Voz' }, { value: 'stems', label: 'Stems' }, { value: 'mix', label: 'Mixagem' },
+  { value: 'master', label: 'Masterização' }, { value: 'referencia', label: 'Referência' },
+];
+
+export const getVersionStageLabel = (stage?: string | null): string =>
+  CATALOG_VERSION_STAGES.find((item) => item.value === stage)?.label || stage || '';

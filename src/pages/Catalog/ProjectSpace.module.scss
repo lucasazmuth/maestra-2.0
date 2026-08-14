@@ -78,25 +78,28 @@
   white-space: nowrap;
 }
 
+// Voltar e editar são o mesmo tipo de controle (botão redondo com um ícone), então têm o mesmo
+// tamanho: antes eram 52px/ícone 24 e 44px/ícone 18, e a diferença aparecia lado a lado.
 .back {
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
+  flex: none;
   border-radius: 50%;
   border: 1px solid #dce6f7;
-  color: #436092;
+  color: #405985;
   background: rgba(255, 255, 255, .92);
   display: grid;
   place-items: center;
   cursor: pointer;
-  font-size: 24px;
-  box-shadow: 0 18px 38px rgba(74, 99, 145, .12);
-  transition: transform .2s ease, box-shadow .2s ease, color .2s ease;
+  font-size: 18px;
+  box-shadow: 0 16px 32px rgba(74, 99, 145, .1);
+  transition: transform .2s ease, box-shadow .2s ease, color .2s ease, border-color .2s ease;
 }
 
 .back:hover {
+  border-color: #2f60f6;
   color: #2f60f6;
   transform: translateX(-2px);
-  box-shadow: 0 20px 44px rgba(47, 96, 246, .16);
 }
 
 .titleBlock {
@@ -135,10 +138,13 @@
 
 .statusPill {
   min-width: 188px;
+  // A altura precisa estar também na raiz do Select: o antd a fixa em 32px, e só aumentar o
+  // .ant-select-selector fazia a pílula transbordar o próprio espaço, desalinhando a linha.
+  height: 44px;
 }
 
 .statusPill :global(.ant-select-selector) {
-  min-height: 34px !important;
+  min-height: 44px !important;
   border: 0 !important;
   border-radius: 999px !important;
   background: #edc663 !important;
@@ -310,8 +316,8 @@
 }
 
 .filterButton {
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   flex: none;
   border: 1px solid #dce6f7;
   border-radius: 14px;

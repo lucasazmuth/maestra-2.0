@@ -12,7 +12,7 @@ import * as membersDb from '../../services/db/members';
 import type { MusicGenre, ArtistMember } from '../../interfaces/maestra';
 import { supabase } from '../../lib/supabase';
 import * as catalogDb from '../../services/db/catalog';
-import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS } from '../../constants/maestra';
+import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, getVersionStageLabel } from '../../constants/maestra';
 import type { CatalogProject, CatalogProjectMessage, CatalogVersion, CatalogVersionStage } from '../../interfaces/maestra';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import type { LocalTrack } from '../../components/LocalPlayerBar';
@@ -20,13 +20,7 @@ import WaveSurferWaveform from './WaveSurferWaveform';
 import styles from './ProjectSpace.module.scss';
 import { Spinner } from '../../components/spinner/spinner';
 
-const stages: { value: CatalogVersionStage; label: string }[] = [
-  { value: 'guia', label: 'Guia' }, { value: 'beat', label: 'Beat' }, { value: 'instrumental', label: 'Instrumental' },
-  { value: 'voz', label: 'Voz' }, { value: 'stems', label: 'Stems' }, { value: 'mix', label: 'Mixagem' },
-  { value: 'master', label: 'Masterização' }, { value: 'referencia', label: 'Referência' },
-];
-
-const getStageLabel = (stage: CatalogVersionStage) => stages.find((item) => item.value === stage)?.label || stage;
+const getStageLabel = (stage: CatalogVersionStage) => getVersionStageLabel(stage);
 const formatDate = (value?: string | null) => value ? new Date(value).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Data indisponível';
 const initials = (value?: string | null) => (value || '?').trim().slice(0, 1).toUpperCase();
 
@@ -430,6 +424,7 @@ const ProjectSpace: FC = () => {
           currentUserAvatar={currentUserAvatar}
           onClose={() => setProjectModal(false)}
           onSaved={() => { void refresh(); }}
+          onVersionsChanged={() => { void refresh(); }}
         />
       )}
     </main>

@@ -114,6 +114,7 @@ const Catalog: FC = () => {
   const [genres, setGenres] = useState<MusicGenre[]>([]);
   const [members, setMembers] = useState<ArtistMember[]>([]);
   const [loading, setLoading] = useState(false);
+  const [catalogReload, setCatalogReload] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogItem | null>(null);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
@@ -247,7 +248,9 @@ const Catalog: FC = () => {
       .finally(() => setLoading(false));
     genresDb.listGenres().then(setGenres).catch(() => {});
     membersDb.listMembers(artistId).then(setMembers).catch(() => {});
-  }, [artistId]);
+    // `catalogReload` existe para o caso de uma versão ser anexada pelo modal da música: ela já
+    // está no banco antes de "Salvar", e a lista mostra a versão principal de cada música.
+  }, [artistId, catalogReload]);
 
   // Responsáveis possíveis: você (dono/usuário atual) + membros ativos da equipe.
   const currentUserName =
@@ -978,6 +981,7 @@ const Catalog: FC = () => {
           onClose={() => setModalOpen(false)}
           onSaved={onSaved}
           onDelete={onDelete}
+          onVersionsChanged={() => setCatalogReload((value) => value + 1)}
         />
       )}
 

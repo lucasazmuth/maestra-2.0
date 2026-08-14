@@ -117,6 +117,18 @@
     color: #52668d !important;
   }
 
+  // O form.scss antigo tem `.ant-modal textarea { height: 40px; padding: 0 12px }`, pensado
+  // para campos de uma linha do tema escuro: a caixa da letra virava uma tira de 40px com o
+  // texto colado na borda. Aqui ela volta a ser uma área de texto.
+  :global(textarea.ant-input) {
+    height: auto !important;
+    min-height: 132px;
+    padding: 11px 13px !important;
+    border-radius: 9px !important;
+    line-height: 1.6;
+    resize: vertical;
+  }
+
   :global(.ant-input:focus),
   :global(.ant-input-focused),
   :global(.ant-input-affix-wrapper:focus-within),
@@ -344,6 +356,106 @@
   padding-inline: 4px;
 }
 
+// Lista de versões dentro da ficha da música (aba Informações). É um resumo: quem quiser
+// tocar, comentar ou trocar a principal faz isso no Espaço Jam.
+.versionsBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px;
+  border: 1px solid #e6ecf6;
+  border-radius: 10px;
+  background: #fbfcfe;
+}
+
+.versionsRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 9px;
+  border: 1px solid #eef2f9;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.versionsRow em {
+  flex: none;
+  padding: 4px 7px;
+  border: 1px solid #dbe5f6;
+  border-radius: 6px;
+  color: #5f76a3;
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.versionsRow strong {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: #405985;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.versionsRow small {
+  flex: none;
+  color: #93a4c0;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.versionsPrimary {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: #e0ad3c;
+  font-size: 14px;
+  line-height: 0;
+}
+
+.versionsPrimary svg {
+  fill: currentColor;
+}
+
+.versionsEmpty {
+  margin: 0;
+  padding: 9px 10px;
+  border: 1px dashed #dde5f2;
+  border-radius: 8px;
+  color: #8ca0c5;
+  font-size: 12px;
+}
+
+.versionsAdd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px dashed #c9d8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #4267b9;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 800;
+  transition: border-color .16s ease, background .16s ease, color .16s ease;
+}
+
+.versionsAdd:hover:not(:disabled) {
+  border-color: #4267b9;
+  background: #f1f5fd;
+}
+
+.versionsAdd:disabled {
+  cursor: progress;
+  opacity: .7;
+}
+
 .splitSections {
   display: flex;
   flex-direction: column;
@@ -362,13 +474,15 @@
   gap: 2px;
 }
 
+// Sobraram do modal escuro: título quase branco e cinza-fumaça, invisíveis no cartão claro.
 .splitSectionTitle strong {
-  color: #f4f4f5;
+  color: #405985;
   font-size: 14px;
+  font-weight: 850;
 }
 
 .splitSectionTitle span {
-  color: #77777f;
+  color: #8ca0c5;
   font-size: 11.5px;
 }
 
@@ -387,7 +501,7 @@
 
 .splitHeader {
   padding: 0 2px;
-  color: #77777f;
+  color: #93a4c0;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -489,9 +603,9 @@
 
 .splitEmpty {
   padding: 11px 12px;
-  color: #707079;
-  background: #141416;
-  border: 1px dashed #303036;
+  color: #8ca0c5;
+  background: #fbfcfe;
+  border: 1px dashed #dde5f2;
   border-radius: 8px;
   font-size: 12px;
 }

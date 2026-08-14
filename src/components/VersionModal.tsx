@@ -2,6 +2,7 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { App, Button, Input, Modal, Popconfirm } from 'antd';
 import { FiCheckCircle, FiMusic, FiStar, FiTrash2, FiUploadCloud } from 'react-icons/fi';
 
+import { readAudioDuration, titleFromFileName } from '../lib/audioMeta';
 import { uploadFile, CATALOG_BUCKET } from '../lib/storage';
 import * as catalogDb from '../services/db/catalog';
 import type { CatalogVersion } from '../interfaces/maestra';
@@ -16,29 +17,6 @@ import modalStyles from './StandardModal.module.scss';
 //
 // Serve pra enviar versão nova e pra editar: a diferença é existir ou não `version`.
 
-// Lê a duração direto do arquivo escolhido. Digitar "3:24" à mão é trabalho que o áudio já
-// responde — e ninguém confere, então o valor digitado tende a ficar errado.
-const readAudioDuration = (file: File): Promise<string | null> =>
-  new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const audio = new Audio();
-    const done = (value: string | null) => { URL.revokeObjectURL(url); resolve(value); };
-    audio.addEventListener('loadedmetadata', () => {
-      const secs = audio.duration;
-      if (!Number.isFinite(secs) || secs <= 0) return done(null);
-      const m = Math.floor(secs / 60);
-      const s = String(Math.floor(secs % 60)).padStart(2, '0');
-      done(`${m}:${s}`);
-    });
-    // Formato que o navegador não decodifica não impede o envio — só fica sem duração.
-    audio.addEventListener('error', () => done(null));
-    audio.src = url;
-  });
-
-// O nome do arquivo já é o melhor palpite de título: quem grava salva como "guia vocal v2.wav".
-// Só limpa o que é ruído de sistema de arquivos (extensão, underscores).
-const titleFromFileName = (name: string) =>
-  name.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
 
 interface Props {
   open: boolean;
