@@ -6,11 +6,22 @@
 // que fez esta página ficar para trás. Aqui ficam só o esqueleto da página e o que é específico
 // dela (sidebar de conversas, banners).
 
-.Main-section:has(.nyta-chat-page) {
+.Main-section:has(.nyta-chat-shell) {
   overflow: hidden !important;
 }
 
+// A casca põe o histórico de conversas ao lado do chat. O scroll fica dentro de cada coluna —
+// a página em si não rola.
+.nyta-chat-shell {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  background: #f7f9fc;
+}
+
 .nyta-chat-page {
+  min-width: 0;
+  flex: 1;
   // Coluna de leitura do chat, igual à do wizard: acompanha a tela e trava em 760px.
   --nyta-col: 760px;
 

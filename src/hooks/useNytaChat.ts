@@ -54,7 +54,7 @@ const mapRowToMessage = (row: NytaMessageRow): NytaChatMessage => ({
 // ─── SSE Line Parser ──────────────────────────────────────────────────────────
 
 interface SSEEvent {
-  type: 'text' | 'tool_call' | 'tool_result' | 'error' | 'done' | 'unavailable_modules';
+  type: 'text' | 'tool_call' | 'tool_result' | 'error' | 'done' | 'unavailable_modules' | 'conversation';
   content?: string;
   tool_call_id?: string;
   name?: string;
@@ -64,6 +64,7 @@ interface SSEEvent {
   message?: string;
   message_id?: string;
   modules?: string[];
+  conversation_id?: string;
 }
 
 function parseSSELine(line: string): SSEEvent | null {
@@ -91,6 +92,9 @@ export interface UseNytaChatReturn {
   hasMoreHistory: boolean;
   error: string | null;
   unavailableModules: string[];
+  conversationId: string | null;
+  selectConversation: (id: string) => Promise<void>;
+  startNewConversation: () => void;
   sendMessage: (text: string) => void;
   confirmTool: (toolCallId: string) => void;
   cancelTool: (toolCallId: string) => void;
@@ -113,7 +117,12 @@ export interface UseNytaChatReturn {
  *  - 'modal': artista vem do nytaModalStore e a requisição leva module_context, que diz à Nyta
  *    de qual tela a pessoa está falando.
  */
-export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn {
+export function useNytaChat(
+  source: NytaChatSource = 'route',
+  // Avisa quando o servidor grava numa conversa — a barra lateral usa pra recarregar a lista
+  // assim que uma conversa nova nasce (ela só existe no banco a partir da primeira mensagem).
+  onConversation?: (conversationId: string) => void,
+): UseNytaChatReturn {
   const { id: routeArtistId } = useParams<{ id: string }>();
   const modalArtistId = useNytaModalStore((s) => s.moduleContext.artistId);
   const artistId = source === 'modal' ? modalArtistId : routeArtistId;
@@ -132,6 +141,32 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
   // Abort controller ref for cancelling in-flight streams
   const abortRef = useRef<AbortController | null>(null);
 
+  // Em ref pra que trocar o callback não recrie processStream (e com ele todo o sendMessage).
+  const onConversationRef = useRef(onConversation);
+  onConversationRef.current = onConversation;
+
+  // ─── Carregar as mensagens de uma conversa ─────────────────────────────────
+
+  // Traz a última página de mensagens da conversa pedida. Usado tanto na carga inicial quanto
+  // ao trocar de conversa pela barra lateral.
+  const loadConversation = useCallback(async (convId: string, cancelled?: () => boolean) => {
+    dispatch(setConversationId(convId));
+    const { data, error: queryError } = await supabase
+      .from('nyta_messages')
+      .select('id, conversation_id, role, content, tool_calls, tool_results, created_at')
+      .eq('conversation_id', convId)
+      .order('created_at', { ascending: false })
+      .limit(PAGE_SIZE);
+    if (cancelled?.()) return;
+
+    if (queryError) {
+      dispatch(setError('Erro ao carregar a conversa.'));
+      return;
+    }
+    dispatch(prependMessages((data ?? []).reverse().map(mapRowToMessage)));
+    if ((data?.length ?? 0) < PAGE_SIZE) dispatch(setHasMoreHistory(false));
+  }, [dispatch]);
+
   // ─── Reset + carga inicial por artista ─────────────────────────────────────
   const lastArtistRef = useRef<string | null>(null);
 
@@ -146,10 +181,16 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
     let cancelled = false;
     (async () => {
       try {
+        // Abre na conversa mexida por último. O `.limit(1)` antes do `.maybeSingle()` não é
+        // enfeite: agora que um artista pode ter várias conversas, o maybeSingle sozinho
+        // recebe mais de uma linha e devolve ERRO — o mesmo tipo de armadilha que já derrubou
+        // o webhook da Asaas.
         const { data: conv } = await supabase
           .from('nyta_conversations')
           .select('id')
           .eq('artist_id', artistId)
+          .order('updated_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
         if (cancelled) return;
 
@@ -157,25 +198,7 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
           dispatch(setHasMoreHistory(false));
           return;
         }
-        dispatch(setConversationId(conv.id));
-
-        const { data, error: queryError } = await supabase
-          .from('nyta_messages')
-          .select('id, conversation_id, role, content, tool_calls, tool_results, created_at')
-          .eq('conversation_id', conv.id)
-          .order('created_at', { ascending: false })
-          .limit(PAGE_SIZE);
-        if (cancelled) return;
-
-        if (queryError) {
-          dispatch(setError('Erro ao carregar a conversa.'));
-          return;
-        }
-
-        dispatch(prependMessages((data ?? []).reverse().map(mapRowToMessage)));
-        if ((data?.length ?? 0) < PAGE_SIZE) {
-          dispatch(setHasMoreHistory(false));
-        }
+        await loadConversation(conv.id, () => cancelled);
       } catch {
         if (!cancelled) dispatch(setError('Erro ao carregar a conversa.'));
       } finally {
@@ -186,7 +209,30 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
     return () => {
       cancelled = true;
     };
-  }, [artistId, dispatch]);
+  }, [artistId, dispatch, loadConversation]);
+
+  // ─── Trocar de conversa / começar uma nova ─────────────────────────────────
+
+  const selectConversation = useCallback(async (convId: string) => {
+    if (convId === conversationId) return;
+    abortRef.current?.abort();
+    dispatch(clearMessages());
+    dispatch(setLoadingHistory(true));
+    try {
+      await loadConversation(convId);
+    } finally {
+      dispatch(setLoadingHistory(false));
+    }
+  }, [conversationId, dispatch, loadConversation]);
+
+  // Conversa nova é só uma tela em branco: a linha no banco nasce com a primeira mensagem, no
+  // servidor. Criar aqui encheria a lista de conversas vazias a cada clique.
+  const startNewConversation = useCallback(() => {
+    abortRef.current?.abort();
+    dispatch(clearMessages());
+    dispatch(setConversationId(null));
+    dispatch(setHasMoreHistory(false));
+  }, [dispatch]);
 
   // ─── Get Auth Token ───────────────────────────────────────────────────────
 
@@ -234,6 +280,17 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
               case 'unavailable_modules':
                 if (event.modules && event.modules.length > 0) {
                   dispatch(setUnavailableModules(event.modules));
+                }
+                break;
+
+              // Em qual conversa a resposta está sendo gravada. Importa quando a mensagem saiu
+              // sem conversation_id (conversa nova): é assim que a tela descobre o id recém
+              // criado, pra próxima mensagem cair na mesma conversa e a barra lateral marcá-la
+              // como a ativa.
+              case 'conversation':
+                if (event.conversation_id) {
+                  dispatch(setConversationId(event.conversation_id));
+                  onConversationRef.current?.(event.conversation_id);
                 }
                 break;
 
@@ -436,6 +493,9 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
         action: 'message',
         message: text.trim(),
         artist_id: artistId,
+        // Sem conversationId a mensagem abre uma conversa nova no servidor, que responde com
+        // o id no evento SSE 'conversation'.
+        ...(conversationId ? { conversation_id: conversationId } : {}),
       });
 
       if (!response) {
@@ -463,7 +523,7 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
       dispatch(updateMessage({ id: userMsgId, status: 'sent' }));
       await processStream(response, assistantMsgId);
     },
-    [artistId, dispatch, postToNytaChat, handleErrorResponse, processStream, rateLimitInfo]
+    [artistId, conversationId, dispatch, postToNytaChat, handleErrorResponse, processStream, rateLimitInfo]
   );
 
   // ─── confirmTool ──────────────────────────────────────────────────────────
@@ -487,6 +547,7 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
 
       const response = await postToNytaChat({
         action: 'confirm',
+        ...(conversationId ? { conversation_id: conversationId } : {}),
         tool_call_id: toolCallId,
         approved: true,
         artist_id: artistId,
@@ -510,7 +571,7 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
       dispatch(updateToolCallStatus({ toolCallId, status: 'confirmed' }));
       await processStream(response, assistantMsgId);
     },
-    [artistId, dispatch, postToNytaChat, handleErrorResponse, processStream]
+    [artistId, conversationId, dispatch, postToNytaChat, handleErrorResponse, processStream]
   );
 
   // ─── cancelTool ───────────────────────────────────────────────────────────
@@ -534,6 +595,7 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
 
       const response = await postToNytaChat({
         action: 'confirm',
+        ...(conversationId ? { conversation_id: conversationId } : {}),
         tool_call_id: toolCallId,
         approved: false,
         artist_id: artistId,
@@ -554,7 +616,7 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
 
       await processStream(response, assistantMsgId);
     },
-    [artistId, dispatch, postToNytaChat, handleErrorResponse, processStream]
+    [artistId, conversationId, dispatch, postToNytaChat, handleErrorResponse, processStream]
   );
 
   // ─── loadOlderMessages ────────────────────────────────────────────────────
@@ -690,6 +752,9 @@ export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn
     hasMoreHistory,
     error,
     unavailableModules,
+    conversationId,
+    selectConversation,
+    startNewConversation,
     sendMessage,
     confirmTool,
     cancelTool,
