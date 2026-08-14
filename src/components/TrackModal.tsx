@@ -124,13 +124,14 @@ const SplitEditor: FC<{
 
 // Ações "Trocar"/"Remover" do estado preenchido.
 const ghostBtn: CSSProperties = {
-  background: 'transparent', border: '1px solid #3a3a3a', color: '#fff',
-  borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 600,
+  background: '#fff', border: '1px solid #dce5f0', color: '#5e739b',
+  borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 800,
   cursor: 'pointer', whiteSpace: 'nowrap',
 };
 
-// Campo de upload estilizado (dropzone + clique) no tema escuro, com estados de
-// envio, preview (miniatura) e ações Trocar/Remover — substitui o <input file> cru.
+// Campo de upload estilizado (dropzone + clique), com estados de envio, preview (miniatura) e
+// ações Trocar/Remover — substitui o <input file> cru. Cores do design claro: a caixa vivia em
+// #181818 e aparecia como um retângulo preto dentro do modal branco.
 const UploadField: FC<{
   accept: string;
   hint: string;
@@ -155,20 +156,20 @@ const UploadField: FC<{
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }}
       />
       {hasValue && !uploading ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#1f1f1f', border: '1px solid #2f2f2f', borderRadius: 10, padding: 10 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 8, background: '#2a2a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, color: '#e07fce' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fbfcfe', border: '1px solid #e1e7f0', borderRadius: 8, padding: 10 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 8, background: '#edf2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, color: '#3361ff' }}>
             {thumb}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ color: '#fff', fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ color: '#62769b', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {fileName || 'Arquivo enviado'}
             </div>
-            <div style={{ color: '#1db954', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+            <div style={{ color: '#1d8a68', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
               <FiCheckCircle size={12} /> Enviado
             </div>
           </div>
           <button type='button' onClick={pick} style={ghostBtn}>Trocar</button>
-          <button type='button' onClick={onClear} style={{ ...ghostBtn, color: '#ff6b6f', padding: '6px 10px' }} aria-label='Remover'>
+          <button type='button' onClick={onClear} style={{ ...ghostBtn, color: '#c0405c', padding: '6px 10px' }} aria-label='Remover'>
             <FiTrash2 size={15} />
           </button>
         </div>
@@ -179,25 +180,25 @@ const UploadField: FC<{
           onDragLeave={() => setDrag(false)}
           onDrop={(e) => { e.preventDefault(); setDrag(false); if (uploading) return; const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
           style={{
-            border: `1.5px dashed ${drag ? '#9A4FD1' : '#3a3a3a'}`,
-            background: drag ? 'rgba(154, 79, 209,0.08)' : '#181818',
-            borderRadius: 10, padding: '20px 16px', textAlign: 'center',
+            border: `1.5px dashed ${drag ? '#8aa5ff' : '#cad5e5'}`,
+            background: drag ? '#eef3ff' : '#fbfcfe',
+            borderRadius: 8, padding: '20px 16px', textAlign: 'center',
             cursor: uploading ? 'default' : 'pointer', transition: 'border-color .15s, background .15s',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
           }}
         >
           {uploading ? (
             <>
-              <Spin indicator={<LoadingOutlined style={{ fontSize: 22, color: '#9A4FD1' }} spin />} />
-              <div style={{ color: '#b3b3b3', fontSize: 13 }}>Enviando…</div>
+              <Spin indicator={<LoadingOutlined style={{ fontSize: 22, color: '#3361ff' }} spin />} />
+              <div style={{ color: '#7c8db0', fontSize: 12 }}>Enviando…</div>
             </>
           ) : (
             <>
-              <FiUploadCloud size={26} color='#9A4FD1' />
-              <div style={{ color: '#fff', fontSize: 13.5, fontWeight: 600 }}>
-                Arraste aqui ou <span style={{ color: '#e07fce' }}>clique para escolher</span>
+              <FiUploadCloud size={24} color='#3361ff' />
+              <div style={{ color: '#62769b', fontSize: 12, fontWeight: 800 }}>
+                Arraste aqui ou <span style={{ color: '#3361ff' }}>clique para escolher</span>
               </div>
-              <div style={{ color: '#7a7a7a', fontSize: 12 }}>{hint}</div>
+              <div style={{ color: '#9aa9c2', fontSize: 10 }}>{hint}</div>
             </>
           )}
         </div>

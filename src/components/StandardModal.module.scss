@@ -1,46 +1,56 @@
+// Modal padrão da Maestra — desenho do gsap-app (workspace-floating-modal): cartão branco,
+// cabeçalho com kicker + título, campos claros em duas colunas e rodapé sobre fundo levemente
+// acinzentado. Antes era escuro (#181818 com gradiente roxo no header), herança do tema antigo:
+// no app claro os modais apareciam como um bloco de outro produto.
+//
+// Compartilhado por Música, Versão, Evento e Equipe — mexer aqui repinta os quatro.
 .modal {
+  // O `!important` no fundo é necessário: o ConfigProvider roda no darkAlgorithm e injeta
+  // colorBgElevated (#282828) direto em .ant-modal-content/.ant-modal-header em runtime, com
+  // especificidade acima da de um override comum. Escopado ao .modal, então só atinge os
+  // modais que adotam este padrão.
   :global(.ant-modal-content) {
     overflow: hidden;
     padding: 0;
-    background: #181818;
-    border: 1px solid #303034;
-    border-radius: 16px;
-    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.66);
+    border: 1px solid rgba(207, 217, 232, .92);
+    border-radius: 13px;
+    background: #fff !important;
+    box-shadow: 0 18px 45px rgba(18, 30, 56, .2);
+    color: #52668d;
   }
 
   :global(.ant-modal-header) {
     margin: 0;
-    padding: 22px 56px 18px 24px;
-    background:
-      linear-gradient(135deg, rgba(154, 79, 209, 0.18), rgba(80, 155, 245, 0.08)),
-      #181818;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 23px 56px 19px 27px;
+    border-bottom: 1px solid #edf0f5;
+    background: #fff !important;
   }
 
   :global(.ant-modal-title) {
-    color: #fff;
+    color: #52668d;
   }
 
   :global(.ant-modal-close) {
-    top: 18px;
-    right: 18px;
-    color: #b3b3b3;
+    top: 20px;
+    right: 20px;
+    color: #b6c1d3;
   }
 
   :global(.ant-modal-close:hover) {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.08);
+    background: #eef3fb;
+    color: #4267b9;
   }
 
   :global(.ant-modal-body) {
-    padding: 0 24px 22px;
+    padding: 0 27px 25px;
   }
 
+  // Rodapé em tom levemente frio, como no gsap: separa a área de ação do formulário.
   :global(.ant-modal-footer) {
     margin: 0;
-    padding: 14px 20px;
-    background: #141414;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 17px 27px;
+    border-top: 1px solid #edf0f5;
+    background: #fbfcfe;
   }
 
   :global(.ant-tabs-nav) {
@@ -49,53 +59,81 @@
 
   :global(.ant-tabs-tab) {
     padding: 15px 2px 12px;
-    color: #929292;
+    color: #92a3bf;
     font-weight: 700;
   }
 
   :global(.ant-tabs-tab:hover),
   :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
-    color: #fff !important;
+    color: #3361ff !important;
   }
 
   :global(.ant-tabs-ink-bar) {
-    background: #9a4fd1;
+    background: #3361ff;
   }
 
   :global(.ant-tabs-nav::before) {
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: #edf0f5;
   }
 
+  // Os campos precisam de !important: o ConfigProvider ainda roda no darkAlgorithm e injeta
+  // as cores escuras em runtime, com especificidade acima de um override comum.
   :global(.ant-input),
+  :global(.ant-input-affix-wrapper),
+  :global(.ant-input-number),
   :global(.ant-picker),
   :global(.ant-select-selector) {
-    color: #fff !important;
-    background: #111 !important;
-    border-color: #37373c !important;
+    border-color: #e1e7f0 !important;
+    background: #fbfcfe !important;
+    color: #52668d !important;
   }
 
   :global(.ant-input:focus),
   :global(.ant-input-focused),
+  :global(.ant-input-affix-wrapper:focus-within),
   :global(.ant-picker-focused),
   :global(.ant-select-focused .ant-select-selector) {
-    border-color: #9a4fd1 !important;
-    box-shadow: 0 0 0 2px rgba(154, 79, 209, 0.14) !important;
+    border-color: #8aa5ff !important;
+    box-shadow: 0 0 0 3px #eaf0ff !important;
+  }
+
+  :global(.ant-input::placeholder),
+  :global(.ant-picker-input > input::placeholder),
+  :global(.ant-select-selection-placeholder) {
+    color: #aab7cd !important;
   }
 
   :global(.ant-picker-input > input),
-  :global(.ant-select-selection-item),
-  :global(.ant-select-selection-placeholder) {
-    color: #fff !important;
+  :global(.ant-select-selection-item) {
+    color: #52668d !important;
   }
 
+  :global(.ant-picker-suffix),
+  :global(.ant-select-arrow) {
+    color: #9aabc4 !important;
+  }
+
+  :global(.ant-btn-default) {
+    border-color: #dce5f0 !important;
+    background: #fff !important;
+    color: #7183a1 !important;
+  }
+
+  :global(.ant-btn-default:hover:not(:disabled)) {
+    border-color: #b9cbed !important;
+    color: #4267b9 !important;
+  }
+
+  // !important pelo mesmo motivo do fundo: colorPrimary do ConfigProvider (#9A4FD1) vem do
+  // runtime do antd. Aqui a ação principal é o azul do redesign.
   :global(.ant-btn-primary) {
-    color: #fff;
-    background: #9a4fd1;
-    box-shadow: none;
+    background: #3361ff !important;
+    color: #fff !important;
+    box-shadow: 0 7px 15px rgba(51, 97, 255, .18);
   }
 
   :global(.ant-btn-primary:hover:not(:disabled)) {
-    background: #8442b6 !important;
+    background: #2a54e0 !important;
   }
 }
 
@@ -107,39 +145,39 @@
 }
 
 .kicker {
-  color: #c97ef3;
-  font-family: var(--font-mono);
-  font-size: 10px;
+  color: #9aa9c2;
+  font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 1.1px;
   text-transform: uppercase;
 }
 
-.title,
-.subtitle {
+.title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .title {
-  color: #fff;
-  font-size: 18px;
+  color: #52668d;
+  font-size: 16px;
   font-weight: 800;
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
 .subtitle {
-  color: #929292;
-  font-size: 12px;
+  max-width: 390px;
+  color: #8c9ab2;
+  font-size: 11px;
   font-weight: 500;
+  line-height: 1.55;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding-top: 20px;
+  gap: 15px;
+  padding-top: 22px;
 }
 
 .tabs {
@@ -154,9 +192,9 @@
 }
 
 .field > span {
-  color: #a8a8aa;
-  font-size: 12px;
-  font-weight: 700;
+  color: #7f91af;
+  font-size: 10px;
+  font-weight: 800;
 }
 
 .field :global(.ant-select),
@@ -168,7 +206,7 @@
 .fieldGridThree,
 .fieldGridFour {
   display: grid;
-  gap: 16px;
+  gap: 15px 18px;
 }
 
 .fieldGrid {
@@ -265,11 +303,11 @@
 .splitRow :global(.ant-input),
 .splitRow :global(.ant-select-selector) {
   min-height: 38px !important;
-  color: #f1f1f3 !important;
-  background: #121214 !important;
-  border-color: #38383e !important;
+  border-color: #e1e7f0 !important;
   border-radius: 8px !important;
-  font-size: 13px;
+  background: #fbfcfe !important;
+  color: #52668d !important;
+  font-size: 12px;
 }
 
 .splitRow :global(.ant-select-selector) {
@@ -283,7 +321,7 @@
 }
 
 .splitRow :global(.ant-input-suffix) {
-  color: #77777f;
+  color: #9aabc4;
 }
 
 .splitRemove {
@@ -292,18 +330,18 @@
   height: 36px;
   padding: 0;
   place-items: center;
-  color: #8b8b94;
-  background: transparent;
   border: 1px solid transparent;
+  background: transparent;
+  color: #9aabc4;
   border-radius: 8px;
   cursor: pointer;
   transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
 .splitRemove:hover {
-  color: #ff6b6f;
-  background: rgba(255, 79, 86, 0.08);
-  border-color: rgba(255, 79, 86, 0.22);
+  border-color: #f3c9d2;
+  background: #fdeef1;
+  color: #c0405c;
 }
 
 .splitFooter {
@@ -315,25 +353,26 @@
 }
 
 .splitAdd {
-  padding: 6px 11px;
-  color: #d9d9de;
-  background: transparent;
-  border: 1px solid #3a3a40;
+  padding: 7px 12px;
+  border: 1px solid #dce5f0;
   border-radius: 8px;
+  background: #fff;
+  color: #5e739b;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .splitAdd:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.05);
-  border-color: #55555d;
+  border-color: #b9cbed;
+  background: #eef3fb;
+  color: #4267b9;
 }
 
 .splitTotal {
-  color: #b3b3b3;
-  font-size: 12px;
+  color: #7c8db0;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .splitTotal strong {
