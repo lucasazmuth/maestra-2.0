@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
 
 import { supabase } from '../lib/supabase';
 import { useAppDispatch, useAppSelector } from '../store/store';
@@ -21,6 +20,8 @@ import {
   type NytaChatMessage,
   type PendingToolCall,
 } from '../store/slices/nytaChat';
+import { useNytaModalStore } from '../stores/nytaModalStore';
+import { useParams } from 'react-router-dom';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,8 @@ function parseSSELine(line: string): SSEEvent | null {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
+export type NytaChatSource = 'route' | 'modal';
+
 export interface UseNytaChatReturn {
   messages: NytaChatMessage[];
   isStreaming: boolean;
@@ -96,8 +99,24 @@ export interface UseNytaChatReturn {
   dismissError: () => void;
 }
 
-export function useNytaChat(): UseNytaChatReturn {
-  const { id: artistId } = useParams<{ id: string }>();
+/**
+ * O chat da Nyta — usado tanto pela página em tela cheia quanto pelo modal flutuante.
+ *
+ * A única diferença real entre os dois sempre foi de ONDE vem o artista e se a requisição
+ * carrega o módulo em que a pessoa está. Mesmo assim viveram como dois arquivos de ~670 linhas
+ * copiados um do outro, e as correções foram entrando só num deles: a guarda de limite diário
+ * na origem, a leitura dos headers X-Daily-*, o clear sem race — tudo isso existia no do modal
+ * e faltava no da página. Esta versão unificada parte do mais completo dos dois.
+ *
+ * `source`:
+ *  - 'route' (padrão): artista vem da URL (/artists/:id/nyta).
+ *  - 'modal': artista vem do nytaModalStore e a requisição leva module_context, que diz à Nyta
+ *    de qual tela a pessoa está falando.
+ */
+export function useNytaChat(source: NytaChatSource = 'route'): UseNytaChatReturn {
+  const { id: routeArtistId } = useParams<{ id: string }>();
+  const modalArtistId = useNytaModalStore((s) => s.moduleContext.artistId);
+  const artistId = source === 'modal' ? modalArtistId : routeArtistId;
   const dispatch = useAppDispatch();
 
   const messages = useAppSelector((s) => s.nytaChat.messages);
@@ -107,17 +126,13 @@ export function useNytaChat(): UseNytaChatReturn {
   const loadingHistory = useAppSelector((s) => s.nytaChat.loadingHistory);
   const hasMoreHistory = useAppSelector((s) => s.nytaChat.hasMoreHistory);
   const error = useAppSelector((s) => s.nytaChat.error);
-  const unavailableModules = useAppSelector((s) => s.nytaChat.unavailableModules);
   const conversationId = useAppSelector((s) => s.nytaChat.conversationId);
+  const unavailableModules = useAppSelector((s) => s.nytaChat.unavailableModules);
 
   // Abort controller ref for cancelling in-flight streams
   const abortRef = useRef<AbortController | null>(null);
 
   // ─── Reset + carga inicial por artista ─────────────────────────────────────
-  // Cada artista tem sua própria conversa (nyta_conversations por artist_id).
-  // A rota /artists/:id/nyta não remonta o componente ao trocar de artista, então
-  // o estado é zerado e a primeira página recarregada sempre que o :id muda.
-  // (Não reusa loadOlderMessages: o closure dela ainda veria o cursor antigo.)
   const lastArtistRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -198,7 +213,6 @@ export function useNytaChat(): UseNytaChatReturn {
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
-          // Keep the last incomplete line in the buffer
           buffer = lines.pop() || '';
 
           for (const line of lines) {
@@ -289,7 +303,7 @@ export function useNytaChat(): UseNytaChatReturn {
     [dispatch]
   );
 
-  // ─── POST to Edge Function ────────────────────────────────────────────────
+  // ─── POST to Edge Function (with module_context) ──────────────────────────
 
   const postToNytaChat = useCallback(
     async (body: Record<string, unknown>): Promise<Response | null> => {
@@ -302,6 +316,22 @@ export function useNytaChat(): UseNytaChatReturn {
       const controller = new AbortController();
       abortRef.current = controller;
 
+      // module_context diz à Nyta de qual tela a pessoa está falando — faz sentido no modal,
+      // que abre por cima de um módulo. Na página em tela cheia o módulo É o chat, então o
+      // contexto seria sempre o mesmo e não acrescenta nada ao prompt.
+      const { moduleContext } = useNytaModalStore.getState();
+      const enrichedBody = source === 'modal'
+        ? {
+            ...body,
+            module_context: {
+              module: moduleContext.module,
+              artist_id: moduleContext.artistId,
+              artist_name: moduleContext.artistName,
+              raw_path: moduleContext.rawPath,
+            },
+          }
+        : body;
+
       try {
         const response = await fetch(`${SUPABASE_URL}/functions/v1/nyta-chat`, {
           method: 'POST',
@@ -309,7 +339,7 @@ export function useNytaChat(): UseNytaChatReturn {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify(enrichedBody),
           signal: controller.signal,
         });
 
@@ -320,7 +350,7 @@ export function useNytaChat(): UseNytaChatReturn {
         return null;
       }
     },
-    [dispatch]
+    [dispatch, source]
   );
 
   // ─── Handle Non-200 Responses ─────────────────────────────────────────────
@@ -345,9 +375,13 @@ export function useNytaChat(): UseNytaChatReturn {
         }
 
         if (response.status === 403) {
-          dispatch(setError(body.error === 'subscription_required'
-            ? 'subscription_required'
-            : 'Acesso negado.'));
+          dispatch(
+            setError(
+              body.error === 'subscription_required'
+                ? 'subscription_required'
+                : 'Acesso negado.'
+            )
+          );
           return true;
         }
 
@@ -367,10 +401,16 @@ export function useNytaChat(): UseNytaChatReturn {
     async (text: string) => {
       if (!artistId || !text.trim()) return;
 
-      dispatch(setError(null));
-      dispatch(setUnavailableModules([]));
+      // Guarda do limite diário NA ORIGEM: vale pra QUALQUER entrada (input do chat, chips do
+      // Dashboard, "Nova estratégia/tarefa" do Plano de Ação). Sem isso, as entradas externas
+      // (openWithPrompt) mandavam a mensagem otimista mesmo no limite — parecia um bypass.
+      // O servidor já bloqueia (429), mas aqui evitamos a mensagem-fantasma e o reset visual.
+      if (rateLimitInfo && rateLimitInfo.count >= rateLimitInfo.limit) {
+        return;
+      }
 
-      // Optimistic UI: add user message immediately
+      dispatch(setError(null));
+
       const userMsgId = uid();
       const userMessage: NytaChatMessage = {
         id: userMsgId,
@@ -382,7 +422,6 @@ export function useNytaChat(): UseNytaChatReturn {
       dispatch(addMessage(userMessage));
       dispatch(setStreaming(true));
 
-      // Create placeholder assistant message for streaming
       const assistantMsgId = uid();
       const assistantMessage: NytaChatMessage = {
         id: assistantMsgId,
@@ -406,7 +445,6 @@ export function useNytaChat(): UseNytaChatReturn {
         return;
       }
 
-      // Handle error status codes
       const isError = await handleErrorResponse(response);
       if (isError) {
         dispatch(updateMessage({ id: userMsgId, status: 'error' }));
@@ -415,13 +453,17 @@ export function useNytaChat(): UseNytaChatReturn {
         return;
       }
 
-      // Mark user message as sent
-      dispatch(updateMessage({ id: userMsgId, status: 'sent' }));
+      // Contador de uso diário (header da resposta) → selo "X/limite" ao vivo no header.
+      const dc = response.headers.get('X-Daily-Count');
+      const dl = response.headers.get('X-Daily-Limit');
+      if (dc != null && dl != null) {
+        dispatch(setRateLimitInfo({ count: Number(dc), limit: Number(dl), resetAt: null }));
+      }
 
-      // Process SSE stream
+      dispatch(updateMessage({ id: userMsgId, status: 'sent' }));
       await processStream(response, assistantMsgId);
     },
-    [artistId, dispatch, postToNytaChat, handleErrorResponse, processStream]
+    [artistId, dispatch, postToNytaChat, handleErrorResponse, processStream, rateLimitInfo]
   );
 
   // ─── confirmTool ──────────────────────────────────────────────────────────
@@ -433,7 +475,6 @@ export function useNytaChat(): UseNytaChatReturn {
       dispatch(updateToolCallStatus({ toolCallId, status: 'executing' }));
       dispatch(setStreaming(true));
 
-      // Create placeholder for follow-up assistant response
       const assistantMsgId = uid();
       const assistantMessage: NytaChatMessage = {
         id: assistantMsgId,
@@ -481,7 +522,6 @@ export function useNytaChat(): UseNytaChatReturn {
       dispatch(updateToolCallStatus({ toolCallId, status: 'cancelled' }));
       dispatch(setStreaming(true));
 
-      // Create placeholder for follow-up assistant acknowledgement
       const assistantMsgId = uid();
       const assistantMessage: NytaChatMessage = {
         id: assistantMsgId,
@@ -533,7 +573,6 @@ export function useNytaChat(): UseNytaChatReturn {
         return;
       }
 
-      // Get conversation ID — either from state or fetch it
       let convId = conversationId;
       if (!convId) {
         const { data: conv } = await supabase
@@ -551,7 +590,6 @@ export function useNytaChat(): UseNytaChatReturn {
         dispatch(setConversationId(convId));
       }
 
-      // Determine the cursor: created_at of the oldest message currently loaded
       const oldestMessage = messages[0];
       const cursor = oldestMessage?.createdAt;
 
@@ -580,7 +618,6 @@ export function useNytaChat(): UseNytaChatReturn {
         return;
       }
 
-      // Map DB rows to NytaChatMessage (reverse to get chronological order)
       dispatch(prependMessages(data.reverse().map(mapRowToMessage)));
 
       if (data.length < PAGE_SIZE) {
@@ -599,9 +636,14 @@ export function useNytaChat(): UseNytaChatReturn {
     if (!artistId) return;
 
     dispatch(setError(null));
+    // Limpa a UI IMEDIATAMENTE (otimista). Isso evita uma race: se o DELETE no banco
+    // demorasse e o clearMessages só rodasse DEPOIS, ele apagaria uma mensagem que o
+    // artista mandou logo após clicar em "Limpar" — a resposta sumia (chat parecia travado).
+    // Limpando antes, um envio seguinte já parte de um estado limpo e não é afetado.
+    dispatch(clearMessages());
+    const cutoff = new Date().toISOString();
 
     try {
-      // Find the conversation
       let convId = conversationId;
       if (!convId) {
         const { data: conv } = await supabase
@@ -610,27 +652,22 @@ export function useNytaChat(): UseNytaChatReturn {
           .eq('artist_id', artistId)
           .maybeSingle();
 
-        if (!conv) {
-          // No conversation to clear
-          dispatch(clearMessages());
-          return;
-        }
+        if (!conv) return;
         convId = conv.id;
+        dispatch(setConversationId(convId));
       }
 
-      // Delete all messages from the conversation (cascade won't delete conv itself)
+      // Apaga só o que existia ANTES do clear: uma mensagem nova enviada em seguida
+      // (created_at > cutoff) é preservada no banco.
       const { error: deleteError } = await supabase
         .from('nyta_messages')
         .delete()
-        .eq('conversation_id', convId);
+        .eq('conversation_id', convId)
+        .lte('created_at', cutoff);
 
       if (deleteError) {
         dispatch(setError('Erro ao limpar conversa.'));
-        return;
       }
-
-      dispatch(clearMessages());
-      dispatch(setConversationId(convId));
     } catch {
       dispatch(setError('Erro ao limpar conversa.'));
     }

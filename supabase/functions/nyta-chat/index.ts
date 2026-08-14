@@ -363,6 +363,9 @@ interface NytaChatRequest {
   artist_id?: string;
   tool_call_id?: string;
   approved?: boolean;
+  // Conversa em que a mensagem entra. Opcional: sem ela, o servidor usa a conversa mexida por
+  // último desse artista (ou abre a primeira). O id é sempre revalidado contra o dono.
+  conversation_id?: string;
 }
 
 function jsonResponse(body: Record<string, unknown>, status: number): Response {
@@ -417,17 +420,20 @@ function validateMessageAction(request: NytaChatRequest): Response | null {
 // Fallback se a tabela nyta_plan_limits não responder. O limite REAL é configurável por plano lá.
 const DAILY_MESSAGE_LIMIT_FALLBACK = 100;
 
-// Limite diário POR PLANO, configurável sem deploy (tabela nyta_plan_limits) e RESILIENTE ao
-// "Limpar histórico": o contador vive na conversa (nyta_conversations.daily_count), não nas
-// mensagens — deletar o histórico NÃO zera o limite. Lê o limite do plano + o contador do dia,
-// bloqueia se atingiu, senão incrementa. Retorna contador + limite pro front mostrar "X/limite".
+// Limite diário POR PLANO, configurável sem deploy (tabela nyta_plan_limits) e RESILIENTE
+// tanto ao "Limpar histórico" quanto a abrir conversa nova: o contador vive em
+// nyta_daily_usage, com chave (user_id, artist_id, dia) — fora das mensagens E fora da
+// conversa. Ele morava em nyta_conversations.daily_count, o que bastava enquanto havia uma
+// conversa por artista; com várias, criar uma conversa zeraria o limite. Lê o limite do plano
+// + o contador do dia, bloqueia se atingiu, senão incrementa. Retorna contador + limite pro
+// front mostrar "X/limite".
 async function checkAndBumpDailyLimit(
-  conversationId: string,
+  userId: string,
+  artistId: string,
   plan: string = "pro",
 ): Promise<{ response?: Response; count: number; limit: number }> {
   // Service role: o incremento é operação do servidor e não pode depender da RLS do usuário
-  // (com o client do usuário o UPDATE em nyta_conversations era negado e o contador não subia).
-  // O conversationId já é da conversa do próprio usuário (resolvida com o auth dele).
+  // (nyta_daily_usage tem RLS ligada e nenhuma policy — ninguém além do servidor entra).
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // Limite do plano — mude o valor na tabela nyta_plan_limits e vale na hora (sem deploy).
@@ -443,24 +449,27 @@ async function checkAndBumpDailyLimit(
   tomorrowUTC.setUTCDate(tomorrowUTC.getUTCDate() + 1);
   const resetAt = tomorrowUTC.toISOString();
 
-  const { data: conv, error } = await supabase
-    .from("nyta_conversations")
-    .select("daily_count, daily_count_date")
-    .eq("id", conversationId)
-    .single();
+  const { data: usage, error } = await supabase
+    .from("nyta_daily_usage")
+    .select("count")
+    .eq("user_id", userId)
+    .eq("artist_id", artistId)
+    .eq("usage_date", todayDate)
+    .maybeSingle();
   // Fail-open: se não conseguir ler, não bloqueia (não vamos travar o chat por um erro de leitura).
-  if (error || !conv) return { count: 0, limit };
+  if (error) return { count: 0, limit };
 
-  const isToday = conv.daily_count_date === todayDate;
-  const current = isToday ? (conv.daily_count ?? 0) : 0;
+  const current = usage?.count ?? 0;
   if (current >= limit) {
     return { response: jsonResponse({ error: "rate_limit_exceeded", resetAt }, 429), count: current, limit };
   }
   const next = current + 1;
   await supabase
-    .from("nyta_conversations")
-    .update({ daily_count: next, daily_count_date: todayDate })
-    .eq("id", conversationId);
+    .from("nyta_daily_usage")
+    .upsert(
+      { user_id: userId, artist_id: artistId, usage_date: todayDate, count: next },
+      { onConflict: "user_id,artist_id,usage_date" },
+    );
   return { count: next, limit };
 }
 
@@ -482,19 +491,43 @@ async function validateSubscription(userId: string): Promise<Response | null> {
   return jsonResponse({ error: "subscription_required" }, 403);
 }
 
+// Resolve em qual conversa a mensagem entra.
+//
+// Com `requestedId`, é aquela conversa — desde que seja do próprio usuário E deste artista. A
+// checagem é explícita e não apenas confiada à RLS: sem o filtro de artist_id, um id válido de
+// outro artista do mesmo usuário jogaria a mensagem (e o contexto que a Nyta lê) na conversa
+// errada. Sem `requestedId`, cai na conversa mexida por último, e só abre uma nova se não
+// houver nenhuma — quem quer conversa nova pede explicitamente, pelo botão da tela.
 async function getOrCreateConversation(
   userId: string,
   artistId: string,
-  authHeader: string
+  authHeader: string,
+  requestedId?: string,
 ): Promise<{ conversationId: string } | Response> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
   });
+
+  if (requestedId) {
+    const { data: owned, error: ownErr } = await supabase
+      .from("nyta_conversations")
+      .select("id")
+      .eq("id", requestedId)
+      .eq("user_id", userId)
+      .eq("artist_id", artistId)
+      .maybeSingle();
+    if (ownErr) return jsonResponse({ error: "Falha buscar conversa" }, 500);
+    if (!owned) return jsonResponse({ error: "conversa não encontrada" }, 404);
+    return { conversationId: owned.id };
+  }
+
   const { data: existing, error: selErr } = await supabase
     .from("nyta_conversations")
     .select("id")
     .eq("user_id", userId)
     .eq("artist_id", artistId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (selErr) return jsonResponse({ error: "Falha buscar conversa" }, 500);
   if (existing) return { conversationId: existing.id };
@@ -505,6 +538,21 @@ async function getOrCreateConversation(
     .single();
   if (insErr) return jsonResponse({ error: "Falha criar conversa" }, 500);
   return { conversationId: created.id };
+}
+
+// Título e ordem da lista de conversas. O título é a primeira fala do usuário, aparada — é o
+// que a pessoa reconhece ao bater o olho na lista. `updated_at` sobe a cada mensagem pra
+// conversa em uso subir pro topo. Service role porque as duas colunas são do servidor.
+async function touchConversation(conversationId: string, firstUserMessage: string): Promise<void> {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const { data: conv } = await supabase
+    .from("nyta_conversations").select("title").eq("id", conversationId).maybeSingle();
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (conv && !conv.title) {
+    const clean = firstUserMessage.replace(/\s+/g, " ").trim();
+    patch.title = clean.length > 60 ? `${clean.slice(0, 60).trimEnd()}…` : clean;
+  }
+  await supabase.from("nyta_conversations").update(patch).eq("id", conversationId);
 }
 
 interface GroqMessage {
@@ -969,6 +1017,11 @@ function streamGroqResponse(
       const sse = (d: Record<string, unknown>) => {
         ctrl.enqueue(enc.encode(`data: ${JSON.stringify(d)}\n\n`));
       };
+
+      // Em qual conversa isto entrou. Vai primeiro porque o cliente pode ter mandado a mensagem
+      // sem conversation_id (a primeira do dia, ou logo após criar uma conversa nova) — sem
+      // este evento ele não teria como saber onde a resposta está sendo gravada.
+      sse({ type: "conversation", conversation_id: convId });
 
       // Emit unavailable modules warning as first SSE event (Req 3.6)
       if (unavailableModules.length > 0) {
@@ -1475,14 +1528,15 @@ Deno.serve(async (req: Request) => {
       const sErr = await validateSubscription(userId);
       if (sErr) return sErr;
       const ah = req.headers.get("Authorization")!;
-      // Conversa primeiro: o limite diário é contado nela (resiliente ao "Limpar histórico").
-      const conv = await getOrCreateConversation(userId, r.artist_id!, ah);
+      const rl = await checkAndBumpDailyLimit(userId, r.artist_id!);
+      if (rl.response) return rl.response;
+      const conv = await getOrCreateConversation(userId, r.artist_id!, ah, r.conversation_id);
       if (conv instanceof Response) return conv;
       const { conversationId } = conv;
-      const rl = await checkAndBumpDailyLimit(conversationId);
-      if (rl.response) return rl.response;
       const pm = await persistUserMessage(conversationId, r.message!, ah);
       if (pm instanceof Response) return pm;
+      // Depois de persistir: dá título à conversa nova e sobe ela no topo da lista.
+      await touchConversation(conversationId, r.message!);
       // Sem busca na base de conhecimento aqui: o chat livre só enxerga o artista
       // atual. Planos de exemplo de outros artistas jamais entram neste contexto.
       const { context: actx, unavailableModules } = await fetchArtistContext(r.artist_id!, ah);
@@ -1499,7 +1553,7 @@ Deno.serve(async (req: Request) => {
       if (cErr) return cErr;
       if (!r.artist_id || !UUID_REGEX.test(r.artist_id)) return jsonResponse({ error: "artist_id inválido" }, 400);
       const ah = req.headers.get("Authorization")!;
-      const conv = await getOrCreateConversation(userId, r.artist_id!, ah);
+      const conv = await getOrCreateConversation(userId, r.artist_id!, ah, r.conversation_id);
       if (conv instanceof Response) return conv;
       const { conversationId: cid } = conv;
       const tcl = await findPendingToolCall(cid, r.tool_call_id!, ah);
