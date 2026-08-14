@@ -270,18 +270,19 @@ const Wizard: FC = () => {
                   <FiRotateCcw size={17} />
                 </button>
               )}
-              {/* Mostrar/ocultar a coluna de resultados. Antes o gatilho era a própria linha
-                  "Etapa X de 9" — que saiu do cabeçalho —, então vira um botão explícito, no
-                  mesmo desenho dos outros controles. */}
-              <button
-                className={`wiz-back-btn${wizardPanel.open ? ' wiz-back-btn--on' : ''}`}
-                title={wizardPanel.open ? 'Ocultar seu plano' : 'Ver seu plano'}
-                aria-label={wizardPanel.open ? 'Ocultar seu plano' : 'Ver seu plano'}
-                aria-expanded={wizardPanel.open}
-                onClick={() => wizardPanel.toggle()}
-              >
-                <FiSidebar size={17} />
-              </button>
+              {/* Abrir a coluna de resultados. Só aparece com ela FECHADA: aberta, quem fecha
+                  é o X do próprio painel, e manter os dois seria oferecer a mesma ação duas
+                  vezes na mesma tela. */}
+              {!wizardPanel.open && (
+                <button
+                  className='wiz-back-btn'
+                  title='Ver seu plano'
+                  aria-label='Ver seu plano'
+                  onClick={() => wizardPanel.setOpen(true)}
+                >
+                  <FiSidebar size={17} />
+                </button>
+              )}
             </div>
           </div>
         </div>
