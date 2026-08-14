@@ -43,12 +43,15 @@ const NytaChatPage: FC = () => {
   const showErrorBanner = error && error !== 'subscription_required';
 
   return (
-    <div className="nyta-chat-page">
+    // `nyta-surface` traz o skin claro do chat (o mesmo do modal flutuante) — ver styles.scss.
+    <div className="nyta-chat-page nyta-surface">
       {/* ChatHeader */}
       <div className="nyta-chat-page__header">
         <ChatHeader
           artistName={artist?.name || ''}
           onClear={clearConversation}
+          dailyCount={rateLimitInfo?.count ?? null}
+          dailyLimit={rateLimitInfo?.limit ?? null}
         />
       </div>
 

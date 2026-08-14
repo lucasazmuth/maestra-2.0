@@ -1,5 +1,5 @@
 import { FC, PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FiAlertCircle } from 'react-icons/fi';
 
 import useIsMobile from '../../utils/isMobile';
@@ -40,7 +40,12 @@ const clampToViewport = (left: number, top: number, w: number, h: number): Coord
 
 export const NytaFloatingModal: FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isOpen, close } = useNytaModal();
+  // O modal é um ATALHO pra Nyta de dentro dos módulos. Na página dela em tela cheia ele não
+  // tem função: abria a mesma conversa por cima dela, com duas caixas de texto na tela e a
+  // dúvida de qual estava valendo (as duas — é a mesma conversa).
+  const onNytaPage = location.pathname.endsWith('/nyta');
   const pendingPrompt = useNytaModalStore((s) => s.pendingPrompt);
   const clearPendingPrompt = useNytaModalStore((s) => s.clearPendingPrompt);
   const entitlements = useEntitlements();
@@ -185,6 +190,12 @@ export const NytaFloatingModal: FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  // Entrar na página da Nyta encerra o atalho de verdade: sem isto o store continuaria "aberto"
+  // e o modal ressurgiria sozinho ao sair da página, sem ninguém ter pedido.
+  useEffect(() => {
+    if (onNytaPage && isOpen) close();
+  }, [onNytaPage, isOpen, close]);
+
   // ─── Escape key listener ───────────────────────────────────────────────────
 
   useEffect(() => {
@@ -234,6 +245,9 @@ export const NytaFloatingModal: FC = () => {
 
   // ─── Don't render anything if never opened ─────────────────────────────────
 
+  // Na página da Nyta o modal sai de cena (ver `onNytaPage`). Quem chegar aqui com ele aberto
+  // — clicou no atalho e depois navegou — encontra a conversa inteira na própria página.
+  if (onNytaPage) return null;
   if (!isVisible && !isOpen) return null;
 
   // ─── Compute container class ───────────────────────────────────────────────
@@ -254,7 +268,7 @@ export const NytaFloatingModal: FC = () => {
   return (
     <div
       ref={panelRef}
-      className={`${containerClassName} nyta-reference-modal`}
+      className={`${containerClassName} nyta-surface nyta-reference-modal`}
       style={panelStyle}
       role="dialog"
       aria-label="Nyta"

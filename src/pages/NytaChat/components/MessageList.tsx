@@ -48,6 +48,7 @@ export const MessageList: FC<MessageListProps> = ({
   const sentinelRef = useRef<HTMLDivElement>(null);
   const userScrolledUpRef = useRef(false);
   const prevMessageCountRef = useRef(messages.length);
+  const didInitialScrollRef = useRef(false);
 
   // ─── Determine if user is near bottom ───────────────────────────────────
 
@@ -64,6 +65,20 @@ export const MessageList: FC<MessageListProps> = ({
     const newCount = messages.length;
     const hadNewMessages = newCount > prevMessageCountRef.current;
     prevMessageCountRef.current = newCount;
+
+    // Primeira leva (o histórico chegando de uma vez): abrir o chat tem que cair na mensagem
+    // MAIS RECENTE. Aqui a rolagem é instantânea e repetida no frame seguinte de propósito — a
+    // suave não alcançava o fim porque o markdown das bolhas ainda cresce depois deste efeito,
+    // e a lista terminava parada lá no começo do histórico.
+    if (!didInitialScrollRef.current && newCount > 0) {
+      didInitialScrollRef.current = true;
+      const container = containerRef.current;
+      const toBottom = () => { if (container) container.scrollTop = container.scrollHeight; };
+      toBottom();
+      requestAnimationFrame(toBottom);
+      return;
+    }
+
     if (!hadNewMessages) return;
 
     // Se a última mensagem é do PRÓPRIO usuário (ele acabou de enviar), SEMPRE rola pro fim —

@@ -176,7 +176,13 @@
   .app-layout { margin-top: 0; }
 }
 
-/* Nyta IA modal: messaging workspace from the reference, with the real chat flows kept intact. */
+/* Nyta IA: messaging workspace from the reference, with the real chat flows kept intact.
+
+   `.nyta-surface` é o SKIN claro do chat (bolhas, lista, input, chips) e
+   `.nyta-reference-modal` é só o CHROME do modal flutuante (tamanho, borda, sombra). Os dois
+   viviam num seletor só, e por isso a página /nyta em tela cheia — que monta exatamente os
+   mesmos componentes — ficava sem estilo, herdando o tema escuro antigo dos .scss. O modal usa
+   as duas classes; a página usa só o skin. */
 .nyta-reference-modal {
   width: min(560px, calc(100vw - 40px));
   height: min(760px, calc(100vh - 48px));
@@ -187,55 +193,55 @@
   color: #60749a;
 }
 
-.nyta-reference-modal .nyta-reference-header {
+.nyta-surface .nyta-reference-header {
   min-height: 70px;
   padding: 0 18px;
   border-bottom: 1px solid #e8edf4;
   background: #ffffff;
 }
 
-.nyta-reference-modal .nyta-reference-header > div:first-child {
+.nyta-surface .nyta-reference-header > div:first-child {
   gap: 11px;
 }
 
-.nyta-reference-modal .nyta-reference-header .nyta-avatar {
+.nyta-surface .nyta-reference-header .nyta-avatar {
   box-shadow: 0 4px 10px rgba(112, 72, 212, 0.18);
 }
 
-.nyta-reference-modal .nyta-reference-header [class*="title"] {
+.nyta-surface .nyta-reference-header [class*="title"] {
   color: #52688f;
   font-size: 14px;
 }
 
-.nyta-reference-modal .nyta-reference-header [class*="iconButton"] {
+.nyta-surface .nyta-reference-header [class*="iconButton"] {
   color: #9aabc4;
 }
 
-.nyta-reference-modal .nyta-reference-header [class*="iconButton"]:hover {
+.nyta-surface .nyta-reference-header [class*="iconButton"]:hover {
   color: #4267b9;
   background: #eef3fb;
 }
 
-.nyta-reference-modal .nyta-reference-header [class*="usage"] {
+.nyta-surface .nyta-reference-header [class*="usage"] {
   background: #eef3fb;
   color: #6e83a6;
 }
 
-.nyta-reference-modal .nyta-chatArea,
-.nyta-reference-modal [class*="chatArea"] {
+.nyta-surface .nyta-chatArea,
+.nyta-surface [class*="chatArea"] {
   background: #f7f9fc;
 }
 
-.nyta-reference-modal .nyta-message-list {
+.nyta-surface .nyta-message-list {
   padding: 24px 24px 8px;
   background: #f7f9fc;
 }
 
-.nyta-reference-modal .nyta-message-list__item {
+.nyta-surface .nyta-message-list__item {
   margin-bottom: 18px;
 }
 
-.nyta-reference-modal .nyta-bubble {
+.nyta-surface .nyta-bubble {
   max-width: min(80%, 430px);
   padding: 13px 16px;
   border: 1px solid #e3eaf3;
@@ -247,74 +253,74 @@
   box-shadow: 0 4px 12px rgba(105, 122, 159, 0.06);
 }
 
-.nyta-reference-modal .nyta-message-list__item--user .nyta-bubble {
+.nyta-surface .nyta-message-list__item--user .nyta-bubble {
   border: 0;
   border-radius: 14px 14px 4px 14px;
   background: #eaf0ff;
   color: #4267b9;
 }
 
-.nyta-reference-modal .nyta-message-list__item--assistant,
-.nyta-reference-modal .nyta-message-list__item--user {
+.nyta-surface .nyta-message-list__item--assistant,
+.nyta-surface .nyta-message-list__item--user {
   animation: nytaReferenceMessageIn 0.25s ease both;
 }
 
-.nyta-reference-modal [class*="greeting"] {
+.nyta-surface [class*="greeting"] {
   background: #f7f9fc;
 }
 
-.nyta-reference-modal [class*="greetingText"] {
+.nyta-surface [class*="greetingText"] {
   border: 1px solid #e3eaf3;
   background: #ffffff;
   color: #60749a;
   box-shadow: 0 4px 12px rgba(105, 122, 159, 0.06);
 }
 
-.nyta-reference-modal [class*="suggestionsLabel"] {
+.nyta-surface [class*="suggestionsLabel"] {
   color: #8b9bb5;
 }
 
-.nyta-reference-modal [class*="suggestionChip"] {
+.nyta-surface [class*="suggestionChip"] {
   border-color: #dfe7f1;
   background: #ffffff;
   color: #60749a;
   box-shadow: 0 3px 8px rgba(105, 122, 159, 0.05);
 }
 
-.nyta-reference-modal [class*="suggestionChip"]:hover:not(:disabled) {
+.nyta-surface [class*="suggestionChip"]:hover:not(:disabled) {
   border-color: #b9cbed;
   background: #eef3ff;
   color: #4267b9;
 }
 
-.nyta-reference-modal .nyta-input-bar {
+.nyta-surface .nyta-input-bar {
   padding: 14px 18px 12px;
   border-top: 1px solid #e8edf4;
   background: #ffffff;
 }
 
-.nyta-reference-modal .nyta-input-bar__row {
+.nyta-surface .nyta-input-bar__row {
   border: 1px solid #dce5f0;
   border-radius: 10px;
   background: #ffffff;
   box-shadow: 0 3px 10px rgba(105, 122, 159, 0.04);
 }
 
-.nyta-reference-modal .nyta-input-bar__row:focus-within {
+.nyta-surface .nyta-input-bar__row:focus-within {
   border-color: #9bb5ec;
   box-shadow: 0 0 0 3px rgba(66, 103, 185, 0.1);
 }
 
-.nyta-reference-modal .nyta-input-bar__textarea {
+.nyta-surface .nyta-input-bar__textarea {
   color: #60749a;
   font-size: 13px;
 }
 
-.nyta-reference-modal .nyta-input-bar__textarea::placeholder {
+.nyta-surface .nyta-input-bar__textarea::placeholder {
   color: #aebbd0;
 }
 
-.nyta-reference-modal .nyta-send {
+.nyta-surface .nyta-send {
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -322,29 +328,29 @@
   background: #3361ff;
 }
 
-.nyta-reference-modal .nyta-input-bar__disclaimer,
-.nyta-reference-modal .nyta-input-bar__char-count {
+.nyta-surface .nyta-input-bar__disclaimer,
+.nyta-surface .nyta-input-bar__char-count {
   color: #9aa8be;
 }
 
-.nyta-reference-modal .nyta-rate-limit-card {
+.nyta-surface .nyta-rate-limit-card {
   border-color: #d9e2f0;
   background: #f4f7fc;
 }
 
-.nyta-reference-modal .nyta-rate-limit-card__title {
+.nyta-surface .nyta-rate-limit-card__title {
   color: #52688f;
 }
 
-.nyta-reference-modal .nyta-rate-limit-card__sub {
+.nyta-surface .nyta-rate-limit-card__sub {
   color: #8b9bb5;
 }
 
-.nyta-reference-modal .nyta-rate-limit-card__cta {
+.nyta-surface .nyta-rate-limit-card__cta {
   background: #3361ff;
 }
 
-.nyta-reference-modal .nyta-errorBanner {
+.nyta-surface .nyta-errorBanner {
   background: #fff5f5;
   border-color: #f5d7d7;
 }
@@ -362,11 +368,11 @@
     border-radius: 0;
   }
 
-  .nyta-reference-modal .nyta-message-list {
+  .nyta-surface .nyta-message-list {
     padding: 18px 16px 8px;
   }
 
-  .nyta-reference-modal .nyta-bubble {
+  .nyta-surface .nyta-bubble {
     max-width: 88%;
   }
 }
@@ -382,23 +388,23 @@
   color: #60749a;
 }
 
-.nyta-reference-modal .nyta-reference-header {
+.nyta-surface .nyta-reference-header {
   min-height: 70px;
   padding: 0 18px;
   border-bottom: 1px solid #e8edf4;
   background: #ffffff;
 }
 
-.nyta-reference-modal .nyta-reference-header [class*="title"] { color: #52688f; font-size: 14px; }
-.nyta-reference-modal .nyta-reference-header [class*="iconButton"] { color: #9aabc4; }
-.nyta-reference-modal .nyta-reference-header [class*="iconButton"]:hover { color: #4267b9; background: #eef3fb; }
-.nyta-reference-modal .nyta-reference-header [class*="usage"] { background: #eef3fb; color: #6e83a6; }
+.nyta-surface .nyta-reference-header [class*="title"] { color: #52688f; font-size: 14px; }
+.nyta-surface .nyta-reference-header [class*="iconButton"] { color: #9aabc4; }
+.nyta-surface .nyta-reference-header [class*="iconButton"]:hover { color: #4267b9; background: #eef3fb; }
+.nyta-surface .nyta-reference-header [class*="usage"] { background: #eef3fb; color: #6e83a6; }
 
-.nyta-reference-modal .nyta-message-list,
-.nyta-reference-modal [class*="greeting"] { background: #f7f9fc; }
-.nyta-reference-modal .nyta-message-list { padding: 24px 24px 8px; }
-.nyta-reference-modal .nyta-message-list__item { margin-bottom: 18px; }
-.nyta-reference-modal .nyta-bubble {
+.nyta-surface .nyta-message-list,
+.nyta-surface [class*="greeting"] { background: #f7f9fc; }
+.nyta-surface .nyta-message-list { padding: 24px 24px 8px; }
+.nyta-surface .nyta-message-list__item { margin-bottom: 18px; }
+.nyta-surface .nyta-bubble {
   max-width: min(80%, 430px);
   padding: 13px 16px;
   border: 1px solid #e3eaf3;
@@ -409,24 +415,24 @@
   line-height: 1.55;
   box-shadow: 0 4px 12px rgba(105, 122, 159, 0.06);
 }
-.nyta-reference-modal .nyta-message-list__item--user .nyta-bubble { border: 0; border-radius: 14px 14px 4px 14px; background: #eaf0ff; color: #4267b9; }
-.nyta-reference-modal [class*="greetingText"] { border: 1px solid #e3eaf3; background: #ffffff; color: #60749a; box-shadow: 0 4px 12px rgba(105, 122, 159, 0.06); }
-.nyta-reference-modal [class*="suggestionsLabel"] { color: #8b9bb5; }
-.nyta-reference-modal [class*="suggestionChip"] { border-color: #dfe7f1; background: #ffffff; color: #60749a; box-shadow: 0 3px 8px rgba(105, 122, 159, 0.05); }
-.nyta-reference-modal [class*="suggestionChip"]:hover:not(:disabled) { border-color: #b9cbed; background: #eef3ff; color: #4267b9; }
+.nyta-surface .nyta-message-list__item--user .nyta-bubble { border: 0; border-radius: 14px 14px 4px 14px; background: #eaf0ff; color: #4267b9; }
+.nyta-surface [class*="greetingText"] { border: 1px solid #e3eaf3; background: #ffffff; color: #60749a; box-shadow: 0 4px 12px rgba(105, 122, 159, 0.06); }
+.nyta-surface [class*="suggestionsLabel"] { color: #8b9bb5; }
+.nyta-surface [class*="suggestionChip"] { border-color: #dfe7f1; background: #ffffff; color: #60749a; box-shadow: 0 3px 8px rgba(105, 122, 159, 0.05); }
+.nyta-surface [class*="suggestionChip"]:hover:not(:disabled) { border-color: #b9cbed; background: #eef3ff; color: #4267b9; }
 
-.nyta-reference-modal .nyta-input-bar { padding: 14px 18px 12px; border-top: 1px solid #e8edf4; background: #ffffff; }
-.nyta-reference-modal .nyta-input-bar__row { border-color: #dce5f0; border-radius: 10px; background: #ffffff; box-shadow: 0 3px 10px rgba(105, 122, 159, 0.04); }
-.nyta-reference-modal .nyta-input-bar__row:focus-within { border-color: #9bb5ec; box-shadow: 0 0 0 3px rgba(66, 103, 185, 0.1); }
-.nyta-reference-modal .nyta-input-bar__textarea { color: #60749a; font-size: 13px; }
-.nyta-reference-modal .nyta-input-bar__textarea::placeholder { color: #aebbd0; }
-.nyta-reference-modal .nyta-send { width: 36px; height: 36px; min-width: 36px; border-radius: 9px; background: #3361ff; }
-.nyta-reference-modal .nyta-input-bar__disclaimer, .nyta-reference-modal .nyta-input-bar__char-count { color: #9aa8be; }
+.nyta-surface .nyta-input-bar { padding: 14px 18px 12px; border-top: 1px solid #e8edf4; background: #ffffff; }
+.nyta-surface .nyta-input-bar__row { border-color: #dce5f0; border-radius: 10px; background: #ffffff; box-shadow: 0 3px 10px rgba(105, 122, 159, 0.04); }
+.nyta-surface .nyta-input-bar__row:focus-within { border-color: #9bb5ec; box-shadow: 0 0 0 3px rgba(66, 103, 185, 0.1); }
+.nyta-surface .nyta-input-bar__textarea { color: #60749a; font-size: 13px; }
+.nyta-surface .nyta-input-bar__textarea::placeholder { color: #aebbd0; }
+.nyta-surface .nyta-send { width: 36px; height: 36px; min-width: 36px; border-radius: 9px; background: #3361ff; }
+.nyta-surface .nyta-input-bar__disclaimer, .nyta-surface .nyta-input-bar__char-count { color: #9aa8be; }
 
 @media (max-width: 767px) {
   .nyta-reference-modal { width: 100%; height: 100dvh; border: 0; border-radius: 0; }
-  .nyta-reference-modal .nyta-message-list { padding: 18px 16px 8px; }
-  .nyta-reference-modal .nyta-bubble { max-width: 88%; }
+  .nyta-surface .nyta-message-list { padding: 18px 16px 8px; }
+  .nyta-surface .nyta-bubble { max-width: 88%; }
 }
 
 /* Agenda reference: month-first workspace with the real agenda interactions kept intact. */
@@ -8944,28 +8950,28 @@ body:has(.track-detail-backdrop) .local-player-bar {
 
 /* Nyta IA cascade after all page-specific reference rules. */
 .nyta-reference-modal { width: min(560px, calc(100vw - 40px)) !important; height: min(760px, calc(100vh - 48px)) !important; border: 1px solid #dce5f0 !important; border-radius: 14px !important; background: #fff !important; box-shadow: 0 24px 60px rgba(48,70,108,.2), 0 4px 14px rgba(48,70,108,.1) !important; color: #60749a; }
-.nyta-reference-modal .nyta-reference-header { min-height: 70px; padding: 0 18px; border-bottom: 1px solid #e8edf4; background: #fff; }
-.nyta-reference-modal .nyta-reference-header [class*="title"] { color: #52688f; font-size: 14px; }
-.nyta-reference-modal .nyta-reference-header [class*="iconButton"] { color: #9aabc4; }
-.nyta-reference-modal .nyta-reference-header [class*="iconButton"]:hover { color: #4267b9; background: #eef3fb; }
-.nyta-reference-modal .nyta-reference-header [class*="usage"] { background: #eef3fb; color: #6e83a6; }
-.nyta-reference-modal .nyta-message-list, .nyta-reference-modal [class*="greeting"] { background: #f7f9fc; }
-.nyta-reference-modal .nyta-message-list { padding: 24px 24px 8px; }
-.nyta-reference-modal .nyta-message-list__item { margin-bottom: 18px; }
-.nyta-reference-modal .nyta-bubble { max-width: min(80%,430px); padding: 13px 16px; border: 1px solid #e3eaf3; border-radius: 14px 14px 14px 4px; background: #fff; color: #60749a; font-size: 13px; line-height: 1.55; box-shadow: 0 4px 12px rgba(105,122,159,.06); }
-.nyta-reference-modal .nyta-message-list__item--user .nyta-bubble { border: 0; border-radius: 14px 14px 4px 14px; background: #eaf0ff; color: #4267b9; }
-.nyta-reference-modal [class*="greetingText"] { border: 1px solid #e3eaf3; background: #fff; color: #60749a; box-shadow: 0 4px 12px rgba(105,122,159,.06); }
-.nyta-reference-modal [class*="suggestionsLabel"] { color: #8b9bb5; }
-.nyta-reference-modal [class*="suggestionChip"] { border-color: #dfe7f1; background: #fff; color: #60749a; box-shadow: 0 3px 8px rgba(105,122,159,.05); }
-.nyta-reference-modal [class*="suggestionChip"]:hover:not(:disabled) { border-color: #b9cbed; background: #eef3ff; color: #4267b9; }
-.nyta-reference-modal .nyta-input-bar { padding: 14px 18px 12px; border-top: 1px solid #e8edf4; background: #fff; }
-.nyta-reference-modal .nyta-input-bar__row { border-color: #dce5f0; border-radius: 10px; background: #fff; box-shadow: 0 3px 10px rgba(105,122,159,.04); }
-.nyta-reference-modal .nyta-input-bar__row:focus-within { border-color: #9bb5ec; box-shadow: 0 0 0 3px rgba(66,103,185,.1); }
-.nyta-reference-modal .nyta-input-bar__textarea { color: #60749a; font-size: 13px; }
-.nyta-reference-modal .nyta-input-bar__textarea::placeholder { color: #aebbd0; }
-.nyta-reference-modal .nyta-send { width: 36px; height: 36px; min-width: 36px; border-radius: 9px; background: #3361ff; }
-.nyta-reference-modal .nyta-input-bar__disclaimer, .nyta-reference-modal .nyta-input-bar__char-count { color: #9aa8be; }
-@media (max-width: 767px) { .nyta-reference-modal { width: 100% !important; height: 100dvh !important; border: 0 !important; border-radius: 0 !important; } .nyta-reference-modal .nyta-message-list { padding: 18px 16px 8px; } .nyta-reference-modal .nyta-bubble { max-width: 88%; } }
+.nyta-surface .nyta-reference-header { min-height: 70px; padding: 0 18px; border-bottom: 1px solid #e8edf4; background: #fff; }
+.nyta-surface .nyta-reference-header [class*="title"] { color: #52688f; font-size: 14px; }
+.nyta-surface .nyta-reference-header [class*="iconButton"] { color: #9aabc4; }
+.nyta-surface .nyta-reference-header [class*="iconButton"]:hover { color: #4267b9; background: #eef3fb; }
+.nyta-surface .nyta-reference-header [class*="usage"] { background: #eef3fb; color: #6e83a6; }
+.nyta-surface .nyta-message-list, .nyta-surface [class*="greeting"] { background: #f7f9fc; }
+.nyta-surface .nyta-message-list { padding: 24px 24px 8px; }
+.nyta-surface .nyta-message-list__item { margin-bottom: 18px; }
+.nyta-surface .nyta-bubble { max-width: min(80%,430px); padding: 13px 16px; border: 1px solid #e3eaf3; border-radius: 14px 14px 14px 4px; background: #fff; color: #60749a; font-size: 13px; line-height: 1.55; box-shadow: 0 4px 12px rgba(105,122,159,.06); }
+.nyta-surface .nyta-message-list__item--user .nyta-bubble { border: 0; border-radius: 14px 14px 4px 14px; background: #eaf0ff; color: #4267b9; }
+.nyta-surface [class*="greetingText"] { border: 1px solid #e3eaf3; background: #fff; color: #60749a; box-shadow: 0 4px 12px rgba(105,122,159,.06); }
+.nyta-surface [class*="suggestionsLabel"] { color: #8b9bb5; }
+.nyta-surface [class*="suggestionChip"] { border-color: #dfe7f1; background: #fff; color: #60749a; box-shadow: 0 3px 8px rgba(105,122,159,.05); }
+.nyta-surface [class*="suggestionChip"]:hover:not(:disabled) { border-color: #b9cbed; background: #eef3ff; color: #4267b9; }
+.nyta-surface .nyta-input-bar { padding: 14px 18px 12px; border-top: 1px solid #e8edf4; background: #fff; }
+.nyta-surface .nyta-input-bar__row { border-color: #dce5f0; border-radius: 10px; background: #fff; box-shadow: 0 3px 10px rgba(105,122,159,.04); }
+.nyta-surface .nyta-input-bar__row:focus-within { border-color: #9bb5ec; box-shadow: 0 0 0 3px rgba(66,103,185,.1); }
+.nyta-surface .nyta-input-bar__textarea { color: #60749a; font-size: 13px; }
+.nyta-surface .nyta-input-bar__textarea::placeholder { color: #aebbd0; }
+.nyta-surface .nyta-send { width: 36px; height: 36px; min-width: 36px; border-radius: 9px; background: #3361ff; }
+.nyta-surface .nyta-input-bar__disclaimer, .nyta-surface .nyta-input-bar__char-count { color: #9aa8be; }
+@media (max-width: 767px) { .nyta-reference-modal { width: 100% !important; height: 100dvh !important; border: 0 !important; border-radius: 0 !important; } .nyta-surface .nyta-message-list { padding: 18px 16px 8px; } .nyta-surface .nyta-bubble { max-width: 88%; } }
 
 /* The Maestra mark is navigation, not a text link: keep its brand treatment on hover/focus. */
 .task-app .top-navigation .constructor,

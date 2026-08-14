@@ -47,7 +47,7 @@ const ProjectSpace = lazy(() => import('./pages/Catalog/ProjectSpace'));
 const Agenda = lazy(() => import('./pages/Agenda'));
 const Team = lazy(() => import('./pages/Team'));
 const Marketing = lazy(() => import('./pages/Marketing'));
-const Nyta = lazy(() => import('./pages/Nyta'));
+const Nyta = lazy(() => import('./pages/NytaChat'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Support = lazy(() => import('./pages/Support'));
 const Legal = lazy(() => import('./pages/Legal'));
