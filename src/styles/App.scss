@@ -1675,35 +1675,55 @@ a {
       font-weight: 700;
     }
 
+    // Todo estado precisa declarar o FUNDO, inclusive o hover. O antd v5 pinta os estados
+    // pelas classes de variante (.ant-btn-color-*.ant-btn-variant-*) calculadas pelo
+    // darkAlgorithm: sem um fundo nosso no :hover, o Cancelar ficava preto (#2a2a2a) ao passar
+    // o mouse. `!important` porque essas regras do runtime nascem com especificidade alta.
     .ant-btn-default {
-      border-color: #dce5f0;
-      background: #fff;
-      color: #7c8db0;
+      border-color: #dce5f0 !important;
+      background: #fff !important;
+      color: #7c8db0 !important;
 
-      &:hover {
-        border-color: #b9cbed;
-        color: #4267b9;
+      &:hover:not(:disabled) {
+        border-color: #b9cbed !important;
+        background: #f6f9ff !important;
+        color: #4267b9 !important;
+      }
+
+      &:active:not(:disabled) {
+        border-color: #9db7e6 !important;
+        background: #eef3fd !important;
+        color: #33528f !important;
       }
     }
 
     // Confirmação destrutiva segue vermelha — é o sinal de que a ação não volta atrás.
+    // Mesmo vermelho do botão Excluir dos modais.
     .ant-btn-dangerous {
-      border-color: transparent;
-      background: #d4455f;
-      color: #fff;
+      border-color: transparent !important;
+      background: #d2474b !important;
+      color: #fff !important;
 
-      &:hover {
-        background: #bf3b53;
+      &:hover:not(:disabled) {
+        background: #b8363a !important;
+      }
+
+      &:active:not(:disabled) {
+        background: #9d2b2f !important;
       }
     }
 
     .ant-btn-primary:not(.ant-btn-dangerous) {
-      border-color: transparent;
-      background: #3361ff;
-      color: #fff;
+      border-color: transparent !important;
+      background: #3361ff !important;
+      color: #fff !important;
 
-      &:hover {
-        background: #2a54e0;
+      &:hover:not(:disabled) {
+        background: #2a54e0 !important;
+      }
+
+      &:active:not(:disabled) {
+        background: #2246bd !important;
       }
     }
   }

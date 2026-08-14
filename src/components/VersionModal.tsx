@@ -1,6 +1,6 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { App, Button, Input, Modal, Popconfirm } from 'antd';
-import { FiCheckCircle, FiMusic, FiStar, FiTrash2, FiUploadCloud } from 'react-icons/fi';
+import { App, Button, Input, Modal, Popconfirm, Spin, Tooltip } from 'antd';
+import { FiMusic, FiStar, FiTrash2, FiUploadCloud } from 'react-icons/fi';
 
 import { readAudioDuration, titleFromFileName } from '../lib/audioMeta';
 import { uploadFile, CATALOG_BUCKET } from '../lib/storage';
@@ -191,15 +191,22 @@ export const VersionModal: FC<Props> = ({
               </Button>
             </Popconfirm>
           )}
-          {editing && (isPrimary ? (
-            <span className={modalStyles.primaryTag}>
-              <FiCheckCircle size={14} /> Versão principal
-            </span>
-          ) : (
-            <Button icon={<FiStar />} loading={promoting} onClick={makePrimary}>
-              Tornar principal
-            </Button>
-          ))}
+          {/* Mesma estrela da lista de versões: cheia quando já é a principal, vazia e clicável
+              quando não é. O rótulo vive no tooltip — o ícone sozinho já diz o estado. */}
+          {editing && (
+            <Tooltip title={isPrimary ? 'Versão principal' : 'Tornar principal'}>
+              <button
+                type='button'
+                className={`${modalStyles.primaryStar} ${isPrimary ? modalStyles.primaryStarOn : ''}`}
+                disabled={isPrimary || promoting}
+                onClick={makePrimary}
+                aria-pressed={isPrimary}
+                aria-label={isPrimary ? 'Versão principal' : 'Tornar versão principal'}
+              >
+                {promoting ? <Spin size='small' /> : <FiStar />}
+              </button>
+            </Tooltip>
+          )}
           <div className={modalStyles.footerActions}>
             <Button type='primary' loading={saving} onClick={handleSave}>
               {editing ? 'Salvar alterações' : 'Enviar versão'}

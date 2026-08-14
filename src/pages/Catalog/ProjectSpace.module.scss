@@ -766,9 +766,16 @@
   font-size: 12px;
 }
 
+// Grudada no topo e do tamanho da tela: o chat é uma conversa, não um trecho do documento.
+// Antes ele esticava junto com a lista de versões (o grid é stretch) e a coluna inteira subia
+// enquanto a pessoa rolava as faixas — para responder era preciso rolar de volta.
+// `align-self: start` é o que impede o stretch de anular a altura fixa.
 .collabPanel {
+  position: sticky;
+  top: 0;
+  align-self: start;
   min-width: 0;
-  min-height: 560px;
+  height: calc(100vh - 128px);
   padding: 0;
   border: 1px solid #dce6f7;
   border-radius: 28px;
@@ -977,7 +984,10 @@
     grid-template-columns: 1fr;
   }
 
+  // Em uma coluna só o chat vem depois das versões: fixá-lo no topo o esconderia.
   .collabPanel {
+    position: static;
+    height: auto;
     min-height: 360px;
     display: flex;
   }

@@ -274,13 +274,37 @@
 }
 
 // Selo de "já é a principal", no lugar do botão de promover.
-.primaryTag {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  color: #1d8a68;
-  font-size: 11px;
-  font-weight: 800;
+// Estrela da versão principal, igual à da lista do Espaço Jam: cheia = já é a principal
+// (sem ação), vazia = clique para promover. O rótulo fica no tooltip.
+.primaryStar {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #b7c4da;
+  background: transparent;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 0;
+  transition: color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.primaryStar:hover:not(:disabled) {
+  color: #e0ad3c;
+  background: #fdf4de;
+  transform: scale(1.08);
+}
+
+.primaryStarOn {
+  color: #e0ad3c;
+  cursor: default;
+}
+
+.primaryStarOn svg {
+  fill: currentColor;
 }
 
 .subtitle {
