@@ -192,6 +192,11 @@ export const AppLayout: FC = memo(() => {
   // "Seus perfis". Uma vez concluído, o painel volta a aparecer normalmente (inclusive se o
   // usuário reabrir o wizard depois, pra revisar uma etapa).
   const hideSideNavForWizard = isWizardChat && !!currentArtist && !isOnboardingComplete(currentArtist);
+  // A Nyta só entra em cena depois do planejamento concluído. Sem plano ela não tem sobre o que
+  // conversar — a própria edge function desliga todas as ferramentas nesse caso e a resposta
+  // vira "faça o planejamento primeiro". Mostrar a porta de entrada aqui só levava a pessoa a
+  // um beco: um chat que responde a mesma coisa a qualquer pergunta.
+  const nytaAvailable = !!currentArtist && isOnboardingComplete(currentArtist);
   // A navbar mobile é uma barra fixa SOBREPOSTA (o conteúdo passa por baixo dela, via padding-bottom
   // da .Main-section, e aparece atrás do gradiente translúcido). Por isso NÃO reservamos altura pra
   // ela aqui — só pro banner de pagamento, que é uma barra sólida. Reserva do banner é justa por
@@ -280,7 +285,7 @@ export const AppLayout: FC = memo(() => {
           </span>
           <strong>{displayName}</strong>
         </div>
-        {routeArtistId && (
+        {routeArtistId && nytaAvailable && (
           <button className='round-control header-nyta-action' aria-label='Abrir Nyta IA' type='button' onClick={openNytaPage}>
             <NytaAvatar size={34} />
           </button>
@@ -330,9 +335,11 @@ export const AppLayout: FC = memo(() => {
               <button type='button' className={location.pathname === '/notifications' ? 'rail-active rail-notification' : 'rail-notification'} aria-label='Notificações' onClick={() => navigate('/notifications')}>
                 <NotificationIcon size={28} />
               </button>
-              <button type='button' className={`rail-nyta${isNytaPage ? ' rail-active' : ''}`} aria-label='Abrir Nyta IA' onClick={openNytaPage}>
-                <b>Nyta IA</b>
-              </button>
+              {nytaAvailable && (
+                <button type='button' className={`rail-nyta${isNytaPage ? ' rail-active' : ''}`} aria-label='Abrir Nyta IA' onClick={openNytaPage}>
+                  <b>Nyta IA</b>
+                </button>
+              )}
             </div>
 
             <div className='rail-people'>

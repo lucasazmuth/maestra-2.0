@@ -8,6 +8,7 @@ import {
 import { useAppSelector } from '../../../../store/store';
 import { useNytaModal } from '../../../../hooks/useNytaModal';
 import { NytaAvatar } from '../../../../pages/Wizard/chat/nytaPersona';
+import { isOnboardingComplete } from '../../../../constants/maestra';
 
 // Navbar inferior (tab bar) do mobile: substitui a sidebar (oculta em telas < 768px).
 // Layout: Início · Plano de ação · [Nyta IA] · Agenda · Mais. O centro é o avatar da Nyta (abre o
@@ -38,6 +39,10 @@ export const MobileNav: FC = () => {
   // navbar segue visível em /settings, /notifications, /assinatura etc.
   const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
   const artistId = matchArtistId(location.pathname) ?? currentArtistId;
+  const artists = useAppSelector((s) => s.artists.items);
+  // Mesmo critério do rail e do header (ver Layout): sem planejamento concluído a Nyta não tem
+  // sobre o que conversar, então a porta de entrada não aparece.
+  const nytaAvailable = !!artistId && isOnboardingComplete(artists.find((a) => a.id === artistId));
 
   // Sem artista no contexto, ou numa rota excluída (lista/admin), não há o que navegar por módulo.
   if (!artistId || isNavExcludedRoute(location.pathname)) return null;
@@ -114,16 +119,18 @@ export const MobileNav: FC = () => {
         {left.map(renderItem)}
 
         {/* Nyta IA — centro da barra: o avatar abre o modal do assistente. */}
-        <button
-          className={`mobile-nav-item mobile-nav-item--nyta${nytaOpen || location.pathname.endsWith('/nyta') ? ' mobile-nav-item--active' : ''}`}
-          aria-label='Nyta IA'
-          onClick={goNyta}
-        >
-          {/* tone='onDark': aqui o emblema fica sobre o pill roxo da Nyta, onde o gradiente
-              azul→roxo dele encostaria no fundo e sumiria. */}
-          <span className='mobile-nav-nyta-avatar'><NytaAvatar size={30} tone='onDark' /></span>
-          <span className='mobile-nav-label'>Nyta</span>
-        </button>
+        {nytaAvailable && (
+          <button
+            className={`mobile-nav-item mobile-nav-item--nyta${nytaOpen || location.pathname.endsWith('/nyta') ? ' mobile-nav-item--active' : ''}`}
+            aria-label='Nyta IA'
+            onClick={goNyta}
+          >
+            {/* tone='onDark': aqui o emblema fica sobre o pill roxo da Nyta, onde o gradiente
+                azul→roxo dele encostaria no fundo e sumiria. */}
+            <span className='mobile-nav-nyta-avatar'><NytaAvatar size={30} tone='onDark' /></span>
+            <span className='mobile-nav-label'>Nyta</span>
+          </button>
+        )}
 
         {right.map(renderItem)}
 
