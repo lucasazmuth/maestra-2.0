@@ -1,11 +1,15 @@
 import { FC, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, Modal, Select, Spin, message } from 'antd';
+import { Button, Input, Select, Spin, message } from 'antd';
 import { FiArrowLeft, FiDownload, FiEdit2, FiFilter, FiMaximize2, FiMessageCircle, FiMoreVertical, FiPause, FiPlay, FiSend, FiUpload } from 'react-icons/fi';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppSelector } from '../../store/store';
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { VersionModal } from '../../components/VersionModal';
+import { TrackModal } from '../../components/TrackModal';
+import * as genresDb from '../../services/db/genres';
+import * as membersDb from '../../services/db/members';
+import type { MusicGenre, ArtistMember } from '../../interfaces/maestra';
 import { supabase } from '../../lib/supabase';
 import * as catalogDb from '../../services/db/catalog';
 import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS } from '../../constants/maestra';
@@ -37,7 +41,6 @@ type VersionRowProps = {
   onEdit: (version: CatalogVersion) => void;
 };
 
-type ProjectDetailsDraft = Pick<CatalogProject, 'title' | 'status' | 'bpm' | 'key' | 'genre'>;
 
 const VersionRow: FC<VersionRowProps> = ({ version, isPrimary, isPlaying, currentTime, onPlay, onSeek, onExpand, onEdit }) => {
   const stageLabel = getStageLabel(version.stage);
@@ -95,6 +98,9 @@ const ProjectSpace: FC = () => {
   const navigate = useNavigate();
   const { artist } = useArtist();
   const user = useAppSelector((state) => state.auth.user);
+  const userMeta = (user?.user_metadata || {}) as Record<string, any>;
+  const currentUserName = userMeta.full_name || userMeta.name || user?.email || 'Você';
+  const currentUserAvatar = userMeta.avatar_url || userMeta.picture || null;
   const { canCollaborateJam, canEditCatalog } = useArtistCapabilities(artist);
   const canUpdateProject = canEditCatalog || canCollaborateJam;
 
@@ -107,7 +113,16 @@ const ProjectSpace: FC = () => {
   const [versionModal, setVersionModal] = useState(false);
   const [editingVersion, setEditingVersion] = useState<CatalogVersion | null>(null);
   const [projectModal, setProjectModal] = useState(false);
-  const [projectDraft, setProjectDraft] = useState<ProjectDetailsDraft | null>(null);
+  // O modal da música pede gênero e responsável; o Espaço Jam não carregava nenhum dos dois.
+  const [genres, setGenres] = useState<MusicGenre[]>([]);
+  const [members, setMembers] = useState<ArtistMember[]>([]);
+  // Mesma lista do catálogo: você primeiro, depois a equipe ativa.
+  const assigneeOptions = [
+    ...(user ? [{ id: user.id, name: `${currentUserName} (você)` }] : []),
+    ...members
+      .filter((m) => m.status === 'active')
+      .map((m) => ({ id: (m.user_id || m.id) as string, name: m.name || m.email })),
+  ];
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [chatMessages, setChatMessages] = useState<CatalogProjectMessage[]>([]);
   const [chatText, setChatText] = useState('');
@@ -156,6 +171,14 @@ const ProjectSpace: FC = () => {
   }, [loadChat, projectId]);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ block: 'end' }); }, [chatMessages]);
   useEffect(() => { document.body.classList.add('jam-space-open'); return () => document.body.classList.remove('jam-space-open'); }, []);
+
+  // Gêneros e equipe alimentam o modal da música (mesmo do catálogo). Falha aqui não impede
+  // trabalhar no Espaço Jam — só deixa os dois selects vazios.
+  useEffect(() => {
+    if (!artistId) return;
+    genresDb.listGenres().then(setGenres).catch(() => {});
+    membersDb.listMembers(artistId).then(setMembers).catch(() => {});
+  }, [artistId]);
 
   const versions = useMemo(() => (project?.versions || []).slice().sort((a, b) => b.version_number - a.version_number), [project]);
   const saveProject = useCallback(async (value: CatalogProject) => {
@@ -222,27 +245,11 @@ const ProjectSpace: FC = () => {
   };
   const openVersion = (version: CatalogVersion) => navigate(`/artists/${artistId}/catalog?projectId=${project?.id}&versionId=${version.id}`);
 
+  // O rascunho local morreu com o modal artesanal: o TrackModal lê do próprio projeto e grava
+  // no banco, e o refresh traz o resultado de volta.
   const openProjectEditor = () => {
     if (!project || !canUpdateProject) return;
-    setProjectDraft({
-      title: project.title,
-      status: project.status,
-      bpm: project.bpm,
-      key: project.key,
-      genre: project.genre,
-    });
     setProjectModal(true);
-  };
-
-  const applyProjectDetails = () => {
-    if (!project || !projectDraft) return;
-    const title = projectDraft.title.trim();
-    if (!title) {
-      message.error('Informe o nome do Espaço JAM');
-      return;
-    }
-    setProject({ ...project, ...projectDraft, title });
-    setProjectModal(false);
   };
 
   const sendChat = async (event: FormEvent) => {
@@ -351,15 +358,23 @@ const ProjectSpace: FC = () => {
         />
       )}
 
-      <Modal open={projectModal} title='Editar Espaço JAM' okText='Concluir' cancelText='Cancelar' onCancel={() => setProjectModal(false)} onOk={applyProjectDetails}>
-        {projectDraft && <div className={styles.form}>
-          <label>Nome do projeto<Input value={projectDraft.title} maxLength={120} onChange={(event) => setProjectDraft({ ...projectDraft, title: event.target.value })} /></label>
-          <label>Status<Select value={projectDraft.status} options={CATALOG_STATUS_OPTIONS.map((entry) => ({ value: entry.id, label: entry.label }))} onChange={(status) => setProjectDraft({ ...projectDraft, status })} /></label>
-          <label>BPM<Input value={projectDraft.bpm || ''} placeholder='Ex.: 120' onChange={(event) => setProjectDraft({ ...projectDraft, bpm: event.target.value })} /></label>
-          <label>Tom<Input value={projectDraft.key || ''} placeholder='Ex.: D#m' onChange={(event) => setProjectDraft({ ...projectDraft, key: event.target.value })} /></label>
-          <label>Gênero<Input value={projectDraft.genre || ''} placeholder='Ex.: Pop' onChange={(event) => setProjectDraft({ ...projectDraft, genre: event.target.value })} /></label>
-        </div>}
-      </Modal>
+      {/* Editar a "ficha" daqui é editar a MÚSICA — o Espaço Jam É o projeto. Antes havia um
+          modal próprio ("Editar Espaço JAM") com um subconjunto dos campos e outro visual, o
+          que fazia parecer uma entidade diferente da que o catálogo edita. É o mesmo modal. */}
+      {project && artistId && (
+        <TrackModal
+          open={projectModal}
+          artistId={artistId}
+          item={catalogDb.catalogProjectToItem(project, project.versions?.find((v) => v.id === project.primary_version_id))}
+          genres={genres}
+          assigneeOptions={assigneeOptions}
+          currentUserName={currentUserName}
+          currentUserId={user?.id || null}
+          currentUserAvatar={currentUserAvatar}
+          onClose={() => setProjectModal(false)}
+          onSaved={() => { void refresh(); }}
+        />
+      )}
     </main>
   );
 };
