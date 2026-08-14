@@ -921,13 +921,13 @@
   overflow: visible;
 }
 .rail-people .avatar-current img { border-radius: inherit; }
-/* Marcador do perfil ativo: 10×10 na quina superior direita do avatar. Encostado em top/right 0
-   ele cai fora do círculo da foto (que é inscrito no quadrado) e só encosta nele de leve — o
-   mesmo desenho da referência. */
+/* Marcador do perfil ativo: 10×10 montado na diagonal superior direita, metade sobre a foto e
+   metade fora. O 2.5px sai da geometria do círculo: num avatar de 51px (raio 25.5) a borda a 45°
+   passa por 25.5 + 25.5·cos45° ≈ 43.5, e centrar a bolinha ali deixa 2.5px sobrando de cada lado. */
 .rail-people .avatar-current::after {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 2.5px;
+  right: 2.5px;
   box-sizing: border-box;
   width: 10px;
   height: 10px;
