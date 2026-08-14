@@ -204,8 +204,9 @@ export const ArtifactsPanel: FC<{
     <aside className='wiz-artifacts'>
       <div className='wiz-artifacts-head'>
         <div className='wiz-artifacts-title'>Seu plano até aqui</div>
+        {/* 18px = mesmo tamanho dos ícones do cabeçalho do wizard (voltar/recomeçar). */}
         <button className='wiz-artifacts-close' onClick={onClose} title='Fechar' aria-label='Fechar'>
-          <FiX size={16} />
+          <FiX size={18} />
         </button>
       </div>
 

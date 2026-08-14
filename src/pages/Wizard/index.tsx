@@ -1,7 +1,7 @@
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { App } from 'antd';
-import { FiChevronDown, FiArrowLeft, FiRotateCcw, FiX } from 'react-icons/fi';
+import { FiChevronDown, FiArrowLeft, FiRotateCcw } from 'react-icons/fi';
 
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
@@ -40,7 +40,6 @@ const Wizard: FC = () => {
 
   const [draft, setDraft] = useState<ArtistContent>({});
   const [draftReady, setDraftReady] = useState(false);
-  const [exiting, setExiting] = useState(false);
   // Coluna de resultados (artefatos por etapa): vive no AppLayout como 3ª coluna; aqui só
   // publicamos os dados e controlamos o toggle via store global.
   const wizardPanel = useWizardPanelStore();
@@ -285,25 +284,6 @@ const Wizard: FC = () => {
                   <FiRotateCcw size={17} />
                 </button>
               )}
-              <button
-                className='wiz-back-btn'
-                title='Salvar e sair — seu progresso fica salvo a cada etapa'
-                aria-label='Salvar e sair'
-                disabled={exiting}
-                onClick={async () => {
-                  // Espera qualquer gravação pendente terminar ANTES de navegar, para que
-                  // sair da tela nunca cancele um save em andamento (perda de progresso).
-                  setExiting(true);
-                  try {
-                    await persistQueueRef.current;
-                  } finally {
-                    navigate(`/artists/${artist.id}`);
-                  }
-                }}
-                style={{ opacity: exiting ? 0.6 : 1 }}
-              >
-                <FiX size={18} />
-              </button>
             </div>
           </div>
         </div>

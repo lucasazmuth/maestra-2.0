@@ -152,6 +152,9 @@
   --wz-canvas: #fafbfc;
   --wz-shadow: 0 7px 17px rgba(124, 145, 185, 0.07);
   --wz-shadow-lg: 0 12px 27px rgba(107, 129, 170, 0.13);
+  // Altura dos cabeçalhos do wizard e da coluna de resultados — os dois cartões ficam lado a
+  // lado, então compartilham a medida pra divisória e botões alinharem.
+  --wiz-head-h: 71px;
   --wz-danger: #f13131;
   // Âmbar escurecido o bastante pra carregar texto branco quando vira preenchimento (SWOT).
   --wz-warn: #b0720f;
@@ -1579,10 +1582,15 @@
   margin: 0 auto;
 }
 
+// Altura compartilhada com o cabeçalho da coluna de resultados (.wiz-artifacts-head), pra
+// que os dois cartões alinhem a divisória e os botões na mesma linha.
 .wiz-chat-head {
   flex: none;
   position: relative;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  min-height: var(--wiz-head-h);
   padding-bottom: 14px;
   margin-bottom: 2px;
   border-bottom: 1px solid var(--wz-line);
@@ -1720,13 +1728,18 @@
   }
 }
 
+// Mesma altura do `.wiz-chat-head` (--wiz-head-h): os dois cartões ficam lado a lado, e uns
+// poucos pixels de diferença desalinhavam a linha divisória e os botões entre eles.
+// `align-items: center` porque agora o cabeçalho tem altura fixa — com flex-start o título
+// e o botão colavam no topo.
 .wiz-artifacts-head {
   flex: none;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 20px 18px 14px;
+  min-height: var(--wiz-head-h);
+  padding: 0 18px 14px;
   border-bottom: 1px solid #e8edf5;
 }
 
@@ -1745,8 +1758,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  // Mesma medida do .wiz-back-btn (controles do cabeçalho do wizard) — os dois cabeçalhos
+  // ficam lado a lado e botões de tamanhos diferentes saltavam à vista.
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: var(--wz-surface);
   border: 1px solid var(--wz-line);
