@@ -751,7 +751,11 @@ body.jam-project-space .local-player-bar {
   border-radius: 0;
   box-shadow: 0 -12px 30px rgba(48, 84, 145, 0.11);
 
-  .lpb-controls button,
+  // `:not(.lpb-play)` como nas regras de hover logo abaixo: sem essa exclusão, o seletor pegava
+  // TAMBÉM o botão de tocar e o deixava transparente — e como ele tem um elemento a mais
+  // (`... button` contra `... .lpb-play`), ganhava do azul mesmo os dois sendo !important. No
+  // Espaço Jam o play sumia: ícone branco sobre fundo branco.
+  .lpb-controls button:not(.lpb-play),
   .lpb-close,
   .lpb-volume button {
     color: #49638f !important;

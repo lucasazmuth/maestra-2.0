@@ -877,7 +877,7 @@ const Catalog: FC = () => {
             </div>
           ) : (
             <div className='catalog-track-table'>
-              <header><span>Música</span><span>Tipo</span><span>Status</span><span>Próximo marco</span><span /></header>
+              <header><span>Música</span><span>Tipo</span><span>Status</span><span>Próximo marco</span><span>Colaboração</span><span /></header>
               {filteredItems.map((it) => (
                 <article
                   key={it.id}
@@ -926,6 +926,22 @@ const Catalog: FC = () => {
                   <span>{it.genre || '—'}</span>
                   <span><StatusBadge status={it.status} /></span>
                   <span>{it.release_date ? new Date(`${it.release_date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '—'}</span>
+                  {/* A linha inteira já abre o Espaço Jam, mas isso não se descobre olhando —
+                      o botão nomeia o destino. `stopPropagation` porque o clique dele e o da
+                      linha levariam ao mesmo lugar e disparariam duas navegações. */}
+                  <span>
+                    <button
+                      className='catalog-track-jam'
+                      type='button'
+                      title='Abrir o Espaço Jam desta música'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/artists/${artist.id}/catalog/projects/${it.project_id || it.id}`);
+                      }}
+                    >
+                      Espaço Jam
+                    </button>
+                  </span>
                   {canEditTracks ? (
                     <button
                       className='catalog-track-more'

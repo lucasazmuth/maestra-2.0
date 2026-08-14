@@ -7490,10 +7490,13 @@
   box-shadow: none;
 }
 
+/* 6 faixas: música, tipo, status, próximo marco, colaboração (Espaço Jam) e o menu de 30px.
+   Os mínimos são apertados de propósito — com os antigos, a coluna nova empurrava a tabela
+   além do container e nascia uma barra de rolagem horizontal, cortando a coluna "Música". */
 .task-app:not(.public-app) .catalog-reference-page .catalog-track-table > header,
 .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article {
-  grid-template-columns: minmax(240px, 2fr) minmax(90px, .7fr) minmax(140px, 1fr) minmax(110px, .7fr) 30px;
-  gap: 18px;
+  grid-template-columns: minmax(180px, 2fr) minmax(70px, .55fr) minmax(110px, .8fr) minmax(80px, .55fr) 104px 30px;
+  gap: 14px;
   padding-right: 20px;
   padding-left: 20px;
 }
@@ -9534,4 +9537,77 @@ body:has(.track-detail-backdrop) .local-player-bar {
 .track-performance > div[role='button']:focus-visible {
   outline: 2px solid #3361ff;
   outline-offset: -2px;
+}
+
+/* Coluna "Colaboração" na tabela de músicas: mais uma faixa antes da coluna de 30px do menu.
+   O grid é declarado por extenso (não é auto-fit), então a coluna nova precisa entrar aqui —
+   sem isto o botão cairia por cima da coluna do menu. */
+.catalog-track-table > header,
+.catalog-track-table article {
+  grid-template-columns: minmax(200px, 2fr) minmax(80px, .6fr) minmax(120px, .9fr) minmax(90px, .6fr) 118px 30px;
+}
+
+.catalog-track-jam {
+  border: 1px solid #dbe4f3;
+  border-radius: 20px;
+  padding: 7px 12px;
+  background: #fff;
+  color: #4267b9;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .16s ease, border-color .16s ease, color .16s ease;
+}
+
+.catalog-track-jam:hover,
+.catalog-track-jam:focus-visible {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+  outline: 0;
+}
+
+/* Em telas médias o "Próximo marco" já some (regra de 960px); a coluna de colaboração encolhe
+   junto pra não espremer o título da música. */
+@media (max-width: 960px) {
+  .catalog-track-table > header,
+  .catalog-track-table article {
+    grid-template-columns: minmax(200px, 2fr) minmax(90px, 1fr) minmax(120px, 1fr) 110px 30px;
+  }
+}
+
+/* Cabeçalho de colunas da lista de músicas do dashboard: mesma grade das linhas (herda de
+   `.track-performance > div`), então os rótulos caem exatamente sobre as colunas que nomeiam. */
+.track-performance > .track-performance-cols {
+  min-height: 34px;
+  color: #9aa9c0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+
+.track-performance > .track-performance-cols strong,
+.track-performance > .track-performance-cols b,
+.track-performance > .track-performance-cols em {
+  color: inherit;
+  font-size: inherit;
+  font-style: normal;
+  font-weight: inherit;
+}
+
+/* O play da linha herda o mesmo botão do módulo Músicas (.catalog-track-play), então aqui só
+   cabe o encaixe na grade — a coluna que antes era o círculo decorativo. */
+.track-performance > div > .catalog-track-play {
+  width: 26px;
+  height: 26px;
+}
+
+/* A linha passou a ter 4 células (play, título, tipo, status) — antes eram 5, com o número da
+   posição e o círculo colorido. A grade acompanha, senão os rótulos do cabeçalho caem uma
+   coluna adiante do conteúdo que nomeiam. */
+.track-performance > div,
+.track-performance > .track-performance-cols {
+  grid-template-columns: 26px minmax(110px, 1fr) 64px 84px;
 }

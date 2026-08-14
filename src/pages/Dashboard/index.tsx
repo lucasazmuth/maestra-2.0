@@ -10,6 +10,8 @@ import { listCatalogProjectItems } from '../../services/db/catalog';
 import { CATALOG_STATUS } from '../../constants/maestra';
 import { TASK_TYPES } from '../ActionPlan/TaskControls';
 import type { CatalogItem } from '../../interfaces/maestra';
+import { useLocalPlayerStore } from '../../stores/localPlayerStore';
+import type { LocalTrack } from '../../components/LocalPlayerBar';
 
 const fmtNumber = (value?: number | null) =>
   typeof value === 'number' ? value.toLocaleString('pt-BR') : '—';
@@ -26,6 +28,12 @@ const Dashboard: FC = () => {
   const [draftTracks, setDraftTracks] = useState<CatalogItem[]>([]);
   const { artist, loading } = useArtist();
   const journey = useJourneyState(artist);
+  const playerCurrentId = useLocalPlayerStore((s) => s.currentId);
+  const playerPlaying = useLocalPlayerStore((s) => s.playing);
+  const togglePlayer = useLocalPlayerStore((s) => s.toggle);
+  const setPlayerTracks = useLocalPlayerStore((s) => s.setTracks);
+  const setPlayerCurrentId = useLocalPlayerStore((s) => s.setCurrentId);
+  const setPlayerOpen = useLocalPlayerStore((s) => s.setOpen);
 
   useEffect(() => {
     let alive = true;
@@ -78,10 +86,25 @@ const Dashboard: FC = () => {
     version: `V${track.version_number || 1} · ${track.version_stage || 'guia'}`,
     genre: track.genre || '—',
     status: track.status,
-    milestone: track.release_date
-      ? new Date(`${track.release_date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-      : '—',
+    hasAudio: !!track.audio_file,
   }));
+
+  // Fila do player: mesma montagem do módulo Músicas (LocalTrack). O player é global — mora no
+  // Layout e é comandado pelo store —, então o play daqui toca de verdade, sem sair da tela.
+  const playerQueue: LocalTrack[] = draftTracks.map((t) => ({
+    id: t.id,
+    title: t.title,
+    subtitle: t.audio_file ? t.genre || 'Música em Músicas' : 'Áudio pendente',
+    cover: t.cover_image,
+    url: t.audio_file || '',
+  }));
+
+  const playTrack = (id: string) => {
+    if (playerCurrentId === id) { togglePlayer?.(); return; } // já é a faixa atual: pausa/retoma
+    setPlayerTracks(playerQueue);
+    setPlayerCurrentId(id);
+    setPlayerOpen(true);
+  };
   return (
     <div className='board-content page-view music-dashboard'>
       <section className='music-hero music-hero-task'>
@@ -187,31 +210,58 @@ const Dashboard: FC = () => {
         <article className='track-performance'>
           <header>
             <h2>Músicas</h2>
-            <span>Tipo&nbsp;&nbsp;&nbsp;&nbsp;Status</span>
           </header>
-          {catalogRows.map((track, index) => (
-            <div
-              key={track.id}
-              role='button'
-              tabIndex={0}
-              title='Abrir espaço do projeto'
-              onClick={() => navigate(`/artists/${artist.id}/catalog/projects/${track.projectId}`)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  navigate(`/artists/${artist.id}/catalog/projects/${track.projectId}`);
-                }
-              }}
-            >
-              <i>{index + 1}</i>
-              <span className='track-dot' style={{ background: ['#8833ff', '#33bfff', '#ff6633', '#29cc39', '#e62e7b'][index % 5] }} />
-              <strong>{track.title}<small>{track.version}</small></strong>
-              <b>{track.genre}</b>
-              <em className='track-status' style={statusStyle(track.status)}>
-                {(CATALOG_STATUS as any)[track.status]?.label || track.status}
-              </em>
+          {/* Rótulos das colunas na MESMA grade das linhas. Antes eram um texto solto
+              ("Tipo    Status") no canto do cabeçalho, separado por espaços — não caía sobre as
+              colunas que nomeava, e a leitura não fechava. */}
+          {catalogRows.length > 0 && (
+            <div className='track-performance-cols' aria-hidden>
+              <i /><strong>Música</strong><b>Tipo</b><em>Status</em>
             </div>
-          ))}
+          )}
+          {catalogRows.map((track) => {
+            const isCurrent = playerCurrentId === track.id;
+            const isPlaying = isCurrent && playerPlaying;
+            return (
+              <div
+                key={track.id}
+                role='button'
+                tabIndex={0}
+                title='Abrir o Espaço Jam desta música'
+                onClick={() => navigate(`/artists/${artist.id}/catalog/projects/${track.projectId}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/artists/${artist.id}/catalog/projects/${track.projectId}`);
+                  }
+                }}
+              >
+                {/* Mesmo play do módulo Músicas, e tocando de verdade: o player é global. O
+                    clique não pode subir pra linha, senão tocar também navegaria pra fora. */}
+                <button
+                  className='catalog-track-play'
+                  type='button'
+                  title={!track.hasAudio ? 'Abrir player — áudio pendente' : isPlaying ? 'Pausar' : 'Tocar'}
+                  onClick={(e) => { e.stopPropagation(); playTrack(track.id); }}
+                >
+                  {isPlaying ? (
+                    <svg viewBox='0 0 16 16' width='11' height='11' fill='currentColor'>
+                      <path d='M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z' />
+                    </svg>
+                  ) : (
+                    <svg viewBox='0 0 16 16' width='11' height='11' fill='currentColor'>
+                      <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
+                    </svg>
+                  )}
+                </button>
+                <strong>{track.title}<small>{track.version}</small></strong>
+                <b>{track.genre}</b>
+                <em className='track-status' style={statusStyle(track.status)}>
+                  {(CATALOG_STATUS as any)[track.status]?.label || track.status}
+                </em>
+              </div>
+            );
+          })}
           {catalogRows.length === 0 && <p>Nenhuma música cadastrada ainda.</p>}
           <button type='button' onClick={() => navigate(`/artists/${artist.id}/catalog`)}>Ver músicas</button>
         </article>
