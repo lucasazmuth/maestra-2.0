@@ -201,7 +201,6 @@ export const VersionModal: FC<Props> = ({
             </Button>
           ))}
           <div className={modalStyles.footerActions}>
-            <Button onClick={onClose}>Cancelar</Button>
             <Button type='primary' loading={saving} onClick={handleSave}>
               {editing ? 'Salvar alterações' : 'Enviar versão'}
             </Button>

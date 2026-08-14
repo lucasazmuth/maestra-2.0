@@ -322,7 +322,6 @@ const Team: FC = () => {
         }
         footer={
           <div className={styles.inviteFooter}>
-            <Button onClick={() => setInviteOpen(false)}>Cancelar</Button>
             <Button type="primary" loading={saving} onClick={invite}>
               {saving ? 'Convidando…' : 'Enviar convite'}
             </Button>

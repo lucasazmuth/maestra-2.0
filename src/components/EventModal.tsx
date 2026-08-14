@@ -133,7 +133,6 @@ export const EventModal: FC<Props> = ({
             </Popconfirm>
           )}
           <div className={modalStyles.footerActions}>
-            <Button onClick={onClose}>Cancelar</Button>
             <Button type='primary' onClick={handleSave} loading={saving}>
               Salvar
             </Button>

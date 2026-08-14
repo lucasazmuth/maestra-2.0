@@ -468,7 +468,6 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
             </Popconfirm>
           )}
           <div className={modalStyles.footerActions}>
-            <Button onClick={onClose}>Cancelar</Button>
             <Button type='primary' loading={saving} onClick={handleSave}>
               Salvar
             </Button>
