@@ -50,21 +50,20 @@ const Dashboard: FC = () => {
     name: album.name,
     album: 'Spotify',
     album_image: album.image,
+    spotify_url: album.spotify_url,
   }));
-  const performanceRows = [
-    ...draftTracks.map((track) => ({
+  // "Performance das músicas" mostra o catálogo cadastrado na plataforma — a MESMA lista (e
+  // ordem: mais recém-atualizada primeiro) que o módulo Músicas exibe por padrão — em vez do
+  // blend com faixas do Spotify que havia aqui antes. Álbum/single só publicado no Spotify e
+  // nunca cadastrado como projeto no catálogo não aparece; é essa a distinção que o módulo
+  // Músicas também faz.
+  const performanceRows = draftTracks
+    .map((track) => ({
       id: track.id,
       title: track.title,
       type: track.genre || (CATALOG_STATUS as any)[track.status]?.label || track.status,
-    })),
-    ...activeTracks
-      .filter((track) => !draftTracks.some((draft) => draft.title?.toLowerCase() === track.name?.toLowerCase()))
-      .map((track) => ({
-        id: track.id || track.name,
-        title: track.name,
-        type: track.album || 'Spotify',
-      })),
-  ].slice(0, 5);
+    }))
+    .slice(0, 5);
   return (
     <div className='board-content page-view music-dashboard'>
       <section className='music-hero music-hero-task'>
@@ -113,7 +112,16 @@ const Dashboard: FC = () => {
             </header>
             <div>
               {activeTracks.slice(0, 4).map((track, index) => (
-                <button type='button' key={track.id || track.name} style={{ '--release': ['#8833ff', '#33bfff', '#ff6633', '#29cc39'][index % 4] } as CSSProperties}>
+                <button
+                  type='button'
+                  key={track.id || track.name}
+                  style={{ '--release': ['#8833ff', '#33bfff', '#ff6633', '#29cc39'][index % 4] } as CSSProperties}
+                  // Abre a faixa no Spotify — mesmo destino do link que o catálogo já usa pra
+                  // "Ouvir no Spotify". Sem spotify_url (ex.: faixa só teve o álbum indexado) o
+                  // clique não faz nada; não vale a pena desabilitar o botão por isso, o resto
+                  // do card ainda é informativo.
+                  onClick={() => track.spotify_url && window.open(track.spotify_url, '_blank', 'noopener,noreferrer')}
+                >
                   {/* `<i>` é o círculo decorativo do design de referência (sempre translúcido,
                       sem imagem). Com a capa disponível (album_image/image), ela some por trás
                       da própria arte — sem capa, cai de volta no círculo liso. */}
