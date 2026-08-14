@@ -348,7 +348,17 @@ export const AppLayout: FC = memo(() => {
                   ? <span key={artist.id} className={`avatar avatar-big avatar-image${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(artistEntryRoute(artist))}><img src={artist.content.spotifyProfile.image} alt={artist.name} /></span>
                   : <span key={artist.id} className={`avatar avatar-big${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(artistEntryRoute(artist))}>{firstInitials(artist.name)}</span>
               ))}
-              <button type='button'>＋</button>
+              {/* Vai por /artists?create=1 e não direto para /criar-artista: aquela tela é quem
+                  checa o limite de perfis pendentes e o cooldown, e avisa o motivo. O deep-link
+                  existe justamente para disparar esse fluxo de fora. */}
+              <button
+                type='button'
+                aria-label='Criar novo perfil de artista'
+                title='Criar perfil'
+                onClick={() => navigate('/artists?create=1')}
+              >
+                ＋
+              </button>
             </div>
           </aside>
 

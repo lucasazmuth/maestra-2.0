@@ -1,3 +1,8 @@
+// Filtros da lista de Músicas. Estava inteiro no design escuro (#181818/#191919) e aparecia
+// como um bloco de outro produto sobre o app claro. A altura máxima também encolheu: com 560px
+// o popover não cabia abaixo do botão, o antd o virava para cima e ele saía pela borda
+// superior da tela.
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -17,33 +22,33 @@
 .search:global(.ant-input-affix-wrapper) {
   height: 36px;
   padding: 0 13px;
-  color: #8e8e96;
-  background: #181818;
-  border: 1px solid transparent;
+  color: #7c8db0;
+  background: #fbfcfe;
+  border: 1px solid #e1e7f0;
   border-radius: 999px;
   box-shadow: none;
 }
 
 .search:global(.ant-input-affix-wrapper:hover) {
-  background: #202020;
-  border-color: #38383d;
+  background: #fff;
+  border-color: #b9cbed;
 }
 
 .search:global(.ant-input-affix-wrapper-focused) {
-  background: #202020;
-  border-color: #77777f;
-  box-shadow: none;
+  background: #fff;
+  border-color: #8aa5ff;
+  box-shadow: 0 0 0 3px #eaf0ff;
 }
 
 .search :global(.ant-input) {
-  color: #f4f4f5;
+  color: #52668d;
   background: transparent;
   font-size: 13px;
 }
 
 .search :global(.ant-input-prefix) {
   margin-inline-end: 9px;
-  color: #9a9aa2;
+  color: #9aabc4;
 }
 
 .filterButton,
@@ -54,9 +59,9 @@
   gap: 7px;
   height: 36px;
   padding: 0 14px;
-  color: #d7d7db;
-  background: #181818;
-  border: 1px solid transparent;
+  color: #5e739b;
+  background: #fff;
+  border: 1px solid #dce5f0;
   border-radius: 999px;
   cursor: pointer;
   font-family: inherit;
@@ -68,8 +73,9 @@
 
 .filterButton:hover,
 .filterButtonActive {
-  color: #fff;
-  background: #2a2a2d;
+  color: #4267b9;
+  background: #eef3fb;
+  border-color: #b9cbed;
 }
 
 .filterButton:hover,
@@ -79,7 +85,7 @@
 
 .filterButton:focus-visible,
 .filterButtonActive:focus-visible {
-  outline: 2px solid #9a4fd1;
+  outline: 2px solid #3361ff;
   outline-offset: 2px;
 }
 
@@ -90,8 +96,8 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  color: #0a0a0a;
-  background: #c97ef3;
+  color: #fff;
+  background: #3361ff;
   border-radius: 999px;
   font-size: 10px;
   font-weight: 800;
@@ -102,18 +108,26 @@
   padding-top: 6px;
 }
 
+// O App.scss limita TODO popover a 336px (`.ant-popover { max-width: 336px }`), pensado nas
+// confirmações curtas. Este painel foi desenhado com 390px e o conteúdo vazava para fora do
+// cartão — os chips de status apareciam por cima do fundo da página. Duas classes para vencer
+// aquela regra sem afrouxar o limite dos outros popovers.
+.popoverOverlay:global(.ant-popover) {
+  max-width: min(390px, calc(100vw - 32px));
+}
+
 .popoverOverlay :global(.ant-popover-inner) {
   overflow: hidden;
   padding: 0;
-  background: #191919;
-  border: 1px solid #303034;
+  background: #fff;
+  border: 1px solid #e3eaf3;
   border-radius: 14px;
-  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.68);
+  box-shadow: 0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08);
 }
 
 .popover {
-  width: min(390px, calc(100vw - 32px));
-  max-height: min(560px, calc(100vh - 120px));
+  width: 100%;
+  max-height: min(430px, calc(100vh - 190px));
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -123,7 +137,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 17px 18px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid #edf0f5;
 }
 
 .popoverHeader > div {
@@ -133,13 +147,13 @@
 }
 
 .popoverHeader strong {
-  color: #f7f7f8;
+  color: #405985;
   font-size: 15px;
   font-weight: 800;
 }
 
 .popoverHeader span {
-  color: #77777f;
+  color: #8ca0c5;
   font-size: 11px;
 }
 
@@ -165,7 +179,7 @@
 
 .clearButton {
   padding: 5px 8px;
-  color: #c97ef3;
+  color: #4267b9;
   background: transparent;
   border: 0;
   border-radius: 999px;
@@ -176,8 +190,8 @@
 }
 
 .clearButton:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.07);
+  color: #2f4f8f;
+  background: #eef3fb;
 }
 
 .filterSection {
@@ -185,7 +199,7 @@
   flex-direction: column;
   gap: 9px;
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid #eef1f7;
 }
 
 .filterSection:last-child {
@@ -193,7 +207,7 @@
 }
 
 .filterLabel {
-  color: #85858d;
+  color: #93a4c0;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -211,8 +225,8 @@
 .filterChipActive {
   min-height: 29px;
   padding: 5px 11px;
-  color: #b6b6bc;
-  background: #252527;
+  color: #5f76a3;
+  background: #f2f6fd;
   border: 0;
   border-radius: 999px;
   cursor: pointer;
@@ -223,15 +237,15 @@
 }
 
 .filterChip:hover {
-  color: #fff;
-  background: #323235;
+  color: #2f4f8f;
+  background: #e5edfb;
   transform: translateY(-1px);
 }
 
 .filterChipActive,
 .filterChipActive:hover {
-  color: #0a0a0a;
-  background: #f5f4f2;
+  color: #fff;
+  background: #3361ff;
 }
 
 .sortList {
@@ -248,7 +262,7 @@
   width: 100%;
   min-height: 34px;
   padding: 7px 9px;
-  color: #a9a9b0;
+  color: #60749a;
   background: transparent;
   border: 0;
   border-radius: 7px;
@@ -260,12 +274,12 @@
 
 .sortOption:hover,
 .sortOptionActive {
-  color: #fff;
-  background: #252527;
+  color: #2f4f8f;
+  background: #eef3fb;
 }
 
 .sortOptionActive svg {
-  color: #c97ef3;
+  color: #3361ff;
 }
 
 @media (max-width: 520px) {
@@ -280,8 +294,7 @@
   }
 
   .popover {
-    width: calc(100vw - 24px);
-    max-height: min(520px, calc(100vh - 92px));
+    max-height: min(400px, calc(100vh - 150px));
   }
 
   .popoverHeader {

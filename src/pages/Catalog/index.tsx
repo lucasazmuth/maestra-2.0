@@ -25,7 +25,7 @@ import {
   FilterSortOption,
   FilterToolbar,
 } from '../../components/FilterToolbar';
-import { CATALOG_STATUS, formatMs, isActiveCatalogStatus } from '../../constants/maestra';
+import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, formatMs, isActiveCatalogStatus } from '../../constants/maestra';
 import * as catalogDb from '../../services/db/catalog';
 import * as genresDb from '../../services/db/genres';
 import * as membersDb from '../../services/db/members';
@@ -620,13 +620,16 @@ const Catalog: FC = () => {
           <FilterChip selected={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>
             Todos
           </FilterChip>
-          {Object.entries(CATALOG_STATUS).map(([value, config]) => (
+          {/* CATALOG_STATUS_OPTIONS e não o mapa inteiro: filtrar por um status que já não se
+              pode escolher (Produção) só confunde — "Todos" continua trazendo as músicas
+              antigas que ainda estão nele. */}
+          {CATALOG_STATUS_OPTIONS.map((option) => (
             <FilterChip
-              key={value}
-              selected={statusFilter === value}
-              onClick={() => setStatusFilter(value)}
+              key={option.id}
+              selected={statusFilter === option.id}
+              onClick={() => setStatusFilter(option.id)}
             >
-              {config.label}
+              {option.label}
             </FilterChip>
           ))}
         </FilterChips>
