@@ -453,16 +453,10 @@
 
 .primaryStarOn {
   color: #e0ad3c;
-  cursor: default;
 }
 
 .primaryStarOn svg {
   fill: currentColor;
-}
-
-.primaryStarOn:hover {
-  background: transparent;
-  transform: none;
 }
 
 .versionPlayback {

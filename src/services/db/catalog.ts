@@ -292,7 +292,9 @@ export const updateCatalogVersion = async (id: string, patch: Partial<CatalogVer
 };
 
 /** Marca qual gravação é a principal — a que toca por padrão e representa a música. */
-export const setPrimaryVersion = async (projectId: string, versionId: string): Promise<void> => {
+// `versionId: null` desmarca a principal — a música fica sem gravação de referência (é o que
+// acontece, por exemplo, quando a única versão boa foi descartada e nenhuma outra a substitui).
+export const setPrimaryVersion = async (projectId: string, versionId: string | null): Promise<void> => {
   const { error } = await supabase
     .from('catalog_projects')
     .update({ primary_version_id: versionId, updated_at: new Date().toISOString() })

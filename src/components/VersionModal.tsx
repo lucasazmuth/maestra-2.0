@@ -121,13 +121,16 @@ export const VersionModal: FC<Props> = ({
     }
   };
 
-  // Promover é uma decisão à parte de salvar: acontece na hora e não depende do formulário.
-  const makePrimary = async () => {
+  // Favoritar é uma decisão à parte de salvar: acontece na hora e não depende do formulário.
+  // Clicar de novo desmarca — a música fica sem versão principal até outra ser escolhida.
+  const togglePrimary = async () => {
     if (!version) return;
     setPromoting(true);
     try {
-      await catalogDb.setPrimaryVersion(projectId, version.id);
-      message.success(`V${version.version_number} agora é a versão principal`);
+      await catalogDb.setPrimaryVersion(projectId, isPrimary ? null : version.id);
+      message.success(isPrimary
+        ? `V${version.version_number} não é mais a versão principal`
+        : `V${version.version_number} agora é a versão principal`);
       await onSaved();
     } catch (e: any) {
       message.error(e?.message || 'Não foi possível definir como principal');
@@ -175,8 +178,7 @@ export const VersionModal: FC<Props> = ({
       }
       footer={
         <div className={modalStyles.footer}>
-          {/* Excluir e tornar principal ficam à esquerda, longe de Salvar: são ações de efeito
-              imediato sobre o projeto, não parte do formulário. */}
+          {/* Excluir fica na ponta oposta de Salvar: é a acão de onde não se volta. */}
           {editing && (
             <Popconfirm
               title='Excluir esta versão?'
@@ -191,23 +193,24 @@ export const VersionModal: FC<Props> = ({
               </Button>
             </Popconfirm>
           )}
-          {/* Mesma estrela da lista de versões: cheia quando já é a principal, vazia e clicável
-              quando não é. O rótulo vive no tooltip — o ícone sozinho já diz o estado. */}
-          {editing && (
-            <Tooltip title={isPrimary ? 'Versão principal' : 'Tornar principal'}>
-              <button
-                type='button'
-                className={`${modalStyles.primaryStar} ${isPrimary ? modalStyles.primaryStarOn : ''}`}
-                disabled={isPrimary || promoting}
-                onClick={makePrimary}
-                aria-pressed={isPrimary}
-                aria-label={isPrimary ? 'Versão principal' : 'Tornar versão principal'}
-              >
-                {promoting ? <Spin size='small' /> : <FiStar />}
-              </button>
-            </Tooltip>
-          )}
           <div className={modalStyles.footerActions}>
+            {/* Mesma estrela da lista de versões, ao lado de Salvar: cheia quando é a principal,
+                vazia quando não é, e clicar alterna nos dois sentidos. O rótulo vive no tooltip
+                — o ícone sozinho já diz o estado. */}
+            {editing && (
+              <Tooltip title={isPrimary ? 'Desmarcar como principal' : 'Tornar principal'}>
+                <button
+                  type='button'
+                  className={`${modalStyles.primaryStar} ${isPrimary ? modalStyles.primaryStarOn : ''}`}
+                  disabled={promoting}
+                  onClick={togglePrimary}
+                  aria-pressed={isPrimary}
+                  aria-label={isPrimary ? 'Desmarcar como versão principal' : 'Tornar versão principal'}
+                >
+                  {promoting ? <Spin size='small' /> : <FiStar />}
+                </button>
+              </Tooltip>
+            )}
             <Button type='primary' loading={saving} onClick={handleSave}>
               {editing ? 'Salvar alterações' : 'Enviar versão'}
             </Button>

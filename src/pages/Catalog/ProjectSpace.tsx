@@ -58,8 +58,8 @@ const VersionRow: FC<VersionRowProps> = ({ version, isPrimary, isPlaying, curren
             className={`${styles.primaryStar} ${isPrimary ? styles.primaryStarOn : ''}`}
             onClick={() => onTogglePrimary(version)}
             aria-pressed={isPrimary}
-            aria-label={isPrimary ? `V${version.version_number} é a versão principal` : `Tornar V${version.version_number} a versão principal`}
-            title={isPrimary ? 'Versão principal' : 'Tornar principal'}
+            aria-label={isPrimary ? `Desmarcar V${version.version_number} como versão principal` : `Tornar V${version.version_number} a versão principal`}
+            title={isPrimary ? 'Desmarcar como principal' : 'Tornar principal'}
           >
             <FiStar />
           </button>
@@ -72,7 +72,7 @@ const VersionRow: FC<VersionRowProps> = ({ version, isPrimary, isPlaying, curren
           className={styles.play}
           disabled={!version.audio_file}
           onClick={() => onPlay(version)}
-          aria-label={version.audio_file ? (isPlaying ? `Pausar V${version.version_number}` : `Tocar V${version.version_number}`) : 'Áudio pendente'}
+          aria-label={version.audio_file ? (isPlaying ? `Pausar V${version.version_number}` : `Tocar V${version.version_number}`) : 'Nenhum áudio anexado'}
         >
           {isPlaying ? <FiPause /> : <FiPlay />}
         </button>
@@ -83,7 +83,7 @@ const VersionRow: FC<VersionRowProps> = ({ version, isPrimary, isPlaying, curren
             onSeek={(time) => onSeek(version, time)}
             className={styles.waveOpen}
           />
-        ) : <div className={styles.waveOpen}><em>Áudio pendente</em></div>}
+        ) : <div className={styles.waveOpen}><em>Nenhum áudio anexado</em></div>}
       </div>
 
       <div className={styles.versionFooter}>
@@ -217,12 +217,15 @@ const ProjectSpace: FC = () => {
     setEditingVersion({ ...version, title: version.title || getStageLabel(version.stage) });
   };
 
+  // Alterna nos dois sentidos: clicar na estrela acesa desmarca, e a música fica sem versão
+  // principal até outra ser escolhida.
   const togglePrimary = async (version: CatalogVersion) => {
-    if (!project || !canCollaborateJam || version.id === project.primary_version_id) return;
+    if (!project || !canCollaborateJam) return;
+    const jaEra = version.id === project.primary_version_id;
     try {
-      await catalogDb.setPrimaryVersion(project.id, version.id);
+      await catalogDb.setPrimaryVersion(project.id, jaEra ? null : version.id);
       await refresh();
-    } catch { message.error('Não foi possível definir a versão principal'); }
+    } catch { message.error('Não foi possível alterar a versão principal'); }
   };
 
   // Excluir a versão principal deixaria a música sem faixa principal (o banco zera o ponteiro),
