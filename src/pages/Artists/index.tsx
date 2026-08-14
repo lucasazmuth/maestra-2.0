@@ -82,6 +82,9 @@ const Artists: FC = () => {
           <div className={`home-profile-directory ${styles.grid}`}>
             {artists.map((a) => {
               const sp = a.content?.spotifyProfile;
+              // Chartmetric primeiro (ver Dashboard): a Web API do Spotify não devolve mais
+              // `followers`, então o campo do spotifyProfile é nulo em quase todo artista.
+              const followers = a.content?.chartmetricProfile?.sp_followers ?? sp?.followers;
               const owner = a.role !== 'member';
               // Estado do perfil, na ordem em que importa pro usuário: cobrança em aberto trava
               // tudo; sem plano, o próximo passo é o planejamento.
@@ -112,9 +115,9 @@ const Artists: FC = () => {
                         {status.label}
                       </em>
                     )}
-                    {sp?.followers != null && (
+                    {followers != null && (
                       <span className={styles.followers}>
-                        {sp.followers.toLocaleString('pt-BR')} seguidores
+                        {followers.toLocaleString('pt-BR')} seguidores
                       </span>
                     )}
                   </button>

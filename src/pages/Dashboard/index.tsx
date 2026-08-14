@@ -85,7 +85,12 @@ const Dashboard: FC = () => {
       <section className='music-stat-grid'>
         {[
           ['Ouvintes mensais', fmtNumber(chartmetric?.monthly_listeners), sp?.popularity != null ? `${sp.popularity}/100 popularidade` : 'Spotify'],
-          ['Seguidores', fmtNumber(sp?.followers), 'Spotify'],
+          // Seguidores vêm da Chartmetric, não do spotifyProfile: desde Fev/2026 a Web API do
+          // Spotify em Dev Mode não devolve mais `followers`, e o fallback pelo token do embed
+          // player hoje bate em 429 QUOTA_EXCEEDED. O campo ficava nulo em quase todos os
+          // artistas e o card exibia um traço mudo, que lê como "não tem seguidores". A
+          // Chartmetric é a mesma fonte que o Diagnóstico REAL já usa pra esse número.
+          ['Seguidores', fmtNumber(chartmetric?.sp_followers ?? sp?.followers), 'Spotify via Chartmetric'],
           ['Músicas ativas', String(tracks.length), `${albums.length} álbuns/singles`],
           ['Tarefas pendentes', String(pendingTasks.length), `${journey.tasksDone} concluídas`],
         ].map(([label, value, change], index) => (
