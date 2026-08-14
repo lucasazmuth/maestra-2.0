@@ -22,7 +22,10 @@ $tr-b: polygon(50% 0%, 75% 0%, 100% 0%, 75% 50%, 50% 100%, 50% 50%);
 $zz-a: polygon(25.5% 0%, 37.7% 50%, 50% 100%, 25% 100%, 0% 100%, 12.7% 50%);
 $zz-b: polygon(75.5% 0%, 87.7% 50%, 100% 100%, 75% 100%, 50% 100%, 62.7% 50%);
 
-// 5. Diagonal (o canto do N) — triângulo grande + triângulo menor.
+// 5. Diagonal com eco — triângulo grande + triângulo menor repetindo a forma. É a MARCA DA
+// NYTA: mesma família de cortes do N da Maestra, mas silhueta própria (a Maestra é a
+// plataforma; a Nyta é produto, não pode congelar com a cara da logo). A leitura do eco ainda
+// combina com assistente: pergunta e resposta, voz que retorna.
 $dg-a: polygon(0% 0%, 50% 0%, 100% 0%, 100% 50%, 100% 100%, 50% 50%);
 $dg-b: polygon(0% 50%, 25% 50%, 50% 50%, 50% 75%, 50% 100%, 25% 75%);
 
@@ -45,13 +48,13 @@ $nn-b: polygon(57.9% 0.8%, 78.5% 0.8%, 99.2% 0.8%, 99.2% 50%, 99.2% 100%, 78.5% 
   background: linear-gradient(135deg, #3361ff, #7420f1);
 }
 
-// Repouso: o emblema é o N da marca.
+// Repouso: o emblema é a diagonal com eco — a marca da Nyta.
 .layerA {
-  clip-path: $nn-a;
+  clip-path: $dg-a;
 }
 
 .layerB {
-  clip-path: $nn-b;
+  clip-path: $dg-b;
 }
 
 .onDark .layerA,
@@ -72,24 +75,26 @@ $nn-b: polygon(57.9% 0.8%, 78.5% 0.8%, 99.2% 0.8%, 99.2% 50%, 99.2% 100%, 78.5% 
   }
 }
 
+// O ciclo parte da marca da Nyta (dg), visita o N da Maestra logo de cara — o parentesco fica
+// explícito — e segue pelas primitivas até voltar pro eco.
 @keyframes nytaEmblemShapesA {
-  0%, 11.7% { clip-path: $nn-a; }
-  16.7%, 28.3% { clip-path: $sq-a; }
-  33.3%, 45% { clip-path: $fr-a; }
-  50%, 61.7% { clip-path: $tr-a; }
-  66.7%, 78.3% { clip-path: $zz-a; }
-  83.3%, 95% { clip-path: $dg-a; }
-  100% { clip-path: $nn-a; }
+  0%, 11.7% { clip-path: $dg-a; }
+  16.7%, 28.3% { clip-path: $nn-a; }
+  33.3%, 45% { clip-path: $sq-a; }
+  50%, 61.7% { clip-path: $fr-a; }
+  66.7%, 78.3% { clip-path: $tr-a; }
+  83.3%, 95% { clip-path: $zz-a; }
+  100% { clip-path: $dg-a; }
 }
 
 @keyframes nytaEmblemShapesB {
-  0%, 11.7% { clip-path: $nn-b; }
-  16.7%, 28.3% { clip-path: $sq-b; }
-  33.3%, 45% { clip-path: $fr-b; }
-  50%, 61.7% { clip-path: $tr-b; }
-  66.7%, 78.3% { clip-path: $zz-b; }
-  83.3%, 95% { clip-path: $dg-b; }
-  100% { clip-path: $nn-b; }
+  0%, 11.7% { clip-path: $dg-b; }
+  16.7%, 28.3% { clip-path: $nn-b; }
+  33.3%, 45% { clip-path: $sq-b; }
+  50%, 61.7% { clip-path: $fr-b; }
+  66.7%, 78.3% { clip-path: $tr-b; }
+  83.3%, 95% { clip-path: $zz-b; }
+  100% { clip-path: $dg-b; }
 }
 
 @media (prefers-reduced-motion: reduce) {

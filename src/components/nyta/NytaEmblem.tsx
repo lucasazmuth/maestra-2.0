@@ -5,10 +5,12 @@ import styles from './NytaEmblem.module.scss';
 // Emblema da Nyta — o rosto da inteligência da Maestra em todo o app (chat do wizard, rail,
 // header, mobile nav, telas de upsell).
 //
-// Em repouso, o emblema É o "N" da Maestra (o glifo final do set Group 50 do design). Ao
-// "pensar" (`state='thinking'`), o N se desmonta nas formas primitivas do mesmo set — quadrado,
-// moldura, triângulo, zigue-zague em M, diagonal — e se remonta, num ciclo de morphs. Esse é o
-// conceito: a Nyta é a marca em movimento, pensando com as próprias formas do sistema.
+// Em repouso, o emblema é a DIAGONAL COM ECO do set Group 50 — a marca própria da Nyta: mesma
+// família de cortes do N da Maestra, mas silhueta distinta, porque a Maestra é a plataforma e
+// a Nyta é produto (a imagem estática não pode ser a logo). Ao "pensar" (`state='thinking'`),
+// o eco se desmonta nas formas do set — passando pelo N da Maestra, quadrado, moldura,
+// triângulo, zigue-zague em M — e se remonta, num ciclo de morphs: a Nyta pensa com as formas
+// do sistema, e a logo aparece só de passagem, como parentesco.
 //
 // Não há SVG aqui: todos os glifos do set são polígonos de arestas retas (a linguagem da logo é
 // corte duro, sem curvas), então cada forma é um `clip-path: polygon()` sobre o gradiente da

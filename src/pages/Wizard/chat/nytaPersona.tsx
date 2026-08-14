@@ -10,9 +10,9 @@ import { NytaEmblem, type NytaEmblemTone } from '../../../components/nyta/NytaEm
 // Nome de exibição global da assistente.
 export const NYTA_NAME = 'Nyta';
 
-// Avatar da Nyta: o N da marca (ver components/nyta/NytaEmblem), solto — sem plate, sem
+// Avatar da Nyta: a diagonal com eco (ver components/nyta/NytaEmblem), solta — sem plate, sem
 // clip circular e sem fundo, porque a forma já é a identidade. Ao "pensar"
-// (`state='thinking'`) o N se desmonta nas formas primitivas do set e se remonta.
+// (`state='thinking'`) o eco se desmonta nas formas do set (o N da Maestra incluso) e se remonta.
 export type NytaAvatarState = 'idle' | 'thinking';
 
 export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState; tone?: NytaEmblemTone }> = ({
