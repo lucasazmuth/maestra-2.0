@@ -107,7 +107,7 @@ export const SystemMenu: FC = () => {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <FiGrid size={19} />
+        <FiGrid size={23} />
       </button>
 
       {open && (

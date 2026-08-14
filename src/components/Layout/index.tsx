@@ -287,7 +287,7 @@ export const AppLayout: FC = memo(() => {
           </button>
         )}
         <button className='round-control notification' aria-label='Notificações' type='button' onClick={() => navigate('/notifications')}>
-          <NotificationIcon size={19} />
+          <NotificationIcon size={28} />
         </button>
         {/* Último da linha: reúne configurações, termos e suporte (e o /admin, para admin).
             O antigo botão de engrenagem virou o item "Configurações" daqui dentro — além de
@@ -326,10 +326,10 @@ export const AppLayout: FC = memo(() => {
           <aside className='app-rail' aria-label='Atalhos'>
             <div className='rail-actions'>
               <button type='button' aria-label='Tela inicial' onClick={() => navigate('/artists')}>
-                <SystemHomeIcon size={20} />
+                <SystemHomeIcon size={24} />
               </button>
               <button type='button' className={location.pathname === '/notifications' ? 'rail-active rail-notification' : 'rail-notification'} aria-label='Notificações' onClick={() => navigate('/notifications')}>
-                <NotificationIcon size={19} />
+                <NotificationIcon size={28} />
               </button>
               <button type='button' className={`rail-nyta${isNytaPage ? ' rail-active' : ''}`} aria-label='Abrir Nyta IA' onClick={openNytaPage}>
                 <b>Nyta IA</b>
