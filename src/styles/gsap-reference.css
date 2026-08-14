@@ -9469,3 +9469,40 @@ body:has(.track-detail-backdrop) .local-player-bar {
   font-size: 9px !important;
   font-weight: 800 !important;
 }
+
+/* Cards do rodapé do dashboard — os ícones eram caracteres soltos (◷ ◌ ♬), cujo tamanho e peso
+   variam por fonte instalada (o ◌ quase não aparecia). Agora são SVG do react-icons, que
+   precisam de dimensão explícita: `font-size` não dimensiona SVG. */
+.music-footer i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8f9fbb;
+}
+
+.music-footer i > svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.7;
+}
+
+/* Só o card de Suporte navega; os outros dois são informativos e não ganham resposta ao
+   passar o mouse, pra não prometer clique onde não há. */
+.music-footer .music-footer-action {
+  cursor: pointer;
+  transition: box-shadow .16s ease, transform .16s ease;
+}
+
+.music-footer .music-footer-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(124, 145, 185, .14);
+}
+
+.music-footer .music-footer-action:hover i {
+  color: #3361ff;
+}
+
+.music-footer .music-footer-action:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: 2px;
+}

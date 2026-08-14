@@ -1,12 +1,14 @@
 import { FC, useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FiLifeBuoy, FiMusic, FiShield } from 'react-icons/fi';
 
 import { useArtist } from '../../hooks/useArtist';
 import { useJourneyState } from '../../hooks/useJourneyState';
 import { Spinner } from '../../components/spinner/spinner';
 import { listCatalogProjectItems } from '../../services/db/catalog';
 import { CATALOG_STATUS } from '../../constants/maestra';
+import { TASK_TYPES } from '../ActionPlan/TaskControls';
 import type { CatalogItem } from '../../interfaces/maestra';
 
 const fmtNumber = (value?: number | null) =>
@@ -45,6 +47,13 @@ const Dashboard: FC = () => {
   );
   const pendingTasks = taskList.filter((task) => task.status !== 'done' && task.status !== 'archived');
   const nextTask = pendingTasks[0];
+  // Rótulo da categoria da tarefa, da mesma fonte que o Plano de Ação usa nos chips. Fica nulo
+  // quando a tarefa não tem categoria — hoje a esmagadora maioria (a categoria é opcional e
+  // preenchida à mão no plano), e um chip "Sem categoria" em toda tela seria pior que o texto
+  // repetido que ele substituiu.
+  const taskCategory = nextTask
+    ? TASK_TYPES.find((t) => t.v === nextTask.type)?.label ?? null
+    : journey.next.kicker;
   const activeTracks = tracks.length ? tracks : albums.map((album) => ({
     id: album.id,
     name: album.name,
@@ -71,9 +80,14 @@ const Dashboard: FC = () => {
           <p>PRÓXIMA TAREFA DO PLANO</p>
           <h1>{nextTask?.description || journey.next.title}</h1>
           <span>{nextTask?.strategyTitle || journey.next.desc}</span>
+          {/* O chip do meio repetia `strategyTitle`, que o <span> logo acima já mostra por
+              inteiro — texto longo cortado com reticências, sem informação nova. Passa a
+              mostrar a CATEGORIA da tarefa (Design, Show, Rádio…): curta, cabe na pílula e não
+              aparece em nenhum outro ponto do hero. Sem categoria, o chip simplesmente não
+              entra e sobram #01 e prazo. */}
           <div className='music-hero-task-meta'>
             <b>#01</b>
-            <strong>{nextTask?.strategyTitle || journey.next.kicker}</strong>
+            {taskCategory && <strong>{taskCategory}</strong>}
             <em>{nextTask?.deadline || 'Sem prazo definido'}</em>
           </div>
         </div>
@@ -175,10 +189,24 @@ const Dashboard: FC = () => {
         </article>
       </section>
 
+      {/* Os ícones eram caracteres soltos (◷ ◌ ♬): tamanho e peso variavam por fonte, e o ◌
+          mal aparecia. Viraram ícones do mesmo set (react-icons/fi) já usado no resto do app.
+          Só o Suporte leva a algum lugar — os outros dois são informativos, então continuam
+          como <article> e não fingem ser clicáveis. */}
       <section className='music-footer'>
-        <article><i>◷</i><h2>Suporte 24/7</h2><p>Conte com o time Maestra em cada etapa.</p></article>
-        <article><i>◌</i><h2>Dados seguros</h2><p>Suas músicas e informações sempre protegidas.</p></article>
-        <article><i>♬</i><h2>Novidades da indústria</h2><p>Curadoria para apoiar decisões da carreira.</p></article>
+        <article
+          className='music-footer-action'
+          role='button'
+          tabIndex={0}
+          onClick={() => navigate('/suporte')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/suporte'); } }}
+        >
+          <i><FiLifeBuoy /></i>
+          <h2>Suporte</h2>
+          <p>Conte com o time Maestra em cada etapa.</p>
+        </article>
+        <article><i><FiShield /></i><h2>Dados seguros</h2><p>Suas músicas e informações sempre protegidas.</p></article>
+        <article><i><FiMusic /></i><h2>Novidades da indústria</h2><p>Curadoria para apoiar decisões da carreira.</p></article>
       </section>
     </div>
   );
