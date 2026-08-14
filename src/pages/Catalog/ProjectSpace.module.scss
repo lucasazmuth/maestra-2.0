@@ -56,11 +56,26 @@
 }
 
 .header {
+  position: relative;
   max-width: 1260px;
   margin: 0 auto 28px;
   display: flex;
   gap: 14px;
   align-items: center;
+}
+
+// Absoluto de propósito: no fluxo, a etiqueta ficava colada no título e "andava" conforme o
+// tamanho do nome da música. Aqui ela fica no meio do header, independente dos dois lados.
+.spaceLabel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  color: #8ca0c5;
+  font: 850 11px 'JetBrains Mono', monospace;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .back {
@@ -406,15 +421,42 @@
   line-height: 1;
 }
 
-.versionBadges em {
-  padding: 6px 10px;
-  border-radius: 999px;
-  color: #181818;
-  background: #edc663;
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 900;
-  line-height: 1;
+// Favoritar a versão principal direto na lista. Apagada é um convite ("marque esta"); acesa é
+// o estado — a estrela cheia substitui a etiqueta "Principal" que existia aqui.
+.primaryStar {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #b7c4da;
+  background: transparent;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 0;
+  transition: color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.primaryStar:hover {
+  color: #e0ad3c;
+  background: #fdf4de;
+  transform: scale(1.08);
+}
+
+.primaryStarOn {
+  color: #e0ad3c;
+  cursor: default;
+}
+
+.primaryStarOn svg {
+  fill: currentColor;
+}
+
+.primaryStarOn:hover {
+  background: transparent;
+  transform: none;
 }
 
 .versionPlayback {

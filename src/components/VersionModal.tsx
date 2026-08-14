@@ -1,76 +1,106 @@
-import { FC, useEffect, useRef, useState } from 'react';
-import { App, Button, Input, Modal, Select } from 'antd';
-import { FiMusic, FiUploadCloud } from 'react-icons/fi';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { App, Button, Input, Modal, Popconfirm } from 'antd';
+import { FiCheckCircle, FiMusic, FiStar, FiTrash2, FiUploadCloud } from 'react-icons/fi';
 
-import { CATALOG_STATUS_OPTIONS } from '../constants/maestra';
 import { uploadFile, CATALOG_BUCKET } from '../lib/storage';
 import * as catalogDb from '../services/db/catalog';
-import type { CatalogVersion, CatalogVersionStage } from '../interfaces/maestra';
+import type { CatalogVersion } from '../interfaces/maestra';
 import modalStyles from './StandardModal.module.scss';
 
-// Modal da VERSÃO (a faixa gravada), irmão do TrackModal — que cuida da MÚSICA.
+// Modal da VERSÃO (a gravação), irmão do TrackModal — que cuida da MÚSICA.
 //
-// A separação é a do próprio banco e a que a equipe usa pra conversar: a MÚSICA é a obra
-// (título, capa, ISRC, letra, splits) e a VERSÃO é uma gravação dela (guia, mix, master), com
-// o áudio e a etapa. Antes tudo vivia numa tela só, e "editar" não deixava claro o que estava
-// sendo alterado — o áudio de uma versão específica ou a ficha da música inteira.
+// A versão é só isto: um nome que a equipe reconheça ("guia vocal", "mix v2"), o arquivo e a
+// marca de qual é a principal. Etapa e Status saíram: status é da MÚSICA (e já se edita na
+// ficha dela), e etapa dizia a mesma coisa que o título diria melhor — o nome livre descreve a
+// gravação com mais precisão do que uma lista fechada.
 //
-// Serve tanto pra enviar uma versão nova quanto pra editar uma existente: o que muda é só se
-// há `version`.
+// Serve pra enviar versão nova e pra editar: a diferença é existir ou não `version`.
 
-export const VERSION_STAGES: { value: CatalogVersionStage; label: string }[] = [
-  { value: 'guia', label: 'Guia' },
-  { value: 'beat', label: 'Beat' },
-  { value: 'instrumental', label: 'Instrumental' },
-  { value: 'voz', label: 'Voz' },
-  { value: 'stems', label: 'Stems' },
-  { value: 'mix', label: 'Mixagem' },
-  { value: 'master', label: 'Masterização' },
-  { value: 'referencia', label: 'Referência' },
-];
+// Lê a duração direto do arquivo escolhido. Digitar "3:24" à mão é trabalho que o áudio já
+// responde — e ninguém confere, então o valor digitado tende a ficar errado.
+const readAudioDuration = (file: File): Promise<string | null> =>
+  new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const audio = new Audio();
+    const done = (value: string | null) => { URL.revokeObjectURL(url); resolve(value); };
+    audio.addEventListener('loadedmetadata', () => {
+      const secs = audio.duration;
+      if (!Number.isFinite(secs) || secs <= 0) return done(null);
+      const m = Math.floor(secs / 60);
+      const s = String(Math.floor(secs % 60)).padStart(2, '0');
+      done(`${m}:${s}`);
+    });
+    // Formato que o navegador não decodifica não impede o envio — só fica sem duração.
+    audio.addEventListener('error', () => done(null));
+    audio.src = url;
+  });
+
+// O nome do arquivo já é o melhor palpite de título: quem grava salva como "guia vocal v2.wav".
+// Só limpa o que é ruído de sistema de arquivos (extensão, underscores).
+const titleFromFileName = (name: string) =>
+  name.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
 
 interface Props {
   open: boolean;
   artistId: string;
   projectId: string;
   projectTitle: string;
-  // Presente = edição. Ausente = enviar nova versão.
   version?: CatalogVersion | null;
-  // Número da próxima versão, mostrado no cabeçalho ao criar.
   nextVersionNumber?: number;
-  // Herdados da música quando a versão nasce, pra não pedir de novo o que já foi informado.
+  // Arquivo já escolhido antes de abrir o modal (fluxo do botão Upload): o modal abre
+  // preenchido e a pessoa só confirma.
+  initialFile?: File | null;
+  // Já é a versão principal do projeto? Esconde a ação de tornar principal.
+  isPrimary?: boolean;
   inherit?: { bpm?: string | null; key?: string | null; genre?: string | null };
   author?: { id?: string | null; name?: string | null; avatar?: string | null };
   onClose: () => void;
-  // O retorno é ignorado — só esperamos a recarga terminar antes de fechar.
   onSaved: () => unknown | Promise<unknown>;
+  onDeleted?: () => unknown | Promise<unknown>;
 }
 
 export const VersionModal: FC<Props> = ({
-  open, artistId, projectId, projectTitle, version, nextVersionNumber = 1, inherit, author, onClose, onSaved,
+  open, artistId, projectId, projectTitle, version, nextVersionNumber = 1, isPrimary,
+  initialFile, inherit, author, onClose, onSaved, onDeleted,
 }) => {
   const { message } = App.useApp();
-  const [stage, setStage] = useState<CatalogVersionStage>('guia');
   const [title, setTitle] = useState('');
-  const [status, setStatus] = useState('composition');
   const [duration, setDuration] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [promoting, setPromoting] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  // Recarrega os campos toda vez que o modal abre, senão a versão anterior "vaza" para a próxima.
-  useEffect(() => {
-    if (!open) return;
-    setStage((version?.stage as CatalogVersionStage) || 'guia');
-    setTitle(version?.title || '');
-    setStatus(version?.status || 'composition');
-    setDuration(version?.duration || '');
-    setFile(null);
-  }, [open, version]);
 
   const editing = Boolean(version);
 
+  const pickFile = useCallback(async (chosen: File) => {
+    setFile(chosen);
+    const detected = await readAudioDuration(chosen);
+    if (detected) setDuration(detected);
+  }, []);
+
+  // Recarrega ao abrir, senão a versão anterior "vaza" para a próxima. Quando o arquivo veio
+  // de fora (botão Upload), o formulário já nasce preenchido: título vem do nome do arquivo e
+  // a duração é lida do áudio.
+  useEffect(() => {
+    if (!open) return;
+    setFile(null);
+    if (initialFile && !version) {
+      setTitle(titleFromFileName(initialFile.name));
+      setDuration('');
+      void pickFile(initialFile);
+      return;
+    }
+    setTitle(version?.title || '');
+    setDuration(version?.duration || '');
+  }, [open, version, initialFile, pickFile]);
+
   const handleSave = async () => {
+    if (!title.trim()) {
+      message.warning('Dê um nome à versão (ex.: guia vocal, mix v2).');
+      return;
+    }
     setSaving(true);
     try {
       const uploaded = file
@@ -79,20 +109,16 @@ export const VersionModal: FC<Props> = ({
 
       if (version) {
         await catalogDb.updateCatalogVersion(version.id, {
-          stage,
-          status,
-          title: title.trim() || null,
+          title: title.trim(),
           duration: duration.trim() || null,
-          // Sem arquivo novo, o áudio atual permanece — "substituir" é opcional.
+          // Sem arquivo novo, o áudio atual permanece — substituir é opcional.
           ...(uploaded ? { audio_file: uploaded.url, audio_file_name: uploaded.name } : {}),
         });
       } else {
         await catalogDb.createCatalogVersion({
           project_id: projectId,
           version_number: nextVersionNumber,
-          stage,
-          status,
-          title: title.trim() || null,
+          title: title.trim(),
           duration: duration.trim() || null,
           audio_file: uploaded?.url || null,
           audio_file_name: uploaded?.name || null,
@@ -105,7 +131,6 @@ export const VersionModal: FC<Props> = ({
         } as any);
       }
 
-      // createCatalogVersion/updateCatalogVersion já promovem a versão com áudio a principal.
       message.success(uploaded
         ? `Versão ${editing ? 'atualizada' : 'enviada'} e definida como principal`
         : `Versão ${editing ? 'atualizada' : 'adicionada'}`);
@@ -115,6 +140,36 @@ export const VersionModal: FC<Props> = ({
       message.error(e?.message || `Não foi possível ${editing ? 'atualizar' : 'adicionar'} a versão`);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Promover é uma decisão à parte de salvar: acontece na hora e não depende do formulário.
+  const makePrimary = async () => {
+    if (!version) return;
+    setPromoting(true);
+    try {
+      await catalogDb.setPrimaryVersion(projectId, version.id);
+      message.success(`V${version.version_number} agora é a versão principal`);
+      await onSaved();
+    } catch (e: any) {
+      message.error(e?.message || 'Não foi possível definir como principal');
+    } finally {
+      setPromoting(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!version) return;
+    setRemoving(true);
+    try {
+      await catalogDb.deleteCatalogVersion(version.id);
+      message.success(`V${version.version_number} excluída`);
+      await (onDeleted ? onDeleted() : onSaved());
+      onClose();
+    } catch (e: any) {
+      message.error(e?.message || 'Não foi possível excluir a versão');
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -130,6 +185,7 @@ export const VersionModal: FC<Props> = ({
         <div className={modalStyles.heading}>
           <span className={modalStyles.kicker}>Versão</span>
           <span className={modalStyles.title}>
+            <i className={modalStyles.titleDot} aria-hidden />
             {editing ? `Editar V${version!.version_number}` : `Nova versão (V${nextVersionNumber})`}
           </span>
           <span className={modalStyles.subtitle}>
@@ -141,6 +197,31 @@ export const VersionModal: FC<Props> = ({
       }
       footer={
         <div className={modalStyles.footer}>
+          {/* Excluir e tornar principal ficam à esquerda, longe de Salvar: são ações de efeito
+              imediato sobre o projeto, não parte do formulário. */}
+          {editing && (
+            <Popconfirm
+              title='Excluir esta versão?'
+              description='O áudio e os comentários dela saem do Espaço JAM.'
+              okText='Excluir'
+              cancelText='Cancelar'
+              okButtonProps={{ danger: true, loading: removing }}
+              onConfirm={remove}
+            >
+              <Button type='text' danger icon={<FiTrash2 />} className={modalStyles.dangerButton}>
+                Excluir
+              </Button>
+            </Popconfirm>
+          )}
+          {editing && (isPrimary ? (
+            <span className={modalStyles.primaryTag}>
+              <FiCheckCircle size={14} /> Versão principal
+            </span>
+          ) : (
+            <Button icon={<FiStar />} loading={promoting} onClick={makePrimary}>
+              Tornar principal
+            </Button>
+          ))}
           <div className={modalStyles.footerActions}>
             <Button onClick={onClose}>Cancelar</Button>
             <Button type='primary' loading={saving} onClick={handleSave}>
@@ -153,27 +234,22 @@ export const VersionModal: FC<Props> = ({
       <div className={modalStyles.form}>
         <div className={modalStyles.fieldGrid}>
           <label className={modalStyles.field}>
-            <span>Etapa</span>
-            <Select value={stage} options={VERSION_STAGES} onChange={setStage} />
-          </label>
-          <label className={modalStyles.field}>
-            <span>Status</span>
-            <Select
-              value={status}
-              options={CATALOG_STATUS_OPTIONS.map((s) => ({ value: s.id, label: s.label }))}
-              onChange={setStatus}
+            <span>Título da versão *</span>
+            <Input
+              value={title}
+              placeholder='Ex.: guia vocal, mix v2'
+              maxLength={80}
+              onChange={(e) => setTitle(e.target.value)}
             />
           </label>
-        </div>
-
-        <div className={modalStyles.fieldGrid}>
           <label className={modalStyles.field}>
-            <span>Título da versão (opcional)</span>
-            <Input value={title} placeholder='Ex.: guia vocal, mix v2' onChange={(e) => setTitle(e.target.value)} />
-          </label>
-          <label className={modalStyles.field}>
+            {/* Somente leitura: vem do próprio arquivo assim que ele é escolhido. */}
             <span>Duração</span>
-            <Input value={duration} placeholder='Ex.: 3:24' onChange={(e) => setDuration(e.target.value)} />
+            <Input
+              value={duration}
+              readOnly
+              placeholder={file ? 'Lendo do arquivo…' : 'Ao anexar o áudio'}
+            />
           </label>
         </div>
 
@@ -195,7 +271,7 @@ export const VersionModal: FC<Props> = ({
             type='file'
             accept='audio/*'
             style={{ display: 'none' }}
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) void pickFile(f); }}
           />
         </label>
       </div>

@@ -5,6 +5,23 @@
 //
 // Compartilhado por Música, Versão, Evento e Equipe — mexer aqui repinta os quatro.
 .modal {
+  // Ancorado no canto inferior direito, como o workspace-modal-layer do gsap-app: o modal
+  // "sobe" de onde a ação nasce em vez de tomar o centro da tela. Neutraliza o `centered` do
+  // antd, que posiciona por flex no wrapper.
+  :global(.ant-modal-wrap) {
+    display: grid;
+    align-items: end;
+    justify-items: end;
+    padding: 34px;
+  }
+
+  :global(.ant-modal) {
+    top: 0;
+    max-width: none;
+    margin: 0;
+    padding-bottom: 0;
+  }
+
   // O `!important` no fundo é necessário: o ConfigProvider roda no darkAlgorithm e injeta
   // colorBgElevated (#282828) direto em .ant-modal-content/.ant-modal-header em runtime, com
   // especificidade acima da de um override comum. Escopado ao .modal, então só atinge os
@@ -30,15 +47,27 @@
     color: #52668d;
   }
 
+  // O X precisa da cor no ÍCONE, não só no botão: o antd pinta .ant-modal-close-icon com o
+  // colorIcon do tema (branco translúcido no darkAlgorithm), e sobre o cartão branco ele
+  // simplesmente sumia — o botão ficava lá, clicável e invisível.
   :global(.ant-modal-close) {
     top: 20px;
     right: 20px;
     color: #b6c1d3;
   }
 
+  :global(.ant-modal-close-icon),
+  :global(.ant-modal-close-x) {
+    color: #b6c1d3 !important;
+  }
+
   :global(.ant-modal-close:hover) {
     background: #eef3fb;
-    color: #4267b9;
+  }
+
+  :global(.ant-modal-close:hover .ant-modal-close-icon),
+  :global(.ant-modal-close:hover .ant-modal-close-x) {
+    color: #4267b9 !important;
   }
 
   :global(.ant-modal-body) {
@@ -113,6 +142,10 @@
     color: #9aabc4 !important;
   }
 
+  // Os estados de hover/active precisam ser escritos aqui inteiros. O antd v5 pinta o hover
+  // pelas classes de variante (.ant-btn-color-*.ant-btn-variant-*), calculadas pelo
+  // darkAlgorithm: no claro isso vira roxo (#a76eca) no secundário e fundos quase pretos no
+  // botão de texto. Sem estas regras o botão muda de paleta só ao passar o mouse.
   :global(.ant-btn-default) {
     border-color: #dce5f0 !important;
     background: #fff !important;
@@ -121,19 +154,72 @@
 
   :global(.ant-btn-default:hover:not(:disabled)) {
     border-color: #b9cbed !important;
+    background: #f6f9ff !important;
     color: #4267b9 !important;
   }
 
-  // !important pelo mesmo motivo do fundo: colorPrimary do ConfigProvider (#9A4FD1) vem do
-  // runtime do antd. Aqui a ação principal é o azul do redesign.
-  :global(.ant-btn-primary) {
+  :global(.ant-btn-default:active:not(:disabled)) {
+    border-color: #9db7e6 !important;
+    background: #eef3fd !important;
+    color: #33528f !important;
+  }
+
+  // O seletor longo espelha o do App.scss (`.ant-btn.ant-btn-primary:not(...):not(...)`), que
+  // pinta o botão primário com o roxo da marca antiga em todo o app. Ele tem seis classes de
+  // especificidade e `!important` no hover: um `.modal .ant-btn-primary` simples perdia, e o
+  // botão azul virava roxo (#8442b6) só ao passar o mouse. Repetir o seletor com o escopo do
+  // modal na frente é o que garante a vitória sem mexer no resto do app.
+  :global(.ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost)) {
+    border-color: #3361ff !important;
     background: #3361ff !important;
     color: #fff !important;
     box-shadow: 0 7px 15px rgba(51, 97, 255, .18);
   }
 
-  :global(.ant-btn-primary:hover:not(:disabled)) {
+  :global(.ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost):hover),
+  :global(.ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost):focus) {
+    border-color: #2a54e0 !important;
     background: #2a54e0 !important;
+    color: #fff !important;
+    box-shadow: 0 9px 20px rgba(51, 97, 255, .26);
+  }
+
+  :global(.ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost):active) {
+    border-color: #2246bd !important;
+    background: #2246bd !important;
+    box-shadow: 0 4px 10px rgba(51, 97, 255, .2);
+  }
+
+  // Ações destrutivas (excluir): vermelho do redesign, não o #dc4446 do tema escuro.
+  :global(.ant-btn-dangerous) {
+    color: #d2474b !important;
+    background: transparent !important;
+  }
+
+  :global(.ant-btn-dangerous:hover:not(:disabled)) {
+    color: #b8363a !important;
+    background: #fdeeee !important;
+  }
+
+  :global(.ant-btn-dangerous:active:not(:disabled)) {
+    color: #9d2b2f !important;
+    background: #fbe0e0 !important;
+  }
+
+  :global(.ant-btn-text:not(.ant-btn-dangerous)) {
+    color: #7183a1 !important;
+    background: transparent !important;
+  }
+
+  :global(.ant-btn-text:not(.ant-btn-dangerous):hover:not(:disabled)) {
+    color: #4267b9 !important;
+    background: #f1f5fd !important;
+  }
+
+  // A onda de clique do antd herda o colorPrimary roxo do tema e piscava roxo por cima do
+  // azul. Aqui ela acompanha a cor real do botão.
+  :global(.ant-wave) {
+    --wave-color: rgba(51, 97, 255, .45);
   }
 }
 
@@ -153,16 +239,36 @@
 }
 
 .title {
+  display: flex;
+  min-width: 0;
+  gap: 10px;
+  align-items: center;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.title {
   color: #52668d;
   font-size: 16px;
   font-weight: 800;
   line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Marcador ao lado do título, como no gsap-app.
+.titleDot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #33bfff;
+}
+
+// Selo de "já é a principal", no lugar do botão de promover.
+.primaryTag {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: #1d8a68;
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .subtitle {

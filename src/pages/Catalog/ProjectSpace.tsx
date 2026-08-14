@@ -1,6 +1,6 @@
 import { FC, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Input, Select, Spin, message } from 'antd';
-import { FiArrowLeft, FiDownload, FiEdit2, FiFilter, FiMaximize2, FiMessageCircle, FiMoreVertical, FiPause, FiPlay, FiSend, FiUpload } from 'react-icons/fi';
+import { FiArrowLeft, FiDownload, FiEdit2, FiFilter, FiMaximize2, FiMessageCircle, FiMoreVertical, FiPause, FiPlay, FiSend, FiStar, FiUpload } from 'react-icons/fi';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppSelector } from '../../store/store';
 import { useArtist } from '../../hooks/useArtist';
@@ -39,10 +39,11 @@ type VersionRowProps = {
   onSeek: (version: CatalogVersion, time: number) => void;
   onExpand: (version: CatalogVersion) => void;
   onEdit: (version: CatalogVersion) => void;
+  onTogglePrimary: (version: CatalogVersion) => void;
 };
 
 
-const VersionRow: FC<VersionRowProps> = ({ version, isPrimary, isPlaying, currentTime, onPlay, onSeek, onExpand, onEdit }) => {
+const VersionRow: FC<VersionRowProps> = ({ version, isPrimary, isPlaying, currentTime, onPlay, onSeek, onExpand, onEdit, onTogglePrimary }) => {
   const stageLabel = getStageLabel(version.stage);
   const versionTitle = version.title || stageLabel;
   const commentsCount = version.comments?.length || 0;
@@ -56,7 +57,18 @@ const VersionRow: FC<VersionRowProps> = ({ version, isPrimary, isPlaying, curren
         </div>
         <div className={styles.versionBadges}>
           <small>V{version.version_number}</small>
-          {isPrimary && <em>Principal</em>}
+          {/* Estrela em vez de etiqueta: além de dizer qual é a principal, marca outra sem
+              abrir o modal de edição. */}
+          <button
+            type='button'
+            className={`${styles.primaryStar} ${isPrimary ? styles.primaryStarOn : ''}`}
+            onClick={() => onTogglePrimary(version)}
+            aria-pressed={isPrimary}
+            aria-label={isPrimary ? `V${version.version_number} é a versão principal` : `Tornar V${version.version_number} a versão principal`}
+            title={isPrimary ? 'Versão principal' : 'Tornar principal'}
+          >
+            <FiStar />
+          </button>
         </div>
       </div>
 
@@ -111,6 +123,8 @@ const ProjectSpace: FC = () => {
   const [project, setProject] = useState<CatalogProject | null>(null);
   const [loading, setLoading] = useState(true);
   const [versionModal, setVersionModal] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const uploadRef = useRef<HTMLInputElement>(null);
   const [editingVersion, setEditingVersion] = useState<CatalogVersion | null>(null);
   const [projectModal, setProjectModal] = useState(false);
   // O modal da música pede gênero e responsável; o Espaço Jam não carregava nenhum dos dois.
@@ -198,13 +212,50 @@ const ProjectSpace: FC = () => {
   }, [project, saveProject]);
 
 
-  // Os campos da versão moram no VersionModal; aqui só dizemos QUAL versão abrir.
+  // Os campos da versão moram no VersionModal; aqui só dizemos QUAL versão abrir. Versões
+  // antigas não tinham título (o nome vinha da etapa); abre com esse nome já preenchido para
+  // a pessoa não encarar um campo obrigatório vazio.
   const openVersionEditor = (version: CatalogVersion) => {
     if (!canCollaborateJam) {
       message.error('Você não tem permissão para editar esta versão');
       return;
     }
-    setEditingVersion(version);
+    setEditingVersion({ ...version, title: version.title || getStageLabel(version.stage) });
+  };
+
+  const togglePrimary = async (version: CatalogVersion) => {
+    if (!project || !canCollaborateJam || version.id === project.primary_version_id) return;
+    try {
+      await catalogDb.setPrimaryVersion(project.id, version.id);
+      await refresh();
+    } catch { message.error('Não foi possível definir a versão principal'); }
+  };
+
+  // Excluir a versão principal deixaria a música sem faixa principal (o banco zera o ponteiro),
+  // e ela apareceria muda no catálogo. Promove a mais recente que sobrou.
+  const handleVersionDeleted = async () => {
+    if (!project) return;
+    try {
+      const next = await catalogDb.getCatalogProject(project.id);
+      const remaining = (next.versions || []).slice().sort((a, b) => b.version_number - a.version_number);
+      if (!next.primary_version_id && remaining.length) {
+        await catalogDb.setPrimaryVersion(next.id, remaining[0].id);
+      }
+    } catch { /* o refresh abaixo mostra o estado real de qualquer jeito */ }
+    await refresh();
+  };
+
+  // O botão Upload abre direto os arquivos do dispositivo: escolher o áudio é o que a pessoa
+  // veio fazer. O modal só aparece depois, já com título e duração vindos do arquivo — resta
+  // conferir e enviar.
+  const startUpload = () => uploadRef.current?.click();
+  const onUploadPicked = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const chosen = event.target.files?.[0];
+    // Zera o input para que escolher o MESMO arquivo de novo continue disparando o change.
+    event.target.value = '';
+    if (!chosen) return;
+    setUploadFile(chosen);
+    setVersionModal(true);
   };
 
 
@@ -280,9 +331,11 @@ const ProjectSpace: FC = () => {
         <div className={styles.titleBlock}>
           <div className={styles.titleLine}>
             <h1>{project.title}</h1>
-            <span>Espaço JAM</span>
           </div>
         </div>
+        {/* Centralizado no header inteiro (absoluto), não entre título e status: assim a
+            etiqueta fica no meio da tela mesmo com títulos de larguras diferentes. */}
+        <span className={styles.spaceLabel}>Espaço JAM</span>
         {canUpdateProject && <span className={`${styles.autosave} ${styles[`autosave${saveState}`]}`} aria-live='polite'>{saveState === 'saving' ? 'Salvando…' : saveState === 'error' ? 'Falha ao salvar' : saveState === 'saved' ? 'Salvo automaticamente' : ''}</span>}
         {canUpdateProject ? <Select className={styles.statusPill} value={project.status} options={CATALOG_STATUS_OPTIONS.map((entry) => ({ value: entry.id, label: entry.label }))} onChange={(status) => setProject({ ...project, status })} /> : <span className={styles.statusReadOnly}>{CATALOG_STATUS[project.status as keyof typeof CATALOG_STATUS]?.label || project.status}</span>}
         {canUpdateProject && <button type='button' className={styles.editProject} onClick={openProjectEditor} aria-label='Editar informações do Espaço JAM' title='Editar informações'><FiEdit2 /></button>}
@@ -297,12 +350,13 @@ const ProjectSpace: FC = () => {
           </div>
 
           <div className={styles.sectionHeader}>
-            {canCollaborateJam && <Button className={styles.uploadButton} type='primary' icon={<FiUpload />} onClick={() => setVersionModal(true)}>Upload</Button>}
+            {canCollaborateJam && <Button className={styles.uploadButton} type='primary' icon={<FiUpload />} onClick={startUpload}>Upload</Button>}
+            <input ref={uploadRef} type='file' accept='audio/*' style={{ display: 'none' }} onChange={onUploadPicked} />
             <button type='button' className={styles.filterButton} aria-label='Filtrar versões' title='Filtrar versões'><FiFilter /></button>
           </div>
 
           <div className={styles.versionList}>
-            {versions.length ? versions.map((version) => <VersionRow key={version.id} version={version} isPrimary={version.id === project.primary_version_id} isPlaying={playerCurrentId === version.id && playerPlaying} currentTime={playerCurrentId === version.id ? playerTime : 0} onPlay={playVersion} onSeek={seekVersion} onExpand={openVersion} onEdit={openVersionEditor} />) : <div className={styles.emptyVersions}><strong>Este Espaço JAM ainda não tem uploads.</strong><span>Envie a primeira guia, beat ou mix para começar a colaboração.</span></div>}
+            {versions.length ? versions.map((version) => <VersionRow key={version.id} version={version} isPrimary={version.id === project.primary_version_id} isPlaying={playerCurrentId === version.id && playerPlaying} currentTime={playerCurrentId === version.id ? playerTime : 0} onPlay={playVersion} onSeek={seekVersion} onExpand={openVersion} onEdit={openVersionEditor} onTogglePrimary={togglePrimary} />) : <div className={styles.emptyVersions}><strong>Este Espaço JAM ainda não tem uploads.</strong><span>Envie a primeira guia, beat ou mix para começar a colaboração.</span></div>}
           </div>
         </div>
 
@@ -335,13 +389,14 @@ const ProjectSpace: FC = () => {
           projectId={project.id}
           projectTitle={project.title}
           nextVersionNumber={versions.length ? Math.max(...versions.map((v) => v.version_number)) + 1 : 1}
+          initialFile={uploadFile}
           inherit={{ bpm: project.bpm, key: project.key, genre: project.genre }}
           author={{
             id: user?.id || null,
             name: (user?.user_metadata as any)?.full_name || (user?.user_metadata as any)?.name || user?.email || 'Você',
             avatar: (user?.user_metadata as any)?.avatar_url || (user?.user_metadata as any)?.picture || null,
           }}
-          onClose={() => setVersionModal(false)}
+          onClose={() => { setVersionModal(false); setUploadFile(null); }}
           onSaved={refresh}
         />
       )}
@@ -353,8 +408,10 @@ const ProjectSpace: FC = () => {
           projectId={project.id}
           projectTitle={project.title}
           version={editingVersion}
+          isPrimary={Boolean(editingVersion && editingVersion.id === project.primary_version_id)}
           onClose={() => setEditingVersion(null)}
           onSaved={refresh}
+          onDeleted={handleVersionDeleted}
         />
       )}
 

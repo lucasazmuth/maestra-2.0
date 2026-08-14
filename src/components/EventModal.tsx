@@ -106,6 +106,7 @@ export const EventModal: FC<Props> = ({
         <div className={modalStyles.heading}>
           <span className={modalStyles.kicker}>Agenda</span>
           <span className={modalStyles.title}>
+            <i className={modalStyles.titleDot} aria-hidden />
             {draft.title?.trim() || (event ? 'Editar compromisso' : 'Novo compromisso')}
           </span>
           <span className={modalStyles.subtitle}>

@@ -291,6 +291,15 @@ export const updateCatalogVersion = async (id: string, patch: Partial<CatalogVer
   return data as CatalogVersion;
 };
 
+/** Marca qual gravação é a principal — a que toca por padrão e representa a música. */
+export const setPrimaryVersion = async (projectId: string, versionId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('catalog_projects')
+    .update({ primary_version_id: versionId, updated_at: new Date().toISOString() })
+    .eq('id', projectId);
+  if (error) throw error;
+};
+
 export const deleteCatalogVersion = async (id: string): Promise<void> => {
   const { error } = await supabase.from('catalog_versions').delete().eq('id', id);
   if (error) throw error;

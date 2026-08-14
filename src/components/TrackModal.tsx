@@ -401,6 +401,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
         <div className={modalStyles.heading}>
           <span className={modalStyles.kicker}>Música</span>
           <span className={modalStyles.title}>
+            <i className={modalStyles.titleDot} aria-hidden />
             {draft.title?.trim() || (item ? 'Editar música' : 'Nova música')}
           </span>
           <span className={modalStyles.subtitle}>

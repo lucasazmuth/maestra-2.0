@@ -219,7 +219,7 @@ const Team: FC = () => {
         title={
           <div className={modalStyles.heading}>
             <span className={modalStyles.kicker}>Membro da equipe</span>
-            <span className={modalStyles.title}>{selectedMember?.name || selectedMember?.email}</span>
+            <span className={modalStyles.title}><i className={modalStyles.titleDot} aria-hidden />{selectedMember?.name || selectedMember?.email}</span>
             <span className={modalStyles.subtitle}>Revise os dados e os acessos desta pessoa.</span>
           </div>
         }
@@ -316,7 +316,7 @@ const Team: FC = () => {
         title={
           <div className={modalStyles.heading}>
             <span className={modalStyles.kicker}>Equipe</span>
-            <span className={modalStyles.title}>Convidar membro</span>
+            <span className={modalStyles.title}><i className={modalStyles.titleDot} aria-hidden />Convidar membro</span>
             <span className={modalStyles.subtitle}>Envie um convite e defina os acessos iniciais.</span>
           </div>
         }
