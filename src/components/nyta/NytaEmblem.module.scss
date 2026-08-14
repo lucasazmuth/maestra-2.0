@@ -1,61 +1,101 @@
-// Animação de "processando" do emblema da Nyta (ver NytaEmblem.tsx).
-// Timings seguem o design system do redesign: cubic-bezier(0.4, 0, 0.2, 1).
+// Formas e animação do emblema da Nyta (ver NytaEmblem.tsx).
+//
+// Cada glifo do set Group 50 do design, decomposto em DUAS camadas de 6 vértices cada — o morph
+// de clip-path exige o mesmo número de pontos em todos os quadros, e todo glifo do set é a
+// união de dois polígonos. Coordenadas em % do tile 24×24 original. Todos os polígonos são
+// listados em sentido horário a partir do vértice mais próximo do canto superior esquerdo,
+// senão o morph vira o polígono do avesso no meio do caminho.
+
+// 1. Quadrado — as duas metades diagonais.
+$sq-a: polygon(0% 0%, 50% 50%, 100% 100%, 50% 100%, 0% 100%, 0% 50%);
+$sq-b: polygon(0% 0%, 50% 0%, 100% 0%, 100% 50%, 100% 100%, 50% 50%);
+
+// 2. Moldura — dois "L" encaixados (esquerda+base / topo+direita).
+$fr-a: polygon(0% 0%, 25% 0%, 25% 75%, 100% 75%, 100% 100%, 0% 100%);
+$fr-b: polygon(25% 0%, 100% 0%, 100% 75%, 75% 75%, 75% 25%, 25% 25%);
+
+// 3. Triângulo (ponta pra baixo) — metades esquerda/direita.
+$tr-a: polygon(0% 0%, 25% 0%, 50% 0%, 50% 50%, 50% 100%, 25% 50%);
+$tr-b: polygon(50% 0%, 75% 0%, 100% 0%, 75% 50%, 50% 100%, 50% 50%);
+
+// 4. Zigue-zague em M — os dois picos.
+$zz-a: polygon(25.5% 0%, 37.7% 50%, 50% 100%, 25% 100%, 0% 100%, 12.7% 50%);
+$zz-b: polygon(75.5% 0%, 87.7% 50%, 100% 100%, 75% 100%, 50% 100%, 62.7% 50%);
+
+// 5. Diagonal (o canto do N) — triângulo grande + triângulo menor.
+$dg-a: polygon(0% 0%, 50% 0%, 100% 0%, 100% 50%, 100% 100%, 50% 50%);
+$dg-b: polygon(0% 50%, 25% 50%, 50% 50%, 50% 75%, 50% 100%, 25% 75%);
+
+// 6. O N da Maestra — os mesmos dois triângulos do símbolo da marca, com o fio de respiro
+// entre eles (98.8/99.2) que o arquivo original tem.
+$nn-a: polygon(0% 0%, 49.4% 50%, 98.8% 100%, 49.4% 100%, 0% 100%, 0% 50%);
+$nn-b: polygon(57.9% 0.8%, 78.5% 0.8%, 99.2% 0.8%, 99.2% 50%, 99.2% 100%, 78.5% 50%);
 
 .emblem {
+  position: relative;
   display: block;
   width: 100%;
   height: 100%;
 }
 
-.core {
-  transform-box: fill-box;
-  transform-origin: center;
-  // Em repouso o núcleo fica discreto — um brilho, não um farol.
-  opacity: 0.9;
+.layerA,
+.layerB {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #3361ff, #7420f1);
 }
 
+// Repouso: o emblema é o N da marca.
+.layerA {
+  clip-path: $nn-a;
+}
+
+.layerB {
+  clip-path: $nn-b;
+}
+
+.onDark .layerA,
+.onDark .layerB {
+  background: #fff;
+}
+
+// Pensando: o N se desmonta nas primitivas e se remonta. Cada forma segura ~490ms e vira a
+// próxima em ~210ms (slots de 1/6 do ciclo, morph nos 5% finais de cada slot) — pausa longa,
+// transição seca: corte duro, não flutuação.
 .thinking {
-  // As folhas apagam e acendem uma por vez em sentido horário — o delay por índice (inline,
-  // no componente, 0.35s entre folhas) percorre o ciclo de 1.4s, então a "sombra" dá uma
-  // volta completa por ciclo, como um spinner.
-  .leaf {
-    animation: nytaEmblemLeaf 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  .layerA {
+    animation: nytaEmblemShapesA 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
 
-  .core {
-    animation: nytaEmblemCore 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  .layerB {
+    animation: nytaEmblemShapesB 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
 }
 
-@keyframes nytaEmblemLeaf {
-  0%,
-  50%,
-  100% {
-    opacity: 1;
-  }
-
-  18% {
-    opacity: 0.3;
-  }
+@keyframes nytaEmblemShapesA {
+  0%, 11.7% { clip-path: $nn-a; }
+  16.7%, 28.3% { clip-path: $sq-a; }
+  33.3%, 45% { clip-path: $fr-a; }
+  50%, 61.7% { clip-path: $tr-a; }
+  66.7%, 78.3% { clip-path: $zz-a; }
+  83.3%, 95% { clip-path: $dg-a; }
+  100% { clip-path: $nn-a; }
 }
 
-@keyframes nytaEmblemCore {
-  0%,
-  100% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.6);
-  }
+@keyframes nytaEmblemShapesB {
+  0%, 11.7% { clip-path: $nn-b; }
+  16.7%, 28.3% { clip-path: $sq-b; }
+  33.3%, 45% { clip-path: $fr-b; }
+  50%, 61.7% { clip-path: $tr-b; }
+  66.7%, 78.3% { clip-path: $zz-b; }
+  83.3%, 95% { clip-path: $dg-b; }
+  100% { clip-path: $nn-b; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .thinking {
-    .leaf,
-    .core {
+    .layerA,
+    .layerB {
       animation: none;
     }
   }
