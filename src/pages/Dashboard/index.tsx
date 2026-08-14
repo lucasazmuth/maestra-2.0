@@ -49,6 +49,7 @@ const Dashboard: FC = () => {
     id: album.id,
     name: album.name,
     album: 'Spotify',
+    album_image: album.image,
   }));
   const performanceRows = [
     ...draftTracks.map((track) => ({
@@ -113,7 +114,10 @@ const Dashboard: FC = () => {
             <div>
               {activeTracks.slice(0, 4).map((track, index) => (
                 <button type='button' key={track.id || track.name} style={{ '--release': ['#8833ff', '#33bfff', '#ff6633', '#29cc39'][index % 4] } as CSSProperties}>
-                  <i />
+                  {/* `<i>` é o círculo decorativo do design de referência (sempre translúcido,
+                      sem imagem). Com a capa disponível (album_image/image), ela some por trás
+                      da própria arte — sem capa, cai de volta no círculo liso. */}
+                  <i style={track.album_image ? { backgroundImage: `url(${track.album_image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined} />
                   <span><strong>{track.name}</strong><small>{track.album || 'Spotify'}</small></span>
                   <b>{index === 0 ? 'Em destaque' : 'Publicado'}</b>
                   <em>›</em>
