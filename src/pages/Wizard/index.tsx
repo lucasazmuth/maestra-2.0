@@ -261,6 +261,19 @@ const Wizard: FC = () => {
               </button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              {/* Voltar à pergunta anterior — só aparece depois da 1ª pergunta respondida.
+                  Vem antes do "recomeçar": é a ação frequente e reversível, enquanto o
+                  recomeçar é destrutivo e fica mais longe do alcance imediato. */}
+              {canGoBack && (
+                <button
+                  className='wiz-back-btn'
+                  title='Voltar à pergunta anterior'
+                  aria-label='Voltar à pergunta anterior'
+                  onClick={() => goBackRef.current()}
+                >
+                  <FiArrowLeft size={18} />
+                </button>
+              )}
               {/* Recomeçar do zero — só aparece quando há progresso; pede confirmação (destrutivo). */}
               {hasProgress && (
                 <button
@@ -270,17 +283,6 @@ const Wizard: FC = () => {
                   onClick={confirmReset}
                 >
                   <FiRotateCcw size={17} />
-                </button>
-              )}
-              {/* Voltar à pergunta anterior — só aparece depois da 1ª pergunta respondida. */}
-              {canGoBack && (
-                <button
-                  className='wiz-back-btn'
-                  title='Voltar à pergunta anterior'
-                  aria-label='Voltar à pergunta anterior'
-                  onClick={() => goBackRef.current()}
-                >
-                  <FiArrowLeft size={18} />
                 </button>
               )}
               <button
