@@ -7,101 +7,55 @@
   height: 100%;
 }
 
-// `transform-box: view-box` deixa o transform-origin ser lido em unidades da viewBox (72×72),
-// que é o que permite fixar o pivô no pescoço em vez do centro da própria bbox.
-.head {
-  transform-box: view-box;
-  transform-origin: 36.5px 40px;
-}
-
-.eyes {
-  transform-box: view-box;
-  transform-origin: 36.5px 21px;
-}
-
-.dot {
+.core {
   transform-box: fill-box;
   transform-origin: center;
+  // Em repouso o núcleo fica discreto — um brilho, não um farol.
+  opacity: 0.9;
 }
 
 .thinking {
-  .head {
-    animation: nytaEmblemTilt 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  // As folhas apagam e acendem uma por vez em sentido horário — o delay por índice (inline,
+  // no componente, 0.35s entre folhas) percorre o ciclo de 1.4s, então a "sombra" dá uma
+  // volta completa por ciclo, como um spinner.
+  .leaf {
+    animation: nytaEmblemLeaf 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
 
-  // Os olhos ficam dentro da cabeça: a varredura lateral se soma à inclinação, então o olhar
-  // chega antes e a cabeça acompanha — que é como a gente lê "procurando alguma coisa".
-  .eyes {
-    animation: nytaEmblemScan 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
-
-  .dot {
-    animation: nytaEmblemDot 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  .core {
+    animation: nytaEmblemCore 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
 }
 
-@keyframes nytaEmblemTilt {
+@keyframes nytaEmblemLeaf {
   0%,
+  50%,
   100% {
-    transform: rotate(0deg);
+    opacity: 1;
   }
 
-  22% {
-    transform: rotate(-5.5deg) translateY(-0.6px);
-  }
-
-  55% {
-    transform: rotate(4.5deg) translateY(-0.3px);
-  }
-
-  78% {
-    transform: rotate(-1.5deg);
+  18% {
+    opacity: 0.3;
   }
 }
 
-@keyframes nytaEmblemScan {
+@keyframes nytaEmblemCore {
   0%,
   100% {
-    transform: translateX(0);
-  }
-
-  20% {
-    transform: translateX(-2.4px);
+    opacity: 0.9;
+    transform: scale(1);
   }
 
   50% {
-    transform: translateX(2.6px);
-  }
-
-  75% {
-    transform: translateX(-1px);
-  }
-}
-
-// Cada ponto apaga e acende no ciano; o delay por índice (inline, no componente) é o que faz
-// os três acenderem um por um em vez de piscarem juntos.
-@keyframes nytaEmblemDot {
-  0%,
-  62%,
-  100% {
-    fill: #162550;
-    opacity: 0.25;
-    transform: scale(0.7);
-  }
-
-  16%,
-  40% {
-    fill: #04fed1;
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1.6);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .thinking {
-    .head,
-    .eyes,
-    .dot {
+    .leaf,
+    .core {
       animation: none;
     }
   }
