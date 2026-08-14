@@ -10,7 +10,7 @@ import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import PendingInvites from '../../components/PendingInvites';
 import { Spinner } from '../../components/spinner/spinner';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
-import { isOnboardingComplete } from '../../constants/maestra';
+import { artistEntryRoute, isOnboardingComplete } from '../../constants/maestra';
 import styles from './Artists.module.scss';
 
 const Artists: FC = () => {
@@ -26,16 +26,6 @@ const Artists: FC = () => {
   useEffect(() => {
     if (user?.id) dispatch(artistsActions.fetchArtists(user.id));
   }, [user?.id, dispatch]);
-
-  // Para onde cada card leva, na ordem em que os bloqueios importam: cobrança em aberto
-  // trava tudo; sem planejamento concluído, manda direto pro wizard (mesmo critério do selo
-  // "Planejamento não iniciado" no card, via isOnboardingComplete) — só depois disso o
-  // dashboard fica acessível.
-  const routeFor = (a: Parameters<typeof isOnboardingComplete>[0] & { id: string; is_locked?: boolean; role?: string }) => {
-    if (a.role !== 'member' && a.is_locked) return `/artists/${a.id}/desbloquear`;
-    if (!isOnboardingComplete(a)) return `/artists/${a.id}/wizard`;
-    return `/artists/${a.id}`;
-  };
 
   // Rate limit: verifica se pode criar via hook (limite de pendentes + cooldown progressivo)
   const { canCreate: allowed, reason, pendingCount, cooldownRemainingSeconds, loading: rlLoading, error: rlError } = useCanCreateArtist();
@@ -108,7 +98,7 @@ const Artists: FC = () => {
                   <button
                     className={styles.card}
                     type='button'
-                    onClick={() => navigate(routeFor(a))}
+                    onClick={() => navigate(artistEntryRoute(a))}
                   >
                     <img
                       src={sp?.image || ARTISTS_DEFAULT_IMAGE}

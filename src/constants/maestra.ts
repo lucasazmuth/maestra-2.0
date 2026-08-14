@@ -50,6 +50,18 @@ export const isOnboardingComplete = (artist?: Artist | null): boolean => {
   return (c.step ?? 0) >= WIZARD_TOTAL_STEPS;
 };
 
+// Para onde abrir um perfil, na ordem em que os bloqueios importam: cobrança em aberto trava
+// tudo; sem planejamento concluído, o destino é o wizard — o dashboard só faz sentido depois
+// que existe um plano pra ele mostrar.
+//
+// Mora aqui porque tem mais de uma porta de entrada pro perfil (a lista de artistas e a pilha
+// de avatares do rail); com a regra copiada em cada uma, elas divergem na primeira mudança.
+export const artistEntryRoute = (artist: Artist): string => {
+  if (artist.role !== 'member' && artist.is_locked) return `/artists/${artist.id}/desbloquear`;
+  if (!isOnboardingComplete(artist)) return `/artists/${artist.id}/wizard`;
+  return `/artists/${artist.id}`;
+};
+
 export const CATALOG_STATUS: Record<CatalogStatus, { label: string; color: string }> = {
   composition: { label: 'Composição', color: '#6b7280' },
   recording: { label: 'Gravação', color: '#e91429' },

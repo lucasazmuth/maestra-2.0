@@ -13,7 +13,7 @@ import { LocalPlayerBar } from '../LocalPlayerBar';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { uiActions } from '../../store/slices/ui';
 import { fetchSubscriptionStatus, fetchPlanConfig } from '../../store/slices/subscription';
-import { PAYWALL_DISABLED, isOnboardingComplete } from '../../constants/maestra';
+import { PAYWALL_DISABLED, artistEntryRoute, isOnboardingComplete } from '../../constants/maestra';
 import useIsMobile from '../../utils/isMobile';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { useNytaModal } from '../../hooks/useNytaModal';
@@ -81,7 +81,6 @@ const ProfileMenuButton: FC<{
   onClick: () => void;
 }> = ({ active, icon, label, locked, onClick }) => (
   <button type='button' className={active ? 'profile-current' : ''} onClick={onClick} title={locked ? 'Bloqueado' : undefined}>
-    <i />
     <span className='menu-icon'>{icon}</span>
     {typeof label === 'string' ? label : <span className='menu-text'>{label}</span>}
   </button>
@@ -339,8 +338,8 @@ export const AppLayout: FC = memo(() => {
             <div className='rail-people'>
               {artists.slice(0, 4).map((artist) => (
                 artist.content?.spotifyProfile?.image
-                  ? <span key={artist.id} className={`avatar avatar-big avatar-image${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(`/artists/${artist.id}`)}><img src={artist.content.spotifyProfile.image} alt={artist.name} /></span>
-                  : <span key={artist.id} className={`avatar avatar-big${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(`/artists/${artist.id}`)}>{firstInitials(artist.name)}</span>
+                  ? <span key={artist.id} className={`avatar avatar-big avatar-image${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(artistEntryRoute(artist))}><img src={artist.content.spotifyProfile.image} alt={artist.name} /></span>
+                  : <span key={artist.id} className={`avatar avatar-big${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(artistEntryRoute(artist))}>{firstInitials(artist.name)}</span>
               ))}
               <button type='button'>＋</button>
             </div>
