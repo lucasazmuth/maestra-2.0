@@ -124,13 +124,32 @@
     display: flex;
     min-width: 0;
     flex: 1;
-    flex-direction: column;
-    gap: 2px;
-    padding: 9px 4px 9px 11px;
+    gap: 9px;
+    align-items: center;
+    padding: 9px 4px 9px 10px;
     border: 0;
     background: none;
     cursor: pointer;
     text-align: left;
+  }
+
+  // Rosto de quem abriu a conversa.
+  &__author {
+    width: 26px;
+    height: 26px;
+    flex: none;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #eaf0ff;
+    object-fit: cover;
+  }
+
+  &__lines {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
   }
 
   &__name {

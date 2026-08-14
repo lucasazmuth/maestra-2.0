@@ -260,6 +260,21 @@
   color: #4267b9;
 }
 
+/* Avatar de quem escreveu, ao lado da própria mensagem. Um perfil pode ter várias pessoas da
+   equipe conversando com a Nyta sobre o mesmo artista, e sem isto o histórico não diz quem
+   perguntou o quê. Fica no mesmo tamanho do emblema da Nyta do outro lado, pra as duas pontas
+   da conversa terem o mesmo peso. */
+.nyta-surface .nyta-row--user { align-items: flex-end; gap: 10px; }
+.nyta-surface .nyta-row--user .nyta-user-avatar {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #eaf0ff;
+}
+
 .nyta-surface .nyta-message-list__item--assistant,
 .nyta-surface .nyta-message-list__item--user {
   animation: nytaReferenceMessageIn 0.25s ease both;

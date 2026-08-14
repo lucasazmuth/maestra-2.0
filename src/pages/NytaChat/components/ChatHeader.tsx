@@ -4,6 +4,7 @@ import { Popconfirm } from 'antd';
 import { FiArrowLeft, FiTrash2 } from 'react-icons/fi';
 
 import { NytaAvatar } from '../../Wizard/chat/nytaPersona';
+import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
 import './ChatHeader.scss';
 
 // Cabeçalho da página do chat em tela cheia.
@@ -16,6 +17,7 @@ import './ChatHeader.scss';
 
 interface ChatHeaderProps {
   artistName: string;
+  artistImage?: string;
   onClear: () => void;
   // Uso diário (X/limite). Some quando não há informação — o contador só chega depois da
   // primeira resposta da Nyta no dia.
@@ -23,7 +25,7 @@ interface ChatHeaderProps {
   dailyLimit?: number | null;
 }
 
-export const ChatHeader: FC<ChatHeaderProps> = ({ artistName, onClear, dailyCount, dailyLimit }) => {
+export const ChatHeader: FC<ChatHeaderProps> = ({ artistName, artistImage, onClear, dailyCount, dailyLimit }) => {
   const navigate = useNavigate();
   const { id: artistId } = useParams<{ id: string }>();
   const showUsage = typeof dailyCount === 'number' && typeof dailyLimit === 'number';
@@ -44,10 +46,18 @@ export const ChatHeader: FC<ChatHeaderProps> = ({ artistName, onClear, dailyCoun
 
       <div className='chat-header__id'>
         <NytaAvatar size={30} />
-        <div className='chat-header__titles'>
-          <h1 className='chat-header__title'>Nyta IA</h1>
-          {artistName && <span className='chat-header__subtitle'>{artistName}</span>}
-        </div>
+        <h1 className='chat-header__title'>Nyta IA</h1>
+
+        {/* De quem é esta conversa. A Nyta responde com os dados do artista selecionado, e o
+            nome solto embaixo do título não deixava isso claro — parecia legenda. Com a foto e
+            o "sobre", a pessoa vê de imediato sobre qual perfil está perguntando. */}
+        {artistName && (
+          <div className='chat-header__scope' title={`Conversa sobre ${artistName}`}>
+            <span className='chat-header__scope-label'>sobre</span>
+            <img className='chat-header__scope-avatar' src={artistImage || ARTISTS_DEFAULT_IMAGE} alt='' aria-hidden />
+            <span className='chat-header__scope-name'>{artistName}</span>
+          </div>
+        )}
       </div>
 
       <div className='chat-header__actions'>

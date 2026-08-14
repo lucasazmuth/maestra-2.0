@@ -40,14 +40,8 @@
     align-items: center;
   }
 
-  &__titles {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 1px;
-  }
-
   &__title {
+    flex: none;
     margin: 0;
     color: #52688f;
     font-size: 14px;
@@ -55,11 +49,39 @@
     line-height: 1.25;
   }
 
-  &__subtitle {
-    overflow: hidden;
+  // Chip do artista em foco: a foto é o que se reconhece de longe, o "sobre" dá a relação.
+  &__scope {
+    display: flex;
+    min-width: 0;
+    gap: 7px;
+    align-items: center;
+    padding: 4px 11px 4px 5px;
+    border: 1px solid #e3eaf3;
+    border-radius: 20px;
+    background: #f7f9fc;
+  }
+
+  &__scope-label {
+    flex: none;
     color: #9aabc4;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
+  }
+
+  &__scope-avatar {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  &__scope-name {
+    overflow: hidden;
+    color: #52688f;
+    font-size: 12px;
+    font-weight: 800;
     text-overflow: ellipsis;
     white-space: nowrap;
   }

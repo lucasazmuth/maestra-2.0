@@ -80,6 +80,7 @@ const NytaChatPage: FC = () => {
         <div className="nyta-chat-page__header">
           <ChatHeader
             artistName={artist?.name || ''}
+            artistImage={artist?.content?.spotifyProfile?.image}
             onClear={clearConversation}
             dailyCount={rateLimitInfo?.count ?? null}
             dailyLimit={rateLimitInfo?.limit ?? null}
@@ -125,6 +126,7 @@ const NytaChatPage: FC = () => {
             onLoadOlder={loadOlderMessages}
             onConfirmTool={confirmTool}
             onCancelTool={cancelTool}
+            showAuthorAvatar
           />
         ) : (
           <div className="nyta-chat-page__greeting">

@@ -27,9 +27,16 @@ export const NytaBubble: FC<{ children: ReactNode; streaming?: boolean }> = ({ c
   </div>
 );
 
-export const UserBubble: FC<{ children: ReactNode }> = ({ children }) => (
+// `avatar` é opcional de propósito: no chat da Nyta ele identifica QUEM da equipe escreveu — um
+// perfil pode ter várias pessoas conversando sobre o mesmo artista. No wizard não entra: lá a
+// conversa é sempre entre a Nyta e quem está preenchendo, e um avatar repetido a cada resposta
+// só faria barulho.
+export const UserBubble: FC<{ children: ReactNode; avatar?: { src: string; name: string } }> = ({ children, avatar }) => (
   <div className='nyta-row nyta-row--user'>
     <div className='nyta-bubble nyta-bubble--user'>{children}</div>
+    {avatar && (
+      <img className='nyta-user-avatar' src={avatar.src} alt={avatar.name} title={avatar.name} />
+    )}
   </div>
 );
 

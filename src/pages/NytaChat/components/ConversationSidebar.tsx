@@ -4,6 +4,8 @@ import { Dropdown, Popconfirm } from 'antd';
 import { FiArrowLeft, FiEdit2, FiMoreHorizontal, FiPlus, FiTrash2 } from 'react-icons/fi';
 
 import type { NytaConversationSummary } from '../../../hooks/useNytaConversations';
+import { useAppSelector } from '../../../store/store';
+import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
 import './ConversationSidebar.scss';
 
 // Histórico de conversas da Nyta, na lateral da página em tela cheia.
@@ -37,6 +39,12 @@ export const ConversationSidebar: FC<ConversationSidebarProps> = ({
 }) => {
   const navigate = useNavigate();
   const { id: artistId } = useParams<{ id: string }>();
+  // Autoria na lista: um perfil pode ter várias pessoas da equipe conversando com a Nyta, e sem
+  // o rosto de quem abriu, o histórico não diz de quem é cada conversa.
+  const user = useAppSelector((s) => s.auth.user);
+  const meta = (user?.user_metadata || {}) as Record<string, unknown>;
+  const myAvatar = (meta.avatar_url as string) || (meta.picture as string) || ARTISTS_DEFAULT_IMAGE;
+  const myName = (meta.full_name as string) || (meta.name as string) || user?.email || 'Você';
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [menuId, setMenuId] = useState<string | null>(null);
@@ -109,8 +117,17 @@ export const ConversationSidebar: FC<ConversationSidebarProps> = ({
                     onClick={() => onSelect(c.id)}
                     aria-current={c.id === activeId ? 'true' : undefined}
                   >
-                    <span className='nyta-conversations__name'>{c.title || 'Nova conversa'}</span>
-                    <time className='nyta-conversations__time' dateTime={c.updatedAt}>{shortDate(c.updatedAt)}</time>
+                    <img
+                      className='nyta-conversations__author'
+                      src={c.userId === user?.id ? myAvatar : ARTISTS_DEFAULT_IMAGE}
+                      alt=''
+                      title={c.userId === user?.id ? myName : 'Outro integrante da equipe'}
+                      aria-hidden
+                    />
+                    <span className='nyta-conversations__lines'>
+                      <span className='nyta-conversations__name'>{c.title || 'Nova conversa'}</span>
+                      <time className='nyta-conversations__time' dateTime={c.updatedAt}>{shortDate(c.updatedAt)}</time>
+                    </span>
                   </button>
                 )}
 

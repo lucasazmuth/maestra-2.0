@@ -5,6 +5,8 @@ import Markdown from 'react-markdown';
 import { NytaBubble, UserBubble, TypingIndicator } from '../../Wizard/chat/ChatMessage';
 import { NytaAvatar } from '../../Wizard/chat/nytaPersona';
 import { NytaChatMessage, PendingToolCall } from '../../../store/slices/nytaChat';
+import { useAppSelector } from '../../../store/store';
+import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
 import { sanitizeNytaContent } from '../../../utils/sanitizeNytaContent';
 import { ToolConfirmationCard } from './ToolConfirmationCard';
 
@@ -24,6 +26,10 @@ export interface MessageListProps {
   // No limite diário, o card do InputBar já explica — não mostramos o balão de erro da
   // mensagem que não passou (evita "erro em cima de erro").
   suppressErrorBubbles?: boolean;
+  // Mostra o avatar de quem escreveu ao lado das mensagens do usuário. Ligado na página em
+  // tela cheia, onde o histórico fica; desligado no modal, que é conversa de passagem e tem
+  // largura curta demais pra mais um elemento por linha.
+  showAuthorAvatar?: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -42,7 +48,18 @@ export const MessageList: FC<MessageListProps> = ({
   onConfirmTool,
   onCancelTool,
   suppressErrorBubbles = false,
+  showAuthorAvatar = false,
 }) => {
+  // Quem está logado agora. As conversas são por usuário (a RLS de nyta_conversations filtra
+  // por auth.uid()), então todas as mensagens da lista carregada são de quem está vendo.
+  const user = useAppSelector((s) => s.auth.user);
+  const authorMeta = (user?.user_metadata || {}) as Record<string, unknown>;
+  const author = showAuthorAvatar
+    ? {
+        src: (authorMeta.avatar_url as string) || (authorMeta.picture as string) || ARTISTS_DEFAULT_IMAGE,
+        name: (authorMeta.full_name as string) || (authorMeta.name as string) || user?.email || 'Você',
+      }
+    : undefined;
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -246,7 +263,7 @@ export const MessageList: FC<MessageListProps> = ({
                 <Markdown>{content}</Markdown>
               </NytaBubble>
             ) : msg.role === 'user' ? (
-              <UserBubble>{content}</UserBubble>
+              <UserBubble avatar={author}>{content}</UserBubble>
             ) : null}
           </div>
         );

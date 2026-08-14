@@ -16,6 +16,10 @@ export interface NytaConversationSummary {
   id: string;
   title: string | null;
   updatedAt: string;
+  // Quem abriu a conversa. Hoje é sempre quem está vendo — a RLS de nyta_conversations filtra
+  // por auth.uid(), então cada pessoa só enxerga as próprias. Fica no modelo porque é o dado
+  // que a lista precisa pra atribuir autoria no dia em que a equipe compartilhar o histórico.
+  userId: string;
 }
 
 export interface UseNytaConversationsReturn {
@@ -39,11 +43,13 @@ export function useNytaConversations(artistId?: string): UseNytaConversationsRet
     try {
       const { data } = await supabase
         .from('nyta_conversations')
-        .select('id, title, updated_at')
+        .select('id, title, updated_at, user_id')
         .eq('artist_id', artistId)
         .order('updated_at', { ascending: false });
       setConversations(
-        (data ?? []).map((row) => ({ id: row.id, title: row.title, updatedAt: row.updated_at })),
+        (data ?? []).map((row) => ({
+          id: row.id, title: row.title, updatedAt: row.updated_at, userId: row.user_id,
+        })),
       );
     } finally {
       setLoading(false);
