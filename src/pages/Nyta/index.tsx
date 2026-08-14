@@ -114,7 +114,7 @@ const Nyta: FC = () => {
             );
           })}
 
-          {isStreaming && <article className='nyta-post'><header><NytaAvatar size={40} /><strong>Nyta IA</strong><span>Respondendo...</span></header></article>}
+          {isStreaming && <article className='nyta-post'><header><NytaAvatar size={40} state='thinking' /><strong>Nyta IA</strong><span>Respondendo...</span></header></article>}
 
           {pendingToolCalls.filter((tool) => tool.status === 'pending').map((tool) => (
             <article className='nyta-tool-confirmation' key={tool.toolCallId}>

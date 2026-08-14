@@ -1,0 +1,108 @@
+// Animação de "processando" do emblema da Nyta (ver NytaEmblem.tsx).
+// Timings seguem o design system do redesign: cubic-bezier(0.4, 0, 0.2, 1).
+
+.emblem {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+// `transform-box: view-box` deixa o transform-origin ser lido em unidades da viewBox (72×72),
+// que é o que permite fixar o pivô no pescoço em vez do centro da própria bbox.
+.head {
+  transform-box: view-box;
+  transform-origin: 36.5px 40px;
+}
+
+.eyes {
+  transform-box: view-box;
+  transform-origin: 36.5px 21px;
+}
+
+.dot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.thinking {
+  .head {
+    animation: nytaEmblemTilt 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  // Os olhos ficam dentro da cabeça: a varredura lateral se soma à inclinação, então o olhar
+  // chega antes e a cabeça acompanha — que é como a gente lê "procurando alguma coisa".
+  .eyes {
+    animation: nytaEmblemScan 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .dot {
+    animation: nytaEmblemDot 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
+@keyframes nytaEmblemTilt {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  22% {
+    transform: rotate(-5.5deg) translateY(-0.6px);
+  }
+
+  55% {
+    transform: rotate(4.5deg) translateY(-0.3px);
+  }
+
+  78% {
+    transform: rotate(-1.5deg);
+  }
+}
+
+@keyframes nytaEmblemScan {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-2.4px);
+  }
+
+  50% {
+    transform: translateX(2.6px);
+  }
+
+  75% {
+    transform: translateX(-1px);
+  }
+}
+
+// Cada ponto apaga e acende no ciano; o delay por índice (inline, no componente) é o que faz
+// os três acenderem um por um em vez de piscarem juntos.
+@keyframes nytaEmblemDot {
+  0%,
+  62%,
+  100% {
+    fill: #162550;
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+
+  16%,
+  40% {
+    fill: #04fed1;
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking {
+    .head,
+    .eyes,
+    .dot {
+      animation: none;
+    }
+  }
+}

@@ -119,7 +119,9 @@ export const MobileNav: FC = () => {
           aria-label='Nyta IA'
           onClick={goNyta}
         >
-          <span className='mobile-nav-nyta-avatar'><NytaAvatar size={30} /></span>
+          {/* tone='onDark': aqui o emblema fica sobre o pill roxo da Nyta, onde o gradiente
+              azul→roxo dele encostaria no fundo e sumiria. */}
+          <span className='mobile-nav-nyta-avatar'><NytaAvatar size={30} tone='onDark' /></span>
           <span className='mobile-nav-label'>Nyta</span>
         </button>
 

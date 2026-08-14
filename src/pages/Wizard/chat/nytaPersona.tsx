@@ -1,7 +1,6 @@
-import { FC, useEffect, useRef } from 'react';
-import lottie, { type AnimationItem } from 'lottie-web';
+import { FC } from 'react';
 
-import nytaLottie from '../../../assets/nyta-lottie.json';
+import { NytaEmblem, type NytaEmblemTone } from '../../../components/nyta/NytaEmblem';
 
 // Identidade visual e verbal da Nyta — a inteligência da Maestra.
 // As falas são templadas (custo zero por turno) e seguem o tom de voz do método
@@ -11,53 +10,24 @@ import nytaLottie from '../../../assets/nyta-lottie.json';
 // Nome de exibição global da assistente.
 export const NYTA_NAME = 'Nyta';
 
-// Avatar da Nyta: a animação Lottie (o "AI logo") tocando em loop. SEM container — sem clip circular,
-// sem fundo e sem overflow: o orb aparece solto (o glow dele já esvai pra transparente nas bordas).
-// Ao "pensar" (`state='thinking'`) acelera. Renderizado via lottie-web (padrão do SpotifyLottie).
+// Avatar da Nyta: o emblema da marca (ver components/nyta/NytaEmblem), solto — sem plate, sem
+// clip circular e sem fundo, porque a silhueta já é a identidade. Ao "pensar"
+// (`state='thinking'`) o emblema anima: cabeça, olhos e os pontos da barriga.
 export type NytaAvatarState = 'idle' | 'thinking';
 
-export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState }> = ({ size = 32, state = 'idle' }) => {
-  const ref = useRef<HTMLSpanElement>(null);
-  const animRef = useRef<AnimationItem | null>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const anim = lottie.loadAnimation({
-      container: el,
-      renderer: 'svg',
-      loop: true,
-      autoplay: true,
-      // deno/CRA importa o JSON como objeto — o lottie aceita direto.
-      animationData: nytaLottie as unknown as Record<string, unknown>,
-      rendererSettings: { preserveAspectRatio: 'xMidYMid meet' },
-    });
-    animRef.current = anim;
-    return () => { anim.destroy(); animRef.current = null; };
-  }, []);
-
-  // Acelera o loop quando a Nyta está "pensando".
-  useEffect(() => {
-    animRef.current?.setSpeed(state === 'thinking' ? 1.7 : 1);
-  }, [state]);
-
-  return (
-    <span
-      className={`nyta-avatar${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
-      // Arquivo EXATO do design, com zoom: a bolha de VIDRO (menor que o disco colorido na comp)
-      // é ampliada até preencher o círculo do avatar; o disco de gradiente, maior, fica cortado
-      // pelo clip circular. Sem fundo/plate — o clip é transparente.
-      style={{ width: size, height: size, minWidth: size, display: 'inline-flex', borderRadius: '50%', overflow: 'hidden' }}
-      aria-hidden
-    >
-      {/* Zoom pra bolha de VIDRO (376px na comp de 700, com ~4px de offset vertical) preencher o
-          círculo do avatar por inteiro: 1.91 cobre as 4 bordas (1.86 deixava um fio do disco
-          colorido embaixo, por causa do offset). O disco de gradiente fica fora do recorte,
-          aparecendo só ATRAVÉS do vidro. */}
-      <span ref={ref} style={{ width: '100%', height: '100%', display: 'block', transform: 'scale(1.91)', transformOrigin: '50% 50%' }} />
-    </span>
-  );
-};
+export const NytaAvatar: FC<{ size?: number; state?: NytaAvatarState; tone?: NytaEmblemTone }> = ({
+  size = 32, state = 'idle', tone = 'brand',
+}) => (
+  <span
+    className={`nyta-avatar${state === 'thinking' ? ' nyta-avatar--thinking' : ''}`}
+    // `background: none` inline anula o gradiente que a classe global `.nyta-avatar` pinta pro
+    // avatar antigo, que era um orb: aqui ele viraria uma bolha atrás do emblema.
+    style={{ width: size, height: size, minWidth: size, display: 'inline-flex', background: 'none', overflow: 'visible' }}
+    aria-hidden
+  >
+    <NytaEmblem state={state} tone={tone} />
+  </span>
+);
 
 // Sorteia uma variação para a fala não soar robótica.
 export const pick = (variants: string[]): string =>
