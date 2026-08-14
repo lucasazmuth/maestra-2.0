@@ -1,6 +1,7 @@
 import { FC, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Dropdown, Popconfirm } from 'antd';
-import { FiEdit2, FiMoreHorizontal, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiArrowLeft, FiEdit2, FiMoreHorizontal, FiPlus, FiTrash2 } from 'react-icons/fi';
 
 import type { NytaConversationSummary } from '../../../hooks/useNytaConversations';
 import './ConversationSidebar.scss';
@@ -34,6 +35,8 @@ const shortDate = (iso: string): string => {
 export const ConversationSidebar: FC<ConversationSidebarProps> = ({
   conversations, activeId, onSelect, onNew, onRename, onDelete,
 }) => {
+  const navigate = useNavigate();
+  const { id: artistId } = useParams<{ id: string }>();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [menuId, setMenuId] = useState<string | null>(null);
@@ -47,6 +50,17 @@ export const ConversationSidebar: FC<ConversationSidebarProps> = ({
   return (
     <aside className='nyta-conversations' aria-label='Conversas com a Nyta'>
       <header className='nyta-conversations__head'>
+        {/* Sair da Nyta é navegação da página inteira, não do chat — por isso mora aqui na
+            coluna, junto do título, e não no cabeçalho da conversa. */}
+        <button
+          className='nyta-conversations__back'
+          type='button'
+          onClick={() => navigate(`/artists/${artistId}`)}
+          aria-label='Voltar para o perfil'
+          title='Voltar para o perfil'
+        >
+          <FiArrowLeft size={16} />
+        </button>
         <span className='nyta-conversations__title'>Conversas</span>
         <button
           className='nyta-conversations__new'

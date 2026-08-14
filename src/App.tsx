@@ -321,6 +321,36 @@ function App() {
           colorTextPlaceholder: '#8a8a8a',
           borderRadius: 8,
         },
+        // Os flutuantes (popover, popconfirm, dropdown, tooltip) já vivem no redesign claro,
+        // então saem do algoritmo escuro por aqui — e não por CSS.
+        //
+        // Tentar corrigir isso no .scss não funciona de forma confiável: o antd injeta as
+        // próprias regras em runtime, com seletores de especificidade maior que a de um
+        // override normal (`.ant-popconfirm .ant-popconfirm-message .ant-popconfirm-title`), e
+        // o resultado era texto branco sobre fundo branco. Pelos tokens, a cor nasce certa.
+        components: {
+          Popover: {
+            colorBgElevated: '#ffffff',
+            colorText: '#7c8db0',
+            colorTextHeading: '#52688f',
+            borderRadiusLG: 12,
+            boxShadowSecondary: '0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08)',
+          },
+          Dropdown: {
+            colorBgElevated: '#ffffff',
+            colorText: '#60749a',
+            controlItemBgHover: '#eef3fb',
+            controlItemBgActive: '#eef3fb',
+            colorPrimary: '#4267b9',
+            borderRadiusLG: 10,
+            boxShadowSecondary: '0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08)',
+          },
+          Tooltip: {
+            colorBgSpotlight: '#3d4d6b',
+            colorTextLightSolid: '#ffffff',
+            borderRadius: 8,
+          },
+        },
       }}
     >
       <AntdApp>

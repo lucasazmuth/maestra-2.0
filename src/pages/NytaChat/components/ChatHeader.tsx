@@ -30,6 +30,8 @@ export const ChatHeader: FC<ChatHeaderProps> = ({ artistName, onClear, dailyCoun
 
   return (
     <header className='chat-header'>
+      {/* No desktop quem leva de volta ao perfil é o botão do topo da lista de conversas. Este
+          aqui só aparece abaixo de 900px, onde a lista some e ele seria a única saída. */}
       <button
         className='chat-header__back'
         onClick={() => navigate(`/artists/${artistId}`)}

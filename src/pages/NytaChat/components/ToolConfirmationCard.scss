@@ -1,14 +1,18 @@
-// ToolConfirmationCard — card UI for confirming/cancelling tool calls.
-// BEM naming: .tool-confirmation-card
+// ToolConfirmationCard — o card em que a Nyta pede confirmação antes de executar uma ação.
+//
+// Paleta clara do redesign, alinhada ao skin `.nyta-surface` do chat: o card é uma bolha da
+// Nyta com um pouco mais de peso, porque pede decisão. Antes era preto (#1a1a1a), herança do
+// tema escuro — no chat claro ele aparecia como um bloco de outro app.
 
 .tool-confirmation-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 14px 16px;
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #dce5f0;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(105, 122, 159, .1);
   max-width: 360px;
   animation: toolCardFadeIn 0.25s ease both;
 
@@ -21,12 +25,12 @@
   }
 
   &__action-label {
-    color: #888;
+    color: #9aabc4;
     font-weight: 500;
   }
 
   &__action-name {
-    color: #fff;
+    color: #52688f;
     font-weight: 600;
   }
 
@@ -35,7 +39,7 @@
     margin: 0;
     font-size: 12px;
     line-height: 1.4;
-    color: #aaa;
+    color: #8b9bb5;
     word-break: break-word;
   }
 
@@ -45,9 +49,9 @@
     flex-direction: column;
     gap: 4px;
     padding: 8px 10px;
-    background: #141414;
-    border-radius: 8px;
-    border: 1px solid #222;
+    background: #f7f9fc;
+    border-radius: 10px;
+    border: 1px solid #e8edf4;
   }
 
   &__arg {
@@ -58,14 +62,14 @@
   }
 
   &__arg-label {
-    color: #888;
+    color: #9aabc4;
     font-weight: 500;
     white-space: nowrap;
     flex-shrink: 0;
   }
 
   &__arg-value {
-    color: #ddd;
+    color: #60749a;
     word-break: break-word;
   }
 
@@ -74,7 +78,7 @@
     margin: 2px 0 0;
     padding: 0 0 0 18px;
     list-style: disc;
-    color: #ddd;
+    color: #60749a;
 
     li {
       margin: 2px 0;
@@ -85,10 +89,10 @@
   // ── Error message ─────────────────────────────────────────────────────────
   &__error {
     font-size: 12px;
-    color: #ff6b6b;
+    color: #c0405c;
     padding: 6px 10px;
-    background: rgba(255, 75, 75, 0.08);
-    border: 1px solid rgba(255, 75, 75, 0.2);
+    background: #fdeef1;
+    border: 1px solid #f3c9d2;
     border-radius: 6px;
   }
 
@@ -101,15 +105,15 @@
     padding: 8px 0 2px;
 
     &--executing {
-      color: #f0c040;
+      color: #b07d18;
     }
 
     &--success {
-      color: #9A4FD1;
+      color: #1d8a68;
     }
 
     &--cancelled {
-      color: #888;
+      color: #9aabc4;
     }
   }
 
@@ -145,13 +149,14 @@
     }
 
     &--confirm {
-      background: #9A4FD1;
-      color: #FFFFFF;
+      background: #3361ff;
+      color: #fff;
     }
 
     &--cancel {
-      background: #333;
-      color: #ccc;
+      border: 1px solid #dce5f0;
+      background: #fff;
+      color: #7c8db0;
     }
   }
 }

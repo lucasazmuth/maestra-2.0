@@ -12,7 +12,7 @@
   background: #fff;
 
   &__back {
-    display: inline-flex;
+    display: none;
     width: 34px;
     min-width: 34px;
     height: 34px;
@@ -104,6 +104,14 @@
       background: #fdeef1;
       color: #c0405c;
     }
+  }
+}
+
+// Abaixo de 900px a lista de conversas some (ver ConversationSidebar.scss) e leva junto o
+// botão de voltar que vive nela — então ele reaparece aqui.
+@media (max-width: 900px) {
+  .chat-header__back {
+    display: inline-flex;
   }
 }
 

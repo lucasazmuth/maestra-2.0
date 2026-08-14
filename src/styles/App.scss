@@ -213,10 +213,11 @@ h3 {
 .ant-dropdown-menu-sub,
 .ant-dropdown-menu-root {
   -webkit-app-region: no-drag !important;
-  background-color: #282828 !important;
-  border-radius: 4px !important;
-  -webkit-box-shadow: 0 16px 24px rgba(0, 0, 0, 0.3), 0 6px 8px rgba(0, 0, 0, 0.2) !important;
-  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.3), 0 6px 8px rgba(0, 0, 0, 0.2) !important;
+  background-color: #fff !important;
+  border: 1px solid #e3eaf3;
+  border-radius: 10px !important;
+  -webkit-box-shadow: 0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08) !important;
+  box-shadow: 0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08) !important;
   max-height: calc(100vh - 24px) !important;
   max-width: 350px !important;
   min-width: 160px !important;
@@ -224,18 +225,29 @@ h3 {
   padding: 4px !important;
 
   li {
-    color: white !important;
+    color: #60749a !important;
 
     &.active {
-      color: #9A4FD1 !important;
+      color: #4267b9 !important;
+    }
+
+    // Item destrutivo continua vermelho: o `!important` da linha acima também apagava o
+    // estado de perigo do antd, e "Excluir" ficava igualzinho a "Renomear".
+    &.ant-dropdown-menu-item-danger {
+      color: #c0405c !important;
+
+      &:hover {
+        background: #fdeef1 !important;
+        color: #c0405c !important;
+      }
     }
   }
 
   .ant-dropdown-menu-submenu,
   .ant-dropdown-menu-item {
     border: 0;
-    border-radius: 2px;
-    color: hsla(0, 0%, 100%, 0.9);
+    border-radius: 7px;
+    color: #60749a;
     cursor: default;
     gap: 12px;
     text-decoration: none;
@@ -263,16 +275,16 @@ h3 {
     .ant-dropdown-menu-title-content {
       font-weight: 500;
       font-size: 0.875rem;
-      color: hsla(0, 0%, 100%, 0.9);
+      color: inherit;
     }
   }
 }
 
 .ant-dropdown-menu-item-selected {
-  background-color: #282828 !important;
+  background-color: #eef3fb !important;
 
   span {
-    color: #1db954 !important;
+    color: #4267b9 !important;
   }
 }
 
@@ -292,7 +304,7 @@ h3 {
   padding: 0 !important;
 
   svg {
-    fill: hsla(0, 0%, 100%, 0.9);
+    fill: currentColor;
   }
   .ant-dropdown-menu-submenu-title {
     width: 100%;
@@ -308,7 +320,7 @@ h3 {
 
 .ant-dropdown-menu-submenu:hover,
 .ant-dropdown-menu-item:hover {
-  background: #ffffff17 !important;
+  background: #eef3fb !important;
   // .ant-dropdown-menu-title-content {
   //   // color: #1db954 !important;
   // }
@@ -1609,93 +1621,86 @@ a {
   }
 }
 
+// Popover / Popconfirm — ajustes que os tokens do antd não alcançam.
+//
+// As CORES vêm do ConfigProvider (theme.components.Popover em App.tsx), não daqui: o antd
+// injeta as próprias regras em runtime com especificidade alta, e um override de CSS acabava
+// perdendo — foi assim que o texto ficou branco sobre fundo branco.
+//
+// Aqui havia um bloco que pintava TODO popover de azul sólido (#0074e0) com texto branco. Ele
+// existia para um `.login-tooltip` que não é mais usado em lugar nenhum, mas o seletor pegava
+// `.ant-popover` inteiro — então cada confirmação do app saía num cartão azul de nenhum design.
 .ant-popover {
   max-width: 336px;
-  transition-duration: 300ms;
-  background-color: #0074e0;
-  border-radius: 8px;
-  -webkit-box-shadow: 0 4px 40px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.3);
-  color: #fff;
-  font-size: 14px;
-  line-height: 1.4;
-  outline: 0;
-  position: relative;
-  text-align: start;
-  -webkit-transition-property: visibility, opacity, -webkit-transform;
-  transition-property: visibility, opacity, -webkit-transform;
-  transition-property: transform, visibility, opacity;
-  transition-property: transform, visibility, opacity, -webkit-transform;
-
-  &.login-tooltip {
-    .ant-popover-inner {
-      padding: 10px;
-      padding-left: 16px;
-      padding-bottom: 5px;
-    }
-
-    .ant-popconfirm-inner-content {
-      display: flex;
-      flex-direction: row;
-    }
-
-    button {
-      svg {
-        fill: #fff !important;
-        height: 0.875rem !important;
-      }
-    }
-
-    .white-button {
-      display: none !important;
-    }
-    .ant-popconfirm-buttons {
-      margin-top: 0px;
-    }
-  }
-
-  .ant-popover-inner,
-  .ant-popover-arrow::before {
-    background-color: #0074e0;
-  }
 
   .ant-popover-inner {
-    padding: 16px;
-    position: relative;
-    transition-duration: 300ms;
+    border: 1px solid #e3eaf3;
+    padding: 14px 16px;
   }
 
+  // O `!important` aqui é deliberado e não preguiça: o antd injeta em runtime
+  // `.ant-popconfirm .ant-popconfirm-message .ant-popconfirm-title { color: <colorTextHeading> }`
+  // — três classes de especificidade, e o Popconfirm não expõe token de cor próprio (herda o
+  // global, que é do tema escuro). Sem isto, o texto sai branco sobre o fundo branco.
   .ant-popconfirm-title {
-    font-weight: 700;
-    color: #fff !important;
-    font-size: 1rem;
+    color: #52688f !important;
+    font-size: 14px;
+    font-weight: 800;
   }
 
+  // #60749a e não o #7c8db0 do resto do texto de apoio: sobre o branco do popover, o mais
+  // claro dava 3.3:1 de contraste e não alcançava o mínimo de 4.5 do WCAG.
   .ant-popconfirm-description {
-    color: #fff !important;
-    font-size: 0.875rem;
-    font-weight: 400;
+    color: #60749a !important;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  // Ícone de atenção no âmbar do design, no lugar do laranja padrão do antd.
+  .ant-popconfirm-message-icon .anticon {
+    color: #e0a12a;
   }
 
   .ant-popconfirm-buttons {
-    margin-top: 25px;
-  }
+    margin-top: 14px;
 
-  .ant-btn-text {
-    font-weight: 700;
-    font-size: 0.875rem;
-    color: #b3b3b3;
-    &:hover {
-      transform: scale(1.04);
-      color: #fff !important;
-      background: none !important;
+    .ant-btn {
+      height: 30px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
     }
-  }
 
-  .white-button {
-    height: auto !important;
-    &:hover {
-      background: none !important;
+    .ant-btn-default {
+      border-color: #dce5f0;
+      background: #fff;
+      color: #7c8db0;
+
+      &:hover {
+        border-color: #b9cbed;
+        color: #4267b9;
+      }
+    }
+
+    // Confirmação destrutiva segue vermelha — é o sinal de que a ação não volta atrás.
+    .ant-btn-dangerous {
+      border-color: transparent;
+      background: #d4455f;
+      color: #fff;
+
+      &:hover {
+        background: #bf3b53;
+      }
+    }
+
+    .ant-btn-primary:not(.ant-btn-dangerous) {
+      border-color: transparent;
+      background: #3361ff;
+      color: #fff;
+
+      &:hover {
+        background: #2a54e0;
+      }
     }
   }
 }
