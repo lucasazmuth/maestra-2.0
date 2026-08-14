@@ -155,6 +155,10 @@
   // Altura dos cabeçalhos do wizard e da coluna de resultados — os dois cartões ficam lado a
   // lado, então compartilham a medida pra divisória e botões alinharem.
   --wiz-head-h: 71px;
+  // Respiro interno do cartão do wizard. A coluna de resultados repete essa medida acima do
+  // próprio cabeçalho: sem isso os dois começam em alturas diferentes e, mesmo com cabeçalhos
+  // da MESMA altura, as divisórias caem desalinhadas (24px de diferença).
+  --wiz-pad: 24px;
   --wz-danger: #f13131;
   // Âmbar escurecido o bastante pra carregar texto branco quando vira preenchimento (SWOT).
   --wz-warn: #b0720f;
@@ -162,7 +166,7 @@
 }
 
 .wizard {
-  padding: 24px;
+  padding: var(--wiz-pad);
   position: relative;
   // Sem preenchimento próprio: o `.board-shell` em volta já dá o fundo e o contorno. Com um
   // --wz-canvas (#fafbfc) aqui em cima do canvas da página (#f7f8fb), a diferença de um tom
@@ -1763,8 +1767,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-height: var(--wiz-head-h);
-  padding: 0 18px 14px;
+  // Altura = a do cabeçalho do wizard MAIS o respiro que o `.wizard` tem acima dele. Os dois
+  // cartões começam no mesmo topo, mas o do chat só desenha o cabeçalho depois do padding —
+  // repetir a medida aqui é o que faz as duas divisórias caírem na mesma linha.
+  min-height: calc(var(--wiz-head-h) + var(--wiz-pad));
+  padding: var(--wiz-pad) 18px 14px;
   border-bottom: 1px solid #e8edf5;
 }
 
