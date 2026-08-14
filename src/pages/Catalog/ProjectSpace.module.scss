@@ -147,19 +147,19 @@
   min-height: 44px !important;
   border: 0 !important;
   border-radius: 999px !important;
-  background: #edc663 !important;
-  box-shadow: 0 14px 32px rgba(237, 198, 99, .28) !important;
+  background: var(--status-bg, #edc663) !important;
+  box-shadow: 0 14px 32px var(--status-shadow, rgba(237, 198, 99, .28)) !important;
 }
 
 .statusPill :global(.ant-select-selection-item) {
   padding-inline-end: 0 !important;
-  color: #181818 !important;
+  color: var(--status-ink, #181818) !important;
   font-weight: 850;
   text-align: center;
 }
 
 .statusPill :global(.ant-select-arrow) {
-  color: #181818 !important;
+  color: var(--status-ink, #181818) !important;
 }
 
 .statusReadOnly {
@@ -167,9 +167,9 @@
   min-height: 34px;
   padding: 8px 18px;
   border-radius: 999px;
-  color: #181818;
-  background: #edc663;
-  box-shadow: 0 14px 32px rgba(237, 198, 99, .28);
+  color: var(--status-ink, #181818);
+  background: var(--status-bg, #edc663);
+  box-shadow: 0 14px 32px var(--status-shadow, rgba(237, 198, 99, .28));
   font-size: 14px;
   font-weight: 850;
   text-align: center;
@@ -259,7 +259,7 @@
 
 .metaStrip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(130px, 1fr));
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
   gap: 0;
   margin-bottom: 34px;
   border-top: 1px solid #dce6f7;
@@ -268,11 +268,11 @@
 
 .metaStrip label {
   min-height: 88px;
-  padding: 22px 28px 18px 0;
+  padding: 22px 20px 18px 0;
 }
 
 .metaStrip label + label {
-  padding-left: 28px;
+  padding-left: 20px;
   border-left: 1px solid #dce6f7;
 }
 
@@ -285,14 +285,29 @@
   text-transform: uppercase;
 }
 
-.metaStrip :global(.ant-input) {
+.metaStrip :global(.ant-input),
+.metaStrip :global(.ant-picker) {
+  width: 100%;
   padding: 0 !important;
   border: 0 !important;
   color: #405985 !important;
   background: transparent !important;
   box-shadow: none !important;
-  font-size: 26px;
+  font-size: clamp(18px, 1.9vw, 26px);
   font-weight: 650;
+}
+
+// O DatePicker aninha o <input>; sem isto ele voltaria à fonte padrão dentro da casca já sem
+// borda. O clamp é o que impede "14/08/2026" de ser cortado quando a janela encolhe — texto
+// livre pode truncar com reticências, uma data pela metade vira desinformação.
+.metaStrip :global(.ant-picker-input > input) {
+  color: #405985 !important;
+  font-size: clamp(15px, 1.5vw, 24px);
+  font-weight: 650;
+}
+
+.metaStrip :global(.ant-picker-input > input::placeholder) {
+  color: #98a9c6 !important;
 }
 
 .sectionHeader {

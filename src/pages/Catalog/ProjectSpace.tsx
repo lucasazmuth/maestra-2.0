@@ -1,6 +1,7 @@
-import { FC, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, Select, Spin, message } from 'antd';
-import { FiArrowLeft, FiDownload, FiEdit2, FiFilter, FiMaximize2, FiMessageCircle, FiMoreVertical, FiPause, FiPlay, FiSend, FiStar, FiUpload } from 'react-icons/fi';
+import { FC, FormEvent, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Button, DatePicker, Input, Select, Spin, message } from 'antd';
+import dayjs from 'dayjs';
+import { FiArrowLeft, FiDownload, FiEdit2, FiMaximize2, FiMessageCircle, FiMoreVertical, FiPause, FiPlay, FiSend, FiStar, FiUpload } from 'react-icons/fi';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppSelector } from '../../store/store';
 import { useArtist } from '../../hooks/useArtist';
@@ -21,6 +22,27 @@ import styles from './ProjectSpace.module.scss';
 import { Spinner } from '../../components/spinner/spinner';
 
 const getStageLabel = (stage: CatalogVersionStage) => getVersionStageLabel(stage);
+
+// A pílula de status era amarela fixa e não acompanhava o status, ao contrário do chip da lista
+// de Músicas. Aqui ela recebe a cor do próprio status (CATALOG_STATUS), com o texto escolhido
+// pela luminância — o roxo da Masterização pede letra clara; o amarelo do fallback, escura.
+const hexToRgb = (hex: string) => {
+  const value = hex.replace('#', '');
+  const full = value.length === 3 ? value.split('').map((c) => c + c).join('') : value;
+  return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+};
+
+const statusStyle = (status?: string | null) => {
+  const color = CATALOG_STATUS[status as keyof typeof CATALOG_STATUS]?.color || '#edc663';
+  const [r, g, b] = hexToRgb(color);
+  // Luminância relativa simplificada (ITU-R BT.601): o suficiente para decidir preto ou branco.
+  const light = (r * 299 + g * 587 + b * 114) / 1000 > 165;
+  return {
+    '--status-bg': color,
+    '--status-ink': light ? '#181818' : '#fff',
+    '--status-shadow': `rgba(${r}, ${g}, ${b}, .28)`,
+  } as CSSProperties;
+};
 const formatDate = (value?: string | null) => value ? new Date(value).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Data indisponível';
 const initials = (value?: string | null) => (value || '?').trim().slice(0, 1).toUpperCase();
 
@@ -149,7 +171,7 @@ const ProjectSpace: FC = () => {
   const togglePlayer = useLocalPlayerStore((state) => state.toggle);
   const seekPlayer = useLocalPlayerStore((state) => state.seek);
 
-  const projectSignature = (value: CatalogProject) => JSON.stringify({ title: value.title, status: value.status, genre: value.genre || '', bpm: value.bpm || '', key: value.key || '' });
+  const projectSignature = (value: CatalogProject) => JSON.stringify({ title: value.title, status: value.status, genre: value.genre || '', bpm: value.bpm || '', key: value.key || '', release_date: value.release_date || '' });
   const refresh = useCallback(() => {
     if (!projectId) return Promise.resolve();
     setLoading(true);
@@ -193,7 +215,7 @@ const ProjectSpace: FC = () => {
     if (!value.title.trim() || projectSignature(value) === lastSavedSignature.current || !canUpdateProject) return;
     setSaveState('saving');
     try {
-      const saved = await catalogDb.updateCatalogProject(value.id, { title: value.title, status: value.status, genre: value.genre, bpm: value.bpm, key: value.key });
+      const saved = await catalogDb.updateCatalogProject(value.id, { title: value.title, status: value.status, genre: value.genre, bpm: value.bpm, key: value.key, release_date: value.release_date });
       lastSavedSignature.current = projectSignature(saved);
       setProject((current) => current ? { ...current, ...saved } : current);
       setSaveState('saved');
@@ -334,7 +356,7 @@ const ProjectSpace: FC = () => {
             etiqueta fica no meio da tela mesmo com títulos de larguras diferentes. */}
         <span className={styles.spaceLabel}>Espaço JAM</span>
         {canUpdateProject && <span className={`${styles.autosave} ${styles[`autosave${saveState}`]}`} aria-live='polite'>{saveState === 'saving' ? 'Salvando…' : saveState === 'error' ? 'Falha ao salvar' : saveState === 'saved' ? 'Salvo automaticamente' : ''}</span>}
-        {canUpdateProject ? <Select className={styles.statusPill} value={project.status} options={CATALOG_STATUS_OPTIONS.map((entry) => ({ value: entry.id, label: entry.label }))} onChange={(status) => setProject({ ...project, status })} /> : <span className={styles.statusReadOnly}>{CATALOG_STATUS[project.status as keyof typeof CATALOG_STATUS]?.label || project.status}</span>}
+        {canUpdateProject ? <Select className={styles.statusPill} style={statusStyle(project.status)} value={project.status} options={CATALOG_STATUS_OPTIONS.map((entry) => ({ value: entry.id, label: entry.label }))} onChange={(status) => setProject({ ...project, status })} /> : <span className={styles.statusReadOnly} style={statusStyle(project.status)}>{CATALOG_STATUS[project.status as keyof typeof CATALOG_STATUS]?.label || project.status}</span>}
         {canUpdateProject && <button type='button' className={styles.editProject} onClick={openProjectEditor} aria-label='Editar informações do Espaço JAM' title='Editar informações'><FiEdit2 /></button>}
       </header>
 
@@ -344,12 +366,15 @@ const ProjectSpace: FC = () => {
             <label><span>BPM</span><Input disabled={!canUpdateProject} value={project.bpm || ''} placeholder='—' onChange={(event) => setProject({ ...project, bpm: event.target.value })} /></label>
             <label><span>Tom</span><Input disabled={!canUpdateProject} value={project.key || ''} placeholder='—' onChange={(event) => setProject({ ...project, key: event.target.value })} /></label>
             <label><span>Gênero</span><Input disabled={!canUpdateProject} value={project.genre || ''} placeholder='—' onChange={(event) => setProject({ ...project, genre: event.target.value })} /></label>
+            {/* A data de lançamento também vive na ficha da música (TrackModal); aqui ela fica à
+                mão junto de BPM, tom e gênero, e usa o mesmo autosave da faixa. */}
+            <label><span>Lançamento</span><DatePicker disabled={!canUpdateProject} value={project.release_date ? dayjs(project.release_date) : null} format='DD/MM/YYYY' placeholder='—' suffixIcon={null} allowClear onChange={(date) => setProject({ ...project, release_date: date ? date.format('YYYY-MM-DD') : null })} /></label>
           </div>
 
           <div className={styles.sectionHeader}>
             {canCollaborateJam && <Button className={styles.uploadButton} type='primary' icon={<FiUpload />} onClick={startUpload}>Upload</Button>}
             <input ref={uploadRef} type='file' accept='audio/*' style={{ display: 'none' }} onChange={onUploadPicked} />
-            <button type='button' className={styles.filterButton} aria-label='Filtrar versões' title='Filtrar versões'><FiFilter /></button>
+            {/* O filtro de versões volta quando existir de verdade — o botão não fazia nada. */}
           </div>
 
           <div className={styles.versionList}>

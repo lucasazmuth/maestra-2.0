@@ -350,6 +350,34 @@ function App() {
             colorTextLightSolid: '#ffffff',
             borderRadius: 8,
           },
+          // O calendário do DatePicker é outro portal com tema próprio — abria preto com o dia
+          // escolhido em roxo, mesmo com o campo já claro. Vale para o Espaço Jam e para a ficha
+          // da música.
+          DatePicker: {
+            colorBgElevated: '#ffffff',
+            colorText: '#52668d',
+            colorTextHeading: '#405985',
+            colorTextDisabled: '#c2cddf',
+            colorIcon: '#93a4c0',
+            colorIconHover: '#4267b9',
+            colorPrimary: '#3361ff',
+            colorSplit: '#e8eef8',
+            cellHoverBg: '#eef3fb',
+            borderRadiusLG: 12,
+            boxShadowSecondary: '0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08)',
+          },
+          // A lista que abre num Select é um portal com tema próprio: continuava preta com o
+          // item marcado em roxo (darkAlgorithm), mesmo com o campo já no design claro.
+          Select: {
+            colorBgElevated: '#ffffff',
+            colorText: '#52668d',
+            colorTextPlaceholder: '#aab7cd',
+            optionSelectedBg: '#eef3fb',
+            optionSelectedColor: '#2f4f8f',
+            optionActiveBg: '#f4f7fd',
+            borderRadiusLG: 10,
+            boxShadowSecondary: '0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08)',
+          },
         },
       }}
     >

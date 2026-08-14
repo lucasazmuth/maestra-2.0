@@ -71,9 +71,13 @@ export const CATALOG_STATUS: Record<CatalogStatus, { label: string; color: strin
   released: { label: 'Lançado', color: '#9A4FD1' },
 };
 
-export const CATALOG_STATUS_OPTIONS = (Object.keys(CATALOG_STATUS) as CatalogStatus[]).map(
-  (id) => ({ id, ...CATALOG_STATUS[id] })
-);
+// "Produção" saiu da lista escolhível, mas continua em CATALOG_STATUS: músicas gravadas antes
+// dessa mudança ainda têm esse status, e sem o rótulo elas mostrariam a chave crua na tela.
+const HIDDEN_CATALOG_STATUSES: readonly CatalogStatus[] = ['production'];
+
+export const CATALOG_STATUS_OPTIONS = (Object.keys(CATALOG_STATUS) as CatalogStatus[])
+  .filter((id) => !HIDDEN_CATALOG_STATUSES.includes(id))
+  .map((id) => ({ id, ...CATALOG_STATUS[id] }));
 
 /**
  * Statuses considerados "ativos" para fins de contagem do limite de catálogo.
