@@ -1737,24 +1737,29 @@
   font-family: var(--font-display);
 }
 
+// Mesmo desenho do `.wiz-back-btn` (os controles do cabeçalho do wizard): botão redondo com
+// superfície, contorno e sombra. Antes era um quadrado transparente e sem borda — do lado do
+// cartão do chat parecia um ícone solto, não um controle clicável.
 .wiz-artifacts-close {
   flex: none;
-  width: 28px;
-  height: 28px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 7px;
-  color: #9aabc4;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-line);
+  color: var(--wz-muted);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  box-shadow: 0 6px 14px rgba(98, 112, 143, 0.07);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 
   &:hover {
-    background: #eef3fb;
-    color: #3361ff;
+    background: var(--wz-blue-soft);
+    color: var(--wz-blue);
   }
+  &:active { transform: scale(0.94); }
 }
 
 .wiz-artifacts-body {
