@@ -28,21 +28,28 @@ const Meta: FC<{ rows: [string, string][] }> = ({ rows }) =>
 const artifactFor = (i: number, d: ArtistContent): ReactNode => {
   const id = d.identity || {};
   switch (i) {
-    case 0: { // Identidade: gênero, cidade e referências, tudo como linhas simples
+    case 0: { // Identidade: gênero e referências, tudo como linhas simples
       const refs = id.references || {};
       const pos = refs.posicionamento || {};
       const posItems = [pos.curto, pos.medio, pos.longo].flatMap(splitRefItems);
       const rows: [string, string][] = [];
       if (id.genre) rows.push(['Gênero', id.genre]);
-      if (id.city) rows.push(['Cidade', `${id.city}${id.state ? `/${id.state}` : ''}`]);
       if (posItems.length) rows.push(['Posicionamento', posItems.join(', ')]);
       if (refs.artisticas) rows.push(['Artísticas', splitRefItems(refs.artisticas).join(', ')]);
       if (refs.comunicacao) rows.push(['Comunicação', splitRefItems(refs.comunicacao).join(', ')]);
       if (refs.gestao) rows.push(['Carreira', splitRefItems(refs.gestao).join(', ')]);
       return rows.length ? <Meta rows={rows} /> : null;
     }
-    case 1: // Visão
-      return id.vision ? <p className='wiz-art-text'>{stripEmDash(id.vision)}</p> : null;
+    case 1: { // Visão: cidade/UF (perguntadas nesta etapa, ver script STEP 1) + o texto da visão
+      const rows: [string, string][] = [];
+      if (id.city) rows.push(['Cidade', `${id.city}${id.state ? `/${id.state}` : ''}`]);
+      return (
+        <>
+          {rows.length ? <Meta rows={rows} /> : null}
+          {id.vision ? <p className='wiz-art-text'>{stripEmDash(id.vision)}</p> : null}
+        </>
+      );
+    }
     case 2: // Missão
       return id.mission ? <p className='wiz-art-text'>{stripEmDash(id.mission)}</p> : null;
     case 3: // Valores
@@ -119,10 +126,12 @@ const SectionEditor: FC<{
     const identity: ArtistIdentity = { ...id };
     if (i === 0) {
       identity.genre = genre.trim();
+    } else if (i === 1) {
+      // Cidade/UF são coletadas na etapa de Visão (script, STEP 1), então é aqui que se editam.
+      identity.vision = text.trim();
       identity.city = city.trim();
       identity.state = uf.trim().toUpperCase();
-    } else if (i === 1) identity.vision = text.trim();
-    else if (i === 2) identity.mission = text.trim();
+    } else if (i === 2) identity.mission = text.trim();
     else if (i === 3) identity.values = text.split('\n').map((v) => v.trim()).filter(Boolean);
     setSaving(true);
     try {
@@ -139,16 +148,6 @@ const SectionEditor: FC<{
         <>
           <label className='wiz-art-edit-label'>Gênero</label>
           <input className='wiz-art-edit-input' value={genre} onChange={(e) => setGenre(e.target.value)} />
-          <div className='wiz-art-edit-row'>
-            <div style={{ flex: 1 }}>
-              <label className='wiz-art-edit-label'>Cidade</label>
-              <input className='wiz-art-edit-input' value={city} onChange={(e) => setCity(e.target.value)} />
-            </div>
-            <div style={{ width: 56 }}>
-              <label className='wiz-art-edit-label'>UF</label>
-              <input className='wiz-art-edit-input' value={uf} maxLength={2} onChange={(e) => setUf(e.target.value.toUpperCase())} />
-            </div>
-          </div>
         </>
       ) : (
         <>
@@ -159,6 +158,20 @@ const SectionEditor: FC<{
             onChange={(e) => setText(e.target.value)}
           />
           {i === 3 && <div className='wiz-art-edit-hint'>Um valor por linha.</div>}
+          {/* Cidade/UF acompanham a Visão: é nessa etapa que o chat pergunta de onde o
+              artista parte, e o alcance geográfico da visão usa esse dado. */}
+          {i === 1 && (
+            <div className='wiz-art-edit-row'>
+              <div style={{ flex: 1 }}>
+                <label className='wiz-art-edit-label'>Cidade</label>
+                <input className='wiz-art-edit-input' value={city} onChange={(e) => setCity(e.target.value)} />
+              </div>
+              <div style={{ width: 56 }}>
+                <label className='wiz-art-edit-label'>UF</label>
+                <input className='wiz-art-edit-input' value={uf} maxLength={2} onChange={(e) => setUf(e.target.value.toUpperCase())} />
+              </div>
+            </div>
+          )}
         </>
       )}
       <div className='wiz-art-edit-actions'>
