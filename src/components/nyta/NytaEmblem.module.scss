@@ -1,106 +1,80 @@
-// Formas e animação do emblema da Nyta (ver NytaEmblem.tsx).
-//
-// Cada glifo do set Group 50 do design, decomposto em DUAS camadas de 6 vértices cada — o morph
-// de clip-path exige o mesmo número de pontos em todos os quadros, e todo glifo do set é a
-// união de dois polígonos. Coordenadas em % do tile 24×24 original. Todos os polígonos são
-// listados em sentido horário a partir do vértice mais próximo do canto superior esquerdo,
-// senão o morph vira o polígono do avesso no meio do caminho.
-
-// 1. Quadrado — as duas metades diagonais.
-$sq-a: polygon(0% 0%, 50% 50%, 100% 100%, 50% 100%, 0% 100%, 0% 50%);
-$sq-b: polygon(0% 0%, 50% 0%, 100% 0%, 100% 50%, 100% 100%, 50% 50%);
-
-// 2. Moldura — dois "L" encaixados (esquerda+base / topo+direita).
-$fr-a: polygon(0% 0%, 25% 0%, 25% 75%, 100% 75%, 100% 100%, 0% 100%);
-$fr-b: polygon(25% 0%, 100% 0%, 100% 75%, 75% 75%, 75% 25%, 25% 25%);
-
-// 3. Triângulo (ponta pra baixo) — metades esquerda/direita.
-$tr-a: polygon(0% 0%, 25% 0%, 50% 0%, 50% 50%, 50% 100%, 25% 50%);
-$tr-b: polygon(50% 0%, 75% 0%, 100% 0%, 75% 50%, 50% 100%, 50% 50%);
-
-// 4. Zigue-zague em M — os dois picos.
-$zz-a: polygon(25.5% 0%, 37.7% 50%, 50% 100%, 25% 100%, 0% 100%, 12.7% 50%);
-$zz-b: polygon(75.5% 0%, 87.7% 50%, 100% 100%, 75% 100%, 50% 100%, 62.7% 50%);
-
-// 5. Diagonal com eco — triângulo grande + triângulo menor repetindo a forma. É a MARCA DA
-// NYTA: mesma família de cortes do N da Maestra, mas silhueta própria (a Maestra é a
-// plataforma; a Nyta é produto, não pode congelar com a cara da logo). A leitura do eco ainda
-// combina com assistente: pergunta e resposta, voz que retorna.
-$dg-a: polygon(0% 0%, 50% 0%, 100% 0%, 100% 50%, 100% 100%, 50% 50%);
-$dg-b: polygon(0% 50%, 25% 50%, 50% 50%, 50% 75%, 50% 100%, 25% 75%);
-
-// 6. O N da Maestra — os mesmos dois triângulos do símbolo da marca, com o fio de respiro
-// entre eles (98.8/99.2) que o arquivo original tem.
-$nn-a: polygon(0% 0%, 49.4% 50%, 98.8% 100%, 49.4% 100%, 0% 100%, 0% 50%);
-$nn-b: polygon(57.9% 0.8%, 78.5% 0.8%, 99.2% 0.8%, 99.2% 50%, 99.2% 100%, 78.5% 50%);
+// Animação do emblema da Nyta (ver NytaEmblem.tsx): a estrela de quatro pontas que, ao pensar,
+// gira e se reveza com as outras duas formas do set — o rastro de giro e o flare — por
+// crossfade. Timings seguem o design system do redesign: cubic-bezier(0.4, 0, 0.2, 1).
 
 .emblem {
-  position: relative;
   display: block;
   width: 100%;
   height: 100%;
 }
 
-.layerA,
-.layerB {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, #3361ff, #7420f1);
+// `transform-box: view-box` pro giro acontecer em torno do centro da viewBox (as três formas
+// são simétricas em 90°, então o loop de 180° fecha sem pulo).
+.spin {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
 }
 
-// Repouso: o emblema é a diagonal com eco — a marca da Nyta.
-.layerA {
-  clip-path: $dg-a;
+.swoosh,
+.flare {
+  opacity: 0;
 }
 
-.layerB {
-  clip-path: $dg-b;
-}
-
-.onDark .layerA,
-.onDark .layerB {
-  background: #fff;
-}
-
-// Pensando: o N se desmonta nas primitivas e se remonta. Cada forma segura ~490ms e vira a
-// próxima em ~210ms (slots de 1/6 do ciclo, morph nos 5% finais de cada slot) — pausa longa,
-// transição seca: corte duro, não flutuação.
 .thinking {
-  .layerA {
-    animation: nytaEmblemShapesA 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  .spin {
+    animation: nytaEmblemSpin 2.4s linear infinite;
   }
 
-  .layerB {
-    animation: nytaEmblemShapesB 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  // O revezamento: estrela até ~8%, rastro entre 20–40%, flare entre 52–78%, estrela de novo
+  // a partir de 92%. As janelas se sobrepõem ~12% (≈290ms): com o conjunto girando, o
+  // crossfade lê como uma forma virando a outra.
+  .spark {
+    animation: nytaEmblemSpark 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .swoosh {
+    animation: nytaEmblemSwoosh 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .flare {
+    animation: nytaEmblemFlare 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   }
 }
 
-// O ciclo parte da marca da Nyta (dg), visita o N da Maestra logo de cara — o parentesco fica
-// explícito — e segue pelas primitivas até voltar pro eco.
-@keyframes nytaEmblemShapesA {
-  0%, 11.7% { clip-path: $dg-a; }
-  16.7%, 28.3% { clip-path: $nn-a; }
-  33.3%, 45% { clip-path: $sq-a; }
-  50%, 61.7% { clip-path: $fr-a; }
-  66.7%, 78.3% { clip-path: $tr-a; }
-  83.3%, 95% { clip-path: $zz-a; }
-  100% { clip-path: $dg-a; }
+@keyframes nytaEmblemSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(180deg);
+  }
 }
 
-@keyframes nytaEmblemShapesB {
-  0%, 11.7% { clip-path: $dg-b; }
-  16.7%, 28.3% { clip-path: $nn-b; }
-  33.3%, 45% { clip-path: $sq-b; }
-  50%, 61.7% { clip-path: $fr-b; }
-  66.7%, 78.3% { clip-path: $tr-b; }
-  83.3%, 95% { clip-path: $zz-b; }
-  100% { clip-path: $dg-b; }
+@keyframes nytaEmblemSpark {
+  0%, 8% { opacity: 1; }
+  20%, 78% { opacity: 0; }
+  92%, 100% { opacity: 1; }
+}
+
+@keyframes nytaEmblemSwoosh {
+  0%, 8% { opacity: 0; }
+  20%, 40% { opacity: 1; }
+  52%, 100% { opacity: 0; }
+}
+
+@keyframes nytaEmblemFlare {
+  0%, 40% { opacity: 0; }
+  52%, 78% { opacity: 1; }
+  92%, 100% { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .thinking {
-    .layerA,
-    .layerB {
+    .spin,
+    .spark,
+    .swoosh,
+    .flare {
       animation: none;
     }
   }
