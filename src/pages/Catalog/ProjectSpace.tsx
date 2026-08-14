@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAppSelector } from '../../store/store';
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
-import { uploadFile, CATALOG_BUCKET } from '../../lib/storage';
+import { VersionModal } from '../../components/VersionModal';
 import { supabase } from '../../lib/supabase';
 import * as catalogDb from '../../services/db/catalog';
 import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS } from '../../constants/maestra';
@@ -104,26 +104,16 @@ const ProjectSpace: FC = () => {
   }, []);
   const [project, setProject] = useState<CatalogProject | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [versionModal, setVersionModal] = useState(false);
   const [editingVersion, setEditingVersion] = useState<CatalogVersion | null>(null);
   const [projectModal, setProjectModal] = useState(false);
   const [projectDraft, setProjectDraft] = useState<ProjectDetailsDraft | null>(null);
-  const [stage, setStage] = useState<CatalogVersionStage>('guia');
-  const [versionStatus, setVersionStatus] = useState('composition');
-  const [versionTitle, setVersionTitle] = useState('');
-  const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [editStage, setEditStage] = useState<CatalogVersionStage>('guia');
-  const [editVersionStatus, setEditVersionStatus] = useState('composition');
-  const [editVersionTitle, setEditVersionTitle] = useState('');
-  const [editAudioFile, setEditAudioFile] = useState<File | null>(null);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [chatMessages, setChatMessages] = useState<CatalogProjectMessage[]>([]);
   const [chatText, setChatText] = useState('');
   const [chatLoading, setChatLoading] = useState(true);
   const [chatSending, setChatSending] = useState(false);
   const [chatError, setChatError] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const lastSavedSignature = useRef('');
 
@@ -170,14 +160,13 @@ const ProjectSpace: FC = () => {
   const versions = useMemo(() => (project?.versions || []).slice().sort((a, b) => b.version_number - a.version_number), [project]);
   const saveProject = useCallback(async (value: CatalogProject) => {
     if (!value.title.trim() || projectSignature(value) === lastSavedSignature.current || !canUpdateProject) return;
-    setSaving(true); setSaveState('saving');
+    setSaveState('saving');
     try {
       const saved = await catalogDb.updateCatalogProject(value.id, { title: value.title, status: value.status, genre: value.genre, bpm: value.bpm, key: value.key });
       lastSavedSignature.current = projectSignature(saved);
       setProject((current) => current ? { ...current, ...saved } : current);
       setSaveState('saved');
     } catch { setSaveState('error'); }
-    finally { setSaving(false); }
   }, [canUpdateProject]);
   useEffect(() => {
     if (!project || projectSignature(project) === lastSavedSignature.current) return;
@@ -185,64 +174,16 @@ const ProjectSpace: FC = () => {
     return () => window.clearTimeout(timer);
   }, [project, saveProject]);
 
-  const createVersion = async () => {
-    if (!project || !artistId || !canCollaborateJam) return;
-    setSaving(true);
-    try {
-      const uploaded = audioFile ? await uploadFile(CATALOG_BUCKET, `${artistId}/${project.id}/versions`, audioFile) : null;
-      const next: Omit<CatalogVersion, 'id' | 'files' | 'comments' | 'created_at' | 'updated_at'> = {
-        project_id: project.id,
-        version_number: versions.length ? Math.max(...versions.map((version) => version.version_number)) + 1 : 1,
-        stage, title: versionTitle || null, status: versionStatus,
-        audio_file: uploaded?.url || null, audio_file_name: uploaded?.name || null,
-        author_id: user?.id || null,
-        author_name: (user?.user_metadata as any)?.full_name || (user?.user_metadata as any)?.name || user?.email || 'Você',
-        author_avatar: (user?.user_metadata as any)?.avatar_url || (user?.user_metadata as any)?.picture || null,
-        bpm: project.bpm, key: project.key, genre: project.genre,
-      };
-      await catalogDb.createCatalogVersion(next);
-      setVersionModal(false); setAudioFile(null); setVersionTitle(''); setStage('guia');
-      await refresh();
-      message.success(audioFile ? 'Nova versão enviada e definida como principal' : 'Versão adicionada');
-    } catch { message.error('Não foi possível adicionar a versão'); }
-    finally { setSaving(false); }
-  };
 
+  // Os campos da versão moram no VersionModal; aqui só dizemos QUAL versão abrir.
   const openVersionEditor = (version: CatalogVersion) => {
     if (!canCollaborateJam) {
       message.error('Você não tem permissão para editar esta versão');
       return;
     }
     setEditingVersion(version);
-    setEditStage(version.stage);
-    setEditVersionStatus(version.status);
-    setEditVersionTitle(version.title || '');
-    setEditAudioFile(null);
   };
 
-  const updateVersion = async () => {
-    if (!editingVersion || !project || !artistId || !canCollaborateJam) return;
-    setSaving(true);
-    try {
-      const uploaded = editAudioFile
-        ? await uploadFile(CATALOG_BUCKET, `${artistId}/${project.id}/versions`, editAudioFile)
-        : null;
-      await catalogDb.updateCatalogVersion(editingVersion.id, {
-        stage: editStage,
-        status: editVersionStatus,
-        title: editVersionTitle.trim() || null,
-        ...(uploaded ? { audio_file: uploaded.url, audio_file_name: uploaded.name } : {}),
-      });
-      setEditingVersion(null);
-      setEditAudioFile(null);
-      await refresh();
-      message.success(uploaded ? 'Versão atualizada e definida como principal' : 'Versão atualizada');
-    } catch {
-      message.error('Não foi possível atualizar a versão');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const localTracks: LocalTrack[] = useMemo(() => versions.filter((version) => version.audio_file).map((version) => ({
     id: version.id,
@@ -378,31 +319,37 @@ const ProjectSpace: FC = () => {
         </aside>
       </section>
 
-      <Modal open={versionModal} title='Enviar nova versão' okText='Enviar versão' cancelText='Cancelar' onCancel={() => setVersionModal(false)} onOk={createVersion} confirmLoading={saving}>
-        <div className={styles.form}>
-          <label>Etapa<Select value={stage} options={stages} onChange={setStage} /></label>
-          <label>Título opcional<Input value={versionTitle} placeholder='Ex.: guia vocal, mix v2' onChange={(event) => setVersionTitle(event.target.value)} /></label>
-          <label>Status<Select value={versionStatus} options={CATALOG_STATUS_OPTIONS.map((entry) => ({ value: entry.id, label: entry.label }))} onChange={setVersionStatus} /></label>
-          <label>Áudio principal<input ref={fileRef} type='file' accept='audio/*' onChange={(event) => setAudioFile(event.target.files?.[0] || null)} />{audioFile && <small>{audioFile.name}</small>}</label>
-        </div>
-      </Modal>
+      {/* Enviar nova versão e editar versão usam o MESMO componente — a diferença é só existir
+          uma `version`. Antes eram dois <Modal> soltos com os campos repetidos à mão. */}
+      {project && artistId && (
+        <VersionModal
+          open={versionModal}
+          artistId={artistId}
+          projectId={project.id}
+          projectTitle={project.title}
+          nextVersionNumber={versions.length ? Math.max(...versions.map((v) => v.version_number)) + 1 : 1}
+          inherit={{ bpm: project.bpm, key: project.key, genre: project.genre }}
+          author={{
+            id: user?.id || null,
+            name: (user?.user_metadata as any)?.full_name || (user?.user_metadata as any)?.name || user?.email || 'Você',
+            avatar: (user?.user_metadata as any)?.avatar_url || (user?.user_metadata as any)?.picture || null,
+          }}
+          onClose={() => setVersionModal(false)}
+          onSaved={refresh}
+        />
+      )}
 
-      <Modal
-        open={Boolean(editingVersion)}
-        title={editingVersion ? `Editar V${editingVersion.version_number}` : 'Editar versão'}
-        okText='Salvar alterações'
-        cancelText='Cancelar'
-        onCancel={() => { setEditingVersion(null); setEditAudioFile(null); }}
-        onOk={updateVersion}
-        confirmLoading={saving}
-      >
-        <div className={styles.form}>
-          <label>Etapa<Select value={editStage} options={stages} onChange={setEditStage} /></label>
-          <label>Título opcional<Input value={editVersionTitle} placeholder='Ex.: guia vocal, mix v2' onChange={(event) => setEditVersionTitle(event.target.value)} /></label>
-          <label>Status<Select value={editVersionStatus} options={CATALOG_STATUS_OPTIONS.map((entry) => ({ value: entry.id, label: entry.label }))} onChange={setEditVersionStatus} /></label>
-          <label>Substituir áudio (opcional)<input type='file' accept='audio/*' onChange={(event) => setEditAudioFile(event.target.files?.[0] || null)} />{editAudioFile && <small>{editAudioFile.name}</small>}</label>
-        </div>
-      </Modal>
+      {project && artistId && (
+        <VersionModal
+          open={Boolean(editingVersion)}
+          artistId={artistId}
+          projectId={project.id}
+          projectTitle={project.title}
+          version={editingVersion}
+          onClose={() => setEditingVersion(null)}
+          onSaved={refresh}
+        />
+      )}
 
       <Modal open={projectModal} title='Editar Espaço JAM' okText='Concluir' cancelText='Cancelar' onCancel={() => setProjectModal(false)} onOk={applyProjectDetails}>
         {projectDraft && <div className={styles.form}>

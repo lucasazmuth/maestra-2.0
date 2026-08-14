@@ -404,8 +404,8 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
           </span>
           <span className={modalStyles.subtitle}>
             {item
-              ? 'Atualize informações, arquivos e créditos de Músicas.'
-              : 'Organize informações, arquivos e créditos da nova música.'}
+              ? 'A ficha da obra: identidade, créditos e letra. As gravações ficam nas versões.'
+              : 'A ficha da obra. O áudio que você enviar aqui vira a primeira versão (V1).'}
           </span>
         </div>
       }
@@ -493,24 +493,16 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                     }}
                   />
                 </label>
-                <div className={modalStyles.fieldGrid}>
-                  <label className={modalStyles.field}>
-                    <span>Data de lançamento</span>
-                    <DatePicker
-                      placeholder='Selecione a data'
-                      value={draft.release_date ? dayjs(draft.release_date) : null}
-                      onChange={(d) => set({ release_date: d ? d.format('YYYY-MM-DD') : null })}
-                    />
-                  </label>
-                  <label className={modalStyles.field}>
-                    <span>Duração</span>
-                    <Input
-                      placeholder='Ex.: 3:24'
-                      value={draft.duration || ''}
-                      onChange={(e) => set({ duration: e.target.value })}
-                    />
-                  </label>
-                </div>
+                {/* Duração saiu daqui: pertence à gravação, e cada versão tem a sua. Está no
+                    modal de Versão (VersionModal). */}
+                <label className={modalStyles.field}>
+                  <span>Data de lançamento</span>
+                  <DatePicker
+                    placeholder='Selecione a data'
+                    value={draft.release_date ? dayjs(draft.release_date) : null}
+                    onChange={(d) => set({ release_date: d ? d.format('YYYY-MM-DD') : null })}
+                  />
+                </label>
                 <div className={modalStyles.fieldGridFour}>
                   <label className={modalStyles.field}>
                     <span>ISRC</span>
@@ -592,8 +584,23 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
             label: 'Áudio',
             children: (
               <div>
-                <label style={{ color: '#b3b3b3', fontSize: 13, display: 'block', marginBottom: 6 }}>Arquivo de áudio</label>
-                {draft.audio_file && uploading !== 'audio' ? (
+                {/* No CADASTRO o áudio é aceito aqui: ele vira a V1 da música, e obrigar a
+                    pessoa a criar a música e só depois subir a primeira gravação seria um passo
+                    a mais sem ganho. Na EDIÇÃO ele sai: o arquivo já pertence a uma versão
+                    específica, e trocá-lo por aqui sobrescreveria a versão principal sem a
+                    pessoa escolher qual. Esse é o trabalho do Espaço Jam. */}
+                {item ? (
+                  <div className={modalStyles.hint}>
+                    <FiMusic size={18} />
+                    <div>
+                      <strong>O áudio agora vive nas versões</strong>
+                      <small>
+                        Cada gravação desta música (guia, mix, master) é uma versão, com o
+                        próprio arquivo. Abra o Espaço Jam para enviar ou substituir.
+                      </small>
+                    </div>
+                  </div>
+                ) : draft.audio_file && uploading !== 'audio' ? (
                   <AudioPreview
                     src={draft.audio_file}
                     fileName={draft.audio_file_name}
@@ -603,7 +610,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                 ) : (
                   <UploadField
                     accept='audio/*'
-                    hint='MP3, WAV ou outro formato de áudio'
+                    hint='Vira a primeira versão (V1) da música'
                     uploading={uploading === 'audio'}
                     hasValue={false}
                     thumb={<FiMusic size={20} />}

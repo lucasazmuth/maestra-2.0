@@ -420,3 +420,89 @@
     flex-direction: column;
   }
 }
+
+/* Caixa de upload compartilhada pelos modais (áudio da versão, capa da música). O <input file>
+   real fica escondido; este botão é a área clicável e o que mostra o arquivo escolhido. */
+.uploadBox {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px dashed #cad5e5;
+  border-radius: 8px;
+  background: #fbfcfe;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .16s ease, background .16s ease;
+}
+
+.uploadBox:hover,
+.uploadBox:focus-visible {
+  border-color: #9bb5ec;
+  background: #f4f8ff;
+  outline: 0;
+}
+
+.uploadBox > i {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 8px;
+  background: #edf2ff;
+  color: #3361ff;
+  font-style: normal;
+}
+
+.uploadBox > div {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+}
+
+.uploadBox strong {
+  overflow: hidden;
+  color: #62769b;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uploadBox small {
+  overflow: hidden;
+  color: #9aa9c2;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Aviso dentro de uma aba: explica pra onde foi um campo que saiu daqui. */
+.hint {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid #e3eaf3;
+  border-radius: 8px;
+  background: #f7f9fc;
+  color: #3361ff;
+}
+
+.hint > div {
+  display: grid;
+  gap: 4px;
+}
+
+.hint strong {
+  color: #52688f;
+  font-size: 12px;
+}
+
+.hint small {
+  color: #7c8db0;
+  font-size: 11px;
+  line-height: 1.5;
+}
