@@ -73,16 +73,25 @@ $ink: #405985;
 
 // ─── Features intro ──────────────────────────────────────────────────────────
 .introWrap { background: #fff; padding: 80px 20px 16px; }
-.introInner { max-width: 42rem; margin: 0 auto; text-align: center; }
+.introInner { max-width: 46rem; margin: 0 auto; text-align: center; }
 .introKicker { display: block; font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: $g400; margin-bottom: 16px; }
-.introTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 20px; }
+// `balance` reparte as linhas em vez de jogar a última palavra sozinha embaixo.
+.introTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 20px; text-wrap: balance; }
 .introSub { font-size: 1.125rem; line-height: 1.6; color: $g300; margin: 0; }
 
 // ─── Feature ─────────────────────────────────────────────────────────────────
 .feature { background: #fff; padding: 56px 20px; }
 .featureGrid { max-width: 72rem; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-// "Ícone solto": sem card/gradiente/borda — o ícone 3D flutua direto sobre o preto.
-.featureVisual { aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; }
+// O ícone 3D flutuava direto sobre o fundo: no tema escuro o preto segurava a peça, no claro
+// sobrava um vazio do lado do texto. O painel na cor do produto dá chão ao ícone.
+.featureVisual {
+  aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(var(--accent, 154, 79, 209), .18);
+  border-radius: 24px;
+  background:
+    radial-gradient(70% 70% at 50% 30%, rgba(var(--accent, 154, 79, 209), .13) 0%, transparent 70%),
+    linear-gradient(160deg, #f9fbff 0%, #f2f6fd 100%);
+}
 .featureGlyph { color: rgba(var(--accent, 154, 79, 209), 0.92); display: flex; width: 100%; align-items: center; justify-content: center; }
 .featureGlyph img { width: min(70%, 240px); height: auto; display: block; filter: drop-shadow(0 18px 40px rgba(74, 99, 145, .22)); }
 .featureBadge { display: block; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--accent, 154, 79, 209)); margin-bottom: 16px; }
@@ -98,7 +107,7 @@ $ink: #405985;
   &:hover { gap: 12px; opacity: 0.85; }
 }
 // Com a vitrine do chat no lugar do ícone, a proporção fixa sobra: a caixa tem altura própria.
-.featureVisualDemo { aspect-ratio: auto; display: block; }
+.featureVisualDemo { aspect-ratio: auto; display: block; border: 0; background: none; }
 .reverse .featureVisual { order: 2; }
 .reverse .featureBody { order: 1; }
 
@@ -242,7 +251,8 @@ $ink: #405985;
 @media (min-width: 768px) {
   .heroTitle { font-size: 4.5rem; }
   .heroSub { font-size: 1.25rem; }
-  .introTitle, .plansTitle, .faqTitle, .ctaBandTitle { font-size: 3rem; }
+  .plansTitle, .faqTitle, .ctaBandTitle { font-size: 3rem; }
+  .introTitle { font-size: 2.75rem; }
   .featureTitle { font-size: 2.25rem; }
   .headerInner, .hero, .feature, .plans, .faq, .ctaBand, .introWrap, .footer { padding-left: 32px; padding-right: 32px; }
 }
@@ -346,25 +356,83 @@ $ink: #405985;
 .heroSecondaryLink { color: $g300; text-decoration: none; cursor: pointer; background: none; border: none; font: inherit; &:hover { color: $ink; text-decoration: underline; } }
 
 // ─── Stats (count-up) ────────────────────────────────────────────────────────
-.stats { background: #fff; padding: 24px 20px; border-top: 1px solid $line; border-bottom: 1px solid $line; }
-.statsInner { max-width: 72rem; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 32px; }
-.statsLead { font-size: 14px; font-weight: 600; color: $ink; max-width: 220px; line-height: 1.4; }
-.statsLead span { color: $mag2; }
-.statsGroup { display: flex; gap: 56px; flex-wrap: wrap; }
-.statNum { font-size: 1.75rem; font-weight: 700; color: $ink; line-height: 1.2; }
-.statLabel { font-size: 14px; color: $g400; margin-top: 2px; }
+// Era uma faixa branca com o texto encostado numa ponta e os números na outra, com um vazio no
+// meio — parecia rodapé de página, não um dado da marca. Agora é um cartão, na mesma linguagem
+// dos cartões do app: superfície branca sobre o cinza, borda fina e divisores entre os números.
+.stats { background: #f7f9fd; padding: 40px 20px; border-top: 1px solid $line; border-bottom: 1px solid $line; }
+.statsInner {
+  max-width: 72rem; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; gap: 28px 40px;
+  padding: 26px 32px; border: 1px solid $line; border-radius: 18px; background: #fff;
+  box-shadow: 0 10px 26px rgba(74, 99, 145, .07);
+}
+.statsLead { font-size: 15px; font-weight: 700; color: $ink; max-width: 220px; line-height: 1.45; }
+.statsLead span { color: $mag; }
+.statsGroup { display: flex; flex-wrap: wrap; gap: 0; }
+// O divisor separa os números sem precisar de borda em cada um (o primeiro não tem).
+.statsGroup > div { padding: 0 34px; border-left: 1px solid $line; &:first-child { border-left: 0; padding-left: 0; } &:last-child { padding-right: 0; } }
+.statNum { font-size: 1.75rem; font-weight: 800; color: $mag; line-height: 1.2; }
+.statLabel { font-size: 13.5px; color: $g300; margin-top: 4px; }
+
+@media (max-width: 860px) {
+  .statsInner { padding: 22px 20px; }
+  .statsGroup > div { padding: 0 20px; }
+}
+
+// Empilhado, o divisor vertical vira um recuo torto (o primeiro item flush e os outros
+// deslocados). Aqui ele deita: separa as linhas em vez das colunas.
+@media (max-width: 620px) {
+  .statsInner { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .statsLead { max-width: none; }
+  .statsGroup { flex-direction: column; width: 100%; gap: 0; }
+  .statsGroup > div {
+    padding: 14px 0 0; border-left: 0; border-top: 1px solid $line;
+    &:first-child { padding-top: 0; border-top: 0; }
+    &:last-child { padding-bottom: 0; }
+  }
+}
 
 // ─── Como funciona (4 passos) ────────────────────────────────────────────────
-.how { background: #fff; padding: 80px 20px; }
+// Os quatro passos eram números soltos sobre o branco, ligados por um fio: sobre o preto isso
+// tinha contraste, sobre o claro virava esboço. Viraram cartões sobre o cinza, cada um com a cor
+// do produto daquele passo (a mesma cor que ele tem dentro do app).
+.how { background: #f7f9fd; padding: 80px 20px; border-top: 1px solid $line; }
 .howInner { max-width: 72rem; margin: 0 auto; }
-.howHead { max-width: 38rem; margin-bottom: 48px; }
+.howHead { max-width: 38rem; margin-bottom: 40px; }
 .howTitle { font-size: 2.25rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin: 0; }
-.howGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
-.howStep { position: relative; }
-.howNum { font-size: 2.5rem; font-weight: 800; color: $ink; line-height: 1; margin-bottom: 16px; }
-.howStep h3 { font-size: 18px; font-weight: 700; margin: 0 0 8px; color: $ink; }
-.howStep p { font-size: 14px; line-height: 1.6; color: $g400; margin: 0; }
-.howLine { position: absolute; top: 18px; left: calc(2.5rem + 16px); right: -28px; height: 1px; background: $line; }
+.howGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.howStep {
+  position: relative; overflow: hidden;
+  padding: 26px 24px 24px; border: 1px solid $line; border-radius: 16px; background: #fff;
+  box-shadow: 0 10px 26px rgba(74, 99, 145, .07);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+
+  // Faixa da cor do produto no topo do cartão: identifica o passo sem pintar o texto.
+  &::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: rgb(var(--accent, 51, 97, 255));
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--accent, 51, 97, 255), .35);
+    box-shadow: 0 16px 34px rgba(74, 99, 145, .12);
+  }
+}
+.howNum {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 38px; height: 38px;
+  margin-bottom: 16px; padding: 0 10px; border-radius: 10px;
+  background: rgba(var(--accent, 51, 97, 255), .12);
+  color: rgb(var(--accent, 51, 97, 255));
+  font-size: 15px; font-weight: 800; line-height: 1;
+}
+.howStep h3 { font-size: 17px; font-weight: 700; margin: 0 0 8px; color: $ink; }
+.howStep p { font-size: 14px; line-height: 1.6; color: $g300; margin: 0; }
+// O fio que ligava os passos não sobrevive ao cartão (e o topo colorido já mostra a sequência).
+.howLine { display: none; }
+
+@media (max-width: 900px) { .howGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .howGrid { grid-template-columns: 1fr; } }
 
 // ─── Carrossel de artistas / depoimentos ─────────────────────────────────────
 .tcar { background: #f7f9fd; padding: 80px 0; }
