@@ -168,12 +168,15 @@ const SubscriptionPage: FC = () => {
 
   if (view === 'benefits') {
     // Gate por status: não deixa quem já tem assinatura (ativa) ou pendência re-assinar (duplicar).
-    const gateCard: CSSProperties = { maxWidth: 560, margin: '0 auto', background: '#fff', border: '1px solid #e3eaf3', borderRadius: 16, padding: 32, textAlign: 'center', boxShadow: '0 12px 30px rgba(74, 99, 145, .1)' };
+    // Sem cartão: a área de conteúdo do app já é um cartão branco, e outro por dentro vira
+    // moldura dentro de moldura. O aviso ocupa o espaço e fica centralizado nele.
+    const gateWrap: CSSProperties = { display: 'flex', minHeight: '100%', alignItems: 'center', justifyContent: 'center', padding: 24 };
+    const gateCard: CSSProperties = { maxWidth: 560, textAlign: 'center' };
     const btnPrimary: CSSProperties = { background: '#3361ff', border: 'none', color: '#fff', borderRadius: 9999, padding: '12px 30px', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 12px 26px rgba(51, 97, 255, .24)' };
     const btnGhost: CSSProperties = { background: 'none', border: 'none', color: '#7c8da8', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 12 };
 
     if (!initialized) {
-      return <div style={{ padding: 24 }}><div style={{ ...gateCard, color: '#8ca0c5' }}>Carregando…</div></div>;
+      return <div style={gateWrap}><div style={{ ...gateCard, color: '#8ca0c5' }}>Carregando…</div></div>;
     }
     if (status === 'active') {
       const proCard: CSSProperties = {
@@ -216,7 +219,7 @@ const SubscriptionPage: FC = () => {
     }
     if (status === 'pending' || status === 'overdue') {
       return (
-        <div style={{ padding: 24 }}>
+        <div style={gateWrap}>
           <div style={gateCard}>
             <div style={{ color: '#405985', fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Você tem um pagamento pendente</div>
             <p style={{ color: '#7c8da8', fontSize: 14, lineHeight: 1.5, margin: '0 0 20px' }}>Já existe uma assinatura aguardando pagamento. Retome de onde parou — não precisa começar do zero.</p>
