@@ -592,22 +592,16 @@ const Catalog: FC = () => {
     }
   };
 
+  // Sem estilo inline: o desenho das abas mora no CSS (.catalog-tabs button / .active). O que
+  // havia aqui era do tema escuro — a aba ativa ficava branca com texto preto e a inativa,
+  // branco translúcido com texto BRANCO, invisível sobre o fundo claro. Como estilo inline
+  // vence qualquer folha, nem o CSS certo conseguia aparecer.
   const TabButton: FC<{ id: Tab; label: string; icon?: ReactNode }> = ({ id, label, icon }) => (
     <button
+      type='button'
+      className={tab === id ? 'active' : ''}
+      aria-pressed={tab === id}
       onClick={() => setTab(id)}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 7,
-        background: tab === id ? '#fff' : 'rgba(255,255,255,0.1)',
-        color: tab === id ? '#000' : '#fff',
-        border: 'none',
-        borderRadius: 9999,
-        padding: '6px 16px',
-        cursor: 'pointer',
-        fontWeight: 700,
-        fontSize: 14,
-      }}
     >
       {icon}{label}
     </button>
@@ -763,7 +757,7 @@ const Catalog: FC = () => {
       </section>
       <div className='catalog-tabs'>
         <TabButton id='manual' label='Músicas / Rascunho' />
-        <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify color='#9A4FD1' />} />
+        <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify />} />
         {tab === 'manual' && !!items.length && catalogFilterControls}
       </div>
       {tab === 'spotify' ? (
