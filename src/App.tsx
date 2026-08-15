@@ -232,6 +232,15 @@ const AppRoutes: FC = () => {
             destaque pra confirmação do pagamento. */}
         <Route path='/assinatura/sucesso' element={<SubscriptionSuccessPage />} />
 
+        {/* Refazer diagnóstico (PRO): é o MESMO quiz de /criar-artista em modo "redo", e
+            portanto tela cheia. Estava dentro do AppLayout e aparecia espremido no container
+            da página, com a barra de busca e o rail em volta de um fluxo que pede a tela
+            inteira. O gate continua: RequireArtistPaid lê o :id da URL e funciona fora do
+            layout. */}
+        <Route element={<RequireArtistPaid />}>
+          <Route path='/artists/:id/diagnostico/refazer' element={<ArtistCreate />} />
+        </Route>
+
         <Route element={<AppLayout />}>
           <Route path='/artists' element={<Artists />} />
 
@@ -247,8 +256,6 @@ const AppRoutes: FC = () => {
             <Route path='/artists/:id/agenda' element={<Agenda />} />
             <Route path='/artists/:id/action-plan' element={<ActionPlan />} />
             <Route path='/artists/:id/diagnostico' element={<DiagnosticView />} />
-            {/* Refazer diagnóstico (PRO): reaproveita a tela de quiz/diagnóstico em modo "redo" */}
-            <Route path='/artists/:id/diagnostico/refazer' element={<ArtistCreate />} />
             <Route path='/artists/:id/team' element={<Team />} />
             <Route path='/artists/:id/marketing' element={<Marketing />} />
             <Route path='/artists/:id/nyta' element={<Nyta />} />

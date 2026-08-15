@@ -2,6 +2,7 @@
 // Mesma altura e paleta clara dos outros cabeçalhos do redesign (wizard, modal da Nyta).
 
 .chat-header {
+  position: relative;
   display: flex;
   min-height: 70px;
   box-sizing: border-box;
@@ -50,7 +51,13 @@
   }
 
   // Chip do artista em foco: a foto é o que se reconhece de longe, o "sobre" dá a relação.
+  // Absoluto para ficar no meio do cabeçalho inteiro: no fluxo ele ficava colado no "Nyta IA"
+  // e mudava de lugar conforme o tamanho do nome do artista.
   &__scope {
+    position: absolute;
+    left: 50%;
+    max-width: min(320px, 42%);
+    transform: translateX(-50%);
     display: flex;
     min-width: 0;
     gap: 7px;
@@ -141,5 +148,13 @@
   .chat-header {
     min-height: 60px;
     padding: 0 12px;
+  }
+
+  // Sem largura para três blocos, o chip centralizado passaria por cima do título e do selo
+  // de uso; aqui ele volta para o fluxo, logo depois do "Nyta IA".
+  .chat-header__scope {
+    position: static;
+    max-width: none;
+    transform: none;
   }
 }

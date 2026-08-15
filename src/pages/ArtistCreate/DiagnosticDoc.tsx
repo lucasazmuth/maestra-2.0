@@ -73,7 +73,8 @@ function v3DimRows(dk: 'r' | 'e' | 'a' | 'l', ri: any, cm: Chartmetric | null): 
       { label: 'Prêmios', value: PREMIOS_LABELS_V3[Number(inp.premios ?? 0)] ?? '–' },
       { label: 'Imprensa', value: inp.imprensaRepercussao ? (FREQ_LABELS[inp.imprensaFrequencia] ?? 'Sim') : 'Não' },
       { label: 'Playlists editoriais', value: String(inp.editorialPlaylists ?? cm?.playlists?.count ?? 0) },
-      { label: 'Execução em rádio', value: Number(inp.radioAirplay) > 0 ? 'Sim' : 'Não' },
+      // Ver DiagnosticReport: nulo é ausência de dado, não ausência de execução.
+      { label: 'Execução em rádio', value: inp.radioAirplay == null ? 'Sem dado' : (Number(inp.radioAirplay) > 0 ? 'Sim' : 'Não') },
     ];
   return rows.filter((r): r is Row => r != null);
 }

@@ -265,13 +265,8 @@ export const AppLayout: FC = memo(() => {
           <span className='brand-logo-mark' aria-hidden='true' />
           Maestra
         </a>
-        {home && (
-          <nav className='site-links'>
-            <a href='#board'>Baixar App</a>
-            <a href='#board'>Planos</a>
-            <a href='/suporte' onClick={(event) => { event.preventDefault(); navigate('/suporte'); }}>Suporte</a>
-          </nav>
-        )}
+        {/* "Baixar App" e "Planos" apontavam para #board (não iam a lugar nenhum) e Suporte já
+            está no rodapé do dashboard. O menu volta quando os destinos existirem. */}
       </div>
       <label className='global-search'>
         <span className='global-search-icon' aria-hidden='true'><SearchIcon size={18} /></span>
