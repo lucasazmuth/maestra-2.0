@@ -77,9 +77,9 @@ const buildFaqItems = (once: number, monthly: number, annual: number): { q: stri
   { q: 'De onde vêm os dados do diagnóstico?', a: 'De duas fontes: dados públicos das plataformas (Spotify, redes sociais, YouTube) e o que você informa sobre shows, receita e reconhecimento. O cruzamento das duas é o que torna o retrato honesto.' },
 ];
 
-// Sem ID, o container do vídeo mostra o espaço reservado (troque pelo ID do YouTube — o trecho
-// depois de `v=` na URL).
-const HERO_VIDEO_ID = '';
+// ID do vídeo de apresentação no YouTube (o trecho depois de `v=` na URL). Vazio, o container
+// mostra o espaço reservado em vez de um player em branco.
+const HERO_VIDEO_ID = 'CeMv7yjdAMU';
 
 // ─── Cabeçalho ───────────────────────────────────────────────────────────────
 const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
