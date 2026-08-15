@@ -2,8 +2,10 @@ import { FC, useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircleFilled, CopyOutlined, ClockCircleOutlined, WifiOutlined } from '@ant-design/icons';
 
+import { App } from 'antd';
+
 import { useAppDispatch, useAppSelector } from '../../store/store';
-import { pollPaymentStatus, resumePayment } from '../../store/slices/subscription';
+import { cancelSubscription, pollPaymentStatus, resumePayment } from '../../store/slices/subscription';
 
 // ─── Styles ─────────────────────────────────────────────────────────────────────
 
@@ -199,6 +201,7 @@ function formatCountdown(seconds: number): string {
 const PaymentPage: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { message } = App.useApp();
 
   const { pixData, status } = useAppSelector((s) => s.subscription);
 
@@ -212,6 +215,7 @@ const PaymentPage: FC = () => {
   // Assinatura de CARTÃO pendente: a 1ª cobrança está em análise na operadora —
   // não há QR pra mostrar; exibimos o estado de análise e aguardamos o webhook.
   const [cardAnalysis, setCardAnalysis] = useState(false);
+  const [renewing, setRenewing] = useState(false);
 
   const pollingStarted = useRef(false);
   const resumeTried = useRef(false);
@@ -388,14 +392,45 @@ const PaymentPage: FC = () => {
   }
 
   // ── Não foi possível recuperar o QR (cobrança expirada/indisponível) ──
+  //
+  // Mandar de volta para /assinatura sem mais nada fechava um LOOP: lá o gate vê a assinatura
+  // ainda `pending` e oferece "Retomar pagamento", que traz para cá, onde a retomada falha de
+  // novo. E mesmo pulando o gate, o asaas-create-subscription responde `resume: true` pela
+  // trava anti-duplicidade. Sem encerrar a assinatura pendente não havia saída pelo app.
+  //
+  // Por isso o botão principal encerra a pendência (asaas-cancel-subscription, que cancela no
+  // Asaas e marca 'cancelled') antes de ir aos planos — aí a escolha começa do zero.
   if (resumeFailed) {
+    const gerarNovo = async () => {
+      setRenewing(true);
+      try {
+        const res = await dispatch(cancelSubscription());
+        if (cancelSubscription.rejected.match(res)) {
+          message.error('Não foi possível encerrar a cobrança anterior. Fale com o suporte para liberar um novo pagamento.');
+          return;
+        }
+        navigate('/assinatura', { replace: true });
+      } finally {
+        setRenewing(false);
+      }
+    };
     return (
       <div style={styles.container}>
         <div style={{ ...styles.card, ...styles.errorContainer }}>
           <ClockCircleOutlined style={{ fontSize: 48, color: '#d2474b' }} />
-          <div style={styles.errorText}>Não foi possível recuperar o PIX.</div>
-          <div style={styles.errorHint}>A cobrança pode ter expirado. Volte aos planos para gerar um novo pagamento.</div>
-          <button onClick={() => navigate('/assinatura', { replace: true })} style={styles.retryBtn}>Voltar aos planos</button>
+          <div style={styles.errorText}>A cobrança PIX expirou.</div>
+          <div style={styles.errorHint}>
+            Encerramos a cobrança anterior e você escolhe o plano de novo — nada foi cobrado.
+          </div>
+          <button onClick={gerarNovo} disabled={renewing} style={{ ...styles.retryBtn, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'progress' : 'pointer' }}>
+            {renewing ? 'Preparando…' : 'Gerar novo pagamento'}
+          </button>
+          <button
+            onClick={() => navigate('/artists', { replace: true })}
+            style={{ background: 'none', border: 'none', color: '#7c8da8', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginTop: 4 }}
+          >
+            Voltar ao painel
+          </button>
         </div>
       </div>
     );
