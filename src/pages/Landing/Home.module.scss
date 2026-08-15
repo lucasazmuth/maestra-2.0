@@ -219,16 +219,19 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
   span { display: block; margin-top: 12px; font-size: .9rem; color: $dim; }
 }
 
-// A onda decorativa fica em azul claro, encostada na borda direita da página.
+// A onda ocupa a metade direita da página, encostada na lateral: `flex-end` mantém as barras
+// coladas na borda e o corte acontece na esquerda, onde a onda já é só ruído visual.
 .waveBars {
   display: flex; align-items: center; justify-content: flex-end; gap: 24px;
-  height: 161px; margin-top: 70px; overflow: hidden;
+  width: 50%; margin: 70px 0 0 auto; height: 161px; overflow: hidden;
   i { display: block; flex: 0 0 auto; width: 4px; border-radius: 2px; background: #cfdcf2; }
 }
 .waveLine { flex: 1 1 auto !important; width: auto !important; height: 4px; }
 
 // ─── Módulos (carrossel) ─────────────────────────────────────────────────────
-.modules { padding: 90px 0 40px; background: $soft; border-top: 1px solid $line; border-bottom: 1px solid $line; }
+// Sem faixa de cor nem borda: a onda logo acima já separa as duas seções, e os cartões têm
+// borda e sombra próprias pra se destacarem do fundo da página.
+.modules { padding: 60px 0 40px; }
 .modRule { display: block; width: 186px; height: 3px; margin: 0 auto 26px; border-radius: 2px; background: $blue; }
 .modCarousel { display: grid; grid-template-columns: 159px 718px 159px; gap: 36px; justify-content: center; align-items: end; }
 
@@ -584,7 +587,8 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
     h3 { font-size: 1.5rem; }
   }
   .modDots { gap: 8px; button { width: 34px; } }
-  .waveBars { justify-content: center; }
+  // Em 375px, meia tela dá 6 barras: aqui ela usa a largura toda, ainda colada na direita.
+  .waveBars { width: 100%; height: 120px; }
   .footerGrid { grid-template-columns: 1fr; gap: 28px; }
   .heroCtas .btnNeon, .heroCtas .btnGhost { width: 100%; }
   .ctaCard { padding: 48px 22px; }
