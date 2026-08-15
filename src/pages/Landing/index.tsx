@@ -147,17 +147,11 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
           <h1 className={`${styles.hDisplay} ${styles.hDisplayNeon}`}>a gestão também</h1>
           <span className={styles.heroTagline}>com método</span>
         </div>
-        <p className={styles.heroLead}>
-          Do diagnóstico ao dia a dia: a Maestra conecta tudo o que a sua carreira precisa num lugar só.
-        </p>
-        <div className={styles.heroCtas}>
-          <button className={styles.btnNeon} onClick={start}>
-            Fazer meu diagnóstico grátis <FiArrowRight size={18} />
-          </button>
-          <button className={styles.btnGhost} onClick={scrollTo('planos')}>Ver planos</button>
-        </div>
       </div>
 
+      {/* Palco nas coordenadas da referência (Hero.svg): a figura em x=483/y=412, o cartão em
+          855/696, o selo com centro em 266/578, os controles em 182/831 e os pontos em 1088/887,
+          medidos na prancheta de 1440 com conteúdo de 1110. */}
       <div className={`${styles.shell} ${styles.heroStage}`}>
         {/* Onda que atravessa o palco, atrás da figura (traço da referência) */}
         <svg className={styles.heroWave} viewBox='0 0 1440 150' preserveAspectRatio='none' aria-hidden focusable='false'>
@@ -191,6 +185,21 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
             <span>Índice REAL · alcance e público em alta</span>
           </span>
           <span className={styles.nowScore}>72</span>
+        </div>
+
+        {/* No lugar das setas do carrossel da referência ficam os CTAs — mesma âncora, embaixo
+            à esquerda, alinhados com o cartão do outro lado. */}
+        <div className={styles.heroCtas}>
+          <button className={styles.btnNeon} onClick={start}>
+            Fazer meu diagnóstico grátis <FiArrowRight size={18} />
+          </button>
+          <button className={styles.btnGhost} onClick={scrollTo('planos')}>Ver planos</button>
+          <p className={styles.heroNote}>Diagnóstico grátis, sem cartão pra começar.</p>
+        </div>
+
+        {/* Os pontos do carrossel viram a régua do ciclo (diagnóstico → plano → execução). */}
+        <div className={styles.heroDots} aria-hidden>
+          <i className={styles.heroDotOn} /><i /><i />
         </div>
       </div>
     </section>
