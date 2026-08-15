@@ -1,3 +1,6 @@
+// Aviso de recurso Pro dentro do modal flutuante da Nyta. O emblema já é o da Nyta; o que
+// destoava era o botão roxo da marca antiga sobre o cartão claro — ação no app é azul.
+
 .container {
   display: flex;
   flex-direction: column;
@@ -22,15 +25,15 @@
 .title {
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 700;
-  color: #fff;
+  font-weight: 850;
+  color: #405985;
   margin: 0 0 12px;
   line-height: 1.2;
 }
 
 .description {
   font-size: 14px;
-  color: #b3b3b3;
+  color: #7c8da8;
   line-height: 1.6;
   margin: 0 0 32px;
   max-width: 280px;
@@ -41,10 +44,11 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background-color: #9A4FD1;
-  color: #FFFFFF;
+  background-color: #3361ff;
+  color: #fff;
   border: none;
-  border-radius: 24px;
+  border-radius: 999px;
+  box-shadow: 0 12px 26px rgba(51, 97, 255, .22);
   padding: 12px 24px;
   font-size: 14px;
   font-weight: 700;
@@ -53,8 +57,8 @@
   white-space: nowrap;
 
   &:hover {
-    transform: scale(1.04);
-    background-color: #8442B6;
+    transform: translateY(-1px);
+    background-color: #2a54e0;
   }
 
   &:active {

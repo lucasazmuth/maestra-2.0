@@ -4,6 +4,7 @@ import { FiCheck } from 'react-icons/fi';
 
 import { LOCKED_FEATURE_CONFIG, type LockedFeatureKey } from './config';
 import { usePlanPrices } from '../../hooks/usePlanPrices';
+import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
 import styles from './LockedFeature.module.scss';
 
 interface LockedFeatureProps {
@@ -32,7 +33,11 @@ export const LockedFeature: FC<LockedFeatureProps> = ({ feature }) => {
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <Icon className={styles.icon} />
+        {/* A tela da Nyta mostra a própria Nyta: o ícone genérico de tendência não dizia de quem
+            era o recurso. Os outros bloqueios seguem com o ícone do módulo no menu. */}
+        {feature === 'nyta'
+          ? <span className={styles.emblem}><NytaAvatar size={62} /></span>
+          : <Icon className={styles.icon} />}
         <h1 className={styles.title}>{config.title}</h1>
         <ul className={styles.benefits}>
           {config.benefits.map((benefit, index) => (
