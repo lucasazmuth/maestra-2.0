@@ -1107,9 +1107,6 @@ body.jam-project-space .local-player-bar {
     transform-origin: bottom right;
     animation: morePop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .mobile-more-handle {
-    display: none; // não é mais um bottom sheet com "alça"
-  }
   .mobile-more-item {
     display: flex;
     align-items: center;
@@ -1811,3 +1808,83 @@ a {
 }
 
 @import './gsap-reference.css';
+
+// ── Painéis flutuantes do antd (data e hora) ─────────────────────────────────
+// Eles renderizam em PORTAL, na raiz do documento, fora do escopo dos modais — por isso
+// escaparam da repintura do redesign e continuavam com o roxo da marca antiga (#9a4fd1 no "OK",
+// roxo escuro na hora selecionada, que ainda deixava o número ilegível). Aqui a paleta é a de
+// ação do app: azul #3361ff.
+.ant-picker-dropdown {
+  .ant-picker-panel-container {
+    border: 1px solid #e1e7f0;
+    background: #fff !important;
+    box-shadow: 0 18px 45px rgba(18, 30, 56, 0.16);
+  }
+
+  // Coluna de horas/minutos
+  .ant-picker-time-panel-cell-inner {
+    color: #52668d !important;
+    border-radius: 8px;
+  }
+
+  .ant-picker-time-panel-cell-inner:hover {
+    background: #f1f5fd !important;
+  }
+
+  .ant-picker-time-panel-cell-selected .ant-picker-time-panel-cell-inner {
+    background: #eaf0ff !important;
+    color: #3361ff !important;
+    font-weight: 800;
+  }
+
+  // Calendário
+  .ant-picker-cell-in-view .ant-picker-cell-inner { color: #52668d; }
+  .ant-picker-cell:not(.ant-picker-cell-in-view) .ant-picker-cell-inner { color: #aab7cd; }
+
+  .ant-picker-cell .ant-picker-cell-inner:hover {
+    background: #f1f5fd !important;
+  }
+
+  .ant-picker-cell-selected .ant-picker-cell-inner,
+  .ant-picker-cell-range-start .ant-picker-cell-inner,
+  .ant-picker-cell-range-end .ant-picker-cell-inner {
+    background: #3361ff !important;
+    color: #fff !important;
+  }
+
+  .ant-picker-cell-today .ant-picker-cell-inner::before {
+    border-color: #3361ff !important;
+  }
+
+  // Cabeçalho e rodapé
+  .ant-picker-header,
+  .ant-picker-header button,
+  .ant-picker-content th {
+    color: #52668d;
+  }
+
+  .ant-picker-header button:hover { color: #3361ff; }
+
+  .ant-picker-footer,
+  .ant-picker-header {
+    border-color: #edf0f5;
+  }
+
+  .ant-picker-now-btn {
+    color: #3361ff !important;
+    font-weight: 700;
+  }
+
+  // O "OK" herda o mesmo seletor longo do primário no App.scss (seis classes + !important no
+  // hover); repetir a especificidade aqui é o que garante o azul.
+  .ant-picker-ok .ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost) {
+    border-color: #3361ff !important;
+    background: #3361ff !important;
+    color: #fff !important;
+  }
+
+  .ant-picker-ok .ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost):hover {
+    border-color: #2a54e0 !important;
+    background: #2a54e0 !important;
+  }
+}

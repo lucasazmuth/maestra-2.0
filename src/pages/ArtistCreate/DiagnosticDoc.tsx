@@ -24,7 +24,7 @@ interface Props {
 const Page: FC<{ n: number; total: number; kicker?: string; children: ReactNode }> = ({ n, total, kicker, children }) => (
   <div className={styles.docPage} data-docpage>
     <div className={styles.docHeader}>
-      <span className={styles.docBrand}><MaestraBrand variant='wordmark' tone='light' /></span>
+      <span className={styles.docBrand}><MaestraBrand variant='wordmark' tone='dark' /></span>
       {kicker && <span className={styles.docHeaderLabel}>{kicker}</span>}
     </div>
     <div className={styles.docBody}>{children}</div>
@@ -46,8 +46,26 @@ const DIM_TAGLINE: Record<'r' | 'e' | 'a' | 'l', string> = {
   l: 'O reconhecimento do setor: imprensa, prêmios, plataformas.',
 };
 
-// Cor da nota/régua por estado (verde acende, âmbar baixo, dourado top tier).
-const dimColor = (high: boolean, top: boolean) => (top ? '#f5c451' : high ? '#21b26e' : '#e0a13c');
+// Cor da nota/régua por estado (verde acende, âmbar baixo, dourado top tier). Tons escolhidos
+// para PAPEL BRANCO: os do tema escuro (#21b26e, #f5c451) sumiam sobre fundo claro.
+// Destino do CTA clicável do PDF (ver data-pdflink e downloadPagesPdf).
+const MAESTRA_URL = 'https://www.maestramanager.com';
+
+// Escala monocromática: papel branco e tinta em cinza-azulado. O deck não usa mais cor para
+// diferenciar estado — quem faz isso é o peso da tipografia e o preenchimento da régua.
+const DOC = {
+  ink: '#2c3f63',
+  body: '#405985',
+  dim: '#56698f',
+  mute: '#61749a',
+  line: '#e3eaf3',
+  real: '#2c3f63',
+  low: '#8b9ab4',
+  goldInk: '#2c3f63',
+  goldBg: '#eef2f8',
+  danger: '#405985',
+} as const;
+const dimColor = (high: boolean, top: boolean) => (top ? DOC.goldInk : high ? DOC.real : DOC.low);
 
 type Row = { label: string; value: string };
 function v3DimRows(dk: 'r' | 'e' | 'a' | 'l', ri: any, cm: Chartmetric | null): Row[] {
@@ -115,14 +133,14 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
           <div className={styles.docDimTag2}>{DIM_TAGLINE[dk]}</div>
         </div>
         <div className={styles.docDimScoreWrap2}>
-          <span className={styles.docDimBadge2} style={top ? { background: 'linear-gradient(120deg,#f5c451,#e0a13c)', color: '#1a1206' } : high ? { background: color, color: '#04140c' } : { background: 'rgba(255,255,255,0.08)', color: '#cfcfd4' }}>{top ? 'Top Tier' : high ? 'Alto' : 'Baixo'}</span>
+          <span className={styles.docDimBadge2} style={top ? { background: DOC.goldBg, color: DOC.goldInk } : high ? { background: color, color: '#fff' } : { background: '#eef2f8', color: DOC.body }}>{top ? 'Top Tier' : high ? 'Alto' : 'Baixo'}</span>
           <span className={styles.docDimScore2}>{score}<span className={styles.docDimScoreMax2}>/100</span></span>
         </div>
       </div>
 
       <div className={styles.docRuler2}>
         {/* Top Tier: a barra enche até o selo (dourado), coerente com o selo do motor. */}
-        <div className={styles.docRulerFill2} style={top ? { width: '100%', background: 'linear-gradient(90deg,#f5c451,#e0a13c)' } : { width: `${score}%`, background: color }} />
+        <div className={styles.docRulerFill2} style={top ? { width: '100%', background: 'linear-gradient(90deg,#2c3f63,#7c8da8)' } : { width: `${score}%`, background: color }} />
         <span className={styles.docRulerMark2} style={{ left: '70%' }} data-label="acende" />
         <span className={styles.docRulerMark2} style={{ left: '100%' }} data-label="top tier" />
       </div>
@@ -150,7 +168,7 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
           <div className={styles.docHealthRow2}>
             <div className={styles.docHealthItem2}><span>Faturamento</span><strong>{money(fat)}</strong></div>
             <div className={styles.docHealthItem2}><span>Investimento</span><strong>{money(inv)}</strong></div>
-            <div className={styles.docHealthItem2}><span>Saldo</span><strong style={{ color: saldo >= 0 ? '#21b26e' : '#e06666' }}>{saldo >= 0 ? '+' : '−'}{money(saldo)}</strong></div>
+            <div className={styles.docHealthItem2}><span>Saldo</span><strong style={{ color: saldo >= 0 ? DOC.real : DOC.danger }}>{saldo >= 0 ? '+' : '−'}{money(saldo)}</strong></div>
           </div>
           <div className={styles.docPills2}>
             <span className={inp.temCnpj ? styles.docPillOn2 : styles.docPillOff2}>{inp.temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
@@ -166,7 +184,7 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
             const label = k === 'instagram' ? 'Instagram' : k === 'tiktok' ? 'TikTok' : 'YouTube';
             if (!e) return null;
             return (
-              <div key={k} className={styles.docEngRow2}><span>{label}</span><strong style={{ color: e.above ? '#21b26e' : '#9a9aa3' }}>{fmtPct(e.value)} {e.above ? 'acima' : 'abaixo'} do corte</strong></div>
+              <div key={k} className={styles.docEngRow2}><span>{label}</span><strong style={{ color: e.above ? DOC.real : DOC.mute }}>{fmtPct(e.value)} {e.above ? 'acima' : 'abaixo'} do corte</strong></div>
             );
           })}
         </div>
@@ -203,7 +221,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
     <div className={styles.docRoot}>
       {/* 1 — CAPA */}
       <div className={`${styles.docPage} ${styles.docCover}`} data-docpage>
-        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='light' /></div>
+        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='dark' /></div>
         <div className={styles.docCoverCenter}>
           <img className={styles.docCoverAvatar} src={avatarSrc} alt="" crossOrigin="anonymous" />
           <div className={styles.docCoverKicker}>Diagnóstico de carreira</div>
@@ -221,7 +239,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
         <div className={styles.docPattern}>
           {DIM_META.map((d) => (
             <div key={d.key} className={styles.docPatternItem}>
-              <span className={styles.docPatternLetter} style={{ color: ri.pattern?.[d.key] ? '#9A4FD1' : '#71717a' }}>{d.letter}</span>
+              <span className={styles.docPatternLetter} style={{ color: ri.pattern?.[d.key] ? DOC.real : '#8492ac' }}>{d.letter}</span>
               <span className={styles.docPatternWord}>{d.full}</span>
               <span className={styles.docPatternSub}>{d.sub}</span>
             </div>
@@ -265,10 +283,10 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
             <div style={{ marginBottom: 26 }}>
               <div className={styles.docSubTitle2} style={{ marginBottom: 12 }}>Playlists onde sua música está{playlists.count ? ` · ${playlists.count} no total` : ''}</div>
               {playlists.top.slice(0, 8).map((p, i) => (
-                <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderTop: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                  {p.editorial && <span style={{ fontSize: 10, fontWeight: 800, color: '#9A4FD1', letterSpacing: '0.06em' }}>EDITORIAL</span>}
-                  <span style={{ color: '#fff', flex: 1, fontSize: 16, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
-                  {p.followers != null && <span style={{ color: '#9a9aa3', fontSize: 14, fontWeight: 700 }}>{fmtNum(p.followers)}</span>}
+                <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderTop: i ? `1px solid ${DOC.line}` : 'none' }}>
+                  {p.editorial && <span style={{ fontSize: 10, fontWeight: 800, color: DOC.real, letterSpacing: '0.06em' }}>EDITORIAL</span>}
+                  <span style={{ color: DOC.ink, flex: 1, fontSize: 16, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
+                  {p.followers != null && <span style={{ color: DOC.dim, fontSize: 14, fontWeight: 700 }}>{fmtNum(p.followers)}</span>}
                 </div>
               ))}
             </div>
@@ -355,14 +373,14 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
 
       {/* O PRÓXIMO PASSO (CTA) */}
       <div className={`${styles.docPage} ${styles.docCta}`} data-docpage>
-        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='light' /></div>
+        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='dark' /></div>
         <div className={styles.docCtaCenter}>
           <div className={styles.docCtaKicker}>O próximo passo</div>
           <div className={styles.docCtaTitle}>Você sabe onde está. Agora, para onde ir.</div>
           <p className={styles.docCtaText}>
             O diagnóstico é o retrato da sua carreira hoje. O planejamento completo com a Nyta transforma esse retrato em um plano de ação real: objetivos, estratégias priorizadas, cronograma e modelagem financeira, construídos com a metodologia que já orientou centenas de artistas.
           </p>
-          <div className={styles.docCtaButton}>Comece seu planejamento com a Nyta</div>
+          <div className={styles.docCtaButton} data-pdflink={MAESTRA_URL}>Comece seu planejamento com a Nyta</div>
         </div>
         <div className={styles.docCoverFoot}>maestramanager.com</div>
       </div>
@@ -407,7 +425,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
   return (
     <div className={styles.docRoot}>
       <div className={`${styles.docPage} ${styles.docCover}`} data-docpage>
-        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='light' /></div>
+        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='dark' /></div>
         <div className={styles.docCoverCenter}>
           <img className={styles.docCoverAvatar} src={avatarSrc} alt="" crossOrigin="anonymous" />
           <div className={styles.docCoverKicker}>Diagnóstico de carreira</div>
@@ -424,7 +442,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
         <div className={styles.docPattern}>
           {DIM_META.map((d) => (
             <div key={d.key} className={styles.docPatternItem}>
-              <span className={styles.docPatternLetter} style={{ color: pattern[d.key] ? '#9A4FD1' : '#71717a' }}>{d.letter}</span>
+              <span className={styles.docPatternLetter} style={{ color: pattern[d.key] ? DOC.real : '#8492ac' }}>{d.letter}</span>
               <span className={styles.docPatternWord}>{d.full}</span>
             </div>
           ))}
@@ -441,7 +459,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
           {DIM_META.map((d) => {
             const high = pattern[d.key];
             const neutral = d.key === 'e' && earningsUnknown;
-            const color = neutral ? '#8a8a92' : high ? '#9A4FD1' : '#e0a13c';
+            const color = neutral ? DOC.mute : high ? DOC.real : DOC.low;
             return (
               <div key={d.key} className={styles.docDimCard}>
                 <div className={styles.docDimHead}>
@@ -527,25 +545,25 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
           <div className={styles.docSectionTitle}>Sua presença nas plataformas</div>
           {!!playlists?.top?.length && (
             <div style={{ marginBottom: 28 }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: '#cfcfd4', marginBottom: 14 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: DOC.ink, marginBottom: 14 }}>
                 Playlists onde sua música está{playlists.count ? ` · ${playlists.count} no total` : ''}
               </div>
               {playlists.top.slice(0, 10).map((p, i) => (
-                <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderTop: i ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
-                  <span style={{ color: '#6f6f78', width: 24, textAlign: 'right', fontSize: 16, fontWeight: 700 }}>{i + 1}</span>
-                  <span style={{ color: '#fff', flex: 1, fontSize: 17, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
-                  {p.editorial && <span style={{ fontSize: 12, fontWeight: 800, color: '#9A4FD1', letterSpacing: '0.04em' }}>EDITORIAL</span>}
-                  {p.followers != null && <span style={{ color: '#9a9aa3', fontSize: 15, fontWeight: 700, minWidth: 70, textAlign: 'right' }}>{fmtNum(p.followers)}</span>}
+                <div key={`${p.name}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', borderTop: i ? `1px solid ${DOC.line}` : 'none' }}>
+                  <span style={{ color: DOC.mute, width: 24, textAlign: 'right', fontSize: 16, fontWeight: 700 }}>{i + 1}</span>
+                  <span style={{ color: DOC.ink, flex: 1, fontSize: 17, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
+                  {p.editorial && <span style={{ fontSize: 12, fontWeight: 800, color: DOC.real, letterSpacing: '0.04em' }}>EDITORIAL</span>}
+                  {p.followers != null && <span style={{ color: DOC.dim, fontSize: 15, fontWeight: 700, minWidth: 70, textAlign: 'right' }}>{fmtNum(p.followers)}</span>}
                 </div>
               ))}
             </div>
           )}
           {!!similar?.length && (
             <div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: '#cfcfd4', marginBottom: 14 }}>Artistas de referência</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: DOC.ink, marginBottom: 14 }}>Artistas de referência</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {similar.filter((a) => a.name?.toLowerCase() !== (artistName || '').toLowerCase()).slice(0, 12).map((a) => (
-                  <span key={a.name} style={{ fontSize: 16, fontWeight: 700, color: '#e0e0e0', padding: '8px 18px', borderRadius: 9999, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>{a.name}</span>
+                  <span key={a.name} style={{ fontSize: 16, fontWeight: 700, color: DOC.body, padding: '8px 18px', borderRadius: 9999, background: '#f7f9fd', border: `1px solid ${DOC.line}` }}>{a.name}</span>
                 ))}
               </div>
             </div>
@@ -555,14 +573,14 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
       )}
 
       <div className={`${styles.docPage} ${styles.docCta}`} data-docpage>
-        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='light' /></div>
+        <div className={styles.docCoverBrand}><MaestraBrand variant='wordmark' tone='dark' /></div>
         <div className={styles.docCtaCenter}>
           <div className={styles.docCtaKicker}>O próximo passo</div>
           <div className={styles.docCtaTitle}>Você sabe onde está. Agora, para onde ir.</div>
           <p className={styles.docCtaText}>
             O diagnóstico é o retrato da sua carreira hoje. O planejamento completo com a Nyta transforma esse retrato em um plano de ação real: objetivos, estratégias priorizadas, cronograma e modelagem financeira, construídos com a metodologia que já orientou centenas de artistas.
           </p>
-          <div className={styles.docCtaButton}>Comece seu planejamento com a Nyta</div>
+          <div className={styles.docCtaButton} data-pdflink={MAESTRA_URL}>Comece seu planejamento com a Nyta</div>
         </div>
         <div className={styles.docCoverFoot}>maestramanager.com</div>
       </div>

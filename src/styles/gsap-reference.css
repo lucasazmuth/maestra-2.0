@@ -660,8 +660,7 @@
 .workspace-mobile-nav { display: none; }
 
 .planning-page .planning-focus > span,
-.planning-page .planning-next > div strong,
-.planning-page .fundamentals-grid strong {
+.planning-page .planning-next > div strong {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
@@ -669,7 +668,13 @@
 
 .planning-page .planning-focus > span { -webkit-line-clamp: 3; }
 .planning-page .planning-next > div strong { -webkit-line-clamp: 2; }
-.planning-page .fundamentals-grid strong { -webkit-line-clamp: 4; }
+/* Visão, missão e valores aparecem INTEIROS: o `-webkit-line-clamp: 4` cortava o texto em
+   reticências e não havia nenhum caminho para ler o resto. Os cartões crescem e o grid iguala a
+   altura por linha. */
+.planning-page .fundamentals-grid strong {
+  display: block;
+  overflow: visible;
+}
 
 /* Match the Novo Gsap planning palette after the later workspace overrides. */
 .planning-page .planning-stage-card,
@@ -712,9 +717,11 @@
     overflow: hidden;
     padding: 0;
     margin-left: auto;
-    background: linear-gradient(145deg, #9d42ff, #7625ee);
-    color: #fff;
-    box-shadow: 0 12px 24px rgba(118,45,232,.22);
+    /* Invertido: cartão branco como os outros round-controls do cabeçalho, com o emblema roxo
+       da Nyta por cima. O círculo roxo cheio pesava mais que o próprio logotipo ao lado. */
+    background: #fff;
+    color: #7625ee;
+    box-shadow: 0 6px 14px rgba(98, 112, 143, .07);
   }
   .task-app:not(.public-app) > .top-navigation .constructor {
     gap: 10px;
@@ -6029,9 +6036,11 @@
     overflow: hidden;
     padding: 0;
     margin-left: auto;
-    background: linear-gradient(145deg, #9d42ff, #7625ee);
-    color: #fff;
-    box-shadow: 0 12px 24px rgba(118,45,232,.22);
+    /* Invertido: cartão branco como os outros round-controls do cabeçalho, com o emblema roxo
+       da Nyta por cima. O círculo roxo cheio pesava mais que o próprio logotipo ao lado. */
+    background: #fff;
+    color: #7625ee;
+    box-shadow: 0 6px 14px rgba(98, 112, 143, .07);
   }
 }
 
@@ -6932,9 +6941,11 @@
 
   .task-app:not(.public-app) > .top-navigation .header-nyta-action {
     margin-left: auto;
-    background: linear-gradient(145deg, #9d42ff, #7625ee);
-    color: #fff;
-    box-shadow: 0 12px 24px rgba(118,45,232,.22);
+    /* Invertido: cartão branco como os outros round-controls do cabeçalho, com o emblema roxo
+       da Nyta por cima. O círculo roxo cheio pesava mais que o próprio logotipo ao lado. */
+    background: #fff;
+    color: #7625ee;
+    box-shadow: 0 6px 14px rgba(98, 112, 143, .07);
   }
 
   .task-app:not(.public-app) > .top-navigation .notification {
@@ -7348,7 +7359,10 @@
   padding: 42px 48px 58px;
   border: 0;
   border-radius: 0;
-  background: #fafbfc;
+  /* var(--canvas) (#f7f8fb), não #fafbfc: os demais módulos usam o mesmo cinza da casca do app,
+     e o tom mais claro daqui fazia a página parecer branca — com uma emenda visível onde o
+     conteúdo acabava e a casca aparecia atrás. */
+  background: var(--canvas);
   color: #52668d;
 }
 
@@ -7570,9 +7584,84 @@
     font-size: 27px;
   }
 
-  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table > header,
+  /* No celular a tabela deixa de ser tabela: cada faixa vira um cartão empilhado.
+     Antes ela era forçada a 650px de largura dentro de um container de 384px, o que dava uma
+     barra de rolagem horizontal — e, pior, o grid da faixa de 960px tem 4 trilhas para 6 filhos
+     (só um deles fica oculto), então o menu "⋮" caía numa segunda linha, embaixo do título. */
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table {
+    overflow-x: visible;
+  }
+
+  /* Os rótulos das colunas não fazem sentido sem as colunas. */
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table > header {
+    display: none;
+  }
+
   .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article {
-    min-width: 650px;
+    position: relative;
+    min-width: 0;
+    /* Linha 1: o título ocupa a largura toda. Linha 2: status e Espaço Jam lado a lado. */
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px 12px;
+    align-items: center;
+    padding: 16px 46px 16px 16px;
+  }
+
+  /* "Tipo" e "Próximo marco" saem: são as duas colunas que quase sempre vêm vazias ("—"), e
+     numa largura dessas cada linha a mais custa caro. Seguem visíveis ao abrir a música. */
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article > span:nth-child(2),
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article > span:nth-child(4) {
+    display: none;
+  }
+
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article > span:first-child {
+    grid-column: 1 / -1;
+  }
+
+  /* Linha 2 é o "rodapé" do cartão: status à esquerda, ação à direita. Encostados um no outro,
+     à esquerda, os dois pareciam sobras da tabela em vez de um par intencional. */
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article > span:nth-child(3) {
+    justify-self: start;
+  }
+
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article > span:nth-child(5) {
+    justify-self: end;
+  }
+
+  /* Chip de status e botão do Espaço Jam com a mesma altura e o mesmo raio: são os dois
+     elementos da mesma linha, e alturas diferentes (28 x 32) deixavam a base desalinhada. */
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article em,
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article .catalog-track-jam {
+    display: inline-flex;
+    height: 30px;
+    box-sizing: border-box;
+    align-items: center;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    line-height: 1;
+  }
+
+  /* A ação ganha peso de ação: fundo azul-claro em vez de contorno, que competia com o cartão. */
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article .catalog-track-jam {
+    border-color: transparent;
+    background: #edf2ff;
+  }
+
+  /* Título e legenda encostados no play, sem o vão da tabela. */
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article > span:first-child {
+    gap: 12px;
+  }
+
+  /* O menu sai do fluxo e ancora no canto — no grid ele era o sexto filho e não tinha trilha. */
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-table article > button {
+    position: absolute;
+    top: 13px;
+    right: 10px;
+  }
+
+  .task-app:not(.public-app) .catalog-reference-page .catalog-track-more-placeholder {
+    display: none;
   }
 }
 
@@ -8823,24 +8912,42 @@ body:has(.track-detail-backdrop) .local-player-bar {
 }
 
 @media (max-width: 700px) {
+  /* 122px embaixo: a navbar inferior é uma ilha flutuante (78px + 18px da base) que passa por
+     cima do conteúdo — com 48px a última tarefa da lista ficava atrás dela. */
   .task-app:not(.public-app) .action-plan-page {
-    padding: 24px 18px 48px;
+    padding: 24px 18px 122px;
   }
 
   .task-app:not(.public-app) .action-plan-page .ap-progress-card {
     padding: 20px !important;
+  }
+
+  /* Menos rótulo, mais conteúdo. Numa tela estreita os cabeçalhos das seções empilhavam quatro
+     linhas de texto antes do primeiro cartão, e cada uma repetia o que já está logo abaixo:
+     o kicker repete o título, "3 estratégias" repete o carrossel, e o "ESTRATÉGIA #01" acima de
+     "Tarefas" repete o cartão selecionado, que fica a poucos pixels dali. No desktop tudo isso
+     cabe na mesma linha e continua valendo. */
+  .task-app:not(.public-app) .action-plan-page .action-strategy-overview > header > div:first-child p,
+  .task-app:not(.public-app) .action-plan-page .action-task-register > header > div:first-child p,
+  .task-app:not(.public-app) .action-plan-page .action-overview-actions > span {
+    display: none;
+  }
+}
+
+/* Keep the action-plan canvas aligned with Planning and REAL at desktop widths.
+   The lower bound importa: sem ela esta regra descia até o celular e deixava 54px de margem
+   de cada lado numa tela de 375px — sobrava menos de 270px de conteúdo. Abaixo de 700px vale
+   a régua mobile (18px), definida acima. */
+@media (min-width: 701px) and (max-width: 1300px) {
+  .task-app:not(.public-app) .action-plan-page {
+    padding-right: 54px;
+    padding-left: 54px;
   }
 }
 
 /* The shell keeps the left artist rail visible, so the content column becomes
    narrow before the viewport itself reaches the mobile breakpoint. */
 @media (max-width: 1300px) {
-  .task-app:not(.public-app) .action-plan-page {
-    /* Keep the action-plan canvas aligned with Planning and REAL at desktop widths. */
-    padding-right: 54px;
-    padding-left: 54px;
-  }
-
   .task-app:not(.public-app) .action-plan-page .action-task-register {
     padding-right: 18px;
     padding-left: 18px;
@@ -9113,56 +9220,76 @@ body:has(.track-detail-backdrop) .local-player-bar {
   .task-app.has-mobile-nav .mobile-nav-item--active .mobile-nav-icon,
   .task-app.has-mobile-nav .mobile-nav-item--active .mobile-nav-label { color: var(--blue); }
 
-  .task-app.has-mobile-nav .mobile-nav-item--nyta,
-  .task-app.has-mobile-nav .mobile-nav-item--nyta.mobile-nav-item--active {
-    min-height: 64px;
-    margin: 0;
+  /* Primeira célula: a foto do artista, sem rótulo (referência: .mobile-nav-profile). O canto
+     arredondado à esquerda acompanha o raio da ilha quando a célula NÃO está erguida. */
+  .task-app.has-mobile-nav .mobile-nav-item--profile {
+    border-radius: 17px 0 0 17px;
+  }
+
+  .task-app.has-mobile-nav .mobile-nav-item--profile img {
+    width: 38px;
+    height: 38px;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 8px 18px rgba(83, 103, 141, .16);
+  }
+
+  .task-app.has-mobile-nav .mobile-nav-item--profile.mobile-nav-item--active {
     border-radius: 18px;
-    background: linear-gradient(145deg, #9d42ff, #7625ee);
-    color: #fff;
-    box-shadow: 0 12px 26px rgba(118, 45, 232, .24);
   }
-
-  .task-app.has-mobile-nav .mobile-nav-item--nyta::after,
-  .task-app.has-mobile-nav .mobile-nav-item--nyta.mobile-nav-item--active::after {
-    background: #fff;
-  }
-
-  .task-app.has-mobile-nav .mobile-nav-item--nyta .mobile-nav-nyta-avatar,
-  .task-app.has-mobile-nav .mobile-nav-item--nyta .mobile-nav-label { color: #fff; }
-  .task-app.has-mobile-nav .mobile-nav-nyta-avatar { margin-top: -2px; }
 
   .task-app.has-mobile-nav .mobile-more-backdrop {
     z-index: 119;
     background: rgba(38, 54, 82, .24);
   }
 
+  /* Painel do "Mais": grade de dois por linha ancorada logo acima da ilha (referência:
+     .mobile-more > div). 18px de folga sobre a nav — 18 (base) + 78 (altura) + 18 (respiro). */
   .task-app.has-mobile-nav .mobile-more-sheet {
     right: 22px;
-    bottom: 112px;
+    bottom: calc(114px + env(safe-area-inset-bottom, 0px));
     z-index: 121;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
     width: min(330px, calc(100vw - 44px));
     padding: 8px;
     border: 1px solid #e1e7f0;
     border-radius: 20px;
     background: #fff;
-    box-shadow: 0 18px 42px rgba(68, 88, 126, .2);
+    box-shadow: 0 16px 34px rgba(72, 91, 130, .16);
   }
 
+  /* Célula igual à da nav: ícone em cima, rótulo embaixo, no mesmo 10px/800. */
   .task-app.has-mobile-nav .mobile-more-item {
-    min-height: 48px;
-    padding: 10px 12px;
-    border-radius: 12px;
-    color: #607399;
-    font-size: 12px;
+    display: grid;
+    min-width: 0;
+    min-height: 74px;
+    padding: 8px 6px;
+    place-items: center;
+    align-content: center;
+    gap: 4px;
+    border-right: 1px solid #edf1f7;
+    border-bottom: 1px solid #edf1f7;
+    border-radius: 0;
+    background: transparent;
+    color: #98a7be;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
   }
 
-  .task-app.has-mobile-nav .mobile-more-item--active {
-    background: #eef3ff;
-    color: var(--blue);
-  }
+  /* Fios de grade: nada à direita da segunda coluna nem abaixo da última linha. */
+  .task-app.has-mobile-nav .mobile-more-item:nth-child(2n) { border-right: 0; }
+  .task-app.has-mobile-nav .mobile-more-item:last-child { border-right: 0; border-bottom: 0; }
+  /* Item ímpar sozinho na última linha ocupa a largura toda, senão fica uma célula órfã. */
+  .task-app.has-mobile-nav .mobile-more-item:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
-  .task-app.has-mobile-nav .mobile-more-ic,
+  .task-app.has-mobile-nav .mobile-more-item--active { background: transparent; color: var(--blue); }
+
+  .task-app.has-mobile-nav .mobile-more-ic { color: #b2bed0; }
   .task-app.has-mobile-nav .mobile-more-item--active .mobile-more-ic { color: var(--blue); }
 
   .task-app.has-mobile-nav .board-content,
@@ -9576,6 +9703,11 @@ body:has(.track-detail-backdrop) .local-player-bar {
 }
 
 .catalog-track-jam {
+  /* inline-flex: o ícone e o rótulo dividem a mesma linha. Como <button> ele é bloco por
+     padrão, e o SVG empilhava em cima do texto. */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid #dbe4f3;
   border-radius: 20px;
   padding: 7px 12px;
@@ -9638,4 +9770,85 @@ body:has(.track-detail-backdrop) .local-player-bar {
 .track-performance > div,
 .track-performance > .track-performance-cols {
   grid-template-columns: 26px minmax(110px, 1fr) 64px 84px;
+}
+
+/* Player aberto no mobile: ele flutua ACIMA da navbar (ver local-player-unified.scss), então
+   ocupa mais ~74px do rodapé. Sem esta folga extra o fim das listas ficava atrás dele. */
+@media (max-width: 960px) {
+  .task-app.has-mobile-nav.has-player .board-content,
+  .task-app.has-mobile-nav.has-player .rail-page,
+  .task-app.has-mobile-nav.has-player .settings-page,
+  .task-app.has-mobile-nav.has-player .community-page,
+  .task-app.has-mobile-nav.has-player .planning-page,
+  .task-app.has-mobile-nav.has-player .action-plan-page,
+  .task-app.has-mobile-nav.has-player .catalog-page,
+  .task-app.has-mobile-nav.has-player .team-page {
+    padding-bottom: 196px;
+  }
+
+  /* O chat da Nyta reserva o rodapé pelo próprio input (ver NytaChat/styles.scss). */
+  .task-app.has-mobile-nav.has-player .nyta-chat-page__input {
+    padding-bottom: calc(178px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Espaço Jam no mobile: a tela é o próprio ambiente da música (player, waveform, comentários) e
+   tem "voltar" próprio no cabeçalho. A tab bar aqui só roubava altura e cobria o rodapé dos
+   cartões de versão. O `body.jam-project-space` é setado pela própria página. */
+@media (max-width: 960px) {
+  /* A especificidade acompanha a regra que mostra a navbar (.task-app.has-mobile-nav
+     .mobile-nav): um `body.x .mobile-nav` simples perdia por um seletor. */
+  body.jam-project-space .task-app.has-mobile-nav .mobile-nav,
+  body.jam-project-space .task-app.has-mobile-nav .mobile-more-backdrop,
+  body.jam-project-space .task-app.has-mobile-nav .mobile-more-sheet {
+    display: none;
+  }
+}
+
+/* Painel do perfil: Reportar · Avaliar · Suporte. O `margin-top: 120px` do .social-links foi
+   escrito para um botão só, empurrando-o para longe do menu; com três em sequência ele virava um
+   vão de 120px ENTRE cada um. Só o primeiro guarda o afastamento do menu; os demais encostam. */
+.profile-panel .social-links + .social-links {
+  margin-top: 10px;
+}
+
+/* ── Planejamento: resumo do foco ──────────────────────────────────────────────
+   O texto vinha travado em 350px dentro de um cartão bem mais largo — no mobile sobrava metade
+   da caixa vazia à direita. Agora ele ocupa a largura toda, e o corpo sobe de 14 para 15px. */
+.planning-page .planning-focus-summary {
+  max-width: none;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* Saída do markdown: cada bloco `**Título**` vira um parágrafo que começa por <strong>, então o
+   <strong> é a linha de título e os parágrafos precisam respirar entre si. */
+.planning-page .planning-focus-summary p + p {
+  margin-top: 14px;
+}
+
+.planning-page .planning-focus-summary strong {
+  font-size: 15px;
+  letter-spacing: .01em;
+}
+
+/* ── Planejamento: mapa de referências ─────────────────────────────────────────
+   Os rótulos eram brancos em quatro bolhas e ESCUROS na amarela, e metade deles não passava no
+   contraste (a laranja ficava em 2,6:1). Escurecendo os preenchimentos, o branco vale para todas
+   e a leitura fica uniforme. */
+.planning-page .reference-center { background: #15794a; }
+.planning-page .node-positioning { background: #2a54e0; }
+.planning-page .node-artistic { background: #8f6207; }
+.planning-page .node-communication { background: #b4490a; }
+.planning-page .node-career { background: #c62330; }
+
+.planning-page .reference-center,
+.planning-page .reference-node {
+  color: #fff;
+}
+
+/* As linhas que ligam as bolhas estavam em #d8e1ef sobre branco — quase invisíveis. */
+.planning-page .reference-map::before,
+.planning-page .reference-map::after {
+  background: repeating-linear-gradient(to bottom, #9fb2ce 0 5px, transparent 5px 11px);
 }

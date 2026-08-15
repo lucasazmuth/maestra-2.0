@@ -84,15 +84,44 @@ export async function downloadPagesPdf(pages: HTMLElement[], fileName: string): 
     let added = 0;
     for (let i = 0; i < pages.length; i++) {
       const { w, h } = dims[i];
-      // JPEG (não PNG): o deck é escuro com gradientes; PNG sem compressão gerava ~85MB. JPEG q0.92
-      // mantém a qualidade e derruba o arquivo para poucos MB. Fontes locais embutidas (sem skipFonts).
+      // JPEG (não PNG): PNG sem compressão gerava ~85MB. JPEG q0.92 mantém a qualidade e derruba o
+      // arquivo para poucos MB. Fontes locais embutidas (sem skipFonts).
+      //
+      // backgroundColor BRANCO: o html-to-image escreve esta cor no fundo do NÓ CLONADO, e não
+      // só atrás dele — com o antigo '#0a0a0e' (do deck escuro) ele apagava o `background: #fff`
+      // da própria página e o PDF saía preto. A capa escapava por acaso, porque o fundo dela é um
+      // gradiente (background-image), que essa opção não sobrescreve.
       const dataUrl = await toJpeg(pages[i], {
-        pixelRatio: 2, cacheBust: true, backgroundColor: '#0a0a0e', quality: 0.92,
+        pixelRatio: 2, cacheBust: true, backgroundColor: '#ffffff', quality: 0.92,
         width: w, height: h, style: { width: `${w}px`, height: `${h}px` },
       });
       if (!dataUrl || !dataUrl.startsWith('data:image/jpeg') || dataUrl.length < 100) continue;
       if (added > 0) pdf.addPage();
       pdf.addImage(dataUrl, 'JPEG', 0, 0, W, H);
+
+      // Áreas clicáveis: a página virou imagem, então os links precisam ser recriados por cima.
+      // Cada nó com data-pdflink vira um retângulo de link, convertido da caixa em px (relativa à
+      // página) para os mm do A4.
+      //
+      // As frações saem de `pageBox`, não de `w`/`h`: a régua precisa ser a MESMA das duas
+      // medidas. `getBoundingClientRect` já vem com qualquer transform do palco off-screen
+      // aplicado, então dividir por `offsetWidth` (sem transform) desalinharia o retângulo.
+      const pageBox = pages[i].getBoundingClientRect();
+      pages[i].querySelectorAll<HTMLElement>('[data-pdflink]').forEach((el) => {
+        const url = el.dataset.pdflink;
+        if (!url) return;
+        const box = el.getBoundingClientRect();
+        const xMm = ((box.left - pageBox.left) / pageBox.width) * W;
+        const yMm = ((box.top - pageBox.top) / pageBox.height) * H;
+        const wMm = (box.width / pageBox.width) * W;
+        const hMm = (box.height / pageBox.height) * H;
+        // Borda de BAIXO com altura NEGATIVA, de propósito. O jsPDF escreve o /Rect como
+        // [x, verticalDe(y), x+w, verticalDe(y+h)] — ou seja, [llx, ury, urx, lly], com os Y
+        // trocados em relação ao que a especificação do PDF pede ([llx lly urx ury]). O Adobe
+        // normaliza sozinho e o link funciona; o Preview do macOS (e outros leitores) não, e o
+        // botão fica morto. Invertendo a entrada, os dois Y saem na ordem certa.
+        pdf.link(xMm, yMm + hMm, wMm, -hMm, { url });
+      });
       added += 1;
     }
     if (added === 0) throw new Error('PDF export: nenhuma página capturada');
