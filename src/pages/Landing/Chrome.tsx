@@ -13,12 +13,14 @@ import styles from './Home.module.scss';
 // As páginas institucionais mais antigas (/diagnostico-real, /music-rio-academy e a landing do
 // workshop) ainda usam ./LightChrome.tsx, que tem a mesma cara mas outro conjunto de links.
 
-const NAV: { label: string; id?: string; to?: string }[] = [
+// Só âncoras: o menu do topo leva a áreas da própria landing, então cada item rola a página em
+// vez de trocar de rota. "Sobre" saiu daqui por isso — ele é página, e vive no rodapé.
+const NAV = [
   { label: 'Recursos', id: 'recursos' },
   { label: 'Nyta IA', id: 'nyta' },
   { label: 'Planos', id: 'planos' },
-  { label: 'Sobre', to: '/sobre' },
   { label: 'FAQ', id: 'faq' },
+  { label: 'Download', id: 'download' },
 ];
 
 export const useSectionNav = () => {
@@ -55,11 +57,7 @@ export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
           <MaestraBrand variant='lockup' tone='dark' className={styles.brandMark} />
         </a>
         <nav className={styles.navLinks}>
-          {NAV.map((n) => (
-            <button key={n.label} onClick={n.to ? () => navigate(n.to as string) : goToSection(n.id as string)}>
-              {n.label}
-            </button>
-          ))}
+          {NAV.map((n) => <button key={n.id} onClick={goToSection(n.id)}>{n.label}</button>)}
         </nav>
         <div className={styles.navActions}>
           {loggedIn ? (

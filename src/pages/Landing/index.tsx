@@ -539,7 +539,7 @@ const Download: FC = () => {
   const { visible: pwaVisible, ios: pwaIOS, install: installPwa } = usePwaInstall();
 
   return (
-    <section className={styles.download}>
+    <section className={styles.download} id='download'>
       <div className={styles.shell}>
         <h2 className={styles.hSection}>A Maestra no seu bolso</h2>
         <p className={styles.downloadLead}>
