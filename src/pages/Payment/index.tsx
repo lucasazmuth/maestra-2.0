@@ -189,11 +189,27 @@ function injectKeyframes() {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 
-function formatCountdown(seconds: number): string {
+// A validade do QR vem na própria cobrança do Asaas e varia muito: pode ser de minutos (PIX
+// avulso) a quase um ano (a cobrança de uma assinatura). MM:SS só faz sentido na reta final —
+// com 366 dias pela frente ele imprimia "527086:15", que não é hora nem prazo.
+function formatCountdown(seconds: number, expiresAt?: string | null): string {
   if (seconds <= 0) return '00:00';
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+  if (seconds < 3600) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+
+  if (seconds < 86400) {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    return mins ? `${hours}h${String(mins).padStart(2, '0')}` : `${hours}h`;
+  }
+
+  // De um dia em diante, a data diz mais do que a contagem: ninguém acompanha "em 366 dias".
+  const date = expiresAt ? new Date(expiresAt) : new Date(Date.now() + seconds * 1000);
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────────
@@ -533,7 +549,7 @@ const PaymentPage: FC = () => {
           {isExpired ? (
             <span>QR Code expirado</span>
           ) : (
-            <span>Expira em {formatCountdown(secondsRemaining ?? 0)}</span>
+            <span>Expira em {formatCountdown(secondsRemaining ?? 0, pixData?.expiresAt)}</span>
           )}
         </div>
 
