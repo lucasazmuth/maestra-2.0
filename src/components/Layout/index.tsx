@@ -6,6 +6,7 @@ import { MobileNav } from './components/MobileNav';
 import { SystemMenu } from './components/SystemMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
+import { MaestraBrand } from '../MaestraBrand';
 import { PlanTag } from '../PlanTag';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import { LocalPlayerBar } from '../LocalPlayerBar';
@@ -247,12 +248,14 @@ export const AppLayout: FC = memo(() => {
   const topNavigation = (home = false) => (
     <header className='top-navigation'>
       <div className='top-navigation-left'>
-        <a className='constructor' href='/artists' onClick={(event) => {
+        {/* O mesmo wordmark vetorial da landing e do login. Aqui a marca era o símbolo em
+            máscara + a palavra "Maestra" em texto peso 800 — parecida, mas mais pesada que o
+            logotipo oficial, então a marca mudava de forma entre o site e o app. */}
+        <a className='constructor' href='/artists' aria-label='Ir para seus perfis' onClick={(event) => {
           event.preventDefault();
           navigate('/artists');
         }}>
-          <span className='brand-logo-mark' aria-hidden='true' />
-          Maestra
+          <MaestraBrand variant='lockup' tone='dark' />
         </a>
         {/* O plano da conta vira um selo aqui: o banner de rodapé dizia a mesma coisa ocupando
             uma faixa inteira da tela em toda navegação. */}

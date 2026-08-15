@@ -1,4 +1,5 @@
 import { FC, useEffect, useState } from 'react';
+import { MaestraBrand } from '../../components/MaestraBrand';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Input, Spin, Select } from 'antd';
 import { FiArrowLeft, FiChevronDown, FiX } from 'react-icons/fi';
@@ -285,8 +286,7 @@ const ProfileUnlock: FC = () => {
           }}
           aria-label='Voltar para seus perfis'
         >
-          <span className='brand-logo-mark' aria-hidden='true' />
-          Maestra
+          <MaestraBrand variant='lockup' tone='dark' />
         </a>
         <FlowHeader phase={step === 'pagamento' ? 2 : 1} />
         <button className={styles.back} onClick={() => navigate('/artists')} aria-label="Sair" title="Sair">

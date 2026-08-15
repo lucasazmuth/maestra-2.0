@@ -333,9 +333,7 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 10px;
   font-size: 24px;
-  font-weight: 800;
   letter-spacing: 0;
   color: #52668d;
   text-decoration: none;
@@ -345,10 +343,8 @@
   &:focus,
   &:visited { color: #52668d; text-decoration: none; }
 
-  :global(.brand-logo-mark) {
-    width: 22px;
-    height: 22px;
-  }
+  // O logotipo vetorial traz o preto da marca; aqui ele segue o cinza-azulado do cabeçalho.
+  :global([data-brand-variant]) { color: #52668d; }
 }
 
 // ─── Progresso enxuto: dots + nome de SÓ a etapa atual ──────────────────────────

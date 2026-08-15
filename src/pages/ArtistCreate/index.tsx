@@ -1,4 +1,5 @@
 import { FC, KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from 'react';
+import { MaestraBrand } from '../../components/MaestraBrand';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Input, InputNumber, Spin } from 'antd';
 import { FiAlertCircle, FiArrowLeft, FiX } from 'react-icons/fi';
@@ -452,8 +453,7 @@ const ArtistCreate: FC = () => {
           }}
           aria-label='Voltar para seus perfis'
         >
-          <span className='brand-logo-mark' aria-hidden='true' />
-          Maestra
+          <MaestraBrand variant='lockup' tone='dark' />
         </a>
         {!redo && <FlowHeader phase={macroPhase} />}
         <button
