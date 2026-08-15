@@ -592,7 +592,7 @@ export const Footer: FC = () => {
             </div>
             <div className={styles.footerCol}>
               <span className={styles.footerColTitle}>Social</span>
-              <a href="https://www.instagram.com/maestramanager/" target="_blank" rel="noreferrer" aria-label="Instagram" className={styles.footerSocial}><FiInstagram size={18} /></a>
+              <a href="https://www.instagram.com/maestra.manager/" target="_blank" rel="noreferrer" aria-label="Instagram" className={styles.footerSocial}><FiInstagram size={18} /></a>
             </div>
           </div>
         </div>
