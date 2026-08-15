@@ -139,18 +139,6 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
             </div>
           )}
         </div>
-
-        {/* O cartão "tocando agora" da referência virou a pergunta da Nyta, encostada no canto do
-            vídeo. Mostrar um resultado fictício não dizia nada a quem chega; a pergunta fala com
-            o visitante e o clique leva pro diagnóstico que responde. */}
-        <button className={styles.nowCard} onClick={start}>
-          <span className={styles.nowIcon}><NytaAvatar size={40} /></span>
-          <span className={styles.nowMeta}>
-            <em>Nyta IA</em>
-            <strong>Você sabe como está a sua carreira hoje?</strong>
-          </span>
-          <span className={styles.nowGo} aria-hidden><FiArrowRight size={18} /></span>
-        </button>
       </div>
     </section>
   );

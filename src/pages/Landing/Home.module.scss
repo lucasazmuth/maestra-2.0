@@ -165,37 +165,6 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
   path { fill: none; stroke: #c9d8f0; stroke-width: 2; }
 }
 
-
-
-// Cartão da pergunta da Nyta: branco, com a moldura e a sombra dos cartões do app.
-.nowCard {
-  position: relative; z-index: 3; margin: -34px 0 0 auto; cursor: pointer; text-align: left;
-  display: flex; align-items: center; gap: 16px; width: 478px; min-height: 104px; padding: 18px 20px;
-  border-radius: 18px; border: 1px solid $line; background: #fff;
-  box-shadow: 0 18px 44px rgba(74, 99, 145, .16);
-  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-
-  &:hover {
-    transform: translateY(-2px); border-color: rgba(122, 79, 209, .45);
-    box-shadow: 0 22px 50px rgba(74, 99, 145, .22);
-  }
-  &:hover .nowGo { background: $nyta; border-color: $nyta; color: #fff; }
-}
-.nowIcon { display: inline-flex; flex: 0 0 auto; }
-.nowMeta {
-  display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 3px;
-  em {
-    font-style: normal; font-family: var(--font-mono);
-    font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: $nyta;
-  }
-  strong { font-size: 17px; font-weight: 700; line-height: 1.35; color: $strong; }
-}
-.nowGo {
-  flex: 0 0 auto; display: grid; place-items: center; width: 44px; height: 44px;
-  border-radius: 50%; border: 1px solid $line; background: #fff; color: $nyta;
-  transition: background .2s ease, color .2s ease, border-color .2s ease;
-}
-
 // ─── Vídeo + números ─────────────────────────────────────────────────────────
 .video { padding: 90px 0 0; }
 .videoGrid { display: block; text-align: center; }
@@ -571,8 +540,6 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
   .modMainBody { position: relative; left: auto; right: auto; top: auto; transform: none; padding: 16px 32px 36px; }
 
   .heroWave { top: 100px; }
-  // No estreito o cartão ocupa a largura toda e desencosta do player.
-  .nowCard { width: 100%; margin: 18px 0 0; }
 }
 
 @media (max-width: 820px) {
