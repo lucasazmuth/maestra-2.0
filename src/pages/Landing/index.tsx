@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  FiArrowRight, FiArrowUp, FiCheck, FiChevronDown,
+  FiArrowLeft, FiArrowRight, FiArrowUp, FiCheck, FiChevronDown,
   FiDownload, FiInstagram, FiPlay, FiShare,
 } from 'react-icons/fi';
 
@@ -446,14 +446,30 @@ const NytaSection: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
 };
 
 // ─── Depoimentos (slot "what are they saying") ───────────────────────────────
-const Testimonials: FC = () => (
-  <section className={styles.says}>
-    <div className={styles.shell}>
-      <div className={styles.sectionHead}>
-        <h2 className={styles.hSection}>O que estão dizendo?</h2>
-        <p className={styles.pBody}>Artistas, produtores e gravadoras já constroem carreira com método na Maestra.</p>
+// Como na referência: cartões de 468×308 numa faixa que começa na margem do conteúdo e sangra
+// pela direita (o próximo aparece cortado, mostrando que há mais). As setas rolam a faixa.
+const Testimonials: FC = () => {
+  const track = useRef<HTMLDivElement>(null);
+  // 468 do cartão + 55 da folga: um clique = um cartão.
+  const slide = (dir: 1 | -1) => track.current?.scrollBy({ left: dir * 523, behavior: 'smooth' });
+
+  return (
+    <section className={styles.says}>
+      <div className={styles.shell}>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.hSection}>O que estão dizendo?</h2>
+          <p className={styles.pBody}>Artistas, produtores e gravadoras já constroem carreira com método na Maestra.</p>
+        </div>
+        <div className={styles.sayArrows}>
+          <button className={styles.sayArrow} onClick={() => slide(-1)} aria-label='Depoimento anterior'>
+            <FiArrowLeft size={20} />
+          </button>
+          <button className={styles.sayArrow} onClick={() => slide(1)} aria-label='Próximo depoimento'>
+            <FiArrowRight size={20} />
+          </button>
+        </div>
       </div>
-      <div className={styles.sayGrid}>
+      <div className={styles.sayTrack} ref={track}>
         {TESTIMONIALS.map((t) => (
           <article key={t.name} className={styles.sayCard}>
             <div className={styles.sayWho}>
@@ -467,9 +483,9 @@ const Testimonials: FC = () => (
           </article>
         ))}
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 // ─── Fundadora ───────────────────────────────────────────────────────────────
 const ANITA_STORY = [

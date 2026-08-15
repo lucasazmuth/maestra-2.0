@@ -370,20 +370,60 @@ $edge: rgba(255, 255, 255, .18);
 
 // ─── Depoimentos ─────────────────────────────────────────────────────────────
 .says { padding: 110px 0 40px; }
-.sayGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; }
+.sayArrows { display: flex; justify-content: flex-end; gap: 17px; margin: -18px 0 40px; }
+// Mesmo par de botões do carrossel da referência (55×55, raio 12).
+.sayArrow {
+  width: 55px; height: 55px; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .30), rgba(255, 255, 255, .10));
+  display: grid; place-items: center; color: #fff;
+  transition: background .16s ease;
+  &:hover { background: linear-gradient(135deg, rgba(255, 255, 255, .42), rgba(255, 255, 255, .16)); }
+}
+
+// A faixa começa na margem do conteúdo e sangra pela direita: o cartão seguinte aparece
+// cortado, que é como a referência mostra que há mais depoimentos.
+.sayTrack {
+  display: flex; gap: 55px; overflow-x: auto; scroll-snap-type: x mandatory;
+  padding: 4px calc((100vw - 1110px) / 2) 24px;
+  // Sem o scroll-padding, o snap alinha o cartão à borda do container e engole o recuo da
+  // margem: a faixa nascia colada na esquerda da tela.
+  scroll-padding-left: calc((100vw - 1110px) / 2);
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
 .sayCard {
-  padding: 32px; border-radius: 24px;
-  background: rgba(250, 250, 250, .08); border: 1px solid rgba(255, 255, 255, .30);
-  p { margin: 26px 0 0; font-size: 1.02rem; line-height: 1.65; font-weight: 300; }
+  position: relative;
+  flex: 0 0 468px; height: 308px; padding: 32px; border-radius: 24px; scroll-snap-align: start;
+  background: rgba(250, 250, 250, .08);
+
+  // A borda vai do branco ao neon translúcido (paint5 do arquivo). Com o fundo do cartão em 8%
+  // de branco, o truque dos dois background-clip vazava o degradê por baixo do texto inteiro;
+  // aqui ele fica preso na moldura de 1px pela máscara.
+  &::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+    background: linear-gradient(94deg, rgba(255, 255, 255, .85) 0%, rgba(182, 255, 82, .25) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  p { margin: 30px 0 0; font-size: 1.12rem; line-height: 1.55; font-weight: 300; }
 }
 .sayWho {
-  display: flex; align-items: center; gap: 14px;
-  strong { display: block; font-size: 1.05rem; font-weight: 600; }
-  span { display: block; margin-top: 2px; font-size: .8rem; color: $mute; font-weight: 300; }
+  display: flex; align-items: center; gap: 16px;
+  // `div span` e não só `span`: o seletor solto pegava também o avatar (que é um span) e
+  // vencia as regras dele por especificidade — a inicial saía cinza, pequena e fora do círculo.
+  div strong { display: block; font-size: 1.15rem; font-weight: 700; }
+  div span { display: block; margin-top: 2px; font-size: .88rem; color: $mute; font-weight: 300; }
 }
+// A referência usa foto; aqui a inicial fica no mesmo círculo de 60px, já que os depoimentos
+// são de clientes reais e não temos retrato de todos.
 .sayAvatar {
-  display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%;
-  color: #fff; font-size: 1.1rem; font-weight: 600;
+  display: grid; place-items: center; flex: 0 0 60px; width: 60px; height: 60px; border-radius: 50%;
+  color: #fff; font-size: 1.25rem; font-weight: 700;
 }
 
 // ─── Fundadora ───────────────────────────────────────────────────────────────
@@ -579,7 +619,8 @@ $edge: rgba(255, 255, 255, .18);
   .modMain { height: auto; }
   .modMainNum { position: relative; left: auto; top: auto; display: block; padding: 32px 32px 0; }
   .modMainBody { position: relative; left: auto; right: auto; top: auto; transform: none; padding: 16px 32px 36px; }
-  .sayGrid { grid-template-columns: 1fr; max-width: 34rem; margin: 0 auto; }
+  .sayTrack { padding-left: 20px; padding-right: 20px; scroll-padding-left: 20px; }
+  .sayArrows { padding: 0 20px; }
   .planGrid { grid-template-columns: 1fr; max-width: 30rem; margin: 0 auto; }
   .founderGrid { grid-template-columns: 1fr; gap: 36px; }
   .founderAside { max-width: 260px; margin: 0 auto; }
