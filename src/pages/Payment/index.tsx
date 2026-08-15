@@ -15,6 +15,19 @@ const styles = {
     maxWidth: 480,
     margin: '0 auto',
   } as React.CSSProperties,
+  // Telas de estado (recuperando, análise, erro, sucesso) não são conteúdo: são uma mensagem.
+  // Ficam centralizadas no espaço disponível e sobre o próprio fundo — um cartão branco aqui
+  // seria moldura dentro de moldura, já que a área de conteúdo do app é ela própria um cartão.
+  stateWrap: {
+    display: 'flex',
+    minHeight: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  } as React.CSSProperties,
+  state: {
+    maxWidth: 420,
+  } as React.CSSProperties,
   title: {
     fontFamily: 'var(--font-display)',
     fontWeight: 800,
@@ -378,8 +391,8 @@ const PaymentPage: FC = () => {
   // ── Retomando o pagamento (buscando o QR atual no Asaas) ──
   if (resuming) {
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.successContainer }}>
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.successContainer }}>
           <div style={styles.successText}>Recuperando seu pagamento…</div>
           <div style={{ color: '#8ca0c5', fontSize: 14 }}>Buscando o PIX da sua assinatura.</div>
         </div>
@@ -390,8 +403,8 @@ const PaymentPage: FC = () => {
   // ── Cartão em análise pela operadora (sem QR; sucesso vem via webhook) ──
   if (cardAnalysis && !paymentConfirmed) {
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.errorContainer }}>
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.errorContainer }}>
           <ClockCircleOutlined style={{ fontSize: 48, color: '#3361ff' }} />
           <div style={{ ...styles.errorText, color: '#405985' }}>Pagamento em análise</div>
           <div style={styles.errorHint}>
@@ -431,8 +444,8 @@ const PaymentPage: FC = () => {
       }
     };
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.errorContainer }}>
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.errorContainer }}>
           <ClockCircleOutlined style={{ fontSize: 48, color: '#d2474b' }} />
           <div style={styles.errorText}>A cobrança PIX expirou.</div>
           <div style={styles.errorHint}>
@@ -464,8 +477,8 @@ const PaymentPage: FC = () => {
   // ─── Success state ──────────────────────────────────────────────────────────
   if (paymentConfirmed || status === 'active') {
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.successContainer }}>
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.successContainer }}>
           <CheckCircleFilled style={{ fontSize: 56, color: '#1d8a68' }} />
           <div style={styles.successText}>Bem-vindo ao Maestra Pro!</div>
           <div style={{ color: '#52668d', fontSize: 14, lineHeight: 1.5 }}>
@@ -483,8 +496,8 @@ const PaymentPage: FC = () => {
   // ─── Timeout state ──────────────────────────────────────────────────────────
   if (timedOut) {
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.errorContainer }}>
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.errorContainer }}>
           <ClockCircleOutlined style={{ fontSize: 48, color: '#d2474b' }} />
           <div style={styles.errorText}>
             Pagamento não confirmado no tempo limite.
@@ -500,8 +513,8 @@ const PaymentPage: FC = () => {
   // ─── Connectivity error state ───────────────────────────────────────────────
   if (connectivityError) {
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.errorContainer }}>
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.errorContainer }}>
           <WifiOutlined style={{ fontSize: 48, color: '#d2474b' }} />
           <div style={styles.errorText}>
             Conexão perdida
@@ -543,15 +556,20 @@ const PaymentPage: FC = () => {
           />
         </div>
 
-        {/* Countdown */}
-        <div style={{ ...styles.countdown, ...(isExpired ? styles.countdownExpired : {}) }}>
-          <ClockCircleOutlined />
-          {isExpired ? (
-            <span>QR Code expirado</span>
-          ) : (
-            <span>Expira em {formatCountdown(secondsRemaining ?? 0, pixData?.expiresAt)}</span>
-          )}
-        </div>
+        {/* Prazo. Só aparece quando informa algo: o Asaas devolve a validade do QR de assinatura
+            a UM ANO de distância (conferido na resposta: expirationDate "2027-08-15 23:59:59"
+            para uma cobrança criada hoje), e anunciar "expira em 2027" não ajuda a decidir nada
+            — só parece defeito. Dentro de 48h o prazo volta a importar e a contagem aparece. */}
+        {(isExpired || (secondsRemaining !== null && secondsRemaining <= 48 * 3600)) && (
+          <div style={{ ...styles.countdown, ...(isExpired ? styles.countdownExpired : {}) }}>
+            <ClockCircleOutlined />
+            {isExpired ? (
+              <span>QR Code expirado</span>
+            ) : (
+              <span>Expira em {formatCountdown(secondsRemaining ?? 0, pixData?.expiresAt)}</span>
+            )}
+          </div>
+        )}
 
         {/* Recebedor: no app do banco aparece a razão social da empresa por trás da Maestra. */}
         <p style={{ color: '#93a4c0', fontSize: 12.5, lineHeight: 1.5, textAlign: 'center', margin: '14px 0 0' }}>
