@@ -178,12 +178,13 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
           <path d='M0 354.5H402.109C402.945 354.5 403.693 353.98 403.984 353.196L441.717 251.499C442.442 249.547 445.295 249.863 445.574 251.926L473.114 455.091C473.425 457.383 476.732 457.406 477.074 455.117L499.347 306.061C499.677 303.854 502.827 303.763 503.283 305.948L521.278 392.241C521.708 394.305 524.627 394.384 525.168 392.347L558.084 268.582C558.639 266.496 561.649 266.647 561.992 268.779L580.234 382.233C580.516 383.992 582.785 384.531 583.829 383.088L603.901 355.328C604.277 354.808 604.88 354.5 605.522 354.5H1082.08C1082.93 354.5 1083.69 355.04 1083.97 355.845L1103.4 411.949C1104.05 413.802 1106.69 413.721 1107.22 411.832L1132.19 322.286C1132.76 320.246 1135.69 320.374 1136.08 322.455L1161.27 457.092C1161.69 459.316 1164.9 459.247 1165.22 457.007L1189.5 287.495C1189.81 285.307 1192.92 285.169 1193.42 287.321L1218.7 394.967C1219.13 396.806 1221.64 397.077 1222.45 395.373L1241.46 355.637C1241.79 354.942 1242.49 354.5 1243.26 354.5H1465' />
         </svg>
 
-        {/* Selo "Diagnóstico grátis" */}
-        <button className={styles.seal} onClick={start} aria-label='Fazer o diagnóstico grátis'>
+        {/* O selo repetia o botão ("diagnóstico grátis" nos dois, a 150px um do outro). Agora ele
+            usa o ▶ pra que serve: leva ao vídeo de apresentação. */}
+        <button className={styles.seal} onClick={scrollTo('video')} aria-label='Ver como funciona'>
           <svg className={styles.sealStar} viewBox='0 0 100 100' aria-hidden focusable='false'><path d={SEAL_POINTS} /></svg>
           <svg className={styles.sealCaption} viewBox='0 0 160 160' aria-hidden focusable='false'>
             <defs><path id='landing-seal-arc' d='M22 80a58 58 0 0 1 116 0' /></defs>
-            <text><textPath href='#landing-seal-arc' startOffset='6%'>Diagnóstico grátis</textPath></text>
+            <text><textPath href='#landing-seal-arc' startOffset='11%'>veja como funciona</textPath></text>
           </svg>
           <span className={styles.sealCore}><FiPlay size={20} /></span>
           <span className={styles.sealDot} aria-hidden />
@@ -194,16 +195,16 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
         <div className={styles.heroFigure}>
           <span className={styles.heroBlob} aria-hidden />
           <img src={heroFigure} alt='' />
-          <span className={styles.heroDotPink} aria-hidden />
         </div>
 
-        {/* O cartão "tocando agora" da referência vira o resultado do diagnóstico. */}
+        {/* O cartão "tocando agora" da referência vira a prévia do diagnóstico: um rótulo, o
+            resultado e a nota. Sem o equalizador nem a frase longa — aqui ele mostra o que o
+            produto entrega, não decora. */}
         <div className={styles.nowCard}>
-          <span className={styles.nowEq} aria-hidden><i /><i /><i /></span>
-          <span className={styles.nowIcon}><NytaAvatar size={44} /></span>
+          <span className={styles.nowIcon}><NytaAvatar size={40} /></span>
           <span className={styles.nowMeta}>
+            <em>Índice REAL</em>
             <strong>Perfil Rising</strong>
-            <span>Índice REAL · alcance e público em alta</span>
           </span>
           <span className={styles.nowScore}>72</span>
         </div>
@@ -215,12 +216,7 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
             Fazer meu diagnóstico grátis <FiArrowRight size={18} />
           </button>
           <button className={styles.btnGhost} onClick={scrollTo('planos')}>Ver planos</button>
-          <p className={styles.heroNote}>Diagnóstico grátis, sem cartão pra começar.</p>
-        </div>
-
-        {/* Os pontos do carrossel viram a régua do ciclo (diagnóstico → plano → execução). */}
-        <div className={styles.heroDots} aria-hidden>
-          <i className={styles.heroDotOn} /><i /><i />
+          <p className={styles.heroNote}>Sem cartão de crédito.</p>
         </div>
       </div>
     </section>
@@ -264,7 +260,7 @@ const VideoStats: FC = () => {
   const anos = useCountUp(30, vis);
 
   return (
-    <section className={styles.video} ref={ref}>
+    <section className={styles.video} id='video' ref={ref}>
       <div className={`${styles.shell} ${styles.videoGrid}`}>
         <div className={styles.videoFrame}>
           {HERO_VIDEO_ID ? (
