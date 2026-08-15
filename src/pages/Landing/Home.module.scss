@@ -148,49 +148,26 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 .heroCtas { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 40px; }
 .heroNote { margin: 16px 0 0; font-size: .85rem; color: $mute; }
 
-.heroStage { position: relative; height: 560px; margin-top: 26px; }
+// O palco agora é o player: 16:9 na largura do conteúdo, com o cartão da Nyta encostado no
+// canto de baixo. A altura acompanha o vídeo (1110 × 9/16 = 624) mais o transbordo do cartão.
+.heroStage { position: relative; padding-bottom: 54px; margin-top: 30px; }
+.heroVideo {
+  position: relative; aspect-ratio: 16 / 9; overflow: hidden;
+  border: 1px solid $line; border-radius: 24px; background: #0b1020;
+  box-shadow: 0 30px 70px rgba(74, 99, 145, .2);
+}
 
 .heroWave {
-  position: absolute; left: 50%; transform: translateX(-50%); top: -11px;
+  position: absolute; left: 50%; transform: translateX(-50%); top: 160px;
   width: 100vw; height: 230px; z-index: 0; pointer-events: none;
   path { fill: none; stroke: #c9d8f0; stroke-width: 2; }
 }
 
-// Selo: o azul de ação com texto branco (era o verde-limão com texto quase preto).
-.seal {
-  position: absolute; left: 5px; top: 33px; width: 162px; height: 162px; z-index: 2;
-  display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer;
-  filter: drop-shadow(0 14px 30px rgba(51, 97, 255, .25));
-  transition: transform .2s ease;
-  &:hover { transform: rotate(8deg) scale(1.03); }
-}
-.sealStar { position: absolute; inset: 0; fill: $blue; }
-.sealCaption {
-  position: absolute; inset: 0;
-  text { fill: #fff; font-size: 15px; font-weight: 700; font-family: var(--font-body), sans-serif; }
-}
-.sealCore {
-  position: relative; display: grid; place-items: center; width: 66px; height: 66px;
-  border-radius: 50%; background: #fff; color: $blue;
-  svg { margin-left: 3px; }
-}
-.sealDot {
-  position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-radius: 50%;
-  background: #fff; transform: translate(3px, 49px);
-}
 
-.heroFigure { position: absolute; left: 302px; top: -52px; width: 417px; height: 612px; z-index: 1; }
-// O arco atrás da figura vira o azul da marca em tom claro (era o verde-limão).
-.heroBlob {
-  position: absolute; left: 8px; bottom: 0; width: 286px; height: 344px;
-  border-radius: 143px 143px 0 0;
-  background: linear-gradient(180deg, #dce6ff 0%, #c7d8ff 100%);
-}
-.heroFigure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
 
 // Cartão da pergunta da Nyta: branco, com a moldura e a sombra dos cartões do app.
 .nowCard {
-  position: absolute; left: 674px; top: 214px; z-index: 3; cursor: pointer; text-align: left;
+  position: absolute; right: -14px; bottom: 0; z-index: 3; cursor: pointer; text-align: left;
   display: flex; align-items: center; gap: 16px; width: 478px; min-height: 104px; padding: 18px 20px;
   border-radius: 18px; border: 1px solid $line; background: #fff;
   box-shadow: 0 18px 44px rgba(74, 99, 145, .16);
@@ -218,13 +195,8 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 }
 
 // ─── Vídeo + números ─────────────────────────────────────────────────────────
-.video { padding: 96px 0 0; }
+.video { padding: 90px 0 0; }
 .videoGrid { display: block; text-align: center; }
-.videoFrame {
-  position: relative; aspect-ratio: 16 / 9; overflow: hidden;
-  border: 1px solid $line; border-radius: 24px; background: #0b1020;
-  box-shadow: 0 30px 70px rgba(74, 99, 145, .18);
-}
 .videoPlayer { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 .videoEmpty {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
@@ -237,7 +209,7 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
   background: $blue; color: #fff; padding-left: 4px;
   box-shadow: 0 16px 34px rgba(51, 97, 255, .28);
 }
-.videoCopy { max-width: 46rem; margin: 56px auto 0; }
+.videoCopy { max-width: 46rem; margin: 0 auto; }
 .videoStats {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
   max-width: 46rem; margin: 44px auto 0;
@@ -593,20 +565,15 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
   .modMainNum { position: relative; left: auto; top: auto; display: block; padding: 32px 32px 0; }
   .modMainBody { position: relative; left: auto; right: auto; top: auto; transform: none; padding: 16px 32px 36px; }
 
-  // Abaixo de 1110 o palco encolhe: tudo vira fluxo, na ordem figura → cartão → CTA.
-  .heroStage { height: auto; margin-top: 30px; display: flex; flex-direction: column; align-items: center; }
-  .heroWave { top: 90px; }
-  .seal { position: absolute; left: 0; top: 24px; width: 122px; height: 122px; }
-  .sealDot { transform: translate(2px, 37px); width: 5px; height: 5px; }
-  .heroFigure { position: relative; left: auto; top: auto; width: min(417px, 92vw); height: auto; aspect-ratio: 417 / 612; }
-  .nowCard { position: relative; left: auto; top: auto; width: min(478px, 100%); margin-top: -46px; }
+  // No estreito o cartão desce pro fluxo, logo abaixo do player.
+  .heroStage { padding-bottom: 0; }
+  .heroWave { top: 100px; }
+  .nowCard { position: relative; right: auto; bottom: auto; width: 100%; margin-top: 18px; }
 }
 
 @media (max-width: 820px) {
   .navLinks { display: none; }
   .nav .shell { height: 76px; gap: 16px; }
-  // No estreito o selo sai: viraria ruído em cima da figura.
-  .seal { display: none; }
 }
 
 @media (max-width: 620px) {

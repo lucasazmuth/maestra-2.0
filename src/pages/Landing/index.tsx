@@ -5,7 +5,6 @@ import { FiArrowLeft, FiArrowRight, FiArrowUp, FiCheck, FiChevronDown, FiPlay } 
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { usePwaInstall } from '../../components/PwaInstallBanner';
 import { Header, Footer } from './Chrome';
-import heroFigure from '../../assets/landing-hero-figure.png';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { fetchPlanConfig } from '../../store/slices/subscription';
 import { usePlanPrices, fmtBRL } from '../../hooks/usePlanPrices';
@@ -89,19 +88,6 @@ const buildFaqItems = (once: number, monthly: number, annual: number): { q: stri
 const HERO_VIDEO_ID = 'xOM_Lz5S70g';
 
 // ─── Hero ────────────────────────────────────────────────────────────────────
-// Selo serrilhado da referência: 26 pontas curtas geradas por código (mesmo desenho do
-// design-ref). O texto corre num arco em cima e o centro é o botão de play.
-const SEAL_POINTS = (() => {
-  const pts: string[] = [];
-  const N = 26;
-  for (let i = 0; i < N * 2; i++) {
-    const r = i % 2 ? 42.5 : 49;
-    const a = (Math.PI * i) / N - Math.PI / 2;
-    pts.push(`${(50 + r * Math.cos(a)).toFixed(2)} ${(50 + r * Math.sin(a)).toFixed(2)}`);
-  }
-  return `M${pts.join('L')}Z`;
-})();
-
 const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   const navigate = useNavigate();
   const start = () => navigate(loggedIn ? '/criar-artista' : '/signup');
@@ -133,31 +119,30 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
           <path d='M0 354.5H402.109C402.945 354.5 403.693 353.98 403.984 353.196L441.717 251.499C442.442 249.547 445.295 249.863 445.574 251.926L473.114 455.091C473.425 457.383 476.732 457.406 477.074 455.117L499.347 306.061C499.677 303.854 502.827 303.763 503.283 305.948L521.278 392.241C521.708 394.305 524.627 394.384 525.168 392.347L558.084 268.582C558.639 266.496 561.649 266.647 561.992 268.779L580.234 382.233C580.516 383.992 582.785 384.531 583.829 383.088L603.901 355.328C604.277 354.808 604.88 354.5 605.522 354.5H1082.08C1082.93 354.5 1083.69 355.04 1083.97 355.845L1103.4 411.949C1104.05 413.802 1106.69 413.721 1107.22 411.832L1132.19 322.286C1132.76 320.246 1135.69 320.374 1136.08 322.455L1161.27 457.092C1161.69 459.316 1164.9 459.247 1165.22 457.007L1189.5 287.495C1189.81 285.307 1192.92 285.169 1193.42 287.321L1218.7 394.967C1219.13 396.806 1221.64 397.077 1222.45 395.373L1241.46 355.637C1241.79 354.942 1242.49 354.5 1243.26 354.5H1465' />
         </svg>
 
-        {/* O selo repetia o botão ("diagnóstico grátis" nos dois, a 150px um do outro). Agora ele
-            usa o ▶ pra que serve: leva ao vídeo de apresentação. */}
-        <button className={styles.seal} onClick={scrollTo('video')} aria-label='Ver como funciona'>
-          <svg className={styles.sealStar} viewBox='0 0 100 100' aria-hidden focusable='false'><path d={SEAL_POINTS} /></svg>
-          {/* O texto corre no meio do anel: raio 50 põe a linha entre a ponta da estrela (78) e o
-              disco escuro (33), e o startOffset de 50% com âncora ao centro mantém a frase
-              centrada no arco, qualquer que seja o comprimento dela. */}
-          <svg className={styles.sealCaption} viewBox='0 0 160 160' aria-hidden focusable='false'>
-            <defs><path id='landing-seal-arc' d='M30 80a50 50 0 0 1 100 0' /></defs>
-            <text textAnchor='middle'><textPath href='#landing-seal-arc' startOffset='50%'>veja como funciona</textPath></text>
-          </svg>
-          <span className={styles.sealCore}><FiPlay size={20} /></span>
-          <span className={styles.sealDot} aria-hidden />
-        </button>
-
-        {/* Figura central: blob neon + recorte. A foto é o placeholder herdado da referência —
-            trocar por um recorte de artista da Maestra (mesmo enquadramento, PNG sem fundo). */}
-        <div className={styles.heroFigure}>
-          <span className={styles.heroBlob} aria-hidden />
-          <img src={heroFigure} alt='' />
+        {/* O vídeo de apresentação toma o lugar da figura: ele é a prova, e a foto era um
+            placeholder do template. O selo "veja como funciona" saiu junto — apontava pro vídeo
+            que agora está bem ali. */}
+        <div className={styles.heroVideo}>
+          {HERO_VIDEO_ID ? (
+            <iframe
+              className={styles.videoPlayer}
+              src={`https://www.youtube-nocookie.com/embed/${HERO_VIDEO_ID}?rel=0&modestbranding=1`}
+              title='Conheça a Maestra'
+              allow='accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+              allowFullScreen
+              loading='lazy'
+            />
+          ) : (
+            <div className={styles.videoEmpty}>
+              <span className={styles.videoPlay} aria-hidden><FiPlay size={24} /></span>
+              <p>Espaço reservado pro vídeo de apresentação</p>
+            </div>
+          )}
         </div>
 
-        {/* O cartão "tocando agora" da referência virou a pergunta da Nyta. Mostrar um resultado
-            fictício ("Perfil Rising · 72") não dizia nada a quem chega; a pergunta fala com o
-            visitante e o clique leva pro diagnóstico que responde. */}
+        {/* O cartão "tocando agora" da referência virou a pergunta da Nyta, encostada no canto do
+            vídeo. Mostrar um resultado fictício não dizia nada a quem chega; a pergunta fala com
+            o visitante e o clique leva pro diagnóstico que responde. */}
         <button className={styles.nowCard} onClick={start}>
           <span className={styles.nowIcon}><NytaAvatar size={40} /></span>
           <span className={styles.nowMeta}>
@@ -210,25 +195,6 @@ const VideoStats: FC = () => {
   return (
     <section className={styles.video} id='video' ref={ref}>
       <div className={`${styles.shell} ${styles.videoGrid}`}>
-        {/* O vídeo ocupa a largura do conteúdo e o texto vem abaixo: em duas colunas, o player
-            ficava pequeno demais pra ser assistido de fato. */}
-        <div className={styles.videoFrame}>
-          {HERO_VIDEO_ID ? (
-            <iframe
-              className={styles.videoPlayer}
-              src={`https://www.youtube-nocookie.com/embed/${HERO_VIDEO_ID}?rel=0&modestbranding=1`}
-              title='Conheça a Maestra'
-              allow='accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
-              allowFullScreen
-              loading='lazy'
-            />
-          ) : (
-            <div className={styles.videoEmpty}>
-              <span className={styles.videoPlay} aria-hidden><FiPlay size={24} /></span>
-              <p>Espaço reservado pro vídeo de apresentação</p>
-            </div>
-          )}
-        </div>
         <div className={styles.videoCopy}>
           <h2 className={styles.hSection}>O retrato honesto da sua carreira</h2>
           <p className={styles.pLead}>
