@@ -10,10 +10,6 @@ import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { usePwaInstall } from '../../components/PwaInstallBanner';
 import anitaPhoto from '../../assets/anita.jpg';
 import heroFigure from '../../assets/landing-hero-figure.png';
-import featureReal from '../../assets/feature-real.png';
-import featurePlanning from '../../assets/feature-planning.png';
-import featureAction from '../../assets/feature-action.png';
-import featureGestao from '../../assets/feature-gestao.png';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { fetchPlanConfig } from '../../store/slices/subscription';
 import { usePlanPrices, fmtBRL } from '../../hooks/usePlanPrices';
@@ -44,25 +40,25 @@ const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoVi
 // ─── Dados ───────────────────────────────────────────────────────────────────
 // O carrossel de módulos segue o bloco "Popular Album" da referência: o ativo grande no meio e
 // os vizinhos como painéis estreitos, com o nome na vertical.
-const MODULES: { img?: string; nyta?: boolean; title: string; sub: string; desc: string; to?: string }[] = [
+const MODULES: { title: string; sub: string; desc: string; to?: string }[] = [
   {
-    img: featureReal, title: 'Diagnóstico REAL', sub: 'o ponto de partida', to: '/diagnostico-real',
+    title: 'Diagnóstico REAL', sub: 'o ponto de partida', to: '/diagnostico-real',
     desc: 'Um raio-X da carreira em quatro dimensões, cruzando dados do Spotify e das redes com o que só você sabe. Em minutos você descobre qual dos 16 perfis é o seu e onde a carreira realmente está, não onde parece estar.',
   },
   {
-    img: featurePlanning, title: 'Planejamento estratégico', sub: 'o mapa',
+    title: 'Planejamento estratégico', sub: 'o mapa',
     desc: 'A metodologia de 30 anos da Anita Carvalho, destilada de 313 planejamentos reais, transforma o diagnóstico em visão, missão, objetivos e as estratégias certas pro seu momento, já priorizadas.',
   },
   {
-    img: featureAction, title: 'Plano de ação', sub: 'a execução',
+    title: 'Plano de ação', sub: 'a execução',
     desc: 'Cada estratégia vira tarefas com progresso, prazos e responsáveis, além de cronograma e modelagem financeira. É o caminho do "o que fazer" pro "feito".',
   },
   {
-    img: featureGestao, title: 'Gestão completa', sub: 'o dia a dia',
+    title: 'Gestão completa', sub: 'o dia a dia',
     desc: 'Músicas, agenda de shows e lançamentos e a equipe junto: a operação da carreira mora no mesmo lugar do plano, e cada entrega alimenta o próximo diagnóstico.',
   },
   {
-    nyta: true, title: 'Nyta IA', sub: 'a assistente',
+    title: 'Nyta IA', sub: 'a assistente',
     desc: 'A assistente que acompanha a carreira em todos os módulos: tira dúvidas, sugere caminhos e ajuda a executar o plano, sempre no contexto dos seus dados.',
   },
   {
@@ -341,11 +337,8 @@ const Modules: FC = () => {
         <div className={styles.modCarousel}>
           <Side index={prev} />
 
-          {/* Cartão aberto: o número, a arte do módulo ao fundo e o texto na base. */}
+          {/* Cartão aberto: o número em cima e o texto na base, sem arte ao fundo. */}
           <article className={styles.modMain} key={active}>
-            <span className={styles.modArt} aria-hidden>
-              {current.nyta ? <NytaAvatar size={230} /> : current.img ? <img src={current.img} alt='' /> : null}
-            </span>
             <span className={styles.modMainNum}>{num(active)}</span>
             <div className={styles.modMainBody}>
               <h3>{current.title}</h3>
