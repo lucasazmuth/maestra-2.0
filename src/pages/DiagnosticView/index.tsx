@@ -55,24 +55,6 @@ const DiagnosticView: FC = () => {
   }
 
   const spotifyProfile = artist.content?.spotifyProfile;
-  const handleShare = async () => {
-    const shareData = {
-      title: 'Diagnóstico REAL',
-      text: `Diagnóstico REAL de ${artist.name}`,
-      url: window.location.href,
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch {
-        // Closing the native share sheet does not require a UI error state.
-      }
-      return;
-    }
-
-    await navigator.clipboard?.writeText(window.location.href);
-  };
 
   return (
     <div className={`board-content page-view workspace-view ${reportStyles.pageReal}`}>
@@ -92,7 +74,6 @@ const DiagnosticView: FC = () => {
             {isPro ? <FiRefreshCw size={14} /> : <FiLock size={14} />}
             Refazer diagnóstico
           </button>
-          <button type="button" onClick={() => void handleShare()}>Compartilhar</button>
         </div>
       </header>
       <DiagnosticReport

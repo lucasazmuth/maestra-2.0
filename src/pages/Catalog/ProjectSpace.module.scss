@@ -1044,11 +1044,31 @@
 @media (max-width: 760px) {
   .header {
     flex-wrap: wrap;
+    gap: 10px;
+    row-gap: 10px;
   }
 
-  .titleBlock {
-    flex: 1 1 calc(100% - 70px);
+  // A etiqueta sai do centro absoluto: com o header quebrando em linhas, ela caía EM CIMA da
+  // pílula de status. Vira um kicker no topo, em cima de tudo, que é onde ela não disputa espaço.
+  .spaceLabel {
+    position: static;
+    order: 0;
+    width: 100%;
+    transform: none;
   }
+
+  // Tudo numa linha só: [voltar] título [status] [editar]. O DOM traz o status e o "editar"
+  // depois da etiqueta e do autosave, e sem ordem explícita eles quebravam para uma segunda
+  // linha, soltos embaixo do título. A ordem aqui é a de leitura.
+  .back { order: 1; }
+  // `flex-basis: 0`, não `auto`: com wrap ligado, um item cuja base é o próprio conteúdo QUEBRA
+  // de linha em vez de encolher. Base zero faz o título ceder espaço (ele já tem reticências) e
+  // a linha nunca transborda.
+  .titleBlock { order: 2; flex: 1 1 0; }
+  .statusPill,
+  .statusReadOnly { order: 3; }
+  .editProject { order: 4; }
+  .autosave { order: 5; }
 
   .titleLine {
     gap: 8px;
@@ -1063,32 +1083,99 @@
   }
 
   .autosave {
-    order: 5;
     width: 100%;
   }
 
+  // O `min-width: 188px` do desktop é o que estourava a linha: com ele, voltar + título + status
+  // + editar não cabiam em 375px e o status era empurrado para baixo. Aqui a pílula encolhe até
+  // o próprio texto ("Composição" é o mais longo) e a linha fecha.
   .statusPill,
   .statusReadOnly {
-    margin-left: auto;
+    min-width: 0;
+    margin-left: 0;
   }
 
+  .statusPill {
+    height: 40px;
+  }
+
+  // O corpo do texto acompanha a largura da tela: em 375px "Composição" (o rótulo mais longo)
+  // não cabia no corpo fixo e era cortado, passando por baixo da seta.
+  .statusPill,
+  .statusReadOnly {
+    font-size: clamp(11px, 3vw, 14px);
+  }
+
+  // A seta é posicionada em absoluto pelo antd: sem reservar o espaço dela à direita, o texto
+  // corria por baixo. 26px é a seta (12px) + respiro dos dois lados.
+  // O antd fixa 14px no .ant-select-selector; sem herdar aqui, o clamp da pílula não chegava
+  // ao texto (o item herda do selector, não da raiz).
+  .statusPill :global(.ant-select-selector) {
+    min-height: 40px !important;
+    padding: 0 26px 0 14px !important;
+    font-size: inherit !important;
+  }
+
+  .statusPill :global(.ant-select-selection-item) {
+    padding-inline-end: 0 !important;
+    overflow: hidden;
+    font-size: inherit;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .statusPill :global(.ant-select-arrow) {
+    inset-inline-end: 9px;
+    font-size: 11px;
+  }
+
+  // Sangra até as bordas: numa tela estreita o cartão dentro do padding da página empilhava dois
+  // recuos (18px da página + 22px dele) e sobrava pouco para o conteúdo, com uma moldura que não
+  // separa nada — é o único bloco da tela. A margem negativa cancela o padding da página.
   .workspace {
-    padding: 22px;
-    border-radius: 22px;
+    margin-right: -18px;
+    margin-left: -18px;
+    padding: 22px 18px;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
   }
 
   .collabPanel {
+    margin-right: -18px;
+    margin-left: -18px;
     padding: 0;
-    border-radius: 22px;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
   }
 
+  // Dois por linha, não empilhados: os quatro campos quase sempre estão vazios ("—"), e uma
+  // coluna só virava ~350px de faixa vazia antes de chegar nas versões, que são o assunto da
+  // tela. Em 2x2 a mesma informação ocupa metade da altura e lê como ficha técnica.
   .metaStrip {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
+  .metaStrip label {
+    min-height: 0;
+    padding: 14px 14px 14px 0;
+  }
+
+  // A grade é redesenhada aqui: divisória vertical só na 2ª coluna, horizontal só da 2ª linha
+  // em diante. A regra de `label + label` do desktop desenhava uma borda por item empilhado.
   .metaStrip label + label {
     padding-left: 0;
     border-left: 0;
+    border-top: 0;
+  }
+
+  .metaStrip label:nth-child(2n) {
+    padding-left: 14px;
+    border-left: 1px solid #dce6f7;
+  }
+
+  .metaStrip label:nth-child(n + 3) {
     border-top: 1px solid #dce6f7;
   }
 

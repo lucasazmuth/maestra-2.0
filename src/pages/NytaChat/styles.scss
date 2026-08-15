@@ -13,6 +13,9 @@
 // A casca põe o histórico de conversas ao lado do chat. O scroll fica dentro de cada coluna —
 // a página em si não rola.
 .nyta-chat-shell {
+  // No mobile a lista de conversas se posiciona por esta casca (ela cobre só a área do chat,
+  // deixando a barra do app e a navbar de fora) — ver ConversationSidebar.scss.
+  position: relative;
   display: flex;
   height: 100%;
   overflow: hidden;
@@ -118,6 +121,15 @@
     align-items: flex-end;
     animation: nytaChatFadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
     text-align: left;
+  }
+}
+
+// A navbar inferior do mobile é uma ilha flutuante (78px de altura, 18px acima da base) que passa
+// POR CIMA do conteúdo. A caixa de texto do chat ficava embaixo dela: aqui o rodapé do chat
+// reserva essa altura, então o campo para logo acima da ilha.
+@media (max-width: 960px) {
+  .task-app.has-mobile-nav .nyta-chat-page__input {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
   }
 }
 

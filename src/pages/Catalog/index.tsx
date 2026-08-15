@@ -1,8 +1,8 @@
-import { FC, FormEvent, MouseEvent, ReactNode, useEffect, useMemo, useState } from 'react';
+import { FC, FormEvent, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Button, message } from 'antd';
 import { FiArrowLeft, FiRefreshCw, FiLock, FiMoreVertical, FiSend, FiSettings } from 'react-icons/fi';
-import { AddIcon } from '../../components/Icons/system';
+import { AddIcon, EspacoJamIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -121,6 +121,27 @@ const Catalog: FC = () => {
   );
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogItem | null>(null);
+  // "Nova música" abre o seletor de arquivos ANTES da ficha: no dia a dia a música começa pelo
+  // áudio, e o que estava no arquivo (nome, duração) não precisa ser redigitado.
+  const newTrackFileRef = useRef<HTMLInputElement>(null);
+  const [newTrackFile, setNewTrackFile] = useState<File | null>(null);
+
+  const startNewTrack = useCallback((file: File | null) => {
+    setEditing(null);
+    setNewTrackFile(file);
+    setModalOpen(true);
+  }, []);
+
+  // Fechar o seletor sem escolher nada abre a ficha vazia — é o caminho de quem vai cadastrar a
+  // música antes de ter a gravação. Listener nativo: o evento `cancel` do input[type=file] não
+  // tem prop sintética no React.
+  useEffect(() => {
+    const el = newTrackFileRef.current;
+    if (!el) return;
+    const onCancel = () => startNewTrack(null);
+    el.addEventListener('cancel', onCancel);
+    return () => el.removeEventListener('cancel', onCancel);
+  });
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -186,7 +207,11 @@ const Catalog: FC = () => {
   const localTracks: LocalTrack[] = items.map((i) => ({
     id: i.id,
     title: i.title,
-    subtitle: i.audio_file ? i.genre || 'Música em Músicas' : 'Áudio pendente',
+    // A lista toca a versão PRINCIPAL de cada música — dizer qual é evita a dúvida de estar
+    // ouvindo uma gravação antiga. O gênero, que ficava aqui, não identificava nada.
+    subtitle: i.audio_file
+      ? `V${i.version_number || 1} · versão principal`
+      : 'Áudio pendente',
     cover: i.cover_image,
     url: i.audio_file || '',
   }));
@@ -736,12 +761,24 @@ const Catalog: FC = () => {
                   setUpsellOpen(true);
                   return;
                 }
-                setEditing(null);
-                setModalOpen(true);
+                // O seletor de arquivos vem primeiro; a ficha abre no onChange (ou no cancel,
+                // vazia, para quem quer cadastrar a música antes de ter a gravação).
+                newTrackFileRef.current?.click();
               }}
             >
               <AddIcon size={18} /> Nova música
             </button>
+            <input
+              ref={newTrackFileRef}
+              type='file'
+              accept='audio/*'
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                e.target.value = '';
+                startNewTrack(file);
+              }}
+            />
           </div>
         )}
         {tab === 'spotify' && (
@@ -756,7 +793,7 @@ const Catalog: FC = () => {
         <span><b>{String(items.length).padStart(2, '0')}</b>Músicas visíveis</span>
       </section>
       <div className='catalog-tabs'>
-        <TabButton id='manual' label='Músicas / Rascunho' />
+        <TabButton id='manual' label='Músicas' />
         <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify />} />
         {tab === 'manual' && !!items.length && catalogFilterControls}
       </div>
@@ -932,7 +969,7 @@ const Catalog: FC = () => {
                       </button>
                     );
                   })()}
-                    <strong>{it.title}<small>V{it.version_number || 1} · {it.version_stage || 'Guia'} · versão principal</small></strong>
+                    <strong>{it.title}<small>V{it.version_number || 1} · versão principal</small></strong>
                   </span>
                   <span>{it.genre || '—'}</span>
                   <span><StatusBadge status={it.status} /></span>
@@ -950,7 +987,7 @@ const Catalog: FC = () => {
                         navigate(`/artists/${artist.id}/catalog/projects/${it.project_id || it.id}`);
                       }}
                     >
-                      Espaço Jam
+                      <EspacoJamIcon size={15} /> Espaço Jam
                     </button>
                   </span>
                   {canEditTracks ? (
@@ -986,7 +1023,8 @@ const Catalog: FC = () => {
           currentUserName={currentUserName}
           currentUserId={user?.id || null}
           currentUserAvatar={currentUserAvatar}
-          onClose={() => setModalOpen(false)}
+          initialFile={newTrackFile}
+          onClose={() => { setModalOpen(false); setNewTrackFile(null); }}
           onSaved={onSaved}
           onDelete={onDelete}
           onVersionsChanged={() => setCatalogReload((value) => value + 1)}

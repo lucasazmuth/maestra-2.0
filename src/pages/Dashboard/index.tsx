@@ -83,7 +83,7 @@ const Dashboard: FC = () => {
     id: track.id,
     projectId: track.project_id || track.id,
     title: track.title,
-    version: `V${track.version_number || 1} · ${track.version_stage || 'guia'}`,
+    version: `V${track.version_number || 1}`,
     genre: track.genre || '—',
     status: track.status,
     hasAudio: !!track.audio_file,
@@ -94,7 +94,10 @@ const Dashboard: FC = () => {
   const playerQueue: LocalTrack[] = draftTracks.map((t) => ({
     id: t.id,
     title: t.title,
-    subtitle: t.audio_file ? t.genre || 'Música em Músicas' : 'Áudio pendente',
+    // Mesma legenda do módulo Músicas: qual versão está tocando, já que a fila usa a principal.
+    subtitle: t.audio_file
+      ? `V${t.version_number || 1} · versão principal`
+      : 'Áudio pendente',
     cover: t.cover_image,
     url: t.audio_file || '',
   }));

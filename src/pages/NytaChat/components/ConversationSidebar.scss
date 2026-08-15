@@ -207,10 +207,62 @@
   }
 }
 
-// Em telas estreitas a lista viraria metade da tela: some, e o chat fica inteiro. Trocar de
-// conversa segue possível pelo desktop; aqui a prioridade é conversar.
+// Fechar sem escolher conversa não existe neste modelo: a lista é um nível da tela, e quem volta
+// pro chat é a própria conversa (a ativa fica destacada). Mantido só como ponto de extensão.
+.nyta-conversations__close,
+.nyta-conversations__backdrop {
+  display: none;
+}
+
+// Em telas estreitas a lista não cabe ao lado do chat: os dois viram níveis da MESMA tela, como
+// em qualquer app de mensagem. A lista cobre a área do chat (não a barra do app nem a navbar),
+// o "voltar" do cabeçalho traz ela de volta e tocar numa conversa abre o chat. Antes ela
+// simplesmente sumia — e no mobile não havia como ver ou trocar de conversa.
 @media (max-width: 900px) {
   .nyta-conversations {
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    width: 100%;
+    min-width: 0;
+    border-right: 0;
+    transform: translateX(-100%);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    // Fechada ela não pode roubar toque nem foco do chat.
+    visibility: hidden;
+
+    &--open {
+      transform: none;
+      visibility: visible;
+    }
+  }
+
+  // A navbar inferior flutua por cima: a última conversa da lista precisa passar por baixo dela.
+  .nyta-conversations__list {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+  }
+
+  // Sair da Nyta no mobile é a barra inferior (a foto do perfil na primeira célula) — este
+  // "voltar" repetia o mesmo destino dentro de uma tela que já é o nível de trás.
+  .nyta-conversations__back {
     display: none;
   }
+
+
+  // Sem hover no toque, o menu de ações (renomear/excluir) ficaria invisível nos itens que não
+  // são o ativo.
+  .nyta-conversations__more {
+    opacity: 1;
+  }
+
+  .nyta-conversations__backdrop {
+    position: fixed;
+    z-index: 129;
+    display: block;
+    inset: 0;
+    background: rgba(38, 54, 82, .24);
+    animation: nytaDrawerFade 0.18s ease;
+  }
+
+  @keyframes nytaDrawerFade { from { opacity: 0; } to { opacity: 1; } }
 }

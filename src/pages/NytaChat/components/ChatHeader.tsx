@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
 import { Popconfirm } from 'antd';
 import { FiArrowLeft, FiTrash2 } from 'react-icons/fi';
 
@@ -23,22 +22,26 @@ interface ChatHeaderProps {
   // primeira resposta da Nyta no dia.
   dailyCount?: number | null;
   dailyLimit?: number | null;
+  // Abre a gaveta de conversas. Só aparece abaixo de 900px, onde a coluna lateral vira gaveta.
+  onOpenHistory: () => void;
 }
 
-export const ChatHeader: FC<ChatHeaderProps> = ({ artistName, artistImage, onClear, dailyCount, dailyLimit }) => {
-  const navigate = useNavigate();
-  const { id: artistId } = useParams<{ id: string }>();
+export const ChatHeader: FC<ChatHeaderProps> = ({
+  artistName, artistImage, onClear, dailyCount, dailyLimit, onOpenHistory,
+}) => {
   const showUsage = typeof dailyCount === 'number' && typeof dailyLimit === 'number';
 
   return (
     <header className='chat-header'>
-      {/* No desktop quem leva de volta ao perfil é o botão do topo da lista de conversas. Este
-          aqui só aparece abaixo de 900px, onde a lista some e ele seria a única saída. */}
+      {/* Só existe abaixo de 900px, onde a lista de conversas fica escondida atrás desta tela.
+          Ali a navegação é em dois níveis, como em qualquer app de mensagem: voltar leva à
+          lista, e é de lá que se sai para o perfil. No desktop a lista já está ao lado e este
+          botão não aparece (ver ChatHeader.scss). */}
       <button
         className='chat-header__back'
-        onClick={() => navigate(`/artists/${artistId}`)}
-        aria-label='Voltar para o perfil'
-        title='Voltar para o perfil'
+        onClick={onOpenHistory}
+        aria-label='Voltar para as conversas'
+        title='Voltar para as conversas'
         type='button'
       >
         <FiArrowLeft size={17} />

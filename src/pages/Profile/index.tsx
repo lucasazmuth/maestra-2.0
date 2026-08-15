@@ -1,6 +1,7 @@
 import { FC, useMemo, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
+import ReactMarkdown from 'react-markdown';
 
 import { useArtist } from '../../hooks/useArtist';
 import { Spinner } from '../../components/spinner/spinner';
@@ -52,7 +53,11 @@ const Profile: FC = () => {
 
       <section className="planning-general">
         <section className="planning-general-grid planning-primary-grid">
-          <article className="planning-focus"><p>FOCO DO CICLO</p><h2>Próximos marcos</h2><div className="planning-focus-summary"><p>{content?.executiveSummary || 'Organize as prioridades da carreira para os próximos lançamentos.'}</p></div><div><i style={{ width: `${capacity}%` }} /></div><small>Atualizado com os dados do planejamento</small></article>
+          <article className="planning-focus"><p>FOCO DO CICLO</p><h2>Próximos marcos</h2>{/* O resumo vem do LLM em markdown: sem renderizar, os `**títulos**` apareciam com os
+                asteriscos crus no meio do texto. */}
+            <div className="planning-focus-summary">
+              <ReactMarkdown>{content?.executiveSummary || 'Organize as prioridades da carreira para os próximos lançamentos.'}</ReactMarkdown>
+            </div><div><i style={{ width: `${capacity}%` }} /></div><small>Atualizado com os dados do planejamento</small></article>
           <article className="planning-next"><header><span>PRÓXIMOS PASSOS</span><button type="button" aria-label="Ir para o plano de ação" onClick={() => navigate(`/artists/${artist.id}/action-plan`)}><FiArrowRight aria-hidden="true" /></button></header>{(nextSteps.length ? nextSteps : ['Definir próximos objetivos', 'Organizar as estratégias', 'Acompanhar as entregas']).map((item, index) => <div key={item}><i>{String(index + 1).padStart(2, '0')}</i><strong>{item}</strong><b>›</b></div>)}</article>
         </section>
 

@@ -1,4 +1,4 @@
-import { FC, useCallback } from 'react';
+import { FC, useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { FiAlertCircle } from 'react-icons/fi';
 
@@ -28,6 +28,8 @@ const NytaChatPage: FC = () => {
   const entitlements = useEntitlements();
   const { id: artistId } = useParams<{ id: string }>();
   const { conversations, refresh, rename, remove } = useNytaConversations(artistId);
+  // Só tem efeito abaixo de 900px, onde a coluna de conversas vira gaveta.
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // A lista de conversas só ganha a linha nova quando o servidor a cria (na primeira mensagem),
   // então é o próprio chat que avisa a hora de recarregar.
@@ -69,10 +71,12 @@ const NytaChatPage: FC = () => {
       <ConversationSidebar
         conversations={conversations}
         activeId={conversationId}
-        onSelect={selectConversation}
-        onNew={startNewConversation}
+        // Abrir/criar conversa é o motivo da gaveta existir: feito isso, ela sai da frente.
+        onSelect={(id) => { setHistoryOpen(false); selectConversation(id); }}
+        onNew={() => { setHistoryOpen(false); startNewConversation(); }}
         onRename={rename}
         onDelete={handleDelete}
+        open={historyOpen}
       />
 
       <div className="nyta-chat-page">
@@ -84,6 +88,7 @@ const NytaChatPage: FC = () => {
             onClear={clearConversation}
             dailyCount={rateLimitInfo?.count ?? null}
             dailyLimit={rateLimitInfo?.limit ?? null}
+            onOpenHistory={() => setHistoryOpen(true)}
           />
         </div>
 

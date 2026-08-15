@@ -38,6 +38,7 @@ const Agenda: FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AgendaEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>();
+  const [defaultTime, setDefaultTime] = useState<string | undefined>();
 
   useEffect(() => {
     if (!artistId) return;
@@ -116,10 +117,11 @@ const Agenda: FC = () => {
     message.success('Prazo removido da tarefa e evento excluído.');
   };
 
-  const openCreate = (date?: string) => {
+  const openCreate = (date?: string, time?: string) => {
     if (!canEdit) return; // colaborador sem PRO: somente-leitura
     setEditing(null);
     setDefaultDate(date);
+    setDefaultTime(time);
     setModalOpen(true);
   };
   const openEdit = (e: AgendaEvent) => {
@@ -242,6 +244,19 @@ const Agenda: FC = () => {
           <section className="calendar-timeline">
             <div className="calendar-hours">{hours.map((hour) => <span key={hour}>{hour}</span>)}</div>
             <div className="calendar-events">
+              {/* Faixas vazias clicáveis: uma por hora, atrás dos eventos (vêm antes no DOM).
+                  Clicar abre o modal já com o dia em foco e a hora da faixa — sobra só o título.
+                  Onde há evento, é o botão dele que recebe o clique, porque pinta por cima. */}
+              {canEdit && hours.map((hour, index) => (
+                <button
+                  type="button"
+                  key={`slot-${hour}`}
+                  className="calendar-slot"
+                  aria-label={`Novo compromisso às ${hour}`}
+                  onClick={() => openCreate(selectedDate, `${hour}:00`)}
+                  style={{ gridRow: index + 1, gridColumn: '1 / -1' } as React.CSSProperties}
+                />
+              ))}
               {dayEvents.filter((event) => event.start_time).map((event, index) => (
                 <button
                   type="button"
@@ -294,6 +309,7 @@ const Agenda: FC = () => {
           artistId={artistId}
           event={editing}
           defaultDate={defaultDate}
+          defaultTime={defaultTime}
           onClose={() => setModalOpen(false)}
           onSaved={onSaved}
           onDeleted={onDeleted}

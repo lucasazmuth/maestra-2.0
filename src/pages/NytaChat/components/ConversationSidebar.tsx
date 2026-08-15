@@ -20,6 +20,9 @@ interface ConversationSidebarProps {
   onNew: () => void;
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
+  // Abaixo de 900px esta coluna deixa de ficar ao lado e vira o nível de trás da tela do chat.
+  // `open` só tem efeito nessa faixa: no desktop a coluna é fixa e o ignora.
+  open?: boolean;
 }
 
 // Data curta como as pessoas leem numa lista: hoje vira hora, esta semana vira o dia da semana,
@@ -35,7 +38,7 @@ const shortDate = (iso: string): string => {
 };
 
 export const ConversationSidebar: FC<ConversationSidebarProps> = ({
-  conversations, activeId, onSelect, onNew, onRename, onDelete,
+  conversations, activeId, onSelect, onNew, onRename, onDelete, open = false,
 }) => {
   const navigate = useNavigate();
   const { id: artistId } = useParams<{ id: string }>();
@@ -56,7 +59,10 @@ export const ConversationSidebar: FC<ConversationSidebarProps> = ({
   };
 
   return (
-    <aside className='nyta-conversations' aria-label='Conversas com a Nyta'>
+    <aside
+      className={`nyta-conversations${open ? ' nyta-conversations--open' : ''}`}
+      aria-label='Conversas com a Nyta'
+    >
       <header className='nyta-conversations__head'>
         {/* Sair da Nyta é navegação da página inteira, não do chat — por isso mora aqui na
             coluna, junto do título, e não no cabeçalho da conversa. */}

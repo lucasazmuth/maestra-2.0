@@ -136,8 +136,8 @@
   }
 }
 
-// Abaixo de 900px a lista de conversas some (ver ConversationSidebar.scss) e leva junto o
-// botão de voltar que vive nela — então ele reaparece aqui.
+// Abaixo de 900px a lista de conversas não cabe ao lado e vira o nível de trás desta tela
+// (ver ConversationSidebar.scss). O "voltar" leva até ela.
 @media (max-width: 900px) {
   .chat-header__back {
     display: inline-flex;
@@ -150,11 +150,9 @@
     padding: 0 12px;
   }
 
-  // Sem largura para três blocos, o chip centralizado passaria por cima do título e do selo
-  // de uso; aqui ele volta para o fluxo, logo depois do "Nyta IA".
+  // O chip do artista sai: não há largura para ele junto do título e do selo de uso, e no mobile
+  // a barra inferior já mostra de quem é o perfil aberto (a foto na primeira célula).
   .chat-header__scope {
-    position: static;
-    max-width: none;
-    transform: none;
+    display: none;
   }
 }

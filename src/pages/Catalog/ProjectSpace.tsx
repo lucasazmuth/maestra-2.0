@@ -281,7 +281,7 @@ const ProjectSpace: FC = () => {
   const localTracks: LocalTrack[] = useMemo(() => versions.filter((version) => version.audio_file).map((version) => ({
     id: version.id,
     title: project ? project.title : 'Música',
-    subtitle: `V${version.version_number} · ${getStageLabel(version.stage)}`,
+    subtitle: `V${version.version_number}`,
     cover: project?.cover_image,
     url: version.audio_file || '',
     fullViewUrl: `/artists/${artistId}/catalog?projectId=${project?.id}&versionId=${version.id}`,

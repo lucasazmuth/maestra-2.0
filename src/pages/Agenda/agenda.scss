@@ -58,7 +58,9 @@
   padding: 0 0 38px !important;
   border: 0;
   border-radius: 0;
-  background: #fafbfc !important;
+  // O mesmo cinza da casca do app (var(--canvas), #f7f8fb) que os outros módulos usam. Com
+  // #fafbfc a página lia como branca e aparecia uma emenda onde o conteúdo acabava.
+  background: var(--canvas) !important;
   color: #52668d;
 }
 
@@ -499,4 +501,65 @@
     border-right: 0;
     border-bottom: 1px solid #e9edf4;
   }
+}
+
+// No mobile a barra de controles nascia colada no cabeçalho do app: a página zera o padding do
+// topo (`padding: 0 0 38px`) e não havia nada separando os dois.
+@media (max-width: 700px) {
+  .task-app:not(.public-app) .agenda-reference-page.calendar-page {
+    padding-top: 16px !important;
+  }
+
+  // O cabeçalho tem altura FIXA de 56px (regra do desktop, mais abaixo no arquivo, que vence a
+  // do bloco de 700px por vir depois). No mobile a data quebra para uma segunda linha e o
+  // conteúdo passa a precisar de ~90px: os 34px que sobravam vazavam para fora e caíam por cima
+  // da faixa "Dia todo". Altura automática resolve o transbordo.
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
+    height: auto;
+    grid-template-rows: auto;
+  }
+
+  // A data quebra para baixo; sem folga vertical ela encostava na faixa seguinte.
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > strong {
+    width: 100%;
+    padding: 6px 0 4px;
+    line-height: 1.3;
+  }
+}
+
+// Faixas vazias da agenda do dia: área clicável que cria um compromisso naquela hora. Fica atrás
+// dos eventos (ordem do DOM) e só se anuncia no hover, para não poluir uma grade vazia.
+.task-app:not(.public-app) .agenda-reference-page .calendar-slot {
+  z-index: 0;
+  margin: 2px;
+  padding: 0;
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background .14s ease, border-color .14s ease;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-slot:hover {
+  border-color: #c4d4ef;
+  background: #f2f6ff;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-slot:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: -2px;
+}
+
+// Os eventos ficam ACIMA das faixas: sem isto, o slot que cobre a linha inteira roubaria o
+// clique de quem quer abrir um evento existente.
+.task-app:not(.public-app) .agenda-reference-page .calendar-event {
+  position: relative;
+  z-index: 1;
+}
+
+// A coluna dos eventos vinha com 10px de padding no topo, e a das horas com zero: cada faixa
+// ficava 12px abaixo do rótulo correspondente, e o "seletor" da hora parecia desalinhado. Sem o
+// padding, a grade das duas colunas nasce na mesma linha. Os eventos já têm margem própria.
+.task-app:not(.public-app) .agenda-reference-page .calendar-events {
+  padding-top: 0;
 }

@@ -1,7 +1,9 @@
 .page {
   min-height: 930px;
   padding: 40px 44px 48px;
-  background: #fafbfc;
+  // O mesmo cinza da casca do app que os outros módulos usam — #fafbfc lia como branco e deixava
+  // uma emenda visível onde o conteúdo acabava.
+  background: var(--canvas);
 }
 
 .header {
