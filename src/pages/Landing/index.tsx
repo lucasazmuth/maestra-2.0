@@ -136,7 +136,7 @@ export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
     <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}>
       <div className={styles.headerInner}>
         <a className={styles.brand} href="#top" onClick={goHome}>
-          <MaestraBrand variant='lockup' tone='light' className={styles.brandText} beta />
+          <MaestraBrand variant='lockup' tone='light' className={styles.brandText} />
         </a>
         <nav className={styles.nav}>
           {NAV.map((n) => <button key={n.id} className={styles.navLink} onClick={goToSection(n.id)}>{n.label}</button>)}

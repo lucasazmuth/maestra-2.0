@@ -126,7 +126,6 @@ export const Topbar = memo(() => {
           <MaestraBrand
             variant='lockup'
             tone='light'
-            beta
             style={{
               fontSize: 25,
               whiteSpace: 'nowrap',
