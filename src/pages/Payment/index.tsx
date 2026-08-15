@@ -148,10 +148,17 @@ const styles = {
     padding: '24px 0',
     textAlign: 'center' as const,
   } as React.CSSProperties,
+  // Verde só na confirmação de fato. "Recuperando seu pagamento…" é espera, não boa notícia —
+  // usa o mesmo azul-marinho dos outros títulos.
   successText: {
     color: '#1d8a68',
     fontSize: 18,
-    fontWeight: 700,
+    fontWeight: 800,
+  } as React.CSSProperties,
+  loadingText: {
+    color: '#405985',
+    fontSize: 18,
+    fontWeight: 800,
   } as React.CSSProperties,
   errorContainer: {
     display: 'flex',
@@ -393,7 +400,7 @@ const PaymentPage: FC = () => {
     return (
       <div style={styles.stateWrap}>
         <div style={{ ...styles.state, ...styles.successContainer }}>
-          <div style={styles.successText}>Recuperando seu pagamento…</div>
+          <div style={styles.loadingText}>Recuperando seu pagamento…</div>
           <div style={{ color: '#8ca0c5', fontSize: 14 }}>Buscando o PIX da sua assinatura.</div>
         </div>
       </div>
