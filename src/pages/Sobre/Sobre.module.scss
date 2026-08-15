@@ -1,0 +1,124 @@
+// Página "Sobre" — mesma paleta e medidas da landing escura (conteúdo de 1110, fundo em degradê
+// azul-noite, verde-limão como cor que acende). Os estilos da história vieram da seção que
+// morava na landing; aqui o texto aparece inteiro, sem o recolhimento.
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+$neon: #b6ff52;
+$neonInk: #0b1b0a;
+$card: #162a47;
+$ink: #fff;
+$dim: #c9d4e6;
+$mute: #9fb0c9;
+$edge: rgba(255, 255, 255, .18);
+
+.shell { width: 1110px; max-width: calc(100% - 40px); margin: 0 auto; }
+
+.page {
+  min-height: 100vh;
+  background: linear-gradient(259deg, #064bb5 0%, rgba(4, 12, 24, .96) 42%, #0a3d94 100%), #040c18;
+  color: $ink;
+  font-family: 'Poppins', var(--font-body), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+// ─── Abertura ────────────────────────────────────────────────────────────────
+.hero {
+  padding: 180px 0 60px; text-align: center;
+
+  h1 {
+    margin: 0; font-size: clamp(2rem, 4.6vw, 3.4rem); font-weight: 700;
+    line-height: 1.08; letter-spacing: -.02em; text-wrap: balance;
+  }
+  p {
+    max-width: 40rem; margin: 22px auto 0;
+    font-size: 1.06rem; line-height: 1.75; color: $dim; font-weight: 300;
+  }
+}
+.kicker {
+  display: block; margin-bottom: 18px;
+  font-size: 14px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: $neon;
+}
+
+// ─── História ────────────────────────────────────────────────────────────────
+.story { padding: 60px 0 40px; }
+.storyGrid { display: grid; grid-template-columns: 300px 1fr; gap: 64px; align-items: start; }
+// A coluna da foto acompanha a leitura no desktop: o texto é longo e a autoria some da vista.
+.aside { position: sticky; top: 120px; text-align: center; }
+.photo {
+  aspect-ratio: 3 / 4; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .25);
+  img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+}
+.name { margin-top: 20px; font-size: 1.35rem; font-weight: 600; }
+.role { margin-top: 6px; font-size: .85rem; color: $mute; font-weight: 300; line-height: 1.5; }
+.social {
+  display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px;
+  margin-top: 16px; border-radius: 50%; border: 1px solid $edge;
+  background: rgba(255, 255, 255, .06); color: $dim;
+  transition: color .16s ease, border-color .16s ease;
+  &:hover { color: $neon; border-color: rgba(182, 255, 82, .5); }
+}
+.text {
+  max-width: 44rem;
+  p { margin: 0 0 22px; font-size: 1.06rem; line-height: 1.85; color: $dim; font-weight: 300; }
+  p:last-child { margin-bottom: 0; }
+  // A capitular marca o começo da carta, como numa página de revista.
+  p:first-child::first-letter {
+    float: left; margin: 6px 12px 0 0;
+    font-size: 3.4rem; font-weight: 700; line-height: .9; color: $ink;
+  }
+}
+
+// ─── Números ─────────────────────────────────────────────────────────────────
+.numbers { padding: 80px 0; }
+.numbersGrid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  padding: 36px 40px; border: 1px solid $edge; border-radius: 24px; background: rgba(250, 250, 250, .06);
+
+  div { text-align: center; }
+  strong { display: block; font-size: 2.4rem; font-weight: 700; color: $neon; line-height: 1; }
+  span { display: block; margin-top: 12px; font-size: .92rem; color: $dim; font-weight: 300; }
+}
+
+// ─── Escola ──────────────────────────────────────────────────────────────────
+.school {
+  padding: 20px 0 80px; text-align: center;
+
+  h2 { margin: 0; font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; letter-spacing: -.01em; }
+  p { max-width: 38rem; margin: 16px auto 0; font-size: 1.02rem; line-height: 1.7; color: $dim; font-weight: 300; }
+}
+.link {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 22px;
+  padding: 0; border: 0; background: none; color: $neon; cursor: pointer;
+  font: inherit; font-size: .98rem; font-weight: 600;
+  transition: gap .18s ease;
+  &:hover { gap: 12px; }
+}
+
+// ─── CTA ─────────────────────────────────────────────────────────────────────
+.cta { padding: 0 0 140px; }
+.ctaCard {
+  padding: 64px 40px; text-align: center; border-radius: 32px;
+  background: rgba(250, 250, 250, .08); border: 1px solid rgba(255, 255, 255, .30);
+
+  h2 { margin: 0; font-size: clamp(1.6rem, 3.4vw, 2.4rem); font-weight: 700; letter-spacing: -.01em; }
+  p { max-width: 32rem; margin: 16px auto 30px; font-size: 1.02rem; line-height: 1.7; color: $dim; font-weight: 300; }
+}
+.btnNeon {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 14px 28px; border: 0; border-radius: 10px;
+  background: $neon; color: $neonInk; cursor: pointer;
+  font: inherit; font-size: 15px; font-weight: 700;
+  transition: filter .16s ease, transform .16s ease;
+  &:hover { filter: brightness(1.07); transform: translateY(-1px); }
+}
+
+// ─── Telas menores ───────────────────────────────────────────────────────────
+@media (max-width: 900px) {
+  .hero { padding-top: 140px; }
+  .storyGrid { grid-template-columns: 1fr; gap: 34px; }
+  .aside { position: static; max-width: 240px; margin: 0 auto; }
+  .numbersGrid { grid-template-columns: 1fr; gap: 28px; padding: 30px 24px; }
+  .ctaCard { padding: 48px 22px; }
+}

@@ -36,6 +36,8 @@ const DiagnosticoReal = lazy(() => import('./pages/DiagnosticoReal'));
 // Página de referência da landing (rota /index2): existe pra avaliarmos o layout antes de mexer
 // na landing oficial. Não é linkada em lugar nenhum.
 const Landing2 = lazy(() => import('./pages/Landing2'));
+// Página institucional "Sobre" (a história da Anita): era uma seção da landing.
+const Sobre = lazy(() => import('./pages/Sobre'));
 const MusicRioAcademy = lazy(() => import('./pages/MusicRioAcademy'));
 const EventNiteroi = lazy(() => import('./pages/EventNiteroi'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
@@ -194,6 +196,9 @@ const AppRoutes: FC = () => {
 
       {/* Referência de layout, fora do fluxo do produto. */}
       <Route path='/index2' element={<Landing2 />} />
+
+      {/* Sobre: pública e standalone, com o mesmo chrome escuro da landing. */}
+      <Route path='/sobre' element={<Sobre />} />
 
       {/* Página institucional do Diagnóstico REAL: pública e standalone (reusa header/footer
           da landing), acessível a quem ainda não tem conta. */}

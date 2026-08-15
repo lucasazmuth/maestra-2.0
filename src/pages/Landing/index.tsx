@@ -1,14 +1,10 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  FiArrowLeft, FiArrowRight, FiArrowUp, FiCheck, FiChevronDown,
-  FiDownload, FiInstagram, FiPlay, FiShare,
-} from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiArrowUp, FiCheck, FiChevronDown, FiPlay } from 'react-icons/fi';
 
-import { MaestraBrand } from '../../components/MaestraBrand';
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { usePwaInstall } from '../../components/PwaInstallBanner';
-import anitaPhoto from '../../assets/anita.jpg';
+import { Header, Footer } from './NoirChrome';
 import heroFigure from '../../assets/landing-hero-figure.png';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { fetchPlanConfig } from '../../store/slices/subscription';
@@ -27,13 +23,6 @@ import styles from './Noir.module.scss';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const fmt = fmtBRL;
-
-const NAV = [
-  { label: 'Recursos', id: 'recursos' },
-  { label: 'Nyta IA', id: 'nyta' },
-  { label: 'Planos', id: 'planos' },
-  { label: 'FAQ', id: 'faq' },
-];
 
 const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -98,43 +87,6 @@ const buildFaqItems = (once: number, monthly: number, annual: number): { q: stri
 // ID do vídeo de apresentação no YouTube (o trecho depois de `v=` na URL). Vazio, o container
 // mostra o espaço reservado em vez de um player em branco.
 const HERO_VIDEO_ID = 'CeMv7yjdAMU';
-
-// ─── Cabeçalho ───────────────────────────────────────────────────────────────
-const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
-  const navigate = useNavigate();
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 12);
-    on(); window.addEventListener('scroll', on, { passive: true });
-    return () => window.removeEventListener('scroll', on);
-  }, []);
-  return (
-    <header className={`${styles.nav} ${scrolled ? styles.navScrolled : ''}`}>
-      <div className={styles.shell}>
-        <a
-          className={styles.brand}
-          href='#top'
-          onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-        >
-          <MaestraBrand variant='lockup' tone='light' className={styles.brandMark} />
-        </a>
-        <nav className={styles.navLinks}>
-          {NAV.map((n) => <button key={n.id} onClick={scrollTo(n.id)}>{n.label}</button>)}
-        </nav>
-        <div className={styles.navActions}>
-          {loggedIn ? (
-            <button className={styles.btnNeon} onClick={() => navigate('/artists')}>Ir pro app</button>
-          ) : (
-            <>
-              <button className={styles.navEntrar} onClick={() => navigate('/login')}>Entrar</button>
-              <button className={styles.btnNeon} onClick={() => navigate('/signup')}>Começar grátis</button>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-};
 
 // ─── Hero ────────────────────────────────────────────────────────────────────
 // Selo serrilhado da referência: 26 pontas curtas geradas por código (mesmo desenho do
@@ -490,42 +442,6 @@ const Testimonials: FC = () => {
   );
 };
 
-// ─── Fundadora ───────────────────────────────────────────────────────────────
-const ANITA_STORY = [
-  'Tenho mais de 30 anos no mercado da música, e durante todos eles ouvi a mesma pergunta, vinda de artistas dos mais diferentes tamanhos: "qual o caminho pra chegar onde eu quero?". Por muito tempo, tudo que eu tinha pra oferecer eram alguns conselhos genéricos. Isso me incomodava, porque eu sou filha de um compositor que nunca alcançou o reconhecimento que merecia, e que, na época, eu não soube como ajudar. Sem o que sei hoje, vi de perto o que acontece quando o talento existe mas falta um caminho. Essa ausência virou o motor da minha vida profissional.',
-  'No mestrado, transformei essa inquietação em método: um processo de planejamento estratégico que apliquei, ao longo dos últimos anos, em mais de 300 consultorias individuais. Ali eu tive a confirmação do que suspeitava: o artista não precisa só de incentivo; precisa de um norte e de um mapa para chegar até ele. O método funcionava. O problema era de alcance: consultoria individual é cara, e por mais que eu desse aulas gratuitas e distribuísse a planilha do método de graça, muitos artistas ainda travavam na hora de aplicar sozinhos. Foi aí que veio o estalo: e se a inteligência artificial pudesse traduzir a minha metodologia, e a minha forma de pensar e a minha experiência profissional, numa ferramenta acessível a qualquer artista, em qualquer lugar do mundo? A Maestra nasceu dessa motivação, sustentada por uma hipótese que carrego como bandeira: talento não basta; é preciso gestão.',
-  'A Maestra pega tudo que aprendi em mais de 300 consultorias e transforma num roteiro guiado, que conduz o artista do seu mapa de referências até um plano de ação concreto, passo a passo, do jeito que eu faria pessoalmente. É uma metodologia proprietária, testada e aprovada, que nenhuma outra plataforma oferece. E há ainda o REAL, o diagnóstico que mostra ao artista, com objetividade, onde sua carreira está hoje: ele nasceu diretamente da minha pesquisa de doutorado, e é o que permite que cada plano comece não de um achismo, mas de um retrato honesto da realidade. Construí a Maestra para o artista em qualquer estágio que queira evoluir, mas, acima de tudo, para quem está começando, sem estrutura profissional por trás nem dinheiro para montar uma equipe. Para quem o meu pai foi, um dia.',
-  'Nada disso seria possível sozinha. Construí a Maestra em parceria com Azmuth, produtor musical de diversos nomes da música urbana, fundador da Banca Records e empreendedor digital. Conheci o Azmuth quando ele me convidou para ser embaixadora de outra de suas iniciativas, e desde então nutro profunda admiração pelo seu olhar inovador. Quando tive a ideia da Maestra, ele foi minha escolha natural: é quem traduz a minha inteligência em sistema, e quem trouxe à ferramenta uma contribuição que só quem vive os dois mundos, a música e a tecnologia, poderia trazer. Juntos, transformamos um método que cabia numa sala de consultoria em algo que agora cabe na palma da mão de qualquer artista.',
-];
-
-const Founder: FC = () => {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <section className={styles.founder} id='fundadora'>
-      <div className={`${styles.shell} ${styles.founderGrid}`}>
-        <aside className={styles.founderAside}>
-          <div className={styles.founderPhoto}><img src={anitaPhoto} alt='Anita Carvalho' /></div>
-          <div className={styles.founderName}>Anita Carvalho</div>
-          <div className={styles.founderRole}>Criadora do Índice REAL · Fundadora da Maestra</div>
-          <a className={styles.founderSocial} href='https://www.instagram.com/anitacarvalho_/' target='_blank' rel='noreferrer' aria-label='Instagram da Anita Carvalho'>
-            <FiInstagram size={18} />
-          </a>
-        </aside>
-        <div>
-          <h2 className={styles.hSection}>A história por trás da Maestra</h2>
-          <div className={`${styles.founderText} ${expanded ? '' : styles.founderTextClamp}`}>
-            {ANITA_STORY.map((p, i) => <p key={i}>{p}</p>)}
-          </div>
-          <button className={styles.founderMore} onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}>
-            {expanded ? 'Ler menos' : 'Ler a história completa'}
-            <FiChevronDown size={16} className={expanded ? styles.founderMoreOpen : undefined} />
-          </button>
-        </div>
-      </div>
-    </section>
-  );
-};
-
 // ─── Planos ──────────────────────────────────────────────────────────────────
 // Dois modelos de cobrança são coisas diferentes e a UI deixa isso explícito: o Planejamento é
 // PAGAMENTO ÚNICO por perfil (vitalício); o PRO é ASSINATURA. O toggle Mensal/Anual vive DENTRO
@@ -740,62 +656,6 @@ const CtaBand: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   );
 };
 
-// ─── Rodapé ──────────────────────────────────────────────────────────────────
-const Footer: FC = () => {
-  const navigate = useNavigate();
-  const { visible: pwaVisible, ios: pwaIOS, install: installPwa, dismiss: dismissPwa } = usePwaInstall();
-  return (
-    <footer className={styles.footer}>
-      <div className={`${styles.shell} ${styles.footerGrid}`}>
-        <div className={styles.footerBrand}>
-          <MaestraBrand variant='lockup' tone='light' className={styles.brandMark} />
-          <p>A plataforma que diagnostica, planeja e acompanha a sua carreira na música.</p>
-          {pwaVisible && (
-            <div className={styles.footerPwa}>
-              <span className={styles.footerPwaIcon}>{pwaIOS ? <FiShare size={16} /> : <FiDownload size={16} />}</span>
-              <span className={styles.footerPwaCopy}>
-                <strong>Instale a Maestra</strong>
-                <span>{pwaIOS ? 'Compartilhar → Adicionar à Tela de Início' : 'Acesso rápido pelo celular ou computador'}</span>
-              </span>
-              {!pwaIOS && <button className={styles.footerPwaAction} onClick={installPwa}>Instalar</button>}
-              <button className={styles.footerPwaClose} onClick={dismissPwa} aria-label='Fechar aviso de instalação'>×</button>
-            </div>
-          )}
-        </div>
-        <div className={styles.footerCol}>
-          <h4>Produto</h4>
-          <button onClick={scrollTo('recursos')}>Recursos</button>
-          <button onClick={() => navigate('/diagnostico-real')}>Diagnóstico REAL</button>
-          <button onClick={() => navigate('/music-rio-academy')}>Music Rio Academy</button>
-          <button onClick={scrollTo('planos')}>Planos</button>
-          <button onClick={scrollTo('faq')}>FAQ</button>
-        </div>
-        <div className={styles.footerCol}>
-          <h4>Conta</h4>
-          <button onClick={() => navigate('/login')}>Entrar</button>
-          <button onClick={() => navigate('/signup')}>Criar conta</button>
-        </div>
-        <div className={styles.footerCol}>
-          <h4>Legal</h4>
-          <button onClick={() => navigate('/legal/termos')}>Termos de uso</button>
-          <button onClick={() => navigate('/legal/privacidade')}>Política de privacidade</button>
-        </div>
-        <div className={styles.footerCol}>
-          <h4>Social</h4>
-          <a href='https://www.instagram.com/maestra.manager/' target='_blank' rel='noreferrer' aria-label='Instagram' className={styles.footerSocial}><FiInstagram size={18} /></a>
-        </div>
-      </div>
-      <div className={`${styles.shell} ${styles.footerBottom}`}>
-        <span>
-          Maestra <em>by</em>{' '}
-          <button onClick={() => { window.scrollTo(0, 0); navigate('/music-rio-academy'); }}>Music Rio Academy</button>
-        </span>
-        <span>© {new Date().getFullYear()} MUSIC RIO ACADEMY LTDA · CNPJ 22.826.985/0001-41. Todos os direitos reservados.</span>
-      </div>
-    </footer>
-  );
-};
-
 // ─── Landing ─────────────────────────────────────────────────────────────────
 const Landing: FC = () => {
   const loggedIn = useAppSelector((s) => !!s.auth.user);
@@ -827,7 +687,6 @@ const Landing: FC = () => {
       <Modules />
       <NytaSection loggedIn={loggedIn} />
       <Testimonials />
-      <Founder />
       <Plans />
       <Faq />
       <Download />
