@@ -19,13 +19,15 @@ interface PayItem {
   status: string;
 }
 
+// Verde no pago, âmbar no que ainda depende de ação e vermelho no que falhou: as cores do
+// design claro, no lugar do roxo/laranja do tema antigo.
 const STATUS_META: Record<string, { label: string; color: string }> = {
-  paid: { label: 'Pago', color: '#9A4FD1' },
-  pending: { label: 'Pendente', color: '#f5b15a' },
-  failed: { label: 'Falhou', color: '#ff6b6b' },
-  overdue: { label: 'Vencido', color: '#ff6b6b' },
-  canceled: { label: 'Cancelado', color: '#8a8a8a' },
-  refunded: { label: 'Estornado', color: '#8a8a8a' },
+  paid: { label: 'Pago', color: '#1d8a68' },
+  pending: { label: 'Pendente', color: '#a17a1c' },
+  failed: { label: 'Falhou', color: '#d2474b' },
+  overdue: { label: 'Vencido', color: '#d2474b' },
+  canceled: { label: 'Cancelado', color: '#93a4c0' },
+  refunded: { label: 'Estornado', color: '#93a4c0' },
 };
 
 // Normaliza os status das duas tabelas num conjunto comum.
@@ -114,13 +116,13 @@ const PaymentHistory: FC = () => {
   }, [user?.id]);
 
   return (
-    <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginTop: 20 }}>
-      <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginTop: 0, marginBottom: 16 }}>Histórico de pagamentos</h2>
+    <section style={{ background: '#fff', border: '1px solid #e3eaf3', borderRadius: 14, padding: 20, marginTop: 20, boxShadow: '0 10px 26px rgba(74, 99, 145, .08)' }}>
+      <h2 style={{ color: '#405985', fontSize: 18, fontWeight: 800, marginTop: 0, marginBottom: 16 }}>Histórico de pagamentos</h2>
 
       {loading ? (
         <Spinner loading section>{null as any}</Spinner>
       ) : items.length === 0 ? (
-        <p style={{ color: '#8a8a8a', fontSize: 13, margin: 0 }}>Você ainda não tem pagamentos registrados.</p>
+        <p style={{ color: '#8ca0c5', fontSize: 13, margin: 0 }}>Você ainda não tem pagamentos registrados.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {items.map((it, i) => {
@@ -131,18 +133,18 @@ const PaymentHistory: FC = () => {
                 key={it.id}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0',
-                  borderTop: i ? '1px solid #262626' : 'none',
+                  borderTop: i ? '1px solid #eef1f7' : 'none',
                 }}
               >
-                <span style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', color: '#cfcfd4' }}>
+                <span style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#eef3fb', color: '#5f76a3' }}>
                   {it.kind === 'subscription' ? <FiRefreshCw size={17} /> : <FiUser size={17} />}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: '#fff', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.title}</div>
-                  <div style={{ color: '#8a8a8a', fontSize: 12, marginTop: 3 }}>{sub}</div>
+                  <div style={{ color: '#405985', fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.title}</div>
+                  <div style={{ color: '#93a4c0', fontSize: 12, marginTop: 3 }}>{sub}</div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>{fmtBRL(it.amount)}</div>
+                  <div style={{ color: '#405985', fontSize: 14, fontWeight: 800 }}>{fmtBRL(it.amount)}</div>
                   <div style={{ color: meta.color, fontSize: 12, fontWeight: 700, marginTop: 3 }}>{meta.label}</div>
                 </div>
               </div>

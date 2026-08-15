@@ -165,44 +165,45 @@ const SubscriptionPage: FC = () => {
 
   if (view === 'benefits') {
     // Gate por status: não deixa quem já tem assinatura (ativa) ou pendência re-assinar (duplicar).
-    const gateCard: CSSProperties = { maxWidth: 560, margin: '0 auto', background: '#181818', border: '1px solid #282828', borderRadius: 16, padding: 32, textAlign: 'center' };
-    const btnPrimary: CSSProperties = { background: '#9A4FD1', border: 'none', color: '#FFFFFF', borderRadius: 9999, padding: '12px 30px', fontSize: 14, fontWeight: 800, cursor: 'pointer' };
-    const btnGhost: CSSProperties = { background: 'none', border: 'none', color: '#9a9aa5', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 12 };
+    const gateCard: CSSProperties = { maxWidth: 560, margin: '0 auto', background: '#fff', border: '1px solid #e3eaf3', borderRadius: 16, padding: 32, textAlign: 'center', boxShadow: '0 12px 30px rgba(74, 99, 145, .1)' };
+    const btnPrimary: CSSProperties = { background: '#3361ff', border: 'none', color: '#fff', borderRadius: 9999, padding: '12px 30px', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 12px 26px rgba(51, 97, 255, .24)' };
+    const btnGhost: CSSProperties = { background: 'none', border: 'none', color: '#7c8da8', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 12 };
 
     if (!initialized) {
-      return <div style={{ padding: 24 }}><div style={gateCard}>Carregando…</div></div>;
+      return <div style={{ padding: 24 }}><div style={{ ...gateCard, color: '#8ca0c5' }}>Carregando…</div></div>;
     }
     if (status === 'active') {
       const proCard: CSSProperties = {
         maxWidth: 520, margin: '0 auto', borderRadius: 20, padding: '44px 32px',
         display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-        background: 'radial-gradient(120% 120% at 50% 0%, rgba(154, 79, 209,0.18) 0%, rgba(154, 79, 209,0.04) 45%, rgba(255,255,255,0.02) 100%)',
-        border: '1px solid rgba(154, 79, 209,0.32)',
+        background: 'radial-gradient(120% 120% at 50% 0%, rgba(51, 97, 255, .1) 0%, rgba(154, 79, 209, .06) 45%, #fff 100%)',
+        border: '1px solid #dbe4f5',
+        boxShadow: '0 16px 40px rgba(74, 99, 145, .12)',
       };
       const proBadge: CSSProperties = {
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 60, height: 60,
-        borderRadius: 18, marginBottom: 22, background: 'rgba(154, 79, 209,0.14)',
-        border: '1px solid rgba(154, 79, 209,0.35)', boxShadow: '0 12px 32px rgba(154, 79, 209,0.25)',
+        borderRadius: 18, marginBottom: 22, background: '#f1f0ff',
+        border: '1px solid #ddd8fb', boxShadow: '0 12px 28px rgba(122, 79, 209, .16)',
       };
       const btnPrimaryArrow: CSSProperties = {
-        display: 'inline-flex', alignItems: 'center', gap: 8, background: '#9A4FD1', border: 'none', color: '#FFFFFF',
+        display: 'inline-flex', alignItems: 'center', gap: 8, background: '#3361ff', border: 'none', color: '#fff',
         borderRadius: 9999, padding: '13px 32px', fontSize: 14, fontWeight: 800, cursor: 'pointer',
-        boxShadow: '0 10px 30px rgba(154, 79, 209,0.32)', transition: 'transform 0.15s, background 0.2s',
+        boxShadow: '0 12px 30px rgba(51, 97, 255, .26)', transition: 'transform 0.15s, background 0.2s',
       };
       return (
         <div style={{ padding: 24 }}>
           <div style={proCard}>
-            <span style={proBadge}><FiAward size={30} color='#e07fce' /></span>
-            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#C97EF3', marginBottom: 10 }}>Assinatura ativa</span>
-            <div style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 12 }}>Você já é Maestra PRO</div>
-            <p style={{ color: '#cfcfd4', fontSize: 14.5, lineHeight: 1.55, margin: '0 0 26px', maxWidth: 400 }}>
+            <span style={proBadge}><FiAward size={30} color='#7a4fd1' /></span>
+            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7a4fd1', marginBottom: 10 }}>Assinatura ativa</span>
+            <div style={{ color: '#405985', fontSize: 26, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 12 }}>Você já é Maestra PRO</div>
+            <p style={{ color: '#7c8da8', fontSize: 14.5, lineHeight: 1.55, margin: '0 0 26px', maxWidth: 400 }}>
               Edição completa, Nyta IA e todos os perfis da conta liberados.
             </p>
             <button
               style={btnPrimaryArrow}
               onClick={() => navigate('/settings')}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#8442B6'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#9A4FD1'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#2a54e0'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#3361ff'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               Gerenciar assinatura <FiArrowRight size={16} />
             </button>
@@ -214,8 +215,8 @@ const SubscriptionPage: FC = () => {
       return (
         <div style={{ padding: 24 }}>
           <div style={gateCard}>
-            <div style={{ color: '#fff', fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Você tem um pagamento pendente</div>
-            <p style={{ color: '#b3b3b3', fontSize: 14, lineHeight: 1.5, margin: '0 0 20px' }}>Já existe uma assinatura aguardando pagamento. Retome de onde parou — não precisa começar do zero.</p>
+            <div style={{ color: '#405985', fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Você tem um pagamento pendente</div>
+            <p style={{ color: '#7c8da8', fontSize: 14, lineHeight: 1.5, margin: '0 0 20px' }}>Já existe uma assinatura aguardando pagamento. Retome de onde parou — não precisa começar do zero.</p>
             <button style={btnPrimary} onClick={() => navigate('/pagamento')}>Retomar pagamento</button>
             <div><button style={btnGhost} onClick={() => navigate('/settings')}>Ver assinatura</button></div>
           </div>
@@ -254,7 +255,7 @@ const SubscriptionPage: FC = () => {
     <div style={{ padding: 24 }}>
       <button
         onClick={() => setView('benefits')}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: '#9a9aa5', fontWeight: 700, fontSize: 14, cursor: 'pointer', padding: 0, marginBottom: 18 }}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: '#7c8da8', fontWeight: 700, fontSize: 14, cursor: 'pointer', padding: 0, marginBottom: 18 }}
       >
         <FiArrowLeft size={16} /> Voltar aos planos
       </button>
@@ -270,7 +271,7 @@ const SubscriptionPage: FC = () => {
                 value={method}
                 onChange={setMethod}
                 renderBody={(m) => (m === 'PIX'
-                  ? <p style={{ fontSize: 14, color: '#9a9aa5', lineHeight: 1.55, margin: 0 }}>Ao continuar, geramos um código PIX. Sua assinatura é ativada assim que o pagamento cair.</p>
+                  ? <p style={{ fontSize: 14, color: '#7c8da8', lineHeight: 1.55, margin: 0 }}>Ao continuar, geramos um código PIX. Sua assinatura é ativada assim que o pagamento cair.</p>
                   : <CardForm form={form} />
                 )}
               />
@@ -295,7 +296,7 @@ const SubscriptionPage: FC = () => {
               </div>
             }
             item={{
-              icon: <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, color: '#9A4FD1' }}>PRO</span>,
+              icon: <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, color: '#3361ff' }}>PRO</span>,
               name: 'Maestra PRO',
               sub: <span>Edição + Nyta IA · {cycleLabel}</span>,
               price: `${priceFmt}${unit}`,

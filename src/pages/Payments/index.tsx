@@ -12,11 +12,11 @@ const Payments: FC = () => {
     <div style={{ padding: 24, maxWidth: 640 }}>
       <button
         onClick={() => navigate('/settings')}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#b3b3b3', cursor: 'pointer', fontWeight: 600, fontSize: 14, marginBottom: 16, padding: 0 }}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#7c8da8', cursor: 'pointer', fontWeight: 700, fontSize: 14, marginBottom: 16, padding: 0 }}
       >
         <FiArrowLeft size={16} /> Configurações
       </button>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: 0 }}>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#405985', margin: 0 }}>
         Pagamentos
       </h1>
       <PaymentHistory />

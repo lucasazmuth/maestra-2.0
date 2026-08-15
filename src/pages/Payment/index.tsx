@@ -17,21 +17,23 @@ const styles = {
     fontFamily: 'var(--font-display)',
     fontWeight: 800,
     fontSize: 28,
-    color: '#fff',
+    color: '#405985',
     margin: '0 0 8px',
     textAlign: 'center' as const,
   } as React.CSSProperties,
   subtitle: {
-    color: '#b3b3b3',
+    color: '#8ca0c5',
     fontSize: 14,
     marginBottom: 24,
     textAlign: 'center' as const,
   } as React.CSSProperties,
   card: {
-    background: '#181818',
-    borderRadius: 12,
+    background: '#fff',
+    border: '1px solid #e3eaf3',
+    borderRadius: 14,
     padding: 24,
     marginBottom: 20,
+    boxShadow: '0 10px 26px rgba(74, 99, 145, .08)',
   } as React.CSSProperties,
   qrContainer: {
     display: 'flex',
@@ -41,12 +43,13 @@ const styles = {
   qrImage: {
     width: 220,
     height: 220,
-    borderRadius: 8,
+    borderRadius: 10,
     background: '#fff',
+    border: '1px solid #e6ecf6',
     padding: 8,
   } as React.CSSProperties,
   sectionTitle: {
-    color: '#fff',
+    color: '#405985',
     fontSize: 16,
     fontWeight: 700,
     marginTop: 0,
@@ -59,10 +62,10 @@ const styles = {
   } as React.CSSProperties,
   copyInput: {
     flex: 1,
-    background: '#282828',
-    border: '1px solid #333',
-    borderRadius: 8,
-    color: '#fff',
+    background: '#fbfcfe',
+    border: '1px solid #e1e7f0',
+    borderRadius: 9,
+    color: '#52668d',
     padding: '10px 12px',
     fontSize: 13,
     fontFamily: 'monospace',
@@ -71,9 +74,9 @@ const styles = {
     whiteSpace: 'nowrap' as const,
   } as React.CSSProperties,
   copyBtn: {
-    background: '#9A4FD1',
+    background: '#3361ff',
     border: 'none',
-    borderRadius: 8,
+    borderRadius: 9,
     color: '#FFFFFF',
     padding: '10px 16px',
     fontSize: 14,
@@ -85,19 +88,19 @@ const styles = {
     whiteSpace: 'nowrap' as const,
   } as React.CSSProperties,
   copiedBtn: {
-    background: '#1db954',
+    background: '#1d8a68',
   } as React.CSSProperties,
   countdown: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    color: '#b3b3b3',
+    color: '#7c8da8',
     fontSize: 14,
     marginBottom: 16,
   } as React.CSSProperties,
   countdownExpired: {
-    color: '#ff4d4f',
+    color: '#d2474b',
   } as React.CSSProperties,
   pollingContainer: {
     display: 'flex',
@@ -115,11 +118,11 @@ const styles = {
     width: 8,
     height: 8,
     borderRadius: '50%',
-    background: '#9A4FD1',
+    background: '#3361ff',
     animation: 'pulse 1.4s infinite ease-in-out',
   } as React.CSSProperties,
   pollingText: {
-    color: '#b3b3b3',
+    color: '#7c8da8',
     fontSize: 14,
   } as React.CSSProperties,
   successContainer: {
@@ -131,7 +134,7 @@ const styles = {
     textAlign: 'center' as const,
   } as React.CSSProperties,
   successText: {
-    color: '#9A4FD1',
+    color: '#1d8a68',
     fontSize: 18,
     fontWeight: 700,
   } as React.CSSProperties,
@@ -144,18 +147,18 @@ const styles = {
     textAlign: 'center' as const,
   } as React.CSSProperties,
   errorText: {
-    color: '#ff4d4f',
+    color: '#d2474b',
     fontSize: 15,
     fontWeight: 600,
   } as React.CSSProperties,
   errorHint: {
-    color: '#b3b3b3',
+    color: '#8ca0c5',
     fontSize: 13,
   } as React.CSSProperties,
   retryBtn: {
-    background: '#9A4FD1',
+    background: '#3361ff',
     border: 'none',
-    borderRadius: 8,
+    borderRadius: 9,
     color: '#FFFFFF',
     padding: '12px 24px',
     fontSize: 14,
@@ -358,7 +361,7 @@ const PaymentPage: FC = () => {
       <div style={styles.container}>
         <div style={{ ...styles.card, ...styles.successContainer }}>
           <div style={styles.successText}>Recuperando seu pagamento…</div>
-          <div style={{ color: '#b3b3b3', fontSize: 14 }}>Buscando o PIX da sua assinatura.</div>
+          <div style={{ color: '#8ca0c5', fontSize: 14 }}>Buscando o PIX da sua assinatura.</div>
         </div>
       </div>
     );
@@ -369,8 +372,8 @@ const PaymentPage: FC = () => {
     return (
       <div style={styles.container}>
         <div style={{ ...styles.card, ...styles.errorContainer }}>
-          <ClockCircleOutlined style={{ fontSize: 48, color: '#9A4FD1' }} />
-          <div style={{ ...styles.errorText, color: '#fff' }}>Pagamento em análise</div>
+          <ClockCircleOutlined style={{ fontSize: 48, color: '#3361ff' }} />
+          <div style={{ ...styles.errorText, color: '#405985' }}>Pagamento em análise</div>
           <div style={styles.errorHint}>
             A operadora do cartão está processando o débito — isso pode levar alguns
             minutos. Assim que for aprovado, seu acesso Pro é liberado automaticamente.
@@ -389,7 +392,7 @@ const PaymentPage: FC = () => {
     return (
       <div style={styles.container}>
         <div style={{ ...styles.card, ...styles.errorContainer }}>
-          <ClockCircleOutlined style={{ fontSize: 48, color: '#ff4d4f' }} />
+          <ClockCircleOutlined style={{ fontSize: 48, color: '#d2474b' }} />
           <div style={styles.errorText}>Não foi possível recuperar o PIX.</div>
           <div style={styles.errorHint}>A cobrança pode ter expirado. Volte aos planos para gerar um novo pagamento.</div>
           <button onClick={() => navigate('/assinatura', { replace: true })} style={styles.retryBtn}>Voltar aos planos</button>
@@ -412,13 +415,13 @@ const PaymentPage: FC = () => {
     return (
       <div style={styles.container}>
         <div style={{ ...styles.card, ...styles.successContainer }}>
-          <CheckCircleFilled style={{ fontSize: 56, color: '#9A4FD1' }} />
+          <CheckCircleFilled style={{ fontSize: 56, color: '#1d8a68' }} />
           <div style={styles.successText}>Bem-vindo ao Maestra Pro!</div>
-          <div style={{ color: '#b3b3b3', fontSize: 14, lineHeight: 1.5 }}>
+          <div style={{ color: '#52668d', fontSize: 14, lineHeight: 1.5 }}>
             Pagamento confirmado com sucesso.<br />
             Todos os recursos estão desbloqueados.
           </div>
-          <div style={{ color: '#6b7280', fontSize: 12, marginTop: 8 }}>
+          <div style={{ color: '#93a4c0', fontSize: 12, marginTop: 8 }}>
             Redirecionando...
           </div>
         </div>
@@ -431,7 +434,7 @@ const PaymentPage: FC = () => {
     return (
       <div style={styles.container}>
         <div style={{ ...styles.card, ...styles.errorContainer }}>
-          <ClockCircleOutlined style={{ fontSize: 48, color: '#ff4d4f' }} />
+          <ClockCircleOutlined style={{ fontSize: 48, color: '#d2474b' }} />
           <div style={styles.errorText}>
             Pagamento não confirmado no tempo limite.
           </div>
@@ -448,7 +451,7 @@ const PaymentPage: FC = () => {
     return (
       <div style={styles.container}>
         <div style={{ ...styles.card, ...styles.errorContainer }}>
-          <WifiOutlined style={{ fontSize: 48, color: '#ff4d4f' }} />
+          <WifiOutlined style={{ fontSize: 48, color: '#d2474b' }} />
           <div style={styles.errorText}>
             Conexão perdida
           </div>
@@ -500,10 +503,10 @@ const PaymentPage: FC = () => {
         </div>
 
         {/* Recebedor: no app do banco aparece a razão social da empresa por trás da Maestra. */}
-        <p style={{ color: '#8a8a8a', fontSize: 12.5, lineHeight: 1.5, textAlign: 'center', margin: '14px 0 0' }}>
+        <p style={{ color: '#93a4c0', fontSize: 12.5, lineHeight: 1.5, textAlign: 'center', margin: '14px 0 0' }}>
           O pagamento aparecerá no seu banco em nome de
           <br />
-          <strong style={{ color: '#b3b3b3', fontWeight: 700 }}>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
+          <strong style={{ color: '#7c8da8', fontWeight: 700 }}>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
         </p>
       </div>
 
