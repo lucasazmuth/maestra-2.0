@@ -1,0 +1,65 @@
+// Selo do plano ao lado da marca. Precisa ser lido quando procurado e ignorado quando não —
+// por isso texto pequeno, sem fundo saturado e sem peso maior que o do wordmark.
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 19px;
+  margin-left: 9px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  line-height: 1;
+  // Sem uppercase forçado: "PRO" e "FREE" já são siglas e "Pendente" é palavra — em caixa alta
+  // ela ficava com a mesma presença de um alerta, que é justamente o que saiu do rodapé.
+  transition: border-color .16s ease, background .16s ease, color .16s ease;
+  // Alinha pela caixa de texto do wordmark, não pela linha inteira.
+  vertical-align: middle;
+}
+
+.pro {
+  border-color: #d7e2ff;
+  background: #eef3ff;
+  color: #3361ff;
+}
+
+.pro:hover {
+  border-color: #b9cbed;
+  background: #e4ecff;
+}
+
+.pending {
+  border-color: #f2e2b8;
+  background: #fdf6e6;
+  color: #a17a1c;
+}
+
+.pending:hover {
+  border-color: #e6d09a;
+  background: #fbf0d8;
+}
+
+// FREE é o estado padrão: só contorno, sem cor de aviso — não há nada de errado em não ser Pro.
+.free {
+  border-color: #e1e8f3;
+  background: transparent;
+  color: #98a9c6;
+}
+
+.free:hover {
+  border-color: #c9d8f0;
+  color: #6f88b5;
+}
+
+@media (max-width: 560px) {
+  .tag {
+    margin-left: 7px;
+    padding: 0 5px;
+    font-size: 9px;
+  }
+}

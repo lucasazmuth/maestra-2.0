@@ -6,7 +6,7 @@ import { MobileNav } from './components/MobileNav';
 import { SystemMenu } from './components/SystemMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
-import { StatusBanner, useStatusBanner } from '../AnnouncementBanner';
+import { PlanTag } from '../PlanTag';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import { LocalPlayerBar } from '../LocalPlayerBar';
 
@@ -90,7 +90,6 @@ export const AppLayout: FC = memo(() => {
   const dispatch = useAppDispatch();
   const container = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-  const rawBannerKind = useStatusBanner();
   const location = useLocation();
   const navigate = useNavigate();
   const { isOpen: nytaOpen, open: openNyta } = useNytaModal();
@@ -119,13 +118,6 @@ export const AppLayout: FC = memo(() => {
   const isArtistsList = location.pathname.replace(/\/+$/, '') === '/artists';
   const playerHidden = isArtistsList || (isMobile && nytaOpen);
   const playerVisible = playerOpen && !playerHidden;
-  // No mobile o banner promocional ("Assine o Maestra Pro") toma espaço demais e não é crítico —
-  // escondemos só ele. Os avisos de pagamento (grace/pending) continuam aparecendo no mobile.
-  const bannerKind = playerVisible
-    ? null
-    : rawBannerKind === 'promo' && isMobile
-    ? null
-    : rawBannerKind;
   const userId = useAppSelector((s) => s.auth.user?.id);
   const user = useAppSelector((s) => s.auth.user);
   const artists = useAppSelector((s) => s.artists.items);
@@ -197,13 +189,10 @@ export const AppLayout: FC = memo(() => {
   // vira "faça o planejamento primeiro". Mostrar a porta de entrada aqui só levava a pessoa a
   // um beco: um chat que responde a mesma coisa a qualquer pergunta.
   const nytaAvailable = !!currentArtist && isOnboardingComplete(currentArtist);
-  // A navbar mobile é uma barra fixa SOBREPOSTA (o conteúdo passa por baixo dela, via padding-bottom
-  // da .Main-section, e aparece atrás do gradiente translúcido). Por isso NÃO reservamos altura pra
-  // ela aqui — só pro banner de pagamento, que é uma barra sólida. Reserva do banner é justa por
-  // viewport (desktop ~1 linha = 76px; mobile 2 linhas = 84px).
-  // Reserva a altura do rodapé pro conteúdo não colar no card. Com o player no lugar do banner
-  // (desktop), reserva o mesmo espaço (76px) — senão o player fica sem respiro no topo.
-  const bottomReserve = bannerKind ? (isMobile ? 84 : 76) : playerVisible && !isMobile ? 76 : 0;
+  // A navbar mobile é uma barra fixa SOBREPOSTA (o conteúdo passa por baixo dela, via
+  // padding-bottom da .Main-section), então não reserva altura aqui. O player, sim: é uma barra
+  // sólida e sem a reserva ele cola no card.
+  const bottomReserve = playerVisible && !isMobile ? 76 : 0;
 
   // Entrar numa das exceções deve fechar o player, não apenas escondê-lo: desmontar o áudio
   // interrompe a reprodução e evita que ela continue tocando sem um controle visível.
@@ -265,6 +254,9 @@ export const AppLayout: FC = memo(() => {
           <span className='brand-logo-mark' aria-hidden='true' />
           Maestra
         </a>
+        {/* O plano da conta vira um selo aqui: o banner de rodapé dizia a mesma coisa ocupando
+            uma faixa inteira da tela em toda navegação. */}
+        <PlanTag />
         {/* "Baixar App" e "Planos" apontavam para #board (não iam a lugar nenhum) e Suporte já
             está no rodapé do dashboard. O menu volta quando os destinos existirem. */}
       </div>
@@ -300,7 +292,7 @@ export const AppLayout: FC = memo(() => {
     <>
       <LanguageModal />
 
-      <main className={`task-app${bannerKind ? ' has-bottom-banner' : ''}${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}`}>
+      <main className={`task-app${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}`}>
         {isArtistsList ? (
           <section className='profile-home page-view'>
             {!hideTopbar && topNavigation(true)}
@@ -409,8 +401,6 @@ export const AppLayout: FC = memo(() => {
         </div>
           </>
         )}
-
-        {bannerKind && <StatusBanner kind={bannerKind} />}
 
         {/* Tab bar do mobile (fixa no rodapé, abaixo do banner). Oculta no desktop via CSS. */}
         <MobileNav />
