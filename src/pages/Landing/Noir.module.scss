@@ -32,13 +32,15 @@ $edge: rgba(255, 255, 255, .18);
 }
 
 // ─── Tipografia ──────────────────────────────────────────────────────────────
+// Caixa alta fica só nos rótulos pequenos (kicker, tipo de plano, "NYTA IA"): neles ela marca
+// hierarquia. Nos títulos grandes ela atrapalhava — em 98px, os acentos de MÚSICA e TAMBÉM
+// encavalam na linha de cima e a frase inteira soa gritada. O tamanho já dá o impacto.
 .hDisplay {
   margin: 0;
   font-size: clamp(2.4rem, 6.8vw, 6.125rem);   // 98px na prancheta de 1440
   font-weight: 700;
   letter-spacing: -.02em;
   line-height: 1.06;                           // 104px de entrelinha
-  text-transform: uppercase;
 }
 .hDisplayNeon { color: $neon; }
 .hSection {
@@ -47,7 +49,6 @@ $edge: rgba(255, 255, 255, .18);
   font-weight: 700;
   letter-spacing: -.01em;
   line-height: 1.25;
-  text-transform: uppercase;
   text-wrap: balance;
 }
 .hCard { margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.35; }
@@ -111,7 +112,7 @@ $edge: rgba(255, 255, 255, .18);
 // Réplica do Hero.svg (prancheta 1465×811, conteúdo de 1110 centrado → margem de 177,5).
 // Cada peça é posicionada pela coordenada do arquivo:
 //   x_palco = x_svg − 177,5      y_palco = y_svg − 199   (o palco começa no topo da figura)
-.hero { position: relative; padding-top: 122px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.hero { position: relative; padding-top: 172px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
 
 .heroTitle { position: relative; z-index: 2; text-align: center; padding: 0 20px; }
 .heroKicker {

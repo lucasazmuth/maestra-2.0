@@ -166,7 +166,7 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
           <h1 className={styles.hDisplay}>A música evoluiu</h1>
           <span className={styles.heroBadge} aria-hidden><FiPlay size={30} /></span>
         </div>
-        <h1 className={`${styles.hDisplay} ${styles.heroLine2}`}>a gestão também</h1>
+        <h1 className={`${styles.hDisplay} ${styles.heroLine2}`}>A gestão também</h1>
         <div className={styles.heroCtas}>
           <button className={styles.btnNeon} onClick={start}>
             Fazer meu diagnóstico grátis <FiArrowRight size={18} />
@@ -189,9 +189,12 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
             usa o ▶ pra que serve: leva ao vídeo de apresentação. */}
         <button className={styles.seal} onClick={scrollTo('video')} aria-label='Ver como funciona'>
           <svg className={styles.sealStar} viewBox='0 0 100 100' aria-hidden focusable='false'><path d={SEAL_POINTS} /></svg>
+          {/* O texto corre no meio do anel: raio 50 põe a linha entre a ponta da estrela (78) e o
+              disco escuro (33), e o startOffset de 50% com âncora ao centro mantém a frase
+              centrada no arco, qualquer que seja o comprimento dela. */}
           <svg className={styles.sealCaption} viewBox='0 0 160 160' aria-hidden focusable='false'>
-            <defs><path id='landing-seal-arc' d='M22 80a58 58 0 0 1 116 0' /></defs>
-            <text><textPath href='#landing-seal-arc' startOffset='11%'>veja como funciona</textPath></text>
+            <defs><path id='landing-seal-arc' d='M30 80a50 50 0 0 1 100 0' /></defs>
+            <text textAnchor='middle'><textPath href='#landing-seal-arc' startOffset='50%'>veja como funciona</textPath></text>
           </svg>
           <span className={styles.sealCore}><FiPlay size={20} /></span>
           <span className={styles.sealDot} aria-hidden />
