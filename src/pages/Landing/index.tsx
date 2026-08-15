@@ -2,7 +2,7 @@ import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   FiArrowRight, FiArrowUp, FiCheck, FiChevronDown,
-  FiDownload, FiInstagram, FiShare, FiStar,
+  FiDownload, FiInstagram, FiPlay, FiShare, FiStar,
 } from 'react-icons/fi';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
@@ -34,7 +34,7 @@ const NAV = [
   { label: 'FAQ', id: 'faq' },
 ];
 
-const FEATURES: { badge: string; title: string; desc: string; items: string[]; glyph: ReactNode; accent: string; bg?: string; reverse?: boolean; to?: string; toLabel?: string }[] = [
+const FEATURES: { badge: string; title: string; desc: string; items: string[]; glyph: ReactNode; accent: string; bg?: string; reverse?: boolean; to?: string; toLabel?: string; visual?: 'nytaPrompt' }[] = [
   {
     badge: 'Diagnóstico REAL',
     accent: PRODUCT_THEME.real.accent, bg: PRODUCT_THEME.real.bg,
@@ -66,7 +66,9 @@ const FEATURES: { badge: string; title: string; desc: string; items: string[]; g
     title: 'Uma assistente de IA ao seu lado',
     desc: 'A Nyta IA acompanha sua carreira em todos os módulos: tira dúvidas, sugere caminhos e ajuda a executar o plano, sempre no contexto dos seus dados.',
     items: ['Chat com a Nyta no contexto da sua carreira', 'Recomendações sob os seus dados reais', 'Do planejamento à gestão do dia a dia'],
-    glyph: <NytaAvatar size={185} />,
+    // A demonstração do chat no lugar do emblema: mostrar a Nyta respondendo diz o que ela é
+    // melhor do que o símbolo parado.
+    glyph: null, visual: 'nytaPrompt',
   },
   {
     badge: 'Gestão completa',
@@ -168,8 +170,10 @@ const SUGGESTIONS = [
   'Por onde eu começo a crescer?',
 ];
 
-// ─── Hero (caixa de prompt da Nyta IA) ───────────────────────────────────────
-const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
+// ─── Vitrine da Nyta (caixa de prompt "digitando") ───────────────────────────
+// Nasceu no hero e mudou pra seção da Nyta IA: lá a demonstração do chat diz o que o produto é
+// melhor do que o emblema parado, e o hero ficou livre pro vídeo.
+const NytaPromptDemo: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   const navigate = useNavigate();
   const [pi, setPi] = useState(0);       // frase atual do efeito de digitação
   const [display, setDisplay] = useState('');
@@ -210,6 +214,43 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   const current = SUGGESTIONS[pi % SUGGESTIONS.length];
 
   return (
+    <div className={styles.promptWrap}>
+      <AiGlow style={{ display: 'block', width: '100%', borderRadius: 20 }}>
+        {/* Vitrine da Nyta: exibe as perguntas "sendo digitadas". Não é editável — a caixa
+            inteira é o CTA pra começar (leva a pergunta em foco pro fluxo de início). */}
+        <div
+          className={styles.promptBox}
+          role="button"
+          tabIndex={0}
+          aria-label="Começar com a Nyta"
+          onClick={() => start(current)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(current); } }}
+        >
+          <div className={styles.promptInput} aria-hidden>
+            {display || ' '}<span className={styles.promptCaret} />
+          </div>
+          <div className={styles.promptBar}>
+            <span className={styles.nytaPill}><NytaAvatar size={22} /> Nyta IA</span>
+            <span className={styles.promptSubmit} aria-hidden><FiArrowUp size={20} /></span>
+          </div>
+        </div>
+      </AiGlow>
+      <div className={styles.chips}>
+        {SUGGESTIONS.map((s) => <button key={s} type="button" className={styles.chip} onClick={() => start(s)}>{s}</button>)}
+      </div>
+    </div>
+  );
+};
+
+// ─── Hero (vídeo de apresentação) ────────────────────────────────────────────
+// Pra trocar o vídeo, basta o ID do YouTube (o trecho depois de `v=` na URL). Enquanto ficar
+// vazio, o container aparece com o aviso no lugar — nenhum vídeo é embutido.
+const HERO_VIDEO_ID = '';
+
+const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
+  const navigate = useNavigate();
+
+  return (
     <section className={styles.hero} id="top">
       <div className={styles.heroInner}>
         <div className={styles.avatars}>
@@ -225,30 +266,30 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
           Do diagnóstico ao dia a dia: a Maestra conecta tudo o que a sua carreira precisa num lugar só, com método.
         </p>
 
-        <div className={styles.promptWrap}>
-          <AiGlow style={{ display: 'block', width: '100%', borderRadius: 20 }}>
-            {/* Vitrine da Nyta: exibe as perguntas "sendo digitadas". Não é editável — a caixa
-                inteira é o CTA pra começar (leva a pergunta em foco pro fluxo de início). */}
-            <div
-              className={styles.promptBox}
-              role="button"
-              tabIndex={0}
-              aria-label="Começar com a Nyta"
-              onClick={() => start(current)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(current); } }}
-            >
-              <div className={styles.promptInput} aria-hidden>
-                {display || ' '}<span className={styles.promptCaret} />
+        <div className={styles.videoWrap}>
+          <div className={styles.videoFrame}>
+            {HERO_VIDEO_ID ? (
+              <iframe
+                className={styles.videoPlayer}
+                src={`https://www.youtube-nocookie.com/embed/${HERO_VIDEO_ID}?rel=0&modestbranding=1`}
+                title="Conheça a Maestra"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                loading="lazy"
+              />
+            ) : (
+              <div className={styles.videoEmpty}>
+                <span className={styles.videoPlay} aria-hidden><FiPlay size={26} /></span>
+                <p>Espaço reservado pro vídeo de apresentação</p>
               </div>
-              <div className={styles.promptBar}>
-                <span className={styles.nytaPill}><NytaAvatar size={22} /> Nyta IA</span>
-                <span className={styles.promptSubmit} aria-hidden><FiArrowUp size={20} /></span>
-              </div>
-            </div>
-          </AiGlow>
-          <div className={styles.chips}>
-            {SUGGESTIONS.map((s) => <button key={s} type="button" className={styles.chip} onClick={() => start(s)}>{s}</button>)}
+            )}
           </div>
+          <button
+            className={`${styles.btnPrimary} ${styles.videoCta}`}
+            onClick={() => navigate(loggedIn ? '/criar-artista' : '/signup')}
+          >
+            Fazer meu diagnóstico grátis <FiArrowRight size={18} />
+          </button>
         </div>
 
         <div className={styles.heroSecondary} style={{ color: '#93a4c0' }}>
@@ -370,13 +411,14 @@ const Testimonials: FC = () => (
 );
 
 // ─── Feature ─────────────────────────────────────────────────────────────────
-const Feature: FC<{ data: typeof FEATURES[number] }> = ({ data }) => {
+const Feature: FC<{ data: typeof FEATURES[number]; loggedIn: boolean }> = ({ data, loggedIn }) => {
   const navigate = useNavigate();
+  const demo = data.visual === 'nytaPrompt';
   return (
     <section className={`${styles.feature} ${data.reverse ? styles.reverse : ''}`} style={{ ['--accent' as string]: data.accent } as React.CSSProperties}>
       <div className={styles.featureGrid}>
-        <div className={styles.featureVisual}>
-          <span className={styles.featureGlyph}>{data.glyph}</span>
+        <div className={`${styles.featureVisual}${demo ? ` ${styles.featureVisualDemo}` : ''}`}>
+          {demo ? <NytaPromptDemo loggedIn={loggedIn} /> : <span className={styles.featureGlyph}>{data.glyph}</span>}
         </div>
         <div className={styles.featureBody}>
           <span className={styles.featureBadge}>{data.badge}</span>
@@ -644,7 +686,7 @@ const Landing: FC = () => {
           <p className={styles.introSub}>Diagnóstico, planejamento, plano de ação, músicas, agenda e equipe: as frentes da sua carreira conectadas e evoluindo juntas.</p>
         </div>
       </div>
-      {FEATURES.map((f) => <Feature key={f.badge} data={f} />)}
+      {FEATURES.map((f) => <Feature key={f.badge} data={f} loggedIn={loggedIn} />)}
       <Founder />
       <Testimonials />
       <Plans />

@@ -97,6 +97,8 @@ $ink: #405985;
   color: rgb(var(--accent, 154, 79, 209)); transition: gap 0.2s, opacity 0.2s;
   &:hover { gap: 12px; opacity: 0.85; }
 }
+// Com a vitrine do chat no lugar do ícone, a proporção fixa sobra: a caixa tem altura própria.
+.featureVisualDemo { aspect-ratio: auto; display: block; }
 .reverse .featureVisual { order: 2; }
 .reverse .featureBody { order: 1; }
 
@@ -279,7 +281,9 @@ $ink: #405985;
 .avatarsText { font-size: 14px; color: $g400; font-weight: 500; max-width: 280px; }
 
 // ─── Hero: caixa de prompt da Nyta ───────────────────────────────────────────
-.promptWrap { max-width: 720px; margin: 40px auto 0; }
+// A vitrine mora na coluna da seção da Nyta IA: sem a largura e a centralização do hero, ela
+// preenche a coluna.
+.promptWrap { width: 100%; }
 .promptBox {
   background: $card; border: 1px solid #dbe4f5; border-radius: 20px; padding: 6px;
   transition: border-color 0.2s, box-shadow 0.2s; text-align: left; cursor: pointer; outline: none;
@@ -304,12 +308,40 @@ $ink: #405985;
   &:hover { background: $magHover; }
   &:disabled { opacity: 0.4; cursor: not-allowed; }
 }
-.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 720px; margin: 16px auto 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
 .chip {
   display: inline-flex; align-items: center; border: 1px solid $line; background: #f7f9fd;
   color: $g400; border-radius: 9999px; padding: 7px 14px; font-size: 13px; cursor: pointer; transition: all 0.2s;
   &:hover { border-color: #c9d8f0; background: #eef3fb; color: #4267b9; }
 }
+// ─── Hero: vídeo de apresentação ─────────────────────────────────────────────
+// O container fica pronto pro vídeo: 16:9, cantos arredondados e a mesma moldura dos cards.
+// Sem ID de vídeo, mostra o espaço reservado em vez de um player vazio.
+.videoWrap { max-width: 800px; margin: 44px auto 0; }
+.videoFrame {
+  position: relative; aspect-ratio: 16 / 9; overflow: hidden;
+  border: 1px solid $line; border-radius: 20px; background: #0b1020;
+  box-shadow: 0 26px 60px rgba(74, 99, 145, .18);
+}
+.videoPlayer { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+.videoEmpty {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: linear-gradient(160deg, #f4f8ff 0%, #eaf0fd 60%, #e7ecfb 100%);
+  color: $g400; font-size: 14px;
+  p { margin: 0; }
+}
+.videoPlay {
+  display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%;
+  background: $mag; color: #fff; padding-left: 4px;
+  box-shadow: 0 16px 34px rgba(51, 97, 255, .28);
+}
+.videoCta { margin-top: 24px; font-size: 16px; padding: 14px 32px; }
+
+@media (max-width: 560px) {
+  .videoWrap { margin-top: 32px; }
+  .videoPlay { width: 52px; height: 52px; }
+}
+
 .heroSecondary { margin-top: 24px; font-size: 14px; }
 .heroSecondaryLink { color: $g300; text-decoration: none; cursor: pointer; background: none; border: none; font: inherit; &:hover { color: $ink; text-decoration: underline; } }
 
