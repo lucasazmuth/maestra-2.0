@@ -8,10 +8,11 @@
   align-items: center;
   gap: 6px;
   height: 22px;
-  // O .top-navigation-left tem gap de ~30px (era a distância entre a marca e o menu que saiu);
-  // a margem negativa cancela quase todo ele para o selo ficar junto do wordmark, sem mexer no
-  // espaçamento dos outros filhos do cabeçalho.
-  margin-left: -20px;
+  // O .top-navigation-left tem `gap: clamp(20px, 3vw, 44px)` — que muda com a largura da tela.
+  // Uma margem negativa fixa acertava só numa largura: em 375px o gap cai pro mínimo de 20px e
+  // os -21px de antes encostavam o selo na marca. Cancelando o gap inteiro e devolvendo 12px, a
+  // distância fica igual em qualquer tela.
+  margin-left: calc(12px - clamp(20px, 3vw, 44px));
   padding: 0 10px 0 8px;
   border: 1px solid transparent;
   border-radius: 999px;
@@ -72,7 +73,6 @@
 @media (max-width: 560px) {
   .tag {
     height: 20px;
-    margin-left: -21px;
     padding: 0 8px 0 6px;
     font-size: 9px;
   }
