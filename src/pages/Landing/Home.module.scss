@@ -36,9 +36,9 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 .hDisplay {
   margin: 0;
   font-family: var(--font-display);
-  // Três linhas com a frase inteira: em 3,6rem a primeira ("A plataforma que diagnostica," mais
-  // o disco) estouraria os 1110 do conteúdo, então o corpo fica em 3,1rem.
-  font-size: clamp(1.8rem, 3.8vw, 3.1rem);
+  // Três linhas com a frase inteira. Sem o disco ao lado, a primeira linha ganhou os 100px que
+  // ele ocupava, e o corpo pôde subir de 3,1rem pra 4rem: a linha maior mede 908 dos 1110.
+  font-size: clamp(1.8rem, 4.6vw, 4rem);
   font-weight: 800;
   letter-spacing: -.025em;
   line-height: 1.16;
@@ -130,27 +130,10 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
   font-family: var(--font-mono);
   font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: $mute;
 }
-.heroLine1 { display: flex; align-items: center; justify-content: center; gap: 22px; flex-wrap: wrap; }
+.heroLine1 { display: block; }
 // O título fica em tinta. Em azul, ele competia com o botão pelo mesmo olhar — e num corpo
 // desse tamanho sempre vence. A hierarquia aqui vem do tamanho, não da cor.
 .heroLine2, .heroLine3 { display: block; }
-// O disco é ornamento, não ação: superfície clara com o ícone em tinta. Cheio de azul e com
-// sombra colorida, ele parecia um segundo botão ao lado do título.
-.heroBadge {
-  position: relative; z-index: 0; flex: 0 0 auto;
-  display: grid; place-items: center; width: clamp(52px, 5.6vw, 78px); height: clamp(52px, 5.6vw, 78px);
-  border-radius: 50%;
-  background: #fff; border: 1px solid $line; color: $mute;
-  box-shadow: 0 10px 26px rgba(74, 99, 145, .1);
-
-  svg { position: relative; z-index: 2; margin-left: 4px; }
-
-  // O círculo que espia por trás do disco, em cinza-azulado (era roxo).
-  &::after {
-    content: ''; position: absolute; right: -22px; top: 50%; transform: translateY(-50%);
-    width: 38px; height: 38px; border-radius: 50%; background: #e4ecfa; z-index: -1;
-  }
-}
 .heroCtas { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 40px; }
 .heroNote { margin: 16px 0 0; font-size: .85rem; color: $mute; }
 
@@ -193,11 +176,11 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
   span { display: block; margin-top: 12px; font-size: .9rem; color: $dim; }
 }
 
-// A onda ocupa a metade direita da página, encostada na lateral: `flex-end` mantém as barras
-// coladas na borda e o corte acontece na esquerda, onde a onda já é só ruído visual.
+// A onda atravessa a página inteira, terminando colada na borda direita: `flex-end` mantém as
+// barras na borda e o corte, quando a onda é mais larga que a tela, acontece na esquerda.
 .waveBars {
   display: flex; align-items: center; justify-content: flex-end; gap: 24px;
-  width: 50%; margin: 70px 0 0 auto; height: 161px; overflow: hidden;
+  width: 100%; margin: 70px 0 0; height: 161px; overflow: hidden;
   i { display: block; flex: 0 0 auto; width: 4px; border-radius: 2px; background: #cfdcf2; }
 }
 .waveLine { flex: 1 1 auto !important; width: auto !important; height: 4px; }
@@ -553,16 +536,13 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 }
 
 @media (max-width: 620px) {
-  // No estreito o disco cai sozinho entre duas linhas do título e parece peça solta: some.
-  .heroBadge { display: none; }
   .videoStats { grid-template-columns: 1fr; gap: 24px; }
   .modMainNum { padding: 24px 22px 0; font-size: 1.8rem; }
   .modMainBody { padding: 14px 22px 30px;
     h3 { font-size: 1.5rem; }
   }
   .modDots { gap: 8px; button { width: 34px; } }
-  // Em 375px, meia tela dá 6 barras: aqui ela usa a largura toda, ainda colada na direita.
-  .waveBars { width: 100%; height: 120px; }
+  .waveBars { height: 120px; }
   .footerGrid { grid-template-columns: 1fr; gap: 28px; }
   .heroCtas .btnNeon, .heroCtas .btnGhost { width: 100%; }
   .ctaCard { padding: 48px 22px; }
