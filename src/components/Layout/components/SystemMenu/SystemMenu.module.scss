@@ -137,3 +137,32 @@
     width: auto;
   }
 }
+
+// Sair fica destacado do resto: é a única ação que tira a pessoa do app, então ganha uma
+// linha própria no rodapé do painel em vez de disputar espaço na grade de atalhos.
+.signOut {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-top: 1px solid #edf1f7;
+  border-radius: 10px;
+  background: transparent;
+  color: #7183a1;
+  cursor: pointer;
+  text-align: left;
+  transition: color .16s ease, background .16s ease, border-color .16s ease;
+}
+
+.signOut:hover {
+  border-color: #f3c9d2;
+  background: #fdeef1;
+  color: #c0405c;
+}
+
+.signOut:hover .itemIcon {
+  background: #fff;
+}

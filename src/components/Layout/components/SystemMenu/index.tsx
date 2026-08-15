@@ -1,11 +1,13 @@
 import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  FiBarChart2, FiBell, FiDatabase, FiGrid, FiKey, FiLifeBuoy,
+  FiBarChart2, FiBell, FiDatabase, FiGrid, FiKey, FiLifeBuoy, FiLogOut,
   FiSettings, FiStar, FiTag, FiUsers,
 } from 'react-icons/fi';
 
 import { useIsPlatformAdmin } from '../../../../hooks/useIsPlatformAdmin';
+import { useAppDispatch } from '../../../../store/store';
+import { authActions } from '../../../../store/slices/auth';
 import styles from './SystemMenu.module.scss';
 
 // Menu do sistema no topo da aplicação. Reúne o que não pertence a um perfil de artista:
@@ -43,6 +45,7 @@ const ADMIN: Item[] = [
 
 export const SystemMenu: FC = () => {
   const isAdmin = useIsPlatformAdmin();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -97,6 +100,14 @@ export const SystemMenu: FC = () => {
     </div>
   );
 
+  // Sair da conta não tinha nenhuma entrada no menu do sistema: só existia lá dentro de
+  // Configurações. Fica separado dos atalhos de navegação, no rodapé do painel.
+  const signOut = async () => {
+    setOpen(false);
+    await dispatch(authActions.signOut());
+    navigate('/login', { replace: true });
+  };
+
   return (
     <div className={styles.wrap} ref={wrapRef}>
       <button
@@ -121,6 +132,11 @@ export const SystemMenu: FC = () => {
               {renderItems(ADMIN)}
             </>
           )}
+
+          <button type='button' role='menuitem' className={styles.signOut} onClick={signOut}>
+            <span className={styles.itemIcon} aria-hidden><FiLogOut /></span>
+            <span className={styles.itemLabel}>Sair da conta</span>
+          </button>
         </div>
       )}
     </div>
