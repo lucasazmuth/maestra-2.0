@@ -26,9 +26,9 @@ export const Gem: FC<{ size?: number; className?: string }> = ({ size = 12, clas
     >
       <defs>
         <linearGradient id={gradientId} x1='12' y1='4' x2='12' y2='20' gradientUnits='userSpaceOnUse'>
-          <stop stopColor='var(--plan-gem-from, #ff5c00)' />
-          <stop offset='.45' stopColor='var(--plan-gem-mid, #ff375f)' />
-          <stop offset='1' stopColor='var(--plan-gem-to, #ff5c00)' />
+          <stop stopColor='var(--plan-gem-from, #5b8cff)' />
+          <stop offset='.45' stopColor='var(--plan-gem-mid, #3361ff)' />
+          <stop offset='1' stopColor='var(--plan-gem-to, #2a54e0)' />
         </linearGradient>
       </defs>
       <path d='M7 4h10l4 5-9 11L3 9l4-5Z' fill={`url(#${gradientId})`} />

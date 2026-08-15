@@ -63,7 +63,7 @@ export const LOCKED_FEATURE_CONFIG: Record<LockedFeatureKey, LockedFeatureConfig
   },
   nyta: {
     icon: FiTrendingUp,
-    title: 'Nyta — Assistente',
+    title: 'Nyta Assistente',
     benefits: [
       'Chat inteligente que executa ações no seu perfil',
       'Crie tarefas, eventos e gerencie músicas por conversa',

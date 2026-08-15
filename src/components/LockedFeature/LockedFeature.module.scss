@@ -1,15 +1,19 @@
 // Tela de recurso bloqueado (Nyta, tarefas, planejamento, equipe).
 //
 // Era um bloco preto de ponta a ponta — herança do tema antigo — dentro de um app claro: parecia
-// que a pessoa tinha caído em outro produto justamente na hora de decidir assinar. Agora é um
-// cartão claro, com o mesmo vocabulário das outras telas do redesign.
+// que a pessoa tinha caído em outro produto justamente na hora de decidir assinar. Agora o
+// conteúdo fica direto sobre o fundo da página: um cartão branco aqui seria uma moldura dentro
+// da outra, já que a área de conteúdo é ela própria um cartão.
 
+// `100vh` aqui gerava rolagem: a área de conteúdo já começa abaixo do cabeçalho e tem os
+// próprios espaçamentos, então pedir a altura da janela inteira sempre estoura por essa
+// diferença. `100%` ocupa o que existe.
 .container {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  min-height: calc(100vh - 64px);
+  min-height: 100%;
   padding: 40px 20px;
 }
 
@@ -19,11 +23,7 @@
   max-width: 520px;
   flex-direction: column;
   align-items: center;
-  padding: 44px 38px 38px;
-  border: 1px solid #e3eaf3;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 18px 44px rgba(74, 99, 145, .12);
+  padding: 8px;
   text-align: center;
 }
 
@@ -52,8 +52,10 @@
   }
 }
 
+// A lista fica centralizada como bloco (o conjunto no meio da tela), mas cada linha continua
+// alinhada à esquerda entre si: centrar cada frase isolada deixaria os "check" desalinhados em
+// zigue-zague, e o olho perde a coluna.
 .benefits {
-  width: 100%;
   margin: 0 0 32px;
   padding: 0;
   list-style: none;
@@ -103,6 +105,6 @@
 
 @media (max-width: 480px) {
   .content {
-    padding: 34px 22px 28px;
+    padding: 4px;
   }
 }
