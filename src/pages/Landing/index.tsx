@@ -210,6 +210,8 @@ const VideoStats: FC = () => {
   return (
     <section className={styles.video} id='video' ref={ref}>
       <div className={`${styles.shell} ${styles.videoGrid}`}>
+        {/* O vídeo ocupa a largura do conteúdo e o texto vem abaixo: em duas colunas, o player
+            ficava pequeno demais pra ser assistido de fato. */}
         <div className={styles.videoFrame}>
           {HERO_VIDEO_ID ? (
             <iframe
@@ -227,7 +229,7 @@ const VideoStats: FC = () => {
             </div>
           )}
         </div>
-        <div>
+        <div className={styles.videoCopy}>
           <h2 className={styles.hSection}>O retrato honesto da sua carreira</h2>
           <p className={styles.pLead}>
             A metodologia nasce de 30 anos de gestão de carreiras e da análise de planejamentos reais,
