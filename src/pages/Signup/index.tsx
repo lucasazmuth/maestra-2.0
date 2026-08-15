@@ -14,7 +14,17 @@ const Signup: FC = () => {
   // 'form' = dados do cadastro; 'code' = confirmar o e-mail com o código (OTP) enviado por e-mail.
   const [step, setStep] = useState<'form' | 'code'>('form');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  // A landing pode chegar com o e-mail já digitado (cartão final "comece grátis"): a pessoa não
+  // digita duas vezes.
+  const [email, setEmail] = useState(() => {
+    try {
+      const seed = sessionStorage.getItem('signup_email') || '';
+      if (seed) sessionStorage.removeItem('signup_email');
+      return seed;
+    } catch {
+      return '';
+    }
+  });
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

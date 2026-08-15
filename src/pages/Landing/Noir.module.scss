@@ -543,17 +543,56 @@ $edge: rgba(255, 255, 255, .18);
 .faqChevronOpen { transform: rotate(180deg); }
 .faqA { margin: 0; padding: 0 24px 22px; font-size: .95rem; line-height: 1.75; color: $dim; font-weight: 300; }
 
+// ─── Download (selos das lojas) ──────────────────────────────────────────────
+// Medidas do Download Section.svg: selos de 216, 243 e 200 por 72 de altura, raio 12, folga de
+// 40, e o conjunto centrado no conteúdo.
+.download { padding: 110px 0 0; text-align: center; }
+.downloadLead { max-width: 40rem; margin: 20px auto 0; font-size: 1.05rem; line-height: 1.7; color: $dim; font-weight: 300; }
+.stores { display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; margin-top: 56px; }
+.store {
+  display: inline-flex; align-items: center; gap: 12px; height: 72px; padding: 0 22px;
+  border: 1px solid #a6a6a6; border-radius: 12px; background: #fff; color: #000; cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease;
+
+  &:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(0, 0, 0, .35); }
+
+  svg { width: 30px; height: 30px; flex: 0 0 auto; }
+  span { display: block; font-size: 11px; line-height: 1.15; text-align: left; }
+  strong { display: block; font-size: 20px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em; }
+}
+// Aviso de "ainda não tem app": aparece no clique, no lugar de um link que não leva a nada.
+.storeSoon {
+  max-width: 40rem; margin: 26px auto 0; font-size: .92rem; line-height: 1.6; color: $dim; font-weight: 300;
+  button {
+    padding: 0; border: 0; background: none; color: $neon; cursor: pointer;
+    font: inherit; font-weight: 600; text-decoration: underline;
+  }
+}
+
 // ─── CTA final ───────────────────────────────────────────────────────────────
-.ctaBand { padding: 120px 0 140px; }
+.ctaBand { padding: 110px 0 140px; }
 .ctaCard {
-  padding: 72px 40px; text-align: center; border-radius: 32px;
+  padding: 64px 40px; text-align: center; border-radius: 32px;
   background: rgba(250, 250, 250, .08); border: 1px solid rgba(255, 255, 255, .30);
 
   h2 {
-    margin: 0; font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700;
-    letter-spacing: -.01em; text-transform: uppercase;
+    margin: 0; font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700; line-height: 1.1;
+    letter-spacing: -.01em;
   }
   p { max-width: 34rem; margin: 16px auto 34px; font-size: 1.05rem; line-height: 1.7; color: $dim; font-weight: 300; }
+}
+// Campo + botão nas medidas do Subscribe.svg: 650×64 e 152×64, raio 8, folga de 32.
+.ctaForm {
+  display: flex; justify-content: center; gap: 32px;
+
+  input {
+    width: 650px; max-width: 100%; height: 64px; padding: 0 24px;
+    border: 1px solid rgba(255, 255, 255, .12); border-radius: 8px; background: $card;
+    color: #fff; font: inherit; font-size: 15px; font-weight: 300;
+    &::placeholder { color: #7e8ea8; }
+    &:focus { outline: none; border-color: rgba(182, 255, 82, .5); }
+  }
+  .btnNeon { width: 152px; height: 64px; border-radius: 8px; font-size: 13px; letter-spacing: .04em; }
 }
 
 // ─── Rodapé ──────────────────────────────────────────────────────────────────
@@ -656,5 +695,9 @@ $edge: rgba(255, 255, 255, .18);
   .footerGrid { grid-template-columns: 1fr; gap: 28px; }
   .heroCtas .btnNeon, .heroCtas .btnGhost { width: 100%; }
   .ctaCard { padding: 48px 22px; }
+  .ctaForm { flex-direction: column; align-items: stretch; gap: 14px; }
+  .ctaForm .btnNeon { width: 100%; }
+  .stores { gap: 16px; }
+  .store { height: 62px; padding: 0 16px; }
   .navActions .navEntrar { display: none; }
 }

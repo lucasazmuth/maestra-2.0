@@ -626,18 +626,111 @@ const Faq: FC = () => {
   );
 };
 
-// ─── CTA final (slot "subscribe us") ─────────────────────────────────────────
+// ─── Download + CTA final (slots "download section" e "subscribe us") ────────
+// Os selos das lojas seguem as medidas do arquivo (216/243/200 × 72, raio 12, folga de 40).
+// Os apps ainda não existem: em vez de links quebrados, o clique avisa que vem por aí e lembra
+// que hoje dá pra instalar a Maestra pelo próprio navegador.
+const STORES = [
+  {
+    name: 'App Store', kicker: 'Baixe na',
+    icon: <path d='M16.4 12.7c0-2 1.6-3 1.7-3.1-1-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.5.6 2.6.6 1.1 0 1.8-1 2.4-1.9.8-1.1 1.1-2.2 1.1-2.2 0-.1-2.1-.8-2.1-3.2zM14.5 6.3c.5-.7.9-1.6.8-2.6-.8 0-1.8.5-2.4 1.2-.5.6-1 1.6-.8 2.5.9.1 1.8-.4 2.4-1.1z' fill='#000' />,
+  },
+  {
+    name: 'Google Play', kicker: 'Disponível no',
+    icon: (
+      <>
+        <path d='M3.6 2.3v19.4l10-9.7z' fill='#00A3EE' />
+        <path d='M3.6 2.3l13 6.9-3 2.8z' fill='#7EB900' />
+        <path d='M3.6 21.7l10-9.7 3 2.8z' fill='#F15021' />
+        <path d='M16.6 9.2l3.8 2.8-3.8 2.8-3-2.8z' fill='#FFB800' />
+      </>
+    ),
+  },
+  {
+    name: 'Microsoft', kicker: 'Baixe na',
+    icon: (
+      <>
+        <rect x='3' y='3' width='8.4' height='8.4' fill='#F15021' />
+        <rect x='12.6' y='3' width='8.4' height='8.4' fill='#7EB900' />
+        <rect x='3' y='12.6' width='8.4' height='8.4' fill='#00A3EE' />
+        <rect x='12.6' y='12.6' width='8.4' height='8.4' fill='#FFB800' />
+      </>
+    ),
+  },
+];
+
+const Download: FC = () => {
+  const [soon, setSoon] = useState<string | null>(null);
+  const { visible: pwaVisible, ios: pwaIOS, install: installPwa } = usePwaInstall();
+
+  return (
+    <section className={styles.download}>
+      <div className={styles.shell}>
+        <h2 className={styles.hSection}>A Maestra no seu bolso</h2>
+        <p className={styles.downloadLead}>
+          Os aplicativos estão a caminho. Enquanto isso, a Maestra funciona no navegador e pode ser
+          instalada como app no celular ou no computador.
+        </p>
+        <div className={styles.stores}>
+          {STORES.map((st) => (
+            <button key={st.name} className={styles.store} onClick={() => setSoon(st.name)}>
+              <svg viewBox='0 0 24 24' aria-hidden focusable='false'>{st.icon}</svg>
+              <span>
+                {st.kicker}
+                <strong>{st.name}</strong>
+              </span>
+            </button>
+          ))}
+        </div>
+        {soon && (
+          <p className={styles.storeSoon} role='status'>
+            O app da Maestra na {soon} ainda está em desenvolvimento.
+            {pwaVisible && !pwaIOS && (
+              <> Você pode <button onClick={installPwa}>instalar agora pelo navegador</button>.</>
+            )}
+            {pwaIOS && ' No iPhone, use Compartilhar → Adicionar à Tela de Início.'}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+};
+
 const CtaBand: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+
+  // O e-mail digitado aqui abre o cadastro já preenchido (o Signup lê essa chave uma vez).
+  const start = () => {
+    const v = email.trim();
+    if (v) {
+      try { sessionStorage.setItem('signup_email', v); } catch { /* noop */ }
+    }
+    navigate(loggedIn ? '/artists' : '/signup');
+  };
+
   return (
     <section className={styles.ctaBand}>
       <div className={styles.shell}>
         <div className={styles.ctaCard}>
           <h2>Comece com o diagnóstico grátis</h2>
           <p>Leva poucos minutos pra ver onde sua carreira está, e dá o primeiro passo pra onde ela pode ir.</p>
-          <button className={styles.btnNeon} onClick={() => navigate(loggedIn ? '/artists' : '/signup')}>
-            {loggedIn ? 'Ir pro app' : 'Começar grátis'} <FiArrowRight size={18} />
-          </button>
+          {loggedIn ? (
+            <button className={styles.btnNeon} onClick={start}>
+              Ir pro app <FiArrowRight size={18} />
+            </button>
+          ) : (
+            <form className={styles.ctaForm} onSubmit={(e) => { e.preventDefault(); start(); }}>
+              <input
+                type='email'
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder='seu@email.com'
+                aria-label='Seu e-mail'
+              />
+              <button className={styles.btnNeon} type='submit'>Começar grátis</button>
+            </form>
+          )}
         </div>
       </div>
     </section>
@@ -734,6 +827,7 @@ const Landing: FC = () => {
       <Founder />
       <Plans />
       <Faq />
+      <Download />
       <CtaBand loggedIn={loggedIn} />
       <Footer />
     </div>
