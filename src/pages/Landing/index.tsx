@@ -145,7 +145,7 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
         </div>
         <div className={styles.heroLine2}>
           <h1 className={`${styles.hDisplay} ${styles.hDisplayNeon}`}>a gestão também</h1>
-          <span className={styles.heroTagline}>com método</span>
+          <span className={styles.heroTagline}>Gestão de carreira musical</span>
         </div>
       </div>
 
