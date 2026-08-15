@@ -11,6 +11,7 @@ import {
   CartSummary, BenefitsCompare, useCheckoutForm, focusFirstInvalidField, type PayMethod, type BenefitGroup,
 } from '../../components/checkout';
 import { useCoupon } from '../../hooks/useCoupon';
+import { Gem } from '../../components/PlanTag/Gem';
 
 // Fallback enquanto a config do plano não carregou do Supabase (asaas_plan_config).
 const FALLBACK_MONTHLY = 39.9;
@@ -179,17 +180,16 @@ const SubscriptionPage: FC = () => {
       return <div style={gateWrap}><div style={{ ...gateCard, color: '#8ca0c5' }}>Carregando…</div></div>;
     }
     if (status === 'active') {
+      // Sem cartão nem gradiente, como as demais telas de estado: a área de conteúdo do app já é
+      // um cartão. E a gema no lugar da medalha genérica — é o mesmo símbolo do selo no topo e do
+      // card do Pro nas Configurações, todos falando do mesmo plano.
       const proCard: CSSProperties = {
-        maxWidth: 520, margin: '0 auto', borderRadius: 20, padding: '44px 32px',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-        background: 'radial-gradient(120% 120% at 50% 0%, rgba(51, 97, 255, .1) 0%, rgba(154, 79, 209, .06) 45%, #fff 100%)',
-        border: '1px solid #dbe4f5',
-        boxShadow: '0 16px 40px rgba(74, 99, 145, .12)',
+        maxWidth: 520, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
       };
       const proBadge: CSSProperties = {
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 60, height: 60,
-        borderRadius: 18, marginBottom: 22, background: '#f1f0ff',
-        border: '1px solid #ddd8fb', boxShadow: '0 12px 28px rgba(122, 79, 209, .16)',
+        borderRadius: 18, marginBottom: 22, background: 'rgba(51, 97, 255, .12)',
+        border: '1px solid rgba(51, 97, 255, .24)', boxShadow: '0 12px 28px rgba(51, 97, 255, .14)',
       };
       const btnPrimaryArrow: CSSProperties = {
         display: 'inline-flex', alignItems: 'center', gap: 8, background: '#3361ff', border: 'none', color: '#fff',
@@ -197,10 +197,10 @@ const SubscriptionPage: FC = () => {
         boxShadow: '0 12px 30px rgba(51, 97, 255, .26)', transition: 'transform 0.15s, background 0.2s',
       };
       return (
-        <div style={{ padding: 24 }}>
+        <div style={gateWrap}>
           <div style={proCard}>
-            <span style={proBadge}><FiAward size={30} color='#7a4fd1' /></span>
-            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#7a4fd1', marginBottom: 10 }}>Assinatura ativa</span>
+            <span style={proBadge}><Gem size={28} /></span>
+            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3361ff', marginBottom: 10 }}>Assinatura ativa</span>
             <div style={{ color: '#405985', fontSize: 26, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 12 }}>Você já é Maestra PRO</div>
             <p style={{ color: '#7c8da8', fontSize: 14.5, lineHeight: 1.55, margin: '0 0 26px', maxWidth: 400 }}>
               Edição completa, Nyta IA e todos os perfis da conta liberados.

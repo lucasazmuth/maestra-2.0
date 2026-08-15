@@ -30,14 +30,16 @@
   transform: translateY(-.5px);
 }
 
+// PRO no azul primário do sistema: o rosa-laranja do selo de referência destacava, mas era a
+// única cor daquele tipo no app — a gema já basta para diferenciar do resto.
 .pro {
-  --plan-gem-from: #ff5c00;
-  --plan-gem-mid: #ff375f;
-  --plan-gem-to: #ff5c00;
+  --plan-gem-from: #5b8cff;
+  --plan-gem-mid: #3361ff;
+  --plan-gem-to: #2a54e0;
 
-  border-color: rgba(255, 55, 95, .22);
-  background: linear-gradient(180deg, rgba(255, 55, 95, .12) 0%, rgba(255, 92, 0, .12) 100%);
-  color: #d12a4d;
+  border-color: rgba(51, 97, 255, .24);
+  background: linear-gradient(180deg, rgba(51, 97, 255, .12) 0%, rgba(51, 97, 255, .08) 100%);
+  color: #2a54e0;
 }
 
 // Pendente segue o âmbar dos avisos do app: a cor diz "falta algo" sem soar erro.
