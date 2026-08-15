@@ -142,18 +142,18 @@ $edge: rgba(255, 255, 255, .18);
 
 // Palco: 612px (y 199→811 no arquivo). A margem negativa encaixa a figura logo abaixo da
 // segunda linha do título, com a sobreposição de 8px que o arquivo tem.
-.heroStage { position: relative; height: 612px; margin-top: 26px; }
+.heroStage { position: relative; height: 560px; margin-top: 26px; }
 
 // Onda: y=354,5 no arquivo → 155,5 no palco. Sangra pelas duas bordas, na largura da janela.
 .heroWave {
-  position: absolute; left: 50%; transform: translateX(-50%); top: 41px;
+  position: absolute; left: 50%; transform: translateX(-50%); top: -11px;
   width: 100vw; height: 230px; opacity: 1; z-index: 0; pointer-events: none;
   path { fill: none; stroke: rgba(255, 255, 255, .18); stroke-width: 2; }
 }
 
 // Selo: centro em (263, 365) → (85,5, 166) no palco; 162px de diâmetro.
 .seal {
-  position: absolute; left: 5px; top: 85px; width: 162px; height: 162px; z-index: 2;
+  position: absolute; left: 5px; top: 33px; width: 162px; height: 162px; z-index: 2;
   display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer;
   transition: transform .2s ease;
   &:hover { transform: rotate(8deg) scale(1.03); }
@@ -175,7 +175,9 @@ $edge: rgba(255, 255, 255, .18);
 }
 
 // Figura: x=480 y=199, 417×612 → (302,5, 0) no palco.
-.heroFigure { position: absolute; left: 302px; top: 0; width: 417px; height: 612px; z-index: 1; }
+// A figura sobe 52px (e o palco encurta o mesmo tanto): o PNG tem uma faixa transparente
+// acima da cabeça, e ela abria um vão entre o texto e a arte.
+.heroFigure { position: absolute; left: 302px; top: -52px; width: 417px; height: 612px; z-index: 1; }
 .heroBlob {
   position: absolute; left: 8px; bottom: 0; width: 286px; height: 344px;
   border-radius: 143px 143px 0 0; background: $neon;
@@ -183,12 +185,17 @@ $edge: rgba(255, 255, 255, .18);
 .heroFigure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
 
 // Cartão do diagnóstico: x=852 y=483, 478×104 → (674,5, 284) no palco.
+// Cartão da pergunta: na altura do ombro dela, encostado na borda direita do conteúdo.
 .nowCard {
-  position: absolute; left: 674px; top: 284px; z-index: 3;
-  display: flex; align-items: center; gap: 16px; width: 478px; height: 104px; padding: 16px 20px;
+  position: absolute; left: 674px; top: 214px; z-index: 3; cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 16px; width: 478px; min-height: 104px; padding: 18px 20px;
   border-radius: 16px; border: 1px solid rgba(255, 255, 255, .30);
   background: linear-gradient(120deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .07));
   backdrop-filter: blur(6px);
+  transition: transform .2s ease, border-color .2s ease;
+
+  &:hover { transform: translateY(-2px); border-color: rgba(182, 255, 82, .5); }
+  &:hover .nowGo { background: $neon; color: $neonInk; }
 }
 .nowIcon { display: inline-flex; flex: 0 0 auto; }
 // Rótulo pequeno em cima, resultado embaixo: quem bate o olho lê "Índice REAL → Rising → 72".
@@ -198,11 +205,12 @@ $edge: rgba(255, 255, 255, .18);
     font-style: normal; font-size: 11px; font-weight: 500; letter-spacing: .14em;
     text-transform: uppercase; color: #9fb6d8;
   }
-  strong { font-size: 19px; font-weight: 600; line-height: 1.1; }
+  strong { font-size: 17px; font-weight: 600; line-height: 1.35; }
 }
-.nowScore {
-  flex: 0 0 auto; display: grid; place-items: center; width: 52px; height: 52px;
-  border-radius: 50%; background: $neon; color: $neonInk; font-size: 19px; font-weight: 700;
+.nowGo {
+  flex: 0 0 auto; display: grid; place-items: center; width: 44px; height: 44px;
+  border-radius: 50%; border: 1px solid rgba(255, 255, 255, .35); color: #fff;
+  transition: background .2s ease, color .2s ease;
 }
 
 // Os CTAs ficam sob o título, centrados: é onde o olho cai depois de ler, e é o único lugar
