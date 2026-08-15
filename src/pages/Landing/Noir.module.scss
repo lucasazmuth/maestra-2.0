@@ -34,10 +34,10 @@ $edge: rgba(255, 255, 255, .18);
 // ─── Tipografia ──────────────────────────────────────────────────────────────
 .hDisplay {
   margin: 0;
-  font-size: clamp(2.4rem, 7vw, 6.6rem);
+  font-size: clamp(2.4rem, 6.8vw, 6.125rem);   // 98px na prancheta de 1440
   font-weight: 700;
   letter-spacing: -.02em;
-  line-height: 1.08;
+  line-height: 1.06;                           // 104px de entrelinha
   text-transform: uppercase;
 }
 .hDisplayNeon { color: $neon; }
@@ -108,23 +108,24 @@ $edge: rgba(255, 255, 255, .18);
 }
 
 // ─── Hero ────────────────────────────────────────────────────────────────────
-// Composição do Hero.svg de referência, na prancheta de 1440 com conteúdo de 1110 (margem 165).
-// As coordenadas absolutas do arquivo viram coordenadas do palco assim:  x_palco = x_svg − 165,
-// y_palco = y_svg − 412 (o palco começa no topo da figura).
-.hero { position: relative; padding-top: 150px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+// Réplica do Hero.svg (prancheta 1465×811, conteúdo de 1110 centrado → margem de 177,5).
+// Cada peça é posicionada pela coordenada do arquivo:
+//   x_palco = x_svg − 177,5      y_palco = y_svg − 199   (o palco começa no topo da figura)
+.hero { position: relative; padding-top: 140px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
 
 .heroTitle { position: relative; z-index: 2; text-align: center; padding: 0 20px; }
-.heroLine1 { display: flex; align-items: center; justify-content: center; gap: 26px; flex-wrap: wrap; }
-.heroLine2 { position: relative; display: inline-block; margin-left: clamp(0px, 8vw, 120px); }
-// A categoria pendurada na ponta da segunda linha, como o "in music" da referência. Ancorada
-// pela direita: o texto cresce pra esquerda, por baixo do título, e nunca estoura a margem.
-.heroTagline {
-  position: absolute; right: -8px; bottom: -34px;
-  font-size: clamp(1rem, 1.9vw, 1.6rem); font-weight: 300; color: #e8eefb; white-space: nowrap;
+.heroKicker {
+  display: block; margin-bottom: 22px;
+  font-size: 15px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase;
+  color: #dbe6f7;
 }
+// As duas linhas são centradas na página (no arquivo, os eixos batem com o centro da prancheta:
+// a linha 1 fica em 198–1221 com o disco, a linha 2 em 284–1200, ambas centradas em ~732).
+.heroLine1 { display: flex; align-items: center; justify-content: center; gap: 30px; flex-wrap: wrap; }
+.heroLine2 { display: block; }
 .heroBadge {
   position: relative; z-index: 0; flex: 0 0 auto;
-  display: grid; place-items: center; width: clamp(56px, 6.5vw, 93px); height: clamp(56px, 6.5vw, 93px);
+  display: grid; place-items: center; width: clamp(56px, 6.4vw, 93px); height: clamp(56px, 6.4vw, 93px);
   border-radius: 50%;
   background: linear-gradient(150deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .10));
   border: 1px solid rgba(255, 255, 255, .35);
@@ -132,26 +133,27 @@ $edge: rgba(255, 255, 255, .18);
 
   svg { position: relative; z-index: 2; margin-left: 4px; }
 
-  // Círculo rosa espiando por trás do disco (cx 1018 cy 75 r 22 no Hero.svg).
+  // Círculo rosa espiando por trás do disco (cx 1214 cy 68 r 22 no arquivo).
   &::after {
     content: ''; position: absolute; right: -26px; top: 50%; transform: translateY(-50%);
     width: 44px; height: 44px; border-radius: 50%; background: $pink; z-index: -1;
   }
 }
 
-// Palco: 620px de altura (y 412→1032 no arquivo), com tudo posicionado por coordenada.
-.heroStage { position: relative; height: 620px; margin-top: 44px; }
+// Palco: 612px (y 199→811 no arquivo). A margem negativa encaixa a figura logo abaixo da
+// segunda linha do título, com a sobreposição de 8px que o arquivo tem.
+.heroStage { position: relative; height: 612px; margin-top: -26px; }
 
-// A onda cruza o palco a 133px do topo (y=545 no arquivo) e sangra pelas duas bordas.
+// Onda: y=354,5 no arquivo → 155,5 no palco. Sangra pelas duas bordas, na largura da janela.
 .heroWave {
-  position: absolute; left: 50%; transform: translateX(-50%); top: 58px;
-  width: 100vw; height: 150px; opacity: .35; z-index: 0; pointer-events: none;
-  path { fill: none; stroke: #cfd9ea; stroke-width: 1.4; }
+  position: absolute; left: 50%; transform: translateX(-50%); top: 41px;
+  width: 100vw; height: 230px; opacity: 1; z-index: 0; pointer-events: none;
+  path { fill: none; stroke: rgba(255, 255, 255, .22); stroke-width: 2; }
 }
 
-// Selo serrilhado: centro em (266, 578) → (101, 166) no palco.
+// Selo: centro em (263, 365) → (85,5, 166) no palco; 162px de diâmetro.
 .seal {
-  position: absolute; left: 21px; top: 86px; width: 160px; height: 160px; z-index: 2;
+  position: absolute; left: 5px; top: 85px; width: 162px; height: 162px; z-index: 2;
   display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer;
   transition: transform .2s ease;
   &:hover { transform: rotate(8deg) scale(1.03); }
@@ -166,20 +168,25 @@ $edge: rgba(255, 255, 255, .18);
   border-radius: 50%; background: #0c203c; color: $neon;
   svg { margin-left: 3px; }
 }
+// Pontinho abaixo do centro (cx 271,8 cy 417,1 r 3,5 no arquivo).
+.sealDot {
+  position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-radius: 50%;
+  background: #0c203c; transform: translate(3px, 49px);
+}
 
-// Figura: x=483 y=412, 417×612 → (318, 0) no palco.
-.heroFigure { position: absolute; left: 318px; top: 0; width: 417px; height: 612px; z-index: 1; }
+// Figura: x=480 y=199, 417×612 → (302,5, 0) no palco.
+.heroFigure { position: absolute; left: 302px; top: 0; width: 417px; height: 612px; z-index: 1; }
 .heroBlob {
   position: absolute; left: 8px; bottom: 0; width: 286px; height: 344px;
   border-radius: 143px 143px 0 0; background: $neon;
 }
-// Um único círculo rosa, entre a figura e o cartão (cx 830 cy 653 r 42 no arquivo).
-.heroDotPink { position: absolute; right: -18px; top: 200px; width: 84px; height: 84px; border-radius: 50%; background: $pink; }
 .heroFigure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
+// Círculo rosa no ombro (cx 830 cy 440 r 42): pintado depois do recorte, como no arquivo.
+.heroDotPink { position: absolute; right: 25px; top: 199px; width: 84px; height: 84px; border-radius: 50%; background: $pink; }
 
-// Cartão do diagnóstico: x=855 y=696, 478×104 → (690, 284) no palco.
+// Cartão do diagnóstico: x=852 y=483, 478×104 → (674,5, 284) no palco.
 .nowCard {
-  position: absolute; left: 690px; top: 284px; z-index: 3;
+  position: absolute; left: 674px; top: 284px; z-index: 3;
   display: flex; align-items: center; gap: 14px; width: 478px; height: 104px; padding: 16px;
   border-radius: 16px; border: 1px solid rgba(255, 255, 255, .30);
   background: linear-gradient(120deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .07));
@@ -203,19 +210,18 @@ $edge: rgba(255, 255, 255, .18);
   background: $neon; color: $neonInk; font-size: 15px; font-weight: 700;
 }
 
-// CTAs na âncora das setas do carrossel: x=182 y=831 → (17, 419) no palco.
-// A coluna dos CTAs vive na faixa livre à esquerda da figura (que começa em x=318): empilhados
-// e com no máximo 290px, eles nunca passam por cima dela.
+// CTAs na âncora das setas do carrossel: x=179,5 y=618,5 → (2, 419,5) no palco. A largura
+// máxima é a faixa livre até a figura (que começa em 302).
 .heroCtas {
-  position: absolute; left: 17px; top: 400px; z-index: 3;
+  position: absolute; left: 2px; top: 400px; z-index: 3;
   display: flex; flex-direction: column; align-items: flex-start; gap: 12px; width: 290px;
 }
 .heroCtas .btnNeon, .heroCtas .btnGhost { width: 100%; padding-left: 18px; padding-right: 18px; }
 .heroNote { margin: 2px 0 0; font-size: .82rem; color: $mute; font-weight: 300; }
 
-// Pontos do carrossel: x=1088 y=887 → (923, 475) no palco.
+// Pontos: x=1085 y=674 → (907,5, 475) no palco.
 .heroDots {
-  position: absolute; left: 923px; top: 475px; z-index: 3; display: flex; gap: 12px;
+  position: absolute; left: 907px; top: 475px; z-index: 3; display: flex; gap: 12px;
   i { display: block; width: 60px; height: 8px; border-radius: 4px; background: #366fc4; }
 }
 .heroDotOn { background: $neon !important; }
@@ -530,15 +536,16 @@ $edge: rgba(255, 255, 255, .18);
   .founderAside { max-width: 260px; margin: 0 auto; }
   .footerGrid { grid-template-columns: 1fr 1fr; }
   // Abaixo de 1110 o palco encolhe: tudo vira fluxo, na ordem figura → cartão → CTAs.
-  .heroStage { height: auto; margin-top: 40px; display: flex; flex-direction: column; align-items: center; }
-  .heroWave { top: 120px; }
-  .seal { position: absolute; left: 0; top: 30px; width: 122px; height: 122px; }
+  .heroStage { height: auto; margin-top: 30px; display: flex; flex-direction: column; align-items: center; }
+  .heroWave { top: 90px; }
+  .seal { position: absolute; left: 0; top: 24px; width: 122px; height: 122px; }
+  .sealDot { transform: translate(2px, 37px); width: 5px; height: 5px; }
   .heroFigure { position: relative; left: auto; top: auto; width: min(417px, 92vw); height: auto; aspect-ratio: 417 / 612; }
   .nowCard {
     position: relative; left: auto; top: auto; width: min(478px, 100%); margin-top: -46px;
     background: rgba(12, 20, 42, .92);
   }
-  .heroCtas { position: relative; left: auto; top: auto; margin-top: 34px; max-width: none; justify-content: center; text-align: center; }
+  .heroCtas { position: relative; left: auto; top: auto; margin-top: 34px; width: 290px; align-items: stretch; text-align: center; }
   .heroNote { text-align: center; }
   .heroDots { display: none; }
 }
@@ -548,7 +555,7 @@ $edge: rgba(255, 255, 255, .18);
   .nav .shell { height: 76px; gap: 16px; }
   // No estreito o selo sai: viraria ruído em cima da figura.
   .seal { display: none; }
-  .heroDotPink { right: 6px; top: 32%; width: 66px; height: 66px; }
+  .heroDotPink { right: 4%; top: 32%; width: 66px; height: 66px; }
 }
 
 @media (max-width: 620px) {
@@ -557,7 +564,6 @@ $edge: rgba(255, 255, 255, .18);
   .waveBars { padding-right: 0; justify-content: center; }
   .footerGrid { grid-template-columns: 1fr; gap: 28px; }
   .heroCtas .btnNeon, .heroCtas .btnGhost { width: 100%; }
-  .heroTagline { right: 0; bottom: -26px; }
   .ctaCard { padding: 48px 22px; }
   .navActions .navEntrar { display: none; }
 }

@@ -139,23 +139,21 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   return (
     <section className={styles.hero} id='top'>
       <div className={styles.heroTitle}>
+        <span className={styles.heroKicker}>Gestão de carreira musical</span>
         <div className={styles.heroLine1}>
           <h1 className={styles.hDisplay}>A música evoluiu</h1>
           <span className={styles.heroBadge} aria-hidden><FiPlay size={30} /></span>
         </div>
-        <div className={styles.heroLine2}>
-          <h1 className={`${styles.hDisplay} ${styles.hDisplayNeon}`}>a gestão também</h1>
-          <span className={styles.heroTagline}>Gestão de carreira musical</span>
-        </div>
+        <h1 className={`${styles.hDisplay} ${styles.heroLine2}`}>a gestão também</h1>
       </div>
 
       {/* Palco nas coordenadas da referência (Hero.svg): a figura em x=483/y=412, o cartão em
           855/696, o selo com centro em 266/578, os controles em 182/831 e os pontos em 1088/887,
           medidos na prancheta de 1440 com conteúdo de 1110. */}
       <div className={`${styles.shell} ${styles.heroStage}`}>
-        {/* Onda que atravessa o palco, atrás da figura (traço da referência) */}
-        <svg className={styles.heroWave} viewBox='0 0 1440 150' preserveAspectRatio='none' aria-hidden focusable='false'>
-          <path d='M0 75 H250 l24 -58 22 108 20 -128 26 150 24 -92 26 60 22 -34 24 42 H700 l26 -66 22 96 24 -120 26 140 22 -84 26 52 24 -28 22 34 H1440' />
+        {/* Onda: o traço do próprio arquivo (paint4), no sistema de 1465×811 do Hero.svg. */}
+        <svg className={styles.heroWave} viewBox='0 240 1465 230' preserveAspectRatio='none' aria-hidden focusable='false'>
+          <path d='M0 354.5H402.109C402.945 354.5 403.693 353.98 403.984 353.196L441.717 251.499C442.442 249.547 445.295 249.863 445.574 251.926L473.114 455.091C473.425 457.383 476.732 457.406 477.074 455.117L499.347 306.061C499.677 303.854 502.827 303.763 503.283 305.948L521.278 392.241C521.708 394.305 524.627 394.384 525.168 392.347L558.084 268.582C558.639 266.496 561.649 266.647 561.992 268.779L580.234 382.233C580.516 383.992 582.785 384.531 583.829 383.088L603.901 355.328C604.277 354.808 604.88 354.5 605.522 354.5H1082.08C1082.93 354.5 1083.69 355.04 1083.97 355.845L1103.4 411.949C1104.05 413.802 1106.69 413.721 1107.22 411.832L1132.19 322.286C1132.76 320.246 1135.69 320.374 1136.08 322.455L1161.27 457.092C1161.69 459.316 1164.9 459.247 1165.22 457.007L1189.5 287.495C1189.81 285.307 1192.92 285.169 1193.42 287.321L1218.7 394.967C1219.13 396.806 1221.64 397.077 1222.45 395.373L1241.46 355.637C1241.79 354.942 1242.49 354.5 1243.26 354.5H1465' />
         </svg>
 
         {/* Selo "Diagnóstico grátis" */}
@@ -166,14 +164,15 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
             <text><textPath href='#landing-seal-arc' startOffset='6%'>Diagnóstico grátis</textPath></text>
           </svg>
           <span className={styles.sealCore}><FiPlay size={20} /></span>
+          <span className={styles.sealDot} aria-hidden />
         </button>
 
         {/* Figura central: blob neon + recorte. A foto é o placeholder herdado da referência —
             trocar por um recorte de artista da Maestra (mesmo enquadramento, PNG sem fundo). */}
         <div className={styles.heroFigure}>
           <span className={styles.heroBlob} aria-hidden />
-          <span className={styles.heroDotPink} aria-hidden />
           <img src={heroFigure} alt='' />
+          <span className={styles.heroDotPink} aria-hidden />
         </div>
 
         {/* O cartão "tocando agora" da referência vira o resultado do diagnóstico. */}
