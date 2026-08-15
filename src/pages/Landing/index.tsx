@@ -167,6 +167,13 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
           <span className={styles.heroBadge} aria-hidden><FiPlay size={30} /></span>
         </div>
         <h1 className={`${styles.hDisplay} ${styles.heroLine2}`}>a gestão também</h1>
+        <div className={styles.heroCtas}>
+          <button className={styles.btnNeon} onClick={start}>
+            Fazer meu diagnóstico grátis <FiArrowRight size={18} />
+          </button>
+          <button className={styles.btnGhost} onClick={scrollTo('planos')}>Ver planos</button>
+        </div>
+        <p className={styles.heroNote}>Sem cartão de crédito.</p>
       </div>
 
       {/* Palco nas coordenadas da referência (Hero.svg): a figura em x=483/y=412, o cartão em
@@ -207,16 +214,6 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
             <strong>Perfil Rising</strong>
           </span>
           <span className={styles.nowScore}>72</span>
-        </div>
-
-        {/* No lugar das setas do carrossel da referência ficam os CTAs — mesma âncora, embaixo
-            à esquerda, alinhados com o cartão do outro lado. */}
-        <div className={styles.heroCtas}>
-          <button className={styles.btnNeon} onClick={start}>
-            Fazer meu diagnóstico grátis <FiArrowRight size={18} />
-          </button>
-          <button className={styles.btnGhost} onClick={scrollTo('planos')}>Ver planos</button>
-          <p className={styles.heroNote}>Sem cartão de crédito.</p>
         </div>
       </div>
     </section>
