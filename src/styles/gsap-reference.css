@@ -1757,7 +1757,22 @@
   backdrop-filter: blur(7px);
 }
 
+/* Entrada suave: a sala nasce um pouco menor e translúcida em vez de aparecer de uma vez —
+   quem vem do Espaço JAM percebe uma transição, não um corte de tela. */
+@keyframes trackDetailIn {
+  from { opacity: 0; transform: scale(.985) translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes trackDetailBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.track-detail-backdrop { animation: trackDetailBackdropIn .18s ease both; }
+
 .track-detail-modal {
+  animation: trackDetailIn .26s cubic-bezier(.22, 1, .36, 1) both;
   width: min(1100px, 100%);
   max-height: min(820px, calc(100vh - 56px));
   overflow: hidden;

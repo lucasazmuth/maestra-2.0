@@ -115,6 +115,10 @@ const Catalog: FC = () => {
   const [members, setMembers] = useState<ArtistMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [catalogReload, setCatalogReload] = useState(0);
+  // Já nasce true quando a URL trouxe a versão a abrir, senão a lista aparece no primeiro frame.
+  const [openingVersionRoom, setOpeningVersionRoom] = useState(
+    () => new URLSearchParams(window.location.search).has('versionId'),
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogItem | null>(null);
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
@@ -540,20 +544,27 @@ const Catalog: FC = () => {
     if (artist && !spotifyCatalog?.tracks?.length) setTab('manual');
   }, [artist, spotifyCatalog]);
 
+  // Deep-link do Espaço JAM (?projectId&versionId): a sala da versão é um overlay POR CIMA
+  // desta página, então quem vinha do Jam via a lista de Músicas piscar antes de a sala abrir —
+  // parecia que a navegação tinha errado o destino. Enquanto o link está sendo resolvido a lista
+  // não é montada: sai do Jam, passa por um carregamento e chega na sala.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const projectId = params.get('projectId');
     const versionId = params.get('versionId');
-    if (!projectId || !versionId) return;
+    if (!projectId || !versionId) { setOpeningVersionRoom(false); return; }
+    setOpeningVersionRoom(true);
     catalogDb.getCatalogProject(projectId)
       .then((project) => {
         const version = project.versions?.find((entry) => entry.id === versionId);
         if (version) openTrackRoom(catalogDb.catalogProjectToItem(project, version));
       })
-      .catch(() => message.error('Não foi possível abrir a versão'));
+      .catch(() => message.error('Não foi possível abrir a versão'))
+      .finally(() => setOpeningVersionRoom(false));
   }, [location.search]);
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
+  if (openingVersionRoom && !selectedTrack) return <Spinner loading>{null as any}</Spinner>;
 
   const onSaved = (saved: CatalogItem) => {
     Promise.resolve((catalogDb as any).syncCatalogItemToProject?.(saved, {
