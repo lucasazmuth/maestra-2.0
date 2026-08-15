@@ -133,19 +133,25 @@ $edge: rgba(255, 255, 255, .18);
     width: 44px; height: 44px; border-radius: 50%; background: $pink; z-index: -1;
   }
 }
-.heroLead { max-width: 40rem; margin: 44px auto 0; font-size: 1.06rem; line-height: 1.75; color: $dim; font-weight: 300; }
+.heroLead { max-width: 40rem; margin: 30px auto 0; font-size: 1.06rem; line-height: 1.75; color: $dim; font-weight: 300; }
 .heroCtas { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 30px; }
 
+// A onda corre atrás da figura, na faixa de cima do palco — ancorada no palco (e não na
+// seção) pra nunca cruzar o texto e os botões, que ficam acima dela no fluxo.
 .heroWave {
-  position: absolute; left: 0; right: 0; top: 460px; width: 100%; height: 150px; opacity: .35;
+  position: absolute; left: 50%; transform: translateX(-50%); top: 30px;
+  width: 100vw; height: 150px; opacity: .35; z-index: 0; pointer-events: none;
   path { fill: none; stroke: #cfd9ea; stroke-width: 1.4; }
 }
 
-.heroStage { position: relative; height: 520px; margin-top: 8px; }
+// O corte reto da figura no fim da seção precisa de uma borda pra ler como moldura, não erro.
+.hero { border-bottom: 1px solid rgba(255, 255, 255, .08); }
+
+.heroStage { position: relative; height: 520px; margin-top: 34px; }
 
 // Selo serrilhado "Diagnóstico grátis"
 .seal {
-  position: absolute; left: 0; top: 150px; width: 150px; height: 150px;
+  position: absolute; left: 0; top: 170px; width: 150px; height: 150px; z-index: 2;
   display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer;
   transition: transform .2s ease;
   &:hover { transform: rotate(8deg) scale(1.03); }
@@ -161,29 +167,26 @@ $edge: rgba(255, 255, 255, .18);
   svg { margin-left: 3px; }
 }
 
-// Figura central: arco neon + recorte + círculo rosa
+// Figura central: arco neon + recorte + círculo rosa (posições da referência: figura à
+// esquerda do centro, cartão à direita, o rosa espiando entre os dois).
 .heroFigure {
-  position: absolute; left: 50%; transform: translateX(-58%);
-  bottom: 0; width: 390px; height: 520px;
+  position: absolute; left: 300px; bottom: 0; width: 400px; height: 520px; z-index: 1;
 }
 .heroBlob {
-  position: absolute; left: -40px; bottom: 0; width: 280px; height: 330px;
+  position: absolute; left: 6px; bottom: 0; width: 280px; height: 340px;
   border-radius: 140px 140px 0 0; background: $neon;
 }
-.heroDotPink { position: absolute; right: 30px; top: 205px; width: 80px; height: 80px; border-radius: 50%; background: $pink; }
+// Um único círculo rosa, saindo por trás do canto do cartão do diagnóstico.
+.heroDotPink { position: absolute; right: -38px; top: 208px; width: 82px; height: 82px; border-radius: 50%; background: $pink; }
 .heroFigure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
 
 // Cartão flutuante: o resultado do diagnóstico no lugar do "tocando agora"
 .nowCard {
-  position: absolute; right: 0; top: 250px; z-index: 3;
+  position: absolute; right: 0; top: 268px; z-index: 3;
   display: flex; align-items: center; gap: 14px; width: 460px; padding: 16px;
   border-radius: 16px; border: 1px solid rgba(255, 255, 255, .30);
   background: linear-gradient(120deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .07));
-
-  &::before {
-    content: ''; position: absolute; left: -46px; top: -46px; width: 84px; height: 84px;
-    border-radius: 50%; background: $pink; z-index: -1;
-  }
+  backdrop-filter: blur(6px);
 }
 .nowEq {
   display: flex; align-items: flex-end; gap: 3px; height: 22px;
@@ -204,7 +207,7 @@ $edge: rgba(255, 255, 255, .18);
 }
 
 // ─── Vídeo + números ─────────────────────────────────────────────────────────
-.video { padding: 120px 0 30px; }
+.video { padding: 110px 0 0; }
 .videoGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
 .videoFrame {
   position: relative; aspect-ratio: 16 / 10; overflow: hidden;
@@ -222,20 +225,22 @@ $edge: rgba(255, 255, 255, .18);
   display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%;
   background: $neon; color: $neonInk; padding-left: 4px;
 }
+// Três colunas fixas: com flex, o "30+" quebrava sozinho pra segunda linha.
 .videoStats {
-  display: flex; gap: 52px; margin-top: 44px; flex-wrap: wrap;
-  strong { display: block; font-size: 2.4rem; font-weight: 600; line-height: 1; }
-  span { display: block; margin-top: 12px; font-size: .95rem; color: $dim; font-weight: 300; }
+  display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 40px;
+  margin-top: 44px;
+  strong { display: block; font-size: 2.1rem; font-weight: 600; line-height: 1; }
+  span { display: block; margin-top: 12px; font-size: .9rem; color: $dim; font-weight: 300; }
 }
 
 .waveBars {
   display: flex; align-items: center; justify-content: flex-end; gap: 22px;
-  height: 140px; margin-top: 60px; padding-right: 6vw; overflow: hidden;
-  i { display: block; width: 4px; border-radius: 2px; background: #fff; opacity: .7; flex: 0 0 auto; }
+  height: 130px; margin-top: 70px; padding-right: 6vw; overflow: hidden;
+  i { display: block; width: 4px; border-radius: 2px; background: #fff; opacity: .55; flex: 0 0 auto; }
 }
 
 // ─── Módulos ─────────────────────────────────────────────────────────────────
-.modules { padding: 110px 0 40px; }
+.modules { padding: 90px 0 40px; }
 .moduleGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px 51px; }
 .moduleCard {
   min-height: 360px; padding: 32px; border-radius: 24px; background: $card;
@@ -511,6 +516,7 @@ $edge: rgba(255, 255, 255, .18);
   .founderAside { max-width: 260px; margin: 0 auto; }
   .footerGrid { grid-template-columns: 1fr 1fr; }
   .nowCard { width: min(460px, calc(100% - 8px)); }
+  .heroFigure { left: 50%; transform: translateX(-62%); }
 }
 
 @media (max-width: 820px) {
@@ -519,17 +525,18 @@ $edge: rgba(255, 255, 255, .18);
   .heroStage { height: 460px; }
   // No estreito, o cartão do diagnóstico desce pra base e o selo sai (viraria ruído em cima da figura).
   .seal { display: none; }
+  .heroFigure { transform: translateX(-50%); }
+  .heroDotPink { right: 12px; top: 190px; }
   // Sobre a foto, o vidro translúcido não segura o texto: o cartão fica sólido.
   .nowCard {
     right: 50%; transform: translateX(50%); top: auto; bottom: 16px;
     background: rgba(12, 20, 42, .92);
   }
-  .heroWave { top: 520px; }
 }
 
 @media (max-width: 620px) {
   .moduleGrid { grid-template-columns: 1fr; }
-  .videoStats { gap: 32px; }
+  .videoStats { grid-template-columns: 1fr; gap: 24px; }
   .waveBars { padding-right: 0; justify-content: center; }
   .footerGrid { grid-template-columns: 1fr; gap: 28px; }
   .heroCtas .btnNeon, .heroCtas .btnGhost { width: 100%; }

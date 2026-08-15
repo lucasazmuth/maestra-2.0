@@ -158,12 +158,12 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
         </div>
       </div>
 
-      {/* Onda que atravessa a seção (traço da referência) */}
-      <svg className={styles.heroWave} viewBox='0 0 1440 150' preserveAspectRatio='none' aria-hidden focusable='false'>
-        <path d='M0 75 H250 l24 -58 22 108 20 -128 26 150 24 -92 26 60 22 -34 24 42 H700 l26 -66 22 96 24 -120 26 140 22 -84 26 52 24 -28 22 34 H1440' />
-      </svg>
-
       <div className={`${styles.shell} ${styles.heroStage}`}>
+        {/* Onda que atravessa o palco, atrás da figura (traço da referência) */}
+        <svg className={styles.heroWave} viewBox='0 0 1440 150' preserveAspectRatio='none' aria-hidden focusable='false'>
+          <path d='M0 75 H250 l24 -58 22 108 20 -128 26 150 24 -92 26 60 22 -34 24 42 H700 l26 -66 22 96 24 -120 26 140 22 -84 26 52 24 -28 22 34 H1440' />
+        </svg>
+
         {/* Selo "Diagnóstico grátis" */}
         <button className={styles.seal} onClick={start} aria-label='Fazer o diagnóstico grátis'>
           <svg className={styles.sealStar} viewBox='0 0 100 100' aria-hidden focusable='false'><path d={SEAL_POINTS} /></svg>
