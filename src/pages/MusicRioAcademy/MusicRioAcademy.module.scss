@@ -1,14 +1,22 @@
 // Página "Music Rio Academy" — a escola por trás da Maestra.
-// Reusa o chrome da landing (Header/Footer) e os tokens do site: fundo preto, Inter,
-// roxo da marca #9A4FD1. Espelha o layout "Versão 2 — Desenvolvida" do material da MRA.
+//
+// Reusa o cabeçalho e o rodapé da landing, que já estão no design claro; com o corpo preto no
+// meio, o topo e o rodapé apareciam claros e o miolo preto. Agora segue a mesma paleta da
+// landing e da página do Diagnóstico REAL.
+//
+// O roxo continua sendo o accent da escola, no tom mais escuro que a landing usa nos elementos
+// roxos (#7a4fd1): o #9a4fd1 nasceu sobre preto e fica no limite da leitura sobre branco.
 
-$brand: #9a4fd1;
-$brandHover: #8442b6;
-$line: rgba(255, 255, 255, 0.1);
+$brand: #7a4fd1;
+$brandHover: #6b3fbf;
+$line: #e3eaf3;
+$ink: #405985;
+$g200: #52668d;
+$g300: #7c8da8;
 
 .page {
-  background: #000;
-  color: #fff;
+  background: #fbfcff;
+  color: $ink;
   min-height: 100vh;
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -56,12 +64,13 @@ $line: rgba(255, 255, 255, 0.1);
 .subtitle {
   font-size: 1.1rem;
   line-height: 1.7;
-  color: #b8b8bf;
+  color: $g300;
   max-width: 60ch;
   margin: 0;
 }
 
 // ─── Estatísticas ────────────────────────────────────────────────────────────
+// As células são brancas e o fundo da grade é a linha: o gap de 1px vira o divisor.
 .statsRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -70,13 +79,14 @@ $line: rgba(255, 255, 255, 0.1);
   border: 1px solid $line;
   border-radius: 14px;
   overflow: hidden;
+  box-shadow: 0 10px 26px rgba(74, 99, 145, .07);
   margin-bottom: 48px;
 
   @media (max-width: 640px) { grid-template-columns: 1fr 1fr; }
 }
 
 .statCell {
-  background: #0a0a0c;
+  background: #fff;
   padding: 24px 20px;
 }
 
@@ -88,9 +98,11 @@ $line: rgba(255, 255, 255, 0.1);
   margin: 0 0 8px;
 }
 
+// Rótulo em caixa alta e 13px: com o cinza mais claro dos textos de apoio ele ficava em 2.5:1
+// sobre o branco. O tom médio da paleta resolve sem mudar o peso visual do bloco.
 .statLabel {
   font-size: 0.82rem;
-  color: #8a8a92;
+  color: $g200;
   line-height: 1.4;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -108,9 +120,10 @@ $line: rgba(255, 255, 255, 0.1);
 }
 
 .card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid $line;
   border-radius: 14px;
-  background: #0a0a0c;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(74, 99, 145, .07);
   padding: 26px 24px;
 
   &::before {
@@ -127,14 +140,14 @@ $line: rgba(255, 255, 255, 0.1);
 .cardTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: #fff;
+  color: $ink;
   margin: 0 0 10px;
 }
 
 .cardBody {
   font-size: 0.92rem;
   line-height: 1.7;
-  color: #9a9aa2;
+  color: $g300;
   margin: 0;
 }
 
@@ -151,12 +164,12 @@ $line: rgba(255, 255, 255, 0.1);
 
 .footerText {
   font-size: 0.95rem;
-  color: #8a8a92;
+  color: $g300;
   max-width: 54ch;
   line-height: 1.65;
   margin: 0;
 
-  strong { color: #e6e6ea; font-weight: 600; }
+  strong { color: $ink; font-weight: 700; }
 }
 
 .cta {
@@ -172,7 +185,12 @@ $line: rgba(255, 255, 255, 0.1);
   text-decoration: none;
   padding: 13px 26px;
   white-space: nowrap;
-  transition: background 0.2s, transform 0.15s;
+  box-shadow: 0 12px 26px rgba(122, 79, 209, .22);
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
 
-  &:hover { background: $brandHover; transform: translateY(-1px); }
+  &:hover {
+    background: $brandHover;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(122, 79, 209, .28);
+  }
 }
