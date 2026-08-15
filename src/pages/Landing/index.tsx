@@ -136,7 +136,7 @@ export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
     <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}>
       <div className={styles.headerInner}>
         <a className={styles.brand} href="#top" onClick={goHome}>
-          <MaestraBrand variant='lockup' tone='light' className={styles.brandText} />
+          <MaestraBrand variant='lockup' tone='dark' className={styles.brandText} />
         </a>
         <nav className={styles.nav}>
           {NAV.map((n) => <button key={n.id} className={styles.navLink} onClick={goToSection(n.id)}>{n.label}</button>)}
@@ -251,7 +251,7 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
           </div>
         </div>
 
-        <div className={styles.heroSecondary} style={{ color: '#6b7280' }}>
+        <div className={styles.heroSecondary} style={{ color: '#93a4c0' }}>
           <button className={styles.heroSecondaryLink} onClick={scrollTo('planos')}>Ver planos</button>
           {' · Diagnóstico grátis, sem cartão pra começar'}
         </div>
@@ -556,7 +556,7 @@ export const Footer: FC = () => {
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
             <a className={styles.brand} href="#top" onClick={goHome}>
-              <MaestraBrand variant='lockup' tone='light' className={styles.brandText} />
+              <MaestraBrand variant='lockup' tone='dark' className={styles.brandText} />
             </a>
             <p className={styles.footerTag}>A plataforma que diagnostica, planeja e acompanha a sua carreira na música.</p>
             {pwaVisible && (
