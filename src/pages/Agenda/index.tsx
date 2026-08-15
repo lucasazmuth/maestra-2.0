@@ -38,7 +38,6 @@ const Agenda: FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AgendaEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>();
-  const [showTasks, setShowTasks] = useState(true);
 
   useEffect(() => {
     if (!artistId) return;
@@ -50,11 +49,9 @@ const Agenda: FC = () => {
       .finally(() => setLoading(false));
   }, [artistId]);
 
-  // Eventos visíveis: o filtro "mostrar tarefas" oculta os eventos gerados pelo Plano de Ação.
-  const visibleEvents = useMemo(
-    () => (showTasks ? events : events.filter((e) => !isTaskEvent(e))),
-    [events, showTasks]
-  );
+  // Antes havia um filtro "mostrar tarefas" que ocultava os eventos vindos do Plano de Ação.
+  // O único botão que o acionava era a falsa aba "Atrasadas"; sem ela, tudo é visível.
+  const visibleEvents = events;
   const hasTaskEvents = useMemo(() => events.some(isTaskEvent), [events]);
 
   const byDate = useMemo(() => {
@@ -260,8 +257,11 @@ const Agenda: FC = () => {
           </section>
           <aside className="calendar-tasks">
             <header><h2>Tarefas</h2>{canEdit && <button type="button" className="calendar-add-task" aria-label="Adicionar compromisso" onClick={() => openCreate()}><FiPlus /></button>}</header>
-            <nav><button className="calendar-active" type="button">Não agendadas</button><button type="button" onClick={() => setShowTasks((current) => !current)}>Atrasadas</button></nav>
-            <p>Ordenar por <b>Prioridade</b></p>
+            {/* Saíram daqui duas abas e um "Ordenar por Prioridade" que não existiam de fato:
+                "Não agendadas" era um botão sem ação (só o estilo de aba ativa), "Atrasadas"
+                escondia as tarefas do calendário inteiro — nada a ver com atraso, e ainda
+                esvaziava esta própria lista — e a ordenação era texto fixo. Voltam quando forem
+                filtros de verdade. */}
             {hasTaskEvents && unscheduledTasks.map((event) => <button className="calendar-task" type="button" key={event.id} onClick={() => openEdit(event)}>{taskCheckbox(event)}<i style={{ background: typeColor(event.type) }} />{calendarTitle(event.title, 48)}</button>)}
             {!unscheduledTasks.length && <p className="agenda-empty">Nenhuma tarefa pendente.</p>}
           </aside>
