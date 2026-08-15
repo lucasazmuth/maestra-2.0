@@ -64,18 +64,76 @@ const Team: FC = () => {
   const pendingMembers = members.filter((member) => member.status === 'pending').length;
   const configuredAccesses = members.reduce((total, member) => total + (member.access_levels?.length || 0), 0);
 
+  // 'full' é "todos os módulos", não mais um módulo: marcá-lo limpa os outros, e escolher um
+  // módulo desmarca o 'full'. Antes os cinco conviviam na mesma lista e dava para pedir
+  // "Músicas + Acesso completo", o que não quer dizer nada.
   const toggleAccessLevel = (
     current: AccessLevel[],
     level: AccessLevel,
     setter: (next: AccessLevel[]) => void
   ) => {
-    setter(current.includes(level) ? current.filter((item) => item !== level) : [...current, level]);
+    if (level === 'full') {
+      setter(current.includes('full') ? [] : ['full']);
+      return;
+    }
+    const semFull = current.filter((item) => item !== 'full');
+    setter(semFull.includes(level) ? semFull.filter((item) => item !== level) : [...semFull, level]);
+  };
+
+  // O que cada módulo abre, em uma linha — "Equipe" ou "Plano de ação" sozinhos não dizem se a
+  // pessoa só vê ou também mexe.
+  const ACCESS_HINTS: Partial<Record<AccessLevel, string>> = {
+    plan: 'Ver e editar tarefas e prazos',
+    catalog: 'Músicas, versões e Espaço JAM',
+    agenda: 'Compromissos e datas',
+    team: 'Convidar e remover pessoas',
+    full: 'Todos os módulos, inclusive os que entrarem depois',
+  };
+
+  const renderAccessOptions = (
+    selected: AccessLevel[],
+    setter: (next: AccessLevel[]) => void,
+    disabled?: boolean,
+  ) => {
+    const full = selected.includes('full');
+    const option = (id: AccessLevel, label: string, destaque?: boolean) => {
+      // Com 'full' marcado, os módulos aparecem incluídos (e travados): o acesso já os cobre.
+      const active = id === 'full' ? full : full || selected.includes(id);
+      return (
+        <button
+          type='button'
+          key={id}
+          className={`${active ? styles.permissionActive : styles.permission} ${destaque ? styles.permissionFull : ''}`}
+          aria-pressed={active}
+          disabled={disabled || (full && id !== 'full')}
+          onClick={() => toggleAccessLevel(selected, id, setter)}
+        >
+          <span className={styles.permissionLabel}>
+            {label}
+            <small>{ACCESS_HINTS[id]}</small>
+          </span>
+          <i aria-hidden='true' />
+        </button>
+      );
+    };
+    return (
+      <div className={styles.permissionGrid}>
+        {option('full', 'Acesso completo', true)}
+        {MVP_ACCESS_LEVEL_OPTIONS.filter((entry) => entry.id !== 'full').map((entry) => option(entry.id, entry.label))}
+      </div>
+    );
   };
 
   const invite = async () => {
     if (!canManageTeam) return;
     if (!email.trim() || !artistId) {
       message.warning('Informe o e-mail');
+      return;
+    }
+    // Convite sem nenhum acesso marcado entra na equipe sem poder abrir nada — provável
+    // esquecimento, já que agora dá para desmarcar tudo de uma vez pelo "Acesso completo".
+    if (!levels.length) {
+      message.warning('Escolha ao menos um módulo que esta pessoa poderá acessar.');
       return;
     }
     setSaving(true);
@@ -280,27 +338,10 @@ const Team: FC = () => {
 
             <div className={styles.permissionSection}>
               <div>
-                <strong>Níveis de acesso</strong>
-                <span>Escolha os módulos que esta pessoa poderá utilizar.</span>
+                <strong>O que esta pessoa pode acessar</strong>
+                <span>Cada módulo marcado libera ver e editar aquele módulo. Pode marcar mais de um.</span>
               </div>
-              <div className={styles.permissionGrid}>
-                {MVP_ACCESS_LEVEL_OPTIONS.map((option) => {
-                  const active = editLevels.includes(option.id);
-                  return (
-                    <button
-                      type="button"
-                      key={option.id}
-                      className={active ? styles.permissionActive : styles.permission}
-                      aria-pressed={active}
-                      disabled={!isOwner}
-                      onClick={() => toggleAccessLevel(editLevels, option.id, setEditLevels)}
-                    >
-                      <span>{option.label}</span>
-                      <i aria-hidden="true" />
-                    </button>
-                  );
-                })}
-              </div>
+              {renderAccessOptions(editLevels, setEditLevels, !isOwner)}
             </div>
           </div>
         )}
@@ -351,26 +392,10 @@ const Team: FC = () => {
           </div>
           <div className={styles.permissionSection}>
             <div>
-              <strong>Níveis de acesso</strong>
-              <span>Você poderá alterar estes acessos depois.</span>
+              <strong>O que esta pessoa pode acessar</strong>
+              <span>Cada módulo marcado libera ver e editar aquele módulo. Pode marcar mais de um, e dá para alterar depois.</span>
             </div>
-            <div className={styles.permissionGrid}>
-              {MVP_ACCESS_LEVEL_OPTIONS.map((option) => {
-                const active = levels.includes(option.id);
-                return (
-                  <button
-                    type="button"
-                    key={option.id}
-                    className={active ? styles.permissionActive : styles.permission}
-                    aria-pressed={active}
-                    onClick={() => toggleAccessLevel(levels, option.id, setLevels)}
-                  >
-                    <span>{option.label}</span>
-                    <i aria-hidden="true" />
-                  </button>
-                );
-              })}
-            </div>
+            {renderAccessOptions(levels, setLevels)}
           </div>
         </div>
       </Modal>

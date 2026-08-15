@@ -311,7 +311,7 @@
 }
 
 .memberOverview small {
-  color: #74747c;
+  color: #8ca0c5;
   font-size: 11px;
 }
 
@@ -329,7 +329,7 @@
 }
 
 .fieldGrid label > span {
-  color: #a8a8ae;
+  color: #7c8da8;
   font-size: 11px;
   font-weight: 700;
 }
@@ -347,13 +347,15 @@
 }
 
 .permissionSection strong {
-  color: #ededee;
+  color: #405985;
   font-size: 13px;
+  font-weight: 850;
 }
 
 .permissionSection > div:first-child > span {
-  color: #77777f;
+  color: #8ca0c5;
   font-size: 11px;
+  line-height: 1.45;
 }
 
 .permissionGrid {
@@ -362,48 +364,99 @@
   gap: 8px;
 }
 
+// Cartões de acesso. Eram pretos (#202022) com a marca roxa antiga — um bloco escuro dentro do
+// modal branco. O marcador virou caixa de seleção: são várias escolhas, e a bolinha de rádio
+// dizia o contrário.
 .permission,
 .permissionActive {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 42px;
-  padding: 8px 12px;
-  color: #a3a3aa;
-  background: #202022;
-  border: 1px solid transparent;
-  border-radius: 9px;
+  gap: 10px;
+  min-height: 46px;
+  padding: 9px 13px;
+  border: 1px solid #e3eaf5;
+  border-radius: 10px;
+  background: #fbfcfe;
+  color: #5f76a3;
   cursor: pointer;
   font: inherit;
-  font-size: 11.5px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 750;
   text-align: left;
+  transition: border-color .16s ease, background .16s ease, color .16s ease;
 }
 
 .permission:hover:not(:disabled) {
-  color: #fff;
-  background: #27272a;
+  border-color: #c9d8f0;
+  background: #f4f8ff;
+  color: #4267b9;
 }
 
 .permissionActive {
-  color: #fff;
-  background: rgba(154, 79, 209, 0.13);
-  border-color: rgba(201, 126, 243, 0.42);
+  border-color: #b9cbed;
+  background: #eef3fb;
+  color: #2f4f8f;
 }
 
 .permission i,
 .permissionActive i {
-  width: 9px;
-  height: 9px;
-  background: #55555c;
-  border: 2px solid #202022;
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px #55555c;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  place-items: center;
+  border: 1.5px solid #ccd8ea;
+  border-radius: 5px;
+  background: #fff;
 }
 
 .permissionActive i {
-  background: #c97ef3;
-  box-shadow: 0 0 0 1px #c97ef3;
+  border-color: #3361ff;
+  background: #3361ff;
+}
+
+// O "check" é desenhado com bordas: dois lados de um retângulo girado 45°.
+.permissionActive i::after {
+  content: '';
+  width: 4px;
+  height: 8px;
+  margin-top: -2px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+// "Acesso completo" não é mais um módulo: é o atalho para todos. Fica sozinho, acima da grade,
+// com a explicação do que inclui — antes disputava espaço com os módulos e parecia que marcar
+// um módulo dava acesso parcial e este aqui, total.
+.permissionFull {
+  grid-column: 1 / -1;
+}
+
+.permissionLabel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.permissionLabel small {
+  color: #93a4c0;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.permissionActive .permissionLabel small {
+  color: #6f88b5;
+}
+
+.permissionNote {
+  margin: 0;
+  color: #8ca0c5;
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .permission:disabled,
