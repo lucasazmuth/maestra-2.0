@@ -36,10 +36,12 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 .hDisplay {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(2.2rem, 5.6vw, 4.6rem);
+  // O título passou de duas frases curtas ("A música evoluiu") pra uma que diz o que o produto
+  // faz, então o corpo desce de 4,6rem pra 3,6rem: em 4,6 a primeira linha estouraria os 1110.
+  font-size: clamp(1.9rem, 4.4vw, 3.6rem);
   font-weight: 800;
   letter-spacing: -.025em;
-  line-height: 1.08;
+  line-height: 1.12;
   color: $strong;
 }
 .hSection {
@@ -122,13 +124,13 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
   background: linear-gradient(180deg, #f7faff 0%, #eef4ff 62%, #fbfcff 100%);
 }
 
-.heroTitle { position: relative; z-index: 2; text-align: center; padding: 0 20px; }
+.heroTitle { position: relative; z-index: 2; max-width: 1110px; margin: 0 auto; text-align: center; padding: 0 20px; }
 .heroKicker {
   display: block; margin-bottom: 20px;
   font-family: var(--font-mono);
   font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: $mute;
 }
-.heroLine1 { display: flex; align-items: center; justify-content: center; gap: 26px; flex-wrap: wrap; }
+.heroLine1 { display: flex; align-items: center; justify-content: center; gap: 22px; flex-wrap: wrap; }
 // O título fica em tinta. Em azul, ele competia com o botão pelo mesmo olhar — e num corpo de
 // 4,6rem sempre vence. A hierarquia aqui vem do tamanho, não da cor.
 .heroLine2 { display: block; }

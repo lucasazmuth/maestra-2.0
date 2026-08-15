@@ -96,11 +96,15 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
     <section className={styles.hero} id='top'>
       <div className={styles.heroTitle}>
         <span className={styles.heroKicker}>Gestão de carreira musical</span>
-        <div className={styles.heroLine1}>
-          <h1 className={styles.hDisplay}>A música evoluiu</h1>
-          <span className={styles.heroBadge} aria-hidden><FiPlay size={30} /></span>
-        </div>
-        <h1 className={`${styles.hDisplay} ${styles.heroLine2}`}>A gestão também</h1>
+        {/* Um h1 só, com as duas linhas em spans: eram dois h1 na mesma página, o que confunde
+            leitor de tela e mecanismo de busca sobre qual é o título. */}
+        <h1 className={styles.hDisplay}>
+          <span className={styles.heroLine1}>
+            Diagnostica, planeja e acompanha
+            <span className={styles.heroBadge} aria-hidden><FiPlay size={30} /></span>
+          </span>{' '}
+          <span className={styles.heroLine2}>a sua carreira na música</span>
+        </h1>
         <div className={styles.heroCtas}>
           <button className={styles.btnNeon} onClick={start}>
             Fazer meu diagnóstico grátis <FiArrowRight size={18} />
