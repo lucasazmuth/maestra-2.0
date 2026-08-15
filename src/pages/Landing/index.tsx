@@ -288,8 +288,11 @@ const VideoStats: FC = () => {
           </div>
         </div>
       </div>
+      {/* Onda do Auto Layout Horizontal.svg: a linha entra pela esquerda e as barras terminam
+          coladas na borda direita da página. Alturas e passo (28px) são os do arquivo. */}
       <div className={styles.waveBars} aria-hidden>
-        {BAR_HEIGHTS.map((h, i) => <i key={i} style={{ height: `${Math.round(h * 0.75)}px` }} />)}
+        <i className={styles.waveLine} />
+        {BAR_HEIGHTS.map((h, i) => <i key={i} style={{ height: `${h}px` }} />)}
       </div>
     </section>
   );

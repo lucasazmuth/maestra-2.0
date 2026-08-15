@@ -247,11 +247,20 @@ $edge: rgba(255, 255, 255, .18);
   span { display: block; margin-top: 12px; font-size: .9rem; color: $dim; font-weight: 300; }
 }
 
+// A onda encosta na borda direita da página: a linha da esquerda é elástica (flex: 1) e empurra
+// as barras até o fim, em qualquer largura de tela. Passo de 28px (4 de barra + 24 de folga) e
+// alturas do arquivo, com o traço em 30% de branco.
 .waveBars {
-  display: flex; align-items: center; justify-content: flex-end; gap: 22px;
-  height: 130px; margin-top: 70px; padding-right: 6vw; overflow: hidden;
-  i { display: block; width: 4px; border-radius: 2px; background: #fff; opacity: .55; flex: 0 0 auto; }
+  // `flex-end` importa quando a onda é mais larga que a tela: sem ele o excesso sai pela
+  // direita e descola as barras da borda; com ele, o corte acontece na esquerda.
+  display: flex; align-items: center; justify-content: flex-end; gap: 24px;
+  height: 161px; margin-top: 70px; overflow: hidden;
+  i {
+    display: block; flex: 0 0 auto; width: 4px; border-radius: 2px;
+    background: rgba(255, 255, 255, .3);
+  }
 }
+.waveLine { flex: 1 1 auto !important; width: auto !important; height: 4px; }
 
 // ─── Módulos (carrossel) ─────────────────────────────────────────────────────
 // Réplica do bloco "Popular Album" da referência (prancheta 1438, conteúdo 1109):
@@ -691,7 +700,6 @@ $edge: rgba(255, 255, 255, .18);
     h3 { font-size: 1.5rem; }
   }
   .modDots { gap: 8px; button { width: 34px; } }
-  .waveBars { padding-right: 0; justify-content: center; }
   .footerGrid { grid-template-columns: 1fr; gap: 28px; }
   .heroCtas .btnNeon, .heroCtas .btnGhost { width: 100%; }
   .ctaCard { padding: 48px 22px; }
