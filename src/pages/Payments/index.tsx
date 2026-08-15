@@ -1,6 +1,5 @@
 import { FC, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiRefreshCw, FiUser } from 'react-icons/fi';
+import { FiRefreshCw, FiUser } from 'react-icons/fi';
 
 import { Spinner } from '../../components/spinner/spinner';
 import {
@@ -15,7 +14,6 @@ import styles from './Payments.module.scss';
 // Página dedicada ao histórico de pagamentos (assinatura + perfis avulsos), para não inflar a
 // tela de Configurações com uma lista longa.
 const Payments: FC = () => {
-  const navigate = useNavigate();
   const { items, loading } = usePaymentHistory();
 
   // Só o que foi efetivamente pago entra no total: somar cobranças canceladas ou vencidas diria
@@ -31,10 +29,6 @@ const Payments: FC = () => {
 
   return (
     <div className={styles.page}>
-      <button type='button' className={styles.back} onClick={() => navigate('/settings')}>
-        <FiArrowLeft size={15} /> Configurações
-      </button>
-
       <div className={styles.heading}>
         <p>Conta do usuário</p>
         <h1>Pagamentos</h1>

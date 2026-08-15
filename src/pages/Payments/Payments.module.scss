@@ -7,25 +7,6 @@
   padding: 34px 36px 48px;
 }
 
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 18px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #7c8da8;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
-  transition: color .16s ease;
-}
-
-.back:hover {
-  color: #3361ff;
-}
-
 .heading {
   padding-bottom: 30px;
   border-bottom: 1px solid #e1e7f0;
