@@ -42,12 +42,34 @@ const NAV = [
 const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
 // ─── Dados ───────────────────────────────────────────────────────────────────
-const MODULES = [
-  { img: featureReal, title: 'Diagnóstico REAL', desc: 'Um raio-X da carreira em 4 dimensões, cruzando dados do Spotify e das redes com o que só você sabe. Descubra qual dos 16 perfis é o seu.' },
-  { img: featurePlanning, title: 'Planejamento estratégico', desc: 'A metodologia de 30 anos da Anita Carvalho transforma o diagnóstico em visão, missão, objetivos e estratégias já priorizadas.' },
-  { img: featureAction, title: 'Plano de ação', desc: 'Cada estratégia vira tarefas com progresso, prazos e responsáveis. Do "o que fazer" pro "feito".' },
-  { img: featureGestao, title: 'Gestão completa', desc: 'Músicas, agenda de shows e lançamentos e a equipe junto: a operação da carreira no mesmo lugar do plano.' },
-] as const;
+// O carrossel de módulos segue o bloco "Popular Album" da referência: o ativo grande no meio e
+// os vizinhos como painéis estreitos, com o nome na vertical.
+const MODULES: { img?: string; nyta?: boolean; title: string; sub: string; desc: string; to?: string }[] = [
+  {
+    img: featureReal, title: 'Diagnóstico REAL', sub: 'o ponto de partida', to: '/diagnostico-real',
+    desc: 'Um raio-X da carreira em quatro dimensões, cruzando dados do Spotify e das redes com o que só você sabe. Em minutos você descobre qual dos 16 perfis é o seu e onde a carreira realmente está, não onde parece estar.',
+  },
+  {
+    img: featurePlanning, title: 'Planejamento estratégico', sub: 'o mapa',
+    desc: 'A metodologia de 30 anos da Anita Carvalho, destilada de 313 planejamentos reais, transforma o diagnóstico em visão, missão, objetivos e as estratégias certas pro seu momento, já priorizadas.',
+  },
+  {
+    img: featureAction, title: 'Plano de ação', sub: 'a execução',
+    desc: 'Cada estratégia vira tarefas com progresso, prazos e responsáveis, além de cronograma e modelagem financeira. É o caminho do "o que fazer" pro "feito".',
+  },
+  {
+    img: featureGestao, title: 'Gestão completa', sub: 'o dia a dia',
+    desc: 'Músicas, agenda de shows e lançamentos e a equipe junto: a operação da carreira mora no mesmo lugar do plano, e cada entrega alimenta o próximo diagnóstico.',
+  },
+  {
+    nyta: true, title: 'Nyta IA', sub: 'a assistente',
+    desc: 'A assistente que acompanha a carreira em todos os módulos: tira dúvidas, sugere caminhos e ajuda a executar o plano, sempre no contexto dos seus dados.',
+  },
+  {
+    title: 'E ela só cresce', sub: 'em breve',
+    desc: 'Novos módulos a caminho: marketing, CRM e financeiro, no mesmo lugar do resto da carreira.',
+  },
+];
 
 const SUGGESTIONS = [
   'Como aumentar meus ouvintes no Spotify?',
@@ -282,38 +304,84 @@ const VideoStats: FC = () => {
 };
 
 // ─── Módulos (slot "our top tier features") ──────────────────────────────────
-const Modules: FC = () => (
-  <section className={styles.modules} id='recursos'>
-    <div className={styles.shell}>
-      <div className={styles.sectionHead}>
-        <h2 className={styles.hSection}>A carreira inteira, num lugar só</h2>
-        <p className={styles.pBody}>
-          Diagnóstico, planejamento, plano de ação, músicas, agenda e equipe: as frentes da sua
-          carreira conectadas e evoluindo juntas, com a Nyta IA acompanhando cada passo.
-        </p>
-      </div>
-      <div className={styles.moduleGrid}>
-        {MODULES.map((m) => (
-          <article key={m.title} className={styles.moduleCard}>
-            <span className={styles.moduleIcon}><img src={m.img} alt='' /></span>
-            <h3 className={styles.hCard}>{m.title}</h3>
-            <p className={styles.pBody}>{m.desc}</p>
+const num = (i: number) => `${String(i + 1).padStart(2, '0')}.`;
+
+const Modules: FC = () => {
+  const navigate = useNavigate();
+  const [active, setActive] = useState(0);
+  const total = MODULES.length;
+  const prev = (active - 1 + total) % total;
+  const next = (active + 1) % total;
+  const current = MODULES[active];
+
+  // O painel lateral é o atalho pro módulo vizinho: clicar traz ele pro meio.
+  const Side: FC<{ index: number }> = ({ index }) => {
+    const m = MODULES[index];
+    return (
+      <button className={styles.modSide} onClick={() => setActive(index)} aria-label={`Ver ${m.title}`}>
+        <span className={styles.modSideNum}>{num(index)}</span>
+        <span className={styles.modSideRule} aria-hidden />
+        <span className={styles.modSideText}>
+          <strong>{m.title}</strong>
+          <em>{m.sub}</em>
+        </span>
+      </button>
+    );
+  };
+
+  return (
+    <section className={styles.modules} id='recursos'>
+      <div className={styles.shell}>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.hSection}>A carreira inteira, num lugar só</h2>
+          <p className={styles.pBody}>
+            Diagnóstico, planejamento, plano de ação, músicas, agenda e equipe: as frentes da sua
+            carreira conectadas e evoluindo juntas, com a Nyta IA acompanhando cada passo.
+          </p>
+        </div>
+
+        <span className={styles.modRule} aria-hidden />
+
+        <div className={styles.modCarousel}>
+          <Side index={prev} />
+
+          {/* Cartão aberto: o número, a arte do módulo ao fundo e o texto na base. */}
+          <article className={styles.modMain} key={active}>
+            <span className={styles.modArt} aria-hidden>
+              {current.nyta ? <NytaAvatar size={230} /> : current.img ? <img src={current.img} alt='' /> : null}
+            </span>
+            <span className={styles.modMainNum}>{num(active)}</span>
+            <div className={styles.modMainBody}>
+              <h3>{current.title}</h3>
+              <em>{current.sub}</em>
+              <p>{current.desc}</p>
+              {current.to && (
+                <button className={styles.modMainLink} onClick={() => navigate(current.to as string)}>
+                  Saiba mais <FiArrowRight size={16} />
+                </button>
+              )}
+            </div>
           </article>
-        ))}
-        <article className={styles.moduleCard}>
-          <span className={styles.moduleIcon}><NytaAvatar size={44} /></span>
-          <h3 className={styles.hCard}>Nyta IA</h3>
-          <p className={styles.pBody}>A assistente que tira dúvidas, sugere caminhos e ajuda a executar o plano, sempre no contexto dos seus dados.</p>
-        </article>
-        <article className={`${styles.moduleCard} ${styles.moduleCardSoon}`}>
-          <span className={styles.moduleSoonTag}>Em breve</span>
-          <h3 className={styles.hCard}>E ela só cresce</h3>
-          <p className={styles.pBody}>Novos módulos a caminho: marketing, CRM e financeiro, no mesmo lugar do resto da carreira.</p>
-        </article>
+
+          <Side index={next} />
+        </div>
+
+        {/* Os pontos dão acesso direto a qualquer módulo (com 6, os laterais só alcançam 2). */}
+        <div className={styles.modDots}>
+          {MODULES.map((m, i) => (
+            <button
+              key={m.title}
+              className={i === active ? styles.modDotOn : undefined}
+              onClick={() => setActive(i)}
+              aria-label={m.title}
+              aria-current={i === active}
+            />
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 // ─── Nyta (vitrine do chat com efeito de digitação) ──────────────────────────
 const NytaSection: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
