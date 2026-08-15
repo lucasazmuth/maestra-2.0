@@ -117,6 +117,31 @@
     color: #52668d !important;
   }
 
+  // Campo com ícone (Input com prefix). O mesmo bloco do form.scss que achatava o textarea
+  // também define `.ant-modal .ant-input-affix-wrapper { height: 40px; padding: 0 12px }` com
+  // as cores do tema escuro: no modal de convite os campos saíam altos demais e com o ícone
+  // apagado. O input interno precisa ficar transparente — a casca é quem pinta.
+  :global(.ant-input-affix-wrapper) {
+    height: auto !important;
+    padding: 6px 11px !important;
+    border-radius: 9px !important;
+  }
+
+  :global(.ant-input-affix-wrapper > .ant-input) {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  :global(.ant-input-prefix),
+  :global(.ant-input-suffix) {
+    color: #9aabc4;
+  }
+
+  :global(.ant-input-affix-wrapper-focused .ant-input-prefix) {
+    color: #4267b9;
+  }
+
   // O form.scss antigo tem `.ant-modal textarea { height: 40px; padding: 0 12px }`, pensado
   // para campos de uma linha do tema escuro: a caixa da letra virava uma tira de 40px com o
   // texto colado na borda. Aqui ela volta a ser uma área de texto.
