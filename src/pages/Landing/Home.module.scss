@@ -474,10 +474,14 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
     &:hover { color: $ink; }
   }
 }
+.footerSocials { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
 .footerSocial {
   display: inline-flex !important; align-items: center; justify-content: center;
-  width: 40px; height: 40px; border-radius: 50%;
+  flex: 0 0 auto; width: 40px; height: 40px; margin: 0 !important; border-radius: 50%;
   border: 1px solid $line; background: #fff; color: #5f76a3;
+  transition: color .16s ease, border-color .16s ease, transform .16s ease;
+
+  &:hover { color: $blue; border-color: #b9cbed; transform: translateY(-1px); }
 }
 .footerPwa {
   display: flex; align-items: center; gap: 10px; margin-top: 20px; padding: 10px;
