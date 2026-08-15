@@ -115,10 +115,11 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 // ─── Hero ────────────────────────────────────────────────────────────────────
 // Mesma composição da referência (figura à esquerda do centro, cartão à direita, selo no alto),
 // agora sobre o degradê claro que a landing e as telas de entrada já usam.
+// Sem borda embaixo: o degradê já termina na cor da página, e a linha só marcava um corte que
+// não existe — a seção seguinte tem o mesmo fundo.
 .hero {
   position: relative; padding-top: 172px;
   background: linear-gradient(180deg, #f7faff 0%, #eef4ff 62%, #fbfcff 100%);
-  border-bottom: 1px solid $line;
 }
 
 .heroTitle { position: relative; z-index: 2; text-align: center; padding: 0 20px; }
@@ -148,9 +149,10 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 .heroCtas { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 40px; }
 .heroNote { margin: 16px 0 0; font-size: .85rem; color: $mute; }
 
-// O palco agora é o player: 16:9 na largura do conteúdo, com o cartão da Nyta encostado no
-// canto de baixo. A altura acompanha o vídeo (1110 × 9/16 = 624) mais o transbordo do cartão.
-.heroStage { position: relative; padding-bottom: 54px; margin-top: 30px; }
+// O palco é o player, com o cartão da Nyta logo abaixo, alinhado à direita e subindo sobre a
+// moldura. Ele fica FORA do vídeo de propósito: sobreposto, cobriria os controles do player
+// (tela cheia, barra de progresso) justamente no canto onde eles moram.
+.heroStage { position: relative; margin-top: 30px; }
 .heroVideo {
   position: relative; aspect-ratio: 16 / 9; overflow: hidden;
   border: 1px solid $line; border-radius: 24px; background: #0b1020;
@@ -167,7 +169,7 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 
 // Cartão da pergunta da Nyta: branco, com a moldura e a sombra dos cartões do app.
 .nowCard {
-  position: absolute; right: -14px; bottom: 0; z-index: 3; cursor: pointer; text-align: left;
+  position: relative; z-index: 3; margin: -34px 0 0 auto; cursor: pointer; text-align: left;
   display: flex; align-items: center; gap: 16px; width: 478px; min-height: 104px; padding: 18px 20px;
   border-radius: 18px; border: 1px solid $line; background: #fff;
   box-shadow: 0 18px 44px rgba(74, 99, 145, .16);
@@ -565,10 +567,9 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
   .modMainNum { position: relative; left: auto; top: auto; display: block; padding: 32px 32px 0; }
   .modMainBody { position: relative; left: auto; right: auto; top: auto; transform: none; padding: 16px 32px 36px; }
 
-  // No estreito o cartão desce pro fluxo, logo abaixo do player.
-  .heroStage { padding-bottom: 0; }
   .heroWave { top: 100px; }
-  .nowCard { position: relative; right: auto; bottom: auto; width: 100%; margin-top: 18px; }
+  // No estreito o cartão ocupa a largura toda e desencosta do player.
+  .nowCard { width: 100%; margin: 18px 0 0; }
 }
 
 @media (max-width: 820px) {
