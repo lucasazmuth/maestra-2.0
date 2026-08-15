@@ -1,29 +1,44 @@
+// Modal "Avaliar a plataforma" — design claro do redesign, o mesmo do StandardModal: cartão
+// branco, cabeçalho com kicker + título, campos claros e ação em azul. Antes era escuro
+// (#18181a com roxo #9a4fd1), herança do tema antigo.
+//
+// Os `!important` acompanham o padrão do StandardModal: o ConfigProvider ainda roda no
+// darkAlgorithm e injeta as cores escuras em runtime, com especificidade acima de um override
+// comum. Tudo escopado em `.modal`, então nada disso vaza para outros modais do app.
 .modal :global(.ant-modal-content) {
   overflow: hidden;
   padding: 0;
-  background: #18181a;
-  border: 1px solid #303036;
-  border-radius: 16px;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(207, 217, 232, .92);
+  border-radius: 13px;
+  background: #fff !important;
+  box-shadow: 0 18px 45px rgba(18, 30, 56, .2);
 }
 
 .modal :global(.ant-modal-close) {
-  top: 17px;
-  color: #b8b8bf;
+  top: 16px;
+  right: 16px;
+  color: #b6c1d3;
+}
+
+.modal :global(.ant-modal-close-icon),
+.modal :global(.ant-modal-close-x) {
+  color: #b6c1d3 !important;
+}
+
+.modal :global(.ant-modal-close:hover) {
+  background: #eef3fb;
 }
 
 .header {
-  padding: 22px 26px 20px;
-  background:
-    linear-gradient(115deg, rgba(154, 79, 209, 0.24), rgba(80, 155, 245, 0.08) 72%, transparent),
-    #202024;
-  border-bottom: 1px solid #35353b;
+  padding: 22px 26px 19px;
+  border-bottom: 1px solid #edf0f5;
+  background: #fff;
 }
 
 .kicker {
   display: block;
   margin-bottom: 6px;
-  color: #c97ef3;
+  color: #9aa9c2;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
@@ -33,15 +48,15 @@
 
 .header h2 {
   margin: 0;
-  color: #fff;
-  font-size: 22px;
+  color: #52668d;
+  font-size: 20px;
   font-weight: 800;
 }
 
 .header p {
   max-width: 440px;
   margin: 7px 0 0;
-  color: #a5a5ae;
+  color: #8c9ab2;
   font-size: 13px;
   line-height: 1.5;
 }
@@ -55,7 +70,7 @@
 
 .question {
   margin: 0;
-  color: #f2f2f4;
+  color: #405985;
   font-size: 15px;
   font-weight: 700;
 }
@@ -75,18 +90,19 @@
   margin-inline-end: 11px;
 }
 
+// Estrela vazia num tom que ainda se vê sobre o branco (o #3b3b41 do tema escuro sumia).
 .rating :global(.ant-rate-star-zero) {
-  color: #3b3b41;
+  color: #d7e0ee;
 }
 
 .rating :global(.ant-rate-star-full),
 .rating :global(.ant-rate-star-half) {
-  color: #c97ef3;
+  color: #e0ad3c;
 }
 
 .ratingHint {
   min-height: 18px;
-  color: #92929b;
+  color: #93a4c0;
   font-size: 12px;
 }
 
@@ -97,31 +113,51 @@
 }
 
 .field > span {
-  color: #b8b8c0;
+  color: #7f91af;
   font-size: 12px;
   font-weight: 700;
 }
 
 .field :global(.ant-input) {
   min-height: 112px;
-  padding: 12px 14px;
-  color: #f4f4f5;
-  background: #101011;
-  border-color: #34343a;
-  border-radius: 10px;
+  padding: 12px 14px !important;
+  border-color: #e1e7f0 !important;
+  border-radius: 10px !important;
+  background: #fbfcfe !important;
+  color: #52668d !important;
   line-height: 1.5;
   resize: vertical;
 }
 
-.field :global(.ant-input:hover),
-.field :global(.ant-input:focus) {
-  border-color: #9a4fd1;
-  box-shadow: none;
+.field :global(.ant-input::placeholder) {
+  color: #aab7cd !important;
+}
+
+.field :global(.ant-input:hover) {
+  border-color: #b9cbed !important;
+}
+
+// `:focus-within` além de `:focus`, e o seletor de variante do antd v5 por extenso: o anel de
+// foco vinha do `.ant-input-outlined:focus` do tema, calculado pelo darkAlgorithm — saía um halo
+// ROXO no meio do modal claro.
+.field :global(.ant-input:focus),
+.field :global(.ant-input:focus-within),
+.field :global(.ant-input-outlined:focus),
+.field :global(.ant-input-outlined:focus-within) {
+  border-color: #8aa5ff !important;
+  box-shadow: 0 0 0 3px #eaf0ff !important;
+}
+
+// Seleção de texto: o padrão herdado pintava a marcação quase preta, e o campo inteiro parecia
+// um bloco cinza ao selecionar o que estava escrito.
+.modal ::selection {
+  background: #d7e4ff;
+  color: #2c3f63;
 }
 
 .counter {
   align-self: flex-end;
-  color: #6f6f78;
+  color: #93a4c0;
   font-size: 11px;
 }
 
@@ -138,16 +174,36 @@
   font-weight: 700;
 }
 
-.actions :global(.ant-btn-primary) {
-  color: #fff;
-  background: #9a4fd1;
-  border-color: #9a4fd1;
+.actions :global(.ant-btn-default) {
+  border-color: #dce5f0 !important;
+  background: #fff !important;
+  color: #7183a1 !important;
 }
 
-.actions :global(.ant-btn-primary:hover) {
+.actions :global(.ant-btn-default:hover:not(:disabled)) {
+  border-color: #b9cbed !important;
+  background: #f6f9ff !important;
+  color: #4267b9 !important;
+}
+
+// O seletor longo espelha o do App.scss, que pinta o primário com o roxo da marca antiga em todo
+// o app com seis classes de especificidade — um `.actions .ant-btn-primary` simples perdia.
+.actions :global(.ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost)) {
+  border-color: #3361ff !important;
+  background: #3361ff !important;
   color: #fff !important;
-  background: #8442b6 !important;
-  border-color: #8442b6 !important;
+  box-shadow: 0 7px 15px rgba(51, 97, 255, .18);
+}
+
+.actions :global(.ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost):hover),
+.actions :global(.ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost):focus) {
+  border-color: #2a54e0 !important;
+  background: #2a54e0 !important;
+  color: #fff !important;
+}
+
+.actions :global(.ant-wave) {
+  --wave-color: rgba(51, 97, 255, .45);
 }
 
 @media (max-width: 560px) {

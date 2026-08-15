@@ -131,3 +131,53 @@ body.jam-project-space .local-player-bar {
     background: #ffffff !important;
   }
 }
+
+/*
+ * Player em cima da tab bar (mobile).
+ *
+ * Colado no rodapé ele cobria a navbar inteira — a navegação simplesmente sumia enquanto uma
+ * música tocava. Aqui ele deixa de ser barra e vira uma ilha flutuante logo ACIMA da navbar, no
+ * mesmo desenho dela (mesmas margens de 22px, mesmo raio de 22px, mesma borda e sombra), de modo
+ * que as duas leem como um par. O `!important` acompanha o bloco mobile acima, que já usa.
+ *
+ * 106px = 18 (base da navbar) + 78 (altura dela) + 10 (respiro entre as duas).
+ */
+@media (max-width: 960px) {
+  .local-player-bar--over-nav,
+  body.jam-project-space .local-player-bar--over-nav {
+    right: 22px !important;
+    bottom: calc(106px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 22px !important;
+    z-index: 119 !important;
+    width: auto !important;
+    min-height: 64px !important;
+    padding: 8px 10px 8px 12px !important;
+    gap: 10px !important;
+    border: 1px solid #dfe7f3 !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, .97) !important;
+    box-shadow: 0 18px 42px rgba(68, 88, 126, .2) !important;
+  }
+
+  /* A linha de progresso encosta na borda arredondada: recolhe pelos cantos para não vazar. */
+  .local-player-bar--over-nav .lpb-progress-mobile {
+    right: 16px !important;
+    bottom: 3px !important;
+    left: 16px !important;
+    background: transparent !important;
+  }
+
+  .local-player-bar--over-nav .lpb-cover {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+  }
+}
+
+/* No Espaço Jam a tab bar não existe (ver gsap-reference.css), então a ilha do player desce e
+   ocupa a base — senão sobra um vão morto de 78px embaixo dela. */
+@media (max-width: 960px) {
+  body.jam-project-space .local-player-bar--over-nav {
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}

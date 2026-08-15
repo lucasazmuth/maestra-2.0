@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, type FC, type ReactNode, type RefObject, type CSSProperties } from 'react';
+import { lazy, memo, Suspense, useEffect, useRef, useState, type FC, type ReactNode, type RefObject, type CSSProperties } from 'react';
 
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
@@ -87,9 +87,15 @@ const ProfileMenuButton: FC<{
   </button>
 );
 
+// Avaliação da plataforma: carregada sob demanda — o modal só existe quando alguém clica.
+const PlatformReviewModal = lazy(() =>
+  import('../PlatformReviewModal').then((m) => ({ default: m.PlatformReviewModal }))
+);
+
 export const AppLayout: FC = memo(() => {
   const dispatch = useAppDispatch();
   const container = useRef<HTMLDivElement>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
@@ -277,7 +283,9 @@ export const AppLayout: FC = memo(() => {
         </div>
         {routeArtistId && nytaAvailable && (
           <button className='round-control header-nyta-action' aria-label='Abrir Nyta IA' type='button' onClick={openNytaPage}>
-            <NytaAvatar size={34} />
+            {/* tone='brand' (gradiente roxo): o botão agora é branco, então o emblema é quem
+                carrega a cor da Nyta. */}
+            <NytaAvatar size={22} />
           </button>
         )}
         <button className='round-control notification' aria-label='Notificações' type='button' onClick={() => navigate('/notifications')}>
@@ -295,7 +303,9 @@ export const AppLayout: FC = memo(() => {
     <>
       <LanguageModal />
 
-      <main className={`task-app${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}`}>
+      {/* has-player: no mobile o player é uma ilha flutuante ACIMA da navbar, então enquanto ele
+          estiver aberto o conteúdo precisa reservar mais espaço embaixo (ver App.scss). */}
+      <main className={`task-app${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}${playerVisible ? ' has-player' : ''}`}>
         {isArtistsList ? (
           <section className='profile-home page-view'>
             {!hideTopbar && topNavigation(true)}
@@ -382,8 +392,11 @@ export const AppLayout: FC = memo(() => {
                 <ProfileMenuButton active={isActive('marketing')} icon={<MarketingIcon size={22} />} label={<span>Marketing<small style={{ display: 'block', fontSize: 8 }}>(Em breve)</small></span>} onClick={() => goArtist('marketing')} />
               </div>
 
-              <button type='button' className='social-links' onClick={() => goArtist('diagnostico')}>
-                Reportar
+              <button type='button' className='social-links' onClick={() => setReviewOpen(true)}>
+                Avaliar
+              </button>
+              <button type='button' className='social-links' onClick={() => navigate('/suporte')}>
+                Suporte
               </button>
             </aside>
           )}
@@ -411,8 +424,13 @@ export const AppLayout: FC = memo(() => {
 
       <NytaFloatingModal />
 
+      <Suspense fallback={null}>
+        {reviewOpen && <PlatformReviewModal open onClose={() => setReviewOpen(false)} />}
+      </Suspense>
+
       {playerVisible && playerCurrentId && playerTracks.length > 0 && (
         <LocalPlayerBar
+          aboveMobileNav={hasMobileNav}
           tracks={playerTracks}
           currentId={playerCurrentId}
           onChangeTrack={setPlayerCurrentId}

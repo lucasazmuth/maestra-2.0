@@ -30,6 +30,9 @@ interface Props {
   onClose: () => void;
   onTrackClick?: () => void;
   onOpenFullView?: (track: LocalTrack) => void;
+  // Há uma tab bar no rodapé (mobile). O player deixa de ser a barra colada embaixo e vira uma
+  // ilha flutuante logo acima dela, no mesmo desenho — senão ele cobre a navegação.
+  aboveMobileNav?: boolean;
 }
 
 const fmt = (s: number): string => {
@@ -49,7 +52,7 @@ const ctrlBtn: React.CSSProperties = {
   padding: 4,
 };
 
-export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, onClose, onTrackClick, onOpenFullView }) => {
+export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, onClose, onTrackClick, onOpenFullView, aboveMobileNav }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // `playing` no store apenas REFLETE o <audio> (via eventos) — pra a LINHA do catálogo exibir e
   // controlar em sincronia. O controle do áudio é IMPERATIVO (togglePlay) — sem efeito que
@@ -146,7 +149,7 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
   // À ESQUERDA, capa + info no MEIO, fechar à direita. Estrutura PLANA (irmãos) pra o mobile
   // reordenar via `order` no CSS sem quebrar o desktop.
   return (
-    <div className='local-player-bar'>
+    <div className={`local-player-bar${aboveMobileNav ? ' local-player-bar--over-nav' : ''}`}>
       {/* Progresso slim no rodapé — só mobile (no desktop o progresso é inline). Sem thumb; o
           preenchido (--pct) é feito via gradiente no CSS. */}
       <input
