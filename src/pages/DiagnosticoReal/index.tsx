@@ -4,7 +4,7 @@ import { FiArrowRight } from 'react-icons/fi';
 
 import { useAppSelector } from '../../store/store';
 import { PRODUCT_THEME } from '../../components/productTheme';
-import { Header, Footer } from '../Landing';
+import { Header, Footer } from '../Landing/LightChrome';
 import landing from '../Landing/Landing.module.scss';
 import styles from './DiagnosticoReal.module.scss';
 

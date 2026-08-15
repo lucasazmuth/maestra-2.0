@@ -1,14 +1,15 @@
-import { FC, ReactNode, useEffect, useRef, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   FiArrowRight, FiArrowUp, FiCheck, FiChevronDown,
-  FiDownload, FiInstagram, FiPlay, FiShare, FiStar,
+  FiDownload, FiInstagram, FiPlay, FiShare,
 } from 'react-icons/fi';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
-import { AiGlow } from '../../components/AiGlow';
+import { usePwaInstall } from '../../components/PwaInstallBanner';
 import anitaPhoto from '../../assets/anita.jpg';
+import heroFigure from '../../assets/landing-hero-figure.png';
 import featureReal from '../../assets/feature-real.png';
 import featurePlanning from '../../assets/feature-planning.png';
 import featureAction from '../../assets/feature-action.png';
@@ -16,118 +17,73 @@ import featureGestao from '../../assets/feature-gestao.png';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { fetchPlanConfig } from '../../store/slices/subscription';
 import { usePlanPrices, fmtBRL } from '../../hooks/usePlanPrices';
-import { PRODUCT_THEME } from '../../components/productTheme';
-import { usePwaInstall } from '../../components/PwaInstallBanner';
-import styles from './Landing.module.scss';
+import styles from './Noir.module.scss';
 
-// Cores extras (produtos que não fazem parte do ciclo REAL→Planejamento→Plano).
-const NYTA_ACCENT = '124, 92, 255';   // violeta
-const GESTAO_ACCENT = '46, 196, 178'; // teal
+// ─────────────────────────────────────────────────────────────────────────────
+// Landing oficial, no layout de referência (design-ref/soundbox): fundo azul-noite em degradê,
+// display em caixa alta, cartões de vidro, selo serrilhado, onda e barras decorativas.
+//
+// A estrutura e as medidas vêm da réplica em design-ref/soundbox/home.html (extraída dos SVGs
+// originais). O conteúdo é o da Maestra; o verde-limão da referência ficou como cor de destaque.
+//
+// O chrome CLARO antigo (usado por /diagnostico-real e /music-rio-academy) mudou pra
+// ./LightChrome.tsx — os re-exports no fim mantêm os imports de fora funcionando.
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Preços dinâmicos via hook compartilhado (usePlanPrices lê asaas_plan_config).
-// `fmt` = alias do formatador de moeda compartilhado.
 const fmt = fmtBRL;
 
 const NAV = [
   { label: 'Recursos', id: 'recursos' },
+  { label: 'Nyta IA', id: 'nyta' },
   { label: 'Planos', id: 'planos' },
   { label: 'FAQ', id: 'faq' },
 ];
 
-const FEATURES: { badge: string; title: string; desc: string; items: string[]; glyph: ReactNode; accent: string; bg?: string; reverse?: boolean; to?: string; toLabel?: string; visual?: 'nytaPrompt' }[] = [
-  {
-    badge: 'Diagnóstico REAL',
-    accent: PRODUCT_THEME.real.accent, bg: PRODUCT_THEME.real.bg,
-    title: 'Saiba exatamente onde sua carreira está',
-    desc: 'Um raio-X da sua carreira em quatro dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que só você sabe.',
-    items: ['Índice REAL calculado a partir de dados reais, não achismo', 'Descubra qual dos 16 perfis de carreira é o seu', 'Onde seus ouvintes estão, playlists e referências'],
-    glyph: <img src={featureReal} alt="" />,
-    to: '/diagnostico-real', toLabel: 'Entenda o Índice REAL',
-  },
-  {
-    badge: 'Planejamento estratégico', reverse: true,
-    accent: PRODUCT_THEME.planning.accent, bg: PRODUCT_THEME.planning.bg,
-    title: 'Do diagnóstico à estratégia certa',
-    desc: 'A metodologia da Anita Carvalho, destilada de mais de 30 anos de carreira e 313 planejamentos reais, transforma seu diagnóstico em um planejamento completo, com as estratégias certas pro seu momento.',
-    items: ['Visão, missão e objetivos da carreira', 'Estratégias priorizadas pelo seu momento', 'Análise SWOT e mapa de referências'],
-    glyph: <img src={featurePlanning} alt="" />,
-  },
-  {
-    badge: 'Plano de ação',
-    accent: PRODUCT_THEME.action.accent, bg: PRODUCT_THEME.action.bg,
-    title: 'Execute o plano, tarefa por tarefa',
-    desc: 'O planejamento vira um plano executável: cada estratégia quebrada em tarefas, com progresso, prazos e responsáveis. Você sai do "o que fazer" pro "feito".',
-    items: ['Estratégias viram tarefas acompanháveis', 'Progresso, prazos e responsáveis', 'Cronograma e modelagem financeira'],
-    glyph: <img src={featureAction} alt="" />,
-  },
-  {
-    badge: 'Nyta IA', reverse: true,
-    accent: NYTA_ACCENT,
-    title: 'Uma assistente de IA ao seu lado',
-    desc: 'A Nyta IA acompanha sua carreira em todos os módulos: tira dúvidas, sugere caminhos e ajuda a executar o plano, sempre no contexto dos seus dados.',
-    items: ['Chat com a Nyta no contexto da sua carreira', 'Recomendações sob os seus dados reais', 'Do planejamento à gestão do dia a dia'],
-    // A demonstração do chat no lugar do emblema: mostrar a Nyta respondendo diz o que ela é
-    // melhor do que o símbolo parado.
-    glyph: null, visual: 'nytaPrompt',
-  },
-  {
-    badge: 'Gestão completa',
-    accent: GESTAO_ACCENT,
-    title: 'Onde o plano vira o seu dia a dia',
-    desc: 'A outra frente da Maestra: a operação da carreira. Organize suas músicas, acompanhe shows e lançamentos e traga sua equipe pra dentro. E ela só cresce.',
-    items: ['Músicas ilimitadas', 'Agenda de shows e lançamentos', 'Novos módulos a caminho: marketing, CRM e financeiro'],
-    glyph: <img src={featureGestao} alt="" />,
-  },
+const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+// ─── Dados ───────────────────────────────────────────────────────────────────
+const MODULES = [
+  { img: featureReal, title: 'Diagnóstico REAL', desc: 'Um raio-X da carreira em 4 dimensões, cruzando dados do Spotify e das redes com o que só você sabe. Descubra qual dos 16 perfis é o seu.' },
+  { img: featurePlanning, title: 'Planejamento estratégico', desc: 'A metodologia de 30 anos da Anita Carvalho transforma o diagnóstico em visão, missão, objetivos e estratégias já priorizadas.' },
+  { img: featureAction, title: 'Plano de ação', desc: 'Cada estratégia vira tarefas com progresso, prazos e responsáveis. Do "o que fazer" pro "feito".' },
+  { img: featureGestao, title: 'Gestão completa', desc: 'Músicas, agenda de shows e lançamentos e a equipe junto: a operação da carreira no mesmo lugar do plano.' },
+] as const;
+
+const SUGGESTIONS = [
+  'Como aumentar meus ouvintes no Spotify?',
+  'Qual o próximo passo da minha carreira?',
+  'Como montar meu plano de lançamento?',
+  'Por onde eu começo a crescer?',
 ];
 
-// FAQ com os preços interpolados (dinâmicos). `once/monthly/annual` vêm da config.
-const buildFaqItems = (once: number, monthly: number, annual: number): { q: string; a: string }[] => {
-  const discountPct = monthly > 0 ? Math.round((1 - annual / (monthly * 12)) * 100) : 0;
-  return [
-    { q: 'O que é a Maestra?', a: 'A Maestra é uma plataforma de gestão de carreira musical. Num só lugar, ela reúne o diagnóstico da sua carreira (o Índice REAL), o planejamento estratégico, o plano de ação para executar e a gestão do dia a dia (músicas, agenda e equipe), tudo com o apoio da Nyta, a assistente de IA. A ideia é simples: tirar a carreira do achismo e colocar no método, com dados e estratégia.' },
-    { q: 'O que é o diagnóstico REAL?', a: 'É uma análise da sua carreira em 4 dimensões (alcance, receita, audiência e legitimação), combinando dados reais do Spotify e das suas redes com o que você nos conta. O resultado é um dos 16 perfis de carreira e um retrato claro de onde você está.' },
-    { q: 'Preciso pagar para ver o diagnóstico?', a: 'Não, o diagnóstico REAL é sempre grátis. Para desbloquear o planejamento estratégico e a gestão de um artista é que existe um pagamento único por perfil, com acesso vitalício.' },
-    { q: 'Como funciona a cobrança?', a: `São dois modelos independentes. O diagnóstico é grátis. O planejamento de cada artista é um pagamento único de ${fmt(once)} (acesso vitalício ao perfil, sem mensalidade). E o Maestra PRO é uma assinatura opcional de ${fmt(monthly)} por mês, que adiciona a Nyta IA e o gerenciamento de vários perfis à sua conta.` },
-    { q: 'O que está incluído no Maestra PRO?', a: 'A Nyta IA (até 100 interações por dia), edição em todos os perfis que você acessa, músicas ilimitadas e acesso a todos os perfis da conta. É uma assinatura, à parte do desbloqueio de cada perfil.' },
-    { q: 'Quanto custa?', a: `O diagnóstico é grátis. O planejamento é um pagamento único de ${fmt(once)} por artista (vitalício). O Maestra PRO, opcional, custa ${fmt(monthly)} por mês ou ${fmt(annual)} no plano anual (cerca de ${discountPct}% de desconto). Cancele quando quiser.` },
-    { q: 'Como faço o pagamento?', a: 'Cartão de crédito (com renovação automática) ou PIX. Tudo processado com segurança via Asaas.' },
-    { q: 'Posso cancelar quando quiser?', a: 'Sim. Você cancela a qualquer momento pela sua conta, sem burocracia.' },
-  ];
-};
+// Clientes REAIS da Maestra (nomes informados pelo Lucas). As frases são ilustrativas —
+// confirmar/ajustar com o depoimento real de cada um antes de tratar como citação literal.
+const TESTIMONIALS = [
+  { quote: 'O planejamento com a Nyta virou meu mapa. Hoje sei exatamente qual é o próximo passo de cada artista que produzo.', name: 'AZMUTH', role: 'Produtor Musical · Rio de Janeiro', i: 'A', c: '#9A4FD1' },
+  { quote: 'A gente vivia apagando incêndio. Com o plano de ação organizado, a operação anda toda na mesma direção.', name: 'A Banca Records', role: 'Gravadora · Rio de Janeiro', i: 'B', c: '#6d4aff' },
+  { quote: 'O Diagnóstico REAL me mostrou com dados onde eu realmente estava. Parei de agir no achismo.', name: 'Madhá', role: 'Compositora · Minas Gerais', i: 'M', c: '#c1543f' },
+];
 
 const FREE_ITEMS = ['Diagnóstico REAL completo nas 4 dimensões', 'Descubra qual dos 16 perfis é o seu', 'Sem cartão de crédito pra começar'];
 const PLAN_ITEMS = ['Planejamento estratégico completo com a Nyta', 'Plano de ação com metas e cronograma', 'Análise de audiência: ouvintes e cidades', 'Músicas, agenda e equipe', 'Acesso vitalício ao perfil e ao plano'];
 const PRO_ITEMS = ['Nyta IA (assistente, até 100 interações por dia)', 'Edição em todos os perfis que você acessa', 'Músicas ilimitadas', 'Acesso a todos os perfis da conta'];
 
-const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+const buildFaqItems = (once: number, monthly: number, annual: number): { q: string; a: string }[] => [
+  { q: 'O diagnóstico é grátis mesmo?', a: 'Sim. Você cria a conta, conecta o perfil do artista e recebe o Diagnóstico REAL completo sem pagar nada e sem cadastrar cartão. O pagamento só aparece se você quiser desbloquear o planejamento estratégico daquele artista.' },
+  { q: 'O que eu ganho ao desbloquear um artista?', a: `Por ${fmt(once)} (pagamento único, sem mensalidade), aquele artista ganha o planejamento estratégico completo, o plano de ação com metas e cronograma, análise de audiência e as ferramentas de gestão: músicas, agenda e equipe. É vitalício.` },
+  { q: 'Qual a diferença entre o desbloqueio e o Maestra PRO?', a: `São coisas diferentes: o desbloqueio é um pagamento único por artista e libera o planejamento daquele perfil pra sempre. O PRO é uma assinatura opcional (${fmt(monthly)}/mês ou ${fmt(annual)}/ano) que adiciona a Nyta IA e o gerenciamento de vários perfis na conta.` },
+  { q: 'Posso cancelar o PRO quando quiser?', a: 'Pode. O PRO é uma assinatura sem fidelidade: cancelando, você mantém o acesso até o fim do período já pago. Os desbloqueios de artista não expiram — são seus.' },
+  { q: 'Sou empresário/produtor e cuido de vários artistas. Funciona pra mim?', a: 'Sim. Cada artista tem um perfil próprio com diagnóstico, planejamento e operação. Com o PRO você gerencia todos os perfis da conta e convida a equipe de cada artista com níveis de acesso.' },
+  { q: 'De onde vêm os dados do diagnóstico?', a: 'De duas fontes: dados públicos das plataformas (Spotify, redes sociais, YouTube) e o que você informa sobre shows, receita e reconhecimento. O cruzamento das duas é o que torna o retrato honesto.' },
+];
 
-// Navegação por seção que também funciona fora da landing (ex.: /diagnostico-real):
-// se a seção existe na página atual, rola até ela; senão volta pra landing pedindo o scroll.
-const useSectionNav = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  return (id: string) => () => {
-    if (location.pathname === '/') document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    else navigate('/', { state: { scrollTo: id } });
-  };
-};
+// Sem ID, o container do vídeo mostra o espaço reservado (troque pelo ID do YouTube — o trecho
+// depois de `v=` na URL).
+const HERO_VIDEO_ID = '';
 
-// Clique na marca: topo da landing (rola se já estiver nela, senão navega pra home).
-const useGoHome = () => {
+// ─── Cabeçalho ───────────────────────────────────────────────────────────────
+const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   const navigate = useNavigate();
-  const location = useLocation();
-  return (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (location.pathname === '/') window.scrollTo({ top: 0, behavior: 'smooth' });
-    else navigate('/');
-  };
-};
-
-// ─── Header ──────────────────────────────────────────────────────────────────
-export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
-  const navigate = useNavigate();
-  const goToSection = useSectionNav();
-  const goHome = useGoHome();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 12);
@@ -135,21 +91,25 @@ export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
     return () => window.removeEventListener('scroll', on);
   }, []);
   return (
-    <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ''}`}>
-      <div className={styles.headerInner}>
-        <a className={styles.brand} href="#top" onClick={goHome}>
-          <MaestraBrand variant='lockup' tone='dark' className={styles.brandText} />
+    <header className={`${styles.nav} ${scrolled ? styles.navScrolled : ''}`}>
+      <div className={styles.shell}>
+        <a
+          className={styles.brand}
+          href='#top'
+          onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+        >
+          <MaestraBrand variant='lockup' tone='light' className={styles.brandMark} />
         </a>
-        <nav className={styles.nav}>
-          {NAV.map((n) => <button key={n.id} className={styles.navLink} onClick={goToSection(n.id)}>{n.label}</button>)}
+        <nav className={styles.navLinks}>
+          {NAV.map((n) => <button key={n.id} onClick={scrollTo(n.id)}>{n.label}</button>)}
         </nav>
-        <div className={styles.actions}>
+        <div className={styles.navActions}>
           {loggedIn ? (
-            <button className={`${styles.btnPrimary} ${styles.headerCta}`} onClick={() => navigate('/artists')}>Ir pro app</button>
+            <button className={styles.btnNeon} onClick={() => navigate('/artists')}>Ir pro app</button>
           ) : (
             <>
-              <button className={`${styles.btnLink} ${styles.entrar}`} onClick={() => navigate('/login')}>Entrar</button>
-              <button className={`${styles.btnPrimary} ${styles.headerCta}`} onClick={() => navigate('/signup')}>Começar grátis</button>
+              <button className={styles.navEntrar} onClick={() => navigate('/login')}>Entrar</button>
+              <button className={styles.btnNeon} onClick={() => navigate('/signup')}>Começar grátis</button>
             </>
           )}
         </div>
@@ -158,27 +118,201 @@ export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   );
 };
 
-// Avatares de prova social (iniciais + cor, sem fotos falsas).
-const AVATARS = [
-  { i: 'L', c: '#9A4FD1' }, { i: 'M', c: '#6d4aff' }, { i: 'A', c: '#2d7d6f' },
-  { i: 'R', c: '#c1543f' }, { i: 'J', c: '#3f6fc1' },
-];
-const SUGGESTIONS = [
-  'Como aumentar meus ouvintes no Spotify?',
-  'Qual o próximo passo da minha carreira?',
-  'Como montar meu plano de lançamento?',
-  'Por onde eu começo a crescer?',
-];
+// ─── Hero ────────────────────────────────────────────────────────────────────
+// Selo serrilhado da referência: 26 pontas curtas geradas por código (mesmo desenho do
+// design-ref). O texto corre num arco em cima e o centro é o botão de play.
+const SEAL_POINTS = (() => {
+  const pts: string[] = [];
+  const N = 26;
+  for (let i = 0; i < N * 2; i++) {
+    const r = i % 2 ? 42.5 : 49;
+    const a = (Math.PI * i) / N - Math.PI / 2;
+    pts.push(`${(50 + r * Math.cos(a)).toFixed(2)} ${(50 + r * Math.sin(a)).toFixed(2)}`);
+  }
+  return `M${pts.join('L')}Z`;
+})();
 
-// ─── Vitrine da Nyta (caixa de prompt "digitando") ───────────────────────────
-// Nasceu no hero e mudou pra seção da Nyta IA: lá a demonstração do chat diz o que o produto é
-// melhor do que o emblema parado, e o hero ficou livre pro vídeo.
-const NytaPromptDemo: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
+const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   const navigate = useNavigate();
-  const [pi, setPi] = useState(0);       // frase atual do efeito de digitação
+  const start = () => navigate(loggedIn ? '/criar-artista' : '/signup');
+
+  return (
+    <section className={styles.hero} id='top'>
+      <div className={styles.heroTitle}>
+        <div className={styles.heroLine1}>
+          <h1 className={styles.hDisplay}>A música evoluiu</h1>
+          <span className={styles.heroBadge} aria-hidden><FiPlay size={30} /></span>
+        </div>
+        <div className={styles.heroLine2}>
+          <h1 className={`${styles.hDisplay} ${styles.hDisplayNeon}`}>a gestão também</h1>
+          <span className={styles.heroTagline}>com método</span>
+        </div>
+        <p className={styles.heroLead}>
+          Do diagnóstico ao dia a dia: a Maestra conecta tudo o que a sua carreira precisa num lugar só.
+        </p>
+        <div className={styles.heroCtas}>
+          <button className={styles.btnNeon} onClick={start}>
+            Fazer meu diagnóstico grátis <FiArrowRight size={18} />
+          </button>
+          <button className={styles.btnGhost} onClick={scrollTo('planos')}>Ver planos</button>
+        </div>
+      </div>
+
+      {/* Onda que atravessa a seção (traço da referência) */}
+      <svg className={styles.heroWave} viewBox='0 0 1440 150' preserveAspectRatio='none' aria-hidden focusable='false'>
+        <path d='M0 75 H250 l24 -58 22 108 20 -128 26 150 24 -92 26 60 22 -34 24 42 H700 l26 -66 22 96 24 -120 26 140 22 -84 26 52 24 -28 22 34 H1440' />
+      </svg>
+
+      <div className={`${styles.shell} ${styles.heroStage}`}>
+        {/* Selo "Diagnóstico grátis" */}
+        <button className={styles.seal} onClick={start} aria-label='Fazer o diagnóstico grátis'>
+          <svg className={styles.sealStar} viewBox='0 0 100 100' aria-hidden focusable='false'><path d={SEAL_POINTS} /></svg>
+          <svg className={styles.sealCaption} viewBox='0 0 160 160' aria-hidden focusable='false'>
+            <defs><path id='landing-seal-arc' d='M22 80a58 58 0 0 1 116 0' /></defs>
+            <text><textPath href='#landing-seal-arc' startOffset='6%'>Diagnóstico grátis</textPath></text>
+          </svg>
+          <span className={styles.sealCore}><FiPlay size={20} /></span>
+        </button>
+
+        {/* Figura central: blob neon + recorte. A foto é o placeholder herdado da referência —
+            trocar por um recorte de artista da Maestra (mesmo enquadramento, PNG sem fundo). */}
+        <div className={styles.heroFigure}>
+          <span className={styles.heroBlob} aria-hidden />
+          <span className={styles.heroDotPink} aria-hidden />
+          <img src={heroFigure} alt='' />
+        </div>
+
+        {/* O cartão "tocando agora" da referência vira o resultado do diagnóstico. */}
+        <div className={styles.nowCard}>
+          <span className={styles.nowEq} aria-hidden><i /><i /><i /></span>
+          <span className={styles.nowIcon}><NytaAvatar size={44} /></span>
+          <span className={styles.nowMeta}>
+            <strong>Perfil Rising</strong>
+            <span>Índice REAL · alcance e público em alta</span>
+          </span>
+          <span className={styles.nowScore}>72</span>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ─── Vídeo + números (slot "many top songs" da referência) ───────────────────
+function useCountUp(target: number, start: boolean, duration = 1600) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!start) return;
+    let raf = 0;
+    let t0: number | null = null;
+    const tick = (ts: number) => {
+      if (t0 === null) t0 = ts;
+      const p = Math.min((ts - t0) / duration, 1);
+      setN(Math.floor(p * target));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, start, duration]);
+  return n;
+}
+
+// Barras decorativas com as alturas do SVG original (a "onda sonora" da referência).
+const BAR_HEIGHTS = [16, 30, 57, 75, 95, 117, 137, 137, 122, 103, 84, 58, 31, 61, 80, 98, 116, 144, 122, 144, 161, 160, 105, 139, 120, 100, 77, 49, 77, 120, 98, 74, 53, 70, 88, 76, 90, 72, 58, 41, 41];
+
+const VideoStats: FC = () => {
+  const ref = useRef<HTMLElement>(null);
+  const [vis, setVis] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVis(true); obs.disconnect(); } }, { threshold: 0.3 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  const planos = useCountUp(313, vis);
+  const perfis = useCountUp(16, vis);
+  const anos = useCountUp(30, vis);
+
+  return (
+    <section className={styles.video} ref={ref}>
+      <div className={`${styles.shell} ${styles.videoGrid}`}>
+        <div className={styles.videoFrame}>
+          {HERO_VIDEO_ID ? (
+            <iframe
+              className={styles.videoPlayer}
+              src={`https://www.youtube-nocookie.com/embed/${HERO_VIDEO_ID}?rel=0&modestbranding=1`}
+              title='Conheça a Maestra'
+              allow='accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+              allowFullScreen
+              loading='lazy'
+            />
+          ) : (
+            <div className={styles.videoEmpty}>
+              <span className={styles.videoPlay} aria-hidden><FiPlay size={24} /></span>
+              <p>Espaço reservado pro vídeo de apresentação</p>
+            </div>
+          )}
+        </div>
+        <div>
+          <h2 className={styles.hSection}>O retrato honesto da sua carreira</h2>
+          <p className={styles.pLead}>
+            A metodologia nasce de 30 anos de gestão de carreiras e da análise de planejamentos reais,
+            sustentada por pesquisa de doutorado. Método de mercado, não achismo de internet.
+          </p>
+          <div className={styles.videoStats}>
+            <div><strong>{planos}+</strong><span>planejamentos reais</span></div>
+            <div><strong>{perfis}</strong><span>perfis de carreira</span></div>
+            <div><strong>{anos}+</strong><span>anos de metodologia</span></div>
+          </div>
+        </div>
+      </div>
+      <div className={styles.waveBars} aria-hidden>
+        {BAR_HEIGHTS.map((h, i) => <i key={i} style={{ height: `${Math.round(h * 0.75)}px` }} />)}
+      </div>
+    </section>
+  );
+};
+
+// ─── Módulos (slot "our top tier features") ──────────────────────────────────
+const Modules: FC = () => (
+  <section className={styles.modules} id='recursos'>
+    <div className={styles.shell}>
+      <div className={styles.sectionHead}>
+        <h2 className={styles.hSection}>A carreira inteira, num lugar só</h2>
+        <p className={styles.pBody}>
+          Diagnóstico, planejamento, plano de ação, músicas, agenda e equipe: as frentes da sua
+          carreira conectadas e evoluindo juntas, com a Nyta IA acompanhando cada passo.
+        </p>
+      </div>
+      <div className={styles.moduleGrid}>
+        {MODULES.map((m) => (
+          <article key={m.title} className={styles.moduleCard}>
+            <span className={styles.moduleIcon}><img src={m.img} alt='' /></span>
+            <h3 className={styles.hCard}>{m.title}</h3>
+            <p className={styles.pBody}>{m.desc}</p>
+          </article>
+        ))}
+        <article className={styles.moduleCard}>
+          <span className={styles.moduleIcon}><NytaAvatar size={44} /></span>
+          <h3 className={styles.hCard}>Nyta IA</h3>
+          <p className={styles.pBody}>A assistente que tira dúvidas, sugere caminhos e ajuda a executar o plano, sempre no contexto dos seus dados.</p>
+        </article>
+        <article className={`${styles.moduleCard} ${styles.moduleCardSoon}`}>
+          <span className={styles.moduleSoonTag}>Em breve</span>
+          <h3 className={styles.hCard}>E ela só cresce</h3>
+          <p className={styles.pBody}>Novos módulos a caminho: marketing, CRM e financeiro, no mesmo lugar do resto da carreira.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+);
+
+// ─── Nyta (vitrine do chat com efeito de digitação) ──────────────────────────
+const NytaSection: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
+  const navigate = useNavigate();
+  const [pi, setPi] = useState(0);
   const [display, setDisplay] = useState('');
 
-  // Leva pro fluxo de início (opcionalmente carregando a pergunta em foco).
   const start = (text: string) => {
     const v = (text || '').trim();
     if (v) {
@@ -187,8 +321,8 @@ const NytaPromptDemo: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
     navigate(loggedIn ? '/criar-artista' : '/signup');
   };
 
-  // Efeito "digitando": digita e apaga as sugestões em loop. A caixa é SÓ vitrine da Nyta —
-  // o usuário NÃO digita nada; a caixa inteira funciona como CTA pra começar.
+  // Efeito "digitando": digita e apaga as sugestões em loop. A caixa é SÓ vitrine — o clique
+  // leva pro fluxo de início com a pergunta em foco.
   useEffect(() => {
     const phrase = SUGGESTIONS[pi % SUGGESTIONS.length];
     let i = 0;
@@ -214,232 +348,65 @@ const NytaPromptDemo: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   const current = SUGGESTIONS[pi % SUGGESTIONS.length];
 
   return (
-    <div className={styles.promptWrap}>
-      <AiGlow style={{ display: 'block', width: '100%', borderRadius: 20 }}>
-        {/* Vitrine da Nyta: exibe as perguntas "sendo digitadas". Não é editável — a caixa
-            inteira é o CTA pra começar (leva a pergunta em foco pro fluxo de início). */}
-        <div
-          className={styles.promptBox}
-          role="button"
-          tabIndex={0}
-          aria-label="Começar com a Nyta"
-          onClick={() => start(current)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(current); } }}
-        >
-          <div className={styles.promptInput} aria-hidden>
-            {display || ' '}<span className={styles.promptCaret} />
-          </div>
-          <div className={styles.promptBar}>
-            <span className={styles.nytaPill}><NytaAvatar size={22} /> Nyta IA</span>
-            <span className={styles.promptSubmit} aria-hidden><FiArrowUp size={20} /></span>
-          </div>
+    <section className={styles.nyta} id='nyta'>
+      <div className={styles.shell}>
+        <div className={styles.nytaHead}>
+          <h2 className={styles.hSection}>Converse com a Nyta</h2>
+          <p className={styles.pLead}>Uma assistente de IA que conhece a sua carreira, do diagnóstico ao dia a dia.</p>
         </div>
-      </AiGlow>
-      <div className={styles.chips}>
-        {SUGGESTIONS.map((s) => <button key={s} type="button" className={styles.chip} onClick={() => start(s)}>{s}</button>)}
-      </div>
-    </div>
-  );
-};
-
-// ─── Hero (vídeo de apresentação) ────────────────────────────────────────────
-// Pra trocar o vídeo, basta o ID do YouTube (o trecho depois de `v=` na URL). Enquanto ficar
-// vazio, o container aparece com o aviso no lugar — nenhum vídeo é embutido.
-const HERO_VIDEO_ID = '';
-
-const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
-  const navigate = useNavigate();
-
-  return (
-    <section className={styles.hero} id="top">
-      <div className={styles.heroInner}>
-        <div className={styles.avatars}>
-          <div className={styles.avatarRow}>
-            {AVATARS.map((a, i) => <span key={i} className={styles.avatar} style={{ background: a.c }}>{a.i}</span>)}
-          </div>
-          <p className={styles.avatarsText}>Centenas de artistas já constroem a carreira com método na Maestra</p>
-        </div>
-
-        <span className={styles.kicker}>Gestão de carreira musical</span>
-        <h1 className={styles.heroTitle}>A música evoluiu. A gestão também.</h1>
-        <p className={styles.heroSub}>
-          Do diagnóstico ao dia a dia: a Maestra conecta tudo o que a sua carreira precisa num lugar só, com método.
-        </p>
-
-        <div className={styles.videoWrap}>
-          <div className={styles.videoFrame}>
-            {HERO_VIDEO_ID ? (
-              <iframe
-                className={styles.videoPlayer}
-                src={`https://www.youtube-nocookie.com/embed/${HERO_VIDEO_ID}?rel=0&modestbranding=1`}
-                title="Conheça a Maestra"
-                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                loading="lazy"
-              />
-            ) : (
-              <div className={styles.videoEmpty}>
-                <span className={styles.videoPlay} aria-hidden><FiPlay size={26} /></span>
-                <p>Espaço reservado pro vídeo de apresentação</p>
-              </div>
-            )}
-          </div>
-          <button
-            className={`${styles.btnPrimary} ${styles.videoCta}`}
-            onClick={() => navigate(loggedIn ? '/criar-artista' : '/signup')}
+        <div className={styles.promptWrap}>
+          <div
+            className={styles.promptBox}
+            role='button'
+            tabIndex={0}
+            aria-label='Começar com a Nyta'
+            onClick={() => start(current)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(current); } }}
           >
-            Fazer meu diagnóstico grátis <FiArrowRight size={18} />
-          </button>
-        </div>
-
-        <div className={styles.heroSecondary} style={{ color: '#93a4c0' }}>
-          <button className={styles.heroSecondaryLink} onClick={scrollTo('planos')}>Ver planos</button>
-          {' · Diagnóstico grátis, sem cartão pra começar'}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// ─── Stats (count-up ao entrar na tela) ──────────────────────────────────────
-function useCountUp(target: number, start: boolean, duration = 1600) {
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    if (!start) return;
-    let raf = 0;
-    let t0: number | null = null;
-    const tick = (ts: number) => {
-      if (t0 === null) t0 = ts;
-      const p = Math.min((ts - t0) / duration, 1);
-      setN(Math.floor(p * target));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, start, duration]);
-  return n;
-}
-
-const Stats: FC = () => {
-  const ref = useRef<HTMLElement>(null);
-  const [vis, setVis] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVis(true); obs.disconnect(); } }, { threshold: 0.3 });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-  const planos = useCountUp(313, vis);
-  const perfis = useCountUp(16, vis);
-  const anos = useCountUp(30, vis);
-  return (
-    <section className={styles.stats} ref={ref}>
-      <div className={styles.statsInner}>
-        <p className={styles.statsLead}>A metodologia por trás da <span>Maestra</span></p>
-        <div className={styles.statsGroup}>
-          <div><div className={styles.statNum}>{planos}+</div><div className={styles.statLabel}>planejamentos reais</div></div>
-          <div><div className={styles.statNum}>{perfis}</div><div className={styles.statLabel}>perfis de carreira</div></div>
-          <div><div className={styles.statNum}>{anos}+</div><div className={styles.statLabel}>anos de metodologia</div></div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// ─── Como funciona (4 passos) ────────────────────────────────────────────────
-const STEPS = [
-  { n: '01', t: 'Diagnóstico REAL', accent: PRODUCT_THEME.real.accent, d: 'Conecte seus dados e responda o que só você sabe. Em minutos, o retrato da sua carreira em 4 dimensões.' },
-  { n: '02', t: 'Planejamento estratégico', accent: PRODUCT_THEME.planning.accent, d: 'O diagnóstico vira um plano: visão, missão, objetivos e as estratégias certas pro seu momento, já priorizadas.' },
-  { n: '03', t: 'Plano de ação', accent: PRODUCT_THEME.action.accent, d: 'As estratégias viram tarefas com progresso, prazos e responsáveis. Do "o que fazer" pro "feito".' },
-  { n: '04', t: 'Evolua e refaça', accent: NYTA_ACCENT, d: 'Execute, cresça e refaça o REAL pra ver sua fase subir. A Nyta IA acompanha cada passo do ciclo.' },
-];
-
-const HowItWorks: FC = () => (
-  <section className={styles.how}>
-    <div className={styles.howInner}>
-      <div className={styles.howHead}>
-        <span className={styles.introKicker}>Como funciona</span>
-        <h2 className={styles.howTitle}>Do diagnóstico à evolução, com método</h2>
-      </div>
-      <div className={styles.howGrid}>
-        {STEPS.map((s, i) => (
-          <div key={s.n} className={styles.howStep} style={{ ['--accent' as string]: s.accent } as React.CSSProperties}>
-            {i < STEPS.length - 1 && <span className={styles.howLine} />}
-            <div className={styles.howNum}>{s.n}</div>
-            <h3>{s.t}</h3>
-            <p>{s.d}</p>
+            <div className={styles.promptInput} aria-hidden>
+              {display || ' '}<span className={styles.promptCaret} />
+            </div>
+            <div className={styles.promptBar}>
+              <span className={styles.nytaPill}><NytaAvatar size={22} /> Nyta IA</span>
+              <span className={styles.promptSubmit} aria-hidden><FiArrowUp size={20} /></span>
+            </div>
           </div>
+          <div className={styles.chips}>
+            {SUGGESTIONS.map((s) => <button key={s} type='button' className={styles.chip} onClick={() => start(s)}>{s}</button>)}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ─── Depoimentos (slot "what are they saying") ───────────────────────────────
+const Testimonials: FC = () => (
+  <section className={styles.says}>
+    <div className={styles.shell}>
+      <div className={styles.sectionHead}>
+        <h2 className={styles.hSection}>O que estão dizendo?</h2>
+        <p className={styles.pBody}>Artistas, produtores e gravadoras já constroem carreira com método na Maestra.</p>
+      </div>
+      <div className={styles.sayGrid}>
+        {TESTIMONIALS.map((t) => (
+          <article key={t.name} className={styles.sayCard}>
+            <div className={styles.sayWho}>
+              <span className={styles.sayAvatar} style={{ background: t.c }}>{t.i}</span>
+              <div>
+                <strong>{t.name}</strong>
+                <span>{t.role}</span>
+              </div>
+            </div>
+            <p>{t.quote}</p>
+          </article>
         ))}
       </div>
     </div>
   </section>
 );
 
-// ─── Carrossel de artistas / depoimentos ─────────────────────────────────────
-// Clientes REAIS da Maestra (nomes informados pelo Lucas). As frases são ilustrativas —
-// confirmar/ajustar com o depoimento real de cada um antes de tratar como citação literal.
-const TESTIMONIALS = [
-  { quote: 'O planejamento com a Nyta virou meu mapa. Hoje sei exatamente qual é o próximo passo de cada artista que produzo.', name: 'AZMUTH', role: 'Produtor Musical · Rio de Janeiro', i: 'A', c: '#9A4FD1' },
-  { quote: 'A gente vivia apagando incêndio. Com o plano de ação organizado, a operação anda toda na mesma direção.', name: 'A Banca Records', role: 'Gravadora · Rio de Janeiro', i: 'B', c: '#6d4aff' },
-  { quote: 'O Diagnóstico REAL me mostrou com dados onde eu realmente estava. Parei de agir no achismo.', name: 'Madhá', role: 'Compositora · Minas Gerais', i: 'M', c: '#c1543f' },
-];
-
-const Testimonials: FC = () => (
-  <section className={styles.tcar}>
-    <div className={styles.tcarHead}>
-      <span className={styles.introKicker}>Quem usa</span>
-      <h2 className={styles.tcarTitle}>Artistas construindo carreira com método</h2>
-    </div>
-    <div className={styles.tcarTrack}>
-      {TESTIMONIALS.map((t, i) => (
-        <div key={i} className={styles.tcard}>
-          <div className={styles.tcardStars}>{[0, 1, 2, 3, 4].map((s) => <FiStar key={s} size={14} fill="currentColor" />)}</div>
-          <p className={styles.tcardQuote}>{t.quote}</p>
-          <div className={styles.tcardWho}>
-            <span className={styles.avatar} style={{ background: t.c, marginLeft: 0 }}>{t.i}</span>
-            <div>
-              <div className={styles.tcardName}>{t.name}</div>
-              <div className={styles.tcardRole}>{t.role}</div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-    <p className={styles.tcarNote}>Espaço reservado para depoimentos reais. Envie nomes, fotos e frases pra publicarmos aqui.</p>
-  </section>
-);
-
-// ─── Feature ─────────────────────────────────────────────────────────────────
-const Feature: FC<{ data: typeof FEATURES[number]; loggedIn: boolean }> = ({ data, loggedIn }) => {
-  const navigate = useNavigate();
-  const demo = data.visual === 'nytaPrompt';
-  return (
-    <section className={`${styles.feature} ${data.reverse ? styles.reverse : ''}`} style={{ ['--accent' as string]: data.accent } as React.CSSProperties}>
-      <div className={styles.featureGrid}>
-        <div className={`${styles.featureVisual}${demo ? ` ${styles.featureVisualDemo}` : ''}`}>
-          {demo ? <NytaPromptDemo loggedIn={loggedIn} /> : <span className={styles.featureGlyph}>{data.glyph}</span>}
-        </div>
-        <div className={styles.featureBody}>
-          <span className={styles.featureBadge}>{data.badge}</span>
-          <h2 className={styles.featureTitle}>{data.title}</h2>
-          <p className={styles.featureDesc}>{data.desc}</p>
-          <ul className={styles.featureList}>
-            {data.items.map((it) => <li key={it} className={styles.featureItem}><FiCheck size={20} /> <span>{it}</span></li>)}
-          </ul>
-          {data.to && (
-            <button className={styles.featureLink} onClick={() => navigate(data.to as string)}>
-              {data.toLabel ?? 'Saiba mais'} <FiArrowRight size={16} />
-            </button>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// ─── Fundadora (história da Anita) ───────────────────────────────────────────
-// Carta da fundadora, sem travessões (a pedido). A foto entra em `anitaPhoto` quando o arquivo existir.
+// ─── Fundadora ───────────────────────────────────────────────────────────────
 const ANITA_STORY = [
   'Tenho mais de 30 anos no mercado da música, e durante todos eles ouvi a mesma pergunta, vinda de artistas dos mais diferentes tamanhos: "qual o caminho pra chegar onde eu quero?". Por muito tempo, tudo que eu tinha pra oferecer eram alguns conselhos genéricos. Isso me incomodava, porque eu sou filha de um compositor que nunca alcançou o reconhecimento que merecia, e que, na época, eu não soube como ajudar. Sem o que sei hoje, vi de perto o que acontece quando o talento existe mas falta um caminho. Essa ausência virou o motor da minha vida profissional.',
   'No mestrado, transformei essa inquietação em método: um processo de planejamento estratégico que apliquei, ao longo dos últimos anos, em mais de 300 consultorias individuais. Ali eu tive a confirmação do que suspeitava: o artista não precisa só de incentivo; precisa de um norte e de um mapa para chegar até ele. O método funcionava. O problema era de alcance: consultoria individual é cara, e por mais que eu desse aulas gratuitas e distribuísse a planilha do método de graça, muitos artistas ainda travavam na hora de aplicar sozinhos. Foi aí que veio o estalo: e se a inteligência artificial pudesse traduzir a minha metodologia, e a minha forma de pensar e a minha experiência profissional, numa ferramenta acessível a qualquer artista, em qualquer lugar do mundo? A Maestra nasceu dessa motivação, sustentada por uma hipótese que carrego como bandeira: talento não basta; é preciso gestão.',
@@ -450,24 +417,20 @@ const ANITA_STORY = [
 const Founder: FC = () => {
   const [expanded, setExpanded] = useState(false);
   return (
-  <section className={styles.founder} id="fundadora">
-    <div className={styles.founderInner}>
-      <div className={styles.founderHead}>
-        <span className={styles.introKicker}>Quem está por trás</span>
-        <h2 className={styles.founderTitle}>A história por trás da Maestra</h2>
-      </div>
-      <div className={styles.founderGrid}>
+    <section className={styles.founder} id='fundadora'>
+      <div className={`${styles.shell} ${styles.founderGrid}`}>
         <aside className={styles.founderAside}>
-          <div className={styles.founderPhoto}><img src={anitaPhoto} alt="Anita Carvalho" /></div>
+          <div className={styles.founderPhoto}><img src={anitaPhoto} alt='Anita Carvalho' /></div>
           <div className={styles.founderName}>Anita Carvalho</div>
           <div className={styles.founderRole}>Criadora do Índice REAL · Fundadora da Maestra</div>
-          <a className={styles.founderSocial} href="https://www.instagram.com/anitacarvalho_/" target="_blank" rel="noreferrer" aria-label="Instagram da Anita Carvalho">
+          <a className={styles.founderSocial} href='https://www.instagram.com/anitacarvalho_/' target='_blank' rel='noreferrer' aria-label='Instagram da Anita Carvalho'>
             <FiInstagram size={18} />
           </a>
         </aside>
-        <div className={styles.founderStory}>
+        <div>
+          <h2 className={styles.hSection}>A história por trás da Maestra</h2>
           <div className={`${styles.founderText} ${expanded ? '' : styles.founderTextClamp}`}>
-            {ANITA_STORY.map((p, i) => <p key={i} className={styles.founderPara}>{p}</p>)}
+            {ANITA_STORY.map((p, i) => <p key={i}>{p}</p>)}
           </div>
           <button className={styles.founderMore} onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}>
             {expanded ? 'Ler menos' : 'Ler a história completa'}
@@ -475,80 +438,77 @@ const Founder: FC = () => {
           </button>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
   );
 };
 
-// ─── Plans ───────────────────────────────────────────────────────────────────
-// Dois modelos de cobrança são coisas diferentes e a UI deixa isso explícito (pra ninguém se
-// sentir enganado): o Planejamento é PAGAMENTO ÚNICO por perfil (vitalício); o PRO é ASSINATURA.
-// O toggle Mensal/Anual vive DENTRO do card do PRO — só a assinatura tem essa escolha.
+// ─── Planos ──────────────────────────────────────────────────────────────────
+// Dois modelos de cobrança são coisas diferentes e a UI deixa isso explícito: o Planejamento é
+// PAGAMENTO ÚNICO por perfil (vitalício); o PRO é ASSINATURA. O toggle Mensal/Anual vive DENTRO
+// do card do PRO — só a assinatura tem essa escolha.
 const Plans: FC = () => {
   const navigate = useNavigate();
   const [annual, setAnnual] = useState(false);
   const { once, monthly, annual: annualPrice, discountPct } = usePlanPrices();
   return (
-    <section className={styles.plans} id="planos">
-      <div className={styles.plansInner}>
-        <div className={styles.plansHead}>
-          <span className={styles.introKicker}>Planos</span>
-          <h2 className={styles.plansTitle}>Preços transparentes, sem surpresas</h2>
-          <p className={styles.plansSub}>O diagnóstico é grátis. Você paga uma vez para desbloquear o planejamento de cada artista, e o Maestra PRO é uma assinatura opcional.</p>
+    <section className={styles.plans} id='planos'>
+      <div className={styles.shell}>
+        <div className={styles.sectionHead}>
+          <h2 className={styles.hSection}>Preços transparentes, sem surpresas</h2>
+          <p className={styles.pBody}>O diagnóstico é grátis. Você paga uma vez para desbloquear o planejamento de cada artista, e o Maestra PRO é uma assinatura opcional.</p>
         </div>
 
         <div className={styles.planGrid}>
-          {/* Grátis — o diagnóstico */}
-          <div className={styles.planCard}>
-            <span className={`${styles.planKind} ${styles.planKindFree}`}>Grátis pra sempre</span>
-            <h3 className={styles.planName}>Diagnóstico REAL</h3>
+          <article className={styles.planCard}>
+            <span className={styles.planKind}>Grátis pra sempre</span>
+            <h3>Diagnóstico REAL</h3>
             <p className={styles.planDesc}>Crie o perfil e receba o retrato completo da carreira.</p>
-            <div className={styles.planPriceFree}>R$ 0</div>
-            <ul className={styles.planList}>
-              {FREE_ITEMS.map((f) => <li key={f} className={`${styles.planItem} ${styles.planItemFree}`}><FiCheck size={18} /> <span>{f}</span></li>)}
+            <div className={styles.planPrice}><strong>R$ 0</strong></div>
+            <ul>
+              {FREE_ITEMS.map((f) => <li key={f}><FiCheck size={17} /> <span>{f}</span></li>)}
             </ul>
-            <button className={styles.planCtaOutline} onClick={() => navigate('/signup')}>Criar conta grátis</button>
-          </div>
+            <button className={styles.btnGhost} onClick={() => navigate('/signup')}>Criar conta grátis</button>
+          </article>
 
-          {/* Planejamento — pagamento único por perfil (o principal desbloqueio) */}
-          <div className={`${styles.planCard} ${styles.planCardHero}`}>
+          <article className={`${styles.planCard} ${styles.planCardHero}`}>
             <span className={styles.planBadge}>Desbloqueio do artista</span>
-            <span className={`${styles.planKind} ${styles.planKindOnce}`} style={{ marginTop: 4 }}>Pagamento único · vitalício</span>
-            <h3 className={styles.planName}>Planejamento estratégico</h3>
+            <span className={styles.planKind}>Pagamento único · vitalício</span>
+            <h3>Planejamento estratégico</h3>
             <p className={styles.planDesc}>Pague uma vez e o planejamento, o plano de ação e a gestão desse artista ficam seus pra sempre.</p>
-            <div className={styles.planPrice}><strong>{fmt(once)}</strong><span className={styles.planUnit}>uma vez</span></div>
+            <div className={styles.planPrice}><strong>{fmt(once)}</strong><span>uma vez</span></div>
             <p className={styles.planNote}>por artista · sem mensalidade</p>
-            <ul className={styles.planList}>
-              {PLAN_ITEMS.map((f) => <li key={f} className={`${styles.planItem} ${styles.planItemPro}`}><FiCheck size={18} /> <span>{f}</span></li>)}
+            <ul>
+              {PLAN_ITEMS.map((f) => <li key={f}><FiCheck size={17} /> <span>{f}</span></li>)}
             </ul>
-            <button className={styles.planCtaPrimary} onClick={() => navigate('/signup')}>Fazer diagnóstico grátis</button>
+            <button className={styles.btnNeon} onClick={() => navigate('/signup')}>Fazer diagnóstico grátis</button>
             <p className={styles.planCancel}>Você só paga quando decidir desbloquear.</p>
-          </div>
+          </article>
 
-          {/* Maestra PRO — assinatura (opcional), com o toggle mensal/anual próprio */}
-          <div className={`${styles.planCard} ${styles.planCardPro}`}>
+          <article className={`${styles.planCard} ${styles.planCardPro}`}>
             <span className={styles.planBadgePro}>PRO</span>
-            <span className={`${styles.planKind} ${styles.planKindSub}`}>Assinatura · opcional</span>
-            <h3 className={`${styles.planName} ${styles.planNamePro}`}>Maestra PRO</h3>
+            <span className={styles.planKind}>Assinatura · opcional</span>
+            <h3>Maestra PRO</h3>
             <p className={styles.planDesc}>A Nyta IA e as ferramentas pra gerenciar vários artistas.</p>
             <div className={styles.toggle}>
-              <button className={`${styles.toggleBtn} ${!annual ? styles.toggleBtnOn : ''}`} onClick={() => setAnnual(false)}>Mensal</button>
-              <button className={`${styles.toggleBtn} ${annual ? styles.toggleBtnOn : ''}`} onClick={() => setAnnual(true)}>
-                Anual <span className={styles.toggleSave}>-{discountPct}%</span>
+              <button className={annual ? '' : styles.toggleOn} onClick={() => setAnnual(false)}>Mensal</button>
+              <button className={annual ? styles.toggleOn : ''} onClick={() => setAnnual(true)}>
+                Anual <em>-{discountPct}%</em>
               </button>
             </div>
-            <div className={styles.planPrice}><strong>{fmt(annual ? annualPrice : monthly)}</strong><span className={styles.planUnit}>{annual ? '/ano' : '/mês'}</span></div>
+            <div className={styles.planPrice}><strong>{fmt(annual ? annualPrice : monthly)}</strong><span>{annual ? '/ano' : '/mês'}</span></div>
             <p className={styles.planNote}>{annual ? `equivale a ${fmt(annualPrice / 12)}/mês` : 'cobrança recorrente'}</p>
-            <ul className={styles.planList}>
-              {PRO_ITEMS.map((f) => <li key={f} className={`${styles.planItem} ${styles.planItemPro}`}><FiCheck size={18} /> <span>{f}</span></li>)}
+            <ul>
+              {PRO_ITEMS.map((f) => <li key={f}><FiCheck size={17} /> <span>{f}</span></li>)}
             </ul>
-            <button className={styles.planCtaPrimary} onClick={() => navigate('/signup')}>Assinar o PRO</button>
+            <button className={styles.btnGhost} onClick={() => navigate('/signup')}>Assinar o PRO</button>
             <p className={styles.planCancel}>Cancele quando quiser.</p>
-          </div>
+          </article>
         </div>
 
         <p className={styles.plansFootnote}>
-          <strong>Como se combinam:</strong> o <strong>diagnóstico</strong> é sempre grátis. O <strong>planejamento</strong> é um pagamento único por artista, vitalício, sem mensalidade. O <strong>Maestra PRO</strong> é uma assinatura opcional que adiciona a Nyta IA e o gerenciamento de vários perfis à sua conta.
+          <strong>Como se combinam:</strong> o <strong>diagnóstico</strong> é sempre grátis. O <strong>planejamento</strong> é um
+          pagamento único por artista, vitalício, sem mensalidade. O <strong>Maestra PRO</strong> é uma assinatura opcional que
+          adiciona a Nyta IA e o gerenciamento de vários perfis à sua conta.
         </p>
       </div>
     </section>
@@ -561,11 +521,10 @@ const Faq: FC = () => {
   const { once, monthly, annual } = usePlanPrices();
   const faqItems = buildFaqItems(once, monthly, annual);
   return (
-    <section className={styles.faq} id="faq">
-      <div className={styles.faqInner}>
+    <section className={styles.faq} id='faq'>
+      <div className={styles.shell}>
         <div className={styles.faqHead}>
-          <span className={styles.introKicker}>Dúvidas</span>
-          <h2 className={styles.faqTitle}>Perguntas frequentes</h2>
+          <h2 className={styles.hSection}>Perguntas frequentes</h2>
         </div>
         <div className={styles.faqList}>
           {faqItems.map((item, i) => {
@@ -573,7 +532,7 @@ const Faq: FC = () => {
             return (
               <div key={item.q} className={styles.faqItem}>
                 <button className={styles.faqBtn} onClick={() => setOpen(isOpen ? null : i)}>
-                  <span className={styles.faqQ}>{item.q}</span>
+                  <span>{item.q}</span>
                   <FiChevronDown size={20} className={`${styles.faqChevron} ${isOpen ? styles.faqChevronOpen : ''}`} />
                 </button>
                 {isOpen && <p className={styles.faqA}>{item.a}</p>}
@@ -586,65 +545,75 @@ const Faq: FC = () => {
   );
 };
 
-// ─── Footer ──────────────────────────────────────────────────────────────────
-export const Footer: FC = () => {
+// ─── CTA final (slot "subscribe us") ─────────────────────────────────────────
+const CtaBand: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   const navigate = useNavigate();
-  const goToSection = useSectionNav();
-  const goHome = useGoHome();
+  return (
+    <section className={styles.ctaBand}>
+      <div className={styles.shell}>
+        <div className={styles.ctaCard}>
+          <h2>Comece com o diagnóstico grátis</h2>
+          <p>Leva poucos minutos pra ver onde sua carreira está, e dá o primeiro passo pra onde ela pode ir.</p>
+          <button className={styles.btnNeon} onClick={() => navigate(loggedIn ? '/artists' : '/signup')}>
+            {loggedIn ? 'Ir pro app' : 'Começar grátis'} <FiArrowRight size={18} />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// ─── Rodapé ──────────────────────────────────────────────────────────────────
+const Footer: FC = () => {
+  const navigate = useNavigate();
   const { visible: pwaVisible, ios: pwaIOS, install: installPwa, dismiss: dismissPwa } = usePwaInstall();
   return (
     <footer className={styles.footer}>
-      <div className={styles.footerInner}>
-        <div className={styles.footerTop}>
-          <div className={styles.footerBrand}>
-            <a className={styles.brand} href="#top" onClick={goHome}>
-              <MaestraBrand variant='lockup' tone='dark' className={styles.brandText} />
-            </a>
-            <p className={styles.footerTag}>A plataforma que diagnostica, planeja e acompanha a sua carreira na música.</p>
-            {pwaVisible && (
-              <div className={styles.footerPwa}>
-                <div className={styles.footerPwaIcon}>{pwaIOS ? <FiShare size={17} /> : <FiDownload size={17} />}</div>
-                <div className={styles.footerPwaCopy}>
-                  <strong>Instale a Maestra</strong>
-                  <span>{pwaIOS ? 'Compartilhar → Adicionar à Tela de Início' : 'Tenha acesso rápido pelo celular ou computador'}</span>
-                </div>
-                {!pwaIOS && <button className={styles.footerPwaAction} onClick={installPwa}>Instalar</button>}
-                <button className={styles.footerPwaClose} onClick={dismissPwa} aria-label='Fechar aviso de instalação'>×</button>
-              </div>
-            )}
-          </div>
-          <div className={styles.footerCols}>
-            <div className={styles.footerCol}>
-              <span className={styles.footerColTitle}>Produto</span>
-              <button className={styles.footerLink} onClick={goToSection('recursos')}>Recursos</button>
-              <button className={styles.footerLink} onClick={() => navigate('/diagnostico-real')}>Diagnóstico REAL</button>
-              <button className={styles.footerLink} onClick={() => navigate('/music-rio-academy')}>Music Rio Academy</button>
-              <button className={styles.footerLink} onClick={goToSection('planos')}>Planos</button>
-              <button className={styles.footerLink} onClick={goToSection('faq')}>FAQ</button>
+      <div className={`${styles.shell} ${styles.footerGrid}`}>
+        <div className={styles.footerBrand}>
+          <MaestraBrand variant='lockup' tone='light' className={styles.brandMark} />
+          <p>A plataforma que diagnostica, planeja e acompanha a sua carreira na música.</p>
+          {pwaVisible && (
+            <div className={styles.footerPwa}>
+              <span className={styles.footerPwaIcon}>{pwaIOS ? <FiShare size={16} /> : <FiDownload size={16} />}</span>
+              <span className={styles.footerPwaCopy}>
+                <strong>Instale a Maestra</strong>
+                <span>{pwaIOS ? 'Compartilhar → Adicionar à Tela de Início' : 'Acesso rápido pelo celular ou computador'}</span>
+              </span>
+              {!pwaIOS && <button className={styles.footerPwaAction} onClick={installPwa}>Instalar</button>}
+              <button className={styles.footerPwaClose} onClick={dismissPwa} aria-label='Fechar aviso de instalação'>×</button>
             </div>
-            <div className={styles.footerCol}>
-              <span className={styles.footerColTitle}>Conta</span>
-              <button className={styles.footerLink} onClick={() => navigate('/login')}>Entrar</button>
-              <button className={styles.footerLink} onClick={() => navigate('/signup')}>Criar conta</button>
-            </div>
-            <div className={styles.footerCol}>
-              <span className={styles.footerColTitle}>Legal</span>
-              <button className={styles.footerLink} onClick={() => navigate('/legal/termos')}>Termos de uso</button>
-              <button className={styles.footerLink} onClick={() => navigate('/legal/privacidade')}>Política de privacidade</button>
-            </div>
-            <div className={styles.footerCol}>
-              <span className={styles.footerColTitle}>Social</span>
-              <a href="https://www.instagram.com/maestra.manager/" target="_blank" rel="noreferrer" aria-label="Instagram" className={styles.footerSocial}><FiInstagram size={18} /></a>
-            </div>
-          </div>
+          )}
         </div>
-        <div className={styles.footerBottom}>
-          <span className={styles.footerBy}>
-            Maestra <span className={styles.footerByDim}>by</span>{' '}
-            <button className={styles.footerByLink} onClick={() => { window.scrollTo(0, 0); navigate('/music-rio-academy'); }}>Music Rio Academy</button>
-          </span>
-          <span>© {new Date().getFullYear()} MUSIC RIO ACADEMY LTDA · CNPJ 22.826.985/0001-41. Todos os direitos reservados.</span>
+        <div className={styles.footerCol}>
+          <h4>Produto</h4>
+          <button onClick={scrollTo('recursos')}>Recursos</button>
+          <button onClick={() => navigate('/diagnostico-real')}>Diagnóstico REAL</button>
+          <button onClick={() => navigate('/music-rio-academy')}>Music Rio Academy</button>
+          <button onClick={scrollTo('planos')}>Planos</button>
+          <button onClick={scrollTo('faq')}>FAQ</button>
         </div>
+        <div className={styles.footerCol}>
+          <h4>Conta</h4>
+          <button onClick={() => navigate('/login')}>Entrar</button>
+          <button onClick={() => navigate('/signup')}>Criar conta</button>
+        </div>
+        <div className={styles.footerCol}>
+          <h4>Legal</h4>
+          <button onClick={() => navigate('/legal/termos')}>Termos de uso</button>
+          <button onClick={() => navigate('/legal/privacidade')}>Política de privacidade</button>
+        </div>
+        <div className={styles.footerCol}>
+          <h4>Social</h4>
+          <a href='https://www.instagram.com/maestra.manager/' target='_blank' rel='noreferrer' aria-label='Instagram' className={styles.footerSocial}><FiInstagram size={18} /></a>
+        </div>
+      </div>
+      <div className={`${styles.shell} ${styles.footerBottom}`}>
+        <span>
+          Maestra <em>by</em>{' '}
+          <button onClick={() => { window.scrollTo(0, 0); navigate('/music-rio-academy'); }}>Music Rio Academy</button>
+        </span>
+        <span>© {new Date().getFullYear()} MUSIC RIO ACADEMY LTDA · CNPJ 22.826.985/0001-41. Todos os direitos reservados.</span>
       </div>
     </footer>
   );
@@ -677,38 +646,16 @@ const Landing: FC = () => {
     <div className={styles.page}>
       <Header loggedIn={loggedIn} />
       <Hero loggedIn={loggedIn} />
-      <Stats />
-      <HowItWorks />
-      <div className={styles.introWrap} id="recursos">
-        <div className={styles.introInner}>
-          <span className={styles.introKicker}>Recursos</span>
-          <h2 className={styles.introTitle}>A carreira inteira, num lugar só</h2>
-          <p className={styles.introSub}>Diagnóstico, planejamento, plano de ação, músicas, agenda e equipe: as frentes da sua carreira conectadas e evoluindo juntas.</p>
-        </div>
-      </div>
-      {FEATURES.map((f) => <Feature key={f.badge} data={f} loggedIn={loggedIn} />)}
-      <Founder />
+      <VideoStats />
+      <Modules />
+      <NytaSection loggedIn={loggedIn} />
       <Testimonials />
+      <Founder />
       <Plans />
       <Faq />
-      <section className={styles.ctaBand}>
-        <div className={styles.ctaBandInner}>
-          <h2 className={styles.ctaBandTitle}>Comece com o diagnóstico grátis</h2>
-          <p className={styles.ctaBandSub}>Leva poucos minutos pra ver onde sua carreira está, e o primeiro passo pra onde ela pode ir.</p>
-          <HeroCtaButton loggedIn={loggedIn} />
-        </div>
-      </section>
+      <CtaBand loggedIn={loggedIn} />
       <Footer />
     </div>
-  );
-};
-
-const HeroCtaButton: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
-  const navigate = useNavigate();
-  return (
-    <button className={`${styles.btnPrimary} ${styles.ctaBandBtn}`} onClick={() => navigate(loggedIn ? '/artists' : '/signup')}>
-      {loggedIn ? 'Ir pro app' : 'Começar grátis'} <FiArrowRight size={18} />
-    </button>
   );
 };
 

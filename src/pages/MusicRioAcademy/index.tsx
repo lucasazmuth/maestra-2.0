@@ -1,7 +1,7 @@
 import { FC, useEffect } from 'react';
 import { FiArrowUpRight } from 'react-icons/fi';
 
-import { Header, Footer } from '../Landing';
+import { Header, Footer } from '../Landing/LightChrome';
 import { useAppSelector } from '../../store/store';
 import styles from './MusicRioAcademy.module.scss';
 
