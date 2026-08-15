@@ -70,7 +70,11 @@
   box-shadow: 0 22px 50px rgba(74, 99, 145, .14);
 }
 
-.pillText {
+// O mesmo cinza-azulado da marca no topo do app (#52668d). O tone 'dark' do MaestraBrand é
+// preto (#0a0a0a) e, sozinho no meio da tela clara, pesava demais. Seletor com o pai para
+// vencer a classe de tom, que tem a mesma especificidade.
+.pill .pillText {
+  color: #52668d;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 36px;
