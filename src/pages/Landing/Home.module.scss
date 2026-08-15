@@ -36,12 +36,12 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 .hDisplay {
   margin: 0;
   font-family: var(--font-display);
-  // O título passou de duas frases curtas ("A música evoluiu") pra uma que diz o que o produto
-  // faz, então o corpo desce de 4,6rem pra 3,6rem: em 4,6 a primeira linha estouraria os 1110.
-  font-size: clamp(1.9rem, 4.4vw, 3.6rem);
+  // Três linhas com a frase inteira: em 3,6rem a primeira ("A plataforma que diagnostica," mais
+  // o disco) estouraria os 1110 do conteúdo, então o corpo fica em 3,1rem.
+  font-size: clamp(1.8rem, 3.8vw, 3.1rem);
   font-weight: 800;
   letter-spacing: -.025em;
-  line-height: 1.12;
+  line-height: 1.16;
   color: $strong;
 }
 .hSection {
@@ -131,9 +131,9 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
   font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: $mute;
 }
 .heroLine1 { display: flex; align-items: center; justify-content: center; gap: 22px; flex-wrap: wrap; }
-// O título fica em tinta. Em azul, ele competia com o botão pelo mesmo olhar — e num corpo de
-// 4,6rem sempre vence. A hierarquia aqui vem do tamanho, não da cor.
-.heroLine2 { display: block; }
+// O título fica em tinta. Em azul, ele competia com o botão pelo mesmo olhar — e num corpo
+// desse tamanho sempre vence. A hierarquia aqui vem do tamanho, não da cor.
+.heroLine2, .heroLine3 { display: block; }
 // O disco é ornamento, não ação: superfície clara com o ícone em tinta. Cheio de azul e com
 // sombra colorida, ele parecia um segundo botão ao lado do título.
 .heroBadge {
@@ -553,6 +553,8 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 }
 
 @media (max-width: 620px) {
+  // No estreito o disco cai sozinho entre duas linhas do título e parece peça solta: some.
+  .heroBadge { display: none; }
   .videoStats { grid-template-columns: 1fr; gap: 24px; }
   .modMainNum { padding: 24px 22px 0; font-size: 1.8rem; }
   .modMainBody { padding: 14px 22px 30px;

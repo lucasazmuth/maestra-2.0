@@ -100,10 +100,11 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
             leitor de tela e mecanismo de busca sobre qual é o título. */}
         <h1 className={styles.hDisplay}>
           <span className={styles.heroLine1}>
-            Diagnostica, planeja e acompanha
+            A plataforma que diagnostica,
             <span className={styles.heroBadge} aria-hidden><FiPlay size={30} /></span>
           </span>{' '}
-          <span className={styles.heroLine2}>a sua carreira na música</span>
+          <span className={styles.heroLine2}>planeja e acompanha</span>{' '}
+          <span className={styles.heroLine3}>a sua carreira na música</span>
         </h1>
         <div className={styles.heroCtas}>
           <button className={styles.btnNeon} onClick={start}>
