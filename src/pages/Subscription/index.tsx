@@ -24,7 +24,10 @@ const PRO_GROUPS: BenefitGroup[] = [
   },
   {
     icon: <NytaAvatar size={20} />, title: 'Assistente de IA ao seu lado',
-    items: ['Nyta Assistente — chat de IA ilimitado', 'Recomendações sob o contexto da sua carreira'],
+    // 100/dia por perfil, não "ilimitado": o limite vem de nyta_plan_limits (pro = 100) e o
+    // contador é por (usuário, artista, dia UTC) em nyta_daily_usage. O próprio chat mostra
+    // "X/100" no cabeçalho — prometer ilimitado aqui contradizia a tela seguinte.
+    items: ['Nyta Assistente — até 100 interações por dia em cada perfil', 'Recomendações sob o contexto da sua carreira'],
   },
   {
     icon: <FiGrid />, title: 'Gestão completa',
