@@ -17,8 +17,8 @@ import styles from './Home.module.scss';
 // A estrutura e as medidas vêm da réplica em design-ref/soundbox/home.html (extraída dos SVGs
 // originais). O conteúdo é o da Maestra; o verde-limão da referência ficou como cor de destaque.
 //
-// O chrome CLARO antigo (usado por /diagnostico-real e /music-rio-academy) mudou pra
-// ./LightChrome.tsx — os re-exports no fim mantêm os imports de fora funcionando.
+// O cabeçalho e o rodapé moram em ./Chrome.tsx, compartilhados com /sobre e com as páginas
+// institucionais.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const fmt = fmtBRL;

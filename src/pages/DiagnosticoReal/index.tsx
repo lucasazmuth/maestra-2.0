@@ -4,8 +4,7 @@ import { FiArrowRight } from 'react-icons/fi';
 
 import { useAppSelector } from '../../store/store';
 import { PRODUCT_THEME } from '../../components/productTheme';
-import { Header, Footer } from '../Landing/LightChrome';
-import landing from '../Landing/Landing.module.scss';
+import { Header, Footer } from '../Landing/Chrome';
 import styles from './DiagnosticoReal.module.scss';
 
 // Accent do produto REAL (mesmo verde usado nos cards da jornada e no recurso da landing).
@@ -79,7 +78,7 @@ const DiagnosticoReal: FC = () => {
             dimensões objetivas e devolve, em segundos, onde ela realmente está, não onde parece estar. É o ponto de
             partida de todo planejamento na plataforma.
           </p>
-          <button className={`${landing.btnPrimary} ${styles.heroCta}`} onClick={startDiagnostic}>
+          <button className={`${styles.btnPrimary} ${styles.heroCta}`} onClick={startDiagnostic}>
             Fazer meu diagnóstico grátis <FiArrowRight size={18} />
           </button>
         </div>
@@ -204,7 +203,7 @@ const DiagnosticoReal: FC = () => {
           <p className={styles.ctaBandSub}>
             Leva poucos minutos pra ver onde sua carreira está, e dá o primeiro passo pra onde ela pode ir.
           </p>
-          <button className={`${landing.btnPrimary} ${styles.ctaBandBtn}`} onClick={() => navigate(loggedIn ? '/artists' : '/signup')}>
+          <button className={`${styles.btnPrimary} ${styles.ctaBandBtn}`} onClick={() => navigate(loggedIn ? '/artists' : '/signup')}>
             {loggedIn ? 'Ir pro app' : 'Começar grátis'} <FiArrowRight size={18} />
           </button>
         </div>

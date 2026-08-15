@@ -10,8 +10,8 @@ import styles from './Home.module.scss';
 // a navegação precisa funcionar dos dois lados: os itens de seção rolam a página quando já se
 // está na landing e voltam pra ela pedindo o scroll quando não se está.
 //
-// As páginas institucionais mais antigas (/diagnostico-real, /music-rio-academy e a landing do
-// workshop) ainda usam ./LightChrome.tsx, que tem a mesma cara mas outro conjunto de links.
+// Serve a landing, /sobre, /diagnostico-real e /music-rio-academy. Só a landing do workshop
+// (/eventos/niteroi) segue com o ./LightChrome.tsx, que tem outro conjunto de links.
 
 // Só âncoras: o menu do topo leva a áreas da própria landing, então cada item rola a página em
 // vez de trocar de rota. "Sobre" saiu daqui por isso — ele é página, e vive no rodapé.
