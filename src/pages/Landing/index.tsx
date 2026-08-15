@@ -4,12 +4,12 @@ import { FiArrowLeft, FiArrowRight, FiArrowUp, FiCheck, FiChevronDown, FiPlay } 
 
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { usePwaInstall } from '../../components/PwaInstallBanner';
-import { Header, Footer } from './NoirChrome';
+import { Header, Footer } from './Chrome';
 import heroFigure from '../../assets/landing-hero-figure.png';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { fetchPlanConfig } from '../../store/slices/subscription';
 import { usePlanPrices, fmtBRL } from '../../hooks/usePlanPrices';
-import styles from './Noir.module.scss';
+import styles from './Home.module.scss';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Landing oficial, no layout de referência (design-ref/soundbox): fundo azul-noite em degradê,

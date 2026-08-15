@@ -2,7 +2,7 @@ import { FC, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiInstagram } from 'react-icons/fi';
 
-import { Header, Footer } from '../Landing/NoirChrome';
+import { Header, Footer } from '../Landing/Chrome';
 import { useAppSelector } from '../../store/store';
 import anitaPhoto from '../../assets/anita.jpg';
 import styles from './Sobre.module.scss';
@@ -10,7 +10,7 @@ import styles from './Sobre.module.scss';
 // Página "Sobre": a história da Anita, que antes era uma seção da landing.
 //
 // Lá o texto vinha recolhido, com um "ler mais" — numa página dedicada ele aparece inteiro, que
-// é o motivo de existir a página. O chrome escuro vem do NoirChrome, o mesmo da landing.
+// é o motivo de existir a página. O cabeçalho e o rodapé vêm do Chrome, o mesmo da landing.
 
 const ANITA_STORY = [
   'Tenho mais de 30 anos no mercado da música, e durante todos eles ouvi a mesma pergunta, vinda de artistas dos mais diferentes tamanhos: "qual o caminho pra chegar onde eu quero?". Por muito tempo, tudo que eu tinha pra oferecer eram alguns conselhos genéricos. Isso me incomodava, porque eu sou filha de um compositor que nunca alcançou o reconhecimento que merecia, e que, na época, eu não soube como ajudar. Sem o que sei hoje, vi de perto o que acontece quando o talento existe mas falta um caminho. Essa ausência virou o motor da minha vida profissional.',

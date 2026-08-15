@@ -4,15 +4,14 @@ import { FiDownload, FiInstagram, FiShare } from 'react-icons/fi';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
 import { usePwaInstall } from '../../components/PwaInstallBanner';
-import styles from './Noir.module.scss';
+import styles from './Home.module.scss';
 
-// Cabeçalho e rodapé ESCUROS, compartilhados pela landing e pelas páginas que nascem dela
-// (hoje /sobre). Ficam aqui porque a navegação precisa funcionar dos dois lados: os itens de
-// seção rolam a página quando já se está na landing e voltam pra ela pedindo o scroll quando
-// não se está.
+// Cabeçalho e rodapé da landing e das páginas que nascem dela (hoje /sobre). Ficam aqui porque
+// a navegação precisa funcionar dos dois lados: os itens de seção rolam a página quando já se
+// está na landing e voltam pra ela pedindo o scroll quando não se está.
 //
-// O par CLARO (usado por /diagnostico-real, /music-rio-academy e a landing do workshop) mora em
-// ./LightChrome.tsx.
+// As páginas institucionais mais antigas (/diagnostico-real, /music-rio-academy e a landing do
+// workshop) ainda usam ./LightChrome.tsx, que tem a mesma cara mas outro conjunto de links.
 
 const NAV: { label: string; id?: string; to?: string }[] = [
   { label: 'Recursos', id: 'recursos' },
@@ -53,7 +52,7 @@ export const Header: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
     <header className={`${styles.nav} ${scrolled ? styles.navScrolled : ''}`}>
       <div className={styles.shell}>
         <a className={styles.brand} href='#top' onClick={goHome}>
-          <MaestraBrand variant='lockup' tone='light' className={styles.brandMark} />
+          <MaestraBrand variant='lockup' tone='dark' className={styles.brandMark} />
         </a>
         <nav className={styles.navLinks}>
           {NAV.map((n) => (
@@ -86,7 +85,7 @@ export const Footer: FC = () => {
     <footer className={styles.footer}>
       <div className={`${styles.shell} ${styles.footerGrid}`}>
         <div className={styles.footerBrand}>
-          <MaestraBrand variant='lockup' tone='light' className={styles.brandMark} />
+          <MaestraBrand variant='lockup' tone='dark' className={styles.brandMark} />
           <p>A plataforma que diagnostica, planeja e acompanha a sua carreira na música.</p>
           {pwaVisible && (
             <div className={styles.footerPwa}>
