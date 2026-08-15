@@ -107,7 +107,7 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
           </button>
           <button className={styles.btnGhost} onClick={scrollTo('planos')}>Ver planos</button>
         </div>
-        <p className={styles.heroNote}>Sem cartão de crédito.</p>
+        <p className={styles.heroNote}>Sem cartão de crédito para começar.</p>
       </div>
 
       {/* Palco nas coordenadas da referência (Hero.svg): a figura em x=483/y=412, o cartão em
