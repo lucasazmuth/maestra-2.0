@@ -50,10 +50,11 @@
   text-decoration: none;
 }
 
+// Mesmo 24px do topo do app e da landing — a marca é uma só.
 .brandWordmark {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 28px;
+  font-size: 24px;
   color: #52668d;
   letter-spacing: -0.01em;
 }

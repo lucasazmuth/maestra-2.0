@@ -48,7 +48,9 @@ $ink: #405985;
 // tone='dark' do MaestraBrand é preto puro; aqui a marca segue o mesmo cinza-azulado do app.
 .brand { display: inline-flex; align-items: center; gap: 10px; color: #52668d; text-decoration: none; }
 .brand span { color: #52668d; }
-.brandText { font-size: 25px; }
+// 24px é o tamanho da marca no topo do app (.constructor). Landing, autenticação e produto
+// mostram a mesma marca; tamanhos diferentes faziam parecer três logotipos.
+.brandText { font-size: 24px; }
 .nav { display: flex; align-items: center; gap: 32px; }
 .navLink { color: $g300; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: none; border: none; &:hover { color: $ink; } }
 .actions { display: flex; align-items: center; gap: 20px; }
