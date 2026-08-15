@@ -97,7 +97,9 @@
    usava roxo #9A4FD1, cor que aqui fica reservada pro assistente Nyta). */
 .settings-upsell { border-radius: 16px; padding: 24px; background: radial-gradient(120% 120% at 0% 0%, rgba(51, 97, 255, .10) 0%, rgba(51, 97, 255, .03) 42%, transparent 100%); border: 1px solid rgba(51, 97, 255, .18); }
 .settings-upsell-head { display: flex; align-items: center; gap: 14px; }
-.settings-upsell-icon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: rgba(51, 97, 255, .12); border: 1px solid rgba(51, 97, 255, .24); box-shadow: 0 10px 24px rgba(51, 97, 255, .14); color: #3361ff; }
+/* A moldura acompanha a gema: com o azul de antes, o fundo brigava com o degradê rosa-laranja
+   do selo do Pro — os dois falam da mesma coisa e agora usam o mesmo símbolo e a mesma cor. */
+.settings-upsell-icon { --plan-gem-from: #ff5c00; --plan-gem-mid: #ff375f; --plan-gem-to: #ff5c00; display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: rgba(255, 55, 95, .1); border: 1px solid rgba(255, 55, 95, .22); box-shadow: 0 10px 24px rgba(255, 92, 0, .12); color: #d12a4d; }
 .settings-upsell-title { color: #33415e; font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
 .settings-upsell-subtitle { margin-top: 2px; color: #7b8eaf; font-size: 13px; }
 .settings-upsell-desc { margin: 16px 0 18px; color: #5b6f94; font-size: 13.5px; line-height: 1.6; }

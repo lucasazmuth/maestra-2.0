@@ -1,10 +1,11 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Popconfirm, message } from 'antd';
-import { FiCheck, FiArrowRight, FiAward } from 'react-icons/fi';
+import { FiCheck, FiArrowRight } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { Spinner } from '../../components/spinner/spinner';
+import { Gem } from '../../components/PlanTag/Gem';
 import {
   fetchSubscriptionStatus,
   cancelSubscription,
@@ -168,7 +169,9 @@ const SubscriptionManagement: FC = () => {
         // Sem assinatura / cancelada → card de upsell do Maestra Pro.
         <div className='settings-upsell'>
           <div className='settings-upsell-head'>
-            <span className='settings-upsell-icon'><FiAward size={26} /></span>
+            {/* A mesma gema do selo do topo: o card do Pro e o selo falam da mesma coisa e
+                agora usam o mesmo símbolo, no lugar da medalha genérica. */}
+            <span className='settings-upsell-icon'><Gem size={24} /></span>
             <div>
               <div className='settings-upsell-title'>Maestra Pro</div>
               <div className='settings-upsell-subtitle'>Desbloqueie todo o potencial da plataforma</div>

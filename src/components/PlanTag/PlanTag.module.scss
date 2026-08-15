@@ -8,7 +8,10 @@
   align-items: center;
   gap: 6px;
   height: 22px;
-  margin-left: 10px;
+  // O .top-navigation-left tem gap de ~30px (era a distância entre a marca e o menu que saiu);
+  // a margem negativa cancela quase todo ele para o selo ficar junto do wordmark, sem mexer no
+  // espaçamento dos outros filhos do cabeçalho.
+  margin-left: -20px;
   padding: 0 10px 0 8px;
   border: 1px solid transparent;
   border-radius: 999px;
@@ -27,15 +30,6 @@
   transform: translateY(-.5px);
 }
 
-// O <svg> que só carrega o <defs> do degradê não deve ocupar espaço na linha.
-.defs {
-  position: absolute;
-  width: 0;
-  height: 0;
-}
-
-// PRO usa o par rosa→laranja do selo de referência: é o único lugar do app com essa cor, e é
-// justamente o que faz o estado se destacar sem imitar um botão de ação (azul).
 .pro {
   --plan-gem-from: #ff5c00;
   --plan-gem-mid: #ff375f;
@@ -76,7 +70,7 @@
 @media (max-width: 560px) {
   .tag {
     height: 20px;
-    margin-left: 7px;
+    margin-left: -21px;
     padding: 0 8px 0 6px;
     font-size: 9px;
   }
