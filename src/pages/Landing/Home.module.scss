@@ -533,6 +533,9 @@ $shadow: 0 10px 26px rgba(74, 99, 145, .07);
 @media (max-width: 820px) {
   .navLinks { display: none; }
   .nav .shell { height: 76px; gap: 16px; }
+  // O respiro do topo é calculado pro cabeçalho de 92px do desktop; com a barra em 76px sobrava
+  // um vão de 95px antes do kicker, que numa tela de 812 de altura custa caro.
+  .hero { padding-top: 120px; }
 }
 
 @media (max-width: 620px) {
