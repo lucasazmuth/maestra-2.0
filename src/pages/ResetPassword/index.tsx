@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { supabase } from '../../lib/supabase';
 import { AuthShell, AuthField, AuthSubmit, authError } from '../Login/AuthShell';
+import styles from '../Login/AuthShell.module.scss';
 import { Spinner } from '../../components/spinner/spinner';
 
 // Tela de "definir nova senha", aberta pelo link do e-mail de recuperação.
@@ -89,16 +90,14 @@ const ResetPassword: FC = () => {
   if (status === 'invalid') {
     return (
       <AuthShell>
-        <p style={{ color: '#e91429', fontSize: 14, lineHeight: 1.5, textAlign: 'center', margin: '4px 0 20px' }}>
+        <p className={styles.error} style={{ fontSize: 14, lineHeight: 1.5, textAlign: 'center', margin: '4px 0 20px' }}>
           Este link de redefinição é inválido ou expirou. Peça um novo na tela de login.
         </p>
         <button
           type='button'
           onClick={() => navigate('/login')}
-          style={{
-            display: 'block', margin: '0 auto', background: 'none', border: 'none',
-            color: '#509bf5', fontSize: 14, cursor: 'pointer',
-          }}
+          className={styles.textLink}
+          style={{ marginTop: 0 }}
         >
           Voltar ao login
         </button>
@@ -109,7 +108,7 @@ const ResetPassword: FC = () => {
   if (status === 'done') {
     return (
       <AuthShell>
-        <p style={{ color: '#9A4FD1', fontSize: 14, textAlign: 'center', margin: '4px 0' }}>
+        <p style={{ color: '#1d8a68', fontSize: 14, fontWeight: 700, textAlign: 'center', margin: '4px 0' }}>
           Senha atualizada! Redirecionando para o login…
         </p>
       </AuthShell>
@@ -121,7 +120,7 @@ const ResetPassword: FC = () => {
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <AuthField type='password' placeholder='Nova senha' value={password} onChange={setPassword} autoFocus />
         <AuthField type='password' placeholder='Confirmar nova senha' value={confirm} onChange={setConfirm} />
-        {error && <div style={{ color: '#e91429', fontSize: 13 }}>{error}</div>}
+        {error && <div className={styles.error}>{error}</div>}
         <AuthSubmit loading={loading} label='Redefinir senha' />
       </form>
     </AuthShell>

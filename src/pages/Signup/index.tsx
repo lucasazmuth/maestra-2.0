@@ -5,6 +5,7 @@ import { useAppDispatch } from '../../store/store';
 import { supabase } from '../../lib/supabase';
 import { authActions } from '../../store/slices/auth';
 import { AuthShell, AuthField, AuthSubmit, authError } from '../Login/AuthShell';
+import styles from '../Login/AuthShell.module.scss';
 import { EmailCodeStep } from '../../components/EmailCodeStep';
 
 const Signup: FC = () => {
@@ -67,9 +68,9 @@ const Signup: FC = () => {
   return (
     <AuthShell
       footer={
-        <p style={{ color: '#b3b3b3', fontSize: 14, marginTop: 28, textAlign: 'center' }}>
+        <p className={styles.footerText}>
           Já possui cadastro?{' '}
-          <Link to='/login' style={{ color: '#af68d8', fontWeight: 700 }}>
+          <Link to='/login' className={styles.footerLink}>
             Entrar
           </Link>
         </p>
@@ -79,7 +80,7 @@ const Signup: FC = () => {
         <AuthField type='text' placeholder='Seu nome' value={name} onChange={setName} autoFocus />
         <AuthField type='email' placeholder='E-mail' value={email} onChange={setEmail} />
         <AuthField type='password' placeholder='Senha (mín. 6 caracteres)' value={password} onChange={setPassword} />
-        {error && <div style={{ color: '#e91429', fontSize: 13 }}>{error}</div>}
+        {error && <div className={styles.error}>{error}</div>}
         <AuthSubmit loading={loading} label='Criar conta' />
       </form>
     </AuthShell>

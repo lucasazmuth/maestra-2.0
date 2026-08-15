@@ -4,6 +4,7 @@ import { FiMail, FiArrowLeft } from 'react-icons/fi';
 
 import { supabase } from '../../lib/supabase';
 import { AuthShell, AuthField, AuthSubmit, authError } from '../Login/AuthShell';
+import styles from '../Login/AuthShell.module.scss';
 
 // Tela dedicada de "Esqueci minha senha", em dois passos:
 //   1) form  → o usuário digita o e-mail e a gente dispara o link de recuperação.
@@ -59,19 +60,17 @@ const ForgotPassword: FC = () => {
             style={{
               width: 60, height: 60, borderRadius: '50%', margin: '4px auto 18px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(154, 79, 209, 0.14)', color: '#c65fb0',
+              background: '#eef3ff', color: '#3361ff',
             }}
           >
             <FiMail size={28} />
           </div>
-          <h2 style={{ color: '#fff', fontSize: 21, fontWeight: 800, margin: '0 0 10px', fontFamily: 'var(--font-display)' }}>
-            Confira seu e-mail
-          </h2>
-          <p style={{ color: '#cfcfd4', fontSize: 14.5, lineHeight: 1.6, margin: '0 0 6px' }}>
-            Se existir uma conta com <strong style={{ color: '#fff' }}>{email.trim()}</strong>, enviamos um
+          <h2 className={styles.stepTitle}>Confira seu e-mail</h2>
+          <p className={styles.stepText} style={{ marginBottom: 6 }}>
+            Se existir uma conta com <strong style={{ color: '#405985' }}>{email.trim()}</strong>, enviamos um
             link para você criar uma nova senha.
           </p>
-          <p style={{ color: '#9a9aa5', fontSize: 13.5, lineHeight: 1.6, margin: '0 0 24px' }}>
+          <p className={styles.stepText} style={{ fontSize: 13.5, marginBottom: 24 }}>
             O link chega em alguns minutos e vale por pouco tempo. Não esqueça de olhar a caixa de spam.
           </p>
 
@@ -79,23 +78,18 @@ const ForgotPassword: FC = () => {
             type='button'
             onClick={resend}
             disabled={loading}
-            style={{
-              width: '100%', background: '#9A4FD1', border: 'none',
-              color: '#FFFFFF', padding: '13px 24px', borderRadius: 9999, fontWeight: 700, fontSize: 15,
-              cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1,
-            }}
+            className={styles.submit}
+            style={{ marginTop: 0 }}
           >
             {loading ? 'Reenviando…' : 'Reenviar e-mail'}
           </button>
-          {error && <div style={{ color: '#e91429', fontSize: 13, marginTop: 12 }}>{error}</div>}
+          {error && <div className={styles.error} style={{ marginTop: 12 }}>{error}</div>}
 
           <button
             type='button'
             onClick={() => navigate('/login')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6, margin: '18px auto 0',
-              background: 'none', border: 'none', color: '#509bf5', fontSize: 14, cursor: 'pointer',
-            }}
+            className={styles.textLink}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 18 }}
           >
             <FiArrowLeft size={15} /> Voltar ao login
           </button>
@@ -107,26 +101,22 @@ const ForgotPassword: FC = () => {
   // ── Passo 1: digitar o e-mail ─────────────────────────────────────────────
   return (
     <AuthShell>
-      <h2 style={{ color: '#fff', fontSize: 21, fontWeight: 800, margin: '0 0 8px', fontFamily: 'var(--font-display)' }}>
-        Esqueceu sua senha?
-      </h2>
-      <p style={{ color: '#9a9aa5', fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>
+      <h2 className={styles.stepTitle}>Esqueceu sua senha?</h2>
+      <p className={styles.stepText}>
         Digite o e-mail do seu cadastro e a gente envia um link para você criar uma nova senha.
       </p>
 
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <AuthField type='email' placeholder='E-mail' value={email} onChange={setEmail} autoFocus />
-        {error && <div style={{ color: '#e91429', fontSize: 13 }}>{error}</div>}
+        {error && <div className={styles.error}>{error}</div>}
         <AuthSubmit loading={loading} label='Enviar link de recuperação' />
       </form>
 
       <button
         type='button'
         onClick={() => navigate('/login')}
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6, margin: '16px auto 0',
-          background: 'none', border: 'none', color: '#509bf5', fontSize: 14, cursor: 'pointer',
-        }}
+        className={styles.textLink}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
       >
         <FiArrowLeft size={15} /> Voltar ao login
       </button>
