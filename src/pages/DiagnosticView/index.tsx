@@ -27,6 +27,13 @@ const DiagnosticView: FC = () => {
     else navigate('/assinatura');
   };
 
+  // Refazer é do DONO do perfil. A edge `artist-diagnostic` filtra por
+  // `.eq("id", redoArtistId).eq("user_id", user.id)` e devolve 404 quando não bate — então um
+  // colaborador via o botão, atravessava o quiz inteiro e a etapa "analisando" para receber
+  // "Não consegui gerar seu diagnóstico agora", que soa como falha temporária e não como falta
+  // de permissão. A condição aqui é a MESMA do servidor, para os dois não divergirem.
+  const souDonoDoPerfil = Boolean(artist?.user_id && user?.id && artist.user_id === user.id);
+
   useEffect(() => {
     if (!loaded && user?.id) dispatch(artistsActions.fetchArtists(user.id));
   }, [loaded, user?.id, dispatch]);
@@ -64,17 +71,19 @@ const DiagnosticView: FC = () => {
           <h1>Diagnóstico REAL</h1>
           <span>Sua fase de carreira atual, com base nos seus dados reais.</span>
         </div>
-        <div className={reportStyles.headerActions}>
-          <button
-            type="button"
-            className={reportStyles.headerGhost}
-            onClick={onRedo}
-            title={isPro ? 'Refazer o diagnóstico e atualizar sua fase' : 'Refazer o diagnóstico é um recurso PRO'}
-          >
-            {isPro ? <FiRefreshCw size={14} /> : <FiLock size={14} />}
-            Refazer diagnóstico
-          </button>
-        </div>
+        {souDonoDoPerfil && (
+          <div className={reportStyles.headerActions}>
+            <button
+              type="button"
+              className={reportStyles.headerGhost}
+              onClick={onRedo}
+              title={isPro ? 'Refazer o diagnóstico e atualizar sua fase' : 'Refazer o diagnóstico é um recurso PRO'}
+            >
+              {isPro ? <FiRefreshCw size={14} /> : <FiLock size={14} />}
+              Refazer diagnóstico
+            </button>
+          </div>
+        )}
       </header>
       <DiagnosticReport
         realIndex={realIndex}

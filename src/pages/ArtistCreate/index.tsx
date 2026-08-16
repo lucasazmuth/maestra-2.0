@@ -113,6 +113,7 @@ const ArtistCreate: FC = () => {
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const artists = useAppSelector((s) => s.artists.items);
+  const artistsLoaded = useAppSelector((s) => s.artists.loaded);
   const { canCreate: allowed, reason: rateLimitReason, pendingCount, cooldownRemainingSeconds, loading: rlLoading, error: rlError, retry: rlRetry } = useCanCreateArtist();
 
   // Modo "Refazer diagnóstico" (PRO): rota própria /artists/:id/diagnostico/refazer. Pula a busca
@@ -130,6 +131,15 @@ const ArtistCreate: FC = () => {
   useEffect(() => {
     if (redo && subInitialized && !isPro) navigate('/assinatura', { replace: true });
   }, [redo, subInitialized, isPro, navigate]);
+
+  // Mesma ideia para quem NÃO é dono do perfil. O botão já não aparece para colaborador, mas a
+  // rota continua alcançável por URL (link salvo, histórico) — e ali o quiz rodava inteiro para
+  // terminar num 404 do edge exibido como "Não consegui gerar seu diagnóstico agora", que soa
+  // como falha temporária. `artistsLoaded` evita expulsar o dono antes da lista chegar.
+  useEffect(() => {
+    if (!redo || !artistsLoaded || !redoArtist || !user?.id) return;
+    if (redoArtist.user_id !== user.id) navigate(`/artists/${redoArtistId}/diagnostico`, { replace: true });
+  }, [redo, artistsLoaded, redoArtist, user?.id, redoArtistId, navigate]);
 
   const [step, setStep] = useState<Step>('perfil');
   const [line, setLine] = useState('');     // fala atual da Maestra
