@@ -32,10 +32,10 @@ const EnhancedEmptyState: FC<EnhancedEmptyStateProps> = ({ artistName, onStartWi
     return () => window.clearInterval(id);
   }, [greeting]);
 
+  // O anel "aurora" saiu daqui: sobre o fundo preto era um brilho passageiro na borda; no design
+  // claro virava uma moldura azul em volta da página inteira, lida como defeito.
   return (
     <div className={styles.empty}>
-      {/* Glow circula a borda da PÁGINA (container inteiro), não o card interno */}
-      <span className='aurora-glow aurora-glow--on' aria-hidden />
       <div className={styles.content}>
         <div className={styles.avatar}>
           <NytaAvatar size={72} state={done ? 'idle' : 'thinking'} />
