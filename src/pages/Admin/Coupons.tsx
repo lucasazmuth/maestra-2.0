@@ -211,7 +211,7 @@ const AdminCoupons: FC = () => {
                   <span style={styles.badgeMuted}>{APPLIES_LABEL[c.applies_to]}</span>
                   {isLive(c)
                     ? <span style={{ ...styles.badge, background: 'rgba(46,196,122,0.15)', color: '#47d18e' }}>Vigente</span>
-                    : <span style={{ ...styles.badge, background: 'rgba(255,255,255,0.06)', color: '#9a9aa5' }}>{c.is_active ? 'Fora do período' : 'Inativo'}</span>}
+                    : <span style={{ ...styles.badge, background: 'rgba(255,255,255,0.06)', color: '#7c8da8' }}>{c.is_active ? 'Fora do período' : 'Inativo'}</span>}
                 </div>
                 <div style={styles.meta}>
                   {fmtDate(c.starts_at)} → {fmtDate(c.ends_at)} · usos: {c.uses_count}{c.max_uses ? `/${c.max_uses}` : ''}
@@ -235,24 +235,24 @@ const AdminCoupons: FC = () => {
 
 const Field: FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-    <label style={{ color: '#9a9aa5', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</label>
+    <label style={{ color: '#7c8da8', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</label>
     {children}
   </div>
 );
 
 const styles: Record<string, CSSProperties> = {
   page: { padding: 24, maxWidth: 1000 },
-  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 6px' },
-  sub: { color: '#9a9aa5', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
-  card: { background: '#181818', borderRadius: 12, padding: 20, marginBottom: 18 },
-  cardHead: { display: 'flex', alignItems: 'center', gap: 8, color: '#fff', fontSize: 16, marginBottom: 16 },
+  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#2c3f63', margin: '0 0 6px' },
+  sub: { color: '#7c8da8', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
+  card: { background: '#ffffff', borderRadius: 12, padding: 20, marginBottom: 18 },
+  cardHead: { display: 'flex', alignItems: 'center', gap: 8, color: '#2c3f63', fontSize: 16, marginBottom: 16 },
   formGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 },
-  empty: { color: '#6f6f78', padding: '20px 0', textAlign: 'center' },
-  row: { display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderTop: '1px solid #262626' },
-  code: { fontWeight: 800, color: '#fff', fontSize: 15, letterSpacing: '0.02em' },
+  empty: { color: '#93a4c0', padding: '20px 0', textAlign: 'center' },
+  row: { display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderTop: '1px solid #e8eef8' },
+  code: { fontWeight: 800, color: '#2c3f63', fontSize: 15, letterSpacing: '0.02em' },
   badge: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 700, background: 'rgba(154, 79, 209,0.16)', color: '#e07fce' },
-  badgeMuted: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: '#cfcfd4' },
-  meta: { color: '#8a8a8a', fontSize: 12.5, marginTop: 5 },
+  badgeMuted: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: '#405985' },
+  meta: { color: '#7c8da8', fontSize: 12.5, marginTop: 5 },
 };
 
 export default AdminCoupons;

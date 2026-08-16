@@ -109,8 +109,8 @@ const Crm: FC = () => {
       key: 'lead',
       render: (_, l) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-          <span style={{ color: '#fff', fontWeight: 600 }}>{l.nome || l.email.split('@')[0]}</span>
-          <span style={{ color: '#8a8a8a', fontSize: 12 }}>{l.email}</span>
+          <span style={{ color: '#2c3f63', fontWeight: 600 }}>{l.nome || l.email.split('@')[0]}</span>
+          <span style={{ color: '#7c8da8', fontSize: 12 }}>{l.email}</span>
         </div>
       ),
     },
@@ -122,7 +122,7 @@ const Crm: FC = () => {
       render: (_, l) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Tag color={COR_ETAPA[l.etapa]}>{l.etapa} · {funil.find((f) => f.id === l.etapa)?.nome || ''}</Tag>
-          {l.perfil && <span style={{ color: '#8a8a8a', fontSize: 11.5 }}>{l.perfil}</span>}
+          {l.perfil && <span style={{ color: '#7c8da8', fontSize: 11.5 }}>{l.perfil}</span>}
         </div>
       ),
     },
@@ -133,17 +133,17 @@ const Crm: FC = () => {
       sorter: (a, b) => (a.diasNaEtapa ?? 0) - (b.diasNaEtapa ?? 0),
       // Quem está em D não está "parado": concluiu. A coluna só faz sentido para quem travou.
       render: (d: number | null, l) =>
-        l.etapa === 'D' ? <span style={{ color: '#4ade80' }}>ativado</span>
-          : <span style={{ color: (d ?? 0) >= 7 ? '#f0ad2f' : '#cfcfd4' }}>{d ?? '—'} d</span>,
+        l.etapa === 'D' ? <span style={{ color: '#2a9a59' }}>ativado</span>
+          : <span style={{ color: (d ?? 0) >= 7 ? '#a4682f' : '#405985' }}>{d ?? '—'} d</span>,
     },
     {
       title: 'Engajamento',
       key: 'engajamento',
       width: 170,
       render: (_, l) => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: 12, color: '#cfcfd4' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: 12, color: '#405985' }}>
           <span>{l.perfis} perfil(is) · {l.usouNyta ? 'usou a Nyta' : 'sem Nyta'}</span>
-          <span style={{ color: (l.diasSemAcessar ?? 0) >= 14 ? '#f0ad2f' : '#8a8a8a' }}>
+          <span style={{ color: (l.diasSemAcessar ?? 0) >= 14 ? '#a4682f' : '#7c8da8' }}>
             {l.ultimoAcesso ? `último acesso há ${l.diasSemAcessar} d` : 'nunca acessou'}
           </span>
         </div>
@@ -156,7 +156,7 @@ const Crm: FC = () => {
       sorter: (a, b) => a.totalPago - b.totalPago,
       render: (_, l) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: 12 }}>
-          <span style={{ color: l.totalPago ? '#fff' : '#8a8a8a' }}>{fmtBRL(l.totalPago)}</span>
+          <span style={{ color: l.totalPago ? '#2c3f63' : '#7c8da8' }}>{fmtBRL(l.totalPago)}</span>
           {l.assinatura && <Tag color={l.assinatura === 'active' ? 'green' : 'default'}>{l.assinatura}</Tag>}
         </div>
       ),
@@ -166,10 +166,10 @@ const Crm: FC = () => {
       key: 'origem',
       width: 130,
       render: (_, l) => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: 12, color: '#cfcfd4' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, fontSize: 12, color: '#405985' }}>
           <span>{l.provedor === 'google' ? 'Google' : 'E-mail'}</span>
           {l.veioDeConvite && <Tag color="purple">convidado</Tag>}
-          <span style={{ color: '#8a8a8a', fontSize: 11.5 }}>{fmtDia(l.criadoEm)}</span>
+          <span style={{ color: '#7c8da8', fontSize: 11.5 }}>{fmtDia(l.criadoEm)}</span>
         </div>
       ),
     },
@@ -182,11 +182,11 @@ const Crm: FC = () => {
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {l.nudgesRecebidos.length
               ? l.nudgesRecebidos.map((c) => <Tag key={c} style={{ marginInlineEnd: 0 }}>{c}</Tag>)
-              : <span style={{ color: '#8a8a8a', fontSize: 12 }}>nenhum</span>}
+              : <span style={{ color: '#7c8da8', fontSize: 12 }}>nenhum</span>}
           </div>
           {!l.aceitaComunicacoes && (
             <Tooltip title="Não optou por receber comunicações. Nudges de marketing não deveriam sair para esta pessoa.">
-              <span style={{ color: '#f0ad2f', fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ color: '#a4682f', fontSize: 11.5, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <FiAlertTriangle size={12} /> sem opt-in
               </span>
             </Tooltip>
@@ -242,14 +242,14 @@ const Crm: FC = () => {
       {/* Leads */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0 12px', flexWrap: 'wrap' }}>
         <Input
-          prefix={<FiSearch style={{ color: '#8a8a8a' }} />}
+          prefix={<FiSearch style={{ color: '#7c8da8' }} />}
           placeholder="Buscar por nome ou e-mail"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           allowClear
           style={{ maxWidth: 320 }}
         />
-        <span style={{ color: '#9a9aa5', fontSize: 13 }}>
+        <span style={{ color: '#7c8da8', fontSize: 13 }}>
           {filtrados.length} de {leads.length} lead(s)
           {etapaAtiva && ` · filtrando a etapa ${etapaAtiva}`}
         </span>
@@ -279,7 +279,7 @@ const Crm: FC = () => {
           return (
             <div key={et} style={styles.grupoAutomacao}>
               <div style={styles.grupoTitulo}>
-                {et} · {etapa?.nome} <span style={{ color: '#8a8a8a', fontWeight: 400 }}>({etapa?.aqui ?? 0} agora)</span>
+                {et} · {etapa?.nome} <span style={{ color: '#7c8da8', fontWeight: 400 }}>({etapa?.aqui ?? 0} agora)</span>
               </div>
               {doGrupo.map((a) => {
                 const enviados = leads.filter((l) => l.nudgesRecebidos.includes(a.code)).length;
@@ -287,11 +287,11 @@ const Crm: FC = () => {
                   <div key={a.code} style={styles.automacao}>
                     <div style={styles.automacaoTopo}>
                       <Tag color="blue" style={{ marginInlineEnd: 0 }}>{a.code}</Tag>
-                      <span style={{ color: '#cfcfd4', fontSize: 12.5 }}>após {a.apos} dias parado</span>
+                      <span style={{ color: '#405985', fontSize: 12.5 }}>após {a.apos} dias parado</span>
                       <span style={styles.canais}>
                         <FiBell size={12} /> in-app <FiMail size={12} /> e-mail
                       </span>
-                      <span style={{ marginLeft: 'auto', color: '#8a8a8a', fontSize: 12 }}>
+                      <span style={{ marginLeft: 'auto', color: '#7c8da8', fontSize: 12 }}>
                         {enviados} enviado(s)
                       </span>
                     </div>
@@ -307,7 +307,7 @@ const Crm: FC = () => {
           );
         })}
         {!automacoes.length && (
-          <div style={{ color: '#8a8a8a', fontSize: 13 }}>
+          <div style={{ color: '#7c8da8', fontSize: 13 }}>
             Catálogo indisponível — a função do funil precisa estar deployada com a ação “spec”.
           </div>
         )}
@@ -318,29 +318,29 @@ const Crm: FC = () => {
 
 const styles: Record<string, CSSProperties> = {
   page: { padding: 24, maxWidth: 1180 },
-  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 6px' },
-  sub: { color: '#9a9aa5', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 720 },
-  sectionHead: { color: '#fff', fontSize: 15, fontWeight: 700, marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #262626' },
+  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#2c3f63', margin: '0 0 6px' },
+  sub: { color: '#7c8da8', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 720 },
+  sectionHead: { color: '#2c3f63', fontSize: 15, fontWeight: 700, marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #e8eef8' },
 
   funil: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 12 },
-  etapaCard: { display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 16px', textAlign: 'left', background: '#191919', border: '1px solid #303035', borderRadius: 10, cursor: 'pointer', color: 'inherit' },
-  etapaCardAtiva: { borderColor: '#3361ff', background: '#161a2b' },
-  etapaNome: { color: '#cfcfd4', fontSize: 12, fontWeight: 700, letterSpacing: '.02em' },
-  etapaNumero: { color: '#fff', fontSize: 30, fontWeight: 800, lineHeight: 1.1 },
+  etapaCard: { display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 16px', textAlign: 'left', background: '#ffffff', border: '1px solid #e3eaf3', borderRadius: 10, cursor: 'pointer', color: 'inherit' },
+  etapaCardAtiva: { borderColor: '#3361ff', background: '#ffffff' },
+  etapaNome: { color: '#405985', fontSize: 12, fontWeight: 700, letterSpacing: '.02em' },
+  etapaNumero: { color: '#2c3f63', fontSize: 30, fontWeight: 800, lineHeight: 1.1 },
   etapaLegenda: { color: '#3361ff', fontSize: 12, fontWeight: 600 },
-  etapaDescricao: { color: '#8a8a8a', fontSize: 11.5, lineHeight: 1.45, marginTop: 2 },
+  etapaDescricao: { color: '#7c8da8', fontSize: 11.5, lineHeight: 1.45, marginTop: 2 },
 
-  alerta: { display: 'flex', alignItems: 'center', gap: 9, marginTop: 14, padding: '11px 14px', background: '#1c1a17', border: '1px solid #4a3a1f', borderRadius: 9, color: '#e8c07a', fontSize: 12.5, lineHeight: 1.5 },
+  alerta: { display: 'flex', alignItems: 'center', gap: 9, marginTop: 14, padding: '11px 14px', background: '#fdf7ea', border: '1px solid #f0dcae', borderRadius: 9, color: '#8a6420', fontSize: 12.5, lineHeight: 1.5 },
 
   automacoes: { display: 'flex', flexDirection: 'column', gap: 20 },
   grupoAutomacao: { display: 'flex', flexDirection: 'column', gap: 9 },
-  grupoTitulo: { color: '#fff', fontSize: 13, fontWeight: 700 },
-  automacao: { display: 'flex', flexDirection: 'column', gap: 6, padding: 13, background: '#191919', border: '1px solid #2a2a2a', borderRadius: 9 },
+  grupoTitulo: { color: '#2c3f63', fontSize: 13, fontWeight: 700 },
+  automacao: { display: 'flex', flexDirection: 'column', gap: 6, padding: 13, background: '#ffffff', border: '1px solid #e3eaf3', borderRadius: 9 },
   automacaoTopo: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
-  canais: { display: 'inline-flex', alignItems: 'center', gap: 5, color: '#8a8a8a', fontSize: 11.5 },
-  automacaoTitulo: { color: '#fff', fontSize: 13.5, fontWeight: 600 },
-  automacaoCorpo: { color: '#cfcfd4', fontSize: 12.5, lineHeight: 1.5 },
-  automacaoRodape: { color: '#8a8a8a', fontSize: 11.5, lineHeight: 1.5, borderTop: '1px solid #262626', paddingTop: 7 },
+  canais: { display: 'inline-flex', alignItems: 'center', gap: 5, color: '#7c8da8', fontSize: 11.5 },
+  automacaoTitulo: { color: '#2c3f63', fontSize: 13.5, fontWeight: 600 },
+  automacaoCorpo: { color: '#405985', fontSize: 12.5, lineHeight: 1.5 },
+  automacaoRodape: { color: '#7c8da8', fontSize: 11.5, lineHeight: 1.5, borderTop: '1px solid #e8eef8', paddingTop: 7 },
 };
 
 export default Crm;

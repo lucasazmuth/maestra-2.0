@@ -189,7 +189,7 @@ const AdminReviews: FC = () => {
         footer={null}
         width={570}
         centered
-        styles={{ content: { overflow: 'hidden', padding: 0, background: '#18181a', border: '1px solid #303036', borderRadius: 16 } }}
+        styles={{ content: { overflow: 'hidden', padding: 0, background: '#ffffff', border: '1px solid #e3eaf3', borderRadius: 16 } }}
       >
         {selected && (
           <>

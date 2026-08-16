@@ -294,7 +294,7 @@ const ArtistList: FC = () => {
             type="circle"
             percent={row.adoption.percent}
             size={38}
-            strokeColor="#9A4FD1"
+            strokeColor="#3361ff"
             format={() => `${row.adoption.used}/${row.adoption.total}`}
           />
           <span>{row.adoption.percent}%</span>
@@ -488,7 +488,7 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
                 <div className={styles.realDimension} key={key}>
                   <span>{key.toUpperCase()}</span>
                   <strong>{detail.real.boletim[key] ?? (detail.real.pattern[key] ? 'Alto' : 'Baixo')}</strong>
-                  {typeof detail.real.boletim[key] === 'number' && <Progress percent={detail.real.boletim[key]} showInfo={false} strokeColor="#2ec47a" />}
+                  {typeof detail.real.boletim[key] === 'number' && <Progress percent={detail.real.boletim[key]} showInfo={false} strokeColor="#2a9a59" />}
                 </div>
               ))}
             </div>
@@ -553,7 +553,7 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
                 <div className={styles.strategyRow} key={strategy.id || index}>
                   <span className={styles.index}>{index + 1}</span>
                   <div><strong>{strategy.title}</strong><span>{strategy.done} de {strategy.tasks} tarefas concluídas</span></div>
-                  <Progress type="circle" percent={strategy.progress} size={40} strokeColor="#9A4FD1" />
+                  <Progress type="circle" percent={strategy.progress} size={40} strokeColor="#3361ff" />
                 </div>
               ))}
             </div>
@@ -693,7 +693,7 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
           </div>
         </div>
         <div className={styles.heroAdoption}>
-          <Progress type="circle" percent={artist.adoption.percent} size={78} strokeColor="#9A4FD1" />
+          <Progress type="circle" percent={artist.adoption.percent} size={78} strokeColor="#3361ff" />
           <span>Adoção do produto</span>
         </div>
       </section>

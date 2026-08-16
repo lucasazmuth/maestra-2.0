@@ -360,20 +360,27 @@ function App() {
     <ConfigProvider
       locale={ptBR}
       theme={{
-        // Tema escuro da Maestra (inputs, selects, modais,
-        // drawers, datepickers etc. deixam de renderizar no claro padrão do antd).
-        algorithm: theme.darkAlgorithm,
+        // Tema CLARO da Maestra. Era `darkAlgorithm`, do design antigo — e o app inteiro passou a
+        // brigar com ele: 73 classes do antd sobrescritas à força no CSS, mais cinco componentes
+        // escapando por token aqui embaixo (Popover, Dropdown, Tooltip, DatePicker, Select). O
+        // único lugar que ainda dependia do escuro eram as telas do admin.
+        //
+        // Com o algoritmo claro, tabela, modal, select e input nascem certos, e as exceções
+        // abaixo passam a ser só ajuste de marca — não mais conserto.
+        algorithm: theme.defaultAlgorithm,
         token: {
           fontFamily: "'Inter Variable', Inter, 'Helvetica Neue', Arial, sans-serif",
-          colorPrimary: '#9A4FD1',
-          // Texto sobre superfícies sólidas na cor primária (botões type="primary" etc.):
-          // branco para manter contraste AA sobre o Deep Violet.
+          colorPrimary: '#3361ff',
+          // Texto sobre superfícies sólidas na cor primária (botões type="primary" etc.).
           colorTextLightSolid: '#FFFFFF',
-          colorBgContainer: '#2a2a2a',
-          colorBgElevated: '#282828',
-          colorBorder: '#3e3e3e',
-          colorText: '#ffffff',
-          colorTextPlaceholder: '#8a8a8a',
+          colorBgContainer: '#ffffff',
+          colorBgElevated: '#ffffff',
+          colorBorder: '#dde5f1',
+          colorText: '#405985',
+          colorTextHeading: '#2c3f63',
+          colorTextPlaceholder: '#a3b2ca',
+          colorBgLayout: '#f7f8fb',
+          colorSplit: '#e8eef8',
           borderRadius: 8,
         },
         // Os flutuantes (popover, popconfirm, dropdown, tooltip) já vivem no redesign claro,

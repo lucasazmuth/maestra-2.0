@@ -76,18 +76,18 @@ const AdminDashboard: FC = () => {
       {/* ── Linha 1: faturamento ── */}
       <div style={styles.cardsGrid}>
         <StatCard
-          icon={<FiDollarSign />} accent="#2ec47a"
+          icon={<FiDollarSign />} accent="#2a9a59"
           label="Faturado este mês" value={fmtBRL(revenue.thisMonth)}
           hint={`Mês passado: ${fmtBRL(revenue.lastMonth)}`}
         />
         <StatCard
-          icon={<FiTrendingUp />} accent="#2ec47a"
+          icon={<FiTrendingUp />} accent="#2a9a59"
           label="Faturamento total" value={fmtBRL(revenue.total)}
           hint={`${revenue.purchases.count + revenue.subscriptionPayments.count} pagamento(s) confirmados`
             + (revenue.accessPassCount ? ` · ${revenue.accessPassCount} via Pass Access` : '')}
         />
         <StatCard
-          icon={<FiCreditCard />} accent="#9A4FD1"
+          icon={<FiCreditCard />} accent="#3361ff"
           label="MRR (assinaturas ativas)" value={fmtBRL(subs.mrr)}
           hint={`${subs.active} assinatura(s) ativa(s)`}
         />
@@ -116,7 +116,7 @@ const AdminDashboard: FC = () => {
           hint={`${artists.paid} liberado(s) · ${artists.locked} bloqueado(s)`}
         />
         <StatCard
-          icon={<FiCreditCard />} accent="#9A4FD1"
+          icon={<FiCreditCard />} accent="#3361ff"
           label="Assinaturas" value={String(subs.active)}
           hint={[
             subs.overdue ? `${subs.overdue} em atraso` : null,
@@ -133,16 +133,16 @@ const AdminDashboard: FC = () => {
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 150, padding: '8px 4px 0' }}>
             {revenue.monthly.map((m) => (
               <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                <span style={{ color: '#cfcfd4', fontSize: 11.5, whiteSpace: 'nowrap' }}>{m.total > 0 ? fmtBRL(m.total) : ''}</span>
+                <span style={{ color: '#405985', fontSize: 11.5, whiteSpace: 'nowrap' }}>{m.total > 0 ? fmtBRL(m.total) : ''}</span>
                 <div
                   title={`${fmtMonth(m.month)}: ${fmtBRL(m.total)}`}
                   style={{
                     width: '100%', maxWidth: 44, borderRadius: '6px 6px 2px 2px',
                     height: Math.max(3, Math.round((m.total / maxMonthly) * 96)),
-                    background: m.total > 0 ? 'linear-gradient(180deg, #2ec47a, #1d7a4d)' : '#2a2a2a',
+                    background: m.total > 0 ? 'linear-gradient(180deg, #2a9a59, #1d7a4d)' : '#e3eaf3',
                   }}
                 />
-                <span style={{ color: '#8a8a8a', fontSize: 11.5 }}>{fmtMonth(m.month)}</span>
+                <span style={{ color: '#7c8da8', fontSize: 11.5 }}>{fmtMonth(m.month)}</span>
               </div>
             ))}
           </div>
@@ -158,7 +158,7 @@ const AdminDashboard: FC = () => {
               thisMonth={revenue.purchases.thisMonth} grand={revenue.total}
             />
             <SourceRow
-              label="Assinaturas PRO" color="#9A4FD1"
+              label="Assinaturas PRO" color="#3361ff"
               total={revenue.subscriptionPayments.total} count={revenue.subscriptionPayments.count}
               thisMonth={revenue.subscriptionPayments.thisMonth} grand={revenue.total}
             />
@@ -178,14 +178,14 @@ const AdminDashboard: FC = () => {
                 <Tag color={p.kind === 'subscription' ? 'magenta' : 'purple'} style={{ marginRight: 0 }}>
                   {p.kind === 'subscription' ? 'Assinatura' : 'Perfil'}
                 </Tag>
-                <span style={{ color: '#fff', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ color: '#2c3f63', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {p.label}
-                  {p.coupon && <span style={{ color: '#8a8a8a', fontWeight: 400 }}> · cupom {p.coupon}</span>}
+                  {p.coupon && <span style={{ color: '#7c8da8', fontWeight: 400 }}> · cupom {p.coupon}</span>}
                 </span>
-                <span style={{ color: '#9a9aa5', fontSize: 12.5, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.email}</span>
-                <span style={{ color: '#8a8a8a', fontSize: 12.5, width: 62 }}>{BILLING_LABEL[p.billing_type || ''] || p.billing_type || '—'}</span>
-                <span style={{ color: '#2ec47a', fontWeight: 700, width: 96, textAlign: 'right' }}>{fmtBRL(p.amount)}</span>
-                <span style={{ color: '#8a8a8a', fontSize: 12.5, width: 88, textAlign: 'right' }}>{dayjs(p.date).format('DD/MM/YYYY')}</span>
+                <span style={{ color: '#7c8da8', fontSize: 12.5, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.email}</span>
+                <span style={{ color: '#7c8da8', fontSize: 12.5, width: 62 }}>{BILLING_LABEL[p.billing_type || ''] || p.billing_type || '—'}</span>
+                <span style={{ color: '#2a9a59', fontWeight: 700, width: 96, textAlign: 'right' }}>{fmtBRL(p.amount)}</span>
+                <span style={{ color: '#7c8da8', fontSize: 12.5, width: 88, textAlign: 'right' }}>{dayjs(p.date).format('DD/MM/YYYY')}</span>
               </div>
             ))}
           </div>
@@ -202,14 +202,14 @@ const AdminDashboard: FC = () => {
 // ─── Componentes locais ──────────────────────────────────────────────────────
 const StatCard: FC<{ icon: ReactNode; accent: string; label: string; value: string; hint?: string }> = ({ icon, accent, label, value, hint }) => (
   <div style={styles.card}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#9a9aa5', fontSize: 12.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#7c8da8', fontSize: 12.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
       <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: `${accent}22`, color: accent, fontSize: 15 }}>
         {icon}
       </span>
       {label}
     </div>
-    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 30, color: '#fff', lineHeight: 1.1 }}>{value}</div>
-    {hint && <div style={{ color: '#8a8a8a', fontSize: 12.5 }}>{hint}</div>}
+    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 30, color: '#2c3f63', lineHeight: 1.1 }}>{value}</div>
+    {hint && <div style={{ color: '#7c8da8', fontSize: 12.5 }}>{hint}</div>}
   </div>
 );
 
@@ -218,30 +218,30 @@ const SourceRow: FC<{ label: string; color: string; total: number; count: number
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6, gap: 8, flexWrap: 'wrap' }}>
-        <span style={{ color: '#e6e6ea', fontSize: 13.5, fontWeight: 600 }}>{label}</span>
-        <span style={{ color: '#cfcfd4', fontSize: 13 }}>
-          {fmtBRL(total)} <span style={{ color: '#6f6f78' }}>({count} pgto(s) · {pct}%)</span>
+        <span style={{ color: '#2c3f63', fontSize: 13.5, fontWeight: 600 }}>{label}</span>
+        <span style={{ color: '#405985', fontSize: 13 }}>
+          {fmtBRL(total)} <span style={{ color: '#93a4c0' }}>({count} pgto(s) · {pct}%)</span>
         </span>
       </div>
-      <div style={{ height: 8, borderRadius: 4, background: '#2a2a2a', overflow: 'hidden' }}>
+      <div style={{ height: 8, borderRadius: 4, background: '#e3eaf3', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 4 }} />
       </div>
-      <div style={{ color: '#8a8a8a', fontSize: 12, marginTop: 4 }}>Este mês: {fmtBRL(thisMonth)}</div>
+      <div style={{ color: '#7c8da8', fontSize: 12, marginTop: 4 }}>Este mês: {fmtBRL(thisMonth)}</div>
     </div>
   );
 };
 
 const styles: Record<string, CSSProperties> = {
   page: { padding: 24, maxWidth: 1100 },
-  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 6px' },
-  sub: { color: '#9a9aa5', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
+  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#2c3f63', margin: '0 0 6px' },
+  sub: { color: '#7c8da8', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
   cardsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14, marginBottom: 14 },
-  card: { background: '#1c1c1e', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 },
+  card: { background: '#ffffff', border: '1px solid #e3eaf3', borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 },
   twoCol: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 14, marginTop: 4 },
-  panel: { background: '#1c1c1e', border: '1px solid #2a2a2a', borderRadius: 12, padding: '16px 18px' },
-  sectionHead: { color: '#fff', fontSize: 14, fontWeight: 700, marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid #262626' },
-  rowItem: { display: 'flex', alignItems: 'center', gap: 10, background: '#1f1f1f', border: '1px solid #2a2a2a', borderRadius: 8, padding: '9px 12px' },
-  empty: { color: '#6f6f78', fontSize: 13, padding: '4px 0' },
+  panel: { background: '#ffffff', border: '1px solid #e3eaf3', borderRadius: 12, padding: '16px 18px' },
+  sectionHead: { color: '#2c3f63', fontSize: 14, fontWeight: 700, marginBottom: 12, paddingBottom: 8, borderBottom: '1px solid #e8eef8' },
+  rowItem: { display: 'flex', alignItems: 'center', gap: 10, background: '#ffffff', border: '1px solid #e3eaf3', borderRadius: 8, padding: '9px 12px' },
+  empty: { color: '#93a4c0', fontSize: 13, padding: '4px 0' },
 };
 
 export default AdminDashboard;
