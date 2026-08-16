@@ -36,6 +36,41 @@ interface ConsentContextValue {
 
 const ConsentContext = createContext<ConsentContextValue | null>(null);
 
+// ─── Consentimento coletado no cadastro, à espera de sessão ──────────────────────────────────
+//
+// O cadastro por e-mail já pergunta idade e aceite, mas só existe sessão DEPOIS do código — e
+// nesse instante o PublicOnly redireciona e desmonta a tela. Enviar dali era uma corrida: a
+// chamada saía no meio do desmonte e falhava calada, e a pessoa reencontrava o mesmo formulário
+// no gate, já tendo preenchido tudo.
+//
+// Guardar e deixar o envio para o provider elimina a corrida: ele está montado, estável, e é
+// exatamente quem precisa do resultado.
+const CHAVE_PENDENTE = 'maestra_consentimento_pendente';
+
+export interface ConsentimentoPendente {
+  email: string;
+  birthDate: string;
+  aceita: boolean;
+  comunicacoes: boolean;
+}
+
+export const guardarConsentimentoPendente = (p: ConsentimentoPendente): void => {
+  try { sessionStorage.setItem(CHAVE_PENDENTE, JSON.stringify(p)); } catch { /* aba sem storage */ }
+};
+
+const lerConsentimentoPendente = (): ConsentimentoPendente | null => {
+  try {
+    const cru = sessionStorage.getItem(CHAVE_PENDENTE);
+    return cru ? (JSON.parse(cru) as ConsentimentoPendente) : null;
+  } catch {
+    return null;
+  }
+};
+
+const limparConsentimentoPendente = (): void => {
+  try { sessionStorage.removeItem(CHAVE_PENDENTE); } catch { /* idem */ }
+};
+
 export const ConsentProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const user = useAppSelector((s) => s.auth.user);
   const [state, setState] = useState<ConsentState | null>(null);
@@ -54,7 +89,33 @@ export const ConsentProvider: FC<{ children: ReactNode }> = ({ children }) => {
         body: { action: 'state' },
       });
       if (error || !data || data.error) throw error || new Error(data?.error || 'Sem resposta');
-      setState(data as ConsentState);
+
+      let estado = data as ConsentState;
+
+      // Acabou de se cadastrar e já respondeu tudo no formulário: envia agora, e a pessoa nunca vê
+      // a tela de consentimento. O e-mail precisa bater — uma aba reaproveitada por outra conta
+      // não pode herdar a declaração de idade de ninguém.
+      const pendente = lerConsentimentoPendente();
+      if (
+        pendente && pendente.aceita && !estado.satisfied && !estado.blocked &&
+        user.email && pendente.email.toLowerCase() === user.email.toLowerCase()
+      ) {
+        limparConsentimentoPendente();
+        const { data: enviado } = await supabase.functions.invoke('account-consent', {
+          body: {
+            action: 'submit',
+            birthDate: pendente.birthDate,
+            aceitaTermos: true,
+            aceitaPolitica: true,
+            aceitaComunicacoes: pendente.comunicacoes,
+          },
+        });
+        // Se o envio falhar, fica o estado original e o gate mostra a tela — o pior caso volta a
+        // ser o de hoje, nunca deixar passar sem registro.
+        if (enviado && !enviado.error) estado = enviado as ConsentState;
+      }
+
+      setState(estado);
       setUnavailable(false);
     } catch (e) {
       // Não derruba o app. Ver o comentário do RequireConsent em App.tsx: trancar todo mundo do

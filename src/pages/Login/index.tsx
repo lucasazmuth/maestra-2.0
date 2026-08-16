@@ -1,6 +1,7 @@
 import { FC, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { supabase } from '../../lib/supabase';
 import { useAppDispatch } from '../../store/store';
 import { authActions } from '../../store/slices/auth';
 import { AuthShell, AuthField, AuthSubmit, authError } from './AuthShell';
@@ -26,17 +27,34 @@ const Login: FC = () => {
       navigate('/artists', { replace: true });
     } catch (err: any) {
       // E-mail ainda não confirmado → manda pro passo do código (o EmailCodeStep reenvia ao abrir).
-      //
-      // Este atalho deixou de disparar: o Supabase passou a responder `invalid_credentials`
-      // ("Invalid login credentials") também para conta não confirmada, para não revelar quais
-      // e-mails existem. Como não dá mais para distinguir, mantemos a checagem (ainda vale onde a
-      // resposta antiga aparecer) e, abaixo do erro, oferecemos a confirmação manualmente — senão
-      // quem se cadastrou e não confirmou lê "e-mail ou senha incorretos" e não tem saída.
       if ((err?.message || '').toLowerCase().includes('not confirmed')) {
         setNeedsVerify(true);
         setLoading(false);
         return;
       }
+
+      // O Supabase passou a responder `invalid_credentials` também para conta não confirmada (e
+      // para conta do Google, que não tem senha), de propósito, para não revelar quais e-mails
+      // existem. O navegador não tem como distinguir os três casos — mas o servidor tem, e é só
+      // isso que `auth-login-hint` responde: o par e-mail/senha está certo E falta confirmar?
+      //
+      // Só nesse caso o encaminhamento é automático. Fazer isso em toda falha jogaria quem
+      // simplesmente errou a senha numa tela de código que nunca chega (conta já confirmada não
+      // recebe reenvio: o Supabase responde 200 e não envia nada), e ainda dispararia um e-mail a
+      // cada tentativa, para o endereço que alguém digitasse.
+      try {
+        const { data } = await supabase.functions.invoke('auth-login-hint', {
+          body: { email: email.trim(), password },
+        });
+        if (data?.needsConfirmation) {
+          setNeedsVerify(true);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        // Indisponível: segue para o erro comum, como era antes desta verificação existir.
+      }
+
       setError(authError(err));
       setLoading(false);
     }
@@ -67,14 +85,15 @@ const Login: FC = () => {
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <AuthField type='email' placeholder='E-mail' value={email} onChange={setEmail} autoFocus />
         <AuthField type='password' placeholder='Senha' value={password} onChange={setPassword} />
+        {/* Chegar aqui já significa que o servidor descartou "falta confirmar" — esse caso é
+            encaminhado sozinho para a tela do código. Sobram senha errada e conta do Google, e a
+            do Google é a mais provável: 29 das 70 contas entraram por lá. */}
         {error && (
           <div className={styles.error}>
             {error}
-            {/* Oferecido a qualquer falha de credencial, e não só a quem de fato não confirmou:
-                mostrar só nesse caso revelaria quais e-mails têm cadastro. */}
-            <button type='button' className={styles.errorAction} onClick={() => setNeedsVerify(true)}>
-              Cadastrou-se e não confirmou o e-mail? Confirmar agora
-            </button>
+            <span className={styles.errorHint}>
+              Criou a conta com o Google? Entre pelo botão Google acima.
+            </span>
           </div>
         )}
         <AuthSubmit loading={loading} label='Entrar' />

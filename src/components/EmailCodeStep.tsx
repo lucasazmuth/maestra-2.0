@@ -174,6 +174,12 @@ export const EmailCodeStep: FC<{ email: string; onVerified: () => void; resendOn
       </p>
       <PinInput value={code} onChange={setCode} onComplete={runVerify} />
       <p style={{ color: '#93a4c0', fontSize: 12.5, margin: '-6px 0 0', textAlign: 'center' }}>O código expira em 1 hora.</p>
+      {/* Conta já confirmada (ex.: criada pelo Google) não recebe código: o Supabase responde 200
+          e não envia nada. Sem este aviso a pessoa fica esperando indefinidamente uma mensagem
+          que não existe, e a tela ainda diz que enviou. */}
+      <p style={{ color: '#93a4c0', fontSize: 12.5, margin: '-8px 0 0', textAlign: 'center', lineHeight: 1.45 }}>
+        Se você criou a conta com o Google, o código não chega — entre pelo botão Google acima.
+      </p>
       {error && <div style={{ color: '#d2474b', fontSize: 13, textAlign: 'center' }}>{error}</div>}
       {info && <div style={{ color: '#3361ff', fontSize: 13, textAlign: 'center' }}>{info}</div>}
       <AuthSubmit loading={loading} label="Confirmar e entrar" />

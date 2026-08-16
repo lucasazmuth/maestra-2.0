@@ -8,6 +8,7 @@ import { AuthShell, AuthField, AuthSubmit, authError } from '../Login/AuthShell'
 import styles from '../Login/AuthShell.module.scss';
 import { EmailCodeStep } from '../../components/EmailCodeStep';
 import { IDADE_MINIMA, ehMaiorDeIdade, idadeEmAnos } from '../../utils/age';
+import { guardarConsentimentoPendente } from '../../hooks/useConsent';
 
 const Signup: FC = () => {
   const dispatch = useAppDispatch();
@@ -33,24 +34,6 @@ const Signup: FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Registra maioridade e aceite na conta recém-criada. Só roda com sessão ativa (depois do
-  // código), e falhar aqui não é fatal: o gate de consentimento pede de novo no próximo acesso.
-  const registrarConsentimento = async () => {
-    try {
-      await supabase.functions.invoke('account-consent', {
-        body: {
-          action: 'submit',
-          birthDate,
-          aceitaTermos: aceite,
-          aceitaPolitica: aceite,
-          aceitaComunicacoes: comunicacoes,
-        },
-      });
-    } catch (err) {
-      console.warn('[signup] consentimento não registrado agora:', err);
-    }
-  };
-
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -67,6 +50,18 @@ const Signup: FC = () => {
       return;
     }
     if (!aceite) { setError('É preciso aceitar os Termos de Uso e a Política de Privacidade.'); return; }
+
+    // Guarda o que foi respondido AQUI, antes de criar a conta. O registro em si é feito pelo
+    // provider assim que houver sessão — ver o comentário em useConsent.tsx. Tentar enviar deste
+    // componente falhava calado: a chamada saía junto com o redirecionamento que o desmonta, e a
+    // pessoa reencontrava o mesmo formulário no gate.
+    guardarConsentimentoPendente({
+      email: email.trim(),
+      birthDate,
+      aceita: aceite,
+      comunicacoes,
+    });
+
     setLoading(true);
     try {
       const res = await dispatch(
@@ -84,7 +79,6 @@ const Signup: FC = () => {
       // sem confirmar — mas o usuário precisa passar pelo código antes de entrar.
       if (res.user?.email_confirmed_at) {
         // Confirmação desligada (ou login social) → entra direto.
-        await registrarConsentimento();
         navigate('/welcome', { replace: true });
       } else {
         // Confirmação ativada → código já enviado por e-mail (Brevo). Limpa a meia-sessão e pede o código.
@@ -101,15 +95,9 @@ const Signup: FC = () => {
   if (step === 'code') {
     return (
       <AuthShell>
-        {/* Código já enviado no signUp — sem resendOnMount pra não duplicar. */}
-        {/* Só aqui existe sessão: o consentimento é gravado depois do código, não no signUp. */}
-        <EmailCodeStep
-          email={email.trim()}
-          onVerified={async () => {
-            await registrarConsentimento();
-            navigate('/welcome', { replace: true });
-          }}
-        />
+        {/* Código já enviado no signUp — sem resendOnMount pra não duplicar. O consentimento
+            guardado no formulário é registrado pelo provider assim que a sessão existir. */}
+        <EmailCodeStep email={email.trim()} onVerified={() => navigate('/welcome', { replace: true })} />
       </AuthShell>
     );
   }
