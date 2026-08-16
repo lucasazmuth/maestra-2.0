@@ -8,6 +8,18 @@ import { useAppDispatch } from '../../store/store';
 import { authActions } from '../../store/slices/auth';
 import styles from './AuthShell.module.scss';
 
+/**
+ * Segundos de espera informados pelo Supabase no erro de rate limit, ou null.
+ *
+ * A resposta traz "For security purposes, you can only request this after 23 seconds." — e o
+ * número é a única parte útil: sem ele a pessoa lê "aguarde um instante", não sabe se são 5 ou 60
+ * segundos, e fica tentando de novo (o que renova o bloqueio).
+ */
+export const rateLimitSeconds = (err: any): number | null => {
+  const m = /after (\d+)\s*second/i.exec(String(err?.message || ''));
+  return m ? Number(m[1]) : null;
+};
+
 export const authError = (err: any): string => {
   const msg = (err?.message || '').toLowerCase();
   if (msg.includes('invalid login')) return 'E-mail ou senha incorretos.';
