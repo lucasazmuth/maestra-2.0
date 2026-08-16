@@ -26,6 +26,7 @@
 .settings-subscription-card,
 .settings-link-card,
 .settings-support-card,
+.settings-data-card,
 .settings-danger-card { border: 1px solid #e5eaf2; border-radius: 10px !important; background: #fff !important; box-shadow: 0 7px 17px rgba(124, 145, 185, .06); }
 /* Duas linhas fixas — cabeçalho (título + Editar) e corpo (avatar + informações) — no
    lugar do antigo truque `display:flex` único + `h2 { order:-1; margin:auto }`: aquilo
@@ -125,6 +126,15 @@
 .settings-danger-btn { border: 1px solid #f13131; border-radius: 9999px; padding: 9px 18px; background: #fff; color: #f13131; font-weight: 700; font-size: 14px; cursor: pointer; }
 .settings-danger-btn:hover:not(:disabled) { background: #fef2f2; }
 .settings-danger-btn:disabled { opacity: .6; cursor: wait; }
+
+/* Exportação dos próprios dados (LGPD art. 18). Mesmo desenho do botão de cancelar cadastro,
+   no azul do sistema: exercer um direito não é uma ação destrutiva e não deve parecer uma. */
+.settings-data-card { margin-top: 18px !important; padding: 24px !important; }
+.settings-data-card h2 { margin: 0 0 6px; color: #52668d; font-size: 18px; font-weight: 800; }
+.settings-data-card p { margin: 0 0 14px; color: #8e9eb8; font-size: 13px; line-height: 1.5; }
+.settings-data-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #3361ff; border-radius: 9999px; padding: 9px 18px; background: #fff; color: #3361ff; font-weight: 700; font-size: 14px; cursor: pointer; }
+.settings-data-btn:hover:not(:disabled) { background: #f2f6ff; }
+.settings-data-btn:disabled { opacity: .6; cursor: wait; }
 @media (max-width: 700px) {
   .task-app .settings-page { padding: 24px 16px 118px; }
   .settings-heading h1 { font-size: 27px; }

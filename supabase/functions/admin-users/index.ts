@@ -49,6 +49,8 @@ Deno.serve(async (req) => {
   try {
     if (body.action === "delete") return await remove(admin, caller.id, body.userId || "");
     if (body.action === "detail") return await detail(admin, body.userId || "");
+    if (body.action === "deletionQueue") return await deletionQueue(admin);
+    if (body.action === "purge") return await purge(admin, caller.id, body.userId || "");
     return await list(admin);
   } catch (e) {
     console.error("[admin-users] erro:", (e as Error)?.message);
@@ -168,4 +170,67 @@ async function remove(admin: Admin, callerId: string, userId: string) {
     return json({ error: `Falha ao excluir: ${error.message}` }, 500);
   }
   return json({ ok: true });
+}
+
+// ── Fila de exclusão (LGPD art. 18, VI) ──────────────────────────────────────────────────────
+// Pedidos que a pessoa fez em Configurações e ainda não foram cumpridos, do mais vencido para o
+// mais recente. `scheduled_purge_at` no passado = pronto para executar.
+async function deletionQueue(admin: Admin) {
+  const { data, error } = await admin
+    .from("account_deletion_requests")
+    .select("id, user_id, email, requested_at, scheduled_purge_at, purged_at, subscription_status")
+    .is("purged_at", null)
+    .not("user_id", "is", null)
+    .order("scheduled_purge_at", { ascending: true });
+  if (error) throw error;
+
+  const agora = Date.now();
+  return json({
+    requests: (data || []).map((r) => ({
+      ...r,
+      vencido: !!r.scheduled_purge_at && new Date(r.scheduled_purge_at).getTime() <= agora,
+    })),
+  });
+}
+
+// Executa a eliminação de um pedido da fila e DEIXA O REGISTRO DE PÉ.
+//
+// A ordem aqui é o ponto todo: marcar o cumprimento e soltar o user_id ANTES de chamar remove().
+// Feito ao contrário, remove() apagaria a própria linha (ela aponta para o usuário), e a prova de
+// que o pedido foi atendido sumiria junto com os dados que ele mandou apagar.
+async function purge(admin: Admin, callerId: string, userId: string) {
+  if (!userId) return json({ error: "userId é obrigatório" }, 400);
+
+  const { data: pedido } = await admin
+    .from("account_deletion_requests")
+    .select("id, purged_at")
+    .eq("user_id", userId)
+    .is("purged_at", null)
+    .maybeSingle();
+  if (!pedido) return json({ error: "Não há pedido de exclusão pendente para esta conta." }, 404);
+
+  const { error: marcaError } = await admin
+    .from("account_deletion_requests")
+    .update({
+      purged_at: new Date().toISOString(),
+      purged_by: callerId,
+      status: "purged",
+      user_id: null,
+    })
+    .eq("id", pedido.id);
+  if (marcaError) throw marcaError;
+
+  const resposta = await remove(admin, callerId, userId);
+  // remove() já devolve o erro formatado. Se falhou, o registro fica marcado como cumprido sem
+  // ter cumprido — melhor reabrir do que mentir na auditoria.
+  if (resposta.status !== 200) {
+    await admin
+      .from("account_deletion_requests")
+      .update({
+        purged_at: null, purged_by: null, status: "requested", user_id: userId,
+        purge_note: "Tentativa de execução falhou; pedido reaberto.",
+      })
+      .eq("id", pedido.id);
+  }
+  return resposta;
 }

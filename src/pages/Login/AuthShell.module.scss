@@ -214,6 +214,42 @@
   font-size: 13px;
 }
 
+// Aceite legal e opt-in de comunicações no cadastro. Nenhuma caixa nasce marcada — a orientação
+// de LGPD é explícita quanto a isso, e uma marcação prévia não é consentimento.
+.consent {
+  display: grid;
+  align-items: start;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.consent input {
+  width: 17px;
+  height: 17px;
+  margin: 2px 0 0;
+  accent-color: #3361ff;
+  cursor: pointer;
+}
+
+.consent > span {
+  color: #56698f;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.consent a {
+  color: #3361ff;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.consent em {
+  color: #93a4c0;
+  font-style: normal;
+}
+
 .footerText {
   margin-top: 26px;
   color: #7c8da8;

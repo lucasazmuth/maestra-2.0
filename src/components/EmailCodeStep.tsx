@@ -61,7 +61,7 @@ const PinInput: FC<{ value: string; onChange: (v: string) => void; onComplete?: 
           aria-label={`Dígito ${i + 1} do código`}
           style={{
             width: 46, height: 56, textAlign: 'center', fontSize: 22, fontWeight: 700,
-            color: '#FFFFFF', background: '#1f1f1f', border: `1px solid ${c ? '#9A4FD1' : '#2a2a2a'}`,
+            color: '#2c3f63', background: '#fbfcfe', border: `1px solid ${c ? '#3361ff' : '#dde5f1'}`,
             borderRadius: 10, outline: 'none', transition: 'border-color .15s',
           }}
         />
@@ -136,21 +136,24 @@ export const EmailCodeStep: FC<{ email: string; onVerified: () => void; resendOn
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); runVerify(code); }} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <p style={{ color: '#b3b3b3', fontSize: 14, margin: '0 0 4px', lineHeight: 1.5, textAlign: 'center' }}>
-        Confirme seu e-mail digitando o código de 6 dígitos que enviamos para <strong style={{ color: '#fff' }}>{email}</strong>.
+      {/* O e-mail estava em branco (#fff) sobre o cartão branco do design novo: a frase terminava
+          em "enviamos para ." e a pessoa não conferia para onde o código tinha ido. */}
+      <p style={{ color: '#56698f', fontSize: 14, margin: '0 0 4px', lineHeight: 1.5, textAlign: 'center' }}>
+        Confirme seu e-mail digitando o código de 6 dígitos que enviamos para{' '}
+        <strong style={{ color: '#2c3f63', wordBreak: 'break-word' }}>{email}</strong>.
       </p>
       <PinInput value={code} onChange={setCode} onComplete={runVerify} />
-      <p style={{ color: '#8a8a92', fontSize: 12.5, margin: '-6px 0 0', textAlign: 'center' }}>O código expira em 1 hora.</p>
-      {error && <div style={{ color: '#e91429', fontSize: 13, textAlign: 'center' }}>{error}</div>}
-      {info && <div style={{ color: '#9A4FD1', fontSize: 13, textAlign: 'center' }}>{info}</div>}
+      <p style={{ color: '#93a4c0', fontSize: 12.5, margin: '-6px 0 0', textAlign: 'center' }}>O código expira em 1 hora.</p>
+      {error && <div style={{ color: '#d2474b', fontSize: 13, textAlign: 'center' }}>{error}</div>}
+      {info && <div style={{ color: '#3361ff', fontSize: 13, textAlign: 'center' }}>{info}</div>}
       <AuthSubmit loading={loading} label="Confirmar e entrar" />
-      <p style={{ color: '#b3b3b3', fontSize: 14, marginTop: 4, textAlign: 'center' }}>
+      <p style={{ color: '#7c8da8', fontSize: 14, marginTop: 4, textAlign: 'center' }}>
         Não recebeu?{' '}
         <button
           type="button"
           onClick={onResend}
           disabled={cooldown > 0}
-          style={{ color: cooldown > 0 ? '#6b7280' : '#af68d8', fontWeight: 700, background: 'none', border: 'none', cursor: cooldown > 0 ? 'default' : 'pointer', padding: 0, font: 'inherit' }}
+          style={{ color: cooldown > 0 ? '#a9b6cb' : '#3361ff', fontWeight: 700, background: 'none', border: 'none', cursor: cooldown > 0 ? 'default' : 'pointer', padding: 0, font: 'inherit' }}
         >
           {cooldown > 0 ? `Reenviar em ${cooldown}s` : 'Reenviar código'}
         </button>

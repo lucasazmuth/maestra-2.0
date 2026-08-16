@@ -34,6 +34,15 @@ interface UserDetail {
   subscription: DetailSub | null;
   purchases: DetailPurchase[];
 }
+// Pedido de exclusão feito pelo titular em Configurações, ainda não cumprido.
+interface DeletionRequest {
+  id: string;
+  user_id: string;
+  email: string | null;
+  requested_at: string;
+  scheduled_purge_at: string | null;
+  vencido: boolean;
+}
 type Activity = 'active' | 'recent' | 'inactive' | 'never';
 interface ArtistUsageDetail {
   artist: {
@@ -83,6 +92,8 @@ const AdminUsers: FC = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletionQueue, setDeletionQueue] = useState<DeletionRequest[]>([]);
+  const [purging, setPurging] = useState<string | null>(null);
   const [artistUsage, setArtistUsage] = useState<Record<string, ArtistUsageDetail>>({});
   const [artistUsageLoading, setArtistUsageLoading] = useState(false);
 
@@ -94,7 +105,32 @@ const AdminUsers: FC = () => {
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  const loadQueue = useCallback(async () => {
+    const { data } = await supabase.functions.invoke('admin-users', { body: { action: 'deletionQueue' } });
+    setDeletionQueue((data?.requests as DeletionRequest[]) || []);
+  }, []);
+
+  // Executa a exclusão pedida pelo titular. Recarrega as duas listas: a conta some da tabela e o
+  // pedido sai da fila no mesmo movimento.
+  const runPurge = async (userId: string) => {
+    setPurging(userId);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'purge', userId },
+      });
+      if (error || data?.error) {
+        throw new Error(data?.error || (await readEdgeFunctionError(error, 'Não foi possível concluir a exclusão.')));
+      }
+      message.success('Conta excluída. O registro do pedido foi preservado.');
+      await Promise.all([load(), loadQueue()]);
+    } catch (e: any) {
+      message.error(e?.message || 'Não foi possível concluir a exclusão.');
+    } finally {
+      setPurging(null);
+    }
+  };
+
+  useEffect(() => { load(); loadQueue(); }, [load, loadQueue]);
 
   const openDetail = useCallback(async (userId: string) => {
     setModalOpen(true);
@@ -181,6 +217,41 @@ const AdminUsers: FC = () => {
     <div style={styles.page}>
       <h1 style={styles.title}>Usuários</h1>
       <p style={styles.sub}>Todos os cadastros da plataforma. Clique em um usuário para ver perfis, assinatura e histórico de pagamentos.</p>
+
+      {/* Fila de exclusão (LGPD art. 18, VI). Só aparece quando há pedido pendente — em regime
+          normal ela fica vazia e não vale ocupar espaço da lista. */}
+      {deletionQueue.length > 0 && (
+        <div style={styles.queueCard}>
+          <strong style={{ color: '#e6e6ea', fontSize: 14 }}>
+            Pedidos de exclusão de conta ({deletionQueue.length})
+          </strong>
+          <p style={{ color: '#8a8a8a', fontSize: 12.5, margin: '4px 0 12px' }}>
+            Executar apaga os dados de forma permanente. O registro do pedido é preservado como
+            comprovação de atendimento.
+          </p>
+          {deletionQueue.map((r) => (
+            <div key={r.id} style={styles.rowItem}>
+              <span style={{ color: '#fff', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {r.email || r.user_id}
+              </span>
+              <Tag color={r.vencido ? 'red' : 'default'}>
+                {r.vencido ? 'prazo vencido' : `libera ${fmtDay(r.scheduled_purge_at)}`}
+              </Tag>
+              <span style={{ color: '#8a8a8a', fontSize: 12.5 }}>pedido {fmtDay(r.requested_at)}</span>
+              <Popconfirm
+                title="Executar a exclusão?"
+                description="Os dados desta conta serão apagados de forma permanente."
+                okText="Sim, excluir"
+                okButtonProps={{ danger: true }}
+                cancelText="Voltar"
+                onConfirm={() => runPurge(r.user_id)}
+              >
+                <Button danger size="small" loading={purging === r.user_id}>Executar</Button>
+              </Popconfirm>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
         <Input
@@ -398,6 +469,8 @@ const styles: Record<string, CSSProperties> = {
   sectionHead: { color: '#fff', fontSize: 14, fontWeight: 700, marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #262626' },
   kvGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 },
   rowItem: { display: 'flex', alignItems: 'center', gap: 10, background: '#1f1f1f', border: '1px solid #2a2a2a', borderRadius: 8, padding: '9px 12px' },
+  // Borda âmbar: a fila pede ação com prazo, e some sozinha quando não há pedido pendente.
+  queueCard: { display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18, padding: 16, background: '#1c1a17', border: '1px solid #4a3a1f', borderRadius: 10 },
   artistItem: { width: '100%', display: 'flex', flexDirection: 'column', gap: 13, padding: 14, textAlign: 'left', color: 'inherit', background: '#191919', border: '1px solid #303035', borderRadius: 10, cursor: 'pointer' },
   artistItemHeader: { display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 },
   artistImage: { width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', background: '#262626', flexShrink: 0 },

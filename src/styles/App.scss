@@ -35,7 +35,10 @@ body {
 }
 
 :root {
-  color-scheme: dark;
+  // O app é claro desde o novo design. Enquanto isto ficou em `dark`, TODO controle nativo
+  // (checkbox, radio, seletor de data, dropdown de select, barra de rolagem) era desenhado pelo
+  // navegador em modo escuro — caixas de seleção pretas sobre cartão branco, por exemplo.
+  color-scheme: light;
   --maestra-violet: #9a4fd1;
   --maestra-violet-hover: #8442b6;
   --maestra-lavender: #c97ef3;

@@ -11,6 +11,7 @@ import { createAsaasCustomer, fetchPlanConfig, clearError } from '../../store/sl
 import { createArtistCharge, pollArtistPurchase } from '../../store/slices/artistPurchases';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
+import { TcleGate } from '../Consent/Tcle';
 import { FlowHeader } from '../ArtistCreate/FlowHeader';
 import { PaymentSuccessScreen } from '../../components/PaymentSuccessScreen';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
@@ -298,13 +299,17 @@ const ProfileUnlock: FC = () => {
         {step === 'diagnostico' && (
           <div style={{ width: '100%', paddingTop: 20 }}>
             {realIndex ? (
-              <DiagnosticReport
-                realIndex={realIndex}
-                chartmetric={chartmetric}
-                artistName={artist?.name}
-                artistImage={artist?.content?.spotifyProfile?.image}
-                onContinue={() => setStep('pagamento')}
-              />
+              // Etapa do TCLE antes do resultado. DESLIGADA por feature flag: enquanto não houver
+              // parecer do Comitê de Ética, o TcleGate devolve o filho sem consultar nada.
+              <TcleGate>
+                <DiagnosticReport
+                  realIndex={realIndex}
+                  chartmetric={chartmetric}
+                  artistName={artist?.name}
+                  artistImage={artist?.content?.spotifyProfile?.image}
+                  onContinue={() => setStep('pagamento')}
+                />
+              </TcleGate>
             ) : (
               <div style={{ textAlign: 'center' }}>
                 <p style={{ color: '#b3b3b3', marginBottom: 18 }}>Diagnóstico indisponível. Você ainda pode liberar o planejamento.</p>
