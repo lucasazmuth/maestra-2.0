@@ -1144,9 +1144,18 @@ const Catalog: FC = () => {
             </header>
 
             <div className='track-detail-layout'>
+              {/* `--track-room` é o slot da capa no fundo da sala, já previsto no CSS mas que
+                  nunca era preenchido — nenhum lugar do app definia a variável. Sem ela a capa
+                  acabava renderizada como um disco no meio da tela, POR CIMA do play/pause
+                  (z-index 4 contra o 3 dos controles): o botão ficava coberto e sem clique. */}
               <section
                 className={`track-player ${detailTrackIsPlaying ? 'is-playing' : ''}`}
-                style={{ '--track-color': '#8e3cff' } as CSSProperties}
+                style={{
+                  '--track-color': '#8e3cff',
+                  ...(selectedTrack.cover_image
+                    ? { '--track-room': `url(${JSON.stringify(selectedTrack.cover_image)})` }
+                    : null),
+                } as CSSProperties}
               >
                 <div className='track-meta-strip'>
                   <span>
@@ -1174,12 +1183,6 @@ const Catalog: FC = () => {
                       d='M229.205 75.9546C238.687 80.376 246.307 87.9968 250.729 97.4785L269.967 138.735C274.388 148.217 275.328 158.954 272.62 169.059L260.838 213.03C258.13 223.135 251.948 231.964 243.378 237.964L206.09 264.074C197.52 270.075 187.109 272.865 176.687 271.953L131.34 267.985C120.917 267.073 111.149 262.518 103.751 255.121L71.5628 222.932C64.165 215.534 59.6107 205.767 58.6988 195.344L54.7303 149.996C53.8185 139.574 56.6085 129.164 62.6093 120.593L88.7191 83.3053C94.7198 74.7354 103.548 68.553 113.654 65.8452L157.624 54.0633C167.73 51.3555 178.466 52.2949 187.948 56.7163L229.205 75.9546Z'
                     />
                   </svg>
-                </div>
-
-                <div className='track-cover-empty'>
-                  {selectedTrack.cover_image ? (
-                    <img src={selectedTrack.cover_image} alt='' />
-                  ) : null}
                 </div>
 
                 {detailTrackCommenters.length > 0 && (
