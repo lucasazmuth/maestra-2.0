@@ -2,7 +2,7 @@ import { FC, useEffect, useRef, useState } from 'react';
 
 import { useAppDispatch } from '../store/store';
 import { authActions } from '../store/slices/auth';
-import { AuthSubmit, authError } from '../pages/Login/AuthShell';
+import { AuthSubmit, authError, rateLimitSeconds } from '../pages/Login/AuthShell';
 
 // Campo de PIN: 6 caixas (1 dígito cada) com auto-avanço, backspace e colar o código inteiro.
 const PIN_LEN = 6;
@@ -83,7 +83,29 @@ export const EmailCodeStep: FC<{ email: string; onVerified: () => void; resendOn
   const [info, setInfo] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
-  const startCooldown = () => setCooldown(RESEND_COOLDOWN);
+  const startCooldown = (segundos = RESEND_COOLDOWN) => setCooldown(segundos);
+
+  /**
+   * Trata a falha de um envio de código.
+   *
+   * Quando é rate limit, o servidor diz de quantos segundos é a espera: usamos esse número tanto
+   * na mensagem quanto no contador. Antes o reenvio que falhava não iniciava contagem nenhuma — o
+   * botão continuava escrito "Reenviar código", como se estivesse disponível, e cada nova
+   * tentativa renovava o bloqueio sem que a pessoa entendesse por quê.
+   */
+  const handleSendError = (err: any) => {
+    const espera = rateLimitSeconds(err);
+    if (espera != null) {
+      startCooldown(espera);
+      setError(
+        espera === 1
+          ? 'Aguarde 1 segundo para pedir um novo código.'
+          : `Aguarde ${espera} segundos para pedir um novo código.`
+      );
+      return;
+    }
+    setError(authError(err));
+  };
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -99,7 +121,7 @@ export const EmailCodeStep: FC<{ email: string; onVerified: () => void; resendOn
     dispatch(authActions.resendSignupOtp({ email }))
       .unwrap()
       .then(() => { setInfo('Enviamos um código para o seu e-mail.'); startCooldown(); })
-      .catch((err) => setError(authError(err)));
+      .catch(handleSendError);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -115,7 +137,15 @@ export const EmailCodeStep: FC<{ email: string; onVerified: () => void; resendOn
       await dispatch(authActions.verifySignupOtp({ email, token })).unwrap();
       onVerified();
     } catch (err: any) {
-      setError(authError(err) || 'Código inválido ou expirado.');
+      // Aqui o limite é de TENTATIVAS, não de envio — daí a frase própria. A contagem começa
+      // junto para o botão de reenviar não convidar a insistir e renovar o bloqueio.
+      const espera = rateLimitSeconds(err);
+      if (espera != null) {
+        startCooldown(espera);
+        setError(`Muitas tentativas. Aguarde ${espera} ${espera === 1 ? 'segundo' : 'segundos'}.`);
+      } else {
+        setError(authError(err) || 'Código inválido ou expirado.');
+      }
       setLoading(false);
       verifyingRef.current = false;
     }
@@ -130,7 +160,7 @@ export const EmailCodeStep: FC<{ email: string; onVerified: () => void; resendOn
       setInfo('Enviamos um novo código para o seu e-mail.');
       startCooldown();
     } catch (err: any) {
-      setError(authError(err));
+      handleSendError(err);
     }
   };
 

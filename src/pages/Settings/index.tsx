@@ -44,7 +44,7 @@ const Settings: FC = () => {
     const supported = isWebPushSupported();
     setPushSupported(supported);
     if (!user?.id || !supported) return () => { alive = false; };
-    syncWebPushSubscription(user.id).then((synced) => {
+    syncWebPushSubscription().then((synced) => {
       if (synced) return true;
       return hasWebPushSubscription();
     }).then((enabled) => {
@@ -62,7 +62,7 @@ const Settings: FC = () => {
         setPushEnabled(false);
         message.success('Avisos desativados neste dispositivo.');
       } else {
-        await enableWebPush(user.id);
+        await enableWebPush();
         setPushEnabled(true);
         message.success('Avisos ativados neste dispositivo.');
       }

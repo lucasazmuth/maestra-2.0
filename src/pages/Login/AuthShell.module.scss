@@ -214,6 +214,27 @@
   font-size: 13px;
 }
 
+// Saída para quem se cadastrou e não confirmou o e-mail. Fica dentro do bloco de erro porque só
+// faz sentido depois de uma tentativa falha.
+.errorAction {
+  display: block;
+  margin-top: 7px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #3361ff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+}
+
+.errorAction:hover {
+  color: #2a54e0;
+}
+
 // Aceite legal e opt-in de comunicações no cadastro. Nenhuma caixa nasce marcada — a orientação
 // de LGPD é explícita quanto a isso, e uma marcação prévia não é consentimento.
 .consent {

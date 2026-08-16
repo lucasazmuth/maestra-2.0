@@ -89,7 +89,7 @@ export const PwaInstallBanner: FC = () => {
     if (!userId) return;
     setPushBusy(true);
     try {
-      await enableWebPush(userId);
+      await enableWebPush();
       setPushAvailable(false);
       message.success('Avisos ativados neste dispositivo.');
     } catch (error) {

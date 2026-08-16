@@ -26,6 +26,12 @@ const Login: FC = () => {
       navigate('/artists', { replace: true });
     } catch (err: any) {
       // E-mail ainda não confirmado → manda pro passo do código (o EmailCodeStep reenvia ao abrir).
+      //
+      // Este atalho deixou de disparar: o Supabase passou a responder `invalid_credentials`
+      // ("Invalid login credentials") também para conta não confirmada, para não revelar quais
+      // e-mails existem. Como não dá mais para distinguir, mantemos a checagem (ainda vale onde a
+      // resposta antiga aparecer) e, abaixo do erro, oferecemos a confirmação manualmente — senão
+      // quem se cadastrou e não confirmou lê "e-mail ou senha incorretos" e não tem saída.
       if ((err?.message || '').toLowerCase().includes('not confirmed')) {
         setNeedsVerify(true);
         setLoading(false);
@@ -61,7 +67,16 @@ const Login: FC = () => {
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <AuthField type='email' placeholder='E-mail' value={email} onChange={setEmail} autoFocus />
         <AuthField type='password' placeholder='Senha' value={password} onChange={setPassword} />
-        {error && <div className={styles.error}>{error}</div>}
+        {error && (
+          <div className={styles.error}>
+            {error}
+            {/* Oferecido a qualquer falha de credencial, e não só a quem de fato não confirmou:
+                mostrar só nesse caso revelaria quais e-mails têm cadastro. */}
+            <button type='button' className={styles.errorAction} onClick={() => setNeedsVerify(true)}>
+              Cadastrou-se e não confirmou o e-mail? Confirmar agora
+            </button>
+          </div>
+        )}
         <AuthSubmit loading={loading} label='Entrar' />
       </form>
       <button type='button' className={styles.textLink} onClick={onForgot}>
