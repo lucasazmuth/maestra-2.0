@@ -7777,7 +7777,9 @@
 
 .track-detail-header {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  /* `auto` na última coluna, e não 44px: ali agora moram duas ações (tornar principal e
+     editar a versão). Com a largura fixa a segunda não cabia e caía para baixo da primeira. */
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
   min-height: 68px;
@@ -7787,6 +7789,7 @@
 }
 
 .track-detail-header > button,
+.track-detail-header .track-detail-actions > button,
 .track-comments > header > button {
   display: grid;
   width: 42px;
@@ -7803,6 +7806,7 @@
 }
 
 .track-detail-header > button:hover,
+.track-detail-header .track-detail-actions > button:hover,
 .track-comments > header > button:hover {
   background: #f9fbff;
   color: #52668d;
@@ -7813,6 +7817,34 @@
 .track-detail-header > button:last-child {
   justify-self: end;
   font-size: 21px;
+}
+
+/* As duas ações da direita (tornar principal e editar a versão) dividem a MESMA célula do
+   grid de três colunas do cabeçalho. Um quarto filho direto abriria uma coluna implícita e
+   desalinharia o título. */
+/* Especificidade acima de `.track-detail-header div`, que pega qualquer div do cabeçalho e
+   impõe `display: grid` — era o que empilhava as duas ações uma sobre a outra. */
+.track-detail-header .track-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 10px;
+}
+
+/* Estrela acesa = esta é a versão principal. Mesmo amarelo da estrela da lista do Espaço Jam,
+   para a marca significar a mesma coisa nos dois lugares. */
+.track-detail-actions .track-detail-star.is-on {
+  color: #e0ad3c;
+  background: #fdf4de;
+}
+
+.track-detail-actions .track-detail-star.is-on:hover {
+  color: #c8952b;
+  background: #fbeccb;
+}
+
+.track-detail-actions .track-detail-star.is-on svg {
+  fill: currentColor;
 }
 
 .track-detail-header .track-detail-title {

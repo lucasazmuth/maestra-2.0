@@ -1,7 +1,7 @@
 import { FC, FormEvent, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { message } from 'antd';
-import { FiArrowLeft, FiRefreshCw, FiLock, FiMoreVertical, FiSend, FiSettings } from 'react-icons/fi';
+import { FiArrowLeft, FiRefreshCw, FiLock, FiMoreVertical, FiSend, FiSettings, FiStar } from 'react-icons/fi';
 import { AddIcon, EspacoJamIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -17,6 +17,7 @@ import { SpotifyEmbedPlayer } from '../../components/SpotifyEmbedPlayer';
 import type { LocalTrack } from '../../components/LocalPlayerBar';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import { TrackModal } from '../../components/TrackModal';
+import { VersionModal } from '../../components/VersionModal';
 import {
   FilterChip,
   FilterChips,
@@ -29,7 +30,7 @@ import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, formatMs, isActiveCatalogStatus
 import * as catalogDb from '../../services/db/catalog';
 import * as genresDb from '../../services/db/genres';
 import * as membersDb from '../../services/db/members';
-import type { CatalogItem, CatalogProject, MusicGenre, ArtistMember } from '../../interfaces/maestra';
+import type { CatalogItem, CatalogProject, CatalogVersion, MusicGenre, ArtistMember } from '../../interfaces/maestra';
 import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
 
 // Forma da linha das DUAS listas da tela — Músicas e Lançamentos. Antes Músicas era uma tabela
@@ -211,6 +212,13 @@ const Catalog: FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('updated-desc');
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<CatalogItem | null>(null);
+  // A sala precisa do projeto e da versao de verdade, nao so do CatalogItem derivado: e deles
+  // que saem a edicao da versao (VersionModal) e o "qual e a principal" (primary_version_id).
+  // Antes o deep-link carregava os dois, montava o item e jogava fora o resto — por isso o
+  // botao de engrenagem abria a ficha do PROJETO, o unico objeto que sobrava em memoria.
+  const [roomProject, setRoomProject] = useState<CatalogProject | null>(null);
+  const [roomVersion, setRoomVersion] = useState<CatalogVersion | null>(null);
+  const [versionModalOpen, setVersionModalOpen] = useState(false);
   const [trackProgress, setTrackProgress] = useState(34);
   const [virtualPlaying, setVirtualPlaying] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -521,16 +529,53 @@ const Catalog: FC = () => {
     return () => window.clearInterval(timer);
   }, [detailTrackIsPlaying, selectedTrack]);
 
-  const openTrackRoom = (track: CatalogItem) => {
+  const openTrackRoom = (track: CatalogItem, project?: CatalogProject, version?: CatalogVersion) => {
     setSelectedTrack(track);
+    setRoomProject(project || null);
+    setRoomVersion(version || null);
     setTrackProgress(track.audio_file ? 0 : 34);
     setCommentText('');
     setTimelineCommentText('');
     setTimelineComposer(null);
   };
 
+  const roomVersionEhPrincipal = Boolean(
+    roomProject && roomVersion && roomProject.primary_version_id === roomVersion.id,
+  );
+
+  // Relê o projeto e reaponta os três estados da sala de uma vez. Sem isto, salvar a versão
+  // ou trocar a principal mudaria o banco e deixaria a tela contando a história antiga.
+  const recarregarSala = async () => {
+    if (!roomProject || !roomVersion) return;
+    try {
+      const projeto = await catalogDb.getCatalogProject(roomProject.id);
+      const versao = projeto.versions?.find((entry) => entry.id === roomVersion.id) || null;
+      setRoomProject(projeto);
+      setRoomVersion(versao);
+      if (versao) setSelectedTrack(catalogDb.catalogProjectToItem(projeto, versao));
+      setCatalogReload((n) => n + 1); // a lista de músicas atrás da sala também muda
+    } catch {
+      message.error('Não foi possível atualizar a versão');
+    }
+  };
+
+  // Alterna nos dois sentidos: clicar na estrela acesa desmarca, e a música fica sem versão
+  // principal até outra ser escolhida — mesmo comportamento da lista do Espaço Jam.
+  const alternarVersaoPrincipal = async () => {
+    if (!roomProject || !roomVersion) return;
+    try {
+      await catalogDb.setPrimaryVersion(roomProject.id, roomVersionEhPrincipal ? null : roomVersion.id);
+      await recarregarSala();
+    } catch {
+      message.error('Não foi possível alterar a versão principal');
+    }
+  };
+
   const closeTrackRoom = () => {
     setSelectedTrack(null);
+    setRoomProject(null);
+    setRoomVersion(null);
+    setVersionModalOpen(false);
     setVirtualPlaying(false);
     setCommentText('');
     setTimelineCommentText('');
@@ -652,7 +697,7 @@ const Catalog: FC = () => {
     catalogDb.getCatalogProject(projectId)
       .then((project) => {
         const version = project.versions?.find((entry) => entry.id === versionId);
-        if (version) openTrackRoom(catalogDb.catalogProjectToItem(project, version));
+        if (version) openTrackRoom(catalogDb.catalogProjectToItem(project, version), project, version);
       })
       .catch(() => message.error('Não foi possível abrir a versão'))
       .finally(() => setOpeningVersionRoom(false));
@@ -1107,6 +1152,29 @@ const Catalog: FC = () => {
         />
       )}
 
+      {/* Edição da versão aberta na sala. É o mesmo modal do Espaço Jam — a sala não ganha uma
+          segunda forma de editar a mesma coisa. */}
+      {artistId && roomProject && roomVersion && (
+        <VersionModal
+          open={versionModalOpen}
+          artistId={artistId}
+          projectId={roomProject.id}
+          projectTitle={roomProject.title}
+          version={roomVersion}
+          isPrimary={roomVersionEhPrincipal}
+          inherit={{ bpm: roomProject.bpm, key: roomProject.key, genre: roomProject.genre }}
+          author={{
+            id: user?.id || null,
+            name: currentUserName,
+            avatar: currentUserAvatar,
+          }}
+          onClose={() => setVersionModalOpen(false)}
+          onSaved={recarregarSala}
+          // Excluir a versão que está aberta deixa a sala sem assunto: volta para a lista.
+          onDeleted={() => { setVersionModalOpen(false); closeTrackRoom(); setCatalogReload((n) => n + 1); }}
+        />
+      )}
+
       <UpsellModal
         open={upsellOpen}
         context="catalog-limit"
@@ -1127,20 +1195,45 @@ const Catalog: FC = () => {
                 <strong>{selectedTrack.title}</strong>
                 <small>
                   <span>Espaço da versão</span>
-                  <span>{selectedTrack.genre || 'Sem categoria'}</span>
+                  {/* Sem a tag de categoria: quem tem categoria é a música, não a versão, e o
+                      rótulo aparecia como "Sem categoria" — um vazio anunciado sobre algo que
+                      nem se aplica ali. Fica o status, que é do projeto e diz onde a obra está. */}
                   <span>{CATALOG_STATUS[selectedTrack.status as keyof typeof CATALOG_STATUS]?.label || selectedTrack.status || 'Rascunho'}</span>
                 </small>
               </div>
+              <div className='track-detail-actions'>
+              {/* Estrela: torna ESTA versão a principal — a que toca por padrão e representa a
+                  música. Alterna nos dois sentidos, igual à da lista do Espaço Jam. */}
+              {roomProject && roomVersion && canEditTracks && (
+                <button
+                  type='button'
+                  className={roomVersionEhPrincipal ? 'track-detail-star is-on' : 'track-detail-star'}
+                  aria-pressed={roomVersionEhPrincipal}
+                  aria-label={
+                    roomVersionEhPrincipal
+                      ? `Desmarcar V${roomVersion.version_number} como versão principal`
+                      : `Tornar V${roomVersion.version_number} a versão principal`
+                  }
+                  title={roomVersionEhPrincipal ? 'Desmarcar como principal' : 'Tornar principal'}
+                  onClick={alternarVersaoPrincipal}
+                >
+                  <FiStar />
+                </button>
+              )}
+              {/* Engrenagem edita a VERSÃO aberta. Antes abria a ficha da música (TrackModal):
+                  quem estava na sala de uma versão clicava aqui e caía editando o projeto. */}
               <button
                 type='button'
-                aria-label='Editar música'
+                aria-label={roomVersion ? 'Editar versão' : 'Editar música'}
                 onClick={() => {
+                  if (roomVersion) { setVersionModalOpen(true); return; }
                   setEditing(selectedTrack);
                   setModalOpen(true);
                 }}
               >
                 <FiSettings />
               </button>
+              </div>
             </header>
 
             <div className='track-detail-layout'>
