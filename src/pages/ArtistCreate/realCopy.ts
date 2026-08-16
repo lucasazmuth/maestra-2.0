@@ -21,7 +21,21 @@ export const fmtPct = (n: number): string => `${Number(n).toFixed(1).replace('.'
 export const clean = (s: string) => s.replace(/\s*—\s*/g, ', ');
 
 // Rótulos do autorrelato V3 (índice → texto para a exibição).
-export const PREMIOS_LABELS_V3 = ['Nenhum', 'Local / regional', 'Indicação nacional', 'Prêmio nacional', 'Indicação internacional', 'Prêmio internacional'];
+//
+// A escala tem SETE níveis (0..6) e o índice precisa bater com as opções do quiz
+// (ArtistCreate/index.tsx) e com CUTS.premiosNota do motor. A lista tinha seis itens: cada
+// resposta era exibida um degrau ACIMA do que a artista respondeu — quem foi só indicada a um
+// prêmio internacional (5) aparecia como se tivesse ganhado —, e quem de fato ganhou (6) caía
+// fora da lista e virava "—".
+export const PREMIOS_LABELS_V3 = [
+  'Nenhum',
+  'Indicação local / regional',
+  'Prêmio local / regional',
+  'Indicação nacional',
+  'Prêmio nacional',
+  'Indicação internacional',
+  'Prêmio internacional',
+];
 export const PAGANTE_LABELS: Record<string, string> = { ate50: 'Até 50%', '51-69': '51–69%', '70-94': '70–94%', '95-100': '95–100%' };
 export const FREQ_LABELS: Record<string, string> = { esporadico: 'Esporádica', lancamento: 'Em lançamentos', perene: 'Perene' };
 

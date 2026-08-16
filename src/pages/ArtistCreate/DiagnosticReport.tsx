@@ -210,10 +210,19 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
       { label: 'Prêmios', value: PREMIOS_LABELS_V3[Number(inputs.premios ?? 0)] ?? '—' },
       { label: 'Imprensa', value: inputs.imprensaRepercussao ? (FREQ_LABELS[inputs.imprensaFrequencia] ?? 'Sim') : 'Não' },
       { label: 'Playlists editoriais', value: String(inputs.editorialPlaylists ?? cm?.playlists?.count ?? 0) },
-      // Sem dado ≠ "não toca". O airplay vem da Chartmetric e hoje volta nulo para todos os
-      // perfis (o motor já ignora e renormaliza nesse caso); dizer "Não" afirmava algo que não
-      // se sabe — inclusive para artistas com execução conhecida.
-      { label: 'Execução em rádio', value: inputs.radioAirplay == null ? 'Sem dado' : (Number(inputs.radioAirplay) > 0 ? 'Sim' : 'Não') },
+      // Sem dado ≠ "não toca": o airplay pode não ter vindo da Chartmetric (o motor ignora e
+      // renormaliza nesse caso), e dizer "Não" afirmaria algo que não se sabe.
+      // Com dado, mostra o NÚMERO de execuções, não "Sim": o motor usa como binário, mas para
+      // quem lê "17.272 execuções" diz o tamanho da presença — do mesmo jeito que a linha das
+      // playlists mostra a contagem em vez de "tem".
+      {
+        label: 'Execução em rádio',
+        value: inputs.radioAirplay == null
+          ? 'Sem dado'
+          : Number(inputs.radioAirplay) > 0
+          ? `${fmtNum(Math.round(Number(inputs.radioAirplay)))} execuções`
+          : 'Não',
+      },
     ];
   return (
     <div className={`${styles.dimCard} ${high ? styles.stHigh : styles.stLow}`}>
