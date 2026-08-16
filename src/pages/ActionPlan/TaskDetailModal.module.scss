@@ -1,129 +1,6 @@
-// Só o que o tema do antd não entrega sozinho: enquadramento e espaçamento.
-// Campos, botões e abas não têm override de cor — o tema claro do App.tsx já os pinta,
-// e sobrescrever aqui foi justamente o que deixou este modal escuro num app claro.
-.modal {
-  :global(.ant-modal-content) {
-    overflow: hidden;
-    padding: 0;
-    border: 1px solid #e3eaf3;
-    border-radius: 16px;
-    box-shadow: 0 28px 80px rgba(24, 40, 80, 0.18);
-  }
-
-  :global(.ant-modal-header) {
-    margin: 0;
-    padding: 22px 56px 18px 24px;
-    background:
-      linear-gradient(135deg, rgba(51, 97, 255, 0.09), rgba(51, 97, 255, 0.02)),
-      #ffffff;
-    border-bottom: 1px solid #eef2f8;
-  }
-
-  :global(.ant-modal-close) {
-    top: 18px;
-    right: 18px;
-    color: #93a4c0;
-  }
-
-  :global(.ant-modal-close:hover) {
-    color: #2c3f63;
-    background: rgba(51, 97, 255, 0.08);
-  }
-
-  :global(.ant-modal-body) {
-    padding: 0 24px 22px;
-  }
-
-  :global(.ant-modal-footer) {
-    margin: 0;
-    padding: 14px 20px;
-    background: #f7f8fb;
-    border-top: 1px solid #eef2f8;
-  }
-
-  :global(.ant-tabs-nav) {
-    margin-bottom: 20px;
-  }
-
-  :global(.ant-tabs-tab) {
-    padding: 15px 2px 12px;
-    font-weight: 700;
-  }
-}
-
-.heading {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.kicker {
-  color: #3361ff;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.title {
-  overflow: hidden;
-  color: #2c3f63;
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.strategy {
-  overflow: hidden;
-  color: #7c8da8;
-  font-size: 12px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.general {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.general label {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 0;
-}
-
-.general label > span {
-  color: #56698f;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.fieldWide {
-  width: 100%;
-}
-
-.descriptionInput {
-  padding: 11px 12px;
-  line-height: 1.5;
-}
-
-.fieldGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.fieldGrid :global(.ant-select),
-.fieldGrid :global(.ant-picker) {
-  width: 100%;
-}
+// Só a lista de comentários. O cartão, o cabeçalho, as abas, os campos e o rodapé vêm do
+// StandardModal.module.scss — o mesmo casco das fichas de música e de compromisso. As cores
+// aqui seguem a paleta de lá para os dois blocos parecerem a mesma peça.
 
 .comments {
   display: flex;
@@ -172,9 +49,9 @@
   flex: 0 0 32px;
   width: 32px;
   height: 32px;
-  color: #3361ff;
-  background: rgba(51, 97, 255, 0.12);
-  border: 1px solid rgba(51, 97, 255, 0.24);
+  color: #4267b9;
+  background: #eef3fb;
+  border: 1px solid #e1e7f0;
   border-radius: 50%;
   font-size: 10px;
   font-weight: 800;
@@ -193,8 +70,8 @@
   min-width: 0;
   flex: 1;
   padding: 10px 12px;
-  background: #f7f8fb;
-  border: 1px solid #e3eaf3;
+  background: #fbfcfe;
+  border: 1px solid #e1e7f0;
   border-radius: 4px 12px 12px;
 }
 
@@ -213,12 +90,12 @@
 }
 
 .commentMeta strong {
-  color: #2c3f63;
+  color: #52668d;
   font-size: 12px;
 }
 
 .commentMeta time {
-  color: #93a4c0;
+  color: #b6c1d3;
   font-size: 10px;
   white-space: nowrap;
 }
@@ -243,25 +120,28 @@
   min-width: 24px;
   height: 24px;
   padding: 0;
-  color: #7c8da8;
+  color: #8c9ab2;
 }
 
 .commentActions :global(.ant-btn:hover:not(.ant-btn-dangerous)) {
-  color: #2c3f63;
-  background: rgba(51, 97, 255, 0.08);
+  color: #4267b9;
+  background: #eef3fb;
 }
 
 .commentContent p {
   margin: 6px 0 0;
-  color: #405985;
+  color: #52668d;
   font-size: 13.5px;
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+// O casco define `min-height: 132px` para textarea (pensado na letra da música). Aqui a
+// caixa cresce com o conteúdo, então a altura mínima volta a ser a do autoSize.
 .commentInput {
-  padding: 11px 12px;
+  min-height: 0 !important;
+  padding: 11px 13px !important;
   line-height: 1.5;
 }
 
@@ -284,25 +164,25 @@
   align-items: center;
   gap: 7px;
   padding: 26px 20px;
-  color: #93a4c0;
+  color: #b6c1d3;
   text-align: center;
 }
 
 .emptyComments strong {
-  color: #2c3f63;
+  color: #52668d;
   font-size: 14px;
 }
 
 .emptyComments span {
   max-width: 390px;
-  color: #7c8da8;
+  color: #8c9ab2;
   font-size: 12.5px;
   line-height: 1.45;
 }
 
 .commentComposer {
   padding-top: 16px;
-  border-top: 1px solid #eef2f8;
+  border-top: 1px solid #edf0f5;
 }
 
 .commentComposerFooter {
@@ -314,67 +194,11 @@
 }
 
 .commentComposerFooter > span {
-  color: #93a4c0;
+  color: #b6c1d3;
   font-size: 10.5px;
 }
 
-.footer {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.footerActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
 @media (max-width: 640px) {
-  .modal {
-    :global(.ant-modal) {
-      max-width: calc(100vw - 20px);
-      margin: 10px auto;
-      padding-bottom: 0;
-    }
-
-    :global(.ant-modal-header) {
-      padding: 18px 50px 16px 18px;
-    }
-
-    :global(.ant-modal-body) {
-      padding: 0 18px 18px;
-    }
-
-    :global(.ant-modal-footer) {
-      padding: 12px 14px;
-    }
-  }
-
-  .fieldGrid {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  .title {
-    font-size: 16px;
-  }
-
-  .footer {
-    align-items: stretch;
-    flex-direction: column-reverse;
-  }
-
-  .footerActions {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .footerActions :global(.ant-btn) {
-    flex: 1;
-  }
-
   .commentComposerFooter {
     align-items: flex-end;
   }
