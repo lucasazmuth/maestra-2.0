@@ -216,9 +216,18 @@
 
 // Saída para quem se cadastrou e não confirmou o e-mail. Fica dentro do bloco de erro porque só
 // faz sentido depois de uma tentativa falha.
-.errorAction {
+// Dica sem ação própria: o botão do Google já está logo acima, na mesma tela.
+.errorHint {
   display: block;
   margin-top: 7px;
+  color: #7c8da8;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.errorAction {
+  display: block;
+  margin-top: 5px;
   padding: 0;
   border: 0;
   background: none;

@@ -70,10 +70,18 @@ const Login: FC = () => {
         {error && (
           <div className={styles.error}>
             {error}
-            {/* Oferecido a qualquer falha de credencial, e não só a quem de fato não confirmou:
-                mostrar só nesse caso revelaria quais e-mails têm cadastro. */}
+            {/* Três causas produzem exatamente este mesmo erro, e o Supabase não deixa distinguir
+                (é anti-enumeração): senha errada, e-mail não confirmado, ou conta criada pelo
+                Google — que não tem senha nenhuma. As duas saídas ficam à mostra para todo mundo.
+
+                A do Google vem primeiro porque é a mais provável: 29 das 70 contas entraram por
+                lá. Mandar essa pessoa para a confirmação por código seria um beco sem saída — o
+                Supabase responde 200 e não envia nada quando a conta já está confirmada. */}
+            <span className={styles.errorHint}>
+              Criou a conta com o Google? Entre pelo botão Google acima.
+            </span>
             <button type='button' className={styles.errorAction} onClick={() => setNeedsVerify(true)}>
-              Cadastrou-se e não confirmou o e-mail? Confirmar agora
+              Cadastrou-se com e-mail e não confirmou? Confirmar agora
             </button>
           </div>
         )}
