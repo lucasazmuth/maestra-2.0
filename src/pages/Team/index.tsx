@@ -2,6 +2,8 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { Button, Input, Modal, Popconfirm, message } from 'antd';
 import { FiMail, FiMoreHorizontal, FiPlus, FiTrash2, FiUser } from 'react-icons/fi';
 
+import { useAppSelector } from '../../store/store';
+import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { useArtist } from '../../hooks/useArtist';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { Spinner } from '../../components/spinner/spinner';
@@ -18,20 +20,36 @@ const statusLabel: Record<string, string> = {
   rejected: 'Recusado',
 };
 
-const initials = (member: ArtistMember) => {
-  const source = member.name?.trim() || member.email.split('@')[0] || '?';
-  return source
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
-};
+// Faixa de contadores oculta por ora, a pedido — mesmo tratamento dado à de Músicas. Fica como
+// flag, e não comentada, para o bloco continuar compilando e tipado: voltar é trocar por `true`.
+const MOSTRAR_KPIS = false;
+
+// Avatar do membro. A foto só existe para quem está logado: `artist_members` guarda id, e-mail,
+// nome, acessos e status — não há coluna de avatar, e a foto dos OUTROS membros vive no
+// `user_metadata` do Auth, que o cliente não lê de terceiros. Então: foto própria quando é você,
+// e para o resto o mesmo avatar padrão do header (nada de inicial sobre gradiente, que era uma
+// terceira linguagem visual só desta tela).
+const MemberAvatar: FC<{ src?: string | null; className: string }> = ({ src, className }) => (
+  <span className={className}>
+    <img src={src || ARTISTS_DEFAULT_IMAGE} alt="" />
+  </span>
+);
 
 const Team: FC = () => {
   const { artist } = useArtist();
   const artistId = artist?.id;
   const { canManageTeam } = useArtistCapabilities(artist);
+  const user = useAppSelector((s) => s.auth.user);
+
+  // Mesma origem que o header usa para a foto de quem está logado. Vale só para a própria
+  // linha: o avatar dos outros membros não está em lugar nenhum que o cliente possa ler.
+  const fotoDoMembro = (member: ArtistMember): string | null => {
+    const meta = (user?.user_metadata || {}) as Record<string, string | undefined>;
+    const souEu = Boolean(user?.id && member.user_id && user.id === member.user_id)
+      || Boolean(user?.email && member.email && user.email.toLowerCase() === member.email.toLowerCase());
+    if (!souEu) return null;
+    return meta.avatar_url || meta.picture || null;
+  };
 
   const [members, setMembers] = useState<ArtistMember[]>([]);
   const [loading, setLoading] = useState(false);
@@ -229,22 +247,20 @@ const Team: FC = () => {
           </div>
         ) : (
           <>
-            <section className={styles.summary} aria-label="Resumo da equipe">
-              <span><b>{String(activeMembers).padStart(2, '0')}</b>Pessoas ativas</span>
-              <span><b>{String(pendingMembers).padStart(2, '0')}</b>Convites pendentes</span>
-              <span><b>{String(configuredAccesses).padStart(2, '0')}</b>Acessos configurados</span>
-            </section>
+            {MOSTRAR_KPIS && (
+              <section className={styles.summary} aria-label="Resumo da equipe">
+                <span><b>{String(activeMembers).padStart(2, '0')}</b>Pessoas ativas</span>
+                <span><b>{String(pendingMembers).padStart(2, '0')}</b>Convites pendentes</span>
+                <span><b>{String(configuredAccesses).padStart(2, '0')}</b>Acessos configurados</span>
+              </section>
+            )}
+            {/* Sem cabeçalho de colunas: a lista virou linhas, como a de Músicas — cada
+                informação já se identifica sozinha (pílula de acesso, selo de status). */}
             <div className={styles.memberList}>
-              <header className={styles.listHeader}>
-                <span>Membro</span>
-                <span>Acessos</span>
-                <span>Status</span>
-                <span aria-hidden="true" />
-              </header>
             {visiveis.map((member) => (
               <article className={styles.memberCard} key={member.id}>
                 <div className={styles.memberCell}>
-                  <span className={styles.avatar} aria-hidden="true">{initials(member)}</span>
+                  <MemberAvatar src={fotoDoMembro(member)} className={styles.avatar} />
                   <div className={styles.memberIdentity}>
                     <strong>{member.name || member.email.split('@')[0]}</strong>
                     <span>{member.email}</span>
@@ -321,7 +337,7 @@ const Team: FC = () => {
         {selectedMember && (
           <div className={styles.modalBody}>
             <div className={styles.memberOverview}>
-              <span className={styles.modalAvatar} aria-hidden="true">{initials(selectedMember)}</span>
+              <MemberAvatar src={fotoDoMembro(selectedMember)} className={styles.modalAvatar} />
               <div>
                 <span className={styles.status} data-status={selectedMember.status}>
                   <i aria-hidden="true" />
