@@ -23,6 +23,7 @@ import { persistor, store, useAppDispatch, useAppSelector } from './store/store'
 import { authActions } from './store/slices/auth';
 
 import { supabase } from './lib/supabase';
+import { ConsentProvider, useConsent } from './hooks/useConsent';
 import { Spinner } from './components/spinner/spinner';
 import { AppLayout } from './components/Layout';
 import { RequireArtistPaid } from './components/RequireArtistPaid';
@@ -31,6 +32,8 @@ import { RequireArtistPaid } from './components/RequireArtistPaid';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Welcome from './pages/Welcome';
+import Consent from './pages/Consent';
+import ContaBloqueada from './pages/Consent/Blocked';
 const Landing = lazy(() => import('./pages/Landing'));
 const DiagnosticoReal = lazy(() => import('./pages/DiagnosticoReal'));
 // Página de referência da landing (rota /index2): existe pra avaliarmos o layout antes de mexer
@@ -142,6 +145,30 @@ const RequireAuth: FC = () => {
     return <Spinner loading global>{null as any}</Spinner>;
   }
   if (!user) return <Navigate to='/login' replace />;
+  // O provider carrega o estado de consentimento uma vez para o gate e para a tela de coleta.
+  return (
+    <ConsentProvider>
+      <Outlet />
+    </ConsentProvider>
+  );
+};
+
+// Gate de consentimento (LGPD). Os Termos (§3) e a Política (§11) restringem o uso a maiores de
+// 18 anos; este componente é o que torna isso real, e cobre de uma vez os três caminhos de
+// entrada: cadastro por e-mail, login por Google (que não passa por formulário) e as contas
+// criadas antes da exigência, que caem aqui no próximo acesso.
+const RequireConsent: FC = () => {
+  const { state, loading, unavailable } = useConsent();
+
+  if (loading) return <Spinner loading global>{null as any}</Spinner>;
+
+  // Indisponibilidade transitória não tranca o app: um deploy ruim da função deixaria todos os
+  // usuários de fora, o que é pior que o risco coberto aqui. A exigência volta na próxima
+  // verificação bem-sucedida, e a escrita de dados segue protegida pela RLS de qualquer forma.
+  if (unavailable) return <Outlet />;
+
+  if (state?.blocked) return <Navigate to='/conta-bloqueada' replace />;
+  if (state && !state.satisfied) return <Navigate to='/consentimento' replace />;
   return <Outlet />;
 };
 
@@ -232,6 +259,13 @@ const AppRoutes: FC = () => {
       <Route path='/legal/:slug' element={<Legal />} />
 
       <Route element={<RequireAuth />}>
+        {/* Coleta de maioridade e aceite: autenticadas, mas FORA do RequireConsent — dentro dele
+            o gate mandaria a pessoa para a tela de consentimento a partir da própria tela de
+            consentimento, em laço. */}
+        <Route path='/consentimento' element={<Consent />} />
+        <Route path='/conta-bloqueada' element={<ContaBloqueada />} />
+
+        <Route element={<RequireConsent />}>
         {/* Boas-vindas pós-cadastro: autenticada, mas em tela cheia (sem o layout do app). */}
         <Route path='/welcome' element={<Welcome />} />
         {/* Criação de artista: chat full-screen (sem o layout do app). O perfil nasce
@@ -293,6 +327,7 @@ const AppRoutes: FC = () => {
             <Route path='/admin/push' element={<AdminPush />} />
           </Route>
           <Route path='*' element={<Page404 />} />
+        </Route>
         </Route>
       </Route>
     </Routes>

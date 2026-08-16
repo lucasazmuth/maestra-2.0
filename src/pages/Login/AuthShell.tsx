@@ -1,7 +1,7 @@
 import { FC, ReactNode, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiUser } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiCalendar } from 'react-icons/fi';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
 import { useAppDispatch } from '../../store/store';
@@ -91,11 +91,13 @@ export const AuthField: FC<{
   value: string;
   onChange: (v: string) => void;
   autoFocus?: boolean;
-}> = ({ type, placeholder, value, onChange, autoFocus }) => {
+  /** Só para type='date': limita a seleção (usado para barrar datas no futuro). */
+  max?: string;
+}> = ({ type, placeholder, value, onChange, autoFocus, max }) => {
   const [show, setShow] = useState(false);
   const isPassword = type === 'password';
-  // text (nome) → usuário; email → envelope; senha → cadeado.
-  const Icon = type === 'email' ? FiMail : isPassword ? FiLock : FiUser;
+  // text (nome) → usuário; email → envelope; senha → cadeado; data → calendário.
+  const Icon = type === 'email' ? FiMail : isPassword ? FiLock : type === 'date' ? FiCalendar : FiUser;
 
   return (
     <div className={styles.field}>
@@ -106,6 +108,9 @@ export const AuthField: FC<{
         placeholder={placeholder}
         value={value}
         autoFocus={autoFocus}
+        max={max}
+        // O campo de data não mostra placeholder: sem rótulo, "dd/mm/aaaa" não diz de quem é.
+        aria-label={placeholder}
         onChange={(e) => onChange(e.target.value)}
       />
       {isPassword && (

@@ -7,6 +7,7 @@ import { authActions } from '../../store/slices/auth';
 import { AuthShell, AuthField, AuthSubmit, authError } from '../Login/AuthShell';
 import styles from '../Login/AuthShell.module.scss';
 import { EmailCodeStep } from '../../components/EmailCodeStep';
+import { IDADE_MINIMA, ehMaiorDeIdade, idadeEmAnos } from '../../utils/age';
 
 const Signup: FC = () => {
   const dispatch = useAppDispatch();
@@ -26,8 +27,29 @@ const Signup: FC = () => {
     }
   });
   const [password, setPassword] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [aceite, setAceite] = useState(false);
+  const [comunicacoes, setComunicacoes] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Registra maioridade e aceite na conta recém-criada. Só roda com sessão ativa (depois do
+  // código), e falhar aqui não é fatal: o gate de consentimento pede de novo no próximo acesso.
+  const registrarConsentimento = async () => {
+    try {
+      await supabase.functions.invoke('account-consent', {
+        body: {
+          action: 'submit',
+          birthDate,
+          aceitaTermos: aceite,
+          aceitaPolitica: aceite,
+          aceitaComunicacoes: comunicacoes,
+        },
+      });
+    } catch (err) {
+      console.warn('[signup] consentimento não registrado agora:', err);
+    }
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +58,15 @@ const Signup: FC = () => {
     if (!name.trim()) { setError('Informe seu nome.'); return; }
     if (!email.trim()) { setError('Informe seu e-mail.'); return; }
     if (password.length < 6) { setError('A senha precisa ter ao menos 6 caracteres.'); return; }
+    // Retorno imediato só para não criar uma conta que já nasceria bloqueada — quem decide de
+    // fato é a edge function, no servidor.
+    if (!birthDate) { setError('Informe sua data de nascimento.'); return; }
+    if (idadeEmAnos(birthDate) === null) { setError('Essa data de nascimento não existe.'); return; }
+    if (!ehMaiorDeIdade(birthDate)) {
+      setError(`A Maestra é destinada a maiores de ${IDADE_MINIMA} anos.`);
+      return;
+    }
+    if (!aceite) { setError('É preciso aceitar os Termos de Uso e a Política de Privacidade.'); return; }
     setLoading(true);
     try {
       const res = await dispatch(
@@ -53,6 +84,7 @@ const Signup: FC = () => {
       // sem confirmar — mas o usuário precisa passar pelo código antes de entrar.
       if (res.user?.email_confirmed_at) {
         // Confirmação desligada (ou login social) → entra direto.
+        await registrarConsentimento();
         navigate('/welcome', { replace: true });
       } else {
         // Confirmação ativada → código já enviado por e-mail (Brevo). Limpa a meia-sessão e pede o código.
@@ -70,7 +102,14 @@ const Signup: FC = () => {
     return (
       <AuthShell>
         {/* Código já enviado no signUp — sem resendOnMount pra não duplicar. */}
-        <EmailCodeStep email={email.trim()} onVerified={() => navigate('/welcome', { replace: true })} />
+        {/* Só aqui existe sessão: o consentimento é gravado depois do código, não no signUp. */}
+        <EmailCodeStep
+          email={email.trim()}
+          onVerified={async () => {
+            await registrarConsentimento();
+            navigate('/welcome', { replace: true });
+          }}
+        />
       </AuthShell>
     );
   }
@@ -90,6 +129,28 @@ const Signup: FC = () => {
         <AuthField type='text' placeholder='Seu nome' value={name} onChange={setName} autoFocus />
         <AuthField type='email' placeholder='E-mail' value={email} onChange={setEmail} />
         <AuthField type='password' placeholder='Senha (mín. 6 caracteres)' value={password} onChange={setPassword} />
+        <AuthField
+          type='date'
+          placeholder='Data de nascimento'
+          value={birthDate}
+          onChange={setBirthDate}
+          max={new Date().toISOString().slice(0, 10)}
+        />
+
+        {/* Nenhuma caixa nasce marcada, e comunicações é opt-in separado do aceite legal. */}
+        <label className={styles.consent}>
+          <input type='checkbox' checked={aceite} onChange={(e) => setAceite(e.target.checked)} />
+          <span>
+            Declaro ter {IDADE_MINIMA} anos ou mais e aceito os{' '}
+            <Link to='/legal/termos' target='_blank' rel='noreferrer'>Termos de Uso</Link> e a{' '}
+            <Link to='/legal/privacidade' target='_blank' rel='noreferrer'>Política de Privacidade</Link>.
+          </span>
+        </label>
+        <label className={styles.consent}>
+          <input type='checkbox' checked={comunicacoes} onChange={(e) => setComunicacoes(e.target.checked)} />
+          <span>Quero receber novidades da Maestra por e-mail. <em>Opcional.</em></span>
+        </label>
+
         {error && <div className={styles.error}>{error}</div>}
         <AuthSubmit loading={loading} label='Criar conta' />
       </form>
