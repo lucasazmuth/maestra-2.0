@@ -108,6 +108,10 @@ export const AppLayout: FC = memo(() => {
 
   // O conteúdo rola dentro de .Main-section (não no body). Como o layout permanece
   // montado entre as rotas, sem este reset a nova tela herdava a posição da anterior.
+  // Cada tela filtra o seu; carregar o termo de uma para outra esconderia itens sem motivo
+  // aparente, com o campo lá em cima, longe de onde o efeito aparece.
+  useEffect(() => { limparBusca(); }, [location.pathname, limparBusca]);
+
   useEffect(() => {
     const page = container.current;
     page?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -256,7 +260,33 @@ export const AppLayout: FC = memo(() => {
   const userMetadata = (user?.user_metadata || {}) as Record<string, any>;
   const displayName = userMetadata.full_name || userMetadata.name || user?.email || 'Usuário';
   const userAvatar = userMetadata.avatar_url || userMetadata.picture || ARTISTS_DEFAULT_IMAGE;
-  const topNavigation = (home = false) => (
+  // A busca só aparece onde filtra alguma coisa. Ela nasceu visível em todo o app sem estar
+  // ligada a nada — na dashboard, por exemplo, digitar ali nunca fez efeito. Campo que não
+  // responde é pior que campo ausente: a pessoa tenta, não acontece nada, e conclui que a tela
+  // está quebrada.
+  //
+  // Ao ligar a busca numa tela nova, acrescente a rota aqui — senão o campo não aparece lá.
+  const buscaFiltraAqui = (() => {
+    const rota = location.pathname.replace(/\/+$/, '');
+    if (rota === '/artists') return true; // lista de perfis
+    // Músicas fica de fora de propósito: aquela tela JÁ tem busca própria, junto dos filtros de
+    // status e gênero (FilterToolbar). Somar o campo do topo daria dois campos para a mesma
+    // lista — exatamente o que acabou de ser removido da Agenda.
+    return /^\/artists\/[^/]+\/(action-plan|agenda|team)$/.test(rota);
+  })();
+
+  // O placeholder diz o que a busca alcança AQUI. "Pesquisar na Maestra" prometia uma busca
+  // global que não existe, e mandava procurar música numa tela de agenda.
+  const buscaPlaceholder = (() => {
+    const rota = location.pathname.replace(/\/+$/, '');
+    if (rota === '/artists') return 'Buscar perfil ou artista';
+    if (rota.endsWith('/action-plan')) return 'Buscar tarefa';
+    if (rota.endsWith('/agenda')) return 'Buscar compromisso';
+    if (rota.endsWith('/team')) return 'Buscar membro';
+    return 'Pesquisar';
+  })();
+
+  const topNavigation = () => (
     <header className='top-navigation'>
       <div className='top-navigation-left'>
         {/* O mesmo wordmark vetorial da landing e do login. Aqui a marca era o símbolo em
@@ -278,10 +308,11 @@ export const AppLayout: FC = memo(() => {
           perfis escuta — nas outras telas o campo segue sem efeito, como sempre esteve.
           A seta some quando há texto: ali entra o "limpar", que é a ação que a pessoa quer
           nesse momento (a seta nunca levou a lugar nenhum). */}
+      {buscaFiltraAqui && (
       <label className='global-search'>
         <span className='global-search-icon' aria-hidden='true'><SearchIcon size={18} /></span>
         <input
-          placeholder={home ? 'Buscar perfil ou artista' : 'Pesquisar na Maestra'}
+          placeholder={buscaPlaceholder}
           aria-label='Busca global'
           value={termoBusca}
           onChange={(e) => setTermoBusca(e.target.value)}
@@ -299,6 +330,7 @@ export const AppLayout: FC = memo(() => {
           <span className='global-search-arrow' aria-hidden='true'><FiArrowRight size={18} /></span>
         )}
       </label>
+      )}
       <div className='top-navigation-right'>
         <div className='account'>
           <span className='account-icon'>
@@ -333,12 +365,12 @@ export const AppLayout: FC = memo(() => {
       <main className={`task-app${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}${playerVisible ? ' has-player' : ''}`}>
         {isArtistsList ? (
           <section className='profile-home page-view'>
-            {!hideTopbar && topNavigation(true)}
+            {!hideTopbar && topNavigation()}
             <Outlet context={{ container } satisfies LayoutContext} />
           </section>
         ) : (
           <>
-        {!hideTopbar && topNavigation(false)}
+        {!hideTopbar && topNavigation()}
         {/* `module-layout` encosta a página no rail (margin-left ~130px) porque significa "sem
             coluna de perfil". O wizard NÃO é esse caso: ele mantém o perfil à esquerda e só ganha
             a coluna de resultados à direita — com a classe, o card ficava embaixo do perfil.

@@ -12,6 +12,7 @@ import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
+import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { UpsellModal } from '../../components/UpsellModal';
@@ -99,6 +100,8 @@ const ActionPlan: FC = () => {
 
   // Gerir tarefas exige PRO. (Editar o dossiê — fundamentos/objetivos etc. — agora é no Perfil.)
   const { manageTasks, editPlanning } = useArtistCapabilities(artist);
+  // Busca do topo — ver globalSearchStore.
+  const termoBusca = useGlobalSearch((st) => st.termo);
   const content = artist?.content;
   const strategies = useMemo<Strategy[]>(() => content?.strategies || [], [content]);
   // As estratégias do plano em ORDEM DE PRIORIDADE (finalScore desc); fallback mantém a ordem salva.
@@ -312,8 +315,16 @@ const ActionPlan: FC = () => {
   }
 
   // ---- Progresso das estratégias da fase atual ----
+  //
+  // A busca do topo filtra as TAREFAS; a estratégia continua visível se alguma das suas casar.
+  // Filtrar estratégias pelo título esconderia tarefas que batem dentro de uma estratégia cujo
+  // nome não bate — e é a tarefa que a pessoa está procurando.
+  const q = normalizar(termoBusca);
+  const casa = (t: { title?: string; description?: string }) =>
+    !q || normalizar(t.title || '').includes(q) || normalizar(t.description || '').includes(q);
+
   const info = ranked.map((s) => {
-    const ts = (s.tasks || []).filter(isActive);
+    const ts = (s.tasks || []).filter(isActive).filter(casa);
     const done = ts.filter(isDone).length;
     return { s, ts, done, total: ts.length, complete: ts.length > 0 && done === ts.length };
   });

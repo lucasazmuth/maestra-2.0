@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useMemo, useState } from 'react';
 import { Button, Input, Modal, Popconfirm, message } from 'antd';
 import { FiMail, FiMoreHorizontal, FiPlus, FiTrash2, FiUser } from 'react-icons/fi';
 
@@ -8,6 +8,7 @@ import { Spinner } from '../../components/spinner/spinner';
 import modalStyles from '../../components/StandardModal.module.scss';
 import { MVP_ACCESS_LEVEL_OPTIONS } from '../../constants/maestra';
 import * as membersDb from '../../services/db/members';
+import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
 import type { ArtistMember, AccessLevel } from '../../interfaces/maestra';
 import styles from './Team.module.scss';
 
@@ -44,6 +45,17 @@ const Team: FC = () => {
   const [editName, setEditName] = useState('');
   const [editLevels, setEditLevels] = useState<AccessLevel[]>([]);
   const [editingSaving, setEditingSaving] = useState(false);
+
+  // Busca do topo (ver globalSearchStore). Casa por nome e e-mail, que são os dois dados
+  // visíveis na linha.
+  const termo = useGlobalSearch((st) => st.termo);
+  const visiveis = useMemo(() => {
+    const q = normalizar(termo);
+    if (!q) return members;
+    return members.filter((m) =>
+      normalizar(m.name || '').includes(q) || normalizar(m.email || '').includes(q)
+    );
+  }, [members, termo]);
 
   useEffect(() => {
     if (!artistId) return;
@@ -229,7 +241,7 @@ const Team: FC = () => {
                 <span>Status</span>
                 <span aria-hidden="true" />
               </header>
-            {members.map((member) => (
+            {visiveis.map((member) => (
               <article className={styles.memberCard} key={member.id}>
                 <div className={styles.memberCell}>
                   <span className={styles.avatar} aria-hidden="true">{initials(member)}</span>
