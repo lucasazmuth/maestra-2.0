@@ -55,7 +55,11 @@ Deno.serve(async (req) => {
 
   // 3) Monta e envia o e-mail.
   const inviterName = (user.user_metadata?.full_name as string) || "Alguém";
-  const loginLink = appUrl ? `${appUrl}/login` : "";
+  // O e-mail vai no link: o convite é amarrado ao endereço, e fazer a pessoa digitar de novo
+  // (podendo errar e cair numa conta sem convite nenhum) é o tipo de atrito que não precisa
+  // existir. O /login já oferece "Cadastre-se!" para quem ainda não tem conta, e leva o endereço
+  // junto.
+  const loginLink = appUrl ? `${appUrl}/login?email=${encodeURIComponent(member.email)}` : "";
   const html = emailLayout({
     title: `${inviterName} te convidou pra gerenciar ${artist.name}`,
     bodyHtml: `<p style="color:#405985;line-height:1.6;">${inviterName} quer você no time do <strong style="color:#2c3f63;">${artist.name}</strong> na Maestra.</p>
