@@ -293,7 +293,10 @@ describe('Catalog Page - Track Limit Integration', () => {
   });
 
   describe('Catalog filters', () => {
-    it('keeps search compact and exposes advanced filters inside a popover', async () => {
+    // A busca por texto saiu do popover e foi para o campo do topo (ela vivia escondida atrás
+    // de "Filtros" e ninguém achava). O popover ficou só com os filtros estruturados, e é isso
+    // que este teste passa a cobrir — a busca em si é exercitada pelo store, não por aqui.
+    it('deixa no popover apenas os filtros estruturados, sem campo de busca', async () => {
       mockCatalogItems = [
         makeCatalogItem({ id: 'track-samba', title: 'Meu Samba', genre: 'Samba', status: 'composition' }),
         makeCatalogItem({ id: 'track-rock', title: 'Noite Rock', genre: 'Rock', status: 'released' }),
@@ -310,7 +313,7 @@ describe('Catalog Page - Track Limit Integration', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
 
       const filters = screen.getByRole('dialog', { name: 'Filtros de Músicas' });
-      expect(within(filters).getByPlaceholderText('Buscar em Músicas')).toBeInTheDocument();
+      expect(within(filters).queryByPlaceholderText('Buscar em Músicas')).not.toBeInTheDocument();
       expect(within(filters).getByText('Status')).toBeInTheDocument();
       expect(within(filters).getByText('Áudio')).toBeInTheDocument();
       expect(within(filters).getByText('Ordenar')).toBeInTheDocument();
@@ -322,14 +325,8 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       fireEvent.click(within(filters).getByRole('button', { name: 'Limpar' }));
 
-      fireEvent.change(
-        within(filters).getByPlaceholderText('Buscar em Músicas'),
-        { target: { value: 'samba' } }
-      );
-
       expect(screen.getByText('Meu Samba')).toBeInTheDocument();
-      expect(screen.queryByText('Noite Rock')).not.toBeInTheDocument();
-      expect(screen.queryByText('1 de 2 música(s)')).not.toBeInTheDocument();
+      expect(screen.getByText('Noite Rock')).toBeInTheDocument();
     });
   });
 });

@@ -32,6 +32,52 @@ import * as membersDb from '../../services/db/members';
 import type { CatalogItem, CatalogProject, MusicGenre, ArtistMember } from '../../interfaces/maestra';
 import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
 
+// Forma da linha das DUAS listas da tela — Músicas e Lançamentos. Antes Músicas era uma tabela
+// em grade, com cabeçalho e colunas fixas, e Lançamentos uma lista solta: duas caras para a
+// mesma coisa. Ficam aqui juntas justamente para não voltarem a divergir.
+const linhaLista: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 14,
+  padding: 8,
+  borderRadius: 6,
+  cursor: 'pointer',
+};
+const linhaPlay: CSSProperties = {
+  width: 36,
+  height: 36,
+  minWidth: 36,
+  borderRadius: '50%',
+  border: 'none',
+  background: '#3361ff',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'transform .1s',
+};
+const linhaCapa: CSSProperties = { width: 40, height: 40, borderRadius: 4, objectFit: 'cover' };
+const linhaTitulo: CSSProperties = {
+  color: '#2c3f63',
+  fontWeight: 600,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+};
+const linhaSub: CSSProperties = {
+  color: '#7c8da8',
+  fontSize: 13,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+};
+const linhaMeta: CSSProperties = { color: '#93a4c0', fontSize: 13 };
+
+// Faixa de contadores ("Rascunhos ativos", "Em produção", "Músicas visíveis") oculta por ora,
+// a pedido. Fica como flag, e não comentada, para o bloco continuar compilando e tipado —
+// voltar é trocar por `true`.
+const MOSTRAR_KPIS = false;
+
 type Tab = 'spotify' | 'manual';
 type SortOption = 'updated-desc' | 'created-desc' | 'title-asc' | 'release-asc';
 
@@ -70,11 +116,22 @@ const parseTrackDuration = (duration?: string | null): number => {
   return Number.isFinite(numeric) && numeric > 0 ? numeric : 222;
 };
 
+// A pilula vinha de `.catalog-track-table article em`. A tabela saiu quando as duas listas
+// passaram a usar a mesma linha, e o selo voltou a ser um <em> italico solto — agora a forma
+// mora aqui, junto de quem a desenha.
 const StatusBadge: FC<{ status: string }> = ({ status }) => {
   const cfg = (CATALOG_STATUS as any)[status] || { label: status, color: '#6b7280' };
   return (
     <em
       style={{
+        display: 'inline-block',
+        flexShrink: 0,
+        borderRadius: 13,
+        padding: '6px 9px',
+        fontSize: 10,
+        fontWeight: 800,
+        fontStyle: 'normal',
+        whiteSpace: 'nowrap',
         background: `${cfg.color}22`,
         color: cfg.color,
       }}
@@ -797,11 +854,13 @@ const Catalog: FC = () => {
           </button>
         )}
       </div>
-      <section className='catalog-summary' aria-label='Resumo de Músicas'>
-        <span><b>{String(draftCount).padStart(2, '0')}</b>Rascunhos ativos</span>
-        <span><b>{String(productionCount).padStart(2, '0')}</b>Em produção</span>
-        <span><b>{String(items.length).padStart(2, '0')}</b>Músicas visíveis</span>
-      </section>
+      {MOSTRAR_KPIS && (
+        <section className='catalog-summary' aria-label='Resumo de Músicas'>
+          <span><b>{String(draftCount).padStart(2, '0')}</b>Rascunhos ativos</span>
+          <span><b>{String(productionCount).padStart(2, '0')}</b>Em produção</span>
+          <span><b>{String(items.length).padStart(2, '0')}</b>Músicas visíveis</span>
+        </section>
+      )}
       <div className='catalog-tabs'>
         <TabButton id='manual' label='Músicas' />
         <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify />} />
@@ -817,24 +876,19 @@ const Catalog: FC = () => {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {/* Hover pela classe `catalog-track-row`, igual a lista de Musicas — antes era
+                  JS no mouseenter/mouseleave. O fundo inline fica so na faixa tocando: estilo
+                  inline vence o :hover, entao pintar 'transparent' mataria o hover das demais. */}
               {filteredSpotifyTracks.map((t) => (
                 <div
                   key={t.id}
+                  className='catalog-track-row'
                   onClick={() => openEmbed(playingTrackId === t.id ? null : t.id)}
                   title='Ouvir prévia aqui'
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 14,
-                    padding: 8,
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    background: playingTrackId === t.id ? 'rgba(51, 97, 255, 0.08)' : 'transparent',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f7f8fb')}
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background =
-                      playingTrackId === t.id ? 'rgba(51, 97, 255, 0.08)' : 'transparent')
+                  style={
+                    playingTrackId === t.id
+                      ? { ...linhaLista, background: 'rgba(51, 97, 255, 0.08)' }
+                      : linhaLista
                   }
                 >
                   <button
@@ -843,19 +897,7 @@ const Catalog: FC = () => {
                       e.stopPropagation();
                       if (t.spotify_url) window.open(t.spotify_url, '_blank', 'noopener');
                     }}
-                    style={{
-                      width: 36,
-                      height: 36,
-                      minWidth: 36,
-                      borderRadius: '50%',
-                      border: 'none',
-                      background: '#3361ff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform .1s',
-                    }}
+                    style={linhaPlay}
                     onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.92)')}
                     onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                   >
@@ -866,15 +908,15 @@ const Catalog: FC = () => {
                   <img
                     src={t.album_image}
                     alt=''
-                    style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover' }}
+                    style={linhaCapa}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#2c3f63', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={linhaTitulo}>
                       {t.name}
                     </div>
-                    <div style={{ color: '#7c8da8', fontSize: 13 }}>{t.album}</div>
+                    <div style={linhaSub}>{t.album}</div>
                   </div>
-                  <span style={{ color: '#93a4c0', fontSize: 13 }}>{formatMs(t.duration_ms)}</span>
+                  <span style={linhaMeta}>{formatMs(t.duration_ms)}</span>
                 </div>
               ))}
             </div>
@@ -939,89 +981,108 @@ const Catalog: FC = () => {
                 : 'Nenhuma música encontrada com esses filtros.'}
             </div>
           ) : (
-            <div className='catalog-track-table'>
-              <header><span>Música</span><span>Tipo</span><span>Status</span><span>Próximo marco</span><span>Colaboração</span><span /></header>
-              {filteredItems.map((it) => (
-                <article
-                  key={it.id}
-                  className='catalog-track-row'
-                  role='button'
-                  tabIndex={0}
-                  title='Abrir espaço do projeto'
-                  onClick={() => navigate(`/artists/${artist.id}/catalog/projects/${it.project_id || it.id}`)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      navigate(`/artists/${artist.id}/catalog/projects/${it.project_id || it.id}`);
-                    }
-                  }}
-                >
-                  <span>
-                  {(() => {
-                    // Espelha o player: se ESTA faixa é a do player, mostra pausar/tocar conforme
-                    // o estado e o clique pausa/retoma; senão, o clique inicia esta faixa.
-                    const isCurrent = playerCurrentId === it.id;
-                    const isPlaying = isCurrent && playerPlaying;
-                    return (
-                      <button
-                        className='catalog-track-play'
-                        title={!it.audio_file ? 'Abrir player — áudio pendente' : isPlaying ? 'Pausar' : 'Tocar'}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isCurrent) togglePlayer?.(); // já no player → pausa/retoma
-                          else openLocal(it.id); // começa esta faixa
-                        }}
-                      >
-                        {isPlaying ? (
-                          <svg viewBox='0 0 16 16'>
-                            <path d='M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z' />
-                          </svg>
-                        ) : (
-                          <svg viewBox='0 0 16 16'>
-                            <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
-                          </svg>
-                        )}
-                      </button>
-                    );
-                  })()}
-                    <strong>{it.title}<small>V{it.version_number || 1} · versão principal</small></strong>
-                  </span>
-                  <span>{it.genre || '—'}</span>
-                  <span><StatusBadge status={it.status} /></span>
-                  <span>{it.release_date ? new Date(`${it.release_date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '—'}</span>
-                  {/* A linha inteira já abre o Espaço Jam, mas isso não se descobre olhando —
-                      o botão nomeia o destino. `stopPropagation` porque o clique dele e o da
-                      linha levariam ao mesmo lugar e disparariam duas navegações. */}
-                  <span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {filteredItems.map((it) => {
+                // Espelha o player: se ESTA faixa é a do player, mostra pausar/tocar conforme
+                // o estado e o clique pausa/retoma; senão, o clique inicia esta faixa.
+                const isCurrent = playerCurrentId === it.id;
+                const isPlaying = isCurrent && playerPlaying;
+                const abrirJam = () =>
+                  navigate(`/artists/${artist.id}/catalog/projects/${it.project_id || it.id}`);
+                // O que era coluna vira uma linha só, como no álbum dos Lançamentos. Gênero e
+                // data não somem: entram aqui, e só aparecem quando existem — antes ocupavam
+                // uma coluna inteira só para exibir "—".
+                const legenda = [
+                  `V${it.version_number || 1} · versão principal`,
+                  it.genre,
+                  it.release_date
+                    ? new Date(`${it.release_date}T00:00:00`).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'short',
+                      })
+                    : null,
+                ].filter(Boolean).join(' · ');
+
+                return (
+                  <div
+                    key={it.id}
+                    className='catalog-track-row'
+                    role='button'
+                    tabIndex={0}
+                    title='Abrir espaço do projeto'
+                    style={linhaLista}
+                    onClick={abrirJam}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        abrirJam();
+                      }
+                    }}
+                  >
+                    <button
+                      style={linhaPlay}
+                      title={!it.audio_file ? 'Abrir player — áudio pendente' : isPlaying ? 'Pausar' : 'Tocar'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isCurrent) togglePlayer?.(); // já no player → pausa/retoma
+                        else openLocal(it.id); // começa esta faixa
+                      }}
+                    >
+                      {isPlaying ? (
+                        <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#fff' }}>
+                          <path d='M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z' />
+                        </svg>
+                      ) : (
+                        <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#fff' }}>
+                          <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
+                        </svg>
+                      )}
+                    </button>
+                    {/* Nem toda faixa tem capa (a dos Lançamentos sempre tem, vem do Spotify).
+                        Sem imagem entra um bloco neutro, para a linha não desalinhar. */}
+                    {it.cover_image ? (
+                      <img src={it.cover_image} alt='' style={linhaCapa} />
+                    ) : (
+                      <span
+                        aria-hidden
+                        style={{ ...linhaCapa, background: '#eef3fb', display: 'block', flexShrink: 0 }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={linhaTitulo}>{it.title}</div>
+                      <div style={linhaSub}>{legenda}</div>
+                    </div>
+                    <StatusBadge status={it.status} />
+                    {/* A linha inteira já abre o Espaço Jam, mas isso não se descobre olhando —
+                        o botão nomeia o destino. `stopPropagation` porque o clique dele e o da
+                        linha levariam ao mesmo lugar e disparariam duas navegações. */}
                     <button
                       className='catalog-track-jam'
                       type='button'
                       title='Abrir o Espaço Jam desta música'
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/artists/${artist.id}/catalog/projects/${it.project_id || it.id}`);
+                        abrirJam();
                       }}
                     >
                       <EspacoJamIcon size={15} /> Espaço Jam
                     </button>
-                  </span>
-                  {canEditTracks ? (
-                    <button
-                      className='catalog-track-more'
-                      title='Editar'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditing(it);
-                        setModalOpen(true);
-                      }}
-                    >
-                      <FiMoreVertical size={18} />
-                    </button>
-                  ) : (
-                    <span className='catalog-track-more-placeholder' aria-hidden='true' />
-                  )}
-                </article>
-              ))}
+                    {canEditTracks && (
+                      <button
+                        className='catalog-track-more'
+                        title='Editar'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditing(it);
+                          setModalOpen(true);
+                        }}
+                      >
+                        <FiMoreVertical size={18} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
           </div>
