@@ -14,7 +14,6 @@ import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
-import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { UpsellModal } from '../../components/UpsellModal';
 import { TaskDate, TaskCategory, TaskOwner, type Assignee } from './TaskControls';
 import { TaskDetailModal } from './TaskDetailModal';
@@ -411,8 +410,6 @@ const ActionPlan: FC = () => {
         </section>
       )}
 
-      {/* Consultora da Nyta (mesma seção do rodapé do Dashboard) no lugar do texto simples de objetivos */}
-      <NytaDashboardHero />
 
       <TaskDetailModal
         open={!!selectedTaskRef}
