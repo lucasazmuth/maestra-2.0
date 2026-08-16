@@ -1188,6 +1188,17 @@
   text-align: left;
 }
 
+// Dentro do app, o diagnóstico acompanha a largura do container — como o cabeçalho da própria
+// página, que não tem teto. Sem isto o relatório parava em 1080px e ficava mais estreito que o
+// seu próprio cabeçalho: numa tela de 1800px sobravam 86px de cada lado, e o desalinhamento
+// entre os dois lia como bug de layout.
+//
+// O teto continua valendo fora do shell (criação de artista e desbloqueio de perfil), onde o
+// `.realWrap` é justamente quem centraliza o conteúdo — lá não existe container para seguir.
+:global(.board-content).pageReal .realWrap {
+  max-width: none;
+}
+
 // ─── Novo design: fluxo REAL ──────────────────────────────────────────────────
 // Criação e refação compartilham esta superfície clara para que o diagnóstico não
 // reintroduza o ambiente escuro do fluxo anterior.
