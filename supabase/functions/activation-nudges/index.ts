@@ -169,7 +169,7 @@ async function fireDue(
     const hi = owner.name ? `Olá, ${owner.name}! ` : "";
     const html = emailLayout({
       title: due.title(artistName),
-      bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi}${due.emailBody(artistName)}</p>${ctaButton(due.ctaLabel, APP_URL + due.ctaPath(artistId ?? undefined))}`,
+      bodyHtml: `<p style="color:#405985;line-height:1.6;">${hi}${due.emailBody(artistName)}</p>${ctaButton(due.ctaLabel, APP_URL + due.ctaPath(artistId ?? undefined))}`,
     });
     await sendBrevoEmail({ to: owner.email, toName: owner.name || undefined, subject: due.subject(artistName), html });
   }

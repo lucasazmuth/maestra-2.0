@@ -38,9 +38,9 @@ function buildEmail(d: EmailData, name: string): { subject: string; html: string
         subject: "Redefinir sua senha",
         html: emailLayout({
           title: "Redefinir sua senha",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Recebemos um pedido pra redefinir a senha da sua conta. Clique no botão abaixo.</p>
-          <p style="margin:20px 0;"><a href="${link}" style="display:inline-block;background:#9A4FD1;color:#FFFFFF;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Redefinir senha</a></p>
-          <p style="color:#8a8a92;font-size:13px;">Se não foi você, pode ignorar. Sua senha continua a mesma.</p>`,
+          bodyHtml: `<p style="color:#405985;line-height:1.6;">${hi} Recebemos um pedido pra redefinir a senha da sua conta. Clique no botão abaixo.</p>
+          <p style="margin:20px 0;"><a href="${link}" style="display:inline-block;background:#3361ff;color:#FFFFFF;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Redefinir senha</a></p>
+          <p style="color:#7c8da8;font-size:13px;">Se não foi você, pode ignorar. Sua senha continua a mesma.</p>`,
         }),
       };
     }
@@ -49,8 +49,8 @@ function buildEmail(d: EmailData, name: string): { subject: string; html: string
         subject: "Seu convite pra Maestra chegou",
         html: emailLayout({
           title: "Seu convite chegou",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Você foi convidado(a) pra Maestra. Use o código abaixo pra concluir seu acesso:</p>${otpBlock(code)}
-          <p style="color:#8a8a92;font-size:13px;">Expira em alguns minutos.</p>`,
+          bodyHtml: `<p style="color:#405985;line-height:1.6;">${hi} Você foi convidado(a) pra Maestra. Use o código abaixo pra concluir seu acesso:</p>${otpBlock(code)}
+          <p style="color:#7c8da8;font-size:13px;">Expira em alguns minutos.</p>`,
         }),
       };
     case "email_change":
@@ -58,7 +58,7 @@ function buildEmail(d: EmailData, name: string): { subject: string; html: string
         subject: "Confirme seu novo e-mail",
         html: emailLayout({
           title: "Confirme seu novo e-mail",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Quase lá! Use o código abaixo pra confirmar seu novo e-mail:</p>${otpBlock(code)}`,
+          bodyHtml: `<p style="color:#405985;line-height:1.6;">${hi} Quase lá! Use o código abaixo pra confirmar seu novo e-mail:</p>${otpBlock(code)}`,
         }),
       };
     case "magiclink":
@@ -66,8 +66,8 @@ function buildEmail(d: EmailData, name: string): { subject: string; html: string
         subject: "Seu código de acesso",
         html: emailLayout({
           title: "Acesse sua conta",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Use o código abaixo pra entrar na Maestra:</p>${otpBlock(code)}
-          <p style="color:#8a8a92;font-size:13px;">Expira em alguns minutos.</p>`,
+          bodyHtml: `<p style="color:#405985;line-height:1.6;">${hi} Use o código abaixo pra entrar na Maestra:</p>${otpBlock(code)}
+          <p style="color:#7c8da8;font-size:13px;">Expira em alguns minutos.</p>`,
         }),
       };
     case "signup":
@@ -78,8 +78,8 @@ function buildEmail(d: EmailData, name: string): { subject: string; html: string
         subject: "Confirme seu e-mail na Maestra",
         html: emailLayout({
           title: "Confirme seu e-mail",
-          bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${hi} Que bom ter você aqui. Use o código abaixo pra confirmar seu e-mail e ativar sua conta:</p>${otpBlock(code)}
-          <p style="color:#8a8a92;font-size:13px;">Ele expira em alguns minutos. Se não foi você, é só ignorar.</p>`,
+          bodyHtml: `<p style="color:#405985;line-height:1.6;">${hi} Que bom ter você aqui. Use o código abaixo pra confirmar seu e-mail e ativar sua conta:</p>${otpBlock(code)}
+          <p style="color:#7c8da8;font-size:13px;">Ele expira em alguns minutos. Se não foi você, é só ignorar.</p>`,
         }),
       };
   }

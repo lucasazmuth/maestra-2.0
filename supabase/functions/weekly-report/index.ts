@@ -205,26 +205,26 @@ function buildReport(content: any, snap: any): Report {
 // ─── HTML do corpo do e-mail ───────────────────────────────────────────────────
 function renderBody(r: Report, artistName: string, greetName: string, artistId: string, unsubUrl: string | null): string {
   const card = (inner: string) =>
-    `<div style="background:#161616;border:1px solid #262626;border-radius:12px;padding:16px 18px;margin:14px 0;">${inner}</div>`;
+    `<div style="background:#f7f9fd;border:1px solid #e3eaf3;border-radius:12px;padding:16px 18px;margin:14px 0;">${inner}</div>`;
   const label = (t: string) =>
-    `<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9A4FD1;margin-bottom:8px;">${t}</div>`;
+    `<div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#3361ff;margin-bottom:8px;">${t}</div>`;
 
   const hi = greetName ? `Olá, ${escapeHtml(greetName)}! ` : "";
   const parts: string[] = [];
   parts.push(
-    `<p style="color:#cfcfd4;line-height:1.6;margin:0 0 4px;">${hi}Aqui está o resumo da semana da carreira de <strong style="color:#fff;">${escapeHtml(artistName)}</strong>.</p>`,
+    `<p style="color:#405985;line-height:1.6;margin:0 0 4px;">${hi}Aqui está o resumo da semana da carreira de <strong style="color:#2c3f63;">${escapeHtml(artistName)}</strong>.</p>`,
   );
 
   // 1) Fase REAL
   let phaseInner = label("Etapa atual") +
-    `<div style="font-size:18px;font-weight:700;color:#fff;line-height:1.3;">${escapeHtml(r.phaseName)}</div>`;
+    `<div style="font-size:18px;font-weight:700;color:#2c3f63;line-height:1.3;">${escapeHtml(r.phaseName)}</div>`;
   if (r.boletim) {
     const bars = ([["Alcance", r.boletim.r], ["Receita", r.boletim.e], ["Audiência", r.boletim.a], ["Legitimidade", r.boletim.l]] as const)
       .map(([name, v]) => {
         const w = Math.max(0, Math.min(100, v));
         return `<div style="margin-top:10px;">
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:#cfcfd4;margin-bottom:4px;"><span>${name}</span><span style="color:#fff;font-weight:600;">${w}/100</span></div>
-          <div style="height:6px;background:#2a2a2a;border-radius:9999px;overflow:hidden;"><div style="height:6px;width:${w}%;background:#9A4FD1;border-radius:9999px;"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#405985;margin-bottom:4px;"><span>${name}</span><span style="color:#2c3f63;font-weight:600;">${w}/100</span></div>
+          <div style="height:6px;background:#eef2f8;border-radius:9999px;overflow:hidden;"><div style="height:6px;width:${w}%;background:#3361ff;border-radius:9999px;"></div></div>
         </div>`;
       }).join("");
     phaseInner += `<div style="margin-top:12px;">${bars}</div>`;
@@ -234,15 +234,15 @@ function renderBody(r: Report, artistName: string, greetName: string, artistId: 
   // 2) Progresso do plano
   let planInner = label("Seu plano de ação");
   if (r.total > 0) {
-    planInner += `<div style="font-size:16px;color:#fff;font-weight:600;">${r.done} de ${r.total} tarefas concluídas <span style="color:#9A4FD1;">(${r.pct}%)</span></div>
-      <div style="height:8px;background:#2a2a2a;border-radius:9999px;overflow:hidden;margin-top:10px;"><div style="height:8px;width:${r.pct}%;background:#9A4FD1;border-radius:9999px;"></div></div>`;
+    planInner += `<div style="font-size:16px;color:#2c3f63;font-weight:600;">${r.done} de ${r.total} tarefas concluídas <span style="color:#3361ff;">(${r.pct}%)</span></div>
+      <div style="height:8px;background:#eef2f8;border-radius:9999px;overflow:hidden;margin-top:10px;"><div style="height:8px;width:${r.pct}%;background:#3361ff;border-radius:9999px;"></div></div>`;
     if (r.planComplete) {
-      planInner += `<p style="color:#cfcfd4;line-height:1.6;margin:12px 0 0;">Você concluiu todas as tarefas do plano. Hora de refazer o diagnóstico e evoluir pro próximo nível.</p>`;
+      planInner += `<p style="color:#405985;line-height:1.6;margin:12px 0 0;">Você concluiu todas as tarefas do plano. Hora de refazer o diagnóstico e evoluir pro próximo nível.</p>`;
     } else if (r.focusTitle) {
-      planInner += `<p style="color:#cfcfd4;line-height:1.6;margin:12px 0 0;">Foco agora: <strong style="color:#fff;">${escapeHtml(r.focusTitle)}</strong></p>`;
+      planInner += `<p style="color:#405985;line-height:1.6;margin:12px 0 0;">Foco agora: <strong style="color:#2c3f63;">${escapeHtml(r.focusTitle)}</strong></p>`;
     }
   } else {
-    planInner += `<p style="color:#cfcfd4;line-height:1.6;margin:0;">Seu plano ainda não tem tarefas. Abra a Maestra e priorize as estratégias com a Nyta.</p>`;
+    planInner += `<p style="color:#405985;line-height:1.6;margin:0;">Seu plano ainda não tem tarefas. Abra a Maestra e priorize as estratégias com a Nyta.</p>`;
   }
   parts.push(card(planInner));
 
@@ -250,22 +250,22 @@ function renderBody(r: Report, artistName: string, greetName: string, artistId: 
   if (r.metrics.length) {
     const rows = r.metrics.map((m) => {
       const deltaHtml = m.delta
-        ? `<span style="font-size:12px;font-weight:700;color:${m.up ? "#4ade80" : "#f87171"};margin-left:8px;">${m.delta}</span>`
+        ? `<span style="font-size:12px;font-weight:700;color:${m.up ? "#2a9a59" : "#d2474b"};margin-left:8px;">${m.delta}</span>`
         : "";
-      return `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid #222;">
-        <span style="color:#cfcfd4;font-size:13px;">${m.label}</span>
-        <span style="color:#fff;font-weight:600;">${m.value}${deltaHtml}</span>
+      return `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid #e3eaf3;">
+        <span style="color:#405985;font-size:13px;">${m.label}</span>
+        <span style="color:#2c3f63;font-weight:600;">${m.value}${deltaHtml}</span>
       </div>`;
     }).join("");
     parts.push(card(label("Métricas e evolução") + rows +
-      `<p style="color:#7a7a82;font-size:11px;margin:10px 0 0;">Variação desde a última medição.</p>`));
+      `<p style="color:#93a4c0;font-size:11px;margin:10px 0 0;">Variação desde a última medição.</p>`));
   }
 
   parts.push(ctaButton("Ver meu plano de ação", `${APP_URL}/artists/${artistId}/action-plan`));
 
   if (unsubUrl) {
     parts.push(
-      `<p style="color:#6b7280;font-size:12px;margin:8px 0 0;line-height:1.6;">Não quer mais o resumo semanal? <a href="${unsubUrl}" style="color:#9a9aa2;text-decoration:underline;">Descadastrar</a>.</p>`,
+      `<p style="color:#93a4c0;font-size:12px;margin:8px 0 0;line-height:1.6;">Não quer mais o resumo semanal? <a href="${unsubUrl}" style="color:#7c8da8;text-decoration:underline;">Descadastrar</a>.</p>`,
     );
   }
   return parts.join("");
