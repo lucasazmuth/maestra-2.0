@@ -2,8 +2,7 @@ import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   FiBarChart2, FiBell, FiDatabase, FiGrid, FiKey, FiLifeBuoy, FiLogOut,
-  FiSettings, FiStar, FiTag, FiUsers,
-} from 'react-icons/fi';
+  FiSettings, FiStar, FiTag, FiUsers, FiFilter } from 'react-icons/fi';
 
 import { useIsPlatformAdmin } from '../../../../hooks/useIsPlatformAdmin';
 import { useAppDispatch } from '../../../../store/store';
@@ -39,6 +38,7 @@ const ADMIN: Item[] = [
   { label: 'Cupons', path: '/admin/cupons', icon: <FiTag /> },
   { label: 'Pass Access', path: '/admin/pass-access', icon: <FiKey /> },
   { label: 'Usuários', path: '/admin/usuarios', icon: <FiUsers /> },
+  { label: 'CRM', path: '/admin/crm', icon: <FiFilter /> },
   { label: 'Avaliações', path: '/admin/avaliacoes', icon: <FiStar /> },
   { label: 'Enviar push', path: '/admin/push', icon: <FiBell /> },
 ];
