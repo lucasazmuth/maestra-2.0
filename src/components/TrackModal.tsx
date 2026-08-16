@@ -5,7 +5,7 @@ import { FiUploadCloud, FiMusic, FiTrash2, FiCheckCircle, FiStar, FiPlay, FiPaus
 import dayjs from 'dayjs';
 
 import type { CatalogItem, CatalogVersion, Split, MusicGenre } from '../interfaces/maestra';
-import { CATALOG_STATUS_OPTIONS, SPLIT_ROLES, getVersionStageLabel } from '../constants/maestra';
+import { CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '../constants/maestra';
 import { readAudioDuration, titleFromFileName } from '../lib/audioMeta';
 import { uploadFile, CATALOG_BUCKET } from '../lib/storage';
 import * as catalogDb from '../services/db/catalog';
