@@ -134,10 +134,20 @@ const ActionPlan: FC = () => {
     const ownerName = isOwner
       ? (user?.user_metadata?.full_name || user?.email || 'Você (dono)')
       : 'Dono do perfil';
-    const list: Assignee[] = [{ value: TASK_OWNER_SELF, label: ownerName }];
+    // Só a foto de quem está logado existe: `artist_members` não tem coluna de avatar e o
+    // `user_metadata` dos outros o cliente não lê. Quem não tem cai no avatar padrão.
+    const meta = (user?.user_metadata || {}) as Record<string, string | undefined>;
+    const minhaFoto = meta.avatar_url || meta.picture || null;
+    const list: Assignee[] = [
+      { value: TASK_OWNER_SELF, label: ownerName, avatar: isOwner ? minhaFoto : null },
+    ];
     members
       .filter((m) => m.status === 'active')
-      .forEach((m) => list.push({ value: m.email, label: m.name || m.email }));
+      .forEach((m) => list.push({
+        value: m.email,
+        label: m.name || m.email,
+        avatar: user?.email && m.email.toLowerCase() === user.email.toLowerCase() ? minhaFoto : null,
+      }));
     return list;
   }, [artist?.user_id, user, members]);
 

@@ -8822,6 +8822,19 @@ body:has(.track-detail-backdrop) .local-player-bar {
   color: #8091ac;
 }
 
+/* O chip do responsavel passou a mostrar foto no lugar da inicial. `overflow: hidden` porque o
+   botao e redondo e a imagem e quadrada. */
+.ap-owner {
+  overflow: hidden;
+}
+
+.ap-owner-foto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .task-app:not(.public-app) .action-plan-page .ap-task-more {
   color: #8a9ab4;
 }
@@ -8956,11 +8969,25 @@ body:has(.track-detail-backdrop) .local-player-bar {
   text-transform: uppercase;
 }
 
-.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
-.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+/* Dia SELECIONADO: pilula azul cheia com o numero em branco. */
+.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
   border-color: #3361ff;
   background: #3361ff;
   color: #fff;
+}
+
+/* HOJE e so um anel — o `::before` do antd existe para desenhar a borda, nao para preencher.
+   Este seletor dividia o bloco com o de cima e herdava `background: #3361ff`: o quadrado azul
+   cobria o numero, que continua em #52668d, e nao dava para ver que dia era hoje.
+   `background: transparent` explicito porque a regra antiga ja pode estar em cache do usuario. */
+.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+  border-color: #3361ff;
+  background: transparent;
+}
+
+/* Hoje E selecionado ao mesmo tempo: o anel passa a branco para aparecer sobre a pilula azul. */
+.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-today.ant-picker-cell-selected .ant-picker-cell-inner::before {
+  border-color: #fff;
 }
 
 .action-plan-picker .ant-picker-cell:hover .ant-picker-cell-inner {

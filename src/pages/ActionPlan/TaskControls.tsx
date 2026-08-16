@@ -3,6 +3,8 @@ import { DatePicker, Dropdown, Popconfirm } from 'antd';
 import dayjs from 'dayjs';
 import { FiTrash2, FiPlus } from 'react-icons/fi';
 
+import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+
 // Categorias de tarefa (valor persistido + rótulo exibido). Fonte única reutilizada pelo
 // chip TaskCategory, pelo composer e pelo Dashboard.
 export const TASK_TYPES: { v: string; label: string }[] = [
@@ -35,14 +37,10 @@ export const TASK_TYPES: { v: string; label: string }[] = [
 export interface Assignee {
   value: string;
   label: string;
+  // Foto de quem esta logado. `artist_members` nao guarda avatar e o `user_metadata` dos OUTROS
+  // membros o cliente nao le — entao vem preenchido so quando o responsavel e voce.
+  avatar?: string | null;
 }
-
-// Letra p/ o avatar (uma letra, mantendo o chip limpo). "Lucas Andrade" → "L"; "joao@x.com" → "J".
-const initials = (label: string): string => {
-  const clean = label.split('@')[0].trim();
-  const parts = clean.split(/[\s._-]+/).filter(Boolean);
-  return (parts[0]?.[0] || '?').toUpperCase();
-};
 
 const fmtDate = (d?: string): string =>
   d ? new Date(`${d}T00:00:00`).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) : '';
@@ -138,7 +136,13 @@ export const TaskOwner: FC<{
     aria-disabled={disabled}
     onClick={disabled ? onBlocked : undefined}
   >
-    {current ? <span className="ap-owner-ini">{initials(current.label)}</span> : <FiPlus size={13} />}
+    {current
+      ? (
+        // Foto quando existe; senao o mesmo avatar padrao do header e da Equipe, no lugar da
+        // inicial. O nome continua no `title` do botao, que e onde ele ja era lido.
+        <img className="ap-owner-foto" src={current.avatar || ARTISTS_DEFAULT_IMAGE} alt="" />
+      )
+      : <FiPlus size={13} />}
   </button>;
   if (disabled) return button;
   return (
