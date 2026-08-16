@@ -1,6 +1,6 @@
 import { FC, FormEvent, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { Button, message } from 'antd';
+import { message } from 'antd';
 import { FiArrowLeft, FiRefreshCw, FiLock, FiMoreVertical, FiSend, FiSettings } from 'react-icons/fi';
 import { AddIcon, EspacoJamIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
@@ -31,7 +31,6 @@ import * as genresDb from '../../services/db/genres';
 import * as membersDb from '../../services/db/members';
 import type { CatalogItem, CatalogProject, MusicGenre, ArtistMember } from '../../interfaces/maestra';
 import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
-import styles from './Catalog.module.scss';
 
 type Tab = 'spotify' | 'manual';
 type SortOption = 'updated-desc' | 'created-desc' | 'title-asc' | 'release-asc';
@@ -927,14 +926,17 @@ const Catalog: FC = () => {
           )}
           <div className='catalog-reference-list'>
           {!items.length ? (
-            <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>
+            <div style={{ color: '#7c8da8', padding: 32, textAlign: 'center' }}>
               {canEditCatalog ? 'Nenhuma música cadastrada ainda. Cadastre a primeira.' : 'Nenhuma música cadastrada ainda.'}
             </div>
           ) : !filteredItems.length ? (
-            <div className={styles.noResults}>
-              <strong>Nenhuma música encontrada</strong>
-              <span>Ajuste os filtros ou limpe a busca para visualizar suas músicas.</span>
-              <Button onClick={clearFilters}>Limpar filtros</Button>
+            // Uma linha, igual ao vazio da aba Lançamentos. Antes era uma caixa tracejada com
+            // título, subtítulo e botão — e o título saía em #d8d8dd, quase invisível no branco.
+            // Quem precisa desfazer tem o X do campo de busca e o "Limpar" dentro de Filtros.
+            <div style={{ color: '#7c8da8', padding: 32, textAlign: 'center' }}>
+              {termoBusca.trim()
+                ? 'Nenhuma música encontrada para esta busca.'
+                : 'Nenhuma música encontrada com esses filtros.'}
             </div>
           ) : (
             <div className='catalog-track-table'>
