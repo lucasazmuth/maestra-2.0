@@ -269,10 +269,10 @@ export const AppLayout: FC = memo(() => {
   const buscaFiltraAqui = (() => {
     const rota = location.pathname.replace(/\/+$/, '');
     if (rota === '/artists') return true; // lista de perfis
-    // Músicas fica de fora de propósito: aquela tela JÁ tem busca própria, junto dos filtros de
-    // status e gênero (FilterToolbar). Somar o campo do topo daria dois campos para a mesma
-    // lista — exatamente o que acabou de ser removido da Agenda.
-    return /^\/artists\/[^/]+\/(action-plan|agenda|team)$/.test(rota);
+    // Músicas entra aqui: a tela tinha busca própria, mas escondida dentro do popover de
+    // "Filtros" — na prática ninguém achava. O campo de texto passou para o topo, junto com o
+    // das outras listas, e a barra ficou só com status, gênero, responsável e ordenação.
+    return /^\/artists\/[^/]+\/(action-plan|agenda|team|catalog)$/.test(rota);
   })();
 
   // O placeholder diz o que a busca alcança AQUI. "Pesquisar na Maestra" prometia uma busca
@@ -283,6 +283,7 @@ export const AppLayout: FC = memo(() => {
     if (rota.endsWith('/action-plan')) return 'Buscar tarefa';
     if (rota.endsWith('/agenda')) return 'Buscar compromisso';
     if (rota.endsWith('/team')) return 'Buscar membro';
+    if (rota.endsWith('/catalog')) return 'Buscar música';
     return 'Pesquisar';
   })();
 

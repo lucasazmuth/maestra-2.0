@@ -30,6 +30,7 @@ import * as catalogDb from '../../services/db/catalog';
 import * as genresDb from '../../services/db/genres';
 import * as membersDb from '../../services/db/members';
 import type { CatalogItem, CatalogProject, MusicGenre, ArtistMember } from '../../interfaces/maestra';
+import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
 import styles from './Catalog.module.scss';
 
 type Tab = 'spotify' | 'manual';
@@ -143,7 +144,10 @@ const Catalog: FC = () => {
     return () => el.removeEventListener('cancel', onCancel);
   });
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  // Busca do topo — ver globalSearchStore. Antes era estado local, com o campo escondido
+  // dentro do popover de "Filtros".
+  const termoBusca = useGlobalSearch((st) => st.termo);
+  const limparBusca = useGlobalSearch((st) => st.limpar);
   const [statusFilter, setStatusFilter] = useState('all');
   const [genreFilter, setGenreFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
@@ -195,13 +199,13 @@ const Catalog: FC = () => {
   const spotifyCatalog = artist?.content?.spotifyCatalog;
 
   useEffect(() => {
-    setSearch('');
+    limparBusca();
     setStatusFilter('all');
     setGenreFilter('all');
     setAssigneeFilter('all');
     setAudioFilter('all');
     setSortBy('updated-desc');
-  }, [artistId]);
+  }, [artistId, limparBusca]);
 
   // Fila do player local: faixas cadastradas que têm áudio.
   const localTracks: LocalTrack[] = items.map((i) => ({
@@ -310,7 +314,7 @@ const Catalog: FC = () => {
   }, [items]);
 
   const filteredItems = useMemo(() => {
-    const normalized = search.trim().toLocaleLowerCase('pt-BR');
+    const normalized = normalizar(termoBusca);
     const timestamp = (item: CatalogItem, field: 'updated' | 'created') => {
       const value = field === 'updated' ? item.updated_at || item.created_at : item.created_at;
       return value ? Date.parse(value) || 0 : 0;
@@ -324,8 +328,8 @@ const Catalog: FC = () => {
           item.isrc,
           item.upc,
           item.assignee?.name,
-        ].filter(Boolean).join(' ').toLocaleLowerCase('pt-BR');
-        const matchesSearch = !normalized || searchable.includes(normalized);
+        ].filter(Boolean).join(' ');
+        const matchesSearch = !normalized || normalizar(searchable).includes(normalized);
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
         const matchesGenre = genreFilter === 'all' || item.genre === genreFilter;
         const matchesAssignee = assigneeFilter === 'all' || item.assignee?.id === assigneeFilter;
@@ -344,7 +348,17 @@ const Catalog: FC = () => {
         }
         return timestamp(b, 'updated') - timestamp(a, 'updated');
       });
-  }, [assigneeFilter, audioFilter, genreFilter, items, search, sortBy, statusFilter]);
+  }, [assigneeFilter, audioFilter, genreFilter, items, termoBusca, sortBy, statusFilter]);
+
+  // A aba Lançamentos lista o que veio do Spotify — outra lista, mas ainda músicas. Sem isto
+  // o campo do topo ficaria visível e inerte aqui, que é justamente o problema que ele veio
+  // resolver. Os filtros de status/gênero não se aplicam: essas faixas já estão publicadas.
+  const filteredSpotifyTracks = useMemo(() => {
+    const q = normalizar(termoBusca);
+    const tracks = spotifyCatalog?.tracks || [];
+    if (!q) return tracks;
+    return tracks.filter((t) => normalizar([t.name, t.album].filter(Boolean).join(' ')).includes(q));
+  }, [spotifyCatalog, termoBusca]);
 
   const activeFilterCount = [
     statusFilter !== 'all',
@@ -358,7 +372,7 @@ const Catalog: FC = () => {
   const productionCount = projects.filter((item) => ['recording', 'production', 'mixing', 'mastering'].includes(item.status)).length;
 
   const clearFilters = () => {
-    setSearch('');
+    limparBusca();
     setStatusFilter('all');
     setGenreFilter('all');
     setAssigneeFilter('all');
@@ -634,12 +648,9 @@ const Catalog: FC = () => {
 
   const catalogFilterControls = (
     <FilterToolbar
-      searchValue={search}
-      onSearchChange={setSearch}
-      searchPlaceholder="Buscar em Músicas"
-      searchPlacement="popover"
+      searchPlacement="none"
       title="Filtros de Músicas"
-      subtitle="Busque e refine suas músicas"
+      subtitle="Refine e ordene a lista"
       activeCount={activeFilterCount}
       onClear={clearFilters}
       open={filterPopoverOpen}
@@ -799,13 +810,15 @@ const Catalog: FC = () => {
       </div>
       {tab === 'spotify' ? (
         <div className='catalog-reference-list'>
-          {!spotifyCatalog?.tracks?.length ? (
-            <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>
-              Nenhum lançamento publicado no Spotify vinculado a este artista.
+          {!filteredSpotifyTracks.length ? (
+            <div style={{ color: '#7c8da8', padding: 32, textAlign: 'center' }}>
+              {spotifyCatalog?.tracks?.length
+                ? 'Nenhum lançamento encontrado para esta busca.'
+                : 'Nenhum lançamento publicado no Spotify vinculado a este artista.'}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {spotifyCatalog.tracks.map((t) => (
+              {filteredSpotifyTracks.map((t) => (
                 <div
                   key={t.id}
                   onClick={() => openEmbed(playingTrackId === t.id ? null : t.id)}
@@ -817,12 +830,12 @@ const Catalog: FC = () => {
                     padding: 8,
                     borderRadius: 6,
                     cursor: 'pointer',
-                    background: playingTrackId === t.id ? 'rgba(154, 79, 209,0.08)' : 'transparent',
+                    background: playingTrackId === t.id ? 'rgba(51, 97, 255, 0.08)' : 'transparent',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f7f8fb')}
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.background =
-                      playingTrackId === t.id ? 'rgba(154, 79, 209,0.08)' : 'transparent')
+                      playingTrackId === t.id ? 'rgba(51, 97, 255, 0.08)' : 'transparent')
                   }
                 >
                   <button
@@ -837,7 +850,7 @@ const Catalog: FC = () => {
                       minWidth: 36,
                       borderRadius: '50%',
                       border: 'none',
-                      background: '#9A4FD1',
+                      background: '#3361ff',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -847,7 +860,7 @@ const Catalog: FC = () => {
                     onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.92)')}
                     onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                   >
-                    <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#000' }}>
+                    <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#fff' }}>
                       <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
                     </svg>
                   </button>
@@ -857,12 +870,12 @@ const Catalog: FC = () => {
                     style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover' }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ color: '#2c3f63', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {t.name}
                     </div>
-                    <div style={{ color: '#b3b3b3', fontSize: 13 }}>{t.album}</div>
+                    <div style={{ color: '#7c8da8', fontSize: 13 }}>{t.album}</div>
                   </div>
-                  <span style={{ color: '#b3b3b3', fontSize: 13 }}>{formatMs(t.duration_ms)}</span>
+                  <span style={{ color: '#93a4c0', fontSize: 13 }}>{formatMs(t.duration_ms)}</span>
                 </div>
               ))}
             </div>
