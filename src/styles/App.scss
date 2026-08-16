@@ -50,10 +50,13 @@ body {
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
 }
 
+// O app e claro: o `body` preto (#0a0a0a) era do design antigo e aparecia como uma tela cheia
+// PRETA antes do React pintar por cima — o "flash" do carregamento inicial, com so a marca da
+// Maestra no meio. A cor agora e a mesma do canvas das telas.
 html,
 body {
-  background: var(--maestra-onyx);
-  color: var(--maestra-bone);
+  background: #f7f8fb;
+  color: #52668d;
   font-family: var(--font-body) !important;
 }
 
