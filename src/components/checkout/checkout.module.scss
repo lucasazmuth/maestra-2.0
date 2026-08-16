@@ -273,6 +273,18 @@ $muted2: #93a4c0;
 }
 .errorMsgIcon { flex-shrink: 0; margin-top: 1px; font-size: 15px; color: #ff5a5f; }
 
+// A tab bar do mobile é fixa e fica por cima do fim da página. O padding que a reserva mora em
+// `.task-app.has-mobile-nav .rail-page`, e estas telas não são `.rail-page` — o resultado era o
+// botão de assinar coberto pela barra, justamente o que a pessoa veio fazer aqui.
+//
+// 122px acompanha o mesmo valor da regra do rail; `safe-area-inset` cobre o gesto do iPhone.
+@media (max-width: 960px) {
+  .layout,
+  .compareWrap {
+    padding-bottom: calc(122px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 // ─── Comparação de benefícios (Grátis vs PRO) ───────────────────────────────────
 .compareWrap { width: 100%; max-width: 980px; margin: 0 auto; }
 .compareHeadline { text-align: center; margin-bottom: 26px; }

@@ -1754,21 +1754,23 @@ a {
   pointer-events: none;
   z-index: 5;
   opacity: 0;
+  // Repintado para o design claro: o roxo e o branco vinham do fundo preto — sobre o gradiente
+  // claro o branco simplesmente sumia. Usado num lugar só (o estado vazio do plano de ação).
   background: conic-gradient(
     from var(--auroraGlowAngle),
     transparent 0deg,
     transparent 140deg,
-    #9A4FD1 195deg,
-    #ffffff 255deg,
+    #3361ff 195deg,
+    #8aa5ff 255deg,
     #509bf5 300deg,
-    #9A4FD1 335deg,
+    #3361ff 335deg,
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 10px rgba(154, 79, 209, 0.4));
+  filter: drop-shadow(0 0 5px rgba(51, 97, 255, 0.28)) drop-shadow(0 0 10px rgba(51, 97, 255, 0.22));
 }
 
 .aurora-glow--on {

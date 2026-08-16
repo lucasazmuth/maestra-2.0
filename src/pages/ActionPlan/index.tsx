@@ -303,7 +303,9 @@ const ActionPlan: FC = () => {
       <EnhancedEmptyState
         artistId={artist.id}
         artistName={content?.identity?.name || artist.name || ''}
-        onStartWizard={() => navigate(`/artists/${artist.id}/wizard`)}
+        // `convidado` diz ao wizard que o convite já foi feito aqui — sem ele a pessoa veria a
+        // mesma mensagem duas vezes seguidas, e clicaria em "começar" duas vezes.
+        onStartWizard={() => navigate(`/artists/${artist.id}/wizard`, { state: { convidado: true } })}
         canStart={editPlanning}
       />
     );
