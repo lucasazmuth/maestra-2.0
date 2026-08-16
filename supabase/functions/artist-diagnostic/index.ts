@@ -228,14 +228,30 @@ async function chartmetricSummary(
         const o = apData?.obj ?? apData;
         if (o == null) return null;
         if (Number.isFinite(Number(o?.total))) return Number(o.total);
-        const arr = Array.isArray(o) ? o : (Array.isArray(o?.data) ? o.data : []);
-        let sum = 0, found = false;
-        for (const item of arr) {
-          const info = Array.isArray(item) ? item[0] : item;
-          const pl = Number(info?.plays ?? info?.count);
-          if (Number.isFinite(pl)) { sum += pl; found = true; }
+
+        // A resposta NÃO tem `total` nem `data`: vem como
+        //   { countries: [...], cities: [...], stations: [...], tracks: [...] }
+        // e cada item é o par [info, série_temporal], com as execuções em info.plays.
+        // Procurar só por `total`/`data` fazia todo artista cair em null — inclusive quem
+        // toca muito: a Anitta devolvia 17 mil execuções em 10 países e virava "Sem dado".
+        // `countries` é o recorte mais abrangente; os outros ficam como reserva.
+        const soma = (grupo: unknown): number | null => {
+          if (!Array.isArray(grupo) || !grupo.length) return null;
+          let sum = 0, found = false;
+          for (const item of grupo) {
+            const info = Array.isArray(item) ? item[0] : item;
+            const pl = Number((info as any)?.plays ?? (info as any)?.count);
+            if (Number.isFinite(pl)) { sum += pl; found = true; }
+          }
+          return found ? sum : null;
+        };
+        for (const grupo of [o?.countries, o?.cities, o?.stations, o?.tracks]) {
+          const t = soma(grupo);
+          if (t != null) return t;
         }
-        return found ? sum : null;
+
+        // Formatos antigos/alternativos (array direto ou `data`), por segurança.
+        return soma(Array.isArray(o) ? o : o?.data);
       } catch { return null; }
     })();
 
