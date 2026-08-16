@@ -103,9 +103,14 @@ function audience(ri: any): DimNarrative {
   const headline = top ? 'Sua audiência real é Top Tier.' : high ? 'Sua audiência real acende.' : 'Sua audiência real ainda está em construção.';
   const paras: Para[] = [];
 
+  // O parágrafo de abertura não pode culpar o palco: A também fica baixa por conversão ou
+  // engajamento. Quem faz 4+ shows/mês lia "não tem público presencial em escala" e, logo abaixo,
+  // "você está no palco com frequência" — 35% dos diagnósticos caíam nessa contradição.
   paras.push(high
     ? { lead: 'Você tem público de verdade.', body: 'Gente que aparece, compra ingresso e segue a música. Isso é difícil de construir e vale muito.' }
-    : { lead: 'Você ainda não tem público presencial em escala.', body: 'É a frente que se constrói no palco e no vínculo direto com quem ouve, e a que mais diferencia uma carreira que dura.' });
+    : shows < 4
+      ? { lead: 'Você ainda não tem público presencial em escala.', body: 'É a frente que se constrói no palco e no vínculo direto com quem ouve, e a que mais diferencia uma carreira que dura.' }
+      : { lead: 'Seu público ainda não acende em todas as frentes.', body: 'Audiência real é a soma de palco, conversão e engajamento. Parte dela você já tem, e o que falta é fechar a frente que ainda fica abaixo do corte.' });
 
   if (shows < 4) {
     paras.push({ lead: 'Você quase não está no palco.', body: 'A agenda de shows está rarefeita. O ao vivo é onde a audiência real se constrói e se prova, e hoje essa frente precisa entrar em desenvolvimento.' });

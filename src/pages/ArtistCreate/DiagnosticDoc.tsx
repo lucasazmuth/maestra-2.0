@@ -91,8 +91,16 @@ function v3DimRows(dk: 'r' | 'e' | 'a' | 'l', ri: any, cm: Chartmetric | null): 
       { label: 'Prêmios', value: PREMIOS_LABELS_V3[Number(inp.premios ?? 0)] ?? '–' },
       { label: 'Imprensa', value: inp.imprensaRepercussao ? (FREQ_LABELS[inp.imprensaFrequencia] ?? 'Sim') : 'Não' },
       { label: 'Playlists editoriais', value: String(inp.editorialPlaylists ?? cm?.playlists?.count ?? 0) },
-      // Ver DiagnosticReport: nulo é ausência de dado, não ausência de execução.
-      { label: 'Execução em rádio', value: inp.radioAirplay == null ? 'Sem dado' : (Number(inp.radioAirplay) > 0 ? 'Sim' : 'Não') },
+      // Ver DiagnosticReport: nulo é ausência de dado, não ausência de execução; com dado,
+      // mostra o número de execuções em vez de "Sim".
+      {
+        label: 'Execução em rádio',
+        value: inp.radioAirplay == null
+          ? 'Sem dado'
+          : Number(inp.radioAirplay) > 0
+          ? `${fmtNum(Math.round(Number(inp.radioAirplay)))} execuções`
+          : 'Não',
+      },
     ];
   return rows.filter((r): r is Row => r != null);
 }
@@ -184,7 +192,7 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
             const label = k === 'instagram' ? 'Instagram' : k === 'tiktok' ? 'TikTok' : 'YouTube';
             if (!e) return null;
             return (
-              <div key={k} className={styles.docEngRow2}><span>{label}</span><strong style={{ color: e.above ? DOC.real : DOC.mute }}>{fmtPct(e.value)} {e.above ? 'acima' : 'abaixo'} do corte</strong></div>
+              <div key={k} className={styles.docEngRow2}><span>{label}</span><strong style={{ color: e.above ? DOC.real : DOC.mute }}>{fmtPct(e.value)} · {e.above ? 'acima' : 'abaixo'} do corte de {fmtPct(e.cut)}</strong></div>
             );
           })}
         </div>
