@@ -1,10 +1,11 @@
-import { FC, useEffect } from 'react';
+import { FC, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { App, Popconfirm } from 'antd';
 import { FiTrash2 } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
+import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
 import { useCanCreateArtist } from '../../hooks/useCanCreateArtist';
 import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import PendingInvites from '../../components/PendingInvites';
@@ -23,9 +24,27 @@ const Artists: FC = () => {
   const artists = useAppSelector((s) => s.artists.items);
   const loading = useAppSelector((s) => s.artists.loading);
 
+  // Filtro do campo de busca do topo. Ele vive no AppLayout, então o termo chega por store —
+  // e é o único lugar do app que hoje escuta essa busca.
+  const termo = useGlobalSearch((s) => s.termo);
+  const visiveis = useMemo(() => {
+    const q = normalizar(termo);
+    if (!q) return artists;
+    // Casa por nome do perfil e pelo nome no Spotify: quem digita costuma lembrar de um dos dois,
+    // e nem sempre são iguais.
+    return artists.filter((a) =>
+      normalizar(a.name || '').includes(q) ||
+      normalizar(a.content?.spotifyProfile?.name || '').includes(q)
+    );
+  }, [artists, termo]);
+
   useEffect(() => {
     if (user?.id) dispatch(artistsActions.fetchArtists(user.id));
   }, [user?.id, dispatch]);
+
+  // Sai da tela, some o filtro: voltar depois e encontrar a lista "vazia" por causa de um termo
+  // esquecido no topo é o tipo de coisa que se lê como bug.
+  useEffect(() => () => useGlobalSearch.getState().limpar(), []);
 
   // Rate limit: verifica se pode criar via hook (limite de pendentes + cooldown progressivo)
   const { canCreate: allowed, reason, pendingCount, cooldownRemainingSeconds, loading: rlLoading, error: rlError } = useCanCreateArtist();
@@ -78,9 +97,16 @@ const Artists: FC = () => {
       <PendingInvites />
 
       <Spinner loading={loading && !artists.length}>
-        {artists.length > 0 && (
+        {/* Busca sem resultado precisa dizer isso. Sem esta linha a grade simplesmente sumia, e
+            a tela parecia ter perdido os perfis. */}
+        {termo.trim() && !visiveis.length && (
+          <p className={styles.semResultado}>
+            Nenhum perfil encontrado para “{termo.trim()}”.
+          </p>
+        )}
+        {visiveis.length > 0 && (
           <div className={`home-profile-directory ${styles.grid}`}>
-            {artists.map((a) => {
+            {visiveis.map((a) => {
               const sp = a.content?.spotifyProfile;
               // Chartmetric primeiro (ver Dashboard): a Web API do Spotify não devolve mais
               // `followers`, então o campo do spotifyProfile é nulo em quase todo artista.

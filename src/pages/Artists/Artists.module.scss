@@ -187,3 +187,15 @@
     height: 140px;
   }
 }
+
+// Busca do topo sem resultado. Sem esta mensagem a grade sumia e a tela parecia ter perdido os
+// perfis — o filtro fica no cabeçalho, longe de onde o efeito aparece.
+.semResultado {
+  margin: 8px 0 0;
+  padding: 26px 22px;
+  border: 1px dashed #d8e1ef;
+  border-radius: 12px;
+  color: #7c8da8;
+  font-size: 14px;
+  text-align: center;
+}

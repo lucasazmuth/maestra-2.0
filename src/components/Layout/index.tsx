@@ -16,13 +16,14 @@ import { uiActions } from '../../store/slices/ui';
 import { fetchSubscriptionStatus, fetchPlanConfig } from '../../store/slices/subscription';
 import { PAYWALL_DISABLED, artistEntryRoute, isOnboardingComplete } from '../../constants/maestra';
 import useIsMobile from '../../utils/isMobile';
+import { useGlobalSearch } from '../../stores/globalSearchStore';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { useNytaModal } from '../../hooks/useNytaModal';
 import { ArtifactsPanel } from '../../pages/Wizard/ArtifactsPanel';
 import { enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { SearchIcon } from '../Icons';
-import { FiArrowRight } from 'react-icons/fi';
+import { FiArrowRight, FiX } from 'react-icons/fi';
 import {
   AgendaIcon,
   CatalogoIcon,
@@ -100,6 +101,10 @@ export const AppLayout: FC = memo(() => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isOpen: nytaOpen, open: openNyta } = useNytaModal();
+  // Termo do campo de busca do topo — a lista de perfis lê daqui (globalSearchStore).
+  const termoBusca = useGlobalSearch((s) => s.termo);
+  const setTermoBusca = useGlobalSearch((s) => s.setTermo);
+  const limparBusca = useGlobalSearch((s) => s.limpar);
 
   // O conteúdo rola dentro de .Main-section (não no body). Como o layout permanece
   // montado entre as rotas, sem este reset a nova tela herdava a posição da anterior.
@@ -269,10 +274,30 @@ export const AppLayout: FC = memo(() => {
         {/* "Baixar App" e "Planos" apontavam para #board (não iam a lugar nenhum) e Suporte já
             está no rodapé do dashboard. O menu volta quando os destinos existirem. */}
       </div>
+      {/* O campo publica o termo num store, e quem sabe filtrar é a página. Hoje só a lista de
+          perfis escuta — nas outras telas o campo segue sem efeito, como sempre esteve.
+          A seta some quando há texto: ali entra o "limpar", que é a ação que a pessoa quer
+          nesse momento (a seta nunca levou a lugar nenhum). */}
       <label className='global-search'>
         <span className='global-search-icon' aria-hidden='true'><SearchIcon size={18} /></span>
-        <input placeholder={home ? 'Buscar perfil ou artista' : 'Pesquisar na Maestra'} aria-label='Busca global' />
-        <span className='global-search-arrow' aria-hidden='true'><FiArrowRight size={18} /></span>
+        <input
+          placeholder={home ? 'Buscar perfil ou artista' : 'Pesquisar na Maestra'}
+          aria-label='Busca global'
+          value={termoBusca}
+          onChange={(e) => setTermoBusca(e.target.value)}
+        />
+        {termoBusca ? (
+          <button
+            type='button'
+            className='global-search-arrow'
+            onClick={() => limparBusca()}
+            aria-label='Limpar busca'
+          >
+            <FiX size={18} />
+          </button>
+        ) : (
+          <span className='global-search-arrow' aria-hidden='true'><FiArrowRight size={18} /></span>
+        )}
       </label>
       <div className='top-navigation-right'>
         <div className='account'>
