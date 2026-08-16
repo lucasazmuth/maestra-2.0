@@ -176,8 +176,51 @@ async function fireDue(
   return true;
 }
 
+// Catálogo das automações, para o painel de CRM ler daqui em vez de repetir as copies numa tela.
+//
+// A duplicação seria pior do que parece: no dia em que alguém ajustasse um prazo ou uma frase, o
+// painel continuaria mostrando a versão antiga — e é justamente esse tipo de divergência que ele
+// deveria denunciar. As funções de texto recebem um nome de artista de exemplo, já que fora de
+// uma rodada real não existe artista nenhum.
+function catalogo() {
+  const EXEMPLO = "{artista}";
+  const serializar = (etapa: string, specs: NudgeSpec[]) =>
+    specs.map((s) => ({
+      etapa,
+      code: s.code,
+      apos: s.minDays,
+      canais: ["in-app", "e-mail"], // push não é disparado pelo funil hoje
+      titulo: s.title(EXEMPLO),
+      mensagem: s.message(EXEMPLO),
+      assunto: s.subject(EXEMPLO),
+      corpo: s.emailBody(EXEMPLO),
+      botao: s.ctaLabel,
+      destino: s.ctaPath(undefined),
+    }));
+  return [...serializar("A", A), ...serializar("B", B), ...serializar("C", C)];
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+
+  // Leitura do catálogo: autenticada por admin, e não pelo segredo do cron — quem consulta é uma
+  // pessoa no painel, não o agendador. Não dispara nada.
+  const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+  if (body?.action === "spec") {
+    const auth = req.headers.get("Authorization");
+    if (!auth) return json({ error: "Não autorizado" }, 401);
+    const client = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
+    const { data: { user: caller } } = await client.auth.getUser(auth.replace("Bearer ", ""));
+    if (!caller) return json({ error: "Não autorizado" }, 401);
+    let ok = !!caller.app_metadata?.is_platform_admin;
+    if (!ok) {
+      const { data: row } = await client.from("platform_admins").select("id").eq("user_id", caller.id).maybeSingle();
+      ok = !!row;
+    }
+    if (!ok) return json({ error: "Acesso restrito a administradores" }, 403);
+    return json({ automacoes: catalogo() });
+  }
+
   if (CRON_SECRET && req.headers.get("x-cron-secret") !== CRON_SECRET) return json({ error: "forbidden" }, 403);
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });

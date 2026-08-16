@@ -2,18 +2,6 @@
 // painel com gradiente, ícone verde, título, lista de benefícios com checks e CTA verde.
 // Aqui o CTA inicia o wizard de planejamento (em vez de levar à assinatura).
 
-// Afasta o anel aurora das bordas do card: assim o brilho do topo não fica atrás da topbar
-// (nem o de baixo atrás do banner) e o efeito circulando aparece inteiro.
-.empty :global(.aurora-glow) {
-  inset: 10px;
-
-  // Mobile: o card estica atrás da navbar (pra encher o fundo), então o anel de baixo precisa
-  // subir bastante pra não ficar escondido atrás da nav — fica logo ACIMA dela, visível.
-  @media (max-width: 600px) {
-    inset: 10px 10px 66px;
-  }
-}
-
 .empty {
   position: relative; // âncora do glow na borda da página
   display: flex;
@@ -24,18 +12,18 @@
   border-radius: 16px;
   padding: 32px 24px;
   box-sizing: border-box;
-  // Mesmo fundo da tela de criação de artista (/criar-artista).
-  background: radial-gradient(120% 90% at 50% 0%, #15101f 0%, #08080c 55%, #050507 100%);
+  // Mesmo fundo claro das telas de entrada do app — o gradiente escuro veio do design antigo e
+  // era a última superfície preta que sobrava dentro do produto.
+  background: radial-gradient(120% 90% at 50% 0%, #ffffff 0%, #fafbfe 55%, #f7f8fb 100%);
 
-  // Compacta pra caber inteiro na tela (e o anel circular ficar 100% visível), sem rolar.
   @media (max-width: 600px) {
-    padding: 16px;
-    // O fundo precisa chegar ATÉ a navbar. Como a .Main-section reserva ~78px de padding-bottom
-    // (pra rolagem limpar a nav), o min-height:100% parava ~24px acima da nav, deixando um vão
-    // preto. Aqui o card estica além do content box (fica atrás da nav) e o margin negativo anula
-    // essa sobra no fluxo — então enche o vão sem criar rolagem.
-    min-height: calc(100% + 78px);
-    margin-bottom: -78px;
+    // Espaço para a tab bar flutuante (78px + respiro), para o conteúdo não terminar embaixo dela.
+    padding: 16px 16px 94px;
+
+    // Sem esticar além do container: o `min-height: calc(100% + 78px)` com margem negativa
+    // existia para o cartão PRETO tapar o vão atrás da navbar. Com o fundo igual ao do app não há
+    // vão a tapar, e aquela sobra criava 78px de rolagem numa tela que cabe inteira.
+    min-height: 100%;
   }
 }
 
@@ -64,7 +52,7 @@
   font-family: var(--font-display);
   font-size: 38px;
   font-weight: 800;
-  color: #fff;
+  color: #2c3f63;
   line-height: 1.28;
   letter-spacing: -0.01em;
   margin: 0 0 36px;
@@ -84,7 +72,7 @@
   height: 1.05em;
   margin-left: 4px;
   vertical-align: text-bottom;
-  background: #9A4FD1;
+  background: #3361ff;
   border-radius: 2px;
   animation: emptyCaret 0.9s steps(1) infinite;
 }
@@ -93,7 +81,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: #9A4FD1;
+  background-color: #3361ff;
   color: #FFFFFF;
   border: none;
   border-radius: 9999px;
@@ -109,7 +97,7 @@
   transition: opacity 0.35s ease, transform 0.35s ease, background-color 0.15s ease;
 
   &:hover {
-    background-color: #8442B6;
+    background-color: #2a54e0;
   }
 }
 

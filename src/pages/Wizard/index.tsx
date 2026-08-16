@@ -1,5 +1,5 @@
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { App } from 'antd';
 import { FiArrowLeft, FiRotateCcw, FiSidebar } from 'react-icons/fi';
 
@@ -13,6 +13,7 @@ import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { migrateWizardContent } from './migration';
 import { NytaChat } from './chat/NytaChat';
+import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { supabase } from '../../lib/supabase';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
 import { setWizardPlatformContext, clearWizardPlatformContext } from '../../services/wizardAi';
@@ -36,6 +37,22 @@ const Wizard: FC = () => {
       navigate(`/artists/${artist.id}/action-plan`, { replace: true });
     }
   }, [artistsLoaded, artist, editPlanning, navigate]);
+
+  // Marca a tela para o CSS reservar altura da tab bar no mobile (ver gsap-reference.css).
+  //
+  // A barra CONTINUA visível aqui, e isso é deliberado: o "voltar" do cabeçalho volta uma
+  // pergunta, não sai da tela — sem a tab bar a pessoa fica presa no wizard sem caminho de saída.
+  // O que incomodava não era a barra existir, era ela ficar por cima da conversa.
+  useEffect(() => {
+    document.body.classList.add('wizard-fullscreen');
+    return () => document.body.classList.remove('wizard-fullscreen');
+  }, []);
+
+  // Convite antes da conversa. Quem entra direto (pelo rail, pelo menu) caía no meio de um
+  // chat já em andamento, sem contexto do que é aquilo nem do próximo passo. A mesma mensagem
+  // que o Plano de Ação usa serve aqui — e, vindo de lá, ela não se repete.
+  const location = useLocation();
+  const [entrou, setEntrou] = useState<boolean>(() => !!(location.state as { convidado?: boolean } | null)?.convidado);
 
   const [draft, setDraft] = useState<ArtistContent>({});
   const [draftReady, setDraftReady] = useState(false);
@@ -227,6 +244,18 @@ const Wizard: FC = () => {
     });
   };
 
+  // Convite antes da conversa — só para quem ainda não começou o planejamento e não veio pela
+  // CTA do Plano de Ação (que já convidou).
+  if (!entrou && !(draft.step ?? 0) && draftReady) {
+    return (
+      <EnhancedEmptyState
+        artistId={artist?.id || ''}
+        artistName={identity.name || artist?.name || ''}
+        onStartWizard={() => setEntrou(true)}
+      />
+    );
+  }
+
   return (
     <div className='wizard wizard--chat'>
       {/* Brilho aurora na borda ao avançar de etapa (re-monta via key pra re-tocar a animação) */}
@@ -242,7 +271,7 @@ const Wizard: FC = () => {
               <img className='wiz-head-avatar' src={artistImage} alt='' aria-hidden />
               {/* Cor/tamanho vêm de `.wiz-title` (styles.scss) — a tipografia acompanha a viewport. */}
               <h1 className='wiz-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-                Planejamento estratégico
+                Crie seu planejamento
               </h1>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
