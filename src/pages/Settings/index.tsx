@@ -1,7 +1,7 @@
 import { ChangeEvent, FC, ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, Popconfirm, message } from 'antd';
-import { FiFileText, FiShield, FiLifeBuoy, FiExternalLink, FiChevronRight, FiCamera, FiClock, FiBell, FiStar } from 'react-icons/fi';
+import { FiFileText, FiShield, FiLifeBuoy, FiExternalLink, FiChevronRight, FiCamera, FiClock, FiBell, FiStar, FiDownload } from 'react-icons/fi';
 import { EditIcon } from '../../components/Icons/system';
 import { PlatformReviewModal } from '../../components/PlatformReviewModal';
 
@@ -126,6 +126,32 @@ const Settings: FC = () => {
   // Assinatura que ainda gera cobrança recorrente na Asaas (precisa ser encerrada junto).
   const hasBillableSubscription = subStatus === 'active' || subStatus === 'overdue' || subStatus === 'pending';
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // Exportação dos próprios dados (LGPD art. 18, II e V). A função não recebe parâmetro nenhum:
+  // o recorte vem do JWT, então não existe forma de pedir o extrato de outra pessoa.
+  const exportarDados = async () => {
+    setExporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('account-data-export', { body: {} });
+      if (error || data?.error) throw error || new Error(data.error);
+
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      );
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `maestra-meus-dados-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      // Sem o revoke o blob fica preso na memória da aba até recarregar a página.
+      URL.revokeObjectURL(url);
+      message.success('Download iniciado.');
+    } catch (err: any) {
+      message.error(err?.message || 'Não foi possível gerar o arquivo. Tente novamente.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Cancelar cadastro: 1) encerra a assinatura na Asaas (se houver) pra não seguir cobrando;
   // 2) grava o pedido em account_deletion_requests (data + contexto, p/ auditoria LGPD);
@@ -333,6 +359,20 @@ const Settings: FC = () => {
             </a>
           );
         })}
+      </section>
+
+      {/* Seus dados (LGPD art. 18, II e V): acesso e portabilidade. Fica ANTES do cartão de
+          cancelamento de propósito — a Política diz que a exportação pode ser pedida antes da
+          exclusão, e enterrá-la depois do botão vermelho não ajudaria ninguém a achar. */}
+      <section className='settings-data-card'>
+        <h2>Seus dados</h2>
+        <p>
+          Baixe uma cópia de tudo que a Maestra guarda sobre você: conta, perfis de artista,
+          catálogo, agenda, planejamento, conversas com a Nyta e consentimentos.
+        </p>
+        <button className='settings-data-btn' onClick={exportarDados} disabled={exporting}>
+          <FiDownload size={15} /> {exporting ? 'Preparando…' : 'Baixar meus dados'}
+        </button>
       </section>
 
       {/* Conta */}

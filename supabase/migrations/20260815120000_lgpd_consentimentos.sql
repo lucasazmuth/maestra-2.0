@@ -52,18 +52,25 @@ create index if not exists user_consents_user_kind_idx
 
 -- Trilha de auditoria não se corrige, se complementa. O gatilho vale inclusive para a service
 -- role: um UPDATE distraído numa rotina administrativa apagaria a prova do consentimento.
+--
+-- Só UPDATE. DELETE fica liberado de propósito: o FK para auth.users é ON DELETE CASCADE, e um
+-- gatilho que barrasse DELETE faria a remoção da conta abortar com "Database error deleting user"
+-- — ou seja, impediria o titular de exercer o direito de eliminação (art. 18, VI) em nome de
+-- proteger o registro do consentimento. A garantia que interessa aqui é não reescrever o passado;
+-- apagar tudo junto com a conta é um evento legítimo, e quem o documenta é
+-- account_deletion_requests, cuja linha sobrevive à exclusão.
 create or replace function public.fn_user_consents_append_only()
 returns trigger
 language plpgsql
 as $$
 begin
-  raise exception 'user_consents é append-only: registre uma nova linha em vez de alterar ou apagar';
+  raise exception 'user_consents é append-only: registre uma nova linha em vez de alterar a existente';
 end;
 $$;
 
 drop trigger if exists user_consents_append_only on public.user_consents;
 create trigger user_consents_append_only
-  before update or delete on public.user_consents
+  before update on public.user_consents
   for each row execute function public.fn_user_consents_append_only();
 
 -- ── Estado de conformidade por usuário ──────────────────────────────────────────────────────
