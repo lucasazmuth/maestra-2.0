@@ -32,14 +32,14 @@
   &:active { transform: scale(0.98); }
   &:disabled { opacity: 0.5; cursor: default; transform: none; }
 }
-.ap-btn--primary { background: #9A4FD1; color: #FFFFFF; &:hover:not(:disabled) { transform: scale(1.04); } }
-.ap-btn--ghost { background: rgba(255, 255, 255, 0.1); color: #fff; &:hover:not(:disabled) { transform: scale(1.04); } }
-.ap-btn--accent { background: rgba(154, 79, 209, 0.16); color: #f0b6e2; &:hover:not(:disabled) { background: rgba(154, 79, 209, 0.26); transform: scale(1.04); } }
+.ap-btn--primary { background: #3361ff; color: #FFFFFF; &:hover:not(:disabled) { transform: scale(1.04); } }
+.ap-btn--ghost { background: #eef2f8; color: #405985; &:hover:not(:disabled) { background: #e3eaf3; transform: scale(1.04); } }
+.ap-btn--accent { background: rgba(51, 97, 255, 0.1); color: #3361ff; &:hover:not(:disabled) { background: rgba(51, 97, 255, 0.18); transform: scale(1.04); } }
 .ap-btn--ai {
-  background: #16161b;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-  &:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.22); transform: scale(1.03); }
+  background: #ffffff;
+  border: 1px solid #e3eaf3;
+  color: #405985;
+  &:hover:not(:disabled) { border-color: #c9d6ea; transform: scale(1.03); }
 }
 
 /* ---- Cabeçalho (título + editar) ---- */

@@ -1800,15 +1800,15 @@ a {
 // geração de estilo por
 // variante do antd. Os seletores :where() do antd têm especificidade 0, então estas regras vencem.
 .ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost) {
-  background: #9a4fd1;
+  background: #3361ff;
   color: #fff;
-  border-color: #9a4fd1;
+  border-color: #3361ff;
 
   &:hover,
   &:focus {
-    background: #8442b6 !important;
+    background: #2a54e0 !important;
     color: #fff !important;
-    border-color: #8442b6 !important;
+    border-color: #2a54e0 !important;
   }
 }
 

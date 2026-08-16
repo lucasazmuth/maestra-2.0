@@ -1,35 +1,33 @@
+// Só o que o tema do antd não entrega sozinho: enquadramento e espaçamento.
+// Campos, botões e abas não têm override de cor — o tema claro do App.tsx já os pinta,
+// e sobrescrever aqui foi justamente o que deixou este modal escuro num app claro.
 .modal {
   :global(.ant-modal-content) {
     overflow: hidden;
     padding: 0;
-    background: #181818;
-    border: 1px solid #303034;
+    border: 1px solid #e3eaf3;
     border-radius: 16px;
-    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.66);
+    box-shadow: 0 28px 80px rgba(24, 40, 80, 0.18);
   }
 
   :global(.ant-modal-header) {
     margin: 0;
     padding: 22px 56px 18px 24px;
     background:
-      linear-gradient(135deg, rgba(154, 79, 209, 0.18), rgba(80, 155, 245, 0.08)),
-      #181818;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  :global(.ant-modal-title) {
-    color: #fff;
+      linear-gradient(135deg, rgba(51, 97, 255, 0.09), rgba(51, 97, 255, 0.02)),
+      #ffffff;
+    border-bottom: 1px solid #eef2f8;
   }
 
   :global(.ant-modal-close) {
     top: 18px;
     right: 18px;
-    color: #b3b3b3;
+    color: #93a4c0;
   }
 
   :global(.ant-modal-close:hover) {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.08);
+    color: #2c3f63;
+    background: rgba(51, 97, 255, 0.08);
   }
 
   :global(.ant-modal-body) {
@@ -39,8 +37,8 @@
   :global(.ant-modal-footer) {
     margin: 0;
     padding: 14px 20px;
-    background: #141414;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: #f7f8fb;
+    border-top: 1px solid #eef2f8;
   }
 
   :global(.ant-tabs-nav) {
@@ -49,53 +47,7 @@
 
   :global(.ant-tabs-tab) {
     padding: 15px 2px 12px;
-    color: #929292;
     font-weight: 700;
-  }
-
-  :global(.ant-tabs-tab:hover),
-  :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
-    color: #fff !important;
-  }
-
-  :global(.ant-tabs-ink-bar) {
-    background: #9a4fd1;
-  }
-
-  :global(.ant-tabs-nav::before) {
-    border-color: rgba(255, 255, 255, 0.08);
-  }
-
-  :global(.ant-input),
-  :global(.ant-picker),
-  :global(.ant-select-selector) {
-    color: #fff !important;
-    background: #111 !important;
-    border-color: #37373c !important;
-  }
-
-  :global(.ant-input:focus),
-  :global(.ant-input-focused),
-  :global(.ant-picker-focused),
-  :global(.ant-select-focused .ant-select-selector) {
-    border-color: #9a4fd1 !important;
-    box-shadow: 0 0 0 2px rgba(154, 79, 209, 0.14) !important;
-  }
-
-  :global(.ant-picker-input > input),
-  :global(.ant-select-selection-item),
-  :global(.ant-select-selection-placeholder) {
-    color: #fff !important;
-  }
-
-  :global(.ant-btn-primary) {
-    color: #fff;
-    background: #9a4fd1;
-    box-shadow: none;
-  }
-
-  :global(.ant-btn-primary:hover:not(:disabled)) {
-    background: #8442b6 !important;
   }
 }
 
@@ -107,7 +59,7 @@
 }
 
 .kicker {
-  color: #c97ef3;
+  color: #3361ff;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
@@ -117,7 +69,7 @@
 
 .title {
   overflow: hidden;
-  color: #fff;
+  color: #2c3f63;
   font-size: 18px;
   font-weight: 800;
   line-height: 1.35;
@@ -127,7 +79,7 @@
 
 .strategy {
   overflow: hidden;
-  color: #929292;
+  color: #7c8da8;
   font-size: 12px;
   font-weight: 500;
   text-overflow: ellipsis;
@@ -148,7 +100,7 @@
 }
 
 .general label > span {
-  color: #a8a8aa;
+  color: #56698f;
   font-size: 12px;
   font-weight: 700;
 }
@@ -192,7 +144,7 @@
   height: 19px;
   padding: 0 5px;
   color: #fff;
-  background: rgba(154, 79, 209, 0.42);
+  background: #3361ff;
   border-radius: 999px;
   font-size: 10px;
   line-height: 1;
@@ -220,9 +172,9 @@
   flex: 0 0 32px;
   width: 32px;
   height: 32px;
-  color: #fff;
-  background: rgba(154, 79, 209, 0.28);
-  border: 1px solid rgba(201, 126, 243, 0.28);
+  color: #3361ff;
+  background: rgba(51, 97, 255, 0.12);
+  border: 1px solid rgba(51, 97, 255, 0.24);
   border-radius: 50%;
   font-size: 10px;
   font-weight: 800;
@@ -241,8 +193,8 @@
   min-width: 0;
   flex: 1;
   padding: 10px 12px;
-  background: #202020;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #f7f8fb;
+  border: 1px solid #e3eaf3;
   border-radius: 4px 12px 12px;
 }
 
@@ -261,12 +213,12 @@
 }
 
 .commentMeta strong {
-  color: #fff;
+  color: #2c3f63;
   font-size: 12px;
 }
 
 .commentMeta time {
-  color: #777;
+  color: #93a4c0;
   font-size: 10px;
   white-space: nowrap;
 }
@@ -291,17 +243,17 @@
   min-width: 24px;
   height: 24px;
   padding: 0;
-  color: #929292;
+  color: #7c8da8;
 }
 
 .commentActions :global(.ant-btn:hover:not(.ant-btn-dangerous)) {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
+  color: #2c3f63;
+  background: rgba(51, 97, 255, 0.08);
 }
 
 .commentContent p {
   margin: 6px 0 0;
-  color: #d7d7d7;
+  color: #405985;
   font-size: 13.5px;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -332,25 +284,25 @@
   align-items: center;
   gap: 7px;
   padding: 26px 20px;
-  color: #707070;
+  color: #93a4c0;
   text-align: center;
 }
 
 .emptyComments strong {
-  color: #d2d2d2;
+  color: #2c3f63;
   font-size: 14px;
 }
 
 .emptyComments span {
   max-width: 390px;
-  color: #858585;
+  color: #7c8da8;
   font-size: 12.5px;
   line-height: 1.45;
 }
 
 .commentComposer {
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid #eef2f8;
 }
 
 .commentComposerFooter {
@@ -362,7 +314,7 @@
 }
 
 .commentComposerFooter > span {
-  color: #707070;
+  color: #93a4c0;
   font-size: 10.5px;
 }
 

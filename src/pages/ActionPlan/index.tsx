@@ -44,19 +44,19 @@ const ArchiveModal: FC<{
   return createPortal(
     <div
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(20, 30, 55, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box' }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 720, maxHeight: '86vh', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 16, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        style={{ width: '100%', maxWidth: 720, maxHeight: '86vh', background: '#ffffff', border: '1px solid #e3eaf3', borderRadius: 16, boxShadow: '0 24px 60px rgba(24, 40, 80, 0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
       >
         <div style={{ padding: '22px 22px 12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-            <div style={{ fontFamily: 'var(--font-display)', color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>Estratégias arquivadas</div>
-            <button onClick={onClose} aria-label="Fechar" style={{ background: 'none', border: 'none', color: '#9a9a9a', cursor: 'pointer', display: 'inline-flex', padding: 4 }}><FiX size={20} /></button>
+            <div style={{ fontFamily: 'var(--font-display)', color: '#2c3f63', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>Estratégias arquivadas</div>
+            <button onClick={onClose} aria-label="Fechar" style={{ background: 'none', border: 'none', color: '#93a4c0', cursor: 'pointer', display: 'inline-flex', padding: 4 }}><FiX size={20} /></button>
           </div>
-          <div style={{ color: '#b3b3b3', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
-            Estratégias que você não priorizou. Selecione as que quer <b style={{ color: '#fff' }}>trazer pro plano</b> — elas ganham tarefas e entram na lista principal, saindo do arquivo.
+          <div style={{ color: '#7c8da8', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
+            Estratégias que você não priorizou. Selecione as que quer <b style={{ color: '#2c3f63' }}>trazer pro plano</b> — elas ganham tarefas e entram na lista principal, saindo do arquivo.
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '4px 22px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -66,21 +66,21 @@ const ArchiveModal: FC<{
               <button
                 key={it.id}
                 onClick={() => toggle(it.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', background: on ? 'rgba(154, 79, 209,0.12)' : '#202020', border: `1px solid ${on ? '#9A4FD1' : 'transparent'}`, borderRadius: 12, padding: '14px 16px', transition: 'background .15s, border-color .15s' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', background: on ? 'rgba(51, 97, 255, 0.08)' : '#f7f8fb', border: `1px solid ${on ? '#3361ff' : 'transparent'}`, borderRadius: 12, padding: '14px 16px', transition: 'background .15s, border-color .15s' }}
               >
-                <span aria-hidden style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: `2px solid ${on ? '#9A4FD1' : '#4a4a4a'}`, background: on ? '#9A4FD1' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF' }}>{on && <FiCheck size={14} />}</span>
-                <span style={{ color: '#fff', fontWeight: 600, fontSize: 14.5, lineHeight: 1.4 }}>{it.title}</span>
+                <span aria-hidden style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: `2px solid ${on ? '#3361ff' : '#c9d6ea'}`, background: on ? '#3361ff' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF' }}>{on && <FiCheck size={14} />}</span>
+                <span style={{ color: '#405985', fontWeight: 600, fontSize: 14.5, lineHeight: 1.4 }}>{it.title}</span>
               </button>
             );
           })}
         </div>
-        <div style={{ padding: '12px 22px 18px', borderTop: '1px solid #232323', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: '#7a7a7a', fontSize: 13 }}>{sel.length} selecionada{sel.length === 1 ? '' : 's'}</span>
+        <div style={{ padding: '12px 22px 18px', borderTop: '1px solid #eef2f8', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ color: '#93a4c0', fontSize: 13 }}>{sel.length} selecionada{sel.length === 1 ? '' : 's'}</span>
           <button className="ap-btn ap-btn--ghost" style={{ marginLeft: 'auto' }} onClick={onClose}>Cancelar</button>
           <button
             disabled={!sel.length}
             onClick={() => onConfirm(sel)}
-            style={{ border: 'none', borderRadius: 9999, padding: '10px 20px', fontWeight: 700, fontSize: 13.5, cursor: sel.length ? 'pointer' : 'not-allowed', color: '#FFFFFF', background: '#9A4FD1', opacity: sel.length ? 1 : 0.5 }}
+            style={{ border: 'none', borderRadius: 9999, padding: '10px 20px', fontWeight: 700, fontSize: 13.5, cursor: sel.length ? 'pointer' : 'not-allowed', color: '#FFFFFF', background: '#3361ff', opacity: sel.length ? 1 : 0.5 }}
           >
             Trazer pro plano{sel.length ? ` (${sel.length})` : ''}
           </button>
