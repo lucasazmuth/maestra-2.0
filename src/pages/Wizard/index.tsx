@@ -56,6 +56,10 @@ const Wizard: FC = () => {
 
   const [draft, setDraft] = useState<ArtistContent>({});
   const [draftReady, setDraftReady] = useState(false);
+
+  // Fonte única da decisão "estou mostrando o convite?": o render e o efeito da coluna de
+  // resultados leem daqui, senão um poderia dizer sim e o outro não.
+  const mostrandoConvite = draftReady && !entrou && !(draft.step ?? 0);
   // Coluna de resultados (artefatos por etapa): vive no AppLayout como 3ª coluna; aqui só
   // publicamos os dados e controlamos o toggle via store global.
   const wizardPanel = useWizardPanelStore();
@@ -79,15 +83,20 @@ const Wizard: FC = () => {
     prevStepRef.current = s;
   }, [draft.step]);
 
-  // Liga/desliga a coluna de resultados no AppLayout enquanto o Wizard está montado.
+  // Liga/desliga a coluna de resultados no AppLayout enquanto a CONVERSA está aberta.
   // Ela nasce ABERTA no desktop (é o acompanhamento do plano, não um extra a descobrir). No
   // mobile não: lá a coluna vira folha de tela cheia e abriria por cima da própria conversa —
   // o breakpoint é o mesmo do CSS (.wiz-artifacts). Fechar segue sendo escolha do usuário.
+  //
+  // Depende de `mostrandoConvite` porque hooks rodam mesmo quando o render sai antes pelo
+  // convite: sem isso a coluna "Etapa 1 de 9" aparecia ao lado de uma tela que ainda nem
+  // começou, anunciando um progresso que não existe.
   useEffect(() => {
+    if (mostrandoConvite) return;
     wizardPanel.activate(window.matchMedia('(min-width: 769px)').matches);
     return () => wizardPanel.deactivate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mostrandoConvite]);
 
   // Publica o draft para a coluna renderizada no AppLayout.
   useEffect(() => {
@@ -246,7 +255,7 @@ const Wizard: FC = () => {
 
   // Convite antes da conversa — só para quem ainda não começou o planejamento e não veio pela
   // CTA do Plano de Ação (que já convidou).
-  if (!entrou && !(draft.step ?? 0) && draftReady) {
+  if (mostrandoConvite) {
     return (
       <EnhancedEmptyState
         artistId={artist?.id || ''}
