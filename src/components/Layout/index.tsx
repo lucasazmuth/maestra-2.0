@@ -149,14 +149,14 @@ export const AppLayout: FC = memo(() => {
     if (!userId || !isWebPushSupported()) return undefined;
 
     const timer = window.setTimeout(() => {
-      syncWebPushSubscription(userId)
+      syncWebPushSubscription()
         .then((synced) => {
           if (synced || Notification.permission !== 'default') return undefined;
           const promptKey = `maestra-push-prompted:${userId}`;
           if (localStorage.getItem(promptKey)) return undefined;
           localStorage.setItem(promptKey, '1');
           return hasWebPushSubscription().then((enabled) => {
-            if (!enabled) return enableWebPush(userId).catch(() => undefined);
+            if (!enabled) return enableWebPush().catch(() => undefined);
             return undefined;
           });
         })
