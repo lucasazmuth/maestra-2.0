@@ -242,7 +242,7 @@ const Wizard: FC = () => {
               <img className='wiz-head-avatar' src={artistImage} alt='' aria-hidden />
               {/* Cor/tamanho vêm de `.wiz-title` (styles.scss) — a tipografia acompanha a viewport. */}
               <h1 className='wiz-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-                Planejamento estratégico
+                Crie seu planejamento
               </h1>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
