@@ -192,7 +192,7 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
             const label = k === 'instagram' ? 'Instagram' : k === 'tiktok' ? 'TikTok' : 'YouTube';
             if (!e) return null;
             return (
-              <div key={k} className={styles.docEngRow2}><span>{label}</span><strong style={{ color: e.above ? DOC.real : DOC.mute }}>{fmtPct(e.value)} {e.above ? 'acima' : 'abaixo'} do corte</strong></div>
+              <div key={k} className={styles.docEngRow2}><span>{label}</span><strong style={{ color: e.above ? DOC.real : DOC.mute }}>{fmtPct(e.value)} · {e.above ? 'acima' : 'abaixo'} do corte de {fmtPct(e.cut)}</strong></div>
             );
           })}
         </div>

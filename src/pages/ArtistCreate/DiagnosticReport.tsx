@@ -173,7 +173,9 @@ const EngagementGrid: FC<{ engagement: any }> = ({ engagement }) => {
           <div key={key} className={styles.engRow}>
             <span className={styles.engNet}>{label}</span>
             {e
-              ? <span className={`${styles.engVal} ${e.above ? styles.engAbove : styles.engBelow}`}>{fmtPct(e.value)} {e.above ? 'acima' : 'abaixo'} do corte ({fmtPct(e.cut)})</span>
+              // "0,4% abaixo do corte (2,8%)" lia como se 0,4 fosse a DISTÂNCIA até o corte —
+              // é a taxa da artista, e a distância real era 2,4 pontos. O "de" amarra o número ao corte.
+              ? <span className={`${styles.engVal} ${e.above ? styles.engAbove : styles.engBelow}`}>{fmtPct(e.value)} · {e.above ? 'acima' : 'abaixo'} do corte de {fmtPct(e.cut)}</span>
               : <span className={styles.engVal}>—</span>}
           </div>
         );
