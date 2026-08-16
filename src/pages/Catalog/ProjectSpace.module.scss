@@ -104,7 +104,16 @@
 
 .titleBlock {
   min-width: 0;
-  flex: 1;
+  // Teto para o titulo parar ANTES da etiqueta central. Com `flex: 1` sozinho ele tomava todo o
+  // espaco livre e, como a etiqueta esta fora do fluxo (absoluta), passava por baixo dela — um
+  // titulo longo cobria o "ESPACO JAM".
+  //
+  // A conta: o bloco comeca a 58px do inicio do header (botao voltar 44px + gap 14px). A
+  // etiqueta e centrada, entao sua borda esquerda fica em `50% - metade da largura dela`
+  // (~42px). Parar 16px antes disso da `50% - 58px` como borda direita, ou seja, uma largura de
+  // `50% - 116px`. Os 116px sao 58 (o offset inicial) + 58 (folga ate a etiqueta).
+  flex: 0 1 auto;
+  max-width: calc(50% - 116px);
 }
 
 .titleLine {
@@ -134,6 +143,22 @@
   line-height: 1.1;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+// O grupo da direita (autosave, status e editar) volta a encostar na borda. Enquanto o titulo
+// era `flex: 1` ele empurrava esses tres para la sozinho; agora que o titulo tem teto, eles
+// ficariam logo depois dele — em cima da etiqueta central. `margin-left: auto` no PRIMEIRO
+// deles recria o empurrao. A regra seguinte tira o auto do status quando o autosave esta
+// presente, senao o espaco livre se dividiria entre os dois e o grupo se separaria no meio.
+.autosave,
+.statusPill,
+.statusReadOnly {
+  margin-left: auto;
+}
+
+.autosave + .statusPill,
+.autosave + .statusReadOnly {
+  margin-left: 0;
 }
 
 .statusPill {
@@ -1064,7 +1089,8 @@
   // `flex-basis: 0`, não `auto`: com wrap ligado, um item cuja base é o próprio conteúdo QUEBRA
   // de linha em vez de encolher. Base zero faz o título ceder espaço (ele já tem reticências) e
   // a linha nunca transborda.
-  .titleBlock { order: 2; flex: 1 1 0; }
+  // Sem o teto do desktop: aqui a etiqueta virou kicker no fluxo, entao nao ha o que evitar.
+  .titleBlock { order: 2; flex: 1 1 0; max-width: none; }
   .statusPill,
   .statusReadOnly { order: 3; }
   .editProject { order: 4; }

@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Modal, Input, Select, DatePicker, Tabs, App, Spin, Button, Popconfirm } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
-import { FiUploadCloud, FiMusic, FiTrash2, FiCheckCircle, FiStar, FiPlay, FiPause } from 'react-icons/fi';
+import { FiUploadCloud, FiMusic, FiTrash2, FiStar, FiPlay, FiPause } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import type { CatalogItem, CatalogVersion, Split, MusicGenre } from '../interfaces/maestra';
@@ -167,12 +167,11 @@ const UploadField: FC<{
           <div style={{ width: 44, height: 44, borderRadius: 8, background: '#edf2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, color: '#3361ff' }}>
             {thumb}
           </div>
+          {/* Sem o selo verde "Enviado": este bloco só existe quando o arquivo já está lá — a
+              miniatura e o nome dizem isso sozinhos. */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ color: '#62769b', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {fileName || 'Arquivo enviado'}
-            </div>
-            <div style={{ color: '#1d8a68', fontSize: 11, display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-              <FiCheckCircle size={12} /> Enviado
             </div>
           </div>
           <button type='button' onClick={pick} style={ghostBtn}>Trocar</button>
