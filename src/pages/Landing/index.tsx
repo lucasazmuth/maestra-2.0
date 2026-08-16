@@ -627,7 +627,7 @@ const Landing: FC = () => {
 
   useEffect(() => {
     const prev = document.title;
-    document.title = 'Maestra · sua carreira musical, com método';
+    document.title = 'Maestra - Gestão de carreira musical';
     return () => { document.title = prev; };
   }, []);
 
