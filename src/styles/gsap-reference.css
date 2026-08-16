@@ -9346,7 +9346,12 @@ body:has(.track-detail-backdrop) .local-player-bar {
   gap: clamp(20px, 3vw, 44px);
 }
 
+/* Ancorado na ÚLTIMA coluna, não na terceira: o campo de busca só existe nas telas onde
+   filtra algo, e sem ele o grupo da direita era colocado automaticamente na coluna do meio
+   — os controles apareciam no centro do header, com a faixa da direita vazia. `-2 / -1`
+   resolve nos dois grids: 3 colunas no desktop e 2 abaixo de 700px. */
 .task-app .top-navigation-right {
+  grid-column: -2 / -1;
   justify-content: flex-end;
   gap: 12px;
 }
