@@ -12,6 +12,7 @@ import { cancelSubscription } from '../../store/slices/subscription';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import SubscriptionManagement from './SubscriptionManagement';
 import { disableWebPush, enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
+import { SUPPORT_EMAIL } from '../../constants/legal';
 
 const Settings: FC = () => {
   const navigate = useNavigate();
@@ -115,12 +116,11 @@ const Settings: FC = () => {
   };
 
   // Links institucionais (ajuste as URLs/e-mail reais da plataforma).
-  const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
   const supportLinks: { label: string; icon: ReactNode; to?: string; href?: string; action?: () => void }[] = [
     { label: 'Avaliar a Maestra', icon: <FiStar size={16} />, action: () => setReviewOpen(true) },
     { label: 'Termos de uso', icon: <FiFileText size={16} />, to: '/legal/termos' },
     { label: 'Política de privacidade', icon: <FiShield size={16} />, to: '/legal/privacidade' },
-    { label: 'Falar com o suporte', icon: <FiLifeBuoy size={16} />, href: `mailto:${SUPPORT_EMAIL}` },
+    { label: 'Falar com o suporte', icon: <FiLifeBuoy size={16} />, to: '/suporte' },
   ];
 
   // Assinatura que ainda gera cobrança recorrente na Asaas (precisa ser encerrada junto).
@@ -175,25 +175,30 @@ const Settings: FC = () => {
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 640 }}>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 24px' }}>
-        Configurações
-      </h1>
+    <div className='settings-page'>
+      <header className='settings-heading'>
+        <div>
+          <p>CONTA DO USUÁRIO</p>
+          <h1>Configurações pessoais</h1>
+          <span>Gerencie seus dados, acesso e preferências de uso na Maestra.</span>
+        </div>
+      </header>
 
-      <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>Perfil</h2>
+      {/* Duas linhas fixas (cabeçalho + corpo), em vez do antigo truque de flex único com
+          h2 { order: -1; margin: auto } — aquilo colocava "Perfil", o avatar e (no modo de
+          edição) o campo Nome disputando a MESMA linha, e quebrava de forma estranha em
+          telas estreitas (avatar caindo pra baixo, fora do centro). */}
+      <section className='settings-profile-card'>
+        <div className='settings-profile-header'>
+          <h2>Perfil</h2>
           {!editing && (
-            <button
-              onClick={startEditing}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff', borderRadius: 9999, padding: '7px 16px', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
-            >
+            <button className='settings-edit-btn' onClick={startEditing}>
               <EditIcon size={16} /> Editar
             </button>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: editing ? 18 : 0 }}>
+        <div className='settings-profile-body'>
           {editing ? (
             <label style={{ position: 'relative', width: 64, height: 64, cursor: uploading ? 'wait' : 'pointer', flexShrink: 0 }}>
               <img src={avatar} alt='avatar' style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', opacity: uploading ? 0.5 : 1 }} />
@@ -206,44 +211,52 @@ const Settings: FC = () => {
             <img src={savedAvatar} alt='avatar' style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }} />
           )}
           <div>
-            {!editing && <div style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>{savedName || 'Sem nome'}</div>}
-            <div style={{ color: '#b3b3b3', fontSize: 13 }}>{user?.email}</div>
-            {editing && <div style={{ color: '#6b7280', fontSize: 12, marginTop: 4 }}>Toque na foto para trocar</div>}
+            {!editing && <div className='settings-profile-name'>{savedName || 'Sem nome'}</div>}
+            <div className='settings-profile-email'>{user?.email}</div>
+            {editing && <div className='settings-profile-hint'>Toque na foto para trocar</div>}
           </div>
         </div>
 
         {editing && (
-          <>
-            <label style={{ color: '#b3b3b3', fontSize: 13 }}>Nome</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder='Seu nome' style={{ marginTop: 6 }} />
-            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <div className='settings-profile-form'>
+            <div className='settings-profile-field'>
+              <label>Nome</label>
+              {/* className settings-name-input: o Input do antd nasce escuro em todo o app
+                  (ConfigProvider usa theme.darkAlgorithm globalmente) — precisa de override
+                  pontual pra combinar com o card claro. Ver regra em gsap-reference.css. */}
+              <Input
+                className='settings-name-input'
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder='Seu nome'
+              />
+            </div>
+            <div className='settings-profile-actions'>
               <button
+                className='settings-save-btn'
                 onClick={saveProfile}
                 disabled={saving || uploading}
-                style={{ background: '#9A4FD1', border: 'none', color: '#FFFFFF', borderRadius: 9999, padding: '8px 20px', cursor: 'pointer', fontWeight: 700, opacity: saving || uploading ? 0.6 : 1 }}
               >
                 {saving ? 'Salvando…' : 'Salvar'}
               </button>
               <button
+                className='settings-cancel-btn'
                 onClick={() => setEditing(false)}
                 disabled={saving}
-                style={{ background: 'transparent', border: '1px solid #3a3a3a', color: '#b3b3b3', borderRadius: 9999, padding: '8px 20px', cursor: 'pointer', fontWeight: 700 }}
               >
                 Cancelar
               </button>
             </div>
-          </>
+          </div>
         )}
       </section>
 
-      <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: '#9A4FD1', display: 'flex' }}><FiBell size={20} /></span>
-          <div style={{ flex: 1 }}>
-            <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>Notificações no dispositivo</h2>
-            <p style={{ color: '#9b9ba3', fontSize: 13, lineHeight: 1.45, margin: '6px 0 0' }}>
-              Receba lembretes da Maestra mesmo quando o app estiver fechado.
-            </p>
+      <section className='settings-notification-card'>
+        <div className='settings-notification-row'>
+          <span className='settings-notification-icon' aria-hidden><FiBell size={20} /></span>
+          <div className='settings-notification-copy'>
+            <h2>Notificações no dispositivo</h2>
+            <p>Receba lembretes da Maestra mesmo quando o app estiver fechado.</p>
           </div>
           {pushSupported && (
             <button
@@ -253,29 +266,19 @@ const Settings: FC = () => {
               aria-label='Notificações no dispositivo'
               onClick={togglePush}
               disabled={pushBusy}
-              style={{
-                width: 48,
-                height: 28,
-                padding: 3,
-                border: 0,
-                borderRadius: 999,
-                background: pushEnabled ? '#9A4FD1' : '#3a3a3a',
-                cursor: pushBusy ? 'wait' : 'pointer',
-                opacity: pushBusy ? 0.6 : 1,
-                transition: 'background .2s ease',
-              }}
+              className={`settings-switch ${pushEnabled ? 'settings-switch-on' : ''}`}
             >
-              <span style={{ display: 'block', width: 22, height: 22, borderRadius: '50%', background: '#fff', transform: pushEnabled ? 'translateX(20px)' : 'translateX(0)', transition: 'transform .2s ease' }} />
+              <span className='settings-switch-thumb' />
             </button>
           )}
         </div>
         {!pushSupported && (
-          <p style={{ color: '#6f6f78', fontSize: 12, margin: '12px 0 0' }}>
+          <p className='settings-notification-note'>
             Seu navegador não oferece notificações push para este dispositivo.
           </p>
         )}
         {pushSupported && Notification.permission === 'denied' && (
-          <p style={{ color: '#f59e0b', fontSize: 12, margin: '12px 0 0' }}>
+          <p className='settings-notification-warn'>
             As notificações foram bloqueadas no navegador. Reative-as nas permissões do site.
           </p>
         )}
@@ -284,40 +287,29 @@ const Settings: FC = () => {
       <SubscriptionManagement />
 
       {/* Atalho para o histórico de pagamentos (página dedicada) */}
-      <section style={{ background: '#181818', borderRadius: 12, padding: '8px 20px', marginTop: 20 }}>
+      <section className='settings-link-card'>
         <div
           role='button'
           tabIndex={0}
+          className='settings-row'
           onClick={() => navigate('/pagamentos')}
           onKeyDown={(e) => e.key === 'Enter' && navigate('/pagamentos')}
-          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 0', color: '#fff', fontSize: 14, cursor: 'pointer' }}
         >
-          <span style={{ color: '#8a8a8a', display: 'flex' }}><FiClock size={16} /></span>
-          <span style={{ flex: 1 }}>Histórico de pagamentos</span>
-          <FiChevronRight size={16} color='#6b7280' />
+          <span className='settings-row-icon' aria-hidden><FiClock size={16} /></span>
+          <span className='settings-row-label'>Histórico de pagamentos</span>
+          <FiChevronRight size={16} className='settings-row-chevron' />
         </div>
       </section>
 
       {/* Suporte e termos */}
-      <section style={{ background: '#181818', borderRadius: 12, padding: '8px 20px', marginTop: 20 }}>
-        <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: '12px 0 4px' }}>Suporte e termos</h2>
-        {supportLinks.map((l, i) => {
-          const rowStyle = {
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: '14px 0',
-            color: '#fff',
-            textDecoration: 'none',
-            fontSize: 14,
-            cursor: 'pointer',
-            borderTop: i ? '1px solid #262626' : 'none',
-          } as const;
+      <section className='settings-support-card'>
+        <h2>Suporte e termos</h2>
+        {supportLinks.map((l) => {
           const inner = (
             <>
-              <span style={{ color: '#8a8a8a', display: 'flex' }}>{l.icon}</span>
-              <span style={{ flex: 1 }}>{l.label}</span>
-              {l.href ? <FiExternalLink size={15} color='#6b7280' /> : <FiChevronRight size={16} color='#6b7280' />}
+              <span className='settings-row-icon' aria-hidden>{l.icon}</span>
+              <span className='settings-row-label'>{l.label}</span>
+              {l.href ? <FiExternalLink size={15} className='settings-row-chevron' /> : <FiChevronRight size={16} className='settings-row-chevron' />}
             </>
           );
           return l.to || l.action ? (
@@ -325,7 +317,7 @@ const Settings: FC = () => {
               key={l.label}
               role='button'
               tabIndex={0}
-              style={rowStyle}
+              className='settings-row'
               onClick={() => l.action ? l.action() : navigate(l.to!)}
               onKeyDown={(event) => {
                 if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -336,7 +328,7 @@ const Settings: FC = () => {
               {inner}
             </div>
           ) : (
-            <a key={l.label} href={l.href} target='_blank' rel='noopener noreferrer' style={rowStyle}>
+            <a key={l.label} href={l.href} target='_blank' rel='noopener noreferrer' className='settings-row'>
               {inner}
             </a>
           );
@@ -344,9 +336,9 @@ const Settings: FC = () => {
       </section>
 
       {/* Conta */}
-      <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginTop: 20 }}>
-        <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginTop: 0, marginBottom: 6 }}>Conta</h2>
-        <p style={{ color: '#8a8a8a', fontSize: 13, margin: '0 0 14px', lineHeight: 1.5 }}>
+      <section className='settings-danger-card'>
+        <h2>Conta</h2>
+        <p>
           Cancelar o cadastro encerra sua conta e remove seus dados. Esta ação é permanente e não pode ser desfeita.
         </p>
         <Popconfirm
@@ -361,20 +353,7 @@ const Settings: FC = () => {
           cancelText='Voltar'
           onConfirm={requestAccountDeletion}
         >
-          <button
-            disabled={deleting}
-            style={{
-              background: 'transparent',
-              border: '1px solid #e91429',
-              color: '#e91429',
-              borderRadius: 9999,
-              padding: '9px 18px',
-              cursor: deleting ? 'wait' : 'pointer',
-              fontWeight: 700,
-              fontSize: 14,
-              opacity: deleting ? 0.6 : 1,
-            }}
-          >
+          <button className='settings-danger-btn' disabled={deleting}>
             {deleting ? 'Cancelando…' : 'Cancelar cadastro'}
           </button>
         </Popconfirm>

@@ -1,10 +1,11 @@
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Input, Modal, Rate, Select, Spin, Table, message, type TableColumnsType } from 'antd';
+import { Button, Input, Modal, Rate, Select, Table, message, type TableColumnsType } from 'antd';
 import { FiMessageSquare, FiRefreshCw, FiSearch, FiStar, FiTrendingUp, FiUsers } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import { supabase } from '../../lib/supabase';
 import styles from './Reviews.module.scss';
+import { Spinner } from '../../components/spinner/spinner';
 
 interface ReviewItem {
   id: string;
@@ -110,7 +111,7 @@ const AdminReviews: FC = () => {
   ];
 
   if (loading && !data) {
-    return <div className={styles.page} style={{ display: 'grid', minHeight: '55vh', placeItems: 'center' }}><Spin size="large" /></div>;
+    return <div className={styles.page}><Spinner loading>{null as any}</Spinner></div>;
   }
 
   const stats = data?.stats || { total: 0, average: 0, withComment: 0, last7d: 0, distribution: {} };

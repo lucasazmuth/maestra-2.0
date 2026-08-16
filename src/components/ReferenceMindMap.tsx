@@ -14,17 +14,21 @@ import type { ArtistReferences } from '../interfaces/maestra';
 const splitRefItems = (s?: string): string[] =>
   (s || '').split(/[,;\n·]+/).map((x) => x.trim()).filter(Boolean);
 
+// `color` pinta o círculo da categoria e o contorno dos satélites. `ink` é a MESMA cor
+// escurecida, usada só no texto dos satélites (fundo branco): as cores cheias não têm contraste
+// suficiente sobre claro — o amarelo #eab308 em texto branco fica praticamente invisível.
 const REF_QUADRANTS: {
   key: 'posicionamento' | 'artisticas' | 'comunicacao' | 'gestao';
   label: string;
   color: string;
+  ink: string;
   x: number;
   y: number;
 }[] = [
-  { key: 'posicionamento', label: 'Posicionamento', color: '#3b82f6', x: 30, y: 30 },
-  { key: 'artisticas', label: 'Artísticas', color: '#eab308', x: 70, y: 30 },
-  { key: 'comunicacao', label: 'Comunicação com o público', color: '#f97316', x: 30, y: 70 },
-  { key: 'gestao', label: 'Carreira', color: '#ef4444', x: 70, y: 70 },
+  { key: 'posicionamento', label: 'Posicionamento', color: '#3b82f6', ink: '#1d4ed8', x: 30, y: 30 },
+  { key: 'artisticas', label: 'Artísticas', color: '#eab308', ink: '#a16207', x: 70, y: 30 },
+  { key: 'comunicacao', label: 'Comunicação com o público', color: '#f97316', ink: '#c2410c', x: 30, y: 70 },
+  { key: 'gestao', label: 'Carreira', color: '#ef4444', ink: '#b91c1c', x: 70, y: 70 },
 ];
 
 const HUB = { x: 50, y: 50 };
@@ -38,7 +42,7 @@ export const ReferenceMindMap: FC<{ references?: ArtistReferences }> = ({ refere
     return splitRefItems(refs[key as 'artisticas' | 'comunicacao' | 'gestao']);
   };
 
-  type MapNode = { x: number; y: number; label: string; color: string; kind: 'hub' | 'cat' | 'item' };
+  type MapNode = { x: number; y: number; label: string; color: string; ink?: string; kind: 'hub' | 'cat' | 'item' };
   const nodes: MapNode[] = [{ ...HUB, label: 'Referências', color: '#16a34a', kind: 'hub' }];
   const lines: { x1: number; y1: number; x2: number; y2: number; color: string }[] = [];
 
@@ -63,7 +67,7 @@ export const ReferenceMindMap: FC<{ references?: ArtistReferences }> = ({ refere
       const t = items.length > 1 ? i - (items.length - 1) / 2 : 0;
       const ix = clamp(ax + Math.cos(perpAngle) * t * spacing, 8, 92);
       const iy = clamp(ay + Math.sin(perpAngle) * t * spacing, 8, 92);
-      nodes.push({ x: ix, y: iy, label: it, color: q.color, kind: 'item' });
+      nodes.push({ x: ix, y: iy, label: it, color: q.color, ink: q.ink, kind: 'item' });
       lines.push({ x1: q.x, y1: q.y, x2: ix, y2: iy, color: `${q.color}80` });
     });
   });
@@ -126,9 +130,13 @@ export const ReferenceMindMap: FC<{ references?: ArtistReferences }> = ({ refere
               justifyContent: 'center',
               textAlign: 'center',
               padding: '4%',
-              background: isHub || isCat ? n.color : '#0e0e0e',
+              // Satélite branco com contorno da categoria: o preenchimento preto (#0e0e0e) vinha
+              // do tema escuro e, no cartão claro, virava um disco opaco no meio do mapa.
+              background: isHub || isCat ? n.color : '#fff',
               border: isHub || isCat ? 'none' : `1.5px solid ${n.color}`,
-              color: isHub ? '#fff' : isCat ? '#0b0b0b' : n.color,
+              // No satélite o texto usa a versão escurecida (ink) — a cor cheia da categoria não
+              // tem contraste sobre branco (o amarelo some por completo).
+              color: isHub ? '#fff' : isCat ? '#0b0b0b' : n.ink || n.color,
               fontWeight: isHub || isCat ? 800 : 700,
               fontSize,
               letterSpacing: isHub || isCat ? 0.3 : 0,

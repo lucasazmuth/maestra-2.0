@@ -1,4 +1,5 @@
 import { FC, KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from 'react';
+import { MaestraBrand } from '../../components/MaestraBrand';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Input, InputNumber, Spin } from 'antd';
 import { FiAlertCircle, FiArrowLeft, FiX } from 'react-icons/fi';
@@ -18,7 +19,6 @@ import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import { DiagnosticReport, type Chartmetric } from './DiagnosticReport';
 import { FlowHeader } from './FlowHeader';
 import { AnalyzingSteps } from './AnalyzingSteps';
-import { MaestraBrand } from '../../components/MaestraBrand';
 import realStar from '../../assets/feature-real.png';
 import styles from './ArtistCreate.module.scss';
 
@@ -279,6 +279,27 @@ const ArtistCreate: FC = () => {
         setChartmetric(d?.chartmetric || null);
         setDiagError(!d?.realIndex);
       } catch {
+        // A função pode concluir a gravação e a resposta falhar depois (por exemplo, por
+        // uma segunda tentativa cair no cooldown). Antes de exibir erro, confirma no banco.
+        if (!redo && user?.id) {
+          try {
+            const refreshedArtists = await dispatch(artistsActions.fetchArtists(user.id)).unwrap();
+            const savedArtist = refreshedArtists.find((artist) => {
+              const savedSpotifyId = artist.content?.spotifyProfile?.spotify_artist_id;
+              return chosen.current.spotifyArtistId
+                ? savedSpotifyId === chosen.current.spotifyArtistId
+                : artist.name.trim().toLocaleLowerCase() === chosen.current.name.trim().toLocaleLowerCase();
+            });
+
+            if (active && savedArtist?.content?.realIndex) {
+              createdRef.current = { artistId: savedArtist.id, locked: savedArtist.is_locked !== false };
+              navigate(`/artists/${savedArtist.id}/desbloquear`, { replace: true, state: { skipDiagnostic: true } });
+              return;
+            }
+          } catch {
+            // A mensagem de erro abaixo permanece como fallback quando a reconciliação falha.
+          }
+        }
         if (active) setDiagError(true);
       }
       if (active) setStep('diagnostico');
@@ -423,7 +444,17 @@ const ArtistCreate: FC = () => {
 
       {/* Cabeçalho numa ÚNICA linha: marca à esquerda (aparece em prints), progresso enxuto e X. */}
       <div className={styles.topBar}>
-        <MaestraBrand variant='lockup' tone='light' className={styles.brand} beta />
+        <a
+          className={styles.brand}
+          href='/artists'
+          onClick={(event) => {
+            event.preventDefault();
+            navigate('/artists');
+          }}
+          aria-label='Voltar para seus perfis'
+        >
+          <MaestraBrand variant='lockup' tone='dark' />
+        </a>
         {!redo && <FlowHeader phase={macroPhase} />}
         <button
           className={styles.back}
@@ -503,7 +534,7 @@ const ArtistCreate: FC = () => {
                     <Input
                       autoFocus
                       size='large'
-                      style={{ height: 56, fontSize: 16, borderRadius: 14, background: '#1a1a1a' }}
+                      className={styles.searchInput}
                       placeholder='Busque o artista no Spotify…'
                       value={query}
                       onChange={(e) => { setQuery(e.target.value); if (notice) setNotice(null); }}
@@ -517,8 +548,8 @@ const ArtistCreate: FC = () => {
                           <button key={r.id} className={styles.resultItem} onClick={() => handleSelectSpotify(r)}>
                             <img src={r.image || ARTISTS_DEFAULT_IMAGE} alt={r.name} />
                             <div>
-                              <div style={{ color: '#fff', fontWeight: 600 }}>{r.name}</div>
-                              {r.followers != null && <div style={{ color: '#b3b3b3', fontSize: 12 }}>{r.followers.toLocaleString('pt-BR')} seguidores</div>}
+                              <div className={styles.resultName}>{r.name}</div>
+                              {r.followers != null && <div className={styles.resultFollowers}>{r.followers.toLocaleString('pt-BR')} seguidores</div>}
                             </div>
                           </button>
                         ))}
@@ -549,7 +580,7 @@ const ArtistCreate: FC = () => {
                     <Input
                       autoFocus
                       size='large'
-                      style={{ height: 56, fontSize: 16, borderRadius: 14, background: '#1a1a1a' }}
+                      className={styles.searchInput}
                       placeholder='Seu nome artístico'
                       value={manualName}
                       onChange={(e) => setManualName(e.target.value)}
@@ -643,7 +674,7 @@ const ArtistCreate: FC = () => {
               if (cur.type === 'matrix') {
                 return (
                   <div className={styles.matrixWrap}>
-                    <p className={styles.matrixHelp}>Marque o porte do veículo onde seu trabalho já apareceu. Pode marcar mais de um por tipo — e pular os tipos onde nunca apareceu.</p>
+                    <p className={styles.matrixHelp}>Marque o porte do veículo onde seu trabalho já apareceu. Pode marcar mais de um por tipo e pular os tipos onde nunca apareceu.</p>
                     <div className={styles.matrixList}>
                       {IMPRENSA_TIPOS.map((t) => (
                         <div key={t.key} className={styles.matrixTypeRow}>
@@ -688,7 +719,7 @@ const ArtistCreate: FC = () => {
                     min={0}
                     precision={0}
                     controls={false}
-                    style={{ width: '100%', height: 56, fontSize: 16, borderRadius: 14, background: '#1a1a1a', display: 'flex', alignItems: 'center' }}
+                    style={{ width: '100%', height: 56, fontSize: 16, borderRadius: 14, display: 'flex', alignItems: 'center' }}
                     value={fieldVal}
                     onChange={(v) => setFieldVal((v as number | null) ?? null)}
                     placeholder={cur.placeholder}
@@ -708,7 +739,7 @@ const ArtistCreate: FC = () => {
             })()}
 
             {/* ANALISANDO — lista "pensante" (passos que sobem em loop, foco no centro). */}
-            {step === 'analisando' && <AnalyzingSteps />}
+            {step === 'analisando' && <AnalyzingSteps light />}
 
             {/* DIAGNÓSTICO (Índice REAL) */}
             {step === 'diagnostico' && (

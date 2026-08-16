@@ -1,0 +1,268 @@
+// ConversationSidebar — histórico de conversas da Nyta, na lateral da página em tela cheia.
+// Paleta clara do redesign, alinhada ao skin `.nyta-surface` do chat.
+
+.nyta-conversations {
+  display: flex;
+  width: 248px;
+  min-width: 248px;
+  flex-direction: column;
+  border-right: 1px solid #e8edf4;
+  background: #fff;
+
+  &__head {
+    display: flex;
+    min-height: 70px;
+    box-sizing: border-box;
+    gap: 10px;
+    align-items: center;
+    padding: 0 12px;
+    border-bottom: 1px solid #e8edf4;
+  }
+
+  &__back {
+    display: inline-flex;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e3eaf3;
+    border-radius: 50%;
+    background: #fff;
+    color: #7c8db0;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+
+    &:hover {
+      border-color: #b9cbed;
+      background: #eef3fb;
+      color: #4267b9;
+    }
+  }
+
+  &__title {
+    flex: 1;
+    color: #52688f;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  &__new {
+    display: inline-flex;
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e3eaf3;
+    border-radius: 8px;
+    background: #fff;
+    color: #7c8db0;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+
+    &:hover {
+      border-color: #b9cbed;
+      background: #eef3fb;
+      color: #4267b9;
+    }
+  }
+
+  &__draft {
+    margin: 10px 10px 0;
+    padding: 9px 11px;
+    border: 1px dashed #cfdcf0;
+    border-radius: 9px;
+    color: #4267b9;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  &__empty {
+    margin: 14px 18px;
+    color: #9aabc4;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  &__list {
+    overflow-y: auto;
+    flex: 1;
+    margin: 0;
+    padding: 8px;
+    list-style: none;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    border-radius: 9px;
+    transition: background 0.15s;
+
+    &:hover {
+      background: #f4f7fc;
+    }
+
+    // O menu de ações só aparece no hover (ou quando o item é o ativo) pra lista respirar.
+    &:hover .nyta-conversations__more,
+    &--active .nyta-conversations__more {
+      opacity: 1;
+    }
+  }
+
+  &__item--active {
+    background: #eef3fb;
+
+    .nyta-conversations__name {
+      color: #4267b9;
+      font-weight: 800;
+    }
+  }
+
+  &__open {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    gap: 9px;
+    align-items: center;
+    padding: 9px 4px 9px 10px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  // Rosto de quem abriu a conversa.
+  &__author {
+    width: 26px;
+    height: 26px;
+    flex: none;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #eaf0ff;
+    object-fit: cover;
+  }
+
+  &__lines {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__name {
+    overflow: hidden;
+    color: #60749a;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__time {
+    color: #a8b6cd;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  &__rename {
+    min-width: 0;
+    flex: 1;
+    margin: 6px 4px 6px 8px;
+    padding: 5px 8px;
+    border: 1px solid #9bb5ec;
+    border-radius: 7px;
+    background: #fff;
+    color: #4267b9;
+    font-size: 12px;
+    font-weight: 700;
+    outline: none;
+  }
+
+  &__more {
+    display: inline-flex;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: #9aabc4;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+
+    &:hover,
+    &:focus-visible {
+      background: #e4ecf9;
+      color: #4267b9;
+      opacity: 1;
+    }
+  }
+}
+
+// Fechar sem escolher conversa não existe neste modelo: a lista é um nível da tela, e quem volta
+// pro chat é a própria conversa (a ativa fica destacada). Mantido só como ponto de extensão.
+.nyta-conversations__close,
+.nyta-conversations__backdrop {
+  display: none;
+}
+
+// Em telas estreitas a lista não cabe ao lado do chat: os dois viram níveis da MESMA tela, como
+// em qualquer app de mensagem. A lista cobre a área do chat (não a barra do app nem a navbar),
+// o "voltar" do cabeçalho traz ela de volta e tocar numa conversa abre o chat. Antes ela
+// simplesmente sumia — e no mobile não havia como ver ou trocar de conversa.
+@media (max-width: 900px) {
+  .nyta-conversations {
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    width: 100%;
+    min-width: 0;
+    border-right: 0;
+    transform: translateX(-100%);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    // Fechada ela não pode roubar toque nem foco do chat.
+    visibility: hidden;
+
+    &--open {
+      transform: none;
+      visibility: visible;
+    }
+  }
+
+  // A navbar inferior flutua por cima: a última conversa da lista precisa passar por baixo dela.
+  .nyta-conversations__list {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+  }
+
+  // Sair da Nyta no mobile é a barra inferior (a foto do perfil na primeira célula) — este
+  // "voltar" repetia o mesmo destino dentro de uma tela que já é o nível de trás.
+  .nyta-conversations__back {
+    display: none;
+  }
+
+
+  // Sem hover no toque, o menu de ações (renomear/excluir) ficaria invisível nos itens que não
+  // são o ativo.
+  .nyta-conversations__more {
+    opacity: 1;
+  }
+
+  .nyta-conversations__backdrop {
+    position: fixed;
+    z-index: 129;
+    display: block;
+    inset: 0;
+    background: rgba(38, 54, 82, .24);
+    animation: nytaDrawerFade 0.18s ease;
+  }
+
+  @keyframes nytaDrawerFade { from { opacity: 0; } to { opacity: 1; } }
+}

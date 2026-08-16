@@ -8,6 +8,7 @@ import {
   VolumeMuteIcon,
   CloseIcon,
 } from './Icons';
+import { FiMaximize2 } from 'react-icons/fi';
 import { useLocalPlayerStore } from '../stores/localPlayerStore';
 
 // Player fixo no rodapé (estilo barra do Spotify) para faixas cadastradas no sistema
@@ -19,6 +20,7 @@ export interface LocalTrack {
   subtitle?: string;
   cover?: string | null;
   url: string;
+  fullViewUrl?: string;
 }
 
 interface Props {
@@ -27,6 +29,10 @@ interface Props {
   onChangeTrack: (id: string) => void;
   onClose: () => void;
   onTrackClick?: () => void;
+  onOpenFullView?: (track: LocalTrack) => void;
+  // Há uma tab bar no rodapé (mobile). O player deixa de ser a barra colada embaixo e vira uma
+  // ilha flutuante logo acima dela, no mesmo desenho — senão ele cobre a navegação.
+  aboveMobileNav?: boolean;
 }
 
 const fmt = (s: number): string => {
@@ -46,15 +52,18 @@ const ctrlBtn: React.CSSProperties = {
   padding: 4,
 };
 
-export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, onClose, onTrackClick }) => {
+export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, onClose, onTrackClick, onOpenFullView, aboveMobileNav }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // `playing` no store apenas REFLETE o <audio> (via eventos) — pra a LINHA do catálogo exibir e
   // controlar em sincronia. O controle do áudio é IMPERATIVO (togglePlay) — sem efeito que
   // "sincroniza" playing→áudio (isso criava loop play/pause).
   const playing = useLocalPlayerStore((s) => s.playing);
   const setPlaying = useLocalPlayerStore((s) => s.setPlaying);
+  const setStoreTime = useLocalPlayerStore((s) => s.setTime);
+  const setStoreDuration = useLocalPlayerStore((s) => s.setDuration);
   const setStoreCurrentId = useLocalPlayerStore((s) => s.setCurrentId);
   const setStoreToggle = useLocalPlayerStore((s) => s.setToggle);
+  const setStoreSeek = useLocalPlayerStore((s) => s.setSeek);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -62,14 +71,23 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
 
   const index = tracks.findIndex((t) => t.id === currentId);
   const track = tracks[index];
+  const playable = !!track?.url;
 
   // Play/pause imperativo do <audio> (os eventos play/pause atualizam o store `playing`).
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !track?.url) return;
     if (audio.paused) audio.play().catch(() => {});
     else audio.pause();
-  }, []);
+  }, [track?.url]);
+
+  const seekTo = useCallback((value: number) => {
+    const audio = audioRef.current;
+    if (!audio || !track?.url) return;
+    audio.currentTime = Math.max(0, Math.min(value, audio.duration || value));
+    setTime(audio.currentTime);
+    setStoreTime(audio.currentTime);
+  }, [setStoreTime, track?.url]);
 
   // Publica no store: faixa atual (pra a lista sincronizar) e a função de toggle (pra a lista
   // controlar o mesmo <audio>). Limpa o toggle ao desmontar.
@@ -80,16 +98,32 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
     setStoreToggle(togglePlay);
     return () => setStoreToggle(null);
   }, [togglePlay, setStoreToggle]);
+  useEffect(() => {
+    setStoreSeek(seekTo);
+    return () => setStoreSeek(null);
+  }, [seekTo, setStoreSeek]);
 
   // (Re)carrega e toca quando a faixa muda (o evento onPlay atualiza o store).
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !track) return;
+    if (!track.url) {
+      audio.removeAttribute('src');
+      audio.load();
+      setPlaying(false);
+      setTime(0);
+      setDuration(0);
+      setStoreTime(0);
+      setStoreDuration(0);
+      return;
+    }
     audio.src = track.url;
     audio.volume = muted ? 0 : volume;
     audio.play().catch(() => {});
     setTime(0);
     setDuration(0);
+    setStoreTime(0);
+    setStoreDuration(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [track?.id]);
 
@@ -108,15 +142,14 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
 
   const seek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = Number(e.target.value);
-    if (audioRef.current) audioRef.current.currentTime = v;
-    setTime(v);
+    seekTo(v);
   };
 
   // Layout (ref. Frame 75): card #333842 arredondado. Desktop = controles + progresso + volume
   // À ESQUERDA, capa + info no MEIO, fechar à direita. Estrutura PLANA (irmãos) pra o mobile
   // reordenar via `order` no CSS sem quebrar o desktop.
   return (
-    <div className='local-player-bar'>
+    <div className={`local-player-bar${aboveMobileNav ? ' local-player-bar--over-nav' : ''}`}>
       {/* Progresso slim no rodapé — só mobile (no desktop o progresso é inline). Sem thumb; o
           preenchido (--pct) é feito via gradiente no CSS. */}
       <input
@@ -134,8 +167,14 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
         ref={audioRef}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
-        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onTimeUpdate={(e) => {
+          setTime(e.currentTarget.currentTime);
+          setStoreTime(e.currentTarget.currentTime);
+        }}
+        onLoadedMetadata={(e) => {
+          setDuration(e.currentTarget.duration);
+          setStoreDuration(e.currentTarget.duration);
+        }}
         onEnded={() => (tracks.length > 1 ? goTo(1) : setPlaying(false))}
       />
 
@@ -144,8 +183,13 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
         <button title='Anterior' style={ctrlBtn} onClick={() => goTo(-1)} disabled={tracks.length < 2}>
           <SkipBack />
         </button>
-        <button className='lpb-play' title={playing ? 'Pausar' : 'Tocar'} onClick={togglePlay}>
-          {playing ? <Pause /> : <Play />}
+        <button
+          className='lpb-play'
+          title={playable ? (playing ? 'Pausar' : 'Tocar') : 'Áudio pendente'}
+          onClick={togglePlay}
+          disabled={!playable}
+        >
+          {playing ? <Pause color="#ffffff" /> : <Play color="#ffffff" />}
         </button>
         <button title='Próxima' style={ctrlBtn} onClick={() => goTo(1)} disabled={tracks.length < 2}>
           <SkipNext />
@@ -183,8 +227,8 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
         type='button'
         className='lpb-track'
         onClick={onTrackClick}
-        aria-label={`Abrir faixa ${track.title} no catálogo`}
-        title='Abrir no Catálogo'
+        aria-label={`Abrir música ${track.title} em Músicas`}
+        title='Abrir em Músicas'
       >
         <img className='lpb-cover' src={track.cover || `${process.env.PUBLIC_URL}/images/playlist.png`} alt='' />
         <div className='lpb-meta'>
@@ -192,6 +236,19 @@ export const LocalPlayerBar: FC<Props> = ({ tracks, currentId, onChangeTrack, on
           {track.subtitle && <div className='lpb-sub'>{track.subtitle}</div>}
         </div>
       </button>
+
+      {onOpenFullView && track.fullViewUrl && (
+        <button
+          type='button'
+          className='lpb-expand'
+          title='Abrir visualização completa'
+          aria-label={`Abrir visualização completa de ${track.title}`}
+          style={ctrlBtn}
+          onClick={() => onOpenFullView(track)}
+        >
+          <FiMaximize2 />
+        </button>
+      )}
 
       {/* Fechar */}
       <button className='lpb-close' title='Fechar player' style={ctrlBtn} onClick={onClose}>

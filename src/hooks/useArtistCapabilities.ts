@@ -23,6 +23,8 @@ import { useEntitlements, FREE_MAX_CATALOG_TRACKS } from './useEntitlements';
 export interface ArtistCapabilities {
   isPaid: boolean;
   isOwner: boolean;
+  /** Dono ou membro com convite aceito: pode colaborar no Espaço JAM. */
+  canCollaborateJam: boolean;
   canEditCatalog: boolean;
   canEditAgenda: boolean;
   canManageTeam: boolean;
@@ -63,6 +65,9 @@ export function deriveArtistCapabilities(args: {
   return {
     isPaid,
     isOwner,
+    // A lista de artistas só inclui convites aceitos; até membro sem níveis específicos
+    // participa do JAM. `accessLevels` definido identifica esse membro ativo.
+    canCollaborateJam: isOwner || args.accessLevels !== undefined,
     canEditCatalog,
     canEditAgenda,
     canManageTeam,

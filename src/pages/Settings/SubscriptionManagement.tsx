@@ -1,9 +1,11 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Popconfirm, message, Spin } from 'antd';
-import { FiCheck, FiArrowRight, FiAward } from 'react-icons/fi';
+import { Popconfirm, message } from 'antd';
+import { FiCheck, FiArrowRight } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
+import { Spinner } from '../../components/spinner/spinner';
+import { Gem } from '../../components/PlanTag/Gem';
 import {
   fetchSubscriptionStatus,
   cancelSubscription,
@@ -20,17 +22,18 @@ const STATUS_LABELS: Record<string, string> = {
   none: 'Sem assinatura',
 };
 
+// currentColor: a mesma cor pinta o texto do status e a bolinha ao lado (settings-subscription-status i).
 const STATUS_COLORS: Record<string, string> = {
-  active: '#9A4FD1',
-  overdue: '#f5a623',
-  cancelled: '#e91429',
-  pending: '#b3b3b3',
-  none: '#b3b3b3',
+  active: '#3361ff',
+  overdue: '#d9822b',
+  cancelled: '#f13131',
+  pending: '#98a6bd',
+  none: '#98a6bd',
 };
 
 const PRO_BENEFITS = [
   'Nyta IA em todos os módulos',
-  'Catálogo ilimitado',
+  'Músicas ilimitadas',
   'Acompanhamento de evolução automatizado',
   'Lembretes inteligentes',
 ];
@@ -104,83 +107,49 @@ const SubscriptionManagement: FC = () => {
     (status === 'pending' && !!asaasSubscriptionId);
 
   return (
-    <section style={{ background: '#181818', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-      <h2 style={{ color: '#fff', fontSize: 18, fontWeight: 700, marginTop: 0, marginBottom: 16 }}>
-        Assinatura
-      </h2>
+    <section className='settings-subscription-card'>
+      <h2>Assinatura</h2>
 
       {loading && !cancelling ? (
-        <div style={{ textAlign: 'center', padding: 20 }}>
-          <Spin />
-        </div>
+        <Spinner loading section>{null as any}</Spinner>
       ) : hasPlan ? (
         <>
-          {/* Status display */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Status */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#b3b3b3', fontSize: 14 }}>Status</span>
-              <span
-                style={{
-                  color: STATUS_COLORS[status] || '#b3b3b3',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
-                <span
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: STATUS_COLORS[status] || '#b3b3b3',
-                    display: 'inline-block',
-                  }}
-                />
+          <div className='settings-subscription-list'>
+            <div className='settings-subscription-row'>
+              <span className='label'>Status</span>
+              <span className='settings-subscription-status' style={{ color: STATUS_COLORS[status] || '#98a6bd' }}>
+                <i />
                 {STATUS_LABELS[status] || status}
               </span>
             </div>
 
-            {/* Plan name */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#b3b3b3', fontSize: 14 }}>Plano</span>
-              <span style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>Maestra Pro</span>
+            <div className='settings-subscription-row'>
+              <span className='label'>Plano</span>
+              <span className='value'>Maestra Pro</span>
             </div>
 
-            {/* Monthly value */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#b3b3b3', fontSize: 14 }}>Valor mensal</span>
-              <span style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>
-                {formatCurrency(value)}
-              </span>
+            <div className='settings-subscription-row'>
+              <span className='label'>Valor mensal</span>
+              <span className='value'>{formatCurrency(value)}</span>
             </div>
 
-            {/* Next billing date */}
             {(status === 'active' || status === 'overdue') && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#b3b3b3', fontSize: 14 }}>Próxima cobrança</span>
-                <span style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>
-                  {formatDate(nextDueDate)}
-                </span>
+              <div className='settings-subscription-row'>
+                <span className='label'>Próxima cobrança</span>
+                <span className='value'>{formatDate(nextDueDate)}</span>
               </div>
             )}
 
-            {/* Grace period end */}
             {gracePeriodEndsAt && status === 'overdue' && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#b3b3b3', fontSize: 14 }}>Prazo de regularização</span>
-                <span style={{ color: '#f5a623', fontSize: 14, fontWeight: 500 }}>
-                  {formatDate(gracePeriodEndsAt)}
-                </span>
+              <div className='settings-subscription-row'>
+                <span className='label'>Prazo de regularização</span>
+                <span className='value settings-subscription-grace'>{formatDate(gracePeriodEndsAt)}</span>
               </div>
             )}
           </div>
 
-          {/* Cancel button */}
           {canCancel && (
-            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #282828' }}>
+            <div className='settings-subscription-footer'>
               <Popconfirm
                 title='Cancelar assinatura?'
                 description='Ao confirmar, sua assinatura é encerrada e o acesso aos módulos Pro é cortado imediatamente.'
@@ -189,131 +158,42 @@ const SubscriptionManagement: FC = () => {
                 cancelText='Voltar'
                 onConfirm={handleCancelConfirm}
               >
-              <button
-                disabled={cancelling}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #e91429',
-                  color: '#e91429',
-                  borderRadius: 9999,
-                  padding: '8px 24px',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: cancelling ? 'not-allowed' : 'pointer',
-                  opacity: cancelling ? 0.6 : 1,
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  if (!cancelling) {
-                    e.currentTarget.style.background = '#e91429';
-                    e.currentTarget.style.color = '#fff';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = '#e91429';
-                }}
-              >
-                Cancelar assinatura
-              </button>
+                <button className='settings-cancel-sub-btn' disabled={cancelling}>
+                  Cancelar assinatura
+                </button>
               </Popconfirm>
             </div>
           )}
-
         </>
       ) : (
-        /* Sem assinatura / cancelada → card de upsell do Maestra Pro. */
-        <div
-          style={{
-            borderRadius: 16,
-            padding: 24,
-            background:
-              'radial-gradient(120% 120% at 0% 0%, rgba(154, 79, 209,0.20) 0%, rgba(154, 79, 209,0.05) 42%, rgba(255,255,255,0.02) 100%)',
-            border: '1px solid rgba(154, 79, 209,0.32)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 48,
-                height: 48,
-                borderRadius: 14,
-                flexShrink: 0,
-                background: 'rgba(154, 79, 209,0.14)',
-                border: '1px solid rgba(154, 79, 209,0.35)',
-                boxShadow: '0 10px 28px rgba(154, 79, 209,0.22)',
-              }}
-            >
-              <FiAward size={26} color='#e07fce' />
-            </span>
+        // Sem assinatura / cancelada → card de upsell do Maestra Pro.
+        <div className='settings-upsell'>
+          <div className='settings-upsell-head'>
+            {/* A mesma gema do selo do topo: o card do Pro e o selo falam da mesma coisa e
+                agora usam o mesmo símbolo, no lugar da medalha genérica. */}
+            <span className='settings-upsell-icon'><Gem size={24} /></span>
             <div>
-              <div style={{ color: '#fff', fontSize: 19, fontWeight: 800, letterSpacing: '-0.01em' }}>
-                Maestra Pro
-              </div>
-              <div style={{ color: '#cfcfd4', fontSize: 13 }}>
-                Desbloqueie todo o potencial da plataforma
-              </div>
+              <div className='settings-upsell-title'>Maestra Pro</div>
+              <div className='settings-upsell-subtitle'>Desbloqueie todo o potencial da plataforma</div>
             </div>
           </div>
 
-          <p style={{ color: '#b3b3b3', fontSize: 13.5, lineHeight: 1.55, margin: '16px 0 18px' }}>
+          <p className='settings-upsell-desc'>
             {status === 'cancelled'
               ? 'Sua assinatura foi cancelada e o acesso aos módulos Pro foi encerrado. Assine de novo quando quiser e retome de onde parou.'
               : 'Você ainda não tem uma assinatura ativa. Assine o Pro e leve sua carreira ao próximo nível.'}
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 22 }}>
+          <div className='settings-upsell-benefits'>
             {PRO_BENEFITS.map((b) => (
-              <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 11, color: '#e6e6e6', fontSize: 14 }}>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 22,
-                    height: 22,
-                    borderRadius: '50%',
-                    flexShrink: 0,
-                    background: 'rgba(154, 79, 209,0.18)',
-                    color: '#C97EF3',
-                  }}
-                >
-                  <FiCheck size={13} />
-                </span>
+              <div key={b} className='settings-upsell-benefit'>
+                <i><FiCheck size={13} /></i>
                 {b}
               </div>
             ))}
           </div>
 
-          <button
-            onClick={() => navigate('/assinatura')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              background: '#9A4FD1',
-              border: 'none',
-              color: '#FFFFFF',
-              borderRadius: 9999,
-              padding: '12px 30px',
-              fontSize: 14,
-              fontWeight: 800,
-              cursor: 'pointer',
-              boxShadow: '0 10px 30px rgba(154, 79, 209,0.32)',
-              transition: 'background 0.2s, transform 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#8442B6';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#9A4FD1';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
+          <button className='settings-upsell-cta' onClick={() => navigate('/assinatura')}>
             {status === 'cancelled' ? 'Assinar novamente' : 'Ver planos do Maestra Pro'}
             <FiArrowRight size={16} />
           </button>

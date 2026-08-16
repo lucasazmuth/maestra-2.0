@@ -2,7 +2,7 @@ import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiCalendar, FiClock, FiMapPin, FiTag, FiCopy, FiCheck, FiArrowRight } from 'react-icons/fi';
 
-import { Header, Footer } from '../Landing';
+import { Header, Footer } from '../Landing/LightChrome';
 import { useAppSelector } from '../../store/store';
 import anitaPhoto from '../../assets/anita.jpg';
 import realStar from '../../assets/feature-real.png';

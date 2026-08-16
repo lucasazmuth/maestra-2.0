@@ -30,7 +30,7 @@ export const TASK_OWNER_SELF = 'owner';
 export const NYTA_SUGGESTIONS = [
   'Qual é o meu próximo passo no plano de ação?',
   'Qual deve ser o meu foco esta semana?',
-  'Analise meu catálogo e me dê ideias',
+  'Analise minhas músicas e me dê ideias',
   'Resuma minha agenda dos próximos dias',
 ];
 
@@ -50,6 +50,18 @@ export const isOnboardingComplete = (artist?: Artist | null): boolean => {
   return (c.step ?? 0) >= WIZARD_TOTAL_STEPS;
 };
 
+// Para onde abrir um perfil, na ordem em que os bloqueios importam: cobrança em aberto trava
+// tudo; sem planejamento concluído, o destino é o wizard — o dashboard só faz sentido depois
+// que existe um plano pra ele mostrar.
+//
+// Mora aqui porque tem mais de uma porta de entrada pro perfil (a lista de artistas e a pilha
+// de avatares do rail); com a regra copiada em cada uma, elas divergem na primeira mudança.
+export const artistEntryRoute = (artist: Artist): string => {
+  if (artist.role !== 'member' && artist.is_locked) return `/artists/${artist.id}/desbloquear`;
+  if (!isOnboardingComplete(artist)) return `/artists/${artist.id}/wizard`;
+  return `/artists/${artist.id}`;
+};
+
 export const CATALOG_STATUS: Record<CatalogStatus, { label: string; color: string }> = {
   composition: { label: 'Composição', color: '#6b7280' },
   recording: { label: 'Gravação', color: '#e91429' },
@@ -59,9 +71,13 @@ export const CATALOG_STATUS: Record<CatalogStatus, { label: string; color: strin
   released: { label: 'Lançado', color: '#9A4FD1' },
 };
 
-export const CATALOG_STATUS_OPTIONS = (Object.keys(CATALOG_STATUS) as CatalogStatus[]).map(
-  (id) => ({ id, ...CATALOG_STATUS[id] })
-);
+// "Produção" saiu da lista escolhível, mas continua em CATALOG_STATUS: músicas gravadas antes
+// dessa mudança ainda têm esse status, e sem o rótulo elas mostrariam a chave crua na tela.
+const HIDDEN_CATALOG_STATUSES: readonly CatalogStatus[] = ['production'];
+
+export const CATALOG_STATUS_OPTIONS = (Object.keys(CATALOG_STATUS) as CatalogStatus[])
+  .filter((id) => !HIDDEN_CATALOG_STATUSES.includes(id))
+  .map((id) => ({ id, ...CATALOG_STATUS[id] }));
 
 /**
  * Statuses considerados "ativos" para fins de contagem do limite de catálogo.
@@ -119,7 +135,7 @@ export const ACCESS_LEVELS: Record<AccessLevel, string> = {
   plan: 'Plano de ação',
   team: 'Equipe',
   finance: 'Financeiro',
-  catalog: 'Catálogo',
+  catalog: 'Músicas',
   agenda: 'Agenda',
   releases: 'Lançamentos',
   full: 'Acesso completo',
@@ -129,7 +145,7 @@ export const ACCESS_LEVELS: Record<AccessLevel, string> = {
 export const MVP_ACCESS_LEVELS: Pick<typeof ACCESS_LEVELS, 'plan' | 'team' | 'catalog' | 'agenda' | 'full'> = {
   plan: 'Plano de ação',
   team: 'Equipe',
-  catalog: 'Catálogo',
+  catalog: 'Músicas',
   agenda: 'Agenda',
   full: 'Acesso completo',
 };
@@ -158,7 +174,7 @@ export const CAREER_PHASES: Record<number, CareerPhase> = {
   },
   2: {
     label: 'Estruturação',
-    focus: 'Montar bases: equipe, catálogo, processos e plano.',
+    focus: 'Montar bases: equipe, músicas, processos e plano.',
     antiFocus: 'Evite escalar antes de ter estrutura mínima.',
   },
   3: {
@@ -192,3 +208,16 @@ export const formatMs = (ms?: number): string => {
   const s = total % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 };
+
+// Etapas herdadas das versões (guia, mix, master…). O modal da versão não pede mais a etapa —
+// o título livre descreve melhor a gravação —, mas as versões antigas foram criadas sem título
+// e o rótulo da etapa é o nome que elas têm. Compartilhado pelo Espaço Jam e pela ficha da
+// música, senão a mesma versão aparece como "Guia" num lugar e "Versão 1" no outro.
+export const CATALOG_VERSION_STAGES: { value: string; label: string }[] = [
+  { value: 'guia', label: 'Guia' }, { value: 'beat', label: 'Beat' }, { value: 'instrumental', label: 'Instrumental' },
+  { value: 'voz', label: 'Voz' }, { value: 'stems', label: 'Stems' }, { value: 'mix', label: 'Mixagem' },
+  { value: 'master', label: 'Masterização' }, { value: 'referencia', label: 'Referência' },
+];
+
+export const getVersionStageLabel = (stage?: string | null): string =>
+  CATALOG_VERSION_STAGES.find((item) => item.value === stage)?.label || stage || '';

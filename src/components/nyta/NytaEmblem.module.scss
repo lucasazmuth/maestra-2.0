@@ -1,0 +1,81 @@
+// Animação do emblema da Nyta (ver NytaEmblem.tsx): a estrela de quatro pontas que, ao pensar,
+// gira e se reveza com as outras duas formas do set — o rastro de giro e o flare — por
+// crossfade. Timings seguem o design system do redesign: cubic-bezier(0.4, 0, 0.2, 1).
+
+.emblem {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+// `transform-box: view-box` pro giro acontecer em torno do centro da viewBox (as três formas
+// são simétricas em 90°, então o loop de 180° fecha sem pulo).
+.spin {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+.swoosh,
+.flare {
+  opacity: 0;
+}
+
+.thinking {
+  .spin {
+    animation: nytaEmblemSpin 2.4s linear infinite;
+  }
+
+  // O revezamento: estrela até ~8%, rastro entre 20–40%, flare entre 52–78%, estrela de novo
+  // a partir de 92%. As janelas se sobrepõem ~12% (≈290ms): com o conjunto girando, o
+  // crossfade lê como uma forma virando a outra.
+  .spark {
+    animation: nytaEmblemSpark 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .swoosh {
+    animation: nytaEmblemSwoosh 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  .flare {
+    animation: nytaEmblemFlare 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
+@keyframes nytaEmblemSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes nytaEmblemSpark {
+  0%, 8% { opacity: 1; }
+  20%, 78% { opacity: 0; }
+  92%, 100% { opacity: 1; }
+}
+
+@keyframes nytaEmblemSwoosh {
+  0%, 8% { opacity: 0; }
+  20%, 40% { opacity: 1; }
+  52%, 100% { opacity: 0; }
+}
+
+@keyframes nytaEmblemFlare {
+  0%, 40% { opacity: 0; }
+  52%, 78% { opacity: 1; }
+  92%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking {
+    .spin,
+    .spark,
+    .swoosh,
+    .flare {
+      animation: none;
+    }
+  }
+}

@@ -7,7 +7,7 @@ import { FaSpotify } from 'react-icons/fa6';
 
 import { listEvents } from '../../services/db/events';
 import { syncActionPlanTaskEvent } from '../../services/db/events';
-import { listCatalogItems } from '../../services/db/catalog';
+import { listCatalogProjectItems } from '../../services/db/catalog';
 import { listMembers } from '../../services/db/members';
 import { useAppDispatch } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
@@ -104,7 +104,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
   useEffect(() => {
     let alive = true;
     listEvents(artist.id).then((d) => alive && setEvents(d)).catch(() => {});
-    listCatalogItems(artist.id).then((d) => alive && setItems(d)).catch(() => {});
+    listCatalogProjectItems(artist.id).then((d) => alive && setItems(d)).catch(() => {});
     listMembers(artist.id).then((d) => alive && setMembers(d)).catch(() => {});
     return () => { alive = false; };
   }, [artist.id]);
@@ -252,7 +252,7 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
         </Panel>
 
         {/* Lançamentos (Spotify) */}
-        <Panel icon={<FaSpotify size={16} color="#9A4FD1" />} title="Lançamentos" action={{ label: 'Catálogo', onClick: () => go('catalog') }}>
+        <Panel icon={<FaSpotify size={16} color="#9A4FD1" />} title="Lançamentos" action={{ label: 'Músicas', onClick: () => go('catalog') }}>
           {spItems.length === 0 ? (
             <Empty text="Conecte o Spotify para ver seus lançamentos publicados." />
           ) : (
@@ -269,9 +269,9 @@ export const DashboardOverview: FC<{ artist: Artist }> = ({ artist }) => {
         </Panel>
 
         {/* Catálogo (sistema) — itens manuais (aba "Faixas / Rascunho" da página de Catálogo) */}
-        <Panel icon={<CatalogoIcon size={18} />} title="Faixas / Rascunho" action={{ label: 'Catálogo', onClick: () => go('catalog') }}>
+        <Panel icon={<CatalogoIcon size={18} />} title="Músicas / Rascunho" action={{ label: 'Músicas', onClick: () => go('catalog') }}>
           {items.length === 0 ? (
-            <Empty text="Nenhuma faixa no catálogo ainda." />
+            <Empty text="Nenhuma música cadastrada ainda." />
           ) : (
             items.slice(0, 5).map((it) => {
               const st = (CATALOG_STATUS as any)[it.status] || { label: it.status, color: '#6b7280' };

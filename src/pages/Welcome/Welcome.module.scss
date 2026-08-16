@@ -1,11 +1,18 @@
-// Tela de boas-vindas pós-cadastro: pill com brilho aurora animado + CTA do tutorial.
+// Tela de boas-vindas pós-cadastro: a marca, a saudação digitada e o CTA.
+//
+// Era a última tela ainda no tema escuro (fundo #050507 com o brilho aurora roxo). É a PRIMEIRA
+// coisa que a pessoa vê depois de criar a conta — abrir no preto e cair no app claro logo em
+// seguida parecia troca de produto. Aqui ela usa o mesmo fundo, a mesma tipografia e o mesmo
+// azul das outras telas do redesign.
 
 .page {
   position: relative;
   min-height: 100vh;
-  // Base escura; o brilho premium vem do <AuroraBackdrop> (camada fixa atrás do conteúdo).
-  background: #050507;
-  color: #fff;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(47, 96, 246, .1), transparent 30%),
+    radial-gradient(circle at 82% 12%, rgba(154, 79, 209, .08), transparent 26%),
+    linear-gradient(180deg, #f9fbff 0%, #eef4ff 100%);
+  color: #405985;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14,40 +21,39 @@
   padding: 48px 24px;
 }
 
-// ─── Pill com brilho aurora ─────────────────────────────────────────────────────
+// ─── Pill da marca ──────────────────────────────────────────────────────────────
 .pillWrap {
   position: relative;
-  z-index: 1; // acima do AuroraBackdrop (z-index 0)
+  z-index: 1;
   display: inline-flex;
   margin-bottom: 52px;
   animation: welcomeFadeUp 0.5s ease both;
 }
 
-// Ângulo registrado para animar o conic-gradient de forma suave (luz que percorre a borda).
 @property --auroraAngle {
   syntax: '<angle>';
   initial-value: 0deg;
   inherits: false;
 }
 
+// O arco que percorre a borda continua, agora nos azuis e no roxo da marca — sobre o branco,
+// a paleta antiga (magenta + branco) sumia contra o fundo.
 .pillGlow {
   position: absolute;
   inset: -2px;
   border-radius: 9999px;
-  // Arco brilhante (magenta → branco → azul → verde) num trecho do círculo; o resto é
-  // transparente. Ao girar o ângulo, esse arco viaja ao redor do contorno do pill.
   background: conic-gradient(
     from var(--auroraAngle),
     transparent 0deg,
     transparent 150deg,
-    #9A4FD1 200deg,
-    #ffffff 255deg,
-    #509bf5 300deg,
-    #9A4FD1 335deg,
+    #9a4fd1 200deg,
+    #3361ff 262deg,
+    #33bfff 300deg,
+    #9a4fd1 335deg,
     transparent 360deg
   );
-  filter: blur(6px);
-  opacity: 0.95;
+  filter: blur(7px);
+  opacity: .55;
   animation: auroraTravel 4s linear infinite;
 }
 
@@ -59,20 +65,23 @@
   gap: 16px;
   padding: 20px 52px;
   border-radius: 9999px;
-  background: #0a0a0e;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid #dce6f7;
+  background: #fff;
+  box-shadow: 0 22px 50px rgba(74, 99, 145, .14);
 }
 
-.pillText {
+// O mesmo cinza-azulado da marca no topo do app (#52668d). O tone 'dark' do MaestraBrand é
+// preto (#0a0a0a) e, sozinho no meio da tela clara, pesava demais. Seletor com o pai para
+// vencer a classe de tom, que tem a mesma especificidade.
+.pill .pillText {
+  color: #52668d;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 36px;
   line-height: 1;
-  color: #fff;
   white-space: nowrap;
 }
 
-// Responsivo: o pill (texto) encolhe nas telas menores pra não estourar a largura.
 @media (max-width: 600px) {
   .page {
     padding: 32px 16px;
@@ -99,16 +108,16 @@
   }
 }
 
-// ─── Saudação digitada (boas-vindas da Maestra) ──────────────────────────────────
+// ─── Saudação digitada ──────────────────────────────────────────────────────────
 .greeting {
   position: relative;
-  z-index: 1; // acima do AuroraBackdrop
+  z-index: 1;
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 850;
   font-size: 34px;
   line-height: 1.32;
   letter-spacing: -0.01em;
-  color: #fff;
+  color: #33528f;
   max-width: 780px;
   min-height: 150px;
   margin: 0 0 36px;
@@ -125,15 +134,15 @@
   height: 1.05em;
   margin-left: 4px;
   vertical-align: text-bottom;
-  background: #9A4FD1;
+  background: #3361ff;
   border-radius: 2px;
   animation: welcomeCaret 0.9s steps(1) infinite;
 }
 
-// ─── Ações (entram quando a Nyta termina de falar) ───────────────────────────────
+// ─── Ações (entram quando a saudação termina) ───────────────────────────────────
 .actions {
   position: relative;
-  z-index: 1; // acima do AuroraBackdrop
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -149,63 +158,29 @@
   pointer-events: auto;
 }
 
-// ─── Criar perfil inline (substitui a saudação ao clicar no CTA) ──────────────────
-// Limpo, sem card: campos grandes flutuando sobre o fundo — experiência única.
-.createCard {
-  width: 100%;
-  max-width: 600px;
-  text-align: center;
-  animation: welcomeFadeUp 0.4s ease both;
-}
-
-.createTitle {
-  font-family: var(--font-display);
-  color: #fff;
-  font-size: 28px;
-  font-weight: 800;
-  margin: 0 0 6px;
-}
-
-.createSub {
-  color: #9a9aa5;
-  font-size: 15px;
-  line-height: 1.5;
-  margin: 0 0 28px;
-}
-
-.skip {
-  background: none;
-  border: none;
-  color: #b3b3b3;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #fff;
-  }
-}
-
 .cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #9A4FD1;
-  color: #FFFFFF;
-  border: none;
-  border-radius: 9999px;
   padding: 14px 30px;
+  border: 0;
+  border-radius: 9999px;
+  background: #3361ff;
+  color: #fff;
+  cursor: pointer;
   font-size: 16px;
   font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 10px 34px rgba(154, 79, 209, 0.28);
+  box-shadow: 0 14px 32px rgba(51, 97, 255, .26);
   transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
 
-  &:hover {
-    background: #8442B6;
+  &:hover:not(:disabled) {
+    background: #2a54e0;
     transform: translateY(-1px);
-    box-shadow: 0 12px 40px rgba(154, 79, 209, 0.4);
+    box-shadow: 0 16px 38px rgba(51, 97, 255, .34);
+  }
+
+  &:disabled {
+    cursor: default;
   }
 }
 

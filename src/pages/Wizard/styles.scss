@@ -1,5 +1,10 @@
 // Wizard — animações e classes do redesign. Segue os timings/easings do design system
-// (cubic-bezier(0.4,0,0.2,1), 200–650ms) e a paleta Encore (#121212/#181818/#9A4FD1).
+// (cubic-bezier(0.4,0,0.2,1), 200–650ms) e a paleta clara da referência GSAP
+// (src/styles/gsap-reference.css): canvas #fafbfc, cards brancos, ação #3361ff.
+//
+// Toda a cor do wizard sai dos tokens `--wz-*` declarados em `.wizard`. Os widgets
+// (chat/widgets.tsx) usam os mesmos tokens nos estilos inline, então a paleta tem
+// uma fonte única — trocar aqui repinta a tela inteira.
 
 // ---- Keyframes -------------------------------------------------------------------------------
 
@@ -37,16 +42,16 @@
   }
 }
 
-// Pulso de destaque no texto do objetivo ao trocar (flash magenta breve).
+// Pulso de destaque no texto do objetivo ao trocar (flash azul breve).
 @keyframes wizObjFlash {
   0% {
-    background: rgba(154, 79, 209, 0);
+    background: rgba(51, 97, 255, 0);
   }
   35% {
-    background: rgba(154, 79, 209, 0.28);
+    background: rgba(51, 97, 255, 0.18);
   }
   100% {
-    background: rgba(154, 79, 209, 0);
+    background: rgba(51, 97, 255, 0);
   }
 }
 
@@ -127,23 +132,59 @@
 
 // ---- Shell -----------------------------------------------------------------------------------
 
+// Paleta da referência GSAP e fonte única de cor do wizard (scss + estilos inline dos widgets).
+// Fica no `:root`, e não em `.wizard`, porque partes do wizard são renderizadas por portal no
+// `document.body` — modal de prioridade, dropdowns e modais do antd — e lá dentro um token
+// declarado em `.wizard` não resolveria (cor viraria inválida).
+:root {
+  --wz-blue: #3361ff;
+  --wz-blue-ink: #4267b9;
+  --wz-blue-soft: #eaf0ff;
+  --wz-blue-tint: rgba(51, 97, 255, 0.08);
+  --wz-ink: #52668d; // títulos e texto forte
+  --wz-text: #61749a; // corpo
+  --wz-muted: #8e9eb8; // secundário
+  --wz-faint: #aebbd0; // placeholder / desabilitado
+  --wz-line: #e8edf5;
+  --wz-line-2: #dce4f0;
+  --wz-surface: #ffffff;
+  --wz-surface-2: #f5f7fb; // preenchimento sutil (bolha da Nyta, trilhos)
+  --wz-canvas: #fafbfc;
+  --wz-shadow: 0 7px 17px rgba(124, 145, 185, 0.07);
+  --wz-shadow-lg: 0 12px 27px rgba(107, 129, 170, 0.13);
+  // Altura dos cabeçalhos do wizard e da coluna de resultados — os dois cartões ficam lado a
+  // lado, então compartilham a medida pra divisória e botões alinharem.
+  --wiz-head-h: 71px;
+  // Respiro interno do cartão do wizard. A coluna de resultados repete essa medida acima do
+  // próprio cabeçalho: sem isso os dois começam em alturas diferentes e, mesmo com cabeçalhos
+  // da MESMA altura, as divisórias caem desalinhadas (24px de diferença).
+  --wiz-pad: 24px;
+  --wz-danger: #f13131;
+  // Âmbar escurecido o bastante pra carregar texto branco quando vira preenchimento (SWOT).
+  --wz-warn: #b0720f;
+  --wz-ok: #29cc39;
+}
+
 .wizard {
-  padding: 24px;
+  padding: var(--wiz-pad);
   position: relative;
-  // Identidade do Planejamento Estratégico: glow azul sutil no topo do ambiente.
-  background: radial-gradient(110% 42% at 50% 0%, rgba(154, 79, 209, 0.09) 0%, rgba(154, 79, 209, 0.03) 38%, transparent 62%);
+  // Sem preenchimento próprio: o `.board-shell` em volta já dá o fundo e o contorno. Com um
+  // --wz-canvas (#fafbfc) aqui em cima do canvas da página (#f7f8fb), a diferença de um tom
+  // criava um retângulo claro visível dentro do cartão.
+  background: transparent;
+  color: var(--wz-text);
 
   .wiz-progress-track {
     height: 4px;
     border-radius: 2px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--wz-line);
     overflow: hidden;
     margin-bottom: 20px;
 
     .wiz-progress-fill {
       height: 100%;
       border-radius: 2px;
-      background: #9A4FD1; // azul do produto Planejamento
+      background: var(--wz-blue);
       transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
@@ -163,55 +204,95 @@
   }
 }
 
-// Ícone de Planejamento grande e translúcido no fundo (id visual do ambiente, azul).
+// A .Main-section é escura por padrão (paleta antiga). Onde o wizard vive, o card do
+// app acompanha o canvas claro da referência.
+.Main-section:has(.wizard) {
+  background-color: var(--wz-canvas, #fafbfc);
+}
 
 // Rótulo dos "atos" (usado no drawer de etapas)
 .wiz-stepper-act {
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--wz-muted);
   font-weight: 700;
 }
 
 // Navegação compacta: linha "Etapa X de 9 · Nome" que abre o drawer
 // Botão "voltar à pergunta anterior" — ícone discreto ao lado do "Salvar e sair".
+// Mesma pastilha branca dos `.round-control` da referência.
 .wiz-back-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #fff;
+  border-radius: 50%;
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-line);
+  color: var(--wz-muted);
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
+  box-shadow: 0 6px 14px rgba(98, 112, 143, 0.07);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 
-  &:hover { background: rgba(255, 255, 255, 0.18); }
+  &:hover {
+    background: var(--wz-blue-soft);
+    color: var(--wz-blue);
+  }
   &:active { transform: scale(0.94); }
+
+  &:focus-visible {
+    outline: 3px solid rgba(51, 97, 255, 0.22);
+    outline-offset: 2px;
+  }
+}
+
+// (Removido `.wiz-back-btn--on`) O botão da coluna de resultados só existe quando ela está
+// fechada, então não há estado "ligado" pra representar.
+
+// Identificação no cabeçalho: avatar + título do planejamento.
+.wiz-head-id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.wiz-head-avatar {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 5px 12px rgba(77, 98, 141, 0.14);
 }
 
 .wiz-step-nav {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  // Sem o teto, o inline-flex cresce com o conteúdo e o nome do artista estoura a coluna
+  // em vez de truncar.
+  max-width: 100%;
+  // `.App` define text-align:center; quando o nome quebra pra linha própria (mobile) ele é um
+  // item de largura total e o texto centralizava dentro dele, desalinhado da etapa embaixo.
+  text-align: left;
   background: transparent;
   border: none;
   outline: none;
   padding: 4px 0;
-  color: #b3b3b3;
+  color: var(--wz-muted);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   cursor: pointer;
   transition: color 0.2s;
 
   &:hover {
-    color: #fff;
+    color: var(--wz-blue);
   }
 
   // O chevron acompanha a cor do texto e fica alinhado, sem caixa de foco do navegador.
@@ -222,7 +303,42 @@
   }
 
   &:focus-visible {
-    color: #fff;
+    color: var(--wz-blue);
+  }
+}
+
+// Nome do artista + etapa na mesma linha. Quem cede espaço é o NOME (trunca com reticências);
+// a etapa e o chevron nunca encolhem, senão em nome longo o usuário perde a referência de onde está.
+.wiz-step-nav-artist {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wiz-step-nav-step,
+.wiz-step-nav-sep {
+  flex: none;
+  white-space: nowrap;
+}
+
+// Mobile: "NOME - ETAPA 1 DE 9 · IDENTIDADE" não cabe em uma linha ao lado dos 3 botões, e
+// truncar reduzia o nome a "A…" — pior que não mostrar. O nome ganha a linha de cima inteira
+// (sem o traço, que só faz sentido separando na mesma linha) e a etapa fica embaixo.
+@media (max-width: 768px) {
+  .wiz-step-nav {
+    flex-wrap: wrap;
+    row-gap: 1px;
+  }
+
+  .wiz-step-nav-artist {
+    flex: 1 0 100%;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .wiz-step-nav-sep {
+    display: none;
   }
 }
 
@@ -248,7 +364,7 @@
   transition: background-color 0.2s;
 
   &:hover:not(:disabled) {
-    background: #282828;
+    background: var(--wz-surface-2);
   }
 
   &:disabled {
@@ -256,18 +372,18 @@
   }
 
   // O estado visual vem do status (não do disabled): concluída clara, atual em
-  // destaque verde, futura esmaecida.
+  // destaque, futura esmaecida.
   &--done {
-    color: #fff;
+    color: var(--wz-ink);
   }
 
   &--current {
-    background: rgba(154, 79, 209, 0.12);
-    color: #9A4FD1;
+    background: var(--wz-blue-soft);
+    color: var(--wz-blue);
   }
 
   &--locked {
-    color: #555;
+    color: var(--wz-faint);
   }
 
   .wiz-step-nav-item-icon {
@@ -283,13 +399,13 @@
   padding: 2px 10px;
   font-size: 11px;
   font-weight: 700;
-  background: rgba(154, 79, 209, 0.18);
-  color: #9A4FD1;
+  background: var(--wz-blue-soft);
+  color: var(--wz-blue);
   white-space: nowrap;
 
   &--done {
-    background: rgba(255, 255, 255, 0.08);
-    color: #b3b3b3;
+    background: var(--wz-surface-2);
+    color: var(--wz-muted);
   }
 }
 
@@ -350,23 +466,26 @@
   .wiz-prio-pct { margin-left: auto; } // empurra o % pro fim da linha do cabeçalho
 }
 
-// Botão de IA (pill gradiente com sparkles)
+// Botão de IA (pill clara com sparkles)
 .wiz-ai-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: #16161b;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-  padding: 8px 18px;
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-line-2);
+  color: var(--wz-blue);
+  padding: 9px 18px;
   border-radius: 9999px;
   cursor: pointer;
-  font-weight: 700;
-  font-size: 14px;
-  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: var(--wz-shadow);
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s,
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, 0.22);
+    border-color: var(--wz-blue);
+    background: var(--wz-blue-soft);
     transform: scale(1.03);
   }
 
@@ -375,7 +494,7 @@
   }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: default;
   }
 }
@@ -388,31 +507,32 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 380px;
-  border-radius: 16px;
+  min-height: 320px;
+  border-radius: 14px;
   padding: 40px 24px;
-  background: linear-gradient(135deg, rgba(154, 79, 209, 0.25), rgba(80, 155, 245, 0.25), rgba(154, 79, 209, 0.18));
+  border: 1px solid var(--wz-line);
+  background: linear-gradient(135deg, #eef3ff, #f7f9ff 45%, #eaf0ff);
   background-size: 300% 300%;
   animation: wizGradientMove 6s ease infinite;
 
   .wiz-ai-icon {
-    font-size: 44px;
-    color: #fff;
+    font-size: 40px;
+    color: var(--wz-blue);
     animation: wizPulse 1.6s ease-in-out infinite;
     margin-bottom: 18px;
     display: flex;
   }
 
   h3 {
-    color: #fff;
+    color: var(--wz-ink);
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 24px;
+    font-size: 22px;
     margin: 0 0 8px;
   }
 
   p {
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--wz-muted);
     font-size: 14px;
     margin: 0;
     min-height: 22px;
@@ -427,19 +547,19 @@
 }
 
 .wiz-quiz-counter {
-  color: #b3b3b3;
+  color: var(--wz-muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 .wiz-quiz-title {
-  color: #fff;
+  color: var(--wz-ink);
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(22px, 3vw, 32px);
+  font-size: clamp(20px, 2.6vw, 28px);
   line-height: 1.25;
   margin: 0 0 18px;
   max-width: 720px;
@@ -454,9 +574,9 @@
 
 // Título opcional no topo de um card de interação (ex.: "Seus valores"). Pequeno e coerente.
 .wiz-card-title {
-  color: #fff;
+  color: var(--wz-ink);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 12px;
 }
 
@@ -465,10 +585,10 @@
   align-items: center;
   gap: 8px;
   border-radius: 9999px;
-  padding: 8px 16px;
-  background: #2a2a2a;
-  border: 1px solid transparent;
-  color: #fff;
+  padding: 9px 16px;
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-line-2);
+  color: var(--wz-text);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -478,12 +598,18 @@
     transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    border-color: #fff;
+    border-color: var(--wz-blue);
+    color: var(--wz-blue);
     transform: scale(1.04);
   }
 
   &:active {
     transform: scale(1);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(51, 97, 255, 0.22);
+    outline-offset: 2px;
   }
 
   .wiz-option-kbd {
@@ -494,16 +620,14 @@
     height: 18px;
     min-width: 18px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    color: #b3b3b3;
+    background: var(--wz-surface-2);
+    color: var(--wz-faint);
     font-size: 11px;
     font-weight: 700;
   }
 
-  // Indicador de seleção (radio): círculo sempre visível à esquerda — deixa CLARO que o item é
-  // selecionável. Vazio = não escolhido; preenchido = escolhido. Vale pra todos os widgets de opção.
   // Indicador de seleção. PADRÃO = CHECKBOX (quadrado arredondado) p/ MÚLTIPLA escolha.
-  // Variante --single = RADIO (círculo) p/ escolha ÚNICA. Marcado = magenta + check (multi) /
+  // Variante --single = RADIO (círculo) p/ escolha ÚNICA. Marcado = azul + check (multi) /
   // ponto branco (single). Padronizado com o checklist do SWOT.
   &::before {
     content: '';
@@ -511,7 +635,7 @@
     width: 16px;
     height: 16px;
     border-radius: 5px;
-    border: 2px solid #707070;
+    border: 2px solid var(--wz-faint);
     background-color: transparent;
     background-position: center;
     background-repeat: no-repeat;
@@ -520,7 +644,7 @@
   }
 
   &:hover::before {
-    border-color: #fff;
+    border-color: var(--wz-blue);
   }
 
   // O ícone de check inline antigo some — o ::before já comunica a seleção.
@@ -533,9 +657,15 @@
   }
 
   &--selected {
-    background: #9A4FD1;
-    color: #FFFFFF;
+    background: var(--wz-blue);
+    border-color: var(--wz-blue);
+    color: #ffffff;
     font-weight: 700;
+    box-shadow: 0 7px 16px rgba(51, 97, 255, 0.18);
+
+    &:hover {
+      color: #ffffff;
+    }
 
     &::before {
       border-color: #fff;
@@ -544,6 +674,11 @@
 
     &:hover::before {
       border-color: #fff;
+    }
+
+    .wiz-option-kbd {
+      background: rgba(255, 255, 255, 0.22);
+      color: #fff;
     }
   }
 
@@ -559,8 +694,9 @@
 
   &--custom {
     background: transparent;
-    border: 1px dashed #555;
-    color: #b3b3b3;
+    border: 1px dashed var(--wz-faint);
+    color: var(--wz-muted);
+    box-shadow: none;
 
     // "Outro" é ação (abre campo), não uma opção selecionável → sem checkbox/radio.
     &::before {
@@ -568,8 +704,8 @@
     }
 
     &:hover {
-      border-color: #fff;
-      color: #fff;
+      border-color: var(--wz-blue);
+      color: var(--wz-blue);
     }
   }
 }
@@ -589,32 +725,33 @@
   .wiz-custom-input {
     flex: 1;
     min-width: 0;
-    background: #2a2a2a;
-    border: 1px solid #404040;
+    background: var(--wz-surface);
+    border: 1px solid var(--wz-line-2);
     border-radius: 9999px;
     padding: 12px 20px;
-    color: #fff;
-    font-size: 15px;
+    color: var(--wz-ink);
+    font-size: 14px;
     font-weight: 600;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 
     &::placeholder {
-      color: #6b7280;
+      color: var(--wz-faint);
       font-weight: 500;
     }
 
     &:focus {
-      border-color: #9A4FD1;
+      border-color: var(--wz-blue);
+      box-shadow: 0 0 0 3px rgba(51, 97, 255, 0.14);
     }
   }
 }
 
-// Dropdown de cidade (Visão Q6) — alinhado ao padrão de inputs do wizard (pílula, dark).
+// Dropdown de cidade (Visão Q6) — alinhado ao padrão de inputs do wizard (pílula, clara).
 .wiz-city-select.ant-select {
   .ant-select-selector {
-    background: #2a2a2a !important;
-    border: 1px solid #404040 !important;
+    background: var(--wz-surface) !important;
+    border: 1px solid var(--wz-line-2) !important;
     border-radius: 9999px !important;
     min-height: 46px !important;
     padding: 4px 18px !important;
@@ -628,59 +765,110 @@
     inset-inline-end: 18px;
   }
 
+  // O campo onde o usuário DIGITA. Sem cor explícita ele herdava o branco do darkAlgorithm do
+  // antd, então o texto sumia enquanto se buscava a cidade e só reaparecia depois de escolher
+  // (aí quem pinta é o .ant-select-selection-item, que já tinha cor).
+  .ant-select-selection-search-input {
+    color: var(--wz-ink) !important;
+    font-weight: 600;
+  }
+
   .ant-select-selection-item,
   .ant-select-selection-placeholder {
     line-height: 38px !important;
     font-weight: 600;
-    color: #fff;
+    color: var(--wz-ink);
   }
 
   .ant-select-selection-placeholder {
-    color: #6b7280;
+    color: var(--wz-faint);
     font-weight: 500;
   }
 
   &.ant-select-focused .ant-select-selector,
   &:hover .ant-select-selector {
-    border-color: #9A4FD1 !important;
+    border-color: var(--wz-blue) !important;
     box-shadow: none !important;
   }
 
   .ant-select-arrow {
     inset-inline-end: 18px;
-    color: #9a9a9a;
+    color: var(--wz-faint);
   }
 }
 
 .wiz-city-dropdown.ant-select-dropdown {
-  background: #282828;
-  border: 1px solid #3e3e3e;
+  background: var(--wz-surface, #fff);
+  border: 1px solid #e5eaf2;
   border-radius: 12px;
   padding: 6px;
+  box-shadow: 0 12px 27px rgba(107, 129, 170, 0.13);
 
   .ant-select-item {
     border-radius: 8px;
-    color: #e8e8e8;
+    color: #61749a;
     font-weight: 500;
   }
 
+  // Estados sem opção casada (buscando / "sem resultados"): o antd os renderiza fora do
+  // .ant-select-item, então ficavam com o texto branco do tema escuro sobre o menu claro —
+  // era o "fica branco e depois volta ao normal" enquanto a lista filtrava.
+  .ant-select-item-empty,
+  .ant-empty-description {
+    color: #8e9eb8;
+  }
+
   .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
-    background: #3a3a3a;
+    background: #f2f6ff;
   }
 
   .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
-    background: rgba(154, 79, 209, 0.22);
-    color: #fff;
+    background: #eaf0ff;
+    color: #3361ff;
     font-weight: 700;
   }
 }
 
+// Diálogo de confirmação do "Recomeçar do zero". Além do darkAlgorithm do antd, `styles/language.scss`
+// pinta TODO `.ant-modal` de rgb(40,40,40) com `!important` — daí o `!important` aqui também, que
+// só vence por ser mais específico. Repinta SÓ este diálogo (className), não os modais do app.
+.wiz-confirm.ant-modal {
+  background-color: transparent !important;
+}
+
+.wiz-confirm.ant-modal .ant-modal-content {
+  border: 1px solid var(--wz-line);
+  border-radius: 12px;
+  background-color: var(--wz-surface) !important;
+  box-shadow: var(--wz-shadow-lg);
+}
+
+.wiz-confirm .ant-modal-confirm-title {
+  color: var(--wz-ink) !important;
+  font-weight: 800;
+}
+
+.wiz-confirm .ant-modal-confirm-content {
+  color: var(--wz-text) !important;
+}
+
+.wiz-confirm .ant-modal-confirm-btns .ant-btn-default {
+  border-color: var(--wz-line-2);
+  background: var(--wz-surface);
+  color: var(--wz-text);
+
+  &:hover {
+    border-color: var(--wz-blue);
+    color: var(--wz-blue);
+  }
+}
+
 .wiz-chat-bubble {
-  background: #282828;
-  border-radius: 16px 16px 16px 4px;
-  padding: 18px 20px;
-  color: #fff;
-  font-size: 17px;
+  background: var(--wz-surface-2);
+  border-radius: 14px 14px 14px 4px;
+  padding: 16px 18px;
+  color: var(--wz-text);
+  font-size: 15px;
   font-weight: 600;
   line-height: 1.5;
   max-width: 640px;
@@ -691,22 +879,25 @@
 .wiz-hero {
   position: relative;
   border-radius: 12px;
-  padding: 48px 32px 28px;
+  padding: 40px 28px 24px;
   margin-bottom: 24px;
   display: flex;
   align-items: flex-end;
   gap: 24px;
-  min-height: 230px;
+  min-height: 200px;
+  border: 1px solid var(--wz-line);
+  background: var(--wz-surface);
+  box-shadow: var(--wz-shadow);
   transition: background 0.8s ease;
   overflow: hidden;
 
   .wiz-hero-img {
-    width: 160px;
-    height: 160px;
-    min-width: 160px;
+    width: 132px;
+    height: 132px;
+    min-width: 132px;
     border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 9px 21px rgba(106, 119, 153, 0.18);
     animation: wizPopIn 0.5s cubic-bezier(0.3, 0, 0.7, 1) both;
   }
 
@@ -714,24 +905,24 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 700;
+    color: var(--wz-blue);
+    font-size: 12px;
+    font-weight: 800;
   }
 
   h1 {
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: clamp(40px, 6vw, 72px);
+    font-size: clamp(28px, 4.2vw, 48px);
     letter-spacing: -0.02em;
-    color: #fff;
+    color: var(--wz-ink);
     margin: 4px 0 8px;
     line-height: 1.05;
   }
 
   .wiz-hero-stats {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 15px;
+    color: var(--wz-muted);
+    font-size: 14px;
     margin: 0;
   }
 }
@@ -741,10 +932,10 @@
   align-items: center;
   gap: 7px;
   border-radius: 9999px;
-  padding: 6px 14px;
-  background: #2a2a2a;
-  border: 1px solid transparent;
-  color: #fff;
+  padding: 7px 14px;
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-line-2);
+  color: var(--wz-text);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -758,7 +949,7 @@
     width: 15px;
     height: 15px;
     border-radius: 5px;
-    border: 2px solid #707070;
+    border: 2px solid var(--wz-faint);
     background-color: transparent;
     background-position: center;
     background-repeat: no-repeat;
@@ -767,22 +958,33 @@
   }
 
   &:hover {
-    border-color: #fff;
+    border-color: var(--wz-blue);
+    color: var(--wz-blue);
     transform: scale(1.04);
 
     &::before {
-      border-color: #fff;
+      border-color: var(--wz-blue);
     }
   }
 
   &--active {
-    background: #9A4FD1;
-    color: #FFFFFF;
+    background: var(--wz-blue);
+    border-color: var(--wz-blue);
+    color: #ffffff;
     font-weight: 700;
+    box-shadow: 0 7px 16px rgba(51, 97, 255, 0.18);
+
+    &:hover {
+      color: #ffffff;
+    }
 
     &::before {
       border-color: #fff;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    }
+
+    &:hover::before {
+      border-color: #fff;
     }
   }
 }
@@ -796,8 +998,8 @@
   border-radius: 9999px;
   padding: 8px 16px;
   background: transparent;
-  border: 1px dashed rgba(154, 79, 209, 0.7);
-  color: #d0aaff;
+  border: 1px dashed rgba(51, 97, 255, 0.55);
+  color: var(--wz-blue);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -805,9 +1007,9 @@
   transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
 
   &:hover {
-    border-color: #509bf5;
-    color: #fff;
-    background: rgba(80, 155, 245, 0.12);
+    border-style: solid;
+    border-color: var(--wz-blue);
+    background: var(--wz-blue-soft);
     transform: scale(1.04);
   }
 }
@@ -818,13 +1020,15 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  background: #181818;
-  border-radius: 8px;
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-line);
+  border-radius: 10px;
   padding: 14px 16px;
-  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    background: #282828;
+    border-color: var(--wz-line-2);
+    box-shadow: var(--wz-shadow);
 
     .wiz-slot-del {
       opacity: 1;
@@ -834,8 +1038,8 @@
   .wiz-slot-rank {
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 26px;
-    color: #9A4FD1;
+    font-size: 24px;
+    color: var(--wz-blue);
     min-width: 36px;
     text-align: center;
   }
@@ -858,14 +1062,15 @@
   gap: 8px;
   border-radius: 9999px;
   padding: 7px 14px;
-  background: #1f1f1f;
-  color: #d0d0d0;
+  background: var(--wz-surface-2);
+  border: 1px solid var(--wz-line);
+  color: var(--wz-text);
   font-size: 13px;
   animation: wizPillIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s;
 
   &:hover {
-    background: #2a2a2a;
+    border-color: var(--wz-line-2);
 
     .wiz-swot-chip-del {
       opacity: 1;
@@ -877,28 +1082,38 @@
     display: inline-flex;
     background: transparent;
     border: none;
-    color: #999;
+    color: var(--wz-faint);
     cursor: pointer;
     padding: 0;
     transition: opacity 0.15s, color 0.15s;
 
     &:hover {
-      color: #fff;
+      color: var(--wz-danger);
     }
+  }
+}
+
+// Touch: sem hover, o "x" de remover precisa estar sempre visível.
+@media (hover: none) {
+  .wiz-swot-chip .wiz-swot-chip-del,
+  .wiz-slot .wiz-slot-del,
+  .wiz-timeline-item .wiz-timeline-del {
+    opacity: 1;
   }
 }
 
 // ---- Estratégias ------------------------------------------------------------------------------
 
 .wiz-strategy-card {
-  background: #181818;
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-line);
   border-radius: 10px;
   padding: 18px;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
 
   &:hover {
-    transform: scale(1.015);
-    background: #1f1f1f;
+    transform: translateY(-2px);
+    box-shadow: var(--wz-shadow);
   }
 }
 
@@ -914,10 +1129,10 @@
   align-items: center;
   border-radius: 9999px;
   padding: 2px 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #b3b3b3;
+  background: var(--wz-surface-2);
+  color: var(--wz-muted);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -935,7 +1150,7 @@
   min-width: 26px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--wz-line);
   color: transparent;
   font-size: 11px;
   font-weight: 700;
@@ -944,16 +1159,16 @@
   transition: background-color 0.15s, color 0.15s, transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    color: #fff;
+    color: var(--wz-ink);
   }
 
   &--preview {
-    background: rgba(154, 79, 209, 0.35);
+    background: rgba(51, 97, 255, 0.28);
   }
 
   &--filled {
-    background: #9A4FD1;
-    color: #FFFFFF;
+    background: var(--wz-blue);
+    color: #ffffff;
   }
 
   &--tip {
@@ -966,7 +1181,7 @@
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 22px;
-  color: #9A4FD1;
+  color: var(--wz-blue);
   min-width: 32px;
   text-align: right;
 }
@@ -977,8 +1192,7 @@
 
 // ---- Cronograma (timeline vertical) ------------------------------------------------------------
 
-// Timeline do cronograma — mesmo design do Plano de Ação (.ap-tl): linha verde e
-// pontos NEUTROS (círculo cinza), sem cor por tipo.
+// Timeline do cronograma — linha azul e pontos NEUTROS (círculo claro), sem cor por tipo.
 .wiz-timeline {
   position: relative;
   margin-top: 4px;
@@ -991,7 +1205,7 @@
     top: 18px;
     bottom: 22px;
     width: 2px;
-    background: linear-gradient(180deg, #9A4FD1, rgba(154, 79, 209, 0.12));
+    background: linear-gradient(180deg, var(--wz-blue), rgba(51, 97, 255, 0.12));
   }
 }
 
@@ -1010,8 +1224,8 @@
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    border: 2px solid #535353;
-    background: #181818;
+    border: 2px solid var(--wz-line-2);
+    background: var(--wz-surface);
     box-sizing: border-box;
   }
 
@@ -1025,13 +1239,13 @@
     opacity: 0;
     background: transparent;
     border: none;
-    color: #777;
+    color: var(--wz-faint);
     cursor: pointer;
     padding: 2px;
     transition: opacity 0.15s, color 0.15s;
 
     &:hover {
-      color: #e91429;
+      color: var(--wz-danger);
     }
   }
 }
@@ -1041,8 +1255,8 @@
   align-items: center;
   border-radius: 9999px;
   padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: var(--wz-blue-soft);
+  color: var(--wz-blue-ink);
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
@@ -1050,7 +1264,750 @@
   transition: background-color 0.2s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: #dbe6ff;
+  }
+}
+
+// ---- Chat da Nyta (wizard conversacional) ------------------------------------------------------
+
+.nyta-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: var(--wiz-col);
+  margin: 0 auto;
+  padding-bottom: 16px;
+}
+
+.nyta-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9a4fd1, #509bf5);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  user-select: none;
+}
+
+.nyta-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+
+  &--user {
+    justify-content: flex-end;
+  }
+}
+
+// Bolhas na referência GSAP: Nyta em card branco com contorno, usuário em azul claro.
+.nyta-bubble {
+  background: var(--wz-surface, #fff);
+  border: 1px solid #e3eaf3;
+  color: var(--wz-text, #61749a);
+  border-radius: 14px 14px 14px 4px;
+  padding: 13px 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: min(78%, 460px);
+  box-shadow: 0 4px 12px rgba(105, 122, 159, 0.06);
+
+  &--user {
+    background: var(--wz-blue-soft, #eaf0ff);
+    border-color: transparent;
+    color: var(--wz-blue-ink, #4267b9);
+    font-weight: 600;
+    border-radius: 14px 14px 4px 14px;
+    box-shadow: none;
+  }
+
+  // Cursor piscando enquanto a fala é "digitada" (efeito streaming, tipo ChatGPT).
+  &--streaming .nyta-md > :last-child::after {
+    content: '';
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    margin-left: 3px;
+    vertical-align: text-bottom;
+    background: var(--wz-blue, #3361ff);
+    animation: nytaCaretBlink 1s steps(1) infinite;
+  }
+}
+
+@keyframes nytaCaretBlink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+// Markdown renderizado dentro das bolhas/cards: remove margens externas e mantém
+// o espaçamento natural entre parágrafos, títulos e listas das falas e do resumo.
+.nyta-md {
+  > :first-child { margin-top: 0; }
+  > :last-child { margin-bottom: 0; }
+
+  p { margin: 0 0 8px; }
+  p:last-child { margin-bottom: 0; }
+  strong { font-weight: 800; color: var(--wz-ink, #52668d); }
+
+  h1, h2, h3, h4 {
+    font-size: 15px;
+    font-weight: 800;
+    margin: 14px 0 6px;
+    color: var(--wz-ink, #52668d);
+  }
+  h1:first-child, h2:first-child, h3:first-child { margin-top: 0; }
+
+  ul, ol { margin: 0 0 8px; padding-left: 20px; }
+  li { margin: 2px 0; }
+
+  a { color: var(--wz-blue, #3361ff); }
+}
+
+// Na bolha do usuário (fundo azul claro) o negrito não pode virar cinza-escuro.
+.nyta-bubble--user .nyta-md strong { color: inherit; }
+
+.nyta-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 13px 16px;
+
+  span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--wz-faint, #aebbd0);
+    animation: nytaDot 1.2s ease-in-out infinite;
+
+    &:nth-child(2) { animation-delay: 0.15s; }
+    &:nth-child(3) { animation-delay: 0.3s; }
+  }
+}
+
+@keyframes nytaDot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+// Widget interativo do beat atual: alinhado à coluna da Nyta (depois do avatar)
+.nyta-widget-slot {
+  margin-left: 42px;
+  animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+  max-width: calc(100% - 42px);
+}
+
+// Input fixo no rodapé do chat (fora da área de scroll — só a conversa rola).
+// Escopado em .nyta-chat: a página do chat livre da Nyta usa as mesmas classes
+// com outra estrutura (NytaChat/styles.scss) — sem o escopo, estes estilos vazam.
+// Campo claro da referência: pill branca com contorno e sombra suave.
+.nyta-chat .nyta-input-bar {
+  flex: none;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  // Mesma coluna das mensagens: o `.nyta-scroll` não tem mais recuo lateral próprio, então o
+  // campo ocupa a largura toda e bate com os avatares/balões.
+  width: 100%;
+  max-width: var(--wiz-col);
+  // Folga igual em cima e embaixo — o campo fica equilibrado no rodapé do chat.
+  margin: 10px auto 10px;
+
+  // Mobile: mesmo recuo enxuto das mensagens (14px = padding do .wizard). Full width do .nyta-chat.
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-line-2);
+  border-radius: 14px;
+  padding: 6px 6px 6px 18px;
+  box-shadow: 0 6px 14px rgba(98, 112, 143, 0.06);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus-within {
+    border-color: var(--wz-blue);
+    box-shadow: 0 0 0 3px rgba(51, 97, 255, 0.14);
+  }
+
+  textarea {
+    flex: 1;
+    resize: none;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    color: var(--wz-ink);
+    font-size: 14px;
+    line-height: 20px;
+    padding: 9px 0;
+    box-shadow: none;
+    outline: none;
+
+    &::placeholder { color: var(--wz-faint); }
+    &:hover,
+    &:focus,
+    &.ant-input-focused { border: none; box-shadow: none; }
+  }
+}
+
+.nyta-chat .nyta-send {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 10px;
+  border: none;
+  background: var(--wz-blue);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 7px 16px rgba(51, 97, 255, 0.22);
+  transition: filter 0.15s ease, transform 0.1s ease;
+
+  &:hover:not(:disabled) { filter: brightness(1.08); }
+  &:active:not(:disabled) { transform: scale(0.95); }
+  &:disabled { opacity: 0.4; box-shadow: none; cursor: default; }
+}
+
+// Cards de conteúdo dentro do chat (SWOT, estratégias, timeline, resumo)
+.nyta-card {
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-line);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--wz-shadow);
+}
+
+// O Input/TextArea do antd nasce ESCURO em todo o app (ConfigProvider usa theme.darkAlgorithm
+// globalmente) — dentro do card claro do wizard aparecia como caixa preta. Um único override
+// aqui cobre todo campo de texto dos widgets (ReferenceHorizons, cidade/UF, respostas livres
+// etc.), em vez de repetir a correção em cada widget.
+.nyta-card .ant-input,
+.nyta-card .ant-input-affix-wrapper {
+  border: 1px solid var(--wz-line) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: var(--wz-ink) !important;
+  box-shadow: none !important;
+  // O tamanho padrão do antd (29px de altura, fonte 12px) fica apertado pra campos que são o
+  // foco da etapa — e abaixo dos ~44px recomendados como alvo de toque. Aqui o campo é a
+  // resposta principal da pergunta, então merece o mesmo peso do resto do cartão.
+  min-height: 44px !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+// TextArea cresce com autoSize; o min-height acima serviria de piso, mas o padding vertical
+// dobrado deixaria as linhas largas demais — aqui a altura vem do número de linhas.
+.nyta-card textarea.ant-input {
+  min-height: 76px !important;
+  padding: 12px 14px !important;
+}
+.nyta-card .ant-input::placeholder { color: var(--wz-faint) !important; }
+.nyta-card .ant-input:hover,
+.nyta-card .ant-input:focus,
+.nyta-card .ant-input-affix-wrapper:hover,
+.nyta-card .ant-input-affix-wrapper:focus-within {
+  border-color: var(--wz-blue) !important;
+  box-shadow: 0 0 0 3px var(--wz-blue-tint) !important;
+}
+
+.nyta-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+// Hero compacto do artista dentro do chat
+.nyta-hero-mini {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  img {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  h3 {
+    color: var(--wz-ink);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 18px;
+    margin: 0;
+  }
+
+  p {
+    color: var(--wz-muted);
+    font-size: 12.5px;
+    margin: 2px 0 0;
+  }
+}
+
+.nyta-spin {
+  animation: nytaSpin 0.9s linear infinite;
+}
+
+@keyframes nytaSpin {
+  to { transform: rotate(360deg); }
+}
+
+// Layout do wizard conversacional: cabeçalho fixo, SÓ a conversa rola, input fixo no rodapé.
+.wizard--chat {
+  // Teto da coluna de conversa — cabeçalho, thread e campo compartilham essa medida, então tudo
+  // se alinha. É um teto pra telas muito largas, não uma largura fixa: em 760px a coluna ficava
+  // encolhida no meio do cartão, com faixas mortas de ~90px de cada lado. O comprimento de linha
+  // continua controlado pela própria bolha (max-width 460px); quem ganha com a largura são os
+  // cards de widget (grade de gêneros, quadro SWOT), que antes ficavam espremidos.
+  --wiz-col: 1100px;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  // O input é o rodapé do chat: seu próprio margin dá a folga inferior. Sem esta linha, os
+  // 24px de padding-bottom do .wizard SOMAVAM com o margin do input (~38px embaixo x 8px em
+  // cima), deixando o campo "jogado" com espaço maior no rodapé.
+  padding-bottom: 0;
+}
+
+// A navbar do mobile é uma barra FIXA sobreposta (bottom:18px, altura 78px). Numa lista que rola,
+// passar por baixo dela é de propósito — mas o campo de resposta é o RODAPÉ do chat e ficaria
+// permanentemente embaixo dela, sem como tocar no botão de enviar. A faixa é reservada nos dois
+// pontos que encostam nela (fim da conversa e campo), e não no shell: reservar no shell encolhia
+// a área de conversa mesmo nas etapas sem campo de texto, deixando um vão morto no rodapé.
+@media (max-width: 768px) {
+  .has-mobile-nav .wizard--chat {
+    --wiz-nav-reserve: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .has-mobile-nav .wizard--chat .nyta-thread {
+    padding-bottom: var(--wiz-nav-reserve, 16px);
+  }
+
+  .has-mobile-nav .wizard--chat .nyta-input-bar {
+    margin-bottom: var(--wiz-nav-reserve, 10px);
+  }
+}
+
+// Coluna central reutilizável: 100% em telas estreitas, travada na largura máxima nas largas.
+.wiz-col {
+  width: 100%;
+  max-width: var(--wiz-col);
+  margin: 0 auto;
+}
+
+// Altura compartilhada com o cabeçalho da coluna de resultados (.wiz-artifacts-head), pra
+// que os dois cartões alinhem a divisória e os botões na mesma linha.
+.wiz-chat-head {
+  flex: none;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  min-height: var(--wiz-head-h);
+  padding-bottom: 14px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--wz-line);
+}
+
+.wiz-title {
+  color: var(--wz-ink);
+  // O título encolhe com a viewport em vez de estourar/truncar cedo demais.
+  font-size: clamp(17px, 2.2vw, 22px);
+  line-height: 1.2;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+// `.nyta-chat` também existe SEM ESCOPO na referência GSAP (gsap-reference.css), onde é o card
+// branco da página avulsa da Nyta: `min-height:600px; padding:28px; background:#fff; radius:12px`.
+// Aqui ela é só o container de flex/scroll do wizard — o card já é o `.board-shell`. Sem este
+// reset, vira um cartão dentro do cartão e o `min-height` quebra a rolagem em telas baixas.
+.wizard--chat .nyta-chat {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.nyta-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  // Sem recuo lateral próprio: a folga das laterais é a do cartão (padding do `.wizard`), a mesma
+  // do cabeçalho — assim título e mensagens começam na MESMA linha vertical. Os 22px que havia aqui
+  // eram folga pro glow do avatar da Nyta no tema escuro; o avatar atual não tem glow, e o recuo
+  // só deslocava a conversa 22px à direita do cabeçalho.
+  padding: 14px 0 0;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  // Mobile: a área de rolagem vai de borda a borda (margem negativa anula os 14px do .wizard),
+  // então o toque rola em qualquer lugar. O recuo das mensagens é enxuto (14px, igual ao header).
+  @media (max-width: 768px) {
+    margin-left: -14px;
+    margin-right: -14px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+// ---- Coluna de resultados (3ª coluna do app, irmã da navbar e da página) --------------------
+// No shell da referência GSAP o `.app-layout` é `display:block` com a página posicionada por
+// margens (não é um flex-row), então a coluna precisa se ancorar sozinha à direita e devolver
+// a largura pro `.board-shell` via margin.
+//
+// Base = folha de tela cheia (mobile). No desktop ela vira um cartão irmão do `.board-shell`,
+// no bloco @media abaixo.
+.wiz-artifacts {
+  position: fixed;
+  z-index: 60;
+  inset: 93px 0 0 auto;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  background: var(--wz-canvas, #fafbfc);
+  overflow: hidden;
+  animation: wizSlideInRight 0.28s ease both;
+}
+
+// Desktop: mesma caixa do `.board-shell` — cartão arredondado de 15px com o mesmo contorno,
+// encaixado na área útil do shell (o padding 28px/30px do `.app-layout`) e com a mesma folga
+// lateral de 29px. `position:absolute` em vez de fixed pra acompanhar o `bottom` que o Layout
+// ajusta inline quando há banner de pagamento ou player no rodapé.
+//
+// A reserva no `.board-shell` = folga entre os dois cartões (29) + coluna (320) + folga da
+// borda direita (29).
+@media (min-width: 769px) {
+  .wiz-artifacts {
+    position: absolute;
+    inset: 28px 29px 30px auto;
+    border: 1px solid #e6ebf3;
+    border-radius: 15px;
+    // Mesmo canvas do rail e do `.board-shell` — os três blocos da tela compartilham a
+    // superfície e só o contorno os separa. O `--wz-canvas` (#fafbfc) daqui ficava um tom
+    // acima do menu, e era isso que fazia a coluna parecer um cartão branco à parte.
+    // O fundo sólido fica só na regra base, que é a que o mobile usa: lá a coluna vira folha
+    // de tela cheia sobreposta ao chat (inset:0), e transparência deixaria a conversa vazar.
+    background: var(--canvas, #f7f8fb);
+  }
+
+  .app-layout:has(.wiz-artifacts) .board-shell {
+    margin-right: 378px;
+  }
+}
+
+// Abaixo de 1301px o shell não comporta rail + perfil + página + resultados: sobravam ~300px
+// pra conversa. Enquanto a coluna de resultados está aberta, o painel de perfil recolhe (ele é
+// navegação entre módulos, não conteúdo do planejamento) e a página encosta no rail.
+@media (min-width: 769px) and (max-width: 1300px) {
+  .app-layout:has(.wiz-artifacts) .profile-panel {
+    display: none;
+  }
+
+  .app-layout:has(.wiz-artifacts) .board-shell {
+    margin-left: 111px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1240px) {
+  .wiz-artifacts {
+    width: 280px;
+  }
+
+  .app-layout:has(.wiz-artifacts) .board-shell {
+    margin-right: 338px; // 29 + 280 + 29
+  }
+}
+
+// Abaixo do breakpoint do shell (700px) o topo do app deixa de ser fixo e não há largura pra uma
+// terceira coluna: a folha de resultados ocupa a tela inteira. z-index acima da navbar mobile
+// (120) — senão a barra flutuante fica por cima da folha e do seu botão de fechar.
+@media (max-width: 768px) {
+  .wiz-artifacts {
+    z-index: 130;
+    inset: 0;
+    width: auto;
+    border: 0;
+    border-radius: 0;
+    background: var(--wz-surface, #fff);
+  }
+}
+
+// Mesma altura do `.wiz-chat-head` (--wiz-head-h): os dois cartões ficam lado a lado, e uns
+// poucos pixels de diferença desalinhavam a linha divisória e os botões entre eles.
+// `align-items: center` porque agora o cabeçalho tem altura fixa — com flex-start o título
+// e o botão colavam no topo.
+.wiz-artifacts-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  // Altura = a do cabeçalho do wizard MAIS o respiro que o `.wizard` tem acima dele. Os dois
+  // cartões começam no mesmo topo, mas o do chat só desenha o cabeçalho depois do padding —
+  // repetir a medida aqui é o que faz as duas divisórias caírem na mesma linha.
+  min-height: calc(var(--wiz-head-h) + var(--wiz-pad));
+  padding: var(--wiz-pad) 18px 14px;
+  border-bottom: 1px solid #e8edf5;
+}
+
+.wiz-artifacts-title {
+  color: #52668d;
+  font-weight: 800;
+  font-size: 15px;
+  font-family: var(--font-display);
+}
+
+// Mesmo desenho do `.wiz-back-btn` (os controles do cabeçalho do wizard): botão redondo com
+// superfície, contorno e sombra. Antes era um quadrado transparente e sem borda — do lado do
+// cartão do chat parecia um ícone solto, não um controle clicável.
+.wiz-artifacts-close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  // Mesma medida do .wiz-back-btn (controles do cabeçalho do wizard) — os dois cabeçalhos
+  // ficam lado a lado e botões de tamanhos diferentes saltavam à vista.
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--wz-surface);
+  border: 1px solid var(--wz-line);
+  color: var(--wz-muted);
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(98, 112, 143, 0.07);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+
+  &:hover {
+    background: var(--wz-blue-soft);
+    color: var(--wz-blue);
+  }
+  &:active { transform: scale(0.94); }
+}
+
+.wiz-artifacts-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 18px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.wiz-art-empty {
+  color: #9aa9c2;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 8px 2px;
+}
+
+// Cada etapa: nome + artefato, separados por um divisor sutil. Sem ícones, sem cores.
+.wiz-art-step {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #edf1f7;
+
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+}
+
+.wiz-art-step-name {
+  color: #52668d;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.wiz-art-now {
+  color: #3361ff;
+  font-weight: 700;
+}
+
+.wiz-art-step-body {
+  margin-top: 8px;
+}
+
+// Texto corrido (visão, missão, valores, conclusão).
+.wiz-art-text {
+  margin: 0;
+  color: #61749a;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+// Linhas "rótulo · valor" (gênero, cidade, referências, SWOT, cronograma).
+.wiz-art-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #61749a;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.wiz-art-k {
+  color: #9aa9c2;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+
+// Listas (objetivos, estratégias, prioridades) — numeração neutra padrão.
+.wiz-art-list {
+  margin: 0;
+  padding-left: 16px;
+
+  li {
+    color: #61749a;
+    font-size: 12.5px;
+    line-height: 1.45;
+    margin-bottom: 5px;
+  }
+}
+
+.wiz-art-muted {
+  color: #aebbd0;
+  list-style: none;
+}
+
+// ---- Edição inline dos entregáveis (lápis sutil por seção) ------------------------------------
+.wiz-art-pencil {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #b9c5d9;
+  padding: 2px 4px;
+  margin-left: 6px;
+  border-radius: 6px;
+  vertical-align: middle;
+  line-height: 0;
+  transition: color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    color: #3361ff;
+    background: #eef3fb;
+  }
+}
+
+.wiz-art-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wiz-art-edit-row {
+  display: flex;
+  gap: 8px;
+}
+
+.wiz-art-edit-label {
+  display: block;
+  color: #9aa9c2;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  margin-bottom: 3px;
+}
+
+.wiz-art-edit-input,
+.wiz-art-edit-area {
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #dce4f0;
+  border-radius: 8px;
+  color: #52668d;
+  font-size: 12.5px;
+  line-height: 1.5;
+  padding: 7px 9px;
+  font-family: inherit;
+  outline: none;
+
+  &:focus {
+    border-color: #3361ff;
+    box-shadow: 0 0 0 3px rgba(51, 97, 255, 0.12);
+  }
+}
+
+.wiz-art-edit-area {
+  resize: vertical;
+  min-height: 54px;
+}
+
+.wiz-art-edit-hint {
+  color: #9aa9c2;
+  font-size: 11px;
+}
+
+.wiz-art-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.wiz-art-edit-save,
+.wiz-art-edit-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 6px 13px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+}
+
+.wiz-art-edit-save {
+  background: #3361ff;
+  border: none;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #2a55e6;
+  }
+}
+
+.wiz-art-edit-cancel {
+  background: #fff;
+  border: 1px solid #dce4f0;
+  color: #7b8eaf;
+
+  &:hover:not(:disabled) {
+    color: #3361ff;
+    border-color: #3361ff;
   }
 }
 
@@ -1059,11 +2016,11 @@
 @media (max-width: 768px) {
   .wizard {
     // Mais respiro no topo pra o header (título + "Salvar e sair") não colar na borda do card.
-    padding: 22px 14px 12px;
+    padding: 18px 14px 12px;
+  }
 
-    .wiz-title {
-      font-size: 17px !important;
-    }
+  .wiz-chat-head {
+    padding-bottom: 12px;
   }
 
   .wiz-hero {
@@ -1072,9 +2029,9 @@
     gap: 16px;
 
     .wiz-hero-img {
-      width: 96px;
-      height: 96px;
-      min-width: 96px;
+      width: 88px;
+      height: 88px;
+      min-width: 88px;
     }
 
     .wiz-hero-stats {
@@ -1083,7 +2040,7 @@
   }
 
   .wiz-option-pill {
-    padding: 12px 16px;
+    padding: 11px 16px;
     font-size: 14px;
 
     // Atalhos de teclado não existem no touch
@@ -1113,617 +2070,41 @@
       min-width: 28px;
     }
   }
-}
 
-// ---- Chat da Nyta (wizard conversacional) ------------------------------------------------------
-
-.nyta-thread {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-  max-width: var(--wiz-col);
-  margin: 0 auto;
-  padding-bottom: 16px;
-}
-
-.nyta-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #9A4FD1, #509bf5);
-  color: #fff;
-  font-family: var(--font-display);
-  font-weight: 800;
-  user-select: none;
-}
-
-.nyta-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
-
-  &--user {
-    justify-content: flex-end;
-  }
-}
-
-.nyta-bubble {
-  background: #1f1f1f;
-  color: #fff;
-  border-radius: 16px 16px 16px 4px;
-  padding: 12px 16px;
-  font-size: 15px;
-  line-height: 1.5;
-  max-width: 78%;
-
-  &--user {
-    background: #9A4FD1;
-    color: #FFFFFF;
-    font-weight: 600;
-    border-radius: 16px 16px 4px 16px;
-  }
-
-  // Cursor piscando enquanto a fala é "digitada" (efeito streaming, tipo ChatGPT).
-  &--streaming .nyta-md > :last-child::after {
-    content: '';
-    display: inline-block;
-    width: 2px;
-    height: 1em;
-    margin-left: 3px;
-    vertical-align: text-bottom;
-    background: #C97EF3;
-    animation: nytaCaretBlink 1s steps(1) infinite;
-  }
-}
-
-@keyframes nytaCaretBlink {
-  0%, 50% { opacity: 1; }
-  50.01%, 100% { opacity: 0; }
-}
-
-// Markdown renderizado dentro das bolhas/cards: remove margens externas e mantém
-// o espaçamento natural entre parágrafos, títulos e listas das falas e do resumo.
-.nyta-md {
-  > :first-child { margin-top: 0; }
-  > :last-child { margin-bottom: 0; }
-
-  p { margin: 0 0 8px; }
-  p:last-child { margin-bottom: 0; }
-  strong { font-weight: 700; color: #fff; }
-
-  h1, h2, h3, h4 {
-    font-size: 15px;
-    font-weight: 800;
-    margin: 14px 0 6px;
-    color: #fff;
-  }
-  h1:first-child, h2:first-child, h3:first-child { margin-top: 0; }
-
-  ul, ol { margin: 0 0 8px; padding-left: 20px; }
-  li { margin: 2px 0; }
-
-  a { color: #9A4FD1; }
-}
-
-.nyta-typing {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 14px 16px;
-
-  span {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #777;
-    animation: nytaDot 1.2s ease-in-out infinite;
-
-    &:nth-child(2) { animation-delay: 0.15s; }
-    &:nth-child(3) { animation-delay: 0.3s; }
-  }
-}
-
-@keyframes nytaDot {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-  30% { transform: translateY(-4px); opacity: 1; }
-}
-
-// Widget interativo do beat atual: alinhado à coluna da Nyta (depois do avatar)
-.nyta-widget-slot {
-  margin-left: 42px;
-  animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
-  max-width: calc(100% - 42px);
-}
-
-// Input fixo no rodapé do chat (fora da área de scroll — só a conversa rola).
-// Escopado em .nyta-chat: a página do chat livre da Nyta usa as mesmas classes
-// com outra estrutura (NytaChat/styles.scss) — sem o escopo, estes estilos vazam.
-// Mesmo visual do campo da tela inicial (NytaDashboardHero): um "pill" translúcido único
-// envolvendo o textarea (transparente) + botão de enviar com gradiente roxo. Um só padrão
-// nos três lugares (hero da home, chat livre da Nyta e este wizard).
-.nyta-chat .nyta-input-bar {
-  flex: none;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  // Alinhado à coluna das mensagens: o mesmo recuo lateral do .nyta-scroll (padding 22px), pra o
-  // campo bater com os avatares/balões — antes ele era 6px mais largo de cada lado (16 vs 22) e
-  // ficava desencaixado. Teto de largura no desktop (= coluna do chat).
-  width: calc(100% - 44px);
-  max-width: var(--wiz-col);
-  // Folga igual em cima e embaixo — o campo fica equilibrado no rodapé do chat.
-  margin: 10px auto 10px;
-
-  // Mobile: mesmo recuo enxuto das mensagens (14px = padding do .wizard). Full width do .nyta-chat.
-  @media (max-width: 768px) {
-    width: 100%;
-  }
-  background: rgba(18, 14, 26, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  padding: 6px 6px 6px 18px;
-  backdrop-filter: blur(6px);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-
-  // Foco na paleta do avatar da Nyta (bolha iridescente: violeta).
-  &:focus-within {
-    border-color: rgba(178, 124, 255, 0.6);
-    box-shadow: 0 0 0 3px rgba(148, 74, 255, 0.16);
-  }
-
-  textarea {
-    flex: 1;
-    resize: none;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    color: #fff;
-    font-size: 15px;
-    line-height: 20px;
-    padding: 9px 0;
-    box-shadow: none;
-    outline: none;
-
-    &::placeholder { color: rgba(255, 255, 255, 0.45); }
-    &:hover,
-    &:focus,
-    &.ant-input-focused { border: none; box-shadow: none; }
-  }
-}
-
-.nyta-chat .nyta-send {
-  align-self: center;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  border-radius: 10px;
-  border: none;
-  // Gradiente da bolha: rosa → violeta → ciano (iridescente).
-  background: linear-gradient(135deg, #e18df7 0%, #8f5cff 55%, #5fb9f0 100%);
-  color: #fff;
-  cursor: pointer;
-  transition: filter 0.15s ease, transform 0.1s ease;
-
-  &:hover:not(:disabled) { filter: brightness(1.1); }
-  &:active:not(:disabled) { transform: scale(0.95); }
-  &:disabled { opacity: 0.4; cursor: default; }
-}
-
-// Cards de conteúdo dentro do chat (SWOT, estratégias, timeline, resumo)
-.nyta-card {
-  background: #181818;
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.nyta-card-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 14px;
-}
-
-// Hero compacto do artista dentro do chat
-.nyta-hero-mini {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-
-  img {
-    width: 64px;
-    height: 64px;
-    min-width: 64px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-
-  h3 {
-    color: #fff;
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 20px;
-    margin: 0;
-  }
-
-  p {
-    color: #b3b3b3;
-    font-size: 13px;
-    margin: 2px 0 0;
-  }
-}
-
-@media (max-width: 768px) {
   .nyta-bubble { max-width: 88%; }
   .nyta-widget-slot { margin-left: 0; max-width: 100%; }
+  .nyta-card { padding: 14px; }
 }
 
-.nyta-spin {
-  animation: nytaSpin 0.9s linear infinite;
-}
-
-@keyframes nytaSpin {
-  to { transform: rotate(360deg); }
-}
-
-// Layout do wizard conversacional: cabeçalho fixo, SÓ a conversa rola, input fixo no rodapé.
-.wizard--chat {
-  // Largura confortável da coluna de conversa. Cabeçalho, thread e input compartilham
-  // a mesma coluna centralizada, então tudo se alinha e acompanha o tamanho da tela.
-  --wiz-col: 760px;
-
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-  // O input é o rodapé do chat: seu próprio margin dá a folga inferior. Sem esta linha, os
-  // 24px de padding-bottom do .wizard SOMAVAM com o margin do input (~38px embaixo x 8px em
-  // cima), deixando o campo "jogado" com espaço maior no rodapé.
-  padding-bottom: 0;
-}
-
-// Coluna central reutilizável: 100% em telas estreitas, travada na largura máxima nas largas.
-.wiz-col {
-  width: 100%;
-  max-width: var(--wiz-col);
-  margin: 0 auto;
-}
-
-.wiz-chat-head {
-  flex: none;
-  position: relative;
-  z-index: 2;
-  // Sem caixa/tom colorido: o header fica chapado no fundo do chat.
-  background: transparent;
-  padding-bottom: 12px;
-}
-
-.nyta-chat {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.nyta-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  // overflow-y:auto faz o x virar 'auto' também → corta o box-shadow (glow) do avatar da Nyta,
-  // que fica colado na borda esquerda. Padding lateral dá folga pro glow caber sem cortar.
-  padding: 0 22px;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
+// Telas bem estreitas (≤380px): o chat precisa render largura pro texto.
+@media (max-width: 380px) {
+  .wizard {
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
-  // Mobile: a área de rolagem vai de borda a borda (margem negativa anula os 14px do .wizard),
-  // então o toque rola em qualquer lugar. O recuo das mensagens é enxuto (14px, igual ao header) —
-  // o avatar não tem glow, então não precisa da folga grande que existia antes.
-  @media (max-width: 768px) {
-    margin-left: -14px;
-    margin-right: -14px;
-    padding-left: 14px;
-    padding-right: 14px;
+  .nyta-scroll {
+    margin-left: -10px;
+    margin-right: -10px;
+    padding-left: 10px;
+    padding-right: 10px;
   }
-}
 
-// ---- Coluna de resultados (3ª coluna do app, irmã da navbar e da página) --------------------
-// Mesmo container da navbar (#121212, cantos arredondados, altura cheia), encaixada à direita.
-.wiz-artifacts {
-  flex: none;
-  width: 320px;
-  // Mesma altura LIMITADA do .Main-section (irmão no flex-row): assim o corpo rola internamente
-  // quando há muitas etapas, em vez de estourar a viewport. O height:100% não resolvia, porque a
-  // cadeia Row/Col (AntD) não propaga altura definida.
-  height: calc(100vh - 86px);
-  display: flex;
-  flex-direction: column;
-  background: #121212;
-  border-radius: 8px;
-  overflow: hidden;
-  animation: wizSlideInRight 0.28s ease both;
-
-  @media (max-width: 768px) {
-    height: calc(100vh - 64px);
+  .nyta-bubble {
+    max-width: 92%;
+    padding: 11px 13px;
   }
-}
 
-// Com o banner promo no rodapé, reserva a MESMA altura extra que o .Main-section.
-.main-container.has-bottom-banner .wiz-artifacts {
-  height: calc(100vh - 86px - 76px);
-
-  @media (max-width: 768px) {
-    height: calc(100vh - 64px - 84px);
-  }
-}
-
-@media (max-width: 1240px) {
-  .wiz-artifacts {
-    width: 280px;
-  }
-}
-
-.wiz-artifacts-head {
-  flex: none;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 16px 16px 12px;
-  border-bottom: 1px solid #232323;
-}
-
-.wiz-artifacts-title {
-  color: #fff;
-  font-weight: 800;
-  font-size: 15px;
-  font-family: var(--font-display);
-}
-
-.wiz-artifacts-sub {
-  color: #7a7a7a;
-  font-size: 11.5px;
-  margin-top: 2px;
-}
-
-.wiz-artifacts-close {
-  flex: none;
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 7px;
-  color: #9a9a9a;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-
-  &:hover {
-    background: #232323;
-    color: #fff;
-  }
-}
-
-.wiz-artifacts-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 14px;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.wiz-art-empty {
-  color: #6b7280;
-  font-size: 12.5px;
-  line-height: 1.5;
-  margin: 8px 2px;
-}
-
-// Cada etapa: nome + artefato, separados por um divisor sutil. Sem ícones, sem cores.
-.wiz-art-step {
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #1f1f1f;
-
-  &:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-  }
-}
-
-.wiz-art-step-name {
-  color: #fff;
-  font-weight: 700;
-  font-size: 13px;
-}
-
-.wiz-art-now {
-  color: #6b7280;
-  font-weight: 600;
-}
-
-.wiz-art-step-body {
-  margin-top: 8px;
-}
-
-// Texto corrido (visão, missão, valores, conclusão).
-.wiz-art-text {
-  margin: 0;
-  color: #b3b3b3;
-  font-size: 12.5px;
-  line-height: 1.55;
-}
-
-// Linhas "rótulo · valor" (gênero, cidade, referências, SWOT, cronograma).
-.wiz-art-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  color: #cfcfcf;
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-
-.wiz-art-k {
-  color: #6b7280;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  margin-right: 4px;
-}
-
-// Listas (objetivos, estratégias, prioridades) — numeração neutra padrão.
-.wiz-art-list {
-  margin: 0;
-  padding-left: 16px;
-
-  li {
-    color: #b3b3b3;
-    font-size: 12.5px;
-    line-height: 1.45;
-    margin-bottom: 5px;
-  }
-}
-
-.wiz-art-muted {
-  color: #6b7280;
-  list-style: none;
-}
-
-// ---- Edição inline dos entregáveis (lápis sutil por seção) ------------------------------------
-.wiz-art-pencil {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: #4a4a52;
-  padding: 2px 4px;
-  margin-left: 6px;
-  border-radius: 6px;
-  vertical-align: middle;
-  line-height: 0;
-  transition: color 0.15s ease, background 0.15s ease;
-
-  &:hover {
-    color: #cfcfd4;
-    background: rgba(255, 255, 255, 0.06);
-  }
-}
-
-.wiz-art-edit {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.wiz-art-edit-row {
-  display: flex;
-  gap: 8px;
-}
-
-.wiz-art-edit-label {
-  display: block;
-  color: #6b7280;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  margin-bottom: 3px;
-}
-
-.wiz-art-edit-input,
-.wiz-art-edit-area {
-  width: 100%;
-  box-sizing: border-box;
-  background: #141414;
-  border: 1px solid #2a2a2a;
-  border-radius: 8px;
-  color: #e8e8e8;
-  font-size: 12.5px;
-  line-height: 1.5;
-  padding: 7px 9px;
-  font-family: inherit;
-  outline: none;
-
-  &:focus {
-    border-color: #9A4FD166;
-  }
-}
-
-.wiz-art-edit-area {
-  resize: vertical;
-  min-height: 54px;
-}
-
-.wiz-art-edit-hint {
-  color: #6b7280;
-  font-size: 11px;
-}
-
-.wiz-art-edit-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.wiz-art-edit-save,
-.wiz-art-edit-cancel {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 5px 12px;
-  cursor: pointer;
-  transition: opacity 0.15s ease, background 0.15s ease;
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: default;
-  }
-}
-
-.wiz-art-edit-save {
-  background: #fff;
-  border: none;
-  color: #000;
-
-  &:hover:not(:disabled) {
-    background: #e8e8e8;
-  }
-}
-
-.wiz-art-edit-cancel {
-  background: transparent;
-  border: 1px solid #2f2f2f;
-  color: #9a9aa5;
-
-  &:hover:not(:disabled) {
-    color: #fff;
+  .wiz-hero .wiz-hero-img {
+    width: 72px;
+    height: 72px;
+    min-width: 72px;
   }
 }
 
 // ---- Brilho de "avanço de etapa" -------------------------------------------------------------
-// Luz aurora (mesma do AiGlow) percorrendo o contorno do painel do wizard, disparada a cada
-// vez que o usuário passa de etapa. Usa a máscara para virar um anel só na borda.
+// Luz percorrendo o contorno do painel do wizard, disparada a cada vez que o usuário passa de
+// etapa. Usa a máscara para virar um anel só na borda.
 @property --wizGlowAngle {
   syntax: '<angle>';
   initial-value: 0deg;
@@ -1745,10 +2126,10 @@
     from var(--wizGlowAngle),
     transparent 0deg,
     transparent 140deg,
-    #9A4FD1 195deg,
-    #ffffff 255deg,
-    #509bf5 300deg,
-    #9A4FD1 335deg,
+    #3361ff 195deg,
+    #8fb0ff 255deg,
+    #29cc39 300deg,
+    #3361ff 335deg,
     transparent 360deg
   );
   // só o anel de 3px aparece (gradiente recortado na borda)
@@ -1756,7 +2137,7 @@
   -webkit-mask-composite: xor;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 10px rgba(154, 79, 209, 0.4));
+  filter: drop-shadow(0 0 5px rgba(51, 97, 255, 0.35)) drop-shadow(0 0 10px rgba(51, 97, 255, 0.25));
 }
 
 .wiz-step-glow--on {

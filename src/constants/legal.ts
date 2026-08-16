@@ -1,3 +1,11 @@
+// Canais de suporte ao usuário. O e-mail estava copiado em Settings e na Topbar; o menu do
+// topo seria a terceira cópia, e um endereço errado em um dos lugares só apareceria em produção.
+export const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
+
+// Número em formato internacional só com dígitos — é o que o link wa.me exige.
+export const SUPPORT_WHATSAPP = '5521976799158';
+export const SUPPORT_WHATSAPP_DISPLAY = '+55 21 97679-9158';
+
 // Conteúdo das páginas legais (Termos de Uso e Política de Privacidade).
 // Edite livremente: título, data de atualização (updatedAt, formato ISO AAAA-MM-DD) e o
 // texto (Markdown). As páginas em /legal/:slug renderizam tudo a partir daqui.
@@ -19,7 +27,7 @@ export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
     content: `Estes Termos de Uso ("Termos") regem o acesso e a utilização da plataforma **Maestra** ("Maestra", "Plataforma"), disponibilizada por **MUSIC RIO ACADEMY LTDA**, inscrita no CNPJ sob o nº 22.826.985/0001-41, com sede na Rua Riposeira, nº 1286, São Conrado, Rio de Janeiro/RJ, CEP 22.610-380 ("nós", "nosso"). Ao criar uma conta ou utilizar a Plataforma, você ("Usuário", "você") declara ter lido, compreendido e aceito integralmente estes Termos. **Se não concordar, não utilize a Plataforma.**
 
 ## 1. Definições
-- **Plataforma / Maestra:** o software de gestão e planejamento estratégico de carreira artística, incluindo a assistente de inteligência artificial "Nyta" e os módulos de perfil, diagnóstico, catálogo, agenda, plano de ação e equipe.
+- **Plataforma / Maestra:** o software de gestão e planejamento estratégico de carreira artística, incluindo a assistente de inteligência artificial "Nyta" e os módulos de perfil, diagnóstico, músicas, agenda, plano de ação e equipe.
 - **Conta:** o cadastro individual que dá acesso à Plataforma.
 - **Conteúdo do Usuário:** todo dado, texto, imagem, áudio, obra musical, metadado ou informação que você insere, envia ou gera na Plataforma.
 - **Perfil de Artista:** o espaço de trabalho vinculado a um artista, que pode ser desbloqueado mediante pagamento único.
@@ -106,7 +114,7 @@ Tratamos apenas os dados necessários para operar a Plataforma:
 
 - **Cadastro e conta:** nome, e-mail, senha (armazenada de forma criptografada — nunca em texto puro) e código de verificação (OTP).
 - **Pagamento e faturamento:** CPF/CNPJ, nome do titular, telefone, CEP e endereço (logradouro, bairro, cidade, UF), identificadores atribuídos pela instituição de pagamento, status e histórico de cobranças. **Os dados do cartão (número, validade, CVV) são transmitidos diretamente à instituição de pagamento e NÃO são armazenados por nós.**
-- **Conteúdo do artista:** identidade e bio do artista, catálogo (faixas, letras, ISRC/UPC, metadados), agenda/eventos, plano de ação, diagnóstico e respostas de quiz.
+- **Conteúdo do artista:** identidade e bio do artista, músicas (faixas, letras, ISRC/UPC, metadados), agenda/eventos, plano de ação, diagnóstico e respostas de quiz.
 - **Equipe:** nome, e-mail e função dos membros que você convida.
 - **Integrações:** identificador público do artista em plataformas de streaming que você conecta e métricas de audiência obtidas de provedor especializado.
 - **Assistente Nyta:** o conteúdo das conversas com a Nyta e contadores de uso.

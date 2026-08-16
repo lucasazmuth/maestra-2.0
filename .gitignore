@@ -24,3 +24,10 @@ yarn-error.log*
 .editorconfig
 .prettierrc.json
 src/**/*.css.map
+
+# Artefatos de build de decks/relatórios gerados localmente (pptx, PNGs de slide,
+# node_modules próprio). São saída de ferramenta, não código do app.
+/output/
+
+# Atalho local pra abrir design-ref/ pelo dev server (o conteudo mora em design-ref/)
+/public/design-ref

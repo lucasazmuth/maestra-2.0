@@ -2,8 +2,10 @@ import { FC, useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircleFilled, CopyOutlined, ClockCircleOutlined, WifiOutlined } from '@ant-design/icons';
 
+import { App } from 'antd';
+
 import { useAppDispatch, useAppSelector } from '../../store/store';
-import { pollPaymentStatus, resumePayment } from '../../store/slices/subscription';
+import { cancelSubscription, pollPaymentStatus, resumePayment } from '../../store/slices/subscription';
 
 // ─── Styles ─────────────────────────────────────────────────────────────────────
 
@@ -13,25 +15,40 @@ const styles = {
     maxWidth: 480,
     margin: '0 auto',
   } as React.CSSProperties,
+  // Telas de estado (recuperando, análise, erro, sucesso) não são conteúdo: são uma mensagem.
+  // Ficam centralizadas no espaço disponível e sobre o próprio fundo — um cartão branco aqui
+  // seria moldura dentro de moldura, já que a área de conteúdo do app é ela própria um cartão.
+  stateWrap: {
+    display: 'flex',
+    minHeight: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  } as React.CSSProperties,
+  state: {
+    maxWidth: 420,
+  } as React.CSSProperties,
   title: {
     fontFamily: 'var(--font-display)',
     fontWeight: 800,
     fontSize: 28,
-    color: '#fff',
+    color: '#405985',
     margin: '0 0 8px',
     textAlign: 'center' as const,
   } as React.CSSProperties,
   subtitle: {
-    color: '#b3b3b3',
+    color: '#8ca0c5',
     fontSize: 14,
     marginBottom: 24,
     textAlign: 'center' as const,
   } as React.CSSProperties,
   card: {
-    background: '#181818',
-    borderRadius: 12,
+    background: '#fff',
+    border: '1px solid #e3eaf3',
+    borderRadius: 14,
     padding: 24,
     marginBottom: 20,
+    boxShadow: '0 10px 26px rgba(74, 99, 145, .08)',
   } as React.CSSProperties,
   qrContainer: {
     display: 'flex',
@@ -41,12 +58,13 @@ const styles = {
   qrImage: {
     width: 220,
     height: 220,
-    borderRadius: 8,
+    borderRadius: 10,
     background: '#fff',
+    border: '1px solid #e6ecf6',
     padding: 8,
   } as React.CSSProperties,
   sectionTitle: {
-    color: '#fff',
+    color: '#405985',
     fontSize: 16,
     fontWeight: 700,
     marginTop: 0,
@@ -59,10 +77,10 @@ const styles = {
   } as React.CSSProperties,
   copyInput: {
     flex: 1,
-    background: '#282828',
-    border: '1px solid #333',
-    borderRadius: 8,
-    color: '#fff',
+    background: '#fbfcfe',
+    border: '1px solid #e1e7f0',
+    borderRadius: 9,
+    color: '#52668d',
     padding: '10px 12px',
     fontSize: 13,
     fontFamily: 'monospace',
@@ -71,9 +89,9 @@ const styles = {
     whiteSpace: 'nowrap' as const,
   } as React.CSSProperties,
   copyBtn: {
-    background: '#9A4FD1',
+    background: '#3361ff',
     border: 'none',
-    borderRadius: 8,
+    borderRadius: 9,
     color: '#FFFFFF',
     padding: '10px 16px',
     fontSize: 14,
@@ -85,19 +103,19 @@ const styles = {
     whiteSpace: 'nowrap' as const,
   } as React.CSSProperties,
   copiedBtn: {
-    background: '#1db954',
+    background: '#1d8a68',
   } as React.CSSProperties,
   countdown: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    color: '#b3b3b3',
+    color: '#7c8da8',
     fontSize: 14,
     marginBottom: 16,
   } as React.CSSProperties,
   countdownExpired: {
-    color: '#ff4d4f',
+    color: '#d2474b',
   } as React.CSSProperties,
   pollingContainer: {
     display: 'flex',
@@ -115,11 +133,11 @@ const styles = {
     width: 8,
     height: 8,
     borderRadius: '50%',
-    background: '#9A4FD1',
+    background: '#3361ff',
     animation: 'pulse 1.4s infinite ease-in-out',
   } as React.CSSProperties,
   pollingText: {
-    color: '#b3b3b3',
+    color: '#7c8da8',
     fontSize: 14,
   } as React.CSSProperties,
   successContainer: {
@@ -130,10 +148,17 @@ const styles = {
     padding: '24px 0',
     textAlign: 'center' as const,
   } as React.CSSProperties,
+  // Verde só na confirmação de fato. "Recuperando seu pagamento…" é espera, não boa notícia —
+  // usa o mesmo azul-marinho dos outros títulos.
   successText: {
-    color: '#9A4FD1',
+    color: '#1d8a68',
     fontSize: 18,
-    fontWeight: 700,
+    fontWeight: 800,
+  } as React.CSSProperties,
+  loadingText: {
+    color: '#405985',
+    fontSize: 18,
+    fontWeight: 800,
   } as React.CSSProperties,
   errorContainer: {
     display: 'flex',
@@ -144,18 +169,18 @@ const styles = {
     textAlign: 'center' as const,
   } as React.CSSProperties,
   errorText: {
-    color: '#ff4d4f',
+    color: '#d2474b',
     fontSize: 15,
     fontWeight: 600,
   } as React.CSSProperties,
   errorHint: {
-    color: '#b3b3b3',
+    color: '#8ca0c5',
     fontSize: 13,
   } as React.CSSProperties,
   retryBtn: {
-    background: '#9A4FD1',
+    background: '#3361ff',
     border: 'none',
-    borderRadius: 8,
+    borderRadius: 9,
     color: '#FFFFFF',
     padding: '12px 24px',
     fontSize: 14,
@@ -184,11 +209,27 @@ function injectKeyframes() {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 
-function formatCountdown(seconds: number): string {
+// A validade do QR vem na própria cobrança do Asaas e varia muito: pode ser de minutos (PIX
+// avulso) a quase um ano (a cobrança de uma assinatura). MM:SS só faz sentido na reta final —
+// com 366 dias pela frente ele imprimia "527086:15", que não é hora nem prazo.
+function formatCountdown(seconds: number, expiresAt?: string | null): string {
   if (seconds <= 0) return '00:00';
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+  if (seconds < 3600) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+
+  if (seconds < 86400) {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    return mins ? `${hours}h${String(mins).padStart(2, '0')}` : `${hours}h`;
+  }
+
+  // De um dia em diante, a data diz mais do que a contagem: ninguém acompanha "em 366 dias".
+  const date = expiresAt ? new Date(expiresAt) : new Date(Date.now() + seconds * 1000);
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────────
@@ -196,6 +237,7 @@ function formatCountdown(seconds: number): string {
 const PaymentPage: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { message } = App.useApp();
 
   const { pixData, status } = useAppSelector((s) => s.subscription);
 
@@ -209,6 +251,7 @@ const PaymentPage: FC = () => {
   // Assinatura de CARTÃO pendente: a 1ª cobrança está em análise na operadora —
   // não há QR pra mostrar; exibimos o estado de análise e aguardamos o webhook.
   const [cardAnalysis, setCardAnalysis] = useState(false);
+  const [renewing, setRenewing] = useState(false);
 
   const pollingStarted = useRef(false);
   const resumeTried = useRef(false);
@@ -355,10 +398,10 @@ const PaymentPage: FC = () => {
   // ── Retomando o pagamento (buscando o QR atual no Asaas) ──
   if (resuming) {
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.successContainer }}>
-          <div style={styles.successText}>Recuperando seu pagamento…</div>
-          <div style={{ color: '#b3b3b3', fontSize: 14 }}>Buscando o PIX da sua assinatura.</div>
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.successContainer }}>
+          <div style={styles.loadingText}>Recuperando seu pagamento…</div>
+          <div style={{ color: '#8ca0c5', fontSize: 14 }}>Buscando o PIX da sua assinatura.</div>
         </div>
       </div>
     );
@@ -367,10 +410,10 @@ const PaymentPage: FC = () => {
   // ── Cartão em análise pela operadora (sem QR; sucesso vem via webhook) ──
   if (cardAnalysis && !paymentConfirmed) {
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.errorContainer }}>
-          <ClockCircleOutlined style={{ fontSize: 48, color: '#9A4FD1' }} />
-          <div style={{ ...styles.errorText, color: '#fff' }}>Pagamento em análise</div>
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.errorContainer }}>
+          <ClockCircleOutlined style={{ fontSize: 48, color: '#3361ff' }} />
+          <div style={{ ...styles.errorText, color: '#405985' }}>Pagamento em análise</div>
           <div style={styles.errorHint}>
             A operadora do cartão está processando o débito — isso pode levar alguns
             minutos. Assim que for aprovado, seu acesso Pro é liberado automaticamente.
@@ -385,14 +428,45 @@ const PaymentPage: FC = () => {
   }
 
   // ── Não foi possível recuperar o QR (cobrança expirada/indisponível) ──
+  //
+  // Mandar de volta para /assinatura sem mais nada fechava um LOOP: lá o gate vê a assinatura
+  // ainda `pending` e oferece "Retomar pagamento", que traz para cá, onde a retomada falha de
+  // novo. E mesmo pulando o gate, o asaas-create-subscription responde `resume: true` pela
+  // trava anti-duplicidade. Sem encerrar a assinatura pendente não havia saída pelo app.
+  //
+  // Por isso o botão principal encerra a pendência (asaas-cancel-subscription, que cancela no
+  // Asaas e marca 'cancelled') antes de ir aos planos — aí a escolha começa do zero.
   if (resumeFailed) {
+    const gerarNovo = async () => {
+      setRenewing(true);
+      try {
+        const res = await dispatch(cancelSubscription());
+        if (cancelSubscription.rejected.match(res)) {
+          message.error('Não foi possível encerrar a cobrança anterior. Fale com o suporte para liberar um novo pagamento.');
+          return;
+        }
+        navigate('/assinatura', { replace: true });
+      } finally {
+        setRenewing(false);
+      }
+    };
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.errorContainer }}>
-          <ClockCircleOutlined style={{ fontSize: 48, color: '#ff4d4f' }} />
-          <div style={styles.errorText}>Não foi possível recuperar o PIX.</div>
-          <div style={styles.errorHint}>A cobrança pode ter expirado. Volte aos planos para gerar um novo pagamento.</div>
-          <button onClick={() => navigate('/assinatura', { replace: true })} style={styles.retryBtn}>Voltar aos planos</button>
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.errorContainer }}>
+          <ClockCircleOutlined style={{ fontSize: 48, color: '#d2474b' }} />
+          <div style={styles.errorText}>A cobrança PIX expirou.</div>
+          <div style={styles.errorHint}>
+            Encerramos a cobrança anterior e você escolhe o plano de novo — nada foi cobrado.
+          </div>
+          <button onClick={gerarNovo} disabled={renewing} style={{ ...styles.retryBtn, opacity: renewing ? 0.6 : 1, cursor: renewing ? 'progress' : 'pointer' }}>
+            {renewing ? 'Preparando…' : 'Gerar novo pagamento'}
+          </button>
+          <button
+            onClick={() => navigate('/artists', { replace: true })}
+            style={{ background: 'none', border: 'none', color: '#7c8da8', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginTop: 4 }}
+          >
+            Voltar ao painel
+          </button>
         </div>
       </div>
     );
@@ -410,15 +484,15 @@ const PaymentPage: FC = () => {
   // ─── Success state ──────────────────────────────────────────────────────────
   if (paymentConfirmed || status === 'active') {
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.successContainer }}>
-          <CheckCircleFilled style={{ fontSize: 56, color: '#9A4FD1' }} />
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.successContainer }}>
+          <CheckCircleFilled style={{ fontSize: 56, color: '#1d8a68' }} />
           <div style={styles.successText}>Bem-vindo ao Maestra Pro!</div>
-          <div style={{ color: '#b3b3b3', fontSize: 14, lineHeight: 1.5 }}>
+          <div style={{ color: '#52668d', fontSize: 14, lineHeight: 1.5 }}>
             Pagamento confirmado com sucesso.<br />
             Todos os recursos estão desbloqueados.
           </div>
-          <div style={{ color: '#6b7280', fontSize: 12, marginTop: 8 }}>
+          <div style={{ color: '#93a4c0', fontSize: 12, marginTop: 8 }}>
             Redirecionando...
           </div>
         </div>
@@ -429,9 +503,9 @@ const PaymentPage: FC = () => {
   // ─── Timeout state ──────────────────────────────────────────────────────────
   if (timedOut) {
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.errorContainer }}>
-          <ClockCircleOutlined style={{ fontSize: 48, color: '#ff4d4f' }} />
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.errorContainer }}>
+          <ClockCircleOutlined style={{ fontSize: 48, color: '#d2474b' }} />
           <div style={styles.errorText}>
             Pagamento não confirmado no tempo limite.
           </div>
@@ -446,9 +520,9 @@ const PaymentPage: FC = () => {
   // ─── Connectivity error state ───────────────────────────────────────────────
   if (connectivityError) {
     return (
-      <div style={styles.container}>
-        <div style={{ ...styles.card, ...styles.errorContainer }}>
-          <WifiOutlined style={{ fontSize: 48, color: '#ff4d4f' }} />
+      <div style={styles.stateWrap}>
+        <div style={{ ...styles.state, ...styles.errorContainer }}>
+          <WifiOutlined style={{ fontSize: 48, color: '#d2474b' }} />
           <div style={styles.errorText}>
             Conexão perdida
           </div>
@@ -489,21 +563,26 @@ const PaymentPage: FC = () => {
           />
         </div>
 
-        {/* Countdown */}
-        <div style={{ ...styles.countdown, ...(isExpired ? styles.countdownExpired : {}) }}>
-          <ClockCircleOutlined />
-          {isExpired ? (
-            <span>QR Code expirado</span>
-          ) : (
-            <span>Expira em {formatCountdown(secondsRemaining ?? 0)}</span>
-          )}
-        </div>
+        {/* Prazo. Só aparece quando informa algo: o Asaas devolve a validade do QR de assinatura
+            a UM ANO de distância (conferido na resposta: expirationDate "2027-08-15 23:59:59"
+            para uma cobrança criada hoje), e anunciar "expira em 2027" não ajuda a decidir nada
+            — só parece defeito. Dentro de 48h o prazo volta a importar e a contagem aparece. */}
+        {(isExpired || (secondsRemaining !== null && secondsRemaining <= 48 * 3600)) && (
+          <div style={{ ...styles.countdown, ...(isExpired ? styles.countdownExpired : {}) }}>
+            <ClockCircleOutlined />
+            {isExpired ? (
+              <span>QR Code expirado</span>
+            ) : (
+              <span>Expira em {formatCountdown(secondsRemaining ?? 0, pixData?.expiresAt)}</span>
+            )}
+          </div>
+        )}
 
         {/* Recebedor: no app do banco aparece a razão social da empresa por trás da Maestra. */}
-        <p style={{ color: '#8a8a8a', fontSize: 12.5, lineHeight: 1.5, textAlign: 'center', margin: '14px 0 0' }}>
+        <p style={{ color: '#93a4c0', fontSize: 12.5, lineHeight: 1.5, textAlign: 'center', margin: '14px 0 0' }}>
           O pagamento aparecerá no seu banco em nome de
           <br />
-          <strong style={{ color: '#b3b3b3', fontWeight: 700 }}>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
+          <strong style={{ color: '#7c8da8', fontWeight: 700 }}>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
         </p>
       </div>
 

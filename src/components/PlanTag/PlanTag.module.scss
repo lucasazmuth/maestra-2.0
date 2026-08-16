@@ -1,0 +1,79 @@
+// Selo do plano ao lado da marca, no formato do selo de referência: pílula de cantos totalmente
+// arredondados, fundo do degradê em opacidade baixa, gema facetada à esquerda e o nome do plano.
+// Precisa ser lido quando procurado e ignorado quando não — por isso o fundo fica em ~12% e o
+// texto herda o tom escuro da mesma família de cor, sem competir com o wordmark.
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  // O .top-navigation-left tem `gap: clamp(20px, 3vw, 44px)` — que muda com a largura da tela.
+  // Uma margem negativa fixa acertava só numa largura: em 375px o gap cai pro mínimo de 20px e
+  // os -21px de antes encostavam o selo na marca. Cancelando o gap inteiro e devolvendo 12px, a
+  // distância fica igual em qualquer tela.
+  margin-left: calc(12px - clamp(20px, 3vw, 44px));
+  padding: 0 10px 0 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  line-height: 1;
+  transition: filter .16s ease, border-color .16s ease, transform .16s ease;
+  vertical-align: middle;
+}
+
+.tag:hover {
+  filter: brightness(.97) saturate(1.08);
+  transform: translateY(-.5px);
+}
+
+// PRO no azul primário do sistema: o rosa-laranja do selo de referência destacava, mas era a
+// única cor daquele tipo no app — a gema já basta para diferenciar do resto.
+.pro {
+  --plan-gem-from: #5b8cff;
+  --plan-gem-mid: #3361ff;
+  --plan-gem-to: #2a54e0;
+
+  border-color: rgba(51, 97, 255, .24);
+  background: linear-gradient(180deg, rgba(51, 97, 255, .12) 0%, rgba(51, 97, 255, .08) 100%);
+  color: #2a54e0;
+}
+
+// Pendente segue o âmbar dos avisos do app: a cor diz "falta algo" sem soar erro.
+.pending {
+  --plan-gem-from: #f0b429;
+  --plan-gem-mid: #dd9a12;
+  --plan-gem-to: #f0b429;
+
+  border-color: rgba(221, 154, 18, .28);
+  background: linear-gradient(180deg, rgba(240, 180, 41, .16) 0%, rgba(221, 154, 18, .12) 100%);
+  color: #9a7217;
+}
+
+// FREE é o estado padrão: gema apagada e só contorno — não há nada de errado em não ser Pro.
+.free {
+  --plan-gem-from: #c3d0e4;
+  --plan-gem-mid: #aebfda;
+  --plan-gem-to: #c3d0e4;
+
+  border-color: #e1e8f3;
+  background: #f7f9fd;
+  color: #8ca0c5;
+}
+
+.free:hover {
+  border-color: #c9d8f0;
+  color: #6f88b5;
+}
+
+@media (max-width: 560px) {
+  .tag {
+    height: 20px;
+    padding: 0 8px 0 6px;
+    font-size: 9px;
+  }
+}

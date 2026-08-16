@@ -1,0 +1,459 @@
+/* ============================================================================
+   Soundbox — réplica em HTML/CSS do layout dos SVGs de referência
+   (Home1.svg, Sound.svg, Album.svg).
+
+   Serve de esqueleto pra montar a versão da Maestra: a estrutura, as medidas e
+   as cores saíram do próprio SVG (rects, círculos e paradas de gradiente), e as
+   fotos foram extraídas dos arquivos (design-ref/soundbox/img).
+
+   Prancheta original: 1440px de largura, conteúdo de 1110px (margem de 165px).
+   Cada bloco abaixo anota a coordenada Y do SVG de onde veio, pra facilitar a
+   conferência lado a lado.
+
+   A fonte do arquivo original não vem embutida (os textos estão vetorizados).
+   Poppins é a que mais se aproxima: geométrica, 'a' de um andar, O circular.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --neon: #b6ff52;          /* verde do template (parada de gradiente do SVG) */
+  --pink: #e97ff1;          /* círculos decorativos do hero */
+  --blue-deep: #064bb5;     /* pontas do degradê de fundo */
+  --blue-dark: #040c18;     /* meio do degradê de fundo */
+  --card: #162a47;          /* preenchimento dos cartões e do input */
+  --footer: #162945;
+  --dot-off: #366fc4;
+  --text: #ffffff;
+  --text-dim: #c9d4e6;
+  --text-mute: #9fb0c9;
+  --edge: rgba(255, 255, 255, .18);
+  --shell: 1110px;          /* largura do conteúdo */
+  --gutter: 165px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #040c18;
+  color: var(--text);
+  font-family: 'Poppins', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Fundo: paint0 do SVG — vetor (1461,-114) → (-1719,503), quase horizontal da direita pra
+   esquerda, com as pontas em #064BB5 e o miolo em #040C18. Em CSS isso é 259deg. */
+.page {
+  min-height: 100vh;
+  background: linear-gradient(259deg, #064bb5 0%, rgba(4, 12, 24, .94) 40%, #064bb5 100%);
+}
+
+.shell { width: var(--shell); max-width: calc(100% - 48px); margin: 0 auto; }
+
+img { max-width: 100%; display: block; }
+button { font: inherit; }
+
+/* ─── Cabeçalho (y 0–136) ───────────────────────────────────────────────── */
+.nav {
+  position: relative; z-index: 5;
+  height: 136px; display: flex; align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(4, 12, 24, .35);
+}
+.nav .shell { display: flex; align-items: center; gap: 40px; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.brand-dot {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--neon);
+  display: grid; place-items: center;
+}
+.brand-dot svg { width: 12px; height: 12px; fill: #0b1b0a; }
+.nav-links { display: flex; gap: 56px; margin-left: 92px; }
+.nav-links a { color: #dbe6f7; text-decoration: none; font-size: 15px; font-weight: 500; }
+.nav-links a.is-active { color: var(--neon); font-weight: 600; }
+.nav-links a:hover { color: var(--neon); }
+.btn-join {
+  margin-left: auto; width: 126px; height: 46px; border: 0; border-radius: 8px;
+  background: var(--neon); color: #0b1b0a; font-size: 13px; font-weight: 700; letter-spacing: .06em;
+  cursor: pointer;
+}
+.btn-join:hover { filter: brightness(1.06); }
+
+/* ─── Títulos ───────────────────────────────────────────────────────────── */
+.h-display { font-size: 120px; font-weight: 700; line-height: 152px; letter-spacing: -.02em; margin: 0; }
+.h-section { font-size: 46px; font-weight: 700; line-height: 1.45; letter-spacing: -.01em; margin: 0; }
+.h-card { font-size: 23px; font-weight: 700; line-height: 1.35; margin: 0; }
+.p-lead { font-size: 18px; line-height: 1.85; color: var(--text-dim); margin: 0; font-weight: 300; }
+.p-body { font-size: 15px; line-height: 1.6; color: var(--text-mute); margin: 0; font-weight: 300; }
+
+/* ─── Botões redondos de carrossel (55×55, raio 12) ─────────────────────── */
+.arrows { display: flex; gap: 17px; }
+.arrow {
+  width: 55px; height: 55px; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: linear-gradient(135deg, rgba(255, 255, 255, .30), rgba(255, 255, 255, .10));
+  display: grid; place-items: center; color: #fff;
+}
+.arrow:hover { background: linear-gradient(135deg, rgba(255, 255, 255, .42), rgba(255, 255, 255, .16)); }
+.arrow svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+/* Pontinhos do carrossel (60×8, raio 4) */
+.dots { display: flex; gap: 12px; }
+.dot { width: 60px; height: 8px; border-radius: 4px; background: var(--dot-off); border: 0; padding: 0; }
+.dot.is-active { background: var(--neon); }
+
+/* ─── Cartões de vidro ──────────────────────────────────────────────────── */
+.glass {
+  border-radius: 24px;
+  background: rgba(250, 250, 250, .08);
+  border: 1px solid rgba(255, 255, 255, .30);
+}
+
+/* ============================ HOME ======================================= */
+
+/* ─── Hero (y 136–1024) ─────────────────────────────────────────────────── */
+.hero { position: relative; padding-top: 60px; }
+.hero-title { text-align: center; position: relative; }
+/* As duas linhas são deslocadas como no original: EXPRESS à esquerda, YOURSELF à direita. */
+.hero-line-1 { display: flex; align-items: center; justify-content: center; gap: 34px; margin-left: -80px; }
+.hero-line-2 { margin-left: 210px; }
+.hero-badge {
+  width: 93px; height: 93px; border-radius: 50%; position: relative; z-index: 0; flex: 0 0 auto;
+  background: linear-gradient(150deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .10));
+  border: 1px solid rgba(255, 255, 255, .35);
+  display: grid; place-items: center;
+}
+.hero-badge svg { width: 34px; height: 34px; fill: #fff; }
+/* Círculo rosa espiando por trás do disco (cx 1021 cy 288 r 22 no SVG). */
+.hero-badge::after {
+  content: ''; position: absolute; right: -30px; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; border-radius: 50%; background: var(--pink); z-index: -1;
+}
+.hero-inmusic {
+  position: absolute; left: 50%; top: 128px; transform: translateX(216px);
+  font-size: 34px; font-weight: 300; color: #e8eefb;
+}
+
+/* Onda que atravessa o hero (path decorativo do SVG) */
+.hero-wave { position: absolute; left: 0; right: 0; top: 350px; width: 100%; height: 150px; opacity: .45; }
+.hero-wave path { fill: none; stroke: #cfd9ea; stroke-width: 1.4; }
+
+/* -88 encaixa a figura em y=412 e o cartão em y=696, como no SVG. */
+.hero-stage { position: relative; height: 620px; margin-top: -88px; }
+
+/* Selo "Listen popular" (centro escuro r=33 no SVG, estrela lime em volta) */
+.badge-listen {
+  position: absolute; left: 21px; top: 220px; width: 160px; height: 160px;
+  display: grid; place-items: center;
+}
+.badge-listen .star { position: absolute; inset: 0; }
+.badge-listen .star svg { width: 100%; height: 100%; fill: var(--neon); }
+.badge-listen .core {
+  position: relative; width: 66px; height: 66px; border-radius: 50%; background: #0c203c;
+  display: grid; place-items: center;
+}
+.badge-listen .core svg { width: 22px; height: 22px; fill: var(--neon); }
+.badge-listen .caption { position: absolute; inset: 0; fill: #0c203c; font-weight: 600; }
+
+/* Figura central: blob lime + foto recortada + círculo rosa */
+.hero-figure { position: absolute; left: 318px; top: 0; width: 417px; height: 612px; }
+/* Arco lime atrás da figura e círculo rosa no ombro direito. */
+.hero-figure .blob {
+  position: absolute; left: -46px; bottom: 0; width: 300px; height: 360px;
+  border-radius: 150px 150px 0 0; background: var(--neon);
+}
+.hero-figure .dot-pink {
+  position: absolute; right: 44px; top: 250px; width: 84px; height: 84px; border-radius: 50%; background: var(--pink);
+}
+.hero-figure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
+
+/* Cartão "tocando agora" (478×104, raio 16, y 696) */
+.now-card {
+  position: absolute; left: 690px; top: 284px; width: 478px; height: 104px;
+  border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 16px;
+  background: linear-gradient(120deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .07));
+  border: 1px solid rgba(255, 255, 255, .30);
+}
+.now-card .eq { display: flex; align-items: flex-end; gap: 3px; height: 22px; }
+.now-card .eq i { width: 3px; background: #fff; border-radius: 2px; display: block; }
+.now-card .cover { width: 72px; height: 72px; border-radius: 8px; overflow: hidden; flex: 0 0 auto; }
+.now-card .meta { flex: 1; }
+.now-card .meta strong { display: block; font-size: 15px; font-weight: 600; }
+.now-card .meta span { font-size: 13px; color: #d6e0f0; font-weight: 300; }
+.now-card .play {
+  width: 40px; height: 40px; border-radius: 50%; background: var(--neon); border: 0; cursor: pointer;
+  display: grid; place-items: center;
+}
+.now-card .play svg { width: 14px; height: 14px; fill: #0b1b0a; }
+/* Círculo rosa atrás do canto do cartão (cx 833 cy 653 r 42) */
+.now-card::before {
+  content: ''; position: absolute; left: -50px; top: -50px; width: 84px; height: 84px;
+  border-radius: 50%; background: var(--pink); z-index: -1;
+}
+
+.hero-controls { position: absolute; left: 17px; top: 695px; }
+.hero-dots { position: absolute; right: 148px; top: 751px; }
+
+/* ─── "Many top songs" (y 1100–1650) ────────────────────────────────────── */
+.songs { padding: 136px 0 40px; }   /* fotos caem em y=1168 */
+.songs .shell { display: grid; grid-template-columns: 434px 1fr; gap: 56px; align-items: start; }
+.songs-photos { position: relative; height: 443px; }
+.songs-photos img {
+  position: absolute; width: 349px; height: 349px; border-radius: 24px; object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, .25);
+}
+.songs-photos img:first-child { left: 0; top: 0; }
+.songs-photos img:last-child { left: 85px; top: 94px; box-shadow: 0 30px 60px rgba(0, 0, 0, .45); }
+.songs-copy .p-lead { margin-top: 26px; max-width: 530px; }
+.songs-stats { display: flex; gap: 56px; margin-top: 54px; }
+.songs-stats strong { display: block; font-size: 40px; font-weight: 600; line-height: 1; }
+.songs-stats span { display: block; margin-top: 18px; font-size: 16px; color: var(--text-dim); font-weight: 300; }
+
+/* Barras da onda decorativa (4px de largura, passo 28, y 1688–1849 no SVG) */
+.wave-bars { display: flex; align-items: center; gap: 24px; height: 170px; margin: 77px 0 0; padding-left: 600px; }  /* y 1688–1849 */
+.wave-bars i { width: 4px; border-radius: 2px; background: #fff; opacity: .75; display: block; }
+
+/* ─── Recursos (y 1980–2790) ────────────────────────────────────────────── */
+.features { padding: 169px 0 60px; }  /* cartões em y=2292 */
+.features-head { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: start; }
+.features-head .h-section { text-transform: uppercase; }
+.features-grid { display: grid; grid-template-columns: repeat(3, 336px); gap: 51px; margin-top: 92px; }
+.feature-card {
+  height: 406px; padding: 32px; border-radius: 24px; background: var(--card);
+  border: 1px solid rgba(255, 255, 255, .22);
+  display: flex; flex-direction: column;
+}
+.feature-icon {
+  width: 78px; height: 78px; border-radius: 50%; margin: 42px 0 60px;
+  background: linear-gradient(140deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .06));
+  border: 1px solid rgba(255, 255, 255, .30);
+  display: grid; place-items: center;
+}
+.feature-icon svg { width: 30px; height: 30px; fill: #fff; }
+.feature-card .p-body { margin-top: 22px; }
+
+/* ─── Depoimentos (y 2900–3650) ─────────────────────────────────────────── */
+.says { padding: 229px 0 40px; }     /* cartões em y=3248 */
+.says-head { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: start; }
+.says-head .h-section { text-transform: uppercase; }
+.says-head .p-body { font-size: 14px; }
+.says .arrows { justify-content: flex-end; margin: 28px 0 44px; }
+/* A faixa sangra pela direita: o terceiro cartão fica cortado, como no original. */
+.says-track { display: flex; gap: 55px; width: max-content; }
+.say-card { width: 468px; height: 308px; padding: 32px; border-radius: 24px; }
+.say-who { display: flex; align-items: center; gap: 14px; }
+.say-who img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+.say-who strong { display: block; font-size: 18px; font-weight: 600; }
+.say-who span { font-size: 13px; color: var(--text-mute); font-weight: 300; }
+.say-card p { margin: 30px 0 0; font-size: 18px; line-height: 1.6; font-weight: 300; }
+
+/* ─── Download (y 3700–4160) ────────────────────────────────────────────── */
+.download { padding: 200px 0 0; text-align: center; }  /* selos em y=4010 */
+.download .h-section { text-transform: uppercase; font-size: 52px; line-height: 1.2; }
+.download .p-lead { margin: 26px auto 0; max-width: 640px; }
+.stores { display: flex; justify-content: center; gap: 40px; margin-top: 60px; }
+.store {
+  height: 72px; border-radius: 12px; background: #fff; border: 1px solid #a6a6a6;
+  display: flex; align-items: center; gap: 12px; padding: 0 22px; color: #000; text-decoration: none;
+}
+.store svg { width: 30px; height: 30px; }
+.store span { display: block; font-size: 11px; line-height: 1.1; text-align: left; }
+.store strong { display: block; font-size: 20px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em; }
+
+/* ─── Assinar (y 4180–4650) ─────────────────────────────────────────────── */
+.subscribe { padding: 154px 0 155px; }  /* cartão em y=4236 */
+.subscribe-card { height: 332px; border-radius: 32px; display: grid; place-content: center; text-align: center; }
+.subscribe-card h2 { margin: 0; font-size: 40px; font-weight: 700; letter-spacing: -.01em; }
+.subscribe-card p { margin: 16px 0 34px; font-size: 18px; font-weight: 300; color: var(--text-dim); }
+.subscribe-form { display: flex; gap: 32px; justify-content: center; }
+.subscribe-form input {
+  width: 650px; height: 64px; border-radius: 8px; border: 0; background: var(--card);
+  padding: 0 24px; color: #fff; font-size: 15px; font-weight: 300;
+}
+.subscribe-form input::placeholder { color: #7e8ea8; }
+.subscribe-form button {
+  width: 152px; height: 64px; border-radius: 8px; border: 0; background: var(--neon); color: #0b1b0a;
+  font-size: 13px; font-weight: 700; letter-spacing: .06em; cursor: pointer;
+}
+
+/* ─── Rodapé (y 4723–5075, altura 352) ──────────────────────────────────── */
+.footer { height: 352px; background: var(--footer); display: flex; align-items: center; }
+.footer .shell { display: grid; grid-template-columns: 340px repeat(4, 1fr); gap: 40px; align-items: start; }
+.footer .brand { font-size: 30px; }
+.footer .brand-dot { width: 36px; height: 36px; }
+.footer .brand-dot svg { width: 16px; height: 16px; }
+.footer-copy { margin: 22px 0 0; font-size: 14px; line-height: 1.6; color: #dbe4f2; font-weight: 300; }
+.footer-col h4 { margin: 0 0 22px; font-size: 15px; font-weight: 600; }
+.footer-col a { display: block; margin-bottom: 14px; font-size: 14px; color: #b9c6da; text-decoration: none; font-weight: 300; }
+.footer-col a:hover { color: var(--neon); }
+
+/* ============================ SOUND ====================================== */
+
+/* Herói com foto de fundo inteira (y 86–830 no Sound.svg) */
+.hero-photo { position: relative; height: 744px; overflow: hidden; }
+.hero-photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hero-photo::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(4, 12, 24, .92) 0%, rgba(4, 12, 24, .55) 45%, transparent 70%);
+}
+.hero-photo .shell { position: relative; z-index: 2; padding-top: 190px; }
+.hero-photo .kicker { font-size: 44px; font-weight: 300; margin: 0; }
+.hero-photo h1 { margin: 6px 0 0; font-size: 76px; font-weight: 700; letter-spacing: -.02em; }
+/* Cartão de faixa em destaque (310×104 no SVG) */
+.track-card {
+  margin-top: 42px; width: 310px; height: 104px; border-radius: 16px; padding: 16px;
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(120deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .07));
+  border: 1px solid rgba(255, 255, 255, .30);
+}
+.track-card .cover { width: 72px; height: 72px; border-radius: 8px; overflow: hidden; flex: 0 0 auto; }
+.track-card .meta { flex: 1; }
+.track-card .meta strong { display: block; font-size: 15px; font-weight: 600; }
+.track-card .meta span { font-size: 13px; color: #d6e0f0; font-weight: 300; }
+.track-card .play { width: 34px; height: 34px; border-radius: 50%; background: var(--neon); border: 0; display: grid; place-items: center; cursor: pointer; }
+.track-card .play svg { width: 12px; height: 12px; fill: #0b1b0a; }
+.hero-photo .controls { display: flex; align-items: center; gap: 40px; margin-top: 46px; }
+
+/* Título de seção centralizado com traço azul em cima (Sound/Album) */
+.center-head { text-align: center; padding-top: 96px; }
+.center-head .rule { width: 78px; height: 4px; border-radius: 2px; background: #2f6fe0; margin: 0 auto 26px; }
+.center-head h2 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -.01em; }
+
+/* Tabela do top chart */
+.chart { width: 100%; border-collapse: collapse; margin-top: 46px; }
+.chart th {
+  text-align: left; padding: 0 0 22px; font-size: 15px; font-weight: 400; color: #b9c6da;
+  border-bottom: 1px solid rgba(255, 255, 255, .18);
+}
+.chart td { padding: 22px 0; border-bottom: 1px solid rgba(255, 255, 255, .08); vertical-align: middle; }
+.chart tbody tr:last-child td { border-bottom: 0; }
+.chart .rank { width: 60px; font-size: 15px; color: #b9c6da; }
+.chart .song { display: flex; align-items: center; gap: 20px; font-size: 17px; font-weight: 600; }
+.chart .song img { width: 46px; height: 46px; border-radius: 6px; object-fit: cover; }
+.chart .artist { color: #8fa2bd; font-size: 16px; font-weight: 300; }
+.chart .listeners { font-size: 16px; font-weight: 400; }
+.chart .likes { text-align: right; font-size: 16px; color: #dbe4f2; }
+.chart .likes svg { width: 16px; height: 16px; vertical-align: -3px; margin-right: 8px; fill: none; stroke: #dbe4f2; stroke-width: 1.6; }
+
+/* Grade de categorias / cards com foto */
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 46px; }
+.tile { position: relative; border-radius: 20px; overflow: hidden; aspect-ratio: 1 / 1; }
+.tile img { width: 100%; height: 100%; object-fit: cover; }
+.tile figcaption {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 22px;
+  background: linear-gradient(180deg, transparent, rgba(4, 12, 24, .85));
+  font-size: 18px; font-weight: 600;
+}
+
+/* ============================ ALBUM ====================================== */
+
+/* Herói do álbum: foto à direita, faixas numeradas à esquerda */
+.album-hero { position: relative; height: 744px; overflow: hidden; }
+.album-hero > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.album-hero::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(20, 10, 6, .95) 0%, rgba(20, 10, 6, .6) 40%, rgba(20, 10, 6, .15) 75%);
+}
+.album-hero .shell { position: relative; z-index: 2; padding-top: 120px; }
+.album-hero .title-row { display: flex; align-items: center; gap: 22px; }
+.album-hero .title-row img { width: 56px; height: 56px; }
+.album-hero h1 { margin: 0; font-size: 40px; font-weight: 700; letter-spacing: -.01em; }
+.album-meta { position: absolute; right: 0; top: 130px; text-align: left; }
+.album-meta strong { display: block; font-size: 18px; font-weight: 600; }
+.album-meta span { font-size: 15px; color: #cfd9ea; font-weight: 300; }
+.tracklist { display: grid; grid-template-columns: repeat(2, 300px); gap: 18px 90px; margin-top: 60px; }
+.tracklist div { display: flex; align-items: baseline; gap: 26px; }
+.tracklist b { font-size: 40px; font-weight: 700; letter-spacing: -.01em; }
+.tracklist span { font-size: 18px; font-weight: 300; color: #e6ecf7; }
+/* Cartão de prévia, no canto inferior direito da foto */
+.preview-card {
+  position: absolute; right: 0; bottom: 150px; z-index: 3; width: 420px; height: 128px;
+  display: flex; align-items: center; gap: 18px; padding: 18px; border-radius: 18px;
+  background: linear-gradient(120deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .07));
+  border: 1px solid rgba(255, 255, 255, .28);
+}
+.preview-card .cover { width: 92px; height: 92px; border-radius: 12px; overflow: hidden; flex: 0 0 auto; }
+.preview-card .meta span { font-size: 13px; color: #cfd9ea; font-weight: 300; }
+.preview-card .meta strong { display: block; font-size: 20px; font-weight: 600; }
+.preview-card .play { width: 40px; height: 40px; border-radius: 50%; background: var(--neon); border: 0; display: grid; place-items: center; cursor: pointer; }
+.preview-card .play svg { width: 14px; height: 14px; fill: #0b1b0a; }
+
+/* Carrossel do álbum popular: cartão central grande, laterais em pé */
+.albums-row { display: grid; grid-template-columns: 96px 1fr 96px; gap: 24px; align-items: center; margin-top: 44px; }
+.album-side {
+  height: 340px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, .04); position: relative; overflow: hidden;
+}
+.album-side b { position: absolute; top: 24px; left: 0; right: 0; text-align: center; color: var(--neon); font-size: 20px; }
+/* O texto sobe da base pro topo, como no original (vertical-rl + 180°). */
+.album-side .vertical {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  writing-mode: vertical-rl; transform: rotate(180deg); font-size: 20px; font-weight: 600;
+}
+.album-side .vertical em { font-style: normal; color: #93a4bd; font-size: 13px; font-weight: 300; }
+.album-main { position: relative; height: 340px; border-radius: 20px; overflow: hidden; }
+.album-main > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.album-main::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6, 14, 30, .10) 25%, rgba(6, 14, 30, .96) 100%); }
+.album-main .body { position: absolute; left: 32px; right: 32px; bottom: 26px; z-index: 2; }
+.album-main .body b { display: block; color: var(--neon); font-size: 20px; margin-bottom: 10px; }
+.album-main .body h3 { margin: 0; font-size: 26px; font-weight: 700; }
+.album-main .body em { font-style: normal; font-size: 15px; color: #b9c6da; font-weight: 300; }
+.album-main .body p { margin: 12px 0 0; font-size: 14px; line-height: 1.6; color: #cfd9ea; font-weight: 300; max-width: 560px; }
+
+/* ─── Telas menores ─────────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .h-display { font-size: 84px; line-height: 1.1; }
+  .hero-line-1, .hero-line-2 { margin-left: 0; }
+  .hero-figure { left: 50%; transform: translateX(-50%); }
+  .now-card, .hero-controls, .hero-dots, .badge-listen { display: none; }
+  .songs .shell, .features-head, .says-head { grid-template-columns: 1fr; gap: 40px; }
+  .features-grid { grid-template-columns: 1fr; }
+  .feature-card { height: auto; }
+  .wave-bars { padding-left: 0; }
+  .footer { height: auto; padding: 60px 0; }
+  .footer .shell { grid-template-columns: 1fr 1fr; }
+  .subscribe-form { flex-direction: column; align-items: center; }
+  .subscribe-form input { width: 100%; }
+  .subscribe-card { height: auto; padding: 48px 24px; }
+  .stores { flex-wrap: wrap; }
+  .tracklist { grid-template-columns: 1fr; }
+  .albums-row { grid-template-columns: 1fr; }
+}
+
+
+/* ─── Sound: cartões de categoria (354×528) ─────────────────────────────── */
+.cat-grid { display: grid; grid-template-columns: repeat(3, 354px); gap: 24px; justify-content: center; margin-top: 46px; }
+.cat {
+  position: relative; height: 528px; border-radius: 8px; overflow: hidden; padding: 34px 30px;
+  background: var(--cat, #e2622f);
+}
+.cat h3 { margin: 0 0 22px; font-size: 46px; font-weight: 700; letter-spacing: -.02em; }
+.cat p { margin: 0; max-width: 240px; font-size: 14px; line-height: 1.55; font-weight: 400; }
+/* A foto recortada encosta na base do cartão, sobre a cor. */
+.cat img { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 340px; object-fit: contain; object-position: bottom; }
+
+/* ─── Album: novas releases e listas numeradas ──────────────────────────── */
+.release-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 46px; }
+.release { margin: 0; border-radius: 14px; overflow: hidden; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .12); }
+.release img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; }
+.release figcaption { padding: 18px 20px; }
+.release strong { display: block; font-size: 15px; font-weight: 600; letter-spacing: .02em; }
+.release span { font-size: 13px; color: #9fb0c9; font-weight: 300; }
+
+.lists { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 90px; }
+.list-title { margin: 0 0 26px; font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
+.rank-row { display: flex; align-items: center; gap: 30px; padding: 18px 0; }
+.rank-row b { font-size: 20px; font-weight: 500; color: #cfd9ea; width: 28px; }
+.rank-row img { width: 130px; height: 130px; border-radius: 4px; object-fit: cover; }
+.rank-row strong { display: block; font-size: 20px; font-weight: 600; }
+.rank-row span { display: block; margin-top: 6px; font-size: 17px; color: #cfd9ea; font-weight: 300; }
+.rank-row em { display: block; margin-top: 14px; font-style: normal; font-size: 14px; color: #8fa2bd; }
+
+@media (max-width: 1200px) {
+  .cat-grid { grid-template-columns: 1fr; }
+  .release-row { grid-template-columns: repeat(2, 1fr); }
+  .lists { grid-template-columns: 1fr; gap: 40px; }
+  .album-meta { position: static; margin-top: 18px; }
+  .preview-card { position: static; width: 100%; margin-top: 24px; }
+}

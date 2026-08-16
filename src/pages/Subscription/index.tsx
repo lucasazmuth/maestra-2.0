@@ -11,6 +11,7 @@ import {
   CartSummary, BenefitsCompare, useCheckoutForm, focusFirstInvalidField, type PayMethod, type BenefitGroup,
 } from '../../components/checkout';
 import { useCoupon } from '../../hooks/useCoupon';
+import { Gem } from '../../components/PlanTag/Gem';
 
 // Fallback enquanto a config do plano não carregou do Supabase (asaas_plan_config).
 const FALLBACK_MONTHLY = 39.9;
@@ -24,18 +25,21 @@ const PRO_GROUPS: BenefitGroup[] = [
   },
   {
     icon: <NytaAvatar size={20} />, title: 'Assistente de IA ao seu lado',
-    items: ['Nyta Assistente — chat de IA ilimitado', 'Recomendações sob o contexto da sua carreira'],
+    // 100/dia por perfil, não "ilimitado": o limite vem de nyta_plan_limits (pro = 100) e o
+    // contador é por (usuário, artista, dia UTC) em nyta_daily_usage. O próprio chat mostra
+    // "X/100" no cabeçalho — prometer ilimitado aqui contradizia a tela seguinte.
+    items: ['Nyta Assistente — até 100 interações por dia em cada perfil', 'Recomendações sob o contexto da sua carreira'],
   },
   {
     icon: <FiGrid />, title: 'Gestão completa',
-    items: ['Catálogo de faixas ilimitado', 'Acesso a todos os perfis da conta'],
+    items: ['Músicas ilimitadas', 'Acesso a todos os perfis da conta'],
   },
 ];
 
 const FREE_GROUPS: BenefitGroup[] = [
   {
     icon: <FiAward />, title: 'Acompanhe a carreira',
-    items: ['Veja o diagnóstico e o plano de ação', 'Visualize catálogo, agenda e equipe', 'Apenas leitura, sem edição'],
+    items: ['Veja o diagnóstico e o plano de ação', 'Visualize músicas, agenda e equipe', 'Apenas leitura, sem edição'],
   },
 ];
 
@@ -165,44 +169,47 @@ const SubscriptionPage: FC = () => {
 
   if (view === 'benefits') {
     // Gate por status: não deixa quem já tem assinatura (ativa) ou pendência re-assinar (duplicar).
-    const gateCard: CSSProperties = { maxWidth: 560, margin: '0 auto', background: '#181818', border: '1px solid #282828', borderRadius: 16, padding: 32, textAlign: 'center' };
-    const btnPrimary: CSSProperties = { background: '#9A4FD1', border: 'none', color: '#FFFFFF', borderRadius: 9999, padding: '12px 30px', fontSize: 14, fontWeight: 800, cursor: 'pointer' };
-    const btnGhost: CSSProperties = { background: 'none', border: 'none', color: '#9a9aa5', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 12 };
+    // Sem cartão: a área de conteúdo do app já é um cartão branco, e outro por dentro vira
+    // moldura dentro de moldura. O aviso ocupa o espaço e fica centralizado nele.
+    const gateWrap: CSSProperties = { display: 'flex', minHeight: '100%', alignItems: 'center', justifyContent: 'center', padding: 24 };
+    const gateCard: CSSProperties = { maxWidth: 560, textAlign: 'center' };
+    const btnPrimary: CSSProperties = { background: '#3361ff', border: 'none', color: '#fff', borderRadius: 9999, padding: '12px 30px', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 12px 26px rgba(51, 97, 255, .24)' };
+    const btnGhost: CSSProperties = { background: 'none', border: 'none', color: '#7c8da8', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 12 };
 
     if (!initialized) {
-      return <div style={{ padding: 24 }}><div style={gateCard}>Carregando…</div></div>;
+      return <div style={gateWrap}><div style={{ ...gateCard, color: '#8ca0c5' }}>Carregando…</div></div>;
     }
     if (status === 'active') {
+      // Sem cartão nem gradiente, como as demais telas de estado: a área de conteúdo do app já é
+      // um cartão. E a gema no lugar da medalha genérica — é o mesmo símbolo do selo no topo e do
+      // card do Pro nas Configurações, todos falando do mesmo plano.
       const proCard: CSSProperties = {
-        maxWidth: 520, margin: '0 auto', borderRadius: 20, padding: '44px 32px',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-        background: 'radial-gradient(120% 120% at 50% 0%, rgba(154, 79, 209,0.18) 0%, rgba(154, 79, 209,0.04) 45%, rgba(255,255,255,0.02) 100%)',
-        border: '1px solid rgba(154, 79, 209,0.32)',
+        maxWidth: 520, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
       };
       const proBadge: CSSProperties = {
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 60, height: 60,
-        borderRadius: 18, marginBottom: 22, background: 'rgba(154, 79, 209,0.14)',
-        border: '1px solid rgba(154, 79, 209,0.35)', boxShadow: '0 12px 32px rgba(154, 79, 209,0.25)',
+        borderRadius: 18, marginBottom: 22, background: 'rgba(51, 97, 255, .12)',
+        border: '1px solid rgba(51, 97, 255, .24)', boxShadow: '0 12px 28px rgba(51, 97, 255, .14)',
       };
       const btnPrimaryArrow: CSSProperties = {
-        display: 'inline-flex', alignItems: 'center', gap: 8, background: '#9A4FD1', border: 'none', color: '#FFFFFF',
+        display: 'inline-flex', alignItems: 'center', gap: 8, background: '#3361ff', border: 'none', color: '#fff',
         borderRadius: 9999, padding: '13px 32px', fontSize: 14, fontWeight: 800, cursor: 'pointer',
-        boxShadow: '0 10px 30px rgba(154, 79, 209,0.32)', transition: 'transform 0.15s, background 0.2s',
+        boxShadow: '0 12px 30px rgba(51, 97, 255, .26)', transition: 'transform 0.15s, background 0.2s',
       };
       return (
-        <div style={{ padding: 24 }}>
+        <div style={gateWrap}>
           <div style={proCard}>
-            <span style={proBadge}><FiAward size={30} color='#e07fce' /></span>
-            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#C97EF3', marginBottom: 10 }}>Assinatura ativa</span>
-            <div style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 12 }}>Você já é Maestra PRO</div>
-            <p style={{ color: '#cfcfd4', fontSize: 14.5, lineHeight: 1.55, margin: '0 0 26px', maxWidth: 400 }}>
+            <span style={proBadge}><Gem size={28} /></span>
+            <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3361ff', marginBottom: 10 }}>Assinatura ativa</span>
+            <div style={{ color: '#405985', fontSize: 26, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 12 }}>Você já é Maestra PRO</div>
+            <p style={{ color: '#7c8da8', fontSize: 14.5, lineHeight: 1.55, margin: '0 0 26px', maxWidth: 400 }}>
               Edição completa, Nyta IA e todos os perfis da conta liberados.
             </p>
             <button
               style={btnPrimaryArrow}
               onClick={() => navigate('/settings')}
-              onMouseEnter={(e) => { e.currentTarget.style.background = '#8442B6'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = '#9A4FD1'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#2a54e0'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#3361ff'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               Gerenciar assinatura <FiArrowRight size={16} />
             </button>
@@ -212,10 +219,10 @@ const SubscriptionPage: FC = () => {
     }
     if (status === 'pending' || status === 'overdue') {
       return (
-        <div style={{ padding: 24 }}>
+        <div style={gateWrap}>
           <div style={gateCard}>
-            <div style={{ color: '#fff', fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Você tem um pagamento pendente</div>
-            <p style={{ color: '#b3b3b3', fontSize: 14, lineHeight: 1.5, margin: '0 0 20px' }}>Já existe uma assinatura aguardando pagamento. Retome de onde parou — não precisa começar do zero.</p>
+            <div style={{ color: '#405985', fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Você tem um pagamento pendente</div>
+            <p style={{ color: '#7c8da8', fontSize: 14, lineHeight: 1.5, margin: '0 0 20px' }}>Já existe uma assinatura aguardando pagamento. Retome de onde parou — não precisa começar do zero.</p>
             <button style={btnPrimary} onClick={() => navigate('/pagamento')}>Retomar pagamento</button>
             <div><button style={btnGhost} onClick={() => navigate('/settings')}>Ver assinatura</button></div>
           </div>
@@ -254,7 +261,7 @@ const SubscriptionPage: FC = () => {
     <div style={{ padding: 24 }}>
       <button
         onClick={() => setView('benefits')}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: '#9a9aa5', fontWeight: 700, fontSize: 14, cursor: 'pointer', padding: 0, marginBottom: 18 }}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: '#7c8da8', fontWeight: 700, fontSize: 14, cursor: 'pointer', padding: 0, marginBottom: 18 }}
       >
         <FiArrowLeft size={16} /> Voltar aos planos
       </button>
@@ -270,7 +277,7 @@ const SubscriptionPage: FC = () => {
                 value={method}
                 onChange={setMethod}
                 renderBody={(m) => (m === 'PIX'
-                  ? <p style={{ fontSize: 14, color: '#9a9aa5', lineHeight: 1.55, margin: 0 }}>Ao continuar, geramos um código PIX. Sua assinatura é ativada assim que o pagamento cair.</p>
+                  ? <p style={{ fontSize: 14, color: '#7c8da8', lineHeight: 1.55, margin: 0 }}>Ao continuar, geramos um código PIX. Sua assinatura é ativada assim que o pagamento cair.</p>
                   : <CardForm form={form} />
                 )}
               />
@@ -295,7 +302,7 @@ const SubscriptionPage: FC = () => {
               </div>
             }
             item={{
-              icon: <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, color: '#9A4FD1' }}>PRO</span>,
+              icon: <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, color: '#3361ff' }}>PRO</span>,
               name: 'Maestra PRO',
               sub: <span>Edição + Nyta IA · {cycleLabel}</span>,
               price: `${priceFmt}${unit}`,

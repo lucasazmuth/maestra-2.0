@@ -1,178 +1,105 @@
-// Página "Music Rio Academy" — a escola por trás da Maestra.
-// Reusa o chrome da landing (Header/Footer) e os tokens do site: fundo preto, Inter,
-// roxo da marca #9A4FD1. Espelha o layout "Versão 2 — Desenvolvida" do material da MRA.
+// Página "Music Rio Academy", no design system da landing: fundo #fbfcff, cartões brancos com
+// borda e sombra, tipografia display em peso 800.
+//
+// O roxo continua sendo o accent da escola (é a identidade dela), mas quem chama pra ação é o
+// azul do sistema — o mesmo botão da landing.
 
-$brand: #9a4fd1;
-$brandHover: #8442b6;
-$line: rgba(255, 255, 255, 0.1);
+$blue: #3361ff;
+$blueDark: #2a54e0;
+$brand: #7a4fd1;         // roxo da escola
+$brandDark: #6b3fbf;
+$ink: #405985;
+$dim: #7c8da8;
+$mute: #93a4c0;
+$strong: #2c3f63;
+$line: #e3eaf3;
+$shadow: 0 10px 26px rgba(74, 99, 145, .07);
 
 .page {
-  background: #000;
-  color: #fff;
   min-height: 100vh;
-  font-family: var(--font-body);
+  background: #fbfcff;
+  color: $ink;
+  font-family: var(--font-body), 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
 .main {
-  max-width: 72rem;
-  margin: 0 auto;
-  // padding-top generoso pra limpar o header fixo e dar respiro (mesmo padrão da Diagnóstico REAL).
-  padding: 140px 20px 80px;
+  max-width: 72rem; margin: 0 auto;
+  // padding-top generoso pra limpar o cabeçalho fixo (mesmo padrão da Diagnóstico REAL).
+  padding: 180px 20px 100px;
 
-  @media (min-width: 768px) {
-    padding-left: 32px;
-    padding-right: 32px;
-  }
+  @media (min-width: 768px) { padding-left: 32px; padding-right: 32px; }
+  @media (max-width: 560px) { padding-top: 140px; }
 }
 
 // ─── Cabeçalho ───────────────────────────────────────────────────────────────
 .head { margin-bottom: 48px; }
-
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 800;
-  color: $brand;
-  margin: 0 0 16px;
+  margin: 0 0 16px; font-family: var(--font-mono);
+  font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: $brand;
 }
-
 .title {
-  font-size: 2.6rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.12;
-  max-width: 20ch;
-  margin: 0 0 20px;
+  margin: 0 0 20px; max-width: 20ch; font-family: var(--font-display);
+  font-size: clamp(2rem, 4.6vw, 3rem); font-weight: 800;
+  letter-spacing: -.025em; line-height: 1.12; color: $strong;
 
   span { color: $brand; }
-
-  @media (max-width: 640px) { font-size: 2rem; }
 }
-
-.subtitle {
-  font-size: 1.1rem;
-  line-height: 1.7;
-  color: #b8b8bf;
-  max-width: 60ch;
-  margin: 0;
-}
+.subtitle { max-width: 60ch; margin: 0; font-size: 1.06rem; line-height: 1.75; color: $dim; }
 
 // ─── Estatísticas ────────────────────────────────────────────────────────────
+// As células são brancas e o fundo da grade é a linha: o gap de 1px vira o divisor.
 .statsRow {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  background: $line;
-  border: 1px solid $line;
-  border-radius: 14px;
-  overflow: hidden;
-  margin-bottom: 48px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+  margin-bottom: 48px; overflow: hidden;
+  border: 1px solid $line; border-radius: 20px; background: $line; box-shadow: $shadow;
 
   @media (max-width: 640px) { grid-template-columns: 1fr 1fr; }
 }
-
-.statCell {
-  background: #0a0a0c;
-  padding: 24px 20px;
-}
-
+.statCell { padding: 26px 22px; background: #fff; }
 .statNum {
-  font-size: 2rem;
-  font-weight: 800;
-  color: $brand;
-  line-height: 1;
-  margin: 0 0 8px;
+  margin: 0 0 8px; font-family: var(--font-display);
+  font-size: 2rem; font-weight: 800; color: $brand; line-height: 1;
 }
-
+// Rótulo em caixa alta e 13px: no cinza mais claro ele ficava em 2,5:1 sobre o branco.
 .statLabel {
-  font-size: 0.82rem;
-  color: #8a8a92;
-  line-height: 1.4;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0;
+  margin: 0; font-size: .82rem; line-height: 1.4; color: $ink;
+  text-transform: uppercase; letter-spacing: .05em;
 }
 
 // ─── Cards ───────────────────────────────────────────────────────────────────
 .cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 48px;
-
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 48px;
   @media (max-width: 640px) { grid-template-columns: 1fr; }
 }
-
 .card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  background: #0a0a0c;
-  padding: 26px 24px;
+  padding: 28px 26px; border: 1px solid $line; border-radius: 20px; background: #fff; box-shadow: $shadow;
 
   &::before {
-    content: '';
-    display: block;
-    width: 26px;
-    height: 3px;
-    border-radius: 2px;
-    background: $brand;
-    margin-bottom: 18px;
+    content: ''; display: block; width: 26px; height: 3px; margin-bottom: 18px;
+    border-radius: 2px; background: $brand;
   }
 }
-
-.cardTitle {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #fff;
-  margin: 0 0 10px;
-}
-
-.cardBody {
-  font-size: 0.92rem;
-  line-height: 1.7;
-  color: #9a9aa2;
-  margin: 0;
-}
+.cardTitle { margin: 0 0 10px; font-size: 1.1rem; font-weight: 700; color: $strong; }
+.cardBody { margin: 0; font-size: .95rem; line-height: 1.75; color: $dim; }
 
 // ─── Faixa final (fundadora + CTA) ───────────────────────────────────────────
 .footerBand {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  border-top: 1px solid $line;
-  padding-top: 32px;
-  flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+  padding-top: 32px; border-top: 1px solid $line;
 }
-
 .footerText {
-  font-size: 0.95rem;
-  color: #8a8a92;
-  max-width: 54ch;
-  line-height: 1.65;
-  margin: 0;
-
-  strong { color: #e6e6ea; font-weight: 600; }
+  max-width: 54ch; margin: 0; font-size: .98rem; line-height: 1.7; color: $dim;
+  strong { color: $strong; font-weight: 700; }
 }
-
 .cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: $brand;
-  color: #fff;
-  border: none;
-  border-radius: 9999px;
-  font-size: 0.92rem;
-  font-weight: 800;
-  text-decoration: none;
-  padding: 13px 26px;
-  white-space: nowrap;
-  transition: background 0.2s, transform 0.15s;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 28px; border: 0; border-radius: 9999px;
+  background: $blue; color: #fff; text-decoration: none; white-space: nowrap;
+  font-size: .95rem; font-weight: 700;
+  box-shadow: 0 14px 30px rgba(51, 97, 255, .24);
+  transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
 
-  &:hover { background: $brandHover; transform: translateY(-1px); }
+  &:hover { background: $blueDark; transform: translateY(-1px); box-shadow: 0 16px 34px rgba(51, 97, 255, .3); }
 }

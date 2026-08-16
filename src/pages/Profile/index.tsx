@@ -1,133 +1,91 @@
-import { FC, useMemo } from 'react';
+import { FC, useMemo, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { message } from 'antd';
 import { FiArrowRight } from 'react-icons/fi';
+import ReactMarkdown from 'react-markdown';
 
 import { useArtist } from '../../hooks/useArtist';
-import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
-import { useEntitlements } from '../../hooks/useEntitlements';
-import { useAppDispatch } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
-import { PageHeader } from '../../components/PageHeader';
-import { RedoRealBanner } from '../../components/RedoRealBanner';
-import { PRODUCT_THEME, pageBg } from '../../components/productTheme';
-import { RealCareerCard } from '../../components/RealCareerCard';
-import { PhaseSummary } from '../../components/PhaseSummary';
-import AdvancedPlan from '../ActionPlan/AdvancedPlan';
-import { isOnboardingComplete } from '../../constants/maestra';
-import type { ArtistContent, Strategy } from '../../interfaces/maestra';
-import '../ActionPlan/actionPlan.scss';
+import type { SwotAnalysis } from '../../interfaces/maestra';
 
-// Página de Perfil do artista (como uma "página de rede social"): tudo que descreve o artista.
-// Cabeçalho + card da FASE REAL + Resumo executivo + dossiê (Fundamentos, Mapa de referências,
-// Objetivos, SWOT, Prioridade das estratégias). Editável (lápis), via AdvancedPlan SEM `crud`
-// (a edição de tarefas/estratégias é exclusiva do Plano de Ação). Equipe abre por um botão aqui.
+const swotColors = ['#3361ff', '#ff6633', '#29cc39', '#e62e7b'] as const;
+
 const Profile: FC = () => {
   const { artist } = useArtist();
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { editPlanning } = useArtistCapabilities(artist);
-  const { isPro } = useEntitlements();
 
   const content = artist?.content;
-  const strategies = useMemo<Strategy[]>(() => content?.strategies || [], [content]);
-  // O dossiê só é exibido quando o wizard foi CONCLUÍDO (Finalizar clicado). Ter só as estratégias
-  // geradas (step 6) não basta — faltam a seleção que vira tarefa (step 7) e o resumo (step 8);
-  // nesse meio-do-caminho mostramos o CTA de "continuar" pra não travar o usuário num plano parcial.
-  const hasPlan = isOnboardingComplete(artist);
-  // Começou o wizard mas não concluiu → o CTA vira "continuar de onde parou".
-  const resumingPlan = !hasPlan && ((content?.step ?? 0) > 0 || strategies.length > 0);
-  // Estratégias em ordem de prioridade (finalScore desc) — alimenta "Prioridade das estratégias".
-  const ranked = useMemo(
-    () => [...strategies].sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0)),
-    [strategies]
+  const identity = content?.identity;
+  const objectives = content?.objectives || [];
+  const strategies = useMemo(
+    () => [...(content?.strategies || [])].sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0)),
+    [content?.strategies]
   );
-
-  // taskCounts ainda é exigido pelo RealCareerCard, mas aqui a barra fica oculta (showProgress=false).
-  const taskCounts = useMemo(() => {
-    const all = strategies.flatMap((s) => (s.tasks || []).filter((t) => t.status !== 'archived'));
-    return {
-      todo: all.filter((t) => !t.status || t.status === 'todo').length,
-      inProgress: all.filter((t) => t.status === 'in_progress').length,
-      done: all.filter((t) => t.status === 'done').length,
-      total: all.length,
+  const swot: Array<[string, string[]]> = useMemo(() => {
+    const analysis: SwotAnalysis = content?.swotAnalysis || {
+      strengths: [], weaknesses: [], opportunities: [], threats: [],
     };
-  }, [strategies]);
-
-  // Salva edições do dossiê (visão/missão/valores/bio/objetivos/gênero/referências). Merge raso +
-  // persistência otimista. Gate: editar o planejamento exige perfil desbloqueado e permissão.
-  const saveContent = async (patch: Partial<ArtistContent>) => {
-    if (!artist || !editPlanning) return;
-    const next: ArtistContent = { ...artist.content, ...patch };
-    dispatch(artistsActions.setArtistContentLocal({ id: artist.id, content: next }));
-    try {
-      await dispatch(artistsActions.updateArtistContent({ id: artist.id, content: next })).unwrap();
-    } catch {
-      message.error('Não consegui salvar agora, tenta de novo.');
-      dispatch(artistsActions.fetchArtists(artist.user_id));
-    }
-  };
+    return [
+      ['Forças', analysis.strengths || []],
+      ['Fraquezas', analysis.weaknesses || []],
+      ['Oportunidades', analysis.opportunities || []],
+      ['Ameaças', analysis.threats || []],
+    ];
+  }, [content?.swotAnalysis]);
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
-  const onRedo = () => navigate(isPro ? `/artists/${artist.id}/diagnostico/refazer` : '/assinatura');
+  const references = identity?.references;
+  const referenceChips = [references?.artisticas, references?.comunicacao, references?.gestao].filter(Boolean) as string[];
+  const totalTasks = strategies.reduce((total, strategy) => total + (strategy.tasks?.length || 0), 0);
+  const completedTasks = strategies.reduce((total, strategy) => total + (strategy.tasks || []).filter((task) => task.status === 'done').length, 0);
+  const capacity = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const nextSteps = strategies.slice(0, 3).map((strategy) => strategy.title);
 
   return (
-    <div style={{ padding: 24, minHeight: '100%', ...pageBg(PRODUCT_THEME.planning.accent) }}>
-      <PageHeader
-        title="Planejamento estratégico"
-        subtitle={`Visão, missão, valores, objetivos e estratégias de ${artist.name}.`}
-      />
-
-      {/* Sem planejamento concluído, a tela fica SÓ com o card de gatilho (criar/continuar) —
-          FASE de carreira e "Refazer diagnóstico" só fazem sentido quando já existe um plano. */}
-      {hasPlan && (
-        <>
-          {/* FASE de carreira REAL (sem barra de progresso — progresso é do Plano de Ação). */}
-          <RealCareerCard artist={artist} taskCounts={taskCounts} showProgress={false} compact />
-
-          {/* Loop do ciclo: executou o plano → refaz o REAL → sobe de fase. */}
-          {artist.content?.realIndex?.profile && (
-            <RedoRealBanner onRedo={onRedo} locked={!isPro} marginTop={0} marginBottom={24} />
-          )}
-        </>
-      )}
-
-      {hasPlan ? (
-        <>
-          {/* Resumo executivo ("Onde X está hoje"). */}
-          {content?.executiveSummary && <PhaseSummary text={content.executiveSummary} />}
-
-          {/* Dossiê: Fundamentos, Mapa de referências, Objetivos, SWOT, Prioridade das estratégias.
-              Sem `crud` → a seção editável de "Estratégias"/tarefas (do Plano de Ação) não aparece. */}
-          <AdvancedPlan
-            content={content!}
-            ranked={ranked}
-            onSaveContent={saveContent}
-            canEdit={editPlanning}
-          />
-        </>
-      ) : (
-        // Sem planejamento CONCLUÍDO: o dossiê não existe — direciona pra criar/continuar com a Nyta.
-        <div style={{ position: 'relative', overflow: 'hidden', background: '#181818', borderRadius: 12, padding: 32, textAlign: 'center' }}>
-          <span className="aurora-glow aurora-glow--on" aria-hidden />
-          <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>
-            {resumingPlan ? 'Termine seu planejamento estratégico' : 'Monte seu planejamento estratégico'}
-          </h2>
-          <p style={{ color: '#b3b3b3', margin: '0 auto 18px', lineHeight: 1.5, maxWidth: 520 }}>
-            {resumingPlan
-              ? 'Você parou no meio do planejamento. Volte pra escolher as estratégias que viram tarefas e finalizar. Só então o dossiê e o plano de ação ficam prontos.'
-              : 'É no planejamento com a Nyta que nascem os fundamentos do seu perfil: visão, missão, valores, objetivos, referências e a análise SWOT. Crie o seu para preencher esta página.'}
-          </p>
-          <button
-            onClick={() => navigate(`/artists/${artist.id}/wizard`)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#9A4FD1', color: '#FFFFFF', border: 'none', padding: '12px 28px', borderRadius: 9999, cursor: 'pointer', fontWeight: 800, fontSize: 15 }}
-          >
-            {resumingPlan ? 'Continuar planejamento' : 'Criar planejamento estratégico'} <FiArrowRight />
-          </button>
+    <div className="board-content page-view planning-page">
+      <header className="module-page-heading">
+        <div>
+          <p>PARA ONDE VOCÊ VAI</p>
+          <h1>Planejamento estratégico</h1>
+          <span>Visão, missão, valores, objetivos e estratégias de {artist.name}.</span>
         </div>
-      )}
+      </header>
+
+      <section className="planning-general">
+        <section className="planning-general-grid planning-primary-grid">
+          <article className="planning-focus"><p>FOCO DO CICLO</p><h2>Próximos marcos</h2>{/* O resumo vem do LLM em markdown: sem renderizar, os `**títulos**` apareciam com os
+                asteriscos crus no meio do texto. */}
+            <div className="planning-focus-summary">
+              <ReactMarkdown>{content?.executiveSummary || 'Organize as prioridades da carreira para os próximos lançamentos.'}</ReactMarkdown>
+            </div><div><i style={{ width: `${capacity}%` }} /></div><small>Atualizado com os dados do planejamento</small></article>
+          <article className="planning-next"><header><span>PRÓXIMOS PASSOS</span><button type="button" aria-label="Ir para o plano de ação" onClick={() => navigate(`/artists/${artist.id}/action-plan`)}><FiArrowRight aria-hidden="true" /></button></header>{(nextSteps.length ? nextSteps : ['Definir próximos objetivos', 'Organizar as estratégias', 'Acompanhar as entregas']).map((item, index) => <div key={item}><i>{String(index + 1).padStart(2, '0')}</i><strong>{item}</strong><b>›</b></div>)}</article>
+        </section>
+
+        <section className="planning-overview-grid">
+          <article><strong>{String(strategies.length).padStart(2, '0')}</strong><span>Frentes estratégicas</span></article>
+          <article><strong>{String(totalTasks).padStart(2, '0')}</strong><span>Entregas no ciclo</span></article>
+          <article><strong>{capacity}%</strong><span>Capacidade planejada</span></article>
+        </section>
+
+      </section>
+
+      <section className="planning-fundamentals">
+        <article className="planning-intro-card"><div className="planning-intro-copy"><p>IDENTIDADE ARTÍSTICA</p><h2>Fundamentos que orientam cada decisão.</h2></div><span>Um retrato claro do que o artista representa, para quem cria e onde quer chegar.</span></article>
+        <div className="fundamentals-grid">
+          <article><span>GÊNERO</span><strong>{identity?.genre || 'Não informado'}</strong></article>
+          <article><span>VISÃO</span><strong>{identity?.vision || 'Ainda não definida.'}</strong></article>
+          <article><span>MISSÃO</span><strong>{identity?.mission || 'Ainda não definida.'}</strong></article>
+          <article><span>VALORES</span><strong>{identity?.values?.join(', ') || 'Ainda não definidos.'}</strong></article>
+        </div>
+      </section>
+
+      <section className="planning-references"><header><div><p>INSPIRAÇÕES QUE GUIAM A CARREIRA</p><h2>Mapa de referências</h2><span>Conecte influências artísticas, posicionamento e caminhos de comunicação.</span></div></header><div className="reference-map"><i className="reference-center">REFERÊNCIAS</i><i className="reference-node node-positioning">POSICIONAMENTO</i><i className="reference-node node-artistic">ARTÍSTICAS</i><i className="reference-node node-communication">COMUNICAÇÃO<br />COM O PÚBLICO</i><i className="reference-node node-career">CARREIRA</i>{referenceChips.map((reference, index) => <small key={reference} className={`reference-chip chip-${['one', 'two', 'three'][index] || 'one'}`}>{reference}</small>)}</div></section>
+
+      <section className="planning-objectives"><header><p>METAS DO CICLO</p><h2>Objetivos</h2><span>Objetivos claros para orientar prioridades, entregas e resultados esperados.</span></header><ol>{(objectives.length ? objectives : ['Objetivos ainda não definidos.']).map((objective, index) => <li key={objective}><b>{String(index + 1).padStart(2, '0')}</b><span>{objective}</span><button type="button" aria-label={`Ver objetivo ${objective}`}>↗</button></li>)}</ol><p className="planning-note">Os objetivos são definidos durante o planejamento estratégico e orientam a priorização das estratégias.</p></section>
+
+      <section className="planning-swot"><header><p>LEITURA DO CENÁRIO</p><h2>Análise SWOT</h2><span>Forças, fragilidades e oportunidades que orientam o posicionamento da carreira.</span></header><div>{swot.map(([title, items], index) => <article key={title} style={{ '--swot-color': swotColors[index] } as CSSProperties}><h3>{title}</h3><ul>{(items.length ? items : ['Nenhum item informado.']).map((item) => <li key={item}>{item}</li>)}</ul></article>)}</div></section>
+
+      <section className="planning-strategies"><header><div><p>PLANO PRIORIZADO</p><h2>Estratégias</h2><span>Prioridades organizadas por impacto para o crescimento sustentável da carreira.</span></div></header><div>{strategies.map((strategy, index) => { const progress = Math.max(0, Math.min(100, strategy.finalScore ? Math.round((strategy.finalScore / 40) * 100) : 0)); return <article key={strategy.id}><b>{String(index + 1).padStart(2, '0')}</b><section><strong>{strategy.title}</strong><i><span style={{ width: `${progress}%` }} /></i></section><em>{progress}%</em></article>; })}</div></section>
     </div>
   );
 };

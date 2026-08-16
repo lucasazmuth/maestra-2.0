@@ -1,0 +1,263 @@
+// Tela de Pagamentos. Segue o mesmo esqueleto das outras telas de conteúdo do redesign
+// (Músicas, Equipe): kicker + título + subtítulo, uma faixa de números com o resumo e a lista
+// como tabela. Antes era um cartão solto com estilo inline, sem hierarquia nenhuma.
+
+.page {
+  max-width: 1120px;
+  padding: 34px 36px 48px;
+}
+
+.heading {
+  padding-bottom: 30px;
+  border-bottom: 1px solid #e1e7f0;
+}
+
+.heading p {
+  margin: 0 0 8px;
+  color: #93a3bc;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.heading h1 {
+  margin: 0;
+  color: #52668d;
+  font-size: 30px;
+  font-weight: 850;
+}
+
+.heading span {
+  display: block;
+  margin-top: 9px;
+  color: #91a0b9;
+  font-size: 12px;
+}
+
+// Resumo: os três números que respondem "quanto já paguei, quantas cobranças, quando foi a
+// última" sem precisar ler a lista.
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid #e1e7f0;
+}
+
+.summary span {
+  padding: 24px 26px 24px 0;
+  color: #8393ad;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.summary span + span {
+  padding-left: 26px;
+  border-left: 1px solid #e1e7f0;
+}
+
+.summary b {
+  display: block;
+  margin-bottom: 5px;
+  color: #3361ff;
+  font-size: 26px;
+  font-weight: 850;
+}
+
+.card {
+  margin-top: 26px;
+  overflow: hidden;
+  border: 1px solid #e6ecf6;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(124, 145, 185, .07);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.cardHead strong {
+  color: #5b6f94;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.cardHead span {
+  color: #94a3bb;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+// Grade única para cabeçalho e linhas: é o que mantém as colunas alinhadas.
+.row,
+.rowHead {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(110px, .8fr) minmax(120px, .8fr) minmax(110px, .7fr) 120px;
+  gap: 18px;
+  align-items: center;
+  padding: 0 24px;
+}
+
+.rowHead {
+  height: 46px;
+  border-bottom: 1px solid #edf1f5;
+  color: #9aa9c0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.row {
+  min-height: 68px;
+  border-bottom: 1px solid #edf1f5;
+  color: #7183a1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  color: #5c7095;
+}
+
+.title i {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  place-items: center;
+  border-radius: 10px;
+  background: #eef3fb;
+  color: #5f76a3;
+  font-size: 15px;
+}
+
+.title strong {
+  overflow: hidden;
+  color: #405985;
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.amount {
+  color: #405985;
+  font-size: 13px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+.ok {
+  background: #e6f5ef;
+  color: #1d8a68;
+}
+
+.warn {
+  background: #fdf6e6;
+  color: #a17a1c;
+}
+
+.danger {
+  background: #fdeeee;
+  color: #c33a3f;
+}
+
+.mute {
+  background: #eef1f7;
+  color: #7c8da8;
+}
+
+.empty {
+  padding: 44px 24px;
+  color: #8ca0c5;
+  font-size: 13px;
+  text-align: center;
+}
+
+.loading {
+  padding: 40px 0;
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 26px 18px 40px;
+  }
+
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .summary span + span {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid #e1e7f0;
+  }
+
+  // Sem largura para cinco colunas, a tabela vira uma lista: descrição e valor na mesma linha,
+  // o resto abaixo. Rolagem horizontal em tela pequena esconderia justamente o status.
+  .rowHead {
+    display: none;
+  }
+
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 14px;
+    padding: 16px 18px;
+  }
+
+  // Linha e coluna explícitas: só dizer a coluna deixava o preenchimento automático empurrar o
+  // valor para a linha de baixo, longe do título a que ele pertence.
+  .title {
+    grid-area: 1 / 1;
+  }
+
+  .amount {
+    grid-area: 1 / 2;
+    text-align: right;
+  }
+
+  .date,
+  .method {
+    color: #93a4c0;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .date {
+    grid-area: 2 / 1;
+  }
+
+  .method {
+    grid-area: 2 / 2;
+    text-align: right;
+  }
+
+  .chip {
+    grid-area: 3 / 1 / 4 / -1;
+    justify-self: start;
+  }
+}

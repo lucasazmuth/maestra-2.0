@@ -779,7 +779,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
           <SwotChecklist
             items={SWOT_OPPORTUNITIES}
             title='Oportunidades'
-            accent='#3b82f6'
+            accent='#29cc39'
             confirmLabel='Continuar'
             onConfirm={(ids) => {
               pushUser(`${ids.length} oportunidade${ids.length === 1 ? '' : 's'} marcada${ids.length === 1 ? '' : 's'}`);
@@ -793,7 +793,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
           <SwotChecklist
             items={SWOT_THREATS}
             title='Ameaças'
-            accent='#f59e0b'
+            accent='var(--wz-warn)'
             confirmLabel='Concluir diagnóstico'
             onConfirm={(ids) => {
               pushUser(`${ids.length} ameaça${ids.length === 1 ? '' : 's'} marcada${ids.length === 1 ? '' : 's'}`);
@@ -931,7 +931,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
                     {!!sp?.spotify_artist_id && (
                       <p>
                         Dados reais do Spotify
-                        {sp?.track_count ? ` · ${sp.track_count} faixas` : ''}
+                        {sp?.track_count ? ` · ${sp.track_count} músicas` : ''}
                       </p>
                     )}
                   </div>

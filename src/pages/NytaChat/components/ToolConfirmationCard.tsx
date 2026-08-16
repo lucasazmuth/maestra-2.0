@@ -8,9 +8,9 @@ import './ToolConfirmationCard.scss';
 // ─── Tool Name Translation Map ────────────────────────────────────────────────
 
 const TOOL_NAME_PT: Record<string, string> = {
-  create_catalog_item: 'Criar item no catálogo',
-  update_catalog_item: 'Atualizar item no catálogo',
-  delete_catalog_item: 'Remover item do catálogo',
+  create_catalog_item: 'Criar item em Músicas',
+  update_catalog_item: 'Atualizar item em Músicas',
+  delete_catalog_item: 'Remover item de Músicas',
   create_event: 'Criar evento',
   update_event: 'Atualizar evento',
   delete_event: 'Remover evento',

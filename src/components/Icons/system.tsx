@@ -1,4 +1,5 @@
 import { FC, SVGProps } from 'react';
+import { FiTrendingUp } from 'react-icons/fi';
 
 // Ícones do sistema (fornecidos pelo design). As cores foram trocadas por currentColor, então cada
 // ícone herda a cor do contexto (ativo/hover). O viewBox é cropado pra o traço (centrado no box 41)
@@ -25,6 +26,7 @@ import { ReactComponent as DownloadSvg } from '../../assets/icons/download.svg';
 import { ReactComponent as EditSvg } from '../../assets/icons/edit.svg';
 import { ReactComponent as AgendaSvg } from '../../assets/icons/agenda.svg';
 import { ReactComponent as FiltrosSvg } from '../../assets/icons/filtros.svg';
+import { ReactComponent as EspacoJamSvg } from '../../assets/icons/espaco-jam.svg';
 
 // Avatar colorido da Nyta (imagem, não traço): importado como URL.
 export { default as nytaAvatar } from '../../assets/icons/nyta-avatar.svg';
@@ -54,7 +56,10 @@ export const ReordenarIcon = make(ReordenarSvg, '6 10 30 19');
 export const AddIcon = make(AddSvg, '10 10 21 21');
 export const MoreIcon = make(MoreSvg, '8 16 25 9');
 export const UploadIcon = make(UploadSvg);
+// Traço ocupa ~16..34 num box de 50 — o crop aperta pra ele render no tamanho pedido.
+export const EspacoJamIcon = make(EspacoJamSvg, '13 15 24 21');
 export const DownloadIcon = make(DownloadSvg);
 export const EditIcon = make(EditSvg, '9 7 24 24');
 export const AgendaIcon = make(AgendaSvg);
 export const FiltrosIcon = make(FiltrosSvg, '7 9 28 28');
+export const MarketingIcon: FC<IconProps> = ({ size = 22, ...rest }) => <FiTrendingUp size={size} {...rest} />;

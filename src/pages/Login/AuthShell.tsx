@@ -57,7 +57,7 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
           <div className={styles.brand}>
             {/* Logo clicável → volta para a landing page. */}
             <Link to='/' className={styles.brandLink} aria-label='Ir para a página inicial'>
-              <MaestraBrand variant='lockup' tone='light' className={styles.brandWordmark} beta />
+              <MaestraBrand variant='lockup' tone='dark' className={styles.brandWordmark} />
             </Link>
           </div>
 
@@ -73,9 +73,7 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
               <FcGoogle /> {socialLoading ? 'Redirecionando…' : 'Google'}
             </button>
           </div>
-          {socialNote && (
-            <div style={{ color: '#e0a82e', fontSize: 13, marginBottom: 12 }}>{socialNote}</div>
-          )}
+          {socialNote && <div className={styles.note}>{socialNote}</div>}
 
           <div className={styles.divider}>ou</div>
 
@@ -100,40 +98,22 @@ export const AuthField: FC<{
   const Icon = type === 'email' ? FiMail : isPassword ? FiLock : FiUser;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        background: '#1f1f1f',
-        border: '1px solid #2a2a2a',
-        borderRadius: 8,
-        padding: '0 14px',
-      }}
-    >
-      <Icon color='#888' size={18} style={{ flexShrink: 0 }} />
+    <div className={styles.field}>
+      <Icon size={18} className={styles.fieldIcon} />
       <input
+        className={styles.input}
         type={isPassword && show ? 'text' : type}
         placeholder={placeholder}
         value={value}
         autoFocus={autoFocus}
         onChange={(e) => onChange(e.target.value)}
-        style={{
-          flex: 1,
-          background: 'transparent',
-          border: 'none',
-          padding: '13px 0',
-          color: '#fff',
-          fontSize: 15,
-          outline: 'none',
-        }}
       />
       {isPassword && (
         <button
           type='button'
+          className={styles.reveal}
           onClick={() => setShow((s) => !s)}
           aria-label={show ? 'Ocultar senha' : 'Mostrar senha'}
-          style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', display: 'flex', padding: 4 }}
         >
           {show ? <FiEyeOff size={18} /> : <FiEye size={18} />}
         </button>
@@ -143,23 +123,7 @@ export const AuthField: FC<{
 };
 
 export const AuthSubmit: FC<{ loading: boolean; label: string }> = ({ loading, label }) => (
-  <button
-    type='submit'
-    disabled={loading}
-    style={{
-      marginTop: 8,
-      width: '100%',
-      background: '#9A4FD1',
-      border: 'none',
-      color: '#FFFFFF',
-      padding: '14px 24px',
-      borderRadius: 9999,
-      fontWeight: 700,
-      fontSize: 16,
-      cursor: loading ? 'default' : 'pointer',
-      opacity: loading ? 0.7 : 1,
-    }}
-  >
+  <button type='submit' className={styles.submit} disabled={loading}>
     {loading ? 'Aguarde…' : label}
   </button>
 );

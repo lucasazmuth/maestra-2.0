@@ -1,0 +1,183 @@
+/*
+ * Player local compartilhado
+ * Mantém a mesma linguagem visual clara no catálogo, Espaço JAM e mobile.
+ */
+.local-player-bar,
+body.jam-project-space .local-player-bar {
+  position: fixed;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: auto !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  color: #3d5786 !important;
+  background: #ffffff !important;
+  border: 0 !important;
+  border-top: 1px solid #d9e5f8 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 -12px 30px rgba(48, 84, 145, 0.11) !important;
+}
+
+.local-player-bar .lpb-controls button:not(.lpb-play),
+.local-player-bar .lpb-close,
+.local-player-bar .lpb-volume button {
+  color: #49638f !important;
+  background: transparent !important;
+  border-radius: 8px;
+}
+
+.local-player-bar .lpb-controls button:not(.lpb-play) svg,
+.local-player-bar .lpb-close svg,
+.local-player-bar .lpb-volume button svg {
+  color: #49638f !important;
+  stroke: currentColor;
+}
+
+.local-player-bar .lpb-controls button:not(.lpb-play):hover:not(:disabled),
+.local-player-bar .lpb-controls button:not(.lpb-play):focus-visible:not(:disabled),
+.local-player-bar .lpb-close:hover,
+.local-player-bar .lpb-close:focus-visible,
+.local-player-bar .lpb-volume button:hover,
+.local-player-bar .lpb-volume button:focus-visible {
+  color: #294c83 !important;
+  background: #edf3ff !important;
+  outline: 2px solid rgba(47, 97, 245, 0.28);
+  outline-offset: 2px;
+}
+
+.local-player-bar .lpb-controls button:not(.lpb-play):hover svg,
+.local-player-bar .lpb-controls button:not(.lpb-play):focus-visible svg,
+.local-player-bar .lpb-close:hover svg,
+.local-player-bar .lpb-close:focus-visible svg,
+.local-player-bar .lpb-volume button:hover svg,
+.local-player-bar .lpb-volume button:focus-visible svg {
+  color: #294c83 !important;
+}
+
+.local-player-bar .lpb-play {
+  color: #ffffff !important;
+  background: #2f61f5 !important;
+  box-shadow: 0 8px 20px rgba(47, 97, 245, 0.28) !important;
+}
+
+.local-player-bar .lpb-play svg {
+  color: #ffffff !important;
+  stroke: currentColor;
+}
+
+.local-player-bar .lpb-play:hover:not(:disabled),
+.local-player-bar .lpb-play:focus-visible:not(:disabled) {
+  color: #ffffff !important;
+  background: #1f4fd9 !important;
+  outline: 2px solid rgba(47, 97, 245, 0.3);
+  outline-offset: 2px;
+}
+
+.local-player-bar .lpb-time,
+.local-player-bar .lpb-sub {
+  color: #7185aa !important;
+}
+
+.local-player-bar .lpb-title {
+  color: #294c83 !important;
+}
+
+.local-player-bar .lpb-track:hover,
+.local-player-bar .lpb-track:focus-visible {
+  background: #f1f6ff !important;
+}
+
+.local-player-bar .lpb-expand {
+  color: #2f61f5 !important;
+  background: #edf3ff !important;
+}
+
+.local-player-bar .lpb-expand svg {
+  color: inherit !important;
+}
+
+.local-player-bar .lpb-expand:hover,
+.local-player-bar .lpb-expand:focus-visible {
+  color: #1f4fd9 !important;
+  background: #dfeaff !important;
+  outline: 2px solid rgba(47, 97, 245, 0.28);
+  outline-offset: 2px;
+}
+
+.local-player-bar .lpb-seek,
+.local-player-bar .lpb-volume-slider {
+  accent-color: #2f61f5;
+}
+
+@media (max-width: 767px) {
+  .local-player-bar,
+  body.jam-project-space .local-player-bar {
+    display: flex !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    min-height: 68px !important;
+    margin: 0 !important;
+    padding: 9px 14px calc(9px + env(safe-area-inset-bottom, 0px)) !important;
+    gap: 12px !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    border-radius: 0 !important;
+  }
+
+  .local-player-bar .lpb-progress-mobile {
+    background: #ffffff !important;
+  }
+}
+
+/*
+ * Player em cima da tab bar (mobile).
+ *
+ * Colado no rodapé ele cobria a navbar inteira — a navegação simplesmente sumia enquanto uma
+ * música tocava. Aqui ele deixa de ser barra e vira uma ilha flutuante logo ACIMA da navbar, no
+ * mesmo desenho dela (mesmas margens de 22px, mesmo raio de 22px, mesma borda e sombra), de modo
+ * que as duas leem como um par. O `!important` acompanha o bloco mobile acima, que já usa.
+ *
+ * 106px = 18 (base da navbar) + 78 (altura dela) + 10 (respiro entre as duas).
+ */
+@media (max-width: 960px) {
+  .local-player-bar--over-nav,
+  body.jam-project-space .local-player-bar--over-nav {
+    right: 22px !important;
+    bottom: calc(106px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 22px !important;
+    z-index: 119 !important;
+    width: auto !important;
+    min-height: 64px !important;
+    padding: 8px 10px 8px 12px !important;
+    gap: 10px !important;
+    border: 1px solid #dfe7f3 !important;
+    border-radius: 22px !important;
+    background: rgba(255, 255, 255, .97) !important;
+    box-shadow: 0 18px 42px rgba(68, 88, 126, .2) !important;
+  }
+
+  /* A linha de progresso encosta na borda arredondada: recolhe pelos cantos para não vazar. */
+  .local-player-bar--over-nav .lpb-progress-mobile {
+    right: 16px !important;
+    bottom: 3px !important;
+    left: 16px !important;
+    background: transparent !important;
+  }
+
+  .local-player-bar--over-nav .lpb-cover {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+  }
+}
+
+/* No Espaço Jam a tab bar não existe (ver gsap-reference.css), então a ilha do player desce e
+   ocupa a base — senão sobra um vão morto de 78px embaixo dela. */
+@media (max-width: 960px) {
+  body.jam-project-space .local-player-bar--over-nav {
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}

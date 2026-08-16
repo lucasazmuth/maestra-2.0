@@ -11,7 +11,7 @@ const SubscriptionSuccess: FC = () => {
     <PaymentSuccessScreen
       title='Bem-vindo ao Maestra Pro!'
       subtitle='Seu pagamento foi confirmado com sucesso.'
-      description='Todos os recursos da plataforma estão desbloqueados: planejamento estratégico, catálogo ilimitado, equipe, IA e muito mais.'
+      description='Todos os recursos da plataforma estão desbloqueados: planejamento estratégico, músicas ilimitadas, equipe, IA e muito mais.'
       ctaLabel='Começar a usar'
       onCta={() => navigate('/artists', { replace: true })}
     />

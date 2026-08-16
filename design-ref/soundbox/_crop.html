@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>crop</title>
+<style>html,body{margin:0;background:#04070f}svg{display:block;width:100vw}</style>
+<div id="m"></div>
+<script>
+const p = new URLSearchParams(location.search);
+const f = p.get('f') || 'Hero';
+const W = +(p.get('W') || 1465), H = +(p.get('H') || 811);
+const x = +(p.get('x') || 0), y = +(p.get('y') || 0), w = +(p.get('w') || W), h = +(p.get('h') || H);
+document.getElementById('m').innerHTML =
+  `<svg viewBox="${x} ${y} ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+     <image href="_svg/${f}.svg" x="0" y="0" width="${W}" height="${H}"/>
+   </svg>`;
+</script>

@@ -51,3 +51,515 @@
     flex: 1;
   }
 }
+
+// The Agenda follows the GSAP calendar canvas; data and event interactions stay in the page.
+.task-app:not(.public-app) .agenda-reference-page.calendar-page {
+  min-height: 1040px;
+  padding: 0 0 38px !important;
+  border: 0;
+  border-radius: 0;
+  // O mesmo cinza da casca do app (var(--canvas), #f7f8fb) que os outros módulos usam. Com
+  // #fafbfc a página lia como branca e aparecia uma emenda onde o conteúdo acabava.
+  background: var(--canvas) !important;
+  color: #52668d;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools,
+.task-app:not(.public-app) .agenda-reference-page .calendar-all-day,
+.task-app:not(.public-app) .agenda-reference-page .calendar-events,
+.task-app:not(.public-app) .agenda-reference-page .calendar-tasks,
+.task-app:not(.public-app) .agenda-reference-page .calendar-tasks nav button,
+.task-app:not(.public-app) .agenda-reference-page .calendar-event,
+.task-app:not(.public-app) .agenda-reference-page .calendar-all-day strong {
+  background-color: #fafbfc;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-event {
+  color: #5f7197;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-add-task-inline {
+  display: inline-flex;
+  width: auto;
+  height: 34px;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 0 12px;
+  border-radius: 7px;
+  background: #3361ff;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.agenda-month-board {
+  padding: 28px;
+  background: #fafbfc;
+}
+
+.agenda-month-weekdays,
+.agenda-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.agenda-month-weekdays {
+  margin-bottom: 8px;
+  color: #92a0b8;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.agenda-month-day {
+  display: grid;
+  min-height: 104px;
+  align-content: start;
+  gap: 6px;
+  padding: 11px;
+  border: 1px solid #e7ecf4;
+  border-radius: 7px;
+  background: #fff;
+  color: #63779c;
+  text-align: left;
+}
+
+.agenda-month-day:hover { border-color: #b9c9ec; background: #f8faff; }
+.agenda-month-day.is-outside { opacity: .46; }
+.agenda-month-day > b { font-size: 12px; }
+.agenda-month-day > span { overflow: hidden; border-left: 3px solid var(--event-color); padding-left: 5px; color: #64779b; font-size: 9px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.agenda-month-day > small { color: #8798b4; font-size: 9px; font-weight: 800; }
+
+.agenda-year-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 28px;
+  background: #fafbfc;
+}
+
+.agenda-year-board > button {
+  display: grid;
+  min-height: 132px;
+  align-content: space-between;
+  gap: 26px;
+  padding: 18px;
+  border: 1px solid #e1e7f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #586c92;
+  text-align: left;
+}
+
+.agenda-year-board > button:hover { border-color: #b9c9ec; background: #f8faff; }
+.agenda-year-board strong { font-size: 15px; text-transform: capitalize; }
+.agenda-year-board span { color: #8b9ab3; font-size: 10px; font-weight: 800; }
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-events {
+  background-image: repeating-linear-gradient(to bottom, transparent 0 53px, #eef1f5 54px);
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-hours span {
+  display: grid;
+  place-items: center;
+  padding-top: 0;
+}
+
+@media (max-width: 1250px) {
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
+    grid-template-columns: 210px minmax(0, 1fr);
+    grid-template-rows: 56px 40px;
+    height: 96px;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > label {
+    grid-row: 1 / -1;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
+    display: grid;
+    grid-template-columns: auto auto auto minmax(130px, 1fr) auto;
+    min-width: 0;
+    gap: 12px;
+    padding: 0 18px;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-add-task-inline {
+    margin-left: 0;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools nav {
+    display: flex;
+    grid-column: 2;
+    grid-row: 2;
+    justify-content: flex-end;
+    gap: 20px;
+    padding: 0 18px;
+    border-top: 1px solid #e9edf4;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tasks {
+    display: none;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .task-app:not(.public-app) .agenda-reference-page.calendar-page {
+    min-height: 800px;
+    padding-bottom: 112px !important;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools label,
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
+    min-height: 52px;
+    border-right: 0;
+    border-bottom: 1px solid #e9edf4;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
+    justify-content: space-between;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools nav {
+    display: none;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-events {
+    grid-template-columns: 1fr;
+  }
+
+  .agenda-month-board { overflow-x: auto; padding: 18px; }
+  .agenda-month-weekdays, .agenda-month-grid { min-width: 610px; }
+  .agenda-year-board { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 18px; }
+}
+
+// Cabeçalho da agenda: data e modos de visualização pertencem ao mesmo grupo.
+// Mantemos todos os controles funcionais, sem criar uma segunda linha solta para Dia/Mês/Ano.
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools {
+  grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-rows: 56px;
+  height: 56px;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools > label {
+  grid-row: auto;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
+  display: flex;
+  min-width: 0;
+  gap: 10px;
+  padding: 0 16px;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > button:not(.calendar-add-task-inline) {
+  flex: 0 0 auto;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > strong {
+  flex: 1 1 140px;
+  min-width: 0;
+  overflow: hidden;
+  color: #61749a;
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-add-task-inline {
+  flex: 0 0 auto;
+  margin-left: 0;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > nav {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #dfe6f1;
+  border-radius: 7px;
+  background: #f2f5fa;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > nav button {
+  min-width: 38px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 5px;
+  color: #7c8dab;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > nav .calendar-active {
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(61, 84, 126, 0.14);
+  color: #3361ff;
+}
+
+@media (max-width: 1250px) {
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > label {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
+    height: auto;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
+    min-height: 58px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > strong {
+    order: 4;
+    flex-basis: 100%;
+    text-align: left;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > nav {
+    margin-left: auto;
+  }
+}
+
+// Fallback para o bundle antigo da Agenda ainda visto em algumas sessões locais.
+// Ele renderiza `agenda-toolbar` com styles inline escuros; estes overrides
+// forçam o mesmo canvas claro/clean da referência GSAP enquanto o chunk novo entra.
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) {
+  min-height: 1040px;
+  padding: 0 0 38px !important;
+  background: #fafbfc !important;
+  color: #52668d !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) > div:first-child {
+  min-height: 72px;
+  margin: 0 !important;
+  padding: 0 28px;
+  border-bottom: 1px solid #e9edf4;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) > div:first-child h1 {
+  color: #52668d !important;
+  font-family: var(--font-body) !important;
+  font-size: 22px !important;
+  letter-spacing: -0.02em;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) > div:first-child button {
+  min-height: 34px;
+  padding: 0 14px !important;
+  border-radius: 7px !important;
+  background: #3361ff !important;
+  box-shadow: 0 7px 16px rgba(51, 97, 255, .18);
+  color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar {
+  display: grid;
+  grid-template-columns: 255px minmax(360px, 1fr) auto;
+  align-items: center;
+  height: 56px;
+  margin: 0 !important;
+  border-bottom: 1px solid #e9edf4;
+  background: #fafbfc;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-filters {
+  height: 100%;
+  gap: 0;
+  padding: 0 24px;
+  border-right: 1px solid #e9edf4;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-filters > button,
+.task-app:not(.public-app) .agenda-toolbar-navigation > button {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #7f91b0 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-filters > button:first-child,
+.task-app:not(.public-app) .agenda-toolbar-filters > button:hover,
+.task-app:not(.public-app) .agenda-toolbar-navigation > button:hover {
+  color: #3361ff !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-filters > button:first-child {
+  background: transparent !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-navigation {
+  justify-content: center;
+  gap: 18px;
+  color: #6d80a5 !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-navigation > button {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+}
+
+.task-app:not(.public-app) .agenda-toolbar-month {
+  min-width: 180px;
+  color: #6d80a5 !important;
+  font-size: 11px !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div {
+  padding: 24px 28px 0;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:first-child {
+  margin-bottom: 8px !important;
+  gap: 7px !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:first-child > div {
+  color: #92a0b8 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:last-child {
+  gap: 7px !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:last-child > div {
+  min-height: 104px !important;
+  padding: 11px !important;
+  border: 1px solid #e7ecf4 !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  box-shadow: 0 7px 17px rgba(124, 145, 185, .04);
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:last-child > div:hover {
+  border-color: #b9c9ec !important;
+  background: #f8faff !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:last-child > div > div:first-child {
+  color: #63779c !important;
+  font-size: 12px !important;
+}
+
+.task-app:not(.public-app) .Main-section > div:has(.agenda-toolbar) .agenda-toolbar + div > div:last-child > div [style*="background"] {
+  border-left: 3px solid #3361ff !important;
+  background: #f2f5ff !important;
+  color: #63779c !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+}
+
+@media (max-width: 960px) {
+  .task-app:not(.public-app) .agenda-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .task-app:not(.public-app) .agenda-toolbar-filters,
+  .task-app:not(.public-app) .agenda-toolbar-navigation {
+    min-height: 52px;
+    border-right: 0;
+    border-bottom: 1px solid #e9edf4;
+  }
+}
+
+// No mobile a barra de controles nascia colada no cabeçalho do app: a página zera o padding do
+// topo (`padding: 0 0 38px`) e não havia nada separando os dois.
+@media (max-width: 700px) {
+  .task-app:not(.public-app) .agenda-reference-page.calendar-page {
+    padding-top: 16px !important;
+  }
+
+  // O cabeçalho tem altura FIXA de 56px (regra do desktop, mais abaixo no arquivo, que vence a
+  // do bloco de 700px por vir depois). No mobile a data quebra para uma segunda linha e o
+  // conteúdo passa a precisar de ~90px: os 34px que sobravam vazavam para fora e caíam por cima
+  // da faixa "Dia todo". Altura automática resolve o transbordo.
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
+    height: auto;
+    grid-template-rows: auto;
+  }
+
+  // A data quebra para baixo; sem folga vertical ela encostava na faixa seguinte.
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > strong {
+    width: 100%;
+    padding: 6px 0 4px;
+    line-height: 1.3;
+  }
+}
+
+// Faixas vazias da agenda do dia: área clicável que cria um compromisso naquela hora. Fica atrás
+// dos eventos (ordem do DOM) e só se anuncia no hover, para não poluir uma grade vazia.
+.task-app:not(.public-app) .agenda-reference-page .calendar-slot {
+  z-index: 0;
+  margin: 2px;
+  padding: 0;
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background .14s ease, border-color .14s ease;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-slot:hover {
+  border-color: #c4d4ef;
+  background: #f2f6ff;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-slot:focus-visible {
+  outline: 2px solid #3361ff;
+  outline-offset: -2px;
+}
+
+// Os eventos ficam ACIMA das faixas: sem isto, o slot que cobre a linha inteira roubaria o
+// clique de quem quer abrir um evento existente.
+.task-app:not(.public-app) .agenda-reference-page .calendar-event {
+  position: relative;
+  z-index: 1;
+}
+
+// A coluna dos eventos vinha com 10px de padding no topo, e a das horas com zero: cada faixa
+// ficava 12px abaixo do rótulo correspondente, e o "seletor" da hora parecia desalinhado. Sem o
+// padding, a grade das duas colunas nasce na mesma linha. Os eventos já têm margem própria.
+.task-app:not(.public-app) .agenda-reference-page .calendar-events {
+  padding-top: 0;
+}

@@ -1,9 +1,10 @@
 import { FC, useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import { Spin, Tag, message, Button } from 'antd';
+import { Tag, message, Button } from 'antd';
 import { FiUsers, FiUserCheck, FiMusic, FiDollarSign, FiTrendingUp, FiRefreshCw, FiClock, FiCreditCard } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import { supabase } from '../../lib/supabase';
+import { Spinner } from '../../components/spinner/spinner';
 
 // ─── Tipos (espelham a resposta da edge admin-dashboard) ────────────────────
 interface Stats {
@@ -46,7 +47,7 @@ const AdminDashboard: FC = () => {
   useEffect(() => { load(); }, [load]);
 
   if (loading && !stats) {
-    return <div style={{ ...styles.page, textAlign: 'center', padding: '80px 24px 24px' }}><Spin size="large" /></div>;
+    return <div style={styles.page}><Spinner loading>{null as any}</Spinner></div>;
   }
 
   if (!stats) {

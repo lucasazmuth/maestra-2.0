@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../store/store';
 import { authActions } from '../../store/slices/auth';
 import { AuthShell, AuthField, AuthSubmit, authError } from './AuthShell';
+import styles from './AuthShell.module.scss';
 import { EmailCodeStep } from '../../components/EmailCodeStep';
 
 const Login: FC = () => {
@@ -49,9 +50,9 @@ const Login: FC = () => {
   return (
     <AuthShell
       footer={
-        <p style={{ color: '#b3b3b3', fontSize: 14, marginTop: 28, textAlign: 'center' }}>
+        <p className={styles.footerText}>
           Você não possui cadastro?{' '}
-          <Link to='/signup' style={{ color: '#af68d8', fontWeight: 700 }}>
+          <Link to='/signup' className={styles.footerLink}>
             Cadastre-se!
           </Link>
         </p>
@@ -60,22 +61,10 @@ const Login: FC = () => {
       <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <AuthField type='email' placeholder='E-mail' value={email} onChange={setEmail} autoFocus />
         <AuthField type='password' placeholder='Senha' value={password} onChange={setPassword} />
-        {error && <div style={{ color: '#e91429', fontSize: 13 }}>{error}</div>}
+        {error && <div className={styles.error}>{error}</div>}
         <AuthSubmit loading={loading} label='Entrar' />
       </form>
-      <button
-        type='button'
-        onClick={onForgot}
-        style={{
-          display: 'block',
-          margin: '16px auto 0',
-          background: 'none',
-          border: 'none',
-          color: '#509bf5',
-          fontSize: 14,
-          cursor: 'pointer',
-        }}
-      >
+      <button type='button' className={styles.textLink} onClick={onForgot}>
         Esqueceu sua senha?
       </button>
     </AuthShell>

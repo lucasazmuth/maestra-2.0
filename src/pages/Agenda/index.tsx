@@ -14,25 +14,11 @@ import * as eventsDb from '../../services/db/events';
 import type { AgendaEvent, ArtistContent } from '../../interfaces/maestra';
 import './agenda.scss';
 
-type View = 'month' | 'list';
+type CalendarView = 'day' | 'month' | 'year';
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 const typeColor = (type: string) => (EVENT_TYPES as any)[type]?.color || '#6b7280';
-const typeLabel = (type: string) => (EVENT_TYPES as any)[type]?.label || type;
-
-const navBtn: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.1)',
-  border: 'none',
-  color: '#fff',
-  width: 32,
-  height: 32,
-  borderRadius: '50%',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-};
 
 const isTaskEvent = (e: AgendaEvent) => e.type === 'task' || e.source === 'action_plan';
 
@@ -47,12 +33,12 @@ const Agenda: FC = () => {
 
   const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [loading, setLoading] = useState(false);
-  const [view, setView] = useState<View>('month');
+  const [calendarView, setCalendarView] = useState<CalendarView>('day');
   const [cursor, setCursor] = useState<Dayjs>(dayjs());
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AgendaEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>();
-  const [showTasks, setShowTasks] = useState(true);
+  const [defaultTime, setDefaultTime] = useState<string | undefined>();
 
   useEffect(() => {
     if (!artistId) return;
@@ -64,18 +50,14 @@ const Agenda: FC = () => {
       .finally(() => setLoading(false));
   }, [artistId]);
 
-  // Eventos visíveis: o filtro "mostrar tarefas" oculta os eventos gerados pelo Plano de Ação.
-  const visibleEvents = useMemo(
-    () => (showTasks ? events : events.filter((e) => !isTaskEvent(e))),
-    [events, showTasks]
-  );
+  // Antes havia um filtro "mostrar tarefas" que ocultava os eventos vindos do Plano de Ação.
+  // O único botão que o acionava era a falsa aba "Atrasadas"; sem ela, tudo é visível.
+  const visibleEvents = events;
   const hasTaskEvents = useMemo(() => events.some(isTaskEvent), [events]);
 
   const byDate = useMemo(() => {
     const map: Record<string, AgendaEvent[]> = {};
-    for (const e of visibleEvents) {
-      (map[e.date] = map[e.date] || []).push(e);
-    }
+    for (const event of visibleEvents) (map[event.date] = map[event.date] || []).push(event);
     return map;
   }, [visibleEvents]);
 
@@ -83,13 +65,10 @@ const Agenda: FC = () => {
     const start = cursor.startOf('month').startOf('week');
     const end = cursor.endOf('month').endOf('week');
     const days: Dayjs[] = [];
-    let d = start;
-    while (d.isBefore(end) || d.isSame(end, 'day')) {
-      days.push(d);
-      d = d.add(1, 'day');
-    }
+    for (let day = start; day.isBefore(end) || day.isSame(end, 'day'); day = day.add(1, 'day')) days.push(day);
     return days;
   }, [cursor]);
+
 
   const onSaved = (e: AgendaEvent) => {
     setEvents((prev) => {
@@ -138,10 +117,11 @@ const Agenda: FC = () => {
     message.success('Prazo removido da tarefa e evento excluído.');
   };
 
-  const openCreate = (date?: string) => {
+  const openCreate = (date?: string, time?: string) => {
     if (!canEdit) return; // colaborador sem PRO: somente-leitura
     setEditing(null);
     setDefaultDate(date);
+    setDefaultTime(time);
     setModalOpen(true);
   };
   const openEdit = (e: AgendaEvent) => {
@@ -222,192 +202,105 @@ const Agenda: FC = () => {
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
-  const today = dayjs().format('YYYY-MM-DD');
-  const upcoming = visibleEvents
-    .slice()
-    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const selectedDate = cursor.format('YYYY-MM-DD');
+  const dayEvents = visibleEvents
+    .filter((event) => event.date === selectedDate)
+    .sort((a, b) => (a.start_time || '23:59').localeCompare(b.start_time || '23:59'));
+  const unscheduledTasks = visibleEvents
+    .filter((event) => isTaskEvent(event) && event.date !== selectedDate)
+    .slice(0, 6);
+  const hours = Array.from({ length: 16 }, (_, index) => `${String(index + 8).padStart(2, '0')}:00`);
+  const hourIndex = (event: AgendaEvent) => {
+    const hour = Number(event.start_time?.slice(0, 2) || 8);
+    return Math.min(Math.max(hour - 7, 1), hours.length);
+  };
+  const moveCursor = (amount: number) => setCursor(cursor.add(amount, calendarView === 'year' ? 'year' : calendarView === 'month' ? 'month' : 'day'));
+  const calendarLabel = calendarView === 'year'
+    ? cursor.format('YYYY')
+    : calendarView === 'month'
+      ? cursor.format('MMMM [de] YYYY')
+      : cursor.format('dddd, D [de] MMMM');
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: 0 }}>
-          Agenda
-        </h1>
-        {canEdit && (
-          <button
-            onClick={() => openCreate()}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#9A4FD1', border: 'none', color: '#FFFFFF', padding: '10px 20px', borderRadius: 9999, cursor: 'pointer', fontWeight: 700 }}
-          >
-            <FiPlus /> Compromisso
-          </button>
-        )}
-      </div>
-
-      <div className="agenda-toolbar">
-        <div className="agenda-toolbar-filters">
-          {(['month', 'list'] as View[]).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              style={{
-                background: view === v ? '#fff' : 'rgba(255,255,255,0.1)',
-                color: view === v ? '#000' : '#fff',
-                border: 'none',
-                borderRadius: 9999,
-                padding: '6px 16px',
-                cursor: 'pointer',
-                fontWeight: 700,
-              }}
-            >
-              {v === 'month' ? 'Mês' : 'Lista'}
-            </button>
-          ))}
-          {hasTaskEvents && (
-            <button
-              onClick={() => setShowTasks((s) => !s)}
-              title='Mostrar/ocultar as tarefas do Plano de Ação'
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 7,
-                background: showTasks ? `${EVENT_TYPES.task.color}26` : 'rgba(255,255,255,0.1)',
-                color: showTasks ? EVENT_TYPES.task.color : '#b3b3b3',
-                border: `1px solid ${showTasks ? `${EVENT_TYPES.task.color}80` : 'transparent'}`,
-                borderRadius: 9999,
-                padding: '6px 14px',
-                cursor: 'pointer',
-                fontWeight: 700,
-                marginLeft: 4,
-              }}
-            >
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: EVENT_TYPES.task.color, opacity: showTasks ? 1 : 0.4 }} />
-              Tarefas
-            </button>
-          )}
+    <div className="calendar-page agenda-reference-page">
+      <header className="calendar-tools">
+        <label><span>⌕</span><input placeholder="Pesquisar tarefas..." aria-label="Pesquisar na agenda" /><b>⌄</b></label>
+        <div>
+          <button type="button" onClick={() => setCursor(dayjs())}>Hoje</button>
+          <button type="button" aria-label="Período anterior" onClick={() => moveCursor(-1)}><FiChevronLeft /></button>
+          <button type="button" aria-label="Próximo período" onClick={() => moveCursor(1)}><FiChevronRight /></button>
+          <strong>{calendarLabel}</strong>
+          {canEdit && <button type="button" className="calendar-add-task calendar-add-task-inline" aria-label="Adicionar compromisso" onClick={() => openCreate()}><FiPlus /> Compromisso</button>}
+          <nav aria-label="Visualização da agenda">
+            <button className={calendarView === 'day' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('day')}>Dia</button>
+            <button className={calendarView === 'month' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('month')}>Mês</button>
+            <button className={calendarView === 'year' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('year')}>Ano</button>
+          </nav>
         </div>
-        {view === 'month' && (
-          <div className="agenda-toolbar-navigation">
-            <button onClick={() => setCursor(cursor.subtract(1, 'month'))} style={navBtn}>
-              <FiChevronLeft />
-            </button>
-            <span className="agenda-toolbar-month">
-              {cursor.format('MMMM [de] YYYY')}
-            </span>
-            <button onClick={() => setCursor(cursor.add(1, 'month'))} style={navBtn}>
-              <FiChevronRight />
-            </button>
-          </div>
-        )}
-      </div>
-
+      </header>
+      {calendarView === 'day' && <div className="calendar-all-day"><span>Dia todo</span><strong>{dayEvents.find((event) => !event.start_time)?.title || 'Planeje sua semana com clareza'}</strong></div>}
       <Spinner loading={loading && !events.length}>
-        {view === 'month' ? (
-          <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, marginBottom: 6 }}>
-              {WEEKDAYS.map((w) => (
-                <div key={w} style={{ color: '#b3b3b3', fontSize: 12, fontWeight: 700, textAlign: 'center' }}>
-                  {w}
-                </div>
+        {calendarView === 'day' ? <div className="calendar-layout">
+          <section className="calendar-timeline">
+            <div className="calendar-hours">{hours.map((hour) => <span key={hour}>{hour}</span>)}</div>
+            <div className="calendar-events">
+              {/* Faixas vazias clicáveis: uma por hora, atrás dos eventos (vêm antes no DOM).
+                  Clicar abre o modal já com o dia em foco e a hora da faixa — sobra só o título.
+                  Onde há evento, é o botão dele que recebe o clique, porque pinta por cima. */}
+              {canEdit && hours.map((hour, index) => (
+                <button
+                  type="button"
+                  key={`slot-${hour}`}
+                  className="calendar-slot"
+                  aria-label={`Novo compromisso às ${hour}`}
+                  onClick={() => openCreate(selectedDate, `${hour}:00`)}
+                  style={{ gridRow: index + 1, gridColumn: '1 / -1' } as React.CSSProperties}
+                />
+              ))}
+              {dayEvents.filter((event) => event.start_time).map((event, index) => (
+                <button
+                  type="button"
+                  key={event.id}
+                  className="calendar-event"
+                  onClick={() => openEdit(event)}
+                  style={{ '--event-color': typeColor(event.type), gridRowStart: hourIndex(event), gridColumn: index % 2 === 0 ? 1 : 2 } as React.CSSProperties}
+                >
+                  <strong>{calendarTitle(event.title, 44)}</strong>
+                </button>
               ))}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6 }}>
-              {monthDays.map((d) => {
-                const key = d.format('YYYY-MM-DD');
-                const dayEvents = byDate[key] || [];
-                const inMonth = d.month() === cursor.month();
-                const isToday = key === today;
-                return (
-                  <div
-                    key={key}
-                    onClick={() => openCreate(key)}
-                    style={{
-                      minHeight: 96,
-                      background: inMonth ? '#181818' : '#101010',
-                      borderRadius: 8,
-                      padding: 6,
-                      cursor: 'pointer',
-                      border: isToday ? '1px solid #9A4FD1' : '1px solid transparent',
-                      opacity: inMonth ? 1 : 0.5,
-                    }}
-                  >
-                    <div style={{ color: isToday ? '#9A4FD1' : '#b3b3b3', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
-                      {d.date()}
-                    </div>
-                    {dayEvents.slice(0, 3).map((e) => (
-                      <div
-                        key={e.id}
-                        onClick={(ev) => {
-                          ev.stopPropagation();
-                          openEdit(e);
-                        }}
-                        style={{
-                          background: `${typeColor(e.type)}33`,
-                          color: typeColor(e.type),
-                          borderLeft: `3px solid ${typeColor(e.type)}`,
-                          padding: '2px 6px',
-                          borderRadius: 4,
-                          fontSize: 11,
-                          marginBottom: 3,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 5,
-                          minWidth: 0,
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {isTaskEvent(e) && taskCheckbox(e)}
-                        <span
-                          title={e.title}
-                          style={{
-                            minWidth: 0,
-                            flex: 1,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            textDecoration: e.status === 'completed' ? 'line-through' : undefined,
-                            opacity: e.status === 'completed' ? 0.7 : 1,
-                          }}
-                        >
-                          {e.start_time ? e.start_time.slice(0, 5) + ' ' : ''}
-                          {calendarTitle(e.title)}
-                        </span>
-                      </div>
-                    ))}
-                    {dayEvents.length > 3 && (
-                      <div style={{ color: '#b3b3b3', fontSize: 11 }}>+{dayEvents.length - 3}</div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+          </section>
+          <aside className="calendar-tasks">
+            <header><h2>Tarefas</h2>{canEdit && <button type="button" className="calendar-add-task" aria-label="Adicionar compromisso" onClick={() => openCreate()}><FiPlus /></button>}</header>
+            {/* Saíram daqui duas abas e um "Ordenar por Prioridade" que não existiam de fato:
+                "Não agendadas" era um botão sem ação (só o estilo de aba ativa), "Atrasadas"
+                escondia as tarefas do calendário inteiro — nada a ver com atraso, e ainda
+                esvaziava esta própria lista — e a ordenação era texto fixo. Voltam quando forem
+                filtros de verdade. */}
+            {hasTaskEvents && unscheduledTasks.map((event) => <button className="calendar-task" type="button" key={event.id} onClick={() => openEdit(event)}>{taskCheckbox(event)}<i style={{ background: typeColor(event.type) }} />{calendarTitle(event.title, 48)}</button>)}
+            {!unscheduledTasks.length && <p className="agenda-empty">Nenhuma tarefa pendente.</p>}
+          </aside>
+        </div> : calendarView === 'month' ? <section className="agenda-month-board" aria-label="Calendário mensal">
+          <div className="agenda-month-weekdays">{WEEKDAYS.map((weekday) => <span key={weekday}>{weekday}</span>)}</div>
+          <div className="agenda-month-grid">
+            {monthDays.map((day) => {
+              const key = day.format('YYYY-MM-DD');
+              const eventsForDay = byDate[key] || [];
+              const outsideMonth = day.month() !== cursor.month();
+              return <button type="button" key={key} className={`agenda-month-day${outsideMonth ? ' is-outside' : ''}`} onClick={() => { setCursor(day); setCalendarView('day'); }}>
+                <b>{day.date()}</b>
+                {eventsForDay.slice(0, 2).map((event) => <span key={event.id} style={{ '--event-color': typeColor(event.type) } as React.CSSProperties}>{calendarTitle(event.title, 20)}</span>)}
+                {eventsForDay.length > 2 && <small>+{eventsForDay.length - 2}</small>}
+              </button>;
+            })}
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {!upcoming.length ? (
-              <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>Nenhum evento agendado.</div>
-            ) : (
-              upcoming.map((e) => (
-                <div
-                  key={e.id}
-                  onClick={() => openEdit(e)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 12, borderRadius: 8, background: '#181818', cursor: 'pointer' }}
-                >
-                  <div style={{ width: 4, height: 40, borderRadius: 2, background: typeColor(e.type) }} />
-                  {isTaskEvent(e) && taskCheckbox(e)}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: '#fff', fontWeight: 700, textDecoration: e.status === 'completed' ? 'line-through' : undefined, opacity: e.status === 'completed' ? 0.65 : 1 }}>{e.title}</div>
-                    <div style={{ color: '#b3b3b3', fontSize: 13 }}>
-                      {dayjs(e.date).format('DD/MM/YYYY')}
-                      {e.start_time ? ` · ${e.start_time.slice(0, 5)}` : ''}
-                      {e.location ? ` · ${e.location}` : ''}
-                    </div>
-                  </div>
-                  <span style={{ color: typeColor(e.type), fontSize: 12, fontWeight: 700 }}>{typeLabel(e.type)}</span>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+        </section> : <section className="agenda-year-board" aria-label="Calendário anual">
+          {Array.from({ length: 12 }, (_, month) => {
+            const monthCursor = cursor.month(month);
+            const count = visibleEvents.filter((event) => dayjs(event.date).isSame(monthCursor, 'month')).length;
+            return <button type="button" key={month} onClick={() => { setCursor(monthCursor); setCalendarView('month'); }}><strong>{monthCursor.format('MMMM')}</strong><span>{count} {count === 1 ? 'compromisso' : 'compromissos'}</span></button>;
+          })}
+        </section>}
       </Spinner>
 
       {artistId && (
@@ -416,6 +309,7 @@ const Agenda: FC = () => {
           artistId={artistId}
           event={editing}
           defaultDate={defaultDate}
+          defaultTime={defaultTime}
           onClose={() => setModalOpen(false)}
           onSaved={onSaved}
           onDeleted={onDeleted}

@@ -1,0 +1,401 @@
+// Estilos da página de referência /index2 (ver o comentário do index.tsx).
+//
+// Paleta do template de referência traduzida pra Maestra:
+//   fundo  → azul-noite em degradê (o template usa navy escuro)
+//   neon   → verde do REAL (#2EC47A), no papel do verde-limão do template
+//   ação   → azul do sistema, nos botões secundários e nos destaques de dado
+//
+// Nada aqui vaza pra landing oficial: é um arquivo de módulo próprio.
+
+$neon: #2ec47a;
+$neonSoft: rgba(46, 196, 122, .16);
+$blue: #3361ff;
+$ink: #eaf0ff;         // texto principal sobre o escuro
+$dim: #a8b6d4;         // texto de apoio
+$dim2: #7e8db0;        // legendas
+$edge: rgba(255, 255, 255, .10);
+$card: rgba(255, 255, 255, .045);
+
+.page {
+  min-height: 100vh;
+  background: #060b1a;
+  color: $ink;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+// ─── Tipografia compartilhada ────────────────────────────────────────────────
+.eyebrow {
+  display: block; margin-bottom: 14px;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase; color: $neon;
+}
+.sectionTitle {
+  margin: 0; font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.4vw, 2.9rem); font-weight: 800; line-height: 1.06;
+  letter-spacing: -.02em; text-transform: uppercase; text-wrap: balance;
+}
+.sectionLead { margin: 0; max-width: 34rem; font-size: 1rem; line-height: 1.7; color: $dim; }
+
+// ─── Botões ──────────────────────────────────────────────────────────────────
+.btnNeon {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 26px; border: 0; border-radius: 9999px;
+  background: $neon; color: #05261a; cursor: pointer;
+  font: inherit; font-size: 15px; font-weight: 800; white-space: nowrap;
+  box-shadow: 0 14px 30px rgba(46, 196, 122, .26);
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+
+  &:hover { background: #46d68d; transform: translateY(-1px); box-shadow: 0 18px 38px rgba(46, 196, 122, .34); }
+}
+.btnGhost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 26px; border: 1px solid $edge; border-radius: 9999px;
+  background: rgba(255, 255, 255, .04); color: $ink; cursor: pointer;
+  font: inherit; font-size: 15px; font-weight: 700; white-space: nowrap;
+  transition: border-color .16s ease, background .16s ease;
+
+  &:hover { border-color: rgba(255, 255, 255, .28); background: rgba(255, 255, 255, .08); }
+}
+.linkNeon {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 26px;
+  padding: 0; border: 0; background: none; color: $neon; cursor: pointer;
+  font: inherit; font-size: 15px; font-weight: 700;
+  transition: gap .18s ease;
+  &:hover { gap: 12px; }
+}
+
+// ─── Cabeçalho ───────────────────────────────────────────────────────────────
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
+  border-bottom: 1px solid transparent; transition: background .3s, border-color .3s, backdrop-filter .3s;
+}
+.headerScrolled {
+  background: rgba(6, 11, 26, .82); backdrop-filter: blur(14px); border-bottom-color: $edge;
+}
+.headerInner {
+  max-width: 78rem; margin: 0 auto; padding: 16px 24px;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+}
+.brand { display: inline-flex; padding: 0; border: 0; background: none; cursor: pointer; }
+.brandMark { font-size: 24px; }
+.nav { display: flex; align-items: center; gap: 32px; }
+.headerActions { display: flex; align-items: center; gap: 18px; }
+.navLink {
+  padding: 0; border: 0; background: none; color: $dim; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 600;
+  transition: color .16s ease;
+  &:hover { color: #fff; }
+}
+
+// ─── Hero ────────────────────────────────────────────────────────────────────
+.hero {
+  position: relative; overflow: hidden;
+  padding: 150px 24px 90px;
+  background:
+    radial-gradient(120% 80% at 50% -20%, rgba(51, 97, 255, .30) 0%, transparent 62%),
+    linear-gradient(180deg, #0a1430 0%, #081027 55%, #060b1a 100%);
+}
+// Halo verde atrás do título, o "brilho" do template.
+.heroGlow {
+  position: absolute; top: -160px; left: 50%; width: 900px; height: 520px; transform: translateX(-50%);
+  background: radial-gradient(50% 50% at 50% 50%, rgba(46, 196, 122, .18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.heroInner { position: relative; max-width: 68rem; margin: 0 auto; text-align: center; }
+.kicker {
+  display: inline-block; margin-bottom: 22px;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .22em; text-transform: uppercase; color: $dim2;
+}
+.heroTitle {
+  margin: 0 0 24px; font-family: var(--font-display);
+  font-size: clamp(2.6rem, 7.2vw, 5.6rem); font-weight: 800; line-height: .98;
+  letter-spacing: -.03em; text-transform: uppercase;
+}
+.heroLine { display: inline-flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center; }
+// A segunda linha sai do branco: é ela que carrega a promessa.
+.heroLineAlt { display: block; color: $neon; }
+.heroBadge {
+  display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%;
+  background: linear-gradient(150deg, rgba(51, 97, 255, .95), rgba(122, 79, 209, .95));
+  color: #fff; box-shadow: 0 16px 34px rgba(51, 97, 255, .38);
+}
+.heroLead { max-width: 40rem; margin: 0 auto 32px; font-size: 1.0625rem; line-height: 1.7; color: $dim; }
+.heroCtas { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+
+.wave { display: block; width: 100%; max-width: 60rem; height: 48px; margin: 44px auto 0; opacity: .5; fill: #6f8ff5; }
+
+// ─── Hero: vídeo + cartão flutuante ──────────────────────────────────────────
+.videoWrap { position: relative; max-width: 62rem; margin: 26px auto 0; }
+.videoFrame {
+  position: relative; aspect-ratio: 16 / 9; overflow: hidden;
+  border: 1px solid $edge; border-radius: 24px; background: #050914;
+  box-shadow: 0 40px 90px rgba(0, 0, 0, .5);
+}
+.videoPlayer { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+.videoEmpty {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: radial-gradient(60% 60% at 50% 40%, rgba(51, 97, 255, .18) 0%, transparent 70%), #070d1e;
+  color: $dim2; font-size: 14px;
+  p { margin: 0; }
+}
+.videoPlay {
+  display: grid; place-items: center; width: 66px; height: 66px; border-radius: 50%;
+  background: $neon; color: #05261a; padding-left: 4px;
+  box-shadow: 0 18px 40px rgba(46, 196, 122, .35);
+}
+// O "now playing" do template: aqui é o resultado do diagnóstico.
+.nowCard {
+  position: absolute; right: -12px; bottom: -26px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border: 1px solid $edge; border-radius: 16px;
+  background: rgba(12, 20, 42, .86); backdrop-filter: blur(10px);
+  box-shadow: 0 22px 50px rgba(0, 0, 0, .45);
+}
+.nowIcon { display: inline-flex; }
+.nowBody { display: flex; flex-direction: column; text-align: left; line-height: 1.3;
+  strong { font-size: 14px; }
+  span { font-size: 12px; color: $dim2; }
+}
+.nowScore {
+  margin-left: 8px; padding: 4px 10px; border-radius: 9999px;
+  background: $neonSoft; color: $neon; font-size: 14px; font-weight: 800;
+}
+
+// ─── Faixa de números ────────────────────────────────────────────────────────
+.band { padding: 84px 24px; border-top: 1px solid $edge; border-bottom: 1px solid $edge; background: rgba(255, 255, 255, .02); }
+.bandInner { max-width: 78rem; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+.bandTitle {
+  margin: 0 0 16px; font-family: var(--font-display);
+  font-size: clamp(1.7rem, 3vw, 2.5rem); font-weight: 800; line-height: 1.08;
+  letter-spacing: -.02em; text-transform: uppercase;
+}
+.bandLead { margin: 0; font-size: 1rem; line-height: 1.7; color: $dim; }
+.bandStats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  div { display: flex; flex-direction: column; gap: 6px; }
+  strong { font-family: var(--font-display); font-size: clamp(2rem, 3.4vw, 2.8rem); font-weight: 800; color: $neon; line-height: 1; }
+  span { font-size: 13.5px; color: $dim2; }
+}
+
+// ─── Seções ──────────────────────────────────────────────────────────────────
+.section { padding: 96px 24px; }
+.sectionInner { max-width: 78rem; margin: 0 auto; }
+.sectionHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 48px; margin-bottom: 44px; }
+
+// ─── Cartões de módulo ───────────────────────────────────────────────────────
+.moduleGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.moduleCard {
+  position: relative; overflow: hidden;
+  padding: 28px; border: 1px solid $edge; border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .06) 0%, rgba(255, 255, 255, .025) 100%);
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+
+  h3 { margin: 18px 0 10px; font-size: 1.1rem; font-weight: 800; }
+  p { margin: 0; font-size: 14.5px; line-height: 1.65; color: $dim; }
+
+  // Brilho da cor do módulo no canto — o que dá a "profundidade" dos cartões do template.
+  &::before {
+    content: ''; position: absolute; top: -70px; right: -70px; width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(50% 50% at 50% 50%, rgba(var(--accent, 46, 196, 122), .28) 0%, transparent 70%);
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+    border-color: rgba(var(--accent, 46, 196, 122), .45);
+    box-shadow: 0 26px 54px rgba(0, 0, 0, .38);
+  }
+}
+.moduleIcon {
+  display: inline-flex; align-items: center; justify-content: center; width: 72px; height: 72px;
+  border-radius: 18px; background: rgba(var(--accent, 46, 196, 122), .12);
+  border: 1px solid rgba(var(--accent, 46, 196, 122), .28);
+  img { width: 46px; height: 46px; object-fit: contain; }
+}
+// O cartão da Nyta ocupa duas colunas: é o diferencial, não mais um item da lista.
+.moduleCardNyta { grid-column: span 2; }
+
+// ─── Passos ──────────────────────────────────────────────────────────────────
+.stepGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.stepCard {
+  position: relative; padding: 26px 24px; border: 1px solid $edge; border-radius: 18px;
+  background: rgba(255, 255, 255, .035);
+  h3 { margin: 16px 0 8px; font-size: 1.05rem; font-weight: 800; }
+  p { margin: 0; font-size: 14px; line-height: 1.6; color: $dim; }
+  &::before {
+    content: ''; position: absolute; top: 0; left: 24px; right: 24px; height: 2px;
+    background: rgb(var(--accent, 46, 196, 122));
+  }
+}
+.stepNum {
+  display: inline-block; font-family: var(--font-display); font-size: 2rem; font-weight: 800; line-height: 1;
+  color: rgb(var(--accent, 46, 196, 122));
+}
+
+// ─── Tabela do índice ────────────────────────────────────────────────────────
+.tableHead { text-align: center; margin-bottom: 40px; }
+.tableWrap { overflow-x: auto; border: 1px solid $edge; border-radius: 20px; background: rgba(255, 255, 255, .03); }
+.table {
+  width: 100%; min-width: 640px; border-collapse: collapse;
+  th {
+    padding: 18px 22px; text-align: left; font-size: 12px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: $dim2;
+    border-bottom: 1px solid $edge;
+  }
+  td { padding: 18px 22px; border-bottom: 1px solid rgba(255, 255, 255, .05); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  tbody tr { transition: background .16s ease; &:hover { background: rgba(255, 255, 255, .03); } }
+}
+.tableIndex { font-family: var(--font-mono); font-size: 14px; color: $dim2; width: 64px; }
+.tableName { font-size: 15px; font-weight: 800; }
+.tableSub { font-size: 13px; color: $dim2; margin-top: 2px; }
+.tableDesc { font-size: 14px; color: $dim; }
+.bits { display: inline-flex; gap: 6px; }
+.bitOn, .bitOff {
+  display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  font-size: 12px; font-weight: 800; font-style: italic;
+}
+.bitOn { background: $neon; color: #05261a; }
+.bitOff { border: 1px solid rgba(255, 255, 255, .16); color: $dim2; }
+
+.profileStrip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.profileChip {
+  padding: 7px 14px; border: 1px solid $edge; border-radius: 9999px;
+  background: rgba(255, 255, 255, .03); color: $dim; font-size: 13px;
+}
+
+// ─── Fundadora ───────────────────────────────────────────────────────────────
+.founder { padding: 96px 24px; background: rgba(255, 255, 255, .02); border-top: 1px solid $edge; border-bottom: 1px solid $edge; }
+.founderInner { max-width: 78rem; margin: 0 auto; display: grid; grid-template-columns: 320px 1fr; gap: 56px; align-items: center; }
+.founderPhoto {
+  aspect-ratio: 3 / 4; border-radius: 22px; overflow: hidden; border: 1px solid $edge;
+  img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+}
+.founderBody {
+  p { margin: 18px 0 0; max-width: 40rem; font-size: 1.0625rem; line-height: 1.75; color: $dim; }
+}
+.founderTags {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px;
+  span { padding: 8px 14px; border: 1px solid $edge; border-radius: 9999px; background: rgba(255, 255, 255, .03); font-size: 13px; color: $dim; }
+}
+
+// ─── Depoimentos ─────────────────────────────────────────────────────────────
+.tRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.tCard {
+  padding: 28px; border: 1px solid $edge; border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .06) 0%, rgba(255, 255, 255, .02) 100%);
+  p { margin: 0 0 22px; font-size: 15px; line-height: 1.7; color: $ink; }
+}
+.tWho {
+  display: flex; align-items: center; gap: 12px;
+  strong { display: block; font-size: 14px; }
+  span { font-size: 12.5px; color: $dim2; }
+}
+.tAvatar {
+  display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%;
+  color: #fff; font-size: 15px; font-weight: 800;
+}
+
+// ─── Planos ──────────────────────────────────────────────────────────────────
+.planGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; }
+.planCard {
+  position: relative; display: flex; flex-direction: column;
+  padding: 30px; border: 1px solid $edge; border-radius: 22px;
+  background: rgba(255, 255, 255, .035);
+
+  h3 { margin: 0 0 12px; font-size: 1.4rem; font-weight: 800; }
+  ul { list-style: none; margin: 22px 0 28px; padding: 0; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  li { display: flex; align-items: flex-start; gap: 10px; font-size: 14.5px; line-height: 1.5; color: $dim; }
+  li svg { flex: 0 0 auto; margin-top: 2px; color: $neon; }
+}
+.planCardHero { border-color: rgba(46, 196, 122, .45); background: linear-gradient(180deg, rgba(46, 196, 122, .10) 0%, rgba(255, 255, 255, .03) 100%); }
+.planCardPro { border-color: rgba(124, 92, 255, .38); }
+.planBadge {
+  position: absolute; top: -12px; left: 30px; padding: 5px 12px; border-radius: 9999px;
+  background: $neon; color: #05261a; font-size: 11px; font-weight: 800; letter-spacing: .04em;
+}
+.planKind {
+  display: inline-block; align-self: flex-start; margin-bottom: 14px; padding: 5px 11px; border-radius: 9999px;
+  background: rgba(255, 255, 255, .07); color: $dim; font-size: 11px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.planPrice {
+  display: flex; align-items: baseline; gap: 8px;
+  strong { font-family: var(--font-display); font-size: 2.2rem; font-weight: 800; }
+  span { font-size: 14px; color: $dim2; }
+}
+.planNote { margin: 8px 0 0; font-size: 13px; color: $dim2; }
+
+// ─── CTA final ───────────────────────────────────────────────────────────────
+.ctaBand { padding: 96px 24px; }
+.ctaCard {
+  max-width: 62rem; margin: 0 auto; padding: 64px 40px; text-align: center;
+  border: 1px solid rgba(46, 196, 122, .30); border-radius: 28px;
+  background:
+    radial-gradient(80% 120% at 50% 0%, rgba(46, 196, 122, .16) 0%, transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, .06) 0%, rgba(255, 255, 255, .02) 100%);
+
+  h2 {
+    margin: 0 0 16px; font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4vw, 3rem); font-weight: 800; line-height: 1.06;
+    letter-spacing: -.02em; text-transform: uppercase;
+  }
+  p { max-width: 34rem; margin: 0 auto 32px; font-size: 1.0625rem; line-height: 1.65; color: $dim; }
+}
+
+// ─── Rodapé ──────────────────────────────────────────────────────────────────
+.footer { border-top: 1px solid $edge; background: #050912; padding: 64px 24px 28px; }
+.footerInner { max-width: 78rem; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 48px; }
+.footerBrand {
+  max-width: 22rem;
+  p { margin: 16px 0 0; font-size: 14px; line-height: 1.65; color: $dim2; }
+}
+.footerCols {
+  display: grid; grid-template-columns: repeat(3, auto); gap: 48px;
+  > div { display: flex; flex-direction: column; gap: 12px; }
+  span { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: $dim2; margin-bottom: 4px; }
+  button {
+    padding: 0; border: 0; background: none; color: $dim; cursor: pointer;
+    font: inherit; font-size: 14px; text-align: left;
+    &:hover { color: #fff; }
+  }
+}
+.footerBottom {
+  max-width: 78rem; margin: 48px auto 0; padding-top: 22px; border-top: 1px solid $edge;
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px;
+  font-size: 13px; color: $dim2;
+}
+.footerRef { color: $neon; font-family: var(--font-mono); font-size: 12px; }
+
+// ─── Responsivo ──────────────────────────────────────────────────────────────
+@media (max-width: 1080px) {
+  .moduleGrid { grid-template-columns: repeat(2, 1fr); }
+  .moduleCardNyta { grid-column: span 2; }
+  .stepGrid { grid-template-columns: repeat(2, 1fr); }
+  .tRow { grid-template-columns: 1fr; }
+  .planGrid { grid-template-columns: 1fr; max-width: 30rem; margin: 0 auto; }
+  .bandInner { grid-template-columns: 1fr; gap: 36px; }
+  .founderInner { grid-template-columns: 1fr; gap: 32px; }
+  .founderPhoto { width: 240px; }
+}
+
+@media (max-width: 820px) {
+  .nav { display: none; }
+  .sectionHead { flex-direction: column; align-items: flex-start; gap: 18px; }
+}
+
+@media (max-width: 620px) {
+  .hero { padding: 124px 20px 72px; }
+  .section, .band, .founder, .ctaBand { padding-left: 20px; padding-right: 20px; }
+  .section { padding-top: 72px; padding-bottom: 72px; }
+  .moduleGrid, .stepGrid { grid-template-columns: 1fr; }
+  .moduleCardNyta { grid-column: span 1; }
+  .bandStats { grid-template-columns: 1fr; gap: 18px; }
+  .heroBadge { width: 48px; height: 48px; }
+  // Encostado no canto do vídeo, o cartão saía da tela no celular.
+  .nowCard { position: static; margin-top: 18px; }
+  .ctaCard { padding: 44px 24px; }
+  .footerCols { grid-template-columns: repeat(2, auto); gap: 28px; }
+}

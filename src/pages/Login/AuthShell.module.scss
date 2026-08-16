@@ -1,29 +1,20 @@
-// Tela de autenticação em split-screen: formulário à esquerda, hero de marca à direita.
-// Segue o tema dark do app (#000/#121212) e o gradiente roxo→azul da Maestra.
-
-// Animação do equalizer da logo (usada no hover do ícone da marca).
-@keyframes eqBounce {
-  0%,
-  100% {
-    transform: scaleY(0.6);
-  }
-  50% {
-    transform: scaleY(1.5);
-  }
-}
-
-// Acessibilidade: quem prefere menos movimento não vê a animação.
-@media (prefers-reduced-motion: reduce) {
-  .brand svg:hover g line {
-    animation: none;
-  }
-}
+// Telas de autenticação (entrar, cadastrar, esqueci e redefinir senha).
+//
+// Eram as últimas telas no tema escuro (#000 com campos #1f1f1f e roxo #9A4FD1). Alguém que
+// entra pela primeira vez via preto no login e claro logo depois — duas caras do mesmo produto.
+// Aqui elas usam o mesmo fundo, os mesmos campos e o mesmo azul do resto do app.
+//
+// O arquivo também guarda as classes de campo e botão usadas pelo AuthShell.tsx, que antes
+// carregava esse estilo inline.
 
 .page {
   min-height: 100vh;
   display: flex;
-  background: #000;
-  color: #fff;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(47, 96, 246, .1), transparent 32%),
+    radial-gradient(circle at 84% 12%, rgba(154, 79, 209, .07), transparent 28%),
+    linear-gradient(180deg, #f9fbff 0%, #eef4ff 100%);
+  color: #405985;
 }
 
 .formCol {
@@ -35,16 +26,23 @@
   overflow-y: auto;
 }
 
+// O cartão branco delimita o formulário no meio da tela — aqui ele não é moldura dentro de
+// moldura: não existe outra superfície em volta.
 .formInner {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
+  padding: 38px 34px 34px;
+  border: 1px solid #e3eaf3;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(74, 99, 145, .12);
 }
 
 .brand {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 32px;
+  margin-bottom: 30px;
 }
 
 .brandLink {
@@ -52,19 +50,21 @@
   text-decoration: none;
 }
 
+// Mesmo 24px do topo do app e da landing — a marca é uma só.
 .brandWordmark {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 28px;
-  color: #fff;
+  font-size: 24px;
+  color: #52668d;
   letter-spacing: -0.01em;
 }
 
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: #b3b3b3;
   margin: 0 0 12px;
+  color: #93a4c0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .social {
@@ -79,19 +79,20 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: #1f1f1f;
-  border: 1px solid #2a2a2a;
-  border-radius: 8px;
   padding: 12px;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
+  border: 1px solid #dce5f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #52668d;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background-color .18s, border-color .18s, box-shadow .18s;
 
-  &:hover {
-    background: #282828;
-    border-color: #3a3a3a;
+  &:hover:not(:disabled) {
+    border-color: #b9cbed;
+    background: #f6f9ff;
+    box-shadow: 0 6px 16px rgba(74, 99, 145, .1);
   }
 
   svg {
@@ -105,14 +106,171 @@
   align-items: center;
   gap: 12px;
   margin: 20px 0;
-  color: #6b7280;
-  font-size: 13px;
+  color: #9aabc4;
+  font-size: 12px;
 
   &::before,
   &::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: #2a2a2a;
+    background: #e6ecf6;
+  }
+}
+
+// ─── Campo ───────────────────────────────────────────────────────────────────────
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 13px;
+  border: 1px solid #e1e7f0;
+  border-radius: 10px;
+  background: #fbfcfe;
+  transition: border-color .16s, box-shadow .16s;
+}
+
+.field:focus-within {
+  border-color: #8aa5ff;
+  box-shadow: 0 0 0 3px #eaf0ff;
+}
+
+.fieldIcon {
+  flex-shrink: 0;
+  color: #9aabc4;
+}
+
+.field:focus-within .fieldIcon {
+  color: #4267b9;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 0;
+  border: 0;
+  background: transparent;
+  color: #405985;
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.input::placeholder {
+  color: #a3b2ca;
+}
+
+.reveal {
+  display: flex;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: #9aabc4;
+  cursor: pointer;
+  transition: color .16s;
+}
+
+.reveal:hover {
+  color: #4267b9;
+}
+
+// ─── Botão principal ─────────────────────────────────────────────────────────────
+.submit {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 24px;
+  border: 0;
+  border-radius: 9999px;
+  background: #3361ff;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 14px 30px rgba(51, 97, 255, .24);
+  transition: background .18s, transform .18s, box-shadow .18s;
+}
+
+.submit:hover:not(:disabled) {
+  background: #2a54e0;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(51, 97, 255, .3);
+}
+
+.submit:disabled {
+  cursor: default;
+  opacity: .7;
+}
+
+// ─── Apoio (links, avisos, erros) ────────────────────────────────────────────────
+.note {
+  margin-bottom: 12px;
+  color: #a17a1c;
+  font-size: 13px;
+}
+
+.error {
+  color: #d2474b;
+  font-size: 13px;
+}
+
+.footerText {
+  margin-top: 26px;
+  color: #7c8da8;
+  font-size: 14px;
+  text-align: center;
+}
+
+.footerLink {
+  color: #3361ff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+// Ação secundária em texto (esqueci a senha, voltar ao login).
+.textLink {
+  display: block;
+  margin: 16px auto 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #4267b9;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.textLink:hover {
+  color: #2a54e0;
+  text-decoration: underline;
+}
+
+.stepTitle {
+  margin: 0 0 8px;
+  color: #405985;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 850;
+}
+
+.stepText {
+  margin: 0 0 18px;
+  color: #7c8da8;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+@media (max-width: 560px) {
+  .formCol {
+    padding: 28px 16px;
+  }
+
+  .formInner {
+    padding: 28px 20px 24px;
   }
 }

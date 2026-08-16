@@ -5,6 +5,7 @@ import { useAppDispatch } from '../../store/store';
 import { supabase } from '../../lib/supabase';
 import { authActions } from '../../store/slices/auth';
 import { AuthShell, AuthField, AuthSubmit, authError } from '../Login/AuthShell';
+import styles from '../Login/AuthShell.module.scss';
 import { EmailCodeStep } from '../../components/EmailCodeStep';
 
 const Signup: FC = () => {
@@ -13,7 +14,17 @@ const Signup: FC = () => {
   // 'form' = dados do cadastro; 'code' = confirmar o e-mail com o código (OTP) enviado por e-mail.
   const [step, setStep] = useState<'form' | 'code'>('form');
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  // A landing pode chegar com o e-mail já digitado (cartão final "comece grátis"): a pessoa não
+  // digita duas vezes.
+  const [email, setEmail] = useState(() => {
+    try {
+      const seed = sessionStorage.getItem('signup_email') || '';
+      if (seed) sessionStorage.removeItem('signup_email');
+      return seed;
+    } catch {
+      return '';
+    }
+  });
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,9 +78,9 @@ const Signup: FC = () => {
   return (
     <AuthShell
       footer={
-        <p style={{ color: '#b3b3b3', fontSize: 14, marginTop: 28, textAlign: 'center' }}>
+        <p className={styles.footerText}>
           Já possui cadastro?{' '}
-          <Link to='/login' style={{ color: '#af68d8', fontWeight: 700 }}>
+          <Link to='/login' className={styles.footerLink}>
             Entrar
           </Link>
         </p>
@@ -79,7 +90,7 @@ const Signup: FC = () => {
         <AuthField type='text' placeholder='Seu nome' value={name} onChange={setName} autoFocus />
         <AuthField type='email' placeholder='E-mail' value={email} onChange={setEmail} />
         <AuthField type='password' placeholder='Senha (mín. 6 caracteres)' value={password} onChange={setPassword} />
-        {error && <div style={{ color: '#e91429', fontSize: 13 }}>{error}</div>}
+        {error && <div className={styles.error}>{error}</div>}
         <AuthSubmit loading={loading} label='Criar conta' />
       </form>
     </AuthShell>

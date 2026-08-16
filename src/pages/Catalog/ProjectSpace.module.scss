@@ -1,0 +1,1243 @@
+:global(body.jam-space-open) {
+  overflow: hidden !important;
+  background: #f4f7fc !important;
+}
+
+:global(body.jam-space-open .top-navigation),
+:global(body.jam-space-open .app-rail),
+:global(body.jam-space-open .profile-panel),
+:global(body.jam-space-open #left) {
+  display: none !important;
+}
+
+:global(body.jam-space-open .task-app),
+:global(body.jam-space-open .app-layout),
+:global(body.jam-space-open #board),
+:global(body.jam-space-open #center),
+:global(body.jam-space-open .Main-section),
+:global(body.jam-space-open .board-shell),
+:global(body.jam-space-open .board-content) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.page {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  min-height: 100vh;
+  padding: 28px 36px 44px;
+  overflow: auto;
+  color: #405985;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(47, 96, 246, .08), transparent 28%),
+    linear-gradient(180deg, #f9fbff 0%, #eef4ff 100%);
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.loading,
+.empty {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #5a6f9b;
+  background: #f7faff;
+}
+
+.header {
+  position: relative;
+  max-width: 1260px;
+  margin: 0 auto 28px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+// Absoluto de propósito: no fluxo, a etiqueta ficava colada no título e "andava" conforme o
+// tamanho do nome da música. Aqui ela fica no meio do header, independente dos dois lados.
+.spaceLabel {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  color: #8ca0c5;
+  font: 850 11px 'JetBrains Mono', monospace;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+// Voltar e editar são o mesmo tipo de controle (botão redondo com um ícone), então têm o mesmo
+// tamanho: antes eram 52px/ícone 24 e 44px/ícone 18, e a diferença aparecia lado a lado.
+.back {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid #dce6f7;
+  color: #405985;
+  background: rgba(255, 255, 255, .92);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 18px;
+  box-shadow: 0 16px 32px rgba(74, 99, 145, .1);
+  transition: transform .2s ease, box-shadow .2s ease, color .2s ease, border-color .2s ease;
+}
+
+.back:hover {
+  border-color: #2f60f6;
+  color: #2f60f6;
+  transform: translateX(-2px);
+}
+
+.titleBlock {
+  min-width: 0;
+  flex: 1;
+}
+
+.titleLine {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.titleLine > span,
+.sectionHeader > div > span {
+  flex: none;
+  color: #8ca0c5;
+  font: 850 11px 'JetBrains Mono', monospace;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.titleLine h1 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: #405985;
+  font-size: 30px;
+  font-weight: 850;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusPill {
+  min-width: 188px;
+  // A altura precisa estar também na raiz do Select: o antd a fixa em 32px, e só aumentar o
+  // .ant-select-selector fazia a pílula transbordar o próprio espaço, desalinhando a linha.
+  height: 44px;
+}
+
+.statusPill :global(.ant-select-selector) {
+  min-height: 44px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--status-bg, #edc663) !important;
+  box-shadow: 0 14px 32px var(--status-shadow, rgba(237, 198, 99, .28)) !important;
+}
+
+.statusPill :global(.ant-select-selection-item) {
+  padding-inline-end: 0 !important;
+  color: var(--status-ink, #181818) !important;
+  font-weight: 850;
+  text-align: center;
+}
+
+.statusPill :global(.ant-select-arrow) {
+  color: var(--status-ink, #181818) !important;
+}
+
+.statusReadOnly {
+  min-width: 188px;
+  min-height: 34px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  color: var(--status-ink, #181818);
+  background: var(--status-bg, #edc663);
+  box-shadow: 0 14px 32px var(--status-shadow, rgba(237, 198, 99, .28));
+  font-size: 14px;
+  font-weight: 850;
+  text-align: center;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.editProject {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 1px solid #dce6f7;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #405985;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 16px 32px rgba(74, 99, 145, .1);
+  cursor: pointer;
+  font-size: 18px;
+  transition: color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.editProject:hover {
+  border-color: #2f60f6;
+  color: #2f60f6;
+  transform: translateY(-1px);
+}
+
+.headerActions :global(.ant-btn) {
+  min-height: 44px;
+  border-color: #dce6f7;
+  border-radius: 999px;
+  color: #405985;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 16px 32px rgba(74, 99, 145, .1);
+}
+
+.avatars,
+.collabAvatars {
+  display: flex;
+  padding-left: 12px;
+}
+
+.avatars img,
+.avatars i,
+.collabAvatars img,
+.collabAvatars i {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid #f8fbff;
+  margin-left: -12px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #9a4fd1;
+  font-style: normal;
+  font-weight: 850;
+  font-size: 13px;
+  object-fit: cover;
+  box-shadow: 0 12px 26px rgba(65, 87, 128, .18);
+}
+
+.content {
+  max-width: 1260px;
+  min-height: calc(100vh - 128px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 30px;
+  align-items: stretch;
+}
+
+.workspace {
+  min-width: 0;
+  padding: 32px 36px 38px;
+  border: 1px solid #dce6f7;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, .86);
+  box-shadow: 0 32px 80px rgba(74, 99, 145, .12);
+}
+
+.metaStrip {
+  // Uma variável só: "14/08/2026" é o texto mais longo da faixa, então o teto vem dele — se
+  // cada campo escolhesse o próprio tamanho, os traços de vazio voltariam a divergir.
+  --meta-font: clamp(16px, 1.6vw, 24px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 0;
+  margin-bottom: 34px;
+  border-top: 1px solid #dce6f7;
+  border-bottom: 1px solid #dce6f7;
+}
+
+.metaStrip label {
+  min-height: 88px;
+  padding: 22px 20px 18px 0;
+}
+
+.metaStrip label + label {
+  padding-left: 20px;
+  border-left: 1px solid #dce6f7;
+}
+
+.metaStrip span {
+  display: block;
+  margin-bottom: 10px;
+  color: #8ca0c5;
+  font: 850 11px 'JetBrains Mono', monospace;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+// Um só tamanho e uma só cor para os quatro campos da faixa. Eles são de tipos diferentes
+// (Input, Select e DatePicker) e cada um traz a própria fonte: o "—" de BPM e Tom saía maior e
+// mais escuro que o de Gênero e Lançamento, e a linha parecia desalinhada.
+.metaStrip :global(.ant-input),
+.metaStrip :global(.ant-picker),
+.metaStrip :global(.ant-select-selector) {
+  width: 100%;
+  padding: 0 !important;
+  border: 0 !important;
+  color: #405985 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: var(--meta-font);
+  font-weight: 650;
+}
+
+// O Select tem a mesma casca do DatePicker: o texto escolhido mora em um span interno, que
+// ignora a fonte do container.
+.metaStrip :global(.ant-select) {
+  width: 100%;
+}
+
+.metaStrip :global(.ant-select-selection-item),
+.metaStrip :global(.ant-select-selection-placeholder) {
+  padding: 0 !important;
+  color: #405985 !important;
+  font-size: var(--meta-font);
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.metaStrip :global(.ant-select-selection-placeholder) {
+  color: #98a9c6 !important;
+}
+
+.metaStrip :global(.ant-select-selection-search-input) {
+  height: auto !important;
+  font-size: var(--meta-font) !important;
+  font-weight: 650;
+}
+
+// O DatePicker aninha o <input>; sem isto ele voltaria à fonte padrão dentro da casca já sem
+// borda. O clamp é o que impede "14/08/2026" de ser cortado quando a janela encolhe — texto
+// livre pode truncar com reticências, uma data pela metade vira desinformação.
+.metaStrip :global(.ant-picker-input > input) {
+  color: #405985 !important;
+  font-size: var(--meta-font);
+  font-weight: 650;
+}
+
+.metaStrip :global(.ant-picker-input > input::placeholder),
+.metaStrip :global(.ant-input::placeholder) {
+  color: #98a9c6 !important;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 30px 0;
+}
+
+.uploadButton {
+  min-width: 142px;
+  min-height: 48px;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: #2f60f6 !important;
+  color: #fff !important;
+  box-shadow: 0 14px 28px rgba(47, 96, 246, .24) !important;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.filterButton {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border: 1px solid #dce6f7;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #405985;
+  background: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  box-shadow: 0 10px 22px rgba(74, 99, 145, .08);
+  transition: color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.filterButton:hover {
+  border-color: rgba(47, 96, 246, .45);
+  color: #2f60f6;
+  box-shadow: 0 14px 26px rgba(47, 96, 246, .13);
+  transform: translateY(-1px);
+}
+
+.versionList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.version {
+  overflow: hidden;
+  border: 1px solid #dce6f7;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(74, 99, 145, .1);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.version:hover,
+.primary {
+  border-color: rgba(47, 96, 246, .28);
+  box-shadow: 0 26px 62px rgba(47, 96, 246, .14);
+}
+
+.version:hover {
+  transform: translateY(-1px);
+}
+
+.versionIdentity {
+  min-width: 0;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f6f9ff;
+}
+
+.versionTitle {
+  min-width: 0;
+  flex: 1;
+}
+
+.versionBadges {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.versionIdentity img,
+.versionIdentity i {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #9a4fd1, #2f60f6);
+  box-shadow: 0 10px 22px rgba(57, 79, 123, .16);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 850;
+  object-fit: cover;
+}
+
+.versionIdentity strong {
+  min-width: 0;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.versionIdentity strong {
+  color: #2f4164;
+  font-size: 20px;
+  font-weight: 850;
+}
+
+.versionBadges small {
+  padding: 6px 9px;
+  border: 1px solid #d6e2f7;
+  border-radius: 8px;
+  color: #5f76a3;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+// Favoritar a versão principal direto na lista. Apagada é um convite ("marque esta"); acesa é
+// o estado — a estrela cheia substitui a etiqueta "Principal" que existia aqui.
+.primaryStar {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #b7c4da;
+  background: transparent;
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 0;
+  transition: color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.primaryStar:hover {
+  color: #e0ad3c;
+  background: #fdf4de;
+  transform: scale(1.08);
+}
+
+.primaryStarOn {
+  color: #e0ad3c;
+}
+
+.primaryStarOn svg {
+  fill: currentColor;
+}
+
+.versionPlayback {
+  min-height: 88px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.waveOpen em {
+  color: #8ca0c5;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.waveformloading i { animation: waveform-pulse 1s ease-in-out infinite alternate; }
+.waveformfallback i { opacity: .46; }
+.waveformready i { opacity: 1; }
+
+@keyframes waveform-pulse {
+  from { opacity: .24; }
+  to { opacity: .78; }
+}
+
+.pending { background: #fbfcff; }
+.pending .waveOpen { cursor: default; }
+
+.versionActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.versionActions a {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #405985;
+  background: #eef4ff;
+}
+
+.emptyVersions {
+  min-height: 170px;
+  padding: 34px;
+  border: 1px dashed #c8d7f0;
+  border-radius: 18px;
+  display: grid;
+  place-content: center;
+  gap: 7px;
+  color: #6f83aa;
+  text-align: center;
+}
+
+.emptyVersions strong { color: #405985; font-size: 17px; }
+.emptyVersions span { font-size: 14px; }
+
+.versionTop {
+  min-height: 64px;
+  padding: 14px 20px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 1.65fr;
+  gap: 24px;
+  align-items: center;
+  background: #f6f9ff;
+}
+
+.authorWrap {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.authorWrap img,
+.authorWrap i {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: linear-gradient(135deg, #9a4fd1, #2f60f6);
+  display: grid;
+  place-items: center;
+  object-fit: cover;
+  color: #fff;
+  font-style: normal;
+  font-weight: 850;
+  box-shadow: 0 12px 26px rgba(65, 87, 128, .18);
+}
+
+.authorWrap strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #2f4164;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.versionMeta {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 20px;
+  align-items: center;
+  color: #405985;
+  font-size: 22px;
+  font-weight: 550;
+}
+
+.versionMeta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.versionMeta a,
+.versionMeta em {
+  justify-self: end;
+  border: 2px solid #2f60f6;
+  border-radius: 10px;
+  padding: 9px 16px;
+  color: #2f60f6;
+  background: rgba(47, 96, 246, .06);
+  text-decoration: none;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.autosave {
+  min-width: 0;
+  color: #7f92b6;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.autosavesaving { color: #2f60f6; }
+.autosaveerror { color: #d84b63; }
+.autosavesaved { color: #5d9a73; }
+
+.versionMeta em {
+  border-color: #dce6f7;
+  color: #7f92b6;
+  background: #f8fbff;
+}
+
+.waveRow {
+  width: 100%;
+  padding: 24px 24px 28px;
+  border: 0;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  color: #2f60f6;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.waveOpen {
+  position: relative;
+  height: 62px;
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  border: 0;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  cursor: pointer;
+}
+
+.waveOpen :global(.wavesurfer-host) {
+  width: 100%;
+  height: 62px;
+}
+
+.waveOpen :global(.wavesurfer-host) ::part(cursor) {
+  display: none;
+}
+
+.waveOpen :global(.wavesurfer-loading),
+.waveOpen :global(.wavesurfer-error) {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  pointer-events: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.waveOpen :global(.wavesurfer-loading) {
+  color: #6f84aa;
+  background: linear-gradient(90deg, rgba(240, 245, 255, .92), rgba(255, 255, 255, .42), rgba(240, 245, 255, .92));
+  background-size: 200% 100%;
+  animation: waveform-shimmer 1.2s ease-in-out infinite;
+}
+
+.waveOpen :global(.wavesurfer-error) {
+  color: #8a98ad;
+  background: rgba(245, 248, 253, .82);
+}
+
+@keyframes waveform-shimmer {
+  to { background-position: -200% 0; }
+}
+
+.play {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: #2f60f6;
+  font-size: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.play:disabled {
+  color: #aebbd0;
+  cursor: not-allowed;
+}
+
+.waveform {
+  height: 62px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+}
+
+.waveform i {
+  width: 4px;
+  min-height: 14px;
+  height: var(--bar-height);
+  flex: 0 0 4px;
+  border-radius: 999px;
+  background: #405985;
+}
+
+.versionFooter {
+  padding: 0 20px 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  color: #7f92b6;
+  font-size: 13px;
+}
+
+.versionFooter small {
+  color: #405985;
+  font-weight: 800;
+}
+
+.versionFooter em {
+  padding: 5px 11px;
+  border-radius: 999px;
+  color: #181818;
+  background: #edc663;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.versionFooter button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #405985;
+  background: #eef4ff;
+  cursor: pointer;
+}
+
+.versionFooter .commentCount {
+  width: auto;
+  min-width: 36px;
+  padding: 0 9px;
+  gap: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+// Grudada no topo e do tamanho da tela: o chat é uma conversa, não um trecho do documento.
+// Antes ele esticava junto com a lista de versões (o grid é stretch) e a coluna inteira subia
+// enquanto a pessoa rolava as faixas — para responder era preciso rolar de volta.
+// `align-self: start` é o que impede o stretch de anular a altura fixa.
+.collabPanel {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  min-width: 0;
+  height: calc(100vh - 128px);
+  padding: 0;
+  border: 1px solid #dce6f7;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 32px 80px rgba(74, 99, 145, .12);
+}
+
+.collabAvatars {
+  margin: 0 0 28px 14px;
+}
+
+.collabAvatars img,
+.collabAvatars i {
+  width: 48px;
+  height: 48px;
+}
+
+.chatHeader {
+  width: 100%;
+  min-height: 74px;
+  margin: 0;
+  padding: 0 22px;
+  border-bottom: 1px solid #dce6f7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.chatHeader > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chatHeader > div > svg {
+  color: #2f60f6;
+  font-size: 16px;
+}
+
+.chatHeader strong {
+  color: #405985;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.chatHeader small {
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #6f83aa;
+  background: #eef4ff;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.chatMessages {
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.chatMessage {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.chatMessage > img,
+.chatMessage > i {
+  width: 34px;
+  height: 34px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #9a4fd1;
+  box-shadow: 0 7px 16px rgba(57, 79, 123, .16);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  object-fit: cover;
+}
+
+.chatMessage strong { display: block; color: #405985; font-size: 13px; font-weight: 850; }
+.chatMessage small { display: block; margin-top: 2px; color: #8ca0c5; font-size: 10px; }
+.chatMessage p { margin: 6px 0 0; color: #5d7198; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+
+.chatEmpty {
+  min-height: 220px;
+  padding: 32px 18px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 7px;
+  color: #7f92b6;
+  text-align: center;
+}
+
+.chatEmpty svg {
+  width: 42px;
+  height: 42px;
+  padding: 10px;
+  border-radius: 14px;
+  color: #2f60f6;
+  background: #eef4ff;
+}
+.chatEmpty strong { color: #405985; font-size: 14px; }
+.chatEmpty span { font-size: 12px; line-height: 1.45; }
+
+.chatComposer {
+  width: 100%;
+  margin-top: auto;
+  padding: 14px 18px 18px;
+  border-top: 1px solid #dce6f7;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chatComposer :global(.ant-input) {
+  min-height: 42px;
+  border-color: #dce6f7;
+  border-radius: 12px;
+  color: #405985;
+  background: #f8fbff;
+  box-shadow: none;
+}
+
+.chatComposer button {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border: 0;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #2f60f6;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(47, 96, 246, .24);
+}
+
+.chatComposer button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.chatAccess,
+.chatError { width: auto; margin: -8px 18px 14px; color: #7f92b6; font-size: 12px; line-height: 1.45; }
+.chatError { color: #c64d5b; }
+
+.sliders {
+  width: 46px;
+  height: 46px;
+  margin-top: 30px;
+  border: 1px solid #dce6f7;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #405985;
+  background: #fff;
+  box-shadow: 0 16px 32px rgba(74, 99, 145, .12);
+  cursor: pointer;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #6f83aa;
+  font-size: 13px;
+}
+
+.form :global(.ant-input),
+.form :global(.ant-select-selector) {
+  min-height: 40px;
+}
+
+.form input[type='file'] {
+  color: #6f83aa;
+}
+
+@media (max-width: 1080px) {
+  .page {
+    padding: 22px 18px 36px;
+  }
+
+  .header,
+  .content {
+    max-width: 920px;
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  // Em uma coluna só o chat vem depois das versões: fixá-lo no topo o esconderia.
+  .collabPanel {
+    position: static;
+    height: auto;
+    min-height: 360px;
+    display: flex;
+  }
+
+  .collabAvatars,
+  .projectCard,
+  .sliders {
+    margin: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .header {
+    flex-wrap: wrap;
+    gap: 10px;
+    row-gap: 10px;
+  }
+
+  // A etiqueta sai do centro absoluto: com o header quebrando em linhas, ela caía EM CIMA da
+  // pílula de status. Vira um kicker no topo, em cima de tudo, que é onde ela não disputa espaço.
+  .spaceLabel {
+    position: static;
+    order: 0;
+    width: 100%;
+    transform: none;
+  }
+
+  // Tudo numa linha só: [voltar] título [status] [editar]. O DOM traz o status e o "editar"
+  // depois da etiqueta e do autosave, e sem ordem explícita eles quebravam para uma segunda
+  // linha, soltos embaixo do título. A ordem aqui é a de leitura.
+  .back { order: 1; }
+  // `flex-basis: 0`, não `auto`: com wrap ligado, um item cuja base é o próprio conteúdo QUEBRA
+  // de linha em vez de encolher. Base zero faz o título ceder espaço (ele já tem reticências) e
+  // a linha nunca transborda.
+  .titleBlock { order: 2; flex: 1 1 0; }
+  .statusPill,
+  .statusReadOnly { order: 3; }
+  .editProject { order: 4; }
+  .autosave { order: 5; }
+
+  .titleLine {
+    gap: 8px;
+  }
+
+  .titleLine h1 {
+    font-size: 25px;
+  }
+
+  .titleLine > span {
+    font-size: 9px;
+  }
+
+  .autosave {
+    width: 100%;
+  }
+
+  // O `min-width: 188px` do desktop é o que estourava a linha: com ele, voltar + título + status
+  // + editar não cabiam em 375px e o status era empurrado para baixo. Aqui a pílula encolhe até
+  // o próprio texto ("Composição" é o mais longo) e a linha fecha.
+  .statusPill,
+  .statusReadOnly {
+    min-width: 0;
+    margin-left: 0;
+  }
+
+  .statusPill {
+    height: 40px;
+  }
+
+  // O corpo do texto acompanha a largura da tela: em 375px "Composição" (o rótulo mais longo)
+  // não cabia no corpo fixo e era cortado, passando por baixo da seta.
+  .statusPill,
+  .statusReadOnly {
+    font-size: clamp(11px, 3vw, 14px);
+  }
+
+  // A seta é posicionada em absoluto pelo antd: sem reservar o espaço dela à direita, o texto
+  // corria por baixo. 26px é a seta (12px) + respiro dos dois lados.
+  // O antd fixa 14px no .ant-select-selector; sem herdar aqui, o clamp da pílula não chegava
+  // ao texto (o item herda do selector, não da raiz).
+  .statusPill :global(.ant-select-selector) {
+    min-height: 40px !important;
+    padding: 0 26px 0 14px !important;
+    font-size: inherit !important;
+  }
+
+  .statusPill :global(.ant-select-selection-item) {
+    padding-inline-end: 0 !important;
+    overflow: hidden;
+    font-size: inherit;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .statusPill :global(.ant-select-arrow) {
+    inset-inline-end: 9px;
+    font-size: 11px;
+  }
+
+  // Sangra até as bordas: numa tela estreita o cartão dentro do padding da página empilhava dois
+  // recuos (18px da página + 22px dele) e sobrava pouco para o conteúdo, com uma moldura que não
+  // separa nada — é o único bloco da tela. A margem negativa cancela o padding da página.
+  .workspace {
+    margin-right: -18px;
+    margin-left: -18px;
+    padding: 22px 18px;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .collabPanel {
+    margin-right: -18px;
+    margin-left: -18px;
+    padding: 0;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  // Dois por linha, não empilhados: os quatro campos quase sempre estão vazios ("—"), e uma
+  // coluna só virava ~350px de faixa vazia antes de chegar nas versões, que são o assunto da
+  // tela. Em 2x2 a mesma informação ocupa metade da altura e lê como ficha técnica.
+  .metaStrip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metaStrip label {
+    min-height: 0;
+    padding: 14px 14px 14px 0;
+  }
+
+  // A grade é redesenhada aqui: divisória vertical só na 2ª coluna, horizontal só da 2ª linha
+  // em diante. A regra de `label + label` do desktop desenhava uma borda por item empilhado.
+  .metaStrip label + label {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  .metaStrip label:nth-child(2n) {
+    padding-left: 14px;
+    border-left: 1px solid #dce6f7;
+  }
+
+  .metaStrip label:nth-child(n + 3) {
+    border-top: 1px solid #dce6f7;
+  }
+
+  .sectionHeader {
+    margin: 26px 0;
+  }
+
+  .uploadButton {
+    min-width: 132px;
+  }
+
+  .versionTop {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .versionIdentity {
+    padding: 14px 16px 10px;
+  }
+
+  .versionBadges {
+    gap: 6px;
+  }
+
+  .versionPlayback {
+    padding: 16px;
+  }
+
+  .versionMeta {
+    grid-template-columns: 1fr 1fr;
+    font-size: 18px;
+  }
+
+  .versionMeta a,
+  .versionMeta em {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .waveRow {
+    padding: 20px 18px;
+  }
+
+  .waveform {
+    gap: 5px;
+  }
+
+  .versionFooter {
+    padding: 0 18px 18px;
+    grid-template-columns: 1fr auto;
+  }
+
+  .versionActions {
+    gap: 5px;
+  }
+
+  .chatMessages {
+    max-height: 310px;
+    flex: none;
+  }
+
+  .collabPanel {
+    display: flex;
+  }
+}

@@ -213,10 +213,11 @@ h3 {
 .ant-dropdown-menu-sub,
 .ant-dropdown-menu-root {
   -webkit-app-region: no-drag !important;
-  background-color: #282828 !important;
-  border-radius: 4px !important;
-  -webkit-box-shadow: 0 16px 24px rgba(0, 0, 0, 0.3), 0 6px 8px rgba(0, 0, 0, 0.2) !important;
-  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.3), 0 6px 8px rgba(0, 0, 0, 0.2) !important;
+  background-color: #fff !important;
+  border: 1px solid #e3eaf3;
+  border-radius: 10px !important;
+  -webkit-box-shadow: 0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08) !important;
+  box-shadow: 0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08) !important;
   max-height: calc(100vh - 24px) !important;
   max-width: 350px !important;
   min-width: 160px !important;
@@ -224,18 +225,29 @@ h3 {
   padding: 4px !important;
 
   li {
-    color: white !important;
+    color: #60749a !important;
 
     &.active {
-      color: #9A4FD1 !important;
+      color: #4267b9 !important;
+    }
+
+    // Item destrutivo continua vermelho: o `!important` da linha acima também apagava o
+    // estado de perigo do antd, e "Excluir" ficava igualzinho a "Renomear".
+    &.ant-dropdown-menu-item-danger {
+      color: #c0405c !important;
+
+      &:hover {
+        background: #fdeef1 !important;
+        color: #c0405c !important;
+      }
     }
   }
 
   .ant-dropdown-menu-submenu,
   .ant-dropdown-menu-item {
     border: 0;
-    border-radius: 2px;
-    color: hsla(0, 0%, 100%, 0.9);
+    border-radius: 7px;
+    color: #60749a;
     cursor: default;
     gap: 12px;
     text-decoration: none;
@@ -263,16 +275,16 @@ h3 {
     .ant-dropdown-menu-title-content {
       font-weight: 500;
       font-size: 0.875rem;
-      color: hsla(0, 0%, 100%, 0.9);
+      color: inherit;
     }
   }
 }
 
 .ant-dropdown-menu-item-selected {
-  background-color: #282828 !important;
+  background-color: #eef3fb !important;
 
   span {
-    color: #1db954 !important;
+    color: #4267b9 !important;
   }
 }
 
@@ -292,7 +304,7 @@ h3 {
   padding: 0 !important;
 
   svg {
-    fill: hsla(0, 0%, 100%, 0.9);
+    fill: currentColor;
   }
   .ant-dropdown-menu-submenu-title {
     width: 100%;
@@ -308,7 +320,7 @@ h3 {
 
 .ant-dropdown-menu-submenu:hover,
 .ant-dropdown-menu-item:hover {
-  background: #ffffff17 !important;
+  background: #eef3fb !important;
   // .ant-dropdown-menu-title-content {
   //   // color: #1db954 !important;
   // }
@@ -582,22 +594,24 @@ h3 {
 
 // ── Tab bar do mobile (rodapé, in-flow abaixo do banner) ─────────────────────
 // A sidebar é oculta no mobile; esta barra navega entre os módulos do artista.
-// Player de faixas do catálogo — card flutuante #333842 arredondado (ref. Frame 75/Home.svg).
-// Desktop: controles + progresso + volume à ESQUERDA, capa + info no MEIO, fechar à direita.
+// Player de músicas — barra de trabalho integrada ao rodapé do app.
+// Desktop: controles + progresso + volume à ESQUERDA, faixa no centro e ações à direita.
 .local-player-bar {
   position: fixed;
-  // Mesma geometria EXATA do banner "Assine Pro" (que ele substitui): 7px de margem, 68px, radius 8.
-  left: 7px;
-  right: 7px;
-  bottom: 7px;
-  min-height: 68px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 76px;
   z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 10px 20px; // 48 (capa) + 20 = 68px, mesma altura do banner
-  background: #333842;
-  border-radius: 8px;
+  gap: 18px;
+  padding: 12px 36px;
+  color: #3d5786;
+  background: #ffffff;
+  border-top: 1px solid #d9e5f8;
+  border-radius: 0;
+  box-shadow: 0 -12px 30px rgba(48, 84, 145, 0.11);
 
   .lpb-controls {
     flex: 0 0 auto;
@@ -611,11 +625,17 @@ h3 {
     height: 40px;
     border-radius: 50%;
     border: none;
-    background: #fff;
+    color: #fff;
+    background: #2f61f5;
+    box-shadow: 0 8px 16px rgba(47, 97, 245, 0.2);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  .lpb-play:disabled {
+    opacity: 0.55;
+    cursor: default;
   }
   .lpb-progress {
     flex: 1 1 auto;
@@ -627,7 +647,7 @@ h3 {
   .lpb-time {
     flex: 0 0 auto;
     min-width: 36px;
-    color: #b3b3b3;
+    color: #7185aa;
     font-size: 11px;
     font-variant-numeric: tabular-nums;
     &:first-child { text-align: right; }
@@ -635,7 +655,7 @@ h3 {
   .lpb-seek {
     flex: 1;
     height: 4px;
-    accent-color: #e0e0e0;
+    accent-color: #2f61f5;
     cursor: pointer;
   }
   .lpb-volume {
@@ -647,7 +667,7 @@ h3 {
   .lpb-volume-slider {
     width: 100px;
     height: 4px;
-    accent-color: #e0e0e0;
+    accent-color: #2f61f5;
     cursor: pointer;
   }
   .lpb-track {
@@ -666,7 +686,7 @@ h3 {
     border-radius: 6px;
   }
   .lpb-track:hover, .lpb-track:focus-visible {
-    background: rgba(255, 255, 255, 0.08);
+    background: #f1f6ff;
     outline: none;
   }
   .lpb-cover {
@@ -678,7 +698,7 @@ h3 {
   }
   .lpb-meta { min-width: 0; }
   .lpb-title {
-    color: #fff;
+    color: #294c83;
     font-weight: 600;
     font-size: 14px;
     white-space: nowrap;
@@ -686,7 +706,7 @@ h3 {
     text-overflow: ellipsis;
   }
   .lpb-sub {
-    color: #b3b3b3;
+    color: #7185aa;
     font-size: 12px;
     white-space: nowrap;
     overflow: hidden;
@@ -696,10 +716,110 @@ h3 {
     flex: 0 0 auto;
     margin-left: auto;
   }
+  .lpb-expand {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px !important;
+    color: #2f61f5;
+    background: #edf3ff !important;
+  }
+  .lpb-expand:hover,
+  .lpb-expand:focus-visible {
+    color: #1f4fd9;
+    background: #dfeaff !important;
+    outline: 2px solid rgba(47, 97, 245, .35);
+  }
 }
 // A linha de progresso no rodapé só existe no mobile (no desktop o progresso é inline).
 .lpb-progress-mobile {
   display: none;
+}
+
+// Espaço JAM mantém a mesma barra global para que a reprodução seja contínua
+// entre a lista de músicas, o projeto e a visualização completa.
+body.jam-project-space .local-player-bar {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 76px;
+  padding: 12px 36px;
+  gap: 18px;
+  color: #3d5786;
+  background: #ffffff;
+  border-top: 1px solid #d9e5f8;
+  border-radius: 0;
+  box-shadow: 0 -12px 30px rgba(48, 84, 145, 0.11);
+
+  // `:not(.lpb-play)` como nas regras de hover logo abaixo: sem essa exclusão, o seletor pegava
+  // TAMBÉM o botão de tocar e o deixava transparente — e como ele tem um elemento a mais
+  // (`... button` contra `... .lpb-play`), ganhava do azul mesmo os dois sendo !important. No
+  // Espaço Jam o play sumia: ícone branco sobre fundo branco.
+  .lpb-controls button:not(.lpb-play),
+  .lpb-close,
+  .lpb-volume button {
+    color: #49638f !important;
+    background: transparent !important;
+    border-radius: 8px;
+    transition: background-color 0.16s ease, color 0.16s ease;
+  }
+
+  .lpb-controls button:not(.lpb-play):hover:not(:disabled),
+  .lpb-controls button:not(.lpb-play):focus-visible:not(:disabled),
+  .lpb-close:hover,
+  .lpb-close:focus-visible,
+  .lpb-volume button:hover,
+  .lpb-volume button:focus-visible {
+    color: #294c83 !important;
+    background: #edf3ff !important;
+    outline: 2px solid rgba(47, 97, 245, 0.28);
+    outline-offset: 2px;
+  }
+
+  .lpb-play {
+    color: #ffffff !important;
+    background: #2f61f5 !important;
+    box-shadow: 0 8px 16px rgba(47, 97, 245, 0.2);
+  }
+
+  .lpb-play:hover:not(:disabled),
+  .lpb-play:focus-visible:not(:disabled) {
+    color: #ffffff !important;
+    background: #1f4fd9 !important;
+    outline: 2px solid rgba(47, 97, 245, 0.32);
+    outline-offset: 2px;
+  }
+
+  .lpb-time,
+  .lpb-sub {
+    color: #7185aa;
+  }
+
+  .lpb-title {
+    color: #294c83;
+  }
+
+  .lpb-track:hover,
+  .lpb-track:focus-visible {
+    background: #f1f6ff;
+  }
+
+  .lpb-seek,
+  .lpb-volume-slider {
+    accent-color: #2f61f5;
+  }
+
+  .lpb-expand {
+    color: #2f61f5;
+    background: #edf3ff !important;
+  }
+
+  .lpb-expand:hover,
+  .lpb-expand:focus-visible {
+    color: #1f4fd9;
+    background: #dfeaff !important;
+    outline-color: rgba(47, 97, 245, 0.35);
+  }
 }
 
 .mobile-nav {
@@ -802,21 +922,42 @@ h3 {
     font-size: 12px !important;
   }
 
-  // ── Player do catálogo no mobile ──────────────────────────────────────────────
-  // Card FLUTUANTE acima da navbar (ref. Home.svg): #333842 (já no base), cantos 10px, 8px de
-  // margem lateral, ~61px. Navbar = 64px; com o banner (84px) a navbar sobe, o card sobe junto.
+  // ── Player de músicas no mobile ──────────────────────────────────────────────
+  // Mantém a barra contínua no rodapé, sem as margens do player legado.
   .local-player-bar {
-    left: 8px;
-    right: 8px;
-    bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px);
-    min-height: 0; // no mobile o card é compacto (não os 68px do desktop)
-    border-radius: 10px;
-    gap: 12px; // mesmo ritmo dos controles, pra não colar o volume no "próxima"
-    padding: 9px 12px;
-    overflow: hidden; // respeita os cantos arredondados / linha de progresso
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 68px;
+    border-radius: 0;
+    gap: 12px;
+    padding: 9px 14px;
+    overflow: hidden;
+  }
+
+  body.jam-project-space .local-player-bar {
+    left: 0;
+    right: 0;
+    bottom: 0 !important;
+    min-height: 68px;
+    padding: 9px 14px;
+    border-radius: 0;
+
+    .lpb-progress-mobile {
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: linear-gradient(
+        to right,
+        #2f61f5 0,
+        #2f61f5 var(--pct, 0%),
+        #dce7fa var(--pct, 0%),
+        #dce7fa 100%
+      );
+    }
   }
   .main-container.has-bottom-banner .local-player-bar {
-    bottom: calc(148px + env(safe-area-inset-bottom, 0px) + 8px);
+    bottom: 0;
   }
   // Reordena o layout plano no compacto: capa/título 1º, depois controles, volume (só ícone) e X.
   .local-player-bar .lpb-track {
@@ -842,19 +983,23 @@ h3 {
     order: 3;
     margin-left: 0;
   }
+  .local-player-bar .lpb-expand {
+    order: 2;
+    width: 32px;
+    height: 32px;
+  }
   // No compacto somem: o progresso inline (tempos + range) e o slider de volume.
   .local-player-bar .lpb-progress,
   .local-player-bar .lpb-volume-slider {
     display: none;
   }
-  // Progresso = linha fina no rodapé (ref. Group 5.svg): 2px, SEM thumb, preenchido #E0E0E0
-  // sobre trilho #DBDBDB a 21%. O preenchido é feito por gradiente com a var --pct.
+  // Progresso = linha fina no rodapé. O preenchido é feito por gradiente com a var --pct.
   .local-player-bar .lpb-progress-mobile {
     display: block;
     position: absolute;
-    bottom: 2px; // rente à borda inferior do card (não flutuando perto da capa)
-    left: 10px;
-    right: 10px;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: auto;
     height: 2px;
     margin: 0;
@@ -865,10 +1010,10 @@ h3 {
     border-radius: 2px;
     background: linear-gradient(
       to right,
-      #e0e0e0 0,
-      #e0e0e0 var(--pct, 0%),
-      rgba(219, 219, 219, 0.21) var(--pct, 0%),
-      rgba(219, 219, 219, 0.21) 100%
+      #2f61f5 0,
+      #2f61f5 var(--pct, 0%),
+      #dce7fa var(--pct, 0%),
+      #dce7fa 100%
     );
     &::-webkit-slider-runnable-track {
       -webkit-appearance: none;
@@ -961,9 +1106,6 @@ h3 {
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
     transform-origin: bottom right;
     animation: morePop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .mobile-more-handle {
-    display: none; // não é mais um bottom sheet com "alça"
   }
   .mobile-more-item {
     display: flex;
@@ -1480,93 +1622,106 @@ a {
   }
 }
 
+// Popover / Popconfirm — ajustes que os tokens do antd não alcançam.
+//
+// As CORES vêm do ConfigProvider (theme.components.Popover em App.tsx), não daqui: o antd
+// injeta as próprias regras em runtime com especificidade alta, e um override de CSS acabava
+// perdendo — foi assim que o texto ficou branco sobre fundo branco.
+//
+// Aqui havia um bloco que pintava TODO popover de azul sólido (#0074e0) com texto branco. Ele
+// existia para um `.login-tooltip` que não é mais usado em lugar nenhum, mas o seletor pegava
+// `.ant-popover` inteiro — então cada confirmação do app saía num cartão azul de nenhum design.
 .ant-popover {
   max-width: 336px;
-  transition-duration: 300ms;
-  background-color: #0074e0;
-  border-radius: 8px;
-  -webkit-box-shadow: 0 4px 40px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.3);
-  color: #fff;
-  font-size: 14px;
-  line-height: 1.4;
-  outline: 0;
-  position: relative;
-  text-align: start;
-  -webkit-transition-property: visibility, opacity, -webkit-transform;
-  transition-property: visibility, opacity, -webkit-transform;
-  transition-property: transform, visibility, opacity;
-  transition-property: transform, visibility, opacity, -webkit-transform;
-
-  &.login-tooltip {
-    .ant-popover-inner {
-      padding: 10px;
-      padding-left: 16px;
-      padding-bottom: 5px;
-    }
-
-    .ant-popconfirm-inner-content {
-      display: flex;
-      flex-direction: row;
-    }
-
-    button {
-      svg {
-        fill: #fff !important;
-        height: 0.875rem !important;
-      }
-    }
-
-    .white-button {
-      display: none !important;
-    }
-    .ant-popconfirm-buttons {
-      margin-top: 0px;
-    }
-  }
-
-  .ant-popover-inner,
-  .ant-popover-arrow::before {
-    background-color: #0074e0;
-  }
 
   .ant-popover-inner {
-    padding: 16px;
-    position: relative;
-    transition-duration: 300ms;
+    border: 1px solid #e3eaf3;
+    padding: 14px 16px;
   }
 
+  // O `!important` aqui é deliberado e não preguiça: o antd injeta em runtime
+  // `.ant-popconfirm .ant-popconfirm-message .ant-popconfirm-title { color: <colorTextHeading> }`
+  // — três classes de especificidade, e o Popconfirm não expõe token de cor próprio (herda o
+  // global, que é do tema escuro). Sem isto, o texto sai branco sobre o fundo branco.
   .ant-popconfirm-title {
-    font-weight: 700;
-    color: #fff !important;
-    font-size: 1rem;
+    color: #52688f !important;
+    font-size: 14px;
+    font-weight: 800;
   }
 
+  // #60749a e não o #7c8db0 do resto do texto de apoio: sobre o branco do popover, o mais
+  // claro dava 3.3:1 de contraste e não alcançava o mínimo de 4.5 do WCAG.
   .ant-popconfirm-description {
-    color: #fff !important;
-    font-size: 0.875rem;
-    font-weight: 400;
+    color: #60749a !important;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  // Ícone de atenção no âmbar do design, no lugar do laranja padrão do antd.
+  .ant-popconfirm-message-icon .anticon {
+    color: #e0a12a;
   }
 
   .ant-popconfirm-buttons {
-    margin-top: 25px;
-  }
+    margin-top: 14px;
 
-  .ant-btn-text {
-    font-weight: 700;
-    font-size: 0.875rem;
-    color: #b3b3b3;
-    &:hover {
-      transform: scale(1.04);
-      color: #fff !important;
-      background: none !important;
+    .ant-btn {
+      height: 30px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
     }
-  }
 
-  .white-button {
-    height: auto !important;
-    &:hover {
-      background: none !important;
+    // Todo estado precisa declarar o FUNDO, inclusive o hover. O antd v5 pinta os estados
+    // pelas classes de variante (.ant-btn-color-*.ant-btn-variant-*) calculadas pelo
+    // darkAlgorithm: sem um fundo nosso no :hover, o Cancelar ficava preto (#2a2a2a) ao passar
+    // o mouse. `!important` porque essas regras do runtime nascem com especificidade alta.
+    .ant-btn-default {
+      border-color: #dce5f0 !important;
+      background: #fff !important;
+      color: #7c8db0 !important;
+
+      &:hover:not(:disabled) {
+        border-color: #b9cbed !important;
+        background: #f6f9ff !important;
+        color: #4267b9 !important;
+      }
+
+      &:active:not(:disabled) {
+        border-color: #9db7e6 !important;
+        background: #eef3fd !important;
+        color: #33528f !important;
+      }
+    }
+
+    // Confirmação destrutiva segue vermelha — é o sinal de que a ação não volta atrás.
+    // Mesmo vermelho do botão Excluir dos modais.
+    .ant-btn-dangerous {
+      border-color: transparent !important;
+      background: #d2474b !important;
+      color: #fff !important;
+
+      &:hover:not(:disabled) {
+        background: #b8363a !important;
+      }
+
+      &:active:not(:disabled) {
+        background: #9d2b2f !important;
+      }
+    }
+
+    .ant-btn-primary:not(.ant-btn-dangerous) {
+      border-color: transparent !important;
+      background: #3361ff !important;
+      color: #fff !important;
+
+      &:hover:not(:disabled) {
+        background: #2a54e0 !important;
+      }
+
+      &:active:not(:disabled) {
+        background: #2246bd !important;
+      }
     }
   }
 }
@@ -1649,5 +1804,87 @@ a {
     background: #8442b6 !important;
     color: #fff !important;
     border-color: #8442b6 !important;
+  }
+}
+
+@import './gsap-reference.css';
+
+// ── Painéis flutuantes do antd (data e hora) ─────────────────────────────────
+// Eles renderizam em PORTAL, na raiz do documento, fora do escopo dos modais — por isso
+// escaparam da repintura do redesign e continuavam com o roxo da marca antiga (#9a4fd1 no "OK",
+// roxo escuro na hora selecionada, que ainda deixava o número ilegível). Aqui a paleta é a de
+// ação do app: azul #3361ff.
+.ant-picker-dropdown {
+  .ant-picker-panel-container {
+    border: 1px solid #e1e7f0;
+    background: #fff !important;
+    box-shadow: 0 18px 45px rgba(18, 30, 56, 0.16);
+  }
+
+  // Coluna de horas/minutos
+  .ant-picker-time-panel-cell-inner {
+    color: #52668d !important;
+    border-radius: 8px;
+  }
+
+  .ant-picker-time-panel-cell-inner:hover {
+    background: #f1f5fd !important;
+  }
+
+  .ant-picker-time-panel-cell-selected .ant-picker-time-panel-cell-inner {
+    background: #eaf0ff !important;
+    color: #3361ff !important;
+    font-weight: 800;
+  }
+
+  // Calendário
+  .ant-picker-cell-in-view .ant-picker-cell-inner { color: #52668d; }
+  .ant-picker-cell:not(.ant-picker-cell-in-view) .ant-picker-cell-inner { color: #aab7cd; }
+
+  .ant-picker-cell .ant-picker-cell-inner:hover {
+    background: #f1f5fd !important;
+  }
+
+  .ant-picker-cell-selected .ant-picker-cell-inner,
+  .ant-picker-cell-range-start .ant-picker-cell-inner,
+  .ant-picker-cell-range-end .ant-picker-cell-inner {
+    background: #3361ff !important;
+    color: #fff !important;
+  }
+
+  .ant-picker-cell-today .ant-picker-cell-inner::before {
+    border-color: #3361ff !important;
+  }
+
+  // Cabeçalho e rodapé
+  .ant-picker-header,
+  .ant-picker-header button,
+  .ant-picker-content th {
+    color: #52668d;
+  }
+
+  .ant-picker-header button:hover { color: #3361ff; }
+
+  .ant-picker-footer,
+  .ant-picker-header {
+    border-color: #edf0f5;
+  }
+
+  .ant-picker-now-btn {
+    color: #3361ff !important;
+    font-weight: 700;
+  }
+
+  // O "OK" herda o mesmo seletor longo do primário no App.scss (seis classes + !important no
+  // hover); repetir a especificidade aqui é o que garante o azul.
+  .ant-picker-ok .ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost) {
+    border-color: #3361ff !important;
+    background: #3361ff !important;
+    color: #fff !important;
+  }
+
+  .ant-picker-ok .ant-btn.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):not(.ant-btn-background-ghost):hover {
+    border-color: #2a54e0 !important;
+    background: #2a54e0 !important;
   }
 }

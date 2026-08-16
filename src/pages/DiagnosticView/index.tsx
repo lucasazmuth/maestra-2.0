@@ -1,87 +1,91 @@
 import { FC, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Spin } from 'antd';
+
+import { FiLock, FiRefreshCw } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { useEntitlements } from '../../hooks/useEntitlements';
-import { PageHeader } from '../../components/PageHeader';
-import { RedoRealBanner } from '../../components/RedoRealBanner';
-import { PRODUCT_THEME, pageBg } from '../../components/productTheme';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
-import styles from '../ArtistCreate/ArtistCreate.module.scss';
+import reportStyles from '../ArtistCreate/ArtistCreate.module.scss';
+import { Spinner } from '../../components/spinner/spinner';
 
-// Visualização do diagnóstico REAL salvo, acessível a qualquer momento pelo
-// artista pago (a partir do Dashboard / Plano de Ação). Sem regerar nada.
 const DiagnosticView: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { id } = useParams();
-  const user = useAppSelector((s) => s.auth.user);
-  const artist = useAppSelector((s) => s.artists.items.find((a) => a.id === id));
-  const loaded = useAppSelector((s) => s.artists.loaded);
+  const user = useAppSelector((state) => state.auth.user);
+  const artist = useAppSelector((state) => state.artists.items.find((item) => item.id === id));
+  const loaded = useAppSelector((state) => state.artists.loaded);
+  const { isPro } = useEntitlements();
+
+  // Loop de crescimento: executou o plano e cresceu? Refaz o REAL pra fase subir. É recurso PRO —
+  // quem não é vai pra /assinatura. Esta é a ÚNICA entrada para /diagnostico/refazer; sem ela a
+  // rota fica registrada e inalcançável.
+  const onRedo = () => {
+    if (isPro) navigate(`/artists/${id}/diagnostico/refazer`);
+    else navigate('/assinatura');
+  };
 
   useEffect(() => {
     if (!loaded && user?.id) dispatch(artistsActions.fetchArtists(user.id));
   }, [loaded, user?.id, dispatch]);
 
-  const { isPro } = useEntitlements();
-  const realIndex = artist?.content?.realIndex ?? null;
-
-  // Refazer diagnóstico (recurso PRO): reabre o quiz REAL pré-preenchido e recalcula o perfil.
-  // Quem não é PRO vê o cadeado e vai pra /assinatura.
-  const onRedo = () => {
-    if (isPro) navigate(`/artists/${id}/diagnostico/refazer`);
-    else navigate('/assinatura');
-  };
-  const cm = artist?.content?.chartmetricProfile;
-  const chartmetric: Chartmetric | null = cm
-    ? {
-        monthly_listeners: cm.monthly_listeners ?? null,
-        monthly_listeners_rank: cm.monthly_listeners_rank ?? null,
-        career_rank: cm.career_rank ?? null,
-        top_cities: cm.top_cities as Chartmetric['top_cities'],
-        audience: (cm.audience as Chartmetric['audience']) ?? null,
-        playlists: (cm.playlists as Chartmetric['playlists']) ?? null,
-        similar: (cm.similar as Chartmetric['similar']) ?? null,
-      }
-    : null;
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = 'Diagnóstico REAL · Maestra';
+    return () => { document.title = previousTitle; };
+  }, []);
 
   if (!loaded) {
+    return <div className={reportStyles.pageReal}><Spinner loading>{null as any}</Spinner></div>;
+  }
+
+  const realIndex = artist?.content?.realIndex;
+  if (!artist || !realIndex) {
     return (
-      <div style={{ padding: 24 }}>
-        <div className={styles.analyzing}><Spin /> Carregando…</div>
+      <div className={`board-content page-view workspace-view ${reportStyles.pageReal}`}>
+        <section className={reportStyles.realProfileCard}>
+          <span className={reportStyles.realProfileKicker}>Diagnóstico REAL</span>
+          <h1 className={reportStyles.realProfileName}>Diagnóstico indisponível</h1>
+          <p className={reportStyles.realProfileDesc}>Este perfil ainda não tem um diagnóstico REAL salvo.</p>
+        </section>
       </div>
     );
   }
 
-  return (
-    <div style={{ padding: 24, minHeight: '100%', ...pageBg(PRODUCT_THEME.real.accent) }}>
-      {realIndex && (
-        <PageHeader
-          title="Diagnóstico REAL"
-          subtitle="Sua fase de carreira atual, com base nos seus dados reais. Refaça o diagnóstico quando evoluir."
-        />
-      )}
+  const spotifyProfile = artist.content?.spotifyProfile;
 
-      {realIndex ? (
-        <DiagnosticReport
-          realIndex={realIndex}
-          chartmetric={chartmetric}
-          artistName={artist?.name}
-          artistImage={artist?.content?.spotifyProfile?.image}
-          onContinue={() => navigate(`/artists/${id}/wizard`)}
-          enableStickyCta={false}
-          showPlanningCta={!artist?.content?.strategies?.length}
-          hideHero
-          // Banner do loop logo abaixo do card "Seu perfil de carreira".
-          belowProfile={<RedoRealBanner onRedo={onRedo} locked={!isPro} marginTop={0} marginBottom={28} />}
-        />
-      ) : (
-        <div style={{ background: '#181818', borderRadius: 12, padding: 32, textAlign: 'center', color: '#b3b3b3' }}>
-          Este perfil ainda não tem um diagnóstico REAL salvo.
+  return (
+    <div className={`board-content page-view workspace-view ${reportStyles.pageReal}`}>
+      <header className={reportStyles.diagnosticPageHeader}>
+        <div>
+          <p>Onde você está</p>
+          <h1>Diagnóstico REAL</h1>
+          <span>Sua fase de carreira atual, com base nos seus dados reais.</span>
         </div>
-      )}
+        <div className={reportStyles.headerActions}>
+          <button
+            type="button"
+            className={reportStyles.headerGhost}
+            onClick={onRedo}
+            title={isPro ? 'Refazer o diagnóstico e atualizar sua fase' : 'Refazer o diagnóstico é um recurso PRO'}
+          >
+            {isPro ? <FiRefreshCw size={14} /> : <FiLock size={14} />}
+            Refazer diagnóstico
+          </button>
+        </div>
+      </header>
+      <DiagnosticReport
+        realIndex={realIndex}
+        chartmetric={artist.content?.chartmetricProfile as Chartmetric | null}
+        artistName={artist.name}
+        artistImage={spotifyProfile?.image ?? null}
+        noSpotify={!spotifyProfile?.spotify_artist_id}
+        enableStickyCta={false}
+        showPlanningCta={false}
+        hideHero
+      />
     </div>
   );
 };

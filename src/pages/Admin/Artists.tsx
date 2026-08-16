@@ -1,5 +1,5 @@
 import { FC, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Input, Progress, Select, Spin, Table, Tabs, Tag, message, type TableColumnsType } from 'antd';
+import { Alert, Button, Input, Progress, Select, Table, Tabs, Tag, message, type TableColumnsType } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   FiActivity,
@@ -21,6 +21,7 @@ import dayjs from 'dayjs';
 import { supabase } from '../../lib/supabase';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import styles from './Artists.module.scss';
+import { Spinner } from '../../components/spinner/spinner';
 
 type Activity = 'active' | 'recent' | 'inactive' | 'never';
 
@@ -405,7 +406,7 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
   }, [artistId, nytaHistoryLoading]);
 
   if (loading && !detail) {
-    return <div className={styles.loading}><Spin size="large" /></div>;
+    return <div className={styles.loading}><Spinner loading>{null as any}</Spinner></div>;
   }
 
   if (failed || !detail) {
@@ -422,7 +423,7 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
     ['REAL', artist.adoption.areas.real],
     ['Planejamento', artist.adoption.areas.planning],
     ['Plano de ação', artist.adoption.areas.actionPlan],
-    ['Catálogo', artist.adoption.areas.catalog],
+    ['Músicas', artist.adoption.areas.catalog],
     ['Agenda', artist.adoption.areas.events],
     ['Equipe', artist.adoption.areas.team],
     ['Nyta', artist.adoption.areas.nyta],
@@ -562,10 +563,10 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
     },
     {
       key: 'catalog',
-      label: `Catálogo (${detail.catalog.total})`,
+      label: `Músicas (${detail.catalog.total})`,
       children: detail.catalog.total ? (
         <section className={`${styles.panel} ${styles.tabPanel}`}>
-          <SectionTitle title="Faixas cadastradas" subtitle="Status e última atualização das faixas adicionadas ao catálogo da Maestra." />
+          <SectionTitle title="Músicas cadastradas" subtitle="Status e última atualização das músicas adicionadas." />
           <div className={styles.chips}>{Object.entries(detail.catalog.byStatus).map(([status, count]) => <Tag key={status}>{CATALOG_STATUS[status] || status}: {count}</Tag>)}</div>
           <div className={styles.list}>
             {detail.catalog.items.map((item) => (
@@ -577,7 +578,7 @@ const ArtistDetailView: FC<{ artistId: string }> = ({ artistId }) => {
             ))}
           </div>
         </section>
-      ) : <EmptyModule title="Nenhuma faixa cadastrada" />,
+      ) : <EmptyModule title="Nenhuma música cadastrada" />,
     },
     {
       key: 'events',

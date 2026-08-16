@@ -128,7 +128,7 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
     {
       label: t('Operations', { defaultValue: 'Operação' }),
       items: [
-        { icon: <CatalogoIcon />, label: t('Catalog', { defaultValue: 'Catálogo' }), navTo: 'catalog', active: isActive('catalog'), locked: false },
+        { icon: <CatalogoIcon />, label: t('Catalog', { defaultValue: 'Músicas' }), navTo: 'catalog', active: isActive('catalog'), locked: false },
         { icon: <AgendaIcon />, label: t('Agenda', { defaultValue: 'Agenda' }), navTo: 'agenda', active: isActive('agenda'), locked: false },
         { icon: <EquipeIcon />, label: t('Team', { defaultValue: 'Equipe' }), navTo: 'team', active: isActive('team'), locked: !viewPlanning },
       ],
@@ -193,9 +193,14 @@ export const Sidebar: FC<{ collapsed?: boolean; hasBanner?: boolean }> = memo(({
                 >
                   {currentArtist.name}
                 </div>
-                {currentArtist.content?.spotifyProfile?.followers != null && (
+                {/* Chartmetric primeiro: a Web API do Spotify parou de devolver `followers`
+                    (ver comentário no Dashboard), então spotifyProfile.followers é nulo em
+                    quase todo artista. */}
+                {(currentArtist.content?.chartmetricProfile?.sp_followers
+                  ?? currentArtist.content?.spotifyProfile?.followers) != null && (
                   <div style={{ color: '#b3b3b3', fontSize: 12 }}>
-                    {currentArtist.content.spotifyProfile.followers.toLocaleString('pt-BR')}{' '}
+                    {(currentArtist.content?.chartmetricProfile?.sp_followers
+                      ?? currentArtist.content?.spotifyProfile?.followers)!.toLocaleString('pt-BR')}{' '}
                     {t('followers', { defaultValue: 'seguidores' })}
                   </div>
                 )}

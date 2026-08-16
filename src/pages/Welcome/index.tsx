@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
-import { AuroraBackdrop } from '../../components/AuroraBackdrop';
 import styles from './Welcome.module.scss';
 
 const REDUCE_MOTION =
@@ -13,7 +12,8 @@ const GREETING =
   'Bem-vindo à Maestra! Aqui a sua carreira vira estratégia, com a Nyta te guiando. Bora criar o seu primeiro perfil?';
 
 // Tela de boas-vindas pós-cadastro: a Maestra dá as boas-vindas (efeito de digitação) e
-// convida o artista a criar o primeiro perfil. Mantém o fundo roxo premium da tela original.
+// convida o artista a criar o primeiro perfil. Repintada no design claro do app — o
+// AuroraBackdrop saiu junto com o fundo preto.
 const Welcome: FC = () => {
   const navigate = useNavigate();
 
@@ -35,11 +35,10 @@ const Welcome: FC = () => {
 
   return (
     <div className={styles.page}>
-      <AuroraBackdrop />
       <div className={styles.pillWrap}>
         <div className={styles.pillGlow} aria-hidden />
         <div className={styles.pill}>
-          <MaestraBrand variant='lockup' tone='light' className={styles.pillText} />
+          <MaestraBrand variant='lockup' tone='dark' className={styles.pillText} />
         </div>
       </div>
 

@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import './styles/App.scss';
+import './styles/local-player-unified.scss';
 
 import i18next from 'i18next';
 import { FC, Suspense, lazy, useEffect, useState } from 'react';
@@ -14,7 +15,6 @@ import {
   Routes,
   useLocation,
   useNavigate,
-  useParams,
 } from 'react-router-dom';
 
 import { Provider } from 'react-redux';
@@ -26,7 +26,6 @@ import { supabase } from './lib/supabase';
 import { Spinner } from './components/spinner/spinner';
 import { AppLayout } from './components/Layout';
 import { RequireArtistPaid } from './components/RequireArtistPaid';
-import { useNytaModalStore } from './stores/nytaModalStore';
 
 // Pages
 import Login from './pages/Login';
@@ -34,6 +33,11 @@ import Signup from './pages/Signup';
 import Welcome from './pages/Welcome';
 const Landing = lazy(() => import('./pages/Landing'));
 const DiagnosticoReal = lazy(() => import('./pages/DiagnosticoReal'));
+// Página de referência da landing (rota /index2): existe pra avaliarmos o layout antes de mexer
+// na landing oficial. Não é linkada em lugar nenhum.
+const Landing2 = lazy(() => import('./pages/Landing2'));
+// Página institucional "Sobre" (a história da Anita): era uma seção da landing.
+const Sobre = lazy(() => import('./pages/Sobre'));
 const MusicRioAcademy = lazy(() => import('./pages/MusicRioAcademy'));
 const EventNiteroi = lazy(() => import('./pages/EventNiteroi'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
@@ -44,9 +48,13 @@ const Artists = lazy(() => import('./pages/Artists'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Catalog = lazy(() => import('./pages/Catalog'));
+const ProjectSpace = lazy(() => import('./pages/Catalog/ProjectSpace'));
 const Agenda = lazy(() => import('./pages/Agenda'));
 const Team = lazy(() => import('./pages/Team'));
+const Marketing = lazy(() => import('./pages/Marketing'));
+const Nyta = lazy(() => import('./pages/NytaChat'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Support = lazy(() => import('./pages/Support'));
 const Legal = lazy(() => import('./pages/Legal'));
 const Notifications = lazy(() => import('./pages/Notifications'));
 const Wizard = lazy(() => import('./pages/Wizard'));
@@ -131,7 +139,7 @@ const RequireAuth: FC = () => {
   const requesting = useAppSelector((s) => s.auth.requesting);
 
   if (requesting && user === undefined) {
-    return <Spinner loading>{null as any}</Spinner>;
+    return <Spinner loading global>{null as any}</Spinner>;
   }
   if (!user) return <Navigate to='/login' replace />;
   return <Outlet />;
@@ -166,31 +174,9 @@ const RequireAdmin: FC = () => {
       });
   }, [user, session]);
 
-  if (isAdmin === null) return <Spinner loading>{null as any}</Spinner>;
+  if (isAdmin === null) return <Spinner loading global>{null as any}</Spinner>;
   if (!isAdmin) return <Navigate to='/artists' replace />;
   return <Outlet />;
-};
-
-// ---- Nyta Chat Redirect (legacy route) ---------------------------------------------------
-
-/**
- * Redireciona /artists/:id/nyta para o dashboard do artista e abre o Floating Modal.
- * Envolvido em try/catch para não bloquear o dashboard se o modal falhar ao abrir.
- */
-const NytaChatRedirect: FC = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    navigate(`/artists/${id}`, { replace: true });
-    try {
-      useNytaModalStore.getState().open();
-    } catch (err) {
-      console.error('Failed to open Nyta modal after redirect:', err);
-    }
-  }, [id, navigate]);
-
-  return null;
 };
 
 // ---- Routes --------------------------------------------------------------------------------
@@ -207,6 +193,12 @@ const AppRoutes: FC = () => {
       {/* Landing pública (porta de entrada): header/footer próprios, sem AppLayout.
           Renderiza pra todos — o header adapta os CTAs pelo estado de login. */}
       <Route path='/' element={<Landing />} />
+
+      {/* Referência de layout, fora do fluxo do produto. */}
+      <Route path='/index2' element={<Landing2 />} />
+
+      {/* Sobre: pública e standalone, com o mesmo chrome escuro da landing. */}
+      <Route path='/sobre' element={<Sobre />} />
 
       {/* Página institucional do Diagnóstico REAL: pública e standalone (reusa header/footer
           da landing), acessível a quem ainda não tem conta. */}
@@ -251,6 +243,15 @@ const AppRoutes: FC = () => {
             destaque pra confirmação do pagamento. */}
         <Route path='/assinatura/sucesso' element={<SubscriptionSuccessPage />} />
 
+        {/* Refazer diagnóstico (PRO): é o MESMO quiz de /criar-artista em modo "redo", e
+            portanto tela cheia. Estava dentro do AppLayout e aparecia espremido no container
+            da página, com a barra de busca e o rail em volta de um fluxo que pede a tela
+            inteira. O gate continua: RequireArtistPaid lê o :id da URL e funciona fora do
+            layout. */}
+        <Route element={<RequireArtistPaid />}>
+          <Route path='/artists/:id/diagnostico/refazer' element={<ArtistCreate />} />
+        </Route>
+
         <Route element={<AppLayout />}>
           <Route path='/artists' element={<Artists />} />
 
@@ -262,24 +263,23 @@ const AppRoutes: FC = () => {
             <Route path='/artists/:id' element={<Dashboard />} />
             <Route path='/artists/:id/perfil' element={<Profile />} />
             <Route path='/artists/:id/catalog' element={<Catalog />} />
+            <Route path='/artists/:id/catalog/projects/:projectId' element={<ProjectSpace />} />
             <Route path='/artists/:id/agenda' element={<Agenda />} />
             <Route path='/artists/:id/action-plan' element={<ActionPlan />} />
             <Route path='/artists/:id/diagnostico' element={<DiagnosticView />} />
-            {/* Refazer diagnóstico (PRO): reaproveita a tela de quiz/diagnóstico em modo "redo" */}
-            <Route path='/artists/:id/diagnostico/refazer' element={<ArtistCreate />} />
             <Route path='/artists/:id/team' element={<Team />} />
+            <Route path='/artists/:id/marketing' element={<Marketing />} />
+            <Route path='/artists/:id/nyta' element={<Nyta />} />
           </Route>
           {/* /profile foi fundido na home do artista (Dashboard) */}
           <Route path='/artists/:id/profile' element={<Navigate to='..' relative='path' replace />} />
-
-          {/* ── Nyta Chat — redirects to dashboard + opens floating modal ── */}
-          <Route path='/artists/:id/nyta' element={<NytaChatRedirect />} />
 
           {/* ── Rotas sem gate (infra) ── */}
           <Route path='/assinatura' element={<SubscriptionPage />} />
           <Route path='/pagamento' element={<PaymentPage />} />
           <Route path='/notifications' element={<Notifications />} />
           <Route path='/settings' element={<Settings />} />
+          <Route path='/suporte' element={<Support />} />
           <Route path='/pagamentos' element={<Payments />} />
           <Route element={<RequireAdmin />}>
             <Route path='/admin/dashboard' element={<AdminDashboard />} />
@@ -311,7 +311,7 @@ const RootComponent: FC = () => {
     <Router>
       <AuthListener />
       <RecoveryHashGuard />
-      <Suspense fallback={<Spinner loading>{null as any}</Spinner>}>
+      <Suspense fallback={<Spinner loading global>{null as any}</Spinner>}>
         <AppRoutes />
       </Suspense>
     </Router>
@@ -338,6 +338,64 @@ function App() {
           colorText: '#ffffff',
           colorTextPlaceholder: '#8a8a8a',
           borderRadius: 8,
+        },
+        // Os flutuantes (popover, popconfirm, dropdown, tooltip) já vivem no redesign claro,
+        // então saem do algoritmo escuro por aqui — e não por CSS.
+        //
+        // Tentar corrigir isso no .scss não funciona de forma confiável: o antd injeta as
+        // próprias regras em runtime, com seletores de especificidade maior que a de um
+        // override normal (`.ant-popconfirm .ant-popconfirm-message .ant-popconfirm-title`), e
+        // o resultado era texto branco sobre fundo branco. Pelos tokens, a cor nasce certa.
+        components: {
+          Popover: {
+            colorBgElevated: '#ffffff',
+            colorText: '#7c8db0',
+            colorTextHeading: '#52688f',
+            borderRadiusLG: 12,
+            boxShadowSecondary: '0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08)',
+          },
+          Dropdown: {
+            colorBgElevated: '#ffffff',
+            colorText: '#60749a',
+            controlItemBgHover: '#eef3fb',
+            controlItemBgActive: '#eef3fb',
+            colorPrimary: '#4267b9',
+            borderRadiusLG: 10,
+            boxShadowSecondary: '0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08)',
+          },
+          Tooltip: {
+            colorBgSpotlight: '#3d4d6b',
+            colorTextLightSolid: '#ffffff',
+            borderRadius: 8,
+          },
+          // O calendário do DatePicker é outro portal com tema próprio — abria preto com o dia
+          // escolhido em roxo, mesmo com o campo já claro. Vale para o Espaço Jam e para a ficha
+          // da música.
+          DatePicker: {
+            colorBgElevated: '#ffffff',
+            colorText: '#52668d',
+            colorTextHeading: '#405985',
+            colorTextDisabled: '#c2cddf',
+            colorIcon: '#93a4c0',
+            colorIconHover: '#4267b9',
+            colorPrimary: '#3361ff',
+            colorSplit: '#e8eef8',
+            cellHoverBg: '#eef3fb',
+            borderRadiusLG: 12,
+            boxShadowSecondary: '0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08)',
+          },
+          // A lista que abre num Select é um portal com tema próprio: continuava preta com o
+          // item marcado em roxo (darkAlgorithm), mesmo com o campo já no design claro.
+          Select: {
+            colorBgElevated: '#ffffff',
+            colorText: '#52668d',
+            colorTextPlaceholder: '#aab7cd',
+            optionSelectedBg: '#eef3fb',
+            optionSelectedColor: '#2f4f8f',
+            optionActiveBg: '#f4f7fd',
+            borderRadiusLG: 10,
+            boxShadowSecondary: '0 14px 34px rgba(48, 70, 108, .16), 0 3px 10px rgba(48, 70, 108, .08)',
+          },
         },
       }}
     >

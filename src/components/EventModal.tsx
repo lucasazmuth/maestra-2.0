@@ -1,5 +1,6 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { Modal, Input, Select, DatePicker, TimePicker, Popconfirm, message, Button } from 'antd';
+import type { InputRef } from 'antd';
 import { FiTrash2 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
@@ -13,6 +14,9 @@ interface Props {
   artistId: string;
   event?: AgendaEvent | null;
   defaultDate?: string;
+  // Horário inicial já preenchido (ex.: clicar numa faixa vazia da agenda do dia). Só vale na
+  // criação — editando, o horário vem do próprio evento.
+  defaultTime?: string;
   onClose: () => void;
   onSaved: (e: AgendaEvent) => void;
   onDeleted?: (id: string) => void;
@@ -21,10 +25,14 @@ interface Props {
   deleteConfirmTitle?: string;
 }
 
-const empty = (date?: string): Partial<AgendaEvent> => ({
+const empty = (date?: string, time?: string): Partial<AgendaEvent> => ({
   title: '',
   type: 'other',
   date: date || dayjs().format('YYYY-MM-DD'),
+  start_time: time || null,
+  // Uma hora de duração como palpite: vindo de uma faixa da agenda, o fim em branco obrigaria a
+  // abrir mais um seletor para o caso mais comum. Continua editável.
+  end_time: time ? dayjs(time, 'HH:mm:ss').add(1, 'hour').format('HH:mm:ss') : null,
   status: 'scheduled',
 });
 
@@ -33,6 +41,7 @@ export const EventModal: FC<Props> = ({
   artistId,
   event,
   defaultDate,
+  defaultTime,
   onClose,
   onSaved,
   onDeleted,
@@ -40,12 +49,13 @@ export const EventModal: FC<Props> = ({
   deleteLabel = 'Excluir',
   deleteConfirmTitle = 'Excluir evento?',
 }) => {
-  const [draft, setDraft] = useState<Partial<AgendaEvent>>(empty(defaultDate));
+  const [draft, setDraft] = useState<Partial<AgendaEvent>>(empty(defaultDate, defaultTime));
   const [saving, setSaving] = useState(false);
+  const titleRef = useRef<InputRef>(null);
 
   useEffect(() => {
-    if (open) setDraft(event ? { ...event } : empty(defaultDate));
-  }, [open, event, defaultDate]);
+    if (open) setDraft(event ? { ...event } : empty(defaultDate, defaultTime));
+  }, [open, event, defaultDate, defaultTime]);
 
   const set = (patch: Partial<AgendaEvent>) => setDraft((d) => ({ ...d, ...patch }));
 
@@ -101,11 +111,16 @@ export const EventModal: FC<Props> = ({
       centered
       width={520}
       destroyOnHidden
+      // O antd devolve o foco ao container do modal quando a animação termina; o `autoFocus` do
+      // Input é engolido nesse caminho. Ao criar, o título é o único campo a preencher, então
+      // vale colocar o cursor nele assim que o modal abre.
+      afterOpenChange={(aberto) => { if (aberto && !event) titleRef.current?.focus(); }}
       rootClassName={modalStyles.modal}
       title={
         <div className={modalStyles.heading}>
           <span className={modalStyles.kicker}>Agenda</span>
           <span className={modalStyles.title}>
+            <i className={modalStyles.titleDot} aria-hidden />
             {draft.title?.trim() || (event ? 'Editar compromisso' : 'Novo compromisso')}
           </span>
           <span className={modalStyles.subtitle}>
@@ -132,7 +147,6 @@ export const EventModal: FC<Props> = ({
             </Popconfirm>
           )}
           <div className={modalStyles.footerActions}>
-            <Button onClick={onClose}>Cancelar</Button>
             <Button type='primary' onClick={handleSave} loading={saving}>
               Salvar
             </Button>
@@ -143,7 +157,14 @@ export const EventModal: FC<Props> = ({
       <div className={modalStyles.form}>
         <label className={modalStyles.field}>
           <span>Título</span>
-          <Input placeholder='Título do compromisso' value={draft.title} onChange={(e) => set({ title: e.target.value })} />
+          {/* autoFocus na criação: data, hora, tipo e status já vêm preenchidos, então o título
+              é literalmente o único campo a digitar antes de salvar. */}
+          <Input
+            ref={titleRef}
+            placeholder='Título do compromisso'
+            value={draft.title}
+            onChange={(e) => set({ title: e.target.value })}
+          />
         </label>
         <div className={modalStyles.fieldGrid}>
           <label className={modalStyles.field}>

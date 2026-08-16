@@ -1,42 +1,105 @@
-import { memo, useEffect, useRef, useState, type FC, type RefObject } from 'react';
+import { lazy, memo, Suspense, useEffect, useRef, useState, type FC, type ReactNode, type RefObject, type CSSProperties } from 'react';
 
-import { Col, Row } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
-import { Topbar } from './components/Topbar';
-import { Sidebar } from './components/Sidebar';
 import { MobileNav } from './components/MobileNav';
+import { SystemMenu } from './components/SystemMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
-import { StatusBanner, useStatusBanner } from '../AnnouncementBanner';
+import { MaestraBrand } from '../MaestraBrand';
+import { PlanTag } from '../PlanTag';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import { LocalPlayerBar } from '../LocalPlayerBar';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
-import { getLibraryCollapsed, uiActions } from '../../store/slices/ui';
+import { uiActions } from '../../store/slices/ui';
 import { fetchSubscriptionStatus, fetchPlanConfig } from '../../store/slices/subscription';
-import { PAYWALL_DISABLED } from '../../constants/maestra';
+import { PAYWALL_DISABLED, artistEntryRoute, isOnboardingComplete } from '../../constants/maestra';
 import useIsMobile from '../../utils/isMobile';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { useNytaModal } from '../../hooks/useNytaModal';
 import { ArtifactsPanel } from '../../pages/Wizard/ArtifactsPanel';
 import { enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
+import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { SearchIcon } from '../Icons';
+import { FiArrowRight } from 'react-icons/fi';
+import {
+  AgendaIcon,
+  CatalogoIcon,
+  DashboardIcon,
+  DiagnosticoIcon,
+  EquipeIcon,
+  MarketingIcon,
+  NotificationIcon,
+  PlanejamentoIcon,
+  PlanoAcaoIcon,
+  SystemHomeIcon,
+} from '../Icons/system';
+import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
+import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
+import { useJourneyState } from '../../hooks/useJourneyState';
 
 export interface LayoutContext {
   container: RefObject<HTMLDivElement | null>;
 }
 
+const REAL_CAREER_STAGES = [
+  'Beginner',
+  'Cult',
+  'Paradox',
+  'Moneymaker',
+  'Influencer',
+  'Bet',
+  'Outlier',
+  'Rising',
+  'Hype',
+  'Potential',
+  'Digital',
+  'Analog',
+  'Underpaid',
+  'Spotlight',
+  'Hit',
+  'Icon',
+] as const;
+
+const pathArtistId = (pathname: string): string | undefined =>
+  /^\/artists\/([^/]+)/.exec(pathname)?.[1];
+
+const firstInitials = (value?: string | null) =>
+  (value || 'Maestra')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+
+const ProfileMenuButton: FC<{
+  active: boolean;
+  icon: ReactNode;
+  label: ReactNode;
+  locked?: boolean;
+  onClick: () => void;
+}> = ({ active, icon, label, locked, onClick }) => (
+  <button type='button' className={active ? 'profile-current' : ''} onClick={onClick} title={locked ? 'Bloqueado' : undefined}>
+    <span className='menu-icon'>{icon}</span>
+    {typeof label === 'string' ? label : <span className='menu-text'>{label}</span>}
+  </button>
+);
+
+// Avaliação da plataforma: carregada sob demanda — o modal só existe quando alguém clica.
+const PlatformReviewModal = lazy(() =>
+  import('../PlatformReviewModal').then((m) => ({ default: m.PlatformReviewModal }))
+);
+
 export const AppLayout: FC = memo(() => {
   const dispatch = useAppDispatch();
   const container = useRef<HTMLDivElement>(null);
-  const libraryCollapsed = useAppSelector(getLibraryCollapsed);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const isMobile = useIsMobile();
-  const [isTablet, setIsTablet] = useState(false);
-  const rawBannerKind = useStatusBanner();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isOpen: nytaOpen } = useNytaModal();
+  const { isOpen: nytaOpen, open: openNyta } = useNytaModal();
 
   // O conteúdo rola dentro de .Main-section (não no body). Como o layout permanece
   // montado entre as rotas, sem este reset a nova tela herdava a posição da anterior.
@@ -62,14 +125,22 @@ export const AppLayout: FC = memo(() => {
   const isArtistsList = location.pathname.replace(/\/+$/, '') === '/artists';
   const playerHidden = isArtistsList || (isMobile && nytaOpen);
   const playerVisible = playerOpen && !playerHidden;
-  // No mobile o banner promocional ("Assine o Maestra Pro") toma espaço demais e não é crítico —
-  // escondemos só ele. Os avisos de pagamento (grace/pending) continuam aparecendo no mobile.
-  const bannerKind = playerVisible
-    ? null
-    : rawBannerKind === 'promo' && isMobile
-    ? null
-    : rawBannerKind;
   const userId = useAppSelector((s) => s.auth.user?.id);
+  const user = useAppSelector((s) => s.auth.user);
+  const artists = useAppSelector((s) => s.artists.items);
+  const routeArtistId = pathArtistId(location.pathname);
+  const currentArtist = routeArtistId ? artists.find((artist) => artist.id === routeArtistId) : undefined;
+  const isNytaPage = location.pathname.endsWith('/nyta');
+  const isNotificationsPage = location.pathname === '/notifications';
+  const openNytaPage = () => routeArtistId ? navigate(`/artists/${routeArtistId}/nyta`) : openNyta();
+  const { viewPlanning } = useArtistCapabilities(currentArtist);
+  const journey = useJourneyState(currentArtist);
+  const currentArtistImage = currentArtist?.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE;
+  const realStage = currentArtist?.content?.realIndex?.profile?.name;
+  // O REAL usa índice zero-based: Beginner = 0 e Icon = 15, como na referência visual.
+  // O arco percorre o intervalo completo entre a primeira e a última das 16 fases.
+  const realStageIndex = realStage ? Math.max(0, REAL_CAREER_STAGES.indexOf(realStage as typeof REAL_CAREER_STAGES[number])) : 0;
+  const realStageProgress = realStage ? `${(realStageIndex / (REAL_CAREER_STAGES.length - 1)) * 100}%` : '0%';
 
   // Solicita push automaticamente na primeira entrada autenticada. O navegador
   // pode bloquear pedidos sem gesto do usuário; nesse caso, Configurações é o
@@ -95,8 +166,11 @@ export const AppLayout: FC = memo(() => {
   }, [userId]);
   // Coluna de resultados do Planejamento Estratégico (publicada pelo Wizard via store global):
   // aparece como 3ª coluna, irmã da navbar e da página, só enquanto o wizard está montado.
+  // No mobile não há largura pra uma terceira coluna: o CSS (.wiz-artifacts) a transforma numa
+  // folha de tela cheia. Ela PRECISA montar lá também — o botão "Etapa X de 9" do cabeçalho do
+  // wizard é o único caminho pros resultados, e no mobile ele não abria nada.
   const wizardPanel = useWizardPanelStore();
-  const showWizardPanel = wizardPanel.active && wizardPanel.open && !isMobile;
+  const showWizardPanel = wizardPanel.active && wizardPanel.open;
   // No mobile a sidebar é oculta; uma tab bar no rodapé (in-flow, abaixo do banner) navega entre os
   // módulos do artista. Reserva a altura dela (56px) no mobile, somada à do banner quando houver.
   // A tab bar aparece nas rotas de artista E nas telas globais (Configurações, Notificações,
@@ -104,20 +178,28 @@ export const AppLayout: FC = memo(() => {
   // lista "Seus artistas" e a área admin. Mantém a reserva de espaço (padding-bottom) em sincronia
   // com o que o MobileNav de fato renderiza, senão o conteúdo ficaria atrás da barra.
   const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
-  const routeArtistId = /^\/artists\/([^/]+)/.exec(location.pathname)?.[1];
   const navExcluded = isArtistsList || location.pathname.startsWith('/admin');
   const hasMobileNav = !!(routeArtistId ?? currentArtistId) && !navExcluded;
   // No mobile, o Planejamento Estratégico (wizard) vira "tela cheia": escondemos o topbar do app
   // pra o chat ocupar toda a altura (o wizard já tem cabeçalho próprio com título e "Salvar e sair").
   const isWizardChat = /^\/artists\/[^/]+\/wizard/.test(location.pathname);
   const hideTopbar = isMobile && isWizardChat;
-  // A navbar mobile é uma barra fixa SOBREPOSTA (o conteúdo passa por baixo dela, via padding-bottom
-  // da .Main-section, e aparece atrás do gradiente translúcido). Por isso NÃO reservamos altura pra
-  // ela aqui — só pro banner de pagamento, que é uma barra sólida. Reserva do banner é justa por
-  // viewport (desktop ~1 linha = 76px; mobile 2 linhas = 84px).
-  // Reserva a altura do rodapé pro conteúdo não colar no card. Com o player no lugar do banner
-  // (desktop), reserva o mesmo espaço (76px) — senão o player fica sem respiro no topo.
-  const bottomReserve = bannerKind ? (isMobile ? 84 : 76) : playerVisible && !isMobile ? 76 : 0;
+  // No wizard, ENQUANTO o planejamento não estiver concluído, o painel de perfil
+  // (Dashboard/Diagnóstico/Plano de Ação/…) some — só a conversa da Nyta fica em foco, pra
+  // não competir com módulos que ainda não fazem sentido pro artista abrir. O rail (Início/
+  // Notificações/Nyta/trocar de artista) continua visível: é o único caminho de volta pra
+  // "Seus perfis". Uma vez concluído, o painel volta a aparecer normalmente (inclusive se o
+  // usuário reabrir o wizard depois, pra revisar uma etapa).
+  const hideSideNavForWizard = isWizardChat && !!currentArtist && !isOnboardingComplete(currentArtist);
+  // A Nyta só entra em cena depois do planejamento concluído. Sem plano ela não tem sobre o que
+  // conversar — a própria edge function desliga todas as ferramentas nesse caso e a resposta
+  // vira "faça o planejamento primeiro". Mostrar a porta de entrada aqui só levava a pessoa a
+  // um beco: um chat que responde a mesma coisa a qualquer pergunta.
+  const nytaAvailable = !!currentArtist && isOnboardingComplete(currentArtist);
+  // A navbar mobile é uma barra fixa SOBREPOSTA (o conteúdo passa por baixo dela, via
+  // padding-bottom da .Main-section), então não reserva altura aqui. O player, sim: é uma barra
+  // sólida e sem a reserva ele cola no card.
+  const bottomReserve = playerVisible && !isMobile ? 76 : 0;
 
   // Entrar numa das exceções deve fechar o player, não apenas escondê-lo: desmontar o áudio
   // interrompe a reprodução e evita que ela continue tocando sem um controle visível.
@@ -145,100 +227,210 @@ export const AppLayout: FC = memo(() => {
 
   useEffect(() => {
     const onResize = () => {
-      const vw = window.innerWidth;
-      if (vw < 950) {
-        dispatch(uiActions.collapseLibrary());
-        setIsTablet(true);
-      } else {
-        // Acompanha o breakpoint: reexpande a sidebar ao voltar para tela larga
-        // (sem isto o estado colapsado ficava "grudado" depois de estreitar a janela).
-        dispatch(uiActions.openLibrary());
-        setIsTablet(false);
-      }
+      if (window.innerWidth < 950) dispatch(uiActions.collapseLibrary());
+      else dispatch(uiActions.openLibrary());
     };
     onResize();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, [dispatch]);
 
+  const isActive = (suffix: string) => {
+    if (!routeArtistId) return false;
+    if (suffix === '') return location.pathname === `/artists/${routeArtistId}`;
+    return location.pathname.startsWith(`/artists/${routeArtistId}/${suffix}`);
+  };
+
+  const goArtist = (suffix: string) => {
+    if (!routeArtistId) return;
+    navigate(`/artists/${routeArtistId}${suffix ? `/${suffix}` : ''}`);
+  };
+
+  const planningTo = journey.hasPlan ? 'perfil' : 'wizard';
+  const actionUnlocked = viewPlanning && journey.hasPlan;
+  const userMetadata = (user?.user_metadata || {}) as Record<string, any>;
+  const displayName = userMetadata.full_name || userMetadata.name || user?.email || 'Usuário';
+  const userAvatar = userMetadata.avatar_url || userMetadata.picture || ARTISTS_DEFAULT_IMAGE;
+  const topNavigation = (home = false) => (
+    <header className='top-navigation'>
+      <div className='top-navigation-left'>
+        {/* O mesmo wordmark vetorial da landing e do login. Aqui a marca era o símbolo em
+            máscara + a palavra "Maestra" em texto peso 800 — parecida, mas mais pesada que o
+            logotipo oficial, então a marca mudava de forma entre o site e o app. */}
+        <a className='constructor' href='/artists' aria-label='Ir para seus perfis' onClick={(event) => {
+          event.preventDefault();
+          navigate('/artists');
+        }}>
+          <MaestraBrand variant='lockup' tone='dark' />
+        </a>
+        {/* O plano da conta vira um selo aqui: o banner de rodapé dizia a mesma coisa ocupando
+            uma faixa inteira da tela em toda navegação. */}
+        <PlanTag />
+        {/* "Baixar App" e "Planos" apontavam para #board (não iam a lugar nenhum) e Suporte já
+            está no rodapé do dashboard. O menu volta quando os destinos existirem. */}
+      </div>
+      <label className='global-search'>
+        <span className='global-search-icon' aria-hidden='true'><SearchIcon size={18} /></span>
+        <input placeholder={home ? 'Buscar perfil ou artista' : 'Pesquisar na Maestra'} aria-label='Busca global' />
+        <span className='global-search-arrow' aria-hidden='true'><FiArrowRight size={18} /></span>
+      </label>
+      <div className='top-navigation-right'>
+        <div className='account'>
+          <span className='account-icon'>
+            <img src={userAvatar} alt='' />
+          </span>
+          <strong>{displayName}</strong>
+        </div>
+        {routeArtistId && nytaAvailable && (
+          <button className='round-control header-nyta-action' aria-label='Abrir Nyta IA' type='button' onClick={openNytaPage}>
+            {/* tone='brand' (gradiente roxo): o botão agora é branco, então o emblema é quem
+                carrega a cor da Nyta. */}
+            <NytaAvatar size={22} />
+          </button>
+        )}
+        <button className='round-control notification' aria-label='Notificações' type='button' onClick={() => navigate('/notifications')}>
+          <NotificationIcon size={28} />
+        </button>
+        {/* Último da linha: reúne configurações, termos e suporte (e o /admin, para admin).
+            O antigo botão de engrenagem virou o item "Configurações" daqui dentro — além de
+            duplicar o destino, ele só existia na home, sumindo no resto do app. */}
+        <SystemMenu />
+      </div>
+    </header>
+  );
+
   return (
     <>
       <LanguageModal />
 
-      <div className={`main-container${bannerKind ? ' has-bottom-banner' : ''}${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}`}>
-        <Row
-          wrap
-          justify='end'
-          gutter={[8, 8]}
-          // alignContent flex-start: sem isso, o align-content padrão (stretch) do flex-wrap estica a
-          // linha do topbar (56px) pra preencher a altura cheia do Row, criando um vão extra ABAIXO da
-          // barra e deixando os ícones "colados no topo". Com flex-start as linhas empacotam sem
-          // esticar — o topbar fica nos 56px e o conteúdo preenche o resto.
-          style={{ overflow: 'hidden', alignContent: 'flex-start', height: bottomReserve ? `calc(100% - ${bottomReserve}px)` : '100%' }}
+      {/* has-player: no mobile o player é uma ilha flutuante ACIMA da navbar, então enquanto ele
+          estiver aberto o conteúdo precisa reservar mais espaço embaixo (ver App.scss). */}
+      <main className={`task-app${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}${playerVisible ? ' has-player' : ''}`}>
+        {isArtistsList ? (
+          <section className='profile-home page-view'>
+            {!hideTopbar && topNavigation(true)}
+            <Outlet context={{ container } satisfies LayoutContext} />
+          </section>
+        ) : (
+          <>
+        {!hideTopbar && topNavigation(false)}
+        {/* `module-layout` encosta a página no rail (margin-left ~130px) porque significa "sem
+            coluna de perfil". O wizard NÃO é esse caso: ele mantém o perfil à esquerda e só ganha
+            a coluna de resultados à direita — com a classe, o card ficava embaixo do perfil.
+            A folga da coluna de resultados vem do `.wiz-artifacts` (pages/Wizard/styles.scss). */}
+        <div
+          className={`app-layout${isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist || hideSideNavForWizard ? ' app-layout-no-profile' : ''}`}
+          style={{ bottom: bottomReserve ? `${bottomReserve}px` : 0 }}
         >
-          {!hideTopbar && (
-            <Col span={24}>
-              <Topbar />
-            </Col>
-          )}
-
-          <Col span={24}>
-            {/* navbar + página (grupo redimensionável) e, à direita, a coluna de resultados do
-                Planejamento Estratégico — irmã das outras, mesmo container da navbar. */}
-            <div style={{ display: 'flex', gap: 8, height: '100%' }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <PanelGroup direction='horizontal' autoSaveId='maestra-persistence'>
-                  <Panel
-                    id='left'
-                    order={1}
-                    className='mobile-hidden'
-                    minSize={isTablet ? 10 : libraryCollapsed ? 7 : 18}
-                    maxSize={isTablet ? 12 : libraryCollapsed ? 8 : 26}
-                    defaultSize={isTablet ? 10 : libraryCollapsed ? 7 : 20}
-                    style={{
-                      borderRadius: 8,
-                      minWidth: libraryCollapsed ? 85 : 260,
-                      maxWidth: libraryCollapsed ? 85 : undefined,
-                    }}
-                  >
-                    <Sidebar collapsed={libraryCollapsed} hasBanner={!!bannerKind} />
-                  </Panel>
-
-                  {!isMobile ? <PanelResizeHandle className='resize-handler' /> : null}
-
-                  {/* No mobile a página fica edge-to-edge flat (cantos retos), pra combinar com o
-                      banner/nav full-width — sem o degrau "arredondado vs reto". */}
-                  <Panel id='center' order={2} style={{ borderRadius: isMobile ? 0 : 8 }}>
-                    <div className='Main-section' ref={container}>
-                      <Outlet context={{ container } satisfies LayoutContext} />
-                    </div>
-                  </Panel>
-                </PanelGroup>
-              </div>
-
-              {showWizardPanel && (
-                <ArtifactsPanel
-                  draft={wizardPanel.content}
-                  artistName={wizardPanel.artistName}
-                  progress={wizardPanel.progress}
-                  onClose={() => wizardPanel.setOpen(false)}
-                  onEdit={wizardPanel.persist ?? undefined}
-                />
+          {/* O rail (Início/Notificações/Nyta/trocar de artista) fica sempre visível — inclusive
+              sem plano concluído, é o único caminho pra voltar pra "Seus perfis". Só o painel
+              de perfil (Dashboard/Diagnóstico/Plano de Ação/…) some nesse caso, via
+              hideSideNavForWizard acima — reaproveita a mesma classe app-layout-no-profile já
+              usada em Nyta/Notificações pra colapsar a margem que seria dele. */}
+          <aside className='app-rail' aria-label='Atalhos'>
+            <div className='rail-actions'>
+              <button type='button' aria-label='Tela inicial' onClick={() => navigate('/artists')}>
+                <SystemHomeIcon size={24} />
+              </button>
+              <button type='button' className={location.pathname === '/notifications' ? 'rail-active rail-notification' : 'rail-notification'} aria-label='Notificações' onClick={() => navigate('/notifications')}>
+                <NotificationIcon size={28} />
+              </button>
+              {nytaAvailable && (
+                <button type='button' className={`rail-nyta${isNytaPage ? ' rail-active' : ''}`} aria-label='Abrir Nyta IA' onClick={openNytaPage}>
+                  <b>Nyta IA</b>
+                </button>
               )}
             </div>
-          </Col>
-        </Row>
 
-        {bannerKind && <StatusBanner kind={bannerKind} />}
+            <div className='rail-people'>
+              {artists.slice(0, 4).map((artist) => (
+                artist.content?.spotifyProfile?.image
+                  ? <span key={artist.id} className={`avatar avatar-big avatar-image${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(artistEntryRoute(artist))}><img src={artist.content.spotifyProfile.image} alt={artist.name} /></span>
+                  : <span key={artist.id} className={`avatar avatar-big${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(artistEntryRoute(artist))}>{firstInitials(artist.name)}</span>
+              ))}
+              {/* Vai por /artists?create=1 e não direto para /criar-artista: aquela tela é quem
+                  checa o limite de perfis pendentes e o cooldown, e avisa o motivo. O deep-link
+                  existe justamente para disparar esse fluxo de fora. */}
+              <button
+                type='button'
+                aria-label='Criar novo perfil de artista'
+                title='Criar perfil'
+                onClick={() => navigate('/artists?create=1')}
+              >
+                ＋
+              </button>
+            </div>
+          </aside>
+
+          {currentArtist && !isNytaPage && !isNotificationsPage && !hideSideNavForWizard && (
+            <aside className='profile-panel' aria-label='Detalhes do artista'>
+              <div
+                className='portrait-wrap'
+                style={{ '--stage-progress': realStageProgress } as CSSProperties}
+              >
+                <div
+                  className='portrait-stage-ring'
+                  aria-label={`Fase ${realStageIndex} de ${REAL_CAREER_STAGES.length}: ${realStage || 'Não definida'}`}
+                >
+                  <div className='portrait'>
+                    <img src={currentArtistImage} alt={currentArtist.name} />
+                  </div>
+                </div>
+                <i>{realStageIndex}</i>
+              </div>
+              <h1>{currentArtist.name}</h1>
+              <p className='profile-stage-label'>Fase atual: <b>{currentArtist.content?.realIndex?.profile?.name || currentArtist.content?.phaseLabel || 'Em construção'}</b></p>
+
+              <div className='profile-menu'>
+                <ProfileMenuButton active={isActive('')} icon={<DashboardIcon size={22} />} label='Dashboard' onClick={() => goArtist('')} />
+                <ProfileMenuButton active={isActive('diagnostico')} icon={<DiagnosticoIcon size={22} />} label='Diagnóstico Real' onClick={() => goArtist('diagnostico')} />
+                <ProfileMenuButton active={isActive('perfil') || isActive('wizard')} icon={<PlanejamentoIcon size={22} />} label='Planejamento' locked={!viewPlanning} onClick={() => goArtist(planningTo)} />
+                <ProfileMenuButton active={isActive('action-plan')} icon={<PlanoAcaoIcon size={22} />} label='Plano de Ação' locked={!actionUnlocked} onClick={() => goArtist(actionUnlocked ? 'action-plan' : 'wizard')} />
+                <ProfileMenuButton active={isActive('catalog')} icon={<CatalogoIcon size={22} />} label='Músicas' onClick={() => goArtist('catalog')} />
+                <ProfileMenuButton active={isActive('agenda')} icon={<AgendaIcon size={22} />} label='Agenda' onClick={() => goArtist('agenda')} />
+                <ProfileMenuButton active={isActive('team')} icon={<EquipeIcon size={22} />} label='Equipe' locked={!viewPlanning} onClick={() => goArtist('team')} />
+                <ProfileMenuButton active={isActive('marketing')} icon={<MarketingIcon size={22} />} label={<span>Marketing<small style={{ display: 'block', fontSize: 8 }}>(Em breve)</small></span>} onClick={() => goArtist('marketing')} />
+              </div>
+
+              <button type='button' className='social-links' onClick={() => setReviewOpen(true)}>
+                Avaliar
+              </button>
+              <button type='button' className='social-links' onClick={() => navigate('/suporte')}>
+                Suporte
+              </button>
+            </aside>
+          )}
+
+          <section className='board-shell' id='board'>
+            <div className='Main-section' ref={container}>
+              <Outlet context={{ container } satisfies LayoutContext} />
+            </div>
+          </section>
+
+          {showWizardPanel && (
+            <ArtifactsPanel
+              draft={wizardPanel.content}
+              onClose={() => wizardPanel.setOpen(false)}
+              onEdit={wizardPanel.persist ?? undefined}
+            />
+          )}
+        </div>
+          </>
+        )}
 
         {/* Tab bar do mobile (fixa no rodapé, abaixo do banner). Oculta no desktop via CSS. */}
         <MobileNav />
-      </div>
+      </main>
 
       <NytaFloatingModal />
 
+      <Suspense fallback={null}>
+        {reviewOpen && <PlatformReviewModal open onClose={() => setReviewOpen(false)} />}
+      </Suspense>
+
       {playerVisible && playerCurrentId && playerTracks.length > 0 && (
         <LocalPlayerBar
+          aboveMobileNav={hasMobileNav}
           tracks={playerTracks}
           currentId={playerCurrentId}
           onChangeTrack={setPlayerCurrentId}
@@ -246,6 +438,9 @@ export const AppLayout: FC = memo(() => {
             if (currentArtistId) {
               navigate(`/artists/${currentArtistId}/catalog`, { state: { catalogTab: 'manual' } });
             }
+          }}
+          onOpenFullView={(track) => {
+            if (track.fullViewUrl) navigate(track.fullViewUrl);
           }}
           onClose={() => {
             setPlayerOpen(false);

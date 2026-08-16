@@ -1,8 +1,8 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spin } from 'antd';
 
 import { supabase } from '../../lib/supabase';
+import { Spinner } from '../../components/spinner/spinner';
 
 // Retorno do login social (Google). O client global tem detectSessionInUrl:false (por causa do
 // recovery de senha, que lê o hash manualmente), então estabelecemos a sessão aqui, escopado a
@@ -73,9 +73,7 @@ const AuthCallback: FC = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#0f0f0f' }}>
-      <Spin size='large' />
-    </div>
+    <Spinner loading global>{null as any}</Spinner>
   );
 };
 

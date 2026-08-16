@@ -1,7 +1,7 @@
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { App } from 'antd';
-import { FiChevronDown, FiArrowLeft, FiRotateCcw, FiX } from 'react-icons/fi';
+import { FiArrowLeft, FiRotateCcw, FiSidebar } from 'react-icons/fi';
 
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
@@ -9,14 +9,13 @@ import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
-import { WIZARD_TOTAL_STEPS } from '../../constants/maestra';
+import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { migrateWizardContent } from './migration';
 import { NytaChat } from './chat/NytaChat';
 import { supabase } from '../../lib/supabase';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
 import { setWizardPlatformContext, clearWizardPlatformContext } from '../../services/wizardAi';
-import { STEP_LABELS } from './chat/script';
 import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 
 // Shell do Planejamento Estratégico conversacional: é dono do draft, da persistência e da
@@ -40,7 +39,6 @@ const Wizard: FC = () => {
 
   const [draft, setDraft] = useState<ArtistContent>({});
   const [draftReady, setDraftReady] = useState(false);
-  const [exiting, setExiting] = useState(false);
   // Coluna de resultados (artefatos por etapa): vive no AppLayout como 3ª coluna; aqui só
   // publicamos os dados e controlamos o toggle via store global.
   const wizardPanel = useWizardPanelStore();
@@ -65,18 +63,20 @@ const Wizard: FC = () => {
   }, [draft.step]);
 
   // Liga/desliga a coluna de resultados no AppLayout enquanto o Wizard está montado.
+  // Ela nasce ABERTA no desktop (é o acompanhamento do plano, não um extra a descobrir). No
+  // mobile não: lá a coluna vira folha de tela cheia e abriria por cima da própria conversa —
+  // o breakpoint é o mesmo do CSS (.wiz-artifacts). Fechar segue sendo escolha do usuário.
   useEffect(() => {
-    wizardPanel.activate();
+    wizardPanel.activate(window.matchMedia('(min-width: 769px)').matches);
     return () => wizardPanel.deactivate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Publica draft + nome + progresso para a coluna renderizada no AppLayout.
+  // Publica o draft para a coluna renderizada no AppLayout.
   useEffect(() => {
-    const prog = Math.round((Math.min(draft.step ?? 0, WIZARD_TOTAL_STEPS) / WIZARD_TOTAL_STEPS) * 100);
-    wizardPanel.setData({ content: draft, artistName: artist?.name || '', progress: prog });
+    wizardPanel.setData({ content: draft });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, artist?.name]);
+  }, [draft]);
 
   // Fila serializada de gravações: uma por vez, em ordem. Sem isso, requests
   // concorrentes chegam fora de ordem no Supabase e a última a aterrissar vence —
@@ -117,6 +117,8 @@ const Wizard: FC = () => {
   useEffect(() => () => clearWizardPlatformContext(), []);
 
   const sp = draft.spotifyProfile;
+  // Avatar do perfil no cabeçalho (identifica de quem é o plano, já que o nome saiu da linha de baixo).
+  const artistImage = sp?.image || ARTISTS_DEFAULT_IMAGE;
   const identity: ArtistIdentity = useMemo(
     () => draft.identity || { name: artist?.name },
     [draft.identity, artist?.name]
@@ -206,12 +208,14 @@ const Wizard: FC = () => {
     return <Spinner loading>{null as any}</Spinner>;
   }
 
-  const step = Math.min(draft.step ?? 0, WIZARD_TOTAL_STEPS - 1);
   // Só oferece "recomeçar" quando há alguma resposta (senão não há o que zerar).
   const hasProgress = (draft.step ?? 0) > 0 || !!draft.identity?.gender;
 
   const confirmReset = () => {
     modal.confirm({
+      // O antd roda em darkAlgorithm no app inteiro; aqui o diálogo precisa acompanhar o
+      // wizard claro. `.wiz-confirm` repinta só esta caixa (styles.scss).
+      className: 'wiz-confirm',
       title: 'Recomeçar o planejamento do zero?',
       content:
         'Isso apaga TODAS as respostas do planejamento estratégico e volta para a primeira pergunta. ' +
@@ -232,22 +236,29 @@ const Wizard: FC = () => {
       <div className='wiz-chat-head'>
         <div className='wiz-col'>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-            {/* Coluna à esquerda: título em cima, etapa (abre o painel de resultados) embaixo. */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-              <h1 className='wiz-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, color: '#fff', margin: 0 }}>
-                Criar planejamento estratégico
+            {/* Identificação enxuta: avatar do perfil + título. A etapa saiu daqui e passou a
+                ser o título do painel de resultados — só um lugar diz em que etapa se está. */}
+            <div className='wiz-head-id'>
+              <img className='wiz-head-avatar' src={artistImage} alt='' aria-hidden />
+              {/* Cor/tamanho vêm de `.wiz-title` (styles.scss) — a tipografia acompanha a viewport. */}
+              <h1 className='wiz-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
+                Planejamento estratégico
               </h1>
-              <button
-                className='wiz-step-nav'
-                onClick={() => wizardPanel.toggle()}
-                title='Ver seus resultados'
-                aria-expanded={wizardPanel.open}
-              >
-                Etapa {step + 1} de {STEP_LABELS.length} · {STEP_LABELS[step]}
-                <FiChevronDown size={14} style={{ transform: wizardPanel.open ? 'rotate(180deg)' : 'none', transition: 'transform .2s ease' }} />
-              </button>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              {/* Voltar à pergunta anterior — só aparece depois da 1ª pergunta respondida.
+                  Vem antes do "recomeçar": é a ação frequente e reversível, enquanto o
+                  recomeçar é destrutivo e fica mais longe do alcance imediato. */}
+              {canGoBack && (
+                <button
+                  className='wiz-back-btn'
+                  title='Voltar à pergunta anterior'
+                  aria-label='Voltar à pergunta anterior'
+                  onClick={() => goBackRef.current()}
+                >
+                  <FiArrowLeft size={18} />
+                </button>
+              )}
               {/* Recomeçar do zero — só aparece quando há progresso; pede confirmação (destrutivo). */}
               {hasProgress && (
                 <button
@@ -259,36 +270,19 @@ const Wizard: FC = () => {
                   <FiRotateCcw size={17} />
                 </button>
               )}
-              {/* Voltar à pergunta anterior — só aparece depois da 1ª pergunta respondida. */}
-              {canGoBack && (
+              {/* Abrir a coluna de resultados. Só aparece com ela FECHADA: aberta, quem fecha
+                  é o X do próprio painel, e manter os dois seria oferecer a mesma ação duas
+                  vezes na mesma tela. */}
+              {!wizardPanel.open && (
                 <button
                   className='wiz-back-btn'
-                  title='Voltar à pergunta anterior'
-                  aria-label='Voltar à pergunta anterior'
-                  onClick={() => goBackRef.current()}
+                  title='Ver seu plano'
+                  aria-label='Ver seu plano'
+                  onClick={() => wizardPanel.setOpen(true)}
                 >
-                  <FiArrowLeft size={18} />
+                  <FiSidebar size={17} />
                 </button>
               )}
-              <button
-                className='wiz-back-btn'
-                title='Salvar e sair — seu progresso fica salvo a cada etapa'
-                aria-label='Salvar e sair'
-                disabled={exiting}
-                onClick={async () => {
-                  // Espera qualquer gravação pendente terminar ANTES de navegar, para que
-                  // sair da tela nunca cancele um save em andamento (perda de progresso).
-                  setExiting(true);
-                  try {
-                    await persistQueueRef.current;
-                  } finally {
-                    navigate(`/artists/${artist.id}`);
-                  }
-                }}
-                style={{ opacity: exiting ? 0.6 : 1 }}
-              >
-                <FiX size={18} />
-              </button>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { FC, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { App, Popconfirm } from 'antd';
-import { FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiTrash2 } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
@@ -10,7 +10,7 @@ import { formatRemainingTime } from '../../utils/rateLimitCalc';
 import PendingInvites from '../../components/PendingInvites';
 import { Spinner } from '../../components/spinner/spinner';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
-import { isOnboardingComplete } from '../../constants/maestra';
+import { artistEntryRoute, isOnboardingComplete } from '../../constants/maestra';
 import styles from './Artists.module.scss';
 
 const Artists: FC = () => {
@@ -23,24 +23,9 @@ const Artists: FC = () => {
   const artists = useAppSelector((s) => s.artists.items);
   const loading = useAppSelector((s) => s.artists.loading);
 
-  // Título contextual: "Seus artistas" (plural) soa estranho pra quem tem 0 ou 1 perfil
-  // (o caso comum é o artista independente com o próprio perfil). Ajusta pela quantidade.
-  const heading = artists.length === 0
-    ? 'Comece por aqui'
-    : artists.length === 1
-      ? 'Seu artista'
-      : 'Seus artistas';
-
   useEffect(() => {
     if (user?.id) dispatch(artistsActions.fetchArtists(user.id));
   }, [user?.id, dispatch]);
-
-  // Para onde cada card leva: não-pago → desbloqueio; pago → dashboard (o
-  // planejamento é opcional e acessível pelo menu).
-  const routeFor = (a: { id: string; is_locked?: boolean; role?: string }) => {
-    if (a.role !== 'member' && a.is_locked) return `/artists/${a.id}/desbloquear`;
-    return `/artists/${a.id}`;
-  };
 
   // Rate limit: verifica se pode criar via hook (limite de pendentes + cooldown progressivo)
   const { canCreate: allowed, reason, pendingCount, cooldownRemainingSeconds, loading: rlLoading, error: rlError } = useCanCreateArtist();
@@ -78,167 +63,98 @@ const Artists: FC = () => {
   }, [params, setParams, navigate]);
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>
-          {heading}
-        </h1>
+    <main className={`profile-home-content ${styles.page}`}>
+      <header className={styles.heading}>
+        <h1>Seus perfis</h1>
         <button
+          type='button'
           onClick={handleCreate}
-          className={styles.createButton}
         >
-          <FiPlus /> Criar artista
+          ＋ Criar perfil
         </button>
-      </div>
+      </header>
+      <p>Escolha um perfil para abrir seu espaço de trabalho.</p>
+
+      <PendingInvites />
 
       <Spinner loading={loading && !artists.length}>
-        <PendingInvites />
-        {!artists.length ? (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '80px 24px',
-              color: '#b3b3b3',
-            }}
-          >
-            <p style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>
-              Nenhum artista ainda
-            </p>
-            <p>Crie seu primeiro perfil de artista para começar.</p>
-          </div>
-        ) : (
-          <div className={styles.grid}>
+        {artists.length > 0 && (
+          <div className={`home-profile-directory ${styles.grid}`}>
             {artists.map((a) => {
               const sp = a.content?.spotifyProfile;
-              const canDelete = a.role !== 'member';
+              // Chartmetric primeiro (ver Dashboard): a Web API do Spotify não devolve mais
+              // `followers`, então o campo do spotifyProfile é nulo em quase todo artista.
+              const followers = a.content?.chartmetricProfile?.sp_followers ?? sp?.followers;
+              const owner = a.role !== 'member';
+              // Estado do perfil, na ordem em que importa pro usuário: cobrança em aberto trava
+              // tudo; sem plano, o próximo passo é o planejamento.
+              const status = owner && a.is_locked
+                ? { tone: styles.statusLocked, label: 'Pagamento pendente' }
+                : !isOnboardingComplete(a)
+                ? { tone: styles.statusPlan, label: 'Planejamento não iniciado' }
+                : null;
+
               return (
-                <div
-                  key={a.id}
-                  className={styles.card}
-                  role='button'
-                  tabIndex={0}
-                  onClick={() => navigate(routeFor(a))}
-                  onKeyDown={(e) => e.key === 'Enter' && navigate(routeFor(a))}
-                  style={{
-                    position: 'relative',
-                    background: '#181818',
-                    borderRadius: 8,
-                    padding: 16,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'background-color .2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#282828';
-                    const del = e.currentTarget.querySelector('[data-del]') as HTMLElement | null;
-                    if (del) del.style.opacity = '1';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#181818';
-                    const del = e.currentTarget.querySelector('[data-del]') as HTMLElement | null;
-                    if (del) del.style.opacity = '0';
-                  }}
-                >
-                  {canDelete && (
+                // O card é um <button>; excluir precisa ser um controle irmão, e não aninhado
+                // (button dentro de button é HTML inválido e o clique não isola).
+                <div className={styles.cardWrap} key={a.id}>
+                  <button
+                    className={styles.card}
+                    type='button'
+                    onClick={() => navigate(artistEntryRoute(a))}
+                  >
+                    <img
+                      src={sp?.image || ARTISTS_DEFAULT_IMAGE}
+                      alt={a.name}
+                    />
+                    <strong>{a.name}</strong>
+                    <span>{a.role === 'member' ? 'Membro' : 'Administrador'}</span>
+                    {status && (
+                      <em className={`${styles.status} ${status.tone}`}>
+                        <i aria-hidden />
+                        {status.label}
+                      </em>
+                    )}
+                    {followers != null && (
+                      <span className={styles.followers}>
+                        {followers.toLocaleString('pt-BR')} seguidores
+                      </span>
+                    )}
+                  </button>
+
+                  {owner && (
                     <Popconfirm
                       title='Excluir artista?'
-                      description='Catálogo, agenda, equipe e planejamento serão apagados. Esta ação não pode ser desfeita.'
+                      description='Essa ação não pode ser desfeita.'
                       okText='Excluir'
                       cancelText='Cancelar'
                       okButtonProps={{ danger: true }}
-                      // o popup renderiza dentro do card — impede o clique de navegar para o artista
-                      onPopupClick={(e) => e.stopPropagation()}
                       onConfirm={async () => {
                         try {
                           await dispatch(artistsActions.deleteArtist(a.id)).unwrap();
-                          message.success(`"${a.name}" excluído.`);
-                        } catch (e: any) {
-                          message.error(e?.message || 'Erro ao excluir artista');
+                          message.success('Perfil excluído');
+                        } catch {
+                          message.error('Erro ao excluir o perfil');
                         }
                       }}
                     >
                       <button
-                        data-del
+                        type='button'
                         className={styles.deleteButton}
                         title='Excluir artista'
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          position: 'absolute',
-                          top: 10,
-                          right: 10,
-                          width: 30,
-                          height: 30,
-                          borderRadius: '50%',
-                          border: 'none',
-                          background: 'rgba(0,0,0,0.6)',
-                          color: '#b3b3b3',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          opacity: 0,
-                          transition: 'opacity .15s, color .15s',
-                          zIndex: 2,
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = '#e91429')}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = '#b3b3b3')}
+                        aria-label={`Excluir ${a.name}`}
                       >
                         <FiTrash2 size={15} />
                       </button>
                     </Popconfirm>
                   )}
-                  <img
-                    src={sp?.image || ARTISTS_DEFAULT_IMAGE}
-                    alt={a.name}
-                    className={styles.artistImage}
-                    style={{
-                      width: '100%',
-                      aspectRatio: '1',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      marginBottom: 12,
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-                    }}
-                  />
-                  <div className={styles.artistName}>{a.name}</div>
-                  {a.role !== 'member' && a.is_locked ? (
-                    <span
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 7,
-                        color: '#a0a0aa', fontSize: 12.5, fontWeight: 600,
-                      }}
-                    >
-                      <span aria-hidden style={{ width: 6, height: 6, borderRadius: '50%', background: '#509bf5', flexShrink: 0 }} />
-                      Pagamento pendente
-                    </span>
-                  ) : !isOnboardingComplete(a) ? (
-                    <span
-                      style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 7, marginTop: 7,
-                        color: '#a0a0aa', fontSize: 12.5, fontWeight: 600,
-                      }}
-                    >
-                      <span aria-hidden style={{ width: 6, height: 6, borderRadius: '50%', background: '#e0a13c', flexShrink: 0 }} />
-                      {/* "pendente" aqui era lido como cobrança em aberto — o estado logo
-                          acima ("Pagamento pendente") usa a mesma palavra. Este fala do
-                          wizard, então nomeia a ação que falta. */}
-                      Planejamento não iniciado
-                    </span>
-                  ) : null}
-                  <div style={{ color: '#b3b3b3', fontSize: 13, marginTop: 4 }}>
-                    {sp?.followers != null
-                      ? `${sp.followers.toLocaleString('pt-BR')} seguidores`
-                      : a.role === 'member'
-                      ? 'Membro'
-                      : 'Artista'}
-                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </Spinner>
-    </div>
+    </main>
   );
 };
 

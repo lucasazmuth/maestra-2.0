@@ -2,17 +2,18 @@ import { FC, ReactNode, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  SystemHomeIcon, PlanoAcaoIcon, CatalogoIcon, AgendaIcon, MoreIcon,
-  DiagnosticoIcon, PlanejamentoIcon, EquipeIcon,
+  PlanoAcaoIcon, CatalogoIcon, AgendaIcon, MoreIcon,
+  DiagnosticoIcon, PlanejamentoIcon, EquipeIcon, MarketingIcon,
 } from '../../../Icons/system';
 import { useAppSelector } from '../../../../store/store';
-import { useNytaModal } from '../../../../hooks/useNytaModal';
-import { NytaAvatar } from '../../../../pages/Wizard/chat/nytaPersona';
+import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
 
 // Navbar inferior (tab bar) do mobile: substitui a sidebar (oculta em telas < 768px).
-// Layout: Início · Plano de ação · [Nyta IA] · Agenda · Mais. O centro é o avatar da Nyta (abre o
-// modal do assistente). "Mais" (popover) guarda o restante: Catálogo, Diagnóstico REAL, Plano
-// estratégico e Equipe.
+// Layout da referência (gsap-app): [avatar do perfil] · Plano · Músicas · Agenda · Mais. A
+// primeira célula é a foto do artista selecionado, que leva pra home dele — no lugar de um ícone
+// de casa, ela também diz DE QUEM é a tela. "Mais" (popover) guarda Diagnóstico REAL, Plano
+// estratégico, Equipe e Marketing.
+// A Nyta NÃO mora aqui: o atalho dela é o botão roxo do cabeçalho (.header-nyta-action).
 // Aparece sempre que há um artista no contexto — seja pela rota /artists/:id… ou, em telas
 // "globais" (Configurações, Notificações, Assinatura…), pelo artista atual guardado no store.
 
@@ -33,29 +34,29 @@ export const MobileNav: FC = () => {
   const location = useLocation();
   const [t] = useTranslation(['navigation']);
   const [moreOpen, setMoreOpen] = useState(false);
-  const { open: openNyta, isOpen: nytaOpen } = useNytaModal();
   // Artista pela rota; senão o atual (setado ao visitar qualquer módulo do artista) — assim a
   // navbar segue visível em /settings, /notifications, /assinatura etc.
   const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
   const artistId = matchArtistId(location.pathname) ?? currentArtistId;
+  const artists = useAppSelector((s) => s.artists.items);
+  const artist = artists.find((a) => a.id === artistId);
 
   // Sem artista no contexto, ou numa rota excluída (lista/admin), não há o que navegar por módulo.
   if (!artistId || isNavExcludedRoute(location.pathname)) return null;
 
-  // Atalhos das pontas (mais usados no dia a dia). O centro (Nyta) é renderizado à parte.
-  const left: Item[] = [
-    { icon: <SystemHomeIcon size={24} />, label: t('Home', { defaultValue: 'Início' }), suffix: '' },
-    { icon: <PlanoAcaoIcon size={24} />, label: t('Plan', { defaultValue: 'Plano de ação' }), suffix: 'action-plan' },
-  ];
-  const right: Item[] = [
+  // Atalhos do dia a dia. A primeira célula (a home do artista) é renderizada à parte: ela é a
+  // foto do perfil, não um ícone.
+  const tabs: Item[] = [
+    { icon: <PlanoAcaoIcon size={24} />, label: t('Plan', { defaultValue: 'Plano' }), suffix: 'action-plan' },
+    { icon: <CatalogoIcon size={24} />, label: t('Catalog', { defaultValue: 'Músicas' }), suffix: 'catalog' },
     { icon: <AgendaIcon size={24} />, label: t('Agenda', { defaultValue: 'Agenda' }), suffix: 'agenda' },
   ];
-  // Restante dos módulos, dentro do "Mais".
+  // Restante dos módulos, dentro do "Mais" (2 por linha, na grade do popover).
   const more: Item[] = [
-    { icon: <CatalogoIcon size={22} />, label: t('Catalog', { defaultValue: 'Catálogo' }), suffix: 'catalog' },
     { icon: <DiagnosticoIcon size={22} />, label: t('REAL Diagnostic', { defaultValue: 'Diagnóstico REAL' }), suffix: 'diagnostico' },
     { icon: <PlanejamentoIcon size={22} />, label: t('Planning', { defaultValue: 'Plano estratégico' }), suffix: 'perfil' },
     { icon: <EquipeIcon size={22} />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team' },
+    { icon: <MarketingIcon size={22} />, label: t('Marketing', { defaultValue: 'Marketing' }), suffix: 'marketing' },
   ];
 
   const isActive = (suffix: string) =>
@@ -69,13 +70,10 @@ export const MobileNav: FC = () => {
     navigate(`/artists/${artistId}${suffix ? `/${suffix}` : ''}`);
   };
 
-  const goNyta = () => {
-    setMoreOpen(false);
-    openNyta();
-  };
-
   const renderItem = (it: Item) => {
-    const active = isActive(it.suffix);
+    // Com o "Mais" aberto ele é quem está em foco: dois itens erguidos (e dois pontinhos azuis)
+    // ao mesmo tempo confundem qual é a tela atual.
+    const active = !moreOpen && isActive(it.suffix);
     return (
       <button
         key={it.suffix || 'home'}
@@ -95,7 +93,6 @@ export const MobileNav: FC = () => {
       {moreOpen && <div className='mobile-more-backdrop' onClick={() => setMoreOpen(false)} />}
       {moreOpen && (
         <div className='mobile-more-sheet' role='menu'>
-          <div className='mobile-more-handle' aria-hidden />
           {more.map((m) => (
             <button
               key={m.suffix}
@@ -110,19 +107,19 @@ export const MobileNav: FC = () => {
       )}
 
       <nav className='mobile-nav' aria-label='Navegação'>
-        {left.map(renderItem)}
-
-        {/* Nyta IA — centro da barra: o avatar abre o modal do assistente. */}
+        {/* Home do artista: a foto do perfil selecionado no lugar de um ícone de casa — é o
+            atalho pra home E o lembrete de qual perfil está aberto (o header no mobile já não
+            mostra o nome). */}
         <button
-          className={`mobile-nav-item mobile-nav-item--nyta${nytaOpen ? ' mobile-nav-item--active' : ''}`}
-          aria-label='Nyta IA'
-          onClick={goNyta}
+          className={`mobile-nav-item mobile-nav-item--profile${!moreOpen && isActive('') ? ' mobile-nav-item--active' : ''}`}
+          aria-current={!moreOpen && isActive('') ? 'page' : undefined}
+          aria-label={artist ? `Início de ${artist.name}` : 'Início'}
+          onClick={() => go('')}
         >
-          <span className='mobile-nav-nyta-avatar'><NytaAvatar size={30} /></span>
-          <span className='mobile-nav-label'>Nyta</span>
+          <img src={artist?.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE} alt='' />
         </button>
 
-        {right.map(renderItem)}
+        {tabs.map(renderItem)}
 
         {/* Mais — abre o popover com os módulos restantes */}
         <button

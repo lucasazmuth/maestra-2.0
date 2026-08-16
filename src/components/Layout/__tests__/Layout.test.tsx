@@ -122,6 +122,10 @@ jest.mock('../../../constants/maestra', () => ({
     return mockPaywallDisabled;
   },
   FEATURE_NYTA_MODAL: false,
+  // O Layout usa `useJourneyState`, que chama `isOnboardingComplete` deste módulo. Sem o stub o
+  // mock devolve undefined e o render quebra antes de chegar no que estes testes verificam
+  // (o dispatch de fetchSubscriptionStatus). O valor não importa aqui.
+  isOnboardingComplete: () => false,
 }));
 
 // ─── Import after mocks ───────────────────────────────────────────────────────
