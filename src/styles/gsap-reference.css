@@ -7430,12 +7430,16 @@
   white-space: nowrap;
 }
 
+/* A folga de cima vinha da faixa de KPIs, que ficava entre o cabeçalho e as abas. Com ela
+   oculta, as abas encostavam no cabeçalho. A margem é do próprio bloco de abas, então vale nos
+   dois casos: `.catalog-page` é bloco comum, e a margem colapsa com a de baixo dos KPIs
+   quando eles voltarem — 24px no total, não 48. */
 .task-app:not(.public-app) .catalog-reference-page .catalog-tabs {
   display: flex;
   width: fit-content;
   align-items: center;
   gap: 8px;
-  margin: 0 0 20px;
+  margin: 24px 0 20px;
   padding: 0;
   border: 0;
   border-radius: 0;
