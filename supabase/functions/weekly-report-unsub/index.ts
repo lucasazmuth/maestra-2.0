@@ -24,11 +24,11 @@ const CORS = {
 function page(title: string, message: string): string {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head>
-<body style="margin:0;background:#0A0A0A;font-family:Inter,'Helvetica Neue',Arial,sans-serif;color:#F5F4F2;">
+<body style="margin:0;background:#f7f8fb;font-family:Inter,'Helvetica Neue',Arial,sans-serif;color:#2c3f63;">
   <div style="max-width:480px;margin:0 auto;padding:64px 24px;text-align:center;">
     <img src="${APP_URL}/brand/maestra-wordmark-light.png" width="154" alt="Maestra" style="display:block;width:154px;max-width:70%;height:auto;margin:0 auto 32px;">
-    <h1 style="font-size:22px;line-height:1.3;color:#fff;margin:0 0 12px;">${title}</h1>
-    <p style="color:#cfcfd4;line-height:1.6;margin:0;">${message}</p>
+    <h1 style="font-size:22px;line-height:1.3;color:#2c3f63;margin:0 0 12px;">${title}</h1>
+    <p style="color:#405985;line-height:1.6;margin:0;">${message}</p>
   </div>
 </body></html>`;
 }

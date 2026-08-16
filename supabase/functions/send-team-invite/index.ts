@@ -55,12 +55,16 @@ Deno.serve(async (req) => {
 
   // 3) Monta e envia o e-mail.
   const inviterName = (user.user_metadata?.full_name as string) || "Alguém";
-  const loginLink = appUrl ? `${appUrl}/login` : "";
+  // O e-mail vai no link: o convite é amarrado ao endereço, e fazer a pessoa digitar de novo
+  // (podendo errar e cair numa conta sem convite nenhum) é o tipo de atrito que não precisa
+  // existir. O /login já oferece "Cadastre-se!" para quem ainda não tem conta, e leva o endereço
+  // junto.
+  const loginLink = appUrl ? `${appUrl}/login?email=${encodeURIComponent(member.email)}` : "";
   const html = emailLayout({
     title: `${inviterName} te convidou pra gerenciar ${artist.name}`,
-    bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;">${inviterName} quer você no time do <strong style="color:#fff;">${artist.name}</strong> na Maestra.</p>
-    <p style="color:#cfcfd4;line-height:1.6;">Entre (ou crie sua conta) com este mesmo e-mail e o convite aparece pra você aceitar.</p>
-    ${loginLink ? `<p style="margin:20px 0;"><a href="${loginLink}" style="display:inline-block;background:#9A4FD1;color:#FFFFFF;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Acessar a Maestra</a></p>` : ""}`,
+    bodyHtml: `<p style="color:#405985;line-height:1.6;">${inviterName} quer você no time do <strong style="color:#2c3f63;">${artist.name}</strong> na Maestra.</p>
+    <p style="color:#405985;line-height:1.6;">Entre (ou crie sua conta) com este mesmo e-mail e o convite aparece pra você aceitar.</p>
+    ${loginLink ? `<p style="margin:20px 0;"><a href="${loginLink}" style="display:inline-block;background:#3361ff;color:#FFFFFF;text-decoration:none;font-weight:700;padding:12px 26px;border-radius:9999px;">Acessar a Maestra</a></p>` : ""}`,
   });
 
   const res = await sendBrevoEmail({ to: member.email, toName: member.name || undefined, subject: `${inviterName} te convidou pra gerenciar ${artist.name}`, html });

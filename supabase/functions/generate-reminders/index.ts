@@ -138,8 +138,8 @@ async function sendReminderEmails(
 ): Promise<void> {
   const html = emailLayout({
     title,
-    bodyHtml: `<p style="color:#cfcfd4;line-height:1.6;white-space:pre-line;">${escapeHtml(message)}</p>
-    <p style="color:#8a8a92;font-size:13px;">Abra a Maestra pra ver os detalhes.</p>`,
+    bodyHtml: `<p style="color:#405985;line-height:1.6;white-space:pre-line;">${escapeHtml(message)}</p>
+    <p style="color:#7c8da8;font-size:13px;">Abra a Maestra pra ver os detalhes.</p>`,
   });
   for (const r of recipients) {
     const email = await getRecipientEmail(supabase, r.user_id);

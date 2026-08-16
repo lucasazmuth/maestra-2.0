@@ -1,5 +1,5 @@
 import { FC, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { supabase } from '../../lib/supabase';
 import { useAppDispatch } from '../../store/store';
@@ -11,7 +11,10 @@ import { EmailCodeStep } from '../../components/EmailCodeStep';
 const Login: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  // O convite chega como /login?email=... — quem foi convidado não digita o endereço de novo,
+  // e não corre o risco de entrar com outra conta, que não teria convite nenhum.
+  const [params] = useSearchParams();
+  const [email, setEmail] = useState(() => params.get('email') || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +79,12 @@ const Login: FC = () => {
       footer={
         <p className={styles.footerText}>
           Você não possui cadastro?{' '}
-          <Link to='/signup' className={styles.footerLink}>
+          {/* Leva o endereço adiante: sem isso o convidado teria que digitar de novo, e um typo
+              o levaria a uma conta sem o convite. */}
+          <Link
+            to={email.trim() ? `/signup?email=${encodeURIComponent(email.trim())}` : '/signup'}
+            className={styles.footerLink}
+          >
             Cadastre-se!
           </Link>
         </p>

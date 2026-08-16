@@ -1,5 +1,5 @@
 import { FC, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAppDispatch } from '../../store/store';
 import { supabase } from '../../lib/supabase';
@@ -18,7 +18,11 @@ const Signup: FC = () => {
   const [name, setName] = useState('');
   // A landing pode chegar com o e-mail já digitado (cartão final "comece grátis"): a pessoa não
   // digita duas vezes.
+  const [params] = useSearchParams();
   const [email, setEmail] = useState(() => {
+    // Convite (?email=) tem prioridade: é o endereço a que o convite está amarrado.
+    const doLink = params.get('email');
+    if (doLink) return doLink;
     try {
       const seed = sessionStorage.getItem('signup_email') || '';
       if (seed) sessionStorage.removeItem('signup_email');
