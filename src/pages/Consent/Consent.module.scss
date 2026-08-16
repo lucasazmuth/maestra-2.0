@@ -195,6 +195,55 @@
   text-decoration: underline;
 }
 
+// ── TCLE (pesquisa) — nasce desligado por feature flag ──────────────────────────────────────
+
+.tcleText {
+  max-height: 320px;
+  margin: 18px 0 20px;
+  padding: 16px;
+  overflow-y: auto;
+  border: 1px solid #e6ecf5;
+  border-radius: 10px;
+  background: #f7f9fd;
+  color: #56698f;
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.tcleActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+// Os dois botões são deliberadamente IDÊNTICOS. Destacar o "Autorizo" (cor de destaque, tamanho
+// maior, ordem privilegiada) seria dark pattern e invalidaria o consentimento como livre.
+.tcleChoice {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #c9d8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #2c3f63;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  transition: background .16s ease, border-color .16s ease;
+}
+
+.tcleChoice:hover:not(:disabled) {
+  border-color: #3361ff;
+  background: #f4f8ff;
+}
+
+.tcleChoice:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
 // ── Tela de bloqueio (menor de 18 em revisão) ───────────────────────────────────────────────
 
 .blockedIcon {

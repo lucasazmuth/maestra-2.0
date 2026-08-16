@@ -143,6 +143,29 @@ serve(async (req) => {
       return json({ ok: true });
     }
 
+    // ── research (TCLE) ──────────────────────────────────────────────────────────────────────
+    // Consentimento para uso dos dados na pesquisa. Registra tanto o SIM quanto o NÃO: a recusa
+    // também é um fato que precisa constar, e é ela que garante que ninguém seja incluído por
+    // omissão. Recusar não altera nada no acesso nem no diagnóstico.
+    if (action === "research") {
+      const tcle = (docs || []).find((d) => d.slug === "tcle");
+      if (!tcle) return json({ error: "TCLE não configurado." }, 500);
+
+      const { error } = await db.from("user_consents").insert({
+        user_id: user.id,
+        kind: "pesquisa",
+        status: body?.autoriza ? "dado" : "negado",
+        document_slug: "tcle",
+        document_version: tcle.version,
+        content_sha256: tcle.content_sha256,
+        source: "app",
+        ip: req.headers.get("x-forwarded-for"),
+        user_agent: req.headers.get("user-agent"),
+      });
+      if (error) throw error;
+      return json({ ok: true });
+    }
+
     // ── submit ───────────────────────────────────────────────────────────────────────────────
     if (action !== "submit") return json({ error: "Ação desconhecida" }, 400);
 
