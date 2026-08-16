@@ -107,16 +107,13 @@ const QUIZ: QuizDef[] = [
   ] },
 ];
 
-const STEP_INDEX: Record<Step, number> = {
-  perfil: 0, intro: 1, quiz: 1, analisando: 2, diagnostico: 2,
-};
-
 
 const ArtistCreate: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const artists = useAppSelector((s) => s.artists.items);
+  const artistsLoaded = useAppSelector((s) => s.artists.loaded);
   const { canCreate: allowed, reason: rateLimitReason, pendingCount, cooldownRemainingSeconds, loading: rlLoading, error: rlError, retry: rlRetry } = useCanCreateArtist();
 
   // Modo "Refazer diagnóstico" (PRO): rota própria /artists/:id/diagnostico/refazer. Pula a busca
@@ -134,6 +131,15 @@ const ArtistCreate: FC = () => {
   useEffect(() => {
     if (redo && subInitialized && !isPro) navigate('/assinatura', { replace: true });
   }, [redo, subInitialized, isPro, navigate]);
+
+  // Mesma ideia para quem NÃO é dono do perfil. O botão já não aparece para colaborador, mas a
+  // rota continua alcançável por URL (link salvo, histórico) — e ali o quiz rodava inteiro para
+  // terminar num 404 do edge exibido como "Não consegui gerar seu diagnóstico agora", que soa
+  // como falha temporária. `artistsLoaded` evita expulsar o dono antes da lista chegar.
+  useEffect(() => {
+    if (!redo || !artistsLoaded || !redoArtist || !user?.id) return;
+    if (redoArtist.user_id !== user.id) navigate(`/artists/${redoArtistId}/diagnostico`, { replace: true });
+  }, [redo, artistsLoaded, redoArtist, user?.id, redoArtistId, navigate]);
 
   const [step, setStep] = useState<Step>('perfil');
   const [line, setLine] = useState('');     // fala atual da Maestra
@@ -413,7 +419,6 @@ const ArtistCreate: FC = () => {
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   const showInteraction = !typing;
-  const dotIndex = STEP_INDEX[step];
   // A identidade do Diagnóstico REAL (verde + "Maestra REAL" + estrela) só entra DEPOIS de selecionar
   // o perfil. No 1º passo ('perfil') é o ambiente neutro da Maestra, pra não parecer que já começou o diagnóstico.
   const realEnv = step !== 'perfil';
@@ -455,32 +460,24 @@ const ArtistCreate: FC = () => {
         >
           <MaestraBrand variant='lockup' tone='dark' />
         </a>
-        {!redo && <FlowHeader phase={macroPhase} />}
+        {/* O mesmo header do /desbloquear tambem no refazer: antes o slot ficava vago e o
+            "Diagnóstico REAL" era uma pilula solta acima da pergunta — que na tela final, com o
+            relatorio em largura cheia, sobrava perdida no topo. Fase 1 e justamente a do
+            diagnostico, entao o rotulo sai pronto e com o "REAL" no mesmo estilo. */}
+        <FlowHeader phase={redo ? 1 : macroPhase} />
+        {/* X nos dois modos. No refazer o destino continua sendo a pagina do diagnostico, mas a
+            acao e a mesma dos dois lados: sair do fluxo. Com a seta, o rotulo dizia "Voltar" —
+            um X anunciado como "Voltar" e contraditorio para quem usa leitor de tela. */}
         <button
           className={styles.back}
           onClick={() => navigate(redo ? `/artists/${redoArtistId}/diagnostico` : '/artists')}
-          aria-label={redo ? 'Voltar' : 'Sair'}
-          title={redo ? 'Voltar' : 'Sair'}
+          aria-label='Sair'
+          title='Sair'
         >
-          {redo ? <FiArrowLeft size={20} /> : <FiX size={20} />}
+          <FiX size={20} />
         </button>
       </div>
 
-      {redo && (
-        // Refazer diagnóstico (PRO): não passa por Criar perfil nem Pagamento — mantém a pílula + dots.
-        <>
-          <div className={styles.pillWrap}>
-            <div className={styles.pill}>
-              <span className={styles.pillText}>Diagnóstico <span className={styles.pillReal}>REAL</span></span>
-            </div>
-          </div>
-          <div className={styles.progress}>
-            {[0, 1, 2].map((i) => (
-              <span key={i} className={`${styles.dot} ${i === dotIndex ? styles.dotOn : i < dotIndex ? styles.dotDone : ''}`} />
-            ))}
-          </div>
-        </>
-      )}
 
       <div className={`${styles.step} ${step === 'diagnostico' ? styles.stepWide : ''}`} key={`${step}-${quizIndex}`}>
         {step !== 'diagnostico' && (

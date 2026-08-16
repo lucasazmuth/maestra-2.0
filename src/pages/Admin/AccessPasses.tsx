@@ -204,35 +204,35 @@ const Field: FC<{ label: string; children: ReactNode }> = ({ label, children }) 
 
 const Stat: FC<{ label: string; value: number; accent?: boolean }> = ({ label, value, accent }) => (
   <div style={styles.stat}>
-    <div style={{ ...styles.statValue, ...(accent ? { color: '#4ade80' } : {}) }}>{value}</div>
+    <div style={{ ...styles.statValue, ...(accent ? { color: '#2a9a59' } : {}) }}>{value}</div>
     <div style={styles.statLabel}>{label}</div>
   </div>
 );
 
 const styles: Record<string, CSSProperties> = {
   page: { padding: 24, maxWidth: 1000 },
-  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 6px' },
-  sub: { color: '#9a9aa5', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
+  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#2c3f63', margin: '0 0 6px' },
+  sub: { color: '#7c8da8', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
   stats: { display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' },
-  stat: { background: '#181818', borderRadius: 12, padding: '14px 22px', minWidth: 120 },
-  statValue: { fontSize: 24, fontWeight: 800, color: '#fff', lineHeight: 1.1 },
-  statLabel: { color: '#8a8a8a', fontSize: 12.5, marginTop: 3 },
-  card: { background: '#181818', borderRadius: 12, padding: 20, marginBottom: 18 },
-  cardHead: { display: 'flex', alignItems: 'center', gap: 8, color: '#fff', fontSize: 16, marginBottom: 16 },
+  stat: { background: '#ffffff', borderRadius: 12, padding: '14px 22px', minWidth: 120 },
+  statValue: { fontSize: 24, fontWeight: 800, color: '#2c3f63', lineHeight: 1.1 },
+  statLabel: { color: '#7c8da8', fontSize: 12.5, marginTop: 3 },
+  card: { background: '#ffffff', borderRadius: 12, padding: 20, marginBottom: 18 },
+  cardHead: { display: 'flex', alignItems: 'center', gap: 8, color: '#2c3f63', fontSize: 16, marginBottom: 16 },
   formGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 },
   fieldLabel: { color: '#b9b9c0', fontSize: 12.5, marginBottom: 6 },
-  empty: { color: '#6f6f78', padding: '20px 0', textAlign: 'center' },
-  row: { display: 'flex', alignItems: 'center', gap: 10, padding: '14px 0', borderTop: '1px solid #262626' },
+  empty: { color: '#93a4c0', padding: '20px 0', textAlign: 'center' },
+  row: { display: 'flex', alignItems: 'center', gap: 10, padding: '14px 0', borderTop: '1px solid #e8eef8' },
   codeLine: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
-  code: { fontWeight: 800, color: '#fff', fontSize: 15, letterSpacing: '0.06em', fontFamily: 'monospace' },
-  meta: { color: '#8a8a8a', fontSize: 12.5, marginTop: 5 },
-  badgeOk: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 700, background: 'rgba(74,222,128,0.16)', color: '#4ade80' },
+  code: { fontWeight: 800, color: '#2c3f63', fontSize: 15, letterSpacing: '0.06em', fontFamily: 'monospace' },
+  meta: { color: '#7c8da8', fontSize: 12.5, marginTop: 5 },
+  badgeOk: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 700, background: 'rgba(42, 154, 89, 0.12)', color: '#2a9a59' },
   badgeUsed: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 700, background: 'rgba(154,79,209,0.16)', color: '#e07fce' },
-  badgeMuted: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: '#cfcfd4' },
+  badgeMuted: { display: 'inline-flex', padding: '2px 9px', borderRadius: 9999, fontSize: 12, fontWeight: 600, background: 'rgba(255,255,255,0.06)', color: '#405985' },
   batch: { marginTop: 18, padding: 14, borderRadius: 10, background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.2)' },
-  batchHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff', marginBottom: 10, gap: 10 },
+  batchHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#2c3f63', marginBottom: 10, gap: 10 },
   batchCodes: { display: 'flex', flexWrap: 'wrap', gap: 8 },
-  batchCode: { background: '#101010', color: '#4ade80', padding: '5px 10px', borderRadius: 7, fontSize: 13.5, letterSpacing: '0.06em' },
+  batchCode: { background: '#f2f6fc', color: '#2a9a59', padding: '5px 10px', borderRadius: 7, fontSize: 13.5, letterSpacing: '0.06em' },
 };
 
 export default AdminAccessPasses;

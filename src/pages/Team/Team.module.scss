@@ -97,63 +97,64 @@
   background: transparent;
 }
 
-.listHeader,
+// Mesma linha da lista de Musicas: avatar, identidade que ocupa o meio e a informacao a
+// direita. Antes era uma grade de colunas fixas com cabecalho — duas caras para o mesmo tipo
+// de lista dentro do app. Os valores abaixo sao os medidos naquela linha.
 .memberCard {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) minmax(180px, 1fr) 110px 34px;
+  display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 0 20px;
-}
-
-.listHeader {
-  min-height: 45px;
-  color: #95a4bc;
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.memberCard {
-  min-height: 76px;
+  gap: 14px;
+  min-height: 78px;
+  padding: 12px 10px;
   border: 0;
-  border-top: 1px solid #e6ebf3;
+  border-bottom: 1px solid #edf1f5;
   border-radius: 0;
-  background: transparent;
+  background: #fff;
   color: #6a7c9e;
   font-size: 11px;
   transition: background 0.16s ease;
+}
+
+.memberCard:last-child {
+  border-bottom: 0;
 }
 
 .memberCard:hover {
   background: #f7f9fd;
 }
 
+// Agora é uma foto, não mais a inicial sobre gradiente. O fundo claro fica como base enquanto
+// a imagem carrega (e por baixo de PNGs com transparência).
 .avatar,
 .modalAvatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  color: #fff;
-  background:
-    linear-gradient(145deg, #83d5db, #4762ae),
-    #5d75a5;
+  overflow: hidden;
+  background: #eaf0fb;
   border-radius: 50%;
-  font-size: 12px;
-  font-weight: 800;
+}
+
+.avatar img,
+.modalAvatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .avatar {
-  width: 39px;
-  height: 39px;
+  width: 40px;
+  height: 40px;
 }
 
 .memberCell {
   display: flex;
   min-width: 0;
+  flex: 1;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .memberIdentity {
@@ -172,20 +173,23 @@
 
 .memberIdentity strong {
   color: #52668d;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 600;
 }
 
+// Mesmo tamanho e cor do subtitulo da linha de Musicas: 9px era legivel como rotulo de coluna,
+// mas aqui o e-mail e a segunda linha da identidade, nao uma legenda.
 .memberIdentity span {
-  color: #9aa8bd;
-  font-size: 9px;
-  font-weight: 700;
+  color: #8b9bb5;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .accessSummary {
   display: flex;
   align-items: center;
   min-width: 0;
+  flex: 0 0 auto;
   flex-wrap: wrap;
   gap: 5px;
 }
@@ -493,17 +497,16 @@
 }
 
 @media (max-width: 820px) {
-  .listHeader {
-    display: none;
-  }
-
+  // A linha quebra em duas: identidade e status em cima, pilulas de acesso embaixo.
   .memberCard {
-    grid-template-columns: minmax(0, 1fr) auto 36px;
+    flex-wrap: wrap;
+    row-gap: 10px;
   }
 
   .accessSummary {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    order: 3;
+    width: 100%;
+    flex-basis: 100%;
   }
 }
 

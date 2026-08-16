@@ -262,8 +262,8 @@
 .page :global(.ant-input-number-affix-wrapper:hover),
 .page :global(.ant-input-number-affix-wrapper-focused),
 .page :global(.ant-input-number-affix-wrapper:focus-within) {
-  border-color: #9A4FD1 !important;
-  box-shadow: 0 0 0 1px rgba(154, 79, 209, 0.25) !important;
+  border-color: #3361ff !important;
+  box-shadow: 0 0 0 1px rgba(51, 97, 255, 0.25) !important;
 }
 
 // Spinner da busca segue o azul institucional, sem herdar o roxo do tema Ant.
@@ -271,35 +271,7 @@
 .page :global(.ant-spin-text) { color: #3361ff !important; }
 
 // ─── Pílula da marca (igual /welcome) ─────────────────────────────────────────
-.pillWrap {
-  position: relative;
-  display: inline-flex;
-  margin-bottom: 8px;
-}
-
-.pill {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 28px;
-  border-radius: 9999px;
-  background: #0a0a0e;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.pillText {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 22px;
-  line-height: 1;
-  white-space: nowrap;
-}
-
 // "REAL" na pílula (ambiente do diagnóstico): assinatura serifada (Georgia itálico) + verde do produto.
-.pillReal { font-family: 'Georgia', 'Times New Roman', serif; font-style: italic; color: #9A4FD1; }
-
 // Cabeçalho numa única linha: etapas à esquerda + botão de sair à direita.
 .topBar {
   display: flex;
@@ -403,22 +375,6 @@
 }
 
 // ─── Progresso (só no "refazer diagnóstico") ───────────────────────────────────
-.progress {
-  display: flex;
-  gap: 7px;
-  margin: 18px 0 28px;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
-  transition: background 0.3s, width 0.3s;
-}
-
-.dotOn { background: #9A4FD1; }
-.dotDone { background: rgba(154, 79, 209, 0.5); }
 
 // ─── Etapa (uma por vez, centralizada) ────────────────────────────────────────
 .step {
@@ -1005,8 +961,8 @@
   :global(.ant-input-affix-wrapper-focused),
   :global(.ant-select:not(.ant-select-disabled):hover .ant-select-selector),
   :global(.ant-select-focused .ant-select-selector) {
-    border-color: #9A4FD1 !important;
-    box-shadow: 0 0 0 1px rgba(154, 79, 209, 0.25) !important;
+    border-color: #3361ff !important;
+    box-shadow: 0 0 0 1px rgba(51, 97, 255, 0.25) !important;
   }
 
   // Select de parcelamento — altura e alinhamento iguais aos inputs.
@@ -1188,6 +1144,17 @@
   text-align: left;
 }
 
+// Dentro do app, o diagnóstico acompanha a largura do container — como o cabeçalho da própria
+// página, que não tem teto. Sem isto o relatório parava em 1080px e ficava mais estreito que o
+// seu próprio cabeçalho: numa tela de 1800px sobravam 86px de cada lado, e o desalinhamento
+// entre os dois lia como bug de layout.
+//
+// O teto continua valendo fora do shell (criação de artista e desbloqueio de perfil), onde o
+// `.realWrap` é justamente quem centraliza o conteúdo — lá não existe container para seguir.
+:global(.board-content).pageReal .realWrap {
+  max-width: none;
+}
+
 // ─── Novo design: fluxo REAL ──────────────────────────────────────────────────
 // Criação e refação compartilham esta superfície clara para que o diagnóstico não
 // reintroduza o ambiente escuro do fluxo anterior.
@@ -1218,13 +1185,7 @@
 
   .flowDot { background: #d8e1ee; }
   .flowDotDone, .flowDotCur { background: #3361ff; }
-  .flowLabel, .pillText { color: #52668d; }
-  .pill { padding: 10px 18px; background: #fff; border-color: #dfe6f1; box-shadow: 0 8px 20px rgba(46, 72, 117, .08); }
-  .pillReal { color: #3361ff; }
-  .progress { margin: -42px 0 30px; }
-  .dot { background: #d8e1ee; }
-  .dotOn { background: #3361ff; }
-  .dotDone { background: rgba(51, 97, 255, .5); }
+  .flowLabel { color: #52668d; }
 
   .line { color: #52668d; font-size: 38px; line-height: 1.2; letter-spacing: 0; }
   .caret, .topProgressFill { background: #3361ff; }
@@ -1997,7 +1958,6 @@ $docLow: #8b9ab4;
 @keyframes acCaret { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .pillGlow { animation: none; }
 }
 
 // ═══════════════════ Diagnóstico REAL V3 — boletim (régua + sub-métricas) ═══════════════════

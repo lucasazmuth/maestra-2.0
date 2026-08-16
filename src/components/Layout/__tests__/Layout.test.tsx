@@ -61,6 +61,14 @@ const mockInvoke = jest.fn().mockResolvedValue({
 jest.mock('../../../lib/supabase', () => ({
   supabase: {
     functions: { invoke: (...args: any[]) => mockInvoke(...args) },
+    // `from` entrou depois deste mock: o menu do sistema usa `useIsPlatformAdmin`, que
+    // consulta `platform_admins`. Sem isto o hook estourava "supabase.from is not a function"
+    // dentro de um efeito e derrubava o render antes do que estes testes verificam.
+    from: () => ({
+      select: () => ({
+        eq: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }),
+      }),
+    }),
   },
 }));
 

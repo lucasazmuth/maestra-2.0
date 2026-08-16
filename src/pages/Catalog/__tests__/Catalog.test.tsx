@@ -83,25 +83,6 @@ jest.mock('../../../components/LocalPlayerBar', () => ({
   LocalPlayerBar: () => null,
 }));
 
-// Keep this integration test focused on catalog behavior. CRA's Jest SVG
-// transform and icon bundles emit legacy React elements under React 19.
-jest.mock('../../../components/Icons/system', () => ({
-  AddIcon: () => <span aria-hidden="true">+</span>,
-}));
-
-jest.mock('react-icons/fi', () => ({
-  FiRefreshCw: () => null,
-  FiLock: () => null,
-  FiMoreVertical: () => null,
-  FiCheck: () => null,
-  FiSearch: () => null,
-  FiSliders: () => null,
-}));
-
-jest.mock('react-icons/fa6', () => ({
-  FaSpotify: () => null,
-}));
-
 jest.mock('../../../components/spinner/spinner', () => ({
   Spinner: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
@@ -153,6 +134,18 @@ function renderCatalog() {
       </MemoryRouter>
     </Provider>
   );
+}
+
+// "Nova musica" abre o seletor de arquivos ANTES da ficha: a ficha aparece no `change` (com
+// audio) ou no `cancel` (sem audio, para quem cadastra a musica antes de ter a gravacao).
+// Em jsdom o clique no input nao abre seletor nenhum e o `cancel` nativo nunca chega, entao
+// aqui ele e disparado a mao — sem isso a ficha nao abre e o teste parece quebrado.
+function abrirFichaSemAudio(container: HTMLElement) {
+  fireEvent.click(screen.getByRole('button', { name: /nova música/i }));
+  const seletor = container.querySelector('input[type="file"]') as HTMLInputElement;
+  act(() => {
+    seletor.dispatchEvent(new Event('cancel'));
+  });
 }
 
 // ─── Import component after mocks ────────────────────────────────────────────
@@ -234,7 +227,7 @@ describe('Catalog Page - Track Limit Integration', () => {
         makeCatalogItem({ id: `track-${i}`, title: `Track ${i}` })
       );
 
-      renderCatalog();
+      const { container } = renderCatalog();
 
       // Wait for content to load (manual tab auto-activates)
       await waitFor(() => {
@@ -249,7 +242,7 @@ describe('Catalog Page - Track Limit Integration', () => {
       expect(button).toHaveStyle({ opacity: 1, cursor: 'pointer' });
 
       // Clicking should open TrackModal, not UpsellModal
-      fireEvent.click(button);
+      abrirFichaSemAudio(container);
 
       await waitFor(() => {
         expect(screen.getByTestId('track-modal')).toBeInTheDocument();
@@ -264,7 +257,7 @@ describe('Catalog Page - Track Limit Integration', () => {
         makeCatalogItem({ id: `track-${i}`, title: `Track ${i}` })
       );
 
-      renderCatalog();
+      const { container } = renderCatalog();
 
       // Wait for initial counter
       await waitFor(() => {
@@ -272,8 +265,7 @@ describe('Catalog Page - Track Limit Integration', () => {
       });
 
       // Open the TrackModal by clicking the button
-      const button = screen.getByRole('button', { name: /nova música/i });
-      fireEvent.click(button);
+      abrirFichaSemAudio(container);
 
       await waitFor(() => {
         expect(screen.getByTestId('track-modal')).toBeInTheDocument();
@@ -293,7 +285,10 @@ describe('Catalog Page - Track Limit Integration', () => {
   });
 
   describe('Catalog filters', () => {
-    it('keeps search compact and exposes advanced filters inside a popover', async () => {
+    // A busca por texto saiu do popover e foi para o campo do topo (ela vivia escondida atrás
+    // de "Filtros" e ninguém achava). O popover ficou só com os filtros estruturados, e é isso
+    // que este teste passa a cobrir — a busca em si é exercitada pelo store, não por aqui.
+    it('deixa no popover apenas os filtros estruturados, sem campo de busca', async () => {
       mockCatalogItems = [
         makeCatalogItem({ id: 'track-samba', title: 'Meu Samba', genre: 'Samba', status: 'composition' }),
         makeCatalogItem({ id: 'track-rock', title: 'Noite Rock', genre: 'Rock', status: 'released' }),
@@ -310,7 +305,7 @@ describe('Catalog Page - Track Limit Integration', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Filtros' }));
 
       const filters = screen.getByRole('dialog', { name: 'Filtros de Músicas' });
-      expect(within(filters).getByPlaceholderText('Buscar em Músicas')).toBeInTheDocument();
+      expect(within(filters).queryByPlaceholderText('Buscar em Músicas')).not.toBeInTheDocument();
       expect(within(filters).getByText('Status')).toBeInTheDocument();
       expect(within(filters).getByText('Áudio')).toBeInTheDocument();
       expect(within(filters).getByText('Ordenar')).toBeInTheDocument();
@@ -322,14 +317,8 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       fireEvent.click(within(filters).getByRole('button', { name: 'Limpar' }));
 
-      fireEvent.change(
-        within(filters).getByPlaceholderText('Buscar em Músicas'),
-        { target: { value: 'samba' } }
-      );
-
       expect(screen.getByText('Meu Samba')).toBeInTheDocument();
-      expect(screen.queryByText('Noite Rock')).not.toBeInTheDocument();
-      expect(screen.queryByText('1 de 2 música(s)')).not.toBeInTheDocument();
+      expect(screen.getByText('Noite Rock')).toBeInTheDocument();
     });
   });
 });

@@ -19,7 +19,7 @@
 .pageHeader h1,
 .artistHero h1 {
   margin: 0;
-  color: #fff;
+  color: #2c3f63;
   font-size: clamp(24px, 3vw, 30px);
   font-weight: 800;
 }
@@ -41,8 +41,8 @@
 
 .summaryCard,
 .panel {
-  background: #18181a;
-  border: 1px solid #29292e;
+  background: #ffffff;
+  border: 1px solid #e8eef8;
   border-radius: 12px;
 }
 
@@ -70,20 +70,20 @@
   place-items: center;
   width: 28px;
   height: 28px;
-  color: #c97ef3;
+  color: #6f8cff;
   background: rgba(154, 79, 209, 0.16);
   border-radius: 8px;
 }
 
 .summaryCard > strong {
-  color: #fff;
+  color: #2c3f63;
   font-size: 27px;
   font-weight: 800;
   line-height: 1.1;
 }
 
 .summaryCard > small {
-  color: #777781;
+  color: #93a4c0;
   font-size: 12px;
 }
 
@@ -104,19 +104,19 @@
 
 .filters > span {
   margin-left: auto;
-  color: #777781;
+  color: #93a4c0;
   font-size: 12px;
   white-space: nowrap;
 }
 
 .table :global(.ant-table) {
   overflow: hidden;
-  border: 1px solid #29292e;
+  border: 1px solid #e8eef8;
   border-radius: 12px;
 }
 
 .table :global(.ant-table-row:hover > td) {
-  background: #222226 !important;
+  background: #ffffff !important;
 }
 
 .artistCell {
@@ -147,7 +147,7 @@
 .artistCell strong,
 .metricCell strong {
   overflow: hidden;
-  color: #f3f3f5;
+  color: #2c3f63;
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -198,7 +198,7 @@
 }
 
 .adoptionCell :global(.ant-progress-text) {
-  color: #fff !important;
+  color: #2c3f63 !important;
   font-size: 9px !important;
 }
 
@@ -235,7 +235,7 @@
   background:
     linear-gradient(120deg, rgba(154, 79, 209, 0.16), rgba(80, 155, 245, 0.05) 55%, transparent),
     #18181a;
-  border: 1px solid #303036;
+  border: 1px solid #e3eaf3;
   border-radius: 16px;
 }
 
@@ -271,7 +271,7 @@
 }
 
 .kicker {
-  color: #c97ef3;
+  color: #6f8cff;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
@@ -288,7 +288,7 @@
 }
 
 .heroAdoption :global(.ant-progress-text) {
-  color: #fff !important;
+  color: #2c3f63 !important;
   font-size: 15px !important;
   font-weight: 800;
 }
@@ -312,11 +312,11 @@
 }
 
 .tabs :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
-  color: #fff !important;
+  color: #2c3f63 !important;
 }
 
 .tabs :global(.ant-tabs-ink-bar) {
-  background: #9a4fd1;
+  background: #3361ff;
 }
 
 .detailContent {
@@ -339,11 +339,11 @@
   gap: 4px;
   margin-bottom: 15px;
   padding-bottom: 11px;
-  border-bottom: 1px solid #29292e;
+  border-bottom: 1px solid #e8eef8;
 }
 
 .sectionTitle strong {
-  color: #fff;
+  color: #2c3f63;
   font-size: 15px;
 }
 
@@ -365,8 +365,8 @@
   grid-template-columns: auto 1fr;
   gap: 3px 8px;
   padding: 12px;
-  background: #121214;
-  border: 1px solid #29292e;
+  background: #ffffff;
+  border: 1px solid #e8eef8;
   border-radius: 9px;
 }
 
@@ -379,7 +379,7 @@
 }
 
 .areaItem > svg {
-  color: #2ec47a;
+  color: #2a9a59;
 }
 
 .emptyDot {
@@ -403,7 +403,7 @@
 }
 
 .areaItemActive strong {
-  color: #2ec47a;
+  color: #2a9a59;
 }
 
 .kvGrid {
@@ -421,7 +421,7 @@
 
 .kv span,
 .textBlock span {
-  color: #777781;
+  color: #93a4c0;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -430,7 +430,7 @@
 
 .kv strong {
   overflow: hidden;
-  color: #e6e6ea;
+  color: #2c3f63;
   font-size: 13px;
   text-overflow: ellipsis;
 }
@@ -444,7 +444,7 @@
 
 .textBlock {
   padding: 14px;
-  background: #121214;
+  background: #ffffff;
   border-radius: 9px;
 }
 
@@ -468,13 +468,13 @@
 
 .realDimension {
   padding: 14px;
-  background: #121a16;
+  background: #ffffff;
   border: 1px solid rgba(46, 196, 122, 0.18);
   border-radius: 10px;
 }
 
 .realDimension span {
-  color: #2ec47a;
+  color: #2a9a59;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
@@ -483,7 +483,7 @@
 .realDimension strong {
   display: block;
   margin: 7px 0 5px;
-  color: #fff;
+  color: #2c3f63;
   font-size: 18px;
 }
 
@@ -512,7 +512,7 @@
   gap: 12px;
   min-width: 0;
   padding: 11px 12px;
-  background: #121214;
+  background: #ffffff;
   border: 1px solid #252529;
   border-radius: 9px;
 }
@@ -523,7 +523,7 @@
   flex: 0 0 28px;
   width: 28px;
   height: 28px;
-  color: #fff;
+  color: #2c3f63;
   background: rgba(154, 79, 209, 0.38);
   border-radius: 50%;
   font-size: 11px;
@@ -542,7 +542,7 @@
 .strategyRow strong,
 .dataRow strong {
   overflow: hidden;
-  color: #e9e9ec;
+  color: #2c3f63;
   font-size: 12.5px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -551,20 +551,20 @@
 .strategyRow span,
 .dataRow span {
   overflow: hidden;
-  color: #777781;
+  color: #93a4c0;
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .strategyRow :global(.ant-progress-text) {
-  color: #fff !important;
+  color: #2c3f63 !important;
   font-size: 9px !important;
 }
 
 .dataRow > svg {
   flex: 0 0 18px;
-  color: #9a4fd1;
+  color: #3361ff;
 }
 
 .dataRow :global(.ant-tag) {
@@ -605,15 +605,15 @@
   gap: 12px;
   min-height: 82px;
   padding: 14px;
-  background: #121214;
-  border: 1px solid #29292e;
+  background: #ffffff;
+  border: 1px solid #e8eef8;
   border-radius: 10px;
 }
 
 .historyGate > svg {
   flex: 0 0 34px;
   padding: 8px;
-  color: #c97ef3;
+  color: #6f8cff;
   background: rgba(154, 79, 209, 0.15);
   border-radius: 9px;
   font-size: 18px;
@@ -628,7 +628,7 @@
 }
 
 .historyGate strong {
-  color: #f1f1f3;
+  color: #2c3f63;
   font-size: 13px;
 }
 
@@ -668,8 +668,8 @@
   flex-direction: column;
   gap: 10px;
   padding: 15px;
-  background: #0f0f11;
-  border: 1px solid #29292e;
+  background: #ffffff;
+  border: 1px solid #e8eef8;
   border-radius: 11px;
   scrollbar-color: #45454d transparent;
 }
@@ -677,8 +677,8 @@
 .historyMessage {
   width: min(82%, 760px);
   padding: 11px 13px;
-  background: #1c1c20;
-  border: 1px solid #303036;
+  background: #ffffff;
+  border: 1px solid #e3eaf3;
   border-radius: 12px 12px 12px 3px;
 }
 
@@ -691,7 +691,7 @@
 }
 
 .historyMessage strong {
-  color: #c97ef3;
+  color: #6f8cff;
   font-size: 11px;
 }
 
@@ -702,7 +702,7 @@
 
 .historyMessage p {
   margin: 0;
-  color: #d9d9de;
+  color: #7c8da8;
   font-size: 13px;
   line-height: 1.55;
   overflow-wrap: anywhere;
@@ -722,7 +722,7 @@
 
 .historyMessageSystem {
   width: 100%;
-  background: #151519;
+  background: #ffffff;
   border-style: dashed;
 }
 
@@ -732,9 +732,9 @@
 
 .historyEmpty {
   padding: 26px;
-  color: #777781;
-  background: #121214;
-  border: 1px dashed #303036;
+  color: #93a4c0;
+  background: #ffffff;
+  border: 1px dashed #e3eaf3;
   border-radius: 10px;
   font-size: 12.5px;
   text-align: center;
@@ -748,8 +748,8 @@
   min-height: 260px;
   justify-content: center;
   color: #5f5f68;
-  background: #18181a;
-  border: 1px dashed #303036;
+  background: #ffffff;
+  border: 1px dashed #e3eaf3;
   border-radius: 12px;
   text-align: center;
 }

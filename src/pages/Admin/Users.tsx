@@ -181,13 +181,13 @@ const AdminUsers: FC = () => {
   const columns: TableColumnsType<UserRow> = [
     {
       title: 'Nome', dataIndex: 'name', key: 'name',
-      render: (name: string) => <span style={{ color: '#fff', fontWeight: 600 }}>{name || '—'}</span>,
+      render: (name: string) => <span style={{ color: '#2c3f63', fontWeight: 600 }}>{name || '—'}</span>,
       sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
     },
-    { title: 'E-mail', dataIndex: 'email', key: 'email', render: (e: string) => <span style={{ color: '#cfcfd4' }}>{e}</span> },
+    { title: 'E-mail', dataIndex: 'email', key: 'email', render: (e: string) => <span style={{ color: '#405985' }}>{e}</span> },
     {
       title: 'Cadastro', dataIndex: 'created_at', key: 'created_at', width: 130,
-      render: (v: string) => <span style={{ color: '#9a9aa5' }}>{fmtDay(v)}</span>,
+      render: (v: string) => <span style={{ color: '#7c8da8' }}>{fmtDay(v)}</span>,
       sorter: (a, b) => (a.created_at < b.created_at ? -1 : 1), defaultSortOrder: 'descend',
     },
     {
@@ -199,8 +199,8 @@ const AdminUsers: FC = () => {
     {
       title: 'Perfis', key: 'artists', width: 90, align: 'center',
       render: (_: unknown, r: UserRow) => (
-        <span style={{ color: '#fff' }} title={`${r.paidArtists} pago(s) de ${r.artistCount}`}>
-          {r.paidArtists}<span style={{ color: '#6f6f78' }}>/{r.artistCount}</span>
+        <span style={{ color: '#2c3f63' }} title={`${r.paidArtists} pago(s) de ${r.artistCount}`}>
+          {r.paidArtists}<span style={{ color: '#93a4c0' }}>/{r.artistCount}</span>
         </span>
       ),
       sorter: (a, b) => a.artistCount - b.artistCount,
@@ -222,22 +222,22 @@ const AdminUsers: FC = () => {
           normal ela fica vazia e não vale ocupar espaço da lista. */}
       {deletionQueue.length > 0 && (
         <div style={styles.queueCard}>
-          <strong style={{ color: '#e6e6ea', fontSize: 14 }}>
+          <strong style={{ color: '#2c3f63', fontSize: 14 }}>
             Pedidos de exclusão de conta ({deletionQueue.length})
           </strong>
-          <p style={{ color: '#8a8a8a', fontSize: 12.5, margin: '4px 0 12px' }}>
+          <p style={{ color: '#7c8da8', fontSize: 12.5, margin: '4px 0 12px' }}>
             Executar apaga os dados de forma permanente. O registro do pedido é preservado como
             comprovação de atendimento.
           </p>
           {deletionQueue.map((r) => (
             <div key={r.id} style={styles.rowItem}>
-              <span style={{ color: '#fff', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ color: '#2c3f63', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {r.email || r.user_id}
               </span>
               <Tag color={r.vencido ? 'red' : 'default'}>
                 {r.vencido ? 'prazo vencido' : `libera ${fmtDay(r.scheduled_purge_at)}`}
               </Tag>
-              <span style={{ color: '#8a8a8a', fontSize: 12.5 }}>pedido {fmtDay(r.requested_at)}</span>
+              <span style={{ color: '#7c8da8', fontSize: 12.5 }}>pedido {fmtDay(r.requested_at)}</span>
               <Popconfirm
                 title="Executar a exclusão?"
                 description="Os dados desta conta serão apagados de forma permanente."
@@ -255,14 +255,14 @@ const AdminUsers: FC = () => {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
         <Input
-          prefix={<FiSearch style={{ color: '#8a8a8a' }} />}
+          prefix={<FiSearch style={{ color: '#7c8da8' }} />}
           placeholder="Buscar por nome ou e-mail"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           allowClear
           style={{ maxWidth: 340 }}
         />
-        <span style={{ color: '#9a9aa5', fontSize: 13 }}>
+        <span style={{ color: '#7c8da8', fontSize: 13 }}>
           {loading ? 'Carregando…' : `${filtered.length} de ${rows.length} usuário(s)`}
         </span>
       </div>
@@ -281,7 +281,7 @@ const AdminUsers: FC = () => {
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         width={880}
-        title={<span style={{ color: '#fff', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8 }}><FiUser /> {detail?.account.name || 'Usuário'}</span>}
+        title={<span style={{ color: '#2c3f63', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8 }}><FiUser /> {detail?.account.name || 'Usuário'}</span>}
         footer={detail ? (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Popconfirm
@@ -403,7 +403,7 @@ const AdminUsers: FC = () => {
                               <Progress
                                 percent={usage.artist.adoption.percent}
                                 showInfo={false}
-                                strokeColor="#9A4FD1"
+                                strokeColor="#3361ff"
                                 style={{ flex: 1, margin: 0 }}
                               />
                               <strong>{usage.artist.adoption.percent}%</strong>
@@ -429,10 +429,10 @@ const AdminUsers: FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {detail.purchases.map((p) => (
                     <div key={p.id} style={styles.rowItem}>
-                      <span style={{ color: '#fff', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.artist_name || 'Perfil'}</span>
-                      <span style={{ color: '#cfcfd4', width: 90, textAlign: 'right' }}>{fmtBRL(p.amount)}</span>
+                      <span style={{ color: '#2c3f63', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.artist_name || 'Perfil'}</span>
+                      <span style={{ color: '#405985', width: 90, textAlign: 'right' }}>{fmtBRL(p.amount)}</span>
                       <Tag color={purchaseColor(p.status)}>{p.status}</Tag>
-                      <span style={{ color: '#8a8a8a', fontSize: 12.5, width: 92, textAlign: 'right' }}>{fmtDay(p.paid_at || p.created_at)}</span>
+                      <span style={{ color: '#7c8da8', fontSize: 12.5, width: 92, textAlign: 'right' }}>{fmtDay(p.paid_at || p.created_at)}</span>
                     </div>
                   ))}
                 </div>
@@ -447,44 +447,44 @@ const AdminUsers: FC = () => {
 
 const KV: FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-    <span style={{ color: '#8a8a8a', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</span>
-    <span style={{ color: '#e6e6ea', fontSize: 14 }}>{value}</span>
+    <span style={{ color: '#7c8da8', fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{label}</span>
+    <span style={{ color: '#2c3f63', fontSize: 14 }}>{value}</span>
   </div>
 );
 
 const UsageMetric: FC<{ icon: React.ReactNode; label: string; value: string; active: boolean }> = ({ icon, label, value, active }) => (
   <div style={styles.usageMetric}>
-    <span style={{ ...styles.usageIcon, color: active ? '#c97ef3' : '#66666f' }}>{icon}</span>
+    <span style={{ ...styles.usageIcon, color: active ? '#6f8cff' : '#66666f' }}>{icon}</span>
     <div>
       <span style={styles.usageLabel}>{label}</span>
-      <strong style={{ ...styles.usageValue, color: active ? '#f3f3f5' : '#777780' }}>{value}</strong>
+      <strong style={{ ...styles.usageValue, color: active ? '#2c3f63' : '#777780' }}>{value}</strong>
     </div>
   </div>
 );
 
 const styles: Record<string, CSSProperties> = {
   page: { padding: 24, maxWidth: 1100 },
-  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 6px' },
-  sub: { color: '#9a9aa5', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
-  sectionHead: { color: '#fff', fontSize: 14, fontWeight: 700, marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #262626' },
+  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#2c3f63', margin: '0 0 6px' },
+  sub: { color: '#7c8da8', fontSize: 14, lineHeight: 1.5, margin: '0 0 22px', maxWidth: 640 },
+  sectionHead: { color: '#2c3f63', fontSize: 14, fontWeight: 700, marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid #e8eef8' },
   kvGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 },
-  rowItem: { display: 'flex', alignItems: 'center', gap: 10, background: '#1f1f1f', border: '1px solid #2a2a2a', borderRadius: 8, padding: '9px 12px' },
+  rowItem: { display: 'flex', alignItems: 'center', gap: 10, background: '#ffffff', border: '1px solid #e3eaf3', borderRadius: 8, padding: '9px 12px' },
   // Borda âmbar: a fila pede ação com prazo, e some sozinha quando não há pedido pendente.
-  queueCard: { display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18, padding: 16, background: '#1c1a17', border: '1px solid #4a3a1f', borderRadius: 10 },
-  artistItem: { width: '100%', display: 'flex', flexDirection: 'column', gap: 13, padding: 14, textAlign: 'left', color: 'inherit', background: '#191919', border: '1px solid #303035', borderRadius: 10, cursor: 'pointer' },
+  queueCard: { display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18, padding: 16, background: '#fdf7ea', border: '1px solid #f0dcae', borderRadius: 10 },
+  artistItem: { width: '100%', display: 'flex', flexDirection: 'column', gap: 13, padding: 14, textAlign: 'left', color: 'inherit', background: '#ffffff', border: '1px solid #e3eaf3', borderRadius: 10, cursor: 'pointer' },
   artistItemHeader: { display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 },
-  artistImage: { width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', background: '#262626', flexShrink: 0 },
+  artistImage: { width: 42, height: 42, borderRadius: '50%', objectFit: 'cover', background: '#e8eef8', flexShrink: 0 },
   artistIdentity: { display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 },
-  artistName: { color: '#fff', fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  artistCreated: { color: '#85858e', fontSize: 12 },
-  artistUsageLoading: { display: 'flex', alignItems: 'center', gap: 8, minHeight: 48, color: '#85858e', fontSize: 13, borderTop: '1px solid #28282d', paddingTop: 12 },
-  usageMetrics: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, borderTop: '1px solid #28282d', paddingTop: 12 },
-  usageMetric: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, padding: '8px 9px', background: '#121212', borderRadius: 7 },
+  artistName: { color: '#2c3f63', fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  artistCreated: { color: '#93a4c0', fontSize: 12 },
+  artistUsageLoading: { display: 'flex', alignItems: 'center', gap: 8, minHeight: 48, color: '#93a4c0', fontSize: 13, borderTop: '1px solid #e8eef8', paddingTop: 12 },
+  usageMetrics: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, borderTop: '1px solid #e8eef8', paddingTop: 12 },
+  usageMetric: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, padding: '8px 9px', background: '#ffffff', borderRadius: 7 },
   usageIcon: { display: 'flex', fontSize: 16, flexShrink: 0 },
   usageLabel: { display: 'block', color: '#777780', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.03em', marginBottom: 2 },
   usageValue: { display: 'block', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  adoptionRow: { display: 'flex', alignItems: 'center', gap: 10, color: '#9999a2', fontSize: 12, borderTop: '1px solid #28282d', paddingTop: 11 },
-  empty: { color: '#6f6f78', fontSize: 13, padding: '4px 0' },
+  adoptionRow: { display: 'flex', alignItems: 'center', gap: 10, color: '#9999a2', fontSize: 12, borderTop: '1px solid #e8eef8', paddingTop: 11 },
+  empty: { color: '#93a4c0', fontSize: 13, padding: '4px 0' },
 };
 
 export default AdminUsers;

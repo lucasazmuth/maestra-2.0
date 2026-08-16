@@ -1,40 +1,28 @@
+// Campos dentro de modal: só forma, nunca cor. O `color: #fff` que morava aqui pintava o
+// texto de branco em cima do fundo branco do tema claro — o usuário digitava e não via nada.
+// Fundo, texto e borda vêm do tema do antd.
 .ant-modal {
   .ant-input-affix-wrapper,
   textarea {
-    background: hsla(0, 0%, 100%, 0.1) !important;
-    border: 1px solid transparent;
     border-radius: 4px;
-    color: #fff !important;
     font-family: inherit;
     font-size: 14px;
-    height: 40px;
     padding: 0 12px;
     width: 100%;
-    border: 1px solid #333 !important;
 
     &:focus,
     &:hover {
-      background-color: #333 !important;
-      border: 1px solid #535353 !important;
       outline: none !important;
-      box-shadow: none !important;
     }
 
     input {
       border: 0px !important;
-      &::placeholder {
-        color: #747474 !important;
-      }
     }
 
     &.ant-input-status-error {
       box-shadow: inset 0 -2px 0 0 #e91429 !important;
     }
   }
-}
-
-textarea::placeholder {
-  color: #747474 !important;
 }
 
 .playlist-img-overlay-container {

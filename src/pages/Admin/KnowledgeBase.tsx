@@ -313,29 +313,29 @@ function parseXLS(file: File): Promise<ParsedPlan> {
 
 const styles = {
   page: { padding: 24, maxWidth: 1400 } as React.CSSProperties,
-  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#fff', margin: '0 0 24px' } as React.CSSProperties,
+  title: { fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(24px, 3vw, 28px)', color: '#2c3f63', margin: '0 0 24px' } as React.CSSProperties,
   statsRow: { display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' as const },
-  statCard: { background: '#181818', borderRadius: 8, padding: 16, flex: 1, minWidth: 140 } as React.CSSProperties,
-  statValue: { color: '#fff', fontSize: 26, fontWeight: 800 } as React.CSSProperties,
-  statLabel: { color: '#b3b3b3', fontSize: 13 } as React.CSSProperties,
+  statCard: { background: '#ffffff', borderRadius: 8, padding: 16, flex: 1, minWidth: 140 } as React.CSSProperties,
+  statValue: { color: '#2c3f63', fontSize: 26, fontWeight: 800 } as React.CSSProperties,
+  statLabel: { color: '#56698f', fontSize: 13 } as React.CSSProperties,
   tabBtn: (active: boolean) => ({
     display: 'flex', alignItems: 'center', gap: 8,
     padding: '10px 20px', border: 'none', borderRadius: 9999, cursor: 'pointer',
     fontSize: 14, fontWeight: active ? 700 : 500, transition: 'all .2s',
-    background: active ? '#282828' : 'transparent',
-    color: active ? '#fff' : '#b3b3b3',
+    background: active ? '#ffffff' : 'transparent',
+    color: active ? '#2c3f63' : '#56698f',
   }) as React.CSSProperties,
-  card: { background: '#181818', borderRadius: 12, padding: 20, marginBottom: 16 } as React.CSSProperties,
-  sectionTitle: { color: '#fff', fontSize: 16, fontWeight: 700, margin: '0 0 12px' } as React.CSSProperties,
+  card: { background: '#ffffff', borderRadius: 12, padding: 20, marginBottom: 16 } as React.CSSProperties,
+  sectionTitle: { color: '#2c3f63', fontSize: 16, fontWeight: 700, margin: '0 0 12px' } as React.CSSProperties,
   badge: (color: string) => ({
     display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 10px',
     borderRadius: 9999, fontSize: 11, fontWeight: 700, background: `${color}20`, color,
   }) as React.CSSProperties,
-  emptyState: { textAlign: 'center' as const, padding: 40, color: '#666' },
+  emptyState: { textAlign: 'center' as const, padding: 40, color: '#93a4c0' },
   modalSection: { marginBottom: 20 } as React.CSSProperties,
-  modalSectionTitle: { color: '#fff', fontSize: 14, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 } as React.CSSProperties,
-  modalItem: { color: '#b3b3b3', fontSize: 13, lineHeight: 1.6 } as React.CSSProperties,
-  strategyCard: { background: '#1a1a1a', borderRadius: 8, padding: 12, marginBottom: 8, borderLeft: '3px solid #9A4FD1' } as React.CSSProperties,
+  modalSectionTitle: { color: '#2c3f63', fontSize: 14, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 } as React.CSSProperties,
+  modalItem: { color: '#56698f', fontSize: 13, lineHeight: 1.6 } as React.CSSProperties,
+  strategyCard: { background: '#ffffff', borderRadius: 8, padding: 12, marginBottom: 8, borderLeft: '3px solid #3361ff' } as React.CSSProperties,
 };
 
 // ---- Component ----
@@ -473,9 +473,9 @@ const KnowledgeBase: FC = () => {
   // ---- Table columns ----
 
   const tabs = [
-    { key: 'pending' as const, label: 'Aguardando', icon: <FiClock />, count: pendingPlans.length, color: '#f59e0b' },
-    { key: 'approved' as const, label: 'Aprovados', icon: <FiCheckCircle />, count: approvedPlans.length, color: '#9A4FD1' },
-    { key: 'import' as const, label: 'Importar XLS', icon: <FiUploadCloud />, count: parsedPlans.length, color: '#3b82f6' },
+    { key: 'pending' as const, label: 'Aguardando', icon: <FiClock />, count: pendingPlans.length, color: '#b8860b' },
+    { key: 'approved' as const, label: 'Aprovados', icon: <FiCheckCircle />, count: approvedPlans.length, color: '#3361ff' },
+    { key: 'import' as const, label: 'Importar XLS', icon: <FiUploadCloud />, count: parsedPlans.length, color: '#3361ff' },
     { key: 'rejected' as const, label: 'Rejeitados', icon: <FiXCircle />, count: rejectedPlans.length, color: '#e91429' },
   ];
 
@@ -493,25 +493,25 @@ const KnowledgeBase: FC = () => {
       {/* Stats */}
       <div style={styles.statsRow}>
         <div style={styles.statCard}>
-          <div style={{ ...styles.statValue, color: '#9A4FD1' }}>{approvedPlans.length}</div>
+          <div style={{ ...styles.statValue, color: '#3361ff' }}>{approvedPlans.length}</div>
           <div style={styles.statLabel}>Na base (treinados)</div>
         </div>
         <div style={styles.statCard}>
-          <div style={{ ...styles.statValue, color: '#f59e0b' }}>{pendingPlans.length}</div>
+          <div style={{ ...styles.statValue, color: '#b8860b' }}>{pendingPlans.length}</div>
           <div style={styles.statLabel}>Aguardando revisão</div>
         </div>
         <div style={styles.statCard}>
-          <div style={{ ...styles.statValue, color: '#3b82f6' }}>{Array.from(new Set(approvedPlans.map(p => p.segment))).length}</div>
+          <div style={{ ...styles.statValue, color: '#3361ff' }}>{Array.from(new Set(approvedPlans.map(p => p.segment))).length}</div>
           <div style={styles.statLabel}>Segmentos cobertos</div>
         </div>
         <div style={styles.statCard}>
-          <div style={{ ...styles.statValue, color: '#a855f7' }}>{approvedPlans.filter(p => p.source === 'human').length}</div>
+          <div style={{ ...styles.statValue, color: '#3361ff' }}>{approvedPlans.filter(p => p.source === 'human').length}</div>
           <div style={styles.statLabel}>Planejamentos manuais</div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#0a0a0a', borderRadius: 9999, padding: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#f7f8fb', borderRadius: 9999, padding: 4 }}>
         {tabs.map((tab) => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={styles.tabBtn(activeTab === tab.key)}>
             <span style={{ display: 'flex', color: activeTab === tab.key ? tab.color : undefined }}>{tab.icon}</span>
@@ -524,11 +524,11 @@ const KnowledgeBase: FC = () => {
       {/* Content */}
       {activeTab === 'import' ? (
         <div>
-          <div style={{ ...styles.card, border: '2px dashed #282828', textAlign: 'center' }}>
+          <div style={{ ...styles.card, border: '2px dashed #ffffff', textAlign: 'center' }}>
             <Upload.Dragger accept=".xlsx,.xls" multiple showUploadList={false} beforeUpload={handleUpload} style={{ background: 'transparent', border: 'none' }}>
-              <FiUploadCloud style={{ fontSize: 40, color: '#3b82f6', marginBottom: 8 }} />
-              <p style={{ color: '#fff', fontSize: 15, fontWeight: 600, margin: '8px 0 4px' }}>Arraste arquivos XLS aqui</p>
-              <p style={{ color: '#666', fontSize: 13 }}>Ou clique para selecionar. Suporta múltiplos arquivos.</p>
+              <FiUploadCloud style={{ fontSize: 40, color: '#3361ff', marginBottom: 8 }} />
+              <p style={{ color: '#2c3f63', fontSize: 15, fontWeight: 600, margin: '8px 0 4px' }}>Arraste arquivos XLS aqui</p>
+              <p style={{ color: '#93a4c0', fontSize: 13 }}>Ou clique para selecionar. Suporta múltiplos arquivos.</p>
             </Upload.Dragger>
           </div>
 
@@ -537,24 +537,24 @@ const KnowledgeBase: FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <h3 style={styles.sectionTitle}>Fila de importação</h3>
                 <Space>
-                  <Button size="small" onClick={() => setParsedPlans([])} style={{ color: '#b3b3b3' }}>Limpar</Button>
+                  <Button size="small" onClick={() => setParsedPlans([])} style={{ color: '#56698f' }}>Limpar</Button>
                   <Button type="primary" icon={<CloudUploadOutlined />} loading={importing} onClick={importAll}
-                    style={{ background: '#9A4FD1', borderColor: '#9A4FD1', color: '#FFFFFF', fontWeight: 700, borderRadius: 9999 }}>
+                    style={{ background: '#3361ff', borderColor: '#3361ff', color: '#FFFFFF', fontWeight: 700, borderRadius: 9999 }}>
                     Importar Todos ({parsedPlans.length})
                   </Button>
                 </Space>
               </div>
-              {importing && <Progress percent={importProgress} strokeColor="#9A4FD1" trailColor="#282828" style={{ marginBottom: 12 }} />}
+              {importing && <Progress percent={importProgress} strokeColor="#3361ff" trailColor="#ffffff" style={{ marginBottom: 12 }} />}
               {parsedPlans.map((plan) => (
-                <div key={plan.key} style={{ ...styles.card, background: '#1a1a1a', display: 'flex', alignItems: 'center', gap: 16, padding: 14 }}>
-                  <FiFileText style={{ fontSize: 24, color: '#3b82f6', flexShrink: 0 }} />
+                <div key={plan.key} style={{ ...styles.card, background: '#ffffff', display: 'flex', alignItems: 'center', gap: 16, padding: 14 }}>
+                  <FiFileText style={{ fontSize: 24, color: '#3361ff', flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>{plan.artist || plan.fileName}</div>
+                    <div style={{ color: '#2c3f63', fontWeight: 600, fontSize: 14 }}>{plan.artist || plan.fileName}</div>
                     <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
-                      <span style={styles.badge('#9A4FD1')}>{plan.objectives.length} obj</span>
-                      <span style={styles.badge('#3b82f6')}>{plan.strategies.length} est</span>
-                      <span style={styles.badge('#f59e0b')}>SWOT {plan.strengths.length + plan.weaknesses.length}</span>
-                      {plan.fullContent.includes('PLANO DE AÇÃO') && <span style={styles.badge('#a855f7')}>Ações</span>}
+                      <span style={styles.badge('#3361ff')}>{plan.objectives.length} obj</span>
+                      <span style={styles.badge('#3361ff')}>{plan.strategies.length} est</span>
+                      <span style={styles.badge('#b8860b')}>SWOT {plan.strengths.length + plan.weaknesses.length}</span>
+                      {plan.fullContent.includes('PLANO DE AÇÃO') && <span style={styles.badge('#3361ff')}>Ações</span>}
                       {plan.fullContent.includes('FINANCEIRO') && <span style={styles.badge('#ec4899')}>Financeiro</span>}
                     </div>
                   </div>
@@ -562,7 +562,7 @@ const KnowledgeBase: FC = () => {
                     <Select size="small" value={plan.segment} style={{ width: 110 }} options={SEGMENTS.map(s => ({ value: s, label: s }))} onChange={(v) => updatePlanField(plan.key, 'segment', v)} />
                     <Select size="small" value={plan.artist_size} style={{ width: 100 }} options={ARTIST_SIZES} onChange={(v) => updatePlanField(plan.key, 'artist_size', v)} />
                     <Select size="small" value={plan.career_stage} style={{ width: 110 }} options={CAREER_STAGES} onChange={(v) => updatePlanField(plan.key, 'career_stage', v)} />
-                    <Button size="small" type="text" icon={<EyeOutlined style={{ color: '#b3b3b3' }} />} onClick={() => setPreviewPlan(plan)} />
+                    <Button size="small" type="text" icon={<EyeOutlined style={{ color: '#56698f' }} />} onClick={() => setPreviewPlan(plan)} />
                     <Button size="small" type="text" icon={<DeleteOutlined style={{ color: '#e91429' }} />} onClick={() => setParsedPlans(prev => prev.filter(p => p.key !== plan.key))} />
                   </div>
                 </div>
@@ -583,7 +583,7 @@ const KnowledgeBase: FC = () => {
                 <div
                   key={plan.id}
                   style={{
-                    background: '#181818',
+                    background: '#ffffff',
                     borderRadius: 8,
                     padding: '14px 16px',
                     display: 'flex',
@@ -592,32 +592,32 @@ const KnowledgeBase: FC = () => {
                     transition: 'background .15s',
                     cursor: 'pointer',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = '#282828')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = '#181818')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#ffffff')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
                   onClick={() => setViewStoredPlan(plan)}
                 >
-                  <div style={{ width: 40, height: 40, borderRadius: 6, background: '#282828', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <FiFileText style={{ color: '#b3b3b3', fontSize: 18 }} />
+                  <div style={{ width: 40, height: 40, borderRadius: 6, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <FiFileText style={{ color: '#56698f', fontSize: 18 }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#fff', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ color: '#2c3f63', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {plan.title}
                     </div>
                     <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center' }}>
-                      <span style={styles.badge('#9A4FD1')}>{plan.segment}</span>
-                      <span style={styles.badge('#3b82f6')}>{plan.artist_size}</span>
-                      <span style={styles.badge('#a855f7')}>{plan.career_stage}</span>
+                      <span style={styles.badge('#3361ff')}>{plan.segment}</span>
+                      <span style={styles.badge('#3361ff')}>{plan.artist_size}</span>
+                      <span style={styles.badge('#3361ff')}>{plan.career_stage}</span>
                       <span style={{ color: '#555', fontSize: 11 }}>•</span>
-                      <span style={{ color: '#666', fontSize: 11 }}>{new Date(plan.created_at).toLocaleDateString('pt-BR')}</span>
+                      <span style={{ color: '#93a4c0', fontSize: 11 }}>{new Date(plan.created_at).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-                    <span style={{ ...styles.badge(plan.source === 'human' ? '#f59e0b' : '#a855f7'), marginRight: 8 }}>{plan.source}</span>
+                    <span style={{ ...styles.badge(plan.source === 'human' ? '#b8860b' : '#3361ff'), marginRight: 8 }}>{plan.source}</span>
                     {plan.status === 'pending' && (
                       <>
                         <button onClick={() => approvePlan(plan.id)} title="Aprovar"
-                          style={{ background: '#9A4FD120', border: 'none', borderRadius: 6, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                          <CheckOutlined style={{ color: '#9A4FD1', fontSize: 14 }} />
+                          style={{ background: '#3361ff20', border: 'none', borderRadius: 6, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                          <CheckOutlined style={{ color: '#3361ff', fontSize: 14 }} />
                         </button>
                         <button onClick={() => rejectPlan(plan.id)} title="Rejeitar"
                           style={{ background: '#e9142920', border: 'none', borderRadius: 6, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -629,7 +629,7 @@ const KnowledgeBase: FC = () => {
                       <Popconfirm title="Excluir permanentemente?" onConfirm={() => deletePlan(plan.id)} placement="left">
                         <button title="Excluir"
                           style={{ background: '#e9142910', border: 'none', borderRadius: 6, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                          <DeleteOutlined style={{ color: '#666', fontSize: 14 }} />
+                          <DeleteOutlined style={{ color: '#93a4c0', fontSize: 14 }} />
                         </button>
                       </Popconfirm>
                     )}
@@ -687,33 +687,33 @@ const PlanPreviewContent: FC<{ plan: ParsedPlan }> = ({ plan }) => (
     {(plan.strengths.length > 0 || plan.weaknesses.length > 0) && (
       <Section title="Análise SWOT">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <SwotBox label="Forças" items={plan.strengths} color="#9A4FD1" />
+          <SwotBox label="Forças" items={plan.strengths} color="#3361ff" />
           <SwotBox label="Fraquezas" items={plan.weaknesses} color="#e91429" />
-          <SwotBox label="Oportunidades" items={plan.opportunities} color="#3b82f6" />
-          <SwotBox label="Ameaças" items={plan.threats} color="#f59e0b" />
+          <SwotBox label="Oportunidades" items={plan.opportunities} color="#3361ff" />
+          <SwotBox label="Ameaças" items={plan.threats} color="#b8860b" />
         </div>
       </Section>
     )}
     {plan.strategies.length > 0 && (
       <Section title={`Estratégias (${plan.strategies.length})`}>
-        {plan.strategies.slice(0, 10).map((s, i) => <div key={i} style={styles.strategyCard}><span style={{ color: '#b3b3b3', fontSize: 13 }}>{s}</span></div>)}
-        {plan.strategies.length > 10 && <p style={{ color: '#666', fontSize: 12 }}>+ {plan.strategies.length - 10} mais</p>}
+        {plan.strategies.slice(0, 10).map((s, i) => <div key={i} style={styles.strategyCard}><span style={{ color: '#56698f', fontSize: 13 }}>{s}</span></div>)}
+        {plan.strategies.length > 10 && <p style={{ color: '#93a4c0', fontSize: 12 }}>+ {plan.strategies.length - 10} mais</p>}
       </Section>
     )}
-    {plan.fullContent.includes('PLANO DE AÇÃO') && <Section title="✓ Plano de Ação detectado"><p style={{ color: '#666', fontSize: 12 }}>Dados incluídos no conteúdo para treinamento.</p></Section>}
-    {plan.fullContent.includes('FINANCEIRO') && <Section title="✓ Financeiro detectado"><p style={{ color: '#666', fontSize: 12 }}>Dados incluídos no conteúdo para treinamento.</p></Section>}
-    {plan.fullContent.includes('CRONOGRAMA') && <Section title="✓ Cronograma detectado"><p style={{ color: '#666', fontSize: 12 }}>Dados incluídos no conteúdo para treinamento.</p></Section>}
+    {plan.fullContent.includes('PLANO DE AÇÃO') && <Section title="✓ Plano de Ação detectado"><p style={{ color: '#93a4c0', fontSize: 12 }}>Dados incluídos no conteúdo para treinamento.</p></Section>}
+    {plan.fullContent.includes('FINANCEIRO') && <Section title="✓ Financeiro detectado"><p style={{ color: '#93a4c0', fontSize: 12 }}>Dados incluídos no conteúdo para treinamento.</p></Section>}
+    {plan.fullContent.includes('CRONOGRAMA') && <Section title="✓ Cronograma detectado"><p style={{ color: '#93a4c0', fontSize: 12 }}>Dados incluídos no conteúdo para treinamento.</p></Section>}
   </div>
 );
 
 const StoredPlanDetail: FC<{ plan: StoredPlan }> = ({ plan }) => (
   <div>
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-      <span style={styles.badge('#9A4FD1')}>{plan.segment}</span>
-      <span style={styles.badge('#3b82f6')}>{plan.artist_size}</span>
-      <span style={styles.badge('#a855f7')}>{plan.career_stage}</span>
-      <span style={styles.badge('#f59e0b')}>{plan.source}</span>
-      <span style={{ color: '#666', fontSize: 12 }}>{'⭐'.repeat(plan.quality_score || 0)} • {new Date(plan.created_at).toLocaleDateString('pt-BR')}</span>
+      <span style={styles.badge('#3361ff')}>{plan.segment}</span>
+      <span style={styles.badge('#3361ff')}>{plan.artist_size}</span>
+      <span style={styles.badge('#3361ff')}>{plan.career_stage}</span>
+      <span style={styles.badge('#b8860b')}>{plan.source}</span>
+      <span style={{ color: '#93a4c0', fontSize: 12 }}>{'⭐'.repeat(plan.quality_score || 0)} • {new Date(plan.created_at).toLocaleDateString('pt-BR')}</span>
     </div>
     {plan.context_summary && <Section title="Contexto"><p style={styles.modalItem}>{plan.context_summary}</p></Section>}
     {plan.objectives && Array.isArray(plan.objectives) && plan.objectives.length > 0 && (
@@ -725,7 +725,7 @@ const StoredPlanDetail: FC<{ plan: StoredPlan }> = ({ plan }) => (
       <Section title={`Estratégias (${plan.strategies.length})`}>
         {plan.strategies.slice(0, 8).map((strat: any, i: number) => (
           <div key={i} style={styles.strategyCard}>
-            <div style={{ color: '#fff', fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
+            <div style={{ color: '#2c3f63', fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
               {strat.type && <Tag color="geekblue" style={{ marginRight: 4, fontSize: 10 }}>{strat.type}</Tag>}
               {strat.title || `Estratégia ${i + 1}`}
             </div>
@@ -733,19 +733,19 @@ const StoredPlanDetail: FC<{ plan: StoredPlan }> = ({ plan }) => (
             {strat.tasks && Array.isArray(strat.tasks) && strat.tasks.length > 0 && (
               <div style={{ marginTop: 6 }}>
                 {strat.tasks.slice(0, 3).map((t: any, j: number) => (
-                  <div key={j} style={{ color: '#666', fontSize: 11, padding: '1px 0' }}>→ {t.description || t.title}{t.deadline && ` (${t.deadline})`}</div>
+                  <div key={j} style={{ color: '#93a4c0', fontSize: 11, padding: '1px 0' }}>→ {t.description || t.title}{t.deadline && ` (${t.deadline})`}</div>
                 ))}
               </div>
             )}
           </div>
         ))}
-        {plan.strategies.length > 8 && <p style={{ color: '#666', fontSize: 12 }}>+ {plan.strategies.length - 8} mais</p>}
+        {plan.strategies.length > 8 && <p style={{ color: '#93a4c0', fontSize: 12 }}>+ {plan.strategies.length - 8} mais</p>}
       </Section>
     )}
     {plan.full_content && (
       <details style={{ marginTop: 16, cursor: 'pointer' }}>
-        <summary style={{ color: '#b3b3b3', fontSize: 13, fontWeight: 600 }}>Ver conteúdo completo para RAG ({(plan.full_content.length / 1000).toFixed(1)}k chars)</summary>
-        <pre style={{ marginTop: 8, padding: 12, background: '#0a0a0a', borderRadius: 8, fontSize: 11, color: '#888', whiteSpace: 'pre-wrap', maxHeight: 250, overflow: 'auto' }}>{plan.full_content}</pre>
+        <summary style={{ color: '#56698f', fontSize: 13, fontWeight: 600 }}>Ver conteúdo completo para RAG ({(plan.full_content.length / 1000).toFixed(1)}k chars)</summary>
+        <pre style={{ marginTop: 8, padding: 12, background: '#f7f8fb', borderRadius: 8, fontSize: 11, color: '#888', whiteSpace: 'pre-wrap', maxHeight: 250, overflow: 'auto' }}>{plan.full_content}</pre>
       </details>
     )}
   </div>
@@ -759,7 +759,7 @@ const Section: FC<{ title: string; children: React.ReactNode }> = ({ title, chil
 );
 
 const SwotBox: FC<{ label: string; items: string[]; color: string }> = ({ label, items, color }) => (
-  <div style={{ background: '#0a0a0a', borderRadius: 8, padding: 10 }}>
+  <div style={{ background: '#f7f8fb', borderRadius: 8, padding: 10 }}>
     <div style={{ color, fontSize: 11, fontWeight: 700, marginBottom: 6 }}>{label} ({items.length})</div>
     {items.slice(0, 5).map((item, i) => <div key={i} style={{ color: '#999', fontSize: 11, padding: '2px 0' }}>• {item}</div>)}
     {items.length > 5 && <div style={{ color: '#555', fontSize: 10 }}>+ {items.length - 5} mais</div>}

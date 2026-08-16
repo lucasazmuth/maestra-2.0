@@ -7430,12 +7430,16 @@
   white-space: nowrap;
 }
 
+/* A folga de cima vinha da faixa de KPIs, que ficava entre o cabeçalho e as abas. Com ela
+   oculta, as abas encostavam no cabeçalho. A margem é do próprio bloco de abas, então vale nos
+   dois casos: `.catalog-page` é bloco comum, e a margem colapsa com a de baixo dos KPIs
+   quando eles voltarem — 24px no total, não 48. */
 .task-app:not(.public-app) .catalog-reference-page .catalog-tabs {
   display: flex;
   width: fit-content;
   align-items: center;
   gap: 8px;
-  margin: 0 0 20px;
+  margin: 24px 0 20px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -7773,7 +7777,9 @@
 
 .track-detail-header {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  /* `auto` na última coluna, e não 44px: ali agora moram duas ações (tornar principal e
+     editar a versão). Com a largura fixa a segunda não cabia e caía para baixo da primeira. */
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
   min-height: 68px;
@@ -7783,6 +7789,7 @@
 }
 
 .track-detail-header > button,
+.track-detail-header .track-detail-actions > button,
 .track-comments > header > button {
   display: grid;
   width: 42px;
@@ -7799,6 +7806,7 @@
 }
 
 .track-detail-header > button:hover,
+.track-detail-header .track-detail-actions > button:hover,
 .track-comments > header > button:hover {
   background: #f9fbff;
   color: #52668d;
@@ -7809,6 +7817,34 @@
 .track-detail-header > button:last-child {
   justify-self: end;
   font-size: 21px;
+}
+
+/* As duas ações da direita (tornar principal e editar a versão) dividem a MESMA célula do
+   grid de três colunas do cabeçalho. Um quarto filho direto abriria uma coluna implícita e
+   desalinharia o título. */
+/* Especificidade acima de `.track-detail-header div`, que pega qualquer div do cabeçalho e
+   impõe `display: grid` — era o que empilhava as duas ações uma sobre a outra. */
+.track-detail-header .track-detail-actions {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 10px;
+}
+
+/* Estrela acesa = esta é a versão principal. Mesmo amarelo da estrela da lista do Espaço Jam,
+   para a marca significar a mesma coisa nos dois lugares. */
+.track-detail-actions .track-detail-star.is-on {
+  color: #e0ad3c;
+  background: #fdf4de;
+}
+
+.track-detail-actions .track-detail-star.is-on:hover {
+  color: #c8952b;
+  background: #fbeccb;
+}
+
+.track-detail-actions .track-detail-star.is-on svg {
+  fill: currentColor;
 }
 
 .track-detail-header .track-detail-title {
@@ -7888,10 +7924,20 @@
   color: #fff;
 }
 
+/* A capa da faixa entra AQUI, atrás do degradê — é o lugar que `--track-room` sempre quis
+   ocupar. O degradê passa a ser translúcido para a imagem aparecer por baixo sem roubar a
+   leitura dos controles.
+   O `none` no fallback do var() não é decorativo: sem ele, quando a faixa não tem capa a
+   variável fica indefinida, o `background-image` inteiro vira inválido em tempo de cômputo e
+   o degradê some junto. Foi o que derrubou a camada radial da regra antiga. */
 .track-player::before {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(135deg, #302852 0%, #151c3e 46%, #080a14 100%);
+  background-image:
+    linear-gradient(135deg, rgba(48, 40, 82, .88) 0%, rgba(21, 28, 62, .92) 46%, rgba(8, 10, 20, .95) 100%),
+    var(--track-room, none);
+  background-position: center;
+  background-size: cover;
   content: '';
 }
 
@@ -8776,6 +8822,19 @@ body:has(.track-detail-backdrop) .local-player-bar {
   color: #8091ac;
 }
 
+/* O chip do responsavel passou a mostrar foto no lugar da inicial. `overflow: hidden` porque o
+   botao e redondo e a imagem e quadrada. */
+.ap-owner {
+  overflow: hidden;
+}
+
+.ap-owner-foto {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .task-app:not(.public-app) .action-plan-page .ap-task-more {
   color: #8a9ab4;
 }
@@ -8910,11 +8969,25 @@ body:has(.track-detail-backdrop) .local-player-bar {
   text-transform: uppercase;
 }
 
-.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
-.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+/* Dia SELECIONADO: pilula azul cheia com o numero em branco. */
+.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
   border-color: #3361ff;
   background: #3361ff;
   color: #fff;
+}
+
+/* HOJE e so um anel — o `::before` do antd existe para desenhar a borda, nao para preencher.
+   Este seletor dividia o bloco com o de cima e herdava `background: #3361ff`: o quadrado azul
+   cobria o numero, que continua em #52668d, e nao dava para ver que dia era hoje.
+   `background: transparent` explicito porque a regra antiga ja pode estar em cache do usuario. */
+.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-cell-inner::before {
+  border-color: #3361ff;
+  background: transparent;
+}
+
+/* Hoje E selecionado ao mesmo tempo: o anel passa a branco para aparecer sobre a pilula azul. */
+.action-plan-picker .ant-picker-cell-in-view.ant-picker-cell-today.ant-picker-cell-selected .ant-picker-cell-inner::before {
+  border-color: #fff;
 }
 
 .action-plan-picker .ant-picker-cell:hover .ant-picker-cell-inner {
@@ -9346,7 +9419,12 @@ body:has(.track-detail-backdrop) .local-player-bar {
   gap: clamp(20px, 3vw, 44px);
 }
 
+/* Ancorado na ÚLTIMA coluna, não na terceira: o campo de busca só existe nas telas onde
+   filtra algo, e sem ele o grupo da direita era colocado automaticamente na coluna do meio
+   — os controles apareciam no centro do header, com a faixa da direita vazia. `-2 / -1`
+   resolve nos dois grids: 3 colunas no desktop e 2 abaixo de 700px. */
 .task-app .top-navigation-right {
+  grid-column: -2 / -1;
   justify-content: flex-end;
   gap: 12px;
 }

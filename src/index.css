@@ -1094,8 +1094,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Mesma razao do App.scss: preto aqui pintava a tela toda antes do app montar. */
 body {
-  background-color: black;
+  background-color: #f7f8fb;
 }
 
 /* Width of the scrollbar */

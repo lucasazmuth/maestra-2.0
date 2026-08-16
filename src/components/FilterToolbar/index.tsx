@@ -5,10 +5,12 @@ import { FiCheck, FiSearch, FiSliders } from 'react-icons/fi';
 import styles from './FilterToolbar.module.scss';
 
 interface FilterToolbarProps {
-  searchValue: string;
-  onSearchChange: (value: string) => void;
+  // 'none': quem faz a busca por texto é o campo do topo. Sobra para a barra só o que ela
+  // sabe fazer melhor — status, gênero, responsável, ordenação.
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
   searchPlaceholder?: string;
-  searchPlacement?: 'toolbar' | 'popover';
+  searchPlacement?: 'toolbar' | 'popover' | 'none';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeCount?: number;
@@ -31,7 +33,7 @@ interface FilterOptionProps {
 }
 
 export const FilterToolbar: FC<FilterToolbarProps> = ({
-  searchValue,
+  searchValue = '',
   onSearchChange,
   searchPlaceholder = 'Buscar',
   searchPlacement = 'toolbar',
@@ -58,7 +60,7 @@ export const FilterToolbar: FC<FilterToolbarProps> = ({
         placeholder={searchPlaceholder}
         value={searchValue}
         allowClear
-        onChange={(event) => onSearchChange(event.target.value)}
+        onChange={(event) => onSearchChange?.(event.target.value)}
       />
     )}
     <Popover
@@ -90,7 +92,7 @@ export const FilterToolbar: FC<FilterToolbarProps> = ({
                 value={searchValue}
                 allowClear
                 autoFocus
-                onChange={(event) => onSearchChange(event.target.value)}
+                onChange={(event) => onSearchChange?.(event.target.value)}
               />
             </div>
           )}

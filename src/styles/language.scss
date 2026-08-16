@@ -59,15 +59,12 @@
   border-bottom: 1px solid hsla(0, 0%, 100%, 0.1) !important;
 }
 
+// Sem `background-color` aqui. Este bloco pintava TODO modal do app de #282828 com
+// `!important` — era o que mantinha os modais escuros mesmo depois da troca para o tema
+// claro do antd, e nenhum override local conseguia vencer. A cor agora vem do tema.
 .ant-modal {
   padding-bottom: 0 !important;
   border-radius: 10px;
-  background-color: rgb(40 40 40) !important;
-
-  .ant-modal-header,
-  .ant-modal-content {
-    background-color: rgb(40 40 40) !important;
-  }
 
   .ant-modal-content {
     border-radius: 10px;

@@ -1,7 +1,7 @@
 import { FC, FormEvent, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { Button, message } from 'antd';
-import { FiArrowLeft, FiRefreshCw, FiLock, FiMoreVertical, FiSend, FiSettings } from 'react-icons/fi';
+import { message } from 'antd';
+import { FiArrowLeft, FiRefreshCw, FiLock, FiMoreVertical, FiSend, FiSettings, FiStar } from 'react-icons/fi';
 import { AddIcon, EspacoJamIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -17,6 +17,7 @@ import { SpotifyEmbedPlayer } from '../../components/SpotifyEmbedPlayer';
 import type { LocalTrack } from '../../components/LocalPlayerBar';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import { TrackModal } from '../../components/TrackModal';
+import { VersionModal } from '../../components/VersionModal';
 import {
   FilterChip,
   FilterChips,
@@ -29,8 +30,54 @@ import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, formatMs, isActiveCatalogStatus
 import * as catalogDb from '../../services/db/catalog';
 import * as genresDb from '../../services/db/genres';
 import * as membersDb from '../../services/db/members';
-import type { CatalogItem, CatalogProject, MusicGenre, ArtistMember } from '../../interfaces/maestra';
-import styles from './Catalog.module.scss';
+import type { CatalogItem, CatalogProject, CatalogVersion, MusicGenre, ArtistMember } from '../../interfaces/maestra';
+import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
+
+// Forma da linha das DUAS listas da tela — Músicas e Lançamentos. Antes Músicas era uma tabela
+// em grade, com cabeçalho e colunas fixas, e Lançamentos uma lista solta: duas caras para a
+// mesma coisa. Ficam aqui juntas justamente para não voltarem a divergir.
+const linhaLista: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 14,
+  padding: 8,
+  borderRadius: 6,
+  cursor: 'pointer',
+};
+const linhaPlay: CSSProperties = {
+  width: 36,
+  height: 36,
+  minWidth: 36,
+  borderRadius: '50%',
+  border: 'none',
+  background: '#3361ff',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'transform .1s',
+};
+const linhaCapa: CSSProperties = { width: 40, height: 40, borderRadius: 4, objectFit: 'cover' };
+const linhaTitulo: CSSProperties = {
+  color: '#2c3f63',
+  fontWeight: 600,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+};
+const linhaSub: CSSProperties = {
+  color: '#7c8da8',
+  fontSize: 13,
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+};
+const linhaMeta: CSSProperties = { color: '#93a4c0', fontSize: 13 };
+
+// Faixa de contadores ("Rascunhos ativos", "Em produção", "Músicas visíveis") oculta por ora,
+// a pedido. Fica como flag, e não comentada, para o bloco continuar compilando e tipado —
+// voltar é trocar por `true`.
+const MOSTRAR_KPIS = false;
 
 type Tab = 'spotify' | 'manual';
 type SortOption = 'updated-desc' | 'created-desc' | 'title-asc' | 'release-asc';
@@ -70,11 +117,22 @@ const parseTrackDuration = (duration?: string | null): number => {
   return Number.isFinite(numeric) && numeric > 0 ? numeric : 222;
 };
 
+// A pilula vinha de `.catalog-track-table article em`. A tabela saiu quando as duas listas
+// passaram a usar a mesma linha, e o selo voltou a ser um <em> italico solto — agora a forma
+// mora aqui, junto de quem a desenha.
 const StatusBadge: FC<{ status: string }> = ({ status }) => {
   const cfg = (CATALOG_STATUS as any)[status] || { label: status, color: '#6b7280' };
   return (
     <em
       style={{
+        display: 'inline-block',
+        flexShrink: 0,
+        borderRadius: 13,
+        padding: '6px 9px',
+        fontSize: 10,
+        fontWeight: 800,
+        fontStyle: 'normal',
+        whiteSpace: 'nowrap',
         background: `${cfg.color}22`,
         color: cfg.color,
       }}
@@ -143,7 +201,10 @@ const Catalog: FC = () => {
     return () => el.removeEventListener('cancel', onCancel);
   });
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  // Busca do topo — ver globalSearchStore. Antes era estado local, com o campo escondido
+  // dentro do popover de "Filtros".
+  const termoBusca = useGlobalSearch((st) => st.termo);
+  const limparBusca = useGlobalSearch((st) => st.limpar);
   const [statusFilter, setStatusFilter] = useState('all');
   const [genreFilter, setGenreFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
@@ -151,6 +212,13 @@ const Catalog: FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('updated-desc');
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState<CatalogItem | null>(null);
+  // A sala precisa do projeto e da versao de verdade, nao so do CatalogItem derivado: e deles
+  // que saem a edicao da versao (VersionModal) e o "qual e a principal" (primary_version_id).
+  // Antes o deep-link carregava os dois, montava o item e jogava fora o resto — por isso o
+  // botao de engrenagem abria a ficha do PROJETO, o unico objeto que sobrava em memoria.
+  const [roomProject, setRoomProject] = useState<CatalogProject | null>(null);
+  const [roomVersion, setRoomVersion] = useState<CatalogVersion | null>(null);
+  const [versionModalOpen, setVersionModalOpen] = useState(false);
   const [trackProgress, setTrackProgress] = useState(34);
   const [virtualPlaying, setVirtualPlaying] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -195,13 +263,13 @@ const Catalog: FC = () => {
   const spotifyCatalog = artist?.content?.spotifyCatalog;
 
   useEffect(() => {
-    setSearch('');
+    limparBusca();
     setStatusFilter('all');
     setGenreFilter('all');
     setAssigneeFilter('all');
     setAudioFilter('all');
     setSortBy('updated-desc');
-  }, [artistId]);
+  }, [artistId, limparBusca]);
 
   // Fila do player local: faixas cadastradas que têm áudio.
   const localTracks: LocalTrack[] = items.map((i) => ({
@@ -310,7 +378,7 @@ const Catalog: FC = () => {
   }, [items]);
 
   const filteredItems = useMemo(() => {
-    const normalized = search.trim().toLocaleLowerCase('pt-BR');
+    const normalized = normalizar(termoBusca);
     const timestamp = (item: CatalogItem, field: 'updated' | 'created') => {
       const value = field === 'updated' ? item.updated_at || item.created_at : item.created_at;
       return value ? Date.parse(value) || 0 : 0;
@@ -324,8 +392,8 @@ const Catalog: FC = () => {
           item.isrc,
           item.upc,
           item.assignee?.name,
-        ].filter(Boolean).join(' ').toLocaleLowerCase('pt-BR');
-        const matchesSearch = !normalized || searchable.includes(normalized);
+        ].filter(Boolean).join(' ');
+        const matchesSearch = !normalized || normalizar(searchable).includes(normalized);
         const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
         const matchesGenre = genreFilter === 'all' || item.genre === genreFilter;
         const matchesAssignee = assigneeFilter === 'all' || item.assignee?.id === assigneeFilter;
@@ -344,7 +412,17 @@ const Catalog: FC = () => {
         }
         return timestamp(b, 'updated') - timestamp(a, 'updated');
       });
-  }, [assigneeFilter, audioFilter, genreFilter, items, search, sortBy, statusFilter]);
+  }, [assigneeFilter, audioFilter, genreFilter, items, termoBusca, sortBy, statusFilter]);
+
+  // A aba Lançamentos lista o que veio do Spotify — outra lista, mas ainda músicas. Sem isto
+  // o campo do topo ficaria visível e inerte aqui, que é justamente o problema que ele veio
+  // resolver. Os filtros de status/gênero não se aplicam: essas faixas já estão publicadas.
+  const filteredSpotifyTracks = useMemo(() => {
+    const q = normalizar(termoBusca);
+    const tracks = spotifyCatalog?.tracks || [];
+    if (!q) return tracks;
+    return tracks.filter((t) => normalizar([t.name, t.album].filter(Boolean).join(' ')).includes(q));
+  }, [spotifyCatalog, termoBusca]);
 
   const activeFilterCount = [
     statusFilter !== 'all',
@@ -358,7 +436,7 @@ const Catalog: FC = () => {
   const productionCount = projects.filter((item) => ['recording', 'production', 'mixing', 'mastering'].includes(item.status)).length;
 
   const clearFilters = () => {
-    setSearch('');
+    limparBusca();
     setStatusFilter('all');
     setGenreFilter('all');
     setAssigneeFilter('all');
@@ -451,16 +529,53 @@ const Catalog: FC = () => {
     return () => window.clearInterval(timer);
   }, [detailTrackIsPlaying, selectedTrack]);
 
-  const openTrackRoom = (track: CatalogItem) => {
+  const openTrackRoom = (track: CatalogItem, project?: CatalogProject, version?: CatalogVersion) => {
     setSelectedTrack(track);
+    setRoomProject(project || null);
+    setRoomVersion(version || null);
     setTrackProgress(track.audio_file ? 0 : 34);
     setCommentText('');
     setTimelineCommentText('');
     setTimelineComposer(null);
   };
 
+  const roomVersionEhPrincipal = Boolean(
+    roomProject && roomVersion && roomProject.primary_version_id === roomVersion.id,
+  );
+
+  // Relê o projeto e reaponta os três estados da sala de uma vez. Sem isto, salvar a versão
+  // ou trocar a principal mudaria o banco e deixaria a tela contando a história antiga.
+  const recarregarSala = async () => {
+    if (!roomProject || !roomVersion) return;
+    try {
+      const projeto = await catalogDb.getCatalogProject(roomProject.id);
+      const versao = projeto.versions?.find((entry) => entry.id === roomVersion.id) || null;
+      setRoomProject(projeto);
+      setRoomVersion(versao);
+      if (versao) setSelectedTrack(catalogDb.catalogProjectToItem(projeto, versao));
+      setCatalogReload((n) => n + 1); // a lista de músicas atrás da sala também muda
+    } catch {
+      message.error('Não foi possível atualizar a versão');
+    }
+  };
+
+  // Alterna nos dois sentidos: clicar na estrela acesa desmarca, e a música fica sem versão
+  // principal até outra ser escolhida — mesmo comportamento da lista do Espaço Jam.
+  const alternarVersaoPrincipal = async () => {
+    if (!roomProject || !roomVersion) return;
+    try {
+      await catalogDb.setPrimaryVersion(roomProject.id, roomVersionEhPrincipal ? null : roomVersion.id);
+      await recarregarSala();
+    } catch {
+      message.error('Não foi possível alterar a versão principal');
+    }
+  };
+
   const closeTrackRoom = () => {
     setSelectedTrack(null);
+    setRoomProject(null);
+    setRoomVersion(null);
+    setVersionModalOpen(false);
     setVirtualPlaying(false);
     setCommentText('');
     setTimelineCommentText('');
@@ -582,7 +697,7 @@ const Catalog: FC = () => {
     catalogDb.getCatalogProject(projectId)
       .then((project) => {
         const version = project.versions?.find((entry) => entry.id === versionId);
-        if (version) openTrackRoom(catalogDb.catalogProjectToItem(project, version));
+        if (version) openTrackRoom(catalogDb.catalogProjectToItem(project, version), project, version);
       })
       .catch(() => message.error('Não foi possível abrir a versão'))
       .finally(() => setOpeningVersionRoom(false));
@@ -634,12 +749,9 @@ const Catalog: FC = () => {
 
   const catalogFilterControls = (
     <FilterToolbar
-      searchValue={search}
-      onSearchChange={setSearch}
-      searchPlaceholder="Buscar em Músicas"
-      searchPlacement="popover"
+      searchPlacement="none"
       title="Filtros de Músicas"
-      subtitle="Busque e refine suas músicas"
+      subtitle="Refine e ordene a lista"
       activeCount={activeFilterCount}
       onClear={clearFilters}
       open={filterPopoverOpen}
@@ -787,11 +899,13 @@ const Catalog: FC = () => {
           </button>
         )}
       </div>
-      <section className='catalog-summary' aria-label='Resumo de Músicas'>
-        <span><b>{String(draftCount).padStart(2, '0')}</b>Rascunhos ativos</span>
-        <span><b>{String(productionCount).padStart(2, '0')}</b>Em produção</span>
-        <span><b>{String(items.length).padStart(2, '0')}</b>Músicas visíveis</span>
-      </section>
+      {MOSTRAR_KPIS && (
+        <section className='catalog-summary' aria-label='Resumo de Músicas'>
+          <span><b>{String(draftCount).padStart(2, '0')}</b>Rascunhos ativos</span>
+          <span><b>{String(productionCount).padStart(2, '0')}</b>Em produção</span>
+          <span><b>{String(items.length).padStart(2, '0')}</b>Músicas visíveis</span>
+        </section>
+      )}
       <div className='catalog-tabs'>
         <TabButton id='manual' label='Músicas' />
         <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify />} />
@@ -799,30 +913,27 @@ const Catalog: FC = () => {
       </div>
       {tab === 'spotify' ? (
         <div className='catalog-reference-list'>
-          {!spotifyCatalog?.tracks?.length ? (
-            <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>
-              Nenhum lançamento publicado no Spotify vinculado a este artista.
+          {!filteredSpotifyTracks.length ? (
+            <div style={{ color: '#7c8da8', padding: 32, textAlign: 'center' }}>
+              {spotifyCatalog?.tracks?.length
+                ? 'Nenhum lançamento encontrado para esta busca.'
+                : 'Nenhum lançamento publicado no Spotify vinculado a este artista.'}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {spotifyCatalog.tracks.map((t) => (
+              {/* Hover pela classe `catalog-track-row`, igual a lista de Musicas — antes era
+                  JS no mouseenter/mouseleave. O fundo inline fica so na faixa tocando: estilo
+                  inline vence o :hover, entao pintar 'transparent' mataria o hover das demais. */}
+              {filteredSpotifyTracks.map((t) => (
                 <div
                   key={t.id}
+                  className='catalog-track-row'
                   onClick={() => openEmbed(playingTrackId === t.id ? null : t.id)}
                   title='Ouvir prévia aqui'
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 14,
-                    padding: 8,
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    background: playingTrackId === t.id ? 'rgba(154, 79, 209,0.08)' : 'transparent',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background =
-                      playingTrackId === t.id ? 'rgba(154, 79, 209,0.08)' : 'transparent')
+                  style={
+                    playingTrackId === t.id
+                      ? { ...linhaLista, background: 'rgba(51, 97, 255, 0.08)' }
+                      : linhaLista
                   }
                 >
                   <button
@@ -831,38 +942,26 @@ const Catalog: FC = () => {
                       e.stopPropagation();
                       if (t.spotify_url) window.open(t.spotify_url, '_blank', 'noopener');
                     }}
-                    style={{
-                      width: 36,
-                      height: 36,
-                      minWidth: 36,
-                      borderRadius: '50%',
-                      border: 'none',
-                      background: '#9A4FD1',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform .1s',
-                    }}
+                    style={linhaPlay}
                     onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.92)')}
                     onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                   >
-                    <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#000' }}>
+                    <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#fff' }}>
                       <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
                     </svg>
                   </button>
                   <img
                     src={t.album_image}
                     alt=''
-                    style={{ width: 40, height: 40, borderRadius: 4, objectFit: 'cover' }}
+                    style={linhaCapa}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={linhaTitulo}>
                       {t.name}
                     </div>
-                    <div style={{ color: '#b3b3b3', fontSize: 13 }}>{t.album}</div>
+                    <div style={linhaSub}>{t.album}</div>
                   </div>
-                  <span style={{ color: '#b3b3b3', fontSize: 13 }}>{formatMs(t.duration_ms)}</span>
+                  <span style={linhaMeta}>{formatMs(t.duration_ms)}</span>
                 </div>
               ))}
             </div>
@@ -914,99 +1013,121 @@ const Catalog: FC = () => {
           )}
           <div className='catalog-reference-list'>
           {!items.length ? (
-            <div style={{ color: '#b3b3b3', padding: 32, textAlign: 'center' }}>
+            <div style={{ color: '#7c8da8', padding: 32, textAlign: 'center' }}>
               {canEditCatalog ? 'Nenhuma música cadastrada ainda. Cadastre a primeira.' : 'Nenhuma música cadastrada ainda.'}
             </div>
           ) : !filteredItems.length ? (
-            <div className={styles.noResults}>
-              <strong>Nenhuma música encontrada</strong>
-              <span>Ajuste os filtros ou limpe a busca para visualizar suas músicas.</span>
-              <Button onClick={clearFilters}>Limpar filtros</Button>
+            // Uma linha, igual ao vazio da aba Lançamentos. Antes era uma caixa tracejada com
+            // título, subtítulo e botão — e o título saía em #d8d8dd, quase invisível no branco.
+            // Quem precisa desfazer tem o X do campo de busca e o "Limpar" dentro de Filtros.
+            <div style={{ color: '#7c8da8', padding: 32, textAlign: 'center' }}>
+              {termoBusca.trim()
+                ? 'Nenhuma música encontrada para esta busca.'
+                : 'Nenhuma música encontrada com esses filtros.'}
             </div>
           ) : (
-            <div className='catalog-track-table'>
-              <header><span>Música</span><span>Tipo</span><span>Status</span><span>Próximo marco</span><span>Colaboração</span><span /></header>
-              {filteredItems.map((it) => (
-                <article
-                  key={it.id}
-                  className='catalog-track-row'
-                  role='button'
-                  tabIndex={0}
-                  title='Abrir espaço do projeto'
-                  onClick={() => navigate(`/artists/${artist.id}/catalog/projects/${it.project_id || it.id}`)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      navigate(`/artists/${artist.id}/catalog/projects/${it.project_id || it.id}`);
-                    }
-                  }}
-                >
-                  <span>
-                  {(() => {
-                    // Espelha o player: se ESTA faixa é a do player, mostra pausar/tocar conforme
-                    // o estado e o clique pausa/retoma; senão, o clique inicia esta faixa.
-                    const isCurrent = playerCurrentId === it.id;
-                    const isPlaying = isCurrent && playerPlaying;
-                    return (
-                      <button
-                        className='catalog-track-play'
-                        title={!it.audio_file ? 'Abrir player — áudio pendente' : isPlaying ? 'Pausar' : 'Tocar'}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isCurrent) togglePlayer?.(); // já no player → pausa/retoma
-                          else openLocal(it.id); // começa esta faixa
-                        }}
-                      >
-                        {isPlaying ? (
-                          <svg viewBox='0 0 16 16'>
-                            <path d='M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z' />
-                          </svg>
-                        ) : (
-                          <svg viewBox='0 0 16 16'>
-                            <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
-                          </svg>
-                        )}
-                      </button>
-                    );
-                  })()}
-                    <strong>{it.title}<small>V{it.version_number || 1} · versão principal</small></strong>
-                  </span>
-                  <span>{it.genre || '—'}</span>
-                  <span><StatusBadge status={it.status} /></span>
-                  <span>{it.release_date ? new Date(`${it.release_date}T00:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : '—'}</span>
-                  {/* A linha inteira já abre o Espaço Jam, mas isso não se descobre olhando —
-                      o botão nomeia o destino. `stopPropagation` porque o clique dele e o da
-                      linha levariam ao mesmo lugar e disparariam duas navegações. */}
-                  <span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {filteredItems.map((it) => {
+                // Espelha o player: se ESTA faixa é a do player, mostra pausar/tocar conforme
+                // o estado e o clique pausa/retoma; senão, o clique inicia esta faixa.
+                const isCurrent = playerCurrentId === it.id;
+                const isPlaying = isCurrent && playerPlaying;
+                const abrirJam = () =>
+                  navigate(`/artists/${artist.id}/catalog/projects/${it.project_id || it.id}`);
+                // O que era coluna vira uma linha só, como no álbum dos Lançamentos. Gênero e
+                // data não somem: entram aqui, e só aparecem quando existem — antes ocupavam
+                // uma coluna inteira só para exibir "—".
+                const legenda = [
+                  `V${it.version_number || 1} · versão principal`,
+                  it.genre,
+                  it.release_date
+                    ? new Date(`${it.release_date}T00:00:00`).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'short',
+                      })
+                    : null,
+                ].filter(Boolean).join(' · ');
+
+                return (
+                  <div
+                    key={it.id}
+                    className='catalog-track-row'
+                    role='button'
+                    tabIndex={0}
+                    title='Abrir espaço do projeto'
+                    style={linhaLista}
+                    onClick={abrirJam}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        abrirJam();
+                      }
+                    }}
+                  >
+                    <button
+                      style={linhaPlay}
+                      title={!it.audio_file ? 'Abrir player — áudio pendente' : isPlaying ? 'Pausar' : 'Tocar'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isCurrent) togglePlayer?.(); // já no player → pausa/retoma
+                        else openLocal(it.id); // começa esta faixa
+                      }}
+                    >
+                      {isPlaying ? (
+                        <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#fff' }}>
+                          <path d='M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z' />
+                        </svg>
+                      ) : (
+                        <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#fff' }}>
+                          <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
+                        </svg>
+                      )}
+                    </button>
+                    {/* Nem toda faixa tem capa (a dos Lançamentos sempre tem, vem do Spotify).
+                        Sem imagem entra um bloco neutro, para a linha não desalinhar. */}
+                    {it.cover_image ? (
+                      <img src={it.cover_image} alt='' style={linhaCapa} />
+                    ) : (
+                      <span
+                        aria-hidden
+                        style={{ ...linhaCapa, background: '#eef3fb', display: 'block', flexShrink: 0 }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={linhaTitulo}>{it.title}</div>
+                      <div style={linhaSub}>{legenda}</div>
+                    </div>
+                    <StatusBadge status={it.status} />
+                    {/* A linha inteira já abre o Espaço Jam, mas isso não se descobre olhando —
+                        o botão nomeia o destino. `stopPropagation` porque o clique dele e o da
+                        linha levariam ao mesmo lugar e disparariam duas navegações. */}
                     <button
                       className='catalog-track-jam'
                       type='button'
                       title='Abrir o Espaço Jam desta música'
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/artists/${artist.id}/catalog/projects/${it.project_id || it.id}`);
+                        abrirJam();
                       }}
                     >
                       <EspacoJamIcon size={15} /> Espaço Jam
                     </button>
-                  </span>
-                  {canEditTracks ? (
-                    <button
-                      className='catalog-track-more'
-                      title='Editar'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditing(it);
-                        setModalOpen(true);
-                      }}
-                    >
-                      <FiMoreVertical size={18} />
-                    </button>
-                  ) : (
-                    <span className='catalog-track-more-placeholder' aria-hidden='true' />
-                  )}
-                </article>
-              ))}
+                    {canEditTracks && (
+                      <button
+                        className='catalog-track-more'
+                        title='Editar'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditing(it);
+                          setModalOpen(true);
+                        }}
+                      >
+                        <FiMoreVertical size={18} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
           </div>
@@ -1031,6 +1152,29 @@ const Catalog: FC = () => {
         />
       )}
 
+      {/* Edição da versão aberta na sala. É o mesmo modal do Espaço Jam — a sala não ganha uma
+          segunda forma de editar a mesma coisa. */}
+      {artistId && roomProject && roomVersion && (
+        <VersionModal
+          open={versionModalOpen}
+          artistId={artistId}
+          projectId={roomProject.id}
+          projectTitle={roomProject.title}
+          version={roomVersion}
+          isPrimary={roomVersionEhPrincipal}
+          inherit={{ bpm: roomProject.bpm, key: roomProject.key, genre: roomProject.genre }}
+          author={{
+            id: user?.id || null,
+            name: currentUserName,
+            avatar: currentUserAvatar,
+          }}
+          onClose={() => setVersionModalOpen(false)}
+          onSaved={recarregarSala}
+          // Excluir a versão que está aberta deixa a sala sem assunto: volta para a lista.
+          onDeleted={() => { setVersionModalOpen(false); closeTrackRoom(); setCatalogReload((n) => n + 1); }}
+        />
+      )}
+
       <UpsellModal
         open={upsellOpen}
         context="catalog-limit"
@@ -1051,26 +1195,60 @@ const Catalog: FC = () => {
                 <strong>{selectedTrack.title}</strong>
                 <small>
                   <span>Espaço da versão</span>
-                  <span>{selectedTrack.genre || 'Sem categoria'}</span>
+                  {/* Sem a tag de categoria: quem tem categoria é a música, não a versão, e o
+                      rótulo aparecia como "Sem categoria" — um vazio anunciado sobre algo que
+                      nem se aplica ali. Fica o status, que é do projeto e diz onde a obra está. */}
                   <span>{CATALOG_STATUS[selectedTrack.status as keyof typeof CATALOG_STATUS]?.label || selectedTrack.status || 'Rascunho'}</span>
                 </small>
               </div>
+              <div className='track-detail-actions'>
+              {/* Estrela: torna ESTA versão a principal — a que toca por padrão e representa a
+                  música. Alterna nos dois sentidos, igual à da lista do Espaço Jam. */}
+              {roomProject && roomVersion && canEditTracks && (
+                <button
+                  type='button'
+                  className={roomVersionEhPrincipal ? 'track-detail-star is-on' : 'track-detail-star'}
+                  aria-pressed={roomVersionEhPrincipal}
+                  aria-label={
+                    roomVersionEhPrincipal
+                      ? `Desmarcar V${roomVersion.version_number} como versão principal`
+                      : `Tornar V${roomVersion.version_number} a versão principal`
+                  }
+                  title={roomVersionEhPrincipal ? 'Desmarcar como principal' : 'Tornar principal'}
+                  onClick={alternarVersaoPrincipal}
+                >
+                  <FiStar />
+                </button>
+              )}
+              {/* Engrenagem edita a VERSÃO aberta. Antes abria a ficha da música (TrackModal):
+                  quem estava na sala de uma versão clicava aqui e caía editando o projeto. */}
               <button
                 type='button'
-                aria-label='Editar música'
+                aria-label={roomVersion ? 'Editar versão' : 'Editar música'}
                 onClick={() => {
+                  if (roomVersion) { setVersionModalOpen(true); return; }
                   setEditing(selectedTrack);
                   setModalOpen(true);
                 }}
               >
                 <FiSettings />
               </button>
+              </div>
             </header>
 
             <div className='track-detail-layout'>
+              {/* `--track-room` é o slot da capa no fundo da sala, já previsto no CSS mas que
+                  nunca era preenchido — nenhum lugar do app definia a variável. Sem ela a capa
+                  acabava renderizada como um disco no meio da tela, POR CIMA do play/pause
+                  (z-index 4 contra o 3 dos controles): o botão ficava coberto e sem clique. */}
               <section
                 className={`track-player ${detailTrackIsPlaying ? 'is-playing' : ''}`}
-                style={{ '--track-color': '#8e3cff' } as CSSProperties}
+                style={{
+                  '--track-color': '#8e3cff',
+                  ...(selectedTrack.cover_image
+                    ? { '--track-room': `url(${JSON.stringify(selectedTrack.cover_image)})` }
+                    : null),
+                } as CSSProperties}
               >
                 <div className='track-meta-strip'>
                   <span>
@@ -1098,12 +1276,6 @@ const Catalog: FC = () => {
                       d='M229.205 75.9546C238.687 80.376 246.307 87.9968 250.729 97.4785L269.967 138.735C274.388 148.217 275.328 158.954 272.62 169.059L260.838 213.03C258.13 223.135 251.948 231.964 243.378 237.964L206.09 264.074C197.52 270.075 187.109 272.865 176.687 271.953L131.34 267.985C120.917 267.073 111.149 262.518 103.751 255.121L71.5628 222.932C64.165 215.534 59.6107 205.767 58.6988 195.344L54.7303 149.996C53.8185 139.574 56.6085 129.164 62.6093 120.593L88.7191 83.3053C94.7198 74.7354 103.548 68.553 113.654 65.8452L157.624 54.0633C167.73 51.3555 178.466 52.2949 187.948 56.7163L229.205 75.9546Z'
                     />
                   </svg>
-                </div>
-
-                <div className='track-cover-empty'>
-                  {selectedTrack.cover_image ? (
-                    <img src={selectedTrack.cover_image} alt='' />
-                  ) : null}
                 </div>
 
                 {detailTrackCommenters.length > 0 && (

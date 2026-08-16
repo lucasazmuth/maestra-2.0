@@ -12,6 +12,7 @@ import { TASK_TYPES } from '../ActionPlan/TaskControls';
 import type { CatalogItem } from '../../interfaces/maestra';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
 import type { LocalTrack } from '../../components/LocalPlayerBar';
+import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 
 const fmtNumber = (value?: number | null) =>
   typeof value === 'number' ? value.toLocaleString('pt-BR') : '—';
@@ -274,6 +275,11 @@ const Dashboard: FC = () => {
           mal aparecia. Viraram ícones do mesmo set (react-icons/fi) já usado no resto do app.
           Só o Suporte leva a algum lugar — os outros dois são informativos, então continuam
           como <article> e não fingem ser clicáveis. */}
+      {/* Consultora da Nyta. Vinha renderizada no Plano de Ação, onde disputava a atenção com as
+          tarefas; aqui fecha o painel, depois de tudo que a pessoa veio consultar. Fica ANTES da
+          faixa de Suporte/Dados/Novidades, que é rodapé informativo e encerra a página. */}
+      <NytaDashboardHero />
+
       <section className='music-footer'>
         <article
           className='music-footer-action'

@@ -5,6 +5,10 @@ import { FiCheck, FiEdit2, FiMessageSquare, FiSend, FiTrash2, FiX } from 'react-
 
 import type { ActionTask, TaskComment } from '../../interfaces/maestra';
 import { TASK_TYPES, type Assignee } from './TaskControls';
+// Mesmo casco das fichas de música e de compromisso: cartão, cabeçalho (kicker + título +
+// subtítulo), abas, campos e rodapé vêm todos daqui. O módulo local guarda só o que é
+// exclusivo desta tela — a lista de comentários, que nenhum outro modal tem.
+import modalStyles from '../../components/StandardModal.module.scss';
 import styles from './TaskDetailModal.module.scss';
 
 interface TaskDetailModalProps {
@@ -270,7 +274,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
   };
 
   const footer = (
-    <div className={styles.footer}>
+    <div className={modalStyles.footer}>
       {canDelete && (
         <Popconfirm
           title="Excluir esta tarefa?"
@@ -280,10 +284,12 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
           okButtonProps={{ danger: true }}
           onConfirm={onDelete}
         >
-          <Button danger type="text" icon={<FiTrash2 />}>Excluir tarefa</Button>
+          <Button className={modalStyles.dangerButton} danger type="text" icon={<FiTrash2 />}>
+            Excluir tarefa
+          </Button>
         </Popconfirm>
       )}
-      <div className={styles.footerActions}>
+      <div className={modalStyles.footerActions}>
         <Button onClick={onClose}>Fechar</Button>
         {activeTab === 'general' && canEdit && (
           <Button type="primary" disabled={!validDescription} onClick={save}>Salvar alterações</Button>
@@ -297,19 +303,23 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
       open={open && !!task}
       onCancel={onClose}
       title={
-        <div className={styles.heading}>
-          <span className={styles.kicker}>Tarefa</span>
-          <span className={styles.title}>{task?.description || 'Detalhes da tarefa'}</span>
-          {strategyTitle && <span className={styles.strategy}>{strategyTitle}</span>}
+        <div className={modalStyles.heading}>
+          <span className={modalStyles.kicker}>Tarefa</span>
+          <span className={modalStyles.title}>
+            <i className={modalStyles.titleDot} aria-hidden />
+            {task?.description || 'Detalhes da tarefa'}
+          </span>
+          {strategyTitle && <span className={modalStyles.subtitle}>{strategyTitle}</span>}
         </div>
       }
       footer={footer}
-      width={680}
+      width={640}
       centered
       destroyOnHidden
-      rootClassName={styles.modal}
+      rootClassName={modalStyles.modal}
     >
       <Tabs
+        className={modalStyles.tabs}
         activeKey={activeTab}
         onChange={setActiveTab}
         items={[
@@ -317,11 +327,10 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
             key: 'general',
             label: 'Geral',
             children: (
-              <div className={styles.general}>
-                <label className={styles.fieldWide}>
+              <div className={modalStyles.form}>
+                <label className={modalStyles.field}>
                   <span>Descrição</span>
                   <Input.TextArea
-                    className={styles.descriptionInput}
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     autoSize={{ minRows: 3, maxRows: 7 }}
@@ -331,8 +340,8 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
                   />
                 </label>
 
-                <div className={styles.fieldGrid}>
-                  <label>
+                <div className={modalStyles.fieldGrid}>
+                  <label className={modalStyles.field}>
                     <span>Status</span>
                     <Select
                       className="action-plan-select"
@@ -343,7 +352,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
                       onChange={setStatus}
                     />
                   </label>
-                  <label>
+                  <label className={modalStyles.field}>
                     <span>Prazo</span>
                     <DatePicker
                       popupClassName="action-plan-picker"
@@ -355,7 +364,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
                       onChange={(date) => setDeadline(date ? date.format('YYYY-MM-DD') : undefined)}
                     />
                   </label>
-                  <label>
+                  <label className={modalStyles.field}>
                     <span>Categoria</span>
                     <Select
                       className="action-plan-select"
@@ -366,7 +375,7 @@ export const TaskDetailModal: FC<TaskDetailModalProps> = ({
                       onChange={setType}
                     />
                   </label>
-                  <label>
+                  <label className={modalStyles.field}>
                     <span>Responsável</span>
                     <Select
                       className="action-plan-select"

@@ -85,7 +85,7 @@ const buildFaqItems = (once: number, monthly: number, annual: number): { q: stri
 
 // ID do vídeo de apresentação no YouTube (o trecho depois de `v=` na URL). Vazio, o container
 // mostra o espaço reservado em vez de um player em branco.
-const HERO_VIDEO_ID = 'xOM_Lz5S70g';
+const HERO_VIDEO_ID = 'SreHxcZdDDE';
 
 // ─── Hero ────────────────────────────────────────────────────────────────────
 const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {

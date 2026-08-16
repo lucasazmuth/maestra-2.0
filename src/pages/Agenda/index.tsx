@@ -4,6 +4,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { FiCheck, FiChevronLeft, FiChevronRight, FiPlus } from 'react-icons/fi';
 
 import { useArtist } from '../../hooks/useArtist';
+import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
 import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { useAppDispatch } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
@@ -52,7 +53,20 @@ const Agenda: FC = () => {
 
   // Antes havia um filtro "mostrar tarefas" que ocultava os eventos vindos do Plano de Ação.
   // O único botão que o acionava era a falsa aba "Atrasadas"; sem ela, tudo é visível.
-  const visibleEvents = events;
+  //
+  // A busca do topo entra AQUI porque `visibleEvents` é o ponto por onde a tela inteira passa —
+  // grade do mês, lista do dia e tarefas sem data. Filtrar em cada uma daria três filtros para
+  // manter em sincronia.
+  const termoBusca = useGlobalSearch((st) => st.termo);
+  const visibleEvents = useMemo(() => {
+    const q = normalizar(termoBusca);
+    if (!q) return events;
+    return events.filter((e) =>
+      normalizar(e.title || '').includes(q) ||
+      normalizar(e.description || '').includes(q) ||
+      normalizar(e.location || '').includes(q)
+    );
+  }, [events, termoBusca]);
   const hasTaskEvents = useMemo(() => events.some(isTaskEvent), [events]);
 
   const byDate = useMemo(() => {
@@ -224,7 +238,9 @@ const Agenda: FC = () => {
   return (
     <div className="calendar-page agenda-reference-page">
       <header className="calendar-tools">
-        <label><span>⌕</span><input placeholder="Pesquisar tarefas..." aria-label="Pesquisar na agenda" /><b>⌄</b></label>
+        {/* Havia aqui um segundo campo de busca, também sem `value` e sem `onChange` — decorativo
+            como o do topo. Dois campos na mesma tela, nenhum funcionando; quem busca agora usa o
+            do cabeçalho, que filtra de verdade. */}
         <div>
           <button type="button" onClick={() => setCursor(dayjs())}>Hoje</button>
           <button type="button" aria-label="Período anterior" onClick={() => moveCursor(-1)}><FiChevronLeft /></button>

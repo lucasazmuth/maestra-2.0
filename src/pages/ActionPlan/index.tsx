@@ -12,8 +12,8 @@ import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
+import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
-import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 import { UpsellModal } from '../../components/UpsellModal';
 import { TaskDate, TaskCategory, TaskOwner, type Assignee } from './TaskControls';
 import { TaskDetailModal } from './TaskDetailModal';
@@ -43,19 +43,19 @@ const ArchiveModal: FC<{
   return createPortal(
     <div
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(20, 30, 55, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box' }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 720, maxHeight: '86vh', background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 16, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        style={{ width: '100%', maxWidth: 720, maxHeight: '86vh', background: '#ffffff', border: '1px solid #e3eaf3', borderRadius: 16, boxShadow: '0 24px 60px rgba(24, 40, 80, 0.18)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
       >
         <div style={{ padding: '22px 22px 12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-            <div style={{ fontFamily: 'var(--font-display)', color: '#fff', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>Estratégias arquivadas</div>
-            <button onClick={onClose} aria-label="Fechar" style={{ background: 'none', border: 'none', color: '#9a9a9a', cursor: 'pointer', display: 'inline-flex', padding: 4 }}><FiX size={20} /></button>
+            <div style={{ fontFamily: 'var(--font-display)', color: '#2c3f63', fontWeight: 800, fontSize: 22, lineHeight: 1.2 }}>Estratégias arquivadas</div>
+            <button onClick={onClose} aria-label="Fechar" style={{ background: 'none', border: 'none', color: '#93a4c0', cursor: 'pointer', display: 'inline-flex', padding: 4 }}><FiX size={20} /></button>
           </div>
-          <div style={{ color: '#b3b3b3', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
-            Estratégias que você não priorizou. Selecione as que quer <b style={{ color: '#fff' }}>trazer pro plano</b> — elas ganham tarefas e entram na lista principal, saindo do arquivo.
+          <div style={{ color: '#7c8da8', fontSize: 13.5, marginTop: 8, lineHeight: 1.5 }}>
+            Estratégias que você não priorizou. Selecione as que quer <b style={{ color: '#2c3f63' }}>trazer pro plano</b> — elas ganham tarefas e entram na lista principal, saindo do arquivo.
           </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '4px 22px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -65,21 +65,21 @@ const ArchiveModal: FC<{
               <button
                 key={it.id}
                 onClick={() => toggle(it.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', background: on ? 'rgba(154, 79, 209,0.12)' : '#202020', border: `1px solid ${on ? '#9A4FD1' : 'transparent'}`, borderRadius: 12, padding: '14px 16px', transition: 'background .15s, border-color .15s' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', background: on ? 'rgba(51, 97, 255, 0.08)' : '#f7f8fb', border: `1px solid ${on ? '#3361ff' : 'transparent'}`, borderRadius: 12, padding: '14px 16px', transition: 'background .15s, border-color .15s' }}
               >
-                <span aria-hidden style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: `2px solid ${on ? '#9A4FD1' : '#4a4a4a'}`, background: on ? '#9A4FD1' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF' }}>{on && <FiCheck size={14} />}</span>
-                <span style={{ color: '#fff', fontWeight: 600, fontSize: 14.5, lineHeight: 1.4 }}>{it.title}</span>
+                <span aria-hidden style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: `2px solid ${on ? '#3361ff' : '#c9d6ea'}`, background: on ? '#3361ff' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF' }}>{on && <FiCheck size={14} />}</span>
+                <span style={{ color: '#405985', fontWeight: 600, fontSize: 14.5, lineHeight: 1.4 }}>{it.title}</span>
               </button>
             );
           })}
         </div>
-        <div style={{ padding: '12px 22px 18px', borderTop: '1px solid #232323', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: '#7a7a7a', fontSize: 13 }}>{sel.length} selecionada{sel.length === 1 ? '' : 's'}</span>
+        <div style={{ padding: '12px 22px 18px', borderTop: '1px solid #eef2f8', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ color: '#93a4c0', fontSize: 13 }}>{sel.length} selecionada{sel.length === 1 ? '' : 's'}</span>
           <button className="ap-btn ap-btn--ghost" style={{ marginLeft: 'auto' }} onClick={onClose}>Cancelar</button>
           <button
             disabled={!sel.length}
             onClick={() => onConfirm(sel)}
-            style={{ border: 'none', borderRadius: 9999, padding: '10px 20px', fontWeight: 700, fontSize: 13.5, cursor: sel.length ? 'pointer' : 'not-allowed', color: '#FFFFFF', background: '#9A4FD1', opacity: sel.length ? 1 : 0.5 }}
+            style={{ border: 'none', borderRadius: 9999, padding: '10px 20px', fontWeight: 700, fontSize: 13.5, cursor: sel.length ? 'pointer' : 'not-allowed', color: '#FFFFFF', background: '#3361ff', opacity: sel.length ? 1 : 0.5 }}
           >
             Trazer pro plano{sel.length ? ` (${sel.length})` : ''}
           </button>
@@ -99,6 +99,8 @@ const ActionPlan: FC = () => {
 
   // Gerir tarefas exige PRO. (Editar o dossiê — fundamentos/objetivos etc. — agora é no Perfil.)
   const { manageTasks, editPlanning } = useArtistCapabilities(artist);
+  // Busca do topo — ver globalSearchStore.
+  const termoBusca = useGlobalSearch((st) => st.termo);
   const content = artist?.content;
   const strategies = useMemo<Strategy[]>(() => content?.strategies || [], [content]);
   // As estratégias do plano em ORDEM DE PRIORIDADE (finalScore desc); fallback mantém a ordem salva.
@@ -132,10 +134,20 @@ const ActionPlan: FC = () => {
     const ownerName = isOwner
       ? (user?.user_metadata?.full_name || user?.email || 'Você (dono)')
       : 'Dono do perfil';
-    const list: Assignee[] = [{ value: TASK_OWNER_SELF, label: ownerName }];
+    // Só a foto de quem está logado existe: `artist_members` não tem coluna de avatar e o
+    // `user_metadata` dos outros o cliente não lê. Quem não tem cai no avatar padrão.
+    const meta = (user?.user_metadata || {}) as Record<string, string | undefined>;
+    const minhaFoto = meta.avatar_url || meta.picture || null;
+    const list: Assignee[] = [
+      { value: TASK_OWNER_SELF, label: ownerName, avatar: isOwner ? minhaFoto : null },
+    ];
     members
       .filter((m) => m.status === 'active')
-      .forEach((m) => list.push({ value: m.email, label: m.name || m.email }));
+      .forEach((m) => list.push({
+        value: m.email,
+        label: m.name || m.email,
+        avatar: user?.email && m.email.toLowerCase() === user.email.toLowerCase() ? minhaFoto : null,
+      }));
     return list;
   }, [artist?.user_id, user, members]);
 
@@ -312,8 +324,16 @@ const ActionPlan: FC = () => {
   }
 
   // ---- Progresso das estratégias da fase atual ----
+  //
+  // A busca do topo filtra as TAREFAS; a estratégia continua visível se alguma das suas casar.
+  // Filtrar estratégias pelo título esconderia tarefas que batem dentro de uma estratégia cujo
+  // nome não bate — e é a tarefa que a pessoa está procurando.
+  const q = normalizar(termoBusca);
+  const casa = (t: { title?: string; description?: string }) =>
+    !q || normalizar(t.title || '').includes(q) || normalizar(t.description || '').includes(q);
+
   const info = ranked.map((s) => {
-    const ts = (s.tasks || []).filter(isActive);
+    const ts = (s.tasks || []).filter(isActive).filter(casa);
     const done = ts.filter(isDone).length;
     return { s, ts, done, total: ts.length, complete: ts.length > 0 && done === ts.length };
   });
@@ -400,8 +420,6 @@ const ActionPlan: FC = () => {
         </section>
       )}
 
-      {/* Consultora da Nyta (mesma seção do rodapé do Dashboard) no lugar do texto simples de objetivos */}
-      <NytaDashboardHero />
 
       <TaskDetailModal
         open={!!selectedTaskRef}
