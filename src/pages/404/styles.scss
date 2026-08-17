@@ -15,7 +15,7 @@
     text-align: center;
 
     h3 {
-      color: white;
+      color: #2c3f63;
       // clamp: encolhe no mobile (não estoura a viewport) e cresce até 48px no desktop.
       font-size: clamp(28px, 8vw, 48px);
       font-weight: 700;
@@ -28,7 +28,7 @@
 
     p {
       line-height: 24px;
-      color: #a7a7a7;
+      color: #7c8da8;
       display: inline-block;
       margin: 0 0 40px;
       max-width: 507px;
@@ -37,10 +37,10 @@
     }
 
     button {
-      background: #fff;
-      border: 1px solid #878787;
+      background: #3361ff;
+      border: 1px solid #3361ff;
       border-radius: 48px;
-      color: #000;
+      color: #fff;
       display: inline-block;
       line-height: 24px;
       margin-bottom: 36px;
@@ -52,7 +52,8 @@
       text-decoration: none;
 
       &:hover {
-        border-color: #000;
+        background: #2650db;
+        border-color: #2650db;
         text-decoration: none;
         -webkit-transform: scale(1.04);
         transform: scale(1.04);

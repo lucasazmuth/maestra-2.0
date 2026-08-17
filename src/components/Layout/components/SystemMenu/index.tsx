@@ -4,6 +4,7 @@ import {
   FiBarChart2, FiBell, FiDatabase, FiGrid, FiKey, FiLifeBuoy, FiLogOut,
   FiSettings, FiStar, FiTag, FiUsers, FiFilter } from 'react-icons/fi';
 
+import { PerfisIcon } from '../../../Icons/system';
 import { useIsPlatformAdmin } from '../../../../hooks/useIsPlatformAdmin';
 import { useAppDispatch } from '../../../../store/store';
 import { authActions } from '../../../../store/slices/auth';
@@ -27,6 +28,9 @@ interface Item {
 }
 
 const GENERAL: Item[] = [
+  // No mobile, páginas sem sidebar/navmenu (ex.: 404) não davam volta para a lista de
+  // perfis. O menu do sistema é o único ponto fixo em qualquer tela, então entra aqui.
+  { label: 'Perfis', path: '/artists', icon: <PerfisIcon size={20} /> },
   { label: 'Configurações', path: '/settings', icon: <FiSettings /> },
   { label: 'Suporte', path: '/suporte', icon: <FiLifeBuoy /> },
 ];

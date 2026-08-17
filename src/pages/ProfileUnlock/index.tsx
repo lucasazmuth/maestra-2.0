@@ -312,7 +312,7 @@ const ProfileUnlock: FC = () => {
               </TcleGate>
             ) : (
               <div style={{ textAlign: 'center' }}>
-                <p style={{ color: '#b3b3b3', marginBottom: 18 }}>Diagnóstico indisponível. Você ainda pode liberar o planejamento.</p>
+                <p style={{ color: '#7c8da8', marginBottom: 18 }}>Diagnóstico indisponível. Você ainda pode liberar o planejamento.</p>
                 <button className={styles.cta} onClick={() => setStep('pagamento')}>Continuar</button>
               </div>
             )}
@@ -424,10 +424,10 @@ const ProfileUnlock: FC = () => {
               <div className={`${styles.payWrap} ${styles.qrWrap}`} style={{ alignItems: 'center' }}>
                 {/* Valor a pagar em destaque — PIX é sempre à vista, já com o desconto do cupom. */}
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#9a9aa5', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Valor a pagar</div>
-                  <div style={{ color: '#fff', fontSize: 30, fontWeight: 800, lineHeight: 1.15, marginTop: 2 }}>{fmtBRL(discountedPrice)}</div>
+                  <div style={{ color: '#7c8da8', fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Valor a pagar</div>
+                  <div style={{ color: '#2c3f63', fontSize: 30, fontWeight: 800, lineHeight: 1.15, marginTop: 2 }}>{fmtBRL(discountedPrice)}</div>
                   {coupon.applied && (
-                    <div style={{ color: '#47d18e', fontSize: 13, fontWeight: 600, marginTop: 4 }}>
+                    <div style={{ color: '#1fa971', fontSize: 13, fontWeight: 600, marginTop: 4 }}>
                       Cupom {coupon.applied.code} · −{fmtBRL(couponDiscount)}
                     </div>
                   )}
@@ -435,11 +435,11 @@ const ProfileUnlock: FC = () => {
                 <img className={styles.qrImg} src={`data:image/png;base64,${pixData.qrCode}`} alt='QR Code PIX' />
                 {pixData.copyPaste && <Input.TextArea value={pixData.copyPaste} readOnly autoSize />}
                 {/* Recebedor: no app do banco aparece a razão social da empresa por trás da Maestra. */}
-                <p style={{ color: '#8a8a8a', fontSize: 12.5, lineHeight: 1.5, textAlign: 'center', margin: 0 }}>
+                <p style={{ color: '#7c8da8', fontSize: 12.5, lineHeight: 1.5, textAlign: 'center', margin: 0 }}>
                   O pagamento aparecerá no seu banco em nome de{' '}
-                  <strong style={{ color: '#b3b3b3', fontWeight: 700 }}>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
+                  <strong style={{ color: '#52668d', fontWeight: 700 }}>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#b3b3b3' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#52668d' }}>
                   <Spin size='small' /> Aguardando confirmação…
                 </div>
                 {payError && <div className={styles.errorMsg}>{payError}</div>}
