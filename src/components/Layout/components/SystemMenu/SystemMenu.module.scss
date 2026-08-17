@@ -6,6 +6,15 @@
   display: inline-flex;
 }
 
+// Abaixo do breakpoint da navbar inferior (mobile/tablet), os mesmos atalhos (Perfis,
+// Configurações, Suporte) já vivem dentro do "Mais" da MobileNav — ter os dois ao mesmo tempo
+// duplicava a navegação e brigava por espaço no header, que no mobile já é apertado.
+@media (max-width: 960px) {
+  .wrap {
+    display: none;
+  }
+}
+
 // .round-control já vem da referência GSAP; aqui só o estado aberto e a cor do ícone.
 .trigger {
   color: #8e9eb8;
