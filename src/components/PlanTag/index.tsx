@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAppSelector } from '../../store/store';
 import { PAYWALL_DISABLED } from '../../constants/maestra';
-import { Gem } from './Gem';
+import { Diamond } from './Diamond';
+import { ShineOverlay } from './ShineOverlay';
 import styles from './PlanTag.module.scss';
 
 // Selo do plano ao lado da marca. Substitui a barra de aviso que ocupava o rodapé inteiro para
@@ -48,7 +49,8 @@ export const PlanTag: FC = () => {
       aria-label={titulo}
       onClick={() => navigate('/assinatura')}
     >
-      <Gem />
+      <ShineOverlay tone={plano} />
+      <Diamond tone={plano} size={12} />
       {label}
     </button>
   );

@@ -27,6 +27,7 @@ import { ReactComponent as EditSvg } from '../../assets/icons/edit.svg';
 import { ReactComponent as AgendaSvg } from '../../assets/icons/agenda.svg';
 import { ReactComponent as FiltrosSvg } from '../../assets/icons/filtros.svg';
 import { ReactComponent as EspacoJamSvg } from '../../assets/icons/espaco-jam.svg';
+import { ReactComponent as PerfisSvg } from '../../assets/icons/perfis.svg';
 
 // Avatar colorido da Nyta (imagem, não traço): importado como URL.
 export { default as nytaAvatar } from '../../assets/icons/nyta-avatar.svg';
@@ -58,6 +59,7 @@ export const MoreIcon = make(MoreSvg, '8 16 25 9');
 export const UploadIcon = make(UploadSvg);
 // Traço ocupa ~16..34 num box de 50 — o crop aperta pra ele render no tamanho pedido.
 export const EspacoJamIcon = make(EspacoJamSvg, '13 15 24 21');
+export const PerfisIcon = make(PerfisSvg, '9 8 22 23');
 export const DownloadIcon = make(DownloadSvg);
 export const EditIcon = make(EditSvg, '9 7 24 24');
 export const AgendaIcon = make(AgendaSvg);

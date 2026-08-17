@@ -134,7 +134,11 @@ serve(async (req) => {
     const { data: purchases } = await supabaseAdmin
       .from("artist_purchases").select("*").eq("artist_id", artistId).order("created_at", { ascending: false });
     if ((purchases || []).some((p: any) => p.status === "received")) return json({ error: "Este perfil já está ativo." }, 409);
-    const pendingP = (purchases || []).find((p: any) => p.status === "pending" && p.asaas_payment_id);
+    // Só reaproveita se o valor bater com o que está sendo cobrado AGORA. Sem checar isso, um
+    // PIX pendente gerado antes de aplicar cupom (valor cheio) voltava a ser servido depois do
+    // cupom aplicado: a tela mostrava o valor com desconto, mas o QR escaneado cobrava o valor
+    // cheio, porque o pagamento na Asaas já tinha sido criado com o valor antigo.
+    const pendingP = (purchases || []).find((p: any) => p.status === "pending" && p.asaas_payment_id && Number(p.amount) === chargeValue);
     // Só PIX reaproveita a cobrança pendente (o QR já existe); cartão sempre cria nova.
     if (pendingP && !isCard) {
       const pixData = await fetchPixQrCode(asaasApiUrl, asaasApiKey, pendingP.asaas_payment_id);

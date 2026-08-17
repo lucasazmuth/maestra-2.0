@@ -1,9 +1,10 @@
 import { FC, ReactNode, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { FiSettings, FiLifeBuoy } from 'react-icons/fi';
 import {
   PlanoAcaoIcon, CatalogoIcon, AgendaIcon, MoreIcon,
-  DiagnosticoIcon, PlanejamentoIcon, EquipeIcon, MarketingIcon,
+  DiagnosticoIcon, PlanejamentoIcon, EquipeIcon, MarketingIcon, PerfisIcon,
 } from '../../../Icons/system';
 import { useAppSelector } from '../../../../store/store';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
@@ -12,7 +13,9 @@ import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
 // Layout da referência (gsap-app): [avatar do perfil] · Plano · Músicas · Agenda · Mais. A
 // primeira célula é a foto do artista selecionado, que leva pra home dele — no lugar de um ícone
 // de casa, ela também diz DE QUEM é a tela. "Mais" (popover) guarda Diagnóstico REAL, Plano
-// estratégico, Equipe e Marketing.
+// estratégico, Equipe e Marketing — e, abaixo, Perfis/Configurações/Suporte, que no desktop vivem
+// no menu do sistema (o ícone de grade do header). Esse menu some no mobile (ver
+// SystemMenu.module.scss) porque os mesmos atalhos já cabem aqui, sem duplicar navegação.
 // A Nyta NÃO mora aqui: o atalho dela é o botão roxo do cabeçalho (.header-nyta-action).
 // Aparece sempre que há um artista no contexto — seja pela rota /artists/:id… ou, em telas
 // "globais" (Configurações, Notificações, Assinatura…), pelo artista atual guardado no store.
@@ -28,6 +31,9 @@ const isNavExcludedRoute = (pathname: string): boolean =>
   pathname === '/artists' || pathname.startsWith('/admin');
 
 type Item = { icon: ReactNode; label: string; suffix: string };
+// Atalhos que não pertencem a um artista (o que no desktop mora no menu do sistema): rota
+// absoluta em vez de sufixo dentro de /artists/:id/....
+type SystemItem = { icon: ReactNode; label: string; path: string };
 
 export const MobileNav: FC = () => {
   const navigate = useNavigate();
@@ -58,16 +64,29 @@ export const MobileNav: FC = () => {
     { icon: <EquipeIcon size={22} />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team' },
     { icon: <MarketingIcon size={22} />, label: t('Marketing', { defaultValue: 'Marketing' }), suffix: 'marketing' },
   ];
+  // Perfis/Configurações/Suporte — no desktop moram no menu do sistema (o ícone de grade do
+  // header), que some no mobile porque esses mesmos atalhos já cabem aqui dentro do "Mais".
+  const systemItems: SystemItem[] = [
+    { icon: <PerfisIcon size={22} />, label: 'Perfis', path: '/artists' },
+    { icon: <FiSettings size={22} />, label: 'Configurações', path: '/settings' },
+    { icon: <FiLifeBuoy size={22} />, label: 'Suporte', path: '/suporte' },
+  ];
 
   const isActive = (suffix: string) =>
     suffix === ''
       ? location.pathname === `/artists/${artistId}`
       : location.pathname.startsWith(`/artists/${artistId}/${suffix}`);
-  const moreActive = more.some((m) => isActive(m.suffix));
+  const isActivePath = (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`);
+  const moreActive = more.some((m) => isActive(m.suffix)) || systemItems.some((s) => isActivePath(s.path));
 
   const go = (suffix: string) => {
     setMoreOpen(false);
     navigate(`/artists/${artistId}${suffix ? `/${suffix}` : ''}`);
+  };
+
+  const goPath = (path: string) => {
+    setMoreOpen(false);
+    navigate(path);
   };
 
   const renderItem = (it: Item) => {
@@ -93,16 +112,30 @@ export const MobileNav: FC = () => {
       {moreOpen && <div className='mobile-more-backdrop' onClick={() => setMoreOpen(false)} />}
       {moreOpen && (
         <div className='mobile-more-sheet' role='menu'>
-          {more.map((m) => (
-            <button
-              key={m.suffix}
-              className={`mobile-more-item${isActive(m.suffix) ? ' mobile-more-item--active' : ''}`}
-              onClick={() => go(m.suffix)}
-            >
-              <span className='mobile-more-ic'>{m.icon}</span>
-              <span>{m.label}</span>
-            </button>
-          ))}
+          {/* Uma grade só: todos os atalhos (módulos do perfil + Perfis/Configurações/Suporte)
+              no mesmo grupo, sem título separando. */}
+          <div className='mobile-more-group'>
+            {more.map((m) => (
+              <button
+                key={m.suffix}
+                className={`mobile-more-item${isActive(m.suffix) ? ' mobile-more-item--active' : ''}`}
+                onClick={() => go(m.suffix)}
+              >
+                <span className='mobile-more-ic'>{m.icon}</span>
+                <span>{m.label}</span>
+              </button>
+            ))}
+            {systemItems.map((s) => (
+              <button
+                key={s.path}
+                className={`mobile-more-item${isActivePath(s.path) ? ' mobile-more-item--active' : ''}`}
+                onClick={() => goPath(s.path)}
+              >
+                <span className='mobile-more-ic'>{s.icon}</span>
+                <span>{s.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

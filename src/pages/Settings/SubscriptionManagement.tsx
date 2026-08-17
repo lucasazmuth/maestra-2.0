@@ -5,7 +5,7 @@ import { FiCheck, FiArrowRight } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { Spinner } from '../../components/spinner/spinner';
-import { Gem } from '../../components/PlanTag/Gem';
+import { Diamond } from '../../components/PlanTag/Diamond';
 import {
   fetchSubscriptionStatus,
   cancelSubscription,
@@ -171,7 +171,7 @@ const SubscriptionManagement: FC = () => {
           <div className='settings-upsell-head'>
             {/* A mesma gema do selo do topo: o card do Pro e o selo falam da mesma coisa e
                 agora usam o mesmo símbolo, no lugar da medalha genérica. */}
-            <span className='settings-upsell-icon'><Gem size={24} /></span>
+            <span className='settings-upsell-icon'><Diamond tone='pro' size={24} /></span>
             <div>
               <div className='settings-upsell-title'>Maestra Pro</div>
               <div className='settings-upsell-subtitle'>Desbloqueie todo o potencial da plataforma</div>

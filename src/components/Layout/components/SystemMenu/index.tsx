@@ -4,6 +4,7 @@ import {
   FiBarChart2, FiBell, FiDatabase, FiGrid, FiKey, FiLifeBuoy, FiLogOut,
   FiSettings, FiStar, FiTag, FiUsers, FiFilter } from 'react-icons/fi';
 
+import { PerfisIcon } from '../../../Icons/system';
 import { useIsPlatformAdmin } from '../../../../hooks/useIsPlatformAdmin';
 import { useAppDispatch } from '../../../../store/store';
 import { authActions } from '../../../../store/slices/auth';
@@ -24,9 +25,14 @@ interface Item {
   icon: ReactNode;
   path?: string;
   href?: string;
+  // Sair da conta não navega — só ele usa isto. Os demais itens vão por path/href.
+  action?: () => void;
 }
 
 const GENERAL: Item[] = [
+  // No mobile, páginas sem sidebar/navmenu (ex.: 404) não davam volta para a lista de
+  // perfis. O menu do sistema é o único ponto fixo em qualquer tela, então entra aqui.
+  { label: 'Perfis', path: '/artists', icon: <PerfisIcon size={20} /> },
   { label: 'Configurações', path: '/settings', icon: <FiSettings /> },
   { label: 'Suporte', path: '/suporte', icon: <FiLifeBuoy /> },
 ];
@@ -43,7 +49,14 @@ const ADMIN: Item[] = [
   { label: 'Enviar push', path: '/admin/push', icon: <FiBell /> },
 ];
 
-export const SystemMenu: FC = () => {
+interface Props {
+  // No mobile, os mesmos atalhos já moram no "Mais" da tab bar — repetir aqui duplicaria a
+  // navegação. Mas em telas sem tab bar (/artists, /admin), este é o único caminho até
+  // Configurações/Suporte/Sair, então continua visível ali mesmo no mobile.
+  hasMobileNav?: boolean;
+}
+
+export const SystemMenu: FC<Props> = ({ hasMobileNav = false }) => {
   const isAdmin = useIsPlatformAdmin();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -74,6 +87,7 @@ export const SystemMenu: FC = () => {
   useEffect(() => setOpen(false), [location.pathname]);
 
   const go = (item: Item) => {
+    if (item.action) { item.action(); return; }
     // mailto em nova aba: apontar location.href pra mailto congela a SPA.
     if (item.href) window.open(item.href, '_blank');
     else if (item.path) navigate(item.path);
@@ -89,7 +103,7 @@ export const SystemMenu: FC = () => {
             key={item.label}
             type='button'
             role='menuitem'
-            className={`${styles.item} ${active ? styles.itemActive : ''}`}
+            className={`${styles.item} ${active ? styles.itemActive : ''}${item.action ? ` ${styles.itemDanger}` : ''}`}
             onClick={() => go(item)}
           >
             <span className={styles.itemIcon} aria-hidden>{item.icon}</span>
@@ -101,15 +115,23 @@ export const SystemMenu: FC = () => {
   );
 
   // Sair da conta não tinha nenhuma entrada no menu do sistema: só existia lá dentro de
-  // Configurações. Fica separado dos atalhos de navegação, no rodapé do painel.
+  // Configurações. Entra como o último item da mesma grade dos demais — não é mais um botão
+  // separado embaixo, só se distingue pelo tom vermelho no hover (.itemDanger).
   const signOut = async () => {
     setOpen(false);
     await dispatch(authActions.signOut());
     navigate('/login', { replace: true });
   };
 
+  // Uma grade só, sem título separando Geral de Administração — a visibilidade de cada item
+  // continua condicionada à mesma regra de antes (isAdmin), só a divisão visual que saiu.
+  const allItems: Item[] = [
+    ...(isAdmin ? [...GENERAL, ...ADMIN] : GENERAL),
+    { label: 'Sair da conta', icon: <FiLogOut />, action: signOut },
+  ];
+
   return (
-    <div className={styles.wrap} ref={wrapRef}>
+    <div className={`${styles.wrap} ${hasMobileNav ? styles.hiddenWithTabBar : ''}`} ref={wrapRef}>
       <button
         type='button'
         className={`round-control ${styles.trigger} ${open ? styles.triggerOpen : ''}`}
@@ -121,22 +143,13 @@ export const SystemMenu: FC = () => {
         <FiGrid size={23} />
       </button>
 
+      {/* Só aparece (via CSS) no mobile: no desktop o clique fora já fecha o painel, sem
+          precisar escurecer a tela — o painel ali é pequeno e ancorado perto do gatilho. */}
+      {open && <div className={styles.backdrop} onClick={() => setOpen(false)} />}
+
       {open && (
         <div className={styles.panel} role='menu'>
-          <div className={styles.panelTitle}>Geral</div>
-          {renderItems(GENERAL)}
-
-          {isAdmin && (
-            <>
-              <div className={`${styles.panelTitle} ${styles.panelTitleSpaced}`}>Administração</div>
-              {renderItems(ADMIN)}
-            </>
-          )}
-
-          <button type='button' role='menuitem' className={styles.signOut} onClick={signOut}>
-            <span className={styles.itemIcon} aria-hidden><FiLogOut /></span>
-            <span className={styles.itemLabel}>Sair da conta</span>
-          </button>
+          {renderItems(allItems)}
         </div>
       )}
     </div>

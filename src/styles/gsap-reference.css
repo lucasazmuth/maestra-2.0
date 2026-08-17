@@ -99,7 +99,7 @@
 .settings-upsell { border-radius: 16px; padding: 24px; background: radial-gradient(120% 120% at 0% 0%, rgba(51, 97, 255, .10) 0%, rgba(51, 97, 255, .03) 42%, transparent 100%); border: 1px solid rgba(51, 97, 255, .18); }
 .settings-upsell-head { display: flex; align-items: center; gap: 14px; }
 /* Gema e moldura no azul primário, iguais ao selo do Pro no topo. */
-.settings-upsell-icon { --plan-gem-from: #5b8cff; --plan-gem-mid: #3361ff; --plan-gem-to: #2a54e0; display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: rgba(51, 97, 255, .12); border: 1px solid rgba(51, 97, 255, .24); box-shadow: 0 10px 24px rgba(51, 97, 255, .14); color: #3361ff; }
+.settings-upsell-icon { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: rgba(51, 97, 255, .12); border: 1px solid rgba(51, 97, 255, .24); box-shadow: 0 10px 24px rgba(51, 97, 255, .14); color: #3361ff; }
 .settings-upsell-title { color: #33415e; font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
 .settings-upsell-subtitle { margin-top: 2px; color: #7b8eaf; font-size: 13px; }
 .settings-upsell-desc { margin: 16px 0 18px; color: #5b6f94; font-size: 13.5px; line-height: 1.6; }
@@ -9327,21 +9327,26 @@ body:has(.track-detail-backdrop) .local-player-bar {
     background: rgba(38, 54, 82, .24);
   }
 
-  /* Painel do "Mais": grade de dois por linha ancorada logo acima da ilha (referência:
-     .mobile-more > div). 18px de folga sobre a nav — 18 (base) + 78 (altura) + 18 (respiro). */
+  /* Painel do "Mais": ancorado logo acima da ilha (referência: .mobile-more > div). 18px de
+     folga sobre a nav — 18 (base) + 78 (altura) + 18 (respiro). Um grid só (.mobile-more-group)
+     com todos os atalhos — módulos do perfil e Perfis/Configurações/Suporte juntos, sem título
+     separando os grupos. */
   .task-app.has-mobile-nav .mobile-more-sheet {
     right: 22px;
     bottom: calc(114px + env(safe-area-inset-bottom, 0px));
     z-index: 121;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
     width: min(330px, calc(100vw - 44px));
     padding: 8px;
     border: 1px solid #e1e7f0;
     border-radius: 20px;
     background: #fff;
     box-shadow: 0 16px 34px rgba(72, 91, 130, .16);
+  }
+
+  .task-app.has-mobile-nav .mobile-more-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
   }
 
   /* Célula igual à da nav: ícone em cima, rótulo embaixo, no mesmo 10px/800. */
@@ -9364,7 +9369,7 @@ body:has(.track-detail-backdrop) .local-player-bar {
     text-align: center;
   }
 
-  /* Fios de grade: nada à direita da segunda coluna nem abaixo da última linha. */
+  /* Fios de grade: nada à direita da segunda coluna nem abaixo da última linha DO GRUPO. */
   .task-app.has-mobile-nav .mobile-more-item:nth-child(2n) { border-right: 0; }
   .task-app.has-mobile-nav .mobile-more-item:last-child { border-right: 0; border-bottom: 0; }
   /* Item ímpar sozinho na última linha ocupa a largura toda, senão fica uma célula órfã. */

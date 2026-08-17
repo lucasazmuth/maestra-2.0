@@ -138,6 +138,28 @@
     font-size: 12px;
     &:hover { background: transparent; color: #244ce0; text-decoration: underline; }
   }
+
+  // .payWrap (tela de desbloqueio/PIX) nasceu para o fundo escuro: campo com texto branco
+  // sobre translúcido claro. Nesta página clara isso vira texto branco sobre branco —
+  // o "copia e cola" do PIX era o caso mais visível, mas vale pra qualquer ant-input aqui.
+  .payWrap {
+    :global(.ant-input),
+    :global(.ant-input-affix-wrapper),
+    :global(.ant-select-selector),
+    :global(.ant-input-number),
+    :global(textarea.ant-input) {
+      background-color: #fff !important;
+      border: 1.5px solid #d8e1ee !important;
+      color: #52668d !important;
+    }
+
+    :global(.ant-input::placeholder),
+    :global(textarea.ant-input::placeholder) { color: #91a1bd !important; }
+
+    :global(.ant-select-selection-item) { color: #2c3f63 !important; }
+    :global(.ant-select-selection-placeholder) { color: #91a1bd !important; }
+    :global(.ant-select-arrow) { color: #8495b3 !important; }
+  }
 }
 
 @media (max-width: 640px) {
