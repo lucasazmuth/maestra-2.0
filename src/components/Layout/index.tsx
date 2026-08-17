@@ -351,8 +351,12 @@ export const AppLayout: FC = memo(() => {
         </button>
         {/* Último da linha: reúne configurações, termos e suporte (e o /admin, para admin).
             O antigo botão de engrenagem virou o item "Configurações" daqui dentro — além de
-            duplicar o destino, ele só existia na home, sumindo no resto do app. */}
-        <SystemMenu />
+            duplicar o destino, ele só existia na home, sumindo no resto do app.
+            No mobile ele some QUANDO a tab bar está presente (os mesmos atalhos já moram no
+            "Mais" dela) — mas em telas sem tab bar, como /artists e /admin, é o único jeito de
+            chegar em Configurações/Suporte/Sair, então continua aparecendo (com o visual do
+            "Mais", não o dropdown de desktop). */}
+        <SystemMenu hasMobileNav={hasMobileNav} />
       </div>
     </header>
   );
