@@ -4,6 +4,7 @@
 // texto herda o tom escuro da mesma família de cor, sem competir com o wordmark.
 
 .tag {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -32,12 +33,10 @@
 }
 
 // PRO no azul primário do sistema: o rosa-laranja do selo de referência destacava, mas era a
-// única cor daquele tipo no app — a gema já basta para diferenciar do resto.
+// única cor daquele tipo no app — o diamante já basta para diferenciar do resto.
+// As cores do diamante em si vêm de `TONE_STOPS` em Diamond.tsx (mesmos hex daqui), não de CSS —
+// o Lottie grava a cor no próprio SVG, não há como herdar var(--...) num gradiente de shape.
 .pro {
-  --plan-gem-from: #5b8cff;
-  --plan-gem-mid: #3361ff;
-  --plan-gem-to: #2a54e0;
-
   border-color: rgba(51, 97, 255, .24);
   background: linear-gradient(180deg, rgba(51, 97, 255, .12) 0%, rgba(51, 97, 255, .08) 100%);
   color: #2a54e0;
@@ -45,21 +44,13 @@
 
 // Pendente segue o âmbar dos avisos do app: a cor diz "falta algo" sem soar erro.
 .pending {
-  --plan-gem-from: #f0b429;
-  --plan-gem-mid: #dd9a12;
-  --plan-gem-to: #f0b429;
-
   border-color: rgba(221, 154, 18, .28);
   background: linear-gradient(180deg, rgba(240, 180, 41, .16) 0%, rgba(221, 154, 18, .12) 100%);
   color: #9a7217;
 }
 
-// FREE é o estado padrão: gema apagada e só contorno — não há nada de errado em não ser Pro.
+// FREE é o estado padrão: diamante apagado e só contorno — não há nada de errado em não ser Pro.
 .free {
-  --plan-gem-from: #c3d0e4;
-  --plan-gem-mid: #aebfda;
-  --plan-gem-to: #c3d0e4;
-
   border-color: #e1e8f3;
   background: #f7f9fd;
   color: #8ca0c5;

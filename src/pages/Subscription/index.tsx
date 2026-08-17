@@ -11,7 +11,7 @@ import {
   CartSummary, BenefitsCompare, useCheckoutForm, focusFirstInvalidField, type PayMethod, type BenefitGroup,
 } from '../../components/checkout';
 import { useCoupon } from '../../hooks/useCoupon';
-import { Gem } from '../../components/PlanTag/Gem';
+import { Diamond } from '../../components/PlanTag/Diamond';
 
 // Fallback enquanto a config do plano não carregou do Supabase (asaas_plan_config).
 const FALLBACK_MONTHLY = 39.9;
@@ -186,11 +186,6 @@ const SubscriptionPage: FC = () => {
       const proCard: CSSProperties = {
         maxWidth: 520, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
       };
-      const proBadge: CSSProperties = {
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 60, height: 60,
-        borderRadius: 18, marginBottom: 22, background: 'rgba(51, 97, 255, .12)',
-        border: '1px solid rgba(51, 97, 255, .24)', boxShadow: '0 12px 28px rgba(51, 97, 255, .14)',
-      };
       const btnPrimaryArrow: CSSProperties = {
         display: 'inline-flex', alignItems: 'center', gap: 8, background: '#3361ff', border: 'none', color: '#fff',
         borderRadius: 9999, padding: '13px 32px', fontSize: 14, fontWeight: 800, cursor: 'pointer',
@@ -199,7 +194,7 @@ const SubscriptionPage: FC = () => {
       return (
         <div style={gateWrap}>
           <div style={proCard}>
-            <span style={proBadge}><Gem size={28} /></span>
+            <Diamond tone='pro' size={90} style={{ marginBottom: 22 }} />
             <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#3361ff', marginBottom: 10 }}>Assinatura ativa</span>
             <div style={{ color: '#405985', fontSize: 26, fontWeight: 800, letterSpacing: '-0.01em', marginBottom: 12 }}>Você já é Maestra PRO</div>
             <p style={{ color: '#7c8da8', fontSize: 14.5, lineHeight: 1.55, margin: '0 0 26px', maxWidth: 400 }}>
@@ -302,7 +297,7 @@ const SubscriptionPage: FC = () => {
               </div>
             }
             item={{
-              icon: <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, color: '#3361ff' }}>PRO</span>,
+              icon: <Diamond tone='pro' size={26} />,
               name: 'Maestra PRO',
               sub: <span>Edição + Nyta IA · {cycleLabel}</span>,
               price: `${priceFmt}${unit}`,
