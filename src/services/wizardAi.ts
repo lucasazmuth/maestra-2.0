@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { readAiError } from '../lib/edgeError';
 import { TASK_OWNER_SELF } from '../constants/maestra';
 import type {
   ArtistIdentity,
@@ -56,7 +57,10 @@ async function callWizardAI(body: Record<string, any>): Promise<any> {
   const { data, error } = await supabase.functions.invoke('wizard-ai', {
     body: { ...platformCtx, ...body },
   });
-  if (error) throw new Error(error.message || 'Erro ao chamar IA');
+  // O erro do supabase-js é sempre o genérico "Edge Function returned a non-2xx status code" e o
+  // corpo traz texto de desenvolvedor (ex.: "Groq error 404: ... model_not_found"). readAiError
+  // manda o técnico pro console e devolve uma frase que o artista entende.
+  if (error) throw new Error(await readAiError(error, `wizard-ai/${body.action || '?'}`));
   return data;
 }
 

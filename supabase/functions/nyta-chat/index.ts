@@ -795,7 +795,9 @@ async function fetchArtistContext(artistId: string, authHeader: string): Promise
 }
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+// A Groq descomissionou o llama-3.3-70b-versatile em 16/08/2026 — GPT OSS 120B é a
+// substituição recomendada por eles (e-mail de aviso de 12/08).
+const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_TIMEOUT_MS = 30_000;
 
 // O Llama às vezes "fala" a chamada de ferramenta como TEXTO — <function(nome){...}</function> —

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 import { supabase } from '../lib/supabase';
+import { friendlyAiError } from '../lib/edgeError';
 import { useAppDispatch, useAppSelector } from '../store/store';
 import {
   addMessage,
@@ -442,9 +443,11 @@ export function useNytaChat(
           return true;
         }
 
-        dispatch(setError(body.error || `Erro ${response.status}`));
+        // body.error vem escrito para desenvolvedor (ex.: "Groq error 404: ... model_not_found").
+        // Vai pro console; o artista lê uma frase que diz o que aconteceu e o que fazer.
+        dispatch(setError(friendlyAiError(body?.error || `HTTP ${response.status}`, 'nyta-chat')));
       } catch {
-        dispatch(setError(`Erro ${response.status}`));
+        dispatch(setError(friendlyAiError(`HTTP ${response.status}`, 'nyta-chat')));
       }
 
       return true;

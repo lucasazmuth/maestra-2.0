@@ -53,7 +53,9 @@ interface RequestBody {
 
 // Modelo padrão (rápido/barato) para quiz e rótulos; as 3 gerações pesadas
 // (estratégias, SWOT, resumo) podem usar um modelo mais forte via env, sem redeploy.
-const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+// A Groq descomissionou o llama-3.3-70b-versatile em 16/08/2026 (e-mail de aviso de
+// 12/08) — GPT OSS 120B é a substituição recomendada por eles.
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
 const HEAVY_MODEL = Deno.env.get("WIZARD_AI_HEAVY_MODEL") || DEFAULT_MODEL;
 
 async function callGroq(

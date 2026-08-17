@@ -465,7 +465,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       say(SAY.proposalReady());
     } catch (e: any) {
       setTyping(false);
-      message.error(e?.message || 'Erro ao compor o texto');
+      message.error(e?.message || 'Não consegui montar o texto agora. Tente de novo.');
       setGuided({ field, answers, current: '', count: 0, failed: true });
     }
   };
@@ -547,7 +547,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       }
       await persist(patch);
     } catch (e: any) {
-      message.error(e?.message || 'Erro na IA');
+      message.error(e?.message || 'A Nyta está indisponível neste momento. Tente de novo em alguns instantes.');
       setWidget({ kind: 'retry' });
     } finally {
       setTyping(false);
