@@ -53,7 +53,8 @@ JSON: { "segment": "...", "artist_size": "...", "career_stage": "..." }`;
       method: "POST",
       headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        // llama-3.3-70b-versatile descomissionado pela Groq em 16/08/2026.
+        model: "openai/gpt-oss-120b",
         messages: [
           { role: "system", content: "Você classifica planejamentos musicais. Responda APENAS JSON válido." },
           { role: "user", content: prompt },

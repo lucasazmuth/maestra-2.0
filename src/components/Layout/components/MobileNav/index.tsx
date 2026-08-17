@@ -76,7 +76,13 @@ export const MobileNav: FC = () => {
     suffix === ''
       ? location.pathname === `/artists/${artistId}`
       : location.pathname.startsWith(`/artists/${artistId}/${suffix}`);
-  const isActivePath = (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`);
+  // '/artists' é um caso especial: TODA página de um artista é '/artists/:id/...', então um
+  // startsWith('/artists/') marcaria "Perfis" como ativo em qualquer perfil aberto — não só na
+  // lista. Só a lista em si (rota exata) deve acender esse item.
+  const isActivePath = (path: string) =>
+    path === '/artists'
+      ? location.pathname === '/artists'
+      : location.pathname === path || location.pathname.startsWith(`${path}/`);
   const moreActive = more.some((m) => isActive(m.suffix)) || systemItems.some((s) => isActivePath(s.path));
 
   const go = (suffix: string) => {

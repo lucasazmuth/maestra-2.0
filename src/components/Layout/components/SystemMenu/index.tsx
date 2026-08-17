@@ -94,10 +94,16 @@ export const SystemMenu: FC<Props> = ({ hasMobileNav = false }) => {
     setOpen(false);
   };
 
+  // '/artists' é um caso especial: TODA página de um artista é '/artists/:id/...', então um
+  // startsWith('/artists') marcaria "Perfis" como ativo em qualquer perfil aberto — não só na
+  // lista. Só a lista em si (rota exata) deve acender esse item.
+  const isItemActive = (path: string) =>
+    path === '/artists' ? location.pathname === '/artists' : location.pathname.startsWith(path);
+
   const renderItems = (items: Item[]) => (
     <div className={styles.grid}>
       {items.map((item) => {
-        const active = !!item.path && location.pathname.startsWith(item.path);
+        const active = !!item.path && isItemActive(item.path);
         return (
           <button
             key={item.label}
