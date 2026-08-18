@@ -21,11 +21,9 @@ export interface SpotifyArtistSearchResult {
   genres?: string[];
 }
 
-/** Busca artistas por nome (para o modal de criação). */
-export const searchSpotifyArtists = async (
-  query: string
-): Promise<SpotifyArtistSearchResult[]> => {
-  if (!query.trim()) return [];
+/** Busca direta no Spotify a partir do navegador. Caminho legado, mantido só como rede de
+ *  segurança do proxy (ver `searchSpotifyArtists`). */
+const buscaDiretaNoSpotify = async (query: string): Promise<SpotifyArtistSearchResult[]> => {
   const { data } = await querySearch({ q: query, type: 'artist', limit: 8 });
   return (data.artists?.items || []).map((a) => ({
     id: a.id,
@@ -34,6 +32,44 @@ export const searchSpotifyArtists = async (
     followers: a.followers?.total,
     genres: a.genres,
   }));
+};
+
+/**
+ * Busca artistas por nome (tela de criação de perfil).
+ *
+ * Passa pela Edge Function `spotify-artist-search` em vez de falar direto com o Spotify. O motivo
+ * é a cota: o limite do Spotify é POR APLICATIVO numa janela de 30s e a Maestra usa
+ * client_credentials, então TODOS os usuários dividem o mesmo balde. Indo pelo proxy ganhamos
+ * cache compartilhado (o segundo que buscar o mesmo termo custa zero), ritmo global e cache
+ * vencido como rede de segurança quando o Spotify está fora. Ver docs/RISCO-SPOTIFY-ESCALA.md.
+ *
+ * O fallback para a busca direta existe por causa da ORDEM DE SUBIDA: o frontend (Vercel) sobe no
+ * merge, a edge function é deployada à mão. Sem ele, a janela entre os dois deploys deixaria a
+ * busca quebrada para todo mundo. Depois que o proxy estiver em produção e estável, dá para
+ * remover o fallback junto com o token do Spotify no navegador (src/lib/spotifyToken.ts).
+ */
+export const searchSpotifyArtists = async (
+  query: string
+): Promise<SpotifyArtistSearchResult[]> => {
+  const termo = query.trim();
+  if (termo.length < 3) return [];
+
+  try {
+    const { data, error } = await supabase.functions.invoke('spotify-artist-search', {
+      body: { q: termo },
+    });
+    if (error) throw error;
+    if (Array.isArray(data?.results)) return data.results as SpotifyArtistSearchResult[];
+    throw new Error('resposta inesperada do proxy de busca');
+  } catch (e: any) {
+    // 403/429 são decisões do Spotify: repetir direto do navegador não muda o veredito e ainda
+    // queima cota. Só caímos no caminho legado quando o problema é o PROXY (ex.: function ainda
+    // não deployada), nunca quando o proxy funcionou e o Spotify é que recusou.
+    const status = e?.context?.status ?? e?.status;
+    if (status === 403 || status === 429 || status === 503) throw e;
+    console.warn('[Spotify] proxy de busca indisponível, usando chamada direta:', e?.message || e);
+    return buscaDiretaNoSpotify(termo);
+  }
 };
 
 /**
