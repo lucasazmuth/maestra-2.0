@@ -151,6 +151,10 @@ const ArtistCreate: FC = () => {
   const [debounced] = useDebounce(query, 400);
   const [results, setResults] = useState<SpotifyArtistSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  // A busca no Spotify falhou (queda/instabilidade da API deles). Sem isto, o catch abaixo
+  // zerava os resultados e a tela ficava idêntica a "nenhum artista com esse nome" — o usuário
+  // não tinha como saber que era falha temporária e que valia tentar de novo.
+  const [searchFailed, setSearchFailed] = useState(false);
   // Aviso inline quando o artista buscado já existe (mesmo usuário).
   const [notice, setNotice] = useState<{ name: string } | null>(null);
   const chosen = useRef<{ name: string; spotifyArtistId: string | null; followers: number | null; image: string | null }>({ name: '', spotifyArtistId: null, followers: null, image: null });
@@ -243,11 +247,19 @@ const ArtistCreate: FC = () => {
   // Busca Spotify
   useEffect(() => {
     let active = true;
-    if (!debounced.trim()) { setResults([]); return; }
+    if (!debounced.trim()) { setResults([]); setSearchFailed(false); return; }
     setSearching(true);
+    setSearchFailed(false);
     searchSpotifyArtists(debounced)
-      .then((r) => active && setResults(r))
-      .catch(() => active && setResults([]))
+      .then((r) => { if (active) { setResults(r); setSearchFailed(false); } })
+      .catch((e) => {
+        if (!active) return;
+        // O axios já reteve 502/503/504 duas vezes (ver src/axios.ts); chegar aqui significa
+        // que a API do Spotify seguiu fora do ar. Marca a falha para a tela poder dizer isso.
+        console.error('[Spotify] busca de artista falhou:', e?.response?.status || e?.message || e);
+        setResults([]);
+        setSearchFailed(true);
+      })
       .finally(() => active && setSearching(false));
     return () => { active = false; };
   }, [debounced]);
@@ -550,6 +562,19 @@ const ArtistCreate: FC = () => {
                             </div>
                           </button>
                         ))}
+                      </div>
+                    )}
+
+                    {/* Falha na API do Spotify: sem isto a tela ficava igual a "não achei ninguém"
+                        e o usuário não sabia que era temporário. Oferece o caminho sem Spotify,
+                        que segue funcionando mesmo com a busca fora do ar. */}
+                    {searchFailed && !searching && (
+                      <div className={styles.dupeNotice}>
+                        <FiAlertCircle className={styles.dupeNoticeIcon} />
+                        <div className={styles.dupeNoticeText}>
+                          Não consegui falar com o Spotify agora. Isso costuma ser passageiro: espere alguns instantes e escreva o nome de novo.
+                        </div>
+                        <button className={styles.dupeNoticeBtn} onClick={chooseNoSpotify}>Criar sem o Spotify</button>
                       </div>
                     )}
 
