@@ -111,6 +111,31 @@ const mapear = (payload: any): Resultado[] =>
 // Resultado de uma ida ao Spotify: ou os artistas, ou o status que ele recusou.
 type Busca = { results: Resultado[]; erro?: undefined } | { erro: number; results?: undefined };
 
+// Compara nomes ignorando caixa e acento: quem digita "bea" quer achar "BEA"; quem digita
+// "beyonce" quer achar "Beyoncé".
+const normalizar = (s: string) =>
+  (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+
+// Quantos resultados a tela recebe. O Spotify limita `limit` a 10 por página (20 devolve 400
+// desde 2026), então mais que isso exige paginar.
+const QUANTOS_DEVOLVER = 10;
+
+/**
+ * Reordena colocando quem tem o nome EXATAMENTE igual ao que foi digitado na frente.
+ *
+ * POR QUE: o Spotify ordena por popularidade global, não por precisão do nome. Quem digita "bea"
+ * recebe The Beatles, beabadoobee, Beach Boys... e a artista chamada literalmente "BEA" fica na
+ * posição 13 (medido). Para quem está criando o próprio perfil, o nome exato é quase sempre o
+ * alvo — então ele vai para o topo.
+ */
+const promoverNomeExato = (itens: Resultado[], termo: string): Resultado[] => {
+  const alvo = normalizar(termo);
+  const exatos = itens.filter((a) => normalizar(a.name) === alvo);
+  if (exatos.length === 0) return itens;
+  const resto = itens.filter((a) => normalizar(a.name) !== alvo);
+  return [...exatos, ...resto];
+};
+
 /**
  * Caminho único de cache + token + fila + degradação, compartilhado pela busca por NOME e pela
  * busca por ID. `chave` é a linha do cache; `ir` faz a chamada específica de cada caso.
@@ -203,12 +228,32 @@ Deno.serve(async (req: Request) => {
     if (termo.length < 3) return json({ results: [], source: "curto" });
 
     return await resolver(termo, async (token) => {
-      const r = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(termo)}&type=artist&limit=8`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      if (!r.ok) return { erro: r.status };
-      return { results: mapear(await r.json()) };
+      const pagina = async (offset: number) => {
+        const r = await fetch(
+          `https://api.spotify.com/v1/search?q=${encodeURIComponent(termo)}` +
+            `&type=artist&limit=10&offset=${offset}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        return r.ok ? { itens: mapear(await r.json()) } : { erro: r.status };
+      };
+
+      const p1 = await pagina(0);
+      if ("erro" in p1) return { erro: p1.erro };
+
+      let itens = p1.itens;
+
+      // Segunda página SÓ quando o nome exato não veio na primeira. Nome comum ou curto
+      // ("BEA") cai fora do top 10 — medido: posição 13. Buscar a página 2 sempre dobraria o
+      // consumo da cota compartilhada; assim, o caso comum (digitou "Anitta", veio "Anitta")
+      // continua custando UMA chamada, e a segunda só entra quando de fato faz falta.
+      const alvo = normalizar(termo);
+      if (!itens.some((a) => normalizar(a.name) === alvo)) {
+        const p2 = await pagina(10);
+        // Falha na página 2 não invalida a 1: melhor devolver 10 do que erro.
+        if (!("erro" in p2)) itens = [...itens, ...p2.itens];
+      }
+
+      return { results: promoverNomeExato(itens, termo).slice(0, QUANTOS_DEVOLVER) };
     });
   } catch (e) {
     console.error("[spotify-artist-search] erro inesperado:", e);
