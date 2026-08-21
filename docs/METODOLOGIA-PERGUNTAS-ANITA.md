@@ -80,8 +80,44 @@ ponto de partida, ou o zero deveria estar em outro lugar?
 
 ## Efeito sobre quem já tem diagnóstico
 
-O `realIndex` fica salvo no perfil do artista, então **diagnósticos já entregues não mudam
-sozinhos** — a nota nova só aparece em diagnósticos novos ou refeitos. Isso evita alterar o
-resultado de alguém pelas costas, mas também significa que dois artistas com os mesmos números
-podem exibir notas diferentes conforme a data. Se preferir uniformizar, dá para recalcular a base
-de uma vez; é uma decisão sua.
+O `realIndex` fica salvo no perfil do artista, então diagnósticos já entregues não mudariam
+sozinhos. Para não deixar dois artistas com os mesmos números exibindo notas diferentes conforme a
+data, **a base foi recalculada em 21/08/2026**.
+
+O que a passagem fez, em 63 diagnósticos na versão 3:
+
+| | |
+|---|---|
+| Artistas com o R alterado | **30** |
+| Artistas sem nenhuma alteração | 33 |
+| Mudanças de perfil | **0** |
+| Mudanças de padrão R.E.A.L | **0** |
+| Violações da invariante §9.1 | **0** |
+
+Nenhuma nota nova passou de 69, então **ninguém acendeu uma dimensão que estava apagada**. A
+mudança é só de granularidade abaixo do corte, como descrito na Questão 2. Os 28 que continuam com
+R = 0 têm no máximo 810 ouvintes mensais e nenhuma rede cadastrada — estão no piso da régua, e zero
+é a leitura correta.
+
+O `realIndex` anterior de todos os artistas foi copiado para a tabela `realindex_backup_20260821`
+antes da escrita, então a passagem é reversível.
+
+### Um efeito colateral encontrado no caminho
+
+Em 02/07/2026 a escala de premiações ganhou um nível (a opção "prêmio local/regional" foi separada
+da indicação). Dois diagnósticos feitos **horas antes** dessa mudança guardaram o índice na escala
+velha, onde `5` era o topo; na escala de hoje, `5` é o penúltimo. Recalcular sem tratar isso
+rebaixaria a resposta dessas duas artistas de "prêmio máximo" para um degrau abaixo. O índice foi
+convertido para a escala atual antes do recálculo, e a nota de Legitimidade delas ficou intacta.
+
+### Dois perfis ficaram de fora, e é proposital
+
+**Roberta Sá** e **Bento Gil** têm diagnósticos anteriores à versão 3, guardados num formato de
+respostas diferente. Não é o caso de recalcular: faltam **18 dos 19 campos** que a versão 3 usa no
+primeiro caso e **7** no segundo. Rodar o motor atual em cima desses dados daria resultado
+inventado — a Roberta Sá cairia de **Icon para Beginner**, com a Legitimidade sem valor nenhum,
+porque a receita dela está gravada como faixa de texto ("Acima de R$ 50.000") e a imprensa como
+frase, não como os números que a versão 3 exige.
+
+Esses dois precisam **refazer o diagnóstico** na plataforma para entrar na versão 3. Migrar na
+marra seria trocar um resultado correto por um errado.
