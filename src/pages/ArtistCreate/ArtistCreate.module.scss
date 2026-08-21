@@ -1567,6 +1567,9 @@
   &:first-child { border-top: none; padding-top: 0; }
 }
 .dimStatLabel { font-size: 12.5px; color: #9a9aa3; }
+// Procedência na tela — mesmo par †/legenda do PDF (ver .docDagger / .docFonteNota).
+.statDagger { font-size: 10px; vertical-align: super; margin-left: 3px; opacity: 0.75; }
+.statFonteNota { font-size: 11px; line-height: 1.5; color: #7c8da8; margin-top: 10px; }
 .dimStatValue { font-size: 16px; color: #52668d; font-weight: 800; text-align: right; letter-spacing: -0.01em; }
 
 .dimPhrase {
@@ -1861,7 +1864,9 @@ $docLow: #8b9ab4;
 .docBrand { display: flex; align-items: center; gap: 9px; font-family: var(--font-display); font-weight: 800; font-size: 17px; color: $docInk; }
 .docHeaderLabel { font-size: 11px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: $docReal; }
 .docBody { flex: 1; display: flex; flex-direction: column; padding-top: 40px; }
-.docFooter { display: flex; justify-content: space-between; font-size: 12px; color: $docMute; letter-spacing: 0.04em; padding-top: 18px; border-top: 1px solid $docLine; }
+.docFooter { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; font-size: 12px; color: $docMute; letter-spacing: 0.04em; padding-top: 18px; border-top: 1px solid $docLine; }
+// Autoria no rodapé: ocupa o meio e cede espaço primeiro, pra nunca empurrar o número da página.
+.docAutoria { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 9.5px; letter-spacing: 0; color: $docMute; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 // Capa
 .docCover { justify-content: space-between; align-items: center; text-align: center; }
@@ -1872,6 +1877,12 @@ $docLow: #8b9ab4;
 .docCoverName { font-family: var(--font-display); font-weight: 800; font-size: 64px; line-height: 1.02; letter-spacing: -0.02em; margin-bottom: 22px; color: $docInk; }
 .docCoverProfile { font-size: 20px; color: $docDim; strong { color: $docReal; font-weight: 800; } }
 .docCoverFoot { font-size: 13px; color: $docMute; letter-spacing: 0.04em; }
+.docCoverFonte { font-size: 11px; line-height: 1.5; color: $docMute; max-width: 460px; margin-top: 10px; }
+.docCoverAutoria {
+  font-size: 11px; line-height: 1.6; color: $docMute; max-width: 460px; margin-top: 12px;
+  padding-top: 10px; border-top: 1px solid $docLine;
+  strong { color: $docBody; font-weight: 800; }
+}
 
 // Página do perfil
 .docProfileKicker { font-family: var(--font-mono); font-size: 13px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: $docReal; margin-bottom: 14px; }
@@ -1959,6 +1970,16 @@ $docLow: #8b9ab4;
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid $docLine;
   span { font-size: 15px; color: $docDim; }
   strong { font-size: 17px; font-weight: 800; color: $docInk; }
+}
+
+// Procedência do dado (†, legenda e aviso). Discreto de propósito: o PDF também é peça de
+// apresentação, então a marcação informa sem poluir a leitura dos números.
+.docDagger { color: $docMute; font-size: 11px; vertical-align: super; margin-left: 2px; }
+.docFonteNota { font-size: 11px; line-height: 1.5; color: $docMute; margin-top: 10px; }
+.docFonteAviso {
+  font-size: 12px; line-height: 1.55; color: $docBody; margin-top: 16px;
+  padding: 10px 14px; border-left: 3px solid $docLine; background: #f6f9fd; border-radius: 0 8px 8px 0;
+  strong { font-weight: 800; }
 }
 
 .docSubBlock2 { margin-top: 18px; }

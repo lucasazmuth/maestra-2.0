@@ -326,6 +326,8 @@ const ProfileUnlock: FC = () => {
                 <DiagnosticReport
                   realIndex={realIndex}
                   chartmetric={chartmetric}
+                  artistId={artist?.id}
+                  vinculo={(artist?.content as any)?.titularidade?.vinculo}
                   artistName={artist?.name}
                   artistImage={artist?.content?.spotifyProfile?.image}
                   onContinue={() => irPara('pagamento')}

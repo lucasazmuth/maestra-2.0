@@ -388,6 +388,10 @@ serve(async (req) => {
     const content: Record<string, unknown> = {
       realIndex, diagnostic, quizDiagnostic: { answers: quiz, completedAt: nowIso },
     };
+    // Cópia no perfil só para EXIBIÇÃO (capa do PDF). A prova é a linha em user_consents, que é
+    // append-only e carrega IP, user-agent e a versão dos Termos; esta aqui é conveniência de leitura.
+    const vinculoDeclarado = typeof (quiz as any)?.vinculo === "string" ? (quiz as any).vinculo : null;
+    if (vinculoDeclarado) content.titularidade = { vinculo: vinculoDeclarado, declaredAt: nowIso };
     if (chartmetric) content.chartmetricProfile = chartmetric;
     if (spotifyId) {
       content.spotifyProfile = {
@@ -401,6 +405,36 @@ serve(async (req) => {
       .insert({ user_id: user.id, name: artistName, content, spotify_artist_id: spotifyId, is_locked: true })
       .select("id").single();
     if (createError || !artist) { console.error("Error creating artist:", createError); return json({ error: "Erro ao criar o perfil" }, 500); }
+
+    // Declaração de vínculo com o artista (ver migration 20260821180000_vinculo_artista).
+    //
+    // Gravada AQUI, no servidor, e não pelo cliente: a trilha só tem valor probatório se o próprio
+    // usuário não puder forjá-la — a RLS de user_consents não permite escrita pelo cliente, e o IP
+    // e o user-agent precisam vir da requisição. Amarra a declaração à versão exata dos Termos
+    // vigentes naquele instante, que é o que dá sentido jurídico ao registro.
+    //
+    // Fire-and-forget: uma falha aqui não pode derrubar a criação do perfil.
+    const vinculo = typeof (quiz as any)?.vinculo === "string" ? (quiz as any).vinculo : null;
+    if (vinculo) {
+      try {
+        const { data: termos } = await supabaseAdmin
+          .from("legal_documents")
+          .select("version, content_sha256")
+          .eq("slug", "termos").eq("is_current", true).maybeSingle();
+        await supabaseAdmin.from("user_consents").insert({
+          user_id: user.id,
+          artist_id: artist.id,
+          kind: "vinculo_artista",
+          status: "dado",
+          document_slug: "termos",
+          document_version: termos?.version ?? null,
+          content_sha256: termos?.content_sha256 ?? null,
+          source: `vinculo:${vinculo}`,
+          ip: req.headers.get("x-forwarded-for"),
+          user_agent: req.headers.get("user-agent"),
+        });
+      } catch (e) { console.error("registrar vinculo:", (e as Error)?.message); }
+    }
 
     // Persiste o JSON CRU de cada chamada Chartmetric (1 linha por endpoint). Fire-and-forget:
     // nunca derruba a criação do perfil. Serve de contexto pro Nyta e evita re-buscar (custo).

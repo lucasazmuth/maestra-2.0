@@ -88,6 +88,8 @@ const DiagnosticView: FC = () => {
       <DiagnosticReport
         realIndex={realIndex}
         chartmetric={artist.content?.chartmetricProfile as Chartmetric | null}
+        artistId={artist.id}
+        vinculo={(artist.content as any)?.titularidade?.vinculo}
         artistName={artist.name}
         artistImage={spotifyProfile?.image ?? null}
         noSpotify={!spotifyProfile?.spotify_artist_id}
