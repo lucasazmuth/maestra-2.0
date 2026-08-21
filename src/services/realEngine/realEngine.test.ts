@@ -179,6 +179,38 @@ describe('Motor REAL v3', () => {
     expect(ri.cutLine).toEqual({ r: 70, e: 70, a: 70, l: 70 });
   });
 
+  // Regressão do bug relatado: 556 mil ouvintes + 24 mil seguidores davam R = 0/100.
+  // Pela contagem de altos, os dois componentes ficavam LOGO abaixo do corte (z 0,0 e 0,50 contra
+  // HIGH_Z 0,52) e "0 de 2 altos" virava zero — a mesma nota de quem não tem nada.
+  it('R apagado reflete a DISTÂNCIA até o corte, não a contagem de altos', () => {
+    const comR = (listeners: number, ig: number) =>
+      computeRealIndexV3(base({
+        spotifyConnected: true, spotifyListeners: listeners, igFollowers: ig,
+        tiktokFollowers: null, youtubeMonthlyViews: null,
+      }) as RealInputsV3);
+
+    const quaseNada = comR(1_000, 1_000);
+    const casoDoBug = comR(556_000, 24_000);
+
+    // Não acende em nenhum dos dois: a classificação alto/baixo (metodologia) não mudou.
+    expect(casoDoBug.pattern.r).toBe(false);
+    expect(casoDoBug.boletim.r).toBeLessThan(70); // invariante §9.1 preservada
+
+    // Mas quem está encostado no corte NÃO pode empatar com quem não tem nada.
+    expect(casoDoBug.boletim.r).toBeGreaterThan(quaseNada.boletim.r + 30);
+    // E o número precisa ser reconhecível para quem tem 556 mil ouvintes.
+    expect(casoDoBug.boletim.r).toBeGreaterThan(40);
+  });
+
+  it('R aceso continua na regra do §9.2 (70 + topicon), sem efeito da mudança', () => {
+    const tudoNoTeto = computeRealIndexV3(base({
+      spotifyConnected: true, spotifyListeners: 38_800_000,
+      igFollowers: 61_200_000, tiktokFollowers: 24_900_000, youtubeMonthlyViews: 131_900_000,
+    }) as RealInputsV3);
+    expect(tudoNoTeto.pattern.r).toBe(true);
+    expect(tudoNoTeto.boletim.r).toBe(100);
+  });
+
   // ── Ausência (opção B) ──
   it('com Spotify: sub-item null é EXCLUÍDO da média (não pune)', () => {
     // IG nulo é excluído → componente de rede = só TikTok (alto).

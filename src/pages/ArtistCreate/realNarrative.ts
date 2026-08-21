@@ -48,10 +48,19 @@ function reach(ri: any): DimNarrative {
   if (lead.length) {
     const names = lead.slice(0, 2).map((c) => (R_CHANNEL as any)[c.key].name as string);
     const fronts = lead.slice(0, 2).map((c) => (R_CHANNEL as any)[c.key].front as string);
-    const verb = names.length > 1 ? 'puxam' : 'puxa';
+    // O verbo concorda com o NÚMERO GRAMATICAL, não com a quantidade de nomes: "as redes sociais"
+    // é um item só, mas plural. Antes saía "As redes sociais puxa o seu alcance".
+    const plural = names.length > 1 || names.some((n) => n.startsWith('as '));
+    const verb = plural ? 'puxam' : 'puxa';
+    // Quando NENHUM canal passou do corte, `lead` é apenas o melhor colocado — chamar isso de
+    // "força concentrada" contradizia a própria nota (a tela dizia isso ao lado de um R baixo).
+    // Sem canal alto, o texto vira o que de fato é: a frente que está na frente, ainda assim baixa.
+    const body = strong.length
+      ? `A força está concentrada ${joinE(fronts)}. Vale observar se as outras frentes acompanham esse tamanho ou se há espaço para equilibrar a presença.`
+      : `É a frente mais avançada ${joinE(fronts)}, ainda que abaixo do corte. Costuma ser por onde o alcance começa a destravar.`;
     paras.push({
       lead: `${joinE(names).replace(/^o /, 'O ').replace(/^as /, 'As ')} ${verb} o seu alcance.`,
-      body: `A força está concentrada ${joinE(fronts)}. Vale observar se as outras frentes acompanham esse tamanho ou se há espaço para equilibrar a presença.`,
+      body,
     });
   }
   return { headline, paras: paras.slice(0, 3) };
