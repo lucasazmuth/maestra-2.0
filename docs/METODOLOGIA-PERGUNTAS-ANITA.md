@@ -1,10 +1,13 @@
-# Perguntas de metodologia para a Anita — dimensão R (Alcance)
+# Perguntas de metodologia para a Anita
 
-Levantado em 21/08/2026, a partir de um caso real relatado por usuária.
+Levantado em 21/08/2026, a partir de casos reais testados na plataforma.
 
 **Nada aqui foi alterado no método.** A classificação alto/baixo, o padrão R.E.A.L, os 16 perfis
-e a linha de acender em 70 continuam exatamente como estão no doc. As duas questões abaixo
-precisam de decisão sua antes de qualquer mudança.
+e a linha de acender em 70 continuam exatamente como estão no doc. As questões abaixo precisam
+de decisão sua antes de qualquer mudança.
+
+A primeira parte trata da dimensão R (Alcance). A segunda, acrescentada depois de testarmos com
+João Gomes e Anitta, trata do A (Audiência) e do L (Legitimação).
 
 ---
 
@@ -121,3 +124,99 @@ frase, não como os números que a versão 3 exige.
 
 Esses dois precisam **refazer o diagnóstico** na plataforma para entrar na versão 3. Migrar na
 marra seria trocar um resultado correto por um errado.
+
+
+---
+
+# Parte 2 — dimensão A (Audiência): nenhum artista grande consegue acender
+
+Testamos a plataforma com **João Gomes** e **Anitta**. Os dois receberam **A = 53/100 (Baixo)**.
+
+## O que aconteceu
+
+O A tem quatro componentes e exige que **os quatro** estejam altos para acender — é um "E", não uma
+soma. João Gomes tem três altos e um baixo:
+
+| Componente | João Gomes | Situação |
+|---|---|---|
+| Conversão (seguidores ÷ ouvintes) | 8,3 mi seguidores Spotify | **Alto** (e Top Tier) |
+| Shows por mês | 25 | **Alto** |
+| % público pagante | 95–100% | **Alto** (e Top Tier) |
+| Engajamento por rede | IG 1,14% · TikTok 1,28% · YT 0,03% | **Baixo** |
+
+O engajamento é o único que não passa, e por isso o A não acende. Como o perfil **Icon** exige as
+quatro dimensões acesas, ele fica de fora.
+
+Verificamos o efeito: **se o engajamento dele passasse do corte, ele seria Icon**, com A = 85 e Top
+Tier geral. O engajamento sozinho é o que separa o maior artista do país do perfil que descreve
+exatamente a carreira dele.
+
+## Por que isso não é um caso isolado
+
+Os cortes de engajamento são fixos (IG 2,8%, TikTok 9,0%, YouTube 4,0%), **independentes do tamanho
+do público**. Mas taxa de engajamento cai conforme a audiência cresce — é assim em qualquer rede, e
+aparece na nossa própria base:
+
+| Seguidores no Instagram | Artistas | Engajamento médio |
+|---|---|---|
+| até 10 mil | 4 | **2,63%** |
+| 10 mil a 100 mil | 6 | 1,36% |
+| 100 mil a 1 milhão | 4 | 1,38% |
+| acima de 1 milhão | 6 | **0,95%** |
+
+A amostra é pequena, mas a direção é clara: quem tem mais público engaja proporcionalmente menos.
+Um corte fixo, então, penaliza sistematicamente quem cresceu.
+
+O resultado na base inteira (64 diagnósticos):
+
+| Dimensão | Quantos acendem |
+|---|---|
+| E (Receita) | 22 |
+| L (Legitimação) | 7 |
+| R (Alcance) | 6 |
+| **A (Audiência)** | **1** |
+| **TOP ICON (as quatro)** | **0** |
+
+**As perguntas:**
+
+1. O A deveria mesmo exigir os quatro componentes altos, quando R e L trabalham com soma ponderada
+   e renormalização? Hoje o A é a única dimensão que funciona como "E" — e é, de longe, a mais
+   difícil de acender.
+2. O corte de engajamento deveria variar conforme a faixa de público? Um artista com 17 milhões de
+   seguidores e 1,1% de engajamento tem, em números absolutos, muito mais gente respondendo do que
+   um com 5 mil seguidores e 3%.
+3. O corte do YouTube (4,0%) parece alto para a escala real do dado: a mediana da nossa base é
+   **0,13%**, e o valor mais alto que já vimos foi 9,4%. Confirmamos que não é erro de unidade — é
+   a escala que a Chartmetric entrega. Esse patamar de 4% foi calibrado para essa escala?
+
+# Parte 3 — dimensão L: o teto de 98 é real, mas vale confirmar
+
+João Gomes e Anitta receberam **L = 98/100**, e a pergunta que surgiu foi se estava travado.
+
+**Não está.** Os dois foram cadastrados com premiação no nível **"indicação internacional"**. Só o
+nível acima — **ter ganhado** prêmio internacional — leva o L a 100, e verificamos que leva: mudando
+só esse campo, o L vai a 100 exatamente.
+
+Ou seja, o comportamento está correto: uma indicação não vale o mesmo que uma vitória. Fica só o
+registro para você confirmar que é essa a intenção, já que na prática significa que **nenhum artista
+brasileiro sem prêmio internacional conquistado pode ter L = 100**, por mais imprensa, playlist e
+rádio que tenha.
+
+Um detalhe técnico à parte, que não é decisão sua: a conta dá exatamente 98,5, e o arredondamento
+de ponto flutuante joga para 98 em vez de 99. É 1 ponto, e a correção é trivial, mas mexe em nota
+exibida — então fica esperando sua confirmação junto com o resto.
+
+# Parte 4 — um dado que a Chartmetric não tem (não é decisão sua, é registro)
+
+No diagnóstico do João Gomes, "YouTube mensal" apareceu vazio. Não é falha nossa nem da integração:
+a Chartmetric respondeu literalmente `{"link": null, "monthly_views": []}` — ela não tem o canal do
+YouTube Charts vinculado ao perfil dele. Para a Anitta o mesmo endpoint devolve normalmente (121
+milhões de views mensais).
+
+Isso **não prejudicou a nota dele**: pela regra de canal ausente (§4.3), o YouTube saiu da conta e o
+R foi renormalizado nos outros dois canais, fechando em 100.
+
+Vale registrar, porém, que temos um dado de YouTube que hoje não usamos: o mesmo perfil traz
+**5,04 milhões de inscritos** por outro endpoint. **A pergunta:** faz sentido usar inscritos como
+substituto quando as views mensais não existem, ou são medidas diferentes demais para se
+substituírem (estoque × fluxo)?
