@@ -1598,6 +1598,16 @@
 .ctaTitle { font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 3.4vw, 36px); line-height: 1.18; letter-spacing: -0.01em; color: #fff; margin: 0 0 18px; white-space: normal; text-wrap: wrap; overflow: visible; text-overflow: clip; }
 .ctaParagraph { font-size: 13.5px; line-height: 1.65; color: #b8b8be; margin: 0 auto 26px; max-width: 500px; }
 
+// Vídeo de apresentação do CTA — mesma moldura do hero da landing (.videoFrame), reancorada na
+// largura do texto acima. Cores em rgba para servir aos dois temas do bloco sem override.
+.ctaVideo {
+  max-width: 500px; margin: 0 auto 26px; position: relative; aspect-ratio: 16 / 9;
+  overflow: hidden; border-radius: 16px; background: #0b1020;
+  border: 1px solid rgba(120, 139, 173, 0.24);
+  box-shadow: 0 18px 44px rgba(74, 99, 145, 0.16);
+}
+.ctaVideoPlayer { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+
 // Efeito "digitando": empilhamento via grid — fantasma reserva o tamanho do texto completo, o
 // texto visível ocupa a mesma célula (sem position:absolute, não corta em telas estreitas).
 // grid-template-columns: minmax(0,1fr) força a coluna a preencher o container (texto quebra),
