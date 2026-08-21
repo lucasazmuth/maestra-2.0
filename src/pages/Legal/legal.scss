@@ -1,3 +1,7 @@
+// Páginas legais públicas (/legal/:slug). Tema CLARO: o arquivo nasceu no tema escuro antigo
+// (títulos #fff sobre fundo escuro) e ficou ilegível quando a plataforma virou claro — texto
+// branco sobre branco. Paleta igual à do resto do app: #2c3f63 título, #52668d corpo,
+// #7c8da8 apoio, #3361ff link.
 .legal-page {
   padding: 48px 24px;
   max-width: 760px;
@@ -11,7 +15,7 @@
   gap: 6px;
   background: transparent;
   border: none;
-  color: #b3b3b3;
+  color: #52668d;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -19,43 +23,48 @@
   margin-bottom: 20px;
   transition: color 0.15s;
 
-  &:hover { color: #fff; }
+  &:hover { color: #3361ff; }
 }
 
 .legal-title {
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 32px;
-  color: #fff;
+  color: #2c3f63;
   margin: 0 0 6px;
 }
 
 .legal-updated {
-  color: #8a8a8a;
+  // #7c8da8 daria 3,17 de contraste neste fundo e #61749a para em 4,42 — os dois reprovam no
+  // mínimo de 4,5 para texto normal. A hierarquia fica por tamanho (13px contra 15px do corpo),
+  // não por cor lavada.
+  color: #52668d;
   font-size: 13px;
   margin: 0 0 28px;
 }
 
 .legal-content {
-  color: #d6d6d6;
+  color: #52668d;
   font-size: 15px;
   line-height: 1.75;
 
   h2 {
-    color: #fff;
+    color: #2c3f63;
     font-size: 18px;
     font-weight: 700;
     margin: 28px 0 8px;
   }
   h3 {
-    color: #fff;
+    color: #2c3f63;
     font-size: 15px;
     font-weight: 700;
     margin: 20px 0 6px;
   }
   p { margin: 0 0 14px; }
-  strong { color: #fff; font-weight: 700; }
+  strong { color: #2c3f63; font-weight: 700; }
   ul, ol { margin: 0 0 14px; padding-left: 22px; }
   li { margin-bottom: 6px; }
-  a { color: #9A4FD1; }
+  a { color: #3361ff; text-decoration: underline;
+    &:hover { color: #2650db; }
+  }
 }
