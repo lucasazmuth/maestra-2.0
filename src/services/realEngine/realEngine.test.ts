@@ -95,9 +95,13 @@ describe('Motor REAL v3', () => {
     // engajamento abaixo de todos os cortes derruba.
     const lowEng = computeRealIndexV3(base({ ...A_ON, igEngagement: 1, tiktokEngagement: 1, youtubeEngagement: 1 }));
     expect(lowEng.pattern.a).toBe(false);
-    // sem bilheteria: % pagante nunca credita → A apagado mesmo com o resto alto.
+    // sem bilheteria o % pagante fica AUSENTE, e ausência não reprova mais (§4.3 aplicado ao A):
+    // o A acende pelos três componentes presentes. Ver o describe de componente ausente abaixo.
     const noBilhe = computeRealIndexV3(base({ ...A_ON, fazBilheteria: false, pagantePct: null }));
-    expect(noBilhe.pattern.a).toBe(false);
+    expect(noBilhe.pattern.a).toBe(true);
+    // mas o que está presente e baixo continua reprovando:
+    const bilheFraca = computeRealIndexV3(base({ ...A_ON, fazBilheteria: true, pagantePct: 'ate50' }));
+    expect(bilheFraca.pattern.a).toBe(false);
   });
 
   it('A engajamento acende com PELO MENOS uma rede acima do corte', () => {
@@ -177,6 +181,38 @@ describe('Motor REAL v3', () => {
   it('cutLine fixa em 70 em todas as dimensões', () => {
     const ri = computeRealIndexV3(base());
     expect(ri.cutLine).toEqual({ r: 70, e: 70, a: 70, l: 70 });
+  });
+
+  // Regressão do bug relatado: 556 mil ouvintes + 24 mil seguidores davam R = 0/100.
+  // Pela contagem de altos, os dois componentes ficavam LOGO abaixo do corte (z 0,0 e 0,50 contra
+  // HIGH_Z 0,52) e "0 de 2 altos" virava zero — a mesma nota de quem não tem nada.
+  it('R apagado reflete a DISTÂNCIA até o corte, não a contagem de altos', () => {
+    const comR = (listeners: number, ig: number) =>
+      computeRealIndexV3(base({
+        spotifyConnected: true, spotifyListeners: listeners, igFollowers: ig,
+        tiktokFollowers: null, youtubeMonthlyViews: null,
+      }) as RealInputsV3);
+
+    const quaseNada = comR(1_000, 1_000);
+    const casoDoBug = comR(556_000, 24_000);
+
+    // Não acende em nenhum dos dois: a classificação alto/baixo (metodologia) não mudou.
+    expect(casoDoBug.pattern.r).toBe(false);
+    expect(casoDoBug.boletim.r).toBeLessThan(70); // invariante §9.1 preservada
+
+    // Mas quem está encostado no corte NÃO pode empatar com quem não tem nada.
+    expect(casoDoBug.boletim.r).toBeGreaterThan(quaseNada.boletim.r + 30);
+    // E o número precisa ser reconhecível para quem tem 556 mil ouvintes.
+    expect(casoDoBug.boletim.r).toBeGreaterThan(40);
+  });
+
+  it('R aceso continua na regra do §9.2 (70 + topicon), sem efeito da mudança', () => {
+    const tudoNoTeto = computeRealIndexV3(base({
+      spotifyConnected: true, spotifyListeners: 38_800_000,
+      igFollowers: 61_200_000, tiktokFollowers: 24_900_000, youtubeMonthlyViews: 131_900_000,
+    }) as RealInputsV3);
+    expect(tudoNoTeto.pattern.r).toBe(true);
+    expect(tudoNoTeto.boletim.r).toBe(100);
   });
 
   // ── Ausência (opção B) ──
@@ -312,5 +348,79 @@ describe('Motor REAL v3', () => {
       // perfil sempre resolve p/ um dos 16.
       expect(ri.profile.name).toBeTruthy();
     }
+  });
+
+  // Componente ausente do A não pode reprovar a dimensão — mesma regra do R (§4.3).
+  describe('componente ausente sai da conta do A, como já sai do R', () => {
+    // Alto em conversão, engajamento e shows; NÃO faz bilheteria (% pagante ausente).
+    const semBilheteria = base({
+      spotifyListeners: 100_000, spotifyFollowers: 30_000, igEngagement: 5, showsPerMonth: 10,
+      fazBilheteria: false, pagantePct: null,
+    });
+
+    it('acende o A mesmo sem bilheteria', () => {
+      const ri = computeRealIndexV3(semBilheteria);
+      const pagante = ri.components.a.find((c) => c.key === 'pagante')!;
+      expect(pagante.absent).toBe(true);
+      expect(ri.pattern.a).toBe(true);
+      expect(ri.boletim.a).toBeGreaterThanOrEqual(70); // invariante §9.1
+    });
+
+    it('mas não marca TOP ICON na dimensão sem o % pagante', () => {
+      expect(computeRealIndexV3(semBilheteria).dimTopIcon.a).toBe(false);
+    });
+
+    it('componente presente e baixo continua reprovando', () => {
+      // Mesmo caso, mas fazendo bilheteria com público pouco pagante: agora está PRESENTE e baixo.
+      const ri = computeRealIndexV3({ ...semBilheteria, fazBilheteria: true, pagantePct: 'ate50' });
+      expect(ri.components.a.find((c) => c.key === 'pagante')!.absent).toBe(false);
+      expect(ri.pattern.a).toBe(false);
+      expect(ri.boletim.a).toBeLessThan(70);
+    });
+
+    it('tudo ausente não acende a dimensão (não cai no every() de lista vazia)', () => {
+      // Sem Spotify não há conversão nem engajamento; sem bilheteria não há % pagante.
+      const ri = computeRealIndexV3(base({ spotifyConnected: false, fazBilheteria: false, showsPerMonth: 0 }));
+      expect(ri.pattern.a).toBe(false);
+      expect(ri.boletim.a).toBeLessThan(70);
+    });
+  });
+
+  // Regressão: a nota do L não pode perder 1 ponto para ruído de ponto flutuante.
+  // Caso real (João Gomes / Anitta): indicação internacional + imprensa no teto + playlist + rádio
+  // dá nota_L = 0,985 exatos, que é 98,5 → 99. Sem a limpeza do ruído, a soma vinha
+  // 0,9849999999999999 e o resultado caía para 98.
+  describe('nota do L não perde ponto para ruído de ponto flutuante', () => {
+    const indicacaoInternacional = base({
+      premios: 5,
+      imprensaRepercussao: true,
+      imprensaMatrix: [{ tipo: 'imprensa', porte: 'grande' }],
+      imprensaFrequencia: 'perene',
+      editorialPlaylists: 17,
+      radioAirplay: 1_740,
+    });
+
+    it('fecha em 99, não em 98', () => {
+      const ri = computeRealIndexV3(indicacaoInternacional);
+      expect(ri.components.l.notaL).toBe(0.99); // round2(0,985)
+      expect(ri.boletim.l).toBe(99);
+    });
+
+    it('só chega a 100 com prêmio internacional conquistado', () => {
+      expect(computeRealIndexV3({ ...indicacaoInternacional, premios: 6 }).boletim.l).toBe(100);
+    });
+
+    it('nota exatamente no corte acende a dimensão', () => {
+      // 0,30×0,70 + 0,30×0,70 + 0,20×1 + 0,20×0,5 = 0,72 — acima do corte e sem ruído.
+      const ri = computeRealIndexV3(base({
+        premios: 3, // nota 0,70
+        imprensaRepercussao: true,
+        imprensaMatrix: [{ tipo: 'youtube', porte: 'medio' }], // 65/100 × 1,0
+        imprensaFrequencia: 'lancamento',
+        editorialPlaylists: 1,
+      }));
+      expect(ri.pattern.l).toBe(true);
+      expect(ri.boletim.l).toBeGreaterThanOrEqual(70);
+    });
   });
 });

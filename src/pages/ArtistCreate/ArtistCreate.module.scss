@@ -74,12 +74,21 @@
     background: #fff;
     box-shadow: 0 10px 24px rgba(46, 72, 117, 0.06);
 
+    // A classe cai em DOIS elementos diferentes, dependendo de o Input ter `prefix` ou não:
+    //   busca do Spotify (com ícone) → span.ant-input-affix-wrapper.searchInput > input.ant-input
+    //   nome artístico (sem ícone)   → input.ant-input.searchInput  (é o PRÓPRIO input)
+    // O `:global(.ant-input)` abaixo é DESCENDENTE, então no segundo caso não casa e o campo
+    // ficava com a tipografia padrão do antd. Estas duas linhas cobrem o campo nu.
+    color: #52668d;
+    font-size: 16px;
+
     :global(.ant-input) {
       color: #52668d;
       font-size: 16px;
       background: transparent;
     }
 
+    &::placeholder,
     :global(.ant-input::placeholder) { color: #91a1bd; }
   }
 
@@ -88,6 +97,15 @@
   :global(.ant-input-affix-wrapper-focused) {
     border-color: #3361ff !important;
     box-shadow: 0 0 0 3px rgba(51, 97, 255, 0.12), 0 10px 24px rgba(46, 72, 117, 0.06) !important;
+  }
+
+  // Mesmo motivo: a regra acima só alcança o wrapper com ícone. Sem isto, o campo do nome
+  // artístico acendia no azul padrão do antd (#1677ff) em vez do azul da marca.
+  .searchInput:hover,
+  .searchInput:focus {
+    border-color: #3361ff !important;
+    box-shadow: 0 0 0 3px rgba(51, 97, 255, 0.12), 0 10px 24px rgba(46, 72, 117, 0.06) !important;
+    outline: none;
   }
 
   .results {
@@ -114,6 +132,17 @@
     font-weight: 700;
 
     &:hover { color: #244ce0; }
+  }
+
+  // O `.cta` base ainda é o roxo #9A4FD1 do tema antigo, e o override azul existente está
+  // escopado em `.pageReal` (o fluxo do diagnóstico). A criação de perfil roda em
+  // `.page:not(.pageReal)`, então o botão caía no roxo. Mesmo azul do resto do app claro.
+  .cta {
+    background: #3361ff;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(51, 97, 255, .18);
+
+    &:hover:not(:disabled) { background: #244ce0; }
   }
 
   .dupeNotice {
@@ -1568,6 +1597,16 @@
 // senão impede a quebra e corta o título em telas estreitas.
 .ctaTitle { font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 3.4vw, 36px); line-height: 1.18; letter-spacing: -0.01em; color: #fff; margin: 0 0 18px; white-space: normal; text-wrap: wrap; overflow: visible; text-overflow: clip; }
 .ctaParagraph { font-size: 13.5px; line-height: 1.65; color: #b8b8be; margin: 0 auto 26px; max-width: 500px; }
+
+// Vídeo de apresentação do CTA — mesma moldura do hero da landing (.videoFrame), reancorada na
+// largura do texto acima. Cores em rgba para servir aos dois temas do bloco sem override.
+.ctaVideo {
+  max-width: 500px; margin: 0 auto 26px; position: relative; aspect-ratio: 16 / 9;
+  overflow: hidden; border-radius: 16px; background: #0b1020;
+  border: 1px solid rgba(120, 139, 173, 0.24);
+  box-shadow: 0 18px 44px rgba(74, 99, 145, 0.16);
+}
+.ctaVideoPlayer { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 
 // Efeito "digitando": empilhamento via grid — fantasma reserva o tamanho do texto completo, o
 // texto visível ocupa a mesma célula (sem position:absolute, não corta em telas estreitas).

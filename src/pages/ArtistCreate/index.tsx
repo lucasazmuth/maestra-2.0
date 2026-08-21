@@ -557,7 +557,7 @@ const ArtistCreate: FC = () => {
                       autoFocus
                       size='large'
                       className={styles.searchInput}
-                      placeholder='Busque o artista no Spotify…'
+                      placeholder='Nome do artista ou link do Spotify…'
                       value={query}
                       onChange={(e) => { setQuery(e.target.value); if (notice) setNotice(null); }}
                       prefix={<SpotifyLottie size={24} style={{ marginRight: 4 }} />}
@@ -575,6 +575,18 @@ const ArtistCreate: FC = () => {
                             </div>
                           </button>
                         ))}
+                      </div>
+                    )}
+
+                    {/* Buscou e não achou. Acontece muito com nome curto ou comum ("BEA"), que
+                        afunda na ordenação por relevância do Spotify. É o momento certo de
+                        contar que dá pra colar o link do perfil, que acha de forma exata. */}
+                    {!searching && !searchFailed && debounced.trim().length >= 3 && results.length === 0 && (
+                      <div className={styles.dupeNotice}>
+                        <FiAlertCircle className={styles.dupeNoticeIcon} />
+                        <div className={styles.dupeNoticeText}>
+                          Não achei esse artista pelo nome. Abra o perfil dele no Spotify, copie o link e cole aqui.
+                        </div>
                       </div>
                     )}
 

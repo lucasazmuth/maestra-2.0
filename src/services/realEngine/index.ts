@@ -103,6 +103,11 @@ const HIGH_Z = 0.52;       // [SPEC] percentil 70
 const TOPICON_Z = 1.64;    // [SPEC] percentil 95
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+// Tira o ruído de ponto flutuante de uma média ponderada antes de comparar com corte ou virar nota.
+// Sem isso, 0,30×0,95 + 0,30 + 0,20 + 0,20 dá 0,9849999999999999 em vez de 0,985: a nota do L cai de
+// 99 para 98, e um valor que deveria bater exatamente no corte de 0,70 pode ficar abaixo e apagar a
+// dimensão. Os pesos e as notas têm no máximo 2 casas, então 6 casas preservam todo valor legítimo.
+const semRuido = (n: number) => Math.round(n * 1e6) / 1e6;
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
 // value <= edges[i] → zs[i]; acima do último edge → zs[last]. (zs.length === edges.length+1)
@@ -172,11 +177,47 @@ function zComp(key: string, label: string, z: number | null): ComponentDebug {
   return { key, label, z: z == null ? null : round2(z), high: z != null && z >= HIGH_Z, topicon: z != null && z >= TOPICON_Z, absent: z == null };
 }
 
-// Boletim por contagem (R/A): apagado → (n_altos/n)*70 (travado em ≤69, invariante §9.1);
+// Boletim por contagem (A): apagado → (n_altos/n)*70 (travado em ≤69, invariante §9.1);
 // aceso → 70 + (n_topicon/n)*30 (§9.2).
+//
+// A dimensão A usa contagem porque seus componentes NÃO têm sinal contínuo: conversão,
+// engajamento, shows/mês e % pagante são limiares (passou / não passou). Não existe "quão perto"
+// de "faz bilheteria" — então contar é a única leitura honesta. O R é diferente: ver boletimZ.
 function countBoletim(comps: { high: boolean; topicon: boolean }[], acende: boolean): number {
   const n = comps.length;
   if (!acende) return Math.min(69, Math.round((comps.filter((c) => c.high).length / n) * 70));
+  return Math.round(70 + (comps.filter((c) => c.topicon).length / n) * 30);
+}
+
+// Piso da escala de R: o menor z das tabelas do §4.2. Serve de zero da régua abaixo do corte.
+const Z_PISO = -1.5;
+
+// Quanto o componente caminhou até o corte: 0 no piso, 1 no corte (ou acima).
+function progressoAteOCorte(z: number | null): number {
+  if (z == null) return 0;
+  return Math.max(0, Math.min(1, (z - Z_PISO) / (HIGH_Z - Z_PISO)));
+}
+
+// Boletim do R — apagado, usa a DISTÂNCIA até o corte em vez da contagem de altos.
+//
+// POR QUE (bug relatado): pela contagem, um artista com 556 mil ouvintes e 24 mil seguidores
+// tirava 0/100. Os dois componentes ficavam logo abaixo do corte (z 0,0 e 0,50 contra HIGH_Z
+// 0,52), e "0 de 2 altos" vira zero. Pior: com 2 componentes as ÚNICAS notas possíveis abaixo do
+// corte eram 0, 35 e 69, então quem estava encostado no corte recebia a mesma nota de quem não
+// tinha nada, e um seguidor a mais podia saltar 35 pontos de uma vez.
+//
+// Diferente de A, os três componentes de R (ouvintes, seguidores de rede, vídeo) são z contínuos:
+// dá para dizer o quanto falta. A nota passa a refletir isso.
+//
+// O QUE NÃO MUDA: a classificação alto/baixo, o padrão R.E.A.L, o perfil e a linha de acender em
+// 70 continuam idênticos — são metodologia (§4.2/§4.4). Muda só o número exibido abaixo do corte,
+// que segue travado em ≤69 (invariante §9.1). Aceso, a regra do §9.2 é a de sempre.
+function boletimZ(comps: ComponentDebug[], acende: boolean): number {
+  const n = comps.length;
+  if (!acende) {
+    const media = comps.reduce((s, c) => s + progressoAteOCorte(c.z), 0) / n;
+    return Math.min(69, Math.round(media * 70));
+  }
   return Math.round(70 + (comps.filter((c) => c.topicon).length / n) * 30);
 }
 
@@ -261,9 +302,18 @@ export function computeRealIndexV3(input: RealInputsV3): RealIndexV3 {
     high: pagHigh, topicon: pagTop, absent: !input.fazBilheteria,
   };
   const aComps = [convComp, engComp, showsComp, pagComp];
-  const aHigh = aComps.every((c) => c.high);
-  // §6.6 (conversão + %pagante no P95) — mas só conta como TOP ICON se A de fato acende (os 4 altos),
-  // senão o topIcon global poderia marcar um perfil que não é Icon.
+  // Componente ausente sai da conta, mesma regra já aplicada ao R (§4.3, "opção A"). Sem isso a
+  // ausência REPROVA no A enquanto é neutra no R: quem não faz show com bilheteria tem o "% público
+  // pagante" ausente e, por definição, nunca poderia acender o A — por melhores que fossem os
+  // outros três. Se TUDO estiver ausente, cai de volta na lista cheia (que não acende), para não
+  // acender uma dimensão sobre lista vazia — `[].every()` é true.
+  const aPresent = aComps.filter((c) => !c.absent);
+  const aEffective = aPresent.length ? aPresent : aComps;
+  const aHigh = aEffective.every((c) => c.high);
+  // §6.6 (conversão + %pagante no P95) — mas só conta como TOP ICON se A de fato acende.
+  // Aqui a ausência CONTINUA pesando de propósito: o TOP ICON é a distinção mais rara do método,
+  // e afrouxá-lo não foi o que se decidiu corrigir. Quem não tem bilheteria pode acender o A, mas
+  // não marca TOP ICON nesta dimensão.
   const aTopIcon = aHigh && convComp.topicon && pagComp.topicon;
 
   // ── E: receita ancorada × modulador (§5) ──
@@ -302,7 +352,7 @@ export function computeRealIndexV3(input: RealInputsV3): RealIndexV3 {
   ];
   if (radioBin != null) lParts.push({ w: CUTS.l.weights.radio, v: radioBin });
   const wSum = lParts.reduce((s, p) => s + p.w, 0);
-  const notaL = wSum ? lParts.reduce((s, p) => s + p.w * p.v, 0) / wSum : 0;
+  const notaL = wSum ? semRuido(lParts.reduce((s, p) => s + p.w * p.v, 0) / wSum) : 0;
   // Trava de plataforma (§7.1/§7.5): L só acende com ≥1 sinal de plataforma REAL (playlist ou rádio),
   // independentemente de nota_L e da renormalização. Impede acender só com júri/imprensa.
   const temSinalPlataforma = playlistsBin === 1 || radioBin === 1;
@@ -337,7 +387,7 @@ export function computeRealIndexV3(input: RealInputsV3): RealIndexV3 {
     version: 3,
     profile: { key, name: def.name, description: def.description, insights: def.insights },
     pattern,
-    boletim: { r: countBoletim(rEffective, rHigh), e: boletimE, a: countBoletim(aComps, aHigh), l: boletimL },
+    boletim: { r: boletimZ(rEffective, rHigh), e: boletimE, a: countBoletim(aEffective, aHigh), l: boletimL },
     cutLine: { r: 70, e: 70, a: 70, l: 70 },
     topIcon,
     dimTopIcon: { r: rTopIcon, e: eTopIcon, a: aTopIcon, l: lTopIcon },

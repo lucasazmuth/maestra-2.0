@@ -1,6 +1,6 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { MaestraBrand } from '../../components/MaestraBrand';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import { Input, Spin, Select } from 'antd';
 import { FiArrowLeft, FiChevronDown, FiX } from 'react-icons/fi';
 
@@ -49,6 +49,7 @@ const ProfileUnlock: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { id } = useParams();
   const user = useAppSelector((s) => s.auth.user);
   const artist = useAppSelector((s) => s.artists.items.find((a) => a.id === id));
@@ -64,11 +65,31 @@ const ProfileUnlock: FC = () => {
   const userEmail = user?.email || '';
 
   // O artista aqui já existe e já foi diagnosticado (criação ou perfil pendente em /artists).
-  // Abre SEMPRE direto no pagamento — o diagnóstico salvo fica disponível via "Voltar ao diagnóstico".
-  // (location.state.skipDiagnostic continua respeitado por compat, mas o default já é 'pagamento'.)
+  // Abre no pagamento por padrão — o diagnóstico salvo fica disponível via "Voltar ao diagnóstico".
+  // (location.state.showDiagnostic continua respeitado por compat, mas o default já é 'pagamento'.)
+  //
+  // A escolha vive na URL (?ver=diagnostico) porque estado de navegação MORRE no reload: quem
+  // estava lendo o próprio diagnóstico e atualizava a página reaparecia numa tela de cobrança,
+  // como se o diagnóstico tivesse sumido. Na URL ela sobrevive ao reload e o link fica retomável.
   const [step, setStep] = useState<Step>(
-    (location.state as { showDiagnostic?: boolean } | null)?.showDiagnostic ? 'diagnostico' : 'pagamento'
+    searchParams.get('ver') === 'diagnostico'
+      || (location.state as { showDiagnostic?: boolean } | null)?.showDiagnostic
+      ? 'diagnostico' : 'pagamento'
   );
+
+  // Só o par diagnóstico/pagamento vai pra URL. 'pix' e 'done' dependem de dados que existem apenas
+  // em memória (QR Code, retorno da cobrança); persistir levaria a recarregar numa tela vazia.
+  // replace: true pra alternar entre as duas não encher o histórico e sequestrar o botão Voltar.
+  const irPara = useCallback((destino: Step) => {
+    setStep(destino);
+    if (destino !== 'diagnostico' && destino !== 'pagamento') return;
+    setSearchParams((atual) => {
+      const proximo = new URLSearchParams(atual);
+      if (destino === 'diagnostico') proximo.set('ver', 'diagnostico');
+      else proximo.delete('ver');
+      return proximo;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   // Pagamento — default: PIX (aprovação na hora). Parcelamento só aparece no crédito.
   const [method, setMethod] = useState<PayMethod>('PIX');
@@ -307,13 +328,13 @@ const ProfileUnlock: FC = () => {
                   chartmetric={chartmetric}
                   artistName={artist?.name}
                   artistImage={artist?.content?.spotifyProfile?.image}
-                  onContinue={() => setStep('pagamento')}
+                  onContinue={() => irPara('pagamento')}
                 />
               </TcleGate>
             ) : (
               <div style={{ textAlign: 'center' }}>
                 <p style={{ color: '#7c8da8', marginBottom: 18 }}>Diagnóstico indisponível. Você ainda pode liberar o planejamento.</p>
-                <button className={styles.cta} onClick={() => setStep('pagamento')}>Continuar</button>
+                <button className={styles.cta} onClick={() => irPara('pagamento')}>Continuar</button>
               </div>
             )}
           </div>
@@ -325,7 +346,7 @@ const ProfileUnlock: FC = () => {
             {realIndex && (
               <div style={{ textAlign: 'left', marginBottom: 18 }}>
                 <button
-                  onClick={() => setStep('diagnostico')}
+                  onClick={() => irPara('diagnostico')}
                   className={styles.unlockBack}
                 >
                   <FiArrowLeft size={16} /> Voltar ao diagnóstico

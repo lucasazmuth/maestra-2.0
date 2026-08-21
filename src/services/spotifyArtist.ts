@@ -2,6 +2,7 @@ import { artistService } from './artist';
 import { albumsService } from './albums';
 import { querySearch } from './search';
 import { supabase } from '../lib/supabase';
+import { extractSpotifyArtistId } from '../lib/spotifyArtistUrl';
 import type {
   SpotifyProfile,
   SpotifyCatalogAlbum,
@@ -21,17 +22,27 @@ export interface SpotifyArtistSearchResult {
   genres?: string[];
 }
 
+const mapearArtista = (a: any): SpotifyArtistSearchResult => ({
+  id: a.id,
+  name: a.name,
+  image: a.images?.[a.images.length - 1]?.url || a.images?.[0]?.url,
+  followers: a.followers?.total,
+  genres: a.genres,
+});
+
 /** Busca direta no Spotify a partir do navegador. Caminho legado, mantido só como rede de
- *  segurança do proxy (ver `searchSpotifyArtists`). */
-const buscaDiretaNoSpotify = async (query: string): Promise<SpotifyArtistSearchResult[]> => {
+ *  segurança do proxy (ver `searchSpotifyArtists`). Quando veio um link colado, busca pelo ID —
+ *  procurar a URL como se fosse nome não acharia nada. */
+const buscaDiretaNoSpotify = async (
+  query: string,
+  artistId: string | null
+): Promise<SpotifyArtistSearchResult[]> => {
+  if (artistId) {
+    const { data } = await artistService.fetchArtist(artistId);
+    return data ? [mapearArtista(data)] : [];
+  }
   const { data } = await querySearch({ q: query, type: 'artist', limit: 8 });
-  return (data.artists?.items || []).map((a) => ({
-    id: a.id,
-    name: a.name,
-    image: a.images?.[a.images.length - 1]?.url || a.images?.[0]?.url,
-    followers: a.followers?.total,
-    genres: a.genres,
-  }));
+  return (data.artists?.items || []).map(mapearArtista);
 };
 
 /**
@@ -54,9 +65,14 @@ export const searchSpotifyArtists = async (
   const termo = query.trim();
   if (termo.length < 3) return [];
 
+  // Link/URI/ID colado: vai direto no artista em vez de procurar por nome. Nome curto ou comum
+  // ("BEA") afunda na ordenação por relevância do Spotify e não aparece na lista — colar o link
+  // do perfil é o caminho determinístico. Ver src/lib/spotifyArtistUrl.ts.
+  const artistId = extractSpotifyArtistId(termo);
+
   try {
     const { data, error } = await supabase.functions.invoke('spotify-artist-search', {
-      body: { q: termo },
+      body: artistId ? { id: artistId } : { q: termo },
     });
     if (error) throw error;
     if (Array.isArray(data?.results)) return data.results as SpotifyArtistSearchResult[];
@@ -68,7 +84,7 @@ export const searchSpotifyArtists = async (
     const status = e?.context?.status ?? e?.status;
     if (status === 403 || status === 429 || status === 503) throw e;
     console.warn('[Spotify] proxy de busca indisponível, usando chamada direta:', e?.message || e);
-    return buscaDiretaNoSpotify(termo);
+    return buscaDiretaNoSpotify(termo, artistId);
   }
 };
 

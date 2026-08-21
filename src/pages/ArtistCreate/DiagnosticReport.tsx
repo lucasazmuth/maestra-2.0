@@ -88,6 +88,8 @@ const PROFILE_MAP: { altas: number; tier: string; names: string[] }[] = [
 ];
 
 const CTA_TITLE = 'Você sabe onde está. Agora precisa saber para onde ir, e como.';
+// Mesmo vídeo de apresentação do hero da landing (youtu.be/tSvzznd-FcI).
+const CTA_VIDEO_ID = 'tSvzznd-FcI';
 const CTA_SUB = 'O diagnóstico te mostrou o retrato da sua carreira hoje. O planejamento completo com a Nyta transforma esse retrato em um plano de ação real: estratégias priorizadas, cronograma e modelagem financeira, tudo construído por você, com a orientação da metodologia que já ajudou centenas de artistas.';
 
 const prefersReducedMotion = () =>
@@ -677,6 +679,18 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             <p className={styles.ctaParagraph}>
               <Typewriter text={CTA_SUB} active={titleDone} speed={9} onDone={() => setSubDone(true)} />
             </p>
+            {/* data-noexport: o PDF é uma captura estática — um iframe sairia como retângulo
+                vazio. O vídeo é da tela, não do documento. */}
+            <div className={styles.ctaVideo} data-noexport="1">
+              <iframe
+                className={styles.ctaVideoPlayer}
+                src={`https://www.youtube-nocookie.com/embed/${CTA_VIDEO_ID}?rel=0&modestbranding=1`}
+                title='Como funciona o planejamento com a Nyta'
+                allow='accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+                allowFullScreen
+                loading='lazy'
+              />
+            </div>
             <button className={`${styles.cta} ${styles.ctaReveal} ${ctaInView ? styles.ctaRevealOn : ''}`} onClick={onContinue}>
               Começar meu planejamento com a Nyta <FiArrowRight />
             </button>
