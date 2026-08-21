@@ -1,30 +1,29 @@
-// Canais de suporte ao usuário. O e-mail estava copiado em Settings e na Topbar; o menu do
-// topo seria a terceira cópia, e um endereço errado em um dos lugares só apareceria em produção.
-export const SUPPORT_EMAIL = 'maestra@musicrioacademy.com.br';
+-- Termos de Uso e Política de Privacidade, versão 2.
+--
+-- POR QUE: até aqui nada nos Termos nomeava o caso de alguém criar um Perfil de Artista de terceiro
+-- e gerar um diagnóstico com números inventados. Havia base genérica (veracidade, direitos de
+-- terceiros, indenização), mas nenhuma cláusula sobre a titularidade do Perfil nem sobre a natureza
+-- do documento gerado, que mistura dado medido com autorrelato.
+--
+-- A nova cláusula 10 dos Termos cobre: quem pode criar um Perfil, que o diagnóstico combina medição
+-- com declaração NÃO verificada, que o material exportado identifica quem o gerou, e a vedação
+-- expressa de atribuir informação falsa a terceiro.
+--
+-- A Política declara que o PDF carrega nome, e-mail e data de quem gerou — colocar dado pessoal num
+-- documento que circula precisa estar divulgado.
+--
+-- CONTEÚDO IDÊNTICO a src/constants/legal.ts nesta data, extraído do próprio arquivo. O
+-- content_sha256 é o sha256 dessa string exata (validado contra a v1: encode(sha256(content),hex)).
+-- É ele que prova o que cada pessoa aceitou; se divergir do texto exibido, a trilha perde o valor.
+--
+-- EFEITO: o gate compara a versão aceita com a vigente (account-consent). Ao rodar, TODOS os
+-- usuários voltam a passar por /consentimento no próximo acesso. É o comportamento correto.
 
-// Número em formato internacional só com dígitos — é o que o link wa.me exige.
-export const SUPPORT_WHATSAPP = '5521976799158';
-export const SUPPORT_WHATSAPP_DISPLAY = '+55 21 97679-9158';
+update public.legal_documents set is_current = false where slug in ('termos','privacidade');
 
-// Conteúdo das páginas legais (Termos de Uso e Política de Privacidade).
-// Edite livremente: título, data de atualização (updatedAt, formato ISO AAAA-MM-DD) e o
-// texto (Markdown). As páginas em /legal/:slug renderizam tudo a partir daqui.
-// Obs.: o renderizador (react-markdown, sem remark-gfm) suporta ##, listas (-) e **negrito**,
-// mas NÃO tabelas. A data de "Última atualização" é exibida pela página a partir de updatedAt.
 
-export interface LegalDoc {
-  title: string;
-  updatedAt: string; // ISO: AAAA-MM-DD
-  content: string; // Markdown
-}
-
-export type LegalSlug = 'termos' | 'privacidade';
-
-export const LEGAL_DOCS: Record<LegalSlug, LegalDoc> = {
-  termos: {
-    title: 'Termos de Uso',
-    updatedAt: '2026-08-21',
-    content: `Estes Termos de Uso ("Termos") regem o acesso e a utilização da plataforma **Maestra** ("Maestra", "Plataforma"), disponibilizada por **MUSIC RIO ACADEMY LTDA**, inscrita no CNPJ sob o nº 22.826.985/0001-41, com sede na Rua Riposeira, nº 1286, São Conrado, Rio de Janeiro/RJ, CEP 22.610-380 ("nós", "nosso"). Ao criar uma conta ou utilizar a Plataforma, você ("Usuário", "você") declara ter lido, compreendido e aceito integralmente estes Termos. **Se não concordar, não utilize a Plataforma.**
+insert into public.legal_documents (slug, version, title, content, content_sha256, published_at, is_current)
+values ('termos', 2, 'Termos de Uso', 'Estes Termos de Uso ("Termos") regem o acesso e a utilização da plataforma **Maestra** ("Maestra", "Plataforma"), disponibilizada por **MUSIC RIO ACADEMY LTDA**, inscrita no CNPJ sob o nº 22.826.985/0001-41, com sede na Rua Riposeira, nº 1286, São Conrado, Rio de Janeiro/RJ, CEP 22.610-380 ("nós", "nosso"). Ao criar uma conta ou utilizar a Plataforma, você ("Usuário", "você") declara ter lido, compreendido e aceito integralmente estes Termos. **Se não concordar, não utilize a Plataforma.**
 
 ## 1. Definições
 - **Plataforma / Maestra:** o software de gestão e planejamento estratégico de carreira artística, incluindo a assistente de inteligência artificial "Nyta" e os módulos de perfil, diagnóstico, músicas, agenda, plano de ação e equipe.
@@ -105,12 +104,11 @@ Podemos atualizar estes Termos a qualquer tempo. Mudanças relevantes serão com
 Estes Termos são regidos pela **lei brasileira**. Fica eleito o **foro da Comarca do Rio de Janeiro/RJ** para dirimir controvérsias, sem prejuízo do direito do consumidor de demandar no foro de seu domicílio, nos termos do CDC.
 
 ## 19. Contato
-Dúvidas sobre estes Termos: **maestra@musicrioacademy.com.br**.`,
-  },
-  privacidade: {
-    title: 'Política de Privacidade',
-    updatedAt: '2026-08-21',
-    content: `Esta Política de Privacidade descreve como a **MUSIC RIO ACADEMY LTDA**, CNPJ 22.826.985/0001-41, com sede na Rua Riposeira, nº 1286, São Conrado, Rio de Janeiro/RJ, CEP 22.610-380 ("nós", "Controladora"), trata os dados pessoais dos usuários da plataforma **Maestra**, em conformidade com a **Lei Geral de Proteção de Dados (Lei 13.709/2018 — LGPD)**.
+Dúvidas sobre estes Termos: **maestra@musicrioacademy.com.br**.', '4adf5495aea788cf10a7bb58b8bd957c0184d2bdeca6dc217601cc6adf9a1563', '2026-08-21'::date, true)
+on conflict (slug, version) do nothing;
+
+insert into public.legal_documents (slug, version, title, content, content_sha256, published_at, is_current)
+values ('privacidade', 2, 'Política de Privacidade', 'Esta Política de Privacidade descreve como a **MUSIC RIO ACADEMY LTDA**, CNPJ 22.826.985/0001-41, com sede na Rua Riposeira, nº 1286, São Conrado, Rio de Janeiro/RJ, CEP 22.610-380 ("nós", "Controladora"), trata os dados pessoais dos usuários da plataforma **Maestra**, em conformidade com a **Lei Geral de Proteção de Dados (Lei 13.709/2018 — LGPD)**.
 
 ## 1. Encarregado (DPO) e contato
 Para exercer seus direitos ou tirar dúvidas sobre privacidade, fale com o nosso Encarregado pelo tratamento de dados: **maestra@musicrioacademy.com.br**.
@@ -184,6 +182,5 @@ Essas saídas têm **caráter consultivo** e não produzem, por si, efeitos jur�
 Podemos atualizar esta Política a qualquer tempo. Mudanças relevantes serão comunicadas por meios razoáveis, e a data de atualização acima refletirá a versão vigente.
 
 ## 14. Contato
-Encarregado pelo tratamento de dados (DPO): **maestra@musicrioacademy.com.br**.`,
-  },
-};
+Encarregado pelo tratamento de dados (DPO): **maestra@musicrioacademy.com.br**.', 'f68aeac9b211dd267da86032521cb2695acad9ab55453d959c4acac80337769c', '2026-08-21'::date, true)
+on conflict (slug, version) do nothing;
