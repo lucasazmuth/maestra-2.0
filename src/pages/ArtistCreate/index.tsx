@@ -32,6 +32,7 @@ const REDUCE_MOTION =
 type QuizValue = string | number | boolean;
 type QuizFieldType = 'int' | 'currency' | 'select' | 'revenue' | 'matrix';
 type QuizKey =
+  | 'vinculo'
   | 'showsPerMonth' | 'cache' | 'revenueSources' | 'investimento'
   | 'temCnpj' | 'temEmpresario' | 'premios'
   | 'imprensaRepercussao' | 'imprensaMatrix' | 'imprensaFrequencia'
@@ -74,8 +75,22 @@ const IMPRENSA_PORTES: { key: ImprensaPorte; label: string }[] = [
 
 const SIM_NAO: { label: string; value: QuizValue }[] = [{ label: 'Sim', value: true }, { label: 'Não', value: false }];
 
+// Declaração de vínculo com o artista. Primeira pergunta de propósito: enquadra o resto do
+// questionário e é registrada com IP e a versão dos Termos vigente (ver a edge artist-diagnostic).
+//
+// NÃO BLOQUEIA: a última opção deixa qualquer pessoa seguir sem declarar vínculo. O objetivo não é
+// impedir — é que quem forjar um diagnóstico de terceiro tenha afirmado algo, numa data, sob os
+// Termos daquele momento. "Apenas conhecendo" também é informação: sai no PDF como tal.
+const VINCULO_OPCOES: { label: string; value: QuizValue }[] = [
+  { label: 'Sou o artista', value: 'sou_o_artista' },
+  { label: 'Faço parte da equipe do artista', value: 'equipe' },
+  { label: 'Represento o artista (empresário, produtor, gravadora)', value: 'representante' },
+  { label: 'Estou apenas conhecendo a ferramenta', value: 'conhecendo' },
+];
+
 // Receita do E = (shows × cachê) + soma das fontes fora shows. Estrutura (CNPJ/empresário) modula.
 const QUIZ: QuizDef[] = [
+  { key: 'vinculo', type: 'select', q: 'Antes de começar: qual a sua relação com esse artista?', options: VINCULO_OPCOES },
   { key: 'showsPerMonth', type: 'int', q: 'Quantos shows você costuma fazer por mês?', placeholder: 'Ex: 4' },
   { key: 'cache', type: 'currency', q: 'Qual o seu cachê médio por show?', placeholder: '0', skipIf: (a) => Number(a.showsPerMonth) <= 0 },
   { key: 'revenueSources', type: 'revenue', q: 'Fora os shows, quanto você fatura por mês com música em cada fonte? (pode deixar em zero o que não se aplica)' },
@@ -796,6 +811,8 @@ const ArtistCreate: FC = () => {
                 <DiagnosticReport
                   realIndex={realIndex}
                   chartmetric={chartmetric}
+                  artistId={createdRef.current?.artistId}
+                  vinculo={typeof answers.current.vinculo === 'string' ? answers.current.vinculo : undefined}
                   artistName={chosen.current.name}
                   artistImage={chosen.current.image}
                   noSpotify={!chosen.current.spotifyArtistId}

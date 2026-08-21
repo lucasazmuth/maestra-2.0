@@ -74,8 +74,22 @@ function suspendCrossOriginStylesheets(): () => void {
 // página pode reportar 0×0 num reflow e o toJpeg devolver vazio (jsPDF: "wrong PNG signature").
 // Por isso pré-medimos (força layout) e passamos width/height/style explícitos — o clone do
 // html-to-image renderiza no tamanho forçado mesmo se o nó vivo estiver 0×0.
-export async function downloadPagesPdf(pages: HTMLElement[], fileName: string): Promise<void> {
+// `meta` grava autoria nas PROPRIEDADES do arquivo, não só nos pixels da página: sobrevive a
+// recorte de imagem e a quem só olha "Propriedades do documento" no leitor de PDF.
+export async function downloadPagesPdf(
+  pages: HTMLElement[],
+  fileName: string,
+  meta?: { title?: string; author?: string; subject?: string },
+): Promise<void> {
   const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  if (meta) {
+    pdf.setProperties({
+      title: meta.title ?? '',
+      author: meta.author ?? '',
+      subject: meta.subject ?? '',
+      creator: 'Maestra · maestramanager.com',
+    });
+  }
   const W = 210;
   const H = 297;
   const dims = pages.map((p) => ({ w: p.offsetWidth || 794, h: p.offsetHeight || 1123 }));

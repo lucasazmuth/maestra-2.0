@@ -9,9 +9,10 @@ import realStar from '../../assets/feature-real.png';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import type { RealIndex } from '../../interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
-import DiagnosticDoc from './DiagnosticDoc';
+import DiagnosticDoc, { type Autoria } from './DiagnosticDoc';
+import { useAppSelector } from '../../store/store';
 import { RealBadge, tierForAltas, tierForPattern, TIER_ACCENT, altasForPattern } from '../../components/RealBadge';
-import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS } from './realCopy';
+import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS, VINCULO_LABELS } from './realCopy';
 import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from './realNarrative';
 import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import styles from './ArtistCreate.module.scss';
@@ -195,24 +196,26 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
   const score = Math.max(0, Math.min(100, Math.round(Number(ri.boletim?.[dk] ?? 0))));
   const inputs = ri.inputs || {};
   const rev = ri.revenue || {};
-  const rows: { label: string; num?: number | null; value?: string }[] =
+  // Mesma procedência do PDF (ver `decl` em DiagnosticDoc): o que vem de API fica sem marca, o que
+  // é autorrelato do questionário leva †. Tela e documento precisam contar a mesma história.
+  const rows: { label: string; num?: number | null; value?: string; declarado?: boolean }[] =
     dk === 'r' ? [
       { label: 'Ouvintes Spotify', num: cm?.monthly_listeners ?? inputs.spotifyListeners ?? null },
       { label: 'Instagram', num: inputs.igFollowers ?? null },
       { label: 'TikTok', num: inputs.tiktokFollowers ?? null },
       { label: 'YouTube mensal', num: inputs.youtubeMonthlyViews ?? null },
     ] : dk === 'e' ? [
-      { label: 'Receita mensal', value: fmtBRL(Number(rev.total ?? 0)) },
-      { label: 'Shows / mês', value: String(inputs.showsPerMonth ?? 0) },
-      { label: 'Cachê médio', value: fmtBRL(Number(inputs.cache ?? 0)) },
+      { label: 'Receita mensal', value: fmtBRL(Number(rev.total ?? 0)), declarado: true },
+      { label: 'Shows / mês', value: String(inputs.showsPerMonth ?? 0), declarado: true },
+      { label: 'Cachê médio', value: fmtBRL(Number(inputs.cache ?? 0)), declarado: true },
     ] : dk === 'a' ? [
-      { label: 'Shows / mês', value: String(inputs.showsPerMonth ?? 0) },
-      { label: '% público pagante', value: inputs.fazBilheteria ? (PAGANTE_LABELS[inputs.pagantePct] ?? '—') : 'Não faz bilheteria' },
+      { label: 'Shows / mês', value: String(inputs.showsPerMonth ?? 0), declarado: true },
+      { label: '% público pagante', value: inputs.fazBilheteria ? (PAGANTE_LABELS[inputs.pagantePct] ?? '—') : 'Não faz bilheteria', declarado: true },
       { label: 'Seguidores Spotify', num: inputs.spotifyFollowers ?? null },
       { label: 'Fãs Deezer', num: inputs.deezerFans ?? null },
     ] : [
-      { label: 'Prêmios', value: PREMIOS_LABELS_V3[Number(inputs.premios ?? 0)] ?? '—' },
-      { label: 'Imprensa', value: inputs.imprensaRepercussao ? (FREQ_LABELS[inputs.imprensaFrequencia] ?? 'Sim') : 'Não' },
+      { label: 'Prêmios', value: PREMIOS_LABELS_V3[Number(inputs.premios ?? 0)] ?? '—', declarado: true },
+      { label: 'Imprensa', value: inputs.imprensaRepercussao ? (FREQ_LABELS[inputs.imprensaFrequencia] ?? 'Sim') : 'Não', declarado: true },
       { label: 'Playlists editoriais', value: String(inputs.editorialPlaylists ?? cm?.playlists?.count ?? 0) },
       // Sem dado ≠ "não toca": o airplay pode não ter vindo da Chartmetric (o motor ignora e
       // renormaliza nesse caso), e dizer "Não" afirmaria algo que não se sabe.
@@ -251,11 +254,17 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
       <div className={styles.dimStats}>
         {rows.map((l) => (
           <div key={l.label} className={styles.dimStatRow}>
-            <span className={styles.dimStatLabel}>{l.label}</span>
+            <span className={styles.dimStatLabel}>
+              {l.label}
+              {l.declarado && <span className={styles.statDagger} title="Informado por quem preencheu o diagnóstico">†</span>}
+            </span>
             <span className={styles.dimStatValue}>{l.num != null ? <CountUp value={l.num} /> : (l.value ?? '—')}</span>
           </div>
         ))}
       </div>
+      {rows.some((l) => l.declarado) && (
+        <div className={styles.statFonteNota}>† Informado por quem preencheu o diagnóstico. A Maestra não verifica estes dados.</div>
+      )}
       {dk === 'e' && <RevenuePie revenue={rev} />}
       {dk === 'e' && (!inputs.temCnpj || !inputs.temEmpresario) && (
         <div className={styles.eBadges}>
@@ -322,11 +331,17 @@ interface Props {
   hideHero?: boolean;
   // Conteúdo opcional renderizado logo ABAIXO do card "Seu perfil de carreira" (ex.: banner de refazer).
   belowProfile?: ReactNode;
+  // Só para compor o identificador do documento exportado (ver `docId`). Sem ele o id cai no
+  // fallback por data, que ainda identifica a entrega mas não aponta o perfil.
+  artistId?: string;
+  // Vínculo declarado com o artista (content.titularidade.vinculo). Sai na capa do PDF.
+  vinculo?: string;
 }
 
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
 // Determinística: consome o realIndex calculado no backend (sem IA). Suporta v1 (antigo) e v2.
-export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, belowProfile }) => {
+export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, belowProfile, artistId, vinculo }) => {
+  const authUser = useAppSelector((s) => s.auth.user);
   const [methodOpen, setMethodOpen] = useState(false);
   // v2 (motor REAL Consolidado) tem `version: 2` + `boletim`; v1 mantém o shape antigo.
   const riAny = realIndex as any;
@@ -392,6 +407,26 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
   const avatarSrc = avatarData || ARTISTS_DEFAULT_IMAGE;
   const fileName = `diagnostico-${(name || 'artista').toLowerCase().replace(/\s+/g, '-')}.png`;
 
+  // AUTORIA DO DOCUMENTO — ver `Autoria` em DiagnosticDoc para o porquê.
+  //
+  // O `docId` é DETERMINÍSTICO: sai do perfil + do instante em que o diagnóstico foi calculado, que
+  // já está salvo. Duas exportações da mesma entrega geram o mesmo id, então ele serve de referência
+  // estável quando alguém trouxer um PDF para o suporte conferir. Não usa a hora do download, que
+  // mudaria a cada clique, nem inventa estado novo no banco.
+  const autoria: Autoria | undefined = (() => {
+    const meta = (authUser?.user_metadata ?? {}) as { full_name?: string; name?: string };
+    const email = authUser?.email;
+    if (!email) return undefined; // sem sessão identificada não há o que afirmar
+    const carimbo = Date.parse(String(riAny.computedAt ?? '')) || 0;
+    const docId = `${(artistId || 'sem-perfil').slice(0, 8)}-${carimbo.toString(36)}`.toUpperCase();
+    return {
+      nome: meta.full_name || meta.name || email.split('@')[0],
+      email,
+      docId,
+      vinculo: vinculo ? (VINCULO_LABELS[vinculo] ?? vinculo) : undefined,
+    };
+  })();
+
   // Entrega completa: deck de apresentação multipágina em PDF.
   const handleDownloadPdf = async () => {
     if (!docRef.current) return;
@@ -399,7 +434,15 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
     if (!pages.length) return;
     setBusy(true);
     try {
-      await downloadPagesPdf(pages, `diagnostico-${(name || 'artista').toLowerCase().replace(/\s+/g, '-')}.pdf`);
+      await downloadPagesPdf(
+        pages,
+        `diagnostico-${(name || 'artista').toLowerCase().replace(/\s+/g, '-')}.pdf`,
+        autoria && {
+          title: `Diagnóstico REAL · ${name}`,
+          author: `${autoria.nome} (${autoria.email})`,
+          subject: `Documento ${autoria.docId}. Receita, agenda e reconhecimento informados pelo usuário e não verificados pela Maestra.`,
+        },
+      );
     } catch (e) {
       console.error('[PDF] export failed', e);
       message.error('Não foi possível gerar o PDF agora. Tente novamente.');
@@ -753,7 +796,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
 
       {/* Deck de apresentação — fora da tela, capturado em PDF multipágina */}
       <div ref={docRef} className={styles.shareStage} aria-hidden data-noexport="1">
-        <DiagnosticDoc realIndex={realIndex} chartmetric={chartmetric} artistName={name} avatarSrc={avatarSrc} />
+        <DiagnosticDoc realIndex={realIndex} chartmetric={chartmetric} artistName={name} avatarSrc={avatarSrc} autoria={autoria} />
       </div>
 
       {/* Cartão de compartilhamento — fora da tela, capturado como PNG */}

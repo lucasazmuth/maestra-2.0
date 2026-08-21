@@ -16,19 +16,36 @@ interface Props {
   chartmetric?: Chartmetric | null;
   artistName: string;
   avatarSrc: string;
+  /** Autoria do documento: aparece no rodapé de todas as páginas. Ver `Autoria`. */
+  autoria?: Autoria;
 }
+
+/**
+ * Identificação de quem gerou o documento.
+ *
+ * POR QUE EXISTE: qualquer pessoa pode criar um perfil de qualquer artista e preencher o
+ * questionário com números inventados. O PDF sai com a marca da Maestra e circula por e-mail e
+ * WhatsApp. Sem autoria no papel, não há como responsabilizar quem produziu, e a marca responde
+ * por um documento que não apurou. O `docId` é determinístico (mesmo diagnóstico, mesmo id), então
+ * serve de referência estável para o suporte.
+ */
+export interface Autoria { nome: string; email: string; docId: string; vinculo?: string }
 
 // IMPORTANTE: componentes de página no escopo de MÓDULO (não dentro do doc). Se ficarem dentro do
 // componente, viram função nova a cada render — React remonta as páginas e, no loop async da captura
 // do PDF, elas saem 0×0 (branco). `total` e `n` vêm por prop.
-const Page: FC<{ n: number; total: number; kicker?: string; children: ReactNode }> = ({ n, total, kicker, children }) => (
+const Page: FC<{ n: number; total: number; kicker?: string; autoria?: Autoria; children: ReactNode }> = ({ n, total, kicker, autoria, children }) => (
   <div className={styles.docPage} data-docpage>
     <div className={styles.docHeader}>
       <span className={styles.docBrand}><MaestraBrand variant='wordmark' tone='dark' /></span>
       {kicker && <span className={styles.docHeaderLabel}>{kicker}</span>}
     </div>
     <div className={styles.docBody}>{children}</div>
-    <div className={styles.docFooter}><span>maestramanager.com</span><span>{n} / {total}</span></div>
+    <div className={styles.docFooter}>
+      <span>maestramanager.com</span>
+      {autoria && <span className={styles.docAutoria}>{linhaAutoria(autoria)}</span>}
+      <span>{n} / {total}</span>
+    </div>
   </div>
 );
 
@@ -67,7 +84,20 @@ const DOC = {
 } as const;
 const dimColor = (high: boolean, top: boolean) => (top ? DOC.goldInk : high ? DOC.real : DOC.low);
 
-type Row = { label: string; value: string };
+type Row = { label: string; value: string; declarado?: boolean };
+
+// PROCEDÊNCIA DO DADO. Alcance e engajamento vêm da API (Spotify/Chartmetric) e o usuário não
+// consegue mexer neles. Receita, cachê, shows, público pagante, prêmios e imprensa são autorrelato
+// do questionário — a Maestra não verifica. Sem essa distinção no papel, quem recebe o PDF lê
+// "Receita mensal R$ 134,4 mi" como número apurado por nós, e é justamente aí que um diagnóstico
+// forjado ganha aparência de laudo. `decl` marca a linha como declarada; o resto é medido.
+const decl = (r: Row): Row => ({ ...r, declarado: true });
+
+// Rodapé de autoria. Curto de propósito: precisa caber numa linha entre o domínio e o número da
+// página, sem virar tarja. A data é a da geração do arquivo, não a do diagnóstico.
+const linhaAutoria = (a: Autoria) =>
+  `Gerado por ${a.nome} · ${a.email} · ${new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · Doc ${a.docId}`;
+const LEGENDA_DECLARADO = '† Informado por quem preencheu o diagnóstico. A Maestra não verifica estes dados.';
 function v3DimRows(dk: 'r' | 'e' | 'a' | 'l', ri: any, cm: Chartmetric | null): Row[] {
   const inp = ri.inputs || {};
   const rev = ri.revenue || {};
@@ -79,17 +109,17 @@ function v3DimRows(dk: 'r' | 'e' | 'a' | 'l', ri: any, cm: Chartmetric | null): 
       inp.tiktokFollowers != null ? { label: 'TikTok', value: fmtNum(inp.tiktokFollowers) } : null,
       inp.youtubeMonthlyViews != null ? { label: 'YouTube mensal', value: fmtNum(inp.youtubeMonthlyViews) } : null,
     ] : dk === 'e' ? [
-      { label: 'Receita mensal', value: fmtBRL(Number(rev.total ?? 0)) },
-      { label: 'Shows / mês', value: String(inp.showsPerMonth ?? 0) },
-      { label: 'Cachê médio', value: fmtBRL(Number(inp.cache ?? 0)) },
+      decl({ label: 'Receita mensal', value: fmtBRL(Number(rev.total ?? 0)) }),
+      decl({ label: 'Shows / mês', value: String(inp.showsPerMonth ?? 0) }),
+      decl({ label: 'Cachê médio', value: fmtBRL(Number(inp.cache ?? 0)) }),
     ] : dk === 'a' ? [
-      { label: 'Shows / mês', value: String(inp.showsPerMonth ?? 0) },
-      { label: '% público pagante', value: inp.fazBilheteria ? (PAGANTE_LABELS[inp.pagantePct] ?? '–') : 'Não faz bilheteria' },
+      decl({ label: 'Shows / mês', value: String(inp.showsPerMonth ?? 0) }),
+      decl({ label: '% público pagante', value: inp.fazBilheteria ? (PAGANTE_LABELS[inp.pagantePct] ?? '–') : 'Não faz bilheteria' }),
       inp.spotifyFollowers != null ? { label: 'Seguidores Spotify', value: fmtNum(inp.spotifyFollowers) } : null,
       inp.deezerFans != null ? { label: 'Fãs Deezer', value: fmtNum(inp.deezerFans) } : null,
     ] : [
-      { label: 'Prêmios', value: PREMIOS_LABELS_V3[Number(inp.premios ?? 0)] ?? '–' },
-      { label: 'Imprensa', value: inp.imprensaRepercussao ? (FREQ_LABELS[inp.imprensaFrequencia] ?? 'Sim') : 'Não' },
+      decl({ label: 'Prêmios', value: PREMIOS_LABELS_V3[Number(inp.premios ?? 0)] ?? '–' }),
+      decl({ label: 'Imprensa', value: inp.imprensaRepercussao ? (FREQ_LABELS[inp.imprensaFrequencia] ?? 'Sim') : 'Não' }),
       { label: 'Playlists editoriais', value: String(inp.editorialPlaylists ?? cm?.playlists?.count ?? 0) },
       // Ver DiagnosticReport: nulo é ausência de dado, não ausência de execução; com dado,
       // mostra o número de execuções em vez de "Sim".
@@ -116,7 +146,7 @@ function revComposition(ri: any): { label: string; pct: number }[] {
 }
 
 // ─── Página de uma dimensão (V3) ───────────────────────────────────────────────
-const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: any; cm: Chartmetric | null }> = ({ dk, n, total, ri, cm }) => {
+const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: any; cm: Chartmetric | null; autoria?: Autoria }> = ({ dk, n, total, ri, cm, autoria }) => {
   const meta = DIM_META.find((m) => m.key === dk)!;
   const high = !!ri.pattern?.[dk];
   const top = !!ri.dimTopIcon?.[dk];
@@ -133,7 +163,7 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
   const eng = ri.engagement || {};
 
   return (
-    <Page n={n} total={total} kicker={`${meta.full} · ${meta.sub}`}>
+    <Page n={n} total={total} kicker={`${meta.full} · ${meta.sub}`} autoria={autoria}>
       <div className={styles.docDimHead2}>
         <span className={styles.docDimLetter2} style={{ color }}>{meta.letter}</span>
         <div className={styles.docDimTitleWrap2}>
@@ -156,9 +186,20 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
 
       <div className={styles.docDimMetrics2}>
         {rows.map((r) => (
-          <div key={r.label} className={styles.docDimMetric2}><span>{r.label}</span><strong>{r.value}</strong></div>
+          <div key={r.label} className={styles.docDimMetric2}>
+            <span>{r.label}{r.declarado && <span className={styles.docDagger}>†</span>}</span>
+            <strong>{r.value}</strong>
+          </div>
         ))}
       </div>
+      {rows.some((r) => r.declarado) && <div className={styles.docFonteNota}>{LEGENDA_DECLARADO}</div>}
+
+      {dk === 'e' && (
+        <div className={styles.docFonteAviso}>
+          Receita, cachê e número de shows foram <strong>informados por quem preencheu</strong> este
+          diagnóstico. A Maestra não tem como apurar faturamento e não verifica estes valores.
+        </div>
+      )}
 
       {dk === 'e' && comp.length > 0 && (
         <div className={styles.docSubBlock2}>
@@ -210,7 +251,7 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
 };
 
 // ─── Deck V3 (12 páginas) ──────────────────────────────────────────────────────
-const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => {
+const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autoria }) => {
   const ri = realIndex as any;
   const { profile } = realIndex;
   const cities = chartmetric?.top_cities;
@@ -237,10 +278,22 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
           <div className={styles.docCoverProfile}>Perfil <strong>{profile.name}</strong></div>
         </div>
         <div className={styles.docCoverFoot}>Índice REAL · metodologia Anita Carvalho · {today}</div>
+        {/* Procedência na capa: quem recebe o documento precisa saber, antes de qualquer número, o
+            que foi medido e o que é declaração de quem preencheu. */}
+        <div className={styles.docCoverFonte}>
+          Alcance e engajamento medidos via Spotify e Chartmetric. Receita, agenda e reconhecimento
+          conforme informado por quem preencheu o diagnóstico, sem verificação da Maestra.
+        </div>
+        {autoria && (
+          <div className={styles.docCoverAutoria}>
+            {linhaAutoria(autoria)}
+            {autoria.vinculo && <><br />Vínculo declarado com o artista: <strong>{autoria.vinculo}</strong></>}
+          </div>
+        )}
       </div>
 
       {/* 2 — O PERFIL */}
-      <Page n={next()} total={total} kicker="O seu perfil">
+      <Page n={next()} total={total} kicker="O seu perfil" autoria={autoria}>
         <div className={styles.docProfileKicker}>Seu perfil de carreira</div>
         <div className={styles.docProfileName}>{profile.name}</div>
         <p className={styles.docProfileDesc}>{clean(profile.description)}</p>
@@ -260,11 +313,11 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
       </Page>
 
       {/* 3–6 — DIMENSÕES */}
-      {DIM_META.map((d) => <DocDimPage key={d.key} dk={d.key} n={next()} total={total} ri={ri} cm={chartmetric ?? null} />)}
+      {DIM_META.map((d) => <DocDimPage key={d.key} dk={d.key} n={next()} total={total} ri={ri} cm={chartmetric ?? null} autoria={autoria} />)}
 
       {/* AUDIÊNCIA & ALCANCE (cidades) — condicional */}
       {hasCities && (
-        <Page n={next()} total={total} kicker="Audiência & alcance">
+        <Page n={next()} total={total} kicker="Audiência & alcance" autoria={autoria}>
           <div className={styles.docSectionTitle}>Onde seus ouvintes estão</div>
           <div className={styles.docCities}>
             {cities!.slice(0, 5).map((ct) => {
@@ -285,7 +338,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
 
       {/* PLATAFORMAS (playlists + imprensa) — condicional a enriquecimento */}
       {hasPlatform && (
-        <Page n={next()} total={total} kicker="Plataformas">
+        <Page n={next()} total={total} kicker="Plataformas" autoria={autoria}>
           <div className={styles.docSectionTitle}>Sua presença nas plataformas</div>
           {!!playlists?.top?.length && (
             <div style={{ marginBottom: 26 }}>
@@ -318,7 +371,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
       )}
 
       {/* OS 16 PERFIS */}
-      <Page n={next()} total={total} kicker="Os 16 perfis">
+      <Page n={next()} total={total} kicker="Os 16 perfis" autoria={autoria}>
         <div className={styles.docSectionTitle}>Sua posição entre os 16 perfis</div>
         <p className={styles.docNote} style={{ margin: '0 0 16px' }}>Cada perfil é uma combinação das quatro dimensões. O seu está destacado.</p>
         <div className={styles.docMap2}>
@@ -356,7 +409,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
       </Page>
 
       {/* METODOLOGIA */}
-      <Page n={next()} total={total} kicker="Metodologia">
+      <Page n={next()} total={total} kicker="Metodologia" autoria={autoria}>
         <div className={styles.docSectionTitle}>{METODOLOGIA.title}</div>
         {METODOLOGIA.intro.map((p, i) => <p key={i} className={styles.docMethodIntro}>{p}</p>)}
         <div className={styles.docMethodGrid}>
@@ -372,7 +425,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
       </Page>
 
       {/* QUEM ASSINA */}
-      <Page n={next()} total={total} kicker="Quem assina">
+      <Page n={next()} total={total} kicker="Quem assina" autoria={autoria}>
         <div className={styles.docSignName}>{QUEM_ASSINA.name}</div>
         <div className={styles.docSignRole}>{QUEM_ASSINA.role}</div>
         {QUEM_ASSINA.paras.map((p, i) => <p key={i} className={styles.docSignPara}>{p}</p>)}
@@ -397,7 +450,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => 
 };
 
 // ─── Deck legado (v1/v2) — mantém o layout anterior ────────────────────────────
-const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc }) => {
+const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autoria }) => {
   const riAny = realIndex as any;
   const isV2 = riAny.version === 2;
   const { profile, pattern } = realIndex;
@@ -443,7 +496,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
         <div className={styles.docCoverFoot}>Índice REAL · metodologia Anita Carvalho · {today}</div>
       </div>
 
-      <Page n={2} total={TOTAL} kicker="O seu perfil">
+      <Page n={2} total={TOTAL} kicker="O seu perfil" autoria={autoria}>
         <div className={styles.docProfileKicker}>Seu perfil de carreira</div>
         <div className={styles.docProfileName}>{profile.name}</div>
         <p className={styles.docProfileDesc}>{clean(profile.description)}</p>
@@ -461,7 +514,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
         </ul>
       </Page>
 
-      <Page n={3} total={TOTAL} kicker="As 4 dimensões">
+      <Page n={3} total={TOTAL} kicker="As 4 dimensões" autoria={autoria}>
         <div className={styles.docSectionTitle}>As quatro dimensões da sua carreira</div>
         <div className={styles.docDimGrid}>
           {DIM_META.map((d) => {
@@ -492,7 +545,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
         </div>
       </Page>
 
-      <Page n={4} total={TOTAL} kicker="Audiência & alcance">
+      <Page n={4} total={TOTAL} kicker="Audiência & alcance" autoria={autoria}>
         <div className={styles.docSectionTitle}>Onde seus ouvintes estão</div>
         {!!cities?.length ? (
           <div className={styles.docCities}>
@@ -512,7 +565,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
         <p className={styles.docNote}>Os dados de plataforma são lidos diretamente do seu Spotify e das suas redes sociais.</p>
       </Page>
 
-      <Page n={5} total={TOTAL} kicker="Os 16 perfis">
+      <Page n={5} total={TOTAL} kicker="Os 16 perfis" autoria={autoria}>
         <div className={styles.docSectionTitle}>Sua posição entre os 16 perfis</div>
         <div className={styles.docMap}>
           {PROFILE_MAP.map((row) => (
@@ -529,7 +582,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
         <p className={styles.docNote}>Do Beginner (começo da jornada) ao Icon (as quatro frentes altas). Cada perfil tem sua própria leitura estratégica.</p>
       </Page>
 
-      <Page n={6} total={TOTAL} kicker="Metodologia">
+      <Page n={6} total={TOTAL} kicker="Metodologia" autoria={autoria}>
         <div className={styles.docSectionTitle}>Como calculamos o seu diagnóstico</div>
         <p className={styles.docMethodIntro}>
           O Índice REAL foi criado por Anita Carvalho a partir de mais de 30 anos de gestão de carreiras musicais e da análise de 313 planejamentos estratégicos reais. Ele cruza dados de plataforma (Spotify e redes) com o que você nos contou sobre shows, faturamento e reconhecimento, e classifica a carreira em 1 de 16 perfis.
@@ -549,7 +602,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc })
       </Page>
 
       {hasPlatform && (
-        <Page n={7} total={TOTAL} kicker="Plataformas">
+        <Page n={7} total={TOTAL} kicker="Plataformas" autoria={autoria}>
           <div className={styles.docSectionTitle}>Sua presença nas plataformas</div>
           {!!playlists?.top?.length && (
             <div style={{ marginBottom: 28 }}>

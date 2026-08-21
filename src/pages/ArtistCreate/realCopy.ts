@@ -27,6 +27,15 @@ export const clean = (s: string) => s.replace(/\s*—\s*/g, ', ');
 // resposta era exibida um degrau ACIMA do que a artista respondeu — quem foi só indicada a um
 // prêmio internacional (5) aparecia como se tivesse ganhado —, e quem de fato ganhou (6) caía
 // fora da lista e virava "—".
+// Vínculo declarado com o artista (ver a pergunta `vinculo` no QUIZ). O rótulo é o que sai na capa
+// do PDF, então é redigido em terceira pessoa, para o documento e não para quem responde.
+export const VINCULO_LABELS: Record<string, string> = {
+  sou_o_artista: 'o próprio artista',
+  equipe: 'integrante da equipe do artista',
+  representante: 'representante do artista',
+  conhecendo: 'nenhum — declarou estar apenas conhecendo a ferramenta',
+};
+
 export const PREMIOS_LABELS_V3 = [
   'Nenhum',
   'Indicação local / regional',

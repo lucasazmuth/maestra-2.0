@@ -66,15 +66,6 @@ const REAL_CAREER_STAGES = [
 const pathArtistId = (pathname: string): string | undefined =>
   /^\/artists\/([^/]+)/.exec(pathname)?.[1];
 
-const firstInitials = (value?: string | null) =>
-  (value || 'Maestra')
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase();
-
 const ProfileMenuButton: FC<{
   active: boolean;
   icon: ReactNode;
@@ -405,11 +396,26 @@ export const AppLayout: FC = memo(() => {
             </div>
 
             <div className='rail-people'>
-              {artists.slice(0, 4).map((artist) => (
-                artist.content?.spotifyProfile?.image
-                  ? <span key={artist.id} className={`avatar avatar-big avatar-image${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(artistEntryRoute(artist))}><img src={artist.content.spotifyProfile.image} alt={artist.name} /></span>
-                  : <span key={artist.id} className={`avatar avatar-big${artist.id === currentArtist?.id ? ' avatar-current' : ''}`} role='button' aria-current={artist.id === currentArtist?.id ? 'page' : undefined} aria-label={artist.id === currentArtist?.id ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`} tabIndex={0} onClick={() => navigate(artistEntryRoute(artist))}>{firstInitials(artist.name)}</span>
-              ))}
+              {/* Sem foto, cai no MESMO avatar vazio de /artists e da Sidebar
+                  (ARTISTS_DEFAULT_IMAGE), e não numa inicial. O rail era o único ponto do app que
+                  desviava para letra, então o mesmo perfil aparecia como desenho numa tela e como
+                  "J" na outra. Com o fallback, os dois ramos viram um só. */}
+              {artists.slice(0, 4).map((artist) => {
+                const selecionado = artist.id === currentArtist?.id;
+                return (
+                  <span
+                    key={artist.id}
+                    className={`avatar avatar-big avatar-image${selecionado ? ' avatar-current' : ''}`}
+                    role='button'
+                    aria-current={selecionado ? 'page' : undefined}
+                    aria-label={selecionado ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`}
+                    tabIndex={0}
+                    onClick={() => navigate(artistEntryRoute(artist))}
+                  >
+                    <img src={artist.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE} alt={artist.name} />
+                  </span>
+                );
+              })}
               {/* Vai por /artists?create=1 e não direto para /criar-artista: aquela tela é quem
                   checa o limite de perfis pendentes e o cooldown, e avisa o motivo. O deep-link
                   existe justamente para disparar esse fluxo de fora. */}
