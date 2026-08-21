@@ -220,3 +220,70 @@ Vale registrar, porém, que temos um dado de YouTube que hoje não usamos: o mes
 **5,04 milhões de inscritos** por outro endpoint. **A pergunta:** faz sentido usar inscritos como
 substituto quando as views mensais não existem, ou são medidas diferentes demais para se
 substituírem (estoque × fluxo)?
+
+
+---
+
+# Parte 5 — o A, revisitado: dois achados novos
+
+Depois de testar também com a **Anitta**, medimos mais a fundo. Os dois casos são idênticos:
+
+| | Conversão | Shows | % pagante | Engajamento | Nota A |
+|---|---|---|---|---|---|
+| João Gomes | Alto | Alto | Alto | IG 1,14 · TikTok 1,28 · YT 0,03 | **53** |
+| Anitta | Alto | Alto | Alto | IG 0,39 · TikTok 3,77 · YT 0,09 | **53** |
+
+Três componentes altos, e sempre o mesmo derrubando a dimensão.
+
+## Achado 1 — os cortes de engajamento estão cerca do dobro do P70 real
+
+O método define "alto" como **percentil 70**. Medimos o P70 do engajamento na base, direto dos dados
+que a Chartmetric entrega:
+
+| Rede | Amostra | Mediana | **P70 medido** | Corte hoje | Quantos passam hoje |
+|---|---|---|---|---|---|
+| Instagram | 22 | 0,89% | **1,47%** | 2,8% | 4 |
+| TikTok | 12 | 2,18% | **3,77%** | 9,0% | 3 |
+| YouTube | 18 | 0,13% | **1,80%** | 4,0% | 3 |
+
+Os cortes vigentes ficam **em torno do dobro** do P70 observado. Se a régua é o percentil 70, os
+números coerentes com o próprio método seriam algo perto de **1,5 / 3,8 / 1,8**.
+
+**Ressalva importante:** a amostra é pequena (12 a 22 artistas) e enviesada — é a nossa base, não uma
+população de referência do mercado brasileiro. Não serve para fixar corte definitivo. Serve para
+mostrar que os valores atuais provavelmente não vieram desta escala de dado, e que vale recalibrar
+com uma base maior antes do lançamento.
+
+**A pergunta:** de onde vieram 2,8 / 9,0 / 4,0? Se foram calibrados sobre engajamento **por post**,
+e a Chartmetric entrega engajamento **por conta**, as duas medidas não são comparáveis e o corte
+está sendo aplicado sobre uma escala diferente da que o originou.
+
+## Achado 2 — componente ausente pune no A, mas não pune no R (inconsistência)
+
+Este não é calibragem, é incoerência entre duas partes do motor.
+
+No **R**, a decisão já tomada (§4.3, "opção A") é que **canal ausente sai da conta** e o restante é
+renormalizado — quem não tem YouTube não é punido por isso.
+
+No **A**, a regra é `todos os quatro componentes altos`, e um componente **ausente conta como não
+alto**. Ou seja: no R a ausência é neutra, no A ela reprova.
+
+Quem isso atinge, na base de 64:
+
+| | |
+|---|---|
+| Artistas com algum componente do A ausente | **25** |
+| — por não fazer bilheteria (% pagante ausente) | 24 |
+| — sem dado de conversão | 7 |
+| — sem dado de engajamento | 6 |
+| **Acenderiam o A se a ausência não punisse** | **3** |
+
+O caso mais comum é o artista que **não faz show com bilheteria**: o componente "% público pagante"
+fica ausente, e com isso o A **nunca** pode acender, por melhores que sejam os outros três. Hoje
+isso vale para 24 dos 64.
+
+Aplicar ao A a mesma regra que já vale para o R levaria os artistas que acendem o A de **1 para 4**.
+
+**A pergunta:** foi intencional tratar ausência de formas opostas nas duas dimensões, ou o §4.3
+deveria valer para o A também? Não mexemos em nada — a mudança altera perfil de artista, então
+depende da sua palavra.
