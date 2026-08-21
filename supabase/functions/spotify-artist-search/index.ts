@@ -97,84 +97,119 @@ interface Resultado {
   genres?: string[];
 }
 
+const mapearArtista = (a: any): Resultado => ({
+  id: a.id,
+  name: a.name,
+  image: a.images?.[a.images.length - 1]?.url || a.images?.[0]?.url,
+  followers: a.followers?.total,
+  genres: a.genres,
+});
+
 const mapear = (payload: any): Resultado[] =>
-  (payload?.artists?.items || []).map((a: any) => ({
-    id: a.id,
-    name: a.name,
-    image: a.images?.[a.images.length - 1]?.url || a.images?.[0]?.url,
-    followers: a.followers?.total,
-    genres: a.genres,
-  }));
+  (payload?.artists?.items || []).map(mapearArtista);
+
+// Resultado de uma ida ao Spotify: ou os artistas, ou o status que ele recusou.
+type Busca = { results: Resultado[]; erro?: undefined } | { erro: number; results?: undefined };
+
+/**
+ * Caminho único de cache + token + fila + degradação, compartilhado pela busca por NOME e pela
+ * busca por ID. `chave` é a linha do cache; `ir` faz a chamada específica de cada caso.
+ */
+async function resolver(chave: string, ir: (token: string) => Promise<Busca>): Promise<Response> {
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { autoRefreshToken: false, persistSession: false } },
+  );
+
+  // 1. Cache. A entrada vencida é guardada para servir de rede de segurança se o Spotify falhar.
+  let vencido: Resultado[] | null = null;
+  const { data: linha } = await supabase
+    .from("spotify_search_cache")
+    .select("results, fetched_at")
+    .eq("query", chave)
+    .maybeSingle();
+
+  if (linha) {
+    const idade = Date.now() - new Date(linha.fetched_at).getTime();
+    if (idade < CACHE_FRESCO_MS) return json({ results: linha.results, source: "cache" });
+    vencido = linha.results as Resultado[];
+  }
+
+  // 2. Sem cache fresco: fala com o Spotify, respeitando o teto de chamadas simultâneas.
+  const token = await getAppToken();
+  if (!token) {
+    // Sem token não há o que fazer, mas cache vencido é melhor que erro na cara do usuário.
+    if (vencido) return json({ results: vencido, source: "cache-vencido" });
+    return json({ error: "spotify_indisponivel" }, 503);
+  }
+
+  await pegarVaga();
+  let saida: Busca;
+  try {
+    saida = await ir(token);
+  } finally {
+    liberarVaga();
+  }
+
+  if (saida.erro !== undefined) {
+    // 401: token velho (ex.: secret rotacionado). Descarta e deixa a próxima chamada renovar.
+    if (saida.erro === 401) tokenCache = null;
+    console.error(`[spotify-artist-search] Spotify ${saida.erro} para "${chave}"`);
+    // Cache vencido salva a experiência quando o Spotify está fora (429, 403 de Premium, 502).
+    if (vencido) return json({ results: vencido, source: "cache-vencido" });
+    // Repassa o status para o frontend distinguir bloqueio (403) de instabilidade.
+    return json({ error: "spotify_indisponivel", status: saida.erro }, saida.erro);
+  }
+
+  const results = saida.results;
+
+  // 3. Grava no cache. Falha aqui não pode derrubar a resposta — o usuário já tem o resultado.
+  supabase
+    .from("spotify_search_cache")
+    .upsert({ query: chave, results, fetched_at: new Date().toISOString() }, { onConflict: "query" })
+    .then(({ error }) => {
+      if (error) console.error("[spotify-artist-search] falha ao gravar cache:", error.message);
+    });
+
+  return json({ results, source: "spotify" });
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { q } = await req.json().catch(() => ({ q: "" }));
+    const body = await req.json().catch(() => ({}));
+    const { q, id } = body as { q?: string; id?: string };
+
+    // Busca por ID: a pessoa colou o link do perfil. Nomes curtos ou comuns ("BEA") somem na
+    // busca por relevância, então o link é o caminho determinístico. IDs do Spotify são 22
+    // caracteres base62 — validamos aqui também, para não repassar lixo à API deles.
+    const artistId = String(id || "").trim();
+    if (artistId) {
+      if (!/^[A-Za-z0-9]{22}$/.test(artistId)) return json({ error: "id_invalido" }, 400);
+      // Chave prefixada para o ID nunca colidir com um termo digitado.
+      return await resolver(`artist:${artistId}`, async (token) => {
+        const r = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!r.ok) return { erro: r.status };
+        return { results: [mapearArtista(await r.json())] };
+      });
+    }
+
     // Mesma regra do frontend: abaixo de 3 caracteres o resultado é inútil e só gasta cota.
     const termo = String(q || "").trim().toLowerCase();
     if (termo.length < 3) return json({ results: [], source: "curto" });
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { autoRefreshToken: false, persistSession: false } },
-    );
-
-    // 1. Cache. Guardamos a entrada vencida para usar como rede de segurança se o Spotify falhar.
-    let vencido: Resultado[] | null = null;
-    const { data: linha } = await supabase
-      .from("spotify_search_cache")
-      .select("results, fetched_at")
-      .eq("query", termo)
-      .maybeSingle();
-
-    if (linha) {
-      const idade = Date.now() - new Date(linha.fetched_at).getTime();
-      if (idade < CACHE_FRESCO_MS) return json({ results: linha.results, source: "cache" });
-      vencido = linha.results as Resultado[];
-    }
-
-    // 2. Sem cache fresco: fala com o Spotify, respeitando o teto de chamadas simultâneas.
-    const token = await getAppToken();
-    if (!token) {
-      // Sem token não há o que fazer, mas cache vencido é melhor que erro na cara do usuário.
-      if (vencido) return json({ results: vencido, source: "cache-vencido" });
-      return json({ error: "spotify_indisponivel" }, 503);
-    }
-
-    await pegarVaga();
-    let resp: Response;
-    try {
-      resp = await fetch(
+    return await resolver(termo, async (token) => {
+      const r = await fetch(
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(termo)}&type=artist&limit=8`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
-    } finally {
-      liberarVaga();
-    }
-
-    if (!resp.ok) {
-      // 401: token velho (ex.: secret rotacionado). Descarta e deixa a próxima chamada renovar.
-      if (resp.status === 401) tokenCache = null;
-      console.error(`[spotify-artist-search] Spotify ${resp.status} para "${termo}"`);
-      // Cache vencido salva a experiência quando o Spotify está fora (429, 403 de Premium, 502).
-      if (vencido) return json({ results: vencido, source: "cache-vencido" });
-      // Repassa o status para o frontend distinguir bloqueio (403) de instabilidade.
-      return json({ error: "spotify_indisponivel", status: resp.status }, resp.status);
-    }
-
-    const results = mapear(await resp.json());
-
-    // 3. Grava no cache. Falha aqui não pode derrubar a resposta — o usuário já tem o resultado.
-    supabase
-      .from("spotify_search_cache")
-      .upsert({ query: termo, results, fetched_at: new Date().toISOString() }, { onConflict: "query" })
-      .then(({ error }) => {
-        if (error) console.error("[spotify-artist-search] falha ao gravar cache:", error.message);
-      });
-
-    return json({ results, source: "spotify" });
+      if (!r.ok) return { erro: r.status };
+      return { results: mapear(await r.json()) };
+    });
   } catch (e) {
     console.error("[spotify-artist-search] erro inesperado:", e);
     return json({ error: "erro_interno" }, 500);
