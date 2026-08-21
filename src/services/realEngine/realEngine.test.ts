@@ -345,4 +345,42 @@ describe('Motor REAL v3', () => {
       expect(ri.profile.name).toBeTruthy();
     }
   });
+
+  // Regressão: a nota do L não pode perder 1 ponto para ruído de ponto flutuante.
+  // Caso real (João Gomes / Anitta): indicação internacional + imprensa no teto + playlist + rádio
+  // dá nota_L = 0,985 exatos, que é 98,5 → 99. Sem a limpeza do ruído, a soma vinha
+  // 0,9849999999999999 e o resultado caía para 98.
+  describe('nota do L não perde ponto para ruído de ponto flutuante', () => {
+    const indicacaoInternacional = base({
+      premios: 5,
+      imprensaRepercussao: true,
+      imprensaMatrix: [{ tipo: 'imprensa', porte: 'grande' }],
+      imprensaFrequencia: 'perene',
+      editorialPlaylists: 17,
+      radioAirplay: 1_740,
+    });
+
+    it('fecha em 99, não em 98', () => {
+      const ri = computeRealIndexV3(indicacaoInternacional);
+      expect(ri.components.l.notaL).toBe(0.99); // round2(0,985)
+      expect(ri.boletim.l).toBe(99);
+    });
+
+    it('só chega a 100 com prêmio internacional conquistado', () => {
+      expect(computeRealIndexV3({ ...indicacaoInternacional, premios: 6 }).boletim.l).toBe(100);
+    });
+
+    it('nota exatamente no corte acende a dimensão', () => {
+      // 0,30×0,70 + 0,30×0,70 + 0,20×1 + 0,20×0,5 = 0,72 — acima do corte e sem ruído.
+      const ri = computeRealIndexV3(base({
+        premios: 3, // nota 0,70
+        imprensaRepercussao: true,
+        imprensaMatrix: [{ tipo: 'youtube', porte: 'medio' }], // 65/100 × 1,0
+        imprensaFrequencia: 'lancamento',
+        editorialPlaylists: 1,
+      }));
+      expect(ri.pattern.l).toBe(true);
+      expect(ri.boletim.l).toBeGreaterThanOrEqual(70);
+    });
+  });
 });

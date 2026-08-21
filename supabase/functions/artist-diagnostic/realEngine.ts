@@ -103,6 +103,11 @@ const HIGH_Z = 0.52;       // [SPEC] percentil 70
 const TOPICON_Z = 1.64;    // [SPEC] percentil 95
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+// Tira o ruído de ponto flutuante de uma média ponderada antes de comparar com corte ou virar nota.
+// Sem isso, 0,30×0,95 + 0,30 + 0,20 + 0,20 dá 0,9849999999999999 em vez de 0,985: a nota do L cai de
+// 99 para 98, e um valor que deveria bater exatamente no corte de 0,70 pode ficar abaixo e apagar a
+// dimensão. Os pesos e as notas têm no máximo 2 casas, então 6 casas preservam todo valor legítimo.
+const semRuido = (n: number) => Math.round(n * 1e6) / 1e6;
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
 // value <= edges[i] → zs[i]; acima do último edge → zs[last]. (zs.length === edges.length+1)
@@ -338,7 +343,7 @@ export function computeRealIndexV3(input: RealInputsV3): RealIndexV3 {
   ];
   if (radioBin != null) lParts.push({ w: CUTS.l.weights.radio, v: radioBin });
   const wSum = lParts.reduce((s, p) => s + p.w, 0);
-  const notaL = wSum ? lParts.reduce((s, p) => s + p.w * p.v, 0) / wSum : 0;
+  const notaL = wSum ? semRuido(lParts.reduce((s, p) => s + p.w * p.v, 0) / wSum) : 0;
   // Trava de plataforma (§7.1/§7.5): L só acende com ≥1 sinal de plataforma REAL (playlist ou rádio),
   // independentemente de nota_L e da renormalização. Impede acender só com júri/imprensa.
   const temSinalPlataforma = playlistsBin === 1 || radioBin === 1;
