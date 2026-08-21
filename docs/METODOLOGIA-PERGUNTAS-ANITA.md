@@ -285,5 +285,36 @@ isso vale para 24 dos 64.
 Aplicar ao A a mesma regra que já vale para o R levaria os artistas que acendem o A de **1 para 4**.
 
 **A pergunta:** foi intencional tratar ausência de formas opostas nas duas dimensões, ou o §4.3
-deveria valer para o A também? Não mexemos em nada — a mudança altera perfil de artista, então
-depende da sua palavra.
+deveria valer para o A também?
+
+### Resolvido em 21/08/2026 — o §4.3 passou a valer para o A
+
+Por decisão do Lucas, a regra do R foi aplicada ao A: **componente ausente sai da conta**, e a
+dimensão é avaliada sobre os presentes. Se todos estiverem ausentes, o A não acende (a lista cheia
+volta a valer, para não acender uma dimensão sobre lista vazia).
+
+**O TOP ICON continua exigindo o "% público pagante" presente e no P95.** Afrouxar a distinção mais
+rara do método não era o que estava em questão, então quem não faz bilheteria pode acender o A mas
+não marca TOP ICON nessa dimensão.
+
+Efeito na base de 64 diagnósticos:
+
+| | |
+|---|---|
+| Notas de A alteradas | **16** |
+| Passaram a acender o A | **3** (de 1 para 4 no total) |
+| **Mudaram de perfil** | **3** |
+| Mudanças de TOP ICON | 0 |
+| Violações da invariante §9.1 | 0 |
+| Alterações fora do A | 0 |
+
+As três mudanças de perfil: **Ana Santi** (dois diagnósticos) de *Moneymaker* para **Rising**, e
+**Marcéus** de *Beginner* para **Paradox**. Todos os três são artistas que já tinham palco e
+faturamento, mas eram reprovados no A por um componente que não se aplicava a eles.
+
+O estado anterior está em `realindex_backup_a_20260821`, e a base inteira foi conferida artista a
+artista contra o motor depois da escrita: 64 de 64 batendo em boletim, padrão, perfil, dimTopIcon e
+topIcon.
+
+**O Achado 1 (cortes de engajamento no dobro do P70) segue em aberto** e continua dependendo de você
+— é ele que mantém Anitta e João Gomes em A = 53.

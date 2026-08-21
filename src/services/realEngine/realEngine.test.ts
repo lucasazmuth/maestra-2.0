@@ -95,9 +95,13 @@ describe('Motor REAL v3', () => {
     // engajamento abaixo de todos os cortes derruba.
     const lowEng = computeRealIndexV3(base({ ...A_ON, igEngagement: 1, tiktokEngagement: 1, youtubeEngagement: 1 }));
     expect(lowEng.pattern.a).toBe(false);
-    // sem bilheteria: % pagante nunca credita → A apagado mesmo com o resto alto.
+    // sem bilheteria o % pagante fica AUSENTE, e ausência não reprova mais (§4.3 aplicado ao A):
+    // o A acende pelos três componentes presentes. Ver o describe de componente ausente abaixo.
     const noBilhe = computeRealIndexV3(base({ ...A_ON, fazBilheteria: false, pagantePct: null }));
-    expect(noBilhe.pattern.a).toBe(false);
+    expect(noBilhe.pattern.a).toBe(true);
+    // mas o que está presente e baixo continua reprovando:
+    const bilheFraca = computeRealIndexV3(base({ ...A_ON, fazBilheteria: true, pagantePct: 'ate50' }));
+    expect(bilheFraca.pattern.a).toBe(false);
   });
 
   it('A engajamento acende com PELO MENOS uma rede acima do corte', () => {
@@ -344,6 +348,42 @@ describe('Motor REAL v3', () => {
       // perfil sempre resolve p/ um dos 16.
       expect(ri.profile.name).toBeTruthy();
     }
+  });
+
+  // Componente ausente do A não pode reprovar a dimensão — mesma regra do R (§4.3).
+  describe('componente ausente sai da conta do A, como já sai do R', () => {
+    // Alto em conversão, engajamento e shows; NÃO faz bilheteria (% pagante ausente).
+    const semBilheteria = base({
+      spotifyListeners: 100_000, spotifyFollowers: 30_000, igEngagement: 5, showsPerMonth: 10,
+      fazBilheteria: false, pagantePct: null,
+    });
+
+    it('acende o A mesmo sem bilheteria', () => {
+      const ri = computeRealIndexV3(semBilheteria);
+      const pagante = ri.components.a.find((c) => c.key === 'pagante')!;
+      expect(pagante.absent).toBe(true);
+      expect(ri.pattern.a).toBe(true);
+      expect(ri.boletim.a).toBeGreaterThanOrEqual(70); // invariante §9.1
+    });
+
+    it('mas não marca TOP ICON na dimensão sem o % pagante', () => {
+      expect(computeRealIndexV3(semBilheteria).dimTopIcon.a).toBe(false);
+    });
+
+    it('componente presente e baixo continua reprovando', () => {
+      // Mesmo caso, mas fazendo bilheteria com público pouco pagante: agora está PRESENTE e baixo.
+      const ri = computeRealIndexV3({ ...semBilheteria, fazBilheteria: true, pagantePct: 'ate50' });
+      expect(ri.components.a.find((c) => c.key === 'pagante')!.absent).toBe(false);
+      expect(ri.pattern.a).toBe(false);
+      expect(ri.boletim.a).toBeLessThan(70);
+    });
+
+    it('tudo ausente não acende a dimensão (não cai no every() de lista vazia)', () => {
+      // Sem Spotify não há conversão nem engajamento; sem bilheteria não há % pagante.
+      const ri = computeRealIndexV3(base({ spotifyConnected: false, fazBilheteria: false, showsPerMonth: 0 }));
+      expect(ri.pattern.a).toBe(false);
+      expect(ri.boletim.a).toBeLessThan(70);
+    });
   });
 
   // Regressão: a nota do L não pode perder 1 ponto para ruído de ponto flutuante.

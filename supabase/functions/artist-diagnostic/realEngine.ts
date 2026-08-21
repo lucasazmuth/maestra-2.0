@@ -302,9 +302,18 @@ export function computeRealIndexV3(input: RealInputsV3): RealIndexV3 {
     high: pagHigh, topicon: pagTop, absent: !input.fazBilheteria,
   };
   const aComps = [convComp, engComp, showsComp, pagComp];
-  const aHigh = aComps.every((c) => c.high);
-  // §6.6 (conversão + %pagante no P95) — mas só conta como TOP ICON se A de fato acende (os 4 altos),
-  // senão o topIcon global poderia marcar um perfil que não é Icon.
+  // Componente ausente sai da conta, mesma regra já aplicada ao R (§4.3, "opção A"). Sem isso a
+  // ausência REPROVA no A enquanto é neutra no R: quem não faz show com bilheteria tem o "% público
+  // pagante" ausente e, por definição, nunca poderia acender o A — por melhores que fossem os
+  // outros três. Se TUDO estiver ausente, cai de volta na lista cheia (que não acende), para não
+  // acender uma dimensão sobre lista vazia — `[].every()` é true.
+  const aPresent = aComps.filter((c) => !c.absent);
+  const aEffective = aPresent.length ? aPresent : aComps;
+  const aHigh = aEffective.every((c) => c.high);
+  // §6.6 (conversão + %pagante no P95) — mas só conta como TOP ICON se A de fato acende.
+  // Aqui a ausência CONTINUA pesando de propósito: o TOP ICON é a distinção mais rara do método,
+  // e afrouxá-lo não foi o que se decidiu corrigir. Quem não tem bilheteria pode acender o A, mas
+  // não marca TOP ICON nesta dimensão.
   const aTopIcon = aHigh && convComp.topicon && pagComp.topicon;
 
   // ── E: receita ancorada × modulador (§5) ──
@@ -378,7 +387,7 @@ export function computeRealIndexV3(input: RealInputsV3): RealIndexV3 {
     version: 3,
     profile: { key, name: def.name, description: def.description, insights: def.insights },
     pattern,
-    boletim: { r: boletimZ(rEffective, rHigh), e: boletimE, a: countBoletim(aComps, aHigh), l: boletimL },
+    boletim: { r: boletimZ(rEffective, rHigh), e: boletimE, a: countBoletim(aEffective, aHigh), l: boletimL },
     cutLine: { r: 70, e: 70, a: 70, l: 70 },
     topIcon,
     dimTopIcon: { r: rTopIcon, e: eTopIcon, a: aTopIcon, l: lTopIcon },
