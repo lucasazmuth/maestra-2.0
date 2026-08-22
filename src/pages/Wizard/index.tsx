@@ -1,7 +1,7 @@
 import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { App } from 'antd';
-import { FiArrowLeft, FiRotateCcw, FiSidebar } from 'react-icons/fi';
+import { FiArrowLeft, FiCornerUpLeft, FiRotateCcw, FiSidebar } from 'react-icons/fi';
 
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
@@ -277,6 +277,19 @@ const Wizard: FC = () => {
             {/* Identificação enxuta: avatar do perfil + título. A etapa saiu daqui e passou a
                 ser o título do painel de resultados — só um lugar diz em que etapa se está. */}
             <div className='wiz-head-id'>
+              {/* SAIR do planejamento. Sem isto o wizard nao teria saida nenhuma no celular: os
+                  outros tres botoes agem DENTRO da conversa (desfazer, recomecar, ver o plano) e a
+                  unica porta era a tab bar, que agora nao existe aqui. Vai para "Seus perfis", o
+                  mesmo destino do "Tela inicial" do rail — e nao para o dashboard do artista, que
+                  com o plano incompleto reencaminha de volta para ca. */}
+              <button
+                className='wiz-exit-btn'
+                title='Sair do planejamento'
+                aria-label='Sair do planejamento'
+                onClick={() => navigate('/artists')}
+              >
+                <FiArrowLeft size={18} />
+              </button>
               <img className='wiz-head-avatar' src={artistImage} alt='' aria-hidden />
               {/* Cor/tamanho vêm de `.wiz-title` (styles.scss) — a tipografia acompanha a viewport. */}
               <h1 className='wiz-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
@@ -294,7 +307,10 @@ const Wizard: FC = () => {
                   aria-label='Voltar à pergunta anterior'
                   onClick={() => goBackRef.current()}
                 >
-                  <FiArrowLeft size={18} />
+                  {/* Deixou de ser FiArrowLeft: com a seta de SAIR agora no canto esquerdo, duas
+                      setas iguais na mesma barra significariam coisas diferentes. Esta desfaz um
+                      passo da conversa, e o icone de canto diz isso. */}
+                  <FiCornerUpLeft size={17} />
                 </button>
               )}
               {/* Recomeçar do zero — só aparece quando há progresso; pede confirmação (destrutivo). */}
