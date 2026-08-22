@@ -8868,8 +8868,10 @@ body:has(.track-detail-backdrop) .local-player-bar {
   filter: drop-shadow(0 0 4px rgba(51, 97, 255, .2));
 }
 
+/* Era #8f4bd5 (lilás do tema escuro anterior) — destoava do azul que o resto do app usa pra
+   estado concluido/primario (o proprio hover desta mesma regra, duas linhas acima, ja e azul). */
 .task-app:not(.public-app) .action-plan-page .action-task-check.is-done {
-  color: #8f4bd5;
+  color: #3361ff;
 }
 
 .task-app:not(.public-app) .action-plan-page .action-task-register > header button {
@@ -9036,6 +9038,16 @@ body:has(.track-detail-backdrop) .local-player-bar {
     padding-left: 18px;
   }
 
+  /* No acordeão, `.action-task-register` já não tem padding próprio (zerado em actionPlan.scss —
+     `.ap-plan-row-body` é quem dá o respiro agora, uma vez só). Essa regra, de 4 classes, batia a
+     de 2 do reset, e devolvia 18px de sobra dos dois lados por baixo do panorama — o "espaço
+     demais nas laterais" que sobrava até com o zero já aplicado. Aqui os dois lados do prefixo
+     ficam iguais (5 classes), então o reset ganha de fato. */
+  .task-app:not(.public-app) .action-plan-page .ap-plan-row-body .action-task-register {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
   .task-app:not(.public-app) .action-plan-page .action-task-register > header > div {
     min-width: 0;
     flex: 1 1 auto;
@@ -9062,15 +9074,31 @@ body:has(.track-detail-backdrop) .local-player-bar {
 }
 
 @media (max-width: 760px) {
+  /* Empilhado (título em cima, "Arquivadas" embaixo) consumia 98px só de cabeçalho antes da
+     primeira estratégia aparecer — no celular, onde ver mais linha sem rolar importa mais, isso
+     é caro. Vira uma linha só, compacta, com o título menor: o rótulo "ESTRATÉGIAS DO PLANO" já
+     some aqui embaixo de 700px (regra logo abaixo), então "Ranking de execução" pode encolher
+     sem perder contexto — a tela ainda diz "Plano de Ação" lá em cima. */
   .task-app:not(.public-app) .action-plan-page .action-strategy-overview > header {
-    display: block;
-    padding: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 0;
+    padding: 12px 14px;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-strategy-overview > header h3 {
+    font-size: 15px;
   }
 
   .task-app:not(.public-app) .action-plan-page .action-overview-actions {
-    margin-top: 12px;
+    margin-top: 0;
     justify-content: space-between;
   }
+
+
 
   .task-app:not(.public-app) .action-plan-page .action-strategy-scroll {
     grid-auto-columns: minmax(230px, 82vw);

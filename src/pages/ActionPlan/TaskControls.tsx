@@ -8,7 +8,12 @@ import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 // Categorias de tarefa (valor persistido + rótulo exibido). Fonte única reutilizada pelo
 // chip TaskCategory, pelo composer e pelo Dashboard.
 export const TASK_TYPES: { v: string; label: string }[] = [
-  { v: 'acoes', label: 'Ações' },
+  // 'acoes' é o valor de FALLBACK quando a tarefa não tem categoria definida (`value ||
+  // 'acoes'`, logo abaixo, e em TaskDetailModal.tsx). "Ações" como rótulo lia como se fosse uma
+  // categoria deliberada — a maioria das tarefas cai aqui só por nunca ter sido categorizada.
+  // "Categoria" lê como os outros chips sem valor (`Sem prazo`, `Dono do perfil`): um placeholder
+  // honesto, não uma escolha.
+  { v: 'acoes', label: 'Categoria' },
   { v: 'produto_fonografico', label: 'Produto fonográfico' },
   { v: 'audio_visual', label: 'Audiovisual' },
   { v: 'design', label: 'Design' },
