@@ -1099,10 +1099,17 @@
 // (ex.: "Mapear e organizar a base de contatos por tipo (jornalistas, contratantes, músicos,
 // fãs)..."). Truncar com reticências tornaria boa parte do texto inacessível, sem nem um tooltip
 // para compensar. Quebra em quantas linhas precisar; a linha some, não o conteúdo.
+//
+// `text-transform: none` explícito: `.action-strategy-overview button span`, em
+// gsap-reference.css, dá uppercase ao `.ap-plan-row-main` (que É um <span> dentro de um <button>
+// dentro de `.action-strategy-overview`) — e text-transform é uma propriedade que HERDA para os
+// filhos por padrão. O <strong> não tinha regra própria pra essa propriedade, então herdava o
+// caixa-alta da <span> mãe sem que nenhuma regra "para strong" tivesse feito isso de propósito.
 .ap-plan-row-main strong {
   color: #52668d;
   font-size: 14px;
   line-height: 1.35;
+  text-transform: none;
 }
 
 .ap-plan-row-progress {
@@ -1118,22 +1125,6 @@
   font-size: 10px;
   font-weight: 800;
   white-space: nowrap;
-}
-
-.ap-plan-row-bar {
-  display: block;
-  width: 64px;
-  height: 5px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #e7edf6;
-}
-
-.ap-plan-row-bar b {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--blue);
 }
 
 .ap-plan-row-body {
@@ -1174,7 +1165,12 @@
   padding-top: 3px;
 }
 
+// `margin-top: 0` explícito: `.action-strategy-overview strong` (a mesma regra reaproveitada
+// sem querer no fix acima) dá margin-top:6px a QUALQUER <strong> descendente — inclusive este,
+// da tarefa. Sem resetar, o título nascia empurrado 6px pra baixo, fora do alinhamento com o
+// checkbox ao lado (que não tem essa margem).
 .ap-plan-task-main > strong {
+  margin-top: 0;
   color: #52668d;
   font-size: 13px;
   font-weight: 700;
@@ -1200,5 +1196,4 @@
   .ap-plan-row-head { padding: 14px; gap: 10px; }
   .ap-plan-row-body { padding: 14px; }
   .ap-plan-row-main strong { font-size: 13.5px; }
-  .ap-plan-row-bar { width: 48px; }
 }

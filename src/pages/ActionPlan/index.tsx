@@ -374,7 +374,6 @@ const ActionPlan: FC = () => {
         <div className="ap-plan-list">
           {displayed.map((p, idx) => {
             const isOpen = p.s.id === activePlanId;
-            const progress = p.total ? Math.round((p.done / p.total) * 100) : 0;
             return (
               <div key={p.s.id} className={`ap-plan-row${isOpen ? ' is-open' : ''}${p.complete ? ' is-complete' : ''}`}>
                 <button
@@ -388,8 +387,10 @@ const ActionPlan: FC = () => {
                     <em>ESTRATÉGIA #{String(idx + 1).padStart(2, '0')}</em>
                     <strong>{p.s.title}</strong>
                   </span>
+                  {/* Sem a barra: só o "1/10" já diz a mesma coisa, e num cabeçalho que agora
+                      pode ter várias linhas de título (título não trunca mais), a barra virava
+                      um segundo elemento solto competindo por espaço sem acrescentar informação. */}
                   <span className="ap-plan-row-progress">
-                    <i className="ap-plan-row-bar"><b style={{ width: `${progress}%` }} /></i>
                     <small>{p.complete ? 'Concluída' : `${p.done}/${p.total}`}</small>
                   </span>
                 </button>

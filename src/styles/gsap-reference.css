@@ -9064,14 +9064,45 @@ body:has(.track-detail-backdrop) .local-player-bar {
 }
 
 @media (max-width: 760px) {
+  /* Empilhado (título em cima, "Arquivadas" embaixo) consumia 98px só de cabeçalho antes da
+     primeira estratégia aparecer — no celular, onde ver mais linha sem rolar importa mais, isso
+     é caro. Vira uma linha só, compacta, com o título menor: o rótulo "ESTRATÉGIAS DO PLANO" já
+     some aqui embaixo de 700px (regra logo abaixo), então "Ranking de execução" pode encolher
+     sem perder contexto — a tela ainda diz "Plano de Ação" lá em cima. */
   .task-app:not(.public-app) .action-plan-page .action-strategy-overview > header {
-    display: block;
-    padding: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 0;
+    padding: 12px 14px;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .action-strategy-overview > header h3 {
+    font-size: 15px;
   }
 
   .task-app:not(.public-app) .action-plan-page .action-overview-actions {
-    margin-top: 12px;
+    margin-top: 0;
     justify-content: space-between;
+  }
+
+  /* "Adicionar tarefa" virava um botão de largura total e alto (regra logo abaixo, pensada pra
+     quando este cabeçalho era o topo de uma seção "Tarefas" separada, rolada até por conta
+     própria). Dentro do acordeão ele compete por espaço com o checklist logo ali — some a
+     esticada e volta a ficar do tamanho do próprio texto, ao lado do título "Tarefas". */
+  .task-app:not(.public-app) .action-plan-page .ap-plan-row-body .action-task-register > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .task-app:not(.public-app) .action-plan-page .ap-plan-row-body .action-task-register > header button {
+    width: auto;
+    margin-top: 0;
   }
 
   .task-app:not(.public-app) .action-plan-page .action-strategy-scroll {
