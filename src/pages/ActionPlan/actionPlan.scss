@@ -924,3 +924,271 @@
   .ap-strat-title { font-size: 15px; line-height: 1.3; }
   .ap-strat-more { margin-left: auto; }
 }
+
+
+// ── Acordeão de estratégias (Plano de Ação) ──────────────────────────────────────────────────
+//
+// Troca a fileira de cartões + tabela solta mais abaixo por uma lista vertical: cada estratégia
+// é uma linha que expande as PRÓPRIAS tarefas embaixo dela, ao clicar. Resolve a queixa de
+// usuários sobre o salto entre "escolher a estratégia" e "achar a lista de tarefas" — as duas
+// coisas viviam em blocos fisicamente distantes na página, um deles rolando na horizontal.
+//
+// Reaproveita deliberadamente estilos JÁ VIVOS do resto do Plano de Ação em vez de reinventá-los:
+// `.action-task-register` (cabeçalho "Tarefas" + botão Adicionar), `.action-task-check`
+// (checkbox), `.action-task-more` (botão de detalhes), `.priority-*` (pílula de status) e os
+// chips `.ap-type`/`.ap-owner`/`.ap-date` do TaskCategory/TaskOwner/TaskDate — todos definidos em
+// src/styles/gsap-reference.css, escopados a `.action-plan-page`. Só a estrutura NOVA (a lista,
+// a linha clicável, o chevron e o checklist) ganha classes novas aqui.
+.ap-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.ap-plan-row {
+  border: 1px solid #e1e7f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: transparent;
+  transition: border-color .15s ease;
+}
+
+.ap-plan-row.is-open {
+  border-color: #b9c8ff;
+}
+
+// Seletores de DUAS classes de propósito, daqui até o fim do bloco: `.action-strategy-overview
+// button`, em gsap-reference.css, mira as antigas cartas do carrossel e aplica width:100%,
+// min-height:132px, display:grid, grid-template-columns:1fr auto, padding:16px e border a
+// QUALQUER botão descendente — sem exigir filho direto. Como reaproveitei `.action-strategy-
+// overview` como moldura externa do painel (mesmo border/rounded-corner de sempre), esse
+// vazamento alcança todo botão daqui de dentro: o cabeçalho da linha, o checkbox da tarefa, o
+// "mais", e os DOIS chips que também são <button> (TaskCategory e TaskOwner — TaskDate também
+// usa <button>). Sem resetar, cada um virava um bloco vazio de 132px, ou um retângulo width:100%
+// ocupando a linha inteira sozinho (foi o caso do chip "Ações", que aparecia largo e solto
+// abaixo do título, e do avatar do responsável, que virava uma caixa vazia enorme).
+//
+// A especificidade de DUAS classes (0,2,0) garante a vitória sobre a regra vazando (0,1,1)
+// independente da ordem de carregamento das folhas — não é uma corrida por sorte.
+.ap-plan-list .ap-plan-row-head {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  gap: 14px;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ap-plan-row.is-open .ap-plan-row-head {
+  background: rgba(51, 97, 255, .045);
+}
+
+.ap-plan-list .action-task-check,
+.ap-plan-list .action-task-more,
+.ap-plan-task-meta .ap-type,
+.ap-plan-task-meta .ap-date,
+.ap-plan-task-meta .ap-owner {
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  grid-template-columns: none;
+  text-align: left;
+}
+
+.ap-plan-list .action-task-check {
+  display: grid;
+  width: 32px;
+  height: 32px;
+}
+
+.ap-plan-list .action-task-more {
+  display: grid;
+  width: 28px;
+  height: 28px;
+}
+
+// Chips de tipo/prazo/status: pílula compacta com borda e cantos arredondados, medida própria
+// (o `.action-task-register-table .ap-type` original só existia dentro da tabela de 6 colunas
+// que este checklist substitui — fora dali, cor e fundo aplicavam, mas nada de tamanho).
+.ap-plan-task-meta .ap-type,
+.ap-plan-task-meta .ap-date,
+.ap-plan-task-meta b.priority-alta,
+.ap-plan-task-meta b.priority-média,
+.ap-plan-task-meta b.priority-normal {
+  display: inline-flex;
+  height: 26px;
+  align-items: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 9px;
+  border: 1px solid #dde5f1;
+  border-radius: 7px;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ap-plan-task-meta b.priority-alta,
+.ap-plan-task-meta b.priority-média,
+.ap-plan-task-meta b.priority-normal {
+  border: 0;
+}
+
+// Avatar do responsável: círculo com a foto — a mesma medida que a tabela dava, só que sem
+// depender dela. Sem tamanho explícito a foto renderiza no seu tamanho NATURAL (a
+// `.ap-owner-foto` é width/height 100%, que sem um continente com tamanho próprio não restringe
+// nada), daí a caixa vazia enorme que apareceu na primeira tentativa.
+.ap-plan-task-meta .ap-owner {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #dde5f1;
+  border-radius: 50%;
+}
+
+.ap-plan-chevron {
+  flex: 0 0 auto;
+  color: #93a3bc;
+  font-size: 16px;
+  transition: transform .18s ease, color .18s ease;
+}
+
+.ap-plan-row.is-open .ap-plan-chevron {
+  color: var(--blue);
+  transform: rotate(180deg);
+}
+
+.ap-plan-row-main {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ap-plan-row-main em {
+  color: #93a3bc;
+  font-size: 9px;
+  font-weight: 900;
+  font-style: normal;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+// SEM truncar numa linha: como o rótulo "Tarefas" não repete mais o título da estratégia (a
+// redundância que o comentário de gsap-reference.css já tratava no mobile), este é o ÚNICO
+// lugar da tela que mostra o título por extenso — e algumas estratégias passam de 100 caracteres
+// (ex.: "Mapear e organizar a base de contatos por tipo (jornalistas, contratantes, músicos,
+// fãs)..."). Truncar com reticências tornaria boa parte do texto inacessível, sem nem um tooltip
+// para compensar. Quebra em quantas linhas precisar; a linha some, não o conteúdo.
+.ap-plan-row-main strong {
+  color: #52668d;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.ap-plan-row-progress {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.ap-plan-row-progress small {
+  color: #8798b4;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.ap-plan-row-bar {
+  display: block;
+  width: 64px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7edf6;
+}
+
+.ap-plan-row-bar b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--blue);
+}
+
+.ap-plan-row-body {
+  border-top: 1px solid #e1e7f0;
+  padding: 18px;
+}
+
+// A tabela de 6 colunas (`.action-task-register-table`) exigia rolar na horizontal a partir de
+// 960px — o motivo mais provável da confusão que os usuários relatam. A checklist empilha em
+// qualquer largura: nome da tarefa em cima, tipo/responsável/prazo/status como chips numa
+// segunda linha, sem grade fixa.
+.ap-plan-tasklist {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ap-plan-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf1f7;
+}
+
+.ap-plan-task:last-child {
+  border-bottom: 0;
+}
+
+.ap-plan-task-main {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 3px;
+}
+
+.ap-plan-task-main > strong {
+  color: #52668d;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.ap-plan-task-main > strong > small {
+  display: block;
+  margin-top: 2px;
+  color: #8d9db7;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.ap-plan-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 480px) {
+  .ap-plan-row-head { padding: 14px; gap: 10px; }
+  .ap-plan-row-body { padding: 14px; }
+  .ap-plan-row-main strong { font-size: 13.5px; }
+  .ap-plan-row-bar { width: 48px; }
+}

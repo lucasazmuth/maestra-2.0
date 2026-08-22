@@ -2,7 +2,7 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { App, message } from 'antd';
 import { createPortal } from 'react-dom';
-import { FiArchive, FiCheck, FiCheckCircle, FiCircle, FiLock, FiMoreVertical, FiPlus, FiX } from 'react-icons/fi';
+import { FiArchive, FiCheck, FiCheckCircle, FiChevronDown, FiCircle, FiLock, FiMoreVertical, FiPlus, FiX } from 'react-icons/fi';
 
 import { useNytaModal } from '../../hooks/useNytaModal';
 import { buildActionPlan } from '../Wizard/method/engines';
@@ -346,7 +346,6 @@ const ActionPlan: FC = () => {
   const displayed = withTasks.length ? withTasks : info; // sem nenhuma priorizada, mostra tudo
   const focusIdx = displayed.findIndex((p) => p.total > 0 && !p.complete); // -1 = todas concluídas
   const activePlanId = openId && openId !== '__none__' ? openId : displayed[focusIdx >= 0 ? focusIdx : 0]?.s.id;
-  const activePlan = displayed.find((p) => p.s.id === activePlanId) || displayed[0];
 
   return (
     <div className="ap action-plan-page">
@@ -366,59 +365,86 @@ const ActionPlan: FC = () => {
             {hasArchive && <button type="button" onClick={() => manageTasks ? setArchiveOpen(true) : showProRequired()}><FiArchive size={13} /> Arquivadas ({archived.length})</button>}
           </div>
         </header>
-        <div className="action-strategy-scroll">
+        {/* Acordeão: cada estratégia é uma linha que abre as PRÓPRIAS tarefas embaixo dela — não
+            mais um cartão aqui em cima e uma tabela solta mais abaixo na página. Era esse salto,
+            escolher a estratégia e ter que procurar a lista de tarefas alguns scrolls depois, que
+            motivou a reclamação. Só uma aberta por vez, como já era (activePlanId decide qual);
+            clicar na que já está aberta fecha — usa o sentinela '__none__', que já existia no
+            código sem nada que o disparasse (a lógica de fechar nunca tinha sido ligada). */}
+        <div className="ap-plan-list">
           {displayed.map((p, idx) => {
+            const isOpen = p.s.id === activePlanId;
             const progress = p.total ? Math.round((p.done / p.total) * 100) : 0;
             return (
-              <button type="button" className={p.s.id === activePlan?.s.id ? 'active' : ''} key={p.s.id} onClick={() => setOpenId(p.s.id)}>
-                <span>ESTRATÉGIA #{String(idx + 1).padStart(2, '0')}</span>
-                <strong>{p.s.title}</strong>
-                <small>{p.complete ? 'Concluída' : `${p.done} de ${p.total} tarefas`}</small>
-                <i><b style={{ width: `${progress}%` }} /></i>
-                <em>{progress}%</em>
-              </button>
+              <div key={p.s.id} className={`ap-plan-row${isOpen ? ' is-open' : ''}${p.complete ? ' is-complete' : ''}`}>
+                <button
+                  type="button"
+                  className="ap-plan-row-head"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenId(isOpen ? '__none__' : p.s.id)}
+                >
+                  <FiChevronDown className="ap-plan-chevron" aria-hidden />
+                  <span className="ap-plan-row-main">
+                    <em>ESTRATÉGIA #{String(idx + 1).padStart(2, '0')}</em>
+                    <strong>{p.s.title}</strong>
+                  </span>
+                  <span className="ap-plan-row-progress">
+                    <i className="ap-plan-row-bar"><b style={{ width: `${progress}%` }} /></i>
+                    <small>{p.complete ? 'Concluída' : `${p.done}/${p.total}`}</small>
+                  </span>
+                </button>
+
+                {isOpen && (
+                  <div className="ap-plan-row-body">
+                    <section className="action-task-register">
+                      <header>
+                        {/* Sem o rótulo "ESTRATÉGIA #0N" aqui: a linha logo acima já mostra
+                            numeração e título — repeti-lo colado embaixo era a MESMA redundância
+                            que o comentário de gsap-reference.css já escondia no mobile (linha
+                            ~9013), só que agora os dois ficariam a poucos pixels um do outro em
+                            qualquer largura de tela, não só na estreita. */}
+                        <h3>Tarefas</h3>
+                        <button type="button" onClick={() => manageTasks ? openWithPrompt(`Quero criar uma tarefa para a estratégia "${p.s.title}"`) : showProRequired()}>
+                          {!manageTasks ? <FiLock size={14} /> : <FiPlus size={14} />} Adicionar tarefa
+                        </button>
+                      </header>
+                      {p.ts.length === 0 ? (
+                        <div className="ap-empty-tasks">Nenhuma tarefa ainda. Crie a primeira com a Nyta no botão acima.</div>
+                      ) : (
+                        <ul className="ap-plan-tasklist">
+                          {p.ts.map((t, index) => {
+                            const done = isDone(t);
+                            const overdue = !!(t.deadline && t.deadline < today && !done);
+                            const statusLabel = done ? 'Concluída' : t.status === 'in_progress' ? 'Em andamento' : 'A fazer';
+                            const statusClass = done ? 'priority-normal' : overdue ? 'priority-alta' : t.status === 'in_progress' ? 'priority-média' : 'priority-normal';
+                            return (
+                              <li key={t.id || `${p.s.id}-${index}`} className="ap-plan-task">
+                                <button type="button" className={`action-task-check${done ? ' is-done' : ''}`} title={done ? 'Reabrir tarefa' : 'Concluir tarefa'} onClick={() => editPlanning ? toggleDone(p.s.id, t) : showProRequired()}>
+                                  {done ? <FiCheckCircle size={25} /> : <FiCircle size={25} />}
+                                </button>
+                                <span className="ap-plan-task-main">
+                                  <strong>{t.description}{t.comments?.length ? <small>{`${t.comments.length} comentário${t.comments.length === 1 ? '' : 's'}`}</small> : null}</strong>
+                                  <span className="ap-plan-task-meta">
+                                    <TaskCategory className="ap-type" value={t.type} disabled={!editPlanning} onBlocked={showProRequired} onChange={(v) => patchTask(p.s.id, t.id, { type: v })} />
+                                    <TaskOwner className="ap-owner" value={t.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(o) => patchTask(p.s.id, t.id, { owner: o })} />
+                                    <TaskDate className="ap-date" value={t.deadline} overdue={overdue} disabled={!editPlanning} onBlocked={showProRequired} onChange={(d) => patchTask(p.s.id, t.id, { deadline: d })} />
+                                    <b className={statusClass}>{statusLabel}</b>
+                                  </span>
+                                </span>
+                                <button type="button" className="action-task-more" aria-label="Abrir detalhes da tarefa" onClick={() => setSelectedTaskRef({ strategyId: p.s.id, taskId: t.id })}><FiMoreVertical size={17} /></button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </section>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
       </section>
-
-      {activePlan && (
-        <section className="action-active-strategy">
-          <div className="action-strategy-grid">
-            <section className="action-task-register">
-              <header>
-                <div><p>ESTRATÉGIA #{String(displayed.findIndex((p) => p.s.id === activePlan.s.id) + 1).padStart(2, '0')}</p><h3>Tarefas</h3></div>
-                <button type="button" onClick={() => manageTasks ? openWithPrompt(`Quero criar uma tarefa para a estratégia "${activePlan.s.title}"`) : showProRequired()}>
-                  {!manageTasks ? <FiLock size={14} /> : <FiPlus size={14} />} Adicionar tarefa
-                </button>
-              </header>
-              {activePlan.ts.length === 0 ? (
-                <div className="ap-empty-tasks">Nenhuma tarefa ainda. Crie a primeira com a Nyta no botão acima.</div>
-              ) : (
-                <div className="action-task-register-table">
-                  <header><span>Tarefa</span><span>Tipo</span><span>Responsável</span><span>Prazo</span><span>Status</span><span /></header>
-                  {activePlan.ts.map((t, index) => {
-                    const done = isDone(t);
-                    const overdue = !!(t.deadline && t.deadline < today && !done);
-                    const statusLabel = done ? 'Concluída' : t.status === 'in_progress' ? 'Em andamento' : 'A fazer';
-                    const statusClass = done ? 'priority-normal' : overdue ? 'priority-alta' : t.status === 'in_progress' ? 'priority-média' : 'priority-normal';
-                    return (
-                      <article key={t.id || `${activePlan.s.id}-${index}`} className={done ? '' : index === 0 ? 'selected' : ''}>
-                    <span className="action-task-title"><button type="button" className={`action-task-check${done ? ' is-done' : ''}`} title={done ? 'Reabrir tarefa' : 'Concluir tarefa'} onClick={() => editPlanning ? toggleDone(activePlan.s.id, t) : showProRequired()}>{done ? <FiCheckCircle size={25} /> : <FiCircle size={25} />}</button><strong>{t.description}{t.comments?.length ? <small>{`${t.comments.length} comentário${t.comments.length === 1 ? '' : 's'}`}</small> : null}</strong></span>
-                        <TaskCategory className="ap-type" value={t.type} disabled={!editPlanning} onBlocked={showProRequired} onChange={(v) => patchTask(activePlan.s.id, t.id, { type: v })} />
-                        <span><TaskOwner className="ap-owner" value={t.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(o) => patchTask(activePlan.s.id, t.id, { owner: o })} /></span>
-                        <TaskDate className="ap-date" value={t.deadline} overdue={overdue} disabled={!editPlanning} onBlocked={showProRequired} onChange={(d) => patchTask(activePlan.s.id, t.id, { deadline: d })} />
-                        <b className={statusClass}>{statusLabel}</b>
-                        <button type="button" className="action-task-more" aria-label="Abrir detalhes da tarefa" onClick={() => setSelectedTaskRef({ strategyId: activePlan.s.id, taskId: t.id })}><FiMoreVertical size={17} /></button>
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          </div>
-        </section>
-      )}
 
 
       <TaskDetailModal
