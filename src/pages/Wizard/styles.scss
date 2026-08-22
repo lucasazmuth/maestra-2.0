@@ -2141,58 +2141,113 @@
   padding-top: 12px;
 }
 
-// Texto corrido (visão, missão, valores, conclusão).
-.wiz-art-text {
-  margin: 0;
-  color: #61749a;
-  font-size: 12.5px;
-  line-height: 1.55;
+// ---- Conteúdo do cartão de etapa: UMA primitiva, um ritmo ------------------------------------
+//
+// Antes havia três tratamentos concorrentes aqui (linhas rótulo/valor, texto corrido e lista com
+// rótulo), cada um com margem própria e remendos inline (`marginTop: 4`, `margin: 0`). O resultado
+// era exatamente o que parecia: cada bloco respirando diferente e algumas etapas sem rótulo
+// nenhum, com o texto solto sem dizer de que pergunta veio.
+//
+// Agora tudo é CAMPO: um micro-rótulo em caixa alta + um corpo (texto, lista numerada ou lista de
+// marcadores). Só dois números governam o espaçamento — `--wz-field-gap` entre campos e
+// `--wz-field-inner` entre rótulo e corpo — e nenhum componente define margem por conta própria.
+
+.wiz-art-fields {
+  --wz-field-gap: 14px;
+  --wz-field-inner: 5px;
+
+  display: grid;
+  gap: var(--wz-field-gap);
 }
 
-// Linhas "rótulo · valor". O rótulo sobe para a PRÓPRIA linha: lado a lado, num rótulo curto
-// como "Gênero" seguido de um valor longo, a segunda linha do valor voltava a alinhar embaixo do
-// rótulo e as duas informações se misturavam.
-.wiz-art-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.wiz-art-field {
+  display: grid;
+  gap: var(--wz-field-inner);
+  min-width: 0;
+}
+
+// Micro-rótulo: nomeia a pergunta que originou o valor. Em linha própria (não ao lado) porque com
+// rótulo curto e valor longo a segunda linha do valor voltava a alinhar sob o rótulo, e as duas
+// informações se misturavam.
+.wiz-art-k {
+  color: #9aa9c2;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+// Corpo de texto do campo (valor curto, visão, missão, resumo). Uma escala só.
+.wiz-art-v {
+  margin: 0;
   color: #52668d;
   font-size: 12.5px;
-  line-height: 1.45;
-
-  > div {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
-.wiz-art-k {
-  display: block;
-  margin-right: 0;
-  color: #9aa9c2;
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 9.5px;
-  letter-spacing: .05em;
-}
-
-// Listas (objetivos, estratégias, prioridades) — numeração neutra padrão.
-.wiz-art-list {
+// Listas do cartão. O reset global (`src/index.css`: `ol, ul, menu { list-style: none }`) zera os
+// marcadores nativos, então eles são desenhados aqui — era por isso que as estratégias apareciam
+// como uma pilha de textos sem numeração.
+//
+// Cada item é um grid de duas colunas (marcador | texto): assim a linha que quebra alinha sob o
+// TEXTO, nunca sob o número. É o detalhe que separa uma lista legível de um bloco derramado.
+.wiz-art-items {
+  display: grid;
+  gap: 6px;
   margin: 0;
-  padding-left: 16px;
+  padding: 0;
+  counter-reset: wizart;
 
-  li {
-    color: #61749a;
+  > li {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    gap: 8px;
+    align-items: baseline;
+    margin: 0;
+    color: #52668d;
     font-size: 12.5px;
-    line-height: 1.45;
-    margin-bottom: 5px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
   }
 }
 
-.wiz-art-muted {
+// Ordenadas de verdade (objetivos, estratégias, prioridades): a ordem é informação.
+.wiz-art-items--num > li {
+  counter-increment: wizart;
+
+  &::before {
+    content: counter(wizart);
+    color: #9aa9c2;
+    font-size: 10.5px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+}
+
+// Conjuntos sem ordem (quadrantes da SWOT, valores): ponto, não número — numerar sugeriria um
+// ranking que não existe. A cor do ponto vem do campo, para casar com a linguagem do board.
+.wiz-art-items--dot > li {
+  &::before {
+    content: '';
+    justify-self: end;
+    width: 5px;
+    height: 5px;
+    margin-right: 4px;
+    border-radius: 50%;
+    background: var(--wz-dot, #c2cddf);
+    transform: translateY(-2px);
+  }
+}
+
+// "+22 estratégias" e afins: rodapé do campo, não um item falso dentro da lista.
+.wiz-art-more {
   color: #aebbd0;
-  list-style: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 // ---- Edição inline dos entregáveis (lápis sutil por seção) ------------------------------------

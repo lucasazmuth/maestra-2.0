@@ -1,4 +1,4 @@
-import { FC, ReactNode, useEffect, useState } from 'react';
+import { CSSProperties, FC, ReactNode, useEffect, useState } from 'react';
 import { FiCheck, FiChevronDown, FiEdit3, FiX } from 'react-icons/fi';
 
 import { STEP_LABELS, currentStepIndex } from './chat/script';
@@ -18,43 +18,80 @@ import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 const splitRefItems = (s?: string): string[] =>
   (s || '').split(/[,;\n·]+/).map((x) => x.trim()).filter(Boolean);
 
-// Linhas "rótulo · valor" — cada uma nomeia a pergunta que a originou, nunca texto solto.
-const Meta: FC<{ rows: [string, string][] }> = ({ rows }) =>
-  rows.length ? (
-    <div className='wiz-art-meta'>
-      {rows.map(([k, v]) => (
-        <div key={k}>
-          <span className='wiz-art-k'>{k}</span> {v}
-        </div>
-      ))}
-    </div>
-  ) : null;
+// ---- Primitivas do corpo do cartão -------------------------------------------------------------
+//
+// Tudo que aparece dentro de um cartão de etapa é um CAMPO: micro-rótulo (a pergunta) + corpo (a
+// resposta). Nada de conteúdo solto sem rótulo, e nenhuma margem definida caso a caso — o ritmo
+// inteiro sai de `.wiz-art-fields` no SCSS. Ter uma primitiva só é o que mantém as nove etapas
+// com a mesma respiração.
 
-// Texto corrido (visão, missão, resumo) com o mesmo rótulo da pergunta que o gerou — nunca
-// aparece "solto", sem dizer que resposta é aquela.
-const TextBlock: FC<{ label: string; text: string }> = ({ label, text }) => (
-  <div className='wiz-art-meta'>
-    <div>
-      <span className='wiz-art-k'>{label}</span>
-      <p className='wiz-art-text' style={{ margin: 0 }}>{text}</p>
-    </div>
+// Os campos são montados como ARRAY, não como filhos JSX, porque a decisão "esta etapa ainda não
+// tem nada a mostrar" precisa ser tomada antes de existir elemento: um `<Fields>` vazio continuaria
+// sendo um elemento truthy, e o cartão renderizaria um corpo em branco com a linha divisória.
+const renderFields = (nodes: ReactNode[]): ReactNode => {
+  const real = nodes.filter(Boolean);
+  return real.length ? <div className='wiz-art-fields'>{real}</div> : null;
+};
+
+const field = (label: string, body: ReactNode): ReactNode => (
+  <div className='wiz-art-field' key={label}>
+    <span className='wiz-art-k'>{label}</span>
+    {body}
   </div>
 );
 
-// Lista com rótulo (SWOT: cada quadrante é a resposta de uma pergunta própria da etapa).
-const LabeledList: FC<{ label: string; items: string[] }> = ({ label, items }) =>
-  items.length ? (
-    <div className='wiz-art-meta'>
-      <div>
-        <span className='wiz-art-k'>{label}</span>
-        <ul className='wiz-art-list' style={{ marginTop: 4 }}>
-          {items.map((it, k) => (
-            <li key={k}>{stripEmDash(it)}</li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  ) : null;
+// Campo de texto: valor curto (pronome, cidade) ou frase montada (visão, missão, resumo).
+const textField = (label: string, text?: string): ReactNode =>
+  text ? field(label, <p className='wiz-art-v'>{stripEmDash(text)}</p>) : null;
+
+/**
+ * Campo de lista.
+ *
+ * `kind` não é decoração: 'num' é para o que tem ordem real (objetivos, estratégias, ranking de
+ * prioridade) e 'dot' para conjuntos sem ordem (quadrantes da SWOT, valores, referências) —
+ * numerar um conjunto sem ordem sugeriria um ranking que não existe.
+ */
+const listField = (
+  label: string,
+  items: string[],
+  kind: 'num' | 'dot',
+  opts: {
+    /** Cor do marcador (quadrantes da SWOT reusam a paleta do board da conversa). */
+    dotColor?: string;
+    /** Quantos itens cabem antes de resumir o resto num "+N". */
+    cap?: number;
+    /** Rodapé do campo (ex.: "8 no plano de ação"). */
+    note?: string;
+  } = {}
+): ReactNode => {
+  if (!items.length) return null;
+  const shown = opts.cap ? items.slice(0, opts.cap) : items;
+  const rest = items.length - shown.length;
+  return field(
+    label,
+    <>
+      <ol
+        className={`wiz-art-items wiz-art-items--${kind}`}
+        style={opts.dotColor ? ({ '--wz-dot': opts.dotColor } as CSSProperties) : undefined}
+      >
+        {shown.map((it, k) => (
+          <li key={k}>{stripEmDash(it)}</li>
+        ))}
+      </ol>
+      {rest > 0 && <div className='wiz-art-more'>+{rest}</div>}
+      {opts.note && <div className='wiz-art-more'>{opts.note}</div>}
+    </>
+  );
+};
+
+// Quadrantes da SWOT na mesma ordem e cor do board da conversa (widgets.tsx), para a coluna e o
+// board não parecerem duas leituras diferentes do mesmo diagnóstico.
+const SWOT_FIELDS: { key: 'strengths' | 'weaknesses' | 'opportunities' | 'threats'; label: string; color: string }[] = [
+  { key: 'strengths', label: 'Forças', color: 'var(--wz-blue, #3361ff)' },
+  { key: 'weaknesses', label: 'Fraquezas', color: 'var(--wz-danger, #e5484d)' },
+  { key: 'opportunities', label: 'Oportunidades', color: '#29cc39' },
+  { key: 'threats', label: 'Ameaças', color: 'var(--wz-warn, #f5a623)' },
+];
 
 // Corta um markdown curto pra caber num cartão: tira marcação básica e para na 1ª quebra dupla
 // ou num limite de caracteres, sempre no fim de uma palavra.
@@ -74,95 +111,70 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
       const refs = id.references || {};
       const pos = refs.posicionamento || {};
       const posItems = [pos.curto, pos.medio, pos.longo].flatMap(splitRefItems);
-      const rows: [string, string][] = [];
-      if (id.gender) rows.push(['Pronome', GENDER_OPTIONS.find((o) => o.value === id.gender)?.label || id.gender]);
-      if (id.genre) rows.push(['Estilo musical', id.genre]);
-      if (id.stage) rows.push(['Momento de carreira', STAGE_OPTIONS.find((o) => o.value === id.stage)?.label || id.stage]);
-      if (refs.artisticas) rows.push(['Referências artísticas', splitRefItems(refs.artisticas).join(', ')]);
-      if (refs.comunicacao) rows.push(['Referências de comunicação', splitRefItems(refs.comunicacao).join(', ')]);
-      if (refs.gestao) rows.push(['Referências de gestão de carreira', splitRefItems(refs.gestao).join(', ')]);
-      if (posItems.length) rows.push(['Referências de posicionamento', posItems.join(', ')]);
-      return rows.length ? <Meta rows={rows} /> : null;
+      return renderFields([
+        textField('Pronome', GENDER_OPTIONS.find((o) => o.value === id.gender)?.label || id.gender),
+        textField('Estilo musical', id.genre),
+        textField('Momento de carreira', STAGE_OPTIONS.find((o) => o.value === id.stage)?.label || id.stage),
+        listField('Referências artísticas', splitRefItems(refs.artisticas), 'dot'),
+        listField('Referências de comunicação', splitRefItems(refs.comunicacao), 'dot'),
+        listField('Referências de gestão', splitRefItems(refs.gestao), 'dot'),
+        listField('Referências de posicionamento', posItems, 'dot'),
+      ]);
     }
     case 1: { // Visão — cidade + as 5 partes da fórmula (script STEP 1) + o texto montado
       const vp = id.visionParts || {};
-      const rows: [string, string][] = [];
-      if (id.city) rows.push(['Cidade de origem', `${id.city}${id.state ? `/${id.state}` : ''}`]);
-      if (vp.onde) rows.push(['Alcance geográfico', VISION_ONDE_OPTIONS.find((o) => o.value === vp.onde)?.label || vp.onde]);
-      if (vp.porQuem?.length) rows.push(['Reconhecido por', vp.porQuem.join(', ')]);
-      if (vp.substantivo) rows.push(['Como o quê', vp.substantivo]);
-      if (vp.adjetivo) rows.push(['Atributo', vp.adjetivo]);
-      if (vp.oQueFalam) rows.push(['O que falam de você', vp.oQueFalam]);
-      return (
-        <>
-          {rows.length ? <Meta rows={rows} /> : null}
-          {id.vision ? <TextBlock label='Visão' text={stripEmDash(id.vision)} /> : null}
-        </>
-      );
+      return renderFields([
+        textField('Cidade de origem', id.city ? `${id.city}${id.state ? `/${id.state}` : ''}` : undefined),
+        textField('Alcance geográfico', VISION_ONDE_OPTIONS.find((o) => o.value === vp.onde)?.label || vp.onde),
+        listField('Reconhecido por', vp.porQuem || [], 'dot'),
+        textField('Como o quê', vp.substantivo),
+        textField('Atributo', vp.adjetivo),
+        textField('O que falam de você', vp.oQueFalam),
+        textField('Visão', id.vision),
+      ]);
     }
     case 2: { // Missão — entrega + para quem + retorno financeiro (script STEP 2) + o texto montado
       const mp = id.missionParts || {};
-      const rows: [string, string][] = [];
-      if (mp.entrega) rows.push(['O que a carreira entrega', mp.entrega]);
-      if (mp.paraQuem) rows.push(['Para quem', mp.paraQuem]);
-      if (mp.financialTier)
-        rows.push(['Retorno financeiro esperado', MISSION_FINANCIAL_OPTIONS.find((o) => o.value === mp.financialTier)?.label || mp.financialTier]);
-      return (
-        <>
-          {rows.length ? <Meta rows={rows} /> : null}
-          {id.mission ? <TextBlock label='Missão' text={stripEmDash(id.mission)} /> : null}
-        </>
-      );
+      return renderFields([
+        textField('O que a carreira entrega', mp.entrega),
+        textField('Para quem', mp.paraQuem),
+        textField(
+          'Retorno financeiro esperado',
+          MISSION_FINANCIAL_OPTIONS.find((o) => o.value === mp.financialTier)?.label || mp.financialTier
+        ),
+        textField('Missão', id.mission),
+      ]);
     }
     case 3: // Valores
-      return id.values?.length ? <Meta rows={[['Valores escolhidos', id.values.join(' · ')]]} /> : null;
+      return renderFields([listField('Valores escolhidos', id.values || [], 'dot')]);
     case 4: // Objetivos (derivados da identidade/visão/missão — sem pergunta própria)
-      return d.objectives?.length ? (
-        <ol className='wiz-art-list'>
-          {d.objectives.map((o, k) => (
-            <li key={k}>{stripEmDash(o)}</li>
-          ))}
-        </ol>
-      ) : null;
+      return renderFields([listField('Objetivos definidos', d.objectives || [], 'num')]);
     case 5: { // Diagnóstico (SWOT) — o conteúdo de cada quadrante, não só a contagem
       const s = d.swotAnalysis;
       if (!s) return null;
-      return (
-        <>
-          <LabeledList label='Forças' items={s.strengths || []} />
-          <LabeledList label='Fraquezas' items={s.weaknesses || []} />
-          <LabeledList label='Oportunidades' items={s.opportunities || []} />
-          <LabeledList label='Ameaças' items={s.threats || []} />
-        </>
+      return renderFields(
+        SWOT_FIELDS.map((q) => listField(q.label, s[q.key] || [], 'dot', { dotColor: q.color }))
       );
     }
     case 6: // Estratégias
-      return d.strategies?.length ? (
-        <ol className='wiz-art-list'>
-          {d.strategies.slice(0, 6).map((s) => (
-            <li key={s.id}>{stripEmDash(s.title)}</li>
-          ))}
-          {d.strategies.length > 6 && <li className='wiz-art-muted'>+{d.strategies.length - 6}</li>}
-        </ol>
-      ) : null;
+      return renderFields([
+        listField('Estratégias geradas', (d.strategies || []).map((s) => s.title), 'num', { cap: 6 }),
+      ]);
     case 7: { // Prioridades — top 3 + nº de estratégias que viraram plano de ação
       const ranked = (d.strategies || []).filter((s) => typeof s.finalScore === 'number');
       if (!ranked.length) return null;
       const top = ranked.slice().sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0)).slice(0, 3);
       const withTasks = (d.strategies || []).filter((s) => (s.tasks?.length || 0) > 0).length;
-      return (
-        <>
-          <ol className='wiz-art-list'>
-            {top.map((s) => (
-              <li key={s.id}>{stripEmDash(s.title)}</li>
-            ))}
-          </ol>
-          {withTasks > 0 && <div className='wiz-art-muted'>{withTasks} no plano de ação</div>}
-        </>
-      );
+      return renderFields([
+        listField('No topo da prioridade', top.map((s) => s.title), 'num', {
+          note: withTasks > 0 ? `${withTasks} no plano de ação` : undefined,
+        }),
+      ]);
     }
     case 8: // Seu plano — prévia do resumo executivo, não só "Plano concluído"
-      return d.executiveSummary ? <TextBlock label='Resumo executivo' text={previewFrom(d.executiveSummary)} /> : null;
+      return renderFields([
+        textField('Resumo executivo', d.executiveSummary ? previewFrom(d.executiveSummary) : undefined),
+      ]);
     default:
       return null;
   }
