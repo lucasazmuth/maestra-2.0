@@ -247,6 +247,13 @@
     outline: 3px solid rgba(51, 97, 255, 0.22);
     outline-offset: 2px;
   }
+
+  // No toque, 38px fica abaixo do minimo confortavel para o dedo (44). Vale para TODOS os
+  // controles do cabecalho, e nao so para o de sair, senao os dois cantos ficam desiguais.
+  @media (pointer: coarse) {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 // (Removido `.wiz-back-btn--on`) O botão da coluna de resultados só existe quando ela está
@@ -260,41 +267,11 @@
   min-width: 0;
 }
 
-// Sair do planejamento. Mesmo desenho dos controles da direita (.wiz-back-btn), mas SEM
-// preenchimento nem contorno: e um "voltar" de tela, nao uma acao dentro da conversa, e no canto
-// superior esquerdo essa e a convencao. Encostado no avatar, com respiro menor que o gap padrao,
-// pra ler como um par (sair deste perfil) e nao como um terceiro item solto.
+// Sair do planejamento. Usa a classe .wiz-back-btn junto, entao herda o MESMO desenho do botao
+// "mais opcoes" do outro canto: os dois sao controles do cabecalho, e desenha-los diferente
+// sugeria hierarquias que nao existem. Aqui sobra so o ajuste de posicao ao lado do avatar.
 .wiz-exit-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  margin-right: -4px;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--wz-muted);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
-
-  &:hover {
-    background: var(--wz-blue-soft);
-    color: var(--wz-blue);
-  }
-  &:active { transform: scale(0.94); }
-
-  &:focus-visible {
-    outline: 3px solid rgba(51, 97, 255, 0.22);
-    outline-offset: 2px;
-  }
-
-  // No toque o alvo sobe pro minimo de 44px, como as setas da agenda.
-  @media (pointer: coarse) {
-    width: 44px;
-    height: 44px;
-  }
+  margin-right: -2px;
 }
 
 .wiz-head-avatar {

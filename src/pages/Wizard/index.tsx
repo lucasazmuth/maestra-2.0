@@ -1,7 +1,7 @@
-import { FC, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { App } from 'antd';
-import { FiArrowLeft, FiCornerUpLeft, FiRotateCcw, FiSidebar } from 'react-icons/fi';
+import { App, Dropdown } from 'antd';
+import { FiArrowLeft, FiCornerUpLeft, FiMoreVertical, FiRotateCcw, FiSidebar } from 'react-icons/fi';
 
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
@@ -253,6 +253,34 @@ const Wizard: FC = () => {
     });
   };
 
+  // Itens do menu "mais opções" do cabeçalho. Cada um so entra quando faz sentido, e se nenhum
+  // fizer o botao inteiro nao e renderizado — um menu que abre vazio e pior que menu nenhum.
+  const menuItens = [
+    canGoBack && {
+      key: 'voltar',
+      label: 'Voltar à pergunta anterior',
+      icon: <FiCornerUpLeft size={15} />,
+    },
+    !wizardPanel.open && {
+      key: 'plano',
+      label: 'Ver seu plano',
+      icon: <FiSidebar size={15} />,
+    },
+    // Por ultimo e em vermelho: apaga todas as respostas. Ainda pede confirmacao.
+    hasProgress && {
+      key: 'recomecar',
+      label: 'Recomeçar do zero',
+      icon: <FiRotateCcw size={15} />,
+      danger: true,
+    },
+  ].filter(Boolean) as { key: string; label: string; icon: ReactNode; danger?: boolean }[];
+
+  const onMenuClick = ({ key }: { key: string }) => {
+    if (key === 'voltar') goBackRef.current();
+    else if (key === 'plano') wizardPanel.setOpen(true);
+    else if (key === 'recomecar') confirmReset();
+  };
+
   // Convite antes da conversa — só para quem ainda não começou o planejamento e não veio pela
   // CTA do Plano de Ação (que já convidou).
   if (mostrandoConvite) {
@@ -283,7 +311,7 @@ const Wizard: FC = () => {
                   mesmo destino do "Tela inicial" do rail — e nao para o dashboard do artista, que
                   com o plano incompleto reencaminha de volta para ca. */}
               <button
-                className='wiz-exit-btn'
+                className='wiz-back-btn wiz-exit-btn'
                 title='Sair do planejamento'
                 aria-label='Sair do planejamento'
                 onClick={() => navigate('/artists')}
@@ -296,48 +324,30 @@ const Wizard: FC = () => {
                 Crie seu planejamento
               </h1>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-              {/* Voltar à pergunta anterior — só aparece depois da 1ª pergunta respondida.
-                  Vem antes do "recomeçar": é a ação frequente e reversível, enquanto o
-                  recomeçar é destrutivo e fica mais longe do alcance imediato. */}
-              {canGoBack && (
+            {/* Um so botao no lugar de tres. Cada um deles aparece condicionalmente, entao a
+                barra oscilava entre um e tres circulos conforme a conversa andava, e no celular
+                competia com o titulo pelo pouco espaco que ha. As acoes viraram uma lista, onde
+                cabem os NOMES delas — antes eram tres icones sem rotulo, e "desfazer um passo" e
+                "recomecar do zero" so se distinguiam pelo desenho.
+
+                A ordem segue o criterio que ja estava aqui: a acao frequente e reversivel vem
+                primeiro e a destrutiva por ultimo, longe do alcance imediato. "Recomecar" continua
+                pedindo confirmacao. */}
+            {menuItens.length > 0 && (
+              <Dropdown
+                trigger={['click']}
+                placement='bottomRight'
+                menu={{ items: menuItens, onClick: onMenuClick }}
+              >
                 <button
                   className='wiz-back-btn'
-                  title='Voltar à pergunta anterior'
-                  aria-label='Voltar à pergunta anterior'
-                  onClick={() => goBackRef.current()}
+                  title='Mais opções'
+                  aria-label='Mais opções'
                 >
-                  {/* Deixou de ser FiArrowLeft: com a seta de SAIR agora no canto esquerdo, duas
-                      setas iguais na mesma barra significariam coisas diferentes. Esta desfaz um
-                      passo da conversa, e o icone de canto diz isso. */}
-                  <FiCornerUpLeft size={17} />
+                  <FiMoreVertical size={18} />
                 </button>
-              )}
-              {/* Recomeçar do zero — só aparece quando há progresso; pede confirmação (destrutivo). */}
-              {hasProgress && (
-                <button
-                  className='wiz-back-btn'
-                  title='Recomeçar o planejamento do zero'
-                  aria-label='Recomeçar o planejamento'
-                  onClick={confirmReset}
-                >
-                  <FiRotateCcw size={17} />
-                </button>
-              )}
-              {/* Abrir a coluna de resultados. Só aparece com ela FECHADA: aberta, quem fecha
-                  é o X do próprio painel, e manter os dois seria oferecer a mesma ação duas
-                  vezes na mesma tela. */}
-              {!wizardPanel.open && (
-                <button
-                  className='wiz-back-btn'
-                  title='Ver seu plano'
-                  aria-label='Ver seu plano'
-                  onClick={() => wizardPanel.setOpen(true)}
-                >
-                  <FiSidebar size={17} />
-                </button>
-              )}
-            </div>
+              </Dropdown>
+            )}
           </div>
         </div>
       </div>
