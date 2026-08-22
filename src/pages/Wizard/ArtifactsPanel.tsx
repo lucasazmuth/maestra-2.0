@@ -1,5 +1,5 @@
 import { CSSProperties, FC, ReactNode, useEffect, useState } from 'react';
-import { FiCheck, FiChevronDown, FiEdit3, FiX } from 'react-icons/fi';
+import { FiCheck, FiChevronDown, FiEdit3, FiLock, FiX } from 'react-icons/fi';
 
 import { STEP_LABELS, currentStepIndex } from './chat/script';
 import { stripEmDash } from './clean';
@@ -293,18 +293,33 @@ export const PlanList: FC<{
 
   const estaAberta = (i: number) => aberturaManual[i] ?? i === cur;
   const alternar = (i: number) => setAberturaManual((m) => ({ ...m, [i]: !estaAberta(i) }));
-  // Só mostra o que já foi alcançado (etapas até a atual) — coluna "até aqui", sem o roteiro futuro.
-  const visible = STEP_LABELS.map((label, i) => ({ label, i, art: artifactFor(i, draft) })).filter(
-    (s) => s.i <= cur
-  );
-  const anyArtifact = visible.some((s) => s.art);
+  // As NOVE etapas, sempre. Antes a coluna só listava até a atual, então quem estava na etapa 2
+  // não tinha como saber o que vinha depois nem quanto faltava. As que ainda não chegaram entram
+  // bloqueadas: aparecem, dão o nome do que vem, e não prometem interação.
+  const steps = STEP_LABELS.map((label, i) => ({ label, i, art: artifactFor(i, draft) }));
+  const anyArtifact = steps.some((s) => s.i <= cur && s.art);
 
   return (
     <>
       {!anyArtifact && (
         <p className='wiz-art-empty'>Seus resultados aparecem aqui conforme você avança com a Nyta.</p>
       )}
-      {visible.map(({ label, i, art }) => (
+      {steps.map(({ label, i, art }) =>
+        i > cur ? (
+          <div key={label} className='wiz-art-step wiz-art-step--locked'>
+            <div className='wiz-art-step-name'>
+              {/* `<span>`, não `<button>`: não há o que abrir aqui, e um botão que não faz nada é
+                  pior do que nenhum — promete interação e não entrega. */}
+              <span
+                className='wiz-art-toggle wiz-art-toggle--static'
+                title={`${label} — disponível depois das etapas anteriores`}
+              >
+                <i className='wiz-art-num' aria-hidden><FiLock size={11} /></i>
+                <span className='wiz-art-label'>{label}</span>
+              </span>
+            </div>
+          </div>
+        ) : (
         <div key={label} className={`wiz-art-step${i === cur ? ' wiz-art-step--now' : ''}${i < cur ? ' wiz-art-step--done' : ''}${estaAberta(i) || editing === i ? ' is-open' : ''}`}>
           {/* O cabeçalho é uma LINHA com dois controles irmãos, não um botão só: o lápis não pode
               ficar dentro do botão que abre/fecha (botão dentro de botão é HTML inválido e o
@@ -347,7 +362,8 @@ export const PlanList: FC<{
             art && <div className='wiz-art-step-body'>{art}</div>
           )}
         </div>
-      ))}
+        )
+      )}
     </>
   );
 };

@@ -145,6 +145,13 @@
   --wz-text: #61749a; // corpo
   --wz-muted: #8e9eb8; // secundário
   --wz-faint: #aebbd0; // placeholder / desabilitado
+  // Texto secundário LEGÍVEL. `--wz-muted` (2,56:1) e `--wz-faint` (1,83:1) sobre o canvas ficam
+  // muito abaixo do mínimo de 4,5:1 do WCAG AA para texto pequeno — servem para preenchimento e
+  // estado desabilitado, não para conteúdo que alguém precisa ler. Micro-rótulo, contadores e
+  // legendas usam estes dois, medidos sobre o fundo PIOR (o canvas, não o branco do cartão):
+  --wz-quiet: #5f7191; // 4,64:1 — micro-rótulos, "+N", barra da etapa
+  --wz-quiet-strong: #5a6c8c; // 5,00:1 — links/ações discretas ("voltar à pergunta anterior")
+  --wz-marker: #7f90ad; // 3,04:1 — pontos e marcadores (gráfico, régua de 3:1)
   --wz-line: #e8edf5;
   --wz-line-2: #dce4f0;
   --wz-surface: #ffffff;
@@ -1701,7 +1708,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--wz-muted);
+  color: var(--wz-quiet-strong, #5a6c8c);
   font: inherit;
   font-size: 12px;
   font-weight: 700;
@@ -1724,8 +1731,10 @@
   border: 0;
   background: transparent;
   // Rótulo de seção, não título: quem dá o nome da etapa em destaque é o cartão dela, logo abaixo.
-  // Com o mesmo peso dos dois, a informação aparecia duplicada e competindo.
-  color: #9aa9c2;
+  // Com o mesmo peso dos dois, a informação aparecia duplicada e competindo. Discreto pelo TAMANHO
+  // e pelo peso, não por apagar a cor — em 9,5px um cinza claro deixa de ser hierarquia e vira
+  // texto ilegível.
+  color: var(--wz-quiet, #5f7191);
   font: inherit;
   font-size: 9.5px;
   font-weight: 900;
@@ -2057,6 +2066,35 @@
   box-shadow: none;
 }
 
+// Etapa que ainda não chegou. Aparece desde o começo para o caminho inteiro ser visível — saber
+// que são nove e quais são muda a leitura de "quanto falta". O contorno tracejado e o fundo
+// transparente dizem "ainda não existe" sem precisar apagar o texto: o rótulo continua legível
+// (4,64:1), porque a informação aqui É o nome da etapa.
+.wiz-art-step--locked {
+  border-style: dashed;
+  border-color: #dfe6f1;
+  background: transparent;
+  box-shadow: none;
+
+  .wiz-art-num {
+    background: #eef2f8;
+    color: var(--wz-marker, #7f90ad);
+  }
+
+  .wiz-art-label {
+    color: var(--wz-quiet, #5f7191);
+    font-weight: 700;
+  }
+}
+
+// A linha de uma etapa bloqueada não é botão (não há o que abrir): mantém o mesmo alinhamento do
+// cabeçalho das outras, sem cursor nem hover prometendo interação que não existe.
+.wiz-art-toggle--static {
+  cursor: default;
+
+  &:hover { background: transparent; }
+}
+
 // Linha do cabeçalho: o botão que abre/fecha ocupa todo o espaço, e o lápis fica ao lado como
 // irmão — nunca dentro dele.
 .wiz-art-step-name {
@@ -2170,7 +2208,7 @@
 // rótulo curto e valor longo a segunda linha do valor voltava a alinhar sob o rótulo, e as duas
 // informações se misturavam.
 .wiz-art-k {
-  color: #9aa9c2;
+  color: var(--wz-quiet, #5f7191);
   font-size: 9.5px;
   font-weight: 800;
   letter-spacing: .05em;
@@ -2219,7 +2257,7 @@
 
   &::before {
     content: counter(wizart);
-    color: #9aa9c2;
+    color: var(--wz-quiet, #5f7191);
     font-size: 10.5px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
@@ -2237,14 +2275,14 @@
     height: 5px;
     margin-right: 4px;
     border-radius: 50%;
-    background: var(--wz-dot, #c2cddf);
+    background: var(--wz-dot, var(--wz-marker, #7f90ad));
     transform: translateY(-2px);
   }
 }
 
 // "+22 estratégias" e afins: rodapé do campo, não um item falso dentro da lista.
 .wiz-art-more {
-  color: #aebbd0;
+  color: var(--wz-quiet, #5f7191);
   font-size: 11.5px;
   font-weight: 700;
   line-height: 1.4;
