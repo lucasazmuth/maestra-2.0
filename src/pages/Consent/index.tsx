@@ -1,4 +1,4 @@
-import { FC, useMemo, useState } from 'react';
+import { FC, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { supabase } from '../../lib/supabase';
@@ -15,14 +15,67 @@ import styles from './Consent.module.scss';
 // formulário nenhum) e as contas criadas antes desta exigência. Quem decide se o dado vale é a
 // edge function `account-consent` — aqui a validação existe só para dar retorno imediato.
 
-const hojeISO = () => new Date().toISOString().slice(0, 10);
-
 const Consent: FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { state, apply } = useConsent();
 
-  const [birthDate, setBirthDate] = useState('');
+  // Antes era um <input type="date">: no iOS/Android isso abre o seletor nativo de rolagem, que
+  // exige rolar por dezenas de anos para alguem nascido nos anos 90 chegar la — lento e o motivo
+  // mais comum de abandono nesse tipo de campo. Three digitos ao inves de selecionar: dia, mes e
+  // ano em caixas separadas, cada uma com o teclado numerico do celular (inputMode="numeric") e
+  // avanco automatico para a proxima ao completar — o mesmo padrao ja usado no codigo de
+  // confirmacao por e-mail (EmailCodeStep.tsx).
+  const [dia, setDia] = useState('');
+  const [mes, setMes] = useState('');
+  const [ano, setAno] = useState('');
+  const diaRef = useRef<HTMLInputElement>(null);
+  const mesRef = useRef<HTMLInputElement>(null);
+  const anoRef = useRef<HTMLInputElement>(null);
+
+  // Só vira uma data pra validar quando os três campos estão completos — ISO (AAAA-MM-DD), o
+  // formato que `idadeEmAnos` espera. Incompleta, fica '' e nenhum aviso de erro aparece ainda
+  // (ver dataInvalida abaixo): a pessoa não pode ver "data inválida" no meio da digitação.
+  const birthDate = useMemo(
+    () => (dia.length === 2 && mes.length === 2 && ano.length === 4 ? `${ano}-${mes}-${dia}` : ''),
+    [dia, mes, ano]
+  );
+
+  const soDigitos = (v: string) => v.replace(/\D/g, '');
+
+  const onDiaChange = (v: string) => {
+    const d = soDigitos(v).slice(0, 2);
+    setDia(d);
+    if (d.length === 2) mesRef.current?.focus();
+  };
+  const onMesChange = (v: string) => {
+    const m = soDigitos(v).slice(0, 2);
+    setMes(m);
+    if (m.length === 2) anoRef.current?.focus();
+  };
+  const onAnoChange = (v: string) => setAno(soDigitos(v).slice(0, 4));
+
+  // Backspace num campo vazio volta e foca o campo anterior — sem apagar nada nele: a pessoa só
+  // reencontra o cursor de onde vai continuar corrigindo, do jeito que já espera de um campo
+  // segmentado (mesma convenção do código de confirmação por e-mail).
+  const onMesKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && mes === '') diaRef.current?.focus();
+  };
+  const onAnoKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && ano === '') mesRef.current?.focus();
+  };
+
+  // Colar uma data inteira ("23/02/1995", "23021995"...) no primeiro campo distribui os dígitos
+  // pelos três — sem isso, colar preencheria só os 2 primeiros dígitos do dia e o resto se perdia.
+  const onDiaPaste = (e: React.ClipboardEvent) => {
+    const digitos = soDigitos(e.clipboardData.getData('text'));
+    if (digitos.length < 8) return; // poucos dígitos: deixa o comportamento normal de colar
+    e.preventDefault();
+    setDia(digitos.slice(0, 2));
+    setMes(digitos.slice(2, 4));
+    setAno(digitos.slice(4, 8));
+    anoRef.current?.focus();
+  };
   const [maioridade, setMaioridade] = useState(false);
   const [termos, setTermos] = useState(false);
   const [politica, setPolitica] = useState(false);
@@ -94,16 +147,57 @@ const Consent: FC = () => {
 
         <form onSubmit={enviar}>
           {precisaData && (
-            <label className={styles.field}>
-              <span>Data de nascimento</span>
-              <input
-                className={styles.dateInput}
-                type='date'
-                value={birthDate}
-                max={hojeISO()}
-                onChange={(e) => setBirthDate(e.target.value)}
-                required
-              />
+            <div className={styles.field}>
+              {/* Rótulo de grupo, não de UM campo: com três inputs dentro, um <label> só
+                  encaminharia o foco/clique para o primeiro. O vínculo com os campos vem do
+                  aria-label de cada um. */}
+              <span id='birthDateLabel'>Data de nascimento</span>
+              <div className={styles.dateGroup} role='group' aria-labelledby='birthDateLabel'>
+                <input
+                  ref={diaRef}
+                  className={styles.dateBox}
+                  type='text'
+                  inputMode='numeric'
+                  autoComplete='bday-day'
+                  placeholder='DD'
+                  maxLength={2}
+                  value={dia}
+                  onChange={(e) => onDiaChange(e.target.value)}
+                  onPaste={onDiaPaste}
+                  aria-label='Dia'
+                  required
+                />
+                <span className={styles.dateSep} aria-hidden>/</span>
+                <input
+                  ref={mesRef}
+                  className={styles.dateBox}
+                  type='text'
+                  inputMode='numeric'
+                  autoComplete='bday-month'
+                  placeholder='MM'
+                  maxLength={2}
+                  value={mes}
+                  onChange={(e) => onMesChange(e.target.value)}
+                  onKeyDown={onMesKeyDown}
+                  aria-label='Mês'
+                  required
+                />
+                <span className={styles.dateSep} aria-hidden>/</span>
+                <input
+                  ref={anoRef}
+                  className={`${styles.dateBox} ${styles.dateBoxYear}`}
+                  type='text'
+                  inputMode='numeric'
+                  autoComplete='bday-year'
+                  placeholder='AAAA'
+                  maxLength={4}
+                  value={ano}
+                  onChange={(e) => onAnoChange(e.target.value)}
+                  onKeyDown={onAnoKeyDown}
+                  aria-label='Ano'
+                  required
+                />
+              </div>
               {dataInvalida && <span className={styles.hint}>Essa data não existe no calendário.</span>}
               {dataFutura && <span className={styles.hint}>A data não pode estar no futuro.</span>}
               {menorDeIdade && (
@@ -112,7 +206,7 @@ const Consent: FC = () => {
                   para revisão.
                 </span>
               )}
-            </label>
+            </div>
           )}
 
           <div className={styles.checks}>

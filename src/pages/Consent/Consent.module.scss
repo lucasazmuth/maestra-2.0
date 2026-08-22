@@ -67,22 +67,52 @@
   font-weight: 750;
 }
 
-.dateInput {
-  width: 100%;
+// Três caixas (DD / MM / AAAA) em vez do <input type="date"> nativo: no celular aquele campo
+// abre o seletor de rolagem do sistema, e para quem nasceu nos anos 80/90 rolar até lá é lento —
+// o motivo mais comum de abandono nesse tipo de campo. Digitar é mais rápido, e com o teclado
+// numérico (inputMode="numeric") não sai do alfabético sem querer.
+.dateGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dateBox {
+  width: 52px;
   min-height: 46px;
-  padding: 0 13px;
+  padding: 0;
   border: 1px solid #dde5f1;
   border-radius: 9px;
   background: #fbfcfe;
   color: #2c3f63;
   font: inherit;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  // 16px é o menor tamanho que o Safari iOS não usa como gatilho pra dar zoom automático no
+  // campo — abaixo disso, tocar aqui deslocava a tela inteira.
+  letter-spacing: 0.5px;
 }
 
-.dateInput:focus {
+.dateBoxYear {
+  width: 76px;
+}
+
+.dateBox:focus {
   border-color: #3361ff;
   background: #fff;
   outline: none;
+}
+
+.dateBox::placeholder {
+  color: #b7c2d6;
+  font-weight: 600;
+}
+
+.dateSep {
+  color: #b7c2d6;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 // Precisa de `.field .hint`: sozinho, `.hint` perde para `.field > span` (o rótulo do campo) e

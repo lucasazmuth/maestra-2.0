@@ -78,6 +78,37 @@
   color: #5f7197;
 }
 
+// Virar o dia media 11x11px: a regra base de `.calendar-tools > div button` serve aos botoes de
+// TEXTO da barra ("Hoje", "Dia/Mes/Ano") e por isso da font-size 11px com padding 0. O icone do
+// react-icons e 1em, entao ele virava o alvo inteiro. A navegacao sempre funcionou — o que falhava
+// era acertar 11px. Vira um alvo de 36x36 com icone de 18, e 44 no toque, que e o minimo
+// recomendado para o dedo.
+.task-app:not(.public-app) .agenda-reference-page .calendar-nav-step {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 8px;
+  color: #7f91b0;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-nav-step:hover,
+.task-app:not(.public-app) .agenda-reference-page .calendar-nav-step:focus-visible {
+  background: #eef3fb;
+  color: #3361ff;
+  outline: 0;
+}
+
+@media (pointer: coarse) {
+  .task-app:not(.public-app) .agenda-reference-page .calendar-nav-step {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 .task-app:not(.public-app) .agenda-reference-page .calendar-add-task-inline {
   display: inline-flex;
   width: auto;
@@ -170,13 +201,9 @@
 
 @media (max-width: 1250px) {
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
-    grid-template-columns: 210px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 56px 40px;
     height: 96px;
-  }
-
-  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > label {
-    grid-row: 1 / -1;
   }
 
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
@@ -223,25 +250,21 @@
     padding-bottom: 112px !important;
   }
 
+  // ATENCAO A ORDEM: este bloco vem ANTES das regras sem media query mais abaixo no arquivo, entao
+  // qualquer `display` declarado aqui perde para elas. A montagem de duas linhas do celular esta
+  // no ultimo bloco de 700px, no fim do arquivo, que e o que efetivamente vence.
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     height: auto;
   }
 
-  .task-app:not(.public-app) .agenda-reference-page .calendar-tools label,
-  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
-    min-height: 52px;
-    border-right: 0;
-    border-bottom: 1px solid #e9edf4;
-  }
-
-  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
-    justify-content: space-between;
-  }
-
-  .task-app:not(.public-app) .agenda-reference-page .calendar-tools nav {
-    display: none;
-  }
+  // As areas de cada controle. Valem em qualquer ordem, porque nada depois redeclara grid-area.
+  .task-app:not(.public-app) .agenda-reference-page .calendar-nav-prev { grid-area: voltar; justify-self: start; }
+  .task-app:not(.public-app) .agenda-reference-page .calendar-nav-next { grid-area: avancar; justify-self: end; }
+  .task-app:not(.public-app) .agenda-reference-page .calendar-today { grid-area: hoje; justify-self: start; }
+  .task-app:not(.public-app) .agenda-reference-page .calendar-add-task-inline { grid-area: criar; justify-self: end; }
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div strong { grid-area: data; }
+  .task-app:not(.public-app) .agenda-reference-page .calendar-tools nav { grid-area: modos; }
 
   .task-app:not(.public-app) .agenda-reference-page .calendar-events {
     grid-template-columns: 1fr;
@@ -254,14 +277,15 @@
 
 // Cabeçalho da agenda: data e modos de visualização pertencem ao mesmo grupo.
 // Mantemos todos os controles funcionais, sem criar uma segunda linha solta para Dia/Mês/Ano.
+// UMA coluna, porque o cabecalho tem UM filho. Os 210px daqui eram a coluna do campo de busca
+// decorativo que foi removido do JSX; a grade nunca foi atualizada junto. Sem o label, o unico
+// <div> caia na faixa de 210px e a de 1fr ficava vazia — dentro dela os controles pediam 341px, e
+// o <strong> da data, unico item encolhivel, ia a ZERO. A data sumia no desktop e so reaparecia
+// abaixo de 700px, onde outra regra ja devolvia a coluna unica.
 .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
-  grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 56px;
   height: 56px;
-}
-
-.task-app:not(.public-app) .agenda-reference-page .calendar-tools > label {
-  grid-row: auto;
 }
 
 .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
@@ -284,8 +308,14 @@
   line-height: 1.25;
   text-align: center;
   text-overflow: ellipsis;
-  text-transform: capitalize;
   white-space: nowrap;
+}
+
+// `capitalize` subia TODA palavra e o rotulo saia "21 De Agosto De 2026" — em portugues as
+// preposicoes ficam minusculas. So a primeira letra sobe, o que da "Sexta-feira, 21 de agosto de
+// 2026" e, na versao curta, "21 de agosto de 2026".
+.task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > strong::first-letter {
+  text-transform: uppercase;
 }
 
 .task-app:not(.public-app) .agenda-reference-page .calendar-add-task-inline {
@@ -323,10 +353,6 @@
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
     grid-template-columns: minmax(0, 1fr);
   }
-
-  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > label {
-    display: none;
-  }
 }
 
 @media (max-width: 700px) {
@@ -334,20 +360,43 @@
     height: auto;
   }
 
+  // DUAS linhas, nao tres. Era aqui que nasciam as tres: `flex-wrap: wrap` mais um
+  // `strong { order: 4; flex-basis: 100% }` empurravam a data para uma faixa inteira so dela,
+  // deixando um vao ao lado dos modos e levando o cabecalho a 144px de altura.
+  //
+  // Vira uma grade declarada, com lugar fixo para cada controle em vez de depender do wrap:
+  //
+  //   [ <  ][  sexta-feira, 21 de agosto de 2026  ][  > ]
+  //   [ Hoje ][     Dia  Mes  Ano     ][ + Compromisso  ]
+  //
+  // A data centrada entre as setas e o padrao de qualquer calendario, e as acoes descem juntas.
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
-    min-height: 58px;
-    flex-wrap: wrap;
-    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "voltar data  avancar"
+      "hoje   modos criar";
+    align-items: center;
+    gap: 2px 10px;
+    min-height: 0;
+    padding: 6px 14px;
   }
 
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > strong {
-    order: 4;
-    flex-basis: 100%;
-    text-align: left;
+    min-width: 0;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div > nav {
-    margin-left: auto;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-left: 0;
+    padding: 0;
+    border-top: 0;
   }
 }
 
@@ -562,4 +611,20 @@
 // padding, a grade das duas colunas nasce na mesma linha. Os eventos já têm margem própria.
 .task-app:not(.public-app) .agenda-reference-page .calendar-events {
   padding-top: 0;
+}
+
+// Rotulo da data em duas versoes: a completa no desktop e a curta no celular, alternadas por
+// media query. Ver o comentario em Agenda/index.tsx sobre por que nao e um `isMobile` em JS.
+.task-app:not(.public-app) .agenda-reference-page .calendar-label-compact {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .task-app:not(.public-app) .agenda-reference-page .calendar-label-full {
+    display: none;
+  }
+
+  .task-app:not(.public-app) .agenda-reference-page .calendar-label-compact {
+    display: inline;
+  }
 }

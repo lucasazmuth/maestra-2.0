@@ -2,7 +2,7 @@ import { lazy, memo, Suspense, useEffect, useRef, useState, type FC, type ReactN
 
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { MobileNav } from './components/MobileNav';
+import { MobileNav, isNavExcludedRoute } from './components/MobileNav';
 import { SystemMenu } from './components/SystemMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
@@ -178,12 +178,20 @@ export const AppLayout: FC = memo(() => {
   // lista "Seus artistas" e a área admin. Mantém a reserva de espaço (padding-bottom) em sincronia
   // com o que o MobileNav de fato renderiza, senão o conteúdo ficaria atrás da barra.
   const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
-  const navExcluded = isArtistsList || location.pathname.startsWith('/admin');
+  // A MESMA funcao que o MobileNav usa para decidir se renderiza. Antes a regra estava escrita
+  // duas vezes, e o comentario acima ja avisava que elas precisam concordar; agora ha uma fonte
+  // so, entao incluir uma rota nova nao tem como sair do sincronismo.
+  const navExcluded = isNavExcludedRoute(location.pathname);
   const hasMobileNav = !!(routeArtistId ?? currentArtistId) && !navExcluded;
   // No mobile, o Planejamento Estratégico (wizard) vira "tela cheia": escondemos o topbar do app
   // pra o chat ocupar toda a altura (o wizard já tem cabeçalho próprio com título e "Salvar e sair").
   const isWizardChat = /^\/artists\/[^/]+\/wizard/.test(location.pathname);
-  const hideTopbar = isMobile && isWizardChat;
+  // No celular o wizard vira tela cheia de verdade: alem de esconder o topbar, a classe abaixo
+  // liga a cadeia de ALTURA LIMITADA que so existia acima de 701px (ver Wizard/styles.scss). Sem
+  // ela o `.nyta-scroll` nunca virava area rolavel, a pagina inteira e que crescia, e a conversa
+  // ficava parada no topo enquanto as mensagens chegavam.
+  const wizardFullscreen = isMobile && isWizardChat;
+  const hideTopbar = wizardFullscreen;
   // No wizard, ENQUANTO o planejamento não estiver concluído, o painel de perfil
   // (Dashboard/Diagnóstico/Plano de Ação/…) some — só a conversa da Nyta fica em foco, pra
   // não competir com módulos que ainda não fazem sentido pro artista abrir. O rail (Início/
@@ -358,7 +366,7 @@ export const AppLayout: FC = memo(() => {
 
       {/* has-player: no mobile o player é uma ilha flutuante ACIMA da navbar, então enquanto ele
           estiver aberto o conteúdo precisa reservar mais espaço embaixo (ver App.scss). */}
-      <main className={`task-app${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}${playerVisible ? ' has-player' : ''}`}>
+      <main className={`task-app${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}${wizardFullscreen ? ' wizard-fullscreen' : ''}${playerVisible ? ' has-player' : ''}`}>
         {isArtistsList ? (
           <section className='profile-home page-view'>
             {!hideTopbar && topNavigation()}

@@ -247,17 +247,31 @@
     outline: 3px solid rgba(51, 97, 255, 0.22);
     outline-offset: 2px;
   }
+
+  // No toque, 38px fica abaixo do minimo confortavel para o dedo (44). Vale para TODOS os
+  // controles do cabecalho, e nao so para o de sair, senao os dois cantos ficam desiguais.
+  @media (pointer: coarse) {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 // (Removido `.wiz-back-btn--on`) O botão da coluna de resultados só existe quando ela está
 // fechada, então não há estado "ligado" pra representar.
 
-// Identificação no cabeçalho: avatar + título do planejamento.
+// Identificação no cabeçalho: saída + avatar + título do planejamento.
 .wiz-head-id {
   display: flex;
   align-items: center;
   gap: 12px;
   min-width: 0;
+}
+
+// Sair do planejamento. Usa a classe .wiz-back-btn junto, entao herda o MESMO desenho do botao
+// "mais opcoes" do outro canto: os dois sao controles do cabecalho, e desenha-los diferente
+// sugeria hierarquias que nao existem. Aqui sobra so o ajuste de posicao ao lado do avatar.
+.wiz-exit-btn {
+  margin-right: -2px;
 }
 
 .wiz-head-avatar {
@@ -1580,22 +1594,64 @@
   padding-bottom: 0;
 }
 
-// A navbar do mobile é uma barra FIXA sobreposta (bottom:18px, altura 78px). Numa lista que rola,
-// passar por baixo dela é de propósito — mas o campo de resposta é o RODAPÉ do chat e ficaria
-// permanentemente embaixo dela, sem como tocar no botão de enviar. A faixa é reservada nos dois
-// pontos que encostam nela (fim da conversa e campo), e não no shell: reservar no shell encolhia
-// a área de conversa mesmo nas etapas sem campo de texto, deixando um vão morto no rodapé.
+// TELA CHEIA NO CELULAR.
+//
+// O problema era um so, com dois sintomas. A cadeia de altura limitada do app (.app-layout fixo,
+// .board-shell com altura de viewport, conteudo com overflow proprio) vive inteira dentro de um
+// `@media (min-width: 701px)` em gsap-reference.css. No celular ela simplesmente nao existe: o
+// `.app-layout` vira `display: block` sem altura, e entao
+//
+//   - o `height: 100%` do .wizard--chat resolve para `auto`;
+//   - o `.nyta-scroll`, que e `flex: 1; overflow-y: auto`, nunca recebe altura definida e por isso
+//     NUNCA vira area rolavel — quem cresce e a pagina;
+//   - o campo de resposta, que e o rodape do chat, vai parar no fim de uma pagina longa, embaixo
+//     da tab bar flutuante.
+//
+// Daí os dois relatos: a conversa nao acompanha as mensagens novas (o `scrollIntoView` do chat
+// mira um container que nao rola) e a barra de navegacao cobre o campo.
+//
+// A tentativa anterior reservava 96px embaixo (--wiz-nav-reserve) para desviar da tab bar. Tratava
+// o sintoma: o chat continuava sem rolagem propria, e nas etapas sem campo de texto sobrava um vao
+// morto. Aqui a cadeia de altura e reconstituida para esta tela, e a tab bar sai de cena (ver
+// MobileNav), entao nao ha mais o que reservar.
 @media (max-width: 768px) {
-  .has-mobile-nav .wizard--chat {
-    --wiz-nav-reserve: calc(96px + env(safe-area-inset-bottom, 0px));
+  // Cada nivel precisa de altura definida, senao o `flex: 1` la embaixo nao tem contra o que medir.
+  .wizard-fullscreen .app-layout {
+    position: fixed;
+    inset: 0;
+    display: block;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
   }
 
-  .has-mobile-nav .wizard--chat .nyta-thread {
-    padding-bottom: var(--wiz-nav-reserve, 16px);
+  .wizard-fullscreen .board-shell {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
   }
 
-  .has-mobile-nav .wizard--chat .nyta-input-bar {
-    margin-bottom: var(--wiz-nav-reserve, 10px);
+  .wizard-fullscreen .Main-section {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  // `min-height: 800px` vinha da regra de =<700px do gsap-reference e sozinho ja estouraria a
+  // viewport, devolvendo a rolagem para a pagina.
+  .wizard-fullscreen .wizard--chat {
+    min-height: 0;
+    flex: 1 1 auto;
+    // A faixa segura do iPhone (barra de gestos) fica por conta do proprio chat agora.
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 
