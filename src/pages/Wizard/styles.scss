@@ -1771,13 +1771,18 @@
 }
 
 @media (max-width: 768px) {
-  .wizard--fullpage {
+  // DUAS classes de propósito (`.wizard.wizard--fullpage`, 0,2,0): mais abaixo neste mesmo arquivo
+  // há um `@media (max-width: 768px) { .wizard { padding: 18px 14px 12px } }` que, por vir depois
+  // e ter a mesma especificidade, vencia o `padding: 0` da regra base. O resultado eram 14px da
+  // raiz SOMANDO com os 14px do cabeçalho: o (X) começava a 38px da borda, que é a "lateral com
+  // espaçamento grande". Com duas classes a ordem no arquivo deixa de importar.
+  .wizard.wizard--fullpage {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "head"
       "chat";
-    // Faixa segura do iPhone (barra de gestos).
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    // Só a faixa segura do iPhone (barra de gestos); lateral é responsabilidade de cada coluna.
+    padding: 0 0 env(safe-area-inset-bottom, 0px);
   }
 
   .wiz-side { display: none; }
@@ -1800,6 +1805,13 @@
   // do conteúdo, com respiro menor — a conversa é que precisa do espaço.
   .wizard--fullpage > .wiz-chat-head {
     min-height: 0;
+    padding: 10px 14px;
+  }
+
+  // O cabeçalho da tela de CONVITE/loading (.wiz-page-frame) tinha ficado de fora do ajuste
+  // acima, que só mirava o da conversa (.wizard--fullpage) — e seguia com os 24px de desktop.
+  // As duas telas são a mesma coisa para quem olha; o recuo tem que ser um só.
+  .wiz-page-frame > .wiz-chat-head {
     padding: 10px 14px;
   }
 
