@@ -201,13 +201,9 @@
 
 @media (max-width: 1250px) {
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
-    grid-template-columns: 210px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 56px 40px;
     height: 96px;
-  }
-
-  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > label {
-    grid-row: 1 / -1;
   }
 
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
@@ -259,7 +255,6 @@
     height: auto;
   }
 
-  .task-app:not(.public-app) .agenda-reference-page .calendar-tools label,
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
     min-height: 52px;
     border-right: 0;
@@ -285,14 +280,15 @@
 
 // Cabeçalho da agenda: data e modos de visualização pertencem ao mesmo grupo.
 // Mantemos todos os controles funcionais, sem criar uma segunda linha solta para Dia/Mês/Ano.
+// UMA coluna, porque o cabecalho tem UM filho. Os 210px daqui eram a coluna do campo de busca
+// decorativo que foi removido do JSX; a grade nunca foi atualizada junto. Sem o label, o unico
+// <div> caia na faixa de 210px e a de 1fr ficava vazia — dentro dela os controles pediam 341px, e
+// o <strong> da data, unico item encolhivel, ia a ZERO. A data sumia no desktop e so reaparecia
+// abaixo de 700px, onde outra regra ja devolvia a coluna unica.
 .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
-  grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 56px;
   height: 56px;
-}
-
-.task-app:not(.public-app) .agenda-reference-page .calendar-tools > label {
-  grid-row: auto;
 }
 
 .task-app:not(.public-app) .agenda-reference-page .calendar-tools > div {
@@ -353,10 +349,6 @@
 @media (max-width: 1250px) {
   .task-app:not(.public-app) .agenda-reference-page .calendar-tools {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .task-app:not(.public-app) .agenda-reference-page .calendar-tools > label {
-    display: none;
   }
 }
 
