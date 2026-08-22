@@ -66,10 +66,3 @@ export const NytaCardRow: FC<{ children: ReactNode; className?: string }> = ({ c
   </div>
 );
 
-// Marco de etapa: divisória com o nome da etapa no meio. Numa conversa contínua não dava pra
-// saber onde uma etapa termina e a outra começa — tudo era o mesmo fio de mensagens.
-export const StepDivider: FC<{ children: ReactNode }> = ({ children }) => (
-  <div className='nyta-step-divider' role='separator' aria-label={`Início da etapa ${children}`}>
-    <span>{children}</span>
-  </div>
-);

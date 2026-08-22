@@ -1886,6 +1886,9 @@
 // Aqui ela é só o container de flex/scroll do wizard — o card já é o `.board-shell`. Sem este
 // reset, vira um cartão dentro do cartão e o `min-height` quebra a rolagem em telas baixas.
 .wizard--chat .nyta-chat {
+  // Âncora do portão entre etapas (.wiz-gate, position: absolute) — sem isto ele resolveria
+  // contra a viewport e cobriria também a coluna do plano.
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -2555,4 +2558,99 @@
 // linhas de texto — no tamanho antigo (13px) ele sumia diante do player logo abaixo.
 .wiz-art-step-name {
   font-size: 15px;
+}
+
+// Etapa CONCLUÍDA: selo verde com check no lugar do número. O progresso fica legível de relance —
+// antes era preciso comparar o número de cada etapa com o da etapa atual para saber o que já foi.
+.wiz-art-step--done .wiz-art-num {
+  background: #e8f7ee;
+  color: #1f9254;
+}
+
+// ---- Portão entre etapas ---------------------------------------------------------------------
+//
+// Cobre a coluna da CONVERSA (position: absolute dentro do .nyta-chat), não a tela toda: no
+// desktop a coluna do plano fica visível ao lado, e o check da etapa recém-concluída aparece lá
+// no mesmo instante — o portão confirma, e a coluna comprova.
+//
+// Enquanto ele está aberto o efeito do beat não avança (gateRef), então a Nyta não fala por trás.
+.wiz-gate {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(247, 248, 251, .92);
+  backdrop-filter: blur(3px);
+  animation: wizFadeSlideUp .3s cubic-bezier(.4, 0, .2, 1) both;
+}
+
+.wiz-gate-card {
+  display: flex;
+  width: 100%;
+  max-width: 340px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 28px 24px;
+  border: 1px solid #e9eef6;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(70, 92, 136, .14);
+  text-align: center;
+}
+
+.wiz-gate-check {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 6px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e8f7ee;
+  color: #1f9254;
+}
+
+.wiz-gate-kicker {
+  margin: 0;
+  color: #9aa9c2;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.wiz-gate-title {
+  margin: 0;
+  color: #2c3f63;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.wiz-gate-next {
+  margin: 4px 0 18px;
+  color: #7c8da8;
+  font-size: 12.5px;
+
+  strong { color: #52668d; }
+}
+
+.wiz-gate-btn {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--wz-blue, #3361ff);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(51, 97, 255, .22);
+  transition: background .15s ease;
+
+  &:hover { background: #244fe3; }
 }
