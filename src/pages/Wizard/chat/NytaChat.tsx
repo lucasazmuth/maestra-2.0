@@ -1,15 +1,17 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { App, Input } from 'antd';
-import { FiArrowUp } from 'react-icons/fi';
+import { FiArrowUp, FiCheck } from 'react-icons/fi';
 
 import * as wizardAi from '../../../services/wizardAi';
 import { supabase } from '../../../lib/supabase';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
 import { WIZARD_TOTAL_STEPS } from '../../../constants/maestra';
-import { NytaBubble, TypingIndicator, UserBubble, WidgetSlot } from './ChatMessage';
+import { NytaBubble, NytaCardRow, TypingIndicator, UserBubble, WidgetSlot } from './ChatMessage';
 import { GUIDED_OPENTEXT, SAY, type OpenTextField } from './nytaPersona';
-import { buildOpening, nextBeat, type PrepareAction, type WidgetSpec } from './script';
+import { buildOpening, nextBeat, currentStepIndex, STEP_LABELS, type PrepareAction, type WidgetSpec } from './script';
+import { YouTubeEmbed } from '../../../components/YouTubeEmbed';
+import { BEAT_VIDEOS, VIDEO_ABERTURA } from '../beatVideos';
 import {
   GENDER_OPTIONS,
   MISSION_FINANCIAL_OPTIONS,
@@ -71,6 +73,10 @@ interface ChatItem {
   hero?: boolean;
   // Card do mapa de referências exibido inline (Metodologia v2, Q6).
   refMap?: ArtistIdentity['references'];
+  // Vídeo explicativo da etapa, exibido como se a Nyta o tivesse enviado. Rola junto com a
+  // conversa, não fica preso na tela. Some ao recarregar (a thread é reconstruída por
+  // `buildOpening`) — e tudo bem: o mesmo vídeo mora fixo na tela das etapas, que é a casa dele.
+  video?: { src: string; title: string };
   // true enquanto a fala está sendo "digitada" letra a letra (cursor piscando).
   streaming?: boolean;
 }
@@ -137,6 +143,10 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   // fica escondida — pra ninguém enviar resposta no meio do "discurso" dela.
   const [speaking, setSpeaking] = useState(false);
   const [nonce, setNonce] = useState(0);
+  // Portão de etapa: tela que cobre a conversa entre uma etapa e a seguinte. Enquanto está aberto,
+  // o efeito do beat não avança — nada é dito por trás dela.
+  const [gate, setGate] = useState<{ concluida: number; proxima: number } | null>(null);
+  const gateRef = useRef(false);
   // "Me ajuda a responder": a Nyta pergunta, o artista responde, e ela formula a resposta.
   const [guided, setGuided] = useState<{
     field: OpenTextField;
@@ -148,6 +158,8 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   } | null>(null);
 
   const stageRef = useRef<string>('');
+  // Última etapa cujo vídeo já foi enviado na conversa — evita repetir a cada beat.
+  const videoStepRef = useRef<number | null>(null);
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const preparingRef = useRef<string | null>(null);
   const openedRef = useRef(false);
@@ -308,6 +320,22 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     return run;
   };
 
+  // Injeta o vídeo da etapa como uma "fala" da Nyta. Mesmo molde do sayMap: entra na fila, para
+  // aparecer na ordem certa em vez de furar as mensagens que ainda estão sendo digitadas.
+  const sayVideo = (src: string, title: string) => {
+    setSpeaking(true);
+    const run = queueRef.current.then(async () => {
+      setTyping(true);
+      await sleep(500);
+      setTyping(false);
+      setThread((t) => [...t, { id: uid(), role: 'nyta', video: { src, title } }]);
+      await sleep(120);
+    });
+    queueRef.current = run;
+    run.then(() => { if (queueRef.current === run) setSpeaking(false); });
+    return run;
+  };
+
   // Injeta o card do mapa de referências inline (na fila, para respeitar a ordem das falas).
   const sayMap = (refs: ArtistIdentity['references']) => {
     setSpeaking(true);
@@ -323,18 +351,53 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     return run;
   };
 
-  // Abertura: hero compacto + saudação/recap (uma única vez por montagem).
+  // "Continuar" do portão: zera a conversa e libera a etapa nova.
+  //
+  // Limpar NÃO perde informação: tudo que foi respondido continua na coluna do plano, e a própria
+  // conversa já era descartada a cada recarga da página (buildOpening reconstrói só saudação e
+  // recap). O que muda é que agora a conversa é de UMA etapa por vez, em vez de um rolo contínuo
+  // de nove — que era onde a pessoa se perdia.
+  const continuarEtapa = () => {
+    setGate(null);
+    gateRef.current = false;
+    // Zera a conversa e o estágio: sem resetar o stageRef, o efeito veria o mesmo beat de antes
+    // e não diria nada — a etapa nova abriria em silêncio, com a tela vazia.
+    setThread([]);
+    stageRef.current = '';
+    setWidget(null);
+    setGuided(null);
+    setNonce((n) => n + 1);
+  };
+
+  // Abertura: hero compacto + vídeo da etapa + saudação/recap (uma única vez por montagem).
   useEffect(() => {
     if (openedRef.current) return;
     openedRef.current = true;
     setThread([{ id: uid(), role: 'nyta', hero: true }]);
+    // A abertura tem vídeo próprio, e só na PRIMEIRA vez (sem progresso ainda): ele reforça o
+    // "deixa eu olhar pra sua carreira como um negócio junto com você?", que é a pergunta da
+    // saudação. Quem retoma no meio do plano já passou por isso.
+    //
+    // DEPOIS da saudação, não antes: aqui o vídeo é reforço de uma pergunta, e reforço vem depois
+    // da pergunta. `videoStepRef` continua sendo marcado para o portão de etapa não disparar na
+    // montagem (ele compara com o step anterior).
+    videoStepRef.current = draft.step ?? 0;
     say(buildOpening(draft, artist.name));
+    // `sayVideo` chamado aqui, e não com `.then()` sobre a promise da saudação: as duas funções
+    // enfileiram SINCRONAMENTE (`queueRef.current = queueRef.current.then(...)`), então chamar as
+    // duas em sequência, no mesmo corpo de efeito, garante a posição no fio — sem depender de
+    // qual promise resolve primeiro. Com `.then()`, o efeito do BEAT (que roda logo depois deste
+    // mesmo efeito, ainda no mount) enfileirava a primeira pergunta antes de o vídeo conseguir
+    // se anexar, e o vídeo aparecia depois da pergunta seguinte, não da saudação que ele reforça.
+    if (!(draft.step ?? 0)) sayVideo(VIDEO_ABERTURA, 'Vídeo: como funciona o planejamento');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Resolução do beat a cada mudança do draft.
   useEffect(() => {
     if (!openedRef.current) return;
+    // Portão aberto: nada avança por trás dele.
+    if (gateRef.current) return;
     const beat = nextBeat(draft);
 
     if (beat.autoPersistStep != null) {
@@ -347,6 +410,27 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     if (beat.autoPersistPatch) {
       persist(beat.autoPersistPatch);
       return;
+    }
+
+    // VIRADA DE ETAPA: abre o portão e para por aqui. O resto (limpar a conversa, mandar o vídeo,
+    // dizer as falas da nova etapa) só acontece quando a pessoa toca em "Continuar" — senão a Nyta
+    // ficaria falando por trás de uma tela que cobre a conversa.
+    //
+    // O gatilho é a mudança de STEP, não de beat: dentro da mesma etapa há vários beats (a
+    // Identidade sozinha tem sete), e por beat o portão apareceria a cada pergunta.
+    const stepAtual = draft.step ?? 0;
+    if (videoStepRef.current !== null && stepAtual !== videoStepRef.current) {
+      const anterior = videoStepRef.current;
+      videoStepRef.current = stepAtual;
+      // `>` e não `!==`: o "voltar à pergunta anterior" pode REGREDIR o step (o restore substitui
+      // o draft inteiro). Com `!==`, voltar cruzando a fronteira de uma etapa abria o portão
+      // anunciando uma conclusão que não aconteceu. Regressão só atualiza a referência, em
+      // silêncio — e o vídeo também não se repete, porque a conversa restaurada já o contém.
+      if (stepAtual > anterior) {
+        gateRef.current = true;
+        setGate({ concluida: anterior, proxima: currentStepIndex(draft) });
+        return;
+      }
     }
 
     if (beat.stage !== stageRef.current) {
@@ -367,7 +451,15 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
           captureBeat('vision.city', { kind: 'cityInput' }, false);
         });
       } else {
-        say(beat.say).then(() => {
+        // Vídeo DEPOIS da pergunta, nas que ganharam apoio: ele reforça o que acabou de ser
+        // perguntado — antes da pergunta seria um vídeo sobre nada. E o widget só aparece depois
+        // dele: oferecer a resposta antes do apoio derrota o propósito de ter o apoio.
+        const apoio = BEAT_VIDEOS[beat.stage];
+        const falas = say(beat.say);
+        const comApoio = apoio
+          ? falas.then(() => sayVideo(apoio, 'Vídeo de apoio da Nyta'))
+          : falas;
+        comApoio.then(() => {
           if (beat.widget) setWidget(beat.widget);
           if (answerable) captureBeat(beat.stage, beat.widget ?? null, beat.acceptsText === true);
         });
@@ -917,6 +1009,26 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
 
   return (
     <div className='nyta-chat'>
+      {/* Portão entre etapas: cobre a conversa, confirma o que foi concluído e anuncia o que vem.
+          Fica DENTRO do .nyta-chat (position: absolute) para cobrir só a coluna da conversa — no
+          desktop a coluna do plano continua visível ao lado, e é lá que o check da etapa recém
+          concluída aparece na mesma hora. */}
+      {gate && (
+        <div className='wiz-gate' role='dialog' aria-modal='true' aria-labelledby='wizGateTitulo'>
+          <div className='wiz-gate-card'>
+            <span className='wiz-gate-check' aria-hidden><FiCheck size={26} /></span>
+            <p className='wiz-gate-kicker'>Etapa {gate.concluida + 1} concluída</p>
+            <h2 className='wiz-gate-title' id='wizGateTitulo'>{STEP_LABELS[gate.concluida]}</h2>
+            <p className='wiz-gate-next'>
+              Próxima · <strong>{gate.proxima + 1}. {STEP_LABELS[gate.proxima]}</strong>
+            </p>
+            <button type='button' className='wiz-gate-btn' onClick={continuarEtapa} autoFocus>
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className='nyta-scroll' ref={scrollRef} onScroll={handleScroll}>
         <div className='nyta-thread' ref={threadRef}>
           {thread.map((item) =>
@@ -937,6 +1049,12 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
                   </div>
                 </div>
               </NytaBubble>
+            ) : item.video ? (
+              <NytaCardRow key={item.id} className='nyta-row--video'>
+                <div className='nyta-card nyta-video-card'>
+                  <YouTubeEmbed src={item.video.src} title={item.video.title} className='wiz-video' />
+                </div>
+              </NytaCardRow>
             ) : item.refMap !== undefined ? (
               <WidgetSlot key={item.id}>
                 <div className='nyta-card'>

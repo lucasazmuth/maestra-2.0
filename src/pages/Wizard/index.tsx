@@ -1,7 +1,7 @@
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { App, Dropdown } from 'antd';
-import { FiArrowLeft, FiCornerUpLeft, FiMoreVertical, FiRotateCcw, FiSidebar } from 'react-icons/fi';
+import { FiCornerUpLeft, FiMoreVertical, FiRotateCcw, FiX } from 'react-icons/fi';
 
 import './styles.scss';
 import { useArtist } from '../../hooks/useArtist';
@@ -10,10 +10,11 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { artistsActions } from '../../store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
-import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { migrateWizardContent } from './migration';
 import { NytaChat } from './chat/NytaChat';
-import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
+import WizardIntro from './WizardIntro';
+import { ArtifactsPanel, PlanList } from './ArtifactsPanel';
+import { StepBar } from './components';
 import { supabase } from '../../lib/supabase';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
 import { setWizardPlatformContext, clearWizardPlatformContext } from '../../services/wizardAi';
@@ -21,6 +22,27 @@ import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 
 // Shell do Planejamento Estratégico conversacional: é dono do draft, da persistência e da
 // migração; a condução da conversa (beats, widgets, IA) vive em chat/NytaChat.
+//
+// A rota vive FORA do <AppLayout> (ver App.tsx): esta tela desenha o próprio shell, em tela
+// cheia, como /criar-artista e /diagnostico/refazer já faziam.
+
+/**
+ * 769px é o breakpoint que o wizard já usava como contrato (ver styles.scss) — não invente outro.
+ *
+ * Não reusa o `utils/isMobile`: aquele hook registra o listener com uma função debounced mas
+ * remove com a original, então nunca desregistra, e na prática só acerta na carga da página.
+ * Aqui a diferença importa: quem decide desktop/celular decide ONDE o plano é montado.
+ */
+const useIsDesktop = (): boolean => {
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 769px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 769px)');
+    const aoMudar = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', aoMudar);
+    return () => mq.removeEventListener('change', aoMudar);
+  }, []);
+  return isDesktop;
+};
 
 const Wizard: FC = () => {
   const { message, modal } = App.useApp(); // `message`/`modal` estáticos são no-op fora do <App> do antd
@@ -38,14 +60,15 @@ const Wizard: FC = () => {
     }
   }, [artistsLoaded, artist, editPlanning, navigate]);
 
-  // Marca a tela para o CSS reservar altura da tab bar no mobile (ver gsap-reference.css).
+  // O wizard ocupa a viewport inteira (`position: fixed`), então o body atrás não deve rolar —
+  // senão o toque no celular às vezes arrasta a página em vez da conversa.
   //
-  // A barra CONTINUA visível aqui, e isso é deliberado: o "voltar" do cabeçalho volta uma
-  // pergunta, não sai da tela — sem a tab bar a pessoa fica presa no wizard sem caminho de saída.
-  // O que incomodava não era a barra existir, era ela ficar por cima da conversa.
+  // A classe ANTERIOR (`wizard-fullscreen`) reservava altura para a tab bar do celular. A barra
+  // deixou de ser renderizada aqui, e agora a tela nem passa mais pelo AppLayout — a reserva
+  // virou vão morto e saiu junto com a regra em gsap-reference.css.
   useEffect(() => {
-    document.body.classList.add('wizard-fullscreen');
-    return () => document.body.classList.remove('wizard-fullscreen');
+    document.body.classList.add('wizard-page');
+    return () => document.body.classList.remove('wizard-page');
   }, []);
 
   // Convite antes da conversa. Quem entra direto (pelo rail, pelo menu) caía no meio de um
@@ -60,9 +83,20 @@ const Wizard: FC = () => {
   // Fonte única da decisão "estou mostrando o convite?": o render e o efeito da coluna de
   // resultados leem daqui, senão um poderia dizer sim e o outro não.
   const mostrandoConvite = draftReady && !entrou && !(draft.step ?? 0);
-  // Coluna de resultados (artefatos por etapa): vive no AppLayout como 3ª coluna; aqui só
-  // publicamos os dados e controlamos o toggle via store global.
-  const wizardPanel = useWizardPanelStore();
+  // Folha do plano no celular. No desktop o plano é coluna fixa e não abre/fecha, então isto só
+  // vale abaixo de 769px. Era um store global (`wizardPanelStore`) enquanto o painel precisava
+  // ser renderizado lá no AppLayout; fora do layout, o Wizard é o dono e um useState basta.
+  const [planoAberto, setPlanoAberto] = useState(false);
+  const isDesktop = useIsDesktop();
+
+  // Esc fecha a folha do plano. Ela cobre a tela inteira no celular, e uma sobreposição sem saída
+  // pelo teclado é uma armadilha para quem navega assim.
+  useEffect(() => {
+    if (!planoAberto) return;
+    const aoTeclar = (e: KeyboardEvent) => { if (e.key === 'Escape') setPlanoAberto(false); };
+    window.addEventListener('keydown', aoTeclar);
+    return () => window.removeEventListener('keydown', aoTeclar);
+  }, [planoAberto]);
   // Brilho "aurora" disparado a cada avanço de etapa: a key incrementa pra re-tocar a animação.
   const [stepGlow, setStepGlow] = useState(0);
   const prevStepRef = useRef<number | null>(null);
@@ -82,27 +116,6 @@ const Wizard: FC = () => {
     }
     prevStepRef.current = s;
   }, [draft.step]);
-
-  // Liga/desliga a coluna de resultados no AppLayout enquanto a CONVERSA está aberta.
-  // Ela nasce ABERTA no desktop (é o acompanhamento do plano, não um extra a descobrir). No
-  // mobile não: lá a coluna vira folha de tela cheia e abriria por cima da própria conversa —
-  // o breakpoint é o mesmo do CSS (.wiz-artifacts). Fechar segue sendo escolha do usuário.
-  //
-  // Depende de `mostrandoConvite` porque hooks rodam mesmo quando o render sai antes pelo
-  // convite: sem isso a coluna "Etapa 1 de 9" aparecia ao lado de uma tela que ainda nem
-  // começou, anunciando um progresso que não existe.
-  useEffect(() => {
-    if (mostrandoConvite) return;
-    wizardPanel.activate(window.matchMedia('(min-width: 769px)').matches);
-    return () => wizardPanel.deactivate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mostrandoConvite]);
-
-  // Publica o draft para a coluna renderizada no AppLayout.
-  useEffect(() => {
-    wizardPanel.setData({ content: draft });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft]);
 
   // Fila serializada de gravações: uma por vez, em ordem. Sem isso, requests
   // concorrentes chegam fora de ordem no Supabase e a última a aterrissar vence —
@@ -219,19 +232,11 @@ const Wizard: FC = () => {
     resetRef.current(cleared);
   };
 
-  // Publica um persist ESTÁVEL pra coluna de resultados (edição inline dos entregáveis).
-  // A função `persist` é recriada a cada render; o wrapper via ref sempre chama a mais recente.
-  const persistFnRef = useRef(persist);
-  persistFnRef.current = persist;
-  useEffect(() => {
-    wizardPanel.setPersist((patch) => persistFnRef.current(patch));
-    return () => wizardPanel.setPersist(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   if (!artist) {
     if (artistsLoaded) return <Navigate to='/artists' replace />;
-    return <Spinner loading>{null as any}</Spinner>;
+    // `wiz-page-frame`: fora do AppLayout não há mais o cartão do .board-shell por trás — sem uma
+    // moldura própria, tanto o loading quanto o convite (abaixo) apareciam nus sobre o fundo.
+    return <div className='wiz-page-frame'><Spinner loading>{null as any}</Spinner></div>;
   }
 
   // Só oferece "recomeçar" quando há alguma resposta (senão não há o que zerar).
@@ -261,11 +266,6 @@ const Wizard: FC = () => {
       label: 'Voltar à pergunta anterior',
       icon: <FiCornerUpLeft size={15} />,
     },
-    !wizardPanel.open && {
-      key: 'plano',
-      label: 'Ver seu plano',
-      icon: <FiSidebar size={15} />,
-    },
     // Por ultimo e em vermelho: apaga todas as respostas. Ainda pede confirmacao.
     hasProgress && {
       key: 'recomecar',
@@ -277,94 +277,112 @@ const Wizard: FC = () => {
 
   const onMenuClick = ({ key }: { key: string }) => {
     if (key === 'voltar') goBackRef.current();
-    else if (key === 'plano') wizardPanel.setOpen(true);
     else if (key === 'recomecar') confirmReset();
   };
 
   // Convite antes da conversa — só para quem ainda não começou o planejamento e não veio pela
   // CTA do Plano de Ação (que já convidou).
+  // O (X) e a identificação do perfil. Precisam existir TAMBÉM no convite: fora do AppLayout não
+  // há mais rail, e sem isto a tela de convite não teria nenhuma saída — a pessoa entrava e
+  // ficava presa antes mesmo de começar.
+  const cabecalho = (comMenu: boolean) => (
+    <header className='wiz-chat-head'>
+      <div className='wiz-head-id'>
+        <button
+          className='wiz-back-btn wiz-exit-btn'
+          title='Sair do planejamento'
+          aria-label='Sair do planejamento'
+          onClick={() => navigate('/artists')}
+        >
+          <FiX size={18} />
+        </button>
+        <img className='wiz-head-avatar' src={artistImage} alt='' aria-hidden />
+        <h1 className='wiz-title'>Crie seu planejamento</h1>
+      </div>
+
+      {/* Um botão no lugar de três: cada ação aparece condicionalmente, então a barra oscilava
+          entre um e três círculos conforme a conversa andava. Na lista cabem os NOMES — antes
+          "desfazer um passo" e "recomeçar do zero" só se distinguiam pelo desenho do ícone.
+          A destrutiva fica por último e em vermelho, e continua pedindo confirmação. */}
+      {comMenu && menuItens.length > 0 && (
+        <Dropdown trigger={['click']} placement='bottomRight' menu={{ items: menuItens, onClick: onMenuClick }}>
+          <button className='wiz-back-btn' title='Mais opções' aria-label='Mais opções'>
+            <FiMoreVertical size={18} />
+          </button>
+        </Dropdown>
+      )}
+    </header>
+  );
+
   if (mostrandoConvite) {
     return (
-      <EnhancedEmptyState
-        artistId={artist?.id || ''}
-        artistName={identity.name || artist?.name || ''}
-        onStartWizard={() => setEntrou(true)}
-      />
+      <div className='wiz-page-frame'>
+        {cabecalho(false)}
+        <WizardIntro
+          artistName={identity.name || artist?.name || ''}
+          onStart={() => setEntrou(true)}
+        />
+      </div>
     );
   }
 
   return (
-    <div className='wizard wizard--chat'>
-      {/* Brilho aurora na borda ao avançar de etapa (re-monta via key pra re-tocar a animação) */}
+    <div className='wizard wizard--chat wizard--fullpage'>
+      {/* Brilho aurora na borda ao avançar de etapa (re-monta via key pra re-tocar a animação).
+          Irmão da raiz de propósito: um `transform` na própria raiz quebraria o `position: fixed`
+          da folha do plano, que passaria a resolver contra ela em vez da viewport. */}
       {stepGlow > 0 && <span key={stepGlow} className='wiz-step-glow wiz-step-glow--on' aria-hidden />}
 
-      {/* Cabeçalho fixo: não rola junto com a conversa */}
-      <div className='wiz-chat-head'>
-        <div className='wiz-col'>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-            {/* Identificação enxuta: avatar do perfil + título. A etapa saiu daqui e passou a
-                ser o título do painel de resultados — só um lugar diz em que etapa se está. */}
-            <div className='wiz-head-id'>
-              {/* SAIR do planejamento. Sem isto o wizard nao teria saida nenhuma no celular: os
-                  outros tres botoes agem DENTRO da conversa (desfazer, recomecar, ver o plano) e a
-                  unica porta era a tab bar, que agora nao existe aqui. Vai para "Seus perfis", o
-                  mesmo destino do "Tela inicial" do rail — e nao para o dashboard do artista, que
-                  com o plano incompleto reencaminha de volta para ca. */}
-              <button
-                className='wiz-back-btn wiz-exit-btn'
-                title='Sair do planejamento'
-                aria-label='Sair do planejamento'
-                onClick={() => navigate('/artists')}
-              >
-                <FiArrowLeft size={18} />
-              </button>
-              <img className='wiz-head-avatar' src={artistImage} alt='' aria-hidden />
-              {/* Cor/tamanho vêm de `.wiz-title` (styles.scss) — a tipografia acompanha a viewport. */}
-              <h1 className='wiz-title' style={{ fontFamily: 'var(--font-display)', fontWeight: 800, margin: 0 }}>
-                Crie seu planejamento
-              </h1>
-            </div>
-            {/* Um so botao no lugar de tres. Cada um deles aparece condicionalmente, entao a
-                barra oscilava entre um e tres circulos conforme a conversa andava, e no celular
-                competia com o titulo pelo pouco espaco que ha. As acoes viraram uma lista, onde
-                cabem os NOMES delas — antes eram tres icones sem rotulo, e "desfazer um passo" e
-                "recomecar do zero" so se distinguiam pelo desenho.
+      {/* No desktop cobre só a coluna de contexto; no celular, a largura toda. */}
+      {cabecalho(true)}
 
-                A ordem segue o criterio que ja estava aqui: a acao frequente e reversivel vem
-                primeiro e a destrutiva por ultimo, longe do alcance imediato. "Recomecar" continua
-                pedindo confirmacao. */}
-            {menuItens.length > 0 && (
-              <Dropdown
-                trigger={['click']}
-                placement='bottomRight'
-                menu={{ items: menuItens, onClick: onMenuClick }}
-              >
-                <button
-                  className='wiz-back-btn'
-                  title='Mais opções'
-                  aria-label='Mais opções'
-                >
-                  <FiMoreVertical size={18} />
-                </button>
-              </Dropdown>
-            )}
-          </div>
+      {/* Coluna de contexto — só no desktop (no celular vira a barra + a folha do plano). */}
+      <aside className='wiz-side'>
+        {/* Sem vídeo nesta coluna: ele é de PERGUNTA, não de etapa — reforça um momento específico
+            da conversa, e por isso vive lá, no fio do diálogo (ver beatVideos.ts). */}
+        <StepBar draft={draft} />
+        <div className='wiz-plan-scroll'>
+          {/* UMA instância montada por vez, aqui ou na folha: o editor inline tem estado local,
+              e duas cópias seriam dois editores divergentes gravando pelo mesmo `persist`. */}
+          {isDesktop && <PlanList draft={draft} onEdit={persist} />}
         </div>
-      </div>
+        {canGoBack && (
+          <div className='wiz-side-foot'>
+            <button
+              type='button'
+              className='wiz-prev-btn'
+              onClick={() => goBackRef.current()}
+              title='Voltar à pergunta anterior'
+            >
+              <FiCornerUpLeft size={15} /> Voltar à pergunta anterior
+            </button>
+          </div>
+        )}
+      </aside>
 
-      {draftReady && (
-        <NytaChat
-          artist={artist}
-          draft={draft}
-          setDraft={setDraft}
-          identity={identity}
-          sp={sp}
-          persist={persist}
-          restore={restore}
-          onBackChange={setCanGoBack}
-          goBackRef={goBackRef}
-          resetRef={resetRef}
-        />
+      {/* Coluna da conversa. No celular recebe no topo a barra da etapa, ancorada fora da thread:
+          é a porta para o plano, que lá não cabe como coluna. */}
+      <main className='wiz-main'>
+        <StepBar draft={draft} onOpenPlan={() => setPlanoAberto(true)} className='wiz-only-mobile' />
+        {draftReady && (
+          <NytaChat
+            artist={artist}
+            draft={draft}
+            setDraft={setDraft}
+            identity={identity}
+            sp={sp}
+            persist={persist}
+            restore={restore}
+            onBackChange={setCanGoBack}
+            goBackRef={goBackRef}
+            resetRef={resetRef}
+          />
+        )}
+      </main>
+
+      {/* Folha do plano — celular apenas. */}
+      {planoAberto && !isDesktop && (
+        <ArtifactsPanel draft={draft} onEdit={persist} onClose={() => setPlanoAberto(false)} />
       )}
     </div>
   );

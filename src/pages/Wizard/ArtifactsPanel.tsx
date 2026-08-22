@@ -1,7 +1,7 @@
-import { FC, ReactNode, useState } from 'react';
-import { FiCheck, FiEdit3, FiX } from 'react-icons/fi';
+import { FC, ReactNode, useEffect, useState } from 'react';
+import { FiCheck, FiChevronDown, FiEdit3, FiX } from 'react-icons/fi';
 
-import { STEP_LABELS } from './chat/script';
+import { STEP_LABELS, currentStepIndex } from './chat/script';
 import { stripEmDash } from './clean';
 import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 
@@ -186,14 +186,37 @@ const SectionEditor: FC<{
   );
 };
 
-export const ArtifactsPanel: FC<{
+/**
+ * A lista do plano acumulado, SEM moldura própria.
+ *
+ * Extraída do `ArtifactsPanel` porque agora tem dois donos com molduras diferentes: no desktop ela
+ * é a parte de baixo da coluna de contexto (sem cabeçalho, sem botão de fechar), e no celular
+ * continua sendo o corpo da folha de tela cheia. O conteúdo é o mesmo nos dois; só o entorno muda.
+ *
+ * Só existe UMA instância montada por vez (ver `useIsDesktop` no Wizard): o `SectionEditor` guarda
+ * estado local de edição, e duas cópias montadas seriam dois editores divergentes gravando pelo
+ * mesmo `onEdit`.
+ */
+export const PlanList: FC<{
   draft: ArtistContent;
-  onClose: () => void;
   // Quando presente, habilita a edição inline dos entregáveis (lápis sutil por seção).
   onEdit?: (patch: Partial<ArtistContent>) => Promise<void> | void;
-}> = ({ draft, onClose, onEdit }) => {
-  const cur = Math.min(draft.step ?? 0, STEP_LABELS.length - 1);
+}> = ({ draft, onEdit }) => {
+  const cur = currentStepIndex(draft);
   const [editing, setEditing] = useState<number | null>(null);
+  // Aberto/fechado POR ESCOLHA do usuário. Sem entrada aqui, vale o padrão: a etapa atual aberta,
+  // as concluídas fechadas — assim a coluna não vira uma pilha de nove cartões abertos.
+  const [aberturaManual, setAberturaManual] = useState<Record<number, boolean>>({});
+
+  // Ao concluir uma etapa, as escolhas manuais são descartadas: a recém-concluída fecha e a nova
+  // abre, que é o comportamento pedido. Sem isto, uma etapa aberta à mão continuaria aberta para
+  // sempre, e a coluna voltaria a crescer sozinha.
+  useEffect(() => {
+    setAberturaManual({});
+  }, [cur]);
+
+  const estaAberta = (i: number) => aberturaManual[i] ?? i === cur;
+  const alternar = (i: number) => setAberturaManual((m) => ({ ...m, [i]: !estaAberta(i) }));
   // Só mostra o que já foi alcançado (etapas até a atual) — coluna "até aqui", sem o roteiro futuro.
   const visible = STEP_LABELS.map((label, i) => ({ label, i, art: artifactFor(i, draft) })).filter(
     (s) => s.i <= cur
@@ -201,48 +224,83 @@ export const ArtifactsPanel: FC<{
   const anyArtifact = visible.some((s) => s.art);
 
   return (
-    <aside className='wiz-artifacts'>
+    <>
+      {!anyArtifact && (
+        <p className='wiz-art-empty'>Seus resultados aparecem aqui conforme você avança com a Nyta.</p>
+      )}
+      {visible.map(({ label, i, art }) => (
+        <div key={label} className={`wiz-art-step${i === cur ? ' wiz-art-step--now' : ''}${i < cur ? ' wiz-art-step--done' : ''}${estaAberta(i) || editing === i ? ' is-open' : ''}`}>
+          {/* O cabeçalho é uma LINHA com dois controles irmãos, não um botão só: o lápis não pode
+              ficar dentro do botão que abre/fecha (botão dentro de botão é HTML inválido e o
+              clique de um dispararia o outro). */}
+          <div className='wiz-art-step-name'>
+            <button
+              type='button'
+              className='wiz-art-toggle'
+              onClick={() => alternar(i)}
+              aria-expanded={estaAberta(i) || editing === i}
+              title={estaAberta(i) ? `Recolher ${label.toLowerCase()}` : `Expandir ${label.toLowerCase()}`}
+            >
+              {/* Número como elemento próprio: vira o selo redondo da etapa. Como texto solto
+                  ("1.") ele se perdia junto do rótulo. Concluída troca o número por um check — o
+                  progresso fica legível de relance. */}
+              <i className='wiz-art-num' aria-hidden>{i < cur ? <FiCheck size={13} /> : i + 1}</i>
+              <span className='wiz-art-label'>{label}</span>
+              {i === cur && <span className='wiz-art-now'>agora</span>}
+              <FiChevronDown className='wiz-art-chevron' size={15} aria-hidden />
+            </button>
+            {onEdit && EDITABLE_STEPS.has(i) && !!art && editing !== i && (
+              <button
+                className='wiz-art-pencil'
+                onClick={() => setEditing(i)}
+                title={`Editar ${label.toLowerCase()}`}
+                aria-label={`Editar ${label.toLowerCase()}`}
+              >
+                <FiEdit3 size={12} />
+              </button>
+            )}
+          </div>
+          {!(estaAberta(i) || editing === i) ? null : editing === i && onEdit ? (
+            <div className='wiz-art-step-body'>
+              <SectionEditor i={i} draft={draft} onCancel={() => setEditing(null)} onSave={onEdit} />
+            </div>
+          ) : (
+            /* Sem vídeo aqui: ele é de PERGUNTA, não de etapa — reforça um momento específico da
+               conversa, e por isso vive lá, no fio do diálogo. Nesta coluna ele só repetia o mesmo
+               player em cada cartão, sem relação com o que estava sendo perguntado. */
+            art && <div className='wiz-art-step-body'>{art}</div>
+          )}
+        </div>
+      ))}
+    </>
+  );
+};
+
+/**
+ * Folha de tela cheia com o plano acumulado — hoje só no celular, aberta pela barra da etapa.
+ * No desktop o plano é coluna fixa, e a `PlanList` é usada direto, sem esta moldura.
+ */
+export const ArtifactsPanel: FC<{
+  draft: ArtistContent;
+  onClose: () => void;
+  onEdit?: (patch: Partial<ArtistContent>) => Promise<void> | void;
+}> = ({ draft, onClose, onEdit }) => {
+  const cur = currentStepIndex(draft);
+
+  return (
+    <aside className='wiz-artifacts' role='dialog' aria-modal='true' aria-label='Seu plano'>
       <div className='wiz-artifacts-head'>
-        {/* A etapa atual vive aqui — saiu do cabeçalho do chat pra não ficar repetida em dois
-            lugares. `cur` já vem clampado ao total de etapas. */}
         <div className='wiz-artifacts-title'>
           Etapa {cur + 1} de {STEP_LABELS.length} · {STEP_LABELS[cur]}
         </div>
-        {/* 18px = mesmo tamanho dos ícones do cabeçalho do wizard (voltar/recomeçar). */}
+        {/* 18px = mesmo tamanho dos ícones do cabeçalho do wizard. */}
         <button className='wiz-artifacts-close' onClick={onClose} title='Fechar' aria-label='Fechar'>
           <FiX size={18} />
         </button>
       </div>
 
       <div className='wiz-artifacts-body'>
-        {!anyArtifact && (
-          <p className='wiz-art-empty'>Seus resultados aparecem aqui conforme você avança com a Nyta.</p>
-        )}
-        {visible.map(({ label, i, art }) => (
-          <div key={label} className='wiz-art-step'>
-            <div className='wiz-art-step-name'>
-              {i + 1}. {label}
-              {i === cur && <span className='wiz-art-now'> · agora</span>}
-              {onEdit && EDITABLE_STEPS.has(i) && !!art && editing !== i && (
-                <button
-                  className='wiz-art-pencil'
-                  onClick={() => setEditing(i)}
-                  title={`Editar ${label.toLowerCase()}`}
-                  aria-label={`Editar ${label.toLowerCase()}`}
-                >
-                  <FiEdit3 size={12} />
-                </button>
-              )}
-            </div>
-            {editing === i && onEdit ? (
-              <div className='wiz-art-step-body'>
-                <SectionEditor i={i} draft={draft} onCancel={() => setEditing(null)} onSave={onEdit} />
-              </div>
-            ) : (
-              art && <div className='wiz-art-step-body'>{art}</div>
-            )}
-          </div>
-        ))}
+        <PlanList draft={draft} onEdit={onEdit} />
       </div>
     </aside>
   );

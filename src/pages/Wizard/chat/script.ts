@@ -343,3 +343,15 @@ export const STEP_LABELS = [
   'Prioridades',
   'Seu plano',
 ] as const;
+
+/**
+ * Índice da etapa atual, já limitado ao último rótulo.
+ *
+ * O clamp existe porque ao CONCLUIR o planejamento o `step` vira 9 (= WIZARD_TOTAL_STEPS), que
+ * está fora do array de 9 posições (0–8). Sem ele, "Etapa 10 de 9 · undefined".
+ *
+ * Fonte única: era calculado solto em cada lugar que precisava (painel de resultados, barra da
+ * etapa, escolha do vídeo), e três cópias da mesma regra é uma a mais do que cabe.
+ */
+export const currentStepIndex = (draft: { step?: number }): number =>
+  Math.min(draft.step ?? 0, STEP_LABELS.length - 1);

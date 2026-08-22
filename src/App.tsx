@@ -283,7 +283,14 @@ const AppRoutes: FC = () => {
             da página, com a barra de busca e o rail em volta de um fluxo que pede a tela
             inteira. O gate continua: RequireArtistPaid lê o :id da URL e funciona fora do
             layout. */}
+        {/* Planejamento Estratégico (Wizard): conversa que pede a tela inteira, com coluna de
+            contexto própria (vídeo da etapa + plano acumulado). Dentro do AppLayout ela dividia
+            espaço com o rail, o topbar e o painel de perfil, e a coluna de resultados precisava
+            ser renderizada LÁ, por um store global, só para virar uma 3ª coluna do grid.
+            Fora do layout o Wizard desenha o próprio shell e é dono do painel — mesmo caminho do
+            "refazer diagnóstico" abaixo. O gate continua: RequireArtistPaid lê o :id da URL. */}
         <Route element={<RequireArtistPaid />}>
+          <Route path='/artists/:id/wizard/*' element={<Wizard />} />
           <Route path='/artists/:id/diagnostico/refazer' element={<ArtistCreate />} />
         </Route>
 
@@ -294,7 +301,6 @@ const AppRoutes: FC = () => {
               de desbloqueio. O Planejamento (Wizard) é OPCIONAL — pago o perfil, o usuário já
               acessa todos os módulos, com ou sem o planejamento concluído. */}
           <Route element={<RequireArtistPaid />}>
-            <Route path='/artists/:id/wizard/*' element={<Wizard />} />
             <Route path='/artists/:id' element={<Dashboard />} />
             <Route path='/artists/:id/perfil' element={<Profile />} />
             <Route path='/artists/:id/catalog' element={<Catalog />} />

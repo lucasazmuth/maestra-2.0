@@ -17,9 +17,7 @@ import { fetchSubscriptionStatus, fetchPlanConfig } from '../../store/slices/sub
 import { PAYWALL_DISABLED, artistEntryRoute, isOnboardingComplete } from '../../constants/maestra';
 import useIsMobile from '../../utils/isMobile';
 import { useGlobalSearch } from '../../stores/globalSearchStore';
-import { useWizardPanelStore } from '../../stores/wizardPanelStore';
 import { useNytaModal } from '../../hooks/useNytaModal';
-import { ArtifactsPanel } from '../../pages/Wizard/ArtifactsPanel';
 import { enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { SearchIcon } from '../Icons';
@@ -164,13 +162,6 @@ export const AppLayout: FC = memo(() => {
     }, 600);
     return () => window.clearTimeout(timer);
   }, [userId]);
-  // Coluna de resultados do Planejamento Estratégico (publicada pelo Wizard via store global):
-  // aparece como 3ª coluna, irmã da navbar e da página, só enquanto o wizard está montado.
-  // No mobile não há largura pra uma terceira coluna: o CSS (.wiz-artifacts) a transforma numa
-  // folha de tela cheia. Ela PRECISA montar lá também — o botão "Etapa X de 9" do cabeçalho do
-  // wizard é o único caminho pros resultados, e no mobile ele não abria nada.
-  const wizardPanel = useWizardPanelStore();
-  const showWizardPanel = wizardPanel.active && wizardPanel.open;
   // No mobile a sidebar é oculta; uma tab bar no rodapé (in-flow, abaixo do banner) navega entre os
   // módulos do artista. Reserva a altura dela (56px) no mobile, somada à do banner quando houver.
   // A tab bar aparece nas rotas de artista E nas telas globais (Configurações, Notificações,
@@ -183,22 +174,6 @@ export const AppLayout: FC = memo(() => {
   // so, entao incluir uma rota nova nao tem como sair do sincronismo.
   const navExcluded = isNavExcludedRoute(location.pathname);
   const hasMobileNav = !!(routeArtistId ?? currentArtistId) && !navExcluded;
-  // No mobile, o Planejamento Estratégico (wizard) vira "tela cheia": escondemos o topbar do app
-  // pra o chat ocupar toda a altura (o wizard já tem cabeçalho próprio com título e "Salvar e sair").
-  const isWizardChat = /^\/artists\/[^/]+\/wizard/.test(location.pathname);
-  // No celular o wizard vira tela cheia de verdade: alem de esconder o topbar, a classe abaixo
-  // liga a cadeia de ALTURA LIMITADA que so existia acima de 701px (ver Wizard/styles.scss). Sem
-  // ela o `.nyta-scroll` nunca virava area rolavel, a pagina inteira e que crescia, e a conversa
-  // ficava parada no topo enquanto as mensagens chegavam.
-  const wizardFullscreen = isMobile && isWizardChat;
-  const hideTopbar = wizardFullscreen;
-  // No wizard, ENQUANTO o planejamento não estiver concluído, o painel de perfil
-  // (Dashboard/Diagnóstico/Plano de Ação/…) some — só a conversa da Nyta fica em foco, pra
-  // não competir com módulos que ainda não fazem sentido pro artista abrir. O rail (Início/
-  // Notificações/Nyta/trocar de artista) continua visível: é o único caminho de volta pra
-  // "Seus perfis". Uma vez concluído, o painel volta a aparecer normalmente (inclusive se o
-  // usuário reabrir o wizard depois, pra revisar uma etapa).
-  const hideSideNavForWizard = isWizardChat && !!currentArtist && !isOnboardingComplete(currentArtist);
   // A Nyta só entra em cena depois do planejamento concluído. Sem plano ela não tem sobre o que
   // conversar — a própria edge function desliga todas as ferramentas nesse caso e a resposta
   // vira "faça o planejamento primeiro". Mostrar a porta de entrada aqui só levava a pessoa a
@@ -366,28 +341,25 @@ export const AppLayout: FC = memo(() => {
 
       {/* has-player: no mobile o player é uma ilha flutuante ACIMA da navbar, então enquanto ele
           estiver aberto o conteúdo precisa reservar mais espaço embaixo (ver App.scss). */}
-      <main className={`task-app${hasMobileNav ? ' has-mobile-nav' : ''}${hideTopbar ? ' topbar-hidden' : ''}${wizardFullscreen ? ' wizard-fullscreen' : ''}${playerVisible ? ' has-player' : ''}`}>
+      <main className={`task-app${hasMobileNav ? ' has-mobile-nav' : ''}${playerVisible ? ' has-player' : ''}`}>
         {isArtistsList ? (
           <section className='profile-home page-view'>
-            {!hideTopbar && topNavigation()}
+            {topNavigation()}
             <Outlet context={{ container } satisfies LayoutContext} />
           </section>
         ) : (
           <>
-        {!hideTopbar && topNavigation()}
+        {topNavigation()}
         {/* `module-layout` encosta a página no rail (margin-left ~130px) porque significa "sem
             coluna de perfil". O wizard NÃO é esse caso: ele mantém o perfil à esquerda e só ganha
             a coluna de resultados à direita — com a classe, o card ficava embaixo do perfil.
             A folga da coluna de resultados vem do `.wiz-artifacts` (pages/Wizard/styles.scss). */}
         <div
-          className={`app-layout${isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist || hideSideNavForWizard ? ' app-layout-no-profile' : ''}`}
+          className={`app-layout${isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist ? ' app-layout-no-profile' : ''}`}
           style={{ bottom: bottomReserve ? `${bottomReserve}px` : 0 }}
         >
-          {/* O rail (Início/Notificações/Nyta/trocar de artista) fica sempre visível — inclusive
-              sem plano concluído, é o único caminho pra voltar pra "Seus perfis". Só o painel
-              de perfil (Dashboard/Diagnóstico/Plano de Ação/…) some nesse caso, via
-              hideSideNavForWizard acima — reaproveita a mesma classe app-layout-no-profile já
-              usada em Nyta/Notificações pra colapsar a margem que seria dele. */}
+          {/* O rail (Início/Notificações/Nyta/trocar de artista) fica sempre visível: é o
+              caminho de volta pra "Seus perfis" em qualquer módulo. */}
           <aside className='app-rail' aria-label='Atalhos'>
             <div className='rail-actions'>
               <button type='button' aria-label='Tela inicial' onClick={() => navigate('/artists')}>
@@ -438,7 +410,7 @@ export const AppLayout: FC = memo(() => {
             </div>
           </aside>
 
-          {currentArtist && !isNytaPage && !isNotificationsPage && !hideSideNavForWizard && (
+          {currentArtist && !isNytaPage && !isNotificationsPage && (
             <aside className='profile-panel' aria-label='Detalhes do artista'>
               <div
                 className='portrait-wrap'
@@ -482,14 +454,6 @@ export const AppLayout: FC = memo(() => {
               <Outlet context={{ container } satisfies LayoutContext} />
             </div>
           </section>
-
-          {showWizardPanel && (
-            <ArtifactsPanel
-              draft={wizardPanel.content}
-              onClose={() => wizardPanel.setOpen(false)}
-              onEdit={wizardPanel.persist ?? undefined}
-            />
-          )}
         </div>
           </>
         )}
