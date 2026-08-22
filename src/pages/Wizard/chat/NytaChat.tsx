@@ -382,8 +382,14 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     // da pergunta. `videoStepRef` continua sendo marcado para o portão de etapa não disparar na
     // montagem (ele compara com o step anterior).
     videoStepRef.current = draft.step ?? 0;
-    const abertura = say(buildOpening(draft, artist.name));
-    if (!(draft.step ?? 0)) abertura.then(() => sayVideo(VIDEO_ABERTURA, 'Vídeo: como funciona o planejamento'));
+    say(buildOpening(draft, artist.name));
+    // `sayVideo` chamado aqui, e não com `.then()` sobre a promise da saudação: as duas funções
+    // enfileiram SINCRONAMENTE (`queueRef.current = queueRef.current.then(...)`), então chamar as
+    // duas em sequência, no mesmo corpo de efeito, garante a posição no fio — sem depender de
+    // qual promise resolve primeiro. Com `.then()`, o efeito do BEAT (que roda logo depois deste
+    // mesmo efeito, ainda no mount) enfileirava a primeira pergunta antes de o vídeo conseguir
+    // se anexar, e o vídeo aparecia depois da pergunta seguinte, não da saudação que ele reforça.
+    if (!(draft.step ?? 0)) sayVideo(VIDEO_ABERTURA, 'Vídeo: como funciona o planejamento');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

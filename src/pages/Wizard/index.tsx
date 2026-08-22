@@ -12,11 +12,9 @@ import { Spinner } from '../../components/spinner/spinner';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { migrateWizardContent } from './migration';
 import { NytaChat } from './chat/NytaChat';
-import { YouTubeEmbed } from '../../components/YouTubeEmbed';
-import { VIDEO_CONVITE } from './beatVideos';
+import WizardIntro from './WizardIntro';
 import { ArtifactsPanel, PlanList } from './ArtifactsPanel';
 import { StepBar } from './components';
-import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { supabase } from '../../lib/supabase';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
 import { setWizardPlatformContext, clearWizardPlatformContext } from '../../services/wizardAi';
@@ -320,11 +318,9 @@ const Wizard: FC = () => {
     return (
       <div className='wiz-page-frame'>
         {cabecalho(false)}
-        <EnhancedEmptyState
-          artistId={artist?.id || ''}
+        <WizardIntro
           artistName={identity.name || artist?.name || ''}
-          onStartWizard={() => setEntrou(true)}
-          video={<YouTubeEmbed src={VIDEO_CONVITE} title='Conheça o planejamento estratégico' />}
+          onStart={() => setEntrou(true)}
         />
       </div>
     );

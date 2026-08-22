@@ -1764,10 +1764,17 @@
 // `display: flex` + `flex: 1` no filho porque o `.empty` do EnhancedEmptyState usa
 // `min-height: 100%`, e porcentagem contra um pai que só tem `min-height` resolve para `auto` —
 // o bloco ficava com a altura do texto e sobrava uma faixa morta embaixo.
+// `position: fixed`, não `min-height: 100vh`: min-height é só um PISO — se o conteúdo (vídeo +
+// lista de 9 etapas) precisar de mais altura que a viewport, o container CRESCE para caber, e o
+// `flex: 1; min-height: 0` do filho não tem mais contra o que travar. É a mesma cadeia de altura
+// da raiz `.wizard--fullpage`, agora nesta ramificação que eu não tinha tocado até o conteúdo
+// ficar alto o bastante para expor o problema (a tela de loading, mais curta, nunca acusava).
 .wiz-page-frame {
+  position: fixed;
+  inset: 0;
   display: flex;
-  min-height: 100vh;
   flex-direction: column;
+  overflow: hidden;
   background: var(--wz-canvas, #f7f8fb);
 
   > .wiz-chat-head {
@@ -2670,4 +2677,128 @@
   transition: background .15s ease;
 
   &:hover { background: #244fe3; }
+}
+
+// ---- Porta de entrada do planejamento (WizardIntro) ------------------------------------------
+//
+// Rola por dentro: é a única tela do wizard com conteúdo mais alto que a viewport (vídeo + lista
+// das nove etapas), e a raiz em tela cheia é `overflow: hidden`.
+.wiz-intro {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.wiz-intro-content {
+  display: flex;
+  max-width: 560px;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+  text-align: center;
+}
+
+.wiz-intro-mark {
+  margin-bottom: 18px;
+}
+
+.wiz-intro-kicker {
+  margin: 0 0 8px;
+  color: #9aa9c2;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.wiz-intro-title {
+  margin: 0 0 12px;
+  color: #2c3f63;
+  font-family: var(--font-display);
+  font-size: clamp(23px, 3.4vw, 31px);
+  font-weight: 800;
+  line-height: 1.18;
+
+  // A segunda metade em azul: separa o endereçamento ("Antes de começar, Fulano:") da promessa
+  // ("veja o caminho completo"), que é o que a tela realmente oferece.
+  span { color: var(--wz-blue, #3361ff); }
+}
+
+.wiz-intro-lead {
+  max-width: 460px;
+  margin: 0 0 26px;
+  color: #61749a;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.wiz-intro-video {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #e3eaf3;
+  border-radius: 14px;
+  background: #0b1020;
+  box-shadow: 0 18px 40px rgba(74, 99, 145, .16);
+}
+
+// As nove etapas em duas colunas: numa só, a lista empurraria o botão para fora da dobra.
+.wiz-intro-steps {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #52668d;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+  }
+
+  b {
+    display: grid;
+    width: 20px;
+    height: 20px;
+    flex: none;
+    place-items: center;
+    border-radius: 50%;
+    background: #eef3fb;
+    color: #7183a3;
+    font-size: 10px;
+    font-weight: 900;
+  }
+}
+
+.wiz-intro-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  margin-top: 30px;
+  padding: 0 26px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--wz-blue, #3361ff);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(51, 97, 255, .26);
+  transition: background .15s ease, transform .1s ease;
+
+  &:hover { background: #244fe3; }
+  &:active { transform: scale(.98); }
+}
+
+@media (max-width: 560px) {
+  .wiz-intro-steps { grid-template-columns: minmax(0, 1fr); }
+  .wiz-intro-content { padding: 24px 16px 40px; }
 }
