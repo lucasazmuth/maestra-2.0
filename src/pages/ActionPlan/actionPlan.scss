@@ -1130,6 +1130,14 @@
 .ap-plan-row-body {
   border-top: 1px solid #e1e7f0;
   padding: 18px;
+  // Padding-left menor de propósito, não é um descuido: o checkbox de 32px centraliza um ícone
+  // de 25px dentro de si (3.5px de sobra de cada lado), enquanto o chevron do cabeçalho, ali em
+  // cima, é o próprio ícone sem essa moldura. Alinhar os dois PADDINGS (18px = 16px do cabeçalho)
+  // deixava o ÍCONE do check ~5.5px mais à direita que o chevron — a régua vertical que devia
+  // ligar os dois ficava torta. Aqui o padding absorve a folga do checkbox (16px do cabeçalho
+  // menos os 3.5px que o ícone ganha de position dentro do botão), então os DOIS ÍCONES, não só
+  // os dois containers, ficam na mesma linha vertical.
+  padding-left: 12.5px;
 }
 
 // `.action-task-register` (gsap-reference.css) tem `padding: 26px 28px 30px` PRÓPRIO — pensado
