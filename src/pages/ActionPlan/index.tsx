@@ -345,7 +345,15 @@ const ActionPlan: FC = () => {
   const hasArchive = withTasks.length > 0 && archived.length > 0;
   const displayed = withTasks.length ? withTasks : info; // sem nenhuma priorizada, mostra tudo
   const focusIdx = displayed.findIndex((p) => p.total > 0 && !p.complete); // -1 = todas concluídas
-  const activePlanId = openId && openId !== '__none__' ? openId : displayed[focusIdx >= 0 ? focusIdx : 0]?.s.id;
+  // `undefined` (estado inicial) e '__none__' (fechou explicitamente) NAO sao a mesma coisa —
+  // antes eram tratados igual, e isso escondia um bug: fechar a PROPRIA estrategia em foco (a
+  // primeira incompleta) caia de novo nesse mesmo fallback, reabrindo ela mesma. Parecia que o
+  // clique de fechar simplesmente nao funcionava — e so nessa estrategia especifica, o que tornava
+  // mais dificil perceber a causa. So `undefined` (ninguem escolheu nada ainda) usa o
+  // auto-foco; '__none__' fecha de verdade, sem nada reabrindo sozinho.
+  const activePlanId = openId === undefined
+    ? displayed[focusIdx >= 0 ? focusIdx : 0]?.s.id
+    : (openId === '__none__' ? undefined : openId);
 
   return (
     <div className="ap action-plan-page">
