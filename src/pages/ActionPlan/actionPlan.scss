@@ -972,8 +972,13 @@
 // A especificidade de DUAS classes (0,2,0) garante a vitória sobre a regra vazando (0,1,1)
 // independente da ordem de carregamento das folhas — não é uma corrida por sorte.
 .ap-plan-list .ap-plan-row-head {
+  // `align-items: flex-start`, não `center`: títulos longos agora QUEBRAM em várias linhas (fix
+  // anterior, pra não truncar o único lugar que mostra o título por extenso). Com `center`, o
+  // chevron e o bloco de progresso flutuavam soltos no meio vertical de um cabeçalho de 6 linhas
+  // no celular — sem relação visível com nada. Alinhados ao topo, os dois ficam ao lado da
+  // PRIMEIRA linha (o rótulo "ESTRATÉGIA #0N"), como um ícone ao lado de um bloco de texto.
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
   min-height: 0;
   gap: 14px;
@@ -982,6 +987,11 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
+}
+
+.ap-plan-chevron,
+.ap-plan-row-progress {
+  margin-top: 2px;
 }
 
 .ap-plan-row.is-open .ap-plan-row-head {
