@@ -398,26 +398,19 @@ const ActionPlan: FC = () => {
                 {isOpen && (
                   <div className="ap-plan-row-body">
                     <section className="action-task-register">
-                      <header>
-                        {/* Sem o rótulo "ESTRATÉGIA #0N" aqui: a linha logo acima já mostra
-                            numeração e título — repeti-lo colado embaixo era a MESMA redundância
-                            que o comentário de gsap-reference.css já escondia no mobile (linha
-                            ~9013), só que agora os dois ficariam a poucos pixels um do outro em
-                            qualquer largura de tela, não só na estreita. */}
-                        <h3>Tarefas</h3>
-                        <button type="button" onClick={() => manageTasks ? openWithPrompt(`Quero criar uma tarefa para a estratégia "${p.s.title}"`) : showProRequired()}>
-                          {!manageTasks ? <FiLock size={14} /> : <FiPlus size={14} />} Adicionar tarefa
-                        </button>
-                      </header>
+                      {/* Nem o rótulo "ESTRATÉGIA #0N" nem "Tarefas" aparecem aqui: a linha do
+                          acordeão logo acima já diz numeração e título, e dentro de uma estratégia
+                          aberta não há ambiguidade sobre o que a lista embaixo contém — o
+                          cabeçalho só ocupava altura pra repetir contexto que já estava a poucos
+                          pixels dali. O "Adicionar tarefa" desce pro fim da lista, onde uma ação
+                          de "adicionar mais um item" costuma ficar. */}
                       {p.ts.length === 0 ? (
-                        <div className="ap-empty-tasks">Nenhuma tarefa ainda. Crie a primeira com a Nyta no botão acima.</div>
+                        <div className="ap-empty-tasks">Nenhuma tarefa ainda. Crie a primeira com a Nyta no botão abaixo.</div>
                       ) : (
                         <ul className="ap-plan-tasklist">
                           {p.ts.map((t, index) => {
                             const done = isDone(t);
                             const overdue = !!(t.deadline && t.deadline < today && !done);
-                            const statusLabel = done ? 'Concluída' : t.status === 'in_progress' ? 'Em andamento' : 'A fazer';
-                            const statusClass = done ? 'priority-normal' : overdue ? 'priority-alta' : t.status === 'in_progress' ? 'priority-média' : 'priority-normal';
                             return (
                               <li key={t.id || `${p.s.id}-${index}`} className="ap-plan-task">
                                 <button type="button" className={`action-task-check${done ? ' is-done' : ''}`} title={done ? 'Reabrir tarefa' : 'Concluir tarefa'} onClick={() => editPlanning ? toggleDone(p.s.id, t) : showProRequired()}>
@@ -428,8 +421,13 @@ const ActionPlan: FC = () => {
                                   <span className="ap-plan-task-meta">
                                     <TaskCategory className="ap-type" value={t.type} disabled={!editPlanning} onBlocked={showProRequired} onChange={(v) => patchTask(p.s.id, t.id, { type: v })} />
                                     <TaskOwner className="ap-owner" value={t.owner} assignees={assignees} disabled={!editPlanning} onBlocked={showProRequired} onChange={(o) => patchTask(p.s.id, t.id, { owner: o })} />
+                                    {/* O status textual ("A fazer"/"Concluída") saiu: o checkbox ao lado já
+                                        distingue feito de não-feito, e repetir isso aqui era o
+                                        mesmo dado duas vezes. "Em andamento" deixa de ter um sinal
+                                        visual próprio na lista — quem quiser marcar ou ver esse
+                                        estado especificamente abre os detalhes da tarefa (botão
+                                        "···"), onde o campo Status continua existindo. */}
                                     <TaskDate className="ap-date" value={t.deadline} overdue={overdue} disabled={!editPlanning} onBlocked={showProRequired} onChange={(d) => patchTask(p.s.id, t.id, { deadline: d })} />
-                                    <b className={statusClass}>{statusLabel}</b>
                                   </span>
                                 </span>
                                 <button type="button" className="action-task-more" aria-label="Abrir detalhes da tarefa" onClick={() => setSelectedTaskRef({ strategyId: p.s.id, taskId: t.id })}><FiMoreVertical size={17} /></button>
@@ -438,6 +436,13 @@ const ActionPlan: FC = () => {
                           })}
                         </ul>
                       )}
+                      <button
+                        type="button"
+                        className="ap-plan-add-task"
+                        onClick={() => manageTasks ? openWithPrompt(`Quero criar uma tarefa para a estratégia "${p.s.title}"`) : showProRequired()}
+                      >
+                        {!manageTasks ? <FiLock size={14} /> : <FiPlus size={14} />} Adicionar tarefa
+                      </button>
                     </section>
                   </div>
                 )}

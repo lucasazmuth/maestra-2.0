@@ -9038,6 +9038,16 @@ body:has(.track-detail-backdrop) .local-player-bar {
     padding-left: 18px;
   }
 
+  /* No acordeão, `.action-task-register` já não tem padding próprio (zerado em actionPlan.scss —
+     `.ap-plan-row-body` é quem dá o respiro agora, uma vez só). Essa regra, de 4 classes, batia a
+     de 2 do reset, e devolvia 18px de sobra dos dois lados por baixo do panorama — o "espaço
+     demais nas laterais" que sobrava até com o zero já aplicado. Aqui os dois lados do prefixo
+     ficam iguais (5 classes), então o reset ganha de fato. */
+  .task-app:not(.public-app) .action-plan-page .ap-plan-row-body .action-task-register {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
   .task-app:not(.public-app) .action-plan-page .action-task-register > header > div {
     min-width: 0;
     flex: 1 1 auto;
@@ -9088,22 +9098,7 @@ body:has(.track-detail-backdrop) .local-player-bar {
     justify-content: space-between;
   }
 
-  /* "Adicionar tarefa" virava um botão de largura total e alto (regra logo abaixo, pensada pra
-     quando este cabeçalho era o topo de uma seção "Tarefas" separada, rolada até por conta
-     própria). Dentro do acordeão ele compete por espaço com o checklist logo ali — some a
-     esticada e volta a ficar do tamanho do próprio texto, ao lado do título "Tarefas". */
-  .task-app:not(.public-app) .action-plan-page .ap-plan-row-body .action-task-register > header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
 
-  .task-app:not(.public-app) .action-plan-page .ap-plan-row-body .action-task-register > header button {
-    width: auto;
-    margin-top: 0;
-  }
 
   .task-app:not(.public-app) .action-plan-page .action-strategy-scroll {
     grid-auto-columns: minmax(230px, 82vw);

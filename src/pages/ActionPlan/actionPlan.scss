@@ -1132,6 +1132,15 @@
   padding: 18px;
 }
 
+// `.action-task-register` (gsap-reference.css) tem `padding: 26px 28px 30px` PRÓPRIO — pensado
+// pra quando era uma seção autônoma, encostada direto no `.action-strategy-grid`. Aninhado aqui
+// dentro do corpo do acordeão, os dois paddings somavam (18+28=46px de sobra nas laterais,
+// 18+30=48px embaixo): o respiro dobrado que ficou visível nas quatro bordas. Só o
+// `.ap-plan-row-body` de fora precisa dar espaço; o de dentro zera.
+.ap-plan-row-body .action-task-register {
+  padding: 0;
+}
+
 // A tabela de 6 colunas (`.action-task-register-table`) exigia rolar na horizontal a partir de
 // 960px — o motivo mais provável da confusão que os usuários relatam. A checklist empilha em
 // qualquer largura: nome da tarefa em cima, tipo/responsável/prazo/status como chips numa
@@ -1196,4 +1205,40 @@
   .ap-plan-row-head { padding: 14px; gap: 10px; }
   .ap-plan-row-body { padding: 14px; }
   .ap-plan-row-main strong { font-size: 13.5px; }
+}
+
+// "Adicionar tarefa" perdeu o `<header>` que o continha (o título "Tarefas" saiu — repetia o
+// título e a numeração que a linha do acordeão logo acima já mostra) e foi pro fim da lista, como
+// uma ação de "adicionar mais um item". Herdava `.action-task-register > header button` antes;
+// precisa do próprio estilo agora que não tem mais o header por perto.
+// Mesmo vazamento de `.action-strategy-overview button` de sempre (min-height:132px,
+// display:grid, width:100%, grid-template-columns:1fr auto) — este botão também é descendente.
+// Seletor de duas classes pra vencer por especificidade, igual aos outros já corrigidos nesta
+// mesma tela.
+.ap-plan-list .ap-plan-add-task {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-width: 0;
+  min-height: 36px;
+  grid-template-columns: none;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 0 14px;
+  border: 1px dashed #c9d8f0;
+  border-radius: 8px;
+  background: transparent;
+  color: #3361ff;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  text-align: left;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.ap-plan-add-task:hover {
+  border-style: solid;
+  border-color: #b9c8ff;
+  background: rgba(51, 97, 255, .06);
 }
