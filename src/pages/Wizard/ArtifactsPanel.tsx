@@ -1,5 +1,5 @@
-import { FC, ReactNode, useState } from 'react';
-import { FiCheck, FiEdit3, FiX } from 'react-icons/fi';
+import { FC, ReactNode, useEffect, useState } from 'react';
+import { FiCheck, FiChevronDown, FiEdit3, FiX } from 'react-icons/fi';
 
 import { STEP_LABELS, currentStepIndex } from './chat/script';
 import { STEP_VIDEOS } from './stepVideos';
@@ -206,6 +206,19 @@ export const PlanList: FC<{
 }> = ({ draft, onEdit }) => {
   const cur = currentStepIndex(draft);
   const [editing, setEditing] = useState<number | null>(null);
+  // Aberto/fechado POR ESCOLHA do usuário. Sem entrada aqui, vale o padrão: a etapa atual aberta,
+  // as concluídas fechadas — assim a coluna não vira uma pilha de nove cartões abertos.
+  const [aberturaManual, setAberturaManual] = useState<Record<number, boolean>>({});
+
+  // Ao concluir uma etapa, as escolhas manuais são descartadas: a recém-concluída fecha e a nova
+  // abre, que é o comportamento pedido. Sem isto, uma etapa aberta à mão continuaria aberta para
+  // sempre, e a coluna voltaria a crescer sozinha.
+  useEffect(() => {
+    setAberturaManual({});
+  }, [cur]);
+
+  const estaAberta = (i: number) => aberturaManual[i] ?? i === cur;
+  const alternar = (i: number) => setAberturaManual((m) => ({ ...m, [i]: !estaAberta(i) }));
   // Só mostra o que já foi alcançado (etapas até a atual) — coluna "até aqui", sem o roteiro futuro.
   const visible = STEP_LABELS.map((label, i) => ({ label, i, art: artifactFor(i, draft) })).filter(
     (s) => s.i <= cur
@@ -218,15 +231,26 @@ export const PlanList: FC<{
         <p className='wiz-art-empty'>Seus resultados aparecem aqui conforme você avança com a Nyta.</p>
       )}
       {visible.map(({ label, i, art }) => (
-        <div key={label} className={`wiz-art-step${i === cur ? ' wiz-art-step--now' : ''}${i < cur ? ' wiz-art-step--done' : ''}`}>
+        <div key={label} className={`wiz-art-step${i === cur ? ' wiz-art-step--now' : ''}${i < cur ? ' wiz-art-step--done' : ''}${estaAberta(i) || editing === i ? ' is-open' : ''}`}>
+          {/* O cabeçalho é uma LINHA com dois controles irmãos, não um botão só: o lápis não pode
+              ficar dentro do botão que abre/fecha (botão dentro de botão é HTML inválido e o
+              clique de um dispararia o outro). */}
           <div className='wiz-art-step-name'>
-            {/* Número como elemento próprio: vira o selo redondo da etapa, que muda de cor quando
-                é a atual. Como texto solto ("1.") ele se perdia junto do rótulo.
-                Etapa já concluída troca o número por um check — o progresso fica legível de
-                relance, sem precisar comparar números com a etapa atual. */}
-            <i className='wiz-art-num' aria-hidden>{i < cur ? <FiCheck size={13} /> : i + 1}</i>
-            <span className='wiz-art-label'>{label}</span>
-            {i === cur && <span className='wiz-art-now'>agora</span>}
+            <button
+              type='button'
+              className='wiz-art-toggle'
+              onClick={() => alternar(i)}
+              aria-expanded={estaAberta(i) || editing === i}
+              title={estaAberta(i) ? `Recolher ${label.toLowerCase()}` : `Expandir ${label.toLowerCase()}`}
+            >
+              {/* Número como elemento próprio: vira o selo redondo da etapa. Como texto solto
+                  ("1.") ele se perdia junto do rótulo. Concluída troca o número por um check — o
+                  progresso fica legível de relance. */}
+              <i className='wiz-art-num' aria-hidden>{i < cur ? <FiCheck size={13} /> : i + 1}</i>
+              <span className='wiz-art-label'>{label}</span>
+              {i === cur && <span className='wiz-art-now'>agora</span>}
+              <FiChevronDown className='wiz-art-chevron' size={15} aria-hidden />
+            </button>
             {onEdit && EDITABLE_STEPS.has(i) && !!art && editing !== i && (
               <button
                 className='wiz-art-pencil'
@@ -238,7 +262,7 @@ export const PlanList: FC<{
               </button>
             )}
           </div>
-          {editing === i && onEdit ? (
+          {!(estaAberta(i) || editing === i) ? null : editing === i && onEdit ? (
             <div className='wiz-art-step-body'>
               <SectionEditor i={i} draft={draft} onCancel={() => setEditing(null)} onSave={onEdit} />
             </div>

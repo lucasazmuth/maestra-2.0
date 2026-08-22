@@ -2043,15 +2043,48 @@
   box-shadow: 0 6px 18px rgba(51, 97, 255, .10);
 }
 
+// Concluída e recolhida: some com a sombra e clareia o contorno. A pilha de etapas passadas vira
+// uma lista discreta, e a etapa atual (aberta, com contorno azul) fica sendo o que salta.
+.wiz-art-step--done:not(.is-open) {
+  border-color: #eef2f8;
+  box-shadow: none;
+}
+
+// Linha do cabeçalho: o botão que abre/fecha ocupa todo o espaço, e o lápis fica ao lado como
+// irmão — nunca dentro dele.
 .wiz-art-step-name {
   display: flex;
   align-items: center;
+  padding-right: 8px;
+}
+
+.wiz-art-toggle {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
   gap: 9px;
-  padding: 12px 14px;
+  padding: 12px 6px 12px 14px;
+  border: 0;
+  background: transparent;
   color: #2c3f63;
+  font: inherit;
   font-weight: 800;
   font-size: 13.5px;
   line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.wiz-art-chevron {
+  flex: none;
+  margin-left: auto;
+  color: #b9c5d9;
+  transition: transform .18s ease;
+}
+
+.wiz-art-step.is-open .wiz-art-chevron {
+  transform: rotate(180deg);
 }
 
 // Selo redondo com o número da etapa.
