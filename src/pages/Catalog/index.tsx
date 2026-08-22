@@ -16,6 +16,7 @@ import { Spinner } from '../../components/spinner/spinner';
 import { SpotifyEmbedPlayer } from '../../components/SpotifyEmbedPlayer';
 import type { LocalTrack } from '../../components/LocalPlayerBar';
 import { useLocalPlayerStore } from '../../stores/localPlayerStore';
+import useIsMobile from '../../utils/isMobile';
 import { TrackModal } from '../../components/TrackModal';
 import { VersionModal } from '../../components/VersionModal';
 import {
@@ -250,6 +251,7 @@ const Catalog: FC = () => {
   );
   // Colaborador sem PRO entra em somente-leitura (não edita catálogo).
   const { canEditCatalog } = useArtistCapabilities(artist);
+  const isMobile = useIsMobile();
   // Se isReadOnlyMode (pós-downgrade: faixas > 10 sem PRO), edição e exclusão ficam bloqueadas.
   const canEditTracks = canEditCatalog && !isReadOnlyMode;
   const [upsellOpen, setUpsellOpen] = useState(false);
@@ -1055,7 +1057,7 @@ const Catalog: FC = () => {
                     role='button'
                     tabIndex={0}
                     title='Abrir espaço do projeto'
-                    style={linhaLista}
+                    style={isMobile ? { ...linhaLista, gap: 8 } : linhaLista}
                     onClick={abrirJam}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -1084,15 +1086,19 @@ const Catalog: FC = () => {
                       )}
                     </button>
                     {/* Nem toda faixa tem capa (a dos Lançamentos sempre tem, vem do Spotify).
-                        Sem imagem entra um bloco neutro, para a linha não desalinhar. */}
-                    {it.cover_image ? (
+                        Sem imagem entra um bloco neutro, para a linha não desalinhar.
+                        No celular a capa sai: as peças fixas somavam 351px numa linha de 319, e o
+                        título e a legenda ficavam com ZERO — não truncados, sumidos. A capa é
+                        decorativa aqui (na maioria das faixas em preparação nem existe, é só o
+                        bloco neutro), então é a primeira a ceder espaço para o nome da música. */}
+                    {!isMobile && (it.cover_image ? (
                       <img src={it.cover_image} alt='' style={linhaCapa} />
                     ) : (
                       <span
                         aria-hidden
                         style={{ ...linhaCapa, background: '#eef3fb', display: 'block', flexShrink: 0 }}
                       />
-                    )}
+                    ))}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={linhaTitulo}>{it.title}</div>
                       <div style={linhaSub}>{legenda}</div>
@@ -1110,7 +1116,11 @@ const Catalog: FC = () => {
                         abrirJam();
                       }}
                     >
-                      <EspacoJamIcon size={15} /> Espaço Jam
+                      <EspacoJamIcon size={15} />
+                      {/* O rótulo sai no celular, onde custava 107px dos 319 da linha — um terço
+                          dela para nomear um destino que tocar a linha já alcança. O ícone fica,
+                          senão o atalho desaparece: `title` não se revela no toque. */}
+                      {!isMobile && ' Espaço Jam'}
                     </button>
                     {canEditTracks && (
                       <button
