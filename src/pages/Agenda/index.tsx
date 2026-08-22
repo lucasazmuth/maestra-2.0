@@ -243,8 +243,11 @@ const Agenda: FC = () => {
             do cabeçalho, que filtra de verdade. */}
         <div>
           <button type="button" onClick={() => setCursor(dayjs())}>Hoje</button>
-          <button type="button" aria-label="Período anterior" onClick={() => moveCursor(-1)}><FiChevronLeft /></button>
-          <button type="button" aria-label="Próximo período" onClick={() => moveCursor(1)}><FiChevronRight /></button>
+          {/* `calendar-nav-step` existe para escapar da regra base de `.calendar-tools > div
+              button`, que dá font-size 11px e padding 0. Como o ícone do react-icons mede 1em, o
+              ícone ERA o botão inteiro: 11×11. */}
+          <button type="button" className="calendar-nav-step" aria-label="Período anterior" onClick={() => moveCursor(-1)}><FiChevronLeft /></button>
+          <button type="button" className="calendar-nav-step" aria-label="Próximo período" onClick={() => moveCursor(1)}><FiChevronRight /></button>
           <strong>{calendarLabel}</strong>
           {canEdit && <button type="button" className="calendar-add-task calendar-add-task-inline" aria-label="Adicionar compromisso" onClick={() => openCreate()}><FiPlus /> Compromisso</button>}
           <nav aria-label="Visualização da agenda">

@@ -78,6 +78,37 @@
   color: #5f7197;
 }
 
+// Virar o dia media 11x11px: a regra base de `.calendar-tools > div button` serve aos botoes de
+// TEXTO da barra ("Hoje", "Dia/Mes/Ano") e por isso da font-size 11px com padding 0. O icone do
+// react-icons e 1em, entao ele virava o alvo inteiro. A navegacao sempre funcionou — o que falhava
+// era acertar 11px. Vira um alvo de 36x36 com icone de 18, e 44 no toque, que e o minimo
+// recomendado para o dedo.
+.task-app:not(.public-app) .agenda-reference-page .calendar-nav-step {
+  display: inline-grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 8px;
+  color: #7f91b0;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease;
+}
+
+.task-app:not(.public-app) .agenda-reference-page .calendar-nav-step:hover,
+.task-app:not(.public-app) .agenda-reference-page .calendar-nav-step:focus-visible {
+  background: #eef3fb;
+  color: #3361ff;
+  outline: 0;
+}
+
+@media (pointer: coarse) {
+  .task-app:not(.public-app) .agenda-reference-page .calendar-nav-step {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 .task-app:not(.public-app) .agenda-reference-page .calendar-add-task-inline {
   display: inline-flex;
   width: auto;
