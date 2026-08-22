@@ -347,7 +347,9 @@ const Wizard: FC = () => {
 
       {/* Coluna de contexto — só no desktop (no celular vira a barra + a folha do plano). */}
       <aside className='wiz-side'>
-        <YouTubeEmbed key={etapa} src={STEP_VIDEOS[etapa]} title={tituloVideo} className='wiz-video' />
+        {/* Sem player fixo aqui: o vídeo de cada etapa mora DENTRO da lista, abaixo do bloco da
+            etapa a que pertence (ver PlanList). Fixo no topo, mostrava só o da etapa atual e
+            empurrava o plano para baixo. */}
         <StepBar draft={draft} />
         <div className='wiz-plan-scroll'>
           {/* UMA instância montada por vez, aqui ou na folha: o editor inline tem estado local,
@@ -394,12 +396,7 @@ const Wizard: FC = () => {
 
       {/* Folha do plano — celular apenas. */}
       {planoAberto && !isDesktop && (
-        <ArtifactsPanel
-          draft={draft}
-          onEdit={persist}
-          onClose={() => setPlanoAberto(false)}
-          video={<YouTubeEmbed key={etapa} src={STEP_VIDEOS[etapa]} title={tituloVideo} className='wiz-video' />}
-        />
+        <ArtifactsPanel draft={draft} onEdit={persist} onClose={() => setPlanoAberto(false)} />
       )}
     </div>
   );

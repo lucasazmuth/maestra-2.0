@@ -2442,3 +2442,16 @@
 
   span { flex: none; }
 }
+
+// No DESKTOP o vídeo não entra na conversa: a coluna de contexto, ao lado, já mostra o vídeo de
+// cada etapa. Ver os dois ao mesmo tempo, na mesma tela, é redundante. No celular não há coluna,
+// então lá ele continua chegando como mensagem da Nyta.
+@media (min-width: 769px) {
+  .nyta-row--video { display: none; }
+}
+
+// Título de cada etapa dentro do plano: agora encabeça um bloco que contém um vídeo, não só duas
+// linhas de texto — no tamanho antigo (13px) ele sumia diante do player logo abaixo.
+.wiz-art-step-name {
+  font-size: 15px;
+}

@@ -993,7 +993,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
             ) : item.stepMark ? (
               <StepDivider key={item.id}>{item.stepMark}</StepDivider>
             ) : item.video ? (
-              <NytaCardRow key={item.id}>
+              <NytaCardRow key={item.id} className='nyta-row--video'>
                 <div className='nyta-card nyta-video-card'>
                   <YouTubeEmbed src={item.video.src} title={item.video.title} className='wiz-video' />
                 </div>

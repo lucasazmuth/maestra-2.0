@@ -59,8 +59,8 @@ export const WidgetSlot: FC<{ children: ReactNode }> = ({ children }) => (
 // Card que a Nyta "envia": mesma linha e mesmo avatar de um balão dela, mas sem a casca da bolha —
 // o conteúdo traz a própria moldura (é o caso do vídeo da etapa). Sem o avatar, o card parecia
 // aparecer sozinho na conversa, sem autor.
-export const NytaCardRow: FC<{ children: ReactNode }> = ({ children }) => (
-  <div className='nyta-row nyta-row--card'>
+export const NytaCardRow: FC<{ children: ReactNode; className?: string }> = ({ children, className }) => (
+  <div className={`nyta-row nyta-row--card${className ? ` ${className}` : ''}`}>
     <NytaAvatar />
     <div className='nyta-row-card'>{children}</div>
   </div>
