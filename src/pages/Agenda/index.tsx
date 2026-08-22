@@ -233,7 +233,14 @@ const Agenda: FC = () => {
     ? cursor.format('YYYY')
     : calendarView === 'month'
       ? cursor.format('MMMM [de] YYYY')
-      : cursor.format('dddd, D [de] MMMM');
+      : cursor.format('dddd, D [de] MMMM [de] YYYY');
+  // No celular a coluna da data mede 165px (o "+ Compromisso" define a coluna vizinha), e o
+  // rotulo inteiro nao cabe — cortaria justamente o ano, no fim da frase. A versao curta larga o
+  // dia da semana e preserva a data completa. Sao dois <span> alternados por CSS, e nao um
+  // `isMobile` em JS: o hook do projeto so acerta na carga e nao reage a mudanca de largura.
+  const calendarLabelCompact = calendarView === 'day'
+    ? cursor.format('D [de] MMMM [de] YYYY')
+    : calendarLabel;
 
   return (
     <div className="calendar-page agenda-reference-page">
@@ -242,13 +249,16 @@ const Agenda: FC = () => {
             como o do topo. Dois campos na mesma tela, nenhum funcionando; quem busca agora usa o
             do cabeçalho, que filtra de verdade. */}
         <div>
-          <button type="button" onClick={() => setCursor(dayjs())}>Hoje</button>
+          <button type="button" className="calendar-today" onClick={() => setCursor(dayjs())}>Hoje</button>
           {/* `calendar-nav-step` existe para escapar da regra base de `.calendar-tools > div
               button`, que dá font-size 11px e padding 0. Como o ícone do react-icons mede 1em, o
               ícone ERA o botão inteiro: 11×11. */}
-          <button type="button" className="calendar-nav-step" aria-label="Período anterior" onClick={() => moveCursor(-1)}><FiChevronLeft /></button>
-          <button type="button" className="calendar-nav-step" aria-label="Próximo período" onClick={() => moveCursor(1)}><FiChevronRight /></button>
-          <strong>{calendarLabel}</strong>
+          <button type="button" className="calendar-nav-step calendar-nav-prev" aria-label="Período anterior" onClick={() => moveCursor(-1)}><FiChevronLeft /></button>
+          <button type="button" className="calendar-nav-step calendar-nav-next" aria-label="Próximo período" onClick={() => moveCursor(1)}><FiChevronRight /></button>
+          <strong>
+            <span className="calendar-label-full">{calendarLabel}</span>
+            <span className="calendar-label-compact">{calendarLabelCompact}</span>
+          </strong>
           {canEdit && <button type="button" className="calendar-add-task calendar-add-task-inline" aria-label="Adicionar compromisso" onClick={() => openCreate()}><FiPlus /> Compromisso</button>}
           <nav aria-label="Visualização da agenda">
             <button className={calendarView === 'day' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('day')}>Dia</button>
