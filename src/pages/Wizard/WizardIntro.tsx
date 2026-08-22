@@ -39,14 +39,6 @@ const WizardIntro: FC<{ artistName: string; onStart: () => void }> = ({ artistNa
         <YouTubeEmbed src={VIDEO_CONVITE} title='Anita Carvalho apresenta o planejamento estratégico' />
       </div>
 
-      {/* As etapas por extenso: dizer "9 etapas" é abstrato, e a lista mostra que o caminho é
-          finito e conhecido. É a diferença entre "vai ser longo" e "são estes nove passos". */}
-      <ol className='wiz-intro-steps'>
-        {STEP_LABELS.map((label, i) => (
-          <li key={label}><b>{i + 1}</b>{label}</li>
-        ))}
-      </ol>
-
       <button type='button' className='wiz-intro-cta' onClick={onStart}>
         Começar meu planejamento <FiArrowRight size={17} />
       </button>

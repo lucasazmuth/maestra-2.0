@@ -302,6 +302,13 @@ export function buildOpening(draft: ArtistContent, artistName: string): string[]
     return SAY.newPhase(phase, label);
   }
 
+  // Retomada NO MEIO da Identidade (`step` ainda em 0, mas já não é "fresh" — algum campo já foi
+  // respondido). Os marcos abaixo só nascem quando um `step` INTEIRO é cruzado, e a Identidade é a
+  // única etapa com sub-perguntas antes disso (pronome, estilo, momento de carreira, 4
+  // referências); sem este branch, a lista `done` ficava vazia e a Nyta caía na saudação completa
+  // de novo, como se o artista não tivesse respondido nada.
+  if (step <= 0) return SAY.recapContinue();
+
   const milestones: [number, string][] = [
     [1, 'sua identidade'],
     [2, 'sua visão'],

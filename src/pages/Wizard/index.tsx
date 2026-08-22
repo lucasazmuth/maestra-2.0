@@ -82,7 +82,13 @@ const Wizard: FC = () => {
 
   // Fonte única da decisão "estou mostrando o convite?": o render e o efeito da coluna de
   // resultados leem daqui, senão um poderia dizer sim e o outro não.
-  const mostrandoConvite = draftReady && !entrou && !(draft.step ?? 0);
+  //
+  // "Ainda não começou" NÃO é só `step === 0` — a Identidade sozinha tem 7 sub-perguntas
+  // (pronome, estilo, momento de carreira, 4 referências) antes do `step` avançar pra 1. Um
+  // artista que já respondeu a metade e só deu F5 caía de novo aqui, via de novo o "Começar meu
+  // planejamento" e ouvia a saudação inteira da Nyta como se nada tivesse sido salvo — a mesma
+  // condição usada em `buildOpening` (script.ts) pra decidir "fresh".
+  const mostrandoConvite = draftReady && !entrou && !(draft.step ?? 0) && !draft.identity?.gender;
   // Folha do plano no celular. No desktop o plano é coluna fixa e não abre/fecha, então isto só
   // vale abaixo de 769px. Era um store global (`wizardPanelStore`) enquanto o painel precisava
   // ser renderizado lá no AppLayout; fora do layout, o Wizard é o dono e um useState basta.
@@ -121,6 +127,22 @@ const Wizard: FC = () => {
   // concorrentes chegam fora de ordem no Supabase e a última a aterrissar vence —
   // foi assim que um step antigo sobrescreveu a conclusão do wizard.
   const persistQueueRef = useRef<Promise<void>>(Promise.resolve());
+
+  // Nº de gravações ainda em voo. Fechar a aba/recarregar NO MEIO de uma (o passo do "prepare" —
+  // vídeo assemblado, estratégias, resumo final — é o mais demorado) descarta essa escrita: o
+  // reload lê o Supabase antes dela chegar lá, e quem volta reabre num ponto anterior ao que já
+  // tinha na tela. `beforeunload` avisa enquanto isto > 0, pra não perder progresso por pressa.
+  const pendingWritesRef = useRef(0);
+  useEffect(() => {
+    const aoSair = (e: BeforeUnloadEvent) => {
+      if (pendingWritesRef.current > 0) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', aoSair);
+    return () => window.removeEventListener('beforeunload', aoSair);
+  }, []);
 
   useEffect(() => {
     if (artist) {
@@ -164,6 +186,7 @@ const Wizard: FC = () => {
   );
 
   const persist = (patch: Partial<ArtistContent>, nextStep?: number): Promise<void> => {
+    pendingWritesRef.current += 1;
     const run = persistQueueRef.current.then(async () => {
       if (!artist) return;
       // Base sempre fresca (ref), nunca o draft do closure de quem chamou.
@@ -182,7 +205,7 @@ const Wizard: FC = () => {
           message.error('Erro ao salvar progresso — verifique sua conexão');
         }
       }
-    });
+    }).finally(() => { pendingWritesRef.current -= 1; });
     persistQueueRef.current = run;
     return run;
   };
@@ -191,6 +214,7 @@ const Wizard: FC = () => {
   // persist normal, aqui o step PODE regredir e campos podem sumir — é uma substituição completa.
   // Vai pela mesma fila serializada, pra não competir com gravações em andamento.
   const restore = (content: ArtistContent): Promise<void> => {
+    pendingWritesRef.current += 1;
     const run = persistQueueRef.current.then(async () => {
       if (!artist) return;
       draftRef.current = content;
@@ -204,7 +228,7 @@ const Wizard: FC = () => {
           message.error('Erro ao voltar — verifique sua conexão');
         }
       }
-    });
+    }).finally(() => { pendingWritesRef.current -= 1; });
     persistQueueRef.current = run;
     return run;
   };

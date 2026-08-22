@@ -13,7 +13,7 @@
 // componente resolve os dois. Stage sem entrada aqui simplesmente não mostra vídeo.
 
 /** Vídeo do convite (tela "Oi, [artista]" com o CTA de começar) — antes de qualquer pergunta. */
-export const VIDEO_CONVITE = 'https://www.youtube.com/watch?v=-Zg9NF1SSgw';
+export const VIDEO_CONVITE = 'https://www.youtube.com/watch?v=EJt6NHRgaSM';
 
 /**
  * stage do beat → vídeo de reforço.

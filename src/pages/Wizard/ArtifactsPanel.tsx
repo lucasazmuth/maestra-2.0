@@ -3,6 +3,12 @@ import { FiCheck, FiChevronDown, FiEdit3, FiX } from 'react-icons/fi';
 
 import { STEP_LABELS, currentStepIndex } from './chat/script';
 import { stripEmDash } from './clean';
+import {
+  GENDER_OPTIONS,
+  MISSION_FINANCIAL_OPTIONS,
+  STAGE_OPTIONS,
+  VISION_ONDE_OPTIONS,
+} from './chat/wizardData';
 import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 
 // Coluna lateral de resultados do Planejamento Estratégico: lista limpa do que já foi produzido
@@ -12,7 +18,7 @@ import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 const splitRefItems = (s?: string): string[] =>
   (s || '').split(/[,;\n·]+/).map((x) => x.trim()).filter(Boolean);
 
-// Linhas "rótulo · valor" (gênero, cidade, referências, cronograma).
+// Linhas "rótulo · valor" — cada uma nomeia a pergunta que a originou, nunca texto solto.
 const Meta: FC<{ rows: [string, string][] }> = ({ rows }) =>
   rows.length ? (
     <div className='wiz-art-meta'>
@@ -24,37 +30,93 @@ const Meta: FC<{ rows: [string, string][] }> = ({ rows }) =>
     </div>
   ) : null;
 
-// Conteúdo do artefato de cada etapa (ou null se ainda não foi gerado).
+// Texto corrido (visão, missão, resumo) com o mesmo rótulo da pergunta que o gerou — nunca
+// aparece "solto", sem dizer que resposta é aquela.
+const TextBlock: FC<{ label: string; text: string }> = ({ label, text }) => (
+  <div className='wiz-art-meta'>
+    <div>
+      <span className='wiz-art-k'>{label}</span>
+      <p className='wiz-art-text' style={{ margin: 0 }}>{text}</p>
+    </div>
+  </div>
+);
+
+// Lista com rótulo (SWOT: cada quadrante é a resposta de uma pergunta própria da etapa).
+const LabeledList: FC<{ label: string; items: string[] }> = ({ label, items }) =>
+  items.length ? (
+    <div className='wiz-art-meta'>
+      <div>
+        <span className='wiz-art-k'>{label}</span>
+        <ul className='wiz-art-list' style={{ marginTop: 4 }}>
+          {items.map((it, k) => (
+            <li key={k}>{stripEmDash(it)}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  ) : null;
+
+// Corta um markdown curto pra caber num cartão: tira marcação básica e para na 1ª quebra dupla
+// ou num limite de caracteres, sempre no fim de uma palavra.
+const previewFrom = (md: string, max = 220): string => {
+  const plain = md.replace(/^#+\s*/gm, '').replace(/[*_`]/g, '').trim();
+  const firstBlock = plain.split(/\n\s*\n/)[0] || plain;
+  if (firstBlock.length <= max) return firstBlock;
+  return `${firstBlock.slice(0, max).replace(/\s+\S*$/, '')}…`;
+};
+
+// Conteúdo do artefato de cada etapa (ou null se ainda não foi gerado). Espelha, campo a campo,
+// tudo que `chat/script.ts` pergunta naquela etapa — nenhum input fica de fora do cartão.
 const artifactFor = (i: number, d: ArtistContent): ReactNode => {
   const id = d.identity || {};
   switch (i) {
-    case 0: { // Identidade: gênero e referências, tudo como linhas simples
+    case 0: { // Identidade — abertura + mapa de referências (script STEP 0)
       const refs = id.references || {};
       const pos = refs.posicionamento || {};
       const posItems = [pos.curto, pos.medio, pos.longo].flatMap(splitRefItems);
       const rows: [string, string][] = [];
-      if (id.genre) rows.push(['Gênero', id.genre]);
-      if (posItems.length) rows.push(['Posicionamento', posItems.join(', ')]);
-      if (refs.artisticas) rows.push(['Artísticas', splitRefItems(refs.artisticas).join(', ')]);
-      if (refs.comunicacao) rows.push(['Comunicação', splitRefItems(refs.comunicacao).join(', ')]);
-      if (refs.gestao) rows.push(['Carreira', splitRefItems(refs.gestao).join(', ')]);
+      if (id.gender) rows.push(['Pronome', GENDER_OPTIONS.find((o) => o.value === id.gender)?.label || id.gender]);
+      if (id.genre) rows.push(['Estilo musical', id.genre]);
+      if (id.stage) rows.push(['Momento de carreira', STAGE_OPTIONS.find((o) => o.value === id.stage)?.label || id.stage]);
+      if (refs.artisticas) rows.push(['Referências artísticas', splitRefItems(refs.artisticas).join(', ')]);
+      if (refs.comunicacao) rows.push(['Referências de comunicação', splitRefItems(refs.comunicacao).join(', ')]);
+      if (refs.gestao) rows.push(['Referências de gestão de carreira', splitRefItems(refs.gestao).join(', ')]);
+      if (posItems.length) rows.push(['Referências de posicionamento', posItems.join(', ')]);
       return rows.length ? <Meta rows={rows} /> : null;
     }
-    case 1: { // Visão: cidade/UF (perguntadas nesta etapa, ver script STEP 1) + o texto da visão
+    case 1: { // Visão — cidade + as 5 partes da fórmula (script STEP 1) + o texto montado
+      const vp = id.visionParts || {};
       const rows: [string, string][] = [];
-      if (id.city) rows.push(['Cidade', `${id.city}${id.state ? `/${id.state}` : ''}`]);
+      if (id.city) rows.push(['Cidade de origem', `${id.city}${id.state ? `/${id.state}` : ''}`]);
+      if (vp.onde) rows.push(['Alcance geográfico', VISION_ONDE_OPTIONS.find((o) => o.value === vp.onde)?.label || vp.onde]);
+      if (vp.porQuem?.length) rows.push(['Reconhecido por', vp.porQuem.join(', ')]);
+      if (vp.substantivo) rows.push(['Como o quê', vp.substantivo]);
+      if (vp.adjetivo) rows.push(['Atributo', vp.adjetivo]);
+      if (vp.oQueFalam) rows.push(['O que falam de você', vp.oQueFalam]);
       return (
         <>
           {rows.length ? <Meta rows={rows} /> : null}
-          {id.vision ? <p className='wiz-art-text'>{stripEmDash(id.vision)}</p> : null}
+          {id.vision ? <TextBlock label='Visão' text={stripEmDash(id.vision)} /> : null}
         </>
       );
     }
-    case 2: // Missão
-      return id.mission ? <p className='wiz-art-text'>{stripEmDash(id.mission)}</p> : null;
+    case 2: { // Missão — entrega + para quem + retorno financeiro (script STEP 2) + o texto montado
+      const mp = id.missionParts || {};
+      const rows: [string, string][] = [];
+      if (mp.entrega) rows.push(['O que a carreira entrega', mp.entrega]);
+      if (mp.paraQuem) rows.push(['Para quem', mp.paraQuem]);
+      if (mp.financialTier)
+        rows.push(['Retorno financeiro esperado', MISSION_FINANCIAL_OPTIONS.find((o) => o.value === mp.financialTier)?.label || mp.financialTier]);
+      return (
+        <>
+          {rows.length ? <Meta rows={rows} /> : null}
+          {id.mission ? <TextBlock label='Missão' text={stripEmDash(id.mission)} /> : null}
+        </>
+      );
+    }
     case 3: // Valores
-      return id.values?.length ? <div className='wiz-art-text'>{id.values.join(' · ')}</div> : null;
-    case 4: // Objetivos
+      return id.values?.length ? <Meta rows={[['Valores escolhidos', id.values.join(' · ')]]} /> : null;
+    case 4: // Objetivos (derivados da identidade/visão/missão — sem pergunta própria)
       return d.objectives?.length ? (
         <ol className='wiz-art-list'>
           {d.objectives.map((o, k) => (
@@ -62,15 +124,17 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
           ))}
         </ol>
       ) : null;
-    case 5: { // Diagnóstico (SWOT) — contagens
+    case 5: { // Diagnóstico (SWOT) — o conteúdo de cada quadrante, não só a contagem
       const s = d.swotAnalysis;
       if (!s) return null;
-      const rows: [string, string][] = [];
-      if (s.strengths?.length) rows.push(['Forças', String(s.strengths.length)]);
-      if (s.weaknesses?.length) rows.push(['Fraquezas', String(s.weaknesses.length)]);
-      if (s.opportunities?.length) rows.push(['Oportunidades', String(s.opportunities.length)]);
-      if (s.threats?.length) rows.push(['Ameaças', String(s.threats.length)]);
-      return rows.length ? <Meta rows={rows} /> : null;
+      return (
+        <>
+          <LabeledList label='Forças' items={s.strengths || []} />
+          <LabeledList label='Fraquezas' items={s.weaknesses || []} />
+          <LabeledList label='Oportunidades' items={s.opportunities || []} />
+          <LabeledList label='Ameaças' items={s.threats || []} />
+        </>
+      );
     }
     case 6: // Estratégias
       return d.strategies?.length ? (
@@ -97,8 +161,8 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
         </>
       );
     }
-    case 8: // Seu plano
-      return d.executiveSummary ? <div className='wiz-art-text'>Plano concluído</div> : null;
+    case 8: // Seu plano — prévia do resumo executivo, não só "Plano concluído"
+      return d.executiveSummary ? <TextBlock label='Resumo executivo' text={previewFrom(d.executiveSummary)} /> : null;
     default:
       return null;
   }

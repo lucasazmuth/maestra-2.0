@@ -48,6 +48,27 @@ import type {
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+// Revela listas longas (estratégias, SWOT, oportunidades/ameaças) item por item em vez de tudo de
+// uma vez. Sem isso, um card com 20+ itens nasce já com a altura final, e o `ResizeObserver` do
+// chat (NytaChat) — que rola pra baixo sozinho a cada crescimento do conteúdo — pula direto pro
+// fim numa só tacada, escondendo o título e a explicação logo acima da lista. Fazendo o card
+// crescer aos poucos, o mesmo auto-scroll acompanha em passos pequenos, e quem está lendo já viu
+// o começo antes dele sair da tela.
+//
+// Revela só na primeira vez: uma vez que `total` já foi alcançado, mudanças posteriores (editar um
+// chip do board da SWOT) aparecem na hora, sem re-tocar a animação da lista inteira.
+const useStaggerReveal = (total: number, stepMs = 80): number => {
+  const doneRef = useRef(false);
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    if (doneRef.current) { setShown(total); return; }
+    if (shown >= total) { doneRef.current = true; return; }
+    const t = window.setTimeout(() => setShown((s) => Math.min(s + 1, total)), shown === 0 ? 260 : stepMs);
+    return () => window.clearTimeout(t);
+  }, [shown, total, stepMs]);
+  return shown;
+};
+
 // ---- Gênero musical ----------------------------------------------------------------------------
 
 export const GenreChips: FC<{
@@ -181,48 +202,11 @@ const SingleChoiceCard: FC<{
   );
 };
 
-// "Explique-me melhor" (Metodologia v2, Q1): texto de apoio colapsável sobre por que tratar a
-// carreira como um negócio. Aparece junto da primeira pergunta.
-export const ExplainMore: FC = () => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ marginBottom: 10 }}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        style={{
-          background: 'transparent',
-          border: '1px solid var(--wz-line-2)',
-          borderRadius: 9999,
-          color: 'var(--wz-muted)',
-          fontSize: 12.5,
-          fontWeight: 600,
-          padding: '6px 14px',
-          cursor: 'pointer',
-        }}
-      >
-        {open ? 'Ocultar' : 'Explique-me melhor'}
-      </button>
-      {open && (
-        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {SAY.explainMore().map((p, i) => (
-            <p key={i} style={{ color: 'var(--wz-muted)', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-              {p}
-            </p>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 export const GenderChoice: FC<{ onConfirm: (g: ArtistGender) => void }> = ({ onConfirm }) => (
-  <div>
-    <ExplainMore />
-    <SingleChoiceCard
-      options={GENDER_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-      onConfirm={(v) => onConfirm(v as ArtistGender)}
-    />
-  </div>
+  <SingleChoiceCard
+    options={GENDER_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+    onConfirm={(v) => onConfirm(v as ArtistGender)}
+  />
 );
 
 export const StageChoice: FC<{ onConfirm: (s: ArtistStage) => void }> = ({ onConfirm }) => (
@@ -1194,6 +1178,7 @@ export const SwotChecklist: FC<{
 }> = ({ items, confirmLabel, onConfirm, title, accent = 'var(--wz-blue)' }) => {
   const [sel, setSel] = useState<number[]>([]);
   const toggle = (id: number) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const shown = useStaggerReveal(items.length, 55);
   return (
     <div className='nyta-card'>
       {title && (
@@ -1202,11 +1187,12 @@ export const SwotChecklist: FC<{
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {items.map((c) => {
+        {items.slice(0, shown).map((c) => {
           const active = sel.includes(c.id);
           return (
             <button
               key={c.id}
+              className='wiz-rank-item'
               onClick={() => toggle(c.id)}
               style={{
                 display: 'flex',
@@ -1268,6 +1254,38 @@ const SWOT_COLS: { key: keyof SwotAnalysis; label: string; color: string }[] = [
   { key: 'threats', label: 'Ameaças', color: 'var(--wz-warn)' },
 ];
 
+// Uma coluna do board (Forças/Fraquezas/Oportunidades/Ameaças), com stagger PRÓPRIO: cada
+// quadrante revela seus chips no seu próprio ritmo, em paralelo com os outros três — extraído à
+// parte porque `useStaggerReveal` é um hook e não pode ser chamado dentro do `.map` do pai.
+const SwotBoardColumn: FC<{
+  label: string;
+  color: string;
+  items: string[];
+  onRemove: (i: number) => void;
+  onAdd: (v: string) => void;
+}> = ({ label, color, items, onRemove, onAdd }) => {
+  const shown = useStaggerReveal(items.length, 60);
+  return (
+    <div style={{ background: 'var(--wz-surface-2)', borderRadius: 8, padding: 12, borderTop: `3px solid ${color}` }}>
+      <div style={{ color, fontWeight: 800, fontSize: 14, marginBottom: 8 }}>
+        {label} <span style={{ color: 'var(--wz-faint)', fontWeight: 700 }}>({items.length})</span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+        {items.slice(0, shown).map((item, i) => (
+          <span key={`${item}-${i}`} className='wiz-swot-chip wiz-rank-item'>
+            <span style={{ width: 6, height: 6, minWidth: 6, borderRadius: '50%', background: color }} />
+            {item}
+            <button className='wiz-swot-chip-del' title='Remover' onClick={() => onRemove(i)}>
+              <FiX size={12} />
+            </button>
+          </span>
+        ))}
+      </div>
+      <AddOwnField placeholder='Adicionar…' label='Adicionar' onAdd={onAdd} />
+    </div>
+  );
+};
+
 export const SwotBoardCard: FC<{
   swot: SwotAnalysis;
   onConfirm: (swot: SwotAnalysis, userEdits: string[]) => void;
@@ -1294,23 +1312,14 @@ export const SwotBoardCard: FC<{
         {SWOT_COLS.map((c) => {
           const items = board[c.key] || [];
           return (
-            <div key={c.key} style={{ background: 'var(--wz-surface-2)', borderRadius: 8, padding: 12, borderTop: `3px solid ${c.color}` }}>
-              <div style={{ color: c.color, fontWeight: 800, fontSize: 14, marginBottom: 8 }}>
-                {c.label} <span style={{ color: 'var(--wz-faint)', fontWeight: 700 }}>({items.length})</span>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                {items.map((item, i) => (
-                  <span key={`${item}-${i}`} className='wiz-swot-chip'>
-                    <span style={{ width: 6, height: 6, minWidth: 6, borderRadius: '50%', background: c.color }} />
-                    {item}
-                    <button className='wiz-swot-chip-del' title='Remover' onClick={() => update(c.key, items.filter((_, j) => j !== i))}>
-                      <FiX size={12} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <AddOwnField placeholder='Adicionar…' label='Adicionar' onAdd={(v) => update(c.key, [...items, v])} />
-            </div>
+            <SwotBoardColumn
+              key={c.key}
+              label={c.label}
+              color={c.color}
+              items={items}
+              onRemove={(i) => update(c.key, items.filter((_, j) => j !== i))}
+              onAdd={(v) => update(c.key, [...items, v])}
+            />
           );
         })}
       </div>
@@ -1341,6 +1350,7 @@ export const StrategyCards: FC<{
 }> = ({ strategies, onConfirm }) => {
   // Lista somente-leitura: as estratégias vêm das matrizes determinísticas e não são editáveis
   // aqui (sem adicionar nem excluir). O artista revisa e segue pra priorização.
+  const shown = useStaggerReveal(strategies.length, 70);
   return (
     <div className='nyta-card'>
       <div
@@ -1359,11 +1369,12 @@ export const StrategyCards: FC<{
         Construídas a partir do seu diagnóstico, cruzando suas forças, fraquezas e oportunidades.
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {strategies.map((s) => {
+        {strategies.slice(0, shown).map((s) => {
           const refsLine = swotRefsLine(s);
           return (
             <div
               key={s.id}
+              className='wiz-rank-item'
               title={refsLine || undefined}
               style={{ position: 'relative', background: 'var(--wz-surface)', border: '1px solid var(--wz-line-2)', borderRadius: 8, padding: '14px 16px' }}
             >
@@ -1467,6 +1478,9 @@ export const PriorityScale: FC<{
   const [hoverVal, setHoverVal] = useState<number | null>(null);
   // X do modal de ordem pronta: MINIMIZA (mantém notas e seleção) e deixa um card no chat pra reabrir.
   const [minimized, setMinimized] = useState(false);
+  // Revela o ranking item por item (28 estratégias de uma vez era demais pra digerir). Chamado
+  // incondicionalmente aqui em cima — é hook, não pode entrar no `if (revealed)` mais abaixo.
+  const rankShown = useStaggerReveal(strategies.length, 45);
 
   // Deixar a Maestra priorizar: busca as notas sugeridas, preenche e mostra a ordem pronta.
   const runAi = async () => {
@@ -1626,14 +1640,14 @@ export const PriorityScale: FC<{
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '4px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {ranked.map((s, i) => {
+            {ranked.slice(0, rankShown).map((s, i) => {
               const on = selected.has(s.id);
               const pct = Math.round(((s.finalScore || 0) / Math.max(maxScore, 1)) * 100);
               return (
                 <button
                   key={s.id}
                   onClick={() => toggleSel(s.id)}
-                  className="wiz-prio-item"
+                  className="wiz-prio-item wiz-rank-item"
                   style={{
                     background: on ? 'var(--wz-blue-soft)' : 'var(--wz-surface-2)',
                     border: `1px solid ${on ? 'var(--wz-blue)' : 'transparent'}`,
