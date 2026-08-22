@@ -9,7 +9,7 @@ const REDUCE_MOTION =
 
 // Empty state conversacional: a Nyta "fala" (efeito de digitação) convidando o artista a
 // iniciar o planejamento; ao terminar, surge a ação. Objetivo: intuitivo e acolhedor.
-const EnhancedEmptyState: FC<EnhancedEmptyStateProps> = ({ artistName, onStartWizard, canStart = true }) => {
+const EnhancedEmptyState: FC<EnhancedEmptyStateProps> = ({ artistName, onStartWizard, canStart = true, video }) => {
   const greeting = canStart
     ? `Oi${artistName ? `, ${artistName}` : ''}! Eu sou a Nyta, sua estrategista de carreira. Bora montar, juntos, um plano sob medida pra você?`
     : `Oi${artistName ? `, ${artistName}` : ''}! Eu sou a Nyta. O planejamento deste artista ainda não foi criado. Assim que o titular do perfil montar o plano, ele aparece aqui pra você acompanhar.`;
@@ -45,6 +45,11 @@ const EnhancedEmptyState: FC<EnhancedEmptyStateProps> = ({ artistName, onStartWi
           {typed}
           {!done && <span className={styles.caret} aria-hidden />}
         </p>
+
+        {/* Vídeo de apresentação: aparece junto com o CTA, quando a Nyta termina de "digitar".
+            Antes disso ele competiria com o texto que ainda está sendo revelado.
+            `video` é opcional — o Plano de Ação usa este mesmo componente sem vídeo. */}
+        {video && done && <div className={styles.video}>{video}</div>}
 
         {canStart && (
           <button

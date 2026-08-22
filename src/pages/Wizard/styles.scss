@@ -2188,15 +2188,6 @@
   list-style: none;
 }
 
-// O vídeo sangra até as bordas do cartão e arredonda só embaixo — fica parte do cartão da etapa,
-// e não uma caixa solta empilhada depois dele.
-.wiz-art-video {
-  margin: 0;
-  border: 0;
-  border-top: 1px solid #f1f5fa;
-  border-radius: 0;
-}
-
 // ---- Edição inline dos entregáveis (lápis sutil por seção) ------------------------------------
 .wiz-art-pencil {
   background: transparent;
@@ -2578,13 +2569,6 @@
   }
 
   span { flex: none; }
-}
-
-// No DESKTOP o vídeo não entra na conversa: a coluna de contexto, ao lado, já mostra o vídeo de
-// cada etapa. Ver os dois ao mesmo tempo, na mesma tela, é redundante. No celular não há coluna,
-// então lá ele continua chegando como mensagem da Nyta.
-@media (min-width: 769px) {
-  .nyta-row--video { display: none; }
 }
 
 // Título de cada etapa dentro do plano: agora encabeça um bloco que contém um vídeo, não só duas

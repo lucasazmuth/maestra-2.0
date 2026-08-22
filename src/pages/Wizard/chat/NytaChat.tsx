@@ -11,7 +11,7 @@ import { NytaBubble, NytaCardRow, TypingIndicator, UserBubble, WidgetSlot } from
 import { GUIDED_OPENTEXT, SAY, type OpenTextField } from './nytaPersona';
 import { buildOpening, nextBeat, currentStepIndex, STEP_LABELS, type PrepareAction, type WidgetSpec } from './script';
 import { YouTubeEmbed } from '../../../components/YouTubeEmbed';
-import { STEP_VIDEOS } from '../stepVideos';
+import { BEAT_VIDEOS, VIDEO_ABERTURA } from '../beatVideos';
 import {
   GENDER_OPTIONS,
   MISSION_FINANCIAL_OPTIONS,
@@ -160,8 +160,6 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   const stageRef = useRef<string>('');
   // Última etapa cujo vídeo já foi enviado na conversa — evita repetir a cada beat.
   const videoStepRef = useRef<number | null>(null);
-  // Ligado ao entrar numa etapa nova: o próximo beat abre mandando o vídeo dela.
-  const videoAbrirRef = useRef(false);
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const preparingRef = useRef<string | null>(null);
   const openedRef = useRef(false);
@@ -362,7 +360,6 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   const continuarEtapa = () => {
     setGate(null);
     gateRef.current = false;
-    videoAbrirRef.current = true;
     // Zera a conversa e o estágio: sem resetar o stageRef, o efeito veria o mesmo beat de antes
     // e não diria nada — a etapa nova abriria em silêncio, com a tela vazia.
     setThread([]);
@@ -377,14 +374,16 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     if (openedRef.current) return;
     openedRef.current = true;
     setThread([{ id: uid(), role: 'nyta', hero: true }]);
-    // O vídeo entra ANTES da saudação, não depois. Antes ele era enfileirado no efeito do beat,
-    // que roda depois deste — e caía entre a saudação e a primeira pergunta, partindo ao meio o
-    // que se lê como um monólogo só. Marca o step aqui para o efeito do beat não repetir.
-    const idxAbertura = currentStepIndex(draft);
+    // A abertura tem vídeo próprio, e só na PRIMEIRA vez (sem progresso ainda): ele reforça o
+    // "deixa eu olhar pra sua carreira como um negócio junto com você?", que é a pergunta da
+    // saudação. Quem retoma no meio do plano já passou por isso.
+    //
+    // DEPOIS da saudação, não antes: aqui o vídeo é reforço de uma pergunta, e reforço vem depois
+    // da pergunta. `videoStepRef` continua sendo marcado para o portão de etapa não disparar na
+    // montagem (ele compara com o step anterior).
     videoStepRef.current = draft.step ?? 0;
-    const videoAbertura = STEP_VIDEOS[idxAbertura];
-    if (videoAbertura) sayVideo(videoAbertura, `Vídeo da etapa ${idxAbertura + 1}: ${STEP_LABELS[idxAbertura]}`);
-    say(buildOpening(draft, artist.name));
+    const abertura = say(buildOpening(draft, artist.name));
+    if (!(draft.step ?? 0)) abertura.then(() => sayVideo(VIDEO_ABERTURA, 'Vídeo: como funciona o planejamento'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -429,14 +428,6 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     }
 
     if (beat.stage !== stageRef.current) {
-      // Vídeo da etapa, ANTES das falas: a Nyta manda o vídeo e então explica.
-      if (videoAbrirRef.current) {
-        videoAbrirRef.current = false;
-        const idx = currentStepIndex(draftRef.current);
-        const fonte = STEP_VIDEOS[idx];
-        if (fonte) sayVideo(fonte, `Vídeo da etapa ${idx + 1}: ${STEP_LABELS[idx]}`);
-      }
-
       stageRef.current = beat.stage;
       setWidget(null);
       setGuided(null);
@@ -454,7 +445,15 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
           captureBeat('vision.city', { kind: 'cityInput' }, false);
         });
       } else {
-        say(beat.say).then(() => {
+        // Vídeo DEPOIS da pergunta, nas que ganharam apoio: ele reforça o que acabou de ser
+        // perguntado — antes da pergunta seria um vídeo sobre nada. E o widget só aparece depois
+        // dele: oferecer a resposta antes do apoio derrota o propósito de ter o apoio.
+        const apoio = BEAT_VIDEOS[beat.stage];
+        const falas = say(beat.say);
+        const comApoio = apoio
+          ? falas.then(() => sayVideo(apoio, 'Vídeo de apoio da Nyta'))
+          : falas;
+        comApoio.then(() => {
           if (beat.widget) setWidget(beat.widget);
           if (answerable) captureBeat(beat.stage, beat.widget ?? null, beat.acceptsText === true);
         });

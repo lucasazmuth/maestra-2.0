@@ -12,12 +12,10 @@ import { Spinner } from '../../components/spinner/spinner';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import { migrateWizardContent } from './migration';
 import { NytaChat } from './chat/NytaChat';
+import { YouTubeEmbed } from '../../components/YouTubeEmbed';
+import { VIDEO_CONVITE } from './beatVideos';
 import { ArtifactsPanel, PlanList } from './ArtifactsPanel';
 import { StepBar } from './components';
-import { currentStepIndex } from './chat/script';
-import { STEP_VIDEOS } from './stepVideos';
-import { STEP_LABELS } from './chat/script';
-import { YouTubeEmbed } from '../../components/YouTubeEmbed';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { supabase } from '../../lib/supabase';
 import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
@@ -326,14 +324,11 @@ const Wizard: FC = () => {
           artistId={artist?.id || ''}
           artistName={identity.name || artist?.name || ''}
           onStartWizard={() => setEntrou(true)}
+          video={<YouTubeEmbed src={VIDEO_CONVITE} title='Conheça o planejamento estratégico' />}
         />
       </div>
     );
   }
-
-  // Etapa atual: decide o rótulo da barra E qual vídeo tocar. Uma conta só, compartilhada.
-  const etapa = currentStepIndex(draft);
-  const tituloVideo = `Vídeo da etapa ${etapa + 1}: ${STEP_LABELS[etapa]}`;
 
   return (
     <div className='wizard wizard--chat wizard--fullpage'>
@@ -347,9 +342,8 @@ const Wizard: FC = () => {
 
       {/* Coluna de contexto — só no desktop (no celular vira a barra + a folha do plano). */}
       <aside className='wiz-side'>
-        {/* Sem player fixo aqui: o vídeo de cada etapa mora DENTRO da lista, abaixo do bloco da
-            etapa a que pertence (ver PlanList). Fixo no topo, mostrava só o da etapa atual e
-            empurrava o plano para baixo. */}
+        {/* Sem vídeo nesta coluna: ele é de PERGUNTA, não de etapa — reforça um momento específico
+            da conversa, e por isso vive lá, no fio do diálogo (ver beatVideos.ts). */}
         <StepBar draft={draft} />
         <div className='wiz-plan-scroll'>
           {/* UMA instância montada por vez, aqui ou na folha: o editor inline tem estado local,
@@ -370,13 +364,9 @@ const Wizard: FC = () => {
         )}
       </aside>
 
-      {/* Coluna da conversa. No celular recebe no topo, ANCORADOS (fora da thread), a barra da
-          etapa e o vídeo: dentro da thread eles sumiriam no reload, porque a conversa é
-          reconstruída por `buildOpening` — e depois de rolar não dava pra reassistir. */}
+      {/* Coluna da conversa. No celular recebe no topo a barra da etapa, ancorada fora da thread:
+          é a porta para o plano, que lá não cabe como coluna. */}
       <main className='wiz-main'>
-        {/* Só a barra fica sobre a conversa: ela é a porta para a tela das etapas. O vídeo mora
-            LÁ, junto do contexto da etapa — sobre a conversa ele roubava altura de uma tela que
-            já é apertada, e a conversa é para conversar. */}
         <StepBar draft={draft} onOpenPlan={() => setPlanoAberto(true)} className='wiz-only-mobile' />
         {draftReady && (
           <NytaChat

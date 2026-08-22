@@ -2,8 +2,6 @@ import { FC, ReactNode, useEffect, useState } from 'react';
 import { FiCheck, FiChevronDown, FiEdit3, FiX } from 'react-icons/fi';
 
 import { STEP_LABELS, currentStepIndex } from './chat/script';
-import { STEP_VIDEOS } from './stepVideos';
-import { YouTubeEmbed } from '../../components/YouTubeEmbed';
 import { stripEmDash } from './clean';
 import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
 
@@ -267,21 +265,10 @@ export const PlanList: FC<{
               <SectionEditor i={i} draft={draft} onCancel={() => setEditing(null)} onSave={onEdit} />
             </div>
           ) : (
-            <>
-              {art && <div className='wiz-art-step-body'>{art}</div>}
-              {/* O vídeo de CADA etapa, abaixo dela — e não um só, fixo no topo. Assim ele
-                  acompanha a lista: conforme as etapas vão surgindo, cada uma traz o seu, e dá
-                  para rever o de qualquer etapa anterior sem sair da tela.
-                  `loading='lazy'` (no YouTubeEmbed) evita carregar os 9 de uma vez: só entra na
-                  rede o que chega perto da viewport. */}
-              {STEP_VIDEOS[i] && (
-                <YouTubeEmbed
-                  src={STEP_VIDEOS[i]}
-                  title={`Vídeo da etapa ${i + 1}: ${label}`}
-                  className='wiz-video wiz-art-video'
-                />
-              )}
-            </>
+            /* Sem vídeo aqui: ele é de PERGUNTA, não de etapa — reforça um momento específico da
+               conversa, e por isso vive lá, no fio do diálogo. Nesta coluna ele só repetia o mesmo
+               player em cada cartão, sem relação com o que estava sendo perguntado. */
+            art && <div className='wiz-art-step-body'>{art}</div>
           )}
         </div>
       ))}
