@@ -262,9 +262,17 @@
 // Identificação no cabeçalho: saída + avatar + título do planejamento.
 .wiz-head-id {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 12px;
+}
+
+// O título é o único item elástico do cabeçalho: encolhe e trunca em vez de empurrar o menu.
+.wiz-head-id .wiz-title {
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 // Sair do planejamento. Usa a classe .wiz-back-btn junto, entao herda o MESMO desenho do botao
@@ -1594,65 +1602,226 @@
   padding-bottom: 0;
 }
 
-// TELA CHEIA NO CELULAR.
+// ── TELA CHEIA (o shell do wizard) ────────────────────────────────────────────────────────────
 //
-// O problema era um so, com dois sintomas. A cadeia de altura limitada do app (.app-layout fixo,
-// .board-shell com altura de viewport, conteudo com overflow proprio) vive inteira dentro de um
-// `@media (min-width: 701px)` em gsap-reference.css. No celular ela simplesmente nao existe: o
-// `.app-layout` vira `display: block` sem altura, e entao
+// MEMÓRIA DO BUG, que continua valendo: a cadeia de altura limitada do app (.app-layout fixo,
+// .board-shell com altura de viewport, conteúdo com overflow próprio) vive inteira dentro de um
+// `@media (min-width: 701px)` no gsap-reference.css. Abaixo disso ela não existe: o `.app-layout`
+// vira `display: block` sem altura, o `height: 100%` resolve para `auto`, e então o `.nyta-scroll`
+// — que é `flex: 1; overflow-y: auto` — NUNCA vira área rolável. Quem cresce é a página: a
+// conversa não acompanha as mensagens novas e o campo de resposta vai parar no fim de uma página
+// longa.
 //
-//   - o `height: 100%` do .wizard--chat resolve para `auto`;
-//   - o `.nyta-scroll`, que e `flex: 1; overflow-y: auto`, nunca recebe altura definida e por isso
-//     NUNCA vira area rolavel — quem cresce e a pagina;
-//   - o campo de resposta, que e o rodape do chat, vai parar no fim de uma pagina longa, embaixo
-//     da tab bar flutuante.
+// Antes isso era remendado reconstituindo a cadeia por cima do AppLayout, só no celular. Agora a
+// rota vive FORA do layout (App.tsx) e o wizard desenha o próprio shell — a altura passa a ser
+// definida aqui, em TODAS as larguras, e o buraco abaixo de 701px deixa de existir.
 //
-// Daí os dois relatos: a conversa nao acompanha as mensagens novas (o `scrollIntoView` do chat
-// mira um container que nao rola) e a barra de navegacao cobre o campo.
-//
-// A tentativa anterior reservava 96px embaixo (--wiz-nav-reserve) para desviar da tab bar. Tratava
-// o sintoma: o chat continuava sem rolagem propria, e nas etapas sem campo de texto sobrava um vao
-// morto. Aqui a cadeia de altura e reconstituida para esta tela, e a tab bar sai de cena (ver
-// MobileNav), entao nao ha mais o que reservar.
+// `position: fixed`, e não `min-height: 100vh`: min-height NÃO é altura definida, e o
+// `flex: 1; min-height: 0` lá embaixo não teria contra o que medir. Cada nível da cadeia precisa
+// do seu `min-height: 0` — é o ponto único de falha desta tela.
+.wizard--fullpage {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  // Anula o `padding: var(--wiz-pad)` do `.wizard`: aqui quem dá respiro é cada coluna.
+  padding: 0;
+  background: var(--wz-canvas, #f7f8fb);
+
+  display: grid;
+  // A conversa ocupa as duas linhas da direita: o cabeçalho cobre só a coluna de contexto.
+  grid-template-columns: var(--wiz-side-w) minmax(0, 1fr);
+  // `auto` na primeira linha, não `var(--wiz-head-h)`: em colunas estreitas o título quebra em
+  // duas linhas, e altura fixa cortaria o texto.
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "head chat"
+    "side chat";
+}
+
+// Largura da coluna de contexto. Os 320px do antigo cartão de resultados dariam ~180px de vídeo
+// 16:9 — apertado demais para assistir.
+:root {
+  --wiz-side-w: clamp(340px, 30vw, 460px);
+}
+
+.wizard--fullpage > .wiz-chat-head {
+  grid-area: head;
+  padding: 0 var(--wiz-pad);
+  margin-bottom: 0;
+}
+
+.wiz-side {
+  grid-area: side;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px var(--wiz-pad) var(--wiz-pad);
+  border-right: 1px solid var(--wz-line);
+  overflow: hidden;
+}
+
+.wiz-main {
+  grid-area: chat;
+  // Começa no topo da coluna direita, ao lado do cabeçalho — como no desenho.
+  grid-row: 1 / -1;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  padding: var(--wiz-pad);
+  overflow: hidden;
+}
+
+// A lista do plano é a única parte que rola dentro da coluna; vídeo, barra e rodapé ficam fixos.
+.wiz-plan-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.wiz-side-foot {
+  flex: none;
+  padding-top: 12px;
+  border-top: 1px solid var(--wz-line);
+}
+
+.wiz-prev-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--wz-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+
+  &:hover { background: var(--wz-blue-soft); color: var(--wz-blue); }
+}
+
+// Barra da etapa. No desktop é um rótulo; no celular vira botão e ganha o chevron (é a porta
+// para o plano acumulado, que lá não cabe como coluna).
+.wiz-stepbar {
+  flex: none;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border: 0;
+  background: transparent;
+  color: var(--wz-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.wiz-stepbar--tap {
+  padding: 12px var(--wiz-pad);
+  border-bottom: 1px solid var(--wz-line);
+  color: var(--wz-blue);
+  cursor: pointer;
+
+  &:hover { background: var(--wz-blue-soft); }
+}
+
+// O player. `.wiz-video` é só o quadro; a proporção e o iframe vêm do <YouTubeEmbed>.
+.wiz-video {
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--wz-line);
+  border-radius: 12px;
+  background: #0b1020;
+}
+
+// Só no celular (a coluna de contexto some lá, e estes dois sobem para o topo da conversa).
+.wiz-only-mobile { display: none; }
+
+// Moldura das telas que NÃO são a conversa (loading e convite). Fora do AppLayout elas perderam
+// o cartão do .board-shell por trás e apareciam nuas sobre o fundo.
+// `display: flex` + `flex: 1` no filho porque o `.empty` do EnhancedEmptyState usa
+// `min-height: 100%`, e porcentagem contra um pai que só tem `min-height` resolve para `auto` —
+// o bloco ficava com a altura do texto e sobrava uma faixa morta embaixo.
+.wiz-page-frame {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background: var(--wz-canvas, #f7f8fb);
+
+  > .wiz-chat-head {
+    flex: none;
+    padding: 0 var(--wiz-pad);
+  }
+
+  > *:not(.wiz-chat-head) {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
 @media (max-width: 768px) {
-  // Cada nivel precisa de altura definida, senao o `flex: 1` la embaixo nao tem contra o que medir.
-  .wizard-fullscreen .app-layout {
-    position: fixed;
-    inset: 0;
-    display: block;
-    height: auto;
-    min-height: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-  }
-
-  .wizard-fullscreen .board-shell {
-    display: flex;
-    height: 100%;
-    min-height: 0;
-    flex-direction: column;
-    margin: 0;
-    border: 0;
-    border-radius: 0;
-  }
-
-  .wizard-fullscreen .Main-section {
-    display: flex;
-    min-height: 0;
-    flex: 1 1 auto;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  // `min-height: 800px` vinha da regra de =<700px do gsap-reference e sozinho ja estouraria a
-  // viewport, devolvendo a rolagem para a pagina.
-  .wizard-fullscreen .wizard--chat {
-    min-height: 0;
-    flex: 1 1 auto;
-    // A faixa segura do iPhone (barra de gestos) fica por conta do proprio chat agora.
+  .wizard--fullpage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "head"
+      "chat";
+    // Faixa segura do iPhone (barra de gestos).
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  .wiz-side { display: none; }
+
+  // A barra e o vídeo sobem para o topo da conversa, ANCORADOS: fora da thread, porque a conversa
+  // é reconstruída a cada reload (buildOpening) e um vídeo dentro dela sumiria — além de rolar
+  // para longe e não poder ser reassistido.
+  .wiz-only-mobile { display: flex; }
+
+  .wiz-main {
+    // Desfaz o `grid-row: 1 / -1` do desktop, que lá faz a conversa subir ao lado do cabeçalho.
+    // Aqui só há uma coluna: mantido, ele colocaria a conversa POR CIMA do cabeçalho — foi
+    // exatamente o que aconteceu, com a barra da etapa e o vídeo sobrepostos ao título.
+    grid-area: chat;
+    padding: 0;
+  }
+
+  // Cabeçalho e barra da etapa comiam 133px dos 812 da tela ANTES da primeira mensagem: o
+  // `--wiz-head-h` (71px) foi desenhado para o desktop, onde há folga de sobra. Aqui a altura vem
+  // do conteúdo, com respiro menor — a conversa é que precisa do espaço.
+  .wizard--fullpage > .wiz-chat-head {
+    min-height: 0;
+    padding: 10px 14px;
+  }
+
+  // Faltavam 11px para "Crie seu planejamento" caber inteiro em 375px. Preferi tirar do avatar
+  // (decorativo, `aria-hidden`) e dos respiros a encolher a tipografia do título — ele é a
+  // identidade da tela, e 15px numa fonte display já lê como legenda.
+  .wiz-chat-head { gap: 8px; }
+  .wiz-head-id { gap: 8px; }
+  .wiz-head-avatar { width: 32px; height: 32px; }
+
+  .wiz-stepbar--tap {
+    padding: 9px 14px;
+  }
+
+  .wiz-main > .wiz-video {
+    margin: 10px 14px 0;
+  }
+
+  .wizard--fullpage .nyta-chat {
+    padding: 0 14px 14px;
+  }
+
 }
 
 // Coluna central reutilizável: 100% em telas estreitas, travada na largura máxima nas largas.
@@ -1670,6 +1839,10 @@
   z-index: 2;
   display: flex;
   align-items: center;
+  // `space-between` + `gap` vinham de um <div> interno que sumiu na reestruturação: sem eles o
+  // título encostava no botão de menu, com ZERO de folga (medido: 306px os dois).
+  justify-content: space-between;
+  gap: 12px;
   min-height: var(--wiz-head-h);
   padding-bottom: 14px;
   margin-bottom: 2px;
@@ -1726,103 +1899,43 @@
   }
 }
 
-// ---- Coluna de resultados (3ª coluna do app, irmã da navbar e da página) --------------------
-// No shell da referência GSAP o `.app-layout` é `display:block` com a página posicionada por
-// margens (não é um flex-row), então a coluna precisa se ancorar sozinha à direita e devolver
-// a largura pro `.board-shell` via margin.
+// ---- Folha do plano (só no celular) ---------------------------------------------------------
 //
-// Base = folha de tela cheia (mobile). No desktop ela vira um cartão irmão do `.board-shell`,
-// no bloco @media abaixo.
+// Era a 3ª coluna do app, renderizada lá no AppLayout e ancorada por `.app-layout:has(...)` para
+// devolver largura ao `.board-shell`. Nada disso existe mais: o wizard saiu do layout e, no
+// desktop, o plano é a parte de baixo da coluna de contexto (`.wiz-plan-scroll`), sem moldura
+// própria. Aqui sobra apenas a folha de tela cheia do celular.
+//
+// `position: fixed` resolve contra a viewport — MAS deixaria de resolver se algum ancestral
+// ganhasse `transform`/`filter`. Por isso o `.wiz-step-glow` (a animação de avanço de etapa) é
+// irmão da raiz, e não filho: mover a animação para a raiz quebraria esta folha em silêncio.
 .wiz-artifacts {
   position: fixed;
+  inset: 0;
+  // Abaixo dos modais do antd (`.wiz-confirm`, ~1000): "Recomeçar do zero" precisa abrir POR CIMA
+  // da folha, não atrás dela.
   z-index: 60;
-  inset: 93px 0 0 auto;
-  width: 320px;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   background: var(--wz-canvas, #fafbfc);
   overflow: hidden;
   animation: wizSlideInRight 0.28s ease both;
 }
 
-// Desktop: mesma caixa do `.board-shell` — cartão arredondado de 15px com o mesmo contorno,
-// encaixado na área útil do shell (o padding 28px/30px do `.app-layout`) e com a mesma folga
-// lateral de 29px. `position:absolute` em vez de fixed pra acompanhar o `bottom` que o Layout
-// ajusta inline quando há banner de pagamento ou player no rodapé.
-//
-// A reserva no `.board-shell` = folga entre os dois cartões (29) + coluna (320) + folga da
-// borda direita (29).
-@media (min-width: 769px) {
-  .wiz-artifacts {
-    position: absolute;
-    inset: 28px 29px 30px auto;
-    border: 1px solid #e6ebf3;
-    border-radius: 15px;
-    // Mesmo canvas do rail e do `.board-shell` — os três blocos da tela compartilham a
-    // superfície e só o contorno os separa. O `--wz-canvas` (#fafbfc) daqui ficava um tom
-    // acima do menu, e era isso que fazia a coluna parecer um cartão branco à parte.
-    // O fundo sólido fica só na regra base, que é a que o mobile usa: lá a coluna vira folha
-    // de tela cheia sobreposta ao chat (inset:0), e transparência deixaria a conversa vazar.
-    background: var(--canvas, #f7f8fb);
-  }
-
-  .app-layout:has(.wiz-artifacts) .board-shell {
-    margin-right: 378px;
-  }
-}
-
-// Abaixo de 1301px o shell não comporta rail + perfil + página + resultados: sobravam ~300px
-// pra conversa. Enquanto a coluna de resultados está aberta, o painel de perfil recolhe (ele é
-// navegação entre módulos, não conteúdo do planejamento) e a página encosta no rail.
-@media (min-width: 769px) and (max-width: 1300px) {
-  .app-layout:has(.wiz-artifacts) .profile-panel {
-    display: none;
-  }
-
-  .app-layout:has(.wiz-artifacts) .board-shell {
-    margin-left: 111px;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 1240px) {
-  .wiz-artifacts {
-    width: 280px;
-  }
-
-  .app-layout:has(.wiz-artifacts) .board-shell {
-    margin-right: 338px; // 29 + 280 + 29
-  }
-}
-
-// Abaixo do breakpoint do shell (700px) o topo do app deixa de ser fixo e não há largura pra uma
-// terceira coluna: a folha de resultados ocupa a tela inteira. z-index acima da navbar mobile
-// (120) — senão a barra flutuante fica por cima da folha e do seu botão de fechar.
-@media (max-width: 768px) {
-  .wiz-artifacts {
-    z-index: 130;
-    inset: 0;
-    width: auto;
-    border: 0;
-    border-radius: 0;
-    background: var(--wz-surface, #fff);
-  }
-}
-
-// Mesma altura do `.wiz-chat-head` (--wiz-head-h): os dois cartões ficam lado a lado, e uns
-// poucos pixels de diferença desalinhavam a linha divisória e os botões entre eles.
-// `align-items: center` porque agora o cabeçalho tem altura fixa — com flex-start o título
-// e o botão colavam no topo.
+// O `calc(--wiz-head-h + --wiz-pad)` que havia aqui existia para alinhar a divisória DESTE
+// cabeçalho com a do `.wiz-chat-head`, quando os dois eram cartões lado a lado. A folha agora
+// cobre a tela sozinha e não tem com o que alinhar — o calc deixaria o cabeçalho 24px mais alto
+// sem motivo. Se um dia voltar a existir algo ao lado, o contrato precisa ser reescrito, não
+// ressuscitado.
 .wiz-artifacts-head {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  // Altura = a do cabeçalho do wizard MAIS o respiro que o `.wizard` tem acima dele. Os dois
-  // cartões começam no mesmo topo, mas o do chat só desenha o cabeçalho depois do padding —
-  // repetir a medida aqui é o que faz as duas divisórias caírem na mesma linha.
-  min-height: calc(var(--wiz-head-h) + var(--wiz-pad));
-  padding: var(--wiz-pad) 18px 14px;
+  min-height: var(--wiz-head-h);
+  padding: 14px 18px;
   border-bottom: 1px solid #e8edf5;
 }
 
@@ -2225,4 +2338,107 @@
   .wiz-step-glow--on {
     animation: wizGlowFade 1.2s ease-out forwards;
   }
+}
+
+// ---- Player de vídeo (estrutura do <YouTubeEmbed>) -------------------------------------------
+// Só proporção e preenchimento: o quadro (borda, raio, fundo) é de quem usa — `.wiz-video` aqui,
+// e as classes próprias de cada página quando as cópias da landing forem migradas.
+.yt-embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.yt-embed-player {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+// Espaço reservado: etapa cujo vídeo ainda não foi definido. Sem isto, um id vazio renderizaria
+// um iframe quebrado — o placeholder é o que permite publicar antes das URLs chegarem.
+.yt-embed-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(160deg, #f4f8ff 0%, #eaf0fd 60%, #e7ecfb 100%);
+  color: #7c8da8;
+  font-size: 12px;
+  font-weight: 700;
+
+  p { margin: 0; }
+}
+
+.yt-embed-play {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  padding-left: 3px;
+  background: var(--wz-blue, #3361ff);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(51, 97, 255, .26);
+}
+
+// Vídeo enviado como mensagem da Nyta: mesma caixa dos outros cards inline da conversa
+// (nyta-card), com o player ocupando a largura toda. O card fixo da tela das etapas usa
+// `.wiz-video` direto; aqui ele vem embrulhado, para ler como um balão da conversa.
+.nyta-video-card {
+  padding: 0;
+  overflow: hidden;
+
+  .wiz-video {
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+// Card enviado pela Nyta (hoje o vídeo da etapa): a mesma linha e o mesmo avatar de um balão
+// dela, mas o conteúdo traz a própria moldura. `align-items: flex-start` porque o card é alto —
+// com o `flex-end` herdado do `.nyta-row`, o avatar descia até o rodapé do vídeo, longe do topo
+// onde a mensagem começa.
+.nyta-row--card {
+  align-items: flex-start;
+}
+
+.nyta-row-card {
+  min-width: 0;
+  // Mesmo teto de largura das bolhas: o card não pode ficar mais largo que a fala que o antecede.
+  max-width: 460px;
+  flex: 1;
+}
+
+// Marco de etapa: divisória com o nome no meio. Numa conversa contínua não havia nada dizendo
+// onde uma etapa termina e a próxima começa.
+.nyta-step-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 2px;
+  color: var(--wz-blue, #3361ff);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+
+  // As linhas dos dois lados do rótulo.
+  &::before,
+  &::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: var(--wz-line, #e3eaf3);
+  }
+
+  span { flex: none; }
 }

@@ -7,9 +7,11 @@ import * as wizardAi from '../../../services/wizardAi';
 import { supabase } from '../../../lib/supabase';
 import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
 import { WIZARD_TOTAL_STEPS } from '../../../constants/maestra';
-import { NytaBubble, TypingIndicator, UserBubble, WidgetSlot } from './ChatMessage';
+import { NytaBubble, NytaCardRow, StepDivider, TypingIndicator, UserBubble, WidgetSlot } from './ChatMessage';
 import { GUIDED_OPENTEXT, SAY, type OpenTextField } from './nytaPersona';
-import { buildOpening, nextBeat, type PrepareAction, type WidgetSpec } from './script';
+import { buildOpening, nextBeat, currentStepIndex, STEP_LABELS, type PrepareAction, type WidgetSpec } from './script';
+import { YouTubeEmbed } from '../../../components/YouTubeEmbed';
+import { STEP_VIDEOS } from '../stepVideos';
 import {
   GENDER_OPTIONS,
   MISSION_FINANCIAL_OPTIONS,
@@ -71,6 +73,12 @@ interface ChatItem {
   hero?: boolean;
   // Card do mapa de referências exibido inline (Metodologia v2, Q6).
   refMap?: ArtistIdentity['references'];
+  // Vídeo explicativo da etapa, exibido como se a Nyta o tivesse enviado. Rola junto com a
+  // conversa, não fica preso na tela. Some ao recarregar (a thread é reconstruída por
+  // `buildOpening`) — e tudo bem: o mesmo vídeo mora fixo na tela das etapas, que é a casa dele.
+  video?: { src: string; title: string };
+  // Marco de etapa: divisória com o nome, para separar visualmente uma etapa da seguinte.
+  stepMark?: string;
   // true enquanto a fala está sendo "digitada" letra a letra (cursor piscando).
   streaming?: boolean;
 }
@@ -148,6 +156,8 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
   } | null>(null);
 
   const stageRef = useRef<string>('');
+  // Última etapa cujo vídeo já foi enviado na conversa — evita repetir a cada beat.
+  const videoStepRef = useRef<number | null>(null);
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const preparingRef = useRef<string | null>(null);
   const openedRef = useRef(false);
@@ -308,6 +318,33 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     return run;
   };
 
+  // Marco de etapa. Entra na fila junto com o resto para cair na ordem certa — fora dela, apareceria
+  // no meio das mensagens que ainda estavam sendo digitadas.
+  const markStep = (rotulo: string) => {
+    const run = queueRef.current.then(async () => {
+      setThread((t) => [...t, { id: uid(), role: 'nyta', stepMark: rotulo }]);
+      await sleep(80);
+    });
+    queueRef.current = run;
+    return run;
+  };
+
+  // Injeta o vídeo da etapa como uma "fala" da Nyta. Mesmo molde do sayMap: entra na fila, para
+  // aparecer na ordem certa em vez de furar as mensagens que ainda estão sendo digitadas.
+  const sayVideo = (src: string, title: string) => {
+    setSpeaking(true);
+    const run = queueRef.current.then(async () => {
+      setTyping(true);
+      await sleep(500);
+      setTyping(false);
+      setThread((t) => [...t, { id: uid(), role: 'nyta', video: { src, title } }]);
+      await sleep(120);
+    });
+    queueRef.current = run;
+    run.then(() => { if (queueRef.current === run) setSpeaking(false); });
+    return run;
+  };
+
   // Injeta o card do mapa de referências inline (na fila, para respeitar a ordem das falas).
   const sayMap = (refs: ArtistIdentity['references']) => {
     setSpeaking(true);
@@ -350,6 +387,22 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     }
 
     if (beat.stage !== stageRef.current) {
+      // Vídeo da etapa, uma vez só por etapa. Vem ANTES das falas do beat: a Nyta manda o vídeo e
+      // então explica. O gatilho é a mudança de STEP, não de beat — dentro da mesma etapa há
+      // vários beats (a Identidade sozinha tem sete), e por beat o mesmo card se repetiria a cada
+      // pergunta.
+      const stepAtual = draftRef.current.step ?? 0;
+      if (videoStepRef.current !== stepAtual) {
+        const primeiraVez = videoStepRef.current === null;
+        videoStepRef.current = stepAtual;
+        const idx = currentStepIndex(draftRef.current);
+        // O marco não entra na PRIMEIRA montagem: ali a conversa acabou de ser reconstruída e a
+        // divisória apareceria solta no topo, separando de nada.
+        if (!primeiraVez) markStep(`Etapa ${idx + 1} · ${STEP_LABELS[idx]}`);
+        const fonte = STEP_VIDEOS[idx];
+        if (fonte) sayVideo(fonte, `Vídeo da etapa ${idx + 1}: ${STEP_LABELS[idx]}`);
+      }
+
       stageRef.current = beat.stage;
       setWidget(null);
       setGuided(null);
@@ -937,6 +990,14 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
                   </div>
                 </div>
               </NytaBubble>
+            ) : item.stepMark ? (
+              <StepDivider key={item.id}>{item.stepMark}</StepDivider>
+            ) : item.video ? (
+              <NytaCardRow key={item.id}>
+                <div className='nyta-card nyta-video-card'>
+                  <YouTubeEmbed src={item.video.src} title={item.video.title} className='wiz-video' />
+                </div>
+              </NytaCardRow>
             ) : item.refMap !== undefined ? (
               <WidgetSlot key={item.id}>
                 <div className='nyta-card'>
