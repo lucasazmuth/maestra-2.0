@@ -1901,11 +1901,14 @@
     display: none;
   }
 
-  // Mobile: a área de rolagem vai de borda a borda (margem negativa anula os 14px do .wizard),
-  // então o toque rola em qualquer lugar. O recuo das mensagens é enxuto (14px, igual ao header).
+  // Mobile: a área de rolagem vai de borda a borda, então o toque rola em qualquer lugar, e o
+  // recuo das mensagens fica no padding (14px, o mesmo do cabeçalho).
+  //
+  // As margens NEGATIVAS que havia aqui existiam para anular os 14px de padding que o `.wizard`
+  // tinha em volta. A raiz em tela cheia zerou esse padding — e então a margem negativa passou a
+  // puxar a área para FORA do container: o padding só devolvia o conteúdo ao zero, e os avatares
+  // da Nyta ficavam colados na borda da tela.
   @media (max-width: 768px) {
-    margin-left: -14px;
-    margin-right: -14px;
     padding-left: 14px;
     padding-right: 14px;
   }
@@ -2264,9 +2267,14 @@
     padding-right: 10px;
   }
 
+  // Sem o padding lateral da raiz em tela cheia, a margem negativa daqui puxaria a conversa para
+  // fora da tela — a mesma armadilha da regra de 768px. Só o recuo interno, mais enxuto.
+  .wizard.wizard--fullpage {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   .nyta-scroll {
-    margin-left: -10px;
-    margin-right: -10px;
     padding-left: 10px;
     padding-right: 10px;
   }

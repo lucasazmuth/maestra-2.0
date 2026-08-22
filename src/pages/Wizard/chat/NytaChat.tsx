@@ -360,11 +360,18 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     return run;
   };
 
-  // Abertura: hero compacto + saudação/recap (uma única vez por montagem).
+  // Abertura: hero compacto + vídeo da etapa + saudação/recap (uma única vez por montagem).
   useEffect(() => {
     if (openedRef.current) return;
     openedRef.current = true;
     setThread([{ id: uid(), role: 'nyta', hero: true }]);
+    // O vídeo entra ANTES da saudação, não depois. Antes ele era enfileirado no efeito do beat,
+    // que roda depois deste — e caía entre a saudação e a primeira pergunta, partindo ao meio o
+    // que se lê como um monólogo só. Marca o step aqui para o efeito do beat não repetir.
+    const idxAbertura = currentStepIndex(draft);
+    videoStepRef.current = draft.step ?? 0;
+    const videoAbertura = STEP_VIDEOS[idxAbertura];
+    if (videoAbertura) sayVideo(videoAbertura, `Vídeo da etapa ${idxAbertura + 1}: ${STEP_LABELS[idxAbertura]}`);
     say(buildOpening(draft, artist.name));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -391,14 +398,14 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       // então explica. O gatilho é a mudança de STEP, não de beat — dentro da mesma etapa há
       // vários beats (a Identidade sozinha tem sete), e por beat o mesmo card se repetiria a cada
       // pergunta.
+      // Virada de etapa: marco + vídeo, nessa ordem, ANTES das falas do beat — é o que faz os dois
+      // lerem como "abertura da etapa". A etapa da montagem já foi tratada no efeito de abertura,
+      // então aqui só entram as viradas de verdade.
       const stepAtual = draftRef.current.step ?? 0;
       if (videoStepRef.current !== stepAtual) {
-        const primeiraVez = videoStepRef.current === null;
         videoStepRef.current = stepAtual;
         const idx = currentStepIndex(draftRef.current);
-        // O marco não entra na PRIMEIRA montagem: ali a conversa acabou de ser reconstruída e a
-        // divisória apareceria solta no topo, separando de nada.
-        if (!primeiraVez) markStep(`Etapa ${idx + 1} · ${STEP_LABELS[idx]}`);
+        markStep(`Etapa ${idx + 1} · ${STEP_LABELS[idx]}`);
         const fonte = STEP_VIDEOS[idx];
         if (fonte) sayVideo(fonte, `Vídeo da etapa ${idx + 1}: ${STEP_LABELS[idx]}`);
       }
