@@ -218,10 +218,13 @@ export const PlanList: FC<{
         <p className='wiz-art-empty'>Seus resultados aparecem aqui conforme você avança com a Nyta.</p>
       )}
       {visible.map(({ label, i, art }) => (
-        <div key={label} className='wiz-art-step'>
+        <div key={label} className={`wiz-art-step${i === cur ? ' wiz-art-step--now' : ''}`}>
           <div className='wiz-art-step-name'>
-            {i + 1}. {label}
-            {i === cur && <span className='wiz-art-now'> · agora</span>}
+            {/* Número como elemento próprio: vira o selo redondo da etapa, que muda de cor quando
+                é a atual. Como texto solto ("1.") ele se perdia junto do rótulo. */}
+            <i className='wiz-art-num' aria-hidden>{i + 1}</i>
+            <span className='wiz-art-label'>{label}</span>
+            {i === cur && <span className='wiz-art-now'>agora</span>}
             {onEdit && EDITABLE_STEPS.has(i) && !!art && editing !== i && (
               <button
                 className='wiz-art-pencil'

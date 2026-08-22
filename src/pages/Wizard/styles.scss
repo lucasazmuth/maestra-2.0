@@ -1678,6 +1678,9 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  // Respiro para a sombra dos cartões não ser cortada pela borda da área de rolagem.
+  padding: 2px 2px 8px;
+  margin: 0 -2px;
   -ms-overflow-style: none;
   scrollbar-width: none;
 
@@ -1720,17 +1723,25 @@
   padding: 10px 0;
   border: 0;
   background: transparent;
-  color: var(--wz-ink);
+  // Rótulo de seção, não título: quem dá o nome da etapa em destaque é o cartão dela, logo abaixo.
+  // Com o mesmo peso dos dois, a informação aparecia duplicada e competindo.
+  color: #9aa9c2;
   font: inherit;
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
   text-align: left;
 }
 
+// No celular ela é a PORTA para o plano — precisa ler como algo tocável, não como rótulo.
 .wiz-stepbar--tap {
   padding: 12px var(--wiz-pad);
   border-bottom: 1px solid var(--wz-line);
   color: var(--wz-blue);
+  font-size: 11.5px;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: pointer;
 
   &:hover { background: var(--wz-blue-soft); }
@@ -2008,31 +2019,83 @@
   margin: 8px 2px;
 }
 
-// Cada etapa: nome + artefato, separados por um divisor sutil. Sem ícones, sem cores.
+// Cada etapa é um CARTÃO. Antes eram blocos de texto separados por um filete, e o resultado era
+// "texto jogado na tela": sem hierarquia entre o nome da etapa, os dados preenchidos e o vídeo —
+// tudo no mesmo peso visual, tudo encostado na margem.
 .wiz-art-step {
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #edf1f7;
+  overflow: hidden;
+  margin-bottom: 12px;
+  border: 1px solid #e9eef6;
+  border-radius: 12px;
+  background: var(--wz-surface, #fff);
+  box-shadow: 0 4px 12px rgba(105, 122, 159, .05);
+  transition: border-color .18s ease, box-shadow .18s ease;
 
-  &:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-  }
+  &:last-child { margin-bottom: 0; }
+}
+
+// A etapa ATUAL se destaca: é a única informação de estado que a coluna precisa dar de longe.
+.wiz-art-step--now {
+  border-color: #b9c8ff;
+  box-shadow: 0 6px 18px rgba(51, 97, 255, .10);
 }
 
 .wiz-art-step-name {
-  color: #52668d;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 14px;
+  color: #2c3f63;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 13.5px;
+  line-height: 1.3;
 }
 
+// Selo redondo com o número da etapa.
+.wiz-art-num {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: #eef3fb;
+  color: #7183a3;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.wiz-art-step--now .wiz-art-num {
+  background: var(--wz-blue, #3361ff);
+  color: #fff;
+}
+
+.wiz-art-label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// "agora" vira pílula, não mais texto solto atrás de um ponto médio.
 .wiz-art-now {
-  color: #3361ff;
-  font-weight: 700;
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eaf0ff;
+  color: var(--wz-blue, #3361ff);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 
 .wiz-art-step-body {
-  margin-top: 8px;
+  padding: 0 14px 12px;
+  border-top: 1px solid #f1f5fa;
+  padding-top: 12px;
 }
 
 // Texto corrido (visão, missão, valores, conclusão).
@@ -2043,23 +2106,32 @@
   line-height: 1.55;
 }
 
-// Linhas "rótulo · valor" (gênero, cidade, referências, SWOT, cronograma).
+// Linhas "rótulo · valor". O rótulo sobe para a PRÓPRIA linha: lado a lado, num rótulo curto
+// como "Gênero" seguido de um valor longo, a segunda linha do valor voltava a alinhar embaixo do
+// rótulo e as duas informações se misturavam.
 .wiz-art-meta {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  color: #61749a;
+  gap: 10px;
+  color: #52668d;
   font-size: 12.5px;
   line-height: 1.45;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
 }
 
 .wiz-art-k {
+  display: block;
+  margin-right: 0;
   color: #9aa9c2;
   font-weight: 800;
   text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  margin-right: 4px;
+  font-size: 9.5px;
+  letter-spacing: .05em;
 }
 
 // Listas (objetivos, estratégias, prioridades) — numeração neutra padrão.
@@ -2078,6 +2150,15 @@
 .wiz-art-muted {
   color: #aebbd0;
   list-style: none;
+}
+
+// O vídeo sangra até as bordas do cartão e arredonda só embaixo — fica parte do cartão da etapa,
+// e não uma caixa solta empilhada depois dele.
+.wiz-art-video {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid #f1f5fa;
+  border-radius: 0;
 }
 
 // ---- Edição inline dos entregáveis (lápis sutil por seção) ------------------------------------
