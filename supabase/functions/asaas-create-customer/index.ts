@@ -77,11 +77,16 @@ Deno.serve(async (req: Request) => {
 
     // Parse & validate
     const body = await req.json();
-    const { name, email, cpfCnpj } = body;
+    const { name, email, cpfCnpj, mobilePhone } = body;
     const nameErr = validateName(name || "");
     if (nameErr) return new Response(JSON.stringify({ error: nameErr }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     const emailErr = validateEmail(email || "");
     if (emailErr) return new Response(JSON.stringify({ error: emailErr }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // Telefone e OPCIONAL: so vai pra Asaas se vier valido (10 ou 11 digitos, com DDD). Invalido
+    // e simplesmente ignorado — nao pode bloquear a criacao do cliente nem o checkout.
+    const telefoneDigits = String(mobilePhone || "").replace(/\D/g, "");
+    const telefoneOk = telefoneDigits.length === 10 || telefoneDigits.length === 11;
+
     const cpfErr = validateCpfCnpj(cpfCnpj || "");
     if (cpfErr) return new Response(JSON.stringify({ error: cpfErr }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -183,6 +188,10 @@ Deno.serve(async (req: Request) => {
           name: (name || "").trim(),
           email: (email || "").trim(),
           cpfCnpj: cpfCnpjDigits,
+          // Telefone quando houver: a regua de cobranca da Asaas so consegue mandar SMS/WhatsApp
+          // se o cliente tiver `mobilePhone`. Sem ele sobrava so o e-mail, e numa assinatura PIX
+          // (que exige o cliente pagar um QR a cada ciclo) esse canal a menos custa renovacao.
+          ...(telefoneOk ? { mobilePhone: telefoneDigits } : {}),
         }),
       });
     } catch (err: any) {

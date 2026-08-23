@@ -60,6 +60,7 @@ function createTestStore(subscriptionState: Partial<SubscriptionState>) {
       nextDueDate: null,
       value: null,
       gracePeriodEndsAt: null,
+      pendingRenewal: false,
       plan: null,
       loading: false,
       error: null,
@@ -101,10 +102,20 @@ function renderPaymentPage(subscriptionState: Partial<SubscriptionState>) {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
+// Resposta padrao do resume: "nada pra retomar". Cada teste que precisa de outro contrato
+// sobrescreve com `mockInvoke.mockImplementation`.
+const resumeRespondendo = (data: Record<string, unknown>) => {
+  mockInvoke.mockImplementation((fnName: string) => {
+    if (fnName === 'asaas-resume-payment') return Promise.resolve({ data, error: null });
+    return new Promise(() => {});
+  });
+};
+
 describe('Payment page redirect guard', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     currentPath = '/pagamento';
+    resumeRespondendo({ status: 'none' });
   });
 
   afterEach(() => {
@@ -205,16 +216,34 @@ describe('Payment page redirect guard', () => {
     });
 
     it('does not redirect when status is active (payment confirmed)', async () => {
-      renderPaymentPage({
-        pixData: null,
-        status: 'active',
-      });
+      // O status do Redux nao decide mais sozinho: a pagina consulta o backend, que confirma
+      // que a assinatura esta em dia. Antes havia um atalho aqui que nunca consultava — e era
+      // exatamente ele que escondia a cobranca de renovacao (ver o teste abaixo).
+      resumeRespondendo({ status: 'active' });
+      renderPaymentPage({ pixData: null, status: 'active' });
 
       await act(async () => {
         jest.advanceTimersByTime(2000);
       });
 
-      // Status active means payment confirmed, should not redirect to /assinatura
+      expect(currentPath).toBe('/pagamento');
+    });
+
+    it('mostra o QR da renovacao quando a assinatura esta ativa com cobranca em aberto', async () => {
+      // Regressao do bug de producao: na virada do ciclo a assinatura segue `active` e nasce uma
+      // cobranca nova. A pagina mostrava a tela de sucesso e o assinante nao conseguia pagar.
+      resumeRespondendo({
+        status: 'pending',
+        pendingRenewal: true,
+        pixData: { qrCode: 'data:image/png;base64,AAA', copyPaste: '000201...', expiresAt: '2026-12-31T23:59:59Z' },
+      });
+      renderPaymentPage({ pixData: null, status: 'active' });
+
+      await act(async () => {
+        jest.advanceTimersByTime(2000);
+      });
+
+      // Nao pode mandar pra /assinatura nem tratar como pago: fica na tela para pagar.
       expect(currentPath).toBe('/pagamento');
     });
   });

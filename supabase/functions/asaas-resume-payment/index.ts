@@ -65,9 +65,13 @@ serve(async (req) => {
     if (!sub || !sub.asaas_subscription_id || sub.status === "none" || sub.status === "cancelled") {
       return json({ status: "none" });
     }
-    if (sub.status === "active") {
-      return json({ status: "active" });
-    }
+
+    // Assinatura `active` TAMBÉM é consultada. Antes havia um `if (status === "active") return`
+    // aqui, e ele escondia exatamente a renovação: na virada do ciclo a assinatura continua
+    // `active` (a Asaas só marca `overdue` depois do vencimento), então a função respondia
+    // "ativa", a tela de pagamento mostrava sucesso e o assinante NÃO CONSEGUIA pagar a
+    // cobrança nova nem querendo. O QR só reaparecia depois de vencer.
+    // Quem decide agora é a existência de cobrança em aberto, não o status local.
 
     const value = sub.value != null ? Number(sub.value) : null;
     const cycle = sub.cycle || "MONTHLY";
@@ -83,14 +87,14 @@ serve(async (req) => {
     const payJson = await payResp.json().catch(() => ({}));
     const payments: any[] = Array.isArray(payJson.data) ? payJson.data : [];
 
-    // Já pago em algum ciclo → marca ativa e retorna (vale pra PIX e cartão).
-    if (payments.some((p) => PAID.includes(p.status))) {
-      await supabaseAdmin
-        .from("asaas_subscriptions")
-        .update({ status: "active", updated_at: new Date().toISOString() })
-        .eq("user_id", user.id);
-      return json({ status: "active" });
-    }
+    // Cobrança PIX em aberto (PENDING primeiro, depois OVERDUE).
+    // Calculado ANTES de qualquer conclusão sobre "já pagou": a lista traz até 20 cobranças, e
+    // num assinante de meses o ciclo 1 pago está sempre nela. O teste antigo ("algum pagamento
+    // pago → active") deixava o pagamento antigo mascarar a cobrança nova para sempre.
+    const open = payments
+      .filter((p) => p.billingType === "PIX" && OPEN.includes(p.status))
+      .sort((a, b) => (a.status === "PENDING" ? -1 : 1));
+    const target = open[0];
 
     // Assinatura de CARTÃO pendente: não existe QR pra retomar — a 1ª cobrança
     // está em análise na operadora. Devolve o billingType pro front mostrar a
@@ -100,26 +104,35 @@ serve(async (req) => {
       return json({ status: sub.status, billingType: "CREDIT_CARD", pixData: null, value, cycle });
     }
 
-    // Cobrança PIX em aberto (PENDING primeiro, depois OVERDUE).
-    const open = payments
-      .filter((p) => p.billingType === "PIX" && OPEN.includes(p.status))
-      .sort((a, b) => (a.status === "PENDING" ? -1 : 1));
-    const target = open[0];
-
+    // Sem cobrança em aberto: aí sim vale concluir pelo histórico. Com algum ciclo pago, a
+    // assinatura está em dia (e o status local é corrigido, para o caso de um webhook perdido).
     if (!target) {
-      // Sem cobrança PIX em aberto (ex.: cartão, ou nenhuma gerada ainda).
+      if (payments.some((p) => PAID.includes(p.status))) {
+        await supabaseAdmin
+          .from("asaas_subscriptions")
+          .update({ status: "active", updated_at: new Date().toISOString() })
+          .eq("user_id", user.id);
+        return json({ status: "active" });
+      }
+      // Nenhuma cobrança gerada ainda.
       return json({ status: sub.status, pixData: null, value, cycle });
     }
+
+    // Há cobrança em aberto. Se a assinatura já teve algum ciclo pago, isto é uma RENOVAÇÃO —
+    // o front precisa saber para não tratar como primeira compra nem como assinatura em risco.
+    const pendingRenewal = payments.some((p) => PAID.includes(p.status));
 
     // QR atual da cobrança em aberto.
     const qrResp = await asaasGet(`${asaasApiUrl}/v3/payments/${target.id}/pixQrCode`, asaasApiKey);
     if (!qrResp || !qrResp.ok) {
-      return json({ status: "pending", pixData: null, value, cycle });
+      return json({ status: "pending", pendingRenewal, pixData: null, value, cycle });
     }
     const qr = await qrResp.json().catch(() => ({}));
 
     return json({
       status: "pending",
+      pendingRenewal,
+      dueDate: target.dueDate || null,
       pixData: {
         qrCode: qr.encodedImage || null,
         copyPaste: qr.payload || null,

@@ -20,9 +20,20 @@ function formatDeadline(isoDate: string): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+/** Data curta "dd/MM" para o lembrete de renovação (a hora não importa ali). */
+function formatDueDate(isoDate: string): string {
+  const d = new Date(isoDate);
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
 /**
- * Banner de aviso exibido quando a assinatura está em período de graça (overdue).
- * Aparece persistentemente em todas as páginas até que o pagamento seja confirmado.
+ * Avisos de cobrança no topo do app. Dois estados, deliberadamente com tons diferentes:
+ *
+ *  1. `overdue` — venceu, o acesso corre risco. Âmbar, prazo com hora.
+ *  2. renovação em aberto — a assinatura segue ativa e nada está em risco ainda; é só a cobrança
+ *     do ciclo novo esperando pagamento. Antes esse estado não existia na interface: a assinatura
+ *     PIX da Asaas emite um QR por ciclo, e o app não dizia nada até vencer. Quem renovava só
+ *     descobria quando já estava atrasado.
  */
 export const GracePeriodBanner: FC = () => {
   const navigate = useNavigate();
@@ -30,6 +41,30 @@ export const GracePeriodBanner: FC = () => {
   const gracePeriodEndsAt = useAppSelector(
     (state) => state.subscription.gracePeriodEndsAt
   );
+  const pendingRenewal = useAppSelector((state) => state.subscription.pendingRenewal);
+  const nextDueDate = useAppSelector((state) => state.subscription.nextDueDate);
+
+  // Renovação em aberto: lembrete, não alarme.
+  if (status === 'active' && pendingRenewal) {
+    return (
+      <div style={{ ...styles.container, ...styles.renewalContainer }} role="status" aria-live="polite">
+        <div style={styles.content}>
+          <span style={{ ...styles.text, ...styles.renewalText }}>
+            Sua renovação está aberta
+            {nextDueDate ? <> e vence em <strong style={styles.renewalStrong}>{formatDueDate(nextDueDate)}</strong></> : null}.
+            Pague pelo PIX para manter o PRO.
+          </span>
+          <button
+            type="button"
+            style={{ ...styles.button, ...styles.renewalButton }}
+            onClick={() => navigate('/pagamento')}
+          >
+            Pagar renovação
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Só exibe se status overdue E gracePeriodEndsAt está no futuro
   if (status !== 'overdue') return null;
@@ -108,6 +143,23 @@ const styles: Record<string, React.CSSProperties> = {
     whiteSpace: 'nowrap' as const,
     flexShrink: 0,
     transition: 'background 0.2s',
+  },
+  // Renovação: azul, não âmbar. O âmbar é a linguagem de "acesso em risco" e reusá-lo aqui
+  // assustaria quem está apenas com a cobrança do mês em aberto, em dia com a assinatura.
+  renewalContainer: {
+    background: '#0e1b33',
+    borderBottom: '1px solid rgba(51, 97, 255, 0.35)',
+  },
+  renewalText: {
+    color: '#9db6ff',
+  },
+  renewalStrong: {
+    color: '#cfdcff',
+  },
+  renewalButton: {
+    background: 'rgba(51, 97, 255, 0.18)',
+    border: '1px solid #3361ff',
+    color: '#9db6ff',
   },
 };
 

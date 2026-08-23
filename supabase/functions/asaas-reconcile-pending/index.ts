@@ -109,11 +109,76 @@ Deno.serve(async (req) => {
     }
   }
 
-  const summary = { scanned: (pendings || []).length, confirmed, stillPending, failed };
+  // ─── Renovações de ASSINATURA ────────────────────────────────────────────────
+  // Antes este cron varria só `artist_purchases`, então a assinatura não tinha rede nenhuma: um
+  // webhook perdido deixava a renovação paga marcada como em aberto (banner e aviso de cobrança
+  // para quem já pagou) ou o `pending_charge_id` presilhado para sempre.
+  let renovacoesConfirmadas = 0;
+  let renovacoesEmAberto = 0;
+
+  const { data: renovacoes, error: renovError } = await supabaseAdmin
+    .from("asaas_subscriptions")
+    .select("id, user_id, pending_charge_id")
+    .not("pending_charge_id", "is", null)
+    .limit(MAX_PER_RUN);
+
+  if (renovError) {
+    console.error("Erro ao listar renovações em aberto:", renovError);
+  } else {
+    for (const s of renovacoes || []) {
+      try {
+        const res = await fetch(`${ASAAS_API_URL}/v3/payments/${s.pending_charge_id}`, {
+          headers: { "Content-Type": "application/json", access_token: ASAAS_API_KEY },
+        });
+        if (!res.ok) {
+          console.warn(`Asaas lookup ${res.status} para renovação ${s.pending_charge_id}`);
+          continue;
+        }
+        const payment = await res.json();
+        if (!PAID_STATUSES.has(String(payment?.status || ""))) {
+          renovacoesEmAberto += 1;
+          continue;
+        }
+
+        const nowIso = new Date().toISOString();
+        await supabaseAdmin
+          .from("asaas_subscriptions")
+          .update({ status: "active", pending_charge_id: null, grace_period_ends_at: null, updated_at: nowIso })
+          .eq("id", s.id);
+
+        // Baixa o aviso daquela cobrança (mesma chave usada pelo webhook).
+        await supabaseAdmin
+          .from("notifications")
+          .update({ read: true })
+          .eq("user_id", s.user_id)
+          .eq("reference_type", "billing")
+          .eq("reference_id", s.pending_charge_id);
+
+        renovacoesConfirmadas += 1;
+        console.log(`Reconcile-cron: renovação ${s.pending_charge_id} confirmada (${payment?.status})`);
+      } catch (err) {
+        console.error("Erro reconciliando renovação", s.id, (err as { message?: string })?.message);
+      }
+    }
+  }
+
+  const summary = {
+    scanned: (pendings || []).length,
+    confirmed,
+    stillPending,
+    failed,
+    renovacoesEscaneadas: (renovacoes || []).length,
+    renovacoesConfirmadas,
+    renovacoesEmAberto,
+  };
   // Confirmar algo aqui significa que o webhook NÃO fez o trabalho dele — vale destacar
   // no log, é o sintoma precoce de fila pausada de novo.
-  if (confirmed > 0) console.warn(`Reconcile-cron destravou ${confirmed} compra(s) — conferir a fila de webhooks da Asaas`, summary);
-  else console.log("Reconcile-cron:", summary);
+  if (confirmed > 0 || renovacoesConfirmadas > 0) {
+    console.warn(
+      `Reconcile-cron destravou ${confirmed} compra(s) e ${renovacoesConfirmadas} renovação(ões) — conferir a fila de webhooks da Asaas`,
+      summary,
+    );
+  } else console.log("Reconcile-cron:", summary);
 
   return json(summary);
 });

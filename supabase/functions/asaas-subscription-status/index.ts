@@ -40,7 +40,7 @@ serve(async (req) => {
     // RLS ensures user can only see their own records
     const { data: subscription, error: queryError } = await supabase
       .from('asaas_subscriptions')
-      .select('status, asaas_customer_id, asaas_subscription_id, next_due_date, value, grace_period_ends_at')
+      .select('status, asaas_customer_id, asaas_subscription_id, next_due_date, value, grace_period_ends_at, pending_charge_id')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -65,6 +65,7 @@ serve(async (req) => {
           nextDueDate: null,
           value: null,
           gracePeriodEndsAt: null,
+          pendingRenewal: false,
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -93,6 +94,10 @@ serve(async (req) => {
         nextDueDate: isPhantomPending ? null : subscription.next_due_date,
         value: isPhantomPending ? null : subscription.value,
         gracePeriodEndsAt: isPhantomPending ? null : subscription.grace_period_ends_at,
+        // Assinatura ativa COM a cobranca do ciclo novo em aberto. A assinatura PIX da Asaas e
+        // recorrencia de cobranca, nao de debito: a cada ciclo nasce um QR que alguem precisa
+        // pagar. Sem este sinal o app mostrava "Ativa" e nao avisava nada.
+        pendingRenewal: !isPhantomPending && !!subscription.pending_charge_id,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

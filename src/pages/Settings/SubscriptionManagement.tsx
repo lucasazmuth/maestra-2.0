@@ -61,7 +61,7 @@ function formatDate(dateStr: string | null): string {
 const SubscriptionManagement: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { status, nextDueDate, value, gracePeriodEndsAt, asaasSubscriptionId, loading, error } =
+  const { status, nextDueDate, value, gracePeriodEndsAt, asaasSubscriptionId, pendingRenewal, loading, error } =
     useAppSelector((s) => s.subscription);
 
   const [cancelling, setCancelling] = useState(false);
@@ -135,7 +135,10 @@ const SubscriptionManagement: FC = () => {
 
             {(status === 'active' || status === 'overdue') && (
               <div className='settings-subscription-row'>
-                <span className='label'>Próxima cobrança</span>
+                {/* Com renovação em aberto a data NÃO é de uma cobrança futura: é o vencimento de
+                    uma cobrança que já existe e está esperando pagamento. Chamar isso de "próxima
+                    cobrança" faria o assinante achar que está tudo em dia. */}
+                <span className='label'>{pendingRenewal ? 'Renovação em aberto, vence em' : 'Próxima cobrança'}</span>
                 <span className='value'>{formatDate(nextDueDate)}</span>
               </div>
             )}

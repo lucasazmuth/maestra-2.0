@@ -1,11 +1,92 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { sendBrevoEmail, emailLayout, ctaButton } from "./brevo.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, asaas-access-token",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const APP_URL = (Deno.env.get("APP_URL") || "https://www.maestramanager.com").replace(/\/+$/, "");
+
+const fmtBRL = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+const fmtData = (iso?: string | null) => {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("T")[0].split("-");
+  return d && m ? `${d}/${m}/${y}` : "";
+};
+
+/**
+ * Avisa o assinante que a cobrança do novo ciclo está aberta — in-app e por e-mail.
+ *
+ * Existe porque a assinatura PIX da Asaas é recorrência de COBRANÇA, não de débito: a cada ciclo
+ * nasce um QR novo que alguém precisa pagar. Sem este aviso o assinante só descobria quando o
+ * acesso começava a ser ameaçado (ou nem isso).
+ *
+ * Idempotente por cobrança: a chave é o `asaas_payment_id` em `reference_id`, então uma reentrega
+ * do webhook não gera dois avisos. Falha de e-mail não derruba o webhook — a notificação in-app
+ * já cumpre o papel, e devolver erro faria a Asaas reenfileirar o evento.
+ */
+async function notificarRenovacao(
+  // deno-lint-ignore no-explicit-any
+  admin: any,
+  userId: string,
+  paymentId: string,
+  info: { value: number; dueDate: string | null },
+): Promise<void> {
+  try {
+    const { data: existente } = await admin
+      .from("notifications")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("reference_type", "billing")
+      .eq("reference_id", paymentId)
+      .limit(1);
+    if (existente && existente.length) return;
+
+    const vence = fmtData(info.dueDate);
+    const titulo = "Sua renovação do Maestra PRO está aberta";
+    const msg = vence
+      ? `A cobrança de ${fmtBRL(info.value)} vence em ${vence}. Você pode pagar pelo PIX agora.`
+      : `A cobrança de ${fmtBRL(info.value)} está disponível. Você pode pagar pelo PIX agora.`;
+
+    await admin.from("notifications").insert({
+      user_id: userId,
+      artist_id: null,
+      type: "billing",
+      title: titulo,
+      message: msg,
+      link: "/pagamento",
+      read: false,
+      source: "billing",
+      reference_type: "billing",
+      reference_id: paymentId,
+      status: "active",
+      created_at: new Date().toISOString(),
+    });
+
+    const { data: u } = await admin.auth.admin.getUserById(userId);
+    const email = u?.user?.email;
+    if (!email) return;
+    const nome = String(u.user.user_metadata?.full_name || "").split(" ")[0] || "";
+
+    await sendBrevoEmail({
+      to: email,
+      toName: nome,
+      subject: titulo,
+      html: emailLayout({
+        title: titulo,
+        bodyHtml:
+          `<p>${nome ? `Oi, ${nome}. ` : ""}${msg}</p>` +
+          `<p>Se preferir, você pode pagar direto pelo app.</p>` +
+          ctaButton("Pagar minha renovação", `${APP_URL}/pagamento`),
+      }),
+    });
+  } catch (e) {
+    console.error("[billing] aviso de renovação falhou:", (e as Error)?.message);
+  }
+}
 
 // ─── Event Type to Subscription Status Mapping ────────────────────────────────
 
@@ -377,6 +458,19 @@ Deno.serve(async (req: Request) => {
       if (newStatus === "active") {
         updateFields.grace_period_ends_at = null;
         updateFields.started_at = subscriptionRecord.started_at || new Date().toISOString();
+        // Pagou o ciclo: não há mais renovação em aberto.
+        updateFields.pending_charge_id = null;
+        // Pagou: baixa o aviso de renovação daquela cobrança para ele não ficar pendurado no sino.
+        // Só `read` — o front filtra por ele (`services/db/notifications.ts`) e nunca por `status`,
+        // que hoje é `active` em 100% das linhas; inventar um valor novo aqui seria letra morta.
+        if (asaasPaymentId && userId) {
+          await supabaseAdmin
+            .from("notifications")
+            .update({ read: true })
+            .eq("user_id", userId)
+            .eq("reference_type", "billing")
+            .eq("reference_id", asaasPaymentId);
+        }
       }
 
       // Backfill do id da assinatura: quando o registro é encontrado pelo fallback de customer_id
@@ -401,6 +495,34 @@ Deno.serve(async (req: Request) => {
     } else if (newStatus && !subscriptionId) {
       // Pagamento único caiu no fluxo de assinatura pelo fallback de cliente — ignorado de propósito.
       console.log(`Skipping subscription status update for non-subscription payment (event=${eventType}, customer=${customerId})`);
+    }
+
+    // ─── 6b. Cobrança de um NOVO CICLO nasceu ─────────────────────────────────
+    // `PAYMENT_CREATED` não muda o status da assinatura (ela segue `active` até vencer), então
+    // não entra no bloco acima e antes daqui não acontecia NADA: o `next_due_date` ficava
+    // congelado na data da contratação para sempre, e o assinante não era avisado de que havia
+    // uma cobrança nova a pagar. Em produção isso deixou assinantes com o ciclo aberto sem saber.
+    if (eventType === "PAYMENT_CREATED" && subscriptionId && subscriptionRecord && paymentData) {
+      const dueDate = (paymentData.dueDate as string) || null;
+      // Só é RENOVAÇÃO se a assinatura já teve um ciclo pago. Na primeira cobrança o usuário
+      // acabou de sair do checkout e está olhando o QR — avisar ali seria ruído.
+      const jaTeveCicloPago = !!subscriptionRecord.started_at;
+
+      const campos: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (dueDate) campos.next_due_date = dueDate;
+      if (jaTeveCicloPago && asaasPaymentId) campos.pending_charge_id = asaasPaymentId;
+
+      await supabaseAdmin
+        .from("asaas_subscriptions")
+        .update(campos)
+        .eq("id", subscriptionRecord.id);
+
+      if (jaTeveCicloPago && userId && asaasPaymentId) {
+        await notificarRenovacao(supabaseAdmin, userId, asaasPaymentId, {
+          value: (paymentData.value as number) || Number(subscriptionRecord.value) || 0,
+          dueDate,
+        });
+      }
     }
 
     // ─── 7. Insert payment record when applicable ─────────────────────────────
