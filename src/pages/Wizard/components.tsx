@@ -1,6 +1,9 @@
 import { CSSProperties, FC, ReactNode } from 'react';
+import { FiChevronRight } from 'react-icons/fi';
 
 import { AiGlow } from '../../components/AiGlow';
+import { STEP_LABELS, currentStepIndex } from './chat/script';
+import type { ArtistContent } from '../../interfaces/maestra';
 
 // Componentes compartilhados do wizard conversacional (botões e navegação de progresso).
 
@@ -60,3 +63,30 @@ export const AiButton: FC<{
   </AiGlow>
 );
 
+
+// ---- Barra da etapa --------------------------------------------------------------------------
+
+// "Etapa 3 de 9 · Missão" — a mesma string que titula a folha do plano no celular
+// (ArtifactsPanel), agora vinda do mesmo `currentStepIndex` para as duas não divergirem.
+//
+// Com `onOpenPlan` vira botão e ganha o chevron: é a porta para o plano acumulado no celular,
+// onde não há coluna fixa. Sem ele é um <div> — e não um <button> desabilitado por CSS, que
+// continuaria no caminho do teclado e do leitor de tela anunciando algo que não faz nada.
+export const StepBar: FC<{
+  draft: ArtistContent;
+  onOpenPlan?: () => void;
+  className?: string;
+}> = ({ draft, onOpenPlan, className }) => {
+  const cur = currentStepIndex(draft);
+  const texto = `Etapa ${cur + 1} de ${STEP_LABELS.length} · ${STEP_LABELS[cur]}`;
+  const classe = `wiz-stepbar${className ? ` ${className}` : ''}`;
+
+  if (!onOpenPlan) return <div className={classe}>{texto}</div>;
+
+  return (
+    <button type='button' className={`${classe} wiz-stepbar--tap`} onClick={onOpenPlan} aria-label={`${texto}. Ver seu plano`}>
+      <span>{texto}</span>
+      <FiChevronRight size={16} aria-hidden />
+    </button>
+  );
+};

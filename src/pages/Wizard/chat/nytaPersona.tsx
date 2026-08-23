@@ -41,16 +41,21 @@ export const SAY = {
     'Eu sei que música carrega muita coisa que não cabe em planilha — sentido, vocação, afeto. Nada disso some. Só que pra essa coisa intangível continuar de pé, ela precisa de uma estrutura concreta por trás. E é essa estrutura que a gente vai montar juntos.',
     'Então te peço uma licença: deixa eu olhar pra sua carreira como um negócio junto com você? Funciona assim — eu pergunto, você responde, e a gente vai montando uma coisa de cada vez, no seu ritmo.',
   ],
-  // Texto de apoio "Explique-me melhor" (Metodologia v2, Q1) — exibido sob demanda.
-  explainMore: () => [
-    'Deixa eu te contar por que isso vale a pena.',
-    'Tem um ditado que diz que, no Japão, se planeja uma ferrovia por dois anos e se constrói em seis meses; no Brasil, faz-se o oposto. Os dois terminam — mas planejar é muito mais barato do que executar. Eficiência é isso: chegar no mesmo lugar gastando menos energia, menos dinheiro e menos retrabalho.',
-    'E o que a maioria dos artistas não percebe é que carreira musical é um negócio — mesmo quando ninguém chama assim. Tem produto, tem cliente, tem custo, tem receita, tem concorrência. Você não abriria um restaurante sem um plano, certo? Tratar a sua carreira como negócio por algumas horas não te tira nada da arte. Pelo contrário: te dá clareza pra escolher onde investir o seu tempo e a sua grana — sem deixar de ser fiel ao que você faz.',
-  ],
   recap: (done: string[], next: string) => [
     pick([
       `Que bom te ver de volta! A gente já tem ${done.join(', ')}. Seguimos de onde paramos: ${next}.`,
       `Voltamos! ${done.join(', ')} já estão guardados. Próximo passo: ${next}.`,
+    ]),
+  ],
+  // Retomada NO MEIO da Identidade: é a única etapa com várias sub-perguntas antes do primeiro
+  // avanço de `step` (pronome, estilo, momento de carreira, 4 referências) — então um F5 nesse
+  // meio-tempo não tem nenhum marco de etapa concluído para citar em `recap`. Sem esta fala, a
+  // Nyta repetiria a saudação inteira ("Prazer, eu sou a Nyta...") como se nada tivesse sido
+  // respondido ainda.
+  recapContinue: () => [
+    pick([
+      'Que bom te ver de novo! Vamos continuar de onde você parou.',
+      'Voltamos! Retomando exatamente de onde você parou.',
     ]),
   ],
   newPhase: (phase: number, label: string) => [

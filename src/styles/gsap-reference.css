@@ -9926,17 +9926,6 @@ body:has(.track-detail-backdrop) .local-player-bar {
   }
 }
 
-/* Wizard no mobile.
-   A tab bar CONTINUA visível aqui — diferente do Espaço Jam, que tem "voltar" próprio no
-   cabeçalho. No wizard o voltar retrocede uma PERGUNTA; sem a tab bar a pessoa fica presa na
-   conversa sem caminho de saída. O problema nunca foi a barra existir, e sim ela ficar por cima
-   das mensagens e das opções de resposta — que é onde a pessoa precisa tocar.
-   O `body.wizard-fullscreen` é setado pela própria página. */
-@media (max-width: 960px) {
-  body.wizard-fullscreen .nyta-scroll {
-    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
-  }
-}
 
 /* Painel do perfil: Reportar · Avaliar · Suporte. O `margin-top: 120px` do .social-links foi
    escrito para um botão só, empurrando-o para longe do menu; com três em sequência ele virava um

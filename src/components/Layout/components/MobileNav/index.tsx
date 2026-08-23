@@ -28,18 +28,13 @@ const matchArtistId = (pathname: string): string | undefined => {
 // Rotas sem contexto de artista: a lista "Seus artistas" (o seletor) e a área admin.
 // Nelas a tab bar não faz sentido, mesmo havendo um artista atual no store.
 //
-// O wizard entra na lista por outro motivo: ali a barra não era só desnecessária, ela ATRAPALHAVA.
-// O campo de resposta é o rodapé do chat, e a barra flutuante ficava permanentemente por cima do
-// botão de enviar. Reservar espaço embaixo não resolvia — sobrava um vão morto nas etapas sem
-// campo de texto. O planejamento é uma tarefa de tela cheia, com saída própria no cabeçalho
-// (a seta ao lado do avatar), então a barra sai inteira.
+// O wizard NÃO precisa mais estar nesta lista: a rota dele saiu de dentro do AppLayout (ver
+// App.tsx), então nem este componente nem a reserva de rodapé do Layout chegam até lá.
 //
 // Espelhado em `navExcluded` no Layout: os dois PRECISAM concordar, senão o app reserva no rodapé
 // um espaço para uma barra que não é renderizada.
 export const isNavExcludedRoute = (pathname: string): boolean =>
-  pathname === '/artists'
-  || pathname.startsWith('/admin')
-  || /^\/artists\/[^/]+\/wizard/.test(pathname);
+  pathname === '/artists' || pathname.startsWith('/admin');
 
 type Item = { icon: ReactNode; label: string; suffix: string };
 // Atalhos que não pertencem a um artista (o que no desktop mora no menu do sistema): rota
