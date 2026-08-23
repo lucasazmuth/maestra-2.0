@@ -61,9 +61,53 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // Nada pra retomar.
-    if (!sub || !sub.asaas_subscription_id || sub.status === "none" || sub.status === "cancelled") {
+    // Nada pra retomar. O Pix Automático conta como assinatura mesmo sem `asaas_subscription_id`:
+    // o vínculo dele é a AUTORIZAÇÃO. Antes o guard exigia o id da assinatura e devolvia "none"
+    // para todo assinante de Pix Automático — a tela de pagamento mandava para /assinatura, o
+    // gate dizia "pagamento pendente", "Retomar pagamento" voltava para cá, e a pessoa ficava
+    // presa nesse pingue-pongue depois de já ter pago. Visto em produção.
+    const temVinculo = !!sub?.asaas_subscription_id || !!sub?.pix_automatic_authorization_id;
+    if (!sub || !temVinculo || sub.status === "none" || sub.status === "cancelled") {
       return json({ status: "none" });
+    }
+
+    const valorLocal = sub.value != null ? Number(sub.value) : null;
+    const cicloLocal = sub.cycle || "MONTHLY";
+
+    // ─── Pix Automático puro (sem assinatura por cobrança por trás) ──────────
+    // Quem está MIGRANDO tem as duas coisas e é tratado mais abaixo, junto das cobranças.
+    if (sub.pix_automatic_authorization_id && !sub.asaas_subscription_id) {
+      const aResp = await asaasGet(
+        `${asaasApiUrl}/v3/pix/automatic/authorizations/${sub.pix_automatic_authorization_id}`,
+        asaasApiKey,
+      );
+      const a = aResp && aResp.ok ? await aResp.json().catch(() => null) : null;
+
+      // Autorização de pé: o débito recorrente está ativo, não há QR a mostrar.
+      if (a?.status === "ACTIVE") return json({ status: "active" });
+
+      // Recusada, expirada ou revogada: a recorrência acabou. Devolver "none" reabre o checkout
+      // em vez de deixar a pessoa olhando um QR morto.
+      if (a && a.status !== "CREATED") return json({ status: "none" });
+
+      // Ainda aguardando o primeiro pagamento: devolve o mesmo QR da autorização.
+      if (a?.encodedImage) {
+        return json({
+          status: "pending",
+          pixAutomatic: true,
+          pixData: {
+            qrCode: a.encodedImage || null,
+            copyPaste: a.payload || null,
+            expiresAt: a.immediateQrCode?.expirationDate || null,
+          },
+          value: a.value != null ? Number(a.value) : valorLocal,
+          cycle: cicloLocal,
+        });
+      }
+
+      // Sem imagem no retorno (indisponibilidade da Asaas): responde o status local em vez de
+      // "none", para não empurrar de volta ao checkout quem já tem autorização criada.
+      return json({ status: sub.status, pixAutomatic: true, pixData: null, value: valorLocal, cycle: cicloLocal });
     }
 
     // Assinatura `active` TAMBÉM é consultada. Antes havia um `if (status === "active") return`

@@ -333,13 +333,15 @@ Deno.serve(async (req: Request) => {
     const ehEventoPixAuth = eventType in PIX_AUTH_EVENTS;
 
     if (ehPixAutomatico) {
-      // O id da autorização chega como STRING no topo do payload:
-      //   { event, id, dateCreated, pixAutomaticAuthorization: "aut_...", paymentId: "pay_..." }
-      // A primeira versão deste bloco procurava só por objetos aninhados (`authorization.id` e
-      // variações) e não olhava a forma documentada — nenhum evento de Pix Automático teria sido
-      // reconhecido, e a autorização nunca sairia de CREATED no nosso banco.
-      // As formas aninhadas continuam na lista porque a doc de eventos cita `authorization.id`,
-      // divergindo da doc de fluxos; aceitar as duas custa nada e cobre a divergência.
+      // OBSERVADO EM PRODUÇÃO, num AUTHORIZATION_CANCELLED real:
+      //   { id, event, account, dateCreated, authorization: { id, status, cancellationReason, ... } }
+      // Ou seja: OBJETO ANINHADO `authorization.id`. Sem `pixAutomaticAuthorization` no topo e
+      // sem `paymentId` — que é a forma que a doc de "Fluxos de Webhook" mostra.
+      //
+      // As duas páginas da documentação se contradizem (a de eventos cita `authorization.id`, a
+      // de fluxos cita a string no topo), então a lista aceita as duas. Não é excesso de zelo:
+      // este evento só foi reconhecido por causa disso. Escolher uma das formas teria descartado
+      // o cancelamento feito pelo pagador no banco, e a assinatura seguiria ativa sem autorização.
       // deno-lint-ignore no-explicit-any
       const pl = payload as any;
       const comoTexto = (v: unknown) => (typeof v === "string" && v ? v : null);
@@ -387,7 +389,7 @@ Deno.serve(async (req: Request) => {
         return new Response(JSON.stringify({ message: "ok" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      const campos_ = "id, user_id, status, started_at, asaas_subscription_id, pix_migration_from_subscription_id, cycle, next_due_date";
+      const campos_ = "id, user_id, status, started_at, asaas_subscription_id, pix_migration_from_subscription_id, cycle, next_due_date, cycle_anchor_day";
       let assinatura = null as Record<string, unknown> | null;
       if (authId) {
         const { data } = await supabaseAdmin
@@ -430,11 +432,20 @@ Deno.serve(async (req: Request) => {
           // só na vida — que é exatamente a falha que este conserto veio fechar.
           const hojeIso = new Date().toISOString().split("T")[0];
           const baseCiclo = String((assinatura.next_due_date as string | null) || hojeIso).split("T")[0];
-          // Fixa a âncora agora, na ativação: é o dia que o assinante escolheu ao contratar, e é
-          // ele que todos os ciclos seguintes vão perseguir.
-          const ancora = Number(baseCiclo.split("-")[2]);
-          campos.cycle_anchor_day = ancora;
-          campos.next_due_date = proximoVencimento(baseCiclo, String(assinatura.cycle || "MONTHLY"), ancora);
+          // SÓ avança se ninguém avançou antes. O primeiro pagamento (bloco 4c) chega ~2 minutos
+          // ANTES deste evento e já move o vencimento; avançar de novo aqui empurraria a próxima
+          // cobrança um mês inteiro para a frente, e o assinante ganharia um mês de graça.
+          // A data já avançada é futura; a que ainda não avançou é hoje ou passada.
+          if (baseCiclo <= hojeIso) {
+            // Fixa a âncora: é o dia que o assinante escolheu ao contratar, e é ele que todos os
+            // ciclos seguintes vão perseguir.
+            const ancora = Number(baseCiclo.split("-")[2]);
+            campos.cycle_anchor_day = ancora;
+            campos.next_due_date = proximoVencimento(baseCiclo, String(assinatura.cycle || "MONTHLY"), ancora);
+          } else if (!assinatura.cycle_anchor_day) {
+            // Já avançada pelo pagamento, mas sem âncora gravada: deriva do vencimento em vigor.
+            campos.cycle_anchor_day = Number(baseCiclo.split("-")[2]);
+          }
 
           // MIGRAÇÃO CONCLUÍDA. A assinatura antiga por cobrança precisa morrer AGORA: ela
           // continuou viva de propósito como rede de segurança, mas a partir daqui cobraria em
@@ -511,11 +522,42 @@ Deno.serve(async (req: Request) => {
     // O vínculo é o `pending_charge_id`, gravado pelo cron ao criar a cobrança.
     const idPagamentoEvento = (paymentData?.id as string) || null;
     if (PAYMENT_EVENTS.has(eventType) && idPagamentoEvento && !paymentData?.subscription) {
-      const { data: assinaturaCiclo } = await supabaseAdmin
+      let { data: assinaturaCiclo } = await supabaseAdmin
         .from("asaas_subscriptions")
         .select("id, user_id, cycle, next_due_date, started_at, cycle_anchor_day")
         .eq("pending_charge_id", idPagamentoEvento)
         .maybeSingle();
+
+      // PRIMEIRO pagamento de uma autorização de Pix Automático. Ele não tem `pending_charge_id`
+      // (o QR imediato nasce junto da autorização, não do cron), então não casa acima e antes
+      // daqui não casava em lugar nenhum: a assinatura só virava `active` quando o
+      // AUTHORIZATION_ACTIVATED chegasse.
+      //
+      // A diferença é grande na prática. Medido em produção: o PAYMENT_RECEIVED chega em 5
+      // SEGUNDOS, o ACTIVATED levou 2 MINUTOS (o banco mostra "Pix Automático em análise" nesse
+      // intervalo). A pessoa pagava e ficava olhando o QR girar, sem ver a tela de sucesso.
+      // O ciclo está pago; é o quanto basta para liberar o acesso. O ACTIVATED, quando vier,
+      // confirma a autorização e fixa a âncora do calendário.
+      const ehPagamentoOk = eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED";
+      if (!assinaturaCiclo && ehPagamentoOk && customerId) {
+        // A cobrança única do perfil compartilha o mesmo cliente Asaas. Sem esta checagem, o
+        // pagamento de um PERFIL ativaria a assinatura Pro de graça.
+        const { data: compra } = await supabaseAdmin
+          .from("artist_purchases").select("id").eq("asaas_payment_id", idPagamentoEvento).maybeSingle();
+        if (!compra) {
+          const { data: porCliente } = await supabaseAdmin
+            .from("asaas_subscriptions")
+            .select("id, user_id, cycle, next_due_date, started_at, cycle_anchor_day")
+            .eq("asaas_customer_id", customerId)
+            .eq("billing_type", "PIX_AUTOMATIC")
+            .eq("status", "pending")
+            .maybeSingle();
+          if (porCliente) {
+            assinaturaCiclo = porCliente;
+            console.log(`Primeiro pagamento de Pix Automático reconhecido em ${eventType} (user=${porCliente.user_id})`);
+          }
+        }
+      }
 
       if (assinaturaCiclo) {
         const agora = new Date().toISOString();
@@ -525,6 +567,7 @@ Deno.serve(async (req: Request) => {
           mudanca.status = "active";
           mudanca.grace_period_ends_at = null;
           mudanca.pending_charge_id = null;
+          mudanca.started_at = (assinaturaCiclo.started_at as string | null) || agora;
           // Ciclo quitado: zera a contagem de retentativas. Sem isto o teto de 3 seria por
           // ASSINATURA em vez de por ciclo, e o assinante perderia o direito a retentativa para
           // sempre depois de três meses ruins ao longo da vida.
@@ -534,11 +577,11 @@ Deno.serve(async (req: Request) => {
           // Ciclo pago: a próxima data passa a ser a do ciclo seguinte, e é ela que reabre a
           // janela do cron daqui a um mês.
           const base = String((assinaturaCiclo.next_due_date as string | null) || agora).split("T")[0];
-          mudanca.next_due_date = proximoVencimento(
-            base,
-            String(assinaturaCiclo.cycle || "MONTHLY"),
-            assinaturaCiclo.cycle_anchor_day as number | null,
-          );
+          const ancoraCiclo = (assinaturaCiclo.cycle_anchor_day as number | null) || Number(base.split("-")[2]);
+          // Grava a âncora já no primeiro pagamento. Sem isto, quem ativasse por aqui ficaria sem
+          // âncora e a data derreteria ao passar por um mês curto.
+          mudanca.cycle_anchor_day = ancoraCiclo;
+          mudanca.next_due_date = proximoVencimento(base, String(assinaturaCiclo.cycle || "MONTHLY"), ancoraCiclo);
         } else if (eventType === "PAYMENT_OVERDUE") {
           // Débito não caiu até o vencimento. Mesma regra de graça do fluxo por cobrança. A
           // cobrança segue em aberto (pending_charge_id continua), porque as retentativas da

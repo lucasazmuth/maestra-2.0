@@ -10,7 +10,7 @@
  * Validates: Requirements 10.1, 6.1
  */
 
-import { render } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
@@ -69,7 +69,19 @@ jest.mock('../../../lib/supabase', () => ({
         eq: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }),
       }),
     }),
+    // O sino assina realtime para acender sem precisar navegar.
+    channel: () => ({ on: function () { return this; }, subscribe: function () { return this; } }),
+    removeChannel: () => {},
   },
+}));
+
+// Contador de nao-lidas do sino. Cada teste ajusta o retorno.
+// O `??` nao e zelo excessivo: o CRA roda com `resetMocks`, entao a implementacao definida aqui
+// e apagada antes de cada teste e a chamada devolveria `undefined` — o efeito faria
+// `undefined.then(...)` e derrubaria o render de TODOS os testes deste arquivo.
+const mockCountUnread = jest.fn();
+jest.mock('../../../services/db/notifications', () => ({
+  countUnread: (...args: any[]) => mockCountUnread(...args) ?? Promise.resolve(0),
 }));
 
 // Mock child components that have complex dependencies
@@ -242,5 +254,47 @@ describe('AppLayout - fetchSubscriptionStatus dispatch', () => {
 
       expect(mockInvoke).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('AppLayout - ponto vermelho do sino', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPaywallDisabled = false;
+  });
+
+  const renderizar = () =>
+    render(
+      <Provider store={createTestStore('user-123')}>
+        <MemoryRouter>
+          <AppLayout />
+        </MemoryRouter>
+      </Provider>
+    );
+
+  // Ha mais de uma campainha na arvore (cabecalho e navegacao); o ponto vermelho e a do
+  // cabecalho, que e a `.round-control`.
+  const sinoDoCabecalho = () =>
+    screen
+      .getAllByRole('button', { name: /notifica/i })
+      .find((b) => b.className.includes('round-control'))!;
+
+  // O ponto vinha do CSS da referencia, pintado incondicionalmente: acendia sem notificacao
+  // nenhuma. Um alerta que esta sempre aceso nao informa nada e ensina a ignorar o proximo.
+  it('nao acende quando nao ha notificacoes nao lidas', async () => {
+    mockCountUnread.mockResolvedValue(0);
+    renderizar();
+
+    await waitFor(() => expect(mockCountUnread).toHaveBeenCalledWith('user-123'));
+    expect(sinoDoCabecalho().className).not.toContain('has-unread');
+  });
+
+  it('acende e diz quantas sao quando ha nao lidas', async () => {
+    mockCountUnread.mockResolvedValue(3);
+    renderizar();
+
+    await waitFor(() => expect(sinoDoCabecalho().className).toContain('has-unread'));
+    // O rotulo carrega a contagem: quem usa leitor de tela nao enxerga a bolinha.
+    expect(sinoDoCabecalho()).toHaveAttribute('aria-label', expect.stringContaining('3 não lidas'));
   });
 });
