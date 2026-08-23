@@ -85,10 +85,6 @@ jest.mock('../../../services/db/notifications', () => ({
 }));
 
 // Mock child components that have complex dependencies
-jest.mock('../components/Topbar', () => ({
-  Topbar: () => <div data-testid="topbar">Topbar</div>,
-}));
-
 jest.mock('../components/Sidebar', () => ({
   Sidebar: () => <div data-testid="sidebar">Sidebar</div>,
 }));
