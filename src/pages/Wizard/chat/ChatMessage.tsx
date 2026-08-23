@@ -7,6 +7,12 @@ import { stripEmDash } from '../clean';
 // Bolhas do chat da Nyta. A da Nyta entra pela esquerda com avatar;
 // a do usuário pela direita, em verde Spotify.
 
+// Tamanho do avatar no fio da conversa. Explícito, e não o default do `NytaAvatar` (32), porque
+// esse default também serve a página de chat livre da Nyta (NytaChat/MessageList) — mudá-lo lá
+// seria efeito colateral de um ajuste pedido só para o wizard.
+// Precisa acompanhar `--wiz-avatar` no styles.scss, que posiciona o widget do beat na mesma coluna.
+const AVATAR = 26;
+
 // Renderiza markdown quando o conteúdo é texto (negrito, listas, títulos das falas
 // e do resumo). Conteúdo já em JSX (ex.: o hero do artista) passa direto.
 export const ChatMarkdown: FC<{ children: ReactNode }> = ({ children }) =>
@@ -20,7 +26,7 @@ export const ChatMarkdown: FC<{ children: ReactNode }> = ({ children }) =>
 
 export const NytaBubble: FC<{ children: ReactNode; streaming?: boolean }> = ({ children, streaming }) => (
   <div className='nyta-row'>
-    <NytaAvatar />
+    <NytaAvatar size={AVATAR} />
     <div className={`nyta-bubble${streaming ? ' nyta-bubble--streaming' : ''}`}>
       <ChatMarkdown>{children}</ChatMarkdown>
     </div>
@@ -42,7 +48,7 @@ export const UserBubble: FC<{ children: ReactNode; avatar?: { src: string; name:
 
 export const TypingIndicator: FC = () => (
   <div className='nyta-row'>
-    <NytaAvatar state='thinking' />
+    <NytaAvatar size={AVATAR} state='thinking' />
     <div className='nyta-bubble nyta-typing' aria-label='Nyta está digitando'>
       <span />
       <span />
@@ -61,7 +67,7 @@ export const WidgetSlot: FC<{ children: ReactNode }> = ({ children }) => (
 // aparecer sozinho na conversa, sem autor.
 export const NytaCardRow: FC<{ children: ReactNode; className?: string }> = ({ children, className }) => (
   <div className={`nyta-row nyta-row--card${className ? ` ${className}` : ''}`}>
-    <NytaAvatar />
+    <NytaAvatar size={AVATAR} />
     <div className='nyta-row-card'>{children}</div>
   </div>
 );

@@ -170,6 +170,11 @@
   // campo é a continuação da mesma coluna), e enquanto o valor estava escrito solto nos dois
   // lugares eles se separaram: as mensagens recuavam 14px e o campo ficava colado nas bordas.
   --wiz-gutter-m: 14px;
+  // Avatar da Nyta no fio da conversa. O widget do beat alinha com os balões somando isto ao
+  // `gap` de 10px da `.nyta-row` — os dois PRECISAM concordar, então o número vive aqui e o
+  // recuo do widget é calculado, nunca redigitado. O valor em pixels do componente está em
+  // `chat/ChatMessage.tsx` (é prop de JS, não dá para ler o token daqui).
+  --wiz-avatar: 26px;
   --wz-danger: #f13131;
   // Âmbar escurecido o bastante pra carregar texto branco quando vira preenchimento (SWOT).
   --wz-warn: #b0720f;
@@ -1426,10 +1431,14 @@
 }
 
 // Widget interativo do beat atual: alinhado à coluna da Nyta (depois do avatar)
+// Alinhado com os balões: largura do avatar + o `gap` de 10px da `.nyta-row`. Calculado a partir
+// do token para não descolar do avatar quando ele mudar de tamanho.
 .nyta-widget-slot {
-  margin-left: 42px;
+  --wiz-slot-indent: calc(var(--wiz-avatar, 26px) + 10px);
+
+  margin-left: var(--wiz-slot-indent);
   animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
-  max-width: calc(100% - 42px);
+  max-width: calc(100% - var(--wiz-slot-indent));
 }
 
 // Input fixo no rodapé do chat (fora da área de scroll — só a conversa rola).
@@ -1642,13 +1651,18 @@
   background: var(--wz-canvas, #f7f8fb);
 
   display: grid;
-  // A conversa ocupa as duas linhas da direita: o cabeçalho cobre só a coluna de contexto.
+  // O cabeçalho atravessa as DUAS colunas. Antes cobria só a de contexto e a conversa subia ao
+  // lado dele — mas aí a régua do cabeçalho morria no meio da tela (x=432) e o topo da coluna da
+  // conversa ficava sem borda nenhuma, com a divisória vertical começando só abaixo. As duas
+  // linhas formavam um "⌐" e o canto superior direito lia como inacabado.
+  // Não dava para resolver desenhando a linha por cima da conversa: a área de rolagem começa no
+  // topo, então as mensagens passariam por baixo de uma régua solta no meio do caminho.
   grid-template-columns: var(--wiz-side-w) minmax(0, 1fr);
   // `auto` na primeira linha, não `var(--wiz-head-h)`: em colunas estreitas o título quebra em
   // duas linhas, e altura fixa cortaria o texto.
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
-    "head chat"
+    "head head"
     "side chat";
 }
 
@@ -1677,8 +1691,6 @@
 
 .wiz-main {
   grid-area: chat;
-  // Começa no topo da coluna direita, ao lado do cabeçalho — como no desenho.
-  grid-row: 1 / -1;
   display: flex;
   min-height: 0;
   flex-direction: column;
@@ -1826,9 +1838,8 @@
   .wiz-only-mobile { display: flex; }
 
   .wiz-main {
-    // Desfaz o `grid-row: 1 / -1` do desktop, que lá faz a conversa subir ao lado do cabeçalho.
-    // Aqui só há uma coluna: mantido, ele colocaria a conversa POR CIMA do cabeçalho — foi
-    // exatamente o que aconteceu, com a barra da etapa e o vídeo sobrepostos ao título.
+    // O desktop não estica mais a conversa até a linha do cabeçalho (ele agora atravessa as duas
+    // colunas), então aqui não há `grid-row` para desfazer — só a área e o recuo próprio.
     grid-area: chat;
     padding: 0;
   }
