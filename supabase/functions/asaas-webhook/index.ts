@@ -356,6 +356,10 @@ Deno.serve(async (req: Request) => {
       // autorização. Quando o evento não trouxer a autorização, o vínculo é feito pela cobrança.
       const idCobrancaEvento: string | null =
         comoTexto(pl?.paymentId) || comoTexto(pl?.payment?.id) || null;
+      // Id da INSTRUÇÃO. É ele, e só ele, que o endpoint de retentativa aceita — nem o da
+      // cobrança, nem o da autorização. Sem guardá-lo aqui não há como pedir nova tentativa.
+      const idInstrucao: string | null =
+        pl?.paymentInstruction?.id || comoTexto(pl?.paymentInstruction) || null;
 
       const registrarEvento = async () => {
         await supabaseAdmin.from("asaas_webhook_events").insert({
@@ -474,11 +478,21 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      if (eventType === "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_REFUSED" && assinatura.status === "active") {
-        // Débito recusado (saldo, limite ou agendamento). É o equivalente ao PAYMENT_OVERDUE do
-        // fluxo por cobrança: mesma regra de 7 dias de graça antes de cortar o acesso.
-        campos.status = "overdue";
-        campos.grace_period_ends_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      if (eventType === "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_REFUSED") {
+        // Débito recusado (saldo, limite ou agendamento). Guarda a instrução que falhou: é ela o
+        // alvo da retentativa extradia, comandada pelo cron. Sempre sobrescreve, porque uma
+        // retentativa recusada gera a sua própria instrução e é a MAIS RECENTE que deve ser
+        // retentada.
+        if (idInstrucao) campos.pix_instruction_id = idInstrucao;
+        // A tentativa agendada morreu aqui; libera o cron a comandar a próxima.
+        campos.pix_retry_scheduled_for = null;
+
+        if (assinatura.status === "active") {
+          // Equivalente ao PAYMENT_OVERDUE do fluxo por cobrança: mesma regra de 7 dias de graça
+          // antes de cortar o acesso — que é justamente a janela em que as retentativas correm.
+          campos.status = "overdue";
+          campos.grace_period_ends_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        }
       }
 
       await supabaseAdmin.from("asaas_subscriptions").update(campos).eq("id", assinatura.id);
@@ -511,6 +525,12 @@ Deno.serve(async (req: Request) => {
           mudanca.status = "active";
           mudanca.grace_period_ends_at = null;
           mudanca.pending_charge_id = null;
+          // Ciclo quitado: zera a contagem de retentativas. Sem isto o teto de 3 seria por
+          // ASSINATURA em vez de por ciclo, e o assinante perderia o direito a retentativa para
+          // sempre depois de três meses ruins ao longo da vida.
+          mudanca.pix_instruction_id = null;
+          mudanca.pix_retry_count = 0;
+          mudanca.pix_retry_scheduled_for = null;
           // Ciclo pago: a próxima data passa a ser a do ciclo seguinte, e é ela que reabre a
           // janela do cron daqui a um mês.
           const base = String((assinaturaCiclo.next_due_date as string | null) || agora).split("T")[0];

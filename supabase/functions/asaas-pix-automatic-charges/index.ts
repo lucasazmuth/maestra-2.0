@@ -14,7 +14,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 // Sem este job, a autorização era ativada no primeiro pagamento e depois NUNCA mais debitava:
 // assinante achando que estava tudo automático, e receita parando silenciosamente no mês 2.
 //
-// Roda diariamente por cron. É idempotente: só cria cobrança para quem não tem nenhuma em aberto.
+// FAZ DUAS COISAS, as duas do mesmo tipo: manter os ciclos do Pix Automático andando, porque a
+// Asaas não os toca sozinha.
+//   1. cria a cobrança do ciclo quando ela entra na janela de 2 a 10 dias úteis;
+//   2. comanda as retentativas extradia de um débito recusado (política 3R_7D) — `retryPolicy`
+//      apenas as PERMITE; quem pede cada uma é a aplicação.
+//
+// Roda diariamente por cron (mesmo padrão do `asaas-reconcile-pending`: `verify_jwt` ligado e o
+// cron manda a chave do vault). É idempotente nas duas pontas: não cria cobrança para quem já tem
+// uma em aberto, e não comanda retentativa enquanto houver uma agendada.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,9 +54,36 @@ function diasUteisAte(alvoIso: string): number {
   return dias;
 }
 
-// Quem AVANÇA o vencimento é o webhook, quando o ciclo é pago (`proximoVencimento` vive lá).
-// Aqui só lemos `next_due_date` e criamos a cobrança quando ela entra na janela — se o ciclo não
-// for pago, a data não avança, e é isso mesmo: as retentativas ainda podem quitá-lo.
+// Quem AVANÇA o vencimento é o webhook, quando o ciclo é pago. Aqui a função serve só para achar
+// o início do ciclo seguinte: a Asaas recusa uma retentativa marcada para uma data que alcance
+// esse dia. Cópia idêntica à de `asaas-webhook` — o Deno não importa de fora da pasta da função
+// e o deploy é achatado, então alterar uma exige alterar a outra.
+function proximoVencimento(iso: string, cycle: string, ancora?: number | null): string {
+  const [a, m, d] = iso.split("T")[0].split("-").map(Number);
+  // A âncora é o dia ORIGINAL da cobrança. Sem ela a data derrete: 31/01 vira 28/02 e depois
+  // fica presa no 28 para sempre, porque cada ciclo passa a ser calculado sobre o dia já aparado.
+  const dia = ancora && ancora >= 1 && ancora <= 31 ? ancora : d;
+  if (cycle === "YEARLY") {
+    const dt = new Date(Date.UTC(a + 1, m - 1, 1));
+    dt.setUTCDate(Math.min(dia, new Date(Date.UTC(a + 1, m, 0)).getUTCDate()));
+    return dt.toISOString().split("T")[0];
+  }
+  const dt = new Date(Date.UTC(a, m, 1)); // m é 1-based, então este índice já é o mês seguinte
+  dt.setUTCDate(Math.min(dia, new Date(Date.UTC(a, m + 1, 0)).getUTCDate()));
+  return dt.toISOString().split("T")[0];
+}
+
+/** Soma dias corridos a uma data YYYY-MM-DD. */
+function somarDias(iso: string, dias: number): string {
+  const dt = new Date(`${iso.split("T")[0]}T12:00:00Z`);
+  dt.setUTCDate(dt.getUTCDate() + dias);
+  return dt.toISOString().split("T")[0];
+}
+
+// Política 3R_7D: no máximo 3 retentativas extradia, dentro de 7 dias corridos após o vencimento
+// original, cada uma em data diferente.
+const MAX_RETENTATIVAS = 3;
+const JANELA_RETENTATIVA_DIAS = 7;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -129,7 +164,104 @@ serve(async (req) => {
       }
     }
 
-    const resumo = { analisadas: (assinaturas || []).length, criadas, foraDaJanela, falhas, detalhes };
+    // ── Retentativas extradia (política 3R_7D) ────────────────────────────────
+    // `retryPolicy: ALLOW_THREE_IN_SEVEN_DAYS` na autorização só PERMITE a retentativa; quem
+    // comanda cada uma é a aplicação. A intradia (mesmo dia, 18h-21h) é automática do PSP; esta,
+    // não. Sem este bloco, uma falha de saldo derruba o ciclo mesmo com a política contratada —
+    // e falta de saldo no dia é a causa mais comum de inadimplência involuntária.
+    const hojeIso = new Date().toISOString().split("T")[0];
+    const amanha = somarDias(hojeIso, 1);
+    let retentativas = 0, retentativasFalhas = 0, semJanela = 0;
+
+    const { data: recusadas } = await admin
+      .from("asaas_subscriptions")
+      .select("id, user_id, cycle, next_due_date, cycle_anchor_day, pix_instruction_id, pix_retry_count, pix_retry_scheduled_for")
+      .eq("authorization_status", "ACTIVE")
+      .eq("status", "overdue")
+      .not("pix_instruction_id", "is", null)
+      .lt("pix_retry_count", MAX_RETENTATIVAS)
+      .limit(200);
+
+    for (const s of recusadas || []) {
+      // Já existe tentativa marcada para hoje ou para frente: ela ainda pode liquidar, e a API
+      // exige que cada retentativa caia em uma data diferente.
+      const agendada = s.pix_retry_scheduled_for ? String(s.pix_retry_scheduled_for).split("T")[0] : null;
+      if (agendada && agendada >= hojeIso) continue;
+      if (!s.next_due_date) continue;
+
+      const vencimentoOriginal = String(s.next_due_date).split("T")[0];
+      const limiteJanela = somarDias(vencimentoOriginal, JANELA_RETENTATIVA_DIAS);
+      const inicioProximoCiclo = proximoVencimento(
+        vencimentoOriginal,
+        String(s.cycle || "MONTHLY"),
+        s.cycle_anchor_day as number | null,
+      );
+
+      // A data precisa caber nos 7 dias corridos E não alcançar o ciclo seguinte. O comando vai
+      // para AMANHÃ porque a Asaas exige envio até 23h59 do dia anterior à data desejada.
+      if (amanha > limiteJanela || amanha >= inicioProximoCiclo) {
+        semJanela += 1;
+        // Acabou a janela: não há mais o que tentar neste ciclo. Limpa o alvo para o cron parar
+        // de olhar para esta linha todo dia; o corte de acesso fica com o período de graça.
+        await admin
+          .from("asaas_subscriptions")
+          .update({ pix_instruction_id: null, updated_at: new Date().toISOString() })
+          .eq("id", s.id);
+        console.log(`[pix-automatico] janela de retentativa encerrada (user=${s.user_id}, vencimento ${vencimentoOriginal})`);
+        continue;
+      }
+
+      try {
+        const r = await fetch(
+          `${asaasApiUrl}/v3/pix/automatic/paymentInstructions/${s.pix_instruction_id}/retries`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "access_token": asaasApiKey },
+            body: JSON.stringify({ dueDate: amanha }),
+          },
+        );
+        const j = await r.json().catch(() => ({}));
+
+        if (!r.ok) {
+          retentativasFalhas += 1;
+          // A API valida as mesmas regras que checamos acima; um 400 aqui significa que a nossa
+          // contagem divergiu da dela. Registra o motivo e para de insistir nesta instrução, em
+          // vez de repetir o erro todo dia.
+          console.error(`[pix-automatico] retentativa recusada (user=${s.user_id}, http=${r.status}):`, JSON.stringify(j).slice(0, 400));
+          if (r.status === 400) {
+            await admin
+              .from("asaas_subscriptions")
+              .update({ pix_instruction_id: null, updated_at: new Date().toISOString() })
+              .eq("id", s.id);
+          }
+          continue;
+        }
+
+        await admin
+          .from("asaas_subscriptions")
+          .update({
+            pix_retry_scheduled_for: amanha,
+            pix_retry_count: Number(s.pix_retry_count || 0) + 1,
+            // A retentativa gera a sua própria instrução; se ela falhar, o webhook grava o id
+            // novo aqui. Guardamos o que a resposta devolveu para não retentar uma instrução
+            // que já foi substituída.
+            pix_instruction_id: j?.id || s.pix_instruction_id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", s.id);
+
+        retentativas += 1;
+        console.log(`[pix-automatico] retentativa ${Number(s.pix_retry_count || 0) + 1}/${MAX_RETENTATIVAS} agendada para ${amanha} (user=${s.user_id})`);
+      } catch (e) {
+        retentativasFalhas += 1;
+        console.error(`[pix-automatico] erro de rede na retentativa (user=${s.user_id}):`, (e as { message?: string })?.message);
+      }
+    }
+
+    const resumo = {
+      analisadas: (assinaturas || []).length, criadas, foraDaJanela, falhas,
+      retentativas, retentativasFalhas, semJanela, detalhes,
+    };
     console.log("[pix-automatico] resumo:", JSON.stringify(resumo));
     return json(resumo);
   } catch (e) {
