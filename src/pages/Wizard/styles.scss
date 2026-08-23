@@ -166,6 +166,10 @@
   // próprio cabeçalho: sem isso os dois começam em alturas diferentes e, mesmo com cabeçalhos
   // da MESMA altura, as divisórias caem desalinhadas (24px de diferença).
   --wiz-pad: 24px;
+  // Recuo lateral do chat no celular. As mensagens e o campo de digitar PRECISAM concordar (o
+  // campo é a continuação da mesma coluna), e enquanto o valor estava escrito solto nos dois
+  // lugares eles se separaram: as mensagens recuavam 14px e o campo ficava colado nas bordas.
+  --wiz-gutter-m: 14px;
   --wz-danger: #f13131;
   // Âmbar escurecido o bastante pra carregar texto branco quando vira preenchimento (SWOT).
   --wz-warn: #b0720f;
@@ -1445,9 +1449,11 @@
   // Folga igual em cima e embaixo — o campo fica equilibrado no rodapé do chat.
   margin: 10px auto 10px;
 
-  // Mobile: mesmo recuo enxuto das mensagens (14px = padding do .wizard). Full width do .nyta-chat.
+  // Mobile: mesmo recuo lateral das mensagens, do mesmo token — o `width: 100%` que havia aqui
+  // deixava o campo colado nas duas bordas enquanto os balões logo acima recuavam 14px. As
+  // margens `auto` acima centralizam, então as folgas saem iguais dos dois lados.
   @media (max-width: 768px) {
-    width: 100%;
+    width: calc(100% - var(--wiz-gutter-m) * 2);
   }
   background: var(--wz-surface);
   border: 1px solid var(--wz-line-2);
@@ -1939,8 +1945,8 @@
   // puxar a área para FORA do container: o padding só devolvia o conteúdo ao zero, e os avatares
   // da Nyta ficavam colados na borda da tela.
   @media (max-width: 768px) {
-    padding-left: 14px;
-    padding-right: 14px;
+    padding-left: var(--wiz-gutter-m);
+    padding-right: var(--wiz-gutter-m);
   }
 }
 
@@ -2510,11 +2516,14 @@
 
 .wiz-step-glow {
   position: absolute;
-  // Recuado da borda: o .wizard preenche a área de rolagem (.Main-section, overflow:scroll) e um
-  // inset:0 deixava o anel rente à linha de corte inferior — o overflow comia o arco de baixo no
-  // desktop. Alguns px pra dentro (cabe na folga do padding:24px) mantêm o contorno inteiro visível.
-  inset: 8px;
-  border-radius: 12px;
+  // Rente à viewport. O recuo de 8px que existia aqui resolvia um problema que não existe mais: o
+  // wizard rodava dentro de `.Main-section` (overflow:scroll) e um inset:0 tinha o arco de baixo
+  // comido pela linha de corte. Desde que a rota saiu do <AppLayout>, a raiz é `position: fixed;
+  // inset: 0` — ela É a viewport, nada corta o anel, e o recuo virou só uma fresta visível entre o
+  // brilho e a borda da janela. Sem raio pelo mesmo motivo: cantos arredondados sobre cantos retos
+  // da janela deixariam quatro falhas nas quinas.
+  inset: 0;
+  border-radius: 0;
   padding: 3px; // espessura do anel
   pointer-events: none;
   z-index: 60;
