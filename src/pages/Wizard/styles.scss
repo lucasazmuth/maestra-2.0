@@ -2224,6 +2224,33 @@
 // Micro-rótulo: nomeia a pergunta que originou o valor. Em linha própria (não ao lado) porque com
 // rótulo curto e valor longo a segunda linha do valor voltava a alinhar sob o rótulo, e as duas
 // informações se misturavam.
+// Linha do rótulo: o nome do campo e, quando o dado é gravável, o lápis logo ao lado dele. O
+// lápis só aparece no hover do campo (ou com foco de teclado) — nove cartões com um lápis fixo em
+// cada campo editável viravam uma coluna pontilhada de ícones competindo com o conteúdo.
+.wiz-art-field-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 14px;
+
+  .wiz-art-pencil {
+    margin-left: 0;
+    padding: 1px 3px;
+    opacity: 0;
+    transition: opacity .15s ease, color .15s ease, background .15s ease;
+  }
+}
+
+.wiz-art-field:hover .wiz-art-pencil,
+.wiz-art-field .wiz-art-pencil:focus-visible {
+  opacity: 1;
+}
+
+// Sem hover (toque), o lápis fica sempre visível: não há como revelá-lo de outro jeito.
+@media (hover: none) {
+  .wiz-art-field-head .wiz-art-pencil { opacity: 1; }
+}
+
 .wiz-art-k {
   color: var(--wz-quiet, #5f7191);
   font-size: 9.5px;

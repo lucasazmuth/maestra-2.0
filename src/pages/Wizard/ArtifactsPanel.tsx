@@ -33,16 +33,56 @@ const renderFields = (nodes: ReactNode[]): ReactNode => {
   return real.length ? <div className='wiz-art-fields'>{real}</div> : null;
 };
 
-const field = (label: string, body: ReactNode): ReactNode => (
-  <div className='wiz-art-field' key={label}>
-    <span className='wiz-art-k'>{label}</span>
-    {body}
-  </div>
-);
+/**
+ * Quais campos o painel sabe gravar.
+ *
+ * É deliberadamente curto. Todo o resto da árvore (pronome, momento de carreira, as partes da
+ * fórmula da visão, as da missão, as referências) é resposta de uma pergunta específica da conversa
+ * e alimenta os motores determinísticos: mudar só o texto aqui desincronizaria o plano — trocar o
+ * "por quem" não regeraria as `recognitionTags`, trocar o substantivo não remontaria a frase da
+ * visão. Esses se refazem voltando a pergunta no chat, e por isso não ganham lápis: um lápis que
+ * não grava é pior do que nenhum.
+ */
+type EditKind = 'genre' | 'city' | 'vision' | 'mission' | 'values';
+
+interface EditCtx {
+  /** Sem `onEdit` (folha somente-leitura) nenhum lápis aparece. */
+  enabled: boolean;
+  active: EditKind | null;
+  begin: (k: EditKind) => void;
+  cancel: () => void;
+  save: (patch: Partial<ArtistContent>) => Promise<void> | void;
+  draft: ArtistContent;
+}
+
+const field = (label: string, body: ReactNode, edit?: { kind: EditKind; ctx: EditCtx }): ReactNode => {
+  const canEdit = !!edit && edit.ctx.enabled;
+  const editando = !!edit && edit.ctx.active === edit.kind;
+  return (
+    <div className='wiz-art-field' key={label}>
+      {/* O lápis fica na linha do RÓTULO, ao lado do dado que ele edita — antes vivia no cabeçalho
+          da etapa, onde prometia "editar identidade" mas o editor só mexia no estilo musical. */}
+      <span className='wiz-art-field-head'>
+        <span className='wiz-art-k'>{label}</span>
+        {canEdit && !editando && (
+          <button
+            className='wiz-art-pencil'
+            onClick={() => edit.ctx.begin(edit.kind)}
+            title={`Editar ${label.toLowerCase()}`}
+            aria-label={`Editar ${label.toLowerCase()}`}
+          >
+            <FiEdit3 size={11} />
+          </button>
+        )}
+      </span>
+      {editando ? <FieldEditor kind={edit.kind} ctx={edit.ctx} /> : body}
+    </div>
+  );
+};
 
 // Campo de texto: valor curto (pronome, cidade) ou frase montada (visão, missão, resumo).
-const textField = (label: string, text?: string): ReactNode =>
-  text ? field(label, <p className='wiz-art-v'>{stripEmDash(text)}</p>) : null;
+const textField = (label: string, text?: string, edit?: { kind: EditKind; ctx: EditCtx }): ReactNode =>
+  text ? field(label, <p className='wiz-art-v'>{stripEmDash(text)}</p>, edit) : null;
 
 /**
  * Campo de lista.
@@ -62,6 +102,8 @@ const listField = (
     cap?: number;
     /** Rodapé do campo (ex.: "8 no plano de ação"). */
     note?: string;
+    /** Lápis no rótulo, quando a lista é gravável (só os valores, hoje). */
+    edit?: { kind: EditKind; ctx: EditCtx };
   } = {}
 ): ReactNode => {
   if (!items.length) return null;
@@ -80,7 +122,8 @@ const listField = (
       </ol>
       {rest > 0 && <div className='wiz-art-more'>+{rest}</div>}
       {opts.note && <div className='wiz-art-more'>{opts.note}</div>}
-    </>
+    </>,
+    opts.edit
   );
 };
 
@@ -104,7 +147,7 @@ const previewFrom = (md: string, max = 220): string => {
 
 // Conteúdo do artefato de cada etapa (ou null se ainda não foi gerado). Espelha, campo a campo,
 // tudo que `chat/script.ts` pergunta naquela etapa — nenhum input fica de fora do cartão.
-const artifactFor = (i: number, d: ArtistContent): ReactNode => {
+const artifactFor = (i: number, d: ArtistContent, ctx: EditCtx): ReactNode => {
   const id = d.identity || {};
   switch (i) {
     case 0: { // Identidade — abertura + mapa de referências (script STEP 0)
@@ -113,7 +156,7 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
       const posItems = [pos.curto, pos.medio, pos.longo].flatMap(splitRefItems);
       return renderFields([
         textField('Pronome', GENDER_OPTIONS.find((o) => o.value === id.gender)?.label || id.gender),
-        textField('Estilo musical', id.genre),
+        textField('Estilo musical', id.genre, { kind: 'genre', ctx }),
         textField('Momento de carreira', STAGE_OPTIONS.find((o) => o.value === id.stage)?.label || id.stage),
         listField('Referências artísticas', splitRefItems(refs.artisticas), 'dot'),
         listField('Referências de comunicação', splitRefItems(refs.comunicacao), 'dot'),
@@ -124,13 +167,13 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
     case 1: { // Visão — cidade + as 5 partes da fórmula (script STEP 1) + o texto montado
       const vp = id.visionParts || {};
       return renderFields([
-        textField('Cidade de origem', id.city ? `${id.city}${id.state ? `/${id.state}` : ''}` : undefined),
+        textField('Cidade de origem', id.city ? `${id.city}${id.state ? `/${id.state}` : ''}` : undefined, { kind: 'city', ctx }),
         textField('Alcance geográfico', VISION_ONDE_OPTIONS.find((o) => o.value === vp.onde)?.label || vp.onde),
         listField('Reconhecido por', vp.porQuem || [], 'dot'),
         textField('Como o quê', vp.substantivo),
         textField('Atributo', vp.adjetivo),
         textField('O que falam de você', vp.oQueFalam),
-        textField('Visão', id.vision),
+        textField('Visão', id.vision, { kind: 'vision', ctx }),
       ]);
     }
     case 2: { // Missão — entrega + para quem + retorno financeiro (script STEP 2) + o texto montado
@@ -142,11 +185,11 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
           'Retorno financeiro esperado',
           MISSION_FINANCIAL_OPTIONS.find((o) => o.value === mp.financialTier)?.label || mp.financialTier
         ),
-        textField('Missão', id.mission),
+        textField('Missão', id.mission, { kind: 'mission', ctx }),
       ]);
     }
     case 3: // Valores
-      return renderFields([listField('Valores escolhidos', id.values || [], 'dot')]);
+      return renderFields([listField('Valores escolhidos', id.values || [], 'dot', { edit: { kind: 'values', ctx } })]);
     case 4: // Objetivos (derivados da identidade/visão/missão — sem pergunta própria)
       return renderFields([listField('Objetivos definidos', d.objectives || [], 'num')]);
     case 5: { // Diagnóstico (SWOT) — o conteúdo de cada quadrante, não só a contagem
@@ -180,81 +223,73 @@ const artifactFor = (i: number, d: ArtistContent): ReactNode => {
   }
 };
 
-// Etapas com edição inline pelo painel (as demais — objetivos, SWOT, estratégias, prioridades —
-// são derivadas pelos motores da metodologia e só mudam refazendo a etapa no chat).
-const EDITABLE_STEPS = new Set([0, 1, 2, 3]);
-
-// Formulário compacto de edição de uma seção. Monta o patch de identity e entrega ao onSave.
-const SectionEditor: FC<{
-  i: number;
-  draft: ArtistContent;
-  onCancel: () => void;
-  onSave: (patch: Partial<ArtistContent>) => Promise<void> | void;
-}> = ({ i, draft, onCancel, onSave }) => {
-  const id = draft.identity || {};
-  const [genre, setGenre] = useState(id.genre || '');
-  const [city, setCity] = useState(id.city || '');
+// Editor de UM campo. Cada tipo sabe só o que grava, então o lápis nunca abre um formulário
+// maior do que o dado que ele estava oferecendo para editar.
+const FieldEditor: FC<{ kind: EditKind; ctx: EditCtx }> = ({ kind, ctx }) => {
+  const id = ctx.draft.identity || {};
+  const inicial =
+    kind === 'genre' ? id.genre || ''
+    : kind === 'vision' ? id.vision || ''
+    : kind === 'mission' ? id.mission || ''
+    : kind === 'values' ? (id.values || []).join('\n')
+    : id.city || '';
+  const [text, setText] = useState(inicial);
   const [uf, setUf] = useState(id.state || '');
-  const [text, setText] = useState(i === 1 ? id.vision || '' : i === 2 ? id.mission || '' : (id.values || []).join('\n'));
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
     const identity: ArtistIdentity = { ...id };
-    if (i === 0) {
-      identity.genre = genre.trim();
-    } else if (i === 1) {
-      // Cidade/UF são coletadas na etapa de Visão (script, STEP 1), então é aqui que se editam.
-      identity.vision = text.trim();
-      identity.city = city.trim();
+    if (kind === 'genre') identity.genre = text.trim();
+    else if (kind === 'vision') identity.vision = text.trim();
+    else if (kind === 'mission') identity.mission = text.trim();
+    else if (kind === 'values') identity.values = text.split('\n').map((v) => v.trim()).filter(Boolean);
+    else {
+      identity.city = text.trim();
       identity.state = uf.trim().toUpperCase();
-    } else if (i === 2) identity.mission = text.trim();
-    else if (i === 3) identity.values = text.split('\n').map((v) => v.trim()).filter(Boolean);
+    }
     setSaving(true);
     try {
-      await onSave({ identity });
-      onCancel();
+      await ctx.save({ identity });
+      ctx.cancel();
     } finally {
       setSaving(false);
     }
   };
 
+  const multilinha = kind === 'vision' || kind === 'mission' || kind === 'values';
+
   return (
     <div className='wiz-art-edit'>
-      {i === 0 ? (
-        <>
-          <label className='wiz-art-edit-label'>Gênero</label>
-          <input className='wiz-art-edit-input' value={genre} onChange={(e) => setGenre(e.target.value)} />
-        </>
+      {multilinha ? (
+        <textarea
+          className='wiz-art-edit-area'
+          rows={kind === 'values' ? 4 : 3}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          autoFocus
+        />
+      ) : kind === 'city' ? (
+        // Cidade e UF são um dado só; separá-los em campos diferentes deixaria o lápis do estado
+        // sem rótulo próprio na árvore.
+        <div className='wiz-art-edit-row'>
+          <div style={{ flex: 1 }}>
+            <label className='wiz-art-edit-label'>Cidade</label>
+            <input className='wiz-art-edit-input' value={text} onChange={(e) => setText(e.target.value)} autoFocus />
+          </div>
+          <div style={{ width: 56 }}>
+            <label className='wiz-art-edit-label'>UF</label>
+            <input className='wiz-art-edit-input' value={uf} maxLength={2} onChange={(e) => setUf(e.target.value.toUpperCase())} />
+          </div>
+        </div>
       ) : (
-        <>
-          <textarea
-            className='wiz-art-edit-area'
-            rows={i === 3 ? 4 : 3}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          {i === 3 && <div className='wiz-art-edit-hint'>Um valor por linha.</div>}
-          {/* Cidade/UF acompanham a Visão: é nessa etapa que o chat pergunta de onde o
-              artista parte, e o alcance geográfico da visão usa esse dado. */}
-          {i === 1 && (
-            <div className='wiz-art-edit-row'>
-              <div style={{ flex: 1 }}>
-                <label className='wiz-art-edit-label'>Cidade</label>
-                <input className='wiz-art-edit-input' value={city} onChange={(e) => setCity(e.target.value)} />
-              </div>
-              <div style={{ width: 56 }}>
-                <label className='wiz-art-edit-label'>UF</label>
-                <input className='wiz-art-edit-input' value={uf} maxLength={2} onChange={(e) => setUf(e.target.value.toUpperCase())} />
-              </div>
-            </div>
-          )}
-        </>
+        <input className='wiz-art-edit-input' value={text} onChange={(e) => setText(e.target.value)} autoFocus />
       )}
+      {kind === 'values' && <div className='wiz-art-edit-hint'>Um valor por linha.</div>}
       <div className='wiz-art-edit-actions'>
         <button className='wiz-art-edit-save' disabled={saving} onClick={save}>
           <FiCheck size={12} /> {saving ? 'Salvando…' : 'Salvar'}
         </button>
-        <button className='wiz-art-edit-cancel' disabled={saving} onClick={onCancel}>
+        <button className='wiz-art-edit-cancel' disabled={saving} onClick={ctx.cancel}>
           <FiX size={12} /> Cancelar
         </button>
       </div>
@@ -269,17 +304,19 @@ const SectionEditor: FC<{
  * é a parte de baixo da coluna de contexto (sem cabeçalho, sem botão de fechar), e no celular
  * continua sendo o corpo da folha de tela cheia. O conteúdo é o mesmo nos dois; só o entorno muda.
  *
- * Só existe UMA instância montada por vez (ver `useIsDesktop` no Wizard): o `SectionEditor` guarda
+ * Só existe UMA instância montada por vez (ver `useIsDesktop` no Wizard): o `FieldEditor` guarda
  * estado local de edição, e duas cópias montadas seriam dois editores divergentes gravando pelo
  * mesmo `onEdit`.
  */
 export const PlanList: FC<{
   draft: ArtistContent;
-  // Quando presente, habilita a edição inline dos entregáveis (lápis sutil por seção).
+  // Quando presente, habilita a edição inline — lápis por CAMPO, nos poucos que o painel grava.
   onEdit?: (patch: Partial<ArtistContent>) => Promise<void> | void;
 }> = ({ draft, onEdit }) => {
   const cur = currentStepIndex(draft);
-  const [editing, setEditing] = useState<number | null>(null);
+  // Qual campo está em edição. Os tipos já são únicos entre as etapas, então um valor só basta —
+  // e garante que nunca haja dois editores abertos gravando pelo mesmo `onEdit`.
+  const [editing, setEditing] = useState<EditKind | null>(null);
   // Aberto/fechado POR ESCOLHA do usuário. Sem entrada aqui, vale o padrão: a etapa atual aberta,
   // as concluídas fechadas — assim a coluna não vira uma pilha de nove cartões abertos.
   const [aberturaManual, setAberturaManual] = useState<Record<number, boolean>>({});
@@ -296,7 +333,15 @@ export const PlanList: FC<{
   // As NOVE etapas, sempre. Antes a coluna só listava até a atual, então quem estava na etapa 2
   // não tinha como saber o que vinha depois nem quanto faltava. As que ainda não chegaram entram
   // bloqueadas: aparecem, dão o nome do que vem, e não prometem interação.
-  const steps = STEP_LABELS.map((label, i) => ({ label, i, art: artifactFor(i, draft) }));
+  const ctx: EditCtx = {
+    enabled: !!onEdit,
+    active: editing,
+    begin: setEditing,
+    cancel: () => setEditing(null),
+    save: onEdit ?? (() => {}),
+    draft,
+  };
+  const steps = STEP_LABELS.map((label, i) => ({ label, i, art: artifactFor(i, draft, ctx) }));
   const anyArtifact = steps.some((s) => s.i <= cur && s.art);
 
   return (
@@ -320,16 +365,16 @@ export const PlanList: FC<{
             </div>
           </div>
         ) : (
-        <div key={label} className={`wiz-art-step${i === cur ? ' wiz-art-step--now' : ''}${i < cur ? ' wiz-art-step--done' : ''}${estaAberta(i) || editing === i ? ' is-open' : ''}`}>
-          {/* O cabeçalho é uma LINHA com dois controles irmãos, não um botão só: o lápis não pode
-              ficar dentro do botão que abre/fecha (botão dentro de botão é HTML inválido e o
-              clique de um dispararia o outro). */}
+        <div key={label} className={`wiz-art-step${i === cur ? ' wiz-art-step--now' : ''}${i < cur ? ' wiz-art-step--done' : ''}${estaAberta(i) ? ' is-open' : ''}`}>
+          {/* Só o botão de abrir/fechar. O lápis saiu daqui: no cabeçalho ele dizia "editar
+              identidade" mas o editor por trás só gravava o estilo musical, enquanto o cartão
+              mostrava sete campos. Agora cada lápis mora ao lado do dado que ele realmente grava. */}
           <div className='wiz-art-step-name'>
             <button
               type='button'
               className='wiz-art-toggle'
               onClick={() => alternar(i)}
-              aria-expanded={estaAberta(i) || editing === i}
+              aria-expanded={estaAberta(i)}
               title={estaAberta(i) ? `Recolher ${label.toLowerCase()}` : `Expandir ${label.toLowerCase()}`}
             >
               {/* Número como elemento próprio: vira o selo redondo da etapa. Como texto solto
@@ -340,27 +385,12 @@ export const PlanList: FC<{
               {i === cur && <span className='wiz-art-now'>agora</span>}
               <FiChevronDown className='wiz-art-chevron' size={15} aria-hidden />
             </button>
-            {onEdit && EDITABLE_STEPS.has(i) && !!art && editing !== i && (
-              <button
-                className='wiz-art-pencil'
-                onClick={() => setEditing(i)}
-                title={`Editar ${label.toLowerCase()}`}
-                aria-label={`Editar ${label.toLowerCase()}`}
-              >
-                <FiEdit3 size={12} />
-              </button>
-            )}
           </div>
-          {!(estaAberta(i) || editing === i) ? null : editing === i && onEdit ? (
-            <div className='wiz-art-step-body'>
-              <SectionEditor i={i} draft={draft} onCancel={() => setEditing(null)} onSave={onEdit} />
-            </div>
-          ) : (
-            /* Sem vídeo aqui: ele é de PERGUNTA, não de etapa — reforça um momento específico da
-               conversa, e por isso vive lá, no fio do diálogo. Nesta coluna ele só repetia o mesmo
-               player em cada cartão, sem relação com o que estava sendo perguntado. */
-            art && <div className='wiz-art-step-body'>{art}</div>
-          )}
+          {/* O editor não troca mais o corpo inteiro do cartão: ele abre DENTRO do campo, no lugar
+              do valor, então o resto da etapa continua à vista enquanto se edita um dado só.
+              Sem vídeo aqui: ele é de PERGUNTA, não de etapa — reforça um momento específico da
+              conversa, e por isso vive lá, no fio do diálogo. */}
+          {estaAberta(i) && art && <div className='wiz-art-step-body'>{art}</div>}
         </div>
         )
       )}
