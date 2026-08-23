@@ -104,7 +104,14 @@ const SubscriptionPage: FC = () => {
     dispatch(clearError());
 
     const rawCpfCnpj = form.cpf.replace(/\D/g, '');
-    const customerResult = await dispatch(createAsaasCustomer({ name: userName, email: userEmail, cpfCnpj: rawCpfCnpj }));
+    // Telefone vai junto quando o usuário preencheu (obrigatório só no cartão): sem `mobilePhone`
+    // no cliente Asaas, a régua de cobrança dela fica só no e-mail — e numa assinatura PIX, que
+    // exige pagar um QR a cada ciclo, um canal a menos custa renovação.
+    const rawPhone = form.phone.replace(/\D/g, '');
+    const customerResult = await dispatch(createAsaasCustomer({
+      name: userName, email: userEmail, cpfCnpj: rawCpfCnpj,
+      ...(rawPhone ? { mobilePhone: rawPhone } : {}),
+    }));
     if (createAsaasCustomer.rejected.match(customerResult)) {
       setFormError((customerResult.payload as string) || 'Erro ao iniciar a cobrança.');
       return;

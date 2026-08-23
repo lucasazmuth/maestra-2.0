@@ -239,11 +239,14 @@ const PaymentPage: FC = () => {
   const navigate = useNavigate();
   const { message } = App.useApp();
 
-  const { pixData, status } = useAppSelector((s) => s.subscription);
+  const { pixData, status, pendingRenewal } = useAppSelector((s) => s.subscription);
 
   const [copied, setCopied] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  // Assinatura ativa COM cobrança de renovação em aberto. Precisa ser estado próprio: `status`
+  // continua 'active' nesse momento, e sem isto a tela trata a renovação como "já pago".
+  const [renewal, setRenewal] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [connectivityError, setConnectivityError] = useState(false);
   const [resuming, setResuming] = useState(false);
@@ -261,7 +264,11 @@ const PaymentPage: FC = () => {
   // o QR atual da cobrança em aberto no Asaas (sem criar assinatura nova). Só manda pra
   // /assinatura se não houver nada pra retomar.
   useEffect(() => {
-    if (paymentConfirmed || status === 'active') return;
+    // `status === 'active'` NÃO barra mais a consulta. Na renovação a assinatura segue `active`
+    // com a cobrança do ciclo novo em aberto, e sair aqui era o que fazia a tela mostrar sucesso
+    // para quem ainda precisava pagar. Quem decide é a resposta do backend; o `resumeTried`
+    // garante uma chamada só.
+    if (paymentConfirmed) return;
 
     const hasValidPixData = pixData && pixData.qrCode && pixData.expiresAt;
     if (hasValidPixData) return;          // fluxo normal (QR recém-criado já no estado)
@@ -273,10 +280,13 @@ const PaymentPage: FC = () => {
       .unwrap()
       .then((res) => {
         setResuming(false);
-        if (res.status === 'active') { setPaymentConfirmed(true); return; }  // já pago → sucesso
+        if (res.status === 'active') { setPaymentConfirmed(true); return; }  // em dia → sucesso
         if (res.status === 'none') { navigate('/assinatura', { replace: true }); return; }
         // Cartão em análise: não existe QR — mostra o estado de análise (não é erro).
         if (res.billingType === 'CREDIT_CARD') { setCardAnalysis(true); return; }
+        // Renovação: a assinatura continua ativa, mas há QR a pagar. Marcar antes de renderizar,
+        // senão as guardas de `status === 'active'` mais abaixo mostram a tela de sucesso.
+        if (res.pendingRenewal) setRenewal(true);
         // pending: se veio QR, entra no Redux e renderiza; se não, mostra estado de falha.
         if (!res.pixData?.qrCode) setResumeFailed(true);
       })
@@ -472,17 +482,23 @@ const PaymentPage: FC = () => {
     );
   }
 
+  // `status === 'active'` NÃO basta para declarar sucesso: numa renovação a assinatura está ativa
+  // E existe QR a pagar. Duas fontes para o mesmo fato, porque chegam por caminhos diferentes —
+  // `renewal` vem da resposta do resume nesta tela, `pendingRenewal` vem do estado global (poll e
+  // fetch de status). Exigir as duas negativas evita a tela de sucesso aparecer sem pagamento.
+  const ativoEmDia = status === 'active' && !renewal && !pendingRenewal;
+
   // Guard: don't render if pixData is invalid and not confirmed
   const hasValidPixData = pixData && pixData.qrCode && pixData.expiresAt;
-  if (!hasValidPixData && !paymentConfirmed && status !== 'active') return null;
+  if (!hasValidPixData && !paymentConfirmed && !ativoEmDia) return null;
 
   const isExpired = secondsRemaining !== null && secondsRemaining <= 0;
 
   // Sem pixData mas pago/ativo → cai nas telas de sucesso abaixo.
-  if (!pixData && status !== 'active' && !paymentConfirmed) return null;
+  if (!pixData && !ativoEmDia && !paymentConfirmed) return null;
 
   // ─── Success state ──────────────────────────────────────────────────────────
-  if (paymentConfirmed || status === 'active') {
+  if (paymentConfirmed || ativoEmDia) {
     return (
       <div style={styles.stateWrap}>
         <div style={{ ...styles.state, ...styles.successContainer }}>

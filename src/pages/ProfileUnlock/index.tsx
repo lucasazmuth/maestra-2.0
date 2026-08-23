@@ -210,7 +210,11 @@ const ProfileUnlock: FC = () => {
     setSubmitting(true);
     try {
       const rawCpf = form.cpf.replace(/\D/g, '');
-      const custRes = await dispatch(createAsaasCustomer({ name: userName, email: userEmail, cpfCnpj: rawCpf }));
+      const rawPhone = form.phone.replace(/\D/g, '');
+      const custRes = await dispatch(createAsaasCustomer({
+        name: userName, email: userEmail, cpfCnpj: rawCpf,
+        ...(rawPhone ? { mobilePhone: rawPhone } : {}),
+      }));
       if (createAsaasCustomer.rejected.match(custRes)) {
         setPayError((custRes.payload as string) || 'Erro ao iniciar a cobrança.');
         return;

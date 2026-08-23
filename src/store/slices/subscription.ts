@@ -69,6 +69,10 @@ export interface SubscriptionState {
   nextDueDate: string | null;
   value: number | null;
   gracePeriodEndsAt: string | null;
+  // Assinatura ativa COM a cobranca do ciclo novo em aberto. A assinatura PIX da Asaas e
+  // recorrencia de COBRANCA, nao de debito: a cada ciclo nasce um QR a pagar. Sem este sinal
+  // a tela mostrava "Ativa" e nao avisava nada.
+  pendingRenewal: boolean;
   plan: PlanConfig | null;
   loading: boolean;
   error: string | null;
@@ -87,6 +91,7 @@ const initialState: SubscriptionState = {
   nextDueDate: null,
   value: null,
   gracePeriodEndsAt: null,
+  pendingRenewal: false,
   plan: null,
   loading: false,
   error: null,
@@ -118,6 +123,7 @@ export const fetchSubscriptionStatus = createAsyncThunk(
       nextDueDate: string | null;
       value: number | null;
       gracePeriodEndsAt: string | null;
+      pendingRenewal?: boolean;
     };
   }
 );
@@ -158,7 +164,9 @@ export const fetchPlanConfig = createAsyncThunk(
 export const createAsaasCustomer = createAsyncThunk(
   'subscription/createCustomer',
   async (
-    payload: { name: string; email: string; cpfCnpj: string },
+    // `mobilePhone` é opcional e só entra quando o usuário preencheu: habilita a régua de
+    // SMS/WhatsApp da Asaas, que sem ele fica restrita ao e-mail.
+    payload: { name: string; email: string; cpfCnpj: string; mobilePhone?: string },
     { rejectWithValue }
   ) => {
     const { data, error } = await supabase.functions.invoke('asaas-create-customer', {
@@ -252,6 +260,11 @@ export const resumePayment = createAsyncThunk(
       status: SubscriptionState['status'];
       // 'CREDIT_CARD' quando a assinatura pendente é de cartão (em análise, sem QR).
       billingType?: string | null;
+      // true quando a cobrança em aberto é de RENOVAÇÃO (a assinatura já teve ciclo pago).
+      // Sem isto a tela não distingue "assinatura em dia" de "assinatura ativa com o ciclo
+      // novo em aberto", e mostra sucesso para quem ainda precisa pagar.
+      pendingRenewal?: boolean;
+      dueDate?: string | null;
       pixData?: PixData | null;
       value?: number | null;
       cycle?: string | null;
@@ -322,7 +335,11 @@ export const pollPaymentStatus = createAsyncThunk(
       // Resposta bem-sucedida: reseta contador de erros consecutivos
       consecutiveErrors = 0;
 
-      if (data?.status === 'active') {
+      // `active` sozinho NÃO significa pago. Numa RENOVAÇÃO a assinatura continua ativa enquanto
+      // a cobrança do ciclo novo está em aberto — o poll resolvia na primeira volta, a tela
+      // declarava "pagamento confirmado" e mandava pro sucesso sem ninguém ter pago nada.
+      // Só encerra quando a renovação em aberto também sumiu (webhook/cron limparam o vínculo).
+      if (data?.status === 'active' && !data?.pendingRenewal) {
         return data as {
           status: SubscriptionState['status'];
           asaasCustomerId: string | null;
@@ -330,6 +347,7 @@ export const pollPaymentStatus = createAsyncThunk(
           nextDueDate: string | null;
           value: number | null;
           gracePeriodEndsAt: string | null;
+          pendingRenewal?: boolean;
         };
       }
 
@@ -372,6 +390,7 @@ const subscriptionSlice = createSlice({
         state.nextDueDate = action.payload.nextDueDate;
         state.value = action.payload.value;
         state.gracePeriodEndsAt = action.payload.gracePeriodEndsAt;
+        state.pendingRenewal = !!action.payload.pendingRenewal;
       })
       .addCase(fetchSubscriptionStatus.rejected, (state, action) => {
         state.loading = false;
@@ -498,6 +517,7 @@ const subscriptionSlice = createSlice({
         state.nextDueDate = action.payload.nextDueDate;
         state.value = action.payload.value;
         state.gracePeriodEndsAt = action.payload.gracePeriodEndsAt;
+        state.pendingRenewal = !!action.payload.pendingRenewal;
         state.pixData = null;
       })
       .addCase(pollPaymentStatus.rejected, (state, action) => {
