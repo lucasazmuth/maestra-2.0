@@ -281,8 +281,9 @@ serve(async (req) => {
     for (const s of orfas || []) {
       try {
         const r = await fetch(
-          `${asaasApiUrl}/v3/pix/automatic/authorizations/${s.pix_automatic_authorization_id}/cancel`,
-          { method: "POST", headers: { "Content-Type": "application/json", "access_token": asaasApiKey } },
+          // DELETE, nao POST .../cancel: aquele path nao existe e devolvia 404 em silencio.
+          `${asaasApiUrl}/v3/pix/automatic/authorizations/${s.pix_automatic_authorization_id}`,
+          { method: "DELETE", headers: { "Content-Type": "application/json", "access_token": asaasApiKey } },
         );
         // 404 = a Asaas já não conhece a autorização; para o nosso objetivo é o mesmo que revogada.
         if (r.ok || r.status === 404) {

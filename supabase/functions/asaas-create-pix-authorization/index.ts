@@ -111,6 +111,9 @@ serve(async (req) => {
       };
 
       const auth = await ler("/v3/pix/automatic/authorizations?limit=1");
+      // Uma autorizacao especifica. Serve para comparar o que a Asaas diz com o que o app do
+      // banco do pagador mostra: os dois ja divergiram (Asaas CANCELLED, Itau "Ativo").
+      const autorizacao = body?.authRef ? await ler(`/v3/pix/automatic/authorizations/${body.authRef}`) : null;
       // Chaves Pix da conta. Diagnostico do "QR Code invalido" no banco: sem chave ATIVA, a Asaas
       // emite o QR mas nenhum PSP honra. Leitura pura.
       const chaves = await ler("/v3/pix/addressKeys?limit=10");
@@ -183,6 +186,7 @@ serve(async (req) => {
         ambiente: asaasApiUrl,
         pixAutomatico: { httpStatus: auth.status, habilitado: auth.status === 200 },
         chavesPix: chaves,
+        autorizacao,
         conta,
         chaveDetalhe,
         creditos,

@@ -809,8 +809,9 @@ Deno.serve(async (req: Request) => {
         if (subscriptionRecord.pix_migration_from_subscription_id && autorizacaoOrfa) {
           if (asaasApiKey) {
             try {
-              await fetch(`${asaasBaseUrl}/v3/pix/automatic/authorizations/${autorizacaoOrfa}/cancel`, {
-                method: "POST",
+              // DELETE, nao POST .../cancel: aquele path nao existe e devolvia 404 em silencio.
+              await fetch(`${asaasBaseUrl}/v3/pix/automatic/authorizations/${autorizacaoOrfa}`, {
+                method: "DELETE",
                 headers: { "access_token": asaasApiKey, "Content-Type": "application/json" },
               });
             } catch (e) {
