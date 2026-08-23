@@ -20,6 +20,8 @@ import { useGlobalSearch } from '../../stores/globalSearchStore';
 import { useNytaModal } from '../../hooks/useNytaModal';
 import { enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { countUnread } from '../../services/db/notifications';
+import { supabase } from '../../lib/supabase';
 import { SearchIcon } from '../Icons';
 import { FiArrowRight, FiX } from 'react-icons/fi';
 import {
@@ -125,6 +127,29 @@ export const AppLayout: FC = memo(() => {
   const playerVisible = playerOpen && !playerHidden;
   const userId = useAppSelector((s) => s.auth.user?.id);
   const user = useAppSelector((s) => s.auth.user);
+
+  // Nao-lidas no sino. O ponto vermelho vinha do CSS da referencia GSAP (`.notification::before`),
+  // pintado INCONDICIONALMENTE — acendia mesmo sem notificacao nenhuma, entao nao significava
+  // nada e ensinava a pessoa a ignora-lo. A contagem de verdade existia, mas no `Topbar`, que
+  // saiu de uso quando este cabecalho foi reescrito e ficou so num mock de teste.
+  // Recarrega ao trocar de rota (para o ponto sumir depois de abrir /notifications) e escuta
+  // realtime, para acender sem precisar navegar.
+  const [naoLidas, setNaoLidas] = useState(0);
+  useEffect(() => {
+    if (!userId) { setNaoLidas(0); return; }
+    let vivo = true;
+    const recontar = () => countUnread(userId).then((n) => { if (vivo) setNaoLidas(n); }).catch(() => {});
+    recontar();
+    const canal = supabase
+      .channel(`notifications-badge:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        recontar,
+      )
+      .subscribe();
+    return () => { vivo = false; void supabase.removeChannel(canal); };
+  }, [userId, location.pathname]);
   const artists = useAppSelector((s) => s.artists.items);
   const routeArtistId = pathArtistId(location.pathname);
   const currentArtist = routeArtistId ? artists.find((artist) => artist.id === routeArtistId) : undefined;
@@ -320,7 +345,12 @@ export const AppLayout: FC = memo(() => {
             <NytaAvatar size={22} />
           </button>
         )}
-        <button className='round-control notification' aria-label='Notificações' type='button' onClick={() => navigate('/notifications')}>
+        <button
+          className={`round-control notification${naoLidas > 0 ? ' has-unread' : ''}`}
+          aria-label={naoLidas > 0 ? `Notificações (${naoLidas} não lidas)` : 'Notificações'}
+          type='button'
+          onClick={() => navigate('/notifications')}
+        >
           <NotificationIcon size={28} />
         </button>
         {/* Último da linha: reúne configurações, termos e suporte (e o /admin, para admin).
