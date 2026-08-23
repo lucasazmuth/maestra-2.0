@@ -77,6 +77,26 @@ serve(async (req) => {
       );
     }
 
+    // 1b. Pix Automático: cancelar a ASSINATURA não basta — quem autoriza o débito é a
+    // autorização, e ela sobrevive por conta própria. Sem revogá-la, o pagador continuaria sendo
+    // debitado depois de cancelar no app, que é o pior desfecho possível deste fluxo.
+    if (subscription.pix_automatic_authorization_id) {
+      try {
+        const r = await fetch(
+          `${asaasBaseUrl}/v3/pix/automatic/authorizations/${subscription.pix_automatic_authorization_id}/cancel`,
+          { method: "POST", headers: { "access_token": asaasApiKey, "Content-Type": "application/json" } },
+        );
+        if (!r.ok) {
+          const corpo = await r.text().catch(() => "");
+          console.error(`Falha ao cancelar autorização Pix Automático (${r.status}):`, corpo.slice(0, 300));
+        }
+      } catch (e) {
+        console.error("Erro ao cancelar autorização Pix Automático:", (e as { message?: string })?.message);
+      }
+      // Segue para o cancelamento local mesmo se a revogação falhar: o usuário precisa conseguir
+      // encerrar. A falha fica no log, e o webhook de AUTHORIZATION_CANCELLED reconcilia se vier.
+    }
+
     // 2. Resolve o id da assinatura na Asaas.
     // Há linhas antigas com status 'active' mas asaas_subscription_id NULO (ativadas via webhook).
     // Antes isso retornava 404 e travava o cancelamento. Agora: se faltar o id, busca a assinatura
@@ -180,6 +200,9 @@ serve(async (req) => {
       .from("asaas_subscriptions")
       .update({
         status: "cancelled",
+        // A autorização também morre aqui: deixá-la como ACTIVE no nosso banco faria o painel e
+        // o cron acharem que ainda há débito recorrente de pé.
+        ...(subscription.pix_automatic_authorization_id ? { authorization_status: "CANCELLED" } : {}),
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", user.id);

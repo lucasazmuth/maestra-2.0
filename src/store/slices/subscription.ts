@@ -60,6 +60,10 @@ export interface PlanConfig {
   annualEnabled: boolean;
   // Valor do pagamento único (desbloqueio de perfil). Mesma config, editável sem deploy.
   profileUnlockValue: number | null;
+  // Pix Automático (débito recorrente) ligado no checkout. Desligado por padrão: o fluxo por
+  // cobrança (QR por ciclo) continua sendo o caminho, e segue existindo como fallback mesmo
+  // depois — nem todo banco do pagador suporta Pix Automático.
+  pixAutomaticEnabled: boolean;
 }
 
 export interface SubscriptionState {
@@ -138,7 +142,7 @@ export const fetchPlanConfig = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     const { data, error } = await supabase
       .from('asaas_plan_config')
-      .select('name, monthly_value, annual_value, annual_enabled, profile_unlock_value')
+      .select('name, monthly_value, annual_value, annual_enabled, profile_unlock_value, pix_automatic_enabled')
       .eq('is_active', true)
       .limit(1)
       .maybeSingle();
@@ -153,6 +157,7 @@ export const fetchPlanConfig = createAsyncThunk(
       annualValue: data.annual_value != null ? Number(data.annual_value) : null,
       annualEnabled: !!data.annual_enabled,
       profileUnlockValue: data.profile_unlock_value != null ? Number(data.profile_unlock_value) : null,
+      pixAutomaticEnabled: !!data.pix_automatic_enabled,
     } as PlanConfig;
   }
 );
@@ -268,6 +273,43 @@ export const resumePayment = createAsyncThunk(
       pixData?: PixData | null;
       value?: number | null;
       cycle?: string | null;
+    };
+  }
+);
+
+/**
+ * Cria uma autorização de Pix Automático (débito recorrente).
+ * Chama a Edge Function `asaas-create-pix-authorization`.
+ *
+ * A resposta traz `pixData` com os MESMOS campos do fluxo por cobrança — a tela de pagamento não
+ * precisa de forma nova. A diferença é o significado: pagar este QR não quita só um ciclo, ele
+ * autoriza os débitos seguintes (Jornada 3).
+ */
+export const createPixAuthorization = createAsyncThunk(
+  'subscription/createPixAuthorization',
+  async (
+    payload: { customerId: string; cycle?: BillingCycle; couponCode?: string },
+    { rejectWithValue }
+  ) => {
+    const { data, error } = await supabase.functions.invoke('asaas-create-pix-authorization', {
+      body: payload,
+    });
+
+    if (error) {
+      return rejectWithValue(
+        await readEdgeFunctionError(error, 'Erro ao criar a autorização de pagamento')
+      );
+    }
+
+    return data as {
+      authorizationId?: string;
+      authorizationStatus?: string;
+      status?: string;
+      pixData?: PixData | null;
+      value?: number | null;
+      cycle?: string | null;
+      alreadyActive?: boolean;
+      resume?: boolean;
     };
   }
 );
@@ -441,6 +483,28 @@ const subscriptionSlice = createSlice({
       .addCase(createSubscription.pending, (state) => {
         state.loading = true;
         state.error = null;
+      })
+      // Pix Automático: o QR da autorização entra no mesmo `pixData` do fluxo por cobrança, para
+      // a tela de pagamento não precisar de um caminho paralelo.
+      .addCase(createPixAuthorization.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createPixAuthorization.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || 'Erro ao criar a autorização de pagamento';
+      })
+      .addCase(createPixAuthorization.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload.alreadyActive) {
+          state.status = 'active';
+          state.pixData = null;
+          return;
+        }
+        if (action.payload.resume) return;
+        state.status = 'pending';
+        state.pixData = action.payload.pixData ?? null;
+        if (action.payload.value != null) state.value = action.payload.value;
       })
       .addCase(createSubscription.fulfilled, (state, action) => {
         state.loading = false;

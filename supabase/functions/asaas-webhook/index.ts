@@ -118,10 +118,33 @@ const CARD_FAILURE_EVENTS = new Set([
   "PAYMENT_CHARGEBACK_REQUESTED",        // chargeback aberto
 ]);
 
+// ─── Pix Automático ───────────────────────────────────────────────────────────
+// Ciclo de vida da AUTORIZAÇÃO (o consentimento do pagador), separado do ciclo de vida das
+// cobranças. Só uma autorização ACTIVE debita: sem ela, os ciclos seguintes não acontecem.
+// Fluxo feliz: CREATED → PAYMENT_CREATED → PAYMENT_RECEIVED → ACTIVATED.
+const PIX_AUTH_EVENTS: Record<string, string> = {
+  PIX_AUTOMATIC_RECURRING_AUTHORIZATION_CREATED: "CREATED",
+  PIX_AUTOMATIC_RECURRING_AUTHORIZATION_ACTIVATED: "ACTIVE",
+  PIX_AUTOMATIC_RECURRING_AUTHORIZATION_REFUSED: "REFUSED",
+  PIX_AUTOMATIC_RECURRING_AUTHORIZATION_EXPIRED: "EXPIRED",
+  PIX_AUTOMATIC_RECURRING_AUTHORIZATION_CANCELLED: "CANCELLED",
+};
+
+// Instruções de pagamento de cada ciclo. INSTRUCTION_REFUSED é o "não debitou" (saldo, limite,
+// agendamento recusado) — é o equivalente ao PAYMENT_OVERDUE do fluxo por cobrança.
+const PIX_INSTRUCTION_EVENTS = new Set([
+  "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_CREATED",
+  "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_SCHEDULED",
+  "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_REFUSED",
+  "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_CANCELLED",
+]);
+
 // All event types we handle (subscription status changes + payment-only events)
 const HANDLED_EVENTS = new Set([
   ...Object.keys(EVENT_STATUS_MAP),
   ...CARD_FAILURE_EVENTS,
+  ...Object.keys(PIX_AUTH_EVENTS),
+  ...PIX_INSTRUCTION_EVENTS,
   "PAYMENT_DELETED",
   "PAYMENT_CREATED",
   "PAYMENT_UPDATED",
@@ -222,7 +245,12 @@ Deno.serve(async (req: Request) => {
       (payload.customer as string) ||
       null;
 
-    if (!subscriptionId && !customerId) {
+    // Eventos de Pix Automático são identificados pela AUTORIZAÇÃO e podem não trazer
+    // `subscription` nem `customer` — sem esta exceção eles morriam aqui, antes do handler 4a,
+    // e a autorização nunca sairia de CREATED no nosso banco.
+    const ehPixAutomatico = eventType in PIX_AUTH_EVENTS || PIX_INSTRUCTION_EVENTS.has(eventType);
+
+    if (!subscriptionId && !customerId && !ehPixAutomatico) {
       console.error("Missing subscription/customer identifier in webhook payload", {
         eventId,
         eventType,
@@ -263,6 +291,84 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ message: "ok", duplicate: true }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // ─── 4a. Pix Automático: ciclo de vida da AUTORIZAÇÃO e das instruções ────
+    // Tratado antes da busca por assinatura porque a chave aqui é o id da AUTORIZAÇÃO, não o da
+    // assinatura nem o do cliente. Só uma autorização ACTIVE debita: se ela cai, os ciclos
+    // seguintes simplesmente não acontecem, e sem tratar estes eventos o app não saberia.
+    const ehEventoPixAuth = eventType in PIX_AUTH_EVENTS;
+
+    if (ehPixAutomatico) {
+      // O id da autorização pode chegar em formatos diferentes conforme o evento; tenta as
+      // variações conhecidas em vez de assumir uma. Sem id não há o que casar.
+      // deno-lint-ignore no-explicit-any
+      const pl = payload as any;
+      const authId: string | null =
+        pl?.authorization?.id ||
+        pl?.pixAutomaticRecurringAuthorization?.id ||
+        pl?.recurringAuthorization?.id ||
+        pl?.payment?.pixAutomaticAuthorizationId ||
+        pl?.pixAutomaticAuthorizationId ||
+        null;
+
+      const registrarEvento = async () => {
+        await supabaseAdmin.from("asaas_webhook_events").insert({
+          event_id: eventId, event_type: eventType, payload, processed_at: new Date().toISOString(),
+        });
+      };
+
+      if (!authId) {
+        console.warn("Evento de Pix Automático sem id de autorização no payload", { eventId, eventType });
+        await registrarEvento();
+        return new Response(JSON.stringify({ message: "ok" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const { data: assinatura } = await supabaseAdmin
+        .from("asaas_subscriptions")
+        .select("id, user_id, status, started_at")
+        .eq("pix_automatic_authorization_id", authId)
+        .maybeSingle();
+
+      if (!assinatura) {
+        console.warn("Autorização de Pix Automático sem assinatura local", { eventId, eventType, authId });
+        await registrarEvento();
+        return new Response(JSON.stringify({ message: "ok" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const campos: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+      if (ehEventoPixAuth) {
+        const novoStatusAuth = PIX_AUTH_EVENTS[eventType];
+        campos.authorization_status = novoStatusAuth;
+
+        if (novoStatusAuth === "ACTIVE") {
+          // Autorização ativada = a primeira cobrança foi paga (Jornada 3). A assinatura passa a
+          // valer, e daqui em diante os ciclos debitam sozinhos.
+          campos.status = "active";
+          campos.grace_period_ends_at = null;
+          campos.pending_charge_id = null;
+          campos.started_at = assinatura.started_at || new Date().toISOString();
+        } else if (novoStatusAuth === "REFUSED" || novoStatusAuth === "EXPIRED" || novoStatusAuth === "CANCELLED") {
+          // Sem autorização não há débito futuro. REFUSED/EXPIRED normalmente acontecem antes de
+          // qualquer pagamento (QR não pago); CANCELLED pode vir depois, se o pagador revogar no
+          // banco — em todos os casos a recorrência acabou.
+          campos.status = "cancelled";
+        }
+      }
+
+      if (eventType === "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_REFUSED" && assinatura.status === "active") {
+        // Débito recusado (saldo, limite ou agendamento). É o equivalente ao PAYMENT_OVERDUE do
+        // fluxo por cobrança: mesma regra de 7 dias de graça antes de cortar o acesso.
+        campos.status = "overdue";
+        campos.grace_period_ends_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      }
+
+      await supabaseAdmin.from("asaas_subscriptions").update(campos).eq("id", assinatura.id);
+      await registrarEvento();
+
+      console.log(`Webhook Pix Automático: ${eventType} (auth=${authId}, user=${assinatura.user_id})`);
+      return new Response(JSON.stringify({ message: "ok" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ─── 4b. One-time artist-profile charge (cobrança única R$199,90) ─────────

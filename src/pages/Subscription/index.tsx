@@ -5,7 +5,7 @@ import { FiArrowLeft, FiArrowRight, FiTarget, FiGrid, FiAward } from 'react-icon
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 
 import { useAppDispatch, useAppSelector } from '../../store/store';
-import { createAsaasCustomer, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, pollPaymentStatus, clearError, type BillingCycle } from '../../store/slices/subscription';
+import { createAsaasCustomer, createPixAuthorization, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, pollPaymentStatus, clearError, type BillingCycle } from '../../store/slices/subscription';
 import {
   CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField, CouponField,
   CartSummary, BenefitsCompare, useCheckoutForm, focusFirstInvalidField, type PayMethod, type BenefitGroup,
@@ -121,6 +121,22 @@ const SubscriptionPage: FC = () => {
     const couponCode = coupon.couponCode ?? undefined;
 
     if (method === 'PIX') {
+      // Pix Automático quando ligado na config: o assinante paga UM QR e autoriza os débitos
+      // seguintes, em vez de receber uma cobrança nova a cada ciclo. A tela de pagamento é a
+      // mesma — a autorização devolve `pixData` no mesmo formato.
+      // Fallback deliberado: se a autorização falhar (conta sem o produto, banco do pagador sem
+      // suporte, indisponibilidade), cai no fluxo por cobrança em vez de barrar a venda.
+      if (plan?.pixAutomaticEnabled) {
+        const auth = await dispatch(createPixAuthorization({ customerId, cycle, couponCode }));
+        if (createPixAuthorization.fulfilled.match(auth)) {
+          const a = auth.payload as { resume?: boolean; alreadyActive?: boolean; pixData?: { qrCode: string | null } | null };
+          if (a.alreadyActive) { navigate('/settings'); return; }
+          if (a.resume) { navigate('/pagamento'); return; }
+          if (a.pixData?.qrCode) { navigate('/pagamento'); return; }
+        }
+        console.warn('Pix Automático indisponível; seguindo pelo fluxo de cobrança por ciclo.');
+      }
+
       const result = await dispatch(createSubscription({ customerId, billingType: 'PIX', cycle, couponCode }));
       if (createSubscription.rejected.match(result)) return;
       // Rede de segurança: a edge barrou duplicidade.
