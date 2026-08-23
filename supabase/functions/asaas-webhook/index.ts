@@ -770,6 +770,25 @@ Deno.serve(async (req: Request) => {
         updateFields.started_at = subscriptionRecord.started_at || new Date().toISOString();
         // Pagou o ciclo: não há mais renovação em aberto.
         updateFields.pending_charge_id = null;
+
+        // Avança a data PROVISORIAMENTE. Neste fluxo quem manda no calendário é a Asaas, e ela
+        // só informa o vencimento seguinte quando cria a cobrança do próximo ciclo — o que
+        // acontece dias antes dele. Até lá o campo guardava a data do ciclo RECÉM-PAGO, e
+        // Configurações anunciava "Próxima cobrança" para uma data de hoje ou já passada, logo
+        // depois de a pessoa pagar. O `PAYMENT_CREATED` corrige com a data oficial quando vier.
+        const vencAtual = subscriptionRecord.next_due_date as string | null;
+        if (vencAtual) {
+          const base = String(vencAtual).split("T")[0];
+          const hojeData = new Date().toISOString().split("T")[0];
+          // Só mexe se a data guardada já venceu. Pagamento adiantado mantém a data real.
+          if (base <= hojeData) {
+            updateFields.next_due_date = proximoVencimento(
+              base,
+              String(subscriptionRecord.cycle || "MONTHLY"),
+              subscriptionRecord.cycle_anchor_day as number | null,
+            );
+          }
+        }
         // Pagou: baixa o aviso de renovação daquela cobrança para ele não ficar pendurado no sino.
         // Só `read` — o front filtra por ele (`services/db/notifications.ts`) e nunca por `status`,
         // que hoje é `active` em 100% das linhas; inventar um valor novo aqui seria letra morta.
