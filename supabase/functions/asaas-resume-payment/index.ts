@@ -91,9 +91,13 @@ serve(async (req) => {
     // Calculado ANTES de qualquer conclusão sobre "já pagou": a lista traz até 20 cobranças, e
     // num assinante de meses o ciclo 1 pago está sempre nela. O teste antigo ("algum pagamento
     // pago → active") deixava o pagamento antigo mascarar a cobrança nova para sempre.
+    // A que VENCE PRIMEIRO. Com mais de uma cobranca em aberto (a Asaas adianta a criacao do ciclo
+    // seguinte), o QR a mostrar e o da mais proxima do vencimento — nunca o do ciclo futuro, que
+    // faria o assinante pagar adiantado e deixar a atual vencer. Ordenar por dueDate crescente
+    // tambem coloca uma OVERDUE na frente de uma PENDING, que e o certo: divida vencida vem antes.
     const open = payments
       .filter((p) => p.billingType === "PIX" && OPEN.includes(p.status))
-      .sort((a, b) => (a.status === "PENDING" ? -1 : 1));
+      .sort((a, b) => String(a.dueDate || a.dateCreated || "").localeCompare(String(b.dueDate || b.dateCreated || "")));
     const target = open[0];
 
     // Assinatura de CARTÃO pendente: não existe QR pra retomar — a 1ª cobrança
