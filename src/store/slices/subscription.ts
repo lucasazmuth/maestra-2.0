@@ -77,6 +77,11 @@ export interface SubscriptionState {
   // recorrencia de COBRANCA, nao de debito: a cada ciclo nasce um QR a pagar. Sem este sinal
   // a tela mostrava "Ativa" e nao avisava nada.
   pendingRenewal: boolean;
+  // O `pixData` em tela é de uma AUTORIZAÇÃO de Pix Automático, não de uma cobrança avulsa.
+  // Pagar aquele QR autoriza os débitos dos próximos ciclos no banco do assinante, e a tela
+  // precisa dizer isso ANTES do pagamento. Vive no estado porque chega por dois caminhos: o
+  // checkout novo (`createPixAuthorization`) e a retomada de quem está migrando (`resumePayment`).
+  pixAutomatic: boolean;
   plan: PlanConfig | null;
   loading: boolean;
   error: string | null;
@@ -96,6 +101,7 @@ const initialState: SubscriptionState = {
   value: null,
   gracePeriodEndsAt: null,
   pendingRenewal: false,
+  pixAutomatic: false,
   plan: null,
   loading: false,
   error: null,
@@ -510,6 +516,9 @@ const subscriptionSlice = createSlice({
         if (action.payload.resume) return;
         state.status = 'pending';
         state.pixData = action.payload.pixData ?? null;
+        // Sem isto o aviso de débito recorrente só aparecia para quem estava MIGRANDO, e não
+        // para quem contrata pelo checkout — que é a maioria e a via principal.
+        state.pixAutomatic = true;
         if (action.payload.value != null) state.value = action.payload.value;
       })
       .addCase(createSubscription.fulfilled, (state, action) => {

@@ -3,6 +3,7 @@ import '@fontsource-variable/inter/wght.css';
 import '@fontsource-variable/jetbrains-mono/wght.css';
 import './index.css';
 import App from './App';
+import AppErrorBoundary, { ehErroDeChunk, tentarRecarregarUmaVez, limparMarcaDeReload } from './components/AppErrorBoundary';
 import reportWebVitals from './reportWebVitals';
 import registerServiceWorker from './serviceWorkerRegistration';
 
@@ -30,7 +31,21 @@ const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 // fires every Spotify API request twice and was a major contributor to hitting Spotify's
 // (tightened, Feb-2026) rate limits — half the calls on the Home/Artist/Album pages were
 // duplicates. Re-enable (<React.StrictMode>) if you need its checks and can tolerate 2x calls.
-root.render(<App />);
+// Chegou ate aqui: o bundle carregou inteiro. Libera a proxima tentativa de reload automatico.
+limparMarcaDeReload();
+
+// Import dinamico que falha FORA do render (dentro de um efeito, de um handler, de um prefetch
+// do router) nao passa pelo error boundary — vira uma promise rejeitada e a navegacao
+// simplesmente nao acontece. Mesmo diagnostico, mesma cura.
+window.addEventListener('unhandledrejection', (evento) => {
+  if (ehErroDeChunk(evento.reason)) tentarRecarregarUmaVez();
+});
+
+root.render(
+  <AppErrorBoundary>
+    <App />
+  </AppErrorBoundary>
+);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

@@ -8,6 +8,7 @@
 import reducer, {
   clearError,
   categorizeEdgeFunctionError,
+  createPixAuthorization,
   SubscriptionState,
 } from '../slices/subscription';
 
@@ -106,6 +107,7 @@ describe('clearError action', () => {
       value: null,
       gracePeriodEndsAt: null,
       pendingRenewal: false,
+      pixAutomatic: false,
       plan: null,
       loading: false,
       error: 'Erro ao criar assinatura',
@@ -126,6 +128,7 @@ describe('clearError action', () => {
       value: 49.9,
       gracePeriodEndsAt: null,
       pendingRenewal: false,
+      pixAutomatic: false,
       plan: null,
       loading: true,
       error: 'Algum erro',
@@ -140,5 +143,47 @@ describe('clearError action', () => {
     expect(newState.loading).toBe(true);
     expect(newState.pixData).toEqual({ qrCode: 'abc', copyPaste: 'def', expiresAt: '2025-01-20' });
     expect(newState.initialized).toBe(true);
+  });
+});
+
+
+describe('Pix Automatico: aviso de debito recorrente', () => {
+  // O aviso na tela de pagamento e a UNICA vez que dizemos a pessoa que aquele QR autoriza
+  // debitos futuros no banco dela. Ele vinha so da resposta do resume — o caminho de quem esta
+  // MIGRANDO. Quem contratava pelo checkout, que e a via principal, autorizava sem ler nada.
+  it('marca pixAutomatic ao criar a autorizacao pelo checkout', () => {
+    const antes = reducer(undefined, { type: '@@INIT' });
+    expect(antes.pixAutomatic).toBe(false);
+
+    const depois = reducer(antes, {
+      type: createPixAuthorization.fulfilled.type,
+      payload: {
+        authorizationId: 'aut_1',
+        status: 'pending',
+        pixData: { qrCode: 'data:image/png;base64,AAA', copyPaste: '000201...', expiresAt: null },
+        value: 47.9,
+      },
+    });
+
+    expect(depois.pixAutomatic).toBe(true);
+    expect(depois.status).toBe('pending');
+    expect(depois.pixData?.qrCode).toBeTruthy();
+  });
+
+  it('nao marca quando a resposta e apenas para retomar ou ja esta ativa', () => {
+    const base = reducer(undefined, { type: '@@INIT' });
+
+    const retomar = reducer(base, {
+      type: createPixAuthorization.fulfilled.type,
+      payload: { resume: true },
+    });
+    expect(retomar.pixAutomatic).toBe(false);
+
+    const jaAtiva = reducer(base, {
+      type: createPixAuthorization.fulfilled.type,
+      payload: { alreadyActive: true },
+    });
+    expect(jaAtiva.pixAutomatic).toBe(false);
+    expect(jaAtiva.status).toBe('active');
   });
 });

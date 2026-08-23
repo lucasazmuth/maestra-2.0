@@ -13,8 +13,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 // `encodedImage` + `payload` + `expirationDate`, exatamente os campos que a tela de pagamento
 // consome hoje. O assinante paga um QR; esse mesmo pagamento ativa a autorização.
 //
-// `paymentCreationMode: SUBSCRIPTION` faz a Asaas gerar sozinha as cobranças dos ciclos seguintes,
-// evitando ter de criar cada instrução por conta própria.
+// ATENÇÃO: a Asaas NÃO gera as cobranças dos ciclos seguintes. A doc da Jornada 3 é explícita —
+// "O primeiro pagamento não cria automaticamente as cobranças futuras" — e cada uma precisa ser
+// criada com `pixAutomaticAuthorizationId` entre 2 e 10 dias úteis antes do vencimento. Quem faz
+// isso é o cron `asaas-pix-automatic-charges`. Sem ele, a assinatura debita UMA vez e para.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -91,16 +93,108 @@ serve(async (req) => {
     // autorização) só para revelar se a conta tem o produto liberado. Serve de diagnóstico antes
     // de plugar o fluxo no checkout.
     if (probe === true) {
-      const r = await fetch(`${asaasApiUrl}/v3/pix/automatic/authorizations?limit=1`, {
-        headers: { "Content-Type": "application/json", access_token: asaasApiKey },
-      });
-      const texto = await r.text().catch(() => "");
+      // RESTRITO A ADMIN. A sondagem devolve chaves Pix, status cadastral e SALDO da conta.
+      // Ela nasceu no meio de um incidente atrás apenas do JWT, o que expunha tudo isso a
+      // qualquer usuário logado — inclusive assinantes. Diagnóstico não justifica isso.
+      const { data: adm } = await supabaseAdmin
+        .from("platform_admins").select("user_id").eq("user_id", user.id).maybeSingle();
+      if (!adm) return json({ error: "Não autorizado" }, 403);
+
+      const h = { "Content-Type": "application/json", access_token: asaasApiKey };
+      const ler = async (caminho: string) => {
+        try {
+          const r = await fetch(`${asaasApiUrl}${caminho}`, { headers: h });
+          return { status: r.status, corpo: (await r.text().catch(() => "")).slice(0, 700) };
+        } catch (e) {
+          return { status: 0, corpo: `erro de rede: ${(e as { message?: string })?.message}` };
+        }
+      };
+
+      const auth = await ler("/v3/pix/automatic/authorizations?limit=1");
+      // Uma autorizacao especifica. Serve para comparar o que a Asaas diz com o que o app do
+      // banco do pagador mostra: os dois ja divergiram (Asaas CANCELLED, Itau "Ativo").
+      const autorizacao = body?.authRef ? await ler(`/v3/pix/automatic/authorizations/${body.authRef}`) : null;
+      // Chaves Pix da conta. Diagnostico do "QR Code invalido" no banco: sem chave ATIVA, a Asaas
+      // emite o QR mas nenhum PSP honra. Leitura pura.
+      const chaves = await ler("/v3/pix/addressKeys?limit=10");
+      // QR da cobranca, sem a imagem base64 — ela ocupa a resposta inteira e esconde o que
+      // importa aqui: o payload copia-e-cola e a validade. Leitura pura.
+      let qr: unknown = null;
+      if (body?.paymentId) {
+        try {
+          const r = await fetch(`${asaasApiUrl}/v3/payments/${body.paymentId}/pixQrCode`, { headers: h });
+          const j = await r.json().catch(() => ({}));
+          qr = {
+            status: r.status,
+            success: j.success ?? null,
+            payload: j.payload ?? null,
+            expirationDate: j.expirationDate ?? null,
+            tamanhoImagem: String(j.encodedImage || "").length,
+          };
+        } catch (e) {
+          qr = { erro: (e as { message?: string })?.message };
+        }
+      }
+      const cobranca = body?.paymentId ? await ler(`/v3/payments/${body.paymentId}`) : null;
+      // Estado da CONTA. Uma conta com pendencia de documentacao ou verificacao continua emitindo
+      // QR normalmente, mas o recebimento fica barrado no PSP — do lado do pagador isso aparece
+      // como "QR invalido"/"falhou", sem nenhuma pista de que o problema e do recebedor.
+      const conta = await ler("/v3/myAccount/status");
+      const chaveDetalhe = body?.pixKeyId ? await ler(`/v3/pix/addressKeys/${body.pixKeyId}`) : null;
+      // Creditos Pix recentes. Um pagamento feito na CHAVE (QR estatico) entra na conta sem se
+      // vincular a cobranca nenhuma: aparece aqui, mas a assinatura segue pendente. Precisa ser
+      // reconciliado na mao, e so da pra saber olhando.
+      const creditos = body?.creditos ? await ler("/v3/pix/transactions?type=CREDIT&limit=5") : null;
+      const saldo = body?.creditos ? await ler("/v3/finance/balance") : null;
+      const cliente = body?.customerRef ? await ler(`/v3/customers/${body.customerRef}`) : null;
+
+      // ── Experimento controlado: QR estatico COM valor ─────────────────────
+      // Unica escrita deste modo, e ela NAO move dinheiro: cria um QR que so vira pagamento se
+      // alguem escanear E confirmar. Serve para separar "cobv quebrada" de "conta quebrada" — a
+      // chave pura ja provou que resolve no banco; falta saber se resolve carregando um valor.
+      // Já protegido pela trava de admin no topo do bloco `probe`, que é a única porta até aqui.
+      let qrEstatico: unknown = null;
+      if (body?.criarQrEstatico) {
+        try {
+          const r = await fetch(`${asaasApiUrl}/v3/pix/qrCodes/static`, {
+            method: "POST",
+            headers: h,
+            body: JSON.stringify({
+              addressKey: body.addressKey,
+              description: "Teste Maestra",
+              value: Number(body.valor) || 5,
+              format: "ALL",
+              allowsMultiplePayments: false,
+              expirationSeconds: 3600,
+            }),
+          });
+          const j = await r.json().catch(() => ({}));
+          qrEstatico = {
+            status: r.status,
+            id: j.id ?? null,
+            payload: j.payload ?? null,
+            expirationDate: j.expirationDate ?? null,
+            erro: j.errors ?? null,
+          };
+        } catch (e) {
+          qrEstatico = { erro: (e as { message?: string })?.message };
+        }
+      }
+
       return json({
         probe: true,
         ambiente: asaasApiUrl,
-        httpStatus: r.status,
-        habilitado: r.ok,
-        resposta: texto.slice(0, 600),
+        pixAutomatico: { httpStatus: auth.status, habilitado: auth.status === 200 },
+        chavesPix: chaves,
+        autorizacao,
+        conta,
+        chaveDetalhe,
+        creditos,
+        saldo,
+        cliente,
+        qrEstatico,
+        cobranca,
+        qr,
       });
     }
 
@@ -167,7 +261,10 @@ serve(async (req) => {
       description: isAnnual ? "Maestra PRO anual" : "Maestra PRO mensal",
       // A Asaas gera sozinha as cobranças dos ciclos seguintes. Sem isto (modo MANUAL, o default)
       // a aplicação teria de criar cada instrução de pagamento dentro dos prazos da autorização.
-      paymentCreationMode: "SUBSCRIPTION",
+      // NÃO enviar `paymentCreationMode`. A primeira versão mandava "SUBSCRIPTION" acreditando
+      // que a Asaas geraria sozinha os ciclos seguintes; a doc da Jornada 3 diz o contrário, e
+      // quem cria cada cobrança é o cron `asaas-pix-automatic-charges`. Se o campo existisse e
+      // funcionasse, os dois criariam a mesma cobrança e o assinante pagaria duas vezes.
       // O default é NOT_ALLOWED: uma falha por saldo insuficiente derrubaria o ciclo sem nenhuma
       // nova tentativa. Com retry, a Asaas tenta de novo dentro da janela do Banco Central.
       retryPolicy: "ALLOW_THREE_IN_SEVEN_DAYS",

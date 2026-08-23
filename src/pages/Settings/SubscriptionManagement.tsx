@@ -103,7 +103,9 @@ const SubscriptionManagement: FC = () => {
     try {
       const result = await dispatch(cancelSubscription()).unwrap();
       if (result.success) {
-        message.success('Assinatura cancelada com sucesso.');
+        message.success(
+          status === 'pending' ? 'Pedido cancelado. Você pode assinar de novo quando quiser.' : 'Assinatura cancelada com sucesso.'
+        );
       }
     } catch (err: any) {
       // Error is handled via Redux state / useEffect above
@@ -117,7 +119,12 @@ const SubscriptionManagement: FC = () => {
     }
   };
 
-  const canCancel = status === 'active' || status === 'overdue';
+  // `pending` entra aqui. Antes ficava de fora, e uma assinatura que nasceu e nunca foi paga
+  // virava um beco sem saida: sem acao para ver o QR, sem acao para desistir, "Pendente" para
+  // sempre — e a trava anti-duplicidade impedia contratar de novo. Cancelar um pedido nao pago
+  // nao tira acesso de ninguem (nao havia acesso), so libera a pessoa a comecar outro.
+  const canCancel = status === 'active' || status === 'overdue' || status === 'pending';
+  const aguardandoPagamento = status === 'pending';
   // Tem uma assinatura para mostrar dados (ativa/atrasada/pendente). none/cancelada → card de upsell.
   // 'pending' só conta como assinatura se houver asaas_subscription_id: a linha do pagamento ÚNICO
   // do perfil também nasce 'pending' (sem subscription_id) e NÃO deve aparecer como plano Pro.
@@ -171,18 +178,34 @@ const SubscriptionManagement: FC = () => {
             )}
           </div>
 
-          {canCancel && (
+          {(canCancel || aguardandoPagamento) && (
             <div className='settings-subscription-footer'>
+              {/* Caminho de volta ao QR. A tela de pagamento sabe reencontrar a cobranca em
+                  aberto na Asaas; sem este link nao havia NENHUMA forma de chegar la depois de
+                  sair do checkout. */}
+              {aguardandoPagamento && (
+                <button
+                  className='settings-resume-payment-btn'
+                  onClick={() => navigate('/pagamento')}
+                  disabled={cancelling}
+                >
+                  Ver QR code do pagamento
+                </button>
+              )}
               <Popconfirm
-                title='Cancelar assinatura?'
-                description='Ao confirmar, sua assinatura é encerrada e o acesso aos módulos Pro é cortado imediatamente.'
-                okText='Sim, cancelar'
+                title={aguardandoPagamento ? 'Cancelar este pedido?' : 'Cancelar assinatura?'}
+                description={
+                  aguardandoPagamento
+                    ? 'O pedido em aberto é descartado e você pode assinar de novo quando quiser. Nada foi cobrado.'
+                    : 'Ao confirmar, sua assinatura é encerrada e o acesso aos módulos Pro é cortado imediatamente.'
+                }
+                okText={aguardandoPagamento ? 'Sim, cancelar pedido' : 'Sim, cancelar'}
                 okButtonProps={{ danger: true, loading: cancelling }}
                 cancelText='Voltar'
                 onConfirm={handleCancelConfirm}
               >
                 <button className='settings-cancel-sub-btn' disabled={cancelling}>
-                  Cancelar assinatura
+                  {aguardandoPagamento ? 'Cancelar pedido' : 'Cancelar assinatura'}
                 </button>
               </Popconfirm>
             </div>

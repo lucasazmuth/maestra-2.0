@@ -80,21 +80,30 @@ serve(async (req) => {
     // 1b. Pix Automático: cancelar a ASSINATURA não basta — quem autoriza o débito é a
     // autorização, e ela sobrevive por conta própria. Sem revogá-la, o pagador continuaria sendo
     // debitado depois de cancelar no app, que é o pior desfecho possível deste fluxo.
+    // O endpoint é DELETE /v3/pix/automatic/authorizations/{id}. A primeira versão usava
+    // POST .../{id}/cancel, que NÃO EXISTE: toda revogação tomava 404 em silêncio, a autorização
+    // seguia ACTIVE no banco do pagador, e mesmo assim gravávamos CANCELLED aqui. Verificado em
+    // produção: assinatura cancelada no app, Asaas respondendo ACTIVE e o Itaú exibindo "Ativo".
+    let autorizacaoRevogada = false;
     if (subscription.pix_automatic_authorization_id) {
       try {
         const r = await fetch(
-          `${asaasBaseUrl}/v3/pix/automatic/authorizations/${subscription.pix_automatic_authorization_id}/cancel`,
-          { method: "POST", headers: { "access_token": asaasApiKey, "Content-Type": "application/json" } },
+          `${asaasBaseUrl}/v3/pix/automatic/authorizations/${subscription.pix_automatic_authorization_id}`,
+          { method: "DELETE", headers: { "access_token": asaasApiKey, "Content-Type": "application/json" } },
         );
-        if (!r.ok) {
+        // 404 = a Asaas não conhece mais esta autorização; para o nosso objetivo é o mesmo que
+        // revogada, e insistir nela todo dia no cron seria ruído.
+        autorizacaoRevogada = r.ok || r.status === 404;
+        if (!autorizacaoRevogada) {
           const corpo = await r.text().catch(() => "");
-          console.error(`Falha ao cancelar autorização Pix Automático (${r.status}):`, corpo.slice(0, 300));
+          console.error(`Falha ao revogar autorização Pix Automático (${r.status}):`, corpo.slice(0, 300));
         }
       } catch (e) {
-        console.error("Erro ao cancelar autorização Pix Automático:", (e as { message?: string })?.message);
+        console.error("Erro de rede ao revogar autorização Pix Automático:", (e as { message?: string })?.message);
       }
       // Segue para o cancelamento local mesmo se a revogação falhar: o usuário precisa conseguir
-      // encerrar. A falha fica no log, e o webhook de AUTHORIZATION_CANCELLED reconcilia se vier.
+      // encerrar. Mas o status local só vira CANCELLED se ela realmente caiu — senão a linha
+      // ficaria mentindo e o cron de órfãs, que procura exatamente por isso, nunca a veria.
     }
 
     // 2. Resolve o id da assinatura na Asaas.
@@ -200,9 +209,10 @@ serve(async (req) => {
       .from("asaas_subscriptions")
       .update({
         status: "cancelled",
-        // A autorização também morre aqui: deixá-la como ACTIVE no nosso banco faria o painel e
-        // o cron acharem que ainda há débito recorrente de pé.
-        ...(subscription.pix_automatic_authorization_id ? { authorization_status: "CANCELLED" } : {}),
+        // SÓ marca revogada se a Asaas confirmou. Antes isto era incondicional, e a linha
+        // afirmava CANCELLED enquanto a autorização seguia viva no banco do pagador — além de
+        // esconder o problema do cron de órfãs, que busca justamente por divergência aqui.
+        ...(autorizacaoRevogada ? { authorization_status: "CANCELLED" } : {}),
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", user.id);

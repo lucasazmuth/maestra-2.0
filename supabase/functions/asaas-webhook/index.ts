@@ -88,6 +88,33 @@ async function notificarRenovacao(
   }
 }
 
+/**
+ * Avança um ciclo preservando o dia do mês (cai no último dia quando o dia não existe no mês
+ * destino: 31/01 + 1 mês = 28/02).
+ *
+ * No Pix Automático quem controla o calendário somos nós. Diferente da assinatura por cobrança,
+ * onde a Asaas gera o ciclo seguinte e o webhook só copiava o `dueDate` que chegava pronto, aqui
+ * a data do próximo vencimento precisa ser calculada aqui — é ela que diz ao cron quando abrir a
+ * janela de criação da cobrança.
+ *
+ * Espelha `proximoVencimento` de `asaas-pix-automatic-charges`; manter as duas em sincronia (o
+ * Deno não importa de fora da pasta da função e o deploy é achatado).
+ */
+function proximoVencimento(iso: string, cycle: string, ancora?: number | null): string {
+  const [a, m, d] = iso.split("T")[0].split("-").map(Number);
+  // A âncora é o dia ORIGINAL da cobrança. Sem ela a data derrete: 31/01 vira 28/02 e depois
+  // fica presa no 28 para sempre, porque cada ciclo passa a ser calculado sobre o dia já aparado.
+  const dia = ancora && ancora >= 1 && ancora <= 31 ? ancora : d;
+  if (cycle === "YEARLY") {
+    const dt = new Date(Date.UTC(a + 1, m - 1, 1));
+    dt.setUTCDate(Math.min(dia, new Date(Date.UTC(a + 1, m, 0)).getUTCDate()));
+    return dt.toISOString().split("T")[0];
+  }
+  const dt = new Date(Date.UTC(a, m, 1)); // m é 1-based, então este índice já é o mês seguinte
+  dt.setUTCDate(Math.min(dia, new Date(Date.UTC(a, m + 1, 0)).getUTCDate()));
+  return dt.toISOString().split("T")[0];
+}
+
 // ─── Event Type to Subscription Status Mapping ────────────────────────────────
 
 const EVENT_STATUS_MAP: Record<string, string> = {
@@ -139,12 +166,17 @@ const PIX_INSTRUCTION_EVENTS = new Set([
   "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_CANCELLED",
 ]);
 
+// Elegibilidade da CONTA para Pix Automático. Não pertence a nenhum assinante: se a conta fica
+// INELIGIBLE, TODO débito recorrente para de acontecer de uma vez só.
+const PIX_ELIGIBILITY_EVENT = "PIX_AUTOMATIC_RECURRING_ELIGIBILITY_UPDATED";
+
 // All event types we handle (subscription status changes + payment-only events)
 const HANDLED_EVENTS = new Set([
   ...Object.keys(EVENT_STATUS_MAP),
   ...CARD_FAILURE_EVENTS,
   ...Object.keys(PIX_AUTH_EVENTS),
   ...PIX_INSTRUCTION_EVENTS,
+  PIX_ELIGIBILITY_EVENT,
   "PAYMENT_DELETED",
   "PAYMENT_CREATED",
   "PAYMENT_UPDATED",
@@ -248,7 +280,8 @@ Deno.serve(async (req: Request) => {
     // Eventos de Pix Automático são identificados pela AUTORIZAÇÃO e podem não trazer
     // `subscription` nem `customer` — sem esta exceção eles morriam aqui, antes do handler 4a,
     // e a autorização nunca sairia de CREATED no nosso banco.
-    const ehPixAutomatico = eventType in PIX_AUTH_EVENTS || PIX_INSTRUCTION_EVENTS.has(eventType);
+    const ehPixAutomatico =
+      eventType in PIX_AUTH_EVENTS || PIX_INSTRUCTION_EVENTS.has(eventType) || eventType === PIX_ELIGIBILITY_EVENT;
 
     if (!subscriptionId && !customerId && !ehPixAutomatico) {
       console.error("Missing subscription/customer identifier in webhook payload", {
@@ -300,17 +333,33 @@ Deno.serve(async (req: Request) => {
     const ehEventoPixAuth = eventType in PIX_AUTH_EVENTS;
 
     if (ehPixAutomatico) {
-      // O id da autorização pode chegar em formatos diferentes conforme o evento; tenta as
-      // variações conhecidas em vez de assumir uma. Sem id não há o que casar.
+      // O id da autorização chega como STRING no topo do payload:
+      //   { event, id, dateCreated, pixAutomaticAuthorization: "aut_...", paymentId: "pay_..." }
+      // A primeira versão deste bloco procurava só por objetos aninhados (`authorization.id` e
+      // variações) e não olhava a forma documentada — nenhum evento de Pix Automático teria sido
+      // reconhecido, e a autorização nunca sairia de CREATED no nosso banco.
+      // As formas aninhadas continuam na lista porque a doc de eventos cita `authorization.id`,
+      // divergindo da doc de fluxos; aceitar as duas custa nada e cobre a divergência.
       // deno-lint-ignore no-explicit-any
       const pl = payload as any;
+      const comoTexto = (v: unknown) => (typeof v === "string" && v ? v : null);
       const authId: string | null =
+        comoTexto(pl?.pixAutomaticAuthorization) ||
+        comoTexto(pl?.authorization) ||
         pl?.authorization?.id ||
         pl?.pixAutomaticRecurringAuthorization?.id ||
         pl?.recurringAuthorization?.id ||
         pl?.payment?.pixAutomaticAuthorizationId ||
         pl?.pixAutomaticAuthorizationId ||
         null;
+      // Instruções de pagamento são identificadas por `paymentInstruction.id`, não pela
+      // autorização. Quando o evento não trouxer a autorização, o vínculo é feito pela cobrança.
+      const idCobrancaEvento: string | null =
+        comoTexto(pl?.paymentId) || comoTexto(pl?.payment?.id) || null;
+      // Id da INSTRUÇÃO. É ele, e só ele, que o endpoint de retentativa aceita — nem o da
+      // cobrança, nem o da autorização. Sem guardá-lo aqui não há como pedir nova tentativa.
+      const idInstrucao: string | null =
+        pl?.paymentInstruction?.id || comoTexto(pl?.paymentInstruction) || null;
 
       const registrarEvento = async () => {
         await supabaseAdmin.from("asaas_webhook_events").insert({
@@ -318,17 +367,41 @@ Deno.serve(async (req: Request) => {
         });
       };
 
-      if (!authId) {
-        console.warn("Evento de Pix Automático sem id de autorização no payload", { eventId, eventType });
+      // Elegibilidade da CONTA (não de um assinante). Não há linha para atualizar; o valor
+      // importa no log porque uma conta INELIGIBLE para de debitar todo mundo de uma vez, e sem
+      // este registro a queda apareceria só como cobranças que misteriosamente não acontecem.
+      if (eventType === PIX_ELIGIBILITY_EVENT) {
+        const situacao = pl?.eligibility?.status || pl?.status || "desconhecida";
+        if (String(situacao).toUpperCase() === "INELIGIBLE") {
+          console.error(`ALERTA: conta ficou INELIGIBLE para Pix Automatico — nenhum debito recorrente vai ocorrer (evento ${eventId})`);
+        } else {
+          console.log(`Elegibilidade de Pix Automático: ${situacao}`);
+        }
         await registrarEvento();
         return new Response(JSON.stringify({ message: "ok" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      const { data: assinatura } = await supabaseAdmin
-        .from("asaas_subscriptions")
-        .select("id, user_id, status, started_at, asaas_subscription_id, pix_migration_from_subscription_id")
-        .eq("pix_automatic_authorization_id", authId)
-        .maybeSingle();
+      if (!authId && !idCobrancaEvento) {
+        console.warn("Evento de Pix Automático sem autorização nem cobrança no payload", { eventId, eventType });
+        await registrarEvento();
+        return new Response(JSON.stringify({ message: "ok" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const campos_ = "id, user_id, status, started_at, asaas_subscription_id, pix_migration_from_subscription_id, cycle, next_due_date";
+      let assinatura = null as Record<string, unknown> | null;
+      if (authId) {
+        const { data } = await supabaseAdmin
+          .from("asaas_subscriptions").select(campos_)
+          .eq("pix_automatic_authorization_id", authId).maybeSingle();
+        assinatura = data;
+      }
+      // Sem autorização no payload (caso das instruções), casa pela cobrança do ciclo.
+      if (!assinatura && idCobrancaEvento) {
+        const { data } = await supabaseAdmin
+          .from("asaas_subscriptions").select(campos_)
+          .eq("pending_charge_id", idCobrancaEvento).maybeSingle();
+        assinatura = data;
+      }
 
       if (!assinatura) {
         console.warn("Autorização de Pix Automático sem assinatura local", { eventId, eventType, authId });
@@ -350,7 +423,18 @@ Deno.serve(async (req: Request) => {
           campos.status = "active";
           campos.grace_period_ends_at = null;
           campos.pending_charge_id = null;
-          campos.started_at = assinatura.started_at || new Date().toISOString();
+          campos.started_at = (assinatura.started_at as string | null) || new Date().toISOString();
+
+          // Marca o PRÓXIMO ciclo. Sem isto o `next_due_date` ficaria parado na data de hoje, o
+          // cron nunca veria uma data futura dentro da janela, e a assinatura debitaria uma vez
+          // só na vida — que é exatamente a falha que este conserto veio fechar.
+          const hojeIso = new Date().toISOString().split("T")[0];
+          const baseCiclo = String((assinatura.next_due_date as string | null) || hojeIso).split("T")[0];
+          // Fixa a âncora agora, na ativação: é o dia que o assinante escolheu ao contratar, e é
+          // ele que todos os ciclos seguintes vão perseguir.
+          const ancora = Number(baseCiclo.split("-")[2]);
+          campos.cycle_anchor_day = ancora;
+          campos.next_due_date = proximoVencimento(baseCiclo, String(assinatura.cycle || "MONTHLY"), ancora);
 
           // MIGRAÇÃO CONCLUÍDA. A assinatura antiga por cobrança precisa morrer AGORA: ela
           // continuou viva de propósito como rede de segurança, mas a partir daqui cobraria em
@@ -394,11 +478,21 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      if (eventType === "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_REFUSED" && assinatura.status === "active") {
-        // Débito recusado (saldo, limite ou agendamento). É o equivalente ao PAYMENT_OVERDUE do
-        // fluxo por cobrança: mesma regra de 7 dias de graça antes de cortar o acesso.
-        campos.status = "overdue";
-        campos.grace_period_ends_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      if (eventType === "PIX_AUTOMATIC_RECURRING_PAYMENT_INSTRUCTION_REFUSED") {
+        // Débito recusado (saldo, limite ou agendamento). Guarda a instrução que falhou: é ela o
+        // alvo da retentativa extradia, comandada pelo cron. Sempre sobrescreve, porque uma
+        // retentativa recusada gera a sua própria instrução e é a MAIS RECENTE que deve ser
+        // retentada.
+        if (idInstrucao) campos.pix_instruction_id = idInstrucao;
+        // A tentativa agendada morreu aqui; libera o cron a comandar a próxima.
+        campos.pix_retry_scheduled_for = null;
+
+        if (assinatura.status === "active") {
+          // Equivalente ao PAYMENT_OVERDUE do fluxo por cobrança: mesma regra de 7 dias de graça
+          // antes de cortar o acesso — que é justamente a janela em que as retentativas correm.
+          campos.status = "overdue";
+          campos.grace_period_ends_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        }
       }
 
       await supabaseAdmin.from("asaas_subscriptions").update(campos).eq("id", assinatura.id);
@@ -406,6 +500,79 @@ Deno.serve(async (req: Request) => {
 
       console.log(`Webhook Pix Automático: ${eventType} (auth=${authId}, user=${assinatura.user_id})`);
       return new Response(JSON.stringify({ message: "ok" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ─── 4c. Pagamento de um CICLO do Pix Automático ──────────────────────────
+    // Estas cobranças são criadas pelo cron com `pixAutomaticAuthorizationId` e NÃO pertencem a
+    // uma assinatura Asaas — `payment.subscription` vem vazio. Sem este bloco elas caíam no vão:
+    // o passo 4b não acha `artist_purchase`, o passo 5 até encontra a assinatura pelo cliente,
+    // mas o passo 6 exige `subscriptionId` e é pulado. Resultado: o assinante debitava e a
+    // assinatura não renovava.
+    // O vínculo é o `pending_charge_id`, gravado pelo cron ao criar a cobrança.
+    const idPagamentoEvento = (paymentData?.id as string) || null;
+    if (PAYMENT_EVENTS.has(eventType) && idPagamentoEvento && !paymentData?.subscription) {
+      const { data: assinaturaCiclo } = await supabaseAdmin
+        .from("asaas_subscriptions")
+        .select("id, user_id, cycle, next_due_date, started_at, cycle_anchor_day")
+        .eq("pending_charge_id", idPagamentoEvento)
+        .maybeSingle();
+
+      if (assinaturaCiclo) {
+        const agora = new Date().toISOString();
+        const mudanca: Record<string, unknown> = { updated_at: agora };
+
+        if (eventType === "PAYMENT_CONFIRMED" || eventType === "PAYMENT_RECEIVED") {
+          mudanca.status = "active";
+          mudanca.grace_period_ends_at = null;
+          mudanca.pending_charge_id = null;
+          // Ciclo quitado: zera a contagem de retentativas. Sem isto o teto de 3 seria por
+          // ASSINATURA em vez de por ciclo, e o assinante perderia o direito a retentativa para
+          // sempre depois de três meses ruins ao longo da vida.
+          mudanca.pix_instruction_id = null;
+          mudanca.pix_retry_count = 0;
+          mudanca.pix_retry_scheduled_for = null;
+          // Ciclo pago: a próxima data passa a ser a do ciclo seguinte, e é ela que reabre a
+          // janela do cron daqui a um mês.
+          const base = String((assinaturaCiclo.next_due_date as string | null) || agora).split("T")[0];
+          mudanca.next_due_date = proximoVencimento(
+            base,
+            String(assinaturaCiclo.cycle || "MONTHLY"),
+            assinaturaCiclo.cycle_anchor_day as number | null,
+          );
+        } else if (eventType === "PAYMENT_OVERDUE") {
+          // Débito não caiu até o vencimento. Mesma regra de graça do fluxo por cobrança. A
+          // cobrança segue em aberto (pending_charge_id continua), porque as retentativas da
+          // política 3R_7D ainda podem pagá-la.
+          mudanca.status = "overdue";
+          mudanca.grace_period_ends_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        } else if (eventType === "PAYMENT_DELETED") {
+          // Cobrança removida: libera o ciclo para o cron tentar de novo na próxima janela.
+          mudanca.pending_charge_id = null;
+        }
+
+        await supabaseAdmin.from("asaas_subscriptions").update(mudanca).eq("id", assinaturaCiclo.id);
+        await supabaseAdmin.from("asaas_payments").upsert(
+          {
+            user_id: assinaturaCiclo.user_id,
+            asaas_payment_id: idPagamentoEvento,
+            value: (paymentData?.value as number) || 0,
+            status: PAYMENT_STATUS_MAP[eventType] || "pending",
+            payment_date: (paymentData?.paymentDate as string) || null,
+            billing_type: "PIX",
+            updated_at: agora,
+          },
+          { onConflict: "asaas_payment_id" },
+        );
+        await supabaseAdmin.from("asaas_webhook_events").insert({
+          event_id: eventId, event_type: eventType, payload, processed_at: agora,
+        });
+
+        console.log(`Webhook ciclo Pix Automático: ${eventType} (user=${assinaturaCiclo.user_id}, cobranca=${idPagamentoEvento})`);
+        return new Response(
+          JSON.stringify({ message: "ok" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     // ─── 4b. One-time artist-profile charge (cobrança única R$199,90) ─────────
@@ -603,6 +770,25 @@ Deno.serve(async (req: Request) => {
         updateFields.started_at = subscriptionRecord.started_at || new Date().toISOString();
         // Pagou o ciclo: não há mais renovação em aberto.
         updateFields.pending_charge_id = null;
+
+        // Avança a data PROVISORIAMENTE. Neste fluxo quem manda no calendário é a Asaas, e ela
+        // só informa o vencimento seguinte quando cria a cobrança do próximo ciclo — o que
+        // acontece dias antes dele. Até lá o campo guardava a data do ciclo RECÉM-PAGO, e
+        // Configurações anunciava "Próxima cobrança" para uma data de hoje ou já passada, logo
+        // depois de a pessoa pagar. O `PAYMENT_CREATED` corrige com a data oficial quando vier.
+        const vencAtual = subscriptionRecord.next_due_date as string | null;
+        if (vencAtual) {
+          const base = String(vencAtual).split("T")[0];
+          const hojeData = new Date().toISOString().split("T")[0];
+          // Só mexe se a data guardada já venceu. Pagamento adiantado mantém a data real.
+          if (base <= hojeData) {
+            updateFields.next_due_date = proximoVencimento(
+              base,
+              String(subscriptionRecord.cycle || "MONTHLY"),
+              subscriptionRecord.cycle_anchor_day as number | null,
+            );
+          }
+        }
         // Pagou: baixa o aviso de renovação daquela cobrança para ele não ficar pendurado no sino.
         // Só `read` — o front filtra por ele (`services/db/notifications.ts`) e nunca por `status`,
         // que hoje é `active` em 100% das linhas; inventar um valor novo aqui seria letra morta.
@@ -623,8 +809,9 @@ Deno.serve(async (req: Request) => {
         if (subscriptionRecord.pix_migration_from_subscription_id && autorizacaoOrfa) {
           if (asaasApiKey) {
             try {
-              await fetch(`${asaasBaseUrl}/v3/pix/automatic/authorizations/${autorizacaoOrfa}/cancel`, {
-                method: "POST",
+              // DELETE, nao POST .../cancel: aquele path nao existe e devolvia 404 em silencio.
+              await fetch(`${asaasBaseUrl}/v3/pix/automatic/authorizations/${autorizacaoOrfa}`, {
+                method: "DELETE",
                 headers: { "access_token": asaasApiKey, "Content-Type": "application/json" },
               });
             } catch (e) {

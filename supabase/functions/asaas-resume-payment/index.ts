@@ -204,7 +204,9 @@ serve(async (req) => {
                 startDate: inicio,
                 value: valorCobranca,
                 description: anual ? "Maestra PRO anual" : "Maestra PRO mensal",
-                paymentCreationMode: "SUBSCRIPTION",
+                // Ver `asaas-create-pix-authorization`: os ciclos seguintes são criados pelo cron
+                // `asaas-pix-automatic-charges`, não pela Asaas. Mandar "SUBSCRIPTION" aqui
+                // arriscaria cobrança em duplicidade.
                 retryPolicy: "ALLOW_THREE_IN_SEVEN_DAYS",
                 immediateQrCode: {
                   originalValue: valorCobranca,
