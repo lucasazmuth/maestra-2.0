@@ -93,6 +93,13 @@ serve(async (req) => {
     // autorização) só para revelar se a conta tem o produto liberado. Serve de diagnóstico antes
     // de plugar o fluxo no checkout.
     if (probe === true) {
+      // RESTRITO A ADMIN. A sondagem devolve chaves Pix, status cadastral e SALDO da conta.
+      // Ela nasceu no meio de um incidente atrás apenas do JWT, o que expunha tudo isso a
+      // qualquer usuário logado — inclusive assinantes. Diagnóstico não justifica isso.
+      const { data: adm } = await supabaseAdmin
+        .from("platform_admins").select("user_id").eq("user_id", user.id).maybeSingle();
+      if (!adm) return json({ error: "Não autorizado" }, 403);
+
       const h = { "Content-Type": "application/json", access_token: asaasApiKey };
       const ler = async (caminho: string) => {
         try {
@@ -142,38 +149,32 @@ serve(async (req) => {
       // Unica escrita deste modo, e ela NAO move dinheiro: cria um QR que so vira pagamento se
       // alguem escanear E confirmar. Serve para separar "cobv quebrada" de "conta quebrada" — a
       // chave pura ja provou que resolve no banco; falta saber se resolve carregando um valor.
-      // Restrito a admin da plataforma: e uma escrita na conta Asaas, nao pode ficar aberta.
+      // Já protegido pela trava de admin no topo do bloco `probe`, que é a única porta até aqui.
       let qrEstatico: unknown = null;
       if (body?.criarQrEstatico) {
-        const { data: adm } = await supabaseAdmin
-          .from("platform_admins").select("user_id").eq("user_id", user.id).maybeSingle();
-        if (!adm) {
-          qrEstatico = { erro: "restrito a administradores" };
-        } else {
-          try {
-            const r = await fetch(`${asaasApiUrl}/v3/pix/qrCodes/static`, {
-              method: "POST",
-              headers: h,
-              body: JSON.stringify({
-                addressKey: body.addressKey,
-                description: "Teste Maestra",
-                value: Number(body.valor) || 5,
-                format: "ALL",
-                allowsMultiplePayments: false,
-                expirationSeconds: 3600,
-              }),
-            });
-            const j = await r.json().catch(() => ({}));
-            qrEstatico = {
-              status: r.status,
-              id: j.id ?? null,
-              payload: j.payload ?? null,
-              expirationDate: j.expirationDate ?? null,
-              erro: j.errors ?? null,
-            };
-          } catch (e) {
-            qrEstatico = { erro: (e as { message?: string })?.message };
-          }
+        try {
+          const r = await fetch(`${asaasApiUrl}/v3/pix/qrCodes/static`, {
+            method: "POST",
+            headers: h,
+            body: JSON.stringify({
+              addressKey: body.addressKey,
+              description: "Teste Maestra",
+              value: Number(body.valor) || 5,
+              format: "ALL",
+              allowsMultiplePayments: false,
+              expirationSeconds: 3600,
+            }),
+          });
+          const j = await r.json().catch(() => ({}));
+          qrEstatico = {
+            status: r.status,
+            id: j.id ?? null,
+            payload: j.payload ?? null,
+            expirationDate: j.expirationDate ?? null,
+            erro: j.errors ?? null,
+          };
+        } catch (e) {
+          qrEstatico = { erro: (e as { message?: string })?.message };
         }
       }
 
