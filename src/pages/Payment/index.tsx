@@ -280,7 +280,10 @@ const PaymentPage: FC = () => {
       .unwrap()
       .then((res) => {
         setResuming(false);
-        if (res.status === 'active') { setPaymentConfirmed(true); return; }  // em dia → sucesso
+        // Só declara pago com as DUAS condições. O backend hoje nunca devolve
+        // `active` junto de `pendingRenewal`, mas essa combinação é justamente a que produziu
+        // a tela de "pagamento confirmado" sem pagamento — não vale confiar só na convenção.
+        if (res.status === 'active' && !res.pendingRenewal) { setPaymentConfirmed(true); return; }
         if (res.status === 'none') { navigate('/assinatura', { replace: true }); return; }
         // Cartão em análise: não existe QR — mostra o estado de análise (não é erro).
         if (res.billingType === 'CREDIT_CARD') { setCardAnalysis(true); return; }

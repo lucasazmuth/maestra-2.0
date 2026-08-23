@@ -217,7 +217,10 @@ Deno.serve(async (req) => {
     .is("pending_charge_id", null)
     .not("asaas_subscription_id", "is", null)
     .not("started_at", "is", null)        // só quem já pagou um ciclo: senão é a 1ª compra
-    .or(`next_due_date.is.null,next_due_date.lte.${limiteDescoberta}`)
+    // `overdue` entra SEMPRE, ignorando a janela: se está atrasada existe dívida em aberto por
+    // definição, e o `next_due_date` pode estar apontando para o ciclo seguinte (foi o que
+    // aconteceu com um assinante real, que ficou fora da varredura tendo cobrança vencida).
+    .or(`status.eq.overdue,next_due_date.is.null,next_due_date.lte.${limiteDescoberta}`)
     .limit(MAX_DISCOVERY_PER_RUN);
 
   if (descError) {
@@ -275,10 +278,11 @@ Deno.serve(async (req) => {
   // custo é uma chamada por descoberta (evento raro) e as duas etapas seguem independentes.
   let renovacoesConfirmadas = 0;
   let renovacoesEmAberto = 0;
+  let escalonadas = 0;
 
   const { data: renovacoes, error: renovError } = await supabaseAdmin
     .from("asaas_subscriptions")
-    .select("id, user_id, pending_charge_id")
+    .select("id, user_id, status, pending_charge_id")
     .not("pending_charge_id", "is", null)
     .limit(MAX_PER_RUN);
 
@@ -295,8 +299,25 @@ Deno.serve(async (req) => {
           continue;
         }
         const payment = await res.json();
-        if (!PAID_STATUSES.has(String(payment?.status || ""))) {
+        const statusAsaas = String(payment?.status || "");
+
+        if (!PAID_STATUSES.has(statusAsaas)) {
           renovacoesEmAberto += 1;
+
+          // A cobrança VENCEU e a assinatura local ainda está `active`. Isso só acontece quando o
+          // evento PAYMENT_OVERDUE se perdeu — e o efeito é o pior possível em silêncio: acesso
+          // PRO indefinido sem pagamento, porque nada mais rebaixa esse status depois.
+          // Escala aqui com a MESMA regra do webhook (overdue + 7 dias de graça), para o corte de
+          // acesso acontecer na data certa em vez de nunca.
+          if (statusAsaas === "OVERDUE" && s.status === "active") {
+            const graca = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+            await supabaseAdmin
+              .from("asaas_subscriptions")
+              .update({ status: "overdue", grace_period_ends_at: graca, updated_at: new Date().toISOString() })
+              .eq("id", s.id);
+            escalonadas += 1;
+            console.warn(`Reconcile-cron: renovação ${s.pending_charge_id} vencida na Asaas e ainda 'active' localmente — escalada para overdue (user=${s.user_id})`);
+          }
           continue;
         }
 
@@ -332,12 +353,13 @@ Deno.serve(async (req) => {
     renovacoesEscaneadas: (renovacoes || []).length,
     renovacoesConfirmadas,
     renovacoesEmAberto,
+    escalonadas,
   };
   // Confirmar ou descobrir algo aqui significa que o webhook NÃO fez o trabalho dele — vale
   // destacar no log, é o sintoma precoce de fila pausada de novo.
-  if (confirmed > 0 || renovacoesConfirmadas > 0 || descobertas > 0) {
+  if (confirmed > 0 || renovacoesConfirmadas > 0 || descobertas > 0 || escalonadas > 0) {
     console.warn(
-      `Reconcile-cron destravou ${confirmed} compra(s), confirmou ${renovacoesConfirmadas} e descobriu ${descobertas} renovação(ões) — conferir a fila de webhooks da Asaas`,
+      `Reconcile-cron destravou ${confirmed} compra(s), confirmou ${renovacoesConfirmadas}, descobriu ${descobertas} e escalou ${escalonadas} renovação(ões) — conferir a fila de webhooks da Asaas`,
       summary,
     );
   } else console.log("Reconcile-cron:", summary);
