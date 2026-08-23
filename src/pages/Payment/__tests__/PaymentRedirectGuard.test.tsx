@@ -7,7 +7,7 @@
  * Validates: Requirements 9.6, 4.2
  */
 
-import { render, act } from '@testing-library/react';
+import { render, act, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
@@ -273,6 +273,45 @@ describe('Payment page redirect guard', () => {
 
       // Nao pode mandar pra /assinatura nem tratar como pago: fica na tela para pagar.
       expect(currentPath).toBe('/pagamento');
+    });
+
+    it('avisa que o pagamento autoriza debito recorrente quando e Pix Automatico', async () => {
+      // Consentimento informado. Quem esta sendo migrado vinha pagando na mao todo mes e nao
+      // espera que ESTE QR autorize debitos futuros no banco dele. Se o aviso sumir num refactor,
+      // a pessoa autoriza recorrencia sem ter lido nada sobre isso.
+      resumeRespondendo({
+        status: 'pending',
+        pendingRenewal: true,
+        pixAutomatic: true,
+        migrating: true,
+        pixData: { qrCode: 'data:image/png;base64,AAA', copyPaste: '000201...', expiresAt: '2026-12-31T23:59:59Z' },
+      });
+      renderPaymentPage({ pixData: null, status: 'active' });
+
+      await act(async () => {
+        jest.advanceTimersByTime(2000);
+      });
+
+      expect(currentPath).toBe('/pagamento');
+      expect(screen.getByText(/autoriza a cobranca automatica/i)).toBeInTheDocument();
+      expect(screen.getByText(/cancelar quando quiser/i)).toBeInTheDocument();
+    });
+
+    it('nao mostra o aviso de debito recorrente numa renovacao comum', async () => {
+      // O outro lado: o aviso nao pode aparecer no PIX avulso, senao promete uma automacao que
+      // nao vai acontecer e a pessoa deixa de voltar pra pagar no mes seguinte.
+      resumeRespondendo({
+        status: 'pending',
+        pendingRenewal: true,
+        pixData: { qrCode: 'data:image/png;base64,AAA', copyPaste: '000201...', expiresAt: '2026-12-31T23:59:59Z' },
+      });
+      renderPaymentPage({ pixData: null, status: 'active' });
+
+      await act(async () => {
+        jest.advanceTimersByTime(2000);
+      });
+
+      expect(screen.queryByText(/autoriza a cobranca automatica/i)).not.toBeInTheDocument();
     });
   });
 });

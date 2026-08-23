@@ -269,6 +269,12 @@ export const resumePayment = createAsyncThunk(
       // Sem isto a tela não distingue "assinatura em dia" de "assinatura ativa com o ciclo
       // novo em aberto", e mostra sucesso para quem ainda precisa pagar.
       pendingRenewal?: boolean;
+      // true quando o QR devolvido é de uma AUTORIZAÇÃO de Pix Automático, não de uma cobrança
+      // avulsa. A tela precisa saber: pagar este QR autoriza débitos futuros, e dizer isso é
+      // obrigação nossa, não detalhe de implementação.
+      pixAutomatic?: boolean;
+      // true quando este é um assinante ANTIGO sendo migrado nesta renovação.
+      migrating?: boolean;
       dueDate?: string | null;
       pixData?: PixData | null;
       value?: number | null;

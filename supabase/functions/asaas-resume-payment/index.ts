@@ -57,7 +57,7 @@ serve(async (req) => {
     // Assinatura do usuário.
     const { data: sub } = await supabaseAdmin
       .from("asaas_subscriptions")
-      .select("status, asaas_subscription_id, billing_type, value, cycle")
+      .select("status, asaas_subscription_id, billing_type, value, cycle, asaas_customer_id, pix_automatic_authorization_id, pix_migration_from_subscription_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -125,6 +125,140 @@ serve(async (req) => {
     // Há cobrança em aberto. Se a assinatura já teve algum ciclo pago, isto é uma RENOVAÇÃO —
     // o front precisa saber para não tratar como primeira compra nem como assinatura em risco.
     const pendingRenewal = payments.some((p) => PAID.includes(p.status));
+
+    // ─── Migração já em curso: devolver a MESMA autorização ──────────────────
+    // Sem isto, a segunda visita à tela (recarregou, voltou depois) mostraria de novo o QR da
+    // cobrança antiga, que continua em aberto — a pessoa veria um QR diferente a cada visita e,
+    // pior, poderia pagar o antigo achando que era o mesmo.
+    if (sub.pix_migration_from_subscription_id && sub.pix_automatic_authorization_id) {
+      const aResp = await asaasGet(
+        `${asaasApiUrl}/v3/pix/automatic/authorizations/${sub.pix_automatic_authorization_id}`,
+        asaasApiKey,
+      );
+      const a = aResp && aResp.ok ? await aResp.json().catch(() => null) : null;
+
+      // Já autorizada: o débito recorrente está de pé. O webhook cuida de encerrar a assinatura
+      // antiga; aqui só não pode mostrar QR nenhum.
+      if (a?.status === "ACTIVE") return json({ status: "active" });
+
+      if (a?.status === "CREATED" && a?.encodedImage) {
+        return json({
+          status: "pending",
+          pendingRenewal: true,
+          pixAutomatic: true,
+          migrating: true,
+          dueDate: target.dueDate || null,
+          pixData: {
+            qrCode: a.encodedImage || null,
+            copyPaste: a.payload || null,
+            expiresAt: a.immediateQrCode?.expirationDate || null,
+          },
+          value: Number(target.value) || value || 0,
+          cycle,
+        });
+      }
+      // Recusada, expirada ou ilegível: segue para o QR da cobrança antiga, que nunca foi
+      // apagada justamente para servir de saída aqui. A limpeza dos campos fica com o webhook.
+    }
+
+    // ─── Migração para Pix Automático ────────────────────────────────────────
+    // Aqui é a virada do ciclo de quem já paga: em vez do QR avulso deste mês, oferece a
+    // AUTORIZAÇÃO. O assinante paga um QR igual ao de sempre e, no app do banco, autoriza os
+    // débitos seguintes (Jornada 3) — a partir daí não precisa mais voltar aqui todo mês.
+    //
+    // NADA É APAGADO. A cobrança antiga e a assinatura antiga continuam de pé; quem for pago
+    // primeiro vence e o webhook derruba o outro. É deliberado: apagar a cobrança boa antes de
+    // saber se a autorização vinga deixaria sem forma de pagar quem tem banco sem suporte a Pix
+    // Automático. O preço da escolha é uma janela curta com dois QRs pagáveis — mas o app mostra
+    // só um, e o outro morre assim que o webhook processa o pagamento.
+    const jaEhPixAutomatico = !!sub.pix_automatic_authorization_id;
+
+    if (pendingRenewal && !jaEhPixAutomatico && sub.asaas_customer_id) {
+      const { data: cfg } = await supabaseAdmin
+        .from("asaas_plan_config")
+        .select("pix_automatic_enabled, pix_migration_enabled")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (cfg?.pix_automatic_enabled && cfg?.pix_migration_enabled) {
+        // O valor vem da COBRANÇA, não do plano: estes assinantes têm preços legados e cupom
+        // vitalício (um deles paga 23,95 num plano que hoje custa 47,90). Ler o plano aqui
+        // aumentaria a mensalidade de quem migrasse, sem avisar.
+        const valorCobranca = Number(target.value) || value || 0;
+        const hoje = new Date().toISOString().split("T")[0];
+        // Preserva a âncora do ciclo: o QR imediato cobre o mês corrente, e a recorrência começa
+        // no vencimento atual (se ainda não passou), mantendo o dia de cobrança da pessoa.
+        const inicio = target.dueDate && String(target.dueDate) >= hoje ? String(target.dueDate) : hoje;
+        const anual = cycle === "YEARLY";
+
+        const criada = await (async () => {
+          try {
+            const r = await fetch(`${asaasApiUrl}/v3/pix/automatic/authorizations`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "access_token": asaasApiKey },
+              body: JSON.stringify({
+                customerId: sub.asaas_customer_id,
+                frequency: anual ? "ANNUALLY" : "MONTHLY",
+                contractId: `maestra-${user.id.replace(/-/g, "").slice(0, 20)}`,
+                startDate: inicio,
+                value: valorCobranca,
+                description: anual ? "Maestra PRO anual" : "Maestra PRO mensal",
+                paymentCreationMode: "SUBSCRIPTION",
+                retryPolicy: "ALLOW_THREE_IN_SEVEN_DAYS",
+                immediateQrCode: {
+                  originalValue: valorCobranca,
+                  expirationSeconds: 86400,
+                  description: anual ? "Maestra PRO anual" : "Maestra PRO mensal",
+                },
+              }),
+            });
+            if (!r.ok) {
+              console.error(`Migração Pix Automático falhou (${r.status}):`, (await r.text().catch(() => "")).slice(0, 400));
+              return null;
+            }
+            return await r.json();
+          } catch (e) {
+            console.error("Migração Pix Automático: erro de rede:", (e as { message?: string })?.message);
+            return null;
+          }
+        })();
+
+        // Só migra se veio QR. Sem ele o assinante ficaria olhando uma tela vazia no dia de
+        // pagar — qualquer falha aqui cai de volta no QR avulso logo abaixo, que é o que ele
+        // já esperava ver.
+        if (criada?.id && criada?.encodedImage) {
+          await supabaseAdmin
+            .from("asaas_subscriptions")
+            .update({
+              pix_automatic_authorization_id: criada.id,
+              authorization_status: criada.status || "CREATED",
+              // Marca a migração em curso. Enquanto isto não for NULL existem DUAS formas de
+              // pagar vivas, e o webhook sabe que precisa derrubar uma delas.
+              pix_migration_from_subscription_id: sub.asaas_subscription_id,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", user.id);
+
+          console.log(`Migração Pix Automático oferecida (user=${user.id}, auth=${criada.id}, valor=${valorCobranca})`);
+
+          return json({
+            status: "pending",
+            pendingRenewal: true,
+            pixAutomatic: true,
+            migrating: true,
+            dueDate: target.dueDate || null,
+            pixData: {
+              qrCode: criada.encodedImage || null,
+              copyPaste: criada.payload || null,
+              expiresAt: criada.immediateQrCode?.expirationDate || null,
+            },
+            value: valorCobranca,
+            cycle,
+          });
+        }
+      }
+    }
 
     // QR atual da cobrança em aberto.
     const qrResp = await asaasGet(`${asaasApiUrl}/v3/payments/${target.id}/pixQrCode`, asaasApiKey);

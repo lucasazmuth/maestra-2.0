@@ -326,7 +326,7 @@ Deno.serve(async (req: Request) => {
 
       const { data: assinatura } = await supabaseAdmin
         .from("asaas_subscriptions")
-        .select("id, user_id, status, started_at")
+        .select("id, user_id, status, started_at, asaas_subscription_id, pix_migration_from_subscription_id")
         .eq("pix_automatic_authorization_id", authId)
         .maybeSingle();
 
@@ -342,6 +342,8 @@ Deno.serve(async (req: Request) => {
         const novoStatusAuth = PIX_AUTH_EVENTS[eventType];
         campos.authorization_status = novoStatusAuth;
 
+        const migrandoDe = assinatura.pix_migration_from_subscription_id as string | null;
+
         if (novoStatusAuth === "ACTIVE") {
           // Autorização ativada = a primeira cobrança foi paga (Jornada 3). A assinatura passa a
           // valer, e daqui em diante os ciclos debitam sozinhos.
@@ -349,11 +351,46 @@ Deno.serve(async (req: Request) => {
           campos.grace_period_ends_at = null;
           campos.pending_charge_id = null;
           campos.started_at = assinatura.started_at || new Date().toISOString();
+
+          // MIGRAÇÃO CONCLUÍDA. A assinatura antiga por cobrança precisa morrer AGORA: ela
+          // continuou viva de propósito como rede de segurança, mas a partir daqui cobraria em
+          // duplicidade com o débito automático. O DELETE também derruba a cobrança em aberto
+          // dela, que é o outro QR que ficou pagável durante a janela.
+          if (migrandoDe && asaasApiKey) {
+            try {
+              const r = await fetch(`${asaasBaseUrl}/v3/subscriptions/${migrandoDe}`, {
+                method: "DELETE",
+                headers: { "access_token": asaasApiKey, "Content-Type": "application/json" },
+              });
+              if (!r.ok && r.status !== 404) {
+                // Grave: sobrou assinatura viva junto com débito automático. Não dá pra reverter
+                // daqui (o pagamento novo já entrou), então fica gritando no log para alguém
+                // cancelar na mão antes do próximo ciclo.
+                console.error(`ALERTA: assinatura antiga ${migrandoDe} NAO foi cancelada (${r.status}) — risco de cobranca duplicada para user=${assinatura.user_id}`);
+              }
+            } catch (e) {
+              console.error(`ALERTA: falha de rede ao cancelar assinatura antiga ${migrandoDe} — risco de cobranca duplicada para user=${assinatura.user_id}:`, (e as { message?: string })?.message);
+            }
+          }
+          campos.pix_migration_from_subscription_id = null;
+          campos.asaas_subscription_id = null;
+          campos.billing_type = "PIX_AUTOMATIC";
         } else if (novoStatusAuth === "REFUSED" || novoStatusAuth === "EXPIRED" || novoStatusAuth === "CANCELLED") {
-          // Sem autorização não há débito futuro. REFUSED/EXPIRED normalmente acontecem antes de
-          // qualquer pagamento (QR não pago); CANCELLED pode vir depois, se o pagador revogar no
-          // banco — em todos os casos a recorrência acabou.
-          campos.status = "cancelled";
+          if (migrandoDe) {
+            // MIGRAÇÃO FRACASSOU, e isto NÃO é um cancelamento. Quem estava migrando já era
+            // assinante pagante: a autorização não vingou (banco sem suporte, QR não pago), mas a
+            // assinatura antiga nunca foi tocada e continua valendo. Marcar `cancelled` aqui
+            // tiraria o PRO de um cliente adimplente.
+            campos.pix_automatic_authorization_id = null;
+            campos.authorization_status = null;
+            campos.pix_migration_from_subscription_id = null;
+            console.log(`Migração Pix Automático revertida (user=${assinatura.user_id}, motivo=${novoStatusAuth}) — assinatura por cobrança segue valendo`);
+          } else {
+            // Sem autorização não há débito futuro. REFUSED/EXPIRED normalmente acontecem antes de
+            // qualquer pagamento (QR não pago); CANCELLED pode vir depois, se o pagador revogar no
+            // banco — em todos os casos a recorrência acabou.
+            campos.status = "cancelled";
+          }
         }
       }
 
@@ -576,6 +613,30 @@ Deno.serve(async (req: Request) => {
             .eq("user_id", userId)
             .eq("reference_type", "billing")
             .eq("reference_id", asaasPaymentId);
+        }
+
+        // O assinante pagou a cobrança ANTIGA em vez do QR da migração (chegou pelo e-mail de
+        // cobrança da Asaas, por exemplo). O ciclo está pago e a assinatura por cobrança segue
+        // valendo — mas a autorização criada para ele ficou pendurada e ATIVARIA um débito
+        // recorrente paralelo se fosse paga depois. Revoga.
+        const autorizacaoOrfa = subscriptionRecord.pix_automatic_authorization_id as string | null;
+        if (subscriptionRecord.pix_migration_from_subscription_id && autorizacaoOrfa) {
+          if (asaasApiKey) {
+            try {
+              await fetch(`${asaasBaseUrl}/v3/pix/automatic/authorizations/${autorizacaoOrfa}/cancel`, {
+                method: "POST",
+                headers: { "access_token": asaasApiKey, "Content-Type": "application/json" },
+              });
+            } catch (e) {
+              console.error("Falha ao revogar autorização órfã:", (e as { message?: string })?.message);
+            }
+          }
+          // Limpa localmente mesmo se a revogação falhar: a autorização órfã expira sozinha em
+          // 24h sem pagamento, e deixar os campos preenchidos faria a tela insistir nela.
+          updateFields.pix_automatic_authorization_id = null;
+          updateFields.authorization_status = null;
+          updateFields.pix_migration_from_subscription_id = null;
+          console.log(`Migração adiada: assinante pagou a cobrança antiga (user=${userId}); autorização ${autorizacaoOrfa} revogada`);
         }
       }
 
