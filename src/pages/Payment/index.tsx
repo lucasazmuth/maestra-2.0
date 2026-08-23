@@ -42,6 +42,25 @@ const styles = {
     marginBottom: 24,
     textAlign: 'center' as const,
   } as React.CSSProperties,
+  // Aviso do débito recorrente. Azul de informação, não âmbar de risco: não é um alerta, é uma
+  // mudança boa que precisa de consentimento informado.
+  autoNotice: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: 4,
+    background: '#eef3ff',
+    border: '1px solid #ccd9ff',
+    borderRadius: 12,
+    padding: '14px 16px',
+    marginBottom: 20,
+    color: '#405985',
+    fontSize: 13,
+    lineHeight: 1.5,
+  } as React.CSSProperties,
+  autoNoticeTitle: {
+    color: '#2c3f63',
+    fontSize: 14,
+  } as React.CSSProperties,
   card: {
     background: '#fff',
     border: '1px solid #e3eaf3',
@@ -247,6 +266,9 @@ const PaymentPage: FC = () => {
   // Assinatura ativa COM cobrança de renovação em aberto. Precisa ser estado próprio: `status`
   // continua 'active' nesse momento, e sem isto a tela trata a renovação como "já pago".
   const [renewal, setRenewal] = useState(false);
+  // QR de AUTORIZAÇÃO de Pix Automático: pagar autoriza os débitos dos próximos ciclos. É uma
+  // diferença que a pessoa precisa ver antes de pagar, não depois.
+  const [pixAutomatic, setPixAutomatic] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [connectivityError, setConnectivityError] = useState(false);
   const [resuming, setResuming] = useState(false);
@@ -290,6 +312,7 @@ const PaymentPage: FC = () => {
         // Renovação: a assinatura continua ativa, mas há QR a pagar. Marcar antes de renderizar,
         // senão as guardas de `status === 'active'` mais abaixo mostram a tela de sucesso.
         if (res.pendingRenewal) setRenewal(true);
+        if (res.pixAutomatic) setPixAutomatic(true);
         // pending: se veio QR, entra no Redux e renderiza; se não, mostra estado de falha.
         if (!res.pixData?.qrCode) setResumeFailed(true);
       })
@@ -565,8 +588,22 @@ const PaymentPage: FC = () => {
   // ─── Default: QR Code + Polling state ───────────────────────────────────────
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>Pagamento PIX</h1>
+      <h1 style={styles.title}>{pixAutomatic ? 'Pagamento PIX automatico' : 'Pagamento PIX'}</h1>
       <p style={styles.subtitle}>Escaneie o QR Code ou copie a chave abaixo</p>
+
+      {/* Pagar este QR nao quita so o mes: autoriza os debitos seguintes no app do banco. Quem
+          esta migrando vinha pagando na mao todo ciclo e nao espera isso, entao o aviso vem
+          ANTES do QR, e nao numa nota de rodape depois de pago. */}
+      {pixAutomatic && (
+        <div style={styles.autoNotice}>
+          <strong style={styles.autoNoticeTitle}>Esta e a ultima vez que voce paga na mao</strong>
+          <span>
+            Ao confirmar no app do banco, voce autoriza a cobranca automatica das proximas
+            mensalidades, no mesmo valor e na mesma data. Pode cancelar quando quiser, aqui nas
+            configuracoes ou pelo proprio banco.
+          </span>
+        </div>
+      )}
 
       {/* QR Code */}
       <div style={styles.card}>
