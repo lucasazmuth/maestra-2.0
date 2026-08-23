@@ -91,16 +91,47 @@ serve(async (req) => {
     // autorização) só para revelar se a conta tem o produto liberado. Serve de diagnóstico antes
     // de plugar o fluxo no checkout.
     if (probe === true) {
-      const r = await fetch(`${asaasApiUrl}/v3/pix/automatic/authorizations?limit=1`, {
-        headers: { "Content-Type": "application/json", access_token: asaasApiKey },
-      });
-      const texto = await r.text().catch(() => "");
+      const h = { "Content-Type": "application/json", access_token: asaasApiKey };
+      const ler = async (caminho: string) => {
+        try {
+          const r = await fetch(`${asaasApiUrl}${caminho}`, { headers: h });
+          return { status: r.status, corpo: (await r.text().catch(() => "")).slice(0, 700) };
+        } catch (e) {
+          return { status: 0, corpo: `erro de rede: ${(e as { message?: string })?.message}` };
+        }
+      };
+
+      const auth = await ler("/v3/pix/automatic/authorizations?limit=1");
+      // Chaves Pix da conta. Diagnostico do "QR Code invalido" no banco: sem chave ATIVA, a Asaas
+      // emite o QR mas nenhum PSP honra. Leitura pura.
+      const chaves = await ler("/v3/pix/addressKeys?limit=10");
+      // QR da cobranca, sem a imagem base64 — ela ocupa a resposta inteira e esconde o que
+      // importa aqui: o payload copia-e-cola e a validade. Leitura pura.
+      let qr: unknown = null;
+      if (body?.paymentId) {
+        try {
+          const r = await fetch(`${asaasApiUrl}/v3/payments/${body.paymentId}/pixQrCode`, { headers: h });
+          const j = await r.json().catch(() => ({}));
+          qr = {
+            status: r.status,
+            success: j.success ?? null,
+            payload: j.payload ?? null,
+            expirationDate: j.expirationDate ?? null,
+            tamanhoImagem: String(j.encodedImage || "").length,
+          };
+        } catch (e) {
+          qr = { erro: (e as { message?: string })?.message };
+        }
+      }
+      const cobranca = body?.paymentId ? await ler(`/v3/payments/${body.paymentId}`) : null;
+
       return json({
         probe: true,
         ambiente: asaasApiUrl,
-        httpStatus: r.status,
-        habilitado: r.ok,
-        resposta: texto.slice(0, 600),
+        pixAutomatico: { httpStatus: auth.status, habilitado: auth.status === 200 },
+        chavesPix: chaves,
+        cobranca,
+        qr,
       });
     }
 

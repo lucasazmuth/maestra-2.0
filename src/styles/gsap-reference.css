@@ -89,7 +89,12 @@
 .settings-subscription-status { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; }
 .settings-subscription-status i { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: currentColor; font-style: normal; }
 .settings-subscription-grace { color: #d9822b !important; }
-.settings-subscription-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid #edf1f7; }
+.settings-subscription-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid #edf1f7; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+/* Pedido aguardando pagamento: a acao PRINCIPAL e voltar ao QR, nao desistir. Por isso o azul
+   cheio ao lado do "Cancelar pedido", que fica no contorno vermelho de sempre. */
+.settings-resume-payment-btn { border: none; border-radius: 9999px; padding: 9px 24px; background: #3361ff; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .15s; }
+.settings-resume-payment-btn:hover:not(:disabled) { background: #2650e0; }
+.settings-resume-payment-btn:disabled { opacity: .6; cursor: not-allowed; }
 .settings-cancel-sub-btn { border: 1px solid #f13131; border-radius: 9999px; padding: 8px 24px; background: #fff; color: #f13131; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .15s, color .15s; }
 .settings-cancel-sub-btn:hover:not(:disabled) { background: #f13131; color: #fff; }
 .settings-cancel-sub-btn:disabled { opacity: .6; cursor: not-allowed; }
