@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-// Cria as cobranças de cada ciclo do Pix Automático, dentro da janela que a Asaas exige.
+// Mantém o Pix Automático coerente: cobranças, retentativas e revogações.
 //
 // POR QUE EXISTE: a primeira versão do Pix Automático partia de uma premissa errada — a de que
 // `paymentCreationMode: SUBSCRIPTION` faria a Asaas gerar sozinha as cobranças dos ciclos
@@ -14,15 +14,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 // Sem este job, a autorização era ativada no primeiro pagamento e depois NUNCA mais debitava:
 // assinante achando que estava tudo automático, e receita parando silenciosamente no mês 2.
 //
-// FAZ DUAS COISAS, as duas do mesmo tipo: manter os ciclos do Pix Automático andando, porque a
-// Asaas não os toca sozinha.
+// FAZ TRÊS COISAS, todas do mesmo tipo: manter o Pix Automático coerente, porque a Asaas não
+// toca nos ciclos sozinha e a revogação pode falhar em silêncio.
 //   1. cria a cobrança do ciclo quando ela entra na janela de 2 a 10 dias úteis;
 //   2. comanda as retentativas extradia de um débito recusado (política 3R_7D) — `retryPolicy`
-//      apenas as PERMITE; quem pede cada uma é a aplicação.
+//      apenas as PERMITE; quem pede cada uma é a aplicação;
+//   3. revoga autorizações órfãs: canceladas aqui, mas ainda vivas no banco do pagador.
 //
 // Roda diariamente por cron (mesmo padrão do `asaas-reconcile-pending`: `verify_jwt` ligado e o
-// cron manda a chave do vault). É idempotente nas duas pontas: não cria cobrança para quem já tem
-// uma em aberto, e não comanda retentativa enquanto houver uma agendada.
+// cron manda a chave do vault). É idempotente nas três pontas: não cria cobrança para quem já tem
+// uma em aberto, não comanda retentativa enquanto houver uma agendada, e não revoga o que já
+// está revogado.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -258,9 +260,51 @@ serve(async (req) => {
       }
     }
 
+    // ── Autorizações órfãs: canceladas aqui, vivas no banco do pagador ────────
+    // O cancelamento revoga a autorização na Asaas ANTES de encerrar a assinatura, mas se aquela
+    // chamada falhar (rede, 5xx) o código segue mesmo assim — o usuário precisa conseguir
+    // cancelar. O resultado é uma autorização de débito recorrente viva no app do banco de quem
+    // já cancelou o serviço.
+    //
+    // Dinheiro não sai: o débito exige uma instrução, e o bloco acima só cria para assinatura
+    // `active`/`overdue`. Mas ninguém deveria ter que confiar nisso olhando o próprio banco e
+    // vendo uma autorização de pé. Aqui a revogação é tentada de novo até pegar.
+    let revogadas = 0, revogacoesFalhas = 0;
+    const { data: orfas } = await admin
+      .from("asaas_subscriptions")
+      .select("id, user_id, pix_automatic_authorization_id, authorization_status")
+      .eq("status", "cancelled")
+      .not("pix_automatic_authorization_id", "is", null)
+      .neq("authorization_status", "CANCELLED")
+      .limit(100);
+
+    for (const s of orfas || []) {
+      try {
+        const r = await fetch(
+          `${asaasApiUrl}/v3/pix/automatic/authorizations/${s.pix_automatic_authorization_id}/cancel`,
+          { method: "POST", headers: { "Content-Type": "application/json", "access_token": asaasApiKey } },
+        );
+        // 404 = a Asaas já não conhece a autorização; para o nosso objetivo é o mesmo que revogada.
+        if (r.ok || r.status === 404) {
+          await admin
+            .from("asaas_subscriptions")
+            .update({ authorization_status: "CANCELLED", updated_at: new Date().toISOString() })
+            .eq("id", s.id);
+          revogadas += 1;
+          console.log(`[pix-automatico] autorização órfã revogada (user=${s.user_id})`);
+        } else {
+          revogacoesFalhas += 1;
+          console.error(`[pix-automatico] revogação de órfã falhou (user=${s.user_id}, http=${r.status})`);
+        }
+      } catch (e) {
+        revogacoesFalhas += 1;
+        console.error(`[pix-automatico] erro de rede ao revogar órfã (user=${s.user_id}):`, (e as { message?: string })?.message);
+      }
+    }
+
     const resumo = {
       analisadas: (assinaturas || []).length, criadas, foraDaJanela, falhas,
-      retentativas, retentativasFalhas, semJanela, detalhes,
+      retentativas, retentativasFalhas, semJanela, revogadas, revogacoesFalhas, detalhes,
     };
     console.log("[pix-automatico] resumo:", JSON.stringify(resumo));
     return json(resumo);
