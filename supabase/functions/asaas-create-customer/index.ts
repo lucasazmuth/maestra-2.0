@@ -111,6 +111,20 @@ Deno.serve(async (req: Request) => {
         // Customer exists and is not deleted
         if (!customerData.deleted) {
           console.log(`Reusing existing customer: ${existingRecord.asaas_customer_id}`);
+          // Cliente ja existe: completa o telefone se ele ainda nao tiver. Sem `mobilePhone` a
+          // regua de cobranca da Asaas fica so no e-mail, e numa assinatura PIX (um QR por ciclo)
+          // esse canal a menos custa renovacao. Falha aqui nao pode travar o checkout.
+          if (telefoneOk && !customerData.mobilePhone) {
+            try {
+              await fetch(`${asaasApiUrl}/v3/customers/${existingRecord.asaas_customer_id}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "access_token": asaasApiKey },
+                body: JSON.stringify({ mobilePhone: telefoneDigits }),
+              });
+            } catch (phoneErr: any) {
+              console.warn("Falha ao completar mobilePhone:", phoneErr?.message);
+            }
+          }
           return new Response(
             JSON.stringify({ customerId: existingRecord.asaas_customer_id }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
