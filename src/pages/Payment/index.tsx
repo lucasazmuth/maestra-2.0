@@ -239,7 +239,7 @@ const PaymentPage: FC = () => {
   const navigate = useNavigate();
   const { message } = App.useApp();
 
-  const { pixData, status } = useAppSelector((s) => s.subscription);
+  const { pixData, status, pendingRenewal } = useAppSelector((s) => s.subscription);
 
   const [copied, setCopied] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
@@ -482,9 +482,11 @@ const PaymentPage: FC = () => {
     );
   }
 
-  // `renewal` desarma o atalho de `status === 'active'` nas três guardas abaixo: numa renovação
-  // a assinatura está ativa E existe QR a pagar, e sem isso a tela de sucesso vencia o QR.
-  const ativoEmDia = status === 'active' && !renewal;
+  // `status === 'active'` NÃO basta para declarar sucesso: numa renovação a assinatura está ativa
+  // E existe QR a pagar. Duas fontes para o mesmo fato, porque chegam por caminhos diferentes —
+  // `renewal` vem da resposta do resume nesta tela, `pendingRenewal` vem do estado global (poll e
+  // fetch de status). Exigir as duas negativas evita a tela de sucesso aparecer sem pagamento.
+  const ativoEmDia = status === 'active' && !renewal && !pendingRenewal;
 
   // Guard: don't render if pixData is invalid and not confirmed
   const hasValidPixData = pixData && pixData.qrCode && pixData.expiresAt;

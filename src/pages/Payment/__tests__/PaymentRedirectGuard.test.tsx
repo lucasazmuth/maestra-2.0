@@ -229,6 +229,34 @@ describe('Payment page redirect guard', () => {
       expect(currentPath).toBe('/pagamento');
     });
 
+    it('NAO declara pagamento confirmado quando ha renovacao em aberto', async () => {
+      // Regressao do bug mais grave da serie: o poll de status resolvia com `status === "active"`,
+      // e numa renovacao a assinatura JA esta ativa (o ciclo anterior foi pago). O poll fechava na
+      // primeira volta e a tela mandava o usuario pro /assinatura/sucesso sem ninguem ter pago.
+      mockInvoke.mockImplementation((fnName: string) => {
+        if (fnName === 'asaas-subscription-status') {
+          return Promise.resolve({ data: { status: 'active', pendingRenewal: true }, error: null });
+        }
+        if (fnName === 'asaas-resume-payment') {
+          return Promise.resolve({ data: { status: 'none' }, error: null });
+        }
+        return new Promise(() => {});
+      });
+
+      renderPaymentPage({
+        status: 'active',
+        pendingRenewal: true,
+        pixData: { qrCode: 'data:image/png;base64,AAA', copyPaste: '000201...', expiresAt: '2026-12-31T23:59:59Z' },
+      });
+
+      await act(async () => {
+        jest.advanceTimersByTime(30000);
+      });
+
+      expect(currentPath).not.toBe('/assinatura/sucesso');
+      expect(currentPath).toBe('/pagamento');
+    });
+
     it('mostra o QR da renovacao quando a assinatura esta ativa com cobranca em aberto', async () => {
       // Regressao do bug de producao: na virada do ciclo a assinatura segue `active` e nasce uma
       // cobranca nova. A pagina mostrava a tela de sucesso e o assinante nao conseguia pagar.

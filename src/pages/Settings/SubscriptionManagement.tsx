@@ -43,6 +43,7 @@ function formatCurrency(value: number | null): string {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+// Instante real (ex.: fim do prazo de graça, gravado como `now + 7 dias`): renderiza no fuso local.
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
   try {
@@ -50,6 +51,25 @@ function formatDate(dateStr: string | null): string {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
+    });
+  } catch {
+    return '—';
+  }
+}
+
+/**
+ * Data de VENCIMENTO. A Asaas manda `dueDate` como data de calendário ("2026-08-22") e ela é
+ * guardada como timestamp à meia-noite UTC. Renderizar no fuso local recua um dia no Brasil
+ * (UTC-3): a renovação que vence em 22/08 aparecia como 21/08. Vencimento não é instante, é dia.
+ */
+function formatDueDate(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  try {
+    return new Date(dateStr).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'UTC',
     });
   } catch {
     return '—';
@@ -139,7 +159,7 @@ const SubscriptionManagement: FC = () => {
                     uma cobrança que já existe e está esperando pagamento. Chamar isso de "próxima
                     cobrança" faria o assinante achar que está tudo em dia. */}
                 <span className='label'>{pendingRenewal ? 'Renovação em aberto, vence em' : 'Próxima cobrança'}</span>
-                <span className='value'>{formatDate(nextDueDate)}</span>
+                <span className='value'>{formatDueDate(nextDueDate)}</span>
               </div>
             )}
 

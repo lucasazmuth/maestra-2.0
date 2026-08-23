@@ -20,10 +20,14 @@ function formatDeadline(isoDate: string): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-/** Data curta "dd/MM" para o lembrete de renovação (a hora não importa ali). */
+/**
+ * Data curta "dd/MM" do vencimento. Em UTC de propósito: a Asaas manda `dueDate` como data de
+ * calendário e ela é guardada à meia-noite UTC, então ler no fuso local recua um dia no Brasil
+ * (UTC-3) e o banner anunciava o vencimento errado.
+ */
 function formatDueDate(isoDate: string): string {
   const d = new Date(isoDate);
-  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
 /**

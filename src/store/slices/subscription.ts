@@ -335,7 +335,11 @@ export const pollPaymentStatus = createAsyncThunk(
       // Resposta bem-sucedida: reseta contador de erros consecutivos
       consecutiveErrors = 0;
 
-      if (data?.status === 'active') {
+      // `active` sozinho NÃO significa pago. Numa RENOVAÇÃO a assinatura continua ativa enquanto
+      // a cobrança do ciclo novo está em aberto — o poll resolvia na primeira volta, a tela
+      // declarava "pagamento confirmado" e mandava pro sucesso sem ninguém ter pago nada.
+      // Só encerra quando a renovação em aberto também sumiu (webhook/cron limparam o vínculo).
+      if (data?.status === 'active' && !data?.pendingRenewal) {
         return data as {
           status: SubscriptionState['status'];
           asaasCustomerId: string | null;
