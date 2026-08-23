@@ -5,7 +5,6 @@ import { FiChevronDown, FiArrowRight, FiShare2, FiHelpCircle, FiRefreshCw, FiLoc
 import { DownloadIcon } from '../../components/Icons/system';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
-import realStar from '../../assets/feature-real.png';
 import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
 import type { RealIndex } from '../../interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
@@ -89,8 +88,11 @@ const PROFILE_MAP: { altas: number; tier: string; names: string[] }[] = [
 ];
 
 const CTA_TITLE = 'Você sabe onde está. Agora precisa saber para onde ir, e como.';
-// Mesmo vídeo de apresentação do hero da landing (youtu.be/tSvzznd-FcI).
-const CTA_VIDEO_ID = 'tSvzznd-FcI';
+// Vídeo de apresentação do planejamento. O anterior (tSvzznd-FcI) foi removido no YouTube e o
+// player passou a mostrar "Vídeo indisponível" no fim do diagnóstico — bem em cima da CTA de
+// conversão. Não é mais o mesmo do hero da landing: os dois divergiram, e a landing tem cópia
+// própria do id (ver o TODO em components/YouTubeEmbed.tsx).
+const CTA_VIDEO_ID = 'N0pV9W7MG4Y';
 const CTA_SUB = 'O diagnóstico te mostrou o retrato da sua carreira hoje. O planejamento completo com a Nyta transforma esse retrato em um plano de ação real: estratégias priorizadas, cronograma e modelagem financeira, tudo construído por você, com a orientação da metodologia que já ajudou centenas de artistas.';
 
 const prefersReducedMotion = () =>
@@ -517,10 +519,6 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
 
       {/* SEÇÃO 2 — O perfil REAL */}
       <div ref={profileRef} className={`${styles.realProfileCard} ${styles.reveal}`} style={{ animationDelay: '0.1s' }}>
-        {/* Estrela 3D do REAL, grande e translúcida no canto (tintada pro roxo da marca). */}
-        <span data-noexport="1" aria-hidden style={{ position: 'absolute', right: -14, bottom: -20, opacity: 0.09, pointerEvents: 'none', lineHeight: 0 }}>
-          <img src={realStar} alt="" width={185} height={185} style={{ display: 'block', filter: 'hue-rotate(122deg) saturate(1.05)' }} />
-        </span>
         {/* Refazer diagnóstico: sutil, no canto do card (não exportado no PDF/share). */}
         {onRedo && !hideHero && (
           <button
