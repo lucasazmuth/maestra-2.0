@@ -13,8 +13,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 // `encodedImage` + `payload` + `expirationDate`, exatamente os campos que a tela de pagamento
 // consome hoje. O assinante paga um QR; esse mesmo pagamento ativa a autorização.
 //
-// `paymentCreationMode: SUBSCRIPTION` faz a Asaas gerar sozinha as cobranças dos ciclos seguintes,
-// evitando ter de criar cada instrução por conta própria.
+// ATENÇÃO: a Asaas NÃO gera as cobranças dos ciclos seguintes. A doc da Jornada 3 é explícita —
+// "O primeiro pagamento não cria automaticamente as cobranças futuras" — e cada uma precisa ser
+// criada com `pixAutomaticAuthorizationId` entre 2 e 10 dias úteis antes do vencimento. Quem faz
+// isso é o cron `asaas-pix-automatic-charges`. Sem ele, a assinatura debita UMA vez e para.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -124,12 +126,68 @@ serve(async (req) => {
         }
       }
       const cobranca = body?.paymentId ? await ler(`/v3/payments/${body.paymentId}`) : null;
+      // Estado da CONTA. Uma conta com pendencia de documentacao ou verificacao continua emitindo
+      // QR normalmente, mas o recebimento fica barrado no PSP — do lado do pagador isso aparece
+      // como "QR invalido"/"falhou", sem nenhuma pista de que o problema e do recebedor.
+      const conta = await ler("/v3/myAccount/status");
+      const chaveDetalhe = body?.pixKeyId ? await ler(`/v3/pix/addressKeys/${body.pixKeyId}`) : null;
+      // Creditos Pix recentes. Um pagamento feito na CHAVE (QR estatico) entra na conta sem se
+      // vincular a cobranca nenhuma: aparece aqui, mas a assinatura segue pendente. Precisa ser
+      // reconciliado na mao, e so da pra saber olhando.
+      const creditos = body?.creditos ? await ler("/v3/pix/transactions?type=CREDIT&limit=5") : null;
+      const saldo = body?.creditos ? await ler("/v3/finance/balance") : null;
+      const cliente = body?.customerRef ? await ler(`/v3/customers/${body.customerRef}`) : null;
+
+      // ── Experimento controlado: QR estatico COM valor ─────────────────────
+      // Unica escrita deste modo, e ela NAO move dinheiro: cria um QR que so vira pagamento se
+      // alguem escanear E confirmar. Serve para separar "cobv quebrada" de "conta quebrada" — a
+      // chave pura ja provou que resolve no banco; falta saber se resolve carregando um valor.
+      // Restrito a admin da plataforma: e uma escrita na conta Asaas, nao pode ficar aberta.
+      let qrEstatico: unknown = null;
+      if (body?.criarQrEstatico) {
+        const { data: adm } = await supabaseAdmin
+          .from("platform_admins").select("user_id").eq("user_id", user.id).maybeSingle();
+        if (!adm) {
+          qrEstatico = { erro: "restrito a administradores" };
+        } else {
+          try {
+            const r = await fetch(`${asaasApiUrl}/v3/pix/qrCodes/static`, {
+              method: "POST",
+              headers: h,
+              body: JSON.stringify({
+                addressKey: body.addressKey,
+                description: "Teste Maestra",
+                value: Number(body.valor) || 5,
+                format: "ALL",
+                allowsMultiplePayments: false,
+                expirationSeconds: 3600,
+              }),
+            });
+            const j = await r.json().catch(() => ({}));
+            qrEstatico = {
+              status: r.status,
+              id: j.id ?? null,
+              payload: j.payload ?? null,
+              expirationDate: j.expirationDate ?? null,
+              erro: j.errors ?? null,
+            };
+          } catch (e) {
+            qrEstatico = { erro: (e as { message?: string })?.message };
+          }
+        }
+      }
 
       return json({
         probe: true,
         ambiente: asaasApiUrl,
         pixAutomatico: { httpStatus: auth.status, habilitado: auth.status === 200 },
         chavesPix: chaves,
+        conta,
+        chaveDetalhe,
+        creditos,
+        saldo,
+        cliente,
+        qrEstatico,
         cobranca,
         qr,
       });
@@ -198,7 +256,10 @@ serve(async (req) => {
       description: isAnnual ? "Maestra PRO anual" : "Maestra PRO mensal",
       // A Asaas gera sozinha as cobranças dos ciclos seguintes. Sem isto (modo MANUAL, o default)
       // a aplicação teria de criar cada instrução de pagamento dentro dos prazos da autorização.
-      paymentCreationMode: "SUBSCRIPTION",
+      // NÃO enviar `paymentCreationMode`. A primeira versão mandava "SUBSCRIPTION" acreditando
+      // que a Asaas geraria sozinha os ciclos seguintes; a doc da Jornada 3 diz o contrário, e
+      // quem cria cada cobrança é o cron `asaas-pix-automatic-charges`. Se o campo existisse e
+      // funcionasse, os dois criariam a mesma cobrança e o assinante pagaria duas vezes.
       // O default é NOT_ALLOWED: uma falha por saldo insuficiente derrubaria o ciclo sem nenhuma
       // nova tentativa. Com retry, a Asaas tenta de novo dentro da janela do Banco Central.
       retryPolicy: "ALLOW_THREE_IN_SEVEN_DAYS",
