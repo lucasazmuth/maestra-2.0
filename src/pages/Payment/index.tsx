@@ -258,7 +258,7 @@ const PaymentPage: FC = () => {
   const navigate = useNavigate();
   const { message } = App.useApp();
 
-  const { pixData, status, pendingRenewal } = useAppSelector((s) => s.subscription);
+  const { pixData, status, pendingRenewal, pixAutomatic: pixAutomaticGlobal } = useAppSelector((s) => s.subscription);
 
   const [copied, setCopied] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
@@ -268,7 +268,10 @@ const PaymentPage: FC = () => {
   const [renewal, setRenewal] = useState(false);
   // QR de AUTORIZAÇÃO de Pix Automático: pagar autoriza os débitos dos próximos ciclos. É uma
   // diferença que a pessoa precisa ver antes de pagar, não depois.
-  const [pixAutomatic, setPixAutomatic] = useState(false);
+  const [pixAutomaticResume, setPixAutomaticResume] = useState(false);
+  // Duas fontes para o mesmo fato, porque chegam por caminhos diferentes: o checkout novo grava
+  // no estado global, e a retomada de quem migra responde na hora. Basta uma delas.
+  const pixAutomatic = pixAutomaticGlobal || pixAutomaticResume;
   const [timedOut, setTimedOut] = useState(false);
   const [connectivityError, setConnectivityError] = useState(false);
   const [resuming, setResuming] = useState(false);
@@ -312,7 +315,7 @@ const PaymentPage: FC = () => {
         // Renovação: a assinatura continua ativa, mas há QR a pagar. Marcar antes de renderizar,
         // senão as guardas de `status === 'active'` mais abaixo mostram a tela de sucesso.
         if (res.pendingRenewal) setRenewal(true);
-        if (res.pixAutomatic) setPixAutomatic(true);
+        if (res.pixAutomatic) setPixAutomaticResume(true);
         // pending: se veio QR, entra no Redux e renderiza; se não, mostra estado de falha.
         if (!res.pixData?.qrCode) setResumeFailed(true);
       })

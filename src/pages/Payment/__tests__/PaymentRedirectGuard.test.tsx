@@ -61,6 +61,7 @@ function createTestStore(subscriptionState: Partial<SubscriptionState>) {
       value: null,
       gracePeriodEndsAt: null,
       pendingRenewal: false,
+      pixAutomatic: false,
       plan: null,
       loading: false,
       error: null,
@@ -295,6 +296,24 @@ describe('Payment page redirect guard', () => {
       expect(currentPath).toBe('/pagamento');
       expect(screen.getByText(/autoriza a cobranca automatica/i)).toBeInTheDocument();
       expect(screen.getByText(/cancelar quando quiser/i)).toBeInTheDocument();
+    });
+
+    it('avisa do debito recorrente tambem no checkout novo, nao so na migracao', async () => {
+      // O aviso de consentimento vinha SO da resposta do resume, que e o caminho de quem esta
+      // migrando. Quem contrata pelo checkout — a maioria — chegava nesta tela sem nenhuma
+      // mencao a debito recorrente e autorizava no banco sem ter lido nada sobre isso.
+      // Aqui o QR ja esta no estado (foi o checkout que colocou), entao o resume nem roda.
+      renderPaymentPage({
+        pixAutomatic: true,
+        status: 'pending',
+        pixData: { qrCode: 'data:image/png;base64,AAA', copyPaste: '000201...', expiresAt: '2026-12-31T23:59:59Z' },
+      });
+
+      await act(async () => {
+        jest.advanceTimersByTime(2000);
+      });
+
+      expect(screen.getByText(/autoriza a cobranca automatica/i)).toBeInTheDocument();
     });
 
     it('nao mostra o aviso de debito recorrente numa renovacao comum', async () => {
