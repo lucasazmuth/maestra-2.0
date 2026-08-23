@@ -130,8 +130,9 @@ export const AppLayout: FC = memo(() => {
 
   // Nao-lidas no sino. O ponto vermelho vinha do CSS da referencia GSAP (`.notification::before`),
   // pintado INCONDICIONALMENTE — acendia mesmo sem notificacao nenhuma, entao nao significava
-  // nada e ensinava a pessoa a ignora-lo. A contagem de verdade existia, mas no `Topbar`, que
-  // saiu de uso quando este cabecalho foi reescrito e ficou so num mock de teste.
+  // nada e ensinava a pessoa a ignora-lo. A contagem de verdade ja existia, com realtime, no
+  // antigo `Topbar` — que saiu de uso quando este cabecalho foi reescrito, virou codigo morto e
+  // acabou removido; a logica dele vive aqui agora.
   // Recarrega ao trocar de rota (para o ponto sumir depois de abrir /notifications) e escuta
   // realtime, para acender sem precisar navegar.
   const [naoLidas, setNaoLidas] = useState(0);
