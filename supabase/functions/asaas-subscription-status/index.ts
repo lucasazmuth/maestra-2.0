@@ -40,7 +40,7 @@ serve(async (req) => {
     // RLS ensures user can only see their own records
     const { data: subscription, error: queryError } = await supabase
       .from('asaas_subscriptions')
-      .select('status, asaas_customer_id, asaas_subscription_id, next_due_date, value, grace_period_ends_at, pending_charge_id')
+      .select('status, asaas_customer_id, asaas_subscription_id, next_due_date, value, grace_period_ends_at, pending_charge_id, pix_automatic_authorization_id')
       .eq('user_id', user.id)
       .maybeSingle()
 
@@ -82,7 +82,15 @@ serve(async (req) => {
     // 'none' (senão o pagamento único vira "assinatura Pro pendente" no banner + Configurações).
     // IMPORTANTE: só sobrescreve o caso pending-fantasma. active/overdue/cancelled passam intactos
     // — uma assinatura ativa pode, em casos de borda, não ter o subscription_id, e não pode sumir.
-    const isPhantomPending = subscription.status === 'pending' && !subscription.asaas_subscription_id
+    // O Pix Automatico NAO tem asaas_subscription_id: o vinculo dele e a AUTORIZACAO. Sem esta
+    // segunda condicao toda assinatura de Pix Automatico era classificada como fantasma enquanto
+    // estava 'pending' — ou seja, durante todo o intervalo entre gerar o QR e o banco ativar a
+    // autorizacao. O app respondia 'none' para quem estava com o QR na tela: o polling nunca
+    // resolvia, a tela de sucesso nunca aparecia, e a pessoa era mandada de volta ao checkout
+    // depois de ja ter pago. Visto em producao no primeiro pagamento real de Pix Automatico.
+    const isPhantomPending = subscription.status === 'pending'
+      && !subscription.asaas_subscription_id
+      && !subscription.pix_automatic_authorization_id
     const effectiveStatus = isPhantomPending ? 'none' : subscription.status
 
     // Return subscription data
