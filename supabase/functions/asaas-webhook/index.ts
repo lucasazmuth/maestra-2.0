@@ -333,13 +333,15 @@ Deno.serve(async (req: Request) => {
     const ehEventoPixAuth = eventType in PIX_AUTH_EVENTS;
 
     if (ehPixAutomatico) {
-      // O id da autorização chega como STRING no topo do payload:
-      //   { event, id, dateCreated, pixAutomaticAuthorization: "aut_...", paymentId: "pay_..." }
-      // A primeira versão deste bloco procurava só por objetos aninhados (`authorization.id` e
-      // variações) e não olhava a forma documentada — nenhum evento de Pix Automático teria sido
-      // reconhecido, e a autorização nunca sairia de CREATED no nosso banco.
-      // As formas aninhadas continuam na lista porque a doc de eventos cita `authorization.id`,
-      // divergindo da doc de fluxos; aceitar as duas custa nada e cobre a divergência.
+      // OBSERVADO EM PRODUÇÃO, num AUTHORIZATION_CANCELLED real:
+      //   { id, event, account, dateCreated, authorization: { id, status, cancellationReason, ... } }
+      // Ou seja: OBJETO ANINHADO `authorization.id`. Sem `pixAutomaticAuthorization` no topo e
+      // sem `paymentId` — que é a forma que a doc de "Fluxos de Webhook" mostra.
+      //
+      // As duas páginas da documentação se contradizem (a de eventos cita `authorization.id`, a
+      // de fluxos cita a string no topo), então a lista aceita as duas. Não é excesso de zelo:
+      // este evento só foi reconhecido por causa disso. Escolher uma das formas teria descartado
+      // o cancelamento feito pelo pagador no banco, e a assinatura seguiria ativa sem autorização.
       // deno-lint-ignore no-explicit-any
       const pl = payload as any;
       const comoTexto = (v: unknown) => (typeof v === "string" && v ? v : null);
