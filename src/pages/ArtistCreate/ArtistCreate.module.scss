@@ -47,7 +47,11 @@
   .flowDotCur { background: #3361ff; }
   .flowLabel { color: #52668d; }
 
-  .step { max-width: 760px; }
+  // `:not(.stepWide)` porque esta regra estava vencendo o `.stepWide` por especificidade
+  // (0,3,0 contra 0,1,0) e o clamp de 760px valia mesmo onde o JSX pedia a largura maior.
+  // No checkout isso deixava a classe como letra morta: presente no markup, sem efeito nenhum,
+  // e a tela ficava visivelmente mais estreita que o diagnostico logo antes dela, no mesmo fluxo.
+  .step:not(.stepWide) { max-width: 760px; }
 
   .line {
     max-width: 700px;
@@ -1417,10 +1421,14 @@
   .unlockHeadTitle { color: #52668d; }
   .unlockHeadSub { color: #7185aa; }
 }
+// Azul desde o repouso, nao so no hover: era um botao sem moldura, sem sublinhado e cinza como
+// o texto ao redor — nada dizia que dava para clicar, e no toque nem existe hover para revelar.
+// O azul tambem conserta o contraste: o cinza #61749a dava 4.42:1 sobre o #f7f8fb, abaixo do
+// minimo AA de 4.5 para texto normal. O #3361ff da 4.60:1, e o hover escurece para 5.98:1.
 .unlockBack {
   display: inline-flex; align-items: center; gap: 8px; padding: 0; border: none; background: none;
-  color: #61749a; font-size: 14px; font-weight: 700; cursor: pointer; transition: color 0.15s ease;
-  &:hover { color: #3361ff; }
+  color: #3361ff; font-size: 14px; font-weight: 700; cursor: pointer; transition: color 0.15s ease;
+  &:hover { color: #2650e0; }
 }
 .unlockPixNote { margin: 0; color: #7185aa; font-size: 14px; line-height: 1.55; }
 @media (max-width: 640px) { .unlockHeadTitle { font-size: 1.6rem; } .unlockHeadSub { font-size: 1rem; } }

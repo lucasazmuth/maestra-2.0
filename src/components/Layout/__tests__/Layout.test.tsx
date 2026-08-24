@@ -10,7 +10,7 @@
  * Validates: Requirements 10.1, 6.1
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
@@ -150,7 +150,7 @@ import { AppLayout } from '../index';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function createTestStore(userId?: string) {
+function createTestStore(userId?: string, artistas: unknown[] = []) {
   return configureStore({
     reducer: {
       auth: (state = { user: userId ? { id: userId } : null, session: {}, requesting: false }) => state,
@@ -170,7 +170,7 @@ function createTestStore(userId?: string) {
       ) => state,
       ui: (state = { libraryCollapsed: false }) => state,
       language: (state = {}) => state,
-      artists: (state = { items: [], loading: false }) => state,
+      artists: (state = { items: artistas, loading: false }) => state,
     },
   });
 }
@@ -292,5 +292,51 @@ describe('AppLayout - ponto vermelho do sino', () => {
     await waitFor(() => expect(sinoDoCabecalho().className).toContain('has-unread'));
     // O rotulo carrega a contagem: quem usa leitor de tela nao enxerga a bolinha.
     expect(sinoDoCabecalho()).toHaveAttribute('aria-label', expect.stringContaining('3 não lidas'));
+  });
+});
+
+describe('AppLayout - lista de perfis do rail', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockPaywallDisabled = false;
+  });
+
+  const perfis = (quantos: number) =>
+    Array.from({ length: quantos }, (_, i) => ({
+      id: `artista-${i}`,
+      name: `Artista ${i}`,
+      content: {},
+    }));
+
+  const renderizarCom = (quantos: number) =>
+    render(
+      <Provider store={createTestStore('user-123', perfis(quantos))}>
+        <MemoryRouter>
+          <AppLayout />
+        </MemoryRouter>
+      </Provider>
+    );
+
+  // O rail cortava a lista nos 4 primeiros. Numa conta com 5 perfis o quinto simplesmente nao
+  // existia na tela, e se ele fosse o selecionado nao havia como perceber qual estava ativo.
+  // Cortar sem avisar e pior que rolar: some com o dado e nao deixa rastro.
+  it('mostra todos os perfis da conta, nao so os primeiros', () => {
+    renderizarCom(9);
+
+    perfis(9).forEach(({ name }) => {
+      expect(screen.getByLabelText(`Abrir perfil de ${name}`)).toBeInTheDocument();
+    });
+  });
+
+  // A lista precisa ser o unico pedaco do rail que rola: se ela empurrasse os vizinhos, rolar
+  // ate um perfil la embaixo esconderia os atalhos ou o botao de criar.
+  it('mantem os atalhos e o botao de criar fora da area rolavel', () => {
+    renderizarCom(30);
+
+    const lista = screen.getByRole('group', { name: 'Seus perfis' });
+    expect(within(lista).getAllByRole('button', { name: /^Abrir perfil de/ })).toHaveLength(30);
+    expect(within(lista).queryByRole('button', { name: 'Criar novo perfil de artista' })).toBeNull();
+    expect(within(lista).queryByRole('button', { name: 'Tela inicial' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Criar novo perfil de artista' })).toBeInTheDocument();
   });
 });
