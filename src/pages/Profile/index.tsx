@@ -32,22 +32,53 @@ const Profile: FC = () => {
     ];
   }, [content?.swotAnalysis]);
 
+  // As referencias sao texto livre: o artista escreve quantos nomes quiser, separados por virgula.
+  // A versao anterior punha o CAMPO INTEIRO dentro de um circulo de 63px — com oito nomes o texto
+  // vazava por todos os lados, cobria os nos e as bolhas se sobrepunham. Um circulo por CAMPO
+  // nunca ia caber; agora e um circulo por NOME.
+  //
+  // Cada grupo orbita o no da sua categoria, em vez de flutuar solto num canto: as artisticas em
+  // volta de ARTISTICAS, as de comunicacao em volta de COMUNICACAO, as de gestao em volta de
+  // CARREIRA. E a conexao que o mapa promete no subtitulo e que antes nao existia — as bolhas
+  // ficavam todas amontoadas a esquerda, sem relacao com nenhum no.
+  const referenceOrbits = useMemo(() => {
+    const refs = identity?.references;
+    const partir = (t?: string) => (t || '').split(/[,;\n·]+/).map((x) => x.trim()).filter(Boolean);
+    // Ordem dos grupos no anel. A cor amarra cada bolha a categoria; com muitos nomes um grupo
+    // acaba dando meia volta no mapa, entao encostar cada um no seu no vira promessa impossivel —
+    // o que da para garantir e que o grupo fique CONTIGUO e reconhecivel pela cor.
+    const grupos = [
+      { chave: 'artistica', nomes: partir(refs?.artisticas) },
+      { chave: 'career', nomes: partir(refs?.gestao) },
+      { chave: 'communication', nomes: partir(refs?.comunicacao) },
+    ].filter((g) => g.nomes.length > 0);
+
+    const total = grupos.reduce((n, g) => n + g.nomes.length, 0);
+    if (!total) return [];
+
+    // Espacamento igual em volta de toda a elipse. Distribuir por setor (um arco por categoria)
+    // foi a primeira tentativa e nao funcionou: com oito nomes num arco de 110 graus as bolhas se
+    // sobrepunham entre si e cobriam os nos — medido na tela, 14 pares sobrepostos.
+    const passo = 360 / total;
+    // Comeco escolhido para o primeiro grupo nascer no alto a direita, perto de ARTISTICAS.
+    let i = -total / 4;
+
+    return grupos.flatMap(({ chave, nomes }) =>
+      nomes.map((nome) => {
+        const rad = (i++ * passo * Math.PI) / 180;
+        return {
+          nome,
+          chave,
+          // Percentuais: o anel acompanha o container em vez de quebrar num tamanho fixo.
+          left: 50 + 44 * Math.cos(rad),
+          top: 50 + 43 * Math.sin(rad),
+        };
+      }),
+    );
+  }, [identity?.references]);
+
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 
-  const references = identity?.references;
-  // As referencias sao texto livre: o artista escreve quantos nomes quiser, separados por virgula.
-  // Antes cada campo inteiro virava UM circulo de 63px — com oito nomes o texto vazava por todos
-  // os lados, cobria os nos do diagrama e as bolhas se sobrepunham. Mesmo cabendo, a bolha nao
-  // ficava perto da categoria dela, entao nem dizia a que se referia.
-  // Agora cada categoria vira uma lista rotulada abaixo do mapa, que e como o wizard ja mostra
-  // exatamente estes mesmos campos.
-  const referenceGroups = ([
-    ['Artísticas', references?.artisticas],
-    ['Comunicação com o público', references?.comunicacao],
-    ['Gestão de carreira', references?.gestao],
-  ] as const)
-    .map(([label, raw]) => [label, (raw || '').split(/[,;\n·]+/).map((x) => x.trim()).filter(Boolean)] as const)
-    .filter(([, items]) => items.length > 0);
   const totalTasks = strategies.reduce((total, strategy) => total + (strategy.tasks?.length || 0), 0);
   const completedTasks = strategies.reduce((total, strategy) => total + (strategy.tasks || []).filter((task) => task.status === 'done').length, 0);
   const capacity = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -91,17 +122,18 @@ const Profile: FC = () => {
         </div>
       </section>
 
-      <section className="planning-references"><header><div><p>INSPIRAÇÕES QUE GUIAM A CARREIRA</p><h2>Mapa de referências</h2><span>Conecte influências artísticas, posicionamento e caminhos de comunicação.</span></div></header><div className="reference-map"><i className="reference-center">REFERÊNCIAS</i><i className="reference-node node-positioning">POSICIONAMENTO</i><i className="reference-node node-artistic">ARTÍSTICAS</i><i className="reference-node node-communication">COMUNICAÇÃO<br />COM O PÚBLICO</i><i className="reference-node node-career">CARREIRA</i></div>
-        {referenceGroups.length > 0 && (
-          <div className="reference-lists">
-            {referenceGroups.map(([label, items]) => (
-              <div className="reference-list" key={label}>
-                <span className="reference-list-label">{label}</span>
-                <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul>
-              </div>
-            ))}
-          </div>
-        )}
+      <section className="planning-references"><header><div><p>INSPIRAÇÕES QUE GUIAM A CARREIRA</p><h2>Mapa de referências</h2><span>Conecte influências artísticas, posicionamento e caminhos de comunicação.</span></div></header><div className="reference-map"><i className="reference-center">REFERÊNCIAS</i><i className="reference-node node-positioning">POSICIONAMENTO</i><i className="reference-node node-artistic">ARTÍSTICAS</i><i className="reference-node node-communication">COMUNICAÇÃO<br />COM O PÚBLICO</i><i className="reference-node node-career">CARREIRA</i>
+          {referenceOrbits.map(({ nome, chave, left, top }) => (
+            <small
+              key={`${chave}-${nome}`}
+              className={`reference-chip chip-${chave}`}
+              style={{ left: `${left}%`, top: `${top}%` }}
+              title={nome}
+            >
+              {nome}
+            </small>
+          ))}
+        </div>
       </section>
 
       <section className="planning-objectives"><header><p>METAS DO CICLO</p><h2>Objetivos</h2><span>Objetivos claros para orientar prioridades, entregas e resultados esperados.</span></header><ol>{(objectives.length ? objectives : ['Objetivos ainda não definidos.']).map((objective, index) => <li key={objective}><b>{String(index + 1).padStart(2, '0')}</b><span>{objective}</span><button type="button" aria-label={`Ver objetivo ${objective}`}>↗</button></li>)}</ol><p className="planning-note">Os objetivos são definidos durante o planejamento estratégico e orientam a priorização das estratégias.</p></section>
