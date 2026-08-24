@@ -47,7 +47,11 @@
   .flowDotCur { background: #3361ff; }
   .flowLabel { color: #52668d; }
 
-  .step { max-width: 760px; }
+  // `:not(.stepWide)` porque esta regra estava vencendo o `.stepWide` por especificidade
+  // (0,3,0 contra 0,1,0) e o clamp de 760px valia mesmo onde o JSX pedia a largura maior.
+  // No checkout isso deixava a classe como letra morta: presente no markup, sem efeito nenhum,
+  // e a tela ficava visivelmente mais estreita que o diagnostico logo antes dela, no mesmo fluxo.
+  .step:not(.stepWide) { max-width: 760px; }
 
   .line {
     max-width: 700px;
