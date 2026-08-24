@@ -876,6 +876,33 @@
 .profile-panel { background: var(--canvas); }
 .rail-people { margin-top: auto; }
 
+/* A lista de perfis nao cabe mais por definicao: uma conta pode ter 5 ou 30 artistas e a altura
+   do rail e a da janela. Entao ela e a UNICA parte que encolhe e rola — os atalhos de cima e o
+   botao de criar ficam ancorados, para rolar a lista nao esconder o resto do menu.
+   O `min-height: 0` aparece nos dois niveis porque sem ele um item flex nao encolhe abaixo do
+   proprio conteudo e o overflow nunca chega a acontecer: a lista simplesmente vazaria pra fora. */
+.app-rail .rail-actions { flex-shrink: 0; }
+.rail-people {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+.rail-people-list {
+  position: relative; /* offsetParent do avatar ativo, usado para trazê-lo à vista */
+  display: grid;
+  min-height: 0;
+  justify-items: center;
+  gap: 9px;
+  overflow-y: auto;
+  /* Barra escondida de proposito: numa coluna de 51px ela cobriria os avatares. Quem sinaliza que
+     ha mais perfis e o avatar cortado na borda, que e o padrao dessas listas. */
+  scrollbar-width: none;
+}
+.rail-people-list::-webkit-scrollbar { display: none; }
+.rail-people > button { flex-shrink: 0; }
+
 /* Mesmo canvas do rail/painel acima, declarado de propósito: o `.board-shell` original define
    #fafbfc (um tom acima), e o resultado igual ao rail vinha por acidente de cascata, não por
    intenção — bastava mexer na ordem das regras pra os cartões voltarem a destoar do menu.

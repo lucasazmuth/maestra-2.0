@@ -87,6 +87,7 @@ const PlatformReviewModal = lazy(() =>
 export const AppLayout: FC = memo(() => {
   const dispatch = useAppDispatch();
   const container = useRef<HTMLDivElement>(null);
+  const listaDePerfis = useRef<HTMLDivElement>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -366,6 +367,23 @@ export const AppLayout: FC = memo(() => {
     </header>
   );
 
+  // O rail lista TODOS os perfis da conta e rola por dentro. Sem isto, quem tem o perfil ativo
+  // fora da primeira dobra da lista abre o app sem enxergar qual esta selecionado. O ajuste e
+  // feito no scrollTop do proprio contêiner, e nao com scrollIntoView, que subiria tambem os
+  // ancestrais e mexeria na rolagem da pagina.
+  useEffect(() => {
+    const lista = listaDePerfis.current;
+    const ativo = lista?.querySelector<HTMLElement>('.avatar-current');
+    if (!lista || !ativo) return;
+    // A folga deixa um pedaco do vizinho aparecendo em vez de encostar o ativo na borda do corte:
+    // e o unico sinal de que a lista continua, ja que a barra de rolagem esta escondida.
+    const folga = 12;
+    const acima = ativo.offsetTop - lista.scrollTop - folga;
+    const abaixo = acima + folga * 2 + ativo.offsetHeight - lista.clientHeight;
+    if (acima < 0) lista.scrollTop += acima;
+    else if (abaixo > 0) lista.scrollTop += abaixo;
+  }, [currentArtist?.id, artists.length]);
+
   return (
     <>
       <LanguageModal />
@@ -407,26 +425,28 @@ export const AppLayout: FC = memo(() => {
             </div>
 
             <div className='rail-people'>
-              {/* Sem foto, cai no MESMO avatar vazio de /artists e da Sidebar
-                  (ARTISTS_DEFAULT_IMAGE), e não numa inicial. O rail era o único ponto do app que
-                  desviava para letra, então o mesmo perfil aparecia como desenho numa tela e como
-                  "J" na outra. Com o fallback, os dois ramos viram um só. */}
-              {artists.slice(0, 4).map((artist) => {
-                const selecionado = artist.id === currentArtist?.id;
-                return (
-                  <span
-                    key={artist.id}
-                    className={`avatar avatar-big avatar-image${selecionado ? ' avatar-current' : ''}`}
-                    role='button'
-                    aria-current={selecionado ? 'page' : undefined}
-                    aria-label={selecionado ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`}
-                    tabIndex={0}
-                    onClick={() => navigate(artistEntryRoute(artist))}
-                  >
-                    <img src={artist.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE} alt={artist.name} />
-                  </span>
-                );
-              })}
+              <div className='rail-people-list' ref={listaDePerfis}>
+                {/* Sem foto, cai no MESMO avatar vazio de /artists e da Sidebar
+                    (ARTISTS_DEFAULT_IMAGE), e não numa inicial. O rail era o único ponto do app que
+                    desviava para letra, então o mesmo perfil aparecia como desenho numa tela e como
+                    "J" na outra. Com o fallback, os dois ramos viram um só. */}
+                {artists.map((artist) => {
+                  const selecionado = artist.id === currentArtist?.id;
+                  return (
+                    <span
+                      key={artist.id}
+                      className={`avatar avatar-big avatar-image${selecionado ? ' avatar-current' : ''}`}
+                      role='button'
+                      aria-current={selecionado ? 'page' : undefined}
+                      aria-label={selecionado ? `${artist.name}, perfil selecionado` : `Abrir perfil de ${artist.name}`}
+                      tabIndex={0}
+                      onClick={() => navigate(artistEntryRoute(artist))}
+                    >
+                      <img src={artist.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE} alt={artist.name} />
+                    </span>
+                  );
+                })}
+              </div>
               {/* Vai por /artists?create=1 e não direto para /criar-artista: aquela tela é quem
                   checa o limite de perfis pendentes e o cooldown, e avisa o motivo. O deep-link
                   existe justamente para disparar esse fluxo de fora. */}
