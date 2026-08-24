@@ -76,11 +76,18 @@ export const resendSignupOtp = createAsyncThunk(
   }
 );
 
-/** Login social (Google/Facebook). Redireciona o navegador para o provedor e volta para a app;
+/** Provedores de login social oferecidos na tela de entrada.
+ *
+ * A Apple entra por exigencia da App Store (diretriz 4.8): quem oferece login social de
+ * terceiro precisa oferecer o Sign in with Apple com a MESMA proeminencia. Nao e uma opcao a
+ * mais na lista, e a condicao para o app existir na loja. */
+export type SocialProvider = 'google' | 'facebook' | 'apple';
+
+/** Login social. Redireciona o navegador para o provedor e volta para a app;
  * a sessão é capturada pelo onAuthStateChange. Requer o provedor habilitado no Supabase Auth. */
 export const signInWithProvider = createAsyncThunk(
   'auth/signInWithProvider',
-  async (provider: 'google' | 'facebook') => {
+  async (provider: SocialProvider) => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       // Volta numa rota dedicada que troca o ?code= por sessão (PKCE). Mantemos

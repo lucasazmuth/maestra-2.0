@@ -1,11 +1,12 @@
 import { FC, ReactNode, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FcGoogle } from 'react-icons/fc';
+import { FaApple } from 'react-icons/fa';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiCalendar } from 'react-icons/fi';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
 import { useAppDispatch } from '../../store/store';
-import { authActions } from '../../store/slices/auth';
+import { authActions, type SocialProvider } from '../../store/slices/auth';
 import styles from './AuthShell.module.scss';
 
 /**
@@ -38,25 +39,41 @@ export const authError = (err: any): string => {
   return err?.message || 'Algo deu errado. Tente novamente.';
 };
 
+const SOCIAL_LABEL: Record<SocialProvider, string> = {
+  google: 'Google',
+  apple: 'Apple',
+  facebook: 'Facebook',
+};
+
+// A ordem é a da tela. O ícone da Apple é monocromático por regra da própria Apple: o logo não
+// pode ser recolorido nem ganhar efeito.
+const SOCIAL_PROVIDERS: { provider: SocialProvider; icon: ReactNode }[] = [
+  { provider: 'google', icon: <FcGoogle /> },
+  { provider: 'apple', icon: <FaApple /> },
+];
+
 export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ children, footer }) => {
   const dispatch = useAppDispatch();
   const [socialNote, setSocialNote] = useState<string | null>(null);
-  const [socialLoading, setSocialLoading] = useState(false);
+  // Guarda QUAL provedor está redirecionando, não um booleano: com dois botões, um booleano
+  // deixaria os dois em "Redirecionando…" ao mesmo tempo.
+  const [socialLoading, setSocialLoading] = useState<SocialProvider | null>(null);
 
-  // Dispara o OAuth do Google: o Supabase redireciona pro Google e volta em /auth/callback.
-  const social = async () => {
+  // Dispara o OAuth: o Supabase redireciona pro provedor e volta em /auth/callback.
+  const social = async (provider: SocialProvider) => {
+    const nome = SOCIAL_LABEL[provider];
     setSocialNote(null);
-    setSocialLoading(true);
+    setSocialLoading(provider);
     try {
-      await dispatch(authActions.signInWithProvider('google')).unwrap();
-      // Sucesso: o navegador está sendo redirecionado pro Google; não há mais nada a fazer aqui.
+      await dispatch(authActions.signInWithProvider(provider)).unwrap();
+      // Sucesso: o navegador está sendo redirecionado; não há mais nada a fazer aqui.
     } catch (err: any) {
-      setSocialLoading(false);
+      setSocialLoading(null);
       const msg = String(err?.message || '').toLowerCase();
       setSocialNote(
         msg.includes('not enabled') || msg.includes('provider')
-          ? 'Login com Google indisponível no momento. Use e-mail e senha.'
-          : 'Não foi possível iniciar o login com Google. Tente novamente.'
+          ? `Login com ${nome} indisponível no momento. Use e-mail e senha.`
+          : `Não foi possível iniciar o login com ${nome}. Tente novamente.`
       );
     }
   };
@@ -74,16 +91,25 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
           </div>
 
           <p className={styles.eyebrow}>Acesse com:</p>
+          {/* Os dois botões são iguais em tamanho, peso e posição de propósito: a diretriz 4.8
+              da App Store exige que o Sign in with Apple tenha a MESMA proeminência dos outros
+              logins sociais. Destacar um dos dois aqui reprova o app. */}
           <div className={styles.social}>
-            <button
-              type='button'
-              className={styles.socialBtn}
-              onClick={social}
-              disabled={socialLoading}
-              style={socialLoading ? { opacity: 0.7, cursor: 'wait' } : undefined}
-            >
-              <FcGoogle /> {socialLoading ? 'Redirecionando…' : 'Google'}
-            </button>
+            {SOCIAL_PROVIDERS.map(({ provider, icon }) => {
+              const redirecionando = socialLoading === provider;
+              return (
+                <button
+                  key={provider}
+                  type='button'
+                  className={styles.socialBtn}
+                  onClick={() => social(provider)}
+                  disabled={socialLoading !== null}
+                  style={socialLoading !== null ? { opacity: 0.7, cursor: 'wait' } : undefined}
+                >
+                  {icon} {redirecionando ? 'Redirecionando…' : SOCIAL_LABEL[provider]}
+                </button>
+              );
+            })}
           </div>
           {socialNote && <div className={styles.note}>{socialNote}</div>}
 
