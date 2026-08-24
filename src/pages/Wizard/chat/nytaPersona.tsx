@@ -62,17 +62,17 @@ export const SAY = {
     `Novo ciclo desbloqueado: ${label} (fase ${phase}). Quem você é continua o mesmo. Vamos revisar objetivos, diagnóstico e estratégias pra essa nova etapa.`,
   ],
   askGender: () => [
-    'Antes de tudo, como você prefere que eu te trate? Isso ajuda a minha fala a combinar com você.',
+    'Antes de tudo, **como você prefere que eu te trate?** Isso ajuda a minha fala a combinar com você.',
   ],
   askGenreMusical: () => [
-    'Boa! Agora me conta: quais estilos definem a sua música? Pode marcar mais de um.',
+    'Boa! Agora me conta: **quais estilos definem a sua música?** Pode marcar mais de um.',
   ],
   // Metodologia v2, Q2 — quando a Chartmetric já trouxe gênero(s), a Nyta só pede confirmação.
   askGenreConfirm: (genres: string) => [
-    `Pelo que vimos, seus gêneros musicais são: ${genres}. Confirma? Se quiser, pode ajustar ou somar outros.`,
+    `Pelo que vimos, seus gêneros musicais são: ${genres}. **Confirma?** Se quiser, pode ajustar ou somar outros.`,
   ],
   askStage: () => [
-    'Em que momento da carreira você está hoje? Quanto mais eu te entender, melhor eu te ajudo.',
+    '**Em que momento da carreira você está hoje?** Quanto mais eu te entender, melhor eu te ajudo.',
   ],
   guidedIntro: () => [
     pick(['Fechado, vamos montar juntos. Te faço algumas perguntas rápidas:', 'Boa, eu te ajudo. Responde rapidinho:']),
@@ -91,17 +91,17 @@ export const SAY = {
     'Não tem resposta certa, e se uma pergunta não te servir, é só escrever "pular".',
   ],
   refArtisticas: () => [
-    'Vamos começar pelas suas referências artísticas. Quais artistas inspiram musicalmente o seu trabalho hoje? (Pra gente começar a enxergar onde o seu som se encontra no mercado.)',
+    'Vamos começar pelas suas referências artísticas. **Quais artistas inspiram musicalmente o seu trabalho hoje?** (Pra gente começar a enxergar onde o seu som se encontra no mercado.)',
   ],
   refComunicacao: () => [
-    'Agora me conta: quais artistas você acha que se comunicam muito bem com o público? (Pensa em quem tem tudo alinhado — a imagem combina com o som, o Instagram é interessante, a capa do álbum é incrível, manda super bem nas entrevistas…)',
+    'Agora me conta: **quais artistas você acha que se comunicam muito bem com o público?** (Pensa em quem tem tudo alinhado — a imagem combina com o som, o Instagram é interessante, a capa do álbum é incrível, manda super bem nas entrevistas…)',
   ],
   refGestao: () => [
-    'Vamos para os bastidores: quais artistas você considera que têm (ou tiveram) uma carreira muito bem administrada? Na hora de responder, pense no "porquê". (Aqui não é sobre a música em si — é sobre as escolhas de carreira: como construíram e sustentaram o trabalho ao longo do tempo.)',
+    'Vamos para os bastidores: **quais artistas você considera que têm (ou tiveram) uma carreira muito bem administrada?** Na hora de responder, pense no "porquê". (Aqui não é sobre a música em si — é sobre as escolhas de carreira: como construíram e sustentaram o trabalho ao longo do tempo.)',
   ],
   refPosicionamento: () => [
-    'Agora, uma referência que pode ser mais desafiadora: a de POSICIONAMENTO. Daqui a alguns anos, com quem você quer estar disputando espaço? Quando alguém for contratar um artista pra um festival, um evento ou uma playlist, entre quais nomes você quer que o seu apareça?',
-    'Em outras palavras: quem serão seus concorrentes de mercado? Vamos pensar em três degraus — curto, médio e longo prazo.',
+    'Agora, uma referência que pode ser mais desafiadora: a de POSICIONAMENTO. **Daqui a alguns anos, com quem você quer estar disputando espaço?** Quando alguém for contratar um artista pra um festival, um evento ou uma playlist, entre quais nomes você quer que o seu apareça?',
+    'Em outras palavras: **quem serão seus concorrentes de mercado?** Vamos pensar em três degraus — curto, médio e longo prazo.',
   ],
 
   // --- Visão (Metodologia v2, Q6–Q11) ----------------------------------------------------------
@@ -114,31 +114,31 @@ export const SAY = {
   visionCityAsk: () => [
     'Vamos em frente? Com seu mapa de referências pronto, a gente parte agora para os seus Fundamentos Estratégicos: visão, missão e valores. É a parte do plano que dá norte pra todo o resto — sem isso, qualquer estratégia depois vira tiro no escuro.',
     'Pensa assim: a visão é aonde você quer chegar — o lugar lá na frente, o posicionamento que você quer alcançar. A missão é por que você existe agora — o que sua carreira entrega pra quem te escuta e pra você, como artista. E os valores são os pilares inegociáveis — as coisas que você não abre mão pra chegar onde quer.',
-    'Mas antes de pensar aonde você quer chegar, me diz: de onde você parte? Qual a sua cidade e estado?',
+    'Mas antes de pensar aonde você quer chegar, me diz: de onde você parte? **Qual a sua cidade e estado?**',
   ],
   visionOnde: () => [
-    'Pensando de forma realista nos próximos 3 anos, até onde você quer que o seu trabalho chegue?',
+    'Pensando de forma realista nos próximos 3 anos, **até onde você quer que o seu trabalho chegue?**',
   ],
   visionPorQuem: () => [
     'Agora a parte que mais define a sua visão: por quem você quer ser reconhecido(a)?',
     'E aqui eu não tô falando de público-alvo. Tô falando de uma coisa mais sutil: de onde você espera que venha a validação. Porque o reconhecimento numa carreira musical pode vir de quatro lugares diferentes — do público, da crítica e da mídia, do mercado, ou dos seus pares — e cada artista valoriza um desses lugares mais que os outros. Não é certo nem errado, é honestidade.',
-    'Pra te ajudar a enxergar isso, eu mudo a pergunta: quando você vai saber que subiu um degrau na carreira? Que aquele clique aconteceu? Escolhe 1 ou 2 opções, as que mais traduzem o que você sente — e responde sem filtro.',
+    'Pra te ajudar a enxergar isso, eu mudo a pergunta: **quando você vai saber que subiu um degrau na carreira?** Que aquele clique aconteceu? Escolhe 1 ou 2 opções, as que mais traduzem o que você sente — e responde sem filtro.',
   ],
   // Reflexo da fonte de reconhecimento (Metodologia v2, Q8).
   visionPorQuemReflect: (fontes: string) => [
     `Entendido. Isso significa que você almeja o reconhecimento principalmente ${fontes}.`,
   ],
-  visionSubstantivo: () => ['Continuando. E como você prefere ser chamado?'],
+  visionSubstantivo: () => ['Continuando. E **como você prefere ser chamado?**'],
   visionAdjetivo: () => [
-    'Qual característica você quer que venha junto desse nome? Qual palavra define o jeito do seu trabalho? Pode escolher uma sugestão ou escrever a sua.',
+    'Qual característica você quer que venha junto desse nome? **Qual palavra define o jeito do seu trabalho?** Pode escolher uma sugestão ou escrever a sua.',
   ],
   // Metodologia v2, Q10: mostra a frase montada com as partes já coletadas; o artista completa o "que…".
   visionOQueFalam: (formulaPrefix: string) => [
     'Certo. Agora a parte mais importante: diante de tantas características que você carrega como artista, em quais vamos jogar luz? Aqui, a ideia é ser intencional quanto ao que você quer que falem de você. Vamos lá.',
-    `Complete a frase: ${formulaPrefix}`,
+    `Complete a frase: **${formulaPrefix}**`,
   ],
   visionReview: () => [
-    'Olha como ficou a sua visão. Faz sentido pra você, ou quer ajustar?',
+    'Olha como ficou a sua visão. **Faz sentido pra você, ou quer ajustar?**',
   ],
 
   // --- Missão (Metodologia v2, Q12) ------------------------------------------------------------
@@ -147,28 +147,28 @@ export const SAY = {
     'Agora a gente vai pra missão. Se a visão é onde você quer chegar daqui a 3 anos, a missão é a sua razão de existir agora — o que essa carreira entrega pro mundo e o que ela tem que te devolver pra ficar de pé.',
     'Bom, vamos pensar a sua carreira como qualquer outro negócio por um instante. Todo negócio existe pra entregar alguma coisa pra alguém: um restaurante entrega comida pra quem tem fome, uma escola entrega conhecimento pra quem quer aprender. Com o seu projeto musical é igual: ele entrega algo, pra alguém.',
     'Pode ser entretenimento, memória afetiva, representatividade, reflexão, pista de dança. Não tem resposta certa, tem a sua, e quanto mais clara, melhor. A gente vai por partes.',
-    'Primeiro, uma coisa só: o que você entrega, oferece ou proporciona?',
+    'Primeiro, uma coisa só: **o que você entrega, oferece ou proporciona?**',
   ],
   missionParaQuem: () => [
-    'Agora a segunda parte: e pra quem? Quem recebe isso que você entrega? Pensa num grupo definido pelo que ele busca, vive ou valoriza. Por exemplo: "jovens urbanos que celebram a vida", "quem busca esperança e mudança" ou "o grande público".',
+    'Agora a segunda parte: e pra quem? **Quem recebe isso que você entrega?** Pensa num grupo definido pelo que ele busca, vive ou valoriza. Por exemplo: "jovens urbanos que celebram a vida", "quem busca esperança e mudança" ou "o grande público".',
   ],
   missionFinancial: () => [
     'Isso é lindo e verdadeiro. E agora eu preciso te lembrar de uma coisa que quase todo artista esquece nessa hora: isso também é um negócio.',
-    'Pra sua missão se sustentar, ela precisa incluir o que essa carreira tem que gerar pra você. Qual dessas opções se aplica melhor pra você?',
+    'Pra sua missão se sustentar, ela precisa incluir o que essa carreira tem que gerar pra você. **Qual dessas opções se aplica melhor pra você?**',
   ],
   missionReview: () => [
-    'Olha como ficou a sua missão. Faz sentido, ou quer ajustar?',
+    'Olha como ficou a sua missão. **Faz sentido, ou quer ajustar?**',
   ],
 
   // --- Valores (Metodologia v2, Q13) -----------------------------------------------------------
   valuesIntro: () => [
-    'Agora os seus valores: os pilares que você não abre mão pra cumprir essa missão e chegar na sua visão. Escolha de 3 a 5 — lembrando que sua carreira é um negócio. Pode usar as sugestões ou escrever os seus.',
+    'Agora os seus valores: os pilares que você não abre mão pra cumprir essa missão e chegar na sua visão. **Escolha de 3 a 5** — lembrando que sua carreira é um negócio. Pode usar as sugestões ou escrever os seus.',
   ],
 
   // --- Objetivos (Nyta_Etapa_Objetivos_v2 §7) --------------------------------------------------
   objectivesIntro: () => [
     'Com a sua visão, missão e valores no lugar, chegou a hora dos objetivos — os alvos concretos que vão medir se a estratégia tá funcionando.',
-    'Aqui eu já trabalhei pra você. A partir do que você me contou, cheguei numa lista de objetivos possíveis. Você escolhe os que vão pro plano — no máximo 5, pra manter foco. E se faltar algum, pode escrever.',
+    'Aqui eu já trabalhei pra você. A partir do que você me contou, cheguei numa lista de objetivos possíveis. **Você escolhe os que vão pro plano — no máximo 5**, pra manter foco. E se faltar algum, pode escrever.',
   ],
 
   // --- SWOT (Metodologia v2, Q15–Q17) ----------------------------------------------------------
@@ -178,21 +178,21 @@ export const SAY = {
     'A gente começa de dentro pra fora. E antes de pegar pesado nas fraquezas, deixa eu te dizer: fraqueza aqui não é fracasso, é ponto de melhoria. Nada do que aparecer vai sair daqui como julgamento.',
   ],
   swotInternalIntro: () => [
-    'Funciona assim: em vez de te deixar olhando pra uma tela em branco, eu vou te apresentar uma lista de pontos que costumam pesar na carreira de qualquer artista — desde os mais técnicos até os mais sensíveis. Pra cada um, três respostas possíveis: é um ponto forte, preciso melhorar nisso, ou não se aplica ao meu caso.',
+    'Funciona assim: em vez de te deixar olhando pra uma tela em branco, eu vou te apresentar uma lista de pontos que costumam pesar na carreira de qualquer artista — desde os mais técnicos até os mais sensíveis. Pra cada um, três respostas possíveis: **é um ponto forte, preciso melhorar nisso, ou não se aplica ao meu caso.**',
     'Responde rápido, sem ficar matutando. A primeira intuição costuma ser a mais honesta — e honestidade aqui é a matéria-prima do diagnóstico.',
   ],
   swotOportunidadesIntro: () => [
     'Pronto. O lado de dentro tá mapeado. Suas forças, o que precisa melhorar e o que não se aplica. Esse é o seu chão.',
     'Agora a gente sai de casa. O que existe lá fora, no mercado, na cena, no momento, que pode te ajudar a chegar onde você quer? E o que pode atrapalhar?',
     'Antes da gente começar a identificar suas oportunidades, uma coisa importante: oportunidade não é exclusividade sua. Ela existe pra qualquer artista, e o que muda é o que cada um faz com ela. E o que você consegue fazer depende justamente do interno, que a gente acabou de mapear.',
-    'Da lista abaixo, escolha as oportunidades que realmente se aplicam ao seu projeto. E aqui vale um cuidado: não é sobre marcar muitas, é sobre marcar as certas. Cada oportunidade que você escolhe aqui vira estratégia lá na frente, e estratégia é trabalho, é tempo, é energia da sua equipe. Se você marca tudo, chega na hora de priorizar com uma lista tão grande que não dá pra executar, e aí trava. Melhor poucas e reais do que muitas no papel. Pensa no que faz sentido pro seu momento agora.',
+    'Da lista abaixo, **escolha as oportunidades que realmente se aplicam ao seu projeto.** E aqui vale um cuidado: não é sobre marcar muitas, é sobre marcar as certas. Cada oportunidade que você escolhe aqui vira estratégia lá na frente, e estratégia é trabalho, é tempo, é energia da sua equipe. Se você marca tudo, chega na hora de priorizar com uma lista tão grande que não dá pra executar, e aí trava. Melhor poucas e reais do que muitas no papel. Pensa no que faz sentido pro seu momento agora.',
   ],
   swotAmeacasIntro: () => [
     'Pronto. Oportunidades mapeadas. Agora a outra ponta: as ameaças.',
-    'Ameaça é tudo que existe no ambiente em volta e pode atrapalhar, e que não depende de você: mudança no mercado, excesso de concorrência, uma plataforma que muda as regras, um cenário econômico difícil. Não é sobre ter medo, é sobre enxergar com clareza. Nem toda ameaça vira uma estratégia, e tudo bem: algumas você não vai poder resolver agora, mas precisa mapear pra deixar no radar. O que você reconhece aqui, você acompanha e se prepara pra enfrentar. O que você ignora é o que te pega de surpresa. Da lista abaixo, escolha as ameaças que se aplicam ao seu caso, com honestidade.',
+    'Ameaça é tudo que existe no ambiente em volta e pode atrapalhar, e que não depende de você: mudança no mercado, excesso de concorrência, uma plataforma que muda as regras, um cenário econômico difícil. Não é sobre ter medo, é sobre enxergar com clareza. Nem toda ameaça vira uma estratégia, e tudo bem: algumas você não vai poder resolver agora, mas precisa mapear pra deixar no radar. O que você reconhece aqui, você acompanha e se prepara pra enfrentar. O que você ignora é o que te pega de surpresa. Da lista abaixo, **escolha as ameaças que se aplicam ao seu caso, com honestidade.**',
   ],
   swotReady: () => [
-    'Diagnóstico fechado. Dá uma olhada na sua Matriz SWOT. Tire o que não combina e acrescente o que faltar.',
+    'Diagnóstico fechado. Dá uma olhada na sua Matriz SWOT. **Tire o que não combina e acrescente o que faltar.**',
   ],
   // Comentário sobre o balanço da SWOT (Metodologia v2 — forças+oportunidades vs fraquezas+ameaças).
   swotBalance: (favoravel: boolean) =>
@@ -204,7 +204,7 @@ export const SAY = {
   strategiesReady: () => [
     'Diagnóstico fechado. Agora a gente sai do que é e vai pro que fazer.',
     'Estratégia é o como. Não é onde você quer chegar (isso é objetivo). É a ação concreta que move você até lá: verbo no infinitivo, específica, exequível.',
-    'Cruzei o que você marcou como fraqueza com o que enxerga como oportunidade e já criei algumas estratégias pra você. Dá uma olhada e me diz o que faz sentido manter, o que sai e o que falta.',
+    'Cruzei o que você marcou como fraqueza com o que enxerga como oportunidade e já criei algumas estratégias pra você. Dá uma olhada e **me diz o que faz sentido manter, o que sai e o que falta.**',
   ],
   // --- Priorização (Nyta_Matriz_Priorizacao_v2) ------------------------------------------------
   priorityIntro: () => [
@@ -212,24 +212,24 @@ export const SAY = {
     'Aqui eu vou te pedir atenção total. É a hora de definir por onde começar.',
     'Vamos começar pensando: quais devem ser os critérios que vão nortear a sua priorização? Bom, se são essas estratégias que vão nos levar à visão e à missão, então o que a gente tem que olhar são os seus OBJETIVOS.',
     'A lógica é simples: cada estratégia contribui pra cada objetivo de um jeito diferente. Algumas empurram o digital com força. Outras puxam o financeiro. Outras servem mais pra mídia ou pra agenda de shows. O que a gente vai fazer agora é olhar estratégia por estratégia e ver quais delas mais atendem os SEUS objetivos. Não os do artista do lado, os seus.',
-    'O método clássico é dar nota de 1 a 10 pra cada estratégia, medindo o impacto em cada objetivo. A soma no final diz quem vem primeiro. Funciona muito bem, mas dá um trabalhinho… Como você quer fazer essa parte?',
+    'O método clássico é dar nota de 1 a 10 pra cada estratégia, medindo o impacto em cada objetivo. A soma no final diz quem vem primeiro. Funciona muito bem, mas dá um trabalhinho… **Como você quer fazer essa parte?**',
   ],
   // Respostas após a escolha de priorização (Metodologia v2, Etapa 6/7).
   priorityAiChosen: () => [
-    'Beleza. Vou rodar essa priorização por você, baseada no que aprendi com mais de 300 planejamentos estratégicos reais de artistas brasileiros. Vou te trazer a ordem proposta. Você pode aceitar, mudar de posição ou substituir qualquer item. A palavra final é sempre sua.',
+    'Beleza. Vou rodar essa priorização por você, baseada no que aprendi com mais de 300 planejamentos estratégicos reais de artistas brasileiros. Vou te trazer a ordem proposta. **Você pode aceitar, mudar de posição ou substituir qualquer item.** A palavra final é sempre sua.',
   ],
   priorityManualChosen: () => ['Combinado. Agora é com você.'],
 
   // --- Plano de Ação e fecho (Nyta_Etapa_Plano_de_Acao_v1) -------------------------------------
   scheduleSetupIntro: () => [
     'Para tudo um instantinho. Olha o que você acabou de fazer: começou essa conversa com um monte de coisa solta na cabeça e chegou num plano de verdade, com direção, propósito e uma ordem clara do que fazer primeiro.',
-    'Último passo: transformar isso em rotina. Cada estratégia priorizada vira um plano de ação — um passo a passo de tarefas, na ordem certa. Pra eu já montar o cronograma pra você, me diz: quando você quer começar e em quanto tempo quer realizar esse plano?',
+    'Último passo: transformar isso em rotina. Cada estratégia priorizada vira um plano de ação — um passo a passo de tarefas, na ordem certa. Pra eu já montar o cronograma pra você, me diz: **quando você quer começar e em quanto tempo quer realizar esse plano?**',
   ],
   scheduleReady: () => [
-    'Pronto — montei o cronograma. Distribuí as tarefas pelo período que você escolheu, começando pelas estratégias mais prioritárias. As datas são uma sugestão: ajuste o que quiser, defina quem faz cada tarefa e siga no seu ritmo.',
+    'Pronto — montei o cronograma. Distribuí as tarefas pelo período que você escolheu, começando pelas estratégias mais prioritárias. As datas são uma sugestão: **ajuste o que quiser, defina quem faz cada tarefa e siga no seu ritmo.**',
   ],
   finalReady: (artist: string) => [
-    `Plano de ${artist} pronto! Esse é o resumo de tudo. Ao confirmar, seu painel completo é liberado.`,
+    `Plano de ${artist} pronto! Esse é o resumo de tudo. **Ao confirmar, seu painel completo é liberado.**`,
   ],
 
   // --- Genéricos -------------------------------------------------------------------------------
@@ -238,8 +238,8 @@ export const SAY = {
   ],
   nudgeWidget: () => [
     pick([
-      'Anotado! Mas aqui preciso que você escolha uma das opções acima.',
-      'Entendi! Só que neste passo a resposta é pelas opções acima.',
+      'Anotado! Mas aqui **preciso que você escolha uma das opções acima.**',
+      'Entendi! Só que **neste passo a resposta é pelas opções acima.**',
     ]),
   ],
 };
@@ -250,15 +250,15 @@ export const SAY = {
 export type OpenTextField = 'oQueFalam' | 'entrega' | 'paraQuem';
 export const GUIDED_OPENTEXT: Record<OpenTextField, { opener: string; followups: string[] }> = {
   oQueFalam: {
-    opener: 'Que palavras você gostaria de ouvir alguém usar pra te descrever?',
-    followups: ['Se alguém indicasse o seu trabalho pra outra pessoa, o que você gostaria que falassem de você?'],
+    opener: '**Que palavras você gostaria de ouvir alguém usar pra te descrever?**',
+    followups: ['**Se alguém indicasse o seu trabalho pra outra pessoa, o que você gostaria que falassem de você?**'],
   },
   entrega: {
-    opener: 'Pensa numa pessoa que te ouve: o que ela sente quando escuta a sua música?',
-    followups: ['Em poucas palavras, que tipo de experiência a sua música oferece? (ex.: energia, acolhimento, nostalgia, pista de dança)'],
+    opener: 'Pensa numa pessoa que te ouve: **o que ela sente quando escuta a sua música?**',
+    followups: ['**Em poucas palavras, que tipo de experiência a sua música oferece?** (ex.: energia, acolhimento, nostalgia, pista de dança)'],
   },
   paraQuem: {
-    opener: 'Pensa em quem mais se conecta com a sua música hoje. Quem são essas pessoas?',
-    followups: ['Tem algo em comum entre elas? Idade, lugar, gosto, um momento de vida?'],
+    opener: 'Pensa em quem mais se conecta com a sua música hoje. **Quem são essas pessoas?**',
+    followups: ['**Tem algo em comum entre elas?** Idade, lugar, gosto, um momento de vida?'],
   },
 };
