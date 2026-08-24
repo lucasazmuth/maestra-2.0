@@ -1,5 +1,7 @@
 import { fecharNegritoAberto, perguntaEmDestaque, placeholderDaPergunta } from '../pergunta';
 import { GUIDED_OPENTEXT, SAY } from '../nytaPersona';
+import { nextBeat } from '../script';
+import type { ArtistContent, ArtistGender } from '../../../../interfaces/maestra';
 
 describe('perguntaEmDestaque', () => {
   it('devolve o trecho em negrito da fala', () => {
@@ -100,7 +102,7 @@ describe('varredura das falas da Nyta', () => {
       SAY.greeting('Fulano'), SAY.askGender(), SAY.askGenreMusical(), SAY.askGenreConfirm('mpb'),
       SAY.askStage(), SAY.referencesIntro('Fulano'), SAY.refArtisticas(), SAY.refComunicacao(),
       SAY.refGestao(), SAY.refPosicionamento(), SAY.visionCityAsk(), SAY.visionOnde(),
-      SAY.visionPorQuem(), SAY.visionSubstantivo(), SAY.visionAdjetivo(), SAY.visionReview(),
+      SAY.visionPorQuem('ele'), SAY.visionSubstantivo('ele'), SAY.visionAdjetivo(), SAY.visionReview(),
       SAY.visionOQueFalam('Fulano quer ser reconhecido que…'), SAY.missionEntrega('Fulano'),
       SAY.missionParaQuem(), SAY.missionFinancial(), SAY.missionReview(), SAY.valuesIntro(),
       SAY.objectivesIntro(), SAY.swotIntro(), SAY.swotInternalIntro(), SAY.swotOportunidadesIntro(),
@@ -112,5 +114,63 @@ describe('varredura das falas da Nyta', () => {
     // em vez de so dizer que 2 nao e <= 2.
     const comDoisDestaques = todas.filter((fala) => (fala.match(/\*\*/g) || []).length > 2);
     expect(comDoisDestaques).toEqual([]);
+  });
+});
+
+// A Nyta trata o artista pelo genero que ele escolheu na abertura. Estas duas falas eram as
+// unicas que ignoravam isso: uma fixava o masculino e a outra usava "reconhecido(a)", que nao
+// atende quem escolheu "elu" e ainda le mal para quem ouve a tela.
+describe('flexao de genero das falas', () => {
+  it('trata quem escolheu "ele" no masculino', () => {
+    expect(SAY.visionSubstantivo('ele')[0]).toContain('ser chamado?');
+    expect(SAY.visionPorQuem('ele')[0]).toContain('ser reconhecido?');
+  });
+
+  it('trata quem escolheu "ela" no feminino', () => {
+    expect(SAY.visionSubstantivo('ela')[0]).toContain('ser chamada?');
+    expect(SAY.visionPorQuem('ela')[0]).toContain('ser reconhecida?');
+  });
+
+  it('trata quem escolheu "elu" na forma neutra', () => {
+    expect(SAY.visionSubstantivo('elu')[0]).toContain('ser chamade?');
+    expect(SAY.visionPorQuem('elu')[0]).toContain('ser reconhecide?');
+  });
+
+  // Sem genero informado a fala ainda precisa sair inteira: cai no masculino, que e a base
+  // segura do `flex` usado no resto do wizard.
+  it('cai no masculino quando o genero ainda nao foi informado', () => {
+    expect(SAY.visionSubstantivo(undefined)[0]).toContain('ser chamado?');
+  });
+
+  // O parentese nao pode voltar por atalho de quem for reescrever a fala.
+  it('nao usa "(a)" para escapar da flexao', () => {
+    const falas = [
+      ...SAY.visionPorQuem('ela'), ...SAY.visionSubstantivo('ela'),
+      ...SAY.visionPorQuem('elu'), ...SAY.visionSubstantivo('elu'),
+    ];
+    expect(falas.filter((f) => /\(a\)|\(o\)|\(as\)|\(os\)/.test(f))).toEqual([]);
+  });
+});
+
+// A ligacao entre o roteiro e as falas: o `SAY` pode flexionar certo e ainda assim o artista ser
+// tratado errado, se o `nextBeat` esquecer de repassar o genero. Sao dois pontos diferentes de
+// falha, e os testes acima so cobrem o primeiro.
+describe('o roteiro repassa o genero do artista para as falas', () => {
+  const noPassoDaVisao = (gender: ArtistGender) => ({
+    step: 1,
+    identity: {
+      name: 'Fulana', gender, city: 'Recife', state: 'PE',
+      visionParts: { onde: 'nacional', porQuem: ['publico'] },
+    },
+  }) as unknown as ArtistContent;
+
+  it.each([
+    ['ela' as ArtistGender, 'ser chamada?'],
+    ['ele' as ArtistGender, 'ser chamado?'],
+    ['elu' as ArtistGender, 'ser chamade?'],
+  ])('trata quem escolheu "%s" corretamente', (gender, esperado) => {
+    const beat = nextBeat(noPassoDaVisao(gender));
+    expect(beat.stage).toBe('vision.substantivo');
+    expect(beat.say.join(' ')).toContain(esperado);
   });
 });

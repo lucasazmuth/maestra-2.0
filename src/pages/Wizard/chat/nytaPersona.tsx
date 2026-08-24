@@ -1,6 +1,8 @@
 import { FC } from 'react';
 
 import { NytaEmblem, type NytaEmblemTone } from '../../../components/nyta/NytaEmblem';
+import { flex } from './wizardData';
+import type { ArtistGender } from '../../../interfaces/maestra';
 
 // Identidade visual e verbal da Nyta — a inteligência da Maestra.
 // As falas são templadas (custo zero por turno) e seguem o tom de voz do método
@@ -119,8 +121,8 @@ export const SAY = {
   visionOnde: () => [
     'Pensando de forma realista nos próximos 3 anos, **até onde você quer que o seu trabalho chegue?**',
   ],
-  visionPorQuem: () => [
-    'Agora a parte que mais define a sua visão: por quem você quer ser reconhecido(a)?',
+  visionPorQuem: (gender?: ArtistGender) => [
+    `Agora a parte que mais define a sua visão: por quem você quer ser ${flex(gender, { m: 'reconhecido', f: 'reconhecida', n: 'reconhecide' })}?`,
     'E aqui eu não tô falando de público-alvo. Tô falando de uma coisa mais sutil: de onde você espera que venha a validação. Porque o reconhecimento numa carreira musical pode vir de quatro lugares diferentes — do público, da crítica e da mídia, do mercado, ou dos seus pares — e cada artista valoriza um desses lugares mais que os outros. Não é certo nem errado, é honestidade.',
     'Pra te ajudar a enxergar isso, eu mudo a pergunta: **quando você vai saber que subiu um degrau na carreira?** Que aquele clique aconteceu? Escolhe 1 ou 2 opções, as que mais traduzem o que você sente — e responde sem filtro.',
   ],
@@ -128,7 +130,9 @@ export const SAY = {
   visionPorQuemReflect: (fontes: string) => [
     `Entendido. Isso significa que você almeja o reconhecimento principalmente ${fontes}.`,
   ],
-  visionSubstantivo: () => ['Continuando. E **como você prefere ser chamado?**'],
+  visionSubstantivo: (gender?: ArtistGender) => [
+    `Continuando. E **como você prefere ser ${flex(gender, { m: 'chamado', f: 'chamada', n: 'chamade' })}?**`,
+  ],
   visionAdjetivo: () => [
     'Qual característica você quer que venha junto desse nome? **Qual palavra define o jeito do seu trabalho?** Pode escolher uma sugestão ou escrever a sua.',
   ],
