@@ -10,7 +10,7 @@
  * Validates: Requirements 10.1, 6.1
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
@@ -331,13 +331,12 @@ describe('AppLayout - lista de perfis do rail', () => {
   // A lista precisa ser o unico pedaco do rail que rola: se ela empurrasse os vizinhos, rolar
   // ate um perfil la embaixo esconderia os atalhos ou o botao de criar.
   it('mantem os atalhos e o botao de criar fora da area rolavel', () => {
-    const { container } = renderizarCom(30);
+    renderizarCom(30);
 
-    const lista = container.querySelector('.rail-people-list');
-    expect(lista).not.toBeNull();
-    expect(lista!.querySelectorAll('[aria-label^="Abrir perfil"]')).toHaveLength(30);
-    expect(lista!.querySelector('[aria-label="Criar novo perfil de artista"]')).toBeNull();
-    expect(lista!.querySelector('[aria-label="Tela inicial"]')).toBeNull();
-    expect(container.querySelector('[aria-label="Criar novo perfil de artista"]')).not.toBeNull();
+    const lista = screen.getByRole('group', { name: 'Seus perfis' });
+    expect(within(lista).getAllByRole('button', { name: /^Abrir perfil de/ })).toHaveLength(30);
+    expect(within(lista).queryByRole('button', { name: 'Criar novo perfil de artista' })).toBeNull();
+    expect(within(lista).queryByRole('button', { name: 'Tela inicial' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Criar novo perfil de artista' })).toBeInTheDocument();
   });
 });

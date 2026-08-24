@@ -425,7 +425,7 @@ export const AppLayout: FC = memo(() => {
             </div>
 
             <div className='rail-people'>
-              <div className='rail-people-list' ref={listaDePerfis}>
+              <div className='rail-people-list' ref={listaDePerfis} role='group' aria-label='Seus perfis'>
                 {/* Sem foto, cai no MESMO avatar vazio de /artists e da Sidebar
                     (ARTISTS_DEFAULT_IMAGE), e não numa inicial. O rail era o único ponto do app que
                     desviava para letra, então o mesmo perfil aparecia como desenho numa tela e como
