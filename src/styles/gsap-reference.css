@@ -881,6 +881,10 @@
    botao de criar ficam ancorados, para rolar a lista nao esconder o resto do menu.
    O `min-height: 0` aparece nos dois niveis porque sem ele um item flex nao encolhe abaixo do
    proprio conteudo e o overflow nunca chega a acontecer: a lista simplesmente vazaria pra fora. */
+/* Folga minima entre o Nyta e a lista de perfis. O `space-between` do rail so afasta os dois
+   enquanto sobra espaco: com a lista cheia ele colapsa pra zero e os avatares encostam no botao.
+   O `row-gap` e o piso que o `space-between` nao garante. */
+.app-rail { row-gap: 18px; }
 .app-rail .rail-actions { flex-shrink: 0; }
 .rail-people {
   display: flex;
