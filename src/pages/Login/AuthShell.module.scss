@@ -69,9 +69,17 @@
 
 .social {
   display: grid;
-  grid-template-columns: 1fr;
+  // Duas colunas iguais: a diretriz 4.8 da App Store pede o Sign in with Apple com a mesma
+  // proeminencia dos demais logins sociais, e coluna unica empilhada daria destaque ao primeiro.
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 20px;
+
+  // So empilha em tela muito estreita. Manter lado a lado ate onde couber e o que mantem os dois
+  // visivelmente equivalentes; empilhado, o de cima vira o "principal" aos olhos de quem le.
+  @media (max-width: 330px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .socialBtn {

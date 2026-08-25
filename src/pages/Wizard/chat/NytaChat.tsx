@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { App, Input } from 'antd';
 import { FiArrowUp, FiCheck } from 'react-icons/fi';
@@ -9,6 +9,7 @@ import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
 import { WIZARD_TOTAL_STEPS } from '../../../constants/maestra';
 import { NytaBubble, NytaCardRow, TypingIndicator, UserBubble, WidgetSlot } from './ChatMessage';
 import { GUIDED_OPENTEXT, SAY, type OpenTextField } from './nytaPersona';
+import { fecharNegritoAberto, perguntaEmDestaque, placeholderDaPergunta } from './pergunta';
 import { buildOpening, nextBeat, currentStepIndex, STEP_LABELS, type PrepareAction, type WidgetSpec } from './script';
 import { YouTubeEmbed } from '../../../components/YouTubeEmbed';
 import { BEAT_VIDEOS, VIDEO_ABERTURA } from '../beatVideos';
@@ -305,7 +306,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
         setThread((t) => [...t, { id, role: 'nyta', text: '', streaming: true }]);
         const step = charsPerTick(text.length);
         for (let i = step; i < text.length; i += step) {
-          const shown = text.slice(0, i);
+          const shown = fecharNegritoAberto(text.slice(0, i));
           setThread((t) => t.map((m) => (m.id === id ? { ...m, text: shown } : m)));
           await sleep(TYPE_MS);
         }
@@ -1007,6 +1008,19 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
     return null;
   };
 
+  // O campo repete a pergunta do passo em vez de "Escreva sua resposta...". A conversa tem muito
+  // texto — video, contexto, ressalvas — e quem chega leigo perde de vista QUAL das frases exige
+  // resposta. A pergunta vem do negrito da ultima fala da Nyta, entao balao e campo nao tem como
+  // divergir: reescrever a fala ja reescreve o campo.
+  const placeholderDoCampo = useMemo(() => {
+    for (let i = thread.length - 1; i >= 0; i -= 1) {
+      const item = thread[i];
+      if (item.role !== 'nyta' || !item.text) continue;
+      return placeholderDaPergunta(perguntaEmDestaque(item.text));
+    }
+    return placeholderDaPergunta(null);
+  }, [thread]);
+
   return (
     <div className='nyta-chat'>
       {/* Portão entre etapas: cobre a conversa, confirma o que foi concluído e anuncia o que vem.
@@ -1084,7 +1098,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
           <Input.TextArea
             ref={inputRef}
             autoSize={{ minRows: 1, maxRows: 4 }}
-            placeholder='Escreva sua resposta…'
+            placeholder={placeholderDoCampo}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {

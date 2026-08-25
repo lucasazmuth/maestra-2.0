@@ -20,6 +20,8 @@ import {
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store, useAppDispatch, useAppSelector } from './store/store';
+import { rodandoNativo } from './lib/plataforma';
+import { MobileIntro } from './pages/MobileIntro';
 import { authActions } from './store/slices/auth';
 
 import { supabase } from './lib/supabase';
@@ -219,8 +221,14 @@ const AppRoutes: FC = () => {
   return (
     <Routes>
       {/* Landing pública (porta de entrada): header/footer próprios, sem AppLayout.
-          Renderiza pra todos — o header adapta os CTAs pelo estado de login. */}
-      <Route path='/' element={<Landing />} />
+          Renderiza pra todos — o header adapta os CTAs pelo estado de login.
+
+          No app empacotado ela NÃO entra. A landing é peça de marketing: quem baixou o app já
+          foi convencido, e uma página de venda dentro do app é exatamente o que a App Review
+          chama de "thin wrapper" (4.2). Pior, o "Ver planos" dela leva ao checkout com PIX, e
+          caminho de compra fora da loja dentro do app iOS é rejeição por 3.1.1. Dentro do app a
+          porta de entrada é o login, e quem já entrou vai direto para os perfis. */}
+      <Route path='/' element={rodandoNativo() ? <MobileIntro /> : <Landing />} />
 
       {/* Referência de layout, fora do fluxo do produto. */}
       <Route path='/index2' element={<Landing2 />} />

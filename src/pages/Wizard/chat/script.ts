@@ -206,13 +206,13 @@ export function nextBeat(draft: ArtistContent): Beat {
     if (!vp.onde)
       return { stage: 'vision.onde', say: SAY.visionOnde(), widget: { kind: 'visionOnde' } };
     if (!vp.porQuem?.length)
-      return { stage: 'vision.porQuem', say: SAY.visionPorQuem(), widget: { kind: 'visionPorQuem' } };
+      return { stage: 'vision.porQuem', say: SAY.visionPorQuem(id.gender), widget: { kind: 'visionPorQuem' } };
     if (!vp.substantivo) {
       // Metodologia v2, Q8: reflete a fonte de reconhecimento antes de perguntar o substantivo.
       const fontes = recognitionFontesLabel(id.recognitionTags);
       const say = fontes
-        ? [...SAY.visionPorQuemReflect(fontes), ...SAY.visionSubstantivo()]
-        : SAY.visionSubstantivo();
+        ? [...SAY.visionPorQuemReflect(fontes), ...SAY.visionSubstantivo(id.gender)]
+        : SAY.visionSubstantivo(id.gender);
       return { stage: 'vision.substantivo', say, widget: { kind: 'visionSubstantivo' } };
     }
     if (!vp.adjetivo)
