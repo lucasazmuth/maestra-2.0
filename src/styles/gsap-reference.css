@@ -10052,3 +10052,23 @@ body:has(.track-detail-backdrop) .local-player-bar {
 .planning-page .reference-map::after {
   background: repeating-linear-gradient(to bottom, #9fb2ce 0 5px, transparent 5px 11px);
 }
+
+/* ── Recuo do topo no app empacotado ──────────────────────────────────────────────────────────
+   No iPhone a WKWebView ocupa a tela inteira, entao o cabecalho nasce DEBAIXO do relogio e da
+   bateria: a marca e o botao de entrar ficam ilegiveis. `env(safe-area-inset-top)` vale 0 em
+   navegador e em aparelho sem recorte, entao estas regras sao inertes na web — nao ha ramo
+   "se for app" a manter.
+
+   A altura do cabecalho (93px) aparece repetida em varias regras, e nao vale reescrever todas:
+   aqui a barra so cresce o tanto do recorte, e quem esta ancorado embaixo dela acompanha. */
+.top-navigation {
+  height: calc(93px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@media (min-width: 701px) {
+  /* No desktop os tres blocos sao `fixed` e cada um repete o 93px como ancora propria. */
+  .app-layout,
+  .app-rail,
+  .profile-panel { top: calc(93px + env(safe-area-inset-top, 0px)); }
+}
