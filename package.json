@@ -54,6 +54,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build && cp build/index.html build/404.html",
+    "build:app": "GENERATE_SOURCEMAP=false react-scripts build",
+    "sync:ios": "npm run build:app && npx cap sync ios",
     "brand:check": "node scripts/check-brand-residue.mjs",
     "edge:check": "node scripts/check-edge-functions.mjs",
     "emails:preview": "node scripts/render-email-preview.mjs",
