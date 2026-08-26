@@ -1644,7 +1644,7 @@
 .wizard--fullpage {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: var(--z-wizard);
   overflow: hidden;
   // Anula o `padding: var(--wiz-pad)` do `.wizard`: aqui quem dá respiro é cada coluna.
   padding: 0;
@@ -1892,7 +1892,7 @@
 .wiz-chat-head {
   flex: none;
   position: relative;
-  z-index: 2;
+  z-index: var(--z-cartao);
   display: flex;
   align-items: center;
   // `space-between` + `gap` vinham de um <div> interno que sumiu na reestruturação: sem eles o
@@ -1976,7 +1976,7 @@
   inset: 0;
   // Abaixo dos modais do antd (`.wiz-confirm`, ~1000): "Recomeçar do zero" precisa abrir POR CIMA
   // da folha, não atrás dela.
-  z-index: 60;
+  z-index: var(--z-coluna);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -2564,7 +2564,7 @@
   border-radius: 0;
   padding: 3px; // espessura do anel
   pointer-events: none;
-  z-index: 60;
+  z-index: var(--z-coluna);
   opacity: 0;
   background: conic-gradient(
     from var(--wizGlowAngle),
@@ -2741,7 +2741,7 @@
 .wiz-gate {
   position: absolute;
   inset: 0;
-  z-index: 20;
+  z-index: var(--z-portao);
   display: grid;
   place-items: center;
   padding: 24px;

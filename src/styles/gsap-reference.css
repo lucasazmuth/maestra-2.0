@@ -1,6 +1,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap');
 
 :root { --blue: #3361ff; --text: #61749a; --pale-text: #aebbd0; --line: #e8edf5; --canvas: #f7f8fb; }
+
+/* ── Camadas ─────────────────────────────────────────────────────────────────────────────────
+   A escada de z-index do app, declarada num lugar só.
+   Ela já existia na prática — dois overlays independentes escolheram 3000, e o confete escolheu
+   4000 para ficar acima deles. O que faltava era alguém DIZER isso: sem a escada escrita, quem
+   precisa aparecer por cima de algo escolhe um número maior no chute, e é assim que se chega a
+   um z-index de 2.147.483.000.
+
+   Usar o token, e não o número. Precisar de um degrau novo é sinal de que ele falta aqui.
+
+   Uma camada só vale contra irmãs no MESMO contexto de empilhamento: o portão do wizard fica em
+   20 e ainda assim é coberto pelo overlay em 3000 porque um é `absolute` dentro da conversa e o
+   outro é `fixed` na raiz. Número alto não resolve contexto errado.                          */
+:root {
+  --z-cartao: 2;      /* detalhe dentro de um cartão (fechar, selo) */
+  --z-portao: 20;     /* portão de etapa do wizard, sobre a coluna da conversa */
+  --z-wizard: 40;     /* casca do wizard em tela cheia */
+  --z-coluna: 60;     /* coluna do plano e brilho da etapa */
+  --z-painel: 70;     /* painel do perfil */
+  --z-rail: 80;       /* rail de atalhos */
+  --z-topo: 100;      /* barra do topo */
+  /* 1000 é onde o antd põe os modais dele. Overlay nosso precisa passar disso. */
+  --z-overlay: 3000;  /* overlay de tela cheia (modal próprio, fora do fluxo) */
+  --z-confete: 4000;  /* comemoração: acima do overlay que ela comemora */
+  --z-carregando: 9999; /* spinner global, o teto */
+}
 .top-navigation .account-icon { width: 24px; height: 24px; overflow: hidden; background: #eaf0fb; }
 .top-navigation .account-icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .top-navigation .global-search { gap: 12px; padding: 0 18px; }
@@ -171,10 +197,10 @@
 
 /* Persistent navigation: only the dashboard content scrolls with the document. */
 @media (min-width: 701px) {
-  .top-navigation { position: fixed; inset: 0 0 auto; z-index: 100; }
+  .top-navigation { position: fixed; inset: 0 0 auto; z-index: var(--z-topo); }
   .app-layout { position: fixed; inset: 93px 0 0; display: block; height: auto; min-height: 0; margin: 0; padding: 28px 0 30px; overflow: hidden; }
-  .app-rail { position: fixed; z-index: 80; top: 93px; bottom: 0; left: 0; width: 101px; }
-  .profile-panel { position: fixed; z-index: 70; top: 93px; bottom: 0; left: 101px; width: 359px; overflow-y: auto; }
+  .app-rail { position: fixed; z-index: var(--z-rail); top: 93px; bottom: 0; left: 0; width: 101px; }
+  .profile-panel { position: fixed; z-index: var(--z-painel); top: 93px; bottom: 0; left: 101px; width: 359px; overflow-y: auto; }
   .board-shell { margin: 0 29px 0 460px; scroll-margin-top: 121px; }
 }
 

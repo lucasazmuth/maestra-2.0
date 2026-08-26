@@ -154,7 +154,7 @@ export const SuccessConfetti: FC<Props> = ({ durationMs = 2600, style }) => {
         width: '100vw',
         height: '100vh',
         pointerEvents: 'none',
-        zIndex: 4000,
+        zIndex: 'var(--z-confete)',
         ...style,
       }}
     />
