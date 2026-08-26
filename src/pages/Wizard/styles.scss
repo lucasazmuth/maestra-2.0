@@ -1644,7 +1644,7 @@
 .wizard--fullpage {
   position: fixed;
   inset: 0;
-  z-index: var(--z-wizard);
+  z-index: var(--z-tela-cheia);
   overflow: hidden;
   // Anula o `padding: var(--wiz-pad)` do `.wizard`: aqui quem dá respiro é cada coluna.
   padding: 0;

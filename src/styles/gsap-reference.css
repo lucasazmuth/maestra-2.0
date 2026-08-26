@@ -17,7 +17,7 @@
 :root {
   --z-cartao: 2;      /* detalhe dentro de um cartão (fechar, selo) */
   --z-portao: 20;     /* portão de etapa do wizard, sobre a coluna da conversa */
-  --z-wizard: 40;     /* casca do wizard em tela cheia */
+  --z-tela-cheia: 40; /* tela que toma o app inteiro (wizard, Espaço JAM) */
   --z-coluna: 60;     /* coluna do plano e brilho da etapa */
   --z-painel: 70;     /* painel do perfil */
   --z-rail: 80;       /* rail de atalhos */
@@ -27,6 +27,11 @@
   --z-confete: 4000;  /* comemoração: acima do overlay que ela comemora */
   --z-carregando: 9999; /* spinner global, o teto */
 }
+
+/* Ainda fora da escada, de propósito: a faixa 119–160 (navbar do celular, barra do player,
+   menu do sistema) e a faixa 999–2500 (banners, modal flutuante da Nyta). São valores coerentes
+   entre si e que codificam ordem real — "121 acima da navbar", por exemplo. Trazer essa faixa
+   para cá exige verificar cada tela, e não é um find/replace: fica como o próximo passo. */
 .top-navigation .account-icon { width: 24px; height: 24px; overflow: hidden; background: #eaf0fb; }
 .top-navigation .account-icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .top-navigation .global-search { gap: 12px; padding: 0 18px; }

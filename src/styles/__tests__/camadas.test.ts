@@ -17,7 +17,7 @@ const ler = (p: string) => fs.readFileSync(path.join(raiz, p), 'utf8');
 const ESCADA = [
   'cartao',
   'portao',
-  'wizard',
+  'tela-cheia',
   'coluna',
   'painel',
   'rail',
@@ -71,10 +71,26 @@ describe('escada de camadas', () => {
       ['pages/ActionPlan/index.tsx', 'var(--z-overlay)'],
       ['components/SuccessConfetti.tsx', 'var(--z-confete)'],
       ['components/spinner/spinner.scss', 'var(--z-carregando)'],
+      ['pages/Catalog/ProjectSpace.module.scss', 'var(--z-tela-cheia)'],
     ];
     for (const [arquivo, token] of alvos) {
       expect(ler(arquivo)).toContain(token);
     }
+  });
+
+  // O Espaço JAM tinha 2147483000 — o teto do int32 — e o número nunca fez nada: os ancestrais
+  // `position: fixed` do `jam-space-open` prendiam aquela camada num contexto próprio. Quem faz o
+  // JAM cobrir o app é o `display: none` no topo, no rail e no painel.
+  //
+  // Este teste existe para o dia em que algo aparecer por cima do JAM e a reação for subir o
+  // número de novo: não vai funcionar, e a resposta está no comentário daquele arquivo.
+  it('o Espaço JAM não voltou a escalar número', () => {
+    const jam = ler('pages/Catalog/ProjectSpace.module.scss');
+    // `matchAll` espalhado exige um target mais novo que o do projeto; exec em laco resolve.
+    const padrao = /z-index:\s*(\d+)/g;
+    const numeros: number[] = [];
+    for (let m = padrao.exec(jam); m; m = padrao.exec(jam)) numeros.push(Number(m[1]));
+    expect(numeros).toEqual([]);
   });
 
   // O portão do wizard fica em 20 e ainda assim é coberto pelo overlay em 3000 — um é `absolute`
