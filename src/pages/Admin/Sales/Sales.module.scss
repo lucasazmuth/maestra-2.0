@@ -221,3 +221,14 @@ $fundo: #f6f8fc;
   font-style: normal;
   font-weight: 700;
 }
+
+// Aviso de que o negocio nasceu ligado a uma conta ja existente da Maestra.
+.avisoInbound {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 7px;
+  background: #eef3ff;
+  color: #4a67a8;
+  font-size: 12.5px;
+  line-height: 1.45;
+}

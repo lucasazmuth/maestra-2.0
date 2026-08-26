@@ -136,7 +136,11 @@ const Coluna: FC<{
   );
 };
 
-export const Kanban: FC = () => {
+export const Kanban: FC<{
+  /** Lead do Inbound que deve virar negocio assim que o quadro estiver carregado. */
+  inboundParaNegocio?: { id: string; nome: string | null; email: string } | null;
+  onConsumirInbound?: () => void;
+}> = ({ inboundParaNegocio, onConsumirInbound }) => {
   const [funil, setFunil] = useState<Funil | null>(null);
   const [etapas, setEtapas] = useState<Etapa[]>([]);
   const [negocios, setNegocios] = useState<Negocio[]>([]);
@@ -154,6 +158,11 @@ export const Kanban: FC = () => {
   // dois ao mesmo tempo.
   const [formulario, setFormulario] = useState<
     { etapa: Etapa | null; negocio: Negocio | null; lead: Lead | null } | null
+  >(null);
+  // Conta da Maestra por tras do negocio, quando ele nasce do Inbound. E o que separa prospect
+  // externo de quem ja e usuario, e vira `linked_user_id` na hora de gravar.
+  const [inboundPendente, setInboundPendente] = useState<
+    { id: string; nome: string | null; email: string } | null
   >(null);
 
   // Um toque curto não pode virar arrasto: sem a distância mínima, abrir o menu do cartão
@@ -183,6 +192,16 @@ export const Kanban: FC = () => {
   useEffect(() => {
     carregar();
   }, [carregar]);
+
+  // Espera as etapas carregarem antes de abrir: sem etapa nao ha onde criar o negocio, e o
+  // formulario abriria sem saber em qual coluna cair.
+  useEffect(() => {
+    if (!inboundParaNegocio || !etapas.length) return;
+    const primeira = etapas[0];
+    setInboundPendente(inboundParaNegocio);
+    setFormulario({ etapa: primeira, negocio: null, lead: null });
+    onConsumirInbound?.();
+  }, [inboundParaNegocio, etapas, onConsumirInbound]);
 
   const aplicarMovimento = useCallback(
     (negocio: Negocio, destino: Etapa, motivo?: string) => {
@@ -323,8 +342,15 @@ export const Kanban: FC = () => {
           const daColuna = negocios.filter((n) => n.stage_id === formulario?.etapa?.id);
           return posicaoEntre(daColuna[daColuna.length - 1]?.board_position, undefined);
         }}
-        onFechar={() => setFormulario(null)}
-        onSalvo={aoSalvarNegocio}
+        inbound={inboundPendente}
+        onFechar={() => {
+          setFormulario(null);
+          setInboundPendente(null);
+        }}
+        onSalvo={(salvo) => {
+          aoSalvarNegocio(salvo);
+          setInboundPendente(null);
+        }}
       />
 
       <Button type='link' onClick={carregar} className={styles.recarregar}>

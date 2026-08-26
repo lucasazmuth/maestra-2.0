@@ -1,6 +1,6 @@
 import { FC, useState, type CSSProperties } from 'react';
 
-import Crm from '../Crm';
+import Crm, { type LeadInbound } from '../Crm';
 import Kanban from './Kanban';
 import Leads from './Leads';
 
@@ -35,6 +35,9 @@ const ABAS: { chave: Aba; rotulo: string; descricao: string }[] = [
 export const AdminSales: FC = () => {
   const [aba, setAba] = useState<Aba>('negocios');
   const atual = ABAS.find((a) => a.chave === aba)!;
+  // Lead do Inbound esperando virar negocio. O quadro e quem abre o formulario, porque e ele
+  // que ja carregou etapas, funil e time.
+  const [inboundParaNegocio, setInboundParaNegocio] = useState<LeadInbound | null>(null);
 
   return (
     <div style={{ padding: 24, maxWidth: 1400 }}>
@@ -58,9 +61,23 @@ export const AdminSales: FC = () => {
 
       {/* A aba Inbound reaproveita a tela de ativação inteira, com a apuração que ela já faz.
           Reescrever aquilo aqui criaria duas contas do mesmo funil, que um dia divergiriam. */}
-      {aba === 'negocios' && <Kanban />}
+      {/* O quadro fica MONTADO nas tres abas, apenas escondido: e ele que abre o formulario de
+          negocio, e desmontar perderia funil, etapas e time toda vez que a aba mudasse. */}
+      <div style={{ display: aba === 'negocios' ? 'block' : 'none' }}>
+        <Kanban
+          inboundParaNegocio={inboundParaNegocio}
+          onConsumirInbound={() => setInboundParaNegocio(null)}
+        />
+      </div>
       {aba === 'leads' && <Leads />}
-      {aba === 'inbound' && <Crm />}
+      {aba === 'inbound' && (
+        <Crm
+          onCriarNegocio={(lead) => {
+            setInboundParaNegocio(lead);
+            setAba('negocios');
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -27,6 +27,8 @@ interface Props {
   negocio?: Negocio | null;
   /** Lead escolhido de fora (botão "Criar negócio" na lista de leads). */
   leadInicial?: Lead | null;
+  /** Conta da Maestra, quando o negócio nasce da aba Inbound. */
+  inbound?: { id: string; nome: string | null; email: string } | null;
   onFechar: () => void;
   onSalvo: (negocio: Negocio | null) => void;
   criarComPosicao?: () => number;
@@ -42,6 +44,7 @@ export const FormularioDeNegocio: FC<Props> = ({
   time,
   negocio,
   leadInicial,
+  inbound,
   onFechar,
   onSalvo,
   criarComPosicao,
@@ -67,6 +70,13 @@ export const FormularioDeNegocio: FC<Props> = ({
       setTituloIntocado(false);
       return;
     }
+    if (inbound) {
+      // Vindo do Inbound o "cliente" não é um lead cadastrado, é uma conta que já existe: o
+      // vínculo vai por `linked_user_id`, e o select de cliente fica vazio de propósito.
+      setForm({ ...VAZIO, title: tituloSugerido(inbound.nome || inbound.email) });
+      setTituloIntocado(true);
+      return;
+    }
     const lead = leadInicial || null;
     setForm({
       ...VAZIO,
@@ -74,7 +84,7 @@ export const FormularioDeNegocio: FC<Props> = ({
       title: lead ? tituloSugerido(lead.name) : '',
     });
     setTituloIntocado(true);
-  }, [aberto, negocio, leadInicial]);
+  }, [aberto, negocio, leadInicial, inbound]);
 
   const escolherLead = (id: string | null) => {
     const lead = leads.find((l) => l.id === id) || null;
@@ -100,7 +110,8 @@ export const FormularioDeNegocio: FC<Props> = ({
           pipelineId,
           etapa,
           posicao: criarComPosicao ? criarComPosicao() : 0,
-          source: form.contactId ? 'prospeccao' : null,
+          linkedUserId: inbound?.id ?? null,
+          source: inbound ? 'inbound' : form.contactId ? 'prospeccao' : null,
         });
         onSalvo(novo);
       }
@@ -125,6 +136,11 @@ export const FormularioDeNegocio: FC<Props> = ({
       width={560}
     >
       <div className={styles.formNovo}>
+        {inbound && (
+          <p className={styles.avisoInbound}>
+            Vindo do Inbound: este negócio fica ligado à conta <strong>{inbound.email}</strong>.
+          </p>
+        )}
         <label>
           Cliente
           <Select

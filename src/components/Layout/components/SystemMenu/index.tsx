@@ -6,6 +6,7 @@ import {
 
 import { PerfisIcon } from '../../../Icons/system';
 import { useIsPlatformAdmin } from '../../../../hooks/useIsPlatformAdmin';
+import { useAdminRole } from '../../../../hooks/useAdminRole';
 import { useAppDispatch } from '../../../../store/store';
 import { authActions } from '../../../../store/slices/auth';
 import styles from './SystemMenu.module.scss';
@@ -37,14 +38,16 @@ const GENERAL: Item[] = [
   { label: 'Suporte', path: '/suporte', icon: <FiLifeBuoy /> },
 ];
 
-const ADMIN: Item[] = [
+// `vendasTambem` marca o que o time de vendas alcanca. O resto do admin some para ele: um
+// vendedor nao precisa (nem deve) ver exclusao de conta, cupons e disparo de push.
+const ADMIN: (Item & { vendasTambem?: boolean })[] = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: <FiBarChart2 /> },
   { label: 'Perfis de artistas', path: '/admin/artistas', icon: <FiGrid /> },
   { label: 'Base de Conhecimento', path: '/admin/knowledge-base', icon: <FiDatabase /> },
   { label: 'Cupons', path: '/admin/cupons', icon: <FiTag /> },
   { label: 'Pass Access', path: '/admin/pass-access', icon: <FiKey /> },
   { label: 'Usuários', path: '/admin/usuarios', icon: <FiUsers /> },
-  { label: 'CRM', path: '/admin/crm', icon: <FiFilter /> },
+  { label: 'CRM de vendas', path: '/admin/vendas', icon: <FiFilter />, vendasTambem: true },
   { label: 'Avaliações', path: '/admin/avaliacoes', icon: <FiStar /> },
   { label: 'Enviar push', path: '/admin/push', icon: <FiBell /> },
 ];
@@ -58,6 +61,7 @@ interface Props {
 
 export const SystemMenu: FC<Props> = ({ hasMobileNav = false }) => {
   const isAdmin = useIsPlatformAdmin();
+  const { ehAdminPleno } = useAdminRole();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -132,7 +136,9 @@ export const SystemMenu: FC<Props> = ({ hasMobileNav = false }) => {
   // Uma grade só, sem título separando Geral de Administração — a visibilidade de cada item
   // continua condicionada à mesma regra de antes (isAdmin), só a divisão visual que saiu.
   const allItems: Item[] = [
-    ...(isAdmin ? [...GENERAL, ...ADMIN] : GENERAL),
+    ...(isAdmin
+      ? [...GENERAL, ...(ehAdminPleno ? ADMIN : ADMIN.filter((i) => i.vendasTambem))]
+      : GENERAL),
     { label: 'Sair da conta', icon: <FiLogOut />, action: signOut },
   ];
 

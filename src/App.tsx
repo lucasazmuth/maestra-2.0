@@ -21,6 +21,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store, useAppDispatch, useAppSelector } from './store/store';
 import { rodandoNativo } from './lib/plataforma';
+import { useAdminRole } from './hooks/useAdminRole';
 import { MobileIntro } from './pages/MobileIntro';
 import { authActions } from './store/slices/auth';
 
@@ -209,6 +210,18 @@ const RequireAdmin: FC = () => {
   return <Outlet />;
 };
 
+// Telas do admin que o time de vendas NAO alcanca. Vendedor precisa do CRM, e nada mais: aqui
+// moram exclusao de conta, cupons, disparo de push e dados pessoais de toda a base.
+//
+// Isto e conveniencia de navegacao, nao seguranca. Quem barra de verdade e a RLS: as tabelas
+// `sales_*` liberam por `can_use_sales_crm()`, e as demais nem para vendedor nem para anonimo.
+const RequireFullAdmin: FC = () => {
+  const { carregando, ehAdminPleno } = useAdminRole();
+  if (carregando) return <Spinner loading global>{null as any}</Spinner>;
+  if (!ehAdminPleno) return <Navigate to='/admin/vendas' replace />;
+  return <Outlet />;
+};
+
 // ---- Routes --------------------------------------------------------------------------------
 
 const PublicOnly: FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -331,19 +344,24 @@ const AppRoutes: FC = () => {
           <Route path='/suporte' element={<Support />} />
           <Route path='/pagamentos' element={<Payments />} />
           <Route element={<RequireAdmin />}>
-            <Route path='/admin/dashboard' element={<AdminDashboard />} />
-            <Route path='/admin/knowledge-base' element={<AdminKnowledgeBase />} />
-            <Route path='/admin/cupons' element={<AdminCoupons />} />
-            <Route path='/admin/pass-access' element={<AdminAccessPasses />} />
-            <Route path='/admin/usuarios' element={<AdminUsers />} />
+            {/* O CRM de vendas fica FORA do RequireFullAdmin: e a unica tela do admin que o time
+                de vendas alcanca. */}
             <Route path='/admin/vendas' element={<AdminSales />} />
             {/* O painel de ativacao virou a aba Inbound de /admin/vendas. A rota antiga
                 redireciona para nao quebrar link salvo por quem ja usava. */}
             <Route path='/admin/crm' element={<Navigate to='/admin/vendas' replace />} />
-            <Route path='/admin/artistas' element={<AdminArtists />} />
-            <Route path='/admin/artistas/:artistId' element={<AdminArtists />} />
-            <Route path='/admin/avaliacoes' element={<AdminReviews />} />
-            <Route path='/admin/push' element={<AdminPush />} />
+
+            <Route element={<RequireFullAdmin />}>
+              <Route path='/admin/dashboard' element={<AdminDashboard />} />
+              <Route path='/admin/knowledge-base' element={<AdminKnowledgeBase />} />
+              <Route path='/admin/cupons' element={<AdminCoupons />} />
+              <Route path='/admin/pass-access' element={<AdminAccessPasses />} />
+              <Route path='/admin/usuarios' element={<AdminUsers />} />
+              <Route path='/admin/artistas' element={<AdminArtists />} />
+              <Route path='/admin/artistas/:artistId' element={<AdminArtists />} />
+              <Route path='/admin/avaliacoes' element={<AdminReviews />} />
+              <Route path='/admin/push' element={<AdminPush />} />
+            </Route>
           </Route>
           <Route path='*' element={<Page404 />} />
         </Route>
