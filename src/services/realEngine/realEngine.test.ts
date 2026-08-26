@@ -37,6 +37,11 @@ describe('Motor REAL v3', () => {
     }));
     expect(ri.pattern.r).toBe(false);
     expect(ri.components.r.every((c) => !c.high)).toBe(true);
+    // Bug relatado: dava 7/100. Sem Spotify a §3.3 manda cada componente receber o z MINIMO da
+    // tabela dele, e essas tabelas nao comecam no mesmo lugar (ouvintes -1,5; seguidores e video
+    // -1,2). Contra um piso global de -1,5, "sem dado nenhum" ja nascia acima do zero em duas das
+    // tres frentes. Zero e a unica nota honesta para quem nao tem nenhuma frente medida.
+    expect(ri.boletim.r).toBe(0);
     expect(ri.pattern.a).toBe(false);
     expect(ri.profile.key).toBe('0000');
   });
@@ -422,5 +427,46 @@ describe('Motor REAL v3', () => {
       expect(ri.pattern.l).toBe(true);
       expect(ri.boletim.l).toBeGreaterThanOrEqual(70);
     });
+  });
+});
+
+// Regressao do piso por componente (bug: artista sem Spotify tirava 7/100).
+//
+// A regua de R mede o quanto cada componente caminhou ate o corte. O zero dessa regua tem que ser
+// o piso da tabela DAQUELE componente: com um piso unico, os componentes cujas tabelas comecam
+// mais alto nunca alcancavam o zero, e um artista sem dado nenhum ganhava pontos do nada.
+describe('R: piso da regua por componente', () => {
+  it('sem nenhuma frente medida, a nota de R e zero', () => {
+    const ri = computeRealIndexV3(base({
+      spotifyConnected: false,
+      spotifyListeners: null, igFollowers: null, tiktokFollowers: null, youtubeMonthlyViews: null,
+    }));
+    expect(ri.boletim.r).toBe(0);
+  });
+
+  // Com Spotify ligado e tudo zerado, o resultado tem que ser o mesmo: zero e zero.
+  it('com Spotify ligado e todos os numeros em zero, R tambem e zero', () => {
+    const ri = computeRealIndexV3(base({
+      spotifyConnected: true,
+      spotifyListeners: 0, igFollowers: 0, tiktokFollowers: 0, youtubeMonthlyViews: 0,
+    }));
+    expect(ri.boletim.r).toBe(0);
+  });
+
+  // A regua so existe porque quem esta encostado no corte nao pode receber a nota de quem nao tem
+  // nada. Este e o caso que a motivou (556 mil ouvintes, 24 mil seguidores): continua alto.
+  it('quem esta perto do corte segue longe do zero', () => {
+    const ri = computeRealIndexV3(base({
+      spotifyConnected: true,
+      spotifyListeners: 556_000, igFollowers: 24_000, tiktokFollowers: null, youtubeMonthlyViews: null,
+    }));
+    expect(ri.boletim.r).toBeGreaterThan(40);
+    expect(ri.boletim.r).toBeLessThan(70); // ainda apagado: invariante §9.1
+  });
+
+  // O piso por componente nao pode mexer na classificacao: aceso/apagado e metodologia.
+  it('nao altera o aceso/apagado', () => {
+    const semNada = computeRealIndexV3(base({ spotifyConnected: false }));
+    expect(semNada.pattern.r).toBe(false);
   });
 });
