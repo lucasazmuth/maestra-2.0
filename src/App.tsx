@@ -70,7 +70,7 @@ const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
 const AdminCoupons = lazy(() => import('./pages/Admin/Coupons'));
 const AdminAccessPasses = lazy(() => import('./pages/Admin/AccessPasses'));
 const AdminUsers = lazy(() => import('./pages/Admin/Users'));
-const AdminCrm = lazy(() => import('./pages/Admin/Crm'));
+const AdminSales = lazy(() => import('./pages/Admin/Sales'));
 const AdminArtists = lazy(() => import('./pages/Admin/Artists'));
 const AdminReviews = lazy(() => import('./pages/Admin/Reviews'));
 const AdminPush = lazy(() => import('./pages/Admin/Push'));
@@ -336,7 +336,10 @@ const AppRoutes: FC = () => {
             <Route path='/admin/cupons' element={<AdminCoupons />} />
             <Route path='/admin/pass-access' element={<AdminAccessPasses />} />
             <Route path='/admin/usuarios' element={<AdminUsers />} />
-            <Route path='/admin/crm' element={<AdminCrm />} />
+            <Route path='/admin/vendas' element={<AdminSales />} />
+            {/* O painel de ativacao virou a aba Inbound de /admin/vendas. A rota antiga
+                redireciona para nao quebrar link salvo por quem ja usava. */}
+            <Route path='/admin/crm' element={<Navigate to='/admin/vendas' replace />} />
             <Route path='/admin/artistas' element={<AdminArtists />} />
             <Route path='/admin/artistas/:artistId' element={<AdminArtists />} />
             <Route path='/admin/avaliacoes' element={<AdminReviews />} />

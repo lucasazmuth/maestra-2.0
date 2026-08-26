@@ -301,3 +301,9 @@ cross join (values
 ) as e(name, position, kind, prob, color)
 where p.is_default
   and not exists (select 1 from public.sales_stages s where s.pipeline_id = p.id);
+
+-- Correcao de acentuacao: as etapas foram semeadas sem acento na primeira aplicacao. Sao texto
+-- de tela, entao voltam a grafia correta. Update por nome exato para nao pisar em etapa que o
+-- time ja tenha renomeado.
+update public.sales_stages set name = 'Reunião'    where name = 'Reuniao';
+update public.sales_stages set name = 'Negociação' where name = 'Negociacao';

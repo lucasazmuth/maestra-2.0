@@ -1,0 +1,177 @@
+import { supabase } from '../../../lib/supabase';
+
+// Camada de dados do CRM de vendas da Maestra (tabelas `sales_*`).
+//
+// Atenção ao prefixo: `crm_*` é o CRM DO ARTISTA (contratantes, casas de show), preso a
+// `artist_id` e reservado ao módulo Marketing do perfil. Este arquivo nunca toca nele.
+//
+// Não há edge function no meio: quem autoriza é a RLS, via `can_use_sales_crm()`. Um usuário
+// sem o papel lê zero linhas e tem a escrita recusada pelo banco, não pela tela.
+
+export interface Etapa {
+  id: string;
+  pipeline_id: string;
+  name: string;
+  position: number;
+  kind: 'open' | 'won' | 'lost';
+  default_probability: number;
+  color: string | null;
+}
+
+export interface Negocio {
+  id: string;
+  pipeline_id: string;
+  stage_id: string;
+  company_id: string | null;
+  contact_id: string | null;
+  linked_user_id: string | null;
+  title: string;
+  value: number;
+  expected_close_date: string | null;
+  priority: 'low' | 'medium' | 'high';
+  source: string | null;
+  status: 'open' | 'won' | 'lost';
+  lost_reason: string | null;
+  board_position: number;
+  owner_id: string | null;
+  archived: boolean;
+}
+
+export interface Funil {
+  id: string;
+  name: string;
+}
+
+/** Funil padrão + suas etapas, na ordem das colunas. */
+export const carregarQuadro = async (): Promise<{ funil: Funil; etapas: Etapa[] }> => {
+  const { data: funil, error: erroFunil } = await supabase
+    .from('sales_pipelines')
+    .select('id, name')
+    .eq('is_default', true)
+    .maybeSingle();
+  if (erroFunil) throw erroFunil;
+  if (!funil) throw new Error('Nenhum funil padrão configurado.');
+
+  const { data: etapas, error: erroEtapas } = await supabase
+    .from('sales_stages')
+    .select('id, pipeline_id, name, position, kind, default_probability, color')
+    .eq('pipeline_id', funil.id)
+    .order('position');
+  if (erroEtapas) throw erroEtapas;
+
+  return { funil: funil as Funil, etapas: (etapas || []) as Etapa[] };
+};
+
+export const carregarNegocios = async (pipelineId: string): Promise<Negocio[]> => {
+  const { data, error } = await supabase
+    .from('sales_deals')
+    // Literal unico, sem concatenar: o `+` transforma o tipo em `string` e o parser de select do
+    // supabase-js perde a inferencia, devolvendo GenericStringError em vez das colunas.
+    .select('id, pipeline_id, stage_id, company_id, contact_id, linked_user_id, title, value, expected_close_date, priority, source, status, lost_reason, board_position, owner_id, archived')
+    .eq('pipeline_id', pipelineId)
+    .eq('archived', false)
+    .order('board_position');
+  if (error) throw error;
+  return (data || []) as Negocio[];
+};
+
+/**
+ * Posição de um cartão solto ENTRE dois vizinhos.
+ *
+ * A média entre as posições dos vizinhos deixa o arrasto escrever uma linha só, em vez de
+ * renumerar a coluna inteira a cada movimento. Fora das pontas o cálculo é direto; nas pontas
+ * abre-se espaço somando ou subtraindo um passo.
+ */
+export const posicaoEntre = (anterior?: number, proxima?: number): number => {
+  if (anterior === undefined && proxima === undefined) return 0;
+  if (anterior === undefined) return (proxima as number) - 1;
+  if (proxima === undefined) return anterior + 1;
+  return (anterior + proxima) / 2;
+};
+
+/**
+ * Move o negócio de etapa e grava a passagem na linha do tempo.
+ *
+ * As duas escritas são deliberadas: `sales_deals` guarda ONDE o negócio está, e
+ * `sales_activities` guarda QUE ele passou por ali. Sem a segunda não há como medir quanto tempo
+ * um negócio levou em cada etapa, que é a leitura que um funil precisa dar.
+ *
+ * O `status` acompanha o `kind` da etapa de destino: é o `kind` que diz se a coluna significa
+ * ganho ou perda, e deixar o status desalinhado da coluna faria o relatório divergir do quadro.
+ */
+export const moverNegocio = async (params: {
+  negocio: Negocio;
+  etapaDestino: Etapa;
+  posicao: number;
+  motivoDaPerda?: string;
+}): Promise<void> => {
+  const { negocio, etapaDestino, posicao, motivoDaPerda } = params;
+
+  const patch: Record<string, unknown> = {
+    stage_id: etapaDestino.id,
+    board_position: posicao,
+    status: etapaDestino.kind,
+    updated_at: new Date().toISOString(),
+  };
+  // O banco recusa perda sem motivo (constraint sales_deals_perda_tem_motivo); sair da perda
+  // precisa limpar o campo, senão o motivo antigo fica pendurado num negócio reaberto.
+  if (etapaDestino.kind === 'lost') patch.lost_reason = motivoDaPerda ?? null;
+  else patch.lost_reason = null;
+
+  const { error } = await supabase.from('sales_deals').update(patch).eq('id', negocio.id);
+  if (error) throw error;
+
+  const { data: sessao } = await supabase.auth.getUser();
+  await supabase.from('sales_activities').insert({
+    deal_id: negocio.id,
+    kind: 'stage_change',
+    // Guarda o id da etapa, não o nome: renomear a coluna não pode reescrever o passado.
+    metadata: { de: negocio.stage_id, para: etapaDestino.id },
+    body: motivoDaPerda || null,
+    owner_id: sessao?.user?.id ?? null,
+    created_by: sessao?.user?.id ?? null,
+  });
+};
+
+export const criarNegocio = async (params: {
+  pipelineId: string;
+  etapa: Etapa;
+  title: string;
+  value: number;
+  posicao: number;
+  linkedUserId?: string | null;
+  source?: string | null;
+}): Promise<Negocio> => {
+  const { data: sessao } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from('sales_deals')
+    .insert({
+      pipeline_id: params.pipelineId,
+      stage_id: params.etapa.id,
+      title: params.title,
+      value: params.value,
+      probability: params.etapa.default_probability,
+      board_position: params.posicao,
+      status: params.etapa.kind,
+      linked_user_id: params.linkedUserId ?? null,
+      source: params.source ?? null,
+      owner_id: sessao?.user?.id ?? null,
+      created_by: sessao?.user?.id ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Negocio;
+};
+
+/** Contagem e soma por coluna. É o que transforma o quadro numa leitura de funil. */
+export const totalDaEtapa = (negocios: Negocio[], etapaId: string) => {
+  const daEtapa = negocios.filter((n) => n.stage_id === etapaId);
+  return {
+    quantidade: daEtapa.length,
+    valor: daEtapa.reduce((soma, n) => soma + Number(n.value || 0), 0),
+  };
+};
+
+export const emReais = (valor: number): string =>
+  valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
