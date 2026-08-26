@@ -21,7 +21,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store, useAppDispatch, useAppSelector } from './store/store';
 import { rodandoNativo } from './lib/plataforma';
-import { useAdminRole } from './hooks/useAdminRole';
+import { useAdminRole, type ModuloAdmin } from './hooks/useAdminRole';
 import { MobileIntro } from './pages/MobileIntro';
 import { authActions } from './store/slices/auth';
 
@@ -72,6 +72,7 @@ const AdminCoupons = lazy(() => import('./pages/Admin/Coupons'));
 const AdminAccessPasses = lazy(() => import('./pages/Admin/AccessPasses'));
 const AdminUsers = lazy(() => import('./pages/Admin/Users'));
 const AdminSales = lazy(() => import('./pages/Admin/Sales'));
+const AdminAcessos = lazy(() => import('./pages/Admin/Acessos'));
 const AdminArtists = lazy(() => import('./pages/Admin/Artists'));
 const AdminReviews = lazy(() => import('./pages/Admin/Reviews'));
 const AdminPush = lazy(() => import('./pages/Admin/Push'));
@@ -216,9 +217,35 @@ const RequireAdmin: FC = () => {
 // Isto e conveniencia de navegacao, nao seguranca. Quem barra de verdade e a RLS: as tabelas
 // `sales_*` liberam por `can_use_sales_crm()`, e as demais nem para vendedor nem para anonimo.
 const RequireFullAdmin: FC = () => {
-  const { carregando, ehAdminPleno } = useAdminRole();
+  const { carregando, ehAdminPleno, modulos } = useAdminRole();
   if (carregando) return <Spinner loading global>{null as any}</Spinner>;
-  if (!ehAdminPleno) return <Navigate to='/admin/vendas' replace />;
+  // Quem nao e admin pleno cai no primeiro modulo que alcanca. Mandar para /admin/vendas fixo
+  // deixaria um analista de suporte, que nao tem o CRM, girando entre dois redirecionamentos.
+  if (!ehAdminPleno) return <Navigate to={primeiraRotaDe(modulos)} replace />;
+  return <Outlet />;
+};
+
+// Rota de cada modulo, para redirecionar quem chegou onde nao alcanca.
+const ROTA_DO_MODULO: Record<ModuloAdmin, string> = {
+  dashboard: '/admin/dashboard',
+  artistas: '/admin/artistas',
+  'knowledge-base': '/admin/knowledge-base',
+  cupons: '/admin/cupons',
+  'pass-access': '/admin/pass-access',
+  usuarios: '/admin/usuarios',
+  vendas: '/admin/vendas',
+  avaliacoes: '/admin/avaliacoes',
+  push: '/admin/push',
+};
+
+const primeiraRotaDe = (modulos: ModuloAdmin[]): string =>
+  modulos.length ? ROTA_DO_MODULO[modulos[0]] : '/artists';
+
+/** Porteiro de um modulo especifico. Conveniencia de navegacao; quem barra e a RLS. */
+const RequireModulo: FC<{ modulo: ModuloAdmin }> = ({ modulo }) => {
+  const { carregando, podeAcessar, modulos } = useAdminRole();
+  if (carregando) return <Spinner loading global>{null as any}</Spinner>;
+  if (!podeAcessar(modulo)) return <Navigate to={primeiraRotaDe(modulos)} replace />;
   return <Outlet />;
 };
 
@@ -346,21 +373,43 @@ const AppRoutes: FC = () => {
           <Route element={<RequireAdmin />}>
             {/* O CRM de vendas fica FORA do RequireFullAdmin: e a unica tela do admin que o time
                 de vendas alcanca. */}
-            <Route path='/admin/vendas' element={<AdminSales />} />
+            <Route element={<RequireModulo modulo='vendas' />}>
+              <Route path='/admin/vendas' element={<AdminSales />} />
+            </Route>
             {/* O painel de ativacao virou a aba Inbound de /admin/vendas. A rota antiga
                 redireciona para nao quebrar link salvo por quem ja usava. */}
             <Route path='/admin/crm' element={<Navigate to='/admin/vendas' replace />} />
 
-            <Route element={<RequireFullAdmin />}>
+            <Route element={<RequireModulo modulo='dashboard' />}>
               <Route path='/admin/dashboard' element={<AdminDashboard />} />
+            </Route>
+            <Route element={<RequireModulo modulo='knowledge-base' />}>
               <Route path='/admin/knowledge-base' element={<AdminKnowledgeBase />} />
+            </Route>
+            <Route element={<RequireModulo modulo='cupons' />}>
               <Route path='/admin/cupons' element={<AdminCoupons />} />
+            </Route>
+            <Route element={<RequireModulo modulo='pass-access' />}>
               <Route path='/admin/pass-access' element={<AdminAccessPasses />} />
+            </Route>
+            <Route element={<RequireModulo modulo='usuarios' />}>
               <Route path='/admin/usuarios' element={<AdminUsers />} />
+            </Route>
+            <Route element={<RequireModulo modulo='artistas' />}>
               <Route path='/admin/artistas' element={<AdminArtists />} />
               <Route path='/admin/artistas/:artistId' element={<AdminArtists />} />
+            </Route>
+            <Route element={<RequireModulo modulo='avaliacoes' />}>
               <Route path='/admin/avaliacoes' element={<AdminReviews />} />
+            </Route>
+            <Route element={<RequireModulo modulo='push' />}>
               <Route path='/admin/push' element={<AdminPush />} />
+            </Route>
+
+            {/* Acessos fica fora do esquema de modulos DE PROPOSITO: se ela fosse concedivel,
+                quem a recebesse poderia conceder tudo a si mesmo. So admin pleno. */}
+            <Route element={<RequireFullAdmin />}>
+              <Route path='/admin/acessos' element={<AdminAcessos />} />
             </Route>
           </Route>
           <Route path='*' element={<Page404 />} />

@@ -2,11 +2,11 @@ import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   FiBarChart2, FiBell, FiDatabase, FiGrid, FiKey, FiLifeBuoy, FiLogOut,
-  FiSettings, FiStar, FiTag, FiUsers, FiFilter } from 'react-icons/fi';
+  FiSettings, FiShield, FiStar, FiTag, FiUsers, FiFilter } from 'react-icons/fi';
 
 import { PerfisIcon } from '../../../Icons/system';
 import { useIsPlatformAdmin } from '../../../../hooks/useIsPlatformAdmin';
-import { useAdminRole } from '../../../../hooks/useAdminRole';
+import { useAdminRole, type ModuloAdmin } from '../../../../hooks/useAdminRole';
 import { useAppDispatch } from '../../../../store/store';
 import { authActions } from '../../../../store/slices/auth';
 import styles from './SystemMenu.module.scss';
@@ -38,18 +38,20 @@ const GENERAL: Item[] = [
   { label: 'Suporte', path: '/suporte', icon: <FiLifeBuoy /> },
 ];
 
-// `vendasTambem` marca o que o time de vendas alcanca. O resto do admin some para ele: um
-// vendedor nao precisa (nem deve) ver exclusao de conta, cupons e disparo de push.
-const ADMIN: (Item & { vendasTambem?: boolean })[] = [
-  { label: 'Dashboard', path: '/admin/dashboard', icon: <FiBarChart2 /> },
-  { label: 'Perfis de artistas', path: '/admin/artistas', icon: <FiGrid /> },
-  { label: 'Base de Conhecimento', path: '/admin/knowledge-base', icon: <FiDatabase /> },
-  { label: 'Cupons', path: '/admin/cupons', icon: <FiTag /> },
-  { label: 'Pass Access', path: '/admin/pass-access', icon: <FiKey /> },
-  { label: 'Usuários', path: '/admin/usuarios', icon: <FiUsers /> },
-  { label: 'CRM de vendas', path: '/admin/vendas', icon: <FiFilter />, vendasTambem: true },
-  { label: 'Avaliações', path: '/admin/avaliacoes', icon: <FiStar /> },
-  { label: 'Enviar push', path: '/admin/push', icon: <FiBell /> },
+// Cada item carrega o modulo que ele exige. O menu mostra so o que a pessoa alcanca — e isso e
+// conveniencia de navegacao, nao seguranca: quem barra e a RLS e os porteiros de rota.
+const ADMIN: (Item & { modulo?: ModuloAdmin; somenteAdminPleno?: boolean })[] = [
+  { label: 'Dashboard', path: '/admin/dashboard', icon: <FiBarChart2 />, modulo: 'dashboard' },
+  { label: 'Perfis de artistas', path: '/admin/artistas', icon: <FiGrid />, modulo: 'artistas' },
+  { label: 'Base de Conhecimento', path: '/admin/knowledge-base', icon: <FiDatabase />, modulo: 'knowledge-base' },
+  { label: 'Cupons', path: '/admin/cupons', icon: <FiTag />, modulo: 'cupons' },
+  { label: 'Pass Access', path: '/admin/pass-access', icon: <FiKey />, modulo: 'pass-access' },
+  { label: 'Usuários', path: '/admin/usuarios', icon: <FiUsers />, modulo: 'usuarios' },
+  { label: 'CRM de vendas', path: '/admin/vendas', icon: <FiFilter />, modulo: 'vendas' },
+  { label: 'Avaliações', path: '/admin/avaliacoes', icon: <FiStar />, modulo: 'avaliacoes' },
+  { label: 'Enviar push', path: '/admin/push', icon: <FiBell />, modulo: 'push' },
+  // Conceder acesso e so de admin pleno: fosse concedivel, quem recebesse poderia se dar tudo.
+  { label: 'Acessos', path: '/admin/acessos', icon: <FiShield />, somenteAdminPleno: true },
 ];
 
 interface Props {
@@ -61,7 +63,7 @@ interface Props {
 
 export const SystemMenu: FC<Props> = ({ hasMobileNav = false }) => {
   const isAdmin = useIsPlatformAdmin();
-  const { ehAdminPleno } = useAdminRole();
+  const { ehAdminPleno, podeAcessar } = useAdminRole();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -137,7 +139,12 @@ export const SystemMenu: FC<Props> = ({ hasMobileNav = false }) => {
   // continua condicionada à mesma regra de antes (isAdmin), só a divisão visual que saiu.
   const allItems: Item[] = [
     ...(isAdmin
-      ? [...GENERAL, ...(ehAdminPleno ? ADMIN : ADMIN.filter((i) => i.vendasTambem))]
+      ? [
+          ...GENERAL,
+          ...ADMIN.filter((i) =>
+            i.somenteAdminPleno ? ehAdminPleno : i.modulo && podeAcessar(i.modulo)
+          ),
+        ]
       : GENERAL),
     { label: 'Sair da conta', icon: <FiLogOut />, action: signOut },
   ];

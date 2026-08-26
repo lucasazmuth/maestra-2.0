@@ -1,11 +1,14 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
 const mockMaybeSingle = jest.fn();
+const mockRpc = jest.fn();
 jest.mock('../../lib/supabase', () => ({
   supabase: {
     from: () => ({
       select: () => ({ eq: () => ({ maybeSingle: () => mockMaybeSingle() }) }),
     }),
+    // O hook busca papel e modulos juntos; sem o rpc o Promise.all rejeita e nada carrega.
+    rpc: (...args: unknown[]) => mockRpc(...args),
   },
 }));
 
@@ -18,29 +21,56 @@ jest.mock('../../store/store', () => ({
 // eslint-disable-next-line import/first
 import { useAdminRole } from '../useAdminRole';
 
-const comPapel = (role: string | null) => {
+const comPapel = (role: string | null, modulos: string[] = []) => {
   mockMaybeSingle.mockResolvedValue({ data: role ? { role } : null });
+  mockRpc.mockResolvedValue({ data: modulos, error: null });
 };
 
 beforeEach(() => {
   mockUsuario = { id: 'u1' };
   mockMaybeSingle.mockReset();
+  mockRpc.mockReset();
+  mockRpc.mockResolvedValue({ data: [], error: null });
 });
 
 describe('useAdminRole', () => {
   // Errar para o lado permissivo aqui abre exclusao de conta, cupons e push para um vendedor.
   it.each([
-    ['admin', true, true],
-    ['super_admin', true, true],
-    ['sales', false, true],
-  ])('papel %s: admin pleno=%s, opera CRM=%s', async (role, pleno, crm) => {
-    comPapel(role);
+    ['admin', [] as string[], true, true],
+    ['super_admin', [] as string[], true, true],
+    // Membro do time so opera o CRM se tiver o modulo: o papel sozinho nao concede mais nada.
+    ['sales', ['vendas'], false, true],
+    ['sales', [] as string[], false, false],
+  ])('papel %s com modulos %j: admin pleno=%s, opera CRM=%s', async (role, mods, pleno, crm) => {
+    comPapel(role, mods as string[]);
     const { result } = renderHook(() => useAdminRole());
 
     await waitFor(() => expect(result.current.carregando).toBe(false));
     expect(result.current.papel).toBe(role);
     expect(result.current.ehAdminPleno).toBe(pleno);
     expect(result.current.operaCrmDeVendas).toBe(crm);
+  });
+
+  // O menu e os porteiros de rota chamam `podeAcessar`. Errar para o lado permissivo aqui mostra
+  // telas que a pessoa nao alcanca, e ela bate na RLS com a tela ja aberta.
+  it('podeAcessar respeita a lista de modulos', async () => {
+    comPapel('sales', ['vendas', 'avaliacoes']);
+    const { result } = renderHook(() => useAdminRole());
+
+    await waitFor(() => expect(result.current.carregando).toBe(false));
+    expect(result.current.podeAcessar('vendas')).toBe(true);
+    expect(result.current.podeAcessar('avaliacoes')).toBe(true);
+    expect(result.current.podeAcessar('usuarios')).toBe(false);
+    expect(result.current.podeAcessar('push')).toBe(false);
+  });
+
+  it('admin pleno alcanca tudo sem precisar de modulo concedido', async () => {
+    comPapel('super_admin', []);
+    const { result } = renderHook(() => useAdminRole());
+
+    await waitFor(() => expect(result.current.carregando).toBe(false));
+    expect(result.current.podeAcessar('usuarios')).toBe(true);
+    expect(result.current.podeAcessar('push')).toBe(true);
   });
 
   it('quem nao esta em platform_admins nao e nada', async () => {

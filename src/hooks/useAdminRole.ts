@@ -17,52 +17,76 @@ import { useAppSelector } from '../store/store';
 
 export type PapelAdmin = 'admin' | 'super_admin' | 'sales';
 
+/** Módulos do admin. O mesmo conjunto do CHECK em `admin_module_access.module`. */
+export type ModuloAdmin =
+  | 'dashboard'
+  | 'artistas'
+  | 'knowledge-base'
+  | 'cupons'
+  | 'pass-access'
+  | 'usuarios'
+  | 'vendas'
+  | 'avaliacoes'
+  | 'push';
+
 export interface AcessoAdmin {
   carregando: boolean;
   papel: PapelAdmin | null;
-  /** Admin pleno: vê o admin inteiro. */
+  /** Admin pleno: vê o admin inteiro, incluindo a tela de Acessos. */
   ehAdminPleno: boolean;
-  /** Opera o CRM de vendas: admin pleno ou vendedor. */
+  /** Módulos que a pessoa alcança. Admin pleno recebe todos. */
+  modulos: ModuloAdmin[];
+  podeAcessar: (modulo: ModuloAdmin) => boolean;
+  /** Atalho de leitura: o CRM de vendas é o módulo `vendas`. */
   operaCrmDeVendas: boolean;
 }
 
 export const useAdminRole = (): AcessoAdmin => {
   const user = useAppSelector((s) => s.auth.user);
   const [papel, setPapel] = useState<PapelAdmin | null>(null);
+  const [modulos, setModulos] = useState<ModuloAdmin[]>([]);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
     if (!user) {
       setPapel(null);
+      setModulos([]);
       setCarregando(false);
       return;
     }
 
     let ativo = true;
     setCarregando(true);
-    supabase
-      .from('platform_admins')
-      .select('role')
-      .eq('user_id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        // Troca de usuário no meio da consulta não pode aplicar o resultado do anterior.
-        if (!ativo) return;
-        setPapel((data?.role as PapelAdmin) ?? null);
-        setCarregando(false);
-      });
+
+    // As duas informações vêm juntas porque a tela precisa das duas para decidir o que mostrar:
+    // o papel diz se é admin pleno, e os módulos dizem o que a pessoa alcança. Carregar em
+    // sequência faria o menu piscar com metade dos itens.
+    Promise.all([
+      supabase.from('platform_admins').select('role').eq('user_id', user.id).maybeSingle(),
+      supabase.rpc('meus_modulos_admin'),
+    ]).then(([resPapel, resModulos]) => {
+      // Troca de usuário no meio da consulta não pode aplicar o resultado do anterior.
+      if (!ativo) return;
+      setPapel((resPapel.data?.role as PapelAdmin) ?? null);
+      setModulos(((resModulos.data as string[] | null) || []) as ModuloAdmin[]);
+      setCarregando(false);
+    });
 
     return () => {
       ativo = false;
     };
   }, [user]);
 
+  // Lista explícita: papel novo que ninguém mapeou não vira admin pleno por omissão.
+  const ehAdminPleno = papel === 'admin' || papel === 'super_admin';
+
   return {
     carregando,
     papel,
-    // Lista explícita: papel novo que ninguém mapeou não vira admin pleno por omissão.
-    ehAdminPleno: papel === 'admin' || papel === 'super_admin',
-    operaCrmDeVendas: papel === 'admin' || papel === 'super_admin' || papel === 'sales',
+    ehAdminPleno,
+    modulos,
+    podeAcessar: (modulo: ModuloAdmin) => ehAdminPleno || modulos.includes(modulo),
+    operaCrmDeVendas: ehAdminPleno || modulos.includes('vendas'),
   };
 };
 
