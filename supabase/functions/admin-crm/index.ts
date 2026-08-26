@@ -52,6 +52,30 @@ const dias = (iso?: string | null): number | null => {
 /** Ordem de avanço — usada para escolher a etapa mais avançada de quem tem vários perfis. */
 const AVANCO: Record<Etapa, number> = { A: 0, B: 1, C: 2, D: 3 };
 
+// Permissao do painel: papel + modulo.
+//
+// Antes isto checava apenas se a pessoa EXISTIA em platform_admins. Com a tela de Acessos, entrar
+// no time deixou de significar acesso total — e a checagem antiga transformava qualquer membro em
+// admin pleno por aqui, ignorando o modulo. Era o buraco: o front escondia o menu, e a funcao
+// entregava os dados assim mesmo.
+//
+// `app_metadata.is_platform_admin` NAO serve de atalho: diz que existe acesso, nao qual.
+async function podeUsarModulo(
+  db: any,
+  userId: string,
+  modulo: string | null,
+): Promise<boolean> {
+  const { data: linha } = await db
+    .from("platform_admins").select("role").eq("user_id", userId).maybeSingle();
+  if (!linha) return false;
+  if (linha.role === "admin" || linha.role === "super_admin") return true;
+  if (!modulo) return false;
+  const { data: mod } = await db
+    .from("admin_module_access").select("module")
+    .eq("user_id", userId).eq("module", modulo).maybeSingle();
+  return !!mod;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "Método não permitido" }, 405);
@@ -65,11 +89,7 @@ Deno.serve(async (req) => {
 
   const { data: { user: caller }, error: callerErr } = await admin.auth.getUser(authHeader.replace("Bearer ", ""));
   if (callerErr || !caller) return json({ error: "Não autorizado" }, 401);
-  let isAdmin = !!caller.app_metadata?.is_platform_admin;
-  if (!isAdmin) {
-    const { data: row } = await admin.from("platform_admins").select("id").eq("user_id", caller.id).maybeSingle();
-    isAdmin = !!row;
-  }
+  const isAdmin = await podeUsarModulo(admin, caller.id, "vendas");
   if (!isAdmin) return json({ error: "Acesso restrito a administradores" }, 403);
 
   try {

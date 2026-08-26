@@ -1,0 +1,244 @@
+// Quadro de negócios do CRM de vendas. Segue os tokens do admin (azul #3361ff, tinta #2c3f63,
+// linha #e3eaf3) para não abrir um segundo visual dentro da mesma área.
+
+$azul: #3361ff;
+$tinta: #2c3f63;
+$suave: #7c8da8;
+$linha: #e3eaf3;
+$fundo: #f6f8fc;
+
+.quadroWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.resumo {
+  color: $suave;
+  font-size: 13px;
+
+  strong { color: $tinta; font-weight: 800; }
+}
+
+// As sete colunas não cabem na largura do admin. A rolagem fica AQUI, não no body: deixar a
+// página inteira rolar de lado arrastaria junto o menu e o cabeçalho do admin.
+.quadro {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  align-items: flex-start;
+}
+
+.coluna {
+  flex: 0 0 268px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 260px);
+  padding: 12px;
+  border: 1px solid $linha;
+  border-radius: 10px;
+  background: $fundo;
+  transition: background-color .15s, border-color .15s;
+}
+
+// Alvo do arrasto precisa ser óbvio: sem retorno visual, soltar vira tentativa e erro.
+.colunaAlvo {
+  border-color: $azul;
+  background: #eef3ff;
+}
+
+.colunaTopo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding-left: 9px;
+  // A cor da etapa vem do banco, por variável: acrescentar coluna nova não exige CSS novo.
+  border-left: 3px solid var(--cor-etapa, #{$suave});
+}
+
+.colunaNome {
+  margin: 0;
+  color: $tinta;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.colunaTotal {
+  color: $suave;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.colunaAdd {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  place-items: center;
+  border: 1px solid $linha;
+  border-radius: 7px;
+  background: #fff;
+  color: $suave;
+  cursor: pointer;
+
+  &:hover { border-color: $azul; color: $azul; }
+}
+
+.colunaLista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 60px;
+  overflow-y: auto;
+}
+
+.colunaVazia {
+  margin: 0;
+  padding: 14px 4px;
+  color: #9fb0c8;
+  font-size: 12px;
+  text-align: center;
+}
+
+.cartao {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 8px 10px 12px;
+  border: 1px solid $linha;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(89, 110, 148, .05);
+}
+
+.cartaoCorpo {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  cursor: grab;
+
+  &:active { cursor: grabbing; }
+}
+
+.cartaoTitulo {
+  color: $tinta;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.cartaoValor {
+  color: $suave;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+// O original some enquanto arrasta; quem aparece sob o cursor é o DragOverlay.
+.cartaoArrastando { opacity: .35; }
+
+.cartaoFantasma {
+  box-shadow: 0 12px 26px rgba(70, 92, 133, .22);
+  cursor: grabbing;
+}
+
+.cartaoMenu {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #a9b8cd;
+  cursor: pointer;
+
+  &:hover { background: #f0f4fa; color: $tinta; }
+}
+
+.formNovo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 6px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: $suave;
+    font-size: 12px;
+    font-weight: 700;
+  }
+}
+
+.aviso, .avisoErro {
+  margin: 0;
+  padding: 22px 0;
+  font-size: 13px;
+}
+
+.aviso { color: $suave; }
+.avisoErro { color: #b32d45; }
+
+.recarregar { align-self: flex-start; padding-left: 0; }
+
+// ── Aba de leads ────────────────────────────────────────────────────────────────────────────
+.barraLeads {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.acoesDaLinha {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+// ── Etiquetas no cartao ─────────────────────────────────────────────────────────────────────
+.cartaoTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.tag {
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: #eef3ff;
+  color: #4a67a8;
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+// Aviso de que o negocio nasceu ligado a uma conta ja existente da Maestra.
+.avisoInbound {
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 7px;
+  background: #eef3ff;
+  color: #4a67a8;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+// Dica sob um campo, quando o comportamento nao e obvio pelo rotulo.
+.dicaDoCampo {
+  display: block;
+  margin-top: 2px;
+  color: #8a99b3;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.4;
+}

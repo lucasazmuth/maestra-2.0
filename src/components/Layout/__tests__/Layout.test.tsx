@@ -69,6 +69,9 @@ jest.mock('../../../lib/supabase', () => ({
         eq: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }),
       }),
     }),
+    // O menu do sistema carrega os modulos do admin por rpc; sem isto o Promise.all do
+    // `useAdminRole` rejeita e derruba o render inteiro.
+    rpc: () => Promise.resolve({ data: [], error: null }),
     // O sino assina realtime para acender sem precisar navegar.
     channel: () => ({ on: function () { return this; }, subscribe: function () { return this; } }),
     removeChannel: () => {},

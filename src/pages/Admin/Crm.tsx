@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { Input, Table, Tag, Tooltip, message, type TableColumnsType } from 'antd';
+import { Button, Input, Table, Tag, Tooltip, message, type TableColumnsType } from 'antd';
 import { FiAlertTriangle, FiMail, FiSearch, FiBell } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
@@ -28,7 +28,7 @@ interface EtapaFunil {
   conversao: number | null;
 }
 
-interface Lead {
+export interface LeadInbound {
   id: string;
   email: string;
   nome: string | null;
@@ -68,9 +68,9 @@ const fmtBRL = (v: number) =>
   v ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : '—';
 const fmtDia = (iso?: string | null) => (iso ? dayjs(iso).format('DD/MM/YY') : '—');
 
-const Crm: FC = () => {
+const Crm: FC<{ onCriarNegocio?: (lead: LeadInbound) => void }> = ({ onCriarNegocio }) => {
   const [funil, setFunil] = useState<EtapaFunil[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leads, setLeads] = useState<LeadInbound[]>([]);
   const [automacoes, setAutomacoes] = useState<Automacao[]>([]);
   const [semOptIn, setSemOptIn] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -103,7 +103,7 @@ const Crm: FC = () => {
     });
   }, [leads, query, etapaAtiva]);
 
-  const colunas: TableColumnsType<Lead> = [
+  const colunas: TableColumnsType<LeadInbound> = [
     {
       title: 'Lead',
       key: 'lead',
@@ -196,6 +196,34 @@ const Crm: FC = () => {
     },
   ];
 
+  // A ponte entre "esta pessoa parou na etapa B" e "alguém do time vai falar com ela". Só existe
+  // quando a tela está dentro do CRM de vendas — sozinha, ela continua sendo painel de leitura.
+  if (onCriarNegocio) {
+    colunas.push({
+      title: '',
+      key: 'prospectar',
+      width: 150,
+      render: (_, l) => (
+        <Tooltip
+          title={
+            l.aceitaComunicacoes
+              ? undefined
+              : 'Esta pessoa não optou por receber comunicações. Abordagem ativa aqui é decisão sua, e precisa de base legal própria.'
+          }
+        >
+          <Button
+            size='small'
+            type='link'
+            onClick={() => onCriarNegocio(l)}
+            style={l.aceitaComunicacoes ? undefined : { color: '#a4682f' }}
+          >
+            {l.aceitaComunicacoes ? 'Criar negócio' : 'Criar negócio (sem opt-in)'}
+          </Button>
+        </Tooltip>
+      ),
+    });
+  }
+
   if (loading) return <Spinner loading global>{null as any}</Spinner>;
 
   return (
@@ -255,7 +283,7 @@ const Crm: FC = () => {
         </span>
       </div>
 
-      <Table<Lead>
+      <Table<LeadInbound>
         rowKey="id"
         columns={colunas}
         dataSource={filtrados}
