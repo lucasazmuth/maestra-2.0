@@ -43,7 +43,7 @@ const ArchiveModal: FC<{
   return createPortal(
     <div
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(20, 30, 55, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 'var(--z-overlay)', background: 'rgba(20, 30, 55, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box' }}
     >
       <div
         onClick={(e) => e.stopPropagation()}

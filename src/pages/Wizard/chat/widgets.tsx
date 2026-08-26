@@ -1597,7 +1597,7 @@ export const PriorityScale: FC<{
     return createPortal(
       <div
         style={{
-          position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.72)',
+          position: 'fixed', inset: 0, zIndex: 'var(--z-overlay)', background: 'rgba(0,0,0,0.72)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, boxSizing: 'border-box',
         }}
       >
@@ -1622,7 +1622,7 @@ export const PriorityScale: FC<{
             title='Fechar'
             aria-label='Fechar'
             style={{
-              position: 'absolute', top: 14, right: 14, zIndex: 2,
+              position: 'absolute', top: 14, right: 14, zIndex: 'var(--z-cartao)',
               background: 'transparent', border: 'none', cursor: 'pointer',
               color: 'var(--wz-faint)', padding: 6, borderRadius: 8, lineHeight: 0,
             }}

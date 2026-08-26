@@ -32,7 +32,15 @@
 .page {
   position: fixed;
   inset: 0;
-  z-index: 2147483000;
+  // Era 2147483000 (o teto do int32). O numero nunca fez nada: o bloco `jam-space-open` acima
+  // forca `position: fixed` em .task-app, .app-layout, .board-shell e .Main-section, e no Chrome
+  // `fixed` cria contexto de empilhamento MESMO com z-index auto — entao esta camada sempre
+  // esteve presa dentro de .Main-section, ordenando so contra irmas que nao existem.
+  //
+  // O que faz o Espaco JAM cobrir o app nao e o z-index: e o `display: none` que aquele bloco
+  // aplica no topo, no rail e no painel. Prova disso e que um Modal do antd (z-index 1000) sempre
+  // apareceu por cima daqui, e continua aparecendo.
+  z-index: var(--z-tela-cheia);
   min-height: 100vh;
   padding: 28px 36px 44px;
   overflow: auto;
@@ -47,7 +55,8 @@
 .empty {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  // Mesma camada da pagina: sao estados alternativos dela, nunca aparecem juntos.
+  z-index: var(--z-tela-cheia);
   min-height: 100vh;
   display: grid;
   place-items: center;

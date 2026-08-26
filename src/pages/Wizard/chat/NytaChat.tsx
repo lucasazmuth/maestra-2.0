@@ -429,6 +429,16 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       // silêncio — e o vídeo também não se repete, porque a conversa restaurada já o contém.
       if (stepAtual > anterior) {
         gateRef.current = true;
+        // O widget pertence ao beat que ACABOU de ser respondido, e some junto com o portão.
+        //
+        // Sem isto ele ficava montado atrás do portão — e o da priorização é um `createPortal`
+        // para o `document.body`, ou seja, ficava POR CIMA. A pessoa clicava em "Gerar plano de
+        // ação", o passo avançava e era gravado, mas a tela continuava mostrando o mesmo modal;
+        // clicar de novo não fazia nada, porque o `gateRef` já barrava o efeito na entrada. Só
+        // recarregando a página o wizard "pulava" para a etapa seguinte.
+        setWidget(null);
+        setGuided(null);
+        setInputOn(false);
         setGate({ concluida: anterior, proxima: currentStepIndex(draft) });
         return;
       }

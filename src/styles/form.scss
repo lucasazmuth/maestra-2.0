@@ -34,7 +34,10 @@
     position: absolute;
     height: 100%;
     width: 100%;
-    z-index: 100000;
+    // Era 100000. O pai e `position: relative`, entao esta camada nunca saiu daqui: ela so
+    // ordena contra os irmaos desta caixa, e o input invisivel precisa apenas ficar acima da
+    // imagem que ele cobre. Numero grande aqui nao alcancava nada fora do container.
+    z-index: var(--z-cartao);
   }
 }
 
