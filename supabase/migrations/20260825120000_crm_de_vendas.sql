@@ -344,3 +344,18 @@ comment on function public.sales_team() is
 
 revoke all on function public.sales_team() from public, anon;
 grant execute on function public.sales_team() to authenticated;
+
+-- Negocio vindo do Inbound tambem precisa virar LEAD.
+--
+-- Antes so o negocio guardava o vinculo (`sales_deals.linked_user_id`), e a pessoa nunca
+-- aparecia na aba Leads: nao dava para olhar a lista depois e saber quem do Inbound avancou.
+alter table public.sales_contacts
+  add column if not exists linked_user_id uuid references auth.users (id) on delete set null;
+
+comment on column public.sales_contacts.linked_user_id is
+  'Conta da Maestra por tras do lead, quando ele veio do Inbound. Nulo = prospeccao externa.';
+
+-- Uma conta, um lead. Sem isto, clicar "Criar negocio" duas vezes para a mesma pessoa criaria
+-- dois leads iguais. Parcial de proposito: leads de prospeccao (sem conta) nao sao afetados.
+create unique index if not exists sales_contacts_uma_por_conta
+  on public.sales_contacts (linked_user_id) where linked_user_id is not null;

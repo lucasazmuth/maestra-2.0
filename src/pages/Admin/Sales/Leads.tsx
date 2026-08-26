@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Input, Modal, Table, message } from 'antd';
+import { Button, Input, Modal, Table, Tag, message } from 'antd';
 import { FiPlus } from 'react-icons/fi';
 
 import {
@@ -121,6 +121,19 @@ export const Leads: FC<{ onCriarNegocio?: (lead: Lead) => void }> = ({ onCriarNe
         locale={{ emptyText: busca ? 'Nenhum lead para esta busca.' : 'Nenhum lead cadastrado ainda.' }}
         columns={[
           { title: 'Nome', dataIndex: 'name', key: 'name' },
+          {
+            // Sem esta coluna a lista mistura quem o time foi atras com quem chegou sozinho, e a
+            // abordagem e diferente: no Inbound a pessoa ja usa o produto e ja recebeu nudge.
+            title: 'Origem',
+            key: 'origem',
+            width: 130,
+            render: (_: unknown, l: Lead) =>
+              l.linked_user_id ? (
+                <Tag color='blue'>Inbound</Tag>
+              ) : (
+                <Tag>Prospecção</Tag>
+              ),
+          },
           { title: 'E-mail', dataIndex: 'email', key: 'email', render: (v) => v || '—' },
           { title: 'Telefone', dataIndex: 'phone', key: 'phone', render: (v) => v || '—' },
           {

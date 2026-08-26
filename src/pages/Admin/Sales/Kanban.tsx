@@ -347,8 +347,15 @@ export const Kanban: FC<{
           setFormulario(null);
           setInboundPendente(null);
         }}
-        onSalvo={(salvo) => {
+        onSalvo={(salvo, leadCriado) => {
           aoSalvarNegocio(salvo);
+          // O Inbound pode ter criado um lead novo: guardar aqui evita que o proximo negocio
+          // para a mesma pessoa abra sem ela na lista de clientes.
+          if (leadCriado) {
+            setLeads((atual) =>
+              atual.some((l) => l.id === leadCriado.id) ? atual : [leadCriado, ...atual]
+            );
+          }
           setInboundPendente(null);
         }}
       />

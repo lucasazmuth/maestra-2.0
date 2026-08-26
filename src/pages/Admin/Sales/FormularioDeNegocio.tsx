@@ -4,6 +4,7 @@ import { Input, InputNumber, Modal, Select, message } from 'antd';
 import {
   criarNegocio,
   editarNegocio,
+  garantirLeadDaConta,
   tituloSugerido,
   type DadosDoNegocio,
   type Etapa,
@@ -30,7 +31,8 @@ interface Props {
   /** Conta da Maestra, quando o negócio nasce da aba Inbound. */
   inbound?: { id: string; nome: string | null; email: string } | null;
   onFechar: () => void;
-  onSalvo: (negocio: Negocio | null) => void;
+  /** O segundo argumento vem preenchido quando o Inbound criou um lead novo. */
+  onSalvo: (negocio: Negocio | null, leadCriado?: Lead | null) => void;
   criarComPosicao?: () => number;
   pipelineId?: string;
 }
@@ -104,16 +106,21 @@ export const FormularioDeNegocio: FC<Props> = ({
         onSalvo({ ...negocio, ...form, title: form.title.trim() } as Negocio);
       } else {
         if (!etapa || !pipelineId) return;
+        // Vindo do Inbound o lead e criado (ou reaproveitado) ANTES do negocio: sem isso a
+        // pessoa ficaria so como um `linked_user_id` dentro do negocio, e a aba Leads nunca
+        // mostraria quem do Inbound avancou.
+        const leadDaConta = inbound ? await garantirLeadDaConta(inbound) : null;
         const novo = await criarNegocio({
           ...form,
           title: form.title.trim(),
           pipelineId,
           etapa,
           posicao: criarComPosicao ? criarComPosicao() : 0,
+          contactId: leadDaConta?.id ?? form.contactId ?? null,
           linkedUserId: inbound?.id ?? null,
           source: inbound ? 'inbound' : form.contactId ? 'prospeccao' : null,
         });
-        onSalvo(novo);
+        onSalvo(novo, leadDaConta);
       }
       onFechar();
     } catch (err: any) {
@@ -138,22 +145,28 @@ export const FormularioDeNegocio: FC<Props> = ({
       <div className={styles.formNovo}>
         {inbound && (
           <p className={styles.avisoInbound}>
-            Vindo do Inbound: este negócio fica ligado à conta <strong>{inbound.email}</strong>.
+            Vindo do Inbound: <strong>{inbound.email}</strong> entra como lead ligado à conta dela,
+            e o negócio nasce apontando para esse lead.
           </p>
         )}
-        <label>
-          Cliente
-          <Select
-            allowClear
-            showSearch
-            placeholder='Escolha um lead já cadastrado'
-            value={form.contactId || undefined}
-            onChange={(v) => escolherLead(v ?? null)}
-            optionFilterProp='label'
-            options={leads.map((l) => ({ value: l.id, label: l.email ? `${l.name} · ${l.email}` : l.name }))}
-            notFoundContent='Nenhum lead cadastrado. Crie na aba Leads.'
-          />
-        </label>
+        {/* No Inbound o cliente nao se escolhe: ele E a conta do aviso acima, e o lead
+            correspondente e criado ao salvar. Deixar o campo aberto convidaria a apontar o
+            negocio para outra pessoa sem querer. */}
+        {!inbound && (
+          <label>
+            Cliente
+            <Select
+              allowClear
+              showSearch
+              placeholder='Escolha um lead já cadastrado'
+              value={form.contactId || undefined}
+              onChange={(v) => escolherLead(v ?? null)}
+              optionFilterProp='label'
+              options={leads.map((l) => ({ value: l.id, label: l.email ? `${l.name} · ${l.email}` : l.name }))}
+              notFoundContent='Nenhum lead cadastrado. Crie na aba Leads.'
+            />
+          </label>
+        )}
 
         <label>
           Título

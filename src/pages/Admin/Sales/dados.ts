@@ -60,6 +60,8 @@ export interface Lead {
   owner_id: string | null;
   created_by: string | null;
   created_at: string;
+  /** Conta da Maestra por trás do lead. Nulo = prospecção externa; preenchido = veio do Inbound. */
+  linked_user_id: string | null;
 }
 
 export interface MembroDoTime {
@@ -222,7 +224,7 @@ export const editarNegocio = async (id: string, dados: DadosDoNegocio): Promise<
 export const carregarLeads = async (): Promise<Lead[]> => {
   const { data, error } = await supabase
     .from('sales_contacts')
-    .select('id, name, email, phone, notes, owner_id, created_by, created_at')
+    .select('id, name, email, phone, notes, owner_id, created_by, created_at, linked_user_id')
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data || []) as Lead[];
@@ -247,7 +249,7 @@ export const criarLead = async (dados: DadosDoLead): Promise<Lead> => {
       owner_id: sessao?.user?.id ?? null,
       created_by: sessao?.user?.id ?? null,
     })
-    .select('id, name, email, phone, notes, owner_id, created_by, created_at')
+    .select('id, name, email, phone, notes, owner_id, created_by, created_at, linked_user_id')
     .single();
   if (error) throw error;
   return data as Lead;
@@ -277,6 +279,46 @@ export const carregarTime = async (): Promise<MembroDoTime[]> => {
   const { data, error } = await supabase.rpc('sales_team');
   if (error) throw error;
   return (data || []) as MembroDoTime[];
+};
+
+/**
+ * Lead correspondente a uma conta da Maestra, criando se ainda nao existir.
+ *
+ * O negocio do Inbound tambem precisa aparecer na aba Leads: sem isso a pessoa fica so como um
+ * `linked_user_id` dentro do negocio, e olhar a lista de leads depois nao diz quem do Inbound
+ * avancou. O indice unico em `linked_user_id` garante uma linha por conta, entao clicar "Criar
+ * negocio" duas vezes para a mesma pessoa reaproveita o lead em vez de duplicar.
+ */
+export const garantirLeadDaConta = async (conta: {
+  id: string;
+  nome: string | null;
+  email: string;
+}): Promise<Lead> => {
+  const colunas = 'id, name, email, phone, notes, owner_id, created_by, created_at, linked_user_id';
+
+  const { data: existente, error: erroBusca } = await supabase
+    .from('sales_contacts')
+    .select(colunas)
+    .eq('linked_user_id', conta.id)
+    .maybeSingle();
+  if (erroBusca) throw erroBusca;
+  if (existente) return existente as Lead;
+
+  const { data: sessao } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from('sales_contacts')
+    .insert({
+      name: conta.nome?.trim() || conta.email,
+      email: conta.email,
+      linked_user_id: conta.id,
+      notes: 'Veio do funil de ativação (Inbound).',
+      owner_id: sessao?.user?.id ?? null,
+      created_by: sessao?.user?.id ?? null,
+    })
+    .select(colunas)
+    .single();
+  if (error) throw error;
+  return data as Lead;
 };
 
 /**
