@@ -28,9 +28,20 @@ async function requirePlatformAdmin(admin: Admin, req: Request) {
   const { data: { user } } = await admin.auth.getUser(token);
   if (!user) return null;
 
-  if (user.app_metadata?.is_platform_admin) return user;
-  const { data } = await admin.from("platform_admins").select("id").eq("user_id", user.id).maybeSingle();
-  return data ? user : null;
+  // Antes bastava EXISTIR em platform_admins. Com a tela de Acessos, entrar no time deixou de
+  // significar acesso total, e a checagem antiga transformava qualquer membro em admin pleno por
+  // aqui: o front escondia o menu e a funcao disparava push para a base inteira assim mesmo.
+  //
+  // `app_metadata.is_platform_admin` NAO serve de atalho: diz que existe acesso, nao qual.
+  const { data: linha } = await admin
+    .from("platform_admins").select("role").eq("user_id", user.id).maybeSingle();
+  if (!linha) return null;
+  if (linha.role === "admin" || linha.role === "super_admin") return user;
+
+  const { data: mod } = await admin
+    .from("admin_module_access").select("module")
+    .eq("user_id", user.id).eq("module", "push").maybeSingle();
+  return mod ? user : null;
 }
 
 async function listUserIds(admin: Admin): Promise<string[]> {

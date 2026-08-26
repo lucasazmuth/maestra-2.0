@@ -200,6 +200,30 @@ function catalogo() {
   return [...serializar("A", A), ...serializar("B", B), ...serializar("C", C)];
 }
 
+// Permissao do painel: papel + modulo.
+//
+// Antes isto checava apenas se a pessoa EXISTIA em platform_admins. Com a tela de Acessos, entrar
+// no time deixou de significar acesso total — e a checagem antiga transformava qualquer membro em
+// admin pleno por aqui, ignorando o modulo. Era o buraco: o front escondia o menu, e a funcao
+// entregava os dados assim mesmo.
+//
+// `app_metadata.is_platform_admin` NAO serve de atalho: diz que existe acesso, nao qual.
+async function podeUsarModulo(
+  db: any,
+  userId: string,
+  modulo: string | null,
+): Promise<boolean> {
+  const { data: linha } = await db
+    .from("platform_admins").select("role").eq("user_id", userId).maybeSingle();
+  if (!linha) return false;
+  if (linha.role === "admin" || linha.role === "super_admin") return true;
+  if (!modulo) return false;
+  const { data: mod } = await db
+    .from("admin_module_access").select("module")
+    .eq("user_id", userId).eq("module", modulo).maybeSingle();
+  return !!mod;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
@@ -212,11 +236,7 @@ Deno.serve(async (req) => {
     const client = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
     const { data: { user: caller } } = await client.auth.getUser(auth.replace("Bearer ", ""));
     if (!caller) return json({ error: "Não autorizado" }, 401);
-    let ok = !!caller.app_metadata?.is_platform_admin;
-    if (!ok) {
-      const { data: row } = await client.from("platform_admins").select("id").eq("user_id", caller.id).maybeSingle();
-      ok = !!row;
-    }
+    const ok = await podeUsarModulo(client, caller.id, null);
     if (!ok) return json({ error: "Acesso restrito a administradores" }, 403);
     return json({ automacoes: catalogo() });
   }
