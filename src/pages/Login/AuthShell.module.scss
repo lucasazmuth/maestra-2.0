@@ -80,6 +80,11 @@
   @media (max-width: 330px) {
     grid-template-columns: 1fr;
   }
+
+  // Provedor unico (Apple escondida fora do mobile) ocupa a linha inteira.
+  &[data-provedores='1'] {
+    grid-template-columns: 1fr;
+  }
 }
 
 .socialBtn {

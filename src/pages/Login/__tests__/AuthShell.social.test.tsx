@@ -15,8 +15,19 @@ jest.mock('../../../lib/supabase', () => ({
   },
 }));
 
+const mockRodandoNativo = jest.fn(() => false);
+jest.mock('../../../lib/plataforma', () => ({
+  rodandoNativo: () => mockRodandoNativo(),
+  plataforma: () => 'web',
+}));
+
 // eslint-disable-next-line import/first
 import { AuthShell } from '../AuthShell';
+
+/** jsdom nasce em 1024px. Estreitar a janela e o que faz `useIsMobile` virar true. */
+const larguraDaJanela = (px: number) => {
+  Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: px });
+};
 
 const renderizar = () =>
   render(
@@ -32,15 +43,35 @@ const renderizar = () =>
 beforeEach(() => {
   mockSignInWithOAuth.mockReset();
   mockSignInWithOAuth.mockResolvedValue({ data: {}, error: null });
+  mockRodandoNativo.mockReturnValue(false);
+  larguraDaJanela(375);
 });
 
 describe('AuthShell - login social', () => {
   // A diretriz 4.8 da App Store exige o Sign in with Apple quando ja existe outro login social.
   // Sem ele o app nao entra na loja, entao a ausencia do botao precisa quebrar a suite.
-  it('oferece Apple ao lado do Google', () => {
+  it('oferece Apple ao lado do Google no mobile', () => {
     renderizar();
 
     expect(screen.getByRole('button', { name: /google/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /apple/i })).toBeInTheDocument();
+  });
+
+  it('esconde a Apple na web de desktop', () => {
+    larguraDaJanela(1280);
+    renderizar();
+
+    expect(screen.getByRole('button', { name: /google/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /apple/i })).not.toBeInTheDocument();
+  });
+
+  // Este e o caso que a largura sozinha erraria: o app no iPad passa de 768px, e esconder o
+  // botao ali reprovaria o app justamente na regra que ele existe para cumprir.
+  it('mantem a Apple no app nativo mesmo em tela larga', () => {
+    mockRodandoNativo.mockReturnValue(true);
+    larguraDaJanela(1024);
+    renderizar();
+
     expect(screen.getByRole('button', { name: /apple/i })).toBeInTheDocument();
   });
 

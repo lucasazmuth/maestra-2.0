@@ -5,6 +5,8 @@ import { FaApple } from 'react-icons/fa';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiCalendar } from 'react-icons/fi';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
+import useIsMobile from '../../utils/isMobile';
+import { rodandoNativo } from '../../lib/plataforma';
 import { useAppDispatch } from '../../store/store';
 import { authActions, type SocialProvider } from '../../store/slices/auth';
 import styles from './AuthShell.module.scss';
@@ -47,13 +49,23 @@ const SOCIAL_LABEL: Record<SocialProvider, string> = {
 
 // A ordem é a da tela. O ícone da Apple é monocromático por regra da própria Apple: o logo não
 // pode ser recolorido nem ganhar efeito.
-const SOCIAL_PROVIDERS: { provider: SocialProvider; icon: ReactNode }[] = [
+const SOCIAL_PROVIDERS: { provider: SocialProvider; icon: ReactNode; somenteMobile?: boolean }[] = [
   { provider: 'google', icon: <FcGoogle /> },
-  { provider: 'apple', icon: <FaApple /> },
+  { provider: 'apple', icon: <FaApple />, somenteMobile: true },
 ];
 
 export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ children, footer }) => {
   const dispatch = useAppDispatch();
+  const isMobile = useIsMobile();
+  // O Sign in with Apple existe aqui por causa da App Store (diretriz 4.8), que exige o botão
+  // dentro do app quando já há outro login social. Na web de desktop ele não é exigido, e cada
+  // provedor a mais é uma porta a mais para a mesma pessoa entrar por duas contas diferentes.
+  //
+  // O `rodandoNativo()` NÃO é redundante com a largura: no iPad o app passa de 768px, e esconder
+  // o botão por viewport reprovaria justamente o caso que a regra existe para cobrir.
+  const mostraApple = rodandoNativo() || isMobile;
+  const provedores = SOCIAL_PROVIDERS.filter((p) => !p.somenteMobile || mostraApple);
+
   const [socialNote, setSocialNote] = useState<string | null>(null);
   // Guarda QUAL provedor está redirecionando, não um booleano: com dois botões, um booleano
   // deixaria os dois em "Redirecionando…" ao mesmo tempo.
@@ -94,8 +106,10 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
           {/* Os dois botões são iguais em tamanho, peso e posição de propósito: a diretriz 4.8
               da App Store exige que o Sign in with Apple tenha a MESMA proeminência dos outros
               logins sociais. Destacar um dos dois aqui reprova o app. */}
-          <div className={styles.social}>
-            {SOCIAL_PROVIDERS.map(({ provider, icon }) => {
+          {/* A coluna acompanha quantos provedores sobraram: com um só, dois botões de meia
+              largura deixariam um buraco ao lado do Google. */}
+          <div className={styles.social} data-provedores={provedores.length}>
+            {provedores.map(({ provider, icon }) => {
               const redirecionando = socialLoading === provider;
               return (
                 <button
