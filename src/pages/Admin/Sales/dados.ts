@@ -35,11 +35,37 @@ export interface Negocio {
   board_position: number;
   owner_id: string | null;
   archived: boolean;
+  notes: string | null;
+  tags: string[] | null;
 }
 
 export interface Funil {
   id: string;
   name: string;
+}
+
+/**
+ * Lead prospectado pelo time (tabela `sales_contacts`).
+ *
+ * Estes NAO sao usuarios da Maestra: sao gente de fora que o time foi atras. Quem chega pelo
+ * funil de ativacao e o caso oposto — la existe conta, e o negocio guarda `linked_user_id`.
+ * Os dois viram negocio no mesmo quadro; o que muda e a origem.
+ */
+export interface Lead {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
+  owner_id: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface MembroDoTime {
+  user_id: string;
+  email: string;
+  role: string;
 }
 
 /** Funil padrão + suas etapas, na ordem das colunas. */
@@ -67,7 +93,7 @@ export const carregarNegocios = async (pipelineId: string): Promise<Negocio[]> =
     .from('sales_deals')
     // Literal unico, sem concatenar: o `+` transforma o tipo em `string` e o parser de select do
     // supabase-js perde a inferencia, devolvendo GenericStringError em vez das colunas.
-    .select('id, pipeline_id, stage_id, company_id, contact_id, linked_user_id, title, value, expected_close_date, priority, source, status, lost_reason, board_position, owner_id, archived')
+    .select('id, pipeline_id, stage_id, company_id, contact_id, linked_user_id, title, value, expected_close_date, priority, source, status, lost_reason, board_position, owner_id, archived, notes, tags')
     .eq('pipeline_id', pipelineId)
     .eq('archived', false)
     .order('board_position');
@@ -133,11 +159,18 @@ export const moverNegocio = async (params: {
   });
 };
 
-export const criarNegocio = async (params: {
-  pipelineId: string;
-  etapa: Etapa;
+export interface DadosDoNegocio {
   title: string;
   value: number;
+  contactId?: string | null;
+  ownerId?: string | null;
+  notes?: string | null;
+  tags?: string[] | null;
+}
+
+export const criarNegocio = async (params: DadosDoNegocio & {
+  pipelineId: string;
+  etapa: Etapa;
   posicao: number;
   linkedUserId?: string | null;
   source?: string | null;
@@ -153,9 +186,13 @@ export const criarNegocio = async (params: {
       probability: params.etapa.default_probability,
       board_position: params.posicao,
       status: params.etapa.kind,
+      contact_id: params.contactId ?? null,
       linked_user_id: params.linkedUserId ?? null,
       source: params.source ?? null,
-      owner_id: sessao?.user?.id ?? null,
+      notes: params.notes ?? null,
+      tags: params.tags?.length ? params.tags : null,
+      // O responsavel e escolhido na tela; sem escolha, fica com quem criou.
+      owner_id: params.ownerId ?? sessao?.user?.id ?? null,
       created_by: sessao?.user?.id ?? null,
     })
     .select()
@@ -163,6 +200,93 @@ export const criarNegocio = async (params: {
   if (error) throw error;
   return data as Negocio;
 };
+
+export const editarNegocio = async (id: string, dados: DadosDoNegocio): Promise<void> => {
+  const { error } = await supabase
+    .from('sales_deals')
+    .update({
+      title: dados.title,
+      value: dados.value,
+      contact_id: dados.contactId ?? null,
+      owner_id: dados.ownerId ?? null,
+      notes: dados.notes ?? null,
+      tags: dados.tags?.length ? dados.tags : null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id);
+  if (error) throw error;
+};
+
+// ---- Leads -------------------------------------------------------------------------------
+
+export const carregarLeads = async (): Promise<Lead[]> => {
+  const { data, error } = await supabase
+    .from('sales_contacts')
+    .select('id, name, email, phone, notes, owner_id, created_by, created_at')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []) as Lead[];
+};
+
+export interface DadosDoLead {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+}
+
+export const criarLead = async (dados: DadosDoLead): Promise<Lead> => {
+  const { data: sessao } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from('sales_contacts')
+    .insert({
+      name: dados.name,
+      email: dados.email || null,
+      phone: dados.phone || null,
+      notes: dados.notes || null,
+      owner_id: sessao?.user?.id ?? null,
+      created_by: sessao?.user?.id ?? null,
+    })
+    .select('id, name, email, phone, notes, owner_id, created_by, created_at')
+    .single();
+  if (error) throw error;
+  return data as Lead;
+};
+
+export const editarLead = async (id: string, dados: DadosDoLead): Promise<void> => {
+  const { error } = await supabase
+    .from('sales_contacts')
+    .update({
+      name: dados.name,
+      email: dados.email || null,
+      phone: dados.phone || null,
+      notes: dados.notes || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id);
+  if (error) throw error;
+};
+
+/**
+ * Time que pode ser responsavel por um negocio.
+ *
+ * Vem de uma funcao no banco porque `auth.users` nao e legivel pelo cliente: sem ela o campo de
+ * responsavel mostraria uuid em vez de gente.
+ */
+export const carregarTime = async (): Promise<MembroDoTime[]> => {
+  const { data, error } = await supabase.rpc('sales_team');
+  if (error) throw error;
+  return (data || []) as MembroDoTime[];
+};
+
+/**
+ * Titulo sugerido ao abrir um negocio para um lead.
+ *
+ * Um titulo em branco faz o time digitar a mesma coisa toda vez, e cartoes sem padrao deixam o
+ * quadro ilegivel de longe. A sugestao e ponto de partida: o campo continua editavel.
+ */
+export const tituloSugerido = (nomeDoLead: string): string =>
+  nomeDoLead.trim() ? `Proposta para ${nomeDoLead.trim()}` : '';
 
 /** Contagem e soma por coluna. É o que transforma o quadro numa leitura de funil. */
 export const totalDaEtapa = (negocios: Negocio[], etapaId: string) => {

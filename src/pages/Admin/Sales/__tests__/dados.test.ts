@@ -1,11 +1,11 @@
-import { emReais, posicaoEntre, totalDaEtapa, type Negocio } from '../dados';
+import { emReais, posicaoEntre, tituloSugerido, totalDaEtapa, type Negocio } from '../dados';
 
 const negocio = (over: Partial<Negocio>): Negocio =>
   ({
     id: 'x', pipeline_id: 'p', stage_id: 'e1', company_id: null, contact_id: null,
     linked_user_id: null, title: 't', value: 0, expected_close_date: null, priority: 'medium',
     source: null, status: 'open', lost_reason: null, board_position: 0, owner_id: null,
-    archived: false, ...over,
+    archived: false, notes: null, tags: null, ...over,
   }) as Negocio;
 
 describe('posicaoEntre', () => {
@@ -71,5 +71,24 @@ describe('emReais', () => {
     //   e o espaco nao separavel que o Intl usa entre o simbolo e o numero.
     expect(emReais(1500)).toBe('R$ 1.500');
     expect(emReais(0)).toBe('R$ 0');
+  });
+});
+
+describe('tituloSugerido', () => {
+  // Titulo em branco faz o time digitar a mesma coisa toda vez, e cartao sem padrao deixa o
+  // quadro ilegivel de longe. A sugestao e ponto de partida, nao imposicao: o campo segue editavel.
+  it('monta o titulo a partir do nome do cliente', () => {
+    expect(tituloSugerido('Estúdio Vermelho')).toBe('Proposta para Estúdio Vermelho');
+  });
+
+  it('ignora espaco em volta do nome', () => {
+    expect(tituloSugerido('  Gravadora X  ')).toBe('Proposta para Gravadora X');
+  });
+
+  // Sem nome nao ha sugestao a fazer: devolver "Proposta para " deixaria o campo com lixo que a
+  // pessoa teria que apagar antes de escrever.
+  it('devolve vazio quando nao ha nome', () => {
+    expect(tituloSugerido('')).toBe('');
+    expect(tituloSugerido('   ')).toBe('');
   });
 });

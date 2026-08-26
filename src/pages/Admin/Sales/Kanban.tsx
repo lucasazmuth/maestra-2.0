@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Dropdown, Input, InputNumber, Modal, message } from 'antd';
+import { Button, Dropdown, Input, Modal, message } from 'antd';
 import { FiPlus, FiMoreVertical } from 'react-icons/fi';
 import {
   DndContext,
@@ -14,26 +14,31 @@ import {
 import { useDraggable } from '@dnd-kit/core';
 
 import {
+  carregarLeads,
   carregarNegocios,
   carregarQuadro,
-  criarNegocio,
+  carregarTime,
   emReais,
   moverNegocio,
   posicaoEntre,
   totalDaEtapa,
   type Etapa,
   type Funil,
+  type Lead,
+  type MembroDoTime,
   type Negocio,
 } from './dados';
+import FormularioDeNegocio from './FormularioDeNegocio';
 import styles from './Sales.module.scss';
 
 // Quadro de negócios do CRM de vendas da Maestra.
 
-const Cartao: FC<{ negocio: Negocio; etapas: Etapa[]; onMover: (destino: Etapa) => void }> = ({
-  negocio,
-  etapas,
-  onMover,
-}) => {
+const Cartao: FC<{
+  negocio: Negocio;
+  etapas: Etapa[];
+  onMover: (destino: Etapa) => void;
+  onEditar: () => void;
+}> = ({ negocio, etapas, onMover, onEditar }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: negocio.id });
 
   return (
@@ -46,6 +51,13 @@ const Cartao: FC<{ negocio: Negocio; etapas: Etapa[]; onMover: (destino: Etapa) 
       <div className={styles.cartaoCorpo} {...listeners} {...attributes}>
         <strong className={styles.cartaoTitulo}>{negocio.title}</strong>
         <span className={styles.cartaoValor}>{emReais(Number(negocio.value || 0))}</span>
+        {!!negocio.tags?.length && (
+          <span className={styles.cartaoTags}>
+            {negocio.tags.map((t) => (
+              <em key={t} className={styles.tag}>{t}</em>
+            ))}
+          </span>
+        )}
       </div>
 
       {/* Mover sem arrastar. Um quadro que só responde a arrasto é inoperável por teclado e
@@ -53,10 +65,15 @@ const Cartao: FC<{ negocio: Negocio; etapas: Etapa[]; onMover: (destino: Etapa) 
       <Dropdown
         trigger={['click']}
         menu={{
-          items: etapas
-            .filter((e) => e.id !== negocio.stage_id)
-            .map((e) => ({ key: e.id, label: `Mover para ${e.name}` })),
+          items: [
+            { key: 'editar', label: 'Editar negócio' },
+            { type: 'divider' as const },
+            ...etapas
+              .filter((e) => e.id !== negocio.stage_id)
+              .map((e) => ({ key: e.id, label: `Mover para ${e.name}` })),
+          ],
           onClick: ({ key }) => {
+            if (key === 'editar') return onEditar();
             const destino = etapas.find((e) => e.id === key);
             if (destino) onMover(destino);
           },
@@ -76,7 +93,8 @@ const Coluna: FC<{
   etapas: Etapa[];
   onMover: (negocio: Negocio, destino: Etapa) => void;
   onNovo: (etapa: Etapa) => void;
-}> = ({ etapa, negocios, etapas, onMover, onNovo }) => {
+  onEditar: (negocio: Negocio) => void;
+}> = ({ etapa, negocios, etapas, onMover, onNovo, onEditar }) => {
   const { setNodeRef, isOver } = useDroppable({ id: etapa.id });
   const total = totalDaEtapa(negocios, etapa.id);
   const daColuna = negocios.filter((n) => n.stage_id === etapa.id);
@@ -104,7 +122,13 @@ const Coluna: FC<{
 
       <div className={styles.colunaLista}>
         {daColuna.map((n) => (
-          <Cartao key={n.id} negocio={n} etapas={etapas} onMover={(destino) => onMover(n, destino)} />
+          <Cartao
+            key={n.id}
+            negocio={n}
+            etapas={etapas}
+            onMover={(destino) => onMover(n, destino)}
+            onEditar={() => onEditar(n)}
+          />
         ))}
         {daColuna.length === 0 && <p className={styles.colunaVazia}>Nenhum negócio aqui.</p>}
       </div>
@@ -124,9 +148,13 @@ export const Kanban: FC = () => {
   // nao se mexia. O resto do projeto ja usa <Modal> controlado por isso.
   const [perdendo, setPerdendo] = useState<{ negocio: Negocio; destino: Etapa } | null>(null);
   const [motivoDaPerda, setMotivoDaPerda] = useState('');
-  const [novoEm, setNovoEm] = useState<Etapa | null>(null);
-  const [novoTitulo, setNovoTitulo] = useState('');
-  const [novoValor, setNovoValor] = useState<number>(0);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [time, setTime] = useState<MembroDoTime[]>([]);
+  // Um estado só para o formulário: `etapa` diz onde criar, `negocio` diz o que editar. Nunca os
+  // dois ao mesmo tempo.
+  const [formulario, setFormulario] = useState<
+    { etapa: Etapa | null; negocio: Negocio | null; lead: Lead | null } | null
+  >(null);
 
   // Um toque curto não pode virar arrasto: sem a distância mínima, abrir o menu do cartão
   // arrastava o cartão junto.
@@ -139,7 +167,12 @@ export const Kanban: FC = () => {
       const { funil: f, etapas: e } = await carregarQuadro();
       setFunil(f);
       setEtapas(e);
-      setNegocios(await carregarNegocios(f.id));
+      // Leads e time entram junto: o formulário precisa deles para o select de cliente e o de
+      // responsável, e buscá-los só na hora de abrir deixaria o modal vazio no primeiro instante.
+      const [ns, ls, t] = await Promise.all([carregarNegocios(f.id), carregarLeads(), carregarTime()]);
+      setNegocios(ns);
+      setLeads(ls);
+      setTime(t);
     } catch (err: any) {
       setErro(err?.message || 'Não foi possível carregar o quadro.');
     } finally {
@@ -208,24 +241,13 @@ export const Kanban: FC = () => {
   const aoPegar = (evento: DragStartEvent) =>
     setArrastando(negocios.find((n) => n.id === evento.active.id) || null);
 
-  const criar = async () => {
-    if (!funil || !novoEm || !novoTitulo.trim()) return;
-    try {
-      const daColuna = negocios.filter((n) => n.stage_id === novoEm.id);
-      const novo = await criarNegocio({
-        pipelineId: funil.id,
-        etapa: novoEm,
-        title: novoTitulo.trim(),
-        value: novoValor || 0,
-        posicao: posicaoEntre(daColuna[daColuna.length - 1]?.board_position, undefined),
-      });
-      setNegocios((atual) => [...atual, novo]);
-      setNovoEm(null);
-      setNovoTitulo('');
-      setNovoValor(0);
-    } catch (err: any) {
-      message.error(err?.message || 'Não foi possível criar o negócio.');
-    }
+  const aoSalvarNegocio = (salvo: Negocio | null) => {
+    if (!salvo) return;
+    setNegocios((atual) =>
+      atual.some((n) => n.id === salvo.id)
+        ? atual.map((n) => (n.id === salvo.id ? { ...n, ...salvo } : n))
+        : [...atual, salvo]
+    );
   };
 
   const totalGeral = useMemo(
@@ -253,7 +275,8 @@ export const Kanban: FC = () => {
               etapas={etapas}
               negocios={negocios}
               onMover={mover}
-              onNovo={setNovoEm}
+              onNovo={(et) => setFormulario({ etapa: et, negocio: null, lead: null })}
+              onEditar={(n) => setFormulario({ etapa: null, negocio: n, lead: null })}
             />
           ))}
         </div>
@@ -288,38 +311,21 @@ export const Kanban: FC = () => {
         />
       </Modal>
 
-      <Modal
-        open={!!novoEm}
-        title={`Novo negócio em ${novoEm?.name ?? ''}`}
-        onCancel={() => setNovoEm(null)}
-        onOk={criar}
-        okText='Criar'
-        cancelText='Cancelar'
-        okButtonProps={{ disabled: !novoTitulo.trim() }}
-      >
-        <div className={styles.formNovo}>
-          <label>
-            Título
-            <Input
-              autoFocus
-              value={novoTitulo}
-              onChange={(e) => setNovoTitulo(e.target.value)}
-              placeholder='Ex.: Gravadora X, plano anual'
-              onPressEnter={criar}
-            />
-          </label>
-          <label>
-            Valor
-            <InputNumber
-              value={novoValor}
-              onChange={(v) => setNovoValor(Number(v || 0))}
-              min={0}
-              style={{ width: '100%' }}
-              prefix='R$'
-            />
-          </label>
-        </div>
-      </Modal>
+      <FormularioDeNegocio
+        aberto={!!formulario}
+        etapa={formulario?.etapa ?? null}
+        negocio={formulario?.negocio ?? null}
+        leadInicial={formulario?.lead ?? null}
+        leads={leads}
+        time={time}
+        pipelineId={funil?.id}
+        criarComPosicao={() => {
+          const daColuna = negocios.filter((n) => n.stage_id === formulario?.etapa?.id);
+          return posicaoEntre(daColuna[daColuna.length - 1]?.board_position, undefined);
+        }}
+        onFechar={() => setFormulario(null)}
+        onSalvo={aoSalvarNegocio}
+      />
 
       <Button type='link' onClick={carregar} className={styles.recarregar}>
         Recarregar

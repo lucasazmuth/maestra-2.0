@@ -1,0 +1,201 @@
+import { FC, useEffect, useState } from 'react';
+import { Input, InputNumber, Modal, Select, message } from 'antd';
+
+import {
+  criarNegocio,
+  editarNegocio,
+  tituloSugerido,
+  type DadosDoNegocio,
+  type Etapa,
+  type Lead,
+  type MembroDoTime,
+  type Negocio,
+} from './dados';
+import styles from './Sales.module.scss';
+
+// Formulário de negócio, o mesmo para criar e para editar.
+//
+// Um formulário só, e não dois: criar e editar pedem exatamente os mesmos campos, e manter duas
+// cópias é como um dos dois acaba esquecendo um campo novo.
+
+interface Props {
+  aberto: boolean;
+  etapa: Etapa | null;
+  leads: Lead[];
+  time: MembroDoTime[];
+  /** Preenchido quando está editando; nulo quando está criando. */
+  negocio?: Negocio | null;
+  /** Lead escolhido de fora (botão "Criar negócio" na lista de leads). */
+  leadInicial?: Lead | null;
+  onFechar: () => void;
+  onSalvo: (negocio: Negocio | null) => void;
+  criarComPosicao?: () => number;
+  pipelineId?: string;
+}
+
+const VAZIO: DadosDoNegocio = { title: '', value: 0, contactId: null, ownerId: null, notes: '', tags: [] };
+
+export const FormularioDeNegocio: FC<Props> = ({
+  aberto,
+  etapa,
+  leads,
+  time,
+  negocio,
+  leadInicial,
+  onFechar,
+  onSalvo,
+  criarComPosicao,
+  pipelineId,
+}) => {
+  const [form, setForm] = useState<DadosDoNegocio>(VAZIO);
+  const [salvando, setSalvando] = useState(false);
+  // Guarda se o título ainda é o sugerido. Enquanto for, trocar o lead atualiza o título junto;
+  // depois que a pessoa escreve o dela, trocar o lead não pode apagar o que ela digitou.
+  const [tituloIntocado, setTituloIntocado] = useState(true);
+
+  useEffect(() => {
+    if (!aberto) return;
+    if (negocio) {
+      setForm({
+        title: negocio.title,
+        value: Number(negocio.value || 0),
+        contactId: negocio.contact_id,
+        ownerId: negocio.owner_id,
+        notes: negocio.notes,
+        tags: negocio.tags || [],
+      });
+      setTituloIntocado(false);
+      return;
+    }
+    const lead = leadInicial || null;
+    setForm({
+      ...VAZIO,
+      contactId: lead?.id ?? null,
+      title: lead ? tituloSugerido(lead.name) : '',
+    });
+    setTituloIntocado(true);
+  }, [aberto, negocio, leadInicial]);
+
+  const escolherLead = (id: string | null) => {
+    const lead = leads.find((l) => l.id === id) || null;
+    setForm((atual) => ({
+      ...atual,
+      contactId: id,
+      title: tituloIntocado && lead ? tituloSugerido(lead.name) : atual.title,
+    }));
+  };
+
+  const salvar = async () => {
+    if (!form.title.trim()) return;
+    setSalvando(true);
+    try {
+      if (negocio) {
+        await editarNegocio(negocio.id, { ...form, title: form.title.trim() });
+        onSalvo({ ...negocio, ...form, title: form.title.trim() } as Negocio);
+      } else {
+        if (!etapa || !pipelineId) return;
+        const novo = await criarNegocio({
+          ...form,
+          title: form.title.trim(),
+          pipelineId,
+          etapa,
+          posicao: criarComPosicao ? criarComPosicao() : 0,
+          source: form.contactId ? 'prospeccao' : null,
+        });
+        onSalvo(novo);
+      }
+      onFechar();
+    } catch (err: any) {
+      message.error(err?.message || 'Não foi possível salvar o negócio.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={aberto}
+      title={negocio ? 'Editar negócio' : `Novo negócio${etapa ? ` em ${etapa.name}` : ''}`}
+      onCancel={onFechar}
+      onOk={salvar}
+      confirmLoading={salvando}
+      okText='Salvar'
+      cancelText='Cancelar'
+      okButtonProps={{ disabled: !form.title.trim() }}
+      width={560}
+    >
+      <div className={styles.formNovo}>
+        <label>
+          Cliente
+          <Select
+            allowClear
+            showSearch
+            placeholder='Escolha um lead já cadastrado'
+            value={form.contactId || undefined}
+            onChange={(v) => escolherLead(v ?? null)}
+            optionFilterProp='label'
+            options={leads.map((l) => ({ value: l.id, label: l.email ? `${l.name} · ${l.email}` : l.name }))}
+            notFoundContent='Nenhum lead cadastrado. Crie na aba Leads.'
+          />
+        </label>
+
+        <label>
+          Título
+          <Input
+            value={form.title}
+            onChange={(e) => {
+              setTituloIntocado(false);
+              setForm({ ...form, title: e.target.value });
+            }}
+            placeholder='Ex.: Proposta para Gravadora X'
+          />
+        </label>
+
+        <label>
+          Valor
+          <InputNumber
+            value={form.value}
+            onChange={(v) => setForm({ ...form, value: Number(v || 0) })}
+            min={0}
+            style={{ width: '100%' }}
+            prefix='R$'
+          />
+        </label>
+
+        <label>
+          Responsável
+          <Select
+            allowClear
+            placeholder='Quem toca este negócio'
+            value={form.ownerId || undefined}
+            onChange={(v) => setForm({ ...form, ownerId: v ?? null })}
+            options={time.map((m) => ({ value: m.user_id, label: m.email }))}
+          />
+        </label>
+
+        <label>
+          Tags
+          <Select
+            mode='tags'
+            placeholder='Ex.: gravadora, indicação, evento'
+            value={form.tags || []}
+            onChange={(v: string[]) => setForm({ ...form, tags: v })}
+            tokenSeparators={[',']}
+          />
+        </label>
+
+        <label>
+          Descrição
+          <Input.TextArea
+            rows={3}
+            value={form.notes || ''}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            placeholder='Contexto da negociação, o que ficou combinado, próximos passos'
+          />
+        </label>
+      </div>
+    </Modal>
+  );
+};
+
+export default FormularioDeNegocio;

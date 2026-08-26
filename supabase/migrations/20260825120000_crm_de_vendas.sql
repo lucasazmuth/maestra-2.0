@@ -307,3 +307,40 @@ where p.is_default
 -- time ja tenha renomeado.
 update public.sales_stages set name = 'Reunião'    where name = 'Reuniao';
 update public.sales_stages set name = 'Negociação' where name = 'Negociacao';
+
+-- ---------------------------------------------------------------------------------------------
+-- Leads manuais e time de vendas
+-- ---------------------------------------------------------------------------------------------
+
+alter table public.sales_deals add column if not exists tags text[];
+
+comment on column public.sales_deals.tags is
+  'Etiquetas livres do negocio (ex.: gravadora, indicacao, evento).';
+
+-- GIN porque a busca por etiqueta e "contem", nao igualdade.
+create index if not exists sales_deals_por_tag on public.sales_deals using gin (tags);
+
+-- Quem pode ser responsavel por um negocio.
+--
+-- Precisa ser SECURITY DEFINER porque `auth.users` nao e legivel pelo cliente: sem isto o campo
+-- "responsavel" so teria uuid, sem nome de gente. Devolve APENAS quem ja esta em
+-- platform_admins, e so para quem opera o CRM — nao e uma porta para listar usuarios do produto.
+create or replace function public.sales_team()
+returns table (user_id uuid, email text, role text)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select pa.user_id, u.email::text, pa.role
+  from public.platform_admins pa
+  join auth.users u on u.id = pa.user_id
+  where public.can_use_sales_crm()
+  order by u.email
+$$;
+
+comment on function public.sales_team() is
+  'Time que opera o CRM de vendas, para o campo de responsavel. Vazia para quem nao opera o CRM.';
+
+revoke all on function public.sales_team() from public, anon;
+grant execute on function public.sales_team() to authenticated;

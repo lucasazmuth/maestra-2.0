@@ -2,6 +2,7 @@ import { FC, useState, type CSSProperties } from 'react';
 
 import Crm from '../Crm';
 import Kanban from './Kanban';
+import Leads from './Leads';
 
 // CRM de vendas da Maestra: onde o time de business development trabalha.
 //
@@ -10,13 +11,19 @@ import Kanban from './Kanban';
 //   - o CRM DO ARTISTA (tabelas `crm_*`) é outro produto, do módulo Marketing do perfil;
 //   - este módulo, sobre as tabelas `sales_*`, é o funil de vendas da Maestra.
 
-type Aba = 'negocios' | 'inbound';
+type Aba = 'negocios' | 'leads' | 'inbound';
 
 const ABAS: { chave: Aba; rotulo: string; descricao: string }[] = [
   {
     chave: 'negocios',
     rotulo: 'Negócios',
     descricao: 'O funil que o time de vendas trabalha: cada cartão é uma negociação em andamento.',
+  },
+  {
+    chave: 'leads',
+    rotulo: 'Leads',
+    descricao:
+      'Gente prospectada de fora, que ainda não é usuária da Maestra. Daqui saem os negócios do funil.',
   },
   {
     chave: 'inbound',
@@ -51,7 +58,9 @@ export const AdminSales: FC = () => {
 
       {/* A aba Inbound reaproveita a tela de ativação inteira, com a apuração que ela já faz.
           Reescrever aquilo aqui criaria duas contas do mesmo funil, que um dia divergiriam. */}
-      {aba === 'negocios' ? <Kanban /> : <Crm />}
+      {aba === 'negocios' && <Kanban />}
+      {aba === 'leads' && <Leads />}
+      {aba === 'inbound' && <Crm />}
     </div>
   );
 };
