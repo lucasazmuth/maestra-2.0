@@ -70,6 +70,8 @@ export interface ComponentDebug {
   high: boolean;         // ≥ percentil 70
   topicon: boolean;      // ≥ percentil 95
   absent: boolean;       // sem dado p/ computar
+  // Piso da régua DESTE componente: o menor z da tabela dele. Ver `progressoAteOCorte`.
+  zPiso?: number;
 }
 
 export interface RealIndexV3 {
@@ -173,8 +175,8 @@ function componentZ(subZs: (number | null)[]): number | null {
   return present.reduce((s, z) => s + z, 0) / present.length;
 }
 
-function zComp(key: string, label: string, z: number | null): ComponentDebug {
-  return { key, label, z: z == null ? null : round2(z), high: z != null && z >= HIGH_Z, topicon: z != null && z >= TOPICON_Z, absent: z == null };
+function zComp(key: string, label: string, z: number | null, zPiso?: number): ComponentDebug {
+  return { key, label, z: z == null ? null : round2(z), high: z != null && z >= HIGH_Z, topicon: z != null && z >= TOPICON_Z, absent: z == null, zPiso };
 }
 
 // Boletim por contagem (A): apagado → (n_altos/n)*70 (travado em ≤69, invariante §9.1);
@@ -189,13 +191,23 @@ function countBoletim(comps: { high: boolean; topicon: boolean }[], acende: bool
   return Math.round(70 + (comps.filter((c) => c.topicon).length / n) * 30);
 }
 
-// Piso da escala de R: o menor z das tabelas do §4.2. Serve de zero da régua abaixo do corte.
+// Piso PADRÃO da régua de R, para componente que não informou o dele.
 const Z_PISO = -1.5;
 
-// Quanto o componente caminhou até o corte: 0 no piso, 1 no corte (ou acima).
-function progressoAteOCorte(z: number | null): number {
+// Quanto o componente caminhou até o corte: 0 no piso DELE, 1 no corte (ou acima).
+//
+// POR QUE o piso é por componente (bug relatado): um artista SEM Spotify tirava 7/100 em vez de
+// 0/100. Sem Spotify, a §3.3 manda cada componente de API receber o z MÍNIMO da tabela dele — e
+// essas tabelas não começam no mesmo lugar: ouvintes começa em -1,5, seguidores e vídeo em -1,2.
+// Com um piso global de -1,5, quem não tinha dado NENHUM já nascia 0,3 acima do zero em duas das
+// três frentes, e a média virava 7 pontos tirados do nada.
+//
+// Medindo cada componente contra o piso da PRÓPRIA tabela, o mínimo vira zero em todos — que é o
+// que "sem dado" significa. Para quem tem dado, a mudança é desprezível: no caso dos 556 mil
+// ouvintes que motivou esta régua, a nota se move menos de um ponto.
+function progressoAteOCorte(z: number | null, zPiso: number = Z_PISO): number {
   if (z == null) return 0;
-  return Math.max(0, Math.min(1, (z - Z_PISO) / (HIGH_Z - Z_PISO)));
+  return Math.max(0, Math.min(1, (z - zPiso) / (HIGH_Z - zPiso)));
 }
 
 // Boletim do R — apagado, usa a DISTÂNCIA até o corte em vez da contagem de altos.
@@ -215,7 +227,7 @@ function progressoAteOCorte(z: number | null): number {
 function boletimZ(comps: ComponentDebug[], acende: boolean): number {
   const n = comps.length;
   if (!acende) {
-    const media = comps.reduce((s, c) => s + progressoAteOCorte(c.z), 0) / n;
+    const media = comps.reduce((s, c) => s + progressoAteOCorte(c.z, c.zPiso), 0) / n;
     return Math.min(69, Math.round(media * 70));
   }
   return Math.round(70 + (comps.filter((c) => c.topicon).length / n) * 30);
@@ -247,13 +259,15 @@ export function computeRealIndexV3(input: RealInputsV3): RealIndexV3 {
   const sp = input.spotifyConnected;
 
   // ── R: 3 componentes (⅓), acende com os 3 altos (§4.4) ──
+  // Cada componente leva o piso da tabela DELE: as três não começam no mesmo z, e medir todas
+  // contra um piso único fazia "sem dado nenhum" valer mais que zero.
   const rComps: ComponentDebug[] = [
-    zComp('listeners', 'Ouvintes mensais Spotify', apiZ(input.spotifyListeners, CUTS.spotifyListeners, sp)),
+    zComp('listeners', 'Ouvintes mensais Spotify', apiZ(input.spotifyListeners, CUTS.spotifyListeners, sp), CUTS.spotifyListeners.zs[0]),
     zComp('socialFollowers', 'Seguidores de rede (IG + TikTok)', componentZ([
       apiZ(input.igFollowers, CUTS.socialFollowers, sp),
       apiZ(input.tiktokFollowers, CUTS.socialFollowers, sp),
-    ])),
-    zComp('videoViews', 'Consumo de vídeo (YouTube)', apiZ(input.youtubeMonthlyViews, CUTS.youtubeViews, sp)),
+    ]), CUTS.socialFollowers.zs[0]),
+    zComp('videoViews', 'Consumo de vídeo (YouTube)', apiZ(input.youtubeMonthlyViews, CUTS.youtubeViews, sp), CUTS.youtubeViews.zs[0]),
   ];
   // Opção A (decisão da metodologia — Anita): um canal AUSENTE (ex.: artista sem YouTube) sai da
   // conta e o R é reponderado sobre as frentes que EXISTEM — mesma lógica já usada dentro do social
