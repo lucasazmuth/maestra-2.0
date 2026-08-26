@@ -168,6 +168,8 @@ export interface DadosDoNegocio {
   ownerId?: string | null;
   notes?: string | null;
   tags?: string[] | null;
+  /** Só faz sentido em negócio perdido; ignorado nos demais. */
+  lostReason?: string | null;
 }
 
 export const criarNegocio = async (params: DadosDoNegocio & {
@@ -203,19 +205,27 @@ export const criarNegocio = async (params: DadosDoNegocio & {
   return data as Negocio;
 };
 
-export const editarNegocio = async (id: string, dados: DadosDoNegocio): Promise<void> => {
-  const { error } = await supabase
-    .from('sales_deals')
-    .update({
-      title: dados.title,
-      value: dados.value,
-      contact_id: dados.contactId ?? null,
-      owner_id: dados.ownerId ?? null,
-      notes: dados.notes ?? null,
-      tags: dados.tags?.length ? dados.tags : null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id);
+export const editarNegocio = async (
+  id: string,
+  dados: DadosDoNegocio,
+  /** Status atual do negócio. Decide se o motivo da perda entra no patch. */
+  status?: Negocio['status']
+): Promise<void> => {
+  const patch: Record<string, unknown> = {
+    title: dados.title,
+    value: dados.value,
+    contact_id: dados.contactId ?? null,
+    owner_id: dados.ownerId ?? null,
+    notes: dados.notes ?? null,
+    tags: dados.tags?.length ? dados.tags : null,
+    updated_at: new Date().toISOString(),
+  };
+  // O motivo só entra quando o negócio ESTÁ perdido. Mandar `null` aqui num negócio perdido
+  // esbarraria na constraint `sales_deals_perda_tem_motivo` e derrubaria a edição inteira por
+  // causa de um campo que a tela nem mostra nos outros casos.
+  if (status === 'lost' && dados.lostReason?.trim()) patch.lost_reason = dados.lostReason.trim();
+
+  const { error } = await supabase.from('sales_deals').update(patch).eq('id', id);
   if (error) throw error;
 };
 

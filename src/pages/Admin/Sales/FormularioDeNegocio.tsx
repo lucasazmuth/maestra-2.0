@@ -68,6 +68,7 @@ export const FormularioDeNegocio: FC<Props> = ({
         ownerId: negocio.owner_id,
         notes: negocio.notes,
         tags: negocio.tags || [],
+        lostReason: negocio.lost_reason,
       });
       setTituloIntocado(false);
       return;
@@ -102,7 +103,7 @@ export const FormularioDeNegocio: FC<Props> = ({
     setSalvando(true);
     try {
       if (negocio) {
-        await editarNegocio(negocio.id, { ...form, title: form.title.trim() });
+        await editarNegocio(negocio.id, { ...form, title: form.title.trim() }, negocio.status);
         onSalvo({ ...negocio, ...form, title: form.title.trim() } as Negocio);
       } else {
         if (!etapa || !pipelineId) return;
@@ -222,6 +223,26 @@ export const FormularioDeNegocio: FC<Props> = ({
             placeholder='Contexto da negociação, o que ficou combinado, próximos passos'
           />
         </label>
+
+        {/* O motivo era escrito ao perder e nunca mais aparecia: ficava no banco sem caminho de
+            volta na tela. Editável de propósito — motivo digitado errado não serve de relatório,
+            e a alternativa seria reabrir e perder o negócio de novo só para corrigir texto. */}
+        {negocio?.status === 'lost' && (
+          <label>
+            Motivo da perda
+            <Input.TextArea
+              rows={2}
+              value={form.lostReason || ''}
+              onChange={(e) => setForm({ ...form, lostReason: e.target.value })}
+              placeholder='Por que este negócio foi perdido?'
+            />
+            {!form.lostReason?.trim() && (
+              <small className={styles.dicaDoCampo}>
+                O banco exige motivo em negócio perdido: deixar em branco mantém o anterior.
+              </small>
+            )}
+          </label>
+        )}
       </div>
     </Modal>
   );
