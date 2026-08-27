@@ -23,4 +23,12 @@ module.exports = {
       { name: 'confirm', message: 'Nao existe no app nativo.' },
     ],
   },
+  overrides: [
+    {
+      // Teste PRECISA falar com o navegador: e assim que se prova que a web continua gravando
+      // onde gravava. Proibir aqui tornaria impossivel testar justamente o que a regra protege.
+      files: ['**/__tests__/**', '**/*.test.ts', '**/*.test.tsx'],
+      rules: { 'no-restricted-globals': 'off' },
+    },
+  ],
 };

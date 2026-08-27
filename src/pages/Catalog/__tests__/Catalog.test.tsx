@@ -248,7 +248,10 @@ describe('Catalog Page - Track Limit Integration', () => {
         expect(screen.getByTestId('track-modal')).toBeInTheDocument();
       });
       expect(screen.queryByTestId('upsell-modal')).not.toBeInTheDocument();
-    });
+      // Este caso monta 50 faixas e leva ~4s de trabalho real, contra os 5s padrao do jest —
+      // margem estreita demais. Passava sozinho e caia quando a maquina tinha outra coisa
+      // rodando em paralelo, que e o pior tipo de teste: o que falha sem ninguem ter mexido.
+    }, 20_000);
   });
 
   describe('5.4: After creating a track (onSaved), counter updates to reflect new count', () => {

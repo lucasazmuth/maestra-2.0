@@ -9,7 +9,7 @@ import {
   persistReducer,
 } from 'redux-persist';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
-import storage from 'redux-persist/lib/storage'; // defaults to localStorage
+import { ambiente } from '../nucleo/ambiente';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 // Reducers
@@ -43,9 +43,30 @@ const rootReducer = (state, action) => {
 
 const whitelist = ['language', 'ui'] as string[];
 
+/**
+ * Onde o redux-persist grava.
+ *
+ * Era `redux-persist/lib/storage`, que e o adaptador WEB — ele fala com `localStorage` e no app
+ * nativo cai num no-op silencioso. Aqui a porta responde nas duas superficies.
+ *
+ * A interface do redux-persist e assincrona; a porta e sincrona. Envolver e trivial, e o
+ * caminho contrario (porta assincrona) obrigaria a mudar todo chamador dela.
+ */
+const deposito = {
+  getItem: (chave: string) => Promise.resolve(ambiente().armazenamento.ler(chave)),
+  setItem: (chave: string, valor: string) => {
+    ambiente().armazenamento.gravar(chave, valor);
+    return Promise.resolve();
+  },
+  removeItem: (chave: string) => {
+    ambiente().armazenamento.apagar(chave);
+    return Promise.resolve();
+  },
+};
+
 const persistedReducer = persistReducer(
   {
-    storage,
+    storage: deposito,
     whitelist,
     key: 'root',
   },

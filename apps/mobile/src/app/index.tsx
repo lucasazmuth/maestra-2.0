@@ -1,94 +1,27 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect } from 'expo-router';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { computeRealIndexV3, type RealInputsV3 } from '@maestra/core/services/realEngine';
-import { BRAND, BRAND_ONYX } from '@maestra/core/constants/brand';
+import { BRAND } from '@maestra/core/constants/brand';
+import { useSessao } from '@/nucleo/sessao';
 
-// Primeira tela do app nativo, e por enquanto uma prova.
+// Porta de entrada: decide entre login e app.
 //
-// O que precisa ficar demonstrado na Etapa 1 nao e visual: e que o app roda a MESMA logica que
-// a web, vinda de `@maestra/core`, sem copia e sem adaptacao. Os dois cenarios abaixo sao os
-// mesmos que a suite do nucleo verifica — se o numero aqui divergir do esperado, o Metro esta
-// carregando outra coisa, e e melhor descobrir agora do que depois de vinte telas prontas.
+// Enquanto nao se sabe, nao se redireciona. Mandar para o login e voltar meio segundo depois
+// e o piscar que denuncia app mal feito — e a sessao quase sempre ESTA no disco.
+export default function Porta() {
+  const { sessao, carregando } = useSessao();
 
-const entrada = (over: Partial<RealInputsV3> = {}): RealInputsV3 => ({
-  spotifyConnected: true,
-  spotifyListeners: 0, igFollowers: 0, tiktokFollowers: 0, youtubeMonthlyViews: 0,
-  spotifyFollowers: 0, deezerFans: 0, igEngagement: 0, youtubeEngagement: 0, tiktokEngagement: 0,
-  editorialPlaylists: 0, radioAirplay: null,
-  showsPerMonth: 0, cache: 0, faturamentoForaShows: 0, revenueSources: {}, investimento: 0,
-  temCnpj: false, temEmpresario: false,
-  premios: 0, imprensaRepercussao: false, imprensaMatrix: [], imprensaFrequencia: 'lancamento',
-  fazBilheteria: false, pagantePct: null,
-  ...over,
-});
+  if (carregando) {
+    return (
+      <View style={estilos.espera}>
+        <ActivityIndicator color={BRAND} size="large" />
+      </View>
+    );
+  }
 
-const CENARIOS = [
-  {
-    nome: 'Artista sem Spotify',
-    porque: 'o bug do piso por componente: dava 7 quando devia dar 0',
-    criterio: 'exatamente 0',
-    obtido: computeRealIndexV3(entrada({ spotifyConnected: false })).boletim.r,
-    passa: (r: number) => r === 0,
-  },
-  {
-    nome: '556 mil ouvintes, 24 mil seguidores',
-    porque: 'quem esta encostado no corte nao pode empatar com quem nao tem nada',
-    criterio: 'entre 41 e 69',
-    obtido: computeRealIndexV3(entrada({
-      spotifyListeners: 556_000, igFollowers: 24_000,
-      tiktokFollowers: null, youtubeMonthlyViews: null,
-    })).boletim.r,
-    passa: (r: number) => r > 40 && r < 70,
-  },
-];
-
-export default function Inicio() {
-  const tudoBate = CENARIOS.every((c) => c.passa(c.obtido));
-
-  return (
-    <SafeAreaView style={estilos.tela}>
-      <ScrollView contentContainerStyle={estilos.conteudo}>
-        <Text style={estilos.marca}>Maestra</Text>
-        <Text style={estilos.legenda}>
-          App nativo, Etapa 1. Esta tela roda o motor REAL direto de @maestra/core.
-        </Text>
-
-        {CENARIOS.map((c) => (
-          <View key={c.nome} style={estilos.cartao}>
-            <Text style={estilos.titulo}>{c.nome}</Text>
-            <Text style={estilos.porque}>{c.porque}</Text>
-            <View style={estilos.linha}>
-              <Text style={estilos.rotulo}>Reach</Text>
-              <Text style={[estilos.valor, c.passa(c.obtido) ? estilos.ok : estilos.erro]}>
-                {c.obtido}/100
-              </Text>
-            </View>
-            <Text style={estilos.esperado}>a suite exige: {c.criterio}</Text>
-          </View>
-        ))}
-
-        <Text style={[estilos.veredito, tudoBate ? estilos.ok : estilos.erro]}>
-          {tudoBate ? 'O nucleo roda igual no app e na web.' : 'Divergencia: investigar o Metro.'}
-        </Text>
-      </ScrollView>
-    </SafeAreaView>
-  );
+  return <Redirect href={sessao ? '/inicio' : '/entrar'} />;
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: '#fff' },
-  conteudo: { padding: 24, gap: 16 },
-  marca: { fontSize: 34, fontWeight: '800', color: BRAND_ONYX, letterSpacing: -0.5 },
-  legenda: { fontSize: 15, lineHeight: 22, color: '#6b7280', marginBottom: 8 },
-  cartao: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 16, gap: 6 },
-  titulo: { fontSize: 17, fontWeight: '700', color: BRAND_ONYX },
-  porque: { fontSize: 13, color: '#6b7280', lineHeight: 19 },
-  linha: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 6 },
-  rotulo: { fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, color: '#9ca3af' },
-  valor: { fontSize: 28, fontWeight: '800' },
-  esperado: { fontSize: 12, color: '#9ca3af' },
-  veredito: { fontSize: 15, fontWeight: '700', marginTop: 8 },
-  ok: { color: BRAND },
-  erro: { color: '#b32d45' },
+  espera: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
 });
