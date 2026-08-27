@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import type { Artist } from '../interfaces/maestra';
-import { PRODUCT_THEME } from '../components/productTheme';
+import { ACENTO_DO_PRODUTO } from '../constants/produtos';
 import { isOnboardingComplete } from '../constants/maestra';
 import { useArtistCapabilities } from './useArtistCapabilities';
 
@@ -16,7 +16,7 @@ export interface JourneyNext {
   desc: string;       // 1 linha de apoio
   ctaLabel: string;   // texto do botão
   to: string;         // sufixo da rota (prefixar com /artists/:id/), ex.: 'wizard'
-  accent: string;     // triplete "r, g, b" do produto (PRODUCT_THEME)
+  accent: string;     // triplete "r, g, b" do produto (ACENTO_DO_PRODUTO)
 }
 
 export interface JourneyState {
@@ -31,9 +31,9 @@ export interface JourneyState {
   next: JourneyNext;
 }
 
-const REAL = PRODUCT_THEME.real.accent;
-const PLAN = PRODUCT_THEME.planning.accent;
-const ACTION = PRODUCT_THEME.action.accent;
+const REAL = ACENTO_DO_PRODUTO.real;
+const PLAN = ACENTO_DO_PRODUTO.planning;
+const ACTION = ACENTO_DO_PRODUTO.action;
 
 // Deriva o estado da jornada a partir do conteúdo do artista + capacidades (pago/PRO).
 // Reusado pelo card "Seu próximo passo", pelo JourneyMap e pela Sidebar (cadeados suaves).

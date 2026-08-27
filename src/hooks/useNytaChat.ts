@@ -22,7 +22,7 @@ import {
   type PendingToolCall,
 } from '../store/slices/nytaChat';
 import { useNytaModalStore } from '../stores/nytaModalStore';
-import { useParams } from 'react-router-dom';
+import { useRota } from '../nucleo/rota';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -124,7 +124,7 @@ export function useNytaChat(
   // assim que uma conversa nova nasce (ela só existe no banco a partir da primeira mensagem).
   onConversation?: (conversationId: string) => void,
 ): UseNytaChatReturn {
-  const { id: routeArtistId } = useParams<{ id: string }>();
+  const { id: routeArtistId } = useRota().parametros;
   const modalArtistId = useNytaModalStore((s) => s.moduleContext.artistId);
   const artistId = source === 'modal' ? modalArtistId : routeArtistId;
   const dispatch = useAppDispatch();

@@ -2,6 +2,8 @@ import ReactDOM from 'react-dom/client';
 import '@fontsource-variable/inter/wght.css';
 import '@fontsource-variable/jetbrains-mono/wght.css';
 import './index.css';
+// Registra a rota da web no nucleo. Precisa vir antes das telas que a consultam.
+import './nucleo/rotaWeb';
 import App from './App';
 import AppErrorBoundary, { ehErroDeChunk, tentarRecarregarUmaVez, limparMarcaDeReload } from './components/AppErrorBoundary';
 import reportWebVitals from './reportWebVitals';

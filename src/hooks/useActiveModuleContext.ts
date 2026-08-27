@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useRota } from '../nucleo/rota';
 import { resolveModuleFromPath, ActiveModuleContext } from '../utils/moduleMapping';
 import { useNytaModalStore } from '../stores/nytaModalStore';
 import { useAppSelector } from '../store/store';
@@ -9,7 +9,7 @@ import { useAppSelector } from '../store/store';
  * Observa mudanças no pathname e sincroniza com o nytaModalStore.
  */
 export function useActiveModuleContext(): ActiveModuleContext {
-  const { pathname } = useLocation();
+  const { caminho: pathname } = useRota();
   const artists = useAppSelector((s) => s.artists.items);
 
   const context = useMemo<ActiveModuleContext>(() => {

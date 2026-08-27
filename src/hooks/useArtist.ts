@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useRota } from '../nucleo/rota';
 
 import { useAppDispatch, useAppSelector } from '../store/store';
 import { artistsActions } from '../store/slices/artists';
@@ -11,7 +11,7 @@ import type { Artist } from '../interfaces/maestra';
  * (se estiver "velho", > 6h) ao acessar.
  */
 export const useArtist = (): { artist?: Artist; loading: boolean } => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useRota().parametros;
   const dispatch = useAppDispatch();
 
   const user = useAppSelector((s) => s.auth.user);

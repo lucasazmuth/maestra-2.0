@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react';
 
+import { ACENTO_DO_PRODUTO } from '../constants/produtos';
+
 import gradReal from './journey/gradients/real.svg';
 import gradPlanning from './journey/gradients/planning.svg';
 import gradAction from './journey/gradients/action.svg';
@@ -7,9 +9,9 @@ import gradAction from './journey/gradients/action.svg';
 // Identidade visual de cada produto do ciclo de crescimento (cor + gradiente de fundo próprio).
 // Compartilhado entre os cards da jornada (Dashboard) e o fundo das páginas de cada produto.
 export const PRODUCT_THEME = {
-  real: { accent: '46, 196, 122', bg: gradReal },        // verde — REAL · Diagnóstico
-  planning: { accent: '154, 79, 209', bg: gradPlanning }, // roxo da marca — Planejamento
-  action: { accent: '154, 79, 209', bg: gradAction },     // roxo da marca — Plano de Ação
+  real: { accent: ACENTO_DO_PRODUTO.real, bg: gradReal },
+  planning: { accent: ACENTO_DO_PRODUTO.planning, bg: gradPlanning },
+  action: { accent: ACENTO_DO_PRODUTO.action, bg: gradAction },
 };
 
 // Fundo sutil da página: um glow radial no topo, na cor do produto (mesma cor dos cards da jornada),
