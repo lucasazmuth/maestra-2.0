@@ -6,7 +6,7 @@ import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiCalendar } from 'react-icons
 
 import { MaestraBrand } from '../../components/MaestraBrand';
 import useIsMobile from '../../utils/isMobile';
-import { rodandoNativo } from '@maestra/core/lib/plataforma';
+import { rodandoNativo } from '../../lib/plataforma';
 import { useAppDispatch } from '@maestra/core/store/store';
 import { authActions, type SocialProvider } from '@maestra/core/store/slices/auth';
 import styles from './AuthShell.module.scss';

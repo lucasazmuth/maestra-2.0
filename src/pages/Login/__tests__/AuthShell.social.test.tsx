@@ -16,7 +16,7 @@ jest.mock('@maestra/core/lib/supabase', () => ({
 }));
 
 const mockRodandoNativo = jest.fn(() => false);
-jest.mock('@maestra/core/lib/plataforma', () => ({
+jest.mock('../../../lib/plataforma', () => ({
   rodandoNativo: () => mockRodandoNativo(),
   plataforma: () => 'web',
 }));

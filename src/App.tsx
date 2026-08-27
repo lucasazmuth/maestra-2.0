@@ -20,7 +20,7 @@ import {
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store, useAppDispatch, useAppSelector } from '@maestra/core/store/store';
-import { rodandoNativo } from '@maestra/core/lib/plataforma';
+import { rodandoNativo } from './lib/plataforma';
 import { useAdminRole, type ModuloAdmin } from '@maestra/core/hooks/useAdminRole';
 import { MobileIntro } from './pages/MobileIntro';
 import { authActions } from '@maestra/core/store/slices/auth';

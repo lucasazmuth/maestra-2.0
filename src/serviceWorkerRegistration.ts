@@ -1,4 +1,4 @@
-import { rodandoNativo } from '@maestra/core/lib/plataforma';
+import { rodandoNativo } from './lib/plataforma';
 
 const register = (): void => {
   if (!('serviceWorker' in navigator)) return;

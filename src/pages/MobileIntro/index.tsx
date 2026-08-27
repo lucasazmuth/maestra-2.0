@@ -3,7 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
 import { NytaEmblem } from '../../components/nyta/NytaEmblem';
-import { rodandoNativo } from '@maestra/core/lib/plataforma';
+import { rodandoNativo } from '../../lib/plataforma';
 import styles from './MobileIntro.module.scss';
 
 // Abertura do app empacotado, no lugar da landing.
