@@ -1,6 +1,6 @@
 import { useLocation, useParams } from 'react-router-dom';
 
-import { configurarRota, type Rota } from './rota';
+import { configurarRota, type Rota } from '@maestra/core/nucleo/rota';
 
 /** A rota da web, lida do react-router. */
 export const useRotaDoNavegador = (): Rota => {

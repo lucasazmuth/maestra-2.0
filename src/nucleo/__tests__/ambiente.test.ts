@@ -1,4 +1,4 @@
-import { ambiente, configurarAmbiente, reiniciarAmbiente, type Armazenamento } from '../ambiente';
+import { ambiente, configurarAmbiente, reiniciarAmbiente, type Armazenamento } from '@maestra/core/nucleo/ambiente';
 
 // A porta existe para o núcleo rodar fora do navegador. O que precisa ficar garantido é que a
 // web continua igual sem nenhuma configuração (senão a extração quebraria o produto de hoje) e

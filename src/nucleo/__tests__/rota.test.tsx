@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-import { useRota, configurarRota, reiniciarRota } from '../rota';
+import { useRota, configurarRota, reiniciarRota } from '@maestra/core/nucleo/rota';
 import { useRotaDoNavegador } from '../rotaWeb';
 
 // O núcleo lê a rota por uma porta para poder rodar sob o Expo Router no app. O que não pode

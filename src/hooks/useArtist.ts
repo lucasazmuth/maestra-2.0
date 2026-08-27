@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useRota } from '../nucleo/rota';
+import { useRota } from '@maestra/core/nucleo/rota';
 
 import { useAppDispatch, useAppSelector } from '../store/store';
 import { artistsActions } from '../store/slices/artists';

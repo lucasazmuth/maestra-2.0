@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useRota } from '../nucleo/rota';
+import { useRota } from '@maestra/core/nucleo/rota';
 import { resolveModuleFromPath, ActiveModuleContext } from '../utils/moduleMapping';
 import { useNytaModalStore } from '../stores/nytaModalStore';
 import { useAppSelector } from '../store/store';

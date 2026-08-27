@@ -31,3 +31,4 @@ src/**/*.css.map
 
 # Atalho local pra abrir design-ref/ pelo dev server (o conteudo mora em design-ref/)
 /public/design-ref
+packages/*/dist

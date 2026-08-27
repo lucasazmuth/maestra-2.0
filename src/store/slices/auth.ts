@@ -3,7 +3,7 @@ import type { Session, User } from '@supabase/supabase-js';
 
 import { supabase } from '../../lib/supabase';
 import { clearSpotifyTokens } from '../../lib/spotifyToken';
-import { ambiente } from '../../nucleo/ambiente';
+import { ambiente } from '@maestra/core/nucleo/ambiente';
 
 interface AuthState {
   user?: User | null;
