@@ -1,8 +1,8 @@
 import { FC, useState } from 'react';
 import ColorThiefRaw from 'colorthief';
 
-import { ARTISTS_DEFAULT_IMAGE } from '../constants/spotify';
-import type { Artist } from '../interfaces/maestra';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import type { Artist } from '@maestra/core/interfaces/maestra';
 import { RealBadge, altasForPattern, tierForPattern, TIER_ACCENT } from './RealBadge';
 
 // Cabeçalho do artista (foto + nome + stats do Spotify) com gradiente extraído da cor dominante

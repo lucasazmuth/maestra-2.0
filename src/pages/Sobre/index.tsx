@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiInstagram } from 'react-icons/fi';
 
 import { Header, Footer } from '../Landing/Chrome';
-import { useAppSelector } from '../../store/store';
+import { useAppSelector } from '@maestra/core/store/store';
 import anitaPhoto from '../../assets/anita.jpg';
 import styles from './Sobre.module.scss';
 

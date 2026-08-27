@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Modal } from 'antd';
 import { FiCheck } from 'react-icons/fi';
 import { UpsellContext, UPSELL_CONFIG } from './config';
-import { usePlanPrices } from '../../hooks/usePlanPrices';
+import { usePlanPrices } from '@maestra/core/hooks/usePlanPrices';
 import styles from './UpsellModal.module.scss';
 
 interface UpsellModalProps {

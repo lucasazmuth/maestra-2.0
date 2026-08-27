@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import type { ActionTask } from '../../interfaces/maestra';
+import type { ActionTask } from '@maestra/core/interfaces/maestra';
 import { TaskDetailModal } from './TaskDetailModal';
 
 beforeAll(() => {

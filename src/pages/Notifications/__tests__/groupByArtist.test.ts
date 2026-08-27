@@ -1,4 +1,4 @@
-import type { NotificationItem } from '../../../interfaces/maestra';
+import type { NotificationItem } from '@maestra/core/interfaces/maestra';
 
 // Extract the groupByArtist helper for testing by re-implementing the same logic
 // (since it's not exported from the component)

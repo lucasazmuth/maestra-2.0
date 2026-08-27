@@ -9,7 +9,7 @@ import AppErrorBoundary, { ehErroDeChunk, tentarRecarregarUmaVez, limparMarcaDeR
 import reportWebVitals from './reportWebVitals';
 import registerServiceWorker from './serviceWorkerRegistration';
 
-import './i18n';
+import '@maestra/core/i18n';
 
 // Locale PT-BR para datas (Agenda, etc.)
 import dayjs from 'dayjs';

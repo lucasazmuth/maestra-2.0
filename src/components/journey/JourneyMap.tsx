@@ -2,7 +2,7 @@ import { FC, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
-import type { Artist } from '../../interfaces/maestra';
+import type { Artist } from '@maestra/core/interfaces/maestra';
 import { PRODUCT_THEME as PRODUCTS } from '../productTheme';
 import './journey.scss';
 

@@ -1,8 +1,8 @@
 import { FC, useEffect } from 'react';
 import { Navigate, Outlet, useParams } from 'react-router-dom';
 
-import { useAppDispatch, useAppSelector } from '../store/store';
-import { artistsActions } from '../store/slices/artists';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { artistsActions } from '@maestra/core/store/slices/artists';
 import { Spinner } from './spinner/spinner';
 
 // Trava qualquer tela do artista enquanto o perfil estiver NÃO-PAGO (is_locked).

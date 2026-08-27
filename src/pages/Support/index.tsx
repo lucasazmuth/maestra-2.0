@@ -5,7 +5,7 @@ import { FiArrowRight } from 'react-icons/fi';
 // como os ícones do sistema), porque são marca de terceiro e precisam ser reconhecíveis.
 import { ReactComponent as GmailSvg } from '../../assets/icons/gmail.svg';
 import { ReactComponent as WhatsappSvg } from '../../assets/icons/whatsapp.svg';
-import { SUPPORT_EMAIL, SUPPORT_WHATSAPP, SUPPORT_WHATSAPP_DISPLAY } from '../../constants/legal';
+import { SUPPORT_EMAIL, SUPPORT_WHATSAPP, SUPPORT_WHATSAPP_DISPLAY } from '@maestra/core/constants/legal';
 import styles from './Support.module.scss';
 
 // Tela dedicada de suporte, com os dois canais de atendimento.

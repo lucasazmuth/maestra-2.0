@@ -4,10 +4,10 @@ import Markdown from 'react-markdown';
 
 import { NytaBubble, UserBubble, TypingIndicator } from '../../Wizard/chat/ChatMessage';
 import { NytaAvatar } from '../../Wizard/chat/nytaPersona';
-import { NytaChatMessage, PendingToolCall } from '../../../store/slices/nytaChat';
-import { useAppSelector } from '../../../store/store';
-import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
-import { sanitizeNytaContent } from '../../../utils/sanitizeNytaContent';
+import { NytaChatMessage, PendingToolCall } from '@maestra/core/store/slices/nytaChat';
+import { useAppSelector } from '@maestra/core/store/store';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import { sanitizeNytaContent } from '@maestra/core/utils/sanitizeNytaContent';
 import { ToolConfirmationCard } from './ToolConfirmationCard';
 
 import './MessageList.scss';

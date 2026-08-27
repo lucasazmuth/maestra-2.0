@@ -22,7 +22,7 @@ import {
   type PendingToolCall,
 } from '../store/slices/nytaChat';
 import { useNytaModalStore } from '../stores/nytaModalStore';
-import { useRota } from '@maestra/core/nucleo/rota';
+import { useRota } from '../nucleo/rota';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

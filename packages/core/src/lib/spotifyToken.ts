@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { ambiente } from '@maestra/core/nucleo/ambiente';
+import { ambiente } from '../nucleo/ambiente';
 
 // Token app-only do Spotify (Client Credentials), obtido via Edge Function `spotify-app-token`
 // (que detém o client_secret). Acessa apenas dados públicos (search, artist, albums, tracks) —

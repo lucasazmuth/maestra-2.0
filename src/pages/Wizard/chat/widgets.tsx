@@ -5,9 +5,9 @@ import { App, DatePicker, Input, Select } from 'antd';
 import dayjs from 'dayjs';
 import { FiCheck, FiEdit3, FiPlus, FiRefreshCw, FiTrash2, FiX } from 'react-icons/fi';
 
-import { listGenres } from '../../../services/db/genres';
-import { searchCities } from '../../../services/db/cities';
-import { TASK_OWNER_SELF, MAX_OBJECTIVES } from '../../../constants/maestra';
+import { listGenres } from '@maestra/core/services/db/genres';
+import { searchCities } from '@maestra/core/services/db/cities';
+import { TASK_OWNER_SELF, MAX_OBJECTIVES } from '@maestra/core/constants/maestra';
 import { AiButton, disabledBtn, ghostBtn, primaryBtn } from '../components';
 import { SuccessConfetti } from '../../../components/SuccessConfetti';
 import { AiGlow } from '../../../components/AiGlow';
@@ -40,7 +40,7 @@ import type {
   SpotifyProfile,
   Strategy,
   SwotAnalysis,
-} from '../../../interfaces/maestra';
+} from '@maestra/core/interfaces/maestra';
 
 // Widgets interativos renderizados dentro do chat da Nyta. Cada um coleta uma resposta
 // estruturada e devolve via callback — o orquestrador (NytaChat) ecoa a resposta como

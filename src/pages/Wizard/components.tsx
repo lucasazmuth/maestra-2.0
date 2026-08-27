@@ -3,7 +3,7 @@ import { FiChevronRight } from 'react-icons/fi';
 
 import { AiGlow } from '../../components/AiGlow';
 import { STEP_LABELS, currentStepIndex } from './chat/script';
-import type { ArtistContent } from '../../interfaces/maestra';
+import type { ArtistContent } from '@maestra/core/interfaces/maestra';
 
 // Componentes compartilhados do wizard conversacional (botões e navegação de progresso).
 

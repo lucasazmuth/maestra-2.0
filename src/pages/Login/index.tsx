@@ -1,9 +1,9 @@
 import { FC, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { supabase } from '../../lib/supabase';
-import { useAppDispatch } from '../../store/store';
-import { authActions } from '../../store/slices/auth';
+import { supabase } from '@maestra/core/lib/supabase';
+import { useAppDispatch } from '@maestra/core/store/store';
+import { authActions } from '@maestra/core/store/slices/auth';
 import { AuthShell, AuthField, AuthSubmit, authError } from './AuthShell';
 import styles from './AuthShell.module.scss';
 import { EmailCodeStep } from '../../components/EmailCodeStep';

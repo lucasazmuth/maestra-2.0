@@ -5,10 +5,10 @@ import {
   FiSettings, FiShield, FiStar, FiTag, FiUsers, FiFilter } from 'react-icons/fi';
 
 import { PerfisIcon } from '../../../Icons/system';
-import { useIsPlatformAdmin } from '../../../../hooks/useIsPlatformAdmin';
-import { useAdminRole, type ModuloAdmin } from '../../../../hooks/useAdminRole';
-import { useAppDispatch } from '../../../../store/store';
-import { authActions } from '../../../../store/slices/auth';
+import { useIsPlatformAdmin } from '@maestra/core/hooks/useIsPlatformAdmin';
+import { useAdminRole, type ModuloAdmin } from '@maestra/core/hooks/useAdminRole';
+import { useAppDispatch } from '@maestra/core/store/store';
+import { authActions } from '@maestra/core/store/slices/auth';
 import styles from './SystemMenu.module.scss';
 
 // Menu do sistema no topo da aplicação. Reúne o que não pertence a um perfil de artista:

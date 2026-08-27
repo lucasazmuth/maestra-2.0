@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Popconfirm, message } from 'antd';
 import { FiCheck, FiArrowRight } from 'react-icons/fi';
 
-import { useAppDispatch, useAppSelector } from '../../store/store';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { Spinner } from '../../components/spinner/spinner';
 import { Diamond } from '../../components/PlanTag/Diamond';
 import {
   fetchSubscriptionStatus,
   cancelSubscription,
   clearError,
-} from '../../store/slices/subscription';
+} from '@maestra/core/store/slices/subscription';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 

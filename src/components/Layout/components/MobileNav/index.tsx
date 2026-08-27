@@ -6,8 +6,8 @@ import {
   PlanoAcaoIcon, CatalogoIcon, AgendaIcon, MoreIcon,
   DiagnosticoIcon, PlanejamentoIcon, EquipeIcon, MarketingIcon, PerfisIcon,
 } from '../../../Icons/system';
-import { useAppSelector } from '../../../../store/store';
-import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
+import { useAppSelector } from '@maestra/core/store/store';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 
 // Navbar inferior (tab bar) do mobile: substitui a sidebar (oculta em telas < 768px).
 // Layout da referência (gsap-app): [avatar do perfil] · Plano · Músicas · Agenda · Mais. A

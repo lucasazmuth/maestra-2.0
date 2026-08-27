@@ -4,23 +4,23 @@ import { App, message } from 'antd';
 import { createPortal } from 'react-dom';
 import { FiArchive, FiCheck, FiCheckCircle, FiChevronDown, FiCircle, FiLock, FiMoreVertical, FiPlus, FiX } from 'react-icons/fi';
 
-import { useNytaModal } from '../../hooks/useNytaModal';
+import { useNytaModal } from '@maestra/core/hooks/useNytaModal';
 import { buildActionPlan } from '../Wizard/method/engines';
 
-import { useArtist } from '../../hooks/useArtist';
-import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
+import { useArtist } from '@maestra/core/hooks/useArtist';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { artistsActions } from '@maestra/core/store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
-import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
+import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
 import EnhancedEmptyState from '../../components/action-plan/EnhancedEmptyState';
 import { UpsellModal } from '../../components/UpsellModal';
 import { TaskDate, TaskCategory, TaskOwner, type Assignee } from './TaskControls';
 import { TaskDetailModal } from './TaskDetailModal';
-import { TASK_OWNER_SELF, isOnboardingComplete } from '../../constants/maestra';
-import { listMembers } from '../../services/db/members';
-import * as eventsDb from '../../services/db/events';
-import type { ActionTask, ArtistContent, ArtistMember, Strategy } from '../../interfaces/maestra';
+import { TASK_OWNER_SELF, isOnboardingComplete } from '@maestra/core/constants/maestra';
+import { listMembers } from '@maestra/core/services/db/members';
+import * as eventsDb from '@maestra/core/services/db/events';
+import type { ActionTask, ArtistContent, ArtistMember, Strategy } from '@maestra/core/interfaces/maestra';
 import './actionPlan.scss';
 
 const uid = () => Math.random().toString(36).slice(2, 10);

@@ -4,8 +4,8 @@ import { CheckCircleFilled, CopyOutlined, ClockCircleOutlined, WifiOutlined } fr
 
 import { App } from 'antd';
 
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { cancelSubscription, pollPaymentStatus, resumePayment } from '../../store/slices/subscription';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { cancelSubscription, pollPaymentStatus, resumePayment } from '@maestra/core/store/slices/subscription';
 
 // ─── Styles ─────────────────────────────────────────────────────────────────────
 

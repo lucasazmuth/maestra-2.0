@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { FiDownload, FiShare, FiX } from 'react-icons/fi';
 import { message } from 'antd';
-import { useAppSelector } from '../../store/store';
+import { useAppSelector } from '@maestra/core/store/store';
 import { enableWebPush, hasWebPushSubscription, isWebPushSupported } from '../../services/pushNotifications';
 
 import './styles.scss';

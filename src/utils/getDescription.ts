@@ -1,7 +1,7 @@
-import type { Album } from '../interfaces/albums';
-import type { Artist } from '../interfaces/artist';
-import type { Playlist } from '../interfaces/playlists';
-import { Track } from '../interfaces/track';
+import type { Album } from '@maestra/core/interfaces/albums';
+import type { Artist } from '@maestra/core/interfaces/artist';
+import type { Playlist } from '@maestra/core/interfaces/playlists';
+import { Track } from '@maestra/core/interfaces/track';
 
 export const removeHtmlTags = (html: string) => {
   const div = document.createElement('div');

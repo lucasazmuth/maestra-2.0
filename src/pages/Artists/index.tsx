@@ -3,15 +3,15 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { App, Popconfirm } from 'antd';
 import { FiTrash2 } from 'react-icons/fi';
 
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
-import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
-import { useCanCreateArtist } from '../../hooks/useCanCreateArtist';
-import { formatRemainingTime } from '../../utils/rateLimitCalc';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { artistsActions } from '@maestra/core/store/slices/artists';
+import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
+import { useCanCreateArtist } from '@maestra/core/hooks/useCanCreateArtist';
+import { formatRemainingTime } from '@maestra/core/utils/rateLimitCalc';
 import PendingInvites from '../../components/PendingInvites';
 import { Spinner } from '../../components/spinner/spinner';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
-import { artistEntryRoute, isOnboardingComplete } from '../../constants/maestra';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import { artistEntryRoute, isOnboardingComplete } from '@maestra/core/constants/maestra';
 import styles from './Artists.module.scss';
 
 const Artists: FC = () => {

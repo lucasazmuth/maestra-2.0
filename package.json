@@ -66,15 +66,15 @@
     "brand:check": "node scripts/check-brand-residue.mjs",
     "edge:check": "node scripts/check-edge-functions.mjs",
     "emails:preview": "node scripts/render-email-preview.mjs",
-    "test": "react-scripts test",
-    "pretest": "tsc -p packages/core",
+    "test:core": "jest -c packages/core/jest.config.js",
+    "test": "jest -c packages/core/jest.config.js && react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build"
   },
   "jest": {
     "moduleNameMapper": {
-      "^@maestra/core$": "<rootDir>/packages/core/dist/index.js",
-      "^@maestra/core/(.*)$": "<rootDir>/packages/core/dist/$1.js",
+      "^@maestra/core$": "<rootDir>/packages/core/src/index.ts",
+      "^@maestra/core/(.*)$": "<rootDir>/packages/core/src/$1",
       "^react-router-dom$": "<rootDir>/node_modules/react-router-dom/dist/index.js",
       "^react-router$": "<rootDir>/node_modules/react-router/dist/development/index.js",
       "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js"

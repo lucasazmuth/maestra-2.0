@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { FiCheck, FiZap } from 'react-icons/fi';
 
-import { usePlanPrices } from '../../hooks/usePlanPrices';
+import { usePlanPrices } from '@maestra/core/hooks/usePlanPrices';
 import styles from './ProUpsellBanner.module.scss';
 
 interface ProUpsellBannerProps {

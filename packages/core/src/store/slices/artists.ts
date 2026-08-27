@@ -6,7 +6,8 @@ import * as artistsDb from '../../services/db/artists';
 import { buildSpotifyProfileAndCatalog } from '../../services/spotifyArtist';
 import { artistService } from '../../services/artist';
 
-interface ArtistsState {
+// Exportado pelo mesmo motivo de `AuthState`: aparece no tipo inferido do `store`.
+export interface ArtistsState {
   items: Artist[];
   currentArtistId?: string;
   loading: boolean;

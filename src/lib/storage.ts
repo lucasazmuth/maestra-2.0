@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 
 // Upload simples para buckets públicos do Supabase Storage. Para arquivos grandes (>50MB) o
 // ideal seria TUS/resumable, mas para o MVP o upload direto cobre capas e áudios curtos.

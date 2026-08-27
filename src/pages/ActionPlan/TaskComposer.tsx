@@ -1,6 +1,6 @@
 import { FC, ReactNode, useEffect, useState } from 'react';
 import { FiPlus, FiLock } from 'react-icons/fi';
-import type { Strategy } from '../../interfaces/maestra';
+import type { Strategy } from '@maestra/core/interfaces/maestra';
 import { AiGlow } from '../../components/AiGlow';
 import { TaskCategory, TaskDate } from './TaskControls';
 

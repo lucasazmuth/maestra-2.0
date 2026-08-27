@@ -1,8 +1,8 @@
 import { FC } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 
-import { useAppSelector } from '../store/store';
-import { useSubscriptionGuard } from '../hooks/useSubscriptionGuard';
+import { useAppSelector } from '@maestra/core/store/store';
+import { useSubscriptionGuard } from '@maestra/core/hooks/useSubscriptionGuard';
 import { Spinner } from './spinner/spinner';
 
 // ─── SubscriptionGuardWrapper ─────────────────────────────────────────────────

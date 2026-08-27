@@ -4,9 +4,9 @@ import type { InputRef } from 'antd';
 import { FiTrash2 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
-import type { AgendaEvent } from '../interfaces/maestra';
-import { EVENT_TYPE_OPTIONS, EVENT_STATUS } from '../constants/maestra';
-import * as eventsDb from '../services/db/events';
+import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
+import { EVENT_TYPE_OPTIONS, EVENT_STATUS } from '@maestra/core/constants/maestra';
+import * as eventsDb from '@maestra/core/services/db/events';
 import modalStyles from './StandardModal.module.scss';
 
 interface Props {

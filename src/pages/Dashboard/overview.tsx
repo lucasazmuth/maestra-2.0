@@ -5,19 +5,19 @@ import { FiChevronRight, FiPause, FiPlay } from 'react-icons/fi';
 import { PlanoAcaoIcon, AgendaIcon, CatalogoIcon, EquipeIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 
-import { listEvents } from '../../services/db/events';
-import { syncActionPlanTaskEvent } from '../../services/db/events';
-import { listCatalogProjectItems } from '../../services/db/catalog';
-import { listMembers } from '../../services/db/members';
-import { useAppDispatch } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
+import { listEvents } from '@maestra/core/services/db/events';
+import { syncActionPlanTaskEvent } from '@maestra/core/services/db/events';
+import { listCatalogProjectItems } from '@maestra/core/services/db/catalog';
+import { listMembers } from '@maestra/core/services/db/members';
+import { useAppDispatch } from '@maestra/core/store/store';
+import { artistsActions } from '@maestra/core/store/slices/artists';
 import { TASK_TYPES } from '../ActionPlan/TaskComposer';
-import { EVENT_TYPES, CATALOG_STATUS, ACCESS_LEVELS } from '../../constants/maestra';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
-import type { AgendaEvent, Artist, ArtistContent, ArtistMember, CatalogItem, Strategy } from '../../interfaces/maestra';
-import type { LocalTrack } from '../../components/LocalPlayerBar';
-import { useLocalPlayerStore } from '../../stores/localPlayerStore';
-import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
+import { EVENT_TYPES, CATALOG_STATUS, ACCESS_LEVELS } from '@maestra/core/constants/maestra';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import type { AgendaEvent, Artist, ArtistContent, ArtistMember, CatalogItem, Strategy } from '@maestra/core/interfaces/maestra';
+import type { LocalTrack } from '@maestra/core/stores/localPlayerStore';
+import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { UpsellModal } from '../../components/UpsellModal';
 
 // Respeita o "reduzir movimento" do sistema (a timeline anima só quando permitido).

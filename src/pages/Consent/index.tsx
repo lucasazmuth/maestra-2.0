@@ -1,12 +1,12 @@
 import { FC, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { supabase } from '../../lib/supabase';
-import { useAppDispatch } from '../../store/store';
-import { authActions } from '../../store/slices/auth';
+import { supabase } from '@maestra/core/lib/supabase';
+import { useAppDispatch } from '@maestra/core/store/store';
+import { authActions } from '@maestra/core/store/slices/auth';
 import { MaestraBrand } from '../../components/MaestraBrand';
-import { useConsent, type ConsentState } from '../../hooks/useConsent';
-import { IDADE_MINIMA, idadeEmAnos } from '../../utils/age';
+import { useConsent, type ConsentState } from '@maestra/core/hooks/useConsent';
+import { IDADE_MINIMA, idadeEmAnos } from '@maestra/core/utils/age';
 import styles from './Consent.module.scss';
 
 // Coleta de maioridade e aceite dos documentos legais (LGPD).

@@ -2,7 +2,7 @@ import { FC, ReactNode, createContext, useCallback, useContext, useEffect, useMe
 
 import { supabase } from '../lib/supabase';
 import { useAppSelector } from '../store/store';
-import { ambiente } from '@maestra/core/nucleo/ambiente';
+import { ambiente } from '../nucleo/ambiente';
 
 // Estado de consentimento do usuário logado (LGPD).
 //

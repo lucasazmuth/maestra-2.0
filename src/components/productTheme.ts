@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-import { ACENTO_DO_PRODUTO } from '../constants/produtos';
+import { ACENTO_DO_PRODUTO } from '@maestra/core/constants/produtos';
 
 import gradReal from './journey/gradients/real.svg';
 import gradPlanning from './journey/gradients/planning.svg';

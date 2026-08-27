@@ -5,11 +5,11 @@ import { FiChevronDown, FiArrowRight, FiShare2, FiHelpCircle, FiRefreshCw, FiLoc
 import { DownloadIcon } from '../../components/Icons/system';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
-import type { RealIndex } from '../../interfaces/maestra';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import type { RealIndex } from '@maestra/core/interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
 import DiagnosticDoc, { type Autoria } from './DiagnosticDoc';
-import { useAppSelector } from '../../store/store';
+import { useAppSelector } from '@maestra/core/store/store';
 import { RealBadge, tierForAltas, tierForPattern, TIER_ACCENT, altasForPattern } from '../../components/RealBadge';
 import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS, VINCULO_LABELS } from './realCopy';
 import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from './realNarrative';

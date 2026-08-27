@@ -4,8 +4,8 @@ import { FiArrowRight, FiArrowUpRight, FiCheck, FiPlay } from 'react-icons/fi';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
-import { useAppSelector } from '../../store/store';
-import { usePlanPrices } from '../../hooks/usePlanPrices';
+import { useAppSelector } from '@maestra/core/store/store';
+import { usePlanPrices } from '@maestra/core/hooks/usePlanPrices';
 import featureReal from '../../assets/feature-real.png';
 import featurePlanning from '../../assets/feature-planning.png';
 import featureAction from '../../assets/feature-action.png';

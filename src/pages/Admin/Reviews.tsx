@@ -3,7 +3,7 @@ import { Button, Input, Modal, Rate, Select, Table, message, type TableColumnsTy
 import { FiMessageSquare, FiRefreshCw, FiSearch, FiStar, FiTrendingUp, FiUsers } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 import styles from './Reviews.module.scss';
 import { Spinner } from '../../components/spinner/spinner';
 

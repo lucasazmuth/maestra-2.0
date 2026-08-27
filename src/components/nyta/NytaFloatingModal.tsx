@@ -3,11 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { FiAlertCircle } from 'react-icons/fi';
 
 import useIsMobile from '../../utils/isMobile';
-import { useNytaModal } from '../../hooks/useNytaModal';
-import { useNytaChatForModal } from '../../hooks/useNytaChatForModal';
-import { useEntitlements } from '../../hooks/useEntitlements';
-import { PAYWALL_DISABLED, NYTA_SUGGESTIONS } from '../../constants/maestra';
-import { useNytaModalStore } from '../../stores/nytaModalStore';
+import { useNytaModal } from '@maestra/core/hooks/useNytaModal';
+import { useNytaChatForModal } from '@maestra/core/hooks/useNytaChatForModal';
+import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
+import { PAYWALL_DISABLED, NYTA_SUGGESTIONS } from '@maestra/core/constants/maestra';
+import { useNytaModalStore } from '@maestra/core/stores/nytaModalStore';
 import { NytaModalHeader } from './NytaModalHeader';
 import { NytaLockedFeatureView } from './NytaLockedFeatureView';
 import { MessageList } from '../../pages/NytaChat/components/MessageList';

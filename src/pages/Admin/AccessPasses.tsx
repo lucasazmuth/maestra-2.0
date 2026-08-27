@@ -3,7 +3,7 @@ import { Input, InputNumber, Button, Popconfirm, message, Empty } from 'antd';
 import { FiKey, FiPlus, FiCopy, FiSlash } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 import { Spinner } from '../../components/spinner/spinner';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────

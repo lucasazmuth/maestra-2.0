@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { FiArrowLeft } from 'react-icons/fi';
 
-import { LEGAL_DOCS, type LegalSlug } from '../../constants/legal';
+import { LEGAL_DOCS, type LegalSlug } from '@maestra/core/constants/legal';
 import './legal.scss';
 
 // Páginas legais (Termos de Uso / Política de Privacidade). Conteúdo, título e data vêm de

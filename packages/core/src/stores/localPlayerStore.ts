@@ -1,5 +1,20 @@
 import { create } from 'zustand';
 
+/**
+ * Uma faixa na fila do player local.
+ *
+ * Mora aqui, e nao no `LocalPlayerBar`, porque e dado: o componente que desenha a barra e um
+ * detalhe da web, e o store precisa do tipo sem depender de interface nenhuma.
+ */
+export interface LocalTrack {
+  id: string;
+  title: string;
+  subtitle?: string;
+  cover?: string | null;
+  url: string;
+  fullViewUrl?: string;
+}
+
 // Estado compartilhado do player de faixas do catálogo. Usado por:
 //  - Layout: esconde o banner "Assine o Maestra Pro" enquanto o player está aberto (`open`);
 //  - linha do Catálogo: mostra play/pause em sincronia (`currentId` + `playing`) e controla a faixa
@@ -8,7 +23,7 @@ import { create } from 'zustand';
 // áudio direto (evita loop de feedback play/pause).
 interface LocalPlayerState {
   open: boolean;
-  tracks: import('../components/LocalPlayerBar').LocalTrack[];
+  tracks: LocalTrack[];
   currentId: string | null;
   playing: boolean;
   time: number;
@@ -16,7 +31,7 @@ interface LocalPlayerState {
   toggle: (() => void) | null; // registrada pelo LocalPlayerBar; a linha do catálogo chama
   seek: ((time: number) => void) | null;
   setOpen: (v: boolean) => void;
-  setTracks: (tracks: import('../components/LocalPlayerBar').LocalTrack[]) => void;
+  setTracks: (tracks: LocalTrack[]) => void;
   setCurrentId: (id: string | null) => void;
   setPlaying: (v: boolean) => void;
   setTime: (time: number) => void;

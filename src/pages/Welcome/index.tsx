@@ -2,8 +2,8 @@ import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
-import { supabase } from '../../lib/supabase';
-import * as membersDb from '../../services/db/members';
+import { supabase } from '@maestra/core/lib/supabase';
+import * as membersDb from '@maestra/core/services/db/members';
 import { MaestraBrand } from '../../components/MaestraBrand';
 import styles from './Welcome.module.scss';
 

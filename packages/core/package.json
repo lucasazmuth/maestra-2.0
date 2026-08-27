@@ -7,6 +7,8 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
+    "./i18n": "./dist/i18n/index.js",
+    "./services/realEngine": "./dist/services/realEngine/index.js",
     "./*": "./dist/*.js"
   },
   "scripts": {

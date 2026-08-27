@@ -1,5 +1,5 @@
 // Dados e textos compartilhados do diagnóstico REAL (usados na tela e no PDF de apresentação).
-import { PROFILES } from '../../services/realEngine';
+import { PROFILES } from '@maestra/core/services/realEngine';
 
 export type DimKey = 'r' | 'e' | 'a' | 'l';
 

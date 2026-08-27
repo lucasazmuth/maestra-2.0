@@ -14,7 +14,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import subscriptionReducer, {
   SubscriptionState,
-} from '../../../store/slices/subscription';
+} from '@maestra/core/store/slices/subscription';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -30,7 +30,7 @@ const mockInvoke = jest.fn().mockImplementation((fnName: string) => {
   return new Promise(() => {});
 });
 
-jest.mock('../../../lib/supabase', () => ({
+jest.mock('@maestra/core/lib/supabase', () => ({
   supabase: {
     functions: {
       invoke: (...args: any[]) => mockInvoke(...args),

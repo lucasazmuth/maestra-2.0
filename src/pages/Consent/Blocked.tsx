@@ -2,10 +2,10 @@ import { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiAlertCircle } from 'react-icons/fi';
 
-import { useAppDispatch } from '../../store/store';
-import { authActions } from '../../store/slices/auth';
+import { useAppDispatch } from '@maestra/core/store/store';
+import { authActions } from '@maestra/core/store/slices/auth';
 import { MaestraBrand } from '../../components/MaestraBrand';
-import { SUPPORT_EMAIL } from '../../constants/legal';
+import { SUPPORT_EMAIL } from '@maestra/core/constants/legal';
 import styles from './Consent.module.scss';
 
 // Conta bloqueada por declaração de menoridade.

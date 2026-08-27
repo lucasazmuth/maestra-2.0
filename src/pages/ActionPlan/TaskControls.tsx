@@ -3,7 +3,7 @@ import { DatePicker, Dropdown, Popconfirm } from 'antd';
 import dayjs from 'dayjs';
 import { FiTrash2, FiPlus } from 'react-icons/fi';
 
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 
 // Categorias de tarefa (valor persistido + rótulo exibido). Fonte única reutilizada pelo
 // chip TaskCategory, pelo composer e pelo Dashboard.

@@ -4,21 +4,21 @@ import { App, Dropdown } from 'antd';
 import { FiCornerUpLeft, FiMoreVertical, FiRotateCcw, FiX } from 'react-icons/fi';
 
 import './styles.scss';
-import { useArtist } from '../../hooks/useArtist';
-import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
+import { useArtist } from '@maestra/core/hooks/useArtist';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { artistsActions } from '@maestra/core/store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import { migrateWizardContent } from './migration';
 import { NytaChat } from './chat/NytaChat';
 import WizardIntro from './WizardIntro';
 import { ArtifactsPanel, PlanList } from './ArtifactsPanel';
 import { StepBar } from './components';
-import { supabase } from '../../lib/supabase';
-import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
-import { setWizardPlatformContext, clearWizardPlatformContext } from '../../services/wizardAi';
-import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
+import { supabase } from '@maestra/core/lib/supabase';
+import { shouldEnrichChartmetric } from '@maestra/core/lib/chartmetricFreshness';
+import { setWizardPlatformContext, clearWizardPlatformContext } from '@maestra/core/services/wizardAi';
+import type { ArtistContent, ArtistIdentity } from '@maestra/core/interfaces/maestra';
 
 // Shell do Planejamento Estratégico conversacional: é dono do draft, da persistência e da
 // migração; a condução da conversa (beats, widgets, IA) vive em chat/NytaChat.

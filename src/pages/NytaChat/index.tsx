@@ -3,12 +3,12 @@ import { useParams } from 'react-router-dom';
 import { FiAlertCircle } from 'react-icons/fi';
 
 import './styles.scss';
-import { useEntitlements } from '../../hooks/useEntitlements';
-import { useNytaChat } from '../../hooks/useNytaChat';
-import { useNytaConversations } from '../../hooks/useNytaConversations';
-import { useArtist } from '../../hooks/useArtist';
+import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
+import { useNytaChat } from '@maestra/core/hooks/useNytaChat';
+import { useNytaConversations } from '@maestra/core/hooks/useNytaConversations';
+import { useArtist } from '@maestra/core/hooks/useArtist';
 import { LockedFeature } from '../../components/LockedFeature';
-import { PAYWALL_DISABLED } from '../../constants/maestra';
+import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { ChatHeader } from './components/ChatHeader';
 import { ConversationSidebar } from './components/ConversationSidebar';

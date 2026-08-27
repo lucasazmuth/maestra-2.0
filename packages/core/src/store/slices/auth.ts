@@ -3,9 +3,11 @@ import type { Session, User } from '@supabase/supabase-js';
 
 import { supabase } from '../../lib/supabase';
 import { clearSpotifyTokens } from '../../lib/spotifyToken';
-import { ambiente } from '@maestra/core/nucleo/ambiente';
+import { ambiente } from '../../nucleo/ambiente';
 
-interface AuthState {
+// Exportado porque o pacote emite declaracoes: o tipo do `store` referencia este, e um tipo
+// so-local nao pode ser nomeado no .d.ts.
+export interface AuthState {
   user?: User | null;
   session?: Session | null;
   requesting: boolean;

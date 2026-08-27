@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiCheck } from 'react-icons/fi';
 
 import { LOCKED_FEATURE_CONFIG, type LockedFeatureKey } from './config';
-import { usePlanPrices } from '../../hooks/usePlanPrices';
+import { usePlanPrices } from '@maestra/core/hooks/usePlanPrices';
 import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
 import styles from './LockedFeature.module.scss';
 

@@ -14,12 +14,12 @@ import {
 } from '../../../Icons/system';
 import { NytaAvatar } from '../../../../pages/Wizard/chat/nytaPersona';
 
-import { useAppSelector } from '../../../../store/store';
-import { useArtistCapabilities } from '../../../../hooks/useArtistCapabilities';
-import { useJourneyState } from '../../../../hooks/useJourneyState';
-import { useNytaModal } from '../../../../hooks/useNytaModal';
-import { ARTISTS_DEFAULT_IMAGE } from '../../../../constants/spotify';
-import { supabase } from '../../../../lib/supabase';
+import { useAppSelector } from '@maestra/core/store/store';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
+import { useJourneyState } from '@maestra/core/hooks/useJourneyState';
+import { useNytaModal } from '@maestra/core/hooks/useNytaModal';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import { supabase } from '@maestra/core/lib/supabase';
 
 const matchArtistId = (pathname: string): string | undefined => {
   const m = pathname.match(/^\/artists\/([^/]+)/);

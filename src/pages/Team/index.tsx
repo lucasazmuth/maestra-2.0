@@ -2,16 +2,16 @@ import { FC, useEffect, useMemo, useState } from 'react';
 import { Button, Input, Modal, Popconfirm, message } from 'antd';
 import { FiMail, FiMoreHorizontal, FiPlus, FiTrash2, FiUser } from 'react-icons/fi';
 
-import { useAppSelector } from '../../store/store';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
-import { useArtist } from '../../hooks/useArtist';
-import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
+import { useAppSelector } from '@maestra/core/store/store';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import { useArtist } from '@maestra/core/hooks/useArtist';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { Spinner } from '../../components/spinner/spinner';
 import modalStyles from '../../components/StandardModal.module.scss';
-import { MVP_ACCESS_LEVEL_OPTIONS } from '../../constants/maestra';
-import * as membersDb from '../../services/db/members';
-import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
-import type { ArtistMember, AccessLevel } from '../../interfaces/maestra';
+import { MVP_ACCESS_LEVEL_OPTIONS } from '@maestra/core/constants/maestra';
+import * as membersDb from '@maestra/core/services/db/members';
+import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
+import type { ArtistMember, AccessLevel } from '@maestra/core/interfaces/maestra';
 import styles from './Team.module.scss';
 
 const statusLabel: Record<string, string> = {

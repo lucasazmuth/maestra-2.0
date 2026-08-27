@@ -5,14 +5,14 @@ import { FiFileText, FiShield, FiLifeBuoy, FiExternalLink, FiChevronRight, FiCam
 import { EditIcon } from '../../components/Icons/system';
 import { PlatformReviewModal } from '../../components/PlatformReviewModal';
 
-import { supabase } from '../../lib/supabase';
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { authActions } from '../../store/slices/auth';
-import { cancelSubscription } from '../../store/slices/subscription';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { supabase } from '@maestra/core/lib/supabase';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { authActions } from '@maestra/core/store/slices/auth';
+import { cancelSubscription } from '@maestra/core/store/slices/subscription';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import SubscriptionManagement from './SubscriptionManagement';
 import { disableWebPush, enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
-import { SUPPORT_EMAIL } from '../../constants/legal';
+import { SUPPORT_EMAIL } from '@maestra/core/constants/legal';
 
 const Settings: FC = () => {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import { FC, useEffect, useRef, useState } from 'react';
 
-import { useAppDispatch } from '../store/store';
-import { authActions } from '../store/slices/auth';
+import { useAppDispatch } from '@maestra/core/store/store';
+import { authActions } from '@maestra/core/store/slices/auth';
 import { AuthSubmit, authError, rateLimitSeconds } from '../pages/Login/AuthShell';
 
 // Campo de PIN: 6 caixas (1 dígito cada) com auto-avanço, backspace e colar o código inteiro.

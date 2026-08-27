@@ -2,8 +2,8 @@ import { FC, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
-import type { Artist } from '../../interfaces/maestra';
-import { useJourneyState, type JourneyStage } from '../../hooks/useJourneyState';
+import type { Artist } from '@maestra/core/interfaces/maestra';
+import { useJourneyState, type JourneyStage } from '@maestra/core/hooks/useJourneyState';
 import { DiagnosticoIcon, PlanejamentoIcon, PlanoAcaoIcon } from '../Icons/system';
 import { AiGlow } from '../AiGlow';
 

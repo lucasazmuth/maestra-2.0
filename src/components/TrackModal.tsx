@@ -4,11 +4,11 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { FiUploadCloud, FiMusic, FiTrash2, FiStar, FiPlay, FiPause } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
-import type { CatalogItem, CatalogVersion, Split, MusicGenre } from '../interfaces/maestra';
-import { CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '../constants/maestra';
+import type { CatalogItem, CatalogVersion, Split, MusicGenre } from '@maestra/core/interfaces/maestra';
+import { CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '@maestra/core/constants/maestra';
 import { readAudioDuration, titleFromFileName } from '../lib/audioMeta';
 import { uploadFile, CATALOG_BUCKET } from '../lib/storage';
-import * as catalogDb from '../services/db/catalog';
+import * as catalogDb from '@maestra/core/services/db/catalog';
 import modalStyles from './StandardModal.module.scss';
 
 interface Props {

@@ -58,7 +58,7 @@ const mockInvoke = jest.fn().mockResolvedValue({
   error: null,
 });
 
-jest.mock('../../../lib/supabase', () => ({
+jest.mock('@maestra/core/lib/supabase', () => ({
   supabase: {
     functions: { invoke: (...args: any[]) => mockInvoke(...args) },
     // `from` entrou depois deste mock: o menu do sistema usa `useIsPlatformAdmin`, que
@@ -83,7 +83,7 @@ jest.mock('../../../lib/supabase', () => ({
 // e apagada antes de cada teste e a chamada devolveria `undefined` — o efeito faria
 // `undefined.then(...)` e derrubaria o render de TODOS os testes deste arquivo.
 const mockCountUnread = jest.fn();
-jest.mock('../../../services/db/notifications', () => ({
+jest.mock('@maestra/core/services/db/notifications', () => ({
   countUnread: (...args: any[]) => mockCountUnread(...args) ?? Promise.resolve(0),
 }));
 
@@ -136,7 +136,7 @@ jest.mock('antd', () => ({
 
 // Default: PAYWALL_DISABLED = false
 let mockPaywallDisabled = false;
-jest.mock('../../../constants/maestra', () => ({
+jest.mock('@maestra/core/constants/maestra', () => ({
   get PAYWALL_DISABLED() {
     return mockPaywallDisabled;
   },

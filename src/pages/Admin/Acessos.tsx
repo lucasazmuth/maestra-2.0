@@ -2,8 +2,8 @@ import { FC, useCallback, useEffect, useState, type CSSProperties } from 'react'
 import { Button, Checkbox, Input, Popconfirm, Table, Tag, message } from 'antd';
 import { FiUserPlus } from 'react-icons/fi';
 
-import { supabase } from '../../lib/supabase';
-import type { ModuloAdmin } from '../../hooks/useAdminRole';
+import { supabase } from '@maestra/core/lib/supabase';
+import type { ModuloAdmin } from '@maestra/core/hooks/useAdminRole';
 
 // Quem do time da Maestra alcança cada módulo do admin.
 //

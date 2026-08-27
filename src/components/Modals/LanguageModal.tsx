@@ -3,14 +3,14 @@ import { Modal } from 'antd';
 import { memo } from 'react';
 
 // Constants
-import { AVAILABLE_LANGUAGES } from '../../constants/languages';
+import { AVAILABLE_LANGUAGES } from '@maestra/core/constants/languages';
 
 // Redux
-import { languageActions } from '../../store/slices/language';
-import { useAppDispatch, useAppSelector } from '../../store/store';
+import { languageActions } from '@maestra/core/store/slices/language';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 
 // Interfaces
-import type { Languages } from '../../interfaces/languages';
+import type { Languages } from '@maestra/core/interfaces/languages';
 
 export const LanguageModal = memo(() => {
   const dispatch = useAppDispatch();

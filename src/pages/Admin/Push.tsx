@@ -2,8 +2,8 @@ import { FC, useEffect, useState, type CSSProperties } from 'react';
 import { Alert, Button, Input, Select, Tag, message } from 'antd';
 import { FiBell, FiSend } from 'react-icons/fi';
 
-import { supabase } from '../../lib/supabase';
-import { readEdgeFunctionError } from '../../lib/edgeError';
+import { supabase } from '@maestra/core/lib/supabase';
+import { readEdgeFunctionError } from '@maestra/core/lib/edgeError';
 
 interface AdminUser { id: string; name: string; email: string; confirmed: boolean; }
 

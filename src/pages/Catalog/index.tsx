@@ -6,16 +6,16 @@ import { AddIcon, EspacoJamIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useArtist } from '../../hooks/useArtist';
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
-import { useCanAddTrack } from '../../hooks/useCanAddTrack';
-import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
+import { useArtist } from '@maestra/core/hooks/useArtist';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { artistsActions } from '@maestra/core/store/slices/artists';
+import { useCanAddTrack } from '@maestra/core/hooks/useCanAddTrack';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { UpsellModal } from '../../components/UpsellModal';
 import { Spinner } from '../../components/spinner/spinner';
 import { SpotifyEmbedPlayer } from '../../components/SpotifyEmbedPlayer';
-import type { LocalTrack } from '../../components/LocalPlayerBar';
-import { useLocalPlayerStore } from '../../stores/localPlayerStore';
+import type { LocalTrack } from '@maestra/core/stores/localPlayerStore';
+import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
 import useIsMobile from '../../utils/isMobile';
 import { TrackModal } from '../../components/TrackModal';
 import { VersionModal } from '../../components/VersionModal';
@@ -27,12 +27,12 @@ import {
   FilterSortOption,
   FilterToolbar,
 } from '../../components/FilterToolbar';
-import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, formatMs, isActiveCatalogStatus } from '../../constants/maestra';
-import * as catalogDb from '../../services/db/catalog';
-import * as genresDb from '../../services/db/genres';
-import * as membersDb from '../../services/db/members';
-import type { CatalogItem, CatalogProject, CatalogVersion, MusicGenre, ArtistMember } from '../../interfaces/maestra';
-import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
+import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, formatMs, isActiveCatalogStatus } from '@maestra/core/constants/maestra';
+import * as catalogDb from '@maestra/core/services/db/catalog';
+import * as genresDb from '@maestra/core/services/db/genres';
+import * as membersDb from '@maestra/core/services/db/members';
+import type { CatalogItem, CatalogProject, CatalogVersion, MusicGenre, ArtistMember } from '@maestra/core/interfaces/maestra';
+import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
 
 // Forma da linha das DUAS listas da tela — Músicas e Lançamentos. Antes Músicas era uma tabela
 // em grade, com cabeçalho e colunas fixas, e Lançamentos uma lista solta: duas caras para a

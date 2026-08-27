@@ -18,8 +18,8 @@ import {
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
-import { supabase } from '../../lib/supabase';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { supabase } from '@maestra/core/lib/supabase';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import styles from './Artists.module.scss';
 import { Spinner } from '../../components/spinner/spinner';
 

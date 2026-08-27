@@ -1,7 +1,7 @@
 import { generateObjectives, generateStrategies, prioritizeStrategies, seedScheduledPlan } from '../engines';
 import { STRATEGY_BANK } from '../strategyBank';
 import { PRIORITY } from '../priorityMatrix';
-import type { ArtistIdentity, Strategy } from '../../../../interfaces/maestra';
+import type { ArtistIdentity, Strategy } from '@maestra/core/interfaces/maestra';
 
 // Validações dos motores determinísticos contra os exemplos resolvidos dos documentos da v2.
 

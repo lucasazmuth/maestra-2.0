@@ -7,18 +7,18 @@ import Consent from './index';
 // despacha o signOut da store — nenhum dos dois deve rodar de verdade num teste. `needsBirthDate`
 // mockado como true é o que faz o campo de data aparecer: é exatamente o caso "conta antiga, sem
 // data registrada" que motivou este redesenho (ver useConsent.tsx e account-consent/index.ts).
-jest.mock('../../hooks/useConsent', () => ({
+jest.mock('@maestra/core/hooks/useConsent', () => ({
   useConsent: () => ({
     state: { needsBirthDate: true, pendingDocs: [], blocked: false, reviewStatus: 'ok' },
     apply: jest.fn(),
   }),
 }));
 
-jest.mock('../../store/store', () => ({
+jest.mock('@maestra/core/store/store', () => ({
   useAppDispatch: () => jest.fn(),
 }));
 
-jest.mock('../../store/slices/auth', () => ({
+jest.mock('@maestra/core/store/slices/auth', () => ({
   authActions: { signOut: jest.fn(() => ({ type: 'auth/signOut' })) },
 }));
 

@@ -3,9 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { FiLock, FiRefreshCw } from 'react-icons/fi';
 
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
-import { useEntitlements } from '../../hooks/useEntitlements';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { artistsActions } from '@maestra/core/store/slices/artists';
+import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 import reportStyles from '../ArtistCreate/ArtistCreate.module.scss';
 import { Spinner } from '../../components/spinner/spinner';

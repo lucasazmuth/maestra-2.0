@@ -1,6 +1,6 @@
 import { supabase } from '../../lib/supabase';
 import type { ArtistMember, AccessLevel } from '../../interfaces/maestra';
-import { ambiente } from '@maestra/core/nucleo/ambiente';
+import { ambiente } from '../../nucleo/ambiente';
 
 const TABLE = 'artist_members';
 

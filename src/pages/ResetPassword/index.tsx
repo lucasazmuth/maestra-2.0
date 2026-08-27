@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 import { AuthShell, AuthField, AuthSubmit, authError } from '../Login/AuthShell';
 import styles from '../Login/AuthShell.module.scss';
 import { Spinner } from '../../components/spinner/spinner';

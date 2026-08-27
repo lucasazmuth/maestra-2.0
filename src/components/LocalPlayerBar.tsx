@@ -9,19 +9,11 @@ import {
   CloseIcon,
 } from './Icons';
 import { FiMaximize2 } from 'react-icons/fi';
-import { useLocalPlayerStore } from '../stores/localPlayerStore';
+import { useLocalPlayerStore, type LocalTrack } from '@maestra/core/stores/localPlayerStore';
 
 // Player fixo no rodapé (estilo barra do Spotify) para faixas cadastradas no sistema
 // (audio_file no bucket `catalog`). Controles: anterior/play/pause/próxima, progresso e volume.
 
-export interface LocalTrack {
-  id: string;
-  title: string;
-  subtitle?: string;
-  cover?: string | null;
-  url: string;
-  fullViewUrl?: string;
-}
 
 interface Props {
   tracks: LocalTrack[];
