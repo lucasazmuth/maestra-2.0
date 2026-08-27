@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { ambiente } from '../nucleo/ambiente';
 
 // Token app-only do Spotify (Client Credentials), obtido via Edge Function `spotify-app-token`
 // (que detém o client_secret). Acessa apenas dados públicos (search, artist, albums, tracks) —
@@ -13,7 +14,7 @@ let refreshPromise: Promise<string | null> | null = null;
 const now = () => Date.now();
 
 const isExpired = (): boolean => {
-  const expiry = Number(localStorage.getItem(EXPIRY_KEY) || 0);
+  const expiry = Number(ambiente().armazenamento.ler(EXPIRY_KEY) || 0);
   return !expiry || now() >= expiry;
 };
 
@@ -30,9 +31,9 @@ export const refreshSpotifyToken = async (): Promise<string | null> => {
 
       inMemoryToken = data.access_token as string;
       const ttl = (Number(data.expires_in) || 3600) * 1000;
-      localStorage.setItem(ACCESS_KEY, inMemoryToken);
+      ambiente().armazenamento.gravar(ACCESS_KEY, inMemoryToken);
       // Renova um pouco antes de expirar.
-      localStorage.setItem(EXPIRY_KEY, String(now() + ttl - 5 * 60 * 1000));
+      ambiente().armazenamento.gravar(EXPIRY_KEY, String(now() + ttl - 5 * 60 * 1000));
       return inMemoryToken;
     } catch {
       return null;
@@ -46,7 +47,7 @@ export const refreshSpotifyToken = async (): Promise<string | null> => {
 
 /** Retorna um access token válido do Spotify (app-only), renovando se necessário. */
 export const getSpotifyToken = async (): Promise<string | null> => {
-  const cached = inMemoryToken || localStorage.getItem(ACCESS_KEY);
+  const cached = inMemoryToken || ambiente().armazenamento.ler(ACCESS_KEY);
   if (cached && !isExpired()) {
     inMemoryToken = cached;
     return cached;
@@ -56,6 +57,6 @@ export const getSpotifyToken = async (): Promise<string | null> => {
 
 export const clearSpotifyTokens = () => {
   inMemoryToken = null;
-  localStorage.removeItem(ACCESS_KEY);
-  localStorage.removeItem(EXPIRY_KEY);
+  ambiente().armazenamento.apagar(ACCESS_KEY);
+  ambiente().armazenamento.apagar(EXPIRY_KEY);
 };

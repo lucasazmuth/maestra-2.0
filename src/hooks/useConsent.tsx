@@ -2,6 +2,7 @@ import { FC, ReactNode, createContext, useCallback, useContext, useEffect, useMe
 
 import { supabase } from '../lib/supabase';
 import { useAppSelector } from '../store/store';
+import { ambiente } from '../nucleo/ambiente';
 
 // Estado de consentimento do usuário logado (LGPD).
 //
@@ -55,12 +56,12 @@ export interface ConsentimentoPendente {
 }
 
 export const guardarConsentimentoPendente = (p: ConsentimentoPendente): void => {
-  try { sessionStorage.setItem(CHAVE_PENDENTE, JSON.stringify(p)); } catch { /* aba sem storage */ }
+  ambiente().sessao.gravar(CHAVE_PENDENTE, JSON.stringify(p));
 };
 
 const lerConsentimentoPendente = (): ConsentimentoPendente | null => {
   try {
-    const cru = sessionStorage.getItem(CHAVE_PENDENTE);
+    const cru = ambiente().sessao.ler(CHAVE_PENDENTE);
     return cru ? (JSON.parse(cru) as ConsentimentoPendente) : null;
   } catch {
     return null;
@@ -68,7 +69,7 @@ const lerConsentimentoPendente = (): ConsentimentoPendente | null => {
 };
 
 const limparConsentimentoPendente = (): void => {
-  try { sessionStorage.removeItem(CHAVE_PENDENTE); } catch { /* idem */ }
+  ambiente().sessao.apagar(CHAVE_PENDENTE);
 };
 
 export const ConsentProvider: FC<{ children: ReactNode }> = ({ children }) => {

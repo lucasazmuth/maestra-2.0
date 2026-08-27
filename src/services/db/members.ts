@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase';
 import type { ArtistMember, AccessLevel } from '../../interfaces/maestra';
+import { ambiente } from '../../nucleo/ambiente';
 
 const TABLE = 'artist_members';
 
@@ -35,7 +36,7 @@ export const inviteMember = async (input: {
   // Dispara o e-mail de convite (Brevo) em segundo plano — fail-safe: erro de e-mail NÃO quebra
   // o convite (a linha 'pending' já existe e aparece pro convidado ao logar com este e-mail).
   supabase.functions
-    .invoke('send-team-invite', { body: { memberId: member.id, appUrl: window.location.origin } })
+    .invoke('send-team-invite', { body: { memberId: member.id, appUrl: ambiente().origemDoApp } })
     .catch((e) => console.error('send-team-invite falhou:', e?.message || e));
   return member;
 };

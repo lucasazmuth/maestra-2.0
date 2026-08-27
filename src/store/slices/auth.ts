@@ -3,6 +3,7 @@ import type { Session, User } from '@supabase/supabase-js';
 
 import { supabase } from '../../lib/supabase';
 import { clearSpotifyTokens } from '../../lib/spotifyToken';
+import { ambiente } from '../../nucleo/ambiente';
 
 interface AuthState {
   user?: User | null;
@@ -92,7 +93,7 @@ export const signInWithProvider = createAsyncThunk(
       provider,
       // Volta numa rota dedicada que troca o ?code= por sessão (PKCE). Mantemos
       // detectSessionInUrl:false no client global por causa do fluxo de recovery.
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${ambiente().origemDoApp}/auth/callback` },
     });
     if (error) throw error;
     return data;
