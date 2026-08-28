@@ -2,7 +2,7 @@ import { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
-import type { Artist } from '../interfaces/maestra';
+import type { Artist } from '@maestra/core/interfaces/maestra';
 
 // Resumo compacto e clean do diagnóstico REAL — usado no Dashboard e no Plano de Ação.
 // Só aparece para perfis que têm o Índice REAL salvo no content.

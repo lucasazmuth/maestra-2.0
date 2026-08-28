@@ -19,7 +19,7 @@ import {
 } from '@ant-design/icons';
 import { FiUploadCloud, FiDatabase, FiClock, FiCheckCircle, FiXCircle, FiFileText } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 
 // ---- Types ----
 

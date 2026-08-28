@@ -1,0 +1,162 @@
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { Session, User } from '@supabase/supabase-js';
+
+import { supabase } from '../../lib/supabase';
+import { clearSpotifyTokens } from '../../lib/spotifyToken';
+import { ambiente } from '../../nucleo/ambiente';
+
+// Exportado porque o pacote emite declaracoes: o tipo do `store` referencia este, e um tipo
+// so-local nao pode ser nomeado no .d.ts.
+export interface AuthState {
+  user?: User | null;
+  session?: Session | null;
+  requesting: boolean;
+}
+
+const initialState: AuthState = {
+  user: undefined,
+  session: undefined,
+  requesting: true,
+};
+
+/** Sessão só "vale" se o e-mail estiver confirmado (ou for login social, que já vem confirmado).
+ *  Usuário recém-cadastrado e ainda NÃO confirmado não é considerado logado — ele precisa digitar
+ *  o código de verificação primeiro. Compartilhado entre bootstrap e onAuthStateChange. */
+export const confirmedOrNull = (session: Session | null): Session | null =>
+  !session?.user || session.user.email_confirmed_at ? session : null;
+
+/** Lê a sessão atual do Supabase (em reloads). */
+export const bootstrapSession = createAsyncThunk('auth/bootstrapSession', async () => {
+  const { data } = await supabase.auth.getSession();
+  const session = confirmedOrNull(data.session ?? null);
+  return { session, user: session?.user ?? null };
+});
+
+/** Login por email/senha. */
+export const signIn = createAsyncThunk(
+  'auth/signIn',
+  async ({ email, password }: { email: string; password: string }) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return { session: data.session ?? null, user: data.user ?? null };
+  }
+);
+
+/** Cadastro por email/senha (signup aberto). Grava o nome em user_metadata. */
+export const signUp = createAsyncThunk(
+  'auth/signUp',
+  async ({ email, password, name }: { email: string; password: string; name?: string }) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name || '' } },
+    });
+    if (error) throw error;
+    return { session: data.session ?? null, user: data.user ?? null };
+  }
+);
+
+/** Confirma o e-mail do cadastro com o CÓDIGO (OTP) recebido por e-mail (via Brevo). Em sucesso,
+ *  já devolve a sessão (usuário logado). UMA única chamada com `type: 'email'` (o código de 6
+ *  dígitos do e-mail é um OTP de e-mail). Antes tentava 'email' E 'signup' — isso DOBRAVA o
+ *  contador de tentativas do Supabase e travava o código ("inválido ou expirado") rápido. */
+export const verifySignupOtp = createAsyncThunk(
+  'auth/verifySignupOtp',
+  async ({ email, token }: { email: string; token: string }) => {
+    const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+    if (error) throw error;
+    return { session: data.session ?? null, user: data.user ?? null };
+  }
+);
+
+/** Reenvia o código de confirmação de cadastro. */
+export const resendSignupOtp = createAsyncThunk(
+  'auth/resendSignupOtp',
+  async ({ email }: { email: string }) => {
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    if (error) throw error;
+    return true;
+  }
+);
+
+/** Provedores de login social oferecidos na tela de entrada.
+ *
+ * A Apple entra por exigencia da App Store (diretriz 4.8): quem oferece login social de
+ * terceiro precisa oferecer o Sign in with Apple com a MESMA proeminencia. Nao e uma opcao a
+ * mais na lista, e a condicao para o app existir na loja. */
+export type SocialProvider = 'google' | 'facebook' | 'apple';
+
+/** Login social. Redireciona o navegador para o provedor e volta para a app;
+ * a sessão é capturada pelo onAuthStateChange. Requer o provedor habilitado no Supabase Auth. */
+export const signInWithProvider = createAsyncThunk(
+  'auth/signInWithProvider',
+  async (provider: SocialProvider) => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      // Volta numa rota dedicada que troca o ?code= por sessão (PKCE). Mantemos
+      // detectSessionInUrl:false no client global por causa do fluxo de recovery.
+      options: { redirectTo: `${ambiente().origemDoApp}/auth/callback` },
+    });
+    if (error) throw error;
+    return data;
+  }
+);
+
+export const signOut = createAsyncThunk('auth/signOut', async () => {
+  await supabase.auth.signOut();
+  clearSpotifyTokens();
+  return true;
+});
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState,
+  reducers: {
+    setSession(state, action: PayloadAction<{ session: Session | null }>) {
+      state.session = action.payload.session;
+      state.user = action.payload.session?.user ?? null;
+      state.requesting = false;
+    },
+    setRequesting(state, action: PayloadAction<{ requesting: boolean }>) {
+      state.requesting = action.payload.requesting;
+    },
+    clearAuth(state) {
+      state.user = null;
+      state.session = null;
+      state.requesting = false;
+    },
+  },
+  extraReducers: (builder) => {
+    const applied = (state: AuthState, action: any) => {
+      state.session = action.payload.session;
+      state.user = action.payload.user;
+      state.requesting = false;
+    };
+    builder.addCase(bootstrapSession.fulfilled, applied);
+    builder.addCase(bootstrapSession.rejected, (state) => {
+      state.requesting = false;
+    });
+    builder.addCase(signIn.fulfilled, applied);
+    // signUp NÃO loga: se a confirmação estiver ligada, o usuário precisa do código antes (verifyOtp).
+    builder.addCase(verifySignupOtp.fulfilled, applied);
+    builder.addCase(signOut.fulfilled, (state) => {
+      state.user = null;
+      state.session = null;
+      state.requesting = false;
+    });
+  },
+});
+
+export const authActions = {
+  ...authSlice.actions,
+  confirmedOrNull,
+  bootstrapSession,
+  signIn,
+  signUp,
+  verifySignupOtp,
+  resendSignupOtp,
+  signInWithProvider,
+  signOut,
+};
+
+export default authSlice.reducer;

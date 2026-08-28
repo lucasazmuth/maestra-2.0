@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
 
-import { useArtist } from '../../hooks/useArtist';
+import { useArtist } from '@maestra/core/hooks/useArtist';
 import { Spinner } from '../../components/spinner/spinner';
-import type { SwotAnalysis } from '../../interfaces/maestra';
+import type { SwotAnalysis } from '@maestra/core/interfaces/maestra';
 
 const swotColors = ['#3361ff', '#ff6633', '#29cc39', '#e62e7b'] as const;
 

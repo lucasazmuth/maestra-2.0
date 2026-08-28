@@ -1,4 +1,4 @@
-import type { RealIndex } from '../interfaces/maestra';
+import type { RealIndex } from '@maestra/core/interfaces/maestra';
 import { tierForAltas, type RealTier } from './RealBadge';
 
 // Progressão de "nível" do REAL: a escada é o nº de dimensões R·E·A·L altas (0→4) = os 5 tiers de

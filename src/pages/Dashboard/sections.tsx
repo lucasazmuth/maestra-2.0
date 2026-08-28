@@ -2,11 +2,11 @@ import { FC, useState } from 'react';
 import { Input, Spin, message } from 'antd';
 import { FaSpotify } from 'react-icons/fa6';
 
-import { useAppDispatch } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
-import { searchSpotifyArtists, buildSpotifyProfileAndCatalog } from '../../services/spotifyArtist';
-import { supabase } from '../../lib/supabase';
-import type { Artist, ArtistContent, SwotAnalysis } from '../../interfaces/maestra';
+import { useAppDispatch } from '@maestra/core/store/store';
+import { artistsActions } from '@maestra/core/store/slices/artists';
+import { searchSpotifyArtists, buildSpotifyProfileAndCatalog } from '@maestra/core/services/spotifyArtist';
+import { supabase } from '@maestra/core/lib/supabase';
+import type { Artist, ArtistContent, SwotAnalysis } from '@maestra/core/interfaces/maestra';
 
 // Seções da home do artista (Dashboard). Antes viviam na tela Perfil — foram fundidas aqui.
 

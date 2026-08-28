@@ -1,7 +1,7 @@
 import { FC, useMemo, useState } from 'react';
 
-import type { RealIndex } from '../interfaces/maestra';
-import { PROFILES } from '../services/realEngine';
+import type { RealIndex } from '@maestra/core/interfaces/maestra';
+import { PROFILES } from '@maestra/core/services/realEngine';
 import { RealBadge, tierForAltas, TIER_ACCENT, altasForPattern } from './RealBadge';
 import { realProgression } from './realProgression';
 

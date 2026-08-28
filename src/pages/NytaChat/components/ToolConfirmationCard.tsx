@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { FiCheck, FiX, FiLoader } from 'react-icons/fi';
 
-import type { PendingToolCall } from '../../../store/slices/nytaChat';
+import type { PendingToolCall } from '@maestra/core/store/slices/nytaChat';
 
 import './ToolConfirmationCard.scss';
 

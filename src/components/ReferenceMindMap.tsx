@@ -1,6 +1,6 @@
 import { FC } from 'react';
 
-import type { ArtistReferences } from '../interfaces/maestra';
+import type { ArtistReferences } from '@maestra/core/interfaces/maestra';
 
 // Mapa mental de referências — componente ÚNICO usado em todo o sistema (wizard/Nyta chat e
 // Plano de Ação avançado). Hub central + um círculo por categoria (Posicionamento/Artísticas no

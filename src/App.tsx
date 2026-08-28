@@ -19,14 +19,14 @@ import {
 
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { persistor, store, useAppDispatch, useAppSelector } from './store/store';
+import { persistor, store, useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { rodandoNativo } from './lib/plataforma';
-import { useAdminRole, type ModuloAdmin } from './hooks/useAdminRole';
+import { useAdminRole, type ModuloAdmin } from '@maestra/core/hooks/useAdminRole';
 import { MobileIntro } from './pages/MobileIntro';
-import { authActions } from './store/slices/auth';
+import { authActions } from '@maestra/core/store/slices/auth';
 
-import { supabase } from './lib/supabase';
-import { ConsentProvider, useConsent } from './hooks/useConsent';
+import { supabase } from '@maestra/core/lib/supabase';
+import { ConsentProvider, useConsent } from '@maestra/core/hooks/useConsent';
 import { Spinner } from './components/spinner/spinner';
 import { AppLayout } from './components/Layout';
 import { RequireArtistPaid } from './components/RequireArtistPaid';

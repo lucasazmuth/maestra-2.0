@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { FiShield, FiTrendingUp, FiAlertTriangle } from 'react-icons/fi';
 import { LuRocket } from 'react-icons/lu';
 
-import type { StrategyType } from '../../interfaces/maestra';
+import type { StrategyType } from '@maestra/core/interfaces/maestra';
 
 // Metadados visuais dos tipos de estratégia (cruzamentos SWOT), compartilhados entre
 // Estratégias, Priorização, Cronograma e Resultado.

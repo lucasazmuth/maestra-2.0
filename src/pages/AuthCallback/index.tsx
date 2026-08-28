@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 import { Spinner } from '../../components/spinner/spinner';
 
 // Retorno do login social (Google). O client global tem detectSessionInUrl:false (por causa do

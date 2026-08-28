@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 
 // Camada de dados do CRM de vendas da Maestra (tabelas `sales_*`).
 //

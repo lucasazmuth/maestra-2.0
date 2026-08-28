@@ -1,15 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { message } from 'antd';
 
-import { getMyPlatformReview, savePlatformReview } from '../../services/db/platformReviews';
+import { getMyPlatformReview, savePlatformReview } from '@maestra/core/services/db/platformReviews';
 import { PlatformReviewModal } from '.';
 
-jest.mock('../../store/store', () => ({
+jest.mock('@maestra/core/store/store', () => ({
   useAppSelector: (selector: (state: unknown) => unknown) =>
     selector({ auth: { user: { id: 'user-1' } } }),
 }));
 
-jest.mock('../../services/db/platformReviews', () => ({
+jest.mock('@maestra/core/services/db/platformReviews', () => ({
   getMyPlatformReview: jest.fn(),
   savePlatformReview: jest.fn(),
 }));

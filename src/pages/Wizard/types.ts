@@ -5,7 +5,7 @@ import type {
   ArtistIdentity,
   QuizQuestion,
   SpotifyProfile,
-} from '../../interfaces/maestra';
+} from '@maestra/core/interfaces/maestra';
 
 // Contrato comum das etapas do wizard. O shell (index.tsx) é dono do draft,
 // da persistência e do estado de IA; cada etapa só renderiza e delega.

@@ -1,0 +1,95 @@
+import { supabase } from '../../lib/supabase';
+import type { ArtistMember, AccessLevel } from '../../interfaces/maestra';
+import { ambiente } from '../../nucleo/ambiente';
+
+const TABLE = 'artist_members';
+
+export const listMembers = async (artistId: string): Promise<ArtistMember[]> => {
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select('*')
+    .eq('artist_id', artistId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data || []) as ArtistMember[];
+};
+
+export const inviteMember = async (input: {
+  artistId: string;
+  email: string;
+  name?: string;
+  accessLevels: AccessLevel[];
+}): Promise<ArtistMember> => {
+  const { data, error } = await supabase
+    .from(TABLE)
+    .insert({
+      artist_id: input.artistId,
+      email: input.email,
+      name: input.name || null,
+      access_levels: input.accessLevels,
+      status: 'pending',
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  const member = data as ArtistMember;
+  // Dispara o e-mail de convite (Brevo) em segundo plano — fail-safe: erro de e-mail NÃO quebra
+  // o convite (a linha 'pending' já existe e aparece pro convidado ao logar com este e-mail).
+  supabase.functions
+    .invoke('send-team-invite', { body: { memberId: member.id, appUrl: ambiente().origemDoApp } })
+    .catch((e) => console.error('send-team-invite falhou:', e?.message || e));
+  return member;
+};
+
+export const updateMember = async (
+  id: string,
+  patch: { access_levels?: AccessLevel[]; status?: ArtistMember['status']; name?: string }
+): Promise<ArtistMember> => {
+  const { data, error } = await supabase
+    .from(TABLE)
+    .update(patch)
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as ArtistMember;
+};
+
+export const removeMember = async (id: string): Promise<void> => {
+  const { error } = await supabase.from(TABLE).delete().eq('id', id);
+  if (error) throw error;
+};
+
+// ---- Convites pendentes (lado do convidado) ------------------------------------------------
+
+// Convite pendente já com nome/imagem/gênero do artista (via RPC SECURITY DEFINER, pois o
+// convidado ainda NÃO é membro e a RLS bloqueia o join direto na tabela artists).
+export interface PendingInvite {
+  id: string;
+  artist_id: string;
+  access_levels: AccessLevel[];
+  status: string;
+  created_at: string;
+  artist_name: string | null;
+  artist_image: string | null;
+  artist_genre: string | null;
+}
+
+// A RPC filtra pelo e-mail do próprio usuário logado (auth.jwt) — nenhum parâmetro necessário.
+export const fetchPendingInvites = async (): Promise<PendingInvite[]> => {
+  const { data, error } = await supabase.rpc('get_pending_invites');
+  if (error) throw error;
+  return (data || []) as PendingInvite[];
+};
+
+export const acceptInvite = async (inviteId: string, userId: string, userName?: string): Promise<void> => {
+  const payload: Record<string, unknown> = { status: 'active', user_id: userId };
+  if (userName) payload.name = userName;
+  const { error } = await supabase.from(TABLE).update(payload).eq('id', inviteId);
+  if (error) throw error;
+};
+
+export const rejectInvite = async (inviteId: string): Promise<void> => {
+  const { error } = await supabase.from(TABLE).update({ status: 'rejected' }).eq('id', inviteId);
+  if (error) throw error;
+};

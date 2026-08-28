@@ -3,15 +3,15 @@ import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiLifeBuoy, FiMusic, FiShield } from 'react-icons/fi';
 
-import { useArtist } from '../../hooks/useArtist';
-import { useJourneyState } from '../../hooks/useJourneyState';
+import { useArtist } from '@maestra/core/hooks/useArtist';
+import { useJourneyState } from '@maestra/core/hooks/useJourneyState';
 import { Spinner } from '../../components/spinner/spinner';
-import { listCatalogProjectItems } from '../../services/db/catalog';
-import { CATALOG_STATUS } from '../../constants/maestra';
+import { listCatalogProjectItems } from '@maestra/core/services/db/catalog';
+import { CATALOG_STATUS } from '@maestra/core/constants/maestra';
 import { TASK_TYPES } from '../ActionPlan/TaskControls';
-import type { CatalogItem } from '../../interfaces/maestra';
-import { useLocalPlayerStore } from '../../stores/localPlayerStore';
-import type { LocalTrack } from '../../components/LocalPlayerBar';
+import type { CatalogItem } from '@maestra/core/interfaces/maestra';
+import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
+import type { LocalTrack } from '@maestra/core/stores/localPlayerStore';
 import { NytaDashboardHero } from '../../components/nyta/NytaDashboardHero';
 
 const fmtNumber = (value?: number | null) =>

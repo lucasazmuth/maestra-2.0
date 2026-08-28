@@ -1,0 +1,21 @@
+{
+  "name": "@maestra/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Logica do produto compartilhada entre a web e o app nativo. Sem DOM, sem antd, sem react-router.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./i18n": "./dist/i18n/index.js",
+    "./services/realEngine": "./dist/services/realEngine/index.js",
+    "./*": "./dist/*.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch --preserveWatchOutput"
+  },
+  "peerDependencies": {
+    "react": "*"
+  }
+}

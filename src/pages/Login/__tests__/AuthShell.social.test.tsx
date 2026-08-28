@@ -6,7 +6,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 // O thunk real chama o Supabase; aqui interessa QUAL provedor ele recebe.
 const mockSignInWithOAuth = jest.fn();
-jest.mock('../../../lib/supabase', () => ({
+jest.mock('@maestra/core/lib/supabase', () => ({
   supabase: {
     auth: {
       signInWithOAuth: (...args: any[]) => mockSignInWithOAuth(...args),

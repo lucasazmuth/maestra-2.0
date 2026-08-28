@@ -1,8 +1,8 @@
 import { FC, ReactNode, useEffect, useState } from 'react';
 
-import { supabase } from '../../lib/supabase';
-import { TCLE_ENABLED } from '../../constants/featureFlags';
-import { useConsent } from '../../hooks/useConsent';
+import { supabase } from '@maestra/core/lib/supabase';
+import { TCLE_ENABLED } from '@maestra/core/constants/featureFlags';
+import { useConsent } from '@maestra/core/hooks/useConsent';
 import styles from './Consent.module.scss';
 
 // Termo de Consentimento Livre e Esclarecido (TCLE) — uso dos dados na pesquisa de doutorado.

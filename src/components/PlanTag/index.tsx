@@ -1,8 +1,8 @@
 import { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useAppSelector } from '../../store/store';
-import { PAYWALL_DISABLED } from '../../constants/maestra';
+import { useAppSelector } from '@maestra/core/store/store';
+import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
 import { Diamond } from './Diamond';
 import { ShineOverlay } from './ShineOverlay';
 import styles from './PlanTag.module.scss';

@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { App, Input } from 'antd';
 import { FiArrowUp, FiCheck } from 'react-icons/fi';
 
-import * as wizardAi from '../../../services/wizardAi';
-import { supabase } from '../../../lib/supabase';
-import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
-import { WIZARD_TOTAL_STEPS } from '../../../constants/maestra';
+import * as wizardAi from '@maestra/core/services/wizardAi';
+import { supabase } from '@maestra/core/lib/supabase';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import { WIZARD_TOTAL_STEPS } from '@maestra/core/constants/maestra';
 import { NytaBubble, NytaCardRow, TypingIndicator, UserBubble, WidgetSlot } from './ChatMessage';
 import { GUIDED_OPENTEXT, SAY, type OpenTextField } from './nytaPersona';
 import { fecharNegritoAberto, perguntaEmDestaque, placeholderDaPergunta } from './pergunta';
@@ -59,7 +59,7 @@ import type {
   SpotifyProfile,
   VisionParts,
   WizardBackTrailEntry,
-} from '../../../interfaces/maestra';
+} from '@maestra/core/interfaces/maestra';
 
 // Orquestrador do wizard conversacional (metodologia Nyta): mantém o thread, resolve o próximo
 // beat a partir do draft (script.ts), roda as ações de IA (prepare) e roteia o texto digitado.
@@ -940,6 +940,9 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
             objectives={draft.objectives || []}
             onSuggest={async () => engine.suggestScores(draft.strategies || [], draft.objectives || [])}
             onAnnounce={(texts) => say(texts)}
+            // Salva as notas conforme são dadas, SEM avançar de etapa: quem recarregar a página no
+            // meio da priorização volta de onde parou em vez de perder a etapa inteira.
+            onProgress={(strategies) => { persist({ strategies }); }}
             onConfirm={(scored, selectedIds) => {
               pushUser('Prioridades definidas');
               // Só as estratégias selecionadas ganham tarefas (plano de ação, sem datas). As demais

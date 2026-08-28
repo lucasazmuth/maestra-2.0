@@ -2,13 +2,13 @@ import { FC, useEffect, useState } from 'react';
 import { Popconfirm, message } from 'antd';
 import { FiCheck, FiX, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
-import { useAppSelector, useAppDispatch } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
-import { MVP_ACCESS_LEVELS } from '../../constants/maestra';
-import * as membersDb from '../../services/db/members';
-import type { PendingInvite } from '../../services/db/members';
-import type { AccessLevel } from '../../interfaces/maestra';
+import { useAppSelector, useAppDispatch } from '@maestra/core/store/store';
+import { artistsActions } from '@maestra/core/store/slices/artists';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import { MVP_ACCESS_LEVELS } from '@maestra/core/constants/maestra';
+import * as membersDb from '@maestra/core/services/db/members';
+import type { PendingInvite } from '@maestra/core/services/db/members';
+import type { AccessLevel } from '@maestra/core/interfaces/maestra';
 import styles from './PendingInvites.module.scss';
 
 // Convites de equipe pendentes, listados no topo de "Seus perfis". É o ÚNICO caminho do app para

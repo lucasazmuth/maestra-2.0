@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { supabase } from '../../lib/supabase';
-import { useAppSelector } from '../../store/store';
+import { supabase } from '@maestra/core/lib/supabase';
+import { useAppSelector } from '@maestra/core/store/store';
 
 // Histórico de pagamentos do usuário: assinatura (asaas_payments) + perfis avulsos
 // (artist_purchases), unificados e ordenados por data. RLS já restringe ao próprio usuário.

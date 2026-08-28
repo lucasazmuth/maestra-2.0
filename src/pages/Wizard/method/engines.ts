@@ -1,7 +1,7 @@
 // Motores determinísticos da Metodologia v2 — objetivos, estratégias, priorização e plano de ação.
 // Funções puras (sem React, sem rede, sem LLM). Consomem as lookup tables deste diretório.
 
-import { TASK_OWNER_SELF } from '../../../constants/maestra';
+import { TASK_OWNER_SELF } from '@maestra/core/constants/maestra';
 import type {
   ActionTask,
   ArtistContent,
@@ -9,7 +9,7 @@ import type {
   MissionParts,
   RecognitionTag,
   Strategy,
-} from '../../../interfaces/maestra';
+} from '@maestra/core/interfaces/maestra';
 import { STRATEGY_BY_ID } from './strategyBank';
 import { MATRIX_A, MATRIX_B, MATRIX_C, TRANSVERSAL_FORCES } from './matrices';
 import { OBJECTIVE_CODES, globalSum, objectiveToCode, scoreFor } from './priorityMatrix';

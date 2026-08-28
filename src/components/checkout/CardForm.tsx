@@ -2,7 +2,7 @@ import { FC } from 'react';
 import { Input, Spin } from 'antd';
 import { FiCreditCard, FiUser, FiCalendar, FiLock, FiSmartphone, FiMapPin } from 'react-icons/fi';
 
-import { formatCardNumber, formatExpiry, formatPhone, formatCep, formatCpfCnpj } from '../../utils/asaasForm';
+import { formatCardNumber, formatExpiry, formatPhone, formatCep, formatCpfCnpj } from '@maestra/core/utils/asaasForm';
 import type { CheckoutForm } from './useCheckoutForm';
 import styles from './checkout.module.scss';
 

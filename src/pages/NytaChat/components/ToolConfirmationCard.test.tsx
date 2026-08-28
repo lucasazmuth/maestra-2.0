@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { ToolConfirmationCard, translateToolName, buildActionSummary } from './ToolConfirmationCard';
-import type { PendingToolCall } from '../../../store/slices/nytaChat';
+import type { PendingToolCall } from '@maestra/core/store/slices/nytaChat';
 
 // ─── Req 3.3: Card de confirmação com descrição da ação ─────────────────────
 

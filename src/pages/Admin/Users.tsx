@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { FiActivity, FiArrowRight, FiCalendar, FiMessageCircle, FiMusic, FiSearch, FiTarget, FiTrash2, FiUser } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
-import { supabase } from '../../lib/supabase';
-import { readEdgeFunctionError } from '../../lib/edgeError';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { supabase } from '@maestra/core/lib/supabase';
+import { readEdgeFunctionError } from '@maestra/core/lib/edgeError';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import { Spinner } from '../../components/spinner/spinner';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────

@@ -3,11 +3,11 @@ import { message } from 'antd';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
-import { useAppSelector } from '../../store/store';
+import { useAppSelector } from '@maestra/core/store/store';
 import { Spinner } from '../../components/spinner/spinner';
-import * as notifsDb from '../../services/db/notifications';
-import type { NotificationItem } from '../../interfaces/maestra';
-import { supabase } from '../../lib/supabase';
+import * as notifsDb from '@maestra/core/services/db/notifications';
+import type { NotificationItem } from '@maestra/core/interfaces/maestra';
+import { supabase } from '@maestra/core/lib/supabase';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

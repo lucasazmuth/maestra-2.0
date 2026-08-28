@@ -1,8 +1,8 @@
 import { FC, useState } from 'react';
 import { FiArrowRight } from 'react-icons/fi';
 
-import { useNytaModal } from '../../hooks/useNytaModal';
-import { NYTA_SUGGESTIONS } from '../../constants/maestra';
+import { useNytaModal } from '@maestra/core/hooks/useNytaModal';
+import { NYTA_SUGGESTIONS } from '@maestra/core/constants/maestra';
 import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
 import styles from './NytaDashboardHero.module.scss';
 

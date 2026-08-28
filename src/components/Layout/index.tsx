@@ -8,20 +8,20 @@ import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
 import { MaestraBrand } from '../MaestraBrand';
 import { PlanTag } from '../PlanTag';
-import { useLocalPlayerStore } from '../../stores/localPlayerStore';
+import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
 import { LocalPlayerBar } from '../LocalPlayerBar';
 
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { uiActions } from '../../store/slices/ui';
-import { fetchSubscriptionStatus, fetchPlanConfig } from '../../store/slices/subscription';
-import { PAYWALL_DISABLED, artistEntryRoute, isOnboardingComplete } from '../../constants/maestra';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { uiActions } from '@maestra/core/store/slices/ui';
+import { fetchSubscriptionStatus, fetchPlanConfig } from '@maestra/core/store/slices/subscription';
+import { PAYWALL_DISABLED, artistEntryRoute, isOnboardingComplete } from '@maestra/core/constants/maestra';
 import useIsMobile from '../../utils/isMobile';
-import { useGlobalSearch } from '../../stores/globalSearchStore';
-import { useNytaModal } from '../../hooks/useNytaModal';
+import { useGlobalSearch } from '@maestra/core/stores/globalSearchStore';
+import { useNytaModal } from '@maestra/core/hooks/useNytaModal';
 import { enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
-import { countUnread } from '../../services/db/notifications';
-import { supabase } from '../../lib/supabase';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import { countUnread } from '@maestra/core/services/db/notifications';
+import { supabase } from '@maestra/core/lib/supabase';
 import { SearchIcon } from '../Icons';
 import { FiArrowRight, FiX } from 'react-icons/fi';
 import {
@@ -37,8 +37,8 @@ import {
   SystemHomeIcon,
 } from '../Icons/system';
 import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
-import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
-import { useJourneyState } from '../../hooks/useJourneyState';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
+import { useJourneyState } from '@maestra/core/hooks/useJourneyState';
 
 export interface LayoutContext {
   container: RefObject<HTMLDivElement | null>;

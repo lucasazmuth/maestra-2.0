@@ -3,16 +3,16 @@ import { message } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { FiCheck, FiChevronLeft, FiChevronRight, FiPlus } from 'react-icons/fi';
 
-import { useArtist } from '../../hooks/useArtist';
-import { useGlobalSearch, normalizar } from '../../stores/globalSearchStore';
-import { useArtistCapabilities } from '../../hooks/useArtistCapabilities';
-import { useAppDispatch } from '../../store/store';
-import { artistsActions } from '../../store/slices/artists';
+import { useArtist } from '@maestra/core/hooks/useArtist';
+import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
+import { useAppDispatch } from '@maestra/core/store/store';
+import { artistsActions } from '@maestra/core/store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import { EventModal } from '../../components/EventModal';
-import { EVENT_TYPES } from '../../constants/maestra';
-import * as eventsDb from '../../services/db/events';
-import type { AgendaEvent, ArtistContent } from '../../interfaces/maestra';
+import { EVENT_TYPES } from '@maestra/core/constants/maestra';
+import * as eventsDb from '@maestra/core/services/db/events';
+import type { AgendaEvent, ArtistContent } from '@maestra/core/interfaces/maestra';
 import './agenda.scss';
 
 type CalendarView = 'day' | 'month' | 'year';

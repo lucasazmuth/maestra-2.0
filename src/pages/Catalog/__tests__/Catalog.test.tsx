@@ -10,7 +10,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 
-import type { CatalogItem } from '../../../interfaces/maestra';
+import type { CatalogItem } from '@maestra/core/interfaces/maestra';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -22,13 +22,13 @@ const mockArtist = {
   content: { step: 9, wizardVersion: 2, spotifyCatalog: { albums: [], tracks: [] } },
 };
 
-jest.mock('../../../hooks/useArtist', () => ({
+jest.mock('@maestra/core/hooks/useArtist', () => ({
   useArtist: () => ({ artist: mockArtist, loading: false }),
 }));
 
 // Mock useEntitlements with controllable return value
 let mockMaxCatalogTracks = 10;
-jest.mock('../../../hooks/useEntitlements', () => ({
+jest.mock('@maestra/core/hooks/useEntitlements', () => ({
   FREE_MAX_CATALOG_TRACKS: 10,
   useEntitlements: () => ({
     plan: mockMaxCatalogTracks === Infinity ? 'pro' : 'free',
@@ -46,7 +46,7 @@ jest.mock('../../../hooks/useEntitlements', () => ({
 let mockCatalogItems: CatalogItem[] = [];
 const mockListCatalogItems = jest.fn();
 const mockDeleteCatalogItem = jest.fn();
-jest.mock('../../../services/db/catalog', () => ({
+jest.mock('@maestra/core/services/db/catalog', () => ({
   __esModule: true,
   listCatalogItems: (...args: any[]) => mockListCatalogItems(...args),
   deleteCatalogItem: (...args: any[]) => mockDeleteCatalogItem(...args),
@@ -54,7 +54,7 @@ jest.mock('../../../services/db/catalog', () => ({
 
 // Mock genres DB service
 const mockListGenres = jest.fn();
-jest.mock('../../../services/db/genres', () => ({
+jest.mock('@maestra/core/services/db/genres', () => ({
   __esModule: true,
   listGenres: (...args: any[]) => mockListGenres(...args),
 }));
@@ -87,13 +87,13 @@ jest.mock('../../../components/spinner/spinner', () => ({
   Spinner: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-jest.mock('../../../services/db/members', () => ({
+jest.mock('@maestra/core/services/db/members', () => ({
   listMembers: () => Promise.resolve([]),
 }));
 
 // Mock PAYWALL_DISABLED to false for tests
-jest.mock('../../../constants/maestra', () => {
-  const actual = jest.requireActual('../../../constants/maestra');
+jest.mock('@maestra/core/constants/maestra', () => {
+  const actual = jest.requireActual('@maestra/core/constants/maestra');
   return { ...actual, PAYWALL_DISABLED: false };
 });
 
@@ -248,7 +248,10 @@ describe('Catalog Page - Track Limit Integration', () => {
         expect(screen.getByTestId('track-modal')).toBeInTheDocument();
       });
       expect(screen.queryByTestId('upsell-modal')).not.toBeInTheDocument();
-    });
+      // Este caso monta 50 faixas e leva ~4s de trabalho real, contra os 5s padrao do jest —
+      // margem estreita demais. Passava sozinho e caia quando a maquina tinha outra coisa
+      // rodando em paralelo, que e o pior tipo de teste: o que falha sem ninguem ter mexido.
+    }, 20_000);
   });
 
   describe('5.4: After creating a track (onSaved), counter updates to reflect new count', () => {

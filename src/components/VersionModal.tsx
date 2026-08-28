@@ -4,8 +4,8 @@ import { FiMusic, FiStar, FiTrash2, FiUploadCloud } from 'react-icons/fi';
 
 import { readAudioDuration, titleFromFileName } from '../lib/audioMeta';
 import { uploadFile, CATALOG_BUCKET } from '../lib/storage';
-import * as catalogDb from '../services/db/catalog';
-import type { CatalogVersion } from '../interfaces/maestra';
+import * as catalogDb from '@maestra/core/services/db/catalog';
+import type { CatalogVersion } from '@maestra/core/interfaces/maestra';
 import modalStyles from './StandardModal.module.scss';
 
 // Modal da VERSÃO (a gravação), irmão do TrackModal — que cuida da MÚSICA.

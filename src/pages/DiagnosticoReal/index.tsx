@@ -2,7 +2,7 @@ import { FC, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
-import { useAppSelector } from '../../store/store';
+import { useAppSelector } from '@maestra/core/store/store';
 import { PRODUCT_THEME } from '../../components/productTheme';
 import { Header, Footer } from '../Landing/Chrome';
 import styles from './DiagnosticoReal.module.scss';

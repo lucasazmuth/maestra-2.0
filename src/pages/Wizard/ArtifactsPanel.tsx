@@ -9,7 +9,7 @@ import {
   STAGE_OPTIONS,
   VISION_ONDE_OPTIONS,
 } from './chat/wizardData';
-import type { ArtistContent, ArtistIdentity } from '../../interfaces/maestra';
+import type { ArtistContent, ArtistIdentity } from '@maestra/core/interfaces/maestra';
 
 // Coluna lateral de resultados do Planejamento Estratégico: lista limpa do que já foi produzido
 // (visão, missão, valores, objetivos, SWOT, estratégias, cronograma) conforme a Nyta os gera —

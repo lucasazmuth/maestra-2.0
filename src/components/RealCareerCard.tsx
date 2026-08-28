@@ -2,7 +2,7 @@ import { FC, CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 
-import type { Artist } from '../interfaces/maestra';
+import type { Artist } from '@maestra/core/interfaces/maestra';
 import { RealBadge, altasForPattern, tierForPattern, TIER_ACCENT } from './RealBadge';
 import { RealLevelLadder } from './RealLevelLadder';
 

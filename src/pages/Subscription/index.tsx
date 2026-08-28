@@ -4,13 +4,13 @@ import { FiArrowLeft, FiArrowRight, FiTarget, FiGrid, FiAward } from 'react-icon
 
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { createAsaasCustomer, createPixAuthorization, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, pollPaymentStatus, clearError, type BillingCycle } from '../../store/slices/subscription';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { createAsaasCustomer, createPixAuthorization, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, pollPaymentStatus, clearError, type BillingCycle } from '@maestra/core/store/slices/subscription';
 import {
   CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField, CouponField,
   CartSummary, BenefitsCompare, useCheckoutForm, focusFirstInvalidField, type PayMethod, type BenefitGroup,
 } from '../../components/checkout';
-import { useCoupon } from '../../hooks/useCoupon';
+import { useCoupon } from '@maestra/core/hooks/useCoupon';
 import { Diamond } from '../../components/PlanTag/Diamond';
 
 // Fallback enquanto a config do plano não carregou do Supabase (asaas_plan_config).
@@ -363,4 +363,4 @@ const SubscriptionPage: FC = () => {
 export default SubscriptionPage;
 
 // Reexport dos validadores puros (mantém compatibilidade com testes/import externos).
-export { isValidCpf, isValidCnpj, isValidCpfCnpj, validateCreditCardFields, type CreditCardFields } from '../../utils/payments';
+export { isValidCpf, isValidCnpj, isValidCpfCnpj, validateCreditCardFields, type CreditCardFields } from '@maestra/core/utils/payments';

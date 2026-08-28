@@ -3,7 +3,7 @@ import { Input, InputNumber, Select, Switch, DatePicker, Button, Popconfirm, mes
 import { FiTag, FiPlus } from 'react-icons/fi';
 import dayjs, { Dayjs } from 'dayjs';
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 type AppliesTo = 'one_time' | 'subscription' | 'both';

@@ -3,7 +3,7 @@ import { Button, DatePicker, Input, Modal, Popconfirm, Select, Tabs } from 'antd
 import dayjs from 'dayjs';
 import { FiCheck, FiEdit2, FiMessageSquare, FiSend, FiTrash2, FiX } from 'react-icons/fi';
 
-import type { ActionTask, TaskComment } from '../../interfaces/maestra';
+import type { ActionTask, TaskComment } from '@maestra/core/interfaces/maestra';
 import { TASK_TYPES, type Assignee } from './TaskControls';
 // Mesmo casco das fichas de música e de compromisso: cartão, cabeçalho (kicker + título +
 // subtítulo), abas, campos e rodapé vêm todos daqui. O módulo local guarda só o que é

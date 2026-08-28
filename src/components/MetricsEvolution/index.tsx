@@ -1,8 +1,8 @@
 import { FC, useEffect, useState } from 'react';
 import { FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
 
-import { supabase } from '../../lib/supabase';
-import type { MetricsSnapshot } from '../../interfaces/maestra';
+import { supabase } from '@maestra/core/lib/supabase';
+import type { MetricsSnapshot } from '@maestra/core/interfaces/maestra';
 
 export interface MetricsEvolutionProps {
   artistId: string;

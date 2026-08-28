@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 
 const VAPID_PUBLIC_KEY =
   process.env.REACT_APP_VAPID_PUBLIC_KEY ||

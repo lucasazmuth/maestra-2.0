@@ -5,9 +5,9 @@ import { FiArrowLeft, FiArrowRight, FiArrowUp, FiCheck, FiChevronDown, FiPlay } 
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { usePwaInstall } from '../../components/PwaInstallBanner';
 import { Header, Footer } from './Chrome';
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { fetchPlanConfig } from '../../store/slices/subscription';
-import { usePlanPrices, fmtBRL } from '../../hooks/usePlanPrices';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { fetchPlanConfig } from '@maestra/core/store/slices/subscription';
+import { usePlanPrices, fmtBRL } from '@maestra/core/hooks/usePlanPrices';
 import styles from './Home.module.scss';
 
 // ─────────────────────────────────────────────────────────────────────────────

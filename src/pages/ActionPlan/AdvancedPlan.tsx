@@ -2,7 +2,7 @@ import { Dispatch, FC, ReactNode, SetStateAction, useState } from 'react';
 import { FiCheck, FiX, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { EditIcon } from '../../components/Icons/system';
 import { ReferenceMindMap } from '../../components/ReferenceMindMap';
-import type { ActionTask, ArtistContent, ArtistReferences, Strategy, SwotAnalysis } from '../../interfaces/maestra';
+import type { ActionTask, ArtistContent, ArtistReferences, Strategy, SwotAnalysis } from '@maestra/core/interfaces/maestra';
 import TaskComposer, { SuggTask } from './TaskComposer';
 import { TaskDate, TaskCategory, TaskOwner, TaskDelete, AutoTextarea, type Assignee } from './TaskControls';
 

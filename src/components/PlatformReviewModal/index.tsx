@@ -1,8 +1,8 @@
 import { FC, useEffect, useState } from 'react';
 import { Button, Input, Modal, Rate, message } from 'antd';
 
-import { useAppSelector } from '../../store/store';
-import { getMyPlatformReview, savePlatformReview } from '../../services/db/platformReviews';
+import { useAppSelector } from '@maestra/core/store/store';
+import { getMyPlatformReview, savePlatformReview } from '@maestra/core/services/db/platformReviews';
 import styles from './PlatformReviewModal.module.scss';
 
 const RATING_LABELS = ['', 'Muito ruim', 'Ruim', 'Regular', 'Boa', 'Excelente'];

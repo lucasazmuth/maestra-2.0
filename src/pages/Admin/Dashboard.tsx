@@ -3,7 +3,7 @@ import { Tag, message, Button } from 'antd';
 import { FiUsers, FiUserCheck, FiMusic, FiDollarSign, FiTrendingUp, FiRefreshCw, FiClock, FiCreditCard } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 import { Spinner } from '../../components/spinner/spinner';
 
 // ─── Tipos (espelham a resposta da edge admin-dashboard) ────────────────────

@@ -3,7 +3,7 @@ import { Popconfirm } from 'antd';
 import { FiArrowLeft, FiTrash2 } from 'react-icons/fi';
 
 import { NytaAvatar } from '../../Wizard/chat/nytaPersona';
-import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import './ChatHeader.scss';
 
 // Cabeçalho da página do chat em tela cheia.

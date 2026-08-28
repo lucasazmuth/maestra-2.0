@@ -4,22 +4,22 @@ import { useNavigate, useParams, useLocation, useSearchParams } from 'react-rout
 import { Input, Spin, Select } from 'antd';
 import { FiArrowLeft, FiChevronDown, FiX } from 'react-icons/fi';
 
-import { useAppDispatch, useAppSelector } from '../../store/store';
-import { supabase } from '../../lib/supabase';
-import { artistsActions } from '../../store/slices/artists';
-import { createAsaasCustomer, fetchPlanConfig, clearError } from '../../store/slices/subscription';
-import { createArtistCharge, pollArtistPurchase } from '../../store/slices/artistPurchases';
-import { ARTISTS_DEFAULT_IMAGE } from '../../constants/spotify';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { supabase } from '@maestra/core/lib/supabase';
+import { artistsActions } from '@maestra/core/store/slices/artists';
+import { createAsaasCustomer, fetchPlanConfig, clearError } from '@maestra/core/store/slices/subscription';
+import { createArtistCharge, pollArtistPurchase } from '@maestra/core/store/slices/artistPurchases';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 import { TcleGate } from '../Consent/Tcle';
 import { FlowHeader } from '../ArtistCreate/FlowHeader';
 import { PaymentSuccessScreen } from '../../components/PaymentSuccessScreen';
-import { shouldEnrichChartmetric } from '../../lib/chartmetricFreshness';
+import { shouldEnrichChartmetric } from '@maestra/core/lib/chartmetricFreshness';
 import {
   CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField, CouponField,
   CartSummary, useCheckoutForm, focusFirstInvalidField, type PayMethod,
 } from '../../components/checkout';
-import { useCoupon } from '../../hooks/useCoupon';
+import { useCoupon } from '@maestra/core/hooks/useCoupon';
 import styles from '../ArtistCreate/ArtistCreate.module.scss';
 import { Spinner } from '../../components/spinner/spinner';
 

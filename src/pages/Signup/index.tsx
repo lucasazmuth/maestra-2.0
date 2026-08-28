@@ -1,14 +1,14 @@
 import { FC, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useAppDispatch } from '../../store/store';
-import { supabase } from '../../lib/supabase';
-import { authActions } from '../../store/slices/auth';
+import { useAppDispatch } from '@maestra/core/store/store';
+import { supabase } from '@maestra/core/lib/supabase';
+import { authActions } from '@maestra/core/store/slices/auth';
 import { AuthShell, AuthField, AuthSubmit, authError } from '../Login/AuthShell';
 import styles from '../Login/AuthShell.module.scss';
 import { EmailCodeStep } from '../../components/EmailCodeStep';
-import { IDADE_MINIMA, ehMaiorDeIdade, idadeEmAnos } from '../../utils/age';
-import { guardarConsentimentoPendente } from '../../hooks/useConsent';
+import { IDADE_MINIMA, ehMaiorDeIdade, idadeEmAnos } from '@maestra/core/utils/age';
+import { guardarConsentimentoPendente } from '@maestra/core/hooks/useConsent';
 
 const Signup: FC = () => {
   const dispatch = useAppDispatch();

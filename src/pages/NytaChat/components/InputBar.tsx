@@ -1,7 +1,7 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { FiArrowUp, FiClock } from 'react-icons/fi';
 
-import type { PendingToolCall, RateLimitInfo } from '../../../store/slices/nytaChat';
+import type { PendingToolCall, RateLimitInfo } from '@maestra/core/store/slices/nytaChat';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

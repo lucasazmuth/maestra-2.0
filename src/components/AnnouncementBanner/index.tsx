@@ -2,8 +2,8 @@ import { FC, ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FiX } from 'react-icons/fi';
 
-import { useAppSelector } from '../../store/store';
-import { PAYWALL_DISABLED } from '../../constants/maestra';
+import { useAppSelector } from '@maestra/core/store/store';
+import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
 
 // Banner fixo no rodapé, no estilo do banner "Testar o Premium de graça" do Spotify.
 // Reutilizável para qualquer aviso do app: promoção de assinatura (gradiente),

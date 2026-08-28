@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { isValidCpfCnpj, validateCreditCardFields } from '../../utils/payments';
+import { isValidCpfCnpj, validateCreditCardFields } from '@maestra/core/utils/payments';
 
 // Endereço resolvido pelo CEP (ViaCEP). Mandamos logradouro/bairro pro Asaas
 // pra compor o endereço do titular do cartão (alguns CEPs são recusados sem isso).

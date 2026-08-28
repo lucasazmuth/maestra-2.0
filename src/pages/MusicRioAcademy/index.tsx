@@ -2,7 +2,7 @@ import { FC, useEffect } from 'react';
 import { FiArrowUpRight } from 'react-icons/fi';
 
 import { Header, Footer } from '../Landing/Chrome';
-import { useAppSelector } from '../../store/store';
+import { useAppSelector } from '@maestra/core/store/store';
 import styles from './MusicRioAcademy.module.scss';
 
 const MRA_URL = 'https://musicrioacademy.com.br';

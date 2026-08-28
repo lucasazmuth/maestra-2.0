@@ -1,4 +1,4 @@
-import type { ArtistGender, ArtistStage, RecognitionTag } from '../../../interfaces/maestra';
+import type { ArtistGender, ArtistStage, RecognitionTag } from '@maestra/core/interfaces/maestra';
 
 // Dados estáticos da metodologia Nyta (Roteiro de Perguntas + Etapa SWOT).
 // Opções exibidas nos widgets e listas-base "seedáveis". Mantidos fora de widgets.tsx

@@ -3,9 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Dropdown, Popconfirm } from 'antd';
 import { FiArrowLeft, FiEdit2, FiMoreHorizontal, FiPlus, FiTrash2 } from 'react-icons/fi';
 
-import type { NytaConversationSummary } from '../../../hooks/useNytaConversations';
-import { useAppSelector } from '../../../store/store';
-import { ARTISTS_DEFAULT_IMAGE } from '../../../constants/spotify';
+import type { NytaConversationSummary } from '@maestra/core/hooks/useNytaConversations';
+import { useAppSelector } from '@maestra/core/store/store';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import './ConversationSidebar.scss';
 
 // Histórico de conversas da Nyta, na lateral da página em tela cheia.

@@ -2,7 +2,7 @@ import { FC } from 'react';
 
 import { NytaEmblem, type NytaEmblemTone } from '../../../components/nyta/NytaEmblem';
 import { flex } from './wizardData';
-import type { ArtistGender } from '../../../interfaces/maestra';
+import type { ArtistGender } from '@maestra/core/interfaces/maestra';
 
 // Identidade visual e verbal da Nyta — a inteligência da Maestra.
 // As falas são templadas (custo zero por turno) e seguem o tom de voz do método

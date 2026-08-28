@@ -3,7 +3,7 @@ import { Button, Input, Table, Tag, Tooltip, message, type TableColumnsType } fr
 import { FiAlertTriangle, FiMail, FiSearch, FiBell } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@maestra/core/lib/supabase';
 import { Spinner } from '../../components/spinner/spinner';
 
 // CRM interno: onde cada pessoa parou no funil de ativação, e o que já foi disparado para ela.
