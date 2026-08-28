@@ -15,7 +15,11 @@
       "@maestra/core/*": [
         "../../packages/core/src/*"
       ]
-    }
+    },
+    "types": [
+      "jest",
+      "node"
+    ]
   },
   "include": [
     "**/*.ts",
