@@ -17,5 +17,16 @@
   },
   "peerDependencies": {
     "react": "*"
+  },
+  "//dependencies": "Estes pacotes SAO importados por src/ e precisam estar declarados aqui. Enquanto nao estavam, so eram encontrados por hoisting do workspace (tudo cai no node_modules da raiz e o resolvedor acha subindo a arvore). Isso funciona na maquina de quem instalou, e depende do ambiente em producao: num install limpo, com outra versao de npm ou outro hoisting, a subida pode cair noutra copia ou noutra condicao de exports. Foi assim que a producao caiu com 'createClient is not a function' — o require do supabase-js aqui resolveu para o build ESM, que nao expoe os exports nomeados como propriedade.",
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.12.0",
+    "@supabase/supabase-js": "^2.108.1",
+    "axios": "^1.17.0",
+    "i18next": "^23.15.1",
+    "react-i18next": "^15.7.3",
+    "react-redux": "^9.3.0",
+    "redux-persist": "^6.0.0",
+    "zustand": "^5.0.14"
   }
 }
