@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BRAND, BRAND_ONYX } from '@maestra/core/constants/brand';
+import { COR, RAIO } from '@maestra/core/constants/design';
 import { CATALOG_STATUS } from '@maestra/core/constants/maestra';
 import type { CatalogItem } from '@maestra/core/interfaces/maestra';
 import { listCatalogProjectItems } from '@maestra/core/services/db/catalog';
@@ -100,7 +100,7 @@ export default function Catalogo() {
       </View>
 
       {carregando ? (
-        <ActivityIndicator color={BRAND} style={estilos.espera} size="large" />
+        <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
       ) : vazio || erro ? (
         <View style={estilos.conteudo}>
           <View style={estilos.aviso}>
@@ -115,7 +115,7 @@ export default function Catalogo() {
           data={faixas}
           keyExtractor={(f) => f.id}
           contentContainerStyle={estilos.conteudo}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={BRAND} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />}
           renderItem={({ item }) => {
             const rotulo = CATALOG_STATUS[item.status as keyof typeof CATALOG_STATUS];
             const eAtual = tocandoId === item.id;
@@ -174,34 +174,34 @@ export default function Catalogo() {
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: '#fff' },
+  tela: { flex: 1, backgroundColor: COR.superficie },
   flex: { flex: 1 },
   cabecalho: { paddingHorizontal: 24, paddingTop: 8, gap: 2 },
-  voltar: { fontSize: 16, color: BRAND, fontWeight: '600', paddingVertical: 4 },
-  titulao: { fontSize: 26, fontWeight: '800', color: BRAND_ONYX, letterSpacing: -0.4 },
+  voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
+  titulao: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4 },
   espera: { marginTop: 48 },
   conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48, gap: 8 },
   linha: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 12,
+    borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 12,
   },
   pressionada: { opacity: 0.6 },
-  capa: { width: 48, height: 48, borderRadius: 8, backgroundColor: '#f3f4f6' },
+  capa: { width: 48, height: 48, borderRadius: 8, backgroundColor: COR.divisoria },
   capaVazia: { alignItems: 'center', justifyContent: 'center' },
-  notaMusical: { fontSize: 20, color: '#c7cdd6' },
-  titulo: { fontSize: 16, fontWeight: '700', color: BRAND_ONYX },
+  notaMusical: { fontSize: 20, color: COR.apagado },
+  titulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 3 },
   status: { fontSize: 12, fontWeight: '700' },
-  duracao: { fontSize: 12, color: '#9ca3af' },
-  botao: { fontSize: 17, color: BRAND, width: 30, textAlign: 'center' },
-  semAudio: { color: '#d1d5db' },
-  barra: { borderTopWidth: 1, borderTopColor: '#e8eef8', paddingHorizontal: 24, paddingTop: 10, paddingBottom: 6, gap: 8 },
-  trilho: { height: 3, borderRadius: 2, backgroundColor: '#eef2f8', overflow: 'hidden' },
-  progresso: { height: 3, backgroundColor: BRAND },
+  duracao: { fontSize: 12, color: COR.apagado },
+  botao: { fontSize: 17, color: COR.primaria, width: 30, textAlign: 'center' },
+  semAudio: { color: COR.contorno },
+  barra: { borderTopWidth: 1, borderTopColor: COR.divisoria, paddingHorizontal: 24, paddingTop: 10, paddingBottom: 6, gap: 8 },
+  trilho: { height: 3, borderRadius: 2, backgroundColor: COR.divisoria, overflow: 'hidden' },
+  progresso: { height: 3, backgroundColor: COR.primaria },
   barraLinha: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  barraTitulo: { flex: 1, fontSize: 13, fontWeight: '600', color: BRAND_ONYX },
-  barraTempo: { fontSize: 12, color: '#9ca3af', fontVariant: ['tabular-nums'] },
-  aviso: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 18, gap: 6 },
-  avisoTitulo: { fontSize: 16, fontWeight: '700', color: BRAND_ONYX },
-  avisoTexto: { fontSize: 14, color: '#6b7280', lineHeight: 20 },
+  barraTitulo: { flex: 1, fontSize: 13, fontWeight: '600', color: COR.titulo },
+  barraTempo: { fontSize: 12, color: COR.apagado, fontVariant: ['tabular-nums'] },
+  aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 18, gap: 6 },
+  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
+  avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
 });

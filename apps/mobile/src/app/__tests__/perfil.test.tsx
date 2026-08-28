@@ -73,4 +73,15 @@ describe('diagnostico REAL em leitura', () => {
     expect(tela.getByText('Sem diagnóstico ainda')).toBeTruthy();
     expect(tela.queryByText('Boletim')).toBeNull();
   });
+
+  // Os atalhos ja estiveram DENTRO do ramo "tem diagnostico" por um descuido de edicao. Um
+  // perfil recem-criado ficava sem nenhuma saida para plano, agenda e catalogo — e nao havia
+  // como perceber sem abrir justamente um perfil novo.
+  it('perfil sem diagnostico ainda alcanca plano, agenda e catalogo', async () => {
+    mockIdNaRota = semDiagnostico.id;
+    const tela = await montar();
+    expect(tela.getByText('Plano de ação')).toBeTruthy();
+    expect(tela.getByText('Agenda')).toBeTruthy();
+    expect(tela.getByText('Catálogo')).toBeTruthy();
+  });
 });

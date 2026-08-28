@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BRAND, BRAND_ONYX } from '@maestra/core/constants/brand';
+import { COR, RAIO } from '@maestra/core/constants/design';
 import { EVENT_TYPES } from '@maestra/core/constants/maestra';
 import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
 import { listEvents } from '@maestra/core/services/db/events';
@@ -116,11 +116,11 @@ export default function Agenda() {
       </View>
 
       {carregando ? (
-        <ActivityIndicator color={BRAND} style={estilos.espera} size="large" />
+        <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
       ) : vazia || erro ? (
         <ScrollView
           contentContainerStyle={estilos.conteudo}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={BRAND} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />}
         >
           <View style={estilos.aviso}>
             <Text style={estilos.avisoTitulo}>{erro ? 'Agenda indisponível' : 'Nada marcado'}</Text>
@@ -135,7 +135,7 @@ export default function Agenda() {
           keyExtractor={(e) => e.id}
           contentContainerStyle={estilos.conteudo}
           stickySectionHeadersEnabled={false}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={BRAND} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />}
           renderSectionHeader={({ section }) => (
             <Text style={estilos.secao}>{section.title}</Text>
           )}
@@ -158,29 +158,29 @@ export default function Agenda() {
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: '#fff' },
+  tela: { flex: 1, backgroundColor: COR.superficie },
   flex: { flex: 1 },
   cabecalho: { paddingHorizontal: 24, paddingTop: 8, gap: 2 },
-  voltar: { fontSize: 16, color: BRAND, fontWeight: '600', paddingVertical: 4 },
-  titulão: { fontSize: 26, fontWeight: '800', color: BRAND_ONYX, letterSpacing: -0.4 },
+  voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
+  titulão: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4 },
   espera: { marginTop: 48 },
   conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48 },
-  secao: { fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: '#9ca3af', fontWeight: '700', marginBottom: 8 },
+  secao: { fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: COR.apagado, fontWeight: '700', marginBottom: 8 },
   folga: { height: 22 },
-  dia: { fontSize: 13, fontWeight: '700', color: '#6b7280', marginTop: 10, marginBottom: 6 },
+  dia: { fontSize: 13, fontWeight: '700', color: COR.secundario, marginTop: 10, marginBottom: 6 },
   cartao: {
-    flexDirection: 'row', gap: 12, borderWidth: 1, borderColor: '#e5e7eb',
+    flexDirection: 'row', gap: 12, borderWidth: 1, borderColor: COR.contorno,
     borderRadius: 14, padding: 14, marginBottom: 8, overflow: 'hidden',
   },
   fita: { width: 4, borderRadius: 2, marginVertical: -14, marginLeft: -14 },
-  titulo: { fontSize: 16, fontWeight: '700', color: BRAND_ONYX, lineHeight: 21 },
-  cancelado: { textDecorationLine: 'line-through', color: '#9ca3af' },
+  titulo: { fontSize: 16, fontWeight: '700', color: COR.titulo, lineHeight: 21 },
+  cancelado: { textDecorationLine: 'line-through', color: COR.apagado },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 3 },
   tipo: { fontSize: 12, fontWeight: '700' },
-  hora: { fontSize: 12, color: '#6b7280' },
-  local: { fontSize: 13, color: '#9ca3af', marginTop: 3 },
-  selo: { fontSize: 12, color: '#b32d45', fontWeight: '700', marginTop: 4 },
-  aviso: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 18, gap: 6 },
-  avisoTitulo: { fontSize: 16, fontWeight: '700', color: BRAND_ONYX },
-  avisoTexto: { fontSize: 14, color: '#6b7280', lineHeight: 20 },
+  hora: { fontSize: 12, color: COR.secundario },
+  local: { fontSize: 13, color: COR.apagado, marginTop: 3 },
+  selo: { fontSize: 12, color: COR.erro, fontWeight: '700', marginTop: 4 },
+  aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 18, gap: 6 },
+  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
+  avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
 });

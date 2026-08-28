@@ -1,4 +1,4 @@
-import { Link, Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import {
   ActivityIndicator, FlatList, Image, Pressable, RefreshControl,
@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BRAND, BRAND_ONYX } from '@maestra/core/constants/brand';
+import { COR, RAIO } from '@maestra/core/constants/design';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
@@ -58,6 +58,7 @@ const Selo = ({ artista }: { artista: Artist }) => {
 export default function Perfis() {
   const { sessao, carregando: carregandoSessao } = useSessao();
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { items, loading, loaded } = useAppSelector((s) => s.artists);
 
   const usuario = sessao?.user.id;
@@ -87,25 +88,34 @@ export default function Perfis() {
           <RefreshControl
             refreshing={loading && loaded}
             onRefresh={() => usuario && dispatch(artistsActions.fetchArtists(usuario))}
-            tintColor={BRAND}
+            tintColor={COR.primaria}
           />
         }
         ListEmptyComponent={
           loading && !loaded
-            ? <ActivityIndicator color={BRAND} style={estilos.espera} />
+            ? <ActivityIndicator color={COR.primaria} style={estilos.espera} />
             : <Text style={estilos.vazio}>Nenhum perfil ainda.</Text>
         }
         renderItem={({ item }) => (
-          <Link href={{ pathname: '/perfil/[id]', params: { id: item.id } }} asChild>
-            <Pressable style={({ pressed }) => [estilos.cartao, pressed && estilos.pressionado]}>
-              <Avatar artista={item} />
-              <View style={estilos.flex}>
-                <Text style={estilos.nome} numberOfLines={1}>{item.name}</Text>
-                <Selo artista={item} />
-              </View>
-              <Text style={estilos.seta}>›</Text>
-            </Pressable>
-          </Link>
+          // Navegacao por `router.push`, e nao por `<Link asChild>`.
+          //
+          // O `Link asChild` monta o filho pelo Slot do Radix, que funde `style` como OBJETO.
+          // Estilo de `Pressable` e uma FUNCAO (`({ pressed }) => [...]`), e espalhar funcao em
+          // objeto da `{}` — o cartao perdia borda e `flexDirection: row` sem erro nenhum, e o
+          // sintoma so aparece com dado real na tela.
+          <Pressable
+            style={({ pressed }) => [estilos.cartao, pressed && estilos.pressionado]}
+            onPress={() => router.push({ pathname: '/perfil/[id]', params: { id: item.id } })}
+            accessibilityRole="button"
+            accessibilityLabel={item.name}
+          >
+            <Avatar artista={item} />
+            <View style={estilos.flex}>
+              <Text style={estilos.nome} numberOfLines={1}>{item.name}</Text>
+              <Selo artista={item} />
+            </View>
+            <Text style={estilos.seta}>›</Text>
+          </Pressable>
         )}
       />
     </SafeAreaView>
@@ -113,31 +123,31 @@ export default function Perfis() {
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: '#fff' },
+  tela: { flex: 1, backgroundColor: COR.superficie },
   flex: { flex: 1 },
   cabecalho: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 },
-  marca: { fontSize: 28, fontWeight: '800', color: BRAND_ONYX, letterSpacing: -0.5 },
-  legenda: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
-  sair: { fontSize: 15, fontWeight: '600', color: '#6b7280' },
+  marca: { fontSize: 28, fontWeight: '800', color: COR.titulo, letterSpacing: -0.5 },
+  legenda: { fontSize: 13, color: COR.apagado, marginTop: 2 },
+  sair: { fontSize: 15, fontWeight: '600', color: COR.secundario },
   lista: { paddingHorizontal: 24, paddingBottom: 32, gap: 10 },
   espera: { marginTop: 40 },
-  vazio: { textAlign: 'center', color: '#9ca3af', marginTop: 40, fontSize: 15 },
+  vazio: { textAlign: 'center', color: COR.apagado, marginTop: 40, fontSize: 15 },
   cartao: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 16, padding: 14,
+    borderWidth: 1, borderColor: COR.contorno, borderRadius: 16, padding: 14,
   },
   pressionado: { opacity: 0.6 },
-  foto: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#f3f4f6' },
+  foto: { width: 52, height: 52, borderRadius: 26, backgroundColor: COR.divisoria },
   fotoVazia: { alignItems: 'center', justifyContent: 'center' },
-  inicial: { fontSize: 20, fontWeight: '800', color: '#9ca3af' },
-  nome: { fontSize: 17, fontWeight: '700', color: BRAND_ONYX },
+  inicial: { fontSize: 20, fontWeight: '800', color: COR.apagado },
+  nome: { fontSize: 17, fontWeight: '700', color: COR.titulo },
   selo: { marginTop: 4, gap: 3 },
-  perfilNome: { fontSize: 13, color: BRAND, fontWeight: '600' },
+  perfilNome: { fontSize: 13, color: COR.primaria, fontWeight: '600' },
   letras: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   letra: { fontSize: 12, fontWeight: '800', letterSpacing: 1 },
-  acesa: { color: BRAND },
-  apagada: { color: '#d1d5db' },
-  contagem: { fontSize: 11, color: '#9ca3af', marginLeft: 2 },
-  semDiagnostico: { fontSize: 13, color: '#9ca3af', marginTop: 4 },
-  seta: { fontSize: 26, color: '#d1d5db', marginTop: -2 },
+  acesa: { color: COR.primaria },
+  apagada: { color: COR.contorno },
+  contagem: { fontSize: 11, color: COR.apagado, marginLeft: 2 },
+  semDiagnostico: { fontSize: 13, color: COR.apagado, marginTop: 4 },
+  seta: { fontSize: 26, color: COR.contorno, marginTop: -2 },
 });

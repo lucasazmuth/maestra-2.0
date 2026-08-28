@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BRAND, BRAND_ONYX } from '@maestra/core/constants/brand';
+import { CONTORNO_DE_ENTRADA, COR, RAIO } from '@maestra/core/constants/design';
 import { appleDisponivel, entrarComApple, entrarComEmail, entrarComGoogle } from '@/nucleo/entrar';
 
 type EmCurso = 'email' | 'apple' | 'google' | null;
@@ -48,7 +48,7 @@ export default function Entrar() {
             <AppleAuthentication.AppleAuthenticationButton
               buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
               buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-              cornerRadius={12}
+              cornerRadius={RAIO.campoDeEntrada}
               style={estilos.botaoApple}
               onPress={() => tentar('apple', entrarComApple)}
             />
@@ -60,7 +60,7 @@ export default function Entrar() {
             onPress={() => tentar('google', entrarComGoogle)}
           >
             {emCurso === 'google'
-              ? <ActivityIndicator color={BRAND_ONYX} />
+              ? <ActivityIndicator color={COR.titulo} />
               : <Text style={estilos.textoClaro}>Continuar com Google</Text>}
           </Pressable>
 
@@ -73,7 +73,7 @@ export default function Entrar() {
           <TextInput
             style={estilos.campo}
             placeholder="E-mail"
-            placeholderTextColor="#a3b2ca"
+            placeholderTextColor={COR.espaçoReservado}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
@@ -84,7 +84,7 @@ export default function Entrar() {
           <TextInput
             style={estilos.campo}
             placeholder="Senha"
-            placeholderTextColor="#a3b2ca"
+            placeholderTextColor={COR.espaçoReservado}
             secureTextEntry
             autoComplete="current-password"
             value={senha}
@@ -99,7 +99,7 @@ export default function Entrar() {
             onPress={() => tentar('email', () => entrarComEmail(email, senha))}
           >
             {emCurso === 'email'
-              ? <ActivityIndicator color="#fff" />
+              ? <ActivityIndicator color={COR.sobrePrimaria} />
               : <Text style={estilos.texto}>Entrar</Text>}
           </Pressable>
 
@@ -111,29 +111,34 @@ export default function Entrar() {
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: '#fff' },
+  tela: { flex: 1, backgroundColor: COR.superficie },
   flex: { flex: 1 },
   conteudo: { padding: 28, gap: 12, flexGrow: 1, justifyContent: 'center' },
-  marca: { fontSize: 36, fontWeight: '800', color: BRAND_ONYX, letterSpacing: -0.6 },
-  legenda: { fontSize: 15, color: '#6b7280', marginBottom: 16 },
-  botaoApple: { height: 52 },
+  marca: { fontSize: 36, fontWeight: '800', color: COR.titulo, letterSpacing: -0.6 },
+  legenda: { fontSize: 15, color: COR.secundario, marginBottom: 16 },
+  // Os raios e contornos abaixo sao os do `AuthShell.module.scss` da web, nao arredondamentos
+  // escolhidos aqui: a entrada e a tela que a pessoa compara entre as duas superficies.
+  botaoApple: { height: 52, borderRadius: RAIO.campoDeEntrada },
   botaoClaro: {
-    height: 52, borderRadius: 12, borderWidth: 1, borderColor: '#dde5f1',
+    height: 52, borderRadius: RAIO.campoDeEntrada,
+    borderWidth: 1, borderColor: CONTORNO_DE_ENTRADA.botao,
     alignItems: 'center', justifyContent: 'center',
   },
-  textoClaro: { fontSize: 16, fontWeight: '600', color: BRAND_ONYX },
+  textoClaro: { fontSize: 15, fontWeight: '700', color: COR.titulo },
   divisor: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 8 },
-  fio: { flex: 1, height: 1, backgroundColor: '#e8eef8' },
-  ou: { color: '#9ca3af', fontSize: 13 },
+  fio: { flex: 1, height: 1, backgroundColor: COR.divisoria },
+  ou: { color: COR.apagado, fontSize: 13 },
   campo: {
-    height: 52, borderRadius: 12, borderWidth: 1, borderColor: '#dde5f1',
-    paddingHorizontal: 16, fontSize: 16, color: '#405985',
+    height: 52, borderRadius: RAIO.campoDeEntrada,
+    borderWidth: 1, borderColor: CONTORNO_DE_ENTRADA.campo,
+    paddingHorizontal: 16, fontSize: 16, color: COR.texto,
   },
+  // Pilula, como na web: e a assinatura visual da acao primaria na entrada.
   botao: {
-    height: 52, borderRadius: 12, backgroundColor: BRAND,
+    height: 52, borderRadius: RAIO.pilula, backgroundColor: COR.primaria,
     alignItems: 'center', justifyContent: 'center', marginTop: 4,
   },
-  texto: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  texto: { fontSize: 16, fontWeight: '800', color: COR.sobrePrimaria },
   pressionado: { opacity: 0.75 },
-  erro: { color: '#b32d45', fontSize: 14, lineHeight: 20, marginTop: 4 },
+  erro: { color: COR.erro, fontSize: 14, lineHeight: 20, marginTop: 4 },
 });

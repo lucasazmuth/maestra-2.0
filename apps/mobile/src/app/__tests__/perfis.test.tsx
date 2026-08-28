@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 
 import { store } from '@maestra/core/store/store';
@@ -47,6 +48,18 @@ describe('lista de perfis', () => {
   it('perfil sem foto cai na inicial do nome, nao numa imagem quebrada', async () => {
     const tela = await montar();
     expect(tela.getByText('C')).toBeTruthy(); // Coletivo Norte
+  });
+
+  // O cartao ja chegou a perder borda e `flexDirection` inteiros, sem erro nenhum: o
+  // `<Link asChild>` monta o filho pelo Slot do Radix, que funde `style` como OBJETO, e estilo
+  // de `Pressable` e uma FUNCAO — espalhar funcao em objeto da `{}`. Nenhum teste de texto
+  // pegava isso; so aparecia com dado real na tela.
+  it('o cartao mantem o layout em linha, com contorno', async () => {
+    const tela = await montar();
+    const cartao = tela.getByLabelText('Marina Sol');
+    const estilo = StyleSheet.flatten(cartao.props.style);
+    expect(estilo.flexDirection).toBe('row');
+    expect(estilo.borderWidth).toBe(1);
   });
 
   it('lista vazia nao vira tela em branco', async () => {

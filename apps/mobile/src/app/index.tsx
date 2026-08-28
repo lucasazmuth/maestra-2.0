@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { BRAND } from '@maestra/core/constants/brand';
+import { COR, RAIO } from '@maestra/core/constants/design';
 import { useSessao } from '@/nucleo/sessao';
 
 // Porta de entrada: decide entre login e app.
@@ -14,7 +14,7 @@ export default function Porta() {
   if (carregando) {
     return (
       <View style={estilos.espera}>
-        <ActivityIndicator color={BRAND} size="large" />
+        <ActivityIndicator color={COR.primaria} size="large" />
       </View>
     );
   }
@@ -23,5 +23,5 @@ export default function Porta() {
 }
 
 const estilos = StyleSheet.create({
-  espera: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  espera: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COR.superficie },
 });
