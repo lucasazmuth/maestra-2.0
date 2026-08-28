@@ -1453,11 +1453,13 @@ export const PriorityScale: FC<{
   // Confirma a priorização entregando as estratégias pontuadas + os ids das que o artista escolheu
   // para virar tarefas (plano de ação). As não selecionadas ficam salvas sem tarefas.
   onConfirm: (strategies: Strategy[], selectedIds: string[]) => void;
+  // Salva as notas JÁ DADAS, sem avançar de etapa. Ver o comentário do autosave mais abaixo.
+  onProgress?: (strategies: Strategy[]) => void;
   // Notas sugeridas pela IA: mapa id da estratégia → { índice do objetivo → nota }.
   onSuggest?: () => Promise<Record<string, { byObjective: Record<number, number> }>>;
   // Fala da Nyta após o artista escolher como priorizar (resposta do método).
   onAnnounce?: (texts: string[]) => void;
-}> = ({ strategies, objectives, onConfirm, onSuggest, onAnnounce }) => {
+}> = ({ strategies, objectives, onConfirm, onProgress, onSuggest, onAnnounce }) => {
   const [list, setList] = useState<Strategy[]>(strategies);
   // Seleção do modal de destaque: quais estratégias viram tarefas (começa vazia — o artista escolhe).
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -1473,7 +1475,14 @@ export const PriorityScale: FC<{
   const [booting, setBooting] = useState(false);
   // Pontuação manual UM objetivo por vez (formulário): qual objetivo da estratégia atual,
   // pausa de feedback ao escolher e nota sob o cursor (preview do medidor).
-  const [objIdx, setObjIdx] = useState(0);
+  // Ao RETOMAR a etapa, começa no primeiro objetivo ainda sem nota da estratégia onde parou —
+  // voltar sempre ao objetivo 1 obrigaria a repassar por perguntas já respondidas.
+  const [objIdx, setObjIdx] = useState(() => {
+    const s = strategies.find((st) => !stratComplete(st, objectives.length));
+    if (!s) return 0;
+    const i = objectives.findIndex((_, k) => typeof (s.objectiveScores || {})[k] !== 'number');
+    return i === -1 ? 0 : i;
+  });
   const [advancing, setAdvancing] = useState(false);
   const [hoverVal, setHoverVal] = useState<number | null>(null);
   // X do modal de ordem pronta: MINIMIZA (mantém notas e seleção) e deixa um card no chat pra reabrir.
@@ -1481,6 +1490,49 @@ export const PriorityScale: FC<{
   // Revela o ranking item por item (28 estratégias de uma vez era demais pra digerir). Chamado
   // incondicionalmente aqui em cima — é hook, não pode entrar no `if (revealed)` mais abaixo.
   const rankShown = useStaggerReveal(strategies.length, 45);
+
+  // ---- Autosave das notas ----------------------------------------------------------------------
+  // POR QUE ISTO EXISTE: esta etapa são dezenas de estratégias × todos os objetivos, uma nota por
+  // clique — 40 minutos de trabalho. Tudo isso vivia só no `list` (estado da aba) até o clique
+  // final em "Gerar plano de ação", que era a ÚNICA gravação. Um refresh no meio apagava a etapa
+  // inteira e a pessoa voltava para "Como você quer priorizar?", sem nem o aviso do navegador
+  // (o `beforeunload` do wizard só alerta quando há gravação em voo, e aqui nunca havia nenhuma).
+  //
+  // Gravando a cada nota, a retomada que o componente já sabia fazer (`alreadyScored` + o `idx`
+  // inicial, que procura a primeira estratégia incompleta) finalmente encontra dado para retomar.
+  //
+  // O debounce evita uma escrita por clique numa sequência rápida; o descarregamento no desmonte
+  // cobre quem sai da tela antes de ele vencer. Depois do confirm a gravação é DESLIGADA: lá o
+  // `onConfirm` grava as estratégias já com as tarefas e avança o step, e um autosave atrasado
+  // aterrissaria depois dele, apagando as tarefas recém-criadas.
+  const onProgressRef = useRef(onProgress);
+  onProgressRef.current = onProgress;
+  const confirmadoRef = useRef(false);
+  const pendenteRef = useRef<Strategy[] | null>(null);
+  const montadoRef = useRef(false);
+
+  const salvarPendente = () => {
+    const pendente = pendenteRef.current;
+    if (!pendente || confirmadoRef.current) return;
+    pendenteRef.current = null;
+    onProgressRef.current?.(pendente);
+  };
+
+  useEffect(() => {
+    // O primeiro efeito é o próprio estado inicial (veio do banco): nada a regravar.
+    if (!montadoRef.current) {
+      montadoRef.current = true;
+      return;
+    }
+    pendenteRef.current = list;
+    const id = window.setTimeout(salvarPendente, 700);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list]);
+
+  // Desmonte (sair do wizard, trocar de widget): grava o que o debounce ainda não levou.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => salvarPendente(), []);
 
   // Deixar a Maestra priorizar: busca as notas sugeridas, preenche e mostra a ordem pronta.
   const runAi = async () => {
@@ -1709,7 +1761,12 @@ export const PriorityScale: FC<{
               <button
                 style={{ ...primaryBtn, marginLeft: 'auto', opacity: count ? 1 : 0.5 }}
                 disabled={!count}
-                onClick={() => onConfirm(scored, Array.from(selected))}
+                onClick={() => {
+                  // Desliga o autosave ANTES de confirmar: daqui em diante quem grava é o
+                  // `onConfirm` (estratégias + tarefas + step 8).
+                  confirmadoRef.current = true;
+                  onConfirm(scored, Array.from(selected));
+                }}
               >
                 Gerar plano de ação
               </button>

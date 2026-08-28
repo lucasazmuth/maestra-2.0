@@ -940,6 +940,9 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
             objectives={draft.objectives || []}
             onSuggest={async () => engine.suggestScores(draft.strategies || [], draft.objectives || [])}
             onAnnounce={(texts) => say(texts)}
+            // Salva as notas conforme são dadas, SEM avançar de etapa: quem recarregar a página no
+            // meio da priorização volta de onde parou em vez de perder a etapa inteira.
+            onProgress={(strategies) => { persist({ strategies }); }}
             onConfirm={(scored, selectedIds) => {
               pushUser('Prioridades definidas');
               // Só as estratégias selecionadas ganham tarefas (plano de ação, sem datas). As demais
