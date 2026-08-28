@@ -20,7 +20,7 @@ const DIMENSOES = [
 
 /** Linha tocável que leva a outra tela do perfil. */
 const Atalho = ({ para, id, titulo, legenda }: {
-  para: '/plano/[id]' | '/agenda/[id]';
+  para: '/plano/[id]' | '/agenda/[id]' | '/catalogo/[id]';
   id: string;
   titulo: string;
   legenda: string;
@@ -85,6 +85,7 @@ export default function Perfil() {
           }
         />
         <Atalho para="/agenda/[id]" id={String(id)} titulo="Agenda" legenda="Seus compromissos" />
+        <Atalho para="/catalogo/[id]" id={String(id)} titulo="Catálogo" legenda="Suas músicas" />
 
         {!real?.profile ? (
           <View style={estilos.aviso}>
