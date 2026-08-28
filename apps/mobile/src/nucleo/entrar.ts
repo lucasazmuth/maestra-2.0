@@ -31,7 +31,7 @@ export const entrarComApple = async () => {
 
   // A Apple so entrega o token de identidade; quem o troca por sessao e o Supabase. Para isso o
   // bundle precisa estar na lista de client IDs autorizados do provedor Apple, no painel.
-  if (!credencial.identityToken) throw new Error('A Apple nao devolveu o token de identidade.');
+  if (!credencial.identityToken) throw new Error('A Apple não devolveu o token de identidade.');
 
   const { error } = await supabase.auth.signInWithIdToken({
     provider: 'apple',
@@ -50,7 +50,7 @@ export const entrarComGoogle = async () => {
     options: { redirectTo, skipBrowserRedirect: true },
   });
   if (error) throw new Error(traduzir(error.message));
-  if (!data?.url) throw new Error('O Supabase nao devolveu a URL de autorizacao.');
+  if (!data?.url) throw new Error('O Supabase não devolveu a URL de autorização.');
 
   const resultado = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
   // `dismiss` e `cancel` sao a pessoa fechando a folha — nao e erro, e desistencia.
@@ -72,7 +72,7 @@ const trocarUrlPorSessao = async (url: string) => {
 
   if (!access_token || !refresh_token) {
     const descricao = campos.get('error_description') || new URL(url).searchParams.get('error_description');
-    throw new Error(descricao ? traduzir(descricao) : 'O retorno do Google veio sem sessao.');
+    throw new Error(descricao ? traduzir(descricao) : 'O retorno do Google veio sem sessão.');
   }
 
   const { error } = await supabase.auth.setSession({ access_token, refresh_token });
@@ -92,13 +92,13 @@ const traduzir = (mensagem: string): string => {
   if (m.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
   if (m.includes('email not confirmed')) return 'Confirme seu e-mail antes de entrar.';
   if (m.includes('provider is not enabled')) {
-    return 'Este provedor ainda nao esta habilitado no Supabase.';
+    return 'Este provedor ainda não está habilitado no Supabase.';
   }
   if (m.includes('unacceptable audience') || m.includes('audience')) {
-    return 'O bundle do app nao esta na lista de client IDs autorizados do provedor Apple, no Supabase.';
+    return 'O bundle do app não está na lista de client IDs autorizados do provedor Apple, no Supabase.';
   }
   if (m.includes('redirect') && m.includes('not allowed')) {
-    return 'O endereco de retorno do app nao esta liberado nas Redirect URLs do Supabase.';
+    return 'O endereço de retorno do app não está liberado nas Redirect URLs do Supabase.';
   }
   return mensagem;
 };

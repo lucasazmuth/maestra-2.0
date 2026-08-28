@@ -19,7 +19,7 @@ export default function Porta() {
     );
   }
 
-  return <Redirect href={sessao ? '/inicio' : '/entrar'} />;
+  return <Redirect href={sessao ? '/perfis' : '/entrar'} />;
 }
 
 const estilos = StyleSheet.create({

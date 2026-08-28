@@ -29,7 +29,7 @@ export default function Entrar() {
     try {
       await acao();
     } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Nao foi possivel entrar.');
+      setErro(e instanceof Error ? e.message : 'Não foi possível entrar.');
     } finally {
       setEmCurso(null);
     }
