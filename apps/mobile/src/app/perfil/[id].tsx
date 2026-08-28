@@ -18,6 +18,24 @@ const DIMENSOES = [
   { chave: 'l', letra: 'L', nome: 'Legitimacy', o_que: 'chancela: imprensa, prêmios, playlist' },
 ] as const;
 
+/** Linha tocável que leva a outra tela do perfil. */
+const Atalho = ({ para, id, titulo, legenda }: {
+  para: '/plano/[id]' | '/agenda/[id]';
+  id: string;
+  titulo: string;
+  legenda: string;
+}) => (
+  <Link href={{ pathname: para, params: { id } }} asChild>
+    <Pressable style={({ pressed }) => [estilos.atalho, pressed && estilos.atalhoTocado]}>
+      <View style={estilos.flex}>
+        <Text style={estilos.atalhoTitulo}>{titulo}</Text>
+        <Text style={estilos.atalhoLegenda}>{legenda}</Text>
+      </View>
+      <Text style={estilos.atalhoSeta}>›</Text>
+    </Pressable>
+  </Link>
+);
+
 export default function Perfil() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -56,19 +74,17 @@ export default function Perfil() {
           </View>
         </View>
 
-        <Link href={{ pathname: '/plano/[id]', params: { id: String(id) } }} asChild>
-          <Pressable style={({ pressed }) => [estilos.atalho, pressed && estilos.atalhoTocado]}>
-            <View style={estilos.flex}>
-              <Text style={estilos.atalhoTitulo}>Plano de ação</Text>
-              <Text style={estilos.atalhoLegenda}>
-                {tarefasFeitas === null
-                  ? 'Nenhum plano ainda'
-                  : `${tarefasFeitas} de ${totalDeTarefas} concluídas`}
-              </Text>
-            </View>
-            <Text style={estilos.atalhoSeta}>›</Text>
-          </Pressable>
-        </Link>
+        <Atalho
+          para="/plano/[id]"
+          id={String(id)}
+          titulo="Plano de ação"
+          legenda={
+            tarefasFeitas === null
+              ? 'Nenhum plano ainda'
+              : `${tarefasFeitas} de ${totalDeTarefas} concluídas`
+          }
+        />
+        <Atalho para="/agenda/[id]" id={String(id)} titulo="Agenda" legenda="Seus compromissos" />
 
         {!real?.profile ? (
           <View style={estilos.aviso}>
@@ -147,7 +163,7 @@ const estilos = StyleSheet.create({
   nome: { fontSize: 26, fontWeight: '800', color: BRAND_ONYX, letterSpacing: -0.4 },
   genero: { fontSize: 14, color: '#9ca3af', marginTop: 2 },
   atalho: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6,
     borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 16,
   },
   atalhoTocado: { opacity: 0.6 },
