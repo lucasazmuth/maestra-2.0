@@ -1,0 +1,20 @@
+# O que NAO pode entrar no contexto do build.
+#
+# Este arquivo nao existia, e a falta dele foi a causa de uma queda em producao: o `COPY . .` do
+# Dockerfile copiava o node_modules da maquina de quem buildava POR CIMA do que o install do
+# container tinha montado. O que subia era a mistura de dois installs diferentes, feitos por
+# gerenciadores diferentes, um deles resolvido no macOS. O build passava e o bundle quebrava no
+# navegador, sem nenhuma mudanca de codigo que explicasse.
+#
+# O `.env` fica de fora desta lista de proposito: e dele que o CRA le as REACT_APP_* na hora do
+# build, entao ele PRECISA estar no contexto.
+
+node_modules
+**/node_modules
+
+# Artefatos que o proprio build regenera. Copiar os locais so arrisca subir versao velha:
+# `build/` e a saida do react-scripts, e `packages/*/dist` e recompilado pelo prebuild.
+build
+packages/*/dist
+
+.git
