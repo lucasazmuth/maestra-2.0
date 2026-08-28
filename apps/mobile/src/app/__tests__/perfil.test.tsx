@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { render } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 
@@ -11,6 +12,8 @@ import { comDiagnostico, semDiagnostico } from './fixtures';
 // de fora do escopo, e abre excecao apenas para nomes que comecam assim.
 let mockIdNaRota = comDiagnostico.id;
 jest.mock('expo-router', () => ({
+  // `Link asChild` so repassa a navegacao: para a tela, o filho e que importa.
+  Link: ({ children }: { children: React.ReactNode }) => children,
   Stack: { Screen: () => null },
   useLocalSearchParams: () => ({ id: mockIdNaRota }),
   useRouter: () => ({ back: jest.fn() }),

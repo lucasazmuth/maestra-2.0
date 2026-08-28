@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { Link, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,6 +28,14 @@ export default function Perfil() {
   // O corte vem do proprio indice; 70 e o valor da V3, mas quem manda e o dado.
   const corte = real?.cutLine?.r ?? 70;
 
+  // O atalho do plano mostra progresso em vez de so um titulo: e a informacao que decide se vale
+  // a pena tocar. `null` distingue "sem plano" de "plano com zero tarefas feitas".
+  const estrategias = artista?.content?.strategies ?? [];
+  const totalDeTarefas = estrategias.reduce((n, e) => n + (e.tasks?.length ?? 0), 0);
+  const tarefasFeitas = estrategias.length
+    ? estrategias.reduce((n, e) => n + (e.tasks ?? []).filter((t) => t.status === 'done').length, 0)
+    : null;
+
   return (
     <SafeAreaView style={estilos.tela}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -47,6 +55,20 @@ export default function Perfil() {
             )}
           </View>
         </View>
+
+        <Link href={{ pathname: '/plano/[id]', params: { id: String(id) } }} asChild>
+          <Pressable style={({ pressed }) => [estilos.atalho, pressed && estilos.atalhoTocado]}>
+            <View style={estilos.flex}>
+              <Text style={estilos.atalhoTitulo}>Plano de ação</Text>
+              <Text style={estilos.atalhoLegenda}>
+                {tarefasFeitas === null
+                  ? 'Nenhum plano ainda'
+                  : `${tarefasFeitas} de ${totalDeTarefas} concluídas`}
+              </Text>
+            </View>
+            <Text style={estilos.atalhoSeta}>›</Text>
+          </Pressable>
+        </Link>
 
         {!real?.profile ? (
           <View style={estilos.aviso}>
@@ -124,6 +146,14 @@ const estilos = StyleSheet.create({
   fotoVazia: {},
   nome: { fontSize: 26, fontWeight: '800', color: BRAND_ONYX, letterSpacing: -0.4 },
   genero: { fontSize: 14, color: '#9ca3af', marginTop: 2 },
+  atalho: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8,
+    borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 16,
+  },
+  atalhoTocado: { opacity: 0.6 },
+  atalhoTitulo: { fontSize: 16, fontWeight: '700', color: BRAND_ONYX },
+  atalhoLegenda: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
+  atalhoSeta: { fontSize: 24, color: '#d1d5db' },
   aviso: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 14, padding: 18, gap: 6, marginTop: 10 },
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: BRAND_ONYX },
   avisoTexto: { fontSize: 14, color: '#6b7280', lineHeight: 20 },

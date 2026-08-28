@@ -15,6 +15,24 @@ export const comDiagnostico: Artist = {
       image: 'https://exemplo.invalid/marina.jpg',
       fetched_at: '2026-01-01T00:00:00Z',
     },
+    strategies: [
+      {
+        id: 's-1',
+        type: 'SO',
+        title: 'Levar o show para uma segunda praça',
+        why: 'O alcance já existe fora da cidade e ninguém está cobrando por isso.',
+        tasks: [
+          { id: 't-1', description: 'Mapear três casas na cidade vizinha', status: 'done' },
+          { id: 't-2', description: 'Montar proposta com cachê e rider', status: 'todo' },
+        ],
+      },
+      {
+        id: 's-2',
+        type: 'WO',
+        title: 'Sair da dependência de um canal só',
+        tasks: [{ id: 't-3', description: 'Abrir catálogo em uma segunda distribuidora', status: 'todo' }],
+      },
+    ],
     realIndex: {
       version: 3,
       profile: {
