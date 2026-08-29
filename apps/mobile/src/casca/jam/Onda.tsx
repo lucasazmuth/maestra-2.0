@@ -21,11 +21,19 @@ import { WAVESURFER } from '@/casca/jam/wavesurfer.gerado';
 //
 // A página não busca nada na rede além do próprio áudio — o wavesurfer vai embutido.
 
-const pagina = (url: string) => `<!doctype html>
+const pagina = (url: string, fundo: string) => `<!doctype html>
 <html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <style>
-  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
-  #onda { width: 100%; height: 62px; display: flex; align-items: center; }
+  /* Fundo OPACO, e não transparente: com o fundo transparente o WKWebView carrega e decodifica
+     o áudio (o 'ready' chega com a duração certa) e mesmo assim não pinta o canvas — a onda
+     existe e não aparece. O cartão da versão é branco, então pintar o branco aqui não muda
+     nada do que se vê. */
+  html, body { margin: 0; padding: 0; background: ${fundo}; overflow: hidden; }
+  /* Bloco simples, sem flex: o wavesurfer monta a propria arvore (com shadow DOM) dentro do
+     conteiner e assume que ela manda no tamanho. Com o conteiner em display:flex ele decodifica
+     o audio, dispara o 'ready' com a duracao certa — e nao desenha nada.
+     (Sem crase: isto aqui e o corpo de um template literal.) */
+  #onda { width: 100%; }
   #aviso {
     font: 400 12px -apple-system, system-ui, sans-serif;
     color: ${COR_JAM.apoio}; font-style: italic; padding: 22px 0;
@@ -63,9 +71,11 @@ const pagina = (url: string) => `<!doctype html>
 </script>
 </body></html>`;
 
-export const Onda = memo(({ url, segundo, aoBuscar, aoSaberDuracao }: {
+export const Onda = memo(({ url, segundo, fundo = COR_JAM.papel, aoBuscar, aoSaberDuracao }: {
   url: string;
   segundo: number;
+  /** A cor do cartão por trás: a página é opaca, então ela precisa saber onde está pousada. */
+  fundo?: string;
   aoBuscar: (segundo: number) => void;
   aoSaberDuracao?: (segundos: number) => void;
 }) => {
@@ -74,7 +84,7 @@ export const Onda = memo(({ url, segundo, aoBuscar, aoSaberDuracao }: {
 
   // A página é montada UMA vez por URL. Sem o memo, cada segundo de reprodução remontaria o
   // WebView, e a onda recomeçaria a carregar do zero a cada tique.
-  const html = useMemo(() => pagina(url), [url]);
+  const html = useMemo(() => pagina(url, fundo), [url, fundo]);
 
   useEffect(() => {
     if (!pronta) return;
@@ -103,8 +113,6 @@ export const Onda = memo(({ url, segundo, aoBuscar, aoSaberDuracao }: {
         style={estilos.teia}
         containerStyle={estilos.teia}
         scrollEnabled={false}
-        // O fundo transparente vem do estilo mais do `background: transparent` no <body> da
-        // página: sem os dois, a onda aparece num retângulo branco dentro do cartão.
         androidLayerType="software"
         onMessage={receber}
         // A barra de rolagem e o menu de seleção não têm o que fazer numa onda.
@@ -126,6 +134,6 @@ export const SemOnda = () => (
 
 const estilos = StyleSheet.create({
   caixa: { flex: 1, height: 62, justifyContent: 'center' },
-  teia: { flex: 1, backgroundColor: 'transparent' },
+  teia: { flex: 1 },
   vazio: { fontSize: 13, fontStyle: 'italic', color: COR_JAM.apoio },
 });

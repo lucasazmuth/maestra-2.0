@@ -6,7 +6,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Defs, Path, Rect, RadialGradient, Stop } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
@@ -299,8 +299,18 @@ export default function EspacoDaVersao() {
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
-            {/* O brilho roxo no centro é o que dá profundidade ao palco. */}
-            <View style={estilos.brilho} pointerEvents="none" />
+            {/* O brilho roxo é RADIAL e some em 33% do raio — não um disco de borda dura. Um
+                `View` redondo com opacidade desenha justamente o disco, que lê como uma mancha
+                colada por cima em vez de profundidade. */}
+            <Svg style={estilos.brilho} pointerEvents="none">
+              <Defs>
+                <RadialGradient id="brilho" cx="50%" cy="50%" r="50%">
+                  <Stop offset="0" stopColor={COR_VERSAO.brilho} stopOpacity={0.22} />
+                  <Stop offset="0.33" stopColor={COR_VERSAO.brilho} stopOpacity={0} />
+                </RadialGradient>
+              </Defs>
+              <Rect x="0" y="0" width="100%" height="100%" fill="url(#brilho)" />
+            </Svg>
 
             <View style={estilos.fichaTecnica}>
               {([['BPM', projeto.bpm], ['TOM', projeto.key], ['GÊNERO', projeto.genre]] as const)
@@ -373,6 +383,29 @@ export default function EspacoDaVersao() {
                   <View style={[estilos.percorrido, { width: `${fracao * 100}%` }]} />
                 </View>
 
+                {/* O marcador anda com a reprodução e abre o campo de comentar NAQUELE ponto —
+                    é o gesto que cria os alfinetes. Mora DENTRO da régua: fora dela a
+                    porcentagem mede a partir da borda da seção, e a gota fica pendurada no
+                    canto da tela. */}
+                <Pressable
+                  style={[estilos.marcador, { left: `${fracao * 100}%` }]}
+                  onPress={() => { setMarcando(Math.floor(posicao)); setTextoMarcado(''); }}
+                  hitSlop={10}
+                  disabled={!duracao}
+                  accessibilityRole="button"
+                  accessibilityLabel="Comentar neste ponto da música"
+                >
+                  <View style={estilos.gota}>
+                    {/* O "+" dentro da gota é o que diz que ela ACRESCENTA algo; sem ele a gota
+                        lê como o cursor da reprodução, e ninguém a toca.
+                        Os 45° DESFAZEM a rotação da gota — a web faz a mesma conta no `::before`.
+                        Sem eles o "+" gira junto e vira um "×", que diz o contrário: fechar. */}
+                    <View style={estilos.mais}>
+                      <Feather name="plus" size={13} color={COR_VERSAO.fundo} />
+                    </View>
+                  </View>
+                </Pressable>
+
                 {alfinetes.map((alfinete) => (
                   <Pressable
                     key={alfinete.id}
@@ -384,23 +417,14 @@ export default function EspacoDaVersao() {
                       `Ir para o comentário marcado em ${relogio(alfinete.segundo)}`
                     }
                   >
+                    {/* Gota também, como a da web: girada 135°, a ponta apontando para a régua.
+                        O número fica FORA da rotação — girado ele viraria um rabisco. */}
+                    <View style={estilos.corpoDoAlfinete} />
                     <Text style={estilos.alfineteTexto}>{alfinete.numero}</Text>
                   </Pressable>
                 ))}
               </View>
 
-              {/* O marcador anda com a reprodução e abre o campo de comentar NAQUELE ponto —
-                  é o gesto que cria os alfinetes. */}
-              <Pressable
-                style={[estilos.marcador, { left: `${fracao * 100}%` }]}
-                onPress={() => { setMarcando(Math.floor(posicao)); setTextoMarcado(''); }}
-                hitSlop={10}
-                disabled={!duracao}
-                accessibilityRole="button"
-                accessibilityLabel="Comentar neste ponto da música"
-              >
-                <View style={estilos.gota} />
-              </Pressable>
             </View>
 
             {marcando != null && (
@@ -561,11 +585,7 @@ const estilos = StyleSheet.create({
     position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,
     width: '100%', height: '100%', resizeMode: 'cover',
   },
-  brilho: {
-    position: 'absolute', top: '50%', left: '50%',
-    width: 300, height: 300, marginTop: -150, marginLeft: -150, borderRadius: 150,
-    backgroundColor: COR_VERSAO.brilho, opacity: 0.22,
-  },
+  brilho: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
 
   fichaTecnica: { flexDirection: 'row', marginTop: 34, marginLeft: 28 },
   dado: { gap: 4 },
@@ -587,24 +607,30 @@ const estilos = StyleSheet.create({
   percorrido: { height: 4, borderRadius: 4, backgroundColor: COR_VERSAO.autor },
   alfinete: {
     position: 'absolute', top: 24, marginLeft: -13,
-    width: 26, height: 26, borderRadius: 13,
-    alignItems: 'center', justifyContent: 'center',
+    width: 26, height: 26, alignItems: 'center', justifyContent: 'center',
+  },
+  corpoDoAlfinete: {
+    position: 'absolute', top: 2, right: 2, bottom: 2, left: 2,
     borderWidth: 2, borderColor: COR_VERSAO.autor, backgroundColor: COR_VERSAO.alfinete,
+    borderTopLeftRadius: 11, borderTopRightRadius: 11, borderBottomRightRadius: 11,
+    borderBottomLeftRadius: 0, transform: [{ rotate: '135deg' }],
   },
   alfineteTexto: { fontSize: 11, fontWeight: '900', color: COR_VERSAO.autor },
   marcador: {
-    position: 'absolute', top: -12, marginLeft: -13,
+    position: 'absolute', top: -32, marginLeft: -13,
     width: 26, height: 26, alignItems: 'center', justifyContent: 'center',
   },
   // A gota da web é um círculo com um canto quadrado, girado 45° — a ponta desce para a régua.
   gota: {
-    width: 22, height: 22, backgroundColor: COR_VERSAO.autor,
+    width: 22, height: 22, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COR_VERSAO.autor,
     borderWidth: 2, borderColor: COR_VERSAO.autor,
     borderTopLeftRadius: 11, borderTopRightRadius: 11, borderBottomRightRadius: 11,
     borderBottomLeftRadius: 0, transform: [{ rotate: '-45deg' }],
     shadowColor: COR_VERSAO.sombra, shadowOpacity: 0.3, shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12, elevation: 4,
   },
+  mais: { transform: [{ rotate: '45deg' }] },
   campoMarcado: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     marginHorizontal: 28, marginTop: 22, padding: 10, borderRadius: 12,

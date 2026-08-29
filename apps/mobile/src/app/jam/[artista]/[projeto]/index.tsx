@@ -559,6 +559,9 @@ export default function EspacoJam() {
                           <Onda
                             url={versao.audio_file}
                             segundo={noAr ? estadoDoSom.currentTime : 0}
+                            // A versão sem áudio tem o cartão levemente tingido; a onda só
+                            // aparece nas com áudio, então o fundo dela é sempre o branco.
+                            fundo={COR_JAM.papel}
                             aoBuscar={(ponto) => buscarNoAudio(versao, ponto)}
                           />
                         ) : (

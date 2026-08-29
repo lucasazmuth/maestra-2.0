@@ -472,11 +472,13 @@ const estilos = StyleSheet.create({
   abaAcesa: { backgroundColor: COR.primaria },
   abaTexto: { fontSize: 13, fontWeight: '800', color: COR_CATALOGO.tocarIcone },
   abaTextoAceso: { color: COR.sobrePrimaria },
-  // A pílula do Espaço Jam: os mesmos 30px de altura e o raio de 999 da web, com o rótulo
-  // omitido — no celular ele custava um terço da linha.
+  // A pílula do Espaço Jam, medida no DOM a 375px: 31px de altura, raio 20, contorno de 1px e
+  // fundo branco. O rótulo sai no celular — ele custava um terço da linha.
   jam: {
-    height: 30, paddingHorizontal: 12, borderRadius: 999,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: COR_CATALOGO.jamFundo,
+    paddingVertical: 7, paddingHorizontal: 12, borderRadius: 20,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: COR_CATALOGO.jamContorno,
+    backgroundColor: COR_CATALOGO.jamFundo,
   },
   mais: { width: 28, alignItems: 'center', justifyContent: 'center' },
   espera: { marginTop: 48 },

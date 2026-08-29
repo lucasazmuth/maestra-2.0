@@ -9,7 +9,23 @@ const css = fs.readFileSync(path.join(__dirname, '..', 'styles', 'gsap-reference
 
 describe('cromo do catálogo', () => {
   it.each(Object.entries(COR_CATALOGO))('%s (%s) é o valor que a web usa', (_nome, valor) => {
-    expect(css).toContain(valor);
+    // `#ffffff` a folha escreve `#fff`.
+    expect(css).toContain(valor === '#ffffff' ? '#fff' : valor);
+  });
+
+  // O atalho do Espaço Jam na linha da música. A folha declara essa pílula DUAS vezes: a regra
+  // base, branca com contorno, e uma variante azul-clara dentro de `.catalog-reference-page
+  // .catalog-track-table article`, que é OUTRA lista. Quem vence na lista de Músicas é a base —
+  // conferido no DOM a 375px, que é a única fonte que resolve duas regras concorrentes.
+  it('a pílula do Espaço Jam é branca com contorno, e não a variante azul', () => {
+    // `\n.` ancora no início da linha: sem isso o primeiro `.catalog-track-jam {` encontrado é
+    // justamente o da variante, que vem prefixado por seletores dentro de uma media query.
+    const regra = css.slice(css.indexOf('\n.catalog-track-jam {'));
+    const base = regra.slice(0, regra.indexOf('\n}'));
+    expect(base).toContain(`border: 1px solid ${COR_CATALOGO.jamContorno}`);
+    expect(base).toContain('background: #fff');
+    expect(base).toContain(`color: ${COR_CATALOGO.jam}`);
+    expect(base).toContain('border-radius: 20px');
   });
 
   // No celular a lista perde o contorno e o canto: o que separa uma faixa da outra é um fio,

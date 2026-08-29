@@ -386,9 +386,17 @@ export const COR_CATALOGO = {
   tocarFundo: '#eef3fb',
   tocarIcone: '#60749a',
   contornoDoTopo: '#e1e7f0',
-  /** O atalho do Espaço Jam na linha da música: pílula azul-clara, texto azul-escuro. */
+  /**
+   * O atalho do Espaço Jam na linha da música: pílula BRANCA com contorno, texto azul-escuro.
+   *
+   * ⚠️ A folha tem um `.catalog-track-jam { background: #edf2ff; border-color: transparent }`
+   * que descreve uma pílula azul-clara sem contorno. Ele NÃO vale aqui: mora dentro de
+   * `.catalog-reference-page .catalog-track-table article`, que é outra lista. O que a lista de
+   * Músicas usa é a regra base — e é o DOM computado a 375px que resolve isso, não a leitura.
+   */
   jam: '#4267b9',
-  jamFundo: '#edf2ff',
+  jamFundo: '#ffffff',
+  jamContorno: '#dbe4f3',
 } as const;
 
 /**
