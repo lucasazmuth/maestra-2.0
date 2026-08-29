@@ -31,11 +31,11 @@ const nameOf = (u: { user_metadata?: Record<string, unknown> | null; email?: str
 // Antes isto checava apenas se a pessoa EXISTIA em platform_admins. Com a tela de Acessos, entrar
 // no time deixou de significar acesso total — e a checagem antiga transformava qualquer membro em
 // admin pleno por aqui, ignorando o modulo. Era o buraco: o front escondia o menu, e a funcao
-// entregava os dados assim mesmo.
+// entregava os dados (e a exclusao de contas) assim mesmo.
 //
 // `app_metadata.is_platform_admin` NAO serve de atalho: diz que existe acesso, nao qual.
 async function podeUsarModulo(
-  db: any,
+  db: Admin,
   userId: string,
   modulo: string | null,
 ): Promise<boolean> {
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
 
   const admin: Admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 
-  // 1) Identifica o chamador e confirma que é admin.
+  // 1) Identifica o chamador e confirma que ele alcanca o modulo de Usuarios.
   const { data: { user: caller }, error: callerErr } = await admin.auth.getUser(authHeader.replace("Bearer ", ""));
   if (callerErr || !caller) return json({ error: "Não autorizado" }, 401);
   const isAdmin = await podeUsarModulo(admin, caller.id, "usuarios");
@@ -169,12 +169,17 @@ async function remove(admin: Admin, callerId: string, userId: string) {
   // A sequência em si vive em `apagarConta.ts` — cópia de `_shared`. Ela ganhou um segundo
   // chamador (a exclusão pedida pela própria pessoa) e duas cópias divergentes dela seriam a
   // pior duplicação possível: a divergência só apareceria na hora de apagar.
+  //
+  // ATENÇÃO: esta refatoração está no disco, mas a versão EM PRODUÇÃO ainda é a v9, com a
+  // sequência embutida aqui. Não a subi porque o deploy por MCP exige colar o arquivo inteiro,
+  // e transcrever 10 KB de uma função de admin à mão é risco desnecessário — o comportamento é
+  // idêntico, então não há pressa. Sai no próximo deploy desta função.
   const { erro } = await apagarConta(admin, userId);
   if (erro) return json({ error: erro }, 500);
   return json({ ok: true });
 }
 
-// ── Fila de exclusão (LGPD art. 18, VI) ──────────────────────────────────────────────────────
+// ── Fila de exclusão (LGPD art. 18, VI) ────────────────────────────────────────────
 // Pedidos que a pessoa fez em Configurações e ainda não foram cumpridos, do mais vencido para o
 // mais recente. `scheduled_purge_at` no passado = pronto para executar.
 async function deletionQueue(admin: Admin) {
