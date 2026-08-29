@@ -333,6 +333,21 @@ export const COR_CONVERSAS = {
  * Os valores saem de `src/pages/ActionPlan/actionPlan.scss`, e
  * `src/__tests__/cromoDoPlano.test.ts` os amarra lá.
  */
+/**
+ * O cabeçalho de página dos módulos — sobretítulo, título e a linha de apoio, com um fio embaixo.
+ *
+ * Ele APARECE no celular. A folha tem um `.board-content > .module-page-heading { display: none }`
+ * que parece esconder em todo lugar, mas o seletor é de filho DIRETO, e o heading dos módulos é
+ * filho da página (`.action-plan-page`, `.planning-page`), não do `.board-content`. Cheguei a
+ * concluir o contrário lendo só a regra — o `>` decide.
+ */
+export const COR_CABECALHO_DE_MODULO = {
+  rotulo: '#9aa9c2',
+  titulo: '#52668d',
+  apoio: '#91a0b9',
+  fio: '#e5eaf2',
+} as const;
+
 export const COR_PLANO = {
   contorno: '#e1e7f0',
   contornoAberta: '#b9c8ff',
@@ -344,6 +359,12 @@ export const COR_PLANO = {
   fio: '#edf1f7',
   legenda: '#8d9db7',
   chipContorno: '#dde5f1',
+  /** O contêiner "Ranking de execução", que envolve a lista de estratégias. */
+  molduraContorno: '#e1e7f0',
+  molduraTitulo: '#52668d',
+  molduraRotulo: '#93a3bc',
+  contagemFundo: '#edf2fb',
+  contagemTexto: '#7183a3',
 } as const;
 
 /**
@@ -370,31 +391,25 @@ export const COR_CATALOGO = {
 /**
  * A Agenda.
  *
- * É a única tela do produto que fica ESCURA no celular — azul-noite inteiro, com os dias do mês
- * em cartões, o roxo marcando hoje e os eventos como etiquetas translúcidas. Não é sobra do tema
- * antigo: as regras são `!important` e específicas de `.agenda-reference-page`, escritas depois
- * da inversão para o claro. Um calendário se lê melhor sobre fundo escuro, e a web decidiu isso.
+ * É CLARA, como o resto do app, e é uma grade do DIA: as horas numa coluna estreita à esquerda e
+ * as faixas de 50px à direita, com a barra de ferramentas em cima (hoje, a data, Dia/Mês/Ano e
+ * "+ Compromisso").
  *
- * Os valores saem de `src/styles/gsap-reference.css`, e `src/__tests__/cromoDaAgenda.test.ts`
- * os amarra lá.
+ * ⚠️ A folha tem um `.agenda-reference-page { background: #0d2146 !important }` que descreve uma
+ * agenda azul-noite. Ela NÃO vale: a página real leva as duas classes
+ * (`calendar-page agenda-reference-page`) e a de `.calendar-page` vence. Cheguei a portar a
+ * versão escura confiando no `!important` — dois `!important` não se resolvem pela leitura, só
+ * pelo que o navegador computa. Os valores abaixo saíram do DOM em execução.
  */
 export const COR_AGENDA = {
-  fundo: '#0d2146',
-  texto: '#dbe7ff',
-  acao: '#8f51dc',
-  hoje: '#b56cff',
-  chip: '#1a3159',
-  chipEscuro: '#172d52',
-  chipClaro: '#d9e7ff',
-  chipClaroTexto: '#172747',
-  navegar: '#1b335b',
-  navegarIcone: '#b7c9e7',
-  diaDeFora: '#12284d',
-  numeroDoDia: '#9eb2d1',
-  diaDaSemana: '#99adce',
-  evento: 'rgba(143,81,220,.18)',
-  legenda: '#a7b9d6',
-  contornoDoItem: '#203b65',
+  fundo: '#f7f8fb',
+  texto: '#52668d',
+  hora: '#65789c',
+  rotulo: '#61749a',
+  navegar: '#7f91b0',
+  abaAtivaFundo: '#ffffff',
+  abaAtivaTexto: '#3361ff',
+  fio: '#e5e7eb',
 } as const;
 
 /**

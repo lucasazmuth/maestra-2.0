@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_PLANO, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_CABECALHO_DE_MODULO, COR_PLANO, RAIO } from '@maestra/core/constants/design';
 import { TASK_TYPES } from '@maestra/core/constants/maestra';
 import type { ActionTask, Strategy } from '@maestra/core/interfaces/maestra';
 import { artistsActions } from '@maestra/core/store/slices/artists';
@@ -88,7 +88,16 @@ export default function Plano() {
     <View style={estilos.tela}>
       <ScrollView contentContainerStyle={estilos.conteudo}>
 
-        <Text style={estilos.titulo}>Plano de ação</Text>
+        {/* O cabecalho de pagina, com as MESMAS palavras da web. Ele aparece no celular: a
+            regra que parece esconde-lo e de filho direto de `.board-content`, e o heading dos
+            modulos e filho da PAGINA. */}
+        <View style={estilos.cabecalhoDaPagina}>
+          <Text style={estilos.sobretitulo}>EXECUÇÃO DIÁRIA</Text>
+          <Text style={estilos.titulo}>Plano de Ação</Text>
+          <Text style={estilos.apoio}>
+            Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase.
+          </Text>
+        </View>
 
         {estrategias.length === 0 ? (
           <View style={estilos.aviso}>
@@ -100,10 +109,22 @@ export default function Plano() {
           </View>
         ) : (
           <>
-            <Text style={estilos.resumo}>
-              {concluidas} de {tarefas.length} {tarefas.length === 1 ? 'tarefa' : 'tarefas'} concluídas
-            </Text>
+            {/* A moldura "Ranking de execucao" envolve a lista inteira, com a contagem de
+                estrategias a direita. */}
+            <View style={estilos.moldura}>
+              <View style={estilos.molduraTopo}>
+                <View style={estilos.flex}>
+                  <Text style={estilos.molduraRotulo}>ESTRATÉGIAS DO PLANO</Text>
+                  <Text style={estilos.molduraTitulo}>Ranking de execução</Text>
+                </View>
+                <View style={estilos.contagem}>
+                  <Text style={estilos.contagemTexto}>
+                    {estrategias.length} {estrategias.length === 1 ? 'estratégia' : 'estratégias'}
+                  </Text>
+                </View>
+              </View>
 
+              <View style={estilos.listaDeEstrategias}>
             {estrategias.map((estrategia, indice) => {
               const { prontas, total, completa } = progresso(estrategia);
               const estaAberta = abertaAgora === estrategia.id;
@@ -178,6 +199,8 @@ export default function Plano() {
               </View>
               );
             })}
+              </View>
+            </View>
           </>
         )}
       </ScrollView>
@@ -190,9 +213,36 @@ const estilos = StyleSheet.create({
   // e uma lista de linhas de acordeao com contorno proprio, dentro de um respiro de 14.
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
-  conteudo: { paddingHorizontal: 18, paddingTop: 24, paddingBottom: 122, gap: 10 },
-  titulo: { fontSize: 27, fontWeight: '800', color: COR_PLANO.titulo, letterSpacing: -1 },
-  resumo: { fontSize: 13, color: COR.secundario, lineHeight: 20, marginBottom: 4 },
+  conteudo: { paddingHorizontal: 18, paddingTop: 24, paddingBottom: 122 },
+  cabecalhoDaPagina: {
+    paddingBottom: 30, marginBottom: 22,
+    borderBottomWidth: 1, borderBottomColor: COR_CABECALHO_DE_MODULO.fio,
+  },
+  sobretitulo: {
+    fontSize: 9, fontWeight: '800', color: COR_CABECALHO_DE_MODULO.rotulo, marginBottom: 8,
+  },
+  titulo: { fontSize: 30, fontWeight: '800', color: COR_CABECALHO_DE_MODULO.titulo },
+  apoio: { fontSize: 12, color: COR_CABECALHO_DE_MODULO.apoio, lineHeight: 19, marginTop: 9 },
+
+  // A moldura "Ranking de execucao": um contorno so em volta da lista inteira.
+  moldura: {
+    borderWidth: 1, borderColor: COR_PLANO.molduraContorno, borderRadius: 8, overflow: 'hidden',
+  },
+  molduraTopo: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18,
+    minHeight: 70, paddingHorizontal: 18,
+    borderBottomWidth: 1, borderBottomColor: COR_PLANO.molduraContorno,
+  },
+  molduraRotulo: {
+    fontSize: 9, fontWeight: '900', color: COR_PLANO.molduraRotulo, marginBottom: 6,
+  },
+  molduraTitulo: { fontSize: 18, fontWeight: '800', color: COR_PLANO.molduraTitulo },
+  contagem: {
+    borderRadius: RAIO.pilula, paddingVertical: 7, paddingHorizontal: 10,
+    backgroundColor: COR_PLANO.contagemFundo,
+  },
+  contagemTexto: { fontSize: 10, fontWeight: '900', color: COR_PLANO.contagemTexto },
+  listaDeEstrategias: { padding: 14, gap: 10 },
   aviso: {
     borderWidth: 1, borderColor: COR_PLANO.contorno, borderRadius: 8, padding: 18, gap: 6, marginTop: 10,
   },

@@ -90,9 +90,12 @@ describe('plano de acao', () => {
     expect(tela.queryByText('Mapear três casas na cidade vizinha')).toBeNull();
   });
 
-  it('conta o progresso somando as tarefas de TODAS as estrategias', async () => {
+  // A web nao mostra o total de tarefas concluidas em lugar nenhum do Plano — o que ela mostra
+  // no alto da lista e a contagem de ESTRATEGIAS. O progresso por estrategia continua no
+  // cabecalho de cada linha ("0/7"), que e onde ele decide se vale a pena abrir.
+  it('mostra quantas estrategias o plano tem', async () => {
     const tela = await montar();
-    expect(tela.getByText('1 de 3 tarefas concluídas')).toBeTruthy();
+    expect(tela.getByText('2 estratégias')).toBeTruthy();
   });
 
   // A caixa marcada precisa ser legivel por leitor de tela, nao so visualmente riscada.

@@ -111,11 +111,11 @@ export default function Agenda() {
       </View>
 
       {carregando ? (
-        <ActivityIndicator color={COR_AGENDA.texto} style={estilos.espera} size="large" />
+        <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
       ) : vazia || erro ? (
         <ScrollView
           contentContainerStyle={estilos.conteudo}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR_AGENDA.texto} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />}
         >
           <View style={estilos.aviso}>
             <Text style={estilos.avisoTitulo}>{erro ? 'Agenda indisponível' : 'Nada marcado'}</Text>
@@ -130,7 +130,7 @@ export default function Agenda() {
           keyExtractor={(e) => e.id}
           contentContainerStyle={estilos.conteudo}
           stickySectionHeadersEnabled={false}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR_AGENDA.texto} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />}
           renderSectionHeader={({ section }) => (
             <Text style={estilos.secao}>{section.title}</Text>
           )}
@@ -153,39 +153,42 @@ export default function Agenda() {
 }
 
 const estilos = StyleSheet.create({
-  // A Agenda e a UNICA tela escura do produto no celular — azul-noite inteiro, com o roxo
-  // marcando o que e acao. Nao e sobra do tema antigo: as regras sao `!important` e proprias de
-  // `.agenda-reference-page`, escritas depois da inversao pro claro. Ver `COR_AGENDA`.
+  // A Agenda e CLARA, como o resto do app.
+  //
+  // Ela ja foi escura aqui: a folha tem um `.agenda-reference-page` com `background: #0d2146
+  // !important` e eu o tomei como vencedor. A pagina real leva as duas classes
+  // (`calendar-page agenda-reference-page`) e a de `.calendar-page` ganha — dois `!important`
+  // nao se resolvem lendo o arquivo, so pelo que o navegador computa. Ver `COR_AGENDA`.
   tela: { flex: 1, backgroundColor: COR_AGENDA.fundo },
   flex: { flex: 1, minWidth: 0 },
-  cabecalho: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 24 },
-  titulão: { fontSize: 31, fontWeight: '800', color: COR_AGENDA.texto, letterSpacing: -1 },
+  cabecalho: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 18 },
+  titulão: { fontSize: 27, fontWeight: '800', color: COR_AGENDA.texto },
   espera: { marginTop: 48 },
   conteudo: { paddingHorizontal: 18, paddingBottom: 122 },
   secao: {
-    fontSize: 12, fontWeight: '800', color: COR_AGENDA.diaDaSemana,
+    fontSize: 11, fontWeight: '800', color: COR_AGENDA.navegar,
     letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8,
   },
   folga: { height: 22 },
-  dia: { fontSize: 13, fontWeight: '800', color: COR_AGENDA.numeroDoDia, marginTop: 10, marginBottom: 6 },
+  dia: { fontSize: 11, fontWeight: '700', color: COR_AGENDA.rotulo, marginTop: 10, marginBottom: 6 },
   cartao: {
     flexDirection: 'row', gap: 12, overflow: 'hidden', marginBottom: 8,
-    borderWidth: 1, borderColor: COR_AGENDA.contornoDoItem, borderRadius: 8,
-    padding: 14, backgroundColor: COR_AGENDA.chipEscuro,
+    borderWidth: 1, borderColor: COR.contorno, borderRadius: 8,
+    padding: 14, backgroundColor: COR.superficie,
   },
-  // A fita do tipo do evento fica na borda esquerda, como o `border-left-width: 3px` da etiqueta.
+  // A fita do tipo do evento na borda esquerda, como a etiqueta da web.
   fita: { width: 3, borderRadius: 2, marginVertical: -14, marginLeft: -14 },
-  titulo: { fontSize: 15, fontWeight: '700', color: COR_AGENDA.texto, lineHeight: 20 },
-  cancelado: { textDecorationLine: 'line-through', color: COR_AGENDA.legenda },
+  titulo: { fontSize: 14, fontWeight: '700', color: COR_AGENDA.texto, lineHeight: 19 },
+  cancelado: { textDecorationLine: 'line-through', color: COR_AGENDA.navegar },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  tipo: { fontSize: 12, fontWeight: '800' },
-  hora: { fontSize: 12, color: COR_AGENDA.legenda },
-  local: { fontSize: 13, color: COR_AGENDA.legenda, marginTop: 3 },
-  selo: { fontSize: 12, color: COR_AGENDA.hoje, fontWeight: '700', marginTop: 4 },
+  tipo: { fontSize: 11, fontWeight: '800' },
+  hora: { fontSize: 10, fontWeight: '800', color: COR_AGENDA.hora },
+  local: { fontSize: 12, color: COR_AGENDA.rotulo, marginTop: 3 },
+  selo: { fontSize: 11, color: COR.erro, fontWeight: '700', marginTop: 4 },
   aviso: {
-    borderWidth: 1, borderColor: COR_AGENDA.contornoDoItem, borderRadius: 8,
-    padding: 18, gap: 6, backgroundColor: COR_AGENDA.chipEscuro,
+    borderWidth: 1, borderColor: COR.contorno, borderRadius: 8,
+    padding: 18, gap: 6, backgroundColor: COR.superficie,
   },
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_AGENDA.texto },
-  avisoTexto: { fontSize: 13, color: COR_AGENDA.legenda, lineHeight: 20 },
+  avisoTexto: { fontSize: 13, color: COR_AGENDA.rotulo, lineHeight: 20 },
 });

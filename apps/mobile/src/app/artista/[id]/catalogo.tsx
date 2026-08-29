@@ -13,6 +13,7 @@ import { CATALOG_STATUS } from '@maestra/core/constants/maestra';
 import type { CatalogItem } from '@maestra/core/interfaces/maestra';
 import { listCatalogProjectItems } from '@maestra/core/services/db/catalog';
 
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { useArtistaDaRota } from '@/nucleo/artista';
 
 // O Catálogo.
@@ -44,6 +45,7 @@ const Capa = ({ faixa }: { faixa: CatalogItem }) =>
 export default function Catalogo() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const artista = useArtistaDaRota(id);
+  const direitos = useArtistCapabilities(artista);
 
   const [faixas, setFaixas] = useState<CatalogItem[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -100,6 +102,13 @@ export default function Catalogo() {
         <Text style={estilos.subtitulo}>
           Organize as músicas em preparação e acompanhe cada etapa antes do lançamento.
         </Text>
+
+        {/* A contagem do limite do plano, como na web. O botao "Nova musica" nao entra: cadastrar
+            faixa exige escolher o arquivo de audio, e a ficha inteira depois — o app le o
+            catalogo, nao o alimenta. */}
+        <Text style={estilos.contagem}>
+          {faixas.length}/{direitos.maxCatalogTracks === Infinity ? '∞' : direitos.maxCatalogTracks} músicas
+        </Text>
       </View>
 
       {carregando ? (
@@ -139,23 +148,27 @@ export default function Catalogo() {
                     : `${item.title}, sem áudio`
                 }
               >
-                <Capa faixa={item} />
-                <View style={estilos.flex}>
-                  <Text style={estilos.titulo} numberOfLines={1}>{item.title}</Text>
-                  <View style={estilos.meta}>
-                    {!!rotulo && (
-                      <Text style={[estilos.status, { color: rotulo.color }]}>{rotulo.label}</Text>
-                    )}
-                    {!!item.duration && <Text style={estilos.duracao}>{item.duration}</Text>}
-                  </View>
-                </View>
+                {/* O tocar fica a ESQUERDA e e o primeiro elemento da linha, como na web — a
+                    capa quadrada que estava aqui nao existe la. */}
                 <View style={estilos.botao}>
                   <Feather
                     name={eAtual && status.playing ? 'pause' : 'play'}
-                    size={18}
+                    size={16}
                     color={temAudio ? COR_CATALOGO.tocarIcone : COR.contorno}
                   />
                 </View>
+                <View style={estilos.flex}>
+                  <Text style={estilos.titulo} numberOfLines={1}>{item.title}</Text>
+                  <Text style={estilos.versao} numberOfLines={1}>
+                    V{item.version_number || 1}
+                    {item.audio_file ? ' · versão principal' : ' · áudio pendente'}
+                  </Text>
+                </View>
+                {!!rotulo && (
+                  <View style={[estilos.status, { backgroundColor: `${rotulo.color}22` }]}>
+                    <Text style={[estilos.statusTexto, { color: rotulo.color }]}>{rotulo.label}</Text>
+                  </View>
+                )}
               </Pressable>
             );
           }}
@@ -196,6 +209,7 @@ const estilos = StyleSheet.create({
   },
   titulao: { fontSize: 27, fontWeight: '800', color: COR_CATALOGO.titulo },
   subtitulo: { fontSize: 12, color: COR_CATALOGO.apoio, lineHeight: 18, marginTop: 9 },
+  contagem: { fontSize: 12, fontWeight: '700', color: COR_CATALOGO.legenda, marginTop: 14 },
   espera: { marginTop: 48 },
   conteudo: { paddingHorizontal: 16, paddingTop: 28, paddingBottom: 122 },
   // A moldura da lista, em duas metades: o topo fecha os cantos de cima, o rodape os de baixo.
@@ -226,9 +240,15 @@ const estilos = StyleSheet.create({
   pressionada: { opacity: 0.6 },
   capa: { width: 48, height: 48, borderRadius: 6, backgroundColor: COR.divisoria },
   capaVazia: { alignItems: 'center', justifyContent: 'center' },
-  titulo: { fontSize: 15, fontWeight: '700', color: COR_CATALOGO.titulo },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 3 },
-  status: { fontSize: 12, fontWeight: '700' },
+  titulo: { fontSize: 14, fontWeight: '600', color: COR_CATALOGO.titulo },
+  versao: { fontSize: 13, color: COR_CATALOGO.legenda, marginTop: 2 },
+  // O selo do status usa a cor do proprio status com o fundo numa transparencia dela — o `22`
+  // e o alpha em hex, o mesmo truque da web.
+  status: {
+    justifyContent: 'center', paddingVertical: 5, paddingHorizontal: 10,
+    borderRadius: RAIO.pilula, flexShrink: 0,
+  },
+  statusTexto: { fontSize: 11, fontWeight: '700' },
   duracao: { fontSize: 12, color: COR_CATALOGO.legenda },
   // O tocar e discreto: azul-claro com o icone cinza-azulado, e nao o azul de acao cheio.
   botao: {
