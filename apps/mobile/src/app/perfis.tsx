@@ -1,5 +1,5 @@
 import { Redirect, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator, FlatList, Image, Pressable, RefreshControl,
   StyleSheet, Text, View,
@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COR, RAIO } from '@maestra/core/constants/design';
 import type { Artist } from '@maestra/core/interfaces/maestra';
+import { countUnread } from '@maestra/core/services/db/notifications';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { sair } from '@/nucleo/entrar';
@@ -62,9 +63,18 @@ export default function Perfis() {
   const { items, loading, loaded } = useAppSelector((s) => s.artists);
 
   const usuario = sessao?.user.id;
+  const [naoLidas, setNaoLidas] = useState(0);
+
   useEffect(() => {
     if (usuario) dispatch(artistsActions.fetchArtists(usuario));
   }, [usuario, dispatch]);
+
+  useEffect(() => {
+    if (!usuario) return;
+    // Falha em silêncio de propósito: a contagem é um enfeite do cabeçalho, e derrubar a lista
+    // de perfis por causa dela seria trocar o essencial pelo acessório.
+    countUnread(usuario).then(setNaoLidas).catch(() => undefined);
+  }, [usuario]);
 
   if (!carregandoSessao && !sessao) return <Redirect href="/entrar" />;
 
@@ -75,6 +85,23 @@ export default function Perfis() {
           <Text style={estilos.marca}>Seus perfis</Text>
           <Text style={estilos.legenda}>{sessao?.user.email}</Text>
         </View>
+        <Pressable
+          onPress={() => router.push('/notificacoes')}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={
+            naoLidas > 0 ? `Notificações, ${naoLidas} não lidas` : 'Notificações'
+          }
+        >
+          <View>
+            <Text style={estilos.sino}>◔</Text>
+            {naoLidas > 0 && (
+              <View style={estilos.bolha}>
+                <Text style={estilos.bolhaTexto}>{naoLidas > 9 ? '9+' : naoLidas}</Text>
+              </View>
+            )}
+          </View>
+        </Pressable>
         <Pressable onPress={sair} hitSlop={12}>
           <Text style={estilos.sair}>Sair</Text>
         </Pressable>
@@ -129,6 +156,13 @@ const estilos = StyleSheet.create({
   marca: { fontSize: 28, fontWeight: '800', color: COR.titulo, letterSpacing: -0.5 },
   legenda: { fontSize: 13, color: COR.apagado, marginTop: 2 },
   sair: { fontSize: 15, fontWeight: '600', color: COR.secundario },
+  sino: { fontSize: 22, color: COR.secundario },
+  bolha: {
+    position: 'absolute', top: -4, right: -8, minWidth: 18, height: 18, paddingHorizontal: 4,
+    borderRadius: RAIO.pilula, backgroundColor: COR.primaria,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  bolhaTexto: { fontSize: 11, fontWeight: '800', color: COR.sobrePrimaria },
   lista: { paddingHorizontal: 24, paddingBottom: 32, gap: 10 },
   espera: { marginTop: 40 },
   vazio: { textAlign: 'center', color: COR.apagado, marginTop: 40, fontSize: 15 },
