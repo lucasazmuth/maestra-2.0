@@ -126,6 +126,7 @@ export default function Notificacoes() {
   return (
     <SafeAreaView style={estilos.tela}>
       <View style={estilos.cabecalho}>
+        <Text style={estilos.sobretitulo}>CENTRAL DO USUÁRIO</Text>
         <Text style={estilos.voltar} onPress={voltar}>‹  Perfis</Text>
         <View style={estilos.linhaTitulo}>
           <Text style={estilos.titulao}>Notificações</Text>
@@ -194,11 +195,11 @@ export default function Notificacoes() {
                       {item.title}
                     </Text>
                     {!!item.message && <Text style={estilos.mensagem}>{item.message}</Text>}
-                  </View>
-                  <View style={estilos.direita}>
+                    {/* A data fica EMBAIXO da mensagem, e nao na coluna da direita. */}
                     <Text style={estilos.data}>{quando(item.created_at)}</Text>
-                    {!item.read && <Text style={estilos.novo}>Novo</Text>}
                   </View>
+                  {/* "NOVO" e uma palavra roxa, sem fundo — nao um selo azul. */}
+                  {!item.read && <Text style={estilos.novo}>NOVO</Text>}
                 </Pressable>
               ))}
             </View>
@@ -217,6 +218,10 @@ const estilos = StyleSheet.create({
   cabecalho: { paddingHorizontal: 18, paddingTop: 8, gap: 2 },
   voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
   linhaTitulo: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
+  sobretitulo: {
+    fontSize: 10, fontWeight: '800', color: COR_NOTIFICACOES.hora,
+    letterSpacing: 1, marginBottom: 9,
+  },
   titulao: { fontSize: 27, fontWeight: '800', color: COR_NOTIFICACOES.titulo },
   lerTudo: { fontSize: 13, fontWeight: '800', color: COR.primaria },
   espera: { marginTop: 48 },
@@ -236,22 +241,19 @@ const estilos = StyleSheet.create({
     width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',
     backgroundColor: COR_NOTIFICACOES.disco,
   },
-  direita: { alignItems: 'flex-end', gap: 6 },
   grupo: { gap: 12 },
   cabecalhoGrupo: {
     flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
     gap: 12, marginTop: 8,
   },
   nomeDoGrupo: { fontSize: 15, fontWeight: '800', color: COR_NOTIFICACOES.titulo },
+  limpar: { fontSize: 12, fontWeight: '800', color: COR_NOTIFICACOES.limpar },
   contagem: { fontSize: 12, color: COR_NOTIFICACOES.texto },
-  novo: {
-    fontSize: 10, fontWeight: '800', color: COR.sobrePrimaria, backgroundColor: COR.primaria,
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: RAIO.pilula, overflow: 'hidden',
-  },
+  novo: { fontSize: 10, fontWeight: '800', color: COR_NOTIFICACOES.novo, flexShrink: 0 },
   titulo: { fontSize: 14, fontWeight: '600', color: COR_NOTIFICACOES.titulo, lineHeight: 19 },
   tituloForte: { fontWeight: '800' },
   mensagem: { fontSize: 12, color: COR_NOTIFICACOES.texto, lineHeight: 17, marginTop: 5 },
-  data: { fontSize: 10, fontWeight: '800', color: COR_NOTIFICACOES.hora },
+  data: { fontSize: 10, fontWeight: '800', color: COR_NOTIFICACOES.hora, marginTop: 8 },
   aviso: {
     borderWidth: 1, borderColor: COR_NOTIFICACOES.contorno, borderRadius: 10, padding: 18, gap: 6,
   },

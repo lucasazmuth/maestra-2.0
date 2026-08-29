@@ -443,6 +443,9 @@ export const COR_NOTIFICACOES = {
   titulo: '#5b6f94',
   texto: '#98a6bd',
   hora: '#9aa9c2',
+  /** "NOVO" é roxo e sem fundo — uma palavra, não um selo. */
+  novo: '#8833ff',
+  limpar: '#d24b61',
 } as const;
 
 /**
@@ -460,6 +463,22 @@ export const COR_CONTA = {
   tituloDoCartao: '#5b6f94',
   texto: '#98a6bd',
   apoio: '#8e9eb8',
+} as const;
+
+/**
+ * A Equipe.
+ *
+ * Cada membro é uma faixa de 78px com o avatar, o nome, o e-mail, UMA pílula dizendo o nível de
+ * acesso e o estado — ponto verde mais a palavra. Os valores vieram do DOM em execução.
+ */
+export const COR_EQUIPE = {
+  nome: '#52668d',
+  email: '#8b9bb5',
+  acessoFundo: '#eef3fb',
+  acessoTexto: '#6a7c9e',
+  ativoPonto: '#29cc39',
+  ativoTexto: '#2a9a59',
+  pendente: '#aeb9ca',
 } as const;
 
 /**

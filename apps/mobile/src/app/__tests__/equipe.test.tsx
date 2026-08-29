@@ -45,20 +45,29 @@ describe('equipe', () => {
     await waitFor(() => expect(tela.getByText('joana')).toBeTruthy());
   });
 
+  // Com UM nivel, o rotulo e o do nucleo — o mesmo texto da web.
   it('usa os rotulos de acesso do nucleo, os mesmos da web', async () => {
-    mockListar.mockResolvedValue([membro({ id: 'm-1', access_levels: ['plan', 'agenda'] })]);
+    mockListar.mockResolvedValue([membro({ id: 'm-1', access_levels: ['plan'] })]);
     const tela = await montar();
     await waitFor(() => expect(tela.getByText('Plano de ação')).toBeTruthy());
-    expect(tela.getByText('Agenda')).toBeTruthy();
   });
 
-  // A linha e para reconhecer, nao para auditar: acima de tres, o resto vira "+N", como na web.
-  it('resume os acessos acima de tres', async () => {
+  // A linha e para reconhecer, nao para auditar. A web resume tudo em UMA etiqueta e guarda o
+  // detalhe no menu; o app listava ate tres pilulas mais um "+N", o que enchia a linha de quem
+  // tem acesso amplo — justamente o caso mais comum.
+  it('acesso amplo vira uma etiqueta so', async () => {
     mockListar.mockResolvedValue([
       membro({ id: 'm-1', access_levels: ['plan', 'agenda', 'catalog', 'team', 'full'] }),
     ]);
     const tela = await montar();
-    await waitFor(() => expect(tela.getByText('+2')).toBeTruthy());
+    await waitFor(() => expect(tela.getByText('Acesso completo')).toBeTruthy());
+    expect(tela.queryByText('Plano de ação')).toBeNull();
+  });
+
+  it('varios acessos sem o completo viram a contagem', async () => {
+    mockListar.mockResolvedValue([membro({ id: 'm-1', access_levels: ['plan', 'agenda'] })]);
+    const tela = await montar();
+    await waitFor(() => expect(tela.getByText('2 acessos')).toBeTruthy());
   });
 
   it('quem nao tem acesso nenhum e dito, e nao fica em branco', async () => {
@@ -67,15 +76,16 @@ describe('equipe', () => {
     await waitFor(() => expect(tela.getByText('Sem acessos')).toBeTruthy());
   });
 
-  it('separa ativo de pendente na contagem', async () => {
+  // A contagem "2 ativos, 1 pendente" saiu do cabecalho: a web nao a mostra, e o estado de cada
+  // um ja esta na propria linha. O que precisa continuar legivel e quem esta ativo e quem nao.
+  it('cada membro diz o proprio estado', async () => {
     mockListar.mockResolvedValue([
       membro({ id: 'm-1', status: 'active' }),
       membro({ id: 'm-2', status: 'active' }),
       membro({ id: 'm-3', status: 'pending' }),
     ]);
     const tela = await montar();
-    await waitFor(() => expect(tela.getByText('2 ativos, 1 pendente')).toBeTruthy());
-    expect(tela.getAllByText('Ativo')).toHaveLength(2);
+    await waitFor(() => expect(tela.getAllByText('Ativo')).toHaveLength(2));
     expect(tela.getByText('Pendente')).toBeTruthy();
   });
 

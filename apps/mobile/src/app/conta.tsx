@@ -1,6 +1,8 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COR, RAIO, COR_CONTA } from '@maestra/core/constants/design';
@@ -24,6 +26,9 @@ import { useSessao } from '@/nucleo/sessao';
 // prometer um "apagado" que não acontece naquele instante.
 
 const COBRAVEL = ['active', 'overdue', 'pending'];
+
+/** Planos, termos, suporte e exportacao de dados vivem na web. */
+const SITE = 'https://www.maestramanager.com';
 
 export default function Conta() {
   const { sessao, carregando: carregandoSessao } = useSessao();
@@ -95,8 +100,66 @@ export default function Conta() {
     <SafeAreaView style={estilos.tela}>
       <ScrollView contentContainerStyle={estilos.conteudo}>
         <Text style={estilos.voltar} onPress={voltar}>‹  Perfis</Text>
-        <Text style={estilos.titulao}>Conta</Text>
-        <Text style={estilos.email}>{usuario?.email}</Text>
+
+        {/* As secoes sao as da web, em cartoes: Perfil, Assinatura, Suporte e termos, Seus dados
+            e Conta. "Notificacoes no dispositivo" fica de fora enquanto o push nao existe no
+            app — um interruptor que nao liga nada e pior do que a ausencia dele. */}
+        <View style={estilos.cartao}>
+          <Text style={estilos.tituloDoCartao}>Perfil</Text>
+          <Text style={estilos.nome}>{usuario?.user_metadata?.full_name ?? 'Sua conta'}</Text>
+          <Text style={estilos.email}>{usuario?.email}</Text>
+        </View>
+
+        <View style={estilos.cartao}>
+          <Text style={estilos.tituloDoCartao}>Assinatura</Text>
+          <Text style={estilos.explicacao}>
+            {temAssinatura
+              ? 'Sua assinatura Maestra Pro está ativa. A gestão do plano é feita na web.'
+              : 'Você está no plano gratuito. Assine o Pro para desbloquear todo o potencial da plataforma.'}
+          </Text>
+          <Pressable
+            style={({ pressed }) => [estilos.linha, pressed && estilos.tocada]}
+            onPress={() => Linking.openURL(`${SITE}/assinatura`)}
+            accessibilityRole="link"
+          >
+            <Text style={estilos.linhaTexto}>
+              {temAssinatura ? 'Gerenciar assinatura' : 'Ver planos'}
+            </Text>
+          </Pressable>
+        </View>
+
+        <View style={estilos.cartao}>
+          <Text style={estilos.tituloDoCartao}>Suporte e termos</Text>
+          {([
+            ['Termos de uso', '/termos'],
+            ['Política de privacidade', '/privacidade'],
+            ['Falar com o suporte', '/suporte'],
+          ] as const).map(([rotulo, caminho]) => (
+            <Pressable
+              key={caminho}
+              style={({ pressed }) => [estilos.linha, pressed && estilos.tocada]}
+              onPress={() => Linking.openURL(`${SITE}${caminho}`)}
+              accessibilityRole="link"
+            >
+              <Text style={estilos.linhaTexto}>{rotulo}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={estilos.cartao}>
+          <Text style={estilos.tituloDoCartao}>Seus dados</Text>
+          <Text style={estilos.explicacao}>
+            Baixe uma cópia de tudo que a Maestra guarda sobre você: conta, perfis de artista,
+            catálogo, agenda, planejamento e conversas com a Nyta.
+          </Text>
+          <Pressable
+            style={({ pressed }) => [estilos.linha, pressed && estilos.tocada]}
+            onPress={() => Linking.openURL(`${SITE}/settings`)}
+            accessibilityRole="link"
+          >
+            <Text style={estilos.linhaTexto}>Baixar meus dados</Text>
+          </Pressable>
+        </View>
 
         <Pressable
           style={({ pressed }) => [estilos.linha, pressed && estilos.tocada]}
@@ -106,7 +169,7 @@ export default function Conta() {
           <Text style={estilos.linhaTexto}>Sair da conta</Text>
         </Pressable>
 
-        <Text style={estilos.secao}>Excluir conta</Text>
+        <Text style={estilos.secao}>Conta</Text>
         <Text style={estilos.explicacao}>
           Ao confirmar, {temAssinatura ? 'sua assinatura é cancelada e ' : ''}sua conta e todos os
           perfis entram na fila de exclusão. Eles são apagados definitivamente em 30 dias — prazo
@@ -137,8 +200,13 @@ const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   conteudo: { paddingHorizontal: 18, paddingTop: 27, paddingBottom: 48, gap: 10 },
   voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
-  titulao: { fontSize: 27, fontWeight: '800', color: COR_CONTA.titulo, lineHeight: 30 },
-  email: { fontSize: 13, color: COR_CONTA.apoio, marginTop: 10, marginBottom: 15 },
+  cartao: {
+    padding: 25, gap: 10, marginBottom: 8,
+    borderRadius: 8, borderWidth: 1, borderColor: COR_CONTA.contorno,
+  },
+  tituloDoCartao: { fontSize: 16, fontWeight: '800', color: COR_CONTA.tituloDoCartao },
+  nome: { fontSize: 15, fontWeight: '700', color: COR_CONTA.titulo, marginTop: 4 },
+  email: { fontSize: 13, color: COR_CONTA.apoio },
   linha: {
     borderWidth: 1, borderColor: COR_CONTA.contorno, borderRadius: 8,
     paddingVertical: 16, paddingHorizontal: 16,

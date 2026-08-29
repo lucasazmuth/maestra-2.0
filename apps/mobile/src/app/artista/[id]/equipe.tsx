@@ -5,7 +5,7 @@ import {
   ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View,
 } from 'react-native';
 
-import { COR, RAIO, COR_CATALOGO } from '@maestra/core/constants/design';
+import { COR, RAIO, COR_CATALOGO, COR_EQUIPE } from '@maestra/core/constants/design';
 import { MVP_ACCESS_LEVEL_OPTIONS } from '@maestra/core/constants/maestra';
 import type { ArtistMember } from '@maestra/core/interfaces/maestra';
 import { listMembers } from '@maestra/core/services/db/members';
@@ -32,21 +32,26 @@ const Avatar = ({ membro }: { membro: ArtistMember }) => (
   </View>
 );
 
+/**
+ * O nível de acesso, em UMA pílula.
+ *
+ * A web resume tudo numa etiqueta só ("Acesso completo", ou o nome do nível quando é um) e
+ * guarda o detalhe no menu de cada linha. O app listava até três pílulas mais um "+2" — o que
+ * enche a linha de um membro com acesso amplo, justamente o caso mais comum.
+ */
 const Acessos = ({ membro }: { membro: ArtistMember }) => {
   const niveis = membro.access_levels ?? [];
   if (!niveis.length) return <Text style={estilos.semAcesso}>Sem acessos</Text>;
 
-  const mostrados = niveis.slice(0, 3);
-  const resto = niveis.length - mostrados.length;
+  const rotulo = niveis.includes('full')
+    ? 'Acesso completo'
+    : niveis.length === 1
+      ? MVP_ACCESS_LEVEL_OPTIONS.find((o) => o.id === niveis[0])?.label ?? 'Acesso'
+      : `${niveis.length} acessos`;
+
   return (
     <View style={estilos.pilulas}>
-      {mostrados.map((nivel) => {
-        const rotulo = MVP_ACCESS_LEVEL_OPTIONS.find((o) => o.id === nivel)?.label;
-        return rotulo ? (
-          <Text key={nivel} style={estilos.pilula}>{rotulo}</Text>
-        ) : null;
-      })}
-      {resto > 0 && <Text style={estilos.pilula}>+{resto}</Text>}
+      <Text style={estilos.pilula}>{rotulo}</Text>
     </View>
   );
 };
@@ -83,13 +88,11 @@ export default function Equipe() {
     <View style={estilos.tela}>
 
       <View style={estilos.cabecalho}>
+        <Text style={estilos.sobretitulo}>TIME DO ARTISTA</Text>
         <Text style={estilos.titulao}>Equipe</Text>
-        {!carregando && !erro && membros.length > 0 && (
-          <Text style={estilos.resumo}>
-            {ativos} {ativos === 1 ? 'ativo' : 'ativos'}
-            {pendentes > 0 && `, ${pendentes} ${pendentes === 1 ? 'pendente' : 'pendentes'}`}
-          </Text>
-        )}
+        <Text style={estilos.resumo}>
+          Gerencie quem participa da operação e o que cada pessoa pode acessar.
+        </Text>
       </View>
 
       {carregando ? (
@@ -125,10 +128,11 @@ export default function Equipe() {
                   <Text style={estilos.email} numberOfLines={1}>{item.email}</Text>
                 </View>
                 <View style={estilos.selo}>
-                  <Feather
-                    name={item.status === 'active' ? 'check-circle' : 'clock'}
-                    size={13}
-                    color={item.status === 'active' ? COR.primaria : COR.apagado}
+                  <View
+                    style={[
+                      estilos.ponto,
+                      { backgroundColor: item.status === 'active' ? COR_EQUIPE.ativoPonto : COR_EQUIPE.pendente },
+                    ]}
                   />
                   <Text style={[estilos.seloTexto, item.status === 'active' && estilos.seloAtivo]}>
                     {ROTULOS[item.status] ?? item.status}
@@ -156,6 +160,9 @@ const estilos = StyleSheet.create({
     paddingHorizontal: 14, paddingTop: 18, paddingBottom: 30,
     borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.contornoDoTopo, marginHorizontal: 4,
   },
+  sobretitulo: {
+    fontSize: 9, fontWeight: '800', color: COR_CATALOGO.rotulo, marginBottom: 8,
+  },
   titulao: { fontSize: 27, fontWeight: '800', color: COR_CATALOGO.titulo },
   resumo: { fontSize: 12, color: COR_CATALOGO.apoio, marginTop: 9, lineHeight: 18 },
   espera: { marginTop: 48 },
@@ -178,18 +185,19 @@ const estilos = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   inicial: { fontSize: 17, fontWeight: '800', color: COR.secundario },
-  nome: { fontSize: 14, fontWeight: '700', color: COR_CATALOGO.titulo },
-  email: { fontSize: 12, color: COR_CATALOGO.legenda, marginTop: 2 },
-  pilulas: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, width: '100%' },
+  nome: { fontSize: 14, fontWeight: '600', color: COR_EQUIPE.nome },
+  email: { fontSize: 13, fontWeight: '500', color: COR_EQUIPE.email, marginTop: 2 },
+  pilulas: { flexShrink: 0 },
   pilula: {
-    fontSize: 10.5, fontWeight: '800', color: COR_CATALOGO.legenda,
-    paddingHorizontal: 9, paddingVertical: 5, borderRadius: 7,
-    borderWidth: 1, borderColor: COR.contorno, overflow: 'hidden',
+    fontSize: 10.5, fontWeight: '700', color: COR_EQUIPE.acessoTexto,
+    backgroundColor: COR_EQUIPE.acessoFundo,
+    paddingHorizontal: 9, paddingVertical: 5, borderRadius: 7, overflow: 'hidden',
   },
-  semAcesso: { fontSize: 12, color: COR_CATALOGO.legenda, fontStyle: 'italic', width: '100%' },
+  semAcesso: { fontSize: 11, color: COR_EQUIPE.pendente, fontStyle: 'italic' },
   selo: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 },
-  seloTexto: { fontSize: 11, fontWeight: '800', color: COR_CATALOGO.legenda },
-  seloAtivo: { color: COR.primaria },
+  ponto: { width: 6, height: 6, borderRadius: 3 },
+  seloTexto: { fontSize: 10, fontWeight: '800', color: COR_EQUIPE.pendente },
+  seloAtivo: { color: COR_EQUIPE.ativoTexto },
   aviso: {
     borderWidth: 1, borderColor: COR_CATALOGO.contornoDoTopo, borderRadius: 8, padding: 18, gap: 6,
   },

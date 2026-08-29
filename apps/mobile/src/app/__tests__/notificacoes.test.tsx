@@ -64,7 +64,8 @@ describe('notificações', () => {
     await waitFor(() => expect(tela.getByText('04/03/2026 12:30')).toBeTruthy());
   });
 
-  it('marca a não lida com o selo Novo, e a lida sem nada', async () => {
+  // "NOVO", em maiusculas: na web e uma palavra roxa ao lado do aviso, e nao um selo azul.
+  it('marca a não lida com o NOVO, e a lida sem nada', async () => {
     mockListar.mockResolvedValue({
       items: [aviso({ id: 'n-1', title: 'Fresca' }), aviso({ id: 'n-2', title: 'Velha', read: true })],
       hasMore: false,
@@ -72,7 +73,7 @@ describe('notificações', () => {
     const tela = await montar();
 
     await waitFor(() => expect(tela.getByText('Fresca')).toBeTruthy());
-    expect(tela.getAllByText('Novo')).toHaveLength(1);
+    expect(tela.getAllByText('NOVO')).toHaveLength(1);
     expect(tela.getByLabelText('Fresca, não lida')).toBeTruthy();
     expect(tela.getByLabelText('Velha')).toBeTruthy();
   });
