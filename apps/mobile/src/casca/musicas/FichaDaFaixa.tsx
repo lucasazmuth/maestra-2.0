@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable,
+  ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable,
   ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 
@@ -12,6 +12,9 @@ import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '@maestra/co
 import type { CatalogItem, Split } from '@maestra/core/interfaces/maestra';
 import { deleteCatalogProject, saveCatalogProjectFromForm } from '@maestra/core/services/db/catalog';
 
+import { Versoes } from '@/casca/musicas/Versoes';
+import { enviarParaOCatalogo, escolherImagem } from '@/nucleo/arquivos';
+
 // A ficha da música — a porta do `TrackModal` da web.
 //
 // Grava pelo MESMO `saveCatalogProjectFromForm` do núcleo, que cuida de projeto e versão de uma
@@ -20,9 +23,9 @@ import { deleteCatalogProject, saveCatalogProjectFromForm } from '@maestra/core/
 // A estrutura é a da web: três abas — Informações, Letras e Splits —, o cabeçalho com o ponto do
 // status ao lado do título da faixa, e o rodapé fixo com "Excluir música" e "Salvar".
 //
-// O que esta ficha ainda NÃO tem, e a da web tem: a capa, o arquivo de áudio e a lista de
-// versões. Os três pedem seletor de arquivo nativo, que é uma dependência a instalar e um
-// rebuild — entram na próxima passada.
+// A capa vem da galeria e as versões do seletor de arquivos do sistema; as duas sobem pelo MESMO
+// caminho da web (`enviarArquivo`, no núcleo), para o arquivo cair no mesmo lugar e com o mesmo
+// nome, venha de onde vier.
 
 /** `2026-08-29` → `29/08/2026`. */
 const paraBR = (iso?: string | null) => (iso ? dayjs(iso).format('DD/MM/YYYY') : '');
@@ -119,21 +122,24 @@ const LinhaDeSplit = ({ split, aoMudar, aoRemover }: {
 );
 
 export const FichaDaFaixa = ({
-  aberta, artistaId, faixa, generos, aoFechar, aoSalvar, aoExcluir,
+  aberta, artistaId, faixa, generos, autor, aoFechar, aoSalvar, aoExcluir, aoMudarVersoes,
 }: {
   aberta: boolean;
   artistaId: string;
   faixa: CatalogItem | null;
   generos: string[];
+  autor: { id?: string | null; nome?: string | null };
   aoFechar: () => void;
   aoSalvar: (f: CatalogItem) => void;
   aoExcluir: (id: string) => void;
+  aoMudarVersoes: () => void;
 }) => {
   const [rascunho, setRascunho] = useState<Partial<CatalogItem>>({});
   const [dataEscrita, setDataEscrita] = useState('');
   const [gravando, setGravando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [aba, setAba] = useState<Aba>('informacoes');
+  const [enviandoCapa, setEnviandoCapa] = useState(false);
 
   useEffect(() => {
     if (!aberta) return;
@@ -153,6 +159,21 @@ export const FichaDaFaixa = ({
     mudar({ [qual]: lista } as Partial<CatalogItem>);
 
   const somar = (lista: Split[]) => lista.reduce((n, s) => n + (Number(s.percentage) || 0), 0);
+
+  const trocarCapa = async () => {
+    setErro(null);
+    try {
+      const escolhida = await escolherImagem();
+      if (!escolhida) return;
+      setEnviandoCapa(true);
+      const enviada = await enviarParaOCatalogo(`${artistaId}/covers`, escolhida);
+      mudar({ cover_image: enviada.url, cover_image_name: enviada.name });
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não consegui enviar a capa.');
+    } finally {
+      setEnviandoCapa(false);
+    }
+  };
 
   const salvar = async () => {
     if (!rascunho.title?.trim()) {
@@ -395,6 +416,57 @@ export const FichaDaFaixa = ({
                   </Campo>
                 </View>
               </View>
+
+              <Campo rotulo="Capa">
+                <Pressable
+                  style={estilos.capa}
+                  onPress={trocarCapa}
+                  disabled={enviandoCapa}
+                  accessibilityRole="button"
+                  accessibilityLabel={rascunho.cover_image ? 'Trocar a capa' : 'Escolher a capa'}
+                >
+                  {enviandoCapa ? (
+                    <ActivityIndicator color={COR.primaria} />
+                  ) : rascunho.cover_image ? (
+                    <>
+                      <Image source={{ uri: rascunho.cover_image }} style={estilos.capaImagem} />
+                      <View style={estilos.flex}>
+                        <Text style={estilos.capaNome} numberOfLines={1}>
+                          {rascunho.cover_image_name || 'Capa da música'}
+                        </Text>
+                        <Text style={estilos.capaApoio}>Toque para trocar</Text>
+                      </View>
+                      <Pressable
+                        onPress={() => mudar({ cover_image: null, cover_image_name: null })}
+                        hitSlop={10}
+                        accessibilityRole="button"
+                        accessibilityLabel="Remover a capa"
+                      >
+                        <Feather name="x" size={18} color={COR_CATALOGO.legenda} />
+                      </Pressable>
+                    </>
+                  ) : (
+                    <>
+                      <View style={estilos.capaVazia}>
+                        <Feather name="image" size={18} color={COR_CATALOGO.legenda} />
+                      </View>
+                      <View style={estilos.flex}>
+                        <Text style={estilos.capaNome}>Escolher a capa</Text>
+                        <Text style={estilos.capaApoio}>PNG ou JPG</Text>
+                      </View>
+                    </>
+                  )}
+                </Pressable>
+              </Campo>
+
+              <Campo rotulo="Versões">
+                <Versoes
+                  artistaId={artistaId}
+                  projetoId={faixa?.project_id}
+                  autor={autor}
+                  aoMudar={aoMudarVersoes}
+                />
+              </Campo>
             </>
           )}
 
@@ -582,6 +654,18 @@ const estilos = StyleSheet.create({
   opcaoTexto: { fontSize: 13, fontWeight: '700', color: COR.secundario },
   opcaoTextoEscolhido: { color: COR.primaria },
   pontoDoStatus: { width: 7, height: 7, borderRadius: 4 },
+  capa: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 62, padding: 10,
+    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR.contorno,
+    borderStyle: 'dashed',
+  },
+  capaImagem: { width: 42, height: 42, borderRadius: 8 },
+  capaVazia: {
+    width: 42, height: 42, borderRadius: 8, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COR_CATALOGO.tocarFundo,
+  },
+  capaNome: { fontSize: 13, fontWeight: '700', color: COR_CATALOGO.titulo },
+  capaApoio: { fontSize: 11, color: COR_CATALOGO.legenda, marginTop: 2 },
   sugestoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   sugestao: {
     paddingVertical: 6, paddingHorizontal: 10,

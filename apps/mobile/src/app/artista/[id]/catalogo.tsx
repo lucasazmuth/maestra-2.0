@@ -1,5 +1,5 @@
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, FlatList, Image, Linking, Pressable, RefreshControl,
@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { useArtistaDaRota } from '@/nucleo/artista';
+import { useSessao } from '@/nucleo/sessao';
 
 type Aba = 'musicas' | 'lancamentos';
 
@@ -68,6 +69,7 @@ export default function Catalogo() {
   const [editando, setEditando] = useState<CatalogItem | null>(null);
 
   const margem = useSafeAreaInsets();
+  const { sessao } = useSessao();
   const player = useAudioPlayer();
   const status = useAudioPlayerStatus(player);
 
@@ -266,25 +268,35 @@ export default function Catalogo() {
             const temAudio = !!item.audio_file;
             return (
               <Pressable
-                style={({ pressed }) => [estilos.linha, pressed && temAudio && estilos.pressionada]}
-                onPress={() => alternar(item)}
-                disabled={!temAudio}
+                style={({ pressed }) => [estilos.linha, pressed && estilos.pressionada]}
+                // A linha abre o ESPAÇO JAM, como na web: a lista é o índice das músicas, e a
+                // música em si mora lá. Tocar é o botão da esquerda, e editar é o "⋮" — três
+                // intenções, três alvos. Antes a linha inteira tocava, e não havia como chegar
+                // ao Espaço Jam pelo app.
+                onPress={() => router.push(`/jam/${id}/${item.project_id || item.id}`)}
                 accessibilityRole="button"
-                accessibilityLabel={
-                  temAudio
-                    ? `${eAtual && status.playing ? 'Pausar' : 'Tocar'} ${item.title}`
-                    : `${item.title}, sem áudio`
-                }
+                accessibilityLabel={`Abrir o Espaço JAM de ${item.title}`}
               >
                 {/* O tocar fica a ESQUERDA e e o primeiro elemento da linha, como na web — a
                     capa quadrada que estava aqui nao existe la. */}
-                <View style={estilos.botao}>
+                <Pressable
+                  style={estilos.botao}
+                  onPress={() => alternar(item)}
+                  disabled={!temAudio}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    temAudio
+                      ? `${eAtual && status.playing ? 'Pausar' : 'Tocar'} ${item.title}`
+                      : `${item.title}, sem áudio`
+                  }
+                >
                   <Feather
                     name={eAtual && status.playing ? 'pause' : 'play'}
                     size={16}
                     color={temAudio ? COR_CATALOGO.tocarIcone : COR.contorno}
                   />
-                </View>
+                </Pressable>
                 <View style={estilos.flex}>
                   <Text style={estilos.titulo} numberOfLines={1}>{item.title}</Text>
                   {/* A legenda junta versão, gênero e lançamento numa linha só, como na web. */}
@@ -329,9 +341,13 @@ export default function Catalogo() {
           artistaId={artista.id}
           faixa={editando}
           generos={generos}
+          autor={{ id: sessao?.user.id, nome: sessao?.user.user_metadata?.full_name }}
           aoFechar={() => setFichaAberta(false)}
           aoSalvar={guardar}
           aoExcluir={remover}
+          // Anexar versão muda o áudio principal da faixa: a lista precisa reler para o play
+          // apontar para o arquivo novo.
+          aoMudarVersoes={buscar}
         />
       )}
 

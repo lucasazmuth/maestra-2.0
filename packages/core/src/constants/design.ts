@@ -552,3 +552,52 @@ export const COR_ENTRADA = {
   linkSecundario: '#4267b9',
   erro: '#d2474b',
 } as const;
+
+/**
+ * O Espaço JAM — a tela da MÚSICA vista pela gravação.
+ *
+ * Na web ela é `position: fixed; inset: 0`: cobre o app inteiro, some o topo, o rail e a barra.
+ * No app, portanto, ela mora FORA das abas do artista, e não dentro do catálogo.
+ *
+ * O layout em 375px é de cima para baixo: etiqueta "ESPAÇO JAM", linha
+ * [voltar] título [status] [editar], a ficha técnica em 2×2 (BPM, Tom, Gênero, Lançamento), o
+ * botão Upload e a lista de versões; embaixo, o chat do projeto. Os dois blocos sangram até as
+ * bordas (a folha cancela o recuo da página com margem negativa de 18px), sem cantos e sem
+ * bordas laterais — o que os separa é o fio de cima e o de baixo.
+ *
+ * Os valores saem de `src/pages/Catalog/ProjectSpace.module.scss` (bloco `max-width: 760px`) e
+ * do DOM computado a 375px; `src/__tests__/cromoDoEspacoJam.test.ts` os amarra lá.
+ */
+export const COR_JAM = {
+  fundoDe: '#f9fbff',
+  fundoAte: '#eef4ff',
+  mancha: 'rgba(47, 96, 246, .08)',
+  painel: 'rgba(255, 255, 255, .86)',
+  painelDoChat: 'rgba(255, 255, 255, .9)',
+  fio: '#dce6f7',
+  texto: '#405985',
+  titulo: '#2f4164',
+  rotulo: '#8ca0c5',
+  apoio: '#7f92b6',
+  legenda: '#5d7198',
+  botaoRedondo: 'rgba(255, 255, 255, .92)',
+  cabecaDaVersao: '#f6f9ff',
+  semAudio: '#fbfcff',
+  contornoDaVersao: '#dce6f7',
+  contornoDaPrincipal: 'rgba(47, 96, 246, .28)',
+  cracha: '#5f76a3',
+  crachaContorno: '#d6e2f7',
+  estrela: '#b7c4da',
+  estrelaAcesa: '#e0ad3c',
+  acaoFundo: '#eef4ff',
+  acaoIcone: '#405985',
+  vazioContorno: '#c8d7f0',
+  entradaFundo: '#f8fbff',
+  avatarDe: '#9a4fd1',
+  avatarAte: '#2f60f6',
+  /** O status sem cor própria cai neste amarelo, e a pílula escolhe a tinta pela luminância. */
+  statusPadrao: '#edc663',
+  tintaEscura: '#181818',
+  apoioDoVazio: '#6f83aa',
+  papel: '#ffffff',
+} as const;
