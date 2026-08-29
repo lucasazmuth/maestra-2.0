@@ -12,7 +12,6 @@ import { cancelSubscription } from '@maestra/core/store/slices/subscription';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import SubscriptionManagement from './SubscriptionManagement';
 import { disableWebPush, enableWebPush, hasWebPushSubscription, isWebPushSupported, syncWebPushSubscription } from '../../services/pushNotifications';
-import { SUPPORT_EMAIL } from '@maestra/core/constants/legal';
 
 const Settings: FC = () => {
   const navigate = useNavigate();
@@ -154,8 +153,11 @@ const Settings: FC = () => {
   };
 
   // Cancelar cadastro: 1) encerra a assinatura na Asaas (se houver) pra não seguir cobrando;
-  // 2) grava o pedido em account_deletion_requests (data + contexto, p/ auditoria LGPD);
-  // 3) sem endpoint self-service de exclusão, o pedido segue pro suporte por e-mail.
+  // 2) grava o pedido em account_deletion_requests (data + contexto, p/ auditoria LGPD).
+  //
+  // O passo 3 saiu: o pedido NÃO vai mais por e-mail pro suporte. O cron `account-purge-due`
+  // cumpre a fila sozinho quando o prazo vence, e continuar avisando por e-mail geraria
+  // trabalho manual para algo que já acontece — com o risco de alguém executar duas vezes.
   const requestAccountDeletion = async () => {
     if (!user) return;
     setDeleting(true);
@@ -185,12 +187,7 @@ const Settings: FC = () => {
       });
       if (auditError) console.error('Falha ao registrar pedido de cancelamento:', auditError);
 
-      message.success('Pedido de cancelamento registrado. Você será desconectado.');
-
-      // Notifica o suporte SEM navegar o app (location.href para mailto congela a SPA).
-      const subject = encodeURIComponent('Cancelamento de cadastro');
-      const body = encodeURIComponent(`Solicito o cancelamento do meu cadastro na Maestra (${user.email || ''}).`);
-      window.open(`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`, '_blank');
+      message.success('Pedido registrado. Sua conta será apagada em 30 dias. Você será desconectado.');
 
       // Conta em processo de exclusão não fica logada: encerra a sessão e volta pro login.
       await dispatch(authActions.signOut());
@@ -378,15 +375,20 @@ const Settings: FC = () => {
       {/* Conta */}
       <section className='settings-danger-card'>
         <h2>Conta</h2>
+        {/* A copy diz o PRAZO. Antes prometia remoção imediata e permanente, e as duas metades
+            estavam erradas: a exclusão acontece em 30 dias, e quem se arrepende nesse intervalo
+            não fazia ideia de que ainda dava tempo de pedir de volta. */}
         <p>
-          Cancelar o cadastro encerra sua conta e remove seus dados. Esta ação é permanente e não pode ser desfeita.
+          Cancelar o cadastro coloca sua conta e seus dados na fila de exclusão. Eles são apagados
+          definitivamente em 30 dias — prazo que existe para você poder desistir e para proteger
+          contas invadidas. Depois disso, não há como desfazer.
         </p>
         <Popconfirm
           title='Cancelar cadastro?'
           description={
             hasBillableSubscription
-              ? 'Sua assinatura Maestra PRO será cancelada e sua conta e seus dados serão removidos. Esta ação é permanente.'
-              : 'Sua conta e seus dados serão removidos. Esta ação é permanente.'
+              ? 'Sua assinatura Maestra PRO será cancelada agora, e sua conta e seus dados serão apagados em 30 dias.'
+              : 'Sua conta e seus dados serão apagados em 30 dias.'
           }
           okText='Sim, cancelar cadastro'
           okButtonProps={{ danger: true, loading: deleting }}
