@@ -410,6 +410,11 @@ export const COR_AGENDA = {
   abaAtivaFundo: '#ffffff',
   abaAtivaTexto: '#3361ff',
   fio: '#e5e7eb',
+  /** O trilho onde as abas Dia/Mês/Ano vivem. */
+  abasFundo: '#eef2f8',
+  faixa: '#eef1f7',
+  diaDeFora: '#aab7cc',
+  hoje: '#3361ff',
 } as const;
 
 /**

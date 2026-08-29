@@ -33,6 +33,16 @@ describe('ordem do boot', () => {
 
   // O registro tem que acontecer no IMPORT do módulo, não só quando alguém chama a função —
   // senão o entry importaria um módulo que não faz nada.
+  // O dayjs nasce em inglês e a Agenda escreve o mês por extenso — "29 de August de 2026" foi o
+  // que apareceu na tela antes disto.
+  it('o idioma das datas é carregado no boot', () => {
+    const entry = fs.readFileSync(path.join(app, 'index.js'), 'utf8');
+    expect(entry).toContain("import './src/nucleo/idioma'");
+
+    const idioma = fs.readFileSync(path.join(app, 'src', 'nucleo', 'idioma.ts'), 'utf8');
+    expect(idioma).toContain("dayjs.locale('pt-br')");
+  });
+
   it('o módulo do ambiente registra ao ser importado', () => {
     const fonte = fs.readFileSync(path.join(app, 'src', 'nucleo', 'ambienteApp.ts'), 'utf8');
     const semComentarios = fonte.replace(/^\s*\/\/.*$/gm, '');

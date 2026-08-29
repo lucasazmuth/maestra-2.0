@@ -9,7 +9,10 @@
 // módulo, então `store`/`supabase` já tinham lido — do depósito em memória, e não do MMKV. O
 // app abria logado assim mesmo, mas por corrida: a leitura seguinte já pegava o depósito certo.
 //
+// O idioma entra junto: o dayjs nasce em inglês, e a agenda mostra o mês por extenso.
+//
 // `src/nucleo/__tests__/ordemDoBoot.test.ts` guarda esta ordem.
 import './src/nucleo/ambienteApp';
+import './src/nucleo/idioma';
 
 import 'expo-router/entry';
