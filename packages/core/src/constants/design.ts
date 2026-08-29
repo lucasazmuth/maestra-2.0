@@ -268,3 +268,30 @@ export const COR_MAPA = {
     career: { contorno: '#d64550', texto: '#b5323d' },
   },
 } as const;
+
+/**
+ * A Nyta — o skin claro do chat.
+ *
+ * As bolhas têm cantos assimétricos: a da Nyta é quadrada no canto de baixo à esquerda, a do
+ * artista no de baixo à direita — é o rabinho que diz quem falou, sem precisar de rótulo. Os
+ * valores saem de `.nyta-surface` em `src/styles/gsap-reference.css`, e
+ * `src/__tests__/cromoDaNyta.test.ts` os amarra lá.
+ */
+export const COR_NYTA = {
+  fundo: '#f7f9fc',
+  bolha: '#ffffff',
+  bolhaContorno: '#e3eaf3',
+  bolhaTexto: '#60749a',
+  bolhaDoArtista: '#eaf0ff',
+  textoDoArtista: '#4267b9',
+  barraContorno: '#e8edf4',
+  campoContorno: '#dce5f0',
+  espacoReservado: '#aebbd0',
+  aviso: '#9aa8be',
+  limiteFundo: '#f4f7fc',
+  limiteContorno: '#d9e2f0',
+  limiteTitulo: '#52688f',
+  limiteTexto: '#8b9bb5',
+  erroFundo: '#fff5f5',
+  erroContorno: '#f5d7d7',
+} as const;

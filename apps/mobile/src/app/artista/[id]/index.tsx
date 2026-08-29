@@ -139,7 +139,12 @@ export default function Inicio() {
                 <View style={[estilos.bolinha, { backgroundColor: CORES_DOS_NUMEROS[i] }]} />
                 <Text style={estilos.rotuloDoNumero}>{rotulo}</Text>
               </View>
-              <Text style={estilos.numero}>{valor}</Text>
+              {/* Um artista grande tem oito dígitos de ouvintes (38.799.335), e em duas
+                  colunas isso quebra em duas linhas dentro do cartão. Encolher a fonte só
+                  quando não couber mantém o número inteiro e não mexe em nada quando cabe. */}
+              <Text style={estilos.numero} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+                {valor}
+              </Text>
               <Text style={[estilos.apoioDoNumero, { color: CORES_DOS_NUMEROS[i] }]}>{apoio}</Text>
             </View>
           ))}

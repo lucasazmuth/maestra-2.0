@@ -2,139 +2,20 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { FiCheck, FiX, FiLoader } from 'react-icons/fi';
 
 import type { PendingToolCall } from '@maestra/core/store/slices/nytaChat';
+import {
+  buildActionSummary, formatArgValue, HIDDEN_ARG_KEYS, translateArgLabel, translateToolName,
+} from '@maestra/core/nucleo/acoesDaNyta';
 
 import './ToolConfirmationCard.scss';
 
-// ─── Tool Name Translation Map ────────────────────────────────────────────────
+// As tabelas de tradução e o resumo moram no núcleo: o app nativo mostra o MESMO cartão, e o
+// texto dele É o consentimento da pessoa. Reexportados porque os testes deste diretório os
+// importam daqui.
+export {
+  translateToolName, buildActionSummary, translateArgLabel, formatArgValue, HIDDEN_ARG_KEYS,
+} from '@maestra/core/nucleo/acoesDaNyta';
 
-const TOOL_NAME_PT: Record<string, string> = {
-  create_catalog_item: 'Criar item em Músicas',
-  update_catalog_item: 'Atualizar item em Músicas',
-  delete_catalog_item: 'Remover item de Músicas',
-  create_event: 'Criar evento',
-  update_event: 'Atualizar evento',
-  delete_event: 'Remover evento',
-  create_team_member: 'Adicionar membro à equipe',
-  update_team_member: 'Atualizar membro da equipe',
-  remove_team_member: 'Remover membro da equipe',
-  update_strategy_task: 'Atualizar tarefa estratégica',
-  update_plan_task: 'Atualizar tarefa do plano de ação',
-  create_strategy: 'Criar estratégia',
-  create_task: 'Criar tarefa',
-};
-
-// ─── Argument Label Translation ───────────────────────────────────────────────
-
-const ARG_LABELS_PT: Record<string, string> = {
-  title: 'Título',
-  name: 'Nome',
-  status: 'Status',
-  genre: 'Gênero',
-  date: 'Data',
-  description: 'Descrição',
-  role: 'Papel',
-  email: 'Email',
-  type: 'Tipo',
-  location: 'Local',
-  venue: 'Local',
-  time: 'Horário',
-  artist_id: 'Artista',
-  id: 'ID',
-  task_id: 'Tarefa',
-  task_query: 'Tarefa',
-  strategy_query: 'Estratégia',
-  notes: 'Notas',
-  priority: 'Prioridade',
-  due_date: 'Data de entrega',
-  objective: 'Objetivo',
-  tasks: 'Tarefas',
-  start_time: 'Horário',
-  end_time: 'Término',
-  release_date: 'Lançamento',
-  item_id: 'Item',
-  event_id: 'Evento',
-  member_id: 'Membro',
-  lyrics: 'Letra',
-  duration: 'Duração',
-  key: 'Tom',
-  bpm: 'BPM',
-  isrc: 'ISRC',
-  upc: 'UPC',
-  access_levels: 'Acesso',
-};
-
-// Valores de enum que chegam em "código" → rótulo amigável (status de catálogo/evento, tipo, prioridade).
-const ENUM_VALUES_PT: Record<string, string> = {
-  // prioridade
-  alta: 'Alta', media: 'Média', baixa: 'Baixa',
-  // status de catálogo
-  composition: 'Composição', production: 'Produção', mixing: 'Mixagem',
-  mastering: 'Masterização', ready: 'Pronta', released: 'Lançada',
-  // status de evento
-  scheduled: 'Agendado', confirmed: 'Confirmado', cancelled: 'Cancelado', completed: 'Concluído',
-  // status de tarefa do plano de ação
-  todo: 'A fazer', in_progress: 'Em andamento', done: 'Concluída', archived: 'Arquivada',
-  // tipo de evento
-  show: 'Show', reuniao: 'Reunião', estudio: 'Estúdio', ensaio: 'Ensaio', entrevista: 'Entrevista', outro: 'Outro',
-};
-
-// Só traduz enum quando a CHAVE é de enum — evita trocar um título tipo "Show" ou "Released".
-const ENUM_KEYS = new Set(['status', 'type', 'priority']);
-
-// Chaves internas que não interessam ao artista (artist_id é injetado pelo servidor; os *_id
-// são UUIDs de roteamento). Escondidas do card — a ação + os campos com sentido já bastam,
-// e a conversa deixa claro de qual item se trata.
-const HIDDEN_ARG_KEYS = new Set(['artist_id', 'id', 'item_id', 'event_id', 'member_id']);
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const SUMMARY_MAX_CHARS = 200;
 const TIMEOUT_MS = 30_000;
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Translate tool name to Portuguese action description.
- */
-export function translateToolName(name: string): string {
-  return TOOL_NAME_PT[name] || name;
-}
-
-/**
- * Translate an argument key to a Portuguese label.
- */
-function translateArgLabel(key: string): string {
-  return ARG_LABELS_PT[key] || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-/**
- * Format an argument value for display. Handles primitives and objects.
- */
-function formatArgValue(value: unknown, key?: string): string {
-  if (value === null || value === undefined) return '—';
-  if (typeof value === 'string') return (key && ENUM_KEYS.has(key) && ENUM_VALUES_PT[value]) || value;
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  // Arrays viram texto legível (sem colchetes/aspas do JSON).
-  if (Array.isArray(value)) return value.map((v) => formatArgValue(v)).join(', ');
-  return JSON.stringify(value);
-}
-
-/**
- * Build a summarized description of the action, truncated to SUMMARY_MAX_CHARS.
- */
-export function buildActionSummary(name: string, args: Record<string, unknown>): string {
-  const actionName = translateToolName(name);
-  const argParts = Object.entries(args)
-    .filter(([key]) => !HIDDEN_ARG_KEYS.has(key))
-    .filter(([, val]) => !Array.isArray(val)) // listas (ex.: tarefas) vão no detalhe, não no resumo
-    .map(([key, val]) => `${translateArgLabel(key)}: ${formatArgValue(val, key)}`)
-    .join(', ');
-
-  const full = argParts ? `${actionName} — ${argParts}` : actionName;
-
-  if (full.length <= SUMMARY_MAX_CHARS) return full;
-  return full.slice(0, SUMMARY_MAX_CHARS - 1) + '…';
-}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 

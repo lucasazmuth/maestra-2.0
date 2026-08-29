@@ -1,3 +1,4 @@
+import { fetch as buscarComStream } from 'expo/fetch';
 import * as Linking from 'expo-linking';
 import { createMMKV, type MMKV } from 'react-native-mmkv';
 
@@ -42,5 +43,10 @@ export const ligarAmbienteDoApp = (): void => {
     // O retorno do OAuth e do link de convite: no app e o deep link, nao uma URL http.
     // `createURL` da o esquema certo em desenvolvimento (exp://) e em producao (maestra://).
     origemDoApp: Linking.createURL('/').replace(/\/$/, ''),
+    // O `fetch` do React Native devolve `Response` SEM `body`: quem le a resposta em pedacos —
+    // a Nyta — receberia o texto inteiro so no fim, sem erro nenhum, parecendo lentidao. O
+    // `expo/fetch` tem `body` como `ReadableStream`, e o Expo ja traz o `TextDecoder` que o
+    // leitor usa.
+    buscar: buscarComStream as unknown as typeof fetch,
   });
 };

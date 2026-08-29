@@ -41,6 +41,7 @@ export default function CascaDoArtista() {
         <Tabs.Screen name="equipe" />
         <Tabs.Screen name="perfil" />
         <Tabs.Screen name="marketing" />
+        <Tabs.Screen name="nyta" />
       </Tabs>
     </View>
   );

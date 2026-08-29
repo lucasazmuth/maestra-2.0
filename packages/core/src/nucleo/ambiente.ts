@@ -29,6 +29,18 @@ export interface Ambiente {
    * e-mail de convite. Na web é a origem da página; no app será o esquema do deep link.
    */
   origemDoApp: string;
+  /**
+   * O `fetch` que sabe fazer STREAMING.
+   *
+   * O `fetch` do React Native devolve uma `Response` sem `body` — ele lê a resposta inteira e
+   * só então entrega o texto. Para quase tudo dá no mesmo; para a Nyta, não: a tela abriria e
+   * ficaria parada até a resposta terminar, e depois cuspiria o texto de uma vez. Sem erro
+   * nenhum, o que é pior — parece lentidão, não defeito.
+   *
+   * O `expo/fetch` tem `body` como `ReadableStream`, então o app registra ele aqui. Na web o
+   * `fetch` global já basta.
+   */
+  buscar: typeof fetch;
 }
 
 /**
@@ -112,13 +124,14 @@ const padrao = (): Ambiente => {
           'Usando memória: nada sobrevive ao fechamento. Chame configurarAmbiente() no boot.'
       );
     }
-    return { armazenamento: emMemoria(), sessao: emMemoria(), origemDoApp: '' };
+    return { armazenamento: emMemoria(), sessao: emMemoria(), origemDoApp: '', buscar: fetch };
   }
 
   return {
     armazenamento: doNavegador(local),
     sessao: sessao ? doNavegador(sessao) : emMemoria(),
     origemDoApp: g.location?.origin ?? '',
+    buscar: fetch,
   };
 };
 

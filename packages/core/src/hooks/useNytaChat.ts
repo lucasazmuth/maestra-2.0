@@ -23,10 +23,15 @@ import {
 } from '../store/slices/nytaChat';
 import { useNytaModalStore } from '../stores/nytaModalStore';
 import { useRota } from '../nucleo/rota';
+import { ambiente } from '../nucleo/ambiente';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const uid = () => crypto.randomUUID?.() ?? Math.random().toString(36).slice(2, 14);
+// `globalThis.crypto`, e não `crypto` direto: no React Native esse global NÃO EXISTE, e o `?.`
+// da linha só protegia a CHAMADA — avaliar o nome já estourava `ReferenceError`. O sintoma era
+// a mensagem sumir ao enviar, sem nada na tela dizendo por quê.
+const uid = () =>
+  globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 14);
 
 const SUPABASE_URL =
   process.env.REACT_APP_SUPABASE_URL || 'https://tpwmzcgtidaxgxwqfxwf.supabase.co';
@@ -391,7 +396,9 @@ export function useNytaChat(
         : body;
 
       try {
-        const response = await fetch(`${SUPABASE_URL}/functions/v1/nyta-chat`, {
+        // `ambiente().buscar`, e não o `fetch` global: no app nativo o global não faz
+        // streaming, e a resposta chegaria inteira no fim (ver `nucleo/ambiente`).
+        const response = await ambiente().buscar(`${SUPABASE_URL}/functions/v1/nyta-chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

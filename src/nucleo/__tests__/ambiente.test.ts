@@ -74,7 +74,7 @@ describe('ambiente', () => {
   describe('configurado pela superfície', () => {
     it('o app substitui o depósito e o navegador não é mais tocado', () => {
       const proprio = memoria();
-      configurarAmbiente({ armazenamento: proprio, sessao: memoria(), origemDoApp: 'maestra://' });
+      configurarAmbiente({ armazenamento: proprio, sessao: memoria(), origemDoApp: 'maestra://', buscar: fetch });
 
       ambiente().armazenamento.gravar('token', 'abc');
 
@@ -87,8 +87,32 @@ describe('ambiente', () => {
       // `store.ts` monta o Redux durante o import. Se a porta resolvesse cedo, o app nativo não
       // teria como se registrar a tempo.
       expect(ambiente().origemDoApp).toBe(window.location.origin);
-      configurarAmbiente({ armazenamento: memoria(), sessao: memoria(), origemDoApp: 'maestra://' });
+      configurarAmbiente({ armazenamento: memoria(), sessao: memoria(), origemDoApp: 'maestra://', buscar: fetch });
       expect(ambiente().origemDoApp).toBe('maestra://');
     });
+  });
+});
+
+// A porta de `fetch` existe por causa de uma diferença que não dá erro nenhum: o `fetch` do
+// React Native devolve uma `Response` SEM `body`, então quem lê a resposta em pedaços (a Nyta)
+// receberia o texto inteiro no fim e pareceria só lentidão. O app registra o `expo/fetch`, que
+// tem `body`; a web não precisa configurar nada.
+describe('a porta de busca', () => {
+  afterEach(() => reiniciarAmbiente());
+
+  it('sem configuração, é o fetch global', () => {
+    expect(ambiente().buscar).toBe(fetch);
+  });
+
+  it('a superfície pode trocar por um que saiba fazer streaming', async () => {
+    const proprio = jest.fn().mockResolvedValue(new Response('ok'));
+    configurarAmbiente({
+      armazenamento: memoria(), sessao: memoria(), origemDoApp: 'maestra://', buscar: proprio,
+    });
+
+    await ambiente().buscar('https://exemplo/x');
+
+    expect(proprio).toHaveBeenCalledWith('https://exemplo/x');
+    expect(ambiente().buscar).not.toBe(fetch);
   });
 });
