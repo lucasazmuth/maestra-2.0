@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
+import { EspacoJamIcon } from '@/icones';
 import { useArtistaDaRota } from '@/nucleo/artista';
 import { useSessao } from '@/nucleo/sessao';
 
@@ -316,6 +317,20 @@ export default function Catalogo() {
                     <Text style={[estilos.statusTexto, { color: rotulo.color }]}>{rotulo.label}</Text>
                   </View>
                 )}
+                {/* A linha inteira já abre o Espaço Jam, mas isso não se descobre olhando —
+                    o botão nomeia o destino. O rótulo "Espaço Jam" que a web mostra no desktop
+                    sai no celular (custava 107px dos 319 da linha); o ícone fica, senão o
+                    atalho desaparece: não há `title` que se revele no toque. */}
+                <Pressable
+                  style={estilos.jam}
+                  onPress={() => router.push(`/jam/${id}/${item.project_id || item.id}`)}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abrir o Espaço Jam de ${item.title}`}
+                >
+                  <EspacoJamIcon size={15} color={COR_CATALOGO.jam} />
+                </Pressable>
+
                 {/* O "⋮" abre a ficha para editar, como na web. Ele fica fora do toque da linha:
                     tocar na linha toca a música, e editar é outra intenção. */}
                 {direitos.canEditCatalog && (
@@ -457,6 +472,12 @@ const estilos = StyleSheet.create({
   abaAcesa: { backgroundColor: COR.primaria },
   abaTexto: { fontSize: 13, fontWeight: '800', color: COR_CATALOGO.tocarIcone },
   abaTextoAceso: { color: COR.sobrePrimaria },
+  // A pílula do Espaço Jam: os mesmos 30px de altura e o raio de 999 da web, com o rótulo
+  // omitido — no celular ele custava um terço da linha.
+  jam: {
+    height: 30, paddingHorizontal: 12, borderRadius: 999,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: COR_CATALOGO.jamFundo,
+  },
   mais: { width: 28, alignItems: 'center', justifyContent: 'center' },
   espera: { marginTop: 48 },
   conteudo: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 122 },

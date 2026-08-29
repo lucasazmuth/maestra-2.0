@@ -177,6 +177,16 @@ describe('espaço jam', () => {
     expect(tela.getByText('0:42')).toBeTruthy();
   });
 
+  // A onda é do wavesurfer, dentro de um WebView; o que é NOSSO aqui é o atalho para a
+  // visualização completa — a tela em que o comentário se prende a um ponto do áudio.
+  it('o botão de expandir abre o Espaço da versão', async () => {
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await usuario.press(await tela.findByLabelText('Abrir a visualização completa de V1'));
+    expect(mockPush).toHaveBeenCalledWith('/jam/a-1/p-1/v-1');
+  });
+
   it('sem versões, convida a mandar a primeira', async () => {
     mockBuscar.mockResolvedValue(projeto({ versions: [], primary_version_id: null }));
     const tela = await montar();

@@ -19,6 +19,7 @@ import { supabase } from '@maestra/core/lib/supabase';
 import * as catalogo from '@maestra/core/services/db/catalog';
 
 import { ComentariosDaVersao } from '@/casca/jam/ComentariosDaVersao';
+import { Onda, SemOnda } from '@/casca/jam/Onda';
 import { FolhaDaVersao } from '@/casca/jam/FolhaDaVersao';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { escolherAudio, type ArquivoEscolhido } from '@/nucleo/arquivos';
@@ -138,7 +139,6 @@ export default function EspacoJam() {
   const [comentando, setComentando] = useState<CatalogVersion | null>(null);
   const [contagens, setContagens] = useState<Record<string, number>>({});
   const [tocandoId, setTocandoId] = useState<string | null>(null);
-  const [larguras, setLarguras] = useState<Record<string, number>>({});
   const player = useAudioPlayer();
   const estadoDoSom = useAudioPlayerStatus(player);
 
@@ -234,13 +234,17 @@ export default function EspacoJam() {
   const mudar = (parte: Partial<CatalogProject>) =>
     setProjeto((atual) => (atual ? { ...atual, ...parte } : atual));
 
-  // Onde a onda da web fica, aqui fica uma barra — e a barra precisa fazer o que a onda faz de
-  // útil além de desenhar: levar a reprodução ao ponto tocado. Sem isso ela é enfeite, e uma mix
-  // de quatro minutos vira quatro minutos de espera para conferir o refrão.
-  const buscarNoAudio = (versao: CatalogVersion, x: number, largura: number) => {
-    if (tocandoId !== versao.id || !estadoDoSom.duration || largura <= 0) return;
-    const fracao = Math.min(1, Math.max(0, x / largura));
-    player.seekTo(fracao * estadoDoSom.duration);
+  // Tocar na onda leva a reprodução ao ponto tocado — é o `onSeek` do WaveSurfer da web. Se a
+  // versão ainda não está no ar, começa por ela: sem isso, tocar na onda de uma versão parada
+  // não faria nada, e o gesto mais óbvio da tela seria o único sem resposta.
+  const buscarNoAudio = (versao: CatalogVersion, segundo: number) => {
+    if (!versao.audio_file) return;
+    if (tocandoId !== versao.id) {
+      player.replace({ uri: versao.audio_file });
+      setTocandoId(versao.id);
+    }
+    player.seekTo(segundo);
+    player.play();
   };
 
   const tocar = (versao: CatalogVersion) => {
@@ -552,50 +556,13 @@ export default function EspacoJam() {
                           />
                         </Pressable>
                         {versao.audio_file ? (
-                          <View style={estilos.flex}>
-                            {/* A onda do WaveSurfer não existe aqui: ela desenha a partir do
-                                arquivo inteiro baixado, e o app toca por streaming. A barra diz
-                                a mesma coisa que a onda dizia de útil — onde a faixa está. */}
-                            <View
-                              style={estilos.alvoDoTrilho}
-                              onStartShouldSetResponder={() => noAr}
-                              onMoveShouldSetResponder={() => noAr}
-                              onResponderGrant={(e) => buscarNoAudio(
-                                versao, e.nativeEvent.locationX, larguras[versao.id] ?? 0,
-                              )}
-                              onResponderMove={(e) => buscarNoAudio(
-                                versao, e.nativeEvent.locationX, larguras[versao.id] ?? 0,
-                              )}
-                              onLayout={(e) => {
-                                const { width } = e.nativeEvent.layout;
-                                setLarguras((atual) => (
-                                  atual[versao.id] === width ? atual : { ...atual, [versao.id]: width }
-                                ));
-                              }}
-                              accessibilityRole="adjustable"
-                              accessibilityLabel={`Posição de V${versao.version_number}`}
-                            >
-                              <View style={estilos.trilho}>
-                                <View
-                                  style={[
-                                    estilos.progresso,
-                                    {
-                                      width: noAr && estadoDoSom.duration
-                                        ? `${Math.min(100, (estadoDoSom.currentTime / estadoDoSom.duration) * 100)}%`
-                                        : '0%',
-                                    },
-                                  ]}
-                                />
-                              </View>
-                            </View>
-                            <Text style={estilos.tempo}>
-                              {noAr
-                                ? `${relogio(estadoDoSom.currentTime)} / ${relogio(estadoDoSom.duration)}`
-                                : versao.duration || '—'}
-                            </Text>
-                          </View>
+                          <Onda
+                            url={versao.audio_file}
+                            segundo={noAr ? estadoDoSom.currentTime : 0}
+                            aoBuscar={(ponto) => buscarNoAudio(versao, ponto)}
+                          />
                         ) : (
-                          <Text style={estilos.semAudioTexto}>Nenhum áudio anexado</Text>
+                          <SemOnda />
                         )}
                       </View>
 
@@ -627,6 +594,16 @@ export default function EspacoJam() {
                           >
                             <Feather name="message-circle" size={15} color={COR_JAM.acaoIcone} />
                             <Text style={estilos.acaoTexto}>{contagens[versao.id] ?? 0}</Text>
+                          </Pressable>
+                          <Pressable
+                            style={estilos.acao}
+                            onPress={() => router.push(`/jam/${artistaId}/${projeto.id}/${versao.id}`)}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              `Abrir a visualização completa de V${versao.version_number}`
+                            }
+                          >
+                            <Feather name="maximize-2" size={15} color={COR_JAM.acaoIcone} />
                           </Pressable>
                           <Pressable
                             style={estilos.acao}
@@ -844,12 +821,6 @@ const estilos = StyleSheet.create({
   crachaTexto: { fontSize: 12, fontWeight: '800', color: COR_JAM.cracha },
 
   reproducao: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 16 },
-  // O alvo é bem mais alto que a barra: 6px de altura é impossível de acertar com o dedo.
-  alvoDoTrilho: { paddingVertical: 14, marginTop: -14 },
-  trilho: { height: 6, borderRadius: 3, backgroundColor: COR_JAM.acaoFundo, overflow: 'hidden' },
-  progresso: { height: 6, borderRadius: 3, backgroundColor: COR.primaria },
-  tempo: { marginTop: 8, fontSize: 12, color: COR_JAM.apoio },
-  semAudioTexto: { flex: 1, fontSize: 13, fontStyle: 'italic', color: COR_JAM.apoio },
 
   rodapeDaVersao: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

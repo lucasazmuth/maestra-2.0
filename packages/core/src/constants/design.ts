@@ -386,6 +386,9 @@ export const COR_CATALOGO = {
   tocarFundo: '#eef3fb',
   tocarIcone: '#60749a',
   contornoDoTopo: '#e1e7f0',
+  /** O atalho do Espaço Jam na linha da música: pílula azul-clara, texto azul-escuro. */
+  jam: '#4267b9',
+  jamFundo: '#edf2ff',
 } as const;
 
 /**
@@ -600,4 +603,78 @@ export const COR_JAM = {
   tintaEscura: '#181818',
   apoioDoVazio: '#6f83aa',
   papel: '#ffffff',
+} as const;
+
+/**
+ * O ESPAÇO DA VERSÃO — a tela cheia de UMA gravação.
+ *
+ * É a única tela ESCURA do produto, e de propósito: aqui não se administra nada, se escuta. O
+ * cabeçalho continua claro (é a saída), o corpo é quase preto com a capa da música ao fundo sob
+ * um degradê, o traço orgânico gira em volta do play enquanto toca, e a conversa da equipe vem
+ * embaixo, também escura.
+ *
+ * A régua de progresso carrega os comentários MARCADOS num ponto do áudio: cada alfinete é um
+ * comentário num segundo, e tocar nele leva a reprodução até lá.
+ *
+ * Os valores saem de `src/styles/gsap-reference.css` (blocos `.track-detail-*`, `.track-player`,
+ * `.track-comment-*`) e do DOM computado a 375px;
+ * `src/__tests__/cromoDoEspacoDaVersao.test.ts` os amarra lá.
+ */
+export const COR_VERSAO = {
+  fundo: '#18213b',
+  cabecalho: '#ffffff',
+  cabecalhoTexto: '#52668d',
+  cabecalhoIcone: '#8ca0bd',
+  cabecalhoApoio: '#a2b0c7',
+  estrelaFundo: '#fdf4de',
+  estrela: '#e0ad3c',
+  palco: '#090c18',
+  veuDe: 'rgba(48, 40, 82, .88)',
+  veuMeio: 'rgba(21, 28, 62, .92)',
+  veuAte: 'rgba(8, 10, 20, .95)',
+  brilho: '#8e3cff',
+  traco: 'rgba(255,255,255,.92)',
+  rotulo: 'rgba(255,255,255,.52)',
+  valor: 'rgba(255,255,255,.86)',
+  relogio: 'rgba(255,255,255,.74)',
+  trilho: 'rgba(255,255,255,.22)',
+  divisoria: 'rgba(255,255,255,.16)',
+  alfinete: '#1479ff',
+  conversaDe: '#080808',
+  conversaAte: '#090b10',
+  contagem: 'rgba(255,255,255,.13)',
+  autor: '#ffffff',
+  data: 'rgba(255,255,255,.45)',
+  fala: 'rgba(255,255,255,.68)',
+  marcado: '#2f8cff',
+  campoFundo: '#171717',
+  campoContorno: 'rgba(255,255,255,.12)',
+  campoTexto: 'rgba(255,255,255,.42)',
+  rotuloDaConversa: '#9aa9c2',
+  sombra: '#000000',
+} as const;
+
+/**
+ * As opções da ONDA da versão — as mesmas nas duas superfícies.
+ *
+ * A web desenha com o wavesurfer.js (`src/pages/Catalog/WaveSurferWaveform.tsx`); o app roda a
+ * MESMA biblioteca dentro de um WebView. Enquanto os dois lerem estas opções daqui, a onda de um
+ * arquivo é o mesmo desenho nos dois — e uma barra a mais no celular deixa de ser possível.
+ *
+ * `height: 60` num contêiner de 62 é o que a folha da web mede; barras de 3px com 4 de vão são o
+ * que dá àquela onda a densidade que ela tem.
+ */
+export const ONDA_DA_VERSAO = {
+  height: 60,
+  waveColor: '#405985',
+  progressColor: '#2f60f6',
+  cursorWidth: 0,
+  barWidth: 3,
+  barGap: 4,
+  barRadius: 3,
+  barMinHeight: 3,
+  normalize: true,
+  interact: true,
+  dragToSeek: true,
+  hideScrollbar: true,
 } as const;

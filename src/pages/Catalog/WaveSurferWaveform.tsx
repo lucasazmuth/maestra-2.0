@@ -1,6 +1,8 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 
+import { ONDA_DA_VERSAO } from '@maestra/core/constants/design';
+
 type WaveSurferWaveformProps = {
   audioUrl: string;
   currentTime: number;
@@ -33,22 +35,9 @@ const WaveSurferWaveform: FC<WaveSurferWaveformProps> = ({ audioUrl, currentTime
     if (!container || !audioUrl) return undefined;
 
     setState('loading');
-    const wavesurfer = WaveSurfer.create({
-      container,
-      url: audioUrl,
-      height: 60,
-      waveColor: '#405985',
-      progressColor: '#2f60f6',
-      cursorWidth: 0,
-      barWidth: 3,
-      barGap: 4,
-      barRadius: 3,
-      barMinHeight: 3,
-      normalize: true,
-      interact: true,
-      dragToSeek: true,
-      hideScrollbar: true,
-    });
+    // As opções moram no núcleo: o app nativo roda o MESMO wavesurfer dentro de um WebView, e
+    // duas cópias desta lista dariam duas ondas diferentes para o mesmo arquivo.
+    const wavesurfer = WaveSurfer.create({ container, url: audioUrl, ...ONDA_DA_VERSAO });
 
     instanceRef.current = wavesurfer;
     wavesurfer.on('ready', () => {
