@@ -7,6 +7,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+import { apagarConta } from "./apagarConta.ts";
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -164,31 +166,11 @@ async function remove(admin: Admin, callerId: string, userId: string) {
   const { data: adm } = await admin.from("platform_admins").select("id").eq("user_id", userId).maybeSingle();
   if (adm) return json({ error: "Não é possível excluir um administrador." }, 400);
 
-  // A ORDEM importa: apaga os artistas PRIMEIRO. O trigger fn_track_artist_deletion grava em
-  // artist_deletions usando o user_id — e isso precisa acontecer com o usuário ainda presente
-  // (senão viola a FK). Só depois limpamos as tabelas cujo FK pra auth.users é NO ACTION
-  // (as com ON DELETE CASCADE somem sozinhas no deleteUser). Se QUALQUER uma dessas ficar pra
-  // trás, o deleteUser falha com "Database error deleting user". Os filhos dessas tabelas
-  // (whatsapp_messages, chat_messages, crm_quote_items etc.) são todos CASCADE, então cair a
-  // linha-pai já os limpa.
-  await admin.from("artists").delete().eq("user_id", userId);
-
-  // Tabelas NO ACTION que apontam pro dono via `user_id`.
-  for (const t of ["artist_deletions", "account_deletion_requests", "artist_members", "nyta_conversations", "whatsapp_instances"]) {
-    await admin.from(t).delete().eq("user_id", userId);
-  }
-  // Tabelas NO ACTION com nome de coluna diferente (dono OU só "ator" do registro).
-  await admin.from("whatsapp_instance_assignments").delete().eq("assigned_by_user_id", userId);
-  await admin.from("chats").delete().eq("created_by", userId);
-  await admin.from("crm_quotes").delete().eq("created_by", userId);
-  // updated_by só marca quem editou por último (pode ser registro de outra pessoa) → zera a ref.
-  await admin.from("crm_quotes").update({ updated_by: null }).eq("updated_by", userId);
-
-  const { error } = await admin.auth.admin.deleteUser(userId);
-  if (error) {
-    console.error("[admin-users] deleteUser:", error.message);
-    return json({ error: `Falha ao excluir: ${error.message}` }, 500);
-  }
+  // A sequência em si vive em `apagarConta.ts` — cópia de `_shared`. Ela ganhou um segundo
+  // chamador (a exclusão pedida pela própria pessoa) e duas cópias divergentes dela seriam a
+  // pior duplicação possível: a divergência só apareceria na hora de apagar.
+  const { erro } = await apagarConta(admin, userId);
+  if (erro) return json({ error: erro }, 500);
   return json({ ok: true });
 }
 

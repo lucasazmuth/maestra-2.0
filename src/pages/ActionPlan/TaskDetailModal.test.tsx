@@ -103,5 +103,8 @@ describe('TaskDetailModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Excluir tarefa' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Excluir' }));
     expect(onDelete).toHaveBeenCalledTimes(1);
-  }, 15000);
+  // O orçamento sobe pelo mesmo motivo do Catalog 5.3: montar o modal inteiro com antd custa
+  // dezenas de segundos quando a máquina tem outra coisa rodando, e um teste que falha sem
+  // ninguém ter mexido no código é pior do que um teste lento.
+  }, 45_000);
 });

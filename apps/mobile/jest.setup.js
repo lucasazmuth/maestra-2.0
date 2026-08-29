@@ -45,9 +45,14 @@ configurarAmbiente({ armazenamento: memoria(), sessao: memoria(), origemDoApp: '
 // token que o cliente do Supabase agenda no import, e a gravacao adiada do redux-persist. Nenhum
 // dos dois e vazamento de verdade — sao servicos que no app rodam a vida toda —, mas num processo
 // de teste eles precisam ser desligados na saida.
+// Encadeado com `?.` de proposito: uma suite que MOCKA `lib/supabase` ou `store/store` nao tem
+// esses objetos, e derrubar a suite inteira num passo de limpeza seria trocar o essencial pelo
+// acessorio — o teste ja passou quando isto roda.
 afterAll(() => {
-  const { supabase } = require('@maestra/core/lib/supabase');
-  supabase.auth.stopAutoRefresh();
-  const { persistor } = require('@maestra/core/store/store');
-  persistor.pause();
+  try {
+    require('@maestra/core/lib/supabase').supabase?.auth?.stopAutoRefresh?.();
+    require('@maestra/core/store/store').persistor?.pause?.();
+  } catch {
+    /* modulo mockado ou nao carregado nesta suite: nada a desligar */
+  }
 });

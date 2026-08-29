@@ -17,6 +17,11 @@ module.exports = {
   // Vale a pena registrar o que ISTO NAO faz: os testes rodam inteiros do mesmo jeito; so a
   // saida do processo e forcada depois que tudo terminou.
   forceExit: true,
+  // O padrao do jest e 5s. Montar uma tela de React Native custa centenas de milissegundos, e
+  // com nove suites em paralelo isso encosta no limite — testes passavam sozinhos e falhavam
+  // juntos, que e o pior tipo de falha: parece regressao e nao e. O numero nao esconde teste
+  // lento; ele reconhece que o custo aqui e de montagem, nao de logica.
+  testTimeout: 20_000,
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   // So arquivos .test: senao os fixtures viram 'suite sem teste' e quebram a rodada.
   testMatch: ['<rootDir>/src/**/*.test.{ts,tsx}'],

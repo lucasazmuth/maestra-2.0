@@ -13,7 +13,6 @@ import type { Artist } from '@maestra/core/interfaces/maestra';
 import { countUnread } from '@maestra/core/services/db/notifications';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
-import { sair } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 
 // Os perfis do usuario.
@@ -119,8 +118,13 @@ export default function Perfis() {
             )}
           </View>
         </Pressable>
-        <Pressable onPress={sair} hitSlop={12}>
-          <Text style={estilos.sair}>Sair</Text>
+        <Pressable
+          onPress={() => router.push('/conta')}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Conta"
+        >
+          <Feather name="user" size={21} color={COR.secundario} />
         </Pressable>
       </View>
 
@@ -172,7 +176,6 @@ const estilos = StyleSheet.create({
   cabecalho: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 },
   marca: { fontSize: 28, fontWeight: '800', color: COR.titulo, letterSpacing: -0.5 },
   legenda: { fontSize: 13, color: COR.apagado, marginTop: 2 },
-  sair: { fontSize: 15, fontWeight: '600', color: COR.secundario },
   bolha: {
     position: 'absolute', top: -4, right: -8, minWidth: 18, height: 18, paddingHorizontal: 4,
     borderRadius: RAIO.pilula, backgroundColor: COR.primaria,
