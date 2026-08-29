@@ -5,7 +5,7 @@ import {
   StyleSheet, Text, View,
 } from 'react-native';
 
-import { COR, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_AGENDA, RAIO } from '@maestra/core/constants/design';
 import { EVENT_TYPES } from '@maestra/core/constants/maestra';
 import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
 import { listEvents } from '@maestra/core/services/db/events';
@@ -111,11 +111,11 @@ export default function Agenda() {
       </View>
 
       {carregando ? (
-        <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
+        <ActivityIndicator color={COR_AGENDA.texto} style={estilos.espera} size="large" />
       ) : vazia || erro ? (
         <ScrollView
           contentContainerStyle={estilos.conteudo}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR_AGENDA.texto} />}
         >
           <View style={estilos.aviso}>
             <Text style={estilos.avisoTitulo}>{erro ? 'Agenda indisponível' : 'Nada marcado'}</Text>
@@ -130,7 +130,7 @@ export default function Agenda() {
           keyExtractor={(e) => e.id}
           contentContainerStyle={estilos.conteudo}
           stickySectionHeadersEnabled={false}
-          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />}
+          refreshControl={<RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR_AGENDA.texto} />}
           renderSectionHeader={({ section }) => (
             <Text style={estilos.secao}>{section.title}</Text>
           )}
@@ -153,28 +153,39 @@ export default function Agenda() {
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: COR.fundo },
-  flex: { flex: 1 },
-  cabecalho: { paddingHorizontal: 24, paddingTop: 8, gap: 2 },
-  titulão: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4 },
+  // A Agenda e a UNICA tela escura do produto no celular — azul-noite inteiro, com o roxo
+  // marcando o que e acao. Nao e sobra do tema antigo: as regras sao `!important` e proprias de
+  // `.agenda-reference-page`, escritas depois da inversao pro claro. Ver `COR_AGENDA`.
+  tela: { flex: 1, backgroundColor: COR_AGENDA.fundo },
+  flex: { flex: 1, minWidth: 0 },
+  cabecalho: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 24 },
+  titulão: { fontSize: 31, fontWeight: '800', color: COR_AGENDA.texto, letterSpacing: -1 },
   espera: { marginTop: 48 },
-  conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 122 },
-  secao: { fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: COR.apagado, fontWeight: '700', marginBottom: 8 },
-  folga: { height: 22 },
-  dia: { fontSize: 13, fontWeight: '700', color: COR.secundario, marginTop: 10, marginBottom: 6 },
-  cartao: {
-    flexDirection: 'row', gap: 12, borderWidth: 1, borderColor: COR.contorno,
-    borderRadius: 14, padding: 14, marginBottom: 8, overflow: 'hidden',
+  conteudo: { paddingHorizontal: 18, paddingBottom: 122 },
+  secao: {
+    fontSize: 12, fontWeight: '800', color: COR_AGENDA.diaDaSemana,
+    letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 8,
   },
-  fita: { width: 4, borderRadius: 2, marginVertical: -14, marginLeft: -14 },
-  titulo: { fontSize: 16, fontWeight: '700', color: COR.titulo, lineHeight: 21 },
-  cancelado: { textDecorationLine: 'line-through', color: COR.apagado },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 3 },
-  tipo: { fontSize: 12, fontWeight: '700' },
-  hora: { fontSize: 12, color: COR.secundario },
-  local: { fontSize: 13, color: COR.apagado, marginTop: 3 },
-  selo: { fontSize: 12, color: COR.erro, fontWeight: '700', marginTop: 4 },
-  aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 18, gap: 6 },
-  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
-  avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
+  folga: { height: 22 },
+  dia: { fontSize: 13, fontWeight: '800', color: COR_AGENDA.numeroDoDia, marginTop: 10, marginBottom: 6 },
+  cartao: {
+    flexDirection: 'row', gap: 12, overflow: 'hidden', marginBottom: 8,
+    borderWidth: 1, borderColor: COR_AGENDA.contornoDoItem, borderRadius: 8,
+    padding: 14, backgroundColor: COR_AGENDA.chipEscuro,
+  },
+  // A fita do tipo do evento fica na borda esquerda, como o `border-left-width: 3px` da etiqueta.
+  fita: { width: 3, borderRadius: 2, marginVertical: -14, marginLeft: -14 },
+  titulo: { fontSize: 15, fontWeight: '700', color: COR_AGENDA.texto, lineHeight: 20 },
+  cancelado: { textDecorationLine: 'line-through', color: COR_AGENDA.legenda },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
+  tipo: { fontSize: 12, fontWeight: '800' },
+  hora: { fontSize: 12, color: COR_AGENDA.legenda },
+  local: { fontSize: 13, color: COR_AGENDA.legenda, marginTop: 3 },
+  selo: { fontSize: 12, color: COR_AGENDA.hoje, fontWeight: '700', marginTop: 4 },
+  aviso: {
+    borderWidth: 1, borderColor: COR_AGENDA.contornoDoItem, borderRadius: 8,
+    padding: 18, gap: 6, backgroundColor: COR_AGENDA.chipEscuro,
+  },
+  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_AGENDA.texto },
+  avisoTexto: { fontSize: 13, color: COR_AGENDA.legenda, lineHeight: 20 },
 });

@@ -4,7 +4,8 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_PLANO, RAIO } from '@maestra/core/constants/design';
+import { TASK_TYPES } from '@maestra/core/constants/maestra';
 import type { ActionTask, Strategy } from '@maestra/core/interfaces/maestra';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
@@ -107,19 +108,19 @@ export default function Plano() {
               const { prontas, total, completa } = progresso(estrategia);
               const estaAberta = abertaAgora === estrategia.id;
               return (
-              <View key={estrategia.id} style={estilos.bloco}>
+              <View key={estrategia.id} style={[estilos.bloco, estaAberta && estilos.blocoAberto]}>
                 <Pressable
-                  style={estilos.cabecalho}
+                  style={[estilos.cabecalho, estaAberta && estilos.cabecalhoAberto]}
                   onPress={() => setAberta(estaAberta ? FECHADA : estrategia.id)}
                   accessibilityRole="button"
                   accessibilityState={{ expanded: estaAberta }}
                   accessibilityLabel={`Estratégia ${indice + 1}: ${estrategia.title}`}
                 >
                   <Feather
-                    name={estaAberta ? 'chevron-down' : 'chevron-right'}
-                    size={18}
-                    color={COR.apagado}
-                    style={estilos.chevron}
+                    name="chevron-down"
+                    size={16}
+                    color={estaAberta ? COR.primaria : COR_PLANO.chevron}
+                    style={[estilos.chevron, estaAberta && estilos.chevronAberto]}
                   />
                   <View style={estilos.flex}>
                     <Text style={estilos.numero}>
@@ -147,15 +148,31 @@ export default function Plano() {
                     accessibilityLabel={tarefa.description}
                   >
                     {gravando === tarefa.id ? (
-                      <ActivityIndicator size="small" color={COR.primaria} style={estilos.caixa} />
+                      <ActivityIndicator size="small" color={COR.primaria} style={estilos.circulo} />
                     ) : (
-                      <View style={[estilos.caixa, feita(tarefa) && estilos.caixaFeita]}>
-                        {feita(tarefa) && <Text style={estilos.tique}>✓</Text>}
-                      </View>
+                      <Feather
+                        name={feita(tarefa) ? 'check-circle' : 'circle'}
+                        size={25}
+                        color={feita(tarefa) ? COR.primaria : COR_PLANO.chevron}
+                        style={estilos.circulo}
+                      />
                     )}
-                    <Text style={[estilos.descricao, feita(tarefa) && estilos.riscada]}>
-                      {tarefa.description}
-                    </Text>
+                    <View style={estilos.flex}>
+                      <Text style={estilos.descricao}>{tarefa.description}</Text>
+                      {/* Os chips de categoria e prazo, como na web. Aqui eles LEEM, não editam:
+                          trocar categoria e responsável abre menus que a web resolve com dropdown
+                          e que não cabem numa linha de lista no celular. */}
+                      <View style={estilos.chips}>
+                        <View style={estilos.chip}>
+                          <Text style={estilos.chipTexto}>
+                            {TASK_TYPES.find((t) => t.v === tarefa.type)?.label ?? 'Categoria'}
+                          </Text>
+                        </View>
+                        <View style={estilos.chip}>
+                          <Text style={estilos.chipTexto}>{tarefa.deadline || 'Sem prazo'}</Text>
+                        </View>
+                      </View>
+                    </View>
                   </Pressable>
                 ))}
               </View>
@@ -169,36 +186,59 @@ export default function Plano() {
 }
 
 const estilos = StyleSheet.create({
+  // Os valores sao os do `actionPlan.scss` da web (ver `COR_PLANO` e o teste de cromo). A tela
+  // e uma lista de linhas de acordeao com contorno proprio, dentro de um respiro de 14.
   tela: { flex: 1, backgroundColor: COR.fundo },
-  flex: { flex: 1 },
-  conteudo: { padding: 24, paddingBottom: 122, gap: 12 },
-  titulo: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4, marginTop: 4 },
-  resumo: { fontSize: 14, color: COR.secundario, marginBottom: 4 },
-  aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 18, gap: 6, marginTop: 10 },
-  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
+  flex: { flex: 1, minWidth: 0 },
+  conteudo: { paddingHorizontal: 18, paddingTop: 24, paddingBottom: 122, gap: 10 },
+  titulo: { fontSize: 27, fontWeight: '800', color: COR_PLANO.titulo, letterSpacing: -1 },
+  resumo: { fontSize: 13, color: COR.secundario, lineHeight: 20, marginBottom: 4 },
+  aviso: {
+    borderWidth: 1, borderColor: COR_PLANO.contorno, borderRadius: 8, padding: 18, gap: 6, marginTop: 10,
+  },
+  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_PLANO.titulo },
   avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
-  bloco: { borderWidth: 1, borderColor: COR.contorno, borderRadius: RAIO.cartao, padding: 14, gap: 4 },
-  cabecalho: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  chevron: { marginTop: 3 },
-  numero: { fontSize: 10, letterSpacing: 1.2, fontWeight: '800', color: COR.apagado, marginBottom: 2 },
-  estrategia: { fontSize: 15, fontWeight: '700', color: COR.titulo, lineHeight: 21 },
-  // `flexShrink: 0` nao e detalhe: os titulos reais da metodologia tem cinco linhas, e sem o
-  // piso o progresso era espremido ate sumir da tela — o cabecalho perdia justamente o numero
-  // que diz se vale a pena abrir.
+
+  // A linha do acordeao: contorno fino, e um azul mais vivo quando aberta.
+  bloco: { borderWidth: 1, borderColor: COR_PLANO.contorno, borderRadius: 8, overflow: 'hidden' },
+  blocoAberto: { borderColor: COR_PLANO.contornoAberta },
+  cabecalho: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 16 },
+  // Aberta, o cabecalho ganha um azul levissimo — o bastante pra dizer qual e, sem virar bloco.
+  cabecalhoAberto: { backgroundColor: COR_PLANO.cabecalhoAberta },
+  // Alinhado ao TOPO, e nao ao centro: titulos reais tem cinco linhas, e centralizado o chevron
+  // flutuava solto no meio de um cabecalho alto, sem relacao visivel com nada.
+  chevron: { marginTop: 2 },
+  chevronAberto: { transform: [{ rotate: '180deg' }] },
+  numero: {
+    fontSize: 9, fontWeight: '900', color: COR_PLANO.rotulo, letterSpacing: 0.2, marginBottom: 4,
+  },
+  estrategia: { fontSize: 14, fontWeight: '700', color: COR_PLANO.titulo, lineHeight: 19 },
+  // `flexShrink: 0` nao e detalhe: com os titulos de cinco linhas, sem o piso o progresso era
+  // espremido ate sumir — o cabecalho perdia justamente o numero que diz se vale a pena abrir.
   progresso: {
-    fontSize: 12, fontWeight: '700', color: COR.secundario,
-    marginTop: 12, flexShrink: 0, minWidth: 52, textAlign: 'right',
+    fontSize: 10, fontWeight: '800', color: COR_PLANO.progresso,
+    marginTop: 2, flexShrink: 0, minWidth: 52, textAlign: 'right',
   },
   progressoFeito: { color: COR.primaria },
-  porque: { fontSize: 13, color: COR.apagado, lineHeight: 19, marginTop: 8 },
-  tarefa: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 10 },
-  pressionada: { opacity: 0.55 },
-  caixa: {
-    width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: COR.contorno,
-    alignItems: 'center', justifyContent: 'center', marginTop: 1,
+  porque: {
+    fontSize: 12, color: COR.secundario, lineHeight: 19,
+    paddingHorizontal: 18, paddingBottom: 4,
   },
-  caixaFeita: { backgroundColor: COR.primaria, borderColor: COR.primaria },
-  tique: { color: COR.superficie, fontSize: 13, fontWeight: '800', lineHeight: 16 },
-  descricao: { flex: 1, fontSize: 15, color: COR.texto, lineHeight: 21 },
-  riscada: { color: COR.apagado, textDecorationLine: 'line-through' },
+
+  // O corpo da linha aberta: separado por um fio, com recuo menor a esquerda pro circulo da
+  // tarefa nao encostar na borda.
+  tarefa: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    paddingVertical: 12, paddingRight: 18, paddingLeft: 12.5,
+    borderTopWidth: 1, borderTopColor: COR_PLANO.fio,
+  },
+  pressionada: { opacity: 0.55 },
+  circulo: { width: 25, height: 25, marginTop: 3 },
+  descricao: { fontSize: 13, fontWeight: '700', color: COR_PLANO.titulo, lineHeight: 18 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  chip: {
+    height: 26, justifyContent: 'center', paddingHorizontal: 9,
+    borderRadius: 7, borderWidth: 1, borderColor: COR_PLANO.chipContorno,
+  },
+  chipTexto: { fontSize: 10.5, fontWeight: '800', color: COR_PLANO.legenda },
 });

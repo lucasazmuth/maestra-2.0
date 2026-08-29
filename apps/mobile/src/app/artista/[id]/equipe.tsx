@@ -2,10 +2,10 @@ import Feather from '@expo/vector-icons/Feather';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View,
+  ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View,
 } from 'react-native';
 
-import { COR, RAIO } from '@maestra/core/constants/design';
+import { COR, RAIO, COR_CATALOGO } from '@maestra/core/constants/design';
 import { MVP_ACCESS_LEVEL_OPTIONS } from '@maestra/core/constants/maestra';
 import type { ArtistMember } from '@maestra/core/interfaces/maestra';
 import { listMembers } from '@maestra/core/services/db/members';
@@ -104,68 +104,95 @@ export default function Equipe() {
           </View>
         </View>
       ) : (
-        <FlatList
-          data={membros}
-          keyExtractor={(m) => m.id}
+        <ScrollView
           contentContainerStyle={estilos.conteudo}
           refreshControl={
             <RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />
           }
-          renderItem={({ item }) => (
-            <View style={estilos.cartao}>
-              <Avatar membro={item} />
-              <View style={estilos.flex}>
-                <Text style={estilos.nome} numberOfLines={1}>{nomeDe(item)}</Text>
-                <Text style={estilos.email} numberOfLines={1}>{item.email}</Text>
+        >
+          {/* O contorno e da LISTA, e nao de cada membro — e assim que a web desenha os dois
+              modulos de lista (Equipe e Musicas). Uma equipe tem poucas pessoas, entao ela e
+              renderizada inteira, como la. */}
+          <View style={estilos.lista}>
+            {membros.map((item, index) => (
+              <View
+                key={item.id}
+                style={[estilos.cartao, index === membros.length - 1 && estilos.ultimo]}
+              >
+                <Avatar membro={item} />
+                <View style={estilos.flex}>
+                  <Text style={estilos.nome} numberOfLines={1}>{nomeDe(item)}</Text>
+                  <Text style={estilos.email} numberOfLines={1}>{item.email}</Text>
+                </View>
+                <View style={estilos.selo}>
+                  <Feather
+                    name={item.status === 'active' ? 'check-circle' : 'clock'}
+                    size={13}
+                    color={item.status === 'active' ? COR.primaria : COR.apagado}
+                  />
+                  <Text style={[estilos.seloTexto, item.status === 'active' && estilos.seloAtivo]}>
+                    {ROTULOS[item.status] ?? item.status}
+                  </Text>
+                </View>
+                {/* As pilulas de acesso descem pra segunda linha quando nao cabem ao lado do
+                    nome — `flexWrap` no cartao com `width: 100%` nelas. */}
                 <Acessos membro={item} />
               </View>
-              <View style={estilos.selo}>
-                <Feather
-                  name={item.status === 'active' ? 'check-circle' : 'clock'}
-                  size={13}
-                  color={item.status === 'active' ? COR.primaria : COR.apagado}
-                />
-                <Text style={[estilos.seloTexto, item.status === 'active' && estilos.seloAtivo]}>
-                  {ROTULOS[item.status] ?? item.status}
-                </Text>
-              </View>
-            </View>
-          )}
-        />
+            ))}
+          </View>
+        </ScrollView>
       )}
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
+  // Mesmo desenho de lista do Catalogo, que e o que a web usa nos dois: um contorno so em volta
+  // da lista inteira, e cada membro e uma faixa branca de 78px separada por um fio. As pilulas
+  // de acesso descem pra segunda linha do cartao quando nao cabem.
   tela: { flex: 1, backgroundColor: COR.fundo },
-  flex: { flex: 1 },
-  cabecalho: { paddingHorizontal: 24, paddingTop: 8, gap: 2 },
-  titulao: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4 },
-  resumo: { fontSize: 13, color: COR.apagado, marginTop: 2 },
-  espera: { marginTop: 48 },
-  conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 122, gap: 8 },
-  cartao: {
-    flexDirection: 'row', gap: 12, alignItems: 'flex-start',
-    borderWidth: 1, borderColor: COR.contorno, borderRadius: RAIO.cartao, padding: 14,
+  flex: { flex: 1, minWidth: 0 },
+  cabecalho: {
+    paddingHorizontal: 14, paddingTop: 18, paddingBottom: 30,
+    borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.contornoDoTopo, marginHorizontal: 4,
   },
+  titulao: { fontSize: 27, fontWeight: '800', color: COR_CATALOGO.titulo },
+  resumo: { fontSize: 12, color: COR_CATALOGO.apoio, marginTop: 9, lineHeight: 18 },
+  espera: { marginTop: 48 },
+  conteudo: {
+    paddingHorizontal: 14, paddingTop: 28, paddingBottom: 122,
+  },
+  // O contorno e da LISTA, nao de cada membro.
+  lista: {
+    borderWidth: 1, borderColor: COR_CATALOGO.contornoDoTopo, borderRadius: 8, overflow: 'hidden',
+  },
+  cartao: {
+    flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 14, rowGap: 10,
+    minHeight: 78, paddingVertical: 12, paddingHorizontal: 10,
+    borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.fio,
+    backgroundColor: COR.superficie,
+  },
+  ultimo: { borderBottomWidth: 0 },
   avatar: {
     width: 42, height: 42, borderRadius: 21, backgroundColor: COR.destaque,
     alignItems: 'center', justifyContent: 'center',
   },
   inicial: { fontSize: 17, fontWeight: '800', color: COR.secundario },
-  nome: { fontSize: 16, fontWeight: '700', color: COR.titulo },
-  email: { fontSize: 13, color: COR.apagado, marginTop: 1 },
-  pilulas: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
+  nome: { fontSize: 14, fontWeight: '700', color: COR_CATALOGO.titulo },
+  email: { fontSize: 12, color: COR_CATALOGO.legenda, marginTop: 2 },
+  pilulas: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, width: '100%' },
   pilula: {
-    fontSize: 11, fontWeight: '700', color: COR.secundario, backgroundColor: COR.destaque,
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: RAIO.pilula, overflow: 'hidden',
+    fontSize: 10.5, fontWeight: '800', color: COR_CATALOGO.legenda,
+    paddingHorizontal: 9, paddingVertical: 5, borderRadius: 7,
+    borderWidth: 1, borderColor: COR.contorno, overflow: 'hidden',
   },
-  semAcesso: { fontSize: 12, color: COR.apagado, marginTop: 8, fontStyle: 'italic' },
-  selo: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0, marginTop: 2 },
-  seloTexto: { fontSize: 12, fontWeight: '700', color: COR.apagado },
+  semAcesso: { fontSize: 12, color: COR_CATALOGO.legenda, fontStyle: 'italic', width: '100%' },
+  selo: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 },
+  seloTexto: { fontSize: 11, fontWeight: '800', color: COR_CATALOGO.legenda },
   seloAtivo: { color: COR.primaria },
-  aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: RAIO.cartao, padding: 18, gap: 6 },
-  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
-  avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
+  aviso: {
+    borderWidth: 1, borderColor: COR_CATALOGO.contornoDoTopo, borderRadius: 8, padding: 18, gap: 6,
+  },
+  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_CATALOGO.titulo },
+  avisoTexto: { fontSize: 13, color: COR_CATALOGO.apoio, lineHeight: 20 },
 });

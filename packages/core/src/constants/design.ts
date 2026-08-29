@@ -322,3 +322,77 @@ export const COR_CONVERSAS = {
   hora: '#a8b6cd',
   renomearContorno: '#9bb5ec',
 } as const;
+
+/**
+ * O Plano de Ação.
+ *
+ * Cada estratégia é uma linha de acordeão com contorno próprio, e aberta ela ganha um azul
+ * levíssimo no cabeçalho — o suficiente para dizer qual está aberta sem virar um bloco colorido.
+ * A tarefa é um círculo (aberto/fechado) mais o texto e os chips de categoria, dono e prazo.
+ *
+ * Os valores saem de `src/pages/ActionPlan/actionPlan.scss`, e
+ * `src/__tests__/cromoDoPlano.test.ts` os amarra lá.
+ */
+export const COR_PLANO = {
+  contorno: '#e1e7f0',
+  contornoAberta: '#b9c8ff',
+  cabecalhoAberta: 'rgba(51, 97, 255, .045)',
+  chevron: '#93a3bc',
+  rotulo: '#93a3bc',
+  titulo: '#52668d',
+  progresso: '#8798b4',
+  fio: '#edf1f7',
+  legenda: '#8d9db7',
+  chipContorno: '#dde5f1',
+} as const;
+
+/**
+ * O Catálogo (o módulo "Músicas").
+ *
+ * No celular a lista deixa de ser cartões soltos e vira uma lista contínua: cada faixa é uma
+ * faixa branca de 78px separada por um fio, sem contorno e sem canto arredondado. O botão de
+ * tocar é discreto — azul-claro com o ícone em cinza-azulado, e não o azul de ação cheio.
+ *
+ * Os valores saem de `.catalog-reference-page` e `.catalog-page-heading` em
+ * `src/styles/gsap-reference.css`. `src/__tests__/cromoDoCatalogo.test.ts` os amarra lá.
+ */
+export const COR_CATALOGO = {
+  fio: '#edf1f5',
+  titulo: '#52668d',
+  legenda: '#8b9bb5',
+  rotulo: '#93a3bc',
+  apoio: '#91a0b9',
+  tocarFundo: '#eef3fb',
+  tocarIcone: '#60749a',
+  contornoDoTopo: '#e1e7f0',
+} as const;
+
+/**
+ * A Agenda.
+ *
+ * É a única tela do produto que fica ESCURA no celular — azul-noite inteiro, com os dias do mês
+ * em cartões, o roxo marcando hoje e os eventos como etiquetas translúcidas. Não é sobra do tema
+ * antigo: as regras são `!important` e específicas de `.agenda-reference-page`, escritas depois
+ * da inversão para o claro. Um calendário se lê melhor sobre fundo escuro, e a web decidiu isso.
+ *
+ * Os valores saem de `src/styles/gsap-reference.css`, e `src/__tests__/cromoDaAgenda.test.ts`
+ * os amarra lá.
+ */
+export const COR_AGENDA = {
+  fundo: '#0d2146',
+  texto: '#dbe7ff',
+  acao: '#8f51dc',
+  hoje: '#b56cff',
+  chip: '#1a3159',
+  chipEscuro: '#172d52',
+  chipClaro: '#d9e7ff',
+  chipClaroTexto: '#172747',
+  navegar: '#1b335b',
+  navegarIcone: '#b7c9e7',
+  diaDeFora: '#12284d',
+  numeroDoDia: '#9eb2d1',
+  diaDaSemana: '#99adce',
+  evento: 'rgba(143,81,220,.18)',
+  legenda: '#a7b9d6',
+  contornoDoItem: '#203b65',
+} as const;
