@@ -65,16 +65,20 @@ describe('lista de perfis', () => {
     expect(tela.getByText('C')).toBeTruthy(); // Coletivo Norte
   });
 
-  // O cartao ja chegou a perder borda e `flexDirection` inteiros, sem erro nenhum: o
-  // `<Link asChild>` monta o filho pelo Slot do Radix, que funde `style` como OBJETO, e estilo
-  // de `Pressable` e uma FUNCAO — espalhar funcao em objeto da `{}`. Nenhum teste de texto
-  // pegava isso; so aparecia com dado real na tela.
-  it('o cartao mantem o layout em linha, com contorno', async () => {
+  // O cartao ja chegou a perder o estilo INTEIRO, sem erro nenhum: o `<Link asChild>` monta o
+  // filho pelo Slot do Radix, que funde `style` como OBJETO, e estilo de `Pressable` e uma
+  // FUNCAO — espalhar funcao em objeto da `{}`. Nenhum teste de texto pegava isso; so aparecia
+  // com dado real na tela.
+  //
+  // O que se verifica aqui e o desenho ATUAL, que e o da web: cartao alto e centrado, com a
+  // foto grande no meio. Era uma linha com miniatura a esquerda ate a copia da folha mobile.
+  it('o cartao mantem o desenho centrado, e nao perde o estilo', async () => {
     const tela = await montar();
     const cartao = tela.getByLabelText('Marina Sol');
     const estilo = StyleSheet.flatten(cartao.props.style);
-    expect(estilo.flexDirection).toBe('row');
-    expect(estilo.borderWidth).toBe(1);
+    expect(estilo.minHeight).toBe(300);
+    expect(estilo.borderRadius).toBe(10);
+    expect(estilo.justifyContent).toBe('center');
   });
 
   // O spinner de "puxar para atualizar" chegou a disparar sozinho ao voltar para a lista: ele

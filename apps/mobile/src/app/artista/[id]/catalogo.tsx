@@ -92,8 +92,14 @@ export default function Catalogo() {
   return (
     <View style={estilos.tela}>
 
+      {/* O cabecalho e o da web, com as MESMAS palavras: o modulo se chama "Musicas", nao
+          "Catalogo" — e a aba de baixo ja dizia "Musicas", entao a tela se contradizia. */}
       <View style={estilos.cabecalho}>
-        <Text style={estilos.titulao}>Catálogo</Text>
+        <Text style={estilos.sobretitulo}>MÚSICAS DO ARTISTA</Text>
+        <Text style={estilos.titulao}>Músicas</Text>
+        <Text style={estilos.subtitulo}>
+          Organize as músicas em preparação e acompanhe cada etapa antes do lançamento.
+        </Text>
       </View>
 
       {carregando ? (
@@ -147,7 +153,7 @@ export default function Catalogo() {
                   <Feather
                     name={eAtual && status.playing ? 'pause' : 'play'}
                     size={18}
-                    color={temAudio ? COR.primaria : COR.contorno}
+                    color={temAudio ? COR_CATALOGO.tocarIcone : COR.contorno}
                   />
                 </View>
               </Pressable>
@@ -181,10 +187,17 @@ export default function Catalogo() {
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1 },
-  cabecalho: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 18, gap: 2 },
+  cabecalho: {
+    paddingHorizontal: 16, paddingTop: 12, paddingBottom: 30, marginHorizontal: 0,
+    borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.contornoDoTopo,
+  },
+  sobretitulo: {
+    fontSize: 9, fontWeight: '800', color: COR_CATALOGO.rotulo, marginBottom: 8,
+  },
   titulao: { fontSize: 27, fontWeight: '800', color: COR_CATALOGO.titulo },
+  subtitulo: { fontSize: 12, color: COR_CATALOGO.apoio, lineHeight: 18, marginTop: 9 },
   espera: { marginTop: 48 },
-  conteudo: { paddingHorizontal: 16, paddingBottom: 122 },
+  conteudo: { paddingHorizontal: 16, paddingTop: 28, paddingBottom: 122 },
   // A moldura da lista, em duas metades: o topo fecha os cantos de cima, o rodape os de baixo.
   // E o jeito de dar UM contorno a uma lista que rola sem envolver o `FlatList` numa `View`,
   // que tiraria a virtualizacao.
@@ -219,9 +232,9 @@ const estilos = StyleSheet.create({
   duracao: { fontSize: 12, color: COR_CATALOGO.legenda },
   // O tocar e discreto: azul-claro com o icone cinza-azulado, e nao o azul de acao cheio.
   botao: {
-    width: 34, height: 34, borderRadius: 17, textAlign: 'center', lineHeight: 34,
-    fontSize: 15, color: COR_CATALOGO.tocarIcone, backgroundColor: COR_CATALOGO.tocarFundo,
-    overflow: 'hidden',
+    width: 34, height: 34, borderRadius: 17,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COR_CATALOGO.tocarFundo,
   },
   barra: { borderTopWidth: 1, borderTopColor: COR.divisoria, paddingHorizontal: 24, paddingTop: 10, paddingBottom: 6, gap: 8 },
   trilho: { height: 3, borderRadius: 2, backgroundColor: COR.divisoria, overflow: 'hidden' },

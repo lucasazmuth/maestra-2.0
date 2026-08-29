@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, RAIO } from '@maestra/core/constants/design';
+import { COR, RAIO, COR_PERFIS } from '@maestra/core/constants/design';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 import { countUnread } from '@maestra/core/services/db/notifications';
 import { artistsActions } from '@maestra/core/store/slices/artists';
@@ -157,12 +157,14 @@ export default function Perfis() {
             accessibilityRole="button"
             accessibilityLabel={item.name}
           >
+            {/* Centrado, com a foto grande no meio: e a leitura de um seletor de perfil, e nao
+                a de uma lista de itens. E o que a web faz. */}
             <Avatar artista={item} />
-            <View style={estilos.flex}>
-              <Text style={estilos.nome} numberOfLines={1}>{item.name}</Text>
-              <Selo artista={item} />
-            </View>
-            <Feather name="chevron-right" size={22} color={COR.contorno} />
+            <Text style={estilos.nome} numberOfLines={2}>{item.name}</Text>
+            <Text style={estilos.papel}>
+              {item.role === 'member' ? 'Membro' : 'Administrador'}
+            </Text>
+            <Selo artista={item} />
           </Pressable>
         )}
       />
@@ -171,35 +173,39 @@ export default function Perfis() {
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: COR.superficie },
+  tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1 },
-  cabecalho: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 },
-  marca: { fontSize: 28, fontWeight: '800', color: COR.titulo, letterSpacing: -0.5 },
-  legenda: { fontSize: 13, color: COR.apagado, marginTop: 2 },
+  cabecalho: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: 8, paddingBottom: 34 },
+  marca: { fontSize: 30, fontWeight: '800', color: COR_PERFIS.titulo, letterSpacing: -1.2 },
+  legenda: { fontSize: 15, color: COR_PERFIS.papel, marginTop: 14 },
   bolha: {
     position: 'absolute', top: -4, right: -8, minWidth: 18, height: 18, paddingHorizontal: 4,
     borderRadius: RAIO.pilula, backgroundColor: COR.primaria,
     alignItems: 'center', justifyContent: 'center',
   },
   bolhaTexto: { fontSize: 11, fontWeight: '800', color: COR.sobrePrimaria },
-  lista: { paddingHorizontal: 24, paddingBottom: 32, gap: 10 },
+  lista: { paddingHorizontal: 18, paddingBottom: 32, gap: 26 },
   espera: { marginTop: 40 },
   vazio: { textAlign: 'center', color: COR.apagado, marginTop: 40, fontSize: 15 },
   cartao: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    borderWidth: 1, borderColor: COR.contorno, borderRadius: 16, padding: 14,
+    minHeight: 300, padding: 22, borderRadius: 10, justifyContent: 'center',
+    backgroundColor: COR.superficie,
+    // A sombra baixa da web (`0 7px 17px rgba(124,145,185,.08)`), no lugar do contorno.
+    shadowColor: 'rgb(124, 145, 185)', shadowOpacity: 0.08, shadowRadius: 17,
+    shadowOffset: { width: 0, height: 7 }, elevation: 3,
   },
   pressionado: { opacity: 0.6 },
-  foto: { width: 52, height: 52, borderRadius: 26, backgroundColor: COR.divisoria },
+  foto: { width: 140, height: 140, borderRadius: 70, backgroundColor: COR.divisoria, alignSelf: 'center' },
   fotoVazia: { alignItems: 'center', justifyContent: 'center' },
-  inicial: { fontSize: 20, fontWeight: '800', color: COR.apagado },
-  nome: { fontSize: 17, fontWeight: '700', color: COR.titulo },
-  selo: { marginTop: 4, gap: 3 },
-  perfilNome: { fontSize: 13, color: COR.primaria, fontWeight: '600' },
-  letras: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  inicial: { fontSize: 56, fontWeight: '800', color: COR.apagado },
+  nome: { fontSize: 20, fontWeight: '800', color: COR_PERFIS.titulo, textAlign: 'center', marginTop: 23, lineHeight: 25 },
+  papel: { fontSize: 15, color: COR_PERFIS.papel, textAlign: 'center', marginTop: 6 },
+  selo: { marginTop: 10, gap: 4, alignItems: 'center' },
+  perfilNome: { fontSize: 12.5, color: COR.primaria, fontWeight: '700' },
+  letras: { flexDirection: 'row', alignItems: 'center', gap: 5, justifyContent: 'center' },
   letra: { fontSize: 12, fontWeight: '800', letterSpacing: 1 },
   acesa: { color: COR.primaria },
   apagada: { color: COR.contorno },
   contagem: { fontSize: 11, color: COR.apagado, marginLeft: 2 },
-  semDiagnostico: { fontSize: 13, color: COR.apagado, marginTop: 4 },
+  semDiagnostico: { fontSize: 12.5, color: COR_PERFIS.semPlano, marginTop: 10, textAlign: 'center', fontWeight: '700' },
 });

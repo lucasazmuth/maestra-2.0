@@ -396,3 +396,70 @@ export const COR_AGENDA = {
   legenda: '#a7b9d6',
   contornoDoItem: '#203b65',
 } as const;
+
+/**
+ * O Diagnóstico REAL — a tela de entrega.
+ *
+ * Tem uma paleta própria, mais fria que a do resto: cartões brancos com contorno `#dbe4f1` e
+ * sombra baixa, o cartão do perfil com um degradê claro, e a frase de cada dimensão puxada por
+ * uma barra à esquerda na cor da própria dimensão.
+ *
+ * Os valores saem de `src/pages/ArtistCreate/ArtistCreate.module.scss` (o `DiagnosticReport`,
+ * que é o que a rota `/artists/:id/diagnostico` renderiza — não a pasta `DiagnosticoReal`, que
+ * é a página pública). `src/__tests__/cromoDoDiagnostico.test.ts` os amarra lá.
+ */
+export const COR_DIAGNOSTICO = {
+  contorno: '#dbe4f1',
+  contornoDoHero: '#e1e8f3',
+  titulo: '#52668d',
+  texto: '#61749a',
+} as const;
+
+/**
+ * A caixa de notificações.
+ *
+ * Cada aviso é um cartão de 88px com um disco azul-claro à esquerda, o título, a linha de apoio
+ * e a hora à direita. Os valores saem de `.notifications-list` em `src/styles/gsap-reference.css`.
+ * `src/__tests__/cromoDasNotificacoes.test.ts` os amarra lá.
+ */
+export const COR_NOTIFICACOES = {
+  contorno: '#e5eaf2',
+  disco: '#edf2ff',
+  titulo: '#5b6f94',
+  texto: '#98a6bd',
+  hora: '#9aa9c2',
+} as const;
+
+/**
+ * Configurações.
+ *
+ * Cartões do MESMO cinza do fundo com contorno fino e sem sombra, cada um aberto por um quadrado
+ * azul-claro de 38px com o ícone dentro. Os valores saem de `.settings-*` em
+ * `src/styles/gsap-reference.css`; `src/__tests__/cromoDaConta.test.ts` os amarra lá.
+ */
+export const COR_CONTA = {
+  contorno: '#e5eaf2',
+  disco: '#edf2ff',
+  rotulo: '#9aa9c2',
+  titulo: '#52668d',
+  tituloDoCartao: '#5b6f94',
+  texto: '#98a6bd',
+  apoio: '#8e9eb8',
+} as const;
+
+/**
+ * A lista de perfis.
+ *
+ * O cartão é CENTRADO, e não uma linha: foto redonda de 140px no meio, nome embaixo em 20px, e o
+ * papel em 15px — a mesma leitura de um seletor de perfil de streaming. O selo de estado é um
+ * ponto colorido com o texto ao lado, na cor do próprio estado.
+ *
+ * Os valores saem de `src/pages/Artists/Artists.module.scss`;
+ * `src/__tests__/cromoDosPerfis.test.ts` os amarra lá.
+ */
+export const COR_PERFIS = {
+  titulo: '#53668d',
+  papel: '#97a6be',
+  pagamentoPendente: '#3361ff',
+  semPlano: '#b0720f',
+} as const;

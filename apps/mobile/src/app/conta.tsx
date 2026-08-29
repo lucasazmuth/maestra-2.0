@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COR, RAIO } from '@maestra/core/constants/design';
+import { COR, RAIO, COR_CONTA } from '@maestra/core/constants/design';
 import { supabase } from '@maestra/core/lib/supabase';
 import { cancelSubscription, fetchSubscriptionStatus } from '@maestra/core/store/slices/subscription';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
@@ -132,26 +132,28 @@ export default function Conta() {
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: COR.superficie },
-  conteudo: { padding: 24, paddingBottom: 48, gap: 10 },
+  // Os cartoes sao do MESMO cinza do fundo, com contorno fino e sem sombra — o oposto do cartao
+  // branco elevado que a mesma classe usa no desktop. Ver `COR_CONTA`.
+  tela: { flex: 1, backgroundColor: COR.fundo },
+  conteudo: { paddingHorizontal: 18, paddingTop: 27, paddingBottom: 48, gap: 10 },
   voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
-  titulao: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4 },
-  email: { fontSize: 14, color: COR.apagado, marginBottom: 10 },
+  titulao: { fontSize: 27, fontWeight: '800', color: COR_CONTA.titulo, lineHeight: 30 },
+  email: { fontSize: 13, color: COR_CONTA.apoio, marginTop: 10, marginBottom: 15 },
   linha: {
-    borderWidth: 1, borderColor: COR.contorno, borderRadius: RAIO.cartao,
+    borderWidth: 1, borderColor: COR_CONTA.contorno, borderRadius: 8,
     paddingVertical: 16, paddingHorizontal: 16,
   },
   tocada: { opacity: 0.6 },
-  linhaTexto: { fontSize: 16, fontWeight: '600', color: COR.titulo },
+  linhaTexto: { fontSize: 16, fontWeight: '700', color: COR_CONTA.tituloDoCartao },
   secao: {
-    fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase',
-    color: COR.apagado, fontWeight: '700', marginTop: 22,
+    fontSize: 10, letterSpacing: 1, textTransform: 'uppercase',
+    color: COR_CONTA.rotulo, fontWeight: '800', marginTop: 25,
   },
-  explicacao: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
+  explicacao: { fontSize: 12, color: COR_CONTA.texto, lineHeight: 19 },
   perigo: {
-    borderWidth: 1, borderColor: COR.erro, borderRadius: RAIO.cartao,
+    borderWidth: 1, borderColor: COR.erro, borderRadius: 8,
     paddingVertical: 16, alignItems: 'center', marginTop: 4,
   },
-  perigoTexto: { fontSize: 16, fontWeight: '700', color: COR.erro },
-  erro: { fontSize: 14, color: COR.erro, lineHeight: 20, marginTop: 4 },
+  perigoTexto: { fontSize: 16, fontWeight: '800', color: COR.erro },
+  erro: { fontSize: 13, color: COR.erro, lineHeight: 19, marginTop: 4 },
 });

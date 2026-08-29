@@ -7,7 +7,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COR, RAIO } from '@maestra/core/constants/design';
+import Feather from '@expo/vector-icons/Feather';
+
+import { COR, RAIO, COR_NOTIFICACOES } from '@maestra/core/constants/design';
 import type { NotificationItem } from '@maestra/core/interfaces/maestra';
 import {
   fetchArtistNames, listNotificationsPaginated, markAllAsRead, markAsRead,
@@ -182,14 +184,21 @@ export default function Notificacoes() {
                   accessibilityRole="button"
                   accessibilityLabel={`${item.title}${item.read ? '' : ', não lida'}`}
                 >
+                  {/* Disco a esquerda, texto no meio, hora a direita: as tres colunas da web
+                      (`grid-template-columns: 42px minmax(0,1fr) auto`). */}
+                  <View style={estilos.disco}>
+                    <Feather name="bell" size={16} color={COR.primaria} />
+                  </View>
                   <View style={estilos.flex}>
                     <Text style={[estilos.titulo, !item.read && estilos.tituloForte]}>
                       {item.title}
                     </Text>
                     {!!item.message && <Text style={estilos.mensagem}>{item.message}</Text>}
-                    <Text style={estilos.data}>{quando(item.created_at)}</Text>
                   </View>
-                  {!item.read && <Text style={estilos.novo}>Novo</Text>}
+                  <View style={estilos.direita}>
+                    <Text style={estilos.data}>{quando(item.created_at)}</Text>
+                    {!item.read && <Text style={estilos.novo}>Novo</Text>}
+                  </View>
                 </Pressable>
               ))}
             </View>
@@ -201,38 +210,51 @@ export default function Notificacoes() {
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: COR.superficie },
-  flex: { flex: 1 },
-  cabecalho: { paddingHorizontal: 24, paddingTop: 8, gap: 2 },
+  // Cada aviso e um cartao de 88px com tres colunas: disco azul-claro, texto, hora. Os valores
+  // sao os de `.notifications-list` na web (ver `COR_NOTIFICACOES`).
+  tela: { flex: 1, backgroundColor: COR.fundo },
+  flex: { flex: 1, minWidth: 0 },
+  cabecalho: { paddingHorizontal: 18, paddingTop: 8, gap: 2 },
   voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
   linhaTitulo: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
-  titulao: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4 },
-  lerTudo: { fontSize: 13, fontWeight: '600', color: COR.primaria },
+  titulao: { fontSize: 27, fontWeight: '800', color: COR_NOTIFICACOES.titulo },
+  lerTudo: { fontSize: 13, fontWeight: '800', color: COR.primaria },
   espera: { marginTop: 48 },
-  conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48, gap: 14 },
+  conteudo: { paddingHorizontal: 18, paddingTop: 34, paddingBottom: 48, gap: 12 },
   rodape: { marginVertical: 16 },
   cartao: {
-    flexDirection: 'row', gap: 12, alignItems: 'flex-start',
-    borderWidth: 1, borderColor: COR.contorno, borderRadius: RAIO.cartao, padding: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 16,
+    minHeight: 88, paddingVertical: 18, paddingHorizontal: 22,
+    borderWidth: 1, borderColor: COR_NOTIFICACOES.contorno, borderRadius: 10,
+    backgroundColor: COR.fundo,
   },
-  naoLida: { backgroundColor: COR.destaque, borderColor: COR.divisoria },
+  // Nao lida nao muda o cartao inteiro: e o selo "Novo" que a distingue, como na web, onde a
+  // unica diferenca e lida/nao lida — sem paleta por tipo.
+  naoLida: { backgroundColor: COR.superficie },
   pressionada: { opacity: 0.6 },
-  grupo: { gap: 8 },
+  disco: {
+    width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COR_NOTIFICACOES.disco,
+  },
+  direita: { alignItems: 'flex-end', gap: 6 },
+  grupo: { gap: 12 },
   cabecalhoGrupo: {
     flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
     gap: 12, marginTop: 8,
   },
-  nomeDoGrupo: { fontSize: 15, fontWeight: '800', color: COR.titulo },
-  contagem: { fontSize: 12, color: COR.apagado },
+  nomeDoGrupo: { fontSize: 15, fontWeight: '800', color: COR_NOTIFICACOES.titulo },
+  contagem: { fontSize: 12, color: COR_NOTIFICACOES.texto },
   novo: {
-    fontSize: 11, fontWeight: '800', color: COR.sobrePrimaria, backgroundColor: COR.primaria,
+    fontSize: 10, fontWeight: '800', color: COR.sobrePrimaria, backgroundColor: COR.primaria,
     paddingHorizontal: 8, paddingVertical: 3, borderRadius: RAIO.pilula, overflow: 'hidden',
   },
-  titulo: { fontSize: 15, fontWeight: '600', color: COR.texto, lineHeight: 20 },
-  tituloForte: { fontWeight: '800', color: COR.titulo },
-  mensagem: { fontSize: 14, color: COR.secundario, lineHeight: 20, marginTop: 3 },
-  data: { fontSize: 12, color: COR.apagado, marginTop: 6 },
-  aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: RAIO.cartao, padding: 18, gap: 6 },
-  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
-  avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
+  titulo: { fontSize: 14, fontWeight: '600', color: COR_NOTIFICACOES.titulo, lineHeight: 19 },
+  tituloForte: { fontWeight: '800' },
+  mensagem: { fontSize: 12, color: COR_NOTIFICACOES.texto, lineHeight: 17, marginTop: 5 },
+  data: { fontSize: 10, fontWeight: '800', color: COR_NOTIFICACOES.hora },
+  aviso: {
+    borderWidth: 1, borderColor: COR_NOTIFICACOES.contorno, borderRadius: 10, padding: 18, gap: 6,
+  },
+  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_NOTIFICACOES.titulo },
+  avisoTexto: { fontSize: 13, color: COR_NOTIFICACOES.texto, lineHeight: 20 },
 });

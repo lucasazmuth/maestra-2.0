@@ -3,7 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, RAIO } from '@maestra/core/constants/design';
+import { COR, RAIO, COR_DIAGNOSTICO } from '@maestra/core/constants/design';
 
 import { useArtistaDaRota } from '@/nucleo/artista';
 
@@ -116,42 +116,72 @@ export default function Perfil() {
 }
 
 const estilos = StyleSheet.create({
+  // A paleta e a do `DiagnosticReport` da web: cartoes brancos com contorno frio e sombra baixa,
+  // o cartao do perfil num degrade claro, e a frase de cada dimensao puxada por uma barra a
+  // esquerda na cor da propria dimensao. Ver `COR_DIAGNOSTICO`.
   tela: { flex: 1, backgroundColor: COR.fundo },
-  flex: { flex: 1 },
-  conteudo: { padding: 24, paddingBottom: 122, gap: 14 },
-  topo: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 4 },
-  foto: { width: 64, height: 64, borderRadius: 32, backgroundColor: COR.divisoria },
+  flex: { flex: 1, minWidth: 0 },
+  conteudo: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 122, gap: 14 },
+  // O hero: avatar de 60px e o nome grande, separados do resto por um fio.
+  topo: {
+    flexDirection: 'row', alignItems: 'center', gap: 16,
+    paddingBottom: 24, marginBottom: 14,
+    borderBottomWidth: 1, borderBottomColor: COR_DIAGNOSTICO.contornoDoHero,
+  },
+  foto: { width: 60, height: 60, borderRadius: 30, backgroundColor: COR.divisoria },
   fotoVazia: {},
-  nome: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4 },
-  genero: { fontSize: 14, color: COR.apagado, marginTop: 2 },
+  nome: { fontSize: 22, fontWeight: '800', color: COR_DIAGNOSTICO.titulo, lineHeight: 26 },
+  genero: { fontSize: 13, color: COR_DIAGNOSTICO.texto, marginTop: 6 },
   atalho: {
     flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6,
-    borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, borderRadius: 14, padding: 16,
+    backgroundColor: COR.superficie,
   },
-  aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 18, gap: 6, marginTop: 10 },
-  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
-  avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
-  cartaoPerfil: { backgroundColor: COR.destaque, borderRadius: 16, padding: 18, gap: 4, marginTop: 8 },
-  rotulo: { fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: COR.primaria, fontWeight: '700' },
-  perfilNome: { fontSize: 22, fontWeight: '800', color: COR.titulo },
-  perfilDescricao: { fontSize: 14, color: COR.texto, lineHeight: 21, marginTop: 2 },
-  secao: { fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: COR.apagado, marginTop: 14, fontWeight: '700' },
-  dimensao: { gap: 8 },
+  aviso: {
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, borderRadius: 14,
+    padding: 18, gap: 6, marginTop: 10, backgroundColor: COR.superficie,
+  },
+  avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_DIAGNOSTICO.titulo },
+  avisoTexto: { fontSize: 14, color: COR_DIAGNOSTICO.texto, lineHeight: 20 },
+  // O "momento uau": cartao com canto largo, degrade claro e sombra.
+  cartaoPerfil: {
+    borderRadius: 20, padding: 26, paddingHorizontal: 24, gap: 4, marginBottom: 14,
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, backgroundColor: COR.superficie,
+  },
+  rotulo: {
+    fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase',
+    color: COR.primaria, fontWeight: '800',
+  },
+  perfilNome: { fontSize: 38, fontWeight: '800', color: COR_DIAGNOSTICO.titulo, lineHeight: 40, marginTop: 4 },
+  perfilDescricao: { fontSize: 15, color: COR_DIAGNOSTICO.titulo, lineHeight: 22, marginTop: 14 },
+  secao: {
+    fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase',
+    color: COR_DIAGNOSTICO.texto, marginTop: 14, fontWeight: '800',
+  },
+  // Cada dimensao e um cartao completo — nota, regua e o que ela revela.
+  dimensao: {
+    gap: 8, padding: 22, paddingHorizontal: 20, borderRadius: 14,
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, backgroundColor: COR.superficie,
+  },
   linhaTopo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   letra: { fontSize: 22, fontWeight: '800', width: 22 },
   acesa: { color: COR.primaria },
   apagada: { color: COR.contorno },
-  dimNome: { fontSize: 15, fontWeight: '700', color: COR.titulo },
-  dimOQue: { fontSize: 12, color: COR.apagado },
-  nota: { fontSize: 20, fontWeight: '800' },
-  notaApagada: { color: COR.apagado },
+  dimNome: { fontSize: 17, fontWeight: '800', color: COR_DIAGNOSTICO.titulo, lineHeight: 19 },
+  dimOQue: { fontSize: 11.5, color: COR_DIAGNOSTICO.texto, marginTop: 2 },
+  nota: { fontSize: 16, fontWeight: '800', color: COR_DIAGNOSTICO.titulo },
+  notaApagada: { color: COR_DIAGNOSTICO.texto },
   trilho: { height: 8, borderRadius: 4, backgroundColor: COR.divisoria, overflow: 'hidden', position: 'relative' },
   barra: { height: 8, borderRadius: 4 },
   barraAcesa: { backgroundColor: COR.primaria },
   barraApagada: { backgroundColor: COR.apagado },
-  corte: { position: 'absolute', top: -2, width: 2, height: 12, backgroundColor: COR.secundario },
-  rodape: { fontSize: 12, color: COR.apagado, marginTop: 2 },
-  insight: { flexDirection: 'row', gap: 8 },
-  marcador: { color: COR.primaria, fontSize: 15, lineHeight: 21 },
-  insightTexto: { flex: 1, fontSize: 14, color: COR.texto, lineHeight: 21 },
+  corte: { position: 'absolute', top: -2, width: 2, height: 12, backgroundColor: COR_DIAGNOSTICO.texto },
+  rodape: { fontSize: 11.5, color: COR_DIAGNOSTICO.texto, marginTop: 2 },
+  // A frase puxada por uma barra a esquerda, como na web.
+  insight: {
+    flexDirection: 'row', gap: 13, marginTop: 16,
+    borderLeftWidth: 2, borderLeftColor: COR.primaria, paddingLeft: 13,
+  },
+  marcador: { display: 'none' },
+  insightTexto: { flex: 1, fontSize: 12.5, color: COR_DIAGNOSTICO.texto, lineHeight: 19 },
 });
