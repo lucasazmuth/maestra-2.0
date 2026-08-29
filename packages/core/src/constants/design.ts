@@ -465,6 +465,22 @@ export const COR_PERFIS = {
 } as const;
 
 /**
+ * O selo do plano, ao lado da marca.
+ *
+ * Três estados, e o padrão é o mais discreto: FREE é só contorno, porque não há nada de errado
+ * em não ser Pro. Os valores saem de `src/components/PlanTag/PlanTag.module.scss`.
+ */
+export const COR_PLANO_DA_CONTA = {
+  proContorno: 'rgba(51, 97, 255, .24)',
+  proTexto: '#2a54e0',
+  pendenteContorno: 'rgba(221, 154, 18, .28)',
+  pendenteTexto: '#9a7217',
+  livreContorno: '#e1e8f3',
+  livreFundo: '#f7f9fd',
+  livreTexto: '#8ca0c5',
+} as const;
+
+/**
  * As telas de autenticação (entrar, cadastrar, esqueci e redefinir senha).
  *
  * O formulário vive num cartão branco no meio de um fundo com degradê — as duas manchas

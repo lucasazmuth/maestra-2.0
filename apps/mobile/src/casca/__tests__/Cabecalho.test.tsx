@@ -1,5 +1,8 @@
 import { render, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
+import { Provider } from 'react-redux';
+
+import { store } from '@maestra/core/store/store';
 
 import { comDiagnostico, semDiagnostico } from '@/app/__tests__/fixtures';
 import { Cabecalho } from '@/casca/Cabecalho';
@@ -53,21 +56,27 @@ beforeEach(() => { canais.length = 0; inscritos.clear(); });
 describe('cabeçalho do artista', () => {
   it('mostra o artista e a contagem de não lidas', async () => {
     const tela = await render(
-      <SafeAreaProvider initialMetrics={MEDIDAS}>
-        <Cabecalho artista={comDiagnostico} id={comDiagnostico.id} />
-      </SafeAreaProvider>,
+      <Provider store={store}>
+        <SafeAreaProvider initialMetrics={MEDIDAS}>
+          <Cabecalho artista={comDiagnostico} id={comDiagnostico.id} />
+        </SafeAreaProvider>
+      </Provider>,
     );
-    expect(tela.getByText(comDiagnostico.name)).toBeTruthy();
+    // A marca, e nao o nome do artista: lendo o DOM da web em execucao, o chip do artista nao e
+    // renderizado em lugar nenhum — quem diz de quem e a tela e a foto na ilha de baixo.
+    expect(tela.getByText('Maestra')).toBeTruthy();
     await waitFor(() => expect(tela.getByLabelText('Notificações (3 não lidas)')).toBeTruthy());
   });
 
   // A regressão em si: dois cabeçalhos ao mesmo tempo, como no instante da troca de perfil.
   it('dois cabeçalhos vivos não disputam o mesmo canal', async () => {
     await render(
-      <SafeAreaProvider initialMetrics={MEDIDAS}>
-        <Cabecalho artista={comDiagnostico} id={comDiagnostico.id} />
-        <Cabecalho artista={semDiagnostico} id={semDiagnostico.id} />
-      </SafeAreaProvider>,
+      <Provider store={store}>
+        <SafeAreaProvider initialMetrics={MEDIDAS}>
+          <Cabecalho artista={comDiagnostico} id={comDiagnostico.id} />
+          <Cabecalho artista={semDiagnostico} id={semDiagnostico.id} />
+        </SafeAreaProvider>
+      </Provider>,
     );
 
     await waitFor(() => expect(canais.length).toBeGreaterThanOrEqual(2));

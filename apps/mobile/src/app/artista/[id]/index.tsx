@@ -23,13 +23,13 @@ import { useArtistaDaRota } from '@/nucleo/artista';
 // são azul-noite sobre o fundo claro, e é esse contraste que separa "o que fazer agora" e "onde
 // eu estou" do resto da página, que é branca.
 //
-// Duas ausências deliberadas em relação à web:
+// Uma ausência deliberada em relação à web: o player. Tocar uma faixa da lista abre o projeto no
+// catálogo em vez de tocar — o player da web é global (mora no Layout) e ainda não existe aqui,
+// e um botão de play que não toca seria pior que não ter.
 //
-// · a `music-spark` — dois degradês diagonais cruzados no rodapé de cada cartão de número. É
-//   decoração pura, não desenha dado nenhum, e sai caro em `react-native-svg` pra nada;
-// · o player: tocar uma faixa da lista abre o projeto no catálogo em vez de tocar. O player da
-//   web é global (mora no Layout) e ainda não existe aqui — botão de play que não toca seria
-//   pior que não ter.
+// A `music-spark` (os dois riscos cruzados no rodapé de cada cartão de número) eu tinha
+// descartado como decoração dispensável. Ela está lá, em toda tela, e a ausência dela deixava o
+// cartão com um vazio no rodapé que não existe na web.
 
 const numero = (valor?: number | null) =>
   typeof valor === 'number' ? valor.toLocaleString('pt-BR') : '—';
@@ -146,6 +146,14 @@ export default function Inicio() {
                 {valor}
               </Text>
               <Text style={[estilos.apoioDoNumero, { color: CORES_DOS_NUMEROS[i] }]}>{apoio}</Text>
+
+              {/* Os dois riscos cruzados do rodapé: na web são dois degradês diagonais, um na
+                  cor cheia e outro a meia opacidade. Aqui são duas faixas giradas — o desenho é
+                  o mesmo e não precisa de SVG. */}
+              <View style={estilos.faisca}>
+                <View style={[estilos.risco, estilos.riscoUm, { backgroundColor: CORES_DOS_NUMEROS[i] }]} />
+                <View style={[estilos.risco, estilos.riscoDois, { backgroundColor: CORES_DOS_NUMEROS[i] }]} />
+              </View>
             </View>
           ))}
         </View>
@@ -342,6 +350,10 @@ const estilos = StyleSheet.create({
   rotuloDoNumero: { flex: 1, color: COR_PAINEL.rotuloDeNumero, fontSize: 12, fontWeight: '800', lineHeight: 15 },
   numero: { marginTop: 20, color: COR_PAINEL.sobreEscuro, fontSize: 32, fontWeight: '800', lineHeight: 37 },
   apoioDoNumero: { marginTop: 5, fontSize: 10, fontWeight: '700' },
+  faisca: { height: 25, marginTop: 8, overflow: 'hidden', justifyContent: 'center' },
+  risco: { position: 'absolute', left: '-10%', width: '120%', height: 3 },
+  riscoUm: { transform: [{ rotate: '-22deg' }] },
+  riscoDois: { transform: [{ rotate: '20deg' }], opacity: 0.5 },
 
   cartao: { overflow: 'hidden', borderRadius: 9, backgroundColor: COR.superficie },
   cabecalhoDoCartao: {

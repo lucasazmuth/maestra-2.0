@@ -3,31 +3,34 @@ import { useEffect, useId, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { COR, COR_CABECALHO, RAIO, SOMBRA_DO_BOTAO } from '@maestra/core/constants/design';
+import {
+  COR, COR_CABECALHO, COR_PERFIS, COR_PLANO_DA_CONTA, RAIO, SOMBRA_DO_BOTAO,
+} from '@maestra/core/constants/design';
+import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
+import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 import { supabase } from '@maestra/core/lib/supabase';
 import { countUnread } from '@maestra/core/services/db/notifications';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
-import { FotoDoArtista } from '@/casca/FotoDoArtista';
-import { NotificationIcon } from '@/icones';
+import { MaestraLogo, NotificationIcon } from '@/icones';
 import { useSessao } from '@/nucleo/sessao';
 
-// O cabeçalho do artista, igual ao da web no celular (ver `src/components/Layout/index.tsx`):
-// à esquerda o chip do artista atual, à direita o botão da Nyta e o sino.
+// O cabeçalho, igual ao da web no celular (ver `src/components/Layout/index.tsx`): à esquerda a
+// MARCA com o selo do plano, à direita o botão da Nyta e o sino.
 //
-// O chip existe porque no celular a barra inferior mostra a FOTO do artista, mas não o nome —
-// e a foto sozinha não basta pra quem tem dois perfis com capa parecida. Tocar nele volta pra
-// lista de perfis, como na web.
+// Ele já mostrou o chip do artista aqui, por causa de um bloco de CSS (`.topbar-artist`, de
+// junho) que o descrevia em detalhe. Lendo o DOM da web em execução: o chip NÃO É RENDERIZADO —
+// o componente nunca foi ligado, e aquele CSS é código morto. Quem diz de quem é a tela é a
+// foto do artista na ilha de baixo, nas duas superfícies.
 //
-// ⚠️ Divergência conhecida: na web o chip está com texto branco sobre o cabeçalho claro
-// (`.topbar-artist-name`, de junho, quando o app ainda era escuro), ou seja, o nome está
-// invisível lá. Aqui ele é legível. Copiar o bug seria copiar o acidente, não o desenho.
+// Tocar na marca volta pra lista de perfis, como o logotipo da web.
 
 export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => {
   const router = useRouter();
   const margem = useSafeAreaInsets();
   const { sessao } = useSessao();
+  const { isPro } = useEntitlements();
   const usuario = sessao?.user.id;
   const [naoLidas, setNaoLidas] = useState(0);
   // O canal leva um sufixo por INSTÂNCIA, e não só o id do usuário.
@@ -65,10 +68,17 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
         style={estilos.chip}
         onPress={() => router.push('/perfis')}
         accessibilityRole="button"
-        accessibilityLabel={artista ? `${artista.name}. Trocar de perfil` : 'Trocar de perfil'}
+        accessibilityLabel="Maestra. Ir para os perfis"
       >
-        <FotoDoArtista artista={artista} tamanho={28} />
-        <Text style={estilos.nome} numberOfLines={1}>{artista?.name ?? 'Perfil'}</Text>
+        <MaestraLogo size={20} color={COR_PERFIS.titulo} />
+        <Text style={estilos.nome}>Maestra</Text>
+        {!PAYWALL_DISABLED && (
+          <View style={[estilos.selo, isPro ? estilos.seloPro : estilos.seloLivre]}>
+            <Text style={[estilos.seloTexto, isPro ? estilos.seloProTexto : estilos.seloLivreTexto]}>
+              {isPro ? 'PRO' : 'FREE'}
+            </Text>
+          </View>
+        )}
       </Pressable>
 
       <Pressable
@@ -103,7 +113,19 @@ const estilos = StyleSheet.create({
   },
   // `flex: 1` empurra os dois botões pra direita, que é o que o `margin-left: auto` faz na web.
   chip: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 8 },
-  nome: { flexShrink: 1, color: COR.titulo, fontSize: 15, fontWeight: '700' },
+  nome: { color: COR_PERFIS.titulo, fontSize: 20, fontWeight: '800' },
+  selo: {
+    height: 20, justifyContent: 'center', paddingHorizontal: 8,
+    borderRadius: RAIO.pilula, borderWidth: 1,
+  },
+  seloPro: { borderColor: COR_PLANO_DA_CONTA.proContorno },
+  seloLivre: {
+    borderColor: COR_PLANO_DA_CONTA.livreContorno,
+    backgroundColor: COR_PLANO_DA_CONTA.livreFundo,
+  },
+  seloTexto: { fontSize: 9, fontWeight: '800', letterSpacing: 0.4 },
+  seloProTexto: { color: COR_PLANO_DA_CONTA.proTexto },
+  seloLivreTexto: { color: COR_PLANO_DA_CONTA.livreTexto },
   // 42px no celular; no desktop a web usa 51.
   redondo: {
     width: 42,
