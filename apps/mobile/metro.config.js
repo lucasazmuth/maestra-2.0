@@ -29,4 +29,14 @@ config.resolver.extraNodeModules = {
 config.resolver.nodeModulesPaths = [path.resolve(projeto, 'node_modules')];
 config.resolver.disableHierarchicalLookup = true;
 
+// SVG como componente, igual ao SVGR do CRA.
+//
+// Os icones do menu sao os 26 arquivos oficiais de `src/assets/icons`, copiados para ca (o
+// Metro nao alcanca a pasta do app web). Aproximar com uma familia de icones pronta seria o
+// "quase igual" que motivou este trabalho — sao os MESMOS arquivos, e um teste garante que as
+// copias nao derivem.
+config.transformer.babelTransformerPath = require.resolve('react-native-svg-transformer/expo');
+config.resolver.assetExts = config.resolver.assetExts.filter((e) => e !== 'svg');
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'svg'];
+
 module.exports = config;

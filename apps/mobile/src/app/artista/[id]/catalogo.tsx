@@ -1,11 +1,10 @@
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, FlatList, Image, Pressable, RefreshControl,
   StyleSheet, Text, View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 
@@ -15,7 +14,6 @@ import type { CatalogItem } from '@maestra/core/interfaces/maestra';
 import { listCatalogProjectItems } from '@maestra/core/services/db/catalog';
 
 import { useArtistaDaRota } from '@/nucleo/artista';
-import { useVoltar } from '@/nucleo/navegar';
 
 // O Catálogo.
 //
@@ -45,7 +43,6 @@ const Capa = ({ faixa }: { faixa: CatalogItem }) =>
 
 export default function Catalogo() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const voltar = useVoltar({ pathname: '/perfil/[id]', params: { id: String(id) } });
   const artista = useArtistaDaRota(id);
 
   const [faixas, setFaixas] = useState<CatalogItem[]>([]);
@@ -93,13 +90,9 @@ export default function Catalogo() {
   const vazio = !carregando && faixas.length === 0;
 
   return (
-    <SafeAreaView style={estilos.tela}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <View style={estilos.tela}>
 
       <View style={estilos.cabecalho}>
-        <Text style={estilos.voltar} onPress={voltar}>
-          ‹  {artista?.name ?? 'Perfil'}
-        </Text>
         <Text style={estilos.titulao}>Catálogo</Text>
       </View>
 
@@ -177,18 +170,17 @@ export default function Catalogo() {
           </View>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: COR.superficie },
+  tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1 },
   cabecalho: { paddingHorizontal: 24, paddingTop: 8, gap: 2 },
-  voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
   titulao: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4 },
   espera: { marginTop: 48 },
-  conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48, gap: 8 },
+  conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 122, gap: 8 },
   linha: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 12,

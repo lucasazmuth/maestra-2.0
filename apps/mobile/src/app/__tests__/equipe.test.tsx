@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 
 import type { ArtistMember } from '@maestra/core/interfaces/maestra';
 import { store } from '@maestra/core/store/store';
-import Equipe from '../equipe/[id]';
+import Equipe from '../artista/[id]/equipe';
 import { comDiagnostico } from './fixtures';
 
 jest.mock('expo-router', () => ({

@@ -1,10 +1,9 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, RefreshControl, ScrollView, SectionList,
   StyleSheet, Text, View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COR, RAIO } from '@maestra/core/constants/design';
 import { EVENT_TYPES } from '@maestra/core/constants/maestra';
@@ -12,7 +11,6 @@ import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
 import { listEvents } from '@maestra/core/services/db/events';
 
 import { useArtistaDaRota } from '@/nucleo/artista';
-import { useVoltar } from '@/nucleo/navegar';
 
 // A Agenda.
 //
@@ -71,7 +69,6 @@ const Cartao = ({ evento }: { evento: AgendaEvent }) => {
 
 export default function Agenda() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const voltar = useVoltar({ pathname: '/perfil/[id]', params: { id: String(id) } });
   const artista = useArtistaDaRota(id);
 
   const [eventos, setEventos] = useState<AgendaEvent[]>([]);
@@ -107,13 +104,9 @@ export default function Agenda() {
   const vazia = !carregando && eventos.length === 0;
 
   return (
-    <SafeAreaView style={estilos.tela}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <View style={estilos.tela}>
 
       <View style={estilos.cabecalho}>
-        <Text style={estilos.voltar} onPress={voltar}>
-          ‹  {artista?.name ?? 'Perfil'}
-        </Text>
         <Text style={estilos.titulão}>Agenda</Text>
       </View>
 
@@ -155,18 +148,17 @@ export default function Agenda() {
           }}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: COR.superficie },
+  tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1 },
   cabecalho: { paddingHorizontal: 24, paddingTop: 8, gap: 2 },
-  voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
   titulão: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4 },
   espera: { marginTop: 48 },
-  conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48 },
+  conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 122 },
   secao: { fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: COR.apagado, fontWeight: '700', marginBottom: 8 },
   folga: { height: 22 },
   dia: { fontSize: 13, fontWeight: '700', color: COR.secundario, marginTop: 10, marginBottom: 6 },

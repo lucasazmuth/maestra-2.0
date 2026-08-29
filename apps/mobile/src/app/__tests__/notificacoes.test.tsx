@@ -85,7 +85,7 @@ describe('notificações', () => {
     await userEvent.setup().press(tela.getByLabelText('Fresca, não lida'));
 
     expect(mockLer).toHaveBeenCalledWith('n-1');
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/perfil/[id]', params: { id: 'a-1' } });
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/artista/[id]', params: { id: 'a-1' } });
   });
 
   // Os nomes vêm numa consulta só: uma por item seria N requisições para desenhar cabeçalho.

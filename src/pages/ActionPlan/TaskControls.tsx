@@ -7,26 +7,11 @@ import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 
 // Categorias de tarefa (valor persistido + rótulo exibido). Fonte única reutilizada pelo
 // chip TaskCategory, pelo composer e pelo Dashboard.
-export const TASK_TYPES: { v: string; label: string }[] = [
-  // 'acoes' é o valor de FALLBACK quando a tarefa não tem categoria definida (`value ||
-  // 'acoes'`, logo abaixo, e em TaskDetailModal.tsx). "Ações" como rótulo lia como se fosse uma
-  // categoria deliberada — a maioria das tarefas cai aqui só por nunca ter sido categorizada.
-  // "Categoria" lê como os outros chips sem valor (`Sem prazo`, `Dono do perfil`): um placeholder
-  // honesto, não uma escolha.
-  { v: 'acoes', label: 'Categoria' },
-  { v: 'produto_fonografico', label: 'Produto fonográfico' },
-  { v: 'audio_visual', label: 'Audiovisual' },
-  { v: 'design', label: 'Design' },
-  { v: 'fotos', label: 'Fotos' },
-  { v: 'figurino', label: 'Figurino' },
-  { v: 'site', label: 'Site' },
-  { v: 'textos', label: 'Textos' },
-  { v: 'assessoria', label: 'Assessoria' },
-  { v: 'marketing_digital', label: 'Marketing digital' },
-  { v: 'media_kit', label: 'Media kit' },
-  { v: 'radio', label: 'Rádio' },
-  { v: 'show', label: 'Show' },
-];
+// A lista mora no núcleo agora — o app nativo usa a MESMA no hero da home. Reexportada aqui
+// porque metade do módulo do plano já a importa deste arquivo.
+import { TASK_TYPES } from '@maestra/core/constants/maestra';
+
+export { TASK_TYPES };
 
 // Controles de tarefa reaproveitados pelos modos básico (timeline) e avançado (lista):
 //  • TaskDate — pílula que abre o calendário (antd DatePicker) ao clicar.

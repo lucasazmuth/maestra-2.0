@@ -30,6 +30,11 @@ module.exports = {
   // `@reduxjs/toolkit` encontra a copia da RAIZ, que e a do app web — duas instancias no mesmo
   // processo, e hooks que quebram sem dizer por que.
   moduleNameMapper: {
+    // A ORDEM importa: o jest para na primeira regra que casa. O `.svg` vem antes do alias de
+    // assets, senão o arquivo real seria carregado e viraria um objeto de asset (o jest não passa
+    // pelo Metro, que é quem transforma SVG em componente). Ver o dublê.
+    '\\.svg$': '<rootDir>/src/__mocks__/svg.tsx',
+    '^@/assets/(.*)$': '<rootDir>/assets/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
     // Toda dependencia que o NUCLEO importa e apontada para a copia do APP.
     //

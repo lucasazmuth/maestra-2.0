@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 
 import { store } from '@maestra/core/store/store';
 import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
-import Agenda from '../agenda/[id]';
+import Agenda from '../artista/[id]/agenda';
 import { comDiagnostico } from './fixtures';
 
 jest.mock('expo-router', () => ({

@@ -1,0 +1,44 @@
+import Feather from '@expo/vector-icons/Feather';
+import type { FC } from 'react';
+import type { SvgProps } from 'react-native-svg';
+
+import AgendaSvg from '@/assets/icons/agenda.svg';
+import CatalogoSvg from '@/assets/icons/catalogo.svg';
+import ConfigSvg from '@/assets/icons/config.svg';
+import DiagnosticoSvg from '@/assets/icons/diagnostico.svg';
+import EquipeSvg from '@/assets/icons/equipe.svg';
+import MoreSvg from '@/assets/icons/more.svg';
+import NotificationSvg from '@/assets/icons/notification.svg';
+import PerfisSvg from '@/assets/icons/perfis.svg';
+import PlanejamentoSvg from '@/assets/icons/planejamento.svg';
+import PlanoAcaoSvg from '@/assets/icons/plano-acao.svg';
+
+// Os ícones do sistema, os MESMOS arquivos da web.
+//
+// Espelha `src/components/Icons/system.tsx`, inclusive os recortes de `viewBox`: o traço ocupa
+// ~6..35 num box de 41, e sem o recorte cada ícone renderiza pequeno demais dentro da própria
+// caixa. Os valores não são estéticos — são os que a web já calibrou, e mudá-los aqui faria os
+// ícones terem tamanhos visualmente diferentes nas duas superfícies.
+//
+// `stroke="currentColor"` nos arquivos: o `react-native-svg` resolve isso pela prop `color`.
+
+type Props = { size?: number; color?: string };
+
+const recortar = (Svg: FC<SvgProps>, viewBox = '6 6 29 29'): FC<Props> =>
+  ({ size = 22, color }) => <Svg viewBox={viewBox} width={size} height={size} color={color} />;
+
+export const PlanoAcaoIcon = recortar(PlanoAcaoSvg);
+export const CatalogoIcon = recortar(CatalogoSvg, '4 4 33 33');
+export const AgendaIcon = recortar(AgendaSvg);
+export const MoreIcon = recortar(MoreSvg, '8 16 25 9');
+export const DiagnosticoIcon = recortar(DiagnosticoSvg);
+export const PlanejamentoIcon = recortar(PlanejamentoSvg);
+export const EquipeIcon = recortar(EquipeSvg, '4 6 33 29');
+export const PerfisIcon = recortar(PerfisSvg, '9 8 22 23');
+export const NotificationIcon = recortar(NotificationSvg);
+export const ConfigIcon = recortar(ConfigSvg, '6 6 30 30');
+
+/** Marketing é o único que a web NÃO tira de um arquivo: lá é o `FiTrendingUp` do Feather. */
+export const MarketingIcon: FC<Props> = ({ size = 22, color }) => (
+  <Feather name="trending-up" size={size} color={color} />
+);

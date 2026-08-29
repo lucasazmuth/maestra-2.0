@@ -1,10 +1,9 @@
 import Feather from '@expo/vector-icons/Feather';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COR, RAIO } from '@maestra/core/constants/design';
 import { MVP_ACCESS_LEVEL_OPTIONS } from '@maestra/core/constants/maestra';
@@ -12,7 +11,6 @@ import type { ArtistMember } from '@maestra/core/interfaces/maestra';
 import { listMembers } from '@maestra/core/services/db/members';
 
 import { useArtistaDaRota } from '@/nucleo/artista';
-import { useVoltar } from '@/nucleo/navegar';
 
 // A equipe do perfil.
 //
@@ -55,7 +53,6 @@ const Acessos = ({ membro }: { membro: ArtistMember }) => {
 
 export default function Equipe() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const voltar = useVoltar({ pathname: '/perfil/[id]', params: { id: String(id) } });
   const artista = useArtistaDaRota(id);
 
   const [membros, setMembros] = useState<ArtistMember[]>([]);
@@ -83,13 +80,9 @@ export default function Equipe() {
   const vazia = !carregando && membros.length === 0;
 
   return (
-    <SafeAreaView style={estilos.tela}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <View style={estilos.tela}>
 
       <View style={estilos.cabecalho}>
-        <Text style={estilos.voltar} onPress={voltar}>
-          ‹  {artista?.name ?? 'Perfil'}
-        </Text>
         <Text style={estilos.titulao}>Equipe</Text>
         {!carregando && !erro && membros.length > 0 && (
           <Text style={estilos.resumo}>
@@ -140,19 +133,18 @@ export default function Equipe() {
           )}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: COR.superficie },
+  tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1 },
   cabecalho: { paddingHorizontal: 24, paddingTop: 8, gap: 2 },
-  voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
   titulao: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4 },
   resumo: { fontSize: 13, color: COR.apagado, marginTop: 2 },
   espera: { marginTop: 48 },
-  conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 48, gap: 8 },
+  conteudo: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 122, gap: 8 },
   cartao: {
     flexDirection: 'row', gap: 12, alignItems: 'flex-start',
     borderWidth: 1, borderColor: COR.contorno, borderRadius: RAIO.cartao, padding: 14,

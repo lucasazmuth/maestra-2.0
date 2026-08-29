@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
 
 import { store } from '@maestra/core/store/store';
-import Plano from '../plano/[id]';
+import Plano from '../artista/[id]/plano';
 import { comDiagnostico, semDiagnostico } from './fixtures';
 
 let mockIdNaRota = comDiagnostico.id;

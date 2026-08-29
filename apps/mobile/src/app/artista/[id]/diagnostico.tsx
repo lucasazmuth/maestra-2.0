@@ -1,13 +1,11 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, RAIO } from '@maestra/core/constants/design';
 
 import { useArtistaDaRota } from '@/nucleo/artista';
-import { useVoltar } from '@/nucleo/navegar';
 
 // O diagnostico R·E·A·L, em leitura.
 //
@@ -22,39 +20,8 @@ const DIMENSOES = [
   { chave: 'l', letra: 'L', nome: 'Legitimacy', o_que: 'chancela: imprensa, prêmios, playlist' },
 ] as const;
 
-/**
- * Linha tocável que leva a outra tela do perfil.
- *
- * Navega por `router.push`, e não por `<Link asChild>`: o Link monta o filho pelo Slot do Radix,
- * que funde `style` como OBJETO — e estilo de `Pressable` é uma FUNÇÃO. O resultado é o estilo
- * virar `{}`, sem erro nenhum.
- */
-const Atalho = ({ para, id, titulo, legenda }: {
-  para: '/plano/[id]' | '/agenda/[id]' | '/catalogo/[id]' | '/equipe/[id]';
-  id: string;
-  titulo: string;
-  legenda: string;
-}) => {
-  const router = useRouter();
-  return (
-    <Pressable
-      style={({ pressed }) => [estilos.atalho, pressed && estilos.atalhoTocado]}
-      onPress={() => router.push({ pathname: para, params: { id } })}
-      accessibilityRole="button"
-      accessibilityLabel={`${titulo}: ${legenda}`}
-    >
-      <View style={estilos.flex}>
-        <Text style={estilos.atalhoTitulo}>{titulo}</Text>
-        <Text style={estilos.atalhoLegenda}>{legenda}</Text>
-      </View>
-      <Feather name="chevron-right" size={22} color={COR.contorno} />
-    </Pressable>
-  );
-};
-
 export default function Perfil() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const voltar = useVoltar('/perfis');
   const artista = useArtistaDaRota(id);
 
   const real = artista?.content?.realIndex;
@@ -62,21 +29,10 @@ export default function Perfil() {
   // O corte vem do proprio indice; 70 e o valor da V3, mas quem manda e o dado.
   const corte = real?.cutLine?.r ?? 70;
 
-  // O atalho do plano mostra progresso em vez de so um titulo: e a informacao que decide se vale
-  // a pena tocar. `null` distingue "sem plano" de "plano com zero tarefas feitas".
-  const estrategias = artista?.content?.strategies ?? [];
-  const totalDeTarefas = estrategias.reduce((n, e) => n + (e.tasks?.length ?? 0), 0);
-  const tarefasFeitas = estrategias.length
-    ? estrategias.reduce((n, e) => n + (e.tasks ?? []).filter((t) => t.status === 'done').length, 0)
-    : null;
 
   return (
-    <SafeAreaView style={estilos.tela}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <View style={estilos.tela}>
       <ScrollView contentContainerStyle={estilos.conteudo}>
-        <Pressable onPress={voltar} hitSlop={12} style={estilos.voltar}>
-          <Text style={estilos.voltarTexto}>‹  Perfis</Text>
-        </Pressable>
 
         <View style={estilos.topo}>
           {foto
@@ -106,21 +62,6 @@ export default function Perfil() {
           </View>
         )}
 
-        {/* Fora do condicional de propósito: perfil recém-criado, sem diagnóstico, também
-            precisa chegar ao plano, à agenda e ao catálogo. */}
-        <Atalho
-          para="/plano/[id]"
-          id={String(id)}
-          titulo="Plano de ação"
-          legenda={
-            tarefasFeitas === null
-              ? 'Nenhum plano ainda'
-              : `${tarefasFeitas} de ${totalDeTarefas} concluídas`
-          }
-        />
-        <Atalho para="/agenda/[id]" id={String(id)} titulo="Agenda" legenda="Seus compromissos" />
-        <Atalho para="/catalogo/[id]" id={String(id)} titulo="Catálogo" legenda="Suas músicas" />
-        <Atalho para="/equipe/[id]" id={String(id)} titulo="Equipe" legenda="Quem acessa este perfil" />
 
         {!!real?.profile && (
           <>
@@ -170,16 +111,14 @@ export default function Perfil() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: COR.superficie },
+  tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1 },
-  conteudo: { padding: 24, paddingBottom: 48, gap: 14 },
-  voltar: { paddingVertical: 4, alignSelf: 'flex-start' },
-  voltarTexto: { fontSize: 16, color: COR.primaria, fontWeight: '600' },
+  conteudo: { padding: 24, paddingBottom: 122, gap: 14 },
   topo: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 4 },
   foto: { width: 64, height: 64, borderRadius: 32, backgroundColor: COR.divisoria },
   fotoVazia: {},
@@ -189,9 +128,6 @@ const estilos = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6,
     borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 16,
   },
-  atalhoTocado: { opacity: 0.6 },
-  atalhoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
-  atalhoLegenda: { fontSize: 13, color: COR.apagado, marginTop: 2 },
   aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 18, gap: 6, marginTop: 10 },
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
   avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },

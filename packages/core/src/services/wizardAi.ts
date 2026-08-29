@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { readAiError } from '../lib/edgeError';
-import { TASK_OWNER_SELF } from '../constants/maestra';
+import { TASK_OWNER_SELF, TASK_TYPE_VALUES } from '../constants/maestra';
 import type {
   ArtistIdentity,
   MissionParts,
@@ -336,21 +336,6 @@ export const createStrategies = async (
   return strategies;
 };
 
-const TASK_TYPES = [
-  'produto_fonografico',
-  'audio_visual',
-  'design',
-  'fotos',
-  'figurino',
-  'site',
-  'textos',
-  'assessoria',
-  'marketing_digital',
-  'media_kit',
-  'radio',
-  'show',
-  'acoes',
-];
 
 const addDays = (iso: string, days: number): string => {
   const d = new Date(`${iso}T12:00:00`);
@@ -398,7 +383,7 @@ export const generateSchedule = async (
       return {
         id: uid(),
         description: String(t.description || 'Tarefa'),
-        type: TASK_TYPES.includes(t.type) ? t.type : 'acoes',
+        type: TASK_TYPE_VALUES.includes(t.type) ? t.type : 'acoes',
         deadline,
         status: 'todo' as const,
       };

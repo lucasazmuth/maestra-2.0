@@ -23,6 +23,35 @@ export const MAX_OBJECTIVES = 5;
 // Valor sentinela gravado em `ActionTask.owner` quando o responsável é o DONO DO PERFIL.
 // Membros da equipe são gravados pelo e-mail (que sempre contém "@", então nunca colide).
 // É o responsável padrão de toda tarefa nova (gerada pela Nyta ou criada à mão).
+// Categorias de tarefa do Plano de Ação.
+//
+// Viveu em `src/pages/ActionPlan/TaskControls.tsx` enquanto só a web usava. Subiu pro núcleo
+// quando o app nativo passou a precisar do MESMO rótulo no hero da home — e, de quebra, o
+// `wizardAi` para de manter uma segunda lista de valores, que já estava uma categoria atrás.
+//
+// 'acoes' é o valor de FALLBACK quando a tarefa não tem categoria definida. "Ações" como rótulo
+// lia como se fosse uma categoria deliberada — a maioria das tarefas cai aqui só por nunca ter
+// sido categorizada. "Categoria" lê como os outros chips sem valor (`Sem prazo`, `Dono do
+// perfil`): um placeholder honesto, não uma escolha.
+export const TASK_TYPES: { v: string; label: string }[] = [
+  { v: 'acoes', label: 'Categoria' },
+  { v: 'produto_fonografico', label: 'Produto fonográfico' },
+  { v: 'audio_visual', label: 'Audiovisual' },
+  { v: 'design', label: 'Design' },
+  { v: 'fotos', label: 'Fotos' },
+  { v: 'figurino', label: 'Figurino' },
+  { v: 'site', label: 'Site' },
+  { v: 'textos', label: 'Textos' },
+  { v: 'assessoria', label: 'Assessoria' },
+  { v: 'marketing_digital', label: 'Marketing digital' },
+  { v: 'media_kit', label: 'Media kit' },
+  { v: 'radio', label: 'Rádio' },
+  { v: 'show', label: 'Show' },
+];
+
+/** Só os valores — é o que a validação da resposta da IA precisa. */
+export const TASK_TYPE_VALUES = TASK_TYPES.map((t) => t.v);
+
 export const TASK_OWNER_SELF = 'owner';
 
 // Perguntas de exemplo da Nyta (chips clicáveis) — compartilhadas pelo estado inicial do chat

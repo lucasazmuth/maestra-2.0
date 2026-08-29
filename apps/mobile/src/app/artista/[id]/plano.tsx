@@ -1,7 +1,6 @@
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 
@@ -10,7 +9,6 @@ import type { ActionTask, Strategy } from '@maestra/core/interfaces/maestra';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { useArtistaDaRota } from '@/nucleo/artista';
-import { useVoltar } from '@/nucleo/navegar';
 
 // O Plano de Acao.
 //
@@ -35,7 +33,6 @@ const FECHADA = '__nenhuma__' as const;
 
 export default function Plano() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const voltar = useVoltar({ pathname: '/perfil/[id]', params: { id: String(id) } });
   const dispatch = useAppDispatch();
   const artista = useArtistaDaRota(id);
   // So a tarefa tocada mostra progresso; travar a tela inteira numa lista longa e desagradavel.
@@ -87,12 +84,8 @@ export default function Plano() {
   };
 
   return (
-    <SafeAreaView style={estilos.tela}>
-      <Stack.Screen options={{ headerShown: false }} />
+    <View style={estilos.tela}>
       <ScrollView contentContainerStyle={estilos.conteudo}>
-        <Pressable onPress={voltar} hitSlop={12} style={estilos.voltar}>
-          <Text style={estilos.voltarTexto}>‹  {artista?.name ?? 'Perfil'}</Text>
-        </Pressable>
 
         <Text style={estilos.titulo}>Plano de ação</Text>
 
@@ -171,16 +164,14 @@ export default function Plano() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: COR.superficie },
+  tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1 },
-  conteudo: { padding: 24, paddingBottom: 48, gap: 12 },
-  voltar: { paddingVertical: 4, alignSelf: 'flex-start' },
-  voltarTexto: { fontSize: 16, color: COR.primaria, fontWeight: '600' },
+  conteudo: { padding: 24, paddingBottom: 122, gap: 12 },
   titulo: { fontSize: 26, fontWeight: '800', color: COR.titulo, letterSpacing: -0.4, marginTop: 4 },
   resumo: { fontSize: 14, color: COR.secundario, marginBottom: 4 },
   aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 18, gap: 6, marginTop: 10 },

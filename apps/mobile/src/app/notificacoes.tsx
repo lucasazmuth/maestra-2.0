@@ -107,7 +107,7 @@ export default function Notificacoes() {
     // O `link` é uma rota da WEB (`/artists/:id/...`). Enquanto o app não tem todas as telas,
     // abrir às cegas daria "rota não encontrada" — então só navego para o que existe aqui.
     const perfil = item.artist_id;
-    if (perfil) router.push({ pathname: '/perfil/[id]', params: { id: perfil } });
+    if (perfil) router.push({ pathname: '/artista/[id]', params: { id: perfil } });
   };
 
   const lerTudo = async () => {

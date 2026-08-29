@@ -3,7 +3,7 @@ import { render } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 
 import { store } from '@maestra/core/store/store';
-import Perfil from '../perfil/[id]';
+import Perfil from '../artista/[id]/diagnostico';
 import { comDiagnostico, semDiagnostico } from './fixtures';
 
 // O prefixo  nao e estilo: o jest recusa a fabrica de  que referencia
@@ -72,16 +72,5 @@ describe('diagnostico REAL em leitura', () => {
     const tela = await montar();
     expect(tela.getByText('Sem diagnóstico ainda')).toBeTruthy();
     expect(tela.queryByText('Boletim')).toBeNull();
-  });
-
-  // Os atalhos ja estiveram DENTRO do ramo "tem diagnostico" por um descuido de edicao. Um
-  // perfil recem-criado ficava sem nenhuma saida para plano, agenda e catalogo — e nao havia
-  // como perceber sem abrir justamente um perfil novo.
-  it('perfil sem diagnostico ainda alcanca plano, agenda e catalogo', async () => {
-    mockIdNaRota = semDiagnostico.id;
-    const tela = await montar();
-    expect(tela.getByText('Plano de ação')).toBeTruthy();
-    expect(tela.getByText('Agenda')).toBeTruthy();
-    expect(tela.getByText('Catálogo')).toBeTruthy();
   });
 });

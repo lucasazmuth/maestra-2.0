@@ -153,7 +153,7 @@ export default function Perfis() {
           // sintoma so aparece com dado real na tela.
           <Pressable
             style={({ pressed }) => [estilos.cartao, pressed && estilos.pressionado]}
-            onPress={() => router.push({ pathname: '/perfil/[id]', params: { id: item.id } })}
+            onPress={() => router.push({ pathname: '/artista/[id]', params: { id: item.id } })}
             accessibilityRole="button"
             accessibilityLabel={item.name}
           >
