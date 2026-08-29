@@ -216,3 +216,55 @@ export const COR_EM_BREVE = {
   item: '#64779a',
   assinatura: '#a1aec1',
 } as const;
+
+/**
+ * O Plano estratégico.
+ *
+ * A tela tem uma assinatura própria: os cartões não são brancos, são do MESMO cinza do fundo,
+ * com um contorno fino e sem sombra — o que separa um bloco do outro é o fio, não a elevação.
+ * Só dois cartões fogem disso, e de propósito: o foco do ciclo (azul) e a introdução da
+ * identidade (azul-noite). Os valores saem de `.planning-*` em `src/styles/gsap-reference.css`,
+ * e `src/__tests__/cromoDoPlanejamento.test.ts` os amarra lá.
+ */
+export const COR_PLANEJAMENTO = {
+  contorno: '#e1e7f0',
+  rotulo: '#93a3bc',
+  titulo: '#52668d',
+  legenda: '#90a0ba',
+  focoDe: '#3361ff',
+  focoAte: '#7398ff',
+  focoTexto: '#e6edff',
+  identidadeDe: '#172548',
+  identidadeAte: '#2856b8',
+  passoRotulo: '#8d9cb6',
+  numeroApoio: '#7f91af',
+  campoRotulo: '#8b9ab4',
+  objetivoNumero: '#9daabe',
+  objetivoTexto: '#5d7095',
+  fio: '#edf1f5',
+  nota: '#8c9bb2',
+  swotTitulo: '#65789b',
+  swotItem: '#63769a',
+} as const;
+
+/** Forças, Fraquezas, Oportunidades, Ameaças — nesta ordem. */
+export const CORES_SWOT = ['#3361ff', '#ff6633', '#29cc39', '#e62e7b'] as const;
+
+/**
+ * O mapa de referências: o miolo, os quatro nós e as bolhas de cada categoria.
+ *
+ * A cor da borda de cada bolha é o que a amarra ao nó do grupo dela — sem isso, o mapa promete
+ * "conectar" no subtítulo e não conecta nada.
+ */
+export const COR_MAPA = {
+  centro: '#15794a',
+  posicionamento: '#2a54e0',
+  artistica: '#8f6207',
+  comunicacao: '#b4490a',
+  gestao: '#c62330',
+  bolha: {
+    artistica: { contorno: '#b8860b', texto: '#8a6508' },
+    communication: { contorno: '#d2691e', texto: '#a4501a' },
+    career: { contorno: '#d64550', texto: '#b5323d' },
+  },
+} as const;

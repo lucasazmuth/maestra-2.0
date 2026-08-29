@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { useArtist } from '@maestra/core/hooks/useArtist';
 import { Spinner } from '../../components/spinner/spinner';
 import type { SwotAnalysis } from '@maestra/core/interfaces/maestra';
+import { mapaDeReferencias } from '@maestra/core/nucleo/mapaDeReferencias';
 
 const swotColors = ['#3361ff', '#ff6633', '#29cc39', '#e62e7b'] as const;
 
@@ -32,82 +33,10 @@ const Profile: FC = () => {
     ];
   }, [content?.swotAnalysis]);
 
-  // As referencias sao texto livre: o artista escreve quantos nomes quiser, separados por virgula.
-  // Um circulo por NOME (um por CAMPO vazava: oito nomes nao cabem num circulo de 63px), e cada
-  // grupo ocupa o SETOR do seu no — artisticas em cima a direita, gestao embaixo a direita,
-  // comunicacao embaixo a esquerda. O quadrante de POSICIONAMENTO fica livre porque nao existe
-  // campo de referencia para ele.
-  //
-  // Cada setor usa DUAS FILEIRAS. Com uma so, oito nomes num arco de 80 graus se sobrepunham —
-  // medido na tela. Duas fileiras dobram a capacidade sem alargar o setor e sem invadir o
-  // quadrante vizinho.
-  const referenceOrbits = useMemo(() => {
-    const refs = identity?.references;
-    const partir = (t?: string) => (t || '').split(/[,;\n·]+/).map((x) => x.trim()).filter(Boolean);
-    const RAIO_NO = 58;    // metade do no grande
-    const RAIO_CHIP = 27;  // metade da bolha
-
-    // Centro de cada no, em px a partir do centro do mapa. Bate com o CSS dos `.reference-node`.
-    const grupos = [
-      { chave: 'artistica', nome: 'artisticas', graus: -45, no: { x: 92, y: -88 }, nomes: partir(refs?.artisticas) },
-      { chave: 'career', nome: 'gestao', graus: 45, no: { x: 92, y: 88 }, nomes: partir(refs?.gestao) },
-      { chave: 'communication', nome: 'comunicacao', graus: 135, no: { x: -92, y: 88 }, nomes: partir(refs?.comunicacao) },
-    ].filter((g) => g.nomes.length > 0);
-
-    // Duas elipses. A de dentro passa longe dos nos (raio diagonal ~221 contra 185 de alcance do
-    // no); a de fora cabe no container sem vazar nas pontas do setor.
-    // Duas elipses. As duas restricoes que definem os raios, ambas medidas na tela: a de dentro
-    // precisa passar longe dos nos, e a distancia ENTRE as duas precisa caber um diametro de
-    // bolha inteiro — aproximar a de dentro so troca uma colisao pela outra.
-    // A de dentro fica quase circular: com ela achatada (ry bem menor que rx), a ponta "de pe" do
-    // setor descia sobre o no — 4px de folga, medido. A de fora usa a altura extra do container.
-    const anel = (fora: boolean) => (fora ? { rx: 330, ry: 310 } : { rx: 245, ry: 235 });
-
-    return grupos.flatMap(({ chave, graus, no, nomes }) => {
-      // A fileira de fora leva mais, porque tem mais arco disponivel.
-      const qtdFora = nomes.length <= 4 ? nomes.length : Math.ceil(nomes.length * 0.6);
-      const fileiras = [
-        { fora: true, itens: nomes.slice(0, qtdFora) },
-        { fora: false, itens: nomes.slice(qtdFora) },
-      ].filter((f) => f.itens.length > 0);
-
-      return fileiras.flatMap(({ fora, itens }) => {
-        const { rx, ry } = anel(fora);
-        // 70 graus e o setor util, deixando 20 graus de vao entre um grupo e o seguinte. Com 80
-        // as bolhas das pontas de setores vizinhos se encostavam: medido, 6px de sobreposicao
-        // entre a ultima artistica e a primeira de gestao.
-        const abertura = Math.min(26 * (itens.length - 1), 70);
-        return itens.map((nomeRef, i) => {
-          const desvio = itens.length === 1 ? 0 : (i / (itens.length - 1) - 0.5) * abertura;
-          const rad = ((graus + desvio) * Math.PI) / 180;
-          const x = rx * Math.cos(rad);
-          const y = ry * Math.sin(rad);
-
-          // Linha do no ate a bolha, aparada nas duas pontas para nao cruzar por dentro dos
-          // circulos. E ela que mostra a que categoria cada nome pertence.
-          const dx = x - no.x;
-          const dy = y - no.y;
-          const dist = Math.hypot(dx, dy);
-          const ang = (Math.atan2(dy, dx) * 180) / Math.PI;
-          const cos = dx / dist;
-          const sen = dy / dist;
-
-          return {
-            nome: nomeRef,
-            chave,
-            x,
-            y,
-            linha: {
-              x: no.x + RAIO_NO * cos,
-              y: no.y + RAIO_NO * sen,
-              comprimento: Math.max(0, dist - RAIO_NO - RAIO_CHIP),
-              ang,
-            },
-          };
-        });
-      });
-    });
-  }, [identity?.references]);
+  // A geometria mora no núcleo (`nucleo/mapaDeReferencias`) desde que o app nativo passou a
+  // desenhar o mesmo mapa: são coordenadas, não JSX, e duas cópias de trigonometria afinada na
+  // tela é como as duas superfícies acabam com diagramas diferentes.
+  const referenceOrbits = useMemo(() => mapaDeReferencias(identity), [identity]);
 
   if (!artist) return <Spinner loading>{null as any}</Spinner>;
 

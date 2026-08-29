@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -30,6 +30,16 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
   const { sessao } = useSessao();
   const usuario = sessao?.user.id;
   const [naoLidas, setNaoLidas] = useState(0);
+  // O canal leva um sufixo por INSTÂNCIA, e não só o id do usuário.
+  //
+  // O Supabase guarda os canais por nome: pedir um nome que já existe devolve o canal existente,
+  // e chamar `.on()` num canal já inscrito estoura. Dois cabeçalhos vivos ao mesmo tempo — que é
+  // o que acontece no instante em que se troca de artista, com a casca velha ainda montada e a
+  // nova já montando — pediam os dois o mesmo nome, e a tela quebrava.
+  //
+  // A web não tem esse problema porque lá o cabeçalho é um só, dentro do Layout, e nunca
+  // coexiste consigo mesmo. Aqui a navegação é por rota, então a sobreposição é normal.
+  const instancia = useId().replace(/[^a-zA-Z0-9]/g, '');
 
   // Mesma mecânica da web: conta ao montar e escuta o realtime, pra acender e apagar sem
   // precisar navegar. Sem isso o ponto só sumiria na próxima abertura do app.
@@ -39,7 +49,7 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
     const recontar = () => { countUnread(usuario).then((n) => { if (vivo) setNaoLidas(n); }).catch(() => {}); };
     recontar();
     const canal = supabase
-      .channel(`notifications-badge:${usuario}`)
+      .channel(`notifications-badge:${usuario}:${instancia}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${usuario}` },
@@ -47,7 +57,7 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
       )
       .subscribe();
     return () => { vivo = false; void supabase.removeChannel(canal); };
-  }, [usuario]);
+  }, [usuario, instancia]);
 
   return (
     <View style={[estilos.cabecalho, { paddingTop: margem.top, height: 72 + margem.top }]}>
