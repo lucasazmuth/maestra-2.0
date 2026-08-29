@@ -1,4 +1,8 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
+
+import { COR } from '@maestra/core/constants/design';
 import { Provider } from 'react-redux';
 
 import type { CatalogItem } from '@maestra/core/interfaces/maestra';
@@ -36,7 +40,18 @@ const faixa = (over: Partial<CatalogItem>): CatalogItem => ({
   audio_file: 'https://exemplo.invalid/audio.mp3', ...over,
 });
 
-const montar = () => render(<Provider store={store}><Catalogo /></Provider>);
+// A ilha do player sobe com a margem segura do aparelho; fora dele, o provedor precisa das
+// medidas na mão.
+const MEDIDAS: Metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
+
+const montar = () => render(
+  <Provider store={store}>
+    <SafeAreaProvider initialMetrics={MEDIDAS}><Catalogo /></SafeAreaProvider>
+  </Provider>,
+);
 
 describe('catalogo', () => {
   beforeEach(() => {
@@ -97,7 +112,11 @@ describe('catalogo', () => {
     await usuario.press(tela.getByLabelText('Tocar Primeira'));
     mockStatus = { ...mockStatus, playing: true };
     // `rerender` tambem e assincrono no RNTL 14, como o `render`.
-    await tela.rerender(<Provider store={store}><Catalogo /></Provider>);
+    await tela.rerender(
+      <Provider store={store}>
+        <SafeAreaProvider initialMetrics={MEDIDAS}><Catalogo /></SafeAreaProvider>
+      </Provider>,
+    );
 
     await usuario.press(tela.getByLabelText('Pausar Primeira'));
 
@@ -156,8 +175,8 @@ describe('catalogo: as duas abas e a ficha', () => {
 
     await userEvent.setup().press(tela.getByLabelText('Nova música'));
 
-    // Dois "Nova música" na tela: o botão do cabeçalho e o título da ficha aberta.
-    expect(tela.getAllByText('Nova música')).toHaveLength(2);
+    // O cabeçalho da ficha mostra o NOME da faixa; sem título ainda, mostra o que ela é.
+    expect(tela.getByText(/A ficha da obra/)).toBeTruthy();
     expect(tela.getByLabelText('Título').props.value).toBe('');
   });
 
@@ -170,7 +189,8 @@ describe('catalogo: as duas abas e a ficha', () => {
 
     await userEvent.setup().press(tela.getByLabelText('Editar Vento sul'));
 
-    expect(tela.getByText('Editar música')).toBeTruthy();
+    // O cabeçalho da ficha é o NOME da faixa, como na web — não um rótulo genérico.
+    expect(tela.getAllByText('Vento sul').length).toBeGreaterThan(1);
     expect(tela.getByLabelText('Título').props.value).toBe('Vento sul');
     expect(tela.getByLabelText('BPM').props.value).toBe('96');
   });
@@ -221,5 +241,164 @@ describe('catalogo: as duas abas e a ficha', () => {
 
     expect(mockSalvar).not.toHaveBeenCalled();
     expect(tela.getByText(/formato 28\/08\/2026/)).toBeTruthy();
+  });
+});
+
+// A ficha tem TRÊS abas, como a da web — Informações, Letras e Splits. Ela já foi uma pilha de
+// campos sem abas: a letra e os créditos ficavam no fim de uma rolagem longa, e o "Salvar" com
+// eles.
+describe('catalogo: as abas da ficha e os splits', () => {
+  beforeEach(() => {
+    store.dispatch({ type: 'artists/fetchArtists/fulfilled', payload: [comDiagnostico] });
+    mockListar.mockReset();
+    mockSalvar.mockReset();
+    mockListar.mockResolvedValue([faixa({ id: 'f-1', project_id: 'p-1', title: 'Vento sul' })]);
+  });
+
+  const abrirFicha = async (tela: ReturnType<typeof montar> extends Promise<infer T> ? T : never) => {
+    await userEvent.setup().press(tela.getByLabelText('Editar Vento sul'));
+  };
+
+  it('a letra vive na aba Letras, e não no meio das informações', async () => {
+    const tela = await montar();
+    await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
+    await abrirFicha(tela);
+
+    expect(tela.queryByLabelText('Letra')).toBeNull();
+
+    await userEvent.setup().press(tela.getByText('Letras'));
+    expect(tela.getByLabelText('Letra')).toBeTruthy();
+    expect(tela.queryByLabelText('ISRC')).toBeNull();
+  });
+
+  it('os créditos vivem na aba Splits, nos dois grupos', async () => {
+    const tela = await montar();
+    await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
+    await abrirFicha(tela);
+
+    await userEvent.setup().press(tela.getByText('Splits'));
+
+    expect(tela.getByText('Créditos autorais da obra')).toBeTruthy();
+    expect(tela.getByText('Créditos do fonograma')).toBeTruthy();
+    expect(tela.getAllByText('Nenhum participante adicionado.')).toHaveLength(2);
+  });
+
+  it('adicionar participante entra na lista e conta no total', async () => {
+    const tela = await montar();
+    const usuario = userEvent.setup();
+    await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
+    await abrirFicha(tela);
+    await usuario.press(tela.getByText('Splits'));
+
+    await usuario.press(tela.getByLabelText('Adicionar participante em Composição'));
+    await usuario.type(tela.getAllByLabelText('Percentual')[0], '60');
+
+    // Um grupo ganhou participante; o outro continua vazio.
+    expect(tela.getAllByText('Nenhum participante adicionado.')).toHaveLength(1);
+    expect(tela.getByText('60%')).toBeTruthy();
+  });
+
+  // Passar de 100% divide direito que não existe — o total precisa dizer isso.
+  it('total acima de 100% aparece em vermelho', async () => {
+    mockListar.mockResolvedValue([
+      faixa({
+        id: 'f-2', project_id: 'p-2', title: 'Vento sul',
+        composition_splits: [
+          { id: 's1', name: 'A', role: 'Autor', percentage: 70 },
+          { id: 's2', name: 'B', role: 'Autor', percentage: 50 },
+        ],
+      }),
+    ]);
+    const tela = await montar();
+    const usuario = userEvent.setup();
+    await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
+    await abrirFicha(tela);
+    await usuario.press(tela.getByText('Splits'));
+
+    const total = tela.getByText('120%');
+    const cor = StyleSheet.flatten(total.props.style).color;
+    expect(cor).toBe(COR.erro);
+  });
+
+  it('os splits vão junto ao salvar', async () => {
+    mockSalvar.mockResolvedValue(faixa({ id: 'f-1', project_id: 'p-1', title: 'Vento sul' }));
+    const tela = await montar();
+    const usuario = userEvent.setup();
+    await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
+    await abrirFicha(tela);
+    await usuario.press(tela.getByText('Splits'));
+    await usuario.press(tela.getByLabelText('Adicionar participante em Gravação'));
+    await usuario.type(tela.getByLabelText('Nome do participante'), 'Ana');
+    await usuario.press(tela.getByText('Salvar'));
+
+    await waitFor(() => expect(mockSalvar).toHaveBeenCalled());
+    expect(mockSalvar.mock.calls[0][0].recording_splits).toEqual([
+      expect.objectContaining({ name: 'Ana', role: 'Autor' }),
+    ]);
+  });
+});
+
+// O player é uma ILHA flutuante acima da barra de navegação, com capa e controles — não uma
+// faixa colada no rodapé com só o título e o tempo.
+describe('catalogo: o player', () => {
+  beforeEach(() => {
+    store.dispatch({ type: 'artists/fetchArtists/fulfilled', payload: [comDiagnostico] });
+    mockListar.mockReset();
+    mockPlayer.replace.mockClear();
+    mockStatus = { playing: true, currentTime: 30, duration: 180, didJustFinish: false };
+    mockListar.mockResolvedValue([
+      faixa({ id: 'f-1', title: 'Primeira', audio_file: 'https://x/1.mp3' }),
+      faixa({ id: 'f-2', title: 'Segunda', audio_file: 'https://x/2.mp3' }),
+      faixa({ id: 'f-3', title: 'Sem áudio', audio_file: null }),
+    ]);
+  });
+
+  it('tocar abre o player com capa, tempo e controles', async () => {
+    const tela = await montar();
+    await waitFor(() => expect(tela.getByText('Primeira')).toBeTruthy());
+
+    await userEvent.setup().press(tela.getByLabelText('Tocar Primeira'));
+
+    expect(tela.getByText('0:30 / 3:00')).toBeTruthy();
+    expect(tela.getByLabelText('Anterior')).toBeTruthy();
+    expect(tela.getByLabelText('Próxima')).toBeTruthy();
+    expect(tela.getByLabelText('Fechar player')).toBeTruthy();
+  });
+
+  it('próxima toca a faixa seguinte que TEM áudio', async () => {
+    const tela = await montar();
+    const usuario = userEvent.setup();
+    await waitFor(() => expect(tela.getByText('Primeira')).toBeTruthy());
+    await usuario.press(tela.getByLabelText('Tocar Primeira'));
+
+    mockPlayer.replace.mockClear();
+    await usuario.press(tela.getByLabelText('Próxima'));
+
+    expect(mockPlayer.replace).toHaveBeenCalledWith({ uri: 'https://x/2.mp3' });
+  });
+
+  // Pular para uma faixa sem arquivo pararia o player: a fila só tem as que têm áudio.
+  it('a fila dá a volta sem passar pela faixa sem áudio', async () => {
+    const tela = await montar();
+    const usuario = userEvent.setup();
+    await waitFor(() => expect(tela.getByText('Primeira')).toBeTruthy());
+    await usuario.press(tela.getByLabelText('Tocar Segunda'));
+
+    mockPlayer.replace.mockClear();
+    await usuario.press(tela.getByLabelText('Próxima'));
+
+    expect(mockPlayer.replace).toHaveBeenCalledWith({ uri: 'https://x/1.mp3' });
+  });
+
+  it('fechar o player para o áudio e some com a ilha', async () => {
+    const tela = await montar();
+    const usuario = userEvent.setup();
+    await waitFor(() => expect(tela.getByText('Primeira')).toBeTruthy());
+    await usuario.press(tela.getByLabelText('Tocar Primeira'));
+
+    await usuario.press(tela.getByLabelText('Fechar player'));
+
+    expect(mockPlayer.pause).toHaveBeenCalled();
+    expect(tela.queryByLabelText('Fechar player')).toBeNull();
   });
 });

@@ -8,10 +8,12 @@ import {
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_CATALOGO, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_BARRA, COR_CATALOGO, RAIO, SOMBRA } from '@maestra/core/constants/design';
 import { CATALOG_STATUS } from '@maestra/core/constants/maestra';
 import type { CatalogItem } from '@maestra/core/interfaces/maestra';
 import { listCatalogProjectItems } from '@maestra/core/services/db/catalog';
+
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
@@ -65,6 +67,7 @@ export default function Catalogo() {
   const [fichaAberta, setFichaAberta] = useState(false);
   const [editando, setEditando] = useState<CatalogItem | null>(null);
 
+  const margem = useSafeAreaInsets();
   const player = useAudioPlayer();
   const status = useAudioPlayerStatus(player);
 
@@ -89,6 +92,28 @@ export default function Catalogo() {
     if (status.didJustFinish) setTocandoId(null);
   }, [status.didJustFinish]);
 
+  /** Só as faixas com áudio entram na fila: pular para uma sem arquivo pararia o player. */
+  const naFila = faixas.filter((f) => f.audio_file);
+
+  const tocar = (faixa: CatalogItem) => {
+    player.replace({ uri: faixa.audio_file! });
+    player.play();
+    setTocandoId(faixa.id);
+  };
+
+  /** Anterior e próximo dão a volta na lista, como o player da web. */
+  const pular = (passo: number) => {
+    if (!naFila.length) return;
+    const atual = naFila.findIndex((f) => f.id === tocandoId);
+    const proxima = naFila[(atual + passo + naFila.length) % naFila.length];
+    if (proxima) tocar(proxima);
+  };
+
+  const fechar = () => {
+    player.pause();
+    setTocandoId(null);
+  };
+
   const alternar = (faixa: CatalogItem) => {
     if (!faixa.audio_file) return;
     if (tocandoId === faixa.id) {
@@ -96,9 +121,7 @@ export default function Catalogo() {
       else player.play();
       return;
     }
-    player.replace({ uri: faixa.audio_file });
-    player.play();
-    setTocandoId(faixa.id);
+    tocar(faixa);
   };
 
   const emFoco = faixas.find((f) => f.id === tocandoId);
@@ -312,8 +335,67 @@ export default function Catalogo() {
         />
       )}
 
+      {/* O player e uma ILHA flutuante logo acima da barra de navegacao, com a mesma forma
+          dela: 22 de folga nos lados, canto de 22 e a mesma sombra. Era uma faixa colada no
+          rodape, sem capa e sem controles. */}
       {!!emFoco && (
-        <View style={estilos.barra}>
+        // A ilha de navegação sobe com a margem segura do aparelho; o player precisa subir
+        // junto, senão ele fica ATRÁS dela — 106 é a conta da web, que não tem safe area.
+        <View style={[estilos.player, { bottom: 106 + margem.bottom }]}>
+          <View style={estilos.capaDoPlayer}>
+            {emFoco.cover_image
+              ? <Image source={{ uri: emFoco.cover_image }} style={estilos.capaDoPlayerImagem} />
+              : <Feather name="music" size={17} color={COR_CATALOGO.tocarIcone} />}
+          </View>
+
+          <View style={estilos.flex}>
+            <Text style={estilos.playerTitulo} numberOfLines={1}>{emFoco.title}</Text>
+            <Text style={estilos.playerTempo}>
+              {tempo(status.currentTime)} / {tempo(status.duration)}
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => pular(-1)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Anterior"
+          >
+            <Feather name="skip-back" size={18} color={COR_CATALOGO.tocarIcone} />
+          </Pressable>
+
+          <Pressable
+            style={estilos.playerBotao}
+            onPress={() => alternar(emFoco)}
+            accessibilityRole="button"
+            accessibilityLabel={status.playing ? 'Pausar' : 'Tocar'}
+          >
+            <Feather
+              name={status.playing ? 'pause' : 'play'}
+              size={18}
+              color={COR.sobrePrimaria}
+            />
+          </Pressable>
+
+          <Pressable
+            onPress={() => pular(1)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Próxima"
+          >
+            <Feather name="skip-forward" size={18} color={COR_CATALOGO.tocarIcone} />
+          </Pressable>
+
+          <Pressable
+            onPress={fechar}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Fechar player"
+          >
+            <Feather name="x" size={18} color={COR_CATALOGO.legenda} />
+          </Pressable>
+
+          {/* O progresso e um fio no rodape da ilha, como na web. */}
           <View style={estilos.trilho}>
             <View
               style={[
@@ -321,12 +403,6 @@ export default function Catalogo() {
                 { width: `${status.duration > 0 ? (status.currentTime / status.duration) * 100 : 0}%` },
               ]}
             />
-          </View>
-          <View style={estilos.barraLinha}>
-            <Text style={estilos.barraTitulo} numberOfLines={1}>{emFoco.title}</Text>
-            <Text style={estilos.barraTempo}>
-              {tempo(status.currentTime)} / {tempo(status.duration)}
-            </Text>
           </View>
         </View>
       )}
@@ -412,12 +488,32 @@ const estilos = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: COR_CATALOGO.tocarFundo,
   },
-  barra: { borderTopWidth: 1, borderTopColor: COR.divisoria, paddingHorizontal: 24, paddingTop: 10, paddingBottom: 6, gap: 8 },
-  trilho: { height: 3, borderRadius: 2, backgroundColor: COR.divisoria, overflow: 'hidden' },
-  progresso: { height: 3, backgroundColor: COR.primaria },
-  barraLinha: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  barraTitulo: { flex: 1, fontSize: 13, fontWeight: '600', color: COR.titulo },
-  barraTempo: { fontSize: 12, color: COR.apagado, fontVariant: ['tabular-nums'] },
+  // A ilha do player: a MESMA forma da barra de navegacao (22 de folga, canto 22, mesma
+  // sombra), logo acima dela.
+  player: {
+    position: 'absolute', left: 22, right: 22,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    minHeight: 64, paddingVertical: 8, paddingLeft: 12, paddingRight: 10,
+    borderRadius: 22, backgroundColor: COR_BARRA.ilha,
+    borderWidth: 1, borderColor: COR_BARRA.contornoDaIlha,
+    ...SOMBRA.ilha,
+  },
+  capaDoPlayer: {
+    width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COR_CATALOGO.tocarFundo, overflow: 'hidden',
+  },
+  capaDoPlayerImagem: { width: 38, height: 38 },
+  playerTitulo: { fontSize: 14, color: COR_CATALOGO.titulo },
+  playerTempo: { fontSize: 11, color: COR_CATALOGO.legenda, marginTop: 2 },
+  playerBotao: {
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: COR.primaria,
+  },
+  trilho: {
+    position: 'absolute', left: 16, right: 16, bottom: 3,
+    height: 2, borderRadius: 1, backgroundColor: COR.divisoria, overflow: 'hidden',
+  },
+  progresso: { height: 2, backgroundColor: COR.primaria },
   aviso: { borderWidth: 1, borderColor: COR_CATALOGO.contornoDoTopo, borderRadius: 8, padding: 18, gap: 6, marginHorizontal: 16 },
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_CATALOGO.titulo },
   avisoTexto: { fontSize: 13, color: COR_CATALOGO.apoio, lineHeight: 20 },
