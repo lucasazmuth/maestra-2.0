@@ -9,6 +9,8 @@ import { COR, RAIO } from '@maestra/core/constants/design';
 import type { ActionTask, Strategy } from '@maestra/core/interfaces/maestra';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { useArtistaDaRota } from '@/nucleo/artista';
+import { useVoltar } from '@/nucleo/navegar';
 
 // O Plano de Acao.
 //
@@ -33,9 +35,9 @@ const FECHADA = '__nenhuma__' as const;
 
 export default function Plano() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const voltar = useVoltar({ pathname: '/perfil/[id]', params: { id: String(id) } });
   const dispatch = useAppDispatch();
-  const artista = useAppSelector((s) => s.artists.items.find((a) => a.id === id));
+  const artista = useArtistaDaRota(id);
   // So a tarefa tocada mostra progresso; travar a tela inteira numa lista longa e desagradavel.
   const [gravando, setGravando] = useState<string | null>(null);
 
@@ -88,7 +90,7 @@ export default function Plano() {
     <SafeAreaView style={estilos.tela}>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView contentContainerStyle={estilos.conteudo}>
-        <Pressable onPress={() => router.back()} hitSlop={12} style={estilos.voltar}>
+        <Pressable onPress={voltar} hitSlop={12} style={estilos.voltar}>
           <Text style={estilos.voltarTexto}>‹  {artista?.name ?? 'Perfil'}</Text>
         </Pressable>
 

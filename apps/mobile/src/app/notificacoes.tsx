@@ -12,6 +12,7 @@ import type { NotificationItem } from '@maestra/core/interfaces/maestra';
 import {
   fetchArtistNames, listNotificationsPaginated, markAllAsRead, markAsRead,
 } from '@maestra/core/services/db/notifications';
+import { useVoltar } from '@/nucleo/navegar';
 import { useSessao } from '@/nucleo/sessao';
 
 // A caixa de entrada do artista.
@@ -55,6 +56,7 @@ const agrupar = (itens: NotificationItem[], nomes: Record<string, string>): Grup
 export default function Notificacoes() {
   const { sessao, carregando: carregandoSessao } = useSessao();
   const router = useRouter();
+  const voltar = useVoltar('/perfis');
 
   const [itens, setItens] = useState<NotificationItem[]>([]);
   const [pagina, setPagina] = useState(0);
@@ -122,7 +124,7 @@ export default function Notificacoes() {
   return (
     <SafeAreaView style={estilos.tela}>
       <View style={estilos.cabecalho}>
-        <Text style={estilos.voltar} onPress={() => router.back()}>‹  Perfis</Text>
+        <Text style={estilos.voltar} onPress={voltar}>‹  Perfis</Text>
         <View style={estilos.linhaTitulo}>
           <Text style={estilos.titulao}>Notificações</Text>
           {naoLidas > 0 && (

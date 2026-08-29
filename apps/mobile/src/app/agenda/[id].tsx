@@ -10,7 +10,9 @@ import { COR, RAIO } from '@maestra/core/constants/design';
 import { EVENT_TYPES } from '@maestra/core/constants/maestra';
 import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
 import { listEvents } from '@maestra/core/services/db/events';
-import { useAppSelector } from '@maestra/core/store/store';
+
+import { useArtistaDaRota } from '@/nucleo/artista';
+import { useVoltar } from '@/nucleo/navegar';
 
 // A Agenda.
 //
@@ -69,8 +71,8 @@ const Cartao = ({ evento }: { evento: AgendaEvent }) => {
 
 export default function Agenda() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
-  const artista = useAppSelector((s) => s.artists.items.find((a) => a.id === id));
+  const voltar = useVoltar({ pathname: '/perfil/[id]', params: { id: String(id) } });
+  const artista = useArtistaDaRota(id);
 
   const [eventos, setEventos] = useState<AgendaEvent[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -109,7 +111,7 @@ export default function Agenda() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={estilos.cabecalho}>
-        <Text style={estilos.voltar} onPress={() => router.back()}>
+        <Text style={estilos.voltar} onPress={voltar}>
           ‹  {artista?.name ?? 'Perfil'}
         </Text>
         <Text style={estilos.titulão}>Agenda</Text>

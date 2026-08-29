@@ -8,6 +8,7 @@ import { supabase } from '@maestra/core/lib/supabase';
 import { cancelSubscription, fetchSubscriptionStatus } from '@maestra/core/store/slices/subscription';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { sair } from '@/nucleo/entrar';
+import { useVoltar } from '@/nucleo/navegar';
 import { useSessao } from '@/nucleo/sessao';
 
 // A conta.
@@ -27,6 +28,7 @@ const COBRAVEL = ['active', 'overdue', 'pending'];
 export default function Conta() {
   const { sessao, carregando: carregandoSessao } = useSessao();
   const router = useRouter();
+  const voltar = useVoltar('/perfis');
   const dispatch = useAppDispatch();
   const status = useAppSelector((s) => s.subscription.status);
 
@@ -92,7 +94,7 @@ export default function Conta() {
   return (
     <SafeAreaView style={estilos.tela}>
       <ScrollView contentContainerStyle={estilos.conteudo}>
-        <Text style={estilos.voltar} onPress={() => router.back()}>‹  Perfis</Text>
+        <Text style={estilos.voltar} onPress={voltar}>‹  Perfis</Text>
         <Text style={estilos.titulao}>Conta</Text>
         <Text style={estilos.email}>{usuario?.email}</Text>
 

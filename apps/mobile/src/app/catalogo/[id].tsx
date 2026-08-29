@@ -13,7 +13,9 @@ import { COR, RAIO } from '@maestra/core/constants/design';
 import { CATALOG_STATUS } from '@maestra/core/constants/maestra';
 import type { CatalogItem } from '@maestra/core/interfaces/maestra';
 import { listCatalogProjectItems } from '@maestra/core/services/db/catalog';
-import { useAppSelector } from '@maestra/core/store/store';
+
+import { useArtistaDaRota } from '@/nucleo/artista';
+import { useVoltar } from '@/nucleo/navegar';
 
 // O Catálogo.
 //
@@ -43,8 +45,8 @@ const Capa = ({ faixa }: { faixa: CatalogItem }) =>
 
 export default function Catalogo() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
-  const artista = useAppSelector((s) => s.artists.items.find((a) => a.id === id));
+  const voltar = useVoltar({ pathname: '/perfil/[id]', params: { id: String(id) } });
+  const artista = useArtistaDaRota(id);
 
   const [faixas, setFaixas] = useState<CatalogItem[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -95,7 +97,7 @@ export default function Catalogo() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={estilos.cabecalho}>
-        <Text style={estilos.voltar} onPress={() => router.back()}>
+        <Text style={estilos.voltar} onPress={voltar}>
           ‹  {artista?.name ?? 'Perfil'}
         </Text>
         <Text style={estilos.titulao}>Catálogo</Text>
