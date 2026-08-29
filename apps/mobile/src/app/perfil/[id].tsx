@@ -2,6 +2,8 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import Feather from '@expo/vector-icons/Feather';
+
 import { COR, RAIO } from '@maestra/core/constants/design';
 import { useAppSelector } from '@maestra/core/store/store';
 
@@ -43,7 +45,7 @@ const Atalho = ({ para, id, titulo, legenda }: {
         <Text style={estilos.atalhoTitulo}>{titulo}</Text>
         <Text style={estilos.atalhoLegenda}>{legenda}</Text>
       </View>
-      <Text style={estilos.atalhoSeta}>›</Text>
+      <Feather name="chevron-right" size={22} color={COR.contorno} />
     </Pressable>
   );
 };
@@ -187,7 +189,6 @@ const estilos = StyleSheet.create({
   atalhoTocado: { opacity: 0.6 },
   atalhoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
   atalhoLegenda: { fontSize: 13, color: COR.apagado, marginTop: 2 },
-  atalhoSeta: { fontSize: 24, color: COR.contorno },
   aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 18, gap: 6, marginTop: 10 },
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
   avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },

@@ -6,6 +6,19 @@ import { store } from '@maestra/core/store/store';
 import Perfis from '../perfis';
 import { comDiagnostico, semDiagnostico } from './fixtures';
 
+// O `RefreshControl` nao publica `refreshing` na arvore renderizada — o no nativo sai com a
+// prop `undefined`. Para verificar o valor que a tela PASSA, ele e capturado aqui.
+const refreshingRecebido: boolean[] = [];
+jest.mock('react-native/Libraries/Components/RefreshControl/RefreshControl', () => {
+  const { View } = jest.requireActual('react-native');
+  const Falso = (props: { refreshing: boolean }) => {
+    refreshingRecebido.push(props.refreshing);
+    return <View />;
+  };
+  // O modulo e ESM: devolver a funcao crua faz o React receber `undefined` como tipo.
+  return { __esModule: true, default: Falso, RefreshControl: Falso };
+});
+
 // A sessao vem do Supabase; aqui interessa a tela, nao o login.
 jest.mock('@/nucleo/sessao', () => ({
   useSessao: () => ({
@@ -21,6 +34,8 @@ const semearPerfis = (perfis: unknown[]) =>
 
 // `render` do RNTL 14 e assincrono.
 const montar = () => render(<Provider store={store}><Perfis /></Provider>);
+
+
 
 describe('lista de perfis', () => {
   beforeEach(() => {
@@ -60,6 +75,25 @@ describe('lista de perfis', () => {
     const estilo = StyleSheet.flatten(cartao.props.style);
     expect(estilo.flexDirection).toBe('row');
     expect(estilo.borderWidth).toBe(1);
+  });
+
+  // O spinner de "puxar para atualizar" chegou a disparar sozinho ao voltar para a lista: ele
+  // estava ligado ao `loading` do store, que fica true em QUALQUER busca — inclusive na que roda
+  // sozinha ao montar. O resultado era um spinner sem ninguem ter puxado, empurrando a lista
+  // para baixo com o conteudo ja na tela.
+  it('nao mostra o spinner de puxar quando a busca e automatica', async () => {
+    // Reproduz a condicao REAL: a lista ja carregou (`loaded`) e uma nova busca esta em voo
+    // (`pending` => `loading`). E o estado de voltar para a tela, quando o efeito refaz a busca
+    // sozinho — e era exatamente ai que o spinner aparecia sem ninguem ter puxado.
+    store.dispatch({ type: 'artists/fetchArtists/pending' });
+    const { loading, loaded } = store.getState().artists;
+    expect([loading, loaded]).toEqual([true, true]);
+
+    refreshingRecebido.length = 0;
+    await montar();
+
+    expect(refreshingRecebido.length).toBeGreaterThan(0);
+    expect(refreshingRecebido).not.toContain(true);
   });
 
   it('lista vazia nao vira tela em branco', async () => {

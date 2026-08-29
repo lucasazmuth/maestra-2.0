@@ -7,6 +7,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import Feather from '@expo/vector-icons/Feather';
+
 import { COR, RAIO } from '@maestra/core/constants/design';
 import { CATALOG_STATUS } from '@maestra/core/constants/maestra';
 import type { CatalogItem } from '@maestra/core/interfaces/maestra';
@@ -35,7 +37,7 @@ const Capa = ({ faixa }: { faixa: CatalogItem }) =>
     <Image source={{ uri: faixa.cover_image }} style={estilos.capa} />
   ) : (
     <View style={[estilos.capa, estilos.capaVazia]}>
-      <Text style={estilos.notaMusical}>♪</Text>
+      <Feather name="music" size={18} color={COR.apagado} />
     </View>
   );
 
@@ -142,9 +144,13 @@ export default function Catalogo() {
                     {!!item.duration && <Text style={estilos.duracao}>{item.duration}</Text>}
                   </View>
                 </View>
-                <Text style={[estilos.botao, !temAudio && estilos.semAudio]}>
-                  {!temAudio ? '—' : eAtual && status.playing ? '❙❙' : '▶'}
-                </Text>
+                <View style={estilos.botao}>
+                  <Feather
+                    name={eAtual && status.playing ? 'pause' : 'play'}
+                    size={18}
+                    color={temAudio ? COR.primaria : COR.contorno}
+                  />
+                </View>
               </Pressable>
             );
           }}
@@ -188,13 +194,11 @@ const estilos = StyleSheet.create({
   pressionada: { opacity: 0.6 },
   capa: { width: 48, height: 48, borderRadius: 8, backgroundColor: COR.divisoria },
   capaVazia: { alignItems: 'center', justifyContent: 'center' },
-  notaMusical: { fontSize: 20, color: COR.apagado },
   titulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 3 },
   status: { fontSize: 12, fontWeight: '700' },
   duracao: { fontSize: 12, color: COR.apagado },
   botao: { fontSize: 17, color: COR.primaria, width: 30, textAlign: 'center' },
-  semAudio: { color: COR.contorno },
   barra: { borderTopWidth: 1, borderTopColor: COR.divisoria, paddingHorizontal: 24, paddingTop: 10, paddingBottom: 6, gap: 8 },
   trilho: { height: 3, borderRadius: 2, backgroundColor: COR.divisoria, overflow: 'hidden' },
   progresso: { height: 3, backgroundColor: COR.primaria },

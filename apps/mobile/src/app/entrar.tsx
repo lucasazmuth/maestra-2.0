@@ -1,4 +1,5 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView,
@@ -8,10 +9,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CONTORNO_DE_ENTRADA, COR, RAIO } from '@maestra/core/constants/design';
 import { appleDisponivel, entrarComApple, entrarComEmail, entrarComGoogle } from '@/nucleo/entrar';
+import { useSessao } from '@/nucleo/sessao';
 
 type EmCurso = 'email' | 'apple' | 'google' | null;
 
 export default function Entrar() {
+  // A saída da tela é REATIVA à sessão, e não uma navegação no fim de cada handler.
+  //
+  // Esta tela já ficou sem nenhuma navegação: o login dava certo, a sessão era criada, e a tela
+  // simplesmente não saía do lugar — sem erro, sem carregando, sem nada. Só entrava quem
+  // reiniciava o app, porque aí a porta em `/` levava aos perfis.
+  //
+  // Reagir à sessão cobre os três caminhos de uma vez: e-mail, Apple (que troca o token por
+  // sessão) e Google (que volta do navegador e chama `setSession`). Um `router.replace` no fim
+  // de cada um deles precisaria ser lembrado três vezes, e o do Google voltaria de outra tela.
+  const { sessao } = useSessao();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [emCurso, setEmCurso] = useState<EmCurso>(null);
@@ -36,6 +48,8 @@ export default function Entrar() {
   };
 
   const ocupado = emCurso !== null;
+
+  if (sessao) return <Redirect href="/perfis" />;
 
   return (
     <SafeAreaView style={estilos.tela}>

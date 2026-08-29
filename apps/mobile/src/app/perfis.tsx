@@ -6,6 +6,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import Feather from '@expo/vector-icons/Feather';
+
 import { COR, RAIO } from '@maestra/core/constants/design';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 import { countUnread } from '@maestra/core/services/db/notifications';
@@ -64,6 +66,21 @@ export default function Perfis() {
 
   const usuario = sessao?.user.id;
   const [naoLidas, setNaoLidas] = useState(0);
+  // Separado do `loading` do store de propósito: `loading` fica true em QUALQUER busca,
+  // inclusive na que roda sozinha ao voltar para esta tela. Ligado ao RefreshControl, isso
+  // fazia um spinner de "puxar para atualizar" aparecer sem ninguém ter puxado nada — e ainda
+  // empurrava a lista para baixo, com o conteúdo já na tela.
+  const [puxando, setPuxando] = useState(false);
+
+  const puxarParaAtualizar = async () => {
+    if (!usuario) return;
+    setPuxando(true);
+    try {
+      await dispatch(artistsActions.fetchArtists(usuario));
+    } finally {
+      setPuxando(false);
+    }
+  };
 
   useEffect(() => {
     if (usuario) dispatch(artistsActions.fetchArtists(usuario));
@@ -94,7 +111,7 @@ export default function Perfis() {
           }
         >
           <View>
-            <Text style={estilos.sino}>◔</Text>
+            <Feather name="bell" size={21} color={COR.secundario} />
             {naoLidas > 0 && (
               <View style={estilos.bolha}>
                 <Text style={estilos.bolhaTexto}>{naoLidas > 9 ? '9+' : naoLidas}</Text>
@@ -113,8 +130,8 @@ export default function Perfis() {
         contentContainerStyle={estilos.lista}
         refreshControl={
           <RefreshControl
-            refreshing={loading && loaded}
-            onRefresh={() => usuario && dispatch(artistsActions.fetchArtists(usuario))}
+            refreshing={puxando}
+            onRefresh={puxarParaAtualizar}
             tintColor={COR.primaria}
           />
         }
@@ -141,7 +158,7 @@ export default function Perfis() {
               <Text style={estilos.nome} numberOfLines={1}>{item.name}</Text>
               <Selo artista={item} />
             </View>
-            <Text style={estilos.seta}>›</Text>
+            <Feather name="chevron-right" size={22} color={COR.contorno} />
           </Pressable>
         )}
       />
@@ -156,7 +173,6 @@ const estilos = StyleSheet.create({
   marca: { fontSize: 28, fontWeight: '800', color: COR.titulo, letterSpacing: -0.5 },
   legenda: { fontSize: 13, color: COR.apagado, marginTop: 2 },
   sair: { fontSize: 15, fontWeight: '600', color: COR.secundario },
-  sino: { fontSize: 22, color: COR.secundario },
   bolha: {
     position: 'absolute', top: -4, right: -8, minWidth: 18, height: 18, paddingHorizontal: 4,
     borderRadius: RAIO.pilula, backgroundColor: COR.primaria,
@@ -183,5 +199,4 @@ const estilos = StyleSheet.create({
   apagada: { color: COR.contorno },
   contagem: { fontSize: 11, color: COR.apagado, marginLeft: 2 },
   semDiagnostico: { fontSize: 13, color: COR.apagado, marginTop: 4 },
-  seta: { fontSize: 26, color: COR.contorno, marginTop: -2 },
 });
