@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import Feather from '@expo/vector-icons/Feather';
+
 import { COR, RAIO } from '@maestra/core/constants/design';
 import type { ActionTask, Strategy } from '@maestra/core/interfaces/maestra';
 import { artistsActions } from '@maestra/core/store/slices/artists';
@@ -16,8 +18,18 @@ import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 //
 // Quem grava e o mesmo `updateArtistContent` da web, com o content inteiro. Nao ha endpoint
 // proprio do app: a regra de escrita e uma so.
+//
+// ACORDEAO, como na web, e nao lista plana. Um perfil real chegou aqui com 31 estrategias e 107
+// tarefas: aberto tudo de uma vez, isso e uma parede de texto que nao se navega no celular, e
+// ainda monta as 107 linhas de uma so vez. Uma estrategia aberta por vez, com o cabecalho
+// dizendo o progresso, e o que a web faz — e o que torna a tela usavel.
+//
+// So aparecem as estrategias COM tarefa (as priorizadas); as demais ficam de fora, como la.
 
 const feita = (t: ActionTask) => t.status === 'done';
+
+/** Fechada de propósito — diferente de "ninguém escolheu nada ainda". */
+const FECHADA = '__nenhuma__' as const;
 
 export default function Plano() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -27,9 +39,27 @@ export default function Plano() {
   // So a tarefa tocada mostra progresso; travar a tela inteira numa lista longa e desagradavel.
   const [gravando, setGravando] = useState<string | null>(null);
 
-  const estrategias: Strategy[] = artista?.content?.strategies ?? [];
+  const todas: Strategy[] = artista?.content?.strategies ?? [];
+  // A web mostra so as priorizadas (as que geraram tarefa); sem nenhuma, mostra tudo.
+  const comTarefa = todas.filter((e) => (e.tasks?.length ?? 0) > 0);
+  const estrategias = comTarefa.length ? comTarefa : todas;
+
   const tarefas = estrategias.flatMap((e) => e.tasks ?? []);
   const concluidas = tarefas.filter(feita).length;
+
+  const progresso = (e: Strategy) => {
+    const lista = e.tasks ?? [];
+    const prontas = lista.filter(feita).length;
+    return { prontas, total: lista.length, completa: lista.length > 0 && prontas === lista.length };
+  };
+
+  // `undefined` (ninguem escolheu ainda) e FECHADA nao sao a mesma coisa. Tratando os dois igual,
+  // fechar a propria estrategia em foco cai de volta no auto-foco e ela reabre sozinha — parece
+  // que o toque de fechar nao funciona, e so naquela estrategia. E um bug que a web ja teve.
+  const [aberta, setAberta] = useState<string | undefined | typeof FECHADA>(undefined);
+  const emFoco = estrategias.find((e) => !progresso(e).completa) ?? estrategias[0];
+  const abertaAgora =
+    aberta === undefined ? emFoco?.id : aberta === FECHADA ? undefined : aberta;
 
   const alternar = async (estrategiaId: string, tarefa: ActionTask) => {
     if (!artista) return;
@@ -78,12 +108,40 @@ export default function Plano() {
               {concluidas} de {tarefas.length} {tarefas.length === 1 ? 'tarefa' : 'tarefas'} concluídas
             </Text>
 
-            {estrategias.map((estrategia) => (
+            {estrategias.map((estrategia, indice) => {
+              const { prontas, total, completa } = progresso(estrategia);
+              const estaAberta = abertaAgora === estrategia.id;
+              return (
               <View key={estrategia.id} style={estilos.bloco}>
-                <Text style={estilos.estrategia}>{estrategia.title}</Text>
-                {!!estrategia.why && <Text style={estilos.porque}>{estrategia.why}</Text>}
+                <Pressable
+                  style={estilos.cabecalho}
+                  onPress={() => setAberta(estaAberta ? FECHADA : estrategia.id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: estaAberta }}
+                  accessibilityLabel={`Estratégia ${indice + 1}: ${estrategia.title}`}
+                >
+                  <Feather
+                    name={estaAberta ? 'chevron-down' : 'chevron-right'}
+                    size={18}
+                    color={COR.apagado}
+                    style={estilos.chevron}
+                  />
+                  <View style={estilos.flex}>
+                    <Text style={estilos.numero}>
+                      ESTRATÉGIA #{String(indice + 1).padStart(2, '0')}
+                    </Text>
+                    <Text style={estilos.estrategia}>{estrategia.title}</Text>
+                  </View>
+                  <Text style={[estilos.progresso, completa && estilos.progressoFeito]}>
+                    {completa ? 'Concluída' : `${prontas}/${total}`}
+                  </Text>
+                </Pressable>
 
-                {(estrategia.tasks ?? []).map((tarefa) => (
+                {estaAberta && !!estrategia.why && (
+                  <Text style={estilos.porque}>{estrategia.why}</Text>
+                )}
+
+                {estaAberta && (estrategia.tasks ?? []).map((tarefa) => (
                   <Pressable
                     key={tarefa.id}
                     style={({ pressed }) => [estilos.tarefa, pressed && estilos.pressionada]}
@@ -106,7 +164,8 @@ export default function Plano() {
                   </Pressable>
                 ))}
               </View>
-            ))}
+              );
+            })}
           </>
         )}
       </ScrollView>
@@ -116,6 +175,7 @@ export default function Plano() {
 
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.superficie },
+  flex: { flex: 1 },
   conteudo: { padding: 24, paddingBottom: 48, gap: 12 },
   voltar: { paddingVertical: 4, alignSelf: 'flex-start' },
   voltarTexto: { fontSize: 16, color: COR.primaria, fontWeight: '600' },
@@ -124,9 +184,20 @@ const estilos = StyleSheet.create({
   aviso: { borderWidth: 1, borderColor: COR.contorno, borderRadius: 14, padding: 18, gap: 6, marginTop: 10 },
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR.titulo },
   avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
-  bloco: { borderWidth: 1, borderColor: COR.contorno, borderRadius: 16, padding: 16, gap: 4 },
-  estrategia: { fontSize: 16, fontWeight: '700', color: COR.titulo, lineHeight: 22 },
-  porque: { fontSize: 13, color: COR.apagado, lineHeight: 19, marginBottom: 6 },
+  bloco: { borderWidth: 1, borderColor: COR.contorno, borderRadius: RAIO.cartao, padding: 14, gap: 4 },
+  cabecalho: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  chevron: { marginTop: 3 },
+  numero: { fontSize: 10, letterSpacing: 1.2, fontWeight: '800', color: COR.apagado, marginBottom: 2 },
+  estrategia: { fontSize: 15, fontWeight: '700', color: COR.titulo, lineHeight: 21 },
+  // `flexShrink: 0` nao e detalhe: os titulos reais da metodologia tem cinco linhas, e sem o
+  // piso o progresso era espremido ate sumir da tela — o cabecalho perdia justamente o numero
+  // que diz se vale a pena abrir.
+  progresso: {
+    fontSize: 12, fontWeight: '700', color: COR.secundario,
+    marginTop: 12, flexShrink: 0, minWidth: 52, textAlign: 'right',
+  },
+  progressoFeito: { color: COR.primaria },
+  porque: { fontSize: 13, color: COR.apagado, lineHeight: 19, marginTop: 8 },
   tarefa: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 10 },
   pressionada: { opacity: 0.55 },
   caixa: {
