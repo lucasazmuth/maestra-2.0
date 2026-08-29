@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable,
@@ -13,12 +13,16 @@ import { COR, COR_NYTA, RAIO } from '@maestra/core/constants/design';
 import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
 import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
 import { useNytaChat } from '@maestra/core/hooks/useNytaChat';
+import { useNytaConversations } from '@maestra/core/hooks/useNytaConversations';
 import type { NytaChatMessage } from '@maestra/core/store/slices/nytaChat';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
 import { FotoDoArtista } from '@/casca/FotoDoArtista';
+import { CabecalhoDoChat } from '@/casca/nyta/CabecalhoDoChat';
 import { CartaoDeAcao } from '@/casca/nyta/CartaoDeAcao';
+import { Conversas } from '@/casca/nyta/Conversas';
 import { RecursoBloqueado } from '@/casca/nyta/RecursoBloqueado';
+import { TextoDaNyta } from '@/casca/nyta/TextoDaNyta';
 import { useArtistaDaRota } from '@/nucleo/artista';
 
 // A Nyta em tela cheia — a porta de `src/pages/NytaChat/index.tsx`.
@@ -30,6 +34,10 @@ import { useArtistaDaRota } from '@/nucleo/artista';
 // A resposta chega em PEDAÇOS, e isso depende da porta de `fetch` (ver `nucleo/ambiente`): o
 // `fetch` do React Native devolve `Response` sem `body`, e o texto chegaria inteiro no fim,
 // parecendo lentidão em vez de defeito. O app registra o `expo/fetch`, que faz streaming.
+//
+// A navegação aqui tem DOIS níveis, como em qualquer aplicativo de mensagem: a lista de
+// conversas é o nível de trás e a conversa fica por cima dela. É o que a web faz abaixo de
+// 900px, onde a coluna lateral não cabe — no celular só existe essa forma.
 
 const SAUDACAO =
   'Oi! Eu sou a Nyta, sua assistente estratégica aqui na Maestra. '
@@ -41,22 +49,38 @@ const MAXIMO_DE_LETRAS = 1000;
 export default function Nyta() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const artista = useArtistaDaRota(id);
+  const router = useRouter();
   const direitos = useEntitlements();
   const [texto, setTexto] = useState('');
+  const [naLista, setNaLista] = useState(false);
   const margem = useSafeAreaInsets();
+  const { conversations, loading: carregandoConversas, refresh, rename, remove } =
+    useNytaConversations(id);
+
+  // A conversa nova só ganha linha no banco quando o servidor a cria, na primeira mensagem —
+  // por isso é o próprio chat que avisa a hora de recarregar a lista.
+  const conversaMudou = useCallback(() => { refresh(); }, [refresh]);
   const lista = useRef<FlatList<NytaChatMessage>>(null);
 
   const {
     messages, isStreaming, pendingToolCalls, rateLimitInfo, loadingHistory, hasMoreHistory,
     error, unavailableModules,
+    conversationId,
     loadOlderMessages, sendMessage, confirmTool, cancelTool, dismissError,
-  } = useNytaChat('route');
+    selectConversation, startNewConversation, clearConversation,
+  } = useNytaChat('route', conversaMudou);
 
   // A conversa cresce por baixo: sem isto, cada pedaço que chega fica fora da vista e a pessoa
   // vê a tela parada enquanto a Nyta escreve.
   useEffect(() => {
     if (messages.length) lista.current?.scrollToEnd({ animated: true });
   }, [messages.length, isStreaming]);
+
+  // Apagar a conversa aberta deixaria a tela mostrando mensagens que não existem mais.
+  const excluir = useCallback(async (alvo: string) => {
+    const foi = await remove(alvo);
+    if (foi && alvo === conversationId) startNewConversation();
+  }, [remove, conversationId, startNewConversation]);
 
   const enviar = useCallback(() => {
     const limpo = texto.trim();
@@ -91,11 +115,31 @@ export default function Nyta() {
           ? <FotoDoArtista artista={artista} tamanho={30} />
           : <EmblemaNyta size={30} />}
         <View style={[estilos.bolha, doArtista && estilos.bolhaDoArtista]}>
-          <Text style={[estilos.texto, doArtista && estilos.textoDoArtista]}>{item.content}</Text>
+          {/* Só a Nyta escreve markdown; o que o artista digita é texto e fica como digitado —
+              um `*` numa pergunta não deve virar itálico. */}
+          {doArtista
+            ? <Text style={[estilos.texto, estilos.textoDoArtista]}>{item.content}</Text>
+            : <TextoDaNyta texto={item.content} />}
         </View>
       </View>
     );
   };
+
+  if (naLista) {
+    return (
+      <Conversas
+        conversas={conversations}
+        carregando={carregandoConversas}
+        ativa={conversationId}
+        // Abrir ou criar conversa é o motivo da lista existir: feito isso, ela sai da frente.
+        aoEscolher={(alvo) => { setNaLista(false); selectConversation(alvo); }}
+        aoCriar={() => { setNaLista(false); startNewConversation(); }}
+        aoRenomear={rename}
+        aoExcluir={excluir}
+        aoSair={() => router.push(`/artista/${id}` as never)}
+      />
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -105,6 +149,14 @@ export default function Nyta() {
       // conversa por baixo dele.
       keyboardVerticalOffset={110}
     >
+      <CabecalhoDoChat
+        artista={artista}
+        usadas={rateLimitInfo?.count ?? null}
+        limite={rateLimitInfo?.limit ?? null}
+        aoAbrirConversas={() => setNaLista(true)}
+        aoLimpar={clearConversation}
+      />
+
       {!!error && error !== 'subscription_required' && (
         <View style={estilos.erro} accessibilityRole="alert">
           <Feather name="alert-circle" size={16} color={COR.erro} />
@@ -132,7 +184,7 @@ export default function Nyta() {
           <View style={estilos.linha}>
             <EmblemaNyta size={30} />
             <View style={estilos.bolha}>
-              <Text style={estilos.texto}>{SAUDACAO}</Text>
+              <TextoDaNyta texto={SAUDACAO} />
             </View>
           </View>
         </View>

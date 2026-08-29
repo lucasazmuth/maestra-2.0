@@ -295,3 +295,30 @@ export const COR_NYTA = {
   erroFundo: '#fff5f5',
   erroContorno: '#f5d7d7',
 } as const;
+
+/**
+ * O cabeçalho do chat e a lista de conversas da Nyta.
+ *
+ * No celular a lista não cabe ao lado e vira o NÍVEL DE TRÁS da conversa: o "voltar" do
+ * cabeçalho leva até ela, e é de lá que se sai para o perfil — a navegação em dois níveis de
+ * qualquer aplicativo de mensagem. Os valores saem de `ChatHeader.scss` e
+ * `ConversationSidebar.scss`, e `src/__tests__/cromoDasConversas.test.ts` os amarra lá.
+ */
+export const COR_CONVERSAS = {
+  fio: '#e8edf4',
+  contorno: '#e3eaf3',
+  botao: '#7c8db0',
+  titulo: '#52688f',
+  rotulo: '#9aabc4',
+  contexto: '#f7f9fc',
+  destaque: '#eef3fb',
+  destaqueTexto: '#4267b9',
+  uso: '#6e83a6',
+  usoCheioFundo: '#fdeef1',
+  usoCheioTexto: '#c0405c',
+  rascunhoContorno: '#cfdcf0',
+  itemTocado: '#f4f7fc',
+  nome: '#60749a',
+  hora: '#a8b6cd',
+  renomearContorno: '#9bb5ec',
+} as const;
