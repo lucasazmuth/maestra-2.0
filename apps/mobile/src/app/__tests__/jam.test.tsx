@@ -17,6 +17,8 @@ const mockAtualizar = jest.fn();
 const mockPrincipal = jest.fn();
 const mockConversa = jest.fn();
 const mockEnviar = jest.fn();
+const mockComentarios = jest.fn();
+const mockComentar = jest.fn();
 jest.mock('@maestra/core/services/db/catalog', () => ({
   getCatalogProject: (...a: unknown[]) => mockBuscar(...a),
   updateCatalogProject: (...a: unknown[]) => mockAtualizar(...a),
@@ -26,6 +28,9 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   createCatalogVersion: jest.fn(),
   updateCatalogVersion: jest.fn(),
   deleteCatalogVersion: jest.fn(),
+  listVersionComments: (...a: unknown[]) => mockComentarios(...a),
+  createVersionComment: (...a: unknown[]) => mockComentar(...a),
+  catalogProjectToItem: () => ({ id: 'v-1', artist_id: 'a-1', title: 'Noite Clara', status: 'mixing' }),
 }));
 
 const mockCanal = { on: jest.fn(), subscribe: jest.fn() };
@@ -81,6 +86,7 @@ describe('espaço jam', () => {
     jest.clearAllMocks();
     mockBuscar.mockResolvedValue(projeto());
     mockConversa.mockResolvedValue([]);
+    mockComentarios.mockResolvedValue([]);
   });
 
   it('mostra a música, a ficha técnica e as versões', async () => {
@@ -151,6 +157,24 @@ describe('espaço jam', () => {
     await usuario.press(await tela.findByLabelText('Nenhum áudio anexado'));
     expect(mockPlayer.replace).not.toHaveBeenCalled();
     expect(tela.getByText('Nenhum áudio anexado')).toBeTruthy();
+  });
+
+  // O balão mostra QUANTOS comentários a versão tem: um balão sem número não diz se vale abrir,
+  // que é a única coisa que ele precisa dizer.
+  it('o balão traz a contagem de comentários da versão, e abre a lista', async () => {
+    mockComentarios.mockResolvedValue([
+      { id: 'c-1', version_id: 'v-1', author_name: 'Bia', text: 'sobe o vocal', time_seconds: 42 },
+      { id: 'c-2', version_id: 'v-1', author_name: 'Lucas', text: 'fechado' },
+    ]);
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    const balao = await tela.findByLabelText('Abrir 2 comentários de V1');
+    await usuario.press(balao);
+
+    expect(await tela.findByText('sobe o vocal')).toBeTruthy();
+    // O comentário preso a um ponto do áudio mostra o ponto; o solto não inventa um.
+    expect(tela.getByText('0:42')).toBeTruthy();
   });
 
   it('sem versões, convida a mandar a primeira', async () => {

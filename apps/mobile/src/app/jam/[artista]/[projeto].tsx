@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView,
-  StyleSheet, Text, TextInput, View,
+  Share, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,6 +18,7 @@ import type {
 import { supabase } from '@maestra/core/lib/supabase';
 import * as catalogo from '@maestra/core/services/db/catalog';
 
+import { ComentariosDaVersao } from '@/casca/jam/ComentariosDaVersao';
 import { FolhaDaVersao } from '@/casca/jam/FolhaDaVersao';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { escolherAudio, type ArquivoEscolhido } from '@/nucleo/arquivos';
@@ -127,6 +128,8 @@ export default function EspacoJam() {
   const [arquivoInicial, setArquivoInicial] = useState<ArquivoEscolhido | null>(null);
   const [emEdicao, setEmEdicao] = useState<CatalogVersion | null>(null);
 
+  const [comentando, setComentando] = useState<CatalogVersion | null>(null);
+  const [contagens, setContagens] = useState<Record<string, number>>({});
   const [tocandoId, setTocandoId] = useState<string | null>(null);
   const player = useAudioPlayer();
   const estadoDoSom = useAudioPlayerStatus(player);
@@ -163,6 +166,20 @@ export default function EspacoJam() {
 
   useEffect(() => { void buscar(); }, [buscar]);
   useEffect(() => { void buscarConversa(); }, [buscarConversa]);
+
+  // O número no balão de cada versão. O `getCatalogProject` não traz os comentários junto, e
+  // um balão sem número não diz se vale abrir — que é a única coisa que ele precisa dizer.
+  const contar = useCallback(async (lista: CatalogVersion[]) => {
+    const pares = await Promise.all(lista.map(async (v) => {
+      try { return [v.id, (await catalogo.listVersionComments(v.id)).length] as const; }
+      catch { return [v.id, 0] as const; }
+    }));
+    setContagens(Object.fromEntries(pares));
+  }, []);
+
+  useEffect(() => {
+    if (projeto?.versions?.length) void contar(projeto.versions);
+  }, [projeto, contar]);
 
   // O chat é ao vivo: duas pessoas na mesma música é o caso de uso da tela. O sufixo do `useId`
   // está aqui pela mesma razão de sempre — canal com nome repetido recusa o segundo `.on()`.
@@ -508,9 +525,12 @@ export default function EspacoJam() {
                             ? (tocando ? `Pausar V${versao.version_number}` : `Tocar V${versao.version_number}`)
                             : 'Nenhum áudio anexado'}
                         >
+                          {/* O triângulo é NU: a web desenha o ícone a 42px num alvo de 46
+                              sem fundo e sem anel. Circulado ele lê como botão primário e
+                              disputa atenção com o Upload, que é o único azul cheio da tela. */}
                           <Feather
-                            name={tocando ? 'pause-circle' : 'play-circle'}
-                            size={46}
+                            name={tocando ? 'pause' : 'play'}
+                            size={42}
                             color={versao.audio_file ? COR.primaria : COR_JAM.estrela}
                           />
                         </Pressable>
@@ -546,14 +566,40 @@ export default function EspacoJam() {
                         <Text style={estilos.autoria} numberOfLines={2}>
                           {versao.author_name || 'Autor não identificado'} · {dataCurta(versao.created_at)}
                         </Text>
-                        <Pressable
-                          style={estilos.acao}
-                          onPress={() => { setArquivoInicial(null); setEmEdicao(versao); setFolhaAberta(true); }}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Mais ações para V${versao.version_number}`}
-                        >
-                          <Feather name="more-vertical" size={15} color={COR_JAM.acaoIcone} />
-                        </Pressable>
+                        <View style={estilos.acoes}>
+                          {/* "Baixar" no celular é a folha de partilha: dela sai "Guardar em
+                              Ficheiros", que é o equivalente do download do navegador, e ainda
+                              o AirDrop e o WhatsApp — que é como a mix costuma circular. */}
+                          {!!versao.audio_file && (
+                            <Pressable
+                              style={estilos.acao}
+                              onPress={() => Share.share({ url: versao.audio_file as string })}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Baixar ou compartilhar V${versao.version_number}`}
+                            >
+                              <Feather name="download" size={15} color={COR_JAM.acaoIcone} />
+                            </Pressable>
+                          )}
+                          <Pressable
+                            style={estilos.acao}
+                            onPress={() => setComentando(versao)}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              `Abrir ${contagens[versao.id] ?? 0} comentários de V${versao.version_number}`
+                            }
+                          >
+                            <Feather name="message-circle" size={15} color={COR_JAM.acaoIcone} />
+                            <Text style={estilos.acaoTexto}>{contagens[versao.id] ?? 0}</Text>
+                          </Pressable>
+                          <Pressable
+                            style={estilos.acao}
+                            onPress={() => { setArquivoInicial(null); setEmEdicao(versao); setFolhaAberta(true); }}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Mais ações para V${versao.version_number}`}
+                          >
+                            <Feather name="more-vertical" size={15} color={COR_JAM.acaoIcone} />
+                          </Pressable>
+                        </View>
                       </View>
                     </View>
                   );
@@ -658,6 +704,14 @@ export default function EspacoJam() {
         // Excluir a música daqui deixa a tela sem assunto: volta para a lista.
         aoExcluir={() => { setFichaAberta(false); voltar(); }}
         aoMudarVersoes={buscar}
+      />
+
+      <ComentariosDaVersao
+        aberta={Boolean(comentando)}
+        versao={comentando}
+        autor={{ id: usuario?.id, nome: meuNome, foto: minhaFoto }}
+        aoFechar={() => setComentando(null)}
+        aoMudar={() => { if (projeto.versions?.length) void contar(projeto.versions); }}
       />
     </LinearGradient>
   );
@@ -765,11 +819,13 @@ const estilos = StyleSheet.create({
     paddingHorizontal: 18, paddingBottom: 18,
   },
   autoria: { flex: 1, fontSize: 13, color: COR_JAM.apoio },
+  acoes: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 5 },
   acao: {
-    height: 36, paddingHorizontal: 9, borderRadius: 999,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    height: 36, minWidth: 36, paddingHorizontal: 9, borderRadius: 999,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
     backgroundColor: COR_JAM.acaoFundo,
   },
+  acaoTexto: { fontSize: 12, color: COR_JAM.acaoIcone },
 
   painelDoChat: {
     marginTop: 30, marginHorizontal: -18,
