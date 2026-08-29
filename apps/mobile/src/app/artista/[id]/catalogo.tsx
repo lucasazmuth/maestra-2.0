@@ -2,7 +2,7 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, Image, Pressable, RefreshControl,
+  ActivityIndicator, FlatList, Image, Linking, Pressable, RefreshControl,
   StyleSheet, Text, View,
 } from 'react-native';
 
@@ -14,7 +14,17 @@ import type { CatalogItem } from '@maestra/core/interfaces/maestra';
 import { listCatalogProjectItems } from '@maestra/core/services/db/catalog';
 
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
+import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { useArtistaDaRota } from '@/nucleo/artista';
+
+type Aba = 'musicas' | 'lancamentos';
+
+/** `189000` → `3:09`. A duração do Spotify vem em milissegundos. */
+const duracaoDoSpotify = (ms?: number) => {
+  if (!ms) return '';
+  const total = Math.round(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+};
 
 // O Catálogo.
 //
@@ -51,6 +61,9 @@ export default function Catalogo() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [tocandoId, setTocandoId] = useState<string | null>(null);
+  const [aba, setAba] = useState<Aba>('musicas');
+  const [fichaAberta, setFichaAberta] = useState(false);
+  const [editando, setEditando] = useState<CatalogItem | null>(null);
 
   const player = useAudioPlayer();
   const status = useAudioPlayerStatus(player);
@@ -90,6 +103,29 @@ export default function Catalogo() {
 
   const emFoco = faixas.find((f) => f.id === tocandoId);
   const vazio = !carregando && faixas.length === 0;
+  // A aba Lançamentos lista o que veio do Spotify: outra lista, mas ainda músicas. Ela sai do
+  // `content` do artista, e não do banco do catálogo — são coisas diferentes, e a web mantém as
+  // duas na mesma tela justamente porque quem procura uma música não sabe de qual lista ela é.
+  const lancamentos = artista?.content?.spotifyCatalog?.tracks ?? [];
+  // Os gêneros que o artista já usou, como atalho na ficha.
+  const generos = [...new Set(faixas.map((f) => f.genre).filter(Boolean) as string[])];
+
+  const guardar = (salva: CatalogItem) =>
+    setFaixas((antes) => {
+      const i = antes.findIndex((f) => f.id === salva.id || f.project_id === salva.project_id);
+      if (i === -1) return [salva, ...antes];
+      const proximo = antes.slice();
+      proximo[i] = salva;
+      return proximo;
+    });
+
+  const remover = (removidaId: string) =>
+    setFaixas((antes) => antes.filter((f) => f.id !== removidaId));
+
+  const abrirFicha = (faixa: CatalogItem | null) => {
+    setEditando(faixa);
+    setFichaAberta(true);
+  };
 
   return (
     <View style={estilos.tela}>
@@ -103,15 +139,84 @@ export default function Catalogo() {
           Organize as músicas em preparação e acompanhe cada etapa antes do lançamento.
         </Text>
 
-        {/* A contagem do limite do plano, como na web. O botao "Nova musica" nao entra: cadastrar
-            faixa exige escolher o arquivo de audio, e a ficha inteira depois — o app le o
-            catalogo, nao o alimenta. */}
-        <Text style={estilos.contagem}>
-          {faixas.length}/{direitos.maxCatalogTracks === Infinity ? '∞' : direitos.maxCatalogTracks} músicas
-        </Text>
+        {/* A contagem do limite do plano e o "Nova música", lado a lado, como na web. */}
+        <View style={estilos.linhaDaContagem}>
+          <Text style={estilos.contagem}>
+            {faixas.length}/{direitos.maxCatalogTracks === Infinity ? '∞' : direitos.maxCatalogTracks} músicas
+          </Text>
+          {direitos.canEditCatalog && (
+            <Pressable
+              style={estilos.nova}
+              onPress={() => abrirFicha(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Nova música"
+            >
+              <Feather name="plus" size={15} color={COR.sobrePrimaria} />
+              <Text style={estilos.novaTexto}>Nova música</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
-      {carregando ? (
+      {/* As duas abas: o catálogo cadastrado aqui e o que já saiu no Spotify. */}
+      <View style={estilos.abas}>
+        {([['musicas', 'Músicas'], ['lancamentos', 'Lançamentos']] as const).map(([chave, texto]) => {
+          const acesa = aba === chave;
+          return (
+            <Pressable
+              key={chave}
+              style={[estilos.aba, acesa && estilos.abaAcesa]}
+              onPress={() => setAba(chave)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: acesa }}
+            >
+              <Text style={[estilos.abaTexto, acesa && estilos.abaTextoAceso]}>{texto}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {aba === 'lancamentos' ? (
+        <FlatList
+          data={lancamentos}
+          keyExtractor={(t) => t.id ?? t.name}
+          contentContainerStyle={estilos.conteudo}
+          ListHeaderComponent={lancamentos.length ? <View style={estilos.topoDaLista} /> : null}
+          ListFooterComponent={lancamentos.length ? <View style={estilos.baseDaLista} /> : null}
+          ListEmptyComponent={
+            <View style={estilos.aviso}>
+              <Text style={estilos.avisoTitulo}>Nenhum lançamento</Text>
+              <Text style={estilos.avisoTexto}>
+                Nenhum lançamento publicado no Spotify vinculado a este artista.
+              </Text>
+            </View>
+          }
+          renderItem={({ item }) => (
+            <Pressable
+              style={estilos.linha}
+              onPress={() => item.spotify_url && Linking.openURL(item.spotify_url)}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.name}. Abrir no Spotify`}
+            >
+              <View style={estilos.botao}>
+                <Feather name="play" size={16} color={COR_CATALOGO.tocarIcone} />
+              </View>
+              {item.album_image
+                ? <Image source={{ uri: item.album_image }} style={estilos.capa} />
+                : <View style={[estilos.capa, estilos.capaVazia]}>
+                    <Feather name="music" size={18} color={COR.apagado} />
+                  </View>}
+              <View style={estilos.flex}>
+                <Text style={estilos.titulo} numberOfLines={1}>{item.name}</Text>
+                <Text style={estilos.versao} numberOfLines={1}>{item.album || 'Spotify'}</Text>
+              </View>
+              {!!item.duration_ms && (
+                <Text style={estilos.duracao}>{duracaoDoSpotify(item.duration_ms)}</Text>
+              )}
+            </Pressable>
+          )}
+        />
+      ) : carregando ? (
         <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
       ) : vazio || erro ? (
         <View style={estilos.conteudo}>
@@ -159,9 +264,16 @@ export default function Catalogo() {
                 </View>
                 <View style={estilos.flex}>
                   <Text style={estilos.titulo} numberOfLines={1}>{item.title}</Text>
+                  {/* A legenda junta versão, gênero e lançamento numa linha só, como na web. */}
                   <Text style={estilos.versao} numberOfLines={1}>
-                    V{item.version_number || 1}
-                    {item.audio_file ? ' · versão principal' : ' · áudio pendente'}
+                    {[
+                      `V${item.version_number || 1}${item.audio_file ? ' · versão principal' : ' · áudio pendente'}`,
+                      item.genre,
+                      item.release_date
+                        ? new Date(`${item.release_date}T00:00:00`)
+                          .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+                        : null,
+                    ].filter(Boolean).join(' · ')}
                   </Text>
                 </View>
                 {!!rotulo && (
@@ -169,9 +281,34 @@ export default function Catalogo() {
                     <Text style={[estilos.statusTexto, { color: rotulo.color }]}>{rotulo.label}</Text>
                   </View>
                 )}
+                {/* O "⋮" abre a ficha para editar, como na web. Ele fica fora do toque da linha:
+                    tocar na linha toca a música, e editar é outra intenção. */}
+                {direitos.canEditCatalog && (
+                  <Pressable
+                    style={estilos.mais}
+                    onPress={() => abrirFicha(item)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Editar ${item.title}`}
+                  >
+                    <Feather name="more-vertical" size={18} color={COR_CATALOGO.legenda} />
+                  </Pressable>
+                )}
               </Pressable>
             );
           }}
+        />
+      )}
+
+      {!!artista && (
+        <FichaDaFaixa
+          aberta={fichaAberta}
+          artistaId={artista.id}
+          faixa={editando}
+          generos={generos}
+          aoFechar={() => setFichaAberta(false)}
+          aoSalvar={guardar}
+          aoExcluir={remover}
         />
       )}
 
@@ -209,9 +346,28 @@ const estilos = StyleSheet.create({
   },
   titulao: { fontSize: 27, fontWeight: '800', color: COR_CATALOGO.titulo },
   subtitulo: { fontSize: 12, color: COR_CATALOGO.apoio, lineHeight: 18, marginTop: 9 },
-  contagem: { fontSize: 12, fontWeight: '700', color: COR_CATALOGO.legenda, marginTop: 14 },
+  linhaDaContagem: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    gap: 12, marginTop: 14,
+  },
+  contagem: { fontSize: 12, fontWeight: '700', color: COR_CATALOGO.legenda },
+  nova: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    minHeight: 42, paddingHorizontal: 17,
+    borderRadius: 7, backgroundColor: COR.primaria,
+  },
+  novaTexto: { fontSize: 11, fontWeight: '800', color: COR.sobrePrimaria },
+  abas: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 18 },
+  aba: {
+    paddingVertical: 11, paddingHorizontal: 18,
+    borderRadius: 7, backgroundColor: COR_CATALOGO.tocarFundo,
+  },
+  abaAcesa: { backgroundColor: COR.primaria },
+  abaTexto: { fontSize: 13, fontWeight: '800', color: COR_CATALOGO.tocarIcone },
+  abaTextoAceso: { color: COR.sobrePrimaria },
+  mais: { width: 28, alignItems: 'center', justifyContent: 'center' },
   espera: { marginTop: 48 },
-  conteudo: { paddingHorizontal: 16, paddingTop: 28, paddingBottom: 122 },
+  conteudo: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 122 },
   // A moldura da lista, em duas metades: o topo fecha os cantos de cima, o rodape os de baixo.
   // E o jeito de dar UM contorno a uma lista que rola sem envolver o `FlatList` numa `View`,
   // que tiraria a virtualizacao.
