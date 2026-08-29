@@ -28,7 +28,7 @@ const DIMENSOES = [
  * virar `{}`, sem erro nenhum.
  */
 const Atalho = ({ para, id, titulo, legenda }: {
-  para: '/plano/[id]' | '/agenda/[id]' | '/catalogo/[id]';
+  para: '/plano/[id]' | '/agenda/[id]' | '/catalogo/[id]' | '/equipe/[id]';
   id: string;
   titulo: string;
   legenda: string;
@@ -118,6 +118,7 @@ export default function Perfil() {
         />
         <Atalho para="/agenda/[id]" id={String(id)} titulo="Agenda" legenda="Seus compromissos" />
         <Atalho para="/catalogo/[id]" id={String(id)} titulo="Catálogo" legenda="Suas músicas" />
+        <Atalho para="/equipe/[id]" id={String(id)} titulo="Equipe" legenda="Quem acessa este perfil" />
 
         {!!real?.profile && (
           <>
