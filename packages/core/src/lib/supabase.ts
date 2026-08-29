@@ -1,15 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
 import { ambiente } from '../nucleo/ambiente';
+import { ENV } from '../nucleo/env';
 
-// Projeto "Maestra Oficial". Lê das env vars (CRA → REACT_APP_*) com fallback para os valores
-// públicos do projeto, garantindo que o app suba mesmo sem .env configurado localmente.
-const SUPABASE_URL =
-  process.env.REACT_APP_SUPABASE_URL || 'https://tpwmzcgtidaxgxwqfxwf.supabase.co';
+// Projeto "Maestra Oficial". Lê do ambiente (`nucleo/env`, que cobre CRA e Expo) com fallback
+// para os valores públicos do projeto, garantindo que o app suba sem .env configurado.
+const SUPABASE_URL = ENV.supabaseUrl || 'https://tpwmzcgtidaxgxwqfxwf.supabase.co';
 
 const SUPABASE_ANON_KEY =
-  process.env.REACT_APP_SUPABASE_ANON_KEY ||
-  'sb_publishable_JnmNt0Cg7tCJtQ9VXPfQBA_04mjnGP9';
+  ENV.supabaseAnonKey || 'sb_publishable_JnmNt0Cg7tCJtQ9VXPfQBA_04mjnGP9';
 
 /**
  * Onde a sessão fica guardada.

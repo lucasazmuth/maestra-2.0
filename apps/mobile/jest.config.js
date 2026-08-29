@@ -46,6 +46,12 @@ module.exports = {
       [
         'react', 'react-redux', '@reduxjs/toolkit', 'redux-persist',
         '@supabase/supabase-js', 'zustand', 'axios', 'i18next', 'react-i18next',
+        // `expo` entrou pelo mesmo motivo, com uma causa a mais: ao ver
+        // `process.env.EXPO_PUBLIC_*`, o `babel-preset-expo` injeta um
+        // `require('expo/virtual/env')`. Como `nucleo/env.ts` usa essas chaves, o require nasce
+        // dentro de `packages/core` e sobe procurando `expo` na raiz — a arvore do app WEB, que
+        // nao o tem.
+        'expo',
       ].flatMap((pacote) => [
         [`^${pacote.replace('/', '\\/')}$`, path.resolve(__dirname, 'node_modules', pacote)],
         [`^${pacote.replace('/', '\\/')}\\/(.*)$`, path.resolve(__dirname, 'node_modules', pacote) + '/$1'],

@@ -24,6 +24,7 @@ import {
 import { useNytaModalStore } from '../stores/nytaModalStore';
 import { useRota } from '../nucleo/rota';
 import { ambiente } from '../nucleo/ambiente';
+import { ENV } from '../nucleo/env';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -33,8 +34,7 @@ import { ambiente } from '../nucleo/ambiente';
 const uid = () =>
   globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 14);
 
-const SUPABASE_URL =
-  process.env.REACT_APP_SUPABASE_URL || 'https://tpwmzcgtidaxgxwqfxwf.supabase.co';
+const SUPABASE_URL = ENV.supabaseUrl || 'https://tpwmzcgtidaxgxwqfxwf.supabase.co';
 
 const PAGE_SIZE = 50;
 

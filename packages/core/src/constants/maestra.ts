@@ -5,6 +5,7 @@ import type {
   EventStatus,
   EventType,
 } from '../interfaces/maestra';
+import { ENV } from '../nucleo/env';
 
 // Onboarding obrigatório: o wizard tem 9 etapas (índices 0–8). `content.step >= 9` marca a
 // conclusão e libera o painel/módulos.
@@ -65,10 +66,10 @@ export const NYTA_SUGGESTIONS = [
 
 // Desliga o paywall em desenvolvimento (REACT_APP_DISABLE_PAYWALL=true no .env).
 // O banner de upsell continua visível; só os redirects/bloqueios são suprimidos.
-export const PAYWALL_DISABLED = process.env.REACT_APP_DISABLE_PAYWALL === 'true';
+export const PAYWALL_DISABLED = ENV.paywallDesligado;
 
 // Habilita o Floating Modal da Nyta Assistente no lugar da página dedicada de chat.
-export const FEATURE_NYTA_MODAL = process.env.REACT_APP_FEATURE_NYTA_MODAL === 'true';
+export const FEATURE_NYTA_MODAL = ENV.nytaModal;
 
 export const isOnboardingComplete = (artist?: Artist | null): boolean => {
   const c = artist?.content;
