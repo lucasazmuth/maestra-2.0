@@ -14,9 +14,10 @@ import { escolherAudio, enviarParaOCatalogo } from '@/nucleo/arquivos';
 // As gravações vivem no Espaço Jam, mas anexar uma versão a partir da ficha é o caminho mais
 // curto para quem acabou de cadastrar a obra — é o que a web faz, e por isso a seção existe aqui.
 //
-// A versão PRINCIPAL é a que toca na lista de músicas e no painel. Trocar de principal é uma
-// escolha, não um efeito de anexar: a nova entra como mais uma, e a coroa continua onde estava —
-// só a primeira de todas assume sozinha, senão o projeto ficaria sem nenhuma.
+// A versão PRINCIPAL é a que toca na lista de músicas e no painel. Quem a define é o núcleo:
+// `createCatalogVersion` promove qualquer versão que chegue COM áudio, e essa é a regra do
+// produto — a gravação mais recente é a que representa a música até alguém dizer o contrário.
+// A estrela aqui serve para dizer o contrário.
 
 export const Versoes = ({ artistaId, projetoId, autor, aoMudar }: {
   artistaId: string;
@@ -58,7 +59,7 @@ export const Versoes = ({ artistaId, projetoId, autor, aoMudar }: {
       const enviado = await enviarParaOCatalogo(`${artistaId}/${projetoId}/versions`, escolhido);
       const numero = versoes.length ? Math.max(...versoes.map((v) => v.version_number)) + 1 : 1;
 
-      const criada = await catalogo.createCatalogVersion({
+      await catalogo.createCatalogVersion({
         project_id: projetoId,
         version_number: numero,
         stage: 'guia',
@@ -71,11 +72,8 @@ export const Versoes = ({ artistaId, projetoId, autor, aoMudar }: {
         author_name: autor.nome ?? null,
       } as Parameters<typeof catalogo.createCatalogVersion>[0]);
 
-      // A primeira de todas assume como principal; as seguintes não roubam o lugar.
-      if (!principalId) {
-        await catalogo.setPrimaryVersion(projetoId, criada.id);
-        setPrincipalId(criada.id);
-      }
+      // O `createCatalogVersion` já promoveu a nova a principal (ela veio com áudio); o
+      // `buscar` traz de volta quem é ela.
       await buscar();
       aoMudar?.();
     } catch (e) {

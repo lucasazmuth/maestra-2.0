@@ -11,7 +11,9 @@ import type { CatalogVersion } from '@maestra/core/interfaces/maestra';
 import { tituloDoArquivo } from '@maestra/core/services/armazenamento';
 import * as catalogo from '@maestra/core/services/db/catalog';
 
-import { enviarParaOCatalogo, escolherAudio, type ArquivoEscolhido } from '@/nucleo/arquivos';
+import {
+  duracaoDoAudio, enviarParaOCatalogo, escolherAudio, type ArquivoEscolhido,
+} from '@/nucleo/arquivos';
 
 // A folha da VERSÃO (a gravação), irmã da ficha da música.
 //
@@ -42,6 +44,7 @@ export const FolhaDaVersao = ({
 
   const [titulo, setTitulo] = useState('');
   const [arquivo, setArquivo] = useState<ArquivoEscolhido | null>(null);
+  const [duracao, setDuracao] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [promovendo, setPromovendo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -54,10 +57,13 @@ export const FolhaDaVersao = ({
     if (arquivoInicial && !versao) {
       setArquivo(arquivoInicial);
       setTitulo(tituloDoArquivo(arquivoInicial.nome));
+      setDuracao('');
+      void duracaoDoAudio(arquivoInicial.uri).then((lida) => setDuracao(lida ?? ''));
       return;
     }
     setArquivo(null);
     setTitulo(versao?.title || '');
+    setDuracao(versao?.duration || '');
   }, [aberta, versao, arquivoInicial]);
 
   const trocarArquivo = async () => {
@@ -66,6 +72,7 @@ export const FolhaDaVersao = ({
       if (!escolhido) return;
       setArquivo(escolhido);
       if (!titulo.trim()) setTitulo(tituloDoArquivo(escolhido.nome));
+      setDuracao(await duracaoDoAudio(escolhido.uri) ?? '');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não consegui abrir os arquivos.');
     }
@@ -86,6 +93,7 @@ export const FolhaDaVersao = ({
       if (versao) {
         await catalogo.updateCatalogVersion(versao.id, {
           title: titulo.trim(),
+          duration: duracao.trim() || versao.duration || null,
           // Sem arquivo novo o áudio atual permanece — substituir é opcional.
           ...(enviado ? { audio_file: enviado.url, audio_file_name: enviado.name } : {}),
         });
@@ -94,6 +102,7 @@ export const FolhaDaVersao = ({
           project_id: projetoId,
           version_number: numero,
           title: titulo.trim(),
+          duration: duracao.trim() || null,
           audio_file: enviado?.url ?? null,
           audio_file_name: enviado?.name ?? null,
           bpm: herdar?.bpm ?? null,
@@ -207,10 +216,14 @@ export const FolhaDaVersao = ({
                   <Text style={estilos.nomeDoArquivo} numberOfLines={1}>
                     {arquivo ? arquivo.nome : 'Toque para escolher'}
                   </Text>
+                  {/* A duração sai do arquivo assim que ele é escolhido, como na web — é o
+                      campo somente-leitura de lá, aqui na linha de apoio. */}
                   <Text style={estilos.apoioDoArquivo} numberOfLines={1}>
-                    {versao?.audio_file_name && !arquivo
-                      ? `Atual: ${versao.audio_file_name}`
-                      : 'MP3, WAV ou outro formato de áudio'}
+                    {duracao
+                      ? `${duracao} · MP3 ou WAV`
+                      : versao?.audio_file_name && !arquivo
+                        ? `Atual: ${versao.audio_file_name}`
+                        : 'MP3 ou WAV'}
                   </Text>
                 </View>
               </Pressable>

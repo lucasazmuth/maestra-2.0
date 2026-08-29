@@ -26,16 +26,54 @@ const higienizar = (nome: string) =>
     .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-zA-Z0-9._-]/g, '_');
 
+/** O balde do catálogo: capas e áudios das versões. */
+export const BALDE_DO_CATALOGO = 'catalog';
+
+/**
+ * O tipo do arquivo, decidido pela EXTENSÃO — e não pelo que o sistema declara.
+ *
+ * O balde `catalog` tem lista fechada de tipos, e quem declara o tipo é quem envia. Aí mora a
+ * armadilha: um .wav escolhido nos Ficheiros do iOS chega com `audio/vnd.wave` (a UTI da Apple
+ * é `com.microsoft.waveform-audio`), que NÃO está na lista — o Storage recusa um arquivo que
+ * ele aceitaria de bom grado sob outro nome. O navegador, para o mesmo arquivo, diz `audio/wav`.
+ *
+ * Dois seletores, dois nomes para o mesmo formato. A extensão é o que os dois concordam, e é
+ * também o que o balde entende — então é ela que decide. O que não estiver aqui é recusado
+ * ANTES de subir, com uma frase em português: a recusa do Storage chega depois do arquivo ter
+ * viajado e diz "mime type ... is not supported", que não sugere o que fazer.
+ */
+const TIPO_POR_EXTENSAO: Record<string, string> = {
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+};
+
+export const tipoDoCatalogo = (nome: string): string | null => {
+  const extensao = nome.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
+  return (extensao && TIPO_POR_EXTENSAO[extensao]) || null;
+};
+
+const RECUSA = 'Esse formato não é aceito. Para áudio use MP3 ou WAV; para imagem, JPG, PNG ou WebP.';
+
 export const enviarArquivo = async (
   balde: string,
   pasta: string,
   arquivo: { nome: string; tipo?: string; dados: ArrayBuffer | Blob },
 ): Promise<ArquivoEnviado> => {
+  // No balde do catálogo o tipo NUNCA vem do seletor: sai da extensão, que é a única coisa em
+  // que o navegador, os Ficheiros do iOS e o próprio balde concordam.
+  const doCatalogo = balde === BALDE_DO_CATALOGO;
+  const tipo = doCatalogo ? tipoDoCatalogo(arquivo.nome) : arquivo.tipo;
+  if (doCatalogo && !tipo) throw new Error(RECUSA);
+
   const caminho = `${pasta}/${Date.now()}_${higienizar(arquivo.nome)}`;
   const { error } = await supabase.storage.from(balde).upload(caminho, arquivo.dados, {
     cacheControl: '3600',
     upsert: false,
-    contentType: arquivo.tipo,
+    contentType: tipo ?? undefined,
   });
   if (error) throw error;
 
@@ -47,8 +85,6 @@ export const removerArquivo = async (balde: string, caminho: string): Promise<vo
   await supabase.storage.from(balde).remove([caminho]);
 };
 
-/** O balde do catálogo: capas e áudios das versões. */
-export const BALDE_DO_CATALOGO = 'catalog';
 
 /**
  * O nome da gravação, tirado do nome do arquivo.

@@ -1,5 +1,7 @@
+import { createAudioPlayer } from 'expo-audio';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
 import {
@@ -40,27 +42,36 @@ export const escolherAudio = async (): Promise<ArquivoEscolhido | null> => {
 };
 
 /**
- * A capa: uma imagem da galeria.
+ * A capa: uma imagem da galeria, sempre em JPEG.
  *
  * Pede permissão antes — no iOS a primeira leitura da galeria abre o pedido do sistema, e sem
  * ele o seletor volta vazio como se a pessoa tivesse desistido.
+ *
+ * A conversão NÃO é zelo: a foto do iPhone sai em HEIC, o balde recusa o formato ("mime type
+ * image/heic is not supported") e, mesmo se aceitasse, nenhum navegador desenha HEIC — a capa
+ * subiria e apareceria quebrada na web. O JPEG é o formato que os dois lados entendem.
  */
 export const escolherImagem = async (): Promise<ArquivoEscolhido | null> => {
   const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permissao.granted) throw new Error('Preciso de acesso às suas fotos para escolher a capa.');
 
-  const escolha = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 0.85,
-  });
+  const escolha = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'] });
   if (escolha.canceled || !escolha.assets?.[0]) return null;
 
   const imagem = escolha.assets[0];
+  const contexto = ImageManipulator.manipulate(imagem.uri);
+  const convertida = await (await contexto.renderAsync()).saveAsync({
+    format: SaveFormat.JPEG,
+    compress: 0.85,
+  });
+
+  // O nome também troca de extensão: guardar "IMG_0042.HEIC" apontando para um JPEG é a
+  // pegadinha que só aparece quando alguém baixa o arquivo.
+  const nome = (imagem.fileName ?? `capa-${Date.now()}`).replace(/\.[^.]+$/, '');
   return {
-    nome: imagem.fileName ?? `capa-${Date.now()}.jpg`,
-    tipo: imagem.mimeType ?? 'image/jpeg',
-    uri: imagem.uri,
-    tamanho: imagem.fileSize,
+    nome: `${nome}.jpg`,
+    tipo: 'image/jpeg',
+    uri: convertida.uri,
   };
 };
 
@@ -76,4 +87,35 @@ export const enviarParaOCatalogo = async (
     // `bytes()` devolve um Uint8Array; o corpo da requisição precisa do buffer por trás.
     dados: dados.buffer as ArrayBuffer,
   });
+};
+
+/**
+ * A duração da gravação, lida do próprio arquivo.
+ *
+ * Digitar duração à mão é trabalho que ninguém confere, e a web já não pede: o `<audio>` do
+ * navegador responde nos metadados. Aqui é o mesmo, com um player descartável — ele é fechado
+ * na saída, senão cada versão enviada deixa um tocador vivo segurando o arquivo.
+ *
+ * Formato que o aparelho não decodifica não impede o envio: a versão só fica sem duração.
+ */
+export const duracaoDoAudio = async (uri: string): Promise<string | null> => {
+  const tocador = createAudioPlayer({ uri });
+  try {
+    // O `duration` só existe depois que os metadados chegam; em arquivo local isso é imediato,
+    // mas "imediato" ainda é o próximo ciclo.
+    for (let tentativa = 0; tentativa < 20; tentativa += 1) {
+      const segundos = tocador.duration;
+      if (Number.isFinite(segundos) && segundos > 0) {
+        const m = Math.floor(segundos / 60);
+        const s = String(Math.floor(segundos % 60)).padStart(2, '0');
+        return `${m}:${s}`;
+      }
+      await new Promise((pronto) => setTimeout(pronto, 100));
+    }
+    return null;
+  } catch {
+    return null;
+  } finally {
+    tocador.release();
+  }
 };

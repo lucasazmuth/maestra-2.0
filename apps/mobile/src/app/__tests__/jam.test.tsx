@@ -47,7 +47,7 @@ jest.mock('@maestra/core/lib/supabase', () => ({
   },
 }));
 
-const mockPlayer = { play: jest.fn(), pause: jest.fn(), replace: jest.fn() };
+const mockPlayer = { play: jest.fn(), pause: jest.fn(), replace: jest.fn(), seekTo: jest.fn() };
 const mockStatus = { playing: false, currentTime: 0, duration: 0, didJustFinish: false };
 jest.mock('expo-audio', () => ({
   useAudioPlayer: () => mockPlayer,

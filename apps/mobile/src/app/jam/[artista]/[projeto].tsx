@@ -77,10 +77,17 @@ const Avatar = ({ nome, foto, tamanho }: { nome?: string | null; foto?: string |
     borderWidth: tamanho >= 44 ? 3 : 2, borderColor: COR_JAM.papel,
   } as const;
   if (foto) return <Image source={{ uri: foto }} style={[forma, estilos.avatarFoto]} />;
+  // Sem foto entra o degradê roxo→azul da web, e não um roxo chapado: ele é a passagem entre a
+  // cor da marca e a cor de ação, e é o que dá ao avatar vazio o mesmo peso do que tem foto.
   return (
-    <View style={[forma, estilos.avatarVazio]}>
+    <LinearGradient
+      colors={[COR_JAM.avatarDe, COR_JAM.avatarAte]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[forma, estilos.avatarVazio]}
+    >
       <Text style={[estilos.avatarTexto, { fontSize: tamanho >= 44 ? 14 : 11 }]}>{iniciais(nome)}</Text>
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -131,6 +138,7 @@ export default function EspacoJam() {
   const [comentando, setComentando] = useState<CatalogVersion | null>(null);
   const [contagens, setContagens] = useState<Record<string, number>>({});
   const [tocandoId, setTocandoId] = useState<string | null>(null);
+  const [larguras, setLarguras] = useState<Record<string, number>>({});
   const player = useAudioPlayer();
   const estadoDoSom = useAudioPlayerStatus(player);
 
@@ -225,6 +233,15 @@ export default function EspacoJam() {
 
   const mudar = (parte: Partial<CatalogProject>) =>
     setProjeto((atual) => (atual ? { ...atual, ...parte } : atual));
+
+  // Onde a onda da web fica, aqui fica uma barra — e a barra precisa fazer o que a onda faz de
+  // útil além de desenhar: levar a reprodução ao ponto tocado. Sem isso ela é enfeite, e uma mix
+  // de quatro minutos vira quatro minutos de espera para conferir o refrão.
+  const buscarNoAudio = (versao: CatalogVersion, x: number, largura: number) => {
+    if (tocandoId !== versao.id || !estadoDoSom.duration || largura <= 0) return;
+    const fracao = Math.min(1, Math.max(0, x / largura));
+    player.seekTo(fracao * estadoDoSom.duration);
+  };
 
   const tocar = (versao: CatalogVersion) => {
     if (!versao.audio_file) return;
@@ -539,17 +556,37 @@ export default function EspacoJam() {
                             {/* A onda do WaveSurfer não existe aqui: ela desenha a partir do
                                 arquivo inteiro baixado, e o app toca por streaming. A barra diz
                                 a mesma coisa que a onda dizia de útil — onde a faixa está. */}
-                            <View style={estilos.trilho}>
-                              <View
-                                style={[
-                                  estilos.progresso,
-                                  {
-                                    width: noAr && estadoDoSom.duration
-                                      ? `${Math.min(100, (estadoDoSom.currentTime / estadoDoSom.duration) * 100)}%`
-                                      : '0%',
-                                  },
-                                ]}
-                              />
+                            <View
+                              style={estilos.alvoDoTrilho}
+                              onStartShouldSetResponder={() => noAr}
+                              onMoveShouldSetResponder={() => noAr}
+                              onResponderGrant={(e) => buscarNoAudio(
+                                versao, e.nativeEvent.locationX, larguras[versao.id] ?? 0,
+                              )}
+                              onResponderMove={(e) => buscarNoAudio(
+                                versao, e.nativeEvent.locationX, larguras[versao.id] ?? 0,
+                              )}
+                              onLayout={(e) => {
+                                const { width } = e.nativeEvent.layout;
+                                setLarguras((atual) => (
+                                  atual[versao.id] === width ? atual : { ...atual, [versao.id]: width }
+                                ));
+                              }}
+                              accessibilityRole="adjustable"
+                              accessibilityLabel={`Posição de V${versao.version_number}`}
+                            >
+                              <View style={estilos.trilho}>
+                                <View
+                                  style={[
+                                    estilos.progresso,
+                                    {
+                                      width: noAr && estadoDoSom.duration
+                                        ? `${Math.min(100, (estadoDoSom.currentTime / estadoDoSom.duration) * 100)}%`
+                                        : '0%',
+                                    },
+                                  ]}
+                                />
+                              </View>
                             </View>
                             <Text style={estilos.tempo}>
                               {noAr
@@ -796,9 +833,7 @@ const estilos = StyleSheet.create({
     backgroundColor: COR_JAM.cabecaDaVersao,
   },
   avatarFoto: { resizeMode: 'cover' },
-  avatarVazio: {
-    alignItems: 'center', justifyContent: 'center', backgroundColor: COR_JAM.avatarDe,
-  },
+  avatarVazio: { alignItems: 'center', justifyContent: 'center' },
   avatarTexto: { fontWeight: '800', color: COR_JAM.papel },
   tituloDaVersao: { fontSize: 20, fontWeight: '800', color: COR_JAM.titulo },
   crachas: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -809,6 +844,8 @@ const estilos = StyleSheet.create({
   crachaTexto: { fontSize: 12, fontWeight: '800', color: COR_JAM.cracha },
 
   reproducao: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 16 },
+  // O alvo é bem mais alto que a barra: 6px de altura é impossível de acertar com o dedo.
+  alvoDoTrilho: { paddingVertical: 14, marginTop: -14 },
   trilho: { height: 6, borderRadius: 3, backgroundColor: COR_JAM.acaoFundo, overflow: 'hidden' },
   progresso: { height: 6, borderRadius: 3, backgroundColor: COR.primaria },
   tempo: { marginTop: 8, fontSize: 12, color: COR_JAM.apoio },
