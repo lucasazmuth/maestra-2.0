@@ -258,7 +258,7 @@ export default function Planejamento() {
           legenda="Forças, fragilidades e oportunidades que orientam o posicionamento da carreira."
         />
         {swot.map(([titulo, itens], i) => (
-          <View key={titulo} style={[estilos.cartao, estilos.swot, { borderTopColor: CORES_SWOT[i] }]}>
+          <View key={titulo} style={[estilos.cartao, estilos.swot, { borderLeftColor: CORES_SWOT[i] }]}>
             <Text style={estilos.swotTitulo}>{titulo.toUpperCase()}</Text>
             {(itens.length ? itens : ['Nenhum item informado.']).map((item) => (
               <View key={item} style={estilos.swotItem}>
@@ -304,16 +304,20 @@ export default function Planejamento() {
 
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
-  conteudo: { paddingHorizontal: 18, paddingTop: 27, paddingBottom: 122, gap: 14 },
+  conteudo: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 122, gap: 22 },
   flex: { flex: 1, minWidth: 0 },
 
-  // O cartão padrão: mesmo cinza do fundo, contorno fino, sem sombra.
+  // O cartão: BRANCO com contorno fino e sem sombra.
+  //
+  // A folha declara `background: var(--canvas)` (o cinza do fundo) e logo depois uma regra mais
+  // específica — `.planning-page .planning-next`, `.planning-page .planning-swot article` e as
+  // irmãs — troca por `#fff`. Ler só a primeira dá um cartão que some no fundo.
   cartao: {
-    padding: 21,
+    padding: 20,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: COR_PLANEJAMENTO.contorno,
-    backgroundColor: COR.fundo,
+    backgroundColor: COR.superficie,
   },
   semRecheio: { padding: 0, overflow: 'hidden' },
 
@@ -322,7 +326,7 @@ const estilos = StyleSheet.create({
   secaoTitulo: { color: COR_PLANEJAMENTO.titulo, fontSize: 26, fontWeight: '800' },
   secaoLegenda: { marginTop: 10, color: COR_PLANEJAMENTO.legenda, fontSize: 13, lineHeight: 20 },
 
-  foco: { padding: 21, borderRadius: 8 },
+  foco: { padding: 21, borderRadius: 8, minHeight: 230 },
   focoRotulo: { marginBottom: 8, color: COR.sobrePrimaria, fontSize: 9, fontWeight: '800', opacity: 0.75 },
   focoTitulo: { marginBottom: 9, color: COR.sobrePrimaria, fontSize: 26, fontWeight: '800' },
   focoTexto: { color: COR_PLANEJAMENTO.focoTexto, fontSize: 14, lineHeight: 21 },
@@ -342,11 +346,11 @@ const estilos = StyleSheet.create({
   passoNumero: { width: 26, color: COR_PLANEJAMENTO.objetivoNumero, fontSize: 14, fontWeight: '800' },
   passoTexto: { flex: 1, color: COR_PLANEJAMENTO.objetivoTexto, fontSize: 13, fontWeight: '700' },
 
-  cartaoDeNumero: { minHeight: 92, justifyContent: 'center' },
+  cartaoDeNumero: { minHeight: 92, justifyContent: 'center', paddingVertical: 19, paddingHorizontal: 22 },
   numero: { color: COR.primaria, fontSize: 28, fontWeight: '800', lineHeight: 30 },
   numeroApoio: { marginTop: 9, color: COR_PLANEJAMENTO.numeroApoio, fontSize: 10, fontWeight: '600' },
 
-  identidade: { padding: 21, borderRadius: 8 },
+  identidade: { padding: 21, borderRadius: 8, gap: 24 },
   identidadeTitulo: { color: COR.sobrePrimaria, fontSize: 25, lineHeight: 29, fontWeight: '800' },
   identidadeTexto: { marginTop: 12, color: COR_PLANEJAMENTO.focoTexto, fontSize: 12, lineHeight: 18 },
 
@@ -372,13 +376,16 @@ const estilos = StyleSheet.create({
   // meio — por isso a origem do `rotate` precisa ser deslocada meio comprimento pra esquerda.
   fio: { position: 'absolute', height: 2, opacity: 0.45, transformOrigin: 'left center' },
 
-  objetivo: { flexDirection: 'row', alignItems: 'center', gap: 15, minHeight: 64, paddingHorizontal: 24 },
+  objetivo: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 64, paddingHorizontal: 24 },
   comFio: { borderBottomWidth: 1, borderBottomColor: COR_PLANEJAMENTO.fio },
   objetivoNumero: { width: 26, color: COR_PLANEJAMENTO.objetivoNumero, fontSize: 14, fontWeight: '800' },
   objetivoTexto: { flex: 1, paddingVertical: 14, color: COR_PLANEJAMENTO.objetivoTexto, fontSize: 14, fontWeight: '800', lineHeight: 20 },
   nota: { color: COR_PLANEJAMENTO.nota, fontSize: 11, lineHeight: 16 },
 
-  swot: { borderTopWidth: 4, gap: 12 },
+  // O SWOT: a cor da dimensao entra pela ESQUERDA, com 4px — nao por cima.
+  swot: {
+    borderLeftWidth: 4, gap: 12, minHeight: 180, paddingVertical: 22, paddingHorizontal: 24,
+  },
   swotTitulo: { color: COR_PLANEJAMENTO.swotTitulo, fontSize: 13, fontWeight: '800', letterSpacing: 1 },
   swotItem: { flexDirection: 'row', gap: 8 },
   marcador: { fontSize: 13, lineHeight: 18 },

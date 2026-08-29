@@ -463,3 +463,37 @@ export const COR_PERFIS = {
   pagamentoPendente: '#3361ff',
   semPlano: '#b0720f',
 } as const;
+
+/**
+ * As telas de autenticação (entrar, cadastrar, esqueci e redefinir senha).
+ *
+ * O formulário vive num cartão branco no meio de um fundo com degradê — as duas manchas
+ * radiais, azul e roxa, são a assinatura da entrada. Google e Apple ficam LADO A LADO, em duas
+ * colunas iguais: a diretriz 4.8 da App Store pede que o Sign in with Apple tenha a mesma
+ * proeminência dos outros, e empilhado o de cima vira o "principal" aos olhos de quem lê.
+ *
+ * Os valores saem de `src/pages/Login/AuthShell.module.scss`;
+ * `src/__tests__/cromoDaEntrada.test.ts` os amarra lá.
+ */
+export const COR_ENTRADA = {
+  fundoDe: '#f9fbff',
+  fundoAte: '#eef4ff',
+  manchaAzul: 'rgba(47, 96, 246, .1)',
+  manchaRoxa: 'rgba(154, 79, 209, .07)',
+  contornoDoCartao: '#e3eaf3',
+  marca: '#52668d',
+  rotulo: '#93a4c0',
+  socialContorno: '#dce5f0',
+  socialFundo: '#f6f9ff',
+  socialTexto: '#52668d',
+  divisoria: '#e6ecf6',
+  divisoriaTexto: '#9aabc4',
+  campoContorno: '#e1e7f0',
+  campoFundo: '#fbfcfe',
+  campoIcone: '#9aabc4',
+  texto: '#405985',
+  espacoReservado: '#a3b2ca',
+  apoio: '#7c8da8',
+  linkSecundario: '#4267b9',
+  erro: '#d2474b',
+} as const;

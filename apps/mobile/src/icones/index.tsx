@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import type { SvgProps } from 'react-native-svg';
 
 import AgendaSvg from '@/assets/icons/agenda.svg';
+import MaestraLogoSvg from '@/assets/icons/maestra-logo.svg';
 import CatalogoSvg from '@/assets/icons/catalogo.svg';
 import ConfigSvg from '@/assets/icons/config.svg';
 import DiagnosticoSvg from '@/assets/icons/diagnostico.svg';
@@ -37,6 +38,16 @@ export const EquipeIcon = recortar(EquipeSvg, '4 6 33 29');
 export const PerfisIcon = recortar(PerfisSvg, '9 8 22 23');
 export const NotificationIcon = recortar(NotificationSvg);
 export const ConfigIcon = recortar(ConfigSvg, '6 6 30 30');
+
+/**
+ * O logotipo — a marca, e não um ícone de sistema.
+ *
+ * Vem da pasta da referência de design (`src/assets/gsap-reference`), e não do set de ícones;
+ * por isso não leva recorte de `viewBox`: o arquivo já é o desenho inteiro.
+ */
+export const MaestraLogo = ({ size = 22, color }: Props) => (
+  <MaestraLogoSvg width={size} height={size} color={color} />
+);
 
 /** Marketing é o único que a web NÃO tira de um arquivo: lá é o `FiTrendingUp` do Feather. */
 export const MarketingIcon: FC<Props> = ({ size = 22, color }) => (

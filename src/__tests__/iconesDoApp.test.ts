@@ -10,7 +10,12 @@ import path from 'path';
 //
 // Mesmo molde do `edgeSharedCopies.test.ts`, que já guarda as cópias de `_shared`.
 
-const daWeb = path.join(__dirname, '..', 'assets', 'icons');
+// Duas origens: o set de ícones do sistema e a pasta da referência de design, de onde vem o
+// logotipo. O que o teste garante não é a PASTA, é que todo SVG do app saiu da web.
+const ORIGENS = [
+  path.join(__dirname, '..', 'assets', 'icons'),
+  path.join(__dirname, '..', 'assets', 'gsap-reference'),
+];
 const doApp = path.join(__dirname, '..', '..', 'apps', 'mobile', 'assets', 'icons');
 
 const svgsDoApp = fs.existsSync(doApp)
@@ -23,10 +28,10 @@ describe('ícones do app nativo', () => {
   });
 
   it.each(svgsDoApp)('%s é idêntico ao da web', (nome) => {
-    const original = path.join(daWeb, nome);
+    const original = ORIGENS.map((o) => path.join(o, nome)).find((c) => fs.existsSync(c));
     // Um arquivo que só existe no app é tão suspeito quanto um divergente: ou veio de outro
     // lugar, ou foi apagado da web e ficou órfão aqui.
-    expect(fs.existsSync(original)).toBe(true);
-    expect(fs.readFileSync(path.join(doApp, nome), 'utf8')).toBe(fs.readFileSync(original, 'utf8'));
+    expect(original).toBeDefined();
+    expect(fs.readFileSync(path.join(doApp, nome), 'utf8')).toBe(fs.readFileSync(original!, 'utf8'));
   });
 });
