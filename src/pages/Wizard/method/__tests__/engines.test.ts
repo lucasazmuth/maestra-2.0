@@ -1,5 +1,5 @@
 import { generateObjectives, generateStrategies, prioritizeStrategies, seedScheduledPlan } from '../engines';
-import { STRATEGY_BANK } from '../strategyBank';
+import { STRATEGY_BANK } from '@maestra/core/constants/strategyBank';
 import { PRIORITY } from '../priorityMatrix';
 import type { ArtistIdentity, Strategy } from '@maestra/core/interfaces/maestra';
 

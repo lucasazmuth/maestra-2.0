@@ -365,6 +365,20 @@ export const COR_PLANO = {
   molduraRotulo: '#93a3bc',
   contagemFundo: '#edf2fb',
   contagemTexto: '#7183a3',
+  /** A moldura "Ranking de execução" tem fundo próprio, um cinza mais frio que o da página. */
+  secaoFundo: '#f7f8fb',
+  /** O círculo de concluir, e o "⋮" que abre a ficha. */
+  marcar: '#8c9bb2',
+  mais: '#9aabc4',
+  /** Os três chips da tarefa: categoria, responsável e prazo. */
+  chipFundo: '#edf1f6',
+  chipTexto: '#7183a1',
+  prazoFundo: '#edf2fb',
+  prazoTexto: '#60749a',
+  responsavelContorno: '#c4cddd',
+  responsavelIcone: '#8091ac',
+  /** "Adicionar tarefa": contorno tracejado, sem fundo — é um convite, não um botão cheio. */
+  adicionarContorno: '#c9d8f0',
 } as const;
 
 /**

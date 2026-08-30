@@ -27,7 +27,9 @@ const doPacote = fs.readFileSync(
 
 describe('a onda do app é o wavesurfer da web', () => {
   it('o arquivo embutido é o do pacote instalado, sem uma vírgula de diferença', () => {
-    const declarado = embutido.match(/export const WAVESURFER = (".*");?\s*$/s)?.[1];
+    // `[\s\S]` no lugar da flag `s`: o alvo do tsconfig é anterior ao ES2018, e a flag nem
+    // compila. O babel do jest aceitava — o `tsc` é que reprova.
+    const declarado = embutido.match(/export const WAVESURFER = ("[\s\S]*");?\s*$/)?.[1];
     expect(declarado).toBeTruthy();
     expect(JSON.parse(declarado as string)).toBe(doPacote);
   });

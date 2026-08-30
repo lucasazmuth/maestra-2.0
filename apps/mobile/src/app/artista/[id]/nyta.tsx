@@ -47,7 +47,7 @@ const SAUDACAO =
 const MAXIMO_DE_LETRAS = 1000;
 
 export default function Nyta() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, pergunta } = useLocalSearchParams<{ id: string; pergunta?: string }>();
   const artista = useArtistaDaRota(id);
   const router = useRouter();
   const direitos = useEntitlements();
@@ -88,6 +88,19 @@ export default function Nyta() {
     sendMessage(limpo);
     setTexto('');
   }, [texto, isStreaming, sendMessage]);
+
+  // Pergunta que chega pela rota (o "Adicionar tarefa" do Plano manda uma). Vai SOZINHA, como o
+  // `openWithPrompt` da web: lá o botão abre o modal da Nyta com a pergunta já enviada.
+  //
+  // O `useRef` é o que impede o reenvio: sem ele, qualquer render com o mesmo parâmetro na rota
+  // manda de novo — e o histórico enche de cópias da mesma frase.
+  const jaPerguntou = useRef<string | null>(null);
+  useEffect(() => {
+    const texto = typeof pergunta === 'string' ? pergunta.trim() : '';
+    if (!texto || jaPerguntou.current === texto || isStreaming) return;
+    jaPerguntou.current = texto;
+    sendMessage(texto);
+  }, [pergunta, isStreaming, sendMessage]);
 
   const noLimite = !!rateLimitInfo && rateLimitInfo.count >= rateLimitInfo.limit;
 

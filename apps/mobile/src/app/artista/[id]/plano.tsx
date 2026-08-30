@@ -1,15 +1,24 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_CABECALHO_DE_MODULO, COR_PLANO, RAIO } from '@maestra/core/constants/design';
-import { TASK_TYPES } from '@maestra/core/constants/maestra';
-import type { ActionTask, Strategy } from '@maestra/core/interfaces/maestra';
+import { TASK_OWNER_SELF, TASK_TYPES } from '@maestra/core/constants/maestra';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+import type { ActionTask, ArtistMember, Strategy } from '@maestra/core/interfaces/maestra';
+import * as eventsDb from '@maestra/core/services/db/events';
+import { listMembers } from '@maestra/core/services/db/members';
+import { buildActionPlan } from '@maestra/core/services/planoDeAcao';
 import { artistsActions } from '@maestra/core/store/slices/artists';
-import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
+import { useAppDispatch } from '@maestra/core/store/store';
+
+import { Arquivadas } from '@/casca/plano/Arquivadas';
+import { Chip, Escolha, type Opcao } from '@/casca/plano/Escolha';
+import { FichaDaTarefa } from '@/casca/plano/FichaDaTarefa';
 import { useArtistaDaRota } from '@/nucleo/artista';
+import { useSessao } from '@/nucleo/sessao';
 
 // O Plano de Acao.
 //
@@ -25,9 +34,21 @@ import { useArtistaDaRota } from '@/nucleo/artista';
 // ainda monta as 107 linhas de uma so vez. Uma estrategia aberta por vez, com o cabecalho
 // dizendo o progresso, e o que a web faz — e o que torna a tela usavel.
 //
-// So aparecem as estrategias COM tarefa (as priorizadas); as demais ficam de fora, como la.
+// So aparecem as estrategias COM tarefa (as priorizadas); as demais ficam ARQUIVADAS, e voltam
+// pelo botao "Arquivadas (N)" — trazer uma de volta e semear nela as tarefas do banco, regra que
+// mora no nucleo (`buildActionPlan`) justamente para nao ter duas versoes.
 
 const feita = (t: ActionTask) => t.status === 'done';
+const ativa = (t: ActionTask) => t.status !== 'archived';
+
+const hoje = () => new Date().toISOString().split('T')[0];
+
+const identificador = () => Math.random().toString(36).slice(2, 10);
+
+const dataCurta = (iso?: string) => {
+  if (!iso) return 'Sem prazo';
+  return new Date(`${iso}T00:00:00`).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+};
 
 /** Fechada de propósito — diferente de "ninguém escolheu nada ainda". */
 const FECHADA = '__nenhuma__' as const;
@@ -39,13 +60,58 @@ export default function Plano() {
   // So a tarefa tocada mostra progresso; travar a tela inteira numa lista longa e desagradavel.
   const [gravando, setGravando] = useState<string | null>(null);
 
-  const todas: Strategy[] = artista?.content?.strategies ?? [];
+  const { sessao } = useSessao();
+  const usuario = sessao?.user;
+  const dadosDoUsuario = (usuario?.user_metadata ?? {}) as Record<string, string | undefined>;
+  const meuNome = dadosDoUsuario.full_name || dadosDoUsuario.name || usuario?.email || 'Usuário';
+  const minhaFoto = dadosDoUsuario.avatar_url || dadosDoUsuario.picture;
+
+  const [equipe, setEquipe] = useState<ArtistMember[]>([]);
+  const [naFicha, setNaFicha] = useState<{ estrategia: string; tarefa: string } | null>(null);
+  const [arquivadasAbertas, setArquivadasAbertas] = useState(false);
+  const [menu, setMenu] = useState<
+    { tipo: 'categoria' | 'responsavel'; estrategia: string; tarefa: string } | null
+  >(null);
+
+  useEffect(() => {
+    if (!artista?.id) return undefined;
+    let vivo = true;
+    listMembers(artista.id).then((d) => { if (vivo) setEquipe(d); }).catch(() => {});
+    return () => { vivo = false; };
+  }, [artista?.id]);
+
+  // Os responsaveis atribuiveis: o DONO do perfil (sentinela) mais cada membro ativo, pelo
+  // e-mail. So a foto de quem esta logado existe — `artist_members` nao tem coluna de avatar.
+  const responsaveis = useMemo<Opcao[]>(() => {
+    const souODono = !!artista?.user_id && !!usuario?.id && artista.user_id === usuario.id;
+    const lista: Opcao[] = [{
+      valor: TASK_OWNER_SELF,
+      rotulo: souODono ? meuNome : 'Dono do perfil',
+      foto: souODono ? minhaFoto : null,
+    }];
+    equipe.filter((m) => m.status === 'active').forEach((m) => lista.push({
+      valor: m.email,
+      rotulo: m.name || m.email,
+      foto: usuario?.email && m.email.toLowerCase() === usuario.email.toLowerCase()
+        ? minhaFoto : null,
+    }));
+    return lista;
+  }, [artista?.user_id, usuario, equipe, meuNome, minhaFoto]);
+
+  // Em ORDEM DE PRIORIDADE (`finalScore` decrescente), como a web — não na ordem em que foram
+  // salvas. É o "Ranking de execução" do título: sem o ordenamento, o app numerava
+  // "ESTRATÉGIA #01" numa estratégia que na web é a quinta, e as duas telas discordavam sobre
+  // qual é a primeira coisa a fazer.
+  const todas: Strategy[] = useMemo(
+    () => [...(artista?.content?.strategies ?? [])].sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0)),
+    [artista?.content?.strategies],
+  );
   // A web mostra so as priorizadas (as que geraram tarefa); sem nenhuma, mostra tudo.
   const comTarefa = todas.filter((e) => (e.tasks?.length ?? 0) > 0);
   const estrategias = comTarefa.length ? comTarefa : todas;
+  // As demais ficam no arquivo — so existe arquivo se ALGUMA foi priorizada.
+  const arquivadas = comTarefa.length ? todas.filter((e) => !(e.tasks?.length ?? 0)) : [];
 
-  const tarefas = estrategias.flatMap((e) => e.tasks ?? []);
-  const concluidas = tarefas.filter(feita).length;
 
   const progresso = (e: Strategy) => {
     const lista = e.tasks ?? [];
@@ -61,28 +127,100 @@ export default function Plano() {
   const abertaAgora =
     aberta === undefined ? emFoco?.id : aberta === FECHADA ? undefined : aberta;
 
-  const alternar = async (estrategiaId: string, tarefa: ActionTask) => {
+  // Uma gravacao so, como na web: muda a lista de estrategias inteira e manda o content.
+  const gravar = useCallback(async (muda: (lista: Strategy[]) => Strategy[]) => {
     if (!artista) return;
-    setGravando(tarefa.id);
-    const proximo = {
-      ...artista.content,
-      strategies: estrategias.map((e) =>
-        e.id !== estrategiaId
-          ? e
-          : {
-              ...e,
-              tasks: (e.tasks ?? []).map((t) =>
-                t.id === tarefa.id ? { ...t, status: feita(t) ? ('todo' as const) : ('done' as const) } : t
-              ),
-            }
-      ),
-    };
+    const proximo = { ...artista.content, strategies: muda(artista.content?.strategies ?? []) };
+    await dispatch(artistsActions.updateArtistContent({ id: artista.id, content: proximo })).unwrap();
+  }, [artista, dispatch]);
+
+  // A Agenda espelha a tarefa: prazo, descricao e conclusao viram compromisso la. Sem isto, o
+  // que se muda aqui deixa de bater com o que a Agenda mostra — e ninguem descobre pelo app.
+  const espelharNaAgenda = useCallback((
+    estrategia: Strategy, tarefa: ActionTask, patch: Partial<ActionTask>,
+  ) => {
+    const mexeu = ['deadline', 'description', 'status']
+      .some((campo) => Object.prototype.hasOwnProperty.call(patch, campo));
+    if (!artista || !mexeu) return;
+    const depois = { ...tarefa, ...patch };
+    void eventsDb.syncActionPlanTaskEvent({
+      artistId: artista.id,
+      taskId: tarefa.id,
+      title: depois.description,
+      strategyTitle: estrategia.title,
+      deadline: depois.deadline,
+      completed: depois.status === 'done',
+    }).catch(() => {});
+  }, [artista]);
+
+  const mexerNaTarefa = useCallback(async (
+    estrategiaId: string, tarefaId: string, patch: Partial<ActionTask>,
+  ) => {
+    const estrategia = (artista?.content?.strategies ?? []).find((e) => e.id === estrategiaId);
+    const tarefa = estrategia?.tasks?.find((t) => t.id === tarefaId);
+    setGravando(tarefaId);
     try {
-      await dispatch(artistsActions.updateArtistContent({ id: artista.id, content: proximo })).unwrap();
+      await gravar((lista) => lista.map((e) => (e.id !== estrategiaId ? e : {
+        ...e,
+        tasks: (e.tasks ?? []).map((t) => (t.id === tarefaId ? { ...t, ...patch } : t)),
+      })));
+      if (estrategia && tarefa) espelharNaAgenda(estrategia, tarefa, patch);
     } finally {
       setGravando(null);
     }
-  };
+  }, [artista, gravar, espelharNaAgenda]);
+
+  const alternar = (estrategiaId: string, tarefa: ActionTask) =>
+    mexerNaTarefa(estrategiaId, tarefa.id, { status: feita(tarefa) ? 'todo' : 'done' });
+
+  const excluirTarefa = (estrategiaId: string, tarefaId: string) => gravar((lista) =>
+    lista.map((e) => (e.id !== estrategiaId ? e : {
+      ...e, tasks: (e.tasks ?? []).filter((t) => t.id !== tarefaId),
+    })));
+
+  const comentar = (estrategiaId: string, tarefa: ActionTask, texto: string) =>
+    mexerNaTarefa(estrategiaId, tarefa.id, {
+      comments: [...(tarefa.comments ?? []), {
+        id: identificador(),
+        body: texto,
+        authorId: usuario?.id,
+        authorName: meuNome,
+        authorAvatarUrl: minhaFoto,
+        createdAt: new Date().toISOString(),
+      }],
+    });
+
+  const editarComentario = (estrategiaId: string, tarefa: ActionTask, id: string, texto: string) =>
+    mexerNaTarefa(estrategiaId, tarefa.id, {
+      comments: (tarefa.comments ?? []).map((c) => (
+        c.id === id ? { ...c, body: texto, updatedAt: new Date().toISOString() } : c
+      )),
+    });
+
+  const excluirComentario = (estrategiaId: string, tarefa: ActionTask, id: string) =>
+    mexerNaTarefa(estrategiaId, tarefa.id, {
+      comments: (tarefa.comments ?? []).filter((c) => c.id !== id),
+    });
+
+  // Trazer do arquivo: a estrategia ganha as tarefas do banco e, por passar a ter tarefa, entra
+  // na lista principal — na prioridade que ja estava salva.
+  const trazerDoArquivo = (ids: string[]) => gravar((lista) =>
+    lista.map((e) => (ids.includes(e.id) ? { ...e, tasks: buildActionPlan(e) } : e)));
+
+  // "Adicionar tarefa" e a Nyta, como na web: la o botao abre o modal dela com a pergunta ja
+  // enviada. Aqui a Nyta e uma aba, entao o mesmo pedido viaja pela rota.
+  const pedirTarefa = (estrategia: Strategy) => router.push({
+    pathname: '/artista/[id]/nyta',
+    params: {
+      id: String(id),
+      pergunta: `Quero criar uma tarefa para a estratégia "${estrategia.title}"`,
+    },
+  });
+
+  const naFichaEstrategia = estrategias.find((e) => e.id === naFicha?.estrategia);
+  const naFichaTarefa = naFichaEstrategia?.tasks?.find((t) => t.id === naFicha?.tarefa);
+  const noMenuTarefa = estrategias
+    .find((e) => e.id === menu?.estrategia)?.tasks?.find((t) => t.id === menu?.tarefa);
 
   return (
     <View style={estilos.tela}>
@@ -112,16 +250,22 @@ export default function Plano() {
             {/* A moldura "Ranking de execucao" envolve a lista inteira, com a contagem de
                 estrategias a direita. */}
             <View style={estilos.moldura}>
+              {/* No celular a web ESCONDE o kicker "ESTRATÉGIAS DO PLANO" e a contagem
+                  "N estratégias" (regra de 700px): o kicker repete o título logo abaixo, e a
+                  contagem repete o que a lista mostra. Eu tinha portado os dois. */}
               <View style={estilos.molduraTopo}>
-                <View style={estilos.flex}>
-                  <Text style={estilos.molduraRotulo}>ESTRATÉGIAS DO PLANO</Text>
-                  <Text style={estilos.molduraTitulo}>Ranking de execução</Text>
-                </View>
-                <View style={estilos.contagem}>
-                  <Text style={estilos.contagemTexto}>
-                    {estrategias.length} {estrategias.length === 1 ? 'estratégia' : 'estratégias'}
-                  </Text>
-                </View>
+                <Text style={estilos.molduraTitulo}>Ranking de execução</Text>
+                {arquivadas.length > 0 && (
+                  <Pressable
+                    style={estilos.arquivadas}
+                    onPress={() => setArquivadasAbertas(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Estratégias arquivadas: ${arquivadas.length}`}
+                  >
+                    <Feather name="archive" size={13} color={COR_PLANO.contagemTexto} />
+                    <Text style={estilos.arquivadasTexto}>Arquivadas ({arquivadas.length})</Text>
+                  </Pressable>
+                )}
               </View>
 
               <View style={estilos.listaDeEstrategias}>
@@ -158,44 +302,106 @@ export default function Plano() {
                   <Text style={estilos.porque}>{estrategia.why}</Text>
                 )}
 
-                {estaAberta && (estrategia.tasks ?? []).map((tarefa) => (
-                  <Pressable
-                    key={tarefa.id}
-                    style={({ pressed }) => [estilos.tarefa, pressed && estilos.pressionada]}
-                    disabled={gravando !== null}
-                    onPress={() => alternar(estrategia.id, tarefa)}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: feita(tarefa) }}
-                    accessibilityLabel={tarefa.description}
-                  >
-                    {gravando === tarefa.id ? (
-                      <ActivityIndicator size="small" color={COR.primaria} style={estilos.circulo} />
-                    ) : (
-                      <Feather
-                        name={feita(tarefa) ? 'check-circle' : 'circle'}
-                        size={25}
-                        color={feita(tarefa) ? COR.primaria : COR_PLANO.chevron}
-                        style={estilos.circulo}
-                      />
-                    )}
+                {estaAberta && (estrategia.tasks ?? []).filter(ativa).map((tarefa) => {
+                  const responsavel = responsaveis.find((r) => r.valor === tarefa.owner);
+                  const comentarios = tarefa.comments?.length ?? 0;
+                  return (
+                  <View key={tarefa.id} style={estilos.tarefa}>
+                    {/* O círculo é o ALVO de concluir — não a linha inteira. Na linha há três
+                        outras intenções (categoria, responsável, prazo) e o "⋮"; um toque que
+                        marcasse a tarefa a partir de qualquer ponto atropelaria todas elas. */}
+                    <Pressable
+                      onPress={() => alternar(estrategia.id, tarefa)}
+                      disabled={gravando !== null}
+                      hitSlop={6}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: feita(tarefa) }}
+                      accessibilityLabel={
+                        feita(tarefa) ? `Reabrir: ${tarefa.description}` : `Concluir: ${tarefa.description}`
+                      }
+                    >
+                      {gravando === tarefa.id ? (
+                        <ActivityIndicator size="small" color={COR.primaria} style={estilos.circulo} />
+                      ) : (
+                        <Feather
+                          name={feita(tarefa) ? 'check-circle' : 'circle'}
+                          size={25}
+                          color={feita(tarefa) ? COR.primaria : COR_PLANO.marcar}
+                          style={estilos.circulo}
+                        />
+                      )}
+                    </Pressable>
+
                     <View style={estilos.flex}>
                       <Text style={estilos.descricao}>{tarefa.description}</Text>
-                      {/* Os chips de categoria e prazo, como na web. Aqui eles LEEM, não editam:
-                          trocar categoria e responsável abre menus que a web resolve com dropdown
-                          e que não cabem numa linha de lista no celular. */}
+                      {comentarios > 0 && (
+                        <Text style={estilos.comentarios}>
+                          {comentarios} {comentarios === 1 ? 'comentário' : 'comentários'}
+                        </Text>
+                      )}
+
+                      {/* Os três controles da web, na mesma ordem: categoria, responsável, prazo.
+                          Eles EDITAM — o dropdown de lá vira folha aqui, que é a forma nativa da
+                          mesma decisão e onde cabe o dedo. */}
                       <View style={estilos.chips}>
-                        <View style={estilos.chip}>
-                          <Text style={estilos.chipTexto}>
-                            {TASK_TYPES.find((t) => t.v === tarefa.type)?.label ?? 'Categoria'}
-                          </Text>
-                        </View>
-                        <View style={estilos.chip}>
-                          <Text style={estilos.chipTexto}>{tarefa.deadline || 'Sem prazo'}</Text>
-                        </View>
+                        <Chip
+                          texto={TASK_TYPES.find((t) => t.v === (tarefa.type || 'acoes'))?.label ?? 'Ações'}
+                          tom="categoria"
+                          rotulo="Mudar categoria"
+                          aoTocar={() => setMenu({ tipo: 'categoria', estrategia: estrategia.id, tarefa: tarefa.id })}
+                        />
+                        <Pressable
+                          style={estilos.responsavel}
+                          onPress={() => setMenu({ tipo: 'responsavel', estrategia: estrategia.id, tarefa: tarefa.id })}
+                          accessibilityRole="button"
+                          accessibilityLabel={
+                            responsavel ? `Responsável: ${responsavel.rotulo}` : 'Atribuir responsável'
+                          }
+                        >
+                          {responsavel ? (
+                            <Image
+                              source={{ uri: responsavel.foto || ARTISTS_DEFAULT_IMAGE }}
+                              style={estilos.fotoDoResponsavel}
+                            />
+                          ) : (
+                            <Feather name="plus" size={13} color={COR_PLANO.responsavelIcone} />
+                          )}
+                        </Pressable>
+                        <Chip
+                          texto={dataCurta(tarefa.deadline)}
+                          tom="prazo"
+                          rotulo="Definir prazo"
+                          aoTocar={() => setNaFicha({ estrategia: estrategia.id, tarefa: tarefa.id })}
+                        />
                       </View>
                     </View>
-                  </Pressable>
-                ))}
+
+                    <Pressable
+                      style={estilos.mais}
+                      onPress={() => setNaFicha({ estrategia: estrategia.id, tarefa: tarefa.id })}
+                      hitSlop={6}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Abrir detalhes de: ${tarefa.description}`}
+                    >
+                      <Feather name="more-vertical" size={17} color={COR_PLANO.mais} />
+                    </Pressable>
+                  </View>
+                  );
+                })}
+
+                {estaAberta && (
+                  <View style={estilos.linhaDeAdicionar}>
+                    <Pressable
+                      style={estilos.adicionar}
+                      onPress={() => pedirTarefa(estrategia)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Adicionar tarefa em ${estrategia.title}`}
+                    >
+                      <Feather name="plus" size={14} color={COR.primaria} />
+                      <Text style={estilos.adicionarTexto}>Adicionar tarefa</Text>
+                    </Pressable>
+                  </View>
+                )}
               </View>
               );
             })}
@@ -204,6 +410,61 @@ export default function Plano() {
           </>
         )}
       </ScrollView>
+
+      <FichaDaTarefa
+        aberta={!!naFichaTarefa}
+        tarefa={naFichaTarefa ?? null}
+        estrategia={naFichaEstrategia?.title}
+        responsaveis={responsaveis}
+        autor={{ id: usuario?.id, nome: meuNome }}
+        aoFechar={() => setNaFicha(null)}
+        aoSalvar={async (patch) => {
+          if (naFicha) await mexerNaTarefa(naFicha.estrategia, naFicha.tarefa, patch);
+        }}
+        aoExcluir={async () => {
+          if (naFicha) await excluirTarefa(naFicha.estrategia, naFicha.tarefa);
+        }}
+        aoComentar={async (texto) => {
+          if (naFicha && naFichaTarefa) await comentar(naFicha.estrategia, naFichaTarefa, texto);
+        }}
+        aoEditarComentario={async (idDoComentario, texto) => {
+          if (naFicha && naFichaTarefa) {
+            await editarComentario(naFicha.estrategia, naFichaTarefa, idDoComentario, texto);
+          }
+        }}
+        aoExcluirComentario={async (idDoComentario) => {
+          if (naFicha && naFichaTarefa) {
+            await excluirComentario(naFicha.estrategia, naFichaTarefa, idDoComentario);
+          }
+        }}
+      />
+
+      {/* Os dois menus da linha. Prazo não entra aqui: uma data pede calendário, e ele mora na
+          ficha — é para lá que o chip do prazo leva. */}
+      <Escolha
+        aberta={menu?.tipo === 'categoria'}
+        titulo="Categoria"
+        opcoes={TASK_TYPES.map((t) => ({ valor: t.v, rotulo: t.label }))}
+        valor={noMenuTarefa?.type || 'acoes'}
+        aoEscolher={(v) => { if (menu) void mexerNaTarefa(menu.estrategia, menu.tarefa, { type: v ?? 'acoes' }); }}
+        aoFechar={() => setMenu(null)}
+      />
+      <Escolha
+        aberta={menu?.tipo === 'responsavel'}
+        titulo="Responsável"
+        opcoes={responsaveis}
+        valor={noMenuTarefa?.owner}
+        limpar="Remover responsável"
+        aoEscolher={(v) => { if (menu) void mexerNaTarefa(menu.estrategia, menu.tarefa, { owner: v }); }}
+        aoFechar={() => setMenu(null)}
+      />
+
+      <Arquivadas
+        aberta={arquivadasAbertas}
+        estrategias={arquivadas}
+        aoTrazer={trazerDoArquivo}
+        aoFechar={() => setArquivadasAbertas(false)}
+      />
     </View>
   );
 }
@@ -228,20 +489,19 @@ const estilos = StyleSheet.create({
   moldura: {
     borderWidth: 1, borderColor: COR_PLANO.molduraContorno, borderRadius: 8, overflow: 'hidden',
   },
+  // Sem o kicker, o cabeçalho encolhe: 12/14 de recuo, como o da web no celular.
   molduraTopo: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 18,
-    minHeight: 70, paddingHorizontal: 18,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+    paddingHorizontal: 14, paddingVertical: 12,
     borderBottomWidth: 1, borderBottomColor: COR_PLANO.molduraContorno,
   },
-  molduraRotulo: {
-    fontSize: 9, fontWeight: '900', color: COR_PLANO.molduraRotulo, marginBottom: 6,
-  },
-  molduraTitulo: { fontSize: 18, fontWeight: '800', color: COR_PLANO.molduraTitulo },
-  contagem: {
+  molduraTitulo: { fontSize: 15, color: COR_PLANO.molduraTitulo },
+  arquivadas: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
     borderRadius: RAIO.pilula, paddingVertical: 7, paddingHorizontal: 10,
     backgroundColor: COR_PLANO.contagemFundo,
   },
-  contagemTexto: { fontSize: 10, fontWeight: '900', color: COR_PLANO.contagemTexto },
+  arquivadasTexto: { fontSize: 10, fontWeight: '900', color: COR_PLANO.contagemTexto },
   listaDeEstrategias: { padding: 14, gap: 10 },
   aviso: {
     borderWidth: 1, borderColor: COR_PLANO.contorno, borderRadius: 8, padding: 18, gap: 6, marginTop: 10,
@@ -285,10 +545,24 @@ const estilos = StyleSheet.create({
   pressionada: { opacity: 0.55 },
   circulo: { width: 25, height: 25, marginTop: 3 },
   descricao: { fontSize: 13, fontWeight: '700', color: COR_PLANO.titulo, lineHeight: 18 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  chip: {
-    height: 26, justifyContent: 'center', paddingHorizontal: 9,
-    borderRadius: 7, borderWidth: 1, borderColor: COR_PLANO.chipContorno,
+  comentarios: { fontSize: 11, color: COR_PLANO.legenda, marginTop: 4 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: 8 },
+  // O responsável é um círculo de 26, e não uma pílula: é uma PESSOA, e o lugar dela é a foto.
+  responsavel: {
+    width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: COR_PLANO.responsavelContorno,
   },
-  chipTexto: { fontSize: 10.5, fontWeight: '800', color: COR_PLANO.legenda },
+  fotoDoResponsavel: { width: 24, height: 24, borderRadius: 12 },
+  mais: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  linhaDeAdicionar: {
+    flexDirection: 'row', paddingHorizontal: 12.5, paddingBottom: 14, paddingTop: 14,
+    borderTopWidth: 1, borderTopColor: COR_PLANO.fio,
+  },
+  // Contorno tracejado e sem fundo: é um convite a acrescentar, não uma ação primária.
+  adicionar: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    minHeight: 36, paddingHorizontal: 14, borderRadius: RAIO.campo,
+    borderWidth: 1, borderStyle: 'dashed', borderColor: COR_PLANO.adicionarContorno,
+  },
+  adicionarTexto: { fontSize: 12, fontWeight: '800', color: COR.primaria },
 });

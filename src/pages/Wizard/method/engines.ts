@@ -2,6 +2,12 @@
 // Funções puras (sem React, sem rede, sem LLM). Consomem as lookup tables deste diretório.
 
 import { TASK_OWNER_SELF } from '@maestra/core/constants/maestra';
+import { STRATEGY_BY_ID } from '@maestra/core/constants/strategyBank';
+// A montagem das tarefas de uma estratégia mora no núcleo: o app nativo traz estratégia
+// arquivada de volta ao plano, e a mesma estratégia tem que render as mesmas tarefas nos dois.
+import { buildActionPlan } from '@maestra/core/services/planoDeAcao';
+
+export { buildActionPlan };
 import type {
   ActionTask,
   ArtistContent,
@@ -10,7 +16,6 @@ import type {
   RecognitionTag,
   Strategy,
 } from '@maestra/core/interfaces/maestra';
-import { STRATEGY_BY_ID } from './strategyBank';
 import { MATRIX_A, MATRIX_B, MATRIX_C, TRANSVERSAL_FORCES } from './matrices';
 import { OBJECTIVE_CODES, globalSum, objectiveToCode, scoreFor } from './priorityMatrix';
 import { internalLabel, opportunityLabel } from './swotItems';
@@ -234,19 +239,6 @@ export const prioritizeStrategies = (strategies: Strategy[], objectives: string[
 };
 
 // ─── Plano de Ação (Nyta_Etapa_Plano_de_Acao_v1) ───────────────────────────────────────────────
-
-// Passo a passo canônico da estratégia → tarefas (responsável = dono; prazo/status vazios).
-// As tarefas canônicas não têm placeholders, então o texto é literal.
-export const buildActionPlan = (strategy: Strategy): ActionTask[] => {
-  const bank = strategy.bankId ? STRATEGY_BY_ID[strategy.bankId] : undefined;
-  const steps = bank?.tasks || [];
-  return steps.map((description) => ({
-    id: uid(),
-    description,
-    owner: TASK_OWNER_SELF,
-    status: 'todo' as const,
-  }));
-};
 
 // Distribui o plano de ação no tempo (Metodologia v2 — perguntar início + duração).
 // Lógica "por prioridade, em cascata": as estratégias entram na ordem de prioridade (finalScore),
