@@ -24,6 +24,7 @@ import { rodandoNativo } from './lib/plataforma';
 import { useAdminRole, type ModuloAdmin } from '@maestra/core/hooks/useAdminRole';
 import { MobileIntro } from './pages/MobileIntro';
 import { authActions } from '@maestra/core/store/slices/auth';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import { supabase } from '@maestra/core/lib/supabase';
 import { ConsentProvider, useConsent } from '@maestra/core/hooks/useConsent';
@@ -533,6 +534,7 @@ function App() {
             <RootComponent />
           </PersistGate>
         </Provider>
+        <SpeedInsights />
       </AntdApp>
     </ConfigProvider>
   );
