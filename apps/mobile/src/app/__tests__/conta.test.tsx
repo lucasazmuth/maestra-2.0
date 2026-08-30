@@ -1,27 +1,75 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
-import { Alert } from 'react-native';
+import { Alert, Share } from 'react-native';
 
 import Conta from '../conta';
 
 const mockReplace = jest.fn();
+const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   Redirect: () => null,
+  router: { push: (...a: unknown[]) => mockPush(...a), back: jest.fn(), replace: jest.fn() },
   useRouter: () => ({ back: jest.fn(), replace: mockReplace }),
+}));
+
+// O seletor de arquivos e o player sao modulos NATIVOS: importa-los aqui derruba a suite antes
+// de qualquer teste rodar. O que a Conta faz com eles (escolher a foto e enviar) e o que os
+// testes abaixo verificam pelo mock.
+const mockEscolherImagem = jest.fn();
+const mockEnviar = jest.fn();
+jest.mock('@/nucleo/arquivos', () => ({
+  escolherImagem: () => mockEscolherImagem(),
+  enviarEscolhido: (...a: unknown[]) => mockEnviar(...a),
+  enviarParaOCatalogo: jest.fn(),
+  escolherAudio: jest.fn(),
+  duracaoDoAudio: jest.fn(),
 }));
 
 jest.mock('@/nucleo/sessao', () => ({
   useSessao: () => ({
-    sessao: { user: { id: 'u-1', email: 'artista@exemplo.com' } },
+    sessao: {
+      user: {
+        id: 'u-1',
+        email: 'artista@exemplo.com',
+        user_metadata: { full_name: 'Lucas Andrade' },
+      },
+    },
     carregando: false,
   }),
+}));
+
+// O espião da folha de partilha nasce no `beforeEach`: o `restoreAllMocks` do `afterEach` o
+// desfaria, e a partir do segundo teste ele não registraria mais nada.
+let mockPartilhar: jest.SpyInstance;
+
+// O arquivo temporario da exportacao: aqui interessa QUE arquivo o app oferece, nao o disco.
+jest.mock('expo-file-system', () => ({
+  Paths: { cache: 'file:///cache' },
+  File: class {
+    uri: string;
+    exists = false;
+    constructor(_pasta: unknown, nome?: string) { this.uri = `file:///cache/${nome ?? ''}`; }
+    create() {}
+    write() {}
+    delete() {}
+  },
 }));
 
 const mockSair = jest.fn();
 jest.mock('@/nucleo/entrar', () => ({ sair: () => mockSair() }));
 
 const mockInsert = jest.fn();
+const mockAtualizarUsuario = jest.fn();
 jest.mock('@maestra/core/lib/supabase', () => ({
-  supabase: { from: () => ({ insert: (linha: unknown) => mockInsert(linha) }) },
+  supabase: {
+    from: () => ({ insert: (linha: unknown) => mockInsert(linha) }),
+    auth: { updateUser: (dados: unknown) => mockAtualizarUsuario(dados) },
+    functions: { invoke: () => Promise.resolve({ data: {}, error: null }) },
+  },
+}));
+
+jest.mock('@maestra/core/services/db/platformReviews', () => ({
+  getMyPlatformReview: () => Promise.resolve(null),
+  savePlatformReview: jest.fn(),
 }));
 
 let mockStatus = 'none';
@@ -53,7 +101,13 @@ describe('conta', () => {
     mockCancelar.mockReset().mockResolvedValue(undefined);
     mockSair.mockReset().mockResolvedValue(undefined);
     mockReplace.mockClear();
+    mockPush.mockClear();
+    mockEscolherImagem.mockReset();
+    mockEnviar.mockReset();
+    mockAtualizarUsuario.mockReset();
     jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockPartilhar = jest.spyOn(Share, 'share')
+      .mockResolvedValue({ action: 'sharedAction' } as never);
   });
 
   afterEach(() => jest.restoreAllMocks());
@@ -106,6 +160,76 @@ describe('conta', () => {
     await waitFor(() => expect(tela.getByText(/Cancele a assinatura/)).toBeTruthy());
     expect(mockInsert).not.toHaveBeenCalled();
     expect(mockSair).not.toHaveBeenCalled();
+  });
+
+  // O perfil era so leitura: o nome e a foto so se mudavam na web. Sao os dois campos que
+  // aparecem em todo lugar do produto — o cabecalho, os comentarios, a lista de responsaveis.
+  it('edita o nome do perfil e grava', async () => {
+    mockAtualizarUsuario.mockResolvedValue({ error: null });
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    expect(tela.getByText('Lucas Andrade')).toBeTruthy();
+    await usuario.press(tela.getByLabelText('Editar perfil'));
+
+    const campo = await tela.findByLabelText('Seu nome');
+    await usuario.clear(campo);
+    await usuario.type(campo, 'Lucas A.');
+    await usuario.press(tela.getByLabelText('Salvar perfil'));
+
+    await waitFor(() => expect(mockAtualizarUsuario).toHaveBeenCalled());
+    expect(mockAtualizarUsuario.mock.calls[0][0].data.full_name).toBe('Lucas A.');
+  });
+
+  // A foto sobe pro balde `avatars` na ESCOLHA; so a URL fica guardada ate salvar. E o mesmo
+  // desenho da web, e e o que permite desistir sem deixar o perfil pela metade.
+  it('a foto sobe na escolha, e so entra no perfil ao salvar', async () => {
+    mockEscolherImagem.mockResolvedValue({ nome: 'eu.jpg', uri: 'file:///eu.jpg', tipo: 'image/jpeg' });
+    mockEnviar.mockResolvedValue({ url: 'https://exemplo.invalid/eu.jpg', path: 'u-1/eu.jpg', name: 'eu.jpg' });
+    mockAtualizarUsuario.mockResolvedValue({ error: null });
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await usuario.press(tela.getByLabelText('Editar perfil'));
+    await usuario.press(await tela.findByLabelText('Trocar a foto'));
+
+    await waitFor(() => expect(mockEnviar).toHaveBeenCalled());
+    // Vai pro balde de AVATARES, na pasta do proprio usuario — nao pro do catalogo.
+    expect(mockEnviar.mock.calls[0][0]).toBe('avatars');
+    expect(mockEnviar.mock.calls[0][1]).toBe('u-1');
+    // E ainda NAO gravou no perfil: isso e do "Salvar".
+    expect(mockAtualizarUsuario).not.toHaveBeenCalled();
+
+    await usuario.press(tela.getByLabelText('Salvar perfil'));
+    await waitFor(() => expect(mockAtualizarUsuario).toHaveBeenCalled());
+    expect(mockAtualizarUsuario.mock.calls[0][0].data.avatar_url)
+      .toBe('https://exemplo.invalid/eu.jpg');
+  });
+
+  // A secao de notificacoes existe porque a web tem, e o texto e o dela. O interruptor NAO
+  // aparece: o push do app ainda nao esta configurado, e um botao que nao liga nada seria pior
+  // do que a ausencia dele. A web faz o mesmo quando o navegador nao suporta.
+  it('mostra a seção de notificações e explica por que não há interruptor', async () => {
+    const tela = await montar();
+    expect(tela.getByText('Notificações no dispositivo')).toBeTruthy();
+    expect(tela.getByText(/Os avisos no aparelho ainda não estão disponíveis/)).toBeTruthy();
+  });
+
+  it('leva ao histórico de pagamentos', async () => {
+    const usuario = userEvent.setup();
+    const tela = await montar();
+    await usuario.press(tela.getByLabelText('Histórico de pagamentos'));
+    expect(mockPush).toHaveBeenCalledWith('/pagamentos');
+  });
+
+  // "Baixar meus dados" era um link pra web. E o mesmo `account-data-export` da web; o que muda
+  // e o destino — arquivo mais folha de partilha, que e o download do celular.
+  it('exporta os dados sem sair do app', async () => {
+    const usuario = userEvent.setup();
+    const tela = await montar();
+    await usuario.press(tela.getByLabelText('Baixar meus dados'));
+    await waitFor(() => expect(mockPartilhar).toHaveBeenCalled());
+    expect(String(mockPartilhar.mock.calls[0][0].url)).toContain('maestra-meus-dados-');
   });
 });
 

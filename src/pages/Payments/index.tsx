@@ -1,6 +1,8 @@
 import { FC, useMemo } from 'react';
 import { FiRefreshCw, FiUser } from 'react-icons/fi';
 
+import { useAppSelector } from '@maestra/core/store/store';
+
 import { Spinner } from '../../components/spinner/spinner';
 import {
   STATUS_META,
@@ -8,13 +10,16 @@ import {
   fmtBRL,
   fmtDate,
   usePaymentHistory,
-} from './usePaymentHistory';
+} from '@maestra/core/hooks/usePaymentHistory';
 import styles from './Payments.module.scss';
 
 // Página dedicada ao histórico de pagamentos (assinatura + perfis avulsos), para não inflar a
 // tela de Configurações com uma lista longa.
 const Payments: FC = () => {
-  const { items, loading } = usePaymentHistory();
+  // O id sai do store AQUI, e não dentro do hook: o app nativo guarda a sessão de outro jeito,
+  // e o hook mora no núcleo, que os dois compartilham.
+  const user = useAppSelector((state) => state.auth.user);
+  const { items, loading } = usePaymentHistory(user?.id);
 
   // Só o que foi efetivamente pago entra no total: somar cobranças canceladas ou vencidas diria
   // que a pessoa gastou um dinheiro que nunca saiu.

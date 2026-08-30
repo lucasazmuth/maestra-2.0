@@ -493,6 +493,27 @@ export const COR_CONTA = {
   tituloDoCartao: '#5b6f94',
   texto: '#98a6bd',
   apoio: '#8e9eb8',
+  /** A estrela da avaliação: o MESMO dourado da estrela do Espaço Jam. */
+  estrela: '#e0ad3c',
+  /** O interruptor de notificações, e o aviso de quando ele não existe. */
+  interruptorFundo: '#dde3ee',
+  aviso: '#b0720f',
+  avisoFundo: '#fff7e8',
+  /**
+   * Os quatro tons do status de um pagamento, com o par fundo/texto de cada um.
+   *
+   * `STATUS_META` (no núcleo) diz o TOM de cada status — `ok`, `warn`, `danger`, `mute` — e a
+   * folha da web (`Payments.module.scss`) pinta cada tom. Aqui é a mesma tradução, para "Pago",
+   * "Pendente" e "Vencido" não caírem todos no mesmo cinza.
+   */
+  pagoFundo: '#e6f5ef',
+  pagoTom: '#1d8a68',
+  atencaoFundo: '#fdf6e6',
+  atencaoTom: '#a17a1c',
+  perigoFundo: '#fdeeee',
+  perigoTom: '#c33a3f',
+  neutroFundo: '#eef1f7',
+  neutroTom: '#7c8da8',
 } as const;
 
 /**

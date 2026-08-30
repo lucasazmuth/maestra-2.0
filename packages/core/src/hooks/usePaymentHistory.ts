@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 
-import { supabase } from '@maestra/core/lib/supabase';
-import { useAppSelector } from '@maestra/core/store/store';
+import { supabase } from '../lib/supabase';
 
 // Histórico de pagamentos do usuário: assinatura (asaas_payments) + perfis avulsos
 // (artist_purchases), unificados e ordenados por data. RLS já restringe ao próprio usuário.
 //
 // A busca vive aqui, separada da tela, porque a página usa a mesma lista duas vezes: no resumo
 // do topo (total, quantidade, último pago) e na tabela.
+//
+// Subiu de `src/pages/Payments` para o núcleo quando o app nativo ganhou a mesma tela. As duas
+// leem as MESMAS duas tabelas e normalizam os status do mesmo jeito — dois normalizadores dariam
+// dois "Pendente" com significados diferentes para a mesma linha do banco.
 
 export interface PayItem {
   id: string;
@@ -65,19 +68,28 @@ export const billingLabel = (b: string | null): string | null => {
 export const fmtBRL = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 export const fmtDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '—');
 
-export function usePaymentHistory() {
-  const user = useAppSelector((s) => s.auth.user);
+/**
+ * O id do usuário vem de FORA, e não do store.
+ *
+ * O hook lia `state.auth.user` — e o app nativo não alimenta essa fatia (ele guarda a sessão
+ * direto do supabase-js). O resultado era a tela ficar girando para sempre: sem usuário, o
+ * efeito saía antes de desligar o `loading`, e nada acontecia nunca mais.
+ */
+export function usePaymentHistory(userId?: string | null) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<PayItem[]>([]);
 
   useEffect(() => {
-    if (!user?.id) return undefined;
+    // Sem usuário não há o que buscar — mas há o que dizer: uma lista vazia, e não um giro
+    // eterno.
+    if (!userId) { setItems([]); setLoading(false); return undefined; }
     let active = true;
+    setLoading(true);
     (async () => {
       try {
         const [subs, profiles] = await Promise.all([
-          supabase.from('asaas_payments').select('id, value, status, payment_date, billing_type, created_at').eq('user_id', user.id),
-          supabase.from('artist_purchases').select('id, amount, status, billing_type, paid_at, created_at, artist_name').eq('user_id', user.id),
+          supabase.from('asaas_payments').select('id, value, status, payment_date, billing_type, created_at').eq('user_id', userId),
+          supabase.from('artist_purchases').select('id, amount, status, billing_type, paid_at, created_at, artist_name').eq('user_id', userId),
         ]);
         if (!active) return;
         const subItems: PayItem[] = (subs.data || []).map((p: any) => ({
@@ -108,7 +120,7 @@ export function usePaymentHistory() {
       }
     })();
     return () => { active = false; };
-  }, [user?.id]);
+  }, [userId]);
 
   return { items, loading };
 }

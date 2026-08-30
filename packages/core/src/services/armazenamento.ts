@@ -29,6 +29,9 @@ const higienizar = (nome: string) =>
 /** O balde do catálogo: capas e áudios das versões. */
 export const BALDE_DO_CATALOGO = 'catalog';
 
+/** O balde das fotos de perfil de quem usa a Maestra (a da CONTA, não a do artista). */
+export const BALDE_DE_AVATARES = 'avatars';
+
 /**
  * O tipo do arquivo, decidido pela EXTENSÃO — e não pelo que o sistema declara.
  *

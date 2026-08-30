@@ -76,18 +76,22 @@ export const escolherImagem = async (): Promise<ArquivoEscolhido | null> => {
 };
 
 /** Lê o arquivo escolhido e o envia pelo MESMO caminho que a web usa. */
-export const enviarParaOCatalogo = async (
+export const enviarEscolhido = async (
+  balde: string,
   pasta: string,
   arquivo: ArquivoEscolhido,
 ): Promise<ArquivoEnviado> => {
   const dados = await new File(arquivo.uri).bytes();
-  return enviarArquivo(BALDE_DO_CATALOGO, pasta, {
+  return enviarArquivo(balde, pasta, {
     nome: arquivo.nome,
     tipo: arquivo.tipo,
     // `bytes()` devolve um Uint8Array; o corpo da requisição precisa do buffer por trás.
     dados: dados.buffer as ArrayBuffer,
   });
 };
+
+export const enviarParaOCatalogo = (pasta: string, arquivo: ArquivoEscolhido) =>
+  enviarEscolhido(BALDE_DO_CATALOGO, pasta, arquivo);
 
 /**
  * A duração da gravação, lida do próprio arquivo.
