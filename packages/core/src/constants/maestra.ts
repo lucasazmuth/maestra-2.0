@@ -185,6 +185,21 @@ export const MVP_ACCESS_LEVEL_OPTIONS = (Object.keys(MVP_ACCESS_LEVELS) as (keyo
   label: MVP_ACCESS_LEVELS[id],
 }));
 
+/**
+ * O que cada módulo abre, em uma linha.
+ *
+ * "Equipe" ou "Plano de ação" sozinhos não dizem se a pessoa só vê ou também mexe — e quem
+ * convida está decidindo justamente isso. O texto é o mesmo nas duas superfícies: uma frase
+ * diferente no celular seria uma promessa diferente sobre o mesmo acesso.
+ */
+export const ACCESS_LEVEL_HINTS: Partial<Record<AccessLevel, string>> = {
+  plan: 'Ver e editar tarefas e prazos',
+  catalog: 'Músicas, versões e Espaço JAM',
+  agenda: 'Compromissos e datas',
+  team: 'Convidar e remover pessoas',
+  full: 'Todos os módulos, inclusive os que entrarem depois',
+};
+
 export const ACCESS_LEVEL_OPTIONS = (Object.keys(ACCESS_LEVELS) as AccessLevel[]).map((id) => ({
   id,
   label: ACCESS_LEVELS[id],

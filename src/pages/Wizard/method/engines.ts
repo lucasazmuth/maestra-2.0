@@ -6,8 +6,6 @@ import { STRATEGY_BY_ID } from '@maestra/core/constants/strategyBank';
 // A montagem das tarefas de uma estratégia mora no núcleo: o app nativo traz estratégia
 // arquivada de volta ao plano, e a mesma estratégia tem que render as mesmas tarefas nos dois.
 import { buildActionPlan } from '@maestra/core/services/planoDeAcao';
-
-export { buildActionPlan };
 import type {
   ActionTask,
   ArtistContent,
@@ -19,6 +17,9 @@ import type {
 import { MATRIX_A, MATRIX_B, MATRIX_C, TRANSVERSAL_FORCES } from './matrices';
 import { OBJECTIVE_CODES, globalSum, objectiveToCode, scoreFor } from './priorityMatrix';
 import { internalLabel, opportunityLabel } from './swotItems';
+
+// Quem já importava `buildActionPlan` daqui continua importando daqui.
+export { buildActionPlan };
 
 const uid = (): string => Math.random().toString(36).slice(2, 10);
 

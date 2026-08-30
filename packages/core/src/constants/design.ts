@@ -508,7 +508,25 @@ export const COR_EQUIPE = {
   acessoTexto: '#6a7c9e',
   ativoPonto: '#29cc39',
   ativoTexto: '#2a9a59',
+  pendentePonto: '#f0ad2f',
+  pendenteTexto: '#e5b95e',
+  recusadoPonto: '#d95263',
+  recusadoTexto: '#d87783',
   pendente: '#aeb9ca',
+  /** O contorno da lista e o fio entre uma pessoa e a seguinte. */
+  contorno: '#e1e7f0',
+  fio: '#edf1f5',
+  /** O avatar sem foto, e o "···" da linha. */
+  avatarFundo: '#eaf0fb',
+  mais: '#aeb9ca',
+  /** O cartão de permissão: contorno e fundo quando apagado, azul quando marcado. */
+  permissaoContorno: '#e3eaf5',
+  permissaoFundo: '#fbfcfe',
+  permissaoTexto: '#5f76a3',
+  permissaoMarcadaContorno: '#b9cbed',
+  permissaoMarcadaTexto: '#2f4f8f',
+  permissaoCaixa: '#ccd8ea',
+  permissaoApoio: '#91a0b9',
 } as const;
 
 /**

@@ -1,68 +1,58 @@
 import Feather from '@expo/vector-icons/Feather';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View,
+  ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View,
 } from 'react-native';
 
-import { COR, RAIO, COR_CATALOGO, COR_EQUIPE } from '@maestra/core/constants/design';
-import { MVP_ACCESS_LEVEL_OPTIONS } from '@maestra/core/constants/maestra';
+import { COR, COR_CATALOGO, COR_EQUIPE, RAIO } from '@maestra/core/constants/design';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { ArtistMember } from '@maestra/core/interfaces/maestra';
 import { listMembers } from '@maestra/core/services/db/members';
 
+import { FolhaDeConvite } from '@/casca/equipe/FolhaDeConvite';
+import { FolhaDoMembro, SeloDeEstado } from '@/casca/equipe/FolhaDoMembro';
 import { useArtistaDaRota } from '@/nucleo/artista';
+import { useSessao } from '@/nucleo/sessao';
 
 // A equipe do perfil.
 //
-// Em leitura, e isso e escolha: o que se quer saber do celular e QUEM alcanca este perfil e o
-// que cada um pode mexer. Convidar exige digitar e-mail e escolher niveis — um formulario que
-// se faz melhor sentado, e que a web ja tem.
+// A tela era só leitura, e eu tinha escrito que convidar "se faz melhor sentado". Não se faz: é
+// um e-mail, um nome e quatro caixas de seleção, e quem precisa dar acesso a alguém costuma
+// precisar disso no momento em que a pessoa está do lado.
 //
-// Os rotulos de acesso saem de `MVP_ACCESS_LEVEL_OPTIONS`, do nucleo: sao os mesmos da web, e um
-// nivel novo aparece nos dois sem ninguem lembrar de duplicar. A lista tambem mostra so os tres
-// primeiros mais um "+N", como la — a linha e para reconhecer, nao para auditar.
-
-const ROTULOS: Record<string, string> = { active: 'Ativo', pending: 'Pendente', rejected: 'Recusado' };
+// Convidar, editar acessos e remover são do DONO do perfil. Quem é membro abre a mesma folha e
+// só lê — o rodapé some, porque um "Salvar" que não salva é pior do que botão nenhum.
+//
+// ⚠️ As pílulas de acesso NÃO aparecem na linha: a folha da web esconde `.accessSummary` abaixo
+// de 600px. Eu tinha portado uma pílula-resumo que a web não mostra aqui — quem quer auditar
+// acesso abre o "···", que é onde a lista completa está.
 
 const nomeDe = (m: ArtistMember) => m.name || m.email.split('@')[0];
-
-const Avatar = ({ membro }: { membro: ArtistMember }) => (
-  <View style={estilos.avatar}>
-    <Text style={estilos.inicial}>{(nomeDe(membro).trim()[0] ?? '?').toUpperCase()}</Text>
-  </View>
-);
-
-/**
- * O nível de acesso, em UMA pílula.
- *
- * A web resume tudo numa etiqueta só ("Acesso completo", ou o nome do nível quando é um) e
- * guarda o detalhe no menu de cada linha. O app listava até três pílulas mais um "+2" — o que
- * enche a linha de um membro com acesso amplo, justamente o caso mais comum.
- */
-const Acessos = ({ membro }: { membro: ArtistMember }) => {
-  const niveis = membro.access_levels ?? [];
-  if (!niveis.length) return <Text style={estilos.semAcesso}>Sem acessos</Text>;
-
-  const rotulo = niveis.includes('full')
-    ? 'Acesso completo'
-    : niveis.length === 1
-      ? MVP_ACCESS_LEVEL_OPTIONS.find((o) => o.id === niveis[0])?.label ?? 'Acesso'
-      : `${niveis.length} acessos`;
-
-  return (
-    <View style={estilos.pilulas}>
-      <Text style={estilos.pilula}>{rotulo}</Text>
-    </View>
-  );
-};
 
 export default function Equipe() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const artista = useArtistaDaRota(id);
+  const { sessao } = useSessao();
+  const usuario = sessao?.user;
 
   const [membros, setMembros] = useState<ArtistMember[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [convidando, setConvidando] = useState(false);
+  const [noFoco, setNoFoco] = useState<ArtistMember | null>(null);
+
+  // Só o dono do perfil convida, edita acessos e remove — é a mesma conta da web (`role`).
+  const souODono = artista?.role !== 'member';
+
+  // Só a foto de quem está logado existe: `artist_members` não tem coluna de avatar, e o
+  // `user_metadata` das outras pessoas o cliente não lê.
+  const fotoDe = (membro: ArtistMember) => {
+    const meta = (usuario?.user_metadata ?? {}) as Record<string, string | undefined>;
+    const souEu = Boolean(usuario?.id && membro.user_id && usuario.id === membro.user_id)
+      || Boolean(usuario?.email && membro.email.toLowerCase() === usuario.email.toLowerCase());
+    return souEu ? (meta.avatar_url || meta.picture || null) : null;
+  };
 
   const buscar = useCallback(async () => {
     if (!id) return;
@@ -76,130 +66,155 @@ export default function Equipe() {
     }
   }, [id]);
 
-  useEffect(() => {
-    buscar();
-  }, [buscar]);
+  useEffect(() => { buscar(); }, [buscar]);
 
-  const ativos = membros.filter((m) => m.status === 'active').length;
-  const pendentes = membros.filter((m) => m.status === 'pending').length;
   const vazia = !carregando && membros.length === 0;
 
   return (
     <View style={estilos.tela}>
+      <ScrollView
+        contentContainerStyle={estilos.conteudo}
+        refreshControl={
+          <RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />
+        }
+      >
+        <View style={estilos.cabecalho}>
+          <Text style={estilos.sobretitulo}>TIME DO ARTISTA</Text>
+          <Text style={estilos.titulao}>Equipe</Text>
+          <Text style={estilos.resumo}>
+            Gerencie quem participa da operação e o que cada pessoa pode acessar.
+          </Text>
 
-      <View style={estilos.cabecalho}>
-        <Text style={estilos.sobretitulo}>TIME DO ARTISTA</Text>
-        <Text style={estilos.titulao}>Equipe</Text>
-        <Text style={estilos.resumo}>
-          Gerencie quem participa da operação e o que cada pessoa pode acessar.
-        </Text>
-      </View>
+          {/* Largura inteira, como na web no celular: no desktop ele fica à direita do título,
+              e aqui não há "direita do título" — o cabeçalho empilha. */}
+          {souODono && (
+            <Pressable
+              style={estilos.convidar}
+              onPress={() => setConvidando(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Convidar membro"
+            >
+              <Feather name="plus" size={14} color={COR.superficie} />
+              <Text style={estilos.convidarTexto}>Convidar membro</Text>
+            </Pressable>
+          )}
+        </View>
 
-      {carregando ? (
-        <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
-      ) : vazia || erro ? (
-        <View style={estilos.conteudo}>
+        {carregando ? (
+          <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
+        ) : erro ? (
           <View style={estilos.aviso}>
-            <Text style={estilos.avisoTitulo}>{erro ? 'Equipe indisponível' : 'Ninguém na equipe'}</Text>
-            <Text style={estilos.avisoTexto}>
-              {erro ?? 'Convites são feitos na web. Quem aceitar aparece aqui, com o que pode acessar.'}
+            <Text style={estilos.avisoTitulo}>Equipe indisponível</Text>
+            <Text style={estilos.avisoTexto}>{erro}</Text>
+          </View>
+        ) : vazia ? (
+          <View style={estilos.vazio}>
+            <View style={estilos.iconeDoVazio}>
+              <Feather name="user" size={22} color={COR_EQUIPE.email} />
+            </View>
+            <Text style={estilos.vazioTitulo}>Sua equipe começa aqui</Text>
+            <Text style={estilos.vazioTexto}>
+              Convide colaboradores por e-mail e defina os acessos de cada pessoa.
             </Text>
           </View>
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={estilos.conteudo}
-          refreshControl={
-            <RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />
-          }
-        >
-          {/* O contorno e da LISTA, e nao de cada membro — e assim que a web desenha os dois
-              modulos de lista (Equipe e Musicas). Uma equipe tem poucas pessoas, entao ela e
-              renderizada inteira, como la. */}
+        ) : (
           <View style={estilos.lista}>
-            {membros.map((item, index) => (
+            {membros.map((item, indice) => (
               <View
                 key={item.id}
-                style={[estilos.cartao, index === membros.length - 1 && estilos.ultimo]}
+                style={[estilos.cartao, indice === membros.length - 1 && estilos.ultimo]}
               >
-                <Avatar membro={item} />
+                <Image source={{ uri: fotoDe(item) || ARTISTS_DEFAULT_IMAGE }} style={estilos.avatar} />
                 <View style={estilos.flex}>
                   <Text style={estilos.nome} numberOfLines={1}>{nomeDe(item)}</Text>
                   <Text style={estilos.email} numberOfLines={1}>{item.email}</Text>
                 </View>
-                <View style={estilos.selo}>
-                  <View
-                    style={[
-                      estilos.ponto,
-                      { backgroundColor: item.status === 'active' ? COR_EQUIPE.ativoPonto : COR_EQUIPE.pendente },
-                    ]}
-                  />
-                  <Text style={[estilos.seloTexto, item.status === 'active' && estilos.seloAtivo]}>
-                    {ROTULOS[item.status] ?? item.status}
-                  </Text>
-                </View>
-                {/* As pilulas de acesso descem pra segunda linha quando nao cabem ao lado do
-                    nome — `flexWrap` no cartao com `width: 100%` nelas. */}
-                <Acessos membro={item} />
+                <SeloDeEstado estado={item.status} />
+                <Pressable
+                  style={estilos.mais}
+                  onPress={() => setNoFoco(item)}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Mais opções de ${nomeDe(item)}`}
+                >
+                  <Feather name="more-horizontal" size={18} color={COR_EQUIPE.mais} />
+                </Pressable>
               </View>
             ))}
           </View>
-        </ScrollView>
-      )}
+        )}
+      </ScrollView>
+
+      <FolhaDeConvite
+        aberta={convidando}
+        artistaId={String(id)}
+        aoFechar={() => setConvidando(false)}
+        aoConvidar={(membro) => setMembros((atual) => [...atual, membro])}
+      />
+
+      <FolhaDoMembro
+        membro={noFoco}
+        souODono={souODono}
+        foto={noFoco ? fotoDe(noFoco) : null}
+        aoFechar={() => setNoFoco(null)}
+        aoSalvar={(atualizado) => setMembros((atual) =>
+          atual.map((m) => (m.id === atualizado.id ? atualizado : m)))}
+        aoRemover={(idDoMembro) => setMembros((atual) =>
+          atual.filter((m) => m.id !== idDoMembro))}
+      />
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
-  // Mesmo desenho de lista do Catalogo, que e o que a web usa nos dois: um contorno so em volta
-  // da lista inteira, e cada membro e uma faixa branca de 78px separada por um fio. As pilulas
-  // de acesso descem pra segunda linha do cartao quando nao cabem.
+  // Um contorno só em volta da lista inteira, e cada pessoa é uma faixa branca separada por um
+  // fio — é assim que a web desenha os dois módulos de lista (Equipe e Músicas).
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
+  conteudo: { paddingHorizontal: 14, paddingTop: 18, paddingBottom: 122 },
   cabecalho: {
-    paddingHorizontal: 14, paddingTop: 18, paddingBottom: 30,
-    borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.contornoDoTopo, marginHorizontal: 4,
+    paddingBottom: 30, borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.contornoDoTopo,
   },
-  sobretitulo: {
-    fontSize: 9, fontWeight: '800', color: COR_CATALOGO.rotulo, marginBottom: 8,
-  },
-  titulao: { fontSize: 27, fontWeight: '800', color: COR_CATALOGO.titulo },
+  sobretitulo: { fontSize: 9, fontWeight: '800', color: COR_CATALOGO.rotulo, marginBottom: 8 },
+  titulao: { fontSize: 30, fontWeight: '800', letterSpacing: -0.75, color: COR_CATALOGO.titulo },
   resumo: { fontSize: 12, color: COR_CATALOGO.apoio, marginTop: 9, lineHeight: 18 },
-  espera: { marginTop: 48 },
-  conteudo: {
-    paddingHorizontal: 14, paddingTop: 28, paddingBottom: 122,
+  convidar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    minHeight: 42, paddingHorizontal: 17, borderRadius: 7, marginTop: 20,
+    backgroundColor: COR.primaria,
+    shadowColor: 'rgba(51, 97, 255, .18)', shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 10 }, shadowRadius: 21, elevation: 5,
   },
-  // O contorno e da LISTA, nao de cada membro.
+  convidarTexto: { fontSize: 11, fontWeight: '800', color: COR.superficie },
+  espera: { marginTop: 48 },
   lista: {
-    borderWidth: 1, borderColor: COR_CATALOGO.contornoDoTopo, borderRadius: 8, overflow: 'hidden',
+    marginTop: 28, borderWidth: 1, borderColor: COR_EQUIPE.contorno, borderRadius: 8,
+    overflow: 'hidden',
   },
   cartao: {
-    flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 14, rowGap: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
     minHeight: 78, paddingVertical: 12, paddingHorizontal: 10,
-    borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.fio,
+    borderBottomWidth: 1, borderBottomColor: COR_EQUIPE.fio,
     backgroundColor: COR.superficie,
   },
   ultimo: { borderBottomWidth: 0 },
-  avatar: {
-    width: 42, height: 42, borderRadius: 21, backgroundColor: COR.destaque,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  inicial: { fontSize: 17, fontWeight: '800', color: COR.secundario },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: COR_EQUIPE.avatarFundo },
   nome: { fontSize: 14, fontWeight: '600', color: COR_EQUIPE.nome },
-  email: { fontSize: 13, fontWeight: '500', color: COR_EQUIPE.email, marginTop: 2 },
-  pilulas: { flexShrink: 0 },
-  pilula: {
-    fontSize: 10.5, fontWeight: '700', color: COR_EQUIPE.acessoTexto,
-    backgroundColor: COR_EQUIPE.acessoFundo,
-    paddingHorizontal: 9, paddingVertical: 5, borderRadius: 7, overflow: 'hidden',
+  email: { fontSize: 13, fontWeight: '500', color: COR_EQUIPE.email, marginTop: 3 },
+  mais: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  vazio: {
+    alignItems: 'center', gap: 8, marginTop: 28, padding: 34,
+    borderWidth: 1, borderStyle: 'dashed', borderColor: COR_EQUIPE.contorno, borderRadius: 8,
   },
-  semAcesso: { fontSize: 11, color: COR_EQUIPE.pendente, fontStyle: 'italic' },
-  selo: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 },
-  ponto: { width: 6, height: 6, borderRadius: 3 },
-  seloTexto: { fontSize: 10, fontWeight: '800', color: COR_EQUIPE.pendente },
-  seloAtivo: { color: COR_EQUIPE.ativoTexto },
+  iconeDoVazio: {
+    width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COR_EQUIPE.avatarFundo,
+  },
+  vazioTitulo: { fontSize: 16, fontWeight: '700', color: COR_EQUIPE.nome, marginTop: 4 },
+  vazioTexto: { fontSize: 13, color: COR_EQUIPE.email, lineHeight: 20, textAlign: 'center' },
   aviso: {
-    borderWidth: 1, borderColor: COR_CATALOGO.contornoDoTopo, borderRadius: 8, padding: 18, gap: 6,
+    marginTop: 28, borderWidth: 1, borderColor: COR_EQUIPE.contorno, borderRadius: RAIO.campo,
+    padding: 18, gap: 6,
   },
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_CATALOGO.titulo },
   avisoTexto: { fontSize: 13, color: COR_CATALOGO.apoio, lineHeight: 20 },
