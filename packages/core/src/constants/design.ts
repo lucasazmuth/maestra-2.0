@@ -490,6 +490,33 @@ export const COR_DIAGNOSTICO = {
    * própria — a folha o escreve como `rgb(140,140,150)` em vez de hex.
    */
   bolinhaApagada: 'rgb(140, 140, 150)',
+  /**
+   * A CRIAÇÃO DE PERFIL — o fluxo que leva ao diagnóstico.
+   *
+   * Ela é neutra no primeiro passo (escolher o artista) e vira o ambiente do REAL a partir da
+   * segunda tela; as duas são claras, e no celular a diferença some. Os valores saem do bloco
+   * `:not(.pageReal)` de `ArtistCreate.module.scss` e do DOM a 375px.
+   */
+  criarContorno: '#dfe6f1',
+  criarCampoContorno: '#d8e1ee',
+  criarPontoApagado: '#d8e1ee',
+  criarTrilho: '#e7ecf5',
+  criarSeguidores: '#8495b3',
+  criarAvisoContorno: '#f0d9a7',
+  criarAvisoIcone: '#c98712',
+  /** O aviso tem uma barra de 3px na esquerda, mais escura que o contorno, e fundo creme. */
+  criarAvisoBarra: '#d89a20',
+  criarAvisoFundo: '#fffdf8',
+  /** O espaço reservado dos campos deste fluxo é mais claro que o `COR.espaçoReservado`. */
+  criarEspacoReservado: '#91a1bd',
+  /** A linha de ajuda da pergunta de imprensa. */
+  criarAjuda: '#788bad',
+  /** As pílulas de porte da pergunta de imprensa, apagadas. */
+  criarChipFundo: '#f8faff',
+  /** A foto do artista na transição: aro azul-claro e um anel de 5px em volta. */
+  criarIntroContorno: '#7f9fff',
+  criarIntroAnel: '#e8efff',
+
   /** O verde de "acima do corte" e o cinza de "abaixo". */
   acima: '#1db954',
   abaixo: '#7184a5',

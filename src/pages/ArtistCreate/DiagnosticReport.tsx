@@ -10,7 +10,10 @@ import type { RealIndex } from '@maestra/core/interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
 import DiagnosticDoc, { type Autoria } from './DiagnosticDoc';
 import { useAppSelector } from '@maestra/core/store/store';
-import { RealBadge, tierForAltas, tierForPattern, TIER_ACCENT, altasForPattern } from '../../components/RealBadge';
+import { RealBadge } from '../../components/RealBadge';
+import {
+  TIER_ACCENT, altasForPattern, tierForAltas, tierForPattern,
+} from '@maestra/core/constants/realBadge';
 import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS, VINCULO_LABELS } from '@maestra/core/constants/realCopy';
 import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
 import { v2InputsView, type Chartmetric } from './diagnosticShared';

@@ -27,6 +27,10 @@ describe('a marca e o selo do plano são os mesmos nos dois', () => {
   it.each([
     ['o diamante', 'gradient-diamond.json'],
     ['o brilho', 'badge-shine.json'],
+    // O logo do Spotify é o prefixo do campo de busca da criação de perfil, e é uma animação
+    // que toca uma vez e congela — no app ela precisa ser o MESMO arquivo, ou o segmento
+    // [0, 82] para noutro quadro.
+    ['o logo do Spotify', 'spotify-logo.json'],
   ])('%s do selo é cópia idêntica', (_nome, arquivo) => {
     expect(doApp('lottie', arquivo)).toEqual(daWeb(arquivo));
   });

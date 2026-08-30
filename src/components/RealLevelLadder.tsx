@@ -2,7 +2,8 @@ import { FC, useMemo, useState } from 'react';
 
 import type { RealIndex } from '@maestra/core/interfaces/maestra';
 import { PROFILES } from '@maestra/core/services/realEngine';
-import { RealBadge, tierForAltas, TIER_ACCENT, altasForPattern } from './RealBadge';
+import { RealBadge } from './RealBadge';
+import { TIER_ACCENT, altasForPattern, tierForAltas } from '@maestra/core/constants/realBadge';
 import { realProgression } from './realProgression';
 
 // Escada de níveis do REAL: os 5 marcos (0→4 dimensões altas) como placas, e ENTRE eles as 16 fases

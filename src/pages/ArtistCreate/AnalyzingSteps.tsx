@@ -3,21 +3,20 @@ import {
   FiMusic, FiShare2, FiTrendingUp, FiGitMerge, FiDollarSign, FiRadio, FiBarChart2, FiAward,
 } from 'react-icons/fi';
 
+import { PASSOS_DA_ANALISE } from '@maestra/core/constants/quizDoDiagnostico';
 import styles from './AnalyzingSteps.module.scss';
 
 // Lista "pensante" do Diagnóstico REAL: passos que sobem um a um dentro de uma janela, o do centro
 // nítido e os das pontas esmaecidos (máscara de gradiente). Loop contínuo enquanto o motor roda —
 // dá a sensação de que a IA está acessando cada recurso, em vez de um spinner mudo.
-const STEPS = [
-  { icon: <FiMusic />, label: 'Analisando seu perfil no Spotify' },
-  { icon: <FiShare2 />, label: 'Buscando sua presença nas redes sociais' },
-  { icon: <FiTrendingUp />, label: 'Medindo alcance e engajamento' },
-  { icon: <FiGitMerge />, label: 'Cruzando os dados do seu quiz' },
-  { icon: <FiDollarSign />, label: 'Avaliando sua saúde financeira' },
-  { icon: <FiRadio />, label: 'Mapeando sua presença na mídia' },
-  { icon: <FiBarChart2 />, label: 'Calculando seu Índice REAL' },
-  { icon: <FiAward />, label: 'Montando seu diagnóstico' },
+//
+// Os RÓTULOS moram no núcleo: o app nativo mostra a mesma lista, e ela descreve o que a edge de
+// fato consulta — duas versões dariam duas promessas sobre o mesmo trabalho.
+const ICONES = [
+  <FiMusic />, <FiShare2 />, <FiTrendingUp />, <FiGitMerge />,
+  <FiDollarSign />, <FiRadio />, <FiBarChart2 />, <FiAward />,
 ];
+const STEPS = PASSOS_DA_ANALISE.map((label, i) => ({ icon: ICONES[i], label }));
 
 const STEP_MS = 1500; // tempo que cada item "descansa" no centro antes de subir
 

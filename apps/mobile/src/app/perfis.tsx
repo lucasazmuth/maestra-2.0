@@ -20,7 +20,7 @@ import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
 import { sair } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 
-/** Criar perfil ainda passa pelo wizard, que só existe na web. */
+/** Assinatura, desbloqueio e suporte continuam na web: pagamento no app exige StoreKit. */
 const SITE = 'https://www.maestramanager.com';
 
 // Os perfis do usuario.
@@ -168,7 +168,7 @@ export default function Perfis() {
         <Text style={estilos.titulao}>Seus perfis</Text>
         <Pressable
           style={estilos.criar}
-          onPress={() => Linking.openURL(`${SITE}/criar-artista`)}
+          onPress={() => router.push('/criar-artista')}
           accessibilityRole="button"
           accessibilityLabel="Criar perfil"
         >

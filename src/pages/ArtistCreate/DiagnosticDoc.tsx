@@ -2,7 +2,8 @@ import { FC, ReactNode } from 'react';
 
 import { MaestraBrand } from '../../components/MaestraBrand';
 import type { RealIndex } from '@maestra/core/interfaces/maestra';
-import { RealBadge, tierForAltas } from '../../components/RealBadge';
+import { RealBadge } from '../../components/RealBadge';
+import { tierForAltas } from '@maestra/core/constants/realBadge';
 import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import {
   DIM_META, DIM_PHRASE, PROFILE_MAP, PROFILE_BITS, clean, fmtNum, fmtBRL, fmtPct,
