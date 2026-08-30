@@ -1,11 +1,11 @@
 // Motores determinísticos da Metodologia v2 — objetivos, estratégias, priorização e plano de ação.
 // Funções puras (sem React, sem rede, sem LLM). Consomem as lookup tables deste diretório.
 
-import { TASK_OWNER_SELF } from '@maestra/core/constants/maestra';
-import { STRATEGY_BY_ID } from '@maestra/core/constants/strategyBank';
+import { TASK_OWNER_SELF } from '../constants/maestra';
+import { STRATEGY_BY_ID } from '../constants/strategyBank';
 // A montagem das tarefas de uma estratégia mora no núcleo: o app nativo traz estratégia
 // arquivada de volta ao plano, e a mesma estratégia tem que render as mesmas tarefas nos dois.
-import { buildActionPlan } from '@maestra/core/services/planoDeAcao';
+import { buildActionPlan } from '../services/planoDeAcao';
 import type {
   ActionTask,
   ArtistContent,
@@ -13,10 +13,10 @@ import type {
   MissionParts,
   RecognitionTag,
   Strategy,
-} from '@maestra/core/interfaces/maestra';
-import { MATRIX_A, MATRIX_B, MATRIX_C, TRANSVERSAL_FORCES } from './matrices';
-import { OBJECTIVE_CODES, globalSum, objectiveToCode, scoreFor } from './priorityMatrix';
-import { internalLabel, opportunityLabel } from './swotItems';
+} from '../interfaces/maestra';
+import { MATRIX_A, MATRIX_B, MATRIX_C, TRANSVERSAL_FORCES } from './matrizes';
+import { OBJECTIVE_CODES, globalSum, objectiveToCode, scoreFor } from './prioridade';
+import { internalLabel, opportunityLabel } from './swot';
 
 // Quem já importava `buildActionPlan` daqui continua importando daqui.
 export { buildActionPlan };

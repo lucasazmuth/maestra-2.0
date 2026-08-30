@@ -1,7 +1,7 @@
 import { fecharNegritoAberto, perguntaEmDestaque, placeholderDaPergunta } from '../pergunta';
-import { GUIDED_OPENTEXT, SAY } from '../nytaPersona';
+import { GUIDED_OPENTEXT, SAY } from '../../constants/nytaPersona';
 import { nextBeat } from '../script';
-import type { ArtistContent, ArtistGender } from '@maestra/core/interfaces/maestra';
+import type { ArtistContent, ArtistGender } from '../../interfaces/maestra';
 
 describe('perguntaEmDestaque', () => {
   it('devolve o trecho em negrito da fala', () => {

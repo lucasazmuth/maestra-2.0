@@ -23,11 +23,11 @@ import {
   VISION_PORQUEM_OPTIONS,
   flex,
   seedValues,
-} from './wizardData';
-import { SAY } from './nytaPersona';
-import { SWOT_INTERNAL } from '../method/swotItems';
-import { generateObjectives } from '../method/engines';
-import { stripEmDash } from '../clean';
+} from '@maestra/core/wizard/dados';
+import { SAY } from '@maestra/core/constants/nytaPersona';
+import { SWOT_INTERNAL } from '@maestra/core/wizard/swot';
+import { generateObjectives } from '@maestra/core/wizard/motores';
+import { stripEmDash } from '@maestra/core/wizard/limpar';
 import type {
   ActionTask,
   ArtistGender,

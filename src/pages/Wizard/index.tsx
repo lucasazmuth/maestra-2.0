@@ -10,7 +10,7 @@ import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { Spinner } from '../../components/spinner/spinner';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
-import { migrateWizardContent } from './migration';
+import { migrateWizardContent } from '@maestra/core/wizard/migracao';
 import { NytaChat } from './chat/NytaChat';
 import WizardIntro from './WizardIntro';
 import { ArtifactsPanel, PlanList } from './ArtifactsPanel';

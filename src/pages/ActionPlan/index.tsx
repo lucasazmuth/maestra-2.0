@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { FiArchive, FiCheck, FiCheckCircle, FiChevronDown, FiCircle, FiLock, FiMoreVertical, FiPlus, FiX } from 'react-icons/fi';
 
 import { useNytaModal } from '@maestra/core/hooks/useNytaModal';
-import { buildActionPlan } from '../Wizard/method/engines';
+import { buildActionPlan } from '@maestra/core/wizard/motores';
 
 import { useArtist } from '@maestra/core/hooks/useArtist';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';

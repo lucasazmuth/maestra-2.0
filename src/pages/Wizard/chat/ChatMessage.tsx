@@ -2,7 +2,7 @@ import { FC, ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { NytaAvatar } from './nytaPersona';
-import { stripEmDash } from '../clean';
+import { stripEmDash } from '@maestra/core/wizard/limpar';
 
 // Bolhas do chat da Nyta. A da Nyta entra pela esquerda com avatar;
 // a do usuário pela direita, em verde Spotify.

@@ -1,7 +1,7 @@
-import { SAY } from './nytaPersona';
-import { getPhaseInfo } from '@maestra/core/constants/maestra';
-import { flex } from './wizardData';
-import type { ArtistContent, ArtistIdentity, ArtistStage, RecognitionTag, VisionParts } from '@maestra/core/interfaces/maestra';
+import { SAY } from '../constants/nytaPersona';
+import { getPhaseInfo } from '../constants/maestra';
+import { flex } from './dados';
+import type { ArtistContent, ArtistIdentity, ArtistStage, RecognitionTag, VisionParts } from '../interfaces/maestra';
 
 // Rótulo legível das fontes de reconhecimento (Visão Q2) para o reflexo da Q8.
 const FONTE_LABEL: Record<RecognitionTag, string> = {

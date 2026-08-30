@@ -1,5 +1,5 @@
-import { WIZARD_VERSION } from '@maestra/core/constants/maestra';
-import type { ArtistContent, PhaseHistoryEntry } from '@maestra/core/interfaces/maestra';
+import { WIZARD_VERSION } from '../constants/maestra';
+import type { ArtistContent, PhaseHistoryEntry } from '../interfaces/maestra';
 
 // Migração para a Metodologia v2 (wizardVersion 5). Diferente das migrações anteriores (que só
 // reescalavam o `step`), esta é uma REFUNDAÇÃO do método: objetivos, estratégias, priorização e
