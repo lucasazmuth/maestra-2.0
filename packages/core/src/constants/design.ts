@@ -590,6 +590,8 @@ export const COR_CHECKOUT = {
  */
 export const COR_SUCESSO = {
   fundo: '#0a0a0a',
+  /** O preto por trás do SVG das auroras (o `backgroundColor` do `AuroraBackdrop`). */
+  pagina: '#000',
   apoio: '#dce3f5',
   texto: '#8f9bb8',
 } as const;

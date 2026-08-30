@@ -25,6 +25,7 @@ import { createAsaasCustomer, fetchPlanConfig } from '@maestra/core/store/slices
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 
 import { Carrinho } from '@/casca/checkout/Carrinho';
+import { Confete } from '@/casca/checkout/Confete';
 import { CampoDeCpf, FormularioDoCartao } from '@/casca/checkout/Cartao';
 import { Cupom } from '@/casca/checkout/Cupom';
 import { Metodos, type MeioDePagamento } from '@/casca/checkout/Metodos';
@@ -258,6 +259,9 @@ export default function Desbloquear() {
   if (etapa === 'pronto') {
     return (
       <View style={estilos.sucesso}>
+        {/* O fundo com as auroras e o confete — os mesmos da web, dentro de um WebView. */}
+        <Confete />
+        <View style={estilos.sucessoMiolo}>
         <MaestraMarca size={28} color={COR.sobrePrimaria} />
         <Text style={estilos.sucessoTitulo}>
           {liberadoPorPasse ? 'Pass Access confirmado!' : 'Pagamento confirmado!'}
@@ -282,6 +286,7 @@ export default function Desbloquear() {
         >
           <Text style={estilos.sucessoLink}>Abrir o perfil no app</Text>
         </Pressable>
+        </View>
       </View>
     );
   }
@@ -650,9 +655,11 @@ const estilos = StyleSheet.create({
   pixErro: { fontSize: 13, color: COR_CHECKOUT.erro, textAlign: 'center' },
 
   // A tela de sucesso é ESCURA, como na web: é uma tela de celebração, não de trabalho.
-  sucesso: {
+  sucesso: { flex: 1, backgroundColor: COR_SUCESSO.fundo },
+  // O miolo fica ACIMA do confete, como na web (lá o conteúdo tem `z-index: 1` sobre o canvas).
+  sucessoMiolo: {
     flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24,
-    backgroundColor: COR_SUCESSO.fundo,
+    maxWidth: 480, alignSelf: 'center',
   },
   sucessoTitulo: {
     fontSize: 30, fontWeight: '800', lineHeight: 34.5, letterSpacing: -0.6, textAlign: 'center',

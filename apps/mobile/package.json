@@ -69,7 +69,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest",
-    "wavesurfer:sync": "node scripts/sincronizarWavesurfer.mjs"
+    "wavesurfer:sync": "node scripts/sincronizarWavesurfer.mjs",
+    "confete:sync": "node scripts/sincronizarConfete.mjs"
   },
   "private": true
 }
