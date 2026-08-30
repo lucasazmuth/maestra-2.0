@@ -8,37 +8,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, RAIO, COR_PERFIS, COR_PLANO_DA_CONTA } from '@maestra/core/constants/design';
-import { artistEntryRoute, isOnboardingComplete, PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
-import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
+import { COR, RAIO, COR_PERFIS } from '@maestra/core/constants/design';
+import { artistEntryRoute, isOnboardingComplete } from '@maestra/core/constants/maestra';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 import { countUnread } from '@maestra/core/services/db/notifications';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
-import { MaestraLogo } from '@/icones';
+import { MaestraMarca, NotificationIcon } from '@/icones';
+import { BotaoRedondo, MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
+import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
+import { sair } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 
 /** Criar perfil ainda passa pelo wizard, que só existe na web. */
 const SITE = 'https://www.maestramanager.com';
-
-/**
- * O selo do plano, ao lado da marca.
- *
- * FREE é só contorno de propósito: não há nada de errado em não ser Pro, e um selo chamativo
- * para o estado padrão viraria uma cobrança permanente na tela de abertura.
- */
-const SeloDoPlano = () => {
-  const { isPro } = useEntitlements();
-  if (PAYWALL_DISABLED) return null;
-
-  return (
-    <View style={[estilos.seloDoPlano, isPro ? estilos.seloPro : estilos.seloLivre]}>
-      <Text style={[estilos.seloTexto, isPro ? estilos.seloProTexto : estilos.seloLivreTexto]}>
-        {isPro ? 'PRO' : 'FREE'}
-      </Text>
-    </View>
-  );
-};
 
 // Os perfis do usuario.
 //
@@ -103,6 +86,7 @@ export default function Perfis() {
 
   const usuario = sessao?.user.id;
   const [naoLidas, setNaoLidas] = useState(0);
+  const [menuAberto, setMenuAberto] = useState(false);
   // Separado do `loading` do store de propósito: `loading` fica true em QUALQUER busca,
   // inclusive na que roda sozinha ao voltar para esta tela. Ligado ao RefreshControl, isso
   // fazia um spinner de "puxar para atualizar" aparecer sem ninguém ter puxado nada — e ainda
@@ -156,37 +140,27 @@ export default function Perfis() {
     <SafeAreaView style={estilos.tela}>
       {/* A barra da web: marca com o selo do plano a esquerda, sino e conta a direita. Antes
           esta linha era "Seus perfis" + o e-mail, que a web nao mostra em lugar nenhum. */}
+      {/* A barra da web: a MARCA (símbolo + palavra, os dois vetores oficiais) com o selo do
+          plano à esquerda, e à direita os dois botões redondos — o sino e o menu do sistema.
+          O segundo botão era um ícone de PESSOA que ia direto para a conta; na web ele é a
+          GRADE que abre o menu, e o caminho para a conta é um item dentro dele. */}
       <View style={estilos.barra}>
         <View style={estilos.marcaLinha}>
-          <MaestraLogo size={20} color={COR_PERFIS.titulo} />
-          <Text style={estilos.marca}>Maestra</Text>
-          <SeloDoPlano />
+          <MaestraMarca size={24} color={COR_PERFIS.titulo} />
+          <SeloDoPlano aoTocar={() => Linking.openURL(`${SITE}/assinatura`)} />
         </View>
-        <Pressable
-          onPress={() => router.push('/notificacoes')}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel={
-            naoLidas > 0 ? `Notificações, ${naoLidas} não lidas` : 'Notificações'
-          }
+
+        <BotaoRedondo
+          rotulo={naoLidas > 0 ? `Notificações (${naoLidas} não lidas)` : 'Notificações'}
+          aoTocar={() => router.push('/notificacoes')}
+          marca={naoLidas > 0}
         >
-          <View>
-            <Feather name="bell" size={21} color={COR.secundario} />
-            {naoLidas > 0 && (
-              <View style={estilos.bolha}>
-                <Text style={estilos.bolhaTexto}>{naoLidas > 9 ? '9+' : naoLidas}</Text>
-              </View>
-            )}
-          </View>
-        </Pressable>
-        <Pressable
-          onPress={() => router.push('/conta')}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Conta"
-        >
-          <Feather name="user" size={21} color={COR.secundario} />
-        </Pressable>
+          <NotificationIcon size={28} color={COR_PERFIS.sino} />
+        </BotaoRedondo>
+
+        <BotaoRedondo rotulo="Menu do sistema" aoTocar={() => setMenuAberto(true)}>
+          <Feather name="grid" size={23} color={COR_PERFIS.menu} />
+        </BotaoRedondo>
       </View>
 
       {/* O titulo com a acao ao lado, como na web. */}
@@ -243,6 +217,21 @@ export default function Perfis() {
           </Pressable>
         )}
       />
+
+      <MenuDoSistema
+        aberto={menuAberto}
+        aoFechar={() => setMenuAberto(false)}
+        itens={itensDoSistema(
+          {
+            // Já estamos nos Perfis: o item fica aceso e o toque só fecha o menu.
+            perfis: () => undefined,
+            configuracoes: () => router.push('/conta'),
+            suporte: () => Linking.openURL(`${SITE}/suporte`),
+            sair: () => { void sair(); },
+          },
+          'perfis',
+        )}
+      />
     </SafeAreaView>
   );
 }
@@ -255,16 +244,7 @@ const estilos = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 18, paddingTop: 8, paddingBottom: 20,
   },
-  marcaLinha: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  seloDoPlano: {
-    height: 20, justifyContent: 'center', paddingHorizontal: 8,
-    borderRadius: RAIO.pilula, borderWidth: 1,
-  },
-  seloPro: { borderColor: COR_PLANO_DA_CONTA.proContorno },
-  seloLivre: { borderColor: COR_PLANO_DA_CONTA.livreContorno, backgroundColor: COR_PLANO_DA_CONTA.livreFundo },
-  seloTexto: { fontSize: 9, fontWeight: '800', letterSpacing: 0.4 },
-  seloProTexto: { color: COR_PLANO_DA_CONTA.proTexto },
-  seloLivreTexto: { color: COR_PLANO_DA_CONTA.livreTexto },
+  marcaLinha: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   tituloLinha: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     gap: 12, paddingHorizontal: 18, paddingBottom: 34,
@@ -276,14 +256,7 @@ const estilos = StyleSheet.create({
     borderRadius: RAIO.pilula, backgroundColor: COR.primaria,
   },
   criarTexto: { fontSize: 13, fontWeight: '800', color: COR.sobrePrimaria },
-  marca: { fontSize: 30, fontWeight: '800', color: COR_PERFIS.titulo, letterSpacing: -1.2 },
   legenda: { fontSize: 15, color: COR_PERFIS.papel, marginTop: 14 },
-  bolha: {
-    position: 'absolute', top: -4, right: -8, minWidth: 18, height: 18, paddingHorizontal: 4,
-    borderRadius: RAIO.pilula, backgroundColor: COR.primaria,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  bolhaTexto: { fontSize: 11, fontWeight: '800', color: COR.sobrePrimaria },
   lista: { paddingHorizontal: 18, paddingBottom: 32, gap: 26 },
   espera: { marginTop: 40 },
   vazio: { textAlign: 'center', color: COR.apagado, marginTop: 40, fontSize: 15 },

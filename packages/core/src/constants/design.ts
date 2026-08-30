@@ -609,6 +609,36 @@ export const COR_PERFIS = {
   papel: '#97a6be',
   pagamentoPendente: '#3361ff',
   semPlano: '#b0720f',
+  /**
+   * O selo do plano (`PlanTag`), nos três estados. O degradê do PRO e do Pendente vira a cor da
+   * PRIMEIRA parada: são duas paradas com 4 pontos de diferença de opacidade dentro de uma
+   * pílula de 20px de altura, e um `LinearGradient` a mais ali não muda o que se vê.
+   */
+  seloFundo: '#f7f9fd',
+  seloContorno: '#e1e8f3',
+  selo: '#8ca0c5',
+  proFundo: 'rgba(51, 97, 255, .12)',
+  proContorno: 'rgba(51, 97, 255, .24)',
+  pendenteFundo: 'rgba(240, 180, 41, .16)',
+  pendenteContorno: 'rgba(221, 154, 18, .28)',
+  pendente: '#9a7217',
+  /** Os dois botões redondos do topo: círculo branco com sombra baixa. */
+  controle: '#ffffff',
+  sino: '#b2bed1',
+  menu: '#8e9eb8',
+  /**
+   * O painel do menu do sistema: grade de duas colunas com fios finos, ícone em cima e rótulo
+   * embaixo — a mesma célula do "Mais" da barra de abas.
+   */
+  painelContorno: '#e8edf5',
+  painelFio: '#edf1f7',
+  painelRotulo: '#98a7be',
+  painelIcone: '#b2bed0',
+  /**
+   * O ponto de não-lidas do sino: ROSA, e sem número. A contagem vive no rótulo de
+   * acessibilidade — o app mostrava um balão vermelho com "2" que a web não tem.
+   */
+  naoLidas: '#e62e7b',
 } as const;
 
 /**

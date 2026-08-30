@@ -2,18 +2,11 @@ import { CSSProperties, FC, useEffect, useRef } from 'react';
 import lottie from 'lottie-web';
 
 import rawDiamond from '../../assets/gradient-diamond.json';
-import { paintDiamond, type ToneStops } from './paintDiamond';
+// As paletas e a pintura moram no núcleo: o app nativo mostra o MESMO selo, e o Lottie precisa
+// da cor em RGB dentro do próprio JSON — não dá pra herdar `var(--...)`.
+import { TONE_STOPS, paintDiamond, type PlanTone } from '@maestra/core/constants/planTagLottie';
 
-export type PlanTone = 'pro' | 'pending' | 'free';
-
-// Mesmas três paletas do selo (PlanTag.module.scss) — pro no azul primário, pendente no âmbar de
-// aviso, free apagado. Repetidas aqui porque o Lottie precisa da cor em RGB no próprio JSON, não
-// dá pra herdar var(--...) como a gema estática antiga fazia.
-const TONE_STOPS: Record<PlanTone, ToneStops> = {
-  pro: ['#5b8cff', '#3361ff', '#2a54e0'],
-  pending: ['#f0b429', '#dd9a12', '#f0b429'],
-  free: ['#c3d0e4', '#aebfda', '#c3d0e4'],
-};
+export type { PlanTone };
 
 interface Props {
   tone?: PlanTone;

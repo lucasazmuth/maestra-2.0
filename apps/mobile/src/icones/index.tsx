@@ -1,9 +1,12 @@
 import Feather from '@expo/vector-icons/Feather';
+import { View } from 'react-native';
 import type { FC } from 'react';
 import type { SvgProps } from 'react-native-svg';
 
 import AgendaSvg from '@/assets/icons/agenda.svg';
 import MaestraLogoSvg from '@/assets/icons/maestra-logo.svg';
+import MaestraSimboloSvg from '@/assets/brand/maestra-symbol.svg';
+import MaestraPalavraSvg from '@/assets/brand/maestra-wordmark.svg';
 import CatalogoSvg from '@/assets/icons/catalogo.svg';
 import ConfigSvg from '@/assets/icons/config.svg';
 import DiagnosticoSvg from '@/assets/icons/diagnostico.svg';
@@ -51,6 +54,30 @@ export const EspacoJamIcon = recortar(EspacoJamSvg, '13 15 24 21');
 export const MaestraLogo = ({ size = 22, color }: Props) => (
   <MaestraLogoSvg width={size} height={size} color={color} />
 );
+
+/**
+ * A MARCA, no travessão: símbolo mais a palavra "Maestra".
+ *
+ * Os dois são os vetores oficiais (`src/assets/brand/`), os MESMOS que a web usa no
+ * `MaestraBrand`. Eu vinha desenhando o símbolo e escrevendo "Maestra" num `<Text>` — a palavra
+ * saía na fonte do app, e não no lettering da marca. De perto é outra logo.
+ *
+ * As proporções são as da folha da web: a palavra tem 620/121 de razão e ocupa 0,68 da altura
+ * do símbolo, com 0,28em de vão entre os dois.
+ */
+export const MaestraMarca = ({ size = 24, color }: Props) => {
+  const alturaDaPalavra = size * 0.68;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: size * 0.28 }}>
+      <MaestraSimboloSvg width={size} height={size} color={color} />
+      <MaestraPalavraSvg
+        width={alturaDaPalavra * (620 / 121)}
+        height={alturaDaPalavra}
+        color={color}
+      />
+    </View>
+  );
+};
 
 /** Marketing é o único que a web NÃO tira de um arquivo: lá é o `FiTrendingUp` do Feather. */
 export const MarketingIcon: FC<Props> = ({ size = 22, color }) => (

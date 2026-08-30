@@ -1,4 +1,24 @@
+// A pintura dos dois Lotties do selo do plano — o diamante e o brilho.
+//
+// Subiu de `src/components/PlanTag` para o núcleo quando o app nativo ganhou o selo animado: as
+// cores TÊM que ser injetadas no JSON (o Lottie não herda `currentColor`), e duas cópias da
+// tabela de tons dariam um diamante azul na web e outro de outro azul no celular.
+
 export type ToneStops = [string, string, string];
+
+export type PlanTone = 'pro' | 'pending' | 'free';
+
+/** As três paletas do selo: pro no azul primário, pendente no âmbar de aviso, free apagado. */
+export const TONE_STOPS: Record<PlanTone, ToneStops> = {
+  pro: ['#5b8cff', '#3361ff', '#2a54e0'],
+  pending: ['#f0b429', '#dd9a12', '#f0b429'],
+  free: ['#c3d0e4', '#aebfda', '#c3d0e4'],
+};
+
+/** A cor do brilho que atravessa a pílula, por tom. */
+export const SHINE_HEX: Record<PlanTone, string> = {
+  pro: '#5b8cff', pending: '#f0b429', free: '#c3d0e4',
+};
 
 const hexToUnit = (hex: string): [number, number, number] => {
   const h = hex.replace('#', '');

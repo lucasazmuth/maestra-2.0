@@ -64,7 +64,10 @@ describe('cabeçalho do artista', () => {
     );
     // A marca, e nao o nome do artista: lendo o DOM da web em execucao, o chip do artista nao e
     // renderizado em lugar nenhum — quem diz de quem e a tela e a foto na ilha de baixo.
-    expect(tela.getByText('Maestra')).toBeTruthy();
+    //
+    // "Maestra" nao e mais TEXTO: e o vetor do lettering, como na web. O que se procura e o
+    // alvo que leva aos perfis — escrever a palavra numa fonte do app dava outra logo.
+    expect(tela.getByLabelText('Maestra. Ir para os perfis')).toBeTruthy();
     await waitFor(() => expect(tela.getByLabelText('Notificações (3 não lidas)')).toBeTruthy());
   });
 

@@ -1,20 +1,22 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useId, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
-  COR, COR_CABECALHO, COR_PERFIS, COR_PLANO_DA_CONTA, RAIO, SOMBRA_DO_BOTAO,
+  COR, COR_CABECALHO, COR_PERFIS, RAIO, SOMBRA_DO_BOTAO,
 } from '@maestra/core/constants/design';
-import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
-import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 import { supabase } from '@maestra/core/lib/supabase';
 import { countUnread } from '@maestra/core/services/db/notifications';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
-import { MaestraLogo, NotificationIcon } from '@/icones';
+import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
+import { MaestraMarca, NotificationIcon } from '@/icones';
 import { useSessao } from '@/nucleo/sessao';
+
+/** A assinatura é comprada na web. */
+const SITE = 'https://www.maestramanager.com';
 
 // O cabeçalho, igual ao da web no celular (ver `src/components/Layout/index.tsx`): à esquerda a
 // MARCA com o selo do plano, à direita o botão da Nyta e o sino.
@@ -30,7 +32,6 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
   const router = useRouter();
   const margem = useSafeAreaInsets();
   const { sessao } = useSessao();
-  const { isPro } = useEntitlements();
   const usuario = sessao?.user.id;
   const [naoLidas, setNaoLidas] = useState(0);
   // O canal leva um sufixo por INSTÂNCIA, e não só o id do usuário.
@@ -70,16 +71,15 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
         accessibilityRole="button"
         accessibilityLabel="Maestra. Ir para os perfis"
       >
-        <MaestraLogo size={20} color={COR_PERFIS.titulo} />
-        <Text style={estilos.nome}>Maestra</Text>
-        {!PAYWALL_DISABLED && (
-          <View style={[estilos.selo, isPro ? estilos.seloPro : estilos.seloLivre]}>
-            <Text style={[estilos.seloTexto, isPro ? estilos.seloProTexto : estilos.seloLivreTexto]}>
-              {isPro ? 'PRO' : 'FREE'}
-            </Text>
-          </View>
-        )}
+        {/* A MARCA, e não o símbolo mais a palavra escrita: a web desenha "Maestra" com o
+            vetor do lettering, e escrever numa fonte do app dá outra logo. */}
+        <MaestraMarca size={24} color={COR_PERFIS.titulo} />
       </Pressable>
+
+      {/* O selo fica FORA do toque da marca: ele leva à assinatura, e a marca aos perfis. */}
+      <SeloDoPlano aoTocar={() => Linking.openURL(`${SITE}/assinatura`)} />
+
+      <View style={estilos.espaco} />
 
       <Pressable
         style={estilos.redondo}
@@ -96,7 +96,7 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
         accessibilityRole="button"
         accessibilityLabel={naoLidas > 0 ? `Notificações (${naoLidas} não lidas)` : 'Notificações'}
       >
-        <NotificationIcon size={22} color={COR_CABECALHO.iconeDoBotao} />
+        <NotificationIcon size={28} color={COR_PERFIS.sino} />
         {naoLidas > 0 && <View style={estilos.ponto} />}
       </Pressable>
     </View>
@@ -111,21 +111,9 @@ const estilos = StyleSheet.create({
     paddingHorizontal: 14,
     backgroundColor: COR.fundo,
   },
-  // `flex: 1` empurra os dois botões pra direita, que é o que o `margin-left: auto` faz na web.
-  chip: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 8 },
-  nome: { color: COR_PERFIS.titulo, fontSize: 20, fontWeight: '800' },
-  selo: {
-    height: 20, justifyContent: 'center', paddingHorizontal: 8,
-    borderRadius: RAIO.pilula, borderWidth: 1,
-  },
-  seloPro: { borderColor: COR_PLANO_DA_CONTA.proContorno },
-  seloLivre: {
-    borderColor: COR_PLANO_DA_CONTA.livreContorno,
-    backgroundColor: COR_PLANO_DA_CONTA.livreFundo,
-  },
-  seloTexto: { fontSize: 9, fontWeight: '800', letterSpacing: 0.4 },
-  seloProTexto: { color: COR_PLANO_DA_CONTA.proTexto },
-  seloLivreTexto: { color: COR_PLANO_DA_CONTA.livreTexto },
+  chip: { flexDirection: 'row', alignItems: 'center' },
+  // O que empurra os botões para a direita — é o `margin-left: auto` da web.
+  espaco: { flex: 1 },
   // 42px no celular; no desktop a web usa 51.
   redondo: {
     width: 42,
@@ -140,8 +128,8 @@ const estilos = StyleSheet.create({
   // A borda da cor do fundo recorta o ponto do ícone, como o `border: 2px solid var(--canvas)`.
   ponto: {
     position: 'absolute',
-    top: 4,
-    right: 8,
+    top: 0,
+    right: 7,
     width: 10,
     height: 10,
     borderRadius: RAIO.pilula,
