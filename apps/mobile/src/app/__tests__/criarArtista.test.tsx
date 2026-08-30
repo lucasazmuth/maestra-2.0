@@ -228,6 +228,36 @@ describe('criar perfil', () => {
     }));
   });
 
+  // A falha do diagnóstico precisa DIZER o que houve: um "não consegui gerar" sem causa não se
+  // investiga. Já aconteceu uma vez em que a requisição nem chegou ao servidor, e não havia
+  // nada — nem no aparelho, nem no log da edge — para saber por quê.
+  it('quando a edge falha, a causa vai para o log e as respostas continuam de pé', async () => {
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockInvocar.mockRejectedValue(new Error('Failed to send a request to the Edge Function'));
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await escolherOArtista(usuario, tela);
+    await usuario.press(tela.getByLabelText('Começar diagnóstico'));
+    await responderOQuiz(usuario, tela);
+
+    expect(await tela.findByText(/Não consegui gerar seu diagnóstico agora/)).toBeTruthy();
+    expect(log).toHaveBeenCalledWith(
+      '[criar-artista] o diagnóstico falhou:',
+      'Failed to send a request to the Edge Function',
+      expect.any(Error),
+    );
+
+    // Tentar de novo repete a MESMA chamada: quem respondeu treze perguntas não as responde
+    // outra vez por causa de uma falha de rede.
+    mockInvocar.mockResolvedValue({
+      data: { artistId: 'a-9', locked: true, realIndex: null, chartmetric: null }, error: null,
+    });
+    await usuario.press(tela.getByLabelText('Tentar de novo'));
+    await waitFor(() => expect(mockInvocar).toHaveBeenCalledTimes(2));
+    expect(mockInvocar.mock.calls[1][1]).toEqual(mockInvocar.mock.calls[0][1]);
+  });
+
   it('não deixa criar quando há perfis pendentes', async () => {
     mockPodeCriar.mockReturnValue({
       canCreate: false, reason: 'pending_limit', pendingCount: 2, cooldownRemainingSeconds: 0,

@@ -96,6 +96,10 @@ export default function CriarArtista() {
   const [real, setReal] = useState<RealIndex | null>(null);
   const [chartmetric, setChartmetric] = useState<Record<string, any> | null>(null);
   const [erroNoDiagnostico, setErroNoDiagnostico] = useState(false);
+  // A falha crua, para o log e para a tela de desenvolvimento. O `catch` engolia tudo, e um
+  // "não consegui gerar" sem causa não se investiga: não dá para saber se foi rede, sessão,
+  // limite ou defeito da edge.
+  const [detalheDoErro, setDetalheDoErro] = useState<string | null>(null);
   const criado = useRef<{ artistId: string; locked: boolean } | null>(null);
 
   const pergunta = passo === 'quiz' ? QUIZ[indice] : null;
@@ -181,8 +185,14 @@ export default function CriarArtista() {
         setReal(d?.realIndex ?? null);
         setChartmetric(d?.chartmetric ?? null);
         setErroNoDiagnostico(!d?.realIndex);
-      } catch {
-        if (vivo) setErroNoDiagnostico(true);
+        if (!d?.realIndex) setDetalheDoErro('a resposta veio sem o índice REAL');
+      } catch (falha) {
+        if (!vivo) return;
+        const mensagem = falha instanceof Error ? falha.message : String(falha);
+        // eslint-disable-next-line no-console
+        console.error('[criar-artista] o diagnóstico falhou:', mensagem, falha);
+        setDetalheDoErro(mensagem);
+        setErroNoDiagnostico(true);
       }
       if (vivo) setPasso('diagnostico');
     })();
@@ -689,10 +699,19 @@ export default function CriarArtista() {
                         ? 'Não consegui gerar seu diagnóstico agora. Tente novamente em instantes.'
                         : 'Carregando…'}
                     </Text>
+                    {/* A causa aparece só em desenvolvimento: para quem usa, ela não muda o que
+                        fazer, e o log já a guarda. */}
+                    {__DEV__ && !!detalheDoErro && (
+                      <Text style={estilos.detalheDoErro}>{detalheDoErro}</Text>
+                    )}
                     {erroNoDiagnostico && (
                       <Pressable
                         style={estilos.principal}
-                        onPress={() => { setErroNoDiagnostico(false); setPasso('analisando'); }}
+                        onPress={() => {
+                          setErroNoDiagnostico(false);
+                          setDetalheDoErro(null);
+                          setPasso('analisando');
+                        }}
                         accessibilityRole="button"
                         accessibilityLabel="Tentar de novo"
                       >
@@ -883,6 +902,10 @@ const estilos = StyleSheet.create({
   },
 
   semDiagnostico: { alignItems: 'center', marginVertical: 64 },
+  detalheDoErro: {
+    fontSize: 12, lineHeight: 17, textAlign: 'center', color: COR_DIAGNOSTICO.rotulo,
+    marginBottom: 14,
+  },
   semDiagnosticoTexto: {
     fontSize: 15, lineHeight: 22, textAlign: 'center', color: COR_DIAGNOSTICO.texto,
     marginBottom: 18,
