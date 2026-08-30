@@ -8,8 +8,9 @@ import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { createAsaasCustomer, createPixAuthorization, createSubscription, fetchPlanConfig, fetchSubscriptionStatus, pollPaymentStatus, clearError, type BillingCycle } from '@maestra/core/store/slices/subscription';
 import {
   CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField, CouponField,
-  CartSummary, BenefitsCompare, useCheckoutForm, focusFirstInvalidField, type PayMethod, type BenefitGroup,
+  CartSummary, BenefitsCompare, focusFirstInvalidField, type PayMethod, type BenefitGroup,
 } from '../../components/checkout';
+import { useCheckoutForm } from '@maestra/core/hooks/useCheckoutForm';
 import { useCoupon } from '@maestra/core/hooks/useCoupon';
 import { Diamond } from '../../components/PlanTag/Diamond';
 

@@ -3,7 +3,7 @@ import { Input, Spin } from 'antd';
 import { FiCreditCard, FiUser, FiCalendar, FiLock, FiSmartphone, FiMapPin } from 'react-icons/fi';
 
 import { formatCardNumber, formatExpiry, formatPhone, formatCep, formatCpfCnpj } from '@maestra/core/utils/asaasForm';
-import type { CheckoutForm } from './useCheckoutForm';
+import type { CheckoutForm } from '@maestra/core/hooks/useCheckoutForm';
 import styles from './checkout.module.scss';
 
 // Campo CPF/CNPJ — exigido tanto no PIX quanto no cartão, então fica fora do

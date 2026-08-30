@@ -17,8 +17,12 @@ import { PaymentSuccessScreen } from '../../components/PaymentSuccessScreen';
 import { shouldEnrichChartmetric } from '@maestra/core/lib/chartmetricFreshness';
 import {
   CheckoutLayout, AccountRow, CheckoutPanel, PaymentMethods, CardForm, CpfField, CouponField,
-  CartSummary, useCheckoutForm, focusFirstInvalidField, type PayMethod,
+  CartSummary, focusFirstInvalidField, type PayMethod,
 } from '../../components/checkout';
+import {
+  CHAMADA_DO_DESBLOQUEIO, O_QUE_LIBERA, RECEBEDOR, VALOR_PADRAO_DO_PERFIL, parcelasPossiveis,
+} from '@maestra/core/constants/checkout';
+import { useCheckoutForm } from '@maestra/core/hooks/useCheckoutForm';
 import { useCoupon } from '@maestra/core/hooks/useCoupon';
 import styles from '../ArtistCreate/ArtistCreate.module.scss';
 import { Spinner } from '../../components/spinner/spinner';
@@ -26,21 +30,6 @@ import { Spinner } from '../../components/spinner/spinner';
 type Step = 'diagnostico' | 'pagamento' | 'pix' | 'done';
 
 const fmtBRL = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-// Valor do pagamento único vem da config (asaas_plan_config.profile_unlock_value),
-// editável sem deploy — igual ao preço da assinatura. Fallback só se a config falhar.
-const FALLBACK_PROFILE_VALUE = 199.9;
-// Asaas exige no mínimo R$5,00 por parcela no cartão de crédito — nunca oferecer
-// um parcelamento que caia abaixo disso (senão a cobrança volta 400 invalid_value).
-const MIN_INSTALLMENT_VALUE = 5;
-
-// O que o pagamento único libera (checklist curta no resumo).
-const INCLUDES = [
-  'Planejamento estratégico',
-  'Plano de ação com metas e cronograma',
-  'Análise de audiência: ouvintes e cidades',
-  'Músicas, agenda e equipe',
-  'Acesso vitalício ao perfil',
-];
 
 // Tela de desbloqueio do perfil (criado no diagnóstico, ainda NÃO pago).
 // Mostra o diagnóstico SALVO (sem regerar) + checkout (padrão Adobe, tema escuro).
@@ -57,9 +46,9 @@ const ProfileUnlock: FC = () => {
   const plan = useAppSelector((s) => s.subscription.plan);
 
   // Preço do pagamento único (dinâmico via config). Enquanto carrega, usa o fallback.
-  const priceValue = plan?.profileUnlockValue ?? FALLBACK_PROFILE_VALUE;
+  const priceValue = plan?.profileUnlockValue ?? VALOR_PADRAO_DO_PERFIL;
   const PRICE = fmtBRL(priceValue);
-  const maxInstallments = Math.max(1, Math.min(12, Math.floor(priceValue / MIN_INSTALLMENT_VALUE)));
+  const maxInstallments = parcelasPossiveis(priceValue);
 
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
   const userEmail = user?.email || '';
@@ -363,12 +352,8 @@ const ProfileUnlock: FC = () => {
             {/* Headline de conversão: puxa o momentum do diagnóstico pro plano, com as âncoras de
                 valor (vitalício, pagamento único) logo antes do formulário. */}
             <div className={styles.unlockHead}>
-              <h1 className={styles.unlockHeadTitle}>
-                Comece hoje o planejamento{artist?.name ? ` de ${artist.name}` : ' estratégico'}.
-              </h1>
-              <p className={styles.unlockHeadSub}>
-                Você já tem o diagnóstico REAL da carreira. O próximo passo é o plano de ação: metas, estratégias e cronograma, construídos com a Nyta e a metodologia que já orientou centenas de artistas. Acesso vitalício ao perfil, num pagamento único.
-              </p>
+              <h1 className={styles.unlockHeadTitle}>{CHAMADA_DO_DESBLOQUEIO.titulo(artist?.name)}</h1>
+              <p className={styles.unlockHeadSub}>{CHAMADA_DO_DESBLOQUEIO.apoio}</p>
             </div>
 
             <CheckoutLayout tone="light"
@@ -382,7 +367,7 @@ const ProfileUnlock: FC = () => {
                       value={method}
                       onChange={setMethod}
                       renderBody={(m) => (m === 'PIX'
-                        ? <p className={styles.unlockPixNote}>Ao continuar, geramos um código PIX pra você pagar na hora. O acesso libera assim que o pagamento cair.</p>
+                        ? <p className={styles.unlockPixNote}>{CHAMADA_DO_DESBLOQUEIO.pix}</p>
                         : <CardForm form={form} />
                       )}
                     />
@@ -426,13 +411,13 @@ const ProfileUnlock: FC = () => {
                     sub: <span>Acesso vitalício ao perfil</span>,
                     price: `${PRICE}`,
                   }}
-                  includes={INCLUDES}
+                  includes={[...O_QUE_LIBERA]}
                   rows={[
                     { label: 'Subtotal', value: PRICE },
                     ...(coupon.applied ? [{ label: `Cupom ${coupon.applied.code}`, value: `−${fmtBRL(couponDiscount)}` }] : []),
                     { label: 'Total', value: installmentTotal, strong: true },
                   ]}
-                  legal={<>Pagamento único pelo acesso a este perfil. O perfil e o plano ficam seus pra sempre. A Nyta IA contínua é um plano à parte. Ao continuar, você concorda com os <a href="/legal/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a href="/legal/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</>}
+                  legal={<>{CHAMADA_DO_DESBLOQUEIO.legal} Ao continuar, você concorda com os <a href="/legal/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e a <a href="/legal/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</>}
                   ctaLabel={ctaLabel}
                   onCta={handlePay}
                   loading={submitting}
@@ -464,7 +449,7 @@ const ProfileUnlock: FC = () => {
                 {/* Recebedor: no app do banco aparece a razão social da empresa por trás da Maestra. */}
                 <p style={{ color: '#7c8da8', fontSize: 12.5, lineHeight: 1.5, textAlign: 'center', margin: 0 }}>
                   O pagamento aparecerá no seu banco em nome de{' '}
-                  <strong style={{ color: '#52668d', fontWeight: 700 }}>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
+                  <strong style={{ color: '#52668d', fontWeight: 700 }}>{RECEBEDOR.razaoSocial}</strong> · CNPJ {RECEBEDOR.cnpj}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#52668d' }}>
                   <Spin size='small' /> Aguardando confirmação…

@@ -532,6 +532,69 @@ export const COR_DIAGNOSTICO = {
 } as const;
 
 /**
+ * O CHECKOUT — a tela que cobra.
+ *
+ * O kit nasceu escuro e foi repintado no design claro: cartão branco com contorno frio, azul de
+ * ação e cinza-azulado no apoio. No celular as duas colunas viram uma só (o `grid` colapsa em
+ * 900px), e é essa a leitura que o app replica: formulário primeiro, resumo depois.
+ *
+ * Os valores saem do bloco `.light` de `src/components/checkout/checkout.module.scss` — que é o
+ * tom que o desbloqueio usa — e de `.unlock*` em `ArtistCreate.module.scss`.
+ * `src/__tests__/cromoDoCheckout.test.ts` os amarra lá.
+ */
+export const COR_CHECKOUT = {
+  /** Cartão (conta, painel, carrinho): branco com contorno e sombra baixa. */
+  contorno: '#d9e3f1',
+  titulo: '#52668d',
+  texto: '#61749a',
+  apoio: '#7185aa',
+  /** O disco do e-mail confirmado, o ícone do painel e a bolinha de cada item incluído. */
+  disco: '#edf2ff',
+  /** O campo: contorno mais forte que o do resto do app — aqui se digita cartão. */
+  campoContorno: '#aebfda',
+  campoFundo: '#ffffff',
+  espacoReservado: '#91a1bb',
+  rotulo: '#7185aa',
+  erro: '#c32645',
+  erroFundo: '#fff1f2',
+  erroContorno: '#fecdd3',
+  erroIcone: '#dc3152',
+  /** O método de pagamento: linha com rádio, e a escolhida ganha fundo azul-claro. */
+  metodoContorno: '#d8e2f1',
+  metodoRadio: '#9aafce',
+  metodoEscolhidoFundo: '#f5f8ff',
+  /** O cupom: botão "Aplicar" e a pílula do cupom aplicado. */
+  cupomFundo: '#f5f8ff',
+  cupomBotaoContorno: '#d5e0f0',
+  cupomAplicadoContorno: '#b9cdf9',
+  cupomApagado: '#f7f9fc',
+  /** As divisórias do carrinho. */
+  fio: '#e2e9f4',
+  /** O texto de "compra segura" e o recebedor. */
+  seguro: '#7185aa',
+  /** A opção escolhida na lista de parcelas. */
+  escolhidoTexto: '#2b56d8',
+  /** O verde do desconto do cupom na tela do PIX (vive numa cor inline do `ProfileUnlock`). */
+  descontoPix: '#1fa971',
+} as const;
+
+/**
+ * A tela de pagamento confirmado.
+ *
+ * É a única tela ESCURA fora do Espaço da versão, e de propósito: é celebração, não trabalho.
+ * Os valores vivem em estilos inline do `src/components/PaymentSuccessScreen.tsx`.
+ *
+ * O confete e o degradê da web (`SuccessConfetti`, `AuroraBackdrop`) não vieram: são duas peças
+ * de animação a mais para um instante que dura três segundos, e o app já tem o Lottie do selo
+ * para manter. Se um dia vierem, é aqui que a cor de fundo continua morando.
+ */
+export const COR_SUCESSO = {
+  fundo: '#0a0a0a',
+  apoio: '#dce3f5',
+  texto: '#8f9bb8',
+} as const;
+
+/**
  * A caixa de notificações.
  *
  * Cada aviso é um cartão de 88px com um disco azul-claro à esquerda, o título, a linha de apoio

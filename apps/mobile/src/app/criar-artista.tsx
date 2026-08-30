@@ -256,9 +256,7 @@ export default function CriarArtista() {
   const desbloquear = () => {
     const perfil = criado.current;
     if (!perfil) { router.replace('/perfis'); return; }
-    // Pagamento é na web (StoreKit ainda não está configurado). A URL é a mesma do "Ver meus
-    // perfis" quando há cobrança em aberto.
-    void Linking.openURL(`${SITE}/artists/${perfil.artistId}/desbloquear`);
+    router.replace({ pathname: '/desbloquear/[id]', params: { id: perfil.artistId } });
   };
 
   if (!carregandoSessao && !sessao) return <Redirect href="/entrar" />;
@@ -672,16 +670,16 @@ export default function CriarArtista() {
                     <Relatorio real={real as unknown as Record<string, any>} chartmetric={chartmetric} />
                     <View style={estilos.desbloqueio}>
                       <Text style={estilos.notaDoDesbloqueio}>
-                        Este perfil ainda está pendente. Liberar os módulos é um pagamento, e o
-                        pagamento é feito no site.
+                        Este perfil ainda está pendente. O próximo passo é liberar o
+                        planejamento estratégico.
                       </Text>
                       <Pressable
                         style={estilos.principal}
                         onPress={desbloquear}
                         accessibilityRole="button"
-                        accessibilityLabel="Liberar este perfil no site"
+                        accessibilityLabel="Liberar este perfil"
                       >
-                        <Text style={estilos.principalTexto}>Liberar este perfil no site</Text>
+                        <Text style={estilos.principalTexto}>Liberar este perfil</Text>
                       </Pressable>
                       <Pressable
                         onPress={() => router.replace('/perfis')}
