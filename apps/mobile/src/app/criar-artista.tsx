@@ -409,8 +409,14 @@ export default function CriarArtista() {
                       )}
 
                       {/* Buscou e não achou. Acontece muito com nome curto ou comum, que afunda
-                          na ordenação do Spotify: é a hora de contar que o link acha exato. */}
-                      {!buscando && !falhaNaBusca && buscado.length >= 3 && resultados.length === 0
+                          na ordenação do Spotify: é a hora de contar que o link acha exato.
+
+                          `!duplicado` porque escolher um perfil que já existe LIMPA os
+                          resultados e mantém o termo digitado: sem isto, os dois avisos
+                          apareciam juntos, e o "não achei esse artista" contradizia o "você já
+                          tem esse artista" logo abaixo. */}
+                      {!buscando && !falhaNaBusca && !duplicado && buscado.length >= 3
+                        && resultados.length === 0
                         && aviso(
                           'Não achei esse artista pelo nome. Abra o perfil dele no Spotify, copie o link e cole aqui.',
                         )}

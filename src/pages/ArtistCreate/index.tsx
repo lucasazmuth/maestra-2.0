@@ -496,8 +496,13 @@ const ArtistCreate: FC = () => {
 
                     {/* Buscou e não achou. Acontece muito com nome curto ou comum ("BEA"), que
                         afunda na ordenação por relevância do Spotify. É o momento certo de
-                        contar que dá pra colar o link do perfil, que acha de forma exata. */}
-                    {!searching && !searchFailed && debounced.trim().length >= 3 && results.length === 0 && (
+                        contar que dá pra colar o link do perfil, que acha de forma exata.
+
+                        `!notice` porque escolher um perfil que já existe LIMPA os resultados e
+                        mantém o termo digitado: sem isto, os dois avisos apareciam juntos, e o
+                        "não achei esse artista" contradizia o "você já tem esse artista" logo
+                        abaixo dele. */}
+                    {!searching && !searchFailed && !notice && debounced.trim().length >= 3 && results.length === 0 && (
                       <div className={styles.dupeNotice}>
                         <FiAlertCircle className={styles.dupeNoticeIcon} />
                         <div className={styles.dupeNoticeText}>

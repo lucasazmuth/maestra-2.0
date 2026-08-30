@@ -158,6 +158,10 @@ describe('criar perfil', () => {
 
     expect(await tela.findByText(/Você já tem AZMUTH BEATS nos seus perfis/)).toBeTruthy();
     expect(tela.queryByLabelText('Começar diagnóstico')).toBeNull();
+    // Escolher o duplicado limpa os resultados e mantém o termo digitado. O aviso de "não
+    // achei" olha para essas duas coisas, e aparecia junto — dizendo o contrário do aviso de
+    // cima, na mesma tela.
+    expect(tela.queryByText(/Não achei esse artista pelo nome/)).toBeNull();
   });
 
   it('quem ainda não tem Spotify entra só com o nome artístico', async () => {
