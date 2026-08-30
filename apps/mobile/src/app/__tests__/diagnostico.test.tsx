@@ -43,22 +43,65 @@ describe('diagnostico REAL em leitura', () => {
   // produziu, o erro esta no DESENHO — e e exatamente isso que este teste protege.
   it('desenha o boletim com as quatro notas do indice, sem recalcular', async () => {
     const tela = await montar();
+    // Cada nota aparece uma vez no cartao da sua dimensao. `getAllBy` porque "12" tambem
+    // aparece dentro de "12 meses" da saude financeira — o que interessa e que a nota exista.
     for (const nota of ['78', '34', '51', '12']) {
-      expect(tela.getByText(nota)).toBeTruthy();
+      expect(tela.getAllByText(nota, { exact: false }).length).toBeGreaterThan(0);
     }
   });
 
-  it('nomeia as quatro dimensoes', async () => {
+  // ⚠️ A dimensao E e EARNINGS, nao "Economics". O app dizia Economics, e o proprio teste
+  // exigia isso — os dois errados juntos. Os nomes agora saem de `DIM_META`, no nucleo, que e a
+  // mesma lista que a web e o PDF leem.
+  it('nomeia as quatro dimensoes com os nomes do nucleo', async () => {
     const tela = await montar();
-    for (const nome of ['Reach', 'Economics', 'Audience', 'Legitimacy']) {
-      expect(tela.getByText(nome)).toBeTruthy();
+    // Cada nome aparece DUAS vezes: na linha do Índice REAL e no cartão da dimensão. É assim
+    // na web também — o índice resume, o cartão detalha.
+    for (const nome of ['Reach', 'Earnings', 'Audience', 'Legitimacy']) {
+      expect(tela.getAllByText(nome)).toHaveLength(2);
     }
+    expect(tela.queryByText('Economics')).toBeNull();
   });
 
-  // Sem a linha de corte, o numero nao diz se a dimensao acendeu — 78 e muito ou pouco?
-  it('diz qual e a linha de acender', async () => {
+  // Sem a linha de status, o numero nao diz se a dimensao acendeu — 78 e muito ou pouco? A web
+  // responde com quanto FALTA, que e mais util do que o valor do corte.
+  it('diz quanto falta para acender e para o Top Tier', async () => {
     const tela = await montar();
-    expect(tela.getByText(/linha de 70/)).toBeTruthy();
+    // r = 78, ja aceso: faltam 22 para o Top Tier.
+    expect(tela.getByText('Aceso · faltam 22 pts para Top Tier')).toBeTruthy();
+    // e = 34, apagado: faltam 36 para acender e 66 para o Top Tier.
+    expect(tela.getByText('Faltam 36 pts para acender · 66 pts para Top Tier')).toBeTruthy();
+  });
+
+  // A placa e o Indice REAL sao o "momento uau" da entrega, e o app nao tinha nem um nem outro.
+  it('mostra a placa da fase e o Índice REAL', async () => {
+    const tela = await montar();
+    expect(tela.getByText('SEU PERFIL DE CARREIRA')).toBeTruthy();
+    expect(tela.getByText('ÍNDICE REAL')).toBeTruthy();
+    // Uma alta (r) → a placa de nivel 1. Ela aparece duas vezes: no cartão do perfil e na
+    // linha "1 alta" do mapa dos 16.
+    expect(tela.getAllByLabelText('Placa standard · 1')).toHaveLength(2);
+  });
+
+  // O mapa dos 16 diz onde a pessoa esta E o que existe acima dela — e a metade que motiva.
+  it('situa o perfil entre os 16, com os que estão acima', async () => {
+    const tela = await montar();
+    expect(tela.getByText('SUA POSIÇÃO ENTRE OS 16 PERFIS')).toBeTruthy();
+    expect(tela.getByText('Icon')).toBeTruthy();
+    expect(tela.getByText('Beginner')).toBeTruthy();
+    expect(tela.getByText('4 altas')).toBeTruthy();
+  });
+
+  // A narrativa por dimensao vem do NUCLEO (`dimNarrative`), a mesma que a web e o PDF usam.
+  // Tres textos diferentes para os mesmos numeros seria o pior defeito possivel nesta tela.
+  it('traz a narrativa "O que isso revela" de cada dimensão', async () => {
+    const tela = await montar();
+    expect(tela.getAllByText('O que isso revela')).toHaveLength(4);
+  });
+
+  it('mostra quem assina o Índice REAL', async () => {
+    const tela = await montar();
+    expect(tela.getByText('Anita Carvalho')).toBeTruthy();
   });
 
   it('mostra as leituras do perfil', async () => {
@@ -67,10 +110,11 @@ describe('diagnostico REAL em leitura', () => {
     expect(tela.getByText('A receita depende de um único canal.')).toBeTruthy();
   });
 
+  // O texto e o da web ("Diagnóstico indisponível"), e nao uma frase minha.
   it('perfil sem diagnostico explica o que fazer, em vez de mostrar tela vazia', async () => {
     mockIdNaRota = semDiagnostico.id;
     const tela = await montar();
-    expect(tela.getByText('Sem diagnóstico ainda')).toBeTruthy();
-    expect(tela.queryByText('Boletim')).toBeNull();
+    expect(tela.getByText('Diagnóstico indisponível')).toBeTruthy();
+    expect(tela.queryByText('ÍNDICE REAL')).toBeNull();
   });
 });

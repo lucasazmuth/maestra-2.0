@@ -458,6 +458,50 @@ export const COR_DIAGNOSTICO = {
   contornoDoHero: '#e1e8f3',
   titulo: '#52668d',
   texto: '#61749a',
+  /** O cartão do perfil tem degradê próprio — é o "momento uau" da entrega. */
+  cartaoDe: '#ffffff',
+  cartaoAte: '#f4f7fd',
+  rotulo: '#8495b3',
+  /** Rótulo de seção dentro de um cartão (Composição da receita, Saúde financeira…). */
+  secao: '#7184a5',
+  /** A letra apagada do Índice REAL, e a palavra abaixo dela. */
+  letraApagada: '#b6c2d3',
+  palavra: '#9baac0',
+  /** O disco da letra no cartão da dimensão. */
+  discoFundo: '#eef3ff',
+  /** A régua e o preenchimento; o Top Tier troca o azul pelo dourado. */
+  regua: '#e8eef7',
+  topoDe: '#f5c451',
+  topoAte: '#e0a13c',
+  /** O "/100" ao lado da nota, e a nota da fonte declarada. */
+  maximo: '#6f6f78',
+  fonte: '#7c8da8',
+  /** O selo âmbar de "Sem CNPJ"/"Sem empresário". */
+  selo: '#e0a13c',
+  seloFundo: 'rgba(224, 161, 60, 0.12)',
+  seloContorno: 'rgba(224, 161, 60, 0.32)',
+  /** O mapa dos 16 perfis: a etiqueta comum e a do perfil da pessoa. */
+  etiquetaFundo: '#f7f9fd',
+  etiquetaContorno: '#d8e1ee',
+  etiquetaAtivaFundo: '#eaf0ff',
+  etiquetaAtivaContorno: '#9db7ff',
+  /**
+   * A bolinha apagada do mapa dos 16: é o cinza do TIER_ACCENT.base (o nível 0), e não uma cor
+   * própria — a folha o escreve como `rgb(140,140,150)` em vez de hex.
+   */
+  bolinhaApagada: 'rgb(140, 140, 150)',
+  /** O verde de "acima do corte" e o cinza de "abaixo". */
+  acima: '#1db954',
+  abaixo: '#7184a5',
+  /** A tinta escura sobre o selo dourado de Top Tier. */
+  tintaDoTopo: '#1a1206',
+  /** O contorno do botão de compartilhar. */
+  compartilharContorno: '#cbd9ff',
+  /**
+   * As cores da composição da receita, na ordem em que a web as usa. São sete porque há sete
+   * fontes possíveis; a oitava dá a volta.
+   */
+  fatiasDaReceita: ['#1db954', '#4c7dff', '#e0a13c', '#9A4FD1', '#21b26e', '#9b8cff', '#d65a5a'],
 } as const;
 
 /**

@@ -11,8 +11,8 @@ import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '
 import DiagnosticDoc, { type Autoria } from './DiagnosticDoc';
 import { useAppSelector } from '@maestra/core/store/store';
 import { RealBadge, tierForAltas, tierForPattern, TIER_ACCENT, altasForPattern } from '../../components/RealBadge';
-import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS, VINCULO_LABELS } from './realCopy';
-import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from './realNarrative';
+import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS, VINCULO_LABELS } from '@maestra/core/constants/realCopy';
+import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
 import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import styles from './ArtistCreate.module.scss';
 

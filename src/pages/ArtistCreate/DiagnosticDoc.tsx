@@ -7,8 +7,8 @@ import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import {
   DIM_META, DIM_PHRASE, PROFILE_MAP, PROFILE_BITS, clean, fmtNum, fmtBRL, fmtPct,
   PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText,
-} from './realCopy';
-import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from './realNarrative';
+} from '@maestra/core/constants/realCopy';
+import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
 import styles from './ArtistCreate.module.scss';
 
 interface Props {

@@ -1,113 +1,289 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
+import { LinearGradient } from 'expo-linear-gradient';
 
-import { COR, RAIO, COR_DIAGNOSTICO } from '@maestra/core/constants/design';
+import { COR, COR_DIAGNOSTICO, RAIO } from '@maestra/core/constants/design';
+import {
+  altasForPattern, tierForAltas, tierForPattern,
+} from '@maestra/core/constants/realBadge';
+import {
+  DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtNum, type DimKey,
+} from '@maestra/core/constants/realCopy';
+import { QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
 
+import { CartaoDaDimensao } from '@/casca/diagnostico/CartaoDaDimensao';
+import { Placa } from '@/casca/diagnostico/Placa';
 import { useArtistaDaRota } from '@/nucleo/artista';
 
-// O diagnostico R·E·A·L, em leitura.
+// O diagnóstico R·E·A·L, em leitura.
 //
-// Nada e calculado aqui: o `realIndex` ja veio gravado no perfil, produzido pelo mesmo motor
-// que a web usa. Esta tela so o desenha — e por isso ela e o teste de paridade mais honesto que
-// existe, com dado real em vez de cenario inventado.
+// Nada é calculado aqui: o `realIndex` já veio gravado no perfil, produzido pelo mesmo motor que
+// a web usa, e os TEXTOS vêm do núcleo (`realCopy`, `realNarrative`). Esta tela só os desenha —
+// e por isso ela é o teste de paridade mais honesto que existe, com dado real.
+//
+// Antes ela tinha quatro barras e uma lista de frases. A web entrega 6.200px: a placa da fase, o
+// Índice REAL, quatro cartões completos com sub-métricas e narrativa, o mapa dos 16 perfis, os
+// insights, o compartilhamento e quem assina. Faltava quase tudo.
 
-const DIMENSOES = [
-  { chave: 'r', letra: 'R', nome: 'Reach', o_que: 'alcance: ouvintes, seguidores e vídeo' },
-  { chave: 'e', letra: 'E', nome: 'Economics', o_que: 'dinheiro que entra e estrutura' },
-  { chave: 'a', letra: 'A', nome: 'Audience', o_que: 'engajamento e conversão de quem ouve' },
-  { chave: 'l', letra: 'L', nome: 'Legitimacy', o_que: 'chancela: imprensa, prêmios, playlist' },
-] as const;
+const semTravessao = (texto: string) => clean(texto);
 
-export default function Perfil() {
+export default function Diagnostico() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const artista = useArtistaDaRota(id);
 
-  const real = artista?.content?.realIndex;
-  const foto = artista?.content?.spotifyProfile?.image;
-  // O corte vem do proprio indice; 70 e o valor da V3, mas quem manda e o dado.
-  const corte = real?.cutLine?.r ?? 70;
+  const real = artista?.content?.realIndex as Record<string, any> | undefined;
+  const chartmetric = (artista?.content as Record<string, any> | undefined)?.chartmetricProfile ?? null;
+  const perfil = real?.profile;
+  const padrao = real?.pattern;
+  const altas = altasForPattern(padrao);
 
+  const cidades = useMemo(
+    () => (chartmetric?.top_cities ?? []) as { name: string; country: string; listeners: number }[],
+    [chartmetric],
+  );
+  const paises = useMemo(
+    () => (chartmetric?.audience?.top_countries ?? []) as { name: string; listeners?: number | null }[],
+    [chartmetric],
+  );
+  const playlists = useMemo(
+    () => (chartmetric?.playlists?.top ?? []) as { name: string; followers?: number; editorial?: boolean }[],
+    [chartmetric],
+  );
+
+  const compartilhar = () => {
+    if (!perfil) return;
+    void Share.share({
+      message:
+        `Meu Diagnóstico REAL na Maestra: ${perfil.name} — ${altas} de 4 dimensões altas.\n\n`
+        + `${semTravessao(perfil.description)}`,
+    });
+  };
 
   return (
     <View style={estilos.tela}>
       <ScrollView contentContainerStyle={estilos.conteudo}>
-
-        <View style={estilos.topo}>
-          {foto
-            ? <Image source={{ uri: foto }} style={estilos.foto} />
-            : <View style={[estilos.foto, estilos.fotoVazia]} />}
-          <View style={estilos.flex}>
-            <Text style={estilos.nome}>{artista?.name ?? 'Perfil'}</Text>
-            {!!artista?.content?.identity?.genre && (
-              <Text style={estilos.genero}>{artista.content.identity.genre}</Text>
-            )}
-          </View>
+        <View style={estilos.cabecalho}>
+          <Text style={estilos.sobretitulo}>ONDE VOCÊ ESTÁ</Text>
+          <Text style={estilos.titulao}>Diagnóstico REAL</Text>
+          <Text style={estilos.apoio}>
+            Sua fase de carreira atual, com base nos seus dados reais.
+          </Text>
         </View>
 
-        {/* A pergunta que a tela responde primeiro é "que artista é este". */}
-        {!real?.profile ? (
+        {!perfil ? (
           <View style={estilos.aviso}>
-            <Text style={estilos.avisoTitulo}>Sem diagnóstico ainda</Text>
+            <Text style={estilos.avisoTitulo}>Diagnóstico indisponível</Text>
             <Text style={estilos.avisoTexto}>
-              Este perfil ainda não passou pelo REAL. O diagnóstico é feito na web.
+              Este perfil ainda não tem um diagnóstico REAL salvo. Ele é feito na web.
             </Text>
           </View>
         ) : (
-          <View style={estilos.cartaoPerfil}>
-            <Text style={estilos.rotulo}>Perfil REAL</Text>
-            <Text style={estilos.perfilNome}>{real.profile.name}</Text>
-            <Text style={estilos.perfilDescricao}>{real.profile.description}</Text>
-          </View>
-        )}
-
-
-        {!!real?.profile && (
           <>
-            <Text style={estilos.secao}>Boletim</Text>
-            {DIMENSOES.map((d) => {
-              const nota = real.boletim?.[d.chave] ?? 0;
-              const acesa = !!real.pattern?.[d.chave];
-              return (
-                <View key={d.chave} style={estilos.dimensao}>
-                  <View style={estilos.linhaTopo}>
-                    <Text style={[estilos.letra, acesa ? estilos.acesa : estilos.apagada]}>
-                      {d.letra}
-                    </Text>
-                    <View style={estilos.flex}>
-                      <Text style={estilos.dimNome}>{d.nome}</Text>
-                      <Text style={estilos.dimOQue}>{d.o_que}</Text>
-                    </View>
-                    <Text style={[estilos.nota, acesa ? estilos.acesa : estilos.notaApagada]}>
-                      {nota}
-                    </Text>
-                  </View>
-
-                  <View style={estilos.trilho}>
-                    <View style={[estilos.barra, { width: `${Math.max(nota, 1)}%` },
-                                  acesa ? estilos.barraAcesa : estilos.barraApagada]} />
-                    {/* A linha de acender, no lugar exato: sem ela o número não diz se passou. */}
-                    <View style={[estilos.corte, { left: `${corte}%` }]} />
-                  </View>
+            {/* O "momento uau": a placa da fase, o nome do perfil e o Índice REAL. */}
+            <LinearGradient
+              colors={[COR_DIAGNOSTICO.cartaoDe, COR_DIAGNOSTICO.cartaoAte]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={estilos.cartaoDoPerfil}
+            >
+              <View style={estilos.linhaDaPlaca}>
+                <Placa tier={tierForPattern(padrao)} rotulo={String(altas)} tamanho={72} />
+                <View style={estilos.flex}>
+                  <Text style={estilos.rotuloDoPerfil}>SEU PERFIL DE CARREIRA</Text>
+                  <Text style={estilos.nomeDoPerfil}>{perfil.name}</Text>
                 </View>
-              );
-            })}
-            <Text style={estilos.rodape}>
-              A marca vertical é a linha de {corte}: acima dela a dimensão acende.
-            </Text>
+              </View>
+              <Text style={estilos.descricao}>{semTravessao(perfil.description)}</Text>
 
-            {!!real.profile.insights?.length && (
-              <>
-                <Text style={estilos.secao}>O que isso quer dizer</Text>
-                {real.profile.insights.map((texto, i) => (
+              <View style={estilos.indice}>
+                <Text style={estilos.indiceRotulo}>ÍNDICE REAL</Text>
+                <View style={estilos.indiceLinha}>
+                  {DIM_META.map((d) => {
+                    const alta = !!padrao?.[d.key];
+                    return (
+                      <View key={d.key} style={estilos.indiceItem}>
+                        <Text style={[estilos.indiceLetra, alta ? estilos.acesa : estilos.apagada]}>
+                          {d.letter}
+                        </Text>
+                        <Text style={[estilos.indicePalavra, alta && estilos.palavraAcesa]}>
+                          {d.full}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            </LinearGradient>
+
+            {/* As quatro dimensões em detalhe — o §9 do boletim. */}
+            {DIM_META.map((d) => (
+              <CartaoDaDimensao
+                key={d.key}
+                chave={d.key as DimKey}
+                real={real as Record<string, any>}
+                chartmetric={chartmetric}
+              />
+            ))}
+
+            {cidades.length > 0 && (
+              <View style={estilos.cartao}>
+                <Text style={estilos.tituloDoCartao}>ONDE SEUS OUVINTES ESTÃO</Text>
+                {cidades.slice(0, 5).map((cidade) => {
+                  const maior = cidades[0].listeners || 1;
+                  return (
+                    <View key={`${cidade.name}-${cidade.country}`} style={estilos.linhaDeBarra}>
+                      <Text style={estilos.nomeDaBarra} numberOfLines={1}>{cidade.name}</Text>
+                      <View style={estilos.trilhoDaBarra}>
+                        <View style={[
+                          estilos.barra,
+                          { width: `${Math.max(6, Math.round((cidade.listeners / maior) * 100))}%` },
+                        ]} />
+                      </View>
+                      <Text style={estilos.valorDaBarra}>{fmtNum(cidade.listeners)}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            {(playlists.length > 0 || paises.length > 0) && (
+              <View style={estilos.cartao}>
+                <Text style={estilos.tituloDoCartao}>SUA PRESENÇA NAS PLATAFORMAS</Text>
+
+                {playlists.length > 0 && (
+                  <View style={estilos.secaoDaPlataforma}>
+                    <Text style={estilos.subtituloDaPlataforma}>
+                      Playlists onde sua música está
+                      {chartmetric?.playlists?.count ? ` · ${chartmetric.playlists.count} no total` : ''}
+                    </Text>
+                    {playlists.slice(0, 10).map((playlist, i) => (
+                      <View key={`${playlist.name}-${i}`} style={estilos.linhaDePlaylist}>
+                        <Text style={estilos.posicao}>{i + 1}</Text>
+                        <Text style={estilos.nomeDaPlaylist} numberOfLines={1}>{playlist.name}</Text>
+                        {playlist.editorial && (
+                          <View style={estilos.editorial}>
+                            <Text style={estilos.editorialTexto}>Editorial</Text>
+                          </View>
+                        )}
+                        {playlist.followers != null && (
+                          <Text style={estilos.seguidores}>{fmtNum(playlist.followers)}</Text>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {paises.length > 0 && (
+                  <View style={estilos.secaoDaPlataforma}>
+                    <Text style={estilos.subtituloDaPlataforma}>Principais países</Text>
+                    {paises.slice(0, 6).map((pais) => {
+                      const maior = paises[0].listeners || 1;
+                      return (
+                        <View key={pais.name} style={estilos.linhaDeBarra}>
+                          <Text style={estilos.nomeDaBarra} numberOfLines={1}>{pais.name}</Text>
+                          <View style={estilos.trilhoDaBarra}>
+                            <View style={[
+                              estilos.barra,
+                              { width: `${Math.max(6, Math.round(((pais.listeners || 0) / maior) * 100))}%` },
+                            ]} />
+                          </View>
+                          <Text style={estilos.valorDaBarra}>
+                            {pais.listeners != null ? fmtNum(pais.listeners) : '–'}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* O mapa dos 16: onde a pessoa está, e o que existe acima dela. */}
+            <View style={estilos.cartao}>
+              <Text style={estilos.tituloDoCartao}>SUA POSIÇÃO ENTRE OS 16 PERFIS</Text>
+              {PROFILE_MAP.map((andar, indice) => {
+                const altasDoAndar = 4 - indice;
+                return (
+                  <View key={andar.tier} style={estilos.andar}>
+                    <View style={estilos.cabecaDoAndar}>
+                      <Placa tier={tierForAltas(altasDoAndar)} rotulo={String(altasDoAndar)} tamanho={38} />
+                      <Text style={estilos.nivel}>{andar.tier}</Text>
+                    </View>
+                    <View style={estilos.etiquetas}>
+                      {andar.names.map((nome) => {
+                        const bits = PROFILE_BITS[nome];
+                        const ehVoce = nome === perfil.name;
+                        return (
+                          <View
+                            key={nome}
+                            style={[estilos.etiqueta, ehVoce && estilos.etiquetaAtiva]}
+                          >
+                            <Text style={[estilos.nomeDaEtiqueta, ehVoce && estilos.nomeAtivo]}>
+                              {nome}
+                            </Text>
+                            {!!bits && (
+                              <View style={estilos.bolinhas}>
+                                {(['r', 'e', 'a', 'l'] as const).map((k) => (
+                                  <View
+                                    key={k}
+                                    style={[estilos.bolinha, bits[k] && estilos.bolinhaAcesa]}
+                                  >
+                                    <Text style={estilos.bolinhaTexto}>{k.toUpperCase()}</Text>
+                                  </View>
+                                ))}
+                              </View>
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+
+            {!!perfil.insights?.length && (
+              <View style={estilos.cartao}>
+                <Text style={estilos.tituloDoCartao}>O QUE O SEU DIAGNÓSTICO REVELA</Text>
+                {perfil.insights.map((texto: string, i: number) => (
                   <View key={i} style={estilos.insight}>
-                    <Text style={estilos.marcador}>•</Text>
-                    <Text style={estilos.insightTexto}>{texto}</Text>
+                    <Text style={estilos.marcador}>▸</Text>
+                    <Text style={estilos.insightTexto}>{semTravessao(texto)}</Text>
                   </View>
                 ))}
-              </>
+              </View>
             )}
+
+            {/* Baixar o PDF é da web: ele é montado com html2canvas sobre a página inteira, e
+                não existe página aqui. Compartilhar existe, e é o que a pessoa faz com ele. */}
+            <View style={estilos.cartao}>
+              <Text style={estilos.chamada}>Compartilhe seu diagnóstico</Text>
+              <Pressable
+                style={estilos.compartilhar}
+                onPress={compartilhar}
+                accessibilityRole="button"
+                accessibilityLabel="Compartilhar diagnóstico"
+              >
+                <Feather name="share-2" size={15} color={COR.primaria} />
+                <Text style={estilos.compartilharTexto}>Compartilhar</Text>
+              </Pressable>
+              <Text style={estilos.notaDoPdf}>
+                O PDF completo do diagnóstico é gerado na web.
+              </Text>
+            </View>
+
+            <View style={estilos.cartao}>
+              <Text style={estilos.tituloDoCartao}>QUEM ASSINA</Text>
+              <Text style={estilos.assinaNome}>{QUEM_ASSINA.name}</Text>
+              <Text style={estilos.assinaPapel}>{QUEM_ASSINA.role}</Text>
+              {QUEM_ASSINA.paras.map((paragrafo, i) => (
+                <Text key={i} style={estilos.assinaTexto}>{paragrafo}</Text>
+              ))}
+              <Text style={estilos.assinaDestaque}>{QUEM_ASSINA.highlight}</Text>
+            </View>
           </>
         )}
       </ScrollView>
@@ -116,72 +292,133 @@ export default function Perfil() {
 }
 
 const estilos = StyleSheet.create({
-  // A paleta e a do `DiagnosticReport` da web: cartoes brancos com contorno frio e sombra baixa,
-  // o cartao do perfil num degrade claro, e a frase de cada dimensao puxada por uma barra a
-  // esquerda na cor da propria dimensao. Ver `COR_DIAGNOSTICO`.
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
-  conteudo: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 122, gap: 14 },
-  // O hero: avatar de 60px e o nome grande, separados do resto por um fio.
-  topo: {
-    flexDirection: 'row', alignItems: 'center', gap: 16,
-    paddingBottom: 24, marginBottom: 14,
-    borderBottomWidth: 1, borderBottomColor: COR_DIAGNOSTICO.contornoDoHero,
-  },
-  foto: { width: 60, height: 60, borderRadius: 30, backgroundColor: COR.divisoria },
-  fotoVazia: {},
-  nome: { fontSize: 22, fontWeight: '800', color: COR_DIAGNOSTICO.titulo, lineHeight: 26 },
-  genero: { fontSize: 13, color: COR_DIAGNOSTICO.texto, marginTop: 6 },
-  atalho: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6,
-    borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, borderRadius: 14, padding: 16,
-    backgroundColor: COR.superficie,
-  },
+  conteudo: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 122, gap: 16 },
+
+  cabecalho: { paddingTop: 22, paddingBottom: 8 },
+  sobretitulo: { fontSize: 9, fontWeight: '800', color: COR_DIAGNOSTICO.rotulo, marginBottom: 8 },
+  titulao: { fontSize: 30, fontWeight: '800', letterSpacing: -0.75, color: COR_DIAGNOSTICO.titulo },
+  apoio: { fontSize: 12, lineHeight: 18, color: COR_DIAGNOSTICO.texto, marginTop: 9 },
+
   aviso: {
     borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, borderRadius: 14,
-    padding: 18, gap: 6, marginTop: 10, backgroundColor: COR.superficie,
+    padding: 18, gap: 6, backgroundColor: COR.superficie,
   },
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_DIAGNOSTICO.titulo },
-  avisoTexto: { fontSize: 14, color: COR_DIAGNOSTICO.texto, lineHeight: 20 },
-  // O "momento uau": cartao com canto largo, degrade claro e sombra.
-  cartaoPerfil: {
-    borderRadius: 20, padding: 26, paddingHorizontal: 24, gap: 4, marginBottom: 14,
-    borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, backgroundColor: COR.superficie,
+  avisoTexto: { fontSize: 14, lineHeight: 20, color: COR_DIAGNOSTICO.texto },
+
+  cartaoDoPerfil: {
+    padding: 26, paddingHorizontal: 24, borderRadius: 20,
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno,
+    shadowColor: 'rgba(67, 86, 123, .07)', shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 10 }, shadowRadius: 24, elevation: 2,
   },
-  rotulo: {
-    fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase',
-    color: COR.primaria, fontWeight: '800',
+  linhaDaPlaca: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 14 },
+  rotuloDoPerfil: {
+    fontSize: 11, fontWeight: '800', letterSpacing: 1.54, textTransform: 'uppercase',
+    color: COR_DIAGNOSTICO.rotulo,
   },
-  perfilNome: { fontSize: 38, fontWeight: '800', color: COR_DIAGNOSTICO.titulo, lineHeight: 40, marginTop: 4 },
-  perfilDescricao: { fontSize: 15, color: COR_DIAGNOSTICO.titulo, lineHeight: 22, marginTop: 14 },
-  secao: {
-    fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase',
-    color: COR_DIAGNOSTICO.texto, marginTop: 14, fontWeight: '800',
+  nomeDoPerfil: {
+    fontSize: 34, fontWeight: '800', letterSpacing: -0.38, color: COR_DIAGNOSTICO.titulo,
+    marginTop: 2,
   },
-  // Cada dimensao e um cartao completo — nota, regua e o que ela revela.
-  dimensao: {
-    gap: 8, padding: 22, paddingHorizontal: 20, borderRadius: 14,
-    borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, backgroundColor: COR.superficie,
+  descricao: { fontSize: 15, lineHeight: 22, color: COR_DIAGNOSTICO.titulo },
+  indice: { marginTop: 20 },
+  indiceRotulo: {
+    fontSize: 11, fontWeight: '800', letterSpacing: 1.32, textTransform: 'uppercase',
+    color: COR_DIAGNOSTICO.rotulo, marginBottom: 12,
   },
-  linhaTopo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  letra: { fontSize: 22, fontWeight: '800', width: 22 },
+  indiceLinha: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
+  indiceItem: { width: '50%', flexDirection: 'row', alignItems: 'center', gap: 11 },
+  indiceLetra: { fontSize: 30, fontWeight: '700', letterSpacing: 0.3 },
   acesa: { color: COR.primaria },
-  apagada: { color: COR.contorno },
-  dimNome: { fontSize: 17, fontWeight: '800', color: COR_DIAGNOSTICO.titulo, lineHeight: 19 },
-  dimOQue: { fontSize: 11.5, color: COR_DIAGNOSTICO.texto, marginTop: 2 },
-  nota: { fontSize: 16, fontWeight: '800', color: COR_DIAGNOSTICO.titulo },
-  notaApagada: { color: COR_DIAGNOSTICO.texto },
-  trilho: { height: 8, borderRadius: 4, backgroundColor: COR.divisoria, overflow: 'hidden', position: 'relative' },
-  barra: { height: 8, borderRadius: 4 },
-  barraAcesa: { backgroundColor: COR.primaria },
-  barraApagada: { backgroundColor: COR.apagado },
-  corte: { position: 'absolute', top: -2, width: 2, height: 12, backgroundColor: COR_DIAGNOSTICO.texto },
-  rodape: { fontSize: 11.5, color: COR_DIAGNOSTICO.texto, marginTop: 2 },
-  // A frase puxada por uma barra a esquerda, como na web.
-  insight: {
-    flexDirection: 'row', gap: 13, marginTop: 16,
-    borderLeftWidth: 2, borderLeftColor: COR.primaria, paddingLeft: 13,
+  apagada: { color: COR_DIAGNOSTICO.letraApagada },
+  indicePalavra: {
+    fontSize: 12, fontWeight: '700', letterSpacing: 0.96, textTransform: 'uppercase',
+    color: COR_DIAGNOSTICO.palavra,
   },
-  marcador: { display: 'none' },
-  insightTexto: { flex: 1, fontSize: 12.5, color: COR_DIAGNOSTICO.texto, lineHeight: 19 },
+  palavraAcesa: { color: COR_DIAGNOSTICO.titulo },
+
+  cartao: {
+    padding: 20, borderRadius: 14, gap: 10,
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, backgroundColor: COR.superficie,
+    shadowColor: 'rgba(67, 86, 123, .07)', shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 10 }, shadowRadius: 24, elevation: 2,
+  },
+  tituloDoCartao: {
+    fontSize: 12, fontWeight: '800', letterSpacing: 0.52, textTransform: 'uppercase',
+    color: COR_DIAGNOSTICO.titulo,
+  },
+
+  linhaDeBarra: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  nomeDaBarra: { width: 104, fontSize: 13, color: COR_DIAGNOSTICO.texto },
+  trilhoDaBarra: {
+    flex: 1, height: 8, borderRadius: RAIO.pilula,
+    backgroundColor: COR_DIAGNOSTICO.regua, overflow: 'hidden',
+  },
+  barra: { height: 8, borderRadius: RAIO.pilula, backgroundColor: COR.primaria },
+  valorDaBarra: { width: 56, fontSize: 13, textAlign: 'right', color: COR_DIAGNOSTICO.texto },
+
+  secaoDaPlataforma: { gap: 8, marginTop: 6 },
+  subtituloDaPlataforma: { fontSize: 13, fontWeight: '700', color: COR_DIAGNOSTICO.secao },
+  linhaDePlaylist: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  posicao: { width: 18, fontSize: 11, fontWeight: '800', color: COR_DIAGNOSTICO.rotulo },
+  nomeDaPlaylist: { flex: 1, fontSize: 13, color: COR_DIAGNOSTICO.titulo },
+  editorial: {
+    paddingHorizontal: 7, paddingVertical: 2, borderRadius: RAIO.pilula,
+    backgroundColor: COR_DIAGNOSTICO.discoFundo,
+  },
+  editorialTexto: { fontSize: 9.5, fontWeight: '800', color: COR.primaria },
+  seguidores: { fontSize: 12, color: COR_DIAGNOSTICO.texto },
+
+  andar: { gap: 8, paddingVertical: 7 },
+  cabecaDoAndar: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  nivel: {
+    fontSize: 11, fontWeight: '700', letterSpacing: 0.44, textTransform: 'uppercase',
+    color: COR_DIAGNOSTICO.texto,
+  },
+  // Etiquetas quebrando em linhas, e não numa faixa rolável: em 375px seis nomes numa linha só
+  // esconderiam metade dos perfis, e o mapa existe justamente para mostrar o que há acima.
+  etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  etiqueta: {
+    gap: 5, paddingVertical: 7, paddingHorizontal: 11, borderRadius: 11,
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.etiquetaContorno,
+    backgroundColor: COR_DIAGNOSTICO.etiquetaFundo,
+  },
+  etiquetaAtiva: {
+    borderColor: COR_DIAGNOSTICO.etiquetaAtivaContorno,
+    backgroundColor: COR_DIAGNOSTICO.etiquetaAtivaFundo,
+  },
+  nomeDaEtiqueta: { fontSize: 12, fontWeight: '600', color: COR_DIAGNOSTICO.titulo },
+  nomeAtivo: { fontWeight: '800' },
+  bolinhas: { flexDirection: 'row', gap: 3 },
+  bolinha: {
+    width: 15, height: 15, borderRadius: 7.5, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.bolinhaApagada,
+    backgroundColor: COR_DIAGNOSTICO.bolinhaApagada,
+  },
+  bolinhaAcesa: { borderColor: COR_DIAGNOSTICO.titulo, backgroundColor: COR_DIAGNOSTICO.titulo },
+  bolinhaTexto: { fontSize: 8, fontWeight: '800', color: COR.superficie },
+
+  insight: { flexDirection: 'row', gap: 11, marginTop: 6 },
+  marcador: { fontSize: 14.5, fontWeight: '800', color: COR_DIAGNOSTICO.bolinhaApagada },
+  insightTexto: { flex: 1, fontSize: 14.5, lineHeight: 22, color: COR_DIAGNOSTICO.texto },
+
+  chamada: { fontSize: 18, fontWeight: '800', letterSpacing: -0.24, color: COR_DIAGNOSTICO.titulo },
+  compartilhar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    minHeight: 45, borderRadius: RAIO.pilula, marginTop: 4,
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.compartilharContorno,
+    backgroundColor: COR.superficie,
+  },
+  compartilharTexto: { fontSize: 13.5, fontWeight: '700', color: COR.primaria },
+  notaDoPdf: { fontSize: 11.5, lineHeight: 17, color: COR_DIAGNOSTICO.fonte },
+
+  assinaNome: { fontSize: 22, fontWeight: '800', letterSpacing: -0.22, color: COR_DIAGNOSTICO.titulo },
+  assinaPapel: { fontSize: 12, fontWeight: '700', color: COR_DIAGNOSTICO.secao },
+  assinaTexto: { fontSize: 13, lineHeight: 20, color: COR_DIAGNOSTICO.texto, marginTop: 6 },
+  assinaDestaque: {
+    fontSize: 13, lineHeight: 20, fontWeight: '700', color: COR_DIAGNOSTICO.titulo, marginTop: 10,
+  },
 });

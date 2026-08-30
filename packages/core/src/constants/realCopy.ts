@@ -1,5 +1,11 @@
-// Dados e textos compartilhados do diagnóstico REAL (usados na tela e no PDF de apresentação).
-import { PROFILES } from '@maestra/core/services/realEngine';
+// Dados e textos compartilhados do diagnóstico REAL (usados na tela, no PDF de apresentação e
+// no app nativo).
+//
+// Subiu de `src/pages/ArtistCreate` para o núcleo quando o app ganhou a tela do diagnóstico. São
+// TEXTOS — a frase que interpreta cada dimensão, os rótulos do autorrelato, a linha de status do
+// boletim. Duas cópias dariam dois diagnósticos diferentes para os mesmos números, e ninguém
+// perceberia, porque os dois continuariam soando bem.
+import { PROFILES } from '../services/realEngine';
 
 export type DimKey = 'r' | 'e' | 'a' | 'l';
 
