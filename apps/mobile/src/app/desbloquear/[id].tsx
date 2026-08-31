@@ -270,10 +270,9 @@ export default function Desbloquear() {
         <Text style={estilos.sucessoTexto}>
           A Nyta já vai te guiar, passo a passo, na construção do seu plano.
         </Text>
-        {/* O wizard do planejamento só existe na web — é lá que a Nyta constrói o plano. */}
         <Pressable
           style={estilos.sucessoBotao}
-          onPress={() => Linking.openURL(`${SITE}/artists/${id}/wizard`)}
+          onPress={() => router.replace({ pathname: '/wizard/[id]', params: { id: String(id) } })}
           accessibilityRole="button"
           accessibilityLabel="Iniciar planejamento"
         >

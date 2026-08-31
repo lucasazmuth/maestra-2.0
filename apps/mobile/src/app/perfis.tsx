@@ -121,8 +121,8 @@ export default function Perfis() {
    * desbloqueio, sem planejamento vai pro wizard, e so o resto abre a home. O app mandava tudo
    * pra home — quem tinha um perfil recem-criado caia numa tela vazia sem saber o que fazer.
    *
-   * O desbloqueio agora e do app (`/desbloquear/[id]`). O WIZARD continua sendo da web: e a
-   * Nyta construindo o plano em varias etapas, e ele ainda nao existe aqui.
+   * Desbloqueio e planejamento agora sao do app: `/desbloquear/[id]` e `/wizard/[id]`. Nada mais
+   * desta lista sai para o navegador.
    */
   const abrir = (artista: Artist) => {
     const destino = artistEntryRoute(artista);
@@ -132,6 +132,10 @@ export default function Perfis() {
     }
     if (destino.endsWith('/desbloquear')) {
       router.push({ pathname: '/desbloquear/[id]', params: { id: artista.id } });
+      return;
+    }
+    if (destino.endsWith('/wizard')) {
+      router.push({ pathname: '/wizard/[id]', params: { id: artista.id } });
       return;
     }
     Linking.openURL(`${SITE}${destino}`);

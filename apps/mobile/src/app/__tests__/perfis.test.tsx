@@ -72,13 +72,16 @@ describe('lista de perfis', () => {
       });
     });
 
-    it('perfil sem planejamento vai pro wizard, que so existe na web', async () => {
+    // O wizard passou a existir no app; antes esta linha abria o navegador.
+    it('perfil sem planejamento vai pro wizard do app', async () => {
       const abrirUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
       const tela = await montar();
       await userEvent.setup().press(tela.getByLabelText(semDiagnostico.name));
 
-      expect(mockPush).not.toHaveBeenCalled();
-      expect(abrirUrl).toHaveBeenCalledWith(expect.stringContaining(`/artists/${semDiagnostico.id}/wizard`));
+      expect(mockPush).toHaveBeenCalledWith({
+        pathname: '/wizard/[id]', params: { id: semDiagnostico.id },
+      });
+      expect(abrirUrl).not.toHaveBeenCalled();
       abrirUrl.mockRestore();
     });
   });

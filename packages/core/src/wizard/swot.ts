@@ -17,6 +17,14 @@ export interface SwotExternalItem {
 }
 
 // 20 itens internos — para cada um o artista responde: forte / melhorar / não se aplica.
+/**
+ * Como o artista classifica cada item do inventário interno.
+ *
+ * O valor vai gravado em `swotInputs.internal` e é lido pelos motores (forte vira força,
+ * melhorar vira fraqueza) — por isso o tipo mora aqui, com a lista, e não na tela.
+ */
+export type InternalClass = 'forte' | 'melhorar' | 'na';
+
 export const SWOT_INTERNAL: SwotInternalItem[] = [
   { id: 1, label: 'Talento / qualidade artística', question: 'Você tem domínio técnico e entrega artística consistente?' },
   { id: 2, label: 'Composição própria / repertório inédito', question: 'Você tem repertório autoral próprio (ou inédito de parceiros) em quantidade e qualidade pra sustentar shows e lançamentos?' },
