@@ -14,6 +14,9 @@ import { WZ } from '@/casca/wizard/cores';
 // As peças da casca do wizard: a barra da etapa, o vídeo, o convite de entrada e o portão entre
 // etapas.
 
+/** A origem do site: é o domínio em que os vídeos do YouTube estão liberados para tocar. */
+const SITE = 'https://www.maestramanager.com';
+
 // ---- A barra da etapa --------------------------------------------------------------------------
 
 /** "Etapa 3 de 9 · Missão" — e, no celular, a porta para o plano. */
@@ -52,11 +55,26 @@ export const Video = ({ src, titulo }: { src: string; titulo: string }) => {
       </View>
     );
   }
+  // ⚠️ O player entra como HTML com `baseUrl`, e não navegando direto para a URL do embed.
+  //
+  // Sem origem nenhuma, o YouTube recusa com "Erro 153"; com `youtube.com` como origem, recusa
+  // com "152" — os vídeos da Maestra estão restritos ao DOMÍNIO do site. A origem certa é a do
+  // site, que é onde eles já tocam.
+  const pagina = `<!DOCTYPE html><html><head>
+      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+      <style>html,body{margin:0;height:100%;background:#000;overflow:hidden}
+        iframe{border:0;width:100%;height:100%}</style>
+    </head><body>
+      <iframe src="https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1"
+        allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+    </body></html>`;
+
   return (
     <View style={estilos.quadroDoVideo}>
       <WebView
-        source={{ uri: `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1` }}
+        source={{ html: pagina, baseUrl: SITE }}
         style={estilos.video}
+        originWhitelist={['*']}
         allowsFullscreenVideo
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction

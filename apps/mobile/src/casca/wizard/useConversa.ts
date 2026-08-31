@@ -83,6 +83,15 @@ const soOsPesados = (d: ArtistContent): Partial<ArtistContent> => {
 
 interface Entrada {
   artista: Artist;
+  /**
+   * Só conduz depois que o rascunho CARREGOU.
+   *
+   * Sem isto, o primeiro beat é resolvido contra um rascunho vazio: a conversa abre perguntando o
+   * pronome, e quando o rascunho real chega o beat certo entra por cima — mas a fala do beat
+   * errado já está na fila, e o widget dela aterrissa depois, sobre a pergunta nova. Foi o que
+   * apareceu no aparelho: a pergunta era sobre referências e embaixo dela estavam ele/ela/elu.
+   */
+  ativo: boolean;
   draft: ArtistContent;
   sp?: SpotifyProfile;
   persist: (patch: Partial<ArtistContent>, proximoPasso?: number) => Promise<void>;
@@ -90,7 +99,7 @@ interface Entrada {
   restore: (content: ArtistContent) => Promise<void>;
 }
 
-export const useConversa = ({ artista, draft, sp, persist, restore }: Entrada) => {
+export const useConversa = ({ artista, ativo, draft, sp, persist, restore }: Entrada) => {
   const [conversa, setConversa] = useState<ItemDaConversa[]>([]);
   const [pensando, setPensando] = useState(false);
   const [widget, setWidget] = useState<WidgetSpec | null>(null);
@@ -274,7 +283,7 @@ export const useConversa = ({ artista, draft, sp, persist, restore }: Entrada) =
   // ---- Abertura --------------------------------------------------------------------------------
 
   useEffect(() => {
-    if (abriuRef.current) return;
+    if (!ativo || abriuRef.current) return;
     abriuRef.current = true;
     setConversa([{ id: uid(), quem: 'nyta', hero: true }]);
     videoDoPassoRef.current = draft.step ?? 0;
@@ -285,7 +294,7 @@ export const useConversa = ({ artista, draft, sp, persist, restore }: Entrada) =
       enfileirar({ video: { src: VIDEO_ABERTURA, titulo: 'Vídeo: como funciona o planejamento' } });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ativo]);
 
   // ---- Ações de IA entre beats -----------------------------------------------------------------
 
@@ -353,7 +362,7 @@ export const useConversa = ({ artista, draft, sp, persist, restore }: Entrada) =
   // ---- A resolução do beat ---------------------------------------------------------------------
 
   useEffect(() => {
-    if (!abriuRef.current) return;
+    if (!ativo || !abriuRef.current) return;
     if (portaoRef.current) return; // portão aberto: nada avança por trás dele
     const beat = nextBeat(draft);
 
@@ -416,7 +425,7 @@ export const useConversa = ({ artista, draft, sp, persist, restore }: Entrada) =
       void preparar(beat.prepare);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, nonce]);
+  }, [ativo, draft, nonce]);
 
   /** "Continuar" do portão: limpa a conversa e libera a etapa nova. */
   const continuarEtapa = useCallback(() => {

@@ -3,7 +3,7 @@ import {
   ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
@@ -70,6 +70,7 @@ const rotuloDe = (opcoes: { value: string; label: string }[], v: string) =>
 export default function Wizard() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { sessao, carregando: carregandoSessao } = useSessao();
+  const folga = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const artista = useArtistaDaRota(id);
   const carregado = useAppSelector((s) => s.artists.loaded);
@@ -177,7 +178,7 @@ export default function Wizard() {
   );
 
   const conversa = useConversa({
-    artista: artista!, draft, sp, persist, restore,
+    artista: artista!, ativo: pronto, draft, sp, persist, restore,
   });
 
   // Rola para o fim a cada mensagem nova — quem está lendo mais acima não é arrastado.
@@ -606,7 +607,9 @@ export default function Wizard() {
                 <BolhaDaNyta key={item.id}>
                   <View style={estilos.hero}>
                     {!!sp?.image && <Image source={{ uri: sp.image }} style={estilos.heroFoto} />}
-                    <View style={estilos.flex}>
+                    {/* `flexShrink`, e não `flex: 1`: a bolha se dimensiona pelo conteúdo, e um
+                        filho esticado dentro dela colapsava o nome para largura zero. */}
+                    <View style={estilos.heroTexto}>
                       <Text style={estilos.heroNome}>{artista.name}</Text>
                       {!!sp?.spotify_artist_id && (
                         <Text style={estilos.heroApoio}>
@@ -696,14 +699,17 @@ export default function Wizard() {
         />
       )}
 
+      {/* O `Modal` do React Native monta numa árvore própria, e o `SafeAreaView` lá dentro não
+          mede nada: o cabeçalho da folha subia para debaixo do relógio. A folga vem do `insets`,
+          que continua vindo do provedor da árvore de cima. */}
       <Modal
         visible={planoAberto}
         animationType="slide"
         onRequestClose={() => setPlanoAberto(false)}
       >
-        <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
+        <View style={[estilos.tela, { paddingTop: folga.top }]}>
           <Plano draft={draft} aoFechar={() => setPlanoAberto(false)} aoEditar={persist} />
-        </SafeAreaView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -731,6 +737,7 @@ const estilos = StyleSheet.create({
   },
   hero: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   heroFoto: { width: 38, height: 38, borderRadius: 19 },
+  heroTexto: { flexShrink: 1 },
   heroNome: { fontSize: 15, fontWeight: '800', color: WZ.ink },
   heroApoio: { fontSize: 12, color: WZ.muted, marginTop: 2 },
   linhaDoMapa: { gap: 2, marginBottom: 8 },
