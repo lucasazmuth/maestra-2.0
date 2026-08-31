@@ -8,7 +8,10 @@ import { MaestraBrand } from '../../components/MaestraBrand';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { RealIndex } from '@maestra/core/interfaces/maestra';
 import { downloadNodePng, downloadPagesPdf, nodeToPngFile, urlToDataUrl } from '../../utils/exportImage';
-import DiagnosticDoc, { type Autoria } from './DiagnosticDoc';
+import DiagnosticDoc from './DiagnosticDoc';
+// O tipo vem do NÚCLEO, e não do componente: reexportar através da fronteira do pacote é o
+// caminho que o webpack não segue.
+import { autoriaDoDocumento, type Autoria } from '@maestra/core/documentos/diagnostico';
 import { useAppSelector } from '@maestra/core/store/store';
 import { RealBadge } from '../../components/RealBadge';
 import {
@@ -420,16 +423,13 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
   // mudaria a cada clique, nem inventa estado novo no banco.
   const autoria: Autoria | undefined = (() => {
     const meta = (authUser?.user_metadata ?? {}) as { full_name?: string; name?: string };
-    const email = authUser?.email;
-    if (!email) return undefined; // sem sessão identificada não há o que afirmar
-    const carimbo = Date.parse(String(riAny.computedAt ?? '')) || 0;
-    const docId = `${(artistId || 'sem-perfil').slice(0, 8)}-${carimbo.toString(36)}`.toUpperCase();
-    return {
-      nome: meta.full_name || meta.name || email.split('@')[0],
-      email,
-      docId,
-      vinculo: vinculo ? (VINCULO_LABELS[vinculo] ?? vinculo) : undefined,
-    };
+    return autoriaDoDocumento({
+      email: authUser?.email,
+      nome: meta.full_name || meta.name,
+      artistId,
+      calculadoEm: String(riAny.computedAt ?? ''),
+      vinculo,
+    });
   })();
 
   // Entrega completa: deck de apresentação multipágina em PDF.

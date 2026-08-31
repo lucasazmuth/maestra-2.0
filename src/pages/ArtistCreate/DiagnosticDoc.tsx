@@ -10,6 +10,12 @@ import {
   PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText,
 } from '@maestra/core/constants/realCopy';
 import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
+import {
+  CHAMADA_DA_DIMENSAO as DIM_TAGLINE, LEGENDA_DO_DECLARADO as LEGENDA_DECLARADO,
+  TINTA_DO_DOCUMENTO as DOC, URL_DA_MAESTRA as MAESTRA_URL, composicaoDaReceita as revComposition,
+  dinheiroRedondo as money, linhaDeAutoria as linhaAutoria, linhasDaDimensao as v3DimRows,
+  tintaDaDimensao as dimColor, type Autoria,
+} from '@maestra/core/documentos/diagnostico';
 import styles from './ArtistCreate.module.scss';
 
 interface Props {
@@ -20,17 +26,6 @@ interface Props {
   /** Autoria do documento: aparece no rodapé de todas as páginas. Ver `Autoria`. */
   autoria?: Autoria;
 }
-
-/**
- * Identificação de quem gerou o documento.
- *
- * POR QUE EXISTE: qualquer pessoa pode criar um perfil de qualquer artista e preencher o
- * questionário com números inventados. O PDF sai com a marca da Maestra e circula por e-mail e
- * WhatsApp. Sem autoria no papel, não há como responsabilizar quem produziu, e a marca responde
- * por um documento que não apurou. O `docId` é determinístico (mesmo diagnóstico, mesmo id), então
- * serve de referência estável para o suporte.
- */
-export interface Autoria { nome: string; email: string; docId: string; vinculo?: string }
 
 // IMPORTANTE: componentes de página no escopo de MÓDULO (não dentro do doc). Se ficarem dentro do
 // componente, viram função nova a cada render — React remonta as páginas e, no loop async da captura
@@ -50,101 +45,10 @@ const Page: FC<{ n: number; total: number; kicker?: string; autoria?: Autoria; c
   </div>
 );
 
-// ─── Helpers de dados V3 ───────────────────────────────────────────────────────
-const SRC_DISPLAY: Record<string, string> = {
-  streaming: 'Streaming', direitos: 'Direitos', publi: 'Publicidade', aulas: 'Aulas',
-  editais: 'Editais', venda: 'Venda / merch', outros: 'Outros',
-};
-const money = (n: number) => `R$ ${fmtNum(Math.abs(Math.round(n)))}`;
-
-const DIM_TAGLINE: Record<'r' | 'e' | 'a' | 'l', string> = {
-  r: 'O quanto a sua música alcança gente no digital.',
-  e: 'O quanto a sua carreira fatura com música.',
-  a: 'O público que aparece, paga ingresso e se conecta de verdade.',
-  l: 'O reconhecimento do setor: imprensa, prêmios, plataformas.',
-};
-
-// Cor da nota/régua por estado (verde acende, âmbar baixo, dourado top tier). Tons escolhidos
-// para PAPEL BRANCO: os do tema escuro (#21b26e, #f5c451) sumiam sobre fundo claro.
-// Destino do CTA clicável do PDF (ver data-pdflink e downloadPagesPdf).
-const MAESTRA_URL = 'https://www.maestramanager.com';
-
-// Escala monocromática: papel branco e tinta em cinza-azulado. O deck não usa mais cor para
-// diferenciar estado — quem faz isso é o peso da tipografia e o preenchimento da régua.
-const DOC = {
-  ink: '#2c3f63',
-  body: '#405985',
-  dim: '#56698f',
-  mute: '#61749a',
-  line: '#e3eaf3',
-  real: '#2c3f63',
-  low: '#8b9ab4',
-  goldInk: '#2c3f63',
-  goldBg: '#eef2f8',
-  danger: '#405985',
-} as const;
-const dimColor = (high: boolean, top: boolean) => (top ? DOC.goldInk : high ? DOC.real : DOC.low);
-
-type Row = { label: string; value: string; declarado?: boolean };
-
-// PROCEDÊNCIA DO DADO. Alcance e engajamento vêm da API (Spotify/Chartmetric) e o usuário não
-// consegue mexer neles. Receita, cachê, shows, público pagante, prêmios e imprensa são autorrelato
-// do questionário — a Maestra não verifica. Sem essa distinção no papel, quem recebe o PDF lê
-// "Receita mensal R$ 134,4 mi" como número apurado por nós, e é justamente aí que um diagnóstico
-// forjado ganha aparência de laudo. `decl` marca a linha como declarada; o resto é medido.
-const decl = (r: Row): Row => ({ ...r, declarado: true });
-
-// Rodapé de autoria. Curto de propósito: precisa caber numa linha entre o domínio e o número da
-// página, sem virar tarja. A data é a da geração do arquivo, não a do diagnóstico.
-const linhaAutoria = (a: Autoria) =>
-  `Gerado por ${a.nome} · ${a.email} · ${new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · Doc ${a.docId}`;
-const LEGENDA_DECLARADO = '† Informado por quem preencheu o diagnóstico. A Maestra não verifica estes dados.';
-function v3DimRows(dk: 'r' | 'e' | 'a' | 'l', ri: any, cm: Chartmetric | null): Row[] {
-  const inp = ri.inputs || {};
-  const rev = ri.revenue || {};
-  const numOr = (n: number | null | undefined) => (n != null ? fmtNum(Number(n)) : null);
-  const rows: (Row | null)[] =
-    dk === 'r' ? [
-      { label: 'Ouvintes Spotify', value: numOr(cm?.monthly_listeners ?? inp.spotifyListeners) ?? '–' },
-      inp.igFollowers != null ? { label: 'Instagram', value: fmtNum(inp.igFollowers) } : null,
-      inp.tiktokFollowers != null ? { label: 'TikTok', value: fmtNum(inp.tiktokFollowers) } : null,
-      inp.youtubeMonthlyViews != null ? { label: 'YouTube mensal', value: fmtNum(inp.youtubeMonthlyViews) } : null,
-    ] : dk === 'e' ? [
-      decl({ label: 'Receita mensal', value: fmtBRL(Number(rev.total ?? 0)) }),
-      decl({ label: 'Shows / mês', value: String(inp.showsPerMonth ?? 0) }),
-      decl({ label: 'Cachê médio', value: fmtBRL(Number(inp.cache ?? 0)) }),
-    ] : dk === 'a' ? [
-      decl({ label: 'Shows / mês', value: String(inp.showsPerMonth ?? 0) }),
-      decl({ label: '% público pagante', value: inp.fazBilheteria ? (PAGANTE_LABELS[inp.pagantePct] ?? '–') : 'Não faz bilheteria' }),
-      inp.spotifyFollowers != null ? { label: 'Seguidores Spotify', value: fmtNum(inp.spotifyFollowers) } : null,
-      inp.deezerFans != null ? { label: 'Fãs Deezer', value: fmtNum(inp.deezerFans) } : null,
-    ] : [
-      decl({ label: 'Prêmios', value: PREMIOS_LABELS_V3[Number(inp.premios ?? 0)] ?? '–' }),
-      decl({ label: 'Imprensa', value: inp.imprensaRepercussao ? (FREQ_LABELS[inp.imprensaFrequencia] ?? 'Sim') : 'Não' }),
-      { label: 'Playlists editoriais', value: String(inp.editorialPlaylists ?? cm?.playlists?.count ?? 0) },
-      // Ver DiagnosticReport: nulo é ausência de dado, não ausência de execução; com dado,
-      // mostra o número de execuções em vez de "Sim".
-      {
-        label: 'Execução em rádio',
-        value: inp.radioAirplay == null
-          ? 'Sem dado'
-          : Number(inp.radioAirplay) > 0
-          ? `${fmtNum(Math.round(Number(inp.radioAirplay)))} execuções`
-          : 'Não',
-      },
-    ];
-  return rows.filter((r): r is Row => r != null);
-}
-
-function revComposition(ri: any): { label: string; pct: number }[] {
-  const rev = ri.revenue || {};
-  const segs: { label: string; value: number }[] = [];
-  if (Number(rev.shows) > 0) segs.push({ label: 'Shows', value: Number(rev.shows) });
-  Object.entries(rev.sources || {}).forEach(([k, v]) => { if (Number(v) > 0) segs.push({ label: SRC_DISPLAY[k] || k, value: Number(v) }); });
-  const total = segs.reduce((s, x) => s + x.value, 0);
-  if (!total) return [];
-  return segs.sort((a, b) => b.value - a.value).map((s) => ({ label: s.label, pct: Math.round((s.value / total) * 100) }));
-}
+// Os helpers de DADOS (as linhas de cada dimensão, a composição da receita, a procedência e a
+// linha de autoria) moram no núcleo, em `documentos/diagnostico`: o app imprime o MESMO deck a
+// partir de HTML, e um "Cachê médio" que sai diferente de cada lado é o mesmo documento contando
+// duas histórias. O que ficou aqui é o desenho.
 
 // ─── Página de uma dimensão (V3) ───────────────────────────────────────────────
 const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: any; cm: Chartmetric | null; autoria?: Autoria }> = ({ dk, n, total, ri, cm, autoria }) => {

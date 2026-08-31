@@ -20,6 +20,12 @@ export default function Diagnostico() {
         <Relatorio
           real={conteudo?.realIndex as Record<string, any> | undefined}
           chartmetric={conteudo?.chartmetricProfile ?? null}
+          artista={{
+            id: artista?.id,
+            nome: artista?.name,
+            foto: conteudo?.spotifyProfile?.image,
+            vinculo: conteudo?.titularidade?.vinculo,
+          }}
         />
       </ScrollView>
     </View>

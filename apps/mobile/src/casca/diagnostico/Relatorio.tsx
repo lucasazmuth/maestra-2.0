@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,9 +12,12 @@ import {
   DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtNum, type DimKey,
 } from '@maestra/core/constants/realCopy';
 import { QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
+import { autoriaDoDocumento } from '@maestra/core/documentos/diagnostico';
 
 import { CartaoDaDimensao } from '@/casca/diagnostico/CartaoDaDimensao';
 import { Placa } from '@/casca/diagnostico/Placa';
+import { baixarDiagnostico } from '@/nucleo/documentos';
+import { useSessao } from '@/nucleo/sessao';
 
 // O diagnóstico R·E·A·L, em leitura.
 //
@@ -31,6 +34,8 @@ const semTravessao = (texto: string) => clean(texto);
 type Props = {
   real?: Record<string, any> | null;
   chartmetric?: Record<string, any> | null;
+  /** O que o PDF precisa saber além dos números: de quem é o diagnóstico e quem o gerou. */
+  artista?: { id?: string; nome?: string; foto?: string | null; vinculo?: string | null };
 };
 
 /**
@@ -38,23 +43,44 @@ type Props = {
  * na página do diagnóstico de um perfil, e no fim do fluxo de criação, antes do desbloqueio.
  * Duas cópias seriam duas telas para manter em pé.
  */
-export const Relatorio = ({ real, chartmetric = null }: Props) => {
+export const Relatorio = ({ real, chartmetric = null, artista }: Props) => {
+  const { sessao } = useSessao();
+  const [gerando, setGerando] = useState(false);
   const perfil = real?.profile;
   const padrao = real?.pattern;
   const altas = altasForPattern(padrao);
 
-  const cidades = useMemo(
-    () => (chartmetric?.top_cities ?? []) as { name: string; country: string; listeners: number }[],
-    [chartmetric],
-  );
-  const paises = useMemo(
-    () => (chartmetric?.audience?.top_countries ?? []) as { name: string; listeners?: number | null }[],
-    [chartmetric],
-  );
-  const playlists = useMemo(
-    () => (chartmetric?.playlists?.top ?? []) as { name: string; followers?: number; editorial?: boolean }[],
-    [chartmetric],
-  );
+  const cidades = (chartmetric?.top_cities ?? []) as { name: string; country: string; listeners: number }[];
+  const paises = (chartmetric?.audience?.top_countries ?? []) as { name: string; listeners?: number | null }[];
+  const playlists = (chartmetric?.playlists?.top ?? []) as { name: string; followers?: number; editorial?: boolean }[];
+
+  const baixarOPdf = async () => {
+    if (!real || gerando) return;
+    setGerando(true);
+    try {
+      const usuario = sessao?.user;
+      const meta = (usuario?.user_metadata ?? {}) as { full_name?: string; name?: string };
+      await baixarDiagnostico({
+        realIndex: real as never,
+        chartmetric,
+        artistName: artista?.nome || 'artista',
+        avatarSrc: artista?.foto || undefined,
+        // A autoria sai do NÚCLEO: o `docId` precisa ser o mesmo que a web imprime para o mesmo
+        // diagnóstico, senão ele deixa de servir de referência no suporte.
+        autoria: autoriaDoDocumento({
+          email: usuario?.email,
+          nome: meta.full_name || meta.name,
+          artistId: artista?.id,
+          calculadoEm: (real as Record<string, any>).computedAt,
+          vinculo: artista?.vinculo,
+        }),
+      });
+    } catch (e: any) {
+      Alert.alert('Não consegui gerar o PDF', e?.message || 'Tente de novo em instantes.');
+    } finally {
+      setGerando(false);
+    }
+  };
 
   const compartilhar = () => {
     if (!perfil) return;
@@ -259,10 +285,24 @@ export const Relatorio = ({ real, chartmetric = null }: Props) => {
           </View>
         )}
 
-        {/* Baixar o PDF é da web: ele é montado com html2canvas sobre a página inteira, e
-            não existe página aqui. Compartilhar existe, e é o que a pessoa faz com ele. */}
+        {/* O PDF é o MESMO deck da web, impresso a partir do HTML do núcleo — aqui ele sai com
+            texto de verdade, e não como foto de tela. */}
         <View style={estilos.cartao}>
-          <Text style={estilos.chamada}>Compartilhe seu diagnóstico</Text>
+          <Text style={estilos.chamada}>Leve seu diagnóstico</Text>
+          <Pressable
+            style={[estilos.baixar, gerando && estilos.baixarApagado]}
+            onPress={baixarOPdf}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: gerando }}
+            accessibilityLabel="Baixar o diagnóstico em PDF"
+          >
+            {gerando
+              ? <ActivityIndicator size="small" color={COR.sobrePrimaria} />
+              : <Feather name="download" size={15} color={COR.sobrePrimaria} />}
+            <Text style={estilos.baixarTexto}>
+              {gerando ? 'Gerando…' : 'Baixar diagnóstico (PDF)'}
+            </Text>
+          </Pressable>
           <Pressable
             style={estilos.compartilhar}
             onPress={compartilhar}
@@ -270,11 +310,8 @@ export const Relatorio = ({ real, chartmetric = null }: Props) => {
             accessibilityLabel="Compartilhar diagnóstico"
           >
             <Feather name="share-2" size={15} color={COR.primaria} />
-            <Text style={estilos.compartilharTexto}>Compartilhar</Text>
+            <Text style={estilos.compartilharTexto}>Compartilhar em texto</Text>
           </Pressable>
-          <Text style={estilos.notaDoPdf}>
-            O PDF completo do diagnóstico é gerado na web.
-          </Text>
         </View>
 
         <View style={estilos.cartao}>
@@ -411,6 +448,13 @@ const estilos = StyleSheet.create({
     backgroundColor: COR.superficie,
   },
   compartilharTexto: { fontSize: 13.5, fontWeight: '700', color: COR.primaria },
+  baixar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 12, paddingHorizontal: 20, borderRadius: RAIO.campoDeEntrada,
+    backgroundColor: COR.primaria, marginBottom: 10,
+  },
+  baixarApagado: { opacity: 0.6 },
+  baixarTexto: { fontSize: 14, fontWeight: '800', color: COR.sobrePrimaria },
   notaDoPdf: { fontSize: 11.5, lineHeight: 17, color: COR_DIAGNOSTICO.fonte },
 
   assinaNome: { fontSize: 22, fontWeight: '800', letterSpacing: -0.22, color: COR_DIAGNOSTICO.titulo },
