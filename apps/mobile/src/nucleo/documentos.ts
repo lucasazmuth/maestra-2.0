@@ -15,6 +15,9 @@ import {
 // O arquivo nasce com um nome temporário do sistema; renomeamos para o nome do artista antes de
 // entregar, porque é esse nome que a pessoa vê ao salvar em Arquivos ou mandar no WhatsApp.
 
+/** A folha A4, em pontos — a mesma medida que o HTML do núcleo desenha em pixels. */
+const A4 = { largura: 595, altura: 842 } as const;
+
 /** O nome do arquivo, no mesmo molde da web: `diagnostico-nome-do-artista.pdf`. */
 export const nomeDoArquivo = (artista: string) =>
   `diagnostico-${(artista || 'artista').toLowerCase().trim().replace(/\s+/g, '-')}.pdf`;
@@ -26,8 +29,14 @@ export const nomeDoArquivo = (artista: string) =>
  * para onde a pessoa quiser.
  */
 export const baixarDiagnostico = async (dados: DadosDoDocumento): Promise<void> => {
+  // O TAMANHO DA FOLHA vem daqui, não do `@page` do CSS: o WKWebView imprime no papel que a API
+  // manda e ignora a regra da folha de estilo. Sem isto ele usa Carta (612×792pt), que é mais
+  // BAIXA que o A4 — cada página do deck vazava para uma segunda, e o PDF saía com 24 páginas,
+  // metade delas em branco.
   const { uri } = await Print.printToFileAsync({
     html: montarDocumentoDoDiagnostico(dados),
+    width: A4.largura,
+    height: A4.altura,
     base64: false,
   });
 

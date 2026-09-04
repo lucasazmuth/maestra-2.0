@@ -41,8 +41,18 @@ const ESTILO = `
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { margin: 0; font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; }
+  /*
+    A folha é A4 (595×842pt). Em impressão o WebKit converte 1px em 0,75pt, então a página é
+    desenhada em 793×1120px — 594,75×840pt, dentro da folha com uma sobra de menos de um ponto.
+    Números maiores (os 794×1123px que o A4 tem a 96dpi) estouram a folha por frações de ponto,
+    e cada página do deck vaza para uma segunda: o PDF sai com 24 páginas em vez de 12, metade
+    delas em branco.
+
+    O tamanho do PAPEL não vem daqui: a regra @page acima é ignorada na impressão do WKWebView,
+    e quem manda é a chamada do expo-print (ver nucleo/documentos.ts, no app).
+  */
   .pg {
-    width: 794px; height: 1123px; background: #fff; color: ${T.body};
+    width: 793px; height: 1120px; background: #fff; color: ${T.body};
     padding: 60px 64px; display: flex; flex-direction: column; overflow: hidden;
     page-break-after: always; position: relative;
   }
