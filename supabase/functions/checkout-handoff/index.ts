@@ -30,9 +30,20 @@ const SITE = Deno.env.get('SITE_URL') ?? 'https://www.maestramanager.com'
 
 /** Os destinos permitidos, resolvidos AQUI. O cliente escolhe o nome, nunca a URL. */
 const destinos = {
-  assinatura: () => `${SITE}/assinatura`,
-  desbloqueio: (artistId: string) => `${SITE}/artists/${artistId}/desbloquear`,
+  assinatura: () => '/assinatura',
+  desbloqueio: (artistId: string) => `/artists/${artistId}/desbloquear`,
 } as const
+
+/**
+ * O link mágico volta SEMPRE em /auth/callback, levando o destino em `next`.
+ *
+ * Mandar direto para a página de destino não funciona: ela é rota protegida, o `RequireAuth`
+ * redireciona para /login antes de o guardião de hash rodar (ele vive num efeito do React), e a
+ * troca de rota descarta os tokens que vieram no `#`. O /auth/callback é público e existe
+ * exatamente para estabelecer a sessão.
+ */
+const retorno = (caminho: string) =>
+  `${SITE}/auth/callback?next=${encodeURIComponent(caminho)}`
 
 const ehUuid = (v: unknown): v is string =>
   typeof v === 'string'
@@ -66,9 +77,9 @@ serve(async (req) => {
       const { data: artista } = await comOUsuario
         .from('artists').select('id').eq('id', corpo.artistId).maybeSingle()
       if (!artista) return json({ error: 'Perfil não encontrado.' }, 404)
-      redirectTo = destinos.desbloqueio(corpo.artistId)
+      redirectTo = retorno(destinos.desbloqueio(corpo.artistId))
     } else {
-      redirectTo = destinos.assinatura()
+      redirectTo = retorno(destinos.assinatura())
     }
 
     const comServico = createClient(
@@ -90,7 +101,12 @@ serve(async (req) => {
       // Sem link mágico o app ainda abre o destino: a pessoa entra na conta à mão. Pior, mas
       // não é beco sem saída.
       console.error('[checkout-handoff] generateLink falhou:', error?.message)
-      return json({ url: redirectTo, autenticado: false })
+      // Sem sessão pronta, o /auth/callback não serve: manda para a página em si, e a pessoa
+      // entra na conta à mão.
+      const nu = destino === 'desbloqueio'
+        ? `${SITE}${destinos.desbloqueio(corpo.artistId)}`
+        : `${SITE}${destinos.assinatura()}`
+      return json({ url: nu, autenticado: false })
     }
 
     return json({ url, autenticado: true })

@@ -4,9 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@maestra/core/lib/supabase';
 import { Spinner } from '../../components/spinner/spinner';
 
-// Retorno do login social (Google). O client global tem detectSessionInUrl:false (por causa do
-// recovery de senha, que lê o hash manualmente), então estabelecemos a sessão aqui, escopado a
-// esta rota. O onAuthStateChange global reage à sessão e popula o Redux; depois entramos no app.
+// Retorno do login social (Google) e do REPASSE DO APP para o checkout. O client global tem
+// detectSessionInUrl:false (por causa do recovery de senha, que lê o hash manualmente), então
+// estabelecemos a sessão aqui, escopado a esta rota. O onAuthStateChange global reage à sessão e
+// popula o Redux; depois entramos no app.
+//
+// Por que o repasse do app aponta para CÁ e não direto para o destino: numa rota protegida, o
+// `RequireAuth` redireciona para /login antes de o guardião de hash rodar (ele vive num efeito),
+// e a troca de rota descarta os tokens. Aqui a rota é pública e o hash sobrevive.
 //
 // Este projeto usa o fluxo IMPLICIT: os tokens voltam no HASH (#access_token=...&refresh_token=...).
 // Também tratamos ?code= (PKCE) como fallback, caso o fluxo do projeto mude no futuro.
@@ -32,7 +37,16 @@ const AuthCallback: FC = () => {
     const refresh_token = hashParams.get('refresh_token');
     const code = query.get('code');
 
-    const done = () => navigate('/artists', { replace: true }); // sai da URL com o hash/token
+    // Para onde ir depois. O repasse do app manda `?next=/assinatura` — quem sai do aplicativo
+    // para pagar precisa cair NO CHECKOUT, não na lista de perfis.
+    //
+    // Só caminho relativo, e nunca `//`: `next=https://outro.site` ou `next=//outro.site` faria
+    // desta rota um redirecionador aberto, com a sessão recém-criada na bagagem.
+    const proximo = query.get('next');
+    const destino = proximo && proximo.startsWith('/') && !proximo.startsWith('//')
+      ? proximo
+      : '/artists';
+    const done = () => navigate(destino, { replace: true }); // sai da URL com o hash/token
     const fail = () =>
       setError('Não foi possível concluir o login com Google. Tente novamente.');
 
