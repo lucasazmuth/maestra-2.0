@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View,
+  ActivityIndicator, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView,
+  StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -32,6 +33,7 @@ import { Metodos, type MeioDePagamento } from '@/casca/checkout/Metodos';
 import { Parcelas } from '@/casca/checkout/Parcelas';
 import { Relatorio } from '@/casca/diagnostico/Relatorio';
 import { MaestraMarca } from '@/icones';
+import { MODO_DE_VENDA, VENDE_DESBLOQUEIO_NO_APP, irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
 
 // DESBLOQUEIO DO PERFIL — a tela que cobra.
@@ -43,10 +45,14 @@ import { useSessao } from '@/nucleo/sessao';
 // Regras, validações e cobrança vêm todas do NÚCLEO — `useCheckoutForm`, `useCoupon` e os thunks
 // da Asaas são os mesmos das duas telas de checkout da web. O que existe aqui é o desenho.
 //
-// ⚠️ COBRANÇA FORA DA APP STORE. A Apple exige compra dentro do app (StoreKit) para conteúdo
-// digital consumido no app; um checkout próprio como este costuma ser recusado na revisão
-// (diretriz 3.1.1). A tela foi pedida assim e está completa; trocar a cobrança por StoreKit
-// depois muda o `handlePagar` e o resumo, não o resto.
+// ⚠️ O CHECKOUT NÃO RODA NO APP. A 3.1.1 alcança o desbloqueio do mesmo jeito que a assinatura
+// — o texto dela cita "unlocking a full version" ao lado de "subscriptions" —, então a cobrança
+// acontece no navegador, pelo repasse autenticado (`nucleo/loja`). O checkout continua inteiro
+// aqui atrás de `VENDE_DESBLOQUEIO_NO_APP`, porque a web e o Android o usam; ligar de volta é
+// uma linha.
+//
+// O que fica no app: o diagnóstico, o que o desbloqueio libera e o resgate de código de acesso,
+// que não é compra.
 
 type Etapa = 'diagnostico' | 'pagamento' | 'pix' | 'pronto';
 
@@ -354,8 +360,94 @@ export default function Desbloquear() {
               )
           )}
 
-          {/* ── O pagamento ─────────────────────────────────────────────── */}
-          {etapa === 'pagamento' && (
+          {/* ── O pagamento, quando ele NÃO acontece aqui ───────────────── */}
+          {etapa === 'pagamento' && !VENDE_DESBLOQUEIO_NO_APP && (
+            <>
+              {!!real && (
+                <Pressable
+                  style={estilos.voltar}
+                  onPress={() => setEtapa('diagnostico')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Voltar ao diagnóstico"
+                >
+                  <Feather name="arrow-left" size={16} color={COR.primaria} />
+                  <Text style={estilos.voltarTexto}>Voltar ao diagnóstico</Text>
+                </Pressable>
+              )}
+
+              <View style={estilos.chamada}>
+                <Text style={estilos.chamadaTitulo}>
+                  {CHAMADA_DO_DESBLOQUEIO.titulo(artista?.name)}
+                </Text>
+                <Text style={estilos.chamadaApoio}>{CHAMADA_DO_DESBLOQUEIO.apoio}</Text>
+              </View>
+
+              <View style={estilos.conta}>
+                <View style={estilos.contaDisco}>
+                  <Feather name="check" size={15} color={COR.primaria} />
+                </View>
+                <Text style={estilos.contaEmail} numberOfLines={1}>{email}</Text>
+              </View>
+
+              <View style={estilos.painel}>
+                <Text style={estilos.painelTitulo}>O que você libera</Text>
+                {O_QUE_LIBERA.map((item) => (
+                  <View key={item} style={estilos.libera}>
+                    <Feather name="check" size={15} color={COR.primaria} />
+                    <Text style={estilos.liberaTexto}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* O código de acesso NÃO é compra: é uma cortesia que libera o perfil sem
+                  cobrança, e por isso continua acontecendo aqui dentro. */}
+              <View style={estilos.painel}>
+                <Text style={estilos.painelTitulo}>Tem um código de acesso?</Text>
+                <View style={estilos.codigo}>
+                  <TextInput
+                    style={estilos.codigoCampo}
+                    value={cupom.input}
+                    onChangeText={cupom.setInput}
+                    placeholder="Digite o código"
+                    placeholderTextColor={COR_DIAGNOSTICO.criarEspacoReservado}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    accessibilityLabel="Código de acesso"
+                  />
+                  <Pressable
+                    style={[estilos.codigoBotao, resgatando && estilos.apagado]}
+                    onPress={aplicarCodigo}
+                    disabled={resgatando}
+                    accessibilityRole="button"
+                    accessibilityLabel="Resgatar código"
+                  >
+                    {resgatando
+                      ? <ActivityIndicator size="small" color={COR.primaria} />
+                      : <Text style={estilos.codigoBotaoTexto}>Resgatar</Text>}
+                  </Pressable>
+                </View>
+                {!!erroDoPagamento && <Text style={estilos.erro}>{erroDoPagamento}</Text>}
+              </View>
+
+              {MODO_DE_VENDA === 'link-externo' ? (
+                <Pressable
+                  style={estilos.continuar}
+                  onPress={() => void irParaOCheckout({ destino: 'desbloqueio', artistId: String(id) })}
+                  accessibilityRole="button"
+                  accessibilityLabel="Liberar este perfil"
+                >
+                  <Text style={estilos.continuarTexto}>Liberar este perfil</Text>
+                </Pressable>
+              ) : (
+                <Text style={estilos.forasDoApp}>
+                  A liberação deste perfil é feita na sua conta Maestra, pelo navegador.
+                </Text>
+              )}
+            </>
+          )}
+
+          {/* ── O checkout, para as superfícies que cobram ───────────────── */}
+          {etapa === 'pagamento' && VENDE_DESBLOQUEIO_NO_APP && (
             <>
               {!!real && (
                 <Pressable
@@ -474,7 +566,7 @@ export default function Desbloquear() {
           )}
 
           {/* ── O PIX ───────────────────────────────────────────────────── */}
-          {etapa === 'pix' && !!pix?.qrCode && (
+          {etapa === 'pix' && VENDE_DESBLOQUEIO_NO_APP && !!pix?.qrCode && (
             <View style={estilos.pix}>
               <Text style={estilos.pixFala}>
                 Escaneia o PIX abaixo. Assim que cair, eu te levo direto pro planejamento.
@@ -602,6 +694,25 @@ const estilos = StyleSheet.create({
 
   topoDoCarrinho: { marginBottom: 20 },
   parcelas: { marginTop: 16 },
+  libera: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 10 },
+  liberaTexto: { flex: 1, fontSize: 14, lineHeight: 20, color: COR_DIAGNOSTICO.texto },
+  codigo: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12 },
+  codigoCampo: {
+    flex: 1, height: 48, paddingHorizontal: 14, borderRadius: RAIO.campo,
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.criarCampoContorno,
+    backgroundColor: COR.superficie, fontSize: 15, color: COR_DIAGNOSTICO.titulo,
+  },
+  codigoBotao: {
+    height: 48, paddingHorizontal: 18, borderRadius: RAIO.campo, alignItems: 'center',
+    justifyContent: 'center', borderWidth: 1, borderColor: COR.primaria,
+  },
+  codigoBotaoTexto: { fontSize: 14, fontWeight: '800', color: COR.primaria },
+  apagado: { opacity: 0.5 },
+  erro: { fontSize: 13, lineHeight: 19, color: COR.erro, marginTop: 10 },
+  forasDoApp: {
+    fontSize: 13, lineHeight: 19, textAlign: 'center', color: COR_DIAGNOSTICO.texto,
+    marginTop: 4,
+  },
   legal: { fontSize: 12, lineHeight: 18, color: COR_CHECKOUT.texto },
   legalLink: { color: COR_CHECKOUT.texto, textDecorationLine: 'underline', fontWeight: '600' },
 
