@@ -12,8 +12,10 @@
       "supportsTablet": true,
       "usesAppleSignIn": true,
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "A Maestra abre suas fotos para você escolher a capa da música."
-      }
+        "NSPhotoLibraryUsageDescription": "A Maestra abre suas fotos para você escolher a capa da música.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
@@ -40,11 +42,17 @@
         }
       ],
       "expo-web-browser",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false
+        }
+      ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "A Maestra abre suas fotos para você escolher a capa da música."
+          "photosPermission": "A Maestra abre suas fotos para você escolher a capa da música.",
+          "cameraPermission": false
         }
       ],
       "expo-document-picker"
