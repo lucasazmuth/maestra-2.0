@@ -8,11 +8,11 @@ import { supabase } from '@maestra/core/lib/supabase';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import { WIZARD_TOTAL_STEPS } from '@maestra/core/constants/maestra';
 import { NytaBubble, NytaCardRow, TypingIndicator, UserBubble, WidgetSlot } from './ChatMessage';
-import { GUIDED_OPENTEXT, SAY, type OpenTextField } from './nytaPersona';
-import { fecharNegritoAberto, perguntaEmDestaque, placeholderDaPergunta } from './pergunta';
-import { buildOpening, nextBeat, currentStepIndex, STEP_LABELS, type PrepareAction, type WidgetSpec } from './script';
+import { GUIDED_OPENTEXT, SAY, type OpenTextField } from '@maestra/core/constants/nytaPersona';
+import { fecharNegritoAberto, perguntaEmDestaque, placeholderDaPergunta } from '@maestra/core/wizard/pergunta';
+import { buildOpening, nextBeat, currentStepIndex, STEP_LABELS, type PrepareAction, type WidgetSpec } from '@maestra/core/wizard/script';
 import { YouTubeEmbed } from '../../../components/YouTubeEmbed';
-import { BEAT_VIDEOS, VIDEO_ABERTURA } from '../beatVideos';
+import { BEAT_VIDEOS, VIDEO_ABERTURA } from '@maestra/core/wizard/videos';
 import {
   GENDER_OPTIONS,
   MISSION_FINANCIAL_OPTIONS,
@@ -21,9 +21,9 @@ import {
   deriveRecognitionTags,
   missionFinancialSuffix,
   seedValues,
-} from './wizardData';
-import * as engine from '../method/engines';
-import { SWOT_INTERNAL, SWOT_OPPORTUNITIES, SWOT_THREATS } from '../method/swotItems';
+} from '@maestra/core/wizard/dados';
+import * as engine from '@maestra/core/wizard/motores';
+import { SWOT_INTERNAL, SWOT_OPPORTUNITIES, SWOT_THREATS } from '@maestra/core/wizard/swot';
 import {
   FinalSummaryCard,
   GenderChoice,

@@ -8,7 +8,7 @@ import { useArtist } from '@maestra/core/hooks/useArtist';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { Spinner } from '../../components/spinner/spinner';
 import modalStyles from '../../components/StandardModal.module.scss';
-import { MVP_ACCESS_LEVEL_OPTIONS } from '@maestra/core/constants/maestra';
+import { ACCESS_LEVEL_HINTS, MVP_ACCESS_LEVEL_OPTIONS } from '@maestra/core/constants/maestra';
 import * as membersDb from '@maestra/core/services/db/members';
 import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
 import type { ArtistMember, AccessLevel } from '@maestra/core/interfaces/maestra';
@@ -110,16 +110,6 @@ const Team: FC = () => {
     setter(semFull.includes(level) ? semFull.filter((item) => item !== level) : [...semFull, level]);
   };
 
-  // O que cada módulo abre, em uma linha — "Equipe" ou "Plano de ação" sozinhos não dizem se a
-  // pessoa só vê ou também mexe.
-  const ACCESS_HINTS: Partial<Record<AccessLevel, string>> = {
-    plan: 'Ver e editar tarefas e prazos',
-    catalog: 'Músicas, versões e Espaço JAM',
-    agenda: 'Compromissos e datas',
-    team: 'Convidar e remover pessoas',
-    full: 'Todos os módulos, inclusive os que entrarem depois',
-  };
-
   const renderAccessOptions = (
     selected: AccessLevel[],
     setter: (next: AccessLevel[]) => void,
@@ -140,7 +130,7 @@ const Team: FC = () => {
         >
           <span className={styles.permissionLabel}>
             {label}
-            <small>{ACCESS_HINTS[id]}</small>
+            <small>{ACCESS_LEVEL_HINTS[id]}</small>
           </span>
           <i aria-hidden='true' />
         </button>

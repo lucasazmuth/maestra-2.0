@@ -14,20 +14,27 @@ import { COR } from '@maestra/core/constants/design';
 // nasceram com o roxo institucional como cor de ação e com uma escala de cinzas que não existe
 // em lugar nenhum do produto.
 
+// O emblema da Nyta é a única exceção: o degradê roxo dele (#a143ff -> #7420f1) é a marca da
+// Nyta, vem literal do SVG do design e não existe como token. Ele não fica solto por isso —
+// `src/__tests__/emblemaNyta.test.ts`, no app web, compara os dois arquivos.
+const LIBERADOS = ['EmblemaNyta.tsx'];
+
 const telas = () => {
-  const raiz = path.join(__dirname, '..');
+  // A casca entra junto: o cabeçalho e a barra de abas são onde as cores da navegação vivem
+  // agora, e deixá-los de fora seria abrir a porta que este teste existe pra fechar.
+  const raizes = [path.join(__dirname, '..'), path.join(__dirname, '..', '..', 'casca')];
   const achados: string[] = [];
   const andar = (dir: string) => {
     for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
       const caminho = path.join(dir, item.name);
       if (item.isDirectory()) {
         if (item.name !== '__tests__') andar(caminho);
-      } else if (item.name.endsWith('.tsx')) {
+      } else if (item.name.endsWith('.tsx') && !LIBERADOS.includes(item.name)) {
         achados.push(caminho);
       }
     }
   };
-  andar(raiz);
+  raizes.forEach(andar);
   return achados;
 };
 

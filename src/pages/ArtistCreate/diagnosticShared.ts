@@ -1,4 +1,4 @@
-import { fmtBRL } from './realCopy';
+import { fmtBRL } from '@maestra/core/constants/realCopy';
 
 export interface Chartmetric {
   monthly_listeners?: number | null;

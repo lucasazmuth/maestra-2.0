@@ -3,8 +3,8 @@ import { FiArrowRight } from 'react-icons/fi';
 
 import { YouTubeEmbed } from '../../components/YouTubeEmbed';
 import { NytaAvatar } from './chat/nytaPersona';
-import { STEP_LABELS } from './chat/script';
-import { VIDEO_CONVITE } from './beatVideos';
+import { STEP_LABELS } from '@maestra/core/wizard/script';
+import { VIDEO_CONVITE } from '@maestra/core/wizard/videos';
 
 // Porta de entrada do Planejamento Estratégico.
 //

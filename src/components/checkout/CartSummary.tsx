@@ -3,6 +3,7 @@ import { Spin, Tooltip } from 'antd';
 import { FiLock, FiCheck, FiAlertCircle } from 'react-icons/fi';
 import { LoadingOutlined } from '@ant-design/icons';
 
+import { RECEBEDOR } from '@maestra/core/constants/checkout';
 import styles from './checkout.module.scss';
 
 export interface CartTimelineItem {
@@ -145,7 +146,7 @@ export const CartSummary: FC<Props> = ({
     <div className={styles.receiverNote}>
       Na fatura do cartão e no extrato, a cobrança aparece como
       <br />
-      <strong>MUSIC RIO ACADEMY LTDA</strong> · CNPJ 22.826.985/0001-41
+      <strong>{RECEBEDOR.razaoSocial}</strong> · CNPJ {RECEBEDOR.cnpj}
     </div>
   </div>
 );

@@ -2,8 +2,7 @@ import { CSSProperties, FC, useEffect, useRef } from 'react';
 import lottie from 'lottie-web';
 
 import shineData from '../../assets/badge-shine.json';
-import { paintShine } from './paintDiamond';
-import type { PlanTone } from './Diamond';
+import { SHINE_HEX, paintShine, type PlanTone } from '@maestra/core/constants/planTagLottie';
 
 // Brilho que atravessa a pílula do selo — extraído do mesmo mecanismo do Lottie de referência
 // (duas barras claras deslizando em looping), mas sem o fundo laranja fixo nem o texto "Premium"
@@ -12,8 +11,6 @@ import type { PlanTone } from './Diamond';
 // A primeira versão usava barras brancas com mix-blend-mode: overlay, que sume sobre um fundo já
 // quase branco (a pílula tem só 8-16% de opacidade de cor). Em vez disso, cada tom tinge as
 // barras com a própria cor clara e sobe a opacidade — visível nos três estados em blend normal.
-const SHINE_HEX: Record<PlanTone, string> = { pro: '#5b8cff', pending: '#f0b429', free: '#c3d0e4' };
-
 export const ShineOverlay: FC<{ tone: PlanTone; className?: string; style?: CSSProperties }> = ({ tone, className, style }) => {
   const ref = useRef<HTMLSpanElement>(null);
 

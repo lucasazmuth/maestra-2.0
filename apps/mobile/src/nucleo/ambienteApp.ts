@@ -1,3 +1,4 @@
+import { fetch as buscarComStream } from 'expo/fetch';
 import * as Linking from 'expo-linking';
 import { createMMKV, type MMKV } from 'react-native-mmkv';
 
@@ -29,11 +30,18 @@ const emMemoria: Armazenamento = {
 };
 
 /**
- * Liga o nucleo ao aparelho. Precisa rodar antes de qualquer tela.
+ * Liga o nucleo ao aparelho.
  *
- * O `ambiente()` guarda o que resolveu na primeira chamada: se alguem o consultar antes daqui,
- * fica com o padrao em memoria e a sessao nao sobrevive ao fechamento do app. Por isso a
- * chamada mora no escopo de modulo do layout raiz, e nao dentro de um efeito.
+ * O `ambiente()` guarda o que resolveu na PRIMEIRA chamada. Quem chega primeiro nao e uma tela:
+ * e o proprio `supabase-js`, que ao ser criado ja dispara a recuperacao da sessao
+ * (`_recoverAndRefresh` -> `getItem`) — e `lib/supabase.ts` cria o cliente no import. Ou seja,
+ * a primeira leitura da sessao acontece durante a AVALIACAO DOS IMPORTS.
+ *
+ * Por isso o registro roda como efeito colateral deste modulo, e o entry do app o importa ANTES
+ * do `expo-router/entry` (ver `index.js`). Chamar do layout raiz nao bastava: em ES modules os
+ * imports sao avaliados antes do corpo do modulo, entao o `store`/`supabase` ja tinham lido.
+ *
+ * Continua exportada para os testes, que precisam registrar de novo depois de `reiniciarAmbiente`.
  */
 export const ligarAmbienteDoApp = (): void => {
   configurarAmbiente({
@@ -42,5 +50,14 @@ export const ligarAmbienteDoApp = (): void => {
     // O retorno do OAuth e do link de convite: no app e o deep link, nao uma URL http.
     // `createURL` da o esquema certo em desenvolvimento (exp://) e em producao (maestra://).
     origemDoApp: Linking.createURL('/').replace(/\/$/, ''),
+    // O `fetch` do React Native devolve `Response` SEM `body`: quem le a resposta em pedacos —
+    // a Nyta — receberia o texto inteiro so no fim, sem erro nenhum, parecendo lentidao. O
+    // `expo/fetch` tem `body` como `ReadableStream`, e o Expo ja traz o `TextDecoder` que o
+    // leitor usa.
+    buscar: buscarComStream as unknown as typeof fetch,
   });
 };
+
+// Efeito colateral no import: e o unico jeito de chegar antes do `supabase-js`, que le a sessao
+// durante a avaliacao dos imports. Ver o comentario acima.
+ligarAmbienteDoApp();

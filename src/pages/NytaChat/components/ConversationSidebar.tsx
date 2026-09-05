@@ -6,6 +6,8 @@ import { FiArrowLeft, FiEdit2, FiMoreHorizontal, FiPlus, FiTrash2 } from 'react-
 import type { NytaConversationSummary } from '@maestra/core/hooks/useNytaConversations';
 import { useAppSelector } from '@maestra/core/store/store';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
+// A regra mora no núcleo desde que o app nativo ganhou a mesma lista.
+import { dataDaConversa as shortDate } from '@maestra/core/nucleo/dataDaConversa';
 import './ConversationSidebar.scss';
 
 // Histórico de conversas da Nyta, na lateral da página em tela cheia.
@@ -24,18 +26,6 @@ interface ConversationSidebarProps {
   // `open` só tem efeito nessa faixa: no desktop a coluna é fixa e o ignora.
   open?: boolean;
 }
-
-// Data curta como as pessoas leem numa lista: hoje vira hora, esta semana vira o dia da semana,
-// o resto vira dia/mês.
-const shortDate = (iso: string): string => {
-  const d = new Date(iso);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  if (sameDay) return new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(d);
-  const days = (now.getTime() - d.getTime()) / 86400000;
-  if (days < 7) return new Intl.DateTimeFormat('pt-BR', { weekday: 'short' }).format(d).replace('.', '');
-  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(d);
-};
 
 export const ConversationSidebar: FC<ConversationSidebarProps> = ({
   conversations, activeId, onSelect, onNew, onRename, onDelete, open = false,

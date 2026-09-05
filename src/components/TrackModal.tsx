@@ -6,7 +6,8 @@ import dayjs from 'dayjs';
 
 import type { CatalogItem, CatalogVersion, Split, MusicGenre } from '@maestra/core/interfaces/maestra';
 import { CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '@maestra/core/constants/maestra';
-import { readAudioDuration, titleFromFileName } from '../lib/audioMeta';
+import { readAudioDuration } from '../lib/audioMeta';
+import { tituloDoArquivo as titleFromFileName } from '@maestra/core/services/armazenamento';
 import { uploadFile, CATALOG_BUCKET } from '../lib/storage';
 import * as catalogDb from '@maestra/core/services/db/catalog';
 import modalStyles from './StandardModal.module.scss';

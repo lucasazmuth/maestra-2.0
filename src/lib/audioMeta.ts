@@ -19,5 +19,8 @@ export const readAudioDuration = (file: File): Promise<string | null> =>
     audio.src = url;
   });
 
-export const titleFromFileName = (name: string) =>
-  name.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+// O nome tirado do arquivo saiu daqui: a regra mora no núcleo (`tituloDoArquivo`), porque o app
+// nativo batiza a versão do mesmo jeito, e duas cópias dela viravam dois nomes para a mesma
+// gravação. Quem precisa dela importa de lá — reexportar por aqui parecia inofensivo e não é: o
+// webpack do CRA não segue um `export ... from` que atravessa a fronteira do pacote, e a tela
+// inteira para de compilar sem que o `tsc` reclame de nada.

@@ -12,7 +12,12 @@ import { searchSpotifyArtists, type SpotifyArtistSearchResult } from '@maestra/c
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import { SpotifyLottie } from '../../components/SpotifyLottie';
 import type { RealIndex } from '@maestra/core/interfaces/maestra';
-import type { ImprensaTipo, ImprensaPorte } from '@maestra/core/services/realEngine';
+// O roteiro do quiz mora no núcleo: o app nativo faz as MESMAS perguntas, na mesma ordem, com
+// as mesmas chaves — é o que a edge `artist-diagnostic` lê dos dois lados.
+import {
+  IMPRENSA_PORTES, IMPRENSA_TIPOS, QUIZ, REVENUE_SOURCES,
+  perguntaAnterior, proximaPergunta,
+} from '@maestra/core/constants/quizDoDiagnostico';
 import { useCanCreateArtist } from '@maestra/core/hooks/useCanCreateArtist';
 import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
 import { formatRemainingTime } from '@maestra/core/utils/rateLimitCalc';
@@ -26,102 +31,6 @@ type Step = 'perfil' | 'intro' | 'quiz' | 'analisando' | 'diagnostico';
 
 const REDUCE_MOTION =
   typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-
-// Roteiro do Diagnóstico REAL v3 (autorrelato). As chaves casam com os campos de RealInputsV3
-// consumidos pelo motor (src/services/realEngine) e mapeados no edge (buildRealInputsV3).
-type QuizValue = string | number | boolean;
-type QuizFieldType = 'int' | 'currency' | 'select' | 'revenue' | 'matrix';
-type QuizKey =
-  | 'vinculo'
-  | 'showsPerMonth' | 'cache' | 'revenueSources' | 'investimento'
-  | 'temCnpj' | 'temEmpresario' | 'premios'
-  | 'imprensaRepercussao' | 'imprensaMatrix' | 'imprensaFrequencia'
-  | 'fazBilheteria' | 'pagantePct';
-interface QuizDef {
-  key: QuizKey;
-  q: string;
-  type: QuizFieldType;
-  placeholder?: string;
-  options?: { label: string; value: QuizValue }[];
-  // Pula a pergunta quando a condição é verdadeira (ex.: cachê só se faz shows).
-  skipIf?: (a: Record<string, any>) => boolean;
-}
-
-// Fontes da composição de receita fora-shows (§5.4) — a soma alimenta o E; as partes, a pizza.
-const REVENUE_SOURCES: { key: string; label: string }[] = [
-  { key: 'streaming', label: 'Streaming (Spotify, Deezer, YouTube…)' },
-  { key: 'direitos', label: 'Direitos (autorais, conexos, fonográficos)' },
-  { key: 'publi', label: 'Publicidade e patrocínio' },
-  { key: 'aulas', label: 'Aulas e cursos' },
-  { key: 'editais', label: 'Editais e prêmios em dinheiro' },
-  { key: 'venda', label: 'Venda de produtos e merch' },
-  { key: 'outros', label: 'Outras fontes musicais' },
-];
-
-// Matriz de imprensa (§7.3) — tipo de veículo × porte. O usuário marca onde já apareceu.
-const IMPRENSA_TIPOS: { key: ImprensaTipo; label: string }[] = [
-  { key: 'imprensa', label: 'Imprensa (jornal, revista, portal)' },
-  { key: 'tv', label: 'Veículos de TV' },
-  { key: 'influenciadores', label: 'Influenciadores do nicho musical' },
-  { key: 'youtube', label: 'Canais no YouTube' },
-  { key: 'podcasts', label: 'Podcasts' },
-  { key: 'blogs', label: 'Blogs especializados' },
-];
-const IMPRENSA_PORTES: { key: ImprensaPorte; label: string }[] = [
-  { key: 'pequeno', label: 'Pequeno' },
-  { key: 'medio', label: 'Médio' },
-  { key: 'grande', label: 'Grande' },
-];
-
-const SIM_NAO: { label: string; value: QuizValue }[] = [{ label: 'Sim', value: true }, { label: 'Não', value: false }];
-
-// Declaração de vínculo com o artista. Primeira pergunta de propósito: enquadra o resto do
-// questionário e é registrada com IP e a versão dos Termos vigente (ver a edge artist-diagnostic).
-//
-// NÃO BLOQUEIA: a última opção deixa qualquer pessoa seguir sem declarar vínculo. O objetivo não é
-// impedir — é que quem forjar um diagnóstico de terceiro tenha afirmado algo, numa data, sob os
-// Termos daquele momento. "Apenas conhecendo" também é informação: sai no PDF como tal.
-const VINCULO_OPCOES: { label: string; value: QuizValue }[] = [
-  { label: 'Sou o artista', value: 'sou_o_artista' },
-  { label: 'Faço parte da equipe do artista', value: 'equipe' },
-  { label: 'Represento o artista (empresário, produtor, gravadora)', value: 'representante' },
-  { label: 'Estou apenas conhecendo a ferramenta', value: 'conhecendo' },
-];
-
-// Receita do E = (shows × cachê) + soma das fontes fora shows. Estrutura (CNPJ/empresário) modula.
-const QUIZ: QuizDef[] = [
-  { key: 'vinculo', type: 'select', q: 'Antes de começar: qual a sua relação com esse artista?', options: VINCULO_OPCOES },
-  { key: 'showsPerMonth', type: 'int', q: 'Quantos shows você costuma fazer por mês?', placeholder: 'Ex: 4' },
-  { key: 'cache', type: 'currency', q: 'Qual o seu cachê médio por show?', placeholder: '0', skipIf: (a) => Number(a.showsPerMonth) <= 0 },
-  { key: 'revenueSources', type: 'revenue', q: 'Fora os shows, quanto você fatura por mês com música em cada fonte? (pode deixar em zero o que não se aplica)' },
-  { key: 'investimento', type: 'currency', q: 'Nos últimos 12 meses, quanto você investiu na sua carreira?', placeholder: '0' },
-  { key: 'temCnpj', type: 'select', q: 'Você tem CNPJ para suas atividades musicais?', options: SIM_NAO },
-  { key: 'temEmpresario', type: 'select', q: 'Você tem empresário/a?', options: SIM_NAO },
-  { key: 'premios', type: 'select', q: 'Qual o maior reconhecimento em premiações que você já teve?', options: [
-    { label: 'Nunca fui indicada nem premiada', value: 0 },
-    { label: 'Indicação a prêmio local/regional', value: 1 },
-    { label: 'Ganhei prêmio local/regional', value: 2 },
-    { label: 'Indicação a prêmio nacional', value: 3 },
-    { label: 'Ganhei prêmio nacional', value: 4 },
-    { label: 'Indicação a prêmio internacional', value: 5 },
-    { label: 'Ganhei prêmio internacional', value: 6 },
-  ] },
-  { key: 'imprensaRepercussao', type: 'select', q: 'Você já teve repercussão de mídia (imprensa, blogs, TV, influenciadores, podcasts) com seu trabalho musical?', options: SIM_NAO },
-  { key: 'imprensaMatrix', type: 'matrix', q: 'Onde seu trabalho já apareceu? Marque os tipos e portes de veículo.', skipIf: (a) => !a.imprensaRepercussao },
-  { key: 'imprensaFrequencia', type: 'select', q: 'Com que frequência seu trabalho aparece na mídia?', skipIf: (a) => !a.imprensaRepercussao, options: [
-    { label: 'Esporadicamente', value: 'esporadico' },
-    { label: 'Nos períodos de lançamento', value: 'lancamento' },
-    { label: 'Com frequência, de forma perene', value: 'perene' },
-  ] },
-  { key: 'fazBilheteria', type: 'select', q: 'Você faz shows de bilheteria em que seja a atração principal?', options: SIM_NAO },
-  { key: 'pagantePct', type: 'select', q: 'Em média, qual % do público dos seus shows é pagante?', skipIf: (a) => !a.fazBilheteria, options: [
-    { label: 'Até 50%', value: 'ate50' },
-    { label: '51% a 69%', value: '51-69' },
-    { label: '70% a 94%', value: '70-94' },
-    { label: '95% a 100%', value: '95-100' },
-  ] },
-];
-
 
 const ArtistCreate: FC = () => {
   const dispatch = useAppDispatch();
@@ -416,11 +325,7 @@ const ArtistCreate: FC = () => {
   };
 
   // Próximo índice pulando perguntas condicionais (ex.: cachê quando shows = 0).
-  const nextQuizIndex = (from: number) => {
-    let i = from;
-    while (i < QUIZ.length && QUIZ[i].skipIf?.(answers.current)) i += 1;
-    return i;
-  };
+  const nextQuizIndex = (from: number) => proximaPergunta(from, answers.current);
 
   const answerQuiz = (value: unknown) => {
     answers.current[QUIZ[quizIndex].key] = value;
@@ -435,11 +340,7 @@ const ArtistCreate: FC = () => {
   };
 
   // Índice ANTERIOR pulando as perguntas condicionais que não se aplicam (espelha o nextQuizIndex).
-  const prevQuizIndex = (from: number) => {
-    let i = from;
-    while (i >= 0 && QUIZ[i].skipIf?.(answers.current)) i -= 1;
-    return i;
-  };
+  const prevQuizIndex = (from: number) => perguntaAnterior(from, answers.current);
 
   const goBackQuiz = () => {
     const prev = prevQuizIndex(quizIndex - 1);
@@ -595,8 +496,13 @@ const ArtistCreate: FC = () => {
 
                     {/* Buscou e não achou. Acontece muito com nome curto ou comum ("BEA"), que
                         afunda na ordenação por relevância do Spotify. É o momento certo de
-                        contar que dá pra colar o link do perfil, que acha de forma exata. */}
-                    {!searching && !searchFailed && debounced.trim().length >= 3 && results.length === 0 && (
+                        contar que dá pra colar o link do perfil, que acha de forma exata.
+
+                        `!notice` porque escolher um perfil que já existe LIMPA os resultados e
+                        mantém o termo digitado: sem isto, os dois avisos apareciam juntos, e o
+                        "não achei esse artista" contradizia o "você já tem esse artista" logo
+                        abaixo dele. */}
+                    {!searching && !searchFailed && !notice && debounced.trim().length >= 3 && results.length === 0 && (
                       <div className={styles.dupeNotice}>
                         <FiAlertCircle className={styles.dupeNoticeIcon} />
                         <div className={styles.dupeNoticeText}>

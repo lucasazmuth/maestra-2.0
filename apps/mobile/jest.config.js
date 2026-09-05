@@ -17,6 +17,11 @@ module.exports = {
   // Vale a pena registrar o que ISTO NAO faz: os testes rodam inteiros do mesmo jeito; so a
   // saida do processo e forcada depois que tudo terminou.
   forceExit: true,
+  // O padrao do jest e 5s. Montar uma tela de React Native custa centenas de milissegundos, e
+  // com nove suites em paralelo isso encosta no limite — testes passavam sozinhos e falhavam
+  // juntos, que e o pior tipo de falha: parece regressao e nao e. O numero nao esconde teste
+  // lento; ele reconhece que o custo aqui e de montagem, nao de logica.
+  testTimeout: 20_000,
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   // So arquivos .test: senao os fixtures viram 'suite sem teste' e quebram a rodada.
   testMatch: ['<rootDir>/src/**/*.test.{ts,tsx}'],
@@ -25,6 +30,11 @@ module.exports = {
   // `@reduxjs/toolkit` encontra a copia da RAIZ, que e a do app web — duas instancias no mesmo
   // processo, e hooks que quebram sem dizer por que.
   moduleNameMapper: {
+    // A ORDEM importa: o jest para na primeira regra que casa. O `.svg` vem antes do alias de
+    // assets, senão o arquivo real seria carregado e viraria um objeto de asset (o jest não passa
+    // pelo Metro, que é quem transforma SVG em componente). Ver o dublê.
+    '\\.svg$': '<rootDir>/src/__mocks__/svg.tsx',
+    '^@/assets/(.*)$': '<rootDir>/assets/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
     // Toda dependencia que o NUCLEO importa e apontada para a copia do APP.
     //
@@ -36,6 +46,12 @@ module.exports = {
       [
         'react', 'react-redux', '@reduxjs/toolkit', 'redux-persist',
         '@supabase/supabase-js', 'zustand', 'axios', 'i18next', 'react-i18next',
+        // `expo` entrou pelo mesmo motivo, com uma causa a mais: ao ver
+        // `process.env.EXPO_PUBLIC_*`, o `babel-preset-expo` injeta um
+        // `require('expo/virtual/env')`. Como `nucleo/env.ts` usa essas chaves, o require nasce
+        // dentro de `packages/core` e sobe procurando `expo` na raiz — a arvore do app WEB, que
+        // nao o tem.
+        'expo',
       ].flatMap((pacote) => [
         [`^${pacote.replace('/', '\\/')}$`, path.resolve(__dirname, 'node_modules', pacote)],
         [`^${pacote.replace('/', '\\/')}\\/(.*)$`, path.resolve(__dirname, 'node_modules', pacote) + '/$1'],

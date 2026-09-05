@@ -1,3 +1,5 @@
+import { ENV } from '../nucleo/env';
+
 // Chaves de funcionalidade que nascem desligadas.
 //
 // Não confundir com configuração: o que está aqui existe pronto no código mas NÃO pode operar
@@ -11,7 +13,7 @@
  * de aprovação do Comitê de Ética em Pesquisa da ESPM. Sem o parecer, nenhum dado desta base pode
  * ser coletado com finalidade de pesquisa — a base é exclusivamente operacional (do produto).
  *
- * Para ligar: definir REACT_APP_TCLE_ENABLED=true no ambiente e registrar, no PR, a data da
- * ativação e o número do parecer.
+ * Para ligar: definir REACT_APP_TCLE_ENABLED=true (web) ou EXPO_PUBLIC_TCLE_ENABLED=true (app)
+ * no ambiente e registrar, no PR, a data da ativação e o número do parecer.
  */
-export const TCLE_ENABLED = process.env.REACT_APP_TCLE_ENABLED === 'true';
+export const TCLE_ENABLED = ENV.tcle;

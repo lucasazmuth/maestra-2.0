@@ -1,14 +1,14 @@
 import { CSSProperties, FC, ReactNode, useEffect, useState } from 'react';
 import { FiCheck, FiChevronDown, FiEdit3, FiLock, FiX } from 'react-icons/fi';
 
-import { STEP_LABELS, currentStepIndex } from './chat/script';
-import { stripEmDash } from './clean';
+import { STEP_LABELS, currentStepIndex } from '@maestra/core/wizard/script';
+import { stripEmDash } from '@maestra/core/wizard/limpar';
 import {
   GENDER_OPTIONS,
   MISSION_FINANCIAL_OPTIONS,
   STAGE_OPTIONS,
   VISION_ONDE_OPTIONS,
-} from './chat/wizardData';
+} from '@maestra/core/wizard/dados';
 import type { ArtistContent, ArtistIdentity } from '@maestra/core/interfaces/maestra';
 
 // Coluna lateral de resultados do Planejamento Estratégico: lista limpa do que já foi produzido

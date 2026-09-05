@@ -1,7 +1,7 @@
 // Verificação do deck V3: narrativa determinística + presença/ordem das 12 páginas do PDF.
 // Renderiza o DiagnosticDoc (V3) com um realIndex mockado (perfil Spotlight) e confere as seções.
 import { renderToStaticMarkup } from 'react-dom/server';
-import { dimNarrative } from './realNarrative';
+import { dimNarrative } from '@maestra/core/constants/realNarrative';
 
 // SVGs são mockados apenas na verificação estrutural do deck; a renderização vetorial é coberta
 // pelos testes dedicados do MaestraBrand e pela validação visual dos arquivos exportados.

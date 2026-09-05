@@ -7,6 +7,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+import { apagarConta } from "./apagarConta.ts";
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -29,11 +31,11 @@ const nameOf = (u: { user_metadata?: Record<string, unknown> | null; email?: str
 // Antes isto checava apenas se a pessoa EXISTIA em platform_admins. Com a tela de Acessos, entrar
 // no time deixou de significar acesso total — e a checagem antiga transformava qualquer membro em
 // admin pleno por aqui, ignorando o modulo. Era o buraco: o front escondia o menu, e a funcao
-// entregava os dados assim mesmo.
+// entregava os dados (e a exclusao de contas) assim mesmo.
 //
 // `app_metadata.is_platform_admin` NAO serve de atalho: diz que existe acesso, nao qual.
 async function podeUsarModulo(
-  db: any,
+  db: Admin,
   userId: string,
   modulo: string | null,
 ): Promise<boolean> {
@@ -57,7 +59,7 @@ Deno.serve(async (req) => {
 
   const admin: Admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 
-  // 1) Identifica o chamador e confirma que é admin.
+  // 1) Identifica o chamador e confirma que ele alcanca o modulo de Usuarios.
   const { data: { user: caller }, error: callerErr } = await admin.auth.getUser(authHeader.replace("Bearer ", ""));
   if (callerErr || !caller) return json({ error: "Não autorizado" }, 401);
   const isAdmin = await podeUsarModulo(admin, caller.id, "usuarios");
@@ -164,35 +166,20 @@ async function remove(admin: Admin, callerId: string, userId: string) {
   const { data: adm } = await admin.from("platform_admins").select("id").eq("user_id", userId).maybeSingle();
   if (adm) return json({ error: "Não é possível excluir um administrador." }, 400);
 
-  // A ORDEM importa: apaga os artistas PRIMEIRO. O trigger fn_track_artist_deletion grava em
-  // artist_deletions usando o user_id — e isso precisa acontecer com o usuário ainda presente
-  // (senão viola a FK). Só depois limpamos as tabelas cujo FK pra auth.users é NO ACTION
-  // (as com ON DELETE CASCADE somem sozinhas no deleteUser). Se QUALQUER uma dessas ficar pra
-  // trás, o deleteUser falha com "Database error deleting user". Os filhos dessas tabelas
-  // (whatsapp_messages, chat_messages, crm_quote_items etc.) são todos CASCADE, então cair a
-  // linha-pai já os limpa.
-  await admin.from("artists").delete().eq("user_id", userId);
-
-  // Tabelas NO ACTION que apontam pro dono via `user_id`.
-  for (const t of ["artist_deletions", "account_deletion_requests", "artist_members", "nyta_conversations", "whatsapp_instances"]) {
-    await admin.from(t).delete().eq("user_id", userId);
-  }
-  // Tabelas NO ACTION com nome de coluna diferente (dono OU só "ator" do registro).
-  await admin.from("whatsapp_instance_assignments").delete().eq("assigned_by_user_id", userId);
-  await admin.from("chats").delete().eq("created_by", userId);
-  await admin.from("crm_quotes").delete().eq("created_by", userId);
-  // updated_by só marca quem editou por último (pode ser registro de outra pessoa) → zera a ref.
-  await admin.from("crm_quotes").update({ updated_by: null }).eq("updated_by", userId);
-
-  const { error } = await admin.auth.admin.deleteUser(userId);
-  if (error) {
-    console.error("[admin-users] deleteUser:", error.message);
-    return json({ error: `Falha ao excluir: ${error.message}` }, 500);
-  }
+  // A sequência em si vive em `apagarConta.ts` — cópia de `_shared`. Ela ganhou um segundo
+  // chamador (a exclusão pedida pela própria pessoa) e duas cópias divergentes dela seriam a
+  // pior duplicação possível: a divergência só apareceria na hora de apagar.
+  //
+  // ATENÇÃO: esta refatoração está no disco, mas a versão EM PRODUÇÃO ainda é a v9, com a
+  // sequência embutida aqui. Não a subi porque o deploy por MCP exige colar o arquivo inteiro,
+  // e transcrever 10 KB de uma função de admin à mão é risco desnecessário — o comportamento é
+  // idêntico, então não há pressa. Sai no próximo deploy desta função.
+  const { erro } = await apagarConta(admin, userId);
+  if (erro) return json({ error: erro }, 500);
   return json({ ok: true });
 }
 
-// ── Fila de exclusão (LGPD art. 18, VI) ──────────────────────────────────────────────────────
+// ── Fila de exclusão (LGPD art. 18, VI) ────────────────────────────────────────────
 // Pedidos que a pessoa fez em Configurações e ainda não foram cumpridos, do mais vencido para o
 // mais recente. `scheduled_purge_at` no passado = pronto para executar.
 async function deletionQueue(admin: Admin) {

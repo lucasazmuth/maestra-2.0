@@ -5,6 +5,7 @@ import type {
   EventStatus,
   EventType,
 } from '../interfaces/maestra';
+import { ENV } from '../nucleo/env';
 
 // Onboarding obrigatório: o wizard tem 9 etapas (índices 0–8). `content.step >= 9` marca a
 // conclusão e libera o painel/módulos.
@@ -23,6 +24,35 @@ export const MAX_OBJECTIVES = 5;
 // Valor sentinela gravado em `ActionTask.owner` quando o responsável é o DONO DO PERFIL.
 // Membros da equipe são gravados pelo e-mail (que sempre contém "@", então nunca colide).
 // É o responsável padrão de toda tarefa nova (gerada pela Nyta ou criada à mão).
+// Categorias de tarefa do Plano de Ação.
+//
+// Viveu em `src/pages/ActionPlan/TaskControls.tsx` enquanto só a web usava. Subiu pro núcleo
+// quando o app nativo passou a precisar do MESMO rótulo no hero da home — e, de quebra, o
+// `wizardAi` para de manter uma segunda lista de valores, que já estava uma categoria atrás.
+//
+// 'acoes' é o valor de FALLBACK quando a tarefa não tem categoria definida. "Ações" como rótulo
+// lia como se fosse uma categoria deliberada — a maioria das tarefas cai aqui só por nunca ter
+// sido categorizada. "Categoria" lê como os outros chips sem valor (`Sem prazo`, `Dono do
+// perfil`): um placeholder honesto, não uma escolha.
+export const TASK_TYPES: { v: string; label: string }[] = [
+  { v: 'acoes', label: 'Categoria' },
+  { v: 'produto_fonografico', label: 'Produto fonográfico' },
+  { v: 'audio_visual', label: 'Audiovisual' },
+  { v: 'design', label: 'Design' },
+  { v: 'fotos', label: 'Fotos' },
+  { v: 'figurino', label: 'Figurino' },
+  { v: 'site', label: 'Site' },
+  { v: 'textos', label: 'Textos' },
+  { v: 'assessoria', label: 'Assessoria' },
+  { v: 'marketing_digital', label: 'Marketing digital' },
+  { v: 'media_kit', label: 'Media kit' },
+  { v: 'radio', label: 'Rádio' },
+  { v: 'show', label: 'Show' },
+];
+
+/** Só os valores — é o que a validação da resposta da IA precisa. */
+export const TASK_TYPE_VALUES = TASK_TYPES.map((t) => t.v);
+
 export const TASK_OWNER_SELF = 'owner';
 
 // Perguntas de exemplo da Nyta (chips clicáveis) — compartilhadas pelo estado inicial do chat
@@ -36,10 +66,10 @@ export const NYTA_SUGGESTIONS = [
 
 // Desliga o paywall em desenvolvimento (REACT_APP_DISABLE_PAYWALL=true no .env).
 // O banner de upsell continua visível; só os redirects/bloqueios são suprimidos.
-export const PAYWALL_DISABLED = process.env.REACT_APP_DISABLE_PAYWALL === 'true';
+export const PAYWALL_DISABLED = ENV.paywallDesligado;
 
 // Habilita o Floating Modal da Nyta Assistente no lugar da página dedicada de chat.
-export const FEATURE_NYTA_MODAL = process.env.REACT_APP_FEATURE_NYTA_MODAL === 'true';
+export const FEATURE_NYTA_MODAL = ENV.nytaModal;
 
 export const isOnboardingComplete = (artist?: Artist | null): boolean => {
   const c = artist?.content;
@@ -154,6 +184,21 @@ export const MVP_ACCESS_LEVEL_OPTIONS = (Object.keys(MVP_ACCESS_LEVELS) as (keyo
   id: id as AccessLevel,
   label: MVP_ACCESS_LEVELS[id],
 }));
+
+/**
+ * O que cada módulo abre, em uma linha.
+ *
+ * "Equipe" ou "Plano de ação" sozinhos não dizem se a pessoa só vê ou também mexe — e quem
+ * convida está decidindo justamente isso. O texto é o mesmo nas duas superfícies: uma frase
+ * diferente no celular seria uma promessa diferente sobre o mesmo acesso.
+ */
+export const ACCESS_LEVEL_HINTS: Partial<Record<AccessLevel, string>> = {
+  plan: 'Ver e editar tarefas e prazos',
+  catalog: 'Músicas, versões e Espaço JAM',
+  agenda: 'Compromissos e datas',
+  team: 'Convidar e remover pessoas',
+  full: 'Todos os módulos, inclusive os que entrarem depois',
+};
 
 export const ACCESS_LEVEL_OPTIONS = (Object.keys(ACCESS_LEVELS) as AccessLevel[]).map((id) => ({
   id,

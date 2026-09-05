@@ -1,4 +1,6 @@
 import { FC, memo } from 'react';
+
+import { extractYouTubeId } from '@maestra/core/wizard/youtube';
 import { FiPlay } from 'react-icons/fi';
 
 // Player de vídeo do YouTube, em proporção 16:9.
@@ -16,32 +18,6 @@ import { FiPlay } from 'react-icons/fi';
 // As duas da landing têm SCSS module próprio; migrar exige cuidado com especificidade.
 // (Elas hoje divergem: a landing aponta para um vídeo e o comentário do diagnóstico afirma ser
 // "o mesmo da landing", o que deixou de ser verdade. Centralizar resolve.)
-
-/**
- * Aceita URL completa em qualquer formato do YouTube, ou o id nu de 11 caracteres.
- * Devolve `null` quando não reconhece — e aí o componente mostra o espaço reservado em vez de
- * renderizar um iframe quebrado.
- */
-export const extractYouTubeId = (input?: string): string | null => {
-  const valor = (input || '').trim();
-  if (!valor) return null;
-
-  // Id nu (é o que sobra depois de qualquer um dos formatos abaixo).
-  if (/^[\w-]{11}$/.test(valor)) return valor;
-
-  const padroes = [
-    /youtu\.be\/([\w-]{11})/,            // youtu.be/ID
-    /[?&]v=([\w-]{11})/,                 // youtube.com/watch?v=ID
-    /\/embed\/([\w-]{11})/,              // youtube.com/embed/ID
-    /\/shorts\/([\w-]{11})/,             // youtube.com/shorts/ID
-    /\/live\/([\w-]{11})/,               // youtube.com/live/ID
-  ];
-  for (const padrao of padroes) {
-    const achado = padrao.exec(valor);
-    if (achado) return achado[1];
-  }
-  return null;
-};
 
 export const YouTubeEmbed: FC<{
   /** URL completa ou id. Vazio ou irreconhecível → espaço reservado. */

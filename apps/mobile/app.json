@@ -10,7 +10,10 @@
     "ios": {
       "bundleIdentifier": "br.com.maestra.app",
       "supportsTablet": true,
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "A Maestra abre suas fotos para você escolher a capa da música."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -37,7 +40,14 @@
         }
       ],
       "expo-web-browser",
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "A Maestra abre suas fotos para você escolher a capa da música."
+        }
+      ],
+      "expo-document-picker"
     ],
     "experiments": {
       "typedRoutes": true,

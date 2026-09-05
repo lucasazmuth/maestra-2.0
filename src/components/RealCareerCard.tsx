@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 
 import type { Artist } from '@maestra/core/interfaces/maestra';
-import { RealBadge, altasForPattern, tierForPattern, TIER_ACCENT } from './RealBadge';
+import { RealBadge } from './RealBadge';
+import { TIER_ACCENT, altasForPattern, tierForPattern } from '@maestra/core/constants/realBadge';
 import { RealLevelLadder } from './RealLevelLadder';
 
 // Card unificado de "fase de carreira": o perfil REAL (1 dos 16) é a FASE do artista — sobe de
