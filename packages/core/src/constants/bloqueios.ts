@@ -73,3 +73,4 @@ export const LOCKED_FEATURE_CONFIG: Record<LockedFeatureKey, LockedFeatureConfig
     cta: SUBSCRIBE_PRO,
   },
 };
+

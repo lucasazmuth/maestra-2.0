@@ -113,7 +113,7 @@ export default function Nyta() {
   // Duas portas para o mesmo lugar, como na web: a checagem local do direito, e o 403 que o
   // servidor devolve (o que cobre a assinatura vencer com a tela aberta).
   if ((!PAYWALL_DISABLED && !direitos.isPro) || error === 'subscription_required') {
-    return <RecursoBloqueado recurso="nyta" />;
+    return <RecursoBloqueado recurso="nyta" artistId={String(id)} />;
   }
 
   const Mensagem = ({ item }: { item: NytaChatMessage }) => {

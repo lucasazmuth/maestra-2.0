@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useId, useState } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -13,10 +13,8 @@ import { countUnread } from '@maestra/core/services/db/notifications';
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
 import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
 import { MaestraMarca, NotificationIcon } from '@/icones';
+import { irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
-
-/** A assinatura é comprada na web. */
-const SITE = 'https://www.maestramanager.com';
 
 // O cabeçalho, igual ao da web no celular (ver `src/components/Layout/index.tsx`): à esquerda a
 // MARCA com o selo do plano, à direita o botão da Nyta e o sino.
@@ -77,7 +75,7 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
       </Pressable>
 
       {/* O selo fica FORA do toque da marca: ele leva à assinatura, e a marca aos perfis. */}
-      <SeloDoPlano aoTocar={() => Linking.openURL(`${SITE}/assinatura`)} />
+      <SeloDoPlano aoTocar={() => void irParaOCheckout({ destino: 'assinatura' })} />
 
       <View style={estilos.espaco} />
 

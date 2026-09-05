@@ -18,6 +18,7 @@ import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { FolhaDaAvaliacao } from '@/casca/conta/FolhaDaAvaliacao';
 import { enviarEscolhido, escolherImagem } from '@/nucleo/arquivos';
 import { sair } from '@/nucleo/entrar';
+import { irParaOCheckout } from '@/nucleo/loja';
 import { useVoltar } from '@/nucleo/navegar';
 import { useSessao } from '@/nucleo/sessao';
 
@@ -293,7 +294,7 @@ export default function Conta() {
           </Text>
           <Pressable
             style={({ pressed }) => [estilos.linha, pressed && estilos.tocada]}
-            onPress={() => Linking.openURL(`${SITE}/assinatura`)}
+            onPress={() => void irParaOCheckout({ destino: 'assinatura' })}
             accessibilityRole="link"
           >
             <Text style={estilos.linhaTexto}>

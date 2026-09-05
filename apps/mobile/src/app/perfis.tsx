@@ -18,6 +18,7 @@ import { MaestraMarca, NotificationIcon } from '@/icones';
 import { BotaoRedondo, MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
 import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
 import { sair } from '@/nucleo/entrar';
+import { irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
 
 /** Assinatura, desbloqueio e suporte continuam na web: pagamento no app exige StoreKit. */
@@ -154,7 +155,7 @@ export default function Perfis() {
       <View style={estilos.barra}>
         <View style={estilos.marcaLinha}>
           <MaestraMarca size={24} color={COR_PERFIS.titulo} />
-          <SeloDoPlano aoTocar={() => Linking.openURL(`${SITE}/assinatura`)} />
+          <SeloDoPlano aoTocar={() => void irParaOCheckout({ destino: 'assinatura' })} />
         </View>
 
         <BotaoRedondo

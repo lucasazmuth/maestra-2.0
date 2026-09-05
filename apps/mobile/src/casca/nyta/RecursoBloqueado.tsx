@@ -1,12 +1,12 @@
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, RAIO } from '@maestra/core/constants/design';
 import { LOCKED_FEATURE_CONFIG, type LockedFeatureKey } from '@maestra/core/constants/bloqueios';
-import { usePlanPrices } from '@maestra/core/hooks/usePlanPrices';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
+import { irParaOCheckout } from '@/nucleo/loja';
 
 // A tela de recurso bloqueado — a porta de `src/components/LockedFeature`.
 //
@@ -14,19 +14,18 @@ import { EmblemaNyta } from '@/casca/EmblemaNyta';
 // A mensagem sumia e nada explicava o porquê: parecia defeito, quando na verdade era o produto
 // dizendo "isso é do plano PRO". Esse silêncio é pior que o bloqueio.
 //
-// O botão leva à assinatura NA WEB, e não a uma compra dentro do app. Isso é deliberado, e não
-// preguiça: cobrar assinatura digital por fora da App Store é rejeição certa na diretriz 3.1.1.
-// Quando houver StoreKit, é aqui que ele entra.
+// O botão leva ao checkout DA WEB, já autenticado (ver `nucleo/loja`), e não a uma compra dentro
+// do app. O PREÇO saiu do rótulo: ele é a parte que a diretriz de anti-steering enxerga primeiro,
+// e mostrá-lo aqui não muda a decisão de quem já quer assinar — ele aparece no checkout.
+//
+// O destino dependia do `kind` e não dependia: o botão abria a assinatura mesmo quando o
+// bloqueio era de perfil pendente. Como só a chave `nyta` é usada hoje, ninguém viu.
 
-const ASSINATURA = 'https://www.maestramanager.com/assinatura';
-
-export const RecursoBloqueado = ({ recurso }: { recurso: LockedFeatureKey }) => {
-  const { onceFmt, monthlyFmt } = usePlanPrices();
+export const RecursoBloqueado = ({
+  recurso, artistId,
+}: { recurso: LockedFeatureKey; artistId?: string }) => {
   const config = LOCKED_FEATURE_CONFIG[recurso];
-
-  const rotulo = config.cta.kind === 'unlock-profile'
-    ? `${config.cta.label} — ${onceFmt}`
-    : `${config.cta.label} — ${monthlyFmt}/mês`;
+  const rotulo = config.cta.label;
 
   return (
     <View style={estilos.tela}>
@@ -47,7 +46,11 @@ export const RecursoBloqueado = ({ recurso }: { recurso: LockedFeatureKey }) => 
 
         <Pressable
           style={estilos.botao}
-          onPress={() => Linking.openURL(ASSINATURA)}
+          onPress={() => void irParaOCheckout(
+            config.cta.kind === 'unlock-profile' && artistId
+              ? { destino: 'desbloqueio', artistId }
+              : { destino: 'assinatura' },
+          )}
           accessibilityRole="button"
           accessibilityLabel={rotulo}
         >
