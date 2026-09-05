@@ -17,7 +17,7 @@ import { RealBadge } from '../../components/RealBadge';
 import {
   TIER_ACCENT, altasForPattern, tierForAltas, tierForPattern,
 } from '@maestra/core/constants/realBadge';
-import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS, VINCULO_LABELS } from '@maestra/core/constants/realCopy';
+import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS } from '@maestra/core/constants/realCopy';
 import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
 import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import styles from './ArtistCreate.module.scss';
