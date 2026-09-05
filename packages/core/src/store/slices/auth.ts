@@ -103,7 +103,15 @@ export const signInWithProvider = createAsyncThunk(
 );
 
 export const signOut = createAsyncThunk('auth/signOut', async () => {
-  await supabase.auth.signOut();
+  // `scope: 'local'` sai DESTE aparelho, e não da conta inteira.
+  //
+  // O padrão do Supabase é global: um `signOut` revoga TODAS as sessões do usuário. Com uma
+  // superfície só isso nunca apareceu; com o app, a mesma conta vive em dois lugares — e o
+  // repasse para o checkout põe a pessoa logada também no navegador do telefone. Sair no
+  // navegador derrubava o aplicativo, sem aviso e sem relação visível de causa.
+  //
+  // Ninguém espera que "sair" no celular encerre a sessão do computador.
+  await supabase.auth.signOut({ scope: 'local' });
   clearSpotifyTokens();
   return true;
 });
