@@ -41,8 +41,8 @@ const MAIS: Item[] = [
   { icone: MarketingIcon, rotulo: 'Marketing', rota: 'marketing' },
 ];
 
-// Perfis/Configurações: no desktop moram no menu do sistema (o ícone de grade do cabeçalho),
-// que some no celular porque estes mesmos atalhos já cabem aqui dentro.
+// Perfis/Configurações também estão no menu do sistema, no botão de grade do cabeçalho. A
+// repetição é de propósito: quem está navegando pelas abas não precisa subir até o topo.
 const DO_SISTEMA: { icone: Icone; rotulo: string; caminho: string }[] = [
   { icone: PerfisIcon, rotulo: 'Perfis', caminho: '/perfis' },
   { icone: ConfigIcon, rotulo: 'Configurações', caminho: '/conta' },

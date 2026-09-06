@@ -1,6 +1,7 @@
 import { render, userEvent } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { StyleSheet } from 'react-native';
+import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 
 import { WIZARD_TOTAL_STEPS, WIZARD_VERSION } from '@maestra/core/constants/maestra';
@@ -48,7 +49,20 @@ const semearPerfis = (perfis: unknown[]) =>
   store.dispatch({ type: 'artists/fetchArtists/fulfilled', payload: perfis });
 
 // `render` do RNTL 14 e assincrono.
-const montar = () => render(<Provider store={store}><Perfis /></Provider>);
+//
+// O provedor de margem segura entra aqui porque o menu do sistema le a margem de cima para
+// abrir ABAIXO do cabecalho, em vez de num `top` fixo. Fora de um aparelho ele precisa das
+// medidas na mao, senao o hook levanta.
+const MEDIDAS: Metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
+
+const montar = () => render(
+  <Provider store={store}>
+    <SafeAreaProvider initialMetrics={MEDIDAS}><Perfis /></SafeAreaProvider>
+  </Provider>,
+);
 
 
 
