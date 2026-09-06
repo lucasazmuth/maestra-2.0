@@ -44,7 +44,7 @@ const ICONES: Record<string, typeof DiagnosticoIcon> = {
   'Diagnóstico REAL': DiagnosticoIcon,
   'Planejamento estratégico': PlanejamentoIcon,
   'Plano de ação': PlanoAcaoIcon,
-  Ferramentas: AgendaIcon,
+  'Gestão: músicas e agenda': AgendaIcon,
   'Nyta IA': NytaIcone,
 };
 

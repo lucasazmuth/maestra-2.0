@@ -58,7 +58,7 @@ export const MODULOS_DA_PLATAFORMA: ModuloDaPlataforma[] = [
     desc: 'Cada estratégia vira tarefas com progresso, prazos e responsáveis, além de cronograma e modelagem financeira. É o caminho do "o que fazer" pro "feito".',
   },
   {
-    title: 'Ferramentas', sub: 'o dia a dia',
+    title: 'Gestão: músicas e agenda', sub: 'o dia a dia',
     desc: 'Músicas, agenda de shows e lançamentos e a equipe junto: a operação da carreira mora no mesmo lugar do plano, e cada entrega alimenta o próximo diagnóstico.',
   },
   {

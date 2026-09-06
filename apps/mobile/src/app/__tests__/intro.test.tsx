@@ -47,7 +47,7 @@ describe('apresentação', () => {
     const tela = await montar();
 
     for (const titulo of [
-      'Diagnóstico REAL', 'Planejamento estratégico', 'Plano de ação', 'Ferramentas', 'Nyta IA',
+      'Diagnóstico REAL', 'Planejamento estratégico', 'Plano de ação', 'Gestão', 'Nyta IA',
     ]) {
       expect(tela.getByText(new RegExp(titulo))).toBeTruthy();
     }
