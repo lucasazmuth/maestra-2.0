@@ -13,9 +13,6 @@ import Intro from '../intro';
 const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace }) }));
 
-const mockMarcar = jest.fn();
-jest.mock('@/nucleo/intro', () => ({ marcarIntroComoVista: () => mockMarcar() }));
-
 const MEDIDAS: Metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 47, left: 0, right: 0, bottom: 34 },
@@ -27,7 +24,6 @@ const montar = () => render(
 
 beforeEach(() => {
   mockReplace.mockClear();
-  mockMarcar.mockClear();
   jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
 });
 
@@ -55,10 +51,4 @@ describe('apresentação', () => {
     expect(mockReplace).toHaveBeenCalledWith('/entrar');
   });
 
-  // Marca ao ABRIR, e não ao tocar num botão: quem fecha o app aqui já viu a apresentação, e
-  // revê-la na próxima abertura seria insistir.
-  it('se dá por vista assim que abre', async () => {
-    await montar();
-    expect(mockMarcar).toHaveBeenCalled();
-  });
 });

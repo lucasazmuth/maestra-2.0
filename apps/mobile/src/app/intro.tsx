@@ -1,12 +1,10 @@
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COR, COR_CABECALHO_DE_MODULO, RAIO } from '@maestra/core/constants/design';
 
 import { AgendaIcon, DiagnosticoIcon, MaestraMarca, PlanoAcaoIcon } from '@/icones';
-import { marcarIntroComoVista } from '@/nucleo/intro';
 
 /** O cadastro acontece na web: aqui o app só leva a pessoa até lá. */
 const SITE = 'https://www.maestramanager.com';
@@ -21,7 +19,9 @@ const SITE = 'https://www.maestramanager.com';
 // uma porta e um portão: criar conta e entrar numa que já existe. O primeiro sai para o
 // navegador porque é lá que o cadastro vive.
 //
-// Aparece uma vez por instalação (ver `nucleo/intro`).
+// Ela aparece SEMPRE que o app abre sem sessão, e não uma vez por instalação: abrir o app do
+// zero é o momento em que se pergunta "o que é isto", e a resposta tem que estar lá toda vez.
+// Quem acabou de SAIR da conta não passa por aqui — o portão da sessão manda direto ao login.
 
 const O_QUE_O_APP_FAZ = [
   { Icone: DiagnosticoIcon, texto: 'O diagnóstico REAL da sua carreira, com os seus números.' },
@@ -31,10 +31,6 @@ const O_QUE_O_APP_FAZ = [
 
 export default function Intro() {
   const router = useRouter();
-
-  // Marca ao ABRIR, e não ao tocar num dos botões: quem fecha o app aqui já viu a
-  // apresentação, e revê-la na próxima abertura seria insistir.
-  useEffect(() => { marcarIntroComoVista(); }, []);
 
   return (
     <SafeAreaView style={estilos.tela}>

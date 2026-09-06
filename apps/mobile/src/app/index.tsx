@@ -2,7 +2,6 @@ import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { COR, RAIO } from '@maestra/core/constants/design';
-import { introJaVista } from '@/nucleo/intro';
 import { useSessao } from '@/nucleo/sessao';
 
 // Porta de entrada: decide entre a apresentacao, o login e o app.
@@ -10,8 +9,12 @@ import { useSessao } from '@/nucleo/sessao';
 // Enquanto nao se sabe, nao se redireciona. Mandar para o login e voltar meio segundo depois
 // e o piscar que denuncia app mal feito — e a sessao quase sempre ESTA no disco.
 //
-// Sem sessao, quem NUNCA viu a apresentacao vai para ela; quem ja viu vai direto ao login. Uma
-// vez por instalacao: repetir as boas-vindas a cada sessao expirada vira pedagio.
+// Sem sessao, a apresentacao. SEMPRE, e nao uma vez por instalacao: abrir o app do zero e o
+// momento em que se pergunta "o que e isto", e a resposta tem que estar la toda vez.
+//
+// Quem SAI da conta nao passa por aqui: o portao da sessao manda direto para o login (ver
+// `nucleo/PortaoDaSessao`). Quem acabou de sair sabe o que o app faz, e receber boas-vindas
+// depois de fechar a porta seria deboche.
 export default function Porta() {
   const { sessao, carregando } = useSessao();
 
@@ -23,8 +26,7 @@ export default function Porta() {
     );
   }
 
-  if (sessao) return <Redirect href="/perfis" />;
-  return <Redirect href={introJaVista() ? '/entrar' : '/intro'} />;
+  return <Redirect href={sessao ? '/perfis' : '/intro'} />;
 }
 
 const estilos = StyleSheet.create({
