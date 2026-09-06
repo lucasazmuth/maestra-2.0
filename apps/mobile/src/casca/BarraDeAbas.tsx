@@ -46,7 +46,7 @@ const MAIS: Item[] = [
 // para a mesma sala e faziam esta folha falar de conta no meio dos módulos do artista.
 
 /** Altura da ilha (78) + a folga de baixo (18), que é o que o painel "Mais" precisa vencer. */
-const ALTURA_DA_ILHA = 78;
+export const ALTURA_DA_ILHA = 78;
 const FOLGA = 18;
 
 /**

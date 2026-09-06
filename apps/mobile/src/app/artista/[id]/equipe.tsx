@@ -10,6 +10,7 @@ import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { ArtistMember } from '@maestra/core/interfaces/maestra';
 import { listMembers } from '@maestra/core/services/db/members';
 
+import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
 import { FolhaDeConvite } from '@/casca/equipe/FolhaDeConvite';
 import { FolhaDoMembro, SeloDeEstado } from '@/casca/equipe/FolhaDoMembro';
 import { useArtistaDaRota } from '@/nucleo/artista';
@@ -85,19 +86,6 @@ export default function Equipe() {
             Gerencie quem participa da operação e o que cada pessoa pode acessar.
           </Text>
 
-          {/* Largura inteira, como na web no celular: no desktop ele fica à direita do título,
-              e aqui não há "direita do título" — o cabeçalho empilha. */}
-          {souODono && (
-            <Pressable
-              style={estilos.convidar}
-              onPress={() => setConvidando(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Convidar membro"
-            >
-              <Feather name="plus" size={14} color={COR.superficie} />
-              <Text style={estilos.convidarTexto}>Convidar membro</Text>
-            </Pressable>
-          )}
         </View>
 
         {carregando ? (
@@ -162,6 +150,10 @@ export default function Equipe() {
         aoRemover={(idDoMembro) => setMembros((atual) =>
           atual.filter((m) => m.id !== idDoMembro))}
       />
+
+      {souODono && (
+        <BotaoFlutuante rotulo="Convidar membro" aoTocar={() => setConvidando(true)} />
+      )}
     </View>
   );
 }
@@ -171,21 +163,16 @@ const estilos = StyleSheet.create({
   // fio — é assim que a web desenha os dois módulos de lista (Equipe e Músicas).
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
-  conteudo: { paddingHorizontal: 14, paddingTop: 18, paddingBottom: 122 },
+  // 196 = a ilha (34 de reserva + 78) mais o botão flutuante (14 de folga + 56) e mais 14. Eram
+  // 122, que só vencia a ilha: a última linha da lista ficava permanentemente debaixo do botão,
+  // com os controles dela inalcançáveis por mais que se rolasse.
+  conteudo: { paddingHorizontal: 14, paddingTop: 18, paddingBottom: 196 },
   cabecalho: {
     paddingBottom: 30, borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.contornoDoTopo,
   },
   sobretitulo: { fontSize: 9, fontWeight: '800', color: COR_CATALOGO.rotulo, marginBottom: 8 },
   titulao: { fontSize: 30, fontWeight: '800', letterSpacing: -0.75, color: COR_CATALOGO.titulo },
   resumo: { fontSize: 12, color: COR_CATALOGO.apoio, marginTop: 9, lineHeight: 18 },
-  convidar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    minHeight: 42, paddingHorizontal: 17, borderRadius: 7, marginTop: 20,
-    backgroundColor: COR.primaria,
-    shadowColor: 'rgba(51, 97, 255, .18)', shadowOpacity: 1,
-    shadowOffset: { width: 0, height: 10 }, shadowRadius: 21, elevation: 5,
-  },
-  convidarTexto: { fontSize: 11, fontWeight: '800', color: COR.superficie },
   espera: { marginTop: 48 },
   lista: {
     marginTop: 28, borderWidth: 1, borderColor: COR_EQUIPE.contorno, borderRadius: 8,
