@@ -14,6 +14,7 @@ import {
 import { CHAMADA_DO_PLANEJAMENTO, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
 import { autoriaDoDocumento } from '@maestra/core/documentos/diagnostico';
 
+import { CabecalhoDoModulo } from '@/casca/CabecalhoDoModulo';
 import { CartaoDaDimensao } from '@/casca/diagnostico/CartaoDaDimensao';
 import { Placa } from '@/casca/diagnostico/Placa';
 import { baixarDiagnostico } from '@/nucleo/documentos';
@@ -145,13 +146,10 @@ export const Relatorio = ({
 
   return (
     <>
-    <View style={estilos.cabecalho}>
-      <Text style={estilos.sobretitulo}>ONDE VOCÊ ESTÁ</Text>
-      <Text style={estilos.titulao}>Diagnóstico REAL</Text>
-      <Text style={estilos.apoio}>
-        Sua fase de carreira atual, com base nos seus dados reais.
-      </Text>
-    </View>
+    <CabecalhoDoModulo
+      titulo="Diagnóstico REAL"
+      descricao="Sua fase de carreira atual, com base nos seus dados reais."
+    />
 
     {!perfil ? (
       <View style={estilos.aviso}>
@@ -437,11 +435,6 @@ const estilos = StyleSheet.create({
     fontSize: 12, lineHeight: 17, textAlign: 'center', color: COR_DIAGNOSTICO.rotulo,
     marginTop: 12,
   },
-
-  cabecalho: { paddingTop: 22, paddingBottom: 8 },
-  sobretitulo: { fontSize: 9, fontWeight: '800', color: COR_DIAGNOSTICO.rotulo, marginBottom: 8 },
-  titulao: { fontSize: 30, fontWeight: '800', letterSpacing: -0.75, color: COR_DIAGNOSTICO.titulo },
-  apoio: { fontSize: 12, lineHeight: 18, color: COR_DIAGNOSTICO.texto, marginTop: 9 },
 
   aviso: {
     borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, borderRadius: 14,

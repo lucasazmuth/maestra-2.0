@@ -37,6 +37,16 @@ describe('diagnostico REAL em leitura', () => {
     mockIdNaRota = comDiagnostico.id;
   });
 
+  // O cabeçalho é o mesmo dos outros módulos, e sem o kicker: "ONDE VOCÊ ESTÁ" repetia em nove
+  // caracteres o que o título e a descrição já diziam.
+  it('usa o cabeçalho padrão dos módulos, sem kicker', async () => {
+    const tela = await montar();
+
+    expect(tela.getByText('Diagnóstico REAL')).toBeTruthy();
+    expect(tela.getByText('Sua fase de carreira atual, com base nos seus dados reais.')).toBeTruthy();
+    expect(tela.queryByText('ONDE VOCÊ ESTÁ')).toBeNull();
+  });
+
   it('mostra o perfil que o motor atribuiu', async () => {
     const tela = await montar();
     expect(tela.getByText('Em construção')).toBeTruthy();
