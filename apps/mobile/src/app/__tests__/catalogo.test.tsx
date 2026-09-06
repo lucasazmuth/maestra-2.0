@@ -47,6 +47,20 @@ const MEDIDAS: Metrics = {
   insets: { top: 47, left: 0, right: 0, bottom: 34 },
 };
 
+// O limite do plano aparece no rótulo da aba. Para provar que ele SOME no PRO, o teto vem
+// daqui: derivá-lo da assinatura de verdade exigiria montar meio slice para trocar um número.
+let mockLimite: number | null = null;
+jest.mock('@maestra/core/hooks/useArtistCapabilities', () => {
+  const real = jest.requireActual('@maestra/core/hooks/useArtistCapabilities');
+  return {
+    ...real,
+    useArtistCapabilities: (artista: unknown) => {
+      const direitos = real.useArtistCapabilities(artista);
+      return mockLimite === null ? direitos : { ...direitos, maxCatalogTracks: mockLimite };
+    },
+  };
+});
+
 const montar = () => render(
   <Provider store={store}>
     <SafeAreaProvider initialMetrics={MEDIDAS}><Catalogo /></SafeAreaProvider>
@@ -63,6 +77,36 @@ describe('catalogo', () => {
     mockPlayer.pause.mockClear();
     mockPlayer.replace.mockClear();
     mockStatus = { playing: false, currentTime: 0, duration: 0, didJustFinish: false };
+    mockLimite = null;
+  });
+
+  // O limite vivia numa linha própria do cabeçalho, acima das abas. Ele é sobre a lista que a
+  // aba abre, e no rótulo dela fica ao lado do que conta — uma linha a menos no topo.
+  describe('o limite do plano', () => {
+    it('aparece no rótulo da aba, e não no cabeçalho', async () => {
+      mockListar.mockResolvedValue([faixa({ id: 'f-1', title: 'Chuva de Março' })]);
+      const tela = await montar();
+
+      await waitFor(() => expect(tela.getByText('Chuva de Março')).toBeTruthy());
+      expect(tela.getByText(' 1/10')).toBeTruthy();
+      expect(tela.getByLabelText('Músicas: 1 de 10 do seu plano')).toBeTruthy();
+      // E não sobrou nada da linha antiga do cabeçalho.
+      expect(tela.queryByText(/^\d+\/\d+ músicas$/)).toBeNull();
+    });
+
+    // Sem teto não há o que contar, e um "1/∞" só ocuparia espaço dizendo que não há limite.
+    it('some para quem tem o PRO', async () => {
+      mockLimite = Infinity;
+      mockListar.mockResolvedValue([faixa({ id: 'f-1', title: 'Chuva de Março' })]);
+      const tela = await montar();
+
+      await waitFor(() => expect(tela.getByText('Chuva de Março')).toBeTruthy());
+      expect(tela.queryByText(/\d+\/\d+/)).toBeNull();
+      expect(tela.queryByText(/∞/)).toBeNull();
+      // E a aba continua lá, com o nome dela — o rótulo de acessibilidade é só "Músicas"
+      // quando não há teto, e "Músicas: 1 de 10 do seu plano" quando há.
+      expect(tela.getByLabelText('Músicas')).toBeTruthy();
+    });
   });
 
   it('lista as faixas com o rotulo de status do nucleo', async () => {

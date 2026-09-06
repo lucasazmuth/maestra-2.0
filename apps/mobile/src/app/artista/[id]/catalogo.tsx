@@ -164,14 +164,18 @@ export default function Catalogo() {
         <CabecalhoDoModulo
           titulo="Músicas"
           descricao="Organize as músicas em preparação e acompanhe cada etapa antes do lançamento."
-          nota={`${faixas.length}/${direitos.maxCatalogTracks === Infinity ? '∞' : direitos.maxCatalogTracks} músicas`}
         />
       </View>
 
-      {/* As duas abas: o catálogo cadastrado aqui e o que já saiu no Spotify. */}
+      {/* As duas abas: o catálogo cadastrado aqui e o que já saiu no Spotify.
+          O limite do plano vive NO RÓTULO da aba de músicas, e não numa linha própria no
+          cabeçalho: ele é sobre a lista que a aba abre, e ali fica ao lado do que conta. Some
+          para quem tem o PRO — sem teto não há o que contar, e um "5/∞" só ocuparia espaço
+          dizendo que não há limite. */}
       <View style={estilos.abas}>
         {([['musicas', 'Músicas'], ['lancamentos', 'Lançamentos']] as const).map(([chave, texto]) => {
           const acesa = aba === chave;
+          const comLimite = chave === 'musicas' && direitos.maxCatalogTracks !== Infinity;
           return (
             <Pressable
               key={chave}
@@ -179,8 +183,18 @@ export default function Catalogo() {
               onPress={() => setAba(chave)}
               accessibilityRole="tab"
               accessibilityState={{ selected: acesa }}
+              accessibilityLabel={comLimite
+                ? `${texto}: ${faixas.length} de ${direitos.maxCatalogTracks} do seu plano`
+                : texto}
             >
-              <Text style={[estilos.abaTexto, acesa && estilos.abaTextoAceso]}>{texto}</Text>
+              <Text style={[estilos.abaTexto, acesa && estilos.abaTextoAceso]}>
+                {texto}
+                {comLimite && (
+                  <Text style={[estilos.abaLimite, acesa && estilos.abaLimiteAceso]}>
+                    {` ${faixas.length}/${direitos.maxCatalogTracks}`}
+                  </Text>
+                )}
+              </Text>
             </Pressable>
           );
         })}
@@ -445,6 +459,10 @@ const estilos = StyleSheet.create({
   abaAcesa: { backgroundColor: COR.primaria },
   abaTexto: { fontSize: 13, fontWeight: '800', color: COR_CATALOGO.tocarIcone },
   abaTextoAceso: { color: COR.sobrePrimaria },
+  // O limite é um dado, não um rótulo: peso menor e cor mais apagada que o nome da aba, para
+  // ser lido depois dele e não competir com ele.
+  abaLimite: { fontWeight: '700', color: COR_CATALOGO.legenda },
+  abaLimiteAceso: { color: COR.sobrePrimaria, opacity: 0.75 },
   // A pílula do Espaço Jam, medida no DOM a 375px: 31px de altura, raio 20, contorno de 1px e
   // fundo branco. O rótulo sai no celular — ele custava um terço da linha.
   jam: {
