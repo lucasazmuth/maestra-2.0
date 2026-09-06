@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import * as AppleAuthentication from 'expo-apple-authentication';
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -15,7 +16,8 @@ import { authActions } from '@maestra/core/store/slices/auth';
 import { useAppDispatch } from '@maestra/core/store/store';
 import { IDADE_MINIMA, ehMaiorDeIdade, idadeEmAnos } from '@maestra/core/utils/age';
 
-import { MaestraMarca } from '@/icones';
+import { GoogleIcon, MaestraMarca } from '@/icones';
+import { appleDisponivel, entrarComApple, entrarComGoogle } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 
 /** Os documentos legais vivem na web. */
@@ -34,6 +36,11 @@ const SITE = 'https://www.maestramanager.com';
 // DUAS ETAPAS, porque o e-mail é confirmado por código: o formulário e o código de seis
 // dígitos. Entre uma e outra o app SAI da meia-sessão que o Supabase devolve — sem isso, quem
 // fechasse o app no meio do cadastro voltaria "logado" com o e-mail nunca confirmado.
+//
+// GOOGLE E APPLE criam a conta sem passar por aqui: quem nunca entrou vira usuário novo no
+// primeiro toque. Eles estão nesta tela porque é onde quem quer se cadastrar chega — e não
+// achar o caminho que já existe faz a pessoa preencher um formulário à toa. Não confirmam
+// e-mail (o provedor já o confirmou) e por isso não passam pela etapa do código.
 
 /** Segundos entre reenvios do código, como na web: menos que isso bate no limite do Supabase. */
 const ESPERA_DO_REENVIO = 45;
@@ -75,6 +82,9 @@ export default function Cadastro() {
   const { sessao } = useSessao();
 
   const [etapa, setEtapa] = useState<'formulario' | 'codigo'>('formulario');
+  // A folha da Apple só existe em iOS 13+; em qualquer outro lugar o botão não deve aparecer.
+  const [temApple, setTemApple] = useState(false);
+  const [social, setSocial] = useState<'google' | 'apple' | null>(null);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -88,6 +98,8 @@ export default function Cadastro() {
   const [aviso, setAviso] = useState<string | null>(null);
   const [espera, setEspera] = useState(0);
 
+  useEffect(() => { appleDisponivel().then(setTemApple); }, []);
+
   const relogio = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (espera <= 0) return undefined;
@@ -98,6 +110,21 @@ export default function Cadastro() {
   // Quem já tem sessão não se cadastra. O `Redirect` fica DEPOIS dos hooks: sair antes deles
   // muda a ordem entre renderizações, e o React quebra.
   if (sessao && etapa === 'formulario') return <Redirect href="/perfis" />;
+
+  const entrarPor = async (qual: 'google' | 'apple', acao: () => Promise<unknown>) => {
+    setErro(null);
+    setSocial(qual);
+    try {
+      await acao();
+      // Não há navegação aqui: o portão da sessão vê a sessão nova e leva a pessoa adiante,
+      // como na tela de entrar. O do Google ainda volta de outra tela, e um `replace` daqui se
+      // perderia no caminho.
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível criar a conta.');
+    } finally {
+      setSocial(null);
+    }
+  };
 
   const criar = async () => {
     setErro(null);
@@ -199,6 +226,44 @@ export default function Cadastro() {
               {etapa === 'formulario' ? (
                 <>
                   <Text style={estilos.titulo}>Criar sua conta</Text>
+
+                  {/* Lado a lado, e não empilhados: a diretriz 4.8 da App Store pede que o
+                      Sign in with Apple tenha a MESMA proeminência dos outros logins sociais, e
+                      empilhado o de cima vira o principal aos olhos de quem lê. */}
+                  <View style={estilos.sociais}>
+                    <Pressable
+                      style={({ pressed }) => [estilos.social, pressed && estilos.pressionado]}
+                      disabled={social !== null}
+                      onPress={() => void entrarPor('google', entrarComGoogle)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Continuar com Google"
+                    >
+                      {social === 'google'
+                        ? <ActivityIndicator color={COR_ENTRADA.socialTexto} />
+                        : <GoogleIcon size={20} />}
+                    </Pressable>
+
+                    {/* O botão da Apple é o OFICIAL, e não um `Pressable` com o texto "Apple":
+                        as Human Interface Guidelines exigem o do sistema, e um próprio é motivo
+                        de rejeição. `SIGN_UP` porque aqui a ação é criar conta. */}
+                    {temApple && (
+                      <View style={estilos.social__apple}>
+                        <AppleAuthentication.AppleAuthenticationButton
+                          buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
+                          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE}
+                          cornerRadius={RAIO.campoDeEntrada}
+                          style={estilos.botaoDaApple}
+                          onPress={() => void entrarPor('apple', entrarComApple)}
+                        />
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={estilos.divisor}>
+                    <View style={estilos.fio} />
+                    <Text style={estilos.ou}>ou</Text>
+                    <View style={estilos.fio} />
+                  </View>
 
                   <View style={estilos.campo}>
                     <Feather name="user" size={18} color={COR_ENTRADA.campoIcone} />
@@ -398,6 +463,20 @@ const estilos = StyleSheet.create({
     fontSize: 20, fontWeight: '800', color: COR_ENTRADA.marca, marginBottom: 16,
   },
   apoio: { fontSize: 14, lineHeight: 20, color: COR_ENTRADA.apoio, marginBottom: 18 },
+  sociais: { flexDirection: 'row', gap: 10, marginBottom: 4 },
+  social: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    padding: 12, minHeight: 46,
+    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_ENTRADA.socialContorno,
+    backgroundColor: COR_ENTRADA.socialFundo,
+  },
+  socialTexto: { fontSize: 14, fontWeight: '700', color: COR_ENTRADA.socialTexto },
+  /** A coluna da Apple não leva contorno nem fundo próprios: o botão do sistema traz os dele. */
+  social__apple: { flex: 1, minHeight: 46 },
+  botaoDaApple: { flex: 1, minHeight: 46 },
+  divisor: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 18 },
+  fio: { flex: 1, height: 1, backgroundColor: COR_ENTRADA.divisoria },
+  ou: { color: COR_ENTRADA.divisoriaTexto, fontSize: 12 },
   campo: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingHorizontal: 13, marginBottom: 12,

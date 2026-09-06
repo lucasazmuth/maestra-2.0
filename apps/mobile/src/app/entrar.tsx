@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_ENTRADA, RAIO } from '@maestra/core/constants/design';
-import { MaestraMarca } from '@/icones';
+import { GoogleIcon, MaestraMarca } from '@/icones';
 import { appleDisponivel, entrarComApple, entrarComEmail, entrarComGoogle } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 
@@ -91,7 +91,7 @@ export default function Entrar() {
                 >
                   {emCurso === 'google'
                     ? <ActivityIndicator color={COR_ENTRADA.socialTexto} />
-                    : <Text style={estilos.socialTexto}>Google</Text>}
+                    : <GoogleIcon size={20} />}
                 </Pressable>
 
                 {/* O botao da Apple e o OFICIAL, e nao um `Pressable` com o texto "Apple" como
