@@ -341,6 +341,34 @@ export const Relatorio = ({
           </View>
         )}
 
+        {/* SEÇÃO 5 — o convite para o planejamento.
+            Vem ANTES de "leve seu diagnóstico", como na web: lá os dois vivem no mesmo bloco,
+            com o convite em cima e os botões de levar embaixo. A ordem importa — quem acabou
+            de ler o retrato da carreira decide o próximo passo primeiro, e só depois pensa em
+            guardar o documento. Ler na ordem inversa é despedir-se antes de convidar.
+            E vem antes de "quem assina": a assinatura da metodologia sustenta a oferta, então
+            fecha a leitura. */}
+        {!!aoContinuar && (
+          <View
+            style={estilos.cartao}
+            onLayout={(e) => aoMedirAncoras?.({ inicioDaChamada: e.nativeEvent.layout.y })}
+          >
+            <Text style={estilos.chamadaTitulo}>{CHAMADA_DO_PLANEJAMENTO.titulo}</Text>
+            <Text style={estilos.chamadaApoio}>{CHAMADA_DO_PLANEJAMENTO.apoio}</Text>
+            <Pressable
+              style={estilos.chamadaBotao}
+              onPress={aoContinuar}
+              accessibilityRole="button"
+              accessibilityLabel={CHAMADA_DO_PLANEJAMENTO.botao}
+            >
+              <Text style={estilos.chamadaBotaoTexto}>{CHAMADA_DO_PLANEJAMENTO.botao}</Text>
+              <Feather name="arrow-right" size={16} color={COR.sobrePrimaria} />
+            </Pressable>
+            {/* Tira o medo de clicar: seguir adiante não perde o diagnóstico. */}
+            <Text style={estilos.chamadaNota}>{CHAMADA_DO_PLANEJAMENTO.nota}</Text>
+          </View>
+        )}
+
         {/* O PDF é o MESMO deck da web, impresso a partir do HTML do núcleo — aqui ele sai com
             texto de verdade, e não como foto de tela. */}
         <View style={estilos.cartao}>
@@ -369,29 +397,6 @@ export const Relatorio = ({
             <Text style={estilos.compartilharTexto}>Compartilhar em texto</Text>
           </Pressable>
         </View>
-
-        {/* SEÇÃO 5 — o convite para o planejamento. Vem antes de "quem assina", como na web:
-            a assinatura da metodologia é o que sustenta a oferta, e por isso fecha a leitura. */}
-        {!!aoContinuar && (
-          <View
-            style={estilos.cartao}
-            onLayout={(e) => aoMedirAncoras?.({ inicioDaChamada: e.nativeEvent.layout.y })}
-          >
-            <Text style={estilos.chamadaTitulo}>{CHAMADA_DO_PLANEJAMENTO.titulo}</Text>
-            <Text style={estilos.chamadaApoio}>{CHAMADA_DO_PLANEJAMENTO.apoio}</Text>
-            <Pressable
-              style={estilos.chamadaBotao}
-              onPress={aoContinuar}
-              accessibilityRole="button"
-              accessibilityLabel={CHAMADA_DO_PLANEJAMENTO.botao}
-            >
-              <Text style={estilos.chamadaBotaoTexto}>{CHAMADA_DO_PLANEJAMENTO.botao}</Text>
-              <Feather name="arrow-right" size={16} color={COR.sobrePrimaria} />
-            </Pressable>
-            {/* Tira o medo de clicar: seguir adiante não perde o diagnóstico. */}
-            <Text style={estilos.chamadaNota}>{CHAMADA_DO_PLANEJAMENTO.nota}</Text>
-          </View>
-        )}
 
         <View style={estilos.cartao}>
           <Text style={estilos.tituloDoCartao}>QUEM ASSINA</Text>

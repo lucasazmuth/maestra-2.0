@@ -164,6 +164,21 @@ describe('desbloqueio do perfil', () => {
       expect(tela.getByText(CHAMADA_DO_PLANEJAMENTO.nota)).toBeTruthy();
     });
 
+    // A ordem importa: quem acabou de ler o retrato da carreira decide o próximo passo
+    // primeiro, e só depois pensa em guardar o documento. Ler na ordem inversa é despedir-se
+    // antes de convidar. Na web os dois vivem no mesmo bloco, com o convite em cima.
+    it('o convite vem ANTES de "leve seu diagnóstico"', async () => {
+      const { tela } = await voltarAoDiagnostico();
+      const arvore = JSON.stringify(tela.toJSON());
+
+      const convite = arvore.indexOf(CHAMADA_DO_PLANEJAMENTO.titulo);
+      const levar = arvore.indexOf('Leve seu diagnóstico');
+
+      expect(convite).toBeGreaterThan(-1);
+      expect(levar).toBeGreaterThan(-1);
+      expect(convite).toBeLessThan(levar);
+    });
+
     it('o convite leva para a etapa que libera o perfil', async () => {
       const { tela, usuario } = await voltarAoDiagnostico();
 
