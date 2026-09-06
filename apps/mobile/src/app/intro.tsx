@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COR, COR_CABECALHO_DE_MODULO, RAIO } from '@maestra/core/constants/design';
 import { LANDING_HERO, MODULOS_DA_PLATAFORMA, tituloDaLanding } from '@maestra/core/constants/landing';
 
+import { EmblemaNyta } from '@/casca/EmblemaNyta';
 import {
   AgendaIcon, DiagnosticoIcon, MaestraMarca, PlanejamentoIcon, PlanoAcaoIcon,
 } from '@/icones';
@@ -26,14 +27,20 @@ const SITE = 'https://www.maestramanager.com';
 // zero é o momento em que se pergunta "o que é isto", e a resposta tem que estar lá toda vez.
 // Quem acabou de SAIR da conta não passa por aqui — o portão da sessão manda direto ao login.
 
-// Os quatro módulos que o APP entrega, com o título e o resumo que a landing usa. Os outros
-// dois da lista do núcleo ficam de fora: a Nyta atravessa todos e não é uma frente à parte, e
-// "E ela só cresce" é promessa de roteiro, que não cabe numa primeira tela.
+/**
+ * O emblema da Nyta não aceita cor: ele tem gradiente próprio, e é assim em todo o app. A
+ * assinatura aqui recebe `color` só para caber ao lado dos outros ícones, e a ignora.
+ */
+const NytaIcone = ({ size }: { size?: number; color?: string }) => <EmblemaNyta size={size} />;
+
+// Os cinco módulos que o app entrega, com o título e o resumo que a landing usa. De fora fica
+// só "E ela só cresce": promessa de roteiro pesa mais do que entrega numa primeira tela.
 const ICONES: Record<string, typeof DiagnosticoIcon> = {
   'Diagnóstico REAL': DiagnosticoIcon,
   'Planejamento estratégico': PlanejamentoIcon,
   'Plano de ação': PlanoAcaoIcon,
   'Gestão completa': AgendaIcon,
+  'Nyta IA': NytaIcone,
 };
 
 const FRENTES = MODULOS_DA_PLATAFORMA.filter((m) => m.title in ICONES);

@@ -46,11 +46,13 @@ describe('apresentação', () => {
   it('lista as frentes da plataforma, com os títulos do núcleo', async () => {
     const tela = await montar();
 
-    for (const titulo of ['Diagnóstico REAL', 'Planejamento estratégico', 'Plano de ação', 'Gestão completa']) {
+    for (const titulo of [
+      'Diagnóstico REAL', 'Planejamento estratégico', 'Plano de ação', 'Gestão completa', 'Nyta IA',
+    ]) {
       expect(tela.getByText(new RegExp(titulo))).toBeTruthy();
     }
-    // A Nyta atravessa todos os módulos e não é uma frente à parte; "E ela só cresce" é
-    // promessa de roteiro, que não cabe numa primeira tela.
+    // "E ela só cresce" fica de fora: promessa de roteiro pesa mais do que entrega numa
+    // primeira tela.
     expect(tela.queryByText(/E ela só cresce/)).toBeNull();
   });
 
