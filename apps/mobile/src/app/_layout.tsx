@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { persistor, store } from '@maestra/core/store/store';
+import { PortaoDaSessao } from '@/nucleo/PortaoDaSessao';
 import { ligarRotaDoApp } from '@/nucleo/rotaApp';
 
 // No escopo do modulo, e nao num efeito: `useRota` e consultado DURANTE a renderizacao dos
@@ -22,6 +23,9 @@ export default function LayoutRaiz() {
     <Provider store={store}>
       <PersistGate persistor={persistor} loading={null}>
         <StatusBar style="dark" />
+        {/* O portão fica DENTRO do roteador: ele lê a rota atual para não expulsar quem já
+            está na tela de entrar. */}
+        <PortaoDaSessao />
         <Stack screenOptions={{ headerShown: false }} />
       </PersistGate>
     </Provider>
