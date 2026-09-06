@@ -359,13 +359,11 @@ export const COR_PLANO = {
   fio: '#edf1f7',
   legenda: '#8d9db7',
   chipContorno: '#dde5f1',
-  /** O contêiner "Ranking de execução", que envolve a lista de estratégias. */
+  /** O contorno em volta da lista de estratégias. */
   molduraContorno: '#e1e7f0',
-  molduraTitulo: '#52668d',
-  molduraRotulo: '#93a3bc',
   contagemFundo: '#edf2fb',
   contagemTexto: '#7183a3',
-  /** A moldura "Ranking de execução" tem fundo próprio, um cinza mais frio que o da página. */
+  /** Um cinza mais frio que o da página, para as seções da ficha da tarefa. */
   secaoFundo: '#f7f8fb',
   /** O círculo de concluir, e o "⋮" que abre a ficha. */
   marcar: '#8c9bb2',

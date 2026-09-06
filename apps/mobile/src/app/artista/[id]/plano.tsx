@@ -99,9 +99,9 @@ export default function Plano() {
   }, [artista?.user_id, usuario, equipe, meuNome, minhaFoto]);
 
   // Em ORDEM DE PRIORIDADE (`finalScore` decrescente), como a web — não na ordem em que foram
-  // salvas. É o "Ranking de execução" do título: sem o ordenamento, o app numerava
-  // "ESTRATÉGIA #01" numa estratégia que na web é a quinta, e as duas telas discordavam sobre
-  // qual é a primeira coisa a fazer.
+  // salvas. A lista já se chamou "Ranking de execução" por causa disto, e o rótulo saiu, mas a
+  // ordem continua sendo o ponto: sem ela, o app numerava "ESTRATÉGIA #01" numa estratégia que
+  // na web é a quinta, e as duas telas discordavam sobre qual é a primeira coisa a fazer.
   const todas: Strategy[] = useMemo(
     () => [...(artista?.content?.strategies ?? [])].sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0)),
     [artista?.content?.strategies],
@@ -247,27 +247,30 @@ export default function Plano() {
           </View>
         ) : (
           <>
-            {/* A moldura "Ranking de execucao" envolve a lista inteira, com a contagem de
-                estrategias a direita. */}
-            <View style={estilos.moldura}>
-              {/* No celular a web ESCONDE o kicker "ESTRATÉGIAS DO PLANO" e a contagem
-                  "N estratégias" (regra de 700px): o kicker repete o título logo abaixo, e a
-                  contagem repete o que a lista mostra. Eu tinha portado os dois. */}
-              <View style={estilos.molduraTopo}>
-                <Text style={estilos.molduraTitulo}>Ranking de execução</Text>
-                {arquivadas.length > 0 && (
-                  <Pressable
-                    style={estilos.arquivadas}
-                    onPress={() => setArquivadasAbertas(true)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Estratégias arquivadas: ${arquivadas.length}`}
-                  >
-                    <Feather name="archive" size={13} color={COR_PLANO.contagemTexto} />
-                    <Text style={estilos.arquivadasTexto}>Arquivadas ({arquivadas.length})</Text>
-                  </Pressable>
-                )}
-              </View>
+            {/* A lista das estratégias, sem cabeçalho.
+                Ela tinha uma faixa em cima escrita "Ranking de execução" — um rótulo que
+                repetia o que a lista já mostra, ocupando uma tela estreita onde cada linha
+                conta. A web esconde no celular, pela mesma razão, o kicker "ESTRATÉGIAS DO
+                PLANO" e a contagem "N estratégias".
 
+                O que aquela faixa também guardava era o acesso às arquivadas — e isso NÃO pode
+                sair junto, ou elas viram um dado sem porta. Ele desce para logo acima da lista,
+                e só aparece quando existe alguma. */}
+            {arquivadas.length > 0 && (
+              <View style={estilos.linhaDasArquivadas}>
+                <Pressable
+                  style={estilos.arquivadas}
+                  onPress={() => setArquivadasAbertas(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Estratégias arquivadas: ${arquivadas.length}`}
+                >
+                  <Feather name="archive" size={13} color={COR_PLANO.contagemTexto} />
+                  <Text style={estilos.arquivadasTexto}>Arquivadas ({arquivadas.length})</Text>
+                </Pressable>
+              </View>
+            )}
+
+            <View style={estilos.moldura}>
               <View style={estilos.listaDeEstrategias}>
             {estrategias.map((estrategia, indice) => {
               const { prontas, total, completa } = progresso(estrategia);
@@ -485,17 +488,12 @@ const estilos = StyleSheet.create({
   titulo: { fontSize: 30, fontWeight: '800', color: COR_CABECALHO_DE_MODULO.titulo },
   apoio: { fontSize: 12, color: COR_CABECALHO_DE_MODULO.apoio, lineHeight: 19, marginTop: 9 },
 
-  // A moldura "Ranking de execucao": um contorno so em volta da lista inteira.
+  /** Um contorno só em volta da lista inteira. */
   moldura: {
     borderWidth: 1, borderColor: COR_PLANO.molduraContorno, borderRadius: 8, overflow: 'hidden',
   },
-  // Sem o kicker, o cabeçalho encolhe: 12/14 de recuo, como o da web no celular.
-  molduraTopo: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-    paddingHorizontal: 14, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: COR_PLANO.molduraContorno,
-  },
-  molduraTitulo: { fontSize: 15, color: COR_PLANO.molduraTitulo },
+  /** A linha das arquivadas, acima da lista: alinhada à direita e só quando há alguma. */
+  linhaDasArquivadas: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 },
   arquivadas: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     borderRadius: RAIO.pilula, paddingVertical: 7, paddingHorizontal: 10,
