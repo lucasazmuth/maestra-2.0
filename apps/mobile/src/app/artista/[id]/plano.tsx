@@ -4,7 +4,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_CABECALHO_DE_MODULO, COR_PLANO, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_PLANO, RAIO } from '@maestra/core/constants/design';
 import { TASK_OWNER_SELF, TASK_TYPES } from '@maestra/core/constants/maestra';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { ActionTask, ArtistMember, Strategy } from '@maestra/core/interfaces/maestra';
@@ -14,6 +14,7 @@ import { buildActionPlan } from '@maestra/core/services/planoDeAcao';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch } from '@maestra/core/store/store';
 
+import { CabecalhoDoModulo } from '@/casca/CabecalhoDoModulo';
 import { Arquivadas } from '@/casca/plano/Arquivadas';
 import { Chip, Escolha, type Opcao } from '@/casca/plano/Escolha';
 import { FichaDaTarefa } from '@/casca/plano/FichaDaTarefa';
@@ -230,11 +231,10 @@ export default function Plano() {
             regra que parece esconde-lo e de filho direto de `.board-content`, e o heading dos
             modulos e filho da PAGINA. */}
         <View style={estilos.cabecalhoDaPagina}>
-          <Text style={estilos.sobretitulo}>EXECUÇÃO DIÁRIA</Text>
-          <Text style={estilos.titulo}>Plano de Ação</Text>
-          <Text style={estilos.apoio}>
-            Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase.
-          </Text>
+          <CabecalhoDoModulo
+            titulo="Plano de Ação"
+            descricao="Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase."
+          />
         </View>
 
         {estrategias.length === 0 ? (
@@ -481,15 +481,8 @@ const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
   conteudo: { paddingHorizontal: 18, paddingTop: 24, paddingBottom: 122 },
-  cabecalhoDaPagina: {
-    paddingBottom: 30, marginBottom: 22,
-    borderBottomWidth: 1, borderBottomColor: COR_CABECALHO_DE_MODULO.fio,
-  },
-  sobretitulo: {
-    fontSize: 9, fontWeight: '800', color: COR_CABECALHO_DE_MODULO.rotulo, marginBottom: 8,
-  },
-  titulo: { fontSize: 30, fontWeight: '800', color: COR_CABECALHO_DE_MODULO.titulo },
-  apoio: { fontSize: 12, color: COR_CABECALHO_DE_MODULO.apoio, lineHeight: 19, marginTop: 9 },
+  /** Só a folga até a lista: o resto do cabeçalho é do `CabecalhoDoModulo`. */
+  cabecalhoDaPagina: { marginBottom: 22 },
 
   /**
    * A lista é uma FAIXA CONTÍNUA branca, com um contorno só em volta de tudo — o mesmo desenho

@@ -11,6 +11,7 @@ import type { ArtistMember } from '@maestra/core/interfaces/maestra';
 import { listMembers } from '@maestra/core/services/db/members';
 
 import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
+import { CabecalhoDoModulo } from '@/casca/CabecalhoDoModulo';
 import { FolhaDeConvite } from '@/casca/equipe/FolhaDeConvite';
 import { FolhaDoMembro, SeloDeEstado } from '@/casca/equipe/FolhaDoMembro';
 import { useArtistaDaRota } from '@/nucleo/artista';
@@ -79,14 +80,10 @@ export default function Equipe() {
           <RefreshControl refreshing={false} onRefresh={buscar} tintColor={COR.primaria} />
         }
       >
-        <View style={estilos.cabecalho}>
-          <Text style={estilos.sobretitulo}>TIME DO ARTISTA</Text>
-          <Text style={estilos.titulao}>Equipe</Text>
-          <Text style={estilos.resumo}>
-            Gerencie quem participa da operação e o que cada pessoa pode acessar.
-          </Text>
-
-        </View>
+        <CabecalhoDoModulo
+          titulo="Equipe"
+          descricao="Gerencie quem participa da operação e o que cada pessoa pode acessar."
+        />
 
         {carregando ? (
           <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
@@ -167,12 +164,6 @@ const estilos = StyleSheet.create({
   // 122, que só vencia a ilha: a última linha da lista ficava permanentemente debaixo do botão,
   // com os controles dela inalcançáveis por mais que se rolasse.
   conteudo: { paddingHorizontal: 14, paddingTop: 18, paddingBottom: 196 },
-  cabecalho: {
-    paddingBottom: 30, borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.contornoDoTopo,
-  },
-  sobretitulo: { fontSize: 9, fontWeight: '800', color: COR_CATALOGO.rotulo, marginBottom: 8 },
-  titulao: { fontSize: 30, fontWeight: '800', letterSpacing: -0.75, color: COR_CATALOGO.titulo },
-  resumo: { fontSize: 12, color: COR_CATALOGO.apoio, marginTop: 9, lineHeight: 18 },
   espera: { marginTop: 48 },
   lista: {
     marginTop: 28, borderWidth: 1, borderColor: COR_EQUIPE.contorno, borderRadius: 8,

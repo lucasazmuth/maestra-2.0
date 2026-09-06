@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
+import { CabecalhoDoModulo } from '@/casca/CabecalhoDoModulo';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { EspacoJamIcon } from '@/icones';
 import { useArtistaDaRota } from '@/nucleo/artista';
@@ -160,18 +161,11 @@ export default function Catalogo() {
       {/* O cabecalho e o da web, com as MESMAS palavras: o modulo se chama "Musicas", nao
           "Catalogo" — e a aba de baixo ja dizia "Musicas", entao a tela se contradizia. */}
       <View style={estilos.cabecalho}>
-        <Text style={estilos.sobretitulo}>MÚSICAS DO ARTISTA</Text>
-        <Text style={estilos.titulao}>Músicas</Text>
-        <Text style={estilos.subtitulo}>
-          Organize as músicas em preparação e acompanhe cada etapa antes do lançamento.
-        </Text>
-
-        {/* Só a contagem do limite do plano: criar virou o botão flutuante, no canto de baixo. */}
-        <View style={estilos.linhaDaContagem}>
-          <Text style={estilos.contagem}>
-            {faixas.length}/{direitos.maxCatalogTracks === Infinity ? '∞' : direitos.maxCatalogTracks} músicas
-          </Text>
-        </View>
+        <CabecalhoDoModulo
+          titulo="Músicas"
+          descricao="Organize as músicas em preparação e acompanhe cada etapa antes do lançamento."
+          nota={`${faixas.length}/${direitos.maxCatalogTracks === Infinity ? '∞' : direitos.maxCatalogTracks} músicas`}
+        />
       </View>
 
       {/* As duas abas: o catálogo cadastrado aqui e o que já saiu no Spotify. */}
@@ -438,17 +432,8 @@ export default function Catalogo() {
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1 },
-  cabecalho: {
-    paddingHorizontal: 16, paddingTop: 12, paddingBottom: 30, marginHorizontal: 0,
-    borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.contornoDoTopo,
-  },
-  sobretitulo: {
-    fontSize: 9, fontWeight: '800', color: COR_CATALOGO.rotulo, marginBottom: 8,
-  },
-  titulao: { fontSize: 27, fontWeight: '800', color: COR_CATALOGO.titulo },
-  subtitulo: { fontSize: 12, color: COR_CATALOGO.apoio, lineHeight: 18, marginTop: 9 },
-  linhaDaContagem: { flexDirection: 'row', alignItems: 'center', marginTop: 14 },
-  contagem: { fontSize: 12, fontWeight: '700', color: COR_CATALOGO.legenda },
+  /** Só o recuo lateral: o resto do cabeçalho é do `CabecalhoDoModulo`. */
+  cabecalho: { paddingHorizontal: 16 },
   abas: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 18 },
   aba: {
     paddingVertical: 11, paddingHorizontal: 18,
