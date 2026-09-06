@@ -3,8 +3,8 @@ import { useEffect } from 'react';
 
 import { useSessao } from '@/nucleo/sessao';
 
-/** A única rota que existe sem sessão. */
-const PUBLICA = 'entrar';
+/** As rotas que existem SEM sessão. Expulsar alguém delas seria um laço. */
+const PUBLICAS = ['entrar', 'intro'];
 
 // O PORTÃO DA SESSÃO — quem sai da conta sai da tela também.
 //
@@ -29,7 +29,7 @@ export const PortaoDaSessao = () => {
     // `carregando` é o que evita o piscar clássico: sem ele, o app mandaria todo mundo para o
     // login por meio segundo até a sessão do disco chegar.
     if (carregando || sessao) return;
-    if (segmentos[0] === PUBLICA) return;
+    if (PUBLICAS.includes(segmentos[0] as string)) return;
     router.replace('/entrar');
   }, [carregando, sessao, segmentos, router]);
 

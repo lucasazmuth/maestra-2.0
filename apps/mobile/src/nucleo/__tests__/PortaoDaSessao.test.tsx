@@ -51,9 +51,9 @@ describe('portão da sessão', () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  // Empurrar quem já está no login para o login é um laço.
-  it('não expulsa quem já está na tela de entrar', async () => {
-    mockSegmentos = ['entrar'];
+  // Empurrar quem já está numa tela que existe SEM sessão é um laço.
+  it.each([['entrar'], ['intro']])('não expulsa quem está em /%s', async (rota) => {
+    mockSegmentos = [rota];
     await render(<PortaoDaSessao />);
 
     expect(mockReplace).not.toHaveBeenCalled();
