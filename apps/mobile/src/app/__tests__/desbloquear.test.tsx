@@ -2,10 +2,11 @@ import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
+import { CHAMADA_DO_PLANEJAMENTO } from '@maestra/core/constants/realNarrative';
 import { store } from '@maestra/core/store/store';
 
 import Desbloquear from '../desbloquear/[id]';
-import { semDiagnostico } from './fixtures';
+import { comDiagnostico, semDiagnostico } from './fixtures';
 
 // O desbloqueio do perfil, no app.
 //
@@ -93,6 +94,8 @@ const semearPerfis = (perfis: unknown[]) =>
 
 /** O perfil pendente que esta tela existe para liberar. */
 const pendente = { ...semDiagnostico, id: 'a-2', name: 'AZMUTH BEATS', is_locked: true };
+/** O mesmo perfil, com o diagnóstico salvo: é o que faz a etapa do relatório existir. */
+const pendenteComReal = { ...comDiagnostico, id: 'a-2', name: 'AZMUTH BEATS', is_locked: true };
 
 describe('desbloqueio do perfil', () => {
   beforeEach(() => {
@@ -128,6 +131,43 @@ describe('desbloqueio do perfil', () => {
     expect(mockInvocar).not.toHaveBeenCalledWith(
       'asaas-create-artist-charge', expect.anything(),
     );
+  });
+
+  // A etapa do relatório terminava sem saída: a pessoa lia o diagnóstico inteiro e o texto
+  // simplesmente acabava, sem dizer qual era o próximo passo nem como dá-lo.
+  describe('a etapa do diagnóstico', () => {
+    const voltarAoDiagnostico = async () => {
+      semearPerfis([pendenteComReal]);
+      const usuario = userEvent.setup();
+      const tela = await montar();
+      await usuario.press(await tela.findByLabelText('Voltar ao diagnóstico'));
+      return { tela, usuario };
+    };
+
+    // A entrega tem nome próprio. O header dizia só "Diagnóstico", que é o rótulo curto que a
+    // web usa por falta de espaço — aqui cabe o nome do produto.
+    it('o header diz o nome completo da entrega', async () => {
+      const { tela } = await voltarAoDiagnostico();
+
+      expect(tela.getByLabelText('Etapa 2 de 3: Diagnóstico REAL')).toBeTruthy();
+    });
+
+    it('termina convidando para o planejamento, com a copy do núcleo', async () => {
+      const { tela } = await voltarAoDiagnostico();
+
+      expect(tela.getByText(CHAMADA_DO_PLANEJAMENTO.titulo)).toBeTruthy();
+      expect(tela.getByText(CHAMADA_DO_PLANEJAMENTO.apoio)).toBeTruthy();
+      // O que tira o medo de clicar: seguir adiante não perde o diagnóstico.
+      expect(tela.getByText(CHAMADA_DO_PLANEJAMENTO.nota)).toBeTruthy();
+    });
+
+    it('o convite leva para a etapa que libera o perfil', async () => {
+      const { tela, usuario } = await voltarAoDiagnostico();
+
+      await usuario.press(tela.getByLabelText(CHAMADA_DO_PLANEJAMENTO.botao));
+
+      expect(await tela.findByLabelText('Liberar este perfil')).toBeTruthy();
+    });
   });
 
   // O passe libera o perfil sem cobrança nenhuma, e a tela de sucesso não pode falar em

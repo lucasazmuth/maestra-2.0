@@ -2,6 +2,7 @@ import * as React from 'react';
 import { render } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 
+import { CHAMADA_DO_PLANEJAMENTO } from '@maestra/core/constants/realNarrative';
 import { store } from '@maestra/core/store/store';
 import Perfil from '../artista/[id]/diagnostico';
 import { comDiagnostico, semDiagnostico } from './fixtures';
@@ -97,6 +98,16 @@ describe('diagnostico REAL em leitura', () => {
   it('traz a narrativa "O que isso revela" de cada dimensão', async () => {
     const tela = await montar();
     expect(tela.getAllByText('O que isso revela')).toHaveLength(4);
+  });
+
+  // O convite para o planejamento NÃO entra aqui: esta tela é a de um perfil já liberado, e
+  // um botão de compra no fim dele seria cobrar de novo por algo já pago. É o mesmo
+  // `showPlanningCta` desligado da web.
+  it('não convida para o planejamento: este perfil já foi liberado', async () => {
+    const tela = await montar();
+
+    expect(tela.queryByText(CHAMADA_DO_PLANEJAMENTO.titulo)).toBeNull();
+    expect(tela.queryByLabelText(CHAMADA_DO_PLANEJAMENTO.botao)).toBeNull();
   });
 
   it('mostra quem assina o Índice REAL', async () => {

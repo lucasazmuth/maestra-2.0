@@ -11,7 +11,7 @@ import {
 import {
   DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtNum, type DimKey,
 } from '@maestra/core/constants/realCopy';
-import { QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
+import { CHAMADA_DO_PLANEJAMENTO, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
 import { autoriaDoDocumento } from '@maestra/core/documentos/diagnostico';
 
 import { CartaoDaDimensao } from '@/casca/diagnostico/CartaoDaDimensao';
@@ -36,6 +36,15 @@ type Props = {
   chartmetric?: Record<string, any> | null;
   /** O que o PDF precisa saber além dos números: de quem é o diagnóstico e quem o gerou. */
   artista?: { id?: string; nome?: string; foto?: string | null; vinculo?: string | null };
+  /**
+   * O convite para o planejamento, no fim do relatório.
+   *
+   * Opcional porque o relatório aparece em DOIS lugares, e só um deles vende: no fluxo de
+   * criação ele termina no desbloqueio; na tela de diagnóstico de um perfil já liberado não há
+   * o que oferecer, e um botão de compra ali seria cobrar de novo por algo já pago. É o mesmo
+   * `showPlanningCta` da web.
+   */
+  aoContinuar?: () => void;
 };
 
 /**
@@ -43,7 +52,7 @@ type Props = {
  * na página do diagnóstico de um perfil, e no fim do fluxo de criação, antes do desbloqueio.
  * Duas cópias seriam duas telas para manter em pé.
  */
-export const Relatorio = ({ real, chartmetric = null, artista }: Props) => {
+export const Relatorio = ({ real, chartmetric = null, artista, aoContinuar }: Props) => {
   const { sessao } = useSessao();
   const [gerando, setGerando] = useState(false);
   const perfil = real?.profile;
@@ -314,6 +323,26 @@ export const Relatorio = ({ real, chartmetric = null, artista }: Props) => {
           </Pressable>
         </View>
 
+        {/* SEÇÃO 5 — o convite para o planejamento. Vem antes de "quem assina", como na web:
+            a assinatura da metodologia é o que sustenta a oferta, e por isso fecha a leitura. */}
+        {!!aoContinuar && (
+          <View style={estilos.cartao}>
+            <Text style={estilos.chamadaTitulo}>{CHAMADA_DO_PLANEJAMENTO.titulo}</Text>
+            <Text style={estilos.chamadaApoio}>{CHAMADA_DO_PLANEJAMENTO.apoio}</Text>
+            <Pressable
+              style={estilos.chamadaBotao}
+              onPress={aoContinuar}
+              accessibilityRole="button"
+              accessibilityLabel={CHAMADA_DO_PLANEJAMENTO.botao}
+            >
+              <Text style={estilos.chamadaBotaoTexto}>{CHAMADA_DO_PLANEJAMENTO.botao}</Text>
+              <Feather name="arrow-right" size={16} color={COR.sobrePrimaria} />
+            </Pressable>
+            {/* Tira o medo de clicar: seguir adiante não perde o diagnóstico. */}
+            <Text style={estilos.chamadaNota}>{CHAMADA_DO_PLANEJAMENTO.nota}</Text>
+          </View>
+        )}
+
         <View style={estilos.cartao}>
           <Text style={estilos.tituloDoCartao}>QUEM ASSINA</Text>
           <Text style={estilos.assinaNome}>{QUEM_ASSINA.name}</Text>
@@ -331,6 +360,29 @@ export const Relatorio = ({ real, chartmetric = null, artista }: Props) => {
 
 const estilos = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
+
+  // O convite do fim do relatório. O botão segue o CTA da marca: pílula, 15/32, texto 16/800.
+  chamadaTitulo: {
+    fontSize: 20, fontWeight: '800', lineHeight: 26, color: COR_DIAGNOSTICO.titulo,
+    marginBottom: 10,
+  },
+  chamadaApoio: {
+    fontSize: 14, lineHeight: 21, color: COR_DIAGNOSTICO.texto, marginBottom: 18,
+  },
+  chamadaBotao: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 15, paddingHorizontal: 32, borderRadius: RAIO.pilula,
+    backgroundColor: COR.primaria,
+  },
+  chamadaBotaoTexto: {
+    fontSize: 16, fontWeight: '800', letterSpacing: 0.16, color: COR.sobrePrimaria,
+    flexShrink: 1,
+  },
+  chamadaNota: {
+    fontSize: 12, lineHeight: 17, textAlign: 'center', color: COR_DIAGNOSTICO.rotulo,
+    marginTop: 12,
+  },
+
   cabecalho: { paddingTop: 22, paddingBottom: 8 },
   sobretitulo: { fontSize: 9, fontWeight: '800', color: COR_DIAGNOSTICO.rotulo, marginBottom: 8 },
   titulao: { fontSize: 30, fontWeight: '800', letterSpacing: -0.75, color: COR_DIAGNOSTICO.titulo },

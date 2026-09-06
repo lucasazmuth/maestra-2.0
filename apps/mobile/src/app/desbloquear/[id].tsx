@@ -300,7 +300,15 @@ export default function Desbloquear() {
     <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
       <View style={estilos.topo}>
         <MaestraMarca size={14} color={COR_DIAGNOSTICO.titulo} />
-        <View style={estilos.fase}>
+        {/* O mesmo `aria-label` da web: quem navega por leitor de tela ouve em que ponto do
+            fluxo está, e não só o nome solto da etapa. */}
+        <View
+          style={estilos.fase}
+          accessibilityRole="header"
+          accessibilityLabel={etapa === 'diagnostico'
+            ? 'Etapa 2 de 3: Diagnóstico REAL'
+            : 'Etapa 3 de 3: Planejamento'}
+        >
           <View style={estilos.pontos}>
             {[0, 1, 2].map((i) => {
               const atual = etapa === 'diagnostico' ? 1 : 2;
@@ -316,8 +324,13 @@ export default function Desbloquear() {
               );
             })}
           </View>
-          <Text style={estilos.faseTexto}>
-            {etapa === 'diagnostico' ? 'Diagnóstico' : 'Planejamento'}
+          {/* O nome COMPLETO da etapa. A web encurta para "Diagnóstico" abaixo de 560px, mas
+              aqui a entrega tem nome próprio — "Diagnóstico REAL" é o produto, e o REAL sai na
+              Georgia itálica da marca, como no `.flowReal` da web. */}
+          <Text style={estilos.faseTexto} numberOfLines={1}>
+            {etapa === 'diagnostico'
+              ? <>Diagnóstico <Text style={estilos.faseReal}>REAL</Text></>
+              : 'Planejamento'}
           </Text>
         </View>
         <Pressable
@@ -342,7 +355,13 @@ export default function Desbloquear() {
           {/* ── O diagnóstico salvo ─────────────────────────────────────── */}
           {etapa === 'diagnostico' && (
             real
-              ? <Relatorio real={real} chartmetric={conteudo?.chartmetricProfile ?? null} />
+              ? (
+                <Relatorio
+                  real={real}
+                  chartmetric={conteudo?.chartmetricProfile ?? null}
+                  aoContinuar={() => setEtapa('pagamento')}
+                />
+              )
               : (
                 <View style={estilos.semDiagnostico}>
                   <Text style={estilos.semDiagnosticoTexto}>
@@ -644,7 +663,10 @@ const estilos = StyleSheet.create({
   pontoAtual: { width: 18 },
   faseTexto: {
     fontSize: 13, fontWeight: '700', letterSpacing: 0.13, color: COR_DIAGNOSTICO.titulo,
+    flexShrink: 1,
   },
+  // O REAL da marca: Georgia itálica, como no `.flowReal` da web e na placa do diagnóstico.
+  faseReal: { fontFamily: 'Georgia', fontStyle: 'italic' },
   sair: {
     width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: COR_DIAGNOSTICO.criarContorno, backgroundColor: COR.superficie,
@@ -718,11 +740,17 @@ const estilos = StyleSheet.create({
 
   semDiagnostico: { alignItems: 'center', gap: 18, paddingVertical: 40 },
   semDiagnosticoTexto: { fontSize: 15, textAlign: 'center', color: COR_CHECKOUT.apoio },
+  // O CTA da marca: pílula, 15/32, texto 16/800 e centrado. Era 13/22 com texto 14 e cantos de
+  // campo de formulário — do tamanho de um botão secundário, na hora em que a tela pede a
+  // decisão mais importante dela.
   continuar: {
-    paddingVertical: 13, paddingHorizontal: 22, borderRadius: RAIO.campoDeEntrada,
+    alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 15, paddingHorizontal: 32, borderRadius: RAIO.pilula,
     backgroundColor: COR.primaria,
   },
-  continuarTexto: { fontSize: 14, fontWeight: '800', color: COR.sobrePrimaria },
+  continuarTexto: {
+    fontSize: 16, fontWeight: '800', letterSpacing: 0.16, color: COR.sobrePrimaria,
+  },
 
   pix: { gap: 18 },
   pixFala: {

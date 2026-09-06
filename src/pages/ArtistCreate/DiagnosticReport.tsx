@@ -18,7 +18,9 @@ import {
   TIER_ACCENT, altasForPattern, tierForAltas, tierForPattern,
 } from '@maestra/core/constants/realBadge';
 import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS } from '@maestra/core/constants/realCopy';
-import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
+import {
+  CHAMADA_DO_PLANEJAMENTO, dimNarrative, METODOLOGIA, QUEM_ASSINA,
+} from '@maestra/core/constants/realNarrative';
 import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import styles from './ArtistCreate.module.scss';
 
@@ -93,13 +95,14 @@ const PROFILE_MAP: { altas: number; tier: string; names: string[] }[] = [
   { altas: 0, tier: '0 altas', names: ['Beginner'] },
 ];
 
-const CTA_TITLE = 'Você sabe onde está. Agora precisa saber para onde ir, e como.';
 // Vídeo de apresentação do planejamento. O anterior (tSvzznd-FcI) foi removido no YouTube e o
 // player passou a mostrar "Vídeo indisponível" no fim do diagnóstico — bem em cima da CTA de
 // conversão. Não é mais o mesmo do hero da landing: os dois divergiram, e a landing tem cópia
 // própria do id (ver o TODO em components/YouTubeEmbed.tsx).
 const CTA_VIDEO_ID = 'N0pV9W7MG4Y';
-const CTA_SUB = 'O diagnóstico te mostrou o retrato da sua carreira hoje. O planejamento completo com a Nyta transforma esse retrato em um plano de ação real: estratégias priorizadas, cronograma e modelagem financeira, tudo construído por você, com a orientação da metodologia que já ajudou centenas de artistas.';
+// A copy vive no núcleo: o app entrega a MESMA chamada, no mesmo ponto da jornada.
+const CTA_TITLE = CHAMADA_DO_PLANEJAMENTO.titulo;
+const CTA_SUB = CHAMADA_DO_PLANEJAMENTO.apoio;
 
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -746,7 +749,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
           <button className={styles.shareBtn} onClick={handleDownloadPdf} disabled={busy}><DownloadIcon size={18} /> {busy ? 'Gerando…' : 'Baixar diagnóstico (PDF)'}</button>
           <button className={styles.shareBtn} onClick={handleShare} disabled={busy} aria-label="Compartilhar diagnóstico"><FiShare2 size={15} /> Compartilhar</button>
         </div>
-        {showPlanningCta && <p className={styles.ctaMicrocopy}>Seu diagnóstico REAL fica salvo. Você pode refazê-lo a qualquer momento para acompanhar a evolução da carreira.</p>}
+        {showPlanningCta && <p className={styles.ctaMicrocopy}>{CHAMADA_DO_PLANEJAMENTO.nota}</p>}
       </div>
 
       {/* SEÇÃO 6 — Quem assina (autoria da metodologia) */}
@@ -789,7 +792,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
       {enableStickyCta && showPlanningCta && showSticky && createPortal(
         <div className={styles.stickyCta}>
           <button className={styles.cta} onClick={onContinue}>
-            Começar meu planejamento com a Nyta <FiArrowRight />
+            {CHAMADA_DO_PLANEJAMENTO.botao} <FiArrowRight />
           </button>
         </div>,
         document.body
