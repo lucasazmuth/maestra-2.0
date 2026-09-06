@@ -105,6 +105,8 @@ describe('desbloqueio do perfil', () => {
     mockInvocar.mockResolvedValue({ data: {}, error: null });
   });
 
+  // Quem ABRE um perfil bloqueado cai aqui, e não no diagnóstico: não houve convite nenhum
+  // antes, e é esta tela que explica o que o desbloqueio libera.
   it('mostra o que o desbloqueio libera, e não cobra nada aqui', async () => {
     const tela = await montar();
 
@@ -179,12 +181,17 @@ describe('desbloqueio do perfil', () => {
       expect(convite).toBeLessThan(levar);
     });
 
-    it('o convite leva para a etapa que libera o perfil', async () => {
+    // O convite vai DIRETO ao checkout. A tela de pagamento no meio do caminho não decide
+    // nada: repete o que a pessoa acabou de ler e termina no mesmo botão. Um passo a mais
+    // entre a decisão e o pagamento é um passo a mais para desistir.
+    it('o convite leva direto ao checkout, sem tela no meio', async () => {
       const { tela, usuario } = await voltarAoDiagnostico();
 
       await usuario.press(tela.getByLabelText(CHAMADA_DO_PLANEJAMENTO.botao));
 
-      expect(await tela.findByLabelText('Liberar este perfil')).toBeTruthy();
+      expect(mockCheckout).toHaveBeenCalledWith({ destino: 'desbloqueio', artistId: 'a-2' });
+      // E a tela de pagamento NÃO apareceu no caminho.
+      expect(tela.queryByLabelText('Liberar este perfil')).toBeNull();
     });
   });
 

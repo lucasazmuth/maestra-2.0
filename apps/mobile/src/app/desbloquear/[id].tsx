@@ -107,6 +107,29 @@ export default function Desbloquear() {
 
   const barraDoConvite = mostrarBarraDoConvite({ ...ancoras, rolagemY, alturaVisivel });
 
+  /**
+   * O que "Começar meu planejamento com a Nyta" faz.
+   *
+   * Quando a venda é por link externo, vai DIRETO para o checkout da web. A tela de pagamento
+   * no meio do caminho não decide nada — ela repete o que a pessoa acabou de ler no convite e
+   * termina no mesmo botão. Um passo a mais entre a decisão e o pagamento é um passo a mais
+   * para desistir.
+   *
+   * Ela continua existindo, e é o que se vê ao ABRIR um perfil bloqueado: ali não houve
+   * convite nenhum antes, e a tela é que explica o que o desbloqueio libera.
+   *
+   * Nos outros modos o passo intermediário é necessário: com a venda dentro do app é lá que
+   * mora o formulário de pagamento, e com a venda desligada é lá que está a explicação de que
+   * a liberação se faz na conta Maestra.
+   */
+  const comecarOPlanejamento = () => {
+    if (!VENDE_DESBLOQUEIO_NO_APP && MODO_DE_VENDA === 'link-externo') {
+      void irParaOCheckout({ destino: 'desbloqueio', artistId: String(id) });
+      return;
+    }
+    setEtapa('pagamento');
+  };
+
   const valorDoPerfil = plano?.profileUnlockValue ?? VALOR_PADRAO_DO_PERFIL;
   const maximoDeParcelas = parcelasPossiveis(valorDoPerfil);
   const conteudo = artista?.content as Record<string, any> | undefined;
@@ -380,7 +403,7 @@ export default function Desbloquear() {
                 <Relatorio
                   real={real}
                   chartmetric={conteudo?.chartmetricProfile ?? null}
-                  aoContinuar={() => setEtapa('pagamento')}
+                  aoContinuar={comecarOPlanejamento}
                   aoMedirAncoras={(a) => setAncoras((atual) => ({ ...atual, ...a }))}
                 />
               )
@@ -668,7 +691,7 @@ export default function Desbloquear() {
         <View style={[estilos.barraFixa, { paddingBottom: 18 + margem.bottom }]}>
           <Pressable
             style={estilos.barraBotao}
-            onPress={() => setEtapa('pagamento')}
+            onPress={comecarOPlanejamento}
             accessibilityRole="button"
             accessibilityLabel={CHAMADA_DO_PLANEJAMENTO.botao}
           >
