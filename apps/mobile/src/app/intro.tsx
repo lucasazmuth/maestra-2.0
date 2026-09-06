@@ -3,7 +3,9 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COR, COR_CABECALHO_DE_MODULO, RAIO } from '@maestra/core/constants/design';
-import { LANDING_HERO, MODULOS_DA_PLATAFORMA, tituloDaLanding } from '@maestra/core/constants/landing';
+import {
+  LANDING_HERO, MODULOS_DA_PLATAFORMA, ROTA_DE_CADASTRO, tituloDaLanding,
+} from '@maestra/core/constants/landing';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
 import {
@@ -12,6 +14,7 @@ import {
 
 /** O cadastro acontece na web: aqui o app só leva a pessoa até lá. */
 const SITE = 'https://www.maestramanager.com';
+const CADASTRO = `${SITE}${ROTA_DE_CADASTRO}`;
 
 // A APRESENTAÇÃO — a primeira tela de quem abre o app sem conta.
 //
@@ -19,9 +22,11 @@ const SITE = 'https://www.maestramanager.com';
 // sem uma linha dizendo do que se trata. Quem chegou por indicação e ainda não tem conta não
 // tinha por que preencher nada.
 //
-// Ela diz o que o app faz em três linhas e oferece os DOIS caminhos, que é a diferença entre
-// uma porta e um portão: criar conta e entrar numa que já existe. O primeiro sai para o
-// navegador porque é lá que o cadastro vive.
+// Ela diz o que o app faz e oferece os DOIS caminhos, que é a diferença entre uma porta e um
+// portão: começar e entrar numa conta que já existe. O primeiro sai para o navegador porque é
+// lá que o cadastro vive — e ele não termina no formulário: quem se cadastra cai nas boas-
+// vindas e, sem perfil nenhum, na criação do primeiro, que é onde o diagnóstico gratuito
+// acontece. A jornada inteira já está ligada do outro lado.
 //
 // Ela aparece SEMPRE que o app abre sem sessão, e não uma vez por instalação: abrir o app do
 // zero é o momento em que se pergunta "o que é isto", e a resposta tem que estar lá toda vez.
@@ -77,7 +82,7 @@ export default function Intro() {
       <View style={estilos.acoes}>
         <Pressable
           style={estilos.principal}
-          onPress={() => { void Linking.openURL(`${SITE}/cadastro`); }}
+          onPress={() => { void Linking.openURL(CADASTRO); }}
           accessibilityRole="button"
           accessibilityLabel={LANDING_HERO.acao}
         >

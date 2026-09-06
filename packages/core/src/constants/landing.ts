@@ -5,6 +5,20 @@
 // promessas diferentes na primeira vez que alguém ajusta uma delas — e aqui o texto é a
 // promessa comercial do produto, o pior lugar possível para uma divergência.
 
+/**
+ * O caminho do cadastro na web, e o inicio da jornada gratuita.
+ *
+ * `/signup` NAO termina em si: quem se cadastra cai em `/welcome` e, sem perfil nenhum, em
+ * `/criar-artista` — que e onde o diagnostico gratuito acontece. E por isso que o botao "Fazer
+ * meu diagnostico gratis" aponta para ca e nao para uma tela de diagnostico: a jornada inteira
+ * ja esta ligada do outro lado.
+ *
+ * A rota mora aqui porque o app linkava para `/cadastro`, que nunca existiu: nao ha rota com
+ * esse nome no `App.tsx`, e quem tocava o botao caia num 404. Um endereco escrito a mao em duas
+ * telas erra em duas telas.
+ */
+export const ROTA_DE_CADASTRO = '/signup';
+
 export const LANDING_HERO = {
   sobretitulo: 'Gestão de carreira musical',
   /** As três linhas do h1. Na web elas são spans; no app, um parágrafo só. */

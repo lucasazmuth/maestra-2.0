@@ -66,8 +66,11 @@ describe('apresentação', () => {
     const tela = await montar();
     const usuario = userEvent.setup();
 
+    // `/signup`, e não `/cadastro`: essa rota nunca existiu no `App.tsx`, e quem tocava o
+    // botão caía num 404. O cadastro segue sozinho para as boas-vindas e para a criação do
+    // primeiro perfil, que é onde o diagnóstico gratuito acontece.
     await usuario.press(tela.getByLabelText(LANDING_HERO.acao));
-    expect(Linking.openURL).toHaveBeenCalledWith('https://www.maestramanager.com/cadastro');
+    expect(Linking.openURL).toHaveBeenCalledWith('https://www.maestramanager.com/signup');
 
     await usuario.press(tela.getByLabelText('Já tenho conta'));
     expect(mockReplace).toHaveBeenCalledWith('/entrar');

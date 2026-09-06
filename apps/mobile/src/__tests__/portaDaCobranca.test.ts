@@ -55,3 +55,18 @@ describe('a porta da cobrança', () => {
     expect(bloqueio).not.toMatch(/usePlanPrices|monthlyFmt|onceFmt|\/mês/);
   });
 });
+
+// UM ENDEREÇO SÓ PARA O CADASTRO.
+//
+// O app apontava para `${SITE}/cadastro` em duas telas, e essa rota nunca existiu no `App.tsx`
+// — quem tocava o botão caía num 404. Um endereço escrito à mão em duas telas erra em duas
+// telas, e o erro é silencioso: o app abre o navegador e o problema aparece do outro lado.
+describe('o endereço do cadastro', () => {
+  it.each(arquivos.map((a) => [path.relative(raiz, a), a]))(
+    '%s não escreve o caminho do cadastro à mão',
+    (_nome, caminho) => {
+      const fonte = fs.readFileSync(caminho, 'utf8');
+      expect(fonte).not.toMatch(/\/cadastro['"`]/);
+    },
+  );
+});

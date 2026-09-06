@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_ENTRADA, RAIO } from '@maestra/core/constants/design';
+import { ROTA_DE_CADASTRO } from '@maestra/core/constants/landing';
 import { MaestraLogo } from '@/icones';
 import { appleDisponivel, entrarComApple, entrarComEmail, entrarComGoogle } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
@@ -188,7 +189,7 @@ export default function Entrar() {
                 Você não possui cadastro?{' '}
                 <Text
                   style={estilos.link}
-                  onPress={() => Linking.openURL(`${SITE}/cadastro`)}
+                  onPress={() => Linking.openURL(`${SITE}${ROTA_DE_CADASTRO}`)}
                   accessibilityRole="link"
                 >
                   Cadastre-se!
