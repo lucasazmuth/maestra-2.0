@@ -16,7 +16,7 @@ import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { MaestraMarca, NotificationIcon } from '@/icones';
 import { BotaoRedondo, MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
-import { SeloPro } from '@/casca/marca/SeloPro';
+import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
 import { useOfertaDoPro } from '@/nucleo/assinatura';
 import { sair } from '@/nucleo/entrar';
 import { irParaOCheckout } from '@/nucleo/loja';
@@ -153,13 +153,13 @@ export default function Perfis() {
           ícone de PESSOA que ia direto para a conta; na web ele é a GRADE que abre o menu, e o
           caminho para a conta é um item dentro dele.
 
-          A pílula do plano diz só PRO, e só para quem assina: uma pílula "FREE" que leva ao
-          checkout é direcionar para fora da loja (3.1.3). Quem não assina encontra o convite em
-          "Seja PRO", dentro do menu. */}
+          A pílula do plano diz PRO ou Pendente, e só para quem paga: uma pílula "FREE" que leva
+          ao checkout é direcionar para fora da loja (3.1.3). Quem não assina encontra o convite
+          em "Seja PRO", dentro do menu. */}
       <View style={estilos.barra}>
         <View style={estilos.marcaLinha}>
           <MaestraMarca size={24} color={COR_PERFIS.titulo} />
-          <SeloPro />
+          <SeloDoPlano />
         </View>
 
         <BotaoRedondo
