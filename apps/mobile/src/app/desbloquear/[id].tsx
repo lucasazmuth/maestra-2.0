@@ -315,7 +315,9 @@ export default function Desbloquear() {
   return (
     <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
       <View style={estilos.topo}>
-        <MaestraMarca size={14} color={COR_DIAGNOSTICO.titulo} />
+        {/* 24, o mesmo do cabeçalho normal do app. Era 14 — a marca ficava menor que o
+            rótulo da etapa ao lado dela. */}
+        <MaestraMarca size={24} color={COR_DIAGNOSTICO.titulo} />
         {/* O mesmo `aria-label` da web: quem navega por leitor de tela ouve em que ponto do
             fluxo está, e não só o nome solto da etapa. */}
         <View
@@ -421,12 +423,11 @@ export default function Desbloquear() {
                 <Text style={estilos.chamadaApoio}>{CHAMADA_DO_DESBLOQUEIO.apoio}</Text>
               </View>
 
-              <View style={estilos.conta}>
-                <View style={estilos.contaDisco}>
-                  <Feather name="check" size={15} color={COR.primaria} />
-                </View>
-                <Text style={estilos.contaEmail} numberOfLines={1}>{email}</Text>
-              </View>
+              {/* O cartão com o e-mail da conta fica só no checkout da WEB.
+                  Ele existe para dizer QUEM está sendo cobrado, no instante em que se cobra —
+                  e aqui não se cobra nada: esta tela só descreve o que o desbloqueio libera e
+                  manda a pessoa para o navegador. Repetir o e-mail antes disso é ruído entre a
+                  promessa e o botão. */}
 
               <View style={estilos.painel}>
                 <Text style={estilos.painelTitulo}>O que você libera</Text>

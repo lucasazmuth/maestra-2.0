@@ -109,8 +109,11 @@ describe('desbloqueio do perfil', () => {
     const tela = await montar();
 
     expect(await tela.findByText(/Comece hoje o planejamento de AZMUTH BEATS/)).toBeTruthy();
-    expect(tela.getByText('artista@exemplo.com')).toBeTruthy();
     expect(tela.getByText('Plano de ação com metas e cronograma')).toBeTruthy();
+
+    // O cartão com o e-mail da conta fica só no checkout da WEB: ele diz QUEM está sendo
+    // cobrado, no instante em que se cobra, e aqui não se cobra nada.
+    expect(tela.queryByText('artista@exemplo.com')).toBeNull();
 
     // Nada de formulário de pagamento: nem cartão, nem PIX, nem CPF.
     expect(tela.queryByLabelText('CPF ou CNPJ')).toBeNull();

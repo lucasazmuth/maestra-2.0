@@ -295,7 +295,9 @@ export default function CriarArtista() {
       )}
 
       <View style={estilos.topo}>
-        <MaestraMarca size={14} color={COR_DIAGNOSTICO.titulo} />
+        {/* 24, o mesmo do cabeçalho normal do app — e o mesmo da etapa seguinte, no
+            desbloqueio: a marca não pode mudar de tamanho no meio da jornada. */}
+        <MaestraMarca size={24} color={COR_DIAGNOSTICO.titulo} />
 
         {/* O progresso do macro-fluxo: três pontos e o nome de SÓ a etapa atual. */}
         <View style={estilos.fase}>
