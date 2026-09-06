@@ -1,5 +1,4 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
-import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 
 import { supabase } from '@maestra/core/lib/supabase';
@@ -11,8 +10,26 @@ import { supabase } from '@maestra/core/lib/supabase';
 // assim reaproveita a configuracao de OAuth que a web ja tem — o que muda e so o endereco de
 // retorno, que no app e um deep link.
 
-/** Onde o OAuth devolve o usuario. Em desenvolvimento e `exp://...`; em producao, `maestra://`. */
-const enderecoDeRetorno = () => Linking.createURL('/auth/callback');
+/**
+ * O esquema de deep link do app. O MESMO de `app.json` — `esquemaDoApp.test.ts` quebra se um
+ * dos dois mudar sozinho.
+ */
+export const ESQUEMA = 'maestra';
+
+/**
+ * Onde o OAuth devolve o usuario: SEMPRE `maestra://auth/callback`.
+ *
+ * Escrito a mao, e nao com `Linking.createURL`. O `createURL` costura o "host" do ambiente no
+ * meio da URL: num build de desenvolvimento ligado ao Metro ele devolve
+ * `maestra://192.168.0.10:8082/auth/callback`, e esse endereco nunca vai estar na lista de
+ * Redirect URLs do Supabase. Quando o `redirect_to` nao esta na lista, o Supabase NAO recusa —
+ * ele cai no Site URL, que e a web. O sintoma e a pessoa logar no navegador e nunca voltar para
+ * o app, sem erro nenhum aparecer.
+ *
+ * Com um endereco fixo, o de desenvolvimento e o de producao sao o mesmo, e uma unica entrada
+ * na lista do Supabase serve para os dois.
+ */
+export const enderecoDeRetorno = () => `${ESQUEMA}://auth/callback`;
 
 export const entrarComEmail = async (email: string, senha: string) => {
   const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha });
