@@ -24,13 +24,19 @@ export interface ModuloDaPlataforma {
   to?: string;
 }
 
+/**
+ * As frentes da plataforma, na ordem da jornada.
+ *
+ * Os `sub` formam uma frase quando lidos em sequência: onde estou, para onde ir, a execução, o
+ * dia a dia, a assistente. Não são rótulos soltos — mudar um sozinho quebra a progressão.
+ */
 export const MODULOS_DA_PLATAFORMA: ModuloDaPlataforma[] = [
   {
-    title: 'Diagnóstico REAL', sub: 'o ponto de partida', to: '/diagnostico-real',
+    title: 'Diagnóstico REAL', sub: 'onde estou', to: '/diagnostico-real',
     desc: 'Um raio-X da carreira em quatro dimensões, cruzando dados do Spotify e das redes com o que só você sabe. Em minutos você descobre qual dos 16 perfis é o seu e onde a carreira realmente está, não onde parece estar.',
   },
   {
-    title: 'Planejamento estratégico', sub: 'o mapa',
+    title: 'Planejamento estratégico', sub: 'para onde ir',
     desc: 'A metodologia de 30 anos da Anita Carvalho, destilada de 313 planejamentos reais, transforma o diagnóstico em visão, missão, objetivos e as estratégias certas pro seu momento, já priorizadas.',
   },
   {
@@ -38,7 +44,7 @@ export const MODULOS_DA_PLATAFORMA: ModuloDaPlataforma[] = [
     desc: 'Cada estratégia vira tarefas com progresso, prazos e responsáveis, além de cronograma e modelagem financeira. É o caminho do "o que fazer" pro "feito".',
   },
   {
-    title: 'Gestão completa', sub: 'o dia a dia',
+    title: 'Ferramentas', sub: 'o dia a dia',
     desc: 'Músicas, agenda de shows e lançamentos e a equipe junto: a operação da carreira mora no mesmo lugar do plano, e cada entrega alimenta o próximo diagnóstico.',
   },
   {

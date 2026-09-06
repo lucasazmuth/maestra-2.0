@@ -47,13 +47,17 @@ describe('apresentação', () => {
     const tela = await montar();
 
     for (const titulo of [
-      'Diagnóstico REAL', 'Planejamento estratégico', 'Plano de ação', 'Gestão completa', 'Nyta IA',
+      'Diagnóstico REAL', 'Planejamento estratégico', 'Plano de ação', 'Ferramentas', 'Nyta IA',
     ]) {
       expect(tela.getByText(new RegExp(titulo))).toBeTruthy();
     }
     // "E ela só cresce" fica de fora: promessa de roteiro pesa mais do que entrega numa
     // primeira tela.
     expect(tela.queryByText(/E ela só cresce/)).toBeNull();
+
+    // Os `sub` formam uma frase lidos em sequência, e é isso que dá o sentido de jornada.
+    expect(tela.getByText(/onde estou/)).toBeTruthy();
+    expect(tela.getByText(/para onde ir/)).toBeTruthy();
   });
 
   // Os DOIS caminhos: é a diferença entre uma porta e um portão. O cadastro sai para o
