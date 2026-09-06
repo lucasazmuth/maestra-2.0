@@ -20,9 +20,7 @@ import {
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store, useAppDispatch, useAppSelector } from '@maestra/core/store/store';
-import { rodandoNativo } from './lib/plataforma';
 import { useAdminRole, type ModuloAdmin } from '@maestra/core/hooks/useAdminRole';
-import { MobileIntro } from './pages/MobileIntro';
 import { authActions } from '@maestra/core/store/slices/auth';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
@@ -269,7 +267,7 @@ const AppRoutes: FC = () => {
           chama de "thin wrapper" (4.2). Pior, o "Ver planos" dela leva ao checkout com PIX, e
           caminho de compra fora da loja dentro do app iOS é rejeição por 3.1.1. Dentro do app a
           porta de entrada é o login, e quem já entrou vai direto para os perfis. */}
-      <Route path='/' element={rodandoNativo() ? <MobileIntro /> : <Landing />} />
+      <Route path='/' element={<Landing />} />
 
       {/* Referência de layout, fora do fluxo do produto. */}
       <Route path='/index2' element={<Landing2 />} />

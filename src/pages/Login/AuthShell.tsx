@@ -6,7 +6,6 @@ import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiCalendar } from 'react-icons
 
 import { MaestraBrand } from '../../components/MaestraBrand';
 import useIsMobile from '../../utils/isMobile';
-import { rodandoNativo } from '../../lib/plataforma';
 import { useAppDispatch } from '@maestra/core/store/store';
 import { authActions, type SocialProvider } from '@maestra/core/store/slices/auth';
 import styles from './AuthShell.module.scss';
@@ -61,9 +60,10 @@ export const AuthShell: FC<{ children: ReactNode; footer?: ReactNode }> = ({ chi
   // dentro do app quando já há outro login social. Na web de desktop ele não é exigido, e cada
   // provedor a mais é uma porta a mais para a mesma pessoa entrar por duas contas diferentes.
   //
-  // O `rodandoNativo()` NÃO é redundante com a largura: no iPad o app passa de 768px, e esconder
-  // o botão por viewport reprovaria justamente o caso que a regra existe para cobrir.
-  const mostraApple = rodandoNativo() || isMobile;
+  // A regra de "outro login social exige o da Apple" vale para o APLICATIVO, que agora é o
+  // nativo em `apps/mobile` e tem a própria tela de entrada. Aqui, na web, o botão segue
+  // aparecendo no celular por conveniência de quem usa iPhone.
+  const mostraApple = isMobile;
   const provedores = SOCIAL_PROVIDERS.filter((p) => !p.somenteMobile || mostraApple);
 
   const [socialNote, setSocialNote] = useState<string | null>(null);

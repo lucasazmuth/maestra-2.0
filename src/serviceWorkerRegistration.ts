@@ -1,4 +1,3 @@
-import { rodandoNativo } from './lib/plataforma';
 
 const register = (): void => {
   if (!('serviceWorker' in navigator)) return;
@@ -6,7 +5,6 @@ const register = (): void => {
   // Dentro do app empacotado o service worker so atrapalha: quem serve os arquivos e o proprio
   // WKWebView a partir do bundle, entao o cache do SW passa a servir uma versao antiga do app que
   // nem a atualizacao pela App Store derruba. Cache e ciclo de vida ali sao do sistema.
-  if (rodandoNativo()) return;
 
   if (process.env.NODE_ENV !== 'production') {
     window.addEventListener('load', () => {
