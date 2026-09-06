@@ -55,7 +55,8 @@
           "cameraPermission": false
         }
       ],
-      "expo-document-picker"
+      "expo-document-picker",
+      "./plugins/withAjustesDoXcode"
     ],
     "experiments": {
       "typedRoutes": true,
