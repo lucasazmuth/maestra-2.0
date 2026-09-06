@@ -80,7 +80,9 @@ const trocarUrlPorSessao = async (url: string) => {
 };
 
 export const sair = async () => {
-  await supabase.auth.signOut();
+  // Sai deste aparelho, não da conta inteira: o padrão do Supabase é global e revogaria também
+  // a sessão da web. Ver o comentário em `store/slices/auth.ts`.
+  await supabase.auth.signOut({ scope: 'local' });
 };
 
 /**

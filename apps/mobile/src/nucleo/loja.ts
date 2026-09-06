@@ -21,6 +21,16 @@ export type ModoDeVenda = 'link-externo' | 'nenhuma';
 
 export const MODO_DE_VENDA: ModoDeVenda = 'link-externo';
 
+/**
+ * O desbloqueio de perfil é cobrado DENTRO do app?
+ *
+ * Não. Ele é bem digital consumido aqui dentro, exatamente como a assinatura — a 3.1.1 não
+ * distingue pagamento único de recorrente, e o texto dela cita "unlocking a full version" junto
+ * com "subscriptions". O checkout continua no código, atrás desta chave, porque a web e o
+ * Android o usam; no app ele fica desligado e a compra acontece no navegador.
+ */
+export const VENDE_DESBLOQUEIO_NO_APP = false;
+
 /** O endereço nu, para quando o repasse autenticado falhar. */
 const SITE = 'https://www.maestramanager.com';
 
