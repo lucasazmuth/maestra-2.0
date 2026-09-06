@@ -276,7 +276,10 @@ export default function Plano() {
               const { prontas, total, completa } = progresso(estrategia);
               const estaAberta = abertaAgora === estrategia.id;
               return (
-              <View key={estrategia.id} style={[estilos.bloco, estaAberta && estilos.blocoAberto]}>
+              <View
+                key={estrategia.id}
+                style={[estilos.bloco, indice < estrategias.length - 1 && estilos.comFio]}
+              >
                 <Pressable
                   style={[estilos.cabecalho, estaAberta && estilos.cabecalhoAberto]}
                   onPress={() => setAberta(estaAberta ? FECHADA : estrategia.id)}
@@ -488,9 +491,18 @@ const estilos = StyleSheet.create({
   titulo: { fontSize: 30, fontWeight: '800', color: COR_CABECALHO_DE_MODULO.titulo },
   apoio: { fontSize: 12, color: COR_CABECALHO_DE_MODULO.apoio, lineHeight: 19, marginTop: 9 },
 
-  /** Um contorno só em volta da lista inteira. */
+  /**
+   * A lista é uma FAIXA CONTÍNUA branca, com um contorno só em volta de tudo — o mesmo desenho
+   * do catálogo de músicas.
+   *
+   * Era uma pilha de caixas: cada estratégia com seu próprio contorno, canto e folga, dentro de
+   * outra caixa. Numa tela estreita isso vira uma sucessão de molduras aninhadas, e o olho
+   * gasta atenção em bordas em vez de gastar no conteúdo. Lista e pilha de caixas não são a
+   * mesma coisa, e no celular a web troca uma pela outra.
+   */
   moldura: {
     borderWidth: 1, borderColor: COR_PLANO.molduraContorno, borderRadius: 8, overflow: 'hidden',
+    backgroundColor: COR.superficie,
   },
   /** A linha das arquivadas, acima da lista: alinhada à direita e só quando há alguma. */
   linhaDasArquivadas: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 },
@@ -500,16 +512,18 @@ const estilos = StyleSheet.create({
     backgroundColor: COR_PLANO.contagemFundo,
   },
   arquivadasTexto: { fontSize: 10, fontWeight: '900', color: COR_PLANO.contagemTexto },
-  listaDeEstrategias: { padding: 14, gap: 10 },
+  /** Sem recuo e sem folga: as faixas se encostam, e o fio entre elas é a separação. */
+  listaDeEstrategias: {},
   aviso: {
     borderWidth: 1, borderColor: COR_PLANO.contorno, borderRadius: 8, padding: 18, gap: 6, marginTop: 10,
   },
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_PLANO.titulo },
   avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
 
-  // A linha do acordeao: contorno fino, e um azul mais vivo quando aberta.
-  bloco: { borderWidth: 1, borderColor: COR_PLANO.contorno, borderRadius: 8, overflow: 'hidden' },
-  blocoAberto: { borderColor: COR_PLANO.contornoAberta },
+  // A faixa do acordeão. Sem contorno próprio: o que separa uma da seguinte é o fio de baixo,
+  // e a última não tem nenhum — senão ele desenharia uma linha solta encostada no contorno.
+  bloco: {},
+  comFio: { borderBottomWidth: 1, borderBottomColor: COR_PLANO.fio },
   cabecalho: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 16 },
   // Aberta, o cabecalho ganha um azul levissimo — o bastante pra dizer qual e, sem virar bloco.
   cabecalhoAberto: { backgroundColor: COR_PLANO.cabecalhoAberta },
