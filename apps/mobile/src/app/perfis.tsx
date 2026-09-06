@@ -11,16 +11,11 @@ import Feather from '@expo/vector-icons/Feather';
 import { COR, RAIO, COR_PERFIS } from '@maestra/core/constants/design';
 import { artistEntryRoute, isOnboardingComplete } from '@maestra/core/constants/maestra';
 import type { Artist } from '@maestra/core/interfaces/maestra';
-import { countUnread } from '@maestra/core/services/db/notifications';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
-import { MaestraMarca, NotificationIcon } from '@/icones';
-import { BotaoRedondo, MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
-import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
-import { useOfertaDoPro } from '@/nucleo/assinatura';
-import { sair } from '@/nucleo/entrar';
-import { irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
+
+import { BarraDoSistema } from '@/casca/BarraDoSistema';
 
 /** Assinatura, desbloqueio e suporte continuam na web: pagamento no app exige StoreKit. */
 const SITE = 'https://www.maestramanager.com';
@@ -87,9 +82,6 @@ export default function Perfis() {
   const { items, loading, loaded } = useAppSelector((s) => s.artists);
 
   const usuario = sessao?.user.id;
-  const [naoLidas, setNaoLidas] = useState(0);
-  const [menuAberto, setMenuAberto] = useState(false);
-  const oferecerPro = useOfertaDoPro();
   // Separado do `loading` do store de propósito: `loading` fica true em QUALQUER busca,
   // inclusive na que roda sozinha ao voltar para esta tela. Ligado ao RefreshControl, isso
   // fazia um spinner de "puxar para atualizar" aparecer sem ninguém ter puxado nada — e ainda
@@ -109,13 +101,6 @@ export default function Perfis() {
   useEffect(() => {
     if (usuario) dispatch(artistsActions.fetchArtists(usuario));
   }, [usuario, dispatch]);
-
-  useEffect(() => {
-    if (!usuario) return;
-    // Falha em silêncio de propósito: a contagem é um enfeite do cabeçalho, e derrubar a lista
-    // de perfis por causa dela seria trocar o essencial pelo acessório.
-    countUnread(usuario).then(setNaoLidas).catch(() => undefined);
-  }, [usuario]);
 
   /**
    * Para onde um perfil abre.
@@ -148,32 +133,7 @@ export default function Perfis() {
 
   return (
     <SafeAreaView style={estilos.tela}>
-      {/* A barra da web: a MARCA (símbolo + palavra, os dois vetores oficiais) à esquerda, e à
-          direita os dois botões redondos — o sino e o menu do sistema. O segundo botão era um
-          ícone de PESSOA que ia direto para a conta; na web ele é a GRADE que abre o menu, e o
-          caminho para a conta é um item dentro dele.
-
-          A pílula do plano diz PRO ou Pendente, e só para quem paga: uma pílula "FREE" que leva
-          ao checkout é direcionar para fora da loja (3.1.3). Quem não assina encontra o convite
-          em "Seja PRO", dentro do menu. */}
-      <View style={estilos.barra}>
-        <View style={estilos.marcaLinha}>
-          <MaestraMarca size={24} color={COR_PERFIS.titulo} />
-          <SeloDoPlano />
-        </View>
-
-        <BotaoRedondo
-          rotulo={naoLidas > 0 ? `Notificações (${naoLidas} não lidas)` : 'Notificações'}
-          aoTocar={() => router.push('/notificacoes')}
-          marca={naoLidas > 0}
-        >
-          <NotificationIcon size={28} color={COR_PERFIS.sino} />
-        </BotaoRedondo>
-
-        <BotaoRedondo rotulo="Menu do sistema" aoTocar={() => setMenuAberto(true)}>
-          <Feather name="grid" size={23} color={COR_PERFIS.menu} />
-        </BotaoRedondo>
-      </View>
+      <BarraDoSistema aqui="perfis" />
 
       {/* O titulo com a acao ao lado, como na web. */}
       <View style={estilos.tituloLinha}>
@@ -230,21 +190,6 @@ export default function Perfis() {
         )}
       />
 
-      <MenuDoSistema
-        aberto={menuAberto}
-        aoFechar={() => setMenuAberto(false)}
-        itens={itensDoSistema(
-          {
-            // Já estamos nos Perfis, e por isso o item nem entra na lista.
-            perfis: () => undefined,
-            configuracoes: () => router.push('/conta'),
-            suporte: () => Linking.openURL(`${SITE}/suporte`),
-            sair: () => { void sair(); },
-            pro: () => { void irParaOCheckout({ destino: 'assinatura' }); },
-          },
-          { aqui: 'perfis', oferecerPro },
-        )}
-      />
     </SafeAreaView>
   );
 }
@@ -257,7 +202,6 @@ const estilos = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 18, paddingTop: 8, paddingBottom: 20,
   },
-  marcaLinha: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   tituloLinha: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     gap: 12, paddingHorizontal: 18, paddingBottom: 34,

@@ -19,8 +19,9 @@ import { FolhaDaAvaliacao } from '@/casca/conta/FolhaDaAvaliacao';
 import { enviarEscolhido, escolherImagem } from '@/nucleo/arquivos';
 import { sair } from '@/nucleo/entrar';
 import { irParaOCheckout } from '@/nucleo/loja';
-import { useVoltar } from '@/nucleo/navegar';
 import { useSessao } from '@/nucleo/sessao';
+
+import { BarraDoSistema } from '@/casca/BarraDoSistema';
 
 // A conta.
 //
@@ -42,7 +43,6 @@ const SITE = 'https://www.maestramanager.com';
 export default function Conta() {
   const { sessao, carregando: carregandoSessao } = useSessao();
   const router = useRouter();
-  const voltar = useVoltar('/perfis');
   const dispatch = useAppDispatch();
   const status = useAppSelector((s) => s.subscription.status);
 
@@ -183,9 +183,11 @@ export default function Conta() {
   if (!carregandoSessao && !sessao) return <Redirect href="/entrar" />;
 
   return (
-    <SafeAreaView style={estilos.tela}>
+    <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
+      {/* O cabeçalho do sistema, o mesmo da lista de perfis e das notificações. O "‹ Perfis"
+          solto que vivia aqui era o único lugar do app com aquele desenho. */}
+      <BarraDoSistema aqui="configuracoes" />
       <ScrollView contentContainerStyle={estilos.conteudo}>
-        <Text style={estilos.voltar} onPress={voltar}>‹  Perfis</Text>
 
         {/* As secoes sao as da web, na ordem dela: Perfil, Notificacoes, Assinatura, Historico
             de pagamentos, Suporte e termos, Seus dados e Conta. */}
@@ -413,7 +415,6 @@ const estilos = StyleSheet.create({
   // branco elevado que a mesma classe usa no desktop. Ver `COR_CONTA`.
   tela: { flex: 1, backgroundColor: COR.fundo },
   conteudo: { paddingHorizontal: 18, paddingTop: 27, paddingBottom: 48, gap: 10 },
-  voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
   cartao: {
     padding: 25, gap: 10, marginBottom: 8,
     borderRadius: 8, borderWidth: 1, borderColor: COR_CONTA.contorno,
