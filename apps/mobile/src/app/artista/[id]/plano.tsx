@@ -480,7 +480,11 @@ const estilos = StyleSheet.create({
   // e uma lista de linhas de acordeao com contorno proprio, dentro de um respiro de 14.
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
-  conteudo: { paddingHorizontal: 18, paddingTop: 24, paddingBottom: 122 },
+  conteudo: {
+    // Sem recuo de cima: ele é todo do `CabecalhoDoModulo`, para o título nascer à mesma
+    // altura em todos os módulos.
+    paddingHorizontal: 18, paddingBottom: 122,
+  },
   /** Só a folga até a lista: o resto do cabeçalho é do `CabecalhoDoModulo`. */
   cabecalhoDaPagina: { marginBottom: 22 },
 

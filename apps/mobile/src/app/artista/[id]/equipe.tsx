@@ -163,7 +163,11 @@ const estilos = StyleSheet.create({
   // 196 = a ilha (34 de reserva + 78) mais o botão flutuante (14 de folga + 56) e mais 14. Eram
   // 122, que só vencia a ilha: a última linha da lista ficava permanentemente debaixo do botão,
   // com os controles dela inalcançáveis por mais que se rolasse.
-  conteudo: { paddingHorizontal: 14, paddingTop: 18, paddingBottom: 196 },
+  conteudo: {
+    // Sem recuo de cima: ele é todo do `CabecalhoDoModulo`, para o título nascer à mesma
+    // altura em todos os módulos.
+    paddingHorizontal: 14, paddingBottom: 196,
+  },
   espera: { marginTop: 48 },
   lista: {
     marginTop: 28, borderWidth: 1, borderColor: COR_EQUIPE.contorno, borderRadius: 8,

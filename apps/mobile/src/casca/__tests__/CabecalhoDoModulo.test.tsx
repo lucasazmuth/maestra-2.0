@@ -41,6 +41,17 @@ describe('cabeçalho do módulo', () => {
     expect(com.getByText('5/10 músicas')).toBeTruthy();
   });
 
+  // O recuo de cima é TODO daqui. Era o contrário: cada tela somava o seu ao daqui, e o título
+  // nascia a 12 nas Músicas, 24 no Diagnóstico, 30 na Equipe e 36 no Plano — quatro números que
+  // ninguém escolheu, porque se somaram sem que nada dissesse que estavam se somando.
+  it('é o dono do espaço até a barra do topo', async () => {
+    const tela = await render(<CabecalhoDoModulo titulo="Músicas" descricao="Organize." />);
+    const cabecalho = tela.getByText('Músicas').parent!;
+
+    expect((StyleSheet.flatten(cabecalho.props.style) as { paddingTop?: number }).paddingTop)
+      .toBe(22);
+  });
+
   it('o título é o mesmo em qualquer módulo', async () => {
     const musicas = await render(<CabecalhoDoModulo titulo="Músicas" descricao="A." />);
     const equipe = await render(<CabecalhoDoModulo titulo="Equipe" descricao="B." />);

@@ -32,8 +32,13 @@ export const CabecalhoDoModulo = ({ titulo, descricao, nota }: {
 const estilos = StyleSheet.create({
   // Sem recuo lateral: quem chama já vive dentro do seu (a lista de músicas tem 16, a equipe
   // 14). Daqui sai só o ritmo vertical e o fio que separa o cabeçalho do conteúdo.
+  //
+  // O RECUO DE CIMA É TODO DAQUI, e quem chama não acrescenta nada. Era o contrário: cada tela
+  // somava o seu ao daqui, e o título nascia a 12 nas Músicas, 24 no Diagnóstico, 30 na Equipe
+  // e 36 no Plano. Ninguém escreveu quatro números diferentes de propósito — eles se somaram
+  // sem que nada dissesse que estavam se somando.
   cabecalho: {
-    paddingTop: 12, paddingBottom: 26,
+    paddingTop: 22, paddingBottom: 26,
     borderBottomWidth: 1, borderBottomColor: COR_CABECALHO_DE_MODULO.fio,
   },
   titulo: {

@@ -34,5 +34,9 @@ export default function Diagnostico() {
 
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
-  conteudo: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 122, gap: 16 },
+  conteudo: {
+    // Sem recuo de cima: ele é todo do `CabecalhoDoModulo`, para o título nascer à mesma
+    // altura em todos os módulos.
+    paddingHorizontal: 16, paddingBottom: 122, gap: 16,
+  },
 });
