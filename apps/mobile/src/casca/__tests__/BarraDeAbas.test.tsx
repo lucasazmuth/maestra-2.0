@@ -57,17 +57,26 @@ describe('barra de abas', () => {
     expect(mockPush).toHaveBeenCalledWith('/artista/a-2');
   });
 
-  it('"Mais" abre a folha com o resto dos módulos e os atalhos do sistema', async () => {
+  it('"Mais" abre a folha com o resto dos módulos do artista', async () => {
     const tela = await montar();
     expect(tela.queryByText('Marketing')).toBeNull();
 
     await userEvent.setup().press(tela.getByLabelText('Mais'));
 
-    for (const rotulo of [
-      'Diagnóstico REAL', 'Plano estratégico', 'Equipe', 'Marketing', 'Perfis', 'Configurações',
-    ]) {
+    for (const rotulo of ['Diagnóstico REAL', 'Plano estratégico', 'Equipe', 'Marketing']) {
       expect(tela.getByText(rotulo)).toBeTruthy();
     }
+  });
+
+  // Perfis e Configurações moram no menu do sistema, no botão de grade do cabeçalho — que agora
+  // acompanha todas as telas. Nos dois lugares, davam duas portas para a mesma sala e faziam
+  // esta folha falar de conta no meio dos módulos do artista.
+  it('a folha não fala de conta: só os módulos do artista', async () => {
+    const tela = await montar();
+    await userEvent.setup().press(tela.getByLabelText('Mais'));
+
+    expect(tela.queryByText('Perfis')).toBeNull();
+    expect(tela.queryByText('Configurações')).toBeNull();
   });
 
   it('a folha fecha ao navegar', async () => {

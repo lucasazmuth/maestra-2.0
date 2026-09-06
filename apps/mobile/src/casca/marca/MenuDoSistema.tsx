@@ -4,7 +4,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_PERFIS } from '@maestra/core/constants/design';
+import type { Artist } from '@maestra/core/interfaces/maestra';
 
+import { FotoDoArtista } from '@/casca/FotoDoArtista';
 import { PerfisIcon } from '@/icones';
 
 // O menu do sistema — o painel que o botão de grade abre no topo da web.
@@ -82,10 +84,18 @@ export const MenuDoSistema = ({ aberto, itens, aoFechar }: {
   );
 };
 
-/** Os itens que o app tem — os mesmos rótulos e ícones da web. */
+/**
+ * Os itens que o app tem.
+ *
+ * O primeiro deles diz "Trocar perfil", e nao "Perfis": quem esta dentro de um artista nao vai
+ * ali para ver uma lista, vai para SAIR deste e entrar noutro. E quando ha um artista aberto, o
+ * icone e a FOTO dele — o menu passa a dizer de quem e a sessao antes mesmo de ser tocado.
+ * Sem artista (a propria lista de perfis) sobra o icone, que e o que existe para mostrar.
+ */
 export const itensDoSistema = (
   acoes: { perfis: () => void; configuracoes: () => void; suporte: () => void; sair: () => void },
   aqui?: 'perfis' | 'configuracoes',
+  artista?: Artist,
 ): ItemDoMenu[] => {
   // O icone acompanha o rotulo. Pintar so o texto de azul e deixar o icone cinza faz o item
   // parecer meio aceso — o destaque tem que valer para a celula inteira.
@@ -93,8 +103,10 @@ export const itensDoSistema = (
 
   return [
     {
-      rotulo: 'Perfis',
-      icone: <PerfisIcon size={22} color={tom(aqui === 'perfis')} />,
+      rotulo: 'Trocar perfil',
+      icone: artista
+        ? <FotoDoArtista artista={artista} tamanho={24} />
+        : <PerfisIcon size={22} color={tom(aqui === 'perfis')} />,
       aoTocar: acoes.perfis,
       ativo: aqui === 'perfis',
     },

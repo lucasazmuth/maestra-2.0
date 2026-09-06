@@ -123,12 +123,16 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
       <MenuDoSistema
         aberto={menuAberto}
         aoFechar={() => setMenuAberto(false)}
-        itens={itensDoSistema({
-          perfis: () => router.push('/perfis'),
-          configuracoes: () => router.push('/conta'),
-          suporte: () => { void Linking.openURL(`${SITE}/suporte`); },
-          sair: () => { void sair(); },
-        })}
+        itens={itensDoSistema(
+          {
+            perfis: () => router.push('/perfis'),
+            configuracoes: () => router.push('/conta'),
+            suporte: () => { void Linking.openURL(`${SITE}/suporte`); },
+            sair: () => { void sair(); },
+          },
+          undefined,
+          artista,
+        )}
       />
     </View>
   );

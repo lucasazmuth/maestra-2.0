@@ -8,8 +8,8 @@ import type { Artist } from '@maestra/core/interfaces/maestra';
 
 import { FotoDoArtista } from '@/casca/FotoDoArtista';
 import {
-  AgendaIcon, CatalogoIcon, ConfigIcon, DiagnosticoIcon, EquipeIcon,
-  MarketingIcon, MoreIcon, PerfisIcon, PlanejamentoIcon, PlanoAcaoIcon,
+  AgendaIcon, CatalogoIcon, DiagnosticoIcon, EquipeIcon,
+  MarketingIcon, MoreIcon, PlanejamentoIcon, PlanoAcaoIcon,
 } from '@/icones';
 
 // A ilha de navegação, célula a célula igual à da web.
@@ -41,12 +41,9 @@ const MAIS: Item[] = [
   { icone: MarketingIcon, rotulo: 'Marketing', rota: 'marketing' },
 ];
 
-// Perfis/Configurações também estão no menu do sistema, no botão de grade do cabeçalho. A
-// repetição é de propósito: quem está navegando pelas abas não precisa subir até o topo.
-const DO_SISTEMA: { icone: Icone; rotulo: string; caminho: string }[] = [
-  { icone: PerfisIcon, rotulo: 'Perfis', caminho: '/perfis' },
-  { icone: ConfigIcon, rotulo: 'Configurações', caminho: '/conta' },
-];
+// Perfis e Configurações NÃO entram aqui: eles moram no menu do sistema, no botão de grade do
+// cabeçalho, que agora acompanha todas as telas. Repetidos nos dois lugares, davam duas portas
+// para a mesma sala e faziam esta folha falar de conta no meio dos módulos do artista.
 
 /** Altura da ilha (78) + a folga de baixo (18), que é o que o painel "Mais" precisa vencer. */
 const ALTURA_DA_ILHA = 78;
@@ -73,16 +70,11 @@ export const BarraDeAbas = ({ artista, id }: { artista?: Artist; id: string }) =
 
   const base = `/artista/${id}`;
   const ativa = (rota: string) => (rota ? caminho.startsWith(`${base}/${rota}`) : caminho === base);
-  const ativoNoCaminho = (destino: string) => caminho === destino;
-  const maisAtivo = MAIS.some((m) => ativa(m.rota)) || DO_SISTEMA.some((s) => ativoNoCaminho(s.caminho));
+  const maisAtivo = MAIS.some((m) => ativa(m.rota));
 
   const ir = (rota: string) => {
     setMaisAberto(false);
     router.push(rota ? (`${base}/${rota}` as never) : (base as never));
-  };
-  const irPara = (destino: string) => {
-    setMaisAberto(false);
-    router.push(destino as never);
   };
 
   /** Uma célula da ilha: ícone em cima, rótulo embaixo. */
@@ -116,9 +108,8 @@ export const BarraDeAbas = ({ artista, id }: { artista?: Artist; id: string }) =
       )}
       {maisAberto && (
         <View style={[estilos.painel, { bottom: rodape + ALTURA_DA_ILHA + FOLGA }]}>
-          {[...MAIS, ...DO_SISTEMA].map((item, i, todos) => {
-            const rota = 'rota' in item ? item.rota : undefined;
-            const aceso = rota ? ativa(rota) : ativoNoCaminho((item as { caminho: string }).caminho);
+          {MAIS.map((item, i, todos) => {
+            const aceso = ativa(item.rota);
             const Icone = item.icone;
             const ultima = i === todos.length - 1;
             return (
@@ -132,7 +123,7 @@ export const BarraDeAbas = ({ artista, id }: { artista?: Artist; id: string }) =
                   !ultima && estilos.fioInferior,
                   ultima && i % 2 === 0 && estilos.larguraCheia,
                 ]}
-                onPress={() => (rota ? ir(rota) : irPara((item as { caminho: string }).caminho))}
+                onPress={() => ir(item.rota)}
                 accessibilityRole="menuitem"
                 accessibilityState={{ selected: aceso }}
               >
@@ -246,11 +237,11 @@ const estilos = StyleSheet.create({
     backgroundColor: COR_BARRA.vidro,
   },
   painel: {
+    // 12 de cada lado, o mesmo do menu do sistema — as duas folhas são a mesma peça e larguras
+    // diferentes faziam parecer que uma delas estava fora de lugar.
     position: 'absolute',
-    right: 22,
-    left: 22,
-    maxWidth: 330,
-    alignSelf: 'flex-end',
+    right: 12,
+    left: 12,
     flexDirection: 'row',
     flexWrap: 'wrap',
     padding: 8,

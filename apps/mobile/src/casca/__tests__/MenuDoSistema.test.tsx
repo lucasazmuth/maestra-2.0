@@ -2,6 +2,8 @@ import type { ReactElement } from 'react';
 
 import { COR, COR_PERFIS } from '@maestra/core/constants/design';
 
+import { comDiagnostico } from '@/app/__tests__/fixtures';
+import { FotoDoArtista } from '@/casca/FotoDoArtista';
 import { itensDoSistema, topoDoPainel } from '@/casca/marca/MenuDoSistema';
 
 // O painel que o botão de grade abre. Três defeitos que apareceram no aparelho e que este
@@ -26,6 +28,28 @@ describe('menu do sistema', () => {
     it('acompanha a margem, em vez de um número fixo', () => {
       expect(topoDoPainel(47)).toBe(125);
       expect(topoDoPainel(20)).toBe(98);
+    });
+  });
+
+  // Quem está dentro de um artista não vai ali para ver uma lista: vai para SAIR deste e entrar
+  // noutro. E o ícone vira a foto de quem está aberto, que diz de quem é a sessão sem um toque.
+  describe('o primeiro item', () => {
+    it('diz "Trocar perfil"', () => {
+      expect(itensDoSistema(acoes)[0].rotulo).toBe('Trocar perfil');
+    });
+
+    it('com um artista aberto, mostra a foto dele no lugar do ícone', () => {
+      const [trocar] = itensDoSistema(acoes, undefined, comDiagnostico);
+
+      expect((trocar.icone as ReactElement).type).toBe(FotoDoArtista);
+      expect((trocar.icone as ReactElement<{ artista?: unknown }>).props.artista)
+        .toBe(comDiagnostico);
+    });
+
+    it('sem artista aberto, continua no ícone — é o que a lista de perfis tem', () => {
+      const [trocar] = itensDoSistema(acoes);
+
+      expect((trocar.icone as ReactElement).type).not.toBe(FotoDoArtista);
     });
   });
 
