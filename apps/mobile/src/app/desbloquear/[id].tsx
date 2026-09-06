@@ -46,14 +46,13 @@ import { useSessao } from '@/nucleo/sessao';
 // Regras, validações e cobrança vêm todas do NÚCLEO — `useCheckoutForm`, `useCoupon` e os thunks
 // da Asaas são os mesmos das duas telas de checkout da web. O que existe aqui é o desenho.
 //
-// ⚠️ O CHECKOUT NÃO RODA NO APP. A 3.1.1 alcança o desbloqueio do mesmo jeito que a assinatura
-// — o texto dela cita "unlocking a full version" ao lado de "subscriptions" —, então a cobrança
-// acontece no navegador, pelo repasse autenticado (`nucleo/loja`). O checkout continua inteiro
-// aqui atrás de `VENDE_DESBLOQUEIO_NO_APP`, porque a web e o Android o usam; ligar de volta é
-// uma linha.
+// ⚠️ O CHECKOUT RODA AQUI, por decisão do produto — cartão e PIX pela Asaas. A 3.1.1 alcança o
+// desbloqueio do mesmo jeito que alcança a assinatura: o texto dela cita "unlocking a full
+// version" ao lado de "subscriptions". A leitura, a decisão e as duas saídas estão em
+// `nucleo/loja`; a tela tem os DOIS corpos e escolhe por `VENDE_DESBLOQUEIO_NO_APP`, então
+// devolver a compra ao navegador é uma linha, sem reescrever nada.
 //
-// O que fica no app: o diagnóstico, o que o desbloqueio libera e o resgate de código de acesso,
-// que não é compra.
+// A assinatura NÃO acompanha: ela é recorrente e continua saindo para o checkout da web.
 
 type Etapa = 'diagnostico' | 'pagamento' | 'pix' | 'pronto';
 

@@ -2,20 +2,30 @@ import { Linking } from 'react-native';
 
 import { supabase } from '@maestra/core/lib/supabase';
 
-// ONDE A MAESTRA COBRA, E POR QUÊ NÃO É AQUI DENTRO.
+// ONDE A MAESTRA COBRA.
 //
-// As duas lojas exigem que bem digital consumido no app seja vendido pelo meio de pagamento
-// delas — App Store 3.1.1 e a política de Pagamentos do Google Play. A assinatura PRO e o
-// desbloqueio de perfil são exatamente isso.
+// Duas compras, dois caminhos, por decisão do produto:
 //
-// A decisão do produto foi vender pelo checkout da web, com o app levando quem quer pagar até
-// lá já autenticado. Isso reduz a exposição da 3.1.1 (nada é cobrado aqui dentro) e assume a da
-// 3.1.3 (o anti-steering, que alcança botão e link que levem a outro meio de pagamento). A
-// permissão para esse link mudou várias vezes entre 2024 e 2026 e varia por país; antes de cada
-// submissão, o texto vigente da diretriz precisa ser conferido.
+// · o DESBLOQUEIO de perfil, pagamento único, acontece dentro do app, no checkout da Asaas;
+// · a assinatura PRO sai para o checkout da web, com a pessoa já autenticada.
 //
-// Se a revisão recusar, o conserto é `MODO_DE_VENDA = 'nenhuma'`: os botões viram informação,
-// sem link e sem preço, que é o desenho que o Spotify usa. Nenhuma tela precisa ser reescrita.
+// O RISCO, escrito aqui porque quem mexer nisto precisa saber: a App Store 3.1.1 exige compra
+// pelo meio de pagamento DELA para bem digital consumido no app, e o texto dela cita
+// "unlocking a full version" ao lado de "subscriptions" — o desbloqueio cai nessa descrição, e
+// cobrar por Asaas aqui dentro é o caso que a diretriz nomeia. A política de Pagamentos do
+// Google Play diz o equivalente. Não é uma leitura de canto: é o motivo pelo qual esta chave
+// esteve desligada.
+//
+// O caminho da assinatura assume a outra diretriz, a 3.1.3 (anti-steering, que alcança botão e
+// link para outro meio de pagamento). Essa permissão mudou várias vezes entre 2024 e 2026 e
+// varia por país; antes de cada submissão, o texto vigente precisa ser conferido.
+//
+// As duas saídas, se a revisão recusar:
+//
+// · o desbloqueio: `VENDE_DESBLOQUEIO_NO_APP = false` devolve a compra para o navegador. A tela
+//   já sabe fazer as duas coisas, nada precisa ser reescrito;
+// · a assinatura: `MODO_DE_VENDA = 'nenhuma'` faz os botões virarem informação, sem link e sem
+//   preço, que é o desenho que o Spotify usa.
 
 export type ModoDeVenda = 'link-externo' | 'nenhuma';
 
@@ -24,12 +34,15 @@ export const MODO_DE_VENDA: ModoDeVenda = 'link-externo';
 /**
  * O desbloqueio de perfil é cobrado DENTRO do app?
  *
- * Não. Ele é bem digital consumido aqui dentro, exatamente como a assinatura — a 3.1.1 não
- * distingue pagamento único de recorrente, e o texto dela cita "unlocking a full version" junto
- * com "subscriptions". O checkout continua no código, atrás desta chave, porque a web e o
- * Android o usam; no app ele fica desligado e a compra acontece no navegador.
+ * Sim, por decisão do produto: cartão e PIX pela Asaas, na propria tela de desbloqueio.
+ *
+ * Ligar isto é o que assume a exposição à 3.1.1 descrita acima. Desligar devolve a compra ao
+ * navegador, com o mesmo repasse autenticado que a assinatura usa — a tela `desbloquear/[id]`
+ * tem os dois corpos e escolhe por esta chave.
+ *
+ * A assinatura NÃO acompanha: ela é recorrente e continua saindo para a web.
  */
-export const VENDE_DESBLOQUEIO_NO_APP = false;
+export const VENDE_DESBLOQUEIO_NO_APP = true;
 
 /** O endereço nu, para quando o repasse autenticado falhar. */
 const SITE = 'https://www.maestramanager.com';

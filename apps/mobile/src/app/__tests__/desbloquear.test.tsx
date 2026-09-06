@@ -107,35 +107,26 @@ describe('desbloqueio do perfil', () => {
 
   // Quem ABRE um perfil bloqueado cai aqui, e não no diagnóstico: não houve convite nenhum
   // antes, e é esta tela que explica o que o desbloqueio libera.
-  it('mostra o que o desbloqueio libera, e não cobra nada aqui', async () => {
+  it('cobra o desbloqueio aqui dentro, com o formulário completo', async () => {
     const tela = await montar();
 
     expect(await tela.findByText(/Comece hoje o planejamento de AZMUTH BEATS/)).toBeTruthy();
     expect(tela.getByText('Plano de ação com metas e cronograma')).toBeTruthy();
 
-    // O cartão com o e-mail da conta fica só no checkout da WEB: ele diz QUEM está sendo
-    // cobrado, no instante em que se cobra, e aqui não se cobra nada.
-    expect(tela.queryByText('artista@exemplo.com')).toBeNull();
-
-    // Nada de formulário de pagamento: nem cartão, nem PIX, nem CPF.
-    expect(tela.queryByLabelText('CPF ou CNPJ')).toBeNull();
-    expect(tela.queryByLabelText('Cartão de crédito')).toBeNull();
-    expect(tela.queryByLabelText(/Gerar código PIX/)).toBeNull();
-    // E nem preço: ele é o sinal que a diretriz de anti-steering enxerga primeiro.
-    expect(tela.queryByText('R$ 199,90')).toBeNull();
+    // O checkout de verdade: CPF, os dois meios e o preço.
+    expect(tela.getByLabelText('CPF ou CNPJ')).toBeTruthy();
+    expect(tela.getByLabelText('Cartão de crédito')).toBeTruthy();
+    expect(tela.getByLabelText('PIX')).toBeTruthy();
+    expect(tela.getAllByText('R$ 199,90').length).toBeGreaterThan(0);
   });
 
-  it('o botão leva ao checkout da web, com o perfil certo', async () => {
-    const usuario = userEvent.setup();
+  // O pagamento único acontece AQUI: nenhum caminho desta tela sai para o navegador.
+  it('não manda ninguém para o checkout da web', async () => {
     const tela = await montar();
+    await tela.findByText(/Comece hoje o planejamento de AZMUTH BEATS/);
 
-    await usuario.press(await tela.findByLabelText('Liberar este perfil'));
-
-    expect(mockCheckout).toHaveBeenCalledWith({ destino: 'desbloqueio', artistId: 'a-2' });
-    // O app não fala com a Asaas em nenhum momento.
-    expect(mockInvocar).not.toHaveBeenCalledWith(
-      'asaas-create-artist-charge', expect.anything(),
-    );
+    expect(mockCheckout).not.toHaveBeenCalled();
+    expect(tela.queryByLabelText('Liberar este perfil')).toBeNull();
   });
 
   // A etapa do relatório terminava sem saída: a pessoa lia o diagnóstico inteiro e o texto
@@ -181,17 +172,15 @@ describe('desbloqueio do perfil', () => {
       expect(convite).toBeLessThan(levar);
     });
 
-    // O convite vai DIRETO ao checkout. A tela de pagamento no meio do caminho não decide
-    // nada: repete o que a pessoa acabou de ler e termina no mesmo botão. Um passo a mais
-    // entre a decisão e o pagamento é um passo a mais para desistir.
-    it('o convite leva direto ao checkout, sem tela no meio', async () => {
+    // Com a cobrança dentro do app, o convite leva ao FORMULÁRIO — não há para onde pular:
+    // é essa tela que cobra. O atalho para o navegador só valia quando a compra acontecia lá.
+    it('o convite leva ao formulário de pagamento, aqui mesmo', async () => {
       const { tela, usuario } = await voltarAoDiagnostico();
 
       await usuario.press(tela.getByLabelText(CHAMADA_DO_PLANEJAMENTO.botao));
 
-      expect(mockCheckout).toHaveBeenCalledWith({ destino: 'desbloqueio', artistId: 'a-2' });
-      // E a tela de pagamento NÃO apareceu no caminho.
-      expect(tela.queryByLabelText('Liberar este perfil')).toBeNull();
+      expect(await tela.findByLabelText('CPF ou CNPJ')).toBeTruthy();
+      expect(mockCheckout).not.toHaveBeenCalled();
     });
   });
 
@@ -205,8 +194,10 @@ describe('desbloqueio do perfil', () => {
     const usuario = userEvent.setup();
     const tela = await montar();
 
-    await usuario.type(await tela.findByLabelText('Código de acesso'), 'PRESENTE');
-    await usuario.press(tela.getByLabelText('Resgatar código'));
+    // Um campo só para cupom e passe: quem tem um código na mão não precisa saber qual dos
+    // dois é. O rótulo é o do cupom porque esse é o caso comum.
+    await usuario.type(await tela.findByLabelText('Cupom de desconto'), 'PRESENTE');
+    await usuario.press(tela.getByLabelText('Aplicar cupom'));
 
     expect(await tela.findByText('Pass Access confirmado!')).toBeTruthy();
     expect(mockInvocar).not.toHaveBeenCalledWith('asaas-create-artist-charge', expect.anything());
@@ -221,10 +212,13 @@ describe('desbloqueio do perfil', () => {
     }));
   });
 
-  // Se alguém religar a venda no app, é para ser de propósito — e com a diretriz relida.
-  it('a venda dentro do app está desligada', () => {
+  // Duas compras, dois caminhos. Trocar qualquer um dos dois é decisão de produto com a
+  // diretriz relida na mão — nunca efeito colateral de outra mudança.
+  it('o pagamento único é cobrado no app; a assinatura sai para a web', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
-    const { VENDE_DESBLOQUEIO_NO_APP } = jest.requireActual('@/nucleo/loja');
-    expect(VENDE_DESBLOQUEIO_NO_APP).toBe(false);
+    const { VENDE_DESBLOQUEIO_NO_APP, MODO_DE_VENDA } = jest.requireActual('@/nucleo/loja');
+
+    expect(VENDE_DESBLOQUEIO_NO_APP).toBe(true);
+    expect(MODO_DE_VENDA).toBe('link-externo');
   });
 });
