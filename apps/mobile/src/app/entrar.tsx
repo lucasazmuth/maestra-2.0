@@ -1,5 +1,5 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView,
@@ -12,8 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_ENTRADA, RAIO } from '@maestra/core/constants/design';
-import { ROTA_DE_CADASTRO } from '@maestra/core/constants/landing';
-import { MaestraLogo } from '@/icones';
+import { MaestraMarca } from '@/icones';
 import { appleDisponivel, entrarComApple, entrarComEmail, entrarComGoogle } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 
@@ -33,6 +32,7 @@ export default function Entrar() {
   // sessão) e Google (que volta do navegador e chama `setSession`). Um `router.replace` no fim
   // de cada um deles precisaria ser lembrado três vezes, e o do Google voltaria de outra tela.
   const { sessao } = useSessao();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [emCurso, setEmCurso] = useState<EmCurso>(null);
@@ -69,10 +69,11 @@ export default function Entrar() {
         <KeyboardAvoidingView style={estilos.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
             <View style={estilos.cartao}>
-              {/* A marca e o LOGOTIPO mais a palavra, como no topo da web e da landing. */}
+              {/* A MARCA, e não o símbolo mais a palavra escrita: a web desenha "Maestra" com o
+                  vetor do lettering, e escrever numa fonte do app dá outra logo — outro peso,
+                  outro desenho das letras, e o símbolo preto ao lado de uma palavra azul. */}
               <View style={estilos.marcaLinha}>
-                <MaestraLogo size={22} color={COR_ENTRADA.marca} />
-                <Text style={estilos.marca}>Maestra</Text>
+                <MaestraMarca size={26} color={COR_ENTRADA.marca} />
               </View>
 
               <Text style={estilos.rotulo}>Acesse com:</Text>
@@ -189,7 +190,7 @@ export default function Entrar() {
                 Você não possui cadastro?{' '}
                 <Text
                   style={estilos.link}
-                  onPress={() => Linking.openURL(`${SITE}${ROTA_DE_CADASTRO}`)}
+                  onPress={() => router.push('/cadastro')}
                   accessibilityRole="link"
                 >
                   Cadastre-se!
@@ -226,7 +227,6 @@ const estilos = StyleSheet.create({
   marcaLinha: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 30,
   },
-  marca: { fontSize: 24, fontWeight: '800', color: COR_ENTRADA.marca },
   rotulo: { color: COR_ENTRADA.rotulo, fontSize: 12, fontWeight: '700', marginBottom: 12 },
   sociais: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   social: {

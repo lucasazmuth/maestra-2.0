@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COR, COR_CABECALHO_DE_MODULO, RAIO } from '@maestra/core/constants/design';
 import {
-  LANDING_HERO, MODULOS_DA_PLATAFORMA, ROTA_DE_CADASTRO, tituloDaLanding,
+  LANDING_HERO, MODULOS_DA_PLATAFORMA, tituloDaLanding,
 } from '@maestra/core/constants/landing';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
@@ -12,9 +12,6 @@ import {
   AgendaIcon, DiagnosticoIcon, MaestraMarca, PlanejamentoIcon, PlanoAcaoIcon,
 } from '@/icones';
 
-/** O cadastro acontece na web: aqui o app só leva a pessoa até lá. */
-const SITE = 'https://www.maestramanager.com';
-const CADASTRO = `${SITE}${ROTA_DE_CADASTRO}`;
 
 // A APRESENTAÇÃO — a primeira tela de quem abre o app sem conta.
 //
@@ -23,10 +20,9 @@ const CADASTRO = `${SITE}${ROTA_DE_CADASTRO}`;
 // tinha por que preencher nada.
 //
 // Ela diz o que o app faz e oferece os DOIS caminhos, que é a diferença entre uma porta e um
-// portão: começar e entrar numa conta que já existe. O primeiro sai para o navegador porque é
-// lá que o cadastro vive — e ele não termina no formulário: quem se cadastra cai nas boas-
-// vindas e, sem perfil nenhum, na criação do primeiro, que é onde o diagnóstico gratuito
-// acontece. A jornada inteira já está ligada do outro lado.
+// portão: começar e entrar numa conta que já existe. Os dois ficam AQUI DENTRO: o cadastro é
+// nativo, e de lá a pessoa segue direto para a criação do primeiro perfil, que é onde o
+// diagnóstico gratuito acontece.
 //
 // Ela aparece SEMPRE que o app abre sem sessão, e não uma vez por instalação: abrir o app do
 // zero é o momento em que se pergunta "o que é isto", e a resposta tem que estar lá toda vez.
@@ -82,7 +78,7 @@ export default function Intro() {
       <View style={estilos.acoes}>
         <Pressable
           style={estilos.principal}
-          onPress={() => { void Linking.openURL(CADASTRO); }}
+          onPress={() => router.push('/cadastro')}
           accessibilityRole="button"
           accessibilityLabel={LANDING_HERO.acao}
         >

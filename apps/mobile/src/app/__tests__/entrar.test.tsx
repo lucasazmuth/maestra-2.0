@@ -3,11 +3,13 @@ import { render, userEvent, waitFor } from '@testing-library/react-native';
 import Entrar from '../entrar';
 
 const mockRedirect = jest.fn();
+const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   Redirect: (props: { href: string }) => {
     mockRedirect(props.href);
     return null;
   },
+  useRouter: () => ({ push: mockPush }),
 }));
 
 let mockSessao: unknown = null;

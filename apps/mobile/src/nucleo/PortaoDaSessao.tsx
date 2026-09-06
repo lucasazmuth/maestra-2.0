@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useSessao } from '@/nucleo/sessao';
 
 /** As rotas que existem SEM sessão. Expulsar alguém delas seria um laço. */
-const PUBLICAS = ['entrar', 'intro'];
+const PUBLICAS = ['entrar', 'intro', 'cadastro'];
 
 // O PORTÃO DA SESSÃO — quem sai da conta sai da tela também.
 //

@@ -56,17 +56,20 @@ describe('a porta da cobrança', () => {
   });
 });
 
-// UM ENDEREÇO SÓ PARA O CADASTRO.
+// O CADASTRO É AQUI DENTRO.
 //
-// O app apontava para `${SITE}/cadastro` em duas telas, e essa rota nunca existiu no `App.tsx`
-// — quem tocava o botão caía num 404. Um endereço escrito à mão em duas telas erra em duas
-// telas, e o erro é silencioso: o app abre o navegador e o problema aparece do outro lado.
-describe('o endereço do cadastro', () => {
+// Ele já foi um link para a web, e apontava para `${SITE}/cadastro` em duas telas — uma rota
+// que nunca existiu no `App.tsx`: quem tocava o botão saía do app e caía num 404. Hoje a conta
+// nasce no app, e nenhuma tela deve mandar ninguém ao navegador para se cadastrar.
+//
+// A regressão é silenciosa: o app abre o navegador e o problema aparece do outro lado.
+describe('o cadastro', () => {
   it.each(arquivos.map((a) => [path.relative(raiz, a), a]))(
-    '%s não escreve o caminho do cadastro à mão',
+    '%s não manda ninguém ao navegador para se cadastrar',
     (_nome, caminho) => {
       const fonte = fs.readFileSync(caminho, 'utf8');
-      expect(fonte).not.toMatch(/\/cadastro['"`]/);
+      const aberturas = fonte.match(/Linking\.openURL\([^)]*\)/g) ?? [];
+      expect(aberturas.filter((a) => /cadastro|signup/i.test(a))).toEqual([]);
     },
   );
 });
