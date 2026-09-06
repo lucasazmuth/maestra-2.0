@@ -16,7 +16,6 @@ import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { MaestraMarca, NotificationIcon } from '@/icones';
 import { BotaoRedondo, MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
-import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
 import { sair } from '@/nucleo/entrar';
 import { irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
@@ -146,16 +145,16 @@ export default function Perfis() {
 
   return (
     <SafeAreaView style={estilos.tela}>
-      {/* A barra da web: marca com o selo do plano a esquerda, sino e conta a direita. Antes
-          esta linha era "Seus perfis" + o e-mail, que a web nao mostra em lugar nenhum. */}
-      {/* A barra da web: a MARCA (símbolo + palavra, os dois vetores oficiais) com o selo do
-          plano à esquerda, e à direita os dois botões redondos — o sino e o menu do sistema.
-          O segundo botão era um ícone de PESSOA que ia direto para a conta; na web ele é a
-          GRADE que abre o menu, e o caminho para a conta é um item dentro dele. */}
+      {/* A barra da web: a MARCA (símbolo + palavra, os dois vetores oficiais) à esquerda, e à
+          direita os dois botões redondos — o sino e o menu do sistema. O segundo botão era um
+          ícone de PESSOA que ia direto para a conta; na web ele é a GRADE que abre o menu, e o
+          caminho para a conta é um item dentro dele.
+
+          A pílula do plano (FREE / PRO / Pendente) ficava aqui e agora é só da WEB: no app o
+          caminho para o PRO é o item "Seja PRO", dentro do menu. */}
       <View style={estilos.barra}>
         <View style={estilos.marcaLinha}>
           <MaestraMarca size={24} color={COR_PERFIS.titulo} />
-          <SeloDoPlano aoTocar={() => void irParaOCheckout({ destino: 'assinatura' })} />
         </View>
 
         <BotaoRedondo
@@ -236,6 +235,7 @@ export default function Perfis() {
             configuracoes: () => router.push('/conta'),
             suporte: () => Linking.openURL(`${SITE}/suporte`),
             sair: () => { void sair(); },
+            pro: () => { void irParaOCheckout({ destino: 'assinatura' }); },
           },
           'perfis',
         )}

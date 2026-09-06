@@ -4,9 +4,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_PERFIS } from '@maestra/core/constants/design';
+import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 
 import { FotoDoArtista } from '@/casca/FotoDoArtista';
+import { DiamanteAnimado } from '@/casca/marca/DiamanteAnimado';
 import { PerfisIcon } from '@/icones';
 
 // O menu do sistema — o painel que o botão de grade abre no topo da web.
@@ -93,7 +95,10 @@ export const MenuDoSistema = ({ aberto, itens, aoFechar }: {
  * Sem artista (a propria lista de perfis) sobra o icone, que e o que existe para mostrar.
  */
 export const itensDoSistema = (
-  acoes: { perfis: () => void; configuracoes: () => void; suporte: () => void; sair: () => void },
+  acoes: {
+    perfis: () => void; configuracoes: () => void; suporte: () => void; sair: () => void;
+    pro: () => void;
+  },
   aqui?: 'perfis' | 'configuracoes',
   artista?: Artist,
 ): ItemDoMenu[] => {
@@ -102,14 +107,15 @@ export const itensDoSistema = (
   const tom = (aceso: boolean) => (aceso ? COR.primaria : COR_PERFIS.painelIcone);
 
   return [
-    {
+    // "Trocar perfil" nao aparece NA lista de perfis: ali o item so fecharia o menu e deixaria a
+    // pessoa onde ja estava. Um item que nao leva a lugar nenhum ensina a desconfiar do menu.
+    ...(aqui === 'perfis' ? [] : [{
       rotulo: 'Trocar perfil',
       icone: artista
         ? <FotoDoArtista artista={artista} tamanho={24} />
-        : <PerfisIcon size={22} color={tom(aqui === 'perfis')} />,
+        : <PerfisIcon size={22} color={tom(false)} />,
       aoTocar: acoes.perfis,
-      ativo: aqui === 'perfis',
-    },
+    }]),
     {
       rotulo: 'Configurações',
       icone: <Feather name="settings" size={22} color={tom(aqui === 'configuracoes')} />,
@@ -129,6 +135,16 @@ export const itensDoSistema = (
       icone: <Feather name="log-out" size={22} color={tom(false)} />,
       aoTocar: acoes.sair,
     },
+    // O caminho para o PRO desceu do cabecalho para ca. Ele era a pilula do plano, ao lado da
+    // marca, e o diamante animado vem de la — e o mesmo Lottie, com o mesmo tom.
+    //
+    // Com o paywall desligado o item some: convidar a assinar o que esta liberado para todos e
+    // pedir dinheiro por nada. E a mesma regra que a pilula seguia.
+    ...(PAYWALL_DISABLED ? [] : [{
+      rotulo: 'Seja PRO',
+      icone: <DiamanteAnimado tom="pro" tamanho={22} />,
+      aoTocar: acoes.pro,
+    }]),
   ];
 };
 

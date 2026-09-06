@@ -14,7 +14,6 @@ import { countUnread } from '@maestra/core/services/db/notifications';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
 import { MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
-import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
 import { MaestraMarca, NotificationIcon } from '@/icones';
 import { sair } from '@/nucleo/entrar';
 import { irParaOCheckout } from '@/nucleo/loja';
@@ -24,7 +23,10 @@ import { useSessao } from '@/nucleo/sessao';
 const SITE = 'https://www.maestramanager.com';
 
 // O cabeçalho, igual ao da web no celular (ver `src/components/Layout/index.tsx`): à esquerda a
-// MARCA com o selo do plano, à direita o botão da Nyta, o sino e o menu do sistema.
+// MARCA, à direita o botão da Nyta, o sino e o menu do sistema.
+//
+// A pílula do plano (FREE / PRO / Pendente) fica só na WEB. Aqui o caminho para o PRO é o item
+// "Seja PRO" do menu do sistema, com o mesmo diamante animado que a pílula usava.
 //
 // Ele já mostrou o chip do artista aqui, por causa de um bloco de CSS (`.topbar-artist`, de
 // junho) que o descrevia em detalhe. Lendo o DOM da web em execução: o chip NÃO É RENDERIZADO —
@@ -82,9 +84,6 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
         <MaestraMarca size={24} color={COR_PERFIS.titulo} />
       </Pressable>
 
-      {/* O selo fica FORA do toque da marca: ele leva à assinatura, e a marca aos perfis. */}
-      <SeloDoPlano aoTocar={() => void irParaOCheckout({ destino: 'assinatura' })} />
-
       <View style={estilos.espaco} />
 
       <Pressable
@@ -129,6 +128,7 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
             configuracoes: () => router.push('/conta'),
             suporte: () => { void Linking.openURL(`${SITE}/suporte`); },
             sair: () => { void sair(); },
+            pro: () => { void irParaOCheckout({ destino: 'assinatura' }); },
           },
           undefined,
           artista,

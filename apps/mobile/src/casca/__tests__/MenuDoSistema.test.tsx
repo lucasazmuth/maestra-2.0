@@ -4,6 +4,7 @@ import { COR, COR_PERFIS } from '@maestra/core/constants/design';
 
 import { comDiagnostico } from '@/app/__tests__/fixtures';
 import { FotoDoArtista } from '@/casca/FotoDoArtista';
+import { DiamanteAnimado } from '@/casca/marca/DiamanteAnimado';
 import { itensDoSistema, topoDoPainel } from '@/casca/marca/MenuDoSistema';
 
 // O painel que o botão de grade abre. Três defeitos que apareceram no aparelho e que este
@@ -11,7 +12,11 @@ import { itensDoSistema, topoDoPainel } from '@/casca/marca/MenuDoSistema';
 
 const acoes = {
   perfis: jest.fn(), configuracoes: jest.fn(), suporte: jest.fn(), sair: jest.fn(),
+  pro: jest.fn(),
 };
+
+const rotulos = (...args: Parameters<typeof itensDoSistema>) =>
+  itensDoSistema(...args).map((i) => i.rotulo);
 
 /** A cor com que cada ícone foi criado — é a prop do elemento, não um estilo herdado. */
 const corDoIcone = (icone: React.ReactNode) =>
@@ -46,26 +51,59 @@ describe('menu do sistema', () => {
         .toBe(comDiagnostico);
     });
 
-    it('sem artista aberto, continua no ícone — é o que a lista de perfis tem', () => {
+    it('sem artista aberto, continua no ícone', () => {
       const [trocar] = itensDoSistema(acoes);
 
       expect((trocar.icone as ReactElement).type).not.toBe(FotoDoArtista);
+    });
+
+    // Na própria lista de perfis o item só fecharia o menu e deixaria a pessoa onde já estava.
+    // Um item que não leva a lugar nenhum ensina a desconfiar do menu inteiro.
+    it('some quando já se está na lista de perfis', () => {
+      expect(rotulos(acoes, 'perfis')).not.toContain('Trocar perfil');
+      expect(rotulos(acoes)).toContain('Trocar perfil');
+    });
+  });
+
+  // O caminho para o PRO desceu do cabeçalho para cá: era a pílula do plano ao lado da marca,
+  // que agora é só da web. O diamante é o MESMO Lottie que a pílula usava.
+  describe('"Seja PRO"', () => {
+    it('entra na lista, com o diamante animado', () => {
+      const pro = itensDoSistema(acoes).find((i) => i.rotulo === 'Seja PRO');
+
+      expect(pro).toBeDefined();
+      expect((pro!.icone as ReactElement).type).toBe(DiamanteAnimado);
+      expect((pro!.icone as ReactElement<{ tom?: string }>).props.tom).toBe('pro');
+    });
+
+    it('leva ao lugar que quem chamou mandou', () => {
+      const pro = itensDoSistema(acoes).find((i) => i.rotulo === 'Seja PRO');
+      pro!.aoTocar();
+
+      expect(acoes.pro).toHaveBeenCalled();
+    });
+
+    it('aparece também na lista de perfis, onde a pílula vivia', () => {
+      expect(rotulos(acoes, 'perfis')).toContain('Seja PRO');
     });
   });
 
   // O item aceso pintava só o TEXTO de azul e deixava o ícone cinza: metade do item aceso lê
   // como defeito, não como estado.
   it('o item aceso pinta o ícone junto com o rótulo', () => {
-    const [perfis, configuracoes] = itensDoSistema(acoes, 'perfis');
+    const itens = itensDoSistema(acoes, 'configuracoes');
+    const configuracoes = itens.find((i) => i.rotulo === 'Configurações')!;
+    const suporte = itens.find((i) => i.rotulo === 'Suporte')!;
 
-    expect(perfis.ativo).toBe(true);
-    expect(corDoIcone(perfis.icone)).toBe(COR.primaria);
-    expect(configuracoes.ativo).toBe(false);
-    expect(corDoIcone(configuracoes.icone)).toBe(COR_PERFIS.painelIcone);
+    expect(configuracoes.ativo).toBe(true);
+    expect(corDoIcone(configuracoes.icone)).toBe(COR.primaria);
+    expect(suporte.ativo).toBeUndefined();
+    expect(corDoIcone(suporte.icone)).toBe(COR_PERFIS.painelIcone);
   });
 
   it('sem tela ativa, nenhum ícone fica aceso', () => {
-    for (const item of itensDoSistema(acoes)) {
+    // O "Seja PRO" fica de fora: o diamante é um Lottie, não um ícone de traço com cor.
+    for (const item of itensDoSistema(acoes).filter((i) => i.rotulo !== 'Seja PRO')) {
       expect(corDoIcone(item.icone)).toBe(COR_PERFIS.painelIcone);
     }
   });
