@@ -72,6 +72,37 @@ describe('lista de perfis', () => {
     semearPerfis([comDiagnostico, semDiagnostico]);
   });
 
+  // A BARRA DO SISTEMA — o cabeçalho desta tela.
+  //
+  // Ela já viveu num componente próprio e voltou para cá. Os testes ficaram: são o que garante
+  // que a volta não perdeu nada pelo caminho.
+  describe('a barra do sistema', () => {
+    it('tem a marca, o sino e o menu', async () => {
+      const tela = await montar();
+
+      expect(tela.getByLabelText('Maestra. Ir para os perfis')).toBeTruthy();
+      expect(tela.getByLabelText('Notificações')).toBeTruthy();
+      expect(tela.getByLabelText('Menu do sistema')).toBeTruthy();
+    });
+
+    it('o sino leva às notificações', async () => {
+      const tela = await montar();
+      await userEvent.setup().press(tela.getByLabelText('Notificações'));
+
+      expect(mockPush).toHaveBeenCalledWith('/notificacoes');
+    });
+
+    // A tela em que se está acende no menu — e "Trocar perfil" nem entra, porque aqui ele só
+    // fecharia o menu e deixaria a pessoa onde já estava.
+    it('o menu sabe que já estamos nos perfis', async () => {
+      const tela = await montar();
+      await userEvent.setup().press(tela.getByLabelText('Menu do sistema'));
+
+      expect(tela.getByText('Configurações')).toBeTruthy();
+      expect(tela.queryByText('Trocar perfil')).toBeNull();
+    });
+  });
+
   // Para onde um perfil abre e regra do NUCLEO (`artistEntryRoute`), a mesma da web: sem
   // planejamento vai pro wizard, e so o resto abre a home. O app mandava tudo pra home — quem
   // tinha um perfil recem-criado caia numa tela vazia sem saber o que fazer.
