@@ -14,6 +14,7 @@ import { countUnread } from '@maestra/core/services/db/notifications';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
 import { MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
+import { SeloPro } from '@/casca/marca/SeloPro';
 import { MaestraMarca, NotificationIcon } from '@/icones';
 import { useOfertaDoPro } from '@/nucleo/assinatura';
 import { sair } from '@/nucleo/entrar';
@@ -26,8 +27,8 @@ const SITE = 'https://www.maestramanager.com';
 // O cabeçalho, igual ao da web no celular (ver `src/components/Layout/index.tsx`): à esquerda a
 // MARCA, à direita o botão da Nyta, o sino e o menu do sistema.
 //
-// A pílula do plano (FREE / PRO / Pendente) fica só na WEB. Aqui o caminho para o PRO é o item
-// "Seja PRO" do menu do sistema, com o mesmo diamante animado que a pílula usava.
+// A pílula do plano diz só PRO, e só para quem assina: uma pílula "FREE" que leva ao checkout é
+// direcionar para fora da loja (3.1.3). Quem não assina encontra "Seja PRO" no menu do sistema.
 //
 // Ele já mostrou o chip do artista aqui, por causa de um bloco de CSS (`.topbar-artist`, de
 // junho) que o descrevia em detalhe. Lendo o DOM da web em execução: o chip NÃO É RENDERIZADO —
@@ -85,6 +86,9 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
             vetor do lettering, e escrever numa fonte do app dá outra logo. */}
         <MaestraMarca size={24} color={COR_PERFIS.titulo} />
       </Pressable>
+
+      {/* Fora do toque da marca: o selo não leva a lugar nenhum, e a marca leva aos perfis. */}
+      <SeloPro />
 
       <View style={estilos.espaco} />
 

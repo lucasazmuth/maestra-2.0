@@ -5,6 +5,39 @@ import { fetchSubscriptionStatus } from '@maestra/core/store/slices/subscription
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 
 /**
+ * O status da assinatura, buscando-o se ninguem buscou ainda.
+ *
+ * Quem buscava era a pilula do plano, no cabecalho, que hoje so aparece para quem assina. Sem
+ * esta busca, `initialized` ficaria falso para sempre — foi exatamente o que aconteceu com a
+ * pilula na lista de perfis, antes de ela buscar por conta propria.
+ *
+ * `initialized` vira true tambem quando a busca FALHA, entao uma rede ruim nao trava as duas
+ * respostas abaixo para sempre.
+ */
+const useStatusDaAssinatura = () => {
+  const dispatch = useAppDispatch();
+  const status = useAppSelector((s) => s.subscription.status);
+  const iniciado = useAppSelector((s) => s.subscription.initialized);
+
+  useEffect(() => {
+    if (!iniciado) void dispatch(fetchSubscriptionStatus());
+  }, [iniciado, dispatch]);
+
+  return { status, iniciado };
+};
+
+/**
+ * Se a assinatura esta ativa.
+ *
+ * Enquanto a resposta nao chega, responde `false`: o selo PRO aparecendo um instante depois e
+ * melhor do que um selo que pisca na tela de quem nao assina.
+ */
+export const useAssinaturaAtiva = (): boolean => {
+  const { status, iniciado } = useStatusDaAssinatura();
+  return iniciado && status === 'active';
+};
+
+/**
  * Se cabe oferecer o PRO a quem esta olhando.
  *
  * TRES respostas viram uma so, e as tres importam:
@@ -16,20 +49,8 @@ import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
  *   `none`, entao oferecer por padrao mostraria "Seja PRO" a um assinante e tiraria um segundo
  *   depois. Aparecer um instante atrasado para quem NAO assina e o erro barato dos dois.
  *
- * Quem buscava o status era a pilula do plano, no cabecalho, que agora e so da web. Sem esta
- * busca aqui, `initialized` ficaria falso para sempre e o item nunca apareceria — foi
- * exatamente o que aconteceu com a pilula na lista de perfis, antes de ela buscar por conta
- * propria. `initialized` vira true tambem quando a busca FALHA, entao uma rede ruim nao esconde
- * a oferta para sempre.
  */
 export const useOfertaDoPro = (): boolean => {
-  const dispatch = useAppDispatch();
-  const status = useAppSelector((s) => s.subscription.status);
-  const iniciado = useAppSelector((s) => s.subscription.initialized);
-
-  useEffect(() => {
-    if (!iniciado) void dispatch(fetchSubscriptionStatus());
-  }, [iniciado, dispatch]);
-
+  const { status, iniciado } = useStatusDaAssinatura();
   return !PAYWALL_DISABLED && iniciado && status !== 'active';
 };

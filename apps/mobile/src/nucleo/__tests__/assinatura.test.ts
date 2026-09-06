@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react-native';
 
-import { useOfertaDoPro } from '@/nucleo/assinatura';
+import { useAssinaturaAtiva, useOfertaDoPro } from '@/nucleo/assinatura';
 
 // Quando cabe oferecer o PRO.
 //
@@ -31,6 +31,11 @@ const comEstado = (status: string, initialized: boolean) => {
   return renderHook(() => useOfertaDoPro());
 };
 
+const selo = (status: string, initialized: boolean) => {
+  mockEstado = { subscription: { status, initialized } };
+  return renderHook(() => useAssinaturaAtiva());
+};
+
 beforeEach(() => { mockDespachos.length = 0; });
 
 describe('oferta do PRO', () => {
@@ -59,5 +64,26 @@ describe('oferta do PRO', () => {
   it('não busca de novo quando o status já veio', async () => {
     await comEstado('none', true);
     expect(mockDespachos).toHaveLength(0);
+  });
+});
+
+// O outro lado da mesma resposta: dizer a quem PAGA que o plano está ativo. Isso não vende
+// nada, é informação sobre a conta — e por isso o selo PRO pode ficar no cabeçalho.
+describe('assinatura ativa', () => {
+  it('é verdadeira só com o plano ativo', async () => {
+    expect((await selo('active', true)).result.current).toBe(true);
+    expect((await selo('none', true)).result.current).toBe(false);
+    expect((await selo('overdue', true)).result.current).toBe(false);
+  });
+
+  // Um selo PRO que pisca na tela de quem não assina é pior do que um selo que chega um
+  // instante depois.
+  it('é falsa enquanto a resposta do servidor não chegou', async () => {
+    expect((await selo('active', false)).result.current).toBe(false);
+  });
+
+  it('busca o status quando ninguém buscou ainda', async () => {
+    await selo('none', false);
+    await waitFor(() => expect(mockDespachos).toHaveLength(1));
   });
 });
