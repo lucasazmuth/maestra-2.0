@@ -48,11 +48,11 @@ describe('menu do sistema', () => {
   // noutro. E o ícone vira a foto de quem está aberto, que diz de quem é a sessão sem um toque.
   describe('o primeiro item', () => {
     it('diz "Trocar perfil"', () => {
-      expect(itensDoSistema(acoes)[0].rotulo).toBe('Trocar perfil');
+      expect(itensDoSistema(acoes, { oferecerPro: true })[0].rotulo).toBe('Trocar perfil');
     });
 
     it('com um artista aberto, mostra a foto dele no lugar do ícone', () => {
-      const [trocar] = itensDoSistema(acoes, undefined, comDiagnostico);
+      const [trocar] = itensDoSistema(acoes, { artista: comDiagnostico, oferecerPro: true });
 
       expect((trocar.icone as ReactElement).type).toBe(FotoDoArtista);
       expect((trocar.icone as ReactElement<{ artista?: unknown }>).props.artista)
@@ -60,7 +60,7 @@ describe('menu do sistema', () => {
     });
 
     it('sem artista aberto, continua no ícone', () => {
-      const [trocar] = itensDoSistema(acoes);
+      const [trocar] = itensDoSistema(acoes, { oferecerPro: true });
 
       expect((trocar.icone as ReactElement).type).not.toBe(FotoDoArtista);
     });
@@ -68,8 +68,8 @@ describe('menu do sistema', () => {
     // Na própria lista de perfis o item só fecharia o menu e deixaria a pessoa onde já estava.
     // Um item que não leva a lugar nenhum ensina a desconfiar do menu inteiro.
     it('some quando já se está na lista de perfis', () => {
-      expect(rotulos(acoes, 'perfis')).not.toContain('Trocar perfil');
-      expect(rotulos(acoes)).toContain('Trocar perfil');
+      expect(rotulos(acoes, { aqui: 'perfis', oferecerPro: true })).not.toContain('Trocar perfil');
+      expect(rotulos(acoes, { oferecerPro: true })).toContain('Trocar perfil');
     });
   });
 
@@ -77,7 +77,7 @@ describe('menu do sistema', () => {
   // que agora é só da web. O diamante é o MESMO Lottie que a pílula usava.
   describe('"Seja PRO"', () => {
     it('entra na lista, com o diamante animado', () => {
-      const pro = itensDoSistema(acoes).find((i) => i.rotulo === 'Seja PRO');
+      const pro = itensDoSistema(acoes, { oferecerPro: true }).find((i) => i.rotulo === 'Seja PRO');
 
       expect(pro).toBeDefined();
       expect((pro!.icone as ReactElement).type).toBe(DiamanteAnimado);
@@ -85,21 +85,32 @@ describe('menu do sistema', () => {
     });
 
     it('leva ao lugar que quem chamou mandou', () => {
-      const pro = itensDoSistema(acoes).find((i) => i.rotulo === 'Seja PRO');
+      const pro = itensDoSistema(acoes, { oferecerPro: true }).find((i) => i.rotulo === 'Seja PRO');
       pro!.aoTocar();
 
       expect(acoes.pro).toHaveBeenCalled();
     });
 
     it('aparece também na lista de perfis, onde a pílula vivia', () => {
-      expect(rotulos(acoes, 'perfis')).toContain('Seja PRO');
+      expect(rotulos(acoes, { aqui: 'perfis', oferecerPro: true })).toContain('Seja PRO');
+    });
+
+    // Convidar a assinar quem já assina é o defeito mais visível que este menu poderia ter.
+    // O `useOfertaDoPro` também responde `false` com o paywall desligado e enquanto a resposta
+    // do servidor não chegou.
+    it('some quando não cabe oferecer', () => {
+      const lista = rotulos(acoes, { oferecerPro: false });
+
+      expect(lista).not.toContain('Seja PRO');
+      // E o resto do menu continua inteiro: esconder a oferta não é esconder o menu.
+      expect(lista).toEqual(['Trocar perfil', 'Configurações', 'Suporte', 'Sair da conta']);
     });
   });
 
   // O item aceso pintava só o TEXTO de azul e deixava o ícone cinza: metade do item aceso lê
   // como defeito, não como estado.
   it('o item aceso pinta o ícone junto com o rótulo', () => {
-    const itens = itensDoSistema(acoes, 'configuracoes');
+    const itens = itensDoSistema(acoes, { aqui: 'configuracoes', oferecerPro: true });
     const configuracoes = itens.find((i) => i.rotulo === 'Configurações')!;
     const suporte = itens.find((i) => i.rotulo === 'Suporte')!;
 
@@ -111,7 +122,7 @@ describe('menu do sistema', () => {
 
   it('sem tela ativa, nenhum ícone fica aceso', () => {
     // O "Seja PRO" fica de fora: o diamante é um Lottie, não um ícone de traço com cor.
-    for (const item of itensDoSistema(acoes).filter((i) => i.rotulo !== 'Seja PRO')) {
+    for (const item of itensDoSistema(acoes, { oferecerPro: true }).filter((i) => i.rotulo !== 'Seja PRO')) {
       expect(corDoIcone(item.icone)).toBe(COR_PERFIS.painelIcone);
     }
   });
@@ -119,7 +130,7 @@ describe('menu do sistema', () => {
   // Sair fecha a lista: é a última coisa que se faz, e vir antes do convite para assinar punha
   // a saída no caminho de quem estava lendo o menu.
   it('"Sair da conta" é o último item, depois de "Seja PRO"', () => {
-    const lista = rotulos(acoes);
+    const lista = rotulos(acoes, { oferecerPro: true });
 
     expect(lista[lista.length - 1]).toBe('Sair da conta');
     expect(lista.indexOf('Seja PRO')).toBeLessThan(lista.indexOf('Sair da conta'));
@@ -128,7 +139,7 @@ describe('menu do sistema', () => {
   // Vermelho promete destruição, e sair não apaga nada. Quem destrói é "Excluir minha conta",
   // nas Configurações, e lá a cor de perigo continua.
   it('"Sair da conta" não é vermelho', () => {
-    const sair = itensDoSistema(acoes).find((i) => i.rotulo === 'Sair da conta');
+    const sair = itensDoSistema(acoes, { oferecerPro: true }).find((i) => i.rotulo === 'Sair da conta');
 
     expect(sair).toBeDefined();
     expect(corDoIcone(sair!.icone)).not.toBe(COR.erro);

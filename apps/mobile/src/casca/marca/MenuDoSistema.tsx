@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_PERFIS } from '@maestra/core/constants/design';
-import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 
 import { FotoDoArtista } from '@/casca/FotoDoArtista';
@@ -100,9 +99,20 @@ export const itensDoSistema = (
     perfis: () => void; configuracoes: () => void; suporte: () => void; sair: () => void;
     pro: () => void;
   },
-  aqui?: 'perfis' | 'configuracoes',
-  artista?: Artist,
+  onde: {
+    /** A tela em que se esta, para acender o item dela. */
+    aqui?: 'perfis' | 'configuracoes';
+    /** O artista aberto, se houver: e a foto dele que vira o icone de "Trocar perfil". */
+    artista?: Artist;
+    /**
+     * Se cabe oferecer o PRO. OBRIGATORIO de proposito: com valor padrao, um chamador que
+     * esquecesse dele ou convidaria um assinante a assinar de novo, ou esconderia a oferta de
+     * quem devia ve-la — e nos dois casos em silencio. Sai do `useOfertaDoPro`.
+     */
+    oferecerPro: boolean;
+  },
 ): ItemDoMenu[] => {
+  const { aqui, artista, oferecerPro } = onde;
   // O icone acompanha o rotulo. Pintar so o texto de azul e deixar o icone cinza faz o item
   // parecer meio aceso — o destaque tem que valer para a celula inteira.
   const tom = (aceso: boolean) => (aceso ? COR.primaria : COR_PERFIS.painelIcone);
@@ -131,13 +141,13 @@ export const itensDoSistema = (
     // O caminho para o PRO desceu do cabecalho para ca. Ele era a pilula do plano, ao lado da
     // marca, e o diamante animado vem de la — e o mesmo Lottie, com o mesmo tom.
     //
-    // Com o paywall desligado o item some: convidar a assinar o que esta liberado para todos e
-    // pedir dinheiro por nada. E a mesma regra que a pilula seguia.
-    ...(PAYWALL_DISABLED ? [] : [{
+    // Quem decide se ele aparece e o `useOfertaDoPro`: paywall desligado, assinatura ja ativa e
+    // "ainda nao sei" escondem o convite.
+    ...(oferecerPro ? [{
       rotulo: 'Seja PRO',
       icone: <DiamanteAnimado tom="pro" tamanho={22} />,
       aoTocar: acoes.pro,
-    }]),
+    }] : []),
     // Sair da conta fecha a lista, e nao e vermelho: vermelho promete destruicao e sair nao
     // apaga nada. Quem destroi de verdade e "Excluir minha conta", nas Configuracoes, e la a
     // cor de perigo continua.

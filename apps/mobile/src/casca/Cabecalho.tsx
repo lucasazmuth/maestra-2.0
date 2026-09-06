@@ -15,6 +15,7 @@ import { countUnread } from '@maestra/core/services/db/notifications';
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
 import { MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
 import { MaestraMarca, NotificationIcon } from '@/icones';
+import { useOfertaDoPro } from '@/nucleo/assinatura';
 import { sair } from '@/nucleo/entrar';
 import { irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
@@ -42,6 +43,7 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
   const usuario = sessao?.user.id;
   const [naoLidas, setNaoLidas] = useState(0);
   const [menuAberto, setMenuAberto] = useState(false);
+  const oferecerPro = useOfertaDoPro();
   // O canal leva um sufixo por INSTÂNCIA, e não só o id do usuário.
   //
   // O Supabase guarda os canais por nome: pedir um nome que já existe devolve o canal existente,
@@ -130,8 +132,7 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
             sair: () => { void sair(); },
             pro: () => { void irParaOCheckout({ destino: 'assinatura' }); },
           },
-          undefined,
-          artista,
+          { artista, oferecerPro },
         )}
       />
     </View>
