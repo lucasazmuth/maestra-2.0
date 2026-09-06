@@ -26,13 +26,21 @@ describe('menu do sistema', () => {
   // Era `top: 96` fixo. Num iPhone com ilha dinâmica a margem de cima sozinha passa de 50 e o
   // botão de grade termina em 109 — o painel abria por cima do botão que o chamou.
   describe('onde o painel começa', () => {
-    it('abre abaixo do cabeçalho num aparelho com ilha dinâmica', () => {
-      expect(topoDoPainel(59)).toBe(137);
+    // O botão redondo tem 42 e termina 57 abaixo da margem no cabeçalho do artista — o painel
+    // vem logo depois dele, não depois da barra inteira.
+    it('abre logo abaixo do botão num aparelho com ilha dinâmica', () => {
+      expect(topoDoPainel(59)).toBe(124);
     });
 
     it('acompanha a margem, em vez de um número fixo', () => {
-      expect(topoDoPainel(47)).toBe(125);
-      expect(topoDoPainel(20)).toBe(98);
+      expect(topoDoPainel(47)).toBe(112);
+      expect(topoDoPainel(20)).toBe(85);
+    });
+
+    it('nunca encosta no botão que o abriu', () => {
+      for (const margem of [0, 20, 47, 59]) {
+        expect(topoDoPainel(margem)).toBeGreaterThan(margem + 57);
+      }
     });
   });
 
@@ -106,6 +114,15 @@ describe('menu do sistema', () => {
     for (const item of itensDoSistema(acoes).filter((i) => i.rotulo !== 'Seja PRO')) {
       expect(corDoIcone(item.icone)).toBe(COR_PERFIS.painelIcone);
     }
+  });
+
+  // Sair fecha a lista: é a última coisa que se faz, e vir antes do convite para assinar punha
+  // a saída no caminho de quem estava lendo o menu.
+  it('"Sair da conta" é o último item, depois de "Seja PRO"', () => {
+    const lista = rotulos(acoes);
+
+    expect(lista[lista.length - 1]).toBe('Sair da conta');
+    expect(lista.indexOf('Seja PRO')).toBeLessThan(lista.indexOf('Sair da conta'));
   });
 
   // Vermelho promete destruição, e sair não apaga nada. Quem destrói é "Excluir minha conta",

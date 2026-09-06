@@ -28,20 +28,21 @@ export interface ItemDoMenu {
 }
 
 /**
- * Onde o painel comeca: logo ABAIXO do cabecalho, nunca em cima dele.
+ * Onde o painel comeca: logo ABAIXO do botao que o abriu, nunca em cima dele.
  *
  * Era um `top: 96` fixo, e 96 nao existe em aparelho nenhum: no iPhone com ilha dinamica a
  * margem de cima sozinha ja passa de 50, e o botao de grade terminava em 109 — o painel abria
  * por cima do proprio botao que o chamou.
  *
- * As duas barras que abrem este menu tem a mesma altura util (72 no cabecalho do artista, 70 na
- * lista de perfis), entao uma conta so serve para as duas.
+ * A conta parte do BOTAO, e nao da altura da barra. As duas barras que abrem este menu poem o
+ * mesmo circulo de 42: no cabecalho do artista ele termina 57 abaixo da margem, na lista de
+ * perfis 50. Contar pela barra inteira somava os 20 de respiro que ela tem embaixo, e o painel
+ * caia longe demais do botao.
  */
-const ALTURA_DO_CABECALHO = 72;
-const FOLGA = 6;
+const BASE_DO_BOTAO = 57;
+const FOLGA = 8;
 
-export const topoDoPainel = (margemDeCima: number) =>
-  margemDeCima + ALTURA_DO_CABECALHO + FOLGA;
+export const topoDoPainel = (margemDeCima: number) => margemDeCima + BASE_DO_BOTAO + FOLGA;
 
 export const MenuDoSistema = ({ aberto, itens, aoFechar }: {
   aberto: boolean;
@@ -127,14 +128,6 @@ export const itensDoSistema = (
       icone: <Feather name="life-buoy" size={22} color={tom(false)} />,
       aoTocar: acoes.suporte,
     },
-    // Sair da conta NAO e vermelho: vermelho aqui promete destruicao, e sair nao apaga nada.
-    // Quem destroi de verdade e "Excluir minha conta", na tela de Configuracoes, e la a cor
-    // continua sendo a de perigo.
-    {
-      rotulo: 'Sair da conta',
-      icone: <Feather name="log-out" size={22} color={tom(false)} />,
-      aoTocar: acoes.sair,
-    },
     // O caminho para o PRO desceu do cabecalho para ca. Ele era a pilula do plano, ao lado da
     // marca, e o diamante animado vem de la — e o mesmo Lottie, com o mesmo tom.
     //
@@ -145,6 +138,14 @@ export const itensDoSistema = (
       icone: <DiamanteAnimado tom="pro" tamanho={22} />,
       aoTocar: acoes.pro,
     }]),
+    // Sair da conta fecha a lista, e nao e vermelho: vermelho promete destruicao e sair nao
+    // apaga nada. Quem destroi de verdade e "Excluir minha conta", nas Configuracoes, e la a
+    // cor de perigo continua.
+    {
+      rotulo: 'Sair da conta',
+      icone: <Feather name="log-out" size={22} color={tom(false)} />,
+      aoTocar: acoes.sair,
+    },
   ];
 };
 
