@@ -52,11 +52,24 @@ const DO_SISTEMA: { icone: Icone; rotulo: string; caminho: string }[] = [
 const ALTURA_DA_ILHA = 78;
 const FOLGA = 18;
 
+/**
+ * A distância da ilha até a borda de baixo.
+ *
+ * NÃO é a folga somada à margem segura: somar as duas conta o mesmo espaço duas vezes. Onde o
+ * aparelho tem barra de gestos, o sistema JÁ reserva 34pt ali que nada desenha em cima — essa
+ * reserva é a folga. Somar os 18 por cima empurrava a ilha para 52pt e ela ficava boiando longe
+ * do rodapé.
+ *
+ * Onde não há barra de gestos a margem é 0, e aí a folga do desenho é quem responde.
+ */
+export const rodapeDaIlha = (margemDeBaixo: number) => Math.max(FOLGA, margemDeBaixo);
+
 export const BarraDeAbas = ({ artista, id }: { artista?: Artist; id: string }) => {
   const router = useRouter();
   const caminho = usePathname();
   const margem = useSafeAreaInsets();
   const [maisAberto, setMaisAberto] = useState(false);
+  const rodape = rodapeDaIlha(margem.bottom);
 
   const base = `/artista/${id}`;
   const ativa = (rota: string) => (rota ? caminho.startsWith(`${base}/${rota}`) : caminho === base);
@@ -102,7 +115,7 @@ export const BarraDeAbas = ({ artista, id }: { artista?: Artist; id: string }) =
         <Pressable style={estilos.vidro} onPress={() => setMaisAberto(false)} accessibilityLabel="Fechar" />
       )}
       {maisAberto && (
-        <View style={[estilos.painel, { bottom: FOLGA + ALTURA_DA_ILHA + FOLGA + margem.bottom }]}>
+        <View style={[estilos.painel, { bottom: rodape + ALTURA_DA_ILHA + FOLGA }]}>
           {[...MAIS, ...DO_SISTEMA].map((item, i, todos) => {
             const rota = 'rota' in item ? item.rota : undefined;
             const aceso = rota ? ativa(rota) : ativoNoCaminho((item as { caminho: string }).caminho);
@@ -133,7 +146,7 @@ export const BarraDeAbas = ({ artista, id }: { artista?: Artist; id: string }) =
         </View>
       )}
 
-      <View style={[estilos.ilha, { bottom: FOLGA + margem.bottom }]}>
+      <View style={[estilos.ilha, { bottom: rodape }]}>
         <Pressable
           style={[estilos.celula, estilos.celulaDaFoto, inicioAceso && estilos.celulaAcesa]}
           onPress={() => ir('')}
@@ -187,7 +200,14 @@ const estilos = StyleSheet.create({
   comFio: { borderLeftWidth: 1, borderLeftColor: COR_BARRA.fio },
   // Erguida: 4px pra fora em cada lado, com sombra e fundo próprios — é o cartão que a web
   // desenha com `margin: -4px`. O fio da esquerda some, senão ele cruzaria o cartão.
+  //
+  // O `zIndex` é o mesmo `z-index: 1` da web (`.mobile-nav-current`, gsap-reference.css:6603) e
+  // não é enfeite: sem ele o React Native pinta os irmãos na ordem em que foram declarados, e a
+  // célula SEGUINTE desenha o fio dela depois — em cima da sobra de 4px do cartão. O fio da
+  // esquerda desta célula a gente apaga; o da direita pertence à vizinha, e só a ordem de
+  // empilhamento resolve.
   celulaAcesa: {
+    zIndex: 1,
     minHeight: 72,
     margin: -4,
     borderRadius: 18,
