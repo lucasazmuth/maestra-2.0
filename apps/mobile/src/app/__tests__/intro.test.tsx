@@ -2,6 +2,8 @@ import { render, userEvent } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
+import { LANDING_HERO, tituloDaLanding } from '@maestra/core/constants/landing';
+
 import Intro from '../intro';
 
 // A APRESENTAÇÃO — a primeira tela de quem abre o app sem conta.
@@ -30,21 +32,35 @@ beforeEach(() => {
 afterEach(() => { jest.restoreAllMocks(); });
 
 describe('apresentação', () => {
-  it('diz o que o app faz antes de pedir qualquer coisa', async () => {
+  // A COPY É A DA LANDING, e vem do núcleo. Uma segunda versão das mesmas palavras vira uma
+  // segunda promessa na primeira vez que alguém ajusta só uma delas.
+  it('diz o que o app faz com as palavras da landing', async () => {
     const tela = await montar();
 
-    expect(tela.getByText('A carreira inteira, no seu bolso.')).toBeTruthy();
-    expect(tela.getByText(/diagnóstico REAL/)).toBeTruthy();
-    expect(tela.getByText(/plano de ação/)).toBeTruthy();
+    expect(tela.getByText(tituloDaLanding())).toBeTruthy();
+    expect(tela.getByText(LANDING_HERO.sobretitulo.toUpperCase())).toBeTruthy();
+    expect(tela.getByText(LANDING_HERO.nota)).toBeTruthy();
+  });
+
+  // As frentes saem da MESMA lista que a landing usa — nada é redigitado aqui.
+  it('lista as frentes da plataforma, com os títulos do núcleo', async () => {
+    const tela = await montar();
+
+    for (const titulo of ['Diagnóstico REAL', 'Planejamento estratégico', 'Plano de ação', 'Gestão completa']) {
+      expect(tela.getByText(new RegExp(titulo))).toBeTruthy();
+    }
+    // A Nyta atravessa todos os módulos e não é uma frente à parte; "E ela só cresce" é
+    // promessa de roteiro, que não cabe numa primeira tela.
+    expect(tela.queryByText(/E ela só cresce/)).toBeNull();
   });
 
   // Os DOIS caminhos: é a diferença entre uma porta e um portão. O cadastro sai para o
   // navegador porque é lá que ele vive.
-  it('oferece criar conta e entrar numa que já existe', async () => {
+  it('oferece começar e entrar numa conta que já existe', async () => {
     const tela = await montar();
     const usuario = userEvent.setup();
 
-    await usuario.press(tela.getByLabelText('Criar minha conta'));
+    await usuario.press(tela.getByLabelText(LANDING_HERO.acao));
     expect(Linking.openURL).toHaveBeenCalledWith('https://www.maestramanager.com/cadastro');
 
     await usuario.press(tela.getByLabelText('Já tenho conta'));

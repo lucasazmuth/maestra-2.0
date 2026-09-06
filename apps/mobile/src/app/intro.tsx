@@ -3,8 +3,11 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { COR, COR_CABECALHO_DE_MODULO, RAIO } from '@maestra/core/constants/design';
+import { LANDING_HERO, MODULOS_DA_PLATAFORMA, tituloDaLanding } from '@maestra/core/constants/landing';
 
-import { AgendaIcon, DiagnosticoIcon, MaestraMarca, PlanoAcaoIcon } from '@/icones';
+import {
+  AgendaIcon, DiagnosticoIcon, MaestraMarca, PlanejamentoIcon, PlanoAcaoIcon,
+} from '@/icones';
 
 /** O cadastro acontece na web: aqui o app só leva a pessoa até lá. */
 const SITE = 'https://www.maestramanager.com';
@@ -23,11 +26,17 @@ const SITE = 'https://www.maestramanager.com';
 // zero é o momento em que se pergunta "o que é isto", e a resposta tem que estar lá toda vez.
 // Quem acabou de SAIR da conta não passa por aqui — o portão da sessão manda direto ao login.
 
-const O_QUE_O_APP_FAZ = [
-  { Icone: DiagnosticoIcon, texto: 'O diagnóstico REAL da sua carreira, com os seus números.' },
-  { Icone: PlanoAcaoIcon, texto: 'Um plano de ação construído com a Nyta, em tarefas do dia a dia.' },
-  { Icone: AgendaIcon, texto: 'Músicas, agenda e equipe no mesmo lugar.' },
-] as const;
+// Os quatro módulos que o APP entrega, com o título e o resumo que a landing usa. Os outros
+// dois da lista do núcleo ficam de fora: a Nyta atravessa todos e não é uma frente à parte, e
+// "E ela só cresce" é promessa de roteiro, que não cabe numa primeira tela.
+const ICONES: Record<string, typeof DiagnosticoIcon> = {
+  'Diagnóstico REAL': DiagnosticoIcon,
+  'Planejamento estratégico': PlanejamentoIcon,
+  'Plano de ação': PlanoAcaoIcon,
+  'Gestão completa': AgendaIcon,
+};
+
+const FRENTES = MODULOS_DA_PLATAFORMA.filter((m) => m.title in ICONES);
 
 export default function Intro() {
   const router = useRouter();
@@ -37,20 +46,24 @@ export default function Intro() {
       <View style={estilos.conteudo}>
         <MaestraMarca size={28} color={COR_CABECALHO_DE_MODULO.titulo} />
 
-        <Text style={estilos.titulo}>A carreira inteira, no seu bolso.</Text>
-        <Text style={estilos.apoio}>
-          A Maestra reúne o que uma carreira precisa para sair do improviso.
-        </Text>
+        <Text style={estilos.sobretitulo}>{LANDING_HERO.sobretitulo.toUpperCase()}</Text>
+        <Text style={estilos.titulo}>{tituloDaLanding()}</Text>
 
         <View style={estilos.lista}>
-          {O_QUE_O_APP_FAZ.map(({ Icone, texto }) => (
-            <View key={texto} style={estilos.linha}>
-              <View style={estilos.disco}>
-                <Icone size={18} color={COR.primaria} />
+          {FRENTES.map(({ title, sub }) => {
+            const Icone = ICONES[title];
+            return (
+              <View key={title} style={estilos.linha}>
+                <View style={estilos.disco}>
+                  <Icone size={18} color={COR.primaria} />
+                </View>
+                <Text style={estilos.linhaTexto}>
+                  {title}
+                  <Text style={estilos.linhaApoio}>{`, ${sub}`}</Text>
+                </Text>
               </View>
-              <Text style={estilos.linhaTexto}>{texto}</Text>
-            </View>
-          ))}
+            );
+          })}
         </View>
       </View>
 
@@ -59,10 +72,12 @@ export default function Intro() {
           style={estilos.principal}
           onPress={() => { void Linking.openURL(`${SITE}/cadastro`); }}
           accessibilityRole="button"
-          accessibilityLabel="Criar minha conta"
+          accessibilityLabel={LANDING_HERO.acao}
         >
-          <Text style={estilos.principalTexto}>Criar minha conta</Text>
+          <Text style={estilos.principalTexto}>{LANDING_HERO.acao}</Text>
         </Pressable>
+
+        <Text style={estilos.nota}>{LANDING_HERO.nota}</Text>
 
         <Pressable
           onPress={() => router.replace('/entrar')}
@@ -80,19 +95,28 @@ const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo, paddingHorizontal: 26 },
   // O conteúdo empurrado para o meio e as ações no rodapé: o polegar já está embaixo.
   conteudo: { flex: 1, justifyContent: 'center', gap: 18 },
-  titulo: {
-    fontSize: 34, fontWeight: '800', letterSpacing: -0.9, lineHeight: 40,
-    color: COR_CABECALHO_DE_MODULO.titulo, marginTop: 10,
+  sobretitulo: {
+    fontSize: 10, fontWeight: '800', letterSpacing: 1.2, marginTop: 14,
+    color: COR_CABECALHO_DE_MODULO.rotulo,
   },
-  apoio: { fontSize: 14, lineHeight: 21, color: COR_CABECALHO_DE_MODULO.apoio },
-  lista: { gap: 16, marginTop: 12 },
+  // 28, e não 34: o título da landing tem três linhas de texto, e no maior ele ocupava metade
+  // da tela sem sobrar espaço para dizer o que o produto faz.
+  titulo: {
+    fontSize: 28, fontWeight: '800', letterSpacing: -0.7, lineHeight: 34,
+    color: COR_CABECALHO_DE_MODULO.titulo, marginTop: 6,
+  },
+  lista: { gap: 16, marginTop: 20 },
   linha: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   disco: {
     width: 38, height: 38, borderRadius: RAIO.pilula,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: COR.destaque,
   },
-  linhaTexto: { flex: 1, fontSize: 13, lineHeight: 19, color: COR_CABECALHO_DE_MODULO.titulo },
+  linhaTexto: {
+    flex: 1, fontSize: 14, fontWeight: '700', lineHeight: 20,
+    color: COR_CABECALHO_DE_MODULO.titulo,
+  },
+  linhaApoio: { fontWeight: '400', color: COR_CABECALHO_DE_MODULO.apoio },
 
   acoes: { gap: 18, paddingBottom: 12 },
   // O CTA da marca: pílula, 15/32, texto 16/800.
@@ -103,6 +127,9 @@ const estilos = StyleSheet.create({
   },
   principalTexto: {
     fontSize: 16, fontWeight: '800', letterSpacing: 0.16, color: COR.sobrePrimaria,
+  },
+  nota: {
+    fontSize: 12, textAlign: 'center', color: COR_CABECALHO_DE_MODULO.apoio, marginTop: -6,
   },
   secundario: {
     fontSize: 14, fontWeight: '800', textAlign: 'center', color: COR_CABECALHO_DE_MODULO.titulo,
