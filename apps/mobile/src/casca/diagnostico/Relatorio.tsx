@@ -31,6 +31,37 @@ import { useSessao } from '@/nucleo/sessao';
 
 const semTravessao = (texto: string) => clean(texto);
 
+/** A folga que impede a barra de piscar no instante exato em que o convite assoma na tela. */
+const FOLGA_DA_CHAMADA = 60;
+
+/**
+ * Se a barra fixa do rodapé, com o convite para o planejamento, deve estar na tela.
+ *
+ * Duas condições, e as duas vieram dos `IntersectionObserver` da web:
+ *
+ * · o cartão do perfil já saiu por cima. Quem acabou de ver a própria fase ainda está no "uau",
+ *   e pedir a decisão ali atropela a leitura;
+ * · o convite de verdade AINDA não entrou em cena. Dois botões dizendo a mesma coisa ao mesmo
+ *   tempo transformam uma chamada em ruído.
+ *
+ * Sem as medidas ainda, a resposta é não: uma barra que aparece no topo da tela, antes de a
+ * pessoa ler qualquer coisa, é exatamente o que esta regra existe para evitar.
+ */
+export const mostrarBarraDoConvite = (m: {
+  fimDoPerfil?: number;
+  inicioDaChamada?: number;
+  rolagemY: number;
+  alturaVisivel: number;
+}): boolean => {
+  if (m.fimDoPerfil == null) return false;
+  if (m.rolagemY <= m.fimDoPerfil) return false;
+
+  const chamadaEmCena = m.inicioDaChamada != null
+    && m.rolagemY + m.alturaVisivel > m.inicioDaChamada + FOLGA_DA_CHAMADA;
+
+  return !chamadaEmCena;
+};
+
 type Props = {
   real?: Record<string, any> | null;
   chartmetric?: Record<string, any> | null;
@@ -45,6 +76,16 @@ type Props = {
    * `showPlanningCta` da web.
    */
   aoContinuar?: () => void;
+  /**
+   * Onde estão as duas âncoras que a barra fixa do rodapé precisa: o fim do cartão do perfil e
+   * o início do convite.
+   *
+   * A barra é da ROTA, não daqui: dentro de um ScrollView, `position: absolute` rola junto com
+   * o conteúdo e não gruda em lugar nenhum. Então o relatório mede e quem desenha decide.
+   *
+   * É o equivalente dos dois `IntersectionObserver` da web, que aqui não existem.
+   */
+  aoMedirAncoras?: (ancoras: { fimDoPerfil?: number; inicioDaChamada?: number }) => void;
 };
 
 /**
@@ -52,7 +93,9 @@ type Props = {
  * na página do diagnóstico de um perfil, e no fim do fluxo de criação, antes do desbloqueio.
  * Duas cópias seriam duas telas para manter em pé.
  */
-export const Relatorio = ({ real, chartmetric = null, artista, aoContinuar }: Props) => {
+export const Relatorio = ({
+  real, chartmetric = null, artista, aoContinuar, aoMedirAncoras,
+}: Props) => {
   const { sessao } = useSessao();
   const [gerando, setGerando] = useState(false);
   const perfil = real?.profile;
@@ -125,6 +168,10 @@ export const Relatorio = ({ real, chartmetric = null, artista, aoContinuar }: Pr
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={estilos.cartaoDoPerfil}
+          onLayout={(e) => {
+            const { y, height } = e.nativeEvent.layout;
+            aoMedirAncoras?.({ fimDoPerfil: y + height });
+          }}
         >
           <View style={estilos.linhaDaPlaca}>
             <Placa tier={tierForPattern(padrao)} rotulo={String(altas)} tamanho={72} />
@@ -306,8 +353,8 @@ export const Relatorio = ({ real, chartmetric = null, artista, aoContinuar }: Pr
             accessibilityLabel="Baixar o diagnóstico em PDF"
           >
             {gerando
-              ? <ActivityIndicator size="small" color={COR.sobrePrimaria} />
-              : <Feather name="download" size={15} color={COR.sobrePrimaria} />}
+              ? <ActivityIndicator size="small" color={COR.primaria} />
+              : <Feather name="download" size={15} color={COR.primaria} />}
             <Text style={estilos.baixarTexto}>
               {gerando ? 'Gerando…' : 'Baixar diagnóstico (PDF)'}
             </Text>
@@ -326,7 +373,10 @@ export const Relatorio = ({ real, chartmetric = null, artista, aoContinuar }: Pr
         {/* SEÇÃO 5 — o convite para o planejamento. Vem antes de "quem assina", como na web:
             a assinatura da metodologia é o que sustenta a oferta, e por isso fecha a leitura. */}
         {!!aoContinuar && (
-          <View style={estilos.cartao}>
+          <View
+            style={estilos.cartao}
+            onLayout={(e) => aoMedirAncoras?.({ inicioDaChamada: e.nativeEvent.layout.y })}
+          >
             <Text style={estilos.chamadaTitulo}>{CHAMADA_DO_PLANEJAMENTO.titulo}</Text>
             <Text style={estilos.chamadaApoio}>{CHAMADA_DO_PLANEJAMENTO.apoio}</Text>
             <Pressable
@@ -500,13 +550,18 @@ const estilos = StyleSheet.create({
     backgroundColor: COR.superficie,
   },
   compartilharTexto: { fontSize: 13.5, fontWeight: '700', color: COR.primaria },
+  // Baixar o PDF é SECUNDÁRIO, igual a compartilhar. Ele era azul sólido, do mesmo peso do
+  // convite para o planejamento, e duas chamadas primárias na mesma tela disputam a decisão em
+  // vez de conduzi-la. Na web os dois botões de "levar o diagnóstico" são secundários; só o
+  // convite é primário.
   baixar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    paddingVertical: 12, paddingHorizontal: 20, borderRadius: RAIO.campoDeEntrada,
-    backgroundColor: COR.primaria, marginBottom: 10,
+    minHeight: 45, borderRadius: RAIO.pilula, marginBottom: 10,
+    borderWidth: 1, borderColor: COR_DIAGNOSTICO.compartilharContorno,
+    backgroundColor: COR.superficie,
   },
   baixarApagado: { opacity: 0.6 },
-  baixarTexto: { fontSize: 14, fontWeight: '800', color: COR.sobrePrimaria },
+  baixarTexto: { fontSize: 13.5, fontWeight: '700', color: COR.primaria },
   notaDoPdf: { fontSize: 11.5, lineHeight: 17, color: COR_DIAGNOSTICO.fonte },
 
   assinaNome: { fontSize: 22, fontWeight: '800', letterSpacing: -0.22, color: COR_DIAGNOSTICO.titulo },

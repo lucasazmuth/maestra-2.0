@@ -2,6 +2,9 @@ import * as React from 'react';
 import { render } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 
+import { StyleSheet } from 'react-native';
+
+import { COR } from '@maestra/core/constants/design';
 import { CHAMADA_DO_PLANEJAMENTO } from '@maestra/core/constants/realNarrative';
 import { store } from '@maestra/core/store/store';
 import Perfil from '../artista/[id]/diagnostico';
@@ -98,6 +101,20 @@ describe('diagnostico REAL em leitura', () => {
   it('traz a narrativa "O que isso revela" de cada dimensão', async () => {
     const tela = await montar();
     expect(tela.getAllByText('O que isso revela')).toHaveLength(4);
+  });
+
+  // Duas chamadas primárias na mesma tela disputam a decisão em vez de conduzi-la. Baixar o
+  // PDF era azul sólido, do mesmo peso do convite para o planejamento; na web os dois botões de
+  // "levar o diagnóstico" são secundários, e só o convite é primário.
+  it('baixar o PDF é um botão secundário, não disputa com o convite', async () => {
+    const tela = await montar();
+    const estilo = StyleSheet.flatten(
+      tela.getByLabelText('Baixar o diagnóstico em PDF').props.style,
+    ) as { backgroundColor?: string; borderWidth?: number };
+
+    expect(estilo.backgroundColor).not.toBe(COR.primaria);
+    expect(estilo.backgroundColor).toBe(COR.superficie);
+    expect(estilo.borderWidth).toBe(1);
   });
 
   // O convite para o planejamento NÃO entra aqui: esta tela é a de um perfil já liberado, e

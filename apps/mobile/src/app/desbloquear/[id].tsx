@@ -3,7 +3,7 @@ import {
   ActivityIndicator, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 import * as Clipboard from 'expo-clipboard';
@@ -18,6 +18,7 @@ import {
 import { useCheckoutForm } from '@maestra/core/hooks/useCheckoutForm';
 import { useCoupon } from '@maestra/core/hooks/useCoupon';
 import { fmtBRL } from '@maestra/core/hooks/usePlanPrices';
+import { CHAMADA_DO_PLANEJAMENTO } from '@maestra/core/constants/realNarrative';
 import { shouldEnrichChartmetric } from '@maestra/core/lib/chartmetricFreshness';
 import { supabase } from '@maestra/core/lib/supabase';
 import { artistsActions } from '@maestra/core/store/slices/artists';
@@ -31,7 +32,7 @@ import { CampoDeCpf, FormularioDoCartao } from '@/casca/checkout/Cartao';
 import { Cupom } from '@/casca/checkout/Cupom';
 import { Metodos, type MeioDePagamento } from '@/casca/checkout/Metodos';
 import { Parcelas } from '@/casca/checkout/Parcelas';
-import { Relatorio } from '@/casca/diagnostico/Relatorio';
+import { Relatorio, mostrarBarraDoConvite } from '@/casca/diagnostico/Relatorio';
 import { MaestraMarca } from '@/icones';
 import { MODO_DE_VENDA, VENDE_DESBLOQUEIO_NO_APP, irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
@@ -82,6 +83,19 @@ export default function Desbloquear() {
   const rolagem = useRef<ScrollView>(null);
   const alturaDoFormulario = useRef(0);
 
+  // A barra fixa do rodapé, com o convite para o planejamento.
+  //
+  // Ela aparece DEPOIS que o cartão do perfil sai da tela — quem acabou de ver a própria fase
+  // ainda está no "uau", e pedir a decisão ali atropela a leitura — e some quando o convite de
+  // verdade entra em cena, para não haver dois botões dizendo a mesma coisa ao mesmo tempo.
+  //
+  // É a mesma regra dos dois `IntersectionObserver` da web, com o que o React Native tem:
+  // `onLayout` para as âncoras e `onScroll` para a posição.
+  const margem = useSafeAreaInsets();
+  const [ancoras, setAncoras] = useState<{ fimDoPerfil?: number; inicioDaChamada?: number }>({});
+  const [rolagemY, setRolagemY] = useState(0);
+  const [alturaVisivel, setAlturaVisivel] = useState(0);
+
   const formulario = useCheckoutForm();
   const cupom = useCoupon();
 
@@ -90,6 +104,8 @@ export default function Desbloquear() {
     || usuario?.email?.split('@')[0]
     || '';
   const email = usuario?.email || '';
+
+  const barraDoConvite = mostrarBarraDoConvite({ ...ancoras, rolagemY, alturaVisivel });
 
   const valorDoPerfil = plano?.profileUnlockValue ?? VALOR_PADRAO_DO_PERFIL;
   const maximoDeParcelas = parcelasPossiveis(valorDoPerfil);
@@ -351,6 +367,9 @@ export default function Desbloquear() {
           ref={rolagem}
           contentContainerStyle={estilos.conteudo}
           keyboardShouldPersistTaps="handled"
+          scrollEventThrottle={32}
+          onLayout={(e) => setAlturaVisivel(e.nativeEvent.layout.height)}
+          onScroll={(e) => setRolagemY(e.nativeEvent.contentOffset.y)}
         >
           {/* ── O diagnóstico salvo ─────────────────────────────────────── */}
           {etapa === 'diagnostico' && (
@@ -360,6 +379,7 @@ export default function Desbloquear() {
                   real={real}
                   chartmetric={conteudo?.chartmetricProfile ?? null}
                   aoContinuar={() => setEtapa('pagamento')}
+                  aoMedirAncoras={(a) => setAncoras((atual) => ({ ...atual, ...a }))}
                 />
               )
               : (
@@ -640,6 +660,24 @@ export default function Desbloquear() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* A barra fixa: fora do ScrollView de propósito. Dentro dele, `position: absolute` rola
+          junto com o conteúdo e não gruda em nada. */}
+      {etapa === 'diagnostico' && !!real && barraDoConvite && (
+        <View style={[estilos.barraFixa, { paddingBottom: 18 + margem.bottom }]}>
+          <Pressable
+            style={estilos.barraBotao}
+            onPress={() => setEtapa('pagamento')}
+            accessibilityRole="button"
+            accessibilityLabel={CHAMADA_DO_PLANEJAMENTO.botao}
+          >
+            <Text style={estilos.barraBotaoTexto} numberOfLines={1}>
+              {CHAMADA_DO_PLANEJAMENTO.botao}
+            </Text>
+            <Feather name="arrow-right" size={16} color={COR.sobrePrimaria} />
+          </Pressable>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -648,6 +686,27 @@ const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
   conteudo: { paddingHorizontal: 16, paddingBottom: 40, gap: 16 },
+
+  // A barra fixa do rodapé. O degradê da web vira uma faixa sólida com fio em cima: um gradiente
+  // aqui exigiria mais uma camada só para o efeito, e o fio já separa a barra do que rola atrás.
+  barraFixa: {
+    position: 'absolute', left: 0, right: 0, bottom: 0,
+    paddingTop: 14, paddingHorizontal: 20,
+    borderTopWidth: 1, borderTopColor: COR_DIAGNOSTICO.barraFio,
+    backgroundColor: COR.fundo,
+  },
+  // O rótulo é longo ("Começar meu planejamento com a Nyta") e a barra é estreita: a 15 ele
+  // saía cortado em "com a…" na largura de um iPhone comum. 14 com folga menor cabe inteiro —
+  // um convite reticente não convida ninguém.
+  barraBotao: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    minHeight: 50, paddingHorizontal: 16, borderRadius: RAIO.pilula,
+    backgroundColor: COR.primaria,
+  },
+  barraBotaoTexto: {
+    fontSize: 14, fontWeight: '800', letterSpacing: 0.14, color: COR.sobrePrimaria,
+    flexShrink: 1,
+  },
 
   topo: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

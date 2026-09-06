@@ -525,6 +525,14 @@ export const COR_DIAGNOSTICO = {
   /** O contorno do botão de compartilhar. */
   compartilharContorno: '#cbd9ff',
   /**
+   * O fio que separa a barra fixa do rodapé do conteúdo que rola atrás dela.
+   *
+   * A web usa um degradê para essa transição; no app é uma faixa sólida com este fio, porque o
+   * degradê exigiria mais uma camada só pelo efeito. O tom é o mesmo `rgba(219, 228, 241, .9)`
+   * do `border-top` do `.stickyCta`, achatado sobre o fundo.
+   */
+  barraFio: '#dbe4f1',
+  /**
    * As cores da composição da receita, na ordem em que a web as usa. São sete porque há sete
    * fontes possíveis; a oitava dá a volta.
    */
