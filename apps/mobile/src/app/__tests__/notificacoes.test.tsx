@@ -49,14 +49,16 @@ const montar = () => render(
 );
 
 describe('notificações', () => {
-  // O cabeçalho é o mesmo das outras telas do sistema. Aqui vivia um "‹ Perfis" solto, o único
-  // lugar do app com aquele desenho — e o caminho de volta agora é a marca.
-  it('usa o cabeçalho padrão do sistema, sem o "‹ Perfis" solto', async () => {
+  // Tela folha: um botão só, o de voltar, no mesmo círculo branco do sino. Aqui já viveu um
+  // "‹ Perfis" em texto solto, que era o único lugar do app com aquele desenho.
+  it('tem o cabeçalho de voltar, e nada além dele', async () => {
     const tela = await montar();
 
-    expect(tela.getByLabelText('Maestra. Ir para os perfis')).toBeTruthy();
-    expect(tela.getByLabelText('Menu do sistema')).toBeTruthy();
+    expect(tela.getByLabelText('Voltar')).toBeTruthy();
     expect(tela.queryByText(/‹\s*Perfis/)).toBeNull();
+    // Nem a marca nem o menu: quem chegou aqui veio de um lugar e quer voltar para ele.
+    expect(tela.queryByLabelText('Maestra. Ir para os perfis')).toBeNull();
+    expect(tela.queryByLabelText('Menu do sistema')).toBeNull();
   });
 
   beforeEach(() => {

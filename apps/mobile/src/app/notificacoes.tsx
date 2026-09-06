@@ -16,7 +16,7 @@ import {
 } from '@maestra/core/services/db/notifications';
 import { useSessao } from '@/nucleo/sessao';
 
-import { BarraDoSistema } from '@/casca/BarraDoSistema';
+import { CabecalhoDeVolta } from '@/casca/CabecalhoDeVolta';
 
 // A caixa de entrada do artista.
 //
@@ -125,8 +125,7 @@ export default function Notificacoes() {
 
   return (
     <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
-      {/* O cabeçalho do sistema, o mesmo da lista de perfis e das configurações. */}
-      <BarraDoSistema />
+      <CabecalhoDeVolta />
       <View style={estilos.cabecalho}>
         <Text style={estilos.sobretitulo}>CENTRAL DO USUÁRIO</Text>
         <View style={estilos.linhaTitulo}>

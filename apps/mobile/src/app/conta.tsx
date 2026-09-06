@@ -21,7 +21,7 @@ import { sair } from '@/nucleo/entrar';
 import { irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
 
-import { BarraDoSistema } from '@/casca/BarraDoSistema';
+import { CabecalhoDeVolta } from '@/casca/CabecalhoDeVolta';
 
 // A conta.
 //
@@ -184,9 +184,7 @@ export default function Conta() {
 
   return (
     <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
-      {/* O cabeçalho do sistema, o mesmo da lista de perfis e das notificações. O "‹ Perfis"
-          solto que vivia aqui era o único lugar do app com aquele desenho. */}
-      <BarraDoSistema aqui="configuracoes" />
+      <CabecalhoDeVolta />
       <ScrollView contentContainerStyle={estilos.conteudo}>
 
         {/* As secoes sao as da web, na ordem dela: Perfil, Notificacoes, Assinatura, Historico
