@@ -14,7 +14,7 @@ import { buildActionPlan } from '@maestra/core/services/planoDeAcao';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch } from '@maestra/core/store/store';
 
-import { CabecalhoDoModulo } from '@/casca/CabecalhoDoModulo';
+import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { Arquivadas } from '@/casca/plano/Arquivadas';
 import { Chip, Escolha, type Opcao } from '@/casca/plano/Escolha';
 import { FichaDaTarefa } from '@/casca/plano/FichaDaTarefa';
@@ -486,7 +486,7 @@ const estilos = StyleSheet.create({
     paddingHorizontal: 18, paddingBottom: 122,
   },
   /** Só a folga até a lista: o resto do cabeçalho é do `CabecalhoDoModulo`. */
-  cabecalhoDaPagina: { marginBottom: 22 },
+  cabecalhoDaPagina: { marginBottom: FOLGA_APOS_O_CABECALHO },
 
   /**
    * A lista é uma FAIXA CONTÍNUA branca, com um contorno só em volta de tudo — o mesmo desenho

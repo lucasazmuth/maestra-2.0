@@ -17,6 +17,19 @@ import { COR_CABECALHO_DE_MODULO } from '@maestra/core/constants/design';
 // do plano, nas Músicas. Ela é uma LINHA, não uma faixa com botão ao lado: criar virou o botão
 // flutuante.
 
+/**
+ * O espaço entre o fio do cabeçalho e o que vem abaixo dele.
+ *
+ * Ele NÃO mora dentro do componente, e a razão é chata mas decide o desenho: cada tela conduz
+ * esse espaço numa propriedade diferente — as Músicas no recuo das abas, o Plano na margem do
+ * bloco, a Equipe na margem da lista, e o Diagnóstico no `gap` da pilha de cartões. Uma margem
+ * no componente SOMARIA com a do `gap`, e o Diagnóstico voltaria a ser o diferente.
+ *
+ * Então o número mora aqui, exportado, e cada tela o aplica onde faz sentido para ela. É uma
+ * linha a mais em quatro arquivos, e um valor só para mudar.
+ */
+export const FOLGA_APOS_O_CABECALHO = 20;
+
 export const CabecalhoDoModulo = ({ titulo, descricao, nota }: {
   titulo: string;
   descricao: string;

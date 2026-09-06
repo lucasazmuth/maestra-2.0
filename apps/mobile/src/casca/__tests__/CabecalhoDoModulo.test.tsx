@@ -1,7 +1,10 @@
 import { render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
-import { CabecalhoDoModulo } from '@/casca/CabecalhoDoModulo';
+import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
+
+import fs from 'fs';
+import path from 'path';
 
 // O cabeçalho de página dos módulos do artista. Um só, para todos.
 //
@@ -50,6 +53,29 @@ describe('cabeçalho do módulo', () => {
 
     expect((StyleSheet.flatten(cabecalho.props.style) as { paddingTop?: number }).paddingTop)
       .toBe(22);
+  });
+
+  // O espaço DEPOIS do fio não pode morar no componente: cada tela o conduz numa propriedade
+  // diferente (o recuo das abas, a margem da lista, o `gap` da pilha de cartões), e uma margem
+  // aqui somaria com a do `gap`. Então o número mora aqui exportado — e este teste é o que
+  // garante que ninguém volte a digitar um valor solto no lugar dele.
+  describe('a folga depois do fio', () => {
+    const TELAS = [
+      'app/artista/[id]/catalogo.tsx',
+      'app/artista/[id]/plano.tsx',
+      'app/artista/[id]/equipe.tsx',
+      'app/artista/[id]/diagnostico.tsx',
+      'app/desbloquear/[id].tsx',
+    ];
+
+    it.each(TELAS)('%s usa a constante, e não um número solto', (tela) => {
+      const fonte = fs.readFileSync(path.join(__dirname, '..', '..', tela), 'utf8');
+      expect(fonte).toContain('FOLGA_APOS_O_CABECALHO');
+    });
+
+    it('é um valor só', () => {
+      expect(FOLGA_APOS_O_CABECALHO).toBe(20);
+    });
   });
 
   it('o título é o mesmo em qualquer módulo', async () => {

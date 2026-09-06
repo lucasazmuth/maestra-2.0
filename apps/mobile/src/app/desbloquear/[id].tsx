@@ -32,6 +32,7 @@ import { CampoDeCpf, FormularioDoCartao } from '@/casca/checkout/Cartao';
 import { Cupom } from '@/casca/checkout/Cupom';
 import { Metodos, type MeioDePagamento } from '@/casca/checkout/Metodos';
 import { Parcelas } from '@/casca/checkout/Parcelas';
+import { FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { Relatorio, mostrarBarraDoConvite } from '@/casca/diagnostico/Relatorio';
 import { MaestraMarca } from '@/icones';
 import { MODO_DE_VENDA, VENDE_DESBLOQUEIO_NO_APP, irParaOCheckout } from '@/nucleo/loja';
@@ -708,7 +709,8 @@ export default function Desbloquear() {
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
-  conteudo: { paddingHorizontal: 16, paddingBottom: 40, gap: 16 },
+  // O mesmo ritmo da página do diagnóstico: o relatório aparece nos dois lugares.
+  conteudo: { paddingHorizontal: 16, paddingBottom: 40, gap: FOLGA_APOS_O_CABECALHO },
 
   // A barra fixa do rodapé. O degradê da web vira uma faixa sólida com fio em cima: um gradiente
   // aqui exigiria mais uma camada só para o efeito, e o fio já separa a barra do que rola atrás.

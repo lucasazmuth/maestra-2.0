@@ -11,7 +11,7 @@ import type { ArtistMember } from '@maestra/core/interfaces/maestra';
 import { listMembers } from '@maestra/core/services/db/members';
 
 import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
-import { CabecalhoDoModulo } from '@/casca/CabecalhoDoModulo';
+import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { FolhaDeConvite } from '@/casca/equipe/FolhaDeConvite';
 import { FolhaDoMembro, SeloDeEstado } from '@/casca/equipe/FolhaDoMembro';
 import { useArtistaDaRota } from '@/nucleo/artista';
@@ -170,7 +170,8 @@ const estilos = StyleSheet.create({
   },
   espera: { marginTop: 48 },
   lista: {
-    marginTop: 28, borderWidth: 1, borderColor: COR_EQUIPE.contorno, borderRadius: 8,
+    marginTop: FOLGA_APOS_O_CABECALHO,
+    borderWidth: 1, borderColor: COR_EQUIPE.contorno, borderRadius: 8,
     overflow: 'hidden',
   },
   cartao: {

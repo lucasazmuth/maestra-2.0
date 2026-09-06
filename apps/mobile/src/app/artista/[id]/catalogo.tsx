@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
-import { CabecalhoDoModulo } from '@/casca/CabecalhoDoModulo';
+import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { EspacoJamIcon } from '@/icones';
 import { useArtistaDaRota } from '@/nucleo/artista';
@@ -434,7 +434,10 @@ const estilos = StyleSheet.create({
   flex: { flex: 1 },
   /** Só o recuo lateral: o resto do cabeçalho é do `CabecalhoDoModulo`. */
   cabecalho: { paddingHorizontal: 16 },
-  abas: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 18 },
+  abas: {
+    flexDirection: 'row', gap: 8, paddingHorizontal: 16,
+    paddingTop: FOLGA_APOS_O_CABECALHO,
+  },
   aba: {
     paddingVertical: 11, paddingHorizontal: 18,
     borderRadius: 7, backgroundColor: COR_CATALOGO.tocarFundo,
