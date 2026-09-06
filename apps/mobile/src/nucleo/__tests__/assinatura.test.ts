@@ -122,10 +122,17 @@ describe('a oferta do PRO', () => {
     expect((await oferta({ status: 'active' })).result.current).toBe(false);
   });
 
-  // O app pedindo de novo um dinheiro que já está em confirmação.
-  it('não aparece para quem está com o pagamento em confirmação', async () => {
+  // Continua aparecendo ao lado do selo "Pendente", e isso é de propósito: enquanto a
+  // confirmação não chega a pessoa ainda não tem o PRO, e o caminho para resolver não pode
+  // sumir justamente de quem está tentando pagar.
+  it('aparece para quem está com o pagamento em confirmação', async () => {
     const { result } = await oferta({ status: 'pending', asaasSubscriptionId: 'sub_1' });
-    expect(result.current).toBe(false);
+    expect(result.current).toBe(true);
+  });
+
+  it('também aparece com a cobrança vencida dentro da tolerância', async () => {
+    const { result } = await oferta({ status: 'overdue', gracePeriodEndsAt: amanha() });
+    expect(result.current).toBe(true);
   });
 
   it('não aparece enquanto a resposta do servidor não chegou', async () => {

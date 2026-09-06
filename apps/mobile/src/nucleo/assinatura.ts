@@ -65,21 +65,21 @@ export const useTomDoSelo = (): TomDoSelo | null => {
 /**
  * Se cabe oferecer o PRO a quem esta olhando.
  *
- * A oferta e o AVESSO do selo: ela aparece exatamente quando nao ha selo. Assim ninguem ve
- * "Pendente" no cabecalho e "Seja PRO" no menu ao mesmo tempo, que seria o app pedindo de novo
- * um dinheiro que ja esta em confirmacao.
+ * So o PLANO ATIVO tira o convite. Quem esta com o pagamento em confirmacao continua vendo
+ * "Seja PRO" ao lado do selo "Pendente", e isso e de proposito: enquanto a confirmacao nao
+ * chega, a pessoa ainda nao tem o PRO, e o caminho para resolver — inclusive pagar de outro
+ * jeito, se a cobranca travou — nao pode desaparecer justamente de quem esta tentando pagar.
  *
- * Isso ja cobre os dois casos que importam: quem assina nao recebe convite, e enquanto a
- * resposta do servidor nao chega tambem nao se oferece — o padrao do status e `none`, entao
- * oferecer por padrao mostraria "Seja PRO" a um assinante e tiraria um segundo depois. Aparecer
- * um instante atrasado para quem NAO assina e o erro barato dos dois.
+ * Enquanto a resposta do servidor nao chega tambem nao se oferece. O padrao do status e `none`,
+ * entao oferecer por padrao mostraria "Seja PRO" a um assinante e tiraria um segundo depois.
+ * Aparecer um instante atrasado para quem NAO assina e o erro barato dos dois.
  *
- * Falta so o paywall: desligado, nao se oferece nada. Convidar a assinar o que esta liberado
- * para todos e pedir dinheiro por nada.
+ * E o paywall: desligado, nao se oferece nada. Convidar a assinar o que esta liberado para
+ * todos e pedir dinheiro por nada.
  */
 export const useOfertaDoPro = (): boolean => {
   const tom = useTomDoSelo();
   const { iniciado } = useStatusDaAssinatura();
 
-  return !PAYWALL_DISABLED && iniciado && tom === null;
+  return !PAYWALL_DISABLED && iniciado && tom !== 'pro';
 };
