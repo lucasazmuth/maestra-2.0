@@ -91,7 +91,7 @@ export default function Entrar() {
                 >
                   {emCurso === 'google'
                     ? <ActivityIndicator color={COR_ENTRADA.socialTexto} />
-                    : <GoogleIcon size={20} />}
+                    : <GoogleIcon size={18} />}
                 </Pressable>
 
                 {/* O botao da Apple e o OFICIAL, e nao um `Pressable` com o texto "Apple" como

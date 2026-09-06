@@ -5,6 +5,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { persistor, store } from '@maestra/core/store/store';
 import { PortaoDaSessao } from '@/nucleo/PortaoDaSessao';
+import { PortaoDoConsentimento } from '@/nucleo/PortaoDoConsentimento';
 import { ligarRotaDoApp } from '@/nucleo/rotaApp';
 
 // No escopo do modulo, e nao num efeito: `useRota` e consultado DURANTE a renderizacao dos
@@ -26,6 +27,8 @@ export default function LayoutRaiz() {
         {/* O portão fica DENTRO do roteador: ele lê a rota atual para não expulsar quem já
             está na tela de entrar. */}
         <PortaoDaSessao />
+        {/* Depois do da sessão: sem sessão não há consentimento a cobrar. */}
+        <PortaoDoConsentimento />
         <Stack screenOptions={{ headerShown: false }} />
       </PersistGate>
     </Provider>

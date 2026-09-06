@@ -16,6 +16,7 @@ import { authActions } from '@maestra/core/store/slices/auth';
 import { useAppDispatch } from '@maestra/core/store/store';
 import { IDADE_MINIMA, ehMaiorDeIdade, idadeEmAnos } from '@maestra/core/utils/age';
 
+import { CaixaDeAceite } from '@/casca/CaixaDeAceite';
 import { GoogleIcon, MaestraMarca } from '@/icones';
 import { appleDisponivel, entrarComApple, entrarComGoogle } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
@@ -60,21 +61,6 @@ const paraISO = (visivel: string) => {
   return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
 };
 
-const Caixa = ({ marcada, texto, aoTocar }: {
-  marcada: boolean; texto: React.ReactNode; aoTocar: () => void;
-}) => (
-  <Pressable
-    style={estilos.linhaDaCaixa}
-    onPress={aoTocar}
-    accessibilityRole="checkbox"
-    accessibilityState={{ checked: marcada }}
-  >
-    <View style={[estilos.caixa, marcada && estilos.caixaMarcada]}>
-      {marcada && <Feather name="check" size={13} color={COR.sobrePrimaria} />}
-    </View>
-    <Text style={estilos.caixaTexto}>{texto}</Text>
-  </Pressable>
-);
 
 export default function Cadastro() {
   const router = useRouter();
@@ -240,7 +226,7 @@ export default function Cadastro() {
                     >
                       {social === 'google'
                         ? <ActivityIndicator color={COR_ENTRADA.socialTexto} />
-                        : <GoogleIcon size={20} />}
+                        : <GoogleIcon size={18} />}
                     </Pressable>
 
                     {/* O botão da Apple é o OFICIAL, e não um `Pressable` com o texto "Apple":
@@ -333,7 +319,7 @@ export default function Cadastro() {
 
                   {/* A trava dos 18 anos não é enfeite de formulário: ela existe porque a
                       plataforma trata dados de carreira, e o servidor a repete. */}
-                  <Caixa
+                  <CaixaDeAceite
                     marcada={aceite}
                     aoTocar={() => setAceite((v) => !v)}
                     texto={(
@@ -356,7 +342,7 @@ export default function Cadastro() {
                     )}
                   />
 
-                  <Caixa
+                  <CaixaDeAceite
                     marcada={comunicacoes}
                     aoTocar={() => setComunicacoes((v) => !v)}
                     texto="Quero receber novidades e conteúdos da Maestra."
@@ -493,14 +479,6 @@ const estilos = StyleSheet.create({
     fontSize: 26, fontWeight: '800', letterSpacing: 10, textAlign: 'center',
     color: COR_ENTRADA.texto,
   },
-  linhaDaCaixa: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 6 },
-  caixa: {
-    width: 20, height: 20, borderRadius: 5, marginTop: 1,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: COR_ENTRADA.campoContorno, backgroundColor: COR_ENTRADA.campoFundo,
-  },
-  caixaMarcada: { backgroundColor: COR.primaria, borderColor: COR.primaria },
-  caixaTexto: { flex: 1, fontSize: 13, lineHeight: 19, color: COR_ENTRADA.apoio },
   botao: {
     marginTop: 18, paddingVertical: 14, paddingHorizontal: 24,
     borderRadius: RAIO.pilula, backgroundColor: COR.primaria,

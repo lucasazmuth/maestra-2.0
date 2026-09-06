@@ -72,8 +72,15 @@ const limparConsentimentoPendente = (): void => {
   ambiente().sessao.apagar(CHAVE_PENDENTE);
 };
 
-export const ConsentProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const user = useAppSelector((s) => s.auth.user);
+/**
+ * O estado do consentimento de UM usuário, e o envio do que ficou pendente do cadastro.
+ *
+ * Extraído do provider para o app nativo poder usar a MESMA lógica: lá não há `ConsentProvider`
+ * envolvendo a árvore, e a sessão não vem do slice de auth (o login social chama o Supabase
+ * direto), então um provider keyed em `s.auth.user` nunca dispararia. Reescrever isto do outro
+ * lado seria reescrever a regra que decide quem entra sem ter declarado idade.
+ */
+export const useEstadoDoConsentimento = (user: { id: string; email?: string } | null) => {
   const [state, setState] = useState<ConsentState | null>(null);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
@@ -138,10 +145,15 @@ export const ConsentProvider: FC<{ children: ReactNode }> = ({ children }) => {
     setUnavailable(false);
   }, []);
 
-  const value = useMemo(
+  return useMemo(
     () => ({ state, loading, unavailable, refresh, apply }),
     [state, loading, unavailable, refresh, apply]
   );
+};
+
+export const ConsentProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const user = useAppSelector((s) => s.auth.user);
+  const value = useEstadoDoConsentimento(user ?? null);
 
   return <ConsentContext.Provider value={value}>{children}</ConsentContext.Provider>;
 };
