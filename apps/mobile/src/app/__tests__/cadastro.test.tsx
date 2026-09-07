@@ -136,7 +136,10 @@ describe('cadastro', () => {
 
   // Conta nova não tem perfil: o próximo passo é criar o primeiro, que é onde o diagnóstico
   // gratuito acontece. É a mesma decisão que a `/welcome` da web toma.
-  it('confirmado o código, segue para a criação do primeiro perfil', async () => {
+  // Não vai direto para a criação do perfil: quem decide o destino é a tela de boas-vindas, que
+  // é a mesma decisão da `/welcome` da web — quem foi convidado para a equipe de alguém não tem
+  // perfil nenhum e não veio criar um.
+  it('confirmado o código, segue para as boas-vindas', async () => {
     mockSignUp.mockImplementation(respondendo({ user: { identities: [{}] } }));
     mockVerify.mockImplementation(respondendo({ session: {} }));
     const tela = await montar();
@@ -147,6 +150,6 @@ describe('cadastro', () => {
 
     await usuario.type(tela.getByLabelText('Código de confirmação'), '123456');
 
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/criar-artista'));
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/bem-vindo'));
   });
 });

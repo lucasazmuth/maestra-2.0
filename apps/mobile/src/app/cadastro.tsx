@@ -151,7 +151,7 @@ export default function Cadastro() {
         return;
       }
 
-      if (r.user?.email_confirmed_at) { router.replace('/criar-artista'); return; }
+      if (r.user?.email_confirmed_at) { router.replace('/bem-vindo'); return; }
 
       await dispatch(authActions.signOut()).unwrap();
       setEtapa('codigo');
@@ -169,9 +169,10 @@ export default function Cadastro() {
     setEnviando(true);
     try {
       await dispatch(authActions.verifySignupOtp({ email: email.trim(), token })).unwrap();
-      // Conta nova não tem perfil: o próximo passo é criar o primeiro, que é onde o
-      // diagnóstico gratuito acontece. É a mesma decisão que a `/welcome` da web toma.
-      router.replace('/criar-artista');
+      // A mesma `/welcome` da web: ela saúda e DECIDE para onde ir. Quem foi convidado para a
+      // equipe de alguém não tem perfil nenhum, e ia parar na criação de um perfil que não veio
+      // criar — a checagem de convite pendente mora lá.
+      router.replace('/bem-vindo');
     } catch {
       setErro('Código inválido ou expirado.');
       setCodigo('');
