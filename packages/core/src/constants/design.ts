@@ -469,9 +469,17 @@ export const COR_DIAGNOSTICO = {
   rotulo: '#8495b3',
   /** Rótulo de seção dentro de um cartão (Composição da receita, Saúde financeira…). */
   secao: '#7184a5',
-  // A letra apagada do Índice REAL e a palavra abaixo dela eram `#b6c2d3` e `#9baac0`: as duas
-  // saíram quando o R·E·A·L passou para o herói escuro, nas duas superfícies. Lá o apagado é
-  // branco a 13%, que vem do `COR_PAINEL`. Deixá-las aqui seria guardar cor que ninguém pinta.
+  /**
+   * A letra apagada do Índice REAL sobre o herói escuro, e a palavra abaixo dela.
+   *
+   * Chegaram a usar o `pilulaContorno` do painel, que é branco a 13% — e 13% é medida de FIO,
+   * não de texto: no navy do herói a letra sumia. Na web ainda se multiplicava por um
+   * `opacity: .42` do item, o que dava 5% de branco: ilegível de perto, quanto mais impresso.
+   *
+   * O contraste com a acesa (branco puro) continua evidente, e agora as duas se leem.
+   */
+  letraApagada: 'rgba(255, 255, 255, .55)',
+  palavraApagada: 'rgba(255, 255, 255, .5)',
   /** O disco da letra no cartão da dimensão. */
   discoFundo: '#eef3ff',
   /** A régua e o preenchimento; o TOP ICON troca o azul pelo dourado. */

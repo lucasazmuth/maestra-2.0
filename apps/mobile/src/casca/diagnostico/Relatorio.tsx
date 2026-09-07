@@ -220,7 +220,7 @@ export const Relatorio = ({
           {/*
             O R·E·A·L vira a assinatura da tela: quatro letras em Georgia itálica, acesas ou
             apagadas. No claro a diferença entre aceso e apagado era um azul contra um cinza
-            pálido; no escuro ela é branco contra 22% de branco, e se lê de longe.
+            pálido; no escuro ela é branco puro contra branco a 55%, e as duas se leem.
 
             O rótulo "ÍNDICE REAL" saiu: eram três caixas-altas espaçadas no mesmo bloco, o
             cabeçalho dois dedos acima já diz "Diagnóstico REAL", e as palavras sob cada letra
@@ -555,10 +555,10 @@ const estilos = StyleSheet.create({
     fontSize: 30, fontWeight: '700', letterSpacing: 0.3,
   },
   acesa: { color: COR_PAINEL.sobreEscuro },
-  apagada: { color: COR_PAINEL.pilulaContorno },
+  apagada: { color: COR_DIAGNOSTICO.letraApagada },
   indicePalavra: {
     fontSize: 9, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase',
-    color: COR_PAINEL.pilulaContorno,
+    color: COR_DIAGNOSTICO.palavraApagada,
   },
   palavraAcesa: { color: COR_PAINEL.heroRotulo },
 

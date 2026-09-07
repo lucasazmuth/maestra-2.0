@@ -2511,14 +2511,13 @@ $docLow: #8b9ab4;
   .realProfileName { color: #ffffff !important; }
   .realProfileDesc { color: #c4d0ed !important; }
 
-  .realPatternItem { opacity: 0.42; }
-  .realPatternItemHigh { opacity: 1; }
+  // A opacidade do item saiu: ela multiplicava a cor da letra apagada e o resultado era 5% de
+  // branco sobre o navy. Quem separa aceso de apagado é a COR, uma vez só.
+  .realPatternItem { opacity: 1; }
   .realPatternItemHigh .realPatternWord { color: #bcd0ff !important; font-weight: 800; }
-  .realPatternItemLow .realPatternWord { color: rgba(255, 255, 255, 0.13) !important; }
-  // No claro a diferença entre aceso e apagado era um azul contra um cinza pálido; no escuro é
-  // branco contra 13% de branco, e se lê de longe.
+  .realPatternItemLow .realPatternWord { color: rgba(255, 255, 255, .5) !important; }
   .realPatternLetterHigh { color: #ffffff !important; }
-  .realPatternLetterLow { color: rgba(255, 255, 255, 0.13) !important; }
+  .realPatternLetterLow { color: rgba(255, 255, 255, .55) !important; }
 
   .dimCard { border-radius: 14px; }
 
