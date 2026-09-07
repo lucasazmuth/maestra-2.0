@@ -239,10 +239,6 @@ export const Relatorio = ({
               vez que o roxo institucional aparece — como LINHA, nunca como campo. */}
           <View style={estilos.anel} pointerEvents="none" />
 
-          {/* Uma linha só para a ação: no mesmo eixo da placa ela roubaria largura do nome do
-              perfil, que em 375pt já ocupa a linha inteira. */}
-          {!!acaoDoPerfil && <View style={estilos.acaoDoPerfil}>{acaoDoPerfil}</View>}
-
           <View style={estilos.linhaDaPlaca}>
             <Placa tier={tierForPattern(padrao)} rotulo={String(altas)} tamanho={76} />
             <View style={estilos.flex}>
@@ -260,6 +256,10 @@ export const Relatorio = ({
           <Text style={estilos.descricao}>
             {retratoDoPerfil(real)?.texto ?? semTravessao(perfil.description)}
           </Text>
+
+          {/* Depois do retrato: a ação vem quando a pessoa já leu o que vai refazer. No topo do
+              cartão ela chegava antes do próprio perfil, competindo com o nome. */}
+          {!!acaoDoPerfil && <View style={estilos.acaoDoPerfil}>{acaoDoPerfil}</View>}
 
           {/*
             O R·E·A·L vira a assinatura da tela: quatro letras em Georgia itálica, acesas ou
@@ -667,7 +667,7 @@ const estilos = StyleSheet.create({
   },
   palavraAcesa: { color: COR_PAINEL.heroRotulo },
 
-  acaoDoPerfil: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 6 },
+  acaoDoPerfil: { flexDirection: 'row', justifyContent: 'flex-start', marginTop: 14 },
 
   // O cabeçalho da ENTREGA: foto, o nome de quem recebe e o "está pronto". Mesmas proporções da
   // web (avatar de 60, título de 22, apoio de 13), porque é a mesma tela.
