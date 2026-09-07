@@ -310,8 +310,11 @@ const ProfileUnlock: FC = () => {
       </div>
 
       <div className={`${styles.step} ${(step === 'pagamento' || step === 'diagnostico') ? styles.stepWide : ''}`}>
+        {/* Sem padding próprio: a folga depois do cabeçalho é a mesma do ambiente do diagnóstico
+            (`.pageReal .topBar`), senão esta tela nasce 20px mais baixa que a da criação do
+            perfil — o mesmo relatório, duas alturas. */}
         {step === 'diagnostico' && (
-          <div style={{ width: '100%', paddingTop: 20 }}>
+          <div style={{ width: '100%' }}>
             {realIndex ? (
               // Etapa do TCLE antes do resultado. DESLIGADA por feature flag: enquanto não houver
               // parecer do Comitê de Ética, o TcleGate devolve o filho sem consultar nada.

@@ -1219,10 +1219,13 @@
   padding: 0 24px 64px;
   overflow-y: auto;
 
+  // A folga depois do fio do cabeçalho: 32px, e não os 64 de antes. O ambiente do diagnóstico é
+  // um DOCUMENTO longo, e não uma pergunta centralizada como as etapas do quiz — deixar meia tela
+  // vazia entre o fio e a primeira linha fazia o cabeçalho parecer de outra página.
   .topBar {
     max-width: 1180px;
     min-height: 94px;
-    margin: 0 0 64px;
+    margin: 0 0 32px;
     padding: 0 4px;
     border-bottom: 1px solid #e7ecf5;
   }
@@ -1429,9 +1432,16 @@
 @media (max-width: 640px) {
   .pageReal {
     padding: 0 16px 40px;
-    .topBar { min-height: 76px; margin-bottom: 52px; }
+    .topBar { min-height: 76px; margin-bottom: 24px; }
     .line { font-size: 28px; }
     .realHero { align-items: flex-start; }
+    // "LEGITIMACY" tem 10 letras: com 12px e 0.08em de espaçamento a linha das quatro palavras
+    // passa da largura da tela em 375px, e "AUDIENCE" encosta na vizinha.
+    .realPatternRow { gap: 8px; }
+    .realPatternWord { font-size: 10px; letter-spacing: 0.04em; }
+    // "Moneymaker" a 38px não cabia ao lado da placa em 375px, e o cartão tem overflow oculto:
+    // o nome do perfil saía cortado no "e" final.
+    .realProfileName { font-size: 30px; }
     .heroRedoBtn { padding: 8px 10px; font-size: 12px; }
   }
 }
