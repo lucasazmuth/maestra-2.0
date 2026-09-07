@@ -80,9 +80,9 @@ describe('dimNarrative (V3)', () => {
     expect(n.paras.some((p) => p.lead.includes('quase não está no palco'))).toBe(true);
     expect(n.paras.some((p) => p.lead.includes('engaja no Instagram'))).toBe(true);
   });
-  it('Legitimacy: Top Tier + imprensa constante + chancela de plataforma', () => {
+  it('Legitimacy: TOP ICON + imprensa constante + chancela de plataforma', () => {
     const n = dimNarrative('l', ri);
-    expect(n.headline).toContain('Top Tier');
+    expect(n.headline).toContain('TOP ICON');
     expect(n.paras.some((p) => p.lead.includes('constante'))).toBe(true);
     expect(n.paras.some((p) => p.lead.includes('chancela de plataforma'))).toBe(true);
   });
@@ -102,7 +102,7 @@ describe('DiagnosticDoc V3 (deck do PDF)', () => {
     expect(html).toContain('Sua posição entre os 16 perfis');
     expect(html).toContain('Como nasce o seu diagnóstico');
     expect(html).toContain('Anita Carvalho');
-    expect(html).toContain('Top Tier');
+    expect(html).toContain('TOP ICON');
   });
   it('usa o wordmark vetorial oficial da Maestra', () => {
     expect(html).toContain('data-brand-variant="wordmark"');

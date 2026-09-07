@@ -1,0 +1,252 @@
+// A LEITURA de um diagnóstico REAL: as linhas de cada dimensão, os avisos obrigatórios e o resumo
+// financeiro. Uma fonte só para as três superfícies que mostram isso (tela da web, PDF e app).
+//
+// Por que aqui e não em cada tela: as três montavam as mesmas linhas à mão, com os mesmos rótulos
+// copiados. Quando a v4 trocou o formato das entradas (proveniência por campo, base anual, nove
+// fontes), as três precisariam mudar juntas — e a que ficasse para trás não quebraria, apenas
+// mostraria o número errado, calado.
+//
+// Referência: "Diagnóstico REAL v4", §11.3 (textos obrigatórios), §7.5 (exibição do E) e §13.2
+// (diagnósticos em versão anterior).
+
+import { fmtBRL, fmtNum, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
+import { ALIQUOTA_PCT, type Aliquota, type FonteDeReceita, type Proveniencia, type TipoDeContratante } from './index';
+
+/** Uma linha de dado no cartão da dimensão. `num` é formatado pelo consumidor; `valor` já vem pronto. */
+export interface LinhaDoRelatorio {
+  rotulo: string;
+  num?: number | null;
+  valor?: string;
+  /** 'self' rende o "informado por você" do §11.3.2; 'api' é dado verificado; ausente não se marca. */
+  fonte?: Proveniencia;
+}
+
+/** Um aviso obrigatório da interface (§11.3). A chave serve para testar sem depender do texto. */
+export interface AvisoDoRelatorio { chave: string; texto: string }
+
+// deno-lint-ignore-file no-explicit-any
+type Diagnostico = Record<string, any>;
+
+/**
+ * Um diagnóstico gravado antes da v4 (§13.2).
+ *
+ * Os 77 anteriores não têm os dados do E anual (shows por ano, seis cachês, nove fontes, alíquota)
+ * nem a autodeclaração de R. Continuam visíveis, marcados, e a saída é refazer — recalcular só a
+ * parte que dá não produziria um perfil interpretável, produziria uma mistura de duas metodologias.
+ */
+export const ehLegado = (ri: Diagnostico | null | undefined): boolean => Number(ri?.version ?? 0) < 4;
+
+export const AVISO_LEGADO = 'Este diagnóstico está em uma versão anterior do método. Refaça para '
+  + 'ver a leitura completa, com o saldo anual da carreira e a origem de cada dado.';
+
+/** Os textos obrigatórios do §11.3, na ordem em que a spec os lista. */
+export const AVISOS = {
+  travaL: 'Sua legitimação ainda não tem um sinal de plataforma. Playlist editorial ou execução em '
+    + 'rádio acende esta dimensão.',
+  autodeclarado: 'Conecte suas redes no Spotify for Artists e refaça o diagnóstico quando quiser.',
+  informadoPorVoce: 'informado por você',
+  saldoNegativo: 'Sua carreira consumiu mais do que gerou nos últimos 12 meses.',
+  naoSei: 'Você não soube informar esta fonte. Conhecer cada receita é parte da gestão da carreira.',
+  informativo: 'informativo, não entra no diagnóstico',
+  semBilheteria: 'Sem shows de bilheteria como atração principal, o público real não pode ser comprovado.',
+} as const;
+
+/** Os avisos que ESTE diagnóstico precisa mostrar, já filtrados pelas flags do motor. */
+export const avisosDoDiagnostico = (ri: Diagnostico | null | undefined): AvisoDoRelatorio[] => {
+  if (!ri) return [];
+  if (ehLegado(ri)) return [{ chave: 'legado', texto: AVISO_LEGADO }];
+  const f = ri.flags ?? {};
+  const avisos: AvisoDoRelatorio[] = [];
+  if (f.travaL) avisos.push({ chave: 'travaL', texto: AVISOS.travaL });
+  if (f.saldoNegativo) avisos.push({ chave: 'saldoNegativo', texto: AVISOS.saldoNegativo });
+  if (f.aSemBilheteria) avisos.push({ chave: 'semBilheteria', texto: AVISOS.semBilheteria });
+  if (Array.isArray(f.autodeclarados) && f.autodeclarados.length) {
+    avisos.push({ chave: 'autodeclarado', texto: AVISOS.autodeclarado });
+  }
+  if (Array.isArray(f.naoSeiFontes) && f.naoSeiFontes.length) {
+    avisos.push({ chave: 'naoSei', texto: AVISOS.naoSei });
+  }
+  return avisos;
+};
+
+/** O valor e a origem de um campo de entrada da v4. Fora da v4, devolve o número cru sem origem. */
+const medida = (ri: Diagnostico, campo: string): { value: number | null; fonte?: Proveniencia } => {
+  const m = ri?.inputs?.[campo];
+  if (m && typeof m === 'object') return { value: m.value ?? null, fonte: m.source };
+  return { value: m == null ? null : Number(m) };
+};
+
+const linhaDeMedida = (ri: Diagnostico, rotulo: string, campo: string): LinhaDoRelatorio => {
+  const { value, fonte } = medida(ri, campo);
+  return { rotulo, num: value, fonte };
+};
+
+/** Os rótulos dos tipos de contratante, para o gráfico de cachê (§7.5). */
+export const ROTULO_DO_CONTRATANTE: Record<TipoDeContratante, string> = {
+  corporativos: 'Corporativos',
+  orgaosPublicos: 'Órgãos públicos',
+  particulares: 'Particulares',
+  produtores: 'Produtores de eventos',
+  casasDeShow: 'Casas de show',
+  outros: 'Outros',
+};
+
+/** Os rótulos curtos das nove fontes, para a tabela de receita (§7.5). */
+export const ROTULO_DA_FONTE: Record<FonteDeReceita, string> = {
+  distribuidora: 'Distribuidora',
+  editora: 'Editora',
+  associacao: 'Associação (direitos de execução)',
+  publi: 'Publis e ativações',
+  patrocinios: 'Patrocínios e editais',
+  aulas: 'Aulas, cursos e mentorias',
+  produtos: 'Produtos físicos',
+  financiamento: 'Financiamento coletivo',
+  outras: 'Outras fontes',
+};
+
+export const ROTULO_DA_ALIQUOTA: Record<Aliquota, string> = {
+  ate6: 'Até 6%', '6-10': 'De 6% a 10%', '10-15': 'De 10% a 15%', acima15: 'Acima de 15%', nao_sei: 'Não sei',
+};
+
+/**
+ * Remuneração média mensal do setor cultural formal (SIIC/IBGE, edição vigente).
+ *
+ * [EXIBIÇÃO] §7.3: entra no relatório como comparação e NUNCA no índice. O corte do E vem da PNAD
+ * (P95 da renda individual), que é outra coisa — misturar as duas trocaria a régua do método.
+ */
+export const SIIC_MENSAL = 4_658;
+export const SIIC_ANUAL = SIIC_MENSAL * 12;
+
+/** O resumo financeiro da entrega (§7.5). Devolve `null` fora da v4. */
+export const resumoDoE = (ri: Diagnostico | null | undefined) => {
+  if (!ri || ehLegado(ri)) return null;
+  const rev = ri.revenue ?? {};
+  const cache = (Object.entries(rev.cacheByType ?? {}) as [TipoDeContratante, number][])
+    .filter(([, v]) => Number(v) > 0)
+    .map(([tipo, valor]) => ({ tipo, rotulo: ROTULO_DO_CONTRATANTE[tipo] ?? tipo, valor: Number(valor) }));
+  const fontes = (Object.entries(rev.receitaOutras ?? {}) as [FonteDeReceita, { valor: number; naoSei: boolean }][])
+    .filter(([, v]) => Number(v?.valor) > 0 || v?.naoSei)
+    .map(([fonte, v]) => ({ fonte, rotulo: ROTULO_DA_FONTE[fonte] ?? fonte, valor: Number(v.valor) || 0, naoSei: !!v.naoSei }));
+  const aliquota: Aliquota | null = rev.aliquota ?? null;
+  return {
+    showsPerYear: Number(rev.showsPerYear) || 0,
+    cache,
+    cacheMedio: Number(rev.cacheMedio) || 0,
+    receitaShows: Number(rev.receitaShows) || 0,
+    fontes,
+    receitaOutrasTotal: Number(rev.receitaOutrasTotal) || 0,
+    receitaAnual: Number(rev.receitaAnual) || 0,
+    investimento: Number(rev.investimento) || 0,
+    saldo: Number(rev.saldo) || 0,
+    bonus: Number(rev.bonus) || 1,
+    saldoAjustado: Number(rev.saldoAjustado) || 0,
+    aliquota,
+    aliquotaRotulo: aliquota ? ROTULO_DA_ALIQUOTA[aliquota] : null,
+    aliquotaPct: aliquota && aliquota !== 'nao_sei' ? ALIQUOTA_PCT[aliquota] : null,
+    receitaLiquidaEstimada: rev.receitaLiquidaEstimada ?? null,
+    // Quantas vezes a média do setor cultural formal (§7.3). Só comparação, nunca cálculo.
+    vezesOSetor: SIIC_ANUAL > 0 ? (Number(rev.receitaAnual) || 0) / SIIC_ANUAL : 0,
+    // §7.5 — quem não tem empresário recebe a recomendação, e é o mesmo dado que dá o bônus do E.
+    recomendarEmpresariamento: ri.raw?.temEmpresario === false,
+  };
+};
+
+/** As linhas de dado do cartão de uma dimensão (v4). Fora da v4, devolve lista vazia. */
+export const linhasDaDimensao = (
+  ri: Diagnostico | null | undefined,
+  dim: DimKey,
+  cm?: Record<string, any> | null,
+): LinhaDoRelatorio[] => {
+  if (!ri || ehLegado(ri)) return [];
+  const bruto = ri.raw ?? {};
+  const rev = ri.revenue ?? {};
+
+  if (dim === 'r') {
+    return [
+      linhaDeMedida(ri, 'Ouvintes Spotify', 'spotifyListeners'),
+      linhaDeMedida(ri, 'Instagram', 'igFollowers'),
+      linhaDeMedida(ri, 'TikTok', 'tiktokFollowers'),
+      linhaDeMedida(ri, 'YouTube (views/mês)', 'youtubeMonthlyViews'),
+    ];
+  }
+
+  if (dim === 'e') {
+    // A v4 lê SALDO, não receita: mostrar só o faturamento contaria a metade que agrada e
+    // esconderia a que decide a dimensão.
+    const linhas: LinhaDoRelatorio[] = [
+      { rotulo: 'Receita (12 meses)', valor: fmtBRL(Number(rev.receitaAnual) || 0), fonte: 'self' },
+      { rotulo: 'Investimento (12 meses)', valor: fmtBRL(Number(rev.investimento) || 0), fonte: 'self' },
+      { rotulo: 'Saldo', valor: fmtBRL(Number(rev.saldo) || 0), fonte: 'self' },
+    ];
+    const bonus = Number(rev.bonus) || 1;
+    if (bonus > 1) {
+      linhas.push({
+        rotulo: 'Saldo ajustado',
+        valor: `${fmtBRL(Number(rev.saldoAjustado) || 0)} (bônus de ${Math.round((bonus - 1) * 100)}%)`,
+        fonte: 'self',
+      });
+    }
+    return linhas;
+  }
+
+  if (dim === 'a') {
+    const conv = ri.components?.a?.find((c: any) => c.key === 'conversion');
+    const listeners = medida(ri, 'spotifyListeners').value;
+    const followers = medida(ri, 'spotifyFollowers').value;
+    return [
+      {
+        rotulo: 'Conversão (seguidores ÷ ouvintes)',
+        valor: conv?.present && listeners && followers
+          ? `${(followers / listeners * 100).toFixed(1).replace('.', ',')}%`
+          : 'Sem dado',
+        fonte: conv?.present ? 'api' : 'absent',
+      },
+      { rotulo: 'Shows (12 meses)', valor: String(Number(rev.showsPerYear) || 0), fonte: 'self' },
+      {
+        rotulo: 'Público pagante',
+        valor: bruto.fazBilheteria ? (PAGANTE_LABELS[bruto.pagantePct] ?? '—') : 'Não faz bilheteria',
+        fonte: 'self',
+      },
+      linhaDeMedida(ri, 'Seguidores Spotify', 'spotifyFollowers'),
+    ];
+  }
+
+  const l = ri.components?.l ?? {};
+  const playlists = l.playlists ?? {};
+  const radio = l.radio ?? {};
+  const execucoes = ri.raw?.radioAirplay180d;
+  return [
+    { rotulo: 'Prêmios', valor: PREMIOS_LABELS_V3[Number(bruto.premios ?? 0)] ?? '—', fonte: 'self' },
+    {
+      rotulo: 'Imprensa',
+      valor: bruto.imprensaRepercussao ? (FREQ_LABELS[bruto.imprensaFrequencia] ?? 'Sim') : 'Não',
+      fonte: 'self',
+    },
+    {
+      rotulo: 'Playlists editoriais',
+      // Consulta vazia ≠ consulta que não aconteceu (§4): a primeira é um zero que pesa, a
+      // segunda é ausência que renormaliza os pesos. Dizer "0" nas duas apagaria a diferença.
+      valor: playlists.present
+        ? String(bruto.editorialPlaylists ?? cm?.playlists?.count ?? 0)
+        : 'Sem dado',
+      fonte: playlists.present ? 'api' : 'absent',
+    },
+    {
+      rotulo: 'Execução em rádio',
+      // Abaixo de 6 execuções em 180 dias o componente é AUSENTE, não zero (§9.5). Mostrar o
+      // número mede a presença; "Sim" esconderia o tamanho dela.
+      valor: radio.present && execucoes != null
+        ? `${fmtNum(Math.round(Number(execucoes)))} execuções`
+        : 'Sem dado',
+      fonte: radio.present ? 'api' : 'absent',
+    },
+  ];
+};
+
+/** O engajamento, quando a API entregou. [SUSPENSO] no cálculo, exibido com rótulo (§8.2, §11.3.5). */
+export const engajamentoExibido = (ri: Diagnostico | null | undefined) => {
+  const e = ri?.engagement ?? {};
+  return (['instagram', 'tiktok', 'youtube'] as const)
+    .map((rede) => (e[rede] ? { rede, ...e[rede] } : null))
+    .filter(Boolean) as { rede: 'instagram' | 'tiktok' | 'youtube'; value: number; cut: number; above: boolean }[];
+};

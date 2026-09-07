@@ -75,16 +75,16 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
           <div className={styles.docDimTag2}>{DIM_TAGLINE[dk]}</div>
         </div>
         <div className={styles.docDimScoreWrap2}>
-          <span className={styles.docDimBadge2} style={top ? { background: DOC.goldBg, color: DOC.goldInk } : high ? { background: color, color: '#fff' } : { background: '#eef2f8', color: DOC.body }}>{top ? 'Top Tier' : high ? 'Alto' : 'Baixo'}</span>
+          <span className={styles.docDimBadge2} style={top ? { background: DOC.goldBg, color: DOC.goldInk } : high ? { background: color, color: '#fff' } : { background: '#eef2f8', color: DOC.body }}>{top ? 'TOP ICON' : high ? 'Alto' : 'Baixo'}</span>
           <span className={styles.docDimScore2}>{score}<span className={styles.docDimScoreMax2}>/100</span></span>
         </div>
       </div>
 
       <div className={styles.docRuler2}>
-        {/* Top Tier: a barra enche até o selo (dourado), coerente com o selo do motor. */}
+        {/* TOP ICON: a barra enche até o selo (dourado), coerente com o selo do motor. */}
         <div className={styles.docRulerFill2} style={top ? { width: '100%', background: 'linear-gradient(90deg,#2c3f63,#7c8da8)' } : { width: `${score}%`, background: color }} />
         <span className={styles.docRulerMark2} style={{ left: '70%' }} data-label="acende" />
-        <span className={styles.docRulerMark2} style={{ left: '100%' }} data-label="top tier" />
+        <span className={styles.docRulerMark2} style={{ left: '100%' }} data-label="TOP ICON" />
       </div>
       <div className={styles.docDimStatus2}>{dimStatusText(score, high, top)}</div>
 
@@ -308,7 +308,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autor
         </div>
         <div className={styles.docTopTierNote}>
           <span className={styles.docTopTierSeal}>TOP</span>
-          <div><strong>Top Tier.</strong> Quando uma dimensão atinge o nível de excelência (o topo absoluto da escala), ela ganha o selo Top Tier no seu diagnóstico. Vale para qualquer perfil e qualquer das quatro dimensões.</div>
+          <div><strong>TOP ICON.</strong> Quando uma dimensão atinge o nível de excelência (o topo absoluto da escala), ela ganha o selo TOP ICON no seu diagnóstico. Vale para qualquer perfil e qualquer das quatro dimensões.</div>
         </div>
       </Page>
 

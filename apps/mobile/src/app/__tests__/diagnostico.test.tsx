@@ -8,7 +8,7 @@ import { COR } from '@maestra/core/constants/design';
 import { CHAMADA_DO_PLANEJAMENTO } from '@maestra/core/constants/realNarrative';
 import { store } from '@maestra/core/store/store';
 import Perfil from '../artista/[id]/diagnostico';
-import { comDiagnostico, semDiagnostico } from './fixtures';
+import { comDiagnostico, comDiagnosticoV4, semDiagnostico } from './fixtures';
 
 // O prefixo  nao e estilo: o jest recusa a fabrica de  que referencia
 // variavel de fora do escopo, e abre excecao so para nomes que comecam assim.
@@ -26,7 +26,7 @@ jest.mock('expo-router', () => ({
 const semear = () =>
   store.dispatch({
     type: 'artists/fetchArtists/fulfilled',
-    payload: [comDiagnostico, semDiagnostico],
+    payload: [comDiagnostico, comDiagnosticoV4, semDiagnostico],
   });
 
 const montar = () => render(<Provider store={store}><Perfil /></Provider>);
@@ -79,21 +79,28 @@ describe('diagnostico REAL em leitura', () => {
 
   // Sem a linha de status, o numero nao diz se a dimensao acendeu — 78 e muito ou pouco? A web
   // responde com quanto FALTA, que e mais util do que o valor do corte.
-  it('diz quanto falta para acender e para o Top Tier', async () => {
+  it('diz quanto falta para acender e para o TOP ICON', async () => {
     const tela = await montar();
-    // r = 78, ja aceso: faltam 22 para o Top Tier.
-    expect(tela.getByText('Aceso · faltam 22 pts para Top Tier')).toBeTruthy();
-    // e = 34, apagado: faltam 36 para acender e 66 para o Top Tier.
-    expect(tela.getByText('Faltam 36 pts para acender · 66 pts para Top Tier')).toBeTruthy();
+    // r = 78, ja aceso: faltam 22 para o TOP ICON.
+    expect(tela.getByText('Aceso · faltam 22 pts para TOP ICON')).toBeTruthy();
+    // e = 34, apagado: faltam 36 para acender e 66 para o TOP ICON.
+    expect(tela.getByText('Faltam 36 pts para acender · 66 pts para TOP ICON')).toBeTruthy();
   });
 
   // A placa e o Indice REAL sao o "momento uau" da entrega, e o app nao tinha nem um nem outro.
-  it('mostra a placa da fase e o Índice REAL', async () => {
+  it('mostra a placa da fase e as quatro dimensões do índice', async () => {
     const tela = await montar();
     expect(tela.getByText('SEU PERFIL DE CARREIRA')).toBeTruthy();
-    expect(tela.getByText('ÍNDICE REAL')).toBeTruthy();
-    // Uma alta (r) → a placa de nivel 1. Ela aparece duas vezes: no cartão do perfil e na
-    // linha "1 alta" do mapa dos 16.
+    // O rótulo "ÍNDICE REAL" saiu do herói: eram três caixas-altas espaçadas no mesmo bloco, e o
+    // cabeçalho dois dedos acima já diz "Diagnóstico REAL". Quem carrega o sentido agora são as
+    // quatro letras com a palavra embaixo — é isso que precisa estar na tela.
+    expect(tela.queryByText('ÍNDICE REAL')).toBeNull();
+    // A caixa-alta é do estilo, não do texto: o nó guarda "Reach", e é assim que se procura.
+    for (const palavra of ['Reach', 'Earnings', 'Audience', 'Legitimacy']) {
+      expect(tela.getAllByText(palavra).length).toBeGreaterThan(0);
+    }
+    // Uma alta (r) → a placa de nivel 1. Ela aparece duas vezes: no herói e na linha "1 alta"
+    // do mapa dos 16.
     expect(tela.getAllByLabelText('Placa standard · 1')).toHaveLength(2);
   });
 
@@ -154,5 +161,69 @@ describe('diagnostico REAL em leitura', () => {
     const tela = await montar();
     expect(tela.getByText('Diagnóstico indisponível')).toBeTruthy();
     expect(tela.queryByText('ÍNDICE REAL')).toBeNull();
+  });
+});
+
+// ── v4: a mesma tela, lendo o formato novo ───────────────────────────────────────────────────
+//
+// O fixture da v3 continua valendo (os 77 diagnósticos antigos seguem visíveis, §13.2), e é por
+// isso que ele não foi substituído: os dois caminhos precisam funcionar ao mesmo tempo. O que
+// este bloco protege é o caminho NOVO, que lê `raw`, `revenue` e `flags` — se o cartão continuar
+// procurando `inputs.showsPerMonth`, ele não quebra, só mostra zero.
+describe('diagnostico REAL na v4', () => {
+  beforeEach(() => {
+    semear();
+    mockIdNaRota = comDiagnosticoV4.id;
+  });
+
+  it('mostra a receita ANUAL, e não uma base mensal', async () => {
+    const tela = await montar();
+    // 60 shows × média de 4.000 + 20.000 da distribuidora = 260.000
+    expect(tela.getByText('R$ 260 mil')).toBeTruthy();
+    // O rótulo do autorrelato carrega a adaga da procedência, então casa por prefixo.
+    expect(tela.getByText(/^Receita \(12 meses\)/)).toBeTruthy();
+  });
+
+  it('mostra o cachê por tipo de contratante', async () => {
+    const tela = await montar();
+    expect(tela.getByText('Cachê médio por tipo de contratante')).toBeTruthy();
+    expect(tela.getByText('Corporativos')).toBeTruthy();
+  });
+
+  it('circulação e público pagante saem em base anual', async () => {
+    const tela = await montar();
+    expect(tela.getByText(/^Shows \(12 meses\)/)).toBeTruthy();
+    expect(tela.getByText('Não faz bilheteria')).toBeTruthy();
+  });
+
+  it('diz que o engajamento não entra no diagnóstico', async () => {
+    const tela = await montar();
+    expect(tela.getByText('informativo, não entra no diagnóstico')).toBeTruthy();
+  });
+
+  it('mostra os textos obrigatórios que se aplicam a este diagnóstico', async () => {
+    const tela = await montar();
+    // Sem bilheteria (§11.3.6) aparece DUAS vezes de propósito: no bloco de avisos do topo, que
+    // é o que quem só passa os olhos vê, e dentro do cartão do A, junto do número a que se
+    // refere. É o mesmo desenho da web.
+    expect(tela.getAllByText(/o público real não pode ser comprovado/)).toHaveLength(2);
+    // A fonte "não sei" (§11.3.4), idem: no topo e na composição da receita.
+    expect(tela.getAllByText(/parte da gestão da carreira/).length).toBeGreaterThanOrEqual(1);
+  });
+
+  // §13.2 — um diagnóstico da versão anterior tem que DIZER que é, e não herdar os avisos da v4:
+  // as flags novas nem existem nele. O app nativo não mostrava isso; só a web mostrava.
+  it('um diagnóstico legado recebe o aviso da versão, e só ele', async () => {
+    mockIdNaRota = comDiagnostico.id;
+    const tela = await montar();
+    expect(tela.getByText(/versão anterior do método/)).toBeTruthy();
+    expect(tela.queryByText(/o público real não pode ser comprovado/)).toBeNull();
+  });
+
+  it('não chama de execução em rádio um airplay abaixo do piso de 6', async () => {
+    const tela = await montar();
+    // 3 execuções em 180 dias: o componente é AUSENTE (§9.5), e "Não" afirmaria o que não se sabe.
+    expect(tela.getByText('Execução em rádio')).toBeTruthy();
+    expect(tela.getAllByText('Sem dado').length).toBeGreaterThan(0);
   });
 });

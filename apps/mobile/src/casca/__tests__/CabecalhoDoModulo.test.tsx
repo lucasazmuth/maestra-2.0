@@ -64,13 +64,33 @@ describe('cabeçalho do módulo', () => {
       'app/artista/[id]/catalogo.tsx',
       'app/artista/[id]/plano.tsx',
       'app/artista/[id]/equipe.tsx',
-      'app/artista/[id]/diagnostico.tsx',
       'app/desbloquear/[id].tsx',
     ];
 
     it.each(TELAS)('%s usa a constante, e não um número solto', (tela) => {
       const fonte = fs.readFileSync(path.join(__dirname, '..', '..', tela), 'utf8');
       expect(fonte).toContain('FOLGA_APOS_O_CABECALHO');
+    });
+
+    // O diagnóstico é a exceção, e por um motivo: ele aparece em TRÊS telas (fim da criação,
+    // desbloqueio e o módulo dentro do perfil). Enquanto cada moldura decidia o espaçamento,
+    // o mesmo documento saía com os cartões grudados numa e respirando na outra. A folga passou
+    // para dentro do `Relatorio`, e é lá que ela tem que estar — as três não podem mais divergir.
+    it('o relatório do diagnóstico carrega a própria folga, para as três telas não divergirem', () => {
+      const relatorio = fs.readFileSync(
+        path.join(__dirname, '..', 'diagnostico', 'Relatorio.tsx'), 'utf8',
+      );
+      expect(relatorio).toContain('FOLGA_APOS_O_CABECALHO');
+      expect(relatorio).toMatch(/pilha: \{ gap: FOLGA_APOS_O_CABECALHO \}/);
+    });
+
+    // Nenhuma das três pode voltar a impor um ritmo próprio ao relatório.
+    it.each([
+      'app/artista/[id]/diagnostico.tsx',
+      'app/criar-artista.tsx',
+    ])('%s não redefine o espaçamento do relatório', (tela) => {
+      const fonte = fs.readFileSync(path.join(__dirname, '..', '..', tela), 'utf8');
+      expect(fonte).not.toMatch(/conteudo:[^}]*gap:/);
     });
 
     it('é um valor só', () => {

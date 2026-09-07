@@ -3,6 +3,8 @@ import path from 'path';
 
 import { montarDocumentoDoDiagnostico } from '@maestra/core/documentos/diagnosticoHtml';
 import { autoriaDoDocumento, linhasDaDimensao } from '@maestra/core/documentos/diagnostico';
+import { computeRealIndexV4 } from '@maestra/core/services/realEngine';
+import type { RealInputsV4 } from '@maestra/core/services/realEngine';
 
 // O PDF do diagnóstico existe nas DUAS superfícies, e é o mesmo documento.
 //
@@ -67,7 +69,7 @@ describe('o documento do diagnóstico', () => {
     ['as plataformas', 'Sua presença nas plataformas'],
     ['a imprensa', 'Imprensa em detalhe'],
     ['os 16 perfis', 'Sua posição entre os 16 perfis'],
-    ['o Top Tier', 'Top Tier'],
+    ['o TOP ICON', 'TOP ICON'],
     ['quem assina', 'Anita Carvalho'],
     ['o próximo passo', 'Você sabe onde está. Agora, para onde ir.'],
   ])('%s existe nos dois decks', (_nome, texto) => {
@@ -111,5 +113,65 @@ describe('o documento do diagnóstico', () => {
 
   it('o botão do fim leva ao site', () => {
     expect(html).toContain('href="https://www.maestramanager.com"');
+  });
+
+  // ── v4: o documento passa a contar a carreira em base ANUAL e com saldo (§7) ──
+  //
+  // O motor entrega os números; o teste garante que eles CHEGAM ao papel. Sem isso o deck
+  // continuaria imprimindo a conta mensal da v3 sobre entradas anuais, e o PDF diria um valor
+  // doze vezes menor sem nenhum erro visível.
+  describe('na v4', () => {
+    const entradas: RealInputsV4 = {
+      spotifyConnected: true,
+      spotifyListeners: 1_914_986, igFollowers: 80_000, tiktokFollowers: null,
+      youtubeMonthlyViews: null, spotifyFollowers: 500_000, deezerFans: 6_000,
+      igEngagement: 4.35, tiktokEngagement: null, youtubeEngagement: null,
+      editorialPlaylists: 3, radioAirplay180d: 120,
+      igFollowersSelf: null, tiktokFollowersSelf: 40_000, youtubeViews28dSelf: null,
+      showsPerYear: 40,
+      cacheByType: { corporativos: 6_000, produtores: 2_000 },
+      revenueSources: { distribuidora: 12_000, editora: 'nao_sei' },
+      investimento: 20_000,
+      temCnpj: true, aliquota: '6-10', temEmpresario: false,
+      fazBilheteria: false, pagantePct: null,
+      premios: 4, imprensaRepercussao: true,
+      imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }], imprensaFrequencia: 'perene',
+    };
+    const v4 = computeRealIndexV4(entradas);
+    const htmlV4 = montarDocumentoDoDiagnostico({
+      realIndex: v4 as never,
+      chartmetric,
+      artistName: 'AZMUTH BEATS',
+      agora: new Date('2026-09-06T12:00:00.000Z'),
+    });
+
+    it('imprime a receita ANUAL, e não a mensal vezes doze', () => {
+      // 40 shows × média de 4.000 + 12.000 de distribuidora = 172.000
+      expect(v4.revenue.receitaAnual).toBe(172_000);
+      expect(htmlV4).toContain('R$ 172 mil');
+      expect(htmlV4).toContain('Saldo');
+    });
+
+    it('mostra o cachê por tipo de contratante', () => {
+      expect(htmlV4).toContain('Cachê médio por tipo de contratante');
+      expect(htmlV4).toContain('Corporativos');
+      expect(htmlV4).toContain('Produtores de eventos');
+    });
+
+    it('diz que o engajamento não entra no diagnóstico', () => {
+      expect(htmlV4).toContain('informativo, não entra no diagnóstico');
+    });
+
+    it('leva ao papel os textos obrigatórios que se aplicam', () => {
+      // Sem bilheteria (§11.3.6) e a fonte "não sei" (§11.3.4).
+      expect(htmlV4).toContain('o público real não pode ser comprovado');
+      expect(htmlV4).toContain('Não informado:');
+      expect(htmlV4).toContain('Editora');
+      expect(htmlV4).toContain('parte da gestão da carreira');
+    });
+
+    it('a linha de receita da dimensão E vem marcada como declarada', () => {
+      expect(linhasDaDimensao('e', v4 as never, chartmetric).every((l) => l.declarado)).toBe(true);
+    });
   });
 });

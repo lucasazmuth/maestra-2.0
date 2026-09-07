@@ -459,15 +459,22 @@ export const COR_DIAGNOSTICO = {
   /** O cartão do perfil tem degradê próprio — é o "momento uau" da entrega. */
   cartaoDe: '#ffffff',
   cartaoAte: '#f4f7fd',
+  /**
+   * O herói da entrega NÃO tem paleta própria: ele usa a do herói do painel (`COR_PAINEL`).
+   *
+   * Chegou a ter uma, navy caminhando para o roxo — e era justamente o erro: o roxo `COR.marca`
+   * é institucional e entra como linha, nunca como campo. Um segundo escuro no produto seria um
+   * segundo sistema.
+   */
   rotulo: '#8495b3',
   /** Rótulo de seção dentro de um cartão (Composição da receita, Saúde financeira…). */
   secao: '#7184a5',
-  /** A letra apagada do Índice REAL, e a palavra abaixo dela. */
-  letraApagada: '#b6c2d3',
-  palavra: '#9baac0',
+  // A letra apagada do Índice REAL e a palavra abaixo dela eram `#b6c2d3` e `#9baac0`: as duas
+  // saíram quando o R·E·A·L passou para o herói escuro, nas duas superfícies. Lá o apagado é
+  // branco a 13%, que vem do `COR_PAINEL`. Deixá-las aqui seria guardar cor que ninguém pinta.
   /** O disco da letra no cartão da dimensão. */
   discoFundo: '#eef3ff',
-  /** A régua e o preenchimento; o Top Tier troca o azul pelo dourado. */
+  /** A régua e o preenchimento; o TOP ICON troca o azul pelo dourado. */
   regua: '#e8eef7',
   topoDe: '#f5c451',
   topoAte: '#e0a13c',
@@ -518,7 +525,7 @@ export const COR_DIAGNOSTICO = {
   /** O verde de "acima do corte" e o cinza de "abaixo". */
   acima: '#1db954',
   abaixo: '#7184a5',
-  /** A tinta escura sobre o selo dourado de Top Tier. */
+  /** A tinta escura sobre o selo dourado de TOP ICON. */
   tintaDoTopo: '#1a1206',
   /** O contorno do botão de compartilhar. */
   compartilharContorno: '#cbd9ff',

@@ -3,7 +3,6 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { COR } from '@maestra/core/constants/design';
 
-import { FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { Relatorio } from '@/casca/diagnostico/Relatorio';
 import { useArtistaDaRota } from '@/nucleo/artista';
 
@@ -38,8 +37,10 @@ const estilos = StyleSheet.create({
   conteudo: {
     // Sem recuo de cima: ele é todo do `CabecalhoDoModulo`, para o título nascer à mesma
     // altura em todos os módulos.
-    // O `gap` é o que separa o cabeçalho do primeiro cartão E um cartão do seguinte: a
-    // pilha inteira tem o mesmo ritmo, e é ele que faz a folga depois do fio.
-    paddingHorizontal: 16, paddingBottom: 122, gap: FOLGA_APOS_O_CABECALHO,
+    // O ritmo da pilha NÃO é decidido aqui: mora dentro do próprio `Relatorio`, que aparece
+    // nesta tela, no fim da criação e no desbloqueio. Era essa decisão espalhada por três
+    // molduras que fazia o mesmo documento sair com espaçamentos diferentes em cada uma.
+    // O recuo de baixo é da barra de abas, que flutua sobre o conteúdo.
+    paddingHorizontal: 16, paddingBottom: 122,
   },
 });

@@ -96,6 +96,10 @@ const DiagnosticView: FC = () => {
         enableStickyCta={false}
         showPlanningCta={false}
         hideHero
+        // O aviso de "diagnóstico em versão anterior" (§13.2) traz a saída junto do texto: quem lê
+        // que a leitura está velha precisa poder refazer ali, sem procurar o botão do topo.
+        onRedo={souDonoDoPerfil ? onRedo : undefined}
+        redoLocked={!isPro}
       />
     </div>
   );

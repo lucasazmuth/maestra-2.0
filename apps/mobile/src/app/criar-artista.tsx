@@ -10,7 +10,8 @@ import { Redirect, router } from 'expo-router';
 
 import { COR, COR_DIAGNOSTICO, RAIO } from '@maestra/core/constants/design';
 import {
-  FALAS, IMPRENSA_PORTES, IMPRENSA_TIPOS, QUIZ, REVENUE_SOURCES,
+  FALAS, IMPRENSA_PORTES, IMPRENSA_TIPOS, IMPRENSA_NUNCA, QUIZ, REVENUE_SOURCES,
+  TIPOS_DE_CONTRATANTE_QUIZ, NAO_SEI, CTX_API, ORIENTACAO_SPOTIFY, CHAVES_DO_BLOCO_R, totalDaTrilha,
   perguntaAnterior, proximaPergunta,
 } from '@maestra/core/constants/quizDoDiagnostico';
 import { useCanCreateArtist } from '@maestra/core/hooks/useCanCreateArtist';
@@ -26,6 +27,7 @@ import { formatRemainingTime } from '@maestra/core/utils/rateLimitCalc';
 import { Fala } from '@/casca/criar/Fala';
 import { LogoDoSpotify } from '@/casca/criar/LogoDoSpotify';
 import { PassosDaAnalise } from '@/casca/criar/PassosDaAnalise';
+import { FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { Relatorio } from '@/casca/diagnostico/Relatorio';
 import { MaestraMarca } from '@/icones';
 import { useSessao } from '@/nucleo/sessao';
@@ -89,8 +91,12 @@ export default function CriarArtista() {
   const [indice, setIndice] = useState(0);
   const respostas = useRef<Record<string, unknown>>({});
   const [valor, setValor] = useState('');
-  const [receita, setReceita] = useState<Record<string, number>>({});
-  const [matriz, setMatriz] = useState<Set<string>>(new Set());
+  // Receita: R$ por fonte, ou a string "não sei" (§4 — conta zero e sinaliza no relatório).
+  const [receita, setReceita] = useState<Record<string, number | typeof NAO_SEI>>({});
+  // Cachê médio por tipo de contratante (§3.2) — seis linhas de R$, zero é resposta válida.
+  const [cachePorTipo, setCachePorTipo] = useState<Record<string, number>>({});
+  // Imprensa: UM porte por tipo, o maior (§9.3). Chave vazia = "nunca apareceu nesse veículo".
+  const [matriz, setMatriz] = useState<Record<string, string>>({});
 
   // Diagnóstico
   const [real, setReal] = useState<RealIndex | null>(null);
@@ -123,10 +129,12 @@ export default function CriarArtista() {
     if (pergunta.type === 'int' || pergunta.type === 'currency') {
       setValor(typeof anterior === 'number' ? String(anterior) : '');
     } else if (pergunta.type === 'revenue') {
-      setReceita((anterior as Record<string, number>) ?? {});
+      setReceita((anterior as Record<string, number | typeof NAO_SEI>) ?? {});
+    } else if (pergunta.type === 'cache') {
+      setCachePorTipo((anterior as Record<string, number>) ?? {});
     } else if (pergunta.type === 'matrix') {
       const guardado = (anterior as { tipo: string; porte: string }[]) ?? [];
-      setMatriz(new Set(guardado.map((c) => `${c.tipo}:${c.porte}`)));
+      setMatriz(Object.fromEntries(guardado.map((c) => [c.tipo, c.porte])));
     }
   }, [pergunta]);
 
@@ -165,7 +173,7 @@ export default function CriarArtista() {
             name: escolhido.current.name,
             spotifyArtistId: escolhido.current.spotifyArtistId,
             spotify: { followers: escolhido.current.followers, image: escolhido.current.image },
-            quizV3: respostas.current,
+            quizV4: respostas.current,
           },
         });
         if (error) throw error;
@@ -201,12 +209,30 @@ export default function CriarArtista() {
   }, [passo]);
 
   // ── Fluxo ───────────────────────────────────────────────────────────────────
+  // Consulta prévia à Chartmetric (§3.1, passo 2): é ela que decide quais perguntas de
+  // autodeclaração de R o quiz mostra. Dispara ao escolher o perfil e roda enquanto o artista lê a
+  // tela de orientação, então na prática ninguém espera por ela.
+  //
+  // Rede de segurança (§3.1, passo 6): qualquer falha deixa o contexto vazio e o quiz pergunta os
+  // três campos. Perguntar demais é recuperável; calcular o alcance sobre nada não é.
+  const preview = useRef<Promise<unknown> | null>(null);
+  const [preparando, setPreparando] = useState(false);
+  const buscarPreview = (spotifyId: string | null) => {
+    delete respostas.current[CTX_API];
+    if (!spotifyId) { preview.current = null; return; }
+    preview.current = supabase.functions
+      .invoke('artist-diagnostic', { body: { preview: true, spotifyArtistId: spotifyId } })
+      .then(({ data }) => { if (data?.api) respostas.current[CTX_API] = data.api; })
+      .catch(() => { /* sem preview, o quiz pergunta tudo */ });
+  };
+
   const escolher = (
     nome: string, spotifyId: string | null, seguidores: number | null, foto: string | null,
   ) => {
     escolhido.current = {
       name: nome, spotifyArtistId: spotifyId, followers: seguidores, image: foto,
     };
+    buscarPreview(spotifyId);
     setPasso('intro');
     dizer(FALAS.escolhido(nome));
   };
@@ -264,8 +290,13 @@ export default function CriarArtista() {
   const podeVoltar = passo === 'quiz' && falou
     && perguntaAnterior(indice - 1, respostas.current) >= 0;
   // O progresso vem da posição ABSOLUTA na trilha, e não da contagem de perguntas visíveis: essa
-  // muda conforme as respostas abrem e fecham desvios, e a barra chegava a recuar.
-  const progresso = passo === 'quiz' ? ((indice + 1) / QUIZ.length) * 100 : 0;
+  // muda conforme as respostas abrem e fecham desvios, e a barra chegava a recuar. A única exceção
+  // é o bloco R, que a consulta prévia resolve ANTES do quiz começar e por isso é estável.
+  const naTrilha = (p: typeof QUIZ[number]) =>
+    !(CHAVES_DO_BLOCO_R.includes(p.key) && p.skipIf?.(respostas.current));
+  const progresso = passo === 'quiz'
+    ? (QUIZ.filter((p, i) => i <= indice && naTrilha(p)).length / totalDaTrilha(respostas.current)) * 100
+    : 0;
   const mostrarInteracao = falou || passo === 'diagnostico';
   const aviso = (texto: string, acao?: { rotulo: string; aoTocar: () => void }) => (
     <View style={estilos.aviso}>
@@ -337,7 +368,9 @@ export default function CriarArtista() {
       >
         <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
           {passo !== 'diagnostico' && (
-            <Fala texto={fala} aoTerminar={() => setFalou(true)} />
+            <View style={estilos.folgaDaFala}>
+              <Fala texto={fala} aoTerminar={() => setFalou(true)} />
+            </View>
           )}
 
           {mostrarInteracao && (
@@ -514,13 +547,29 @@ export default function CriarArtista() {
                     </View>
                   )}
                   <Text style={estilos.nomeDaIntro}>{escolhido.current.name}</Text>
+                  {/*
+                    §3.1, passo 3 — é o que faz o dado automático existir da próxima vez, e o único
+                    momento do fluxo em que o artista tem motivo para ir configurar isso.
+                  */}
+                  {!!escolhido.current.spotifyArtistId && (
+                    <Text style={estilos.orientacao}>{ORIENTACAO_SPOTIFY}</Text>
+                  )}
                   <Pressable
-                    style={estilos.principal}
-                    onPress={() => { setIndice(0); setPasso('quiz'); dizer(QUIZ[0].q); }}
+                    style={[estilos.principal, preparando && estilos.apagado]}
+                    disabled={preparando}
+                    onPress={async () => {
+                      // Espera o preview para não abrir o quiz com perguntas que já sabemos que
+                      // vão sumir. Quase sempre já terminou enquanto esta tela era lida.
+                      if (preview.current) { setPreparando(true); await preview.current; setPreparando(false); }
+                      setIndice(0); setPasso('quiz'); dizer(QUIZ[0].q);
+                    }}
                     accessibilityRole="button"
+                    accessibilityState={{ disabled: preparando }}
                     accessibilityLabel="Começar diagnóstico"
                   >
-                    <Text style={estilos.principalTexto}>Começar diagnóstico</Text>
+                    <Text style={estilos.principalTexto}>
+                      {preparando ? 'Preparando as perguntas…' : 'Começar diagnóstico'}
+                    </Text>
                   </Pressable>
                 </View>
               )}
@@ -528,6 +577,13 @@ export default function CriarArtista() {
               {/* ── 3. O quiz ──────────────────────────────────────────────── */}
               {passo === 'quiz' && !!pergunta && (
                 <>
+                  {/*
+                    Várias perguntas da v4 trazem instrução própria ("deixe em zero o que não se
+                    aplica", "esse número aparece no YouTube Studio"). Sem ela o artista responde
+                    outra coisa, e o que entra no índice deixa de ser o que a metodologia pediu.
+                  */}
+                  {!!pergunta.ajuda && <Text style={estilos.ajuda}>{pergunta.ajuda}</Text>}
+
                   {pergunta.type === 'select' && (
                     <View style={estilos.opcoes}>
                       {pergunta.options?.map((opcao) => (
@@ -572,27 +628,57 @@ export default function CriarArtista() {
                     </>
                   )}
 
+                  {/*
+                    Receita fora dos shows: nove fontes, cada uma em R$ ou "não sei" (§3.2).
+
+                    O "não sei" é resposta de verdade, não campo vazio: conta zero no saldo e vira
+                    sinalização no relatório (§4, §11.3.4). Quem não sabe quanto a própria
+                    distribuidora paga está dizendo algo sobre a gestão da carreira, e é isso que o
+                    diagnóstico devolve. Por isso a linha marcada trava o campo em vez de escondê-lo.
+                  */}
                   {pergunta.type === 'revenue' && (
                     <View style={estilos.receita}>
-                      {REVENUE_SOURCES.map((fonte) => (
-                        <View key={fonte.key} style={estilos.linhaDeReceita}>
-                          <Text style={estilos.rotuloDaReceita}>{fonte.label}</Text>
-                          <View style={estilos.campoNumerico}>
-                            <Text style={estilos.prefixo}>R$</Text>
-                            <TextInput
-                              style={estilos.entrada}
-                              value={receita[fonte.key] ? comMilhar(String(receita[fonte.key])) : ''}
-                              onChangeText={(t) => setReceita((atual) => ({
-                                ...atual, [fonte.key]: Number(soDigitos(t)) || 0,
-                              }))}
-                              placeholder="0"
-                              placeholderTextColor={COR_DIAGNOSTICO.criarEspacoReservado}
-                              keyboardType="number-pad"
-                              accessibilityLabel={fonte.label}
-                            />
+                      <Text style={estilos.prefixoDaReceita}>
+                        Quanto você recebeu nos últimos 12 meses...
+                      </Text>
+                      {REVENUE_SOURCES.map((fonte) => {
+                        const naoSei = receita[fonte.key] === NAO_SEI;
+                        return (
+                          <View key={fonte.key} style={estilos.linhaDeReceita}>
+                            <Text style={estilos.rotuloDaReceita}>{fonte.label}</Text>
+                            <View style={estilos.controlesDaReceita}>
+                              <View style={[estilos.campoNumerico, estilos.campoDaReceita, naoSei && estilos.campoApagado]}>
+                                <Text style={estilos.prefixo}>R$</Text>
+                                <TextInput
+                                  style={estilos.entrada}
+                                  editable={!naoSei}
+                                  value={!naoSei && receita[fonte.key] ? comMilhar(String(receita[fonte.key])) : ''}
+                                  onChangeText={(t) => setReceita((atual) => ({
+                                    ...atual, [fonte.key]: Number(soDigitos(t)) || 0,
+                                  }))}
+                                  placeholder={naoSei ? 'Não sei' : '0'}
+                                  placeholderTextColor={COR_DIAGNOSTICO.criarEspacoReservado}
+                                  keyboardType="number-pad"
+                                  accessibilityLabel={fonte.label}
+                                />
+                              </View>
+                              <Pressable
+                                style={[estilos.naoSei, naoSei && estilos.naoSeiMarcado]}
+                                onPress={() => setReceita((atual) => ({
+                                  ...atual, [fonte.key]: naoSei ? 0 : NAO_SEI,
+                                }))}
+                                accessibilityRole="checkbox"
+                                accessibilityState={{ checked: naoSei }}
+                                accessibilityLabel={`Não sei: ${fonte.label}`}
+                              >
+                                <Text style={[estilos.naoSeiTexto, naoSei && estilos.naoSeiTextoMarcado]}>
+                                  Não sei
+                                </Text>
+                              </Pressable>
+                            </View>
                           </View>
-                        </View>
-                      ))}
+                        );
+                      })}
                       <Pressable
                         style={[estilos.principal, estilos.principalDaReceita]}
                         onPress={() => responder({ ...receita })}
@@ -604,31 +690,69 @@ export default function CriarArtista() {
                     </View>
                   )}
 
+                  {/*
+                    Cachê médio por tipo de contratante (§3.2). Zero é resposta válida e significa
+                    "não atendi esse tipo": o motor tira os zeros antes de tirar a média.
+                  */}
+                  {pergunta.type === 'cache' && (
+                    <View style={estilos.receita}>
+                      {TIPOS_DE_CONTRATANTE_QUIZ.map((tipo) => (
+                        <View key={tipo.key} style={estilos.linhaDeReceita}>
+                          <Text style={estilos.rotuloDaReceita}>{tipo.label}</Text>
+                          <View style={estilos.campoNumerico}>
+                            <Text style={estilos.prefixo}>R$</Text>
+                            <TextInput
+                              style={estilos.entrada}
+                              value={cachePorTipo[tipo.key] ? comMilhar(String(cachePorTipo[tipo.key])) : ''}
+                              onChangeText={(t) => setCachePorTipo((atual) => ({
+                                ...atual, [tipo.key]: Number(soDigitos(t)) || 0,
+                              }))}
+                              placeholder="0"
+                              placeholderTextColor={COR_DIAGNOSTICO.criarEspacoReservado}
+                              keyboardType="number-pad"
+                              accessibilityLabel={tipo.label}
+                            />
+                          </View>
+                        </View>
+                      ))}
+                      <Pressable
+                        style={[estilos.principal, estilos.principalDaReceita]}
+                        onPress={() => responder({ ...cachePorTipo })}
+                        accessibilityRole="button"
+                        accessibilityLabel="Continuar"
+                      >
+                        <Text style={estilos.principalTexto}>Continuar</Text>
+                      </Pressable>
+                    </View>
+                  )}
+
+                  {/*
+                    Imprensa: uma escolha por tipo de veículo, o MAIOR porte (§9.3).
+
+                    A v3 deixava marcar vários portes no mesmo tipo, o que não significava nada: o
+                    motor agrega pelo máximo, porque a matriz mede o TETO de legitimação alcançado.
+                    Marcar "pequeno" além de "grande" nunca mudou a nota e só confundia. Agora a
+                    pergunta é a que a metodologia faz, com "Nunca" explícito em vez de deixar em branco.
+                  */}
                   {pergunta.type === 'matrix' && (
                     <>
-                      <Text style={estilos.ajuda}>
-                        Marque o porte do veículo onde seu trabalho já apareceu. Pode marcar mais
-                        de um por tipo e pular os tipos onde nunca apareceu.
-                      </Text>
                       <View style={estilos.matriz}>
                         {IMPRENSA_TIPOS.map((tipo) => (
                           <View key={tipo.key} style={estilos.linhaDaMatriz}>
                             <Text style={estilos.nomeDoTipo}>{tipo.label}</Text>
                             <View style={estilos.portes}>
-                              {IMPRENSA_PORTES.map((porte) => {
-                                const celula = `${tipo.key}:${porte.key}`;
-                                const marcada = matriz.has(celula);
+                              {[{ key: IMPRENSA_NUNCA, label: 'Nunca' }, ...IMPRENSA_PORTES].map((porte) => {
+                                const ehNunca = porte.key === IMPRENSA_NUNCA;
+                                const marcada = ehNunca ? !matriz[tipo.key] : matriz[tipo.key] === porte.key;
                                 return (
                                   <Pressable
                                     key={porte.key}
                                     style={[estilos.porte, marcada && estilos.porteMarcado]}
-                                    onPress={() => setMatriz((atual) => {
-                                      const proximo = new Set(atual);
-                                      if (proximo.has(celula)) proximo.delete(celula);
-                                      else proximo.add(celula);
-                                      return proximo;
-                                    })}
-                                    accessibilityRole="checkbox"
+                                    onPress={() => setMatriz((atual) => ({
+                                      ...atual,
+                                      [tipo.key]: ehNunca || atual[tipo.key] === porte.key ? '' : porte.key,
+                                    }))}
+                                    accessibilityRole="radio"
                                     accessibilityState={{ checked: marcada }}
                                     accessibilityLabel={`${tipo.label}, ${porte.label}`}
                                   >
@@ -648,10 +772,11 @@ export default function CriarArtista() {
                       </View>
                       <Pressable
                         style={[estilos.principal, estilos.principalDaMatriz]}
-                        onPress={() => responder([...matriz].map((celula) => {
-                          const [tipo, porte] = celula.split(':');
-                          return { tipo, porte };
-                        }))}
+                        onPress={() => responder(
+                          Object.entries(matriz)
+                            .filter(([, porte]) => !!porte)
+                            .map(([tipo, porte]) => ({ tipo, porte })),
+                        )}
                         accessibilityRole="button"
                         accessibilityLabel="Continuar"
                       >
@@ -759,12 +884,15 @@ const estilos = StyleSheet.create({
   trilho: { height: 3, backgroundColor: COR_DIAGNOSTICO.criarTrilho },
   progresso: { height: 3, backgroundColor: COR.primaria },
 
-  // 76px de altura e um fio embaixo, com 52 de folga até a fala.
+  // 76px de altura e um fio embaixo. A folga até o conteúdo NAO mora aqui: ela depende do que
+  // vem depois. A fala da Nyta precisa dos 52; o relatório do diagnóstico ja traz o recuo do
+  // próprio cabeçalho de módulo, e somar os dois abria um vao de 74px embaixo do fio.
   topo: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    minHeight: 76, paddingHorizontal: 20, marginBottom: 52,
+    minHeight: 76, paddingHorizontal: 20,
     borderBottomWidth: 1, borderBottomColor: COR_DIAGNOSTICO.criarTrilho,
   },
+  folgaDaFala: { marginTop: 52 },
   fase: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
   pontos: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   ponto: {
@@ -847,6 +975,27 @@ const estilos = StyleSheet.create({
   receita: { gap: 14 },
   linhaDeReceita: { gap: 8 },
   rotuloDaReceita: { fontSize: 13.5, fontWeight: '700', color: COR_DIAGNOSTICO.texto },
+  // O prefixo comum das nove fontes ("Quanto você recebeu nos últimos 12 meses...") é dito uma vez
+  // no topo, e cada linha completa a frase. Repeti-lo nove vezes empurraria a lista para fora da tela.
+  prefixoDaReceita: {
+    fontSize: 13.5, lineHeight: 19, fontWeight: '700', color: COR_DIAGNOSTICO.titulo,
+  },
+  controlesDaReceita: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  campoDaReceita: { flex: 1, minWidth: 0 },
+  campoApagado: { opacity: 0.55 },
+  naoSei: {
+    height: 56, paddingHorizontal: 14, borderRadius: RAIO.cartao,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1,
+    borderColor: COR_DIAGNOSTICO.criarCampoContorno,
+    backgroundColor: COR_DIAGNOSTICO.criarChipFundo,
+  },
+  naoSeiMarcado: { borderColor: COR.primaria, backgroundColor: COR.primaria },
+  naoSeiTexto: { fontSize: 12, fontWeight: '700', color: COR_DIAGNOSTICO.texto },
+  naoSeiTextoMarcado: { color: COR.sobrePrimaria },
+  orientacao: {
+    fontSize: 13, lineHeight: 19.5, color: COR_DIAGNOSTICO.criarAjuda,
+    textAlign: 'center', marginTop: -4,
+  },
 
   ajuda: {
     fontSize: 13, lineHeight: 18.85, color: COR_DIAGNOSTICO.criarAjuda,
@@ -862,9 +1011,9 @@ const estilos = StyleSheet.create({
   nomeDoTipo: {
     fontSize: 13, fontWeight: '600', color: COR_DIAGNOSTICO.titulo, textAlign: 'center',
   },
-  portes: { flexDirection: 'row', justifyContent: 'center', gap: 7 },
+  portes: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 7 },
   porte: {
-    minWidth: 70, paddingVertical: 8, paddingHorizontal: 12, borderRadius: RAIO.campo,
+    minWidth: 62, paddingVertical: 8, paddingHorizontal: 12, borderRadius: RAIO.campo,
     alignItems: 'center', borderWidth: 1, borderColor: COR_DIAGNOSTICO.criarCampoContorno,
     backgroundColor: COR_DIAGNOSTICO.criarChipFundo,
   },
@@ -896,7 +1045,7 @@ const estilos = StyleSheet.create({
   avisoTexto: { fontSize: 13, lineHeight: 19, color: COR_DIAGNOSTICO.texto },
   avisoAcao: { fontSize: 12, fontWeight: '600', color: COR.primaria, paddingVertical: 7 },
 
-  desbloqueio: { marginTop: 8, gap: 4 },
+  desbloqueio: { marginTop: FOLGA_APOS_O_CABECALHO, gap: 4 },
   notaDoDesbloqueio: {
     fontSize: 13, lineHeight: 19, textAlign: 'center', color: COR_DIAGNOSTICO.texto,
   },

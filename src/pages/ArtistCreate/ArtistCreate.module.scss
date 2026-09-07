@@ -1300,6 +1300,34 @@
     font-size: 15px;
     font-weight: 800;
   }
+  .avisoLinha { border-color: #f0dcb4; background: #fdf8ec; color: #8a6a24; }
+  .avisoLegado { border-color: #ddcbf1; background: #f8f2fe; color: #6b4a95; }
+  .dimAviso { background: #f4f7fd; color: #61749a; }
+  .pieNaoSei { color: #788bad; }
+  .engInfo { color: #93a4c0; }
+  .cacheLabel { color: #61749a; }
+  .cacheBarWrap { background: #e8eefb; }
+  .cacheVal { color: #52668d; }
+  .healthAviso { color: #c0463f; }
+  .healthNota { color: #788bad; }
+  .quizAjuda { color: #788bad; }
+  .revenuePrefixo { color: #52668d; }
+  .naoSeiChip {
+    height: 56px;
+    border-color: #d8e1ee;
+    border-radius: 10px;
+    background: #f8faff;
+    color: #61749a;
+    font-size: 12px;
+    &:hover { border-color: #9db6ff; background: #edf2ff; color: #3361ff; }
+  }
+  .naoSeiChipOn {
+    border-color: #3361ff;
+    background: #3361ff;
+    color: #fff;
+    &:hover { border-color: #244ce0; background: #244ce0; color: #fff; }
+  }
+  .introOrientacao { color: #788bad; }
   .matrixHelp { color: #788bad; }
   .matrixList { gap: 10px; }
   .matrixTypeRow {
@@ -1314,7 +1342,7 @@
   .matrixTypeName { color: #52668d; font-size: 13px; }
   .porteChips { gap: 7px; }
   .porteChip {
-    min-width: 70px;
+    min-width: 62px;
     padding: 8px 12px;
     border-color: #d8e1ee;
     border-radius: 8px;
@@ -1493,8 +1521,16 @@
   transition: color 0.15s ease;
   &:hover, &:focus-visible { color: #9A4FD1; outline: none; }
 }
-.realPatternRow { display: flex; flex-wrap: wrap; gap: 14px 40px; }
-.realPatternItem { display: flex; align-items: baseline; gap: 11px; }
+// As quatro dimensões em linha, cada uma com a letra sobre a palavra: lidas de uma vez, viram a
+// assinatura da entrega. Lado a lado e quebrando linha, como estavam, eram só uma lista.
+.realPatternRow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+.realPatternItem { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .realPatternLetter {
   font-family: Georgia, 'Times New Roman', serif;
   font-style: italic;
@@ -2059,7 +2095,7 @@ $docLow: #8b9ab4;
 .dimScore { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: #52668d; line-height: 1; letter-spacing: -0.02em; }
 .dimScoreMax { font-size: 12px; color: #6f6f78; font-weight: 700; }
 
-// Régua de 0–100 com marcadores fixos: acende (70) e top tier (100).
+// Régua de 0–100 com marcadores fixos: acende (70) e TOP ICON (100).
 .ruler {
   position: relative;
   height: 8px;
@@ -2130,7 +2166,11 @@ $docLow: #8b9ab4;
 // Saúde financeira · 12 meses (E) — faturamento / investimento / saldo.
 .healthBlock { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
 .healthTitle { font-size: 12px; font-weight: 800; color: #9a9aa3; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 12px; }
-.healthGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+// A grade nasceu com TRÊS colunas (receita, investimento, saldo) e a v4 acrescentou mais duas: o
+// saldo ajustado pelo bônus de estrutura e a receita líquida estimada. Em três colunas fixas as
+// duas novas ficavam órfãs numa segunda linha meia-vazia; com `auto-fit` e 140px de mínimo, ela
+// se acomoda sozinha em qualquer largura — e cada rótulo cabe inteiro.
+.healthGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
 .healthItem {
   display: flex;
   flex-direction: column;
@@ -2154,7 +2194,44 @@ $docLow: #8b9ab4;
 .engAbove { color: #1db954; }
 .engBelow { color: #b0b0b8; }
 
-// ═══════════════════ Quiz V3 — widgets (composição de receita + matriz de imprensa) ═══════════════════
+// ═══════════════════ Quiz V4 — widgets (cachê por tipo, receita por fonte, matriz de imprensa) ═══════════════════
+// Linha de apoio da pergunta: onde achar o número, o que deixar em zero, o que não entra no cálculo.
+.quizAjuda { font-size: 13px; line-height: 1.5; color: #9a9aa3; margin: 0 0 14px; }
+// Prefixo comum das nove fontes ("Quanto você recebeu nos últimos 12 meses..."), dito uma vez.
+.revenuePrefixo { font-size: 13.5px; line-height: 1.5; color: #c9c9d0; font-weight: 600; margin: 0; }
+.revenueControls { display: flex; align-items: center; gap: 8px; }
+.revenueControls .revenueInput { flex: 1; min-width: 0; }
+.naoSeiChip {
+  flex-shrink: 0;
+  padding: 0 14px;
+  height: 48px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #c9c9d0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+
+  &:hover { background: rgba(255, 255, 255, 0.09); }
+}
+.naoSeiChipOn {
+  background: rgb(var(--real-accent, 154, 79, 209));
+  border-color: rgb(var(--real-accent, 154, 79, 209));
+  color: #000;
+}
+// Orientação do Spotify for Artists, antes do quiz: é o que faz o dado automático existir da
+// próxima vez, e o único momento do fluxo em que o artista tem motivo para ir configurar isso.
+.introOrientacao {
+  max-width: 420px;
+  margin: 4px auto 18px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #9a9aa3;
+  text-align: center;
+}
+
 // Composição de receita: cada fonte é um bloco — rótulo em cima, campo R$ full-width embaixo.
 // Empilhado (não lado a lado) pra rótulos longos ("Direitos (autorais, conexos…)") não brigarem
 // com o campo. Vale em desktop e mobile — consistente e limpo.
@@ -2170,6 +2247,50 @@ $docLow: #8b9ab4;
   align-items: center;
 }
 
+// ── Avisos obrigatórios da entrega (§11.3) e blocos novos do E (§7.5) ──
+.avisosBloco { display: flex; flex-direction: column; gap: 10px; margin: 18px 0 4px; }
+.avisoLinha {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(224, 161, 60, 0.28);
+  background: rgba(224, 161, 60, 0.08);
+  color: #d9b579;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.avisoLegado { border-color: rgba(154, 79, 209, 0.32); background: rgba(154, 79, 209, 0.1); color: #c7a4e6; }
+.avisoAcao {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.dimAviso {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #b3b3bd;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.pieNaoSei { margin-top: 12px; color: #9a9aa3; font-size: 12.5px; line-height: 1.5; }
+.engInfo { margin-left: 8px; color: #8a8a93; font-size: 11.5px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.cacheBlock { margin-top: 18px; display: flex; flex-direction: column; gap: 9px; }
+.cacheRow { display: grid; grid-template-columns: minmax(96px, 1.1fr) minmax(0, 2fr) auto; align-items: center; gap: 10px; }
+.cacheLabel { color: #b3b3bd; font-size: 12.5px; }
+.cacheBarWrap { height: 8px; border-radius: 9999px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+.cacheBar { display: block; height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #4c7dff, #9A4FD1); }
+.cacheVal { color: #e6e6ea; font-size: 12.5px; font-weight: 700; }
+.healthAviso { margin-top: 10px; color: #d97a7a; font-size: 12.5px; line-height: 1.5; }
+.healthNota { margin-top: 8px; color: #9a9aa3; font-size: 12px; line-height: 1.5; }
+
 .matrixWrap { width: 100%; }
 .matrixHelp { font-size: 13px; line-height: 1.45; color: #9a9aa3; margin: 0 0 16px; }
 .matrixList { display: flex; flex-direction: column; gap: 14px; }
@@ -2181,7 +2302,7 @@ $docLow: #8b9ab4;
   flex-wrap: wrap;
 }
 .matrixTypeName { font-size: 14px; color: #e6e6ea; font-weight: 600; flex: 1; min-width: 150px; }
-.porteChips { display: inline-flex; gap: 8px; flex-shrink: 0; }
+.porteChips { display: inline-flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
 .porteChip {
   min-width: 78px;
   padding: 9px 14px;
@@ -2208,7 +2329,6 @@ $docLow: #8b9ab4;
 .pageReal {
   .realHeroTitle,
   .unlockHeadTitle,
-  .realProfileName,
   .dimTitle,
   .dimScore,
   .dimStatValue,
@@ -2246,35 +2366,76 @@ $docLow: #8b9ab4;
     color: #61749a !important;
   }
 
-  .realProfileDesc {
-    color: #52668d !important;
-  }
-
-  .realProfileCard,
   .dimCard,
-  .cityChart,
-  .platformPresence,
-  .profileMap,
-  .insightsBlock,
-  .signBlock {
+  .insightsBlock {
     background: #ffffff !important;
     border-color: #dbe4f1 !important;
     box-shadow: 0 10px 24px rgba(67, 86, 123, 0.07) !important;
   }
 
-  .realProfileCard {
-    background: linear-gradient(135deg, #ffffff, #f4f7fd) !important;
+  // ── O TERCEIRO nível de superfície ────────────────────────────────────────────────
+  //
+  // A entrega tinha dois: o herói e "cartão branco com sombra", este último repetido em cada
+  // bloco. Com tudo no mesmo peso, nada tem peso: as cidades, as playlists e a bio de quem
+  // assina pediam a mesma atenção que as quatro dimensões do índice.
+  //
+  // O apoio vira cartão de CONTORNO: sem preenchimento e sem sombra, só a linha. A leitura passa
+  // a ser escuro é o perfil, preenchido e elevado é o índice, contornado é o apêndice.
+  //
+  // A primeira tentativa foi tingir o apoio com #eef3fb sobre o fundo #f7f8fb. São 2% de
+  // diferença: fraco demais para ler como decisão e forte o bastante para ler como falha — a
+  // primeira pergunta de quem viu foi por que alguns blocos tinham perdido o branco.
+  .cityChart,
+  .platformPresence,
+  .profileMap,
+  .signBlock {
+    background: transparent !important;
+    border-color: #dbe4f1 !important;
+    box-shadow: none !important;
   }
+
+  // ── O HERÓI ──────────────────────────────────────────────────────────────────────
+  //
+  // É o MESMO herói do painel do artista (`.music-hero` em `styles/gsap-reference.css`): o
+  // brilho radial azul sobre o degradê navy, e o anel vazado cortado pela borda. Não é um
+  // desenho novo — um segundo escuro no produto seria um segundo sistema.
+  //
+  // O roxo entra só como LINHA no anel. Ele é institucional; a cor de ação é o azul.
+  .realProfileCard {
+    overflow: hidden;
+    border: 0 !important;
+    border-radius: 14px;
+    background:
+      radial-gradient(circle at 50% -40%, #315de8 0, transparent 45%),
+      linear-gradient(135deg, #121c38, #18254d) !important;
+    box-shadow: none !important;
+
+    &::after {
+      position: absolute;
+      right: -78px;
+      top: -104px;
+      width: 190px;
+      height: 190px;
+      border: 2px solid rgba(157, 87, 255, 0.8);
+      border-radius: 50%;
+      content: '';
+    }
+
+    > * { position: relative; z-index: 1; }
+  }
+  // A escala tipográfica é a do herói do painel: rótulo 10/800/1.1, título 34, apoio 12/17.
+  .realProfileKicker { color: #bcd0ff !important; }
+  .realProfileName { color: #ffffff !important; }
+  .realProfileDesc { color: #c4d0ed !important; }
 
   .realPatternItem { opacity: 0.42; }
   .realPatternItemHigh { opacity: 1; }
-  .realPatternItemHigh .realPatternWord {
-    color: #52668d !important;
-    font-weight: 800;
-  }
-  .realPatternItemLow .realPatternWord { color: #9baac0 !important; }
-  .realPatternLetterHigh { color: rgb(var(--real-accent, 51, 97, 255)) !important; }
-  .realPatternLetterLow { color: #b6c2d3 !important; }
+  .realPatternItemHigh .realPatternWord { color: #bcd0ff !important; font-weight: 800; }
+  .realPatternItemLow .realPatternWord { color: rgba(255, 255, 255, 0.13) !important; }
+  // No claro a diferença entre aceso e apagado era um azul contra um cinza pálido; no escuro é
+  // branco contra 13% de branco, e se lê de longe.
+  .realPatternLetterHigh { color: #ffffff !important; }
+  .realPatternLetterLow { color: rgba(255, 255, 255, 0.13) !important; }
 
   .dimCard { border-radius: 14px; }
 

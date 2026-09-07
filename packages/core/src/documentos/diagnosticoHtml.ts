@@ -9,6 +9,9 @@ import {
   composicaoDaReceita, dinheiroRedondo, linhaDeAutoria, linhasDaDimensao, tintaDaDimensao,
   type Autoria,
 } from './diagnostico';
+import {
+  AVISOS, ehLegado, resumoDoE, SIIC_MENSAL,
+} from '../services/realEngine/relatorio';
 
 // O DECK do Diagnóstico REAL em HTML — o mesmo documento que a web baixa, montado como texto.
 //
@@ -134,6 +137,9 @@ const ESTILO = `
   .bloco { margin-bottom: 18px; }
   .blocoTitulo { font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
     color: ${T.ink}; margin-bottom: 10px; }
+  /* O selo de "não entra no diagnóstico" (§11.3.5) anda junto do título do bloco informativo. */
+  .blocoNota { font-size: 10.5px; font-weight: 600; letter-spacing: 0; text-transform: none;
+    color: ${T.mute}; }
   .comp { display: flex; flex-wrap: wrap; gap: 10px 26px; }
   .compItem { display: flex; align-items: baseline; gap: 7px; }
   .compPct { font-weight: 800; font-size: 20px; color: ${T.ink}; }
@@ -241,9 +247,14 @@ const paginaDaDimensao = (
   const inp = ri.inputs || {};
   const rev = ri.revenue || {};
   const comp = dk === 'e' ? composicaoDaReceita(ri) : [];
-  const faturamento = Math.round(Number(rev.total ?? 0) * 12);
-  const investimento = Math.round(Number(inp.investimento ?? 0));
-  const saldo = faturamento - investimento;
+  const resumo = resumoDoE(ri);
+  const legado = ehLegado(ri);
+  // A v4 lê o SALDO ANUAL direto do motor; o legado ainda multiplica a base mensal por doze.
+  const faturamento = resumo ? resumo.receitaAnual : Math.round(Number(rev.total ?? 0) * 12);
+  const investimento = resumo ? resumo.investimento : Math.round(Number(inp.investimento ?? 0));
+  const saldo = resumo ? resumo.saldo : faturamento - investimento;
+  const temCnpj = resumo ? ri.raw?.temCnpj === true : !!inp.temCnpj;
+  const temEmpresario = resumo ? ri.raw?.temEmpresario === true : !!inp.temEmpresario;
   const eng = ri.engagement || {};
   const temDeclarado = linhas.some((r) => r.declarado);
 
@@ -259,7 +270,7 @@ const paginaDaDimensao = (
         <span class="dimSelo" style="${topo
           ? `background:${T.goldBg};color:${T.goldInk}`
           : alta ? `background:${cor};color:#fff` : `background:#eef2f8;color:${T.body}`}">
-          ${topo ? 'Top Tier' : alta ? 'Alto' : 'Baixo'}</span>
+          ${topo ? 'TOP ICON' : alta ? 'Alto' : 'Baixo'}</span>
         <span class="dimValor">${nota}<span class="dimMax">/100</span></span>
       </div>
     </div>
@@ -282,6 +293,24 @@ const paginaDaDimensao = (
       <b>informados por quem preencheu</b> este diagnóstico. A Maestra não tem como apurar
       faturamento e não verifica estes valores.</div>` : ''}
 
+    ${dk === 'e' && resumo && resumo.saldo < 0
+      ? `<div class="aviso">${escapar(AVISOS.saldoNegativo)}</div>` : ''}
+    ${dk === 'e' && resumo?.fontes.some((f) => f.naoSei)
+      ? `<div class="aviso"><b>Não informado:</b>
+        ${escapar(resumo.fontes.filter((f) => f.naoSei).map((f) => f.rotulo).join(', '))}.
+        ${escapar(AVISOS.naoSei)}</div>` : ''}
+    ${dk === 'a' && !legado && ri.flags?.aSemBilheteria
+      ? `<div class="aviso">${escapar(AVISOS.semBilheteria)}</div>` : ''}
+    ${dk === 'l' && !legado && ri.flags?.travaL
+      ? `<div class="aviso">${escapar(AVISOS.travaL)}</div>` : ''}
+
+    ${dk === 'e' && resumo?.cache.length ? `<div class="bloco">
+      <div class="blocoTitulo">Cachê médio por tipo de contratante</div>
+      <div class="comp">${resumo.cache.map((c) => `<div class="compItem">
+        <span class="compPct">${escapar(dinheiroRedondo(c.valor))}</span>
+        <span class="compLabel">${escapar(c.rotulo)}</span></div>`).join('')}</div>
+    </div>` : ''}
+
     ${dk === 'e' && comp.length ? `<div class="bloco">
       <div class="blocoTitulo">Composição da receita</div>
       <div class="comp">${comp.map((s) => `<div class="compItem">
@@ -298,15 +327,26 @@ const paginaDaDimensao = (
           <b style="color:${saldo >= 0 ? T.real : T.danger}">
             ${saldo >= 0 ? '+' : '−'}${dinheiroRedondo(saldo)}</b></div>
       </div>
+      ${resumo && resumo.bonus > 1 ? `<div class="saude">
+        <div class="saudeItem"><span>Saldo ajustado (+${Math.round((resumo.bonus - 1) * 100)}%)</span>
+          <b style="color:${resumo.saldoAjustado >= 0 ? T.real : T.danger}">
+            ${resumo.saldoAjustado >= 0 ? '+' : '−'}${dinheiroRedondo(resumo.saldoAjustado)}</b></div>
+        ${resumo.receitaLiquidaEstimada != null ? `<div class="saudeItem">
+          <span>Receita líquida estimada (${escapar(resumo.aliquotaRotulo ?? '')})</span>
+          <b>${dinheiroRedondo(resumo.receitaLiquidaEstimada)}</b></div>` : ''}
+      </div>` : ''}
       <div class="pilulas">
-        <span class="pilula ${inp.temCnpj ? 'pilulaOn' : ''}">${inp.temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
-        <span class="pilula ${inp.temEmpresario ? 'pilulaOn' : ''}">${inp.temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
+        <span class="pilula ${temCnpj ? 'pilulaOn' : ''}">${temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
+        <span class="pilula ${temEmpresario ? 'pilulaOn' : ''}">${temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
       </div>
+      ${resumo ? `<div class="fonteNota">A média mensal do setor cultural formal é
+        ${escapar(dinheiroRedondo(SIIC_MENSAL))} (SIIC/IBGE). Esta receita anual equivale a
+        ${escapar(resumo.vezesOSetor.toFixed(1).replace('.', ','))}× esse patamar.</div>` : ''}
     </div>` : ''}
 
     ${dk === 'a' && (['instagram', 'tiktok', 'youtube'] as const).some((k) => eng[k])
       ? `<div class="bloco">
-        <div class="blocoTitulo">Engajamento por rede</div>
+        <div class="blocoTitulo">Engajamento por rede${legado ? '' : ` <span class="blocoNota">${escapar(AVISOS.informativo)}</span>`}</div>
         ${(['instagram', 'tiktok', 'youtube'] as const).map((k) => {
           const e = eng[k];
           if (!e) return '';
@@ -459,8 +499,8 @@ export function montarDocumentoDoDiagnostico({
     }).join('')}
     <div class="topo">
       <span class="topoSelo">TOP</span>
-      <div><b>Top Tier.</b> Quando uma dimensão atinge o nível de excelência (o topo absoluto da
-        escala), ela ganha o selo Top Tier no seu diagnóstico. Vale para qualquer perfil e qualquer
+      <div><b>TOP ICON.</b> Quando uma dimensão atinge o nível de excelência (o topo absoluto da
+        escala), ela ganha o selo TOP ICON no seu diagnóstico. Vale para qualquer perfil e qualquer
         das quatro dimensões.</div>
     </div>`, autoria, agora));
 

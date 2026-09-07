@@ -3,7 +3,7 @@ import { AccessibilityInfo } from 'react-native';
 import { Provider } from 'react-redux';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
-import { QUIZ, REVENUE_SOURCES } from '@maestra/core/constants/quizDoDiagnostico';
+import { CTX_API, QUIZ, REVENUE_SOURCES, TIPOS_DE_CONTRATANTE_QUIZ } from '@maestra/core/constants/quizDoDiagnostico';
 import { store } from '@maestra/core/store/store';
 
 import CriarArtista from '../criar-artista';
@@ -11,7 +11,7 @@ import CriarArtista from '../criar-artista';
 // A criação de perfil — o fluxo inteiro, do nome no Spotify ao diagnóstico.
 //
 // O que este teste protege não é o desenho, é o CONTRATO com a edge `artist-diagnostic`: ela é
-// a mesma para a web e para o app, e lê `quizV3` com as chaves do roteiro do núcleo. Uma
+// a mesma para a web e para o app, e lê `quizV4` com as chaves do roteiro do núcleo. Uma
 // resposta gravada no formato errado (a matriz de imprensa é o caso: a web manda
 // `{ tipo, porte }`, não `"tipo:porte"`) não quebra nada aqui — quebra o diagnóstico, depois,
 // sem erro nenhum na tela.
@@ -91,10 +91,14 @@ const responderAPergunta = async (
     return;
   }
   if (pergunta.type === 'matrix') {
-    await usuario.press(tela.getAllByRole('checkbox')[0]);
+    // Uma escolha por tipo: as pílulas são radio, e a primeira de cada linha é "Nunca".
+    await usuario.press(tela.getAllByRole('radio')[1]);
   } else if (pergunta.type === 'revenue') {
     await usuario.type(tela.getByLabelText(REVENUE_SOURCES[0].label), '10');
-    await usuario.type(tela.getByLabelText(REVENUE_SOURCES[1].label), '20');
+    // Uma fonte marcada "não sei": é o caminho que o motor conta como zero e sinaliza (§4).
+    await usuario.press(tela.getByLabelText(`Não sei: ${REVENUE_SOURCES[1].label}`));
+  } else if (pergunta.type === 'cache') {
+    await usuario.type(tela.getByLabelText(TIPOS_DE_CONTRATANTE_QUIZ[0].label), '3000');
   } else {
     await usuario.type(tela.getByLabelText(pergunta.q), '10');
   }
@@ -129,6 +133,13 @@ describe('criar perfil', () => {
     });
     mockBuscar.mockResolvedValue([ARTISTA]);
     mockRpc.mockResolvedValue({ data: false });
+    // Toda escolha de perfil dispara a consulta prévia (§3.1, passo 2). O padrão devolve vazio,
+    // que é a rede de segurança: o quiz então pergunta os três campos de R.
+    mockInvocar.mockImplementation((_fn: string, opts: any) => Promise.resolve(
+      opts?.body?.preview
+        ? { data: { preview: true, api: {} }, error: null }
+        : { data: null, error: null },
+    ));
     // A fala é escrita letra a letra; quem pediu menos movimento recebe a frase inteira, e é
     // esse caminho que o teste usa — senão cada pergunta custaria dois segundos de relógio.
     jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
@@ -179,9 +190,13 @@ describe('criar perfil', () => {
   });
 
   it('o quiz inteiro chega na edge com as chaves do roteiro', async () => {
-    mockInvocar.mockResolvedValue({
-      data: { artistId: 'a-9', locked: true, realIndex: null, chartmetric: null }, error: null,
-    });
+    // Duas chamadas: a consulta prévia (§3.1, passo 2) e o diagnóstico. Aqui o preview volta vazio,
+    // então as três perguntas de autodeclaração de R aparecem — é a rede de segurança do §3.1.6.
+    mockInvocar.mockImplementation((_fn: string, opts: any) => Promise.resolve(
+      opts?.body?.preview
+        ? { data: { preview: true, api: {} }, error: null }
+        : { data: { artistId: 'a-9', locked: true, realIndex: null, chartmetric: null }, error: null },
+    ));
     const usuario = userEvent.setup();
     const tela = await montar();
 
@@ -190,32 +205,43 @@ describe('criar perfil', () => {
 
     await responderOQuiz(usuario, tela);
 
-    await waitFor(() => expect(mockInvocar).toHaveBeenCalledTimes(1));
-    const [nome, { body }] = mockInvocar.mock.calls[0] as [string, { body: any }];
+    await waitFor(() => expect(mockInvocar).toHaveBeenCalledTimes(2));
+    const [previewFn, previewOpts] = mockInvocar.mock.calls[0] as [string, { body: any }];
+    expect(previewFn).toBe('artist-diagnostic');
+    expect(previewOpts.body).toEqual({ preview: true, spotifyArtistId: 'sp-1' });
+    const [nome, { body }] = mockInvocar.mock.calls[1] as [string, { body: any }];
     expect(nome).toBe('artist-diagnostic');
     expect(body.name).toBe('AZMUTH BEATS');
     expect(body.spotifyArtistId).toBe('sp-1');
     expect(body.spotify).toEqual({ followers: 1234, image: ARTISTA.image });
 
-    // Toda pergunta que apareceu deixou resposta, e nenhuma chave inventada foi junto.
-    const chaves = Object.keys(body.quizV3);
+    // Toda pergunta que apareceu deixou resposta, e nenhuma chave inventada foi junto. O `_api`
+    // é o contexto da consulta prévia, não uma resposta: a edge ignora, mas não pode surpreender.
+    const chaves = Object.keys(body.quizV4).filter((c) => c !== CTX_API);
     expect(chaves.length).toBeGreaterThan(0);
     chaves.forEach((chave) => expect(QUIZ.map((p) => p.key)).toContain(chave));
 
     // A imprensa vai em objetos, não em "tipo:porte" — é o formato que o motor lê.
-    const imprensa = body.quizV3[QUIZ.find((p) => p.type === 'matrix')!.key];
+    const imprensa = body.quizV4[QUIZ.find((p) => p.type === 'matrix')!.key];
     if (imprensa) {
       expect(Array.isArray(imprensa)).toBe(true);
       expect(imprensa[0]).toEqual(expect.objectContaining({ tipo: expect.any(String), porte: expect.any(String) }));
     }
+
+    // A receita carrega o "não sei" até o motor: virar zero aqui apagaria a diferença entre
+    // "não recebi" e "não sei quanto recebi", que é justamente o que o relatório devolve.
+    expect(body.quizV4.revenueSources[REVENUE_SOURCES[1].key]).toBe('nao_sei');
+    // Base ANUAL: o cachê vem por tipo de contratante, não mais um número só.
+    expect(body.quizV4.cacheByType[TIPOS_DE_CONTRATANTE_QUIZ[0].key]).toBe(3000);
   });
 
   // Um perfil que já existe e já foi pago não repete o diagnóstico: entra direto.
   it('perfil reaproveitado e pago vai direto para o artista', async () => {
-    mockInvocar.mockResolvedValue({
-      data: { artistId: 'a-7', locked: false, reused: true, realIndex: null, chartmetric: null },
-      error: null,
-    });
+    mockInvocar.mockImplementation((_fn: string, opts: any) => Promise.resolve(
+      opts?.body?.preview
+        ? { data: { preview: true, api: {} }, error: null }
+        : { data: { artistId: 'a-7', locked: false, reused: true, realIndex: null, chartmetric: null }, error: null },
+    ));
     const usuario = userEvent.setup();
     const tela = await montar();
 
@@ -233,7 +259,9 @@ describe('criar perfil', () => {
   // nada — nem no aparelho, nem no log da edge — para saber por quê.
   it('quando a edge falha, a causa vai para o log e as respostas continuam de pé', async () => {
     const log = jest.spyOn(console, 'error').mockImplementation(() => {});
-    mockInvocar.mockRejectedValue(new Error('Failed to send a request to the Edge Function'));
+    mockInvocar.mockImplementation((_fn: string, opts: any) => (opts?.body?.preview
+      ? Promise.resolve({ data: { preview: true, api: {} }, error: null })
+      : Promise.reject(new Error('Failed to send a request to the Edge Function'))));
     const usuario = userEvent.setup();
     const tela = await montar();
 
@@ -248,14 +276,14 @@ describe('criar perfil', () => {
       expect.any(Error),
     );
 
-    // Tentar de novo repete a MESMA chamada: quem respondeu treze perguntas não as responde
-    // outra vez por causa de uma falha de rede.
+    // Tentar de novo repete a MESMA chamada: quem respondeu o quiz inteiro não o responde
+    // outra vez por causa de uma falha de rede. (A chamada 0 é a consulta prévia.)
     mockInvocar.mockResolvedValue({
       data: { artistId: 'a-9', locked: true, realIndex: null, chartmetric: null }, error: null,
     });
     await usuario.press(tela.getByLabelText('Tentar de novo'));
-    await waitFor(() => expect(mockInvocar).toHaveBeenCalledTimes(2));
-    expect(mockInvocar.mock.calls[1][1]).toEqual(mockInvocar.mock.calls[0][1]);
+    await waitFor(() => expect(mockInvocar).toHaveBeenCalledTimes(3));
+    expect(mockInvocar.mock.calls[2][1]).toEqual(mockInvocar.mock.calls[1][1]);
   });
 
   it('não deixa criar quando há perfis pendentes', async () => {

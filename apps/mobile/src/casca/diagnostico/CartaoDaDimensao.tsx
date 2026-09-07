@@ -6,11 +6,14 @@ import {
   dimStatusText, fmtBRL, fmtNum, fmtPct, type DimKey,
 } from '@maestra/core/constants/realCopy';
 import { dimNarrative } from '@maestra/core/constants/realNarrative';
+import {
+  AVISOS, ehLegado, linhasDaDimensao, resumoDoE, SIIC_MENSAL,
+} from '@maestra/core/services/realEngine/relatorio';
 
 // O cartão de UMA dimensão do boletim — o §9 do documento, e a maior peça da entrega.
 //
-// Traz, na ordem da web: a letra num disco, o nome e o subtítulo, o selo (Baixo/Alto/Top Tier),
-// a nota sobre 100, a régua com as duas marcas (acende em 70, Top Tier em 100), a linha de
+// Traz, na ordem da web: a letra num disco, o nome e o subtítulo, o selo (Baixo/Alto/TOP ICON),
+// a nota sobre 100, a régua com as duas marcas (acende em 70, TOP ICON em 100), a linha de
 // status, as sub-métricas, e a narrativa "O que isso revela".
 //
 // A narrativa NÃO é escrita aqui nem por IA: vem de `dimNarrative`, no núcleo, que a escolhe a
@@ -30,12 +33,20 @@ const Rotulo = ({ children }: { children: React.ReactNode }) => (
 );
 
 /** A composição da receita. A rosca da web vira barra empilhada: 104px de disco em 375 é pouco. */
-const Receita = ({ revenue }: { revenue: Record<string, unknown> }) => {
+const Receita = ({ real }: { real: Record<string, any> }) => {
+  const revenue = real.revenue || {};
+  const resumo = resumoDoE(real);
   const partes: { rotulo: string; valor: number }[] = [];
-  if (Number(revenue?.shows) > 0) partes.push({ rotulo: 'Shows', valor: Number(revenue.shows) });
-  Object.entries((revenue?.sources as Record<string, unknown>) || {}).forEach(([k, v]) => {
-    if (Number(v) > 0) partes.push({ rotulo: SRC_LABELS[k] || k, valor: Number(v) });
-  });
+  if (resumo) {
+    if (resumo.receitaShows > 0) partes.push({ rotulo: 'Shows', valor: resumo.receitaShows });
+    resumo.fontes.forEach((f) => { if (f.valor > 0) partes.push({ rotulo: f.rotulo, valor: f.valor }); });
+  } else {
+    if (Number(revenue?.shows) > 0) partes.push({ rotulo: 'Shows', valor: Number(revenue.shows) });
+    Object.entries((revenue?.sources as Record<string, unknown>) || {}).forEach(([k, v]) => {
+      if (Number(v) > 0) partes.push({ rotulo: SRC_LABELS[k] || k, valor: Number(v) });
+    });
+  }
+  const naoSei = resumo?.fontes.filter((f) => f.naoSei) ?? [];
   const total = partes.reduce((soma, x) => soma + x.valor, 0);
 
   if (!total) {
@@ -65,14 +76,33 @@ const Receita = ({ revenue }: { revenue: Record<string, unknown> }) => {
           <Text style={estilos.legendaValor}>{Math.round((parte.valor / total) * 100)}%</Text>
         </View>
       ))}
+      {/*
+        §11.3.4 — a fonte marcada "não sei" precisa aparecer. Sumir com ela no zero contaria uma
+        receita menor sem dizer por quê, e é justamente aí que mora a recomendação de gestão.
+      */}
+      {naoSei.length > 0 && (
+        <Text style={estilos.observacao}>
+          <Text style={estilos.observacaoForte}>Não informado: </Text>
+          {naoSei.map((f) => f.rotulo).join(', ')}. {AVISOS.naoSei}
+        </Text>
+      )}
     </View>
   );
 };
 
 /** O engajamento por rede, com a leitura do corte. */
-const Engajamento = ({ engagement }: { engagement: Record<string, { value: number; cut: number; above: boolean } | undefined> }) => (
+const Engajamento = ({ engagement, informativo }: {
+  engagement: Record<string, { value: number; cut: number; above: boolean } | undefined>;
+  informativo?: boolean;
+}) => (
   <View style={estilos.bloco}>
     <Rotulo>Engajamento por rede</Rotulo>
+    {/*
+      §8.2 e §11.3.5 — o engajamento está SUSPENSO do cálculo (a API entrega em 21% a 35% dos
+      casos, e a taxa não é autodeclarável). Mostrar sem dizer isso faria o artista atribuir a
+      nota dele a um número que não a moveu.
+    */}
+    {informativo && <Text style={estilos.observacao}>{AVISOS.informativo}</Text>}
     {([['Instagram', 'instagram'], ['TikTok', 'tiktok'], ['YouTube', 'youtube']] as const).map(
       ([rotulo, chave]) => {
         const e = engagement?.[chave];
@@ -107,7 +137,15 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
   const entradas = real.inputs || {};
   const receita = real.revenue || {};
 
+  const legado = ehLegado(real);
+  const resumo = resumoDoE(real);
+
   const linhas: { rotulo: string; num?: number | null; valor?: string; declarado?: boolean }[] =
+    // Na v4 as linhas vêm do núcleo, a mesma fonte da tela da web e do PDF. O legado (v2/v3)
+    // mantém as suas: aquelas entradas são números crus, sem proveniência, e a base é mensal.
+    !legado ? linhasDaDimensao(real, chave, chartmetric).map((l) => ({
+      rotulo: l.rotulo, num: l.num, valor: l.valor, declarado: l.fonte === 'self',
+    })) :
     chave === 'r' ? [
       { rotulo: 'Ouvintes Spotify', num: chartmetric?.monthly_listeners ?? entradas.spotifyListeners ?? null },
       { rotulo: 'Instagram', num: entradas.igFollowers ?? null },
@@ -154,9 +192,10 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
   const temDeclarado = linhas.some((l) => l.declarado);
   const narrativa = dimNarrative(chave, real);
 
-  const faturamento = Math.round(Number(receita.total ?? 0) * 12);
-  const investimento = Math.round(Number(entradas.investimento ?? 0));
-  const saldo = faturamento - investimento;
+  // A v4 lê o SALDO ANUAL direto do motor; o legado ainda multiplica a base mensal por doze.
+  const faturamento = resumo ? resumo.receitaAnual : Math.round(Number(receita.total ?? 0) * 12);
+  const investimento = resumo ? resumo.investimento : Math.round(Number(entradas.investimento ?? 0));
+  const saldo = resumo ? resumo.saldo : faturamento - investimento;
   const dinheiro = (n: number) => `R$ ${fmtNum(Math.abs(n))}`;
 
   return (
@@ -178,7 +217,7 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
               estilos.seloTexto,
               topo ? estilos.seloTextoTopo : alta ? estilos.seloTextoAlto : estilos.seloTextoBaixo,
             ]}>
-              {topo ? 'Top Tier' : alta ? 'Alto' : 'Baixo'}
+              {topo ? 'TOP ICON' : alta ? 'Alto' : 'Baixo'}
             </Text>
           </View>
           <Text style={estilos.nota}>
@@ -188,7 +227,7 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
       </View>
 
       <View style={estilos.regua}>
-        {/* Top Tier enche a régua em dourado: uma barra pela metade contradiria o selo. */}
+        {/* TOP ICON enche a régua em dourado: uma barra pela metade contradiria o selo. */}
         <View
           style={[
             estilos.preenchimento,
@@ -197,7 +236,7 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
               : { width: `${nota}%`, backgroundColor: alta ? COR.primaria : COR_DIAGNOSTICO.bolinhaApagada },
           ]}
         />
-        {/* As duas marcas: 70 acende, 100 é Top Tier. Sem elas a nota não diz se passou. */}
+        {/* As duas marcas: 70 acende, 100 é TOP ICON. Sem elas a nota não diz se passou. */}
         <View style={[estilos.marca, { left: '70%' }]} />
       </View>
       <Text style={estilos.status}>{dimStatusText(nota, alta, topo)}</Text>
@@ -220,26 +259,62 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
         </Text>
       )}
 
-      {chave === 'e' && <Receita revenue={receita} />}
-      {chave === 'e' && (!entradas.temCnpj || !entradas.temEmpresario) && (
-        <View style={estilos.selos}>
-          {!entradas.temCnpj && (
-            <View style={estilos.seloAmbar}><Text style={estilos.seloAmbarTexto}>Sem CNPJ</Text></View>
-          )}
-          {!entradas.temEmpresario && (
-            <View style={estilos.seloAmbar}><Text style={estilos.seloAmbarTexto}>Sem empresário</Text></View>
-          )}
+      {/* §11.3 — o que a interface é obrigada a dizer, junto do número a que se refere. */}
+      {chave === 'a' && !legado && !!real.flags?.aSemBilheteria && (
+        <Text style={estilos.aviso}>{AVISOS.semBilheteria}</Text>
+      )}
+      {chave === 'l' && !legado && !!real.flags?.travaL && (
+        <Text style={estilos.aviso}>{AVISOS.travaL}</Text>
+      )}
+
+      {chave === 'e' && <Receita real={real} />}
+      {/* Cachê médio por tipo de contratante (§7.5): a receita de shows assume distribuição igual
+          entre os tipos informados, e ver quais são deixa a aproximação à vista de quem lê. */}
+      {chave === 'e' && !!resumo?.cache.length && (
+        <View style={estilos.bloco}>
+          <Rotulo>Cachê médio por tipo de contratante</Rotulo>
+          {resumo.cache.map((c) => (
+            <View key={c.tipo} style={estilos.linhaDaLegenda}>
+              <Text style={estilos.legendaRotulo}>{c.rotulo}</Text>
+              <Text style={estilos.legendaValor}>{fmtBRL(c.valor)}</Text>
+            </View>
+          ))}
         </View>
       )}
+      {chave === 'e' && (() => {
+        const semCnpj = resumo ? real.raw?.temCnpj === false : !entradas.temCnpj;
+        const semEmpresario = resumo ? real.raw?.temEmpresario === false : !entradas.temEmpresario;
+        if (!semCnpj && !semEmpresario) return null;
+        return (
+          <View style={estilos.selos}>
+            {semCnpj && (
+              <View style={estilos.seloAmbar}><Text style={estilos.seloAmbarTexto}>Sem CNPJ</Text></View>
+            )}
+            {semEmpresario && (
+              <View style={estilos.seloAmbar}><Text style={estilos.seloAmbarTexto}>Sem empresário</Text></View>
+            )}
+          </View>
+        );
+      })()}
       {chave === 'e' && (
         <View style={estilos.bloco}>
           <Rotulo>Saúde financeira · 12 meses</Rotulo>
           <View style={estilos.grade}>
             {([
-              ['Faturamento', dinheiro(faturamento), false],
+              [resumo ? 'Receita' : 'Faturamento', dinheiro(faturamento), false],
               ['Investimento', dinheiro(investimento), false],
               ['Saldo', `${saldo >= 0 ? '+' : '−'}${dinheiro(saldo)}`, true],
-            ] as const).map(([rotulo, valor, ehSaldo]) => (
+              ...(resumo && resumo.bonus > 1 ? [[
+                `Saldo ajustado (+${Math.round((resumo.bonus - 1) * 100)}%)`,
+                `${resumo.saldoAjustado >= 0 ? '+' : '−'}${dinheiro(resumo.saldoAjustado)}`,
+                true,
+              ]] as const : []),
+              ...(resumo?.receitaLiquidaEstimada != null ? [[
+                `Líquida estimada (${resumo.aliquotaRotulo})`,
+                dinheiro(resumo.receitaLiquidaEstimada),
+                false,
+              ]] as const : []),
+            ] as readonly (readonly [string, string, boolean])[]).map(([rotulo, valor, ehSaldo]) => (
               <View key={rotulo} style={estilos.itemDaGrade}>
                 <Text style={estilos.gradeRotulo}>{rotulo}</Text>
                 <Text style={[
@@ -251,9 +326,26 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
               </View>
             ))}
           </View>
+          {saldo < 0 && <Text style={estilos.aviso}>{AVISOS.saldoNegativo}</Text>}
+          {/*
+            Comparação com o setor cultural formal (SIIC/IBGE), §7.3. É exibição: a régua do E vem
+            da PNAD (P95 da renda individual), e trocar uma pela outra mudaria o método.
+          */}
+          {!!resumo && (
+            <Text style={estilos.observacao}>
+              {`A média mensal do setor cultural formal é ${fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). `}
+              {`Sua receita anual equivale a ${resumo.vezesOSetor.toFixed(1).replace('.', ',')}× esse patamar.`}
+            </Text>
+          )}
+          {!!resumo?.recomendarEmpresariamento && (
+            <Text style={estilos.observacao}>
+              Artistas com empresariamento faturam mais na Pesquisa Empresariamento 2025. É a
+              estrutura que mais muda esta dimensão.
+            </Text>
+          )}
         </View>
       )}
-      {chave === 'a' && <Engajamento engagement={real.engagement} />}
+      {chave === 'a' && <Engajamento engagement={real.engagement} informativo={!legado} />}
 
       <View style={estilos.revelacao}>
         <Rotulo>O que isso revela</Rotulo>
@@ -281,7 +373,11 @@ const estilos = StyleSheet.create({
     width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: COR_DIAGNOSTICO.titulo, backgroundColor: COR_DIAGNOSTICO.discoFundo,
   },
-  letra: { fontSize: 20, fontWeight: '700', color: COR_DIAGNOSTICO.titulo },
+  // A mesma Georgia itálica do índice: é a mesma letra da sigla, no disco da dimensão.
+  letra: {
+    fontFamily: 'Georgia', fontStyle: 'italic',
+    fontSize: 20, fontWeight: '700', color: COR_DIAGNOSTICO.titulo,
+  },
   nome: { fontSize: 17, fontWeight: '800', color: COR_DIAGNOSTICO.titulo },
   subnome: { fontSize: 11.5, letterSpacing: 0.23, color: COR_DIAGNOSTICO.texto },
   notaBloco: { alignItems: 'flex-end', gap: 4 },
@@ -317,6 +413,15 @@ const estilos = StyleSheet.create({
     color: COR_DIAGNOSTICO.secao,
   },
   vazio: { fontSize: 12.5, color: COR_DIAGNOSTICO.texto, marginTop: 18 },
+  // Nota discreta: o que é informativo, o que não foi informado, a comparação com o setor.
+  observacao: { fontSize: 11.5, lineHeight: 16.5, color: COR_DIAGNOSTICO.fonte, marginTop: 10 },
+  observacaoForte: { fontWeight: '800' },
+  // Os textos obrigatórios do §11.3 — precisam ler como aviso, não como legenda.
+  aviso: {
+    marginTop: 12, paddingVertical: 10, paddingHorizontal: 12, borderRadius: RAIO.campo,
+    backgroundColor: COR_DIAGNOSTICO.criarChipFundo,
+    fontSize: 12.5, lineHeight: 18, color: COR_DIAGNOSTICO.texto,
+  },
   // A rosca da web vira barra empilhada: 104px de disco em 375 fica pequeno demais para ler.
   barraEmpilhada: { flexDirection: 'row', height: 10, borderRadius: 5, overflow: 'hidden' },
   linhaDaLegenda: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -332,8 +437,15 @@ const estilos = StyleSheet.create({
   },
   seloAmbarTexto: { fontSize: 11, fontWeight: '700', color: COR_DIAGNOSTICO.selo },
 
-  grade: { flexDirection: 'row', gap: 12 },
-  itemDaGrade: { flex: 1, gap: 4 },
+  // A grade nasceu com TRÊS colunas (receita, investimento, saldo) e a v4 acrescentou mais duas:
+  // o saldo ajustado pelo bônus de estrutura e a receita líquida estimada. Em cinco colunas os
+  // rótulos cortavam no meio da palavra ("Investime", "Líquida"). Agora ela quebra em duas linhas
+  // com no mínimo 44% de largura por item, e cada rótulo cabe inteiro.
+  grade: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  // `minWidth` em vez de `flexBasis` percentual: a base em porcentagem depende de o pai ter
+  // largura resolvida, e aqui ela não estava quebrando a linha. Com 140pt de mínimo, cabem dois
+  // itens por linha num cartão de ~350pt e o terceiro desce — sem depender de resolução de %.
+  itemDaGrade: { flexGrow: 1, minWidth: 140, gap: 4 },
   gradeRotulo: { fontSize: 11, fontWeight: '600', color: COR_DIAGNOSTICO.texto },
   gradeValor: { fontSize: 15, fontWeight: '800', letterSpacing: -0.15, color: COR_DIAGNOSTICO.titulo },
   acima: { color: COR_DIAGNOSTICO.acima },
@@ -347,5 +459,9 @@ const estilos = StyleSheet.create({
   revelacao: { marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: COR.divisoria, gap: 8 },
   chamada: { fontSize: 15, fontWeight: '800', letterSpacing: -0.15, lineHeight: 22, color: COR_DIAGNOSTICO.titulo },
   paragrafo: { fontSize: 13, lineHeight: 20, color: COR_DIAGNOSTICO.titulo },
-  paragrafoForte: { fontWeight: '800' },
+  // O `lineHeight` REPETIDO no trecho aninhado não é redundância: no iOS, um <Text> dentro de
+  // outro que só herda parte da métrica faz o pai medir a altura errado, e a última linha do
+  // parágrafo aparece em branco — o espaço existe, os glifos somem. Foi o que cortou o "delas
+  // oscila." do parágrafo da receita.
+  paragrafoForte: { fontWeight: '800', fontSize: 13, lineHeight: 20 },
 });
