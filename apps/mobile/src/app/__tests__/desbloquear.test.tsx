@@ -2,7 +2,7 @@ import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
-import { CHAMADA_DO_PLANEJAMENTO } from '@maestra/core/constants/realNarrative';
+import { CHAMADA_DO_PLANEJAMENTO, LEVAR_O_DIAGNOSTICO } from '@maestra/core/constants/realNarrative';
 import { store } from '@maestra/core/store/store';
 
 import Desbloquear from '../desbloquear/[id]';
@@ -165,7 +165,7 @@ describe('desbloqueio do perfil', () => {
       const arvore = JSON.stringify(tela.toJSON());
 
       const convite = arvore.indexOf(CHAMADA_DO_PLANEJAMENTO.titulo);
-      const levar = arvore.indexOf('Leve seu diagnóstico');
+      const levar = arvore.indexOf(LEVAR_O_DIAGNOSTICO.titulo);
 
       expect(convite).toBeGreaterThan(-1);
       expect(levar).toBeGreaterThan(-1);
