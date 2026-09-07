@@ -30,6 +30,15 @@ jobs:
         with:
           node-version: '20'
 
+      # SÓ o TypeScript, e não a árvore inteira: o `check-edge-functions.mjs` usa o parser dele e
+      # mais nada. Um `npm ci` na raiz traria o CRA, o antd e o resto do front para rodar um
+      # parser em 40 arquivos — minutos de instalação por um passo de segundos.
+      #
+      # A versão sai do próprio package.json: um parser mais novo que o do desenvolvedor
+      # recusaria sintaxe que passa na máquina dele, e um mais velho deixaria passar.
+      - name: TypeScript (só o parser)
+        run: npm install --no-save --no-audit --no-fund "typescript@$(node -p "require('./package.json').devDependencies.typescript")"
+
       # O que já existia: as 40 funções passam pelo parser antes de qualquer deploy. É barato e
       # pega o erro de digitação que hoje só aparece quando a função já está no ar.
       - name: Sintaxe das funções
