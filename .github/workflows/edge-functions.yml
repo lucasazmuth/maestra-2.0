@@ -58,10 +58,16 @@ jobs:
       #
       # Falhar aqui NÃO significa ataque: quase sempre significa que uma dependência entrou ou
       # saiu de alguma função. O passo seguinte imprime o lock novo, pronto para commitar.
+      #
+      # `--node-modules-dir=none` porque o passo do TypeScript deixa um `node_modules/` na raiz,
+      # e o Deno, ao encontrar um, passa a exigir que TODA dependência npm esteja lá dentro —
+      # inclusive as que ele mesmo baixaria. Em produção não existe node_modules nenhum: quem
+      # roda essas funções é o Deno do Supabase, com o cache dele. A flag diz isso.
       - name: As dependências batem com o lock?
         id: lock
         run: |
-          deno cache --frozen --lock=supabase/functions/deno.lock \
+          deno cache --frozen --node-modules-dir=none \
+            --lock=supabase/functions/deno.lock \
             supabase/functions/*/index.ts
 
       # Só quando o de cima falha. O Deno 2 não tem mais `--lock-write`: ele reescreve o lock
@@ -70,10 +76,13 @@ jobs:
         if: failure() && steps.lock.outcome == 'failure'
         run: |
           rm -f supabase/functions/deno.lock
-          deno cache --lock=supabase/functions/deno.lock supabase/functions/*/index.ts
+          deno cache --node-modules-dir=none \
+            --lock=supabase/functions/deno.lock supabase/functions/*/index.ts
           echo "::error::O deno.lock não corresponde ao que as funções importam hoje."
           echo "Regenere localmente com:"
           echo "  rm supabase/functions/deno.lock"
           echo "  deno cache --lock=supabase/functions/deno.lock supabase/functions/*/index.ts"
+          echo "--- lock completo ---"
+          cat supabase/functions/deno.lock
           echo "--- diff ---"
           git --no-pager diff -- supabase/functions/deno.lock
