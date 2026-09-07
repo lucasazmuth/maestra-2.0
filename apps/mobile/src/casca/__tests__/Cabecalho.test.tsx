@@ -85,4 +85,20 @@ describe('cabeçalho do artista', () => {
     await waitFor(() => expect(canais.length).toBeGreaterThanOrEqual(2));
     expect(new Set(canais).size).toBe(canais.length);
   });
+
+  // O menu do sistema vivia só na lista de perfis: ao entrar num artista o botão sumia, e com
+  // ele os únicos caminhos para Suporte e Sair da conta — nenhum dos dois está na ilha de baixo.
+  it('leva o menu do sistema para dentro do artista, ao lado da Nyta e do sino', async () => {
+    const tela = await render(
+      <Provider store={store}>
+        <SafeAreaProvider initialMetrics={MEDIDAS}>
+          <Cabecalho artista={comDiagnostico} id={comDiagnostico.id} />
+        </SafeAreaProvider>
+      </Provider>,
+    );
+
+    expect(tela.getByLabelText('Abrir Nyta IA')).toBeTruthy();
+    expect(tela.getByLabelText('Menu do sistema')).toBeTruthy();
+    await waitFor(() => expect(tela.getByLabelText('Notificações (3 não lidas)')).toBeTruthy());
+  });
 });

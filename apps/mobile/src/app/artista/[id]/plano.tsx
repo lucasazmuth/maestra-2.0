@@ -4,7 +4,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_CABECALHO_DE_MODULO, COR_PLANO, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_PLANO, RAIO } from '@maestra/core/constants/design';
 import { TASK_OWNER_SELF, TASK_TYPES } from '@maestra/core/constants/maestra';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { ActionTask, ArtistMember, Strategy } from '@maestra/core/interfaces/maestra';
@@ -14,6 +14,7 @@ import { buildActionPlan } from '@maestra/core/services/planoDeAcao';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch } from '@maestra/core/store/store';
 
+import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { Arquivadas } from '@/casca/plano/Arquivadas';
 import { Chip, Escolha, type Opcao } from '@/casca/plano/Escolha';
 import { FichaDaTarefa } from '@/casca/plano/FichaDaTarefa';
@@ -99,9 +100,9 @@ export default function Plano() {
   }, [artista?.user_id, usuario, equipe, meuNome, minhaFoto]);
 
   // Em ORDEM DE PRIORIDADE (`finalScore` decrescente), como a web — não na ordem em que foram
-  // salvas. É o "Ranking de execução" do título: sem o ordenamento, o app numerava
-  // "ESTRATÉGIA #01" numa estratégia que na web é a quinta, e as duas telas discordavam sobre
-  // qual é a primeira coisa a fazer.
+  // salvas. A lista já se chamou "Ranking de execução" por causa disto, e o rótulo saiu, mas a
+  // ordem continua sendo o ponto: sem ela, o app numerava "ESTRATÉGIA #01" numa estratégia que
+  // na web é a quinta, e as duas telas discordavam sobre qual é a primeira coisa a fazer.
   const todas: Strategy[] = useMemo(
     () => [...(artista?.content?.strategies ?? [])].sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0)),
     [artista?.content?.strategies],
@@ -230,11 +231,10 @@ export default function Plano() {
             regra que parece esconde-lo e de filho direto de `.board-content`, e o heading dos
             modulos e filho da PAGINA. */}
         <View style={estilos.cabecalhoDaPagina}>
-          <Text style={estilos.sobretitulo}>EXECUÇÃO DIÁRIA</Text>
-          <Text style={estilos.titulo}>Plano de Ação</Text>
-          <Text style={estilos.apoio}>
-            Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase.
-          </Text>
+          <CabecalhoDoModulo
+            titulo="Plano de Ação"
+            descricao="Execute suas estratégias em tarefas e acompanhe o progresso até subir de fase."
+          />
         </View>
 
         {estrategias.length === 0 ? (
@@ -247,33 +247,39 @@ export default function Plano() {
           </View>
         ) : (
           <>
-            {/* A moldura "Ranking de execucao" envolve a lista inteira, com a contagem de
-                estrategias a direita. */}
-            <View style={estilos.moldura}>
-              {/* No celular a web ESCONDE o kicker "ESTRATÉGIAS DO PLANO" e a contagem
-                  "N estratégias" (regra de 700px): o kicker repete o título logo abaixo, e a
-                  contagem repete o que a lista mostra. Eu tinha portado os dois. */}
-              <View style={estilos.molduraTopo}>
-                <Text style={estilos.molduraTitulo}>Ranking de execução</Text>
-                {arquivadas.length > 0 && (
-                  <Pressable
-                    style={estilos.arquivadas}
-                    onPress={() => setArquivadasAbertas(true)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Estratégias arquivadas: ${arquivadas.length}`}
-                  >
-                    <Feather name="archive" size={13} color={COR_PLANO.contagemTexto} />
-                    <Text style={estilos.arquivadasTexto}>Arquivadas ({arquivadas.length})</Text>
-                  </Pressable>
-                )}
-              </View>
+            {/* A lista das estratégias, sem cabeçalho.
+                Ela tinha uma faixa em cima escrita "Ranking de execução" — um rótulo que
+                repetia o que a lista já mostra, ocupando uma tela estreita onde cada linha
+                conta. A web esconde no celular, pela mesma razão, o kicker "ESTRATÉGIAS DO
+                PLANO" e a contagem "N estratégias".
 
+                O que aquela faixa também guardava era o acesso às arquivadas — e isso NÃO pode
+                sair junto, ou elas viram um dado sem porta. Ele desce para logo acima da lista,
+                e só aparece quando existe alguma. */}
+            {arquivadas.length > 0 && (
+              <View style={estilos.linhaDasArquivadas}>
+                <Pressable
+                  style={estilos.arquivadas}
+                  onPress={() => setArquivadasAbertas(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Estratégias arquivadas: ${arquivadas.length}`}
+                >
+                  <Feather name="archive" size={13} color={COR_PLANO.contagemTexto} />
+                  <Text style={estilos.arquivadasTexto}>Arquivadas ({arquivadas.length})</Text>
+                </Pressable>
+              </View>
+            )}
+
+            <View style={estilos.moldura}>
               <View style={estilos.listaDeEstrategias}>
             {estrategias.map((estrategia, indice) => {
               const { prontas, total, completa } = progresso(estrategia);
               const estaAberta = abertaAgora === estrategia.id;
               return (
-              <View key={estrategia.id} style={[estilos.bloco, estaAberta && estilos.blocoAberto]}>
+              <View
+                key={estrategia.id}
+                style={[estilos.bloco, indice < estrategias.length - 1 && estilos.comFio]}
+              >
                 <Pressable
                   style={[estilos.cabecalho, estaAberta && estilos.cabecalhoAberto]}
                   onPress={() => setAberta(estaAberta ? FECHADA : estrategia.id)}
@@ -474,44 +480,47 @@ const estilos = StyleSheet.create({
   // e uma lista de linhas de acordeao com contorno proprio, dentro de um respiro de 14.
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
-  conteudo: { paddingHorizontal: 18, paddingTop: 24, paddingBottom: 122 },
-  cabecalhoDaPagina: {
-    paddingBottom: 30, marginBottom: 22,
-    borderBottomWidth: 1, borderBottomColor: COR_CABECALHO_DE_MODULO.fio,
+  conteudo: {
+    // Sem recuo de cima: ele é todo do `CabecalhoDoModulo`, para o título nascer à mesma
+    // altura em todos os módulos.
+    paddingHorizontal: 18, paddingBottom: 122,
   },
-  sobretitulo: {
-    fontSize: 9, fontWeight: '800', color: COR_CABECALHO_DE_MODULO.rotulo, marginBottom: 8,
-  },
-  titulo: { fontSize: 30, fontWeight: '800', color: COR_CABECALHO_DE_MODULO.titulo },
-  apoio: { fontSize: 12, color: COR_CABECALHO_DE_MODULO.apoio, lineHeight: 19, marginTop: 9 },
+  /** Só a folga até a lista: o resto do cabeçalho é do `CabecalhoDoModulo`. */
+  cabecalhoDaPagina: { marginBottom: FOLGA_APOS_O_CABECALHO },
 
-  // A moldura "Ranking de execucao": um contorno so em volta da lista inteira.
+  /**
+   * A lista é uma FAIXA CONTÍNUA branca, com um contorno só em volta de tudo — o mesmo desenho
+   * do catálogo de músicas.
+   *
+   * Era uma pilha de caixas: cada estratégia com seu próprio contorno, canto e folga, dentro de
+   * outra caixa. Numa tela estreita isso vira uma sucessão de molduras aninhadas, e o olho
+   * gasta atenção em bordas em vez de gastar no conteúdo. Lista e pilha de caixas não são a
+   * mesma coisa, e no celular a web troca uma pela outra.
+   */
   moldura: {
     borderWidth: 1, borderColor: COR_PLANO.molduraContorno, borderRadius: 8, overflow: 'hidden',
+    backgroundColor: COR.superficie,
   },
-  // Sem o kicker, o cabeçalho encolhe: 12/14 de recuo, como o da web no celular.
-  molduraTopo: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-    paddingHorizontal: 14, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: COR_PLANO.molduraContorno,
-  },
-  molduraTitulo: { fontSize: 15, color: COR_PLANO.molduraTitulo },
+  /** A linha das arquivadas, acima da lista: alinhada à direita e só quando há alguma. */
+  linhaDasArquivadas: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 },
   arquivadas: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     borderRadius: RAIO.pilula, paddingVertical: 7, paddingHorizontal: 10,
     backgroundColor: COR_PLANO.contagemFundo,
   },
   arquivadasTexto: { fontSize: 10, fontWeight: '900', color: COR_PLANO.contagemTexto },
-  listaDeEstrategias: { padding: 14, gap: 10 },
+  /** Sem recuo e sem folga: as faixas se encostam, e o fio entre elas é a separação. */
+  listaDeEstrategias: {},
   aviso: {
     borderWidth: 1, borderColor: COR_PLANO.contorno, borderRadius: 8, padding: 18, gap: 6, marginTop: 10,
   },
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_PLANO.titulo },
   avisoTexto: { fontSize: 14, color: COR.secundario, lineHeight: 20 },
 
-  // A linha do acordeao: contorno fino, e um azul mais vivo quando aberta.
-  bloco: { borderWidth: 1, borderColor: COR_PLANO.contorno, borderRadius: 8, overflow: 'hidden' },
-  blocoAberto: { borderColor: COR_PLANO.contornoAberta },
+  // A faixa do acordeão. Sem contorno próprio: o que separa uma da seguinte é o fio de baixo,
+  // e a última não tem nenhum — senão ele desenharia uma linha solta encostada no contorno.
+  bloco: {},
+  comFio: { borderBottomWidth: 1, borderBottomColor: COR_PLANO.fio },
   cabecalho: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 16 },
   // Aberta, o cabecalho ganha um azul levissimo — o bastante pra dizer qual e, sem virar bloco.
   cabecalhoAberto: { backgroundColor: COR_PLANO.cabecalhoAberta },

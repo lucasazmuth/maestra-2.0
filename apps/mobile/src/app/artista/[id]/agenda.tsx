@@ -13,6 +13,7 @@ import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities
 import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
 import { listEvents } from '@maestra/core/services/db/events';
 
+import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
 import { FolhaDeCompromisso } from '@/casca/agenda/FolhaDeCompromisso';
 import { useArtistaDaRota } from '@/nucleo/artista';
 
@@ -180,17 +181,6 @@ export default function Agenda() {
             })}
           </View>
 
-          {podeEditar && (
-            <Pressable
-              style={estilos.novo}
-              onPress={() => criar(diaEmFoco)}
-              accessibilityRole="button"
-              accessibilityLabel="Adicionar compromisso"
-            >
-              <Feather name="plus" size={15} color={COR.sobrePrimaria} />
-              <Text style={estilos.novoTexto}>Compromisso</Text>
-            </Pressable>
-          )}
         </View>
       </View>
 
@@ -334,6 +324,10 @@ export default function Agenda() {
           podeExcluir={!editando || !eTarefa(editando)}
         />
       )}
+
+      {podeEditar && (
+        <BotaoFlutuante rotulo="Adicionar compromisso" aoTocar={() => criar(diaEmFoco)} />
+      )}
     </View>
   );
 }
@@ -343,7 +337,10 @@ const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR_AGENDA.fundo },
   flex: { flex: 1, minWidth: 0 },
   espera: { marginTop: 48 },
-  conteudo: { paddingHorizontal: 18, paddingBottom: 122 },
+  // 196 = a ilha (34 de reserva + 78) mais o botão flutuante (14 de folga + 56) e mais 14. Eram
+  // 122, que só vencia a ilha: a última linha da lista ficava permanentemente debaixo do botão,
+  // com os controles dela inalcançáveis por mais que se rolasse.
+  conteudo: { paddingHorizontal: 18, paddingBottom: 196 },
 
   ferramentas: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 14, gap: 12 },
   linhaDeNavegacao: { flexDirection: 'row', alignItems: 'center', gap: 14 },
@@ -363,12 +360,6 @@ const estilos = StyleSheet.create({
   },
   abaTexto: { fontSize: 10, fontWeight: '800', color: COR_AGENDA.navegar },
   abaTextoAceso: { color: COR_AGENDA.abaAtivaTexto },
-  novo: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto',
-    paddingVertical: 10, paddingHorizontal: 12,
-    borderRadius: 7, backgroundColor: COR.primaria,
-  },
-  novoTexto: { fontSize: 11, fontWeight: '800', color: COR.sobrePrimaria },
 
   diaTodo: {
     flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 57,

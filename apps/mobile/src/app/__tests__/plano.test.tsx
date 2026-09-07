@@ -105,14 +105,19 @@ describe('plano de acao', () => {
     expect(tela.queryByText('Mapear três casas na cidade vizinha')).toBeNull();
   });
 
-  // No CELULAR a web esconde o kicker "ESTRATÉGIAS DO PLANO" e a contagem "N estratégias" (a
-  // regra de 700px diz por quê: o kicker repete o título logo abaixo, e a contagem repete o que
-  // a lista mostra). Eu tinha portado os dois — este teste chegou a exigir a contagem.
-  it('no celular o cabeçalho da moldura é só o título', async () => {
+  // A lista não tem cabeçalho nenhum. A web já esconde no celular o kicker "ESTRATÉGIAS DO
+  // PLANO" e a contagem "N estratégias" (a regra de 700px diz por quê: o kicker repete o título
+  // logo acima, e a contagem repete o que a lista mostra). O rótulo "Ranking de execução"
+  // caía no mesmo problema e ocupava uma faixa inteira numa tela onde cada linha conta.
+  it('a lista vai direto ao ponto, sem faixa de título em cima', async () => {
     const tela = await montar();
-    expect(tela.getByText('Ranking de execução')).toBeTruthy();
+
+    expect(tela.queryByText('Ranking de execução')).toBeNull();
     expect(tela.queryByText('ESTRATÉGIAS DO PLANO')).toBeNull();
     expect(tela.queryByText('2 estratégias')).toBeNull();
+    // E a lista continua onde estava.
+    expect(tela.getByText('Levar o show para uma segunda praça')).toBeTruthy();
+    expect(tela.getByText('ESTRATÉGIA #01')).toBeTruthy();
   });
 
   // A caixa marcada precisa ser legivel por leitor de tela, nao so visualmente riscada. E o

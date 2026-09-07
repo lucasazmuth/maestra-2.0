@@ -1,6 +1,7 @@
 import { render, userEvent } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { StyleSheet } from 'react-native';
+import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 
 import { WIZARD_TOTAL_STEPS, WIZARD_VERSION } from '@maestra/core/constants/maestra';
@@ -48,7 +49,20 @@ const semearPerfis = (perfis: unknown[]) =>
   store.dispatch({ type: 'artists/fetchArtists/fulfilled', payload: perfis });
 
 // `render` do RNTL 14 e assincrono.
-const montar = () => render(<Provider store={store}><Perfis /></Provider>);
+//
+// O provedor de margem segura entra aqui porque o menu do sistema le a margem de cima para
+// abrir ABAIXO do cabecalho, em vez de num `top` fixo. Fora de um aparelho ele precisa das
+// medidas na mao, senao o hook levanta.
+const MEDIDAS: Metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
+
+const montar = () => render(
+  <Provider store={store}>
+    <SafeAreaProvider initialMetrics={MEDIDAS}><Perfis /></SafeAreaProvider>
+  </Provider>,
+);
 
 
 
@@ -56,6 +70,37 @@ describe('lista de perfis', () => {
   beforeEach(() => {
     mockPush.mockClear();
     semearPerfis([comDiagnostico, semDiagnostico]);
+  });
+
+  // A BARRA DO SISTEMA — o cabeçalho desta tela.
+  //
+  // Ela já viveu num componente próprio e voltou para cá. Os testes ficaram: são o que garante
+  // que a volta não perdeu nada pelo caminho.
+  describe('a barra do sistema', () => {
+    it('tem a marca, o sino e o menu', async () => {
+      const tela = await montar();
+
+      expect(tela.getByLabelText('Maestra. Ir para os perfis')).toBeTruthy();
+      expect(tela.getByLabelText('Notificações')).toBeTruthy();
+      expect(tela.getByLabelText('Menu do sistema')).toBeTruthy();
+    });
+
+    it('o sino leva às notificações', async () => {
+      const tela = await montar();
+      await userEvent.setup().press(tela.getByLabelText('Notificações'));
+
+      expect(mockPush).toHaveBeenCalledWith('/notificacoes');
+    });
+
+    // A tela em que se está acende no menu — e "Trocar perfil" nem entra, porque aqui ele só
+    // fecharia o menu e deixaria a pessoa onde já estava.
+    it('o menu sabe que já estamos nos perfis', async () => {
+      const tela = await montar();
+      await userEvent.setup().press(tela.getByLabelText('Menu do sistema'));
+
+      expect(tela.getByText('Configurações')).toBeTruthy();
+      expect(tela.queryByText('Trocar perfil')).toBeNull();
+    });
   });
 
   // Para onde um perfil abre e regra do NUCLEO (`artistEntryRoute`), a mesma da web: sem

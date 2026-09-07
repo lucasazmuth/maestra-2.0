@@ -3,7 +3,7 @@ import {
   ActivityIndicator, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 import * as Clipboard from 'expo-clipboard';
@@ -18,6 +18,7 @@ import {
 import { useCheckoutForm } from '@maestra/core/hooks/useCheckoutForm';
 import { useCoupon } from '@maestra/core/hooks/useCoupon';
 import { fmtBRL } from '@maestra/core/hooks/usePlanPrices';
+import { CHAMADA_DO_PLANEJAMENTO } from '@maestra/core/constants/realNarrative';
 import { shouldEnrichChartmetric } from '@maestra/core/lib/chartmetricFreshness';
 import { supabase } from '@maestra/core/lib/supabase';
 import { artistsActions } from '@maestra/core/store/slices/artists';
@@ -31,7 +32,8 @@ import { CampoDeCpf, FormularioDoCartao } from '@/casca/checkout/Cartao';
 import { Cupom } from '@/casca/checkout/Cupom';
 import { Metodos, type MeioDePagamento } from '@/casca/checkout/Metodos';
 import { Parcelas } from '@/casca/checkout/Parcelas';
-import { Relatorio } from '@/casca/diagnostico/Relatorio';
+import { FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
+import { Relatorio, mostrarBarraDoConvite } from '@/casca/diagnostico/Relatorio';
 import { MaestraMarca } from '@/icones';
 import { MODO_DE_VENDA, VENDE_DESBLOQUEIO_NO_APP, irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
@@ -45,14 +47,13 @@ import { useSessao } from '@/nucleo/sessao';
 // Regras, validações e cobrança vêm todas do NÚCLEO — `useCheckoutForm`, `useCoupon` e os thunks
 // da Asaas são os mesmos das duas telas de checkout da web. O que existe aqui é o desenho.
 //
-// ⚠️ O CHECKOUT NÃO RODA NO APP. A 3.1.1 alcança o desbloqueio do mesmo jeito que a assinatura
-// — o texto dela cita "unlocking a full version" ao lado de "subscriptions" —, então a cobrança
-// acontece no navegador, pelo repasse autenticado (`nucleo/loja`). O checkout continua inteiro
-// aqui atrás de `VENDE_DESBLOQUEIO_NO_APP`, porque a web e o Android o usam; ligar de volta é
-// uma linha.
+// ⚠️ O CHECKOUT RODA AQUI, por decisão do produto — cartão e PIX pela Asaas. A 3.1.1 alcança o
+// desbloqueio do mesmo jeito que alcança a assinatura: o texto dela cita "unlocking a full
+// version" ao lado de "subscriptions". A leitura, a decisão e as duas saídas estão em
+// `nucleo/loja`; a tela tem os DOIS corpos e escolhe por `VENDE_DESBLOQUEIO_NO_APP`, então
+// devolver a compra ao navegador é uma linha, sem reescrever nada.
 //
-// O que fica no app: o diagnóstico, o que o desbloqueio libera e o resgate de código de acesso,
-// que não é compra.
+// A assinatura NÃO acompanha: ela é recorrente e continua saindo para o checkout da web.
 
 type Etapa = 'diagnostico' | 'pagamento' | 'pix' | 'pronto';
 
@@ -82,6 +83,19 @@ export default function Desbloquear() {
   const rolagem = useRef<ScrollView>(null);
   const alturaDoFormulario = useRef(0);
 
+  // A barra fixa do rodapé, com o convite para o planejamento.
+  //
+  // Ela aparece DEPOIS que o cartão do perfil sai da tela — quem acabou de ver a própria fase
+  // ainda está no "uau", e pedir a decisão ali atropela a leitura — e some quando o convite de
+  // verdade entra em cena, para não haver dois botões dizendo a mesma coisa ao mesmo tempo.
+  //
+  // É a mesma regra dos dois `IntersectionObserver` da web, com o que o React Native tem:
+  // `onLayout` para as âncoras e `onScroll` para a posição.
+  const margem = useSafeAreaInsets();
+  const [ancoras, setAncoras] = useState<{ fimDoPerfil?: number; inicioDaChamada?: number }>({});
+  const [rolagemY, setRolagemY] = useState(0);
+  const [alturaVisivel, setAlturaVisivel] = useState(0);
+
   const formulario = useCheckoutForm();
   const cupom = useCoupon();
 
@@ -90,6 +104,31 @@ export default function Desbloquear() {
     || usuario?.email?.split('@')[0]
     || '';
   const email = usuario?.email || '';
+
+  const barraDoConvite = mostrarBarraDoConvite({ ...ancoras, rolagemY, alturaVisivel });
+
+  /**
+   * O que "Começar meu planejamento com a Nyta" faz.
+   *
+   * Quando a venda é por link externo, vai DIRETO para o checkout da web. A tela de pagamento
+   * no meio do caminho não decide nada — ela repete o que a pessoa acabou de ler no convite e
+   * termina no mesmo botão. Um passo a mais entre a decisão e o pagamento é um passo a mais
+   * para desistir.
+   *
+   * Ela continua existindo, e é o que se vê ao ABRIR um perfil bloqueado: ali não houve
+   * convite nenhum antes, e a tela é que explica o que o desbloqueio libera.
+   *
+   * Nos outros modos o passo intermediário é necessário: com a venda dentro do app é lá que
+   * mora o formulário de pagamento, e com a venda desligada é lá que está a explicação de que
+   * a liberação se faz na conta Maestra.
+   */
+  const comecarOPlanejamento = () => {
+    if (!VENDE_DESBLOQUEIO_NO_APP && MODO_DE_VENDA === 'link-externo') {
+      void irParaOCheckout({ destino: 'desbloqueio', artistId: String(id) });
+      return;
+    }
+    setEtapa('pagamento');
+  };
 
   const valorDoPerfil = plano?.profileUnlockValue ?? VALOR_PADRAO_DO_PERFIL;
   const maximoDeParcelas = parcelasPossiveis(valorDoPerfil);
@@ -299,8 +338,18 @@ export default function Desbloquear() {
   return (
     <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
       <View style={estilos.topo}>
-        <MaestraMarca size={14} color={COR_DIAGNOSTICO.titulo} />
-        <View style={estilos.fase}>
+        {/* 24, o mesmo do cabeçalho normal do app. Era 14 — a marca ficava menor que o
+            rótulo da etapa ao lado dela. */}
+        <MaestraMarca size={24} color={COR_DIAGNOSTICO.titulo} />
+        {/* O mesmo `aria-label` da web: quem navega por leitor de tela ouve em que ponto do
+            fluxo está, e não só o nome solto da etapa. */}
+        <View
+          style={estilos.fase}
+          accessibilityRole="header"
+          accessibilityLabel={etapa === 'diagnostico'
+            ? 'Etapa 2 de 3: Diagnóstico REAL'
+            : 'Etapa 3 de 3: Planejamento'}
+        >
           <View style={estilos.pontos}>
             {[0, 1, 2].map((i) => {
               const atual = etapa === 'diagnostico' ? 1 : 2;
@@ -316,8 +365,13 @@ export default function Desbloquear() {
               );
             })}
           </View>
-          <Text style={estilos.faseTexto}>
-            {etapa === 'diagnostico' ? 'Diagnóstico' : 'Planejamento'}
+          {/* O nome COMPLETO da etapa. A web encurta para "Diagnóstico" abaixo de 560px, mas
+              aqui a entrega tem nome próprio — "Diagnóstico REAL" é o produto, e o REAL sai na
+              Georgia itálica da marca, como no `.flowReal` da web. */}
+          <Text style={estilos.faseTexto} numberOfLines={1}>
+            {etapa === 'diagnostico'
+              ? <>Diagnóstico <Text style={estilos.faseReal}>REAL</Text></>
+              : 'Planejamento'}
           </Text>
         </View>
         <Pressable
@@ -338,11 +392,21 @@ export default function Desbloquear() {
           ref={rolagem}
           contentContainerStyle={estilos.conteudo}
           keyboardShouldPersistTaps="handled"
+          scrollEventThrottle={32}
+          onLayout={(e) => setAlturaVisivel(e.nativeEvent.layout.height)}
+          onScroll={(e) => setRolagemY(e.nativeEvent.contentOffset.y)}
         >
           {/* ── O diagnóstico salvo ─────────────────────────────────────── */}
           {etapa === 'diagnostico' && (
             real
-              ? <Relatorio real={real} chartmetric={conteudo?.chartmetricProfile ?? null} />
+              ? (
+                <Relatorio
+                  real={real}
+                  chartmetric={conteudo?.chartmetricProfile ?? null}
+                  aoContinuar={comecarOPlanejamento}
+                  aoMedirAncoras={(a) => setAncoras((atual) => ({ ...atual, ...a }))}
+                />
+              )
               : (
                 <View style={estilos.semDiagnostico}>
                   <Text style={estilos.semDiagnosticoTexto}>
@@ -382,12 +446,11 @@ export default function Desbloquear() {
                 <Text style={estilos.chamadaApoio}>{CHAMADA_DO_DESBLOQUEIO.apoio}</Text>
               </View>
 
-              <View style={estilos.conta}>
-                <View style={estilos.contaDisco}>
-                  <Feather name="check" size={15} color={COR.primaria} />
-                </View>
-                <Text style={estilos.contaEmail} numberOfLines={1}>{email}</Text>
-              </View>
+              {/* O cartão com o e-mail da conta fica só no checkout da WEB.
+                  Ele existe para dizer QUEM está sendo cobrado, no instante em que se cobra —
+                  e aqui não se cobra nada: esta tela só descreve o que o desbloqueio libera e
+                  manda a pessoa para o navegador. Repetir o e-mail antes disso é ruído entre a
+                  promessa e o botão. */}
 
               <View style={estilos.painel}>
                 <Text style={estilos.painelTitulo}>O que você libera</Text>
@@ -621,6 +684,24 @@ export default function Desbloquear() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* A barra fixa: fora do ScrollView de propósito. Dentro dele, `position: absolute` rola
+          junto com o conteúdo e não gruda em nada. */}
+      {etapa === 'diagnostico' && !!real && barraDoConvite && (
+        <View style={[estilos.barraFixa, { paddingBottom: 18 + margem.bottom }]}>
+          <Pressable
+            style={estilos.barraBotao}
+            onPress={comecarOPlanejamento}
+            accessibilityRole="button"
+            accessibilityLabel={CHAMADA_DO_PLANEJAMENTO.botao}
+          >
+            <Text style={estilos.barraBotaoTexto} numberOfLines={1}>
+              {CHAMADA_DO_PLANEJAMENTO.botao}
+            </Text>
+            <Feather name="arrow-right" size={16} color={COR.sobrePrimaria} />
+          </Pressable>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -628,7 +709,29 @@ export default function Desbloquear() {
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
-  conteudo: { paddingHorizontal: 16, paddingBottom: 40, gap: 16 },
+  // O mesmo ritmo da página do diagnóstico: o relatório aparece nos dois lugares.
+  conteudo: { paddingHorizontal: 16, paddingBottom: 40, gap: FOLGA_APOS_O_CABECALHO },
+
+  // A barra fixa do rodapé. O degradê da web vira uma faixa sólida com fio em cima: um gradiente
+  // aqui exigiria mais uma camada só para o efeito, e o fio já separa a barra do que rola atrás.
+  barraFixa: {
+    position: 'absolute', left: 0, right: 0, bottom: 0,
+    paddingTop: 14, paddingHorizontal: 20,
+    borderTopWidth: 1, borderTopColor: COR_DIAGNOSTICO.barraFio,
+    backgroundColor: COR.fundo,
+  },
+  // O rótulo é longo ("Começar meu planejamento com a Nyta") e a barra é estreita: a 15 ele
+  // saía cortado em "com a…" na largura de um iPhone comum. 14 com folga menor cabe inteiro —
+  // um convite reticente não convida ninguém.
+  barraBotao: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    minHeight: 50, paddingHorizontal: 16, borderRadius: RAIO.pilula,
+    backgroundColor: COR.primaria,
+  },
+  barraBotaoTexto: {
+    fontSize: 14, fontWeight: '800', letterSpacing: 0.14, color: COR.sobrePrimaria,
+    flexShrink: 1,
+  },
 
   topo: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -644,7 +747,10 @@ const estilos = StyleSheet.create({
   pontoAtual: { width: 18 },
   faseTexto: {
     fontSize: 13, fontWeight: '700', letterSpacing: 0.13, color: COR_DIAGNOSTICO.titulo,
+    flexShrink: 1,
   },
+  // O REAL da marca: Georgia itálica, como no `.flowReal` da web e na placa do diagnóstico.
+  faseReal: { fontFamily: 'Georgia', fontStyle: 'italic' },
   sair: {
     width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: COR_DIAGNOSTICO.criarContorno, backgroundColor: COR.superficie,
@@ -718,11 +824,17 @@ const estilos = StyleSheet.create({
 
   semDiagnostico: { alignItems: 'center', gap: 18, paddingVertical: 40 },
   semDiagnosticoTexto: { fontSize: 15, textAlign: 'center', color: COR_CHECKOUT.apoio },
+  // O CTA da marca: pílula, 15/32, texto 16/800 e centrado. Era 13/22 com texto 14 e cantos de
+  // campo de formulário — do tamanho de um botão secundário, na hora em que a tela pede a
+  // decisão mais importante dela.
   continuar: {
-    paddingVertical: 13, paddingHorizontal: 22, borderRadius: RAIO.campoDeEntrada,
+    alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 15, paddingHorizontal: 32, borderRadius: RAIO.pilula,
     backgroundColor: COR.primaria,
   },
-  continuarTexto: { fontSize: 14, fontWeight: '800', color: COR.sobrePrimaria },
+  continuarTexto: {
+    fontSize: 16, fontWeight: '800', letterSpacing: 0.16, color: COR.sobrePrimaria,
+  },
 
   pix: { gap: 18 },
   pixFala: {

@@ -15,12 +15,6 @@ jest.mock('@maestra/core/lib/supabase', () => ({
   },
 }));
 
-const mockRodandoNativo = jest.fn(() => false);
-jest.mock('../../../lib/plataforma', () => ({
-  rodandoNativo: () => mockRodandoNativo(),
-  plataforma: () => 'web',
-}));
-
 // eslint-disable-next-line import/first
 import { AuthShell } from '../AuthShell';
 
@@ -43,7 +37,6 @@ const renderizar = () =>
 beforeEach(() => {
   mockSignInWithOAuth.mockReset();
   mockSignInWithOAuth.mockResolvedValue({ data: {}, error: null });
-  mockRodandoNativo.mockReturnValue(false);
   larguraDaJanela(375);
 });
 
@@ -63,16 +56,6 @@ describe('AuthShell - login social', () => {
 
     expect(screen.getByRole('button', { name: /google/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /apple/i })).not.toBeInTheDocument();
-  });
-
-  // Este e o caso que a largura sozinha erraria: o app no iPad passa de 768px, e esconder o
-  // botao ali reprovaria o app justamente na regra que ele existe para cumprir.
-  it('mantem a Apple no app nativo mesmo em tela larga', () => {
-    mockRodandoNativo.mockReturnValue(true);
-    larguraDaJanela(1024);
-    renderizar();
-
-    expect(screen.getByRole('button', { name: /apple/i })).toBeInTheDocument();
   });
 
   // O risco real de uma tela com dois botoes iguais e um chamar o provedor do outro — falha

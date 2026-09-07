@@ -1,4 +1,8 @@
+import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { Provider } from 'react-redux';
+
+import { store } from '@maestra/core/store/store';
 
 import type { NotificationItem } from '@maestra/core/interfaces/maestra';
 import Notificacoes from '../notificacoes';
@@ -22,6 +26,8 @@ jest.mock('@maestra/core/services/db/notifications', () => ({
   markAsRead: (...a: unknown[]) => mockLer(...a),
   markAllAsRead: (...a: unknown[]) => mockLerTudo(...a),
   fetchArtistNames: (...a: unknown[]) => mockNomes(...a),
+  // A barra do sistema, no topo desta tela, conta as não lidas para o ponto do sino.
+  countUnread: () => Promise.resolve(0),
 }));
 
 const aviso = (over: Partial<NotificationItem>): NotificationItem => ({
@@ -29,9 +35,32 @@ const aviso = (over: Partial<NotificationItem>): NotificationItem => ({
   created_at: '2026-03-04T15:30:00.000Z', artist_id: 'a-1', ...over,
 });
 
-const montar = () => render(<Notificacoes />);
+// A barra do sistema lê a margem segura (o menu dela abre abaixo do cabeçalho). Fora de um
+// aparelho, o provedor precisa das medidas na mão — senão o hook levanta.
+const MEDIDAS: Metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
+
+const montar = () => render(
+  <Provider store={store}>
+    <SafeAreaProvider initialMetrics={MEDIDAS}><Notificacoes /></SafeAreaProvider>
+  </Provider>,
+);
 
 describe('notificações', () => {
+  // Tela folha: um botão só, o de voltar, no mesmo círculo branco do sino. Aqui já viveu um
+  // "‹ Perfis" em texto solto, que era o único lugar do app com aquele desenho.
+  it('tem o cabeçalho de voltar, e nada além dele', async () => {
+    const tela = await montar();
+
+    expect(tela.getByLabelText('Voltar')).toBeTruthy();
+    expect(tela.queryByText(/‹\s*Perfis/)).toBeNull();
+    // Nem a marca nem o menu: quem chegou aqui veio de um lugar e quer voltar para ele.
+    expect(tela.queryByLabelText('Maestra. Ir para os perfis')).toBeNull();
+    expect(tela.queryByLabelText('Menu do sistema')).toBeNull();
+  });
+
   beforeEach(() => {
     mockListar.mockReset();
     mockLer.mockReset().mockResolvedValue(undefined);

@@ -359,13 +359,11 @@ export const COR_PLANO = {
   fio: '#edf1f7',
   legenda: '#8d9db7',
   chipContorno: '#dde5f1',
-  /** O contêiner "Ranking de execução", que envolve a lista de estratégias. */
+  /** O contorno em volta da lista de estratégias. */
   molduraContorno: '#e1e7f0',
-  molduraTitulo: '#52668d',
-  molduraRotulo: '#93a3bc',
   contagemFundo: '#edf2fb',
   contagemTexto: '#7183a3',
-  /** A moldura "Ranking de execução" tem fundo próprio, um cinza mais frio que o da página. */
+  /** Um cinza mais frio que o da página, para as seções da ficha da tarefa. */
   secaoFundo: '#f7f8fb',
   /** O círculo de concluir, e o "⋮" que abre a ficha. */
   marcar: '#8c9bb2',
@@ -524,6 +522,14 @@ export const COR_DIAGNOSTICO = {
   tintaDoTopo: '#1a1206',
   /** O contorno do botão de compartilhar. */
   compartilharContorno: '#cbd9ff',
+  /**
+   * O fio que separa a barra fixa do rodapé do conteúdo que rola atrás dela.
+   *
+   * A web usa um degradê para essa transição; no app é uma faixa sólida com este fio, porque o
+   * degradê exigiria mais uma camada só pelo efeito. O tom é o mesmo `rgba(219, 228, 241, .9)`
+   * do `border-top` do `.stickyCta`, achatado sobre o fundo.
+   */
+  barraFio: '#dbe4f1',
   /**
    * As cores da composição da receita, na ordem em que a web as usa. São sete porque há sete
    * fontes possíveis; a oitava dá a volta.
@@ -768,8 +774,17 @@ export const COR_ENTRADA = {
   contornoDoCartao: '#e3eaf3',
   marca: '#52668d',
   rotulo: '#93a4c0',
-  socialContorno: '#dce5f0',
-  socialFundo: '#f6f9ff',
+  /**
+   * O contorno dos botoes sociais.
+   *
+   * E PRETO porque o botao do Sign in with Apple e o do SISTEMA, e ele so aceita tres estilos
+   * (branco, branco com contorno, preto) — nao da para pintar a borda dele. Entao quem se
+   * ajusta e o botao do Google, que copia o contorno do vizinho para os dois parecerem o mesmo
+   * par. E tambem o que as diretrizes de marca do Google pedem para o tema claro: fundo branco
+   * com traco neutro.
+   */
+  socialContorno: '#000000',
+  socialFundo: '#ffffff',
   socialTexto: '#52668d',
   divisoria: '#e6ecf6',
   divisoriaTexto: '#9aabc4',

@@ -194,6 +194,21 @@ export const METODOLOGIA = {
   outro: 'Cada dimensão é lida a partir de dados reais. Nenhuma delas vale mais que a outra: o que importa é como se combinam na carreira, hoje. Esse retrato não é um julgamento. É um ponto de partida.',
 };
 
+/**
+ * A chamada do fim do diagnóstico: o convite para o planejamento.
+ *
+ * Vive no núcleo porque as DUAS superfícies a entregam no mesmo ponto da jornada — a web no fim
+ * do relatório, o app idem. Duas cópias do mesmo texto viram duas promessas diferentes na
+ * primeira vez que alguém ajusta uma delas.
+ */
+export const CHAMADA_DO_PLANEJAMENTO = {
+  titulo: 'Você sabe onde está. Agora precisa saber para onde ir, e como.',
+  apoio: 'O diagnóstico te mostrou o retrato da sua carreira hoje. O planejamento completo com a Nyta transforma esse retrato em um plano de ação real: estratégias priorizadas, cronograma e modelagem financeira, tudo construído por você, com a orientação da metodologia que já ajudou centenas de artistas.',
+  botao: 'Começar meu planejamento com a Nyta',
+  /** O diagnóstico não se perde ao seguir adiante — é o que tira o medo de clicar. */
+  nota: 'Seu diagnóstico REAL fica salvo. Você pode refazê-lo a qualquer momento para acompanhar a evolução da carreira.',
+};
+
 export const QUEM_ASSINA = {
   name: 'Anita Carvalho',
   role: 'Criadora do Índice REAL · Fundadora da Maestra',

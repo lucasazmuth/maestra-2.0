@@ -8,7 +8,7 @@
     "scheme": "maestra",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "br.com.maestra.app",
+      "bundleIdentifier": "com.maestramanager.app",
       "supportsTablet": true,
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -25,7 +25,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "br.com.maestra.app"
+      "package": "com.maestramanager.app"
     },
     "web": {
       "output": "static",
@@ -55,7 +55,8 @@
           "cameraPermission": false
         }
       ],
-      "expo-document-picker"
+      "expo-document-picker",
+      "./plugins/withAjustesDoXcode"
     ],
     "experiments": {
       "typedRoutes": true,

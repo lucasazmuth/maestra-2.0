@@ -16,6 +16,8 @@ import { listCatalogProjectItems } from '@maestra/core/services/db/catalog';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
+import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
+import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { EspacoJamIcon } from '@/icones';
 import { useArtistaDaRota } from '@/nucleo/artista';
@@ -159,35 +161,21 @@ export default function Catalogo() {
       {/* O cabecalho e o da web, com as MESMAS palavras: o modulo se chama "Musicas", nao
           "Catalogo" — e a aba de baixo ja dizia "Musicas", entao a tela se contradizia. */}
       <View style={estilos.cabecalho}>
-        <Text style={estilos.sobretitulo}>MÚSICAS DO ARTISTA</Text>
-        <Text style={estilos.titulao}>Músicas</Text>
-        <Text style={estilos.subtitulo}>
-          Organize as músicas em preparação e acompanhe cada etapa antes do lançamento.
-        </Text>
-
-        {/* A contagem do limite do plano e o "Nova música", lado a lado, como na web. */}
-        <View style={estilos.linhaDaContagem}>
-          <Text style={estilos.contagem}>
-            {faixas.length}/{direitos.maxCatalogTracks === Infinity ? '∞' : direitos.maxCatalogTracks} músicas
-          </Text>
-          {direitos.canEditCatalog && (
-            <Pressable
-              style={estilos.nova}
-              onPress={() => abrirFicha(null)}
-              accessibilityRole="button"
-              accessibilityLabel="Nova música"
-            >
-              <Feather name="plus" size={15} color={COR.sobrePrimaria} />
-              <Text style={estilos.novaTexto}>Nova música</Text>
-            </Pressable>
-          )}
-        </View>
+        <CabecalhoDoModulo
+          titulo="Músicas"
+          descricao="Organize as músicas em preparação e acompanhe cada etapa antes do lançamento."
+        />
       </View>
 
-      {/* As duas abas: o catálogo cadastrado aqui e o que já saiu no Spotify. */}
+      {/* As duas abas: o catálogo cadastrado aqui e o que já saiu no Spotify.
+          O limite do plano vive NO RÓTULO da aba de músicas, e não numa linha própria no
+          cabeçalho: ele é sobre a lista que a aba abre, e ali fica ao lado do que conta. Some
+          para quem tem o PRO — sem teto não há o que contar, e um "5/∞" só ocuparia espaço
+          dizendo que não há limite. */}
       <View style={estilos.abas}>
         {([['musicas', 'Músicas'], ['lancamentos', 'Lançamentos']] as const).map(([chave, texto]) => {
           const acesa = aba === chave;
+          const comLimite = chave === 'musicas' && direitos.maxCatalogTracks !== Infinity;
           return (
             <Pressable
               key={chave}
@@ -195,8 +183,18 @@ export default function Catalogo() {
               onPress={() => setAba(chave)}
               accessibilityRole="tab"
               accessibilityState={{ selected: acesa }}
+              accessibilityLabel={comLimite
+                ? `${texto}: ${faixas.length} de ${direitos.maxCatalogTracks} do seu plano`
+                : texto}
             >
-              <Text style={[estilos.abaTexto, acesa && estilos.abaTextoAceso]}>{texto}</Text>
+              <Text style={[estilos.abaTexto, acesa && estilos.abaTextoAceso]}>
+                {texto}
+                {comLimite && (
+                  <Text style={[estilos.abaLimite, acesa && estilos.abaLimiteAceso]}>
+                    {` ${faixas.length}/${direitos.maxCatalogTracks}`}
+                  </Text>
+                )}
+              </Text>
             </Pressable>
           );
         })}
@@ -437,6 +435,10 @@ export default function Catalogo() {
           </View>
         </View>
       )}
+
+      {direitos.canEditCatalog && (
+        <BotaoFlutuante rotulo="Nova música" aoTocar={() => abrirFicha(null)} />
+      )}
     </View>
   );
 }
@@ -444,27 +446,12 @@ export default function Catalogo() {
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1 },
-  cabecalho: {
-    paddingHorizontal: 16, paddingTop: 12, paddingBottom: 30, marginHorizontal: 0,
-    borderBottomWidth: 1, borderBottomColor: COR_CATALOGO.contornoDoTopo,
+  /** Só o recuo lateral: o resto do cabeçalho é do `CabecalhoDoModulo`. */
+  cabecalho: { paddingHorizontal: 16 },
+  abas: {
+    flexDirection: 'row', gap: 8, paddingHorizontal: 16,
+    paddingTop: FOLGA_APOS_O_CABECALHO,
   },
-  sobretitulo: {
-    fontSize: 9, fontWeight: '800', color: COR_CATALOGO.rotulo, marginBottom: 8,
-  },
-  titulao: { fontSize: 27, fontWeight: '800', color: COR_CATALOGO.titulo },
-  subtitulo: { fontSize: 12, color: COR_CATALOGO.apoio, lineHeight: 18, marginTop: 9 },
-  linhaDaContagem: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    gap: 12, marginTop: 14,
-  },
-  contagem: { fontSize: 12, fontWeight: '700', color: COR_CATALOGO.legenda },
-  nova: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    minHeight: 42, paddingHorizontal: 17,
-    borderRadius: 7, backgroundColor: COR.primaria,
-  },
-  novaTexto: { fontSize: 11, fontWeight: '800', color: COR.sobrePrimaria },
-  abas: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 18 },
   aba: {
     paddingVertical: 11, paddingHorizontal: 18,
     borderRadius: 7, backgroundColor: COR_CATALOGO.tocarFundo,
@@ -472,6 +459,10 @@ const estilos = StyleSheet.create({
   abaAcesa: { backgroundColor: COR.primaria },
   abaTexto: { fontSize: 13, fontWeight: '800', color: COR_CATALOGO.tocarIcone },
   abaTextoAceso: { color: COR.sobrePrimaria },
+  // O limite é um dado, não um rótulo: peso menor e cor mais apagada que o nome da aba, para
+  // ser lido depois dele e não competir com ele.
+  abaLimite: { fontWeight: '700', color: COR_CATALOGO.legenda },
+  abaLimiteAceso: { color: COR.sobrePrimaria, opacity: 0.75 },
   // A pílula do Espaço Jam, medida no DOM a 375px: 31px de altura, raio 20, contorno de 1px e
   // fundo branco. O rótulo sai no celular — ele custava um terço da linha.
   jam: {
@@ -482,7 +473,10 @@ const estilos = StyleSheet.create({
   },
   mais: { width: 28, alignItems: 'center', justifyContent: 'center' },
   espera: { marginTop: 48 },
-  conteudo: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 122 },
+  // 196 = a ilha (34 de reserva + 78) mais o botão flutuante (14 de folga + 56) e mais 14. Eram
+  // 122, que só vencia a ilha: a última linha da lista ficava permanentemente debaixo do botão,
+  // com os controles dela inalcançáveis por mais que se rolasse.
+  conteudo: { paddingHorizontal: 16, paddingTop: 18, paddingBottom: 196 },
   // A moldura da lista, em duas metades: o topo fecha os cantos de cima, o rodape os de baixo.
   // E o jeito de dar UM contorno a uma lista que rola sem envolver o `FlatList` numa `View`,
   // que tiraria a virtualizacao.

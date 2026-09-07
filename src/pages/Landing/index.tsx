@@ -5,6 +5,7 @@ import { FiArrowLeft, FiArrowRight, FiArrowUp, FiCheck, FiChevronDown, FiPlay } 
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { usePwaInstall } from '../../components/PwaInstallBanner';
 import { Header, Footer } from './Chrome';
+import { LANDING_HERO, MODULOS_DA_PLATAFORMA } from '@maestra/core/constants/landing';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { fetchPlanConfig } from '@maestra/core/store/slices/subscription';
 import { usePlanPrices, fmtBRL } from '@maestra/core/hooks/usePlanPrices';
@@ -28,32 +29,8 @@ const scrollTo = (id: string) => () => document.getElementById(id)?.scrollIntoVi
 // ─── Dados ───────────────────────────────────────────────────────────────────
 // O carrossel de módulos segue o bloco "Popular Album" da referência: o ativo grande no meio e
 // os vizinhos como painéis estreitos, com o nome na vertical.
-const MODULES: { title: string; sub: string; desc: string; to?: string }[] = [
-  {
-    title: 'Diagnóstico REAL', sub: 'o ponto de partida', to: '/diagnostico-real',
-    desc: 'Um raio-X da carreira em quatro dimensões, cruzando dados do Spotify e das redes com o que só você sabe. Em minutos você descobre qual dos 16 perfis é o seu e onde a carreira realmente está, não onde parece estar.',
-  },
-  {
-    title: 'Planejamento estratégico', sub: 'o mapa',
-    desc: 'A metodologia de 30 anos da Anita Carvalho, destilada de 313 planejamentos reais, transforma o diagnóstico em visão, missão, objetivos e as estratégias certas pro seu momento, já priorizadas.',
-  },
-  {
-    title: 'Plano de ação', sub: 'a execução',
-    desc: 'Cada estratégia vira tarefas com progresso, prazos e responsáveis, além de cronograma e modelagem financeira. É o caminho do "o que fazer" pro "feito".',
-  },
-  {
-    title: 'Gestão completa', sub: 'o dia a dia',
-    desc: 'Músicas, agenda de shows e lançamentos e a equipe junto: a operação da carreira mora no mesmo lugar do plano, e cada entrega alimenta o próximo diagnóstico.',
-  },
-  {
-    title: 'Nyta IA', sub: 'a assistente',
-    desc: 'A assistente que acompanha a carreira em todos os módulos: tira dúvidas, sugere caminhos e ajuda a executar o plano, sempre no contexto dos seus dados.',
-  },
-  {
-    title: 'E ela só cresce', sub: 'em breve',
-    desc: 'Novos módulos a caminho: marketing, CRM e financeiro, no mesmo lugar do resto da carreira.',
-  },
-];
+// A lista mora no núcleo: a tela de apresentação do app diz as mesmas palavras.
+const MODULES = MODULOS_DA_PLATAFORMA;
 
 const SUGGESTIONS = [
   'Como aumentar meus ouvintes no Spotify?',
@@ -95,21 +72,21 @@ const Hero: FC<{ loggedIn: boolean }> = ({ loggedIn }) => {
   return (
     <section className={styles.hero} id='top'>
       <div className={styles.heroTitle}>
-        <span className={styles.heroKicker}>Gestão de carreira musical</span>
+        <span className={styles.heroKicker}>{LANDING_HERO.sobretitulo}</span>
         {/* Um h1 só, com as duas linhas em spans: eram dois h1 na mesma página, o que confunde
             leitor de tela e mecanismo de busca sobre qual é o título. */}
         <h1 className={styles.hDisplay}>
-          <span className={styles.heroLine1}>A plataforma que diagnostica,</span>{' '}
-          <span className={styles.heroLine2}>planeja e acompanha</span>{' '}
-          <span className={styles.heroLine3}>a sua carreira na música</span>
+          <span className={styles.heroLine1}>{LANDING_HERO.titulo[0]}</span>{' '}
+          <span className={styles.heroLine2}>{LANDING_HERO.titulo[1]}</span>{' '}
+          <span className={styles.heroLine3}>{LANDING_HERO.titulo[2]}</span>
         </h1>
         <div className={styles.heroCtas}>
           <button className={styles.btnNeon} onClick={start}>
-            Fazer meu diagnóstico grátis <FiArrowRight size={18} />
+            {LANDING_HERO.acao} <FiArrowRight size={18} />
           </button>
           <button className={styles.btnGhost} onClick={scrollTo('planos')}>Ver planos</button>
         </div>
-        <p className={styles.heroNote}>Sem cartão de crédito para começar.</p>
+        <p className={styles.heroNote}>{LANDING_HERO.nota}</p>
       </div>
 
       {/* Palco nas coordenadas da referência (Hero.svg): a figura em x=483/y=412, o cartão em

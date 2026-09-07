@@ -1,4 +1,5 @@
 import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 
 import { store } from '@maestra/core/store/store';
@@ -41,7 +42,18 @@ const evento = (over: Partial<AgendaEvent>): AgendaEvent => ({
   date: emDias(0), status: 'scheduled', ...over,
 });
 
-const montar = () => render(<Provider store={store}><Agenda /></Provider>);
+// O botão flutuante lê a margem segura para não cobrir a ilha de navegação. Fora de um
+// aparelho, o provedor precisa das medidas na mão — senão o hook levanta.
+const MEDIDAS: Metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
+
+const montar = () => render(
+  <Provider store={store}>
+    <SafeAreaProvider initialMetrics={MEDIDAS}><Agenda /></SafeAreaProvider>
+  </Provider>,
+);
 
 describe('agenda', () => {
   beforeEach(() => {

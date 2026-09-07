@@ -1,3 +1,4 @@
+import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { Alert, Share } from 'react-native';
 
@@ -95,6 +96,18 @@ const confirmarNoAlerta = () => {
 };
 
 describe('conta', () => {
+  // Tela folha: um botão só, o de voltar, no mesmo círculo branco do sino. Aqui já viveu um
+  // "‹ Perfis" em texto solto, que era o único lugar do app com aquele desenho.
+  it('tem o cabeçalho de voltar, e nada além dele', async () => {
+    const tela = await montar();
+
+    expect(tela.getByLabelText('Voltar')).toBeTruthy();
+    expect(tela.queryByText(/‹\s*Perfis/)).toBeNull();
+    // Nem a marca nem o menu: quem chegou aqui veio de um lugar e quer voltar para ele.
+    expect(tela.queryByLabelText('Maestra. Ir para os perfis')).toBeNull();
+    expect(tela.queryByLabelText('Menu do sistema')).toBeNull();
+  });
+
   beforeEach(() => {
     mockStatus = 'none';
     mockInsert.mockReset().mockResolvedValue({ error: null });
@@ -233,4 +246,13 @@ describe('conta', () => {
   });
 });
 
-const montar = () => render(<Conta />);
+// A barra do sistema lê a margem segura (o menu dela abre abaixo do cabeçalho). Fora de um
+// aparelho, o provedor precisa das medidas na mão — senão o hook levanta.
+const MEDIDAS: Metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
+
+const montar = () => render(
+  <SafeAreaProvider initialMetrics={MEDIDAS}><Conta /></SafeAreaProvider>,
+);

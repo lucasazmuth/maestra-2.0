@@ -55,3 +55,21 @@ describe('a porta da cobrança', () => {
     expect(bloqueio).not.toMatch(/usePlanPrices|monthlyFmt|onceFmt|\/mês/);
   });
 });
+
+// O CADASTRO É AQUI DENTRO.
+//
+// Ele já foi um link para a web, e apontava para `${SITE}/cadastro` em duas telas — uma rota
+// que nunca existiu no `App.tsx`: quem tocava o botão saía do app e caía num 404. Hoje a conta
+// nasce no app, e nenhuma tela deve mandar ninguém ao navegador para se cadastrar.
+//
+// A regressão é silenciosa: o app abre o navegador e o problema aparece do outro lado.
+describe('o cadastro', () => {
+  it.each(arquivos.map((a) => [path.relative(raiz, a), a]))(
+    '%s não manda ninguém ao navegador para se cadastrar',
+    (_nome, caminho) => {
+      const fonte = fs.readFileSync(caminho, 'utf8');
+      const aberturas = fonte.match(/Linking\.openURL\([^)]*\)/g) ?? [];
+      expect(aberturas.filter((a) => /cadastro|signup/i.test(a))).toEqual([]);
+    },
+  );
+});

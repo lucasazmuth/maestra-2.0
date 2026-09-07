@@ -2,10 +2,11 @@ import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
+import { CHAMADA_DO_PLANEJAMENTO } from '@maestra/core/constants/realNarrative';
 import { store } from '@maestra/core/store/store';
 
 import Desbloquear from '../desbloquear/[id]';
-import { semDiagnostico } from './fixtures';
+import { comDiagnostico, semDiagnostico } from './fixtures';
 
 // O desbloqueio do perfil, no app.
 //
@@ -93,6 +94,8 @@ const semearPerfis = (perfis: unknown[]) =>
 
 /** O perfil pendente que esta tela existe para liberar. */
 const pendente = { ...semDiagnostico, id: 'a-2', name: 'AZMUTH BEATS', is_locked: true };
+/** O mesmo perfil, com o diagnóstico salvo: é o que faz a etapa do relatório existir. */
+const pendenteComReal = { ...comDiagnostico, id: 'a-2', name: 'AZMUTH BEATS', is_locked: true };
 
 describe('desbloqueio do perfil', () => {
   beforeEach(() => {
@@ -102,32 +105,83 @@ describe('desbloqueio do perfil', () => {
     mockInvocar.mockResolvedValue({ data: {}, error: null });
   });
 
-  it('mostra o que o desbloqueio libera, e não cobra nada aqui', async () => {
+  // Quem ABRE um perfil bloqueado cai aqui, e não no diagnóstico: não houve convite nenhum
+  // antes, e é esta tela que explica o que o desbloqueio libera.
+  it('cobra o desbloqueio aqui dentro, com o formulário completo', async () => {
     const tela = await montar();
 
     expect(await tela.findByText(/Comece hoje o planejamento de AZMUTH BEATS/)).toBeTruthy();
-    expect(tela.getByText('artista@exemplo.com')).toBeTruthy();
     expect(tela.getByText('Plano de ação com metas e cronograma')).toBeTruthy();
 
-    // Nada de formulário de pagamento: nem cartão, nem PIX, nem CPF.
-    expect(tela.queryByLabelText('CPF ou CNPJ')).toBeNull();
-    expect(tela.queryByLabelText('Cartão de crédito')).toBeNull();
-    expect(tela.queryByLabelText(/Gerar código PIX/)).toBeNull();
-    // E nem preço: ele é o sinal que a diretriz de anti-steering enxerga primeiro.
-    expect(tela.queryByText('R$ 199,90')).toBeNull();
+    // O checkout de verdade: CPF, os dois meios e o preço.
+    expect(tela.getByLabelText('CPF ou CNPJ')).toBeTruthy();
+    expect(tela.getByLabelText('Cartão de crédito')).toBeTruthy();
+    expect(tela.getByLabelText('PIX')).toBeTruthy();
+    expect(tela.getAllByText('R$ 199,90').length).toBeGreaterThan(0);
   });
 
-  it('o botão leva ao checkout da web, com o perfil certo', async () => {
-    const usuario = userEvent.setup();
+  // O pagamento único acontece AQUI: nenhum caminho desta tela sai para o navegador.
+  it('não manda ninguém para o checkout da web', async () => {
     const tela = await montar();
+    await tela.findByText(/Comece hoje o planejamento de AZMUTH BEATS/);
 
-    await usuario.press(await tela.findByLabelText('Liberar este perfil'));
+    expect(mockCheckout).not.toHaveBeenCalled();
+    expect(tela.queryByLabelText('Liberar este perfil')).toBeNull();
+  });
 
-    expect(mockCheckout).toHaveBeenCalledWith({ destino: 'desbloqueio', artistId: 'a-2' });
-    // O app não fala com a Asaas em nenhum momento.
-    expect(mockInvocar).not.toHaveBeenCalledWith(
-      'asaas-create-artist-charge', expect.anything(),
-    );
+  // A etapa do relatório terminava sem saída: a pessoa lia o diagnóstico inteiro e o texto
+  // simplesmente acabava, sem dizer qual era o próximo passo nem como dá-lo.
+  describe('a etapa do diagnóstico', () => {
+    const voltarAoDiagnostico = async () => {
+      semearPerfis([pendenteComReal]);
+      const usuario = userEvent.setup();
+      const tela = await montar();
+      await usuario.press(await tela.findByLabelText('Voltar ao diagnóstico'));
+      return { tela, usuario };
+    };
+
+    // A entrega tem nome próprio. O header dizia só "Diagnóstico", que é o rótulo curto que a
+    // web usa por falta de espaço — aqui cabe o nome do produto.
+    it('o header diz o nome completo da entrega', async () => {
+      const { tela } = await voltarAoDiagnostico();
+
+      expect(tela.getByLabelText('Etapa 2 de 3: Diagnóstico REAL')).toBeTruthy();
+    });
+
+    it('termina convidando para o planejamento, com a copy do núcleo', async () => {
+      const { tela } = await voltarAoDiagnostico();
+
+      expect(tela.getByText(CHAMADA_DO_PLANEJAMENTO.titulo)).toBeTruthy();
+      expect(tela.getByText(CHAMADA_DO_PLANEJAMENTO.apoio)).toBeTruthy();
+      // O que tira o medo de clicar: seguir adiante não perde o diagnóstico.
+      expect(tela.getByText(CHAMADA_DO_PLANEJAMENTO.nota)).toBeTruthy();
+    });
+
+    // A ordem importa: quem acabou de ler o retrato da carreira decide o próximo passo
+    // primeiro, e só depois pensa em guardar o documento. Ler na ordem inversa é despedir-se
+    // antes de convidar. Na web os dois vivem no mesmo bloco, com o convite em cima.
+    it('o convite vem ANTES de "leve seu diagnóstico"', async () => {
+      const { tela } = await voltarAoDiagnostico();
+      const arvore = JSON.stringify(tela.toJSON());
+
+      const convite = arvore.indexOf(CHAMADA_DO_PLANEJAMENTO.titulo);
+      const levar = arvore.indexOf('Leve seu diagnóstico');
+
+      expect(convite).toBeGreaterThan(-1);
+      expect(levar).toBeGreaterThan(-1);
+      expect(convite).toBeLessThan(levar);
+    });
+
+    // Com a cobrança dentro do app, o convite leva ao FORMULÁRIO — não há para onde pular:
+    // é essa tela que cobra. O atalho para o navegador só valia quando a compra acontecia lá.
+    it('o convite leva ao formulário de pagamento, aqui mesmo', async () => {
+      const { tela, usuario } = await voltarAoDiagnostico();
+
+      await usuario.press(tela.getByLabelText(CHAMADA_DO_PLANEJAMENTO.botao));
+
+      expect(await tela.findByLabelText('CPF ou CNPJ')).toBeTruthy();
+      expect(mockCheckout).not.toHaveBeenCalled();
+    });
   });
 
   // O passe libera o perfil sem cobrança nenhuma, e a tela de sucesso não pode falar em
@@ -140,8 +194,10 @@ describe('desbloqueio do perfil', () => {
     const usuario = userEvent.setup();
     const tela = await montar();
 
-    await usuario.type(await tela.findByLabelText('Código de acesso'), 'PRESENTE');
-    await usuario.press(tela.getByLabelText('Resgatar código'));
+    // Um campo só para cupom e passe: quem tem um código na mão não precisa saber qual dos
+    // dois é. O rótulo é o do cupom porque esse é o caso comum.
+    await usuario.type(await tela.findByLabelText('Cupom de desconto'), 'PRESENTE');
+    await usuario.press(tela.getByLabelText('Aplicar cupom'));
 
     expect(await tela.findByText('Pass Access confirmado!')).toBeTruthy();
     expect(mockInvocar).not.toHaveBeenCalledWith('asaas-create-artist-charge', expect.anything());
@@ -156,10 +212,13 @@ describe('desbloqueio do perfil', () => {
     }));
   });
 
-  // Se alguém religar a venda no app, é para ser de propósito — e com a diretriz relida.
-  it('a venda dentro do app está desligada', () => {
+  // Duas compras, dois caminhos. Trocar qualquer um dos dois é decisão de produto com a
+  // diretriz relida na mão — nunca efeito colateral de outra mudança.
+  it('o pagamento único é cobrado no app; a assinatura sai para a web', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
-    const { VENDE_DESBLOQUEIO_NO_APP } = jest.requireActual('@/nucleo/loja');
-    expect(VENDE_DESBLOQUEIO_NO_APP).toBe(false);
+    const { VENDE_DESBLOQUEIO_NO_APP, MODO_DE_VENDA } = jest.requireActual('@/nucleo/loja');
+
+    expect(VENDE_DESBLOQUEIO_NO_APP).toBe(true);
+    expect(MODO_DE_VENDA).toBe('link-externo');
   });
 });

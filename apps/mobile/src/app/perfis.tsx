@@ -14,9 +14,11 @@ import type { Artist } from '@maestra/core/interfaces/maestra';
 import { countUnread } from '@maestra/core/services/db/notifications';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
-import { MaestraMarca, NotificationIcon } from '@/icones';
+
 import { BotaoRedondo, MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
 import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
+import { MaestraMarca, NotificationIcon } from '@/icones';
+import { useOfertaDoPro } from '@/nucleo/assinatura';
 import { sair } from '@/nucleo/entrar';
 import { irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
@@ -88,6 +90,7 @@ export default function Perfis() {
   const usuario = sessao?.user.id;
   const [naoLidas, setNaoLidas] = useState(0);
   const [menuAberto, setMenuAberto] = useState(false);
+  const oferecerPro = useOfertaDoPro();
   // Separado do `loading` do store de propósito: `loading` fica true em QUALQUER busca,
   // inclusive na que roda sozinha ao voltar para esta tela. Ligado ao RefreshControl, isso
   // fazia um spinner de "puxar para atualizar" aparecer sem ninguém ter puxado nada — e ainda
@@ -146,17 +149,31 @@ export default function Perfis() {
 
   return (
     <SafeAreaView style={estilos.tela}>
-      {/* A barra da web: marca com o selo do plano a esquerda, sino e conta a direita. Antes
-          esta linha era "Seus perfis" + o e-mail, que a web nao mostra em lugar nenhum. */}
-      {/* A barra da web: a MARCA (símbolo + palavra, os dois vetores oficiais) com o selo do
-          plano à esquerda, e à direita os dois botões redondos — o sino e o menu do sistema.
-          O segundo botão era um ícone de PESSOA que ia direto para a conta; na web ele é a
-          GRADE que abre o menu, e o caminho para a conta é um item dentro dele. */}
+      {/* A barra do sistema: a MARCA à esquerda, com a pílula do plano ao lado, e à direita o
+          sino e o menu de grade. É o mesmo desenho do cabeçalho de dentro do artista, que só
+          acrescenta a Nyta.
+
+          Tocar na marca leva aos perfis, como no cabeçalho do artista. Aqui já se está neles;
+          o alvo existe porque o desenho é o mesmo, e um logotipo que responde numa tela e não
+          na outra é o tipo de diferença que só se sente sem saber nomear.
+
+          A pílula diz PRO ou Pendente, e só para quem paga: uma pílula "FREE" que leva ao
+          checkout é direcionar para fora da loja (3.1.3). Quem não assina encontra o convite
+          em "Seja PRO", dentro do menu. */}
       <View style={estilos.barra}>
-        <View style={estilos.marcaLinha}>
+        <Pressable
+          style={estilos.marca}
+          onPress={() => router.push('/perfis')}
+          accessibilityRole="button"
+          accessibilityLabel="Maestra. Ir para os perfis"
+        >
           <MaestraMarca size={24} color={COR_PERFIS.titulo} />
-          <SeloDoPlano aoTocar={() => void irParaOCheckout({ destino: 'assinatura' })} />
-        </View>
+        </Pressable>
+
+        {/* Fora do toque da marca: o selo não leva a lugar nenhum. */}
+        <SeloDoPlano />
+
+        <View style={estilos.espaco} />
 
         <BotaoRedondo
           rotulo={naoLidas > 0 ? `Notificações (${naoLidas} não lidas)` : 'Notificações'}
@@ -169,6 +186,22 @@ export default function Perfis() {
         <BotaoRedondo rotulo="Menu do sistema" aoTocar={() => setMenuAberto(true)}>
           <Feather name="grid" size={23} color={COR_PERFIS.menu} />
         </BotaoRedondo>
+
+        <MenuDoSistema
+          aberto={menuAberto}
+          aoFechar={() => setMenuAberto(false)}
+          itens={itensDoSistema(
+            {
+              // Já estamos nos Perfis, e por isso o item nem entra na lista.
+              perfis: () => undefined,
+              configuracoes: () => router.push('/conta'),
+              suporte: () => { void Linking.openURL(`${SITE}/suporte`); },
+              sair: () => { void sair(); },
+              pro: () => { void irParaOCheckout({ destino: 'assinatura' }); },
+            },
+            { aqui: 'perfis', oferecerPro },
+          )}
+        />
       </View>
 
       {/* O titulo com a acao ao lado, como na web. */}
@@ -226,20 +259,6 @@ export default function Perfis() {
         )}
       />
 
-      <MenuDoSistema
-        aberto={menuAberto}
-        aoFechar={() => setMenuAberto(false)}
-        itens={itensDoSistema(
-          {
-            // Já estamos nos Perfis: o item fica aceso e o toque só fecha o menu.
-            perfis: () => undefined,
-            configuracoes: () => router.push('/conta'),
-            suporte: () => Linking.openURL(`${SITE}/suporte`),
-            sair: () => { void sair(); },
-          },
-          'perfis',
-        )}
-      />
     </SafeAreaView>
   );
 }
@@ -252,7 +271,9 @@ const estilos = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 18, paddingTop: 8, paddingBottom: 20,
   },
-  marcaLinha: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  marca: { flexDirection: 'row', alignItems: 'center' },
+  /** O que empurra os botões para a direita — o `margin-left: auto` da web. */
+  espaco: { flex: 1 },
   tituloLinha: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     gap: 12, paddingHorizontal: 18, paddingBottom: 34,

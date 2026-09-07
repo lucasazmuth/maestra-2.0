@@ -9,13 +9,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, RAIO, COR_NOTIFICACOES } from '@maestra/core/constants/design';
+import { COR, COR_NOTIFICACOES } from '@maestra/core/constants/design';
 import type { NotificationItem } from '@maestra/core/interfaces/maestra';
 import {
   fetchArtistNames, listNotificationsPaginated, markAllAsRead, markAsRead,
 } from '@maestra/core/services/db/notifications';
-import { useVoltar } from '@/nucleo/navegar';
 import { useSessao } from '@/nucleo/sessao';
+
+import { CabecalhoDeVolta } from '@/casca/CabecalhoDeVolta';
 
 // A caixa de entrada do artista.
 //
@@ -58,7 +59,6 @@ const agrupar = (itens: NotificationItem[], nomes: Record<string, string>): Grup
 export default function Notificacoes() {
   const { sessao, carregando: carregandoSessao } = useSessao();
   const router = useRouter();
-  const voltar = useVoltar('/perfis');
 
   const [itens, setItens] = useState<NotificationItem[]>([]);
   const [pagina, setPagina] = useState(0);
@@ -124,10 +124,10 @@ export default function Notificacoes() {
   const vazia = !carregando && itens.length === 0;
 
   return (
-    <SafeAreaView style={estilos.tela}>
+    <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
+      <CabecalhoDeVolta />
       <View style={estilos.cabecalho}>
         <Text style={estilos.sobretitulo}>CENTRAL DO USUÁRIO</Text>
-        <Text style={estilos.voltar} onPress={voltar}>‹  Perfis</Text>
         <View style={estilos.linhaTitulo}>
           <Text style={estilos.titulao}>Notificações</Text>
           {naoLidas > 0 && (
@@ -216,7 +216,6 @@ const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
   cabecalho: { paddingHorizontal: 18, paddingTop: 8, gap: 2 },
-  voltar: { fontSize: 16, color: COR.primaria, fontWeight: '600', paddingVertical: 4 },
   linhaTitulo: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
   sobretitulo: {
     fontSize: 10, fontWeight: '800', color: COR_NOTIFICACOES.hora,

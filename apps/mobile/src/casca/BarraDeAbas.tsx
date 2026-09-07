@@ -8,8 +8,8 @@ import type { Artist } from '@maestra/core/interfaces/maestra';
 
 import { FotoDoArtista } from '@/casca/FotoDoArtista';
 import {
-  AgendaIcon, CatalogoIcon, ConfigIcon, DiagnosticoIcon, EquipeIcon,
-  MarketingIcon, MoreIcon, PerfisIcon, PlanejamentoIcon, PlanoAcaoIcon,
+  AgendaIcon, CatalogoIcon, DiagnosticoIcon, EquipeIcon,
+  MarketingIcon, MoreIcon, PlanejamentoIcon, PlanoAcaoIcon,
 } from '@/icones';
 
 // A ilha de navegação, célula a célula igual à da web.
@@ -41,35 +41,40 @@ const MAIS: Item[] = [
   { icone: MarketingIcon, rotulo: 'Marketing', rota: 'marketing' },
 ];
 
-// Perfis/Configurações: no desktop moram no menu do sistema (o ícone de grade do cabeçalho),
-// que some no celular porque estes mesmos atalhos já cabem aqui dentro.
-const DO_SISTEMA: { icone: Icone; rotulo: string; caminho: string }[] = [
-  { icone: PerfisIcon, rotulo: 'Perfis', caminho: '/perfis' },
-  { icone: ConfigIcon, rotulo: 'Configurações', caminho: '/conta' },
-];
+// Perfis e Configurações NÃO entram aqui: eles moram no menu do sistema, no botão de grade do
+// cabeçalho, que agora acompanha todas as telas. Repetidos nos dois lugares, davam duas portas
+// para a mesma sala e faziam esta folha falar de conta no meio dos módulos do artista.
 
 /** Altura da ilha (78) + a folga de baixo (18), que é o que o painel "Mais" precisa vencer. */
-const ALTURA_DA_ILHA = 78;
+export const ALTURA_DA_ILHA = 78;
 const FOLGA = 18;
+
+/**
+ * A distância da ilha até a borda de baixo.
+ *
+ * NÃO é a folga somada à margem segura: somar as duas conta o mesmo espaço duas vezes. Onde o
+ * aparelho tem barra de gestos, o sistema JÁ reserva 34pt ali que nada desenha em cima — essa
+ * reserva é a folga. Somar os 18 por cima empurrava a ilha para 52pt e ela ficava boiando longe
+ * do rodapé.
+ *
+ * Onde não há barra de gestos a margem é 0, e aí a folga do desenho é quem responde.
+ */
+export const rodapeDaIlha = (margemDeBaixo: number) => Math.max(FOLGA, margemDeBaixo);
 
 export const BarraDeAbas = ({ artista, id }: { artista?: Artist; id: string }) => {
   const router = useRouter();
   const caminho = usePathname();
   const margem = useSafeAreaInsets();
   const [maisAberto, setMaisAberto] = useState(false);
+  const rodape = rodapeDaIlha(margem.bottom);
 
   const base = `/artista/${id}`;
   const ativa = (rota: string) => (rota ? caminho.startsWith(`${base}/${rota}`) : caminho === base);
-  const ativoNoCaminho = (destino: string) => caminho === destino;
-  const maisAtivo = MAIS.some((m) => ativa(m.rota)) || DO_SISTEMA.some((s) => ativoNoCaminho(s.caminho));
+  const maisAtivo = MAIS.some((m) => ativa(m.rota));
 
   const ir = (rota: string) => {
     setMaisAberto(false);
     router.push(rota ? (`${base}/${rota}` as never) : (base as never));
-  };
-  const irPara = (destino: string) => {
-    setMaisAberto(false);
-    router.push(destino as never);
   };
 
   /** Uma célula da ilha: ícone em cima, rótulo embaixo. */
@@ -102,10 +107,9 @@ export const BarraDeAbas = ({ artista, id }: { artista?: Artist; id: string }) =
         <Pressable style={estilos.vidro} onPress={() => setMaisAberto(false)} accessibilityLabel="Fechar" />
       )}
       {maisAberto && (
-        <View style={[estilos.painel, { bottom: FOLGA + ALTURA_DA_ILHA + FOLGA + margem.bottom }]}>
-          {[...MAIS, ...DO_SISTEMA].map((item, i, todos) => {
-            const rota = 'rota' in item ? item.rota : undefined;
-            const aceso = rota ? ativa(rota) : ativoNoCaminho((item as { caminho: string }).caminho);
+        <View style={[estilos.painel, { bottom: rodape + ALTURA_DA_ILHA + FOLGA }]}>
+          {MAIS.map((item, i, todos) => {
+            const aceso = ativa(item.rota);
             const Icone = item.icone;
             const ultima = i === todos.length - 1;
             return (
@@ -119,7 +123,7 @@ export const BarraDeAbas = ({ artista, id }: { artista?: Artist; id: string }) =
                   !ultima && estilos.fioInferior,
                   ultima && i % 2 === 0 && estilos.larguraCheia,
                 ]}
-                onPress={() => (rota ? ir(rota) : irPara((item as { caminho: string }).caminho))}
+                onPress={() => ir(item.rota)}
                 accessibilityRole="menuitem"
                 accessibilityState={{ selected: aceso }}
               >
@@ -133,7 +137,7 @@ export const BarraDeAbas = ({ artista, id }: { artista?: Artist; id: string }) =
         </View>
       )}
 
-      <View style={[estilos.ilha, { bottom: FOLGA + margem.bottom }]}>
+      <View style={[estilos.ilha, { bottom: rodape }]}>
         <Pressable
           style={[estilos.celula, estilos.celulaDaFoto, inicioAceso && estilos.celulaAcesa]}
           onPress={() => ir('')}
@@ -187,7 +191,14 @@ const estilos = StyleSheet.create({
   comFio: { borderLeftWidth: 1, borderLeftColor: COR_BARRA.fio },
   // Erguida: 4px pra fora em cada lado, com sombra e fundo próprios — é o cartão que a web
   // desenha com `margin: -4px`. O fio da esquerda some, senão ele cruzaria o cartão.
+  //
+  // O `zIndex` é o mesmo `z-index: 1` da web (`.mobile-nav-current`, gsap-reference.css:6603) e
+  // não é enfeite: sem ele o React Native pinta os irmãos na ordem em que foram declarados, e a
+  // célula SEGUINTE desenha o fio dela depois — em cima da sobra de 4px do cartão. O fio da
+  // esquerda desta célula a gente apaga; o da direita pertence à vizinha, e só a ordem de
+  // empilhamento resolve.
   celulaAcesa: {
+    zIndex: 1,
     minHeight: 72,
     margin: -4,
     borderRadius: 18,
@@ -226,11 +237,11 @@ const estilos = StyleSheet.create({
     backgroundColor: COR_BARRA.vidro,
   },
   painel: {
+    // 12 de cada lado, o mesmo do menu do sistema — as duas folhas são a mesma peça e larguras
+    // diferentes faziam parecer que uma delas estava fora de lugar.
     position: 'absolute',
-    right: 22,
-    left: 22,
-    maxWidth: 330,
-    alignSelf: 'flex-end',
+    right: 12,
+    left: 12,
     flexDirection: 'row',
     flexWrap: 'wrap',
     padding: 8,
