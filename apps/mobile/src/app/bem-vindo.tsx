@@ -130,11 +130,13 @@ export default function BemVindo() {
 
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
-  miolo: { flex: 1, justifyContent: 'center', paddingHorizontal: 24, gap: 36 },
-  // A pílula da marca, como na web: fundo branco, contorno e sombra, alinhada à esquerda porque
-  // aqui a coluna é estreita e centralizar deixaria a frase desalinhada dela.
+  // Tudo centrado, como na web: lá a página é `align-items: center` com `text-align: center`.
+  miolo: {
+    flex: 1, justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: 24, gap: 36,
+  },
   pilula: {
-    alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     paddingVertical: 16, paddingHorizontal: 30, borderRadius: RAIO.pilula,
     borderWidth: 1, borderColor: COR.divisoria, backgroundColor: COR.superficie,
   },
@@ -142,10 +144,10 @@ const estilos = StyleSheet.create({
   // desce a cada linha nova.
   saudacao: {
     fontSize: 26, lineHeight: 35, fontWeight: '800', letterSpacing: -0.4,
-    color: COR_CABECALHO_DE_MODULO.titulo, minHeight: 175,
+    textAlign: 'center', color: COR_CABECALHO_DE_MODULO.titulo, minHeight: 175,
   },
   botao: {
-    alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 14, paddingHorizontal: 26, borderRadius: RAIO.pilula,
     backgroundColor: COR.primaria,
   },
