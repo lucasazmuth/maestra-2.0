@@ -1,0 +1,72 @@
+# As edge functions, verificadas antes do deploy.
+#
+# Elas rodam em Deno, e o Deno não está no ambiente de desenvolvimento de ninguém aqui: o que
+# valida uma função hoje é ela quebrar em produção. Este fluxo fecha duas frestas, e só roda
+# quando algo em `supabase/functions/` muda — o resto do repositório não tem por que esperar.
+
+name: Edge Functions
+
+on:
+  push:
+    branches: [main, newdesign]
+    paths: ['supabase/functions/**', '.github/workflows/edge-functions.yml']
+  pull_request:
+    paths: ['supabase/functions/**', '.github/workflows/edge-functions.yml']
+
+# Um push em cima de outro cancela a execução anterior: o que importa é o estado final do ramo.
+concurrency:
+  group: edge-functions-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: Sintaxe e dependências travadas
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # O que já existia: as 40 funções passam pelo parser antes de qualquer deploy. É barato e
+      # pega o erro de digitação que hoje só aparece quando a função já está no ar.
+      - name: Sintaxe das funções
+        run: node scripts/check-edge-functions.mjs
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # O LOCK.
+      #
+      # As funções importam por URL — `deno.land/std`, `esm.sh`. Uma URL não é um contrato: o
+      # conteúdo servido nela pode mudar sem que uma linha do repositório mude junto, e o deploy
+      # seguinte sobe outro código com a mesma revisão de git. O lock guarda o hash do que cada
+      # URL devolveu; regenerá-lo e comparar é o que transforma esse registro em verificação.
+      #
+      # Falhar aqui NÃO significa ataque: significa que uma dependência entrou, saiu ou mudou.
+      # A correção é olhar o diff impresso abaixo e commitar o lock novo.
+      - name: Travar as dependências remotas
+        run: |
+          deno cache --lock=supabase/functions/deno.lock --lock-write \
+            supabase/functions/*/index.ts
+
+      - name: O lock commitado está em dia?
+        run: |
+          if ! git diff --exit-code --stat supabase/functions/deno.lock; then
+            echo "::error::O deno.lock não corresponde ao que as funções importam hoje."
+            echo "Rode o mesmo comando localmente e commite o arquivo:"
+            echo "  deno cache --lock=supabase/functions/deno.lock --lock-write supabase/functions/*/index.ts"
+            echo "--- diff ---"
+            git --no-pager diff supabase/functions/deno.lock
+            exit 1
+          fi
+
+      # Quando o lock está em dia, ele passa a valer como trava: `--frozen` recusa qualquer
+      # download cujo hash não bata com o registrado.
+      - name: Conferir os hashes contra o lock
+        run: |
+          deno cache --frozen --lock=supabase/functions/deno.lock \
+            supabase/functions/*/index.ts
