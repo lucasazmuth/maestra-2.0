@@ -41,6 +41,12 @@ export default function BemVindo() {
   const pronto = digitado.length >= saudacao.length;
   const surgir = useRef(new Animated.Value(0)).current;
 
+  // O `useRouter` devolve um objeto NOVO a cada render. Pô-lo na lista de dependências do efeito
+  // abaixo faria a consulta rodar de novo a cada render — um laço. A referência resolve: o efeito
+  // roda uma vez e sempre enxerga o router atual.
+  const rota = useRef(router);
+  rota.current = router;
+
   useEffect(() => {
     let vivo = true;
     const decidir = (c: Chegada) => { if (vivo) setChegada(c); };
@@ -53,9 +59,16 @@ export default function BemVindo() {
       .then(([perfis, convites]) => {
         const temPerfil = !perfis.error && (perfis.count ?? 0) > 0;
         const temConvite = convites.length > 0;
+        // Quem JÁ TEM perfil não está chegando: passa direto, sem a saudação.
+        //
+        // Na web isso não acontece — lá só se chega aqui logo depois de a conta nascer. No app
+        // esta tela também recebe quem entrou por Google ou Apple e acabou de preencher o
+        // consentimento (LGPD), e essa pessoa pode ser antiga. Dar "Bem-vindo à Maestra!" a
+        // quem usa o app há meses soaria como se ele não a conhecesse.
+        if (temPerfil) { rota.current.replace('/perfis'); return; }
         decidir({
-          rota: temPerfil || temConvite ? '/perfis' : '/criar-artista',
-          convidado: !temPerfil && temConvite,
+          rota: temConvite ? '/perfis' : '/criar-artista',
+          convidado: temConvite,
         });
       })
       // Em caso de falha, a lista de perfis é o destino seguro: ela lida com os dois casos e é

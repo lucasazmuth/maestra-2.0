@@ -89,7 +89,12 @@ export default function Consentimento() {
       apply(data as ConsentState);
       // Bloqueado fica NESTA tela, com a mensagem: o portão não tem para onde levar, e mandar a
       // pessoa ao app para expulsá-la de volta seria um pisca-pisca.
-      if (!data?.blocked) router.replace('/perfis');
+      //
+      // Quem passa por aqui entrou por Google ou Apple, e para essa pessoa este é o primeiro
+      // instante dentro do app: quem cria conta por e-mail responde tudo no cadastro e não vê
+      // esta tela. Então o destino é o mesmo do cadastro — as boas-vindas, que saúdam e DECIDEM
+      // para onde ir: criar o primeiro perfil, ou ver o convite de equipe que está esperando.
+      if (!data?.blocked) router.replace('/bem-vindo');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível registrar. Tente de novo.');
     } finally {

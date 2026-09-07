@@ -74,3 +74,13 @@ describe('boas-vindas', () => {
     expect(mockReplace).toHaveBeenCalledWith('/perfis');
   });
 });
+
+// A tela também recebe quem entrou por Google ou Apple e acabou de preencher o consentimento —
+// e essa pessoa pode ser antiga. Saudar quem usa o app há meses soaria como se ele não a
+// conhecesse.
+it('quem já tem perfil passa direto, sem a saudação', async () => {
+  mockCount.mockResolvedValue({ count: 2, error: null });
+  const tela = await montar();
+  await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/perfis'));
+  expect(tela.queryByText(BOAS_VINDAS.artista)).toBeNull();
+});
