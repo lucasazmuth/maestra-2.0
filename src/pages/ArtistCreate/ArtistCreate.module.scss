@@ -1579,7 +1579,10 @@
 
 .dimCard {
   position: relative;
-  padding: 22px 20px;
+  // O pé é maior que a testa de propósito: em cima o primeiro elemento é a linha do nome, que
+  // preenche a própria caixa; embaixo o último é um parágrafo, cuja caixa termina abaixo da
+  // última linha de texto. Com 22px nos dois lados a folga ÓPTICA dava 31 em cima e 26 embaixo.
+  padding: 22px 20px 28px;
   border-radius: 18px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.018));
   border: 1px solid rgba(255, 255, 255, 0.07);

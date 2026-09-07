@@ -244,14 +244,15 @@ describe('diagnostico REAL na v4', () => {
     expect(tela.queryByText('TOP ICON')).toBeNull();
   });
 
-  it('a intro de cada frente vem recolhida, e abre ao toque (§2)', async () => {
+  it('a intro de cada frente vem ABERTA, e recolhe ao toque (§2)', async () => {
     const tela = await montar();
     const gatilhos = tela.getAllByLabelText('O que é esta frente');
     expect(gatilhos).toHaveLength(4);
-    // Recolhida: o texto da intro não está na tela.
-    expect(tela.queryByText(/Alcance é consumo passivo/)).toBeNull();
-    await userEvent.setup().press(gatilhos[0]);
+    // Aberta: é o texto que explica o que a dimensão mede, e quem abre o diagnóstico pela
+    // primeira vez precisa dele antes dos números. O botão serve para recolher, não para abrir.
     expect(tela.getByText(/Alcance é consumo passivo/)).toBeTruthy();
+    await userEvent.setup().press(gatilhos[0]);
+    expect(tela.queryByText(/Alcance é consumo passivo/)).toBeNull();
   });
 
   // Este perfil é o Outlier (0101): E e L acesos, R e A apagados.

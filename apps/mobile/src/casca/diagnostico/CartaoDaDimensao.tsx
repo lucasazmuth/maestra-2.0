@@ -148,7 +148,7 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
 
   const legado = ehLegado(real);
   const resumo = resumoDoE(real);
-  const [introAberta, setIntroAberta] = useState(false);
+  const [introAberta, setIntroAberta] = useState(true);
   const comentarios = comentariosDaDimensao(real, chave, { superficie: 'tela', chartmetric });
 
   const linhas: { rotulo: string; num?: number | null; valor?: string; declarado?: boolean }[] =
@@ -258,7 +258,9 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
       <Text style={estilos.status}>{statusDaBarra(real, chave)}</Text>
 
       {/*
-        A intro da frente, recolhida na tela e aberta no PDF (§2).
+        A intro da frente. Nasce ABERTA nas duas superfícies: é o texto que explica o que a
+        dimensão mede, e quem abre o diagnóstico pela primeira vez precisa dele antes dos
+        números. O botão fica para quem já leu e quer recolher.
 
         Ela explica o que a dimensão mede, e é longa de propósito: quem já entendeu não precisa
         reler a cada visita, e quem chegou agora precisa dela inteira. O acordeão resolve os dois
@@ -534,7 +536,7 @@ const estilos = StyleSheet.create({
   rede: { width: 70, fontSize: 12.5, fontWeight: '600', color: COR_DIAGNOSTICO.texto },
   taxa: { flex: 1, fontSize: 12.5, fontWeight: '700', color: COR_DIAGNOSTICO.abaixo },
 
-  // A intro fica recolhida atrás de uma linha discreta: ela é longa, e quem já leu não precisa
+  // A intro abre por padrão atrás de uma linha discreta: quem já leu não precisa
   // reler a cada visita.
   intro: { marginTop: 12, borderTopWidth: 1, borderTopColor: COR.divisoria, paddingTop: 12 },
   introBotao: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

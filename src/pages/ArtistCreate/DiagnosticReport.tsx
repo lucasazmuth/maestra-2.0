@@ -322,7 +322,10 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
             A intro da frente, recolhida na tela e aberta no PDF (§2). É longa de propósito: quem
             já entendeu não precisa reler a cada visita, e quem chegou agora precisa dela inteira.
           */}
-          <details className={styles.dimIntro}>
+          {/* Nasce ABERTA: é o texto que explica o que a dimensão mede, e um artista que abre o
+              diagnóstico pela primeira vez precisa dele antes dos números. O acordeão fica para
+              quem já leu e quer recolher. */}
+          <details className={styles.dimIntro} open>
             <summary className={styles.dimIntroLabel}>{FIXOS.F21}</summary>
             <p className={styles.dimIntroText}>{INTRO_DA_DIMENSAO[dk]}</p>
           </details>
