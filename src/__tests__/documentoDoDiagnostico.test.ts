@@ -223,3 +223,47 @@ describe('os avisos obrigatórios da tela', () => {
     expect(telaDaWeb).not.toContain('avisosDoDiagnostico(');
   });
 });
+
+// ── As três telas da entrega dizem as MESMAS palavras ───────────────────────────
+//
+// O relatório aparece em três rotas, nas duas superfícies: o fim da criação, o desbloqueio e o
+// módulo dentro do perfil. São dois MOMENTOS: a entrega (as duas primeiras) e a revisita (a
+// terceira). O app usava o cabeçalho de revisita nas três, inclusive na hora da entrega — o
+// mesmo momento com dois textos, e ninguém percebe sem abrir as duas lado a lado.
+describe('o cabeçalho da entrega', () => {
+  const ler = (...p: string[]) => fs.readFileSync(path.join(raiz, ...p), 'utf8');
+  const relatorioDaWeb = ler('src', 'pages', 'ArtistCreate', 'DiagnosticReport.tsx');
+  const relatorioDoApp = ler('apps', 'mobile', 'src', 'casca', 'diagnostico', 'Relatorio.tsx');
+  const moduloDaWeb = ler('src', 'pages', 'DiagnosticView', 'index.tsx');
+
+  it('as duas superfícies leem a copy do núcleo, e não a própria', () => {
+    for (const fonte of [relatorioDaWeb, relatorioDoApp]) {
+      expect(fonte).toContain('CABECALHO_DA_ENTREGA');
+      expect(fonte).not.toContain('Seu diagnóstico de carreira está pronto,');
+    }
+    expect(moduloDaWeb).toContain('CABECALHO_DA_REVISITA');
+    expect(relatorioDoApp).toContain('CABECALHO_DA_REVISITA');
+    expect(moduloDaWeb).not.toContain('Sua fase de carreira atual');
+  });
+
+  it('as telas de entrega declaram que são entrega, nas duas superfícies', () => {
+    const criarNoApp = ler('apps', 'mobile', 'src', 'app', 'criar-artista.tsx');
+    const desbloquearNoApp = ler('apps', 'mobile', 'src', 'app', 'desbloquear', '[id].tsx');
+    for (const fonte of [criarNoApp, desbloquearNoApp]) expect(fonte).toContain('momento="entrega"');
+    // Na web o corte é o inverso: quem esconde o herói é o módulo, e só ele.
+    expect(moduloDaWeb).toContain('hideHero');
+    expect(ler('src', 'pages', 'ProfileUnlock', 'index.tsx')).not.toContain('hideHero');
+  });
+
+  it('o "sem Spotify" chega às três telas, e não só a duas', () => {
+    for (const [arquivo, marca] of [
+      [ler('src', 'pages', 'ArtistCreate', 'index.tsx'), 'noSpotify'],
+      [ler('src', 'pages', 'ProfileUnlock', 'index.tsx'), 'noSpotify'],
+      [moduloDaWeb, 'noSpotify'],
+      [ler('apps', 'mobile', 'src', 'app', 'criar-artista.tsx'), 'semSpotify'],
+      [ler('apps', 'mobile', 'src', 'app', 'desbloquear', '[id].tsx'), 'semSpotify'],
+    ] as [string, string][]) {
+      expect(arquivo).toContain(marca);
+    }
+  });
+});

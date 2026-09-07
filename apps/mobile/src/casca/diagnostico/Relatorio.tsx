@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +9,7 @@ import {
   altasForPattern, tierForAltas, tierForPattern,
 } from '@maestra/core/constants/realBadge';
 import {
+  CABECALHO_DA_ENTREGA, CABECALHO_DA_REVISITA,
   DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtNum, type DimKey,
 } from '@maestra/core/constants/realCopy';
 import { CHAMADA_DO_PLANEJAMENTO, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
@@ -94,6 +95,18 @@ type Props = {
    * É o equivalente dos dois `IntersectionObserver` da web, que aqui não existem.
    */
   aoMedirAncoras?: (ancoras: { fimDoPerfil?: number; inicioDaChamada?: number }) => void;
+  /**
+   * Qual dos dois cabeçalhos usar — o mesmo corte da web.
+   *
+   * 'entrega' é a primeira vez (fim da criação e desbloqueio): avatar, o nome de quem recebe e o
+   * "está pronto". 'revisita' é o módulo dentro do perfil, onde a pessoa volta meses depois e
+   * aquele texto soaria como se o diagnóstico tivesse acabado de sair de novo.
+   *
+   * O app usava o de revisita nas TRÊS telas, inclusive na entrega.
+   */
+  momento?: 'entrega' | 'revisita';
+  /** Perfil criado sem Spotify: a copy do apoio não promete dado de plataforma. */
+  semSpotify?: boolean;
 };
 
 /**
@@ -103,6 +116,7 @@ type Props = {
  */
 export const Relatorio = ({
   real, chartmetric = null, artista, aoContinuar, aoMedirAncoras,
+  momento = 'revisita', semSpotify = false,
 }: Props) => {
   const { sessao } = useSessao();
   const [gerando, setGerando] = useState(false);
@@ -159,10 +173,22 @@ export const Relatorio = ({
     // outra não, e o mesmo documento saía com os cartões grudados numa e respirando na outra.
     // Com a folga aqui dentro, as três não têm como divergir de novo.
     <View style={estilos.pilha}>
-    <CabecalhoDoModulo
-      titulo="Diagnóstico REAL"
-      descricao="Sua fase de carreira atual, com base nos seus dados reais."
-    />
+    {momento === 'entrega' ? (
+      <View style={estilos.entrega}>
+        {!!artista?.foto && <Image source={{ uri: artista.foto }} style={estilos.entregaFoto} />}
+        <View style={estilos.flex}>
+          <Text style={estilos.entregaTitulo}>{CABECALHO_DA_ENTREGA.titulo(artista?.nome)}</Text>
+          <Text style={estilos.entregaApoio}>
+            {semSpotify ? CABECALHO_DA_ENTREGA.apoioSemSpotify : CABECALHO_DA_ENTREGA.apoio}
+          </Text>
+        </View>
+      </View>
+    ) : (
+      <CabecalhoDoModulo
+        titulo={CABECALHO_DA_REVISITA.titulo}
+        descricao={CABECALHO_DA_REVISITA.apoio}
+      />
+    )}
 
     {!perfil ? (
       <View style={estilos.aviso}>
@@ -561,6 +587,16 @@ const estilos = StyleSheet.create({
     color: COR_DIAGNOSTICO.palavraApagada,
   },
   palavraAcesa: { color: COR_PAINEL.heroRotulo },
+
+  // O cabeçalho da ENTREGA: foto, o nome de quem recebe e o "está pronto". Mesmas proporções da
+  // web (avatar de 60, título de 22, apoio de 13), porque é a mesma tela.
+  entrega: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  entregaFoto: { width: 60, height: 60, borderRadius: 30 },
+  entregaTitulo: {
+    fontSize: 22, fontWeight: '800', lineHeight: 27, letterSpacing: -0.3,
+    color: COR_DIAGNOSTICO.titulo,
+  },
+  entregaApoio: { marginTop: 6, fontSize: 13, lineHeight: 18, color: COR_DIAGNOSTICO.texto },
 
   cartao: {
     padding: 20, borderRadius: RAIO.cartao, gap: 10,

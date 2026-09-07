@@ -803,7 +803,12 @@ export default function CriarArtista() {
                         id: criado.current?.artistId,
                         nome: escolhido.current?.name || nomeManual,
                         foto: escolhido.current?.image,
+                        // O vínculo declarado sai na capa do PDF: sem ele, esta tela gerava um
+                        // documento diferente do das outras duas.
+                        vinculo: typeof respostas.current?.vinculo === 'string' ? respostas.current.vinculo : null,
                       }}
+                      momento="entrega"
+                      semSpotify={!escolhido.current?.spotifyArtistId}
                     />
                     <View style={estilos.desbloqueio}>
                       <Text style={estilos.notaDoDesbloqueio}>

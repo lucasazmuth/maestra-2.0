@@ -35,6 +35,32 @@ export const clean = (s: string) => s.replace(/\s*—\s*/g, ', ');
 // fora da lista e virava "—".
 // Vínculo declarado com o artista (ver a pergunta `vinculo` no QUIZ). O rótulo é o que sai na capa
 // do PDF, então é redigido em terceira pessoa, para o documento e não para quem responde.
+/**
+ * Os DOIS cabeçalhos da entrega do diagnóstico.
+ *
+ * São momentos diferentes do mesmo documento. A ENTREGA é a primeira vez — o fim da criação e a
+ * tela de desbloquear —, e fala com quem acabou de responder o quiz. A REVISITA é o módulo dentro
+ * do perfil, onde a mesma pessoa volta meses depois: ali o "está pronto" soaria como se o
+ * diagnóstico tivesse acabado de sair de novo.
+ *
+ * Moram aqui porque as duas superfícies precisam dizer as MESMAS palavras. Enquanto cada lado
+ * tinha as suas, o app usava o cabeçalho de revisita nas TRÊS telas, inclusive na hora da
+ * entrega, e a web usava o da entrega em duas: o mesmo momento, dois textos.
+ */
+export const CABECALHO_DA_ENTREGA = {
+  titulo: (nome?: string | null) => `Seu diagnóstico de carreira está pronto, ${nome || 'seu artista'}.`,
+  apoio: 'Baseado nos seus dados reais: Spotify, redes sociais e o que você nos contou.',
+  /** Sem Spotify não há dado de plataforma: a copy não promete o que não foi medido. */
+  apoioSemSpotify: 'Baseado no que você nos contou. Quando você conectar o Spotify, a gente '
+    + 'atualiza com seus números de plataforma.',
+} as const;
+
+export const CABECALHO_DA_REVISITA = {
+  chapeu: 'Onde você está',
+  titulo: 'Diagnóstico REAL',
+  apoio: 'Sua fase de carreira atual, com base nos seus dados reais.',
+} as const;
+
 export const VINCULO_LABELS: Record<string, string> = {
   sou_o_artista: 'o próprio artista',
   equipe: 'integrante da equipe do artista',

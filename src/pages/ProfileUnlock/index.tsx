@@ -326,6 +326,7 @@ const ProfileUnlock: FC = () => {
                   vinculo={(artist?.content as any)?.titularidade?.vinculo}
                   artistName={artist?.name}
                   artistImage={artist?.content?.spotifyProfile?.image}
+                  noSpotify={!artist?.content?.spotifyProfile?.spotify_artist_id}
                   onContinue={() => irPara('pagamento')}
                 />
               </TcleGate>

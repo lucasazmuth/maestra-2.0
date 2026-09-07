@@ -17,7 +17,7 @@ import { RealBadge } from '../../components/RealBadge';
 import {
   TIER_ACCENT, altasForPattern, tierForAltas, tierForPattern,
 } from '@maestra/core/constants/realBadge';
-import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, PROFILE_BITS } from '@maestra/core/constants/realCopy';
+import { CABECALHO_DA_ENTREGA, fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, PROFILE_BITS } from '@maestra/core/constants/realCopy';
 import { FIXOS, INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO, LEITURAS_CURTAS } from '@maestra/core/constants/realTextos';
 import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
@@ -699,12 +699,9 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
         <div className={`${styles.realHero} ${styles.reveal}`} style={{ animationDelay: '0s' }}>
           <img className={styles.realHeroAvatar} src={artistImage || ARTISTS_DEFAULT_IMAGE} alt={name} />
           <div>
-            <h2 className={styles.realHeroTitle}>{heroTitle || `Seu diagnóstico de carreira está pronto, ${name}.`}</h2>
+            <h2 className={styles.realHeroTitle}>{heroTitle || CABECALHO_DA_ENTREGA.titulo(name)}</h2>
             <p className={styles.realHeroSub}>
-              {heroSub
-                || (noSpotify
-                  ? 'Baseado no que você nos contou. Quando você conectar o Spotify, a gente atualiza com seus números de plataforma.'
-                  : 'Baseado nos seus dados reais: Spotify, redes sociais e o que você nos contou.')}
+              {heroSub || (noSpotify ? CABECALHO_DA_ENTREGA.apoioSemSpotify : CABECALHO_DA_ENTREGA.apoio)}
             </p>
           </div>
           {onRedo && (

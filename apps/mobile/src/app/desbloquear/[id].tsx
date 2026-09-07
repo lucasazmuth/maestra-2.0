@@ -411,6 +411,8 @@ export default function Desbloquear() {
                     foto: conteudo?.spotifyProfile?.image,
                     vinculo: conteudo?.titularidade?.vinculo,
                   }}
+                  momento="entrega"
+                  semSpotify={!conteudo?.spotifyProfile?.spotify_artist_id}
                   aoContinuar={comecarOPlanejamento}
                   aoMedirAncoras={(a) => setAncoras((atual) => ({ ...atual, ...a }))}
                 />
