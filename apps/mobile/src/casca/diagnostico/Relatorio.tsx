@@ -569,25 +569,19 @@ const estilos = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 }, shadowRadius: 24, elevation: 2,
   },
   /**
-   * O TERCEIRO nível de superfície da entrega.
+   * Todo cartão de seção é o MESMO cartão branco — este estilo existe só para não quebrar as
+   * chamadas que já o aplicam.
    *
-   * A tela tinha dois: o herói e "cartão branco com sombra", este último repetido onze vezes. Com
-   * tudo no mesmo peso, nada tem peso: cidades, playlists e a bio de quem assina pediam a mesma
-   * atenção que as quatro dimensões do índice.
+   * A entrega chegou a ter um terceiro nível de superfície: cidades, playlists, os 16 perfis e a
+   * bio de quem assina viravam cartão de CONTORNO, sem preenchimento nem sombra, para não pedir
+   * a mesma atenção que as quatro dimensões do índice. Antes disso, tentou-se tingi-los com
+   * `COR.destaque` sobre o fundo — 2% de diferença, fraco demais para ler como decisão.
    *
-   * O apoio vira cartão de CONTORNO: sem preenchimento e sem sombra, só a linha. A leitura passa
-   * a ser escuro é o perfil, preenchido e elevado é o índice, contornado é o apêndice.
-   *
-   * A primeira tentativa foi tingir o apoio com `COR.destaque` (#eef3fb) sobre o fundo #f7f8fb.
-   * São 2% de diferença: fraco demais para ler como decisão e forte o bastante para ler como
-   * falha — a primeira pergunta de quem viu foi por que alguns blocos tinham perdido o branco.
-   * Preenchido contra contornado se lê de imediato.
+   * As duas tentativas foram lidas do mesmo jeito por quem abriu a tela: "por que estes blocos
+   * perderam o branco?". Uma hierarquia que precisa ser explicada não está funcionando, e a
+   * distinção que importa aqui já é dada pelo herói escuro.
    */
-  cartaoDeApoio: {
-    backgroundColor: 'transparent',
-    borderColor: COR_DIAGNOSTICO.contorno,
-    shadowOpacity: 0, elevation: 0,
-  },
+  cartaoDeApoio: {},
   tituloDoCartao: {
     fontSize: 12, fontWeight: '800', letterSpacing: 0.52, textTransform: 'uppercase',
     color: COR_DIAGNOSTICO.secao,

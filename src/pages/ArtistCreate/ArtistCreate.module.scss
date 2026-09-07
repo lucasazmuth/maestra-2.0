@@ -2469,32 +2469,25 @@ $docLow: #8b9ab4;
     color: #61749a !important;
   }
 
+  // UM cartão só para toda seção da entrega: branco, a mesma linha, a mesma sombra.
+  //
+  // Os quatro últimos já tiveram tratamento próprio, duas vezes. Primeiro um tingimento com
+  // #eef3fb sobre o fundo #f7f8fb — 2% de diferença, fraco demais para ler como decisão e forte
+  // o bastante para ler como falha. Depois só o contorno, sem preenchimento, criando um terceiro
+  // nível de superfície: escuro é o perfil, branco é o índice, contornado é o apêndice.
+  //
+  // As duas foram lidas do mesmo jeito por quem abriu a tela: "por que estes blocos perderam o
+  // branco?". Uma hierarquia que precisa ser explicada não está funcionando, e a distinção que
+  // importa nesta entrega já é dada pelo herói escuro.
   .dimCard,
-  .insightsBlock {
-    background: #ffffff !important;
-    border-color: #dbe4f1 !important;
-    box-shadow: 0 10px 24px rgba(67, 86, 123, 0.07) !important;
-  }
-
-  // ── O TERCEIRO nível de superfície ────────────────────────────────────────────────
-  //
-  // A entrega tinha dois: o herói e "cartão branco com sombra", este último repetido em cada
-  // bloco. Com tudo no mesmo peso, nada tem peso: as cidades, as playlists e a bio de quem
-  // assina pediam a mesma atenção que as quatro dimensões do índice.
-  //
-  // O apoio vira cartão de CONTORNO: sem preenchimento e sem sombra, só a linha. A leitura passa
-  // a ser escuro é o perfil, preenchido e elevado é o índice, contornado é o apêndice.
-  //
-  // A primeira tentativa foi tingir o apoio com #eef3fb sobre o fundo #f7f8fb. São 2% de
-  // diferença: fraco demais para ler como decisão e forte o bastante para ler como falha — a
-  // primeira pergunta de quem viu foi por que alguns blocos tinham perdido o branco.
+  .insightsBlock,
   .cityChart,
   .platformPresence,
   .profileMap,
   .signBlock {
-    background: transparent !important;
+    background: #ffffff !important;
     border-color: #dbe4f1 !important;
-    box-shadow: none !important;
+    box-shadow: 0 10px 24px rgba(67, 86, 123, 0.07) !important;
   }
 
   // ── O HERÓI ──────────────────────────────────────────────────────────────────────
