@@ -1622,7 +1622,10 @@
 .dimLevelFill { height: 100%; border-radius: 9999px; background: var(--st); animation: acBarGrow 0.8s ease 0.3s both; transform-origin: left; }
 
 // Stat sheet: fios finos, valor em destaque (não é "card box").
-.dimStats { display: flex; flex-direction: column; }
+// A folga acima da tabela: a primeira linha não tem borda nem padding de topo (senão o fio
+// duplicaria com o de baixo), então sem esta margem ela encosta no que vier antes — hoje, a
+// caixa da frase de leitura.
+.dimStats { display: flex; flex-direction: column; margin-top: 16px; }
 .dimStatRow {
   display: flex;
   align-items: baseline;
