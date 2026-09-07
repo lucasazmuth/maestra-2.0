@@ -12,7 +12,7 @@ import {
   CABECALHO_DA_ENTREGA, CABECALHO_DA_REVISITA,
   DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtNum, type DimKey,
 } from '@maestra/core/constants/realCopy';
-import { CHAMADA_DO_PLANEJAMENTO, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
+import { CHAMADA_DO_PLANEJAMENTO, LEVAR_O_DIAGNOSTICO, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
 import { autoriaDoDocumento } from '@maestra/core/documentos/diagnostico';
 
 import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
@@ -453,7 +453,7 @@ export const Relatorio = ({
         {/* O PDF é o MESMO deck da web, impresso a partir do HTML do núcleo — aqui ele sai com
             texto de verdade, e não como foto de tela. */}
         <View style={[estilos.cartao, estilos.cartaoDeApoio]}>
-          <Text style={estilos.chamada}>Leve seu diagnóstico</Text>
+          <Text style={estilos.chamada}>{LEVAR_O_DIAGNOSTICO.titulo}</Text>
           <Pressable
             style={[estilos.baixar, gerando && estilos.baixarApagado]}
             onPress={baixarOPdf}
@@ -465,7 +465,7 @@ export const Relatorio = ({
               ? <ActivityIndicator size="small" color={COR.primaria} />
               : <Feather name="download" size={15} color={COR.primaria} />}
             <Text style={estilos.baixarTexto}>
-              {gerando ? 'Gerando…' : 'Baixar diagnóstico (PDF)'}
+              {gerando ? LEVAR_O_DIAGNOSTICO.baixando : LEVAR_O_DIAGNOSTICO.baixar}
             </Text>
           </Pressable>
           <Pressable
@@ -475,7 +475,7 @@ export const Relatorio = ({
             accessibilityLabel="Compartilhar diagnóstico"
           >
             <Feather name="share-2" size={15} color={COR.primaria} />
-            <Text style={estilos.compartilharTexto}>Compartilhar em texto</Text>
+            <Text style={estilos.compartilharTexto}>{LEVAR_O_DIAGNOSTICO.compartilhar}</Text>
           </Pressable>
         </View>
 

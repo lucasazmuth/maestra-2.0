@@ -242,6 +242,21 @@ export const CHAMADA_DO_PLANEJAMENTO = {
   nota: 'Seu diagnóstico REAL fica salvo. Você pode refazê-lo a qualquer momento para acompanhar a evolução da carreira.',
 };
 
+/**
+ * O bloco de levar o diagnóstico embora, no fim da entrega.
+ *
+ * A web dizia "Baixe ou compartilhe seu diagnóstico" e o app "Leve seu diagnóstico"; o botão de
+ * compartilhar era "Compartilhar" de um lado e "Compartilhar em texto" do outro. Duas telas, o
+ * mesmo bloco, quatro textos.
+ */
+export const LEVAR_O_DIAGNOSTICO = {
+  titulo: 'Baixe ou compartilhe seu diagnóstico',
+  baixar: 'Baixar diagnóstico (PDF)',
+  baixando: 'Gerando…',
+  /** "em texto" porque é o resumo escrito que sai no compartilhamento, e não o PDF. */
+  compartilhar: 'Compartilhar em texto',
+};
+
 export const QUEM_ASSINA = {
   name: 'Anita Carvalho',
   role: 'Criadora do Índice REAL · Fundadora da Maestra',

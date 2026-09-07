@@ -26,7 +26,7 @@ import {
   AVISOS, avisosSemLugarProprio, ehLegado, linhasDaDimensao, resumoDoE, SIIC_MENSAL,
 } from '@maestra/core/services/realEngine/relatorio';
 import {
-  CHAMADA_DO_PLANEJAMENTO, dimNarrative, METODOLOGIA, QUEM_ASSINA,
+  CHAMADA_DO_PLANEJAMENTO, dimNarrative, LEVAR_O_DIAGNOSTICO, METODOLOGIA, QUEM_ASSINA,
 } from '@maestra/core/constants/realNarrative';
 import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import styles from './ArtistCreate.module.scss';
@@ -967,11 +967,11 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             </button>
           </>
         ) : (
-          <h3 className={styles.ctaTitle}>Baixe ou compartilhe seu diagnóstico</h3>
+          <h3 className={styles.ctaTitle}>{LEVAR_O_DIAGNOSTICO.titulo}</h3>
         )}
         <div className={styles.shareActions} data-noexport="1">
-          <button className={styles.shareBtn} onClick={handleDownloadPdf} disabled={busy}><DownloadIcon size={18} /> {busy ? 'Gerando…' : 'Baixar diagnóstico (PDF)'}</button>
-          <button className={styles.shareBtn} onClick={handleShare} disabled={busy} aria-label="Compartilhar diagnóstico"><FiShare2 size={15} /> Compartilhar</button>
+          <button className={styles.shareBtn} onClick={handleDownloadPdf} disabled={busy}><DownloadIcon size={18} /> {busy ? LEVAR_O_DIAGNOSTICO.baixando : LEVAR_O_DIAGNOSTICO.baixar}</button>
+          <button className={styles.shareBtn} onClick={handleShare} disabled={busy} aria-label="Compartilhar diagnóstico"><FiShare2 size={15} /> {LEVAR_O_DIAGNOSTICO.compartilhar}</button>
         </div>
         {showPlanningCta && <p className={styles.ctaMicrocopy}>{CHAMADA_DO_PLANEJAMENTO.nota}</p>}
       </div>
