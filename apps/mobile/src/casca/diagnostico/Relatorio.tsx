@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, Image, Pressable, Share, StyleSheet, Text, Vi
 
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
+import { WebView } from 'react-native-webview';
 
 import { COR, COR_DIAGNOSTICO, COR_PAINEL, RAIO } from '@maestra/core/constants/design';
 import {
@@ -12,8 +13,10 @@ import {
   CABECALHO_DA_ENTREGA, CABECALHO_DA_REVISITA,
   DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtNum, type DimKey,
 } from '@maestra/core/constants/realCopy';
-import { CHAMADA_DO_PLANEJAMENTO, LEVAR_O_DIAGNOSTICO, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
-import { autoriaDoDocumento } from '@maestra/core/documentos/diagnostico';
+import {
+  CHAMADA_DO_PLANEJAMENTO, LEVAR_O_DIAGNOSTICO, QUEM_ASSINA, VIDEO_DO_PLANEJAMENTO,
+} from '@maestra/core/constants/realNarrative';
+import { autoriaDoDocumento, URL_DA_MAESTRA } from '@maestra/core/documentos/diagnostico';
 
 import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { LEITURAS_CURTAS } from '@maestra/core/constants/realTextos';
@@ -436,6 +439,22 @@ export const Relatorio = ({
           >
             <Text style={estilos.chamadaTitulo}>{CHAMADA_DO_PLANEJAMENTO.titulo}</Text>
             <Text style={estilos.chamadaApoio}>{CHAMADA_DO_PLANEJAMENTO.apoio}</Text>
+            {/* O MESMO vídeo da web, no mesmo ponto da jornada: entre a promessa e o botão.
+                Aqui ele vive num WebView porque não há iframe — o player é o do YouTube, com a
+                mesma URL `nocookie`, e a proporção 16:9 é a mesma. */}
+            <View style={estilos.video}>
+              <WebView
+                style={estilos.videoPlayer}
+                originWhitelist={['*']}
+                source={{
+                  html: VIDEO_DO_PLANEJAMENTO.pagina(VIDEO_DO_PLANEJAMENTO.id),
+                  baseUrl: URL_DA_MAESTRA,
+                }}
+                allowsInlineMediaPlayback
+                allowsFullscreenVideo
+                accessibilityLabel={VIDEO_DO_PLANEJAMENTO.titulo}
+              />
+            </View>
             <Pressable
               style={estilos.chamadaBotao}
               onPress={aoContinuar}
@@ -594,6 +613,14 @@ const estilos = StyleSheet.create({
   // revisita. Sem ele, o cabeçalho da entrega nascia colado no fio do topo — as três molduras
   // não acrescentam recuo nenhum, de propósito: ele é todo do cabeçalho.
   entrega: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingTop: 22 },
+
+  // A moldura do vídeo: 16:9 com canto arredondado e fundo escuro, como o `.ctaVideo` da web.
+  // O `overflow: hidden` é o que faz o player respeitar o raio.
+  video: {
+    aspectRatio: 16 / 9, marginTop: 4, marginBottom: 4,
+    borderRadius: RAIO.campo, overflow: 'hidden', backgroundColor: COR_DIAGNOSTICO.fundoDoVideo,
+  },
+  videoPlayer: { flex: 1, backgroundColor: 'transparent' },
   entregaFoto: { width: 60, height: 60, borderRadius: 30 },
   entregaTitulo: {
     fontSize: 22, fontWeight: '800', lineHeight: 27, letterSpacing: -0.3,

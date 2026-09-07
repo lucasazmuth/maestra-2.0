@@ -482,6 +482,13 @@ export const COR_DIAGNOSTICO = {
   palavraApagada: 'rgba(255, 255, 255, .5)',
   /** O disco da letra no cartão da dimensão. */
   discoFundo: '#eef3ff',
+  /**
+   * O fundo da moldura do vídeo do convite — o azul quase preto por trás do player.
+   *
+   * Ele aparece enquanto o YouTube carrega, e é o que impede um retângulo branco piscando no
+   * meio do cartão. O valor é o mesmo do `.ctaVideo` da web.
+   */
+  fundoDoVideo: '#0b1020',
   /** A régua e o preenchimento; o TOP ICON troca o azul pelo dourado. */
   regua: '#e8eef7',
   topoDe: '#f5c451',

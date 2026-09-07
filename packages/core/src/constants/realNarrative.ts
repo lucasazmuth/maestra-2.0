@@ -243,6 +243,37 @@ export const CHAMADA_DO_PLANEJAMENTO = {
 };
 
 /**
+ * O vídeo que abre o convite ao planejamento, no fim da entrega.
+ *
+ * O id mora aqui, e não na tela, porque o vídeo é o MESMO nas duas superfícies — a web já o
+ * mostrava e o app não tinha nenhum. E porque ele já quebrou uma vez: o anterior (tSvzznd-FcI)
+ * foi removido do YouTube e o player passou a dizer "Vídeo indisponível" bem em cima da chamada
+ * de conversão. Com um lugar só, trocar o id conserta as duas telas.
+ *
+ * Não é o mesmo do herói da landing: os dois divergiram, e a landing tem cópia própria do id.
+ */
+export const VIDEO_DO_PLANEJAMENTO = {
+  id: 'N0pV9W7MG4Y',
+  titulo: 'Como funciona o planejamento com a Nyta',
+  /** `nocookie` para o player não plantar cookie de rastreio antes de o vídeo tocar. */
+  url: (id: string) => `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`,
+  /**
+   * O mesmo iframe, embrulhado numa página — é como o app o mostra.
+   *
+   * Um WebView carregando a URL do embed direto recebe do YouTube o **erro 153**: o player exige
+   * um `Referer` válido, e uma página sem origem não tem nenhum. Servindo o iframe dentro de um
+   * documento cujo `baseUrl` é o domínio da Maestra, o referrer passa a existir e o vídeo toca.
+   */
+  pagina: (id: string) => '<!doctype html><html><head>'
+    + '<meta name="viewport" content="width=device-width, initial-scale=1">'
+    + '<style>html,body{margin:0;height:100%;background:#0b1020;overflow:hidden}'
+    + 'iframe{border:0;width:100%;height:100%;display:block}</style></head><body>'
+    + `<iframe src="https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1" `
+    + 'allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+    + '</body></html>',
+};
+
+/**
  * O bloco de levar o diagnóstico embora, no fim da entrega.
  *
  * A web dizia "Baixe ou compartilhe seu diagnóstico" e o app "Leve seu diagnóstico"; o botão de

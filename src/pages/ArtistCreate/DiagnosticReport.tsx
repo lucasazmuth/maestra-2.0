@@ -27,6 +27,7 @@ import {
 } from '@maestra/core/services/realEngine/relatorio';
 import {
   CHAMADA_DO_PLANEJAMENTO, dimNarrative, LEVAR_O_DIAGNOSTICO, METODOLOGIA, QUEM_ASSINA,
+  VIDEO_DO_PLANEJAMENTO,
 } from '@maestra/core/constants/realNarrative';
 import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import styles from './ArtistCreate.module.scss';
@@ -102,11 +103,7 @@ const PROFILE_MAP: { altas: number; tier: string; names: string[] }[] = [
   { altas: 0, tier: '0 altas', names: ['Beginner'] },
 ];
 
-// Vídeo de apresentação do planejamento. O anterior (tSvzznd-FcI) foi removido no YouTube e o
-// player passou a mostrar "Vídeo indisponível" no fim do diagnóstico — bem em cima da CTA de
-// conversão. Não é mais o mesmo do hero da landing: os dois divergiram, e a landing tem cópia
-// própria do id (ver o TODO em components/YouTubeEmbed.tsx).
-const CTA_VIDEO_ID = 'N0pV9W7MG4Y';
+// O id e a URL do vídeo vivem no núcleo: é o MESMO vídeo no app. Ver `VIDEO_DO_PLANEJAMENTO`.
 // A copy vive no núcleo: o app entrega a MESMA chamada, no mesmo ponto da jornada.
 const CTA_TITLE = CHAMADA_DO_PLANEJAMENTO.titulo;
 const CTA_SUB = CHAMADA_DO_PLANEJAMENTO.apoio;
@@ -955,8 +952,8 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             <div className={styles.ctaVideo} data-noexport="1">
               <iframe
                 className={styles.ctaVideoPlayer}
-                src={`https://www.youtube-nocookie.com/embed/${CTA_VIDEO_ID}?rel=0&modestbranding=1`}
-                title='Como funciona o planejamento com a Nyta'
+                src={VIDEO_DO_PLANEJAMENTO.url(VIDEO_DO_PLANEJAMENTO.id)}
+                title={VIDEO_DO_PLANEJAMENTO.titulo}
                 allow='accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
                 allowFullScreen
                 loading='lazy'
