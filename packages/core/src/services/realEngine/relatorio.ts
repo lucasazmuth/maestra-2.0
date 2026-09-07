@@ -10,6 +10,7 @@
 // (diagnósticos em versão anterior).
 
 import { fmtBRL, fmtNum, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
+import { FIXOS } from '../../constants/realTextos';
 import { ALIQUOTA_PCT, type Aliquota, type FonteDeReceita, type Proveniencia, type TipoDeContratante } from './index';
 
 /** Uma linha de dado no cartão da dimensão. `num` é formatado pelo consumidor; `valor` já vem pronto. */
@@ -36,8 +37,8 @@ type Diagnostico = Record<string, any>;
  */
 export const ehLegado = (ri: Diagnostico | null | undefined): boolean => Number(ri?.version ?? 0) < 4;
 
-export const AVISO_LEGADO = 'Este diagnóstico está em uma versão anterior do método. Refaça para '
-  + 'ver a leitura completa, com o saldo anual da carreira e a origem de cada dado.';
+/** F17 (§10) — o texto é da autora, e vive com os outros em `constants/realTextos`. */
+export const AVISO_LEGADO = FIXOS.F17;
 
 /** Os textos obrigatórios do §11.3, na ordem em que a spec os lista. */
 export const AVISOS = {
@@ -136,7 +137,14 @@ export const resumoDoE = (ri: Diagnostico | null | undefined) => {
     fontes,
     receitaOutrasTotal: Number(rev.receitaOutrasTotal) || 0,
     receitaAnual: Number(rev.receitaAnual) || 0,
-    investimento: Number(rev.investimento) || 0,
+    // O investimento decomposto (v4.1, §7.5): o total continua existindo para a linha de saldo,
+    // e as três parcelas alimentam o gráfico de composição do custo.
+    custoPorShow: Number(rev.custoPorShow) || 0,
+    custoShowsAnual: Number(rev.custoShowsAnual) || 0,
+    custoFixoMensal: Number(rev.custoFixoMensal) || 0,
+    custoFixoAnual: Number(rev.custoFixoAnual) || 0,
+    investLancamentos12m: Number(rev.investLancamentos12m) || 0,
+    investimentoAnual: Number(rev.investimentoAnual) || 0,
     saldo: Number(rev.saldo) || 0,
     bonus: Number(rev.bonus) || 1,
     saldoAjustado: Number(rev.saldoAjustado) || 0,
@@ -144,6 +152,8 @@ export const resumoDoE = (ri: Diagnostico | null | undefined) => {
     aliquotaRotulo: aliquota ? ROTULO_DA_ALIQUOTA[aliquota] : null,
     aliquotaPct: aliquota && aliquota !== 'nao_sei' ? ALIQUOTA_PCT[aliquota] : null,
     receitaLiquidaEstimada: rev.receitaLiquidaEstimada ?? null,
+    margemPorShow: rev.margemPorShow ?? null,
+    pontoEquilibrioShows: rev.pontoEquilibrioShows ?? null,
     // Quantas vezes a média do setor cultural formal (§7.3). Só comparação, nunca cálculo.
     vezesOSetor: SIIC_ANUAL > 0 ? (Number(rev.receitaAnual) || 0) / SIIC_ANUAL : 0,
     // §7.5 — quem não tem empresário recebe a recomendação, e é o mesmo dado que dá o bônus do E.
@@ -173,9 +183,16 @@ export const linhasDaDimensao = (
   if (dim === 'e') {
     // A v4 lê SALDO, não receita: mostrar só o faturamento contaria a metade que agrada e
     // esconderia a que decide a dimensão.
+    // §12 — a tabela do E mostra as PARCELAS do custo, não só o total. É o que permite ao artista
+    // conferir a própria conta: o total sozinho não diz se o peso está no show, no fixo ou no
+    // lançamento, e é essa distinção que muda a decisão.
     const linhas: LinhaDoRelatorio[] = [
+      { rotulo: 'Shows (12 meses)', valor: String(Number(rev.showsPerYear) || 0), fonte: 'self' },
       { rotulo: 'Receita (12 meses)', valor: fmtBRL(Number(rev.receitaAnual) || 0), fonte: 'self' },
-      { rotulo: 'Investimento (12 meses)', valor: fmtBRL(Number(rev.investimento) || 0), fonte: 'self' },
+      { rotulo: 'Custo médio por show', valor: fmtBRL(Number(rev.custoPorShow) || 0), fonte: 'self' },
+      { rotulo: 'Custo fixo mensal', valor: fmtBRL(Number(rev.custoFixoMensal) || 0), fonte: 'self' },
+      { rotulo: 'Investimento em lançamentos', valor: fmtBRL(Number(rev.investLancamentos12m) || 0), fonte: 'self' },
+      { rotulo: 'Custos e investimento (12 meses)', valor: fmtBRL(Number(rev.investimentoAnual) || 0), fonte: 'self' },
       { rotulo: 'Saldo', valor: fmtBRL(Number(rev.saldo) || 0), fonte: 'self' },
     ];
     const bonus = Number(rev.bonus) || 1;

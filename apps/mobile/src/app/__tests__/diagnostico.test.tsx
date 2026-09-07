@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, userEvent } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 
 import { StyleSheet } from 'react-native';
@@ -77,14 +77,15 @@ describe('diagnostico REAL em leitura', () => {
     expect(tela.queryByText('Economics')).toBeNull();
   });
 
-  // Sem a linha de status, o numero nao diz se a dimensao acendeu — 78 e muito ou pouco? A web
-  // responde com quanto FALTA, que e mais util do que o valor do corte.
-  it('diz quanto falta para acender e para o TOP ICON', async () => {
+  // Sem a linha de status, o numero nao diz se a dimensao acendeu — 78 e muito ou pouco? A
+  // resposta e quanto FALTA, que e mais util do que o valor do corte. Os textos sao os F3, F4 e
+  // F5 da spec do relatório, palavra por palavra.
+  it('diz quanto falta para acender e para o Top Tier', async () => {
     const tela = await montar();
-    // r = 78, ja aceso: faltam 22 para o TOP ICON.
-    expect(tela.getByText('Aceso · faltam 22 pts para TOP ICON')).toBeTruthy();
-    // e = 34, apagado: faltam 36 para acender e 66 para o TOP ICON.
-    expect(tela.getByText('Faltam 36 pts para acender · 66 pts para TOP ICON')).toBeTruthy();
+    // r = 78, ja aceso: faltam 22 para o Top Tier.
+    expect(tela.getByText('Acesa. Faltam 22 pontos para o Top Tier.')).toBeTruthy();
+    // e = 34, apagada: faltam 36 para acender e 66 para o Top Tier.
+    expect(tela.getByText('Faltam 36 pontos para acender e 66 para o Top Tier.')).toBeTruthy();
   });
 
   // A placa e o Indice REAL sao o "momento uau" da entrega, e o app nao tinha nem um nem outro.
@@ -149,10 +150,13 @@ describe('diagnostico REAL em leitura', () => {
     expect(tela.getByText('Anita Carvalho')).toBeTruthy();
   });
 
-  it('mostra as leituras do perfil', async () => {
+  // §13.3 — o bloco "O que o seu diagnóstico revela" saiu dos dois formatos: o conteúdo dele
+  // agora está no retrato do perfil e nos comentários de cada dimensão. Mantê-lo seria dizer a
+  // mesma coisa três vezes.
+  it('não mostra mais o bloco de insights do perfil', async () => {
     const tela = await montar();
-    expect(tela.getByText('O alcance já sustenta um show fora da cidade.')).toBeTruthy();
-    expect(tela.getByText('A receita depende de um único canal.')).toBeTruthy();
+    expect(tela.queryByText('O QUE O SEU DIAGNÓSTICO REVELA')).toBeNull();
+    expect(tela.queryByText('O alcance já sustenta um show fora da cidade.')).toBeNull();
   });
 
   // O texto e o da web ("Diagnóstico indisponível"), e nao uma frase minha.
@@ -192,8 +196,20 @@ describe('diagnostico REAL na v4', () => {
 
   it('circulação e público pagante saem em base anual', async () => {
     const tela = await montar();
-    expect(tela.getByText(/^Shows \(12 meses\)/)).toBeTruthy();
+    // Duas vezes de propósito: o mesmo número de shows é a base da receita no E e a circulação
+    // no A. São duas leituras do mesmo dado, e cada cartão precisa mostrar o seu.
+    expect(tela.getAllByText(/^Shows \(12 meses\)/)).toHaveLength(2);
     expect(tela.getByText('Não faz bilheteria')).toBeTruthy();
+  });
+
+  // §12 (v4.1) — o custo decomposto aparece na tabela do E. O total sozinho não diz se o peso
+  // está no show, no fixo ou no lançamento, e é essa distinção que muda a decisão do artista.
+  it('mostra as três parcelas do custo, e não só o total', async () => {
+    const tela = await montar();
+    for (const rotulo of ['Custo médio por show', 'Custo fixo mensal', 'Investimento em lançamentos']) {
+      expect(tela.getByText(new RegExp(`^${rotulo}`))).toBeTruthy();
+    }
+    expect(tela.getByText(/^Custos e investimento \(12 meses\)/)).toBeTruthy();
   });
 
   it('diz que o engajamento não entra no diagnóstico', async () => {
@@ -218,6 +234,42 @@ describe('diagnostico REAL na v4', () => {
     const tela = await montar();
     expect(tela.getByText(/versão anterior do método/)).toBeTruthy();
     expect(tela.queryByText(/o público real não pode ser comprovado/)).toBeNull();
+  });
+
+  // A spec do relatório troca o §3 inteiro: selo por estado, linha de status F3/F4/F5, intro em
+  // acordeão, frase de leitura destacada e até três comentários por dimensão.
+  it('o selo da dimensão é APAGADA / ACESA / TOP TIER, não TOP ICON', async () => {
+    const tela = await montar();
+    // "Top Tier" é o patamar da DIMENSÃO; "TOP ICON" é o perfil, e não aparece nos selos.
+    expect(tela.getAllByText(/^(APAGADA|ACESA|TOP TIER)$/).length).toBe(4);
+    expect(tela.queryByText('TOP ICON')).toBeNull();
+  });
+
+  it('a intro de cada frente vem recolhida, e abre ao toque (§2)', async () => {
+    const tela = await montar();
+    const gatilhos = tela.getAllByLabelText('O que é esta frente');
+    expect(gatilhos).toHaveLength(4);
+    // Recolhida: o texto da intro não está na tela.
+    expect(tela.queryByText(/Alcance é consumo passivo/)).toBeNull();
+    await userEvent.setup().press(gatilhos[0]);
+    expect(tela.getByText(/Alcance é consumo passivo/)).toBeTruthy();
+  });
+
+  // Este perfil é o Outlier (0101): E e L acesos, R e A apagados.
+  it('cada dimensão traz a frase de leitura do seu estado', async () => {
+    const tela = await montar();
+    expect(tela.getByText(/Sua música se paga, e paga bem/)).toBeTruthy();          // E acesa
+    expect(tela.getByText(/Seu público real ainda está em construção/)).toBeTruthy(); // A apagada
+  });
+
+  it('mostra os comentários da spec, com a abertura em negrito', async () => {
+    const tela = await montar();
+    // A2.e: este perfil não faz bilheteria, e esse comentário tem precedência no grupo.
+    expect(tela.getByText(/Você não faz shows de bilheteria em que é a atração principal/)).toBeTruthy();
+    // E6 entrou no lugar do E4 porque há fonte marcada "não sei" (§7).
+    expect(tela.getByText(/Você não soube informar quanto recebeu de editora/)).toBeTruthy();
+    // O retrato do perfil substituiu a descrição de uma linha.
+    expect(tela.getByText(/Sua música se sustenta e o setor te reconhece/)).toBeTruthy();
   });
 
   it('não chama de execução em rádio um airplay abaixo do piso de 6', async () => {

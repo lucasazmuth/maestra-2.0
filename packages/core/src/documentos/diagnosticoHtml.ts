@@ -1,5 +1,5 @@
 import {
-  DIM_META, PROFILE_BITS, PROFILE_MAP, clean, dimStatusText, fmtNum, fmtPct,
+  DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtNum, fmtPct,
 } from '../constants/realCopy';
 import { METODOLOGIA, QUEM_ASSINA, dimNarrative } from '../constants/realNarrative';
 import { tierForAltas } from '../constants/realBadge';
@@ -9,6 +9,12 @@ import {
   composicaoDaReceita, dinheiroRedondo, linhaDeAutoria, linhasDaDimensao, tintaDaDimensao,
   type Autoria,
 } from './diagnostico';
+import {
+  FIXOS, INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO, LEITURAS_CURTAS,
+} from '../constants/realTextos';
+import {
+  comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
+} from '../services/realEngine/comentarios';
 import {
   AVISOS, ehLegado, resumoDoE, SIIC_MENSAL,
 } from '../services/realEngine/relatorio';
@@ -125,6 +131,12 @@ const ESTILO = `
     overflow: hidden; margin-bottom: 8px; }
   .reguaCheia { height: 100%; border-radius: 9999px; }
   .dimEstado { font-size: 14px; color: ${T.mute}; margin-bottom: 20px; }
+  /* No PDF a intro vem ABERTA (§2): aqui não há toque para expandir, e o documento é onde a
+     explicação inteira cabe. */
+  .dimIntro { font-size: 11.5px; line-height: 1.6; color: ${T.mute}; margin: 0 0 16px; }
+  /* A frase de leitura é a resposta curta da dimensão: barra à esquerda, como na maquete. */
+  .dimLeitura { font-size: 12.5px; line-height: 1.6; color: ${T.ink}; margin: 0 0 18px;
+    border-left: 3px solid ${T.real}; padding: 12px 14px; background: ${T.soft}; }
   .dimLinhas { display: flex; flex-direction: column; margin-bottom: 14px; }
   .dimLinha { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0;
     border-top: 1px solid ${T.line}; font-size: 15px; color: ${T.dim}; }
@@ -140,6 +152,19 @@ const ESTILO = `
   /* O selo de "não entra no diagnóstico" (§11.3.5) anda junto do título do bloco informativo. */
   .blocoNota { font-size: 10.5px; font-weight: 600; letter-spacing: 0; text-transform: none;
     color: ${T.mute}; }
+  /* A página "Onde a conta fecha": cartões de número e barras comparativas. */
+  .tituloDaSecao { font-size: 26px; font-weight: 800; letter-spacing: -0.4px; color: ${T.ink};
+    margin-bottom: 18px; }
+  .contaGrade { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+  .contaCartao { flex: 1 1 150px; border: 1px solid ${T.line}; border-radius: 10px;
+    padding: 12px 14px; background: ${T.soft}; }
+  .contaRotulo { display: block; font-size: 10.5px; color: ${T.mute}; margin-bottom: 6px; }
+  .contaValor { font-size: 17px; color: ${T.ink}; }
+  .contaLinha { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .contaNome { flex: 0 0 150px; font-size: 11.5px; color: ${T.mute}; }
+  .contaTrilho { flex: 1; height: 8px; border-radius: 9999px; background: ${T.line}; overflow: hidden; }
+  .contaBarra { display: block; height: 100%; border-radius: 9999px; background: ${T.real}; }
+  .contaNumero { flex: 0 0 90px; text-align: right; font-size: 11.5px; color: ${T.ink}; }
   .comp { display: flex; flex-wrap: wrap; gap: 10px 26px; }
   .compItem { display: flex; align-items: baseline; gap: 7px; }
   .compPct { font-weight: 800; font-size: 20px; color: ${T.ink}; }
@@ -251,7 +276,7 @@ const paginaDaDimensao = (
   const legado = ehLegado(ri);
   // A v4 lê o SALDO ANUAL direto do motor; o legado ainda multiplica a base mensal por doze.
   const faturamento = resumo ? resumo.receitaAnual : Math.round(Number(rev.total ?? 0) * 12);
-  const investimento = resumo ? resumo.investimento : Math.round(Number(inp.investimento ?? 0));
+  const investimento = resumo ? resumo.investimentoAnual : Math.round(Number(inp.investimento ?? 0));
   const saldo = resumo ? resumo.saldo : faturamento - investimento;
   const temCnpj = resumo ? ri.raw?.temCnpj === true : !!inp.temCnpj;
   const temEmpresario = resumo ? ri.raw?.temEmpresario === true : !!inp.temEmpresario;
@@ -270,7 +295,7 @@ const paginaDaDimensao = (
         <span class="dimSelo" style="${topo
           ? `background:${T.goldBg};color:${T.goldInk}`
           : alta ? `background:${cor};color:#fff` : `background:#eef2f8;color:${T.body}`}">
-          ${topo ? 'TOP ICON' : alta ? 'Alto' : 'Baixo'}</span>
+          ${escapar(seloDaDimensao(ri, dk).rotulo)}</span>
         <span class="dimValor">${nota}<span class="dimMax">/100</span></span>
       </div>
     </div>
@@ -278,7 +303,10 @@ const paginaDaDimensao = (
     <div class="regua">
       <div class="reguaCheia" style="width:${topo ? 100 : nota}%;background:${cor}"></div>
     </div>
-    <div class="dimEstado">${escapar(dimStatusText(nota, alta, topo))}</div>
+    <div class="dimEstado">${escapar(statusDaBarra(ri, dk))}</div>
+
+    ${!legado ? `<p class="dimIntro">${escapar(INTRO_DA_DIMENSAO[dk])}</p>
+    <p class="dimLeitura">${escapar(LEITURA_DA_DIMENSAO[dk][alta ? 'alto' : 'baixo'])}</p>` : ''}
 
     <div class="dimLinhas">
       ${linhas.map((r) => `
@@ -352,16 +380,19 @@ const paginaDaDimensao = (
           if (!e) return '';
           const nome = k === 'instagram' ? 'Instagram' : k === 'tiktok' ? 'TikTok' : 'YouTube';
           return `<div class="eng"><span>${nome}</span>
-            <b style="color:${e.above ? T.real : T.mute}">${fmtPct(e.value)} ·
-            ${e.above ? 'acima' : 'abaixo'} do corte de ${fmtPct(e.cut)}</b></div>`;
+            <b>${fmtPct(e.value)}</b></div>`;
         }).join('')}
       </div>` : ''}
 
     <div class="revelaBloco">
       <div class="revelaTitulo">O que isso revela</div>
-      <div class="revelaLead">${escapar(narrativa.headline)}</div>
-      ${narrativa.paras.map((p) => `<p class="revelaPara">
-        <b>${escapar(p.lead)}</b> ${escapar(p.body)}</p>`).join('')}
+      ${legado
+        ? `<div class="revelaLead">${escapar(narrativa.headline)}</div>
+           ${narrativa.paras.map((p) => `<p class="revelaPara">
+             <b>${escapar(p.lead)}</b> ${escapar(p.body)}</p>`).join('')}`
+        // No PDF saem TODOS os comentários aplicáveis (§4), e não os três da tela.
+        : comentariosDaDimensao(ri, dk, { superficie: 'pdf', chartmetric: cm }).map((c) => `
+            <p class="revelaPara"><b>${escapar(c.lead)}</b> ${escapar(c.corpo)}</p>`).join('')}
     </div>`;
 
   return moldura(numero, total, `${meta.full} · ${meta.sub}`, corpo, autoria, agora);
@@ -386,7 +417,10 @@ export function montarDocumentoDoDiagnostico({
 
   const temCidades = !!cidades?.length;
   const temPlataformas = !!(playlists?.top?.length || similares?.length);
-  const total = 10 + (temCidades ? 1 : 0) + (temPlataformas ? 1 : 0);
+  // A página "Onde a conta fecha" só existe quando há um resumo do E para aprofundar — ou seja,
+  // não existe no legado, que não tem os custos decompostos.
+  const temContaFecha = !!resumoDoE(ri);
+  const total = 10 + (temCidades ? 1 : 0) + (temPlataformas ? 1 : 0) + (temContaFecha ? 1 : 0);
   let n = 1; // a capa é a 1 e não leva número
   const proxima = () => (n += 1);
 
@@ -417,22 +451,85 @@ export function montarDocumentoDoDiagnostico({
   paginas.push(moldura(proxima(), total, 'O seu perfil', `
     <div class="perfilChapeu">Seu perfil de carreira</div>
     <div class="perfilNome">${escapar(perfil.name)}</div>
-    <p class="perfilDesc">${escapar(clean(perfil.description))}</p>
+    <p class="perfilDesc">${escapar(retratoDoPerfil(ri)?.texto ?? clean(perfil.description))}</p>
     <div class="padrao">
       ${DIM_META.map((d) => `<div class="padraoItem">
         <span class="padraoLetra" style="color:${ri.pattern?.[d.key] ? T.real : '#8492ac'}">${d.letter}</span>
         <span class="padraoPalavra">${escapar(d.full)}</span>
       </div>`).join('')}
     </div>
-    <div class="revelaTitulo">O que o seu diagnóstico revela</div>
+    ${/* §13.3 — o bloco de bullets saiu: o retrato acima e os comentários por dimensão cobrem
+          o que ele dizia. O legado o mantém, porque lá não há retrato que o substitua. */ ''}
+    ${ehLegado(ri) ? `<div class="revelaTitulo">O que o seu diagnóstico revela</div>
     <ul class="revela">
       ${(perfil.insights || []).map((it: string) => `<li>${escapar(clean(it))}</li>`).join('')}
-    </ul>`, autoria, agora));
+    </ul>` : ''}`, autoria, agora));
 
   // 3–6 — AS DIMENSÕES
   DIM_META.forEach((d) => {
     paginas.push(paginaDaDimensao(d.key as 'r' | 'e' | 'a' | 'l', proxima(), total, ri, chartmetric ?? null, autoria, agora));
   });
+
+  // 7 — ONDE A CONTA FECHA (só no PDF, §2)
+  //
+  // É o aprofundamento do E: o que a tela não comporta sem virar planilha. Aqui cabem a margem
+  // por show, o ponto de equilíbrio, o cachê por tipo de contratante e a referência do setor —
+  // os números que respondem "quantos shows eu preciso vender por ano".
+  const contaFecha = resumoDoE(ri);
+  if (temContaFecha && contaFecha) {
+    const numero = (rotulo: string, valor: string) => `<div class="contaCartao">
+      <span class="contaRotulo">${escapar(rotulo)}</span>
+      <b class="contaValor">${escapar(valor)}</b></div>`;
+    const barra = (rotulo: string, valor: number, teto: number, texto: string) => `<div class="contaLinha">
+      <span class="contaNome">${escapar(rotulo)}</span>
+      <span class="contaTrilho"><span class="contaBarra"
+        style="width:${teto > 0 ? Math.max(2, Math.round((valor / teto) * 100)) : 2}%"></span></span>
+      <b class="contaNumero">${escapar(texto)}</b></div>`;
+    const tetoDoCache = Math.max(...contaFecha.cache.map((c) => c.valor), 1);
+    const composicaoDoPdf = [
+      { rotulo: 'Shows', valor: contaFecha.receitaShows },
+      ...contaFecha.fontes.filter((f) => f.valor > 0).map((f) => ({ rotulo: f.rotulo, valor: f.valor })),
+    ].filter((x) => x.valor > 0).sort((x, y) => y.valor - x.valor);
+    const tetoDaComposicao = Math.max(...composicaoDoPdf.map((x) => x.valor), 1);
+    const doE = comentariosDaDimensao(ri, 'e', { superficie: 'pdf', chartmetric: chartmetric ?? null });
+    const soDaConta = doE.filter((c) => ['E7', 'E5', 'E8'].includes(c.grupo));
+
+    paginas.push(moldura(proxima(), total, 'Aprofundamento', `
+      <div class="tituloDaSecao">Onde a conta fecha</div>
+
+      <div class="blocoTitulo">Saúde financeira · 12 meses</div>
+      <div class="contaGrade">
+        ${numero('Receita', dinheiroRedondo(contaFecha.receitaAnual))}
+        ${numero('Custos e investimento', dinheiroRedondo(contaFecha.investimentoAnual))}
+        ${numero('Saldo', `${contaFecha.saldo >= 0 ? '+' : '−'}${dinheiroRedondo(contaFecha.saldo)}`)}
+        ${numero(
+          contaFecha.bonus > 1 ? `Saldo ajustado (+${Math.round((contaFecha.bonus - 1) * 100)}%)` : 'Saldo ajustado',
+          `${contaFecha.saldoAjustado >= 0 ? '+' : '−'}${dinheiroRedondo(contaFecha.saldoAjustado)}`,
+        )}
+      </div>
+
+      ${contaFecha.margemPorShow != null ? `
+        <div class="blocoTitulo">Margem por show e ponto de equilíbrio</div>
+        <div class="contaGrade">
+          ${numero('Cachê médio', dinheiroRedondo(contaFecha.cacheMedio))}
+          ${numero('Custo médio por show', dinheiroRedondo(contaFecha.custoPorShow))}
+          ${numero('Margem por show', dinheiroRedondo(contaFecha.margemPorShow))}
+          ${numero('Shows pra cobrir o fixo do ano', contaFecha.pontoEquilibrioShows == null ? 'não fecha' : String(contaFecha.pontoEquilibrioShows))}
+        </div>` : ''}
+
+      ${contaFecha.cache.length ? `
+        <div class="blocoTitulo">Cachê médio por tipo de contratante</div>
+        ${contaFecha.cache.map((c) => barra(c.rotulo, c.valor, tetoDoCache, dinheiroRedondo(c.valor))).join('')}` : ''}
+
+      ${composicaoDoPdf.length ? `
+        <div class="blocoTitulo">Composição da receita anual</div>
+        ${composicaoDoPdf.map((x) => barra(x.rotulo, x.valor, tetoDaComposicao, dinheiroRedondo(x.valor))).join('')}` : ''}
+
+      ${soDaConta.length ? `<div class="revelaBloco">
+        ${soDaConta.map((c) => `<p class="revelaPara"><b>${escapar(c.lead)}</b> ${escapar(c.corpo)}</p>`).join('')}
+      </div>` : ''}
+    `, autoria, agora));
+  }
 
   // AUDIÊNCIA & ALCANCE
   if (temCidades) {
@@ -499,9 +596,10 @@ export function montarDocumentoDoDiagnostico({
     }).join('')}
     <div class="topo">
       <span class="topoSelo">TOP</span>
-      <div><b>TOP ICON.</b> Quando uma dimensão atinge o nível de excelência (o topo absoluto da
-        escala), ela ganha o selo TOP ICON no seu diagnóstico. Vale para qualquer perfil e qualquer
-        das quatro dimensões.</div>
+      <div><b>Top Tier.</b> Quando uma dimensão atinge o nível de excelência (o topo absoluto da
+        escala), ela ganha o selo Top Tier no seu diagnóstico. Vale para qualquer perfil e qualquer
+        das quatro dimensões. Quando as quatro acendem em Top Tier ao mesmo tempo, o perfil é
+        TOP ICON.</div>
     </div>`, autoria, agora));
 
   // METODOLOGIA

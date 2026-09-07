@@ -15,7 +15,13 @@ import { CHAMADA_DO_PLANEJAMENTO, QUEM_ASSINA } from '@maestra/core/constants/re
 import { autoriaDoDocumento } from '@maestra/core/documentos/diagnostico';
 
 import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
+import { LEITURAS_CURTAS } from '@maestra/core/constants/realTextos';
+import { retratoDoPerfil } from '@maestra/core/services/realEngine/comentarios';
 import { avisosDoDiagnostico } from '@maestra/core/services/realEngine/relatorio';
+
+/** O padrão de bits R E A L de um perfil, que é a chave dos textos (§5.2, §5.3). */
+const chaveDoPerfil = (bits: Record<string, boolean>) =>
+  `${bits.r ? 1 : 0}${bits.e ? 1 : 0}${bits.a ? 1 : 0}${bits.l ? 1 : 0}`;
 import { CartaoDaDimensao } from '@/casca/diagnostico/CartaoDaDimensao';
 import { Placa } from '@/casca/diagnostico/Placa';
 import { baixarDiagnostico } from '@/nucleo/documentos';
@@ -200,7 +206,16 @@ export const Relatorio = ({
               <Text style={estilos.nomeDoPerfil}>{perfil.name}</Text>
             </View>
           </View>
-          <Text style={estilos.descricao}>{semTravessao(perfil.description)}</Text>
+          {/*
+            O RETRATO do perfil (§5.2), e não mais a descrição de uma linha.
+
+            São textos definitivos da Anita, um por perfil, com o Beginner em três estágios que o
+            artista não vê. O legado cai na descrição antiga: os retratos descrevem a leitura da
+            v4, e colar um deles sobre um cálculo da v3 afirmaria o que ele não sustenta.
+          */}
+          <Text style={estilos.descricao}>
+            {retratoDoPerfil(real)?.texto ?? semTravessao(perfil.description)}
+          </Text>
 
           {/*
             O R·E·A·L vira a assinatura da tela: quatro letras em Georgia itálica, acesas ou
@@ -348,6 +363,12 @@ export const Relatorio = ({
                         <Text style={[estilos.nomeDaEtiqueta, ehVoce && estilos.nomeAtivo]}>
                           {nome}
                         </Text>
+                        {/* §5.3 — a leitura curta explica o perfil sem abrir nada. */}
+                        {!!bits && !!LEITURAS_CURTAS[chaveDoPerfil(bits)] && (
+                          <Text style={estilos.leituraCurta}>
+                            {LEITURAS_CURTAS[chaveDoPerfil(bits)]}
+                          </Text>
+                        )}
                         {!!bits && (
                           <View style={estilos.bolinhas}>
                             {(['r', 'e', 'a', 'l'] as const).map((k) => (
@@ -369,17 +390,11 @@ export const Relatorio = ({
           })}
         </View>
 
-        {!!perfil.insights?.length && (
-          <View style={estilos.cartao}>
-            <Text style={estilos.tituloDoCartao}>O QUE O SEU DIAGNÓSTICO REVELA</Text>
-            {perfil.insights.map((texto: string, i: number) => (
-              <View key={i} style={estilos.insight}>
-                <Text style={estilos.marcador}>▸</Text>
-                <Text style={estilos.insightTexto}>{semTravessao(texto)}</Text>
-              </View>
-            ))}
-          </View>
-        )}
+        {/*
+          O bloco "O que o seu diagnóstico revela" SAIU (§13.3): eram dois bullets por perfil, e o
+          conteúdo deles agora está coberto pelo retrato acima e pelos comentários de cada
+          dimensão. Mantê-lo seria dizer a mesma coisa três vezes.
+        */}
 
         {/* SEÇÃO 5 — o convite para o planejamento.
             Vem ANTES de "leve seu diagnóstico", como na web: lá os dois vivem no mesmo bloco,
@@ -617,6 +632,7 @@ const estilos = StyleSheet.create({
     borderColor: COR_DIAGNOSTICO.etiquetaAtivaContorno,
     backgroundColor: COR_DIAGNOSTICO.etiquetaAtivaFundo,
   },
+  leituraCurta: { fontSize: 11, lineHeight: 15.5, color: COR_DIAGNOSTICO.texto, marginTop: 4 },
   nomeDaEtiqueta: { fontSize: 12, fontWeight: '600', color: COR_DIAGNOSTICO.titulo },
   nomeAtivo: { fontWeight: '800' },
   bolinhas: { flexDirection: 'row', gap: 3 },

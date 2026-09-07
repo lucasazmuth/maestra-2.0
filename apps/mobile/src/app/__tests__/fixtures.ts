@@ -80,7 +80,7 @@ const v4 = computeRealIndexV4({
   showsPerYear: 60,
   cacheByType: { corporativos: 6_000, produtores: 2_000 },
   revenueSources: { distribuidora: 20_000, editora: 'nao_sei' },
-  investimento: 40_000,
+  custoPorShow: 0, custoFixoMensal: 0, investLancamentos12m: 40_000,
   temCnpj: true, aliquota: '6-10', temEmpresario: false,
   fazBilheteria: false, pagantePct: null,
   premios: 4, imprensaRepercussao: true,

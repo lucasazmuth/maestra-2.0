@@ -21,7 +21,8 @@ export type QuizFieldType = 'int' | 'currency' | 'select' | 'revenue' | 'cache' 
 export type QuizKey =
   | 'vinculo'
   | 'igFollowersSelf' | 'tiktokFollowersSelf' | 'youtubeViews28dSelf'
-  | 'showsPerYear' | 'cacheByType' | 'revenueSources' | 'investimento'
+  | 'showsPerYear' | 'cacheByType' | 'revenueSources'
+  | 'custoPorShow' | 'custoFixoMensal' | 'investLancamentos12m'
   | 'temCnpj' | 'aliquota' | 'temEmpresario'
   | 'fazBilheteria' | 'pagantePct'
   | 'premios' | 'imprensaRepercussao' | 'imprensaMatrix' | 'imprensaFrequencia';
@@ -141,7 +142,15 @@ export const QUIZ: QuizDef[] = [
   { key: 'showsPerYear', type: 'int', q: 'Vamos falar dos seus shows no último ano. Quantos shows você fez nos últimos 12 meses, no total?', placeholder: '0' },
   { key: 'cacheByType', type: 'cache', q: 'Agora, o cachê médio por tipo de contratante.', ajuda: 'Preencha os tipos que você atendeu e deixe em zero os que não se aplicam.' },
   { key: 'revenueSources', type: 'revenue', q: 'Fora os shows, quanto a música te rendeu nos últimos 12 meses em cada fonte?', ajuda: 'Se não souber alguma, marque "não sei".' },
-  { key: 'investimento', type: 'currency', q: 'E quanto você investiu na carreira nos últimos 12 meses?', ajuda: 'Gravação de fonogramas, campanhas de lançamento, produção, divulgação, equipe, deslocamento. Se não souber com precisão, coloque sua melhor estimativa.', placeholder: '0' },
+  // O investimento decomposto (v4.1, §3.2). Antes era uma pergunta só, e a resposta não permitia
+  // dizer nada: com o custo POR SHOW separado do fixo mensal e do que foi para lançamento, saem a
+  // margem por show e o ponto de equilíbrio, que são as contas que decidem cachê.
+  //
+  // Os três textos delimitam o que NÃO entra, porque é aí que o artista erra: o que o contratante
+  // paga não é custo dele, e comissão de empresário e imposto não entram no fixo.
+  { key: 'custoPorShow', type: 'currency', q: 'Quanto custa, em média, produzir um show seu?', ajuda: 'Conte banda, equipe técnica e o que sai do seu bolso. Não conte o que o contratante paga, como transporte, hospedagem, alimentação e estrutura. Se não souber com precisão, coloque sua melhor estimativa.', placeholder: '0' },
+  { key: 'custoFixoMensal', type: 'currency', q: 'Quanto você gasta por mês com a carreira, mesmo nos meses sem show?', ajuda: 'Contador, assessoria de imprensa, gestão de redes, estúdio fixo, o que for recorrente. Não inclua comissão de empresário nem impostos. Se não souber com precisão, coloque sua melhor estimativa.', placeholder: '0' },
+  { key: 'investLancamentos12m', type: 'currency', q: 'Nos últimos 12 meses, quanto você investiu em gravação de músicas, clipes e campanhas de lançamento?', ajuda: 'Inclua assessoria e mídia paga dos lançamentos. Se não souber com precisão, coloque sua melhor estimativa.', placeholder: '0' },
   { key: 'temCnpj', type: 'select', q: 'Você tem CNPJ para as suas atividades musicais?', options: SIM_NAO },
   { key: 'aliquota', type: 'select', q: 'Qual é a alíquota atual de impostos do seu CNPJ?', ajuda: 'Isso não entra no cálculo do diagnóstico. Serve para estimar a sua receita líquida no relatório.', skipIf: (a) => !a.temCnpj, options: [
     { label: 'Até 6%', value: 'ate6' },

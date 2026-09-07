@@ -12,7 +12,8 @@ const base = (over: Partial<RealInputsV4> = {}): RealInputsV4 => ({
   igEngagement: null, tiktokEngagement: null, youtubeEngagement: null,
   editorialPlaylists: null, radioAirplay180d: null,
   igFollowersSelf: null, tiktokFollowersSelf: null, youtubeViews28dSelf: null,
-  showsPerYear: 0, cacheByType: {}, revenueSources: {}, investimento: 0,
+  showsPerYear: 0, cacheByType: {}, revenueSources: {},
+  custoPorShow: 0, custoFixoMensal: 0, investLancamentos12m: 0,
   temCnpj: false, aliquota: null, temEmpresario: false,
   fazBilheteria: false, pagantePct: null,
   premios: 0, imprensaRepercussao: false, imprensaMatrix: [], imprensaFrequencia: 'lancamento',
@@ -51,7 +52,7 @@ describe('§11.3 textos obrigatórios', () => {
       premios: 4, imprensaRepercussao: true, imprensaFrequencia: 'perene',
       imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }],
       revenueSources: { outras: 1_000, editora: 'nao_sei' },
-      investimento: 20_000,
+      investLancamentos12m: 20_000,
       igFollowersSelf: 4_000,
     }));
     const chaves = avisosDoDiagnostico(ri).map((a) => a.chave);
@@ -65,7 +66,7 @@ describe('§7.5 resumo do E', () => {
     showsPerYear: 40,
     cacheByType: { corporativos: 6_000, produtores: 2_000, particulares: 0 },
     revenueSources: { distribuidora: 12_000, editora: 'nao_sei', aulas: 8_000 },
-    investimento: 30_000,
+    investLancamentos12m: 30_000,
     temCnpj: true, aliquota: '6-10', temEmpresario: true,
   }));
 
@@ -131,9 +132,19 @@ describe('linhas de cada dimensão', () => {
     expect(r.find((l) => l.rotulo === 'YouTube (views/mês)')?.fonte).toBe('absent');
   });
 
-  it('o E mostra saldo, não só receita', () => {
+  it('o E mostra as parcelas do custo, não só o total (§12)', () => {
     const rotulos = linhasDaDimensao(ri, 'e').map((l) => l.rotulo);
-    expect(rotulos).toEqual(['Receita (12 meses)', 'Investimento (12 meses)', 'Saldo']);
+    expect(rotulos).toEqual([
+      'Shows (12 meses)',
+      'Receita (12 meses)',
+      'Custo médio por show',
+      'Custo fixo mensal',
+      'Investimento em lançamentos',
+      'Custos e investimento (12 meses)',
+      'Saldo',
+    ]);
+    // Todas são autorrelato: levam a adaga e a nota de rodapé (§11.3.2, F8).
+    expect(linhasDaDimensao(ri, 'e').every((l) => l.fonte === 'self')).toBe(true);
   });
 
   it('o A traz a conversão calculada e a circulação anual', () => {
@@ -185,7 +196,7 @@ describe('a narrativa lê a v4 (e não some com os parágrafos)', () => {
     showsPerYear: 60,
     cacheByType: { produtores: 3_000 },
     revenueSources: { distribuidora: 20_000, aulas: 10_000 },
-    investimento: 40_000,
+    investLancamentos12m: 40_000,
     imprensaRepercussao: true, imprensaFrequencia: 'perene',
     imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }],
     editorialPlaylists: 4, radioAirplay180d: 200,
@@ -242,8 +253,11 @@ describe('compatibilidade com o quiz da v3', () => {
     expect(v4.showsPerYear).toBe(60);
     expect(v4.cacheByType).toEqual({ outros: 3_000 });
     expect(v4.revenueSources).toEqual({ distribuidora: 12_000, associacao: 6_000, patrocinios: 2_400 });
-    // O investimento já era anual nas duas versões: multiplicá-lo seria inventar um gasto.
-    expect(v4.investimento).toBe(40_000);
+    // O `investimento` da v3 já era anual: cai inteiro no balde de lançamentos, sem multiplicar.
+    expect(v4.investLancamentos12m).toBe(40_000);
+    // Os outros dois baldes ficam em zero: nunca perguntamos custo por show nem fixo à v3.
+    expect(v4.custoPorShow).toBe(0);
+    expect(v4.custoFixoMensal).toBe(0);
     expect(v4.aliquota).toBeNull();
   });
 
@@ -262,7 +276,7 @@ describe('compatibilidade com o quiz da v3', () => {
     const nativo = motor(base({
       showsPerYear: 60, cacheByType: { outros: 3_000 },
       revenueSources: { distribuidora: 12_000, associacao: 6_000, patrocinios: 2_400 },
-      investimento: 40_000, temCnpj: true, temEmpresario: true,
+      investLancamentos12m: 40_000, temCnpj: true, temEmpresario: true,
       fazBilheteria: true, pagantePct: '70-94', premios: 4,
     }));
     expect(traduzido.revenue.receitaAnual).toBe(nativo.revenue.receitaAnual);

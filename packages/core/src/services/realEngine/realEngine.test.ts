@@ -9,7 +9,8 @@ const base = (over: Partial<RealInputsV4> = {}): RealInputsV4 => ({
   igEngagement: null, tiktokEngagement: null, youtubeEngagement: null,
   editorialPlaylists: null, radioAirplay180d: null,
   igFollowersSelf: null, tiktokFollowersSelf: null, youtubeViews28dSelf: null,
-  showsPerYear: 0, cacheByType: {}, revenueSources: {}, investimento: 0,
+  showsPerYear: 0, cacheByType: {}, revenueSources: {},
+  custoPorShow: 0, custoFixoMensal: 0, investLancamentos12m: 0,
   temCnpj: false, aliquota: null, temEmpresario: false,
   fazBilheteria: false, pagantePct: null,
   premios: 0, imprensaRepercussao: false, imprensaMatrix: [], imprensaFrequencia: 'lancamento',
@@ -120,7 +121,7 @@ describe('§7 E · Earnings', () => {
     const semInvestimento = computeRealIndexV4(base(E_ON));
     expect(semInvestimento.revenue.receitaAnual).toBe(150_000);
     expect(semInvestimento.pattern.e).toBe(true);
-    const comInvestimento = computeRealIndexV4(base({ ...E_ON, investimento: 60_000 }));
+    const comInvestimento = computeRealIndexV4(base({ ...E_ON, investLancamentos12m: 60_000 }));
     expect(comInvestimento.revenue.saldo).toBe(90_000);
     expect(comInvestimento.pattern.e).toBe(false);
   });
@@ -161,8 +162,54 @@ describe('§7 E · Earnings', () => {
     expect(em(120_000)).toBe(true);
   });
 
+  it('soma as três parcelas do investimento (§7.2, v4.1)', () => {
+    const ri = computeRealIndexV4(base({
+      showsPerYear: 20, cacheByType: { produtores: 5_000 },
+      custoPorShow: 1_200, custoFixoMensal: 800, investLancamentos12m: 30_000,
+    }));
+    expect(ri.revenue.custoShowsAnual).toBe(24_000);   // 1.200 × 20
+    expect(ri.revenue.custoFixoAnual).toBe(9_600);     // 800 × 12
+    expect(ri.revenue.investimentoAnual).toBe(63_600); // 24.000 + 9.600 + 30.000
+    expect(ri.revenue.saldo).toBe(36_400);             // 100.000 de receita − 63.600
+  });
+
+  it('o custo por show multiplica os MESMOS shows que o cachê', () => {
+    // É isso que torna margem e ponto de equilíbrio comparáveis: as duas contas andam sobre a
+    // mesma agenda. Dobrar os shows dobra receita e custo de show, e o fixo não se move.
+    const um = computeRealIndexV4(base({ showsPerYear: 10, cacheByType: { produtores: 3_000 }, custoPorShow: 1_000, custoFixoMensal: 500 }));
+    const dois = computeRealIndexV4(base({ showsPerYear: 20, cacheByType: { produtores: 3_000 }, custoPorShow: 1_000, custoFixoMensal: 500 }));
+    expect(dois.revenue.receitaShows).toBe(um.revenue.receitaShows * 2);
+    expect(dois.revenue.custoShowsAnual).toBe(um.revenue.custoShowsAnual * 2);
+    expect(dois.revenue.custoFixoAnual).toBe(um.revenue.custoFixoAnual);
+  });
+
+  it('margem por show e ponto de equilíbrio (§7.5)', () => {
+    const ri = computeRealIndexV4(base({
+      showsPerYear: 12, cacheByType: { casasDeShow: 2_000 },
+      custoPorShow: 800, custoFixoMensal: 150,
+    }));
+    expect(ri.revenue.margemPorShow).toBe(1_200);       // 2.000 − 800
+    expect(ri.revenue.pontoEquilibrioShows).toBe(2);    // 1.800 de fixo ÷ 1.200, arredondado acima
+  });
+
+  it('sem margem positiva não há ponto de equilíbrio, e não um número enorme', () => {
+    // Com o cachê abaixo do custo, nenhuma quantidade de shows cobre o fixo. Devolver um número
+    // gigante seria pior que devolver nada: o relatório tem texto próprio para este caso.
+    const ri = computeRealIndexV4(base({
+      showsPerYear: 12, cacheByType: { casasDeShow: 800 }, custoPorShow: 1_000, custoFixoMensal: 500,
+    }));
+    expect(ri.revenue.margemPorShow).toBe(-200);
+    expect(ri.revenue.pontoEquilibrioShows).toBeNull();
+  });
+
+  it('sem cachê informado não há margem: não há o que subtrair', () => {
+    const ri = computeRealIndexV4(base({ showsPerYear: 12, custoPorShow: 1_000 }));
+    expect(ri.revenue.margemPorShow).toBeNull();
+    expect(ri.revenue.pontoEquilibrioShows).toBeNull();
+  });
+
   it('sinaliza saldo negativo (§11.3.3)', () => {
-    const ri = computeRealIndexV4(base({ revenueSources: { outras: 10_000 }, investimento: 30_000 }));
+    const ri = computeRealIndexV4(base({ revenueSources: { outras: 10_000 }, investLancamentos12m: 30_000 }));
     expect(ri.flags.saldoNegativo).toBe(true);
     expect(ri.boletim.e).toBe(0);
   });

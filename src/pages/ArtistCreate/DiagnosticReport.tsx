@@ -17,7 +17,11 @@ import { RealBadge } from '../../components/RealBadge';
 import {
   TIER_ACCENT, altasForPattern, tierForAltas, tierForPattern,
 } from '@maestra/core/constants/realBadge';
-import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, dimStatusText, PROFILE_BITS } from '@maestra/core/constants/realCopy';
+import { fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, PROFILE_BITS } from '@maestra/core/constants/realCopy';
+import { FIXOS, INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO, LEITURAS_CURTAS } from '@maestra/core/constants/realTextos';
+import {
+  comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
+} from '@maestra/core/services/realEngine/comentarios';
 import {
   AVISOS, avisosDoDiagnostico, ehLegado, linhasDaDimensao, resumoDoE, SIIC_MENSAL,
 } from '@maestra/core/services/realEngine/relatorio';
@@ -142,6 +146,10 @@ const Typewriter: FC<{ text: string; active: boolean; speed?: number; onDone?: (
   );
 };
 
+/** O padrão de bits R E A L de um perfil, que é a chave dos textos (§5.2, §5.3). */
+const chaveDoPerfil = (bits: Record<string, boolean>) =>
+  `${bits.r ? 1 : 0}${bits.e ? 1 : 0}${bits.a ? 1 : 0}${bits.l ? 1 : 0}`;
+
 // ── V3: componentes do boletim (definidos no escopo de módulo p/ não remontar a cada render) ──
 type DimK = 'r' | 'e' | 'a' | 'l';
 const SRC_LABELS: Record<string, string> = { streaming: 'Streaming', direitos: 'Direitos', publi: 'Publicidade', aulas: 'Aulas', editais: 'Editais', venda: 'Venda / merch', outros: 'Outros' };
@@ -214,10 +222,13 @@ const EngagementGrid: FC<{ engagement: any; deezerFans?: number | null; informat
         return (
           <div key={key} className={styles.engRow}>
             <span className={styles.engNet}>{label}</span>
+            {/*
+              §13.6 — sai o "abaixo do corte de X%". O engajamento está SUSPENSO do índice, e
+              comparar com um corte que não move nota fazia o artista atribuir o resultado dele a
+              um número que não participou da conta. Fica só a taxa.
+            */}
             {e
-              // "0,4% abaixo do corte (2,8%)" lia como se 0,4 fosse a DISTÂNCIA até o corte —
-              // é a taxa da artista, e a distância real era 2,4 pontos. O "de" amarra o número ao corte.
-              ? <span className={`${styles.engVal} ${e.above ? styles.engAbove : styles.engBelow}`}>{fmtPct(e.value)} · {e.above ? 'acima' : 'abaixo'} do corte de {fmtPct(e.cut)}</span>
+              ? <span className={styles.engVal}>{fmtPct(e.value)}</span>
               : <span className={styles.engVal}>—</span>}
           </div>
         );
@@ -290,7 +301,9 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
           <div className={styles.dimSub}>{sub}</div>
         </div>
         <div className={styles.dimScoreWrap}>
-          <span className={`${styles.dimBadge} ${top ? styles.dimBadgeTop : high ? styles.dimBadgeHigh : styles.dimBadgeLow}`}>{top ? 'TOP ICON' : high ? 'Alto' : 'Baixo'}</span>
+          {/* §3 — "Top Tier" é o patamar desta DIMENSÃO; "TOP ICON" é o perfil, e só aparece
+              junto do nome dele. */}
+          <span className={`${styles.dimBadge} ${top ? styles.dimBadgeTop : high ? styles.dimBadgeHigh : styles.dimBadgeLow}`}>{seloDaDimensao(ri, dk).rotulo}</span>
           <span className={styles.dimScore}>{score}<span className={styles.dimScoreMax}>/100</span></span>
         </div>
       </div>
@@ -300,7 +313,24 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
         <span className={styles.rulerMark} style={{ left: '70%' }} data-label="acende" />
         <span className={styles.rulerMark} style={{ left: '100%' }} data-label="TOP ICON" />
       </div>
-      <div className={styles.dimStatusLine}>{dimStatusText(score, high, top)}</div>
+      {/* F3, F4 ou F5, conforme o estado (§10). */}
+      <div className={styles.dimStatusLine}>{statusDaBarra(ri, dk)}</div>
+
+      {!ehLegado(ri) && (
+        <>
+          {/*
+            A intro da frente, recolhida na tela e aberta no PDF (§2). É longa de propósito: quem
+            já entendeu não precisa reler a cada visita, e quem chegou agora precisa dela inteira.
+          */}
+          <details className={styles.dimIntro}>
+            <summary className={styles.dimIntroLabel}>{FIXOS.F21}</summary>
+            <p className={styles.dimIntroText}>{INTRO_DA_DIMENSAO[dk]}</p>
+          </details>
+
+          {/* A frase de leitura: uma só, pelo estado. */}
+          <p className={styles.dimLeitura}>{LEITURA_DA_DIMENSAO[dk][high ? 'alto' : 'baixo']}</p>
+        </>
+      )}
       <div className={styles.dimStats}>
         {rows.map((l) => (
           <div key={l.label} className={styles.dimStatRow}>
@@ -316,15 +346,23 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
         <div className={styles.statFonteNota}>† Informado por quem preencheu o diagnóstico. A Maestra não verifica estes dados.</div>
       )}
       {dk === 'e' && <RevenuePie ri={ri} />}
+      {/*
+        §3 — os chips de estrutura aparecem SEMPRE os dois, positivo ou negativo. Mostrar só a
+        ausência transformava um dado neutro em repreensão, e escondia de quem tem os dois que
+        eles contam a favor.
+      */}
       {dk === 'e' && (() => {
         const resumo = resumoDoE(ri);
-        const semCnpj = resumo ? ri.raw?.temCnpj === false : !inputs.temCnpj;
-        const semEmpresario = resumo ? ri.raw?.temEmpresario === false : !inputs.temEmpresario;
-        if (!semCnpj && !semEmpresario) return null;
+        const comCnpj = resumo ? ri.raw?.temCnpj === true : !!inputs.temCnpj;
+        const comEmpresario = resumo ? ri.raw?.temEmpresario === true : !!inputs.temEmpresario;
         return (
           <div className={styles.eBadges}>
-            {semCnpj && <span className={styles.eBadge}>Sem CNPJ</span>}
-            {semEmpresario && <span className={styles.eBadge}>Sem empresário</span>}
+            <span className={`${styles.eBadge} ${comCnpj ? styles.eBadgeOk : ''}`}>
+              {comCnpj ? 'Com CNPJ' : 'Sem CNPJ'}
+            </span>
+            <span className={`${styles.eBadge} ${comEmpresario ? styles.eBadgeOk : ''}`}>
+              {comEmpresario ? 'Com empresário' : 'Sem empresário'}
+            </span>
           </div>
         );
       })()}
@@ -377,7 +415,7 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
             <div className={styles.healthTitle}>Saúde financeira · 12 meses</div>
             <div className={styles.healthGrid}>
               <div className={styles.healthItem}><span className={styles.healthLabel}>Receita</span><span className={styles.healthVal}>{money(resumo.receitaAnual)}</span></div>
-              <div className={styles.healthItem}><span className={styles.healthLabel}>Investimento</span><span className={styles.healthVal}>{money(resumo.investimento)}</span></div>
+              <div className={styles.healthItem}><span className={styles.healthLabel}>Custos e investimento</span><span className={styles.healthVal}>{money(resumo.investimentoAnual)}</span></div>
               <div className={styles.healthItem}>
                 <span className={styles.healthLabel}>Saldo</span>
                 <span className={`${styles.healthVal} ${resumo.saldo >= 0 ? styles.healthPos : styles.healthNeg}`}>
@@ -431,13 +469,31 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
         />
       )}
       {(() => {
-        const nar = dimNarrative(dk, ri);
+        // O legado (v2/v3) segue na narrativa antiga: os gatilhos novos leem estado que aquele
+        // cálculo não produzia, e comentar sobre dado que não existe seria inventar.
+        if (ehLegado(ri)) {
+          const nar = dimNarrative(dk, ri);
+          return (
+            <div className={styles.dimReveal}>
+              <div className={styles.dimRevealHead}>O que isso revela</div>
+              <div className={styles.dimRevealLead}>{nar.headline}</div>
+              {nar.paras.map((p, i) => (
+                <p key={i} className={styles.dimRevealPara}><strong>{p.lead}</strong> {p.body}</p>
+              ))}
+            </div>
+          );
+        }
+        const comentarios = comentariosDaDimensao(ri, dk, { superficie: 'tela', chartmetric: cm });
+        if (!comentarios.length) return null;
         return (
           <div className={styles.dimReveal}>
             <div className={styles.dimRevealHead}>O que isso revela</div>
-            <div className={styles.dimRevealLead}>{nar.headline}</div>
-            {nar.paras.map((p, i) => (
-              <p key={i} className={styles.dimRevealPara}><strong>{p.lead}</strong> {p.body}</p>
+            {/* Cada comentário abre com a primeira frase em negrito, como na maquete. O corte é
+                feito no núcleo, para as três superfícies não inventarem regras diferentes. */}
+            {comentarios.map((c) => (
+              <p key={c.id} className={styles.dimRevealPara}>
+                <strong>{c.lead}</strong>{c.corpo ? ` ${c.corpo}` : ''}
+              </p>
             ))}
           </div>
         );
@@ -675,7 +731,12 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
             <h3 className={`${styles.realProfileName} ${styles.stamp}`} style={{ margin: 0 }}>{profile.name}</h3>
           </div>
         </div>
-        <p className={styles.realProfileDesc}>{clean(profile.description)}</p>
+        {/*
+          O RETRATO do perfil (§5.2), e não mais a descrição de uma linha. São textos definitivos
+          da autora, um por perfil, com o Beginner em três estágios que o artista não vê. O legado
+          cai na descrição antiga: os retratos descrevem a leitura da v4.
+        */}
+        <p className={styles.realProfileDesc}>{retratoDoPerfil(riAny)?.texto ?? clean(profile.description)}</p>
         {/*
           O R·E·A·L é a assinatura da entrega: quatro letras em serifa itálica sobre a palavra.
 
@@ -844,6 +905,10 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
                         ))}
                       </span>
                     )}
+                    {/* §5.3 — a leitura curta explica o perfil sem abrir nada. */}
+                    {!!bits && !!LEITURAS_CURTAS[chaveDoPerfil(bits)] && (
+                      <span className={styles.mapChipLeitura}>{LEITURAS_CURTAS[chaveDoPerfil(bits)]}</span>
+                    )}
                   </span>
                 );
               })}
@@ -852,8 +917,14 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
         ))}
       </div>
 
-      {/* SEÇÃO 4 — Insights do perfil */}
-      {!!profile.insights?.length && (
+      {/*
+        SEÇÃO 4 — o bloco "O que o seu diagnóstico revela" SAIU (§13.3): eram dois bullets por
+        perfil, e o conteúdo deles agora está no retrato acima e nos comentários de cada dimensão.
+        Mantê-lo seria dizer a mesma coisa três vezes.
+
+        O legado continua com os bullets: lá não há retrato nem comentários que os substituam.
+      */}
+      {ehLegado(riAny) && !!profile.insights?.length && (
         <div className={`${styles.insightsBlock} ${styles.reveal}`} style={{ animationDelay: '0.36s' }}>
           <div className={styles.insightsTitle}>O que o seu diagnóstico revela</div>
           <ul className={styles.insightsList}>

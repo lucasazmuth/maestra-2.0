@@ -1300,6 +1300,12 @@
     font-size: 15px;
     font-weight: 800;
   }
+  .dimIntro { border-top-color: #e8eef8; }
+  .dimIntroLabel { color: #7184a5; }
+  .dimIntroText { color: #61749a; }
+  .dimLeitura { background: #eef3ff; color: #52668d; }
+  .mapChipLeitura { color: #7184a5; }
+  .eBadgeOk { border-color: #b7e2c6 !important; background: #eefaf1 !important; color: #1f8a4c !important; }
   .avisoLinha { border-color: #f0dcb4; background: #fdf8ec; color: #8a6a24; }
   .avisoLegado { border-color: #ddcbf1; background: #f8f2fe; color: #6b4a95; }
   .dimAviso { background: #f4f7fd; color: #61749a; }
@@ -2026,6 +2032,31 @@ $docLow: #8b9ab4;
   strong { font-weight: 800; }
 }
 
+// A intro fixa da dimensão e a frase de leitura (§3 do relatório). No papel as duas saem
+// ABERTAS: o acordeão da tela não existe aqui.
+.docDimIntro2 { font-size: 14px; line-height: 1.6; color: $docMute; margin: 0 0 14px; }
+.docDimLeitura2 {
+  font-size: 16px; line-height: 1.55; color: $docInk; font-weight: 600; margin: 0 0 20px;
+  padding-left: 14px; border-left: 3px solid $docLine;
+}
+
+// A página "Onde a conta fecha": cartões de número e barras comparativas.
+.docContaGrade { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+.docContaCartao {
+  flex: 1 1 200px; padding: 14px 16px; border-radius: 12px;
+  background: $docSoft; border: 1px solid $docLine;
+}
+.docContaRotulo { display: block; font-size: 12px; color: $docDim; }
+.docContaValor {
+  display: block; font-family: var(--font-display); font-weight: 800; font-size: 24px;
+  color: $docInk; margin-top: 4px; line-height: 1.1;
+}
+.docContaLinha { display: flex; align-items: center; gap: 14px; padding: 7px 0; }
+.docContaNome { width: 190px; font-size: 14px; color: $docBody; }
+.docContaTrilho { flex: 1; height: 10px; border-radius: 9999px; background: #eef2f8; overflow: hidden; }
+.docContaBarra { display: block; height: 100%; border-radius: 9999px; background: $docReal; }
+.docContaNumero { font-size: 14px; font-weight: 800; color: $docInk; min-width: 88px; text-align: right; }
+
 .docSubBlock2 { margin-top: 18px; }
 .docSubTitle2 { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: $docMute; margin-bottom: 10px; }
 .docCompRow2 { display: flex; flex-wrap: wrap; gap: 24px; }
@@ -2162,6 +2193,12 @@ $docLow: #8b9ab4;
   background: rgba(224, 161, 60, 0.12);
   border: 1px solid rgba(224, 161, 60, 0.32);
 }
+// §3 — os dois chips aparecem sempre; o positivo é verde suave, o negativo âmbar suave.
+.eBadgeOk {
+  color: #1db954;
+  background: rgba(29, 185, 84, 0.12);
+  border-color: rgba(29, 185, 84, 0.32);
+}
 
 // Saúde financeira · 12 meses (E) — faturamento / investimento / saldo.
 .healthBlock { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
@@ -2246,6 +2283,41 @@ $docLow: #8b9ab4;
   display: flex;
   align-items: center;
 }
+
+// ── A intro em acordeão e a frase de leitura de cada dimensão (spec do relatório, §2 e §6.2) ──
+.dimIntro {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+
+  // A seta padrão do <details> não combina com o resto; o marcador vira o nosso.
+  summary { list-style: none; cursor: pointer; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '⌄'; float: right; opacity: 0.6; }
+  &[open] summary::after { content: '⌃'; }
+}
+.dimIntroLabel {
+  color: #9a9aa3;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.dimIntroText { margin: 10px 0 0; color: #b3b3bd; font-size: 12.5px; line-height: 1.55; }
+// A frase de leitura é a resposta curta da dimensão: barra à esquerda e fundo próprio, para não
+// se confundir com os comentários que vêm depois.
+.dimLeitura {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border-left: 3px solid rgb(var(--real-accent, 51, 97, 255));
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 255, 255, 0.04);
+  color: #e6e6ea;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+// A leitura curta de cada perfil na grade dos 16 (§5.3).
+.mapChipLeitura { display: block; margin-top: 5px; color: #9a9aa3; font-size: 11px; line-height: 1.4; }
 
 // ── Avisos obrigatórios da entrega (§11.3) e blocos novos do E (§7.5) ──
 .avisosBloco { display: flex; flex-direction: column; gap: 10px; margin: 18px 0 4px; }

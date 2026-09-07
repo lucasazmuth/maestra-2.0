@@ -13,7 +13,7 @@
 //
 //   R: 3 componentes de peso igual, escala interpolada em log; acende com TODOS os
 //      presentes ≥ 0,52 e no mínimo 2 presentes. §6
-//   E: saldo ANUAL ajustado (receita − investimento) × bônus de estrutura;
+//   E: saldo ANUAL ajustado (receita − investimento decomposto) × bônus de estrutura;
 //      acende em R$ 120 mil. §7
 //   A: 3 componentes de limiar (engajamento SUSPENSO); acende com os 3 altos e
 //      exige conversão presente. §8
@@ -82,7 +82,16 @@ export interface RealInputsV4 {
   showsPerYear: number;
   cacheByType: CacheByType;             // cachê médio por tipo de contratante; 0 = não atendeu
   revenueSources: RevenueSources;       // 9 fontes fora shows; 'nao_sei' conta 0 e sinaliza
-  investimento: number;
+  /**
+   * O investimento decomposto (v4.1, §7.2). Antes era um número só, e um número só não permite
+   * dizer nada útil: com o custo POR SHOW separado do fixo, saem a margem por show e o ponto de
+   * equilíbrio, que são as duas contas que o artista de fato usa para decidir cachê.
+   *
+   * Nenhum dos três aceita "não sei" — zero ou estimativa (§4).
+   */
+  custoPorShow: number;          // banda, equipe técnica, o que sai do bolso do artista
+  custoFixoMensal: number;       // contador, assessoria, gestão de redes, estúdio fixo
+  investLancamentos12m: number;  // gravação, clipe, campanha de lançamento
   temCnpj: boolean;
   aliquota: Aliquota | null;            // [EXIBIÇÃO]
   temEmpresario: boolean;
@@ -145,12 +154,21 @@ export interface RealIndexV4 {
     receitaOutras: Partial<Record<FonteDeReceita, { valor: number; naoSei: boolean }>>;
     receitaOutrasTotal: number;
     receitaAnual: number;
-    investimento: number;
+    custoPorShow: number;
+    custoShowsAnual: number;
+    custoFixoMensal: number;
+    custoFixoAnual: number;
+    investLancamentos12m: number;
+    investimentoAnual: number;
     saldo: number;
     bonus: number;
     saldoAjustado: number;
     aliquota: Aliquota | null;
     receitaLiquidaEstimada: number | null;   // null quando a alíquota não foi informada
+    /** Cachê médio menos custo por show. `null` quando não há como saber (§7.5). */
+    margemPorShow: number | null;
+    /** Shows por ano que cobrem o custo fixo. `null` quando a margem não é positiva. */
+    pontoEquilibrioShows: number | null;
   };
   /** [EXIBIÇÃO] §8.5 e §11.3.5 — "informativo, não entra no diagnóstico". */
   engagement: Record<'instagram' | 'tiktok' | 'youtube', { value: number; cut: number; above: boolean } | null>;
@@ -205,6 +223,16 @@ export function daQuizV3(qz: Record<string, any> | null | undefined): Record<str
     // distribuição por tipo que a pessoa nunca informou.
     cacheByType: { outros: Math.max(0, num0(qz.cache)) },
     revenueSources,
+    // O `investimento` da v3 era UM número, já anual ("quanto você investiu nos últimos 12
+    // meses"). Ele cai inteiro em `investLancamentos12m`, que é o único balde anual dos três —
+    // assim o saldo de um quiz antigo continua exatamente o mesmo de antes.
+    //
+    // Os outros dois ficam em zero, e isso é honesto: nunca perguntamos o custo por show nem o
+    // fixo mensal a essas pessoas. A consequência é que a margem por show e o ponto de
+    // equilíbrio não aparecem para elas, que é melhor do que aparecerem errados.
+    investLancamentos12m: Math.max(0, num0(qz.investimento)),
+    custoPorShow: 0,
+    custoFixoMensal: 0,
     // A v3 não coletava alíquota nem autodeclaração de R: ficam ausentes, como devem.
     aliquota: null,
   };
@@ -469,8 +497,16 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   }
 
   const receitaAnual = receitaShows + receitaOutrasTotal;
-  const investimento = Math.max(0, Number(input.investimento) || 0);
-  const saldo = receitaAnual - investimento;
+  // §7.2 (v4.1) — o investimento anual é a soma de três parcelas. O custo por show multiplica os
+  // MESMOS `showsPerYear` que o cachê: é isso que torna a margem por show e o ponto de equilíbrio
+  // comparáveis, em vez de dois números que não se falam.
+  const custoPorShow = Math.max(0, Number(input.custoPorShow) || 0);
+  const custoFixoMensal = Math.max(0, Number(input.custoFixoMensal) || 0);
+  const investLancamentos12m = Math.max(0, Number(input.investLancamentos12m) || 0);
+  const custoShowsAnual = custoPorShow * showsPerYear;
+  const custoFixoAnual = custoFixoMensal * 12;
+  const investimentoAnual = custoShowsAnual + custoFixoAnual + investLancamentos12m;
+  const saldo = receitaAnual - investimentoAnual;
   // Estrutura é BÔNUS na v4 (a v3 descontava de quem não tinha). Premiar a formalização em vez de
   // punir a ausência dela mantém o índice do lado de quem está começando.
   const bonus = 1 + (input.temEmpresario ? CUTS.e.bonusEmpresario : 0) + (input.temCnpj ? CUTS.e.bonusCnpj : 0);
@@ -478,11 +514,23 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   const eHigh = saldoAjustado >= CUTS.e.saldoAcende;
   const eTopIcon = saldoAjustado >= CUTS.e.saldoTopIcon;
 
-  // Impostos NÃO entram no índice (§7.2): descontá-los penalizaria a formalização, que o método
-  // premia. A alíquota alimenta só esta linha de exibição.
+  // Impostos e comissão de empresário NÃO entram no índice (§7.2): descontá-los penalizaria a
+  // formalização e o empresariamento, que o método premia com bônus. A alíquota alimenta só esta
+  // linha de exibição.
   const aliquota = input.aliquota ?? null;
   const pct = aliquota && aliquota !== 'nao_sei' ? ALIQUOTA_PCT[aliquota] : null;
   const receitaLiquidaEstimada = pct == null ? null : Math.round(receitaAnual * (1 - pct));
+
+  // §7.5 — margem por show e ponto de equilíbrio.
+  //
+  // A margem só existe quando há cachê informado: sem ele não há o que subtrair, e devolver o
+  // custo negativo como "margem" seria inventar. O ponto de equilíbrio só existe com margem
+  // positiva — com margem zero ou negativa nenhuma quantidade de shows cobre o fixo, e é isso
+  // que o texto do relatório precisa dizer, não um número enorme.
+  const margemPorShow = cacheMedio > 0 ? cacheMedio - custoPorShow : null;
+  const pontoEquilibrioShows = margemPorShow != null && margemPorShow > 0 && custoFixoAnual > 0
+    ? Math.ceil(custoFixoAnual / margemPorShow)
+    : null;
 
   // ════════ A · Audience (§8) — 3 componentes; engajamento SUSPENSO ════════
   const mSpFollowers = marcar('spotifyFollowers', sp ? resolver(input.spotifyFollowers, null, at) : { value: null, source: 'absent' });
@@ -629,12 +677,19 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
       receitaOutras,
       receitaOutrasTotal: Math.round(receitaOutrasTotal),
       receitaAnual: Math.round(receitaAnual),
-      investimento: Math.round(investimento),
+      custoPorShow: Math.round(custoPorShow),
+      custoShowsAnual: Math.round(custoShowsAnual),
+      custoFixoMensal: Math.round(custoFixoMensal),
+      custoFixoAnual: Math.round(custoFixoAnual),
+      investLancamentos12m: Math.round(investLancamentos12m),
+      investimentoAnual: Math.round(investimentoAnual),
       saldo: Math.round(saldo),
       bonus: round2(bonus),
       saldoAjustado: Math.round(saldoAjustado),
       aliquota,
       receitaLiquidaEstimada,
+      margemPorShow: margemPorShow == null ? null : Math.round(margemPorShow),
+      pontoEquilibrioShows,
     },
     engagement: { instagram: eng[0], tiktok: eng[1], youtube: eng[2] },
     deezerFans: input.deezerFans ?? null,

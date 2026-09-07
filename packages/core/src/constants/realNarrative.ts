@@ -40,7 +40,7 @@ const autorrelato = (ri: any): Record<string, any> => (ehLegado(ri) ? (ri.inputs
 /** Faturamento e investimento em 12 meses, nas duas formas de entrada. */
 const contaAnual = (ri: any): { fat: number; inv: number; saldo: number } => {
   const resumo = resumoDoE(ri);
-  if (resumo) return { fat: resumo.receitaAnual, inv: resumo.investimento, saldo: resumo.saldo };
+  if (resumo) return { fat: resumo.receitaAnual, inv: resumo.investimentoAnual, saldo: resumo.saldo };
   const fat = Math.round(Number(ri.revenue?.total ?? 0) * 12);
   const inv = Math.round(Number(ri.inputs?.investimento ?? 0));
   return { fat, inv, saldo: fat - inv };

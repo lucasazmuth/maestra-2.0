@@ -1,11 +1,20 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_DIAGNOSTICO, RAIO } from '@maestra/core/constants/design';
 import {
   DIM_META, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3,
-  dimStatusText, fmtBRL, fmtNum, fmtPct, type DimKey,
+  fmtBRL, fmtNum, fmtPct, type DimKey,
 } from '@maestra/core/constants/realCopy';
 import { dimNarrative } from '@maestra/core/constants/realNarrative';
+import {
+  FIXOS, INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO,
+} from '@maestra/core/constants/realTextos';
+import {
+  comentariosDaDimensao, seloDaDimensao, statusDaBarra,
+} from '@maestra/core/services/realEngine/comentarios';
 import {
   AVISOS, ehLegado, linhasDaDimensao, resumoDoE, SIIC_MENSAL,
 } from '@maestra/core/services/realEngine/relatorio';
@@ -139,6 +148,8 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
 
   const legado = ehLegado(real);
   const resumo = resumoDoE(real);
+  const [introAberta, setIntroAberta] = useState(false);
+  const comentarios = comentariosDaDimensao(real, chave, { superficie: 'tela', chartmetric });
 
   const linhas: { rotulo: string; num?: number | null; valor?: string; declarado?: boolean }[] =
     // Na v4 as linhas vêm do núcleo, a mesma fonte da tela da web e do PDF. O legado (v2/v3)
@@ -194,7 +205,7 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
 
   // A v4 lê o SALDO ANUAL direto do motor; o legado ainda multiplica a base mensal por doze.
   const faturamento = resumo ? resumo.receitaAnual : Math.round(Number(receita.total ?? 0) * 12);
-  const investimento = resumo ? resumo.investimento : Math.round(Number(entradas.investimento ?? 0));
+  const investimento = resumo ? resumo.investimentoAnual : Math.round(Number(entradas.investimento ?? 0));
   const saldo = resumo ? resumo.saldo : faturamento - investimento;
   const dinheiro = (n: number) => `R$ ${fmtNum(Math.abs(n))}`;
 
@@ -209,6 +220,10 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
           <Text style={estilos.subnome}>{meta.sub}</Text>
         </View>
         <View style={estilos.notaBloco}>
+          {/*
+            §3 — o selo do estado. "Top Tier" é o patamar de elite DESTA dimensão; "TOP ICON" é o
+            perfil, e só aparece junto do nome dele. São coisas diferentes.
+          */}
           <View style={[
             estilos.selo,
             topo ? estilos.seloTopo : alta ? estilos.seloAlto : estilos.seloBaixo,
@@ -217,7 +232,7 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
               estilos.seloTexto,
               topo ? estilos.seloTextoTopo : alta ? estilos.seloTextoAlto : estilos.seloTextoBaixo,
             ]}>
-              {topo ? 'TOP ICON' : alta ? 'Alto' : 'Baixo'}
+              {seloDaDimensao(real, chave).rotulo}
             </Text>
           </View>
           <Text style={estilos.nota}>
@@ -239,7 +254,44 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
         {/* As duas marcas: 70 acende, 100 é TOP ICON. Sem elas a nota não diz se passou. */}
         <View style={[estilos.marca, { left: '70%' }]} />
       </View>
-      <Text style={estilos.status}>{dimStatusText(nota, alta, topo)}</Text>
+      {/* F3, F4 ou F5, conforme o estado (§10). */}
+      <Text style={estilos.status}>{statusDaBarra(real, chave)}</Text>
+
+      {/*
+        A intro da frente, recolhida na tela e aberta no PDF (§2).
+
+        Ela explica o que a dimensão mede, e é longa de propósito: quem já entendeu não precisa
+        reler a cada visita, e quem chegou agora precisa dela inteira. O acordeão resolve os dois
+        sem obrigar ninguém.
+      */}
+      {!legado && (
+        <View style={estilos.intro}>
+          <Pressable
+            style={estilos.introBotao}
+            onPress={() => setIntroAberta((v) => !v)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: introAberta }}
+            accessibilityLabel={FIXOS.F21}
+          >
+            <Text style={estilos.introRotulo}>{FIXOS.F21}</Text>
+            <Feather
+              name={introAberta ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={COR_DIAGNOSTICO.secao}
+            />
+          </Pressable>
+          {introAberta && <Text style={estilos.introTexto}>{INTRO_DA_DIMENSAO[chave]}</Text>}
+        </View>
+      )}
+
+      {/* A frase de leitura (§6.2 e irmãs): uma só, pelo estado, destacada. */}
+      {!legado && (
+        <View style={estilos.leitura}>
+          <Text style={estilos.leituraTexto}>
+            {LEITURA_DA_DIMENSAO[chave][alta ? 'alto' : 'baixo']}
+          </Text>
+        </View>
+      )}
 
       <View style={estilos.metricas}>
         {linhas.map((linha) => (
@@ -302,7 +354,7 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
           <View style={estilos.grade}>
             {([
               [resumo ? 'Receita' : 'Faturamento', dinheiro(faturamento), false],
-              ['Investimento', dinheiro(investimento), false],
+              [resumo ? 'Custos e investimento' : 'Investimento', dinheiro(investimento), false],
               ['Saldo', `${saldo >= 0 ? '+' : '−'}${dinheiro(saldo)}`, true],
               ...(resumo && resumo.bonus > 1 ? [[
                 `Saldo ajustado (+${Math.round((resumo.bonus - 1) * 100)}%)`,
@@ -347,14 +399,35 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
       )}
       {chave === 'a' && <Engajamento engagement={real.engagement} informativo={!legado} />}
 
+      {/*
+        Os comentários da spec do relatório (§6 a §9), escolhidos por gatilho no núcleo.
+        Na tela saem até três; o PDF traz todos.
+
+        Cada um abre com a primeira frase em negrito, como na maquete. O corte é feito no núcleo
+        para as três superfícies não inventarem regras diferentes.
+
+        O legado (v2/v3) cai na narrativa antiga: os gatilhos novos leem estado que aquele
+        cálculo não produzia, e comentar sobre dado que não existe seria inventar.
+      */}
       <View style={estilos.revelacao}>
         <Rotulo>O que isso revela</Rotulo>
-        <Text style={estilos.chamada}>{narrativa.headline}</Text>
-        {narrativa.paras.map((paragrafo, i) => (
-          <Text key={i} style={estilos.paragrafo}>
-            <Text style={estilos.paragrafoForte}>{paragrafo.lead}</Text> {paragrafo.body}
-          </Text>
-        ))}
+        {legado ? (
+          <>
+            <Text style={estilos.chamada}>{narrativa.headline}</Text>
+            {narrativa.paras.map((paragrafo, i) => (
+              <Text key={i} style={estilos.paragrafo}>
+                <Text style={estilos.paragrafoForte}>{paragrafo.lead}</Text> {paragrafo.body}
+              </Text>
+            ))}
+          </>
+        ) : (
+          comentarios.map((c) => (
+            <Text key={c.id} style={estilos.paragrafo}>
+              <Text style={estilos.paragrafoForte}>{c.lead}</Text>
+              {c.corpo ? ` ${c.corpo}` : ''}
+            </Text>
+          ))
+        )}
       </View>
     </View>
   );
@@ -456,6 +529,24 @@ const estilos = StyleSheet.create({
   rede: { width: 70, fontSize: 12.5, fontWeight: '600', color: COR_DIAGNOSTICO.texto },
   taxa: { flex: 1, fontSize: 12.5, fontWeight: '700', color: COR_DIAGNOSTICO.abaixo },
 
+  // A intro fica recolhida atrás de uma linha discreta: ela é longa, e quem já leu não precisa
+  // reler a cada visita.
+  intro: { marginTop: 12, borderTopWidth: 1, borderTopColor: COR.divisoria, paddingTop: 12 },
+  introBotao: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  introRotulo: {
+    fontSize: 11, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase',
+    color: COR_DIAGNOSTICO.secao,
+  },
+  introTexto: { marginTop: 10, fontSize: 12.5, lineHeight: 19, color: COR_DIAGNOSTICO.texto },
+  // A frase de leitura é a resposta curta da dimensão: leva barra à esquerda e fundo próprio,
+  // como na maquete, para não se confundir com os comentários que vêm depois.
+  leitura: {
+    marginTop: 14, paddingVertical: 14, paddingHorizontal: 16,
+    borderLeftWidth: 3, borderLeftColor: COR.primaria,
+    borderTopRightRadius: RAIO.campo, borderBottomRightRadius: RAIO.campo,
+    backgroundColor: COR_DIAGNOSTICO.discoFundo,
+  },
+  leituraTexto: { fontSize: 13.5, lineHeight: 20, color: COR_DIAGNOSTICO.titulo },
   revelacao: { marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: COR.divisoria, gap: 8 },
   chamada: { fontSize: 15, fontWeight: '800', letterSpacing: -0.15, lineHeight: 22, color: COR_DIAGNOSTICO.titulo },
   paragrafo: { fontSize: 13, lineHeight: 20, color: COR_DIAGNOSTICO.titulo },

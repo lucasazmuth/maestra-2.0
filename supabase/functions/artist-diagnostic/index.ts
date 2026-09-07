@@ -107,7 +107,10 @@ function buildRealInputsV4(qz: any, cm: any, spotifyConnected: boolean): RealInp
     showsPerYear: int0(qz?.showsPerYear),
     cacheByType,
     revenueSources,
-    investimento: Math.max(0, num0(qz?.investimento)),
+    // O investimento decomposto (v4.1, §3.2). Nenhum dos três aceita "não sei": zero ou estimativa.
+    custoPorShow: Math.max(0, num0(qz?.custoPorShow)),
+    custoFixoMensal: Math.max(0, num0(qz?.custoFixoMensal)),
+    investLancamentos12m: Math.max(0, num0(qz?.investLancamentos12m)),
     temCnpj: bool(qz?.temCnpj),
     aliquota: oneOf(qz?.aliquota, ["ate6", "6-10", "10-15", "acima15", "nao_sei"] as const, null) as Aliquota | null,
     temEmpresario: bool(qz?.temEmpresario),

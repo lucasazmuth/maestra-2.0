@@ -34,7 +34,7 @@ const real = {
   boletim: { r: 40, e: 72, a: 31, l: 12 },
   revenue: { total: 12000, shows: 8000, sources: { streaming: 4000 } },
   inputs: {
-    showsPerMonth: 4, cache: 3000, investimento: 20000, temCnpj: true, temEmpresario: false,
+    showsPerMonth: 4, cache: 3000, custoPorShow: 0, custoFixoMensal: 0, investLancamentos12m: 20000, temCnpj: true, temEmpresario: false,
     premios: 1, imprensaRepercussao: true, imprensaFrequencia: 'perene', editorialPlaylists: 3,
     radioAirplay: 120, fazBilheteria: true, pagantePct: '70_94',
   },
@@ -131,7 +131,7 @@ describe('o documento do diagnóstico', () => {
       showsPerYear: 40,
       cacheByType: { corporativos: 6_000, produtores: 2_000 },
       revenueSources: { distribuidora: 12_000, editora: 'nao_sei' },
-      investimento: 20_000,
+      custoPorShow: 0, custoFixoMensal: 0, investLancamentos12m: 20_000,
       temCnpj: true, aliquota: '6-10', temEmpresario: false,
       fazBilheteria: false, pagantePct: null,
       premios: 4, imprensaRepercussao: true,
@@ -168,6 +168,17 @@ describe('o documento do diagnóstico', () => {
       expect(htmlV4).toContain('Não informado:');
       expect(htmlV4).toContain('Editora');
       expect(htmlV4).toContain('parte da gestão da carreira');
+    });
+
+    // O aprofundamento do E (§2) é página do PDF, não da tela — e das duas superfícies, senão
+    // o artista que baixa pelo app recebe um documento com uma página a mais que o da web.
+    it('tem a página "Onde a conta fecha" nos dois decks', () => {
+      expect(htmlV4).toContain('Onde a conta fecha');
+      expect(deckDaWeb).toContain('Onde a conta fecha');
+      expect(htmlV4).toContain('Margem por show e ponto de equilíbrio');
+      expect(deckDaWeb).toContain('Margem por show e ponto de equilíbrio');
+      expect(htmlV4).toContain('Composição da receita anual');
+      expect(deckDaWeb).toContain('Composição da receita anual');
     });
 
     it('a linha de receita da dimensão E vem marcada como declarada', () => {
