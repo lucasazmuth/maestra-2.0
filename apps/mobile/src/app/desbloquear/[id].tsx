@@ -403,6 +403,14 @@ export default function Desbloquear() {
                 <Relatorio
                   real={real}
                   chartmetric={conteudo?.chartmetricProfile ?? null}
+                  // Sem isto o PDF sai sem nome, sem foto e com o docId "SEM-PERF": a referência
+                  // que o suporte usa para achar o diagnóstico deixa de bater com a da web.
+                  artista={{
+                    id: artista?.id,
+                    nome: artista?.name,
+                    foto: conteudo?.spotifyProfile?.image,
+                    vinculo: conteudo?.titularidade?.vinculo,
+                  }}
                   aoContinuar={comecarOPlanejamento}
                   aoMedirAncoras={(a) => setAncoras((atual) => ({ ...atual, ...a }))}
                 />

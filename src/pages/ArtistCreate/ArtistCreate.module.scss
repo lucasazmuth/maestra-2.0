@@ -2034,25 +2034,31 @@ $docLow: #8b9ab4;
 
 // A intro fixa da dimensão e a frase de leitura (§3 do relatório). No papel as duas saem
 // ABERTAS: o acordeão da tela não existe aqui.
-.docDimIntro2 { font-size: 14px; line-height: 1.6; color: $docMute; margin: 0 0 14px; }
+// A página da dimensão passou a carregar a intro fixa, a frase de leitura e TODOS os comentários
+// aplicáveis. É muito texto para uma A4 que não pagina: os corpos abaixo são menores que os da
+// tela de propósito, senão o último parágrafo sai cortado no papel.
+.docDimIntro2 { font-size: 13px; line-height: 1.5; color: $docMute; margin: 0 0 12px; }
 .docDimLeitura2 {
-  font-size: 16px; line-height: 1.55; color: $docInk; font-weight: 600; margin: 0 0 20px;
+  font-size: 14.5px; line-height: 1.5; color: $docInk; font-weight: 600; margin: 0 0 16px;
   padding-left: 14px; border-left: 3px solid $docLine;
 }
 
 // A página "Onde a conta fecha": cartões de número e barras comparativas.
-.docContaGrade { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+// As medidas são apertadas de propósito: a página é uma A4 fechada, e os quatro cartões precisam
+// caber em UMA fila. Com base de 200px eles quebravam em duas, e o bloco de leitura do fim
+// transbordava para fora do papel — sem erro nenhum, só um parágrafo cortado no PDF.
+.docContaGrade { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
 .docContaCartao {
-  flex: 1 1 200px; padding: 14px 16px; border-radius: 12px;
+  flex: 1 1 150px; padding: 12px 14px; border-radius: 12px;
   background: $docSoft; border: 1px solid $docLine;
 }
 .docContaRotulo { display: block; font-size: 12px; color: $docDim; }
 .docContaValor {
-  display: block; font-family: var(--font-display); font-weight: 800; font-size: 24px;
-  color: $docInk; margin-top: 4px; line-height: 1.1;
+  display: block; font-family: var(--font-display); font-weight: 800; font-size: 20px;
+  color: $docInk; margin-top: 3px; line-height: 1.1;
 }
-.docContaLinha { display: flex; align-items: center; gap: 14px; padding: 7px 0; }
-.docContaNome { width: 190px; font-size: 14px; color: $docBody; }
+.docContaLinha { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
+.docContaNome { width: 170px; font-size: 13px; color: $docBody; }
 .docContaTrilho { flex: 1; height: 10px; border-radius: 9999px; background: #eef2f8; overflow: hidden; }
 .docContaBarra { display: block; height: 100%; border-radius: 9999px; background: $docReal; }
 .docContaNumero { font-size: 14px; font-weight: 800; color: $docInk; min-width: 88px; text-align: right; }
@@ -2078,10 +2084,15 @@ $docLow: #8b9ab4;
   strong { font-size: 15px; font-weight: 800; }
 }
 
-.docReveal2 { margin-top: 24px; padding: 20px 22px; border-radius: 14px; background: $docSoft; border: 1px solid $docLine; }
+.docReveal2 { margin-top: auto; padding: 16px 18px; border-radius: 14px; background: $docSoft; border: 1px solid $docLine; }
+// Na página de leitura o bloco vem logo abaixo da frase, e não empurrado para o pé: ali ele é o
+// assunto da página, não o rodapé dela.
+.docRevealSolto2 { margin-top: 18px; }
+// O cabeçalho leve da página de leitura: a letra e o nome, para o leitor saber de quem ela é.
+.docDimHeadLeitura2 { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
 .docRevealTitle2 { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: $docReal; margin-bottom: 10px; }
 .docRevealLead2 { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: $docInk; margin-bottom: 12px; letter-spacing: -0.01em; }
-.docRevealPara2 { font-size: 15px; line-height: 1.55; color: $docDim; margin: 0 0 10px; strong { color: $docInk; font-weight: 800; } &:last-child { margin-bottom: 0; } }
+.docRevealPara2 { font-size: 13.5px; line-height: 1.5; color: $docDim; margin: 0 0 8px; strong { color: $docInk; font-weight: 800; } &:last-child { margin-bottom: 0; } }
 
 // ─── PDF V3: 16 perfis agrupados ───────────────────────────────────────────────
 .docMap2 { display: flex; flex-direction: column; gap: 14px; margin-bottom: 22px; }

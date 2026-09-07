@@ -1,5 +1,5 @@
 import {
-  DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtNum, fmtPct,
+  DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtBRL, fmtNum, fmtPct,
 } from '../constants/realCopy';
 import { METODOLOGIA, QUEM_ASSINA, dimNarrative } from '../constants/realNarrative';
 import { tierForAltas } from '../constants/realBadge';
@@ -16,7 +16,7 @@ import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '../services/realEngine/comentarios';
 import {
-  AVISOS, ehLegado, resumoDoE, SIIC_MENSAL,
+  AVISOS, ehLegado, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
 } from '../services/realEngine/relatorio';
 
 // O DECK do Diagnóstico REAL em HTML — o mesmo documento que a web baixa, montado como texto.
@@ -133,10 +133,12 @@ const ESTILO = `
   .dimEstado { font-size: 14px; color: ${T.mute}; margin-bottom: 20px; }
   /* No PDF a intro vem ABERTA (§2): aqui não há toque para expandir, e o documento é onde a
      explicação inteira cabe. */
-  .dimIntro { font-size: 11.5px; line-height: 1.6; color: ${T.mute}; margin: 0 0 16px; }
+  /* A página de leitura repete a letra e o nome da dimensão, para o leitor saber de quem ela é. */
+  .dimCabLeitura { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .dimIntro { font-size: 11px; line-height: 1.5; color: ${T.mute}; margin: 0 0 12px; }
   /* A frase de leitura é a resposta curta da dimensão: barra à esquerda, como na maquete. */
-  .dimLeitura { font-size: 12.5px; line-height: 1.6; color: ${T.ink}; margin: 0 0 18px;
-    border-left: 3px solid ${T.real}; padding: 12px 14px; background: ${T.soft}; }
+  .dimLeitura { font-size: 12.5px; line-height: 1.55; color: ${T.ink}; margin: 0 0 14px;
+    border-left: 3px solid ${T.real}; padding: 11px 14px; background: ${T.soft}; }
   .dimLinhas { display: flex; flex-direction: column; margin-bottom: 14px; }
   .dimLinha { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0;
     border-top: 1px solid ${T.line}; font-size: 15px; color: ${T.dim}; }
@@ -180,9 +182,12 @@ const ESTILO = `
   .eng { display: flex; justify-content: space-between; font-size: 14px; color: ${T.dim};
     padding: 6px 0; }
   .revelaBloco { margin-top: auto; border-top: 1px solid ${T.line}; padding-top: 18px; }
+  /* Na página de leitura o bloco vem logo abaixo da frase, e não empurrado para o pé: ali ele é
+     o assunto da página, não o rodapé dela. */
+  .revelaSolto { margin-top: 18px; }
   .revelaLead { font-weight: 800; font-size: 20px; color: ${T.ink}; margin-bottom: 10px;
     line-height: 1.3; }
-  .revelaPara { font-size: 14.5px; line-height: 1.6; color: ${T.dim}; margin: 0 0 8px; }
+  .revelaPara { font-size: 13.5px; line-height: 1.5; color: ${T.dim}; margin: 0 0 8px; }
   .revelaPara b { color: ${T.ink}; }
 
   .cidade { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
@@ -213,8 +218,8 @@ const ESTILO = `
   .topoSelo { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; padding: 4px 8px;
     border-radius: 6px; background: ${T.goldBg}; color: ${T.ink}; }
 
-  .metodoIntro { font-size: 18px; line-height: 1.55; color: ${T.dim}; margin: 0 0 24px; }
-  .metodoGrade { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 24px; }
+  .metodoIntro { font-size: 17px; line-height: 1.5; color: ${T.dim}; margin: 0 0 18px; }
+  .metodoGrade { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
   .metodoCartao { width: calc(50% - 9px); background: ${T.soft}; border: 1px solid ${T.line};
     border-radius: 16px; padding: 22px; }
   .metodoLetra { display: inline-block; width: 38px; height: 38px; line-height: 38px;
@@ -257,11 +262,22 @@ const moldura = (
     </div>
   </div>`;
 
-/** Uma página de dimensão: nota, régua, tabela, blocos próprios e "o que isso revela". */
-const paginaDaDimensao = (
-  dk: 'r' | 'e' | 'a' | 'l', numero: number, total: number, ri: any, cm: any,
+/**
+ * As páginas de uma dimensão: os números e a leitura.
+ *
+ * No legado é UMA página, e cabe. Da v4 em diante são DUAS, porque a página passou a carregar a
+ * intro fixa, a frase de leitura e todos os comentários aplicáveis — junto com a tabela e os
+ * avisos, isso passa de uma A4, e a A4 do PDF não pagina: o que sobra é cortado, calado.
+ *
+ * A divisão não é por medida de altura, é editorial e fixa: a primeira página é o RETRATO (nota,
+ * régua, tabela, avisos e blocos), a segunda é a LEITURA (o que a dimensão significa, a frase do
+ * seu caso e os comentários). Assim o número de páginas do deck é previsível, e nenhum artista
+ * com muitos comentários estoura o papel.
+ */
+const paginasDaDimensao = (
+  dk: 'r' | 'e' | 'a' | 'l', proxima: () => number, total: number, ri: any, cm: any,
   autoria?: Autoria, agora?: Date,
-) => {
+): string[] => {
   const meta = DIM_META.find((m) => m.key === dk)!;
   const alta = !!ri.pattern?.[dk];
   const topo = !!ri.dimTopIcon?.[dk];
@@ -283,7 +299,7 @@ const paginaDaDimensao = (
   const eng = ri.engagement || {};
   const temDeclarado = linhas.some((r) => r.declarado);
 
-  const corpo = `
+  const cabecalho = `
     <div class="dimCab">
       <span class="dimLetra" style="color:${cor}">${meta.letter}</span>
       <div>
@@ -304,9 +320,6 @@ const paginaDaDimensao = (
       <div class="reguaCheia" style="width:${topo ? 100 : nota}%;background:${cor}"></div>
     </div>
     <div class="dimEstado">${escapar(statusDaBarra(ri, dk))}</div>
-
-    ${!legado ? `<p class="dimIntro">${escapar(INTRO_DA_DIMENSAO[dk])}</p>
-    <p class="dimLeitura">${escapar(LEITURA_DA_DIMENSAO[dk][alta ? 'alto' : 'baixo'])}</p>` : ''}
 
     <div class="dimLinhas">
       ${linhas.map((r) => `
@@ -332,21 +345,17 @@ const paginaDaDimensao = (
     ${dk === 'l' && !legado && ri.flags?.travaL
       ? `<div class="aviso">${escapar(AVISOS.travaL)}</div>` : ''}
 
-    ${dk === 'e' && resumo?.cache.length ? `<div class="bloco">
-      <div class="blocoTitulo">Cachê médio por tipo de contratante</div>
-      <div class="comp">${resumo.cache.map((c) => `<div class="compItem">
-        <span class="compPct">${escapar(dinheiroRedondo(c.valor))}</span>
-        <span class="compLabel">${escapar(c.rotulo)}</span></div>`).join('')}</div>
-    </div>` : ''}
-
-    ${dk === 'e' && comp.length ? `<div class="bloco">
+    ${/* Cachê, composição e saúde financeira saíram daqui na v4: são o corpo da página "Onde a
+         conta fecha", e repetir os mesmos números duas vezes estourava esta página. O legado, que
+         não tem aquela página, continua imprimindo os dois blocos que sempre teve. */ ''}
+    ${dk === 'e' && !resumo && comp.length ? `<div class="bloco">
       <div class="blocoTitulo">Composição da receita</div>
       <div class="comp">${comp.map((s) => `<div class="compItem">
         <span class="compPct">${s.pct}%</span>
         <span class="compLabel">${escapar(s.label)}</span></div>`).join('')}</div>
     </div>` : ''}
 
-    ${dk === 'e' && (faturamento > 0 || investimento > 0) ? `<div class="bloco">
+    ${dk === 'e' && !resumo && (faturamento > 0 || investimento > 0) ? `<div class="bloco">
       <div class="blocoTitulo">Saúde financeira · 12 meses</div>
       <div class="saude">
         <div class="saudeItem"><span>Faturamento</span><b>${dinheiroRedondo(faturamento)}</b></div>
@@ -355,21 +364,10 @@ const paginaDaDimensao = (
           <b style="color:${saldo >= 0 ? T.real : T.danger}">
             ${saldo >= 0 ? '+' : '−'}${dinheiroRedondo(saldo)}</b></div>
       </div>
-      ${resumo && resumo.bonus > 1 ? `<div class="saude">
-        <div class="saudeItem"><span>Saldo ajustado (+${Math.round((resumo.bonus - 1) * 100)}%)</span>
-          <b style="color:${resumo.saldoAjustado >= 0 ? T.real : T.danger}">
-            ${resumo.saldoAjustado >= 0 ? '+' : '−'}${dinheiroRedondo(resumo.saldoAjustado)}</b></div>
-        ${resumo.receitaLiquidaEstimada != null ? `<div class="saudeItem">
-          <span>Receita líquida estimada (${escapar(resumo.aliquotaRotulo ?? '')})</span>
-          <b>${dinheiroRedondo(resumo.receitaLiquidaEstimada)}</b></div>` : ''}
-      </div>` : ''}
       <div class="pilulas">
         <span class="pilula ${temCnpj ? 'pilulaOn' : ''}">${temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
         <span class="pilula ${temEmpresario ? 'pilulaOn' : ''}">${temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
       </div>
-      ${resumo ? `<div class="fonteNota">A média mensal do setor cultural formal é
-        ${escapar(dinheiroRedondo(SIIC_MENSAL))} (SIIC/IBGE). Esta receita anual equivale a
-        ${escapar(resumo.vezesOSetor.toFixed(1).replace('.', ','))}× esse patamar.</div>` : ''}
     </div>` : ''}
 
     ${dk === 'a' && (['instagram', 'tiktok', 'youtube'] as const).some((k) => eng[k])
@@ -384,18 +382,40 @@ const paginaDaDimensao = (
         }).join('')}
       </div>` : ''}
 
-    <div class="revelaBloco">
+`;
+
+  const leitura = `
+    ${!legado ? `<div class="dimCabLeitura">
+      <span class="dimLetra" style="color:${cor}">${meta.letter}</span>
+      <div><div class="dimTitulo">${escapar(meta.full)}
+        <span class="dimTituloSub">· ${escapar(meta.sub)}</span></div></div>
+    </div>
+    <div class="blocoTitulo">O que é esta frente</div>
+    <p class="dimIntro">${escapar(INTRO_DA_DIMENSAO[dk])}</p>
+    <p class="dimLeitura">${escapar(LEITURA_DA_DIMENSAO[dk][alta ? 'alto' : 'baixo'])}</p>` : ''}
+
+    <div class="revelaBloco${legado ? '' : ' revelaSolto'}">
       <div class="revelaTitulo">O que isso revela</div>
       ${legado
         ? `<div class="revelaLead">${escapar(narrativa.headline)}</div>
            ${narrativa.paras.map((p) => `<p class="revelaPara">
              <b>${escapar(p.lead)}</b> ${escapar(p.body)}</p>`).join('')}`
         // No PDF saem TODOS os comentários aplicáveis (§4), e não os três da tela.
-        : comentariosDaDimensao(ri, dk, { superficie: 'pdf', chartmetric: cm }).map((c) => `
+        // Os comentários da conta saem daqui quando existe a página de aprofundamento: lá eles
+        // têm os números do lado, e no mesmo documento o parágrafo não pode aparecer duas vezes.
+        : comentariosDaDimensao(ri, dk, { superficie: 'pdf', chartmetric: cm })
+            .filter((c) => !(dk === 'e' && resumo && GRUPOS_DA_CONTA.includes(c.grupo)))
+            .map((c) => `
             <p class="revelaPara"><b>${escapar(c.lead)}</b> ${escapar(c.corpo)}</p>`).join('')}
     </div>`;
 
-  return moldura(numero, total, `${meta.full} · ${meta.sub}`, corpo, autoria, agora);
+  const titulo = `${meta.full} · ${meta.sub}`;
+  // No legado as duas metades cabem juntas, e o deck continua com uma página por dimensão.
+  if (legado) return [moldura(proxima(), total, titulo, cabecalho + leitura, autoria, agora)];
+  return [
+    moldura(proxima(), total, titulo, cabecalho, autoria, agora),
+    moldura(proxima(), total, `${titulo} · a leitura`, leitura, autoria, agora),
+  ];
 };
 
 /**
@@ -420,7 +440,9 @@ export function montarDocumentoDoDiagnostico({
   // A página "Onde a conta fecha" só existe quando há um resumo do E para aprofundar — ou seja,
   // não existe no legado, que não tem os custos decompostos.
   const temContaFecha = !!resumoDoE(ri);
-  const total = 10 + (temCidades ? 1 : 0) + (temPlataformas ? 1 : 0) + (temContaFecha ? 1 : 0);
+  // 10 fixas + a segunda página de cada dimensão (só fora do legado) + as condicionais.
+  const total = 10 + (ehLegado(ri) ? 0 : 4)
+    + (temCidades ? 1 : 0) + (temPlataformas ? 1 : 0) + (temContaFecha ? 1 : 0);
   let n = 1; // a capa é a 1 e não leva número
   const proxima = () => (n += 1);
 
@@ -467,7 +489,7 @@ export function montarDocumentoDoDiagnostico({
 
   // 3–6 — AS DIMENSÕES
   DIM_META.forEach((d) => {
-    paginas.push(paginaDaDimensao(d.key as 'r' | 'e' | 'a' | 'l', proxima(), total, ri, chartmetric ?? null, autoria, agora));
+    paginas.push(...paginasDaDimensao(d.key as 'r' | 'e' | 'a' | 'l', proxima, total, ri, chartmetric ?? null, autoria, agora));
   });
 
   // 7 — ONDE A CONTA FECHA (só no PDF, §2)
@@ -506,7 +528,17 @@ export function montarDocumentoDoDiagnostico({
           contaFecha.bonus > 1 ? `Saldo ajustado (+${Math.round((contaFecha.bonus - 1) * 100)}%)` : 'Saldo ajustado',
           `${contaFecha.saldoAjustado >= 0 ? '+' : '−'}${dinheiroRedondo(contaFecha.saldoAjustado)}`,
         )}
+        ${contaFecha.receitaLiquidaEstimada != null
+          ? numero(`Receita líquida estimada (${contaFecha.aliquotaRotulo ?? ''})`, dinheiroRedondo(contaFecha.receitaLiquidaEstimada))
+          : ''}
       </div>
+      <div class="pilulas" style="margin:-8px 0 14px">
+        <span class="pilula ${ri.raw?.temCnpj === true ? 'pilulaOn' : ''}">${ri.raw?.temCnpj === true ? 'Com CNPJ' : 'Sem CNPJ'}</span>
+        <span class="pilula ${ri.raw?.temEmpresario === true ? 'pilulaOn' : ''}">${ri.raw?.temEmpresario === true ? 'Com empresário' : 'Sem empresário'}</span>
+      </div>
+      <div class="fonteNota" style="margin:0 0 14px">A média mensal do setor cultural formal é
+        ${escapar(fmtBRL(SIIC_MENSAL))} (SIIC/IBGE). Esta receita anual equivale a
+        ${escapar(contaFecha.vezesOSetor.toFixed(1).replace('.', ','))}× esse patamar.</div>
 
       ${contaFecha.margemPorShow != null ? `
         <div class="blocoTitulo">Margem por show e ponto de equilíbrio</div>

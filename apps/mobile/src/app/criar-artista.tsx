@@ -794,7 +794,17 @@ export default function CriarArtista() {
               {passo === 'diagnostico' && (
                 real ? (
                   <>
-                    <Relatorio real={real as unknown as Record<string, any>} chartmetric={chartmetric} />
+                    <Relatorio
+                      real={real as unknown as Record<string, any>}
+                      chartmetric={chartmetric}
+                      // Idem: o PDF baixado aqui é o mesmo documento da tela de desbloquear e do
+                      // módulo do perfil, e precisa carregar a mesma identificação.
+                      artista={{
+                        id: criado.current?.artistId,
+                        nome: escolhido.current?.name || nomeManual,
+                        foto: escolhido.current?.image,
+                      }}
+                    />
                     <View style={estilos.desbloqueio}>
                       <Text style={estilos.notaDoDesbloqueio}>
                         Este perfil ainda está pendente. O próximo passo é liberar o

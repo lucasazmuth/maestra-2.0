@@ -40,6 +40,15 @@ export const ehLegado = (ri: Diagnostico | null | undefined): boolean => Number(
 /** F17 (§10) — o texto é da autora, e vive com os outros em `constants/realTextos`. */
 export const AVISO_LEGADO = FIXOS.F17;
 
+/**
+ * Os grupos de comentário do E que MIGRAM para a página "Onde a conta fecha" do PDF (§2).
+ *
+ * Eles falam de margem, ponto de equilíbrio e composição da receita, que é o assunto daquela
+ * página. Sem esta lista, os dois lugares imprimiriam o mesmo parágrafo: a página do E e a do
+ * aprofundamento, no mesmo documento, uma depois da outra.
+ */
+export const GRUPOS_DA_CONTA: readonly string[] = ['E7', 'E5', 'E8'];
+
 /** Os textos obrigatórios do §11.3, na ordem em que a spec os lista. */
 export const AVISOS = {
   travaL: 'Sua legitimação ainda não tem um sinal de plataforma. Playlist editorial ou execução em '
