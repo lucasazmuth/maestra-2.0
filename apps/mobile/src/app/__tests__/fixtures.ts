@@ -1,4 +1,5 @@
 import type { Artist } from '@maestra/core/interfaces/maestra';
+import { computeRealIndexV4 } from '@maestra/core/services/realEngine';
 
 // Perfis de mentira, mas com a FORMA real: o `realIndex` aqui e o que o motor grava de verdade,
 // entao a tela e exercitada contra a estrutura que ela vai encontrar em producao.
@@ -58,4 +59,40 @@ export const semDiagnostico: Artist = {
   user_id: 'u-1',
   name: 'Coletivo Norte',
   content: {},
+};
+
+/**
+ * Um diagnóstico da v4, calculado pelo MOTOR de verdade.
+ *
+ * Os outros fixtures são escritos à mão, e isso basta enquanto a forma é estável. Aqui não: a v4
+ * mudou o formato de `inputs` (proveniência por campo), de `revenue` (base anual, nove fontes) e
+ * acrescentou `flags`. Um fixture escrito à mão fixaria a forma que EU imaginei, e a tela
+ * continuaria passando no teste enquanto quebrasse em produção. Chamando o motor, o fixture não
+ * pode divergir dele.
+ */
+const v4 = computeRealIndexV4({
+  spotifyConnected: true,
+  spotifyListeners: 200_000, igFollowers: 80_000, tiktokFollowers: null, youtubeMonthlyViews: null,
+  spotifyFollowers: 60_000, deezerFans: 6_000,
+  igEngagement: 5.2, tiktokEngagement: null, youtubeEngagement: null,
+  editorialPlaylists: 4, radioAirplay180d: 3,
+  igFollowersSelf: null, tiktokFollowersSelf: 40_000, youtubeViews28dSelf: null,
+  showsPerYear: 60,
+  cacheByType: { corporativos: 6_000, produtores: 2_000 },
+  revenueSources: { distribuidora: 20_000, editora: 'nao_sei' },
+  custoPorShow: 0, custoFixoMensal: 0, investLancamentos12m: 40_000,
+  temCnpj: true, aliquota: '6-10', temEmpresario: false,
+  fazBilheteria: false, pagantePct: null,
+  premios: 4, imprensaRepercussao: true,
+  imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }], imprensaFrequencia: 'perene',
+});
+
+export const comDiagnosticoV4: Artist = {
+  id: 'a-3',
+  user_id: 'u-1',
+  name: 'Rafa Duarte',
+  content: {
+    identity: { genre: 'MPB' },
+    realIndex: v4 as never,
+  },
 };

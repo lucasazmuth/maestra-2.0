@@ -1,49 +1,102 @@
-import type { ImprensaTipo, ImprensaPorte } from '../services/realEngine';
+import type { ImprensaTipo, ImprensaPorte, TipoDeContratante, FonteDeReceita } from '../services/realEngine';
 
-// O ROTEIRO do Diagnóstico REAL v3 — o questionário inteiro, sem uma linha de interface.
+// O ROTEIRO do Diagnóstico REAL v4 — o questionário inteiro, sem uma linha de interface.
 //
 // Subiu de `src/pages/ArtistCreate` para o núcleo quando o app nativo ganhou a criação de perfil.
-// As chaves casam com os campos de `RealInputsV3` que o motor consome e que a edge
-// `artist-diagnostic` mapeia em `buildRealInputsV3`: um roteiro por superfície significaria dois
+// As chaves casam com os campos de `RealInputsV4` que o motor consome e que a edge
+// `artist-diagnostic` mapeia em `buildRealInputsV4`: um roteiro por superfície significaria dois
 // diagnósticos que o mesmo servidor lê de maneiras diferentes — e o erro apareceria como uma
 // nota errada, não como uma tela quebrada.
 //
-// A ORDEM também é conteúdo: `vinculo` é a primeira de propósito (enquadra o resto e é
-// registrada com IP e a versão dos Termos vigente), e os `skipIf` desenham o caminho real de
-// quem não faz show ou não teve imprensa.
+// A ORDEM é a da spec (§3.2): vínculo, bloco R (condicional), E, A, L. Os `skipIf` desenham o
+// caminho real de quem não tem CNPJ, não faz bilheteria ou não teve imprensa.
+//
+// ⚠️ O QUE MUDOU DA v3 (§ Apêndice A): base ANUAL no E (shows por ano, seis cachês por tipo de
+// contratante, nove fontes com "não sei", alíquota); bloco R de autodeclaração que só aparece
+// quando a Chartmetric não trouxe o dado; e a matriz de imprensa passa a aceitar UM porte por
+// tipo, o maior, porque é o teto de legitimação que o método mede.
 
-// Roteiro do Diagnóstico REAL v3 (autorrelato). As chaves casam com os campos de RealInputsV3
-// consumidos pelo motor (src/services/realEngine) e mapeados no edge (buildRealInputsV3).
 export type QuizValue = string | number | boolean;
-export type QuizFieldType = 'int' | 'currency' | 'select' | 'revenue' | 'matrix';
+export type QuizFieldType = 'int' | 'currency' | 'select' | 'revenue' | 'cache' | 'matrix';
 export type QuizKey =
   | 'vinculo'
-  | 'showsPerMonth' | 'cache' | 'revenueSources' | 'investimento'
-  | 'temCnpj' | 'temEmpresario' | 'premios'
-  | 'imprensaRepercussao' | 'imprensaMatrix' | 'imprensaFrequencia'
-  | 'fazBilheteria' | 'pagantePct';
+  | 'igFollowersSelf' | 'tiktokFollowersSelf' | 'youtubeViews28dSelf'
+  | 'showsPerYear' | 'cacheByType' | 'revenueSources'
+  | 'custoPorShow' | 'custoFixoMensal' | 'investLancamentos12m'
+  | 'temCnpj' | 'aliquota' | 'temEmpresario'
+  | 'fazBilheteria' | 'pagantePct'
+  | 'premios' | 'imprensaRepercussao' | 'imprensaMatrix' | 'imprensaFrequencia';
+
 export interface QuizDef {
   key: QuizKey;
   q: string;
   type: QuizFieldType;
+  /** Linha de apoio abaixo da pergunta, quando ela precisa de instrução (ex.: onde achar o número). */
+  ajuda?: string;
   placeholder?: string;
   options?: { label: string; value: QuizValue }[];
-  // Pula a pergunta quando a condição é verdadeira (ex.: cachê só se faz shows).
+  /** Pula a pergunta quando a condição é verdadeira (ex.: alíquota só para quem tem CNPJ). */
   skipIf?: (a: Record<string, any>) => boolean;
 }
 
-// Fontes da composição de receita fora-shows (§5.4) — a soma alimenta o E; as partes, a pizza.
-export const REVENUE_SOURCES: { key: string; label: string }[] = [
-  { key: 'streaming', label: 'Streaming (Spotify, Deezer, YouTube…)' },
-  { key: 'direitos', label: 'Direitos (autorais, conexos, fonográficos)' },
-  { key: 'publi', label: 'Publicidade e patrocínio' },
-  { key: 'aulas', label: 'Aulas e cursos' },
-  { key: 'editais', label: 'Editais e prêmios em dinheiro' },
-  { key: 'venda', label: 'Venda de produtos e merch' },
-  { key: 'outros', label: 'Outras fontes musicais' },
+/**
+ * O que a consulta prévia à Chartmetric trouxe (§3.1, passo 2). As telas depositam este objeto na
+ * chave `CTX_API` das respostas ANTES de abrir o quiz, e é ele que decide quais perguntas de
+ * autodeclaração de R aparecem.
+ *
+ * Rede de segurança (§3.1, passo 6): se a consulta falhar, o objeto não existe e as três perguntas
+ * aparecem — é melhor perguntar de novo do que calcular o R sobre nada.
+ */
+export interface ApiDisponivel {
+  igFollowers?: number | null;
+  tiktokFollowers?: number | null;
+  youtubeMonthlyViews?: number | null;
+}
+export const CTX_API = '_api';
+
+/** Pula a autodeclaração quando a API já trouxe o campo com valor útil. */
+const jaVeioDaApi = (campo: keyof ApiDisponivel) => (a: Record<string, any>): boolean => {
+  const v = a?.[CTX_API]?.[campo];
+  return v != null && Number(v) > 0;
+};
+
+/** Mensagem da tela de orientação, antes do quiz (§3.1, passo 3). */
+export const ORIENTACAO_SPOTIFY = 'Conecte suas redes sociais no Spotify for Artists. Isso ajuda as '
+  + 'plataformas de dados a reconhecerem seus perfis, e o diagnóstico passa a usar o dado automático '
+  + 'assim que ele existir.';
+
+/** Os 6 tipos de contratante do cachê médio (§3.2), na ordem da spec. */
+export const TIPOS_DE_CONTRATANTE_QUIZ: { key: TipoDeContratante; label: string }[] = [
+  { key: 'corporativos', label: 'Corporativos (eventos fechados de empresas, festas de fim de ano)' },
+  { key: 'orgaosPublicos', label: 'Órgãos públicos (prefeituras, fundações, Sescs)' },
+  { key: 'particulares', label: 'Particulares (casamentos, aniversários, bodas)' },
+  { key: 'produtores', label: 'Produtores de eventos (festivais e outros eventos)' },
+  { key: 'casasDeShow', label: 'Casas de show e espaços de bilheteria (bares, teatros)' },
+  { key: 'outros', label: 'Outros tipos de contratante' },
 ];
 
-// Matriz de imprensa (§7.3) — tipo de veículo × porte. O usuário marca onde já apareceu.
+/**
+ * As 9 fontes de receita fora dos shows (§3.2), na ordem da spec.
+ *
+ * O rótulo completa a pergunta "Quanto você recebeu nos últimos 12 meses...", por isso cada um
+ * começa em minúscula e termina em interrogação.
+ */
+export const REVENUE_SOURCES: { key: FonteDeReceita; label: string }[] = [
+  { key: 'distribuidora', label: 'da sua distribuidora?' },
+  { key: 'editora', label: 'da sua editora?' },
+  { key: 'associacao', label: 'da sua associação (direitos de execução)?' },
+  { key: 'publi', label: 'em publis e ativações com marcas?' },
+  { key: 'patrocinios', label: 'com patrocínios e editais?' },
+  { key: 'aulas', label: 'com aulas, cursos e mentorias?' },
+  { key: 'produtos', label: 'com venda de produtos físicos?' },
+  { key: 'financiamento', label: 'de financiamento coletivo?' },
+  { key: 'outras', label: 'de outras fontes relacionadas à música?' },
+];
+
+/** O valor que uma linha de receita assume quando o artista marca "não sei" (§4). */
+export const NAO_SEI = 'nao_sei';
+
+// Matriz de imprensa (§9.3) — tipo de veículo × porte. UMA escolha por tipo: o MAIOR porte.
 export const IMPRENSA_TIPOS: { key: ImprensaTipo; label: string }[] = [
   { key: 'imprensa', label: 'Imprensa (jornal, revista, portal)' },
   { key: 'tv', label: 'Veículos de TV' },
@@ -57,6 +110,8 @@ export const IMPRENSA_PORTES: { key: ImprensaPorte; label: string }[] = [
   { key: 'medio', label: 'Médio' },
   { key: 'grande', label: 'Grande' },
 ];
+/** A opção que zera a linha na matriz de imprensa. Fica antes dos portes. */
+export const IMPRENSA_NUNCA = 'nunca';
 
 export const SIM_NAO: { label: string; value: QuizValue }[] = [{ label: 'Sim', value: true }, { label: 'Não', value: false }];
 
@@ -73,37 +128,64 @@ export const VINCULO_OPCOES: { label: string; value: QuizValue }[] = [
   { label: 'Estou apenas conhecendo a ferramenta', value: 'conhecendo' },
 ];
 
-// Receita do E = (shows × cachê) + soma das fontes fora shows. Estrutura (CNPJ/empresário) modula.
 export const QUIZ: QuizDef[] = [
   { key: 'vinculo', type: 'select', q: 'Antes de começar: qual a sua relação com esse artista?', options: VINCULO_OPCOES },
-  { key: 'showsPerMonth', type: 'int', q: 'Quantos shows você costuma fazer por mês?', placeholder: 'Ex: 4' },
-  { key: 'cache', type: 'currency', q: 'Qual o seu cachê médio por show?', placeholder: '0', skipIf: (a) => Number(a.showsPerMonth) <= 0 },
-  { key: 'revenueSources', type: 'revenue', q: 'Fora os shows, quanto você fatura por mês com música em cada fonte? (pode deixar em zero o que não se aplica)' },
-  { key: 'investimento', type: 'currency', q: 'Nos últimos 12 meses, quanto você investiu na sua carreira?', placeholder: '0' },
-  { key: 'temCnpj', type: 'select', q: 'Você tem CNPJ para suas atividades musicais?', options: SIM_NAO },
-  { key: 'temEmpresario', type: 'select', q: 'Você tem empresário/a?', options: SIM_NAO },
-  { key: 'premios', type: 'select', q: 'Qual o maior reconhecimento em premiações que você já teve?', options: [
-    { label: 'Nunca fui indicada nem premiada', value: 0 },
-    { label: 'Indicação a prêmio local/regional', value: 1 },
-    { label: 'Ganhei prêmio local/regional', value: 2 },
+
+  // ── Bloco R · só quando a API não trouxe o dado (§3.2) ──
+  // Zero aqui significa "não tenho essa rede" e é tratado como ausente pelo motor, não como zero
+  // seguidores: um canal que não existe não pode puxar o alcance para baixo.
+  { key: 'igFollowersSelf', type: 'int', q: 'Quantos seguidores você tem no Instagram hoje?', ajuda: 'Se não tiver Instagram, deixe em zero.', placeholder: '0', skipIf: jaVeioDaApi('igFollowers') },
+  { key: 'tiktokFollowersSelf', type: 'int', q: 'E no TikTok, quantos seguidores?', ajuda: 'Se não tiver TikTok, deixe em zero.', placeholder: '0', skipIf: jaVeioDaApi('tiktokFollowers') },
+  { key: 'youtubeViews28dSelf', type: 'int', q: 'Quantas visualizações seu canal do YouTube teve nos últimos 28 dias?', ajuda: 'Esse número aparece no YouTube Studio. Se não tiver canal, deixe em zero.', placeholder: '0', skipIf: jaVeioDaApi('youtubeMonthlyViews') },
+
+  // ── Bloco E · sempre (§3.2). Base anual: o saldo do E é dos últimos 12 meses. ──
+  { key: 'showsPerYear', type: 'int', q: 'Vamos falar dos seus shows no último ano. Quantos shows você fez nos últimos 12 meses, no total?', placeholder: '0' },
+  { key: 'cacheByType', type: 'cache', q: 'Agora, o cachê médio por tipo de contratante.', ajuda: 'Preencha os tipos que você atendeu e deixe em zero os que não se aplicam.' },
+  { key: 'revenueSources', type: 'revenue', q: 'Fora os shows, quanto a música te rendeu nos últimos 12 meses em cada fonte?', ajuda: 'Se não souber alguma, marque "não sei".' },
+  // O investimento decomposto (v4.1, §3.2). Antes era uma pergunta só, e a resposta não permitia
+  // dizer nada: com o custo POR SHOW separado do fixo mensal e do que foi para lançamento, saem a
+  // margem por show e o ponto de equilíbrio, que são as contas que decidem cachê.
+  //
+  // Os três textos delimitam o que NÃO entra, porque é aí que o artista erra: o que o contratante
+  // paga não é custo dele, e comissão de empresário e imposto não entram no fixo.
+  { key: 'custoPorShow', type: 'currency', q: 'Quanto custa, em média, produzir um show seu?', ajuda: 'Conte banda, equipe técnica e o que sai do seu bolso. Não conte o que o contratante paga, como transporte, hospedagem, alimentação e estrutura. Se não souber com precisão, coloque sua melhor estimativa.', placeholder: '0' },
+  { key: 'custoFixoMensal', type: 'currency', q: 'Quanto você gasta por mês com a carreira, mesmo nos meses sem show?', ajuda: 'Contador, assessoria de imprensa, gestão de redes, estúdio fixo, o que for recorrente. Não inclua comissão de empresário nem impostos. Se não souber com precisão, coloque sua melhor estimativa.', placeholder: '0' },
+  { key: 'investLancamentos12m', type: 'currency', q: 'Nos últimos 12 meses, quanto você investiu em gravação de músicas, clipes e campanhas de lançamento?', ajuda: 'Inclua assessoria e mídia paga dos lançamentos. Se não souber com precisão, coloque sua melhor estimativa.', placeholder: '0' },
+  { key: 'temCnpj', type: 'select', q: 'Você tem CNPJ para as suas atividades musicais?', options: SIM_NAO },
+  { key: 'aliquota', type: 'select', q: 'Qual é a alíquota atual de impostos do seu CNPJ?', ajuda: 'Isso não entra no cálculo do diagnóstico. Serve para estimar a sua receita líquida no relatório.', skipIf: (a) => !a.temCnpj, options: [
+    { label: 'Até 6%', value: 'ate6' },
+    { label: 'De 6% a 10%', value: '6-10' },
+    { label: 'De 10% a 15%', value: '10-15' },
+    { label: 'Acima de 15%', value: 'acima15' },
+    { label: 'Não sei', value: 'nao_sei' },
+  ] },
+  { key: 'temEmpresario', type: 'select', q: 'Você tem empresário ou empresária?', options: SIM_NAO },
+
+  // ── Bloco A · sempre (§3.2) ──
+  { key: 'fazBilheteria', type: 'select', q: 'Você faz shows de bilheteria em que seja a atração principal?', options: SIM_NAO },
+  { key: 'pagantePct', type: 'select', q: 'Em média, qual porcentagem do público dos seus shows de bilheteria é pagante?', skipIf: (a) => !a.fazBilheteria, options: [
+    { label: 'Até 50%', value: 'ate50' },
+    { label: 'De 51% a 69%', value: '51-69' },
+    { label: 'De 70% a 94%', value: '70-94' },
+    { label: 'De 95% a 100%', value: '95-100' },
+  ] },
+
+  // ── Bloco L · sempre (§3.2) ──
+  { key: 'premios', type: 'select', q: 'Qual é o maior reconhecimento em prêmios que seu trabalho já teve?', options: [
+    { label: 'Nunca tive indicação nem prêmio', value: 0 },
+    { label: 'Indicação a prêmio local ou regional', value: 1 },
+    { label: 'Prêmio local ou regional', value: 2 },
     { label: 'Indicação a prêmio nacional', value: 3 },
-    { label: 'Ganhei prêmio nacional', value: 4 },
+    { label: 'Prêmio nacional', value: 4 },
     { label: 'Indicação a prêmio internacional', value: 5 },
-    { label: 'Ganhei prêmio internacional', value: 6 },
+    { label: 'Prêmio internacional', value: 6 },
   ] },
   { key: 'imprensaRepercussao', type: 'select', q: 'Você já teve repercussão de mídia (imprensa, blogs, TV, influenciadores, podcasts) com seu trabalho musical?', options: SIM_NAO },
-  { key: 'imprensaMatrix', type: 'matrix', q: 'Onde seu trabalho já apareceu? Marque os tipos e portes de veículo.', skipIf: (a) => !a.imprensaRepercussao },
+  { key: 'imprensaMatrix', type: 'matrix', q: 'Para cada tipo de veículo, marque o maior porte em que seu trabalho já apareceu.', ajuda: 'Só o maior conta.', skipIf: (a) => !a.imprensaRepercussao },
   { key: 'imprensaFrequencia', type: 'select', q: 'Com que frequência seu trabalho aparece na mídia?', skipIf: (a) => !a.imprensaRepercussao, options: [
     { label: 'Esporadicamente', value: 'esporadico' },
     { label: 'Nos períodos de lançamento', value: 'lancamento' },
     { label: 'Com frequência, de forma perene', value: 'perene' },
-  ] },
-  { key: 'fazBilheteria', type: 'select', q: 'Você faz shows de bilheteria em que seja a atração principal?', options: SIM_NAO },
-  { key: 'pagantePct', type: 'select', q: 'Em média, qual % do público dos seus shows é pagante?', skipIf: (a) => !a.fazBilheteria, options: [
-    { label: 'Até 50%', value: 'ate50' },
-    { label: '51% a 69%', value: '51-69' },
-    { label: '70% a 94%', value: '70-94' },
-    { label: '95% a 100%', value: '95-100' },
   ] },
 ];
 
@@ -121,6 +203,20 @@ export const perguntaAnterior = (de: number, respostas: Record<string, unknown>)
   return i;
 };
 
+/** As três perguntas de autodeclaração de R, que só existem quando a API não entregou o campo. */
+export const CHAVES_DO_BLOCO_R: QuizKey[] = ['igFollowersSelf', 'tiktokFollowersSelf', 'youtubeViews28dSelf'];
+
+/**
+ * O tamanho da trilha para a barra de progresso.
+ *
+ * Desconta APENAS o bloco R que a consulta prévia já respondeu, porque essa é a única condição
+ * conhecida antes do quiz começar e portanto a única estável. As demais condicionais (alíquota,
+ * pagante, imprensa) dependem de respostas que ainda virão: incluí-las faria o total mudar no meio
+ * do caminho e a barra recuar, que é exatamente o defeito que a régua absoluta existe para evitar.
+ */
+export const totalDaTrilha = (respostas: Record<string, any>): number =>
+  QUIZ.filter((p) => !(CHAVES_DO_BLOCO_R.includes(p.key) && p.skipIf?.(respostas))).length;
+
 /**
  * Os passos que a tela mostra enquanto o motor roda.
  *
@@ -131,9 +227,9 @@ export const perguntaAnterior = (de: number, respostas: Record<string, unknown>)
 export const PASSOS_DA_ANALISE = [
   'Analisando seu perfil no Spotify',
   'Buscando sua presença nas redes sociais',
-  'Medindo alcance e engajamento',
+  'Medindo alcance e consumo de vídeo',
   'Cruzando os dados do seu quiz',
-  'Avaliando sua saúde financeira',
+  'Calculando o saldo da sua carreira',
   'Mapeando sua presença na mídia',
   'Calculando seu Índice REAL',
   'Montando seu diagnóstico',

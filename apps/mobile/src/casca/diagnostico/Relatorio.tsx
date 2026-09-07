@@ -1,20 +1,31 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
+import { WebView } from 'react-native-webview';
 
-import { COR, COR_DIAGNOSTICO, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_DIAGNOSTICO, COR_PAINEL, RAIO } from '@maestra/core/constants/design';
 import {
   altasForPattern, tierForAltas, tierForPattern,
 } from '@maestra/core/constants/realBadge';
 import {
+  CABECALHO_DA_ENTREGA, CABECALHO_DA_REVISITA,
   DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtNum, type DimKey,
 } from '@maestra/core/constants/realCopy';
-import { CHAMADA_DO_PLANEJAMENTO, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
-import { autoriaDoDocumento } from '@maestra/core/documentos/diagnostico';
+import {
+  CHAMADA_DO_PLANEJAMENTO, LEVAR_O_DIAGNOSTICO, QUEM_ASSINA, VIDEO_DO_PLANEJAMENTO,
+} from '@maestra/core/constants/realNarrative';
+import { autoriaDoDocumento, URL_DA_MAESTRA } from '@maestra/core/documentos/diagnostico';
 
-import { CabecalhoDoModulo } from '@/casca/CabecalhoDoModulo';
+import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
+import { LEITURAS_CURTAS } from '@maestra/core/constants/realTextos';
+import { retratoDoPerfil } from '@maestra/core/services/realEngine/comentarios';
+import { avisosSemLugarProprio } from '@maestra/core/services/realEngine/relatorio';
+
+/** O padrão de bits R E A L de um perfil, que é a chave dos textos (§5.2, §5.3). */
+const chaveDoPerfil = (bits: Record<string, boolean>) =>
+  `${bits.r ? 1 : 0}${bits.e ? 1 : 0}${bits.a ? 1 : 0}${bits.l ? 1 : 0}`;
 import { CartaoDaDimensao } from '@/casca/diagnostico/CartaoDaDimensao';
 import { Placa } from '@/casca/diagnostico/Placa';
 import { baixarDiagnostico } from '@/nucleo/documentos';
@@ -87,6 +98,18 @@ type Props = {
    * É o equivalente dos dois `IntersectionObserver` da web, que aqui não existem.
    */
   aoMedirAncoras?: (ancoras: { fimDoPerfil?: number; inicioDaChamada?: number }) => void;
+  /**
+   * Qual dos dois cabeçalhos usar — o mesmo corte da web.
+   *
+   * 'entrega' é a primeira vez (fim da criação e desbloqueio): avatar, o nome de quem recebe e o
+   * "está pronto". 'revisita' é o módulo dentro do perfil, onde a pessoa volta meses depois e
+   * aquele texto soaria como se o diagnóstico tivesse acabado de sair de novo.
+   *
+   * O app usava o de revisita nas TRÊS telas, inclusive na entrega.
+   */
+  momento?: 'entrega' | 'revisita';
+  /** Perfil criado sem Spotify: a copy do apoio não promete dado de plataforma. */
+  semSpotify?: boolean;
 };
 
 /**
@@ -96,6 +119,7 @@ type Props = {
  */
 export const Relatorio = ({
   real, chartmetric = null, artista, aoContinuar, aoMedirAncoras,
+  momento = 'revisita', semSpotify = false,
 }: Props) => {
   const { sessao } = useSessao();
   const [gerando, setGerando] = useState(false);
@@ -145,11 +169,29 @@ export const Relatorio = ({
   };
 
   return (
-    <>
-    <CabecalhoDoModulo
-      titulo="Diagnóstico REAL"
-      descricao="Sua fase de carreira atual, com base nos seus dados reais."
-    />
+    // O relatório é dono do PRÓPRIO ritmo, e não um punhado de irmãos soltos.
+    //
+    // Ele aparece em TRÊS telas (fim da criação, desbloqueio e o módulo dentro do perfil), e
+    // enquanto devolvia um fragmento cada uma decidia o espaçamento por conta: uma tinha `gap`,
+    // outra não, e o mesmo documento saía com os cartões grudados numa e respirando na outra.
+    // Com a folga aqui dentro, as três não têm como divergir de novo.
+    <View style={estilos.pilha}>
+    {momento === 'entrega' ? (
+      <View style={estilos.entrega}>
+        {!!artista?.foto && <Image source={{ uri: artista.foto }} style={estilos.entregaFoto} />}
+        <View style={estilos.flex}>
+          <Text style={estilos.entregaTitulo}>{CABECALHO_DA_ENTREGA.titulo(artista?.nome)}</Text>
+          <Text style={estilos.entregaApoio}>
+            {semSpotify ? CABECALHO_DA_ENTREGA.apoioSemSpotify : CABECALHO_DA_ENTREGA.apoio}
+          </Text>
+        </View>
+      </View>
+    ) : (
+      <CabecalhoDoModulo
+        titulo={CABECALHO_DA_REVISITA.titulo}
+        descricao={CABECALHO_DA_REVISITA.apoio}
+      />
+    )}
 
     {!perfil ? (
       <View style={estilos.aviso}>
@@ -160,45 +202,89 @@ export const Relatorio = ({
       </View>
     ) : (
       <>
-        {/* O "momento uau": a placa da fase, o nome do perfil e o Índice REAL. */}
+        {/*
+          O "momento uau" da entrega.
+
+          Antes ele era mais um cartão branco de canto arredondado, igual aos onze que vêm
+          depois: a frase mais importante do produto pesava o mesmo que uma lista de playlists.
+          Agora ele é a ÚNICA superfície escura da tela e sangra de ponta a ponta (por isso a
+          margem negativa, que cancela o recuo lateral da rolagem). A profundidade vem do
+          contraste com o corpo claro, não de mais uma sombra.
+
+          Tudo aqui é material que a Maestra já tem: a placa da fase, o navy, o roxo da Nyta e a
+          Georgia itálica do REAL. Nada de enfeite emprestado.
+        */}
         <LinearGradient
-          colors={[COR_DIAGNOSTICO.cartaoDe, COR_DIAGNOSTICO.cartaoAte]}
+          colors={[COR_PAINEL.heroDe, COR_PAINEL.heroAte]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={estilos.cartaoDoPerfil}
+          style={estilos.heroi}
           onLayout={(e) => {
             const { y, height } = e.nativeEvent.layout;
             aoMedirAncoras?.({ fimDoPerfil: y + height });
           }}
         >
+          {/* O anel vazado cortado pela borda: é o recurso gráfico do herói do painel, e a única
+              vez que o roxo institucional aparece — como LINHA, nunca como campo. */}
+          <View style={estilos.anel} pointerEvents="none" />
+
           <View style={estilos.linhaDaPlaca}>
-            <Placa tier={tierForPattern(padrao)} rotulo={String(altas)} tamanho={72} />
+            <Placa tier={tierForPattern(padrao)} rotulo={String(altas)} tamanho={76} />
             <View style={estilos.flex}>
               <Text style={estilos.rotuloDoPerfil}>SEU PERFIL DE CARREIRA</Text>
               <Text style={estilos.nomeDoPerfil}>{perfil.name}</Text>
             </View>
           </View>
-          <Text style={estilos.descricao}>{semTravessao(perfil.description)}</Text>
+          {/*
+            O RETRATO do perfil (§5.2), e não mais a descrição de uma linha.
 
-          <View style={estilos.indice}>
-            <Text style={estilos.indiceRotulo}>ÍNDICE REAL</Text>
-            <View style={estilos.indiceLinha}>
-              {DIM_META.map((d) => {
-                const alta = !!padrao?.[d.key];
-                return (
-                  <View key={d.key} style={estilos.indiceItem}>
-                    <Text style={[estilos.indiceLetra, alta ? estilos.acesa : estilos.apagada]}>
-                      {d.letter}
-                    </Text>
-                    <Text style={[estilos.indicePalavra, alta && estilos.palavraAcesa]}>
-                      {d.full}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
+            São textos definitivos da Anita, um por perfil, com o Beginner em três estágios que o
+            artista não vê. O legado cai na descrição antiga: os retratos descrevem a leitura da
+            v4, e colar um deles sobre um cálculo da v3 afirmaria o que ele não sustenta.
+          */}
+          <Text style={estilos.descricao}>
+            {retratoDoPerfil(real)?.texto ?? semTravessao(perfil.description)}
+          </Text>
+
+          {/*
+            O R·E·A·L vira a assinatura da tela: quatro letras em Georgia itálica, acesas ou
+            apagadas. No claro a diferença entre aceso e apagado era um azul contra um cinza
+            pálido; no escuro ela é branco puro contra branco a 55%, e as duas se leem.
+
+            O rótulo "ÍNDICE REAL" saiu: eram três caixas-altas espaçadas no mesmo bloco, o
+            cabeçalho dois dedos acima já diz "Diagnóstico REAL", e as palavras sob cada letra
+            explicam o que elas são.
+          */}
+          <View style={estilos.assinatura}>
+            {DIM_META.map((d) => {
+              const alta = !!padrao?.[d.key];
+              return (
+                <View key={d.key} style={estilos.dimensaoDaAssinatura}>
+                  <Text style={[estilos.indiceLetra, alta ? estilos.acesa : estilos.apagada]}>
+                    {d.letter}
+                  </Text>
+                  <Text style={[estilos.indicePalavra, alta && estilos.palavraAcesa]}>
+                    {d.full}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         </LinearGradient>
+
+        {/*
+          Os avisos obrigatórios da entrega (§11.3), e o de versão anterior (§13.2).
+          
+          Sobrou o aviso de VERSÃO, que fala do documento inteiro. Os outros quatro vivem dentro
+          da dimensão a que pertencem, onde dizem de qual fonte ou de qual campo se trata — aqui
+          em cima eram a mesma frase sem a informação que a torna útil, e chegavam antes de o
+          artista ter lido um número sequer. Ver `avisosSemLugarProprio`.
+        */}
+        {avisosSemLugarProprio(real).map((av) => (
+          <View key={av.chave} style={[estilos.aviso, estilos.avisoDaEntrega]}>
+            <Text style={estilos.avisoDaEntregaTexto}>{av.texto}</Text>
+          </View>
+        ))}
 
         {/* As quatro dimensões em detalhe — o §9 do boletim. */}
         {DIM_META.map((d) => (
@@ -211,7 +297,7 @@ export const Relatorio = ({
         ))}
 
         {cidades.length > 0 && (
-          <View style={estilos.cartao}>
+          <View style={[estilos.cartao, estilos.cartaoDeApoio]}>
             <Text style={estilos.tituloDoCartao}>ONDE SEUS OUVINTES ESTÃO</Text>
             {cidades.slice(0, 5).map((cidade) => {
               const maior = cidades[0].listeners || 1;
@@ -232,7 +318,7 @@ export const Relatorio = ({
         )}
 
         {(playlists.length > 0 || paises.length > 0) && (
-          <View style={estilos.cartao}>
+          <View style={[estilos.cartao, estilos.cartaoDeApoio]}>
             <Text style={estilos.tituloDoCartao}>SUA PRESENÇA NAS PLATAFORMAS</Text>
 
             {playlists.length > 0 && (
@@ -284,7 +370,7 @@ export const Relatorio = ({
         )}
 
         {/* O mapa dos 16: onde a pessoa está, e o que existe acima dela. */}
-        <View style={estilos.cartao}>
+        <View style={[estilos.cartao, estilos.cartaoDeApoio]}>
           <Text style={estilos.tituloDoCartao}>SUA POSIÇÃO ENTRE OS 16 PERFIS</Text>
           {PROFILE_MAP.map((andar, indice) => {
             const altasDoAndar = 4 - indice;
@@ -306,6 +392,12 @@ export const Relatorio = ({
                         <Text style={[estilos.nomeDaEtiqueta, ehVoce && estilos.nomeAtivo]}>
                           {nome}
                         </Text>
+                        {/* §5.3 — a leitura curta explica o perfil sem abrir nada. */}
+                        {!!bits && !!LEITURAS_CURTAS[chaveDoPerfil(bits)] && (
+                          <Text style={estilos.leituraCurta}>
+                            {LEITURAS_CURTAS[chaveDoPerfil(bits)]}
+                          </Text>
+                        )}
                         {!!bits && (
                           <View style={estilos.bolinhas}>
                             {(['r', 'e', 'a', 'l'] as const).map((k) => (
@@ -327,17 +419,11 @@ export const Relatorio = ({
           })}
         </View>
 
-        {!!perfil.insights?.length && (
-          <View style={estilos.cartao}>
-            <Text style={estilos.tituloDoCartao}>O QUE O SEU DIAGNÓSTICO REVELA</Text>
-            {perfil.insights.map((texto: string, i: number) => (
-              <View key={i} style={estilos.insight}>
-                <Text style={estilos.marcador}>▸</Text>
-                <Text style={estilos.insightTexto}>{semTravessao(texto)}</Text>
-              </View>
-            ))}
-          </View>
-        )}
+        {/*
+          O bloco "O que o seu diagnóstico revela" SAIU (§13.3): eram dois bullets por perfil, e o
+          conteúdo deles agora está coberto pelo retrato acima e pelos comentários de cada
+          dimensão. Mantê-lo seria dizer a mesma coisa três vezes.
+        */}
 
         {/* SEÇÃO 5 — o convite para o planejamento.
             Vem ANTES de "leve seu diagnóstico", como na web: lá os dois vivem no mesmo bloco,
@@ -353,6 +439,22 @@ export const Relatorio = ({
           >
             <Text style={estilos.chamadaTitulo}>{CHAMADA_DO_PLANEJAMENTO.titulo}</Text>
             <Text style={estilos.chamadaApoio}>{CHAMADA_DO_PLANEJAMENTO.apoio}</Text>
+            {/* O MESMO vídeo da web, no mesmo ponto da jornada: entre a promessa e o botão.
+                Aqui ele vive num WebView porque não há iframe — o player é o do YouTube, com a
+                mesma URL `nocookie`, e a proporção 16:9 é a mesma. */}
+            <View style={estilos.video}>
+              <WebView
+                style={estilos.videoPlayer}
+                originWhitelist={['*']}
+                source={{
+                  html: VIDEO_DO_PLANEJAMENTO.pagina(VIDEO_DO_PLANEJAMENTO.id),
+                  baseUrl: URL_DA_MAESTRA,
+                }}
+                allowsInlineMediaPlayback
+                allowsFullscreenVideo
+                accessibilityLabel={VIDEO_DO_PLANEJAMENTO.titulo}
+              />
+            </View>
             <Pressable
               style={estilos.chamadaBotao}
               onPress={aoContinuar}
@@ -369,8 +471,8 @@ export const Relatorio = ({
 
         {/* O PDF é o MESMO deck da web, impresso a partir do HTML do núcleo — aqui ele sai com
             texto de verdade, e não como foto de tela. */}
-        <View style={estilos.cartao}>
-          <Text style={estilos.chamada}>Leve seu diagnóstico</Text>
+        <View style={[estilos.cartao, estilos.cartaoDeApoio]}>
+          <Text style={estilos.chamada}>{LEVAR_O_DIAGNOSTICO.titulo}</Text>
           <Pressable
             style={[estilos.baixar, gerando && estilos.baixarApagado]}
             onPress={baixarOPdf}
@@ -382,7 +484,7 @@ export const Relatorio = ({
               ? <ActivityIndicator size="small" color={COR.primaria} />
               : <Feather name="download" size={15} color={COR.primaria} />}
             <Text style={estilos.baixarTexto}>
-              {gerando ? 'Gerando…' : 'Baixar diagnóstico (PDF)'}
+              {gerando ? LEVAR_O_DIAGNOSTICO.baixando : LEVAR_O_DIAGNOSTICO.baixar}
             </Text>
           </Pressable>
           <Pressable
@@ -392,11 +494,11 @@ export const Relatorio = ({
             accessibilityLabel="Compartilhar diagnóstico"
           >
             <Feather name="share-2" size={15} color={COR.primaria} />
-            <Text style={estilos.compartilharTexto}>Compartilhar em texto</Text>
+            <Text style={estilos.compartilharTexto}>{LEVAR_O_DIAGNOSTICO.compartilhar}</Text>
           </Pressable>
         </View>
 
-        <View style={estilos.cartao}>
+        <View style={[estilos.cartao, estilos.cartaoDeApoio]}>
           <Text style={estilos.tituloDoCartao}>QUEM ASSINA</Text>
           <Text style={estilos.assinaNome}>{QUEM_ASSINA.name}</Text>
           <Text style={estilos.assinaPapel}>{QUEM_ASSINA.role}</Text>
@@ -407,12 +509,17 @@ export const Relatorio = ({
         </View>
       </>
     )}
-    </>
+    </View>
   );
 };
 
 const estilos = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
+
+  // O ritmo da pilha: a mesma folga entre o cabeçalho e o primeiro cartão e entre um cartão e o
+  // seguinte. É a régua dos outros módulos (`FOLGA_APOS_O_CABECALHO`), para o diagnóstico não ter
+  // um espaçamento só dele.
+  pilha: { gap: FOLGA_APOS_O_CABECALHO },
 
   // O convite do fim do relatório. O botão segue o CTA da marca: pílula, 15/32, texto 16/800.
   chamadaTitulo: {
@@ -443,47 +550,107 @@ const estilos = StyleSheet.create({
   avisoTitulo: { fontSize: 16, fontWeight: '700', color: COR_DIAGNOSTICO.titulo },
   avisoTexto: { fontSize: 14, lineHeight: 20, color: COR_DIAGNOSTICO.texto },
 
-  cartaoDoPerfil: {
-    padding: 26, paddingHorizontal: 24, borderRadius: 20,
-    borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno,
-    shadowColor: 'rgba(67, 86, 123, .07)', shadowOpacity: 1,
-    shadowOffset: { width: 0, height: 10 }, shadowRadius: 24, elevation: 2,
+  // Os textos obrigatórios do §11.3 reusam o cartão de aviso, tingidos de âmbar: eles precisam
+  // ler como ressalva, e não como mais um bloco de conteúdo do relatório.
+  avisoDaEntrega: {
+    borderColor: COR_DIAGNOSTICO.seloContorno, backgroundColor: COR_DIAGNOSTICO.seloFundo,
   },
-  linhaDaPlaca: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 14 },
+  avisoDaEntregaTexto: { fontSize: 13, lineHeight: 19, color: COR_DIAGNOSTICO.selo },
+
+  // O herói do diagnóstico é o MESMO herói do painel: navy `heroDe → heroAte`, raio de cartão,
+  // padding 26/30 e o anel vazado no canto. Não é um desenho novo.
+  //
+  // A primeira versão que fiz sangrava de ponta a ponta e ia do navy ao roxo. Ficou bonita e
+  // ficou fora do sistema: o roxo `COR.marca` é institucional e entra como LINHA (o anel), nunca
+  // como campo, e nenhuma superfície do app rompe o recuo lateral da rolagem.
+  heroi: { overflow: 'hidden', padding: 26, paddingBottom: 30, borderRadius: RAIO.cartao },
+  // No painel o anel fica embaixo à direita, onde o último elemento é um botão curto e sobra
+  // canto. Aqui a última linha é a assinatura R·E·A·L, que ocupa a largura toda — o anel cortava
+  // o L. Subiu para o alto, onde a folga é real: à direita do nome do perfil.
+  anel: {
+    position: 'absolute', right: -104, top: -128,
+    width: 190, height: 190, borderRadius: 95,
+    borderWidth: 2, borderColor: COR.marca, opacity: 0.72,
+  },
+  linhaDaPlaca: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  // A escala tipográfica é a do herói do painel: rótulo 10/800/1.1, título 34/37/800, apoio
+  // 12/17. Eu tinha subido o nome para 46 — grande, e de um tamanho que não existe no app.
   rotuloDoPerfil: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 1.54, textTransform: 'uppercase',
-    color: COR_DIAGNOSTICO.rotulo,
+    fontSize: 10, fontWeight: '800', letterSpacing: 1.1, textTransform: 'uppercase',
+    color: COR_PAINEL.heroRotulo, marginBottom: 6,
   },
   nomeDoPerfil: {
-    fontSize: 34, fontWeight: '800', letterSpacing: -0.38, color: COR_DIAGNOSTICO.titulo,
-    marginTop: 2,
+    fontSize: 34, lineHeight: 37, fontWeight: '800', letterSpacing: -0.4,
+    color: COR_PAINEL.sobreEscuro,
   },
-  descricao: { fontSize: 15, lineHeight: 22, color: COR_DIAGNOSTICO.titulo },
-  indice: { marginTop: 20 },
-  indiceRotulo: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 1.32, textTransform: 'uppercase',
-    color: COR_DIAGNOSTICO.rotulo, marginBottom: 12,
+  descricao: { fontSize: 13, lineHeight: 19, color: COR_PAINEL.heroTexto, marginTop: 14 },
+  // As quatro dimensões em linha: lidas de uma vez, viram a assinatura da entrega. Em duas
+  // colunas, como estavam antes, eram só uma lista.
+  assinatura: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    marginTop: 22, paddingTop: 18,
+    borderTopWidth: 1, borderTopColor: COR_PAINEL.pilulaContorno,
   },
-  indiceLinha: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 14 },
-  indiceItem: { width: '50%', flexDirection: 'row', alignItems: 'center', gap: 11 },
-  indiceLetra: { fontSize: 30, fontWeight: '700', letterSpacing: 0.3 },
-  acesa: { color: COR.primaria },
+  dimensaoDaAssinatura: { flex: 1, alignItems: 'center', gap: 5 },
+  // As quatro letras são a MARCA do índice, não uma inicial qualquer: levam a mesma Georgia
+  // itálica do "REAL" do cabeçalho e da placa. É o que as separa do resto da tipografia da tela,
+  // toda em Inter — e o que faz o R·E·A·L ler como sigla, e não como quatro letras avulsas.
+  indiceLetra: {
+    fontFamily: 'Georgia', fontStyle: 'italic',
+    fontSize: 30, fontWeight: '700', letterSpacing: 0.3,
+  },
+  acesa: { color: COR_PAINEL.sobreEscuro },
   apagada: { color: COR_DIAGNOSTICO.letraApagada },
   indicePalavra: {
-    fontSize: 12, fontWeight: '700', letterSpacing: 0.96, textTransform: 'uppercase',
-    color: COR_DIAGNOSTICO.palavra,
+    fontSize: 9, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase',
+    color: COR_DIAGNOSTICO.palavraApagada,
   },
-  palavraAcesa: { color: COR_DIAGNOSTICO.titulo },
+  palavraAcesa: { color: COR_PAINEL.heroRotulo },
+
+  // O cabeçalho da ENTREGA: foto, o nome de quem recebe e o "está pronto". Mesmas proporções da
+  // web (avatar de 60, título de 22, apoio de 13), porque é a mesma tela.
+  // O mesmo `paddingTop: 22` do `CabecalhoDoModulo`, que é quem dá o recuo de cima nas telas de
+  // revisita. Sem ele, o cabeçalho da entrega nascia colado no fio do topo — as três molduras
+  // não acrescentam recuo nenhum, de propósito: ele é todo do cabeçalho.
+  entrega: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingTop: 22 },
+
+  // A moldura do vídeo: 16:9 com canto arredondado e fundo escuro, como o `.ctaVideo` da web.
+  // O `overflow: hidden` é o que faz o player respeitar o raio.
+  video: {
+    aspectRatio: 16 / 9, marginTop: 4, marginBottom: 4,
+    borderRadius: RAIO.campo, overflow: 'hidden', backgroundColor: COR_DIAGNOSTICO.fundoDoVideo,
+  },
+  videoPlayer: { flex: 1, backgroundColor: 'transparent' },
+  entregaFoto: { width: 60, height: 60, borderRadius: 30 },
+  entregaTitulo: {
+    fontSize: 22, fontWeight: '800', lineHeight: 27, letterSpacing: -0.3,
+    color: COR_DIAGNOSTICO.titulo,
+  },
+  entregaApoio: { marginTop: 6, fontSize: 13, lineHeight: 18, color: COR_DIAGNOSTICO.texto },
 
   cartao: {
-    padding: 20, borderRadius: 14, gap: 10,
+    padding: 20, borderRadius: RAIO.cartao, gap: 10,
     borderWidth: 1, borderColor: COR_DIAGNOSTICO.contorno, backgroundColor: COR.superficie,
     shadowColor: 'rgba(67, 86, 123, .07)', shadowOpacity: 1,
     shadowOffset: { width: 0, height: 10 }, shadowRadius: 24, elevation: 2,
   },
+  /**
+   * Todo cartão de seção é o MESMO cartão branco — este estilo existe só para não quebrar as
+   * chamadas que já o aplicam.
+   *
+   * A entrega chegou a ter um terceiro nível de superfície: cidades, playlists, os 16 perfis e a
+   * bio de quem assina viravam cartão de CONTORNO, sem preenchimento nem sombra, para não pedir
+   * a mesma atenção que as quatro dimensões do índice. Antes disso, tentou-se tingi-los com
+   * `COR.destaque` sobre o fundo — 2% de diferença, fraco demais para ler como decisão.
+   *
+   * As duas tentativas foram lidas do mesmo jeito por quem abriu a tela: "por que estes blocos
+   * perderam o branco?". Uma hierarquia que precisa ser explicada não está funcionando, e a
+   * distinção que importa aqui já é dada pelo herói escuro.
+   */
+  cartaoDeApoio: {},
   tituloDoCartao: {
     fontSize: 12, fontWeight: '800', letterSpacing: 0.52, textTransform: 'uppercase',
-    color: COR_DIAGNOSTICO.titulo,
+    color: COR_DIAGNOSTICO.secao,
   },
 
   linhaDeBarra: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -525,6 +692,7 @@ const estilos = StyleSheet.create({
     borderColor: COR_DIAGNOSTICO.etiquetaAtivaContorno,
     backgroundColor: COR_DIAGNOSTICO.etiquetaAtivaFundo,
   },
+  leituraCurta: { fontSize: 11, lineHeight: 15.5, color: COR_DIAGNOSTICO.texto, marginTop: 4 },
   nomeDaEtiqueta: { fontSize: 12, fontWeight: '600', color: COR_DIAGNOSTICO.titulo },
   nomeAtivo: { fontWeight: '800' },
   bolinhas: { flexDirection: 'row', gap: 3 },

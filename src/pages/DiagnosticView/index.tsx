@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
+import { CABECALHO_DA_REVISITA } from '@maestra/core/constants/realCopy';
 import reportStyles from '../ArtistCreate/ArtistCreate.module.scss';
 import { Spinner } from '../../components/spinner/spinner';
 
@@ -67,9 +68,9 @@ const DiagnosticView: FC = () => {
     <div className={`board-content page-view workspace-view ${reportStyles.pageReal}`}>
       <header className={reportStyles.diagnosticPageHeader}>
         <div>
-          <p>Onde você está</p>
-          <h1>Diagnóstico REAL</h1>
-          <span>Sua fase de carreira atual, com base nos seus dados reais.</span>
+          <p>{CABECALHO_DA_REVISITA.chapeu}</p>
+          <h1>{CABECALHO_DA_REVISITA.titulo}</h1>
+          <span>{CABECALHO_DA_REVISITA.apoio}</span>
         </div>
         {souDonoDoPerfil && (
           <div className={reportStyles.headerActions}>
@@ -96,6 +97,10 @@ const DiagnosticView: FC = () => {
         enableStickyCta={false}
         showPlanningCta={false}
         hideHero
+        // O aviso de "diagnóstico em versão anterior" (§13.2) traz a saída junto do texto: quem lê
+        // que a leitura está velha precisa poder refazer ali, sem procurar o botão do topo.
+        onRedo={souDonoDoPerfil ? onRedo : undefined}
+        redoLocked={!isPro}
       />
     </div>
   );

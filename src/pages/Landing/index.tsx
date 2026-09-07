@@ -185,7 +185,7 @@ const VideoStats: FC = () => {
   );
 };
 
-// ─── Módulos (slot "our top tier features") ──────────────────────────────────
+// ─── Módulos (slot "our TOP ICON features") ──────────────────────────────────
 const num = (i: number) => `${String(i + 1).padStart(2, '0')}.`;
 
 const Modules: FC = () => {

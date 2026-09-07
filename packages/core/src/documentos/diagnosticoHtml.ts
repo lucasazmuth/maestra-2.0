@@ -1,5 +1,5 @@
 import {
-  DIM_META, PROFILE_BITS, PROFILE_MAP, clean, dimStatusText, fmtNum, fmtPct,
+  DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtBRL, fmtNum, fmtPct,
 } from '../constants/realCopy';
 import { METODOLOGIA, QUEM_ASSINA, dimNarrative } from '../constants/realNarrative';
 import { tierForAltas } from '../constants/realBadge';
@@ -9,6 +9,15 @@ import {
   composicaoDaReceita, dinheiroRedondo, linhaDeAutoria, linhasDaDimensao, tintaDaDimensao,
   type Autoria,
 } from './diagnostico';
+import {
+  FIXOS, INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO, LEITURAS_CURTAS,
+} from '../constants/realTextos';
+import {
+  comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
+} from '../services/realEngine/comentarios';
+import {
+  AVISOS, ehLegado, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
+} from '../services/realEngine/relatorio';
 
 // O DECK do Diagnóstico REAL em HTML — o mesmo documento que a web baixa, montado como texto.
 //
@@ -122,6 +131,14 @@ const ESTILO = `
     overflow: hidden; margin-bottom: 8px; }
   .reguaCheia { height: 100%; border-radius: 9999px; }
   .dimEstado { font-size: 14px; color: ${T.mute}; margin-bottom: 20px; }
+  /* No PDF a intro vem ABERTA (§2): aqui não há toque para expandir, e o documento é onde a
+     explicação inteira cabe. */
+  /* A página de leitura repete a letra e o nome da dimensão, para o leitor saber de quem ela é. */
+  .dimCabLeitura { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .dimIntro { font-size: 11px; line-height: 1.5; color: ${T.mute}; margin: 0 0 12px; }
+  /* A frase de leitura é a resposta curta da dimensão: barra à esquerda, como na maquete. */
+  .dimLeitura { font-size: 12.5px; line-height: 1.55; color: ${T.ink}; margin: 0 0 14px;
+    border-left: 3px solid ${T.real}; padding: 11px 14px; background: ${T.soft}; }
   .dimLinhas { display: flex; flex-direction: column; margin-bottom: 14px; }
   .dimLinha { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0;
     border-top: 1px solid ${T.line}; font-size: 15px; color: ${T.dim}; }
@@ -134,6 +151,22 @@ const ESTILO = `
   .bloco { margin-bottom: 18px; }
   .blocoTitulo { font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
     color: ${T.ink}; margin-bottom: 10px; }
+  /* O selo de "não entra no diagnóstico" (§11.3.5) anda junto do título do bloco informativo. */
+  .blocoNota { font-size: 10.5px; font-weight: 600; letter-spacing: 0; text-transform: none;
+    color: ${T.mute}; }
+  /* A página "Onde a conta fecha": cartões de número e barras comparativas. */
+  .tituloDaSecao { font-size: 26px; font-weight: 800; letter-spacing: -0.4px; color: ${T.ink};
+    margin-bottom: 18px; }
+  .contaGrade { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+  .contaCartao { flex: 1 1 150px; border: 1px solid ${T.line}; border-radius: 10px;
+    padding: 12px 14px; background: ${T.soft}; }
+  .contaRotulo { display: block; font-size: 10.5px; color: ${T.mute}; margin-bottom: 6px; }
+  .contaValor { font-size: 17px; color: ${T.ink}; }
+  .contaLinha { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .contaNome { flex: 0 0 150px; font-size: 11.5px; color: ${T.mute}; }
+  .contaTrilho { flex: 1; height: 8px; border-radius: 9999px; background: ${T.line}; overflow: hidden; }
+  .contaBarra { display: block; height: 100%; border-radius: 9999px; background: ${T.real}; }
+  .contaNumero { flex: 0 0 90px; text-align: right; font-size: 11.5px; color: ${T.ink}; }
   .comp { display: flex; flex-wrap: wrap; gap: 10px 26px; }
   .compItem { display: flex; align-items: baseline; gap: 7px; }
   .compPct { font-weight: 800; font-size: 20px; color: ${T.ink}; }
@@ -149,9 +182,12 @@ const ESTILO = `
   .eng { display: flex; justify-content: space-between; font-size: 14px; color: ${T.dim};
     padding: 6px 0; }
   .revelaBloco { margin-top: auto; border-top: 1px solid ${T.line}; padding-top: 18px; }
+  /* Na página de leitura o bloco vem logo abaixo da frase, e não empurrado para o pé: ali ele é
+     o assunto da página, não o rodapé dela. */
+  .revelaSolto { margin-top: 18px; }
   .revelaLead { font-weight: 800; font-size: 20px; color: ${T.ink}; margin-bottom: 10px;
     line-height: 1.3; }
-  .revelaPara { font-size: 14.5px; line-height: 1.6; color: ${T.dim}; margin: 0 0 8px; }
+  .revelaPara { font-size: 13.5px; line-height: 1.5; color: ${T.dim}; margin: 0 0 8px; }
   .revelaPara b { color: ${T.ink}; }
 
   .cidade { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
@@ -182,8 +218,8 @@ const ESTILO = `
   .topoSelo { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; padding: 4px 8px;
     border-radius: 6px; background: ${T.goldBg}; color: ${T.ink}; }
 
-  .metodoIntro { font-size: 18px; line-height: 1.55; color: ${T.dim}; margin: 0 0 24px; }
-  .metodoGrade { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 24px; }
+  .metodoIntro { font-size: 17px; line-height: 1.5; color: ${T.dim}; margin: 0 0 18px; }
+  .metodoGrade { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
   .metodoCartao { width: calc(50% - 9px); background: ${T.soft}; border: 1px solid ${T.line};
     border-radius: 16px; padding: 22px; }
   .metodoLetra { display: inline-block; width: 38px; height: 38px; line-height: 38px;
@@ -226,11 +262,22 @@ const moldura = (
     </div>
   </div>`;
 
-/** Uma página de dimensão: nota, régua, tabela, blocos próprios e "o que isso revela". */
-const paginaDaDimensao = (
-  dk: 'r' | 'e' | 'a' | 'l', numero: number, total: number, ri: any, cm: any,
+/**
+ * As páginas de uma dimensão: os números e a leitura.
+ *
+ * No legado é UMA página, e cabe. Da v4 em diante são DUAS, porque a página passou a carregar a
+ * intro fixa, a frase de leitura e todos os comentários aplicáveis — junto com a tabela e os
+ * avisos, isso passa de uma A4, e a A4 do PDF não pagina: o que sobra é cortado, calado.
+ *
+ * A divisão não é por medida de altura, é editorial e fixa: a primeira página é o RETRATO (nota,
+ * régua, tabela, avisos e blocos), a segunda é a LEITURA (o que a dimensão significa, a frase do
+ * seu caso e os comentários). Assim o número de páginas do deck é previsível, e nenhum artista
+ * com muitos comentários estoura o papel.
+ */
+const paginasDaDimensao = (
+  dk: 'r' | 'e' | 'a' | 'l', proxima: () => number, total: number, ri: any, cm: any,
   autoria?: Autoria, agora?: Date,
-) => {
+): string[] => {
   const meta = DIM_META.find((m) => m.key === dk)!;
   const alta = !!ri.pattern?.[dk];
   const topo = !!ri.dimTopIcon?.[dk];
@@ -241,13 +288,18 @@ const paginaDaDimensao = (
   const inp = ri.inputs || {};
   const rev = ri.revenue || {};
   const comp = dk === 'e' ? composicaoDaReceita(ri) : [];
-  const faturamento = Math.round(Number(rev.total ?? 0) * 12);
-  const investimento = Math.round(Number(inp.investimento ?? 0));
-  const saldo = faturamento - investimento;
+  const resumo = resumoDoE(ri);
+  const legado = ehLegado(ri);
+  // A v4 lê o SALDO ANUAL direto do motor; o legado ainda multiplica a base mensal por doze.
+  const faturamento = resumo ? resumo.receitaAnual : Math.round(Number(rev.total ?? 0) * 12);
+  const investimento = resumo ? resumo.investimentoAnual : Math.round(Number(inp.investimento ?? 0));
+  const saldo = resumo ? resumo.saldo : faturamento - investimento;
+  const temCnpj = resumo ? ri.raw?.temCnpj === true : !!inp.temCnpj;
+  const temEmpresario = resumo ? ri.raw?.temEmpresario === true : !!inp.temEmpresario;
   const eng = ri.engagement || {};
   const temDeclarado = linhas.some((r) => r.declarado);
 
-  const corpo = `
+  const cabecalho = `
     <div class="dimCab">
       <span class="dimLetra" style="color:${cor}">${meta.letter}</span>
       <div>
@@ -259,7 +311,7 @@ const paginaDaDimensao = (
         <span class="dimSelo" style="${topo
           ? `background:${T.goldBg};color:${T.goldInk}`
           : alta ? `background:${cor};color:#fff` : `background:#eef2f8;color:${T.body}`}">
-          ${topo ? 'Top Tier' : alta ? 'Alto' : 'Baixo'}</span>
+          ${escapar(seloDaDimensao(ri, dk).rotulo)}</span>
         <span class="dimValor">${nota}<span class="dimMax">/100</span></span>
       </div>
     </div>
@@ -267,7 +319,7 @@ const paginaDaDimensao = (
     <div class="regua">
       <div class="reguaCheia" style="width:${topo ? 100 : nota}%;background:${cor}"></div>
     </div>
-    <div class="dimEstado">${escapar(dimStatusText(nota, alta, topo))}</div>
+    <div class="dimEstado">${escapar(statusDaBarra(ri, dk))}</div>
 
     <div class="dimLinhas">
       ${linhas.map((r) => `
@@ -282,14 +334,28 @@ const paginaDaDimensao = (
       <b>informados por quem preencheu</b> este diagnóstico. A Maestra não tem como apurar
       faturamento e não verifica estes valores.</div>` : ''}
 
-    ${dk === 'e' && comp.length ? `<div class="bloco">
+    ${dk === 'e' && resumo && resumo.saldo < 0
+      ? `<div class="aviso">${escapar(AVISOS.saldoNegativo)}</div>` : ''}
+    ${dk === 'e' && resumo?.fontes.some((f) => f.naoSei)
+      ? `<div class="aviso"><b>Não informado:</b>
+        ${escapar(resumo.fontes.filter((f) => f.naoSei).map((f) => f.rotulo).join(', '))}.
+        ${escapar(AVISOS.naoSei)}</div>` : ''}
+    ${dk === 'a' && !legado && ri.flags?.aSemBilheteria
+      ? `<div class="aviso">${escapar(AVISOS.semBilheteria)}</div>` : ''}
+    ${dk === 'l' && !legado && ri.flags?.travaL
+      ? `<div class="aviso">${escapar(AVISOS.travaL)}</div>` : ''}
+
+    ${/* Cachê, composição e saúde financeira saíram daqui na v4: são o corpo da página "Onde a
+         conta fecha", e repetir os mesmos números duas vezes estourava esta página. O legado, que
+         não tem aquela página, continua imprimindo os dois blocos que sempre teve. */ ''}
+    ${dk === 'e' && !resumo && comp.length ? `<div class="bloco">
       <div class="blocoTitulo">Composição da receita</div>
       <div class="comp">${comp.map((s) => `<div class="compItem">
         <span class="compPct">${s.pct}%</span>
         <span class="compLabel">${escapar(s.label)}</span></div>`).join('')}</div>
     </div>` : ''}
 
-    ${dk === 'e' && (faturamento > 0 || investimento > 0) ? `<div class="bloco">
+    ${dk === 'e' && !resumo && (faturamento > 0 || investimento > 0) ? `<div class="bloco">
       <div class="blocoTitulo">Saúde financeira · 12 meses</div>
       <div class="saude">
         <div class="saudeItem"><span>Faturamento</span><b>${dinheiroRedondo(faturamento)}</b></div>
@@ -299,32 +365,57 @@ const paginaDaDimensao = (
             ${saldo >= 0 ? '+' : '−'}${dinheiroRedondo(saldo)}</b></div>
       </div>
       <div class="pilulas">
-        <span class="pilula ${inp.temCnpj ? 'pilulaOn' : ''}">${inp.temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
-        <span class="pilula ${inp.temEmpresario ? 'pilulaOn' : ''}">${inp.temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
+        <span class="pilula ${temCnpj ? 'pilulaOn' : ''}">${temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
+        <span class="pilula ${temEmpresario ? 'pilulaOn' : ''}">${temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
       </div>
     </div>` : ''}
 
     ${dk === 'a' && (['instagram', 'tiktok', 'youtube'] as const).some((k) => eng[k])
       ? `<div class="bloco">
-        <div class="blocoTitulo">Engajamento por rede</div>
+        <div class="blocoTitulo">Engajamento por rede${legado ? '' : ` <span class="blocoNota">${escapar(AVISOS.informativo)}</span>`}</div>
         ${(['instagram', 'tiktok', 'youtube'] as const).map((k) => {
           const e = eng[k];
           if (!e) return '';
           const nome = k === 'instagram' ? 'Instagram' : k === 'tiktok' ? 'TikTok' : 'YouTube';
           return `<div class="eng"><span>${nome}</span>
-            <b style="color:${e.above ? T.real : T.mute}">${fmtPct(e.value)} ·
-            ${e.above ? 'acima' : 'abaixo'} do corte de ${fmtPct(e.cut)}</b></div>`;
+            <b>${fmtPct(e.value)}</b></div>`;
         }).join('')}
       </div>` : ''}
 
-    <div class="revelaBloco">
+`;
+
+  const leitura = `
+    ${!legado ? `<div class="dimCabLeitura">
+      <span class="dimLetra" style="color:${cor}">${meta.letter}</span>
+      <div><div class="dimTitulo">${escapar(meta.full)}
+        <span class="dimTituloSub">· ${escapar(meta.sub)}</span></div></div>
+    </div>
+    <div class="blocoTitulo">O que é esta frente</div>
+    <p class="dimIntro">${escapar(INTRO_DA_DIMENSAO[dk])}</p>
+    <p class="dimLeitura">${escapar(LEITURA_DA_DIMENSAO[dk][alta ? 'alto' : 'baixo'])}</p>` : ''}
+
+    <div class="revelaBloco${legado ? '' : ' revelaSolto'}">
       <div class="revelaTitulo">O que isso revela</div>
-      <div class="revelaLead">${escapar(narrativa.headline)}</div>
-      ${narrativa.paras.map((p) => `<p class="revelaPara">
-        <b>${escapar(p.lead)}</b> ${escapar(p.body)}</p>`).join('')}
+      ${legado
+        ? `<div class="revelaLead">${escapar(narrativa.headline)}</div>
+           ${narrativa.paras.map((p) => `<p class="revelaPara">
+             <b>${escapar(p.lead)}</b> ${escapar(p.body)}</p>`).join('')}`
+        // No PDF saem TODOS os comentários aplicáveis (§4), e não os três da tela.
+        // Os comentários da conta saem daqui quando existe a página de aprofundamento: lá eles
+        // têm os números do lado, e no mesmo documento o parágrafo não pode aparecer duas vezes.
+        : comentariosDaDimensao(ri, dk, { superficie: 'pdf', chartmetric: cm })
+            .filter((c) => !(dk === 'e' && resumo && GRUPOS_DA_CONTA.includes(c.grupo)))
+            .map((c) => `
+            <p class="revelaPara"><b>${escapar(c.lead)}</b> ${escapar(c.corpo)}</p>`).join('')}
     </div>`;
 
-  return moldura(numero, total, `${meta.full} · ${meta.sub}`, corpo, autoria, agora);
+  const titulo = `${meta.full} · ${meta.sub}`;
+  // No legado as duas metades cabem juntas, e o deck continua com uma página por dimensão.
+  if (legado) return [moldura(proxima(), total, titulo, cabecalho + leitura, autoria, agora)];
+  return [
+    moldura(proxima(), total, titulo, cabecalho, autoria, agora),
+    moldura(proxima(), total, `${titulo} · a leitura`, leitura, autoria, agora),
+  ];
 };
 
 /**
@@ -346,7 +437,12 @@ export function montarDocumentoDoDiagnostico({
 
   const temCidades = !!cidades?.length;
   const temPlataformas = !!(playlists?.top?.length || similares?.length);
-  const total = 10 + (temCidades ? 1 : 0) + (temPlataformas ? 1 : 0);
+  // A página "Onde a conta fecha" só existe quando há um resumo do E para aprofundar — ou seja,
+  // não existe no legado, que não tem os custos decompostos.
+  const temContaFecha = !!resumoDoE(ri);
+  // 10 fixas + a segunda página de cada dimensão (só fora do legado) + as condicionais.
+  const total = 10 + (ehLegado(ri) ? 0 : 4)
+    + (temCidades ? 1 : 0) + (temPlataformas ? 1 : 0) + (temContaFecha ? 1 : 0);
   let n = 1; // a capa é a 1 e não leva número
   const proxima = () => (n += 1);
 
@@ -377,22 +473,95 @@ export function montarDocumentoDoDiagnostico({
   paginas.push(moldura(proxima(), total, 'O seu perfil', `
     <div class="perfilChapeu">Seu perfil de carreira</div>
     <div class="perfilNome">${escapar(perfil.name)}</div>
-    <p class="perfilDesc">${escapar(clean(perfil.description))}</p>
+    <p class="perfilDesc">${escapar(retratoDoPerfil(ri)?.texto ?? clean(perfil.description))}</p>
     <div class="padrao">
       ${DIM_META.map((d) => `<div class="padraoItem">
         <span class="padraoLetra" style="color:${ri.pattern?.[d.key] ? T.real : '#8492ac'}">${d.letter}</span>
         <span class="padraoPalavra">${escapar(d.full)}</span>
       </div>`).join('')}
     </div>
-    <div class="revelaTitulo">O que o seu diagnóstico revela</div>
+    ${/* §13.3 — o bloco de bullets saiu: o retrato acima e os comentários por dimensão cobrem
+          o que ele dizia. O legado o mantém, porque lá não há retrato que o substitua. */ ''}
+    ${ehLegado(ri) ? `<div class="revelaTitulo">O que o seu diagnóstico revela</div>
     <ul class="revela">
       ${(perfil.insights || []).map((it: string) => `<li>${escapar(clean(it))}</li>`).join('')}
-    </ul>`, autoria, agora));
+    </ul>` : ''}`, autoria, agora));
 
   // 3–6 — AS DIMENSÕES
   DIM_META.forEach((d) => {
-    paginas.push(paginaDaDimensao(d.key as 'r' | 'e' | 'a' | 'l', proxima(), total, ri, chartmetric ?? null, autoria, agora));
+    paginas.push(...paginasDaDimensao(d.key as 'r' | 'e' | 'a' | 'l', proxima, total, ri, chartmetric ?? null, autoria, agora));
   });
+
+  // 7 — ONDE A CONTA FECHA (só no PDF, §2)
+  //
+  // É o aprofundamento do E: o que a tela não comporta sem virar planilha. Aqui cabem a margem
+  // por show, o ponto de equilíbrio, o cachê por tipo de contratante e a referência do setor —
+  // os números que respondem "quantos shows eu preciso vender por ano".
+  const contaFecha = resumoDoE(ri);
+  if (temContaFecha && contaFecha) {
+    const numero = (rotulo: string, valor: string) => `<div class="contaCartao">
+      <span class="contaRotulo">${escapar(rotulo)}</span>
+      <b class="contaValor">${escapar(valor)}</b></div>`;
+    const barra = (rotulo: string, valor: number, teto: number, texto: string) => `<div class="contaLinha">
+      <span class="contaNome">${escapar(rotulo)}</span>
+      <span class="contaTrilho"><span class="contaBarra"
+        style="width:${teto > 0 ? Math.max(2, Math.round((valor / teto) * 100)) : 2}%"></span></span>
+      <b class="contaNumero">${escapar(texto)}</b></div>`;
+    const tetoDoCache = Math.max(...contaFecha.cache.map((c) => c.valor), 1);
+    const composicaoDoPdf = [
+      { rotulo: 'Shows', valor: contaFecha.receitaShows },
+      ...contaFecha.fontes.filter((f) => f.valor > 0).map((f) => ({ rotulo: f.rotulo, valor: f.valor })),
+    ].filter((x) => x.valor > 0).sort((x, y) => y.valor - x.valor);
+    const tetoDaComposicao = Math.max(...composicaoDoPdf.map((x) => x.valor), 1);
+    const doE = comentariosDaDimensao(ri, 'e', { superficie: 'pdf', chartmetric: chartmetric ?? null });
+    const soDaConta = doE.filter((c) => ['E7', 'E5', 'E8'].includes(c.grupo));
+
+    paginas.push(moldura(proxima(), total, 'Aprofundamento', `
+      <div class="tituloDaSecao">Onde a conta fecha</div>
+
+      <div class="blocoTitulo">Saúde financeira · 12 meses</div>
+      <div class="contaGrade">
+        ${numero('Receita', dinheiroRedondo(contaFecha.receitaAnual))}
+        ${numero('Custos e investimento', dinheiroRedondo(contaFecha.investimentoAnual))}
+        ${numero('Saldo', `${contaFecha.saldo >= 0 ? '+' : '−'}${dinheiroRedondo(contaFecha.saldo)}`)}
+        ${numero(
+          contaFecha.bonus > 1 ? `Saldo ajustado (+${Math.round((contaFecha.bonus - 1) * 100)}%)` : 'Saldo ajustado',
+          `${contaFecha.saldoAjustado >= 0 ? '+' : '−'}${dinheiroRedondo(contaFecha.saldoAjustado)}`,
+        )}
+        ${contaFecha.receitaLiquidaEstimada != null
+          ? numero(`Receita líquida estimada (${contaFecha.aliquotaRotulo ?? ''})`, dinheiroRedondo(contaFecha.receitaLiquidaEstimada))
+          : ''}
+      </div>
+      <div class="pilulas" style="margin:-8px 0 14px">
+        <span class="pilula ${ri.raw?.temCnpj === true ? 'pilulaOn' : ''}">${ri.raw?.temCnpj === true ? 'Com CNPJ' : 'Sem CNPJ'}</span>
+        <span class="pilula ${ri.raw?.temEmpresario === true ? 'pilulaOn' : ''}">${ri.raw?.temEmpresario === true ? 'Com empresário' : 'Sem empresário'}</span>
+      </div>
+      <div class="fonteNota" style="margin:0 0 14px">A média mensal do setor cultural formal é
+        ${escapar(fmtBRL(SIIC_MENSAL))} (SIIC/IBGE). Esta receita anual equivale a
+        ${escapar(contaFecha.vezesOSetor.toFixed(1).replace('.', ','))}× esse patamar.</div>
+
+      ${contaFecha.margemPorShow != null ? `
+        <div class="blocoTitulo">Margem por show e ponto de equilíbrio</div>
+        <div class="contaGrade">
+          ${numero('Cachê médio', dinheiroRedondo(contaFecha.cacheMedio))}
+          ${numero('Custo médio por show', dinheiroRedondo(contaFecha.custoPorShow))}
+          ${numero('Margem por show', dinheiroRedondo(contaFecha.margemPorShow))}
+          ${numero('Shows pra cobrir o fixo do ano', contaFecha.pontoEquilibrioShows == null ? 'não fecha' : String(contaFecha.pontoEquilibrioShows))}
+        </div>` : ''}
+
+      ${contaFecha.cache.length ? `
+        <div class="blocoTitulo">Cachê médio por tipo de contratante</div>
+        ${contaFecha.cache.map((c) => barra(c.rotulo, c.valor, tetoDoCache, dinheiroRedondo(c.valor))).join('')}` : ''}
+
+      ${composicaoDoPdf.length ? `
+        <div class="blocoTitulo">Composição da receita anual</div>
+        ${composicaoDoPdf.map((x) => barra(x.rotulo, x.valor, tetoDaComposicao, dinheiroRedondo(x.valor))).join('')}` : ''}
+
+      ${soDaConta.length ? `<div class="revelaBloco">
+        ${soDaConta.map((c) => `<p class="revelaPara"><b>${escapar(c.lead)}</b> ${escapar(c.corpo)}</p>`).join('')}
+      </div>` : ''}
+    `, autoria, agora));
+  }
 
   // AUDIÊNCIA & ALCANCE
   if (temCidades) {
@@ -461,7 +630,8 @@ export function montarDocumentoDoDiagnostico({
       <span class="topoSelo">TOP</span>
       <div><b>Top Tier.</b> Quando uma dimensão atinge o nível de excelência (o topo absoluto da
         escala), ela ganha o selo Top Tier no seu diagnóstico. Vale para qualquer perfil e qualquer
-        das quatro dimensões.</div>
+        das quatro dimensões. Quando as quatro acendem em Top Tier ao mesmo tempo, o perfil é
+        TOP ICON.</div>
     </div>`, autoria, agora));
 
   // METODOLOGIA

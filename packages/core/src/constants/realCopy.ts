@@ -35,6 +35,32 @@ export const clean = (s: string) => s.replace(/\s*—\s*/g, ', ');
 // fora da lista e virava "—".
 // Vínculo declarado com o artista (ver a pergunta `vinculo` no QUIZ). O rótulo é o que sai na capa
 // do PDF, então é redigido em terceira pessoa, para o documento e não para quem responde.
+/**
+ * Os DOIS cabeçalhos da entrega do diagnóstico.
+ *
+ * São momentos diferentes do mesmo documento. A ENTREGA é a primeira vez — o fim da criação e a
+ * tela de desbloquear —, e fala com quem acabou de responder o quiz. A REVISITA é o módulo dentro
+ * do perfil, onde a mesma pessoa volta meses depois: ali o "está pronto" soaria como se o
+ * diagnóstico tivesse acabado de sair de novo.
+ *
+ * Moram aqui porque as duas superfícies precisam dizer as MESMAS palavras. Enquanto cada lado
+ * tinha as suas, o app usava o cabeçalho de revisita nas TRÊS telas, inclusive na hora da
+ * entrega, e a web usava o da entrega em duas: o mesmo momento, dois textos.
+ */
+export const CABECALHO_DA_ENTREGA = {
+  titulo: (nome?: string | null) => `Seu diagnóstico de carreira está pronto, ${nome || 'seu artista'}.`,
+  apoio: 'Baseado nos seus dados reais: Spotify, redes sociais e o que você nos contou.',
+  /** Sem Spotify não há dado de plataforma: a copy não promete o que não foi medido. */
+  apoioSemSpotify: 'Baseado no que você nos contou. Quando você conectar o Spotify, a gente '
+    + 'atualiza com seus números de plataforma.',
+} as const;
+
+export const CABECALHO_DA_REVISITA = {
+  chapeu: 'Onde você está',
+  titulo: 'Diagnóstico REAL',
+  apoio: 'Sua fase de carreira atual, com base nos seus dados reais.',
+} as const;
+
 export const VINCULO_LABELS: Record<string, string> = {
   sou_o_artista: 'o próprio artista',
   equipe: 'integrante da equipe do artista',
@@ -54,15 +80,15 @@ export const PREMIOS_LABELS_V3 = [
 export const PAGANTE_LABELS: Record<string, string> = { ate50: 'Até 50%', '51-69': '51–69%', '70-94': '70–94%', '95-100': '95–100%' };
 export const FREQ_LABELS: Record<string, string> = { esporadico: 'Esporádica', lancamento: 'Em lançamentos', perene: 'Perene' };
 
-// Linha de status do boletim (§9): "Top Tier" (excelência) / "Aceso · faltam X para Top Tier" /
-// "Faltam X para acender · Y para Top Tier". `topTier` vem do flag do motor (dimTopIcon).
-export const dimStatusText = (score: number, acende: boolean, topTier = false): string => {
+// Linha de status do boletim (§9): "TOP ICON" (excelência) / "Aceso · faltam X para TOP ICON" /
+// "Faltam X para acender · Y para TOP ICON". `topIcon` vem do flag do motor (dimTopIcon).
+export const dimStatusText = (score: number, acende: boolean, topIcon = false): string => {
   const s = Math.round(score);
   const toTop = Math.max(0, 100 - s);
-  if (topTier) return 'Top Tier · nível de excelência desta dimensão';
-  if (acende) return toTop > 0 ? `Aceso · faltam ${toTop} pts para Top Tier` : 'Top Tier · pleno';
+  if (topIcon) return 'TOP ICON · nível de excelência desta dimensão';
+  if (acende) return toTop > 0 ? `Aceso · faltam ${toTop} pts para TOP ICON` : 'TOP ICON · pleno';
   const toOn = Math.max(0, 70 - s);
-  return `Faltam ${toOn} pts para acender · ${toTop} pts para Top Tier`;
+  return `Faltam ${toOn} pts para acender · ${toTop} pts para TOP ICON`;
 };
 
 // Padrão R·E·A·L (alto/baixo) por nome de perfil — derivado da chave de 4 bits do motor.

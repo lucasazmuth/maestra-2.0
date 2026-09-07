@@ -6,9 +6,14 @@ import { RealBadge } from '../../components/RealBadge';
 import { tierForAltas } from '@maestra/core/constants/realBadge';
 import { v2InputsView, type Chartmetric } from './diagnosticShared';
 import {
-  DIM_META, DIM_PHRASE, PROFILE_MAP, PROFILE_BITS, clean, fmtNum, fmtPct, dimStatusText,
+  DIM_META, DIM_PHRASE, PROFILE_MAP, PROFILE_BITS, clean, fmtBRL, fmtNum, fmtPct, dimStatusText,
 } from '@maestra/core/constants/realCopy';
 import { dimNarrative, METODOLOGIA, QUEM_ASSINA } from '@maestra/core/constants/realNarrative';
+import { INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO } from '@maestra/core/constants/realTextos';
+import {
+  comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
+} from '@maestra/core/services/realEngine/comentarios';
+import { AVISOS, ehLegado, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL } from '@maestra/core/services/realEngine/relatorio';
 import {
   CHAMADA_DA_DIMENSAO as DIM_TAGLINE, LEGENDA_DO_DECLARADO as LEGENDA_DECLARADO,
   TINTA_DO_DOCUMENTO as DOC, URL_DA_MAESTRA as MAESTRA_URL, composicaoDaReceita as revComposition,
@@ -50,7 +55,18 @@ const Page: FC<{ n: number; total: number; kicker?: string; autoria?: Autoria; c
 // duas histórias. O que ficou aqui é o desenho.
 
 // ─── Página de uma dimensão (V3) ───────────────────────────────────────────────
-const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: any; cm: Chartmetric | null; autoria?: Autoria }> = ({ dk, n, total, ri, cm, autoria }) => {
+/**
+ * As páginas de uma dimensão: os números e a leitura.
+ *
+ * No legado é UMA página, e cabe. Da v4 em diante são DUAS, porque a página passou a carregar a
+ * intro fixa, a frase de leitura e todos os comentários aplicáveis — junto com a tabela e os
+ * avisos, isso passa de uma A4, e a A4 do PDF não pagina: o que sobra é cortado, calado.
+ *
+ * A divisão é editorial e fixa, não por medida de altura: a primeira é o RETRATO (nota, régua,
+ * tabela, avisos e blocos), a segunda é a LEITURA. Assim o total de páginas é previsível, e um
+ * artista com muitos comentários não estoura o papel.
+ */
+const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; nLeitura: number | null; total: number; ri: any; cm: Chartmetric | null; autoria?: Autoria }> = ({ dk, n, nLeitura, total, ri, cm, autoria }) => {
   const meta = DIM_META.find((m) => m.key === dk)!;
   const high = !!ri.pattern?.[dk];
   const top = !!ri.dimTopIcon?.[dk];
@@ -61,12 +77,39 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
   const inp = ri.inputs || {};
   const rev = ri.revenue || {};
   const comp = dk === 'e' ? revComposition(ri) : [];
-  const fat = Math.round(Number(rev.total ?? 0) * 12);
-  const inv = Math.round(Number(inp.investimento ?? 0));
-  const saldo = fat - inv;
+  const resumo = resumoDoE(ri);
+  const legado = ehLegado(ri);
+  // A v4 lê o SALDO ANUAL direto do motor; o legado ainda multiplica a base mensal por doze.
+  const fat = resumo ? resumo.receitaAnual : Math.round(Number(rev.total ?? 0) * 12);
+  const inv = resumo ? resumo.investimentoAnual : Math.round(Number(inp.investimento ?? 0));
+  const saldo = resumo ? resumo.saldo : fat - inv;
+  const temCnpj = resumo ? ri.raw?.temCnpj === true : !!inp.temCnpj;
+  const temEmpresario = resumo ? ri.raw?.temEmpresario === true : !!inp.temEmpresario;
   const eng = ri.engagement || {};
+  const naoSei = (resumo?.fontes ?? []).filter((f) => f.naoSei);
+  // No PDF saem TODOS os comentários aplicáveis (§4), e não os três da tela. Os da conta saem
+  // daqui quando existe a página de aprofundamento: lá eles têm os números do lado, e no mesmo
+  // documento o parágrafo não pode aparecer duas vezes.
+  const comentarios = legado ? [] : comentariosDaDimensao(ri, dk, { superficie: 'pdf', chartmetric: cm })
+    .filter((c) => !(dk === 'e' && resumo && GRUPOS_DA_CONTA.includes(c.grupo)));
 
-  return (
+  const leitura = (
+    <div className={`${styles.docReveal2} ${legado ? '' : styles.docRevealSolto2}`}>
+      <div className={styles.docRevealTitle2}>O que isso revela</div>
+      {legado ? (
+        <>
+          <div className={styles.docRevealLead2}>{nar.headline}</div>
+          {nar.paras.map((p, i) => (
+            <p key={i} className={styles.docRevealPara2}><strong>{p.lead}</strong> {p.body}</p>
+          ))}
+        </>
+      ) : comentarios.map((c) => (
+        <p key={c.id} className={styles.docRevealPara2}><strong>{c.lead}</strong> {c.corpo}</p>
+      ))}
+    </div>
+  );
+
+  const numeros = (
     <Page n={n} total={total} kicker={`${meta.full} · ${meta.sub}`} autoria={autoria}>
       <div className={styles.docDimHead2}>
         <span className={styles.docDimLetter2} style={{ color }}>{meta.letter}</span>
@@ -75,18 +118,18 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
           <div className={styles.docDimTag2}>{DIM_TAGLINE[dk]}</div>
         </div>
         <div className={styles.docDimScoreWrap2}>
-          <span className={styles.docDimBadge2} style={top ? { background: DOC.goldBg, color: DOC.goldInk } : high ? { background: color, color: '#fff' } : { background: '#eef2f8', color: DOC.body }}>{top ? 'Top Tier' : high ? 'Alto' : 'Baixo'}</span>
+          <span className={styles.docDimBadge2} style={top ? { background: DOC.goldBg, color: DOC.goldInk } : high ? { background: color, color: '#fff' } : { background: '#eef2f8', color: DOC.body }}>{seloDaDimensao(ri, dk).rotulo}</span>
           <span className={styles.docDimScore2}>{score}<span className={styles.docDimScoreMax2}>/100</span></span>
         </div>
       </div>
 
       <div className={styles.docRuler2}>
-        {/* Top Tier: a barra enche até o selo (dourado), coerente com o selo do motor. */}
+        {/* Top Tier: a barra enche até o selo, coerente com o selo do motor. */}
         <div className={styles.docRulerFill2} style={top ? { width: '100%', background: 'linear-gradient(90deg,#2c3f63,#7c8da8)' } : { width: `${score}%`, background: color }} />
         <span className={styles.docRulerMark2} style={{ left: '70%' }} data-label="acende" />
-        <span className={styles.docRulerMark2} style={{ left: '100%' }} data-label="top tier" />
+        <span className={styles.docRulerMark2} style={{ left: '100%' }} data-label="Top Tier" />
       </div>
-      <div className={styles.docDimStatus2}>{dimStatusText(score, high, top)}</div>
+      <div className={styles.docDimStatus2}>{legado ? dimStatusText(score, high, top) : statusDaBarra(ri, dk)}</div>
 
       <div className={styles.docDimMetrics2}>
         {rows.map((r) => (
@@ -105,7 +148,21 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
         </div>
       )}
 
-      {dk === 'e' && comp.length > 0 && (
+      {/* Os avisos obrigatórios do motor (§11.3): saldo negativo, fonte não informada,
+          bilheteria ausente e a trava da L. */}
+      {dk === 'e' && !!resumo && resumo.saldo < 0 && <div className={styles.docFonteAviso}>{AVISOS.saldoNegativo}</div>}
+      {dk === 'e' && naoSei.length > 0 && (
+        <div className={styles.docFonteAviso}>
+          <strong>Não informado:</strong> {naoSei.map((f) => f.rotulo).join(', ')}. {AVISOS.naoSei}
+        </div>
+      )}
+      {dk === 'a' && !legado && !!ri.flags?.aSemBilheteria && <div className={styles.docFonteAviso}>{AVISOS.semBilheteria}</div>}
+      {dk === 'l' && !legado && !!ri.flags?.travaL && <div className={styles.docFonteAviso}>{AVISOS.travaL}</div>}
+
+      {/* Cachê, composição e saúde financeira saíram daqui na v4: são o corpo da página
+          "Onde a conta fecha", e repetir os mesmos números duas vezes estourava esta página.
+          O legado, que não tem aquela página, continua imprimindo os dois blocos que tinha. */}
+      {dk === 'e' && !resumo && comp.length > 0 && (
         <div className={styles.docSubBlock2}>
           <div className={styles.docSubTitle2}>Composição da receita</div>
           <div className={styles.docCompRow2}>
@@ -115,7 +172,7 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
           </div>
         </div>
       )}
-      {dk === 'e' && (fat > 0 || inv > 0) && (
+      {dk === 'e' && !resumo && (fat > 0 || inv > 0) && (
         <div className={styles.docSubBlock2}>
           <div className={styles.docSubTitle2}>Saúde financeira · 12 meses</div>
           <div className={styles.docHealthRow2}>
@@ -124,32 +181,142 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; total: number; ri: 
             <div className={styles.docHealthItem2}><span>Saldo</span><strong style={{ color: saldo >= 0 ? DOC.real : DOC.danger }}>{saldo >= 0 ? '+' : '−'}{money(saldo)}</strong></div>
           </div>
           <div className={styles.docPills2}>
-            <span className={inp.temCnpj ? styles.docPillOn2 : styles.docPillOff2}>{inp.temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
-            <span className={inp.temEmpresario ? styles.docPillOn2 : styles.docPillOff2}>{inp.temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
+            <span className={temCnpj ? styles.docPillOn2 : styles.docPillOff2}>{temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
+            <span className={temEmpresario ? styles.docPillOn2 : styles.docPillOff2}>{temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
           </div>
         </div>
       )}
       {dk === 'a' && (['instagram', 'tiktok', 'youtube'] as const).some((k) => eng[k]) && (
         <div className={styles.docSubBlock2}>
-          <div className={styles.docSubTitle2}>Engajamento por rede</div>
+          <div className={styles.docSubTitle2}>Engajamento por rede{legado ? '' : ` · ${AVISOS.informativo}`}</div>
           {(['instagram', 'tiktok', 'youtube'] as const).map((k) => {
             const e = eng[k];
             const label = k === 'instagram' ? 'Instagram' : k === 'tiktok' ? 'TikTok' : 'YouTube';
             if (!e) return null;
             return (
-              <div key={k} className={styles.docEngRow2}><span>{label}</span><strong style={{ color: e.above ? DOC.real : DOC.mute }}>{fmtPct(e.value)} · {e.above ? 'acima' : 'abaixo'} do corte de {fmtPct(e.cut)}</strong></div>
+              <div key={k} className={styles.docEngRow2}>
+                <span>{label}</span>
+                <strong>{legado ? `${fmtPct(e.value)} · ${e.above ? 'acima' : 'abaixo'} do corte de ${fmtPct(e.cut)}` : fmtPct(e.value)}</strong>
+              </div>
             );
           })}
         </div>
       )}
 
-      <div className={styles.docReveal2}>
-        <div className={styles.docRevealTitle2}>O que isso revela</div>
-        <div className={styles.docRevealLead2}>{nar.headline}</div>
-        {nar.paras.map((p, i) => (
-          <p key={i} className={styles.docRevealPara2}><strong>{p.lead}</strong> {p.body}</p>
-        ))}
+      {legado && leitura}
+    </Page>
+  );
+
+  return nLeitura == null ? numeros : (
+    <>
+      {numeros}
+      <Page n={nLeitura} total={total} kicker={`${meta.full} · ${meta.sub} · a leitura`} autoria={autoria}>
+        <div className={styles.docDimHeadLeitura2}>
+          <span className={styles.docDimLetter2} style={{ color }}>{meta.letter}</span>
+          <div className={styles.docDimTitle2}>{meta.full} <span className={styles.docDimTitleSub2}>· {meta.sub}</span></div>
+        </div>
+        <div className={styles.docSubTitle2}>O que é esta frente</div>
+        <p className={styles.docDimIntro2}>{INTRO_DA_DIMENSAO[dk]}</p>
+        <p className={styles.docDimLeitura2}>{LEITURA_DA_DIMENSAO[dk][high ? 'alto' : 'baixo']}</p>
+        {leitura}
+      </Page>
+    </>
+  );
+};
+
+// ─── A página "Onde a conta fecha" (só no PDF, §2) ─────────────────────────────
+//
+// É o aprofundamento do E: o que a tela não comporta sem virar planilha. Aqui cabem a margem por
+// show, o ponto de equilíbrio, o cachê por tipo de contratante e a composição da receita — os
+// números que respondem "quantos shows eu preciso vender por ano".
+const DocContaPage: FC<{ n: number; total: number; ri: any; cm: Chartmetric | null; autoria?: Autoria }> = ({ n, total, ri, cm, autoria }) => {
+  const conta = resumoDoE(ri)!;
+  const temCnpj = ri.raw?.temCnpj === true;
+  const temEmpresario = ri.raw?.temEmpresario === true;
+  const tetoDoCache = Math.max(...conta.cache.map((c) => c.valor), 1);
+  const composicao = [
+    { rotulo: 'Shows', valor: conta.receitaShows },
+    ...conta.fontes.filter((f) => f.valor > 0).map((f) => ({ rotulo: f.rotulo, valor: f.valor })),
+  ].filter((x) => x.valor > 0).sort((x, y) => y.valor - x.valor);
+  const tetoDaComposicao = Math.max(...composicao.map((x) => x.valor), 1);
+  const soDaConta = comentariosDaDimensao(ri, 'e', { superficie: 'pdf', chartmetric: cm })
+    .filter((c) => GRUPOS_DA_CONTA.includes(c.grupo));
+
+  const numero = (rotulo: string, valor: string) => (
+    <div key={rotulo} className={styles.docContaCartao}>
+      <span className={styles.docContaRotulo}>{rotulo}</span>
+      <b className={styles.docContaValor}>{valor}</b>
+    </div>
+  );
+  const barra = (rotulo: string, valor: number, teto: number, texto: string) => (
+    <div key={rotulo} className={styles.docContaLinha}>
+      <span className={styles.docContaNome}>{rotulo}</span>
+      <span className={styles.docContaTrilho}>
+        <span className={styles.docContaBarra} style={{ width: `${teto > 0 ? Math.max(2, Math.round((valor / teto) * 100)) : 2}%` }} />
+      </span>
+      <b className={styles.docContaNumero}>{texto}</b>
+    </div>
+  );
+
+  return (
+    <Page n={n} total={total} kicker="Aprofundamento" autoria={autoria}>
+      <div className={styles.docSectionTitle}>Onde a conta fecha</div>
+
+      <div className={styles.docSubTitle2}>Saúde financeira · 12 meses</div>
+      <div className={styles.docContaGrade}>
+        {numero('Receita', money(conta.receitaAnual))}
+        {numero('Custos e investimento', money(conta.investimentoAnual))}
+        {numero('Saldo', `${conta.saldo >= 0 ? '+' : '−'}${money(conta.saldo)}`)}
+        {numero(
+          conta.bonus > 1 ? `Saldo ajustado (+${Math.round((conta.bonus - 1) * 100)}%)` : 'Saldo ajustado',
+          `${conta.saldoAjustado >= 0 ? '+' : '−'}${money(conta.saldoAjustado)}`,
+        )}
+        {conta.receitaLiquidaEstimada != null
+          && numero(`Receita líquida estimada (${conta.aliquotaRotulo ?? ''})`, money(conta.receitaLiquidaEstimada))}
       </div>
+      <div className={styles.docFonteNota} style={{ marginTop: -10, marginBottom: 14 }}>
+        A média mensal do setor cultural formal é {fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). Esta receita anual
+        equivale a {conta.vezesOSetor.toFixed(1).replace('.', ',')}× esse patamar.
+      </div>
+
+      <div className={styles.docPills2} style={{ marginBottom: 18 }}>
+        <span className={temCnpj ? styles.docPillOn2 : styles.docPillOff2}>{temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
+        <span className={temEmpresario ? styles.docPillOn2 : styles.docPillOff2}>{temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
+      </div>
+
+      {conta.margemPorShow != null && (
+        <>
+          <div className={styles.docSubTitle2}>Margem por show e ponto de equilíbrio</div>
+          <div className={styles.docContaGrade}>
+            {numero('Cachê médio', money(conta.cacheMedio))}
+            {numero('Custo médio por show', money(conta.custoPorShow))}
+            {numero('Margem por show', money(conta.margemPorShow))}
+            {numero('Shows pra cobrir o fixo do ano', conta.pontoEquilibrioShows == null ? 'não fecha' : String(conta.pontoEquilibrioShows))}
+          </div>
+        </>
+      )}
+
+      {conta.cache.length > 0 && (
+        <>
+          <div className={styles.docSubTitle2}>Cachê médio por tipo de contratante</div>
+          {conta.cache.map((c) => barra(c.rotulo, c.valor, tetoDoCache, money(c.valor)))}
+        </>
+      )}
+
+      {composicao.length > 0 && (
+        <>
+          <div className={styles.docSubTitle2} style={{ marginTop: 18 }}>Composição da receita anual</div>
+          {composicao.map((x) => barra(x.rotulo, x.valor, tetoDaComposicao, money(x.valor)))}
+        </>
+      )}
+
+      {soDaConta.length > 0 && (
+        <div className={styles.docReveal2}>
+          {soDaConta.map((c) => (
+            <p key={c.id} className={styles.docRevealPara2}><strong>{c.lead}</strong> {c.corpo}</p>
+          ))}
+        </div>
+      )}
     </Page>
   );
 };
@@ -166,7 +333,13 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autor
 
   const hasCities = !!cities?.length;
   const hasPlatform = !!(playlists?.top?.length || similar?.length);
-  const total = 10 + (hasCities ? 1 : 0) + (hasPlatform ? 1 : 0);
+  // A página "Onde a conta fecha" só existe quando há um resumo do E para aprofundar — ou seja,
+  // no diagnóstico v4. No legado o E não tem custo decomposto nem cachê por contratante.
+  const temContaFecha = !!resumoDoE(ri);
+  const legado = ehLegado(ri);
+  // 10 fixas + a segunda página de cada dimensão (só fora do legado) + as condicionais.
+  const total = 10 + (legado ? 0 : 4)
+    + (hasCities ? 1 : 0) + (hasPlatform ? 1 : 0) + (temContaFecha ? 1 : 0);
   let c = 1; // capa = 1 (sem número)
   const next = () => ++c;
 
@@ -200,7 +373,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autor
       <Page n={next()} total={total} kicker="O seu perfil" autoria={autoria}>
         <div className={styles.docProfileKicker}>Seu perfil de carreira</div>
         <div className={styles.docProfileName}>{profile.name}</div>
-        <p className={styles.docProfileDesc}>{clean(profile.description)}</p>
+        <p className={styles.docProfileDesc}>{retratoDoPerfil(ri)?.texto ?? clean(profile.description)}</p>
         <div className={styles.docPattern}>
           {DIM_META.map((d) => (
             <div key={d.key} className={styles.docPatternItem}>
@@ -210,14 +383,28 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autor
             </div>
           ))}
         </div>
-        <div className={styles.docInsightsTitle}>O que o seu diagnóstico revela</div>
-        <ul className={styles.docInsights}>
-          {profile.insights.map((it, i) => <li key={i}>{clean(it)}</li>)}
-        </ul>
+        {/* §13.3 — o bloco de bullets saiu: o retrato acima e os comentários por dimensão cobrem
+            o que ele dizia. O legado o mantém, porque lá não há retrato que o substitua. */}
+        {legado && (
+          <>
+            <div className={styles.docInsightsTitle}>O que o seu diagnóstico revela</div>
+            <ul className={styles.docInsights}>
+              {profile.insights.map((it, i) => <li key={i}>{clean(it)}</li>)}
+            </ul>
+          </>
+        )}
       </Page>
 
       {/* 3–6 — DIMENSÕES */}
-      {DIM_META.map((d) => <DocDimPage key={d.key} dk={d.key} n={next()} total={total} ri={ri} cm={chartmetric ?? null} autoria={autoria} />)}
+      {DIM_META.map((d) => {
+        // A ordem importa: `next()` numera as páginas na sequência em que elas saem.
+        const nNumeros = next();
+        const nLeitura = legado ? null : next();
+        return <DocDimPage key={d.key} dk={d.key} n={nNumeros} nLeitura={nLeitura} total={total} ri={ri} cm={chartmetric ?? null} autoria={autoria} />;
+      })}
+
+      {/* 7 — ONDE A CONTA FECHA */}
+      {temContaFecha && <DocContaPage n={next()} total={total} ri={ri} cm={chartmetric ?? null} autoria={autoria} />}
 
       {/* AUDIÊNCIA & ALCANCE (cidades) — condicional */}
       {hasCities && (
@@ -308,7 +495,7 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autor
         </div>
         <div className={styles.docTopTierNote}>
           <span className={styles.docTopTierSeal}>TOP</span>
-          <div><strong>Top Tier.</strong> Quando uma dimensão atinge o nível de excelência (o topo absoluto da escala), ela ganha o selo Top Tier no seu diagnóstico. Vale para qualquer perfil e qualquer das quatro dimensões.</div>
+          <div><strong>Top Tier.</strong> Quando uma dimensão atinge o nível de excelência (o topo absoluto da escala), ela ganha o selo Top Tier no seu diagnóstico. Vale para qualquer perfil e qualquer das quatro dimensões. Quando as quatro acendem em Top Tier ao mesmo tempo, o perfil é TOP ICON.</div>
         </div>
       </Page>
 
@@ -554,10 +741,14 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, a
 };
 
 // Documento de apresentação (deck multipágina) do diagnóstico REAL — capturado em PDF.
-// V3 usa o deck detalhado (páginas por dimensão + narrativa); v1/v2 caem no layout legado.
+// Da v3 em diante vale o deck detalhado (páginas por dimensão + narrativa); v1/v2 caem no legado.
+//
+// A comparação é >= 3, e não === 3, de propósito: a v4 usa O MESMO deck, e o que muda entre as
+// duas está DENTRO das páginas, decidido por `ehLegado`. Com a igualdade estrita, todo
+// diagnóstico v4 caía no layout legado de 8 páginas — sem erro nenhum, só um PDF errado.
 export const DiagnosticDoc: FC<Props> = (props) => {
-  const isV3 = (props.realIndex as any).version === 3;
-  return isV3 ? <V3Doc {...props} /> : <LegacyDoc {...props} />;
+  const ehModerno = Number((props.realIndex as any).version ?? 0) >= 3;
+  return ehModerno ? <V3Doc {...props} /> : <LegacyDoc {...props} />;
 };
 
 export default DiagnosticDoc;

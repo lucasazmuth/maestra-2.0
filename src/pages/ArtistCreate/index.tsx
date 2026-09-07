@@ -15,7 +15,8 @@ import type { RealIndex } from '@maestra/core/interfaces/maestra';
 // O roteiro do quiz mora no núcleo: o app nativo faz as MESMAS perguntas, na mesma ordem, com
 // as mesmas chaves — é o que a edge `artist-diagnostic` lê dos dois lados.
 import {
-  IMPRENSA_PORTES, IMPRENSA_TIPOS, QUIZ, REVENUE_SOURCES,
+  IMPRENSA_PORTES, IMPRENSA_TIPOS, IMPRENSA_NUNCA, QUIZ, REVENUE_SOURCES, CHAVES_DO_BLOCO_R,
+  TIPOS_DE_CONTRATANTE_QUIZ, NAO_SEI, CTX_API, ORIENTACAO_SPOTIFY, totalDaTrilha,
   perguntaAnterior, proximaPergunta,
 } from '@maestra/core/constants/quizDoDiagnostico';
 import { useCanCreateArtist } from '@maestra/core/hooks/useCanCreateArtist';
@@ -96,8 +97,12 @@ const ArtistCreate: FC = () => {
   const [quizIndex, setQuizIndex] = useState(0);
   const answers = useRef<Record<string, any>>({});
   const [fieldVal, setFieldVal] = useState<number | null>(null);        // campo aberto (int/currency)
-  const [revenueVal, setRevenueVal] = useState<Record<string, number>>({}); // passo de composição de receita
-  const [matrixVal, setMatrixVal] = useState<Set<string>>(new Set());   // células "tipo:porte" marcadas
+  // Receita: R$ por fonte, ou a string "não sei" (§4 — conta zero e sinaliza no relatório).
+  const [revenueVal, setRevenueVal] = useState<Record<string, number | typeof NAO_SEI>>({});
+  // Cachê médio por tipo de contratante (§3.2) — seis linhas de R$, zero é resposta válida.
+  const [cacheVal, setCacheVal] = useState<Record<string, number>>({});
+  // Imprensa: UM porte por tipo, o maior (§9.3). `undefined` na chave = ainda não respondeu.
+  const [matrixVal, setMatrixVal] = useState<Record<string, string>>({});
 
   // Ao trocar de pergunta: pré-carrega a resposta anterior (modo redo) ou zera (criação).
   useEffect(() => {
@@ -108,15 +113,20 @@ const ArtistCreate: FC = () => {
       setFieldVal(typeof prev === 'number' ? prev : null);
     } else if (cur.type === 'revenue') {
       setRevenueVal(prev && typeof prev === 'object' && !Array.isArray(prev) ? { ...prev } : {});
+    } else if (cur.type === 'cache') {
+      setCacheVal(prev && typeof prev === 'object' && !Array.isArray(prev) ? { ...prev } : {});
     } else if (cur.type === 'matrix') {
-      setMatrixVal(new Set(Array.isArray(prev) ? prev.map((c: any) => `${c.tipo}:${c.porte}`) : []));
+      setMatrixVal(Array.isArray(prev)
+        ? Object.fromEntries(prev.map((c: any) => [c.tipo, c.porte]))
+        : {});
     } else {
       setFieldVal(null);
     }
   }, [quizIndex, step]);
 
-  const toggleMatrix = (id: string) =>
-    setMatrixVal((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  // Escolha única por tipo: marcar um porte substitui o anterior. Reclicar o mesmo desmarca.
+  const marcarPorte = (tipo: string, porte: string) =>
+    setMatrixVal((prev) => ({ ...prev, [tipo]: prev[tipo] === porte ? '' : porte }));
 
   // Refazer diagnóstico: semeia os dados salvos do artista + as respostas anteriores e começa no
   // quiz (pula o "perfil"). Só age enquanto está no perfil; ao achar o artista, troca pra quiz.
@@ -211,12 +221,12 @@ const ArtistCreate: FC = () => {
         // Redo (PRO): recalcula no edge reusando o Chartmetric salvo. Criação: cria/reusa o perfil.
         const { data, error } = await supabase.functions.invoke('artist-diagnostic', {
           body: redo
-            ? { redoArtistId, quizV3: answers.current }
+            ? { redoArtistId, quizV4: answers.current }
             : {
                 name: chosen.current.name,
                 spotifyArtistId: chosen.current.spotifyArtistId,
                 spotify: { followers: chosen.current.followers, image: chosen.current.image },
-                quizV3: answers.current,
+                quizV4: answers.current,
               },
         });
         if (error) throw error;
@@ -266,14 +276,34 @@ const ArtistCreate: FC = () => {
   // ─── Handlers de fluxo ──────────────────────────────────────────────────────
   // Após escolher o artista, entra na transição ('intro'): aqui o ambiente já vira o do Diagnóstico
   // REAL e a Maestra confirma de quem é o diagnóstico antes de começar as perguntas.
+  // Consulta prévia à Chartmetric (§3.1, passo 2): é ela que decide quais perguntas de
+  // autodeclaração de R o quiz mostra. Dispara ao escolher o perfil e roda enquanto o artista lê a
+  // tela de orientação, então na prática nunca faz ninguém esperar.
+  //
+  // Rede de segurança (§3.1, passo 6): qualquer falha deixa `_api` vazio e o quiz pergunta os três
+  // campos. Perguntar demais é recuperável; calcular o alcance sobre nada não é.
+  const previewRef = useRef<Promise<unknown> | null>(null);
+  const buscarPreview = (spotifyArtistId: string | null) => {
+    delete answers.current[CTX_API];
+    if (!spotifyArtistId) { previewRef.current = null; return; }
+    previewRef.current = supabase.functions
+      .invoke('artist-diagnostic', { body: { preview: true, spotifyArtistId } })
+      .then(({ data }) => { if (data?.api) answers.current[CTX_API] = data.api; })
+      .catch(() => { /* sem preview, o quiz pergunta tudo */ });
+  };
+
   const selectArtist = (name: string, spotifyArtistId: string | null, followers: number | null, image: string | null = null) => {
     chosen.current = { name, spotifyArtistId, followers, image };
+    buscarPreview(spotifyArtistId);
     setStep('intro');
     say(`Boa! Vamos criar o diagnóstico de ${name}. Vou te fazer algumas perguntas rápidas pra entender a sua realidade de hoje.`);
   };
 
   // Começa o quiz de fato (botão da transição).
-  const beginQuiz = () => {
+  const [preparando, setPreparando] = useState(false);
+  const beginQuiz = async () => {
+    // Espera o preview para não abrir o quiz com perguntas que já sabemos que vão sumir.
+    if (previewRef.current) { setPreparando(true); await previewRef.current; setPreparando(false); }
     setQuizIndex(0);
     setStep('quiz');
     say(QUIZ[0].q);
@@ -371,8 +401,12 @@ const ArtistCreate: FC = () => {
   // condicionais (o antigo "de 9" virava "de 13" e a barra até recuava). Como o índice só avança
   // (pulando os skips) ou volta pelo "Voltar", a barra é monotônica; na última pergunta, 100%.
   const isLastQuiz = step === 'quiz' && nextQuizIndex(quizIndex + 1) >= QUIZ.length;
+  // O denominador desconta o bloco R que a consulta prévia já respondeu: sem isso a barra pararia
+  // em 82% num quiz que terminou, porque três perguntas nunca apareceram.
+  const trilha = totalDaTrilha(answers.current);
+  const posicao = QUIZ.filter((p, i) => i <= quizIndex && !(CHAVES_DO_BLOCO_R.includes(p.key) && p.skipIf?.(answers.current))).length;
   const quizPct = step === 'quiz'
-    ? (isLastQuiz ? 100 : Math.round(((quizIndex + 1) / QUIZ.length) * 100))
+    ? (isLastQuiz ? 100 : Math.round((posicao / trilha) * 100))
     : 0;
   const canGoBack = step === 'quiz' && prevQuizIndex(quizIndex - 1) >= 0;
 
@@ -580,7 +614,12 @@ const ArtistCreate: FC = () => {
                   <img src={chosen.current.image} alt={chosen.current.name} className={styles.introAvatar} />
                 )}
                 <div className={styles.introName}>{chosen.current.name}</div>
-                <button className={styles.cta} onClick={beginQuiz}>Começar diagnóstico</button>
+                {chosen.current.spotifyArtistId && (
+                  <p className={styles.introOrientacao}>{ORIENTACAO_SPOTIFY}</p>
+                )}
+                <button className={styles.cta} disabled={preparando} onClick={beginQuiz}>
+                  {preparando ? 'Preparando as perguntas…' : 'Começar diagnóstico'}
+                </button>
               </div>
             )}
 
@@ -602,10 +641,16 @@ const ArtistCreate: FC = () => {
                 formatter: (val?: string | number) => `${val ?? ''}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
               };
 
+              // Várias perguntas da v4 trazem instrução própria ("deixe em zero o que não se
+              // aplica", "esse número aparece no YouTube Studio"). Sem ela o artista responde outra
+              // coisa, e o que entra no índice deixa de ser o que a metodologia pediu.
+              const ajuda = cur.ajuda ? <p className={styles.quizAjuda}>{cur.ajuda}</p> : null;
+
               // Sim/Não e selects (níveis/enums): botões de opção.
               if (cur.type === 'select') {
                 return (
                   <div className={styles.options}>
+                    {ajuda}
                     {cur.options!.map((o) => (
                       <button key={String(o.value)} className={styles.option} onClick={() => answerQuiz(o.value)}>{o.label}</button>
                     ))}
@@ -613,26 +658,47 @@ const ArtistCreate: FC = () => {
                 );
               }
 
-              // Composição de receita fora-shows: um R$ por fonte (soma alimenta o E; partes, a pizza).
+              // Receita fora dos shows: nove fontes, cada uma em R$ ou "não sei" (§3.2).
+              //
+              // O "não sei" é uma resposta de verdade, não um campo vazio: conta zero no saldo e
+              // vira sinalização no relatório (§4, §11.3.4). Quem não sabe quanto a própria
+              // distribuidora paga está dizendo algo sobre a gestão da carreira, e é isso que o
+              // diagnóstico devolve. Por isso a linha marcada trava o campo, em vez de escondê-lo.
               if (cur.type === 'revenue') {
                 return (
                   <div className={styles.revenueForm}>
-                    {REVENUE_SOURCES.map((s) => (
-                      <div key={s.key} className={styles.revenueRow}>
-                        <span className={styles.revenueLabel}>{s.label}</span>
-                        <InputNumber
-                          size='large'
-                          min={0}
-                          precision={0}
-                          controls={false}
-                          className={styles.revenueInput}
-                          value={revenueVal[s.key] ?? null}
-                          onChange={(v) => setRevenueVal((p) => ({ ...p, [s.key]: Math.max(0, Number(v) || 0) }))}
-                          placeholder='0'
-                          {...currencyProps}
-                        />
-                      </div>
-                    ))}
+                    {ajuda}
+                    <p className={styles.revenuePrefixo}>Quanto você recebeu nos últimos 12 meses...</p>
+                    {REVENUE_SOURCES.map((s) => {
+                      const naoSei = revenueVal[s.key] === NAO_SEI;
+                      return (
+                        <div key={s.key} className={styles.revenueRow}>
+                          <span className={styles.revenueLabel}>{s.label}</span>
+                          <div className={styles.revenueControls}>
+                            <InputNumber
+                              size='large'
+                              min={0}
+                              precision={0}
+                              controls={false}
+                              disabled={naoSei}
+                              className={styles.revenueInput}
+                              value={naoSei ? null : ((revenueVal[s.key] as number) ?? null)}
+                              onChange={(v) => setRevenueVal((p) => ({ ...p, [s.key]: Math.max(0, Number(v) || 0) }))}
+                              placeholder={naoSei ? 'Não sei' : '0'}
+                              {...currencyProps}
+                            />
+                            <button
+                              type='button'
+                              aria-pressed={naoSei}
+                              className={`${styles.naoSeiChip} ${naoSei ? styles.naoSeiChipOn : ''}`}
+                              onClick={() => setRevenueVal((p) => ({ ...p, [s.key]: naoSei ? 0 : NAO_SEI }))}
+                            >
+                              Não sei
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                     <button className={styles.cta} style={{ marginTop: 14, width: '100%' }} onClick={() => answerQuiz({ ...revenueVal })}>
                       Continuar
                     </button>
@@ -640,26 +706,62 @@ const ArtistCreate: FC = () => {
                 );
               }
 
-              // Imprensa: lista de tipos; em cada um, pílulas rotuladas de porte (multi-seleção).
+              // Cachê médio por tipo de contratante (§3.2). Seis linhas de R$; zero é resposta
+              // válida e significa "não atendi esse tipo" — o motor tira os zeros da média.
+              if (cur.type === 'cache') {
+                return (
+                  <div className={styles.revenueForm}>
+                    {ajuda}
+                    {TIPOS_DE_CONTRATANTE_QUIZ.map((t) => (
+                      <div key={t.key} className={styles.revenueRow}>
+                        <span className={styles.revenueLabel}>{t.label}</span>
+                        <InputNumber
+                          size='large'
+                          min={0}
+                          precision={0}
+                          controls={false}
+                          className={styles.revenueInput}
+                          value={cacheVal[t.key] ?? null}
+                          onChange={(v) => setCacheVal((p) => ({ ...p, [t.key]: Math.max(0, Number(v) || 0) }))}
+                          placeholder='0'
+                          {...currencyProps}
+                        />
+                      </div>
+                    ))}
+                    <button className={styles.cta} style={{ marginTop: 14, width: '100%' }} onClick={() => answerQuiz({ ...cacheVal })}>
+                      Continuar
+                    </button>
+                  </div>
+                );
+              }
+
+              // Imprensa: uma escolha por tipo de veículo, o MAIOR porte (§9.3).
+              //
+              // A v3 deixava marcar vários portes no mesmo tipo, o que não significava nada: o
+              // motor agrega pelo máximo, porque a matriz mede o TETO de legitimação alcançado.
+              // Marcar "pequeno" além de "grande" nunca mudou a nota e só confundia. Agora a
+              // pergunta é a que a metodologia faz, com "Nunca" explícito em vez de deixar em branco.
               if (cur.type === 'matrix') {
+                const opcoes = [{ key: IMPRENSA_NUNCA, label: 'Nunca' }, ...IMPRENSA_PORTES];
                 return (
                   <div className={styles.matrixWrap}>
-                    <p className={styles.matrixHelp}>Marque o porte do veículo onde seu trabalho já apareceu. Pode marcar mais de um por tipo e pular os tipos onde nunca apareceu.</p>
+                    {ajuda}
                     <div className={styles.matrixList}>
                       {IMPRENSA_TIPOS.map((t) => (
                         <div key={t.key} className={styles.matrixTypeRow}>
                           <span className={styles.matrixTypeName}>{t.label}</span>
                           <div className={styles.porteChips}>
-                            {IMPRENSA_PORTES.map((p) => {
-                              const id = `${t.key}:${p.key}`;
-                              const on = matrixVal.has(id);
+                            {opcoes.map((p) => {
+                              const marcado = p.key === IMPRENSA_NUNCA
+                                ? !matrixVal[t.key]
+                                : matrixVal[t.key] === p.key;
                               return (
                                 <button
-                                  key={id}
+                                  key={p.key}
                                   type='button'
-                                  aria-pressed={on}
-                                  className={`${styles.porteChip} ${on ? styles.porteChipOn : ''}`}
-                                  onClick={() => toggleMatrix(id)}
+                                  aria-pressed={marcado}
+                                  className={`${styles.porteChip} ${marcado ? styles.porteChipOn : ''}`}
+                                  onClick={() => marcarPorte(t.key, p.key === IMPRENSA_NUNCA ? '' : p.key)}
                                 >
                                   {p.label}
                                 </button>
@@ -672,7 +774,11 @@ const ArtistCreate: FC = () => {
                     <button
                       className={styles.cta}
                       style={{ marginTop: 16, width: '100%' }}
-                      onClick={() => answerQuiz(Array.from(matrixVal).map((id) => { const [tipo, porte] = id.split(':'); return { tipo, porte }; }))}
+                      onClick={() => answerQuiz(
+                        Object.entries(matrixVal)
+                          .filter(([, porte]) => !!porte)
+                          .map(([tipo, porte]) => ({ tipo, porte })),
+                      )}
                     >
                       Continuar
                     </button>
@@ -683,6 +789,7 @@ const ArtistCreate: FC = () => {
               // int / currency: campo numérico aberto.
               return (
                 <div>
+                  {ajuda}
                   <InputNumber
                     autoFocus
                     size='large'

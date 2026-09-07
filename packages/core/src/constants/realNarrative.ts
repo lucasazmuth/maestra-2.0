@@ -1,7 +1,14 @@
 // Narrativa determinística por dimensão ("O QUE ISSO REVELA") do diagnóstico REAL.
-// Sem IA: cada bloco é escolhido a partir dos dados reais do motor V3 (boletim, dimTopIcon,
+// Sem IA: cada bloco é escolhido a partir dos dados reais do motor (boletim, dimTopIcon,
 // revenue, engagement, inputs). Reproduz o tom/lógica do PDF de exemplo. Reusado pela tela e pelo PDF.
+//
+// ⚠️ DUAS FORMAS DE ENTRADA. Na v4 o autorrelato mora em `ri.raw` e `ri.revenue` (base ANUAL, com
+// proveniência por campo em `ri.inputs`); no legado v2/v3 tudo era número cru em `ri.inputs`, em
+// base mensal. Os leitores abaixo (`autorrelato`, `contaAnual`) resolvem os dois — sem eles a
+// narrativa da v4 leria `undefined` em todo campo e simplesmente sumiria com os parágrafos, sem
+// erro nenhum na tela.
 import { fmtNum, fmtPct, type DimKey } from './realCopy';
+import { ehLegado, resumoDoE } from '../services/realEngine/relatorio';
 
 export interface Para { lead: string; body: string }
 export interface DimNarrative { headline: string; paras: Para[] }
@@ -27,11 +34,30 @@ const NET_LABEL: Record<string, string> = { instagram: 'Instagram', tiktok: 'Tik
 
 const money = (n: number) => `R$ ${fmtNum(Math.abs(Math.round(n)))}`;
 
+/** O autorrelato do quiz, venha ele da v4 (`raw`) ou do legado (`inputs`). */
+const autorrelato = (ri: any): Record<string, any> => (ehLegado(ri) ? (ri.inputs || {}) : (ri.raw || {}));
+
+/** Faturamento e investimento em 12 meses, nas duas formas de entrada. */
+const contaAnual = (ri: any): { fat: number; inv: number; saldo: number } => {
+  const resumo = resumoDoE(ri);
+  if (resumo) return { fat: resumo.receitaAnual, inv: resumo.investimentoAnual, saldo: resumo.saldo };
+  const fat = Math.round(Number(ri.revenue?.total ?? 0) * 12);
+  const inv = Math.round(Number(ri.inputs?.investimento ?? 0));
+  return { fat, inv, saldo: fat - inv };
+};
+
+/** Shows POR MÊS, para os textos que falam de agenda. A v4 coleta por ano; o legado, por mês. */
+const showsPorMes = (ri: any): number => {
+  const resumo = resumoDoE(ri);
+  if (resumo) return resumo.showsPerYear / 12;
+  return Number(ri.inputs?.showsPerMonth ?? 0);
+};
+
 // ── Reach ────────────────────────────────────────────────────────────────────
 function reach(ri: any): DimNarrative {
   const high = !!ri.pattern?.r;
   const top = !!ri.dimTopIcon?.r;
-  const headline = top ? 'Seu alcance digital é Top Tier.' : high ? 'Seu alcance digital acende.' : 'Seu alcance digital ainda está em construção.';
+  const headline = top ? 'Seu alcance digital é TOP ICON.' : high ? 'Seu alcance digital acende.' : 'Seu alcance digital ainda está em construção.';
   const paras: Para[] = [];
 
   paras.push(high
@@ -71,8 +97,7 @@ function earnings(ri: any): DimNarrative {
   const high = !!ri.pattern?.e;
   const top = !!ri.dimTopIcon?.e;
   const rev = ri.revenue || {};
-  const inputs = ri.inputs || {};
-  const headline = top ? 'Sua receita é Top Tier.' : high ? 'A receita acende.' : 'Sua receita ainda não se sustenta.';
+  const headline = top ? 'Sua receita é TOP ICON.' : high ? 'A receita acende.' : 'Sua receita ainda não se sustenta.';
   const paras: Para[] = [];
 
   paras.push(high
@@ -81,8 +106,14 @@ function earnings(ri: any): DimNarrative {
 
   // Diversificação: conta as fontes com valor > 0 (shows + fontes fora-shows).
   const srcs: { label: string; value: number }[] = [];
-  if (Number(rev.shows) > 0) srcs.push({ label: SRC_LABELS.shows, value: Number(rev.shows) });
-  Object.entries(rev.sources || {}).forEach(([k, v]) => { if (Number(v) > 0) srcs.push({ label: SRC_LABELS[k] || k, value: Number(v) }); });
+  const resumoE = resumoDoE(ri);
+  if (resumoE) {
+    if (resumoE.receitaShows > 0) srcs.push({ label: SRC_LABELS.shows, value: resumoE.receitaShows });
+    resumoE.fontes.forEach((f) => { if (f.valor > 0) srcs.push({ label: f.rotulo.toLowerCase(), value: f.valor }); });
+  } else {
+    if (Number(rev.shows) > 0) srcs.push({ label: SRC_LABELS.shows, value: Number(rev.shows) });
+    Object.entries(rev.sources || {}).forEach(([k, v]) => { if (Number(v) > 0) srcs.push({ label: SRC_LABELS[k] || k, value: Number(v) }); });
+  }
   srcs.sort((a, b) => b.value - a.value);
   if (srcs.length >= 2) {
     const names = srcs.slice(0, 3).map((s) => s.label);
@@ -91,11 +122,10 @@ function earnings(ri: any): DimNarrative {
     paras.push({ lead: 'Sua receita depende de uma fonte só.', body: `Hoje o faturamento vem de ${srcs[0].label}. Concentração é risco: diversificar as fontes é o que protege a carreira quando uma delas oscila.` });
   }
 
-  // Saúde financeira (12m): faturamento bruto anual × investimento informado → saldo.
-  const fat = Math.round(Number(rev.total ?? 0) * 12);
-  const inv = Math.round(Number(inputs.investimento ?? 0));
+  // Saúde financeira (12 meses): receita × investimento → saldo. Na v4 é o próprio saldo do
+  // índice; no legado, a base mensal multiplicada por doze.
+  const { fat, inv, saldo } = contaAnual(ri);
   if (fat > 0 || inv > 0) {
-    const saldo = fat - inv;
     paras.push(saldo >= 0
       ? { lead: 'A música se paga, e sobra.', body: `Em 12 meses você faturou ${money(fat)} e investiu ${money(inv)}. O saldo é positivo: a carreira devolve mais do que consome.` }
       : { lead: 'Você ainda investe mais do que a música devolve.', body: `Em 12 meses foram ${money(fat)} de faturamento e ${money(inv)} de investimento. Saldo negativo é comum em fase de construção, mas precisa de um plano para virar.` });
@@ -107,9 +137,8 @@ function earnings(ri: any): DimNarrative {
 function audience(ri: any): DimNarrative {
   const high = !!ri.pattern?.a;
   const top = !!ri.dimTopIcon?.a;
-  const inputs = ri.inputs || {};
-  const shows = Number(inputs.showsPerMonth ?? 0);
-  const headline = top ? 'Sua audiência real é Top Tier.' : high ? 'Sua audiência real acende.' : 'Sua audiência real ainda está em construção.';
+  const shows = showsPorMes(ri);
+  const headline = top ? 'Sua audiência real é TOP ICON.' : high ? 'Sua audiência real acende.' : 'Sua audiência real ainda está em construção.';
   const paras: Para[] = [];
 
   // O parágrafo de abertura não pode culpar o palco: A também fica baixa por conversão ou
@@ -143,12 +172,12 @@ function audience(ri: any): DimNarrative {
 function legitimacy(ri: any): DimNarrative {
   const high = !!ri.pattern?.l;
   const top = !!ri.dimTopIcon?.l;
-  const inputs = ri.inputs || {};
-  const headline = top ? 'Parabéns: sua legitimação é Top Tier.' : high ? 'Sua legitimação acende.' : 'Sua legitimação ainda está em construção.';
+  const inputs = autorrelato(ri);
+  const headline = top ? 'Parabéns: sua legitimação é TOP ICON.' : high ? 'Sua legitimação acende.' : 'Sua legitimação ainda está em construção.';
   const paras: Para[] = [];
 
   paras.push(top
-    ? { lead: 'Você está no topo absoluto desta dimensão.', body: 'Um patamar que pouquíssimos artistas alcançam: o setor te reconhece por vários ângulos ao mesmo tempo, prêmios, imprensa, playlists e rádio.' }
+    ? { lead: 'Você está no topo absoluto desta dimensão.', body: 'Um patamar que pouquíssimas carreiras alcançam: o setor te reconhece por vários ângulos ao mesmo tempo, prêmios, imprensa, playlists e rádio.' }
     : high
       ? { lead: 'O setor já reconhece o seu trabalho.', body: 'Prêmios e imprensa validam o que você faz, um capital que abre portas que números sozinhos não abrem.' }
       : { lead: 'Seu trabalho ainda não foi chancelado pelo setor.', body: 'Prêmios e imprensa costumam vir com estratégia de posicionamento, não só com talento.' });
@@ -162,7 +191,11 @@ function legitimacy(ri: any): DimNarrative {
 
   // Chancela de plataforma (opcional): playlists editoriais e/ou rádio.
   const editorial = Number(inputs.editorialPlaylists ?? 0);
-  const radio = Number(inputs.radioAirplay ?? 0) > 0;
+  // Na v4 o rádio só conta a partir de 6 execuções em 180 dias (§9.5); é o componente do motor
+  // que sabe disso, e repetir o corte aqui deixaria a narrativa contradizer a nota.
+  const radio = ehLegado(ri)
+    ? Number(inputs.radioAirplay ?? 0) > 0
+    : !!ri.components?.l?.radio?.present;
   if (paras.length < 3 && (editorial > 0 || radio)) {
     const bits: string[] = [];
     if (editorial > 0) bits.push(`${editorial} ${editorial === 1 ? 'playlist editorial' : 'playlists editoriais'}`);
@@ -207,6 +240,52 @@ export const CHAMADA_DO_PLANEJAMENTO = {
   botao: 'Começar meu planejamento com a Nyta',
   /** O diagnóstico não se perde ao seguir adiante — é o que tira o medo de clicar. */
   nota: 'Seu diagnóstico REAL fica salvo. Você pode refazê-lo a qualquer momento para acompanhar a evolução da carreira.',
+};
+
+/**
+ * O vídeo que abre o convite ao planejamento, no fim da entrega.
+ *
+ * O id mora aqui, e não na tela, porque o vídeo é o MESMO nas duas superfícies — a web já o
+ * mostrava e o app não tinha nenhum. E porque ele já quebrou uma vez: o anterior (tSvzznd-FcI)
+ * foi removido do YouTube e o player passou a dizer "Vídeo indisponível" bem em cima da chamada
+ * de conversão. Com um lugar só, trocar o id conserta as duas telas.
+ *
+ * Não é o mesmo do herói da landing: os dois divergiram, e a landing tem cópia própria do id.
+ */
+export const VIDEO_DO_PLANEJAMENTO = {
+  id: 'N0pV9W7MG4Y',
+  titulo: 'Como funciona o planejamento com a Nyta',
+  /** `nocookie` para o player não plantar cookie de rastreio antes de o vídeo tocar. */
+  url: (id: string) => `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`,
+  /**
+   * O mesmo iframe, embrulhado numa página — é como o app o mostra.
+   *
+   * Um WebView carregando a URL do embed direto recebe do YouTube o **erro 153**: o player exige
+   * um `Referer` válido, e uma página sem origem não tem nenhum. Servindo o iframe dentro de um
+   * documento cujo `baseUrl` é o domínio da Maestra, o referrer passa a existir e o vídeo toca.
+   */
+  pagina: (id: string) => '<!doctype html><html><head>'
+    + '<meta name="viewport" content="width=device-width, initial-scale=1">'
+    + '<style>html,body{margin:0;height:100%;background:#0b1020;overflow:hidden}'
+    + 'iframe{border:0;width:100%;height:100%;display:block}</style></head><body>'
+    + `<iframe src="https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1" `
+    + 'allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+    + '</body></html>',
+};
+
+/**
+ * O bloco de levar o diagnóstico embora, no fim da entrega.
+ *
+ * A web dizia "Baixe ou compartilhe seu diagnóstico" e o app "Leve seu diagnóstico"; o botão de
+ * compartilhar era "Compartilhar" de um lado e "Compartilhar em texto" do outro. Duas telas, o
+ * mesmo bloco, quatro textos.
+ */
+export const LEVAR_O_DIAGNOSTICO = {
+  titulo: 'Baixe ou compartilhe seu diagnóstico',
+  baixar: 'Baixar diagnóstico (PDF)',
+  baixando: 'Gerando…',
+  /** "em texto" porque é o resumo escrito que sai no compartilhamento, e não o PDF. */
+  compartilhar: 'Compartilhar em texto',
 };
 
 export const QUEM_ASSINA = {

@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { logChartmetricCall } from "./chartmetric-log.ts";
-import { computeRealIndexV3, type RealInputsV3, type ImprensaCell, type Frequencia, type PaganteFaixa, type RevenueSources } from "./realEngine.ts";
+import {
+  computeRealIndexV4, daQuizV3, FONTES_DE_RECEITA, TIPOS_DE_CONTRATANTE,
+  type RealInputsV4, type ImprensaCell, type Frequencia, type PaganteFaixa,
+  type RevenueSources, type CacheByType, type Aliquota, type FonteDeReceita, type TipoDeContratante,
+} from "./realEngine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,32 +34,60 @@ function buildDiagnostic(ri: any, cm: any): Record<string, unknown> {
   };
 }
 
-// Monta o RealInputsV3 do motor a partir das respostas (quizV3) + resumo Chartmetric.
+// Monta o RealInputsV4 do motor a partir das respostas (quizV4) + resumo Chartmetric.
+//
+// É AQUI que o autorrelato do artista vira número, então cada campo é saneado: o quiz é um
+// formulário público e o índice é o produto. Nenhum valor do cliente chega ao motor sem passar
+// por um clamp, uma lista de opções válidas ou um Math.max(0, …).
 // deno-lint-ignore no-explicit-any
-function buildRealInputsV3(qz: any, cm: any, spotifyConnected: boolean): RealInputsV3 {
+function buildRealInputsV4(qz: any, cm: any, spotifyConnected: boolean): RealInputsV4 {
   const mp = cm?.multiplatform ?? {};
   const n = (v: any) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
   const num0 = (v: any) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
+  const int0 = (v: any) => Math.max(0, Math.round(num0(v)));
   const oneOf = <T extends string>(v: any, allowed: readonly T[], fallback: T | null): T | null =>
     (allowed.includes(v as T) ? (v as T) : fallback);
   const bool = (v: any) => v === true || v === "true" || v === "sim" || v === 1 || v === "1";
-  // Composição da receita fora-shows: aceita objeto {fonte: R$} (quizV3) ou número único (compat).
-  const sources: RevenueSources = (qz?.revenueSources && typeof qz.revenueSources === "object")
-    ? Object.fromEntries(Object.entries(qz.revenueSources).map(([k, v]) => [k, Math.max(0, num0(v))]))
-    : {};
-  const foraShows = Object.keys(sources).length
-    ? Object.values(sources).reduce((s, v) => s + (Number(v) || 0), 0)
-    : Math.max(0, num0(qz?.faturamentoForaShows));
-  // Imprensa: matriz de células {tipo,porte}. Aceita também forma achatada ["tipo:porte", ...].
-  const matrix: ImprensaCell[] = Array.isArray(qz?.imprensaMatrix)
-    ? qz.imprensaMatrix.map((c: any) => {
-        if (c && typeof c === "object" && c.tipo && c.porte) return { tipo: c.tipo, porte: c.porte };
-        if (typeof c === "string" && c.includes(":")) { const [tipo, porte] = c.split(":"); return { tipo, porte }; }
+
+  // Cachê médio por tipo de contratante (§3.2). Só as 6 chaves conhecidas entram.
+  const cacheByType: CacheByType = {};
+  for (const tipo of TIPOS_DE_CONTRATANTE) {
+    cacheByType[tipo as TipoDeContratante] = Math.max(0, num0(qz?.cacheByType?.[tipo]));
+  }
+
+  // Nove fontes de receita, cada uma em reais ou "não sei" (§3.2). O motor conta "não sei" como
+  // zero e sinaliza no relatório — a distinção precisa sobreviver até lá, então não vira 0 aqui.
+  const revenueSources: RevenueSources = {};
+  for (const fonte of FONTES_DE_RECEITA) {
+    const v = qz?.revenueSources?.[fonte];
+    revenueSources[fonte as FonteDeReceita] = v === "nao_sei" ? "nao_sei" : Math.max(0, num0(v));
+  }
+
+  // Imprensa: um porte por tipo, o MAIOR (§9.3). Aceita o objeto {tipo,porte}, a forma achatada
+  // "tipo:porte" e o mapa { tipo: porte } que a matriz de escolha única produz.
+  const matrix: ImprensaCell[] = (() => {
+    const bruto = qz?.imprensaMatrix;
+    const portes = ["pequeno", "medio", "grande"] as const;
+    const tipos = ["imprensa", "tv", "influenciadores", "youtube", "podcasts", "blogs"] as const;
+    const valida = (t: any, p: any): ImprensaCell | null =>
+      (tipos.includes(t) && portes.includes(p)) ? { tipo: t, porte: p } : null;
+    if (Array.isArray(bruto)) {
+      return bruto.map((c: any) => {
+        if (c && typeof c === "object" && c.tipo && c.porte) return valida(c.tipo, c.porte);
+        if (typeof c === "string" && c.includes(":")) { const [t, p] = c.split(":"); return valida(t, p); }
         return null;
-      }).filter(Boolean) as ImprensaCell[]
-    : [];
+      }).filter(Boolean) as ImprensaCell[];
+    }
+    if (bruto && typeof bruto === "object") {
+      return Object.entries(bruto).map(([t, p]) => valida(t, p)).filter(Boolean) as ImprensaCell[];
+    }
+    return [];
+  })();
+
   return {
     spotifyConnected,
+    fetchedAt: typeof cm?.fetched_at === "string" ? cm.fetched_at : null,
+    // ── API ──
     spotifyListeners: n(cm?.monthly_listeners),
     igFollowers: n(mp.instagram),
     tiktokFollowers: n(mp.tiktok),
@@ -66,20 +98,31 @@ function buildRealInputsV3(qz: any, cm: any, spotifyConnected: boolean): RealInp
     youtubeEngagement: n(cm?.yt_engagement),
     tiktokEngagement: n(cm?.tt_engagement),
     editorialPlaylists: n(cm?.editorial_playlists),
-    radioAirplay: n(cm?.radio_airplay),
-    showsPerMonth: Math.max(0, Math.round(num0(qz?.showsPerMonth))),
-    cache: Math.max(0, num0(qz?.cache)),
-    faturamentoForaShows: Math.max(0, foraShows),
-    revenueSources: sources,
-    investimento: Math.max(0, num0(qz?.investimento)),
+    radioAirplay180d: n(cm?.radio_airplay),
+    // ── Autodeclaração de R: só vale quando a API não trouxe; o motor decide a precedência ──
+    igFollowersSelf: n(qz?.igFollowersSelf),
+    tiktokFollowersSelf: n(qz?.tiktokFollowersSelf),
+    youtubeViews28dSelf: n(qz?.youtubeViews28dSelf),
+    // ── E (base anual) ──
+    showsPerYear: int0(qz?.showsPerYear),
+    cacheByType,
+    revenueSources,
+    // O investimento decomposto (v4.1, §3.2). Nenhum dos três aceita "não sei": zero ou estimativa.
+    custoPorShow: Math.max(0, num0(qz?.custoPorShow)),
+    custoFixoMensal: Math.max(0, num0(qz?.custoFixoMensal)),
+    investLancamentos12m: Math.max(0, num0(qz?.investLancamentos12m)),
     temCnpj: bool(qz?.temCnpj),
+    aliquota: oneOf(qz?.aliquota, ["ate6", "6-10", "10-15", "acima15", "nao_sei"] as const, null) as Aliquota | null,
     temEmpresario: bool(qz?.temEmpresario),
-    premios: Math.max(0, Math.min(5, Math.round(num0(qz?.premios)))),
+    // ── A ──
+    fazBilheteria: bool(qz?.fazBilheteria),
+    pagantePct: oneOf(qz?.pagantePct, ["ate50", "51-69", "70-94", "95-100"] as const, null) as PaganteFaixa | null,
+    // ── L ──
+    // O nível 6 (prêmio internacional) é VÁLIDO. A v3 cortava em 5 e rebaixava quem ganhou (§15).
+    premios: Math.max(0, Math.min(6, Math.round(num0(qz?.premios)))),
     imprensaRepercussao: bool(qz?.imprensaRepercussao),
     imprensaMatrix: matrix,
     imprensaFrequencia: (oneOf(qz?.imprensaFrequencia, ["esporadico", "lancamento", "perene"] as const, "lancamento") as Frequencia),
-    fazBilheteria: bool(qz?.fazBilheteria),
-    pagantePct: oneOf(qz?.pagantePct, ["ate50", "51-69", "70-94", "95-100"] as const, null) as PaganteFaixa | null,
   };
 }
 
@@ -267,6 +310,64 @@ async function chartmetricSummary(
   } catch (e) { console.error("chartmetricSummary:", (e as Error).message); return null; }
 }
 
+// Consulta PRÉVIA à Chartmetric (§3.1, passo 2): só os três campos de R que o quiz precisa saber
+// para decidir quais perguntas de autodeclaração mostrar.
+//
+// Por que não reaproveitar `chartmetricSummary`: ela faz oito chamadas e a resposta inteira não
+// serve de nada antes do quiz. Aqui são três (get-ids, meta, série do YouTube) e o resultado é
+// descartado — o diagnóstico de verdade busca tudo de novo, e é o número DELE que entra no índice.
+// O preview não é fonte de dado, é só quem decide o que perguntar.
+//
+// Rede de segurança (§3.1, passo 6): qualquer falha devolve os três campos nulos, e o quiz então
+// pergunta todos. Perguntar demais é recuperável; calcular o R sobre nada não é.
+// deno-lint-ignore no-explicit-any
+async function chartmetricPreview(spotifyArtistId: string, supabaseAdmin?: any): Promise<Record<string, number | null>> {
+  const vazio = { igFollowers: null, tiktokFollowers: null, youtubeMonthlyViews: null };
+  if (!CHARTMETRIC_REFRESH_TOKEN) return vazio;
+  const log = (endpoint: string, ok: boolean, status: number | null, started: number) => {
+    if (supabaseAdmin) {
+      logChartmetricCall(supabaseAdmin, {
+        function_name: "artist-diagnostic:preview", artist_id: null, endpoint, ok, status_code: status, duration_ms: Date.now() - started,
+      });
+    }
+  };
+  try {
+    const tokRes = await fetch("https://api.chartmetric.com/api/token", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshtoken: CHARTMETRIC_REFRESH_TOKEN }),
+    });
+    if (!tokRes.ok) return vazio;
+    const auth = { headers: { Authorization: `Bearer ${(await tokRes.json()).token}` } };
+    let t0 = Date.now();
+    const idsRes = await fetch(`https://api.chartmetric.com/api/artist/spotify/${spotifyArtistId}/get-ids`, auth);
+    log(`/api/artist/spotify/:id/get-ids`, idsRes.ok, idsRes.status, t0);
+    if (!idsRes.ok) return vazio;
+    const idsObj = (await idsRes.json())?.obj;
+    const row = Array.isArray(idsObj) ? idsObj[0] : idsObj;
+    const cmId = row?.cm_artist ?? row?.chartmetric_id ?? null;
+    if (!cmId) return vazio;
+    t0 = Date.now();
+    const metaRes = await fetch(`https://api.chartmetric.com/api/artist/${cmId}`, auth);
+    log(`/api/artist/:id`, metaRes.ok, metaRes.status, t0);
+    if (!metaRes.ok) return vazio;
+    const cms = (await metaRes.json())?.obj?.cm_statistics ?? {};
+    const num = (v: any) => (v == null || v === "" || !Number.isFinite(Number(v)) ? null : Number(v));
+    t0 = Date.now();
+    let youtubeMonthlyViews: number | null = null;
+    try {
+      const ytRes = await fetch(`https://api.chartmetric.com/api/artist/${cmId}/stat/youtube_artist?field=monthly_views`, auth);
+      log(`/api/artist/:id/stat/youtube_artist`, ytRes.ok, ytRes.status, t0);
+      if (ytRes.ok) {
+        const d = await ytRes.json();
+        const serie = d?.obj?.monthly_views ?? (Array.isArray(d?.obj) ? d.obj : null);
+        const ultimo = Array.isArray(serie) && serie.length ? serie[serie.length - 1] : null;
+        youtubeMonthlyViews = num(ultimo?.value);
+      }
+    } catch { log(`/api/artist/:id/stat/youtube_artist`, false, null, t0); }
+    return { igFollowers: num(cms.ins_followers), tiktokFollowers: num(cms.tiktok_followers), youtubeMonthlyViews };
+  } catch (e) { console.error("chartmetricPreview:", (e as Error).message); return vazio; }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -281,8 +382,18 @@ serve(async (req) => {
 
     const body = await req.json();
     const { name, spotifyArtistId, spotify, redoArtistId } = body;
-    // O front envia o quiz V3; aceitamos `quizV2` por compatibilidade de transição.
-    const quiz = body.quizV3 ?? body.quizV2 ?? {};
+
+    // ── PREVIEW: o que a Chartmetric tem, ANTES do quiz (§3.1, passo 2). Só leitura, sem criar
+    // nada e sem rate-limit de criação: é o que permite ao quiz esconder as perguntas de
+    // autodeclaração de R cujo dado a API já entrega. ──
+    if (body.preview === true) {
+      const pid = typeof spotifyArtistId === "string" ? spotifyArtistId : null;
+      const api = pid ? await chartmetricPreview(pid, supabaseAdmin) : { igFollowers: null, tiktokFollowers: null, youtubeMonthlyViews: null };
+      return json({ preview: true, api });
+    }
+    // O front envia o quiz V4. As chaves anteriores continuam aceitas e são TRADUZIDAS: um app
+    // nativo antigo, que só atualiza quando o usuário quiser na loja, segue mandando `quizV3`.
+    const quiz = body.quizV4 ?? daQuizV3(body.quizV3 ?? body.quizV2 ?? {});
 
     // ── REDO: re-diagnóstico de um perfil existente (recurso PRO no front). Reusa o Chartmetric
     // já salvo (NÃO re-busca — o enrich tem TTL próprio) + as novas respostas do quiz; recalcula o
@@ -308,8 +419,8 @@ serve(async (req) => {
       if (exErr || !existing) return json({ error: "Perfil não encontrado" }, 404);
       const prevContent = (existing.content || {}) as Record<string, any>;
       const chartmetric = prevContent.chartmetricProfile ?? null;
-      const realInputs = buildRealInputsV3(quiz, chartmetric, !!existing.spotify_artist_id);
-      const realIndex = computeRealIndexV3(realInputs);
+      const realInputs = buildRealInputsV4(quiz, chartmetric, !!existing.spotify_artist_id);
+      const realIndex = computeRealIndexV4(realInputs);
       const diagnostic = buildDiagnostic(realIndex, chartmetric || {});
       const nowIso = new Date().toISOString();
       const newContent = {
@@ -380,8 +491,8 @@ serve(async (req) => {
     // de API como z mínimo (opção B). Com Spotify, puxa o resumo + os 6 campos extras da Fase C.
     const cmRaw: Array<{ endpoint: string; payload: unknown }> = [];
     const chartmetric = spotifyId ? await chartmetricSummary(spotifyId, supabaseAdmin, cmRaw) : null;
-    const realInputs = buildRealInputsV3(quiz, chartmetric, !!spotifyId);
-    const realIndex = computeRealIndexV3(realInputs);
+    const realInputs = buildRealInputsV4(quiz, chartmetric, !!spotifyId);
+    const realIndex = computeRealIndexV4(realInputs);
     const diagnostic = buildDiagnostic(realIndex, chartmetric || {});
 
     const nowIso = new Date().toISOString();

@@ -337,7 +337,7 @@ export default function Desbloquear() {
 
   return (
     <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
-      <View style={estilos.topo}>
+      <View style={[estilos.topo, etapa !== 'diagnostico' && estilos.topoComFolga]}>
         {/* 24, o mesmo do cabeçalho normal do app. Era 14 — a marca ficava menor que o
             rótulo da etapa ao lado dela. */}
         <MaestraMarca size={24} color={COR_DIAGNOSTICO.titulo} />
@@ -403,6 +403,16 @@ export default function Desbloquear() {
                 <Relatorio
                   real={real}
                   chartmetric={conteudo?.chartmetricProfile ?? null}
+                  // Sem isto o PDF sai sem nome, sem foto e com o docId "SEM-PERF": a referência
+                  // que o suporte usa para achar o diagnóstico deixa de bater com a da web.
+                  artista={{
+                    id: artista?.id,
+                    nome: artista?.name,
+                    foto: conteudo?.spotifyProfile?.image,
+                    vinculo: conteudo?.titularidade?.vinculo,
+                  }}
+                  momento="entrega"
+                  semSpotify={!conteudo?.spotifyProfile?.spotify_artist_id}
                   aoContinuar={comecarOPlanejamento}
                   aoMedirAncoras={(a) => setAncoras((atual) => ({ ...atual, ...a }))}
                 />
@@ -733,11 +743,14 @@ const estilos = StyleSheet.create({
     flexShrink: 1,
   },
 
+  // A folga até o conteúdo depende do que vem depois: o relatório traz o recuo do próprio
+  // cabeçalho de módulo, e o passo de pagamento não — esse pede os 24. Ver `topoComFolga`.
   topo: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    minHeight: 76, paddingHorizontal: 20, marginBottom: 24,
+    minHeight: 76, paddingHorizontal: 20,
     borderBottomWidth: 1, borderBottomColor: COR_DIAGNOSTICO.criarTrilho,
   },
+  topoComFolga: { marginBottom: 24 },
   fase: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
   pontos: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   ponto: {

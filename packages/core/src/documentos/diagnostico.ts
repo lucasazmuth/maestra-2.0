@@ -1,6 +1,7 @@
 import {
   DIM_META, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, VINCULO_LABELS, fmtBRL, fmtNum,
 } from '../constants/realCopy';
+import { ehLegado, linhasDaDimensao as linhasV4, resumoDoE } from '../services/realEngine/relatorio';
 
 // O DOCUMENTO do Diagnóstico REAL — a parte que não é desenho.
 //
@@ -82,10 +83,21 @@ export const linhaDeAutoria = (a: Autoria, agora = new Date()) =>
   `Gerado por ${a.nome} · ${a.email} · `
   + `${agora.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · Doc ${a.docId}`;
 
-/** As linhas da tabela de uma dimensão (V3). */
+/** As linhas da tabela de uma dimensão. Na v4 vêm do núcleo; o legado (v2/v3) tem as suas. */
 export function linhasDaDimensao(
   dk: 'r' | 'e' | 'a' | 'l', ri: any, cm: any,
 ): LinhaDoDocumento[] {
+  // Uma fonte só para as três superfícies. O documento contava as mesmas linhas da tela por
+  // cópia, e a v4 mudou o formato de todas: proveniência por campo, base anual, nove fontes.
+  if (!ehLegado(ri)) {
+    return linhasV4(ri, dk, cm)
+      .filter((l) => l.num != null || l.valor != null)
+      .map((l) => ({
+        label: l.rotulo,
+        value: l.num != null ? fmtNum(Number(l.num)) : (l.valor ?? '–'),
+        declarado: l.fonte === 'self',
+      }));
+  }
   const inp = ri.inputs || {};
   const rev = ri.revenue || {};
   const numeroOu = (n: number | null | undefined) => (n != null ? fmtNum(Number(n)) : null);
@@ -138,10 +150,16 @@ export function linhasDaDimensao(
 export function composicaoDaReceita(ri: any): { label: string; pct: number }[] {
   const rev = ri.revenue || {};
   const partes: { label: string; value: number }[] = [];
-  if (Number(rev.shows) > 0) partes.push({ label: 'Shows', value: Number(rev.shows) });
-  Object.entries(rev.sources || {}).forEach(([k, v]) => {
-    if (Number(v) > 0) partes.push({ label: FONTE_DE_RECEITA[k] || k, value: Number(v) });
-  });
+  const resumo = resumoDoE(ri);
+  if (resumo) {
+    if (resumo.receitaShows > 0) partes.push({ label: 'Shows', value: resumo.receitaShows });
+    resumo.fontes.forEach((f) => { if (f.valor > 0) partes.push({ label: f.rotulo, value: f.valor }); });
+  } else {
+    if (Number(rev.shows) > 0) partes.push({ label: 'Shows', value: Number(rev.shows) });
+    Object.entries(rev.sources || {}).forEach(([k, v]) => {
+      if (Number(v) > 0) partes.push({ label: FONTE_DE_RECEITA[k] || k, value: Number(v) });
+    });
+  }
   const total = partes.reduce((s, x) => s + x.value, 0);
   if (!total) return [];
   return partes
