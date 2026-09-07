@@ -53,29 +53,27 @@ jobs:
       # As funções importam por URL — `deno.land/std`, `esm.sh`. Uma URL não é um contrato: o
       # conteúdo servido nela pode mudar sem que uma linha do repositório mude junto, e o deploy
       # seguinte sobe outro código com a mesma revisão de git. O lock guarda o hash do que cada
-      # URL devolveu; regenerá-lo e comparar é o que transforma esse registro em verificação.
+      # URL devolveu, e `--frozen` recusa tanto o hash que mudou quanto o import que entrou sem
+      # passar pelo lock.
       #
-      # Falhar aqui NÃO significa ataque: significa que uma dependência entrou, saiu ou mudou.
-      # A correção é olhar o diff impresso abaixo e commitar o lock novo.
-      - name: Travar as dependências remotas
-        run: |
-          deno cache --lock=supabase/functions/deno.lock --lock-write \
-            supabase/functions/*/index.ts
-
-      - name: O lock commitado está em dia?
-        run: |
-          if ! git diff --exit-code --stat supabase/functions/deno.lock; then
-            echo "::error::O deno.lock não corresponde ao que as funções importam hoje."
-            echo "Rode o mesmo comando localmente e commite o arquivo:"
-            echo "  deno cache --lock=supabase/functions/deno.lock --lock-write supabase/functions/*/index.ts"
-            echo "--- diff ---"
-            git --no-pager diff supabase/functions/deno.lock
-            exit 1
-          fi
-
-      # Quando o lock está em dia, ele passa a valer como trava: `--frozen` recusa qualquer
-      # download cujo hash não bata com o registrado.
-      - name: Conferir os hashes contra o lock
+      # Falhar aqui NÃO significa ataque: quase sempre significa que uma dependência entrou ou
+      # saiu de alguma função. O passo seguinte imprime o lock novo, pronto para commitar.
+      - name: As dependências batem com o lock?
+        id: lock
         run: |
           deno cache --frozen --lock=supabase/functions/deno.lock \
             supabase/functions/*/index.ts
+
+      # Só quando o de cima falha. O Deno 2 não tem mais `--lock-write`: ele reescreve o lock
+      # sozinho quando não está congelado, então o caminho para regenerar é apagar e cachear.
+      - name: O lock que deveria estar commitado
+        if: failure() && steps.lock.outcome == 'failure'
+        run: |
+          rm -f supabase/functions/deno.lock
+          deno cache --lock=supabase/functions/deno.lock supabase/functions/*/index.ts
+          echo "::error::O deno.lock não corresponde ao que as funções importam hoje."
+          echo "Regenere localmente com:"
+          echo "  rm supabase/functions/deno.lock"
+          echo "  deno cache --lock=supabase/functions/deno.lock supabase/functions/*/index.ts"
+          echo "--- diff ---"
+          git --no-pager diff -- supabase/functions/deno.lock
