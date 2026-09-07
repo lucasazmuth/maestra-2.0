@@ -5,7 +5,8 @@ import { Provider } from 'react-redux';
 import { StyleSheet } from 'react-native';
 
 import { COR } from '@maestra/core/constants/design';
-import { CHAMADA_DO_PLANEJAMENTO } from '@maestra/core/constants/realNarrative';
+import { CABECALHO_DA_REVISITA } from '@maestra/core/constants/realCopy';
+import { CHAMADA_DO_PLANEJAMENTO, METODOLOGIA } from '@maestra/core/constants/realNarrative';
 import { store } from '@maestra/core/store/store';
 import Perfil from '../artista/[id]/diagnostico';
 import { comDiagnostico, comDiagnosticoV4, semDiagnostico } from './fixtures';
@@ -15,12 +16,21 @@ import { comDiagnostico, comDiagnosticoV4, semDiagnostico } from './fixtures';
 // O prefixo `mock` nao e estilo: o jest recusa fabrica de `jest.mock` que referencie variavel
 // de fora do escopo, e abre excecao apenas para nomes que comecam assim.
 let mockIdNaRota = comDiagnostico.id;
+const mockPush = jest.fn();
+const mockCheckout = jest.fn();
+let mockEhPro = false;
+jest.mock('@maestra/core/hooks/useEntitlements', () => ({
+  useEntitlements: () => ({ isPro: mockEhPro, plan: mockEhPro ? 'pro' : 'free' }),
+}));
+jest.mock('@/nucleo/loja', () => ({ irParaOCheckout: (...a: unknown[]) => mockCheckout(...a) }));
+// O dono do perfil: as fixtures são de `u-1`, e refazer é só de quem é dono.
+jest.mock('@/nucleo/sessao', () => ({ useSessao: () => ({ sessao: { user: { id: 'u-1' } } }) }));
 jest.mock('expo-router', () => ({
   // `Link asChild` so repassa a navegacao: para a tela, o filho e que importa.
   Link: ({ children }: { children: React.ReactNode }) => children,
   Stack: { Screen: () => null },
   useLocalSearchParams: () => ({ id: mockIdNaRota }),
-  useRouter: () => ({ back: jest.fn() }),
+  useRouter: () => ({ back: jest.fn(), push: (...a: unknown[]) => mockPush(...a) }),
 }));
 
 const semear = () =>
@@ -37,14 +47,27 @@ describe('diagnostico REAL em leitura', () => {
     mockIdNaRota = comDiagnostico.id;
   });
 
-  // O cabeçalho é o mesmo dos outros módulos, e sem o kicker: "ONDE VOCÊ ESTÁ" repetia em nove
-  // caracteres o que o título e a descrição já diziam.
-  it('usa o cabeçalho padrão dos módulos, sem kicker', async () => {
+  // O cabeçalho é o dos módulos, com as MESMAS três linhas da web. O chapéu chegou a sair daqui
+  // por parecer redundante — mas a web o mantinha, e o mesmo módulo abria diferente nas duas
+  // superfícies. As três linhas vêm do núcleo: quem muda uma, muda as duas.
+  it('usa o cabeçalho padrão dos módulos, com o chapéu da web', async () => {
     const tela = await montar();
 
-    expect(tela.getByText('Diagnóstico REAL')).toBeTruthy();
-    expect(tela.getByText('Sua fase de carreira atual, com base nos seus dados reais.')).toBeTruthy();
-    expect(tela.queryByText('ONDE VOCÊ ESTÁ')).toBeNull();
+    expect(tela.getByText(CABECALHO_DA_REVISITA.chapeu)).toBeTruthy();
+    expect(tela.getByText(CABECALHO_DA_REVISITA.titulo)).toBeTruthy();
+    expect(tela.getByText(CABECALHO_DA_REVISITA.apoio)).toBeTruthy();
+  });
+
+  // A metodologia fecha a leitura dizendo de onde o índice veio. Ela existia só na web: o app
+  // terminava em "quem assina", e quem quisesse saber por que acreditar nos números não tinha
+  // onde ler. Recolhida, como lá.
+  it('traz a metodologia no pé, recolhida, e abre ao toque', async () => {
+    const tela = await montar();
+
+    expect(tela.getByText(METODOLOGIA.title)).toBeTruthy();
+    expect(tela.queryByText(METODOLOGIA.intro[0])).toBeNull();
+    await userEvent.setup().press(tela.getByText(METODOLOGIA.title));
+    expect(tela.getByText(METODOLOGIA.intro[0])).toBeTruthy();
   });
 
   it('mostra o perfil que o motor atribuiu', async () => {
@@ -277,5 +300,40 @@ describe('diagnostico REAL na v4', () => {
     // 3 execuções em 180 dias: o componente é AUSENTE (§9.5), e "Não" afirmaria o que não se sabe.
     expect(tela.getByText('Execução em rádio')).toBeTruthy();
     expect(tela.getAllByText('Sem dado').length).toBeGreaterThan(0);
+  });
+});
+
+
+// REFAZER — o loop de crescimento: executou o plano e cresceu? Refaz o REAL para a fase subir.
+//
+// Existia só na web. E não é um botão solto: é do DONO do perfil (a edge filtra por `user_id` e
+// devolveria 404 no fim do quiz inteiro, que soa como falha temporária e não como falta de
+// permissão) e é recurso PRO.
+describe('refazer o diagnóstico', () => {
+  beforeEach(() => {
+    semear();
+    mockIdNaRota = comDiagnosticoV4.id;
+    mockPush.mockClear();
+    mockCheckout.mockClear();
+    mockEhPro = false;
+  });
+
+  it('quem é PRO cai no quiz em modo refazer, sobre o mesmo perfil', async () => {
+    mockEhPro = true;
+    const tela = await montar();
+    await userEvent.setup().press(tela.getByLabelText('Refazer o diagnóstico'));
+
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/criar-artista', params: { refazer: comDiagnosticoV4.id },
+    });
+    expect(mockCheckout).not.toHaveBeenCalled();
+  });
+
+  it('quem não é PRO vai para a assinatura, e o cadeado avisa antes', async () => {
+    const tela = await montar();
+    await userEvent.setup().press(tela.getByLabelText('Refazer o diagnóstico é um recurso PRO'));
+
+    expect(mockCheckout).toHaveBeenCalledWith({ destino: 'assinatura' });
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });

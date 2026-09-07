@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 
@@ -14,7 +15,7 @@ import {
   DIM_META, PROFILE_BITS, PROFILE_MAP, clean, fmtNum, type DimKey,
 } from '@maestra/core/constants/realCopy';
 import {
-  CHAMADA_DO_PLANEJAMENTO, LEVAR_O_DIAGNOSTICO, QUEM_ASSINA, VIDEO_DO_PLANEJAMENTO,
+  CHAMADA_DO_PLANEJAMENTO, LEVAR_O_DIAGNOSTICO, METODOLOGIA, QUEM_ASSINA, VIDEO_DO_PLANEJAMENTO,
 } from '@maestra/core/constants/realNarrative';
 import { autoriaDoDocumento, URL_DA_MAESTRA } from '@maestra/core/documentos/diagnostico';
 
@@ -108,6 +109,8 @@ type Props = {
    * O app usava o de revisita nas TRÊS telas, inclusive na entrega.
    */
   momento?: 'entrega' | 'revisita';
+  /** Um controle à direita do título, na revisita — hoje, o "refazer diagnóstico". */
+  acaoDoCabecalho?: ReactNode;
   /** Perfil criado sem Spotify: a copy do apoio não promete dado de plataforma. */
   semSpotify?: boolean;
 };
@@ -119,10 +122,11 @@ type Props = {
  */
 export const Relatorio = ({
   real, chartmetric = null, artista, aoContinuar, aoMedirAncoras,
-  momento = 'revisita', semSpotify = false,
+  momento = 'revisita', semSpotify = false, acaoDoCabecalho,
 }: Props) => {
   const { sessao } = useSessao();
   const [gerando, setGerando] = useState(false);
+  const [metodoAberto, setMetodoAberto] = useState(false);
   const perfil = real?.profile;
   const padrao = real?.pattern;
   const altas = altasForPattern(padrao);
@@ -188,8 +192,10 @@ export const Relatorio = ({
       </View>
     ) : (
       <CabecalhoDoModulo
+        chapeu={CABECALHO_DA_REVISITA.chapeu}
         titulo={CABECALHO_DA_REVISITA.titulo}
         descricao={CABECALHO_DA_REVISITA.apoio}
+        acao={acaoDoCabecalho}
       />
     )}
 
@@ -507,6 +513,51 @@ export const Relatorio = ({
           ))}
           <Text style={estilos.assinaDestaque}>{QUEM_ASSINA.highlight}</Text>
         </View>
+
+        {/*
+          COMO NASCE O DIAGNÓSTICO — o rodapé da metodologia, recolhido.
+
+          Ele fecha a leitura dizendo de onde o índice veio: 30 anos de carreiras, 313
+          planejamentos analisados, e o que cada uma das quatro letras mede. É o que sustenta os
+          números para quem quer saber por que acreditar neles.
+
+          Recolhido, como na web: quem já leu não precisa reler, e quem acabou de receber o
+          retrato não deveria esbarrar em três parágrafos de metodologia antes de digerir o
+          próprio diagnóstico.
+        */}
+        <View style={[estilos.cartao, estilos.cartaoDeApoio]}>
+          <Pressable
+            style={estilos.metodoBotao}
+            onPress={() => setMetodoAberto((v) => !v)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: metodoAberto }}
+            accessibilityLabel={METODOLOGIA.title}
+          >
+            <Text style={estilos.metodoTitulo}>{METODOLOGIA.title}</Text>
+            <Feather
+              name={metodoAberto ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={COR_DIAGNOSTICO.fonte}
+            />
+          </Pressable>
+          {metodoAberto && (
+            <>
+              {METODOLOGIA.intro.map((paragrafo, i) => (
+                <Text key={i} style={estilos.metodoTexto}>{paragrafo}</Text>
+              ))}
+              {METODOLOGIA.dims.map((d) => (
+                <View key={d.l} style={estilos.metodoDimensao}>
+                  <Text style={estilos.metodoLetra}>{d.l}</Text>
+                  <View style={estilos.flex}>
+                    <Text style={estilos.metodoNome}>{d.t}</Text>
+                    <Text style={estilos.metodoDescricao}>{d.d}</Text>
+                  </View>
+                </View>
+              ))}
+              <Text style={estilos.metodoTexto}>{METODOLOGIA.outro}</Text>
+            </>
+          )}
+        </View>
       </>
     )}
     </View>
@@ -613,6 +664,18 @@ const estilos = StyleSheet.create({
   // revisita. Sem ele, o cabeçalho da entrega nascia colado no fio do topo — as três molduras
   // não acrescentam recuo nenhum, de propósito: ele é todo do cabeçalho.
   entrega: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingTop: 22 },
+
+  // A metodologia, no pé: mesmo acordeão discreto da intro das dimensões.
+  metodoBotao: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  metodoTitulo: { fontSize: 15, fontWeight: '800', color: COR_DIAGNOSTICO.titulo, flexShrink: 1 },
+  metodoTexto: { fontSize: 12.5, lineHeight: 19, color: COR_DIAGNOSTICO.texto, marginTop: 10 },
+  metodoDimensao: { flexDirection: 'row', gap: 12, marginTop: 14 },
+  metodoLetra: {
+    fontFamily: 'Georgia', fontStyle: 'italic', fontSize: 20, fontWeight: '700',
+    width: 22, color: COR_DIAGNOSTICO.titulo,
+  },
+  metodoNome: { fontSize: 12.5, fontWeight: '800', color: COR_DIAGNOSTICO.titulo },
+  metodoDescricao: { fontSize: 12, lineHeight: 18, color: COR_DIAGNOSTICO.texto, marginTop: 3 },
 
   // A moldura do vídeo: 16:9 com canto arredondado e fundo escuro, como o `.ctaVideo` da web.
   // O `overflow: hidden` é o que faz o player respeitar o raio.

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { COR_CABECALHO_DE_MODULO } from '@maestra/core/constants/design';
@@ -30,13 +31,21 @@ import { COR_CABECALHO_DE_MODULO } from '@maestra/core/constants/design';
  */
 export const FOLGA_APOS_O_CABECALHO = 20;
 
-export const CabecalhoDoModulo = ({ titulo, descricao, nota }: {
+export const CabecalhoDoModulo = ({ chapeu, titulo, descricao, nota, acao }: {
+  /** A linha curta acima do título, em caixa alta. Opcional: só o Diagnóstico REAL usa. */
+  chapeu?: string;
   titulo: string;
   descricao: string;
   nota?: string;
+  /** Um controle à direita do título — hoje, o "refazer" do diagnóstico. */
+  acao?: ReactNode;
 }) => (
   <View style={estilos.cabecalho}>
-    <Text style={estilos.titulo}>{titulo}</Text>
+    {!!chapeu && <Text style={estilos.chapeu}>{chapeu}</Text>}
+    <View style={estilos.linhaDoTitulo}>
+      <Text style={[estilos.titulo, estilos.flex]}>{titulo}</Text>
+      {acao}
+    </View>
     <Text style={estilos.descricao}>{descricao}</Text>
     {!!nota && <Text style={estilos.nota}>{nota}</Text>}
   </View>
@@ -54,6 +63,12 @@ const estilos = StyleSheet.create({
     paddingTop: 22, paddingBottom: 26,
     borderBottomWidth: 1, borderBottomColor: COR_CABECALHO_DE_MODULO.fio,
   },
+  chapeu: {
+    fontSize: 11, fontWeight: '800', letterSpacing: 1.1, textTransform: 'uppercase',
+    color: COR_CABECALHO_DE_MODULO.rotulo, marginBottom: 6,
+  },
+  linhaDoTitulo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  flex: { flex: 1 },
   titulo: {
     fontSize: 30, fontWeight: '800', letterSpacing: -0.75,
     color: COR_CABECALHO_DE_MODULO.titulo,

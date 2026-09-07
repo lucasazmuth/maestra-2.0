@@ -49,7 +49,9 @@ describe('cabeçalho do módulo', () => {
   // ninguém escolheu, porque se somaram sem que nada dissesse que estavam se somando.
   it('é o dono do espaço até a barra do topo', async () => {
     const tela = await render(<CabecalhoDoModulo titulo="Músicas" descricao="Organize." />);
-    const cabecalho = tela.getByText('Músicas').parent!;
+    // Dois níveis: o título divide uma linha com a ação da direita (o "refazer" do diagnóstico),
+    // e é essa linha que vive dentro do cabeçalho.
+    const cabecalho = tela.getByText('Músicas').parent!.parent!;
 
     expect((StyleSheet.flatten(cabecalho.props.style) as { paddingTop?: number }).paddingTop)
       .toBe(22);

@@ -249,7 +249,10 @@ describe('o cabeçalho da entrega', () => {
   it('as telas de entrega declaram que são entrega, nas duas superfícies', () => {
     const criarNoApp = ler('apps', 'mobile', 'src', 'app', 'criar-artista.tsx');
     const desbloquearNoApp = ler('apps', 'mobile', 'src', 'app', 'desbloquear', '[id].tsx');
-    for (const fonte of [criarNoApp, desbloquearNoApp]) expect(fonte).toContain('momento="entrega"');
+    expect(desbloquearNoApp).toContain('momento="entrega"');
+    // A criação serve aos DOIS momentos: é ela que roda o refazer, e ali quem chega já conhece
+    // o produto — o cabeçalho é o da revisita, como na web, que desliga o herói no modo redo.
+    expect(criarNoApp).toContain("momento={refazendo ? 'revisita' : 'entrega'}");
     // Na web o corte é o inverso: quem esconde o herói é o módulo, e só ele.
     expect(moduloDaWeb).toContain('hideHero');
     expect(ler('src', 'pages', 'ProfileUnlock', 'index.tsx')).not.toContain('hideHero');
