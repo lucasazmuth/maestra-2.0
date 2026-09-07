@@ -190,6 +190,18 @@ export const COR_PAINEL = {
 } as const;
 
 /** A bolinha de cada número, na ordem em que os cartões aparecem. */
+/**
+ * O arco de luz que percorre a borda da pílula da marca, nas boas-vindas.
+ *
+ * São os azuis e o roxo da marca, na ordem em que o arco os atravessa. A paleta anterior
+ * (magenta + branco) sumia contra o branco da pílula sobre o fundo claro.
+ *
+ * Vive aqui porque o efeito existe nas DUAS superfícies: na web é um `conic-gradient` girando
+ * atrás da pílula; no app, um degradê que gira dentro de um anel recortado. A técnica muda
+ * porque não há gradiente cônico no React Native — as cores, não.
+ */
+export const AURORA_DA_MARCA = ['#9a4fd1', '#3361ff', '#33bfff'] as const;
+
 export const CORES_DOS_NUMEROS = ['#29cc39', '#3361ff', '#8833ff', '#ffcb33'] as const;
 
 /**

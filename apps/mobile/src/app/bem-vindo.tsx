@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 
+import { LinearGradient } from 'expo-linear-gradient';
+
 import { BOAS_VINDAS } from '@maestra/core/constants/landing';
-import { COR, COR_CABECALHO_DE_MODULO, RAIO } from '@maestra/core/constants/design';
+import { AURORA_DA_MARCA, COR, COR_CABECALHO_DE_MODULO, RAIO } from '@maestra/core/constants/design';
 import { supabase } from '@maestra/core/lib/supabase';
 import * as membersDb from '@maestra/core/services/db/members';
 
@@ -103,6 +105,17 @@ export default function BemVindo() {
     return () => { cancelado = true; if (relogio) clearInterval(relogio); };
   }, [chegada, saudacao]);
 
+  // A aurora: uma volta a cada 4s, como na web. `useNativeDriver` porque é só transform — ela
+  // gira na thread de UI e não disputa com a digitação da frase.
+  const aurora = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const laco = Animated.loop(Animated.timing(aurora, {
+      toValue: 1, duration: 4000, easing: Easing.linear, useNativeDriver: true,
+    }));
+    laco.start();
+    return () => laco.stop();
+  }, [aurora]);
+
   // O botão só aparece quando a frase termina: ele é a resposta ao que foi dito.
   useEffect(() => {
     if (!pronto) return;
@@ -116,8 +129,28 @@ export default function BemVindo() {
       <View style={estilos.miolo}>
         {/* Só a `MaestraMarca`: ela JÁ é o símbolo mais a palavra no lettering oficial. Escrever
             "Maestra" ao lado escrevia a palavra duas vezes, a segunda na fonte do app. */}
-        <View style={estilos.pilula}>
-          <MaestraMarca size={32} color={COR_CABECALHO_DE_MODULO.titulo} />
+        {/* O anel recorta; o degradê gira atrás; a pílula branca cobre o miolo. O que sobra à
+            vista é um arco de luz percorrendo a borda — o mesmo efeito do `conic-gradient` da
+            web, que aqui não existe. */}
+        <View style={estilos.anel}>
+          <Animated.View
+            pointerEvents="none"
+            style={[estilos.auroraGiro, {
+              transform: [{
+                rotate: aurora.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }),
+              }],
+            }]}
+          >
+            <LinearGradient
+              colors={['transparent', ...AURORA_DA_MARCA, 'transparent']}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={estilos.auroraTinta}
+            />
+          </Animated.View>
+          <View style={estilos.pilula}>
+            <MaestraMarca size={32} color={COR_CABECALHO_DE_MODULO.titulo} />
+          </View>
         </View>
 
         <Text style={estilos.saudacao} accessibilityLiveRegion="polite">{digitado}</Text>
@@ -148,6 +181,12 @@ const estilos = StyleSheet.create({
     flex: 1, justifyContent: 'center', alignItems: 'center',
     paddingHorizontal: 24, gap: 36,
   },
+  // A espessura do anel é o padding: a pílula branca por cima deixa só esta faixa à mostra.
+  anel: { padding: 3, borderRadius: RAIO.pilula, overflow: 'hidden' },
+  // Bem maior que o anel e centrado nele: girando, um quadrado do tamanho exato deixaria os
+  // cantos vazios em 45°.
+  auroraGiro: { position: 'absolute', top: -160, bottom: -160, left: -160, right: -160 },
+  auroraTinta: { flex: 1, opacity: 0.9 },
   pilula: {
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 16, paddingHorizontal: 30, borderRadius: RAIO.pilula,
