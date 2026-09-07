@@ -63,10 +63,16 @@ jobs:
       # e o Deno, ao encontrar um, passa a exigir que TODA dependência npm esteja lá dentro —
       # inclusive as que ele mesmo baixaria. Em produção não existe node_modules nenhum: quem
       # roda essas funções é o Deno do Supabase, com o cache dele. A flag diz isso.
+      #
+      # `--config` aponta o `supabase/functions/deno.json`, que existe para o Deno PARAR de
+      # subir diretórios. Sem ele, o Deno acha o `package.json` da raiz, adota o front inteiro
+      # como workspace e escreve as 60 dependências do CRA dentro do lock das edge functions —
+      # que então quebraria toda vez que alguém mexesse no `package.json` da web.
       - name: As dependências batem com o lock?
         id: lock
         run: |
           deno cache --frozen --node-modules-dir=none \
+            --config=supabase/functions/deno.json \
             --lock=supabase/functions/deno.lock \
             supabase/functions/*/index.ts
 
@@ -77,6 +83,7 @@ jobs:
         run: |
           rm -f supabase/functions/deno.lock
           deno cache --node-modules-dir=none \
+            --config=supabase/functions/deno.json \
             --lock=supabase/functions/deno.lock supabase/functions/*/index.ts
           echo "::error::O deno.lock não corresponde ao que as funções importam hoje."
           echo "Regenere localmente com:"
