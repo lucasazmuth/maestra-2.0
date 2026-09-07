@@ -109,8 +109,14 @@ type Props = {
    * O app usava o de revisita nas TRÊS telas, inclusive na entrega.
    */
   momento?: 'entrega' | 'revisita';
-  /** Um controle à direita do título, na revisita — hoje, o "refazer diagnóstico". */
-  acaoDoCabecalho?: ReactNode;
+  /**
+   * Um controle DENTRO do cartão do perfil — hoje, o "refazer diagnóstico".
+   *
+   * Ele morava ao lado do título da página, e ali disputava a linha com um título de 30px: em
+   * 375pt o nome do perfil quebrava. Dentro do cartão ele também fica junto do que refaz — o
+   * retrato —, e não junto do nome do módulo.
+   */
+  acaoDoPerfil?: ReactNode;
   /** Perfil criado sem Spotify: a copy do apoio não promete dado de plataforma. */
   semSpotify?: boolean;
 };
@@ -122,7 +128,7 @@ type Props = {
  */
 export const Relatorio = ({
   real, chartmetric = null, artista, aoContinuar, aoMedirAncoras,
-  momento = 'revisita', semSpotify = false, acaoDoCabecalho,
+  momento = 'revisita', semSpotify = false, acaoDoPerfil,
 }: Props) => {
   const { sessao } = useSessao();
   const [gerando, setGerando] = useState(false);
@@ -195,7 +201,6 @@ export const Relatorio = ({
         chapeu={CABECALHO_DA_REVISITA.chapeu}
         titulo={CABECALHO_DA_REVISITA.titulo}
         descricao={CABECALHO_DA_REVISITA.apoio}
-        acao={acaoDoCabecalho}
       />
     )}
 
@@ -233,6 +238,10 @@ export const Relatorio = ({
           {/* O anel vazado cortado pela borda: é o recurso gráfico do herói do painel, e a única
               vez que o roxo institucional aparece — como LINHA, nunca como campo. */}
           <View style={estilos.anel} pointerEvents="none" />
+
+          {/* Uma linha só para a ação: no mesmo eixo da placa ela roubaria largura do nome do
+              perfil, que em 375pt já ocupa a linha inteira. */}
+          {!!acaoDoPerfil && <View style={estilos.acaoDoPerfil}>{acaoDoPerfil}</View>}
 
           <View style={estilos.linhaDaPlaca}>
             <Placa tier={tierForPattern(padrao)} rotulo={String(altas)} tamanho={76} />
@@ -657,6 +666,8 @@ const estilos = StyleSheet.create({
     color: COR_DIAGNOSTICO.palavraApagada,
   },
   palavraAcesa: { color: COR_PAINEL.heroRotulo },
+
+  acaoDoPerfil: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 6 },
 
   // O cabeçalho da ENTREGA: foto, o nome de quem recebe e o "está pronto". Mesmas proporções da
   // web (avatar de 60, título de 22, apoio de 13), porque é a mesma tela.

@@ -202,6 +202,15 @@ export const COR_PAINEL = {
  */
 export const AURORA_DA_MARCA = ['#9a4fd1', '#3361ff', '#33bfff'] as const;
 
+/**
+ * O véu escuro por trás de um aviso modal.
+ *
+ * Só do APP: na web o overlay é do Ant Design e não passa por aqui. Fica FORA do
+ * `COR_DIAGNOSTICO` por isso — aquele grupo é espelhado na folha da web, e um valor que a web
+ * não pinta quebraria o cromo dela sem que nada estivesse errado.
+ */
+export const COR_AVISO = { veu: 'rgba(23, 33, 56, 0.45)' };
+
 export const CORES_DOS_NUMEROS = ['#29cc39', '#3361ff', '#8833ff', '#ffcb33'] as const;
 
 /**

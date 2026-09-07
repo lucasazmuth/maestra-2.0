@@ -414,9 +414,32 @@ serve(async (req) => {
       if (!isPro) return json({ error: "subscription_required", reason: "pro_required" }, 403);
 
       const { data: existing, error: exErr } = await supabaseAdmin
-        .from("artists").select("id, content, spotify_artist_id")
-        .eq("id", redoArtistId).eq("user_id", user.id).maybeSingle();
+        .from("artists").select("id, content, spotify_artist_id, user_id")
+        .eq("id", redoArtistId).maybeSingle();
       if (exErr || !existing) return json({ error: "Perfil não encontrado" }, 404);
+
+      // Quem pode refazer: o DONO, ou um membro ATIVO com nível 'plan'/'full'.
+      //
+      // Era só o dono — o filtro ficava no próprio `select`, por `user_id`. Mas o modelo de
+      // permissão do produto (`useArtistCapabilities`) diz outra coisa há tempos: refazer o
+      // diagnóstico é `manageTasks`, e o membro com o nível 'plan' ou 'full' tem. Quem
+      // convidou alguém com ACESSO TOTAL escolheu isso deliberadamente, e via a pessoa
+      // atravessar o quiz inteiro para receber 404 — que a tela mostra como "não consegui
+      // gerar seu diagnóstico agora", ou seja, falha temporária em vez de falta de permissão.
+      //
+      // A checagem é explícita porque este client é service role: ele passa por cima da RLS,
+      // então a regra que o banco aplicaria (`has_artist_access`) precisa ser escrita aqui.
+      let autorizado = existing.user_id === user.id;
+      if (!autorizado) {
+        const { data: membro } = await supabaseAdmin
+          .from("artist_members")
+          .select("access_levels")
+          .eq("artist_id", redoArtistId).eq("user_id", user.id).eq("status", "active")
+          .maybeSingle();
+        const niveis = (membro?.access_levels ?? []) as string[];
+        autorizado = niveis.includes("full") || niveis.includes("plan");
+      }
+      if (!autorizado) return json({ error: "Sem permissão para refazer este diagnóstico" }, 403);
       const prevContent = (existing.content || {}) as Record<string, any>;
       const chartmetric = prevContent.chartmetricProfile ?? null;
       const realInputs = buildRealInputsV4(quiz, chartmetric, !!existing.spotify_artist_id);
@@ -428,9 +451,11 @@ serve(async (req) => {
         realIndex, diagnostic,
         quizDiagnostic: { answers: quiz, completedAt: nowIso },
       };
+      // Sem o filtro por user_id: quem autoriza é a checagem acima, e o membro com acesso não
+      // passaria por ele. O `id` já é único.
       const { error: upErr } = await supabaseAdmin
         .from("artists").update({ content: newContent })
-        .eq("id", redoArtistId).eq("user_id", user.id);
+        .eq("id", redoArtistId);
       if (upErr) { console.error("redo update:", upErr); return json({ error: "Erro ao salvar o re-diagnóstico" }, 500); }
       return json({ artistId: redoArtistId, redo: true, reused: false, locked: false, realIndex, diagnostic, chartmetric });
     }

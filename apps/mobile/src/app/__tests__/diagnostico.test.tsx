@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { StyleSheet } from 'react-native';
 
 import { COR } from '@maestra/core/constants/design';
+import { LOCKED_FEATURE_CONFIG } from '@maestra/core/constants/bloqueios';
 import { CABECALHO_DA_REVISITA } from '@maestra/core/constants/realCopy';
 import { CHAMADA_DO_PLANEJAMENTO, METODOLOGIA } from '@maestra/core/constants/realNarrative';
 import { store } from '@maestra/core/store/store';
@@ -329,11 +330,19 @@ describe('refazer o diagnóstico', () => {
     expect(mockCheckout).not.toHaveBeenCalled();
   });
 
-  it('quem não é PRO vai para a assinatura, e o cadeado avisa antes', async () => {
+  // Sem PRO, tocar não manda ninguém para o checkout: abre o aviso, que diz o nome do recurso e
+  // o que ele entrega. Levar direto ao pagamento é pedir dinheiro por algo que a pessoa ainda
+  // não leu o que é.
+  it('quem não é PRO vê o aviso do plano antes de qualquer checkout', async () => {
+    const usuario = userEvent.setup();
     const tela = await montar();
-    await userEvent.setup().press(tela.getByLabelText('Refazer o diagnóstico é um recurso PRO'));
+    await usuario.press(tela.getByLabelText('Refazer o diagnóstico é um recurso PRO'));
 
-    expect(mockCheckout).toHaveBeenCalledWith({ destino: 'assinatura' });
+    expect(mockCheckout).not.toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
+    expect(tela.getByText(LOCKED_FEATURE_CONFIG.refazer.title)).toBeTruthy();
+
+    await usuario.press(tela.getByLabelText(LOCKED_FEATURE_CONFIG.refazer.cta.label));
+    expect(mockCheckout).toHaveBeenCalledWith({ destino: 'assinatura' });
   });
 });
