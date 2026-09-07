@@ -21,10 +21,14 @@
   color: #61749a;
   padding: 0 24px 64px;
 
+  // A MESMA folga do ambiente do diagnóstico: 32px depois do fio. Aqui eram 72, e a etapa de
+  // pagamento — que é a mesma tela, um passo adiante — nascia meia tela abaixo do cabeçalho.
+  // As três superfícies da entrega (criar perfil, desbloquear e o módulo do perfil) têm que
+  // medir igual: é o mesmo produto, e a diferença só aparece quando se vai de uma para a outra.
   .topBar {
     max-width: 1180px;
     min-height: 94px;
-    margin: 0 0 72px;
+    margin: 0 0 32px;
     padding: 0 4px;
     border-bottom: 1px solid #e7ecf5;
   }
@@ -199,7 +203,7 @@
   .page:not(.pageReal) {
     padding: 0 16px 40px;
 
-    .topBar { min-height: 76px; margin-bottom: 52px; }
+    .topBar { min-height: 76px; margin-bottom: 24px; }
     .flow { margin-left: auto; }
     .line { font-size: 28px; }
     .interaction { padding: 0; }
