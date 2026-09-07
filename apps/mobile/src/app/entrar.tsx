@@ -1,4 +1,3 @@
-import * as AppleAuthentication from 'expo-apple-authentication';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -12,7 +11,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_ENTRADA, RAIO } from '@maestra/core/constants/design';
-import { GoogleIcon, MaestraMarca } from '@/icones';
+import { BotoesSociais } from '@/casca/BotoesSociais';
+import { MaestraMarca } from '@/icones';
 import { appleDisponivel, entrarComApple, entrarComEmail, entrarComGoogle } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 
@@ -78,41 +78,13 @@ export default function Entrar() {
 
               <Text style={estilos.rotulo}>Acesse com:</Text>
 
-              {/* Lado a lado, e nao empilhados: a diretriz 4.8 da App Store pede que o Sign in
-                  with Apple tenha a MESMA proeminencia dos outros logins sociais, e empilhado o
-                  de cima vira o principal aos olhos de quem le. */}
               <View style={estilos.sociais}>
-                <Pressable
-                  style={({ pressed }) => [estilos.social, pressed && estilos.pressionado]}
-                  disabled={ocupado}
-                  onPress={() => tentar('google', entrarComGoogle)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Continuar com Google"
-                >
-                  {emCurso === 'google'
-                    ? <ActivityIndicator color={COR_ENTRADA.socialTexto} />
-                    : <GoogleIcon size={18} />}
-                </Pressable>
-
-                {/* O botao da Apple e o OFICIAL, e nao um `Pressable` com o texto "Apple" como
-                    o do Google ao lado.
-                    
-                    Aqui a paridade com a web para no LAYOUT: as Human Interface Guidelines
-                    exigem o botao do sistema (ou um que siga as regras de marca ao pe da letra),
-                    e um botao proprio e motivo de rejeicao. `WHITE_OUTLINE` e a variante que
-                    mais se aproxima do social claro da web, entao a linha continua com dois
-                    botoes de mesmo peso — que e o que a diretriz 4.8 pede. */}
-                {temApple && (
-                  <View style={estilos.social__apple}>
-                    <AppleAuthentication.AppleAuthenticationButton
-                      buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                      buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE}
-                      cornerRadius={RAIO.campoDeEntrada}
-                      style={estilos.botaoDaApple}
-                      onPress={() => tentar('apple', entrarComApple)}
-                    />
-                  </View>
-                )}
+                <BotoesSociais
+                  tipo="entrar"
+                  temApple={temApple}
+                  emCurso={emCurso === 'email' ? null : emCurso}
+                  aoEntrar={(qual) => tentar(qual, qual === 'google' ? entrarComGoogle : entrarComApple)}
+                />
               </View>
 
               <View style={estilos.divisor}>
@@ -228,17 +200,8 @@ const estilos = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 30,
   },
   rotulo: { color: COR_ENTRADA.rotulo, fontSize: 12, fontWeight: '700', marginBottom: 12 },
-  sociais: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  social: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    padding: 12, minHeight: 46,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_ENTRADA.socialContorno,
-    backgroundColor: COR_ENTRADA.socialFundo,
-  },
-  socialTexto: { fontSize: 14, fontWeight: '700', color: COR_ENTRADA.socialTexto },
-  // A coluna da Apple nao leva contorno nem fundo proprios: o botao do sistema traz os dele.
-  social__apple: { flex: 1, minHeight: 46 },
-  botaoDaApple: { flex: 1, minHeight: 46 },
+  /** Só a folga até o divisor: a linha dos botões é do `BotoesSociais`. */
+  sociais: { marginBottom: 20 },
   divisor: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 20 },
   fio: { flex: 1, height: 1, backgroundColor: COR_ENTRADA.divisoria },
   ou: { color: COR_ENTRADA.divisoriaTexto, fontSize: 12 },

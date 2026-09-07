@@ -774,8 +774,17 @@ export const COR_ENTRADA = {
   contornoDoCartao: '#e3eaf3',
   marca: '#52668d',
   rotulo: '#93a4c0',
-  socialContorno: '#dce5f0',
-  socialFundo: '#f6f9ff',
+  /**
+   * O contorno dos botoes sociais.
+   *
+   * E PRETO porque o botao do Sign in with Apple e o do SISTEMA, e ele so aceita tres estilos
+   * (branco, branco com contorno, preto) — nao da para pintar a borda dele. Entao quem se
+   * ajusta e o botao do Google, que copia o contorno do vizinho para os dois parecerem o mesmo
+   * par. E tambem o que as diretrizes de marca do Google pedem para o tema claro: fundo branco
+   * com traco neutro.
+   */
+  socialContorno: '#000000',
+  socialFundo: '#ffffff',
   socialTexto: '#52668d',
   divisoria: '#e6ecf6',
   divisoriaTexto: '#9aabc4',

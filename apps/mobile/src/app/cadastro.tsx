@@ -6,7 +6,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import * as AppleAuthentication from 'expo-apple-authentication';
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -16,8 +15,9 @@ import { authActions } from '@maestra/core/store/slices/auth';
 import { useAppDispatch } from '@maestra/core/store/store';
 import { IDADE_MINIMA, ehMaiorDeIdade, idadeEmAnos } from '@maestra/core/utils/age';
 
+import { BotoesSociais } from '@/casca/BotoesSociais';
 import { CaixaDeAceite } from '@/casca/CaixaDeAceite';
-import { GoogleIcon, MaestraMarca } from '@/icones';
+import { MaestraMarca } from '@/icones';
 import { appleDisponivel, entrarComApple, entrarComGoogle } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 
@@ -213,36 +213,15 @@ export default function Cadastro() {
                 <>
                   <Text style={estilos.titulo}>Criar sua conta</Text>
 
-                  {/* Lado a lado, e não empilhados: a diretriz 4.8 da App Store pede que o
-                      Sign in with Apple tenha a MESMA proeminência dos outros logins sociais, e
-                      empilhado o de cima vira o principal aos olhos de quem lê. */}
                   <View style={estilos.sociais}>
-                    <Pressable
-                      style={({ pressed }) => [estilos.social, pressed && estilos.pressionado]}
-                      disabled={social !== null}
-                      onPress={() => void entrarPor('google', entrarComGoogle)}
-                      accessibilityRole="button"
-                      accessibilityLabel="Continuar com Google"
-                    >
-                      {social === 'google'
-                        ? <ActivityIndicator color={COR_ENTRADA.socialTexto} />
-                        : <GoogleIcon size={18} />}
-                    </Pressable>
-
-                    {/* O botão da Apple é o OFICIAL, e não um `Pressable` com o texto "Apple":
-                        as Human Interface Guidelines exigem o do sistema, e um próprio é motivo
-                        de rejeição. `SIGN_UP` porque aqui a ação é criar conta. */}
-                    {temApple && (
-                      <View style={estilos.social__apple}>
-                        <AppleAuthentication.AppleAuthenticationButton
-                          buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}
-                          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE}
-                          cornerRadius={RAIO.campoDeEntrada}
-                          style={estilos.botaoDaApple}
-                          onPress={() => void entrarPor('apple', entrarComApple)}
-                        />
-                      </View>
-                    )}
+                    <BotoesSociais
+                      tipo="cadastrar"
+                      temApple={temApple}
+                      emCurso={social}
+                      aoEntrar={(qual) => void entrarPor(
+                        qual, qual === 'google' ? entrarComGoogle : entrarComApple,
+                      )}
+                    />
                   </View>
 
                   <View style={estilos.divisor}>
@@ -449,17 +428,8 @@ const estilos = StyleSheet.create({
     fontSize: 20, fontWeight: '800', color: COR_ENTRADA.marca, marginBottom: 16,
   },
   apoio: { fontSize: 14, lineHeight: 20, color: COR_ENTRADA.apoio, marginBottom: 18 },
-  sociais: { flexDirection: 'row', gap: 10, marginBottom: 4 },
-  social: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    padding: 12, minHeight: 46,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_ENTRADA.socialContorno,
-    backgroundColor: COR_ENTRADA.socialFundo,
-  },
-  socialTexto: { fontSize: 14, fontWeight: '700', color: COR_ENTRADA.socialTexto },
-  /** A coluna da Apple não leva contorno nem fundo próprios: o botão do sistema traz os dele. */
-  social__apple: { flex: 1, minHeight: 46 },
-  botaoDaApple: { flex: 1, minHeight: 46 },
+  /** Só a folga até o divisor: a linha dos botões é do `BotoesSociais`. */
+  sociais: { marginBottom: 4 },
   divisor: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 18 },
   fio: { flex: 1, height: 1, backgroundColor: COR_ENTRADA.divisoria },
   ou: { color: COR_ENTRADA.divisoriaTexto, fontSize: 12 },
