@@ -239,13 +239,22 @@ export default function Wizard() {
 
   const cabecalho = (comMenu: boolean) => (
     <View style={estilos.cabecalho}>
+      {/* VOLTAR, e não fechar: quem entra aqui vem de dentro do perfil e volta para lá. O ✕
+          prometia sair do app ou descartar o planejamento, que não é o que acontece — o
+          rascunho fica salvo de qualquer jeito.
+
+          O `back` respeita a pilha; o destino declarado é a saída de quem abriu por link
+          direto, com a pilha vazia. É a mesma regra do `CabecalhoDeVolta`. */}
       <Pressable
         style={estilos.sair}
-        onPress={() => router.replace('/perfis')}
+        onPress={() => {
+          if (router.canGoBack()) router.back();
+          else router.replace('/perfis');
+        }}
         accessibilityRole="button"
-        accessibilityLabel="Sair do planejamento"
+        accessibilityLabel="Voltar"
       >
-        <Feather name="x" size={18} color={WZ.quietStrong} />
+        <Feather name="chevron-left" size={24} color={WZ.quietStrong} />
       </Pressable>
       {!!sp?.image && <Image source={{ uri: sp.image }} style={estilos.fotoDoArtista} />}
       <Text style={estilos.titulo} numberOfLines={1}>Crie seu planejamento</Text>
@@ -263,7 +272,7 @@ export default function Wizard() {
           accessibilityRole="button"
           accessibilityLabel="Mais opções"
         >
-          <Feather name="more-vertical" size={18} color={WZ.quietStrong} />
+          <Feather name="more-vertical" size={20} color={WZ.quietStrong} />
         </Pressable>
       )}
     </View>
@@ -725,8 +734,11 @@ const estilos = StyleSheet.create({
     paddingVertical: 10, paddingHorizontal: 14,
     borderBottomWidth: 1, borderBottomColor: WZ.line,
   },
+  // 42×42, como TODO controle redondo do app: o sino, o menu, o voltar das telas folha e o ✕
+  // das etapas de criar perfil e desbloquear. Aqui eram 32, e o botão saía menor que o mesmo
+  // botão duas telas antes.
   sair: {
-    width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center',
+    width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: WZ.line2, backgroundColor: WZ.surface,
   },
   fotoDoArtista: { width: 32, height: 32, borderRadius: 16 },
