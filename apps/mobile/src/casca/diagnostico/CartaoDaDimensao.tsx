@@ -312,6 +312,11 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
       )}
 
       {/* §11.3 — o que a interface é obrigada a dizer, junto do número a que se refere. */}
+      {/* Os campos que aceitam autodeclaração são todos do R, então é aqui que o convite para
+          conectar as redes faz sentido: ao lado das linhas marcadas com †. */}
+      {chave === 'r' && !legado && !!real.flags?.autodeclarados?.length && (
+        <Text style={estilos.aviso}>{AVISOS.autodeclarado}</Text>
+      )}
       {chave === 'a' && !legado && !!real.flags?.aSemBilheteria && (
         <Text style={estilos.aviso}>{AVISOS.semBilheteria}</Text>
       )}

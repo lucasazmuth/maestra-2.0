@@ -186,3 +186,40 @@ describe('o documento do diagnóstico', () => {
     });
   });
 });
+
+// ── Os textos obrigatórios do §11.3 têm que ter CASA ────────────────────────────
+//
+// Eles saíram do bloco genérico no topo da entrega e foram para dentro da dimensão a que
+// pertencem. O risco agora é o oposto do de antes: um deles deixar de ser impresso em algum
+// lugar e desaparecer do produto sem que nada quebre.
+describe('os avisos obrigatórios da tela', () => {
+  const telaDaWeb = fs.readFileSync(
+    path.join(raiz, 'src', 'pages', 'ArtistCreate', 'DiagnosticReport.tsx'), 'utf8',
+  );
+  const cartaoDoApp = fs.readFileSync(
+    path.join(raiz, 'apps', 'mobile', 'src', 'casca', 'diagnostico', 'CartaoDaDimensao.tsx'), 'utf8',
+  );
+
+  it.each([
+    ['a trava do L', 'travaL', "chave === 'l'", "dk === 'l'"],
+    ['a ausência de bilheteria', 'aSemBilheteria', "chave === 'a'", "dk === 'a'"],
+    ['a autodeclaração', 'autodeclarados', "chave === 'r'", "dk === 'r'"],
+  ])('%s é impressa na dimensão certa, nas duas superfícies', (_nome, flag, noApp, naWeb) => {
+    expect(cartaoDoApp).toContain(flag);
+    expect(cartaoDoApp).toContain(noApp);
+    expect(telaDaWeb).toContain(flag);
+    expect(telaDaWeb).toContain(naWeb);
+  });
+
+  it('o saldo negativo e o "não sei" saem junto dos números do E', () => {
+    for (const fonte of [telaDaWeb, cartaoDoApp]) {
+      expect(fonte).toContain('AVISOS.saldoNegativo');
+      expect(fonte).toContain('AVISOS.naoSei');
+    }
+  });
+
+  it('o bloco do topo passa a usar só o que não tem casa', () => {
+    expect(telaDaWeb).toContain('avisosSemLugarProprio');
+    expect(telaDaWeb).not.toContain('avisosDoDiagnostico(');
+  });
+});

@@ -1,7 +1,7 @@
 import { computeRealIndexV4 } from './index';
 import type { RealInputsV4 } from './index';
 import {
-  AVISOS, AVISO_LEGADO, avisosDoDiagnostico, ehLegado, engajamentoExibido,
+  AVISOS, AVISO_LEGADO, avisosDoDiagnostico, avisosSemLugarProprio, ehLegado, engajamentoExibido,
   linhasDaDimensao, resumoDoE, SIIC_ANUAL,
 } from './relatorio';
 
@@ -58,6 +58,26 @@ describe('§11.3 textos obrigatórios', () => {
     const chaves = avisosDoDiagnostico(ri).map((a) => a.chave);
     expect(chaves).toEqual(['travaL', 'saldoNegativo', 'semBilheteria', 'autodeclarado', 'naoSei']);
     expect(avisosDoDiagnostico(ri)[0].texto).toBe(AVISOS.travaL);
+  });
+
+  // Os cinco continuam obrigatórios; o que mudou é ONDE cada um aparece. Os quatro que pertencem
+  // a uma dimensão são impressos dentro do cartão dela, e o bloco do topo some quando não há
+  // aviso de versão — senão o artista lê a mesma frase duas vezes, a primeira sem contexto.
+  it('nenhum dos cinco precisa do bloco do topo na v4', () => {
+    const ri = computeRealIndexV4(base({
+      premios: 4, imprensaRepercussao: true, imprensaFrequencia: 'perene',
+      imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }],
+      revenueSources: { outras: 1_000, editora: 'nao_sei' },
+      investLancamentos12m: 20_000,
+      igFollowersSelf: 4_000,
+    }));
+    expect(avisosDoDiagnostico(ri)).toHaveLength(5);
+    expect(avisosSemLugarProprio(ri)).toEqual([]);
+  });
+
+  it('o aviso de versão fica, porque fala do documento inteiro', () => {
+    expect(avisosSemLugarProprio({ version: 3 }))
+      .toEqual([{ chave: 'legado', texto: AVISO_LEGADO }]);
   });
 });
 

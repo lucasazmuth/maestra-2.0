@@ -79,6 +79,27 @@ export const avisosDoDiagnostico = (ri: Diagnostico | null | undefined): AvisoDo
   return avisos;
 };
 
+/**
+ * Os avisos que NÃO têm lugar próprio na entrega, e por isso precisam de um bloco no topo.
+ *
+ * Todos os textos do §11.3 continuam obrigatórios; o que muda é ONDE eles aparecem. Quatro deles
+ * pertencem a uma dimensão e são impressos dentro do cartão dela, onde ganham o contexto que o
+ * texto sozinho não tem:
+ *
+ *   travaL          → cartão do L
+ *   saldoNegativo   → cartão do E
+ *   semBilheteria   → cartão do A
+ *   naoSei          → cartão do E, nomeando a fonte ("Não informado: Editora")
+ *   autodeclarado   → cartão do R, que é onde moram os campos que aceitam autodeclaração
+ *
+ * Repetir os mesmos textos num bloco no alto, sem dizer de qual fonte ou de qual campo se trata,
+ * é a mesma frase duas vezes — e a primeira, a genérica, chega antes do artista ter lido um
+ * número sequer. O que sobra para o topo é o aviso de VERSÃO, que fala do documento inteiro e
+ * não cabe em cartão nenhum.
+ */
+export const avisosSemLugarProprio = (ri: Diagnostico | null | undefined): AvisoDoRelatorio[] =>
+  avisosDoDiagnostico(ri).filter((a) => a.chave === 'legado');
+
 /** O valor e a origem de um campo de entrada da v4. Fora da v4, devolve o número cru sem origem. */
 const medida = (ri: Diagnostico, campo: string): { value: number | null; fonte?: Proveniencia } => {
   const m = ri?.inputs?.[campo];

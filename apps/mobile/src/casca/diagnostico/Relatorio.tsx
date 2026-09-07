@@ -17,7 +17,7 @@ import { autoriaDoDocumento } from '@maestra/core/documentos/diagnostico';
 import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { LEITURAS_CURTAS } from '@maestra/core/constants/realTextos';
 import { retratoDoPerfil } from '@maestra/core/services/realEngine/comentarios';
-import { avisosDoDiagnostico } from '@maestra/core/services/realEngine/relatorio';
+import { avisosSemLugarProprio } from '@maestra/core/services/realEngine/relatorio';
 
 /** O padrão de bits R E A L de um perfil, que é a chave dos textos (§5.2, §5.3). */
 const chaveDoPerfil = (bits: Record<string, boolean>) =>
@@ -246,12 +246,12 @@ export const Relatorio = ({
         {/*
           Os avisos obrigatórios da entrega (§11.3), e o de versão anterior (§13.2).
           
-          Cada um também aparece junto do número a que se refere, dentro do cartão da dimensão;
-          aqui eles ficam onde quem só passa os olhos vai ver. Num diagnóstico antigo este bloco
-          é só o aviso da versão: as flags da v4 nem existem lá, e repetir os outros afirmaria
-          coisas sobre dados que aquele diagnóstico nunca coletou.
+          Sobrou o aviso de VERSÃO, que fala do documento inteiro. Os outros quatro vivem dentro
+          da dimensão a que pertencem, onde dizem de qual fonte ou de qual campo se trata — aqui
+          em cima eram a mesma frase sem a informação que a torna útil, e chegavam antes de o
+          artista ter lido um número sequer. Ver `avisosSemLugarProprio`.
         */}
-        {avisosDoDiagnostico(real).map((av) => (
+        {avisosSemLugarProprio(real).map((av) => (
           <View key={av.chave} style={[estilos.aviso, estilos.avisoDaEntrega]}>
             <Text style={estilos.avisoDaEntregaTexto}>{av.texto}</Text>
           </View>

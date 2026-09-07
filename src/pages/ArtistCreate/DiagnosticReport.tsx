@@ -23,7 +23,7 @@ import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '@maestra/core/services/realEngine/comentarios';
 import {
-  AVISOS, avisosDoDiagnostico, ehLegado, linhasDaDimensao, resumoDoE, SIIC_MENSAL,
+  AVISOS, avisosSemLugarProprio, ehLegado, linhasDaDimensao, resumoDoE, SIIC_MENSAL,
 } from '@maestra/core/services/realEngine/relatorio';
 import {
   CHAMADA_DO_PLANEJAMENTO, dimNarrative, METODOLOGIA, QUEM_ASSINA,
@@ -455,6 +455,11 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
           </div>
         );
       })()}
+      {/* §11.3.2 — os campos que aceitam autodeclaração são todos do R, então é aqui que o
+          convite para conectar as redes faz sentido: ao lado das linhas marcadas com †. */}
+      {dk === 'r' && !ehLegado(ri) && !!ri.flags?.autodeclarados?.length && (
+        <div className={styles.dimAviso}>{AVISOS.autodeclarado}</div>
+      )}
       {dk === 'a' && !ehLegado(ri) && ri.flags?.aSemBilheteria && (
         <div className={styles.dimAviso}>{AVISOS.semBilheteria}</div>
       )}
@@ -543,9 +548,10 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
   const isV2 = riAny.version === 2;
   // O motor com boletim e componentes: v3 e v4. A v2 e a v1 caem no cartão antigo.
   const isV3 = riAny.version === 3 || riAny.version === 4;
-  // `avisosDoDiagnostico` já distingue o legado: num diagnóstico da versão anterior ele devolve
-  // só o aviso da versão, porque as flags da v4 nem existem lá.
-  const avisos = avisosDoDiagnostico(riAny);
+  // Só o que não tem cartão para chamar de seu — hoje, o aviso de versão. Os outros quatro do
+  // §11.3 são impressos dentro da dimensão a que pertencem, onde dizem de qual fonte ou de qual
+  // campo se trata; aqui em cima eles eram a mesma frase sem a informação que a torna útil.
+  const avisos = avisosSemLugarProprio(riAny);
   const { profile, pattern } = realIndex;
   // Acento da página segue a fase REAL (tier da placa) — coerente com a identidade de gamificação.
   const realTier = tierForPattern(pattern);
@@ -766,11 +772,10 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
       {belowProfile}
 
       {/*
-        Os avisos obrigatórios da interface (§11.3), reunidos antes das dimensões.
+        O aviso de VERSÃO (§13.2), que fala do documento inteiro e não cabe em cartão nenhum.
 
-        Cada um também aparece junto do número a que se refere; aqui eles ficam onde quem só
-        passa os olhos pela entrega vai ver. O do legado (§13.2) substitui os demais: num
-        diagnóstico da versão anterior, as flags da v4 nem existem.
+        Os outros quatro textos obrigatórios do §11.3 saíram daqui: cada um vive dentro da
+        dimensão a que pertence — ver `avisosSemLugarProprio`.
       */}
       {avisos.length > 0 && (
         <div className={`${styles.avisosBloco} ${styles.reveal}`} style={{ animationDelay: '0.14s' }}>

@@ -217,14 +217,13 @@ describe('diagnostico REAL na v4', () => {
     expect(tela.getByText('informativo, não entra no diagnóstico')).toBeTruthy();
   });
 
-  it('mostra os textos obrigatórios que se aplicam a este diagnóstico', async () => {
+  it('mostra os textos obrigatórios uma vez, dentro da dimensão a que pertencem', async () => {
     const tela = await montar();
-    // Sem bilheteria (§11.3.6) aparece DUAS vezes de propósito: no bloco de avisos do topo, que
-    // é o que quem só passa os olhos vê, e dentro do cartão do A, junto do número a que se
-    // refere. É o mesmo desenho da web.
-    expect(tela.getAllByText(/o público real não pode ser comprovado/)).toHaveLength(2);
-    // A fonte "não sei" (§11.3.4), idem: no topo e na composição da receita.
-    expect(tela.getAllByText(/parte da gestão da carreira/).length).toBeGreaterThanOrEqual(1);
+    // Estes textos já apareceram DUAS vezes: no bloco genérico do topo e dentro do cartão. O
+    // bloco do topo dizia a mesma frase sem dizer de qual fonte ou de qual campo se tratava, e
+    // chegava antes de o artista ter lido um número. Ficou só a versão com contexto.
+    expect(tela.getAllByText(/o público real não pode ser comprovado/)).toHaveLength(1);
+    expect(tela.getAllByText(/parte da gestão da carreira/)).toHaveLength(1);
   });
 
   // §13.2 — um diagnóstico da versão anterior tem que DIZER que é, e não herdar os avisos da v4:
