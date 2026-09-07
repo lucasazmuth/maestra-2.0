@@ -590,7 +590,10 @@ const estilos = StyleSheet.create({
 
   // O cabeçalho da ENTREGA: foto, o nome de quem recebe e o "está pronto". Mesmas proporções da
   // web (avatar de 60, título de 22, apoio de 13), porque é a mesma tela.
-  entrega: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  // O mesmo `paddingTop: 22` do `CabecalhoDoModulo`, que é quem dá o recuo de cima nas telas de
+  // revisita. Sem ele, o cabeçalho da entrega nascia colado no fio do topo — as três molduras
+  // não acrescentam recuo nenhum, de propósito: ele é todo do cabeçalho.
+  entrega: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingTop: 22 },
   entregaFoto: { width: 60, height: 60, borderRadius: 30 },
   entregaTitulo: {
     fontSize: 22, fontWeight: '800', lineHeight: 27, letterSpacing: -0.3,
