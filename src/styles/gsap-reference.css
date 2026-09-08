@@ -439,8 +439,20 @@
   box-shadow: 0 6px 22px rgba(105, 122, 159, 0.11);
 }
 
+/* `flex: none` e `max-height` alinhado ao JS.
+ *
+ * O `flex: 1` do textarea (nytaChatUI.scss) foi escrito quando esta linha era HORIZONTAL: ali
+ * ele significava "ocupe a largura que sobra ao lado do botão". Quando o campo virou cartão em
+ * coluna, o mesmo `flex: 1` passou a mandar na ALTURA — e com `flex-basis: 0` a altura que o
+ * `resizeTextarea` calcula (`style.height`) era simplesmente ignorada. O campo ficava travado em
+ * uma linha por mais que se escrevesse, com o texto rolando por dentro de 26px.
+ *
+ * E o teto tem que ser o MESMO dos dois lados: o JS para de crescer em `MAX_ROWS * lineHeight`
+ * (6 × 22 = 132) e o CSS cortava em 80. */
 .nyta-surface .nyta-input-bar__textarea {
+  flex: none;
   min-height: 26px;
+  max-height: 132px;
   padding: 2px 2px 0;
   color: #40506e;
   font-size: 15px;
@@ -10217,4 +10229,16 @@ body:has(.track-detail-backdrop) .local-player-bar {
   height: 100%;
   margin-top: 0;
   padding-bottom: 0;
+}
+
+/* O botão de parar: o MESMO círculo do enviar, com o quadrado no lugar da seta. Ele não é um
+   controle a mais na tela — é o de enviar mudando de função enquanto a Nyta escreve, que é o
+   único momento em que parar faz sentido. */
+.nyta-surface .nyta-send--parar {
+  background: #22314f;
+  color: #fff;
+}
+
+.nyta-surface .nyta-send--parar:hover {
+  background: #33456d;
 }

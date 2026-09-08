@@ -34,7 +34,7 @@ const NytaChatPage: FC = () => {
   const {
     messages, isStreaming, pendingToolCalls, rateLimitInfo, loadingHistory, hasMoreHistory,
     error, unavailableModules, conversationId,
-    loadOlderMessages, sendMessage, confirmTool, cancelTool,
+    loadOlderMessages, sendMessage, stopStreaming, confirmTool, cancelTool,
     selectConversation, startNewConversation,
   } = useNytaChat('route', handleConversation);
   const { artist } = useArtist();
@@ -144,6 +144,7 @@ const NytaChatPage: FC = () => {
         <div className="nyta-chat-page__input">
           <InputBar
             onSend={sendMessage}
+            onStop={stopStreaming}
             disabled={isStreaming}
             rateLimitInfo={rateLimitInfo}
             pendingToolCalls={pendingToolCalls}

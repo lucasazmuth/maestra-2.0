@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { FiArrowUp, FiClock } from 'react-icons/fi';
+import { FiArrowUp, FiClock, FiSquare } from 'react-icons/fi';
 
 import { CONVITE_DO_CAMPO, RESSALVA_DA_NYTA } from '@maestra/core/constants/nytaChat';
 import type { PendingToolCall, RateLimitInfo } from '@maestra/core/store/slices/nytaChat';
@@ -34,6 +34,12 @@ function formatCountdown(resetAt: string): string {
 
 export interface InputBarProps {
   onSend: (message: string) => void;
+  /**
+   * Interrompe a resposta em andamento. Enquanto a Nyta escreve, o botão de enviar VIRA este —
+   * é o mesmo lugar, e não um controle a mais na tela. Numa resposta longa que saiu do assunto,
+   * a única saída era esperar até o fim.
+   */
+  onStop?: () => void;
   disabled: boolean;
   rateLimitInfo: RateLimitInfo | null;
   pendingToolCalls: PendingToolCall[];
@@ -45,6 +51,7 @@ export interface InputBarProps {
 
 export const InputBar: FC<InputBarProps> = ({
   onSend,
+  onStop,
   disabled,
   rateLimitInfo,
   pendingToolCalls,
@@ -191,15 +198,28 @@ export const InputBar: FC<InputBarProps> = ({
               {value.length}/{MAX_CHARS}
             </span>
           )}
-          <button
-            className="nyta-send"
-            onClick={handleSend}
-            disabled={!canSend}
-            aria-label="Enviar"
-            type="button"
-          >
-            <FiArrowUp size={18} />
-          </button>
+          {/* `disabled` é o sinal de que há resposta em andamento (ver `isStreaming` na página). */}
+          {disabled && onStop ? (
+            <button
+              className="nyta-send nyta-send--parar"
+              onClick={onStop}
+              aria-label="Parar a resposta"
+              title="Parar a resposta"
+              type="button"
+            >
+              <FiSquare size={12} fill="currentColor" />
+            </button>
+          ) : (
+            <button
+              className="nyta-send"
+              onClick={handleSend}
+              disabled={!canSend}
+              aria-label="Enviar"
+              type="button"
+            >
+              <FiArrowUp size={18} />
+            </button>
+          )}
         </div>
       </div>
 

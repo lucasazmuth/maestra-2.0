@@ -69,7 +69,7 @@ export default function Nyta() {
     messages, isStreaming, pendingToolCalls, rateLimitInfo, loadingHistory, hasMoreHistory,
     error, unavailableModules,
     conversationId,
-    loadOlderMessages, sendMessage, confirmTool, cancelTool,
+    loadOlderMessages, sendMessage, stopStreaming, confirmTool, cancelTool,
     selectConversation, startNewConversation,
   } = useNytaChat('route', conversaMudou);
 
@@ -304,19 +304,33 @@ export default function Nyta() {
                 {texto.length >= AVISAR_A_PARTIR_DE && (
                   <Text style={estilos.disclaimer}>{texto.length}/{MAXIMO_DE_LETRAS}</Text>
                 )}
-                <Pressable
-                  style={[estilos.enviar, (!texto.trim() || isStreaming) && estilos.enviarInativo]}
-                  onPress={enviar}
-                  disabled={!texto.trim() || isStreaming}
-                  accessibilityRole="button"
-                  accessibilityLabel="Enviar"
-                >
-                  <Feather
-                    name="arrow-up"
-                    size={18}
-                    color={!texto.trim() || isStreaming ? COR_NYTA.espacoReservado : COR.sobrePrimaria}
-                  />
-                </Pressable>
+                {/* Enquanto a Nyta escreve, o botao de enviar VIRA o de parar. É o mesmo
+                    lugar, e não um controle a mais: parar só faz sentido nesse momento, e numa
+                    resposta longa que saiu do assunto a única saída era esperar até o fim. */}
+                {isStreaming ? (
+                  <Pressable
+                    style={estilos.enviar}
+                    onPress={stopStreaming}
+                    accessibilityRole="button"
+                    accessibilityLabel="Parar a resposta"
+                  >
+                    <Feather name="square" size={13} color={COR.sobrePrimaria} />
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    style={[estilos.enviar, !texto.trim() && estilos.enviarInativo]}
+                    onPress={enviar}
+                    disabled={!texto.trim()}
+                    accessibilityRole="button"
+                    accessibilityLabel="Enviar"
+                  >
+                    <Feather
+                      name="arrow-up"
+                      size={18}
+                      color={!texto.trim() ? COR_NYTA.espacoReservado : COR.sobrePrimaria}
+                    />
+                  </Pressable>
+                )}
               </View>
             </View>
             <Text style={[estilos.disclaimer, estilos.ressalva]}>{RESSALVA_DA_NYTA}</Text>

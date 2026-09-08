@@ -1015,6 +1015,22 @@ function streamGroqResponse(
   hasPlan: boolean = true
 ): Response {
   const enc = new TextEncoder();
+
+  /**
+   * O QUE ACONTECE QUANDO A PESSOA APERTA "PARAR".
+   *
+   * Ela corta a leitura do lado dela, e só. Sem o `cancel` abaixo, o Groq continuava gerando o
+   * texto inteiro e o servidor o gravava completo — então a resposta reaparecia INTEIRA ao
+   * reabrir a conversa, como se o botão não tivesse feito nada. E os tokens eram cobrados até o
+   * fim de uma resposta que ninguém ia ler.
+   *
+   * Estas duas referências existem para o `cancel` alcançar o que o `start` está fazendo: o
+   * abort da chamada ao Groq, e o texto acumulado até o corte, que é o que fica gravado.
+   */
+  let abortarGeracao: (() => void) | null = null;
+  let textoAteAqui = "";
+  let jaGravou = false;
+
   const stream = new ReadableStream({
     async start(ctrl) {
       const sse = (d: Record<string, unknown>) => {
@@ -1032,6 +1048,7 @@ function streamGroqResponse(
       }
 
       const ac = new AbortController();
+      abortarGeracao = () => ac.abort();
       const tid = setTimeout(() => {
         ac.abort();
       }, GROQ_TIMEOUT_MS);
@@ -1084,6 +1101,7 @@ function streamGroqResponse(
               const d = ch.delta;
               if (d?.content) {
                 full += d.content;
+                textoAteAqui = full;
                 sse({ type: "text", content: d.content });
               }
               if (d?.tool_calls) {
@@ -1121,6 +1139,7 @@ function streamGroqResponse(
           sse({ type: "tool_call", tool_call_id: tc.id, name: tc.name, arguments: pa });
         }
         const tca = calls.length ? calls : null;
+        jaGravou = true;
         const mid = await persistAssistantMessage(convId, full, tca, authHeader);
         if (mid) sse({ type: "done", message_id: mid });
         else sse({ type: "error", message: "Resposta gerada mas não salva." });
@@ -1133,6 +1152,20 @@ function streamGroqResponse(
           sse({ type: "error", message: "Erro interno. Tente novamente." });
         }
         ctrl.close();
+      }
+    },
+
+    /**
+     * O cliente foi embora: apertou "parar", fechou a tela, perdeu a rede.
+     *
+     * Parar de gerar é o ponto. Gravar o pedaço também: sem isso a conversa perderia o trecho
+     * que a pessoa acabou de ler, e a próxima abertura mostraria um buraco onde havia texto.
+     */
+    async cancel() {
+      abortarGeracao?.();
+      if (!jaGravou && textoAteAqui.trim()) {
+        jaGravou = true;
+        await persistAssistantMessage(convId, textoAteAqui, null, authHeader);
       }
     },
   });

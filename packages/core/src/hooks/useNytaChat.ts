@@ -102,6 +102,8 @@ export interface UseNytaChatReturn {
   selectConversation: (id: string) => Promise<void>;
   startNewConversation: () => void;
   sendMessage: (text: string) => void;
+  /** Interrompe a resposta em andamento, guardando o que já chegou. */
+  stopStreaming: () => void;
   confirmTool: (toolCallId: string) => void;
   cancelTool: (toolCallId: string) => void;
   loadOlderMessages: () => void;
@@ -146,6 +148,15 @@ export function useNytaChat(
 
   // Abort controller ref for cancelling in-flight streams
   const abortRef = useRef<AbortController | null>(null);
+  /**
+   * Quem cortou o streaming: a pessoa, ou um acidente.
+   *
+   * O mesmo `abort()` serve para trocar de conversa, desmontar a tela e para o botão de parar,
+   * e as consequências são opostas — parar de propósito GUARDA o que já foi escrito, e não
+   * marca a mensagem como falha. Sem esta marca, apertar "parar" deixaria na conversa o mesmo
+   * "Não foi possível completar a resposta" de uma queda de rede.
+   */
+  const paradoPelaPessoa = useRef(false);
 
   // Em ref pra que trocar o callback não recrie processStream (e com ele todo o sendMessage).
   const onConversationRef = useRef(onConversation);
@@ -359,12 +370,35 @@ export function useNytaChat(
             );
           }
         }
+      } catch (err) {
+        // Parar é uma decisão, não um defeito: o que a Nyta já escreveu fica na conversa, como
+        // resposta encerrada. Sem isto o `AbortError` subiria como rejeição não tratada e a
+        // mensagem ficaria em `sending` para sempre.
+        if (paradoPelaPessoa.current) {
+          dispatch(updateMessage({ id: assistantMsgId, status: 'sent' }));
+        } else {
+          throw err;
+        }
       } finally {
+        paradoPelaPessoa.current = false;
         dispatch(setStreaming(false));
       }
     },
     [dispatch]
   );
+
+  /**
+   * Interrompe a resposta em andamento, sem apagar o que já chegou.
+   *
+   * O `AbortController` já existia aqui — trocar de artista ou de conversa aborta a requisição
+   * em voo —, mas nenhuma das duas telas oferecia isso a quem está lendo. Numa resposta longa
+   * que já saiu do assunto, a única saída era esperar até o fim.
+   */
+  const stopStreaming = useCallback(() => {
+    if (!abortRef.current) return;
+    paradoPelaPessoa.current = true;
+    abortRef.current.abort();
+  }, []);
 
   // ─── POST to Edge Function (with module_context) ──────────────────────────
 
@@ -509,8 +543,17 @@ export function useNytaChat(
       });
 
       if (!response) {
-        dispatch(updateMessage({ id: userMsgId, status: 'error' }));
-        dispatch(updateMessage({ id: assistantMsgId, status: 'error', content: null }));
+        // Parar ANTES da resposta chegar continua sendo parar: o `postToNytaChat` devolve `null`
+        // no `AbortError` igual a uma queda de rede, e sem esta distinção a conversa ficaria com
+        // "Não foi possível completar a resposta" por causa de um botão que a pessoa apertou.
+        if (paradoPelaPessoa.current) {
+          paradoPelaPessoa.current = false;
+          dispatch(updateMessage({ id: userMsgId, status: 'sent' }));
+          dispatch(updateMessage({ id: assistantMsgId, status: 'sent', content: null }));
+        } else {
+          dispatch(updateMessage({ id: userMsgId, status: 'error' }));
+          dispatch(updateMessage({ id: assistantMsgId, status: 'error', content: null }));
+        }
         dispatch(setStreaming(false));
         return;
       }
@@ -766,6 +809,7 @@ export function useNytaChat(
     selectConversation,
     startNewConversation,
     sendMessage,
+    stopStreaming,
     confirmTool,
     cancelTool,
     loadOlderMessages,
