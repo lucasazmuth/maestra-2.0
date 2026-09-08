@@ -18,10 +18,16 @@
  *
  * Só o primeiro nome: o cadastro guarda o nome inteiro, e "Em que eu ajudo hoje, Lucas Andrade
  * Santos?" não é como ninguém cumprimenta ninguém.
+ *
+ * E com a inicial maiúscula, porque o campo do cadastro é livre e muita gente digita tudo em
+ * caixa baixa. "Em que eu ajudo hoje, lucas?" lê como defeito da tela, e não como o nome que a
+ * pessoa escreveu. Só a PRIMEIRA letra é tocada: o resto fica como veio, senão "McCartney"
+ * viraria "Mccartney" e "MC Bin" viraria "Mc Bin".
  */
 export const saudacaoDaNyta = (nomeDeQuemEntrou?: string | null): string => {
   const primeiro = (nomeDeQuemEntrou ?? '').trim().split(/\s+/)[0];
-  return primeiro ? `Em que eu ajudo hoje, ${primeiro}?` : 'Em que eu ajudo hoje?';
+  if (!primeiro) return 'Em que eu ajudo hoje?';
+  return `Em que eu ajudo hoje, ${primeiro[0].toUpperCase()}${primeiro.slice(1)}?`;
 };
 
 /** O convite dentro do campo. Curto: a saudação acima já fez as honras. */
