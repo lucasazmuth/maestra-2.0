@@ -400,7 +400,38 @@ export function useNytaChat(
     abortRef.current.abort();
 
     /**
-     * E MAIS NADA. Nem recarregar, nem limpar.
+     * E AVISA O SERVIDOR, porque abortar aqui nem sempre chega lá.
+     *
+     * Na web, fechar a conexão dispara o `cancel` do stream na edge function e a geração morre
+     * junto. No app não: o `abort` do `expo/fetch` interrompe a leitura, mas não fecha a conexão
+     * de um jeito que o runtime propague. Medido: a mesma parada gravou 924 caracteres pela web
+     * e 9.185 pelo app — a resposta inteira, que reaparecia completa na abertura seguinte, ao
+     * contrário do que a tela tinha mostrado.
+     *
+     * Quem gera está em OUTRO isolate, então o recado vai pelo banco (ver `action: 'stop'`). É
+     * disparo e esquece de propósito: parar já aconteceu nesta tela, e uma falha em avisar não
+     * pode desfazer isso — no pior caso a geração termina sozinha, que é o que acontecia antes.
+     *
+     * A chamada é direta, e não pelo `postToNytaChat`: aquele guarda o `AbortController` dele em
+     * `abortRef`, e usá-lo aqui faria o pedido de parada substituir a referência da resposta que
+     * acabamos de abortar — a próxima parada abortaria o aviso, e não a geração.
+     */
+    if (conversationId) {
+      void (async () => {
+        const token = await getAccessToken();
+        if (!token) return;
+        await ambiente().buscar(`${SUPABASE_URL}/functions/v1/nyta-chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ action: 'stop', conversation_id: conversationId }),
+        });
+      })().catch(() => {
+        /* avisar é melhor-esforço: parar já aconteceu na tela (ver acima) */
+      });
+    }
+
+    /**
+     * E MAIS NADA na tela. Nem recarregar, nem limpar.
      *
      * Isto já releu a conversa do servidor, para a tela bater com o que ficou gravado. Fazia
      * sentido quando dava para parar ANTES da primeira palavra: a tela ficava sem resposta e o
@@ -412,7 +443,7 @@ export function useNytaChat(
      * O que sobra de divergência é o buffer em voo: o servidor grava o que enfileirou, e este
      * lado mostra o que recebeu. São algumas palavras no fim, e não um parágrafo.
      */
-  }, []);
+  }, [conversationId]);
 
   // ─── POST to Edge Function (with module_context) ──────────────────────────
 
