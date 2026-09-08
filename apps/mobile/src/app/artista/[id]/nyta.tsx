@@ -25,6 +25,7 @@ import { Conversas } from '@/casca/nyta/Conversas';
 import { RecursoBloqueado } from '@/casca/nyta/RecursoBloqueado';
 import { TextoDaNyta } from '@/casca/nyta/TextoDaNyta';
 import { useArtistaDaRota } from '@/nucleo/artista';
+import { useTecladoAberto } from '@/nucleo/teclado';
 import { useSessao } from '@/nucleo/sessao';
 
 // A Nyta em tela cheia — a porta de `src/pages/NytaChat/index.tsx`.
@@ -57,6 +58,7 @@ export default function Nyta() {
   const [texto, setTexto] = useState('');
   const [naLista, setNaLista] = useState(false);
   const margem = useSafeAreaInsets();
+  const tecladoAberto = useTecladoAberto();
   const { conversations, loading: carregandoConversas, refresh, rename, remove } =
     useNytaConversations(id);
 
@@ -207,9 +209,12 @@ export default function Nyta() {
     <KeyboardAvoidingView
       style={estilos.tela}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      // O cabeçalho do artista fica acima desta tela: sem o deslocamento, o teclado empurra a
-      // conversa por baixo dele.
-      keyboardVerticalOffset={110}
+      // ZERO, e o número importa: com `behavior='padding'` o deslocamento é SOMADO ao espaço
+      // que o teclado ocupa, então cada ponto aqui vira um ponto de vão entre o campo e as
+      // teclas. Os 110 que moravam aqui compensavam o cabeçalho do artista, que ficava acima
+      // desta tela. Ele não fica mais: nesta rota o `_layout` não desenha nem o cabeçalho nem a
+      // barra de abas, e a tela ocupa a janela inteira.
+      keyboardVerticalOffset={0}
     >
       <CabecalhoDoChat
         artista={artista}
@@ -278,7 +283,10 @@ export default function Nyta() {
         <Text style={estilos.linhaDaFalha} accessibilityRole="alert">{avisoDeFalha}</Text>
       )}
 
-      <View style={[estilos.barra, { paddingBottom: margem.bottom }]}>
+      {/* A margem de baixo só existe enquanto a barra de gestos do aparelho está à mostra. Com
+          o teclado aberto quem ocupa aquele lugar é o próprio teclado, e manter a margem
+          empurrava o campo mais 34px para cima. */}
+      <View style={[estilos.barra, { paddingBottom: tecladoAberto ? 0 : margem.bottom }]}>
         {noLimite ? (
           <View style={estilos.limite}>
             <Feather name="clock" size={18} color={COR_NYTA.limiteTitulo} />

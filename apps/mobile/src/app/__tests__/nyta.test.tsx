@@ -1,4 +1,8 @@
-import { render, userEvent } from '@testing-library/react-native';
+import fs from 'fs';
+import path from 'path';
+
+import { act, render, userEvent } from '@testing-library/react-native';
+import { Keyboard, StyleSheet } from 'react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 
@@ -158,5 +162,76 @@ describe('a Nyta', () => {
 
       expect(tela.getByLabelText('Abrir conversa: Nova conversa')).toBeTruthy();
     });
+  });
+});
+
+
+// O CAMPO E O TECLADO.
+//
+// Com o teclado aberto o campo ficava uma tira vazia acima das teclas. Duas medidas somavam para
+// isso, e nenhuma delas aparece lendo o JSX de relance:
+//
+// 1. o `keyboardVerticalOffset` do `KeyboardAvoidingView` é SOMADO ao espaço do teclado quando o
+//    `behavior` é `padding` — cada ponto ali vira um ponto de vão. Os 110 que moravam lá
+//    compensavam o cabeçalho do artista, que esta rota deixou de desenhar;
+// 2. a margem de baixo do aparelho continuava aplicada, e com o teclado aberto quem ocupa aquele
+//    lugar é o próprio teclado.
+//
+// Nada disso quebra em teste de renderização comum: a tela monta igual, com teclado ou sem.
+describe('a Nyta · o campo quando o teclado sobe', () => {
+  // O `Keyboard` do RN não é mais um emissor com `emit`, então quem dispara os eventos aqui é o
+  // próprio ouvinte que a tela registrou: o espião guarda a função por nome do evento.
+  const ouvintes: Record<string, (e: unknown) => void> = {};
+
+  beforeEach(() => {
+    mockPro = true;
+    mockConversas = [];
+    jest.spyOn(Keyboard, 'addListener').mockImplementation((evento: string, fn: any) => {
+      ouvintes[evento] = fn;
+      return { remove: () => { delete ouvintes[evento]; } } as any;
+    });
+  });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  /** O recuo de baixo da barra do campo: sobe pela árvore até achar quem o define. */
+  const recuoDeBaixo = (tela: Awaited<ReturnType<typeof montar>>): number | undefined => {
+    let no: any = tela.getByLabelText('Pergunte algo à Nyta');
+    for (let passo = 0; passo < 6 && no; passo += 1) {
+      const estilo = StyleSheet.flatten(no.props?.style) as { paddingBottom?: number } | undefined;
+      if (typeof estilo?.paddingBottom === 'number' && estilo.paddingBottom !== 10) {
+        return estilo.paddingBottom;
+      }
+      no = no.parent;
+    }
+    return undefined;
+  };
+
+  // Zero, e o número é o ponto: com `behavior='padding'` o deslocamento é somado ao espaço do
+  // teclado, então qualquer valor aqui é vão puro entre o campo e as teclas.
+  //
+  // Lido da FONTE, e não da árvore: o `KeyboardAvoidingView` não desenha nada de si no ambiente
+  // de teste (não há teclado para evitar), então a prop não chega a lugar nenhum que se possa
+  // consultar. É o mesmo molde dos testes de regra que leem CSS na web.
+  it('o deslocamento do teclado é zero, porque não há barra acima desta tela', () => {
+    const fonte = fs.readFileSync(
+      path.join(__dirname, '..', 'artista', '[id]', 'nyta.tsx'), 'utf8',
+    );
+
+    expect(fonte).toContain('keyboardVerticalOffset={0}');
+  });
+
+  it('a margem do aparelho some enquanto o teclado está aberto', async () => {
+    const tela = await montar();
+
+    // Fechado, a margem existe: é ela que tira o campo de cima da barra de gestos.
+    expect(recuoDeBaixo(tela)).toBe(34);
+
+    await act(async () => { ouvintes.keyboardWillShow?.({ endCoordinates: { height: 336 } }); });
+    expect(recuoDeBaixo(tela)).toBe(0);
+
+    // E volta quando ele fecha, senão o campo encosta na barra de gestos.
+    await act(async () => { ouvintes.keyboardWillHide?.({}); });
+    expect(recuoDeBaixo(tela)).toBe(34);
   });
 });
