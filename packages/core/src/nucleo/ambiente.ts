@@ -38,7 +38,7 @@ export interface Ambiente {
    * nenhum, o que é pior — parece lentidão, não defeito.
    *
    * O `expo/fetch` tem `body` como `ReadableStream`, então o app registra ele aqui. Na web o
-   * `fetch` global já basta.
+   * `fetch` global já basta — LIGADO ao `globalThis`, ver `comBinding` abaixo.
    */
   buscar: typeof fetch;
 }
@@ -104,6 +104,20 @@ interface GlobalDoNavegador {
   location?: { origin?: string };
 }
 
+/**
+ * O `fetch` do navegador, preso ao `globalThis`.
+ *
+ * `buscar: fetch` guarda a função SOLTA, e quem chama escreve `ambiente().buscar(...)` — uma
+ * chamada de MÉTODO, com `this` valendo o objeto do ambiente. O `fetch` do navegador recusa
+ * isso: "Failed to execute 'fetch' on 'Window': Illegal invocation".
+ *
+ * O erro não aparecia como erro. Ele era um `TypeError` dentro do `try` do `postToNytaChat`,
+ * que o transformava em "Erro de conexão. Verifique sua internet." — a web culpando a internet
+ * de quem estava usando por um problema de binding, com a requisição nunca saindo do navegador.
+ * No app nada quebrava: o `fetch` do `expo/fetch` não depende de `this`.
+ */
+const comBinding: typeof fetch = (...args) => fetch(...args);
+
 let avisou = false;
 
 const padrao = (): Ambiente => {
@@ -124,14 +138,14 @@ const padrao = (): Ambiente => {
           'Usando memória: nada sobrevive ao fechamento. Chame configurarAmbiente() no boot.'
       );
     }
-    return { armazenamento: emMemoria(), sessao: emMemoria(), origemDoApp: '', buscar: fetch };
+    return { armazenamento: emMemoria(), sessao: emMemoria(), origemDoApp: '', buscar: comBinding };
   }
 
   return {
     armazenamento: doNavegador(local),
     sessao: sessao ? doNavegador(sessao) : emMemoria(),
     origemDoApp: g.location?.origin ?? '',
-    buscar: fetch,
+    buscar: comBinding,
   };
 };
 

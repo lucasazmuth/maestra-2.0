@@ -2,7 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_NYTA, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_NYTA, RAIO, COR_CONVERSAS } from '@maestra/core/constants/design';
 import {
   buildActionSummary, formatArgValue, HIDDEN_ARG_KEYS, translateArgLabel, translateToolName,
 } from '@maestra/core/nucleo/acoesDaNyta';
@@ -14,13 +14,19 @@ import type { PendingToolCall } from '@maestra/core/store/slices/nytaChat';
 // O texto deste cartão É o consentimento: por isso ele não fala em `create_catalog_item` nem
 // mostra UUID nenhum — as tabelas de tradução vivem no núcleo e são as MESMAS da web.
 
-export const CartaoDeAcao = ({ acao, aoConfirmar, aoCancelar }: {
+export const CartaoDeAcao = ({ acao, aoConfirmar, aoCancelar, somenteLeitura = false }: {
   acao: PendingToolCall;
-  aoConfirmar: (id: string) => void;
-  aoCancelar: (id: string) => void;
+  aoConfirmar?: (id: string) => void;
+  aoCancelar?: (id: string) => void;
+  /**
+   * O mesmo cartão, no histórico da conversa: mostra O QUE a Nyta fez e como terminou, sem
+   * oferecer decisão. Uma ação que já rodou não se confirma de novo, e uma que falhou há três
+   * dias não se repete por um botão que sobrou na tela.
+   */
+  somenteLeitura?: boolean;
 }) => {
   const campos = Object.entries(acao.arguments).filter(([chave]) => !HIDDEN_ARG_KEYS.has(chave));
-  const decidindo = acao.status === 'pending' || acao.status === 'error';
+  const decidindo = !somenteLeitura && (acao.status === 'pending' || acao.status === 'error');
 
   return (
     <View style={estilos.cartao}>
@@ -59,7 +65,7 @@ export const CartaoDeAcao = ({ acao, aoConfirmar, aoCancelar }: {
       )}
       {(acao.status === 'confirmed' || acao.status === 'done') && (
         <View style={estilos.estado}>
-          <Feather name="check" size={14} color={COR_NYTA.textoDoArtista} />
+          <Feather name="check" size={14} color={COR_CONVERSAS.destaqueTexto} />
           <Text style={estilos.estadoTexto}>Ação executada</Text>
         </View>
       )}
@@ -73,7 +79,7 @@ export const CartaoDeAcao = ({ acao, aoConfirmar, aoCancelar }: {
         <View style={estilos.botoes}>
           <Pressable
             style={[estilos.botao, estilos.confirmar]}
-            onPress={() => aoConfirmar(acao.toolCallId)}
+            onPress={() => aoConfirmar?.(acao.toolCallId)}
             accessibilityRole="button"
             accessibilityLabel="Confirmar ação"
           >
@@ -82,11 +88,11 @@ export const CartaoDeAcao = ({ acao, aoConfirmar, aoCancelar }: {
           </Pressable>
           <Pressable
             style={[estilos.botao, estilos.cancelar]}
-            onPress={() => aoCancelar(acao.toolCallId)}
+            onPress={() => aoCancelar?.(acao.toolCallId)}
             accessibilityRole="button"
             accessibilityLabel="Cancelar ação"
           >
-            <Feather name="x" size={14} color={COR_NYTA.bolhaTexto} />
+            <Feather name="x" size={14} color={COR_CONVERSAS.nome} />
             <Text style={estilos.cancelarTexto}>Cancelar</Text>
           </Pressable>
         </View>
@@ -102,18 +108,18 @@ const estilos = StyleSheet.create({
     gap: 10,
     borderRadius: RAIO.cartao,
     borderWidth: 1,
-    borderColor: COR_NYTA.bolhaContorno,
-    backgroundColor: COR_NYTA.bolha,
+    borderColor: COR_CONVERSAS.contorno,
+    backgroundColor: COR_NYTA.cartao,
   },
   flex: { flex: 1 },
   cabecalho: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   rotulo: { color: COR_NYTA.limiteTexto, fontSize: 11, fontWeight: '700' },
   nome: { flex: 1, color: COR.titulo, fontSize: 13, fontWeight: '800' },
-  resumo: { color: COR_NYTA.bolhaTexto, fontSize: 13, lineHeight: 20 },
+  resumo: { color: COR_CONVERSAS.nome, fontSize: 13, lineHeight: 20 },
   campos: { gap: 6, paddingTop: 4 },
   campo: { flexDirection: 'row', gap: 6 },
   campoRotulo: { color: COR_NYTA.limiteTexto, fontSize: 12, fontWeight: '700' },
-  campoValor: { flex: 1, color: COR_NYTA.bolhaTexto, fontSize: 12, lineHeight: 18 },
+  campoValor: { flex: 1, color: COR_CONVERSAS.nome, fontSize: 12, lineHeight: 18 },
   estado: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   estadoTexto: { color: COR_NYTA.limiteTexto, fontSize: 12, fontWeight: '700' },
   botoes: { flexDirection: 'row', gap: 8 },
@@ -128,6 +134,6 @@ const estilos = StyleSheet.create({
   },
   confirmar: { backgroundColor: COR.primaria },
   confirmarTexto: { color: COR.sobrePrimaria, fontSize: 13, fontWeight: '800' },
-  cancelar: { borderWidth: 1, borderColor: COR_NYTA.campoContorno, backgroundColor: COR_NYTA.bolha },
-  cancelarTexto: { color: COR_NYTA.bolhaTexto, fontSize: 13, fontWeight: '700' },
+  cancelar: { borderWidth: 1, borderColor: COR_NYTA.campoContorno, backgroundColor: COR_NYTA.cartao },
+  cancelarTexto: { color: COR_CONVERSAS.nome, fontSize: 13, fontWeight: '700' },
 });

@@ -100,8 +100,41 @@ describe('ambiente', () => {
 describe('a porta de busca', () => {
   afterEach(() => reiniciarAmbiente());
 
-  it('sem configuração, é o fetch global', () => {
-    expect(ambiente().buscar).toBe(fetch);
+  it('sem configuração, delega para o fetch global', async () => {
+    const global = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('ok'));
+
+    await ambiente().buscar('https://exemplo/x');
+
+    expect(global).toHaveBeenCalledWith('https://exemplo/x');
+    global.mockRestore();
+  });
+
+  // O DEFEITO QUE ESTE ARQUIVO DEIXOU PASSAR.
+  //
+  // Aqui se afirmava `expect(ambiente().buscar).toBe(fetch)` — identidade com o global. Só que
+  // guardar a função SOLTA faz de `ambiente().buscar(...)` uma chamada de MÉTODO, com `this`
+  // valendo o objeto do ambiente, e o `fetch` do navegador recusa isso: "Failed to execute
+  // 'fetch' on 'Window': Illegal invocation".
+  //
+  // O jsdom não reproduz a recusa (o `fetch` dele é função comum), então o teste passava e a
+  // web quebrava. E quebrava CALADA: o TypeError caía no `try` do `postToNytaChat` e virava
+  // "Erro de conexão. Verifique sua internet." — a web culpando a internet de quem estava
+  // usando, com a requisição nunca saindo do navegador. No app nada acontecia, porque o
+  // `expo/fetch` não depende de `this`.
+  //
+  // O que se prende agora não é a identidade, é o `this` da chamada.
+  it('não chama o fetch global como método do ambiente', async () => {
+    let esteThis: unknown = '(não chamado)';
+    const original = globalThis.fetch;
+    globalThis.fetch = function (this: unknown) {
+      esteThis = this;
+      return Promise.resolve(new Response('ok'));
+    } as typeof fetch;
+
+    await ambiente().buscar('https://exemplo/x');
+    globalThis.fetch = original;
+
+    expect(esteThis).not.toBe(ambiente());
   });
 
   it('a superfície pode trocar por um que saiba fazer streaming', async () => {
@@ -113,6 +146,5 @@ describe('a porta de busca', () => {
     await ambiente().buscar('https://exemplo/x');
 
     expect(proprio).toHaveBeenCalledWith('https://exemplo/x');
-    expect(ambiente().buscar).not.toBe(fetch);
   });
 });

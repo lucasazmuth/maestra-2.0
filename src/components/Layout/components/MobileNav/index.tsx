@@ -37,7 +37,20 @@ const matchArtistId = (pathname: string): string | undefined => {
 // Espelhado em `navExcluded` no Layout: os dois PRECISAM concordar, senão o app reserva no rodapé
 // um espaço para uma barra que não é renderizada.
 export const isNavExcludedRoute = (pathname: string): boolean =>
-  pathname === '/artists' || pathname.startsWith('/admin');
+  pathname === '/artists' || pathname.startsWith('/admin') || isImmersiveRoute(pathname);
+
+/**
+ * Telas que tomam a tela inteira: sem a barra da Maestra em cima e sem a tab bar embaixo.
+ *
+ * Só o chat da Nyta, por ora. Ele é uma conversa que se lê e se escreve, e as duas barras
+ * roubavam a altura justamente do que importa ali. Sair é pelo botão de voltar da própria faixa
+ * do chat — que passa a ser a única do topo.
+ *
+ * Separado do `isNavExcludedRoute` acima porque as duas regras dizem coisas diferentes: aquela
+ * é "não há artista no contexto", esta é "há, e é só disto que a tela trata".
+ */
+export const isImmersiveRoute = (pathname: string): boolean =>
+  /^\/artists\/[^/]+\/nyta$/.test(pathname);
 
 type Item = { icon: ReactNode; label: string; suffix: string };
 export const MobileNav: FC = () => {

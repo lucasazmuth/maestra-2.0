@@ -2,6 +2,7 @@ import { render, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 
+import { saudacaoDaNyta } from '@maestra/core/constants/nytaChat';
 import { store } from '@maestra/core/store/store';
 import Nyta from '../artista/[id]/nyta';
 
@@ -78,40 +79,59 @@ describe('a Nyta', () => {
     expect(tela.queryByLabelText('Pergunte algo à Nyta')).toBeNull();
   });
 
+  // A conversa em branco abre com UMA LINHA, e não com a apresentação de sete que a Nyta
+  // repetia toda vez ("Oi! Eu sou a Nyta, sua assistente estratégica..."). Aquilo tomava a
+  // primeira tela inteira e ninguém lia duas vezes.
   it('com PRO, abre a conversa com a saudação e o campo', async () => {
     mockPro = true;
     const tela = await montar();
 
-    expect(tela.getByText(/Oi! Eu sou a Nyta/)).toBeTruthy();
+    expect(tela.getByText(saudacaoDaNyta())).toBeTruthy();
+    expect(tela.queryByText(/Oi! Eu sou a Nyta/)).toBeNull();
     expect(tela.getByLabelText('Pergunte algo à Nyta')).toBeTruthy();
     expect(tela.queryByText('Nyta Assistente')).toBeNull();
   });
 
-  // A navegação em dois níveis: a lista de conversas é o nível de trás, e o "voltar" do
-  // cabeçalho do chat leva até ela — não para fora da Nyta. Um "voltar" que saísse da tela
-  // deixaria o histórico inalcançável, que foi como o app viveu até agora.
+  // A lista de conversas tem BOTÃO PRÓPRIO na faixa do chat.
+  //
+  // Ela já foi o nível de trás — o "voltar" levava até ela, e era de lá que se saía para o
+  // perfil. Aquilo existia porque não havia outro caminho para o histórico, e cobrava dois
+  // toques de quem só queria sair. Com um botão para as conversas, a seta pode significar o que
+  // uma seta significa: sair. O que não pode voltar é o histórico ficar inalcançável, e é isso
+  // que estes casos guardam.
   describe('o histórico de conversas', () => {
     beforeEach(() => { mockPro = true; });
 
-    it('o voltar do chat leva à lista, e não para fora da Nyta', async () => {
+    it('o botão das conversas abre a lista, sem sair da Nyta', async () => {
       mockConversas = [
         { id: 'c-1', title: 'Lançamento do single', updatedAt: '2026-08-29T09:00:00', userId: 'u-1' },
       ];
       const tela = await montar();
 
-      await userEvent.setup().press(tela.getByLabelText('Voltar para as conversas'));
+      await userEvent.setup().press(tela.getByLabelText('Ver as conversas'));
 
-      expect(tela.getByText('CONVERSAS')).toBeTruthy();
+      expect(tela.getByText('Conversas')).toBeTruthy();
       expect(tela.getByText('Lançamento do single')).toBeTruthy();
       expect(mockPush).not.toHaveBeenCalled();
     });
 
-    it('é de dentro da lista que se sai para o perfil', async () => {
+    // A seta sai da conversa DIRETO, sem passar pela lista. Ela levava à lista, e quem só
+    // queria voltar ao perfil pagava dois toques por um histórico que não tinha pedido.
+    it('a seta sai da conversa para o perfil, num toque', async () => {
+      mockConversas = [];
+      const tela = await montar();
+
+      await userEvent.setup().press(tela.getByLabelText('Sair da conversa'));
+
+      expect(mockPush).toHaveBeenCalledWith('/artista/a-1');
+    });
+
+    it('e de dentro da lista também se sai para o perfil', async () => {
       mockConversas = [];
       const tela = await montar();
       const usuario = userEvent.setup();
 
-      await usuario.press(tela.getByLabelText('Voltar para as conversas'));
+      await usuario.press(tela.getByLabelText('Ver as conversas'));
       await usuario.press(tela.getByLabelText('Voltar para o perfil'));
 
       expect(mockPush).toHaveBeenCalledWith('/artista/a-1');
@@ -121,7 +141,7 @@ describe('a Nyta', () => {
       mockConversas = [];
       const tela = await montar();
 
-      await userEvent.setup().press(tela.getByLabelText('Voltar para as conversas'));
+      await userEvent.setup().press(tela.getByLabelText('Ver as conversas'));
 
       expect(tela.getByText('Suas conversas com a Nyta aparecem aqui.')).toBeTruthy();
     });
@@ -134,7 +154,7 @@ describe('a Nyta', () => {
       ];
       const tela = await montar();
 
-      await userEvent.setup().press(tela.getByLabelText('Voltar para as conversas'));
+      await userEvent.setup().press(tela.getByLabelText('Ver as conversas'));
 
       expect(tela.getByLabelText('Abrir conversa: Nova conversa')).toBeTruthy();
     });

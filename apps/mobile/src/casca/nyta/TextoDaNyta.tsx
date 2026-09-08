@@ -51,14 +51,16 @@ export const TextoDaNyta = ({ texto }: { texto: string }) => {
   );
 };
 
+// Corpo de LEITURA, e não de conferência: a resposta saiu do balão e passou a ser o texto da
+// página, então 15px com entrelinha larga, como na web.
 const estilos = StyleSheet.create({
-  texto: { color: COR_NYTA.bolhaTexto, fontSize: 13, lineHeight: 20 },
+  texto: { color: COR_NYTA.resposta, fontSize: 15, lineHeight: 24 },
   flex: { flex: 1 },
-  negrito: { fontWeight: '800' },
+  negrito: { fontWeight: '800', color: COR_NYTA.respostaForte },
   italico: { fontStyle: 'italic' },
-  titulo: { fontSize: 15, fontWeight: '800', lineHeight: 21 },
-  // A folga entre blocos vive no bloco SEGUINTE: assim o primeiro encosta no topo da bolha.
-  espaco: { marginTop: 8 },
+  titulo: { fontSize: 15, fontWeight: '800', lineHeight: 22, color: COR_NYTA.respostaForte },
+  // A folga entre blocos vive no bloco SEGUINTE: assim o primeiro encosta no topo do bloco.
+  espaco: { marginTop: 12 },
   item: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  marcador: { color: COR_NYTA.bolhaTexto, fontSize: 13, lineHeight: 20, fontWeight: '700' },
+  marcador: { color: COR_NYTA.marcador, fontSize: 15, lineHeight: 24, fontWeight: '700' },
 });

@@ -42,11 +42,9 @@
 
   &__title {
     flex: 1;
-    color: #52688f;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
+    color: #8496b3;
+    font-size: 13px;
+    font-weight: 600;
   }
 
   &__new {
@@ -237,15 +235,11 @@
     }
   }
 
-  // A navbar inferior flutua por cima: a última conversa da lista precisa passar por baixo dela.
+  // A gaveta ocupa a tela inteira e a rota do chat não desenha mais a barra de abas (ver
+  // `isImmersiveRoute`), então esta reserva de 112px guardava altura para uma barra que não
+  // existe: um vão morto no fim da lista.
   .nyta-conversations__list {
-    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
-  }
-
-  // Sair da Nyta no mobile é a barra inferior (a foto do perfil na primeira célula) — este
-  // "voltar" repetia o mesmo destino dentro de uma tela que já é o nível de trás.
-  .nyta-conversations__back {
-    display: none;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
 
 

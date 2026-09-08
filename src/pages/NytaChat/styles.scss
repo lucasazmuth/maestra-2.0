@@ -40,42 +40,18 @@
     flex: none;
   }
 
-  &__error-banner {
-    display: flex;
+  // A falha que o fio da conversa NÃO conta: uma linha acima do campo, no lugar e no tamanho da
+  // ressalva da Nyta. Era um cartão vermelho com contorno e botão de fechar, flutuando sobre a
+  // conversa — e dizendo, em duplicata, o que a mensagem marcada como erro já dizia.
+  &__aviso {
     flex: none;
-    gap: 8px;
-    align-items: center;
-    margin: 12px 24px 0;
-    padding: 10px 14px;
-    border: 1px solid #f3c9d2;
-    border-radius: 10px;
-    background: #fdeef1;
+    margin: 0;
+    padding: 0 18px 2px;
     color: #c0405c;
-    font-size: 13px;
+    font-size: 11px;
     line-height: 1.4;
+    text-align: center;
     animation: nytaChatFadeUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
-  }
-
-  &__error-text {
-    flex: 1;
-  }
-
-  &__error-dismiss {
-    flex: none;
-    padding: 2px 6px;
-    border: 0;
-    border-radius: 4px;
-    background: none;
-    color: inherit;
-    font-size: 14px;
-    line-height: 1;
-    opacity: 0.7;
-    cursor: pointer;
-    transition: opacity 0.15s;
-
-    &:hover {
-      opacity: 1;
-    }
   }
 
   &__module-warning {
@@ -102,25 +78,31 @@
     flex: none;
   }
 
-  // Estado vazio: a saudação ocupa o miolo, com a caixa de texto ancorada embaixo.
+  // Estado vazio: o emblema e uma linha, centrados no miolo, com a caixa de texto ancorada
+  // embaixo. Era um balão de sete linhas se apresentando, que ocupava a primeira tela inteira.
   &__greeting {
     display: flex;
     flex: 1;
     min-height: 0;
     flex-direction: column;
+    gap: 18px;
     align-items: center;
     justify-content: center;
     padding: 32px 16px;
     text-align: center;
+    animation: nytaChatFadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
 
-  &__greeting-bubble {
-    display: flex;
-    max-width: 560px;
-    gap: 10px;
-    align-items: flex-end;
-    animation: nytaChatFadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
-    text-align: left;
+  // Grande e de peso leve. O tamanho é o que faz a linha ser a saudação da tela em vez de mais
+  // um título do app; o peso leve é o que a impede de gritar.
+  &__greeting-text {
+    max-width: 460px;
+    margin: 0;
+    color: #4a5b78;
+    font-size: 27px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
   }
 }
 
@@ -135,7 +117,6 @@
 
 @media (max-width: 768px) {
   .nyta-chat-page {
-    &__error-banner,
     &__module-warning {
       margin-right: 16px;
       margin-left: 16px;
@@ -145,8 +126,8 @@
       padding: 24px 12px;
     }
 
-    &__greeting-bubble {
-      max-width: 100%;
+    &__greeting-text {
+      font-size: 24px;
     }
   }
 }

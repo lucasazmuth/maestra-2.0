@@ -11,19 +11,21 @@ import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_NYTA, RAIO } from '@maestra/core/constants/design';
 import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
+import { CONVITE_DO_CAMPO, RESSALVA_DA_NYTA, saudacaoDaNyta } from '@maestra/core/constants/nytaChat';
 import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
 import { useNytaChat } from '@maestra/core/hooks/useNytaChat';
 import { useNytaConversations } from '@maestra/core/hooks/useNytaConversations';
+import { acoesDoHistorico } from '@maestra/core/nucleo/acoesDaNyta';
 import type { NytaChatMessage } from '@maestra/core/store/slices/nytaChat';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
-import { FotoDoArtista } from '@/casca/FotoDoArtista';
 import { CabecalhoDoChat } from '@/casca/nyta/CabecalhoDoChat';
 import { CartaoDeAcao } from '@/casca/nyta/CartaoDeAcao';
 import { Conversas } from '@/casca/nyta/Conversas';
 import { RecursoBloqueado } from '@/casca/nyta/RecursoBloqueado';
 import { TextoDaNyta } from '@/casca/nyta/TextoDaNyta';
 import { useArtistaDaRota } from '@/nucleo/artista';
+import { useSessao } from '@/nucleo/sessao';
 
 // A Nyta em tela cheia — a porta de `src/pages/NytaChat/index.tsx`.
 //
@@ -39,17 +41,18 @@ import { useArtistaDaRota } from '@/nucleo/artista';
 // conversas é o nível de trás e a conversa fica por cima dela. É o que a web faz abaixo de
 // 900px, onde a coluna lateral não cabe — no celular só existe essa forma.
 
-const SAUDACAO =
-  'Oi! Eu sou a Nyta, sua assistente estratégica aqui na Maestra. '
-  + 'Pode me perguntar qualquer coisa sobre seu planejamento, músicas, agenda ou equipe — '
-  + 'e eu também posso executar ações por você, sempre com sua confirmação. Como posso te ajudar?';
-
 const MAXIMO_DE_LETRAS = 1000;
+// A contagem só aparece quando começa a importar. Um "0/1000" fixo não informa nada em 99% das
+// mensagens: só conta que existe um limite, e ocupa o rodapé com isso.
+const AVISAR_A_PARTIR_DE = MAXIMO_DE_LETRAS - 150;
 
 export default function Nyta() {
   const { id, pergunta } = useLocalSearchParams<{ id: string; pergunta?: string }>();
   const artista = useArtistaDaRota(id);
   const router = useRouter();
+  const { sessao } = useSessao();
+  const dadosDaConta = (sessao?.user.user_metadata ?? {}) as Record<string, unknown>;
+  const nomeDeQuemEntrou = (dadosDaConta.full_name ?? dadosDaConta.name) as string | undefined;
   const direitos = useEntitlements();
   const [texto, setTexto] = useState('');
   const [naLista, setNaLista] = useState(false);
@@ -66,15 +69,32 @@ export default function Nyta() {
     messages, isStreaming, pendingToolCalls, rateLimitInfo, loadingHistory, hasMoreHistory,
     error, unavailableModules,
     conversationId,
-    loadOlderMessages, sendMessage, confirmTool, cancelTool, dismissError,
-    selectConversation, startNewConversation, clearConversation,
+    loadOlderMessages, sendMessage, stopStreaming, confirmTool, cancelTool,
+    selectConversation, startNewConversation,
   } = useNytaChat('route', conversaMudou);
 
-  // A conversa cresce por baixo: sem isto, cada pedaço que chega fica fora da vista e a pessoa
-  // vê a tela parada enquanto a Nyta escreve.
-  useEffect(() => {
-    if (messages.length) lista.current?.scrollToEnd({ animated: true });
-  }, [messages.length, isStreaming]);
+  /**
+   * A conversa abre no FIM, e cresce por baixo.
+   *
+   * Havia um efeito que rolava ao mudar `messages.length`, e ele nao dava conta de ABRIR a
+   * tela: quando o historico chega de uma vez, o efeito roda antes de o FlatList ter medido as
+   * linhas, e o `scrollToEnd` mira uma altura que ainda nao existe. A conversa abria no topo, e
+   * quem entrava tinha que rolar ate embaixo para achar o que acabou de ser dito.
+   *
+   * Quem sabe a altura de verdade e o `onContentSizeChange` (ver `assentar`, no FlatList). O
+   * primeiro pouso e SEM animacao — animar uma rolagem de tela inteira que a pessoa nao pediu
+   * mostra o historico passando voando —, e dai em diante e animado, que e o certo para o texto
+   * que chega enquanto a Nyta escreve.
+   */
+  const jaAssentou = useRef(false);
+  const assentar = useCallback(() => {
+    if (!messages.length) return;
+    lista.current?.scrollToEnd({ animated: jaAssentou.current });
+    jaAssentou.current = true;
+  }, [messages.length]);
+
+  // Trocar de conversa e abrir outra tela: a nova tambem tem que pousar no fim, sem animacao.
+  useEffect(() => { jaAssentou.current = false; }, [conversationId]);
 
   // Apagar a conversa aberta deixaria a tela mostrando mensagens que não existem mais.
   const excluir = useCallback(async (alvo: string) => {
@@ -119,24 +139,53 @@ export default function Nyta() {
   const Mensagem = ({ item }: { item: NytaChatMessage }) => {
     // As mensagens de ferramenta são o registro do que a Nyta executou; quem mostra isso é o
     // cartão de ação, não uma bolha com JSON dentro.
-    if (item.role === 'tool' || !item.content) return null;
+    // As mensagens `tool` são o registro cru do que voltou do servidor; quem mostra isso é o
+    // cartão, montado a partir da mensagem da Nyta que PEDIU a ação. Uma mensagem dela sem
+    // texto mas com ações não some mais: era ela que carregava o cartão.
+    if (item.role === 'tool') return null;
+    if (!item.content && !item.toolCalls?.length) return null;
     const doArtista = item.role === 'user';
 
-    return (
-      <View style={[estilos.linha, doArtista && estilos.linhaDoArtista]}>
-        {doArtista
-          ? <FotoDoArtista artista={artista} tamanho={30} />
-          : <EmblemaNyta size={30} />}
-        <View style={[estilos.bolha, doArtista && estilos.bolhaDoArtista]}>
-          {/* Só a Nyta escreve markdown; o que o artista digita é texto e fica como digitado —
-              um `*` numa pergunta não deve virar itálico. */}
-          {doArtista
-            ? <Text style={[estilos.texto, estilos.textoDoArtista]}>{item.content}</Text>
-            : <TextoDaNyta texto={item.content} />}
-        </View>
+    // A resposta da Nyta NÃO tem recipiente: nem moldura, nem avatar. É texto na própria tela,
+    // na largura toda. A pergunta de quem escreve é o único recipiente da conversa, à direita.
+    // Ver `COR_NYTA` para o porquê das duas regras.
+    //
+    // Só a Nyta escreve markdown; o que a pessoa digita fica como digitado — um `*` numa
+    // pergunta não deve virar itálico.
+    return doArtista ? (
+      <View style={estilos.linhaDaPergunta}>
+        <Text style={estilos.pergunta}>{item.content}</Text>
+      </View>
+    ) : (
+      <View style={estilos.resposta}>
+        {!!item.content && <TextoDaNyta texto={item.content} />}
+        {acoesDoHistorico(item, messages, pendingToolCalls.map((a) => a.toolCallId)).map((acao) => (
+          <View key={acao.toolCallId} style={estilos.acaoDoHistorico}>
+            <CartaoDeAcao acao={acao} somenteLeitura />
+          </View>
+        ))}
       </View>
     );
   };
+
+  // A FAIXA VERMELHA NO TOPO SAIU.
+  //
+  // Ela dizia "Erro de conexão" no mesmo instante em que o fio dizia "Não foi possível completar
+  // a resposta": dois avisos para uma falha, e o mais feio dos dois logo abaixo do cabeçalho.
+  // Toda falha de envio marca a mensagem com `status: 'error'` (ver `useNytaChat`), então o fio
+  // já conta a história. O que ele NÃO conta é a conversa que não carregou — ali não há mensagem
+  // para marcar, e é só esse caso que sobra como linha acima do campo.
+  const falhaNoFio = messages.some((m) => m.status === 'error');
+  const avisoDeFalha =
+    error && error !== 'subscription_required' && !falhaNoFio ? error : null;
+
+  // Só dá para parar depois que a resposta COMEÇOU: entre o envio e a primeira palavra o
+  // servidor ainda monta o pedido, e abortar ali derruba a requisição antes de a PERGUNTA ser
+  // gravada — a mensagem que a pessoa acabou de digitar some da conversa. Ver a nota igual em
+  // `src/pages/NytaChat/index.tsx`.
+  const respostaComecou = messages.some(
+    (m) => m.role === 'assistant' && m.status === 'sending' && !!m.content,
+  );
 
   if (naLista) {
     return (
@@ -164,21 +213,10 @@ export default function Nyta() {
     >
       <CabecalhoDoChat
         artista={artista}
-        usadas={rateLimitInfo?.count ?? null}
-        limite={rateLimitInfo?.limit ?? null}
+        aoSair={() => router.push(`/artista/${id}` as never)}
         aoAbrirConversas={() => setNaLista(true)}
-        aoLimpar={clearConversation}
       />
 
-      {!!error && error !== 'subscription_required' && (
-        <View style={estilos.erro} accessibilityRole="alert">
-          <Feather name="alert-circle" size={16} color={COR.erro} />
-          <Text style={estilos.erroTexto}>{error}</Text>
-          <Pressable onPress={dismissError} hitSlop={10} accessibilityLabel="Fechar erro">
-            <Feather name="x" size={16} color={COR.erro} />
-          </Pressable>
-        </View>
-      )}
 
       {unavailableModules.length > 0 && (
         <View style={estilos.aviso}>
@@ -193,13 +231,12 @@ export default function Nyta() {
       )}
 
       {messages.length === 0 && !loadingHistory ? (
+        // A conversa em branco abre com uma SAUDAÇÃO centrada, e não com uma mensagem da Nyta se
+        // apresentando em sete linhas. Aquilo tomava a primeira tela inteira e ninguém lia duas
+        // vezes: quem abre o chat pela décima vez já sabe quem é a Nyta.
         <View style={estilos.saudacao}>
-          <View style={estilos.linha}>
-            <EmblemaNyta size={30} />
-            <View style={estilos.bolha}>
-              <TextoDaNyta texto={SAUDACAO} />
-            </View>
-          </View>
+          <EmblemaNyta size={34} />
+          <Text style={estilos.saudacaoTexto}>{saudacaoDaNyta(nomeDeQuemEntrou)}</Text>
         </View>
       ) : (
         <FlatList
@@ -212,6 +249,7 @@ export default function Nyta() {
           // cima procurando o que já foi dito, e é ali que faltam mensagens.
           onStartReached={hasMoreHistory ? loadOlderMessages : undefined}
           onStartReachedThreshold={0.2}
+          onContentSizeChange={assentar}
           ListHeaderComponent={loadingHistory ? (
             <ActivityIndicator style={estilos.carregando} color={COR.primaria} />
           ) : null}
@@ -226,22 +264,21 @@ export default function Nyta() {
                 />
               ))}
               {isStreaming && !messages[messages.length - 1]?.content && (
-                <View style={estilos.linha}>
-                  <EmblemaNyta size={30} />
-                  <View style={estilos.bolha}>
-                    <ActivityIndicator size="small" color={COR_NYTA.espacoReservado} />
-                  </View>
-                </View>
+                <ActivityIndicator size="small" color={COR_NYTA.espera} style={estilos.espera} />
               )}
             </>
           )}
         />
       )}
 
-      {/* A ilha de navegação passa POR CIMA do conteúdo, então o rodapé do chat reserva a
-          altura dela — os mesmos 104px que a web reserva aqui (ver NytaChat/styles.scss). Sem
-          isso, o campo de escrever nasce debaixo da barra. */}
-      <View style={[estilos.barra, { paddingBottom: 104 + margem.bottom }]}>
+      {/* A reserva de 104px para a ilha de navegação saiu junto com ela: nesta rota a barra de
+          abas não é renderizada (ver `_layout.tsx`), e reservar altura para uma barra que não
+          existe deixava uma tira vazia embaixo do campo. */}
+      {!!avisoDeFalha && (
+        <Text style={estilos.linhaDaFalha} accessibilityRole="alert">{avisoDeFalha}</Text>
+      )}
+
+      <View style={[estilos.barra, { paddingBottom: margem.bottom }]}>
         {noLimite ? (
           <View style={estilos.limite}>
             <Feather name="clock" size={18} color={COR_NYTA.limiteTitulo} />
@@ -256,34 +293,55 @@ export default function Nyta() {
           </View>
         ) : (
           <>
+            {/* Um CARTÃO, e não uma linha: o texto em cima ocupando a largura toda, os
+                controles numa fileira embaixo. Numa linha só, o botão de enviar comia a largura
+                e uma pergunta de duas frases já rolava dentro de um campo baixinho. */}
             <View style={estilos.campo}>
               <TextInput
                 style={estilos.entrada}
                 value={texto}
                 onChangeText={setTexto}
-                placeholder="Pergunte algo à Nyta…"
+                placeholder={CONVITE_DO_CAMPO}
                 placeholderTextColor={COR_NYTA.espacoReservado}
                 maxLength={MAXIMO_DE_LETRAS}
                 multiline
                 editable={!isStreaming}
-                accessibilityLabel="Pergunte algo à Nyta"
+                accessibilityLabel={CONVITE_DO_CAMPO}
               />
-              <Pressable
-                style={[estilos.enviar, (!texto.trim() || isStreaming) && estilos.enviarInativo]}
-                onPress={enviar}
-                disabled={!texto.trim() || isStreaming}
-                accessibilityRole="button"
-                accessibilityLabel="Enviar"
-              >
-                <Feather name="arrow-up" size={18} color={COR.sobrePrimaria} />
-              </Pressable>
+              <View style={estilos.acoesDoCampo}>
+                {texto.length >= AVISAR_A_PARTIR_DE && (
+                  <Text style={estilos.disclaimer}>{texto.length}/{MAXIMO_DE_LETRAS}</Text>
+                )}
+                {/* Enquanto a Nyta escreve, o botao de enviar VIRA o de parar. É o mesmo
+                    lugar, e não um controle a mais: parar só faz sentido nesse momento, e numa
+                    resposta longa que saiu do assunto a única saída era esperar até o fim. */}
+                {isStreaming && respostaComecou ? (
+                  <Pressable
+                    style={estilos.enviar}
+                    onPress={stopStreaming}
+                    accessibilityRole="button"
+                    accessibilityLabel="Parar a resposta"
+                  >
+                    <Feather name="square" size={13} color={COR.sobrePrimaria} />
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    style={[estilos.enviar, (!texto.trim() || isStreaming) && estilos.enviarInativo]}
+                    onPress={enviar}
+                    disabled={!texto.trim() || isStreaming}
+                    accessibilityRole="button"
+                    accessibilityLabel="Enviar"
+                  >
+                    <Feather
+                      name="arrow-up"
+                      size={18}
+                      color={!texto.trim() || isStreaming ? COR_NYTA.espacoReservado : COR.sobrePrimaria}
+                    />
+                  </Pressable>
+                )}
+              </View>
             </View>
-            <View style={estilos.rodapeDaBarra}>
-              <Text style={estilos.disclaimer}>
-                A Nyta pode cometer erros. Confira informações importantes.
-              </Text>
-              <Text style={estilos.disclaimer}>{texto.length}/{MAXIMO_DE_LETRAS}</Text>
-            </View>
+            <Text style={[estilos.disclaimer, estilos.ressalva]}>{RESSALVA_DA_NYTA}</Text>
           </>
         )}
       </View>
@@ -294,61 +352,68 @@ export default function Nyta() {
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR_NYTA.fundo },
   flex: { flex: 1 },
-  conversa: { padding: 24, paddingBottom: 8 },
-  saudacao: { flex: 1, padding: 24 },
+  conversa: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 },
+  saudacao: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 18, padding: 24 },
+  // Grande e de peso leve: o tamanho é o que faz a linha ser a saudação da tela em vez de mais
+  // um título do app, e o peso leve é o que a impede de gritar.
+  saudacaoTexto: {
+    maxWidth: 440, color: COR_NYTA.resposta, fontSize: 26, fontWeight: '400',
+    lineHeight: 34, textAlign: 'center',
+  },
   carregando: { marginBottom: 18 },
 
-  linha: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 18 },
-  linhaDoArtista: { flexDirection: 'row-reverse', alignItems: 'flex-end' },
-  bolha: {
-    maxWidth: '80%',
-    paddingVertical: 13,
+  // A resposta: sem moldura, na largura toda. A pergunta: o único recipiente, à direita.
+  resposta: { marginBottom: 26 },
+  linhaDaPergunta: { alignItems: 'flex-end', marginBottom: 26 },
+  pergunta: {
+    maxWidth: '84%',
+    paddingVertical: 11,
     paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: COR_NYTA.bolhaContorno,
-    backgroundColor: COR_NYTA.bolha,
-    // Os cantos são assimétricos e opostos entre si: é o rabinho que diz quem falou, sem
-    // precisar de rótulo. Da Nyta, quadrado embaixo à esquerda; do artista, à direita.
-    borderRadius: 14,
-    borderBottomLeftRadius: 4,
+    borderRadius: 18,
+    backgroundColor: COR_NYTA.pergunta,
+    color: COR_NYTA.perguntaTexto,
+    fontSize: 15,
+    lineHeight: 22,
   },
-  bolhaDoArtista: {
-    borderWidth: 0,
-    backgroundColor: COR_NYTA.bolhaDoArtista,
-    borderBottomLeftRadius: 14,
-    borderBottomRightRadius: 4,
-  },
-  texto: { color: COR_NYTA.bolhaTexto, fontSize: 13, lineHeight: 20 },
-  textoDoArtista: { color: COR_NYTA.textoDoArtista },
+  espera: { alignSelf: 'flex-start', marginBottom: 26 },
+  acaoDoHistorico: { marginTop: 12 },
 
-  erro: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12,
-    borderBottomWidth: 1, borderBottomColor: COR_NYTA.erroContorno, backgroundColor: COR_NYTA.erroFundo,
-  },
-  erroTexto: { flex: 1, color: COR.erro, fontSize: 12, lineHeight: 17 },
+  // A falha que o fio da conversa NÃO conta: uma linha acima do campo, no tamanho da ressalva
+  // da Nyta. Era uma faixa vermelha com ícone e botão de fechar, logo abaixo do cabeçalho, que
+  // dizia em duplicata o que a mensagem marcada como erro já dizia.
+  linhaDaFalha: { marginBottom: 6, color: COR.erro, fontSize: 11, lineHeight: 16, textAlign: 'center' },
   aviso: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 12,
     backgroundColor: COR_NYTA.limiteFundo,
   },
   avisoTexto: { flex: 1, color: COR_NYTA.limiteTexto, fontSize: 11, lineHeight: 16 },
 
-  barra: {
-    paddingTop: 14, paddingHorizontal: 18, paddingBottom: 12,
-    borderTopWidth: 1, borderTopColor: COR_NYTA.barraContorno, backgroundColor: COR_NYTA.bolha,
-  },
+  // Sem fio e sem faixa branca: a caixa flutua sobre o mesmo fundo da conversa. A borda que
+  // separava o campo era um segundo traço a dois pixels do primeiro, e o que ela marcava — onde
+  // acaba a conversa e começa o que se escreve — o próprio cartão já marca.
+  barra: { paddingTop: 8, paddingHorizontal: 18 },
   campo: {
-    flexDirection: 'row', alignItems: 'flex-end', gap: 8, padding: 8,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_NYTA.campoContorno,
-    backgroundColor: COR_NYTA.bolha,
+    gap: 6, paddingTop: 12, paddingHorizontal: 14, paddingBottom: 10,
+    borderRadius: 20, borderWidth: 1, borderColor: COR_NYTA.campoContorno,
+    backgroundColor: COR.superficie,
+    shadowColor: 'rgba(105, 122, 159, .18)', shadowOpacity: 1,
+    shadowOffset: { width: 0, height: 6 }, shadowRadius: 20, elevation: 3,
   },
-  entrada: { flex: 1, maxHeight: 96, color: COR_NYTA.bolhaTexto, fontSize: 13, lineHeight: 19, paddingVertical: 6 },
+  entrada: {
+    maxHeight: 132, paddingVertical: 2,
+    color: COR_NYTA.campoTexto, fontSize: 15, lineHeight: 22,
+  },
+  acoesDoCampo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 10 },
   enviar: {
-    width: 36, height: 36, alignItems: 'center', justifyContent: 'center',
-    borderRadius: 9, backgroundColor: COR.primaria,
+    width: 34, height: 34, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 17, backgroundColor: COR_NYTA.enviar,
   },
-  enviarInativo: { opacity: 0.4 },
-  rodapeDaBarra: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginTop: 8 },
-  disclaimer: { color: COR_NYTA.aviso, fontSize: 10 },
+  enviarInativo: { backgroundColor: COR_NYTA.enviarApagado },
+  disclaimer: { color: COR_NYTA.aviso, fontSize: 11 },
+  // A ressalva encosta na margem do aparelho de proposito: ela e a ultima linha da tela, e os
+  // 12px que havia embaixo dela somavam com os 34 do indicador de home e deixavam o campo
+  // flutuando longe da borda.
+  ressalva: { marginTop: 8, marginBottom: 2, textAlign: 'center' },
 
   limite: {
     flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,

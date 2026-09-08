@@ -135,3 +135,69 @@ export function buildActionSummary(name: string, args: Record<string, unknown>):
   if (full.length <= SUMMARY_MAX_CHARS) return full;
   return full.slice(0, SUMMARY_MAX_CHARS - 1) + '…';
 }
+
+// ─── O que a Nyta JÁ EXECUTOU, no histórico ───────────────────────────────────
+
+/**
+ * As ações de uma mensagem do histórico, prontas para o mesmo cartão que pediu a confirmação.
+ *
+ * O cartão só existia enquanto a ação estava PENDENTE: ele vinha de `pendingToolCalls`, que é
+ * estado de memória e morre ao fechar a tela. Quem voltava à conversa via a Nyta dizer "confirme
+ * no card abaixo" e nenhum card abaixo — e, pior, não tinha como saber se o evento chegou a ser
+ * criado. O registro sempre esteve no banco: a mensagem da Nyta guarda `tool_calls`, e a
+ * mensagem `tool` seguinte guarda `tool_results`. Ninguém desenhava.
+ *
+ * O estado sai do RESULTADO, e não de um padrão otimista: sem resultado a ação não terminou
+ * (`executing`), com `success: false` ela falhou. Um cartão que dissesse "executada" para uma
+ * ação que deu erro seria pior do que cartão nenhum.
+ *
+ * `jaPendentes` são as ações que a tela já está desenhando ao vivo. Sem essa exclusão, no
+ * instante entre confirmar e recarregar, a mesma ação apareceria duas vezes na conversa.
+ */
+interface ResultadoDaAcao { tool_call_id: string; success: boolean }
+
+export interface MensagemComAcoes {
+  id: string;
+  role: string;
+  toolCalls?: { id: string; name: string; arguments: Record<string, unknown> }[];
+  /** Um objeto (o que o servidor grava hoje) ou uma lista. Ver `NytaChatMessage.toolResults`. */
+  toolResults?: ResultadoDaAcao | ResultadoDaAcao[];
+}
+
+export interface AcaoDoHistorico {
+  toolCallId: string;
+  name: string;
+  arguments: Record<string, unknown>;
+  status: 'executing' | 'done' | 'error';
+}
+
+export function acoesDoHistorico(
+  mensagem: MensagemComAcoes,
+  todas: MensagemComAcoes[],
+  jaPendentes: string[] = [],
+): AcaoDoHistorico[] {
+  if (!mensagem.toolCalls?.length) return [];
+
+  // Os resultados chegam nas mensagens `tool` da conversa, e não na mensagem que pediu a ação.
+  const resultados = new Map<string, boolean>();
+  for (const outra of todas) {
+    if (!outra.toolResults) continue;
+    // Objeto ou lista: o servidor grava um objeto, e o tipo dizia lista. Normalizar aqui é o que
+    // impede o `for...of` de estourar numa conversa que tem ação executada.
+    const lista = Array.isArray(outra.toolResults) ? outra.toolResults : [outra.toolResults];
+    for (const r of lista) resultados.set(r.tool_call_id, r.success);
+  }
+
+  const pendentes = new Set(jaPendentes);
+  return mensagem.toolCalls
+    .filter((chamada) => !pendentes.has(chamada.id))
+    .map((chamada) => {
+      const sucesso = resultados.get(chamada.id);
+      return {
+        toolCallId: chamada.id,
+        name: chamada.name,
+        arguments: chamada.arguments,
+        status: sucesso === undefined ? 'executing' : sucesso ? 'done' : 'error',
+      } as AcaoDoHistorico;
+    });
+}

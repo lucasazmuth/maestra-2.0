@@ -1,5 +1,5 @@
 import { FC, useCallback, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FiAlertCircle } from 'react-icons/fi';
 
 import './styles.scss';
@@ -9,18 +9,14 @@ import { useNytaConversations } from '@maestra/core/hooks/useNytaConversations';
 import { useArtist } from '@maestra/core/hooks/useArtist';
 import { LockedFeature } from '../../components/LockedFeature';
 import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
+import { useAppSelector } from '@maestra/core/store/store';
+import { saudacaoDaNyta } from '@maestra/core/constants/nytaChat';
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { ChatHeader } from './components/ChatHeader';
 import { ConversationSidebar } from './components/ConversationSidebar';
 import { InputBar } from './components/InputBar';
 import { MessageList } from './components/MessageList';
 
-// ─── Greeting text (empty state) ──────────────────────────────────────────────
-
-const GREETING_TEXT =
-  'Oi! Eu sou a Nyta, sua assistente estratégica aqui na Maestra. ' +
-  'Pode me perguntar qualquer coisa sobre seu planejamento, músicas, agenda ou equipe — ' +
-  'e eu também posso executar ações por você, sempre com sua confirmação. Como posso te ajudar?';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -38,10 +34,14 @@ const NytaChatPage: FC = () => {
   const {
     messages, isStreaming, pendingToolCalls, rateLimitInfo, loadingHistory, hasMoreHistory,
     error, unavailableModules, conversationId,
-    loadOlderMessages, sendMessage, confirmTool, cancelTool, clearConversation, dismissError,
+    loadOlderMessages, sendMessage, stopStreaming, confirmTool, cancelTool,
     selectConversation, startNewConversation,
   } = useNytaChat('route', handleConversation);
   const { artist } = useArtist();
+  const navigate = useNavigate();
+  const usuario = useAppSelector((st) => st.auth.user);
+  const quemEntrou = (usuario?.user_metadata as Record<string, unknown> | undefined);
+  const nome = (quemEntrou?.full_name || quemEntrou?.name) as string | undefined;
   // A carga inicial (e o reset ao trocar de artista) é feita pelo useNytaChat.
 
   const handleDelete = useCallback(async (id: string) => {
@@ -62,8 +62,32 @@ const NytaChatPage: FC = () => {
 
   const hasMessages = messages.length > 0;
 
-  // Determine if we should show the error banner (non-subscription errors)
-  const showErrorBanner = error && error !== 'subscription_required';
+  /**
+   * Só dá para parar depois que a resposta COMEÇOU.
+   *
+   * Entre o envio e a primeira palavra, o servidor ainda está montando o pedido — valida, conta
+   * o limite, grava a pergunta, busca os dados do artista. Abortar ali derruba a requisição
+   * antes de a PERGUNTA ser gravada, e o resultado é a mensagem que a pessoa acabou de digitar
+   * sumindo da conversa. Perder a própria pergunta é pior do que esperar um segundo.
+   *
+   * Nesse intervalo o botão continua o de enviar, desabilitado — que é o que ele sempre foi.
+   */
+  const respostaComecou = messages.some(
+    (m) => m.role === 'assistant' && m.status === 'sending' && !!m.content
+  );
+
+  // O CARTÃO VERMELHO NO TOPO SAIU.
+  //
+  // Ele flutuava sobre a conversa dizendo "Erro de conexão" no mesmo instante em que o fio
+  // dizia "Não foi possível completar a resposta": dois avisos para uma falha, e o mais feio
+  // dos dois por cima justamente do que a pessoa estava lendo. Toda falha de envio marca a
+  // mensagem com `status: 'error'` (ver `useNytaChat`), então o fio já conta a história.
+  //
+  // O que o fio NÃO conta é a conversa que não carregou — ali não há mensagem para marcar. Essa
+  // vira uma linha discreta acima do campo, onde já mora a ressalva da Nyta.
+  const falhaNoFio = messages.some((m) => m.status === 'error');
+  const avisoDeFalha =
+    error && error !== 'subscription_required' && !falhaNoFio ? error : null;
 
   return (
     // `nyta-surface` traz o skin claro do chat (o mesmo do modal flutuante) — ver styles.scss.
@@ -84,29 +108,10 @@ const NytaChatPage: FC = () => {
         <div className="nyta-chat-page__header">
           <ChatHeader
             artistName={artist?.name || ''}
-            artistImage={artist?.content?.spotifyProfile?.image}
-            onClear={clearConversation}
-            dailyCount={rateLimitInfo?.count ?? null}
-            dailyLimit={rateLimitInfo?.limit ?? null}
             onOpenHistory={() => setHistoryOpen(true)}
+            onBack={() => navigate(`/artists/${artistId}`)}
           />
         </div>
-
-        {/* Error banner for connection/stream errors (Req 8.11, 1.4) */}
-        {showErrorBanner && (
-          <div className="nyta-chat-page__error-banner" role="alert">
-            <FiAlertCircle size={16} />
-            <span className="nyta-chat-page__error-text">{error}</span>
-            <button
-              className="nyta-chat-page__error-dismiss"
-              onClick={dismissError}
-              aria-label="Fechar erro"
-              type="button"
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
         {/* Inline warning when modules are unavailable (Req 3.6) */}
         {unavailableModules.length > 0 && (
@@ -131,21 +136,29 @@ const NytaChatPage: FC = () => {
             onLoadOlder={loadOlderMessages}
             onConfirmTool={confirmTool}
             onCancelTool={cancelTool}
-            showAuthorAvatar
+
           />
         ) : (
+          // A conversa em branco abre com uma SAUDAÇÃO, e não com uma mensagem da Nyta.
+          //
+          // Ela se apresentava num balão de sete linhas explicando o que sabe fazer. Aquilo
+          // ocupava a primeira tela inteira, e ninguém lê a segunda vez: quem abre o chat pela
+          // décima vez já sabe quem é a Nyta. Uma linha basta, e o convite fica no campo.
           <div className="nyta-chat-page__greeting">
-            <div className="nyta-chat-page__greeting-bubble">
-              <NytaAvatar size={32} />
-              <div className="nyta-bubble">{GREETING_TEXT}</div>
-            </div>
+            <NytaAvatar size={34} />
+            <p className="nyta-chat-page__greeting-text">{saudacaoDaNyta(nome)}</p>
           </div>
+        )}
+
+        {avisoDeFalha && (
+          <p className="nyta-chat-page__aviso" role="alert">{avisoDeFalha}</p>
         )}
 
         {/* A caixa de texto é a mesma nos dois estados: com histórico e na conversa em branco. */}
         <div className="nyta-chat-page__input">
           <InputBar
             onSend={sendMessage}
+            onStop={respostaComecou ? stopStreaming : undefined}
             disabled={isStreaming}
             rateLimitInfo={rateLimitInfo}
             pendingToolCalls={pendingToolCalls}

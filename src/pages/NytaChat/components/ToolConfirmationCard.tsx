@@ -21,8 +21,14 @@ const TIMEOUT_MS = 30_000;
 
 export interface ToolConfirmationCardProps {
   toolCall: PendingToolCall;
-  onConfirm: (toolCallId: string) => void;
-  onCancel: (toolCallId: string) => void;
+  onConfirm?: (toolCallId: string) => void;
+  onCancel?: (toolCallId: string) => void;
+  /**
+   * O mesmo cartão, no histórico da conversa: mostra O QUE a Nyta fez e como terminou, sem
+   * oferecer decisão. Uma ação que já rodou não se confirma de novo, e uma que falhou há três
+   * dias não se repete por um botão que sobrou na tela.
+   */
+  somenteLeitura?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -31,6 +37,7 @@ export const ToolConfirmationCard: FC<ToolConfirmationCardProps> = ({
   toolCall,
   onConfirm,
   onCancel,
+  somenteLeitura = false,
 }) => {
   const { toolCallId, name, arguments: args, status } = toolCall;
   const [error, setError] = useState<string | null>(null);
@@ -75,12 +82,12 @@ export const ToolConfirmationCard: FC<ToolConfirmationCardProps> = ({
       setError('Tempo limite excedido. Tente novamente.');
     }, TIMEOUT_MS);
 
-    onConfirm(toolCallId);
+    onConfirm?.(toolCallId);
   }, [onConfirm, toolCallId]);
 
   const handleCancel = useCallback(() => {
     setError(null);
-    onCancel(toolCallId);
+    onCancel?.(toolCallId);
   }, [onCancel, toolCallId]);
 
   // ─── Derived ──────────────────────────────────────────────────────────────
@@ -108,7 +115,8 @@ export const ToolConfirmationCard: FC<ToolConfirmationCardProps> = ({
         return (
           <div className="tool-confirmation-card__status tool-confirmation-card__status--success">
             <FiCheck size={14} />
-            <span>✓ Ação executada</span>
+            {/* Sem o "✓" no texto: o ícone ao lado já é um, e a linha saía com dois vistos. */}
+            <span>Ação executada</span>
           </div>
         );
 
@@ -130,7 +138,7 @@ export const ToolConfirmationCard: FC<ToolConfirmationCardProps> = ({
 
   // ─── Render buttons (pending or error with retry) ─────────────────────────
 
-  const showButtons = status === 'pending' || status === 'error';
+  const showButtons = !somenteLeitura && (status === 'pending' || status === 'error');
 
   // ─── Render ───────────────────────────────────────────────────────────────
 

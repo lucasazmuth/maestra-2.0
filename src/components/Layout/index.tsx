@@ -2,7 +2,7 @@ import { lazy, memo, Suspense, useEffect, useRef, useState, type FC, type ReactN
 
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { MobileNav, isNavExcludedRoute } from './components/MobileNav';
+import { MobileNav, isImmersiveRoute, isNavExcludedRoute } from './components/MobileNav';
 import { SystemMenu } from './components/SystemMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
@@ -156,6 +156,10 @@ export const AppLayout: FC = memo(() => {
   const routeArtistId = pathArtistId(location.pathname);
   const currentArtist = routeArtistId ? artists.find((artist) => artist.id === routeArtistId) : undefined;
   const isNytaPage = location.pathname.endsWith('/nyta');
+  // O chat toma a tela: sem a barra da Maestra em cima, sem a tab bar embaixo e sem o rail de
+  // perfis ao lado. A faixa do próprio chat vira a única do topo, e o botão de voltar dela é a
+  // saída. Ver `isImmersiveRoute`.
+  const imersivo = isImmersiveRoute(location.pathname);
   const isNotificationsPage = location.pathname === '/notifications';
   const openNytaPage = () => routeArtistId ? navigate(`/artists/${routeArtistId}/nyta`) : openNyta();
   const { viewPlanning } = useArtistCapabilities(currentArtist);
@@ -398,13 +402,13 @@ export const AppLayout: FC = memo(() => {
           </section>
         ) : (
           <>
-        {topNavigation()}
+        {!imersivo && topNavigation()}
         {/* `module-layout` encosta a página no rail (margin-left ~130px) porque significa "sem
             coluna de perfil". O wizard NÃO é esse caso: ele mantém o perfil à esquerda e só ganha
             a coluna de resultados à direita — com a classe, o card ficava embaixo do perfil.
             A folga da coluna de resultados vem do `.wiz-artifacts` (pages/Wizard/styles.scss). */}
         <div
-          className={`app-layout${isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist ? ' app-layout-no-profile' : ''}`}
+          className={`app-layout${isNytaPage || isNotificationsPage ? ' module-layout' : ''}${!currentArtist ? ' app-layout-no-profile' : ''}${imersivo ? ' app-layout-imersivo' : ''}`}
           style={{ bottom: bottomReserve ? `${bottomReserve}px` : 0 }}
         >
           {/* O rail (Início/Notificações/Nyta/trocar de artista) fica sempre visível: é o

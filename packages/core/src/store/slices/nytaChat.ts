@@ -7,7 +7,19 @@ export interface NytaChatMessage {
   role: 'user' | 'assistant' | 'tool';
   content: string | null;
   toolCalls?: ToolCall[];
-  toolResults?: ToolResult[];
+  /**
+   * O resultado da ação, como o servidor grava.
+   *
+   * Isto era `ToolResult[]`, e o tipo MENTIA: `nyta-chat/index.ts` escreve `tool_results` como
+   * UM objeto (`{ tool_call_id, success, summary }`), não como lista. Ninguém percebeu porque
+   * ninguém lia o campo — ele era carregado do banco e nunca desenhado. Quando o cartão de ação
+   * do histórico passou a lê-lo, o `for...of` estourou "iterator method is not callable" na
+   * primeira conversa com uma ação executada.
+   *
+   * A união aceita as duas formas de propósito: a do servidor de hoje, e a lista que linhas
+   * antigas podem ter. Quem consome normaliza (ver `acoesDoHistorico`).
+   */
+  toolResults?: ToolResult | ToolResult[];
   createdAt: string;
   status: 'sending' | 'sent' | 'error';
 }
@@ -148,8 +160,22 @@ const nytaChatSlice = createSlice({
       return { ...initialState, rateLimitInfo: state.rateLimitInfo };
     },
 
+    /**
+     * O histórico, na frente do que já está na tela.
+     *
+     * Ele PULA o que já está lá, por id. A carga do histórico pode rodar duas vezes — dois
+     * efeitos, uma reconexão, um remount —, e prepender cego punha a conversa inteira em dobro
+     * no store. O React reclamava ("Encountered two children with the same key") e escondia
+     * metade, então o sintoma visível era só o aviso no console.
+     *
+     * Não é hipótese: `src/index.tsx` desligou o StrictMode citando duplicatas como motivo. O
+     * lugar de resolver isso é aqui, onde a regra "uma mensagem, um id" pertence — e não numa
+     * ferramenta de desenvolvimento desligada para o sintoma não aparecer.
+     */
     prependMessages(state, action: PayloadAction<NytaChatMessage[]>) {
-      state.messages = [...action.payload, ...state.messages];
+      const jaEstao = new Set(state.messages.map((m) => m.id));
+      const novas = action.payload.filter((m) => !jaEstao.has(m.id));
+      if (novas.length) state.messages = [...novas, ...state.messages];
     },
   },
 });

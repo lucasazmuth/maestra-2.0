@@ -51,7 +51,7 @@ const NYTA_SYSTEM_PROMPT = `Você é a Nyta, a inteligência da Maestra: assiste
 - NUNCA cite termos internos do sistema na conversa (ex.: "DADOS DO ARTISTA", nomes de ferramentas, IDs, formato de data). Fale como assistente: "no seu plano", "nas suas estratégias". E NÃO narre seu raciocínio interno (ex.: cálculo de datas, "como o sistema não fornece..."): resolva por trás e responda só o resultado, ou faça uma pergunta curta se faltar dado.
 - Ao LISTAR itens pro artista (catálogo, agenda, equipe), mostre só nome + status/data em português (ex.: "Cidade Cinza — em mixagem"). NUNCA inclua o "[id: ...]" na resposta: o id entre colchetes é SÓ pra você usar internamente em update/remove, jamais para exibir.
 - Ao adicionar alguém à equipe, registre o PAPEL/função que o artista mencionar (empresário, produtor, assessor, DJ, etc.) no campo \`access_levels\`.
-- QUANDO VOCÊ CHAMA UMA FERRAMENTA de criar/atualizar/remover, a ação NÃO está feita — ela só acontece quando o artista clicar em "Confirmar" no card. Então fale SEMPRE no futuro/condicional: "Vou marcar o show…, confirme no card abaixo" / "Posso criar…". NUNCA fale no passado ("show marcado", "criei", "pronto", "foi feito") — senão você mente e ainda envenena o histórico.
+- QUANDO VOCÊ CHAMA UMA FERRAMENTA de criar/atualizar/remover, a ação NÃO está feita — ela só acontece quando o artista clicar em "Confirmar" no card. NA MENSAGEM EM QUE VOCÊ CHAMA A FERRAMENTA, fale SEMPRE no futuro/condicional: "Vou marcar o show…, confirme no card abaixo" / "Posso criar…". NUNCA fale no passado ("show marcado", "criei", "pronto", "foi feito") — senão você mente e ainda envenena o histórico. Depois que o artista decide, quem escreve a confirmação é o servidor, e não você: você nunca precisa relatar o desfecho de um card.
 - NÃO assuma que algo proposto num card que o artista NÃO confirmou (ou que ele cancelou) virou realidade — mesmo que VOCÊ tenha mencionado antes na conversa. A ÚNICA verdade sobre o que existe é a lista do contexto. Se o item não está lá, ele NÃO existe: diga que não encontrou e ofereça criar/ajudar.
 - Se o artista pedir para REMARCAR/ATUALIZAR/REMOVER um evento, tarefa ou item e NÃO houver um correspondente na lista do contexto, diga que não encontrou esse item na agenda/plano e ofereça CRIAR um novo — NÃO crie/atualize silenciosamente outro no lugar.
 - Se a mensagem do artista for vaga, curtíssima ou sem sentido (ex.: só emoji, "e aí?", "qual a boa?"), NÃO repita a resposta anterior nem assuma o assunto de antes. Responda leve e pergunte o que ele quer agora (ex.: "Não entendi direito. Quer ver seu plano, mexer no catálogo, na agenda, ou falar de estratégia?").
@@ -1003,8 +1003,9 @@ function streamGroqResponse(
   convId: string,
   authHeader: string,
   ragCtx: string = "",
-  // false no follow-up pós-confirmação: o modelo só relata o resultado, sem poder
-  // emendar outra tool call (evita cards de confirmação duplicados/alucinados).
+  // Era `false` no follow-up pós-decisão do card. Esse turno deixou de passar pelo modelo (ver
+  // `respostaDoCard`), então hoje só `hasPlan` desliga ferramenta. Fica como porta: um turno
+  // futuro que precise do modelo sem poder agir passa `false` aqui.
   allowTools: boolean = true,
   unavailableModules: string[] = [],
   dailyCount: number | null = null,
@@ -1014,6 +1015,22 @@ function streamGroqResponse(
   hasPlan: boolean = true
 ): Response {
   const enc = new TextEncoder();
+
+  /**
+   * O QUE ACONTECE QUANDO A PESSOA APERTA "PARAR".
+   *
+   * Ela corta a leitura do lado dela, e só. Sem o `cancel` abaixo, o Groq continuava gerando o
+   * texto inteiro e o servidor o gravava completo — então a resposta reaparecia INTEIRA ao
+   * reabrir a conversa, como se o botão não tivesse feito nada. E os tokens eram cobrados até o
+   * fim de uma resposta que ninguém ia ler.
+   *
+   * Estas duas referências existem para o `cancel` alcançar o que o `start` está fazendo: o
+   * abort da chamada ao Groq, e o texto acumulado até o corte, que é o que fica gravado.
+   */
+  let abortarGeracao: (() => void) | null = null;
+  let textoAteAqui = "";
+  let jaGravou = false;
+
   const stream = new ReadableStream({
     async start(ctrl) {
       const sse = (d: Record<string, unknown>) => {
@@ -1031,12 +1048,16 @@ function streamGroqResponse(
       }
 
       const ac = new AbortController();
+      abortarGeracao = () => ac.abort();
       const tid = setTimeout(() => {
         ac.abort();
       }, GROQ_TIMEOUT_MS);
       try {
         const today = new Date().toISOString().split("T")[0];
-        const sysPrompt = NYTA_SYSTEM_PROMPT + `\n\n## Data atual: ${today}` + (ragCtx || "") + (hasPlan ? "" : NYTA_NO_PLAN_DIRECTIVE);
+        const sysPrompt = NYTA_SYSTEM_PROMPT
+          + `\n\n## Data atual: ${today}`
+          + (ragCtx || "")
+          + (hasPlan ? "" : NYTA_NO_PLAN_DIRECTIVE);
         const msgs = [{ role: "system", content: sysPrompt }, ...convMsgs];
         // Sem plano: nenhuma ferramenta — a Nyta só pode direcionar pro planejamento guiado.
         const toolsEnabled = allowTools && hasPlan;
@@ -1080,6 +1101,7 @@ function streamGroqResponse(
               const d = ch.delta;
               if (d?.content) {
                 full += d.content;
+                textoAteAqui = full;
                 sse({ type: "text", content: d.content });
               }
               if (d?.tool_calls) {
@@ -1117,6 +1139,7 @@ function streamGroqResponse(
           sse({ type: "tool_call", tool_call_id: tc.id, name: tc.name, arguments: pa });
         }
         const tca = calls.length ? calls : null;
+        jaGravou = true;
         const mid = await persistAssistantMessage(convId, full, tca, authHeader);
         if (mid) sse({ type: "done", message_id: mid });
         else sse({ type: "error", message: "Resposta gerada mas não salva." });
@@ -1129,6 +1152,28 @@ function streamGroqResponse(
           sse({ type: "error", message: "Erro interno. Tente novamente." });
         }
         ctrl.close();
+      }
+    },
+
+    /**
+     * O cliente foi embora: apertou "parar", fechou a tela, perdeu a rede.
+     *
+     * Parar de gerar é o ponto. Gravar o pedaço também: sem isso a conversa perderia o trecho
+     * que a pessoa acabou de ler, e a próxima abertura mostraria um buraco onde havia texto.
+     */
+    async cancel() {
+      abortarGeracao?.();
+      // Parar no primeiro segundo captura o começo de um marcador — "### ", "**", "**O" —, e
+      // gravar isso deixa no histórico uma mensagem que aparece como um vão em branco, que
+      // nunca vai ganhar texto. Só "tem uma letra" não bastou: `**O` passou.
+      //
+      // O corte é por TEXTO VISÍVEL, sem a pontuação de markdown, e 24 é um limiar, não uma
+      // regra da natureza: abaixo disso não há uma ideia legível, só o começo de uma. Um
+      // parágrafo interrompido no meio continua valendo — foi lido.
+      const visivel = textoAteAqui.replace(/[*_#>`~\-\s]/g, "");
+      if (!jaGravou && visivel.length >= 24) {
+        jaGravou = true;
+        await persistAssistantMessage(convId, textoAteAqui, null, authHeader);
       }
     },
   });
@@ -1144,6 +1189,64 @@ function streamGroqResponse(
       ...CORS_HEADERS,
     },
   });
+}
+
+/**
+ * A resposta de quem JÁ SABE o que aconteceu.
+ *
+ * Depois que o artista decide o card, o servidor tem o desfecho na mão: o `summary` da
+ * ferramenta é uma frase pronta, escrita em português por quem executou a ação ("Evento 'Show
+ * Abril' criado para 2026-02-23."). Passar isso por um modelo para ele reescrever a mesma frase
+ * é pedir três problemas de graça:
+ *
+ *  • ELE PODE MENTIR. A regra "não diga que deu certo se falhou" só vale enquanto o modelo a
+ *    obedece. Aqui o sucesso e a falha vêm do resultado, e não de uma instrução.
+ *  • ELE PODE DEGENERAR. Aconteceu: uma confirmação voltou com o título do evento substituído
+ *    por espaços de largura zero, e a frase gravada assim no histórico.
+ *  • ELE DEMORA E CUSTA. Eram alguns segundos e uma chamada de LLM para dizer o que já estava
+ *    escrito.
+ *
+ * O que se perde é a naturalidade de uma frase gerada. Numa confirmação de ação, isso vale
+ * menos do que a certeza — a pessoa acabou de tocar "Confirmar" e quer saber se funcionou.
+ *
+ * O formato é o MESMO do streaming (eventos `conversation`, `text`, `done`), então o cliente não
+ * sabe a diferença: nada muda no app nem na web.
+ */
+function respostaDoCard(convId: string, texto: string, authHeader: string): Response {
+  const enc = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(ctrl) {
+      const sse = (d: Record<string, unknown>) => {
+        ctrl.enqueue(enc.encode(`data: ${JSON.stringify(d)}\n\n`));
+      };
+      sse({ type: "conversation", conversation_id: convId });
+      sse({ type: "text", content: texto });
+      const mid = await persistAssistantMessage(convId, texto, null, authHeader);
+      if (mid) sse({ type: "done", message_id: mid });
+      else sse({ type: "error", message: "Resposta gerada mas não salva." });
+      ctrl.close();
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+      ...CORS_HEADERS,
+    },
+  });
+}
+
+/**
+ * A frase que a Nyta diz depois da ação.
+ *
+ * O `summary` de sucesso já é uma frase inteira ("Evento 'X' criado para ..."). O de falha é um
+ * diagnóstico técnico ("Falha: duplicate key ..."), que não se mostra cru para o artista: ele
+ * vira uma frase que diz o que não aconteceu e oferece o caminho de volta.
+ */
+function fraseDoResultado(result: ToolResult): string {
+  if (result.success) return result.summary;
+  return "Não consegui completar essa ação. Quer tentar de novo?";
 }
 
 function validateConfirmAction(r: NytaChatRequest): Response | null {
@@ -1561,16 +1664,13 @@ Deno.serve(async (req: Request) => {
       const tcl = await findPendingToolCall(cid, r.tool_call_id!, ah);
       if (tcl instanceof Response) return tcl;
       const { toolCall: ptc } = tcl;
+      // O modelo NÃO entra aqui. Ver `respostaDoCard`: o desfecho já está escrito, e mandá-lo
+      // reescrever a mesma frase abria espaço para mentir, degenerar e demorar.
       if (r.approved) {
         const tr = await executeTool(ptc.name, ptc.arguments, userId, r.artist_id!);
         const pt = await persistToolMessage(cid, r.tool_call_id!, tr, ah);
         if (pt instanceof Response) return pt;
-        const ctx = await loadConversationContext(cid, ah);
-        if (ctx instanceof Response) return ctx;
-        // Follow-up apenas relata o resultado: sem ferramentas, com contexto fresco
-        // do artista (a ação acabou de mudar agenda/catálogo/plano).
-        const { context: actx, unavailableModules: confirmUnavailable } = await fetchArtistContext(r.artist_id!, ah);
-        return streamGroqResponse(ctx.messages, cid, ah, buildRAGContext(actx), false, confirmUnavailable);
+        return respostaDoCard(cid, fraseDoResultado(tr), ah);
       } else {
         const pt = await persistToolMessage(
           cid,
@@ -1579,9 +1679,7 @@ Deno.serve(async (req: Request) => {
           ah
         );
         if (pt instanceof Response) return pt;
-        const ctx = await loadConversationContext(cid, ah);
-        if (ctx instanceof Response) return ctx;
-        return streamGroqResponse(ctx.messages, cid, ah, "", false);
+        return respostaDoCard(cid, "Ação cancelada. Quer tentar de outro jeito?", ah);
       }
     }
     default:

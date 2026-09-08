@@ -291,24 +291,47 @@ export const COR_MAPA = {
 } as const;
 
 /**
- * A Nyta — o skin claro do chat.
+ * A Nyta — o chat.
  *
- * As bolhas têm cantos assimétricos: a da Nyta é quadrada no canto de baixo à esquerda, a do
- * artista no de baixo à direita — é o rabinho que diz quem falou, sem precisar de rótulo. Os
- * valores saem de `.nyta-surface` em `src/styles/gsap-reference.css`, e
- * `src/__tests__/cromoDaNyta.test.ts` os amarra lá.
+ * A conversa tinha um balão por turno, com contorno e avatar dos dois lados. Ela passou a ter
+ * UM recipiente só, e é a assimetria toda do desenho:
+ *
+ *  • A resposta da Nyta é texto na própria página, sem moldura. Um balão espremia uma resposta
+ *    longa em 80% da largura e a fazia ler como mensagem de robô; solta, ela lê como documento,
+ *    que é o que uma resposta longa é.
+ *  • A pergunta de quem escreve é o único recipiente, e em CINZA — não no azul de ação, que a
+ *    fazia parecer um botão.
+ *
+ * Por isso não há mais `bolha`, `bolhaContorno` nem `textoDoArtista` aqui: as duas pontas da
+ * conversa deixaram de ser a mesma peça em cores diferentes. Os valores saem de `.nyta-surface`
+ * em `src/styles/gsap-reference.css`, e `src/__tests__/cromoDaNyta.test.ts` os amarra lá.
  */
 export const COR_NYTA = {
   fundo: '#f7f9fc',
-  bolha: '#ffffff',
-  bolhaContorno: '#e3eaf3',
-  bolhaTexto: '#60749a',
-  bolhaDoArtista: '#eaf0ff',
-  textoDoArtista: '#4267b9',
-  barraContorno: '#e8edf4',
-  campoContorno: '#dce5f0',
-  espacoReservado: '#aebbd0',
-  aviso: '#9aa8be',
+  /**
+   * A superfície branca dos CARTÕES do chat — o de confirmar uma ação e o campo de escrever.
+   * Era `bolha`, quando a resposta ainda vinha dentro de uma; o nome mudou porque a coisa que
+   * ele pinta mudou. Cartão continua existindo; balão de conversa, não.
+   */
+  cartao: '#ffffff',
+  /** O texto da resposta, e o corpo de leitura da tela. */
+  resposta: '#4a5b78',
+  /** Negrito e títulos dentro da resposta. */
+  respostaForte: '#2f4064',
+  /** Marcadores das listas que a Nyta escreve. */
+  marcador: '#9aabc4',
+  /** A pergunta de quem escreve: o único recipiente da conversa. */
+  pergunta: '#eceff5',
+  perguntaTexto: '#40506e',
+  campoContorno: '#dfe6f1',
+  campoTexto: '#40506e',
+  espacoReservado: '#a4b1c8',
+  /** O botão de enviar: escuro e redondo, como na referência. */
+  enviar: '#22314f',
+  enviarApagado: '#e4e9f2',
+  aviso: '#a4b1c8',
+  /** Os três pontos da espera. */
+  espera: '#b6c2d6',
   limiteFundo: '#f4f7fc',
   limiteContorno: '#d9e2f0',
   limiteTitulo: '#52688f',
@@ -322,21 +345,27 @@ export const COR_NYTA = {
  *
  * No celular a lista não cabe ao lado e vira o NÍVEL DE TRÁS da conversa: o "voltar" do
  * cabeçalho leva até ela, e é de lá que se sai para o perfil — a navegação em dois níveis de
- * qualquer aplicativo de mensagem. Os valores saem de `ChatHeader.scss` e
- * `ConversationSidebar.scss`, e `src/__tests__/cromoDasConversas.test.ts` os amarra lá.
+ * qualquer aplicativo de mensagem.
+ *
+ * Saíram daqui `contexto`, `uso`, `usoCheioFundo`, `usoCheioTexto` e `titulo`: os quatro
+ * primeiros eram a pílula "sobre <artista>" com foto e o contador de mensagens do dia, que o
+ * cabeçalho deixou de ter. O `titulo` era o "CONVERSAS" em caixa alta e peso 800 da lista —
+ * hoje ela usa o mesmo tom e peso do nome do artista na faixa do chat, porque as duas telas
+ * são a MESMA faixa com conteúdos diferentes, e um rótulo gritado fazia parecerem de épocas
+ * diferentes do produto. Ele
+ * carregava seis coisas numa tela cuja função é ler e escrever, e ficou com três — sair, ver as
+ * conversas, começar outra. O nome do artista continua, agora em texto solto.
+ *
+ * Os valores saem de `ChatHeader.scss` e `ConversationSidebar.scss`, e
+ * `src/__tests__/cromoDasConversas.test.ts` os amarra lá.
  */
 export const COR_CONVERSAS = {
   fio: '#e8edf4',
   contorno: '#e3eaf3',
-  botao: '#7c8db0',
-  titulo: '#52688f',
+  botao: '#8496b3',
   rotulo: '#9aabc4',
-  contexto: '#f7f9fc',
-  destaque: '#eef3fb',
+  destaque: '#eef2f8',
   destaqueTexto: '#4267b9',
-  uso: '#6e83a6',
-  usoCheioFundo: '#fdeef1',
-  usoCheioTexto: '#c0405c',
   rascunhoContorno: '#cfdcf0',
   itemTocado: '#f4f7fc',
   nome: '#60749a',
