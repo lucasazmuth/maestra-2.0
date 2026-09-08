@@ -15,12 +15,9 @@ import { countUnread } from '@maestra/core/services/db/notifications';
 import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 
-import { BotaoRedondo, MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
+import { BotaoDoMenuDoSistema, BotaoRedondo } from '@/casca/marca/MenuDoSistema';
 import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
 import { MaestraMarca, NotificationIcon } from '@/icones';
-import { useOfertaDoPro } from '@/nucleo/assinatura';
-import { sair } from '@/nucleo/entrar';
-import { irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
 
 /** Assinatura, desbloqueio e suporte continuam na web: pagamento no app exige StoreKit. */
@@ -89,8 +86,6 @@ export default function Perfis() {
 
   const usuario = sessao?.user.id;
   const [naoLidas, setNaoLidas] = useState(0);
-  const [menuAberto, setMenuAberto] = useState(false);
-  const oferecerPro = useOfertaDoPro();
   // Separado do `loading` do store de propósito: `loading` fica true em QUALQUER busca,
   // inclusive na que roda sozinha ao voltar para esta tela. Ligado ao RefreshControl, isso
   // fazia um spinner de "puxar para atualizar" aparecer sem ninguém ter puxado nada — e ainda
@@ -183,25 +178,7 @@ export default function Perfis() {
           <NotificationIcon size={28} color={COR_PERFIS.sino} />
         </BotaoRedondo>
 
-        <BotaoRedondo rotulo="Menu do sistema" aoTocar={() => setMenuAberto(true)}>
-          <Feather name="grid" size={23} color={COR_PERFIS.menu} />
-        </BotaoRedondo>
-
-        <MenuDoSistema
-          aberto={menuAberto}
-          aoFechar={() => setMenuAberto(false)}
-          itens={itensDoSistema(
-            {
-              // Já estamos nos Perfis, e por isso o item nem entra na lista.
-              perfis: () => undefined,
-              configuracoes: () => router.push('/conta'),
-              suporte: () => { void Linking.openURL(`${SITE}/suporte`); },
-              sair: () => { void sair(); },
-              pro: () => { void irParaOCheckout({ destino: 'assinatura' }); },
-            },
-            { aqui: 'perfis', oferecerPro },
-          )}
-        />
+        <BotaoDoMenuDoSistema aqui="perfis" />
       </View>
 
       {/* O titulo com a acao ao lado, como na web. */}

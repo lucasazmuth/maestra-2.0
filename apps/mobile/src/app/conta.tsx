@@ -184,7 +184,7 @@ export default function Conta() {
 
   return (
     <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
-      <CabecalhoDeVolta />
+      <CabecalhoDeVolta aqui="configuracoes" />
       <ScrollView contentContainerStyle={estilos.conteudo}>
 
         {/* As secoes sao as da web, na ordem dela: Perfil, Notificacoes, Assinatura, Historico

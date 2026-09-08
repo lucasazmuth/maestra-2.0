@@ -1,9 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useId, useState } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import Feather from '@expo/vector-icons/Feather';
 
 import {
   COR, COR_CABECALHO, COR_PERFIS, RAIO, SOMBRA_DO_BOTAO,
@@ -13,16 +11,10 @@ import { supabase } from '@maestra/core/lib/supabase';
 import { countUnread } from '@maestra/core/services/db/notifications';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
-import { MenuDoSistema, itensDoSistema } from '@/casca/marca/MenuDoSistema';
+import { BotaoDoMenuDoSistema } from '@/casca/marca/MenuDoSistema';
 import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
 import { MaestraMarca, NotificationIcon } from '@/icones';
-import { useOfertaDoPro } from '@/nucleo/assinatura';
-import { sair } from '@/nucleo/entrar';
-import { irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
-
-/** Assinatura, desbloqueio e suporte continuam na web: pagamento no app exige StoreKit. */
-const SITE = 'https://www.maestramanager.com';
 
 // O cabeçalho, igual ao da web no celular (ver `src/components/Layout/index.tsx`): à esquerda a
 // MARCA, à direita o botão da Nyta, o sino e o menu do sistema.
@@ -43,8 +35,6 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
   const { sessao } = useSessao();
   const usuario = sessao?.user.id;
   const [naoLidas, setNaoLidas] = useState(0);
-  const [menuAberto, setMenuAberto] = useState(false);
-  const oferecerPro = useOfertaDoPro();
   // O canal leva um sufixo por INSTÂNCIA, e não só o id do usuário.
   //
   // O Supabase guarda os canais por nome: pedir um nome que já existe devolve o canal existente,
@@ -116,29 +106,7 @@ export const Cabecalho = ({ artista, id }: { artista?: Artist; id: string }) => 
           painel "Mais" da ilha de baixo. Só que o botão SUMIR de uma tela para outra faz a
           pessoa procurar onde ele foi parar — e Suporte e Sair não estão em lugar nenhum na
           ilha. Fica nas três telas, sempre no mesmo canto. */}
-      <Pressable
-        style={estilos.redondo}
-        onPress={() => setMenuAberto(true)}
-        accessibilityRole="button"
-        accessibilityLabel="Menu do sistema"
-      >
-        <Feather name="grid" size={23} color={COR_PERFIS.menu} />
-      </Pressable>
-
-      <MenuDoSistema
-        aberto={menuAberto}
-        aoFechar={() => setMenuAberto(false)}
-        itens={itensDoSistema(
-          {
-            perfis: () => router.push('/perfis'),
-            configuracoes: () => router.push('/conta'),
-            suporte: () => { void Linking.openURL(`${SITE}/suporte`); },
-            sair: () => { void sair(); },
-            pro: () => { void irParaOCheckout({ destino: 'assinatura' }); },
-          },
-          { artista, oferecerPro },
-        )}
-      />
+      <BotaoDoMenuDoSistema artista={artista} />
     </View>
   );
 };

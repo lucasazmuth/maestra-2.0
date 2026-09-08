@@ -1,14 +1,21 @@
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_PERFIS } from '@maestra/core/constants/design';
+import { COR, COR_PERFIS, SOMBRA_DO_BOTAO } from '@maestra/core/constants/design';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 
 import { FotoDoArtista } from '@/casca/FotoDoArtista';
 import { DiamanteAnimado } from '@/casca/marca/DiamanteAnimado';
 import { PerfisIcon } from '@/icones';
+import { useOfertaDoPro } from '@/nucleo/assinatura';
+import { sair } from '@/nucleo/entrar';
+import { irParaOCheckout } from '@/nucleo/loja';
+
+const SITE = 'https://www.maestramanager.com';
 
 // O menu do sistema — o painel que o botão de grade abre no topo da web.
 //
@@ -33,10 +40,10 @@ export interface ItemDoMenu {
  * margem de cima sozinha ja passa de 50, e o botao de grade terminava em 109 — o painel abria
  * por cima do proprio botao que o chamou.
  *
- * A conta parte do BOTAO, e nao da altura da barra. As duas barras que abrem este menu poem o
+ * A conta parte do BOTAO, e nao da altura da barra. As tres barras que abrem este menu poem o
  * mesmo circulo de 42: no cabecalho do artista ele termina 57 abaixo da margem, na lista de
- * perfis 50. Contar pela barra inteira somava os 20 de respiro que ela tem embaixo, e o painel
- * caia longe demais do botao.
+ * perfis e nas telas folha, 50. Contar pela barra inteira somava os 20 de respiro que ela tem
+ * embaixo, e o painel caia longe demais do botao.
  */
 const BASE_DO_BOTAO = 57;
 const FOLGA = 8;
@@ -159,6 +166,50 @@ export const itensDoSistema = (
   ];
 };
 
+/**
+ * O botao de grade e o painel que ele abre, num componente so.
+ *
+ * As tres barras que mostram este menu — o cabecalho do artista, a lista de perfis e as telas
+ * folha — montavam cada uma o seu: o estado de aberto, a oferta do PRO e as cinco acoes,
+ * identicas nos tres lugares. Um destino que mudasse teria que mudar em todos, e quem
+ * esquecesse um deles nao quebraria teste nenhum.
+ *
+ * As acoes moram AQUI porque nenhuma delas depende da tela: sair e sair, suporte e o site,
+ * Configuracoes e /conta em qualquer lugar de onde se chame. O que varia e so o que a tela sabe
+ * de si — onde ela esta e qual artista tem aberto — e e isso que entra por prop.
+ */
+export const BotaoDoMenuDoSistema = ({ aqui, artista }: {
+  aqui?: 'perfis' | 'configuracoes';
+  artista?: Artist;
+}) => {
+  const router = useRouter();
+  const [aberto, setAberto] = useState(false);
+  const oferecerPro = useOfertaDoPro();
+
+  return (
+    <>
+      <BotaoRedondo rotulo="Menu do sistema" aoTocar={() => setAberto(true)}>
+        <Feather name="grid" size={23} color={COR_PERFIS.menu} />
+      </BotaoRedondo>
+
+      <MenuDoSistema
+        aberto={aberto}
+        aoFechar={() => setAberto(false)}
+        itens={itensDoSistema(
+          {
+            perfis: () => router.push('/perfis'),
+            configuracoes: () => router.push('/conta'),
+            suporte: () => { void Linking.openURL(`${SITE}/suporte`); },
+            sair: () => { void sair(); },
+            pro: () => { void irParaOCheckout({ destino: 'assinatura' }); },
+          },
+          { aqui, artista, oferecerPro },
+        )}
+      />
+    </>
+  );
+};
+
 const estilos = StyleSheet.create({
   fundo: { flex: 1, backgroundColor: 'rgba(20, 30, 55, .25)' },
   painel: {
@@ -203,11 +254,14 @@ export const BotaoRedondo = ({ children, aoTocar, rotulo, marca }: {
 );
 
 const estilosDoBotao = StyleSheet.create({
+  // A sombra sai do design system, e não de valores repetidos aqui. Eram a MESMA sombra escrita
+  // de duas formas, com uma diferença: `elevation` 3 contra os 2 do `SOMBRA_DO_BOTAO`. No
+  // cabeçalho do artista, onde os três círculos ficam lado a lado, um deles ganharia no Android
+  // um degrau de sombra a mais que os vizinhos.
   botao: {
     width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center',
     backgroundColor: COR_PERFIS.controle,
-    shadowColor: 'rgba(98, 112, 143, .07)', shadowOpacity: 1,
-    shadowOffset: { width: 0, height: 6 }, shadowRadius: 14, elevation: 3,
+    ...SOMBRA_DO_BOTAO,
   },
   // O ponto de não-lidas: ROSA e SEM número, no canto do sino — a contagem vive no rótulo de
   // acessibilidade. O app mostrava um balão vermelho com "2", que a web não tem.

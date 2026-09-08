@@ -51,10 +51,10 @@ describe('menu do sistema', () => {
       expect(itensDoSistema(acoes, { oferecerPro: true })[0].rotulo).toBe('Trocar perfil');
     });
 
-    // O item precisa LEVAR à lista, e isso não é óbvio olhando só para ele: na própria tela de
-    // perfis o chamador passa `perfis: () => undefined`, porque ali o item nem existe. Se a
-    // regra que o esconde caísse, o item apareceria e não faria nada — e o `aoTocar` seria o
-    // único lugar onde isso apareceria. Aqui ele fica preso à ação que recebeu.
+    // O item precisa LEVAR à lista, e não só existir. A tela de perfis já passou aqui um
+    // `perfis: () => undefined`, porque ali o item nem entra na lista — e um item que aparece e
+    // não faz nada é o defeito que só o `aoTocar` denuncia. Hoje a ação é uma só, montada no
+    // `BotaoDoMenuDoSistema`, e este caso é o que prende o item a ela.
     it('leva à lista de perfis', () => {
       // Ações próprias, e não as do arquivo: `acoes` é compartilhado entre todos os testes e
       // ninguém o limpa, então um espião reaproveitado passaria mesmo sem ninguém chamá-lo.
