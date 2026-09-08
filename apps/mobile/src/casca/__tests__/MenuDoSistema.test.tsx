@@ -51,6 +51,19 @@ describe('menu do sistema', () => {
       expect(itensDoSistema(acoes, { oferecerPro: true })[0].rotulo).toBe('Trocar perfil');
     });
 
+    // O item precisa LEVAR à lista, e isso não é óbvio olhando só para ele: na própria tela de
+    // perfis o chamador passa `perfis: () => undefined`, porque ali o item nem existe. Se a
+    // regra que o esconde caísse, o item apareceria e não faria nada — e o `aoTocar` seria o
+    // único lugar onde isso apareceria. Aqui ele fica preso à ação que recebeu.
+    it('leva à lista de perfis', () => {
+      // Ações próprias, e não as do arquivo: `acoes` é compartilhado entre todos os testes e
+      // ninguém o limpa, então um espião reaproveitado passaria mesmo sem ninguém chamá-lo.
+      const proprias = { ...acoes, perfis: jest.fn() };
+      itensDoSistema(proprias, { artista: comDiagnostico, oferecerPro: true })[0].aoTocar();
+
+      expect(proprias.perfis).toHaveBeenCalledTimes(1);
+    });
+
     it('com um artista aberto, mostra a foto dele no lugar do ícone', () => {
       const [trocar] = itensDoSistema(acoes, { artista: comDiagnostico, oferecerPro: true });
 
