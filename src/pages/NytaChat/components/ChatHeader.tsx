@@ -16,6 +16,15 @@ import './ChatHeader.scss';
 //
 // A lixeira saiu por ser redundante: "nova conversa" já dá a folha em branco sem destruir nada,
 // e apagar de vez é uma ação da lista de conversas, que é onde ela pertence.
+//
+// Os botões são `round-control`, o círculo branco do resto do app (a marca, o sino, o menu do
+// sistema). Eles foram ícones sem casca por um tempo, e aí a única faixa da tela usava um
+// controle que não existe em nenhuma outra — o chat parecia de outro produto.
+//
+// E o VOLTAR só existe no mobile. Acima de 900px a lista de conversas está à esquerda, com o
+// voltar dela, e a tela ficava com duas setas lado a lado apontando para o mesmo lugar. É o
+// espelho exato do que a lista faz: ela esconde o voltar dela abaixo de 900px, onde vira gaveta
+// e quem sai é esta faixa.
 
 interface ChatHeaderProps {
   artistName: string;
@@ -30,36 +39,36 @@ interface ChatHeaderProps {
 export const ChatHeader: FC<ChatHeaderProps> = ({ artistName, onBack, onOpenHistory, onNew }) => (
   <header className='chat-header'>
     <button
-      className='chat-header__icone chat-header__voltar'
+      className='round-control chat-header__icone chat-header__voltar'
       onClick={onBack}
       aria-label='Sair da conversa'
       title='Sair da conversa'
       type='button'
     >
-      <FiArrowLeft size={19} />
+      <FiArrowLeft size={21} />
     </button>
 
     {artistName && <span className='chat-header__escopo'>{artistName}</span>}
 
     <div className='chat-header__actions'>
       <button
-        className='chat-header__icone chat-header__conversas'
+        className='round-control chat-header__icone chat-header__conversas'
         onClick={onOpenHistory}
         aria-label='Ver as conversas'
         title='Ver as conversas'
         type='button'
       >
-        <FiMessageSquare size={18} />
+        <FiMessageSquare size={20} />
       </button>
 
       <button
-        className='chat-header__icone'
+        className='round-control chat-header__icone'
         onClick={onNew}
         aria-label='Nova conversa'
         title='Nova conversa'
         type='button'
       >
-        <FiEdit size={18} />
+        <FiEdit size={20} />
       </button>
     </div>
   </header>

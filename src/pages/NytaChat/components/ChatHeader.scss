@@ -4,14 +4,17 @@
 // barra da Maestra (ver `isImmersiveRoute` no Layout), a faixa passou a ser a única do topo — e
 // uma faixa só, sem fio e sem cor própria, é o que faz a tela parecer a conversa e não um
 // aplicativo em volta dela.
+//
+// Os botões são `.round-control` (styles/gsap-reference.css): o círculo branco que a marca, o
+// sino e o menu do sistema já usam. Aqui só ficam o tom do ícone e o estado de foco — a forma
+// vem de lá, e é isso que impede esta tela de inventar um controle próprio.
 
 .chat-header {
   display: flex;
   flex: none;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  height: 58px;
-  padding: 0 12px;
+  padding: 12px 14px;
   background: transparent;
 
   &__escopo {
@@ -29,20 +32,11 @@
   &__actions {
     display: flex;
     flex: none;
-    gap: 2px;
+    gap: 8px;
     align-items: center;
   }
 
   &__icone {
-    display: inline-flex;
-    width: 38px;
-    height: 38px;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
     color: #8496b3;
     cursor: pointer;
     transition: color 0.15s, background 0.15s;
@@ -59,10 +53,17 @@
   }
 }
 
-// No desktop a lista de conversas já está ao lado, então o botão que abre a gaveta não tem o que
-// abrir. Abaixo de 900px ela vira gaveta e ele aparece.
+// Acima de 900px a lista de conversas está à esquerda, e ela tem o voltar dela, o título e o
+// "+". Os três botões desta faixa viram cópias do que já está na tela: duas setas lado a lado
+// apontando para o mesmo lugar, um botão que abre uma gaveta que não existe, e um segundo "nova
+// conversa" a 900px do primeiro. No desktop a faixa fica só com o nome do artista, e a lista é
+// quem navega.
+//
+// É o espelho do que a lista faz (ConversationSidebar.scss): ela esconde o voltar dela abaixo de
+// 900px, onde vira gaveta e quem sai é esta faixa. As duas regras precisam continuar opostas,
+// senão a tela fica com dois botões de voltar ou com nenhum.
 @media (min-width: 901px) {
-  .chat-header__conversas {
+  .chat-header__icone {
     display: none;
   }
 }
