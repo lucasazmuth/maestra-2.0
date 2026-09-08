@@ -148,6 +148,16 @@
   color: #3361ff;
 }
 
+// "Trocar perfil" traz a FOTO do artista aberto no lugar do ícone. Ela mora dentro do mesmo
+// `.itemIcon` e no tamanho do ícone que substitui, senão a primeira célula cresce e desalinha
+// a grade inteira. `object-fit: cover` porque foto de perfil raramente chega quadrada.
+.itemAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .itemLabel {
   min-width: 0;
   font-size: 13px;

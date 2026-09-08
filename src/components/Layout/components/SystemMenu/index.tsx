@@ -7,8 +7,9 @@ import {
 import { PerfisIcon } from '../../../Icons/system';
 import { useIsPlatformAdmin } from '@maestra/core/hooks/useIsPlatformAdmin';
 import { useAdminRole, type ModuloAdmin } from '@maestra/core/hooks/useAdminRole';
-import { useAppDispatch } from '@maestra/core/store/store';
+import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { authActions } from '@maestra/core/store/slices/auth';
+import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import styles from './SystemMenu.module.scss';
 
 // Menu do sistema no topo da aplicação. Reúne o que não pertence a um perfil de artista:
@@ -30,13 +31,17 @@ interface Item {
   action?: () => void;
 }
 
+// O que aparece para todo mundo, DEPOIS de "Trocar perfil" — que é montado dentro do
+// componente porque depende do artista aberto (ver `trocarDePerfil`).
 const GENERAL: Item[] = [
-  // No mobile, páginas sem sidebar/navmenu (ex.: 404) não davam volta para a lista de
-  // perfis. O menu do sistema é o único ponto fixo em qualquer tela, então entra aqui.
-  { label: 'Perfis', path: '/artists', icon: <PerfisIcon size={20} /> },
   { label: 'Configurações', path: '/settings', icon: <FiSettings /> },
   { label: 'Suporte', path: '/suporte', icon: <FiLifeBuoy /> },
 ];
+
+const matchArtistId = (pathname: string): string | undefined => {
+  const m = pathname.match(/^\/artists\/([^/]+)/);
+  return m ? m[1] : undefined;
+};
 
 // Cada item carrega o modulo que ele exige. O menu mostra so o que a pessoa alcanca — e isso e
 // conveniencia de navegacao, nao seguranca: quem barra e a RLS e os porteiros de rota.
@@ -69,6 +74,15 @@ export const SystemMenu: FC<Props> = ({ hasMobileNav = false }) => {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Qual perfil está aberto. Pela rota primeiro — é ela que manda quando se está dentro de um
+  // artista — e, nas telas que não têm artista na URL (Configurações, Notificações), pelo
+  // último aberto, que é o mesmo critério da barra de abas do mobile.
+  const artists = useAppSelector((s) => s.artists.items);
+  const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
+  const routeId = matchArtistId(location.pathname);
+  const artist =
+    artists.find((a) => a.id === routeId) ?? artists.find((a) => a.id === currentArtistId);
 
   // Fecha ao clicar fora ou no Esc — o painel é flutuante e não tem overlay próprio.
   useEffect(() => {
@@ -135,9 +149,37 @@ export const SystemMenu: FC<Props> = ({ hasMobileNav = false }) => {
     navigate('/login', { replace: true });
   };
 
+  // O primeiro item diz "Trocar perfil", e não "Perfis": quem está dentro de um artista não vai
+  // ali para ver uma lista, vai para SAIR deste e entrar noutro. E o ícone é a FOTO do perfil
+  // aberto — o menu passa a dizer de quem é a sessão antes mesmo de ser clicado. É o mesmo item
+  // do app nativo (`itensDoSistema`, em casca/marca/MenuDoSistema.tsx).
+  //
+  // Ele some NA lista de perfis: ali o item só fecharia o menu e deixaria a pessoa onde já
+  // estava. Um item que não leva a lugar nenhum ensina a desconfiar do menu.
+  //
+  // Fora dali ele não é dispensável: em páginas sem sidebar nem tab bar (a 404, por exemplo)
+  // este menu é o único ponto fixo da tela, e sem este item não haveria volta para a lista.
+  const naListaDePerfis = location.pathname === '/artists';
+  const trocarDePerfil: Item[] = naListaDePerfis
+    ? []
+    : [{
+        label: 'Trocar perfil',
+        path: '/artists',
+        icon: artist
+          ? (
+            <img
+              className={styles.itemAvatar}
+              src={artist.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE}
+              alt=''
+            />
+          )
+          : <PerfisIcon size={20} />,
+      }];
+
   // Uma grade só, sem título separando Geral de Administração — a visibilidade de cada item
   // continua condicionada à mesma regra de antes (isAdmin), só a divisão visual que saiu.
   const allItems: Item[] = [
+    ...trocarDePerfil,
     ...(isAdmin
       ? [
           ...GENERAL,
