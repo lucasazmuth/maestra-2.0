@@ -14,13 +14,19 @@ import type { PendingToolCall } from '@maestra/core/store/slices/nytaChat';
 // O texto deste cartão É o consentimento: por isso ele não fala em `create_catalog_item` nem
 // mostra UUID nenhum — as tabelas de tradução vivem no núcleo e são as MESMAS da web.
 
-export const CartaoDeAcao = ({ acao, aoConfirmar, aoCancelar }: {
+export const CartaoDeAcao = ({ acao, aoConfirmar, aoCancelar, somenteLeitura = false }: {
   acao: PendingToolCall;
-  aoConfirmar: (id: string) => void;
-  aoCancelar: (id: string) => void;
+  aoConfirmar?: (id: string) => void;
+  aoCancelar?: (id: string) => void;
+  /**
+   * O mesmo cartão, no histórico da conversa: mostra O QUE a Nyta fez e como terminou, sem
+   * oferecer decisão. Uma ação que já rodou não se confirma de novo, e uma que falhou há três
+   * dias não se repete por um botão que sobrou na tela.
+   */
+  somenteLeitura?: boolean;
 }) => {
   const campos = Object.entries(acao.arguments).filter(([chave]) => !HIDDEN_ARG_KEYS.has(chave));
-  const decidindo = acao.status === 'pending' || acao.status === 'error';
+  const decidindo = !somenteLeitura && (acao.status === 'pending' || acao.status === 'error');
 
   return (
     <View style={estilos.cartao}>
@@ -73,7 +79,7 @@ export const CartaoDeAcao = ({ acao, aoConfirmar, aoCancelar }: {
         <View style={estilos.botoes}>
           <Pressable
             style={[estilos.botao, estilos.confirmar]}
-            onPress={() => aoConfirmar(acao.toolCallId)}
+            onPress={() => aoConfirmar?.(acao.toolCallId)}
             accessibilityRole="button"
             accessibilityLabel="Confirmar ação"
           >
@@ -82,7 +88,7 @@ export const CartaoDeAcao = ({ acao, aoConfirmar, aoCancelar }: {
           </Pressable>
           <Pressable
             style={[estilos.botao, estilos.cancelar]}
-            onPress={() => aoCancelar(acao.toolCallId)}
+            onPress={() => aoCancelar?.(acao.toolCallId)}
             accessibilityRole="button"
             accessibilityLabel="Cancelar ação"
           >

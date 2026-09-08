@@ -2,6 +2,7 @@ import { FC, useCallback, useEffect, useRef } from 'react';
 import { FiAlertTriangle } from 'react-icons/fi';
 import { FalaDaNyta, FalaDeAviso, FalaDeQuemPergunta, Pensando } from './Mensagem';
 import { NytaChatMessage, PendingToolCall } from '@maestra/core/store/slices/nytaChat';
+import { acoesDoHistorico } from '@maestra/core/nucleo/acoesDaNyta';
 import { sanitizeNytaContent } from '@maestra/core/utils/sanitizeNytaContent';
 import { ToolConfirmationCard } from './ToolConfirmationCard';
 
@@ -204,11 +205,18 @@ export const MessageList: FC<MessageListProps> = ({
         const content =
           msg.role === 'assistant' ? sanitizeNytaContent(msg.content) : msg.content || '';
 
+        // As ações que esta mensagem executou, tiradas do próprio histórico. O cartão só existia
+        // enquanto a ação estava pendente (`pendingToolCalls`, que é memória), então voltar à
+        // conversa mostrava a Nyta dizendo "confirme no card abaixo" e nenhum card abaixo.
+        const acoes = msg.role === 'assistant'
+          ? acoesDoHistorico(msg, messages, pendingToolCalls.map((tc) => tc.toolCallId))
+          : [];
+
         // Mensagens de assistant vazias: normalmente são tool-call (o card aparece à parte) ou
         // placeholder de streaming — essas pulamos. MAS se a msg TINHA texto e foi sanitizada a
         // vazio (ex.: o modelo respondeu só com um bloco JSON que removemos) e NÃO é tool-call,
         // mostramos um fallback em vez de sumir silenciosamente (senão o chat parece travado).
-        if (msg.role === 'assistant' && !content && msg.status !== 'error') {
+        if (msg.role === 'assistant' && !content && msg.status !== 'error' && !acoes.length) {
           const isToolCall = !!msg.toolCalls?.length;
           const hadRawText = !!(msg.content && msg.content.trim());
           if (!isToolCall && hadRawText) {
@@ -237,7 +245,12 @@ export const MessageList: FC<MessageListProps> = ({
                 <span>Não foi possível completar a resposta. Tente novamente.</span>
               </FalaDeAviso>
             ) : msg.role === 'assistant' ? (
-              <FalaDaNyta>{content}</FalaDaNyta>
+              <div className="nyta-message-list__fala">
+                {content && <FalaDaNyta>{content}</FalaDaNyta>}
+                {acoes.map((acao) => (
+                  <ToolConfirmationCard key={acao.toolCallId} toolCall={acao} somenteLeitura />
+                ))}
+              </div>
             ) : msg.role === 'user' ? (
               <FalaDeQuemPergunta>{content}</FalaDeQuemPergunta>
             ) : null}

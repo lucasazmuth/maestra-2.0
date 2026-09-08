@@ -15,6 +15,7 @@ import { CONVITE_DO_CAMPO, RESSALVA_DA_NYTA, saudacaoDaNyta } from '@maestra/cor
 import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
 import { useNytaChat } from '@maestra/core/hooks/useNytaChat';
 import { useNytaConversations } from '@maestra/core/hooks/useNytaConversations';
+import { acoesDoHistorico } from '@maestra/core/nucleo/acoesDaNyta';
 import type { NytaChatMessage } from '@maestra/core/store/slices/nytaChat';
 
 import { EmblemaNyta } from '@/casca/EmblemaNyta';
@@ -72,11 +73,28 @@ export default function Nyta() {
     selectConversation, startNewConversation,
   } = useNytaChat('route', conversaMudou);
 
-  // A conversa cresce por baixo: sem isto, cada pedaço que chega fica fora da vista e a pessoa
-  // vê a tela parada enquanto a Nyta escreve.
-  useEffect(() => {
-    if (messages.length) lista.current?.scrollToEnd({ animated: true });
-  }, [messages.length, isStreaming]);
+  /**
+   * A conversa abre no FIM, e cresce por baixo.
+   *
+   * Havia um efeito que rolava ao mudar `messages.length`, e ele nao dava conta de ABRIR a
+   * tela: quando o historico chega de uma vez, o efeito roda antes de o FlatList ter medido as
+   * linhas, e o `scrollToEnd` mira uma altura que ainda nao existe. A conversa abria no topo, e
+   * quem entrava tinha que rolar ate embaixo para achar o que acabou de ser dito.
+   *
+   * Quem sabe a altura de verdade e o `onContentSizeChange` (ver `assentar`, no FlatList). O
+   * primeiro pouso e SEM animacao — animar uma rolagem de tela inteira que a pessoa nao pediu
+   * mostra o historico passando voando —, e dai em diante e animado, que e o certo para o texto
+   * que chega enquanto a Nyta escreve.
+   */
+  const jaAssentou = useRef(false);
+  const assentar = useCallback(() => {
+    if (!messages.length) return;
+    lista.current?.scrollToEnd({ animated: jaAssentou.current });
+    jaAssentou.current = true;
+  }, [messages.length]);
+
+  // Trocar de conversa e abrir outra tela: a nova tambem tem que pousar no fim, sem animacao.
+  useEffect(() => { jaAssentou.current = false; }, [conversationId]);
 
   // Apagar a conversa aberta deixaria a tela mostrando mensagens que não existem mais.
   const excluir = useCallback(async (alvo: string) => {
@@ -121,7 +139,11 @@ export default function Nyta() {
   const Mensagem = ({ item }: { item: NytaChatMessage }) => {
     // As mensagens de ferramenta são o registro do que a Nyta executou; quem mostra isso é o
     // cartão de ação, não uma bolha com JSON dentro.
-    if (item.role === 'tool' || !item.content) return null;
+    // As mensagens `tool` são o registro cru do que voltou do servidor; quem mostra isso é o
+    // cartão, montado a partir da mensagem da Nyta que PEDIU a ação. Uma mensagem dela sem
+    // texto mas com ações não some mais: era ela que carregava o cartão.
+    if (item.role === 'tool') return null;
+    if (!item.content && !item.toolCalls?.length) return null;
     const doArtista = item.role === 'user';
 
     // A resposta da Nyta NÃO tem recipiente: nem moldura, nem avatar. É texto na própria tela,
@@ -136,7 +158,12 @@ export default function Nyta() {
       </View>
     ) : (
       <View style={estilos.resposta}>
-        <TextoDaNyta texto={item.content} />
+        {!!item.content && <TextoDaNyta texto={item.content} />}
+        {acoesDoHistorico(item, messages, pendingToolCalls.map((a) => a.toolCallId)).map((acao) => (
+          <View key={acao.toolCallId} style={estilos.acaoDoHistorico}>
+            <CartaoDeAcao acao={acao} somenteLeitura />
+          </View>
+        ))}
       </View>
     );
   };
@@ -212,6 +239,7 @@ export default function Nyta() {
           // cima procurando o que já foi dito, e é ali que faltam mensagens.
           onStartReached={hasMoreHistory ? loadOlderMessages : undefined}
           onStartReachedThreshold={0.2}
+          onContentSizeChange={assentar}
           ListHeaderComponent={loadingHistory ? (
             <ActivityIndicator style={estilos.carregando} color={COR.primaria} />
           ) : null}
@@ -236,7 +264,7 @@ export default function Nyta() {
       {/* A reserva de 104px para a ilha de navegação saiu junto com ela: nesta rota a barra de
           abas não é renderizada (ver `_layout.tsx`), e reservar altura para uma barra que não
           existe deixava uma tira vazia embaixo do campo. */}
-      <View style={[estilos.barra, { paddingBottom: 12 + margem.bottom }]}>
+      <View style={[estilos.barra, { paddingBottom: margem.bottom }]}>
         {noLimite ? (
           <View style={estilos.limite}>
             <Feather name="clock" size={18} color={COR_NYTA.limiteTitulo} />
@@ -320,6 +348,7 @@ const estilos = StyleSheet.create({
     lineHeight: 22,
   },
   espera: { alignSelf: 'flex-start', marginBottom: 26 },
+  acaoDoHistorico: { marginTop: 12 },
 
   erro: {
     flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12,
@@ -354,7 +383,10 @@ const estilos = StyleSheet.create({
   },
   enviarInativo: { backgroundColor: COR_NYTA.enviarApagado },
   disclaimer: { color: COR_NYTA.aviso, fontSize: 11 },
-  ressalva: { marginTop: 8, textAlign: 'center' },
+  // A ressalva encosta na margem do aparelho de proposito: ela e a ultima linha da tela, e os
+  // 12px que havia embaixo dela somavam com os 34 do indicador de home e deixavam o campo
+  // flutuando longe da borda.
+  ressalva: { marginTop: 8, marginBottom: 2, textAlign: 'center' },
 
   limite: {
     flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,

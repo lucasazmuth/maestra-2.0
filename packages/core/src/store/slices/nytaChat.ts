@@ -7,7 +7,19 @@ export interface NytaChatMessage {
   role: 'user' | 'assistant' | 'tool';
   content: string | null;
   toolCalls?: ToolCall[];
-  toolResults?: ToolResult[];
+  /**
+   * O resultado da ação, como o servidor grava.
+   *
+   * Isto era `ToolResult[]`, e o tipo MENTIA: `nyta-chat/index.ts` escreve `tool_results` como
+   * UM objeto (`{ tool_call_id, success, summary }`), não como lista. Ninguém percebeu porque
+   * ninguém lia o campo — ele era carregado do banco e nunca desenhado. Quando o cartão de ação
+   * do histórico passou a lê-lo, o `for...of` estourou "iterator method is not callable" na
+   * primeira conversa com uma ação executada.
+   *
+   * A união aceita as duas formas de propósito: a do servidor de hoje, e a lista que linhas
+   * antigas podem ter. Quem consome normaliza (ver `acoesDoHistorico`).
+   */
+  toolResults?: ToolResult | ToolResult[];
   createdAt: string;
   status: 'sending' | 'sent' | 'error';
 }
