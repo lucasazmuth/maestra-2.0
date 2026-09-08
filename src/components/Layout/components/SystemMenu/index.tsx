@@ -59,14 +59,7 @@ const ADMIN: (Item & { modulo?: ModuloAdmin; somenteAdminPleno?: boolean })[] = 
   { label: 'Acessos', path: '/admin/acessos', icon: <FiShield />, somenteAdminPleno: true },
 ];
 
-interface Props {
-  // No mobile, os mesmos atalhos já moram no "Mais" da tab bar — repetir aqui duplicaria a
-  // navegação. Mas em telas sem tab bar (/artists, /admin), este é o único caminho até
-  // Configurações/Suporte/Sair, então continua visível ali mesmo no mobile.
-  hasMobileNav?: boolean;
-}
-
-export const SystemMenu: FC<Props> = ({ hasMobileNav = false }) => {
+export const SystemMenu: FC = () => {
   const isAdmin = useIsPlatformAdmin();
   const { ehAdminPleno, podeAcessar } = useAdminRole();
   const dispatch = useAppDispatch();
@@ -192,7 +185,7 @@ export const SystemMenu: FC<Props> = ({ hasMobileNav = false }) => {
   ];
 
   return (
-    <div className={`${styles.wrap} ${hasMobileNav ? styles.hiddenWithTabBar : ''}`} ref={wrapRef}>
+    <div className={styles.wrap} ref={wrapRef}>
       <button
         type='button'
         className={`round-control ${styles.trigger} ${open ? styles.triggerOpen : ''}`}

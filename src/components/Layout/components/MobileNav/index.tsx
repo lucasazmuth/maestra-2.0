@@ -1,10 +1,9 @@
 import { FC, ReactNode, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiSettings, FiLifeBuoy } from 'react-icons/fi';
 import {
   PlanoAcaoIcon, CatalogoIcon, AgendaIcon, MoreIcon,
-  DiagnosticoIcon, PlanejamentoIcon, EquipeIcon, MarketingIcon, PerfisIcon,
+  DiagnosticoIcon, PlanejamentoIcon, EquipeIcon, MarketingIcon,
 } from '../../../Icons/system';
 import { useAppSelector } from '@maestra/core/store/store';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
@@ -37,10 +36,6 @@ export const isNavExcludedRoute = (pathname: string): boolean =>
   pathname === '/artists' || pathname.startsWith('/admin');
 
 type Item = { icon: ReactNode; label: string; suffix: string };
-// Atalhos que não pertencem a um artista (o que no desktop mora no menu do sistema): rota
-// absoluta em vez de sufixo dentro de /artists/:id/....
-type SystemItem = { icon: ReactNode; label: string; path: string };
-
 export const MobileNav: FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,35 +65,21 @@ export const MobileNav: FC = () => {
     { icon: <EquipeIcon size={22} />, label: t('Team', { defaultValue: 'Equipe' }), suffix: 'team' },
     { icon: <MarketingIcon size={22} />, label: t('Marketing', { defaultValue: 'Marketing' }), suffix: 'marketing' },
   ];
-  // Perfis/Configurações/Suporte — no desktop moram no menu do sistema (o ícone de grade do
-  // header), que some no mobile porque esses mesmos atalhos já cabem aqui dentro do "Mais".
-  const systemItems: SystemItem[] = [
-    { icon: <PerfisIcon size={22} />, label: 'Perfis', path: '/artists' },
-    { icon: <FiSettings size={22} />, label: 'Configurações', path: '/settings' },
-    { icon: <FiLifeBuoy size={22} />, label: 'Suporte', path: '/suporte' },
-  ];
+  // Perfis, Configurações e Suporte NÃO entram aqui: eles moram no menu do sistema, no botão de
+  // grade do header, que agora aparece em qualquer largura. Eles já viveram nos dois lugares, e
+  // aí o "Mais" misturava duas coisas diferentes — os módulos DESTE perfil e os atalhos da
+  // conta, que não pertencem a perfil nenhum. É a mesma divisão do app nativo (ver
+  // `BarraDeAbas.tsx` e `MenuDoSistema.tsx`).
 
   const isActive = (suffix: string) =>
     suffix === ''
       ? location.pathname === `/artists/${artistId}`
       : location.pathname.startsWith(`/artists/${artistId}/${suffix}`);
-  // '/artists' é um caso especial: TODA página de um artista é '/artists/:id/...', então um
-  // startsWith('/artists/') marcaria "Perfis" como ativo em qualquer perfil aberto — não só na
-  // lista. Só a lista em si (rota exata) deve acender esse item.
-  const isActivePath = (path: string) =>
-    path === '/artists'
-      ? location.pathname === '/artists'
-      : location.pathname === path || location.pathname.startsWith(`${path}/`);
-  const moreActive = more.some((m) => isActive(m.suffix)) || systemItems.some((s) => isActivePath(s.path));
+  const moreActive = more.some((m) => isActive(m.suffix));
 
   const go = (suffix: string) => {
     setMoreOpen(false);
     navigate(`/artists/${artistId}${suffix ? `/${suffix}` : ''}`);
-  };
-
-  const goPath = (path: string) => {
-    setMoreOpen(false);
-    navigate(path);
   };
 
   const renderItem = (it: Item) => {
@@ -124,8 +105,7 @@ export const MobileNav: FC = () => {
       {moreOpen && <div className='mobile-more-backdrop' onClick={() => setMoreOpen(false)} />}
       {moreOpen && (
         <div className='mobile-more-sheet' role='menu'>
-          {/* Uma grade só: todos os atalhos (módulos do perfil + Perfis/Configurações/Suporte)
-              no mesmo grupo, sem título separando. */}
+          {/* Os módulos deste perfil que não couberam na barra, numa grade só. */}
           <div className='mobile-more-group'>
             {more.map((m) => (
               <button
@@ -135,16 +115,6 @@ export const MobileNav: FC = () => {
               >
                 <span className='mobile-more-ic'>{m.icon}</span>
                 <span>{m.label}</span>
-              </button>
-            ))}
-            {systemItems.map((s) => (
-              <button
-                key={s.path}
-                className={`mobile-more-item${isActivePath(s.path) ? ' mobile-more-item--active' : ''}`}
-                onClick={() => goPath(s.path)}
-              >
-                <span className='mobile-more-ic'>{s.icon}</span>
-                <span>{s.label}</span>
               </button>
             ))}
           </div>
