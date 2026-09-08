@@ -1,17 +1,17 @@
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_CATALOGO, RAIO } from '@maestra/core/constants/design';
-import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '@maestra/core/constants/maestra';
+import { CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '@maestra/core/constants/maestra';
 import type { CatalogItem, Split } from '@maestra/core/interfaces/maestra';
 import { deleteCatalogProject, saveCatalogProjectFromForm } from '@maestra/core/services/db/catalog';
 
+import { Folha } from '@/casca/Folha';
 import { Versoes } from '@/casca/musicas/Versoes';
 import { enviarParaOCatalogo, escolherImagem } from '@/nucleo/arquivos';
 
@@ -241,32 +241,24 @@ export const FichaDaFaixa = ({
   };
 
   return (
-    <Modal visible={aberta} animationType="slide" presentationStyle="pageSheet" onRequestClose={aoFechar}>
-      <KeyboardAvoidingView style={estilos.folha} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {/* O cabecalho da web: o sobretitulo, o ponto do status ao lado do titulo da faixa, o
-            subtitulo que explica o que e esta ficha, e o "x" a direita. */}
-        <View style={estilos.topo}>
-          <View style={estilos.flex}>
-            <Text style={estilos.sobretitulo}>MÚSICA</Text>
-            <View style={estilos.tituloLinha}>
-              <View
-                style={[
-                  estilos.pontoDoTitulo,
-                  { backgroundColor: CATALOG_STATUS[(rascunho.status ?? 'composition') as keyof typeof CATALOG_STATUS]?.color ?? COR.apagado },
-                ]}
-              />
-              <Text style={estilos.titulo} numberOfLines={2}>
-                {rascunho.title?.trim() || (faixa ? 'Editar música' : 'Nova música')}
-              </Text>
-            </View>
-            <Text style={estilos.subtitulo}>
-              A ficha da obra: identidade, créditos e letra. As gravações ficam nas versões.
-            </Text>
-          </View>
-          <Pressable onPress={aoFechar} hitSlop={10} accessibilityRole="button" accessibilityLabel="Fechar">
-            <Feather name="x" size={22} color={COR_CATALOGO.legenda} />
-          </Pressable>
-        </View>
+    <Folha
+      aberta={aberta}
+      titulo={rascunho.title?.trim() || (faixa ? 'Editar música' : 'Nova música')}
+      aoFechar={aoFechar}
+      acao={{ rotulo: 'Salvar', aoTocar: salvar, carregando: gravando }}
+      // Só editando: uma música que ainda não nasceu não tem o que excluir.
+      destrutiva={faixa ? { rotulo: 'Excluir', aoTocar: confirmarExclusao } : undefined}
+      // Esta ficha tem abas e rolagem por aba, então a `Folha` não põe a dela por cima.
+      semRolagem
+    >
+      <View style={estilos.miolo}>
+        {/* Onde moram as gravações é a dúvida que esta tela mais gera: a ficha é da OBRA, e as
+            versões são de outra tela. O sobretítulo "MÚSICA" e o ponto de status saíram (o
+            título já diz de que música se trata, e o status é um campo logo abaixo); esta linha
+            ficou, porque é a única que ensina algo. */}
+        <Text style={estilos.subtitulo}>
+          A ficha da obra: identidade, créditos e letra. As gravações ficam nas versões.
+        </Text>
 
         <View style={estilos.abas}>
           {([['informacoes', 'Informações'], ['letras', 'Letras'], ['splits', 'Splits']] as const)
@@ -535,40 +527,14 @@ export const FichaDaFaixa = ({
 
           {!!erro && <Text style={estilos.erro}>{erro}</Text>}
         </ScrollView>
-
-        {/* O rodape e FIXO, como na web: excluir a esquerda, salvar a direita. Ele nao rola com
-            o conteudo — numa ficha de tres abas, um "Salvar" no fim da rolagem se esconde. */}
-        <View style={estilos.rodape}>
-          {faixa ? (
-            <Pressable
-              style={estilos.excluir}
-              onPress={confirmarExclusao}
-              accessibilityRole="button"
-              accessibilityLabel="Excluir música"
-            >
-              <Feather name="trash-2" size={15} color={COR.erro} />
-              <Text style={estilos.excluirTexto}>Excluir música</Text>
-            </Pressable>
-          ) : <View />}
-
-          <Pressable
-            style={estilos.salvar}
-            onPress={salvar}
-            disabled={gravando}
-            accessibilityRole="button"
-          >
-            {gravando
-              ? <ActivityIndicator size="small" color={COR.sobrePrimaria} />
-              : <Text style={estilos.salvarTexto}>Salvar</Text>}
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </View>
+    </Folha>
   );
 };
 
+// A casca (fundo, cabeçalho, teclado e rodapé) mora na `Folha`. Aqui ficam as abas e os campos.
 const estilos = StyleSheet.create({
-  folha: { flex: 1, backgroundColor: COR.superficie },
+  miolo: { flex: 1, minHeight: 0 },
   flex: { flex: 1 },
   topo: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
@@ -578,11 +544,16 @@ const estilos = StyleSheet.create({
   titulo: { flex: 1, fontSize: 17, fontWeight: '800', color: COR_CATALOGO.titulo, lineHeight: 22 },
   tituloLinha: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 2 },
   pontoDoTitulo: { width: 8, height: 8, borderRadius: 4 },
-  subtitulo: { fontSize: 12, color: COR_CATALOGO.legenda, lineHeight: 17, marginTop: 6 },
+  // O recuo lateral é o mesmo do corpo da `Folha` (16). Sem ele o texto encostava na borda da
+  // folha, porque a casca não põe recuo em quem usa `semRolagem`.
+  subtitulo: {
+    fontSize: 12, color: COR_CATALOGO.legenda, lineHeight: 17,
+    paddingHorizontal: 16, paddingBottom: 12,
+  },
 
   // As tres abas com o sublinhado azul na ativa, como na web.
   abas: {
-    flexDirection: 'row', gap: 22, paddingHorizontal: 18,
+    flexDirection: 'row', gap: 22, paddingHorizontal: 16,
     borderBottomWidth: 1, borderBottomColor: COR.divisoria,
   },
   aba: { paddingVertical: 13, borderBottomWidth: 2, borderBottomColor: 'transparent' },

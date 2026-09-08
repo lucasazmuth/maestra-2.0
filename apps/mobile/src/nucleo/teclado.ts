@@ -29,3 +29,31 @@ export const useTecladoAberto = (): boolean => {
 
   return aberto;
 };
+
+/**
+ * A ALTURA do teclado, em pontos. Zero quando ele está fechado.
+ *
+ * Existe porque o `KeyboardAvoidingView` não serve dentro de um `Modal` com
+ * `presentationStyle="pageSheet"`: ele calcula o quanto empurrar a partir da posição do próprio
+ * quadro dentro da JANELA, e numa folha esse quadro começa abaixo do topo da tela. O resultado é
+ * um empurrão curto demais, e o rodapé fica atrás das teclas.
+ *
+ * Medir o teclado e reservar a altura embaixo do container é determinístico: não depende de onde
+ * o quadro começa nem de deslocamento algum para compensar.
+ */
+export const useAlturaDoTeclado = (): number => {
+  const [altura, setAltura] = useState(0);
+
+  useEffect(() => {
+    const abriu = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const fechou = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const assinaturas = [
+      Keyboard.addListener(abriu, (e) => setAltura(e?.endCoordinates?.height ?? 0)),
+      Keyboard.addListener(fechou, () => setAltura(0)),
+    ];
+    return () => assinaturas.forEach((a) => a.remove());
+  }, []);
+
+  return altura;
+};

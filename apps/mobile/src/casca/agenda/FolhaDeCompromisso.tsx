@@ -1,16 +1,13 @@
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, Text, TextInput, View,
-} from 'react-native';
-
-import Feather from '@expo/vector-icons/Feather';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { COR, COR_AGENDA, RAIO } from '@maestra/core/constants/design';
 import { EVENT_STATUS, EVENT_TYPES } from '@maestra/core/constants/maestra';
 import type { AgendaEvent } from '@maestra/core/interfaces/maestra';
 import * as eventos from '@maestra/core/services/db/events';
+
+import { Bloco, Folha, Linha } from '../Folha';
 
 // O formulário de compromisso — a porta do `EventModal` da web.
 //
@@ -172,27 +169,17 @@ export const FolhaDeCompromisso = ({
   };
 
   return (
-    <Modal visible={aberta} animationType="slide" presentationStyle="pageSheet" onRequestClose={aoFechar}>
-      <KeyboardAvoidingView
-        style={estilos.folha}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={estilos.topo}>
-          <Pressable onPress={aoFechar} hitSlop={10} accessibilityRole="button">
-            <Text style={estilos.cancelar}>Cancelar</Text>
-          </Pressable>
-          <View>
-            <Text style={estilos.sobretitulo}>AGENDA</Text>
-            <Text style={estilos.titulo}>{evento ? 'Editar compromisso' : 'Novo compromisso'}</Text>
-          </View>
-          <Pressable onPress={salvar} disabled={gravando} hitSlop={10} accessibilityRole="button">
-            {gravando
-              ? <ActivityIndicator size="small" color={COR.primaria} />
-              : <Text style={estilos.salvar}>Salvar</Text>}
-          </Pressable>
-        </View>
-
-        <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
+    <Folha
+      aberta={aberta}
+      titulo={evento ? 'Editar compromisso' : 'Novo compromisso'}
+      aoFechar={aoFechar}
+      acao={{ rotulo: 'Salvar', aoTocar: salvar, carregando: gravando }}
+      // Excluir só existe editando, e só para quem pode. Num compromisso que ainda não nasceu o
+      // botão não teria o que apagar.
+      destrutiva={evento && podeExcluir ? { rotulo: 'Excluir', aoTocar: confirmarExclusao } : undefined}
+    >
+      <Bloco rotulo="O compromisso">
+        <Linha primeira>
           <Campo rotulo="Título">
             <TextInput
               style={estilos.entrada}
@@ -204,7 +191,9 @@ export const FolhaDeCompromisso = ({
               accessibilityLabel="Título"
             />
           </Campo>
+        </Linha>
 
+        <Linha>
           <Campo rotulo="Tipo">
             <View style={estilos.opcoes}>
               {(Object.keys(EVENT_TYPES) as (keyof typeof EVENT_TYPES)[]).map((tipo) => {
@@ -226,7 +215,9 @@ export const FolhaDeCompromisso = ({
               })}
             </View>
           </Campo>
+        </Linha>
 
+        <Linha>
           <Campo rotulo="Status">
             <View style={estilos.opcoes}>
               {(Object.keys(EVENT_STATUS) as (keyof typeof EVENT_STATUS)[]).map((estado) => {
@@ -247,7 +238,11 @@ export const FolhaDeCompromisso = ({
               })}
             </View>
           </Campo>
+        </Linha>
+      </Bloco>
 
+      <Bloco rotulo="Quando">
+        <Linha primeira>
           <Campo rotulo="Data">
             <TextInput
               style={estilos.entrada}
@@ -259,7 +254,9 @@ export const FolhaDeCompromisso = ({
               accessibilityLabel="Data"
             />
           </Campo>
+        </Linha>
 
+        <Linha>
           <View style={estilos.lado}>
             <View style={estilos.flex}>
               <Campo rotulo="Início">
@@ -290,7 +287,11 @@ export const FolhaDeCompromisso = ({
               </Campo>
             </View>
           </View>
+        </Linha>
+      </Bloco>
 
+      <Bloco rotulo="Onde e o quê">
+        <Linha primeira>
           <Campo rotulo="Local">
             <TextInput
               style={estilos.entrada}
@@ -301,7 +302,9 @@ export const FolhaDeCompromisso = ({
               accessibilityLabel="Local"
             />
           </Campo>
+        </Linha>
 
+        <Linha>
           <Campo rotulo="Descrição">
             <TextInput
               style={[estilos.entrada, estilos.entradaAlta]}
@@ -313,49 +316,26 @@ export const FolhaDeCompromisso = ({
               accessibilityLabel="Descrição"
             />
           </Campo>
+        </Linha>
+      </Bloco>
 
-          {!!erro && <Text style={estilos.erro}>{erro}</Text>}
-
-          {!!evento && podeExcluir && (
-            <Pressable
-              style={estilos.excluir}
-              onPress={confirmarExclusao}
-              accessibilityRole="button"
-              accessibilityLabel="Excluir evento"
-            >
-              <Feather name="trash-2" size={15} color={COR.erro} />
-              <Text style={estilos.excluirTexto}>Excluir</Text>
-            </Pressable>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </Modal>
+      {!!erro && <Text style={estilos.erro}>{erro}</Text>}
+    </Folha>
   );
 };
 
+// A casca (fundo, cabeçalho, rolagem e rodapé) mora na `Folha`. Aqui ficam só os campos.
 const estilos = StyleSheet.create({
-  folha: { flex: 1, backgroundColor: COR.superficie },
   flex: { flex: 1 },
-  topo: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-    paddingHorizontal: 18, paddingVertical: 16,
-    borderBottomWidth: 1, borderBottomColor: COR.divisoria,
-  },
-  sobretitulo: {
-    fontSize: 9, fontWeight: '800', color: COR_AGENDA.navegar, letterSpacing: 1, textAlign: 'center',
-  },
-  titulo: { fontSize: 15, fontWeight: '800', color: COR_AGENDA.texto, marginTop: 2 },
-  cancelar: { fontSize: 15, color: COR.secundario },
-  salvar: { fontSize: 15, fontWeight: '800', color: COR.primaria },
-  conteudo: { padding: 18, paddingBottom: 48, gap: 16 },
-  campo: { gap: 8 },
+  campo: { gap: 6 },
   rotulo: { fontSize: 11, fontWeight: '800', color: COR_AGENDA.navegar, letterSpacing: 0.4 },
+  // SEM moldura: o campo já está dentro do bloco branco, e a linha que o separa do vizinho é a
+  // divisória. Com a borda de antes, cada campo virava uma caixa dentro de outra caixa.
   entrada: {
-    borderWidth: 1, borderColor: COR.contorno, borderRadius: RAIO.campoDeEntrada,
-    paddingHorizontal: 13, paddingVertical: 12,
-    fontSize: 15, color: COR_AGENDA.texto, backgroundColor: COR.fundo,
+    paddingVertical: 2,
+    fontSize: 15, color: COR_AGENDA.texto,
   },
-  entradaAlta: { minHeight: 88, textAlignVertical: 'top' },
+  entradaAlta: { minHeight: 78, textAlignVertical: 'top' },
   lado: { flexDirection: 'row', gap: 12 },
   opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   opcao: {
@@ -367,11 +347,5 @@ const estilos = StyleSheet.create({
   opcaoTexto: { fontSize: 13, fontWeight: '700', color: COR.secundario },
   opcaoTextoEscolhido: { color: COR.primaria },
   pontoDoTipo: { width: 7, height: 7, borderRadius: 4 },
-  erro: { fontSize: 13, color: COR.erro, lineHeight: 19 },
-  excluir: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    marginTop: 8, paddingVertical: 14,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR.erro,
-  },
-  excluirTexto: { fontSize: 14, fontWeight: '800', color: COR.erro },
+  erro: { fontSize: 13, color: COR.erro, lineHeight: 19, paddingHorizontal: 4 },
 });
