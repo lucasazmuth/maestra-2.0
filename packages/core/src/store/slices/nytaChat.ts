@@ -160,8 +160,22 @@ const nytaChatSlice = createSlice({
       return { ...initialState, rateLimitInfo: state.rateLimitInfo };
     },
 
+    /**
+     * O histórico, na frente do que já está na tela.
+     *
+     * Ele PULA o que já está lá, por id. A carga do histórico pode rodar duas vezes — dois
+     * efeitos, uma reconexão, um remount —, e prepender cego punha a conversa inteira em dobro
+     * no store. O React reclamava ("Encountered two children with the same key") e escondia
+     * metade, então o sintoma visível era só o aviso no console.
+     *
+     * Não é hipótese: `src/index.tsx` desligou o StrictMode citando duplicatas como motivo. O
+     * lugar de resolver isso é aqui, onde a regra "uma mensagem, um id" pertence — e não numa
+     * ferramenta de desenvolvimento desligada para o sintoma não aparecer.
+     */
     prependMessages(state, action: PayloadAction<NytaChatMessage[]>) {
-      state.messages = [...action.payload, ...state.messages];
+      const jaEstao = new Set(state.messages.map((m) => m.id));
+      const novas = action.payload.filter((m) => !jaEstao.has(m.id));
+      if (novas.length) state.messages = [...novas, ...state.messages];
     },
   },
 });

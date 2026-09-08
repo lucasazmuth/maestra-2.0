@@ -201,6 +201,12 @@ export const MessageList: FC<MessageListProps> = ({
           return null;
         }
 
+        // As mensagens `tool` são o registro cru do que voltou do servidor; quem mostra isso é o
+        // cartão, montado a partir da mensagem da Nyta que PEDIU a ação. Elas caíam no ternário
+        // lá embaixo e viravam `null` — mas dentro do invólucro, que continuava ali como um
+        // bloco vazio de 26px no meio da conversa.
+        if (msg.role === 'tool') return null;
+
         // Remove markup de tool-call que alguns modelos vazam como texto (ver sanitizeNytaContent).
         const content =
           msg.role === 'assistant' ? sanitizeNytaContent(msg.content) : msg.content || '';
