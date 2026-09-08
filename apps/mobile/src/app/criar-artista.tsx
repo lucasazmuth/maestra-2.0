@@ -12,7 +12,7 @@ import { COR, COR_DIAGNOSTICO, RAIO } from '@maestra/core/constants/design';
 import {
   FALAS, IMPRENSA_PORTES, IMPRENSA_TIPOS, IMPRENSA_NUNCA, QUIZ, REVENUE_SOURCES,
   TIPOS_DE_CONTRATANTE_QUIZ, NAO_SEI, CTX_API, ORIENTACAO_SPOTIFY, CHAVES_DO_BLOCO_R, totalDaTrilha,
-  perguntaAnterior, proximaPergunta,
+  perguntaAnterior, proximaPergunta, transicaoDoBloco, enunciado,
 } from '@maestra/core/constants/quizDoDiagnostico';
 import { useCanCreateArtist } from '@maestra/core/hooks/useCanCreateArtist';
 import type { RealIndex } from '@maestra/core/interfaces/maestra';
@@ -193,7 +193,7 @@ export default function CriarArtista() {
     respostas.current = { ...(conteudo?.quizDiagnostic?.answers || {}) };
     setIndice(0);
     setPasso('quiz');
-    dizer(QUIZ[0].q);
+    dizer(enunciado(QUIZ[0], respostas.current));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refazendo, artistaDoRefazer, passo]);
 
@@ -304,10 +304,10 @@ export default function CriarArtista() {
     const proxima = proximaPergunta(indice + 1, respostas.current);
     if (proxima < QUIZ.length) {
       setIndice(proxima);
-      dizer(QUIZ[proxima].q);
+      dizer(enunciado(QUIZ[proxima], respostas.current));
     } else {
       setPasso('analisando');
-      dizer(FALAS.analisando(escolhido.current.name));
+      dizer(FALAS.analisando);
     }
   }, [indice, dizer]);
 
@@ -315,7 +315,7 @@ export default function CriarArtista() {
     const anterior = perguntaAnterior(indice - 1, respostas.current);
     if (anterior < 0) return;
     setIndice(anterior);
-    dizer(QUIZ[anterior].q);
+    dizer(enunciado(QUIZ[anterior], respostas.current));
   };
 
   const desbloquear = () => {
@@ -337,6 +337,10 @@ export default function CriarArtista() {
     ? (QUIZ.filter((p, i) => i <= indice && naTrilha(p)).length / totalDaTrilha(respostas.current)) * 100
     : 0;
   const mostrarInteracao = falou || passo === 'diagnostico';
+  // A transição do bloco (v4.2, §2): a frase que explica por que o próximo assunto está sendo
+  // puxado. Sai na primeira pergunta VISÍVEL de cada bloco e some quando a pessoa responde —
+  // quem volta pelo "Voltar" a vê de novo, que é o certo: ela é o contexto daquela pergunta.
+  const transicao = passo === 'quiz' ? transicaoDoBloco(indice, respostas.current) : undefined;
   const aviso = (texto: string, acao?: { rotulo: string; aoTocar: () => void }) => (
     <View style={estilos.aviso}>
       <Feather name="alert-circle" size={18} color={COR_DIAGNOSTICO.criarAvisoIcone} />
@@ -410,6 +414,12 @@ export default function CriarArtista() {
         <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
           {passo !== 'diagnostico' && (
             <View style={estilos.folgaDaFala}>
+              {/*
+                A transição vem PRONTA, sem a máquina de escrever. São até quatro linhas, e a
+                18ms por caractere o bloco dos números levaria quase cinco segundos até a
+                pergunta começar — a interação só entra quando a fala termina.
+              */}
+              {!!transicao && <Text style={estilos.transicao}>{transicao}</Text>}
               <Fala texto={fala} aoTerminar={() => setFalou(true)} />
             </View>
           )}
@@ -602,7 +612,7 @@ export default function CriarArtista() {
                       // Espera o preview para não abrir o quiz com perguntas que já sabemos que
                       // vão sumir. Quase sempre já terminou enquanto esta tela era lida.
                       if (preview.current) { setPreparando(true); await preview.current; setPreparando(false); }
-                      setIndice(0); setPasso('quiz'); dizer(QUIZ[0].q);
+                      setIndice(0); setPasso('quiz'); dizer(enunciado(QUIZ[0], respostas.current));
                     }}
                     accessibilityRole="button"
                     accessibilityState={{ disabled: preparando }}
@@ -654,7 +664,7 @@ export default function CriarArtista() {
                           placeholder={pergunta.placeholder ?? '0'}
                           placeholderTextColor={COR_DIAGNOSTICO.criarEspacoReservado}
                           keyboardType="number-pad"
-                          accessibilityLabel={pergunta.q}
+                          accessibilityLabel={enunciado(pergunta, respostas.current)}
                         />
                       </View>
                       <Pressable
@@ -968,6 +978,12 @@ const estilos = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: COR_DIAGNOSTICO.criarTrilho,
   },
   folgaDaFala: { marginTop: 52 },
+  // Menor que a pergunta de propósito. As duas são a mesma voz, e no mesmo corpo a tela ficaria
+  // com dois títulos brigando — quem chega precisa saber de relance qual das linhas se responde.
+  transicao: {
+    fontSize: 15, lineHeight: 23, fontWeight: '500',
+    color: COR_DIAGNOSTICO.criarAjuda, textAlign: 'center', marginBottom: 18,
+  },
   fase: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
   pontos: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   ponto: {

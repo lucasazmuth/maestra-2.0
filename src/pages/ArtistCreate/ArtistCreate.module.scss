@@ -482,6 +482,25 @@
   margin: 40px 0 24px;
 }
 
+// A transição de bloco (Quiz v4.2, §2): a frase da Nyta que abre o assunto, acima da pergunta.
+//
+// Ela é deliberadamente MENOR que a pergunta. As duas são a mesma voz, e no mesmo corpo a tela
+// passaria a ter dois títulos brigando — quem chega precisa saber, de relance, qual das duas
+// linhas é a que se responde. Por isso o contraste é de tamanho e de peso, e não de cor.
+.transicao {
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 560px;
+  margin: 26px 0 0;
+
+  @media (max-width: 600px) {
+    font-size: 14px;
+    margin-top: 18px;
+  }
+}
+
 .caret {
   display: inline-block;
   width: 3px;
