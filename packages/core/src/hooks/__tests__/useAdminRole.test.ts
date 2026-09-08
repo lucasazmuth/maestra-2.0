@@ -33,6 +33,42 @@ beforeEach(() => {
   mockRpc.mockResolvedValue({ data: [], error: null });
 });
 
+// O mesmo defeito do consentimento vivia aqui: o `RequireFullAdmin` troca a tela por um spinner
+// global enquanto `carregando` for verdade, e reverificar a MESMA pessoa o ligava de novo. Com o
+// supabase-js reconferindo a sessão a cada volta de aba, um admin no meio de um formulário do
+// painel perdia o que tinha digitado só por ter ido olhar outra aba.
+describe('useAdminRole quando a aba volta', () => {
+  it('reverificar a mesma pessoa não volta para o spinner', async () => {
+    comPapel('admin');
+    const { result, rerender } = renderHook(() => useAdminRole());
+    await waitFor(() => expect(result.current.carregando).toBe(false));
+
+    // A resposta da reverificação fica pendurada: o que importa é o estado NO MEIO dela.
+    mockMaybeSingle.mockReturnValue(new Promise(() => {}));
+    mockRpc.mockReturnValue(new Promise(() => {}));
+    mockUsuario = { id: 'u1' };
+    rerender({});
+
+    expect(result.current.carregando).toBe(false);
+    expect(result.current.ehAdminPleno).toBe(true);
+  });
+
+  // Trocar de conta precisa esperar: mostrar o painel pleno para quem ainda não foi verificado,
+  // mesmo por um instante, é a falha que não se desfaz.
+  it('outra pessoa volta a esperar', async () => {
+    comPapel('admin');
+    const { result, rerender } = renderHook(() => useAdminRole());
+    await waitFor(() => expect(result.current.carregando).toBe(false));
+
+    mockMaybeSingle.mockReturnValue(new Promise(() => {}));
+    mockRpc.mockReturnValue(new Promise(() => {}));
+    mockUsuario = { id: 'u2' };
+    rerender({});
+
+    expect(result.current.carregando).toBe(true);
+  });
+});
+
 describe('useAdminRole', () => {
   // Errar para o lado permissivo aqui abre exclusao de conta, cupons e push para um vendedor.
   it.each([

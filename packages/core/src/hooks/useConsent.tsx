@@ -1,4 +1,4 @@
-import { FC, ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { FC, ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { supabase } from '../lib/supabase';
 import { useAppSelector } from '../store/store';
@@ -85,13 +85,20 @@ export const useEstadoDoConsentimento = (user: { id: string; email?: string } | 
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
 
+  // Quem já foi respondido. Uma REVERIFICAÇÃO da mesma pessoa não pode voltar para `loading`:
+  // o `RequireConsent` troca a árvore inteira por um spinner enquanto isso, e desmontar a árvore
+  // apaga a página que a pessoa estava preenchendo. Trocar de conta, sim, precisa apagar — senão
+  // quem entra herda por um instante o veredito de quem saiu, e este gate é o da idade.
+  const idAtendido = useRef<string | null>(null);
+
   const refresh = useCallback(async () => {
     if (!user) {
+      idAtendido.current = null;
       setState(null);
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (idAtendido.current !== user.id) setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('account-consent', {
         body: { action: 'state' },
@@ -133,6 +140,7 @@ export const useEstadoDoConsentimento = (user: { id: string; email?: string } | 
       setUnavailable(true);
       setState(null);
     } finally {
+      idAtendido.current = user.id;
       setLoading(false);
     }
   }, [user]);
