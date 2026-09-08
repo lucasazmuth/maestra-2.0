@@ -197,7 +197,7 @@ export const Conversas = ({
 };
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: COR_NYTA.bolha },
+  tela: { flex: 1, backgroundColor: COR_NYTA.cartao },
   cabecalho: {
     flexDirection: 'row',
     alignItems: 'center',

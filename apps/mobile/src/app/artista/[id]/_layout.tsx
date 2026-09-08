@@ -1,4 +1,4 @@
-import { Tabs, useLocalSearchParams } from 'expo-router';
+import { Tabs, useLocalSearchParams, usePathname } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Cabecalho } from '@/casca/Cabecalho';
@@ -19,18 +19,25 @@ import { useArtistaDaRota } from '@/nucleo/artista';
 // POR ABA, e as cinco cópias assinavam o mesmo canal de realtime do sino — o Supabase recusa o
 // segundo `.on()` num canal já inscrito, e a tela quebrava ao trocar de aba. Um cabeçalho só,
 // acima das abas, é também o que a web faz.
+//
+// A Nyta é a exceção: ali as duas somem e o chat toma a tela. Uma conversa que se lê e se
+// escreve não tem altura de sobra para duas barras que não falam dela, e a faixa do próprio
+// chat passa a ser a única — com o botão de voltar como saída. A web faz o mesmo nessa rota
+// (ver `isImmersiveRoute` em `src/components/Layout/components/MobileNav`).
 
 export default function CascaDoArtista() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const artista = useArtistaDaRota(id);
+  const caminho = usePathname();
+  const imersivo = caminho.endsWith('/nyta');
 
   return (
     <View style={estilos.casca}>
-      <Cabecalho artista={artista} id={String(id)} />
+      {!imersivo && <Cabecalho artista={artista} id={String(id)} />}
       <Tabs
         // A barra é própria porque duas coisas nela não cabem na do Expo Router: a primeira
         // célula é a FOTO do artista (não um ícone), e "Mais" abre um painel em vez de navegar.
-        tabBar={() => <BarraDeAbas artista={artista} id={String(id)} />}
+        tabBar={() => (imersivo ? null : <BarraDeAbas artista={artista} id={String(id)} />)}
         screenOptions={{ headerShown: false }}
       >
         <Tabs.Screen name="index" />

@@ -308,6 +308,12 @@ export const COR_MAPA = {
  */
 export const COR_NYTA = {
   fundo: '#f7f9fc',
+  /**
+   * A superfície branca dos CARTÕES do chat — o de confirmar uma ação e o campo de escrever.
+   * Era `bolha`, quando a resposta ainda vinha dentro de uma; o nome mudou porque a coisa que
+   * ele pinta mudou. Cartão continua existindo; balão de conversa, não.
+   */
+  cartao: '#ffffff',
   /** O texto da resposta, e o corpo de leitura da tela. */
   resposta: '#4a5b78',
   /** Negrito e títulos dentro da resposta. */
