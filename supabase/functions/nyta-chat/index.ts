@@ -51,7 +51,7 @@ const NYTA_SYSTEM_PROMPT = `Você é a Nyta, a inteligência da Maestra: assiste
 - NUNCA cite termos internos do sistema na conversa (ex.: "DADOS DO ARTISTA", nomes de ferramentas, IDs, formato de data). Fale como assistente: "no seu plano", "nas suas estratégias". E NÃO narre seu raciocínio interno (ex.: cálculo de datas, "como o sistema não fornece..."): resolva por trás e responda só o resultado, ou faça uma pergunta curta se faltar dado.
 - Ao LISTAR itens pro artista (catálogo, agenda, equipe), mostre só nome + status/data em português (ex.: "Cidade Cinza — em mixagem"). NUNCA inclua o "[id: ...]" na resposta: o id entre colchetes é SÓ pra você usar internamente em update/remove, jamais para exibir.
 - Ao adicionar alguém à equipe, registre o PAPEL/função que o artista mencionar (empresário, produtor, assessor, DJ, etc.) no campo \`access_levels\`.
-- QUANDO VOCÊ CHAMA UMA FERRAMENTA de criar/atualizar/remover, a ação NÃO está feita — ela só acontece quando o artista clicar em "Confirmar" no card. Então fale SEMPRE no futuro/condicional: "Vou marcar o show…, confirme no card abaixo" / "Posso criar…". NUNCA fale no passado ("show marcado", "criei", "pronto", "foi feito") — senão você mente e ainda envenena o histórico.
+- QUANDO VOCÊ CHAMA UMA FERRAMENTA de criar/atualizar/remover, a ação NÃO está feita — ela só acontece quando o artista clicar em "Confirmar" no card. NA MENSAGEM EM QUE VOCÊ CHAMA A FERRAMENTA, fale SEMPRE no futuro/condicional: "Vou marcar o show…, confirme no card abaixo" / "Posso criar…". NUNCA fale no passado ("show marcado", "criei", "pronto", "foi feito") — senão você mente e ainda envenena o histórico. ATENÇÃO: isto vale ENQUANTO O CARD ESTÁ PENDENTE. Depois que o artista decide, você recebe uma diretiva própria (## O CARD JÁ FOI DECIDIDO) e ali a regra é o contrário.
 - NÃO assuma que algo proposto num card que o artista NÃO confirmou (ou que ele cancelou) virou realidade — mesmo que VOCÊ tenha mencionado antes na conversa. A ÚNICA verdade sobre o que existe é a lista do contexto. Se o item não está lá, ele NÃO existe: diga que não encontrou e ofereça criar/ajudar.
 - Se o artista pedir para REMARCAR/ATUALIZAR/REMOVER um evento, tarefa ou item e NÃO houver um correspondente na lista do contexto, diga que não encontrou esse item na agenda/plano e ofereça CRIAR um novo — NÃO crie/atualize silenciosamente outro no lugar.
 - Se a mensagem do artista for vaga, curtíssima ou sem sentido (ex.: só emoji, "e aí?", "qual a boa?"), NÃO repita a resposta anterior nem assuma o assunto de antes. Responda leve e pergunte o que ele quer agora (ex.: "Não entendi direito. Quer ver seu plano, mexer no catálogo, na agenda, ou falar de estratégia?").
@@ -109,6 +109,26 @@ Ele ainda NÃO criou o planejamento estratégico (não há plano de ação). NES
 - NÃO crie nem ofereça criar estratégias, tarefas, eventos, itens de catálogo, nem qualquer outra coisa. NÃO conduza NENHUM protocolo de criação.
 - NÃO pergunte objetivos nem comece a montar estratégia pelo chat — isso é feito SÓ no planejamento guiado.
 - Se ele perguntar o "próximo passo", pedir ajuda ou qualquer ação, responda que o primeiro passo é fazer o planejamento estratégico e direcione pra aba "Plano de Ação". Ele precisa passar pelo planejamento ANTES de qualquer outra ação.`;
+
+// Diretiva injetada NO FOLLOW-UP, depois que o artista decidiu o card (confirmou ou cancelou).
+//
+// Ela existe porque a regra de tempo verbal do prompt principal ("fale SEMPRE no futuro, NUNCA
+// no passado") estava sendo aplicada TAMBÉM aqui, onde a ação já terminou. O resultado aparecia
+// na conversa: uma ação executada às 01:53:38 e, três segundos depois, a Nyta escrevendo "Vou
+// marcar o show… Confirme no card abaixo" — pedindo confirmação de algo que ela mesma acabara de
+// fazer, e deixando o artista sem saber se o evento existia.
+//
+// O tempo verbal aqui é o PASSADO, e o que aconteceu não é escolha da Nyta: está no resultado da
+// ferramenta, na última mensagem `tool` da conversa. Sucesso e falha têm respostas diferentes, e
+// inventar sucesso é o pior erro possível — o artista deixa de procurar o que nunca foi criado.
+const NYTA_POS_CARD_DIRECTIVE = `
+
+## O CARD JÁ FOI DECIDIDO
+O artista JÁ decidiu o card de confirmação, e a ação já terminou. O que aconteceu está na ÚLTIMA mensagem de papel \`tool\` desta conversa — leia o resultado dela antes de escrever.
+- Fale no PASSADO, e só sobre o que o resultado diz: "Show marcado para 23/02 às 10:00", "Tarefa criada", "Ação cancelada".
+- NUNCA peça confirmação de novo. Está PROIBIDO escrever "confirme no card abaixo", "Vou marcar", "Posso criar" ou qualquer variação: não há card pendente nenhum.
+- Se o resultado foi ERRO ou a ação foi CANCELADA, diga isso com todas as letras e ofereça tentar de novo. NÃO diga que deu certo.
+- Responda em UMA OU DUAS FRASES. Isto é a confirmação do que já foi feito, não uma retomada do assunto.`;
 
 // Schemas das ferramentas SEM artist_id: o servidor é a única fonte desse valor.
 const NYTA_TOOLS = [
@@ -1003,8 +1023,9 @@ function streamGroqResponse(
   convId: string,
   authHeader: string,
   ragCtx: string = "",
-  // false no follow-up pós-confirmação: o modelo só relata o resultado, sem poder
-  // emendar outra tool call (evita cards de confirmação duplicados/alucinados).
+  // false no follow-up PÓS-DECISÃO do card (confirmado ou cancelado): o modelo só relata o
+  // resultado, sem poder emendar outra tool call (evita cards duplicados/alucinados) — e é este
+  // mesmo sinal que injeta a `NYTA_POS_CARD_DIRECTIVE`, que inverte a regra de tempo verbal.
   allowTools: boolean = true,
   unavailableModules: string[] = [],
   dailyCount: number | null = null,
@@ -1036,7 +1057,13 @@ function streamGroqResponse(
       }, GROQ_TIMEOUT_MS);
       try {
         const today = new Date().toISOString().split("T")[0];
-        const sysPrompt = NYTA_SYSTEM_PROMPT + `\n\n## Data atual: ${today}` + (ragCtx || "") + (hasPlan ? "" : NYTA_NO_PLAN_DIRECTIVE);
+        const sysPrompt = NYTA_SYSTEM_PROMPT
+          + `\n\n## Data atual: ${today}`
+          + (ragCtx || "")
+          + (hasPlan ? "" : NYTA_NO_PLAN_DIRECTIVE)
+          // Sem ferramentas E com plano: é o follow-up de um card já decidido. (Sem plano as
+          // ferramentas também estão desligadas, mas ali não houve card nenhum.)
+          + (!allowTools && hasPlan ? NYTA_POS_CARD_DIRECTIVE : "");
         const msgs = [{ role: "system", content: sysPrompt }, ...convMsgs];
         // Sem plano: nenhuma ferramenta — a Nyta só pode direcionar pro planejamento guiado.
         const toolsEnabled = allowTools && hasPlan;
