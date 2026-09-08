@@ -1163,11 +1163,15 @@ function streamGroqResponse(
      */
     async cancel() {
       abortarGeracao?.();
-      // `temConteudo`, e não `.trim()`: parar no primeiro segundo captura coisas como "### " ou
-      // "**" — markdown pela metade, sem uma letra dentro. Gravar isso deixa no histórico uma
-      // mensagem que aparece como um vão em branco na conversa, e o vão nunca vai ganhar texto.
-      const temConteudo = /[\p{L}\p{N}]/u.test(textoAteAqui);
-      if (!jaGravou && temConteudo) {
+      // Parar no primeiro segundo captura o começo de um marcador — "### ", "**", "**O" —, e
+      // gravar isso deixa no histórico uma mensagem que aparece como um vão em branco, que
+      // nunca vai ganhar texto. Só "tem uma letra" não bastou: `**O` passou.
+      //
+      // O corte é por TEXTO VISÍVEL, sem a pontuação de markdown, e 24 é um limiar, não uma
+      // regra da natureza: abaixo disso não há uma ideia legível, só o começo de uma. Um
+      // parágrafo interrompido no meio continua valendo — foi lido.
+      const visivel = textoAteAqui.replace(/[*_#>`~\-\s]/g, "");
+      if (!jaGravou && visivel.length >= 24) {
         jaGravou = true;
         await persistAssistantMessage(convId, textoAteAqui, null, authHeader);
       }

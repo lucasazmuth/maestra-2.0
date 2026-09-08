@@ -102,7 +102,7 @@ export interface UseNytaChatReturn {
   selectConversation: (id: string) => Promise<void>;
   startNewConversation: () => void;
   sendMessage: (text: string) => void;
-  /** Interrompe a resposta em andamento, guardando o que já chegou. */
+  /** Interrompe a resposta em andamento e relê a conversa, para a tela bater com o gravado. */
   stopStreaming: () => void;
   confirmTool: (toolCallId: string) => void;
   cancelTool: (toolCallId: string) => void;
@@ -394,11 +394,34 @@ export function useNytaChat(
    * em voo —, mas nenhuma das duas telas oferecia isso a quem está lendo. Numa resposta longa
    * que já saiu do assunto, a única saída era esperar até o fim.
    */
-  const stopStreaming = useCallback(() => {
+  const stopStreaming = useCallback(async () => {
     if (!abortRef.current) return;
     paradoPelaPessoa.current = true;
     abortRef.current.abort();
-  }, []);
+
+    /**
+     * E DEPOIS RELÊ A CONVERSA DO SERVIDOR.
+     *
+     * Parar aborta a leitura do lado de cá e DESCARTA o que já estava no buffer. O servidor, do
+     * lado de lá, grava o que chegou a gerar. Os dois quase sempre coincidem — mas parar no
+     * primeiro segundo produzia o pior caso: a tela ficava sem resposta nenhuma e o banco com um
+     * parágrafo, que aparecia do nada na próxima abertura da conversa.
+     *
+     * Reler é o que faz o que se vê ser o que ficou. `clearMessages` antes porque
+     * `prependMessages` põe na FRENTE: sem limpar, a página recarregada iria para o topo da
+     * conversa, e a resposta parada apareceria antes da pergunta que a gerou.
+     */
+    const convId = conversationId;
+    if (!convId) return;
+    // A gravação do lado do servidor é OUTRA viagem, disparada quando ele percebe que a conexão
+    // caiu, e não há evento que avise quando ela termina — a resposta já foi abortada. Sem esta
+    // folga a releitura chega antes da escrita e traz a conversa sem o trecho parado. Meio
+    // segundo é o que separa as duas na prática; se a escrita atrasar mais, o trecho aparece na
+    // próxima abertura da conversa, que é o comportamento de antes e não uma regressão.
+    await new Promise((r) => setTimeout(r, 500));
+    dispatch(clearMessages());
+    await loadConversation(convId);
+  }, [conversationId, dispatch, loadConversation]);
 
   // ─── POST to Edge Function (with module_context) ──────────────────────────
 
