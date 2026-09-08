@@ -347,8 +347,12 @@ export const COR_NYTA = {
  * cabeçalho leva até ela, e é de lá que se sai para o perfil — a navegação em dois níveis de
  * qualquer aplicativo de mensagem.
  *
- * Saíram daqui `contexto`, `uso`, `usoCheioFundo` e `usoCheioTexto`: eram a pílula "sobre
- * <artista>" com foto e o contador de mensagens do dia, que o cabeçalho deixou de ter. Ele
+ * Saíram daqui `contexto`, `uso`, `usoCheioFundo`, `usoCheioTexto` e `titulo`: os quatro
+ * primeiros eram a pílula "sobre <artista>" com foto e o contador de mensagens do dia, que o
+ * cabeçalho deixou de ter. O `titulo` era o "CONVERSAS" em caixa alta e peso 800 da lista —
+ * hoje ela usa o mesmo tom e peso do nome do artista na faixa do chat, porque as duas telas
+ * são a MESMA faixa com conteúdos diferentes, e um rótulo gritado fazia parecerem de épocas
+ * diferentes do produto. Ele
  * carregava seis coisas numa tela cuja função é ler e escrever, e ficou com três — sair, ver as
  * conversas, começar outra. O nome do artista continua, agora em texto solto.
  *
@@ -359,7 +363,6 @@ export const COR_CONVERSAS = {
   fio: '#e8edf4',
   contorno: '#e3eaf3',
   botao: '#8496b3',
-  titulo: '#52688f',
   rotulo: '#9aabc4',
   destaque: '#eef2f8',
   destaqueTexto: '#4267b9',
