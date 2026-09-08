@@ -129,6 +129,39 @@ describe('catalogo', () => {
     expect(mockPlayer.play).toHaveBeenCalled();
   });
 
+  // O PLAYER E O BOTAO DE CRIAR MORAM NO MESMO CANTO.
+  //
+  // A barra do player nasce acima da ilha de navegacao, no canto de baixo a direita, que e onde
+  // o botao flutuante ja estava — e o botao ficava POR CIMA dela, cobrindo o "proxima faixa".
+  // Sao dois `position: absolute` que so se encontram na tela, entao nada alem deste caso avisa
+  // quando um invade o outro.
+  it('com o player aberto, o botão de criar sobe acima da barra', async () => {
+    mockListar.mockResolvedValue([faixa({ id: 'f-1', title: 'Chuva de Março' })]);
+    const tela = await montar();
+    await waitFor(() => expect(tela.getByText('Chuva de Março')).toBeTruthy());
+
+    // O `bottom` vive na ÂNCORA, e não no botão: ela ocupa a largura toda para encostá-lo à
+    // direita, e é ela que se desloca. Daí subir na árvore até achar quem tem a medida.
+    type No = { props: { style?: unknown }; parent: No | null };
+    const deBaixo = (rotulo: string) => {
+      let no = tela.getByLabelText(rotulo) as unknown as No | null;
+      for (let i = 0; no && i < 5; i += 1) {
+        const estilo = StyleSheet.flatten(no.props.style) as { bottom?: number } | undefined;
+        if (typeof estilo?.bottom === 'number') return estilo.bottom;
+        no = no.parent;
+      }
+      throw new Error(`Sem "bottom" na árvore de ${rotulo}`);
+    };
+    const antes = deBaixo('Nova música');
+
+    await userEvent.setup().press(tela.getByLabelText('Tocar Chuva de Março'));
+
+    // O botão sobe, e sobe o suficiente: o piso dele passa a ficar ACIMA do topo da barra
+    // (106 de base + 34 da margem do aparelho + 64 de altura = 204).
+    expect(deBaixo('Nova música')).toBeGreaterThan(antes);
+    expect(deBaixo('Nova música')).toBeGreaterThanOrEqual(204);
+  });
+
   // O defeito classico de lista com som: duas faixas no ar ao mesmo tempo. Um player unico para a
   // tela torna isso impossivel — trocar de faixa e `replace`, nao um player novo.
   it('trocar de faixa substitui a fonte, em vez de somar players', async () => {

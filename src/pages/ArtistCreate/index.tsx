@@ -17,7 +17,7 @@ import type { RealIndex } from '@maestra/core/interfaces/maestra';
 import {
   IMPRENSA_PORTES, IMPRENSA_TIPOS, IMPRENSA_NUNCA, QUIZ, REVENUE_SOURCES, CHAVES_DO_BLOCO_R,
   TIPOS_DE_CONTRATANTE_QUIZ, NAO_SEI, CTX_API, ORIENTACAO_SPOTIFY, totalDaTrilha,
-  perguntaAnterior, proximaPergunta,
+  perguntaAnterior, proximaPergunta, transicaoDoBloco, enunciado, FALAS,
 } from '@maestra/core/constants/quizDoDiagnostico';
 import { useCanCreateArtist } from '@maestra/core/hooks/useCanCreateArtist';
 import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
@@ -143,7 +143,7 @@ const ArtistCreate: FC = () => {
     answers.current = { ...(redoArtist.content?.quizDiagnostic?.answers || {}) };
     setQuizIndex(0);
     setStep('quiz');
-    say(QUIZ[0].q);
+    say(enunciado(QUIZ[0], answers.current));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [redo, redoArtist, step]);
 
@@ -306,7 +306,7 @@ const ArtistCreate: FC = () => {
     if (previewRef.current) { setPreparando(true); await previewRef.current; setPreparando(false); }
     setQuizIndex(0);
     setStep('quiz');
-    say(QUIZ[0].q);
+    say(enunciado(QUIZ[0], answers.current));
   };
 
   const handleSelectSpotify = async (r: SpotifyArtistSearchResult) => {
@@ -362,10 +362,10 @@ const ArtistCreate: FC = () => {
     const next = nextQuizIndex(quizIndex + 1);
     if (next < QUIZ.length) {
       setQuizIndex(next);
-      say(QUIZ[next].q);
+      say(enunciado(QUIZ[next], answers.current));
     } else {
       setStep('analisando');
-      say(`Deixa eu cruzar esses dados e montar um diagnóstico de ${chosen.current.name}…`);
+      say(FALAS.analisando);
     }
   };
 
@@ -376,7 +376,7 @@ const ArtistCreate: FC = () => {
     const prev = prevQuizIndex(quizIndex - 1);
     if (prev < 0) return;
     setQuizIndex(prev);
-    say(QUIZ[prev].q);
+    say(enunciado(QUIZ[prev], answers.current));
   };
 
   const goToUnlock = () => {
@@ -409,6 +409,11 @@ const ArtistCreate: FC = () => {
     ? (isLastQuiz ? 100 : Math.round((posicao / trilha) * 100))
     : 0;
   const canGoBack = step === 'quiz' && prevQuizIndex(quizIndex - 1) >= 0;
+  // A transição do bloco (v4.2, §2): a frase que explica por que o próximo assunto está sendo
+  // puxado. Ela sai na primeira pergunta VISÍVEL de cada bloco e some assim que a pessoa
+  // responde — quem volta pelo "Voltar" a vê de novo, que é o comportamento certo: ela é o
+  // contexto daquela pergunta.
+  const transicao = step === 'quiz' ? transicaoDoBloco(quizIndex, answers.current) : undefined;
 
   return (
     <div className={`${styles.page} ${realEnv ? styles.pageReal : ''}`}>
@@ -455,6 +460,11 @@ const ArtistCreate: FC = () => {
 
 
       <div className={`${styles.step} ${step === 'diagnostico' ? styles.stepWide : ''}`} key={`${step}-${quizIndex}`}>
+        {/* A transição vem PRONTA, sem a máquina de escrever. São até quatro linhas na voz da
+            Nyta, e a 18ms por caractere o bloco dos números levaria quase cinco segundos até a
+            pergunta começar a aparecer — a interação só entra quando a fala termina. */}
+        {!!transicao && <p className={styles.transicao}>{transicao}</p>}
+
         {step !== 'diagnostico' && (
           <p className={styles.line}>
             {typed}

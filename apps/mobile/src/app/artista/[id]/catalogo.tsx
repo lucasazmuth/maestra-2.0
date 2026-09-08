@@ -39,6 +39,20 @@ const duracaoDoSpotify = (ms?: number) => {
 // falta. A barra de progresso e o equivalente honesto, e a forma de onda fica de fora ate
 // alguem precisar dela de verdade no aparelho.
 //
+/**
+ * A caixa do player, em números, porque DUAS coisas dependem dela.
+ *
+ * Ela desenha a barra e também diz ao botão flutuante até onde subir: os dois moram no mesmo
+ * canto de baixo à direita, e enquanto isto era um `106` solto dentro do estilo o botão ficava
+ * por cima da barra, cobrindo o "próxima faixa".
+ *
+ * 106 é a conta da web, que não tem margem segura — por isso a margem do aparelho é somada na
+ * hora de posicionar. 64 é o `minHeight` da barra, e as duas medidas precisam continuar
+ * andando juntas.
+ */
+const PLAYER_DEBAIXO = 106;
+const ALTURA_DO_PLAYER = 64;
+
 // Um player so para a tela inteira, e nao um por linha: dois audios tocando juntos e o defeito
 // classico de lista com som, e um player unico o torna impossivel por construcao.
 
@@ -369,8 +383,8 @@ export default function Catalogo() {
           rodape, sem capa e sem controles. */}
       {!!emFoco && (
         // A ilha de navegação sobe com a margem segura do aparelho; o player precisa subir
-        // junto, senão ele fica ATRÁS dela — 106 é a conta da web, que não tem safe area.
-        <View style={[estilos.player, { bottom: 106 + margem.bottom }]}>
+        // junto, senão ele fica ATRÁS dela. Ver `PLAYER_DEBAIXO`.
+        <View style={[estilos.player, { bottom: PLAYER_DEBAIXO + margem.bottom }]}>
           <View style={estilos.capaDoPlayer}>
             {emFoco.cover_image
               ? <Image source={{ uri: emFoco.cover_image }} style={estilos.capaDoPlayerImagem} />
@@ -437,7 +451,13 @@ export default function Catalogo() {
       )}
 
       {direitos.canEditCatalog && (
-        <BotaoFlutuante rotulo="Nova música" aoTocar={() => abrirFicha(null)} />
+        <BotaoFlutuante
+          rotulo="Nova música"
+          aoTocar={() => abrirFicha(null)}
+          // Com o player aberto o botão sobe para cima dele. Os dois moram no mesmo canto de
+          // baixo à direita, e o botão ficava por cima da barra, cobrindo o "próxima faixa".
+          acimaDe={emFoco ? PLAYER_DEBAIXO + margem.bottom + ALTURA_DO_PLAYER : 0}
+        />
       )}
     </View>
   );
@@ -526,7 +546,7 @@ const estilos = StyleSheet.create({
   player: {
     position: 'absolute', left: 22, right: 22,
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    minHeight: 64, paddingVertical: 8, paddingLeft: 12, paddingRight: 10,
+    minHeight: ALTURA_DO_PLAYER, paddingVertical: 8, paddingLeft: 12, paddingRight: 10,
     borderRadius: 22, backgroundColor: COR_BARRA.ilha,
     borderWidth: 1, borderColor: COR_BARRA.contornoDaIlha,
     ...SOMBRA.ilha,

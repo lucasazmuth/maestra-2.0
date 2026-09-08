@@ -20,9 +20,21 @@ import { ALTURA_DA_ILHA, rodapeDaIlha } from '@/casca/BarraDeAbas';
 /** A folga entre a ilha e o botão. */
 const FOLGA = 14;
 
-export const BotaoFlutuante = ({ rotulo, aoTocar }: { rotulo: string; aoTocar: () => void }) => {
+export const BotaoFlutuante = ({ rotulo, aoTocar, acimaDe = 0 }: {
+  rotulo: string;
+  aoTocar: () => void;
+  /**
+   * O topo de algo que já ocupa esse canto e que o botão precisa vencer.
+   *
+   * Só o catálogo passa isto, e só quando o player está aberto: a barra dele nasce ACIMA da
+   * ilha, no mesmo canto de baixo à direita, e o botão ficava por cima — cobrindo o "próxima
+   * faixa". Quem sabe onde o player está é a tela que o desenha, então a medida vem de lá em
+   * vez de este arquivo passar a conhecer o player.
+   */
+  acimaDe?: number;
+}) => {
   const margem = useSafeAreaInsets();
-  const debaixo = rodapeDaIlha(margem.bottom) + ALTURA_DA_ILHA + FOLGA;
+  const debaixo = Math.max(rodapeDaIlha(margem.bottom) + ALTURA_DA_ILHA + FOLGA, acimaDe + FOLGA);
 
   return (
     <View style={[estilos.ancora, { bottom: debaixo }]} pointerEvents="box-none">
