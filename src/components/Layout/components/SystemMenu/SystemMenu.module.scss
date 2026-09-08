@@ -11,15 +11,11 @@
   display: inline-flex;
 }
 
-// Quando a tab bar do mobile está presente, os mesmos atalhos (Perfis, Configurações, Suporte)
-// já moram no "Mais" dela — ter os dois ao mesmo tempo duplicava a navegação. Em telas SEM tab
-// bar (/artists, /admin) o gatilho continua visível mesmo no mobile: é o único caminho até
-// Configurações/Suporte/Sair ali (ver `hasMobileNav` em Layout/index.tsx).
-@media (max-width: 960px) {
-  .hiddenWithTabBar {
-    display: none;
-  }
-}
+// O gatilho aparece em QUALQUER largura. Ele já sumiu no mobile quando havia tab bar, porque
+// Perfis, Configurações e Suporte moravam também no "Mais" dela e os dois juntos duplicavam a
+// navegação. A duplicação acabou pelo outro lado: esses atalhos saíram do "Mais", que ficou só
+// com os módulos do perfil, e este menu voltou a ser o lugar único deles — como no app nativo,
+// onde o botão de grade está nas três telas, sempre no mesmo canto.
 
 // .round-control já vem da referência GSAP; aqui só o estado aberto e a cor do ícone.
 .trigger {
@@ -146,6 +142,16 @@
 
 .itemActive .itemIcon {
   color: #3361ff;
+}
+
+// "Trocar perfil" traz a FOTO do artista aberto no lugar do ícone. Ela mora dentro do mesmo
+// `.itemIcon` e no tamanho do ícone que substitui, senão a primeira célula cresce e desalinha
+// a grade inteira. `object-fit: cover` porque foto de perfil raramente chega quadrada.
+.itemAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .itemLabel {

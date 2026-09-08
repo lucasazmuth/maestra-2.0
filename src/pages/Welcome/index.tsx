@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 
 import { supabase } from '@maestra/core/lib/supabase';
+import { BOAS_VINDAS } from '@maestra/core/constants/landing';
 import * as membersDb from '@maestra/core/services/db/members';
 import { MaestraBrand } from '../../components/MaestraBrand';
 import styles from './Welcome.module.scss';
@@ -10,11 +11,10 @@ import styles from './Welcome.module.scss';
 const REDUCE_MOTION =
   typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-// Duas saudações, porque são duas pessoas diferentes chegando aqui.
-const SAUDACAO_ARTISTA =
-  'Bem-vindo à Maestra! Aqui a sua carreira vira estratégia, com a Nyta te guiando. Bora criar o seu primeiro perfil?';
-const SAUDACAO_CONVIDADO =
-  'Bem-vindo à Maestra! Você tem um convite esperando por você. Vamos dar uma olhada?';
+// Duas saudações, porque são duas pessoas diferentes chegando aqui. A copy vive no núcleo: o
+// app tem a MESMA tela, com as mesmas palavras.
+const SAUDACAO_ARTISTA = BOAS_VINDAS.artista;
+const SAUDACAO_CONVIDADO = BOAS_VINDAS.convidado;
 
 /** Para onde o botão leva, e o que a saudação deve dizer. */
 type Chegada = { rota: string; convidado: boolean };
@@ -96,7 +96,7 @@ const Welcome: FC = () => {
 
       <div className={`${styles.actions} ${done ? styles.actionsVisible : ''}`}>
         <button type='button' className={styles.cta} onClick={comecar} disabled={!done}>
-          {chegada?.convidado ? 'Ver meu convite' : 'Começar'} <FiArrowRight />
+          {chegada?.convidado ? BOAS_VINDAS.botaoDoConvite : BOAS_VINDAS.botao} <FiArrowRight />
         </button>
       </div>
     </div>

@@ -32,3 +32,8 @@ src/**/*.css.map
 # Atalho local pra abrir design-ref/ pelo dev server (o conteudo mora em design-ref/)
 /public/design-ref
 packages/*/dist
+
+# O lock do Deno das edge functions mora em `supabase/functions/deno.lock`. Na raiz ele
+# nasce de novo a cada vez que uma ferramenta com Deno embutido roda daqui, e sai com uma
+# seção `workspace` que espelha o package.json da web — ruído num arquivo de trava.
+/deno.lock

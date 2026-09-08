@@ -1,0 +1,95 @@
+# As edge functions, verificadas antes do deploy.
+#
+# Elas rodam em Deno, e o Deno não está no ambiente de desenvolvimento de ninguém aqui: o que
+# valida uma função hoje é ela quebrar em produção. Este fluxo fecha duas frestas, e só roda
+# quando algo em `supabase/functions/` muda — o resto do repositório não tem por que esperar.
+
+name: Edge Functions
+
+on:
+  push:
+    branches: [main, newdesign]
+    paths: ['supabase/functions/**', '.github/workflows/edge-functions.yml']
+  pull_request:
+    paths: ['supabase/functions/**', '.github/workflows/edge-functions.yml']
+
+# Um push em cima de outro cancela a execução anterior: o que importa é o estado final do ramo.
+concurrency:
+  group: edge-functions-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    name: Sintaxe e dependências travadas
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # SÓ o TypeScript, e não a árvore inteira: o `check-edge-functions.mjs` usa o parser dele e
+      # mais nada. Um `npm ci` na raiz traria o CRA, o antd e o resto do front para rodar um
+      # parser em 40 arquivos — minutos de instalação por um passo de segundos.
+      #
+      # A versão sai do próprio package.json: um parser mais novo que o do desenvolvedor
+      # recusaria sintaxe que passa na máquina dele, e um mais velho deixaria passar.
+      - name: TypeScript (só o parser)
+        run: npm install --no-save --no-audit --no-fund "typescript@$(node -p "require('./package.json').devDependencies.typescript")"
+
+      # O que já existia: as 40 funções passam pelo parser antes de qualquer deploy. É barato e
+      # pega o erro de digitação que hoje só aparece quando a função já está no ar.
+      - name: Sintaxe das funções
+        run: node scripts/check-edge-functions.mjs
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # O LOCK.
+      #
+      # As funções importam por URL — `deno.land/std`, `esm.sh`. Uma URL não é um contrato: o
+      # conteúdo servido nela pode mudar sem que uma linha do repositório mude junto, e o deploy
+      # seguinte sobe outro código com a mesma revisão de git. O lock guarda o hash do que cada
+      # URL devolveu, e `--frozen` recusa tanto o hash que mudou quanto o import que entrou sem
+      # passar pelo lock.
+      #
+      # Falhar aqui NÃO significa ataque: quase sempre significa que uma dependência entrou ou
+      # saiu de alguma função. O passo seguinte imprime o lock novo, pronto para commitar.
+      #
+      # `--node-modules-dir=none` porque o passo do TypeScript deixa um `node_modules/` na raiz,
+      # e o Deno, ao encontrar um, passa a exigir que TODA dependência npm esteja lá dentro —
+      # inclusive as que ele mesmo baixaria. Em produção não existe node_modules nenhum: quem
+      # roda essas funções é o Deno do Supabase, com o cache dele. A flag diz isso.
+      #
+      # `--config` aponta o `supabase/functions/deno.json`, que existe para o Deno PARAR de
+      # subir diretórios. Sem ele, o Deno acha o `package.json` da raiz, adota o front inteiro
+      # como workspace e escreve as 60 dependências do CRA dentro do lock das edge functions —
+      # que então quebraria toda vez que alguém mexesse no `package.json` da web.
+      - name: As dependências batem com o lock?
+        id: lock
+        run: |
+          deno cache --frozen --node-modules-dir=none \
+            --config=supabase/functions/deno.json \
+            --lock=supabase/functions/deno.lock \
+            supabase/functions/*/index.ts
+
+      # Só quando o de cima falha. O Deno 2 não tem mais `--lock-write`: ele reescreve o lock
+      # sozinho quando não está congelado, então o caminho para regenerar é apagar e cachear.
+      - name: O lock que deveria estar commitado
+        if: failure() && steps.lock.outcome == 'failure'
+        run: |
+          rm -f supabase/functions/deno.lock
+          deno cache --node-modules-dir=none \
+            --config=supabase/functions/deno.json \
+            --lock=supabase/functions/deno.lock supabase/functions/*/index.ts
+          echo "::error::O deno.lock não corresponde ao que as funções importam hoje."
+          echo "Regenere localmente com:"
+          echo "  rm supabase/functions/deno.lock"
+          echo "  deno cache --lock=supabase/functions/deno.lock supabase/functions/*/index.ts"
+          echo "--- lock completo ---"
+          cat supabase/functions/deno.lock
+          echo "--- diff ---"
+          git --no-pager diff -- supabase/functions/deno.lock

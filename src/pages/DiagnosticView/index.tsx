@@ -5,7 +5,7 @@ import { FiLock, FiRefreshCw } from 'react-icons/fi';
 
 import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { artistsActions } from '@maestra/core/store/slices/artists';
-import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { DiagnosticReport, type Chartmetric } from '../ArtistCreate/DiagnosticReport';
 import { CABECALHO_DA_REVISITA } from '@maestra/core/constants/realCopy';
 import reportStyles from '../ArtistCreate/ArtistCreate.module.scss';
@@ -18,22 +18,24 @@ const DiagnosticView: FC = () => {
   const user = useAppSelector((state) => state.auth.user);
   const artist = useAppSelector((state) => state.artists.items.find((item) => item.id === id));
   const loaded = useAppSelector((state) => state.artists.loaded);
-  const { isPro } = useEntitlements();
 
   // Loop de crescimento: executou o plano e cresceu? Refaz o REAL pra fase subir. É recurso PRO —
   // quem não é vai pra /assinatura. Esta é a ÚNICA entrada para /diagnostico/refazer; sem ela a
   // rota fica registrada e inalcançável.
   const onRedo = () => {
-    if (isPro) navigate(`/artists/${id}/diagnostico/refazer`);
+    if (capacidades.manageTasks) navigate(`/artists/${id}/diagnostico/refazer`);
     else navigate('/assinatura');
   };
 
-  // Refazer é do DONO do perfil. A edge `artist-diagnostic` filtra por
-  // `.eq("id", redoArtistId).eq("user_id", user.id)` e devolve 404 quando não bate — então um
-  // colaborador via o botão, atravessava o quiz inteiro e a etapa "analisando" para receber
-  // "Não consegui gerar seu diagnóstico agora", que soa como falha temporária e não como falta
-  // de permissão. A condição aqui é a MESMA do servidor, para os dois não divergirem.
-  const souDonoDoPerfil = Boolean(artist?.user_id && user?.id && artist.user_id === user.id);
+  // Quem pode refazer é quem o MODELO diz: `manageTasks` — "edições avançadas (adicionar
+  // estratégia/tarefa, editar/excluir campos, refazer diagnóstico): PRO obrigatório pra TODOS
+  // (inclusive dono); membro também precisa do nível 'plan'/'full'".
+  //
+  // Estava amarrado a ser DONO, e não era isso que o modelo dizia: um membro com acesso total —
+  // que a dona do perfil escolheu deliberadamente — não via o botão. A edge fazia o mesmo corte,
+  // e mudou junto: as duas continuam iguais, na regra certa.
+  const capacidades = useArtistCapabilities(artist);
+  const souDonoDoPerfil = capacidades.isOwner || capacidades.editPlanning;
 
   useEffect(() => {
     if (!loaded && user?.id) dispatch(artistsActions.fetchArtists(user.id));
@@ -78,9 +80,9 @@ const DiagnosticView: FC = () => {
               type="button"
               className={reportStyles.headerGhost}
               onClick={onRedo}
-              title={isPro ? 'Refazer o diagnóstico e atualizar sua fase' : 'Refazer o diagnóstico é um recurso PRO'}
+              title={capacidades.manageTasks ? 'Refazer o diagnóstico e atualizar sua fase' : 'Refazer o diagnóstico é um recurso PRO'}
             >
-              {isPro ? <FiRefreshCw size={14} /> : <FiLock size={14} />}
+              {capacidades.manageTasks ? <FiRefreshCw size={14} /> : <FiLock size={14} />}
               Refazer diagnóstico
             </button>
           </div>
@@ -100,7 +102,7 @@ const DiagnosticView: FC = () => {
         // O aviso de "diagnóstico em versão anterior" (§13.2) traz a saída junto do texto: quem lê
         // que a leitura está velha precisa poder refazer ali, sem procurar o botão do topo.
         onRedo={souDonoDoPerfil ? onRedo : undefined}
-        redoLocked={!isPro}
+        redoLocked={!capacidades.manageTasks}
       />
     </div>
   );

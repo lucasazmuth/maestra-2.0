@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { persistor, store } from '@maestra/core/store/store';
+import { AssinaturaDaConta } from '@/nucleo/AssinaturaDaConta';
 import { PortaoDaSessao } from '@/nucleo/PortaoDaSessao';
 import { PortaoDoConsentimento } from '@/nucleo/PortaoDoConsentimento';
 import { ligarRotaDoApp } from '@/nucleo/rotaApp';
@@ -29,6 +30,9 @@ export default function LayoutRaiz() {
         <PortaoDaSessao />
         {/* Depois do da sessão: sem sessão não há consentimento a cobrar. */}
         <PortaoDoConsentimento />
+        {/* O estado da assinatura chega aqui, e não na pílula do cabeçalho: quem lê o
+            `useEntitlements` numa tela sem pílula lia o padrão `none` como resposta. */}
+        <AssinaturaDaConta />
         <Stack screenOptions={{ headerShown: false }} />
       </PersistGate>
     </Provider>

@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 
 import { COR, COR_DIAGNOSTICO, RAIO } from '@maestra/core/constants/design';
 import {
@@ -62,6 +62,16 @@ export default function CriarArtista() {
   const dispatch = useAppDispatch();
   const artistas = useAppSelector((s) => s.artists.items);
   const usuario = sessao?.user;
+
+  // REFAZER: a mesma tela, mas sobre um perfil que já existe.
+  //
+  // A edge recalcula o Índice REAL com as novas respostas (`redoArtistId`), sem criar perfil,
+  // sem tocar em plano nem em identidade. Aqui isso significa pular a busca do artista — ele já
+  // está escolhido — e pré-carregar o quiz com o que foi respondido da última vez, para quem
+  // refaz corrigir o que mudou em vez de digitar tudo de novo. É o modo `redo` da web.
+  const { refazer: refazerId } = useLocalSearchParams<{ refazer?: string }>();
+  const refazendo = !!refazerId;
+  const artistaDoRefazer = refazerId ? artistas.find((a) => a.id === refazerId) : undefined;
 
   const {
     canCreate: pode, reason: motivo, pendingCount: pendentes,
@@ -162,6 +172,31 @@ export default function CriarArtista() {
     return () => { vivo = false; clearTimeout(conta); };
   }, [busca]);
 
+  // No refazer, o perfil já está escolhido: a tela pula a busca e cai no quiz com as respostas
+  // da última vez pré-carregadas. Se a lista ainda não chegou (abriu por link direto), busca e
+  // tenta de novo quando ela chegar.
+  useEffect(() => {
+    if (!refazendo || passo !== 'perfil') return;
+    if (!artistaDoRefazer) { if (usuario?.id) dispatch(artistsActions.fetchArtists(usuario.id)); return; }
+    // Refazer é do DONO: a edge filtra por user_id e devolveria 404 no fim do quiz inteiro.
+    if (artistaDoRefazer.user_id !== usuario?.id) {
+      router.replace({ pathname: '/artista/[id]/diagnostico', params: { id: String(refazerId) } });
+      return;
+    }
+    const conteudo = artistaDoRefazer.content as Record<string, any> | undefined;
+    escolhido.current = {
+      name: artistaDoRefazer.name,
+      spotifyArtistId: conteudo?.spotifyProfile?.spotify_artist_id ?? null,
+      followers: conteudo?.spotifyProfile?.followers ?? null,
+      image: conteudo?.spotifyProfile?.image ?? null,
+    };
+    respostas.current = { ...(conteudo?.quizDiagnostic?.answers || {}) };
+    setIndice(0);
+    setPasso('quiz');
+    dizer(QUIZ[0].q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refazendo, artistaDoRefazer, passo]);
+
   // O diagnóstico roda ao entrar em "analisando".
   useEffect(() => {
     if (passo !== 'analisando') return undefined;
@@ -169,12 +204,14 @@ export default function CriarArtista() {
     (async () => {
       try {
         const { data, error } = await supabase.functions.invoke('artist-diagnostic', {
-          body: {
-            name: escolhido.current.name,
-            spotifyArtistId: escolhido.current.spotifyArtistId,
-            spotify: { followers: escolhido.current.followers, image: escolhido.current.image },
-            quizV4: respostas.current,
-          },
+          body: refazendo
+            ? { redoArtistId: refazerId, quizV4: respostas.current }
+            : {
+              name: escolhido.current.name,
+              spotifyArtistId: escolhido.current.spotifyArtistId,
+              spotify: { followers: escolhido.current.followers, image: escolhido.current.image },
+              quizV4: respostas.current,
+            },
         });
         if (error) throw error;
         const d = data as {
@@ -185,8 +222,10 @@ export default function CriarArtista() {
         criado.current = { artistId: d.artistId, locked: d.locked !== false };
         // A lista precisa refletir o perfil novo (que nasce pendente).
         if (usuario?.id) dispatch(artistsActions.fetchArtists(usuario.id));
-        // Perfil reaproveitado e já PAGO segue direto pro app, sem repetir o diagnóstico.
-        if (d.reused && d.locked === false) {
+        // Perfil reaproveitado e já PAGO segue direto pro app, sem repetir o diagnóstico. No
+        // refazer isso não se aplica: o perfil é o mesmo, e o que a pessoa veio ver é o índice
+        // recalculado.
+        if (!refazendo && d.reused && d.locked === false) {
           router.replace({ pathname: '/artista/[id]', params: { id: d.artistId } });
           return;
         }
@@ -354,9 +393,11 @@ export default function CriarArtista() {
 
         <Pressable
           style={estilos.sair}
-          onPress={() => router.replace('/perfis')}
+          onPress={() => (refazendo
+            ? router.replace({ pathname: '/artista/[id]/diagnostico', params: { id: String(refazerId) } })
+            : router.replace('/perfis'))}
           accessibilityRole="button"
-          accessibilityLabel="Sair"
+          accessibilityLabel={refazendo ? 'Voltar ao diagnóstico' : 'Sair'}
         >
           <Feather name="x" size={20} color={COR_DIAGNOSTICO.texto} />
         </Pressable>
@@ -800,37 +841,56 @@ export default function CriarArtista() {
                       // Idem: o PDF baixado aqui é o mesmo documento da tela de desbloquear e do
                       // módulo do perfil, e precisa carregar a mesma identificação.
                       artista={{
-                        id: criado.current?.artistId,
+                        id: refazendo ? String(refazerId) : criado.current?.artistId,
                         nome: escolhido.current?.name || nomeManual,
                         foto: escolhido.current?.image,
                         // O vínculo declarado sai na capa do PDF: sem ele, esta tela gerava um
                         // documento diferente do das outras duas.
                         vinculo: typeof respostas.current?.vinculo === 'string' ? respostas.current.vinculo : null,
                       }}
-                      momento="entrega"
+                      // No refazer a pessoa já conhece o produto: o cabeçalho é o da REVISITA,
+                      // como na web, que desliga o herói de entrega no modo redo.
+                      momento={refazendo ? 'revisita' : 'entrega'}
                       semSpotify={!escolhido.current?.spotifyArtistId}
                     />
-                    <View style={estilos.desbloqueio}>
-                      <Text style={estilos.notaDoDesbloqueio}>
-                        Este perfil ainda está pendente. O próximo passo é liberar o
-                        planejamento estratégico.
-                      </Text>
-                      <Pressable
-                        style={estilos.principal}
-                        onPress={desbloquear}
-                        accessibilityRole="button"
-                        accessibilityLabel="Liberar este perfil"
-                      >
-                        <Text style={estilos.principalTexto}>Liberar este perfil</Text>
-                      </Pressable>
-                      <Pressable
-                        onPress={() => router.replace('/perfis')}
-                        accessibilityRole="button"
-                        accessibilityLabel="Ver meus perfis"
-                      >
-                        <Text style={estilos.link}>Ver meus perfis</Text>
-                      </Pressable>
-                    </View>
+                    {/* No refazer não há o que liberar: o perfil já é pago, e a saída é voltar
+                        para o módulo de onde a pessoa veio. */}
+                    {refazendo ? (
+                      <View style={estilos.desbloqueio}>
+                        <Pressable
+                          style={estilos.principal}
+                          onPress={() => router.replace({
+                            pathname: '/artista/[id]/diagnostico', params: { id: String(refazerId) },
+                          })}
+                          accessibilityRole="button"
+                          accessibilityLabel="Voltar ao diagnóstico"
+                        >
+                          <Text style={estilos.principalTexto}>Voltar ao diagnóstico</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <View style={estilos.desbloqueio}>
+                        <Text style={estilos.notaDoDesbloqueio}>
+                          Este perfil ainda está pendente. O próximo passo é liberar o
+                          planejamento estratégico.
+                        </Text>
+                        <Pressable
+                          style={estilos.principal}
+                          onPress={desbloquear}
+                          accessibilityRole="button"
+                          accessibilityLabel="Liberar este perfil"
+                        >
+                          <Text style={estilos.principalTexto}>Liberar este perfil</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => router.replace('/perfis')}
+                          accessibilityRole="button"
+                          accessibilityLabel="Ver meus perfis"
+                        >
+                          <Text style={estilos.link}>Ver meus perfis</Text>
+                        </Pressable>
+                      </View>
+                    )}
                   </>
                 ) : (
                   <View style={estilos.semDiagnostico}>

@@ -51,6 +51,19 @@ describe('menu do sistema', () => {
       expect(itensDoSistema(acoes, { oferecerPro: true })[0].rotulo).toBe('Trocar perfil');
     });
 
+    // O item precisa LEVAR à lista, e não só existir. A tela de perfis já passou aqui um
+    // `perfis: () => undefined`, porque ali o item nem entra na lista — e um item que aparece e
+    // não faz nada é o defeito que só o `aoTocar` denuncia. Hoje a ação é uma só, montada no
+    // `BotaoDoMenuDoSistema`, e este caso é o que prende o item a ela.
+    it('leva à lista de perfis', () => {
+      // Ações próprias, e não as do arquivo: `acoes` é compartilhado entre todos os testes e
+      // ninguém o limpa, então um espião reaproveitado passaria mesmo sem ninguém chamá-lo.
+      const proprias = { ...acoes, perfis: jest.fn() };
+      itensDoSistema(proprias, { artista: comDiagnostico, oferecerPro: true })[0].aoTocar();
+
+      expect(proprias.perfis).toHaveBeenCalledTimes(1);
+    });
+
     it('com um artista aberto, mostra a foto dele no lugar do ícone', () => {
       const [trocar] = itensDoSistema(acoes, { artista: comDiagnostico, oferecerPro: true });
 

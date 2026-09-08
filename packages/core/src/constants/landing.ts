@@ -56,3 +56,22 @@ export const MODULOS_DA_PLATAFORMA: ModuloDaPlataforma[] = [
     desc: 'Novos módulos a caminho: marketing, CRM e financeiro, no mesmo lugar do resto da carreira.',
   },
 ];
+
+/**
+ * A tela de boas-vindas, logo depois de a conta nascer.
+ *
+ * São DUAS saudações porque são duas pessoas diferentes chegando: o artista que vai criar o
+ * primeiro perfil, e quem foi convidado para a equipe de alguém. Mandar as duas para o mesmo
+ * lugar confunde justamente quem tem menos contexto — o convidado era empurrado a criar um
+ * perfil que ele não veio criar.
+ *
+ * A copy mora aqui porque a web e o app dizem as MESMAS palavras: o app não tinha esta tela, e
+ * ia do código de confirmação direto para a criação do perfil.
+ */
+export const BOAS_VINDAS = {
+  artista: 'Bem-vindo à Maestra! Aqui a sua carreira vira estratégia, com a Nyta te guiando. '
+    + 'Bora criar o seu primeiro perfil?',
+  convidado: 'Bem-vindo à Maestra! Você tem um convite esperando por você. Vamos dar uma olhada?',
+  botao: 'Começar',
+  botaoDoConvite: 'Ver meu convite',
+};

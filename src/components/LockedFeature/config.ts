@@ -1,5 +1,5 @@
 import { IconType } from 'react-icons';
-import { FiCheckSquare, FiUsers, FiTrendingUp } from 'react-icons/fi';
+import { FiCheckSquare, FiUsers, FiTrendingUp, FiRefreshCw } from 'react-icons/fi';
 
 import {
   LOCKED_FEATURE_CONFIG as TEXTOS,
@@ -16,6 +16,8 @@ const ICONES: Record<LockedFeatureKey, IconType> = {
   planning: FiCheckSquare, // = "Plano de Ação" na navbar
   team: FiUsers, // = "Equipe" na navbar
   tasks: FiCheckSquare,
+  // Refazer o diagnóstico: o mesmo ícone de recomeçar do botão no cabeçalho da /diagnostico.
+  refazer: FiRefreshCw,
   nyta: FiTrendingUp,
 };
 

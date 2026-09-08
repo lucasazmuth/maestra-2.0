@@ -96,16 +96,22 @@ const confirmarNoAlerta = () => {
 };
 
 describe('conta', () => {
-  // Tela folha: um botão só, o de voltar, no mesmo círculo branco do sino. Aqui já viveu um
-  // "‹ Perfis" em texto solto, que era o único lugar do app com aquele desenho.
-  it('tem o cabeçalho de voltar, e nada além dele', async () => {
+  // Tela folha: voltar à esquerda, menu do sistema à direita, os dois no mesmo círculo branco
+  // do sino. Aqui já viveu um "‹ Perfis" em texto solto, que era o único lugar do app com
+  // aquele desenho, e depois a barra completa da marca.
+  //
+  // O menu esteve fora daqui, com o argumento de que repetir o menu que abriu a tela em que se
+  // está é ruído. Ele volta porque em Configurações é o único caminho para outro perfil sem
+  // passar pela lista — e porque é o que a web faz em /settings. O argumento continua de pé
+  // para Notificações, que segue só com o botão de voltar.
+  it('tem o cabeçalho de voltar, com o menu do sistema', async () => {
     const tela = await montar();
 
     expect(tela.getByLabelText('Voltar')).toBeTruthy();
+    expect(tela.getByLabelText('Menu do sistema')).toBeTruthy();
     expect(tela.queryByText(/‹\s*Perfis/)).toBeNull();
-    // Nem a marca nem o menu: quem chegou aqui veio de um lugar e quer voltar para ele.
+    // A marca continua fora: quem chegou aqui veio de um lugar e quer voltar para ele.
     expect(tela.queryByLabelText('Maestra. Ir para os perfis')).toBeNull();
-    expect(tela.queryByLabelText('Menu do sistema')).toBeNull();
   });
 
   beforeEach(() => {

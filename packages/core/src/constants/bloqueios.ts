@@ -12,7 +12,7 @@
 // Variantes de bloqueio. Duas origens de bloqueio:
 //   - perfil pendente (cobrança única R$199,90): 'planning' | 'team'
 //   - falta de assinatura PRO (R$39,90/mês): 'tasks' | 'nyta'
-export type LockedFeatureKey = 'planning' | 'team' | 'tasks' | 'nyta';
+export type LockedFeatureKey = 'planning' | 'team' | 'tasks' | 'nyta' | 'refazer';
 
 export type LockedCtaKind = 'unlock-profile' | 'subscribe-pro';
 
@@ -60,6 +60,18 @@ export const LOCKED_FEATURE_CONFIG: Record<LockedFeatureKey, LockedFeatureConfig
       'Gerencie as tarefas do seu plano de ação',
       'Acompanhe o progresso fase a fase',
       'Recurso do plano PRO',
+    ],
+    cta: SUBSCRIBE_PRO,
+  },
+  // Refazer o diagnóstico é o loop de crescimento: executou o plano, cresceu, refaz o REAL e a
+  // fase sobe. É PRO porque recalcular é o que dá sentido a acompanhar a evolução — quem faz uma
+  // vez tem o retrato; quem refaz tem a trajetória.
+  refazer: {
+    title: 'Refazer o diagnóstico',
+    benefits: [
+      'Recalcule o Índice REAL quando a carreira mudar',
+      'Acompanhe a evolução das quatro frentes ao longo do tempo',
+      'O diagnóstico anterior fica salvo para comparação',
     ],
     cta: SUBSCRIBE_PRO,
   },

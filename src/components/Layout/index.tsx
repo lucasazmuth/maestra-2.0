@@ -362,7 +362,7 @@ export const AppLayout: FC = memo(() => {
             "Mais" dela) — mas em telas sem tab bar, como /artists e /admin, é o único jeito de
             chegar em Configurações/Suporte/Sair, então continua aparecendo (com o visual do
             "Mais", não o dropdown de desktop). */}
-        <SystemMenu hasMobileNav={hasMobileNav} />
+        <SystemMenu />
       </div>
     </header>
   );

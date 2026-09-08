@@ -18,11 +18,14 @@ import CriarArtista from '../criar-artista';
 
 const mockReplace = jest.fn();
 const mockPush = jest.fn();
+// `useLocalSearchParams` devolve o `refazer` da rota. Vazio aqui: estes testes são da CRIAÇÃO.
+const mockParams: { refazer?: string } = {};
 jest.mock('expo-router', () => ({
   router: {
     replace: (...a: unknown[]) => mockReplace(...a),
     push: (...a: unknown[]) => mockPush(...a),
   },
+  useLocalSearchParams: () => mockParams,
   Redirect: () => null,
 }));
 
@@ -295,5 +298,56 @@ describe('criar perfil', () => {
 
     expect(await tela.findByText(/Você tem 2 perfis pendentes/)).toBeTruthy();
     expect(tela.queryByLabelText('Nome do artista ou link do Spotify')).toBeNull();
+  });
+});
+
+
+// REFAZER — a mesma tela sobre um perfil que já existe.
+//
+// A edge recalcula o índice com `redoArtistId`, sem criar perfil nem tocar em plano. O que este
+// bloco guarda é o que muda AQUI: a busca do artista é pulada (ele já está escolhido), as
+// respostas da última vez voltam pré-carregadas, e o corpo que sai para a edge é outro. Mandar
+// `name`/`spotifyArtistId` num refazer criaria um perfil novo.
+describe('criar perfil · refazer', () => {
+  const PERFIL = {
+    id: 'a-7',
+    user_id: 'u-1',
+    name: 'AZMUTH BEATS',
+    content: {
+      spotifyProfile: { spotify_artist_id: 'sp-1', followers: 1234, image: ARTISTA.image },
+      quizDiagnostic: { answers: { showsPerYear: 12 } },
+    },
+  };
+
+  beforeEach(() => {
+    mockParams.refazer = PERFIL.id;
+    store.dispatch({ type: 'artists/fetchArtists/fulfilled', payload: [PERFIL] });
+  });
+
+  afterEach(() => { delete mockParams.refazer; });
+
+  it('pula a busca do artista e entra direto no quiz', async () => {
+    const tela = await montar();
+    // A primeira pergunta do roteiro, e não o campo de busca do Spotify.
+    expect(await tela.findByText(QUIZ[0].q)).toBeTruthy();
+    expect(tela.queryByLabelText('Nome do artista ou link do Spotify')).toBeNull();
+  });
+
+  it('manda redoArtistId para a edge, e não um perfil novo', async () => {
+    mockInvocar.mockImplementation(() => Promise.resolve(
+      { data: { artistId: PERFIL.id, redo: true, realIndex: null, chartmetric: null }, error: null },
+    ));
+    const usuario = userEvent.setup();
+    const tela = await montar();
+    await tela.findByText(QUIZ[0].q);
+
+    await responderOQuiz(usuario, tela);
+
+    await waitFor(() => expect(mockInvocar).toHaveBeenCalled());
+    const [, { body }] = mockInvocar.mock.calls[mockInvocar.mock.calls.length - 1] as [string, { body: any }];
+    expect(body.redoArtistId).toBe(PERFIL.id);
+    expect(body.name).toBeUndefined();
+    expect(body.spotifyArtistId).toBeUndefined();
+    expect(body.quizV4).toBeTruthy();
   });
 });
