@@ -21,16 +21,15 @@ import { BotaoRedondo } from '@/casca/marca/MenuDoSistema';
 // O nome do artista ficou, em texto solto no meio. A Nyta responde com os dados de UM perfil, e
 // numa conta com vários não há como saber de qual sem isso.
 //
-// A lixeira saiu por ser redundante: "nova conversa" já dá a folha em branco sem destruir nada,
-// e apagar de vez é ação da lista de conversas, que é onde ela pertence.
+// Tudo que É da conversa mora na LISTA, e não aqui: criar uma nova, renomear, excluir. Esta
+// faixa só leva até lá. A lixeira e o "nova conversa" já moraram nela, e ter duas portas para a
+// mesma ação não deixa nada mais rápido — só faz procurar em duas.
 
-export const CabecalhoDoChat = ({ artista, aoSair, aoAbrirConversas, aoCriar }: {
+export const CabecalhoDoChat = ({ artista, aoSair, aoAbrirConversas }: {
   artista?: Artist;
   /** Sai do chat e volta ao perfil. */
   aoSair: () => void;
   aoAbrirConversas: () => void;
-  /** Folha em branco, sem apagar a conversa de agora. */
-  aoCriar: () => void;
 }) => {
   const margem = useSafeAreaInsets();
 
@@ -44,10 +43,6 @@ export const CabecalhoDoChat = ({ artista, aoSair, aoAbrirConversas, aoCriar }: 
 
       <BotaoRedondo rotulo="Ver as conversas" aoTocar={aoAbrirConversas}>
         <Feather name="message-square" size={19} color={COR_CONVERSAS.botao} />
-      </BotaoRedondo>
-
-      <BotaoRedondo rotulo="Nova conversa" aoTocar={aoCriar}>
-        <Feather name="edit" size={19} color={COR_CONVERSAS.botao} />
       </BotaoRedondo>
     </View>
   );

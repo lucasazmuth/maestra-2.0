@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { FiArrowLeft, FiEdit, FiMessageSquare } from 'react-icons/fi';
+import { FiArrowLeft, FiMessageSquare } from 'react-icons/fi';
 
 import './ChatHeader.scss';
 
@@ -14,8 +14,9 @@ import './ChatHeader.scss';
 // pesar o mínimo. O nome do artista ficou, em texto solto no meio: a Nyta responde com os dados
 // de UM perfil, e sem isso não há como saber de qual, ainda mais em conta com vários.
 //
-// A lixeira saiu por ser redundante: "nova conversa" já dá a folha em branco sem destruir nada,
-// e apagar de vez é uma ação da lista de conversas, que é onde ela pertence.
+// Tudo que É da conversa mora na LISTA, e não aqui: criar uma nova, renomear, excluir. Esta
+// faixa só leva até lá. A lixeira e o "nova conversa" já moraram nela, e ter duas portas para a
+// mesma ação a 300px uma da outra não deixa nada mais rápido — só faz procurar em duas.
 //
 // Os botões são `round-control`, o círculo branco do resto do app (a marca, o sino, o menu do
 // sistema). Eles foram ícones sem casca por um tempo, e aí a única faixa da tela usava um
@@ -32,11 +33,9 @@ interface ChatHeaderProps {
   onBack: () => void;
   /** Abre a gaveta de conversas. Só aparece abaixo de 900px, onde a coluna vira gaveta. */
   onOpenHistory: () => void;
-  /** Folha em branco, sem apagar a conversa de agora. */
-  onNew: () => void;
 }
 
-export const ChatHeader: FC<ChatHeaderProps> = ({ artistName, onBack, onOpenHistory, onNew }) => (
+export const ChatHeader: FC<ChatHeaderProps> = ({ artistName, onBack, onOpenHistory }) => (
   <header className='chat-header'>
     <button
       className='round-control chat-header__icone chat-header__voltar'
@@ -61,15 +60,6 @@ export const ChatHeader: FC<ChatHeaderProps> = ({ artistName, onBack, onOpenHist
         <FiMessageSquare size={20} />
       </button>
 
-      <button
-        className='round-control chat-header__icone'
-        onClick={onNew}
-        aria-label='Nova conversa'
-        title='Nova conversa'
-        type='button'
-      >
-        <FiEdit size={20} />
-      </button>
     </div>
   </header>
 );

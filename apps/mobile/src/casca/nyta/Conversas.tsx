@@ -10,6 +10,8 @@ import { COR, COR_CONVERSAS, COR_NYTA, RAIO } from '@maestra/core/constants/desi
 import type { NytaConversationSummary } from '@maestra/core/hooks/useNytaConversations';
 import { dataDaConversa } from '@maestra/core/nucleo/dataDaConversa';
 
+import { BotaoRedondo } from '@/casca/marca/MenuDoSistema';
+
 // O histórico de conversas — a porta de `ConversationSidebar`.
 //
 // Na web é uma coluna ao lado; abaixo de 900px ela some e vira o nível de trás da conversa. No
@@ -141,24 +143,19 @@ export const Conversas = ({
 
   return (
     <View style={estilos.tela}>
-      <View style={estilos.cabecalho}>
-        <Pressable
-          style={estilos.redondo}
-          onPress={aoSair}
-          accessibilityRole="button"
-          accessibilityLabel="Voltar para o perfil"
-        >
-          <Feather name="arrow-left" size={16} color={COR_CONVERSAS.botao} />
-        </Pressable>
-        <Text style={estilos.titulo}>CONVERSAS</Text>
-        <Pressable
-          style={estilos.novo}
-          onPress={aoCriar}
-          accessibilityRole="button"
-          accessibilityLabel="Nova conversa"
-        >
-          <Feather name="plus" size={16} color={COR_CONVERSAS.botao} />
-        </Pressable>
+      {/* A MESMA faixa do chat: a margem do aparelho, os círculos brancos do sistema e o
+          título no meio. Ela não tinha recuo de cima nenhum, porque o cabeçalho do artista
+          ficava acima desta tela e empurrava tudo para baixo. Quando a rota da Nyta passou a
+          esconder aquele cabeçalho, o "voltar" foi parar embaixo da ilha dinâmica — visível,
+          e intocável. */}
+      <View style={[estilos.cabecalho, { paddingTop: margem.top + 6 }]}>
+        <BotaoRedondo rotulo="Voltar para o perfil" aoTocar={aoSair}>
+          <Feather name="arrow-left" size={21} color={COR_CONVERSAS.botao} />
+        </BotaoRedondo>
+        <Text style={estilos.titulo}>Conversas</Text>
+        <BotaoRedondo rotulo="Nova conversa" aoTocar={aoCriar}>
+          <Feather name="plus" size={21} color={COR_CONVERSAS.botao} />
+        </BotaoRedondo>
       </View>
 
       {/* Conversa nova ainda sem id: a lista não tem o que destacar, então o rascunho segura o
@@ -189,7 +186,9 @@ export const Conversas = ({
               aoPedirAcoes={() => acoes(item)}
             />
           )}
-          contentContainerStyle={[estilos.lista, { paddingBottom: 122 + margem.bottom }]}
+          // 122px reservavam a ilha de navegação. Nesta rota ela não é desenhada (ver
+          // `artista/[id]/_layout.tsx`), e a reserva virava um vão morto no fim da lista.
+          contentContainerStyle={[estilos.lista, { paddingBottom: 24 + margem.bottom }]}
         />
       )}
     </View>
@@ -201,9 +200,9 @@ const estilos = StyleSheet.create({
   cabecalho: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    minHeight: 70,
-    paddingHorizontal: 12,
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingBottom: 6,
     borderBottomWidth: 1,
     borderBottomColor: COR_CONVERSAS.fio,
   },
@@ -216,7 +215,10 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: COR_CONVERSAS.contorno,
   },
-  titulo: { flex: 1, color: COR_CONVERSAS.titulo, fontSize: 12, fontWeight: '800', letterSpacing: 0.6 },
+  // Centrado e no mesmo peso do nome do artista na faixa do chat: as duas telas são a mesma
+  // faixa com conteúdos diferentes, e um rótulo em caixa alta fazia parecerem de épocas
+  // diferentes do produto.
+  titulo: { flex: 1, color: COR_CONVERSAS.botao, fontSize: 14, fontWeight: '700', textAlign: 'center' },
   novo: {
     width: 30,
     height: 30,

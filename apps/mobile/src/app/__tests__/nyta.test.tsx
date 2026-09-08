@@ -110,7 +110,7 @@ describe('a Nyta', () => {
 
       await userEvent.setup().press(tela.getByLabelText('Ver as conversas'));
 
-      expect(tela.getByText('CONVERSAS')).toBeTruthy();
+      expect(tela.getByText('Conversas')).toBeTruthy();
       expect(tela.getByText('Lançamento do single')).toBeTruthy();
       expect(mockPush).not.toHaveBeenCalled();
     });

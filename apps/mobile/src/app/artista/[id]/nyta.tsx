@@ -169,7 +169,6 @@ export default function Nyta() {
         artista={artista}
         aoSair={() => router.push(`/artista/${id}` as never)}
         aoAbrirConversas={() => setNaLista(true)}
-        aoCriar={startNewConversation}
       />
 
       {!!error && error !== 'subscription_required' && (

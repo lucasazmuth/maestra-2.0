@@ -85,7 +85,6 @@ const NytaChatPage: FC = () => {
           <ChatHeader
             artistName={artist?.name || ''}
             onOpenHistory={() => setHistoryOpen(true)}
-            onNew={startNewConversation}
             onBack={() => navigate(`/artists/${artistId}`)}
           />
         </div>
