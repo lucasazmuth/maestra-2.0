@@ -27,10 +27,11 @@ describe('cromo do chat da Nyta', () => {
   // alguém "consertar" a resposta da Nyta dando um fundo a ela para a tela voltar a ter cara de
   // chatbot —, e nenhuma das três se vê num teste de cor.
   describe('a assimetria entre as duas pontas', () => {
-    const daNyta = trecho.slice(
-      trecho.indexOf('.nyta-surface .nyta-fala--nyta {'),
-      trecho.indexOf('.nyta-surface .nyta-fala--voce {'),
-    );
+    // Só o bloco da PRÓPRIA fala, e não tudo até a regra seguinte. A fatia larga varria junto as
+    // regras dos filhos (`code`, `pre`, `table`), que têm fundo por direito — e um `background`
+    // ali dentro fazia este teste acusar recipiente onde não há.
+    const abre = trecho.indexOf('.nyta-surface .nyta-fala--nyta {');
+    const daNyta = trecho.slice(abre, trecho.indexOf('}', abre));
 
     it('a resposta da Nyta não tem recipiente: nem fundo, nem contorno', () => {
       expect(daNyta).not.toContain('background');

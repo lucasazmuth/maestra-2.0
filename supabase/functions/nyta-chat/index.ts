@@ -1163,7 +1163,11 @@ function streamGroqResponse(
      */
     async cancel() {
       abortarGeracao?.();
-      if (!jaGravou && textoAteAqui.trim()) {
+      // `temConteudo`, e não `.trim()`: parar no primeiro segundo captura coisas como "### " ou
+      // "**" — markdown pela metade, sem uma letra dentro. Gravar isso deixa no histórico uma
+      // mensagem que aparece como um vão em branco na conversa, e o vão nunca vai ganhar texto.
+      const temConteudo = /[\p{L}\p{N}]/u.test(textoAteAqui);
+      if (!jaGravou && temConteudo) {
         jaGravou = true;
         await persistAssistantMessage(convId, textoAteAqui, null, authHeader);
       }

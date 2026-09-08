@@ -328,6 +328,64 @@
   font-weight: 700;
 }
 
+/* O QUE A WEB DESENHA E O APP NÃO.
+ *
+ * O parser do app tem um subconjunto declarado (ver `markdownDaNyta`): link, imagem, tabela e
+ * bloco de código passam como texto puro. O `react-markdown` da web desenha tudo — e sem regra
+ * própria, um link sai no azul sublinhado padrão do navegador e uma tabela larga empurra a
+ * coluna inteira para o lado. O estilo abaixo não iguala as duas superfícies (isso seria mexer
+ * no parser), mas impede que a web fique FEIA quando a Nyta escapa do subconjunto. */
+.nyta-surface .nyta-fala--nyta a {
+  color: #3361ff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nyta-surface .nyta-fala--nyta code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: #eceff5;
+  color: #2f4064;
+  font-size: 13px;
+}
+
+.nyta-surface .nyta-fala--nyta pre {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #eceff5;
+  overflow-x: auto;
+}
+
+.nyta-surface .nyta-fala--nyta pre code {
+  padding: 0;
+  background: none;
+}
+
+/* Tabela larga rola dentro de si, e não empurra a conversa. */
+.nyta-surface .nyta-fala--nyta table {
+  display: block;
+  max-width: 100%;
+  margin: 0 0 12px;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.nyta-surface .nyta-fala--nyta th,
+.nyta-surface .nyta-fala--nyta td {
+  padding: 6px 10px;
+  border: 1px solid #e3eaf3;
+  text-align: left;
+}
+
+.nyta-surface .nyta-fala--nyta blockquote {
+  margin: 0 0 12px;
+  padding-left: 12px;
+  border-left: 2px solid #dfe6f1;
+  color: #6b7c99;
+}
+
 .nyta-surface .nyta-fala--voce {
   max-width: min(84%, 460px);
   padding: 11px 16px;
