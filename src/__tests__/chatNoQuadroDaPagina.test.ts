@@ -93,3 +93,64 @@ describe('o chat em tela cheia', () => {
     expect(layout).toContain("imersivo ? ' app-layout-imersivo' : ''");
   });
 });
+
+// A SETA DE VOLTAR DA LISTA DE CONVERSAS, e por que ela só existe no mobile.
+//
+// Ela nasceu como a saída da gaveta: abaixo de 900px a lista cobre o chat inteiro, e sem a seta
+// a pessoa fica presa nela. Fixa ao lado, com o chat dentro do quadro da página, a barra da
+// Maestra e o rail já levam de volta — e uma terceira porta para o mesmo lugar só faz procurar
+// em três. No lugar dela entra a foto do perfil, que diz o que a seta não dizia: de quem é a
+// conversa.
+describe('a seta de voltar da lista de conversas', () => {
+  const scss = fs.readFileSync(
+    path.join(raiz, 'pages', 'NytaChat', 'components', 'ConversationSidebar.scss'), 'utf8',
+  );
+
+  /** O corpo do bloco `@media (min-width: 901px)`, achado por contagem de chaves. */
+  const blocoDoDesktop = (() => {
+    const inicio = scss.indexOf('@media (min-width: 901px)');
+    if (inicio < 0) return '';
+    const abre = scss.indexOf('{', inicio);
+    let nivel = 0;
+    for (let i = abre; i < scss.length; i += 1) {
+      if (scss[i] === '{') nivel += 1;
+      else if (scss[i] === '}') {
+        nivel -= 1;
+        if (nivel === 0) return scss.slice(abre + 1, i);
+      }
+    }
+    return '';
+  })();
+
+  it('o bloco do desktop foi localizado', () => {
+    expect(blocoDoDesktop).toContain('nyta-conversations');
+  });
+
+  it('some no desktop, e a foto do perfil toma o lugar', () => {
+    expect(blocoDoDesktop).toMatch(/\.nyta-conversations__back\s*\{[^}]*display:\s*none/);
+    expect(blocoDoDesktop).toMatch(/\.nyta-conversations__perfil\s*\{[^}]*display:\s*block/);
+  });
+
+  // A foto nasce escondida: quem a acende é a media query. Sem isto ela apareceria TAMBÉM no
+  // mobile, ao lado da seta, e o cabeçalho da gaveta ficaria com dois círculos.
+  it('a foto nasce escondida', () => {
+    expect(scss).toMatch(/&__perfil\s*\{[^}]*display:\s*none/);
+  });
+
+  // As duas quebras precisam continuar opostas. A gaveta é `max-width: 900px` e a troca é
+  // `min-width: 901px`: mexer numa sem a outra deixa uma faixa de largura com a lista em gaveta
+  // e sem saída, ou com a seta e a foto ao mesmo tempo.
+  it('a quebra é a mesma em que a lista deixa de ser gaveta', () => {
+    expect(scss).toContain('@media (max-width: 900px)');
+    expect(scss).toContain('@media (min-width: 901px)');
+  });
+
+  it('o cabeçalho da lista desenha os dois, e deixa a largura escolher', () => {
+    const componente = fs.readFileSync(
+      path.join(raiz, 'pages', 'NytaChat', 'components', 'ConversationSidebar.tsx'), 'utf8',
+    );
+
+    expect(componente).toContain("className='nyta-conversations__back'");
+    expect(componente).toContain("className='nyta-conversations__perfil'");
+  });
+});

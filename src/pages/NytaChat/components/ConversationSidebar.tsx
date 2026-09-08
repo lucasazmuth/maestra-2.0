@@ -35,6 +35,12 @@ export const ConversationSidebar: FC<ConversationSidebarProps> = ({
   // Autoria na lista: um perfil pode ter várias pessoas da equipe conversando com a Nyta, e sem
   // o rosto de quem abriu, o histórico não diz de quem é cada conversa.
   const user = useAppSelector((s) => s.auth.user);
+  // O perfil de quem a conversa trata. Acima de 900px ele ocupa o lugar do "voltar" (ver o
+  // comentário do cabeçalho abaixo), e é o que diz de quem a Nyta está falando sem gastar uma
+  // linha de texto.
+  const artistas = useAppSelector((s) => s.artists.items);
+  const artista = artistId ? artistas.find((a) => a.id === artistId) : undefined;
+  const fotoDoPerfil = artista?.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE;
   const meta = (user?.user_metadata || {}) as Record<string, unknown>;
   const myAvatar = (meta.avatar_url as string) || (meta.picture as string) || ARTISTS_DEFAULT_IMAGE;
   const myName = (meta.full_name as string) || (meta.name as string) || user?.email || 'Você';
@@ -54,8 +60,14 @@ export const ConversationSidebar: FC<ConversationSidebarProps> = ({
       aria-label='Conversas com a Nyta'
     >
       <header className='nyta-conversations__head'>
-        {/* Sair da Nyta é navegação da página inteira, não do chat — por isso mora aqui na
-            coluna, junto do título, e não no cabeçalho da conversa. */}
+        {/* DOIS OCUPANTES PARA O MESMO CANTO, e quem escolhe é a largura (ver o SCSS).
+
+            Abaixo de 900px esta coluna deixa de ficar ao lado e vira um nível por cima do chat.
+            Ali o "voltar" é a saída, e sem ele a pessoa fica presa na lista.
+
+            Acima disso a coluna é fixa, o chat mora no quadro da página, e a barra da Maestra e
+            o rail já são o caminho de volta. A seta virava um terceiro caminho para o mesmo
+            lugar; no lugar dela entra a foto do perfil, que diz de quem é a conversa. */}
         <button
           className='nyta-conversations__back'
           type='button'
@@ -65,6 +77,15 @@ export const ConversationSidebar: FC<ConversationSidebarProps> = ({
         >
           <FiArrowLeft size={16} />
         </button>
+        {/* Decoração: o nome do perfil já está na faixa do chat, e repeti-lo para quem usa
+            leitor de tela seria dizer a mesma coisa duas vezes. */}
+        <img
+          className='nyta-conversations__perfil'
+          src={fotoDoPerfil}
+          alt=''
+          title={artista?.name}
+          aria-hidden
+        />
         <span className='nyta-conversations__title'>Conversas</span>
         <button
           className='nyta-conversations__new'

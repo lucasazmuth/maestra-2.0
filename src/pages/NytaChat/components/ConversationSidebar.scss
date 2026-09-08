@@ -40,6 +40,18 @@
     }
   }
 
+  // A foto do perfil, no lugar da seta. Mesmo diâmetro do botão que ela substitui, para o
+  // cabeçalho não mudar de altura na virada da media query.
+  &__perfil {
+    display: none;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    border: 1px solid #e3eaf3;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
   &__title {
     flex: 1;
     color: #8496b3;
@@ -210,6 +222,24 @@
 .nyta-conversations__close,
 .nyta-conversations__backdrop {
   display: none;
+}
+
+// ACIMA DE 900px A SETA SAI E ENTRA A FOTO DO PERFIL.
+//
+// É a mesma quebra em que esta coluna deixa de ser gaveta e passa a ficar fixa ao lado do chat.
+// Não é coincidência: a seta existe porque, como gaveta, ela cobre o chat inteiro e é a única
+// saída. Fixa ao lado, com o chat dentro do quadro da página, quem leva de volta é a barra da
+// Maestra e o rail — e uma terceira porta para o mesmo lugar só faz procurar em três.
+//
+// A foto ocupa o lugar dizendo o que a seta não dizia: de qual perfil é esta conversa.
+@media (min-width: 901px) {
+  .nyta-conversations__back {
+    display: none;
+  }
+
+  .nyta-conversations__perfil {
+    display: block;
+  }
 }
 
 // Em telas estreitas a lista não cabe ao lado do chat: os dois viram níveis da MESMA tela, como
