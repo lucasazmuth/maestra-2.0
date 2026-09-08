@@ -510,7 +510,17 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   // Estrutura é BÔNUS na v4 (a v3 descontava de quem não tinha). Premiar a formalização em vez de
   // punir a ausência dela mantém o índice do lado de quem está começando.
   const bonus = 1 + (input.temEmpresario ? CUTS.e.bonusEmpresario : 0) + (input.temCnpj ? CUTS.e.bonusCnpj : 0);
-  const saldoAjustado = saldo * bonus;
+  // ⚠️ O BÔNUS SÓ INCIDE SOBRE SALDO POSITIVO (v4.2, §7.2).
+  //
+  // Multiplicar um saldo negativo AMPLIA o prejuízo: um caso real foi de −2,79 mi para −3,63 mi
+  // só por ter CNPJ e empresário. O número saía impresso no relatório, então o artista com mais
+  // estrutura lia um resultado pior do que o dele.
+  //
+  // A nota do boletim não mudava (saldo ≤ 0 sempre vale 0), e é por isso que o defeito atravessou
+  // a implementação inteira sem ninguém tropeçar nele: o índice estava certo e só a exibição
+  // mentia. O bônus existe para reconhecer quem já se sustenta, e quem não se sustenta não tem o
+  // que reconhecer.
+  const saldoAjustado = saldo > 0 ? saldo * bonus : saldo;
   const eHigh = saldoAjustado >= CUTS.e.saldoAcende;
   const eTopIcon = saldoAjustado >= CUTS.e.saldoTopIcon;
 

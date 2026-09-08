@@ -789,6 +789,18 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
 
       {/* SEÇÃO 3 — As 4 dimensões em detalhe */}
       <div className={`${styles.dimGrid} ${styles.reveal}`} style={{ animationDelay: '0.18s' }}>
+        {/*
+          O ramo de baixo é só para diagnósticos da versão 2. A v3 e a v4 caem no `DimCardV3`,
+          que é o card da spec do relatório (selo, barra, intro, leitura e comentários).
+
+          Aqui o vocabulário foi alinhado ("Acesa" e "Apagada", §1.7 e §3), porque nomenclatura
+          não é método: o estado sempre se chamou assim, só era exibido com outra palavra.
+
+          O TEXTO, não. As frases da v4 descrevem uma leitura que a v2 não calculou, e colá-las
+          sobre um resultado antigo seria dizer da carreira algo que aquele diagnóstico nunca
+          mediu. É a mesma razão pela qual `retratoDoPerfil` devolve `null` no legado. Quem avisa
+          que o retrato é de outra régua é o F17.
+        */}
         {isV3
           ? DIM_META.map((d) => <DimCardV3 key={d.key} dk={d.key} ri={riAny} cm={chartmetric ?? null} />)
           : DIM_META.map((d) => {
@@ -804,7 +816,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
                       <div className={styles.dimTitle}>{title}</div>
                       <div className={styles.dimSub}>{sub}</div>
                     </div>
-                    <span className={styles.dimStatus}>{neutral ? 'Não informado' : high ? 'Alto' : 'Baixo'}{isV2 && boletim ? ` · ${boletim[d.key]}/100` : ''}</span>
+                    <span className={styles.dimStatus}>{neutral ? 'Não informado' : high ? 'Acesa' : 'Apagada'}{isV2 && boletim ? ` · ${boletim[d.key]}/100` : ''}</span>
                   </div>
                   <div className={styles.dimLevel}>
                     <div className={styles.dimLevelFill} style={{ width: isV2 && boletim ? `${boletim[d.key]}%` : (high && !neutral ? '100%' : '34%') }} />

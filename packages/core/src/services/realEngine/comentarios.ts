@@ -224,6 +224,15 @@ const GRUPOS: Record<DimKey, Grupo[]> = {
     {
       nome: 'E2',
       soPdf: true,
+      // ⚠️ ZERO POR IGNORÂNCIA NÃO É ZERO POR AUSÊNCIA (v4.2, §7.4).
+      //
+      // Quem marcou "não sei" em todas as fontes tem `receitaOutrasTotal = 0`, e o E2.d lia isso
+      // como "toda a sua receita vem do palco, essas frentes estão em zero". No mesmo PDF, o E6
+      // dizia "você não soube informar quanto recebeu". Os dois se contradiziam: um afirmava
+      // ausência de receita, o outro reconhecia ausência de informação.
+      //
+      // Com o zero vindo de "não sei", o grupo inteiro se cala e o E6 responde sozinho.
+      quandoOGrupo: (c) => !(c.resumo?.receitaOutrasTotal === 0 && (c.flags.naoSeiFontes?.length ?? 0) > 0),
       itens: [
         // Sem receita nenhuma não há composição a comentar: "toda a sua receita vem do palco"
         // seria falso para quem não faturou nada.

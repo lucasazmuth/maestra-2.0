@@ -304,3 +304,44 @@ describe('§10 a linha de status da barra', () => {
     expect(statusDaBarra(ri, 'l')).toBe(FIXOS.F5);
   });
 });
+
+
+// §7.4 · O ZERO QUE VEM DE "NÃO SEI".
+//
+// Quem marca "não sei" em todas as fontes fica com `receitaOutrasTotal = 0`, igualzinho a quem
+// de fato não faturou nada fora do palco. O relatório lia os dois casos do mesmo jeito e
+// imprimia, no MESMO PDF, dois textos que se contradizem: o E2.d afirmando que essas frentes
+// estão em zero, e o E6 reconhecendo que a pessoa não soube informar.
+//
+// É o tipo de erro que o artista percebe antes da gente, e que o faz desconfiar do diagnóstico
+// inteiro. A regra manda o grupo se calar e deixa o E6 responder sozinho.
+describe('§7.4 zero por ignorância não é zero por ausência', () => {
+  const soShows = { showsPerYear: 20, cacheByType: { produtores: 2_000 } };
+
+  it('com "não sei" nas fontes, o grupo da composição se cala', () => {
+    const ri = computeRealIndexV4(base({ ...soShows, revenueSources: { distribuidora: 'nao_sei' } as any }));
+
+    expect(ids(ri, 'e')).not.toContain('E2.d');
+    // E quem responde é o E6, que diz a verdade: não é ausência de receita, é de informação.
+    expect(ids(ri, 'e')).toContain('E6');
+  });
+
+  it('sem "não sei", o zero é real e o E2.d volta a falar', () => {
+    const ri = computeRealIndexV4(base({ ...soShows }));
+
+    expect(ids(ri, 'e')).toContain('E2.d');
+    expect(ids(ri, 'e')).not.toContain('E6');
+  });
+
+  // A regra é só para o zero. Quem informou receita de verdade E marcou "não sei" noutra fonte
+  // continua tendo a composição comentada, porque aí há composição para comentar.
+  it('com receita informada, o "não sei" não cala a composição', () => {
+    const ri = computeRealIndexV4(base({
+      ...soShows,
+      revenueSources: { distribuidora: 40_000, editora: 'nao_sei' } as any,
+    }));
+
+    expect(ids(ri, 'e').some((id) => id.startsWith('E2.'))).toBe(true);
+    expect(ids(ri, 'e')).toContain('E6');
+  });
+});
