@@ -150,7 +150,10 @@ describe('a seta de voltar da lista de conversas', () => {
       path.join(raiz, 'pages', 'NytaChat', 'components', 'ConversationSidebar.tsx'), 'utf8',
     );
 
-    expect(componente).toContain("className='nyta-conversations__back'");
-    expect(componente).toContain("className='nyta-conversations__perfil'");
+    // Pela CLASSE, e não pelo `className` inteiro: os botões carregam o `round-control` do
+    // sistema junto (ver `cabecalhosDoChat.test.ts`), e prender a string completa aqui fazia
+    // este teste reprovar por uma mudança que não é a dele.
+    expect(componente).toMatch(/className='[^']*nyta-conversations__back'/);
+    expect(componente).toMatch(/className='[^']*nyta-conversations__perfil'/);
   });
 });

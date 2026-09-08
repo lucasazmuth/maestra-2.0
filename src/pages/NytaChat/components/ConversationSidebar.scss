@@ -9,44 +9,46 @@
   border-right: 1px solid #e8edf4;
   background: #fff;
 
+  // Mesma medida da faixa do chat (`ChatHeader.scss`): 12px/14px de recuo e 8px de intervalo.
+  // No mobile as duas são a MESMA tira do topo, uma atrás da outra — a lista cobre o chat —, e
+  // qualquer diferença de escala aparece na troca como se fosse outro aplicativo.
+  //
+  // O fio embaixo fica, e é a única diferença que se mantém: aqui ele separa o cabeçalho da
+  // lista que vem logo abaixo. A faixa do chat não tem lista nenhuma para separar.
   &__head {
     display: flex;
-    min-height: 70px;
     box-sizing: border-box;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
-    padding: 0 12px;
+    padding: 12px 14px;
     border-bottom: 1px solid #e8edf4;
   }
 
+  // A FORMA vem do `.round-control` (styles/gsap-reference.css), o círculo branco que a marca,
+  // o sino e o menu do sistema já usam. Aqui só o tom — o mesmo `#8496b3` da faixa do chat.
   &__back {
-    display: inline-flex;
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #e3eaf3;
-    border-radius: 50%;
-    background: #fff;
-    color: #7c8db0;
+    color: #8496b3;
     cursor: pointer;
-    transition: color 0.15s, background 0.15s, border-color 0.15s;
+    transition: color 0.15s, background 0.15s;
 
     &:hover {
-      border-color: #b9cbed;
-      background: #eef3fb;
+      background: #eef2f8;
       color: #4267b9;
+    }
+
+    &:focus-visible {
+      outline: 3px solid rgba(51, 97, 255, 0.22);
+      outline-offset: 1px;
     }
   }
 
-  // A foto do perfil, no lugar da seta. Mesmo diâmetro do botão que ela substitui, para o
-  // cabeçalho não mudar de altura na virada da media query.
+  // A foto do perfil, no lugar da seta. Acompanha o diâmetro do botão que ela substitui na
+  // largura em que aparece, para o cabeçalho não mudar de altura na virada da media query.
   &__perfil {
     display: none;
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
     border: 1px solid #e3eaf3;
     border-radius: 50%;
     object-fit: cover;
@@ -59,23 +61,21 @@
     font-weight: 600;
   }
 
+  // Também `.round-control`. Ele era um quadrado de cantos arredondados de 30px ao lado de um
+  // círculo de 51px na faixa de trás — dois controles para a mesma tira do topo.
   &__new {
-    display: inline-flex;
-    width: 30px;
-    height: 30px;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #e3eaf3;
-    border-radius: 8px;
-    background: #fff;
-    color: #7c8db0;
+    color: #8496b3;
     cursor: pointer;
-    transition: color 0.15s, background 0.15s, border-color 0.15s;
+    transition: color 0.15s, background 0.15s;
 
     &:hover {
-      border-color: #b9cbed;
-      background: #eef3fb;
+      background: #eef2f8;
       color: #4267b9;
+    }
+
+    &:focus-visible {
+      outline: 3px solid rgba(51, 97, 255, 0.22);
+      outline-offset: 1px;
     }
   }
 
@@ -239,6 +239,24 @@
 
   .nyta-conversations__perfil {
     display: block;
+  }
+
+  // Aqui esta faixa deixa de ser a tira do topo da tela e vira o cabeçalho de uma COLUNA de
+  // 248px. O controle de 51px do sistema, pensado para uma barra de ponta a ponta, come metade
+  // dela — então volta à escala da coluna. O seletor é composto de propósito: é preciso vencer
+  // o `.round-control`, que tem a mesma especificidade sozinho.
+  .nyta-conversations .nyta-conversations__new {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    font-size: 15px;
+    box-shadow: none;
+    border: 1px solid #e3eaf3;
+  }
+
+  .nyta-conversations__head {
+    gap: 10px;
+    padding: 10px 12px;
   }
 }
 
