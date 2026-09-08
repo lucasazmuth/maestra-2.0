@@ -355,7 +355,7 @@ const NYTA_TOOLS = [
   },
 ];
 
-type Action = "message" | "confirm" | "stop";
+type Action = "message" | "confirm";
 
 interface NytaChatRequest {
   action: Action;
@@ -389,8 +389,8 @@ async function authenticateUser(req: Request): Promise<{ userId: string } | Resp
 function parseAndValidateAction(body: unknown): { data: NytaChatRequest } | { error: Response } {
   if (!body || typeof body !== "object") return { error: jsonResponse({ error: "Body inválido" }, 400) };
   const req = body as Record<string, unknown>;
-  if (!req.action || (req.action !== "message" && req.action !== "confirm" && req.action !== "stop")) {
-    return { error: jsonResponse({ error: "action deve ser 'message', 'confirm' ou 'stop'" }, 400) };
+  if (!req.action || (req.action !== "message" && req.action !== "confirm")) {
+    return { error: jsonResponse({ error: "action deve ser 'message' ou 'confirm'" }, 400) };
   }
   return { data: body as NytaChatRequest };
 }
@@ -799,8 +799,6 @@ const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 // substituição recomendada por eles (e-mail de aviso de 12/08).
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const GROQ_TIMEOUT_MS = 30_000;
-/** De quanto em quanto a geração pergunta ao banco se pediram para parar. Ver `pediramParaParar`. */
-const INTERVALO_DA_CHECAGEM_MS = 1_500;
 
 // O Llama às vezes "fala" a chamada de ferramenta como TEXTO — <function(nome){...}</function> —
 // em vez de usar o canal estruturado tool_calls. Removemos esse markup antes de persistir para
@@ -1050,7 +1048,6 @@ function streamGroqResponse(
       }
 
       const ac = new AbortController();
-      let paradoPeloArtista = false;
       abortarGeracao = () => ac.abort();
       const tid = setTimeout(() => {
         ac.abort();
@@ -1084,10 +1081,6 @@ function streamGroqResponse(
         const reader = resp.body.getReader();
         const dec = new TextDecoder();
         let full = "";
-        // O instante em que ESTA resposta começou: é com ele que a parada é comparada. Ver
-        // `pediramParaParar`.
-        const inicioDaResposta = new Date().toISOString();
-        let proximaChecagem = Date.now() + INTERVALO_DA_CHECAGEM_MS;
         let buf = "";
         const tcAcc: Map<number, { id: string; name: string; arguments: string }> = new Map();
         while (true) {
@@ -1096,21 +1089,6 @@ function streamGroqResponse(
           buf += dec.decode(value, { stream: true });
           const lines = buf.split("\n");
           buf = lines.pop() || "";
-
-          // A CHECAGEM DA PARADA.
-          //
-          // De tempos em tempos, e não a cada pedaço: seriam dezenas de consultas por resposta
-          // para uma coluna que quase nunca muda. Um segundo e meio é o atraso máximo entre o
-          // toque e a geração morrer — imperceptível para quem parou, e barato para o banco.
-          if (Date.now() >= proximaChecagem) {
-            proximaChecagem = Date.now() + INTERVALO_DA_CHECAGEM_MS;
-            if (await pediramParaParar(convId, inicioDaResposta, authHeader)) {
-              ac.abort();
-              paradoPeloArtista = true;
-              break;
-            }
-          }
-
           for (const line of lines) {
             const tr = line.trim();
             if (!tr || !tr.startsWith("data: ")) continue;
@@ -1149,22 +1127,6 @@ function streamGroqResponse(
           }
         }
         // Tool calls estruturadas (caminho feliz) OU, como fallback, as emitidas em texto pelo modelo.
-        // Parada pedida: grava o que já saiu (com o mesmo critério do `cancel`) e encerra sem
-        // tentar tool call nenhuma — a resposta não chegou ao fim, e uma chamada de ferramenta
-        // montada pela metade não deve virar card.
-        if (paradoPeloArtista) {
-          const visivel = full.replace(/[*_#>`~\-\s]/g, "");
-          if (!jaGravou && visivel.length >= 24) {
-            jaGravou = true;
-            const pid = await persistAssistantMessage(convId, full, null, authHeader);
-            if (pid) sse({ type: "done", message_id: pid });
-          } else {
-            sse({ type: "done", message_id: "" });
-          }
-          ctrl.close();
-          return;
-        }
-
         const structured = Array.from(tcAcc.values());
         const calls = structured.length ? structured : parseTextToolCalls(full);
         for (const tc of calls) {
@@ -1227,60 +1189,6 @@ function streamGroqResponse(
       ...CORS_HEADERS,
     },
   });
-}
-
-/**
- * PARAR: marca a hora do pedido, e é só isso que esta requisição faz.
- *
- * Quem está gerando a resposta é OUTRO isolate — cada requisição de edge function roda no seu —,
- * então não há variável em memória que os dois alcancem. O ponto de encontro é a coluna
- * `stopped_at` da conversa: aqui se grava o instante, e o laço da geração o lê de tempos em
- * tempos (ver `pediramParaParar`).
- *
- * O `eq("user_id", userId)` não é zelo: sem ele, saber um id de conversa bastaria para
- * interromper a resposta de outra pessoa.
- */
-async function marcarParada(
-  conversationId: string,
-  userId: string,
-  authHeader: string
-): Promise<Response> {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { error } = await supabase
-    .from("nyta_conversations")
-    .update({ stopped_at: new Date().toISOString() })
-    .eq("id", conversationId)
-    .eq("user_id", userId);
-  if (error) return jsonResponse({ error: "Falha ao registrar a parada" }, 500);
-  return jsonResponse({ ok: true }, 200);
-}
-
-/**
- * Pediram para parar DEPOIS que esta resposta começou?
- *
- * A comparação é por instante, e não um booleano: um `stopped` ligado precisaria ser desligado
- * por alguém, e esquecer disso mataria a resposta seguinte antes de ela começar. Uma parada
- * antiga fica no passado e não afeta nada.
- */
-async function pediramParaParar(
-  conversationId: string,
-  desde: string,
-  authHeader: string
-): Promise<boolean> {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const { data, error } = await supabase
-    .from("nyta_conversations")
-    .select("stopped_at")
-    .eq("id", conversationId)
-    .maybeSingle();
-  // Falha de leitura NÃO interrompe: perder uma resposta por um erro de rede é pior do que
-  // gerar alguns segundos a mais de um texto que ninguém vai ler.
-  if (error || !data?.stopped_at) return false;
-  return new Date(data.stopped_at as string).getTime() > new Date(desde).getTime();
 }
 
 /**
@@ -1773,13 +1681,6 @@ Deno.serve(async (req: Request) => {
         if (pt instanceof Response) return pt;
         return respostaDoCard(cid, "Ação cancelada. Quer tentar de outro jeito?", ah);
       }
-    }
-    case "stop": {
-      const ah = req.headers.get("Authorization")!;
-      if (!r.conversation_id || !UUID_REGEX.test(r.conversation_id)) {
-        return jsonResponse({ error: "conversation_id inválido" }, 400);
-      }
-      return await marcarParada(r.conversation_id, userId, ah);
     }
     default:
       return jsonResponse({ error: "Action inválida" }, 400);
