@@ -40,42 +40,18 @@
     flex: none;
   }
 
-  &__error-banner {
-    display: flex;
+  // A falha que o fio da conversa NÃO conta: uma linha acima do campo, no lugar e no tamanho da
+  // ressalva da Nyta. Era um cartão vermelho com contorno e botão de fechar, flutuando sobre a
+  // conversa — e dizendo, em duplicata, o que a mensagem marcada como erro já dizia.
+  &__aviso {
     flex: none;
-    gap: 8px;
-    align-items: center;
-    margin: 12px 24px 0;
-    padding: 10px 14px;
-    border: 1px solid #f3c9d2;
-    border-radius: 10px;
-    background: #fdeef1;
+    margin: 0;
+    padding: 0 18px 2px;
     color: #c0405c;
-    font-size: 13px;
+    font-size: 11px;
     line-height: 1.4;
+    text-align: center;
     animation: nytaChatFadeUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
-  }
-
-  &__error-text {
-    flex: 1;
-  }
-
-  &__error-dismiss {
-    flex: none;
-    padding: 2px 6px;
-    border: 0;
-    border-radius: 4px;
-    background: none;
-    color: inherit;
-    font-size: 14px;
-    line-height: 1;
-    opacity: 0.7;
-    cursor: pointer;
-    transition: opacity 0.15s;
-
-    &:hover {
-      opacity: 1;
-    }
   }
 
   &__module-warning {
@@ -141,7 +117,6 @@
 
 @media (max-width: 768px) {
   .nyta-chat-page {
-    &__error-banner,
     &__module-warning {
       margin-right: 16px;
       margin-left: 16px;

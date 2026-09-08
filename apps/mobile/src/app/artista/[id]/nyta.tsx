@@ -69,7 +69,7 @@ export default function Nyta() {
     messages, isStreaming, pendingToolCalls, rateLimitInfo, loadingHistory, hasMoreHistory,
     error, unavailableModules,
     conversationId,
-    loadOlderMessages, sendMessage, confirmTool, cancelTool, dismissError,
+    loadOlderMessages, sendMessage, confirmTool, cancelTool,
     selectConversation, startNewConversation,
   } = useNytaChat('route', conversaMudou);
 
@@ -168,6 +168,17 @@ export default function Nyta() {
     );
   };
 
+  // A FAIXA VERMELHA NO TOPO SAIU.
+  //
+  // Ela dizia "Erro de conexão" no mesmo instante em que o fio dizia "Não foi possível completar
+  // a resposta": dois avisos para uma falha, e o mais feio dos dois logo abaixo do cabeçalho.
+  // Toda falha de envio marca a mensagem com `status: 'error'` (ver `useNytaChat`), então o fio
+  // já conta a história. O que ele NÃO conta é a conversa que não carregou — ali não há mensagem
+  // para marcar, e é só esse caso que sobra como linha acima do campo.
+  const falhaNoFio = messages.some((m) => m.status === 'error');
+  const avisoDeFalha =
+    error && error !== 'subscription_required' && !falhaNoFio ? error : null;
+
   if (naLista) {
     return (
       <Conversas
@@ -198,15 +209,6 @@ export default function Nyta() {
         aoAbrirConversas={() => setNaLista(true)}
       />
 
-      {!!error && error !== 'subscription_required' && (
-        <View style={estilos.erro} accessibilityRole="alert">
-          <Feather name="alert-circle" size={16} color={COR.erro} />
-          <Text style={estilos.erroTexto}>{error}</Text>
-          <Pressable onPress={dismissError} hitSlop={10} accessibilityLabel="Fechar erro">
-            <Feather name="x" size={16} color={COR.erro} />
-          </Pressable>
-        </View>
-      )}
 
       {unavailableModules.length > 0 && (
         <View style={estilos.aviso}>
@@ -264,6 +266,10 @@ export default function Nyta() {
       {/* A reserva de 104px para a ilha de navegação saiu junto com ela: nesta rota a barra de
           abas não é renderizada (ver `_layout.tsx`), e reservar altura para uma barra que não
           existe deixava uma tira vazia embaixo do campo. */}
+      {!!avisoDeFalha && (
+        <Text style={estilos.linhaDaFalha} accessibilityRole="alert">{avisoDeFalha}</Text>
+      )}
+
       <View style={[estilos.barra, { paddingBottom: margem.bottom }]}>
         {noLimite ? (
           <View style={estilos.limite}>
@@ -350,11 +356,10 @@ const estilos = StyleSheet.create({
   espera: { alignSelf: 'flex-start', marginBottom: 26 },
   acaoDoHistorico: { marginTop: 12 },
 
-  erro: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12,
-    borderBottomWidth: 1, borderBottomColor: COR_NYTA.erroContorno, backgroundColor: COR_NYTA.erroFundo,
-  },
-  erroTexto: { flex: 1, color: COR.erro, fontSize: 12, lineHeight: 17 },
+  // A falha que o fio da conversa NÃO conta: uma linha acima do campo, no tamanho da ressalva
+  // da Nyta. Era uma faixa vermelha com ícone e botão de fechar, logo abaixo do cabeçalho, que
+  // dizia em duplicata o que a mensagem marcada como erro já dizia.
+  linhaDaFalha: { marginBottom: 6, color: COR.erro, fontSize: 11, lineHeight: 16, textAlign: 'center' },
   aviso: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 12,
     backgroundColor: COR_NYTA.limiteFundo,

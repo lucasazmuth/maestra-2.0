@@ -34,7 +34,7 @@ const NytaChatPage: FC = () => {
   const {
     messages, isStreaming, pendingToolCalls, rateLimitInfo, loadingHistory, hasMoreHistory,
     error, unavailableModules, conversationId,
-    loadOlderMessages, sendMessage, confirmTool, cancelTool, dismissError,
+    loadOlderMessages, sendMessage, confirmTool, cancelTool,
     selectConversation, startNewConversation,
   } = useNytaChat('route', handleConversation);
   const { artist } = useArtist();
@@ -62,8 +62,18 @@ const NytaChatPage: FC = () => {
 
   const hasMessages = messages.length > 0;
 
-  // Determine if we should show the error banner (non-subscription errors)
-  const showErrorBanner = error && error !== 'subscription_required';
+  // O CARTÃO VERMELHO NO TOPO SAIU.
+  //
+  // Ele flutuava sobre a conversa dizendo "Erro de conexão" no mesmo instante em que o fio
+  // dizia "Não foi possível completar a resposta": dois avisos para uma falha, e o mais feio
+  // dos dois por cima justamente do que a pessoa estava lendo. Toda falha de envio marca a
+  // mensagem com `status: 'error'` (ver `useNytaChat`), então o fio já conta a história.
+  //
+  // O que o fio NÃO conta é a conversa que não carregou — ali não há mensagem para marcar. Essa
+  // vira uma linha discreta acima do campo, onde já mora a ressalva da Nyta.
+  const falhaNoFio = messages.some((m) => m.status === 'error');
+  const avisoDeFalha =
+    error && error !== 'subscription_required' && !falhaNoFio ? error : null;
 
   return (
     // `nyta-surface` traz o skin claro do chat (o mesmo do modal flutuante) — ver styles.scss.
@@ -88,22 +98,6 @@ const NytaChatPage: FC = () => {
             onBack={() => navigate(`/artists/${artistId}`)}
           />
         </div>
-
-        {/* Error banner for connection/stream errors (Req 8.11, 1.4) */}
-        {showErrorBanner && (
-          <div className="nyta-chat-page__error-banner" role="alert">
-            <FiAlertCircle size={16} />
-            <span className="nyta-chat-page__error-text">{error}</span>
-            <button
-              className="nyta-chat-page__error-dismiss"
-              onClick={dismissError}
-              aria-label="Fechar erro"
-              type="button"
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
         {/* Inline warning when modules are unavailable (Req 3.6) */}
         {unavailableModules.length > 0 && (
@@ -140,6 +134,10 @@ const NytaChatPage: FC = () => {
             <NytaAvatar size={34} />
             <p className="nyta-chat-page__greeting-text">{saudacaoDaNyta(nome)}</p>
           </div>
+        )}
+
+        {avisoDeFalha && (
+          <p className="nyta-chat-page__aviso" role="alert">{avisoDeFalha}</p>
         )}
 
         {/* A caixa de texto é a mesma nos dois estados: com histórico e na conversa em branco. */}
