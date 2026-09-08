@@ -10244,49 +10244,64 @@ body:has(.track-detail-backdrop) .local-player-bar {
   .profile-panel { top: calc(93px + env(safe-area-inset-top, 0px)); }
 }
 
-/* O CHAT EM TELA CHEIA.
+/* O CHAT EM TELA CHEIA — SÓ NO MOBILE.
 
-   Nesta rota o Layout não renderiza a barra da Maestra nem a tab bar (ver `isImmersiveRoute`).
-   O que sobra aqui é tirar a reserva de 93px que existia para aquela barra e apagar as duas
-   colunas laterais — o rail de perfis e o painel do artista. Elas eram a navegação do módulo, e
-   este módulo não navega: ele é uma conversa que se lê de cima a baixo.
+   Os 700px são a quebra do próprio layout: é neles que o rail de perfis e o painel do artista
+   somem e a tab bar aparece (ver o bloco `@media (max-width: 700px)` lá em cima). Acima disso o
+   chat é uma página como as outras, dentro do mesmo quadro das Notificações — numa janela larga,
+   em tela cheia, a conversa virava uma ilha sem endereço: sem dizer em que perfil estava, sem
+   caminho de volta que não fosse a setinha da própria faixa, e sem nada em volta lembrando que
+   aquilo ainda era o Maestra.
 
-   O `inset: 0` é o que faz o chat encostar no topo da tela. Sem ele a faixa da conversa nasceria
-   93px abaixo, num vão branco reservado para uma barra que não existe mais. */
-.task-app .app-layout.app-layout-imersivo {
-  position: fixed;
-  inset: 0;
-  display: block;
-  height: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
+   No telefone é o contrário: as barras roubam a altura justamente do que importa numa conversa,
+   e a tela é estreita demais para carregar moldura. Lá o chat toma tudo.
 
-.task-app .app-layout-imersivo .app-rail,
-.task-app .app-layout-imersivo .profile-panel {
-  display: none;
-}
+   O Layout marca a rota com `app-layout-imersivo` em QUALQUER largura, e a decisão é toda daqui.
+   Duas fontes para a mesma quebra divergem no primeiro ajuste. */
+@media (max-width: 700px) {
+  /* A barra da Maestra é renderizada sempre; aqui ela sai de cena para o chat encostar no topo.
+     A faixa do próprio chat vira a única do topo, e o botão de voltar dela é a saída. */
+  .task-app:has(.app-layout-imersivo) .top-navigation {
+    display: none;
+  }
 
-/* A coluna do chat perde a margem que existia para o rail (o `module-layout` a põe em 111px e
-   130px, por largura) e passa a ocupar a tela toda. */
-.task-app .app-layout-imersivo .board-shell,
-.task-app .module-layout.app-layout-imersivo .board-shell {
-  height: 100%;
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-}
+  /* O `inset: 0` é o que faz o chat encostar no topo da tela. Sem ele a faixa da conversa
+     nasceria 93px abaixo, num vão branco reservado para uma barra que não está mais ali. */
+  .task-app .app-layout.app-layout-imersivo {
+    position: fixed;
+    inset: 0;
+    display: block;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
 
-/* A `.Main-section` reserva 86px de altura para a barra do design antigo (`calc(100vh - 86px)`
-   no App.scss) e sobe 10px por uma margem negativa. Sem a barra, aquilo vira uma tira branca de
-   74px embaixo do campo de texto e um recuo de 10px no topo. Aqui a coluna simplesmente ocupa a
-   altura que tem. */
-.task-app .app-layout-imersivo .Main-section {
-  height: 100%;
-  margin-top: 0;
-  padding-bottom: 0;
+  .task-app .app-layout-imersivo .app-rail,
+  .task-app .app-layout-imersivo .profile-panel {
+    display: none;
+  }
+
+  /* A coluna do chat perde a margem que existia para o rail (o `module-layout` a põe em 111px e
+     130px, por largura) e passa a ocupar a tela toda. */
+  .task-app .app-layout-imersivo .board-shell,
+  .task-app .module-layout.app-layout-imersivo .board-shell {
+    height: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  /* A `.Main-section` reserva 86px de altura para a barra do design antigo (`calc(100vh - 86px)`
+     no App.scss) e sobe 10px por uma margem negativa. Sem a barra, aquilo vira uma tira branca de
+     74px embaixo do campo de texto e um recuo de 10px no topo. Aqui a coluna simplesmente ocupa a
+     altura que tem. */
+  .task-app .app-layout-imersivo .Main-section {
+    height: 100%;
+    margin-top: 0;
+    padding-bottom: 0;
+  }
 }
 
 /* O botão de parar: o MESMO círculo do enviar, com o quadrado no lugar da seta. Ele não é um
