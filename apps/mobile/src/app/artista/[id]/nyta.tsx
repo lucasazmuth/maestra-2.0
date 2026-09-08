@@ -179,6 +179,14 @@ export default function Nyta() {
   const avisoDeFalha =
     error && error !== 'subscription_required' && !falhaNoFio ? error : null;
 
+  // Só dá para parar depois que a resposta COMEÇOU: entre o envio e a primeira palavra o
+  // servidor ainda monta o pedido, e abortar ali derruba a requisição antes de a PERGUNTA ser
+  // gravada — a mensagem que a pessoa acabou de digitar some da conversa. Ver a nota igual em
+  // `src/pages/NytaChat/index.tsx`.
+  const respostaComecou = messages.some(
+    (m) => m.role === 'assistant' && m.status === 'sending' && !!m.content,
+  );
+
   if (naLista) {
     return (
       <Conversas
@@ -307,7 +315,7 @@ export default function Nyta() {
                 {/* Enquanto a Nyta escreve, o botao de enviar VIRA o de parar. É o mesmo
                     lugar, e não um controle a mais: parar só faz sentido nesse momento, e numa
                     resposta longa que saiu do assunto a única saída era esperar até o fim. */}
-                {isStreaming ? (
+                {isStreaming && respostaComecou ? (
                   <Pressable
                     style={estilos.enviar}
                     onPress={stopStreaming}
@@ -318,16 +326,16 @@ export default function Nyta() {
                   </Pressable>
                 ) : (
                   <Pressable
-                    style={[estilos.enviar, !texto.trim() && estilos.enviarInativo]}
+                    style={[estilos.enviar, (!texto.trim() || isStreaming) && estilos.enviarInativo]}
                     onPress={enviar}
-                    disabled={!texto.trim()}
+                    disabled={!texto.trim() || isStreaming}
                     accessibilityRole="button"
                     accessibilityLabel="Enviar"
                   >
                     <Feather
                       name="arrow-up"
                       size={18}
-                      color={!texto.trim() ? COR_NYTA.espacoReservado : COR.sobrePrimaria}
+                      color={!texto.trim() || isStreaming ? COR_NYTA.espacoReservado : COR.sobrePrimaria}
                     />
                   </Pressable>
                 )}

@@ -62,6 +62,20 @@ const NytaChatPage: FC = () => {
 
   const hasMessages = messages.length > 0;
 
+  /**
+   * Só dá para parar depois que a resposta COMEÇOU.
+   *
+   * Entre o envio e a primeira palavra, o servidor ainda está montando o pedido — valida, conta
+   * o limite, grava a pergunta, busca os dados do artista. Abortar ali derruba a requisição
+   * antes de a PERGUNTA ser gravada, e o resultado é a mensagem que a pessoa acabou de digitar
+   * sumindo da conversa. Perder a própria pergunta é pior do que esperar um segundo.
+   *
+   * Nesse intervalo o botão continua o de enviar, desabilitado — que é o que ele sempre foi.
+   */
+  const respostaComecou = messages.some(
+    (m) => m.role === 'assistant' && m.status === 'sending' && !!m.content
+  );
+
   // O CARTÃO VERMELHO NO TOPO SAIU.
   //
   // Ele flutuava sobre a conversa dizendo "Erro de conexão" no mesmo instante em que o fio
@@ -144,7 +158,7 @@ const NytaChatPage: FC = () => {
         <div className="nyta-chat-page__input">
           <InputBar
             onSend={sendMessage}
-            onStop={stopStreaming}
+            onStop={respostaComecou ? stopStreaming : undefined}
             disabled={isStreaming}
             rateLimitInfo={rateLimitInfo}
             pendingToolCalls={pendingToolCalls}
