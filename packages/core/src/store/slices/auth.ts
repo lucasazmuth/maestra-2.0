@@ -120,9 +120,32 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    /**
+     * A sessão vinda do `onAuthStateChange`.
+     *
+     * ⚠️ A MESMA SESSÃO NÃO PODE VIRAR UM OBJETO NOVO, e isto não é micro-otimização: era a
+     * causa de a web inteira se desmontar toda vez que a pessoa voltava para a aba.
+     *
+     * O supabase-js registra um `visibilitychange` próprio e, ao reaver o foco, reconfere a
+     * sessão e emite `SIGNED_IN` de novo — com a sessão IDÊNTICA, mesmo token. Repassar isso
+     * cru trocava as referências de `session` e `user` no store, e todo efeito com `[user]` na
+     * lista de dependências disparava outra vez. Entre eles os que decidem o que a rota
+     * renderiza: o gate de consentimento e o de admin voltam para `loading` e trocam a árvore
+     * inteira por um spinner. Desmontar a árvore é perder o formulário pela metade, o rascunho
+     * não salvo, a posição da rolagem — sem nenhuma navegação ter acontecido.
+     *
+     * A comparação é pelo `access_token` porque ele É o conteúdo: token igual significa as
+     * mesmas claims e o mesmo usuário, sem exceção. Quando o token de fato é renovado, aí sim
+     * a troca acontece e quem depende dela reage.
+     */
     setSession(state, action: PayloadAction<{ session: Session | null }>) {
-      state.session = action.payload.session;
-      state.user = action.payload.session?.user ?? null;
+      const nova = action.payload.session;
+      const mesmaSessao = !!nova && !!state.session && nova.access_token === state.session.access_token;
+
+      if (!mesmaSessao) {
+        state.session = nova;
+        state.user = nova?.user ?? null;
+      }
       state.requesting = false;
     },
     setRequesting(state, action: PayloadAction<{ requesting: boolean }>) {

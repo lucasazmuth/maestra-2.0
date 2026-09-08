@@ -156,9 +156,17 @@ export const AppLayout: FC = memo(() => {
   const routeArtistId = pathArtistId(location.pathname);
   const currentArtist = routeArtistId ? artists.find((artist) => artist.id === routeArtistId) : undefined;
   const isNytaPage = location.pathname.endsWith('/nyta');
-  // O chat toma a tela: sem a barra da Maestra em cima, sem a tab bar embaixo e sem o rail de
-  // perfis ao lado. A faixa do próprio chat vira a única do topo, e o botão de voltar dela é a
-  // saída. Ver `isImmersiveRoute`.
+  // O chat toma a tela — MAS SÓ NO MOBILE (até 700px, a mesma quebra em que o rail e o painel
+  // de perfil somem e a tab bar aparece).
+  //
+  // No desktop ele volta a ser uma página do produto, dentro do mesmo quadro das Notificações:
+  // com a barra da Maestra em cima e o rail ao lado. Em tela cheia, numa janela de 1400px, a
+  // conversa virava uma ilha sem endereço — a pessoa perdia de vista em que perfil estava e
+  // como sair, e nada em volta dizia que aquilo ainda era o Maestra.
+  //
+  // A classe entra em toda largura e QUEM DECIDE É O CSS (ver `.app-layout-imersivo` em
+  // `styles/gsap-reference.css`, dentro de um `@media (max-width: 700px)`). Duplicar a quebra
+  // aqui em JS daria duas fontes para a mesma regra, e elas divergem no primeiro ajuste.
   const imersivo = isImmersiveRoute(location.pathname);
   const isNotificationsPage = location.pathname === '/notifications';
   const openNytaPage = () => routeArtistId ? navigate(`/artists/${routeArtistId}/nyta`) : openNyta();
@@ -402,7 +410,7 @@ export const AppLayout: FC = memo(() => {
           </section>
         ) : (
           <>
-        {!imersivo && topNavigation()}
+        {topNavigation()}
         {/* `module-layout` encosta a página no rail (margin-left ~130px) porque significa "sem
             coluna de perfil". O wizard NÃO é esse caso: ele mantém o perfil à esquerda e só ganha
             a coluna de resultados à direita — com a classe, o card ficava embaixo do perfil.

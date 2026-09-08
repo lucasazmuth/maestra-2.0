@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { supabase } from '../lib/supabase';
 import { useAppSelector } from '../store/store';
@@ -46,9 +46,11 @@ export const useAdminRole = (): AcessoAdmin => {
   const [papel, setPapel] = useState<PapelAdmin | null>(null);
   const [modulos, setModulos] = useState<ModuloAdmin[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const idAtendido = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) {
+      idAtendido.current = null;
       setPapel(null);
       setModulos([]);
       setCarregando(false);
@@ -56,7 +58,10 @@ export const useAdminRole = (): AcessoAdmin => {
     }
 
     let ativo = true;
-    setCarregando(true);
+    // Mesma regra do consentimento: reverificar a MESMA pessoa não volta para `carregando`,
+    // porque o `RequireFullAdmin` troca a tela por um spinner enquanto isso. Ver o comentário
+    // do `setSession` em `store/slices/auth`.
+    if (idAtendido.current !== user.id) setCarregando(true);
 
     // As duas informações vêm juntas porque a tela precisa das duas para decidir o que mostrar:
     // o papel diz se é admin pleno, e os módulos dizem o que a pessoa alcança. Carregar em
@@ -69,6 +74,7 @@ export const useAdminRole = (): AcessoAdmin => {
       if (!ativo) return;
       setPapel((resPapel.data?.role as PapelAdmin) ?? null);
       setModulos(((resModulos.data as string[] | null) || []) as ModuloAdmin[]);
+      idAtendido.current = user.id;
       setCarregando(false);
     });
 
