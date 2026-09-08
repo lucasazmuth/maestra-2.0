@@ -11,10 +11,14 @@ import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 // Navbar inferior (tab bar) do mobile: substitui a sidebar (oculta em telas < 768px).
 // Layout da referência (gsap-app): [avatar do perfil] · Plano · Músicas · Agenda · Mais. A
 // primeira célula é a foto do artista selecionado, que leva pra home dele — no lugar de um ícone
-// de casa, ela também diz DE QUEM é a tela. "Mais" (popover) guarda Diagnóstico REAL, Plano
-// estratégico, Equipe e Marketing — e, abaixo, Perfis/Configurações/Suporte, que no desktop vivem
-// no menu do sistema (o ícone de grade do header). Esse menu some no mobile (ver
-// SystemMenu.module.scss) porque os mesmos atalhos já cabem aqui, sem duplicar navegação.
+// de casa, ela também diz DE QUEM é a tela. "Mais" (popover) guarda o que sobrou dos módulos:
+// Diagnóstico REAL, Plano estratégico, Equipe e Marketing.
+//
+// Perfis, Configurações e Suporte NÃO moram aqui. Eles já moraram, e o botão de grade do header
+// sumia no mobile para não duplicar a navegação — só que isso misturava duas coisas de naturezas
+// diferentes no mesmo painel: os módulos DESTE perfil e os atalhos da conta, que não pertencem a
+// perfil nenhum. Hoje a conta fica só no menu do sistema, que aparece em qualquer largura. É a
+// divisão do app nativo (`casca/BarraDeAbas.tsx` e `casca/marca/MenuDoSistema.tsx`).
 // A Nyta NÃO mora aqui: o atalho dela é o botão roxo do cabeçalho (.header-nyta-action).
 // Aparece sempre que há um artista no contexto — seja pela rota /artists/:id… ou, em telas
 // "globais" (Configurações, Notificações, Assinatura…), pelo artista atual guardado no store.
