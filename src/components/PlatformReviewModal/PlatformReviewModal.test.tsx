@@ -53,6 +53,14 @@ beforeEach(() => {
   });
 });
 
+// Este caso monta um modal do antd inteiro. Sozinho ele leva menos de um segundo, mas o padrão
+// do jest é 5s POR TESTE, e numa suíte de 65 arquivos disputando CPU essa folga acaba: ele já
+// reprovou duas vezes por tempo, sem nada a ver com o que estava sendo alterado.
+//
+// Um vermelho que aparece e some conforme a carga da máquina é pior que um teste lento: ensina a
+// ignorar a suíte. A folga é do relógio, não do comportamento.
+jest.setTimeout(20000);
+
 it('exige nota e envia comentário da avaliação', async () => {
   const onClose = jest.fn();
   render(<PlatformReviewModal open onClose={onClose} />);

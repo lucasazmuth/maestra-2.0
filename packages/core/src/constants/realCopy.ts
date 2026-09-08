@@ -65,30 +65,39 @@ export const VINCULO_LABELS: Record<string, string> = {
   sou_o_artista: 'o próprio artista',
   equipe: 'integrante da equipe do artista',
   representante: 'representante do artista',
-  conhecendo: 'nenhum — declarou estar apenas conhecendo a ferramenta',
+  conhecendo: 'nenhum, declarou estar apenas conhecendo a ferramenta',
 };
 
 export const PREMIOS_LABELS_V3 = [
   'Nenhum',
-  'Indicação local / regional',
-  'Prêmio local / regional',
+  'Indicação local ou regional',
+  'Prêmio local ou regional',
   'Indicação nacional',
   'Prêmio nacional',
   'Indicação internacional',
   'Prêmio internacional',
 ];
-export const PAGANTE_LABELS: Record<string, string> = { ate50: 'Até 50%', '51-69': '51–69%', '70-94': '70–94%', '95-100': '95–100%' };
+export const PAGANTE_LABELS: Record<string, string> = { ate50: 'Até 50%', '51-69': '51 a 69%', '70-94': '70 a 94%', '95-100': '95 a 100%' };
 export const FREQ_LABELS: Record<string, string> = { esporadico: 'Esporádica', lancamento: 'Em lançamentos', perene: 'Perene' };
 
-// Linha de status do boletim (§9): "TOP ICON" (excelência) / "Aceso · faltam X para TOP ICON" /
-// "Faltam X para acender · Y para TOP ICON". `topIcon` vem do flag do motor (dimTopIcon).
-export const dimStatusText = (score: number, acende: boolean, topIcon = false): string => {
+/**
+ * A linha de status da barra nos diagnósticos de versão ANTERIOR.
+ *
+ * O caminho atual usa `statusDaBarra` (F3, F4 e F5 da spec do relatório). Este aqui sobrevive só
+ * para os diagnósticos gravados antes da v4, que não têm os estados que aquela função lê.
+ *
+ * A nomenclatura foi corrigida junto (relatório v4.2, §1.7): "Top Tier" é o patamar de elite de
+ * UMA DIMENSÃO, e "TOP ICON" é o PERFIL de quem é Top Tier nas quatro. Este texto chamava de TOP
+ * ICON o topo de uma dimensão, que é o perfil inteiro sendo prometido a quem acendeu uma frente.
+ * E "Acesa" no feminino, porque é a dimensão que acende.
+ */
+export const dimStatusText = (score: number, acende: boolean, topTier = false): string => {
   const s = Math.round(score);
   const toTop = Math.max(0, 100 - s);
-  if (topIcon) return 'TOP ICON · nível de excelência desta dimensão';
-  if (acende) return toTop > 0 ? `Aceso · faltam ${toTop} pts para TOP ICON` : 'TOP ICON · pleno';
+  if (topTier) return 'Top Tier: o patamar mais alto desta frente.';
+  if (acende) return `Acesa. Faltam ${toTop} pontos para o Top Tier.`;
   const toOn = Math.max(0, 70 - s);
-  return `Faltam ${toOn} pts para acender · ${toTop} pts para TOP ICON`;
+  return `Faltam ${toOn} pontos para acender e ${toTop} para o Top Tier.`;
 };
 
 // Padrão R·E·A·L (alto/baixo) por nome de perfil — derivado da chave de 4 bits do motor.
@@ -100,7 +109,7 @@ export const PROFILE_BITS: Record<string, { r: boolean; e: boolean; a: boolean; 
 
 export const DIM_META: { key: DimKey; letter: string; name: string; full: string; sub: string }[] = [
   { key: 'r', letter: 'R', name: 'Reach · Alcance', full: 'Reach', sub: 'Alcance' },
-  { key: 'e', letter: 'E', name: 'Earnings · Receita', full: 'Earnings', sub: 'Receita' },
+  { key: 'e', letter: 'E', name: 'Earnings · Sustentabilidade', full: 'Earnings', sub: 'Sustentabilidade' },
   { key: 'a', letter: 'A', name: 'Audience · Público real', full: 'Audience', sub: 'Público real' },
   { key: 'l', letter: 'L', name: 'Legitimacy · Legitimação', full: 'Legitimacy', sub: 'Legitimação' },
 ];
@@ -127,9 +136,9 @@ export const DIM_PHRASE: Record<DimKey, { high: string; low: string }> = {
 
 // Mapa dos 16 perfis por "andar" (nº de dimensões altas), do Icon (4) ao Beginner (0).
 export const PROFILE_MAP: { tier: string; names: string[] }[] = [
-  { tier: '4 altas', names: ['Icon'] },
-  { tier: '3 altas', names: ['Hit', 'Spotlight', 'Underpaid', 'Analog'] },
-  { tier: '2 altas', names: ['Digital', 'Potential', 'Hype', 'Rising', 'Outlier', 'Bet'] },
-  { tier: '1 alta', names: ['Influencer', 'Moneymaker', 'Paradox', 'Cult'] },
-  { tier: '0 altas', names: ['Beginner'] },
+  { tier: '4 acesas', names: ['Icon'] },
+  { tier: '3 acesas', names: ['Hit', 'Spotlight', 'Underpaid', 'Analog'] },
+  { tier: '2 acesas', names: ['Digital', 'Potential', 'Hype', 'Rising', 'Outlier', 'Bet'] },
+  { tier: '1 acesa', names: ['Influencer', 'Moneymaker', 'Paradox', 'Cult'] },
+  { tier: '0 acesas', names: ['Beginner'] },
 ];

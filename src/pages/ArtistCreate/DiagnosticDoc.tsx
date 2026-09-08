@@ -620,7 +620,7 @@ const LegacyDoc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, a
                     <div className={styles.docDimName}>{d.full}</div>
                     <div className={styles.docDimSub}>{d.sub}</div>
                   </div>
-                  <span className={styles.docDimStatus} style={{ color }}>{neutral ? 'Não inf.' : high ? 'Alto' : 'Baixo'}</span>
+                  <span className={styles.docDimStatus} style={{ color }}>{neutral ? 'Não inf.' : high ? 'Acesa' : 'Apagada'}</span>
                 </div>
                 <div className={styles.docDimStats}>
                   {dimData[d.key].map((l) => (

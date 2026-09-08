@@ -134,6 +134,33 @@ describe('§7 E · Earnings', () => {
     expect(b(true, true)).toBe(1.3);
   });
 
+  // ⚠️ O CASO QUE AMPLIAVA PREJUÍZO.
+  //
+  // Multiplicar saldo negativo pelo bônus deixava quem tem CNPJ e empresário com um resultado
+  // PIOR do que quem não tem. Um caso real saiu de −2,79 mi para −3,63 mi, e o número ia impresso
+  // no relatório.
+  //
+  // A nota do boletim não denunciava nada: saldo ≤ 0 vale 0 com ou sem bônus. Só a exibição
+  // mentia, e é por isso que isto atravessou a implementação sem ninguém tropeçar.
+  it('o bônus não amplia prejuízo: só incide sobre saldo positivo (§7.2)', () => {
+    const noVermelho = { showsPerYear: 0, custoFixoMensal: 100_000 };   // saldo de −1,2 mi
+    const semEstrutura = computeRealIndexV4(base({ ...noVermelho }));
+    const comEstrutura = computeRealIndexV4(base({ ...noVermelho, temCnpj: true, temEmpresario: true }));
+
+    expect(semEstrutura.revenue.saldo).toBe(-1_200_000);
+    expect(comEstrutura.revenue.bonus).toBe(1.3);
+    // O bônus foi calculado, e não foi aplicado: o ajustado é o próprio saldo.
+    expect(comEstrutura.revenue.saldoAjustado).toBe(-1_200_000);
+    expect(comEstrutura.revenue.saldoAjustado).toBe(semEstrutura.revenue.saldoAjustado);
+  });
+
+  it('sobre saldo positivo o bônus continua valendo (§7.2)', () => {
+    const comEstrutura = computeRealIndexV4(base({ ...E_ON, temCnpj: true, temEmpresario: true }));
+
+    expect(comEstrutura.revenue.saldo).toBe(150_000);
+    expect(comEstrutura.revenue.saldoAjustado).toBe(195_000);          // 150k × 1,3
+  });
+
   it('receita de shows usa a média dos cachês informados (§7.2)', () => {
     const ri = computeRealIndexV4(base({ showsPerYear: 10, cacheByType: { corporativos: 5_000, particulares: 3_000, produtores: 0 } }));
     expect(ri.revenue.cacheMedio).toBe(4_000);
