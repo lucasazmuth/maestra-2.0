@@ -1,12 +1,7 @@
 import { FC, useCallback, useEffect, useRef } from 'react';
 import { FiAlertTriangle } from 'react-icons/fi';
-import Markdown from 'react-markdown';
-
-import { NytaBubble, UserBubble, TypingIndicator } from '../../Wizard/chat/ChatMessage';
-import { NytaAvatar } from '../../Wizard/chat/nytaPersona';
+import { FalaDaNyta, FalaDeAviso, FalaDeQuemPergunta, Pensando } from './Mensagem';
 import { NytaChatMessage, PendingToolCall } from '@maestra/core/store/slices/nytaChat';
-import { useAppSelector } from '@maestra/core/store/store';
-import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import { sanitizeNytaContent } from '@maestra/core/utils/sanitizeNytaContent';
 import { ToolConfirmationCard } from './ToolConfirmationCard';
 
@@ -26,10 +21,6 @@ export interface MessageListProps {
   // No limite diário, o card do InputBar já explica — não mostramos o balão de erro da
   // mensagem que não passou (evita "erro em cima de erro").
   suppressErrorBubbles?: boolean;
-  // Mostra o avatar de quem escreveu ao lado das mensagens do usuário. Ligado na página em
-  // tela cheia, onde o histórico fica; desligado no modal, que é conversa de passagem e tem
-  // largura curta demais pra mais um elemento por linha.
-  showAuthorAvatar?: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -48,18 +39,7 @@ export const MessageList: FC<MessageListProps> = ({
   onConfirmTool,
   onCancelTool,
   suppressErrorBubbles = false,
-  showAuthorAvatar = false,
 }) => {
-  // Quem está logado agora. As conversas são por usuário (a RLS de nyta_conversations filtra
-  // por auth.uid()), então todas as mensagens da lista carregada são de quem está vendo.
-  const user = useAppSelector((s) => s.auth.user);
-  const authorMeta = (user?.user_metadata || {}) as Record<string, unknown>;
-  const author = showAuthorAvatar
-    ? {
-        src: (authorMeta.avatar_url as string) || (authorMeta.picture as string) || ARTISTS_DEFAULT_IMAGE,
-        name: (authorMeta.full_name as string) || (authorMeta.name as string) || user?.email || 'Você',
-      }
-    : undefined;
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -237,11 +217,9 @@ export const MessageList: FC<MessageListProps> = ({
                 key={msg.id}
                 className="nyta-message-list__item nyta-message-list__item--assistant"
               >
-                <NytaBubble>
-                  <span style={{ opacity: 0.75 }}>
-                    Hmm, não consegui formular essa resposta direito. Pode reformular o pedido?
-                  </span>
-                </NytaBubble>
+                <FalaDeAviso>
+                  Hmm, não consegui formular essa resposta direito. Pode reformular o pedido?
+                </FalaDeAviso>
               </div>
             );
           }
@@ -254,16 +232,14 @@ export const MessageList: FC<MessageListProps> = ({
             className={`nyta-message-list__item nyta-message-list__item--${msg.role}`}
           >
             {msg.role === 'assistant' && msg.status === 'error' && !content ? (
-              <div className="nyta-message-list__error-bubble">
+              <FalaDeAviso tom="erro">
                 <FiAlertTriangle size={14} />
                 <span>Não foi possível completar a resposta. Tente novamente.</span>
-              </div>
+              </FalaDeAviso>
             ) : msg.role === 'assistant' ? (
-              <NytaBubble>
-                <Markdown>{content}</Markdown>
-              </NytaBubble>
+              <FalaDaNyta>{content}</FalaDaNyta>
             ) : msg.role === 'user' ? (
-              <UserBubble avatar={author}>{content}</UserBubble>
+              <FalaDeQuemPergunta>{content}</FalaDeQuemPergunta>
             ) : null}
           </div>
         );
@@ -275,7 +251,7 @@ export const MessageList: FC<MessageListProps> = ({
           messages[messages.length - 1]?.role !== 'assistant' ||
           !messages[messages.length - 1]?.content) && (
         <div className="nyta-message-list__item nyta-message-list__item--assistant">
-          <TypingIndicator />
+          <Pensando />
         </div>
       )}
 
@@ -288,14 +264,11 @@ export const MessageList: FC<MessageListProps> = ({
               key={tc.toolCallId}
               className="nyta-message-list__item nyta-message-list__item--tool"
             >
-              <div className="nyta-row">
-                <NytaAvatar />
-                <ToolConfirmationCard
-                  toolCall={tc}
-                  onConfirm={onConfirmTool}
-                  onCancel={onCancelTool}
-                />
-              </div>
+              <ToolConfirmationCard
+                toolCall={tc}
+                onConfirm={onConfirmTool}
+                onCancel={onCancelTool}
+              />
             </div>
           ))
       )}

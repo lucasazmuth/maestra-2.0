@@ -283,46 +283,96 @@
 }
 
 .nyta-surface .nyta-message-list {
-  padding: 24px 24px 8px;
+  padding: 28px 24px 8px;
   background: #f7f9fc;
 }
 
 .nyta-surface .nyta-message-list__item {
-  margin-bottom: 18px;
+  margin-bottom: 26px;
 }
 
-.nyta-surface .nyta-bubble {
-  max-width: min(80%, 430px);
-  padding: 13px 16px;
-  border: 1px solid #e3eaf3;
-  border-radius: 14px 14px 14px 4px;
-  background: #ffffff;
-  color: #60749a;
-  font-size: 13px;
-  line-height: 1.55;
-  box-shadow: 0 4px 12px rgba(105, 122, 159, 0.06);
+/* AS FALAS.
+
+   A resposta da Nyta não tem recipiente — nem balão, nem contorno, nem avatar. É texto na
+   própria página, na largura da coluna. O balão que havia aqui espremia a resposta em 80% da
+   largura e a fazia ler como mensagem de robô; sem ele, ela lê como documento, que é o que uma
+   resposta longa é. O tamanho subiu de 13 para 15px pelo mesmo motivo: isto se lê, não se
+   confere de relance.
+
+   A pergunta de quem escreve é o ÚNICO recipiente da tela, e é o que deixa achar, rolando, onde
+   se perguntou o quê. Em cinza, e não no azul de ação: ela não é um botão. */
+.nyta-surface .nyta-fala--nyta {
+  max-width: 100%;
+  color: #4a5b78;
+  font-size: 15px;
+  line-height: 1.62;
 }
 
-.nyta-surface .nyta-message-list__item--user .nyta-bubble {
-  border: 0;
-  border-radius: 14px 14px 4px 14px;
-  background: #eaf0ff;
-  color: #4267b9;
+.nyta-surface .nyta-fala--nyta > *:first-child { margin-top: 0; }
+.nyta-surface .nyta-fala--nyta > *:last-child { margin-bottom: 0; }
+.nyta-surface .nyta-fala--nyta p { margin: 0 0 12px; }
+/* `list-style` explícito porque o reset do app zera os marcadores em toda lista. Numa resposta
+   da Nyta eles são conteúdo: "escolha uma das opções" só se responde se as opções estiverem
+   numeradas. */
+.nyta-surface .nyta-fala--nyta ol { margin: 0 0 12px; padding-left: 22px; list-style: decimal; }
+.nyta-surface .nyta-fala--nyta ul { margin: 0 0 12px; padding-left: 22px; list-style: disc; }
+.nyta-surface .nyta-fala--nyta li::marker { color: #9aabc4; }
+.nyta-surface .nyta-fala--nyta li { margin-bottom: 6px; }
+.nyta-surface .nyta-fala--nyta strong { color: #2f4064; font-weight: 700; }
+.nyta-surface .nyta-fala--nyta h1,
+.nyta-surface .nyta-fala--nyta h2,
+.nyta-surface .nyta-fala--nyta h3 {
+  margin: 20px 0 8px;
+  color: #2f4064;
+  font-size: 15px;
+  font-weight: 700;
 }
 
-/* Avatar de quem escreveu, ao lado da própria mensagem. Um perfil pode ter várias pessoas da
-   equipe conversando com a Nyta sobre o mesmo artista, e sem isto o histórico não diz quem
-   perguntou o quê. Fica no mesmo tamanho do emblema da Nyta do outro lado, pra as duas pontas
-   da conversa terem o mesmo peso. */
-.nyta-surface .nyta-row--user { align-items: flex-end; gap: 10px; }
-.nyta-surface .nyta-row--user .nyta-user-avatar {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 auto;
-  aspect-ratio: 1;
+.nyta-surface .nyta-fala--voce {
+  max-width: min(84%, 460px);
+  padding: 11px 16px;
+  border-radius: 18px;
+  background: #eceff5;
+  color: #40506e;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.nyta-surface .nyta-fala--aviso {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: #8496b3;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.nyta-surface .nyta-fala--erro { color: #c0405c; }
+
+/* A espera: três pontos onde a resposta vai nascer, sem moldura, para o texto começar no mesmo
+   lugar em que eles estavam. */
+.nyta-surface .nyta-fala--pensando {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.nyta-surface .nyta-fala--pensando span {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  object-fit: cover;
-  background: #eaf0ff;
+  background: #b6c2d6;
+  animation: nytaPensando 1.1s ease-in-out infinite;
+}
+
+.nyta-surface .nyta-fala--pensando span:nth-child(2) { animation-delay: 0.15s; }
+.nyta-surface .nyta-fala--pensando span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes nytaPensando {
+  0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
 }
 
 .nyta-surface .nyta-message-list__item--assistant,
@@ -358,44 +408,80 @@
   color: #4267b9;
 }
 
+/* O CAMPO.
+
+   Sem fio no topo e sem faixa branca: a caixa flutua sobre o mesmo fundo da conversa, como na
+   referência. A borda separando o campo do fio era um segundo traço horizontal a dois pixels do
+   primeiro, e o que ela marcava — onde acaba a conversa e começa o que se escreve — o próprio
+   cartão já marca. */
 .nyta-surface .nyta-input-bar {
-  padding: 14px 18px 12px;
-  border-top: 1px solid #e8edf4;
-  background: #ffffff;
+  padding: 8px 18px 14px;
+  border-top: 0;
+  background: transparent;
 }
 
+/* Cartão, e não linha: o texto em cima ocupando a largura toda, os controles numa fileira
+   embaixo. Numa linha só o botão de enviar comia a largura do texto, e uma pergunta de duas
+   frases já rolava dentro de um campo de 40px. */
 .nyta-surface .nyta-input-bar__row {
-  border: 1px solid #dce5f0;
-  border-radius: 10px;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+  padding: 12px 14px 10px;
+  border: 1px solid #dfe6f1;
+  border-radius: 20px;
   background: #ffffff;
-  box-shadow: 0 3px 10px rgba(105, 122, 159, 0.04);
+  box-shadow: 0 6px 20px rgba(105, 122, 159, 0.07);
 }
 
 .nyta-surface .nyta-input-bar__row:focus-within {
-  border-color: #9bb5ec;
-  box-shadow: 0 0 0 3px rgba(66, 103, 185, 0.1);
+  border-color: #c3d1ea;
+  box-shadow: 0 6px 22px rgba(105, 122, 159, 0.11);
 }
 
 .nyta-surface .nyta-input-bar__textarea {
-  color: #60749a;
-  font-size: 13px;
+  min-height: 26px;
+  padding: 2px 2px 0;
+  color: #40506e;
+  font-size: 15px;
+  line-height: 22px;
 }
 
 .nyta-surface .nyta-input-bar__textarea::placeholder {
-  color: #aebbd0;
+  color: #a4b1c8;
+}
+
+.nyta-surface .nyta-input-bar__acoes {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .nyta-surface .nyta-send {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  border-radius: 9px;
-  background: #3361ff;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: #22314f;
+}
+
+.nyta-surface .nyta-send:disabled {
+  background: #e4e9f2;
+  color: #b3c0d4;
+}
+
+/* Centrado e miúdo: é uma ressalva, não um rótulo do campo. Ele dividia a linha com um
+   "0/1000" que agora só aparece perto do limite. */
+.nyta-surface .nyta-input-bar__footer {
+  justify-content: center;
+  padding-top: 8px;
 }
 
 .nyta-surface .nyta-input-bar__disclaimer,
 .nyta-surface .nyta-input-bar__char-count {
-  color: #9aa8be;
+  color: #a4b1c8;
+  font-size: 11px;
 }
 
 .nyta-surface .nyta-rate-limit-card {
@@ -467,8 +553,6 @@
 
 .nyta-surface .nyta-message-list,
 .nyta-surface [class*="greeting"] { background: #f7f9fc; }
-.nyta-surface .nyta-message-list { padding: 24px 24px 8px; }
-.nyta-surface .nyta-message-list__item { margin-bottom: 18px; }
 .nyta-surface .nyta-bubble {
   max-width: min(80%, 430px);
   padding: 13px 16px;
@@ -480,24 +564,14 @@
   line-height: 1.55;
   box-shadow: 0 4px 12px rgba(105, 122, 159, 0.06);
 }
-.nyta-surface .nyta-message-list__item--user .nyta-bubble { border: 0; border-radius: 14px 14px 4px 14px; background: #eaf0ff; color: #4267b9; }
 .nyta-surface [class*="greetingText"] { border: 1px solid #e3eaf3; background: #ffffff; color: #60749a; box-shadow: 0 4px 12px rgba(105, 122, 159, 0.06); }
 .nyta-surface [class*="suggestionsLabel"] { color: #8b9bb5; }
 .nyta-surface [class*="suggestionChip"] { border-color: #dfe7f1; background: #ffffff; color: #60749a; box-shadow: 0 3px 8px rgba(105, 122, 159, 0.05); }
 .nyta-surface [class*="suggestionChip"]:hover:not(:disabled) { border-color: #b9cbed; background: #eef3ff; color: #4267b9; }
 
-.nyta-surface .nyta-input-bar { padding: 14px 18px 12px; border-top: 1px solid #e8edf4; background: #ffffff; }
-.nyta-surface .nyta-input-bar__row { border-color: #dce5f0; border-radius: 10px; background: #ffffff; box-shadow: 0 3px 10px rgba(105, 122, 159, 0.04); }
-.nyta-surface .nyta-input-bar__row:focus-within { border-color: #9bb5ec; box-shadow: 0 0 0 3px rgba(66, 103, 185, 0.1); }
-.nyta-surface .nyta-input-bar__textarea { color: #60749a; font-size: 13px; }
-.nyta-surface .nyta-input-bar__textarea::placeholder { color: #aebbd0; }
-.nyta-surface .nyta-send { width: 36px; height: 36px; min-width: 36px; border-radius: 9px; background: #3361ff; }
-.nyta-surface .nyta-input-bar__disclaimer, .nyta-surface .nyta-input-bar__char-count { color: #9aa8be; }
 
 @media (max-width: 767px) {
   .nyta-reference-modal { width: 100%; height: 100dvh; border: 0; border-radius: 0; }
-  .nyta-surface .nyta-message-list { padding: 18px 16px 8px; }
-  .nyta-surface .nyta-bubble { max-width: 88%; }
 }
 
 /* Agenda reference: month-first workspace with the real agenda interactions kept intact. */
@@ -9329,21 +9403,10 @@ body:has(.track-detail-backdrop) .local-player-bar {
 .nyta-surface .nyta-reference-header [class*="iconButton"]:hover { color: #4267b9; background: #eef3fb; }
 .nyta-surface .nyta-reference-header [class*="usage"] { background: #eef3fb; color: #6e83a6; }
 .nyta-surface .nyta-message-list, .nyta-surface [class*="greeting"] { background: #f7f9fc; }
-.nyta-surface .nyta-message-list { padding: 24px 24px 8px; }
-.nyta-surface .nyta-message-list__item { margin-bottom: 18px; }
-.nyta-surface .nyta-bubble { max-width: min(80%,430px); padding: 13px 16px; border: 1px solid #e3eaf3; border-radius: 14px 14px 14px 4px; background: #fff; color: #60749a; font-size: 13px; line-height: 1.55; box-shadow: 0 4px 12px rgba(105,122,159,.06); }
-.nyta-surface .nyta-message-list__item--user .nyta-bubble { border: 0; border-radius: 14px 14px 4px 14px; background: #eaf0ff; color: #4267b9; }
 .nyta-surface [class*="greetingText"] { border: 1px solid #e3eaf3; background: #fff; color: #60749a; box-shadow: 0 4px 12px rgba(105,122,159,.06); }
 .nyta-surface [class*="suggestionsLabel"] { color: #8b9bb5; }
 .nyta-surface [class*="suggestionChip"] { border-color: #dfe7f1; background: #fff; color: #60749a; box-shadow: 0 3px 8px rgba(105,122,159,.05); }
 .nyta-surface [class*="suggestionChip"]:hover:not(:disabled) { border-color: #b9cbed; background: #eef3ff; color: #4267b9; }
-.nyta-surface .nyta-input-bar { padding: 14px 18px 12px; border-top: 1px solid #e8edf4; background: #fff; }
-.nyta-surface .nyta-input-bar__row { border-color: #dce5f0; border-radius: 10px; background: #fff; box-shadow: 0 3px 10px rgba(105,122,159,.04); }
-.nyta-surface .nyta-input-bar__row:focus-within { border-color: #9bb5ec; box-shadow: 0 0 0 3px rgba(66,103,185,.1); }
-.nyta-surface .nyta-input-bar__textarea { color: #60749a; font-size: 13px; }
-.nyta-surface .nyta-input-bar__textarea::placeholder { color: #aebbd0; }
-.nyta-surface .nyta-send { width: 36px; height: 36px; min-width: 36px; border-radius: 9px; background: #3361ff; }
-.nyta-surface .nyta-input-bar__disclaimer, .nyta-surface .nyta-input-bar__char-count { color: #9aa8be; }
 @media (max-width: 767px) { .nyta-reference-modal { width: 100% !important; height: 100dvh !important; border: 0 !important; border-radius: 0 !important; } .nyta-surface .nyta-message-list { padding: 18px 16px 8px; } .nyta-surface .nyta-bubble { max-width: 88%; } }
 
 /* The Maestra mark is navigation, not a text link: keep its brand treatment on hover/focus. */
@@ -10109,4 +10172,49 @@ body:has(.track-detail-backdrop) .local-player-bar {
   .app-layout,
   .app-rail,
   .profile-panel { top: calc(93px + env(safe-area-inset-top, 0px)); }
+}
+
+/* O CHAT EM TELA CHEIA.
+
+   Nesta rota o Layout não renderiza a barra da Maestra nem a tab bar (ver `isImmersiveRoute`).
+   O que sobra aqui é tirar a reserva de 93px que existia para aquela barra e apagar as duas
+   colunas laterais — o rail de perfis e o painel do artista. Elas eram a navegação do módulo, e
+   este módulo não navega: ele é uma conversa que se lê de cima a baixo.
+
+   O `inset: 0` é o que faz o chat encostar no topo da tela. Sem ele a faixa da conversa nasceria
+   93px abaixo, num vão branco reservado para uma barra que não existe mais. */
+.task-app .app-layout.app-layout-imersivo {
+  position: fixed;
+  inset: 0;
+  display: block;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.task-app .app-layout-imersivo .app-rail,
+.task-app .app-layout-imersivo .profile-panel {
+  display: none;
+}
+
+/* A coluna do chat perde a margem que existia para o rail (o `module-layout` a põe em 111px e
+   130px, por largura) e passa a ocupar a tela toda. */
+.task-app .app-layout-imersivo .board-shell,
+.task-app .module-layout.app-layout-imersivo .board-shell {
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+/* A `.Main-section` reserva 86px de altura para a barra do design antigo (`calc(100vh - 86px)`
+   no App.scss) e sobe 10px por uma margem negativa. Sem a barra, aquilo vira uma tira branca de
+   74px embaixo do campo de texto e um recuo de 10px no topo. Aqui a coluna simplesmente ocupa a
+   altura que tem. */
+.task-app .app-layout-imersivo .Main-section {
+  height: 100%;
+  margin-top: 0;
+  padding-bottom: 0;
 }

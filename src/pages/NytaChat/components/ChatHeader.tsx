@@ -1,97 +1,66 @@
 import { FC } from 'react';
-import { Popconfirm } from 'antd';
-import { FiArrowLeft, FiTrash2 } from 'react-icons/fi';
+import { FiArrowLeft, FiEdit, FiMessageSquare } from 'react-icons/fi';
 
-import { NytaAvatar } from '../../Wizard/chat/nytaPersona';
-import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import './ChatHeader.scss';
 
-// Cabeçalho da página do chat em tela cheia.
+// A faixa do chat em tela cheia.
 //
-// Quem fala aqui é a Nyta, então é o nome dela que titula — o do artista vira contexto ao lado.
-// Antes o título era só o nome do artista, o que fazia a tela parecer a página do perfil.
+// Ela tinha o emblema da Nyta, o título "Nyta IA", uma pílula "sobre <artista>" com foto, o uso
+// do dia e uma lixeira. Seis coisas para uma tela cuja função é ler e escrever. Sobraram três:
+// sair, ver as conversas, começar outra.
 //
-// O desenho segue os outros cabeçalhos do redesign (wizard e modal): 70px de altura, voltar em
-// botão redondo à esquerda, ações à direita.
+// O título saiu porque a tela inteira já diz de quem é a voz — e porque, com a barra da Maestra
+// escondida nesta rota (ver `isImmersiveRoute`), esta é a única faixa da tela e ela precisa
+// pesar o mínimo. O nome do artista ficou, em texto solto no meio: a Nyta responde com os dados
+// de UM perfil, e sem isso não há como saber de qual, ainda mais em conta com vários.
+//
+// A lixeira saiu por ser redundante: "nova conversa" já dá a folha em branco sem destruir nada,
+// e apagar de vez é uma ação da lista de conversas, que é onde ela pertence.
 
 interface ChatHeaderProps {
   artistName: string;
-  artistImage?: string;
-  onClear: () => void;
-  // Uso diário (X/limite). Some quando não há informação — o contador só chega depois da
-  // primeira resposta da Nyta no dia.
-  dailyCount?: number | null;
-  dailyLimit?: number | null;
-  // Abre a gaveta de conversas. Só aparece abaixo de 900px, onde a coluna lateral vira gaveta.
+  /** Sai do chat e volta ao perfil. */
+  onBack: () => void;
+  /** Abre a gaveta de conversas. Só aparece abaixo de 900px, onde a coluna vira gaveta. */
   onOpenHistory: () => void;
+  /** Folha em branco, sem apagar a conversa de agora. */
+  onNew: () => void;
 }
 
-export const ChatHeader: FC<ChatHeaderProps> = ({
-  artistName, artistImage, onClear, dailyCount, dailyLimit, onOpenHistory,
-}) => {
-  const showUsage = typeof dailyCount === 'number' && typeof dailyLimit === 'number';
+export const ChatHeader: FC<ChatHeaderProps> = ({ artistName, onBack, onOpenHistory, onNew }) => (
+  <header className='chat-header'>
+    <button
+      className='chat-header__icone chat-header__voltar'
+      onClick={onBack}
+      aria-label='Sair da conversa'
+      title='Sair da conversa'
+      type='button'
+    >
+      <FiArrowLeft size={19} />
+    </button>
 
-  return (
-    <header className='chat-header'>
-      {/* Só existe abaixo de 900px, onde a lista de conversas fica escondida atrás desta tela.
-          Ali a navegação é em dois níveis, como em qualquer app de mensagem: voltar leva à
-          lista, e é de lá que se sai para o perfil. No desktop a lista já está ao lado e este
-          botão não aparece (ver ChatHeader.scss). */}
+    {artistName && <span className='chat-header__escopo'>{artistName}</span>}
+
+    <div className='chat-header__actions'>
       <button
-        className='chat-header__back'
+        className='chat-header__icone chat-header__conversas'
         onClick={onOpenHistory}
-        aria-label='Voltar para as conversas'
-        title='Voltar para as conversas'
+        aria-label='Ver as conversas'
+        title='Ver as conversas'
         type='button'
       >
-        <FiArrowLeft size={17} />
+        <FiMessageSquare size={18} />
       </button>
 
-      <div className='chat-header__id'>
-        <NytaAvatar size={30} />
-        <h1 className='chat-header__title'>Nyta IA</h1>
-
-        {/* De quem é esta conversa. A Nyta responde com os dados do artista selecionado, e o
-            nome solto embaixo do título não deixava isso claro — parecia legenda. Com a foto e
-            o "sobre", a pessoa vê de imediato sobre qual perfil está perguntando. */}
-        {artistName && (
-          <div className='chat-header__scope' title={`Conversa sobre ${artistName}`}>
-            <span className='chat-header__scope-label'>sobre</span>
-            <img className='chat-header__scope-avatar' src={artistImage || ARTISTS_DEFAULT_IMAGE} alt='' aria-hidden />
-            <span className='chat-header__scope-name'>{artistName}</span>
-          </div>
-        )}
-      </div>
-
-      <div className='chat-header__actions'>
-        {showUsage && (
-          <span
-            className={`chat-header__usage${dailyCount >= dailyLimit ? ' chat-header__usage--full' : ''}`}
-            title='Mensagens usadas hoje'
-          >
-            {dailyCount}/{dailyLimit}
-          </span>
-        )}
-
-        <Popconfirm
-          title='Limpar conversa?'
-          description='Todas as mensagens serão apagadas. Esta ação não pode ser desfeita.'
-          onConfirm={onClear}
-          okText='Limpar'
-          cancelText='Cancelar'
-          okButtonProps={{ danger: true }}
-          placement='bottomRight'
-        >
-          <button
-            className='chat-header__clear'
-            aria-label='Limpar conversa'
-            title='Limpar conversa'
-            type='button'
-          >
-            <FiTrash2 size={16} />
-          </button>
-        </Popconfirm>
-      </div>
-    </header>
-  );
-};
+      <button
+        className='chat-header__icone'
+        onClick={onNew}
+        aria-label='Nova conversa'
+        title='Nova conversa'
+        type='button'
+      >
+        <FiEdit size={18} />
+      </button>
+    </div>
+  </header>
+);

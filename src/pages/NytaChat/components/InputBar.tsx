@@ -1,13 +1,17 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { FiArrowUp, FiClock } from 'react-icons/fi';
 
+import { CONVITE_DO_CAMPO, RESSALVA_DA_NYTA } from '@maestra/core/constants/nytaChat';
 import type { PendingToolCall, RateLimitInfo } from '@maestra/core/store/slices/nytaChat';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MAX_CHARS = 1000;
 const MIN_ROWS = 1;
-const MAX_ROWS = 4;
+const MAX_ROWS = 6;
+// A contagem só aparece quando começa a importar. Um "0/1000" fixo embaixo do campo não informa
+// nada em 99% das mensagens — só conta que existe um limite, e ocupa a linha de rodapé com isso.
+const AVISAR_A_PARTIR_DE = MAX_CHARS - 150;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -163,13 +167,16 @@ export const InputBar: FC<InputBarProps> = ({
     );
   }
 
+  // O campo é um CARTÃO, e não uma linha: o texto ocupa a largura toda e os controles ficam numa
+  // fileira embaixo dele. Numa linha só, o botão de enviar comia a largura do texto e uma
+  // pergunta de duas frases já rolava dentro de um campo de 40px de altura.
   return (
     <div className="nyta-input-bar">
       <div className="nyta-input-bar__row">
         <textarea
           ref={textareaRef}
           className="nyta-input-bar__textarea"
-          placeholder="Pergunte algo à Nyta…"
+          placeholder={CONVITE_DO_CAMPO}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
@@ -178,24 +185,28 @@ export const InputBar: FC<InputBarProps> = ({
           maxLength={MAX_CHARS}
           aria-label="Mensagem para a Nyta"
         />
-        <button
-          className="nyta-send"
-          onClick={handleSend}
-          disabled={!canSend}
-          aria-label="Enviar"
-          type="button"
-        >
-          <FiArrowUp size={18} />
-        </button>
+        <div className="nyta-input-bar__acoes">
+          {value.length >= AVISAR_A_PARTIR_DE && (
+            <span className="nyta-input-bar__char-count">
+              {value.length}/{MAX_CHARS}
+            </span>
+          )}
+          <button
+            className="nyta-send"
+            onClick={handleSend}
+            disabled={!canSend}
+            aria-label="Enviar"
+            type="button"
+          >
+            <FiArrowUp size={18} />
+          </button>
+        </div>
       </div>
 
       {!isRateLimited && (
         <div className="nyta-input-bar__footer">
           <span className="nyta-input-bar__disclaimer">
-            A Nyta pode cometer erros. Confira informações importantes.
-          </span>
-          <span className="nyta-input-bar__char-count">
-            {value.length}/{MAX_CHARS}
+            {RESSALVA_DA_NYTA}
           </span>
         </div>
       )}

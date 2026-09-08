@@ -1,5 +1,5 @@
 import { FC, useCallback, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FiAlertCircle } from 'react-icons/fi';
 
 import './styles.scss';
@@ -9,18 +9,14 @@ import { useNytaConversations } from '@maestra/core/hooks/useNytaConversations';
 import { useArtist } from '@maestra/core/hooks/useArtist';
 import { LockedFeature } from '../../components/LockedFeature';
 import { PAYWALL_DISABLED } from '@maestra/core/constants/maestra';
+import { useAppSelector } from '@maestra/core/store/store';
+import { saudacaoDaNyta } from '@maestra/core/constants/nytaChat';
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 import { ChatHeader } from './components/ChatHeader';
 import { ConversationSidebar } from './components/ConversationSidebar';
 import { InputBar } from './components/InputBar';
 import { MessageList } from './components/MessageList';
 
-// ─── Greeting text (empty state) ──────────────────────────────────────────────
-
-const GREETING_TEXT =
-  'Oi! Eu sou a Nyta, sua assistente estratégica aqui na Maestra. ' +
-  'Pode me perguntar qualquer coisa sobre seu planejamento, músicas, agenda ou equipe — ' +
-  'e eu também posso executar ações por você, sempre com sua confirmação. Como posso te ajudar?';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -38,10 +34,14 @@ const NytaChatPage: FC = () => {
   const {
     messages, isStreaming, pendingToolCalls, rateLimitInfo, loadingHistory, hasMoreHistory,
     error, unavailableModules, conversationId,
-    loadOlderMessages, sendMessage, confirmTool, cancelTool, clearConversation, dismissError,
+    loadOlderMessages, sendMessage, confirmTool, cancelTool, dismissError,
     selectConversation, startNewConversation,
   } = useNytaChat('route', handleConversation);
   const { artist } = useArtist();
+  const navigate = useNavigate();
+  const usuario = useAppSelector((st) => st.auth.user);
+  const quemEntrou = (usuario?.user_metadata as Record<string, unknown> | undefined);
+  const nome = (quemEntrou?.full_name || quemEntrou?.name) as string | undefined;
   // A carga inicial (e o reset ao trocar de artista) é feita pelo useNytaChat.
 
   const handleDelete = useCallback(async (id: string) => {
@@ -84,11 +84,9 @@ const NytaChatPage: FC = () => {
         <div className="nyta-chat-page__header">
           <ChatHeader
             artistName={artist?.name || ''}
-            artistImage={artist?.content?.spotifyProfile?.image}
-            onClear={clearConversation}
-            dailyCount={rateLimitInfo?.count ?? null}
-            dailyLimit={rateLimitInfo?.limit ?? null}
             onOpenHistory={() => setHistoryOpen(true)}
+            onNew={startNewConversation}
+            onBack={() => navigate(`/artists/${artistId}`)}
           />
         </div>
 
@@ -131,14 +129,17 @@ const NytaChatPage: FC = () => {
             onLoadOlder={loadOlderMessages}
             onConfirmTool={confirmTool}
             onCancelTool={cancelTool}
-            showAuthorAvatar
+
           />
         ) : (
+          // A conversa em branco abre com uma SAUDAÇÃO, e não com uma mensagem da Nyta.
+          //
+          // Ela se apresentava num balão de sete linhas explicando o que sabe fazer. Aquilo
+          // ocupava a primeira tela inteira, e ninguém lê a segunda vez: quem abre o chat pela
+          // décima vez já sabe quem é a Nyta. Uma linha basta, e o convite fica no campo.
           <div className="nyta-chat-page__greeting">
-            <div className="nyta-chat-page__greeting-bubble">
-              <NytaAvatar size={32} />
-              <div className="nyta-bubble">{GREETING_TEXT}</div>
-            </div>
+            <NytaAvatar size={34} />
+            <p className="nyta-chat-page__greeting-text">{saudacaoDaNyta(nome)}</p>
           </div>
         )}
 
