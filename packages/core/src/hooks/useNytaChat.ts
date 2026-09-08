@@ -102,7 +102,7 @@ export interface UseNytaChatReturn {
   selectConversation: (id: string) => Promise<void>;
   startNewConversation: () => void;
   sendMessage: (text: string) => void;
-  /** Interrompe a resposta em andamento e relê a conversa, para a tela bater com o gravado. */
+  /** Interrompe a resposta em andamento, guardando na tela o que já chegou. */
   stopStreaming: () => void;
   confirmTool: (toolCallId: string) => void;
   cancelTool: (toolCallId: string) => void;
@@ -394,34 +394,25 @@ export function useNytaChat(
    * em voo —, mas nenhuma das duas telas oferecia isso a quem está lendo. Numa resposta longa
    * que já saiu do assunto, a única saída era esperar até o fim.
    */
-  const stopStreaming = useCallback(async () => {
+  const stopStreaming = useCallback(() => {
     if (!abortRef.current) return;
     paradoPelaPessoa.current = true;
     abortRef.current.abort();
 
     /**
-     * E DEPOIS RELÊ A CONVERSA DO SERVIDOR.
+     * E MAIS NADA. Nem recarregar, nem limpar.
      *
-     * Parar aborta a leitura do lado de cá e DESCARTA o que já estava no buffer. O servidor, do
-     * lado de lá, grava o que chegou a gerar. Os dois quase sempre coincidem — mas parar no
-     * primeiro segundo produzia o pior caso: a tela ficava sem resposta nenhuma e o banco com um
-     * parágrafo, que aparecia do nada na próxima abertura da conversa.
+     * Isto já releu a conversa do servidor, para a tela bater com o que ficou gravado. Fazia
+     * sentido quando dava para parar ANTES da primeira palavra: a tela ficava sem resposta e o
+     * banco com um parágrafo. Mas parar passou a só existir depois que o texto começa a chegar
+     * (ver `respostaComecou` nas duas telas), e aí a tela SEMPRE tem o texto — a releitura
+     * deixou de consertar nada e passou só a cobrar o preço: a conversa piscava, era remontada
+     * do zero e a rolagem voltava para o meio da lista em vez de ficar onde estava.
      *
-     * Reler é o que faz o que se vê ser o que ficou. `clearMessages` antes porque
-     * `prependMessages` põe na FRENTE: sem limpar, a página recarregada iria para o topo da
-     * conversa, e a resposta parada apareceria antes da pergunta que a gerou.
+     * O que sobra de divergência é o buffer em voo: o servidor grava o que enfileirou, e este
+     * lado mostra o que recebeu. São algumas palavras no fim, e não um parágrafo.
      */
-    const convId = conversationId;
-    if (!convId) return;
-    // A gravação do lado do servidor é OUTRA viagem, disparada quando ele percebe que a conexão
-    // caiu, e não há evento que avise quando ela termina — a resposta já foi abortada. Sem esta
-    // folga a releitura chega antes da escrita e traz a conversa sem o trecho parado. Meio
-    // segundo é o que separa as duas na prática; se a escrita atrasar mais, o trecho aparece na
-    // próxima abertura da conversa, que é o comportamento de antes e não uma regressão.
-    await new Promise((r) => setTimeout(r, 500));
-    dispatch(clearMessages());
-    await loadConversation(convId);
-  }, [conversationId, dispatch, loadConversation]);
+  }, []);
 
   // ─── POST to Edge Function (with module_context) ──────────────────────────
 
