@@ -62,14 +62,6 @@ export const CORES_DAS_PISTAS = [
 export const corDaPista = (indice: number): string =>
   CORES_DAS_PISTAS[((indice % CORES_DAS_PISTAS.length) + CORES_DAS_PISTAS.length) % CORES_DAS_PISTAS.length];
 
-/** Os tipos de pista que o seletor oferece. Só `audio` toca — os outros esperam o piano roll. */
-export const TIPOS_DE_PISTA = [
-  { valor: 'audio', rotulo: 'Áudio' },
-  { valor: 'synth', rotulo: 'Sintetizador' },
-  { valor: 'piano', rotulo: 'Piano' },
-  { valor: 'drums', rotulo: 'Bateria' },
-] as const;
-
 // ─── Dimensões ───────────────────────────────────────────────────────────────
 
 /** O zoom de partida: 100% são 60 pixels por segundo. */

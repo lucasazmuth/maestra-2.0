@@ -3,7 +3,7 @@ import path from 'path';
 
 import {
   ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE, CORES_DAS_PISTAS,
-  DS, ENCAIXE, LARGURA_DAS_FERRAMENTAS, LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO, TIPOS_DE_PISTA,
+  DS, ENCAIXE, LARGURA_DAS_FERRAMENTAS, LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO,
   corDaPista,
 } from '../pages/Catalog/daw/tokens';
 
@@ -60,8 +60,11 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(corDaPista(-1)).toBe(CORES_DAS_PISTAS[5]);
   });
 
-  it('os quatro tipos de pista existem, e o áudio é o primeiro', () => {
-    expect(TIPOS_DE_PISTA.map((t) => t.valor)).toEqual(['audio', 'synth', 'piano', 'drums']);
+  // ⚠️ Nada de seletor de TIPO enquanto só o áudio toca: um controlo que guarda uma escolha
+  // sem consequência ensina errado — a pista parece mudar de natureza e não muda.
+  it('a pista não oferece tipo nenhum', () => {
+    expect(editor).not.toContain('Tipo da pista');
+    expect(editor).not.toContain('TIPOS_DE_PISTA');
   });
 
   // A tela é ESCURA. Um editor claro seria o único do mercado, e não por bom motivo.
@@ -103,7 +106,6 @@ describe('cromo do editor do Espaço JAM', () => {
 
   // Os controlos que a referência mostra em cada pista, e o Master no topo.
   it('cada pista tem tipo, mudo, solo, volume e panorama; e há um Master', () => {
-    expect(editor).toContain('Tipo da pista');
     expect(editor).toContain('Panorama de');
     expect(editor).toContain('Volume geral');
     // ⚠️ Mudo e solo em cores diferentes: são as duas ações mais usadas de uma mesa, e são

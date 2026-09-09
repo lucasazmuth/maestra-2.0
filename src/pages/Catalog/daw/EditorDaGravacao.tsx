@@ -13,7 +13,7 @@ import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
 import {
   ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE, DS, DURACAO_MINIMA,
-  ENCAIXE, LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO, TIPOS_DE_PISTA,
+  ENCAIXE, LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO,
   ZOOM_MAXIMO, ZOOM_MINIMO, corDaPista,
 } from './tokens';
 
@@ -203,21 +203,11 @@ export const EditorDaGravacao: FC<{
           )}
         </div>
 
-        <select
-          value={faixa.kind ?? 'audio'}
-          onChange={(e) => acoes.aoMudarPista(faixa.id, { kind: e.target.value as CatalogTrack['kind'] })}
-          disabled={!podeEditar || fixa}
-          aria-label={`Tipo da pista ${faixa.name}`}
-          style={{
-            width: '100%', height: 28, padding: '0 8px',
-            background: DS.color.bgCampo, border: `1px solid ${DS.color.borda}`,
-            borderRadius: DS.raio.pequeno, color: DS.color.texto,
-            fontSize: 12, fontFamily: DS.font.display, outline: 'none',
-            cursor: podeEditar && !fixa ? 'pointer' : 'default',
-          }}
-        >
-          {TIPOS_DE_PISTA.map((t) => <option key={t.valor} value={t.valor}>{t.rotulo}</option>)}
-        </select>
+        {/* ⚠️ O SELETOR DE TIPO SAIU DA TELA. Só `audio` toca: sintetizador, piano e bateria
+            pedem notas agendadas e síntese, que é outra engrenagem. Um seletor que guarda uma
+            escolha sem consequência ensina errado — a pista parece mudar de natureza e não
+            muda. A coluna `kind` fica no banco, com `audio` de padrão, à espera do dia em que
+            os outros três signifiquem alguma coisa. */}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <button
