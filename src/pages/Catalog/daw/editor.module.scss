@@ -85,8 +85,10 @@
 // pessoa do que está a fazer, funciona com teclado sem uma linha de JavaScript, e fechado é só
 // um círculo que não disputa atenção com nada.
 .ajuda {
-  position: relative;
-  flex-shrink: 0;
+  // Flutua sobre a linha do tempo, ACIMA do rodapé — o `bottom` chega em linha, do mesmo token
+  // que dá a altura ao rodapé, para os dois não poderem divergir.
+  position: absolute;
+  right: 18px;
   // ⚠️ Do TOKEN, e nunca um número solto. A escada de camadas do produto é uma só, e o dia em
   // que algo aparecer por cima do balão a resposta não é somar zeros aqui — é olhar em que
   // contexto de empilhamento ele caiu.

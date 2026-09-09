@@ -697,7 +697,7 @@ export const EditorDaGravacao: FC<{
         identidade e navegação, e o volume geral fica ao lado do que ele governa.
       */}
       <div style={{
-        height: ALTURA_DO_RODAPE, flexShrink: 0, position: 'relative',
+        height: ALTURA_DO_RODAPE, flexShrink: 0,
         display: 'flex', alignItems: 'center', gap: 14, padding: '0 18px',
         background: DS.color.bgPainel, borderTop: `1px solid ${DS.color.borda}`,
       }}>
@@ -753,21 +753,23 @@ export const EditorDaGravacao: FC<{
           </span>
         </div>
 
-        {/* A ajuda mora no rodapé, e não solta por cima da linha do tempo: ali ela tapava a
-            última pista de quem tivesse a tela cheia de faixas. */}
-        <details className={casca.ajuda}>
-          <summary title='Ajuda' aria-label='Ajuda'>?</summary>
-          <div>
-            <strong>Como se monta</strong>
-          <p>Arraste os stems para a linha do tempo, ou use <em>Enviar áudio</em>. Cada ficheiro
-            vira uma pista; com uma <em>pista de destino</em> escolhida, vira um clipe nela.</p>
+      </div>
+
+      {/* A ajuda flutua ACIMA do rodapé, e não dentro dele: um círculo de 30 px numa barra de
+          44 encostava nas bordas e empurrava o Master para dentro. O `bottom` sai do mesmo
+          token da altura do rodapé, para os dois não poderem divergir. */}
+      <details className={casca.ajuda} style={{ bottom: ALTURA_DO_RODAPE + 12 }}>
+        <summary title='Ajuda' aria-label='Ajuda'>?</summary>
+        <div>
+          <strong>Como se monta</strong>
+          <p>Arraste os stems para a linha do tempo, ou use <em>Escolher arquivos</em>. Cada
+            ficheiro vira uma pista; largado sobre uma faixa, vira um clipe nela.</p>
           <p>Arraste um clipe para o mover — ele encaixa de um quarto de segundo. Selecione-o e
             use <em>dividir</em> para o cortar onde a agulha está. Clique duplo remove.</p>
           <p><strong>M</strong> cala a pista, <strong>S</strong> deixa só ela. O primeiro
             controlo é o volume; o segundo, o panorama entre os dois alto-falantes.</p>
-          </div>
-        </details>
-      </div>
+        </div>
+      </details>
     </div>
   );
 };
