@@ -509,6 +509,8 @@ export interface CatalogVersion {
   created_at?: string;
   updated_at?: string;
   files?: CatalogVersionFile[];
+  /** A montagem: as faixas da linha do tempo, cada uma com os seus clipes. */
+  tracks?: CatalogTrack[];
   comments?: CatalogVersionComment[];
 }
 
@@ -535,6 +537,53 @@ export interface CatalogVersionFile {
   gain?: number | null;
   /** Para estimar memória e egress antes de descodificar. */
   size_bytes?: number | null;
+  /** A duração do ficheiro inteiro, lida no envio: é o tamanho do clipe que nasce com ele. */
+  duration_seconds?: number | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Uma PISTA da linha do tempo: uma faixa da mesa, com nome, cor, volume e mudo.
+ *
+ * A pista não tem áudio — ela é a faixa. O áudio vem dos CLIPES que moram nela.
+ */
+export interface CatalogTrack {
+  id: string;
+  version_id: string;
+  name: string;
+  /** A ordem na tela, de cima para baixo. */
+  position: number;
+  /** 0..1. O nível na mistura. Persiste: é decisão de quem montou. */
+  gain: number;
+  /** ⚠️ Persiste; o SOLO não. Mutar é decisão de arranjo, solar é gesto de escuta. */
+  muted: boolean;
+  /** O índice na paleta `CORES_DAS_PISTAS`. Guardado, para mover a pista não trocar a cor. */
+  color_index: number;
+  clips?: CatalogClip[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Um CLIPE: um pedaço de um ficheiro, numa pista, num instante.
+ *
+ * Cortar ao meio não toca no ficheiro — nascem dois clipes que apontam para o mesmo áudio com
+ * recortes diferentes. É por isso que a edição é instantânea e não destrói nada.
+ */
+export interface CatalogClip {
+  id: string;
+  track_id: string;
+  file_id: string;
+  /** Em que segundo da linha do tempo o clipe começa a soar. */
+  start_seconds: number;
+  /** A partir de que segundo DO FICHEIRO. Aparar a ponta esquerda mexe aqui. */
+  offset_seconds: number;
+  /** Quanto do ficheiro entra. Aparar a ponta direita mexe aqui. */
+  duration_seconds: number;
+  /** A URL do ficheiro, trazida junto pela leitura. Não é coluna desta tabela. */
+  file_url?: string;
+  file_name?: string;
   created_at?: string;
   updated_at?: string;
 }

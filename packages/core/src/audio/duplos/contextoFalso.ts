@@ -20,7 +20,7 @@ export class FonteFalsa implements FonteDeAudio {
   buffer: BufferDeAudio | null = null;
   onended: (() => void) | null = null;
   ligadaA: NoDeGanho | null = null;
-  arranques: { quando: number; deslocamento: number }[] = [];
+  arranques: { quando: number; deslocamento: number; duracao?: number }[] = [];
   parada = false;
   desligada = false;
   /** Uma fonte que já acabou sozinha lança no `stop` — como a de verdade. */
@@ -28,7 +28,9 @@ export class FonteFalsa implements FonteDeAudio {
 
   connect(destino: NoDeGanho) { this.ligadaA = destino; return destino; }
   disconnect() { this.desligada = true; }
-  start(quando: number, deslocamento: number) { this.arranques.push({ quando, deslocamento }); }
+  start(quando: number, deslocamento: number, duracao?: number) {
+    this.arranques.push({ quando, deslocamento, duracao });
+  }
   stop() {
     if (this.jaTerminou) throw new Error('InvalidStateError');
     this.parada = true;
@@ -60,15 +62,39 @@ export class ModeladorFalso implements Modelador {
   disconnect() { this.desligado = true; }
 }
 
+/**
+ * A taxa de amostragem do falso.
+ *
+ * 100 Hz, e não 44100: um buffer de três minutos a 44,1 kHz são oito milhões de números por
+ * pista, e uma suíte com meia dúzia deles passa a medir-se em gigabytes. A 100 Hz a aritmética
+ * do tempo é exatamente a mesma (um segundo continua a ser um segundo) e o áudio cabe na mão.
+ */
+export const TAXA_FALSA = 100;
+
 export class BufferFalso implements BufferDeAudio {
+  private readonly canais: Float32Array[];
+
   constructor(
     readonly duration: number,
     readonly numberOfChannels = 2,
-    readonly sampleRate = 44100,
-    private readonly dados?: Float32Array[],
-  ) {}
+    readonly sampleRate = TAXA_FALSA,
+    dados?: Float32Array[],
+  ) {
+    // Uma onda de verdade, e não zeros: os picos são calculados a partir daqui, e um canal
+    // vazio faria qualquer teste de onda passar sem provar nada. A amplitude cresce ao longo
+    // do buffer, para que um recorte do começo e um do fim sejam distinguíveis.
+    this.canais = dados ?? Array.from({ length: numberOfChannels }, () => {
+      const total = Math.round(duration * sampleRate);
+      const onda = new Float32Array(total);
+      for (let i = 0; i < total; i += 1) {
+        onda[i] = Math.sin(i / 4) * (0.1 + 0.9 * (i / Math.max(1, total - 1)));
+      }
+      return onda;
+    });
+  }
+
   get length() { return Math.round(this.duration * this.sampleRate); }
-  getChannelData(canal: number) { return this.dados?.[canal] ?? new Float32Array(0); }
+  getChannelData(canal: number) { return this.canais[canal] ?? new Float32Array(0); }
 }
 
 export class ContextoFalso implements ContextoDeAudio {

@@ -8,10 +8,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 
-import { ehPistaDaMix, pistasDaVersao, stemsDaVersao } from '@maestra/core/audio/pistasDaVersao';
-import {
-  enviarPistas, validarPistas, type EnvioDePista, type Recusa,
-} from '@maestra/core/audio/envioDePistas';
+import { ehPistaDaMix, montagemDaVersao, pistasDaGravacao } from '@maestra/core/audio/pistasDaVersao';
 import { useMesa } from '@maestra/core/audio/useMesa';
 import {
   CATALOG_STATUS, CATALOG_STATUS_OPTIONS, MEMORIA_DE_AVISO_BYTES,
@@ -27,8 +24,6 @@ import { CampoDoCabecalho, DonoDosCampos } from '@/casca/jam/CampoDoCabecalho';
 import { ComentariosDaVersao } from '@/casca/jam/ComentariosDaVersao';
 import { FolhaDaVersao } from '@/casca/jam/FolhaDaVersao';
 import { ResumoDaFicha } from '@/casca/jam/ResumoDaFicha';
-import { AdicionarPista } from '@/casca/jam/mesa/AdicionarPista';
-import { FolhaDaPista } from '@/casca/jam/mesa/FolhaDaPista';
 import { BARRAS } from '@/casca/jam/mesa/MiniOnda';
 import { Pista } from '@/casca/jam/mesa/Pista';
 import { SeletorDeGravacoes } from '@/casca/jam/mesa/SeletorDeGravacoes';
@@ -36,7 +31,7 @@ import { Transporte } from '@/casca/jam/mesa/Transporte';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { buscarNativo, criarContextoNativo } from '@/nucleo/audio/contextoNativo';
 import { useInterrupcoesDeAudio } from '@/nucleo/audio/interrupcoes';
-import { escolherAudio, escolherAudios, paraEnvioDePista, type ArquivoEscolhido } from '@/nucleo/arquivos';
+import { escolherAudio, type ArquivoEscolhido } from '@/nucleo/arquivos';
 import { useSessao } from '@/nucleo/sessao';
 
 // O Espaço JAM: a MÚSICA, aberta como um editor.
@@ -153,9 +148,6 @@ export default function EspacoJam() {
   const [bpm, setBpm] = useState('');
   const [tom, setTom] = useState('');
 
-  const [pistaEmOpcoes, setPistaEmOpcoes] = useState<CatalogVersionFile | null>(null);
-  const [envios, setEnvios] = useState<EnvioDePista[]>([]);
-  const [recusados, setRecusados] = useState<Recusa[]>([]);
 
   const buscar = useCallback(async () => {
     if (!projetoId) return;
@@ -191,16 +183,25 @@ export default function EspacoJam() {
     [versoes, abertaId],
   );
 
-  const stems = useMemo(() => stemsDaVersao(aberta), [aberta]);
-  const pistas = useMemo(() => pistasDaVersao(aberta), [aberta]);
+  // ⚠️ O APP AINDA É A MESA, e não o editor. A linha do tempo — clipes que se arrastam, tesoura,
+  // régua — entrou primeiro na web, por decisão do dono do produto: a referência é de desktop
+  // (220px de lateral e 2400px de linha do tempo) e num telemóvel de 390pt ela precisa de um
+  // desenho próprio, com zoom e arrasto de dedo. Até lá, o app lê o MESMO modelo (pistas e
+  // clipes) e toca-o empilhado, com mutar, solo e volume.
+  //
+  // O que saiu daqui foi só a EDIÇÃO dos stems (enviar, renomear, mover, remover): mexer numa
+  // montagem que a tela não mostra seria editar às cegas. Envia-se e monta-se na web; aqui
+  // ouve-se, comenta-se e manda-se gravação nova.
+  const stems = useMemo(() => pistasDaGravacao(aberta), [aberta]);
+  const pistas = useMemo(() => montagemDaVersao(aberta), [aberta]);
   const mesa = useMesa(pistas, DEPENDENCIAS_DA_MESA);
   // Uma chamada tira a sessão de áudio sem avisar; sem isto a mesa fica a achar que toca.
   useInterrupcoesDeAudio(mesa);
 
   // O peso do que está aberto, estimado antes de descodificar. Ver `MEMORIA_DE_AVISO_BYTES`.
   const pesado = useMemo(
-    () => stems.reduce((soma, s) => soma + (s.size_bytes ?? 0), 0) > MEMORIA_DE_AVISO_BYTES,
-    [stems],
+    () => (aberta?.files ?? []).reduce((soma, f) => soma + (f.size_bytes ?? 0), 0) > MEMORIA_DE_AVISO_BYTES,
+    [aberta],
   );
 
   // ─── Salvamento automático ────────────────────────────────────────────────
@@ -365,60 +366,6 @@ export default function EspacoJam() {
         .then(() => patcharPista(id, { gain: arredondado }))
         .catch(() => { /* o valor real volta no próximo carregamento */ });
     }, ESPERA);
-  };
-
-  const enviarStems = async () => {
-    if (!aberta || !projeto) return;
-    const escolhidos = await escolherAudios();
-    if (!escolhidos.length) return;
-
-    const { aceites, recusados: fora } = validarPistas(escolhidos, stems.length);
-    setRecusados(fora);
-    if (!aceites.length) return;
-
-    await enviarPistas({
-      artistaId: String(artistaId),
-      projetoId: projeto.id,
-      versaoId: aberta.id,
-      arquivos: aceites.map(paraEnvioDePista),
-      jaExistem: stems.length,
-      aoMudar: setEnvios,
-    });
-    // Só aqui é que a mesa recarrega, e tem de recarregar: há áudio novo para descodificar.
-    setEnvios([]);
-    await buscar();
-  };
-
-  const renomearPista = async (nome: string) => {
-    if (!pistaEmOpcoes) return;
-    await catalogo.updateVersionFile(pistaEmOpcoes.id, { name: nome });
-    patcharPista(pistaEmOpcoes.id, { name: nome });
-  };
-
-  const moverPista = async (direcao: -1 | 1) => {
-    if (!pistaEmOpcoes || !aberta) return;
-    const ordem = stems.map((s) => s.id);
-    const de = ordem.indexOf(pistaEmOpcoes.id);
-    const para = de + direcao;
-    if (de < 0 || para < 0 || para >= ordem.length) return;
-    [ordem[de], ordem[para]] = [ordem[para], ordem[de]];
-    await catalogo.reorderVersionFiles(ordem);
-    // A ordem é assunto da tela: a mesa toca tudo junto e não precisa de saber. Por isso aqui
-    // se remenda a posição de cada linha em vez de recarregar a gravação.
-    ordem.forEach((id, position) => patcharPista(id, { position }));
-    setPistaEmOpcoes(null);
-  };
-
-  const removerPista = async () => {
-    if (!pistaEmOpcoes) return;
-    const alvo = pistaEmOpcoes;
-    await catalogo.deleteVersionFile(alvo.id);
-    // O arquivo sai do balde junto: um stem são dezenas de MB, e um órfão no armazenamento é
-    // custo que ninguém volta a olhar.
-    const caminho = caminhoNoBalde(alvo.file_url, BALDE_DO_CATALOGO);
-    if (caminho) await removerArquivo(BALDE_DO_CATALOGO, caminho);
-    setPistaEmOpcoes(null);
-    await buscar();
   };
 
   // ─── Gravações ────────────────────────────────────────────────────────────
@@ -666,15 +613,17 @@ export default function EspacoJam() {
                     {pistas.map((pista, indice) => {
                       const estadoDaPista = mesa.estado.pistas.find((p) => p.id === pista.id);
                       if (!estadoDaPista) return null;
-                      const stem = stems.find((s) => s.id === pista.id);
                       return (
                         <Pista
                           key={pista.id}
                           pista={estadoDaPista}
                           indice={indice}
-                          picos={mesa.picos(pista.id, BARRAS)}
-                          progresso={estadoDaPista.duracao
-                            ? Math.min(mesa.estado.posicao / estadoDaPista.duracao, 1)
+                          // Os picos são POR CLIPE: a pista empilhada do app mostra o primeiro.
+                          picos={mesa.picos(pista.clipes[0]?.id ?? '', BARRAS)}
+                          // O progresso é o da GRAVAÇÃO, e não o da pista: a duração agora é do
+                          // conjunto dos clipes, e a onda empilhada do app desenha o primeiro.
+                          progresso={mesa.estado.duracao
+                            ? Math.min(mesa.estado.posicao / mesa.estado.duracao, 1)
                             : 0}
                           haSolo={haSolo}
                           aoMudar={() => mexerNoMudo(pista.id, !estadoDaPista.muda)}
@@ -682,19 +631,13 @@ export default function EspacoJam() {
                           aoGanho={(v) => mexerNoGanho(pista.id, v)}
                           // A Mix não se renomeia, não se move e não se apaga: ela é o áudio da
                           // própria gravação, e mexer nela é mexer na gravação.
-                          aoAbrirOpcoes={stem ? () => setPistaEmOpcoes(stem) : undefined}
+                          // Sem `⋯`: renomear, mover e remover pedem a linha do tempo, e ela
+                          // ainda não existe aqui.
+                          aoAbrirOpcoes={undefined}
                         />
                       );
                     })}
                   </View>
-
-                  <AdicionarPista
-                    quantas={stems.length}
-                    envios={envios}
-                    recusados={recusados}
-                    aoEscolher={() => { void enviarStems(); }}
-                    aoLimparRecusas={() => setRecusados([])}
-                  />
 
                   {/* As ações da gravação ficam no rodapé do editor, longe dos controles de
                       escuta: aqui se baixa, se comenta, se abre em tela cheia e se edita. */}
@@ -780,17 +723,6 @@ export default function EspacoJam() {
         aoFechar={() => { setFolhaAberta(false); setEmEdicao(null); setArquivoInicial(null); }}
         aoSalvar={buscar}
         aoExcluir={aoExcluirVersao}
-      />
-
-      <FolhaDaPista
-        aberta={Boolean(pistaEmOpcoes)}
-        pista={pistaEmOpcoes}
-        primeira={stems[0]?.id === pistaEmOpcoes?.id}
-        ultima={stems[stems.length - 1]?.id === pistaEmOpcoes?.id}
-        aoFechar={() => setPistaEmOpcoes(null)}
-        aoRenomear={renomearPista}
-        aoMover={moverPista}
-        aoRemover={removerPista}
       />
 
       <FichaDaFaixa

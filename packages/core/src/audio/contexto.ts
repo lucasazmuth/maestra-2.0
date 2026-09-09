@@ -71,7 +71,14 @@ export interface FonteDeAudio {
    * Audio API, e é por isso que a Mesa deita fora as fontes a cada pausa e a cada busca, e
    * cria outras. Guardar a fonte para reutilizar é o erro clássico aqui.
    */
-  start(quando: number, deslocamento: number): void;
+  /**
+   * `quando` no relógio do contexto, `deslocamento` dentro do ficheiro, `duracao` quanto tocar.
+   *
+   * Os três juntos são o editor inteiro: com um argumento só, todo clipe começaria no zero e
+   * duraria o ficheiro. É `start(base + 4.25, 12, 3)` que faz um clipe entrar aos 4,25 s, do
+   * segundo 12 do ficheiro, por três segundos.
+   */
+  start(quando: number, deslocamento: number, duracao?: number): void;
   stop(): void;
 }
 

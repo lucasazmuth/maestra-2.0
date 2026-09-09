@@ -42,23 +42,33 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
   const gaveta = useRef(deps);
   gaveta.current = deps;
 
-  // A identidade da mesa é o CONJUNTO de pistas, e não o array (que muda de referência a cada
-  // render). Trocar de gravação muda esta linha; renomear uma pista, não — e renomear não pode
-  // recarregar 400 MB de áudio.
+  // A identidade da MONTAGEM: as pistas, os clipes, e onde cada um entra.
   //
-  // Ordenada de propósito: a ordem das pistas é assunto da TELA (é ela que empilha as linhas),
-  // não da mesa, que toca todas ao mesmo tempo. Sem o `sort`, "mover para cima" mudaria a
-  // assinatura e a mesa descarregaria e descodificaria tudo de novo — vários segundos de
-  // silêncio para trocar duas linhas de lugar.
-  const assinatura = pistas.map((p) => `${p.id}:${p.url}`).sort().join('|');
+  // Muda a cada edição — arrastar um clipe, cortá-lo, apagar — e é isso que se quer: a mesa
+  // precisa de reagendar. O que ela NÃO faz é voltar a baixar o áudio, porque os buffers são
+  // guardados por URL lá dentro; arrastar um clipe é uma reprogramação de fontes, não um
+  // download.
+  //
+  // O nome da pista fica de fora de propósito: renomear não muda uma nota do que soa.
+  const assinatura = pistas
+    .map((p) => `${p.id}|${p.clipes.map((c) => `${c.id}:${c.url}:${c.inicio}:${c.recorte}:${c.duracao}`).join(',')}`)
+    .join('||');
 
   useEffect(() => {
     if (!assinatura) {
       setEstado(VAZIA);
       return undefined;
     }
+    // A onda de um clipe é a do seu recorte: cortar ao meio muda o desenho dos dois pedaços.
     guardados.current.clear();
     const { criarContexto, buscar, mono } = gaveta.current;
+
+    // A mesa que já existe continua a servir: ela guarda os buffers, e recarregá-la com a
+    // montagem nova é barato. Criar outra deitaria fora o áudio descodificado a cada arrasto.
+    if (mesa.current) {
+      void mesa.current.carregar(pistas);
+      return undefined;
+    }
 
     // Criar o contexto pode falhar — um navegador sem Web Audio, uma sessão de áudio que o
     // sistema recusa. Sem esta guarda, a exceção sobe pelo efeito e derruba a TELA INTEIRA: quem
@@ -74,22 +84,16 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
         ...VAZIA,
         pistas: pistas.map((p) => ({
           id: p.id, nome: p.nome, carga: 'erro', erro: motivo,
-          duracao: 0, muda: false, solo: false, ganho: p.ganhoInicial ?? 1,
+          muda: false, solo: false, ganho: p.ganhoInicial ?? 1,
         })),
       });
       return undefined;
     }
     mesa.current = nova;
-    const largar = nova.ouvir(setEstado);
+    nova.ouvir(setEstado);
     void nova.carregar(pistas);
 
-    return () => {
-      largar();
-      mesa.current = null;
-      // Sem isto, sair da tela deixa a mesa a tocar por baixo da seguinte e centenas de MB de
-      // áudio descodificado presos na memória.
-      void nova.descartar();
-    };
+    return undefined;
     // `pistas` de propósito fora: quem manda é a assinatura. Ver o comentário acima.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assinatura]);
@@ -117,6 +121,17 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
   const mudar = useCallback((id: string, v: boolean) => { mesa.current?.mudar(id, v); }, []);
   const solar = useCallback((id: string, v: boolean) => { mesa.current?.solar(id, v); }, []);
   const ganho = useCallback((id: string, v: number) => { mesa.current?.ganho(id, v); }, []);
+  // O descarte é do DESMONTAR, e só dele. Antes vivia na limpeza do efeito da montagem, e
+  // então cada arrasto de clipe fechava o contexto de áudio e abria outro — com o download e a
+  // descodificação de tudo outra vez.
+  useEffect(() => () => {
+    const atual = mesa.current;
+    mesa.current = null;
+    // Sem isto, sair da tela deixa a mesa a tocar por baixo da seguinte e centenas de MB de
+    // áudio descodificado presos na memória.
+    void atual?.descartar();
+  }, []);
+
   const picos = useCallback((id: string, n: number) => {
     const chave = `${id}:${n}`;
     const pronto = guardados.current.get(chave);

@@ -2,38 +2,57 @@ import type { BufferDeAudio, ContextoDeAudio, FonteDeAudio, Modelador, NoDeGanho
 import { picos as picosDoBuffer } from './picos';
 import { curvaDoTeto } from './teto';
 
-// A MESA: N pistas de áudio tocando em sincronia, com mutar, solo e volume.
+// A MESA: as pistas de um editor de música, tocando em sincronia.
 //
-// É o motor do editor de stems do Espaço JAM. Vive no núcleo e não conhece nem o navegador nem
-// o React Native: recebe um `ContextoDeAudio` de fora. A web passa o `AudioContext` do
-// navegador, o app passa o do `react-native-audio-api`, e os testes passam um falso com relógio
-// manual — é isso que torna a lógica toda (arranque, busca, solo, falhas) testável sem tocar
-// um único som.
+// É o motor do Espaço JAM. Vive no núcleo e não conhece nem o navegador nem o React Native:
+// recebe um `ContextoDeAudio` de fora. A web passa o `AudioContext` do navegador, o app passa o
+// do `react-native-audio-api`, e os testes passam um falso com relógio manual — é isso que
+// torna a lógica toda (agendamento, busca, solo, falhas) testável sem tocar um único som.
+//
+// ─── Pista e clipe: a diferença que faz disto um editor ──────────────────────
+//
+// A primeira versão desta mesa tocava N stems, todos a partir do segundo zero. Isso é um
+// TOCADOR de camadas. Um editor — Ableton, Logic, Pro Tools — tem um EIXO DO TEMPO: a pista é
+// uma faixa vazia, e dentro dela moram CLIPES, cada um com a hora em que entra (`inicio`), o
+// recorte dentro do ficheiro (`recorte`) e quanto dura. Arrastar é mudar `inicio`. Cortar ao
+// meio é fazer nascer dois clipes sobre o MESMO ficheiro, com recortes diferentes — por isso a
+// edição é instantânea e não destrói nada.
 //
 // ─── Por que as fontes são descartáveis ──────────────────────────────────────
 //
 // Um `AudioBufferSourceNode` toca UMA vez. Não há `pause`, não há segundo `start`. Portanto:
 // pausar = parar as fontes e guardar em que segundo íamos; retomar = criar fontes novas e
-// arrancá-las a partir dali. O que persiste entre uma coisa e outra é o BUFFER (caro, é o áudio
-// descodificado) e o NÓ DE GANHO de cada pista (para o fader não saltar). As fontes nascem e
-// morrem a cada play/pausa/busca.
+// arrancá-las a partir dali. O que persiste entre uma coisa e outra são os BUFFERS (caros: é o
+// áudio descodificado) e o nó de ganho de cada pista (para o fader não saltar).
 //
 // ─── Por que a sincronia funciona ────────────────────────────────────────────
 //
-// Todas as fontes recebem `start(quando, deslocamento)` com o MESMO `quando`, um instante no
-// futuro. O contexto agenda-as no seu relógio de amostras, não no relógio do JavaScript — a
-// precisão é de uma amostra, não dos milissegundos que o JS conseguiria. A antecedência existe
-// porque criar seis fontes em JS leva tempo: sem ela, a sexta pediria "agora" já depois de a
+// Todas as fontes são agendadas contra o MESMO instante-base, um pouco no futuro. Um clipe que
+// entra aos 4,25 s recebe `start(base + 4.25, …)`, e o contexto agenda-o no seu relógio de
+// AMOSTRAS, não no relógio do JavaScript — a precisão é de uma amostra. A antecedência existe
+// porque criar as fontes em JS leva tempo: sem ela, a última pediria "agora" já depois de a
 // primeira ter começado.
 
-/** Uma pista a carregar: o que a mesa precisa saber antes de ter o áudio. */
+/** Um pedaço de áudio numa pista, num instante. */
+export interface Clipe {
+  id: string;
+  /** De onde vem o som. Dois clipes podem partilhar a mesma URL — é o que um corte produz. */
+  url: string;
+  /** Em que segundo da linha do tempo o clipe começa a soar. */
+  inicio: number;
+  /** A partir de que segundo DO FICHEIRO. Aparar a ponta esquerda mexe aqui. */
+  recorte: number;
+  /** Quanto do ficheiro entra. Aparar a ponta direita mexe aqui. */
+  duracao: number;
+}
+
+/** Uma faixa da mesa: um nome, um volume, um mudo, e os clipes que moram nela. */
 export interface Pista {
   id: string;
   nome: string;
-  url: string;
+  clipes: Clipe[];
   /** 0..1. O que ficou guardado no banco, ou 1. */
   ganhoInicial?: number;
-  /** A Mix ★ entra muda quando a gravação tem stems: senão o áudio soa dobrado. */
   mudaInicial?: boolean;
 }
 
@@ -44,7 +63,6 @@ export interface EstadoDaPista {
   nome: string;
   carga: CargaDaPista;
   erro?: string;
-  duracao: number;
   muda: boolean;
   solo: boolean;
   /** A posição do fader. SOBREVIVE ao mute — mutar não é baixar o volume a zero. */
@@ -55,7 +73,7 @@ export interface EstadoDaMesa {
   pistas: EstadoDaPista[];
   tocando: boolean;
   posicao: number;
-  /** A da pista mais longa que carregou. */
+  /** Onde acaba o último clipe. */
   duracao: number;
   carregando: boolean;
 }
@@ -68,7 +86,7 @@ export interface OpcoesDaMesa {
    * Quanto à frente agendar o arranque, em segundos.
    *
    * 50 ms é folga que sobra para criar as fontes e não é percetível como atraso. Menos que
-   * isto e uma mesa com muitas pistas arrisca pedir um instante que já passou.
+   * isto e uma mesa com muitos clipes arrisca pedir um instante que já passou.
    */
   antecedencia?: number;
   /**
@@ -95,11 +113,46 @@ export const ganhoEfetivo = (
   haSolo: boolean,
 ): number => (pista.muda || (haSolo && !pista.solo) ? 0 : pista.ganho);
 
-interface PistaViva extends EstadoDaPista {
-  url: string;
-  buffer: BufferDeAudio | null;
-  saida: NoDeGanho | null;
+/**
+ * Quando e como um clipe entra, dado o ponto em que a mesa está.
+ *
+ * Pura, exportada e testada à parte porque é a aritmética central do editor, e a que mais
+ * silenciosamente erra: um sinal trocado aqui faz o clipe entrar no lugar errado, e som no
+ * lugar errado é indistinguível de "o ficheiro está mau" para quem ouve.
+ *
+ * Devolve `null` quando o clipe já passou inteiro — e é ISSO que impede a mesa de pedir a uma
+ * fonte um deslocamento além do fim do ficheiro, que o contexto recusa.
+ */
+export const agendamentoDoClipe = (
+  clipe: Pick<Clipe, 'inicio' | 'recorte' | 'duracao'>,
+  /** Em que segundo da linha do tempo a reprodução vai começar. */
+  deslocamento: number,
+): { atraso: number; recorte: number; duracao: number } | null => {
+  const dentro = deslocamento - clipe.inicio;
+  // Ainda não chegou: espera o tempo que falta e toca inteiro.
+  // `Math.max(0, …)` e não `-dentro`: com `dentro` igual a zero aquilo dá menos zero, que é um
+  // número diferente de zero para quem compara com `Object.is` — e foi um teste que o apanhou.
+  if (dentro <= 0) return { atraso: Math.max(0, -dentro), recorte: clipe.recorte, duracao: clipe.duracao };
+  // Já acabou: não entra. (`>=` e não `>`: um clipe que acaba exatamente aqui não tem o que dar.)
+  if (dentro >= clipe.duracao) return null;
+  // Estamos a meio dele: entra já, do ponto correspondente, pelo que sobra.
+  return { atraso: 0, recorte: clipe.recorte + dentro, duracao: clipe.duracao - dentro };
+};
+
+interface ClipeVivo extends Clipe {
   fonte: FonteDeAudio | null;
+}
+
+interface PistaViva {
+  id: string;
+  nome: string;
+  clipes: ClipeVivo[];
+  carga: CargaDaPista;
+  erro?: string;
+  muda: boolean;
+  solo: boolean;
+  ganho: number;
+  saida: NoDeGanho | null;
 }
 
 const ANTECEDENCIA_PADRAO = 0.05;
@@ -119,10 +172,21 @@ export class Mesa {
   private pistas: PistaViva[] = [];
   private ouvintes = new Set<(e: EstadoDaMesa) => void>();
 
+  /**
+   * O áudio descodificado, por URL.
+   *
+   * ⚠️ POR URL, e não por clipe: cortar um clipe ao meio produz dois clipes sobre o mesmo
+   * ficheiro, e descodificar duas vezes seria dobrar a memória (dezenas de MB) para tocar
+   * exatamente o mesmo som. É também o que faz arrastar um clipe custar zero: a montagem muda,
+   * o áudio não.
+   */
+  private buffers = new Map<string, BufferDeAudio>();
+  private falhas = new Map<string, string>();
+
   private tocando = false;
-  /** Em que segundo da música estamos, quando parado. */
+  /** Em que segundo da linha do tempo estamos, quando parado. */
   private deslocamento = 0;
-  /** O `currentTime` do contexto no instante em que as fontes arrancaram. */
+  /** O `currentTime` do contexto no instante em que a reprodução arrancou. */
   private inicioNoContexto = 0;
   private descartada = false;
 
@@ -136,77 +200,96 @@ export class Mesa {
   // ─── Carregar ─────────────────────────────────────────────────────────────
 
   /**
-   * Baixa e descodifica as pistas.
+   * Recebe a montagem e garante que o áudio dela está na memória.
    *
-   * Um stem que falha (404, formato que o descodificador não lê) NÃO pode calar os outros: fica
-   * marcado como erro, com um "tentar de novo" na tela, e a mesa toca o resto.
+   * ⚠️ CHAMADA A CADA EDIÇÃO, e por isso tem de ser barata quando nada de novo entrou: arrastar
+   * um clipe, cortá-lo, mudar-lhe o nome — tudo passa por aqui, e nada disso pode voltar a
+   * baixar 400 MB. O que decide é a gaveta de buffers: URL que já lá está não é buscada outra
+   * vez, e URL que deixou de ser usada é solta.
    *
-   * Quem garante isso é o `try/catch` dentro de `carregarUma` — ele transforma a falha em
-   * estado, e a promessa nunca rejeita. (Cheguei a escrever `Promise.allSettled` aqui a pensar
-   * que era ele a proteger; a mutação mostrou que `all` e `allSettled` eram indistinguíveis,
-   * porque nada rejeita. Ficou o `all`, que é o que a leitura promete.)
+   * Um ficheiro que falha (404, formato que o descodificador não lê) NÃO pode calar os outros:
+   * as pistas que dependem dele ficam com erro, e a mesa toca o resto.
    *
    * Sequencial quando `mono` (o app): descodificar quatro WAV de 40 MB ao mesmo tempo é um pico
    * de memória de quatro ficheiros mais quatro PCM — é onde o sistema mata a aplicação.
    */
   async carregar(pistas: Pista[]): Promise<void> {
     if (this.descartada) return;
-    this.pararFontes();
-    this.soltarPistas();
-    this.deslocamento = 0;
-    this.tocando = false;
 
-    this.pistas = pistas.map((p) => ({
-      id: p.id,
-      nome: p.nome,
-      url: p.url,
-      carga: 'na-fila',
-      duracao: 0,
-      muda: p.mudaInicial ?? false,
-      solo: false,
-      ganho: p.ganhoInicial ?? 1,
-      buffer: null,
-      saida: null,
-      fonte: null,
-    }));
+    const tocava = this.tocando;
+    this.pararFontes();
+
+    // O grafo de ganhos é reaproveitado por id: sem isto, cada edição criaria um nó novo e o
+    // ganho antigo ficaria pendurado no mestre, somando som para sempre.
+    const antigas = new Map(this.pistas.map((p) => [p.id, p]));
+    this.pistas = pistas.map((nova) => {
+      const antiga = antigas.get(nova.id);
+      antigas.delete(nova.id);
+      return {
+        id: nova.id,
+        nome: nova.nome,
+        clipes: nova.clipes.map((c) => ({ ...c, fonte: null })),
+        carga: 'na-fila' as CargaDaPista,
+        // O que é ESCUTA (mudo, solo, fader) sobrevive à edição: cortar um clipe não pode
+        // acender uma pista que a pessoa tinha calado.
+        muda: antiga ? antiga.muda : nova.mudaInicial ?? false,
+        solo: antiga ? antiga.solo : false,
+        ganho: antiga ? antiga.ganho : nova.ganhoInicial ?? 1,
+        saida: antiga?.saida ?? null,
+      };
+    });
+    // `forEach` e não `for…of`: o alvo do TypeScript da web é anterior ao ES2015 e recusa
+    // iterar um `Map` sem `downlevelIteration`.
+    antigas.forEach((sobra) => sobra.saida?.disconnect());
     this.avisar();
 
-    const carregarUma = async (viva: PistaViva) => {
-      viva.carga = 'carregando';
-      this.avisar();
-      try {
-        const dados = await this.buscar(viva.url);
-        const cru = await this.ctx.decodeAudioData(dados);
-        // A mesa pode ter sido descartada, ou recarregada com outra gravação, enquanto isto
-        // corria. Sem esta guarda, o buffer de uma gravação antiga entraria na mesa nova.
-        if (this.descartada || !this.pistas.includes(viva)) return;
-        viva.buffer = this.mono ? this.paraMono(cru) : cru;
-        viva.duracao = viva.buffer.duration;
-        viva.saida = this.ctx.createGain();
-        viva.saida.gain.value = 0;
-        viva.saida.connect(this.saidaMestre());
-        viva.carga = 'pronta';
-      } catch (e) {
-        viva.carga = 'erro';
-        viva.erro = e instanceof Error ? e.message : 'Não consegui carregar esta pista.';
+    const precisas = new Set(pistas.flatMap((p) => p.clipes.map((c) => c.url)));
+    Array.from(this.buffers.keys()).forEach((url) => {
+      if (!precisas.has(url)) this.buffers.delete(url);
+    });
+    Array.from(this.falhas.keys()).forEach((url) => {
+      if (!precisas.has(url)) this.falhas.delete(url);
+    });
+
+    const faltam = Array.from(precisas).filter((url) => !this.buffers.has(url) && !this.falhas.has(url));
+    if (faltam.length) {
+      for (const pista of this.pistas) {
+        if (pista.clipes.some((c) => faltam.includes(c.url))) pista.carga = 'carregando';
       }
       this.avisar();
+    }
+
+    const trazer = async (url: string) => {
+      try {
+        const dados = await this.buscar(url);
+        const cru = await this.ctx.decodeAudioData(dados);
+        // A mesa pode ter sido descartada, ou recarregada com outra montagem, enquanto isto
+        // corria. Sem esta guarda, o buffer de uma gravação antiga entraria na mesa nova.
+        if (this.descartada) return;
+        this.buffers.set(url, this.mono ? this.paraMono(cru) : cru);
+      } catch (e) {
+        this.falhas.set(url, e instanceof Error ? e.message : 'Não consegui carregar este áudio.');
+      }
     };
 
     if (this.mono) {
-      for (const viva of this.pistas) await carregarUma(viva);
+      for (const url of faltam) await trazer(url);
     } else {
-      await Promise.all(this.pistas.map(carregarUma));
+      await Promise.all(faltam.map(trazer));
     }
+    if (this.descartada) return;
 
+    this.marcarCargas();
+    this.ligarSaidas();
     this.aplicarGanhos();
-    this.avisar();
+    if (tocava) await this.tocar();
+    else this.avisar();
   }
 
   // ─── Transporte ───────────────────────────────────────────────────────────
 
   /**
-   * Toca todas as pistas prontas, a partir de onde parámos.
+   * Toca a montagem a partir de onde parámos.
    *
    * O `resume` vem ANTES do agendamento e não é cerimónia: na web o contexto nasce suspenso
    * até um gesto da pessoa, e o clique no play é esse gesto. Agendar antes de retomar produz
@@ -216,24 +299,32 @@ export class Mesa {
     if (this.descartada || this.tocando) return;
     if (this.ctx.state === 'suspended') await this.ctx.resume();
     if (this.descartada) return;
-
-    const prontas = this.pistas.filter((p) => p.carga === 'pronta' && p.buffer);
-    if (!prontas.length) return;
+    if (!this.buffers.size) return;
     if (this.deslocamento >= this.duracaoTotal()) this.deslocamento = 0;
 
-    const quando = this.ctx.currentTime + this.antecedencia;
-    for (const pista of prontas) {
-      // Uma pista mais curta que o ponto onde estamos simplesmente não entra: pedir um
-      // deslocamento além da duração faz o contexto recusar a fonte.
-      if (this.deslocamento >= pista.duracao) continue;
-      const fonte = this.ctx.createBufferSource();
-      fonte.buffer = pista.buffer;
-      fonte.connect(pista.saida as NoDeGanho);
-      fonte.start(quando, this.deslocamento);
-      pista.fonte = fonte;
+    const base = this.ctx.currentTime + this.antecedencia;
+    for (const pista of this.pistas) {
+      if (!pista.saida) continue;
+      for (const clipe of pista.clipes) {
+        const buffer = this.buffers.get(clipe.url);
+        if (!buffer) continue;
+        const quando = agendamentoDoClipe(
+          { ...clipe, duracao: this.duracaoEfetiva(clipe) },
+          this.deslocamento,
+        );
+        if (!quando) continue;
+
+        const fonte = this.ctx.createBufferSource();
+        fonte.buffer = buffer;
+        fonte.connect(pista.saida);
+        // Os três argumentos são o editor inteiro: QUANDO tocar, de que ponto do ficheiro, e
+        // por quanto tempo. Com um só, todo clipe começaria no zero e duraria o ficheiro.
+        fonte.start(base + quando.atraso, quando.recorte, quando.duracao);
+        clipe.fonte = fonte;
+      }
     }
 
-    this.inicioNoContexto = quando;
+    this.inicioNoContexto = base;
     this.tocando = true;
     this.aplicarGanhos();
     this.avisar();
@@ -248,7 +339,7 @@ export class Mesa {
     this.avisar();
   }
 
-  /** Leva a mesa a um segundo. A tocar, recomeça de lá; parada, só marca o ponto. */
+  /** Leva a agulha a um segundo. A tocar, recomeça de lá; parada, só marca o ponto. */
   irPara(segundo: number): void {
     const alvo = Math.max(0, Math.min(segundo, this.duracaoTotal()));
     const estava = this.tocando;
@@ -260,7 +351,7 @@ export class Mesa {
   }
 
   /**
-   * Onde a música está.
+   * Onde a agulha está.
    *
    * Derivada do relógio do CONTEXTO, não de um contador nosso: é o mesmo relógio que agendou as
    * fontes, então a agulha na tela e o som nunca divergem, por mais que o JS engasgue.
@@ -316,8 +407,8 @@ export class Mesa {
 
   estado(): EstadoDaMesa {
     return {
-      pistas: this.pistas.map(({ id, nome, carga, erro, duracao, muda, solo, ganho }) => ({
-        id, nome, carga, erro, duracao, muda, solo, ganho,
+      pistas: this.pistas.map(({ id, nome, carga, erro, muda, solo, ganho }) => ({
+        id, nome, carga, erro, muda, solo, ganho,
       })),
       tocando: this.tocando,
       posicao: this.posicao(),
@@ -331,10 +422,35 @@ export class Mesa {
     return () => { this.ouvintes.delete(fn); };
   }
 
-  /** A mini-onda de uma pista, do buffer que já está na memória. */
-  picos(id: string, n: number): number[] {
-    const pista = this.pistas.find((p) => p.id === id);
-    return pista?.buffer ? picosDoBuffer(pista.buffer, n) : [];
+  /**
+   * A onda de um CLIPE, do buffer que já está na memória.
+   *
+   * Do trecho do clipe, e não do ficheiro inteiro: dois clipes nascidos do mesmo corte
+   * desenhariam a mesma onda, e a montagem deixaria de se ler.
+   */
+  picos(clipeId: string, n: number): number[] {
+    for (const pista of this.pistas) {
+      const clipe = pista.clipes.find((c) => c.id === clipeId);
+      if (!clipe) continue;
+      const buffer = this.buffers.get(clipe.url);
+      if (!buffer) return [];
+      return picosDoBuffer(buffer, n, clipe.recorte, clipe.recorte + this.duracaoEfetiva(clipe));
+    }
+    return [];
+  }
+
+  /** A duração do ficheiro inteiro por trás de um clipe — o limite de quanto se pode esticar. */
+  duracaoDoArquivo(url: string): number {
+    return this.buffers.get(url)?.duration ?? 0;
+  }
+
+  /** Quanto um clipe REALMENTE dura, já limitado pelo fim do ficheiro. */
+  duracaoDoClipe(clipeId: string): number {
+    for (const pista of this.pistas) {
+      const clipe = pista.clipes.find((c) => c.id === clipeId);
+      if (clipe) return this.duracaoEfetiva(clipe);
+    }
+    return 0;
   }
 
   /** Cala tudo, desliga o grafo e solta os buffers. Sair da tela sem isto deixa a mesa a tocar. */
@@ -342,7 +458,9 @@ export class Mesa {
     if (this.descartada) return;
     this.descartada = true;
     this.pararFontes();
-    this.soltarPistas();
+    for (const pista of this.pistas) pista.saida?.disconnect();
+    this.pistas = [];
+    this.buffers.clear();
     this.mestre?.disconnect();
     this.mestre = null;
     this.teto?.disconnect();
@@ -357,8 +475,8 @@ export class Mesa {
   /**
    * A saída de tudo: `pistas → mestre → teto → alto-falantes`.
    *
-   * ⚠️ O TETO NÃO É ENFEITE, É ARITMÉTICA. Seis stems a ganho 1 somam-se: dois sinais de meia
-   * escala em fase dão escala cheia, e o sexto passa de 0 dBFS. O que passa de 0 dBFS não fica
+   * ⚠️ O TETO NÃO É ENFEITE, É ARITMÉTICA. Seis pistas a ganho 1 somam-se: dois sinais de meia
+   * escala em fase dão escala cheia, e a sexta passa de 0 dBFS. O que passa de 0 dBFS não fica
    * mais alto — fica cortado na quina, que é o estalo. Quem abrisse a mesa ia pensar que os
    * ficheiros que enviou estão ruins.
    *
@@ -367,9 +485,6 @@ export class Mesa {
    * e nada mais. Isto não foi escolha de gosto: a primeira versão usava
    * `createDynamicsCompressor`, e no aparelho TODAS as pistas morriam em "undefined is not a
    * function", porque aquele nó não existe lá. A curva é a mesma nos dois motores.
-   *
-   * `2x` de sobreamostragem porque dobrar a onda cria harmónicos acima da metade da taxa de
-   * amostragem, e sem sobreamostrar eles voltam dobrados para dentro do audível (aliasing).
    */
   private saidaMestre(): NoDeGanho {
     if (!this.mestre) {
@@ -385,8 +500,50 @@ export class Mesa {
     return this.mestre;
   }
 
+  private ligarSaidas(): void {
+    for (const pista of this.pistas) {
+      if (pista.saida || pista.carga === 'erro') continue;
+      pista.saida = this.ctx.createGain();
+      pista.saida.gain.value = 0;
+      pista.saida.connect(this.saidaMestre());
+    }
+  }
+
+  /** A carga de uma pista é a do pior dos ficheiros que ela usa. */
+  private marcarCargas(): void {
+    for (const pista of this.pistas) {
+      const falhou = pista.clipes.find((c) => this.falhas.has(c.url));
+      if (falhou) {
+        pista.carga = 'erro';
+        pista.erro = this.falhas.get(falhou.url);
+        continue;
+      }
+      pista.carga = 'pronta';
+      pista.erro = undefined;
+    }
+  }
+
+  /**
+   * Quanto um clipe dura de facto: o que ele pede, limitado pelo que o ficheiro tem.
+   *
+   * ⚠️ Um clipe NUNCA pode durar mais do que o áudio por trás dele. Sem este limite, a gravação
+   * que ainda não foi montada em pistas — cujo clipe nasce com uma duração de reserva, porque a
+   * verdadeira só se sabe depois de descodificar — desenhava uma hora de linha do tempo e um
+   * retângulo laranja de ponta a ponta.
+   */
+  private duracaoEfetiva(clipe: Clipe): number {
+    const buffer = this.buffers.get(clipe.url);
+    if (!buffer) return clipe.duracao;
+    return Math.max(0, Math.min(clipe.duracao, buffer.duration - clipe.recorte));
+  }
+
+  /** Onde acaba o último clipe de todas as pistas. */
   private duracaoTotal(): number {
-    return this.pistas.reduce((maior, p) => Math.max(maior, p.duracao), 0);
+    let fim = 0;
+    for (const pista of this.pistas) {
+      for (const clipe of pista.clipes) fim = Math.max(fim, clipe.inicio + this.duracaoEfetiva(clipe));
+    }
+    return fim;
   }
 
   private aplicarGanhos(): void {
@@ -400,22 +557,15 @@ export class Mesa {
 
   private pararFontes(): void {
     for (const pista of this.pistas) {
-      if (!pista.fonte) continue;
-      // `stop()` numa fonte que já terminou sozinha lança. Não é erro nosso — é o fim natural
-      // da música a chegar antes do nosso pedido.
-      try { pista.fonte.stop(); } catch { /* já tinha acabado */ }
-      pista.fonte.disconnect();
-      pista.fonte = null;
+      for (const clipe of pista.clipes) {
+        if (!clipe.fonte) continue;
+        // `stop()` numa fonte que já terminou sozinha lança. Não é erro nosso — é o fim natural
+        // do clipe a chegar antes do nosso pedido.
+        try { clipe.fonte.stop(); } catch { /* já tinha acabado */ }
+        clipe.fonte.disconnect();
+        clipe.fonte = null;
+      }
     }
-  }
-
-  private soltarPistas(): void {
-    for (const pista of this.pistas) {
-      pista.saida?.disconnect();
-      pista.saida = null;
-      pista.buffer = null;
-    }
-    this.pistas = [];
   }
 
   /** Média dos canais num buffer novo. O estéreo original é solto a seguir. */

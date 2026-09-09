@@ -11,9 +11,11 @@ import type { Pista } from '../mesa';
 // é recriada à toa, que os picos não são recalculados a cada tique, e — o mais importante — que
 // um contexto de áudio que se recusa a nascer não derruba a tela.
 
+const clipe = (id: string, url: string, inicio = 0) => ({ id, url, inicio, recorte: 0, duracao: 10 });
+
 const PISTAS: Pista[] = [
-  { id: 'mix', nome: 'Mix ★', url: 'https://x/mix.wav' },
-  { id: 's1', nome: 'Voz', url: 'https://x/voz.wav' },
+  { id: 'mix', nome: 'Mix ★', clipes: [clipe('cm', 'https://x/mix.wav')] },
+  { id: 's1', nome: 'Voz', clipes: [clipe('cv', 'https://x/voz.wav')] },
 ];
 
 const comContexto = (criar: () => ContextoFalso) => ({
@@ -55,15 +57,17 @@ describe('useMesa', () => {
     await waitFor(() => expect(result.current.estado.pistas).toHaveLength(2));
     expect(criados).toBe(1);
 
-    // A ordem também não conta: a mesa toca tudo ao mesmo tempo, e quem empilha as linhas é a
-    // tela. Sem isto, "mover para cima" recarregaria centenas de MB de áudio.
-    rerender({ pistas: [...PISTAS].reverse() });
+    // ⚠️ E ARRASTAR UM CLIPE TAMBÉM NÃO. A montagem muda, o contexto de áudio é o mesmo: a
+    // mesa reagenda as fontes com os buffers que já tem. Criar outro contexto aqui seria
+    // baixar e descodificar tudo de novo a cada pixel de arrasto.
+    rerender({ pistas: [{ ...PISTAS[0], clipes: [clipe('cm', 'https://x/mix.wav', 8)] }, PISTAS[1]] });
     await waitFor(() => expect(result.current.estado.pistas).toHaveLength(2));
     expect(criados).toBe(1);
 
-    // Outra gravação, aí sim.
-    rerender({ pistas: [{ id: 'mix2', nome: 'Mix ★', url: 'https://x/outra.wav' }] });
-    await waitFor(() => expect(criados).toBe(2));
+    // Trocar de gravação também reaproveita o contexto — o que sai são os buffers antigos.
+    rerender({ pistas: [{ id: 'mix2', nome: 'Mix ★', clipes: [clipe('c2', 'https://x/outra.wav')] }] });
+    await waitFor(() => expect(result.current.estado.pistas[0].id).toBe('mix2'));
+    expect(criados).toBe(1);
   });
 
   // `picos()` percorre o PCM inteiro, e a tela pede-os 20 vezes por segundo, por pista.
@@ -72,12 +76,12 @@ describe('useMesa', () => {
     const { result } = renderHook(() => useMesa(PISTAS, comContexto(() => contexto)));
 
     await waitFor(() => expect(result.current.estado.pistas[0].carga).toBe('pronta'));
-    const primeiro = result.current.picos('mix', 8);
+    const primeiro = result.current.picos('cm', 8);
     expect(primeiro).toHaveLength(8);
     // A MESMA lista, e não uma igual: é a identidade que faz o `memo` da onda não redesenhar.
-    expect(result.current.picos('mix', 8)).toBe(primeiro);
+    expect(result.current.picos('cm', 8)).toBe(primeiro);
     // Outra resolução é outra conta — guardar só uma devolveria o número errado de barras.
-    expect(result.current.picos('mix', 16)).toHaveLength(16);
+    expect(result.current.picos('cm', 16)).toHaveLength(16);
   });
 
   // Sair da tela sem isto deixa a mesa a tocar por baixo da seguinte, com centenas de MB de

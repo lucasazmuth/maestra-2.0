@@ -1,0 +1,82 @@
+// A CASCA do editor: o que tem de ser CSS de verdade, e não estilo em linha.
+//
+// O resto desta tela desenha-se em linha, como no projeto de referência — mas estas três coisas
+// não conseguem: regras sobre o `body` e sobre a moldura do app (que não é filha desta tela), e
+// a camada, que sai do mesmo token do resto do produto.
+//
+// ⚠️ QUEM FAZ O EDITOR COBRIR O APP É O `display: none` ABAIXO, e não o z-index. O Espaço JAM já
+// teve 2147483000 aqui — o teto do int32 — e o número nunca fez nada: os ancestrais
+// `position: fixed` prendem esta camada num contexto de empilhamento próprio, onde ela só
+// concorre com irmãs que não existem. No dia em que algo aparecer por cima, subir o número não
+// vai resolver.
+
+:global(body.jam-space-open) {
+  overflow: hidden !important;
+  background: #0e0e0e !important;
+}
+
+:global(body.jam-space-open .top-navigation),
+:global(body.jam-space-open .app-rail),
+:global(body.jam-space-open .profile-panel),
+// A barra de abas do celular também: ela é `fixed` e ficava POR CIMA da linha do tempo,
+// tapando a última pista. Um editor é uma tela cheia — nada do app fica em volta.
+:global(body.jam-space-open .mobile-nav),
+:global(body.jam-space-open #left) {
+  display: none !important;
+}
+
+:global(body.jam-space-open .task-app),
+:global(body.jam-space-open .app-layout),
+:global(body.jam-space-open #board),
+:global(body.jam-space-open #center),
+:global(body.jam-space-open .Main-section),
+:global(body.jam-space-open .board-shell),
+:global(body.jam-space-open .board-content) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.tela {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-tela-cheia);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// Os contadores (pistas · clipes · duração) somem antes dos controlos: eles são informação, e
+// o status, o BPM e o tom são coisas em que se mexe. Numa tela apertada, quem sai é o texto.
+.contadores {
+  @media (max-width: 1180px) {
+    display: none;
+  }
+}
+
+// A fila dos controlos.
+//
+// Em tela larga são três colunas com o transporte exatamente no meio, como na referência. Numa
+// tela estreita a grelha vira uma fila que rola: a alternativa era o grupo da direita passar
+// POR CIMA do transporte, que foi o que aconteceu na primeira tentativa — e um botão de play
+// escondido debaixo de um seletor de status é pior do que uma barra que rola.
+.controlos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+
+  @media (max-width: 1180px) {
+    display: flex;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}

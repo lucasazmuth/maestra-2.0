@@ -2,7 +2,7 @@ import { Alert } from 'react-native';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
-import type { CatalogProject, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
+import type { CatalogProject, CatalogTrack, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
 
 import EspacoJam from '../jam/[artista]/[projeto]';
 
@@ -91,19 +91,26 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
   };
 });
 
-const mockEscolherAudios = jest.fn();
 jest.mock('@/nucleo/arquivos', () => ({
   escolherAudio: jest.fn(),
-  escolherAudios: (...a: unknown[]) => mockEscolherAudios(...a),
-  paraEnvioDePista: (arquivo: { nome: string }) => ({ ...arquivo, dados: jest.fn() }),
   escolherImagem: jest.fn(),
   enviarParaOCatalogo: jest.fn(),
 }));
 
-const stem = (over: Partial<CatalogVersionFile>): CatalogVersionFile => ({
-  id: 's-1', version_id: 'v-1', name: 'Voz', kind: 'stem',
-  file_url: 'https://exemplo.invalid/voz.wav', position: 0, gain: 1, ...over,
+const arquivo = (over: Partial<CatalogVersionFile> = {}): CatalogVersionFile => ({
+  id: 'f-1', version_id: 'v-1', name: 'Voz', kind: 'stem',
+  file_url: 'https://exemplo.invalid/voz.wav', position: 0, ...over,
 } as CatalogVersionFile);
+
+/** Uma pista da montagem, com um clipe do princípio ao fim do ficheiro. */
+const pista = (over: Partial<CatalogTrack> = {}, arquivoId = 'f-1'): CatalogTrack => ({
+  id: 't-1', version_id: 'v-1', name: 'Voz', position: 0, gain: 1, muted: false, color_index: 0,
+  clips: [{
+    id: `c-${over.id ?? 't-1'}`, track_id: String(over.id ?? 't-1'), file_id: arquivoId,
+    start_seconds: 0, offset_seconds: 0, duration_seconds: 30,
+  }],
+  ...over,
+} as CatalogTrack);
 
 const versao = (over: Partial<CatalogVersion>): CatalogVersion => ({
   id: 'v-1', project_id: 'p-1', version_number: 1, title: 'guia vocal',
@@ -154,48 +161,35 @@ describe('espaço jam', () => {
   // e tocá-la junto faz cada instrumento soar duas vezes, ligeiramente desalinhado.
   it('com stems, cada camada vira uma pista e a mix entra muda', async () => {
     mockBuscar.mockResolvedValue(projeto({
-      versions: [versao({ files: [stem({}), stem({ id: 's-2', name: 'Bateria', position: 1 })] })],
+      versions: [versao({
+        files: [arquivo(), arquivo({ id: 'f-2', name: 'Bateria' })],
+        tracks: [
+          pista(),
+          pista({ id: 't-2', name: 'Bateria', position: 1 }, 'f-2'),
+        ],
+      })],
     }));
 
     const tela = await montar();
-    expect(await tela.findByLabelText('Ouvir Mix ★')).toBeTruthy();
-    expect(tela.getByLabelText('Silenciar Voz')).toBeTruthy();
+    expect(await tela.findByLabelText('Silenciar Voz')).toBeTruthy();
     expect(tela.getByLabelText('Silenciar Bateria')).toBeTruthy();
     // Solo e mute são ações opostas e têm alvos próprios — não são o mesmo botão.
     expect(tela.getByLabelText('Ouvir só Voz')).toBeTruthy();
-    // A Mix não se renomeia, não se move e não se apaga: ela É o áudio da gravação. Só os
-    // stems têm o `⋯`.
-    expect(tela.getByLabelText('Opções de Voz')).toBeTruthy();
-    expect(tela.queryByLabelText('Opções de Mix ★')).toBeNull();
+    // ⚠️ Com a montagem feita, a MIX SAI DE CENA: ela é a soma das camadas, e tocá-la junto
+    // faria cada instrumento soar duas vezes.
+    expect(tela.queryByLabelText('Silenciar Mix ★')).toBeNull();
+    expect(tela.queryByLabelText('Ouvir Mix ★')).toBeNull();
   });
 
   // ⚠️ A mix já é a SOMA das pistas. Acesa junto com elas, cada instrumento soa duas vezes e o
   // volume dobra. Não dá para impedir — é o que a pessoa pediu —, mas é quase sempre engano, e
   // ouvir sem entender por que "está estranho" é pior do que ler uma frase.
-  it('acender a mix com as pistas no ar avisa que o volume dobra — e avisa uma vez só', async () => {
-    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    mockBuscar.mockResolvedValue(projeto({ versions: [versao({ files: [stem({})] })] }));
-    const usuario = userEvent.setup();
-    const tela = await montar();
-
-    await usuario.press(await tela.findByLabelText('Ouvir Mix ★'));
-    await waitFor(() => expect(alerta).toHaveBeenCalledTimes(1));
-    expect(alerta.mock.calls[0][1]).toMatch(/duas vezes/);
-
-    // Apagar e acender de novo não repete a lição: repetida, ela vira obstáculo.
-    await usuario.press(await tela.findByLabelText('Silenciar Mix ★'));
-    await usuario.press(await tela.findByLabelText('Ouvir Mix ★'));
-    expect(alerta).toHaveBeenCalledTimes(1);
-    alerta.mockRestore();
-  });
-
-  // Sem pista nenhuma no ar não há o que dobrar: acender a mix é só ouvir a gravação.
   it('acender a mix sozinha não avisa nada', async () => {
     const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const usuario = userEvent.setup();
     const tela = await montar();
 
-    // Sem stems, a mix já entra acesa: apagar e acender não deve dizer nada.
+    // Sem montagem, a mix entra sozinha e acesa: apagar e acender não dobra nada, e não avisa.
     await usuario.press(await tela.findByLabelText('Silenciar Mix ★'));
     await usuario.press(await tela.findByLabelText('Ouvir Mix ★'));
     expect(alerta).not.toHaveBeenCalled();
@@ -208,8 +202,8 @@ describe('espaço jam', () => {
     const grande = 300 * 1024 * 1024;
     mockBuscar.mockResolvedValue(projeto({
       versions: [versao({ files: [
-        stem({ id: 's-1', size_bytes: grande }),
-        stem({ id: 's-2', name: 'Bateria', position: 1, size_bytes: grande }),
+        arquivo({ id: 'f-1', size_bytes: grande }),
+        arquivo({ id: 'f-2', name: 'Bateria', size_bytes: grande }),
       ] })],
     }));
 
@@ -357,15 +351,18 @@ describe('espaço jam', () => {
     await waitFor(() => expect(mockPrincipal).toHaveBeenCalledWith('p-1', null));
   });
 
-  // O que não é áudio nem sobe: a recusa é dita ANTES de gastar rede, com o nome do arquivo e
-  // o motivo. Um "falhou" genérico depois do upload não ensina nada a ninguém.
-  it('um arquivo que não é áudio é recusado com o motivo', async () => {
-    mockEscolherAudios.mockResolvedValue([{ nome: 'letra.pdf', uri: 'file://letra.pdf' }]);
-    const usuario = userEvent.setup();
+  // ⚠️ ENVIAR E MONTAR STEMS SAIU DO APP, por agora. A linha do tempo — clipes que se arrastam,
+  // tesoura, régua — entrou primeiro na web; mexer aqui numa montagem que a tela não mostra
+  // seria editar às cegas. O que fica é ouvir, comentar e mandar gravação nova.
+  it('não há como montar pistas por aqui: isso é da linha do tempo', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
     const tela = await montar();
 
-    await usuario.press(await tela.findByLabelText('Adicionar pistas do aparelho'));
-    expect(await tela.findByText(/letra\.pdf: formato não aceito/)).toBeTruthy();
+    await tela.findByLabelText('Silenciar Voz');
+    expect(tela.queryByLabelText('Adicionar pistas do aparelho')).toBeNull();
+    expect(tela.queryByLabelText('Opções de Voz')).toBeNull();
   });
 
   // O balão mostra QUANTOS comentários a gravação tem: um balão sem número não diz se vale

@@ -18,22 +18,40 @@ import type { BufferDeAudio } from './contexto';
  * baixinho e um de bateria alto têm de desenhar ondas comparáveis, senão a do baixo lê como
  * silêncio. O volume relativo é o que o fader mostra, não a onda.
  */
-export const picos = (buffer: BufferDeAudio, n: number): number[] => {
+export const picos = (
+  buffer: BufferDeAudio,
+  n: number,
+  /**
+   * O TRECHO do ficheiro a desenhar, em segundos. Um clipe é um recorte: cortar um áudio ao
+   * meio faz nascer dois clipes sobre o MESMO ficheiro, e cada um tem de desenhar só a sua
+   * parte — desenhar a onda inteira nos dois seria mostrar a mesma coisa duas vezes.
+   */
+  deSegundo = 0,
+  ateSegundo?: number,
+): number[] => {
   if (n <= 0 || buffer.length === 0 || buffer.numberOfChannels === 0) return [];
 
-  const amostras = buffer.getChannelData(0);
-  const porBalde = Math.max(1, Math.floor(amostras.length / n));
+  const canal = buffer.getChannelData(0);
+  const taxa = buffer.sampleRate || 1;
+  const primeira = Math.max(0, Math.min(Math.floor(deSegundo * taxa), canal.length));
+  const ultima = ateSegundo === undefined
+    ? canal.length
+    : Math.max(primeira, Math.min(Math.ceil(ateSegundo * taxa), canal.length));
+  const total = ultima - primeira;
+  if (total <= 0) return [];
+
+  const porBalde = Math.max(1, Math.floor(total / n));
   const baldes: number[] = [];
 
   for (let i = 0; i < n; i += 1) {
-    const inicio = i * porBalde;
+    const inicio = primeira + i * porBalde;
     // O último balde varre até ao fim: com divisão inexata sobram amostras, e cortá-las faria
     // a onda acabar antes da música.
-    const fim = i === n - 1 ? amostras.length : Math.min(inicio + porBalde, amostras.length);
-    if (inicio >= amostras.length) { baldes.push(0); continue; }
+    const fim = i === n - 1 ? ultima : Math.min(inicio + porBalde, ultima);
+    if (inicio >= ultima) { baldes.push(0); continue; }
 
     let soma = 0;
-    for (let j = inicio; j < fim; j += 1) soma += Math.abs(amostras[j]);
+    for (let j = inicio; j < fim; j += 1) soma += Math.abs(canal[j]);
     baldes.push(soma / (fim - inicio));
   }
 

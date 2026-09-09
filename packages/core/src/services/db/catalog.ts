@@ -5,6 +5,8 @@ import type {
   CatalogProjectMessage,
   CatalogVersion,
   CatalogVersionComment,
+  CatalogTrack,
+  CatalogClip,
   CatalogVersionFile,
 } from '../../interfaces/maestra';
 
@@ -15,6 +17,15 @@ const TABLE = 'catalog_items';
 // versão principal). Sem o `!catalog_versions_project_id_fkey`, o PostgREST considera o vínculo
 // ambíguo, recusa a query inteira e a lista de músicas volta vazia.
 const PROJECT_SELECT = `*, versions:catalog_versions!catalog_versions_project_id_fkey(*, files:catalog_version_files(*), comments:catalog_version_comments(*))`;
+
+/**
+ * O mesmo, mais a MONTAGEM: as pistas da linha do tempo e os clipes dentro delas.
+ *
+ * Separado do `PROJECT_SELECT` de propósito: a LISTA de músicas não desenha linha do tempo
+ * nenhuma, e trazer todos os clipes de todas as gravações de todas as músicas seria pagar por
+ * um editor em cada abertura do catálogo.
+ */
+const PROJECT_SELECT_COM_MONTAGEM = `*, versions:catalog_versions!catalog_versions_project_id_fkey(*, files:catalog_version_files(*), tracks:catalog_tracks(*, clips:catalog_clips(*)), comments:catalog_version_comments(*))`;
 
 const isMissingTable = (error: any) =>
   error?.code === '42P01' || error?.code === 'PGRST205' || /does not exist|relation .* not found/i.test(error?.message || '');
@@ -243,7 +254,7 @@ export const listCatalogProjectItems = async (artistId: string): Promise<Catalog
 };
 
 export const getCatalogProject = async (projectId: string): Promise<CatalogProject> => {
-  const { data, error } = await supabase.from('catalog_projects').select(PROJECT_SELECT).eq('id', projectId).single();
+  const { data, error } = await supabase.from('catalog_projects').select(PROJECT_SELECT_COM_MONTAGEM).eq('id', projectId).single();
   if (!error) return data as CatalogProject;
   if (!isMissingTable(error) && error.code !== 'PGRST116') throw error;
   const { data: legacy, error: legacyError } = await supabase.from(TABLE).select('*').eq('id', projectId).single();
@@ -398,4 +409,114 @@ export const reorderVersionFiles = async (ids: string[]): Promise<void> => {
 export const deleteVersionFile = async (id: string): Promise<void> => {
   const { error } = await supabase.from('catalog_version_files').delete().eq('id', id);
   if (error) throw error;
+};
+
+// ─── A LINHA DO TEMPO: pistas e clipes ──────────────────────────────────────
+//
+// A pista é a faixa; o clipe é o pedaço de áudio que mora nela. Cortar um clipe ao meio não
+// toca no ficheiro: nascem dois clipes que apontam para o mesmo áudio com recortes diferentes.
+// É por isso que a edição é instantânea e não destrói nada.
+
+export const createTrack = async (
+  input: Omit<CatalogTrack, 'id' | 'clips' | 'created_at' | 'updated_at'>,
+): Promise<CatalogTrack> => {
+  const { data, error } = await supabase.from('catalog_tracks').insert(input).select('*').single();
+  if (error) throw error;
+  return data as CatalogTrack;
+};
+
+export const updateTrack = async (
+  id: string,
+  patch: Partial<Pick<CatalogTrack, 'name' | 'position' | 'gain' | 'muted' | 'color_index'>>,
+): Promise<CatalogTrack> => {
+  const { data, error } = await supabase
+    .from('catalog_tracks')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id).select('*').single();
+  if (error) throw error;
+  return data as CatalogTrack;
+};
+
+/** Apagar a pista leva os clipes junto (o banco cascateia). O FICHEIRO fica na biblioteca. */
+export const deleteTrack = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('catalog_tracks').delete().eq('id', id);
+  if (error) throw error;
+};
+
+/**
+ * A nova ordem das pistas, na ordem em que os ids vêm.
+ *
+ * N updates em paralelo, e não uma RPC: são poucas linhas, e uma função no banco para isto
+ * seria mais uma coisa a manter em troca de nada. Se uma falhar, as outras ficam — a tela
+ * recarrega e mostra a ordem real, que é a do banco.
+ */
+export const reorderTracks = async (ids: string[]): Promise<void> => {
+  const agora = new Date().toISOString();
+  const erros = await Promise.all(ids.map(async (id, position) => {
+    const { error } = await supabase
+      .from('catalog_tracks').update({ position, updated_at: agora }).eq('id', id);
+    return error;
+  }));
+  const primeiro = erros.find(Boolean);
+  if (primeiro) throw primeiro;
+};
+
+export const createClip = async (
+  input: Omit<CatalogClip, 'id' | 'created_at' | 'updated_at' | 'file_url' | 'file_name'>,
+): Promise<CatalogClip> => {
+  const { data, error } = await supabase.from('catalog_clips').insert(input).select('*').single();
+  if (error) throw error;
+  return data as CatalogClip;
+};
+
+export const updateClip = async (
+  id: string,
+  patch: Partial<Pick<CatalogClip, 'start_seconds' | 'offset_seconds' | 'duration_seconds' | 'track_id'>>,
+): Promise<CatalogClip> => {
+  const { data, error } = await supabase
+    .from('catalog_clips')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id).select('*').single();
+  if (error) throw error;
+  return data as CatalogClip;
+};
+
+export const deleteClip = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('catalog_clips').delete().eq('id', id);
+  if (error) throw error;
+};
+
+/**
+ * Um ficheiro enviado vira uma pista com um clipe, do princípio ao fim.
+ *
+ * As três escritas numa função só porque é sempre assim que um áudio entra num editor: ele não
+ * é "um ficheiro solto na biblioteca", é uma faixa com som dentro. Fazer isto na tela, em três
+ * chamadas soltas, deixaria ficheiros órfãos sempre que a segunda falhasse.
+ */
+export const criarPistaComArquivo = async (p: {
+  versionId: string;
+  arquivo: CatalogVersionFile;
+  nome: string;
+  position: number;
+  colorIndex: number;
+  duracao: number;
+  /** Em que segundo da linha do tempo o clipe entra. Zero, salvo se largado noutro ponto. */
+  inicio?: number;
+}): Promise<CatalogTrack> => {
+  const pista = await createTrack({
+    version_id: p.versionId,
+    name: p.nome,
+    position: p.position,
+    gain: 1,
+    muted: false,
+    color_index: p.colorIndex,
+  });
+  const clipe = await createClip({
+    track_id: pista.id,
+    file_id: p.arquivo.id,
+    start_seconds: p.inicio ?? 0,
+    offset_seconds: 0,
+    duration_seconds: p.duracao,
+  });
+  return { ...pista, clips: [{ ...clipe, file_url: p.arquivo.file_url }] };
 };

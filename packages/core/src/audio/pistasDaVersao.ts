@@ -1,67 +1,86 @@
-import type { CatalogVersion, CatalogVersionFile } from '../interfaces/maestra';
-import type { Pista } from './mesa';
+import type { CatalogTrack, CatalogVersion, CatalogVersionFile } from '../interfaces/maestra';
+import type { Clipe, Pista } from './mesa';
 
-// Que pistas a mesa carrega para uma gravação.
+// A montagem de uma gravação, traduzida para o que a mesa toca.
 //
-// Uma gravação (versão) tem sempre a sua MIX — o `audio_file`, que é o que o catálogo toca e o
-// que o certificado assina — e pode ter STEMS, as camadas dela.
-//
-// ⚠️ A MIX ENTRA MUDA QUANDO HÁ STEMS, e é a decisão menos óbvia deste arquivo. A mix já é a
-// soma das camadas: tocá-la junto com elas faz cada instrumento soar duas vezes, ligeiramente
-// desalinhado (a mix passou por processamento que os stems não têm), o que soa a defeito. Muda,
-// ela continua ali para quem quiser SOLAR e comparar "como ficou" com "o que está por baixo" —
-// que é exatamente o gesto que um editor de stems tem de permitir.
+// O banco guarda três coisas: os FICHEIROS enviados (`catalog_version_files`), as PISTAS da
+// linha do tempo (`catalog_tracks`) e os CLIPES dentro delas (`catalog_clips`). A mesa só quer
+// saber de pistas e clipes com URL, início, recorte e duração — esta camada faz a ponte, e é
+// aqui que se resolve a única junção que o banco não traz pronta: clipe → ficheiro → URL.
 
-/** O nome da pista da mix. A estrela liga-a visualmente à gravação principal. */
+/** O nome da pista da mix, quando a gravação ainda não foi montada em pistas. */
 export const NOME_DA_MIX = 'Mix ★';
+/** O id da pista que a mix ocupa. Não existe no banco: é montada na hora. */
+export const ID_DA_MIX = 'mix';
 
-const ehStem = (f: CatalogVersionFile) => f.kind === 'stem';
+export const ehPistaDaMix = (id: string): boolean => id === ID_DA_MIX;
 
-/**
- * Os stems de uma gravação, na ordem em que a mesa os mostra.
- *
- * `position` primeiro, `created_at` como desempate: duas pistas com a mesma posição (um envio
- * em lote que gravou tudo com 0, por exemplo) ficam na ordem em que chegaram, e não numa ordem
- * que muda a cada leitura.
- */
-export const stemsDaVersao = (versao?: CatalogVersion | null): CatalogVersionFile[] =>
-  (versao?.files ?? [])
-    .filter(ehStem)
-    .slice()
-    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0)
-      || String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')));
+const porPosicao = <T extends { position?: number; created_at?: string }>(a: T, b: T) =>
+  (a.position ?? 0) - (b.position ?? 0)
+  || String(a.created_at ?? '').localeCompare(String(b.created_at ?? ''));
+
+/** As faixas da gravação, na ordem em que a tela as empilha. */
+export const pistasDaGravacao = (versao?: CatalogVersion | null): CatalogTrack[] =>
+  (versao?.tracks ?? []).slice().sort(porPosicao);
 
 /**
- * As pistas da mesa: a mix mais os stems.
+ * A montagem que a mesa toca.
  *
- * Sem stems, a mix entra sozinha e ACESA — a mesa com uma pista é o tocador da gravação, e é o
- * que toda versão que já existe hoje passa a ter, sem ninguém enviar nada.
+ * ⚠️ SEM MONTAGEM, A MIX ENTRA SOZINHA. Toda gravação que já existe hoje tem um `audio_file` e
+ * nenhuma pista — e tem de continuar a tocar ao abrir, sem ninguém montar nada. Ela vira uma
+ * pista com um clipe só, do segundo zero ao fim. Assim que a primeira pista de verdade é
+ * criada, a mix sai de cena: ela é a SOMA das camadas, e tocá-la junto faria cada instrumento
+ * soar duas vezes.
  */
-export const pistasDaVersao = (versao?: CatalogVersion | null): Pista[] => {
+export const montagemDaVersao = (versao?: CatalogVersion | null): Pista[] => {
   if (!versao) return [];
-  const stems = stemsDaVersao(versao);
-  const pistas: Pista[] = [];
 
-  if (versao.audio_file) {
-    pistas.push({
-      id: `mix:${versao.id}`,
-      nome: NOME_DA_MIX,
+  const faixas = pistasDaGravacao(versao);
+  if (faixas.length) {
+    const porId = new Map((versao.files ?? []).map((f: CatalogVersionFile) => [f.id, f]));
+    return faixas.map((faixa) => ({
+      id: faixa.id,
+      nome: faixa.name,
+      ganhoInicial: faixa.gain ?? 1,
+      mudaInicial: faixa.muted ?? false,
+      clipes: (faixa.clips ?? [])
+        .map((clipe): Clipe | null => {
+          const url = clipe.file_url ?? porId.get(clipe.file_id)?.file_url;
+          if (!url) return null;
+          return {
+            id: clipe.id,
+            url,
+            inicio: Number(clipe.start_seconds) || 0,
+            recorte: Number(clipe.offset_seconds) || 0,
+            duracao: Number(clipe.duration_seconds) || 0,
+          };
+        })
+        // Um clipe sem ficheiro é uma linha órfã do banco: some da mesa em vez de a derrubar.
+        .filter((c): c is Clipe => c !== null && c.duracao > 0)
+        .sort((a, b) => a.inicio - b.inicio),
+    }));
+  }
+
+  if (!versao.audio_file) return [];
+  return [{
+    id: ID_DA_MIX,
+    nome: NOME_DA_MIX,
+    clipes: [{
+      id: `${ID_DA_MIX}:${versao.id}`,
       url: versao.audio_file,
-      mudaInicial: stems.length > 0,
-    });
-  }
-
-  for (const stem of stems) {
-    pistas.push({
-      id: stem.id,
-      nome: stem.name,
-      url: stem.file_url,
-      ganhoInicial: stem.gain ?? 1,
-    });
-  }
-
-  return pistas;
+      inicio: 0,
+      recorte: 0,
+      // A duração real chega com o buffer; até lá, um número grande o bastante para o clipe
+      // não ser cortado. A mesa nunca toca além do fim do ficheiro — o contexto trata disso.
+      duracao: DURACAO_DESCONHECIDA,
+    }],
+  }];
 };
 
-/** É a pista da mix? A tela trata-a à parte: não se renomeia, não se apaga, não se reordena. */
-export const ehPistaDaMix = (id: string): boolean => id.startsWith('mix:');
+/**
+ * Quanto dura um clipe cuja duração ainda não se sabe.
+ *
+ * Uma hora: mais do que qualquer gravação que passe por aqui, e o contexto simplesmente pára a
+ * fonte no fim do buffer. O contrário — chutar baixo — cortaria a música no meio.
+ */
+export const DURACAO_DESCONHECIDA = 3600;
