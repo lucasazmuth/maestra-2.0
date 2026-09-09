@@ -60,6 +60,14 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(corDaPista(-1)).toBe(CORES_DAS_PISTAS[5]);
   });
 
+  // ⚠️ O fechar e o tela cheia são CÍRCULOS. É o idioma do produto — o voltar, o sino, o menu
+  // do sistema e o fechar das folhas são todos redondos —, e um quadradinho aqui lia como "mais
+  // um controlo da tela" em vez de "isto tira você daqui".
+  it('os botões do cabeçalho são redondos', () => {
+    expect(editor).toContain("borderRadius: '50%'");
+    expect(editor).toContain('style={redondo}');
+  });
+
   // ⚠️ Nada de seletor de TIPO enquanto só o áudio toca: um controlo que guarda uma escolha
   // sem consequência ensina errado — a pista parece mudar de natureza e não muda.
   it('a pista não oferece tipo nenhum', () => {

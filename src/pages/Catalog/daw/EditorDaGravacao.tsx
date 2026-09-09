@@ -36,6 +36,20 @@ const relogio = (segundos: number) => {
   return `${String(m).padStart(2, '0')}:${String(resto).padStart(2, '0')}.${decimo}`;
 };
 
+/**
+ * O botão redondo do cabeçalho: fechar, abrir em tela cheia.
+ *
+ * ⚠️ CIRCULAR, e não um quadrado de cantos arredondados. É o idioma do produto — o voltar, o
+ * sino, o menu do sistema e o fechar das folhas são todos círculos —, e um quadradinho aqui
+ * lia como "mais um controlo da tela" em vez de "isto tira você daqui".
+ */
+const redondo = {
+  width: 28, height: 28, borderRadius: '50%',
+  background: DS.color.bgCampo, border: `1px solid ${DS.color.borda}`,
+  color: DS.color.textoApoio, cursor: 'pointer',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+} as const;
+
 const botaozinho = (ativo: boolean, corAtiva?: string) => ({
   height: 24, minWidth: 28, padding: '0 7px',
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 3,
@@ -288,12 +302,7 @@ export const EditorDaGravacao: FC<{
           onClick={acoes.aoSair}
           title='Voltar para Músicas'
           aria-label='Voltar para Músicas'
-          style={{
-            width: 28, height: 28, borderRadius: DS.raio.medio,
-            background: DS.color.bgCampo, border: `1px solid ${DS.color.borda}`,
-            color: DS.color.textoApoio, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}
+          style={redondo}
         >
           <FiX size={13} />
         </button>
@@ -386,12 +395,7 @@ export const EditorDaGravacao: FC<{
           onClick={acoes.aoAbrirCompleta}
           title='Abrir a sala desta gravação'
           aria-label='Abrir a sala desta gravação'
-          style={{
-            width: 28, height: 28, borderRadius: DS.raio.medio,
-            background: 'transparent', border: `1px solid ${DS.color.borda}`,
-            color: DS.color.textoFraco, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}
+          style={{ ...redondo, background: 'transparent', color: DS.color.textoFraco }}
         >
           <FiMaximize2 size={12} />
         </button>
