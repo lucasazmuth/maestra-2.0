@@ -1,6 +1,7 @@
 import { render, userEvent } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { Provider } from 'react-redux';
+import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
 import { store } from '@maestra/core/store/store';
 import Plano from '../artista/[id]/plano';
@@ -43,7 +44,19 @@ const semear = () =>
     payload: [comDiagnostico, semDiagnostico],
   });
 
-const montar = () => render(<Provider store={store}><Plano /></Provider>);
+// A `Folha` (a casca dos modais) lê a margem do aparelho, e `useSafeAreaInsets` exige o
+// provedor. No app ele está na raiz; aqui precisa ser montado, como já fazem os testes da
+// criação de perfil e do chat.
+const MEDIDAS: Metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
+
+const montar = () => render(
+  <SafeAreaProvider initialMetrics={MEDIDAS}>
+    <Provider store={store}><Plano /></Provider>
+  </SafeAreaProvider>,
+);
 
 describe('plano de acao', () => {
   beforeEach(() => {
@@ -204,7 +217,11 @@ describe('plano de acao', () => {
 
     await usuario.press(tela.getByLabelText('Abrir detalhes de: Montar proposta com cachê e rider'));
 
-    expect(await tela.findByText('TAREFA')).toBeTruthy();
+    // O sobretítulo "TAREFA" saiu com a padronização das folhas: ele repetia o módulo de onde a
+    // pessoa veio, e quem identifica a ficha agora é o título, que é a própria tarefa. Mas esse
+    // texto também está na LISTA atrás, então quem prova que a folha abriu é o botão de fechar
+    // dela, que só existe com a folha na tela.
+    expect(await tela.findByLabelText('Fechar')).toBeTruthy();
     expect(tela.getByLabelText('Geral')).toBeTruthy();
     expect(tela.getByLabelText('Comentários')).toBeTruthy();
     expect(tela.getByLabelText('Status: A fazer')).toBeTruthy();

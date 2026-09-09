@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
@@ -10,6 +9,8 @@ import { COR, COR_JAM, RAIO } from '@maestra/core/constants/design';
 import type { CatalogVersion } from '@maestra/core/interfaces/maestra';
 import { tituloDoArquivo } from '@maestra/core/services/armazenamento';
 import * as catalogo from '@maestra/core/services/db/catalog';
+
+import { Bloco, Folha, Linha } from '@/casca/Folha';
 
 import {
   duracaoDoAudio, enviarParaOCatalogo, escolherAudio, type ArquivoEscolhido,
@@ -162,30 +163,19 @@ export const FolhaDaVersao = ({
   };
 
   return (
-    <Modal visible={aberta} animationType="slide" transparent onRequestClose={aoFechar}>
-      <KeyboardAvoidingView
-        style={estilos.fundo}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={estilos.folha}>
-          <View style={estilos.cabecalho}>
-            <View style={estilos.flex}>
-              <Text style={estilos.sobrenome}>VERSÃO</Text>
-              <Text style={estilos.titulo}>
-                {editando ? `Editar V${versao!.version_number}` : `Nova versão (V${numero})`}
-              </Text>
-              <Text style={estilos.apoio}>
-                {editando
-                  ? `Uma gravação de "${nomeDoProjeto}". Alterações aqui não mudam a ficha da música.`
-                  : `Envie uma nova gravação de "${nomeDoProjeto}" — a música em si continua a mesma.`}
-              </Text>
-            </View>
-            <Pressable onPress={aoFechar} hitSlop={10} accessibilityRole="button" accessibilityLabel="Fechar">
-              <Feather name="x" size={20} color={COR_JAM.apoio} />
-            </Pressable>
-          </View>
-
-          <ScrollView contentContainerStyle={estilos.corpo} keyboardShouldPersistTaps="handled">
+    <Folha
+      aberta={aberta}
+      titulo={editando ? `Editar V${versao!.version_number}` : `Nova versão (V${numero})`}
+      aoFechar={aoFechar}
+      acao={{
+        rotulo: editando ? 'Salvar alterações' : 'Enviar versão',
+        aoTocar: salvar,
+        carregando: salvando,
+      }}
+      destrutiva={editando ? { rotulo: 'Excluir', aoTocar: excluir } : undefined}
+    >
+      <Bloco>
+        <Linha primeira>
             <View>
               <Text style={estilos.rotulo}>TÍTULO DA VERSÃO *</Text>
               <TextInput
@@ -250,52 +240,14 @@ export const FolhaDaVersao = ({
             )}
 
             {!!erro && <Text style={estilos.erro}>{erro}</Text>}
-          </ScrollView>
-
-          <View style={estilos.rodape}>
-            {editando ? (
-              <Pressable onPress={excluir} accessibilityRole="button" accessibilityLabel="Excluir versão">
-                <Text style={estilos.excluir}>Excluir</Text>
-              </Pressable>
-            ) : (
-              <View />
-            )}
-            <Pressable
-              style={[estilos.salvar, salvando && estilos.salvarOcupado]}
-              onPress={salvar}
-              disabled={salvando}
-              accessibilityRole="button"
-              accessibilityLabel={editando ? 'Salvar alterações' : 'Enviar versão'}
-            >
-              {salvando
-                ? <ActivityIndicator size="small" color={COR_JAM.papel} />
-                : <Text style={estilos.salvarTexto}>{editando ? 'Salvar alterações' : 'Enviar versão'}</Text>}
-            </Pressable>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+        </Linha>
+      </Bloco>
+    </Folha>
   );
 };
 
 const estilos = StyleSheet.create({
-  fundo: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(23, 35, 58, .45)' },
-  folha: {
-    maxHeight: '92%', backgroundColor: COR_JAM.papel,
-    borderTopLeftRadius: 26, borderTopRightRadius: 26,
-  },
   flex: { flex: 1, minWidth: 0 },
-  cabecalho: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    padding: 22, borderBottomWidth: 1, borderBottomColor: COR_JAM.fio,
-  },
-  sobrenome: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 1.76,
-    textTransform: 'uppercase', color: COR_JAM.rotulo,
-  },
-  titulo: { fontSize: 20, fontWeight: '800', color: COR_JAM.titulo, marginTop: 6 },
-  apoio: { fontSize: 12, color: COR_JAM.apoio, lineHeight: 18, marginTop: 6 },
-  corpo: { padding: 22, gap: 18 },
   rotulo: {
     fontSize: 11, fontWeight: '800', letterSpacing: 1.76,
     textTransform: 'uppercase', color: COR_JAM.rotulo, marginBottom: 10,
@@ -319,16 +271,4 @@ const estilos = StyleSheet.create({
   principal: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   principalTexto: { fontSize: 13, fontWeight: '800', color: COR_JAM.texto },
   erro: { fontSize: 13, color: COR.erro, lineHeight: 19 },
-  rodape: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 22, paddingTop: 14, paddingBottom: 28,
-    borderTopWidth: 1, borderTopColor: COR_JAM.fio,
-  },
-  excluir: { fontSize: 14, fontWeight: '800', color: COR.erro },
-  salvar: {
-    minHeight: 46, minWidth: 150, paddingHorizontal: 22, borderRadius: 14,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: COR.primaria,
-  },
-  salvarOcupado: { opacity: 0.7 },
-  salvarTexto: { fontSize: 15, fontWeight: '800', color: COR_JAM.papel },
 });

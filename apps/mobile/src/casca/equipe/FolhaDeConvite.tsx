@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, Text, TextInput, View,
-} from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
-import Feather from '@expo/vector-icons/Feather';
-
-import { COR, COR_EQUIPE, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_EQUIPE } from '@maestra/core/constants/design';
 import type { AccessLevel, ArtistMember } from '@maestra/core/interfaces/maestra';
 import * as membrosDb from '@maestra/core/services/db/members';
+
+import { Bloco, Folha, Linha } from '@/casca/Folha';
 
 import { Permissoes } from '@/casca/equipe/Permissoes';
 
@@ -68,26 +65,14 @@ export const FolhaDeConvite = ({ aberta, artistaId, aoFechar, aoConvidar }: {
   };
 
   return (
-    <Modal visible={aberta} animationType="slide" onRequestClose={aoFechar}>
-      <KeyboardAvoidingView
-        style={estilos.folha}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={estilos.cabecalho}>
-          <View style={estilos.flex}>
-            <Text style={estilos.sobrenome}>EQUIPE</Text>
-            <View style={estilos.linhaDoTitulo}>
-              <View style={estilos.ponto} />
-              <Text style={estilos.titulo}>Convidar membro</Text>
-            </View>
-            <Text style={estilos.apoio}>Envie um convite e defina os acessos iniciais.</Text>
-          </View>
-          <Pressable onPress={aoFechar} hitSlop={10} accessibilityRole="button" accessibilityLabel="Fechar">
-            <Feather name="x" size={20} color={COR_EQUIPE.email} />
-          </Pressable>
-        </View>
-
-        <ScrollView contentContainerStyle={estilos.corpo} keyboardShouldPersistTaps="handled">
+    <Folha
+      aberta={aberta}
+      titulo="Convidar membro"
+      aoFechar={aoFechar}
+      acao={{ rotulo: 'Enviar convite', aoTocar: convidar, carregando: enviando }}
+    >
+      <Bloco rotulo="Quem">
+        <Linha primeira>
           <View style={estilos.campo}>
             <Text style={estilos.rotulo}>Nome</Text>
             <TextInput
@@ -99,7 +84,9 @@ export const FolhaDeConvite = ({ aberta, artistaId, aoFechar, aoConvidar }: {
               accessibilityLabel="Nome do convidado"
             />
           </View>
+        </Linha>
 
+        <Linha>
           <View style={estilos.campo}>
             <Text style={estilos.rotulo}>E-mail *</Text>
             <TextInput
@@ -114,72 +101,32 @@ export const FolhaDeConvite = ({ aberta, artistaId, aoFechar, aoConvidar }: {
               accessibilityLabel="E-mail do convidado"
             />
           </View>
+        </Linha>
+      </Bloco>
 
-          <View style={estilos.campo}>
-            <Text style={estilos.subtitulo}>O que esta pessoa pode acessar</Text>
-            <Text style={estilos.apoioDoCampo}>
-              Cada módulo marcado libera ver e editar aquele módulo. Pode marcar mais de um, e dá
-              para alterar depois.
-            </Text>
-            <Permissoes escolhidos={niveis} aoMudar={setNiveis} />
-          </View>
+      {/* A explicação das permissões FICA: ela não descreve a tela, descreve a regra (marcar um
+          módulo libera ver e editar, e dá para mudar depois). Sem ela, a pessoa marca no escuro. */}
+      <Bloco rotulo="O que esta pessoa pode acessar">
+        <Linha primeira>
+          <Text style={estilos.apoioDoCampo}>
+            Cada módulo marcado libera ver e editar aquele módulo. Pode marcar mais de um, e dá
+            para alterar depois.
+          </Text>
+          <Permissoes escolhidos={niveis} aoMudar={setNiveis} />
+        </Linha>
+      </Bloco>
 
-          {!!erro && <Text style={estilos.erro}>{erro}</Text>}
-        </ScrollView>
-
-        <View style={estilos.rodape}>
-          <Pressable
-            style={[estilos.enviar, enviando && estilos.enviarOcupado]}
-            onPress={convidar}
-            disabled={enviando}
-            accessibilityRole="button"
-            accessibilityLabel="Enviar convite"
-          >
-            {enviando
-              ? <ActivityIndicator size="small" color={COR.superficie} />
-              : <Text style={estilos.enviarTexto}>Enviar convite</Text>}
-          </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      {!!erro && <Text style={estilos.erro}>{erro}</Text>}
+    </Folha>
   );
 };
 
+// A casca mora na `Folha`. Aqui ficam só os campos.
 const estilos = StyleSheet.create({
-  folha: { flex: 1, backgroundColor: COR.superficie },
-  flex: { flex: 1, minWidth: 0 },
-  cabecalho: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    paddingTop: 60, paddingHorizontal: 22, paddingBottom: 18,
-    borderBottomWidth: 1, borderBottomColor: COR_EQUIPE.fio,
-  },
-  sobrenome: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 1.6,
-    textTransform: 'uppercase', color: COR_EQUIPE.email,
-  },
-  linhaDoTitulo: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
-  ponto: { width: 8, height: 8, borderRadius: 4, backgroundColor: COR.primaria },
-  titulo: { fontSize: 20, fontWeight: '800', color: COR_EQUIPE.nome },
-  apoio: { fontSize: 13, color: COR_EQUIPE.email, lineHeight: 19, marginTop: 8 },
-  corpo: { padding: 22, gap: 20 },
-  campo: { gap: 8 },
+  campo: { gap: 6 },
   rotulo: { fontSize: 13, fontWeight: '700', color: COR_EQUIPE.email },
-  subtitulo: { fontSize: 14, fontWeight: '800', color: COR_EQUIPE.nome },
-  apoioDoCampo: { fontSize: 12, lineHeight: 18, color: COR_EQUIPE.permissaoApoio, marginBottom: 4 },
-  entrada: {
-    minHeight: 46, paddingHorizontal: 14,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_EQUIPE.contorno,
-    backgroundColor: COR_EQUIPE.permissaoFundo, fontSize: 15, color: COR_EQUIPE.nome,
-  },
-  erro: { fontSize: 13, color: COR.erro, lineHeight: 19 },
-  rodape: {
-    paddingHorizontal: 22, paddingTop: 14, paddingBottom: 34,
-    borderTopWidth: 1, borderTopColor: COR_EQUIPE.fio,
-  },
-  enviar: {
-    minHeight: 46, borderRadius: RAIO.campo,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: COR.primaria,
-  },
-  enviarOcupado: { opacity: 0.7 },
-  enviarTexto: { fontSize: 15, fontWeight: '700', color: COR.superficie },
+  apoioDoCampo: { fontSize: 12, lineHeight: 18, color: COR_EQUIPE.permissaoApoio, marginBottom: 10 },
+  // Sem moldura: o campo já está dentro do bloco branco, e quem separa é a divisória.
+  entrada: { paddingVertical: 2, fontSize: 15, color: COR_EQUIPE.nome },
+  erro: { fontSize: 13, color: COR.erro, lineHeight: 19, paddingHorizontal: 4 },
 });

@@ -252,8 +252,10 @@ describe('catalogo: as duas abas e a ficha', () => {
 
     await userEvent.setup().press(tela.getByLabelText('Nova música'));
 
-    // O cabeçalho da ficha mostra o NOME da faixa; sem título ainda, mostra o que ela é.
-    expect(tela.getByText(/A ficha da obra/)).toBeTruthy();
+    // A linha "A ficha da obra…" saiu com a padronização das folhas: descrição embaixo do título
+    // não existe mais em nenhum modal. Quem prova que a ficha abriu é o botão de fechar dela, que
+    // só existe com a folha na tela — o rótulo "Nova música" também é o do botão que a abre.
+    expect(tela.getByLabelText('Fechar')).toBeTruthy();
     expect(tela.getByLabelText('Título').props.value).toBe('');
   });
 

@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, Text, TextInput, View,
-} from 'react-native';
+import { Alert, Image, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import Feather from '@expo/vector-icons/Feather';
-
-import { COR, COR_EQUIPE, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_EQUIPE } from '@maestra/core/constants/design';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { AccessLevel, ArtistMember } from '@maestra/core/interfaces/maestra';
 import * as membrosDb from '@maestra/core/services/db/members';
+
+import { Bloco, Folha, Linha } from '@/casca/Folha';
 
 import { Permissoes } from '@/casca/equipe/Permissoes';
 
@@ -100,28 +97,16 @@ export const FolhaDoMembro = ({ membro, souODono, foto, aoFechar, aoSalvar, aoRe
   };
 
   return (
-    <Modal visible={!!membro} animationType="slide" onRequestClose={aoFechar}>
-      <KeyboardAvoidingView
-        style={estilos.folha}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={estilos.cabecalho}>
-          <View style={estilos.flex}>
-            <Text style={estilos.sobrenome}>MEMBRO DA EQUIPE</Text>
-            <View style={estilos.linhaDoTitulo}>
-              <View style={estilos.pontoDoTitulo} />
-              <Text style={estilos.titulo} numberOfLines={2}>
-                {membro?.name || membro?.email}
-              </Text>
-            </View>
-            <Text style={estilos.apoio}>Revise os dados e os acessos desta pessoa.</Text>
-          </View>
-          <Pressable onPress={aoFechar} hitSlop={10} accessibilityRole="button" accessibilityLabel="Fechar">
-            <Feather name="x" size={20} color={COR_EQUIPE.email} />
-          </Pressable>
-        </View>
-
-        <ScrollView contentContainerStyle={estilos.corpo} keyboardShouldPersistTaps="handled">
+    <Folha
+      aberta={!!membro}
+      titulo={membro?.name || membro?.email || 'Membro'}
+      aoFechar={aoFechar}
+      // Quem é membro só LÊ: sem poder salvar, um rodapé com "Salvar" seria um botão que mente.
+      acao={souODono ? { rotulo: 'Salvar alterações', aoTocar: salvar, carregando: salvando } : undefined}
+      destrutiva={souODono ? { rotulo: 'Excluir', aoTocar: remover } : undefined}
+    >
+      <Bloco>
+        <Linha primeira>
           <View style={estilos.resumo}>
             <Image source={{ uri: foto || ARTISTS_DEFAULT_IMAGE }} style={estilos.avatar} />
             <View style={estilos.flex}>
@@ -129,7 +114,9 @@ export const FolhaDoMembro = ({ membro, souODono, foto, aoFechar, aoSalvar, aoRe
               <Text style={estilos.convidado}>Convidado para este perfil</Text>
             </View>
           </View>
+        </Linha>
 
+        <Linha>
           <View style={estilos.campo}>
             <Text style={estilos.rotulo}>Nome</Text>
             <TextInput
@@ -142,7 +129,9 @@ export const FolhaDoMembro = ({ membro, souODono, foto, aoFechar, aoSalvar, aoRe
               accessibilityLabel="Nome do membro"
             />
           </View>
+        </Linha>
 
+        <Linha>
           <View style={estilos.campo}>
             <Text style={estilos.rotulo}>E-mail</Text>
             {/* Não editável nem para o dono: é a chave do convite. */}
@@ -153,58 +142,26 @@ export const FolhaDoMembro = ({ membro, souODono, foto, aoFechar, aoSalvar, aoRe
               accessibilityLabel="E-mail do membro"
             />
           </View>
+        </Linha>
+      </Bloco>
 
-          <View style={estilos.campo}>
-            <Text style={estilos.subtitulo}>O que esta pessoa pode acessar</Text>
-            <Text style={estilos.apoioDoCampo}>
-              Cada módulo marcado libera ver e editar aquele módulo. Pode marcar mais de um.
-            </Text>
-            <Permissoes escolhidos={niveis} travado={!souODono} aoMudar={setNiveis} />
-          </View>
+      {/* A explicação FICA: ela descreve a REGRA das permissões, não a tela. */}
+      <Bloco rotulo="O que esta pessoa pode acessar">
+        <Linha primeira>
+          <Text style={estilos.apoioDoCampo}>
+            Cada módulo marcado libera ver e editar aquele módulo. Pode marcar mais de um.
+          </Text>
+          <Permissoes escolhidos={niveis} travado={!souODono} aoMudar={setNiveis} />
+        </Linha>
+      </Bloco>
 
-          {!!erro && <Text style={estilos.erro}>{erro}</Text>}
-        </ScrollView>
-
-        {souODono && (
-          <View style={estilos.rodape}>
-            <Pressable onPress={remover} accessibilityRole="button" accessibilityLabel="Excluir membro">
-              <Text style={estilos.remover}>Excluir membro</Text>
-            </Pressable>
-            <Pressable
-              style={[estilos.salvar, salvando && estilos.salvarOcupado]}
-              onPress={salvar}
-              disabled={salvando}
-              accessibilityRole="button"
-              accessibilityLabel="Salvar alterações"
-            >
-              {salvando
-                ? <ActivityIndicator size="small" color={COR.superficie} />
-                : <Text style={estilos.salvarTexto}>Salvar alterações</Text>}
-            </Pressable>
-          </View>
-        )}
-      </KeyboardAvoidingView>
-    </Modal>
+      {!!erro && <Text style={estilos.erro}>{erro}</Text>}
+    </Folha>
   );
 };
 
 const estilos = StyleSheet.create({
-  folha: { flex: 1, backgroundColor: COR.superficie },
   flex: { flex: 1, minWidth: 0 },
-  cabecalho: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    paddingTop: 60, paddingHorizontal: 22, paddingBottom: 18,
-    borderBottomWidth: 1, borderBottomColor: COR_EQUIPE.fio,
-  },
-  sobrenome: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 1.6,
-    textTransform: 'uppercase', color: COR_EQUIPE.email,
-  },
-  linhaDoTitulo: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
-  pontoDoTitulo: { width: 8, height: 8, borderRadius: 4, backgroundColor: COR.primaria },
-  titulo: { flex: 1, fontSize: 20, fontWeight: '800', color: COR_EQUIPE.nome },
-  apoio: { fontSize: 13, color: COR_EQUIPE.email, lineHeight: 19, marginTop: 8 },
-  corpo: { padding: 22, gap: 20 },
   resumo: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: COR_EQUIPE.avatarFundo },
   convidado: { fontSize: 12, color: COR_EQUIPE.email, marginTop: 6 },
@@ -213,25 +170,10 @@ const estilos = StyleSheet.create({
   seloTexto: { fontSize: 10, fontWeight: '800' },
   campo: { gap: 8 },
   rotulo: { fontSize: 13, fontWeight: '700', color: COR_EQUIPE.email },
-  subtitulo: { fontSize: 14, fontWeight: '800', color: COR_EQUIPE.nome },
   apoioDoCampo: { fontSize: 12, lineHeight: 18, color: COR_EQUIPE.permissaoApoio, marginBottom: 4 },
-  entrada: {
-    minHeight: 46, paddingHorizontal: 14,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_EQUIPE.contorno,
-    backgroundColor: COR_EQUIPE.permissaoFundo, fontSize: 15, color: COR_EQUIPE.nome,
-  },
+  // Sem moldura: o campo já está dentro do bloco branco, e quem o separa do vizinho é a
+  // divisória. Com a borda, cada campo virava uma caixa dentro de outra caixa.
+  entrada: { paddingVertical: 2, fontSize: 15, color: COR_EQUIPE.nome },
   entradaTravada: { color: COR_EQUIPE.email },
-  erro: { fontSize: 13, color: COR.erro, lineHeight: 19 },
-  rodape: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 22, paddingTop: 14, paddingBottom: 34,
-    borderTopWidth: 1, borderTopColor: COR_EQUIPE.fio,
-  },
-  remover: { fontSize: 14, fontWeight: '700', color: COR.erro },
-  salvar: {
-    minHeight: 46, minWidth: 170, paddingHorizontal: 22, borderRadius: RAIO.campo,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: COR.primaria,
-  },
-  salvarOcupado: { opacity: 0.7 },
-  salvarTexto: { fontSize: 15, fontWeight: '700', color: COR.superficie },
+  erro: { fontSize: 13, color: COR.erro, lineHeight: 19, paddingHorizontal: 4 },
 });

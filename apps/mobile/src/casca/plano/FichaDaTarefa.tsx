@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, Text, TextInput, View,
+  Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_PLANO, RAIO } from '@maestra/core/constants/design';
+
+import { Folha } from '@/casca/Folha';
 import { TASK_TYPES } from '@maestra/core/constants/maestra';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { ActionTask, TaskComment } from '@maestra/core/interfaces/maestra';
@@ -172,26 +173,25 @@ export const FichaDaTarefa = ({
   };
 
   return (
-    <Modal visible={aberta} animationType="slide" onRequestClose={aoFechar}>
-      <KeyboardAvoidingView
-        style={estilos.folha}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={estilos.cabecalho}>
-          <View style={estilos.flex}>
-            <Text style={estilos.sobrenome}>TAREFA</Text>
-            <View style={estilos.linhaDoTitulo}>
-              <View style={estilos.ponto} />
-              <Text style={estilos.titulo} numberOfLines={2}>
-                {tarefa?.description || 'Tarefa'}
-              </Text>
-            </View>
-            {!!estrategia && <Text style={estilos.apoio} numberOfLines={2}>{estrategia}</Text>}
+    <Folha
+      aberta={aberta}
+      titulo={tarefa?.description || 'Tarefa'}
+      aoFechar={aoFechar}
+      // Salvar só na aba Geral: na de comentários não há formulário para gravar.
+      acao={aba === 'geral' ? { rotulo: 'Salvar alterações', aoTocar: salvar, carregando: salvando } : undefined}
+      destrutiva={{ rotulo: 'Excluir', aoTocar: excluir }}
+      semRolagem
+    >
+      <View style={estilos.miolo}>
+        {/* A ESTRATÉGIA não é descrição da tela, é o endereço da tarefa: sem ela não há como
+            saber a que estratégia esta tarefa pertence, e este era o único lugar que dizia.
+            Saiu de baixo do título e virou uma linha do corpo. */}
+        {!!estrategia && (
+          <View style={estilos.estrategia}>
+            <Text style={estilos.estrategiaRotulo}>Estratégia</Text>
+            <Text style={estilos.estrategiaNome} numberOfLines={2}>{estrategia}</Text>
           </View>
-          <Pressable onPress={aoFechar} hitSlop={10} accessibilityRole="button" accessibilityLabel="Fechar">
-            <Feather name="x" size={20} color={COR_PLANO.rotulo} />
-          </Pressable>
-        </View>
+        )}
 
         <View style={estilos.abas}>
           {([['geral', 'Geral'], ['comentarios', `Comentários${comentarios.length ? ` (${comentarios.length})` : ''}`]] as const)
@@ -377,26 +377,7 @@ export const FichaDaTarefa = ({
             </>
           )}
         </ScrollView>
-
-        <View style={estilos.rodape}>
-          <Pressable onPress={excluir} accessibilityRole="button" accessibilityLabel="Excluir tarefa">
-            <Text style={estilos.excluir}>Excluir tarefa</Text>
-          </Pressable>
-          {aba === 'geral' && (
-            <Pressable
-              style={[estilos.salvar, salvando && estilos.salvarOcupado]}
-              onPress={salvar}
-              disabled={salvando}
-              accessibilityRole="button"
-              accessibilityLabel="Salvar alterações"
-            >
-              {salvando
-                ? <ActivityIndicator size="small" color={COR.superficie} />
-                : <Text style={estilos.salvarTexto}>Salvar alterações</Text>}
-            </Pressable>
-          )}
-        </View>
-      </KeyboardAvoidingView>
+      </View>
 
       <Escolha
         aberta={menu === 'estado'}
@@ -423,25 +404,17 @@ export const FichaDaTarefa = ({
         aoEscolher={setResponsavel}
         aoFechar={() => setMenu(null)}
       />
-    </Modal>
+    </Folha>
   );
 };
 
+// A casca mora na `Folha`. Aqui ficam as abas, a estratégia e os campos.
 const estilos = StyleSheet.create({
-  folha: { flex: 1, backgroundColor: COR.superficie },
+  miolo: { flex: 1, minHeight: 0 },
+  estrategia: { paddingHorizontal: 16, paddingBottom: 12, gap: 2 },
+  estrategiaRotulo: { fontSize: 11, fontWeight: '800', color: COR_PLANO.rotulo, letterSpacing: 0.4 },
+  estrategiaNome: { fontSize: 13, color: COR_PLANO.rotulo, lineHeight: 18 },
   flex: { flex: 1, minWidth: 0 },
-  cabecalho: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    paddingTop: 60, paddingHorizontal: 22, paddingBottom: 18,
-  },
-  sobrenome: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 1.6,
-    textTransform: 'uppercase', color: COR_PLANO.rotulo,
-  },
-  linhaDoTitulo: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
-  ponto: { width: 8, height: 8, borderRadius: 4, backgroundColor: COR.primaria },
-  titulo: { flex: 1, fontSize: 20, fontWeight: '800', color: COR_PLANO.titulo },
-  apoio: { fontSize: 13, color: COR_PLANO.legenda, lineHeight: 19, marginTop: 8 },
   abas: {
     flexDirection: 'row', gap: 22, paddingHorizontal: 22,
     borderBottomWidth: 1, borderBottomColor: COR_PLANO.fio,
@@ -496,16 +469,4 @@ const estilos = StyleSheet.create({
   },
   enviarApagado: { opacity: 0.45 },
 
-  rodape: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 22, paddingTop: 14, paddingBottom: 34,
-    borderTopWidth: 1, borderTopColor: COR_PLANO.fio,
-  },
-  excluir: { fontSize: 14, fontWeight: '700', color: COR.erro },
-  salvar: {
-    minHeight: 46, minWidth: 170, paddingHorizontal: 22, borderRadius: RAIO.campo,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: COR.primaria,
-  },
-  salvarOcupado: { opacity: 0.7 },
-  salvarTexto: { fontSize: 15, fontWeight: '700', color: COR.superficie },
 });

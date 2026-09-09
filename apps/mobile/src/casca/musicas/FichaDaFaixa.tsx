@@ -252,14 +252,6 @@ export const FichaDaFaixa = ({
       semRolagem
     >
       <View style={estilos.miolo}>
-        {/* Onde moram as gravações é a dúvida que esta tela mais gera: a ficha é da OBRA, e as
-            versões são de outra tela. O sobretítulo "MÚSICA" e o ponto de status saíram (o
-            título já diz de que música se trata, e o status é um campo logo abaixo); esta linha
-            ficou, porque é a única que ensina algo. */}
-        <Text style={estilos.subtitulo}>
-          A ficha da obra: identidade, créditos e letra. As gravações ficam nas versões.
-        </Text>
-
         <View style={estilos.abas}>
           {([['informacoes', 'Informações'], ['letras', 'Letras'], ['splits', 'Splits']] as const)
             .map(([chave, texto]) => {
@@ -544,12 +536,6 @@ const estilos = StyleSheet.create({
   titulo: { flex: 1, fontSize: 17, fontWeight: '800', color: COR_CATALOGO.titulo, lineHeight: 22 },
   tituloLinha: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 2 },
   pontoDoTitulo: { width: 8, height: 8, borderRadius: 4 },
-  // O recuo lateral é o mesmo do corpo da `Folha` (16). Sem ele o texto encostava na borda da
-  // folha, porque a casca não põe recuo em quem usa `semRolagem`.
-  subtitulo: {
-    fontSize: 12, color: COR_CATALOGO.legenda, lineHeight: 17,
-    paddingHorizontal: 16, paddingBottom: 12,
-  },
 
   // As tres abas com o sublinhado azul na ativa, como na web.
   abas: {
