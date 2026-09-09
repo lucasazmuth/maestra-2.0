@@ -19,7 +19,7 @@ import {
 import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
 import { useAppSelector } from '@maestra/core/store/store';
 
-import { Button, ConfigProvider, Input, message, theme } from 'antd';
+import { ConfigProvider, Input, message, theme } from 'antd';
 
 import { CamposDaFicha, CamposDosSplits } from '../../components/ficha/campos';
 import { Spinner } from '../../components/spinner/spinner';
@@ -216,12 +216,12 @@ const ProjectSpace: FC = () => {
   // regravar no primeiro render aquilo que acabou de voltar do servidor.
   const daMusica = (v: CatalogProject) => JSON.stringify({ title: v.title, status: v.status });
   const daGravacao = (v?: CatalogVersion | null) => JSON.stringify({ id: v?.id || '', bpm: v?.bpm || '', key: v?.key || '' });
-  const daBanco = (r: Partial<CatalogItem>) => JSON.stringify({
+  const daBanco = useCallback((r: Partial<CatalogItem>) => JSON.stringify({
     title: r.title, status: r.status, genre: r.genre, release_date: r.release_date, isrc: r.isrc,
     upc: r.upc, bpm: r.bpm, key: r.key, duration: r.duration, lyrics: r.lyrics, details: r.details,
     cover_image: r.cover_image, cover_image_name: r.cover_image_name,
     composition_splits: r.composition_splits, recording_splits: r.recording_splits, assignee: r.assignee,
-  });
+  }), []);
   const musicaGravada = useRef('');
   const gravacaoMarcada = useRef<string | null>(null);
   const gravacaoGravada = useRef('');
