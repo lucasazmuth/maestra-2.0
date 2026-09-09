@@ -11,6 +11,7 @@ import { tituloDoArquivo } from '@maestra/core/services/armazenamento';
 import * as catalogo from '@maestra/core/services/db/catalog';
 
 import { Bloco, Folha, Linha } from '@/casca/Folha';
+import { RegistroDeAutoria } from '@/casca/jam/RegistroDeAutoria';
 
 import {
   duracaoDoAudio, enviarParaOCatalogo, escolherAudio, type ArquivoEscolhido,
@@ -250,6 +251,10 @@ export const FolhaDaVersao = ({
           </Linha>
         )}
       </Bloco>
+
+      {/* Só ao EDITAR: uma versão que ainda não nasceu não tem arquivo no Storage para o
+          servidor somar, e um botão de registrar antes do envio prometeria o impossível. */}
+      {editando && <RegistroDeAutoria versaoId={versao!.id} temAudio={!!versao!.audio_file} />}
 
       {!!erro && <Text style={estilos.erro}>{erro}</Text>}
     </Folha>

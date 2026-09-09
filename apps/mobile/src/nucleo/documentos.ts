@@ -5,6 +5,9 @@ import { File, Paths } from 'expo-file-system';
 import {
   montarDocumentoDoDiagnostico, type DadosDoDocumento,
 } from '@maestra/core/documentos/diagnosticoHtml';
+import {
+  montarCertificadoDeAutoria, type DadosDoCertificado,
+} from '@maestra/core/documentos/certificadoHtml';
 
 // Gerar e entregar o PDF do diagnóstico, no aparelho.
 //
@@ -49,6 +52,39 @@ export const baixarDiagnostico = async (dados: DadosDoDocumento): Promise<void> 
     await Sharing.shareAsync(destino.uri, {
       mimeType: 'application/pdf',
       dialogTitle: 'Diagnóstico REAL',
+      UTI: 'com.adobe.pdf',
+    });
+  }
+};
+
+/** `Vento sul` → `certificado-vento-sul.pdf`. Mesmo molde do nome do diagnóstico. */
+export const nomeDoCertificado = (musica: string) =>
+  `certificado-${(musica || 'musica').toLowerCase().trim().replace(/\s+/g, '-')}.pdf`;
+
+/**
+ * Gera o PDF do certificado de autoria e abre a folha de compartilhamento.
+ *
+ * Mesmo caminho do diagnóstico, e pelo mesmo motivo: o HTML vem do núcleo, então o documento
+ * que sai daqui e o que sai da web são o mesmo documento. A diferença é o tamanho — uma folha
+ * só, e por isso sem `page-break-after` no HTML (ver `certificadoHtml.ts`).
+ */
+export const baixarCertificado = async (dados: DadosDoCertificado): Promise<void> => {
+  const { uri } = await Print.printToFileAsync({
+    html: montarCertificadoDeAutoria(dados),
+    width: A4.largura,
+    height: A4.altura,
+    base64: false,
+  });
+
+  const gerado = new File(uri);
+  const destino = new File(Paths.cache, nomeDoCertificado(dados.musica));
+  if (destino.exists) destino.delete();
+  gerado.move(destino);
+
+  if (await Sharing.isAvailableAsync()) {
+    await Sharing.shareAsync(destino.uri, {
+      mimeType: 'application/pdf',
+      dialogTitle: 'Certificado de autoria',
       UTI: 'com.adobe.pdf',
     });
   }
