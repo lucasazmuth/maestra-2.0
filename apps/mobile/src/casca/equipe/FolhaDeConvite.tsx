@@ -71,7 +71,9 @@ export const FolhaDeConvite = ({ aberta, artistaId, aoFechar, aoConvidar }: {
       aoFechar={aoFechar}
       acao={{ rotulo: 'Enviar convite', aoTocar: convidar, carregando: enviando }}
     >
-      <Bloco rotulo="Quem">
+      {/* Mesmo caso da agenda: o primeiro bloco não leva rótulo, porque o título da folha
+          ("Convidar membro") já diz de que se trata. */}
+      <Bloco>
         <Linha primeira>
           <View style={estilos.campo}>
             <Text style={estilos.rotulo}>Nome</Text>

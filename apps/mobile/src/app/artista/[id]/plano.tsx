@@ -421,7 +421,6 @@ export default function Plano() {
       <FichaDaTarefa
         aberta={!!naFichaTarefa}
         tarefa={naFichaTarefa ?? null}
-        estrategia={naFichaEstrategia?.title}
         responsaveis={responsaveis}
         autor={{ id: usuario?.id, nome: meuNome }}
         aoFechar={() => setNaFicha(null)}

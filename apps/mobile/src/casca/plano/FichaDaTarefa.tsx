@@ -86,12 +86,11 @@ const Seletor = ({ texto, aoTocar, rotulo }: {
 );
 
 export const FichaDaTarefa = ({
-  aberta, tarefa, estrategia, responsaveis, autor,
+  aberta, tarefa, responsaveis, autor,
   aoFechar, aoSalvar, aoExcluir, aoComentar, aoEditarComentario, aoExcluirComentario,
 }: {
   aberta: boolean;
   tarefa: ActionTask | null;
-  estrategia?: string;
   responsaveis: Opcao[];
   autor: { id?: string | null; nome: string };
   aoFechar: () => void;
@@ -183,16 +182,6 @@ export const FichaDaTarefa = ({
       semRolagem
     >
       <View style={estilos.miolo}>
-        {/* A ESTRATÉGIA não é descrição da tela, é o endereço da tarefa: sem ela não há como
-            saber a que estratégia esta tarefa pertence, e este era o único lugar que dizia.
-            Saiu de baixo do título e virou uma linha do corpo. */}
-        {!!estrategia && (
-          <View style={estilos.estrategia}>
-            <Text style={estilos.estrategiaRotulo}>Estratégia</Text>
-            <Text style={estilos.estrategiaNome} numberOfLines={2}>{estrategia}</Text>
-          </View>
-        )}
-
         <View style={estilos.abas}>
           {([['geral', 'Geral'], ['comentarios', `Comentários${comentarios.length ? ` (${comentarios.length})` : ''}`]] as const)
             .map(([chave, rotulo]) => (
@@ -411,9 +400,6 @@ export const FichaDaTarefa = ({
 // A casca mora na `Folha`. Aqui ficam as abas, a estratégia e os campos.
 const estilos = StyleSheet.create({
   miolo: { flex: 1, minHeight: 0 },
-  estrategia: { paddingHorizontal: 16, paddingBottom: 12, gap: 2 },
-  estrategiaRotulo: { fontSize: 11, fontWeight: '800', color: COR_PLANO.rotulo, letterSpacing: 0.4 },
-  estrategiaNome: { fontSize: 13, color: COR_PLANO.rotulo, lineHeight: 18 },
   flex: { flex: 1, minWidth: 0 },
   abas: {
     flexDirection: 'row', gap: 22, paddingHorizontal: 22,

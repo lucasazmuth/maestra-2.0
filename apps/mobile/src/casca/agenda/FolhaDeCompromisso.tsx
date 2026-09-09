@@ -178,7 +178,10 @@ export const FolhaDeCompromisso = ({
       // botão não teria o que apagar.
       destrutiva={evento && podeExcluir ? { rotulo: 'Excluir', aoTocar: confirmarExclusao } : undefined}
     >
-      <Bloco rotulo="O compromisso">
+      {/* SEM rótulo: este é o primeiro bloco, logo abaixo do título da folha, e "O compromisso"
+          repetia o que "Novo compromisso" já diz. Os blocos seguintes têm rótulo porque mudam de
+          assunto ("Quando", "Onde e o quê") e é isso que um rótulo de seção serve para dizer. */}
+      <Bloco>
         <Linha primeira>
           <Campo rotulo="Título">
             <TextInput
