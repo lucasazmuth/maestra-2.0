@@ -15,14 +15,22 @@ import { COR_JAM } from '@maestra/core/constants/design';
 // O chat do projeto saiu das duas superfícies em 09/09/2026; este teste é também o que impede
 // a sua casca (`.collabPanel`, `.chat*`) de voltar por acidente à folha.
 
-const css = fs.readFileSync(
-  path.join(__dirname, '..', 'pages', 'Catalog', 'ProjectSpace.module.scss'),
-  'utf8',
-);
+const ler = (...partes: string[]) => fs.readFileSync(path.join(__dirname, '..', ...partes), 'utf8');
+
+const css = ler('pages', 'Catalog', 'ProjectSpace.module.scss');
+/** O editor de pistas tem folha própria: são ~300 linhas que não são do resto da tela. */
+const cssDaMesa = ler('pages', 'Catalog', 'mesa', 'mesa.module.scss');
+// O `cabecaDaVersao` é o fundo dos blocos DENTRO das folhas e dos modais. No app quem o usa é a
+// `Folha`; na web, o `StandardModal`. Por isso ele entra na conta a partir daqui, e não da folha
+// do Espaço JAM — que deixou de o ter quando os cartões de versão saíram.
+const cssDosModais = ler('components', 'StandardModal.module.scss');
+
+/** Só as regras: os comentários NOMEIAM o que saiu, e nomear não é declarar. */
+const semComentarios = (valor: string) => valor.replace(/\/\/.*$/gm, '');
 
 /** `rgba(47, 96, 246, .28)` e `rgba(47,96,246,.28)` são a mesma cor. */
 const semEspacos = (valor: string) => valor.replace(/\s+/g, '');
-const folha = semEspacos(css);
+const folha = semEspacos(css + cssDaMesa + cssDosModais);
 
 const celular = css.slice(css.indexOf('@media (max-width: 760px)'));
 
@@ -54,17 +62,42 @@ describe('cromo do Espaço JAM', () => {
     expect(celular).toContain('border-left: 0');
   });
 
-  // No celular a faixa de quatro campos SOME e entra a linha-resumo. A faixa custava 153px e
-  // quase sempre mostrava quatro traços — o bloco mais alto e mais vazio da tela. No desktop
-  // ela fica: a 960px não é o problema, e a edição inline é boa lá.
-  it('no celular a faixa some e a linha-resumo entra', () => {
-    const faixa = celular.slice(celular.indexOf('.metaStrip {'));
-    expect(faixa).toMatch(/^\.metaStrip \{\s*display: none;/);
-    const resumo = celular.slice(celular.indexOf('.fichaResumo {'));
+  // A faixa de quatro campos (BPM, tom, gênero, lançamento) SAIU das duas superfícies. BPM e
+  // tom subiram para o cabeçalho, com o rótulo a dizer de que gravação são; gênero e data
+  // ficaram na ficha, que a linha-resumo abre — e agora essa linha aparece em toda largura,
+  // porque não há mais nada a disputar com ela.
+  it('a faixa de quatro campos não existe, e a linha-resumo vale em toda a largura', () => {
+    expect(semComentarios(css)).not.toContain('.metaStrip');
+    const resumo = css.slice(css.indexOf('.fichaResumo {'));
     expect(resumo).toMatch(/^\.fichaResumo \{\s*display: flex;/);
-    // E fora do celular é o contrário: a linha começa escondida.
-    const desktop = css.slice(css.indexOf('.fichaResumo {'), css.indexOf('@media'));
-    expect(desktop).toMatch(/^\.fichaResumo \{\s*display: none;/);
+  });
+
+  // Os campos do cabeçalho, e a linha que diz de quem são os números — que é o que resolve a
+  // confusão pela qual eles tinham sido escondidos.
+  it('o cabeçalho tem os campos da gravação e o rótulo do dono', () => {
+    expect(css).toContain('.headerField {');
+    expect(css).toContain('.fieldOwner {');
+  });
+
+  // A lista de cartões saiu: cada um com o seu play e a sua onda desenhava as gravações como
+  // coisas que tocam ao mesmo tempo, e elas são alternativas.
+  it('a lista de cartões de versão não está mais na folha', () => {
+    expect(semComentarios(css))
+      .not.toMatch(/\.versionList\b|\.versionPlayback\b|\.versionFooter\b|\.waveOpen\b/);
+  });
+
+  // ⚠️ Mutar e solar têm CORES DIFERENTES, e isso não é gosto: são as duas ações mais usadas de
+  // uma mesa e são opostas. Pintadas iguais quando ativas, ninguém sabe qual carregou.
+  it('mutar é cinza e solar é âmbar', () => {
+    expect(semEspacos(cssDaMesa)).toContain('.chaveMuda{background:#b7c4da');
+    expect(semEspacos(cssDaMesa)).toContain('.chaveSolo{background:#e0ad3c');
+  });
+
+  // 34px, e não os 20 da referência que inspirou a tela: 20 é menor que qualquer mínimo de
+  // toque, e justamente nos dois botões que mais se usam.
+  it('os alvos de mutar e solar têm 34px', () => {
+    const chave = cssDaMesa.slice(cssDaMesa.indexOf('.chave {'));
+    expect(chave).toMatch(/^\.chave \{\s*width: 34px;\s*height: 34px;/);
   });
 
   // O kicker "Espaço JAM" saiu: a seta e a origem já dizem onde se está, e o título ganhou a

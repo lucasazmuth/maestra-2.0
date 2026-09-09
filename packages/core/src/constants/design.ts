@@ -931,12 +931,10 @@ export const COR_JAM = {
   rotulo: '#8ca0c5',
   apoio: '#7f92b6',
   botaoRedondo: 'rgba(255, 255, 255, .92)',
+  /** O fundo dos blocos dentro das folhas e dos modais — vem do `StandardModal` da web. */
   cabecaDaVersao: '#f6f9ff',
-  semAudio: '#fbfcff',
   contornoDaVersao: '#dce6f7',
-  contornoDaPrincipal: 'rgba(47, 96, 246, .28)',
   cracha: '#5f76a3',
-  crachaContorno: '#d6e2f7',
   estrela: '#b7c4da',
   estrelaAcesa: '#e0ad3c',
   acaoFundo: '#eef4ff',

@@ -59,7 +59,26 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
     }
     guardados.current.clear();
     const { criarContexto, buscar, mono } = gaveta.current;
-    const nova = new Mesa(criarContexto(), buscar, { mono });
+
+    // Criar o contexto pode falhar — um navegador sem Web Audio, uma sessão de áudio que o
+    // sistema recusa. Sem esta guarda, a exceção sobe pelo efeito e derruba a TELA INTEIRA: quem
+    // abrisse o editor num navegador antigo veria uma página branca em vez de uma música que não
+    // toca. Assim as pistas aparecem, dizem por que não tocam, e tudo o resto (nome, ficha,
+    // comentários) continua a funcionar.
+    let nova: Mesa;
+    try {
+      nova = new Mesa(criarContexto(), buscar, { mono });
+    } catch (e) {
+      const motivo = e instanceof Error ? e.message : 'Este navegador não toca áudio.';
+      setEstado({
+        ...VAZIA,
+        pistas: pistas.map((p) => ({
+          id: p.id, nome: p.nome, carga: 'erro', erro: motivo,
+          duracao: 0, muda: false, solo: false, ganho: p.ganhoInicial ?? 1,
+        })),
+      });
+      return undefined;
+    }
     mesa.current = nova;
     const largar = nova.ouvir(setEstado);
     void nova.carregar(pistas);

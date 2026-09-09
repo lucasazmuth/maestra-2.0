@@ -409,6 +409,9 @@ export class Mesa {
 
   private avisar(): void {
     const e = this.estado();
-    for (const fn of this.ouvintes) fn(e);
+    // `forEach` e não `for…of`: o alvo do TypeScript da web é anterior ao ES2015 e recusa
+    // iterar um `Set` sem `downlevelIteration`. Foi o build da web que apanhou isto — o do app
+    // compila com outro alvo e passava.
+    this.ouvintes.forEach((fn) => fn(e));
   }
 }

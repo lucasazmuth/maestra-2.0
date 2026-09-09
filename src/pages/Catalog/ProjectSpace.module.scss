@@ -218,97 +218,51 @@
   box-shadow: 0 32px 80px rgba(74, 99, 145, .12);
 }
 
-.metaStrip {
-  // Uma variável só: "14/08/2026" é o texto mais longo da faixa, então o teto vem dele — se
-  // cada campo escolhesse o próprio tamanho, os traços de vazio voltariam a divergir.
-  --meta-font: clamp(16px, 1.6vw, 24px);
-  display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
-  gap: 0;
-  margin-bottom: 34px;
-  border-top: 1px solid #dce6f7;
-  border-bottom: 1px solid #dce6f7;
-}
-
-.metaStrip label {
-  min-height: 88px;
-  padding: 22px 20px 18px 0;
-}
-
-.metaStrip label + label {
-  padding-left: 20px;
-  border-left: 1px solid #dce6f7;
-}
-
-.metaStrip span {
-  display: block;
-  margin-bottom: 10px;
+// A faixa de quatro campos (BPM, tom, gênero, lançamento) SAIU. BPM e tom subiram para o
+// cabeçalho, editáveis em linha e com o rótulo a dizer de quem são; gênero e data ficaram só na
+// ficha, que a linha abaixo abre. A faixa custava ~90 linhas de SCSS a domar o antd para
+// mostrar, quase sempre, quatro traços.
+//
+// Os campos do cabeçalho: um `Input` vestido de chip, com o sufixo ao lado. Contorno claro e
+// não a cor do status — este ACEITA texto, e aquele abre uma lista; pintados igual, um
+// prometeria o menu do outro.
+.headerField {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #8ca0c5;
-  font: 850 11px 'JetBrains Mono', monospace;
-  letter-spacing: .16em;
-  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
 }
 
-// Um só tamanho e uma só cor para os quatro campos da faixa. Eles são de tipos diferentes
-// (Input, Select e DatePicker) e cada um traz a própria fonte: o "—" de BPM e Tom saía maior e
-// mais escuro que o de Gênero e Lançamento, e a linha parecia desalinhada.
-.metaStrip :global(.ant-input),
-.metaStrip :global(.ant-picker),
-.metaStrip :global(.ant-select-selector) {
+.headerField :global(.ant-input) {
+  width: 56px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #dce6f7;
+  border-radius: 999px;
+  color: #2f4164;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  // Tabular: sem isto o chip muda de largura entre 98 e 128 BPM.
+  font-variant-numeric: tabular-nums;
+}
+
+// A linha que resolve a confusão antiga: o número é DAQUELA gravação, com nome e tudo.
+.fieldOwner {
   width: 100%;
-  padding: 0 !important;
-  border: 0 !important;
-  color: #405985 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  font-size: var(--meta-font);
-  font-weight: 650;
+  margin: 0;
+  padding-left: 58px;
+  color: #8ca0c5;
+  font-size: 11px;
+  font-weight: 600;
 }
 
-// O Select tem a mesma casca do DatePicker: o texto escolhido mora em um span interno, que
-// ignora a fonte do container.
-.metaStrip :global(.ant-select) {
-  width: 100%;
-}
+.fieldOwnerAlert { color: #2f60f6; }
 
-.metaStrip :global(.ant-select-selection-item),
-.metaStrip :global(.ant-select-selection-placeholder) {
-  padding: 0 !important;
-  color: #405985 !important;
-  font-size: var(--meta-font);
-  font-weight: 650;
-  line-height: 1.3;
-}
-
-.metaStrip :global(.ant-select-selection-placeholder) {
-  color: #98a9c6 !important;
-}
-
-.metaStrip :global(.ant-select-selection-search-input) {
-  height: auto !important;
-  font-size: var(--meta-font) !important;
-  font-weight: 650;
-}
-
-// O DatePicker aninha o <input>; sem isto ele voltaria à fonte padrão dentro da casca já sem
-// borda. O clamp é o que impede "14/08/2026" de ser cortado quando a janela encolhe — texto
-// livre pode truncar com reticências, uma data pela metade vira desinformação.
-.metaStrip :global(.ant-picker-input > input) {
-  color: #405985 !important;
-  font-size: var(--meta-font);
-  font-weight: 650;
-}
-
-.metaStrip :global(.ant-picker-input > input::placeholder),
-.metaStrip :global(.ant-input::placeholder) {
-  color: #98a9c6 !important;
-}
-
-// A ficha técnica numa LINHA, para o celular. Escondida no desktop, onde a faixa de quatro
-// colunas fica: em 960px ela não é o problema, e a edição inline com autosave é boa lá. Abaixo
-// de 760px a faixa some e esta linha entra (ver a media query).
 .fichaResumo {
-  display: none;
+  display: flex;
   width: 100%;
   align-items: center;
   gap: 8px;
@@ -363,169 +317,121 @@
   font-weight: 800;
 }
 
-.versionList {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+// A LISTA DE CARTÕES saiu, e com ela ~230 linhas: `.version`, `.versionIdentity`,
+// `.versionPlayback`, `.versionFooter`, `.waveOpen` (o hospedeiro do wavesurfer), `.play` e os
+// dois keyframes das ondas. Cada cartão tinha o seu play e a sua onda, e isso desenhava as
+// gravações como coisas que tocam ao mesmo tempo — elas são ALTERNATIVAS. O editor está em
+// `mesa/mesa.module.scss`; aqui ficam a identidade da gravação aberta e as ações dela.
+
+.editor {
+  display: grid;
+  gap: 16px;
+  // O contêiner recebe o foco para o atalho do espaço funcionar; o anel do navegador nele não
+  // diz nada a ninguém — quem mostra o foco são os controles lá dentro.
+  outline: none;
 }
 
-.version {
-  overflow: hidden;
-  border: 1px solid #dce6f7;
-  border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 20px 50px rgba(74, 99, 145, .1);
-  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-}
-
-.version:hover,
-.primary {
-  border-color: rgba(47, 96, 246, .28);
-  box-shadow: 0 26px 62px rgba(47, 96, 246, .14);
-}
-
-.version:hover {
-  transform: translateY(-1px);
-}
-
-.versionIdentity {
-  min-width: 0;
-  padding: 14px 20px;
+.openIdentity {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #f6f9ff;
 }
 
-.versionTitle {
-  min-width: 0;
-  flex: 1;
-}
-
-.versionBadges {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.versionIdentity img,
-.versionIdentity i {
+.openIdentity img,
+.openIdentity i {
   width: 44px;
   height: 44px;
   flex: none;
-  border: 3px solid #fff;
   border-radius: 50%;
+  border: 3px solid #fff;
   display: grid;
   place-items: center;
+  object-fit: cover;
   color: #fff;
   background: linear-gradient(135deg, #9a4fd1, #2f60f6);
-  box-shadow: 0 10px 22px rgba(57, 79, 123, .16);
   font-size: 14px;
   font-style: normal;
-  font-weight: 850;
-  object-fit: cover;
+  font-weight: 800;
 }
 
-.versionIdentity strong {
+.openIdentity div {
+  flex: 1;
   min-width: 0;
-  display: block;
+  display: grid;
+}
+
+.openIdentity strong {
   overflow: hidden;
+  color: #2f4164;
+  font-size: 19px;
+  font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.versionIdentity strong {
-  color: #2f4164;
-  font-size: 20px;
-  font-weight: 850;
-}
-
-.versionBadges small {
-  padding: 6px 9px;
-  border: 1px solid #d6e2f7;
-  border-radius: 8px;
-  color: #5f76a3;
-  background: #fff;
+.openIdentity small {
+  color: #7f92b6;
   font-size: 12px;
-  font-weight: 850;
-  line-height: 1;
 }
 
-// Favoritar a versão principal direto na lista. Apagada é um convite ("marque esta"); acesa é
-// o estado — a estrela cheia substitui a etiqueta "Principal" que existia aqui.
+.pistas {
+  display: grid;
+}
+
+// Estrela em vez de etiqueta: além de dizer qual é a principal, marca outra sem abrir o modal.
 .primaryStar {
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  flex: none;
   display: grid;
   place-items: center;
+  border: 0;
+  border-radius: 50%;
   color: #b7c4da;
   background: transparent;
   cursor: pointer;
-  font-size: 17px;
-  line-height: 0;
-  transition: color .18s ease, background .18s ease, transform .18s ease;
+  font-size: 19px;
+  transition: color .2s ease, transform .2s ease;
 }
 
 .primaryStar:hover {
   color: #e0ad3c;
-  background: #fdf4de;
   transform: scale(1.08);
 }
 
-.primaryStarOn {
-  color: #e0ad3c;
-}
+.primaryStarOn { color: #e0ad3c; }
+.primaryStarOn svg { fill: currentColor; }
 
-.primaryStarOn svg {
-  fill: currentColor;
-}
-
-.versionPlayback {
-  min-height: 88px;
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.waveOpen em {
-  color: #8ca0c5;
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.waveformloading i { animation: waveform-pulse 1s ease-in-out infinite alternate; }
-.waveformfallback i { opacity: .46; }
-.waveformready i { opacity: 1; }
-
-@keyframes waveform-pulse {
-  from { opacity: .24; }
-  to { opacity: .78; }
-}
-
-.pending { background: #fbfcff; }
-.pending .waveOpen { cursor: default; }
-
-.versionActions {
+.openActions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
 }
 
-.versionActions a {
+.openActions a,
+.openActions button {
   width: 36px;
   height: 36px;
+  border: 0;
   border-radius: 50%;
   display: grid;
   place-items: center;
   color: #405985;
   background: #eef4ff;
+  cursor: pointer;
+}
+
+.openActions .commentCount {
+  width: auto;
+  min-width: 36px;
+  padding: 0 9px;
+  gap: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 12px;
 }
 
 .emptyVersions {
@@ -555,124 +461,6 @@
 .autosaveerror { color: #d84b63; }
 .autosavesaved { color: #5d9a73; }
 
-.waveOpen {
-  position: relative;
-  height: 62px;
-  min-width: 0;
-  flex: 1;
-  padding: 0;
-  border: 0;
-  display: flex;
-  align-items: center;
-  background: transparent;
-  cursor: pointer;
-}
-
-.waveOpen :global(.wavesurfer-host) {
-  width: 100%;
-  height: 62px;
-}
-
-.waveOpen :global(.wavesurfer-host) ::part(cursor) {
-  display: none;
-}
-
-.waveOpen :global(.wavesurfer-loading),
-.waveOpen :global(.wavesurfer-error) {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  pointer-events: none;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.waveOpen :global(.wavesurfer-loading) {
-  color: #6f84aa;
-  background: linear-gradient(90deg, rgba(240, 245, 255, .92), rgba(255, 255, 255, .42), rgba(240, 245, 255, .92));
-  background-size: 200% 100%;
-  animation: waveform-shimmer 1.2s ease-in-out infinite;
-}
-
-.waveOpen :global(.wavesurfer-error) {
-  color: #8a98ad;
-  background: rgba(245, 248, 253, .82);
-}
-
-@keyframes waveform-shimmer {
-  to { background-position: -200% 0; }
-}
-
-.play {
-  width: 46px;
-  height: 46px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  color: #2f60f6;
-  font-size: 42px;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  cursor: pointer;
-}
-
-.play:disabled {
-  color: #aebbd0;
-  cursor: not-allowed;
-}
-
-.versionFooter {
-  padding: 0 20px 16px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  color: #7f92b6;
-  font-size: 13px;
-}
-
-.versionFooter small {
-  color: #405985;
-  font-weight: 800;
-}
-
-.versionFooter em {
-  padding: 5px 11px;
-  border-radius: 999px;
-  color: #181818;
-  background: #edc663;
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 900;
-}
-
-.versionFooter button {
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: #405985;
-  background: #eef4ff;
-  cursor: pointer;
-}
-
-.versionFooter .commentCount {
-  width: auto;
-  min-width: 36px;
-  padding: 0 9px;
-  gap: 5px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  font-size: 12px;
-}
-
 @media (max-width: 1080px) {
   .page {
     padding: 22px 18px 36px;
@@ -682,7 +470,6 @@
   .content {
     max-width: 920px;
   }
-
 }
 
 @media (max-width: 760px) {
@@ -695,7 +482,13 @@
     font-size: 22px;
   }
 
+  // Alinhada com o título, e não com o botão de voltar: 44 do botão + 10 do gap.
   .secondLine {
+    padding-left: 54px;
+    flex-wrap: wrap;
+  }
+
+  .fieldOwner {
     padding-left: 54px;
   }
 
@@ -711,43 +504,11 @@
     border-radius: 0;
   }
 
-  // A faixa de quatro campos SOME, e entra a linha-resumo. Ela custava 153px no celular e quase
-  // sempre mostrava quatro traços — o bloco mais alto e mais vazio da tela. A linha ocupa o que
-  // tem para dizer e abre a ficha, que é onde os quatro se editam.
-  .metaStrip {
-    display: none;
-  }
-
-  .fichaResumo {
-    display: flex;
-  }
-
   .sectionHeader {
     margin: 12px 0;
   }
 
   .uploadButton {
     min-width: 132px;
-  }
-
-  .versionIdentity {
-    padding: 14px 16px 10px;
-  }
-
-  .versionBadges {
-    gap: 6px;
-  }
-
-  .versionPlayback {
-    padding: 16px;
-  }
-
-  .versionFooter {
-    padding: 0 18px 18px;
-    grid-template-columns: 1fr auto;
-  }
-
-  .versionActions {
-    gap: 5px;
   }
 }
