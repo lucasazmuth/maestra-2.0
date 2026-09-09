@@ -14,6 +14,7 @@ jest.mock('expo-router', () => ({
 
 const mockBuscar = jest.fn();
 const mockAtualizar = jest.fn();
+const mockAtualizarVersao = jest.fn();
 const mockPrincipal = jest.fn();
 const mockConversa = jest.fn();
 const mockEnviar = jest.fn();
@@ -26,7 +27,7 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   listCatalogProjectMessages: (...a: unknown[]) => mockConversa(...a),
   createCatalogProjectMessage: (...a: unknown[]) => mockEnviar(...a),
   createCatalogVersion: jest.fn(),
-  updateCatalogVersion: jest.fn(),
+  updateCatalogVersion: (...a: unknown[]) => mockAtualizarVersao(...a),
   deleteCatalogVersion: jest.fn(),
   listVersionComments: (...a: unknown[]) => mockComentarios(...a),
   createVersionComment: (...a: unknown[]) => mockComentar(...a),
@@ -63,12 +64,13 @@ jest.mock('@/nucleo/arquivos', () => ({
 const versao = (over: Partial<CatalogVersion>): CatalogVersion => ({
   id: 'v-1', project_id: 'p-1', version_number: 1, title: 'guia vocal',
   audio_file: 'https://exemplo.invalid/guia.mp3', author_name: 'Lucas',
+  bpm: '128', key: 'Am',
   created_at: '2026-08-01T12:00:00Z', ...over,
 } as CatalogVersion);
 
 const projeto = (over: Partial<CatalogProject> = {}): CatalogProject => ({
   id: 'p-1', artist_id: 'a-1', title: 'Noite Clara', status: 'mixing',
-  bpm: '128', key: 'Am', genre: 'Pop', release_date: null,
+  genre: 'Pop', release_date: null,
   primary_version_id: 'v-1', versions: [versao({})], ...over,
 } as CatalogProject);
 
@@ -93,30 +95,64 @@ describe('espaço jam', () => {
     const tela = await montar();
     expect(await tela.findByText('Noite Clara')).toBeTruthy();
     expect(tela.getByText('ESPAÇO JAM')).toBeTruthy();
-    expect(tela.getByLabelText('BPM').props.value).toBe('128');
-    expect(tela.getByLabelText('Tom').props.value).toBe('Am');
+    expect(tela.getByLabelText('BPM da versão favorita').props.value).toBe('128');
+    expect(tela.getByLabelText('Tom da versão favorita').props.value).toBe('Am');
     expect(tela.getByText('guia vocal')).toBeTruthy();
     expect(tela.getByText('V1')).toBeTruthy();
   });
 
   // O que separa esta tela de uma lista qualquer: a ficha grava sozinha. Sem isso, mexer no BPM
   // no meio de uma sessão pede uma volta ao botão Salvar que a web não pede.
-  it('a ficha técnica salva sozinha depois da última tecla', async () => {
+  //
+  // ⚠️ E grava NA VERSÃO, não no projeto: BPM e tom são da gravação. Um acústico não anda no
+  // mesmo andamento do original.
+  it('o BPM salva sozinho, e salva na versão favorita', async () => {
     jest.useFakeTimers();
     const usuario = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    mockAtualizar.mockResolvedValue(projeto({ bpm: '140' }));
+    mockAtualizarVersao.mockResolvedValue(versao({ bpm: '140' }));
 
     const tela = await montar();
-    await waitFor(() => expect(tela.getByLabelText('BPM')).toBeTruthy());
-    await usuario.clear(tela.getByLabelText('BPM'));
-    await usuario.type(tela.getByLabelText('BPM'), '140');
+    await waitFor(() => expect(tela.getByLabelText('BPM da versão favorita')).toBeTruthy());
+    await usuario.clear(tela.getByLabelText('BPM da versão favorita'));
+    await usuario.type(tela.getByLabelText('BPM da versão favorita'), '140');
 
     // Antes do prazo não grava: senão seria uma escrita por tecla digitada.
-    expect(mockAtualizar).not.toHaveBeenCalled();
+    expect(mockAtualizarVersao).not.toHaveBeenCalled();
     jest.advanceTimersByTime(700);
-    await waitFor(() => expect(mockAtualizar).toHaveBeenCalledTimes(1));
-    expect(mockAtualizar.mock.calls[0][1]).toMatchObject({ bpm: '140' });
+    await waitFor(() => expect(mockAtualizarVersao).toHaveBeenCalledTimes(1));
+    expect(mockAtualizarVersao.mock.calls[0][0]).toBe('v-1');
+    expect(mockAtualizarVersao.mock.calls[0][1]).toMatchObject({ bpm: '140' });
+    // E o projeto NÃO é tocado: se fosse, o número passaria a existir em dois lugares e o
+    // próximo a ler escolheria um deles no escuro.
+    expect(mockAtualizar).not.toHaveBeenCalled();
     jest.useRealTimers();
+  });
+
+  // O pedido do dono do produto, e a razão de tudo isto: a ficha mostra a FAVORITA.
+  it('a ficha mostra o BPM da favorita, e não o da primeira versão da lista', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      primary_version_id: 'v-2',
+      versions: [
+        versao({ id: 'v-1', version_number: 1, bpm: '128', key: 'Am' }),
+        versao({ id: 'v-2', version_number: 2, title: 'acústico', bpm: '92', key: 'D' }),
+      ],
+    }));
+
+    const tela = await montar();
+    await waitFor(() => expect(tela.getByLabelText('BPM da versão favorita')).toBeTruthy());
+    expect(tela.getByLabelText('BPM da versão favorita').props.value).toBe('92');
+    expect(tela.getByLabelText('Tom da versão favorita').props.value).toBe('D');
+  });
+
+  // Sem favorita não há gravação de referência: não há o que mostrar nem onde guardar, e um
+  // campo aberto aceitaria uma digitação que se perderia no recarregamento.
+  it('sem favorita, os campos ficam travados', async () => {
+    mockBuscar.mockResolvedValue(projeto({ primary_version_id: null }));
+
+    const tela = await montar();
+    await waitFor(() => expect(tela.getByLabelText('BPM da versão favorita')).toBeTruthy());
+    expect(tela.getByLabelText('BPM da versão favorita').props.editable).toBe(false);
+    expect(tela.getByLabelText('BPM da versão favorita').props.value).toBe('');
   });
 
   // A estrela alterna nos DOIS sentidos: tocar na acesa desmarca, e a música fica sem principal

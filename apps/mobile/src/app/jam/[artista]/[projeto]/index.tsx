@@ -147,8 +147,20 @@ export default function EspacoJam() {
   // disparar no primeiro render, e de gravar de novo o que acabou de voltar do servidor.
   const gravado = useRef('');
   const assinatura = (v: CatalogProject) => JSON.stringify({
-    title: v.title, status: v.status, genre: v.genre ?? '', bpm: v.bpm ?? '',
-    key: v.key ?? '', release_date: v.release_date ?? '',
+    title: v.title, status: v.status, genre: v.genre ?? '', release_date: v.release_date ?? '',
+  });
+
+  // ⚠️ BPM E TOM SÃO DA VERSÃO FAVORITA, e têm salvamento próprio.
+  //
+  // Eles saíram do projeto porque são da GRAVAÇÃO: um acústico não anda no mesmo andamento do
+  // original, e um remix quase nunca fica no mesmo tom. Guardar um número só para a música
+  // obrigava a escolher qual das gravações mandava, e a resposta mudava conforme a semana.
+  //
+  // O id entra na assinatura de propósito: trocar de favorita muda o que a ficha mostra, e sem
+  // ele o efeito acharia que o valor da nova favorita é uma edição da anterior.
+  const gravadoDaVersao = useRef('');
+  const assinaturaDaVersao = (v?: CatalogVersion | null) => JSON.stringify({
+    id: v?.id ?? '', bpm: v?.bpm ?? '', key: v?.key ?? '',
   });
 
   const buscar = useCallback(async () => {
@@ -157,6 +169,9 @@ export default function EspacoJam() {
       const proximo = await catalogo.getCatalogProject(String(projetoId));
       setProjeto(proximo);
       gravado.current = assinatura(proximo);
+      gravadoDaVersao.current = assinaturaDaVersao(
+        (proximo.versions ?? []).find((v) => v.id === proximo.primary_version_id),
+      );
     } catch {
       setProjeto(null);
     } finally {
@@ -216,7 +231,7 @@ export default function EspacoJam() {
       try {
         const salvo = await catalogo.updateCatalogProject(projeto.id, {
           title: projeto.title, status: projeto.status, genre: projeto.genre,
-          bpm: projeto.bpm, key: projeto.key, release_date: projeto.release_date,
+          release_date: projeto.release_date,
         });
         gravado.current = assinatura({ ...projeto, ...salvo });
         setSelo('salvo');
@@ -231,6 +246,34 @@ export default function EspacoJam() {
     () => (projeto?.versions ?? []).slice().sort((a, b) => b.version_number - a.version_number),
     [projeto],
   );
+
+  /** A favorita: é dela que a ficha técnica mostra o BPM e o tom. */
+  const favorita = useMemo(
+    () => versoes.find((v) => v.id === projeto?.primary_version_id) ?? null,
+    [versoes, projeto?.primary_version_id],
+  );
+
+  // Edita a favorita DENTRO do projeto, e não em estado à parte: assim continua a haver uma
+  // fonte de verdade só, e a lista de versões e a ficha nunca discordam sobre o mesmo número.
+  const mudarFavorita = (parte: Partial<CatalogVersion>) => setProjeto((p) => (p ? {
+    ...p,
+    versions: (p.versions ?? []).map((v) => (v.id === p.primary_version_id ? { ...v, ...parte } : v)),
+  } : p));
+
+  useEffect(() => {
+    if (!favorita || assinaturaDaVersao(favorita) === gravadoDaVersao.current) return undefined;
+    const conta = setTimeout(async () => {
+      setSelo('salvando');
+      try {
+        await catalogo.updateCatalogVersion(favorita.id, { bpm: favorita.bpm, key: favorita.key });
+        gravadoDaVersao.current = assinaturaDaVersao(favorita);
+        setSelo('salvo');
+      } catch {
+        setSelo('erro');
+      }
+    }, 650);
+    return () => clearTimeout(conta);
+  }, [favorita]);
 
   const mudar = (parte: Partial<CatalogProject>) =>
     setProjeto((atual) => (atual ? { ...atual, ...parte } : atual));
@@ -432,25 +475,30 @@ export default function EspacoJam() {
               deixava pouco para o conteúdo, e a moldura não separava nada — é o único bloco. */}
           <View style={estilos.painel}>
             <View style={estilos.ficha}>
+              {/* BPM e TOM saem da versão FAVORITA, e é nela que são gravados. Sem favorita
+                  não há o que mostrar nem onde guardar: os campos ficam travados, e o rótulo
+                  diz por quê em vez de aceitar uma digitação que se perderia. */}
               <CampoDaFicha rotulo="BPM" ultimaColuna={false} primeiraLinha>
                 <TextInput
                   style={estilos.valorDaFicha}
-                  value={projeto.bpm ?? ''}
-                  onChangeText={(t) => mudar({ bpm: t })}
+                  value={favorita?.bpm ?? ''}
+                  onChangeText={(t) => mudarFavorita({ bpm: t })}
+                  editable={!!favorita}
                   placeholder="—"
                   placeholderTextColor={COR_JAM.rotulo}
                   keyboardType="number-pad"
-                  accessibilityLabel="BPM"
+                  accessibilityLabel="BPM da versão favorita"
                 />
               </CampoDaFicha>
               <CampoDaFicha rotulo="TOM" ultimaColuna primeiraLinha>
                 <TextInput
                   style={estilos.valorDaFicha}
-                  value={projeto.key ?? ''}
-                  onChangeText={(t) => mudar({ key: t })}
+                  value={favorita?.key ?? ''}
+                  onChangeText={(t) => mudarFavorita({ key: t })}
+                  editable={!!favorita}
                   placeholder="—"
                   placeholderTextColor={COR_JAM.rotulo}
-                  accessibilityLabel="Tom"
+                  accessibilityLabel="Tom da versão favorita"
                 />
               </CampoDaFicha>
               <CampoDaFicha rotulo="GÊNERO" ultimaColuna={false} primeiraLinha={false}>
@@ -476,8 +524,8 @@ export default function EspacoJam() {
                 por cima deles. Ouve a versão PRINCIPAL: é a que representa a música, e analisar
                 todas seria gastar CPU para responder a mesma pergunta várias vezes. */}
             <SugestaoDaAnalise
-              versaoId={projeto.primary_version_id}
-              aoUsar={({ bpm, tom }) => mudar({ bpm, key: tom })}
+              versaoId={favorita?.id}
+              aoUsar={({ bpm, tom }) => mudarFavorita({ bpm, key: tom })}
             />
 
             <View style={estilos.linhaDoUpload}>
@@ -708,7 +756,9 @@ export default function EspacoJam() {
         versao={emEdicao}
         ehPrincipal={Boolean(emEdicao && emEdicao.id === projeto.primary_version_id)}
         proximoNumero={versoes.length ? Math.max(...versoes.map((v) => v.version_number)) + 1 : 1}
-        herdar={{ bpm: projeto.bpm, key: projeto.key, genre: projeto.genre }}
+        // Herda da FAVORITA: é a gravação de referência, e é dela que o andamento e o tom de
+        // uma versão nova provavelmente partem. O gênero continua da música.
+        herdar={{ bpm: favorita?.bpm, key: favorita?.key, genre: projeto.genre }}
         autor={{ id: usuario?.id, nome: meuNome, foto: minhaFoto }}
         arquivoInicial={arquivoInicial}
         aoFechar={() => { setFolhaAberta(false); setEmEdicao(null); setArquivoInicial(null); }}

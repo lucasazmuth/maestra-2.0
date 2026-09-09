@@ -162,6 +162,7 @@ const ProjectSpace: FC = () => {
   const [chatError, setChatError] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const lastSavedSignature = useRef('');
+  const lastSavedVersionSignature = useRef('');
 
   const setPlayerOpen = useLocalPlayerStore((state) => state.setOpen);
   const setPlayerTracks = useLocalPlayerStore((state) => state.setTracks);
@@ -172,12 +173,21 @@ const ProjectSpace: FC = () => {
   const togglePlayer = useLocalPlayerStore((state) => state.toggle);
   const seekPlayer = useLocalPlayerStore((state) => state.seek);
 
-  const projectSignature = (value: CatalogProject) => JSON.stringify({ title: value.title, status: value.status, genre: value.genre || '', bpm: value.bpm || '', key: value.key || '', release_date: value.release_date || '' });
+  const projectSignature = (value: CatalogProject) => JSON.stringify({ title: value.title, status: value.status, genre: value.genre || '', release_date: value.release_date || '' });
+  // ⚠️ BPM e tom são da VERSÃO FAVORITA, e têm salvamento próprio. Saíram do projeto porque são
+  // da GRAVAÇÃO: um acústico não anda no mesmo andamento do original, e um remix quase nunca
+  // fica no mesmo tom. O id entra na assinatura porque trocar de favorita muda o que a ficha
+  // mostra — sem ele, o efeito acharia que o valor da nova é uma edição da anterior.
+  const versionSignature = (value?: CatalogVersion | null) => JSON.stringify({ id: value?.id || '', bpm: value?.bpm || '', key: value?.key || '' });
   const refresh = useCallback(() => {
     if (!projectId) return Promise.resolve();
     setLoading(true);
     return catalogDb.getCatalogProject(projectId)
-      .then((next) => { setProject(next); lastSavedSignature.current = projectSignature(next); })
+      .then((next) => {
+        setProject(next);
+        lastSavedSignature.current = projectSignature(next);
+        lastSavedVersionSignature.current = versionSignature((next.versions || []).find((v) => v.id === next.primary_version_id));
+      })
       .catch(() => message.error('Erro ao carregar Espaço JAM'))
       .finally(() => setLoading(false));
   }, [projectId]);
@@ -212,16 +222,37 @@ const ProjectSpace: FC = () => {
   }, [artistId]);
 
   const versions = useMemo(() => (project?.versions || []).slice().sort((a, b) => b.version_number - a.version_number), [project]);
+  /** A favorita: é dela que a ficha técnica mostra o BPM e o tom. */
+  const favorite = useMemo(() => versions.find((v) => v.id === project?.primary_version_id) ?? null, [versions, project?.primary_version_id]);
+
+  // Edita a favorita DENTRO do projeto, e não em estado à parte: assim continua a haver uma
+  // fonte de verdade só, e a lista de versões e a ficha nunca discordam sobre o mesmo número.
+  const changeFavorite = useCallback((part: Partial<CatalogVersion>) => setProject((current) => (current ? { ...current, versions: (current.versions || []).map((v) => (v.id === current.primary_version_id ? { ...v, ...part } : v)) } : current)), []);
+
   const saveProject = useCallback(async (value: CatalogProject) => {
     if (!value.title.trim() || projectSignature(value) === lastSavedSignature.current || !canUpdateProject) return;
     setSaveState('saving');
     try {
-      const saved = await catalogDb.updateCatalogProject(value.id, { title: value.title, status: value.status, genre: value.genre, bpm: value.bpm, key: value.key, release_date: value.release_date });
+      const saved = await catalogDb.updateCatalogProject(value.id, { title: value.title, status: value.status, genre: value.genre, release_date: value.release_date });
       lastSavedSignature.current = projectSignature(saved);
       setProject((current) => current ? { ...current, ...saved } : current);
       setSaveState('saved');
     } catch { setSaveState('error'); }
   }, [canUpdateProject]);
+  useEffect(() => {
+    if (!favorite || !canUpdateProject || versionSignature(favorite) === lastSavedVersionSignature.current) return undefined;
+    const timer = window.setTimeout(async () => {
+      setSaveState('saving');
+      try {
+        await catalogDb.updateCatalogVersion(favorite.id, { bpm: favorite.bpm, key: favorite.key });
+        lastSavedVersionSignature.current = versionSignature(favorite);
+        setSaveState('saved');
+      } catch { setSaveState('error'); }
+    }, 650);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [favorite, canUpdateProject]);
+
   useEffect(() => {
     if (!project || projectSignature(project) === lastSavedSignature.current) return;
     const timer = window.setTimeout(() => { void saveProject(project); }, 650);
@@ -364,8 +395,11 @@ const ProjectSpace: FC = () => {
       <section className={styles.content}>
         <div className={styles.workspace}>
           <div className={styles.metaStrip}>
-            <label><span>BPM</span><Input disabled={!canUpdateProject} value={project.bpm || ''} placeholder='—' onChange={(event) => setProject({ ...project, bpm: event.target.value })} /></label>
-            <label><span>Tom</span><Input disabled={!canUpdateProject} value={project.key || ''} placeholder='—' onChange={(event) => setProject({ ...project, key: event.target.value })} /></label>
+            {/* BPM e Tom saem da versão FAVORITA, e é nela que são gravados. Sem favorita não
+                há o que mostrar nem onde guardar, e o campo fica travado em vez de aceitar uma
+                digitação que se perderia. */}
+            <label><span>BPM</span><Input disabled={!canUpdateProject || !favorite} value={favorite?.bpm || ''} placeholder='—' onChange={(event) => changeFavorite({ bpm: event.target.value })} /></label>
+            <label><span>Tom</span><Input disabled={!canUpdateProject || !favorite} value={favorite?.key || ''} placeholder='—' onChange={(event) => changeFavorite({ key: event.target.value })} /></label>
             {/* Mesma lista de gêneros da ficha da música: aqui era um campo livre, então cada
                 pessoa escrevia de um jeito ("Trap", "trap", "Hip Hop/Trap") e o mesmo gênero
                 virava três nos filtros. */}
@@ -379,9 +413,9 @@ const ProjectSpace: FC = () => {
               cima deles. Ouve a versão PRINCIPAL: é a que representa a música, e analisar todas
               seria gastar CPU para responder a mesma pergunta várias vezes. */}
           <AnalysisHint
-            versionId={project.primary_version_id}
+            versionId={favorite?.id}
             disabled={!canUpdateProject}
-            onUse={({ bpm, tom }) => setProject({ ...project, bpm, key: tom })}
+            onUse={({ bpm, tom }) => changeFavorite({ bpm, key: tom })}
           />
 
           <div className={styles.sectionHeader}>
@@ -425,7 +459,7 @@ const ProjectSpace: FC = () => {
           projectTitle={project.title}
           nextVersionNumber={versions.length ? Math.max(...versions.map((v) => v.version_number)) + 1 : 1}
           initialFile={uploadFile}
-          inherit={{ bpm: project.bpm, key: project.key, genre: project.genre }}
+          inherit={{ bpm: favorite?.bpm, key: favorite?.key, genre: project.genre }}
           author={{
             id: user?.id || null,
             name: (user?.user_metadata as any)?.full_name || (user?.user_metadata as any)?.name || user?.email || 'Você',

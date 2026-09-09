@@ -139,13 +139,17 @@ export const saveCatalogProjectFromForm = async (
 ): Promise<CatalogItem> => {
   const now = new Date().toISOString();
   // Campos da MÚSICA (o projeto): identidade, capa, responsável, data de lançamento.
+  //
+  // ⚠️ BPM E TOM NÃO ENTRAM AQUI. Eles são da GRAVAÇÃO, e vão no `versionPayload` abaixo: um
+  // acústico não anda no mesmo andamento do original, e um remix quase nunca fica no mesmo tom.
+  // As colunas `catalog_projects.bpm/key` continuam no banco como legado — o
+  // `catalogProjectToItem` ainda as lê como último recurso para músicas antigas cuja versão
+  // nunca teve o valor —, mas ninguém escreve nelas.
   const projectPayload = {
     artist_id: input.artist_id,
     title: input.title || 'Sem título',
     status: input.status || 'composition',
     genre: input.genre ?? null,
-    bpm: input.bpm ?? null,
-    key: input.key ?? null,
     cover_image: input.cover_image ?? null,
     cover_image_name: input.cover_image_name ?? null,
     assignee: input.assignee ?? null,

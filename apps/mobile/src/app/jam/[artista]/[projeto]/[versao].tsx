@@ -313,7 +313,10 @@ export default function EspacoDaVersao() {
             </Svg>
 
             <View style={estilos.fichaTecnica}>
-              {([['BPM', projeto.bpm], ['TOM', projeto.key], ['GÊNERO', projeto.genre]] as const)
+              {/* BPM e tom são DESTA gravação, e não da música: esta tela é a versão, e um
+                  acústico não anda no mesmo andamento do original. O gênero continua da música,
+                  que é onde ele de facto vive. */}
+              {([['BPM', versao?.bpm], ['TOM', versao?.key], ['GÊNERO', projeto.genre]] as const)
                 .map(([rotulo, valor], i) => (
                   <View key={rotulo} style={[estilos.dado, i > 0 && estilos.dadoComFio]}>
                     <Text style={estilos.dadoRotulo}>{rotulo}</Text>
