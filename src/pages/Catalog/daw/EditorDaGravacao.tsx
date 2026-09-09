@@ -1,11 +1,11 @@
 import { FC, ReactNode, useRef, useState } from 'react';
 import {
-  FiChevronDown, FiCircle, FiHeadphones, FiMaximize2, FiPause, FiPlay,
+  FiCircle, FiHeadphones, FiMaximize2, FiPause, FiPlay,
   FiSkipBack, FiSquare, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
-import type { CatalogTrack, CatalogVersion } from '@maestra/core/interfaces/maestra';
+import type { CatalogTrack } from '@maestra/core/interfaces/maestra';
 
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
 import { IconeDaTimeline, IconeDoMixer } from './icones';
@@ -50,7 +50,6 @@ const botaozinho = (ativo: boolean, corAtiva?: string) => ({
 export interface AcoesDoEditor {
   aoSair: () => void;
   aoRenomear: (nome: string) => void;
-  aoAbrirGravacao: (id: string) => void;
   aoAbrirCompleta: () => void;
   /** `pistaAlvo` vazio cria uma pista nova para cada ficheiro. */
   aoAdicionarArquivos: (arquivos: File[], inicio: number, pistaAlvo?: string) => void;
@@ -68,9 +67,6 @@ export const EditorDaGravacao: FC<{
   selo: 'parado' | 'salvando' | 'salvo' | 'erro';
   /** O lote em curso, se houver: dez stems levam um minuto, e um minuto sem sinal é um bug. */
   envio?: { feitos: number; total: number } | null;
-  gravacoes: CatalogVersion[];
-  abertaId: string | null;
-  principalId?: string | null;
   pistas: CatalogTrack[];
   pistaFixaId?: string | null;
   aoMontar?: () => void;
@@ -82,7 +78,7 @@ export const EditorDaGravacao: FC<{
   podeEditar: boolean;
   acoes: AcoesDoEditor;
 }> = ({
-  titulo, selo, envio, gravacoes, abertaId, principalId, pistas, pistaFixaId, aoMontar,
+  titulo, selo, envio, pistas, pistaFixaId, aoMontar,
   estado, picos, transporte, ficha, podeEditar, acoes,
 }) => {
   const [aba, setAba] = useState<'linha' | 'mesa'>('linha');
@@ -90,7 +86,6 @@ export const EditorDaGravacao: FC<{
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [editandoNome, setEditandoNome] = useState(false);
   const [rascunho, setRascunho] = useState(titulo);
-  const [gravacoesAbertas, setGravacoesAbertas] = useState(false);
   const [biblioteca, setBiblioteca] = useState<ItemDaBiblioteca[]>([]);
   const [sobre, setSobre] = useState(false);
 
@@ -102,7 +97,6 @@ export const EditorDaGravacao: FC<{
   const duracao = Math.max(DURACAO_MINIMA, Math.ceil(estado.duracao) + 10);
   const largura = duracao * escala + 80;
   const agulha = estado.posicao;
-  const aberta = gravacoes.find((v) => v.id === abertaId) ?? null;
 
   /** De quantos em quantos segundos a régua põe um número, para os rótulos não se colarem. */
   const passo = escala >= 80 ? 1 : escala >= 40 ? 2 : escala >= 20 ? 5 : 10;
@@ -391,57 +385,11 @@ export const EditorDaGravacao: FC<{
           </span>
         )}
 
-        {/* A gravação aberta: V1, V2 e V3 são ALTERNATIVAS — ouve-se uma de cada vez —, e é por
-            isso que são um menu, e não faixas empilhadas. */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <button
-            type='button'
-            onClick={() => setGravacoesAbertas((v) => !v)}
-            aria-label='Trocar de gravação'
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, height: 28, padding: '0 10px',
-              background: DS.color.bgCampo, border: `1px solid ${DS.color.borda}`,
-              borderRadius: DS.raio.medio, color: DS.color.texto,
-              fontSize: 12, fontWeight: 600, cursor: 'pointer',
-            }}
-          >
-            {aberta ? `V${aberta.version_number}` : '—'}
-            {aberta?.id === principalId && <span style={{ color: '#f59e0b' }}>★</span>}
-            <FiChevronDown size={11} />
-          </button>
-
-          {gravacoesAbertas && (
-            <div style={{
-              position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40,
-              minWidth: 240, padding: 4,
-              background: DS.color.bgPainel, border: `1px solid ${DS.color.bordaForte}`,
-              borderRadius: DS.raio.grande, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-            }}>
-              {gravacoes.map((gravacao) => (
-                <button
-                  key={gravacao.id}
-                  type='button'
-                  onClick={() => { acoes.aoAbrirGravacao(gravacao.id); setGravacoesAbertas(false); }}
-                  aria-label={`Abrir V${gravacao.version_number}${gravacao.title ? `, ${gravacao.title}` : ''}`}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '8px 10px', borderRadius: DS.raio.medio,
-                    background: gravacao.id === abertaId ? DS.color.bgHover : 'transparent',
-                    border: 'none', cursor: 'pointer', textAlign: 'left',
-                    color: gravacao.id === abertaId ? DS.color.texto : DS.color.textoApoio,
-                    fontSize: 12, fontFamily: DS.font.display,
-                  }}
-                >
-                  <strong style={{ fontSize: 11 }}>V{gravacao.version_number}</strong>
-                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {gravacao.title || 'Sem título'}
-                  </span>
-                  {gravacao.id === principalId && <span style={{ color: '#f59e0b' }}>★</span>}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* ⚠️ O SELETOR DE GRAVAÇÃO SAIU DA TELA, a pedido do dono do produto, enquanto ele
+            decide como as versões se organizam. O que saiu foi só o CONTROLE: continua a haver
+            uma gravação aberta (a principal, ou a mais recente), e é ela que o editor carrega —
+            essa escolha vive em `ProjectSpace`. Quando as versões voltarem, volta um botão, não
+            um modelo novo. */}
 
         <button
           type='button'

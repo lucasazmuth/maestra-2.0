@@ -415,7 +415,6 @@ const ProjectSpace: FC = () => {
   const acoes: AcoesDoEditor = {
     aoSair: () => navigate(`/artists/${artistId}/catalog`),
     aoRenomear: (nome) => setProject((atual) => (atual ? { ...atual, title: nome } : atual)),
-    aoAbrirGravacao: (id) => setOpenId(id),
     aoAbrirCompleta: () => navigate(`/artists/${artistId}/catalog?projectId=${project?.id}&versionId=${openId}`),
     aoAdicionarArquivos: (arquivos, inicio, pistaAlvo) => { void enviarPistas(arquivos, inicio, pistaAlvo); },
 
@@ -505,9 +504,6 @@ const ProjectSpace: FC = () => {
         titulo={project.title}
         selo={saveState}
         envio={envio}
-        gravacoes={versions}
-        abertaId={openId}
-        principalId={project.primary_version_id}
         pistas={pistas}
         pistaFixaId={porMontar ? ID_DA_MIX : null}
         aoMontar={porMontar && podeEditar ? () => { void montarAMix(); } : undefined}
