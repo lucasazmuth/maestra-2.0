@@ -39,31 +39,35 @@ export const Dialogo = ({
     {/* Tocar fora fecha: é o gesto que todo mundo tenta primeiro numa caixa destas. */}
     <Pressable style={estilos.veu} onPress={aoFechar} accessibilityLabel="Fechar" />
 
-    <View style={estilos.caixa} accessibilityViewIsModal accessibilityRole="alert">
-      <View style={estilos.cabecalho}>
-        {!!emblema && <View style={estilos.emblema}>{emblema}</View>}
-        <Text style={estilos.titulo}>{titulo}</Text>
+    {/* O véu recebe o toque de fora; esta camada só CENTRA, e deixa passar o que não for a caixa
+        (`box-none`). Sem isso ela cobriria o véu inteiro e fechar tocando fora pararia. */}
+    <View style={estilos.centro} pointerEvents="box-none">
+      <View style={estilos.caixa} accessibilityViewIsModal accessibilityRole="alert">
+        <View style={estilos.cabecalho}>
+          {!!emblema && <View style={estilos.emblema}>{emblema}</View>}
+          <Text style={estilos.titulo}>{titulo}</Text>
+        </View>
+
+        {children}
+
+        {!!acao && (
+          <Pressable
+            style={estilos.acao}
+            onPress={acao.aoTocar}
+            accessibilityRole="button"
+            accessibilityLabel={acao.rotulo}
+          >
+            <Text style={estilos.acaoTexto}>{acao.rotulo}</Text>
+            {acao.sufixo}
+          </Pressable>
+        )}
+
+        {!!recusa && (
+          <Pressable onPress={aoFechar} accessibilityRole="button" accessibilityLabel={recusa}>
+            <Text style={estilos.recusa}>{recusa}</Text>
+          </Pressable>
+        )}
       </View>
-
-      {children}
-
-      {!!acao && (
-        <Pressable
-          style={estilos.acao}
-          onPress={acao.aoTocar}
-          accessibilityRole="button"
-          accessibilityLabel={acao.rotulo}
-        >
-          <Text style={estilos.acaoTexto}>{acao.rotulo}</Text>
-          {acao.sufixo}
-        </Pressable>
-      )}
-
-      {!!recusa && (
-        <Pressable onPress={aoFechar} accessibilityRole="button" accessibilityLabel={recusa}>
-          <Text style={estilos.recusa}>{recusa}</Text>
-        </Pressable>
-      )}
     </View>
   </Modal>
 );
@@ -71,13 +75,20 @@ export const Dialogo = ({
 const estilos = StyleSheet.create({
   veu: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: COR_AVISO.veu },
 
-  // Centrada de verdade: `justifyContent` no lugar do `translateY` fixo que a versão anterior
-  // usava. Aquele número era a metade da altura ESPERADA da caixa, e um diálogo com mais texto
-  // saía do centro sem ninguém perceber.
-  caixa: {
+  // QUEM CENTRA É O CONTÊINER, e não a caixa. Duas tentativas erradas antes desta, e as duas
+  // pareciam certas lendo o arquivo:
+  //
+  // 1. `translateY: -190` na caixa absoluta — metade da altura ESPERADA dela. Um aviso com mais
+  //    texto saía do centro e ninguém percebia, porque o número continuava plausível;
+  // 2. `marginVertical: 'auto'` numa caixa com `top` e `bottom` em zero. Isso não centra: ESTICA.
+  //    O diálogo ocupou a tela inteira, com o título atrás do notch.
+  //
+  // O segundo eu só descobri no simulador. Nenhum teste pega altura de caixa.
+  centro: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    marginHorizontal: 16, marginVertical: 'auto',
-    alignSelf: 'center', width: '100%',
+    justifyContent: 'center', paddingHorizontal: 16,
+  },
+  caixa: {
     padding: 22, gap: 14,
     borderRadius: RAIO.cartao, backgroundColor: COR.superficie,
     shadowColor: 'rgb(46, 72, 117)', shadowOpacity: 0.18, shadowRadius: 34,
