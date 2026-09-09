@@ -20,6 +20,7 @@ import * as catalogo from '@maestra/core/services/db/catalog';
 
 import { ComentariosDaVersao } from '@/casca/jam/ComentariosDaVersao';
 import { Onda, SemOnda } from '@/casca/jam/Onda';
+import { SugestaoDaAnalise } from '@/casca/jam/SugestaoDaAnalise';
 import { FolhaDaVersao } from '@/casca/jam/FolhaDaVersao';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { escolherAudio, type ArquivoEscolhido } from '@/nucleo/arquivos';
@@ -470,6 +471,14 @@ export default function EspacoJam() {
                 </Text>
               </CampoDaFicha>
             </View>
+
+            {/* O que a máquina ouviu, logo abaixo dos campos que a pessoa preenche — e nunca
+                por cima deles. Ouve a versão PRINCIPAL: é a que representa a música, e analisar
+                todas seria gastar CPU para responder a mesma pergunta várias vezes. */}
+            <SugestaoDaAnalise
+              versaoId={projeto.primary_version_id}
+              aoUsar={({ bpm, tom }) => mudar({ bpm, key: tom })}
+            />
 
             <View style={estilos.linhaDoUpload}>
               <Pressable

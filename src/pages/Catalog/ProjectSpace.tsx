@@ -20,6 +20,7 @@ import type { LocalTrack } from '@maestra/core/stores/localPlayerStore';
 import WaveSurferWaveform from './WaveSurferWaveform';
 import styles from './ProjectSpace.module.scss';
 import { Spinner } from '../../components/spinner/spinner';
+import AnalysisHint from '../../components/AnalysisHint';
 
 const getStageLabel = (stage: CatalogVersionStage) => getVersionStageLabel(stage);
 
@@ -373,6 +374,15 @@ const ProjectSpace: FC = () => {
                 mão junto de BPM, tom e gênero, e usa o mesmo autosave da faixa. */}
             <label><span>Lançamento</span><DatePicker disabled={!canUpdateProject} value={project.release_date ? dayjs(project.release_date) : null} format='DD/MM/YYYY' placeholder='—' suffixIcon={null} allowClear onChange={(date) => setProject({ ...project, release_date: date ? date.format('YYYY-MM-DD') : null })} /></label>
           </div>
+
+          {/* O que a máquina ouviu, logo abaixo dos campos que a pessoa preenche — e nunca por
+              cima deles. Ouve a versão PRINCIPAL: é a que representa a música, e analisar todas
+              seria gastar CPU para responder a mesma pergunta várias vezes. */}
+          <AnalysisHint
+            versionId={project.primary_version_id}
+            disabled={!canUpdateProject}
+            onUse={({ bpm, tom }) => setProject({ ...project, bpm, key: tom })}
+          />
 
           <div className={styles.sectionHeader}>
             {canCollaborateJam && <Button className={styles.uploadButton} type='primary' icon={<FiUpload />} onClick={startUpload}>Upload</Button>}

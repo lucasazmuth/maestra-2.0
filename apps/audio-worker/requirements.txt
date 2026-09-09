@@ -1,0 +1,3 @@
+# O essentia com os modelos treinados. Wheel só para Linux x86_64 — ver o aviso no Dockerfile.
+essentia-tensorflow==2.1b6.dev1110
+httpx==0.27.2

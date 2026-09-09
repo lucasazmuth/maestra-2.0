@@ -1,0 +1,24 @@
+# A máquina dorme quando não há trabalho, e acorda com o toque em /acordar que a
+# `audio-job-create` dá ao enfileirar. É o que faz a conta ser proporcional ao uso: uma fila
+# vazia não custa CPU.
+app = "maestra-audio-worker"
+primary_region = "gru"
+
+[build]
+
+[env]
+  PORTA = "8080"
+  OCIOSO_ATE_DORMIR = "120"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+# 2 GB porque o essentia carrega modelos. Menos que isto e o processo morre por memória no meio
+# da primeira análise, o que na fila aparece como um trabalho que volta três vezes e desiste.
+[[vm]]
+  size = "performance-2x"
+  memory = "2gb"
