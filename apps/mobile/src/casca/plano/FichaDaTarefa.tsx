@@ -7,7 +7,7 @@ import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_PLANO, RAIO } from '@maestra/core/constants/design';
 
-import { Folha } from '@/casca/Folha';
+import { Bloco, Folha, Linha } from '@/casca/Folha';
 import { TASK_TYPES } from '@maestra/core/constants/maestra';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { ActionTask, TaskComment } from '@maestra/core/interfaces/maestra';
@@ -201,6 +201,8 @@ export const FichaDaTarefa = ({
         <ScrollView contentContainerStyle={estilos.corpo} keyboardShouldPersistTaps="handled">
           {aba === 'geral' ? (
             <>
+              <Bloco>
+                <Linha primeira>
               <Campo rotulo="Descrição">
                 <TextInput
                   style={[estilos.entrada, estilos.entradaAlta]}
@@ -213,7 +215,9 @@ export const FichaDaTarefa = ({
                   accessibilityLabel="Descrição da tarefa"
                 />
               </Campo>
+                </Linha>
 
+                <Linha>
               <Campo rotulo="Status">
                 <Seletor
                   texto={rotuloDoEstado(estado)}
@@ -221,7 +225,9 @@ export const FichaDaTarefa = ({
                   rotulo={`Status: ${rotuloDoEstado(estado)}`}
                 />
               </Campo>
+                </Linha>
 
+                <Linha>
               <Campo rotulo="Prazo">
                 <TextInput
                   style={estilos.entrada}
@@ -238,7 +244,11 @@ export const FichaDaTarefa = ({
                   accessibilityLabel="Prazo"
                 />
               </Campo>
+                </Linha>
+              </Bloco>
 
+              <Bloco rotulo="Classificação">
+                <Linha primeira>
               <Campo rotulo="Categoria">
                 <Seletor
                   texto={rotuloDaCategoria(tipo)}
@@ -246,7 +256,9 @@ export const FichaDaTarefa = ({
                   rotulo={`Categoria: ${rotuloDaCategoria(tipo)}`}
                 />
               </Campo>
+                </Linha>
 
+                <Linha>
               <Campo rotulo="Responsável">
                 <Seletor
                   texto={responsaveis.find((r) => r.valor === responsavel)?.rotulo ?? 'Sem responsável'}
@@ -254,6 +266,8 @@ export const FichaDaTarefa = ({
                   rotulo="Responsável"
                 />
               </Campo>
+                </Linha>
+              </Bloco>
 
               {!!erro && <Text style={estilos.erro}>{erro}</Text>}
             </>
@@ -409,20 +423,17 @@ const estilos = StyleSheet.create({
   abaAtiva: { borderBottomColor: COR.primaria },
   abaTexto: { fontSize: 15, color: COR_PLANO.legenda },
   abaTextoAtivo: { fontWeight: '700', color: COR.primaria },
-  corpo: { padding: 22, gap: 18 },
-  campo: { gap: 8 },
-  rotulo: { fontSize: 13, fontWeight: '700', color: COR_PLANO.rotulo },
-  entrada: {
-    minHeight: 46, paddingHorizontal: 14, paddingVertical: 12,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_PLANO.contorno,
-    backgroundColor: COR_PLANO.secaoFundo, fontSize: 15, color: COR_PLANO.titulo,
-  },
-  entradaAlta: { minHeight: 92, textAlignVertical: 'top' },
+  // O recuo e o intervalo do corpo saem da `Folha`; aqui fica o espaço ENTRE os blocos.
+  corpo: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 28, gap: 22 },
+  // Os campos seguem a folha de compromisso da Agenda, que é a referência: rótulo miúdo em caixa
+  // alta e o campo SEM moldura, porque o bloco branco já é o recipiente e a divisória já separa.
+  campo: { gap: 6 },
+  rotulo: { fontSize: 11, fontWeight: '800', color: COR_PLANO.rotulo, letterSpacing: 0.4 },
+  entrada: { paddingVertical: 2, fontSize: 15, color: COR_PLANO.titulo },
+  entradaAlta: { minHeight: 72, textAlignVertical: 'top' },
   seletor: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-    minHeight: 46, paddingHorizontal: 14,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_PLANO.contorno,
-    backgroundColor: COR_PLANO.secaoFundo,
+    paddingVertical: 2,
   },
   seletorTexto: { flex: 1, fontSize: 15, color: COR_PLANO.titulo },
   erro: { fontSize: 13, color: COR.erro, lineHeight: 19 },

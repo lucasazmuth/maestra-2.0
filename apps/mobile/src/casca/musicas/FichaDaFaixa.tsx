@@ -11,7 +11,7 @@ import { CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '@maestra/core/constants/mae
 import type { CatalogItem, Split } from '@maestra/core/interfaces/maestra';
 import { deleteCatalogProject, saveCatalogProjectFromForm } from '@maestra/core/services/db/catalog';
 
-import { Folha } from '@/casca/Folha';
+import { Bloco, Folha, Linha } from '@/casca/Folha';
 import { Versoes } from '@/casca/musicas/Versoes';
 import { enviarParaOCatalogo, escolherImagem } from '@/nucleo/arquivos';
 
@@ -62,63 +62,66 @@ const Campo = ({ rotulo, children }: { rotulo: string; children: React.ReactNode
 type Aba = 'informacoes' | 'letras' | 'splits';
 
 /** Um participante dos créditos: quem é, o que fez e quanto leva. */
-const LinhaDeSplit = ({ split, aoMudar, aoRemover }: {
+const LinhaDeSplit = ({ split, primeira, aoMudar, aoRemover }: {
   split: Split;
+  primeira?: boolean;
   aoMudar: (parte: Partial<Split>) => void;
   aoRemover: () => void;
 }) => (
-  <View style={estilos.split}>
-    <View style={estilos.splitTopo}>
-      <TextInput
-        style={[estilos.entrada, estilos.flex]}
-        value={split.name}
-        onChangeText={(t) => aoMudar({ name: t })}
-        placeholder="Nome do participante"
-        placeholderTextColor={COR.espaçoReservado}
-        accessibilityLabel="Nome do participante"
-      />
-      <Pressable
-        onPress={aoRemover}
-        hitSlop={10}
-        accessibilityRole="button"
-        accessibilityLabel={`Remover ${split.name || 'participante'}`}
-      >
-        <Feather name="x" size={18} color={COR_CATALOGO.legenda} />
-      </Pressable>
-    </View>
+  <Linha primeira={primeira}>
+    <View style={estilos.split}>
+      <View style={estilos.splitTopo}>
+        <TextInput
+          style={[estilos.entrada, estilos.flex]}
+          value={split.name}
+          onChangeText={(t) => aoMudar({ name: t })}
+          placeholder="Nome do participante"
+          placeholderTextColor={COR.espaçoReservado}
+          accessibilityLabel="Nome do participante"
+        />
+        <Pressable
+          onPress={aoRemover}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={`Remover ${split.name || 'participante'}`}
+        >
+          <Feather name="x" size={18} color={COR_CATALOGO.legenda} />
+        </Pressable>
+      </View>
 
-    <View style={estilos.papeis}>
-      {SPLIT_ROLES.map((papel) => {
-        const escolhido = split.role === papel;
-        return (
-          <Pressable
-            key={papel}
-            style={[estilos.papel, escolhido && estilos.papelEscolhido]}
-            onPress={() => aoMudar({ role: papel })}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: escolhido }}
-          >
-            <Text style={[estilos.papelTexto, escolhido && estilos.papelTextoEscolhido]}>
-              {papel}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
+      <View style={estilos.papeis}>
+        {SPLIT_ROLES.map((papel) => {
+          const escolhido = split.role === papel;
+          return (
+            <Pressable
+              key={papel}
+              style={[estilos.papel, escolhido && estilos.papelEscolhido]}
+              onPress={() => aoMudar({ role: papel })}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: escolhido }}
+            >
+              <Text style={[estilos.papelTexto, escolhido && estilos.papelTextoEscolhido]}>
+                {papel}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
-    <View style={estilos.splitBaixo}>
-      <TextInput
-        style={[estilos.entrada, estilos.entradaCurta]}
-        value={String(split.percentage ?? '')}
-        onChangeText={(t) => aoMudar({ percentage: Number(t.replace(/[^\d]/g, '')) || 0 })}
-        placeholder="0"
-        placeholderTextColor={COR.espaçoReservado}
-        keyboardType="number-pad"
-        accessibilityLabel="Percentual"
-      />
-      <Text style={estilos.porcento}>%</Text>
+      <View style={estilos.splitBaixo}>
+        <TextInput
+          style={[estilos.entrada, estilos.entradaCurta]}
+          value={String(split.percentage ?? '')}
+          onChangeText={(t) => aoMudar({ percentage: Number(t.replace(/[^\d]/g, '')) || 0 })}
+          placeholder="0"
+          placeholderTextColor={COR.espaçoReservado}
+          keyboardType="number-pad"
+          accessibilityLabel="Percentual"
+        />
+        <Text style={estilos.porcento}>%</Text>
+      </View>
     </View>
-  </View>
+  </Linha>
 );
 
 export const FichaDaFaixa = ({
@@ -273,215 +276,250 @@ export const FichaDaFaixa = ({
         <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
           {aba === 'informacoes' && (
             <>
-              <Campo rotulo="Título">
-                <TextInput
-                  style={estilos.entrada}
-                  value={rascunho.title ?? ''}
-                  onChangeText={(t) => mudar({ title: t })}
-                  placeholder="Título da música"
-                  placeholderTextColor={COR.espaçoReservado}
-                  autoFocus={!faixa}
-                  accessibilityLabel="Título"
-                />
-              </Campo>
+              <Bloco>
+                <Linha primeira>
+                  <Campo rotulo="Título">
+                    <TextInput
+                      style={estilos.entrada}
+                      value={rascunho.title ?? ''}
+                      onChangeText={(t) => mudar({ title: t })}
+                      placeholder="Título da música"
+                      placeholderTextColor={COR.espaçoReservado}
+                      autoFocus={!faixa}
+                      accessibilityLabel="Título"
+                    />
+                  </Campo>
+                </Linha>
 
-              <Campo rotulo="Status">
-                <View style={estilos.opcoes}>
-                  {CATALOG_STATUS_OPTIONS.map((opcao) => {
-                    const escolhido = (rascunho.status ?? 'composition') === opcao.id;
-                    return (
-                      <Pressable
-                        key={opcao.id}
-                        style={[estilos.opcao, escolhido && estilos.opcaoEscolhida]}
-                        onPress={() => mudar({ status: opcao.id })}
-                        accessibilityRole="radio"
-                        accessibilityState={{ selected: escolhido }}
-                      >
-                        <View style={[estilos.pontoDoStatus, { backgroundColor: opcao.color }]} />
-                        <Text style={[estilos.opcaoTexto, escolhido && estilos.opcaoTextoEscolhido]}>
-                          {opcao.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </Campo>
+                <Linha>
+                  <Campo rotulo="Status">
+                    <View style={estilos.opcoes}>
+                      {CATALOG_STATUS_OPTIONS.map((opcao) => {
+                        const escolhido = (rascunho.status ?? 'composition') === opcao.id;
+                        return (
+                          <Pressable
+                            key={opcao.id}
+                            style={[estilos.opcao, escolhido && estilos.opcaoEscolhida]}
+                            onPress={() => mudar({ status: opcao.id })}
+                            accessibilityRole="radio"
+                            accessibilityState={{ selected: escolhido }}
+                          >
+                            <View style={[estilos.pontoDoStatus, { backgroundColor: opcao.color }]} />
+                            <Text
+                              style={[estilos.opcaoTexto, escolhido && estilos.opcaoTextoEscolhido]}
+                            >
+                              {opcao.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </Campo>
+                </Linha>
 
-              <Campo rotulo="Gênero">
-                <TextInput
-                  style={estilos.entrada}
-                  value={rascunho.genre ?? ''}
-                  onChangeText={(t) => mudar({ genre: t })}
-                  placeholder="Gênero"
-                  placeholderTextColor={COR.espaçoReservado}
-                  accessibilityLabel="Gênero"
-                />
-                {generos.length > 0 && (
-                  <View style={estilos.sugestoes}>
-                    {generos.slice(0, 6).map((genero) => (
-                      <Pressable
-                        key={genero}
-                        style={estilos.sugestao}
-                        onPress={() => mudar({ genre: genero })}
-                        accessibilityRole="button"
-                      >
-                        <Text style={estilos.sugestaoTexto}>{genero}</Text>
-                      </Pressable>
-                    ))}
+                <Linha>
+                  <Campo rotulo="Gênero">
+                    <TextInput
+                      style={estilos.entrada}
+                      value={rascunho.genre ?? ''}
+                      onChangeText={(t) => mudar({ genre: t })}
+                      placeholder="Gênero"
+                      placeholderTextColor={COR.espaçoReservado}
+                      accessibilityLabel="Gênero"
+                    />
+                    {generos.length > 0 && (
+                      <View style={estilos.sugestoes}>
+                        {generos.slice(0, 6).map((genero) => (
+                          <Pressable
+                            key={genero}
+                            style={estilos.sugestao}
+                            onPress={() => mudar({ genre: genero })}
+                            accessibilityRole="button"
+                          >
+                            <Text style={estilos.sugestaoTexto}>{genero}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </Campo>
+                </Linha>
+              </Bloco>
+
+              <Bloco rotulo="Lançamento">
+                <Linha primeira>
+                  <Campo rotulo="Data de lançamento">
+                    <TextInput
+                      style={estilos.entrada}
+                      value={dataEscrita}
+                      onChangeText={setDataEscrita}
+                      placeholder="28/08/2026"
+                      placeholderTextColor={COR.espaçoReservado}
+                      keyboardType="numbers-and-punctuation"
+                      accessibilityLabel="Data de lançamento"
+                    />
+                  </Campo>
+                </Linha>
+
+                {/* Dois a dois na mesma linha: são códigos curtos, e um por linha esticaria a
+                    aba de informações sem nenhum ganho de leitura. */}
+                <Linha>
+                  <View style={estilos.lado}>
+                    <View style={estilos.flex}>
+                      <Campo rotulo="ISRC">
+                        <TextInput
+                          style={estilos.entrada}
+                          value={rascunho.isrc ?? ''}
+                          onChangeText={(t) => mudar({ isrc: t })}
+                          placeholder="ISRC"
+                          placeholderTextColor={COR.espaçoReservado}
+                          autoCapitalize="characters"
+                          accessibilityLabel="ISRC"
+                        />
+                      </Campo>
+                    </View>
+                    <View style={estilos.flex}>
+                      <Campo rotulo="UPC">
+                        <TextInput
+                          style={estilos.entrada}
+                          value={rascunho.upc ?? ''}
+                          onChangeText={(t) => mudar({ upc: t })}
+                          placeholder="UPC"
+                          placeholderTextColor={COR.espaçoReservado}
+                          keyboardType="number-pad"
+                          accessibilityLabel="UPC"
+                        />
+                      </Campo>
+                    </View>
                   </View>
-                )}
-              </Campo>
+                </Linha>
 
-              <Campo rotulo="Data de lançamento">
-                <TextInput
-                  style={estilos.entrada}
-                  value={dataEscrita}
-                  onChangeText={setDataEscrita}
-                  placeholder="28/08/2026"
-                  placeholderTextColor={COR.espaçoReservado}
-                  keyboardType="numbers-and-punctuation"
-                  accessibilityLabel="Data de lançamento"
-                />
-              </Campo>
+                <Linha>
+                  <View style={estilos.lado}>
+                    <View style={estilos.flex}>
+                      <Campo rotulo="BPM">
+                        <TextInput
+                          style={estilos.entrada}
+                          value={rascunho.bpm ?? ''}
+                          onChangeText={(t) => mudar({ bpm: t })}
+                          placeholder="BPM"
+                          placeholderTextColor={COR.espaçoReservado}
+                          keyboardType="number-pad"
+                          accessibilityLabel="BPM"
+                        />
+                      </Campo>
+                    </View>
+                    <View style={estilos.flex}>
+                      <Campo rotulo="Tom">
+                        <TextInput
+                          style={estilos.entrada}
+                          value={rascunho.key ?? ''}
+                          onChangeText={(t) => mudar({ key: t })}
+                          placeholder="Tom"
+                          placeholderTextColor={COR.espaçoReservado}
+                          accessibilityLabel="Tom"
+                        />
+                      </Campo>
+                    </View>
+                  </View>
+                </Linha>
+              </Bloco>
 
-              <View style={estilos.lado}>
-                <View style={estilos.flex}>
-                  <Campo rotulo="ISRC">
-                    <TextInput
-                      style={estilos.entrada}
-                      value={rascunho.isrc ?? ''}
-                      onChangeText={(t) => mudar({ isrc: t })}
-                      placeholder="ISRC"
-                      placeholderTextColor={COR.espaçoReservado}
-                      autoCapitalize="characters"
-                      accessibilityLabel="ISRC"
+              <Bloco rotulo="Capa e versões">
+                <Linha primeira>
+                  <Campo rotulo="Capa">
+                    <Pressable
+                      style={estilos.capa}
+                      onPress={trocarCapa}
+                      disabled={enviandoCapa}
+                      accessibilityRole="button"
+                      accessibilityLabel={rascunho.cover_image ? 'Trocar a capa' : 'Escolher a capa'}
+                    >
+                      {enviandoCapa ? (
+                        <ActivityIndicator color={COR.primaria} />
+                      ) : rascunho.cover_image ? (
+                        <>
+                          <Image source={{ uri: rascunho.cover_image }} style={estilos.capaImagem} />
+                          <View style={estilos.flex}>
+                            <Text style={estilos.capaNome} numberOfLines={1}>
+                              {rascunho.cover_image_name || 'Capa da música'}
+                            </Text>
+                            <Text style={estilos.capaApoio}>Toque para trocar</Text>
+                          </View>
+                          <Pressable
+                            onPress={() => mudar({ cover_image: null, cover_image_name: null })}
+                            hitSlop={10}
+                            accessibilityRole="button"
+                            accessibilityLabel="Remover a capa"
+                          >
+                            <Feather name="x" size={18} color={COR_CATALOGO.legenda} />
+                          </Pressable>
+                        </>
+                      ) : (
+                        <>
+                          <View style={estilos.capaVazia}>
+                            <Feather name="image" size={18} color={COR_CATALOGO.legenda} />
+                          </View>
+                          <View style={estilos.flex}>
+                            <Text style={estilos.capaNome}>Escolher a capa</Text>
+                            <Text style={estilos.capaApoio}>PNG ou JPG</Text>
+                          </View>
+                        </>
+                      )}
+                    </Pressable>
+                  </Campo>
+                </Linha>
+
+                <Linha>
+                  <Campo rotulo="Versões">
+                    <Versoes
+                      artistaId={artistaId}
+                      projetoId={faixa?.project_id}
+                      autor={autor}
+                      aoMudar={aoMudarVersoes}
                     />
                   </Campo>
-                </View>
-                <View style={estilos.flex}>
-                  <Campo rotulo="UPC">
-                    <TextInput
-                      style={estilos.entrada}
-                      value={rascunho.upc ?? ''}
-                      onChangeText={(t) => mudar({ upc: t })}
-                      placeholder="UPC"
-                      placeholderTextColor={COR.espaçoReservado}
-                      keyboardType="number-pad"
-                      accessibilityLabel="UPC"
-                    />
-                  </Campo>
-                </View>
-              </View>
-
-              <View style={estilos.lado}>
-                <View style={estilos.flex}>
-                  <Campo rotulo="BPM">
-                    <TextInput
-                      style={estilos.entrada}
-                      value={rascunho.bpm ?? ''}
-                      onChangeText={(t) => mudar({ bpm: t })}
-                      placeholder="BPM"
-                      placeholderTextColor={COR.espaçoReservado}
-                      keyboardType="number-pad"
-                      accessibilityLabel="BPM"
-                    />
-                  </Campo>
-                </View>
-                <View style={estilos.flex}>
-                  <Campo rotulo="Tom">
-                    <TextInput
-                      style={estilos.entrada}
-                      value={rascunho.key ?? ''}
-                      onChangeText={(t) => mudar({ key: t })}
-                      placeholder="Tom"
-                      placeholderTextColor={COR.espaçoReservado}
-                      accessibilityLabel="Tom"
-                    />
-                  </Campo>
-                </View>
-              </View>
-
-              <Campo rotulo="Capa">
-                <Pressable
-                  style={estilos.capa}
-                  onPress={trocarCapa}
-                  disabled={enviandoCapa}
-                  accessibilityRole="button"
-                  accessibilityLabel={rascunho.cover_image ? 'Trocar a capa' : 'Escolher a capa'}
-                >
-                  {enviandoCapa ? (
-                    <ActivityIndicator color={COR.primaria} />
-                  ) : rascunho.cover_image ? (
-                    <>
-                      <Image source={{ uri: rascunho.cover_image }} style={estilos.capaImagem} />
-                      <View style={estilos.flex}>
-                        <Text style={estilos.capaNome} numberOfLines={1}>
-                          {rascunho.cover_image_name || 'Capa da música'}
-                        </Text>
-                        <Text style={estilos.capaApoio}>Toque para trocar</Text>
-                      </View>
-                      <Pressable
-                        onPress={() => mudar({ cover_image: null, cover_image_name: null })}
-                        hitSlop={10}
-                        accessibilityRole="button"
-                        accessibilityLabel="Remover a capa"
-                      >
-                        <Feather name="x" size={18} color={COR_CATALOGO.legenda} />
-                      </Pressable>
-                    </>
-                  ) : (
-                    <>
-                      <View style={estilos.capaVazia}>
-                        <Feather name="image" size={18} color={COR_CATALOGO.legenda} />
-                      </View>
-                      <View style={estilos.flex}>
-                        <Text style={estilos.capaNome}>Escolher a capa</Text>
-                        <Text style={estilos.capaApoio}>PNG ou JPG</Text>
-                      </View>
-                    </>
-                  )}
-                </Pressable>
-              </Campo>
-
-              <Campo rotulo="Versões">
-                <Versoes
-                  artistaId={artistaId}
-                  projetoId={faixa?.project_id}
-                  autor={autor}
-                  aoMudar={aoMudarVersoes}
-                />
-              </Campo>
+                </Linha>
+              </Bloco>
             </>
           )}
 
           {aba === 'letras' && (
-            <TextInput
-              style={[estilos.entrada, estilos.entradaAlta]}
-              value={rascunho.lyrics ?? ''}
-              onChangeText={(t) => mudar({ lyrics: t })}
-              placeholder="Letra da música…"
-              placeholderTextColor={COR.espaçoReservado}
-              multiline
-              accessibilityLabel="Letra"
-            />
+            <Bloco>
+              <Linha primeira>
+                <TextInput
+                  style={[estilos.entrada, estilos.entradaAlta]}
+                  value={rascunho.lyrics ?? ''}
+                  onChangeText={(t) => mudar({ lyrics: t })}
+                  placeholder="Letra da música…"
+                  placeholderTextColor={COR.espaçoReservado}
+                  multiline
+                  accessibilityLabel="Letra"
+                />
+              </Linha>
+            </Bloco>
           )}
 
           {aba === 'splits' && (
             <>
+              {/* O subtítulo de cada grupo ("Créditos autorais da obra") saiu: é a linha de
+                  apoio que deixou de existir nos modais, e "Composição" e "Gravação" já dizem
+                  qual direito está em jogo para quem trabalha com música. */}
               {([
-                ['Composição', 'Créditos autorais da obra', 'composition_splits', autorais],
-                ['Gravação', 'Créditos do fonograma', 'recording_splits', fonograma],
-              ] as const).map(([nome, apoio, chave, lista]) => (
-                <View key={chave} style={estilos.grupoDeSplit}>
-                  <Text style={estilos.grupoNome}>{nome}</Text>
-                  <Text style={estilos.grupoApoio}>{apoio}</Text>
-
+                ['Composição', 'composition_splits', autorais],
+                ['Gravação', 'recording_splits', fonograma],
+              ] as const).map(([nome, chave, lista]) => (
+                <Bloco key={chave} rotulo={nome}>
                   {lista.length === 0
-                    ? <Text style={estilos.semParticipante}>Nenhum participante adicionado.</Text>
+                    ? (
+                      <Linha primeira>
+                        <Text style={estilos.semParticipante}>Nenhum participante adicionado.</Text>
+                      </Linha>
+                    )
                     : lista.map((split, i) => (
                       <LinhaDeSplit
                         key={split.id}
                         split={split}
+                        primeira={i === 0}
                         aoMudar={(parte) => mudarSplits(
                           chave,
                           lista.map((s, j) => (i === j ? { ...s, ...parte } : s)),
@@ -490,29 +528,33 @@ export const FichaDaFaixa = ({
                       />
                     ))}
 
-                  <Pressable
-                    style={estilos.adicionar}
-                    onPress={() => mudarSplits(chave, [
-                      ...lista,
-                      // O id é só para a lista se manter estável enquanto se edita; quem grava
-                      // é o `saveCatalogProjectFromForm`, com o array inteiro.
-                      { id: `s-${Date.now()}`, name: '', role: SPLIT_ROLES[0], percentage: 0 },
-                    ])}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Adicionar participante em ${nome}`}
-                  >
-                    <Feather name="plus" size={14} color={COR.primaria} />
-                    <Text style={estilos.adicionarTexto}>Adicionar participante</Text>
-                  </Pressable>
+                  <Linha>
+                    <Pressable
+                      style={estilos.adicionar}
+                      onPress={() => mudarSplits(chave, [
+                        ...lista,
+                        // O id é só para a lista se manter estável enquanto se edita; quem grava
+                        // é o `saveCatalogProjectFromForm`, com o array inteiro.
+                        { id: `s-${Date.now()}`, name: '', role: SPLIT_ROLES[0], percentage: 0 },
+                      ])}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Adicionar participante em ${nome}`}
+                    >
+                      <Feather name="plus" size={14} color={COR.primaria} />
+                      <Text style={estilos.adicionarTexto}>Adicionar participante</Text>
+                    </Pressable>
+                  </Linha>
 
                   {/* O total precisa fechar em 100%: passar disso divide direito que não existe. */}
-                  <View style={estilos.total}>
-                    <Text style={estilos.totalRotulo}>Total</Text>
-                    <Text style={[estilos.totalValor, somar(lista) > 100 && estilos.totalExcedido]}>
-                      {somar(lista)}%
-                    </Text>
-                  </View>
-                </View>
+                  <Linha>
+                    <View style={estilos.total}>
+                      <Text style={estilos.totalRotulo}>Total</Text>
+                      <Text style={[estilos.totalValor, somar(lista) > 100 && estilos.totalExcedido]}>
+                        {somar(lista)}%
+                      </Text>
+                    </View>
+                  </Linha>
+                </Bloco>
               ))}
             </>
           )}
@@ -528,14 +570,6 @@ export const FichaDaFaixa = ({
 const estilos = StyleSheet.create({
   miolo: { flex: 1, minHeight: 0 },
   flex: { flex: 1 },
-  topo: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    paddingHorizontal: 18, paddingTop: 20, paddingBottom: 16,
-  },
-  sobretitulo: { fontSize: 9, fontWeight: '800', color: COR_CATALOGO.rotulo, letterSpacing: 1 },
-  titulo: { flex: 1, fontSize: 17, fontWeight: '800', color: COR_CATALOGO.titulo, lineHeight: 22 },
-  tituloLinha: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 2 },
-  pontoDoTitulo: { width: 8, height: 8, borderRadius: 4 },
 
   // As tres abas com o sublinhado azul na ativa, como na web.
   abas: {
@@ -547,28 +581,10 @@ const estilos = StyleSheet.create({
   abaTexto: { fontSize: 14, fontWeight: '700', color: COR_CATALOGO.legenda },
   abaTextoAceso: { color: COR.primaria },
 
-  // O rodape e fixo: numa ficha de tres abas, um "Salvar" no fim da rolagem se esconde.
-  rodape: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-    paddingHorizontal: 18, paddingVertical: 14,
-    borderTopWidth: 1, borderTopColor: COR.divisoria, backgroundColor: COR.superficie,
-  },
-  salvar: {
-    minWidth: 108, alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 12, paddingHorizontal: 22,
-    borderRadius: RAIO.campo, backgroundColor: COR.primaria,
-  },
-  salvarTexto: { fontSize: 14, fontWeight: '800', color: COR.sobrePrimaria },
-
-  // Splits: um bloco por grupo, com os participantes e o total embaixo.
-  grupoDeSplit: { gap: 8 },
-  grupoNome: { fontSize: 15, fontWeight: '800', color: COR_CATALOGO.titulo },
-  grupoApoio: { fontSize: 12, color: COR_CATALOGO.legenda, marginTop: -4 },
-  semParticipante: { fontSize: 13, color: COR_CATALOGO.legenda, paddingVertical: 10 },
-  split: {
-    gap: 8, padding: 12, marginTop: 4,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR.contorno,
-  },
+  // Splits: um bloco por grupo, com os participantes e o total embaixo. Cada participante é uma
+  // LINHA do bloco, então a moldura que separava um do outro saiu: quem separa é a divisória.
+  semParticipante: { fontSize: 13, color: COR_CATALOGO.legenda },
+  split: { gap: 8 },
   splitTopo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   splitBaixo: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   entradaCurta: { width: 88 },
@@ -583,23 +599,18 @@ const estilos = StyleSheet.create({
   papelTextoEscolhido: { color: COR.primaria },
   adicionar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10 },
   adicionarTexto: { fontSize: 13, fontWeight: '800', color: COR.primaria },
-  total: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingTop: 10, borderTopWidth: 1, borderTopColor: COR.divisoria,
-  },
+  total: { flexDirection: 'row', justifyContent: 'space-between' },
   totalRotulo: { fontSize: 12, fontWeight: '700', color: COR_CATALOGO.legenda },
   totalValor: { fontSize: 12, fontWeight: '800', color: COR_CATALOGO.titulo },
   // Passar de 100% divide direito que nao existe.
   totalExcedido: { color: COR.erro },
-  conteudo: { padding: 18, paddingBottom: 48, gap: 16 },
-  campo: { gap: 8 },
+  // Daqui para baixo é o molde da folha de compromisso da Agenda, que é a referência do app:
+  // rótulo miúdo em cima, campo sem moldura embaixo. A moldura de cada campo virou a do bloco.
+  conteudo: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 28, gap: 22 },
+  campo: { gap: 6 },
   rotulo: { fontSize: 11, fontWeight: '800', color: COR_CATALOGO.rotulo, letterSpacing: 0.4 },
-  entrada: {
-    borderWidth: 1, borderColor: COR.contorno, borderRadius: RAIO.campoDeEntrada,
-    paddingHorizontal: 13, paddingVertical: 12,
-    fontSize: 15, color: COR_CATALOGO.titulo, backgroundColor: COR.fundo,
-  },
-  entradaAlta: { minHeight: 130, textAlignVertical: 'top' },
+  entrada: { paddingVertical: 2, fontSize: 15, color: COR_CATALOGO.titulo },
+  entradaAlta: { minHeight: 220, textAlignVertical: 'top' },
   lado: { flexDirection: 'row', gap: 12 },
   opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   opcao: {
@@ -630,6 +641,4 @@ const estilos = StyleSheet.create({
   },
   sugestaoTexto: { fontSize: 11, fontWeight: '700', color: COR_CATALOGO.tocarIcone },
   erro: { fontSize: 13, color: COR.erro, lineHeight: 19 },
-  excluir: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 },
-  excluirTexto: { fontSize: 13, fontWeight: '800', color: COR.erro },
 });

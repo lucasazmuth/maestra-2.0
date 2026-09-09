@@ -357,8 +357,10 @@ describe('catalogo: as abas da ficha e os splits', () => {
 
     await userEvent.setup().press(tela.getByText('Splits'));
 
-    expect(tela.getByText('Créditos autorais da obra')).toBeTruthy();
-    expect(tela.getByText('Créditos do fonograma')).toBeTruthy();
+    // Pelo botão de cada grupo, e não pelo rótulo: "Composição" também é um status do
+    // catálogo, e aparece na lista atrás da folha.
+    expect(tela.getByLabelText('Adicionar participante em Composição')).toBeTruthy();
+    expect(tela.getByLabelText('Adicionar participante em Gravação')).toBeTruthy();
     expect(tela.getAllByText('Nenhum participante adicionado.')).toHaveLength(2);
   });
 

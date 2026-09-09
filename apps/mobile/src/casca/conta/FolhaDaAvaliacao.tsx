@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, Text, TextInput, View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_CONTA, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_CONTA } from '@maestra/core/constants/design';
 import { getMyPlatformReview, savePlatformReview } from '@maestra/core/services/db/platformReviews';
+
+import { Bloco, Folha, Linha } from '@/casca/Folha';
 
 // "Avaliar a Maestra": nota de 1 a 5 e um comentário opcional.
 //
@@ -68,137 +67,89 @@ export const FolhaDaAvaliacao = ({ aberta, usuarioId, aoFechar }: {
   };
 
   return (
-    <Modal visible={aberta} animationType="slide" transparent onRequestClose={aoFechar}>
-      <KeyboardAvoidingView
-        style={estilos.fundo}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={estilos.folha}>
-          <View style={estilos.cabecalho}>
-            <View style={estilos.flex}>
-              <Text style={estilos.sobrenome}>SUA OPINIÃO IMPORTA</Text>
-              <Text style={estilos.titulo}>Avalie a Maestra</Text>
-              <Text style={estilos.apoio}>
-                Conte como está sendo sua experiência. Sua avaliação ajuda a gente a evoluir o
-                produto.
-              </Text>
+    <Folha
+      aberta={aberta}
+      titulo="Avalie a Maestra"
+      aoFechar={aoFechar}
+      acao={{
+        rotulo: 'Enviar avaliação',
+        aoTocar: enviar,
+        carregando: enviando,
+        desabilitada: !nota || carregando,
+      }}
+    >
+      {/* O "Agora não" do rodapé saiu junto com a casca antiga: quem fecha uma folha é o
+          círculo no canto, em toda tela do app, e um segundo jeito de sair só nesta seria
+          mais uma coisa para reaprender. */}
+      <Bloco rotulo="Sua nota">
+        <Linha primeira>
+          <View style={estilos.bloco}>
+            <View style={estilos.estrelas}>
+              {[1, 2, 3, 4, 5].map((valor) => (
+                <Pressable
+                  key={valor}
+                  onPress={() => setNota(valor)}
+                  disabled={carregando || enviando}
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: nota >= valor }}
+                  accessibilityLabel={`${valor} ${valor === 1 ? 'estrela' : 'estrelas'}`}
+                >
+                  <Feather
+                    name="star"
+                    size={32}
+                    color={nota >= valor ? COR_CONTA.estrela : COR_CONTA.contorno}
+                  />
+                </Pressable>
+              ))}
             </View>
-            <Pressable onPress={aoFechar} hitSlop={10} accessibilityRole="button" accessibilityLabel="Fechar">
-              <Feather name="x" size={20} color={COR_CONTA.rotulo} />
-            </Pressable>
+            <Text style={estilos.dica}>
+              {carregando
+                ? 'Carregando sua avaliação…'
+                : ROTULOS[nota] || 'Selecione de 1 a 5 estrelas'}
+            </Text>
           </View>
+        </Linha>
+      </Bloco>
 
-          <ScrollView contentContainerStyle={estilos.corpo} keyboardShouldPersistTaps="handled">
-            <View style={estilos.bloco}>
-              <Text style={estilos.pergunta}>Como você avalia sua experiência?</Text>
-              <View style={estilos.estrelas}>
-                {[1, 2, 3, 4, 5].map((valor) => (
-                  <Pressable
-                    key={valor}
-                    onPress={() => setNota(valor)}
-                    disabled={carregando || enviando}
-                    hitSlop={6}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: nota >= valor }}
-                    accessibilityLabel={`${valor} ${valor === 1 ? 'estrela' : 'estrelas'}`}
-                  >
-                    <Feather
-                      name="star"
-                      size={32}
-                      color={nota >= valor ? COR_CONTA.estrela : COR_CONTA.contorno}
-                    />
-                  </Pressable>
-                ))}
-              </View>
-              <Text style={estilos.dica}>
-                {carregando
-                  ? 'Carregando sua avaliação…'
-                  : ROTULOS[nota] || 'Selecione de 1 a 5 estrelas'}
-              </Text>
-            </View>
-
-            <View style={estilos.campo}>
-              <Text style={estilos.rotulo}>Quer contar um pouco mais? (opcional)</Text>
-              <TextInput
-                style={estilos.entrada}
-                value={comentario}
-                onChangeText={setComentario}
-                maxLength={LIMITE}
-                multiline
-                editable={!carregando && !enviando}
-                placeholder="O que está funcionando bem? O que podemos melhorar?"
-                placeholderTextColor={COR_CONTA.texto}
-                accessibilityLabel="Comentário da avaliação"
-              />
-              <Text style={estilos.contador}>{comentario.length}/{LIMITE}</Text>
-            </View>
-
-            {!!erro && <Text style={estilos.erro}>{erro}</Text>}
-          </ScrollView>
-
-          <View style={estilos.rodape}>
-            <Pressable onPress={aoFechar} disabled={enviando} accessibilityRole="button" accessibilityLabel="Agora não">
-              <Text style={estilos.agoraNao}>Agora não</Text>
-            </Pressable>
-            <Pressable
-              style={[estilos.enviar, (!nota || carregando || enviando) && estilos.enviarApagado]}
-              onPress={enviar}
-              disabled={!nota || carregando || enviando}
-              accessibilityRole="button"
-              accessibilityLabel="Enviar avaliação"
-            >
-              {enviando
-                ? <ActivityIndicator size="small" color={COR.superficie} />
-                : <Text style={estilos.enviarTexto}>Enviar avaliação</Text>}
-            </Pressable>
+      {/* Sem rótulo dentro da linha: "Comentário" já está em cima do bloco, e a pergunta
+          antiga ("Quer contar um pouco mais?") é uma frase inteira num lugar que o resto do
+          app usa para uma palavra. O que ela pedia, o texto de exemplo já pede. */}
+      <Bloco rotulo="Comentário (opcional)">
+        <Linha primeira>
+          <View style={estilos.campo}>
+            <TextInput
+              style={estilos.entrada}
+              value={comentario}
+              onChangeText={setComentario}
+              maxLength={LIMITE}
+              multiline
+              editable={!carregando && !enviando}
+              placeholder="O que está funcionando bem? O que podemos melhorar?"
+              placeholderTextColor={COR_CONTA.texto}
+              accessibilityLabel="Comentário da avaliação"
+            />
+            <Text style={estilos.contador}>{comentario.length}/{LIMITE}</Text>
           </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+        </Linha>
+      </Bloco>
+
+      {!!erro && <Text style={estilos.erro}>{erro}</Text>}
+    </Folha>
   );
 };
 
+// A casca (fundo, cabeçalho, teclado e rodapé) mora na `Folha`. Aqui ficam só os campos, no
+// mesmo molde da folha de compromisso da Agenda: rótulo miúdo em cima, campo sem moldura.
 const estilos = StyleSheet.create({
-  fundo: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(20, 30, 55, .45)' },
-  folha: {
-    maxHeight: '90%', backgroundColor: COR.superficie,
-    borderTopLeftRadius: 26, borderTopRightRadius: 26,
-  },
-  flex: { flex: 1, minWidth: 0 },
-  cabecalho: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    padding: 22, borderBottomWidth: 1, borderBottomColor: COR_CONTA.contorno,
-  },
-  sobrenome: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 1.6,
-    textTransform: 'uppercase', color: COR_CONTA.rotulo,
-  },
-  titulo: { fontSize: 22, fontWeight: '800', color: COR_CONTA.titulo, marginTop: 8 },
-  apoio: { fontSize: 13, lineHeight: 20, color: COR_CONTA.apoio, marginTop: 8 },
-  corpo: { padding: 22, gap: 24 },
   bloco: { alignItems: 'center', gap: 12 },
-  pergunta: { fontSize: 14, fontWeight: '700', color: COR_CONTA.tituloDoCartao },
   estrelas: { flexDirection: 'row', gap: 10 },
   dica: { fontSize: 13, color: COR_CONTA.texto },
-  campo: { gap: 8 },
-  rotulo: { fontSize: 13, fontWeight: '700', color: COR_CONTA.tituloDoCartao },
+  campo: { gap: 6 },
   entrada: {
-    minHeight: 110, padding: 14, textAlignVertical: 'top',
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_CONTA.contorno,
+    minHeight: 110, paddingVertical: 2, textAlignVertical: 'top',
     fontSize: 15, color: COR_CONTA.titulo,
   },
   contador: { fontSize: 11, color: COR_CONTA.texto, textAlign: 'right' },
-  erro: { fontSize: 13, color: COR.erro, lineHeight: 19 },
-  rodape: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 22, paddingTop: 14, paddingBottom: 34,
-    borderTopWidth: 1, borderTopColor: COR_CONTA.contorno,
-  },
-  agoraNao: { fontSize: 14, color: COR_CONTA.apoio },
-  enviar: {
-    minHeight: 46, minWidth: 170, paddingHorizontal: 22, borderRadius: RAIO.campo,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: COR.primaria,
-  },
-  enviarApagado: { opacity: 0.45 },
-  enviarTexto: { fontSize: 15, fontWeight: '700', color: COR.superficie },
+  erro: { fontSize: 13, color: COR.erro, lineHeight: 19, paddingHorizontal: 4 },
 });

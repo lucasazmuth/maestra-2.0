@@ -126,7 +126,7 @@ export const FolhaDeConvite = ({ aberta, artistaId, aoFechar, aoConvidar }: {
 // A casca mora na `Folha`. Aqui ficam só os campos.
 const estilos = StyleSheet.create({
   campo: { gap: 6 },
-  rotulo: { fontSize: 13, fontWeight: '700', color: COR_EQUIPE.email },
+  rotulo: { fontSize: 11, fontWeight: '800', color: COR_EQUIPE.email, letterSpacing: 0.4 },
   apoioDoCampo: { fontSize: 12, lineHeight: 18, color: COR_EQUIPE.permissaoApoio, marginBottom: 10 },
   // Sem moldura: o campo já está dentro do bloco branco, e quem separa é a divisória.
   entrada: { paddingVertical: 2, fontSize: 15, color: COR_EQUIPE.nome },

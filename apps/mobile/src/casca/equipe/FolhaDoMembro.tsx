@@ -168,8 +168,8 @@ const estilos = StyleSheet.create({
   selo: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   ponto: { width: 6, height: 6, borderRadius: 3 },
   seloTexto: { fontSize: 10, fontWeight: '800' },
-  campo: { gap: 8 },
-  rotulo: { fontSize: 13, fontWeight: '700', color: COR_EQUIPE.email },
+  campo: { gap: 6 },
+  rotulo: { fontSize: 11, fontWeight: '800', color: COR_EQUIPE.email, letterSpacing: 0.4 },
   apoioDoCampo: { fontSize: 12, lineHeight: 18, color: COR_EQUIPE.permissaoApoio, marginBottom: 4 },
   // Sem moldura: o campo já está dentro do bloco branco, e quem o separa do vizinho é a
   // divisória. Com a borda, cada campo virava uma caixa dentro de outra caixa.
