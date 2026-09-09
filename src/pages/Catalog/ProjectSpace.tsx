@@ -775,6 +775,7 @@ const ProjectSpace: FC = () => {
         ficha={(
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             {/* O status é da MÚSICA: é o estado da obra, e anda com o nome dela no topo. */}
+            {/* Status minimalista: sem borda, sem fundo — só texto. Permite trocar rápido. */}
             <select
               value={project.status}
               onChange={(e) => setProject({ ...project, status: e.target.value })}
@@ -782,11 +783,11 @@ const ProjectSpace: FC = () => {
               aria-label={`Status: ${rotuloDoStatus}`}
               style={{
                 height: 26, padding: '0 8px',
-                background: DS.color.bgCampo,
-                border: `1px solid ${DS.color.borda}`,
-                borderRadius: DS.raio.medio,
+                background: 'transparent',
+                border: 'none',
+                borderRadius: 0,
                 color: DS.color.textoApoio,
-                fontSize: 11, fontWeight: 600, fontFamily: DS.font.display,
+                fontSize: 12, fontWeight: 600, fontFamily: DS.font.display,
                 outline: 'none', cursor: podeEditar ? 'pointer' : 'default',
               }}
             >

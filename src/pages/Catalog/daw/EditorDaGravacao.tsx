@@ -299,94 +299,104 @@ export const EditorDaGravacao: FC<{
 
   return (
     <div className={casca.tela} style={{ background: DS.color.bgBase, color: DS.color.texto, fontFamily: DS.font.display }}>
-      {/* ══════════ FILA DO TÍTULO ══════════ */}
+      {/* ══════════ FILA DO TÍTULO ══════════
+          LADO ESQUERDO: Logo (se tiver) · Título · Status dropdown
+          LADO DIREITO: Menu (Timeline/Mixer/Ficha) · X fechar
+      ══════════ */}
       <div style={{
         height: ALTURA_DO_TITULO, flexShrink: 0,
-        display: 'flex', alignItems: 'center', gap: 14, padding: '0 18px',
+        display: 'flex', alignItems: 'center', gap: 16, padding: '0 18px',
         background: DS.color.bgPainel, borderBottom: `1px solid ${DS.color.borda}`,
       }}>
-        <button
-          type='button'
-          onClick={acoes.aoSair}
-          disabled={gerando}
-          title={gerando ? 'Gerando a guia…' : 'Voltar para Músicas'}
-          aria-label='Voltar para Músicas'
-          style={{ ...redondo, opacity: gerando ? 0.4 : 1, cursor: gerando ? 'wait' : 'pointer' }}
-        >
-          <FiX size={13} />
-        </button>
-
-        {editandoNome ? (
-          <input
-            autoFocus
-            value={rascunho}
-            onChange={(e) => setRascunho(e.target.value)}
-            onBlur={() => { setEditandoNome(false); acoes.aoRenomear(rascunho.trim() || titulo); }}
-            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-            aria-label='Nome da música'
-            style={{
-              background: DS.color.bgCampo, border: `1px solid ${DS.color.primaria}`,
-              borderRadius: DS.raio.medio, color: DS.color.texto,
-              fontSize: 17, fontWeight: 700, padding: '4px 10px', outline: 'none',
-              fontFamily: DS.font.display, minWidth: 200,
-            }}
-          />
-        ) : (
-          <h1
-            onClick={() => { if (podeEditar) { setRascunho(titulo); setEditandoNome(true); } }}
-            title={podeEditar ? 'Clique para renomear' : undefined}
-            style={{
-              margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em',
-              color: DS.color.texto, cursor: podeEditar ? 'text' : 'default',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320,
-            }}
-          >
-            {titulo}
-          </h1>
-        )}
-
-        {/* As três vistas da mesma música, no topo: é a primeira escolha de quem entra —
-            estou a montar, a misturar, ou a preencher a ficha? — e ela decide o que a tela
-            inteira mostra. O que fica em baixo são os controlos do que já está aberto. */}
-        <div style={{
-          display: 'flex', gap: 2, padding: 3,
-          background: DS.color.bgCampo, borderRadius: DS.raio.grande, flexShrink: 0,
-        }}>
-          {([['linha', 'Timeline'], ['mesa', 'Mixer'], ['ficha', 'Ficha']] as const).map(([chave, rotulo]) => (
-            <button
-              key={chave}
-              type='button'
-              onClick={() => setAba(chave)}
-              aria-pressed={aba === chave}
+        {/* LADO ESQUERDO: Título e Status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {editandoNome ? (
+            <input
+              autoFocus
+              value={rascunho}
+              onChange={(e) => setRascunho(e.target.value)}
+              onBlur={() => { setEditandoNome(false); acoes.aoRenomear(rascunho.trim() || titulo); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+              aria-label='Nome da música'
               style={{
-                height: 28, padding: '0 14px',
-                display: 'flex', alignItems: 'center', gap: 6,
-                background: aba === chave ? DS.color.bgHover : 'transparent',
-                border: 'none', borderRadius: DS.raio.medio,
-                color: aba === chave ? DS.color.texto : DS.color.textoFraco,
-                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: DS.font.display,
+                background: DS.color.bgCampo, border: `1px solid ${DS.color.primaria}`,
+                borderRadius: DS.raio.medio, color: DS.color.texto,
+                fontSize: 17, fontWeight: 700, padding: '4px 10px', outline: 'none',
+                fontFamily: DS.font.display, minWidth: 200,
+              }}
+            />
+          ) : (
+            <h1
+              onClick={() => { if (podeEditar) { setRascunho(titulo); setEditandoNome(true); } }}
+              title={podeEditar ? 'Clique para renomear' : undefined}
+              style={{
+                margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em',
+                color: DS.color.texto, cursor: podeEditar ? 'text' : 'default',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320,
               }}
             >
-              {chave === 'linha' ? <IconeDaTimeline />
-                : chave === 'mesa' ? <IconeDoMixer />
-                : <FiFileText size={14} />}
-              {rotulo}
-            </button>
-          ))}
+              {titulo}
+            </h1>
+          )}
+
+          {/* Status dropdown minimalista sem borda */}
+          {ficha}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }} />
 
-        {ficha}
+        {/* LADO DIREITO: Menu + X fechar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {/* As três vistas da mesma música, no topo: é a primeira escolha de quem entra —
+              estou a montar, a misturar, ou a preencher a ficha? — e ela decide o que a tela
+              inteira mostra. O que fica em baixo são os controlos do que já está aberto. */}
+          <div style={{
+            display: 'flex', gap: 2, padding: 3,
+            background: DS.color.bgCampo, borderRadius: DS.raio.grande, flexShrink: 0,
+          }}>
+            {([['linha', 'Timeline'], ['mesa', 'Mixer'], ['ficha', 'Ficha']] as const).map(([chave, rotulo]) => (
+              <button
+                key={chave}
+                type='button'
+                onClick={() => setAba(chave)}
+                aria-pressed={aba === chave}
+                style={{
+                  height: 28, padding: '0 14px',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  background: aba === chave ? DS.color.bgHover : 'transparent',
+                  border: 'none', borderRadius: DS.raio.medio,
+                  color: aba === chave ? DS.color.texto : DS.color.textoFraco,
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: DS.font.display,
+                }}
+              >
+                {chave === 'linha' ? <IconeDaTimeline />
+                  : chave === 'mesa' ? <IconeDoMixer />
+                  : <FiFileText size={14} />}
+                {rotulo}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type='button'
+            onClick={acoes.aoSair}
+            disabled={gerando}
+            title={gerando ? 'Gerando a guia…' : 'Voltar para Músicas'}
+            aria-label='Voltar para Músicas'
+            style={{ ...redondo, opacity: gerando ? 0.4 : 1, cursor: gerando ? 'wait' : 'pointer' }}
+          >
+            <FiX size={13} />
+          </button>
+        </div>
 
         {gerando && (
-          <span style={{ fontSize: 11, color: DS.color.primaria, fontFamily: DS.font.mono, flexShrink: 0 }}>
+          <span style={{ fontSize: 11, color: DS.color.primaria, fontFamily: DS.font.mono, flexShrink: 0, position: 'absolute', right: 18 }}>
             Gerando a guia…
           </span>
         )}
 
         {!!envio && (
-          <span style={{ fontSize: 11, color: DS.color.primaria, fontFamily: DS.font.mono, flexShrink: 0 }}>
+          <span style={{ fontSize: 11, color: DS.color.primaria, fontFamily: DS.font.mono, flexShrink: 0, position: 'absolute', right: 18 }}>
             Enviando {envio.feitos + 1} de {envio.total}…
           </span>
         )}
@@ -396,6 +406,7 @@ export const EditorDaGravacao: FC<{
             aria-live='polite'
             style={{
               fontSize: 11, fontFamily: DS.font.mono, flexShrink: 0,
+              position: 'absolute', right: 18,
               color: selo === 'erro' ? DS.color.agulha : selo === 'salvando' ? DS.color.textoFraco : '#22c55e',
             }}
           >
