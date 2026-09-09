@@ -1,3 +1,4 @@
+import { Alert } from 'react-native';
 import { render, userEvent, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
@@ -64,8 +65,12 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
     duration: 180, length: 180 * 44100, numberOfChannels: 1, sampleRate: 44100,
     getChannelData: () => new Float32Array(4410),
   };
-  const ganho = () => ({
-    gain: { value: 1, setTargetAtTime: jest.fn() },
+  const parametro = () => ({ value: 1, setValueAtTime: jest.fn(), setTargetAtTime: jest.fn() });
+  const ganho = () => ({ gain: parametro(), connect: jest.fn(), disconnect: jest.fn() });
+  // O limitador do mestre: sem ele o grafo não se monta e TODA pista dá erro de carga.
+  const limitador = () => ({
+    threshold: parametro(), ratio: parametro(), attack: parametro(),
+    release: parametro(), knee: parametro(),
     connect: jest.fn(), disconnect: jest.fn(),
   });
   return {
@@ -75,6 +80,7 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
       destination: {},
       decodeAudioData: () => Promise.resolve(buffer),
       createGain: ganho,
+      createDynamicsCompressor: limitador,
       createBuffer: () => ({ ...buffer, getChannelData: () => new Float32Array(4410) }),
       createBufferSource: () => ({
         buffer: null, connect: jest.fn(), disconnect: jest.fn(), start: jest.fn(), stop: jest.fn(),
@@ -165,6 +171,54 @@ describe('espaço jam', () => {
     expect(tela.queryByLabelText('Opções de Mix ★')).toBeNull();
   });
 
+  // ⚠️ A mix já é a SOMA das pistas. Acesa junto com elas, cada instrumento soa duas vezes e o
+  // volume dobra. Não dá para impedir — é o que a pessoa pediu —, mas é quase sempre engano, e
+  // ouvir sem entender por que "está estranho" é pior do que ler uma frase.
+  it('acender a mix com as pistas no ar avisa que o volume dobra — e avisa uma vez só', async () => {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockBuscar.mockResolvedValue(projeto({ versions: [versao({ files: [stem({})] })] }));
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await usuario.press(await tela.findByLabelText('Ouvir Mix ★'));
+    await waitFor(() => expect(alerta).toHaveBeenCalledTimes(1));
+    expect(alerta.mock.calls[0][1]).toMatch(/duas vezes/);
+
+    // Apagar e acender de novo não repete a lição: repetida, ela vira obstáculo.
+    await usuario.press(await tela.findByLabelText('Silenciar Mix ★'));
+    await usuario.press(await tela.findByLabelText('Ouvir Mix ★'));
+    expect(alerta).toHaveBeenCalledTimes(1);
+    alerta.mockRestore();
+  });
+
+  // Sem pista nenhuma no ar não há o que dobrar: acender a mix é só ouvir a gravação.
+  it('acender a mix sozinha não avisa nada', async () => {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    // Sem stems, a mix já entra acesa: apagar e acender não deve dizer nada.
+    await usuario.press(await tela.findByLabelText('Silenciar Mix ★'));
+    await usuario.press(await tela.findByLabelText('Ouvir Mix ★'));
+    expect(alerta).not.toHaveBeenCalled();
+    alerta.mockRestore();
+  });
+
+  // O aviso de peso vem ANTES de descodificar, da soma dos tamanhos: depois já não há o que
+  // avisar — ou coube, ou o sistema matou o app.
+  it('pistas grandes demais avisam antes de derrubar o app', async () => {
+    const grande = 300 * 1024 * 1024;
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [
+        stem({ id: 's-1', size_bytes: grande }),
+        stem({ id: 's-2', name: 'Bateria', position: 1, size_bytes: grande }),
+      ] })],
+    }));
+
+    const tela = await montar();
+    expect(await tela.findByText(/São muitas pistas grandes/)).toBeTruthy();
+  });
+
   // O que o dono do produto pediu de volta, e a razão de o rótulo existir: o número é da
   // GRAVAÇÃO, não da música. Antes disto, ninguém sabia de quem era o BPM.
   it('o BPM digitado no cabeçalho grava na gravação aberta, e não na música', async () => {
@@ -201,6 +255,28 @@ describe('espaço jam', () => {
     await waitFor(() => expect(mockAtualizarVersao).toHaveBeenCalledTimes(1));
     expect(mockAtualizarVersao.mock.calls[0][1]).toEqual({ bpm: null, key: 'Am' });
     jest.useRealTimers();
+  });
+
+  // ⚠️ Trocar de gravação não é uma EDIÇÃO. Sem o cuidado de marcar os números da nova como já
+  // gravados, o salvamento automático acharia que o valor que acabou de ser lido é uma
+  // digitação e o regravaria por cima — uma escrita à toa a cada troca de ficha, que atropelaria
+  // quem estivesse a editar a mesma gravação noutro lugar. (A web tinha exatamente este bug, e
+  // foi um teste igual a este que o apanhou.)
+  it('trocar de gravação não regrava o que acabou de ler', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [
+        versao({ id: 'v-1', version_number: 1 }),
+        versao({ id: 'v-2', version_number: 2, title: 'acústico', bpm: '92', key: 'D' }),
+      ],
+    }));
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await usuario.press(await tela.findByLabelText('Abrir V2, acústico'));
+    await tela.findByText('de V2 · acústico');
+
+    await new Promise((pronto) => { setTimeout(pronto, 900); });
+    expect(mockAtualizarVersao).not.toHaveBeenCalled();
   });
 
   // Trocar de ficha é ABRIR outra gravação: o cabeçalho passa a falar dela, e o rótulo diz qual.

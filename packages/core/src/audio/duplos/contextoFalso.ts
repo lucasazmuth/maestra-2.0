@@ -3,7 +3,7 @@
 // inteira com "your test suite must contain at least one test".
 
 import type {
-  BufferDeAudio, ContextoDeAudio, Destino, FonteDeAudio, NoDeGanho, ParametroDeAudio,
+  BufferDeAudio, ContextoDeAudio, Destino, FonteDeAudio, Limitador, NoDeGanho, ParametroDeAudio,
 } from '../contexto';
 
 // O motor de áudio de mentira: relógio na mão, e um registo de tudo o que a mesa mandou fazer.
@@ -51,6 +51,18 @@ export class GanhoFalso implements NoDeGanho {
   disconnect() { this.desligado = true; }
 }
 
+export class LimitadorFalso implements Limitador {
+  threshold = new ParametroFalso();
+  ratio = new ParametroFalso();
+  attack = new ParametroFalso();
+  release = new ParametroFalso();
+  knee = new ParametroFalso();
+  ligadoA: NoDeGanho | Destino | null = null;
+  desligado = false;
+  connect(destino: NoDeGanho | Destino) { this.ligadoA = destino; return destino; }
+  disconnect() { this.desligado = true; }
+}
+
 export class BufferFalso implements BufferDeAudio {
   constructor(
     readonly duration: number,
@@ -74,7 +86,10 @@ export class ContextoFalso implements ContextoDeAudio {
   /** A ordem das chamadas que importam para a sequência (resume antes de start, etc.). */
   passos: string[] = [];
 
+  limitadores: LimitadorFalso[] = [];
+
   createGain() { const g = new GanhoFalso(); this.ganhos.push(g); return g; }
+  createDynamicsCompressor() { const l = new LimitadorFalso(); this.limitadores.push(l); return l; }
   createBufferSource() { const f = new FonteFalsa(); this.fontes.push(f); this.passos.push('fonte'); return f; }
   createBuffer(canais: number, tamanho: number, taxa: number) {
     return new BufferFalso(tamanho / taxa, canais, taxa, [new Float32Array(tamanho)]);

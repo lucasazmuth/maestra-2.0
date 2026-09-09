@@ -18,7 +18,7 @@ const PISTAS: Pista[] = [
 
 const comContexto = (criar: () => ContextoFalso) => ({
   criarContexto: criar as unknown as () => never,
-  buscar: buscarFalso,
+  buscar: buscarFalso({}),
 });
 
 describe('useMesa', () => {

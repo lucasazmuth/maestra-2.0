@@ -11,7 +11,7 @@ import * as genresDb from '@maestra/core/services/db/genres';
 import * as membersDb from '@maestra/core/services/db/members';
 import type { MusicGenre, ArtistMember } from '@maestra/core/interfaces/maestra';
 import * as catalogDb from '@maestra/core/services/db/catalog';
-import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, getVersionStageLabel } from '@maestra/core/constants/maestra';
+import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, MEMORIA_DE_AVISO_BYTES, getVersionStageLabel } from '@maestra/core/constants/maestra';
 import type { CatalogProject, CatalogVersion, CatalogVersionStage } from '@maestra/core/interfaces/maestra';
 import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
 import styles from './ProjectSpace.module.scss';
@@ -183,7 +183,18 @@ const ProjectSpace: FC = () => {
       setSaveState('saved');
     } catch { setSaveState('error'); }
   }, [canUpdateProject]);
+  // ⚠️ Trocar de gravação não é uma EDIÇÃO, e a marca tem de ser posta DENTRO deste efeito.
+  // Num efeito à parte, a ordem decidia: este corre primeiro, vê a assinatura da gravação
+  // anterior, agenda a gravação, e a marca chegava tarde demais para a impedir. O resultado era
+  // uma escrita à toa a cada troca de ficha — que atropelaria quem estivesse a editar a mesma
+  // gravação noutro lugar.
+  const versaoMarcada = useRef<string | null>(null);
   useEffect(() => {
+    if (open && versaoMarcada.current !== open.id) {
+      versaoMarcada.current = open.id;
+      lastSavedVersionSignature.current = versionSignature(open);
+      return undefined;
+    }
     if (!open || !canUpdateProject || versionSignature(open) === lastSavedVersionSignature.current) return undefined;
     const timer = window.setTimeout(async () => {
       setSaveState('saving');
@@ -197,9 +208,6 @@ const ProjectSpace: FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, canUpdateProject]);
 
-  // Trocar de gravação não é uma edição: marca os números da nova como já gravados, senão o
-  // efeito acima acharia que o valor que acabou de ser lido é uma digitação e o regravaria.
-  useEffect(() => { lastSavedVersionSignature.current = versionSignature(open); }, [openId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!project || projectSignature(project) === lastSavedSignature.current) return;
@@ -267,6 +275,26 @@ const ProjectSpace: FC = () => {
   // O fader mexe no som na hora e no banco depois: gravar a cada pixel do arrasto seriam
   // dezenas de escritas para um gesto só. Um relógio por pista — arrastar duas seguidas não
   // pode fazer a segunda cancelar a gravação da primeira.
+  /** Já avisei nesta abertura de tela? O aviso ensina uma vez; repetido, vira obstáculo. */
+  const warnedAboutMix = useRef(false);
+
+  /**
+   * Mutar e desmutar — com um aviso, e só um, ao acender a Mix.
+   *
+   * ⚠️ A Mix já é a SOMA dos stems. Acesa junto com eles, cada instrumento soa duas vezes: uma
+   * pela camada e outra pela mistura, com o desfasamento do processamento que a mix levou e as
+   * camadas não. Não dá para impedir — é o que a pessoa pediu —, mas é quase sempre engano.
+   */
+  const toggleMute = (id: string, muda: boolean) => {
+    mesa.mudar(id, muda);
+    const acendendoAMix = !muda && ehPistaDaMix(id);
+    const haCamadasNoAr = mesa.estado.pistas.some((p) => !ehPistaDaMix(p.id) && !p.muda);
+    if (acendendoAMix && haCamadasNoAr && !warnedAboutMix.current) {
+      warnedAboutMix.current = true;
+      message.warning('A mix já é a soma das pistas: com as duas acesas você ouve cada instrumento duas vezes. Para comparar, use o S da mix.', 6);
+    }
+  };
+
   const gainTimers = useRef<Record<string, number>>({});
   useEffect(() => () => { Object.values(gainTimers.current).forEach(window.clearTimeout); }, []);
 
@@ -459,6 +487,15 @@ const ProjectSpace: FC = () => {
                     aoBuscar={mesa.irPara}
                   />
 
+                  {/* O aviso de peso vem ANTES de descodificar, da soma dos tamanhos dos
+                      ficheiros: depois de descodificar já não há o que avisar. */}
+                  {stems.reduce((soma, entry) => soma + (entry.size_bytes || 0), 0) > MEMORIA_DE_AVISO_BYTES && (
+                    <p className={styles.weightWarning}>
+                      São muitas pistas grandes. Em máquinas com pouca memória, o navegador pode
+                      recarregar a aba sozinho — deixe menos pistas nesta gravação.
+                    </p>
+                  )}
+
                   {/* A ordem das linhas é a das PISTAS (posição no banco), e não a da mesa —
                       para ela, que toca tudo ao mesmo tempo, ordem nenhuma significa nada. */}
                   <div className={styles.pistas}>
@@ -474,7 +511,7 @@ const ProjectSpace: FC = () => {
                           picos={mesa.picos(pista.id, BARRAS)}
                           progresso={estado.duracao ? Math.min(mesa.estado.posicao / estado.duracao, 1) : 0}
                           haSolo={mesa.estado.pistas.some((entry) => entry.solo)}
-                          aoMudar={() => mesa.mudar(pista.id, !estado.muda)}
+                          aoMudar={() => toggleMute(pista.id, !estado.muda)}
                           aoSolar={() => mesa.solar(pista.id, !estado.solo)}
                           aoGanho={(valor) => changeGain(pista.id, valor)}
                           // A Mix não se renomeia, não se move e não se apaga: ela é o áudio da

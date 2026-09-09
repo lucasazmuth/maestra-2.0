@@ -26,6 +26,16 @@ import type { Buscar } from '@maestra/core/audio/mesa';
 const PASTA = 'pistas';
 
 /**
+ * O teto da cache de stems, em bytes.
+ *
+ * 500 MB é ~12 WAV de quatro minutos: as duas ou três gravações que se está a trabalhar esta
+ * semana, e não o catálogo inteiro. O sistema também limpa a pasta de cache quando precisa de
+ * espaço, mas só quando o APARELHO aperta — e um aparelho com 128 GB livres nunca aperta,
+ * enquanto a nossa pasta cresce sem fim.
+ */
+const TETO_DA_CACHE = 500 * 1024 * 1024;
+
+/**
  * Configura a sessão de áudio e devolve um contexto.
  *
  * `playback` é a categoria que toca com o interruptor de silêncio ligado e que não pede o
@@ -73,5 +83,38 @@ export const buscarNativo: Buscar = async (url: string) => {
   if (destino.exists && destino.size) return destino.uri;
 
   const baixado = await File.downloadFileAsync(url, destino);
+  // Depois de baixar, e não antes: assim o ficheiro que acabou de chegar conta para o teto, e
+  // uma gravação enorme não passa por cima dele só por ser a última.
+  aparar(pasta);
   return baixado.uri;
+};
+
+/**
+ * Deita fora os stems mais VELHOS até a pasta caber no teto.
+ *
+ * Mais velhos pela data de modificação, que aqui é a data em que foram baixados: o critério é
+ * "há mais tempo que não se abre esta gravação", que é o mais próximo de "não interessa mais"
+ * que se consegue sem guardar um registo à parte.
+ *
+ * Nunca lança: falhar a limpeza não pode impedir a música de tocar. No pior caso a pasta fica
+ * grande, e o sistema é que a limpa.
+ */
+const aparar = (pasta: Directory): void => {
+  try {
+    const ficheiros = pasta.list().filter((entrada): entrada is File => entrada instanceof File);
+    let total = ficheiros.reduce((soma, f) => soma + (f.size ?? 0), 0);
+    if (total <= TETO_DA_CACHE) return;
+
+    const porIdade = ficheiros
+      .slice()
+      .sort((a, b) => (a.modificationTime ?? 0) - (b.modificationTime ?? 0));
+
+    for (const velho of porIdade) {
+      if (total <= TETO_DA_CACHE) return;
+      total -= velho.size ?? 0;
+      velho.delete();
+    }
+  } catch {
+    /* a cache continua grande; o sistema limpa quando precisar */
+  }
 };

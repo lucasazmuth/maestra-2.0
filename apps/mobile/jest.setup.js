@@ -47,6 +47,7 @@ jest.mock('react-native-audio-api', () => {
   // render. Ficam aqui como nada, que é o que uma sessão de áudio faz num processo sem áudio.
   api.AudioManager.setAudioSessionOptions ??= () => {};
   api.AudioManager.setAudioSessionActivity ??= () => Promise.resolve(true);
+  api.AudioManager.observeAudioInterruptions ??= () => {};
   return api;
 });
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));

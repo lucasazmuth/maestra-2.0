@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Image, Pressable, ScrollView, Share, StyleSheet, Text, View,
+  ActivityIndicator, Alert, Image, Pressable, ScrollView, Share, StyleSheet, Text, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,7 +13,9 @@ import {
   enviarPistas, validarPistas, type EnvioDePista, type Recusa,
 } from '@maestra/core/audio/envioDePistas';
 import { useMesa } from '@maestra/core/audio/useMesa';
-import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS } from '@maestra/core/constants/maestra';
+import {
+  CATALOG_STATUS, CATALOG_STATUS_OPTIONS, MEMORIA_DE_AVISO_BYTES,
+} from '@maestra/core/constants/maestra';
 import { COR, COR_JAM } from '@maestra/core/constants/design';
 import type { CatalogProject, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
 import { BALDE_DO_CATALOGO, caminhoNoBalde, removerArquivo } from '@maestra/core/services/armazenamento';
@@ -33,6 +35,7 @@ import { SeletorDeGravacoes } from '@/casca/jam/mesa/SeletorDeGravacoes';
 import { Transporte } from '@/casca/jam/mesa/Transporte';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { buscarNativo, criarContextoNativo } from '@/nucleo/audio/contextoNativo';
+import { useInterrupcoesDeAudio } from '@/nucleo/audio/interrupcoes';
 import { escolherAudio, escolherAudios, paraEnvioDePista, type ArquivoEscolhido } from '@/nucleo/arquivos';
 import { useSessao } from '@/nucleo/sessao';
 
@@ -191,6 +194,14 @@ export default function EspacoJam() {
   const stems = useMemo(() => stemsDaVersao(aberta), [aberta]);
   const pistas = useMemo(() => pistasDaVersao(aberta), [aberta]);
   const mesa = useMesa(pistas, DEPENDENCIAS_DA_MESA);
+  // Uma chamada tira a sessão de áudio sem avisar; sem isto a mesa fica a achar que toca.
+  useInterrupcoesDeAudio(mesa);
+
+  // O peso do que está aberto, estimado antes de descodificar. Ver `MEMORIA_DE_AVISO_BYTES`.
+  const pesado = useMemo(
+    () => stems.reduce((soma, s) => soma + (s.size_bytes ?? 0), 0) > MEMORIA_DE_AVISO_BYTES,
+    [stems],
+  );
 
   // ─── Salvamento automático ────────────────────────────────────────────────
   //
@@ -315,6 +326,32 @@ export default function EspacoJam() {
   useEffect(() => () => {
     Object.values(relogiosDoGanho.current).forEach(clearTimeout);
   }, []);
+
+  /** Já avisei nesta abertura de tela? O aviso ensina uma vez; repetido, vira obstáculo. */
+  const avisouDaMix = useRef(false);
+
+  /**
+   * Mutar e desmutar uma pista — com um aviso, e só um, ao acender a Mix.
+   *
+   * ⚠️ A Mix já é a SOMA dos stems. Acesa junto com eles, cada instrumento soa duas vezes: uma
+   * pela camada e outra pela mistura, com o desfasamento do processamento que a mix levou e as
+   * camadas não. Não é um bug que se possa evitar por dentro — é o que a pessoa pediu —, mas é
+   * quase sempre engano, e ouvir sem entender por que "está estranho" é pior do que ler uma
+   * frase.
+   */
+  const mexerNoMudo = (id: string, muda: boolean) => {
+    mesa.mudar(id, muda);
+    const acendendoAMix = !muda && ehPistaDaMix(id);
+    const haCamadasNoAr = mesa.estado.pistas.some((p) => !ehPistaDaMix(p.id) && !p.muda);
+    if (acendendoAMix && haCamadasNoAr && !avisouDaMix.current) {
+      avisouDaMix.current = true;
+      Alert.alert(
+        'A mix e as pistas juntas',
+        'A mix já é a soma das pistas. Com as duas acesas você ouve cada instrumento duas vezes, '
+        + 'e o volume dobra. Para comparar, use o S da mix.',
+      );
+    }
+  };
 
   const mexerNoGanho = (id: string, valor: number) => {
     mesa.ganho(id, valor);
@@ -614,6 +651,15 @@ export default function EspacoJam() {
                     aoBuscar={mesa.irPara}
                   />
 
+                  {/* O aviso de peso vem ANTES de descodificar, com a conta do tamanho dos
+                      ficheiros: depois de descodificar já não há o que avisar. */}
+                  {pesado && (
+                    <Text style={estilos.avisoDePeso}>
+                      São muitas pistas grandes para um celular. Se o app fechar sozinho, deixe
+                      menos pistas nesta gravação.
+                    </Text>
+                  )}
+
                   {/* A ordem das linhas é a das PISTAS (posição no banco), e não a da mesa —
                       para ela, que toca tudo ao mesmo tempo, ordem nenhuma significa nada. */}
                   <View>
@@ -631,7 +677,7 @@ export default function EspacoJam() {
                             ? Math.min(mesa.estado.posicao / estadoDaPista.duracao, 1)
                             : 0}
                           haSolo={haSolo}
-                          aoMudar={() => mesa.mudar(pista.id, !estadoDaPista.muda)}
+                          aoMudar={() => mexerNoMudo(pista.id, !estadoDaPista.muda)}
                           aoSolar={() => mesa.solar(pista.id, !estadoDaPista.solo)}
                           aoGanho={(v) => mexerNoGanho(pista.id, v)}
                           // A Mix não se renomeia, não se move e não se apaga: ela é o áudio da
@@ -826,6 +872,11 @@ const estilos = StyleSheet.create({
   tituloDaVersao: { fontSize: 19, fontWeight: '800', color: COR_JAM.titulo },
   autoria: { fontSize: 12, color: COR_JAM.apoio },
 
+  avisoDePeso: {
+    padding: 10, borderRadius: 10,
+    backgroundColor: COR_JAM.acaoFundo,
+    fontSize: 12, lineHeight: 17, color: COR_JAM.texto,
+  },
   acoes: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 5 },
   acao: {
     height: 36, minWidth: 36, paddingHorizontal: 9, borderRadius: 999,

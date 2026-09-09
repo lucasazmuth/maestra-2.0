@@ -1,4 +1,4 @@
-import type { BufferDeAudio, ContextoDeAudio, FonteDeAudio, NoDeGanho } from './contexto';
+import type { BufferDeAudio, ContextoDeAudio, FonteDeAudio, Limitador, NoDeGanho } from './contexto';
 import { picos as picosDoBuffer } from './picos';
 
 // A MESA: N pistas de áudio tocando em sincronia, com mutar, solo e volume.
@@ -112,6 +112,7 @@ export class Mesa {
   private readonly mono: boolean;
 
   private mestre: NoDeGanho | null = null;
+  private limitador: Limitador | null = null;
   private pistas: PistaViva[] = [];
   private ouvintes = new Set<(e: EstadoDaMesa) => void>();
 
@@ -341,6 +342,8 @@ export class Mesa {
     this.soltarPistas();
     this.mestre?.disconnect();
     this.mestre = null;
+    this.limitador?.disconnect();
+    this.limitador = null;
     this.tocando = false;
     this.ouvintes.clear();
     await this.ctx.close();
@@ -348,11 +351,31 @@ export class Mesa {
 
   // ─── Por dentro ───────────────────────────────────────────────────────────
 
+  /**
+   * A saída de tudo: `pistas → mestre → limitador → alto-falantes`.
+   *
+   * ⚠️ O LIMITADOR NÃO É ENFEITE, É ARITMÉTICA. Seis stems a ganho 1 somam-se: dois sinais de
+   * meia escala em fase dão escala cheia, e o sexto passa de 0 dBFS. O que passa de 0 dBFS não
+   * fica mais alto — fica cortado, e o corte soa a chiado. Quem abrisse a mesa ia pensar que os
+   * ficheiros que enviou estão ruins.
+   *
+   * `threshold: -1` e `ratio: 20` é um limitador, não um compressor de gosto: ele não faz nada
+   * até ao último decibel antes do teto, e aí segura. `knee: 0` para a curva não começar a agir
+   * antes do limiar, e um `release` curto para o volume voltar sem "bombear".
+   */
   private saidaMestre(): NoDeGanho {
     if (!this.mestre) {
+      this.limitador = this.ctx.createDynamicsCompressor();
+      this.limitador.threshold.value = -1;
+      this.limitador.ratio.value = 20;
+      this.limitador.knee.value = 0;
+      this.limitador.attack.value = 0.003;
+      this.limitador.release.value = 0.1;
+      this.limitador.connect(this.ctx.destination);
+
       this.mestre = this.ctx.createGain();
       this.mestre.gain.value = 1;
-      this.mestre.connect(this.ctx.destination);
+      this.mestre.connect(this.limitador as unknown as NoDeGanho);
     }
     return this.mestre;
   }

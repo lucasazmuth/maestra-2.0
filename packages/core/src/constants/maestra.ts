@@ -147,6 +147,18 @@ export const MAXIMO_DE_PISTAS = 8;
  */
 export const LIMITE_DA_PISTA_BYTES = 60 * 1024 * 1024;
 
+/**
+ * A partir de quanto áudio a mesa avisa que pode ser demais.
+ *
+ * A conta: um WAV 16-bit estéreo gasta 4 bytes por quadro, e o PCM que a mesa guarda no
+ * telemóvel (mono, vírgula flutuante) gasta os MESMOS 4 bytes por quadro. Por isso o tamanho do
+ * ficheiro serve de estimativa direta da memória — para WAV. Para MP3 ele subestima por dez, e
+ * o aviso é o que há: o número exato só se sabe depois de descodificar, que é tarde demais.
+ *
+ * 400 MB é onde um iPhone antigo começa a matar aplicações.
+ */
+export const MEMORIA_DE_AVISO_BYTES = 400 * 1024 * 1024;
+
 /** Sugestões para o nome da pista. São ATALHOS, não uma lista fechada: o campo é livre. */
 export const PAPEIS_SUGERIDOS_DA_PISTA = [
   'Voz', 'Guia', 'Bateria', 'Baixo', 'Guitarra', 'Teclas', 'Outros',

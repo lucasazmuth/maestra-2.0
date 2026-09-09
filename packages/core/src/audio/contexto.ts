@@ -6,11 +6,11 @@
 //
 // 1. o núcleo não passa a depender do DOM por causa de áudio (ele corre no app, onde `window`
 //    não existe);
-// 2. o contexto FALSO dos testes fica pequeno — são estes nove métodos, e não a superfície
+// 2. o contexto FALSO dos testes fica pequeno — são estes poucos métodos, e não a superfície
 //    inteira da Web Audio API.
 //
-// Se um dia a Mesa precisar de um nó novo (um compressor no mestre, por exemplo), ele entra
-// aqui primeiro, e o falso ganha o mesmo — que é o que obriga o teste a acompanhar.
+// Quando a Mesa precisa de um nó novo, ele entra aqui primeiro, e o falso ganha o mesmo — que é
+// o que obriga o teste a acompanhar. Foi assim que o limitador do mestre entrou.
 
 export interface BufferDeAudio {
   readonly duration: number;
@@ -42,6 +42,23 @@ export interface NoDeGanho {
   disconnect(): void;
 }
 
+/**
+ * O limitador do mestre.
+ *
+ * Só os parâmetros que a mesa mexe. É um `DynamicsCompressorNode`, e existe por uma razão de
+ * aritmética: seis stems a ganho 1 somados passam de 0 dBFS, e o que passa de 0 dBFS não fica
+ * mais alto — fica DISTORCIDO. Quem ouvisse a mesa iria pensar que os ficheiros estão ruins.
+ */
+export interface Limitador {
+  readonly threshold: ParametroDeAudio;
+  readonly ratio: ParametroDeAudio;
+  readonly attack: ParametroDeAudio;
+  readonly release: ParametroDeAudio;
+  readonly knee: ParametroDeAudio;
+  connect(destino: NoDeGanho | Destino): unknown;
+  disconnect(): void;
+}
+
 export interface FonteDeAudio {
   buffer: BufferDeAudio | null;
   onended: (() => void) | null;
@@ -62,6 +79,7 @@ export interface ContextoDeAudio {
   readonly state: 'suspended' | 'running' | 'closed' | string;
   readonly destination: Destino;
   createGain(): NoDeGanho;
+  createDynamicsCompressor(): Limitador;
   createBufferSource(): FonteDeAudio;
   createBuffer(canais: number, tamanho: number, taxa: number): BufferDeAudio;
   /**
