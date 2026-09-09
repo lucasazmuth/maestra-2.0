@@ -67,12 +67,10 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
   };
   const parametro = () => ({ value: 1, setValueAtTime: jest.fn(), setTargetAtTime: jest.fn() });
   const ganho = () => ({ gain: parametro(), connect: jest.fn(), disconnect: jest.fn() });
-  // O limitador do mestre: sem ele o grafo não se monta e TODA pista dá erro de carga.
-  const limitador = () => ({
-    threshold: parametro(), ratio: parametro(), attack: parametro(),
-    release: parametro(), knee: parametro(),
-    connect: jest.fn(), disconnect: jest.fn(),
-  });
+  // O teto do mestre: sem ele o grafo não se monta e TODA pista dá erro de carga — que foi
+  // exatamente o que aconteceu no aparelho quando o teto era um compressor, que o motor do
+  // telemóvel não tem.
+  const teto = () => ({ curve: null, oversample: 'none', connect: jest.fn(), disconnect: jest.fn() });
   return {
     criarContextoNativo: () => ({
       currentTime: 0,
@@ -80,7 +78,7 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
       destination: {},
       decodeAudioData: () => Promise.resolve(buffer),
       createGain: ganho,
-      createDynamicsCompressor: limitador,
+      createWaveShaper: teto,
       createBuffer: () => ({ ...buffer, getChannelData: () => new Float32Array(4410) }),
       createBufferSource: () => ({
         buffer: null, connect: jest.fn(), disconnect: jest.fn(), start: jest.fn(), stop: jest.fn(),

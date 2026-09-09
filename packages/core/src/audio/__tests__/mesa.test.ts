@@ -193,10 +193,10 @@ describe('descartar', () => {
   });
 });
 
-// ⚠️ O limitador do mestre não é enfeite, é aritmética: seis stems a ganho 1 somam-se e passam
-// de 0 dBFS, e o que passa de 0 dBFS não fica mais alto — fica cortado. Quem ouvisse a mesa ia
+// ⚠️ O teto do mestre não é enfeite, é aritmética: seis stems a ganho 1 somam-se e passam de
+// 0 dBFS, e o que passa de 0 dBFS não fica mais alto — fica cortado. Quem ouvisse a mesa ia
 // culpar os próprios ficheiros.
-describe('o limitador do mestre', () => {
+describe('o teto do mestre', () => {
   it('todo o som passa por ele antes de sair', async () => {
     const ctx = new ContextoFalso();
     const mesa = new Mesa(ctx, buscarFalso({}));
@@ -205,26 +205,27 @@ describe('o limitador do mestre', () => {
       { id: 'b', nome: 'Bateria', url: 'b' },
     ]);
 
-    expect(ctx.limitadores).toHaveLength(1);
-    const limitador = ctx.limitadores[0];
-    // O caminho inteiro: pista → mestre → limitador → alto-falantes.
-    expect(limitador.ligadoA).toBe(ctx.destination);
-    const mestre = ctx.ganhos.find((g) => g.ligadoA === limitador);
+    expect(ctx.tetos).toHaveLength(1);
+    const teto = ctx.tetos[0];
+    // O caminho inteiro: pista → mestre → teto → alto-falantes.
+    expect(teto.ligadoA).toBe(ctx.destination);
+    const mestre = ctx.ganhos.find((g) => g.ligadoA === teto);
     expect(mestre).toBeDefined();
     // E NENHUMA pista fala direto com os alto-falantes: se falasse, o som dela escapava ao teto.
     expect(ctx.ganhos.filter((g) => g.ligadoA === ctx.destination)).toHaveLength(0);
   });
 
-  // Um limitador, e não um compressor de gosto: não faz nada até ao último decibel antes do
-  // teto, e aí segura. Um `threshold` mais fundo mudaria a mistura de quem enviou os stems.
-  it('segura só no último decibel', async () => {
+  // A curva é o teto. Sem ela o modelador é um fio: passa tudo, inclusive o que estoura.
+  it('recebe a curva, e sobreamostra', async () => {
     const ctx = new ContextoFalso();
     const mesa = new Mesa(ctx, buscarFalso({}));
     await mesa.carregar([{ id: 'a', nome: 'Voz', url: 'a' }]);
 
-    const limitador = ctx.limitadores[0];
-    expect(limitador.threshold.value).toBe(-1);
-    expect(limitador.ratio.value).toBe(20);
-    expect(limitador.knee.value).toBe(0);
+    const teto = ctx.tetos[0];
+    expect(teto.curve).toBeInstanceOf(Float32Array);
+    expect((teto.curve as Float32Array).length).toBeGreaterThan(1000);
+    // Dobrar a onda cria harmónicos acima da metade da taxa; sem sobreamostrar eles voltam
+    // dobrados para dentro do audível.
+    expect(teto.oversample).toBe('2x');
   });
 });

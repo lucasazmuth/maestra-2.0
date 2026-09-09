@@ -71,10 +71,7 @@ const contextoFalso = () => ({
     getChannelData: () => new Float32Array(4410),
   }),
   createGain: () => ({ gain: parametro(), connect: jest.fn(), disconnect: jest.fn() }),
-  createDynamicsCompressor: () => ({
-    threshold: parametro(), ratio: parametro(), attack: parametro(),
-    release: parametro(), knee: parametro(), connect: jest.fn(), disconnect: jest.fn(),
-  }),
+  createWaveShaper: () => ({ curve: null, oversample: 'none', connect: jest.fn(), disconnect: jest.fn() }),
   createBufferSource: () => ({
     buffer: null, connect: jest.fn(), disconnect: jest.fn(), start: jest.fn(), stop: jest.fn(),
   }),

@@ -10,7 +10,7 @@
 //    inteira da Web Audio API.
 //
 // Quando a Mesa precisa de um nó novo, ele entra aqui primeiro, e o falso ganha o mesmo — que é
-// o que obriga o teste a acompanhar. Foi assim que o limitador do mestre entrou.
+// o que obriga o teste a acompanhar. Foi assim que o teto do mestre entrou.
 
 export interface BufferDeAudio {
   readonly duration: number;
@@ -43,18 +43,20 @@ export interface NoDeGanho {
 }
 
 /**
- * O limitador do mestre.
+ * O TETO do mestre: um `WaveShaperNode` com uma curva de corte suave.
  *
- * Só os parâmetros que a mesa mexe. É um `DynamicsCompressorNode`, e existe por uma razão de
- * aritmética: seis stems a ganho 1 somados passam de 0 dBFS, e o que passa de 0 dBFS não fica
- * mais alto — fica DISTORCIDO. Quem ouvisse a mesa iria pensar que os ficheiros estão ruins.
+ * Existe por uma razão de aritmética: seis stems a ganho 1 somados passam de 0 dBFS, e o que
+ * passa de 0 dBFS não fica mais alto — fica DISTORCIDO, com o estalo feio de amostras
+ * estouradas. Quem ouvisse a mesa iria pensar que os ficheiros que enviou estão ruins.
+ *
+ * ⚠️ É um modelador de onda, e NÃO um `DynamicsCompressorNode`, e a razão é concreta: o motor
+ * do telemóvel (`react-native-audio-api`) não tem compressor. Um limitador só na web seria um
+ * som diferente em cada superfície — e o aparelho descobriu isso do pior jeito, com todas as
+ * pistas a falharem em "undefined is not a function". O modelador existe nos dois.
  */
-export interface Limitador {
-  readonly threshold: ParametroDeAudio;
-  readonly ratio: ParametroDeAudio;
-  readonly attack: ParametroDeAudio;
-  readonly release: ParametroDeAudio;
-  readonly knee: ParametroDeAudio;
+export interface Modelador {
+  curve: Float32Array | null;
+  oversample: string;
   connect(destino: NoDeGanho | Destino): unknown;
   disconnect(): void;
 }
@@ -79,7 +81,7 @@ export interface ContextoDeAudio {
   readonly state: 'suspended' | 'running' | 'closed' | string;
   readonly destination: Destino;
   createGain(): NoDeGanho;
-  createDynamicsCompressor(): Limitador;
+  createWaveShaper(): Modelador;
   createBufferSource(): FonteDeAudio;
   createBuffer(canais: number, tamanho: number, taxa: number): BufferDeAudio;
   /**
