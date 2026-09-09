@@ -75,6 +75,8 @@ export const LARGURA_DAS_FERRAMENTAS = 256;
 export const LARGURA_DAS_PISTAS = 256;
 export const ALTURA_DO_TITULO = 68;
 export const ALTURA_DO_TRANSPORTE = 62;
+/** O rodapé: onde ficam os controlos que valem para a montagem inteira. */
+export const ALTURA_DO_RODAPE = 44;
 
 /** O comprimento mínimo da linha do tempo, em segundos. Cresce com a montagem. */
 export const DURACAO_MINIMA = 30;

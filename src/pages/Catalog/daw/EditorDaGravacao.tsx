@@ -12,7 +12,8 @@ import { IconeDaTimeline, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
 import {
-  ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE, DS, DURACAO_MINIMA,
+  ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_RODAPE, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE,
+  DS, DURACAO_MINIMA,
   ENCAIXE, LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO,
   ZOOM_MAXIMO, ZOOM_MINIMO, corDaPista,
 } from './tokens';
@@ -400,21 +401,6 @@ export const EditorDaGravacao: FC<{
           <FiMaximize2 size={12} />
         </button>
 
-        {/* O MASTER: o fader que fica depois de todos os outros. */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <span style={{ fontSize: 12, color: DS.color.textoApoio }}>Master</span>
-          <FiVolume2 size={14} color={DS.color.textoFraco} />
-          <input
-            type='range' min={0} max={100}
-            value={Math.round(estado.mestre * 100)}
-            onChange={(e) => acoes.aoMestre(Number(e.target.value) / 100)}
-            aria-label='Volume geral'
-            style={{ width: 120, accentColor: DS.color.primaria, cursor: 'pointer' }}
-          />
-          <span style={{ width: 34, fontSize: 12, color: DS.color.textoApoio, fontFamily: DS.font.mono }}>
-            {Math.round(estado.mestre * 100)}%
-          </span>
-        </div>
       </div>
 
       {/* ══════════ CORPO ══════════ */}
@@ -734,19 +720,58 @@ export const EditorDaGravacao: FC<{
           )}
         </div>
       </div>
-      {/* O canto de ajuda da referência: o que os botões fazem, sem sair da tela. */}
-      <details className={casca.ajuda}>
-        <summary title='Ajuda' aria-label='Ajuda'>?</summary>
-        <div>
-          <strong>Como se monta</strong>
+      {/* ══════════ RODAPÉ ══════════ */}
+      {/*
+        O que vale para a MONTAGEM INTEIRA mora aqui, e não no cabeçalho.
+        O cabeçalho ficou a dizer três coisas ao mesmo tempo — que música é esta, que vista está
+        aberta, e como está a soar — e a terceira não é do mesmo tipo das outras: o Master não
+        identifica nada, ele mexe no som. Descido para o rodapé, o topo volta a ser só
+        identidade e navegação, e o volume geral fica ao lado do que ele governa.
+      */}
+      <div style={{
+        height: ALTURA_DO_RODAPE, flexShrink: 0, position: 'relative',
+        display: 'flex', alignItems: 'center', gap: 14, padding: '0 18px',
+        background: DS.color.bgPainel, borderTop: `1px solid ${DS.color.borda}`,
+      }}>
+        <span style={{ fontSize: 11, color: DS.color.textoFraco, fontFamily: DS.font.mono }}>
+          {pistas.length} {pistas.length === 1 ? 'pista' : 'pistas'}
+        </span>
+
+        <div style={{ flex: 1, minWidth: 0 }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <span style={{ fontSize: 12, color: DS.color.textoApoio }}>Master</span>
+          <FiVolume2 size={14} color={DS.color.textoFraco} />
+          <input
+            type='range' min={0} max={100}
+            value={Math.round(estado.mestre * 100)}
+            onChange={(e) => acoes.aoMestre(Number(e.target.value) / 100)}
+            aria-label='Volume geral'
+            style={{ width: 160, accentColor: DS.color.primaria, cursor: 'pointer' }}
+          />
+          <span style={{
+            width: 38, textAlign: 'right', fontSize: 12,
+            color: DS.color.textoApoio, fontFamily: DS.font.mono,
+          }}>
+            {Math.round(estado.mestre * 100)}%
+          </span>
+        </div>
+
+        {/* A ajuda mora no rodapé, e não solta por cima da linha do tempo: ali ela tapava a
+            última pista de quem tivesse a tela cheia de faixas. */}
+        <details className={casca.ajuda}>
+          <summary title='Ajuda' aria-label='Ajuda'>?</summary>
+          <div>
+            <strong>Como se monta</strong>
           <p>Arraste os stems para a linha do tempo, ou use <em>Enviar áudio</em>. Cada ficheiro
             vira uma pista; com uma <em>pista de destino</em> escolhida, vira um clipe nela.</p>
           <p>Arraste um clipe para o mover — ele encaixa de um quarto de segundo. Selecione-o e
             use <em>dividir</em> para o cortar onde a agulha está. Clique duplo remove.</p>
           <p><strong>M</strong> cala a pista, <strong>S</strong> deixa só ela. O primeiro
             controlo é o volume; o segundo, o panorama entre os dois alto-falantes.</p>
-        </div>
-      </details>
+          </div>
+        </details>
+      </div>
     </div>
   );
 };

@@ -85,9 +85,8 @@
 // pessoa do que está a fazer, funciona com teclado sem uma linha de JavaScript, e fechado é só
 // um círculo que não disputa atenção com nada.
 .ajuda {
-  position: absolute;
-  right: 18px;
-  bottom: 18px;
+  position: relative;
+  flex-shrink: 0;
   // ⚠️ Do TOKEN, e nunca um número solto. A escada de camadas do produto é uma só, e o dia em
   // que algo aparecer por cima do balão a resposta não é somar zeros aqui — é olhar em que
   // contexto de empilhamento ele caiu.
@@ -113,7 +112,8 @@
   > div {
     position: absolute;
     right: 0;
-    bottom: 38px;
+    // Abre PARA CIMA: no rodapé, para baixo não há tela.
+    bottom: calc(100% + 10px);
     width: 300px;
     padding: 14px 16px;
     border-radius: 8px;

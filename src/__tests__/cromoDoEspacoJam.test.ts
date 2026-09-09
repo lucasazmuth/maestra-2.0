@@ -3,7 +3,8 @@ import path from 'path';
 
 import {
   ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE, CORES_DAS_PISTAS,
-  DS, ENCAIXE, LARGURA_DAS_FERRAMENTAS, LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO,
+  ALTURA_DO_RODAPE, DS, ENCAIXE, LARGURA_DAS_FERRAMENTAS, LARGURA_DAS_PISTAS,
+  PIXELS_POR_SEGUNDO,
   corDaPista,
 } from '../pages/Catalog/daw/tokens';
 
@@ -40,6 +41,7 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(LARGURA_DAS_PISTAS).toBe(256);
     expect(ALTURA_DO_TITULO).toBe(68);
     expect(ALTURA_DO_TRANSPORTE).toBe(62);
+    expect(ALTURA_DO_RODAPE).toBe(44);
     // O encaixe do arrasto: um quarto de segundo.
     expect(ENCAIXE).toBe(0.25);
   });
@@ -58,6 +60,20 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(corDaPista(6)).toBe(CORES_DAS_PISTAS[0]);
     // E um índice negativo não estoura o array.
     expect(corDaPista(-1)).toBe(CORES_DAS_PISTAS[5]);
+  });
+
+  // ⚠️ O que vale para a MONTAGEM INTEIRA mora no rodapé, e não no cabeçalho: o Master não
+  // identifica nada, ele mexe no som, e no topo fazia o cabeçalho dizer três coisas ao mesmo
+  // tempo — que música é esta, que vista está aberta, e como está a soar.
+  it('o volume geral está no rodapé, e não no cabeçalho', () => {
+    const rodape = editor.slice(editor.indexOf('══════════ RODAPÉ'));
+    expect(rodape).toContain('Volume geral');
+    // E no cabeçalho não sobrou nenhum: o corte tem de ser de verdade, não uma segunda cópia.
+    const cabecalho = editor.slice(
+      editor.indexOf('══════════ FILA DO TÍTULO'),
+      editor.indexOf('══════════ CORPO'),
+    );
+    expect(cabecalho).not.toContain('Volume geral');
   });
 
   // ⚠️ O fechar e o tela cheia são CÍRCULOS. É o idioma do produto — o voltar, o sino, o menu
