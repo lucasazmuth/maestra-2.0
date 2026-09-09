@@ -24,6 +24,10 @@ const editor = ler('pages', 'Catalog', 'daw', 'EditorDaGravacao.tsx');
 const clipe = ler('pages', 'Catalog', 'daw', 'Clipe.tsx');
 const casca = ler('pages', 'Catalog', 'daw', 'editor.module.scss');
 const biblioteca = ler('pages', 'Catalog', 'daw', 'Biblioteca.tsx');
+const icones = ler('pages', 'Catalog', 'daw', 'icones.tsx');
+
+/** Só o código: um comentário que NOMEIA o que saiu não é o que saiu. */
+const semComentarios = (valor: string) => valor.replace(/\/\/.*$/gm, '');
 
 describe('cromo do editor do Espaço JAM', () => {
   // As dimensões da referência. São elas que dão à tela a densidade de um editor: uma faixa de
@@ -111,7 +115,14 @@ describe('cromo do editor do Espaço JAM', () => {
   // As duas vistas da mesma montagem: a linha do tempo responde "o que toca quando", a mesa
   // responde "como isto soa junto".
   it('há as duas abas, e a mesa tem faders verticais', () => {
-    expect(editor).toContain('Linha do tempo');
+    expect(editor).toContain("'Timeline'");
+    expect(editor).toContain("'Mixer'");
+    // Os dois ícones são desenho do dono do produto; o traço segue a cor da aba em vez de ficar
+    // cinza para sempre.
+    expect(icones).toContain('currentColor');
+    // Sem os comentários: o arquivo NOMEIA a cor antiga para explicar a troca, e nomear não é
+    // pintar. (É a segunda vez que este teste tropeça nisso.)
+    expect(semComentarios(icones)).not.toContain('#898989');
     expect(editor).toContain('MesaDeCanais');
     expect(editor).toContain("writingMode: 'vertical-lr'");
   });

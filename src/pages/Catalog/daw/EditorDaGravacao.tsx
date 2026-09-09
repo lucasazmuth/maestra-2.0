@@ -1,6 +1,6 @@
 import { FC, ReactNode, useRef, useState } from 'react';
 import {
-  FiChevronDown, FiCircle, FiGrid, FiHeadphones, FiMaximize2, FiMusic, FiPause, FiPlay,
+  FiChevronDown, FiCircle, FiHeadphones, FiMaximize2, FiPause, FiPlay,
   FiSkipBack, FiSquare, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
@@ -8,6 +8,7 @@ import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import type { CatalogTrack, CatalogVersion } from '@maestra/core/interfaces/maestra';
 
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
+import { IconeDaTimeline, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
 import {
@@ -347,7 +348,7 @@ export const EditorDaGravacao: FC<{
           display: 'flex', gap: 2, padding: 3,
           background: DS.color.bgCampo, borderRadius: DS.raio.grande, flexShrink: 0,
         }}>
-          {([['linha', 'Linha do tempo'], ['mesa', 'Mesa']] as const).map(([chave, rotulo]) => (
+          {([['linha', 'Timeline'], ['mesa', 'Mixer']] as const).map(([chave, rotulo]) => (
             <button
               key={chave}
               type='button'
@@ -362,7 +363,7 @@ export const EditorDaGravacao: FC<{
                 fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: DS.font.display,
               }}
             >
-              {chave === 'linha' ? <FiMusic size={12} /> : <FiGrid size={12} />}
+              {chave === 'linha' ? <IconeDaTimeline /> : <IconeDoMixer />}
               {rotulo}
             </button>
           ))}
