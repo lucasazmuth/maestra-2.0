@@ -1,4 +1,4 @@
-import { ContextoFalso, buscarFalso } from '../duplos/contextoFalso';
+import { ContextoFalso, OfflineFalso, buscarFalso } from '../duplos/contextoFalso';
 import { Mesa, agendamentoDoClipe, ganhoEfetivo, type Pista } from '../mesa';
 
 // A mesa, sem tocar um som.
@@ -299,6 +299,93 @@ describe('Mesa', () => {
     await mesa.carregar([pista({ clipes: [clipe()] })]);
     await mesa.tocar();
     expect(ctx.passos.indexOf('resume')).toBeLessThan(ctx.passos.indexOf('fonte'));
+  });
+});
+
+// A GUIA: a montagem inteira num buffer só, para a lista de Músicas tocar.
+//
+// ⚠️ Ela sai do MESMO grafo e do MESMO agendamento que a mesa usa para tocar. Duas
+// implementações de "somar as pistas" divergem no primeiro ajuste, e ninguém descobre até
+// alguém reclamar que na lista está diferente.
+describe('renderizar a guia', () => {
+  const comDuasPistas = async () => {
+    const { mesa } = montar([]);
+    await mesa.carregar([
+      pista({ id: 'p1', clipes: [clipe({ id: 'c1', url: 'a', inicio: 0, duracao: 5 })] }),
+      pista({ id: 'p2', clipes: [clipe({ id: 'c2', url: 'b', inicio: 10, duracao: 5 })] }),
+    ]);
+    return mesa;
+  };
+
+  it('o buffer tem o tamanho da montagem inteira', async () => {
+    const mesa = await comDuasPistas();
+    let offline: OfflineFalso | null = null;
+    const rendido = await mesa.renderizar((canais, quadros, taxa) => {
+      offline = new OfflineFalso(canais, quadros, taxa);
+      return offline;
+    });
+
+    // Do zero ao fim do último clipe: 15 segundos.
+    expect(rendido?.duration).toBeCloseTo(15, 3);
+    expect(offline!.canais).toBe(2);
+    expect(offline!.renderizou).toBe(true);
+  });
+
+  it('passa pelo teto, e cada pista leva o seu ganho e o seu panorama', async () => {
+    const mesa = await comDuasPistas();
+    mesa.ganho('p1', 0.5);
+    mesa.panoramar('p2', -1);
+
+    let offline: OfflineFalso | null = null;
+    await mesa.renderizar((c, q, t) => { offline = new OfflineFalso(c, q, t); return offline; });
+
+    const ctx = offline!;
+    expect(ctx.tetos).toHaveLength(1);
+    expect(ctx.tetos[0].ligadoA).toBe(ctx.destination);
+    expect(ctx.panoramas.map((p) => p.pan.value).sort()).toEqual([-1, 0]);
+    expect(ctx.ganhos.map((g) => g.gain.value)).toContain(0.5);
+  });
+
+  it('cada clipe entra no seu instante, com o seu recorte', async () => {
+    const { mesa } = montar([]);
+    await mesa.carregar([pista({
+      clipes: [
+        clipe({ id: 'c1', inicio: 0, recorte: 0, duracao: 4 }),
+        clipe({ id: 'c2', inicio: 9, recorte: 12, duracao: 3 }),
+      ],
+    })]);
+
+    let offline: OfflineFalso | null = null;
+    await mesa.renderizar((c, q, t) => { offline = new OfflineFalso(c, q, t); return offline; });
+
+    const arranques = offline!.arrancadas.map((f) => f.arranques[0]);
+    expect(arranques).toContainEqual({ quando: 0, deslocamento: 0, duracao: 4 });
+    expect(arranques).toContainEqual({ quando: 9, deslocamento: 12, duracao: 3 });
+  });
+
+  // ⚠️ O SOLO NÃO ENTRA NA GUIA. Ele é um gesto de escuta ("deixa-me ouvir só esta"), e uma
+  // guia gravada com um solo aceso sairia com uma pista só — e ninguém perceberia até ouvir na
+  // lista. O MUDO entra, porque é decisão de arranjo.
+  it('o solo não vai para a guia; o mudo vai', async () => {
+    const mesa = await comDuasPistas();
+    mesa.solar('p1', true);
+
+    let offline: OfflineFalso | null = null;
+    await mesa.renderizar((c, q, t) => { offline = new OfflineFalso(c, q, t); return offline; });
+    // As duas pistas entram, e nenhuma calada.
+    expect(offline!.ganhos.filter((g) => g.gain.value === 0)).toHaveLength(0);
+
+    mesa.solar('p1', false);
+    mesa.mudar('p2', true);
+    let outro: OfflineFalso | null = null;
+    await mesa.renderizar((c, q, t) => { outro = new OfflineFalso(c, q, t); return outro; });
+    expect(outro!.ganhos.filter((g) => g.gain.value === 0)).toHaveLength(1);
+  });
+
+  it('sem montagem não há guia', async () => {
+    const { mesa } = montar([]);
+    await mesa.carregar([]);
+    expect(await mesa.renderizar((c, q, t) => new OfflineFalso(c, q, t))).toBeNull();
   });
 });
 

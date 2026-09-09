@@ -115,3 +115,36 @@ export const caminhoNoBalde = (url: string, balde: string): string | null => {
   if (corte < 0) return null;
   return decodeURIComponent(url.slice(corte + marca.length).split('?')[0]);
 };
+
+/**
+ * Grava num caminho FIXO, por cima do que lá estiver.
+ *
+ * O `enviarArquivo` carimba a data no nome, e é o certo para o que a pessoa envia: dois
+ * ficheiros com o mesmo nome não se atropelam. Para o que o PRODUTO gera e regenera — a guia de
+ * uma música, que é sempre a mesma coisa recalculada — o carimbo é o erro: uma música editada
+ * trinta vezes guardaria trinta guias, e vinte e nove delas nunca mais seriam ouvidas por
+ * ninguém. Com mil músicas isso são centenas de gigabytes de lixo.
+ *
+ * Caminho fixo, `upsert`, armazenamento constante por música.
+ *
+ * ⚠️ `cacheControl` curto de propósito: o endereço não muda quando o conteúdo muda, e um cache
+ * longo entregaria a guia velha depois de a montagem já ter sido refeita.
+ */
+export const gravarEmCaminhoFixo = async (
+  balde: string,
+  caminho: string,
+  dados: Blob | ArrayBuffer,
+  tipo: string,
+): Promise<{ url: string; path: string }> => {
+  const { error } = await supabase.storage.from(balde).upload(caminho, dados, {
+    cacheControl: '60',
+    upsert: true,
+    contentType: tipo,
+  });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from(balde).getPublicUrl(caminho);
+  // O sufixo obriga o navegador a buscar de novo depois de uma regravação — o endereço é o
+  // mesmo, e sem isto quem já ouviu continuaria a ouvir a guia antiga.
+  return { url: `${data.publicUrl}?v=${Date.now()}`, path: caminho };
+};

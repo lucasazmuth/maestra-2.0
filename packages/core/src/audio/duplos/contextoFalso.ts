@@ -3,7 +3,8 @@
 // inteira com "your test suite must contain at least one test".
 
 import type {
-  BufferDeAudio, ContextoDeAudio, Destino, FonteDeAudio, Modelador, NoDeGanho, Panorama, ParametroDeAudio,
+  BufferDeAudio, ContextoDeAudio, ContextoOffline, Destino, FonteDeAudio, Modelador, NoDeGanho,
+  Panorama, ParametroDeAudio,
 } from '../contexto';
 
 // O motor de áudio de mentira: relógio na mão, e um registo de tudo o que a mesa mandou fazer.
@@ -156,3 +157,25 @@ export const buscarFalso = (duracoes: Record<string, number>): (url: string) => 
     if (url.includes('falha')) throw new Error('404');
     return new ArrayBuffer(duracoes[url] ?? 180);
   };
+
+
+/**
+ * O contexto que RENDERIZA de mentira.
+ *
+ * Não soma amostra nenhuma — devolve um buffer do tamanho pedido. O que ele prova é o GRAFO: que
+ * a guia passou pelo teto, que cada pista levou o seu ganho e o seu panorama, e que os clipes
+ * foram agendados nos instantes certos. A soma em si é do motor de áudio, não nossa.
+ */
+export class OfflineFalso extends ContextoFalso implements ContextoOffline {
+  renderizou = false;
+
+  constructor(readonly canais: number, readonly length: number, readonly taxa: number) {
+    super();
+    this.sampleRate = taxa;
+  }
+
+  async startRendering(): Promise<BufferDeAudio> {
+    this.renderizou = true;
+    return new BufferFalso(this.length / this.taxa, this.canais, this.taxa);
+  }
+}

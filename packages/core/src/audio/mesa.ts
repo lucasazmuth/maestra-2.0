@@ -1,5 +1,5 @@
 import type {
-  BufferDeAudio, ContextoDeAudio, FonteDeAudio, Modelador, NoDeGanho, Panorama,
+  BufferDeAudio, ContextoDeAudio, ContextoOffline, FonteDeAudio, Modelador, NoDeGanho, Panorama,
 } from './contexto';
 import { picos as picosDoBuffer } from './picos';
 import { curvaDoTeto } from './teto';
@@ -482,6 +482,64 @@ export class Mesa {
       if (clipe) return this.duracaoEfetiva(clipe);
     }
     return 0;
+  }
+
+  /**
+   * Renderiza a montagem inteira num buffer só — a GUIA da música.
+   *
+   * ⚠️ O grafo é o MESMO que toca: `fontes → ganho → panorama → mestre → teto`, com o mesmo
+   * `agendamentoDoClipe` e o mesmo `ganhoEfetivo`. É isso que garante que a guia soa como o que
+   * se ouviu ao montar — duas implementações de "somar as pistas" divergem no primeiro ajuste,
+   * e ninguém descobre até alguém reclamar que na lista está diferente.
+   *
+   * O SOLO não entra: ele é um gesto de escuta ("deixa-me ouvir só esta"), e uma guia gravada
+   * com um solo aceso sairia com uma pista só. O mudo entra, porque é decisão de arranjo.
+   */
+  async renderizar(
+    criarOffline: (canais: number, quadros: number, taxa: number) => ContextoOffline,
+  ): Promise<BufferDeAudio | null> {
+    const duracao = this.duracaoTotal();
+    if (!duracao || !this.buffers.size) return null;
+
+    const taxa = this.ctx.sampleRate || 44100;
+    const offline = criarOffline(2, Math.ceil(duracao * taxa), taxa);
+
+    const teto = offline.createWaveShaper();
+    teto.curve = curvaDoTeto(PONTOS_DA_CURVA);
+    teto.oversample = '2x';
+    teto.connect(offline.destination);
+
+    const mestre = offline.createGain();
+    mestre.gain.value = this.ganhoDoMestre;
+    mestre.connect(teto as unknown as NoDeGanho);
+
+    for (const pista of this.pistas) {
+      if (pista.carga === 'erro') continue;
+      const panorama = offline.createStereoPanner();
+      panorama.pan.value = pista.pan;
+      panorama.connect(mestre);
+
+      const ganho = offline.createGain();
+      // `haSolo: false` de propósito — ver o comentário acima.
+      ganho.gain.value = ganhoEfetivo({ ...pista, solo: false }, false);
+      ganho.connect(panorama as unknown as NoDeGanho);
+
+      for (const clipe of pista.clipes) {
+        const buffer = this.buffers.get(clipe.url);
+        if (!buffer) continue;
+        const quando = agendamentoDoClipe(
+          { ...clipe, duracao: this.duracaoEfetiva(clipe) },
+          0,
+        );
+        if (!quando) continue;
+        const fonte = offline.createBufferSource();
+        fonte.buffer = buffer;
+        fonte.connect(ganho);
+        fonte.start(quando.atraso, quando.recorte, quando.duracao);
+      }
+    }
+
+    return offline.startRendering();
   }
 
   /** Cala tudo, desliga o grafo e solta os buffers. Sair da tela sem isto deixa a mesa a tocar. */

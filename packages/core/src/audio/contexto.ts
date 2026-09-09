@@ -95,6 +95,19 @@ export interface FonteDeAudio {
   stop(): void;
 }
 
+/**
+ * Um contexto que renderiza em vez de tocar: é ele que produz a GUIA.
+ *
+ * ⚠️ A guia sai do MESMO grafo e do MESMO agendamento que a mesa usa para tocar. É a única
+ * forma de garantir que o que se ouve na lista de Músicas é o que se ouviu ao montar — duas
+ * implementações de "somar as pistas" divergem no primeiro ajuste, e ninguém descobre até
+ * alguém reclamar que "na lista está diferente".
+ */
+export interface ContextoOffline extends ContextoDeAudio {
+  readonly length: number;
+  startRendering(): Promise<BufferDeAudio>;
+}
+
 export interface ContextoDeAudio {
   readonly currentTime: number;
   readonly sampleRate: number;

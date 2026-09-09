@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { ContextoDeAudio } from './contexto';
+import type { ContextoDeAudio, ContextoOffline } from './contexto';
 import { Mesa, type Buscar, type EstadoDaMesa, type Pista } from './mesa';
 
 // A mesa ligada a uma tela.
@@ -123,6 +123,12 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
   const ganho = useCallback((id: string, v: number) => { mesa.current?.ganho(id, v); }, []);
   const panoramar = useCallback((id: string, v: number) => { mesa.current?.panoramar(id, v); }, []);
   const mestreEm = useCallback((v: number) => { mesa.current?.mestreEm(v); }, []);
+  /** A montagem inteira num buffer só — a guia que a lista de Músicas toca. */
+  const renderizar = useCallback(
+    (criarOffline: (canais: number, quadros: number, taxa: number) => ContextoOffline) =>
+      mesa.current?.renderizar(criarOffline) ?? Promise.resolve(null),
+    [],
+  );
   // O descarte é do DESMONTAR, e só dele. Antes vivia na limpeza do efeito da montagem, e
   // então cada arrasto de clipe fechava o contexto de áudio e abria outro — com o download e a
   // descodificação de tudo outra vez.
@@ -145,5 +151,8 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
     return novos;
   }, []);
 
-  return { estado, tocar, pausar, alternar, irPara, mudar, solar, ganho, panoramar, mestreEm, picos };
+  return {
+    estado, tocar, pausar, alternar, irPara, mudar, solar, ganho, panoramar, mestreEm,
+    renderizar, picos,
+  };
 }

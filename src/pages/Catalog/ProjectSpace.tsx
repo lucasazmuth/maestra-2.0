@@ -15,7 +15,7 @@ import * as catalogDb from '@maestra/core/services/db/catalog';
 import * as genresDb from '@maestra/core/services/db/genres';
 import * as membersDb from '@maestra/core/services/db/members';
 import {
-  BALDE_DO_CATALOGO, enviarArquivo, tipoDoCatalogo, tituloDoArquivo,
+  BALDE_DO_CATALOGO, enviarArquivo, gravarEmCaminhoFixo, tipoDoCatalogo, tituloDoArquivo,
 } from '@maestra/core/services/armazenamento';
 import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
 import { useAppSelector } from '@maestra/core/store/store';
@@ -25,6 +25,7 @@ import { Spinner } from '../../components/spinner/spinner';
 import { EditorDaGravacao, type AcoesDoEditor } from './daw/EditorDaGravacao';
 import { buscarWeb, criarContextoWeb } from './daw/contextoWeb';
 import { duracaoDoArquivo } from './daw/duracao';
+import { caminhoDaGuia, criarOfflineWeb, paraMp3 } from './daw/guia';
 import { DS } from './daw/tokens';
 
 // O ESPAÇO JAM: a música aberta num editor.
@@ -46,6 +47,12 @@ import { DS } from './daw/tokens';
 // pistas de UMA gravação.
 
 const ESPERA = 650;
+
+/** `3:46` — o formato que a lista de Músicas mostra. */
+const relogioCurto = (segundos: number) => {
+  const s = Math.max(0, Math.round(segundos));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
 
 // Fora do componente: são as mesmas duas funções para sempre, e cá dentro seriam objetos novos
 // a cada render.
@@ -401,6 +408,7 @@ const ProjectSpace: FC = () => {
           });
         }
       }
+      sujo.current = true;
       // Só aqui é que a montagem recarrega, e tem de recarregar: há áudio novo para descodificar.
       await refresh();
       setSaveState('salvo');
@@ -412,12 +420,71 @@ const ProjectSpace: FC = () => {
     }
   };
 
+  // ─── A guia ───────────────────────────────────────────────────────────────
+  //
+  // A lista de Músicas toca UMA coisa por música. Antes era a "gravação principal" — fazia
+  // sentido quando uma música era várias gravações alternativas e uma delas era a boa. Com o
+  // editor, uma música é uma MONTAGEM: bateria, piano, voz, tocando juntas. Eleger uma
+  // principal entre elas não quer dizer nada.
+  //
+  // ⚠️ QUANDO: ao SAIR, e só se a montagem mudou. Renderizar a cada edição daria o mesmo
+  // resultado final depois de trinta renders e trinta envios de 4 MB — o mesmo arquivo, trinta
+  // vezes, para ninguém ouvir vinte e nove deles.
+  //
+  // ⚠️ ONDE: num caminho FIXO por música, regravado por cima. Se cada render criasse um arquivo
+  // novo, uma música editada trinta vezes guardaria trinta guias mortas; com mil músicas, isso
+  // são centenas de gigabytes que ninguém volta a abrir.
+  const sujo = useRef(false);
+  const gerando = useRef(false);
+
+  const gerarGuia = useCallback(async () => {
+    const gravacao = openRef.current;
+    if (!sujo.current || gerando.current || !gravacao || !artistId || !projectId) return;
+    const mesaViva = mesaRef.current;
+    if (!mesaViva) return;
+
+    gerando.current = true;
+    try {
+      const rendido = await mesaViva.renderizar(criarOfflineWeb);
+      if (!rendido) return;
+      const mp3 = await paraMp3(rendido);
+      const gravado = await gravarEmCaminhoFixo(
+        BALDE_DO_CATALOGO, caminhoDaGuia(artistId, projectId), mp3, 'audio/mpeg',
+      );
+
+      // ⚠️ A guia tem CAMINHO PRÓPRIO, e o que muda é para onde a gravação aponta. Escrever por
+      // cima do ficheiro original seria um laço: a pista da mix aponta para esse mesmo endereço,
+      // e a guia seguinte teria a guia anterior dentro dela, cada vez mais dobrada. E o áudio
+      // que a pessoa enviou um dia desapareceria sem forma de voltar atrás.
+      await catalogDb.updateCatalogVersion(gravacao.id, {
+        audio_file: gravado.url,
+        audio_file_name: 'guia.mp3',
+        duration: relogioCurto(rendido.duration),
+      });
+      sujo.current = false;
+    } catch {
+      // Falhar a guia não pode estragar a saída: a montagem está salva, e a próxima saída
+      // tenta de novo.
+    } finally {
+      gerando.current = false;
+    }
+  }, [artistId, projectId]);
+
+  // Sair da tela é o gatilho. `openRef` e `mesaRef` existem porque este efeito corre uma vez e
+  // precisa dos valores do INSTANTE da saída, não dos da montagem.
+  const openRef = useRef<CatalogVersion | null>(null);
+  const mesaRef = useRef<typeof mesa | null>(null);
+  openRef.current = open;
+  mesaRef.current = mesa;
+  useEffect(() => () => { void gerarGuia(); }, [gerarGuia]);
+
   const acoes: AcoesDoEditor = {
     aoSair: () => navigate(`/artists/${artistId}/catalog`),
     aoRenomear: (nome) => setProject((atual) => (atual ? { ...atual, title: nome } : atual)),
     aoAdicionarArquivos: (arquivos, inicio, pistaAlvo) => { void enviarPistas(arquivos, inicio, pistaAlvo); },
 
     aoMoverClipe: (clipeId, inicio) => {
+      sujo.current = true;
       mudarClipeLocal(clipeId, { start_seconds: inicio });
       adiar(`clipe:${clipeId}`, () => catalogDb.updateClip(clipeId, { start_seconds: inicio }));
     },
@@ -435,6 +502,7 @@ const ProjectSpace: FC = () => {
       const dentro = emSegundo - inicio;
       if (dentro <= 0.05 || dentro >= duracao - 0.05) return;
 
+      sujo.current = true;
       setSaveState('salvando');
       void (async () => {
         try {
@@ -453,6 +521,7 @@ const ProjectSpace: FC = () => {
     },
 
     aoApagarClipe: (clipeId) => {
+      sujo.current = true;
       setSaveState('salvando');
       void catalogDb.deleteClip(clipeId)
         .then(refresh)
@@ -461,6 +530,7 @@ const ProjectSpace: FC = () => {
     },
 
     aoMudarPista: (pistaId, parte) => {
+      sujo.current = true;
       mudarPistaLocal(pistaId, parte);
       // O som muda AGORA; o banco recebe depois. O contrário faria o fader responder com meio
       // segundo de atraso, e ninguém mistura assim.
@@ -471,6 +541,7 @@ const ProjectSpace: FC = () => {
     },
 
     aoApagarPista: (pistaId) => {
+      sujo.current = true;
       setSaveState('salvando');
       // O FICHEIRO fica na biblioteca da gravação: apagar a pista é desfazer a montagem, não
       // deitar fora o que foi enviado.

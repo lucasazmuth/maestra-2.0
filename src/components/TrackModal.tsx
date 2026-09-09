@@ -221,6 +221,10 @@ const UploadField: FC<{
 //
 // Enquanto a música ainda não existe (cadastro), não há projeto para pendurar a versão: o
 // arquivo escolhido fica no rascunho e vira a V1 no momento de salvar.
+// Ver o comentário no lugar onde ele era usado: o bloco de versões saiu da ficha, e o
+// componente fica à espera de uma decisão sobre as gravações antigas. Apagá-lo agora seria
+// deitar fora a única tela que sabe lidar com elas.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const VersionsSection: FC<{
   artistId: string;
   projectId?: string | null;
@@ -811,17 +815,14 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                     onClear={() => set({ cover_image: null, cover_image_name: null })}
                   />
                 </label>
-                <VersionsSection
-                  artistId={artistId}
-                  projectId={item?.project_id}
-                  author={{ id: currentUserId, name: currentUserName, avatar: currentUserAvatar }}
-                  onChanged={onVersionsChanged}
-                  firstFileName={draft.audio_file_name}
-                  firstFileUrl={draft.audio_file}
-                  uploadingFirst={uploading === 'audio'}
-                  onPickFirst={(f) => handleUpload('audio', f)}
-                  onClearFirst={() => set({ audio_file: null, audio_file_name: null, duration: null })}
-                />
+                {/* ⚠️ O BLOCO DE VERSÕES SAIU DA FICHA, e com ele o gesto de eleger uma
+                    gravação principal.
+                    O modelo mudou: uma música deixou de ser "várias gravações alternativas, uma
+                    delas a boa" e passou a ser UMA montagem — bateria, piano, voz — que soa
+                    junta. Escolher uma "principal" entre pistas de um mesmo arranjo não quer
+                    dizer nada: seria eleger a bateria como a música.
+                    O componente fica no arquivo, sem uso, à espera da decisão do dono do
+                    produto sobre o que fazer com as gravações antigas. */}
               </div>
             ),
           },
