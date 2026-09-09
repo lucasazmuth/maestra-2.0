@@ -449,6 +449,8 @@ export interface CatalogItem {
   key?: string | null;
   duration?: string | null;
   lyrics?: string | null;
+  /** Campo livre da ficha: observações sobre a MÚSICA (a letra, que é da gravação, é `lyrics`). */
+  details?: string | null;
   cover_image?: string | null;
   cover_image_name?: string | null;
   audio_file?: string | null;
@@ -479,6 +481,8 @@ export interface CatalogProject {
   genre?: string | null;
   bpm?: string | null;
   key?: string | null;
+  /** Campo livre da ficha: observações sobre a música. */
+  details?: string | null;
   cover_image?: string | null;
   cover_image_name?: string | null;
   assignee?: { id: string; name: string } | null;

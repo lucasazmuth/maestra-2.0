@@ -172,16 +172,42 @@ export const PAPEIS_SUGERIDOS_DA_PISTA = [
   'Voz', 'Guia', 'Bateria', 'Baixo', 'Guitarra', 'Teclas', 'Outros',
 ] as const;
 
-export const SPLIT_ROLES = [
-  'Autor',
-  'Compositor',
-  'Intérprete',
-  'Produtor',
-  'Músico',
+// As CLASSES de titular, no vocabulário das associações autorais.
+//
+// ⚠️ São duas listas, e não uma, porque são dois direitos diferentes: a OBRA é o que foi
+// composto (letra e melodia), o FONOGRAMA é a gravação daquela obra. Um intérprete não tem
+// classe na obra; um compositor não tem classe no fonograma. Uma lista só faz aparecer
+// "Produtor fonográfico" no lugar onde se declara quem escreveu a canção — que é como se
+// preenche errado um cadastro que depois paga (ou não paga) direitos a alguém.
+//
+// Os nomes saem do que o ECAD e a UBC praticam nos formulários deles.
+
+/** Quem tem direito sobre a OBRA: quem a escreveu, e quem a edita. */
+export const CLASSES_DA_OBRA = [
+  'Compositor/Autor',
+  'Versionista',
+  'Adaptador',
   'Arranjador',
   'Editora',
+  'Subeditora',
+];
+
+/** Quem tem direito sobre o FONOGRAMA: quem gravou, quem tocou, quem produziu. */
+export const CLASSES_DO_FONOGRAMA = [
+  'Intérprete',
+  'Produtor fonográfico',
+  'Músico acompanhante',
+  'Músico',
   'Gravadora',
 ];
+
+/**
+ * As duas listas juntas.
+ *
+ * Fica para quem ainda não sabe separar os dois direitos — hoje, a ficha do app. Onde a
+ * distinção existe (a ficha da web), usam-se as listas específicas.
+ */
+export const SPLIT_ROLES = [...CLASSES_DA_OBRA, ...CLASSES_DO_FONOGRAMA];
 
 export const EVENT_TYPES: Record<EventType, { label: string; color: string }> = {
   release: { label: 'Lançamento', color: '#a855f7' },

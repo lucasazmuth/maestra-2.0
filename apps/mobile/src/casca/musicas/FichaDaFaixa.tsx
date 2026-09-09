@@ -7,7 +7,7 @@ import {
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_CATALOGO, RAIO } from '@maestra/core/constants/design';
-import { CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '@maestra/core/constants/maestra';
+import { CATALOG_STATUS_OPTIONS, CLASSES_DA_OBRA, CLASSES_DO_FONOGRAMA } from '@maestra/core/constants/maestra';
 import type { CatalogItem, Split } from '@maestra/core/interfaces/maestra';
 import { deleteCatalogProject, saveCatalogProjectFromForm } from '@maestra/core/services/db/catalog';
 
@@ -62,9 +62,17 @@ const Campo = ({ rotulo, children }: { rotulo: string; children: React.ReactNode
 
 type Aba = 'informacoes' | 'letras' | 'splits';
 
-/** Um participante dos créditos: quem é, o que fez e quanto leva. */
-const LinhaDeSplit = ({ split, primeira, aoMudar, aoRemover }: {
+/**
+ * Um titular dos créditos: quem é, em que classe entra e quanto leva.
+ *
+ * "Titular", "classe" e "% partic." são as palavras da UBC e do ECAD. Quem preenche isto aqui
+ * vai preencher o mesmo cadastro lá, e reencontrar as mesmas palavras poupa uma tradução
+ * mental — e os enganos que ela produz.
+ */
+const LinhaDeSplit = ({ split, classes, primeira, aoMudar, aoRemover }: {
   split: Split;
+  /** As classes que este corpo aceita — as da obra ou as do fonograma. */
+  classes: readonly string[];
   primeira?: boolean;
   aoMudar: (parte: Partial<Split>) => void;
   aoRemover: () => void;
@@ -76,22 +84,22 @@ const LinhaDeSplit = ({ split, primeira, aoMudar, aoRemover }: {
           style={[estilos.entrada, estilos.flex]}
           value={split.name}
           onChangeText={(t) => aoMudar({ name: t })}
-          placeholder="Nome do participante"
+          placeholder="Nome do titular"
           placeholderTextColor={COR.espaçoReservado}
-          accessibilityLabel="Nome do participante"
+          accessibilityLabel="Nome do titular"
         />
         <Pressable
           onPress={aoRemover}
           hitSlop={10}
           accessibilityRole="button"
-          accessibilityLabel={`Remover ${split.name || 'participante'}`}
+          accessibilityLabel={`Remover ${split.name || 'titular'}`}
         >
           <Feather name="x" size={18} color={COR_CATALOGO.legenda} />
         </Pressable>
       </View>
 
       <View style={estilos.papeis}>
-        {SPLIT_ROLES.map((papel) => {
+        {classes.map((papel) => {
           const escolhido = split.role === papel;
           return (
             <Pressable
@@ -117,7 +125,7 @@ const LinhaDeSplit = ({ split, primeira, aoMudar, aoRemover }: {
           placeholder="0"
           placeholderTextColor={COR.espaçoReservado}
           keyboardType="number-pad"
-          accessibilityLabel="Percentual"
+          accessibilityLabel="Participação"
         />
         <Text style={estilos.porcento}>%</Text>
       </View>
@@ -208,6 +216,7 @@ export const FichaDaFaixa = ({
         bpm: rascunho.bpm || null,
         key: rascunho.key || null,
         lyrics: rascunho.lyrics || null,
+        details: rascunho.details || null,
         composition_splits: autorais,
         recording_splits: fonograma,
       });
@@ -484,6 +493,24 @@ export const FichaDaFaixa = ({
                   </Campo>
                 </Linha>
 
+                {/* Detalhes: o único campo da ficha que não tem forma. Todo o resto pergunta
+                    uma coisa e aceita uma resposta; o que sobra ("a segunda estrofe ainda vai
+                    mudar", "a editora confirma o split por e-mail") não cabia em campo nenhum
+                    e acabava no título da música ou numa conversa que ninguém reencontra. */}
+                <Linha>
+                  <Campo rotulo="Detalhes">
+                    <TextInput
+                      style={[estilos.entrada, estilos.entradaMedia]}
+                      value={rascunho.details ?? ''}
+                      onChangeText={(t) => mudar({ details: t })}
+                      placeholder="Combinados, pendências, o que ainda vai mudar"
+                      placeholderTextColor={COR.espaçoReservado}
+                      multiline
+                      accessibilityLabel="Detalhes"
+                    />
+                  </Campo>
+                </Linha>
+
                 <Linha>
                   <Campo rotulo="Versões">
                     <Versoes
@@ -516,24 +543,26 @@ export const FichaDaFaixa = ({
 
           {aba === 'splits' && (
             <>
-              {/* O subtítulo de cada grupo ("Créditos autorais da obra") saiu: é a linha de
-                  apoio que deixou de existir nos modais, e "Composição" e "Gravação" já dizem
-                  qual direito está em jogo para quem trabalha com música. */}
+              {/* ⚠️ DOIS corpos, e não um: a OBRA é o que foi composto, o FONOGRAMA é a
+                  gravação dela. São direitos diferentes, com titulares e percentagens que
+                  raramente coincidem — e cada um aceita as suas classes: não há "Intérprete"
+                  na obra nem "Compositor" no fonograma. É assim que a UBC e o ECAD pedem. */}
               {([
-                ['Composição', 'composition_splits', autorais],
-                ['Gravação', 'recording_splits', fonograma],
-              ] as const).map(([nome, chave, lista]) => (
+                ['Obra', 'composition_splits', autorais, CLASSES_DA_OBRA],
+                ['Fonograma', 'recording_splits', fonograma, CLASSES_DO_FONOGRAMA],
+              ] as const).map(([nome, chave, lista, classes]) => (
                 <Bloco key={chave} rotulo={nome}>
                   {lista.length === 0
                     ? (
                       <Linha primeira>
-                        <Text style={estilos.semParticipante}>Nenhum participante adicionado.</Text>
+                        <Text style={estilos.semParticipante}>Nenhum titular adicionado.</Text>
                       </Linha>
                     )
                     : lista.map((split, i) => (
                       <LinhaDeSplit
                         key={split.id}
                         split={split}
+                        classes={classes}
                         primeira={i === 0}
                         aoMudar={(parte) => mudarSplits(
                           chave,
@@ -550,13 +579,13 @@ export const FichaDaFaixa = ({
                         ...lista,
                         // O id é só para a lista se manter estável enquanto se edita; quem grava
                         // é o `saveCatalogProjectFromForm`, com o array inteiro.
-                        { id: `s-${Date.now()}`, name: '', role: SPLIT_ROLES[0], percentage: 0 },
+                        { id: `s-${Date.now()}`, name: '', role: classes[0], percentage: 0 },
                       ])}
                       accessibilityRole="button"
-                      accessibilityLabel={`Adicionar participante em ${nome}`}
+                      accessibilityLabel={`Adicionar titular em ${nome}`}
                     >
                       <Feather name="plus" size={14} color={COR.primaria} />
-                      <Text style={estilos.adicionarTexto}>Adicionar participante</Text>
+                      <Text style={estilos.adicionarTexto}>Adicionar titular</Text>
                     </Pressable>
                   </Linha>
 
@@ -626,6 +655,7 @@ const estilos = StyleSheet.create({
   rotulo: { fontSize: 11, fontWeight: '800', color: COR_CATALOGO.rotulo, letterSpacing: 0.4 },
   entrada: { paddingVertical: 2, fontSize: 15, color: COR_CATALOGO.titulo },
   entradaAlta: { minHeight: 220, textAlignVertical: 'top' },
+  entradaMedia: { minHeight: 96, textAlignVertical: 'top' },
   lado: { flexDirection: 'row', gap: 12 },
   opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   opcao: {

@@ -41,6 +41,7 @@ const legacyItemToProject = (item: CatalogItem): CatalogProject => ({
   cover_image: item.cover_image,
   cover_image_name: item.cover_image_name,
   assignee: item.assignee,
+  details: item.details,
   release_date: item.release_date,
   created_at: item.created_at,
   updated_at: item.updated_at,
@@ -71,6 +72,7 @@ export const catalogProjectToItem = (project: CatalogProject, version?: CatalogV
   assignee: project.assignee,
   genre: version?.genre ?? project.genre,
   release_date: project.release_date,
+  details: project.details,
   bpm: version?.bpm ?? project.bpm,
   key: version?.key ?? project.key,
   duration: version?.duration,
@@ -164,6 +166,7 @@ export const saveCatalogProjectFromForm = async (
     cover_image: input.cover_image ?? null,
     cover_image_name: input.cover_image_name ?? null,
     assignee: input.assignee ?? null,
+    details: input.details ?? null,
     release_date: input.release_date || null,
     updated_at: now,
   };

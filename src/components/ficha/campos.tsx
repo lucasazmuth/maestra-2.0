@@ -5,7 +5,7 @@ import { FiTrash2, FiUploadCloud } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 import type { CatalogItem, MusicGenre, Split } from '@maestra/core/interfaces/maestra';
-import { CATALOG_STATUS_OPTIONS, SPLIT_ROLES } from '@maestra/core/constants/maestra';
+import { CATALOG_STATUS_OPTIONS, CLASSES_DA_OBRA, CLASSES_DO_FONOGRAMA } from '@maestra/core/constants/maestra';
 
 import AnalysisHint from '../AnalysisHint';
 import modalStyles from '../StandardModal.module.scss';
@@ -24,15 +24,20 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 export const SplitEditor: FC<{
   splits: Split[];
   onChange: (s: Split[]) => void;
-}> = ({ splits, onChange }) => {
+  /** As classes que este corpo aceita — as da obra ou as do fonograma. */
+  classes: readonly string[];
+}> = ({ splits, onChange, classes }) => {
   const total = splits.reduce((acc, s) => acc + (Number(s.percentage) || 0), 0);
   return (
     <div className={modalStyles.splitEditor}>
       {!!splits.length && (
         <div className={modalStyles.splitHeader} aria-hidden="true">
-          <span>Nome</span>
-          <span>Função</span>
-          <span>Percentual</span>
+          {/* Os nomes que as associações usam nos formulários delas: quem preenche aqui vai
+              preencher o mesmo cadastro na UBC ou no ECAD, e reencontrar as mesmas palavras
+              poupa uma tradução mental — e os enganos que ela produz. */}
+          <span>Titular</span>
+          <span>Classe</span>
+          <span>% Partic.</span>
           <span />
         </div>
       )}
@@ -40,9 +45,9 @@ export const SplitEditor: FC<{
         <div key={s.id} className={modalStyles.splitRow}>
           <Input
             className={modalStyles.splitName}
-            placeholder='Nome do participante'
+            placeholder='Nome do titular'
             value={s.name}
-            aria-label={`Nome do participante ${i + 1}`}
+            aria-label={`Titular ${i + 1}`}
             onChange={(e) => {
               const next = splits.slice();
               next[i] = { ...s, name: e.target.value };
@@ -51,10 +56,10 @@ export const SplitEditor: FC<{
           />
           <Select
             className={modalStyles.splitRole}
-            placeholder='Selecione a função'
+            placeholder='Selecione a classe'
             value={s.role || undefined}
-            aria-label={`Função do participante ${i + 1}`}
-            options={SPLIT_ROLES.map((r) => ({ value: r, label: r }))}
+            aria-label={`Classe do titular ${i + 1}`}
+            options={classes.map((r) => ({ value: r, label: r }))}
             onChange={(v) => {
               const next = splits.slice();
               next[i] = { ...s, role: v };
@@ -68,7 +73,7 @@ export const SplitEditor: FC<{
             value={s.percentage}
             min={0}
             max={100}
-            aria-label={`Percentual do participante ${i + 1}`}
+            aria-label={`Participação do titular ${i + 1}`}
             onChange={(e) => {
               const next = splits.slice();
               const value = Math.max(0, Math.min(100, Number(e.target.value) || 0));
@@ -79,8 +84,8 @@ export const SplitEditor: FC<{
           <button
             type='button'
             className={modalStyles.splitRemove}
-            aria-label={`Remover ${s.name || `participante ${i + 1}`}`}
-            title='Remover participante'
+            aria-label={`Remover ${s.name || `titular ${i + 1}`}`}
+            title='Remover titular'
             onClick={() => onChange(splits.filter((x) => x.id !== s.id))}
           >
             <FiTrash2 size={15} />
@@ -88,7 +93,7 @@ export const SplitEditor: FC<{
         </div>
       ))}
       {!splits.length && (
-        <div className={modalStyles.splitEmpty}>Nenhum participante adicionado.</div>
+        <div className={modalStyles.splitEmpty}>Nenhum titular adicionado.</div>
       )}
       <div className={modalStyles.splitFooter}>
         <button
@@ -96,7 +101,7 @@ export const SplitEditor: FC<{
           className={modalStyles.splitAdd}
           onClick={() => onChange([...splits, { id: uid(), name: '', role: '', percentage: 0 }])}
         >
-          + Adicionar participante
+          + Adicionar titular
         </button>
         <span
           className={modalStyles.splitTotal}
@@ -319,6 +324,20 @@ export const CamposDaFicha: FC<DadosDaFicha> = ({
               onClear={() => set({ cover_image: null, cover_image_name: null })}
             />
           </label>
+          {/* Detalhes: o único campo da ficha que não tem forma.
+              Todo o resto pergunta uma coisa e aceita uma resposta — status, gênero, ISRC,
+              titular, percentagem. O que sobra ("a segunda estrofe ainda vai mudar", "a
+              editora confirma o split por e-mail") não cabe em campo nenhum, e sem lugar
+              acaba no título da música ou numa conversa que ninguém reencontra. */}
+          <label className={modalStyles.field}>
+            <span>Detalhes</span>
+            <Input.TextArea
+              placeholder='Observações sobre a música: combinados, pendências, o que ainda vai mudar'
+              autoSize={{ minRows: 3, maxRows: 10 }}
+              value={draft.details || ''}
+              onChange={(e) => set({ details: e.target.value })}
+            />
+          </label>
           {/* ⚠️ O BLOCO DE VERSÕES SAIU DA FICHA, e com ele o gesto de eleger uma
               gravação principal.
               O modelo mudou: uma música deixou de ser "várias gravações alternativas, uma
@@ -336,24 +355,29 @@ export const CamposDosSplits: FC<{
   set: (parte: Partial<CatalogItem>) => void;
 }> = ({ draft, set }) => (
   <div className={modalStyles.splitSections}>
+    {/* ⚠️ DOIS corpos, e não um: a OBRA é o que foi composto, o FONOGRAMA é a gravação dela.
+        São direitos diferentes, com titulares e percentagens que raramente coincidem — e é
+        assim que a UBC e o ECAD pedem. */}
     <div className={modalStyles.splitSection}>
       <div className={modalStyles.splitSectionTitle}>
-        <strong>Composição</strong>
-        <span>Créditos autorais da obra</span>
+        <strong>Obra</strong>
+        <span>Quem escreveu e quem edita — o direito autoral da composição</span>
       </div>
       <SplitEditor
         splits={draft.composition_splits || []}
         onChange={(s) => set({ composition_splits: s })}
+        classes={CLASSES_DA_OBRA}
       />
     </div>
     <div className={modalStyles.splitSection}>
       <div className={modalStyles.splitSectionTitle}>
-        <strong>Gravação</strong>
-        <span>Créditos do fonograma</span>
+        <strong>Fonograma</strong>
+        <span>Quem gravou, tocou e produziu — os direitos conexos desta gravação</span>
       </div>
       <SplitEditor
         splits={draft.recording_splits || []}
         onChange={(s) => set({ recording_splits: s })}
+        classes={CLASSES_DO_FONOGRAMA}
       />
     </div>
   </div>

@@ -450,6 +450,7 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
         key: draft.key || null,
         duration: draft.duration || null,
         lyrics: draft.lyrics || null,
+        details: draft.details || null,
         cover_image: draft.cover_image || null,
         cover_image_name: draft.cover_image_name || null,
         audio_file: draft.audio_file || null,

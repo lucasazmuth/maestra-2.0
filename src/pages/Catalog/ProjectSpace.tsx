@@ -107,12 +107,14 @@ const ProjectSpace: FC = () => {
   // ─── A ficha, dentro do editor ────────────────────────────────────────────
   //
   // Os MESMOS campos do modal de sempre (`components/ficha/campos.tsx`), montados aqui em vez
-  // de flutuarem por cima. O rascunho é local e só vai ao banco no "Salvar" — é uma ficha, não
+  // de flutuarem por cima. O rascunho autosalva: mudanças na ficha gravam sozinhas, como em tudo
   // um controlo de som: escrever um ISRC a meio não pode gravar meio ISRC.
   const [rascunho, setRascunho] = useState<Partial<CatalogItem>>({});
-  const [salvandoFicha, setSalvandoFicha] = useState(false);
+  // Autosave da ficha: serializa o rascunho e compara com o que foi gravado
   const [enviandoCapa, setEnviandoCapa] = useState<'cover' | 'audio' | null>(null);
   const fichaCarregada = useRef<string | null>(null);
+  const rascunhoGravado = useRef('');
+  const contaFicha = useRef<number | null>(null);
   /** Onde vai o lote. Sem isto, enviar dez stems é olhar para uma tela parada durante um minuto. */
   const [envio, setEnvio] = useState<{ feitos: number; total: number } | null>(null);
   const [genres, setGenres] = useState<MusicGenre[]>([]);
@@ -214,6 +216,12 @@ const ProjectSpace: FC = () => {
   // regravar no primeiro render aquilo que acabou de voltar do servidor.
   const daMusica = (v: CatalogProject) => JSON.stringify({ title: v.title, status: v.status });
   const daGravacao = (v?: CatalogVersion | null) => JSON.stringify({ id: v?.id || '', bpm: v?.bpm || '', key: v?.key || '' });
+  const daBanco = (r: Partial<CatalogItem>) => JSON.stringify({
+    title: r.title, status: r.status, genre: r.genre, release_date: r.release_date, isrc: r.isrc,
+    upc: r.upc, bpm: r.bpm, key: r.key, duration: r.duration, lyrics: r.lyrics, details: r.details,
+    cover_image: r.cover_image, cover_image_name: r.cover_image_name,
+    composition_splits: r.composition_splits, recording_splits: r.recording_splits, assignee: r.assignee,
+  });
   const musicaGravada = useRef('');
   const gravacaoMarcada = useRef<string | null>(null);
   const gravacaoGravada = useRef('');
@@ -294,6 +302,48 @@ const ProjectSpace: FC = () => {
   /** Um relógio por alvo: mexer em dois clipes seguidos não pode cancelar a gravação do primeiro. */
   const relogios = useRef<Record<string, number>>({});
   useEffect(() => () => { Object.values(relogios.current).forEach(window.clearTimeout); }, []);
+
+  // Autosave da ficha com debounce: título, status, gênero, atribuição, ISRC/UPC, BPM, tom, datas,
+  // letra, detalhes, capa e créditos — tudo o que é editável na ficha salva sozinho.
+  useEffect(() => {
+    if (!project || !artistId || !podeEditar || !rascunho.title?.trim()) return undefined;
+    const assinatura = daBanco(rascunho);
+    if (assinatura === rascunhoGravado.current) return undefined;
+
+    if (contaFicha.current) window.clearTimeout(contaFicha.current);
+    contaFicha.current = window.setTimeout(async () => {
+      try {
+        await catalogDb.saveCatalogProjectFromForm(
+          {
+            artist_id: artistId,
+            title: rascunho.title,
+            status: rascunho.status || 'composition',
+            genre: rascunho.genre || null,
+            release_date: rascunho.release_date || null,
+            isrc: rascunho.isrc || null,
+            upc: rascunho.upc || null,
+            bpm: rascunho.bpm || null,
+            key: rascunho.key || null,
+            duration: rascunho.duration || null,
+            lyrics: rascunho.lyrics || null,
+            details: rascunho.details || null,
+            cover_image: rascunho.cover_image || null,
+            cover_image_name: rascunho.cover_image_name || null,
+            composition_splits: rascunho.composition_splits || [],
+            recording_splits: rascunho.recording_splits || [],
+            assignee: rascunho.assignee || null,
+            id: project.id,
+            versionId: open?.id,
+          } as never,
+          { id: user?.id || null, name: currentUserName, avatar: userMeta.avatar_url || null },
+        );
+        rascunhoGravado.current = assinatura;
+      } catch {
+        /* silencioso */
+      }
+    }, ESPERA);
+    return () => { if (contaFicha.current) window.clearTimeout(contaFicha.current); };
+  }, [rascunho, project, artistId, podeEditar, open?.id, user?.id, currentUserName, userMeta.avatar_url, daBanco]);
 
   const adiar = (chave: string, gravar: () => Promise<unknown>) => {
     window.clearTimeout(relogios.current[chave]);
@@ -505,47 +555,6 @@ const ProjectSpace: FC = () => {
   const mexerNaFicha = (parte: Partial<CatalogItem>) =>
     setRascunho((atual) => ({ ...atual, ...parte }));
 
-  const salvarFicha = async () => {
-    if (!project || !artistId || !rascunho.title?.trim()) {
-      message.warning('Informe o título da música antes de salvar.');
-      return;
-    }
-    setSalvandoFicha(true);
-    try {
-      // O MESMO caminho de gravação do modal: uma segunda rotina para os mesmos campos
-      // divergiria no primeiro ajuste.
-      await catalogDb.saveCatalogProjectFromForm(
-        {
-          artist_id: artistId,
-          title: rascunho.title,
-          status: rascunho.status || 'composition',
-          genre: rascunho.genre || null,
-          release_date: rascunho.release_date || null,
-          isrc: rascunho.isrc || null,
-          upc: rascunho.upc || null,
-          bpm: rascunho.bpm || null,
-          key: rascunho.key || null,
-          duration: rascunho.duration || null,
-          lyrics: rascunho.lyrics || null,
-          cover_image: rascunho.cover_image || null,
-          cover_image_name: rascunho.cover_image_name || null,
-          composition_splits: rascunho.composition_splits || [],
-          recording_splits: rascunho.recording_splits || [],
-          assignee: rascunho.assignee || null,
-          id: project.id,
-          versionId: open?.id,
-        } as never,
-        { id: user?.id || null, name: currentUserName, avatar: userMeta.avatar_url || null },
-      );
-      await refresh();
-      message.success('Ficha salva');
-    } catch {
-      message.error('Não consegui salvar a ficha');
-    } finally {
-      setSalvandoFicha(false);
-    }
-  };
-
   const acoes: AcoesDoEditor = {
     // ⚠️ A GUIA É GERADA ANTES DE SAIR, e não na limpeza do efeito, porque a limpeza chega
     // tarde: o `useMesa` descarta a mesa primeiro — é ele quem está declarado antes — e a
@@ -702,6 +711,33 @@ const ProjectSpace: FC = () => {
                 colorTextPlaceholder: DS.color.textoInerte,
                 borderRadius: DS.raio.medio,
               },
+              // ⚠️ AS LISTAS QUE ABREM PRECISAM DE SER DITAS À PARTE, e isto não é zelo a mais.
+              // O `ConfigProvider` da aplicação (`App.tsx`) trava `Select` e `DatePicker` em
+              // branco por token de COMPONENTE — foi como se tirou o antd do design escuro
+              // antigo. Token de componente vence o token global de um provedor de dentro, e o
+              // resultado era o campo escuro abrindo uma lista branca por cima do editor.
+              components: {
+                Select: {
+                  colorBgElevated: DS.color.bgPainel,
+                  colorText: DS.color.texto,
+                  colorTextPlaceholder: DS.color.textoInerte,
+                  optionSelectedBg: DS.color.bgPista,
+                  optionSelectedColor: DS.color.texto,
+                  optionActiveBg: DS.color.bgHover,
+                  boxShadowSecondary: '0 14px 34px rgba(0, 0, 0, .5)',
+                },
+                DatePicker: {
+                  colorBgElevated: DS.color.bgPainel,
+                  colorText: DS.color.texto,
+                  colorTextHeading: DS.color.texto,
+                  colorTextDisabled: DS.color.textoInerte,
+                  colorIcon: DS.color.textoFraco,
+                  colorIconHover: DS.color.primaria,
+                  colorSplit: DS.color.borda,
+                  cellHoverBg: DS.color.bgHover,
+                  boxShadowSecondary: '0 14px 34px rgba(0, 0, 0, .5)',
+                },
+              },
             }}
           >
           <div style={{ display: 'grid', gap: 20 }}>
@@ -719,9 +755,6 @@ const ProjectSpace: FC = () => {
               versionId={open?.id}
             />
             <CamposDosSplits draft={rascunho} set={mexerNaFicha} />
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button type='primary' loading={salvandoFicha} onClick={salvarFicha}>Salvar</Button>
-            </div>
           </div>
           </ConfigProvider>
         )}
@@ -736,7 +769,6 @@ const ProjectSpace: FC = () => {
             placeholder='Letra da música…'
             value={rascunho.lyrics || ''}
             onChange={(e) => mexerNaFicha({ lyrics: e.target.value })}
-            onBlur={() => { void salvarFicha(); }}
           />
           </ConfigProvider>
         )}
