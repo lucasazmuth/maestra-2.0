@@ -117,8 +117,12 @@ const ghostBtn: CSSProperties = {
 };
 
 // Campo de upload estilizado (dropzone + clique), com estados de envio, preview (miniatura) e
-// ações Trocar/Remover — substitui o <input file> cru. Cores do design claro: a caixa vivia em
-// #181818 e aparecia como um retângulo preto dentro do modal branco.
+// ações Trocar/Remover — substitui o <input file> cru.
+//
+// ⚠️ As cores saem de VARIÁVEIS com o valor claro por omissão. A ficha tem duas casas — o modal
+// claro e a aba do editor, que é escura — e as cores estavam presas em estilo em linha, que
+// nenhuma folha consegue vencer. Com variáveis, quem a hospeda decide a pintura sem que exista
+// um segundo componente de envio para manter em dia.
 export const UploadField: FC<{
   accept: string;
   hint: string;
@@ -143,14 +147,14 @@ export const UploadField: FC<{
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }}
       />
       {hasValue && !uploading ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#fbfcfe', border: '1px solid #e1e7f0', borderRadius: 8, padding: 10 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 8, background: '#edf2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, color: '#3361ff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--ficha-fundo, #fbfcfe)', border: '1px solid var(--ficha-borda, #e1e7f0)', borderRadius: 8, padding: 10 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--ficha-realce, #edf2ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, color: 'var(--ficha-acao, #3361ff)' }}>
             {thumb}
           </div>
           {/* Sem o selo verde "Enviado": este bloco só existe quando o arquivo já está lá — a
               miniatura e o nome dizem isso sozinhos. */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ color: '#62769b', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ color: 'var(--ficha-texto, #62769b)', fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {fileName || 'Arquivo enviado'}
             </div>
           </div>
@@ -166,8 +170,8 @@ export const UploadField: FC<{
           onDragLeave={() => setDrag(false)}
           onDrop={(e) => { e.preventDefault(); setDrag(false); if (uploading) return; const f = e.dataTransfer.files?.[0]; if (f) onFile(f); }}
           style={{
-            border: `1.5px dashed ${drag ? '#8aa5ff' : '#cad5e5'}`,
-            background: drag ? '#eef3ff' : '#fbfcfe',
+            border: `1.5px dashed ${drag ? 'var(--ficha-acao, #8aa5ff)' : 'var(--ficha-borda, #cad5e5)'}`,
+            background: drag ? 'var(--ficha-realce, #eef3ff)' : 'var(--ficha-fundo, #fbfcfe)',
             borderRadius: 8, padding: '20px 16px', textAlign: 'center',
             cursor: uploading ? 'default' : 'pointer', transition: 'border-color .15s, background .15s',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
@@ -175,16 +179,16 @@ export const UploadField: FC<{
         >
           {uploading ? (
             <>
-              <Spin indicator={<LoadingOutlined style={{ fontSize: 22, color: '#3361ff' }} spin />} />
-              <div style={{ color: '#7c8db0', fontSize: 12 }}>Enviando…</div>
+              <Spin indicator={<LoadingOutlined style={{ fontSize: 22, color: 'var(--ficha-acao, #3361ff)' }} spin />} />
+              <div style={{ color: 'var(--ficha-apoio, #7c8db0)', fontSize: 12 }}>Enviando…</div>
             </>
           ) : (
             <>
-              <FiUploadCloud size={24} color='#3361ff' />
-              <div style={{ color: '#62769b', fontSize: 12, fontWeight: 800 }}>
-                Arraste aqui ou <span style={{ color: '#3361ff' }}>clique para escolher</span>
+              <FiUploadCloud size={24} color='var(--ficha-acao, #3361ff)' />
+              <div style={{ color: 'var(--ficha-texto, #62769b)', fontSize: 12, fontWeight: 800 }}>
+                Arraste aqui ou <span style={{ color: 'var(--ficha-acao, #3361ff)' }}>clique para escolher</span>
               </div>
-              <div style={{ color: '#9aa9c2', fontSize: 10 }}>{hint}</div>
+              <div style={{ color: 'var(--ficha-apoio, #9aa9c2)', fontSize: 10 }}>{hint}</div>
             </>
           )}
         </div>

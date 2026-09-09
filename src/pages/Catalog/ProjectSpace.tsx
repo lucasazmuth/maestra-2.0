@@ -19,7 +19,7 @@ import {
 import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
 import { useAppSelector } from '@maestra/core/store/store';
 
-import { Button, Input, message } from 'antd';
+import { Button, ConfigProvider, Input, message, theme } from 'antd';
 
 import { CamposDaFicha, CamposDosSplits } from '../../components/ficha/campos';
 import { Spinner } from '../../components/spinner/spinner';
@@ -686,6 +686,24 @@ const ProjectSpace: FC = () => {
           </div>
         )}
         fichaCompleta={(
+          // ⚠️ O antd inteiro em modo escuro, e só AQUI DENTRO: os campos são os mesmos do
+          // modal claro, e pintá-los à mão seria reescrever meia biblioteca. O `algorithm`
+          // recalcula os tokens todos — fundos, bordas, foco, estados desabilitados — a partir
+          // das cores desta tela.
+          <ConfigProvider
+            theme={{
+              algorithm: theme.darkAlgorithm,
+              token: {
+                colorPrimary: DS.color.primaria,
+                colorBgContainer: DS.color.bgCampo,
+                colorBgElevated: DS.color.bgPainel,
+                colorBorder: DS.color.borda,
+                colorText: DS.color.texto,
+                colorTextPlaceholder: DS.color.textoInerte,
+                borderRadius: DS.raio.medio,
+              },
+            }}
+          >
           <div style={{ display: 'grid', gap: 20 }}>
             <CamposDaFicha
               draft={rascunho}
@@ -705,8 +723,14 @@ const ProjectSpace: FC = () => {
               <Button type='primary' loading={salvandoFicha} onClick={salvarFicha}>Salvar</Button>
             </div>
           </div>
+          </ConfigProvider>
         )}
         letra={(
+          <ConfigProvider theme={{ algorithm: theme.darkAlgorithm, token: {
+            colorPrimary: DS.color.primaria, colorBgContainer: DS.color.bgCampo,
+            colorBorder: DS.color.borda, colorText: DS.color.texto,
+            colorTextPlaceholder: DS.color.textoInerte, borderRadius: DS.raio.medio,
+          } }}>
           <Input.TextArea
             rows={12}
             placeholder='Letra da música…'
@@ -714,6 +738,7 @@ const ProjectSpace: FC = () => {
             onChange={(e) => mexerNaFicha({ lyrics: e.target.value })}
             onBlur={() => { void salvarFicha(); }}
           />
+          </ConfigProvider>
         )}
         ficha={(
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>

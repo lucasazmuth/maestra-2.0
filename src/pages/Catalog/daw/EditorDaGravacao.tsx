@@ -550,11 +550,10 @@ export const EditorDaGravacao: FC<{
             // sempre, montados aqui em vez de flutuarem por cima. Um formulário escuro seria um
             // segundo formulário para os mesmos dados, e dois formulários divergem.
             <div style={{ flex: 1, minHeight: 0, overflow: 'auto', background: DS.color.bgFundoDaLinha, padding: 24 }}>
-              <div style={{
-                maxWidth: 760, margin: '0 auto', padding: 24,
-                background: '#fff', borderRadius: 12,
-                boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
-              }}>
+              {/* A ficha veste a folha do editor: os MESMOS campos do modal, com as cores desta
+                  tela. Um cartão branco no meio de um editor escuro é uma janela de outro
+                  aplicativo — e obriga o olho a reajustar cada vez que se troca de aba. */}
+              <div className={casca.ficha}>
                 {fichaCompleta}
               </div>
             </div>

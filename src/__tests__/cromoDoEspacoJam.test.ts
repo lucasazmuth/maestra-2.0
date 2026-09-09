@@ -26,6 +26,8 @@ const clipe = ler('pages', 'Catalog', 'daw', 'Clipe.tsx');
 const casca = ler('pages', 'Catalog', 'daw', 'editor.module.scss');
 const biblioteca = ler('pages', 'Catalog', 'daw', 'Biblioteca.tsx');
 const icones = ler('pages', 'Catalog', 'daw', 'icones.tsx');
+const tela = ler('pages', 'Catalog', 'ProjectSpace.tsx');
+const campos = ler('components', 'ficha', 'campos.tsx');
 
 /** Só o código: um comentário que NOMEIA o que saiu não é o que saiu. */
 const semComentarios = (valor: string) => valor.replace(/\/\/.*$/gm, '');
@@ -94,6 +96,19 @@ describe('cromo do editor do Espaço JAM', () => {
     // (o de sair fica apagado enquanto a guia é gerada), mas a forma sai daqui.
     expect(editor).toMatch(/const redondo = \{[\s\S]{0,120}borderRadius: '50%'/);
     expect(editor).toContain('...redondo');
+  });
+
+  // ⚠️ A ficha veste a folha do EDITOR, e é a mesma ficha do modal claro. Um cartão branco no
+  // meio de um editor escuro é uma janela de outro aplicativo, e obriga o olho a reajustar a
+  // cada troca de aba. Duplicar o formulário para o pintar de escuro seria pior: dois
+  // formulários para os mesmos dados divergem no primeiro campo novo.
+  it('a ficha é escura, e é a mesma do modal', () => {
+    expect(casca).toContain('.ficha {');
+    // O antd inteiro em modo escuro, só ali dentro.
+    expect(tela).toContain('theme.darkAlgorithm');
+    // E o campo de envio pergunta a cor a quem o hospeda, porque vive em estilo em linha.
+    expect(campos).toContain('var(--ficha-fundo');
+    expect(casca).toContain('--ficha-fundo:');
   });
 
   // ⚠️ Nada de seletor de TIPO enquanto só o áudio toca: um controlo que guarda uma escolha

@@ -142,3 +142,71 @@
     padding: 12px;
   }
 }
+
+// A FICHA, vestida com a folha do editor.
+//
+// ⚠️ Os campos são os MESMOS do modal claro (`components/ficha/campos.tsx`) — o que muda aqui é
+// só a pintura. Duplicar o formulário para o pintar de escuro seria criar dois formulários para
+// os mesmos dados, e dois formulários divergem no primeiro campo novo.
+//
+// O antd é temado por `ConfigProvider` no `ProjectSpace`; o que sobra para o CSS é o que não é
+// antd: os rótulos, os títulos de secção e as molduras tracejadas, que vinham do
+// `StandardModal.module.scss` com cores de cartão claro.
+.ficha {
+  // As cores que o campo de envio lê. Ele vive em estilo em linha (é um dropzone com estados),
+  // e nenhuma folha vence estilo em linha — então ele pergunta, e aqui se responde.
+  --ficha-fundo: #1c1c21;
+  --ficha-borda: #44444f;
+  --ficha-realce: #2a2a32;
+  --ficha-acao: #3b82f6;
+  --ficha-texto: #e8e8ee;
+  --ficha-apoio: #71717f;
+
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px;
+  border-radius: 12px;
+  background: #212127;
+  border: 1px solid #33333d;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+
+  // Os rótulos dos campos.
+  :global([class*='StandardModal_field'] > span) {
+    color: #71717f;
+  }
+
+  // Os títulos das secções de créditos.
+  :global([class*='StandardModal_splitSectionTitle'] strong) { color: #e8e8ee; }
+  :global([class*='StandardModal_splitSectionTitle'] span) { color: #71717f; }
+
+  // O vazio dos créditos e a moldura da capa: tracejados de cartão claro.
+  :global([class*='StandardModal_splitEmpty']),
+  :global([class*='StandardModal_uploadBox']) {
+    border-color: #44444f !important;
+    background: #1c1c21 !important;
+    color: #71717f;
+  }
+
+  :global([class*='StandardModal_uploadBox'] strong) { color: #e8e8ee; }
+  :global([class*='StandardModal_uploadBox'] small) { color: #71717f; }
+  :global([class*='StandardModal_uploadBox'] > i) {
+    background: #2a2a32;
+    color: #3b82f6;
+  }
+
+  :global([class*='StandardModal_splitRow']) {
+    background: #2a2a32;
+    border-color: #33333d;
+  }
+
+  :global([class*='StandardModal_splitTotal']),
+  :global([class*='StandardModal_splitFooter']) {
+    color: #a6a6b3;
+  }
+
+  // O botão de acrescentar participante é um fantasma: no escuro, ele precisa de contorno.
+  :global([class*='StandardModal_splitAdd']) {
+    border-color: #44444f;
+    color: #3b82f6;
+  }
+}
