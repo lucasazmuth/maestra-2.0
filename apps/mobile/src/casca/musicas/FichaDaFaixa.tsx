@@ -12,6 +12,7 @@ import type { CatalogItem, Split } from '@maestra/core/interfaces/maestra';
 import { deleteCatalogProject, saveCatalogProjectFromForm } from '@maestra/core/services/db/catalog';
 
 import { Bloco, Folha, Linha } from '@/casca/Folha';
+import { SugestaoDaAnalise } from '@/casca/jam/SugestaoDaAnalise';
 import { Versoes } from '@/casca/musicas/Versoes';
 import { enviarParaOCatalogo, escolherImagem } from '@/nucleo/arquivos';
 
@@ -422,6 +423,20 @@ export const FichaDaFaixa = ({
                     </View>
                   </View>
                 </Linha>
+
+                {/* O que a máquina ouviu, ao lado dos campos que ela preenche — e nunca por
+                    cima deles: "usar" escreve no rascunho, e é a pessoa quem salva. Vivia na
+                    tela do Espaço JAM; saiu de lá porque é uma ação ocasional e a tela
+                    principal tinha coisas demais. Só existe quando a faixa tem uma versão com
+                    áudio para ouvir. */}
+                {!!faixa?.version_id && (
+                  <Linha>
+                    <SugestaoDaAnalise
+                      versaoId={faixa.version_id}
+                      aoUsar={({ bpm, tom }) => mudar({ bpm, key: tom })}
+                    />
+                  </Linha>
+                )}
               </Bloco>
 
               <Bloco rotulo="Capa e versões">

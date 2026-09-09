@@ -194,7 +194,7 @@ const estilos = StyleSheet.create({
   },
   marcaTexto: { fontSize: 10, fontWeight: '800', color: COR.primaria },
   data: { fontSize: 10, color: COR_JAM.rotulo, marginTop: 2 },
-  texto: { fontSize: 13, lineHeight: 19, color: COR_JAM.legenda, marginTop: 6 },
+  texto: { fontSize: 13, lineHeight: 19, color: COR_JAM.apoio, marginTop: 6 },
   vazio: { alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 50 },
   iconeDoVazio: {
     width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
@@ -209,7 +209,7 @@ const estilos = StyleSheet.create({
   },
   entrada: {
     flex: 1, height: 42, paddingHorizontal: 11, borderRadius: 12,
-    borderWidth: 1, borderColor: COR_JAM.fio, backgroundColor: COR_JAM.entradaFundo,
+    borderWidth: 1, borderColor: COR_JAM.fio, backgroundColor: COR_JAM.cabecaDaVersao,
     fontSize: 14, color: COR_JAM.texto,
   },
   enviar: {

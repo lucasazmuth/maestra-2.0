@@ -14,20 +14,15 @@ jest.mock('expo-router', () => ({
 
 const mockBuscar = jest.fn();
 const mockAtualizar = jest.fn();
-const mockAtualizarVersao = jest.fn();
 const mockPrincipal = jest.fn();
-const mockConversa = jest.fn();
-const mockEnviar = jest.fn();
 const mockComentarios = jest.fn();
 const mockComentar = jest.fn();
 jest.mock('@maestra/core/services/db/catalog', () => ({
   getCatalogProject: (...a: unknown[]) => mockBuscar(...a),
   updateCatalogProject: (...a: unknown[]) => mockAtualizar(...a),
   setPrimaryVersion: (...a: unknown[]) => mockPrincipal(...a),
-  listCatalogProjectMessages: (...a: unknown[]) => mockConversa(...a),
-  createCatalogProjectMessage: (...a: unknown[]) => mockEnviar(...a),
   createCatalogVersion: jest.fn(),
-  updateCatalogVersion: (...a: unknown[]) => mockAtualizarVersao(...a),
+  updateCatalogVersion: jest.fn(),
   deleteCatalogVersion: jest.fn(),
   listVersionComments: (...a: unknown[]) => mockComentarios(...a),
   createVersionComment: (...a: unknown[]) => mockComentar(...a),
@@ -87,45 +82,31 @@ describe('espaço jam', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockBuscar.mockResolvedValue(projeto());
-    mockConversa.mockResolvedValue([]);
     mockComentarios.mockResolvedValue([]);
   });
 
-  it('mostra a música, a ficha técnica e as versões', async () => {
+  it('mostra a música, a ficha técnica numa linha e as versões', async () => {
     const tela = await montar();
     expect(await tela.findByText('Noite Clara')).toBeTruthy();
-    expect(tela.getByText('ESPAÇO JAM')).toBeTruthy();
-    expect(tela.getByLabelText('BPM da versão favorita').props.value).toBe('128');
-    expect(tela.getByLabelText('Tom da versão favorita').props.value).toBe('Am');
+    // O kicker "ESPAÇO JAM" saiu: a seta de voltar e a origem já dizem onde se está, e ele
+    // custava 23 pt no topo de uma tela que já tinha 441 pt antes da primeira versão.
+    expect(tela.queryByText('ESPAÇO JAM')).toBeNull();
+    // A ficha técnica é UMA linha, com o BPM e o tom da favorita e o gênero da música.
+    expect(tela.getByText('128 BPM · Am · Pop')).toBeTruthy();
     expect(tela.getByText('guia vocal')).toBeTruthy();
     expect(tela.getByText('V1')).toBeTruthy();
   });
 
-  // O que separa esta tela de uma lista qualquer: a ficha grava sozinha. Sem isso, mexer no BPM
-  // no meio de uma sessão pede uma volta ao botão Salvar que a web não pede.
-  //
-  // ⚠️ E grava NA VERSÃO, não no projeto: BPM e tom são da gravação. Um acústico não anda no
-  // mesmo andamento do original.
-  it('o BPM salva sozinho, e salva na versão favorita', async () => {
-    jest.useFakeTimers();
-    const usuario = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    mockAtualizarVersao.mockResolvedValue(versao({ bpm: '140' }));
-
+  // BPM, tom, gênero e data já não se editam em linha aqui: a linha-resumo e o lápis abrem a
+  // MESMA ficha do catálogo. Um segundo formulário só para estes quatro faria parecer outra
+  // entidade — e era a grelha 2×2 deles que custava 153 pt à tela.
+  it('a linha-resumo abre a ficha da música', async () => {
+    const usuario = userEvent.setup();
     const tela = await montar();
-    await waitFor(() => expect(tela.getByLabelText('BPM da versão favorita')).toBeTruthy());
-    await usuario.clear(tela.getByLabelText('BPM da versão favorita'));
-    await usuario.type(tela.getByLabelText('BPM da versão favorita'), '140');
 
-    // Antes do prazo não grava: senão seria uma escrita por tecla digitada.
-    expect(mockAtualizarVersao).not.toHaveBeenCalled();
-    jest.advanceTimersByTime(700);
-    await waitFor(() => expect(mockAtualizarVersao).toHaveBeenCalledTimes(1));
-    expect(mockAtualizarVersao.mock.calls[0][0]).toBe('v-1');
-    expect(mockAtualizarVersao.mock.calls[0][1]).toMatchObject({ bpm: '140' });
-    // E o projeto NÃO é tocado: se fosse, o número passaria a existir em dois lugares e o
-    // próximo a ler escolheria um deles no escuro.
-    expect(mockAtualizar).not.toHaveBeenCalled();
-    jest.useRealTimers();
+    await usuario.press(await tela.findByLabelText('Editar a ficha técnica'));
+    // O campo BPM da FICHA, e não da tela: é a prova de que abriu a ficha.
+    expect(await tela.findByLabelText('BPM')).toBeTruthy();
   });
 
   // O pedido do dono do produto, e a razão de tudo isto: a ficha mostra a FAVORITA.
@@ -139,20 +120,56 @@ describe('espaço jam', () => {
     }));
 
     const tela = await montar();
-    await waitFor(() => expect(tela.getByLabelText('BPM da versão favorita')).toBeTruthy());
-    expect(tela.getByLabelText('BPM da versão favorita').props.value).toBe('92');
-    expect(tela.getByLabelText('Tom da versão favorita').props.value).toBe('D');
+    expect(await tela.findByText('92 BPM · D · Pop')).toBeTruthy();
+    expect(tela.queryByText(/128 BPM/)).toBeNull();
   });
 
-  // Sem favorita não há gravação de referência: não há o que mostrar nem onde guardar, e um
-  // campo aberto aceitaria uma digitação que se perderia no recarregamento.
-  it('sem favorita, os campos ficam travados', async () => {
-    mockBuscar.mockResolvedValue(projeto({ primary_version_id: null }));
+  // Sem nada preenchido, a linha convida — e não mostra quatro traços, que era o que a grelha
+  // fazia e o que a tornava o bloco mais alto e mais vazio da tela.
+  it('sem favorita e sem dados, a linha convida a preencher', async () => {
+    mockBuscar.mockResolvedValue(projeto({ primary_version_id: null, genre: null }));
 
     const tela = await montar();
-    await waitFor(() => expect(tela.getByLabelText('BPM da versão favorita')).toBeTruthy());
-    expect(tela.getByLabelText('BPM da versão favorita').props.editable).toBe(false);
-    expect(tela.getByLabelText('BPM da versão favorita').props.value).toBe('');
+    expect(await tela.findByText('Adicionar BPM, tom e gênero')).toBeTruthy();
+    expect(tela.queryByText(/BPM ·/)).toBeNull();
+  });
+
+  // O status saiu da fila do título (onde a pílula de até 132 pt lhe roubava a largura) e
+  // virou um chip que abre a Escolha por cima — a lista antiga abria NO FLUXO e empurrava a
+  // tela inteira 217 pt para baixo.
+  it('o chip de status abre a escolha por cima, e trocar grava', async () => {
+    jest.useFakeTimers();
+    const usuario = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    mockAtualizar.mockResolvedValue(projeto({ status: 'composition' }));
+
+    const tela = await montar();
+    await usuario.press(await tela.findByLabelText('Status: Mixagem. Toque para trocar.'));
+    expect(tela.getByText('Status da música')).toBeTruthy();
+
+    await usuario.press(tela.getByLabelText('Composição'));
+    expect(mockAtualizar).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(700);
+    await waitFor(() => expect(mockAtualizar).toHaveBeenCalledTimes(1));
+    expect(mockAtualizar.mock.calls[0][1]).toEqual({ status: 'composition' });
+    jest.useRealTimers();
+  });
+
+  // ⚠️ O "Salvo" vai embora sozinho. Antes ficava para sempre: `setSelo` nunca voltava a
+  // 'parado', e a linha empurrava a tela 25 pt para baixo desde a primeira edição até sair.
+  it('o selo de salvo some sozinho', async () => {
+    jest.useFakeTimers();
+    const usuario = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    mockAtualizar.mockResolvedValue(projeto({ status: 'composition' }));
+
+    const tela = await montar();
+    await usuario.press(await tela.findByLabelText('Status: Mixagem. Toque para trocar.'));
+    await usuario.press(tela.getByLabelText('Composição'));
+    jest.advanceTimersByTime(700);
+    expect(await tela.findByText('Salvo')).toBeTruthy();
+
+    jest.advanceTimersByTime(2100);
+    await waitFor(() => expect(tela.queryByText('Salvo')).toBeNull());
+    jest.useRealTimers();
   });
 
   // A estrela alterna nos DOIS sentidos: tocar na acesa desmarca, e a música fica sem principal
@@ -165,20 +182,6 @@ describe('espaço jam', () => {
     const estrela = await tela.findByLabelText('Desmarcar V1 como versão principal');
     await usuario.press(estrela);
     await waitFor(() => expect(mockPrincipal).toHaveBeenCalledWith('p-1', null));
-  });
-
-  it('manda a mensagem para o chat do projeto', async () => {
-    mockEnviar.mockResolvedValue({ id: 'm-1', author_name: 'Você', text: 'subi a mix', created_at: '2026-08-02T10:00:00Z' });
-    const usuario = userEvent.setup();
-    const tela = await montar();
-
-    const campo = await tela.findByLabelText('Mensagem para o chat do projeto');
-    await usuario.type(campo, 'subi a mix');
-    await usuario.press(tela.getByLabelText('Enviar mensagem'));
-
-    await waitFor(() => expect(mockEnviar).toHaveBeenCalled());
-    expect(mockEnviar.mock.calls[0][0]).toMatchObject({ project_id: 'p-1', text: 'subi a mix' });
-    expect(await tela.findByText('subi a mix')).toBeTruthy();
   });
 
   // Sem áudio a versão não toca — e o botão precisa dizer isso, senão a pessoa toca e nada

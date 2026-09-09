@@ -111,7 +111,7 @@ export const RegistroDeAutoria = ({ versaoId, temAudio }: {
                   accessibilityRole="button"
                   accessibilityLabel={`Baixar o certificado de ${dataCurta(c.certificado_em)}`}
                 >
-                  <Feather name="download" size={18} color={COR_JAM.legenda} />
+                  <Feather name="download" size={18} color={COR_JAM.apoio} />
                 </Pressable>
               </View>
             </Linha>

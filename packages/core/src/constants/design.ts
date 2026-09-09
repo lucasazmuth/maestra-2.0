@@ -885,18 +885,21 @@ export const COR_ENTRADA = {
  * Os valores saem de `src/pages/Catalog/ProjectSpace.module.scss` (bloco `max-width: 760px`) e
  * do DOM computado a 375px; `src/__tests__/cromoDoEspacoJam.test.ts` os amarra lá.
  */
+// Três tokens saíram daqui em 09/09/2026 junto com o chat do projeto: `painelDoChat`,
+// `legenda` (o texto das mensagens) e `entradaFundo` (o campo de escrever). Eram cores que só a
+// casca do chat usava na web, e este objeto é a cópia da folha da web — o teste do cromo
+// reprova um token que a folha não tem. O que no app usava `legenda` passou para `apoio`, e o
+// que usava `entradaFundo` para `cabecaDaVersao`, que são os tons vizinhos que ficaram.
 export const COR_JAM = {
   fundoDe: '#f9fbff',
   fundoAte: '#eef4ff',
   mancha: 'rgba(47, 96, 246, .08)',
   painel: 'rgba(255, 255, 255, .86)',
-  painelDoChat: 'rgba(255, 255, 255, .9)',
   fio: '#dce6f7',
   texto: '#405985',
   titulo: '#2f4164',
   rotulo: '#8ca0c5',
   apoio: '#7f92b6',
-  legenda: '#5d7198',
   botaoRedondo: 'rgba(255, 255, 255, .92)',
   cabecaDaVersao: '#f6f9ff',
   semAudio: '#fbfcff',
@@ -909,7 +912,6 @@ export const COR_JAM = {
   acaoFundo: '#eef4ff',
   acaoIcone: '#405985',
   vazioContorno: '#c8d7f0',
-  entradaFundo: '#f8fbff',
   avatarDe: '#9a4fd1',
   avatarAte: '#2f60f6',
   /** O status sem cor própria cai neste amarelo, e a pílula escolhe a tinta pela luminância. */

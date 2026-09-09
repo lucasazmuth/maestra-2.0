@@ -272,7 +272,7 @@ const estilos = StyleSheet.create({
   caixaDeArquivo: {
     flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14,
     borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_JAM.fio,
-    borderStyle: 'dashed', backgroundColor: COR_JAM.entradaFundo,
+    borderStyle: 'dashed', backgroundColor: COR_JAM.cabecaDaVersao,
   },
   iconeDoArquivo: {
     width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center',

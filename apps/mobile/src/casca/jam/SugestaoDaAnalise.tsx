@@ -59,7 +59,7 @@ export const SugestaoDaAnalise = ({ versaoId, aoUsar }: {
     const inseguro = tomInseguro(analise);
     return (
       <View style={estilos.linha}>
-        <Feather name="activity" size={14} color={COR_JAM.legenda} />
+        <Feather name="activity" size={14} color={COR_JAM.apoio} />
         <View style={estilos.meio}>
           <Text style={estilos.detetado} numberOfLines={1}>
             Ouvi {bpmLegivel(analise.bpm)} BPM{tom ? ` · ${tom}` : ''}
@@ -84,7 +84,7 @@ export const SugestaoDaAnalise = ({ versaoId, aoUsar }: {
 
   return (
     <View style={estilos.linha}>
-      <Feather name="activity" size={14} color={COR_JAM.legenda} />
+      <Feather name="activity" size={14} color={COR_JAM.apoio} />
       <View style={estilos.meio}>
         <Pressable
           onPress={() => { void pedir('bpm_tom'); }}
@@ -100,16 +100,14 @@ export const SugestaoDaAnalise = ({ versaoId, aoUsar }: {
 };
 
 const estilos = StyleSheet.create({
-  linha: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 16, paddingVertical: 12,
-    borderTopWidth: 1, borderTopColor: COR_JAM.fio,
-  },
+  // Sem recuo nem fio próprios: quem a envolve é a `Linha` da ficha, que já traz os dois.
+  // Com os dela por cima, o conteúdo ficava a 32 pt da borda e com uma divisória dupla.
+  linha: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   meio: { flex: 1, minWidth: 0 },
   detetado: { fontSize: 13, fontWeight: '700', color: COR_JAM.titulo },
   apoio: { flex: 1, fontSize: 13, color: COR_JAM.apoio },
   ressalva: { fontSize: 11, color: COR_JAM.apoio, marginTop: 2 },
   acao: { fontSize: 13, fontWeight: '800', color: COR.primaria },
-  desistir: { fontSize: 13, fontWeight: '700', color: COR_JAM.legenda },
+  desistir: { fontSize: 13, fontWeight: '700', color: COR_JAM.apoio },
   erro: { fontSize: 11, color: COR.erro, marginTop: 3, lineHeight: 16 },
 });

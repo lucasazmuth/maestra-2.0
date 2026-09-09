@@ -11,6 +11,7 @@ import { tituloDoArquivo as titleFromFileName } from '@maestra/core/services/arm
 import { uploadFile, CATALOG_BUCKET } from '../lib/storage';
 import * as catalogDb from '@maestra/core/services/db/catalog';
 import modalStyles from './StandardModal.module.scss';
+import AnalysisHint from './AnalysisHint';
 
 interface Props {
   open: boolean;
@@ -788,6 +789,13 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                     <Input placeholder='Tom' value={draft.key || ''} onChange={(e) => set({ key: e.target.value })} />
                   </label>
                 </div>
+                {/* O que a máquina ouviu, ao lado dos campos que ela preenche — e nunca por cima
+                    deles: "usar" escreve no rascunho, e é a pessoa quem salva. Vivia no Espaço
+                    JAM; saiu de lá porque é uma ação ocasional e a tela principal tinha coisas
+                    demais. Só existe quando a faixa tem uma versão com áudio para ouvir. */}
+                {!!item?.version_id && (
+                  <AnalysisHint versionId={item.version_id} onUse={({ bpm, tom }) => set({ bpm, key: tom })} />
+                )}
                 <label className={modalStyles.field}>
                   <span>Capa</span>
                   <UploadField

@@ -8,10 +8,12 @@ import { COR_JAM } from '@maestra/core/constants/design';
 // A web o desenha em `ProjectSpace.module.scss`; o app não lê CSS, então os valores estão
 // duplicados em `COR_JAM`. Este teste é o que impede a duplicata de virar divergência.
 //
-// O recorte da folha inteira é de propósito: a tela empilha painel + chat, e as cores se
-// espalham pelas duas metades. O que o teste NÃO consegue provar sozinho é o layout — esse veio
-// do DOM computado a 375px, que é a única fonte que resolve `!important` disputando com
-// `!important` e media query sobrescrevendo o desktop.
+// O que o teste NÃO consegue provar sozinho é o layout — esse veio do DOM computado a 375px,
+// que é a única fonte que resolve `!important` disputando com `!important` e media query
+// sobrescrevendo o desktop.
+//
+// O chat do projeto saiu das duas superfícies em 09/09/2026; este teste é também o que impede
+// a sua casca (`.collabPanel`, `.chat*`) de voltar por acidente à folha.
 
 const css = fs.readFileSync(
   path.join(__dirname, '..', 'pages', 'Catalog', 'ProjectSpace.module.scss'),
@@ -28,7 +30,12 @@ describe('cromo do Espaço JAM', () => {
   it('a folha e o bloco do celular foram localizados', () => {
     expect(css).toContain('.page {');
     expect(celular).toContain('.workspace {');
-    expect(celular).toContain('.collabPanel {');
+  });
+
+  // O chat saiu. A coluna de 330px que ele ocupava também: é uma coluna só, centrada.
+  it('o chat do projeto não está na folha, nem a coluna dele', () => {
+    expect(css).not.toMatch(/\.collabPanel\b|\.chatMessages\b|\.chatComposer\b/);
+    expect(css).not.toContain('330px');
   });
 
   it.each(Object.entries(COR_JAM))('%s (%s) é o valor que a web usa', (_nome, valor) => {
@@ -38,35 +45,40 @@ describe('cromo do Espaço JAM', () => {
     expect(folha).toContain(semEspacos(naFolha));
   });
 
-  // Os dois painéis SANGRAM até as bordas: a margem negativa cancela o recuo da página. Sem
-  // isso a tela ganha duas molduras que não separam nada — e foi o que o desktop desenhou.
-  it('painel e chat sangram até as bordas, e sem borda lateral', () => {
+  // O painel SANGRA até as bordas: a margem negativa cancela o recuo da página. Sem isso a
+  // tela ganha uma moldura que não separa nada — é o único bloco.
+  it('o painel sangra até as bordas, e sem borda lateral', () => {
     expect(celular).toContain('margin-right: -18px');
     expect(celular).toContain('margin-left: -18px');
     expect(celular).toContain('border-right: 0');
     expect(celular).toContain('border-left: 0');
   });
 
-  // A ficha técnica é 2×2, não uma coluna: os quatro campos quase sempre estão vazios, e
-  // empilhados viravam uma faixa morta antes de chegar nas versões, que são o assunto da tela.
-  it('a ficha técnica é de duas colunas no celular', () => {
-    expect(celular).toContain('grid-template-columns: 1fr 1fr');
-    expect(celular).toContain('.metaStrip label:nth-child(2n)');
-    expect(celular).toContain('.metaStrip label:nth-child(n + 3)');
+  // No celular a faixa de quatro campos SOME e entra a linha-resumo. A faixa custava 153px e
+  // quase sempre mostrava quatro traços — o bloco mais alto e mais vazio da tela. No desktop
+  // ela fica: a 960px não é o problema, e a edição inline é boa lá.
+  it('no celular a faixa some e a linha-resumo entra', () => {
+    const faixa = celular.slice(celular.indexOf('.metaStrip {'));
+    expect(faixa).toMatch(/^\.metaStrip \{\s*display: none;/);
+    const resumo = celular.slice(celular.indexOf('.fichaResumo {'));
+    expect(resumo).toMatch(/^\.fichaResumo \{\s*display: flex;/);
+    // E fora do celular é o contrário: a linha começa escondida.
+    const desktop = css.slice(css.indexOf('.fichaResumo {'), css.indexOf('@media'));
+    expect(desktop).toMatch(/^\.fichaResumo \{\s*display: none;/);
   });
 
-  // A etiqueta "ESPAÇO JAM" sai do centro absoluto e vira um kicker no topo — no desktop ela é
-  // posicionada em absoluto e cairia EM CIMA da pílula de status quando o cabeçalho quebra.
-  it('a etiqueta vira kicker acima do cabeçalho', () => {
-    expect(celular).toContain('position: static');
-    expect(celular).toContain('order: 0');
-    expect(celular).toContain('width: 100%');
+  // O kicker "Espaço JAM" saiu: a seta e a origem já dizem onde se está, e o título ganhou a
+  // largura que a etiqueta central lhe roubava — em duas linhas, e não uma com reticências.
+  it('sem kicker, e o título em duas linhas', () => {
+    expect(css).not.toContain('.spaceLabel');
+    expect(folha).toContain('-webkit-line-clamp:2');
+    expect(folha).not.toContain('max-width:calc(50%-116px)');
   });
 
-  // A ordem da linha é a de leitura: [voltar] título [status] [editar].
-  it('a linha do cabeçalho segue a ordem de leitura', () => {
-    expect(celular).toContain('.back { order: 1; }');
-    expect(celular).toContain('.titleBlock { order: 2;');
-    expect(celular).toContain('.editProject { order: 4; }');
+  // O status é um chip de 28px numa segunda linha, e não uma pílula de 188px na fila do título.
+  it('o status é um chip, fora da fila do título', () => {
+    expect(css).toContain('.secondLine {');
+    expect(folha).not.toContain('min-width:188px');
+    expect(folha).toContain('.statusPill{min-width:0;height:28px');
   });
 });

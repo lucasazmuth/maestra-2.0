@@ -330,6 +330,12 @@ export const deleteVersionComment = async (id: string): Promise<void> => {
 
 // ---- Conversa geral do Espaço JAM ---------------------------------------------------------
 
+// ─── O chat do projeto ────────────────────────────────────────────────────────
+//
+// As duas funções abaixo (e a tabela `catalog_project_messages`) ficaram SEM CHAMADORES em
+// 09/09/2026: o chat saiu das duas telas do Espaço JAM por decisão do dono do produto, e ficam
+// os comentários da versão. Não foram apagadas porque a decisão foi "por enquanto". Para o chat
+// voltar: a tabela e a RLS continuam no ar, e o realtime dela continua na publicação.
 export const listCatalogProjectMessages = async (projectId: string): Promise<CatalogProjectMessage[]> => {
   const { data, error } = await supabase
     .from('catalog_project_messages')

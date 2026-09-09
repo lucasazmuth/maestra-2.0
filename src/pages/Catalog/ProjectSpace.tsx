@@ -1,7 +1,7 @@
-import { FC, FormEvent, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Button, DatePicker, Input, Select, Spin, message } from 'antd';
+import { FC, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Button, DatePicker, Input, Select, message } from 'antd';
 import dayjs from 'dayjs';
-import { FiArrowLeft, FiDownload, FiEdit2, FiMaximize2, FiMessageCircle, FiMoreVertical, FiPause, FiPlay, FiSend, FiStar, FiUpload } from 'react-icons/fi';
+import { FiArrowLeft, FiChevronRight, FiDownload, FiEdit2, FiMaximize2, FiMessageCircle, FiMoreVertical, FiPause, FiPlay, FiStar, FiUpload } from 'react-icons/fi';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppSelector } from '@maestra/core/store/store';
 import { useArtist } from '@maestra/core/hooks/useArtist';
@@ -11,16 +11,15 @@ import { TrackModal } from '../../components/TrackModal';
 import * as genresDb from '@maestra/core/services/db/genres';
 import * as membersDb from '@maestra/core/services/db/members';
 import type { MusicGenre, ArtistMember } from '@maestra/core/interfaces/maestra';
-import { supabase } from '@maestra/core/lib/supabase';
 import * as catalogDb from '@maestra/core/services/db/catalog';
 import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, getVersionStageLabel } from '@maestra/core/constants/maestra';
-import type { CatalogProject, CatalogProjectMessage, CatalogVersion, CatalogVersionStage } from '@maestra/core/interfaces/maestra';
+import type { CatalogProject, CatalogVersion, CatalogVersionStage } from '@maestra/core/interfaces/maestra';
 import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
 import type { LocalTrack } from '@maestra/core/stores/localPlayerStore';
 import WaveSurferWaveform from './WaveSurferWaveform';
 import styles from './ProjectSpace.module.scss';
 import { Spinner } from '../../components/spinner/spinner';
-import AnalysisHint from '../../components/AnalysisHint';
+import { fichaVazia, resumoDaFicha } from '@maestra/core/utils/resumoDaFicha';
 
 const getStageLabel = (stage: CatalogVersionStage) => getVersionStageLabel(stage);
 
@@ -155,12 +154,6 @@ const ProjectSpace: FC = () => {
       .map((m) => ({ id: (m.user_id || m.id) as string, name: m.name || m.email })),
   ];
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [chatMessages, setChatMessages] = useState<CatalogProjectMessage[]>([]);
-  const [chatText, setChatText] = useState('');
-  const [chatLoading, setChatLoading] = useState(true);
-  const [chatSending, setChatSending] = useState(false);
-  const [chatError, setChatError] = useState('');
-  const chatEndRef = useRef<HTMLDivElement>(null);
   const lastSavedSignature = useRef('');
   const lastSavedVersionSignature = useRef('');
 
@@ -191,26 +184,7 @@ const ProjectSpace: FC = () => {
       .catch(() => message.error('Erro ao carregar Espaço JAM'))
       .finally(() => setLoading(false));
   }, [projectId]);
-  const loadChat = useCallback(() => {
-    if (!projectId) return Promise.resolve();
-    setChatLoading(true);
-    return catalogDb.listCatalogProjectMessages(projectId)
-      .then(setChatMessages)
-      .catch(() => setChatError('Não foi possível carregar o chat.'))
-      .finally(() => setChatLoading(false));
-  }, [projectId]);
-
   useEffect(() => { void refresh(); }, [refresh]);
-  useEffect(() => { void loadChat(); }, [loadChat]);
-  useEffect(() => {
-    if (!projectId) return undefined;
-    const channel = supabase
-      .channel(`jam-project-chat:${projectId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'catalog_project_messages', filter: `project_id=eq.${projectId}` }, () => { void loadChat(); })
-      .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [loadChat, projectId]);
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ block: 'end' }); }, [chatMessages]);
   useEffect(() => { document.body.classList.add('jam-space-open'); return () => document.body.classList.remove('jam-space-open'); }, []);
 
   // Gêneros e equipe alimentam o modal da música (mesmo do catálogo). Falha aqui não impede
@@ -354,42 +328,25 @@ const ProjectSpace: FC = () => {
     setProjectModal(true);
   };
 
-  const sendChat = async (event: FormEvent) => {
-    event.preventDefault();
-    const text = chatText.trim();
-    if (!project || !text || chatSending || !canCollaborateJam) return;
-    setChatSending(true); setChatError('');
-    try {
-      const metadata = (user?.user_metadata || {}) as Record<string, any>;
-      const sent = await catalogDb.createCatalogProjectMessage({
-        project_id: project.id, author_id: user?.id || null,
-        author_name: metadata.full_name || metadata.name || user?.email || 'Você',
-        author_avatar: metadata.avatar_url || metadata.picture || null, text,
-      });
-      setChatMessages((current) => current.some((item) => item.id === sent.id) ? current : [...current, sent]);
-      setChatText('');
-    } catch { setChatError('Não foi possível enviar. Tente novamente.'); }
-    finally { setChatSending(false); }
-  };
-
   if (loading) return <div className={styles.loading}><Spinner loading>{null as any}</Spinner></div>;
   if (!project) return <div className={styles.empty}>Espaço JAM não encontrado.</div>;
 
   return (
     <main className={styles.page}>
+      {/* O cabeçalho é o TÍTULO: voltar de um lado, editar do outro, o nome da música com a
+          largura toda. O kicker "Espaço JAM" saiu (a seta e a origem já dizem onde se está), e
+          o status desceu para uma segunda linha como um chip — na fila do título ele lhe roubava
+          a largura, e em 375px sobravam ~104px para 7 a 9 caracteres. */}
       <header className={styles.header}>
         <button className={styles.back} onClick={() => navigate(`/artists/${artistId}/catalog`)} aria-label='Voltar para Músicas'><FiArrowLeft /></button>
         <div className={styles.titleBlock}>
-          <div className={styles.titleLine}>
-            <h1>{project.title}</h1>
-          </div>
+          <h1>{project.title}</h1>
         </div>
-        {/* Centralizado no header inteiro (absoluto), não entre título e status: assim a
-            etiqueta fica no meio da tela mesmo com títulos de larguras diferentes. */}
-        <span className={styles.spaceLabel}>Espaço JAM</span>
-        {canUpdateProject && <span className={`${styles.autosave} ${styles[`autosave${saveState}`]}`} aria-live='polite'>{saveState === 'saving' ? 'Salvando…' : saveState === 'error' ? 'Falha ao salvar' : saveState === 'saved' ? 'Salvo automaticamente' : ''}</span>}
-        {canUpdateProject ? <Select className={styles.statusPill} style={statusStyle(project.status)} value={project.status} options={CATALOG_STATUS_OPTIONS.map((entry) => ({ value: entry.id, label: entry.label }))} onChange={(status) => setProject({ ...project, status })} /> : <span className={styles.statusReadOnly} style={statusStyle(project.status)}>{CATALOG_STATUS[project.status as keyof typeof CATALOG_STATUS]?.label || project.status}</span>}
         {canUpdateProject && <button type='button' className={styles.editProject} onClick={openProjectEditor} aria-label='Editar informações do Espaço JAM' title='Editar informações'><FiEdit2 /></button>}
+        <div className={styles.secondLine}>
+          {canUpdateProject ? <Select className={styles.statusPill} style={statusStyle(project.status)} value={project.status} options={CATALOG_STATUS_OPTIONS.map((entry) => ({ value: entry.id, label: entry.label }))} onChange={(status) => setProject({ ...project, status })} /> : <span className={styles.statusReadOnly} style={statusStyle(project.status)}>{CATALOG_STATUS[project.status as keyof typeof CATALOG_STATUS]?.label || project.status}</span>}
+          {canUpdateProject && <span className={`${styles.autosave} ${styles[`autosave${saveState}`]}`} aria-live='polite'>{saveState === 'saving' ? 'Salvando…' : saveState === 'error' ? 'Falha ao salvar' : saveState === 'saved' ? 'Salvo' : ''}</span>}
+        </div>
       </header>
 
       <section className={styles.content}>
@@ -409,14 +366,21 @@ const ProjectSpace: FC = () => {
             <label><span>Lançamento</span><DatePicker disabled={!canUpdateProject} value={project.release_date ? dayjs(project.release_date) : null} format='DD/MM/YYYY' placeholder='—' suffixIcon={null} allowClear onChange={(date) => setProject({ ...project, release_date: date ? date.format('YYYY-MM-DD') : null })} /></label>
           </div>
 
-          {/* O que a máquina ouviu, logo abaixo dos campos que a pessoa preenche — e nunca por
-              cima deles. Ouve a versão PRINCIPAL: é a que representa a música, e analisar todas
-              seria gastar CPU para responder a mesma pergunta várias vezes. */}
-          <AnalysisHint
-            versionId={favorite?.id}
-            disabled={!canUpdateProject}
-            onUse={({ bpm, tom }) => changeFavorite({ bpm, key: tom })}
-          />
+          {/* No celular a faixa de quatro colunas some (CSS) e entra esta LINHA, que abre a
+              mesma ficha do lápis. A grelha custava 153px e quase sempre mostrava quatro
+              traços; a linha ocupa o que tem para dizer, e quando não tem nada, convida.
+              A deteção de BPM/tom mudou-se para dentro da ficha, ao lado dos campos que
+              preenche. */}
+          {(() => {
+            const dados = { bpm: favorite?.bpm, tom: favorite?.key, genero: project.genre, lancamento: project.release_date };
+            const vazia = fichaVazia(dados);
+            return (
+              <button type='button' className={`${styles.fichaResumo} ${vazia ? styles.fichaResumoVazia : ''}`} onClick={openProjectEditor} aria-label={vazia ? 'Adicionar BPM, tom e gênero' : 'Editar a ficha técnica'}>
+                <span>{resumoDaFicha(dados)}</span>
+                <FiChevronRight aria-hidden />
+              </button>
+            );
+          })()}
 
           <div className={styles.sectionHeader}>
             {canCollaborateJam && <Button className={styles.uploadButton} type='primary' icon={<FiUpload />} onClick={startUpload}>Upload</Button>}
@@ -429,24 +393,6 @@ const ProjectSpace: FC = () => {
           </div>
         </div>
 
-        <aside className={styles.collabPanel} aria-label='Chat do projeto'>
-          <div className={styles.chatHeader}>
-            <div><strong>Chat do projeto</strong></div>
-            <small>{chatMessages.length} {chatMessages.length === 1 ? 'mensagem' : 'mensagens'}</small>
-          </div>
-          <div className={styles.chatMessages} aria-live='polite'>
-            {chatLoading ? <Spin size='small' /> : chatMessages.length ? chatMessages.map((chat) => <article key={chat.id} className={styles.chatMessage}>
-              {chat.author_avatar ? <img src={chat.author_avatar} alt={chat.author_name} /> : <i>{initials(chat.author_name)}</i>}
-              <div><strong>{chat.author_name}</strong><small>{formatDate(chat.created_at)}</small><p>{chat.text}</p></div>
-            </article>) : <div className={styles.chatEmpty}><FiMessageCircle /><strong>Comece a conversa</strong><span>Alinhe decisões do projeto sem misturar com os comentários marcados no áudio.</span></div>}
-            <div ref={chatEndRef} />
-          </div>
-          {canCollaborateJam ? <form className={styles.chatComposer} onSubmit={sendChat}>
-            <Input value={chatText} maxLength={5000} placeholder='Escreva uma mensagem…' onChange={(event) => setChatText(event.target.value)} disabled={chatSending} />
-            <button type='submit' disabled={!chatText.trim() || chatSending} aria-label='Enviar mensagem'>{chatSending ? <Spin size='small' /> : <FiSend />}</button>
-          </form> : <p className={styles.chatAccess}>Somente membros ativos podem participar do chat.</p>}
-          {chatError && <p className={styles.chatError}>{chatError}</p>}
-        </aside>
       </section>
 
       {/* Enviar nova versão e editar versão usam o MESMO componente — a diferença é só existir
