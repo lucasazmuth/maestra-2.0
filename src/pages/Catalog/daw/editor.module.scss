@@ -131,3 +131,14 @@
     em { color: #e8e8ee; font-style: normal; font-weight: 600; }
   }
 }
+
+// O balão da letra: o mesmo gesto do "?", do outro lado do rodapé — e mais largo, porque um
+// verso quebrado a cada quatro palavras deixa de ser um verso.
+.letra {
+  right: 62px;
+
+  > div {
+    width: 420px;
+    padding: 12px;
+  }
+}

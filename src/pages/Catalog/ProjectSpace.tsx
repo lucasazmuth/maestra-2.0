@@ -1,5 +1,4 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { message } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { ID_DA_MIX, NOME_DA_MIX, montagemDaVersao, pistasDaGravacao } from '@maestra/core/audio/pistasDaVersao';
@@ -9,7 +8,7 @@ import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities
 import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS } from '@maestra/core/constants/maestra';
 import { LIMITE_DA_PISTA_BYTES, MAXIMO_DE_PISTAS } from '@maestra/core/constants/maestra';
 import type {
-  ArtistMember, CatalogProject, CatalogTrack, CatalogVersion, MusicGenre,
+  ArtistMember, CatalogItem, CatalogProject, CatalogTrack, CatalogVersion, MusicGenre,
 } from '@maestra/core/interfaces/maestra';
 import * as catalogDb from '@maestra/core/services/db/catalog';
 import * as genresDb from '@maestra/core/services/db/genres';
@@ -20,7 +19,9 @@ import {
 import { useLocalPlayerStore } from '@maestra/core/stores/localPlayerStore';
 import { useAppSelector } from '@maestra/core/store/store';
 
-import { TrackModal } from '../../components/TrackModal';
+import { Button, Input, message } from 'antd';
+
+import { CamposDaFicha, CamposDosSplits } from '../../components/ficha/campos';
 import { Spinner } from '../../components/spinner/spinner';
 import { EditorDaGravacao, type AcoesDoEditor } from './daw/EditorDaGravacao';
 import { buscarWeb, criarContextoWeb } from './daw/contextoWeb';
@@ -102,7 +103,16 @@ const ProjectSpace: FC = () => {
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<'parado' | 'salvando' | 'salvo' | 'erro'>('parado');
-  const [projectModal, setProjectModal] = useState(false);
+
+  // ─── A ficha, dentro do editor ────────────────────────────────────────────
+  //
+  // Os MESMOS campos do modal de sempre (`components/ficha/campos.tsx`), montados aqui em vez
+  // de flutuarem por cima. O rascunho é local e só vai ao banco no "Salvar" — é uma ficha, não
+  // um controlo de som: escrever um ISRC a meio não pode gravar meio ISRC.
+  const [rascunho, setRascunho] = useState<Partial<CatalogItem>>({});
+  const [salvandoFicha, setSalvandoFicha] = useState(false);
+  const [enviandoCapa, setEnviandoCapa] = useState<'cover' | 'audio' | null>(null);
+  const fichaCarregada = useRef<string | null>(null);
   /** Onde vai o lote. Sem isto, enviar dez stems é olhar para uma tela parada durante um minuto. */
   const [envio, setEnvio] = useState<{ feitos: number; total: number } | null>(null);
   const [genres, setGenres] = useState<MusicGenre[]>([]);
@@ -467,6 +477,75 @@ const ProjectSpace: FC = () => {
     }
   };
 
+  // O rascunho parte do que está no banco, e recarrega quando a gravação aberta muda.
+  useEffect(() => {
+    if (!project) return;
+    const chave = `${project.id}:${openId ?? ''}`;
+    if (fichaCarregada.current === chave) return;
+    fichaCarregada.current = chave;
+    setRascunho(catalogDb.catalogProjectToItem(project, open ?? undefined));
+  }, [project, open, openId]);
+
+  /** A capa sobe na hora — é um ficheiro, e ficheiro não cabe num rascunho. */
+  const enviarCapa = async (arquivo: File) => {
+    if (!artistId) return;
+    setEnviandoCapa('cover');
+    try {
+      const enviado = await enviarArquivo(BALDE_DO_CATALOGO, `${artistId}/covers`, {
+        nome: arquivo.name, tipo: arquivo.type, dados: arquivo,
+      });
+      setRascunho((atual) => ({ ...atual, cover_image: enviado.url, cover_image_name: arquivo.name }));
+    } catch {
+      message.error('Não consegui enviar a capa');
+    } finally {
+      setEnviandoCapa(null);
+    }
+  };
+
+  const mexerNaFicha = (parte: Partial<CatalogItem>) =>
+    setRascunho((atual) => ({ ...atual, ...parte }));
+
+  const salvarFicha = async () => {
+    if (!project || !artistId || !rascunho.title?.trim()) {
+      message.warning('Informe o título da música antes de salvar.');
+      return;
+    }
+    setSalvandoFicha(true);
+    try {
+      // O MESMO caminho de gravação do modal: uma segunda rotina para os mesmos campos
+      // divergiria no primeiro ajuste.
+      await catalogDb.saveCatalogProjectFromForm(
+        {
+          artist_id: artistId,
+          title: rascunho.title,
+          status: rascunho.status || 'composition',
+          genre: rascunho.genre || null,
+          release_date: rascunho.release_date || null,
+          isrc: rascunho.isrc || null,
+          upc: rascunho.upc || null,
+          bpm: rascunho.bpm || null,
+          key: rascunho.key || null,
+          duration: rascunho.duration || null,
+          lyrics: rascunho.lyrics || null,
+          cover_image: rascunho.cover_image || null,
+          cover_image_name: rascunho.cover_image_name || null,
+          composition_splits: rascunho.composition_splits || [],
+          recording_splits: rascunho.recording_splits || [],
+          assignee: rascunho.assignee || null,
+          id: project.id,
+          versionId: open?.id,
+        } as never,
+        { id: user?.id || null, name: currentUserName, avatar: userMeta.avatar_url || null },
+      );
+      await refresh();
+      message.success('Ficha salva');
+    } catch {
+      message.error('Não consegui salvar a ficha');
+    } finally {
+      setSalvandoFicha(false);
+    }
+  };
+
   const acoes: AcoesDoEditor = {
     // ⚠️ A GUIA É GERADA ANTES DE SAIR, e não na limpeza do efeito, porque a limpeza chega
     // tarde: o `useMesa` descarta a mesa primeiro — é ele quem está declarado antes — e a
@@ -584,6 +663,36 @@ const ProjectSpace: FC = () => {
         }}
         podeEditar={podeEditar}
         acoes={acoes}
+        fichaCompleta={(
+          <div style={{ display: 'grid', gap: 20 }}>
+            <CamposDaFicha
+              draft={rascunho}
+              set={mexerNaFicha}
+              genres={genres}
+              assigneeOptions={[
+                ...(user ? [{ id: user.id, name: `${currentUserName} (você)` }] : []),
+                ...members.filter((m) => m.status === 'active')
+                  .map((m) => ({ id: (m.user_id || m.id) as string, name: m.name || m.email })),
+              ]}
+              uploading={enviandoCapa}
+              aoEnviarCapa={(arquivo) => { void enviarCapa(arquivo); }}
+              versionId={open?.id}
+            />
+            <CamposDosSplits draft={rascunho} set={mexerNaFicha} />
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button type='primary' loading={salvandoFicha} onClick={salvarFicha}>Salvar</Button>
+            </div>
+          </div>
+        )}
+        letra={(
+          <Input.TextArea
+            rows={12}
+            placeholder='Letra da música…'
+            value={rascunho.lyrics || ''}
+            onChange={(e) => mexerNaFicha({ lyrics: e.target.value })}
+            onBlur={() => { void salvarFicha(); }}
+          />
+        )}
         ficha={(
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             {/* O status é da MÚSICA; o BPM e o tom são da GRAVAÇÃO ABERTA — e é o rótulo
@@ -625,43 +734,12 @@ const ProjectSpace: FC = () => {
               aoMudar={(v) => mudarGravacao({ key: v })}
             />
 
-            <button
-              type='button'
-              onClick={() => setProjectModal(true)}
-              title='Editar as informações da música'
-              aria-label='Editar as informações da música'
-              style={{
-                height: 26, padding: '0 10px',
-                background: 'transparent', border: `1px solid ${DS.color.borda}`,
-                borderRadius: DS.raio.medio, color: DS.color.textoFraco,
-                fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', cursor: 'pointer',
-              }}
-            >
-              FICHA
-            </button>
+            {/* O botão FICHA saiu: a aba do rodapé é a porta, e duas portas para a mesma sala
+                fazem a pessoa perguntar qual é a diferença — não há. */}
           </div>
         )}
       />
 
-      {project && artistId && (
-        <TrackModal
-          open={projectModal}
-          artistId={artistId}
-          item={catalogDb.catalogProjectToItem(project, open ?? undefined)}
-          genres={genres}
-          assigneeOptions={[
-            ...(user ? [{ id: user.id, name: `${currentUserName} (você)` }] : []),
-            ...members.filter((m) => m.status === 'active')
-              .map((m) => ({ id: (m.user_id || m.id) as string, name: m.name || m.email })),
-          ]}
-          currentUserName={currentUserName}
-          currentUserId={user?.id || null}
-          currentUserAvatar={userMeta.avatar_url || userMeta.picture || null}
-          onClose={() => setProjectModal(false)}
-          onSaved={() => { void refresh(); }}
-          onVersionsChanged={() => { void refresh(); }}
-        />
-      )}
     </>
   );
 };

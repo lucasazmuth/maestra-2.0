@@ -76,6 +76,7 @@ describe('cromo do editor do Espaço JAM', () => {
     // Trocar de vista não é identificar a música: é mudar o que se está a fazer com ela.
     expect(rodape).toContain("'Timeline'");
     expect(rodape).toContain("'Mixer'");
+    expect(rodape).toContain("'Ficha'");
 
     // E no cabeçalho não sobrou nenhum: o corte tem de ser de verdade, não uma segunda cópia.
     expect(cabecalho).not.toContain('Volume geral');
@@ -86,8 +87,10 @@ describe('cromo do editor do Espaço JAM', () => {
   // do sistema e o fechar das folhas são todos redondos —, e um quadradinho aqui lia como "mais
   // um controlo da tela" em vez de "isto tira você daqui".
   it('os botões do cabeçalho são redondos', () => {
-    expect(editor).toContain("borderRadius: '50%'");
-    expect(editor).toContain('style={redondo}');
+    // O molde é um só, e é ele que os botões do cabeçalho vestem — cada um pode temperá-lo
+    // (o de sair fica apagado enquanto a guia é gerada), mas a forma sai daqui.
+    expect(editor).toMatch(/const redondo = \{[\s\S]{0,120}borderRadius: '50%'/);
+    expect(editor).toContain('...redondo');
   });
 
   // ⚠️ Nada de seletor de TIPO enquanto só o áudio toca: um controlo que guarda uma escolha
@@ -146,9 +149,15 @@ describe('cromo do editor do Espaço JAM', () => {
 
   // As duas vistas da mesma montagem: a linha do tempo responde "o que toca quando", a mesa
   // responde "como isto soa junto".
-  it('há as duas abas, e a mesa tem faders verticais', () => {
+  it('há as três abas, e a mesa tem faders verticais', () => {
     expect(editor).toContain("'Timeline'");
     expect(editor).toContain("'Mixer'");
+    expect(editor).toContain("'Ficha'");
+    // Na ficha não há o que arrastar nem o que tocar: a coluna e o transporte somem.
+    expect(editor).toContain("aba !== 'ficha'");
+    // A letra é um balão, e não uma aba: escreve-se letra a olhar para a montagem.
+    expect(editor).toContain('casca.letra');
+    expect(casca).toContain('.letra');
     // Os dois ícones são desenho do dono do produto; o traço segue a cor da aba em vez de ficar
     // cinza para sempre.
     expect(icones).toContain('currentColor');

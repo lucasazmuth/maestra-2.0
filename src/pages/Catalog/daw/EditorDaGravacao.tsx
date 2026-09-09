@@ -1,7 +1,7 @@
 import { FC, ReactNode, useRef, useState } from 'react';
 import {
-  FiCircle, FiHeadphones, FiPause, FiPlay,
-  FiSkipBack, FiSquare, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
+  FiCircle, FiFileText, FiHeadphones, FiPause, FiPlay, FiSkipBack, FiSquare, FiTrash2,
+  FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
@@ -91,13 +91,17 @@ export const EditorDaGravacao: FC<{
   transporte: { alternar: () => void; parar: () => void; irPara: (s: number) => void };
   /** Os campos da música (status, BPM, tom), vestidos por quem chama. */
   ficha: ReactNode;
+  /** A ficha inteira — identidade, créditos —, para a aba do mesmo nome. */
+  fichaCompleta: ReactNode;
+  /** A letra, que abre num balão flutuante em vez de ocupar uma aba. */
+  letra: ReactNode;
   podeEditar: boolean;
   acoes: AcoesDoEditor;
 }> = ({
   titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
-  estado, picos, transporte, ficha, podeEditar, acoes,
+  estado, picos, transporte, ficha, fichaCompleta, letra, podeEditar, acoes,
 }) => {
-  const [aba, setAba] = useState<'linha' | 'mesa'>('linha');
+  const [aba, setAba] = useState<'linha' | 'mesa' | 'ficha'>('linha');
   const [zoom, setZoom] = useState(1);
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [editandoNome, setEditandoNome] = useState(false);
@@ -382,6 +386,10 @@ export const EditorDaGravacao: FC<{
 
       {/* ══════════ CORPO ══════════ */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        {/* A biblioteca serve as abas de ÁUDIO. Na ficha não há o que arrastar para lugar
+            nenhum, e uma coluna de 256 px encostada num formulário é só uma coluna a menos
+            para o formulário. */}
+        {aba !== 'ficha' && (
         <Biblioteca
           itens={biblioteca}
           aoAbrirPasta={setBiblioteca}
@@ -391,9 +399,12 @@ export const EditorDaGravacao: FC<{
           podeEditar={podeEditar}
           aoMontar={aoMontar}
         />
+        )}
 
         {/* ── Transporte + pistas ── */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          {/* O transporte também: não se toca uma ficha. */}
+          {aba !== 'ficha' && (
           <div style={{
             height: ALTURA_DO_TRANSPORTE, flexShrink: 0,
             display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px',
@@ -500,8 +511,22 @@ export const EditorDaGravacao: FC<{
               <FiZoomIn size={14} />
             </button>
           </div>
+          )}
 
-          {aba === 'mesa' ? (
+          {aba === 'ficha' ? (
+            // A ficha ocupa o lugar das faixas, e é clara: são os MESMOS campos do modal de
+            // sempre, montados aqui em vez de flutuarem por cima. Um formulário escuro seria um
+            // segundo formulário para os mesmos dados, e dois formulários divergem.
+            <div style={{ flex: 1, minHeight: 0, overflow: 'auto', background: DS.color.bgFundoDaLinha, padding: 24 }}>
+              <div style={{
+                maxWidth: 760, margin: '0 auto', padding: 24,
+                background: '#fff', borderRadius: 12,
+                boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
+              }}>
+                {fichaCompleta}
+              </div>
+            </div>
+          ) : aba === 'mesa' ? (
             <MesaDeCanais
               pistas={pistas}
               estado={estado}
@@ -717,7 +742,7 @@ export const EditorDaGravacao: FC<{
           display: 'flex', gap: 2, padding: 3,
           background: DS.color.bgCampo, borderRadius: DS.raio.grande, flexShrink: 0,
         }}>
-          {([['linha', 'Timeline'], ['mesa', 'Mixer']] as const).map(([chave, rotulo]) => (
+          {([['linha', 'Timeline'], ['mesa', 'Mixer'], ['ficha', 'Ficha']] as const).map(([chave, rotulo]) => (
             <button
               key={chave}
               type='button'
@@ -732,7 +757,9 @@ export const EditorDaGravacao: FC<{
                 fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: DS.font.display,
               }}
             >
-              {chave === 'linha' ? <IconeDaTimeline /> : <IconeDoMixer />}
+              {chave === 'linha' ? <IconeDaTimeline />
+                : chave === 'mesa' ? <IconeDoMixer />
+                : <FiFileText size={14} />}
               {rotulo}
             </button>
           ))}
@@ -767,6 +794,13 @@ export const EditorDaGravacao: FC<{
       {/* A ajuda flutua ACIMA do rodapé, e não dentro dele: um círculo de 30 px numa barra de
           44 encostava nas bordas e empurrava o Master para dentro. O `bottom` sai do mesmo
           token da altura do rodapé, para os dois não poderem divergir. */}
+      {/* A LETRA num balão, e não numa aba: escreve-se letra a olhar para a montagem, e uma aba
+          faria trocar de tela para ler um verso. Mesmo gesto do "?", do outro lado. */}
+      <details className={`${casca.ajuda} ${casca.letra}`} style={{ bottom: ALTURA_DO_RODAPE + 12 }}>
+        <summary title='Letra' aria-label='Letra'><FiFileText size={14} /></summary>
+        <div>{letra}</div>
+      </details>
+
       <details className={casca.ajuda} style={{ bottom: ALTURA_DO_RODAPE + 12 }}>
         <summary title='Ajuda' aria-label='Ajuda'>?</summary>
         <div>
