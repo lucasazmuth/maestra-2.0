@@ -663,6 +663,28 @@ const ProjectSpace: FC = () => {
         }}
         podeEditar={podeEditar}
         acoes={acoes}
+        numeros={(
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            {/* O andamento e o tom são da GRAVAÇÃO ABERTA, e não da obra — por isso descem
+                para a barra dos controlos, junto do que governa o som. */}
+            <CampoDoTopo
+              rotulo='BPM'
+              valor={open?.bpm || ''}
+              largura={48}
+              limite={3}
+              travado={!podeEditar || !open}
+              aoMudar={(v) => mudarGravacao({ bpm: v })}
+            />
+            <CampoDoTopo
+              rotulo='TOM'
+              valor={open?.key || ''}
+              largura={52}
+              limite={6}
+              travado={!podeEditar || !open}
+              aoMudar={(v) => mudarGravacao({ key: v })}
+            />
+          </div>
+        )}
         fichaCompleta={(
           <div style={{ display: 'grid', gap: 20 }}>
             <CamposDaFicha
@@ -695,8 +717,7 @@ const ProjectSpace: FC = () => {
         )}
         ficha={(
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            {/* O status é da MÚSICA; o BPM e o tom são da GRAVAÇÃO ABERTA — e é o rótulo
-                por baixo que resolve a confusão de quem não sabia de quem era o número. */}
+            {/* O status é da MÚSICA: é o estado da obra, e anda com o nome dela no topo. */}
             <select
               value={project.status}
               onChange={(e) => setProject({ ...project, status: e.target.value })}
@@ -717,22 +738,6 @@ const ProjectSpace: FC = () => {
               ))}
             </select>
 
-            <CampoDoTopo
-              rotulo='BPM'
-              valor={open?.bpm || ''}
-              largura={48}
-              limite={3}
-              travado={!podeEditar || !open}
-              aoMudar={(v) => mudarGravacao({ bpm: v })}
-            />
-            <CampoDoTopo
-              rotulo='TOM'
-              valor={open?.key || ''}
-              largura={52}
-              limite={6}
-              travado={!podeEditar || !open}
-              aoMudar={(v) => mudarGravacao({ key: v })}
-            />
 
             {/* O botão FICHA saiu: a aba do rodapé é a porta, e duas portas para a mesma sala
                 fazem a pessoa perguntar qual é a diferença — não há. */}

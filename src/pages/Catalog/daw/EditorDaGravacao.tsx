@@ -89,8 +89,10 @@ export const EditorDaGravacao: FC<{
   estado: EstadoDaMesa;
   picos: (clipeId: string, n: number) => number[];
   transporte: { alternar: () => void; parar: () => void; irPara: (s: number) => void };
-  /** Os campos da música (status, BPM, tom), vestidos por quem chama. */
+  /** O status da música, no topo: é o estado da OBRA, e anda com o nome dela. */
   ficha: ReactNode;
+  /** O andamento e o tom da gravação aberta, no rodapé, junto dos outros controlos. */
+  numeros: ReactNode;
   /** A ficha inteira — identidade, créditos —, para a aba do mesmo nome. */
   fichaCompleta: ReactNode;
   /** A letra, que abre num balão flutuante em vez de ocupar uma aba. */
@@ -99,7 +101,7 @@ export const EditorDaGravacao: FC<{
   acoes: AcoesDoEditor;
 }> = ({
   titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
-  estado, picos, transporte, ficha, fichaCompleta, letra, podeEditar, acoes,
+  estado, picos, transporte, ficha, numeros, fichaCompleta, letra, podeEditar, acoes,
 }) => {
   const [aba, setAba] = useState<'linha' | 'mesa' | 'ficha'>('linha');
   const [zoom, setZoom] = useState(1);
@@ -342,6 +344,36 @@ export const EditorDaGravacao: FC<{
             {titulo}
           </h1>
         )}
+
+        {/* As três vistas da mesma música, no topo: é a primeira escolha de quem entra —
+            estou a montar, a misturar, ou a preencher a ficha? — e ela decide o que a tela
+            inteira mostra. O que fica em baixo são os controlos do que já está aberto. */}
+        <div style={{
+          display: 'flex', gap: 2, padding: 3,
+          background: DS.color.bgCampo, borderRadius: DS.raio.grande, flexShrink: 0,
+        }}>
+          {([['linha', 'Timeline'], ['mesa', 'Mixer'], ['ficha', 'Ficha']] as const).map(([chave, rotulo]) => (
+            <button
+              key={chave}
+              type='button'
+              onClick={() => setAba(chave)}
+              aria-pressed={aba === chave}
+              style={{
+                height: 28, padding: '0 14px',
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: aba === chave ? DS.color.bgHover : 'transparent',
+                border: 'none', borderRadius: DS.raio.medio,
+                color: aba === chave ? DS.color.texto : DS.color.textoFraco,
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: DS.font.display,
+              }}
+            >
+              {chave === 'linha' ? <IconeDaTimeline />
+                : chave === 'mesa' ? <IconeDoMixer />
+                : <FiFileText size={14} />}
+              {rotulo}
+            </button>
+          ))}
+        </div>
 
         <div style={{ flex: 1, minWidth: 0 }} />
 
@@ -735,35 +767,7 @@ export const EditorDaGravacao: FC<{
         display: 'flex', alignItems: 'center', gap: 14, padding: '0 18px',
         background: DS.color.bgPainel, borderTop: `1px solid ${DS.color.borda}`,
       }}>
-        {/* As duas vistas da mesma montagem, no rodapé: TROCAR DE VISTA não é identificar a
-            música, é mudar o que se está a fazer com ela — e isso pertence à barra dos
-            controlos, junto do Master, e não à fila que diz que música é esta. */}
-        <div style={{
-          display: 'flex', gap: 2, padding: 3,
-          background: DS.color.bgCampo, borderRadius: DS.raio.grande, flexShrink: 0,
-        }}>
-          {([['linha', 'Timeline'], ['mesa', 'Mixer'], ['ficha', 'Ficha']] as const).map(([chave, rotulo]) => (
-            <button
-              key={chave}
-              type='button'
-              onClick={() => setAba(chave)}
-              aria-pressed={aba === chave}
-              style={{
-                height: 28, padding: '0 14px',
-                display: 'flex', alignItems: 'center', gap: 6,
-                background: aba === chave ? DS.color.bgHover : 'transparent',
-                border: 'none', borderRadius: DS.raio.medio,
-                color: aba === chave ? DS.color.texto : DS.color.textoFraco,
-                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: DS.font.display,
-              }}
-            >
-              {chave === 'linha' ? <IconeDaTimeline />
-                : chave === 'mesa' ? <IconeDoMixer />
-                : <FiFileText size={14} />}
-              {rotulo}
-            </button>
-          ))}
-        </div>
+        {numeros}
 
         <span style={{ fontSize: 11, color: DS.color.textoFraco, fontFamily: DS.font.mono }}>
           {pistas.length} {pistas.length === 1 ? 'pista' : 'pistas'}

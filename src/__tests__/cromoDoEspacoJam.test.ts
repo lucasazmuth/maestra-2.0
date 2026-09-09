@@ -65,22 +65,25 @@ describe('cromo do editor do Espaço JAM', () => {
   // ⚠️ O que vale para a MONTAGEM INTEIRA mora no rodapé, e não no cabeçalho: o Master não
   // identifica nada, ele mexe no som, e no topo fazia o cabeçalho dizer três coisas ao mesmo
   // tempo — que música é esta, que vista está aberta, e como está a soar.
-  it('o volume geral e as abas estão no rodapé, e não no cabeçalho', () => {
+  // ⚠️ A divisão entre as duas barras: em cima, o que diz QUE MÚSICA é e QUE VISTA está aberta
+  // — a primeira escolha de quem entra. Em baixo, o que governa o que já está aberto: o
+  // andamento e o tom da gravação, a contagem de pistas e o volume geral.
+  it('as abas ficam no topo, e os controlos no rodapé', () => {
     const rodape = editor.slice(editor.indexOf('══════════ RODAPÉ'));
     const cabecalho = editor.slice(
       editor.indexOf('══════════ FILA DO TÍTULO'),
       editor.indexOf('══════════ CORPO'),
     );
 
+    expect(cabecalho).toContain("'Timeline'");
+    expect(cabecalho).toContain("'Mixer'");
+    expect(cabecalho).toContain("'Ficha'");
     expect(rodape).toContain('Volume geral');
-    // Trocar de vista não é identificar a música: é mudar o que se está a fazer com ela.
-    expect(rodape).toContain("'Timeline'");
-    expect(rodape).toContain("'Mixer'");
-    expect(rodape).toContain("'Ficha'");
+    expect(rodape).toContain('{numeros}');
 
-    // E no cabeçalho não sobrou nenhum: o corte tem de ser de verdade, não uma segunda cópia.
+    // E o corte tem de ser de verdade, não uma segunda cópia em cada barra.
     expect(cabecalho).not.toContain('Volume geral');
-    expect(cabecalho).not.toContain("'Timeline'");
+    expect(rodape).not.toContain("'Timeline'");
   });
 
   // ⚠️ O fechar e o tela cheia são CÍRCULOS. É o idioma do produto — o voltar, o sino, o menu
@@ -153,6 +156,7 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(editor).toContain("'Timeline'");
     expect(editor).toContain("'Mixer'");
     expect(editor).toContain("'Ficha'");
+
     // Na ficha não há o que arrastar nem o que tocar: a coluna e o transporte somem.
     expect(editor).toContain("aba !== 'ficha'");
     // A letra é um balão, e não uma aba: escreve-se letra a olhar para a montagem.
