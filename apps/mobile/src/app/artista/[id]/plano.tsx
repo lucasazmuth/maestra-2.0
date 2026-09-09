@@ -16,7 +16,8 @@ import { useAppDispatch } from '@maestra/core/store/store';
 
 import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { Arquivadas } from '@/casca/plano/Arquivadas';
-import { Chip, Escolha, type Opcao } from '@/casca/plano/Escolha';
+import { Escolha, type Opcao } from '@/casca/Escolha';
+import { Chip } from '@/casca/plano/Escolha';
 import { FichaDaTarefa } from '@/casca/plano/FichaDaTarefa';
 import { useArtistaDaRota } from '@/nucleo/artista';
 import { useSessao } from '@/nucleo/sessao';

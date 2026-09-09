@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_CHECKOUT, RAIO } from '@maestra/core/constants/design';
+import { COR_CHECKOUT, RAIO } from '@maestra/core/constants/design';
+
+import { Escolha } from '@/casca/Escolha';
 
 // Em quantas vezes.
 //
@@ -14,6 +16,9 @@ import { COR, COR_CHECKOUT, RAIO } from '@maestra/core/constants/design';
 // O teto de parcelas não é um número fixo: sai do preço dividido pelo mínimo que a Asaas aceita
 // por parcela (`parcelasPossiveis`, no núcleo). Oferecer 12x num preço baixo faria a cobrança
 // voltar 400.
+//
+// A folha da lista era escrita AQUI, com véu, cantos e "check" próprios, igual à do plano e com
+// medidas ligeiramente diferentes. Agora as duas são a mesma `casca/Escolha`.
 
 type Props = {
   valor: number;
@@ -38,33 +43,14 @@ export const Parcelas = ({ valor, maximo, aoEscolher, rotuloDa }: Props) => {
         <Feather name="chevron-down" size={16} color={COR_CHECKOUT.apoio} />
       </Pressable>
 
-      <Modal visible={aberto} transparent animationType="fade" onRequestClose={() => setAberto(false)}>
-        <Pressable style={estilos.vidro} onPress={() => setAberto(false)}>
-          <Pressable style={estilos.folha} onPress={(e) => e.stopPropagation()}>
-            <Text style={estilos.titulo}>Em quantas vezes</Text>
-            <ScrollView>
-              {opcoes.map((n) => {
-                const escolhida = n === valor;
-                return (
-                  <Pressable
-                    key={n}
-                    style={[estilos.opcao, escolhida && estilos.opcaoEscolhida]}
-                    onPress={() => { aoEscolher(n); setAberto(false); }}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: escolhida }}
-                    accessibilityLabel={rotuloDa(n)}
-                  >
-                    <Text style={[estilos.opcaoTexto, escolhida && estilos.opcaoTextoEscolhida]}>
-                      {rotuloDa(n)}
-                    </Text>
-                    {escolhida && <Feather name="check" size={15} color={COR.primaria} />}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <Escolha
+        aberta={aberto}
+        titulo="Em quantas vezes"
+        opcoes={opcoes.map((n) => ({ valor: String(n), rotulo: rotuloDa(n) }))}
+        valor={String(valor)}
+        aoEscolher={(v) => { if (v) aoEscolher(Number(v)); }}
+        aoFechar={() => setAberto(false)}
+      />
     </>
   );
 };
@@ -77,23 +63,4 @@ const estilos = StyleSheet.create({
     backgroundColor: COR_CHECKOUT.campoFundo,
   },
   valor: { flex: 1, fontSize: 14, fontWeight: '600', color: COR_CHECKOUT.titulo },
-  vidro: {
-    flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(38, 54, 82, .24)',
-  },
-  folha: {
-    maxHeight: '70%', padding: 6, paddingBottom: 28,
-    borderTopLeftRadius: 18, borderTopRightRadius: 18,
-    borderWidth: 1, borderColor: COR_CHECKOUT.campoContorno, backgroundColor: COR.superficie,
-  },
-  titulo: {
-    fontSize: 13, fontWeight: '700', color: COR_CHECKOUT.apoio,
-    paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8,
-  },
-  opcao: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    minHeight: 42, paddingHorizontal: 12, borderRadius: 7,
-  },
-  opcaoEscolhida: { backgroundColor: COR_CHECKOUT.disco },
-  opcaoTexto: { fontSize: 14, fontWeight: '600', color: COR_CHECKOUT.titulo },
-  opcaoTextoEscolhida: { color: COR_CHECKOUT.escolhidoTexto },
 });

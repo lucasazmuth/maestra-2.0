@@ -12,7 +12,7 @@ import { TASK_TYPES } from '@maestra/core/constants/maestra';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { ActionTask, TaskComment } from '@maestra/core/interfaces/maestra';
 
-import { Escolha, type Opcao } from '@/casca/plano/Escolha';
+import { Escolha, type Opcao } from '@/casca/Escolha';
 
 // A ficha da TAREFA — a mesma do "⋮" da web (`TaskDetailModal`).
 //
