@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { supabase } from '../lib/supabase';
 import {
-  aindaAndando, analiseDaVersao, pedirAnalise, trabalhosDaVersao,
+  aindaAndando, analiseDaVersao, cancelavel, cancelarAnalise, pedirAnalise, trabalhosDaVersao,
   type AnaliseDaVersao, type TipoDeAnalise, type TrabalhoDeAudio,
 } from '../services/db/audioJobs';
 
@@ -36,6 +36,10 @@ export interface AnaliseNaTela {
   pedindo: TipoDeAnalise | null;
   erro: string | null;
   pedir: (tipo: TipoDeAnalise) => Promise<void>;
+  /** Há um trabalho daquele tipo que ainda dá para cancelar? */
+  podeCancelar: (tipo: TipoDeAnalise) => boolean;
+  /** Desiste de um trabalho que ainda não começou. Ver `cancelar`. */
+  cancelar: (tipo: TipoDeAnalise) => Promise<void>;
   recarregar: () => Promise<void>;
 }
 
@@ -126,7 +130,39 @@ export function useAnaliseDaVersao(versionId?: string | null): AnaliseNaTela {
     }
   }, [versionId]);
 
+  /**
+   * Desiste de um trabalho que ainda está NA FILA.
+   *
+   * ⚠️ Isto não é enfeite: sem ele, quem toca em "detectar" fica preso a um "ouvindo o áudio…"
+   * que não tem fim se o worker estiver fora do ar. Foi o que aconteceu durante a construção —
+   * o único jeito de sair era apagar a linha no banco, e quem usa o produto não faz isso.
+   *
+   * Só cancela o que não começou. Interromper a máquina a meio não é possível de um lado só, e
+   * marcar como cancelado o que a CPU ainda gira produziria uma linha que mente.
+   */
+  const podeCancelar = useCallback(
+    (tipo: TipoDeAnalise) => !!cancelavel(trabalhos, tipo),
+    [trabalhos],
+  );
+
+  const cancelar = useCallback(async (tipo: TipoDeAnalise) => {
+    const aberto = cancelavel(trabalhos, tipo);
+    if (!aberto) return;
+    setErro(null);
+    try {
+      await cancelarAnalise(aberto.id);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não consegui cancelar.');
+    } finally {
+      // Recarrega mesmo se falhou: o estado real está no banco, e adivinhá-lo daqui é como o
+      // pedido acaba a mostrar uma coisa enquanto o servidor pensa outra.
+      await buscar();
+    }
+  }, [trabalhos, buscar]);
+
   return {
-    analise, trabalhos, emCurso, ultimoErro, carregando, pedindo, erro, pedir, recarregar: buscar,
+    analise, trabalhos, emCurso, ultimoErro, carregando, pedindo, erro, pedir,
+    podeCancelar, cancelar,
+    recarregar: buscar,
   };
 }

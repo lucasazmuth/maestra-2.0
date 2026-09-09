@@ -22,7 +22,7 @@ export const SugestaoDaAnalise = ({ versaoId, aoUsar }: {
   versaoId?: string | null;
   aoUsar: (valores: { bpm: string; tom: string }) => void;
 }) => {
-  const { analise, emCurso, ultimoErro, carregando, pedindo, erro, pedir } =
+  const { analise, emCurso, ultimoErro, carregando, pedindo, erro, pedir, podeCancelar, cancelar } =
     useAnaliseDaVersao(versaoId);
 
   if (!versaoId || carregando) return null;
@@ -31,10 +31,25 @@ export const SugestaoDaAnalise = ({ versaoId, aoUsar }: {
   const falhou = erro || ultimoErro('bpm_tom');
 
   if (andando) {
+    // ⚠️ A SAÍDA SÓ APARECE ENQUANTO O TRABALHO NÃO COMEÇOU, e é honesta por isso: dá para
+    // desistir da fila, não dá para interromper a máquina no meio. Sem ela, quem toca em
+    // "detectar" com o worker fora do ar fica preso neste texto para sempre — e o único jeito
+    // de sair seria apagar a linha no banco.
+    const naFila = podeCancelar('bpm_tom');
     return (
       <View style={estilos.linha}>
         <ActivityIndicator size="small" color={COR.primaria} />
         <Text style={estilos.apoio}>Ouvindo o áudio… isso leva alguns minutos.</Text>
+        {naFila && (
+          <Pressable
+            onPress={() => { void cancelar('bpm_tom'); }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Cancelar a análise"
+          >
+            <Text style={estilos.desistir}>Cancelar</Text>
+          </Pressable>
+        )}
       </View>
     );
   }
@@ -95,5 +110,6 @@ const estilos = StyleSheet.create({
   apoio: { flex: 1, fontSize: 13, color: COR_JAM.apoio },
   ressalva: { fontSize: 11, color: COR_JAM.apoio, marginTop: 2 },
   acao: { fontSize: 13, fontWeight: '800', color: COR.primaria },
+  desistir: { fontSize: 13, fontWeight: '700', color: COR_JAM.legenda },
   erro: { fontSize: 11, color: COR.erro, marginTop: 3, lineHeight: 16 },
 });

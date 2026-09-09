@@ -8,7 +8,9 @@ import { readEdgeFunctionError } from '../../lib/edgeError';
 // se OLHA e se CANCELA o que ainda não começou.
 
 export type TipoDeAnalise = 'bpm_tom' | 'letra' | 'sensorial' | 'converter';
-export type EstadoDoTrabalho = 'na_fila' | 'a_correr' | 'pronto' | 'erro';
+// 'cancelado' é separado de 'erro' de propósito: desistir não é falhar, e a tela mostrava
+// "Cancelado." em vermelho ao lado do botão — dizendo que algo deu errado numa ação escolhida.
+export type EstadoDoTrabalho = 'na_fila' | 'a_correr' | 'pronto' | 'erro' | 'cancelado';
 
 export interface TrabalhoDeAudio {
   id: string;
@@ -46,6 +48,22 @@ export const LIMITE_MENSAL_DE_ANALISES = 10;
 /** Enquanto está num destes, ainda há o que esperar. */
 export const aindaAndando = (t?: TrabalhoDeAudio | null): boolean =>
   t?.estado === 'na_fila' || t?.estado === 'a_correr';
+
+/**
+ * O trabalho daquele tipo que ainda dá para cancelar, se houver.
+ *
+ * Só o que está NA FILA. Interromper a máquina a meio não é possível de um lado só, e marcar
+ * como cancelado o que a CPU ainda gira produziria uma linha que mente — então a saída só
+ * aparece enquanto ela é verdadeira.
+ *
+ * Mora aqui, e não nas telas: nasceu duplicado no app e na web, que é como duas cópias de uma
+ * regra começam a divergir.
+ */
+export const cancelavel = (
+  trabalhos: TrabalhoDeAudio[],
+  tipo: TipoDeAnalise,
+): TrabalhoDeAudio | undefined =>
+  trabalhos.find((t) => t.tipo === tipo && t.estado === 'na_fila');
 
 /**
  * Abaixo disto, a sugestão de tom vem com ressalva em vez de vir como resposta.

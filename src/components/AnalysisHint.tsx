@@ -20,7 +20,7 @@ const AnalysisHint: FC<{
   disabled?: boolean;
   onUse: (valores: { bpm: string; tom: string }) => void;
 }> = ({ versionId, disabled, onUse }) => {
-  const { analise, emCurso, ultimoErro, carregando, pedindo, erro, pedir } =
+  const { analise, emCurso, ultimoErro, carregando, pedindo, erro, pedir, podeCancelar, cancelar } =
     useAnaliseDaVersao(versionId);
 
   if (!versionId || carregando) return null;
@@ -29,10 +29,19 @@ const AnalysisHint: FC<{
   const falhou = erro || ultimoErro('bpm_tom');
 
   if (andando) {
+    // ⚠️ A saída só aparece enquanto o trabalho não começou, e é honesta por isso: dá para
+    // desistir da fila, não dá para interromper a máquina no meio. Sem ela, quem clica em
+    // "detectar" com o worker fora do ar fica preso neste texto para sempre.
+    const naFila = podeCancelar('bpm_tom');
     return (
       <div className={styles.hint}>
         <Spin size='small' />
         <span className={styles.muted}>Ouvindo o áudio… isso leva alguns minutos.</span>
+        {naFila && (
+          <Button type='text' size='small' onClick={() => void cancelar('bpm_tom')}>
+            Cancelar
+          </Button>
+        )}
       </div>
     );
   }

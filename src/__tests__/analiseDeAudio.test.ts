@@ -1,5 +1,5 @@
 import {
-  aindaAndando, bpmLegivel, CONFIANCA_BAIXA, tomInseguro, tomLegivel,
+  aindaAndando, bpmLegivel, cancelavel, CONFIANCA_BAIXA, tomInseguro, tomLegivel,
   type AnaliseDaVersao, type TrabalhoDeAudio,
 } from '@maestra/core/services/db/audioJobs';
 
@@ -11,8 +11,11 @@ import {
 // O que NÃO se testa aqui: a deteção em si. Ela corre no worker, com o essentia, fora deste
 // repositório de testes. Ver `apps/audio-worker/`.
 
-const trabalho = (estado: TrabalhoDeAudio['estado']): TrabalhoDeAudio => ({
-  id: 't', artist_id: 'a', version_id: 'v', tipo: 'bpm_tom', estado,
+const trabalho = (
+  estado: TrabalhoDeAudio['estado'],
+  over: Partial<TrabalhoDeAudio> = {},
+): TrabalhoDeAudio => ({
+  id: 't', artist_id: 'a', version_id: 'v', tipo: 'bpm_tom', estado, ...over,
   resultado: null, erro: null, tentativas: 1,
   criado_em: '2026-09-09T00:00:00Z', iniciado_em: null, terminado_em: null,
 });
@@ -90,5 +93,40 @@ describe('a ressalva do tom', () => {
     // aí a mesma análise vira palpite num lado e resposta no outro.
     expect(tomInseguro(analise(CONFIANCA_BAIXA - 0.001))).toBe(true);
     expect(tomInseguro(analise(CONFIANCA_BAIXA))).toBe(false);
+  });
+});
+
+describe('desistir de uma análise', () => {
+  // ⚠️ O BURACO QUE ESTE TESTE FECHA. Sem uma saída, quem toca em "detectar" com o worker fora
+  // do ar fica preso num "ouvindo o áudio…" que não termina — aconteceu durante a construção, e
+  // o único jeito de sair era apagar a linha no banco. Quem usa o produto não faz isso.
+  it('deixa cancelar o que ainda está na fila', () => {
+    expect(cancelavel([trabalho('na_fila')], 'bpm_tom')?.id).toBe('t');
+  });
+
+  it('NÃO deixa cancelar o que já começou', () => {
+    // Interromper a máquina a meio não é possível de um lado só. Oferecer o botão aqui seria
+    // prometer uma coisa que o servidor recusa, e a tela ficaria a mentir.
+    expect(cancelavel([trabalho('a_correr')], 'bpm_tom')).toBeUndefined();
+  });
+
+  it('não oferece saída para o que já acabou', () => {
+    expect(cancelavel([trabalho('pronto')], 'bpm_tom')).toBeUndefined();
+    expect(cancelavel([trabalho('erro')], 'bpm_tom')).toBeUndefined();
+    expect(cancelavel([], 'bpm_tom')).toBeUndefined();
+  });
+
+  it('cancelado NÃO é erro', () => {
+    // Desistir não é falhar. Antes disto o cancelamento gravava estado 'erro' com a mensagem
+    // "Cancelado.", e a tela mostrava em vermelho, ao lado do botão, uma ação que a pessoa
+    // escolheu — dizendo que algo deu errado quando nada deu.
+    expect(aindaAndando(trabalho('cancelado'))).toBe(false);
+    expect(cancelavel([trabalho('cancelado')], 'bpm_tom')).toBeUndefined();
+  });
+
+  it('não confunde um tipo de análise com outro', () => {
+    // Uma letra na fila não pode oferecer "cancelar" ao lado do BPM.
+    expect(cancelavel([trabalho('na_fila', { tipo: 'letra' })], 'bpm_tom')).toBeUndefined();
+    expect(cancelavel([trabalho('na_fila', { tipo: 'letra' })], 'letra')?.id).toBe('t');
   });
 });
