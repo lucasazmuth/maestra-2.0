@@ -87,8 +87,25 @@ serve(async (req) => {
     const comOToken = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: erroDoUsuario } = await comOToken.auth.getUser();
-    if (erroDoUsuario || !user) return json({ error: "Não autorizado" }, 401);
+
+    // ⚠️ O TOKEN VAI COMO ARGUMENTO, e não implícito no cabeçalho.
+    //
+    // `getUser()` sem argumento procura a sessão GUARDADA do cliente, e numa edge function não
+    // existe sessão guardada nenhuma. O erro que volta é "Auth session missing!", que parece
+    // token inválido e não é: o cabeçalho estava lá, certo, o tempo todo. É o mesmo argumento
+    // que o `account-consent` passa, pelo mesmo motivo.
+    //
+    // O cabeçalho global continua a fazer falta: é ele que faz a leitura seguinte passar pela
+    // RLS como esta pessoa. Ele serve ao PostgREST; o argumento serve ao Auth.
+    const { data: { user }, error: erroDoUsuario } = await comOToken.auth.getUser(
+      authHeader.replace("Bearer ", "").trim(),
+    );
+    if (erroDoUsuario || !user) {
+      // O motivo entra no LOG, e não na resposta: quem pede não precisa saber por que o token
+      // não serve, e dizer isso ajudaria quem está a tentar adivinhar um.
+      console.error("[version-certify] getUser falhou", { erro: erroDoUsuario?.message });
+      return json({ error: "Não autorizado" }, 401);
+    }
 
     const body = await req.json().catch(() => ({}));
     const versionId = String(body?.versionId || "").trim();
@@ -135,6 +152,7 @@ serve(async (req) => {
 
     const { data: arquivo, error: erroDoArquivo } = await servico.storage.from(BALDE).download(caminho);
     if (erroDoArquivo || !arquivo) {
+      console.error("[version-certify] download falhou", { caminho, erro: erroDoArquivo?.message });
       return json({ error: "Não consegui ler o áudio desta versão." }, 502);
     }
     if (arquivo.size > TETO_DE_BYTES) {

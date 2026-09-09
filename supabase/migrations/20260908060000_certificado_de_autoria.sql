@@ -77,8 +77,14 @@ create index if not exists version_certificates_artista_idx
 -- gatilho que recusasse o apagamento faria a purga da LGPD falhar a meio — trocaria um risco
 -- pequeno (alguém apagar um certificado de propósito, já impossível pela RLS) por um problema
 -- de conformidade real. Quem apaga é a cascata, e a cascata tem que passar.
+-- O `set search_path` não é enfeite: sem ele a função resolve nomes pelo search_path de quem a
+-- dispara, e o linter do Supabase reprova (`function_search_path_mutable`). É a guarda que diz
+-- que um certificado não se altera; não pode depender do ambiente de quem a aciona.
 create or replace function public.certificado_nao_se_altera()
-returns trigger language plpgsql as $$
+returns trigger
+language plpgsql
+set search_path = public
+as $$
 begin
   raise exception 'Um certificado de autoria não pode ser alterado (id %). Emita outro.', old.id;
 end $$;
