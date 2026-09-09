@@ -336,32 +336,6 @@ export const EditorDaGravacao: FC<{
           </h1>
         )}
 
-        {/* As duas vistas da mesma montagem: a linha do tempo e a mesa. */}
-        <div style={{
-          display: 'flex', gap: 2, padding: 3,
-          background: DS.color.bgCampo, borderRadius: DS.raio.grande, flexShrink: 0,
-        }}>
-          {([['linha', 'Timeline'], ['mesa', 'Mixer']] as const).map(([chave, rotulo]) => (
-            <button
-              key={chave}
-              type='button'
-              onClick={() => setAba(chave)}
-              aria-pressed={aba === chave}
-              style={{
-                height: 28, padding: '0 14px',
-                display: 'flex', alignItems: 'center', gap: 6,
-                background: aba === chave ? DS.color.bgHover : 'transparent',
-                border: 'none', borderRadius: DS.raio.medio,
-                color: aba === chave ? DS.color.texto : DS.color.textoFraco,
-                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: DS.font.display,
-              }}
-            >
-              {chave === 'linha' ? <IconeDaTimeline /> : <IconeDoMixer />}
-              {rotulo}
-            </button>
-          ))}
-        </div>
-
         <div style={{ flex: 1, minWidth: 0 }} />
 
         {ficha}
@@ -727,6 +701,34 @@ export const EditorDaGravacao: FC<{
         display: 'flex', alignItems: 'center', gap: 14, padding: '0 18px',
         background: DS.color.bgPainel, borderTop: `1px solid ${DS.color.borda}`,
       }}>
+        {/* As duas vistas da mesma montagem, no rodapé: TROCAR DE VISTA não é identificar a
+            música, é mudar o que se está a fazer com ela — e isso pertence à barra dos
+            controlos, junto do Master, e não à fila que diz que música é esta. */}
+        <div style={{
+          display: 'flex', gap: 2, padding: 3,
+          background: DS.color.bgCampo, borderRadius: DS.raio.grande, flexShrink: 0,
+        }}>
+          {([['linha', 'Timeline'], ['mesa', 'Mixer']] as const).map(([chave, rotulo]) => (
+            <button
+              key={chave}
+              type='button'
+              onClick={() => setAba(chave)}
+              aria-pressed={aba === chave}
+              style={{
+                height: 28, padding: '0 14px',
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: aba === chave ? DS.color.bgHover : 'transparent',
+                border: 'none', borderRadius: DS.raio.medio,
+                color: aba === chave ? DS.color.texto : DS.color.textoFraco,
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: DS.font.display,
+              }}
+            >
+              {chave === 'linha' ? <IconeDaTimeline /> : <IconeDoMixer />}
+              {rotulo}
+            </button>
+          ))}
+        </div>
+
         <span style={{ fontSize: 11, color: DS.color.textoFraco, fontFamily: DS.font.mono }}>
           {pistas.length} {pistas.length === 1 ? 'pista' : 'pistas'}
         </span>

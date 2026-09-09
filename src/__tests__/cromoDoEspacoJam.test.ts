@@ -65,15 +65,21 @@ describe('cromo do editor do Espaço JAM', () => {
   // ⚠️ O que vale para a MONTAGEM INTEIRA mora no rodapé, e não no cabeçalho: o Master não
   // identifica nada, ele mexe no som, e no topo fazia o cabeçalho dizer três coisas ao mesmo
   // tempo — que música é esta, que vista está aberta, e como está a soar.
-  it('o volume geral está no rodapé, e não no cabeçalho', () => {
+  it('o volume geral e as abas estão no rodapé, e não no cabeçalho', () => {
     const rodape = editor.slice(editor.indexOf('══════════ RODAPÉ'));
-    expect(rodape).toContain('Volume geral');
-    // E no cabeçalho não sobrou nenhum: o corte tem de ser de verdade, não uma segunda cópia.
     const cabecalho = editor.slice(
       editor.indexOf('══════════ FILA DO TÍTULO'),
       editor.indexOf('══════════ CORPO'),
     );
+
+    expect(rodape).toContain('Volume geral');
+    // Trocar de vista não é identificar a música: é mudar o que se está a fazer com ela.
+    expect(rodape).toContain("'Timeline'");
+    expect(rodape).toContain("'Mixer'");
+
+    // E no cabeçalho não sobrou nenhum: o corte tem de ser de verdade, não uma segunda cópia.
     expect(cabecalho).not.toContain('Volume geral');
+    expect(cabecalho).not.toContain("'Timeline'");
   });
 
   // ⚠️ O fechar e o tela cheia são CÍRCULOS. É o idioma do produto — o voltar, o sino, o menu
