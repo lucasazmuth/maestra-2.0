@@ -98,3 +98,20 @@ export const removerArquivo = async (balde: string, caminho: string): Promise<vo
  */
 export const tituloDoArquivo = (nome: string) =>
   nome.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+
+/**
+ * O caminho de um arquivo dentro do balde, a partir da URL pública.
+ *
+ * O banco guarda a URL (é ela que o tocador usa); o Storage apaga por CAMINHO. Sem esta
+ * conversão, apagar uma pista tira a linha do banco e deixa 40 MB órfãos no balde para sempre.
+ *
+ * A URL pública tem a forma `.../storage/v1/object/public/<balde>/<caminho>`. Devolve `null`
+ * quando a URL não é do balde pedido — um link externo colado à mão, por exemplo, que não deve
+ * mandar apagar nada.
+ */
+export const caminhoNoBalde = (url: string, balde: string): string | null => {
+  const marca = `/storage/v1/object/public/${balde}/`;
+  const corte = url.indexOf(marca);
+  if (corte < 0) return null;
+  return decodeURIComponent(url.slice(corte + marca.length).split('?')[0]);
+};

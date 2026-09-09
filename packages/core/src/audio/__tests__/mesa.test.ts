@@ -1,5 +1,5 @@
 import { ganhoEfetivo, Mesa, type Pista } from '../mesa';
-import { buscarFalso, ContextoFalso } from './contextoFalso';
+import { buscarFalso, ContextoFalso } from '../duplos/contextoFalso';
 
 // A MESA — o motor que toca os stems em sincronia.
 //

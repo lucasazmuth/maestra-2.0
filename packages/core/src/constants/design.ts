@@ -890,6 +890,36 @@ export const COR_ENTRADA = {
 // casca do chat usava na web, e este objeto é a cópia da folha da web — o teste do cromo
 // reprova um token que a folha não tem. O que no app usava `legenda` passou para `apoio`, e o
 // que usava `entradaFundo` para `cabecaDaVersao`, que são os tons vizinhos que ficaram.
+/**
+ * A cor de cada pista da mesa, pela posição dela.
+ *
+ * Cor como SISTEMA, e não como enfeite: a mesma cor identifica a faixa na borda da linha, o
+ * ponto ao lado do nome e a onda. É o que faz uma mesa de seis pistas ler-se de relance.
+ *
+ * Sai da POSIÇÃO e não do instrumento, porque o nome da pista é texto livre — adivinhar
+ * "bateria" de "808" ou "Kick in" daria errado mais vezes do que certo, e uma cor errada é pior
+ * do que uma cor arbitrária.
+ *
+ * ⚠️ Estas NÃO entram no `COR_JAM`: aquele objeto é a cópia da folha da web, e o teste do cromo
+ * compara-o linha a linha com o SCSS. Estas são usadas em linha nas duas superfícies, a partir
+ * daqui — uma fonte só, sem cópia para divergir.
+ */
+export const CORES_DAS_PISTAS = [
+  '#2f60f6', // azul da marca
+  '#e0ad3c', // âmbar
+  '#5f9ea0', // verde-água
+  '#c4568f', // rosa
+  '#6f5fd8', // roxo
+  '#4f9d5b', // verde
+  '#d1743a', // laranja
+  '#5588c7', // azul claro
+] as const;
+
+/** A cor da pista na posição N. Dá a volta: a nona pista repete a primeira. */
+export const corDaPista = (indice: number): string =>
+  CORES_DAS_PISTAS[((indice % CORES_DAS_PISTAS.length) + CORES_DAS_PISTAS.length)
+    % CORES_DAS_PISTAS.length];
+
 export const COR_JAM = {
   fundoDe: '#f9fbff',
   fundoAte: '#eef4ff',

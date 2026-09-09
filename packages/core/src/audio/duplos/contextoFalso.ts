@@ -1,3 +1,7 @@
+// ⚠️ Este arquivo mora FORA de `__tests__` de propósito: o `testMatch` do núcleo trata todo
+// arquivo daquela pasta como uma suíte, e um duplo de teste sem `it()` nenhum reprovava a suíte
+// inteira com "your test suite must contain at least one test".
+
 import type {
   BufferDeAudio, ContextoDeAudio, Destino, FonteDeAudio, NoDeGanho, ParametroDeAudio,
 } from '../contexto';

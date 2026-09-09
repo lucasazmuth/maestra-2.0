@@ -7,47 +7,62 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 
+import { ehPistaDaMix, pistasDaVersao, stemsDaVersao } from '@maestra/core/audio/pistasDaVersao';
+import {
+  enviarPistas, validarPistas, type EnvioDePista, type Recusa,
+} from '@maestra/core/audio/envioDePistas';
+import { useMesa } from '@maestra/core/audio/useMesa';
 import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS } from '@maestra/core/constants/maestra';
 import { COR, COR_JAM } from '@maestra/core/constants/design';
-import type { CatalogProject, CatalogVersion } from '@maestra/core/interfaces/maestra';
+import type { CatalogProject, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
+import { BALDE_DO_CATALOGO, caminhoNoBalde, removerArquivo } from '@maestra/core/services/armazenamento';
 import * as catalogo from '@maestra/core/services/db/catalog';
 
 import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
 import { Escolha } from '@/casca/Escolha';
+import { CampoDoCabecalho, DonoDosCampos } from '@/casca/jam/CampoDoCabecalho';
 import { ComentariosDaVersao } from '@/casca/jam/ComentariosDaVersao';
 import { FolhaDaVersao } from '@/casca/jam/FolhaDaVersao';
-import { Onda, SemOnda } from '@/casca/jam/Onda';
 import { ResumoDaFicha } from '@/casca/jam/ResumoDaFicha';
+import { AdicionarPista } from '@/casca/jam/mesa/AdicionarPista';
+import { FolhaDaPista } from '@/casca/jam/mesa/FolhaDaPista';
+import { BARRAS } from '@/casca/jam/mesa/MiniOnda';
+import { Pista } from '@/casca/jam/mesa/Pista';
+import { SeletorDeGravacoes } from '@/casca/jam/mesa/SeletorDeGravacoes';
+import { Transporte } from '@/casca/jam/mesa/Transporte';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
-import { escolherAudio, type ArquivoEscolhido } from '@/nucleo/arquivos';
+import { buscarNativo, criarContextoNativo } from '@/nucleo/audio/contextoNativo';
+import { escolherAudio, escolherAudios, paraEnvioDePista, type ArquivoEscolhido } from '@/nucleo/arquivos';
 import { useSessao } from '@/nucleo/sessao';
 
-// O Espaço JAM: a MÚSICA vista pela gravação.
+// O Espaço JAM: a MÚSICA, aberta como um editor.
 //
 // Mora fora das abas do artista de propósito. Na web ela é `position: fixed; inset: 0` e some o
 // topo, o rail e a barra — é uma tela cheia, não mais um módulo. Aqui, portanto, é uma tela da
 // pilha da raiz, e a barra de abas não aparece.
 //
-// ─── A ordem da tela é a ordem do que a pessoa veio fazer ────────────────────
+// ─── Por que a tela virou uma mesa ───────────────────────────────────────────
 //
-// Quem abre isto veio OUVIR versões, comentá-las e mandar novas. A tela anterior estava na
-// ordem do banco: projeto, metadados, versões, chat — e metade do ecrã (441 pt) passava antes
-// da primeira versão. Uma grelha 2×2 de BPM/tom/gênero/data, quase sempre com quatro traços,
-// era o bloco mais alto da tela. O título tinha ~104 pt de largura para 25 px em peso 800.
+// Quem chegava aqui não percebia o modelo: que o Espaço JAM é a MÚSICA e que cada versão é uma
+// GRAVAÇÃO dela. A pilha de cartões, cada um com o seu play e a sua onda, dizia o contrário —
+// parecia uma lista de faixas soltas. O dono do produto propôs a forma que todo músico já
+// conhece: um editor. Ableton, Logic, qualquer um deles ensina em três segundos que um projeto
+// tem pistas, e que as pistas tocam JUNTAS.
 //
-// Agora: o cabeçalho é o título em duas linhas, o status virou um chip por baixo dele, a ficha
-// técnica virou UMA linha (que abre a mesma ficha do lápis), e o upload flutua como o "+" do
-// catálogo. As versões começam a ~200 pt.
+// Daí esta tela:
+//   • as gravações são uma FILA DE FICHAS — são alternativas, ouve-se uma de cada vez, e
+//     escolher uma é ABRI-LA no editor;
+//   • as pistas empilhadas são os STEMS da gravação aberta — essas sim tocam ao mesmo tempo,
+//     com mutar, solo e volume;
+//   • o transporte é UM só, da gravação aberta, e é ele quem diz que as pistas são camadas de
+//     uma coisa e não coisas separadas.
 //
-// O chat do projeto saiu em 09/09/2026, por decisão do dono do produto: ficam os comentários
-// da versão. A tabela e as funções do núcleo continuam lá para o dia em que ele voltar.
-
-// Nota de peso: a folha da web pede 850, 750 e 650 em vários lugares — passos intermediários
-// que só a fonte variável do navegador entrega. O React Native aceita apenas os múltiplos de
-// 100, então aqui são 800, 700 e 600. É o valor mais próximo que EXISTE, não o "quase igual"
-// de sempre: não há 850 para replicar.
+// ─── E por que o BPM e o tom voltaram para o cabeçalho ───────────────────────
+//
+// Eles tinham ido para dentro da ficha porque a tela estava confusa. Mas o que confundia não era
+// editar em linha, era não se saber de QUEM era o número. Aqui eles são da gravação ABERTA, e o
+// rótulo por baixo diz qual é. Gênero e data ficam na linha da ficha, porque são da música.
 
 const iniciais = (valor?: string | null) => (valor || '?').trim().slice(0, 1).toUpperCase();
 
@@ -72,6 +87,14 @@ const coresDoStatus = (status?: string | null) => {
 
 /** Quanto tempo o "Salvo" fica na tela. Depois disso ele saía do nada; antes disto não saía nunca. */
 const DURACAO_DO_SELO = 2000;
+
+/** O compasso do salvamento automático, igual ao do resto do app. */
+const ESPERA = 650;
+
+// Fora do componente: são as mesmas duas funções para sempre, e cá dentro seriam objetos novos
+// a cada render. `mono` ligado — no telemóvel, somar os canais é metade da memória por pista, e
+// a memória é o que mata a aplicação com seis stems abertos.
+const DEPENDENCIAS_DA_MESA = { criarContexto: criarContextoNativo, buscar: buscarNativo, mono: true };
 
 // Declarado FORA do componente: dentro, cada render cria uma função nova e o React remonta a
 // subárvore.
@@ -121,23 +144,21 @@ export default function EspacoJam() {
 
   const [comentando, setComentando] = useState<CatalogVersion | null>(null);
   const [contagens, setContagens] = useState<Record<string, number>>({});
-  const [tocandoId, setTocandoId] = useState<string | null>(null);
-  const player = useAudioPlayer();
-  const estadoDoSom = useAudioPlayerStatus(player);
 
-  // O único campo que esta tela ainda edita em linha é o STATUS, pelo chip. BPM, tom, gênero e
-  // data saíram daqui para a ficha (o lápis e a linha-resumo abrem a mesma), então o salvamento
-  // automático só tem uma coisa para vigiar. Comparar antes de gravar é o que impede disparar no
-  // primeiro render e regravar o que acabou de voltar do servidor.
-  const gravado = useRef('');
-  const assinatura = (v: CatalogProject) => v.status;
+  /** Qual gravação está aberta no editor. É ela que a mesa carrega e que o cabeçalho edita. */
+  const [abertaId, setAbertaId] = useState<string | null>(null);
+  const [bpm, setBpm] = useState('');
+  const [tom, setTom] = useState('');
+
+  const [pistaEmOpcoes, setPistaEmOpcoes] = useState<CatalogVersionFile | null>(null);
+  const [envios, setEnvios] = useState<EnvioDePista[]>([]);
+  const [recusados, setRecusados] = useState<Recusa[]>([]);
 
   const buscar = useCallback(async () => {
     if (!projetoId) return;
     try {
       const proximo = await catalogo.getCatalogProject(String(projetoId));
       setProjeto(proximo);
-      gravado.current = assinatura(proximo);
     } catch {
       setProjeto(null);
     } finally {
@@ -147,7 +168,105 @@ export default function EspacoJam() {
 
   useEffect(() => { void buscar(); }, [buscar]);
 
-  // O número no balão de cada versão. O `getCatalogProject` não traz os comentários junto, e
+  const versoes = useMemo(
+    () => (projeto?.versions ?? []).slice().sort((a, b) => b.version_number - a.version_number),
+    [projeto],
+  );
+
+  // Abre a principal — e, sem principal, a mais recente. Também conserta o caso de a gravação
+  // aberta ter sido excluída: sem isto, o editor ficaria a apontar para nada.
+  useEffect(() => {
+    if (!versoes.length) { setAbertaId(null); return; }
+    if (abertaId && versoes.some((v) => v.id === abertaId)) return;
+    setAbertaId(
+      versoes.find((v) => v.id === projeto?.primary_version_id)?.id ?? versoes[0].id,
+    );
+  }, [versoes, projeto?.primary_version_id, abertaId]);
+
+  const aberta = useMemo(
+    () => versoes.find((v) => v.id === abertaId) ?? null,
+    [versoes, abertaId],
+  );
+
+  const stems = useMemo(() => stemsDaVersao(aberta), [aberta]);
+  const pistas = useMemo(() => pistasDaVersao(aberta), [aberta]);
+  const mesa = useMesa(pistas, DEPENDENCIAS_DA_MESA);
+
+  // ─── Salvamento automático ────────────────────────────────────────────────
+  //
+  // Duas coisas diferentes, e por isso dois relógios: o status é da MÚSICA, o BPM e o tom são da
+  // GRAVAÇÃO ABERTA. Cada um compara com o que já está gravado antes de disparar — é o que
+  // impede de regravar no primeiro render aquilo que acabou de voltar do servidor.
+  const statusGravado = useRef('');
+  const numerosGravados = useRef('');
+
+  useEffect(() => { if (projeto) statusGravado.current ||= projeto.status ?? ''; }, [projeto]);
+
+  // Trocar de gravação enche os campos com os números DELA — e marca-os como já gravados, senão
+  // a troca dispararia uma gravação do valor que acabou de ser lido.
+  useEffect(() => {
+    if (!aberta) return;
+    const novoBpm = aberta.bpm ? String(aberta.bpm) : '';
+    const novoTom = aberta.key ?? '';
+    setBpm(novoBpm);
+    setTom(novoTom);
+    numerosGravados.current = `${aberta.id}|${novoBpm}|${novoTom}`;
+  }, [aberta]);
+
+  useEffect(() => {
+    if (!projeto || (projeto.status ?? '') === statusGravado.current) return undefined;
+    const conta = setTimeout(async () => {
+      setSelo('salvando');
+      try {
+        await catalogo.updateCatalogProject(projeto.id, { status: projeto.status });
+        statusGravado.current = projeto.status ?? '';
+        setSelo('salvo');
+      } catch {
+        setSelo('erro');
+      }
+    }, ESPERA);
+    return () => clearTimeout(conta);
+  }, [projeto]);
+
+  useEffect(() => {
+    if (!aberta) return undefined;
+    const chave = `${aberta.id}|${bpm}|${tom}`;
+    if (chave === numerosGravados.current) return undefined;
+    const conta = setTimeout(async () => {
+      setSelo('salvando');
+      const numero = Number(bpm.trim());
+      // Um BPM fora da faixa é engano de digitação, não uma escolha: 30 a 300 cobre de uma
+      // balada a um drum and bass, e o que passa disso vira "sem BPM" em vez de ir para o banco.
+      const valido = bpm.trim() ? (Number.isFinite(numero) && numero >= 30 && numero <= 300) : true;
+      try {
+        const salva = await catalogo.updateCatalogVersion(aberta.id, {
+          // Texto, e não número: a coluna é `text` desde sempre, e um "128 " gravado como
+          // número voltaria como 128 e apagaria o que a pessoa digitou enquanto digitava.
+          bpm: valido && bpm.trim() ? bpm.trim() : null,
+          key: tom.trim() || null,
+        });
+        numerosGravados.current = chave;
+        patcharVersao(aberta.id, { bpm: salva.bpm, key: salva.key });
+        setSelo('salvo');
+      } catch {
+        setSelo('erro');
+      }
+    }, ESPERA);
+    return () => clearTimeout(conta);
+    // `patcharVersao` é estável (não depende de nada que mude), e listá-la aqui só ruído.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberta, bpm, tom]);
+
+  // ⚠️ O "Salvo" vai embora sozinho. Antes ficava para sempre: `setSelo` nunca voltava a
+  // 'parado', e a linha empurrava a tela 25 pt para baixo desde a primeira edição até sair.
+  // O erro fica: é a única forma da pessoa saber que a última mudança não pegou.
+  useEffect(() => {
+    if (selo !== 'salvo') return undefined;
+    const conta = setTimeout(() => setSelo('parado'), DURACAO_DO_SELO);
+    return () => clearTimeout(conta);
+  }, [selo]);
+
+  // O número no balão de cada gravação. O `getCatalogProject` não traz os comentários junto, e
   // um balão sem número não diz se vale abrir — que é a única coisa que ele precisa dizer.
   const contar = useCallback(async (lista: CatalogVersion[]) => {
     const pares = await Promise.all(lista.map(async (v) => {
@@ -161,68 +280,111 @@ export default function EspacoJam() {
     if (projeto?.versions?.length) void contar(projeto.versions);
   }, [projeto, contar]);
 
-  // Meio segundo depois da mudança. É o mesmo ritmo do resto do app, mesmo aqui sendo um toque só.
-  useEffect(() => {
-    if (!projeto || assinatura(projeto) === gravado.current) return undefined;
-    const conta = setTimeout(async () => {
-      setSelo('salvando');
-      try {
-        const salvo = await catalogo.updateCatalogProject(projeto.id, { status: projeto.status });
-        gravado.current = assinatura({ ...projeto, ...salvo });
-        setSelo('salvo');
-      } catch {
-        setSelo('erro');
-      }
-    }, 650);
-    return () => clearTimeout(conta);
-  }, [projeto]);
+  // ─── Mexer no estado sem recarregar a tela ────────────────────────────────
+  //
+  // Renomear uma pista ou mudar um volume não pode chamar `buscar()`: a resposta vinha com um
+  // objeto novo, a mesa via pistas "diferentes" e descarregava 400 MB de áudio para mostrar um
+  // nome trocado. Estas duas costuras remendam só o que mudou.
+  const patcharVersao = (id: string, parte: Partial<CatalogVersion>) => setProjeto((atual) => (
+    atual ? {
+      ...atual,
+      versions: (atual.versions ?? []).map((v) => (v.id === id ? { ...v, ...parte } : v)),
+    } : atual
+  ));
 
-  // ⚠️ O "Salvo" vai embora sozinho. Antes ficava para sempre: `setSelo` nunca voltava a
-  // 'parado', e a linha empurrava a tela 25 pt para baixo desde a primeira edição até sair.
-  // O erro fica: é a única forma da pessoa saber que a última mudança não pegou.
-  useEffect(() => {
-    if (selo !== 'salvo') return undefined;
-    const conta = setTimeout(() => setSelo('parado'), DURACAO_DO_SELO);
-    return () => clearTimeout(conta);
-  }, [selo]);
-
-  const versoes = useMemo(
-    () => (projeto?.versions ?? []).slice().sort((a, b) => b.version_number - a.version_number),
-    [projeto],
-  );
-
-  /** A favorita: é dela que a linha-resumo tira o BPM e o tom, e é dela que versões novas herdam. */
-  const favorita = useMemo(
-    () => versoes.find((v) => v.id === projeto?.primary_version_id) ?? null,
-    [versoes, projeto?.primary_version_id],
-  );
+  const patcharPista = (id: string, parte: Partial<CatalogVersionFile>) => setProjeto((atual) => (
+    atual ? {
+      ...atual,
+      versions: (atual.versions ?? []).map((v) => ({
+        ...v,
+        files: (v.files ?? []).map((f) => (f.id === id ? { ...f, ...parte } : f)),
+      })),
+    } : atual
+  ));
 
   const mudar = (parte: Partial<CatalogProject>) =>
     setProjeto((atual) => (atual ? { ...atual, ...parte } : atual));
 
-  // Tocar na onda leva a reprodução ao ponto tocado — é o `onSeek` do WaveSurfer da web. Se a
-  // versão ainda não está no ar, começa por ela: sem isso, tocar na onda de uma versão parada
-  // não faria nada, e o gesto mais óbvio da tela seria o único sem resposta.
-  const buscarNoAudio = (versao: CatalogVersion, segundo: number) => {
-    if (!versao.audio_file) return;
-    if (tocandoId !== versao.id) {
-      player.replace({ uri: versao.audio_file });
-      setTocandoId(versao.id);
-    }
-    player.seekTo(segundo);
-    player.play();
+  // ─── A mesa ───────────────────────────────────────────────────────────────
+
+  // O fader mexe no som na hora e no banco depois: gravar a cada pixel do arrasto seriam
+  // dezenas de escritas para um gesto só. Um relógio por pista — arrastar duas seguidas não
+  // pode fazer a segunda cancelar a gravação da primeira.
+  const relogiosDoGanho = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  useEffect(() => () => {
+    Object.values(relogiosDoGanho.current).forEach(clearTimeout);
+  }, []);
+
+  const mexerNoGanho = (id: string, valor: number) => {
+    mesa.ganho(id, valor);
+    // A Mix não tem linha no banco: ela é o `audio_file` da gravação, e o volume dela é só
+    // desta sessão de escuta.
+    if (ehPistaDaMix(id)) return;
+    clearTimeout(relogiosDoGanho.current[id]);
+    relogiosDoGanho.current[id] = setTimeout(() => {
+      const arredondado = Number(valor.toFixed(3));
+      catalogo.updateVersionFile(id, { gain: arredondado })
+        .then(() => patcharPista(id, { gain: arredondado }))
+        .catch(() => { /* o valor real volta no próximo carregamento */ });
+    }, ESPERA);
   };
 
-  const tocar = (versao: CatalogVersion) => {
-    if (!versao.audio_file) return;
-    if (tocandoId === versao.id) {
-      if (estadoDoSom.playing) player.pause(); else player.play();
-      return;
-    }
-    player.replace({ uri: versao.audio_file });
-    player.play();
-    setTocandoId(versao.id);
+  const enviarStems = async () => {
+    if (!aberta || !projeto) return;
+    const escolhidos = await escolherAudios();
+    if (!escolhidos.length) return;
+
+    const { aceites, recusados: fora } = validarPistas(escolhidos, stems.length);
+    setRecusados(fora);
+    if (!aceites.length) return;
+
+    await enviarPistas({
+      artistaId: String(artistaId),
+      projetoId: projeto.id,
+      versaoId: aberta.id,
+      arquivos: aceites.map(paraEnvioDePista),
+      jaExistem: stems.length,
+      aoMudar: setEnvios,
+    });
+    // Só aqui é que a mesa recarrega, e tem de recarregar: há áudio novo para descodificar.
+    setEnvios([]);
+    await buscar();
   };
+
+  const renomearPista = async (nome: string) => {
+    if (!pistaEmOpcoes) return;
+    await catalogo.updateVersionFile(pistaEmOpcoes.id, { name: nome });
+    patcharPista(pistaEmOpcoes.id, { name: nome });
+  };
+
+  const moverPista = async (direcao: -1 | 1) => {
+    if (!pistaEmOpcoes || !aberta) return;
+    const ordem = stems.map((s) => s.id);
+    const de = ordem.indexOf(pistaEmOpcoes.id);
+    const para = de + direcao;
+    if (de < 0 || para < 0 || para >= ordem.length) return;
+    [ordem[de], ordem[para]] = [ordem[para], ordem[de]];
+    await catalogo.reorderVersionFiles(ordem);
+    // A ordem é assunto da tela: a mesa toca tudo junto e não precisa de saber. Por isso aqui
+    // se remenda a posição de cada linha em vez de recarregar a gravação.
+    ordem.forEach((id, position) => patcharPista(id, { position }));
+    setPistaEmOpcoes(null);
+  };
+
+  const removerPista = async () => {
+    if (!pistaEmOpcoes) return;
+    const alvo = pistaEmOpcoes;
+    await catalogo.deleteVersionFile(alvo.id);
+    // O arquivo sai do balde junto: um stem são dezenas de MB, e um órfão no armazenamento é
+    // custo que ninguém volta a olhar.
+    const caminho = caminhoNoBalde(alvo.file_url, BALDE_DO_CATALOGO);
+    if (caminho) await removerArquivo(BALDE_DO_CATALOGO, caminho);
+    setPistaEmOpcoes(null);
+    await buscar();
+  };
+
+  // ─── Gravações ────────────────────────────────────────────────────────────
 
   // O botão de enviar abre direto os arquivos: escolher o áudio é o que a pessoa veio fazer. A
   // folha só aparece depois, já com o título tirado do nome do arquivo.
@@ -239,7 +401,7 @@ export default function EspacoJam() {
     const jaEra = versao.id === projeto.primary_version_id;
     try {
       await catalogo.setPrimaryVersion(projeto.id, jaEra ? null : versao.id);
-      await buscar();
+      mudar({ primary_version_id: jaEra ? null : versao.id });
     } catch { /* o estado real volta no próximo refresh */ }
   };
 
@@ -285,6 +447,10 @@ export default function EspacoJam() {
   const rotuloDoStatus =
     CATALOG_STATUS[projeto.status as keyof typeof CATALOG_STATUS]?.label || projeto.status;
 
+  const principalAberta = Boolean(aberta && aberta.id === projeto.primary_version_id);
+  const haSolo = mesa.estado.pistas.some((p) => p.solo);
+  const prontas = mesa.estado.pistas.filter((p) => p.carga === 'pronta').length;
+
   return (
     <LinearGradient colors={[COR_JAM.fundoDe, COR_JAM.fundoAte]} style={estilos.tela}>
       <ScrollView
@@ -297,8 +463,7 @@ export default function EspacoJam() {
         keyboardShouldPersistTaps="handled"
       >
         {/* O cabeçalho é o TÍTULO. Voltar de um lado, editar do outro, e o nome da música com a
-            largura toda e duas linhas — antes ele disputava a fila com uma pílula de status de
-            até 132 pt e sobravam-lhe ~104 pt, que é 7 a 9 caracteres. */}
+            largura toda e duas linhas. */}
         <View style={estilos.cabecalho}>
           <Pressable
             style={estilos.redondo}
@@ -326,8 +491,9 @@ export default function EspacoJam() {
           </Pressable>
         </View>
 
-        {/* A segunda linha: o status como um chip pequeno, e o selo de gravação ao lado. O
-            status saiu da fila do título porque não é o assunto — é um atributo. */}
+        {/* A segunda linha: o status da música e, ao lado, o andamento e o tom da gravação
+            aberta. Envolve para a linha de baixo em telas estreitas em vez de espremer os
+            campos — um campo de dois caracteres não se aperta mais do que isso. */}
         <View style={estilos.segundaLinha}>
           <Pressable
             style={[estilos.chip, { backgroundColor: status.fundo }]}
@@ -341,6 +507,27 @@ export default function EspacoJam() {
             <Feather name="chevron-down" size={11} color={status.texto} />
           </Pressable>
 
+          <CampoDoCabecalho
+            valor={bpm}
+            aoMudar={setBpm}
+            sufixo="BPM"
+            largura={34}
+            numerico
+            limite={3}
+            travado={!aberta}
+            rotulo="Andamento da gravação, em BPM"
+          />
+          <CampoDoCabecalho
+            valor={tom}
+            aoMudar={setTom}
+            sufixo="Tom"
+            largura={40}
+            maiusculas
+            limite={6}
+            travado={!aberta}
+            rotulo="Tom da gravação"
+          />
+
           {selo !== 'parado' && (
             <Text
               style={[estilos.selo, selo === 'erro' && estilos.seloDeErro]}
@@ -351,13 +538,17 @@ export default function EspacoJam() {
           )}
         </View>
 
-        {/* A ficha técnica numa linha. BPM e tom vêm da FAVORITA (são da gravação); gênero e
-            data, da música. Tocar abre a mesma ficha do lápis. */}
+        {/* A linha que resolve a confusão antiga: o número é DAQUELA gravação, com nome e tudo. */}
+        <DonoDosCampos
+          alerta={!aberta}
+          texto={aberta
+            ? `de V${aberta.version_number}${aberta.title ? ` · ${aberta.title}` : ''}${principalAberta ? ' ★' : ''}`
+            : 'envie uma gravação para registrar andamento e tom'}
+        />
+
+        {/* O que é da MÚSICA e não muda de gravação para gravação. Tocar abre a mesma ficha. */}
         <ResumoDaFicha
-          dados={{
-            bpm: favorita?.bpm, tom: favorita?.key,
-            genero: projeto.genre, lancamento: projeto.release_date,
-          }}
+          dados={{ genero: projeto.genre, lancamento: projeto.release_date }}
           aoTocar={() => setFichaAberta(true)}
         />
 
@@ -372,136 +563,138 @@ export default function EspacoJam() {
               </Text>
             </View>
           ) : (
-            <View style={estilos.listaDeVersoes}>
-              {versoes.map((versao) => {
-                const principal = versao.id === projeto.primary_version_id;
-                const noAr = tocandoId === versao.id;
-                const tocando = noAr && estadoDoSom.playing;
-                return (
-                  <View
-                    key={versao.id}
-                    style={[
-                      estilos.versao,
-                      principal && estilos.versaoPrincipal,
-                      !versao.audio_file && estilos.versaoSemAudio,
-                    ]}
-                  >
-                    <View style={estilos.identidade}>
-                      <Avatar nome={versao.author_name} foto={versao.author_avatar} tamanho={44} />
-                      <View style={estilos.flex}>
-                        <Text style={estilos.tituloDaVersao} numberOfLines={1}>
-                          {versao.title || `Versão ${versao.version_number}`}
-                        </Text>
-                      </View>
-                      <View style={estilos.crachas}>
-                        <View style={estilos.cracha}>
-                          <Text style={estilos.crachaTexto}>V{versao.version_number}</Text>
-                        </View>
-                        {/* Estrela em vez de etiqueta: além de dizer qual é a principal,
-                            marca outra sem abrir a folha de edição. */}
-                        <Pressable
-                          onPress={() => alternarPrincipal(versao)}
-                          hitSlop={8}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: principal }}
-                          accessibilityLabel={principal
-                            ? `Desmarcar V${versao.version_number} como versão principal`
-                            : `Tornar V${versao.version_number} a versão principal`}
-                        >
-                          <Feather
-                            name="star"
-                            size={17}
-                            color={principal ? COR_JAM.estrelaAcesa : COR_JAM.estrela}
-                          />
-                        </Pressable>
-                      </View>
-                    </View>
+            <View style={estilos.editor}>
+              <SeletorDeGravacoes
+                versoes={versoes}
+                abertaId={abertaId}
+                principalId={projeto.primary_version_id}
+                aoAbrir={(versao) => setAbertaId(versao.id)}
+              />
 
-                    <View style={estilos.reproducao}>
-                      <Pressable
-                        onPress={() => tocar(versao)}
-                        disabled={!versao.audio_file}
-                        hitSlop={6}
-                        accessibilityRole="button"
-                        accessibilityLabel={versao.audio_file
-                          ? (tocando ? `Pausar V${versao.version_number}` : `Tocar V${versao.version_number}`)
-                          : 'Nenhum áudio anexado'}
-                      >
-                        {/* O triângulo é NU: a web desenha o ícone a 42px num alvo de 46
-                            sem fundo e sem anel. Circulado ele lê como botão primário e
-                            disputa atenção com o botão de enviar, que é o único azul cheio. */}
-                        <Feather
-                          name={tocando ? 'pause' : 'play'}
-                          size={42}
-                          color={versao.audio_file ? COR.primaria : COR_JAM.estrela}
-                        />
-                      </Pressable>
-                      {versao.audio_file ? (
-                        <Onda
-                          url={versao.audio_file}
-                          segundo={noAr ? estadoDoSom.currentTime : 0}
-                          // A versão sem áudio tem o cartão levemente tingido; a onda só
-                          // aparece nas com áudio, então o fundo dela é sempre o branco.
-                          fundo={COR_JAM.papel}
-                          aoBuscar={(ponto) => buscarNoAudio(versao, ponto)}
-                        />
-                      ) : (
-                        <SemOnda />
-                      )}
-                    </View>
-
-                    <View style={estilos.rodapeDaVersao}>
-                      <Text style={estilos.autoria} numberOfLines={2}>
-                        {versao.author_name || 'Autor não identificado'} · {dataCurta(versao.created_at)}
+              {!!aberta && (
+                <>
+                  {/* Quem gravou, quando, e o que se faz com esta gravação. A estrela marca a
+                      principal daqui mesmo, sem abrir a folha de edição. */}
+                  <View style={estilos.identidade}>
+                    <Avatar nome={aberta.author_name} foto={aberta.author_avatar} tamanho={44} />
+                    <View style={estilos.flex}>
+                      <Text style={estilos.tituloDaVersao} numberOfLines={1}>
+                        {aberta.title || `Versão ${aberta.version_number}`}
                       </Text>
-                      <View style={estilos.acoes}>
-                        {/* "Baixar" no celular é a folha de partilha: dela sai "Guardar em
-                            Ficheiros", que é o equivalente do download do navegador, e ainda
-                            o AirDrop e o WhatsApp — que é como a mix costuma circular. */}
-                        {!!versao.audio_file && (
-                          <Pressable
-                            style={estilos.acao}
-                            onPress={() => Share.share({ url: versao.audio_file as string })}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Baixar ou compartilhar V${versao.version_number}`}
-                          >
-                            <Feather name="download" size={15} color={COR_JAM.acaoIcone} />
-                          </Pressable>
-                        )}
-                        <Pressable
-                          style={estilos.acao}
-                          onPress={() => setComentando(versao)}
-                          accessibilityRole="button"
-                          accessibilityLabel={
-                            `Abrir ${contagens[versao.id] ?? 0} comentários de V${versao.version_number}`
-                          }
-                        >
-                          <Feather name="message-circle" size={15} color={COR_JAM.acaoIcone} />
-                          <Text style={estilos.acaoTexto}>{contagens[versao.id] ?? 0}</Text>
-                        </Pressable>
-                        <Pressable
-                          style={estilos.acao}
-                          onPress={() => router.push(`/jam/${artistaId}/${projeto.id}/${versao.id}`)}
-                          accessibilityRole="button"
-                          accessibilityLabel={
-                            `Abrir a visualização completa de V${versao.version_number}`
-                          }
-                        >
-                          <Feather name="maximize-2" size={15} color={COR_JAM.acaoIcone} />
-                        </Pressable>
-                        <Pressable
-                          style={estilos.acao}
-                          onPress={() => { setArquivoInicial(null); setEmEdicao(versao); setFolhaAberta(true); }}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Mais ações para V${versao.version_number}`}
-                        >
-                          <Feather name="more-vertical" size={15} color={COR_JAM.acaoIcone} />
-                        </Pressable>
-                      </View>
+                      <Text style={estilos.autoria} numberOfLines={1}>
+                        {aberta.author_name || 'Autor não identificado'} · {dataCurta(aberta.created_at)}
+                      </Text>
                     </View>
+                    <Pressable
+                      onPress={() => alternarPrincipal(aberta)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: principalAberta }}
+                      accessibilityLabel={principalAberta
+                        ? `Desmarcar V${aberta.version_number} como gravação principal`
+                        : `Tornar V${aberta.version_number} a gravação principal`}
+                    >
+                      <Feather
+                        name="star"
+                        size={19}
+                        color={principalAberta ? COR_JAM.estrelaAcesa : COR_JAM.estrela}
+                      />
+                    </Pressable>
                   </View>
-                );
-              })}
+
+                  {/* UM transporte para a gravação inteira. É ele que diz, sem uma palavra, que
+                      as pistas abaixo tocam JUNTAS. */}
+                  <Transporte
+                    tocando={mesa.estado.tocando}
+                    posicao={mesa.estado.posicao}
+                    duracao={mesa.estado.duracao}
+                    carregando={mesa.estado.carregando}
+                    prontas={prontas}
+                    aoAlternar={mesa.alternar}
+                    aoBuscar={mesa.irPara}
+                  />
+
+                  {/* A ordem das linhas é a das PISTAS (posição no banco), e não a da mesa —
+                      para ela, que toca tudo ao mesmo tempo, ordem nenhuma significa nada. */}
+                  <View>
+                    {pistas.map((pista, indice) => {
+                      const estadoDaPista = mesa.estado.pistas.find((p) => p.id === pista.id);
+                      if (!estadoDaPista) return null;
+                      const stem = stems.find((s) => s.id === pista.id);
+                      return (
+                        <Pista
+                          key={pista.id}
+                          pista={estadoDaPista}
+                          indice={indice}
+                          picos={mesa.picos(pista.id, BARRAS)}
+                          progresso={estadoDaPista.duracao
+                            ? Math.min(mesa.estado.posicao / estadoDaPista.duracao, 1)
+                            : 0}
+                          haSolo={haSolo}
+                          aoMudar={() => mesa.mudar(pista.id, !estadoDaPista.muda)}
+                          aoSolar={() => mesa.solar(pista.id, !estadoDaPista.solo)}
+                          aoGanho={(v) => mexerNoGanho(pista.id, v)}
+                          // A Mix não se renomeia, não se move e não se apaga: ela é o áudio da
+                          // própria gravação, e mexer nela é mexer na gravação.
+                          aoAbrirOpcoes={stem ? () => setPistaEmOpcoes(stem) : undefined}
+                        />
+                      );
+                    })}
+                  </View>
+
+                  <AdicionarPista
+                    quantas={stems.length}
+                    envios={envios}
+                    recusados={recusados}
+                    aoEscolher={() => { void enviarStems(); }}
+                    aoLimparRecusas={() => setRecusados([])}
+                  />
+
+                  {/* As ações da gravação ficam no rodapé do editor, longe dos controles de
+                      escuta: aqui se baixa, se comenta, se abre em tela cheia e se edita. */}
+                  <View style={estilos.acoes}>
+                    {!!aberta.audio_file && (
+                      // "Baixar" no celular é a folha de partilha: dela sai "Guardar em
+                      // Ficheiros", e ainda o AirDrop e o WhatsApp — que é como a mix circula.
+                      <Pressable
+                        style={estilos.acao}
+                        onPress={() => Share.share({ url: aberta.audio_file as string })}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Baixar ou compartilhar V${aberta.version_number}`}
+                      >
+                        <Feather name="download" size={15} color={COR_JAM.acaoIcone} />
+                      </Pressable>
+                    )}
+                    <Pressable
+                      style={estilos.acao}
+                      onPress={() => setComentando(aberta)}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        `Abrir ${contagens[aberta.id] ?? 0} comentários de V${aberta.version_number}`
+                      }
+                    >
+                      <Feather name="message-circle" size={15} color={COR_JAM.acaoIcone} />
+                      <Text style={estilos.acaoTexto}>{contagens[aberta.id] ?? 0}</Text>
+                    </Pressable>
+                    <Pressable
+                      style={estilos.acao}
+                      onPress={() => router.push(`/jam/${artistaId}/${projeto.id}/${aberta.id}`)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Abrir a visualização completa de V${aberta.version_number}`}
+                    >
+                      <Feather name="maximize-2" size={15} color={COR_JAM.acaoIcone} />
+                    </Pressable>
+                    <Pressable
+                      style={estilos.acao}
+                      onPress={() => { setArquivoInicial(null); setEmEdicao(aberta); setFolhaAberta(true); }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Mais ações para V${aberta.version_number}`}
+                    >
+                      <Feather name="more-vertical" size={15} color={COR_JAM.acaoIcone} />
+                    </Pressable>
+                  </View>
+                </>
+              )}
             </View>
           )}
         </View>
@@ -533,9 +726,9 @@ export default function EspacoJam() {
         versao={emEdicao}
         ehPrincipal={Boolean(emEdicao && emEdicao.id === projeto.primary_version_id)}
         proximoNumero={versoes.length ? Math.max(...versoes.map((v) => v.version_number)) + 1 : 1}
-        // Herda da FAVORITA: é a gravação de referência, e é dela que o andamento e o tom de
-        // uma versão nova provavelmente partem. O gênero continua da música.
-        herdar={{ bpm: favorita?.bpm, key: favorita?.key, genre: projeto.genre }}
+        // Herda da gravação ABERTA: é dela que o andamento e o tom de uma gravação nova
+        // provavelmente partem. O gênero continua da música.
+        herdar={{ bpm: aberta?.bpm, key: aberta?.key, genre: projeto.genre }}
         autor={{ id: usuario?.id, nome: meuNome, foto: minhaFoto }}
         arquivoInicial={arquivoInicial}
         aoFechar={() => { setFolhaAberta(false); setEmEdicao(null); setArquivoInicial(null); }}
@@ -543,10 +736,21 @@ export default function EspacoJam() {
         aoExcluir={aoExcluirVersao}
       />
 
+      <FolhaDaPista
+        aberta={Boolean(pistaEmOpcoes)}
+        pista={pistaEmOpcoes}
+        primeira={stems[0]?.id === pistaEmOpcoes?.id}
+        ultima={stems[stems.length - 1]?.id === pistaEmOpcoes?.id}
+        aoFechar={() => setPistaEmOpcoes(null)}
+        aoRenomear={renomearPista}
+        aoMover={moverPista}
+        aoRemover={removerPista}
+      />
+
       <FichaDaFaixa
         aberta={fichaAberta}
         artistaId={String(artistaId)}
-        faixa={catalogo.catalogProjectToItem(projeto, favorita ?? undefined)}
+        faixa={catalogo.catalogProjectToItem(projeto, aberta ?? undefined)}
         generos={projeto.genre ? [projeto.genre] : []}
         autor={{ id: usuario?.id, nome: meuNome }}
         aoFechar={() => setFichaAberta(false)}
@@ -590,7 +794,7 @@ const estilos = StyleSheet.create({
 
   // Alinhada com o título, e não com o botão de voltar: 44 do botão + 10 de folga.
   segundaLinha: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
+    flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8,
     marginTop: 8, paddingLeft: 54,
   },
   chip: {
@@ -614,41 +818,14 @@ const estilos = StyleSheet.create({
   semVersoesTitulo: { fontSize: 17, fontWeight: '700', color: COR_JAM.texto, textAlign: 'center' },
   semVersoesApoio: { fontSize: 14, color: COR_JAM.apoioDoVazio, textAlign: 'center', lineHeight: 20 },
 
-  listaDeVersoes: { gap: 14 },
-  versao: {
-    borderRadius: 18, borderWidth: 1, borderColor: COR_JAM.contornoDaVersao,
-    backgroundColor: COR_JAM.papel, overflow: 'hidden',
-    shadowColor: 'rgba(74, 99, 145, .1)', shadowOpacity: 1,
-    shadowOffset: { width: 0, height: 20 }, shadowRadius: 50, elevation: 3,
-  },
-  versaoPrincipal: { borderColor: COR_JAM.contornoDaPrincipal },
-  versaoSemAudio: { backgroundColor: COR_JAM.semAudio },
-  identidade: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingTop: 14, paddingHorizontal: RECUO, paddingBottom: 10,
-    backgroundColor: COR_JAM.cabecaDaVersao,
-  },
+  editor: { gap: 14 },
+  identidade: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatarFoto: { resizeMode: 'cover' },
   avatarVazio: { alignItems: 'center', justifyContent: 'center' },
   avatarTexto: { fontWeight: '800', color: COR_JAM.papel },
-  tituloDaVersao: { fontSize: 20, fontWeight: '800', color: COR_JAM.titulo },
-  crachas: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cracha: {
-    paddingHorizontal: 9, paddingVertical: 6, borderRadius: 8,
-    borderWidth: 1, borderColor: COR_JAM.crachaContorno, backgroundColor: COR_JAM.papel,
-  },
-  crachaTexto: { fontSize: 12, fontWeight: '800', color: COR_JAM.cracha },
+  tituloDaVersao: { fontSize: 19, fontWeight: '800', color: COR_JAM.titulo },
+  autoria: { fontSize: 12, color: COR_JAM.apoio },
 
-  reproducao: {
-    flexDirection: 'row', alignItems: 'center', gap: 16,
-    paddingVertical: 16, paddingHorizontal: RECUO,
-  },
-
-  rodapeDaVersao: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingHorizontal: RECUO, paddingBottom: RECUO,
-  },
-  autoria: { flex: 1, fontSize: 13, color: COR_JAM.apoio },
   acoes: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 5 },
   acao: {
     height: 36, minWidth: 36, paddingHorizontal: 9, borderRadius: 999,

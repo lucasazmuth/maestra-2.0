@@ -4,6 +4,7 @@ import { File } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
+import type { ArquivoParaEnviar } from '@maestra/core/audio/envioDePistas';
 import {
   BALDE_DO_CATALOGO, enviarArquivo, type ArquivoEnviado,
 } from '@maestra/core/services/armazenamento';
@@ -146,3 +147,17 @@ export const escolherAudios = async (): Promise<ArquivoEscolhido[]> => {
     tamanho: arquivo.size ?? undefined,
   }));
 };
+
+/**
+ * O arquivo escolhido, no formato que a fila de stems espera.
+ *
+ * A tradução é toda no `dados`: a fila do núcleo pede uma FUNÇÃO que devolve os bytes, e não os
+ * bytes. Ler aqui, agora, os seis ficheiros que a pessoa acabou de escolher seria 240 MB na
+ * memória antes de o primeiro sequer começar a subir.
+ */
+export const paraEnvioDePista = (arquivo: ArquivoEscolhido): ArquivoParaEnviar => ({
+  nome: arquivo.nome,
+  tipo: arquivo.tipo,
+  tamanho: arquivo.tamanho,
+  dados: async () => (await new File(arquivo.uri).bytes()).buffer as ArrayBuffer,
+});
