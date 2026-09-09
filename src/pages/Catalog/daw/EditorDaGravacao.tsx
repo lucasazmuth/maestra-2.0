@@ -81,6 +81,8 @@ export const EditorDaGravacao: FC<{
   selo: 'parado' | 'salvando' | 'salvo' | 'erro';
   /** O lote em curso, se houver: dez stems levam um minuto, e um minuto sem sinal é um bug. */
   envio?: { feitos: number; total: number } | null;
+  /** A guia a ser gerada na saída: a tela precisa de dizer por que não fechou ainda. */
+  gerando?: boolean;
   pistas: CatalogTrack[];
   pistaFixaId?: string | null;
   aoMontar?: () => void;
@@ -92,7 +94,7 @@ export const EditorDaGravacao: FC<{
   podeEditar: boolean;
   acoes: AcoesDoEditor;
 }> = ({
-  titulo, selo, envio, pistas, pistaFixaId, aoMontar,
+  titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
   estado, picos, transporte, ficha, podeEditar, acoes,
 }) => {
   const [aba, setAba] = useState<'linha' | 'mesa'>('linha');
@@ -300,9 +302,10 @@ export const EditorDaGravacao: FC<{
         <button
           type='button'
           onClick={acoes.aoSair}
-          title='Voltar para Músicas'
+          disabled={gerando}
+          title={gerando ? 'Gerando a guia…' : 'Voltar para Músicas'}
           aria-label='Voltar para Músicas'
-          style={redondo}
+          style={{ ...redondo, opacity: gerando ? 0.4 : 1, cursor: gerando ? 'wait' : 'pointer' }}
         >
           <FiX size={13} />
         </button>
@@ -339,6 +342,12 @@ export const EditorDaGravacao: FC<{
         <div style={{ flex: 1, minWidth: 0 }} />
 
         {ficha}
+
+        {gerando && (
+          <span style={{ fontSize: 11, color: DS.color.primaria, fontFamily: DS.font.mono, flexShrink: 0 }}>
+            Gerando a guia…
+          </span>
+        )}
 
         {!!envio && (
           <span style={{ fontSize: 11, color: DS.color.primaria, fontFamily: DS.font.mono, flexShrink: 0 }}>

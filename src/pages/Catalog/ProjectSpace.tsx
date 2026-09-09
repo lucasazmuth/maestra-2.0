@@ -435,17 +435,14 @@ const ProjectSpace: FC = () => {
   // novo, uma música editada trinta vezes guardaria trinta guias mortas; com mil músicas, isso
   // são centenas de gigabytes que ninguém volta a abrir.
   const sujo = useRef(false);
-  const gerando = useRef(false);
+  const [gerando, setGerando] = useState(false);
 
-  const gerarGuia = useCallback(async () => {
-    const gravacao = openRef.current;
-    if (!sujo.current || gerando.current || !gravacao || !artistId || !projectId) return;
-    const mesaViva = mesaRef.current;
-    if (!mesaViva) return;
+  const gerarGuia = async (gravacao: CatalogVersion | null) => {
+    if (!sujo.current || !gravacao || !artistId || !projectId) return;
 
-    gerando.current = true;
+    setGerando(true);
     try {
-      const rendido = await mesaViva.renderizar(criarOfflineWeb);
+      const rendido = await mesa.renderizar(criarOfflineWeb);
       if (!rendido) return;
       const mp3 = await paraMp3(rendido);
       const gravado = await gravarEmCaminhoFixo(
@@ -463,23 +460,22 @@ const ProjectSpace: FC = () => {
       });
       sujo.current = false;
     } catch {
-      // Falhar a guia não pode estragar a saída: a montagem está salva, e a próxima saída
-      // tenta de novo.
+      // Falhar a guia não pode prender a pessoa na tela: a montagem está salva, e a próxima
+      // saída tenta de novo.
     } finally {
-      gerando.current = false;
+      setGerando(false);
     }
-  }, [artistId, projectId]);
-
-  // Sair da tela é o gatilho. `openRef` e `mesaRef` existem porque este efeito corre uma vez e
-  // precisa dos valores do INSTANTE da saída, não dos da montagem.
-  const openRef = useRef<CatalogVersion | null>(null);
-  const mesaRef = useRef<typeof mesa | null>(null);
-  openRef.current = open;
-  mesaRef.current = mesa;
-  useEffect(() => () => { void gerarGuia(); }, [gerarGuia]);
+  };
 
   const acoes: AcoesDoEditor = {
-    aoSair: () => navigate(`/artists/${artistId}/catalog`),
+    // ⚠️ A GUIA É GERADA ANTES DE SAIR, e não na limpeza do efeito, porque a limpeza chega
+    // tarde: o `useMesa` descarta a mesa primeiro — é ele quem está declarado antes — e a
+    // renderização encontraria a gaveta de buffers já vazia. Foi assim que a primeira versão
+    // falhou, em silêncio, sem gravar nada.
+    aoSair: async () => {
+      await gerarGuia(open);
+      navigate(`/artists/${artistId}/catalog`);
+    },
     aoRenomear: (nome) => setProject((atual) => (atual ? { ...atual, title: nome } : atual)),
     aoAdicionarArquivos: (arquivos, inicio, pistaAlvo) => { void enviarPistas(arquivos, inicio, pistaAlvo); },
 
@@ -574,6 +570,7 @@ const ProjectSpace: FC = () => {
         titulo={project.title}
         selo={saveState}
         envio={envio}
+        gerando={gerando}
         pistas={pistas}
         pistaFixaId={porMontar ? ID_DA_MIX : null}
         aoMontar={porMontar && podeEditar ? () => { void montarAMix(); } : undefined}
