@@ -58,7 +58,7 @@ const CampoDoTopo: FC<{
 }> = ({ rotulo, valor, largura, aoMudar, travado, limite }) => (
   <label style={{
     display: 'inline-flex', alignItems: 'center', gap: 5,
-    color: DS.color.textTertiary, fontSize: 10, fontWeight: 700, letterSpacing: '0.05em',
+    color: DS.color.textoFraco, fontSize: 10, fontWeight: 700, letterSpacing: '0.05em',
   }}>
     <input
       value={valor}
@@ -69,10 +69,10 @@ const CampoDoTopo: FC<{
       aria-label={rotulo}
       style={{
         width: largura, height: 26, padding: '0 8px',
-        background: DS.color.bgSurface,
-        border: `1px solid ${DS.color.borderDefault}`,
-        borderRadius: DS.radius.sm,
-        color: DS.color.textPrimary,
+        background: DS.color.bgCampo,
+        border: `1px solid ${DS.color.borda}`,
+        borderRadius: DS.raio.medio,
+        color: DS.color.texto,
         fontSize: 12, fontWeight: 700, textAlign: 'center',
         fontFamily: DS.font.mono, outline: 'none',
       }}
@@ -96,6 +96,8 @@ const ProjectSpace: FC = () => {
   const [openId, setOpenId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<'parado' | 'salvando' | 'salvo' | 'erro'>('parado');
   const [projectModal, setProjectModal] = useState(false);
+  /** Onde vai o lote. Sem isto, enviar dez stems é olhar para uma tela parada durante um minuto. */
+  const [envio, setEnvio] = useState<{ feitos: number; total: number } | null>(null);
   const [genres, setGenres] = useState<MusicGenre[]>([]);
   const [members, setMembers] = useState<ArtistMember[]>([]);
 
@@ -178,6 +180,15 @@ const ProjectSpace: FC = () => {
   }, [doBanco, open, mesa.estado.duracao]);
 
   const porMontar = !doBanco.length && Boolean(open?.audio_file);
+
+  // O Master é da GRAVAÇÃO: trocar de gravação traz o dela. Sem isto, a mesa ficaria com o
+  // volume geral da anterior, e a pessoa ouviria a nova mais alta ou mais baixa sem saber por quê.
+  const mestreAplicado = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open || mestreAplicado.current === open.id) return;
+    mestreAplicado.current = open.id;
+    mesa.mestreEm(Number(open.master_gain ?? 0.8));
+  }, [open, mesa]);
 
   // ─── Salvamento automático ────────────────────────────────────────────────
   //
@@ -316,7 +327,7 @@ const ProjectSpace: FC = () => {
     }
   };
 
-  const enviarPistas = async (arquivos: File[], inicio: number) => {
+  const enviarPistas = async (arquivos: File[], inicio: number, pistaAlvo?: string) => {
     if (!open || !project || !artistId || !podeEditar) return;
 
     // ⚠️ A MIX É MONTADA ANTES do primeiro stem entrar. Assim que existe uma pista de verdade,
@@ -344,9 +355,11 @@ const ProjectSpace: FC = () => {
     if (!aceites.length) return;
 
     setSaveState('salvando');
+    setEnvio({ feitos: 0, total: aceites.length });
     const pasta = `${artistId}/${project.id}/versions/${open.id}/stems`;
     try {
       for (let i = 0; i < aceites.length; i += 1) {
+        setEnvio({ feitos: i, total: aceites.length });
         const arquivo = aceites[i];
         // A duração vem dos metadados, antes de subir: é o tamanho do clipe que vai nascer, e
         // sem ela a tela teria de descodificar 40 MB só para desenhar um retângulo.
@@ -366,15 +379,27 @@ const ProjectSpace: FC = () => {
           size_bytes: arquivo.size,
           duration_seconds: duracao,
         });
-        await catalogDb.criarPistaComArquivo({
-          versionId: open.id,
-          arquivo: linha,
-          nome: tituloDoArquivo(arquivo.name),
-          position: pistas.length + i,
-          colorIndex: (pistas.length + i) % 6,
-          duracao,
-          inicio,
-        });
+        if (pistaAlvo) {
+          // Com pista de destino, o ficheiro vira mais um CLIPE nela — é assim que se junta um
+          // take novo à mesma faixa em vez de encher a montagem de pistas de uma linha só.
+          await catalogDb.createClip({
+            track_id: pistaAlvo,
+            file_id: linha.id,
+            start_seconds: inicio,
+            offset_seconds: 0,
+            duration_seconds: duracao,
+          });
+        } else {
+          await catalogDb.criarPistaComArquivo({
+            versionId: open.id,
+            arquivo: linha,
+            nome: tituloDoArquivo(arquivo.name),
+            position: pistas.length + i,
+            colorIndex: (pistas.length + i) % 6,
+            duracao,
+            inicio,
+          });
+        }
       }
       // Só aqui é que a montagem recarrega, e tem de recarregar: há áudio novo para descodificar.
       await refresh();
@@ -382,6 +407,8 @@ const ProjectSpace: FC = () => {
     } catch {
       setSaveState('erro');
       message.error('Não consegui enviar as pistas');
+    } finally {
+      setEnvio(null);
     }
   };
 
@@ -390,7 +417,7 @@ const ProjectSpace: FC = () => {
     aoRenomear: (nome) => setProject((atual) => (atual ? { ...atual, title: nome } : atual)),
     aoAbrirGravacao: (id) => setOpenId(id),
     aoAbrirCompleta: () => navigate(`/artists/${artistId}/catalog?projectId=${project?.id}&versionId=${openId}`),
-    aoAdicionarArquivos: (arquivos, inicio) => { void enviarPistas(arquivos, inicio); },
+    aoAdicionarArquivos: (arquivos, inicio, pistaAlvo) => { void enviarPistas(arquivos, inicio, pistaAlvo); },
 
     aoMoverClipe: (clipeId, inicio) => {
       mudarClipeLocal(clipeId, { start_seconds: inicio });
@@ -441,6 +468,7 @@ const ProjectSpace: FC = () => {
       // segundo de atraso, e ninguém mistura assim.
       if (parte.muted !== undefined) mesa.mudar(pistaId, parte.muted);
       if (parte.gain !== undefined) mesa.ganho(pistaId, parte.gain);
+      if (parte.pan !== undefined) mesa.panoramar(pistaId, parte.pan);
       adiar(`pista:${pistaId}`, () => catalogDb.updateTrack(pistaId, parte));
     },
 
@@ -455,10 +483,19 @@ const ProjectSpace: FC = () => {
     },
 
     aoSolar: (pistaId, solo) => mesa.solar(pistaId, solo),
+
+    // O Master é o fader que fica depois de todos os outros: muda o som na hora e vai para o
+    // banco com atraso, como os outros faders.
+    aoMestre: (valor) => {
+      mesa.mestreEm(valor);
+      if (!open) return;
+      mudarGravacao({ master_gain: valor });
+      adiar('mestre', () => catalogDb.updateCatalogVersion(open.id, { master_gain: valor }));
+    },
   };
 
   if (loading) return <div style={{ position: 'fixed', inset: 0, display: 'grid', placeItems: 'center', background: DS.color.bgBase }}><Spinner loading>{null as any}</Spinner></div>;
-  if (!project) return <div style={{ position: 'fixed', inset: 0, display: 'grid', placeItems: 'center', background: DS.color.bgBase, color: DS.color.textTertiary }}>Espaço JAM não encontrado.</div>;
+  if (!project) return <div style={{ position: 'fixed', inset: 0, display: 'grid', placeItems: 'center', background: DS.color.bgBase, color: DS.color.textoFraco }}>Espaço JAM não encontrado.</div>;
 
   const rotuloDoStatus = CATALOG_STATUS[project.status as keyof typeof CATALOG_STATUS]?.label || project.status;
 
@@ -467,6 +504,7 @@ const ProjectSpace: FC = () => {
       <EditorDaGravacao
         titulo={project.title}
         selo={saveState}
+        envio={envio}
         gravacoes={versions}
         abertaId={openId}
         principalId={project.primary_version_id}
@@ -475,7 +513,12 @@ const ProjectSpace: FC = () => {
         aoMontar={porMontar && podeEditar ? () => { void montarAMix(); } : undefined}
         estado={mesa.estado}
         picos={mesa.picos}
-        transporte={{ alternar: mesa.alternar, irPara: mesa.irPara }}
+        transporte={{
+          alternar: mesa.alternar,
+          // Parar é pausar E voltar ao início — é o que o quadrado faz em qualquer editor.
+          parar: () => { mesa.pausar(); mesa.irPara(0); },
+          irPara: mesa.irPara,
+        }}
         podeEditar={podeEditar}
         acoes={acoes}
         ficha={(
@@ -489,10 +532,10 @@ const ProjectSpace: FC = () => {
               aria-label={`Status: ${rotuloDoStatus}`}
               style={{
                 height: 26, padding: '0 8px',
-                background: DS.color.bgSurface,
-                border: `1px solid ${DS.color.borderDefault}`,
-                borderRadius: DS.radius.sm,
-                color: DS.color.textSecondary,
+                background: DS.color.bgCampo,
+                border: `1px solid ${DS.color.borda}`,
+                borderRadius: DS.raio.medio,
+                color: DS.color.textoApoio,
                 fontSize: 11, fontWeight: 600, fontFamily: DS.font.display,
                 outline: 'none', cursor: podeEditar ? 'pointer' : 'default',
               }}
@@ -526,8 +569,8 @@ const ProjectSpace: FC = () => {
               aria-label='Editar as informações da música'
               style={{
                 height: 26, padding: '0 10px',
-                background: 'transparent', border: `1px solid ${DS.color.borderDefault}`,
-                borderRadius: DS.radius.sm, color: DS.color.textTertiary,
+                background: 'transparent', border: `1px solid ${DS.color.borda}`,
+                borderRadius: DS.raio.medio, color: DS.color.textoFraco,
                 fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', cursor: 'pointer',
               }}
             >

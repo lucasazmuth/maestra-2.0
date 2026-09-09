@@ -79,6 +79,8 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
       decodeAudioData: () => Promise.resolve(buffer),
       createGain: ganho,
       createWaveShaper: teto,
+      // O panorama de cada pista: sem ele o grafo não se monta e toda pista dá erro de carga.
+      createStereoPanner: () => ({ pan: parametro(), connect: jest.fn(), disconnect: jest.fn() }),
       createBuffer: () => ({ ...buffer, getChannelData: () => new Float32Array(4410) }),
       createBufferSource: () => ({
         buffer: null, connect: jest.fn(), disconnect: jest.fn(), start: jest.fn(), stop: jest.fn(),

@@ -13,7 +13,7 @@ import { Mesa, type Buscar, type EstadoDaMesa, type Pista } from './mesa';
 const TIQUE = 50;
 
 const VAZIA: EstadoDaMesa = {
-  pistas: [], tocando: false, posicao: 0, duracao: 0, carregando: false,
+  pistas: [], tocando: false, posicao: 0, duracao: 0, carregando: false, mestre: 1,
 };
 
 export interface DependenciasDaMesa {
@@ -84,7 +84,7 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
         ...VAZIA,
         pistas: pistas.map((p) => ({
           id: p.id, nome: p.nome, carga: 'erro', erro: motivo,
-          muda: false, solo: false, ganho: p.ganhoInicial ?? 1,
+          muda: false, solo: false, ganho: p.ganhoInicial ?? 1, pan: p.panInicial ?? 0,
         })),
       });
       return undefined;
@@ -121,6 +121,8 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
   const mudar = useCallback((id: string, v: boolean) => { mesa.current?.mudar(id, v); }, []);
   const solar = useCallback((id: string, v: boolean) => { mesa.current?.solar(id, v); }, []);
   const ganho = useCallback((id: string, v: number) => { mesa.current?.ganho(id, v); }, []);
+  const panoramar = useCallback((id: string, v: number) => { mesa.current?.panoramar(id, v); }, []);
+  const mestreEm = useCallback((v: number) => { mesa.current?.mestreEm(v); }, []);
   // O descarte é do DESMONTAR, e só dele. Antes vivia na limpeza do efeito da montagem, e
   // então cada arrasto de clipe fechava o contexto de áudio e abria outro — com o download e a
   // descodificação de tudo outra vez.
@@ -143,5 +145,5 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
     return novos;
   }, []);
 
-  return { estado, tocar, pausar, alternar, irPara, mudar, solar, ganho, picos };
+  return { estado, tocar, pausar, alternar, irPara, mudar, solar, ganho, panoramar, mestreEm, picos };
 }

@@ -243,6 +243,48 @@ describe('Mesa', () => {
     expect(comeco).not.toEqual(fim);
   });
 
+  // O panorama é o segundo controlo de qualquer mesa depois do volume: é com ele que se abre
+  // espaço entre duas camadas que disputam a mesma frequência, sem baixar nenhuma.
+  it('o panorama fica DEPOIS do ganho, e o mestre depois dele', async () => {
+    const { ctx, mesa } = montar([]);
+    await mesa.carregar([pista({ clipes: [clipe()], panInicial: -0.5 })]);
+
+    expect(ctx.panoramas).toHaveLength(1);
+    const panorama = ctx.panoramas[0];
+    expect(panorama.pan.value).toBe(-0.5);
+    // O ganho fala com o panorama, e o panorama com o mestre. Se fosse ao contrário, mover o
+    // panorama mexeria no nível, e o fader deixaria de dizer a mesma coisa.
+    const daPista = ctx.ganhos.find((g) => g.ligadoA === panorama);
+    expect(daPista).toBeDefined();
+    expect(panorama.ligadoA).toBe(ctx.ganhos.find((g) => g.ligadoA === ctx.tetos[0]));
+  });
+
+  it('mover o panorama e o mestre entra com rampa', async () => {
+    const { ctx, mesa } = montar([]);
+    await mesa.carregar([pista({ clipes: [clipe()] })]);
+
+    mesa.panoramar('p1', 0.8);
+    expect(ctx.panoramas[0].pan.value).toBeCloseTo(0.8, 6);
+    expect(mesa.estado().pistas[0].pan).toBeCloseTo(0.8, 6);
+
+    mesa.mestreEm(0.4);
+    expect(mesa.estado().mestre).toBeCloseTo(0.4, 6);
+    // Um salto seco de volume geral estala tanto quanto um de pista: entra pela mesma rampa.
+    const mestre = ctx.ganhos.find((g) => g.ligadoA === ctx.tetos[0]);
+    expect(mestre?.gain.value).toBeCloseTo(0.4, 6);
+  });
+
+  it('o panorama e o mestre ficam dentro dos limites', async () => {
+    const { mesa } = montar([]);
+    await mesa.carregar([pista({ clipes: [clipe()] })]);
+    mesa.panoramar('p1', 9);
+    expect(mesa.estado().pistas[0].pan).toBe(1);
+    mesa.panoramar('p1', -9);
+    expect(mesa.estado().pistas[0].pan).toBe(-1);
+    mesa.mestreEm(9);
+    expect(mesa.estado().mestre).toBe(1);
+  });
+
   it('descartar fecha o contexto', async () => {
     const { ctx, mesa } = montar([]);
     await mesa.carregar([pista({ clipes: [clipe()] })]);

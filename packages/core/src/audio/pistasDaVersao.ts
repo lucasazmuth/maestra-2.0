@@ -43,6 +43,7 @@ export const montagemDaVersao = (versao?: CatalogVersion | null): Pista[] => {
       nome: faixa.name,
       ganhoInicial: faixa.gain ?? 1,
       mudaInicial: faixa.muted ?? false,
+      panInicial: Number(faixa.pan) || 0,
       clipes: (faixa.clips ?? [])
         .map((clipe): Clipe | null => {
           const url = clipe.file_url ?? porId.get(clipe.file_id)?.file_url;

@@ -1,85 +1,91 @@
-// A folha do EDITOR — copiada do projeto de referência que o dono do produto deixou
-// (`Digital Audio WAVE`, `src/styles/tokens.ts` e `ProjectHomePageDAW.tsx`).
+// A folha do EDITOR.
+//
+// Os valores saem da referência que o dono do produto mandou — o print do editor com as três
+// colunas, o acento azul, o Master no topo e as abas Timeline/Mixer.
 //
 // ⚠️ ESTA TELA NÃO USA O DESIGN SYSTEM DO RESTO DO APP, e é de propósito. O Maestra é claro,
-// azul e arredondado; um editor de música é escuro, denso e de contraste alto — é o que Ableton,
-// Logic e Pro Tools são, e é o que o olho de quem trabalha com áudio espera. Misturar os dois
-// daria uma tela que não é nem uma coisa nem outra.
-//
-// Os valores são os da referência, à vírgula. Onde há divergência de nome, o comentário diz de
-// onde veio.
+// azul-marca e arredondado; um editor de música é escuro, denso e de contraste alto — é o que
+// Ableton, Logic e Pro Tools são, e é o que o olho de quem trabalha com áudio espera. Misturar
+// os dois daria uma tela que não é nem uma coisa nem outra.
 
 export const DS = {
   font: {
-    display: "'Onest', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
-    mono: "'Geist Mono', 'JetBrains Mono', 'SF Mono', monospace",
+    display: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif",
+    mono: "'SF Mono', 'JetBrains Mono', 'Geist Mono', monospace",
   },
   color: {
-    // Camadas de fundo, do mais escuro ao mais claro.
-    bgBase: '#0E0E0E',
-    bgSurface: '#141414',
-    bgRaised: '#1A1A1A',
-    bgCard: '#28201B',
-    bgHover: '#302822',
+    /** As camadas, do fundo para a frente. */
+    bgBase: '#1a1a1e',
+    bgPainel: '#212127',
+    bgPista: '#2a2a32',
+    bgFundoDaLinha: '#1c1c21',
+    bgCampo: '#2f2f38',
+    bgHover: '#383842',
 
-    borderSubtle: '#1A1A1A',
-    borderDefault: '#2A2A2A',
-    borderStrong: '#3D342D',
+    borda: '#33333d',
+    bordaForte: '#44444f',
 
-    textPrimary: '#E8E8F0',
-    textSecondary: '#A0A0B8',
-    textTertiary: '#6B6B80',
-    textDisabled: '#3A3A4A',
+    texto: '#e8e8ee',
+    textoApoio: '#a6a6b3',
+    textoFraco: '#71717f',
+    textoInerte: '#4a4a56',
 
-    /** Laranja: a ação principal, a agulha, o corte. */
-    primary: '#E95216',
-    secondary: '#AEE916',
-    success: '#33EB28',
-    warning: '#FFD727',
-    error: '#FF272A',
-    info: '#14B4FF',
+    /** O azul é a ação: o play, os controlos deslizantes, o botão de enviar. */
+    primaria: '#3b82f6',
+    primariaEscura: '#2563eb',
+    /** A agulha e o botão de gravar. */
+    agulha: '#ef4444',
+    gravar: '#ef4444',
 
-    /** A grelha da linha do tempo: a linha de cada segundo, e a mais forte de cinco em cinco. */
-    gridMajor: '#2E2E3E',
-    gridMinor: '#1A1A26',
-    /** As faixas alternam de fundo, para o olho não perder a linha em seis pistas. */
-    rowAlt1: '#0E0E0E',
-    rowAlt2: '#0D0D14',
+    /** A grelha: a linha de cada segundo, e a mais forte de dois em dois. */
+    grelhaForte: '#32323c',
+    grelhaFraca: '#26262e',
   },
-  radius: { sm: 6, md: 8, lg: 10, xl: 14, full: 9999 },
-  transition: { fast: 'all 0.1s ease', base: 'all 0.2s ease' },
+  raio: { pequeno: 4, medio: 6, grande: 8, pilula: 9999 },
 } as const;
 
-/** As cores das pistas, na ordem em que são distribuídas. São as da referência. */
+/**
+ * As cores das pistas.
+ *
+ * Cada faixa recebe a sua, e é o que dá identidade a um clipe visto de longe. Dão a volta
+ * quando as pistas passam de seis.
+ */
 export const CORES_DAS_PISTAS = [
-  '#E95216', // laranja
-  '#AEE916', // lima
-  '#33EB28', // verde
-  '#14B4FF', // azul
-  '#FFD727', // amarelo
-  '#FF272A', // vermelho
+  '#3b82f6', // azul
+  '#a855f7', // roxo
+  '#22c55e', // verde
+  '#f59e0b', // âmbar
+  '#ec4899', // rosa
+  '#14b8a6', // turquesa
 ] as const;
 
 export const corDaPista = (indice: number): string =>
   CORES_DAS_PISTAS[((indice % CORES_DAS_PISTAS.length) + CORES_DAS_PISTAS.length) % CORES_DAS_PISTAS.length];
 
+/** Os tipos de pista que o seletor oferece. Só `audio` toca — os outros esperam o piano roll. */
+export const TIPOS_DE_PISTA = [
+  { valor: 'audio', rotulo: 'Áudio' },
+  { valor: 'synth', rotulo: 'Sintetizador' },
+  { valor: 'piano', rotulo: 'Piano' },
+  { valor: 'drums', rotulo: 'Bateria' },
+] as const;
+
 // ─── Dimensões ───────────────────────────────────────────────────────────────
-//
-// São as da referência. O `PIXELS_POR_SEGUNDO` é o único que a tela mexe (o zoom), e por isso
-// entra como estado em vez de constante.
 
-/** O zoom de partida: 80 pixels por segundo. */
-export const ZOOM_PADRAO = 80;
-export const ZOOM_MINIMO = 12;
-export const ZOOM_MAXIMO = 240;
+/** O zoom de partida: 100% são 60 pixels por segundo. */
+export const PIXELS_POR_SEGUNDO = 60;
+export const ZOOM_MINIMO = 0.25;
+export const ZOOM_MAXIMO = 4;
 
-export const ALTURA_DA_PISTA = 88;
-export const ALTURA_DA_REGUA = 32;
-export const LARGURA_DA_LATERAL = 220;
-export const ALTURA_DO_TOPO = 116;
+export const ALTURA_DA_PISTA = 160;
+export const ALTURA_DA_REGUA = 30;
+export const LARGURA_DAS_FERRAMENTAS = 256;
+export const LARGURA_DAS_PISTAS = 256;
+export const ALTURA_DO_TITULO = 68;
+export const ALTURA_DO_TRANSPORTE = 62;
 
 /** O comprimento mínimo da linha do tempo, em segundos. Cresce com a montagem. */
-export const DURACAO_MINIMA = 120;
+export const DURACAO_MINIMA = 30;
 
-/** O passo do encaixe ao arrastar um clipe. Um quarto de segundo, como na referência. */
+/** O passo do encaixe ao arrastar um clipe. */
 export const ENCAIXE = 0.25;

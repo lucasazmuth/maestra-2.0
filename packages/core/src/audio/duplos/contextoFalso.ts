@@ -3,7 +3,7 @@
 // inteira com "your test suite must contain at least one test".
 
 import type {
-  BufferDeAudio, ContextoDeAudio, Destino, FonteDeAudio, Modelador, NoDeGanho, ParametroDeAudio,
+  BufferDeAudio, ContextoDeAudio, Destino, FonteDeAudio, Modelador, NoDeGanho, Panorama, ParametroDeAudio,
 } from '../contexto';
 
 // O motor de áudio de mentira: relógio na mão, e um registo de tudo o que a mesa mandou fazer.
@@ -71,6 +71,14 @@ export class ModeladorFalso implements Modelador {
  */
 export const TAXA_FALSA = 100;
 
+export class PanoramaFalso implements Panorama {
+  pan = new ParametroFalso();
+  ligadoA: NoDeGanho | Destino | null = null;
+  desligado = false;
+  connect(destino: NoDeGanho | Destino) { this.ligadoA = destino; return destino; }
+  disconnect() { this.desligado = true; }
+}
+
 export class BufferFalso implements BufferDeAudio {
   private readonly canais: Float32Array[];
 
@@ -110,9 +118,11 @@ export class ContextoFalso implements ContextoDeAudio {
   passos: string[] = [];
 
   tetos: ModeladorFalso[] = [];
+  panoramas: PanoramaFalso[] = [];
 
   createGain() { const g = new GanhoFalso(); this.ganhos.push(g); return g; }
   createWaveShaper() { const t = new ModeladorFalso(); this.tetos.push(t); return t; }
+  createStereoPanner() { const p = new PanoramaFalso(); this.panoramas.push(p); return p; }
   createBufferSource() { const f = new FonteFalsa(); this.fontes.push(f); this.passos.push('fonte'); return f; }
   createBuffer(canais: number, tamanho: number, taxa: number) {
     return new BufferFalso(tamanho / taxa, canais, taxa, [new Float32Array(tamanho)]);

@@ -1,4 +1,6 @@
-import type { BufferDeAudio, ContextoDeAudio, FonteDeAudio, Modelador, NoDeGanho } from './contexto';
+import type {
+  BufferDeAudio, ContextoDeAudio, FonteDeAudio, Modelador, NoDeGanho, Panorama,
+} from './contexto';
 import { picos as picosDoBuffer } from './picos';
 import { curvaDoTeto } from './teto';
 
@@ -54,6 +56,8 @@ export interface Pista {
   /** 0..1. O que ficou guardado no banco, ou 1. */
   ganhoInicial?: number;
   mudaInicial?: boolean;
+  /** −1 esquerda, 0 centro, 1 direita. */
+  panInicial?: number;
 }
 
 export type CargaDaPista = 'na-fila' | 'carregando' | 'pronta' | 'erro';
@@ -67,10 +71,14 @@ export interface EstadoDaPista {
   solo: boolean;
   /** A posição do fader. SOBREVIVE ao mute — mutar não é baixar o volume a zero. */
   ganho: number;
+  /** −1 esquerda, 0 centro, 1 direita. */
+  pan: number;
 }
 
 export interface EstadoDaMesa {
   pistas: EstadoDaPista[];
+  /** O fader que fica depois de todos os outros. */
+  mestre: number;
   tocando: boolean;
   posicao: number;
   /** Onde acaba o último clipe. */
@@ -152,7 +160,9 @@ interface PistaViva {
   muda: boolean;
   solo: boolean;
   ganho: number;
+  pan: number;
   saida: NoDeGanho | null;
+  panorama: Panorama | null;
 }
 
 const ANTECEDENCIA_PADRAO = 0.05;
@@ -169,6 +179,7 @@ export class Mesa {
 
   private mestre: NoDeGanho | null = null;
   private teto: Modelador | null = null;
+  private ganhoDoMestre = 1;
   private pistas: PistaViva[] = [];
   private ouvintes = new Set<(e: EstadoDaMesa) => void>();
 
@@ -235,12 +246,14 @@ export class Mesa {
         muda: antiga ? antiga.muda : nova.mudaInicial ?? false,
         solo: antiga ? antiga.solo : false,
         ganho: antiga ? antiga.ganho : nova.ganhoInicial ?? 1,
+        pan: antiga ? antiga.pan : nova.panInicial ?? 0,
         saida: antiga?.saida ?? null,
+        panorama: antiga?.panorama ?? null,
       };
     });
     // `forEach` e não `for…of`: o alvo do TypeScript da web é anterior ao ES2015 e recusa
     // iterar um `Map` sem `downlevelIteration`.
-    antigas.forEach((sobra) => sobra.saida?.disconnect());
+    antigas.forEach((sobra) => { sobra.saida?.disconnect(); sobra.panorama?.disconnect(); });
     this.avisar();
 
     const precisas = new Set(pistas.flatMap((p) => p.clipes.map((c) => c.url)));
@@ -403,13 +416,31 @@ export class Mesa {
     this.avisar();
   }
 
+  /** Move o panorama: −1 esquerda, 0 centro, 1 direita. */
+  panoramar(id: string, valor: number): void {
+    const pista = this.pistas.find((p) => p.id === id);
+    if (!pista) return;
+    pista.pan = Math.max(-1, Math.min(valor, 1));
+    // A mesma rampa dos ganhos: um salto de panorama estala tanto quanto um salto de volume.
+    pista.panorama?.pan.setTargetAtTime(pista.pan, this.ctx.currentTime, RAMPA);
+    this.avisar();
+  }
+
+  /** O fader que fica depois de todos os outros. */
+  mestreEm(valor: number): void {
+    this.ganhoDoMestre = Math.max(0, Math.min(valor, 1));
+    this.mestre?.gain.setTargetAtTime(this.ganhoDoMestre, this.ctx.currentTime, RAMPA);
+    this.avisar();
+  }
+
   // ─── Leitura ──────────────────────────────────────────────────────────────
 
   estado(): EstadoDaMesa {
     return {
-      pistas: this.pistas.map(({ id, nome, carga, erro, muda, solo, ganho }) => ({
-        id, nome, carga, erro, muda, solo, ganho,
+      pistas: this.pistas.map(({ id, nome, carga, erro, muda, solo, ganho, pan }) => ({
+        id, nome, carga, erro, muda, solo, ganho, pan,
       })),
+      mestre: this.ganhoDoMestre,
       tocando: this.tocando,
       posicao: this.posicao(),
       duracao: this.duracaoTotal(),
@@ -458,7 +489,7 @@ export class Mesa {
     if (this.descartada) return;
     this.descartada = true;
     this.pararFontes();
-    for (const pista of this.pistas) pista.saida?.disconnect();
+    for (const pista of this.pistas) { pista.saida?.disconnect(); pista.panorama?.disconnect(); }
     this.pistas = [];
     this.buffers.clear();
     this.mestre?.disconnect();
@@ -494,18 +525,28 @@ export class Mesa {
       this.teto.connect(this.ctx.destination);
 
       this.mestre = this.ctx.createGain();
-      this.mestre.gain.value = 1;
+      this.mestre.gain.value = this.ganhoDoMestre;
       this.mestre.connect(this.teto as unknown as NoDeGanho);
     }
     return this.mestre;
   }
 
+  /**
+   * O caminho de uma pista: `fontes → ganho → panorama → mestre`.
+   *
+   * O panorama vem DEPOIS do ganho porque ele não muda o nível, muda o lugar — e assim o fader
+   * continua a dizer a mesma coisa esteja a pista onde estiver entre os alto-falantes.
+   */
   private ligarSaidas(): void {
     for (const pista of this.pistas) {
       if (pista.saida || pista.carga === 'erro') continue;
+      pista.panorama = this.ctx.createStereoPanner();
+      pista.panorama.pan.value = pista.pan;
+      pista.panorama.connect(this.saidaMestre());
+
       pista.saida = this.ctx.createGain();
       pista.saida.gain.value = 0;
-      pista.saida.connect(this.saidaMestre());
+      pista.saida.connect(pista.panorama as unknown as NoDeGanho);
     }
   }
 

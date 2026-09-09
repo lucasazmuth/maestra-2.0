@@ -25,13 +25,15 @@ export const Clipe: FC<{
   escala: number;
   agulha: number;
   selecionado: boolean;
+  /** A altura da faixa: o clipe preenche-a, menos uma folga em cima e em baixo. */
+  altura: number;
   /** A mix de uma gravação por montar: toca e desenha-se, mas não se edita. */
   fixo?: boolean;
   aoSelecionar: () => void;
   aoArrastar: (evento: React.MouseEvent) => void;
   aoCortar: () => void;
   aoApagar: () => void;
-}> = ({ clipe, indice, cor, picos, escala, agulha, selecionado, fixo, aoSelecionar, aoArrastar, aoCortar, aoApagar }) => {
+}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, aoSelecionar, aoArrastar, aoCortar, aoApagar }) => {
   const caixa = useRef<HTMLDivElement>(null);
   const partiuDe = useRef(0);
   const arrastou = useRef(false);
@@ -56,6 +58,7 @@ export const Clipe: FC<{
       ref={caixa}
       onMouseDown={(evento) => { partiuDe.current = evento.clientX; arrastou.current = false; aoArrastar(evento); }}
       onMouseMove={(evento) => { if (Math.abs(evento.clientX - partiuDe.current) > 4) arrastou.current = true; }}
+      onDoubleClick={(evento) => { evento.stopPropagation(); if (!fixo) aoApagar(); }}
       onClick={(evento) => {
         // Só alterna a seleção num clique LIMPO: sem isto, largar um arrasto selecionava ou
         // largava o clipe sem ninguém ter pedido.
@@ -65,8 +68,8 @@ export const Clipe: FC<{
       style={{
         position: 'absolute',
         left: inicio * escala,
-        top: 6,
-        bottom: 6,
+        top: 8,
+        height: altura - 16,
         width: Math.max(duracao * escala, 8),
         background: `${cor}18`,
         border: `2px solid ${selecionado ? cor : `${cor}99`}`,
@@ -90,15 +93,15 @@ export const Clipe: FC<{
             position: 'absolute',
             left: `${((agulha - inicio) / duracao) * 100}%`,
             top: 0, bottom: 0, width: 2,
-            background: DS.color.primary,
+            background: DS.color.primaria,
             zIndex: 3,
             pointerEvents: 'none',
-            boxShadow: `0 0 6px ${DS.color.primary}88`,
+            boxShadow: `0 0 6px ${DS.color.primaria}88`,
           }}
         >
           <div style={{
             position: 'absolute', top: -2, left: '50%', transform: 'translateX(-50%)',
-            background: DS.color.primary, borderRadius: 3, padding: '1px 2px',
+            background: DS.color.primaria, borderRadius: 3, padding: '1px 2px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <FiScissors size={8} color='#fff' strokeWidth={2.5} />
@@ -122,9 +125,9 @@ export const Clipe: FC<{
           style={{
             position: 'absolute', top: -38, left: 0,
             display: 'flex', gap: 4,
-            background: DS.color.bgRaised,
-            border: `1px solid ${DS.color.borderStrong}`,
-            borderRadius: DS.radius.sm,
+            background: DS.color.bgPainel,
+            border: `1px solid ${DS.color.bordaForte}`,
+            borderRadius: DS.raio.medio,
             padding: 4,
             boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
             zIndex: 20,
@@ -139,10 +142,10 @@ export const Clipe: FC<{
             style={{
               display: 'flex', alignItems: 'center', gap: 4,
               height: 24, padding: '0 8px',
-              background: podeCortar ? `${DS.color.primary}18` : 'transparent',
-              border: `1px solid ${podeCortar ? `${DS.color.primary}60` : DS.color.borderDefault}`,
+              background: podeCortar ? `${DS.color.primaria}18` : 'transparent',
+              border: `1px solid ${podeCortar ? `${DS.color.primaria}60` : DS.color.borda}`,
               borderRadius: 4,
-              color: podeCortar ? DS.color.primary : DS.color.textDisabled,
+              color: podeCortar ? DS.color.primaria : DS.color.textoInerte,
               cursor: podeCortar ? 'pointer' : 'default',
               fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
             }}
@@ -158,9 +161,9 @@ export const Clipe: FC<{
               display: 'flex', alignItems: 'center', gap: 4,
               height: 24, padding: '0 8px',
               background: 'transparent',
-              border: `1px solid ${DS.color.borderDefault}`,
+              border: `1px solid ${DS.color.borda}`,
               borderRadius: 4,
-              color: DS.color.error,
+              color: DS.color.agulha,
               cursor: 'pointer',
               fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
             }}

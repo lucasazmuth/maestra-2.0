@@ -427,7 +427,7 @@ export const createTrack = async (
 
 export const updateTrack = async (
   id: string,
-  patch: Partial<Pick<CatalogTrack, 'name' | 'position' | 'gain' | 'muted' | 'color_index'>>,
+  patch: Partial<Pick<CatalogTrack, 'name' | 'position' | 'gain' | 'muted' | 'color_index' | 'pan' | 'kind'>>,
 ): Promise<CatalogTrack> => {
   const { data, error } = await supabase
     .from('catalog_tracks')

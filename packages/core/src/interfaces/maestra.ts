@@ -511,6 +511,8 @@ export interface CatalogVersion {
   files?: CatalogVersionFile[];
   /** A montagem: as faixas da linha do tempo, cada uma com os seus clipes. */
   tracks?: CatalogTrack[];
+  /** O fader que fica depois de todos os outros. 0..1. */
+  master_gain?: number;
   comments?: CatalogVersionComment[];
 }
 
@@ -560,6 +562,10 @@ export interface CatalogTrack {
   muted: boolean;
   /** O índice na paleta `CORES_DAS_PISTAS`. Guardado, para mover a pista não trocar a cor. */
   color_index: number;
+  /** −1 esquerda, 0 centro, 1 direita. */
+  pan?: number;
+  /** Por agora só `audio` toca; os outros esperam o piano roll e o sequenciador. */
+  kind?: 'audio' | 'synth' | 'piano' | 'drums';
   clips?: CatalogClip[];
   created_at?: string;
   updated_at?: string;

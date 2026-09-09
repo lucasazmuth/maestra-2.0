@@ -12,7 +12,7 @@
 
 :global(body.jam-space-open) {
   overflow: hidden !important;
-  background: #0e0e0e !important;
+  background: #1a1a1e !important;
 }
 
 :global(body.jam-space-open .top-navigation),
@@ -78,5 +78,54 @@
     justify-content: flex-start;
     overflow-x: auto;
     overflow-y: hidden;
+  }
+}
+
+// O canto de ajuda. É um `<details>` e não um modal de propósito: abre e fecha sem tirar a
+// pessoa do que está a fazer, funciona com teclado sem uma linha de JavaScript, e fechado é só
+// um círculo que não disputa atenção com nada.
+.ajuda {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  // ⚠️ Do TOKEN, e nunca um número solto. A escada de camadas do produto é uma só, e o dia em
+  // que algo aparecer por cima do balão a resposta não é somar zeros aqui — é olhar em que
+  // contexto de empilhamento ele caiu.
+  z-index: var(--z-cartao);
+
+  summary {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    list-style: none;
+    cursor: pointer;
+    background: #2f2f38;
+    border: 1px solid #44444f;
+    color: #a6a6b3;
+    font-size: 14px;
+    font-weight: 700;
+
+    &::-webkit-details-marker { display: none; }
+  }
+
+  > div {
+    position: absolute;
+    right: 0;
+    bottom: 38px;
+    width: 300px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #212127;
+    border: 1px solid #44444f;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+    color: #a6a6b3;
+    font-size: 12px;
+    line-height: 1.6;
+
+    strong { color: #e8e8ee; }
+    p { margin: 8px 0 0; }
+    em { color: #e8e8ee; font-style: normal; font-weight: 600; }
   }
 }

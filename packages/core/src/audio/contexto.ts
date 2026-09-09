@@ -61,6 +61,19 @@ export interface Modelador {
   disconnect(): void;
 }
 
+/**
+ * O PANORAMA de uma pista: onde ela fica entre os dois alto-falantes.
+ *
+ * −1 é tudo à esquerda, 0 o centro, 1 à direita. É o segundo controlo de qualquer mesa depois
+ * do volume, e faz o que o volume não faz: abre espaço entre duas camadas que disputam a mesma
+ * frequência, sem baixar nenhuma delas.
+ */
+export interface Panorama {
+  readonly pan: ParametroDeAudio;
+  connect(destino: NoDeGanho | Destino): unknown;
+  disconnect(): void;
+}
+
 export interface FonteDeAudio {
   buffer: BufferDeAudio | null;
   onended: (() => void) | null;
@@ -89,6 +102,7 @@ export interface ContextoDeAudio {
   readonly destination: Destino;
   createGain(): NoDeGanho;
   createWaveShaper(): Modelador;
+  createStereoPanner(): Panorama;
   createBufferSource(): FonteDeAudio;
   createBuffer(canais: number, tamanho: number, taxa: number): BufferDeAudio;
   /**

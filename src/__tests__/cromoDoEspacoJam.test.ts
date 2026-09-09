@@ -2,8 +2,9 @@ import fs from 'fs';
 import path from 'path';
 
 import {
-  ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TOPO, CORES_DAS_PISTAS, DS, ENCAIXE,
-  LARGURA_DA_LATERAL, ZOOM_PADRAO, corDaPista,
+  ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE, CORES_DAS_PISTAS,
+  DS, ENCAIXE, LARGURA_DAS_FERRAMENTAS, LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO, TIPOS_DE_PISTA,
+  corDaPista,
 } from '../pages/Catalog/daw/tokens';
 
 // O EDITOR do Espaço JAM é o desenho do projeto de referência que o dono do produto deixou
@@ -22,43 +23,47 @@ const ler = (...partes: string[]) => fs.readFileSync(path.join(__dirname, '..', 
 const editor = ler('pages', 'Catalog', 'daw', 'EditorDaGravacao.tsx');
 const clipe = ler('pages', 'Catalog', 'daw', 'Clipe.tsx');
 const casca = ler('pages', 'Catalog', 'daw', 'editor.module.scss');
+const biblioteca = ler('pages', 'Catalog', 'daw', 'Biblioteca.tsx');
 
 describe('cromo do editor do Espaço JAM', () => {
   // As dimensões da referência. São elas que dão à tela a densidade de um editor: uma faixa de
-  // 88px cabe uma onda legível, e uma de 40 não.
+  // 160px cabe uma onda legível e cinco controlos no cabeçalho, e uma de 40 não cabe nada.
   it('as dimensões são as da referência', () => {
-    expect(ZOOM_PADRAO).toBe(80);
-    expect(ALTURA_DA_PISTA).toBe(88);
-    expect(ALTURA_DA_REGUA).toBe(32);
-    expect(LARGURA_DA_LATERAL).toBe(220);
-    expect(ALTURA_DO_TOPO).toBe(116);
+    expect(PIXELS_POR_SEGUNDO).toBe(60);
+    expect(ALTURA_DA_PISTA).toBe(160);
+    expect(ALTURA_DA_REGUA).toBe(30);
+    expect(LARGURA_DAS_FERRAMENTAS).toBe(256);
+    expect(LARGURA_DAS_PISTAS).toBe(256);
+    expect(ALTURA_DO_TITULO).toBe(68);
+    expect(ALTURA_DO_TRANSPORTE).toBe(62);
     // O encaixe do arrasto: um quarto de segundo.
     expect(ENCAIXE).toBe(0.25);
   });
 
-  it('as cores de fundo e de texto são as da referência', () => {
-    expect(DS.color.bgBase).toBe('#0E0E0E');
-    expect(DS.color.bgSurface).toBe('#141414');
-    expect(DS.color.bgRaised).toBe('#1A1A1A');
-    expect(DS.color.textPrimary).toBe('#E8E8F0');
-    expect(DS.color.textTertiary).toBe('#6B6B80');
-    // O laranja é a ação, a agulha e o corte; o verde é o play.
-    expect(DS.color.primary).toBe('#E95216');
-    expect(DS.color.success).toBe('#33EB28');
+  it('as cores são as da referência: escuro, com o azul na ação e o vermelho na agulha', () => {
+    expect(DS.color.bgBase).toBe('#1a1a1e');
+    expect(DS.color.bgPainel).toBe('#212127');
+    expect(DS.color.bgPista).toBe('#2a2a32');
+    expect(DS.color.primaria).toBe('#3b82f6');
+    expect(DS.color.agulha).toBe('#ef4444');
   });
 
-  it('a paleta das pistas é a da referência, e dá a volta', () => {
-    expect(CORES_DAS_PISTAS).toEqual(['#E95216', '#AEE916', '#33EB28', '#14B4FF', '#FFD727', '#FF272A']);
+  it('a paleta das pistas dá a volta', () => {
+    expect(CORES_DAS_PISTAS).toHaveLength(6);
     // A sétima pista repete a primeira, em vez de ficar sem cor.
     expect(corDaPista(6)).toBe(CORES_DAS_PISTAS[0]);
     // E um índice negativo não estoura o array.
     expect(corDaPista(-1)).toBe(CORES_DAS_PISTAS[5]);
   });
 
+  it('os quatro tipos de pista existem, e o áudio é o primeiro', () => {
+    expect(TIPOS_DE_PISTA.map((t) => t.valor)).toEqual(['audio', 'synth', 'piano', 'drums']);
+  });
+
   // A tela é ESCURA. Um editor claro seria o único do mercado, e não por bom motivo.
   it('a tela é escura, e o fundo do corpo acompanha', () => {
     expect(editor).toContain('DS.color.bgBase');
-    expect(casca).toContain('#0e0e0e');
+    expect(casca).toContain('#1a1a1e');
   });
 
   // ⚠️ Quem faz o editor cobrir o app é o `display: none` na moldura, e não o z-index. O Espaço
@@ -66,21 +71,56 @@ describe('cromo do editor do Espaço JAM', () => {
   it('a moldura do app é escondida, e a camada sai do token', () => {
     expect(casca).toContain('body.jam-space-open .top-navigation');
     expect(casca).toContain('body.jam-space-open .app-rail');
+    expect(casca).toContain('body.jam-space-open .mobile-nav');
     expect(casca).toContain('var(--z-tela-cheia)');
   });
 
-  // As três zonas do editor. Sem uma delas não é um editor — é um tocador com enfeites.
-  it('as três zonas estão na tela: lateral, régua e faixas', () => {
-    expect(editor).toContain('LARGURA_DA_LATERAL');
+  // As quatro zonas do desenho: biblioteca, cabeçalhos, régua e faixas. Sem uma delas não é um
+  // editor — é um tocador com enfeites.
+  it('as quatro zonas estão na tela', () => {
+    expect(biblioteca).toContain('LARGURA_DAS_FERRAMENTAS');
+    expect(editor).toContain('<Biblioteca');
+    expect(editor).toContain('LARGURA_DAS_PISTAS');
     expect(editor).toContain('ALTURA_DA_REGUA');
     expect(editor).toContain('ALTURA_DA_PISTA');
   });
 
-  // O clipe é o que separa um editor de uma mesa: ele mora num INSTANTE, e é por isso que a sua
-  // posição na tela sai de `start_seconds × escala`.
-  it('o clipe é posicionado no tempo, e a tesoura corta na agulha', () => {
+  // ⚠️ A pasta é lida NO NAVEGADOR e nada sobe até alguém arrastar. Enviar tudo o que a pessoa
+  // abriu paga armazenamento e egress por ficheiros que ela nem ia usar, e enche a montagem de
+  // pistas que ninguém pediu.
+  it('a biblioteca pré-visualiza a pasta, e só o arrasto envia', () => {
+    expect(biblioteca).toContain('webkitdirectory');
+    expect(biblioteca).toContain('draggable');
+    expect(biblioteca).toContain('Nada sobe para a nuvem enquanto você não');
+    // E o lote continua a existir: um projeto de stems tem dez faixas, e uma a uma ninguém faz.
+    expect(biblioteca).toContain('Enviar todos como pistas');
+    expect(editor).toContain('largarNaFaixa');
+  });
+
+  // Os controlos que a referência mostra em cada pista, e o Master no topo.
+  it('cada pista tem tipo, mudo, solo, volume e panorama; e há um Master', () => {
+    expect(editor).toContain('Tipo da pista');
+    expect(editor).toContain('Panorama de');
+    expect(editor).toContain('Volume geral');
+    // ⚠️ Mudo e solo em cores diferentes: são as duas ações mais usadas de uma mesa, e são
+    // opostas. Pintadas iguais quando acesas, ninguém sabe qual carregou.
+    expect(editor).toContain("botaozinho(calada, DS.color.textoFraco)");
+    expect(editor).toContain("botaozinho(Boolean(daMesa?.solo), '#f59e0b')");
+  });
+
+  // As duas vistas da mesma montagem: a linha do tempo responde "o que toca quando", a mesa
+  // responde "como isto soa junto".
+  it('há as duas abas, e a mesa tem faders verticais', () => {
+    expect(editor).toContain('Linha do tempo');
+    expect(editor).toContain('MesaDeCanais');
+    expect(editor).toContain("writingMode: 'vertical-lr'");
+  });
+
+  // O clipe é o que separa um editor de uma mesa: ele mora num INSTANTE.
+  it('o clipe é posicionado no tempo, corta na agulha e some com clique duplo', () => {
     expect(clipe).toContain('inicio * escala');
     expect(clipe).toContain('agulha > inicio');
     expect(clipe).toContain('DIVIDIR');
+    expect(clipe).toContain('onDoubleClick');
   });
 });

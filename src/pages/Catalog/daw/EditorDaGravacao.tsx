@@ -1,115 +1,113 @@
 import { FC, ReactNode, useRef, useState } from 'react';
 import {
-  FiChevronDown, FiMaximize2, FiMusic, FiPause, FiPlay, FiPlus, FiSkipBack, FiSkipForward,
-  FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
+  FiChevronDown, FiCircle, FiGrid, FiHeadphones, FiMaximize2, FiMusic, FiPause, FiPlay,
+  FiSkipBack, FiSquare, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import type { CatalogTrack, CatalogVersion } from '@maestra/core/interfaces/maestra';
 
+import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
 import {
-  ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TOPO, DS, DURACAO_MINIMA, ENCAIXE,
-  LARGURA_DA_LATERAL, ZOOM_MAXIMO, ZOOM_MINIMO, ZOOM_PADRAO, corDaPista,
+  ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE, DS, DURACAO_MINIMA,
+  ENCAIXE, LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO, TIPOS_DE_PISTA,
+  ZOOM_MAXIMO, ZOOM_MINIMO, corDaPista,
 } from './tokens';
 
 // O EDITOR: o Espaço JAM como um editor de música.
 //
-// O desenho é o do projeto de referência que o dono do produto deixou — a barra de topo em duas
-// filas, a lateral de instrumentos, a régua em segundos, as faixas com a grelha, os clipes com
-// a onda dentro, e a agulha. As dimensões e as cores estão em `tokens.ts`, à vírgula.
+// O desenho é o da referência que o dono do produto mandou: a fila do título com as abas
+// Timeline/Mixer e o Master à direita; a coluna das ferramentas e da biblioteca à esquerda; a
+// coluna dos cabeçalhos de pista (tipo, M/S/AT, volume e panorama); e a linha do tempo com o
+// transporte, a régua em segundos e a agulha vermelha.
 //
 // ⚠️ ESTA TELA É ESCURA, e é a única do produto que é. Não é gosto: um editor de música é denso
 // e de contraste alto porque se olha para ele durante horas e o que interessa são formas de
-// onda, não texto. Ableton, Logic, Pro Tools, Reaper — todos escuros, e é o que o olho de quem
-// trabalha com áudio espera encontrar.
+// onda, não texto.
 
 const relogio = (segundos: number) => {
   const s = Math.max(0, segundos);
   const m = Math.floor(s / 60);
   const resto = Math.floor(s % 60);
-  const centesimos = Math.floor((s % 1) * 100);
-  return `${m}:${String(resto).padStart(2, '0')}.${String(centesimos).padStart(2, '0')}`;
+  const decimo = Math.floor((s % 1) * 10);
+  return `${String(m).padStart(2, '0')}:${String(resto).padStart(2, '0')}.${decimo}`;
 };
 
-const botaoDoTransporte = (ativo: boolean, cor?: string) => ({
-  width: 28, height: 28,
-  borderRadius: DS.radius.sm,
-  background: ativo && cor ? `${cor}12` : 'transparent',
-  border: `1px solid ${ativo && cor ? `${cor}55` : 'transparent'}`,
-  color: ativo ? cor ?? DS.color.textSecondary : DS.color.textTertiary,
-  cursor: ativo ? 'pointer' : 'default',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  opacity: ativo ? 1 : 0.3,
-  transition: DS.transition.fast,
+const botaozinho = (ativo: boolean, corAtiva?: string) => ({
+  height: 24, minWidth: 28, padding: '0 7px',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+  background: ativo && corAtiva ? corAtiva : DS.color.bgCampo,
+  border: `1px solid ${ativo && corAtiva ? corAtiva : DS.color.borda}`,
+  borderRadius: DS.raio.pequeno,
+  color: ativo && corAtiva ? '#0d0d10' : DS.color.textoApoio,
+  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+  fontFamily: DS.font.display,
 });
 
 export interface AcoesDoEditor {
   aoSair: () => void;
   aoRenomear: (nome: string) => void;
   aoAbrirGravacao: (id: string) => void;
-  aoAdicionarArquivos: (arquivos: File[], inicio: number, pistaId?: string) => void;
+  aoAbrirCompleta: () => void;
+  /** `pistaAlvo` vazio cria uma pista nova para cada ficheiro. */
+  aoAdicionarArquivos: (arquivos: File[], inicio: number, pistaAlvo?: string) => void;
   aoMoverClipe: (clipeId: string, inicio: number) => void;
   aoCortarClipe: (clipeId: string, emSegundo: number) => void;
   aoApagarClipe: (clipeId: string) => void;
-  aoMudarPista: (pistaId: string, parte: Partial<Pick<CatalogTrack, 'name' | 'gain' | 'muted'>>) => void;
+  aoMudarPista: (pistaId: string, parte: Partial<CatalogTrack>) => void;
   aoApagarPista: (pistaId: string) => void;
   aoSolar: (pistaId: string, solo: boolean) => void;
-  /** Abre a sala da gravação — é lá que moram os comentários e o download. */
-  aoAbrirCompleta: () => void;
+  aoMestre: (valor: number) => void;
 }
 
 export const EditorDaGravacao: FC<{
   titulo: string;
   selo: 'parado' | 'salvando' | 'salvo' | 'erro';
+  /** O lote em curso, se houver: dez stems levam um minuto, e um minuto sem sinal é um bug. */
+  envio?: { feitos: number; total: number } | null;
   gravacoes: CatalogVersion[];
   abertaId: string | null;
   principalId?: string | null;
   pistas: CatalogTrack[];
-  /**
-   * A pista que existe só na tela, e não no banco: a MIX de uma gravação ainda não montada.
-   *
-   * Ela toca e desenha-se como as outras, mas não se arrasta, não se corta e não se apaga —
-   * não há linha nenhuma para gravar a mudança. O botão "montar em pistas" é que a transforma
-   * em pista de verdade.
-   */
   pistaFixaId?: string | null;
-  /** Transforma a mix numa pista editável. Ausente quando não há o que montar. */
   aoMontar?: () => void;
   estado: EstadoDaMesa;
   picos: (clipeId: string, n: number) => number[];
-  transporte: { alternar: () => void; irPara: (s: number) => void };
-  /** Os campos da música (status, BPM, tom) — vestidos por quem chama, com estas cores. */
+  transporte: { alternar: () => void; parar: () => void; irPara: (s: number) => void };
+  /** Os campos da música (status, BPM, tom), vestidos por quem chama. */
   ficha: ReactNode;
   podeEditar: boolean;
   acoes: AcoesDoEditor;
 }> = ({
-  titulo, selo, gravacoes, abertaId, principalId, pistas, pistaFixaId, aoMontar,
+  titulo, selo, envio, gravacoes, abertaId, principalId, pistas, pistaFixaId, aoMontar,
   estado, picos, transporte, ficha, podeEditar, acoes,
 }) => {
-  const [escala, setEscala] = useState(ZOOM_PADRAO);
+  const [aba, setAba] = useState<'linha' | 'mesa'>('linha');
+  const [zoom, setZoom] = useState(1);
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [editandoNome, setEditandoNome] = useState(false);
-  const [rascunhoDoNome, setRascunhoDoNome] = useState(titulo);
+  const [rascunho, setRascunho] = useState(titulo);
   const [gravacoesAbertas, setGravacoesAbertas] = useState(false);
+  const [biblioteca, setBiblioteca] = useState<ItemDaBiblioteca[]>([]);
   const [sobre, setSobre] = useState(false);
 
-  const pista = useRef<HTMLDivElement>(null);
-  const entrada = useRef<HTMLInputElement>(null);
+  const linha = useRef<HTMLDivElement>(null);
   const arrasto = useRef<{ clipeId: string; deslocamentoX: number } | null>(null);
   const agulhaPresa = useRef(false);
 
-  const duracao = Math.max(DURACAO_MINIMA, Math.ceil(estado.duracao) + 30);
-  const largura = duracao * escala + 100;
+  const escala = PIXELS_POR_SEGUNDO * zoom;
+  const duracao = Math.max(DURACAO_MINIMA, Math.ceil(estado.duracao) + 10);
+  const largura = duracao * escala + 80;
   const agulha = estado.posicao;
-
   const aberta = gravacoes.find((v) => v.id === abertaId) ?? null;
-  const totalDeClipes = pistas.reduce((soma, p) => soma + (p.clips?.length ?? 0), 0);
 
-  /** O segundo correspondente a um ponto do rato, já com a rolagem descontada. */
+  /** De quantos em quantos segundos a régua põe um número, para os rótulos não se colarem. */
+  const passo = escala >= 80 ? 1 : escala >= 40 ? 2 : escala >= 20 ? 5 : 10;
+
   const segundoDoEvento = (evento: { clientX: number }) => {
-    const caixa = pista.current;
+    const caixa = linha.current;
     if (!caixa) return 0;
     const x = evento.clientX - caixa.getBoundingClientRect().left + caixa.scrollLeft;
     return Math.max(0, Math.min(x / escala, duracao));
@@ -119,10 +117,9 @@ export const EditorDaGravacao: FC<{
     if (agulhaPresa.current) { transporte.irPara(segundoDoEvento(evento)); return; }
     const puxado = arrasto.current;
     if (!puxado) return;
-    const bruto = segundoDoEvento(evento) - puxado.deslocamentoX / escala;
     // O encaixe é ao LARGAR, não durante: encaixar a cada pixel faz o clipe saltar debaixo do
     // dedo, e a pessoa deixa de saber onde ele vai cair.
-    acoes.aoMoverClipe(puxado.clipeId, Math.max(0, bruto));
+    acoes.aoMoverClipe(puxado.clipeId, Math.max(0, segundoDoEvento(evento) - puxado.deslocamentoX / escala));
   };
 
   const aoLargar = (evento: React.MouseEvent) => {
@@ -134,631 +131,786 @@ export const EditorDaGravacao: FC<{
     acoes.aoMoverClipe(puxado.clipeId, Math.max(0, Math.round(bruto / ENCAIXE) * ENCAIXE));
   };
 
-  return (
-    <div
-      className={casca.tela}
-      style={{
-        background: DS.color.bgBase,
-        color: DS.color.textPrimary,
-        fontFamily: DS.font.display,
-      }}
-    >
-      {/* ══════════════════ TOPO ══════════════════ */}
-      <div style={{
-        height: ALTURA_DO_TOPO,
-        background: DS.color.bgSurface,
-        borderBottom: `1px solid ${DS.color.borderDefault}`,
-        display: 'flex', flexDirection: 'column', flexShrink: 0,
-      }}>
-        {/* ── Fila 1: sair · nome · gravações · ficha ── */}
-        <div style={{
-          height: 52, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 8,
-          borderBottom: `1px solid ${DS.color.borderDefault}`,
-          background: DS.color.bgRaised, flexShrink: 0,
-        }}>
-          <button
-            type='button'
-            onClick={acoes.aoSair}
-            title='Voltar para Músicas'
-            aria-label='Voltar para Músicas'
-            style={{
-              width: 28, height: 28, borderRadius: DS.radius.sm,
-              background: DS.color.bgRaised, border: `1px solid ${DS.color.borderDefault}`,
-              color: DS.color.textTertiary, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}
-          >
-            <FiX size={12} strokeWidth={2.2} />
-          </button>
+  const escolherArquivos = (arquivos: File[], inicio: number, pistaAlvo?: string) => {
+    if (!arquivos.length || !podeEditar) return;
+    acoes.aoAdicionarArquivos(arquivos, inicio, pistaAlvo);
+  };
 
-          <div style={{ width: 1, height: 16, background: DS.color.borderDefault, flexShrink: 0 }} />
+  /**
+   * O que largar numa faixa.
+   *
+   * Duas origens, um gesto: um ficheiro vindo da BIBLIOTECA (que só existe no computador até
+   * este instante — é aqui que ele sobe) ou um vindo de fora do navegador.
+   */
+  const largarNaFaixa = (evento: React.DragEvent, faixaId: string) => {
+    evento.preventDefault();
+    evento.stopPropagation();
+    setSobre(false);
+    if (!podeEditar) return;
+    const segundo = Math.round(segundoDoEvento(evento) / ENCAIXE) * ENCAIXE;
 
-          {editandoNome ? (
-            <input
-              autoFocus
-              value={rascunhoDoNome}
-              onChange={(e) => setRascunhoDoNome(e.target.value)}
-              onBlur={() => { setEditandoNome(false); acoes.aoRenomear(rascunhoDoNome.trim() || titulo); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-              aria-label='Nome da música'
-              style={{
-                background: DS.color.bgRaised, border: `1px solid ${DS.color.primary}`,
-                borderRadius: DS.radius.sm, color: DS.color.textPrimary,
-                fontSize: 16, fontWeight: 600, padding: '3px 8px', outline: 'none',
-                fontFamily: DS.font.display, minWidth: 160,
-              }}
-            />
-          ) : (
-            <div
-              onClick={() => { if (podeEditar) { setRascunhoDoNome(titulo); setEditandoNome(true); } }}
-              title={podeEditar ? 'Clique para renomear' : undefined}
-              style={{
-                fontSize: 16, fontWeight: 600, color: DS.color.textPrimary,
-                cursor: podeEditar ? 'text' : 'default', letterSpacing: '-0.01em',
-                userSelect: 'none', display: 'flex', alignItems: 'center', gap: 5,
-              }}
-            >
-              {titulo}
-            </div>
-          )}
+    const daBiblioteca = evento.dataTransfer.getData(TIPO_DO_ARRASTO);
+    if (daBiblioteca) {
+      const item = biblioteca.find((i) => i.id === daBiblioteca);
+      if (item) escolherArquivos([item.arquivo], segundo, faixaId);
+      return;
+    }
+    escolherArquivos(Array.from(evento.dataTransfer.files), segundo, faixaId);
+  };
 
-          <div style={{ flex: 1 }} />
+  // ─── As peças ─────────────────────────────────────────────────────────────
 
-          {selo !== 'parado' && (
-            <div
-              aria-live='polite'
-              style={{
-                fontSize: 10, fontFamily: DS.font.mono, letterSpacing: '0.03em', flexShrink: 0,
-                color: selo === 'erro' ? DS.color.error : selo === 'salvando' ? DS.color.textTertiary : DS.color.success,
-              }}
-            >
-              {selo === 'salvando' ? 'Salvando…' : selo === 'erro' ? 'Falha ao salvar' : 'Salvo'}
-            </div>
-          )}
+  const cabecalhoDaPista = (faixa: CatalogTrack, indice: number) => {
+    const cor = corDaPista(faixa.color_index ?? indice);
+    const daMesa = estado.pistas.find((p) => p.id === faixa.id);
+    const calada = Boolean(daMesa?.muda);
+    const fixa = faixa.id === pistaFixaId;
+    const pan = daMesa?.pan ?? (Number(faixa.pan) || 0);
 
-          {/* A gravação aberta. É o seletor de "takes" da música: V1, V2, V3 são alternativas,
-              ouve-se uma de cada vez — e é por isso que é um menu, e não mais pistas. */}
-          {/* A sala da gravação: os comentários e o download vivem lá, e não cabem num editor
-              sem lhe roubar a tela. */}
-          <button
-            type='button'
-            onClick={acoes.aoAbrirCompleta}
-            title='Abrir a sala desta gravação'
-            aria-label='Abrir a sala desta gravação'
-            style={{
-              width: 28, height: 28, borderRadius: DS.radius.sm,
-              background: 'transparent', border: `1px solid ${DS.color.borderDefault}`,
-              color: DS.color.textTertiary, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}
-          >
-            <FiMaximize2 size={11} />
-          </button>
-
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <button
-              type='button'
-              onClick={() => setGravacoesAbertas((v) => !v)}
-              aria-label='Trocar de gravação'
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                background: gravacoesAbertas ? `${DS.color.primary}18` : 'transparent',
-                border: `1px solid ${gravacoesAbertas ? `${DS.color.primary}60` : DS.color.borderDefault}`,
-                borderRadius: DS.radius.sm,
-                color: gravacoesAbertas ? DS.color.primary : DS.color.textSecondary,
-                padding: '4px 9px', cursor: 'pointer', fontSize: 11, fontWeight: 600,
-              }}
-            >
-              <FiMusic size={11} />
-              {aberta ? `V${aberta.version_number}` : '—'}
-              {aberta?.id === principalId && <span style={{ color: DS.color.warning }}>★</span>}
-              <FiChevronDown size={10} />
-            </button>
-
-            {gravacoesAbertas && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40,
-                minWidth: 220, padding: 4,
-                background: DS.color.bgRaised,
-                border: `1px solid ${DS.color.borderStrong}`,
-                borderRadius: DS.radius.md,
-                boxShadow: '0 16px 48px rgba(0,0,0,0.7)',
-              }}>
-                {gravacoes.map((gravacao) => (
-                  <button
-                    key={gravacao.id}
-                    type='button'
-                    onClick={() => { acoes.aoAbrirGravacao(gravacao.id); setGravacoesAbertas(false); }}
-                    aria-label={`Abrir V${gravacao.version_number}${gravacao.title ? `, ${gravacao.title}` : ''}`}
-                    style={{
-                      width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '7px 9px', borderRadius: DS.radius.sm,
-                      background: gravacao.id === abertaId ? `${DS.color.primary}14` : 'transparent',
-                      border: 'none', cursor: 'pointer', textAlign: 'left',
-                      color: gravacao.id === abertaId ? DS.color.primary : DS.color.textSecondary,
-                      fontSize: 12, fontFamily: DS.font.display,
-                    }}
-                  >
-                    <strong style={{ fontSize: 11 }}>V{gravacao.version_number}</strong>
-                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {gravacao.title || 'Sem título'}
-                    </span>
-                    {gravacao.id === principalId && <span style={{ color: DS.color.warning }}>★</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Fila 2: adicionar · transporte · contadores ── */}
-        {/* Três colunas, e não um centro absoluto como na referência: lá a direita tinha dois
-            contadores; aqui tem o status, o BPM, o tom e o zoom, e um centro absoluto passava
-            POR BAIXO deles. A grelha mantém o transporte no meio sem nunca o deixar colidir. */}
-        <div className={casca.controlos} style={{ flex: 1, padding: '0 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          {podeEditar && (
-            <button
-              type='button'
-              onClick={() => entrada.current?.click()}
-              aria-label='Adicionar pista'
-              style={{
-                background: 'rgba(233, 82, 22, 0.08)',
-                border: '1px solid rgba(233, 82, 22, 0.31)',
-                borderRadius: DS.radius.sm,
-                color: DS.color.primary,
-                fontSize: 12, fontWeight: 700, padding: '0 14px', height: 38,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
-                letterSpacing: '0.02em', textTransform: 'uppercase',
-                fontFamily: DS.font.display, flexShrink: 0,
-              }}
-            >
-              <span style={{ fontSize: 15, lineHeight: 1, fontWeight: 800 }}>+</span>
-              ADICIONAR PISTA
-            </button>
-          )}
-
-          {!!aoMontar && (
-            <button
-              type='button'
-              onClick={aoMontar}
-              title='Transforma esta gravação numa pista que se pode arrastar e cortar'
-              style={{
-                background: 'transparent',
-                border: `1px solid ${DS.color.borderStrong}`,
-                borderRadius: DS.radius.sm, color: DS.color.textSecondary,
-                fontSize: 11, fontWeight: 700, padding: '0 12px', height: 38,
-                cursor: 'pointer', letterSpacing: '0.02em', textTransform: 'uppercase',
-                fontFamily: DS.font.display, flexShrink: 0, whiteSpace: 'nowrap',
-              }}
-            >
-              Montar em pistas
-            </button>
-          )}
-
+    return (
+      <div
+        key={faixa.id}
+        style={{
+          height: ALTURA_DA_PISTA, flexShrink: 0,
+          padding: '10px 12px',
+          display: 'flex', flexDirection: 'column', gap: 8,
+          background: DS.color.bgPista,
+          borderBottom: `1px solid ${DS.color.borda}`,
+          borderLeft: `3px solid ${calada ? DS.color.textoInerte : cor}`,
+          opacity: calada ? 0.6 : 1,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input
-            ref={entrada}
-            type='file'
-            accept='.mp3,.wav,audio/mpeg,audio/wav'
-            multiple
-            style={{ display: 'none' }}
-            onChange={(evento) => {
-              const escolhidos = Array.from(evento.target.files || []);
-              evento.target.value = '';
-              if (escolhidos.length) acoes.aoAdicionarArquivos(escolhidos, 0);
+            value={faixa.name}
+            onChange={(e) => acoes.aoMudarPista(faixa.id, { name: e.target.value })}
+            disabled={!podeEditar || fixa}
+            aria-label={`Nome da pista ${faixa.name}`}
+            style={{
+              flex: 1, minWidth: 0, padding: 0, background: 'transparent', border: 'none',
+              outline: 'none', color: DS.color.texto, fontSize: 13, fontWeight: 600,
+              fontFamily: DS.font.display,
             }}
           />
+          {podeEditar && !fixa && (
+            <button
+              type='button'
+              onClick={() => acoes.aoApagarPista(faixa.id)}
+              title='Apagar a pista'
+              aria-label={`Apagar a pista ${faixa.name}`}
+              style={{
+                background: 'transparent', border: 'none', color: DS.color.textoFraco,
+                cursor: 'pointer', display: 'flex', padding: 2,
+              }}
+            >
+              <FiTrash2 size={13} />
+            </button>
+          )}
+        </div>
 
-          </div>
+        <select
+          value={faixa.kind ?? 'audio'}
+          onChange={(e) => acoes.aoMudarPista(faixa.id, { kind: e.target.value as CatalogTrack['kind'] })}
+          disabled={!podeEditar || fixa}
+          aria-label={`Tipo da pista ${faixa.name}`}
+          style={{
+            width: '100%', height: 28, padding: '0 8px',
+            background: DS.color.bgCampo, border: `1px solid ${DS.color.borda}`,
+            borderRadius: DS.raio.pequeno, color: DS.color.texto,
+            fontSize: 12, fontFamily: DS.font.display, outline: 'none',
+            cursor: podeEditar && !fixa ? 'pointer' : 'default',
+          }}
+        >
+          {TIPOS_DE_PISTA.map((t) => <option key={t.valor} value={t.valor}>{t.rotulo}</option>)}
+        </select>
 
-          {/* O transporte é o ponto fixo da tela: fica no meio, aconteça o que acontecer aos
-              lados. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button
+            type='button'
+            onClick={() => acoes.aoMudarPista(faixa.id, { muted: !calada })}
+            aria-label={calada ? `Ouvir ${faixa.name}` : `Silenciar ${faixa.name}`}
+            aria-pressed={calada}
+            title={calada ? 'Ouvir' : 'Silenciar'}
+            // ⚠️ Mudo e solo têm CORES DIFERENTES: são as duas ações mais usadas de uma mesa e
+            // são opostas. Pintadas iguais quando acesas, ninguém sabe qual carregou.
+            style={botaozinho(calada, DS.color.textoFraco)}
+          >
+            M
+          </button>
+          <button
+            type='button'
+            onClick={() => acoes.aoSolar(faixa.id, !daMesa?.solo)}
+            aria-label={daMesa?.solo ? 'Ouvir tudo de novo' : `Ouvir só ${faixa.name}`}
+            aria-pressed={Boolean(daMesa?.solo)}
+            title={daMesa?.solo ? 'Ouvir tudo' : 'Ouvir só esta'}
+            style={botaozinho(Boolean(daMesa?.solo), '#f59e0b')}
+          >
+            S
+          </button>
+          <button
+            type='button'
+            disabled
+            title='Automação — ainda não disponível'
+            style={{ ...botaozinho(false), color: DS.color.textoInerte, cursor: 'not-allowed' }}
+          >
+            AT
+          </button>
+        </div>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <FiVolume2 size={13} color={DS.color.textoFraco} />
+          <input
+            type='range' min={0} max={100}
+            value={Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
+            onChange={(e) => acoes.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
+            disabled={!podeEditar}
+            aria-label={`Volume de ${faixa.name}`}
+            style={{ flex: 1, minWidth: 0, accentColor: DS.color.primaria, cursor: 'pointer' }}
+          />
+        </label>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <FiHeadphones size={13} color={DS.color.textoFraco} />
+          <input
+            type='range' min={-100} max={100}
+            value={Math.round(pan * 100)}
+            onChange={(e) => acoes.aoMudarPista(faixa.id, { pan: Number(e.target.value) / 100 })}
+            disabled={!podeEditar}
+            aria-label={`Panorama de ${faixa.name}`}
+            style={{ flex: 1, minWidth: 0, accentColor: DS.color.primaria, cursor: 'pointer' }}
+          />
+          <span style={{
+            width: 16, fontSize: 10, color: DS.color.textoFraco, fontFamily: DS.font.mono,
+          }}>
+            {/* C de centro; senão, o lado e quanto. */}
+            {Math.abs(pan) < 0.02 ? 'C' : `${pan < 0 ? 'E' : 'D'}${Math.round(Math.abs(pan) * 100)}`}
+          </span>
+        </label>
+      </div>
+    );
+  };
+
+  return (
+    <div className={casca.tela} style={{ background: DS.color.bgBase, color: DS.color.texto, fontFamily: DS.font.display }}>
+      {/* ══════════ FILA DO TÍTULO ══════════ */}
+      <div style={{
+        height: ALTURA_DO_TITULO, flexShrink: 0,
+        display: 'flex', alignItems: 'center', gap: 14, padding: '0 18px',
+        background: DS.color.bgPainel, borderBottom: `1px solid ${DS.color.borda}`,
+      }}>
+        <button
+          type='button'
+          onClick={acoes.aoSair}
+          title='Voltar para Músicas'
+          aria-label='Voltar para Músicas'
+          style={{
+            width: 28, height: 28, borderRadius: DS.raio.medio,
+            background: DS.color.bgCampo, border: `1px solid ${DS.color.borda}`,
+            color: DS.color.textoApoio, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}
+        >
+          <FiX size={13} />
+        </button>
+
+        {editandoNome ? (
+          <input
+            autoFocus
+            value={rascunho}
+            onChange={(e) => setRascunho(e.target.value)}
+            onBlur={() => { setEditandoNome(false); acoes.aoRenomear(rascunho.trim() || titulo); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+            aria-label='Nome da música'
+            style={{
+              background: DS.color.bgCampo, border: `1px solid ${DS.color.primaria}`,
+              borderRadius: DS.raio.medio, color: DS.color.texto,
+              fontSize: 17, fontWeight: 700, padding: '4px 10px', outline: 'none',
+              fontFamily: DS.font.display, minWidth: 200,
+            }}
+          />
+        ) : (
+          <h1
+            onClick={() => { if (podeEditar) { setRascunho(titulo); setEditandoNome(true); } }}
+            title={podeEditar ? 'Clique para renomear' : undefined}
+            style={{
+              margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em',
+              color: DS.color.texto, cursor: podeEditar ? 'text' : 'default',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 320,
+            }}
+          >
+            {titulo}
+          </h1>
+        )}
+
+        {/* As duas vistas da mesma montagem: a linha do tempo e a mesa. */}
+        <div style={{
+          display: 'flex', gap: 2, padding: 3,
+          background: DS.color.bgCampo, borderRadius: DS.raio.grande, flexShrink: 0,
+        }}>
+          {([['linha', 'Linha do tempo'], ['mesa', 'Mesa']] as const).map(([chave, rotulo]) => (
+            <button
+              key={chave}
+              type='button'
+              onClick={() => setAba(chave)}
+              aria-pressed={aba === chave}
+              style={{
+                height: 28, padding: '0 14px',
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: aba === chave ? DS.color.bgHover : 'transparent',
+                border: 'none', borderRadius: DS.raio.medio,
+                color: aba === chave ? DS.color.texto : DS.color.textoFraco,
+                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: DS.font.display,
+              }}
+            >
+              {chave === 'linha' ? <FiMusic size={12} /> : <FiGrid size={12} />}
+              {rotulo}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }} />
+
+        {ficha}
+
+        {!!envio && (
+          <span style={{ fontSize: 11, color: DS.color.primaria, fontFamily: DS.font.mono, flexShrink: 0 }}>
+            Enviando {envio.feitos + 1} de {envio.total}…
+          </span>
+        )}
+
+        {!envio && selo !== 'parado' && (
+          <span
+            aria-live='polite'
+            style={{
+              fontSize: 11, fontFamily: DS.font.mono, flexShrink: 0,
+              color: selo === 'erro' ? DS.color.agulha : selo === 'salvando' ? DS.color.textoFraco : '#22c55e',
+            }}
+          >
+            {selo === 'salvando' ? 'Salvando…' : selo === 'erro' ? 'Falha ao salvar' : 'Salvo'}
+          </span>
+        )}
+
+        {/* A gravação aberta: V1, V2 e V3 são ALTERNATIVAS — ouve-se uma de cada vez —, e é por
+            isso que são um menu, e não faixas empilhadas. */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <button
+            type='button'
+            onClick={() => setGravacoesAbertas((v) => !v)}
+            aria-label='Trocar de gravação'
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, height: 28, padding: '0 10px',
+              background: DS.color.bgCampo, border: `1px solid ${DS.color.borda}`,
+              borderRadius: DS.raio.medio, color: DS.color.texto,
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            {aberta ? `V${aberta.version_number}` : '—'}
+            {aberta?.id === principalId && <span style={{ color: '#f59e0b' }}>★</span>}
+            <FiChevronDown size={11} />
+          </button>
+
+          {gravacoesAbertas && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40,
+              minWidth: 240, padding: 4,
+              background: DS.color.bgPainel, border: `1px solid ${DS.color.bordaForte}`,
+              borderRadius: DS.raio.grande, boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+            }}>
+              {gravacoes.map((gravacao) => (
+                <button
+                  key={gravacao.id}
+                  type='button'
+                  onClick={() => { acoes.aoAbrirGravacao(gravacao.id); setGravacoesAbertas(false); }}
+                  aria-label={`Abrir V${gravacao.version_number}${gravacao.title ? `, ${gravacao.title}` : ''}`}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '8px 10px', borderRadius: DS.raio.medio,
+                    background: gravacao.id === abertaId ? DS.color.bgHover : 'transparent',
+                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                    color: gravacao.id === abertaId ? DS.color.texto : DS.color.textoApoio,
+                    fontSize: 12, fontFamily: DS.font.display,
+                  }}
+                >
+                  <strong style={{ fontSize: 11 }}>V{gravacao.version_number}</strong>
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {gravacao.title || 'Sem título'}
+                  </span>
+                  {gravacao.id === principalId && <span style={{ color: '#f59e0b' }}>★</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button
+          type='button'
+          onClick={acoes.aoAbrirCompleta}
+          title='Abrir a sala desta gravação'
+          aria-label='Abrir a sala desta gravação'
+          style={{
+            width: 28, height: 28, borderRadius: DS.raio.medio,
+            background: 'transparent', border: `1px solid ${DS.color.borda}`,
+            color: DS.color.textoFraco, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}
+        >
+          <FiMaximize2 size={12} />
+        </button>
+
+        {/* O MASTER: o fader que fica depois de todos os outros. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <span style={{ fontSize: 12, color: DS.color.textoApoio }}>Master</span>
+          <FiVolume2 size={14} color={DS.color.textoFraco} />
+          <input
+            type='range' min={0} max={100}
+            value={Math.round(estado.mestre * 100)}
+            onChange={(e) => acoes.aoMestre(Number(e.target.value) / 100)}
+            aria-label='Volume geral'
+            style={{ width: 120, accentColor: DS.color.primaria, cursor: 'pointer' }}
+          />
+          <span style={{ width: 34, fontSize: 12, color: DS.color.textoApoio, fontFamily: DS.font.mono }}>
+            {Math.round(estado.mestre * 100)}%
+          </span>
+        </div>
+      </div>
+
+      {/* ══════════ CORPO ══════════ */}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <Biblioteca
+          itens={biblioteca}
+          aoAbrirPasta={setBiblioteca}
+          // Em LOTE: um projeto de stems tem dez, doze faixas, e mandar uma a uma é o tipo de
+          // trabalho que faz a pessoa desistir da tela.
+          aoEnviar={(arquivos) => escolherArquivos(arquivos, 0)}
+          podeEditar={podeEditar}
+          aoMontar={aoMontar}
+        />
+
+        {/* ── Transporte + pistas ── */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 3, padding: '4px 5px',
-            background: DS.color.bgSurface, borderRadius: DS.radius.md,
-            border: `1px solid ${DS.color.borderDefault}`,
+            height: ALTURA_DO_TRANSPORTE, flexShrink: 0,
+            display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px',
+            background: DS.color.bgPainel, borderBottom: `1px solid ${DS.color.borda}`,
           }}>
             <button
               type='button'
               onClick={() => transporte.irPara(0)}
               title='Voltar ao início'
               aria-label='Voltar ao início'
-              style={botaoDoTransporte(true)}
+              style={{
+                width: 32, height: 32, borderRadius: DS.raio.medio,
+                background: 'transparent', border: 'none', color: DS.color.textoApoio,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
             >
-              <FiSkipBack size={12} strokeWidth={2} />
+              <FiSkipBack size={16} />
             </button>
 
             <button
               type='button'
               onClick={transporte.alternar}
-              disabled={!estado.tocando}
-              title='Pausar'
-              aria-label='Pausar'
-              style={botaoDoTransporte(estado.tocando, '#FFC44D')}
+              disabled={estado.carregando}
+              title={estado.carregando ? 'Preparando as pistas' : estado.tocando ? 'Pausar' : 'Tocar'}
+              aria-label={estado.carregando ? 'Preparando as pistas' : estado.tocando ? 'Pausar' : 'Tocar'}
+              style={{
+                width: 42, height: 42, borderRadius: '50%',
+                background: estado.carregando ? DS.color.bgCampo : DS.color.primaria,
+                border: 'none', color: '#fff',
+                cursor: estado.carregando ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: estado.carregando ? 'none' : `0 0 16px ${DS.color.primaria}55`,
+              }}
             >
-              <FiPause size={12} strokeWidth={2} />
+              {estado.tocando ? <FiPause size={18} /> : <FiPlay size={18} style={{ marginLeft: 2 }} />}
             </button>
 
             <button
               type='button'
-              onClick={transporte.alternar}
-              disabled={estado.tocando || estado.carregando}
-              title={estado.carregando ? 'Preparando as pistas' : 'Tocar'}
-              aria-label={estado.carregando ? 'Preparando as pistas' : 'Tocar'}
-              style={botaoDoTransporte(!estado.tocando && !estado.carregando, DS.color.success)}
+              onClick={transporte.parar}
+              title='Parar'
+              aria-label='Parar'
+              style={{
+                width: 32, height: 32, borderRadius: DS.raio.medio,
+                background: 'transparent', border: 'none', color: DS.color.textoApoio,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
             >
-              <FiPlay size={12} strokeWidth={2} />
+              <FiSquare size={15} />
             </button>
 
             <button
               type='button'
-              onClick={() => transporte.irPara(Math.min(agulha + 4, duracao))}
-              title='Avançar'
-              aria-label='Avançar quatro segundos'
-              style={botaoDoTransporte(true)}
+              disabled
+              title='Gravar — ainda não disponível'
+              aria-label='Gravar — ainda não disponível'
+              style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'transparent', border: `2px solid ${DS.color.gravar}`,
+                color: DS.color.gravar, opacity: 0.4, cursor: 'not-allowed',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
             >
-              <FiSkipForward size={12} strokeWidth={2} />
+              <FiCircle size={11} fill='currentColor' />
             </button>
 
-            <div style={{ width: 1, height: 16, background: DS.color.borderDefault, margin: '0 4px' }} />
+            <div style={{ flex: 1 }} />
 
             <div style={{
-              fontFamily: DS.font.mono, fontSize: 12, color: DS.color.textPrimary,
-              minWidth: 62, textAlign: 'center', letterSpacing: '0.02em',
+              padding: '6px 14px', borderRadius: DS.raio.medio,
+              background: DS.color.bgCampo, border: `1px solid ${DS.color.borda}`,
+              fontFamily: DS.font.mono, fontSize: 14, color: DS.color.texto, letterSpacing: '0.04em',
             }}>
               {relogio(agulha)}
             </div>
-          </div>
 
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10, minWidth: 0,
-            justifyContent: 'flex-end',
-          }}>
-          {ficha}
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
             <button
               type='button'
-              onClick={() => setEscala((z) => Math.max(ZOOM_MINIMO, Math.round(z / 1.5)))}
+              onClick={() => setZoom((z) => Math.max(ZOOM_MINIMO, z / 1.5))}
               title='Afastar'
               aria-label='Afastar a linha do tempo'
-              style={{ ...botaoDoTransporte(true), cursor: 'pointer' }}
+              style={{
+                width: 30, height: 30, borderRadius: DS.raio.medio, background: 'transparent',
+                border: 'none', color: DS.color.textoApoio, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
             >
-              <FiZoomOut size={12} />
+              <FiZoomOut size={14} />
             </button>
+            <span style={{ width: 42, textAlign: 'center', fontSize: 12, color: DS.color.textoApoio, fontFamily: DS.font.mono }}>
+              {Math.round(zoom * 100)}%
+            </span>
             <button
               type='button'
-              onClick={() => setEscala((z) => Math.min(ZOOM_MAXIMO, Math.round(z * 1.5)))}
+              onClick={() => setZoom((z) => Math.min(ZOOM_MAXIMO, z * 1.5))}
               title='Aproximar'
               aria-label='Aproximar a linha do tempo'
-              style={{ ...botaoDoTransporte(true), cursor: 'pointer' }}
+              style={{
+                width: 30, height: 30, borderRadius: DS.raio.medio, background: 'transparent',
+                border: 'none', color: DS.color.textoApoio, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
             >
-              <FiZoomIn size={12} />
+              <FiZoomIn size={14} />
             </button>
           </div>
 
-          {/* Os contadores são o primeiro a sair quando a tela aperta: são informação, e o
-              status, o BPM e o tom são controlos. */}
-          <div className={casca.contadores} style={{
-            fontSize: 10, color: DS.color.textTertiary, fontFamily: DS.font.mono,
-            letterSpacing: '0.03em', flexShrink: 0, whiteSpace: 'nowrap',
-          }}>
-            {pistas.length} {pistas.length === 1 ? 'pista' : 'pistas'} · {totalDeClipes} {totalDeClipes === 1 ? 'clipe' : 'clipes'} · {relogio(estado.duracao)}
-          </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ══════════════════ CONTEÚDO ══════════════════ */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* ── LATERAL ── */}
-        <div style={{
-          width: LARGURA_DA_LATERAL, flexShrink: 0,
-          background: DS.color.bgSurface,
-          borderRight: `2px solid ${DS.color.gridMajor}`,
-          display: 'flex', flexDirection: 'column', overflow: 'auto',
-        }}>
-          <div style={{
-            height: ALTURA_DA_REGUA, flexShrink: 0,
-            borderBottom: `1px solid ${DS.color.borderDefault}`,
-            display: 'flex', alignItems: 'center', padding: '0 16px',
-            fontSize: 10, color: DS.color.textTertiary, fontWeight: 600, letterSpacing: 1,
-          }}>
-            PISTAS
-          </div>
-
-          {pistas.length === 0 && (
-            <div style={{
-              padding: '20px 12px', display: 'flex', flexDirection: 'column',
-              alignItems: 'center', gap: 8, flex: 1, justifyContent: 'center',
-            }}>
+          {aba === 'mesa' ? (
+            <MesaDeCanais
+              pistas={pistas}
+              estado={estado}
+              podeEditar={podeEditar}
+              pistaFixaId={pistaFixaId}
+              acoes={acoes}
+            />
+          ) : (
+            <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+              {/* Cabeçalhos das pistas */}
               <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: `${DS.color.primary}18`,
-                border: `1px dashed ${DS.color.primary}60`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: LARGURA_DAS_PISTAS, flexShrink: 0,
+                background: DS.color.bgPainel, borderRight: `1px solid ${DS.color.borda}`,
+                overflowY: 'auto',
               }}>
-                <FiPlus size={18} color={DS.color.primary} strokeWidth={2} />
-              </div>
-              <p style={{ fontSize: 10, color: DS.color.textTertiary, textAlign: 'center', lineHeight: 1.5, margin: 0 }}>
-                Arraste os stems para cá<br />ou use ADICIONAR PISTA
-              </p>
-            </div>
-          )}
-
-          {pistas.map((faixa, indice) => {
-            const cor = corDaPista(faixa.color_index ?? indice);
-            const daMesa = estado.pistas.find((p) => p.id === faixa.id);
-            const calada = Boolean(daMesa?.muda);
-            return (
-              <div
-                key={faixa.id}
-                style={{
-                  height: ALTURA_DA_PISTA, flexShrink: 0,
-                  borderBottom: `2px solid ${DS.color.borderSubtle}`,
-                  borderLeft: `3px solid ${calada ? '#3A3A4A' : cor}`,
-                  display: 'flex', flexDirection: 'column', justifyContent: 'center',
-                  padding: '0 10px', gap: 5,
-                  opacity: calada ? 0.55 : 1,
-                  transition: 'opacity 0.2s, border-color 0.2s',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{
-                    width: 30, height: 30, borderRadius: 7,
-                    background: `${cor}20`, border: `1px solid ${cor}35`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, boxShadow: `0 0 8px ${cor}22`,
-                  }}>
-                    <FiMusic size={15} color={cor} />
-                  </div>
-                  <input
-                    value={faixa.name}
-                    onChange={(e) => acoes.aoMudarPista(faixa.id, { name: e.target.value })}
-                    disabled={!podeEditar || faixa.id === pistaFixaId}
-                    aria-label={`Nome da pista ${faixa.name}`}
-                    style={{
-                      flex: 1, minWidth: 0, padding: 0, background: 'transparent', border: 'none',
-                      outline: 'none', color: calada ? DS.color.textTertiary : DS.color.textPrimary,
-                      fontSize: 12, fontWeight: 700, fontFamily: DS.font.display,
-                    }}
-                  />
+                <div style={{
+                  height: ALTURA_DA_REGUA,
+                  borderBottom: `1px solid ${DS.color.borda}`,
+                  display: 'flex', alignItems: 'center', padding: '0 12px',
+                  fontSize: 10, letterSpacing: '0.08em', color: DS.color.textoFraco, fontWeight: 600,
+                }}>
+                  PISTAS
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingLeft: 38 }}>
+                {pistas.map(cabecalhoDaPista)}
+
+                {podeEditar && (
                   <button
                     type='button'
-                    onClick={() => acoes.aoMudarPista(faixa.id, { muted: !calada })}
-                    title={calada ? 'Ouvir' : 'Silenciar'}
-                    aria-label={calada ? `Ouvir ${faixa.name}` : `Silenciar ${faixa.name}`}
-                    aria-pressed={calada}
+                    onClick={() => document.querySelector<HTMLButtonElement>('[aria-label="Escolher arquivos"]')?.click()}
+                    aria-label='Adicionar pista'
                     style={{
-                      height: 20, padding: '0 7px', borderRadius: 4,
-                      background: calada ? '#3A3A4A' : DS.color.bgCard,
-                      border: `1px solid ${DS.color.borderDefault}`,
-                      color: calada ? '#fff' : DS.color.textSecondary,
-                      cursor: 'pointer', fontSize: 10, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', gap: 3,
-                    }}
-                  >
-                    {calada ? <FiVolumeX size={9} /> : <FiVolume2 size={9} />} M
-                  </button>
-
-                  {/* ⚠️ Solo e mudo têm CORES DIFERENTES. São ações opostas e as duas mais usadas
-                      de uma mesa; pintadas iguais quando acesas, ninguém sabe qual carregou. */}
-                  <button
-                    type='button'
-                    onClick={() => acoes.aoSolar(faixa.id, !daMesa?.solo)}
-                    title={daMesa?.solo ? 'Ouvir tudo' : 'Ouvir só esta'}
-                    aria-label={daMesa?.solo ? 'Ouvir tudo de novo' : `Ouvir só ${faixa.name}`}
-                    aria-pressed={Boolean(daMesa?.solo)}
-                    style={{
-                      height: 20, padding: '0 8px', borderRadius: 4,
-                      background: daMesa?.solo ? DS.color.warning : DS.color.bgCard,
-                      border: `1px solid ${daMesa?.solo ? DS.color.warning : DS.color.borderDefault}`,
-                      color: daMesa?.solo ? '#1A1A1A' : DS.color.textSecondary,
-                      cursor: 'pointer', fontSize: 10, fontWeight: 700,
-                    }}
-                  >
-                    S
-                  </button>
-
-                  <input
-                    type='range'
-                    min={0} max={100}
-                    value={Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
-                    onChange={(e) => acoes.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
-                    disabled={!podeEditar}
-                    aria-label={`Volume de ${faixa.name}`}
-                    style={{ flex: 1, minWidth: 0, height: 20, accentColor: cor, cursor: 'pointer' }}
-                  />
-
-                  {podeEditar && faixa.id !== pistaFixaId && (
-                    <button
-                      type='button'
-                      onClick={() => acoes.aoApagarPista(faixa.id)}
-                      title='Apagar a pista'
-                      aria-label={`Apagar a pista ${faixa.name}`}
-                      style={{
-                        height: 20, width: 22, borderRadius: 4,
-                        background: 'transparent', border: `1px solid ${DS.color.borderDefault}`,
-                        color: DS.color.textTertiary, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >
-                      <FiTrash2 size={10} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* ── LINHA DO TEMPO ── */}
-        <div
-          ref={pista}
-          onMouseMove={aoMover}
-          onMouseUp={aoLargar}
-          onMouseLeave={aoLargar}
-          onDragOver={(e) => { e.preventDefault(); setSobre(true); }}
-          onDragLeave={() => setSobre(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setSobre(false);
-            const arquivos = Array.from(e.dataTransfer.files);
-            // Largar um ficheiro no segundo 12 põe o clipe no segundo 12: é o gesto que quem vem
-            // de uma DAW já faz sem pensar.
-            if (arquivos.length && podeEditar) {
-              acoes.aoAdicionarArquivos(arquivos, Math.round(segundoDoEvento(e) / ENCAIXE) * ENCAIXE);
-            }
-          }}
-          style={{
-            flex: 1, overflow: 'auto', position: 'relative',
-            cursor: arrasto.current ? 'grabbing' : 'default',
-            outline: sobre ? `2px dashed ${DS.color.primary}` : 'none',
-            outlineOffset: -2,
-          }}
-        >
-          {/* Régua */}
-          <div
-            onMouseDown={(evento) => { agulhaPresa.current = true; transporte.irPara(segundoDoEvento(evento)); }}
-            style={{
-              height: ALTURA_DA_REGUA, width: largura,
-              background: DS.color.bgRaised,
-              borderBottom: `2px solid ${DS.color.gridMajor}`,
-              position: 'sticky', top: 0, zIndex: 10,
-              display: 'flex', cursor: 'pointer', userSelect: 'none',
-            }}
-          >
-            {Array.from({ length: duracao + 1 }, (_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: escala, flexShrink: 0, position: 'relative',
-                  borderLeft: `1px solid ${i % 5 === 0 ? '#444458' : DS.color.gridMinor}`,
-                }}
-              >
-                {/* Com pouco zoom, um número por segundo vira um borrão: de cinco em cinco. */}
-                {(escala >= 40 || i % 5 === 0) && (
-                  <div style={{ position: 'absolute', top: 4, left: 4, fontSize: 10, color: DS.color.textTertiary }}>
-                    {i}s
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Faixas */}
-          <div style={{ position: 'relative', width: largura }}>
-            {pistas.map((faixa, indice) => {
-              const cor = corDaPista(faixa.color_index ?? indice);
-              return (
-                <div
-                  key={faixa.id}
-                  style={{
-                    height: ALTURA_DA_PISTA,
-                    background: indice % 2 === 0 ? DS.color.rowAlt1 : DS.color.rowAlt2,
-                    borderBottom: `2px solid ${DS.color.borderSubtle}`,
-                    position: 'relative',
-                  }}
-                >
-                  {Array.from({ length: duracao + 1 }, (_, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        position: 'absolute', left: i * escala, top: 0, bottom: 0, width: 1,
-                        background: i % 5 === 0 ? DS.color.gridMajor : DS.color.gridMinor,
-                      }}
-                    />
-                  ))}
-
-                  {(faixa.clips ?? []).map((clipe, ordem) => (
-                    <Clipe
-                      key={clipe.id}
-                      clipe={clipe}
-                      indice={ordem}
-                      cor={cor}
-                      // Uma barra a cada três pixels: um número fixo faz a onda de um clipe de
-                      // meio segundo ficar rendilhada e a de quatro minutos virar um bloco.
-                      picos={picos(clipe.id, Math.max(40, Math.min(900, Math.round(((Number(clipe.duration_seconds) || 0) * escala) / 3))))}
-                      escala={escala}
-                      agulha={agulha}
-                      selecionado={selecionado === clipe.id}
-                      fixo={faixa.id === pistaFixaId}
-                      aoSelecionar={() => setSelecionado((atual) => (atual === clipe.id ? null : clipe.id))}
-                      aoArrastar={(evento) => {
-                        if (!podeEditar || faixa.id === pistaFixaId) return;
-                        const caixa = pista.current;
-                        if (!caixa) return;
-                        const x = evento.clientX - caixa.getBoundingClientRect().left + caixa.scrollLeft;
-                        arrasto.current = {
-                          clipeId: clipe.id,
-                          deslocamentoX: x - (Number(clipe.start_seconds) || 0) * escala,
-                        };
-                      }}
-                      aoCortar={() => { acoes.aoCortarClipe(clipe.id, agulha); setSelecionado(null); }}
-                      aoApagar={() => { acoes.aoApagarClipe(clipe.id); setSelecionado(null); }}
-                    />
-                  ))}
-                </div>
-              );
-            })}
-
-            {pistas.length === 0 && (
-              <div style={{
-                position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: 10, pointerEvents: 'none',
-                paddingTop: 80,
-              }}>
-                <p style={{ fontSize: 13, color: DS.color.textTertiary, margin: 0 }}>
-                  Arraste os stems desta gravação para aqui.
-                </p>
-                {!!aoMontar && (
-                  <button
-                    type='button'
-                    onClick={aoMontar}
-                    style={{
-                      pointerEvents: 'auto',
-                      height: 34, padding: '0 16px',
-                      background: 'rgba(233, 82, 22, 0.08)',
-                      border: '1px solid rgba(233, 82, 22, 0.31)',
-                      borderRadius: DS.radius.sm, color: DS.color.primary,
-                      fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
-                      textTransform: 'uppercase', cursor: 'pointer',
+                      width: '100%', height: 46,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      background: 'transparent', border: 'none',
+                      borderBottom: `1px solid ${DS.color.borda}`,
+                      color: DS.color.textoApoio, fontSize: 13, cursor: 'pointer',
                       fontFamily: DS.font.display,
                     }}
                   >
-                    Montar esta gravação em pistas
+                    + Adicionar pista
                   </button>
                 )}
-                <p style={{ fontSize: 11, color: DS.color.textDisabled, margin: 0, maxWidth: 420, textAlign: 'center', lineHeight: 1.6 }}>
-                  WAV para sincronia exata. Stems em MP3 só alinham entre si se saíram do mesmo
-                  programa: cada codificador acrescenta um silêncio de alguns milissegundos no início.
-                </p>
               </div>
-            )}
 
-            {/* A agulha. Fica por cima de tudo, e é ela que diz onde o corte cai. */}
-            <div
-              onMouseDown={() => { agulhaPresa.current = true; }}
-              style={{
-                position: 'absolute', left: agulha * escala, top: 0,
-                height: Math.max(pistas.length, 1) * ALTURA_DA_PISTA,
-                width: 2, background: DS.color.primary,
-                cursor: 'grab', zIndex: 100,
-              }}
-            >
-              <div style={{
-                position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)',
-                width: 12, height: 12, borderRadius: '50%',
-                background: DS.color.primary,
-                boxShadow: `0 0 8px ${DS.color.primary}`,
-              }} />
+              {/* Linha do tempo */}
+              <div
+                ref={linha}
+                onMouseMove={aoMover}
+                onMouseUp={aoLargar}
+                onMouseLeave={aoLargar}
+                onDragOver={(e) => { e.preventDefault(); setSobre(true); }}
+                onDragLeave={() => setSobre(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setSobre(false);
+                  if (!podeEditar) return;
+                  // Fora de uma faixa: cada ficheiro vira uma PISTA nova, no segundo em que foi
+                  // largado. É o gesto que quem vem de uma DAW já faz sem pensar.
+                  const inicio = Math.round(segundoDoEvento(e) / ENCAIXE) * ENCAIXE;
+                  const daBiblioteca = e.dataTransfer.getData(TIPO_DO_ARRASTO);
+                  if (daBiblioteca) {
+                    const item = biblioteca.find((i) => i.id === daBiblioteca);
+                    if (item) escolherArquivos([item.arquivo], inicio);
+                    return;
+                  }
+                  escolherArquivos(Array.from(e.dataTransfer.files), inicio);
+                }}
+                style={{
+                  flex: 1, minWidth: 0, overflow: 'auto', position: 'relative',
+                  background: DS.color.bgFundoDaLinha,
+                  outline: sobre ? `2px dashed ${DS.color.primaria}` : 'none',
+                  outlineOffset: -2,
+                }}
+              >
+                <div
+                  onMouseDown={(evento) => { agulhaPresa.current = true; transporte.irPara(segundoDoEvento(evento)); }}
+                  style={{
+                    height: ALTURA_DA_REGUA, width: largura,
+                    position: 'sticky', top: 0, zIndex: 10,
+                    background: DS.color.bgPainel,
+                    borderBottom: `1px solid ${DS.color.borda}`,
+                    cursor: 'pointer', userSelect: 'none',
+                  }}
+                >
+                  {Array.from({ length: Math.floor(duracao / passo) + 1 }, (_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        position: 'absolute', left: i * passo * escala, top: 0, bottom: 0,
+                        paddingLeft: 6, borderLeft: `1px solid ${DS.color.grelhaForte}`,
+                        fontSize: 10, color: DS.color.textoFraco, lineHeight: `${ALTURA_DA_REGUA}px`,
+                      }}
+                    >
+                      {i * passo}s
+                    </div>
+                  ))}
+                  <span style={{
+                    position: 'absolute', right: 12, top: 0, lineHeight: `${ALTURA_DA_REGUA}px`,
+                    fontSize: 10, color: DS.color.textoInerte,
+                  }}>
+                    Clique duplo num clipe para remover
+                  </span>
+                </div>
+
+                <div style={{ position: 'relative', width: largura }}>
+                  {pistas.map((faixa, indice) => {
+                    const cor = corDaPista(faixa.color_index ?? indice);
+                    return (
+                      <div
+                        key={faixa.id}
+                        onDragOver={(e) => { e.preventDefault(); setSobre(true); }}
+                        onDrop={(e) => largarNaFaixa(e, faixa.id)}
+                        style={{
+                          height: ALTURA_DA_PISTA,
+                          borderBottom: `1px solid ${DS.color.borda}`,
+                          position: 'relative',
+                        }}
+                      >
+                        {Array.from({ length: Math.floor(duracao / passo) + 1 }, (_, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              position: 'absolute', left: i * passo * escala, top: 0, bottom: 0,
+                              width: 1, background: DS.color.grelhaFraca,
+                            }}
+                          />
+                        ))}
+
+                        {(faixa.clips ?? []).map((clipe, ordem) => (
+                          <Clipe
+                            key={clipe.id}
+                            clipe={clipe}
+                            indice={ordem}
+                            cor={cor}
+                            // Uma barra a cada três pixels: um número fixo faz a onda de meio
+                            // segundo ficar rendilhada e a de quatro minutos virar um bloco.
+                            picos={picos(clipe.id, Math.max(40, Math.min(900, Math.round(((Number(clipe.duration_seconds) || 0) * escala) / 3))))}
+                            escala={escala}
+                            agulha={agulha}
+                            altura={ALTURA_DA_PISTA}
+                            selecionado={selecionado === clipe.id}
+                            fixo={faixa.id === pistaFixaId}
+                            aoSelecionar={() => setSelecionado((atual) => (atual === clipe.id ? null : clipe.id))}
+                            aoArrastar={(evento) => {
+                              if (!podeEditar || faixa.id === pistaFixaId) return;
+                              const caixa = linha.current;
+                              if (!caixa) return;
+                              const x = evento.clientX - caixa.getBoundingClientRect().left + caixa.scrollLeft;
+                              arrasto.current = {
+                                clipeId: clipe.id,
+                                deslocamentoX: x - (Number(clipe.start_seconds) || 0) * escala,
+                              };
+                            }}
+                            aoCortar={() => { acoes.aoCortarClipe(clipe.id, agulha); setSelecionado(null); }}
+                            aoApagar={() => { acoes.aoApagarClipe(clipe.id); setSelecionado(null); }}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })}
+
+                  {pistas.length === 0 && (
+                    <div style={{
+                      position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center', gap: 8,
+                      pointerEvents: 'none', paddingTop: 60,
+                    }}>
+                      <p style={{ margin: 0, fontSize: 13, color: DS.color.textoFraco }}>
+                        Arraste os stems desta gravação para aqui.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* A agulha. Fica por cima de tudo, e é ela que diz onde o corte cai. */}
+                  <div
+                    onMouseDown={() => { agulhaPresa.current = true; }}
+                    style={{
+                      position: 'absolute', left: agulha * escala, top: 0,
+                      height: Math.max(pistas.length, 1) * ALTURA_DA_PISTA,
+                      width: 2, background: DS.color.agulha, cursor: 'grab', zIndex: 100,
+                    }}
+                  >
+                    <div style={{
+                      position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+                      width: 11, height: 11, borderRadius: '50%',
+                      background: DS.color.agulha, boxShadow: `0 0 8px ${DS.color.agulha}`,
+                    }} />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
+      {/* O canto de ajuda da referência: o que os botões fazem, sem sair da tela. */}
+      <details className={casca.ajuda}>
+        <summary title='Ajuda' aria-label='Ajuda'>?</summary>
+        <div>
+          <strong>Como se monta</strong>
+          <p>Arraste os stems para a linha do tempo, ou use <em>Enviar áudio</em>. Cada ficheiro
+            vira uma pista; com uma <em>pista de destino</em> escolhida, vira um clipe nela.</p>
+          <p>Arraste um clipe para o mover — ele encaixa de um quarto de segundo. Selecione-o e
+            use <em>dividir</em> para o cortar onde a agulha está. Clique duplo remove.</p>
+          <p><strong>M</strong> cala a pista, <strong>S</strong> deixa só ela. O primeiro
+            controlo é o volume; o segundo, o panorama entre os dois alto-falantes.</p>
+        </div>
+      </details>
     </div>
   );
 };
+
+/**
+ * A MESA: as mesmas pistas, vistas como canais.
+ *
+ * A linha do tempo responde "o que toca quando"; a mesa responde "como isto soa junto". É a
+ * mesma montagem — o que muda é a pergunta, e por isso é uma aba e não outra tela.
+ */
+const MesaDeCanais: FC<{
+  pistas: CatalogTrack[];
+  estado: EstadoDaMesa;
+  podeEditar: boolean;
+  pistaFixaId?: string | null;
+  acoes: AcoesDoEditor;
+}> = ({ pistas, estado, podeEditar, acoes }) => (
+  <div style={{
+    flex: 1, minHeight: 0, overflow: 'auto', padding: 20,
+    display: 'flex', gap: 14, alignItems: 'stretch',
+    background: DS.color.bgFundoDaLinha,
+  }}>
+    {pistas.map((faixa, indice) => {
+      const cor = corDaPista(faixa.color_index ?? indice);
+      const daMesa = estado.pistas.find((p) => p.id === faixa.id);
+      const calada = Boolean(daMesa?.muda);
+      const pan = daMesa?.pan ?? (Number(faixa.pan) || 0);
+      return (
+        <div
+          key={faixa.id}
+          style={{
+            width: 116, flexShrink: 0, padding: 12,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+            background: DS.color.bgPista, border: `1px solid ${DS.color.borda}`,
+            borderTop: `3px solid ${calada ? DS.color.textoInerte : cor}`,
+            borderRadius: DS.raio.grande, opacity: calada ? 0.6 : 1,
+          }}
+        >
+          <span style={{
+            width: '100%', fontSize: 12, fontWeight: 600, color: DS.color.texto,
+            textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {faixa.name}
+          </span>
+
+          <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <input
+              type='range' min={-100} max={100}
+              value={Math.round(pan * 100)}
+              onChange={(e) => acoes.aoMudarPista(faixa.id, { pan: Number(e.target.value) / 100 })}
+              disabled={!podeEditar}
+              aria-label={`Panorama de ${faixa.name} na mesa`}
+              style={{ width: 84, accentColor: DS.color.primaria, cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: 10, color: DS.color.textoFraco, fontFamily: DS.font.mono }}>
+              {Math.abs(pan) < 0.02 ? 'C' : `${pan < 0 ? 'E' : 'D'}${Math.round(Math.abs(pan) * 100)}`}
+            </span>
+          </label>
+
+          {/* O fader vertical: é a forma de uma mesa, e é o que deixa comparar seis níveis de
+              relance — deitados, seis linhas empilhadas não se comparam. */}
+          <input
+            type='range' min={0} max={100}
+            value={Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
+            onChange={(e) => acoes.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
+            disabled={!podeEditar}
+            aria-label={`Volume de ${faixa.name} na mesa`}
+            style={{
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              writingMode: 'vertical-lr' as React.CSSProperties['writingMode'],
+              direction: 'rtl', width: 28, height: 150,
+              accentColor: cor, cursor: 'pointer',
+            }}
+          />
+
+          <span style={{ fontSize: 11, color: DS.color.textoApoio, fontFamily: DS.font.mono }}>
+            {Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
+          </span>
+
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button
+              type='button'
+              onClick={() => acoes.aoMudarPista(faixa.id, { muted: !calada })}
+              aria-label={calada ? `Ouvir ${faixa.name} na mesa` : `Silenciar ${faixa.name} na mesa`}
+              aria-pressed={calada}
+              style={botaozinho(calada, DS.color.textoFraco)}
+            >
+              {calada ? <FiVolumeX size={11} /> : <FiVolume2 size={11} />}
+            </button>
+            <button
+              type='button'
+              onClick={() => acoes.aoSolar(faixa.id, !daMesa?.solo)}
+              aria-label={daMesa?.solo ? 'Ouvir tudo de novo na mesa' : `Ouvir só ${faixa.name} na mesa`}
+              aria-pressed={Boolean(daMesa?.solo)}
+              style={botaozinho(Boolean(daMesa?.solo), '#f59e0b')}
+            >
+              S
+            </button>
+          </div>
+        </div>
+      );
+    })}
+
+    {pistas.length === 0 && (
+      <p style={{ margin: 'auto', fontSize: 13, color: DS.color.textoFraco }}>
+        Sem pistas para misturar ainda.
+      </p>
+    )}
+  </div>
+);

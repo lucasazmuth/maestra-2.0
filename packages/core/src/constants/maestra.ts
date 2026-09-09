@@ -136,7 +136,15 @@ export const isActiveCatalogStatus = (status: string): boolean =>
  * descodificado para tocar. Oito estéreo passam dos 600 MB, que é onde um iPhone antigo começa
  * a ser morto pelo sistema.
  */
-export const MAXIMO_DE_PISTAS = 8;
+/**
+ * Quantas pistas cabem numa gravação.
+ *
+ * Eram 8, e 8 é pouco: um projeto de stems tem dez, doze, às vezes vinte faixas — bateria
+ * aberta em bombo, caixa, pratos e ambiências já gasta quatro. O teto existe pela memória (ver
+ * `MEMORIA_DE_AVISO_BYTES`), e no computador há folga para isto; quem passar do aviso de peso
+ * é avisado antes de descodificar.
+ */
+export const MAXIMO_DE_PISTAS = 24;
 
 /**
  * O tamanho máximo de uma pista.
