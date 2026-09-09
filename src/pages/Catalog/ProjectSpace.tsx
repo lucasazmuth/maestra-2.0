@@ -415,7 +415,6 @@ const ProjectSpace: FC = () => {
   const acoes: AcoesDoEditor = {
     aoSair: () => navigate(`/artists/${artistId}/catalog`),
     aoRenomear: (nome) => setProject((atual) => (atual ? { ...atual, title: nome } : atual)),
-    aoAbrirCompleta: () => navigate(`/artists/${artistId}/catalog?projectId=${project?.id}&versionId=${openId}`),
     aoAdicionarArquivos: (arquivos, inicio, pistaAlvo) => { void enviarPistas(arquivos, inicio, pistaAlvo); },
 
     aoMoverClipe: (clipeId, inicio) => {

@@ -1,6 +1,6 @@
 import { FC, ReactNode, useRef, useState } from 'react';
 import {
-  FiCircle, FiHeadphones, FiMaximize2, FiPause, FiPlay,
+  FiCircle, FiHeadphones, FiPause, FiPlay,
   FiSkipBack, FiSquare, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
@@ -65,7 +65,6 @@ const botaozinho = (ativo: boolean, corAtiva?: string) => ({
 export interface AcoesDoEditor {
   aoSair: () => void;
   aoRenomear: (nome: string) => void;
-  aoAbrirCompleta: () => void;
   /** `pistaAlvo` vazio cria uma pista nova para cada ficheiro. */
   aoAdicionarArquivos: (arquivos: File[], inicio: number, pistaAlvo?: string) => void;
   aoMoverClipe: (clipeId: string, inicio: number) => void;
@@ -391,15 +390,10 @@ export const EditorDaGravacao: FC<{
             essa escolha vive em `ProjectSpace`. Quando as versões voltarem, volta um botão, não
             um modelo novo. */}
 
-        <button
-          type='button'
-          onClick={acoes.aoAbrirCompleta}
-          title='Abrir a sala desta gravação'
-          aria-label='Abrir a sala desta gravação'
-          style={{ ...redondo, background: 'transparent', color: DS.color.textoFraco }}
-        >
-          <FiMaximize2 size={12} />
-        </button>
+        {/* ⚠️ O ATALHO PARA A SALA DA GRAVAÇÃO SAIU, a pedido do dono do produto: com o editor
+            aqui, aquela tela deixou de fazer sentido como destino. Ela continua a existir e
+            continua a ser alcançável pela lista de Músicas — é lá que moram os comentários
+            presos a um ponto do áudio e o download —, mas não é mais daqui que se vai até ela. */}
 
       </div>
 
