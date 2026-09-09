@@ -56,7 +56,16 @@
         }
       ],
       "expo-document-picker",
-      "./plugins/withAjustesDoXcode"
+      "./plugins/withAjustesDoXcode",
+      [
+        "react-native-audio-api",
+        {
+          "iosBackgroundMode": false,
+          "iosMicrophonePermission": false,
+          "androidPermissions": [],
+          "androidForegroundService": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

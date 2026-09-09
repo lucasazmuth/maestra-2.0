@@ -360,6 +360,41 @@ export const addVersionFile = async (input: Omit<CatalogVersionFile, 'id' | 'cre
   return data as CatalogVersionFile;
 };
 
+/** Renomear, mover de lugar ou mudar o volume de uma pista. */
+export const updateVersionFile = async (
+  id: string,
+  patch: Partial<Pick<CatalogVersionFile, 'name' | 'position' | 'gain'>>,
+): Promise<CatalogVersionFile> => {
+  const { data, error } = await supabase
+    .from('catalog_version_files')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as CatalogVersionFile;
+};
+
+/**
+ * A nova ordem das pistas, na ordem em que os ids vêm.
+ *
+ * N updates em paralelo, e não uma RPC: são no máximo oito linhas (`MAXIMO_DE_PISTAS`), e uma
+ * função no banco para isto seria mais uma coisa a manter em troca de nada. Se uma falhar, as
+ * outras ficam — a tela recarrega e mostra a ordem real, que é a do banco.
+ */
+export const reorderVersionFiles = async (ids: string[]): Promise<void> => {
+  const agora = new Date().toISOString();
+  const erros = await Promise.all(ids.map(async (id, position) => {
+    const { error } = await supabase
+      .from('catalog_version_files')
+      .update({ position, updated_at: agora })
+      .eq('id', id);
+    return error;
+  }));
+  const primeiro = erros.find(Boolean);
+  if (primeiro) throw primeiro;
+};
+
 export const deleteVersionFile = async (id: string): Promise<void> => {
   const { error } = await supabase.from('catalog_version_files').delete().eq('id', id);
   if (error) throw error;

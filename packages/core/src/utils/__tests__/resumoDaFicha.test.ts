@@ -1,4 +1,7 @@
-import { CONVITE_DA_FICHA, fichaVazia, partesDaFicha, resumoDaFicha } from '../resumoDaFicha';
+import {
+  CONVITE_DA_FICHA, CONVITE_DO_PROJETO, fichaVazia, partesDaFicha, projetoVazio, resumoDaFicha,
+  resumoDoProjeto, type DadosDoProjeto,
+} from '../resumoDaFicha';
 
 // A ficha técnica numa linha só — o que substituiu a grelha 2×2 de 153 pt no celular.
 //
@@ -42,5 +45,21 @@ describe('a linha pronta', () => {
     expect(resumoDaFicha({})).toBe(CONVITE_DA_FICHA);
     expect(fichaVazia({})).toBe(true);
     expect(fichaVazia({ tom: 'C' })).toBe(false);
+  });
+});
+
+describe('a linha do projeto, sem BPM nem tom', () => {
+  // BPM e tom subiram para o cabeçalho; a linha fica só com o que é da MÚSICA. Se o BPM
+  // vazasse para aqui, a tela mostraria o mesmo número duas vezes — e "de quê?" voltaria.
+  it('mostra gênero e data, e ignora BPM e tom mesmo que venham', () => {
+    expect(resumoDoProjeto({ genero: 'Pop', lancamento: '2026-09-12' })).toBe('Pop · 12/09/2026');
+    expect(resumoDoProjeto({ genero: 'Pop', lancamento: '2026-09-12', bpm: '128', tom: 'Am' } as DadosDoProjeto))
+      .toBe('Pop · 12/09/2026');
+  });
+
+  it('convida quando não há nada', () => {
+    expect(resumoDoProjeto({})).toBe(CONVITE_DO_PROJETO);
+    expect(projetoVazio({})).toBe(true);
+    expect(projetoVazio({ genero: 'Trap' })).toBe(false);
   });
 });

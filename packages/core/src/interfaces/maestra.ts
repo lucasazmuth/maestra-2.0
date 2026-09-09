@@ -512,14 +512,31 @@ export interface CatalogVersion {
   comments?: CatalogVersionComment[];
 }
 
+/**
+ * Um arquivo de uma versão. `kind` diz o que ele é:
+ *
+ * - `stem`: uma PISTA da gravação (voz, bateria, baixo…), que toca junto com as outras na mesa
+ *   do Espaço JAM. `position`, `gain` e `size_bytes` só fazem sentido aqui.
+ * - `attachment`: um anexo qualquer (letra em PDF, referência), que não toca.
+ *
+ * O PAPEL do stem não é um campo: é o `name`, texto livre. Um enum obrigaria "808" e
+ * "Vox dobra" a caírem em "outros".
+ */
 export interface CatalogVersionFile {
   id: string;
   version_id: string;
   name: string;
   file_url: string;
   file_type?: string | null;
-  kind?: string | null;
+  kind?: 'attachment' | 'stem' | null;
+  /** A ordem da pista na mesa. Persiste: quem abre vê a mesma mesa que quem a montou. */
+  position?: number;
+  /** 0..1. O nível relativo é decisão de quem enviou, e persiste. Mutar e solo NÃO. */
+  gain?: number | null;
+  /** Para estimar memória e egress antes de descodificar. */
+  size_bytes?: number | null;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface CatalogVersionComment {

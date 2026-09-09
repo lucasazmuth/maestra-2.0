@@ -59,3 +59,24 @@ export const resumoDaFicha = (dados: DadosDaFicha): string => {
 
 /** Há alguma coisa preenchida? Decide se a linha é resumo ou convite. */
 export const fichaVazia = (dados: DadosDaFicha): boolean => partesDaFicha(dados).length === 0;
+
+// ─── O que é da MÚSICA, e não da gravação ───────────────────────────────────
+//
+// BPM e tom subiram para o cabeçalho, editáveis em linha e rotulados "da gravação principal".
+// O que sobra para a linha-resumo é o que pertence ao projeto: gênero e data de lançamento.
+// Separar os dois é o que resolve a confusão que havia — "BPM de quê?" — sem tirar a edição
+// em linha da tela, que era o que o dono do produto gostava.
+
+export type DadosDoProjeto = Pick<DadosDaFicha, 'genero' | 'lancamento'>;
+
+/** O que a linha diz quando gênero e data estão vazios. */
+export const CONVITE_DO_PROJETO = 'Adicionar gênero e data';
+
+/** `Pop · 12/09/2026`, ou o convite. Mesma ordem fixa da ficha: gênero antes da data. */
+export const resumoDoProjeto = (dados: DadosDoProjeto): string => {
+  const partes = partesDaFicha({ genero: dados.genero, lancamento: dados.lancamento });
+  return partes.length ? partes.join(' · ') : CONVITE_DO_PROJETO;
+};
+
+export const projetoVazio = (dados: DadosDoProjeto): boolean =>
+  partesDaFicha({ genero: dados.genero, lancamento: dados.lancamento }).length === 0;

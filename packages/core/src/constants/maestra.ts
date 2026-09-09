@@ -127,6 +127,31 @@ export const ACTIVE_CATALOG_STATUSES: readonly CatalogStatus[] = [
 export const isActiveCatalogStatus = (status: string): boolean =>
   (ACTIVE_CATALOG_STATUSES as readonly string[]).includes(status);
 
+// ─── As pistas (stems) de uma gravação ──────────────────────────────────────
+
+/**
+ * O teto de pistas por gravação.
+ *
+ * É memória, não gosto: um stem de 4 minutos ocupa ~85 MB de PCM estéreo (~42 em mono) quando
+ * descodificado para tocar. Oito estéreo passam dos 600 MB, que é onde um iPhone antigo começa
+ * a ser morto pelo sistema.
+ */
+export const MAXIMO_DE_PISTAS = 8;
+
+/**
+ * O tamanho máximo de uma pista.
+ *
+ * 60 MB cabe um WAV 16-bit de 4 minutos com folga. O balde `catalog` aceita até 100 MB, então
+ * este número é o nosso, e não o dele — um WAV 24-bit de 5 minutos passaria no balde e daria
+ * 130 MB de PCM na memória por pista.
+ */
+export const LIMITE_DA_PISTA_BYTES = 60 * 1024 * 1024;
+
+/** Sugestões para o nome da pista. São ATALHOS, não uma lista fechada: o campo é livre. */
+export const PAPEIS_SUGERIDOS_DA_PISTA = [
+  'Voz', 'Guia', 'Bateria', 'Baixo', 'Guitarra', 'Teclas', 'Outros',
+] as const;
+
 export const SPLIT_ROLES = [
   'Autor',
   'Compositor',
