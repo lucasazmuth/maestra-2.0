@@ -66,7 +66,18 @@ export const corDaPista = (indice: number): string =>
 
 /** O zoom de partida: 100% são 60 pixels por segundo. */
 export const PIXELS_POR_SEGUNDO = 60;
+/** O quanto os botões de zoom afastam, no caso normal. */
 export const ZOOM_MINIMO = 0.25;
+/**
+ * O chão de todos: nem o encaixe automático desce daqui.
+ *
+ * ⚠️ ELE EXISTE POR CAUSA DO TELEMÓVEL. A 0,25 (15 px/s) uma música de dois minutos mede
+ * 2 000 px — cinco ecrãs de 390 —, e num ecrã desses a única forma de a percorrer era um
+ * polegar de barra de rolagem com 17 px, que aliás nem chega a ser desenhado ao toque. Para o
+ * editor abrir com a montagem inteira à vista, o zoom tem de poder descer até onde ela caiba;
+ * abaixo de 0,02 (1,2 px/s) a onda deixa de ter forma e passa a ser um risco.
+ */
+export const ZOOM_MINIMO_ABSOLUTO = 0.02;
 export const ZOOM_MAXIMO = 4;
 
 export const ALTURA_DA_PISTA = 160;

@@ -1,4 +1,4 @@
-import { FC, ReactNode, useRef, useState } from 'react';
+import { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import {
   FiAlertCircle, FiCheck, FiCircle, FiDownload, FiFileText, FiFolder, FiHeadphones, FiLoader, FiPause,
   FiPlay, FiRepeat, FiSkipBack, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
@@ -18,7 +18,7 @@ import {
   ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_RODAPE, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE,
   DS, DURACAO_MINIMA,
   ENCAIXE, LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO,
-  ZOOM_MAXIMO, ZOOM_MINIMO, corDaPista,
+  ZOOM_MAXIMO, ZOOM_MINIMO, ZOOM_MINIMO_ABSOLUTO, corDaPista,
 } from './tokens';
 
 /** A medida dos quatro ícones das abas. Uma só, para a fila parecer uma fila. */
@@ -71,6 +71,21 @@ export const faixaDoPan = (pan: number) => {
   return desvio >= 0
     ? { de: `${meio}%`, ate: `${meio + desvio}%` }
     : { de: `${meio + desvio}%`, ate: `${meio}%` };
+};
+
+/**
+ * O zoom com que a montagem inteira cabe na largura que sobra para as ondas.
+ *
+ * Nunca passa de 100 %: uma música de dez segundos não deve abrir esticada a 400 % só porque
+ * cabia — a régua fica absurda e a onda vira um borrão largo. E nunca desce abaixo do
+ * `ZOOM_MINIMO_ABSOLUTO`, que é o ponto em que a onda deixa de ter forma; daí para baixo é
+ * melhor sobrar linha do tempo para rolar do que uma mancha encaixada.
+ *
+ * Sem largura ou sem duração não há encaixe possível, e o valor de partida (100 %) fica.
+ */
+export const zoomQueEncaixa = (duracao: number, larguraVisivel: number): number => {
+  if (duracao <= 0 || larguraVisivel <= 0) return 1;
+  return Math.max(ZOOM_MINIMO_ABSOLUTO, Math.min(1, larguraVisivel / (duracao * PIXELS_POR_SEGUNDO)));
 };
 
 const botaozinho = (ativo: boolean, corAtiva?: string) => ({
@@ -201,8 +216,13 @@ export const EditorDaGravacao: FC<{
   const [sobre, setSobre] = useState(false);
 
   const linha = useRef<HTMLDivElement>(null);
+  const rolagem = useRef<HTMLDivElement>(null);
   const arrasto = useRef<{ clipeId: string; deslocamentoX: number } | null>(null);
   const agulhaPresa = useRef(false);
+  /** Quem mexeu no zoom manda: o encaixe automático nunca volta a mexer nele. */
+  const zoomMexido = useRef(false);
+  /** O zoom em que a montagem inteira cabe no ecrã. Medido, porque depende da largura real. */
+  const [encaixe, setEncaixe] = useState(ZOOM_MINIMO);
 
   const escala = PIXELS_POR_SEGUNDO * zoom;
   const duracao = Math.max(DURACAO_MINIMA, Math.ceil(estado.duracao) + 10);
@@ -210,7 +230,40 @@ export const EditorDaGravacao: FC<{
   const agulha = estado.posicao;
 
   /** De quantos em quantos segundos a régua põe um número, para os rótulos não se colarem. */
-  const passo = escala >= 80 ? 1 : escala >= 40 ? 2 : escala >= 20 ? 5 : 10;
+  // ⚠️ OS DEGRAUS VÃO ATÉ AO MINUTO. Ficavam nos 10 s, que a 100 % são 600 px de intervalo e
+  // encaixado no telemóvel são 17 px: os números da régua passavam a escrever-se uns por cima
+  // dos outros ("100s110s120s"), e uma régua ilegível é pior do que régua nenhuma.
+  const passo = escala >= 80 ? 1
+    : escala >= 40 ? 2
+      : escala >= 20 ? 5
+        : escala >= 8 ? 10
+          : escala >= 4 ? 30
+            : 60;
+
+  // ⚠️ NO TELEMÓVEL A MONTAGEM ABRE ENCAIXADA NO ECRÃ.
+  //
+  // A 100 % são 60 px por segundo: uma música de dois minutos mede 8 700 px, e num ecrã de 390
+  // isso são vinte e dois ecrãs em fila. A pessoa abria a linha do tempo, via seis segundos de
+  // onda, e para chegar ao resto tinha de arrastar um polegar de barra de rolagem com 17 px de
+  // comprimento — que num telemóvel nem sequer é desenhado. Daí o "não consigo rolar pro lado":
+  // o lado existia, mas não havia como o alcançar.
+  //
+  // Encaixada, a música inteira está à vista de partida e o zoom deixa de ser obrigatório para
+  // ser opção. Só na abertura: a partir do primeiro toque nos botões de zoom, quem manda é quem
+  // está a olhar.
+  useEffect(() => {
+    const visivel = rolagem.current?.clientWidth;
+    if (aba !== 'linha' || !visivel) return;
+    const alvo = zoomQueEncaixa(duracao, visivel - larguraDasPistas);
+    setEncaixe(alvo);
+    if (noCelular && !zoomMexido.current) setZoom(alvo);
+  }, [noCelular, aba, duracao, larguraDasPistas]);
+
+  // ⚠️ AFASTAR VAI SEMPRE ATÉ AO ENCAIXE, e nunca além. O chão dos botões é o menor entre o
+  // afastamento normal e o zoom em que a montagem cabe: no desktop isso quase sempre dá os
+  // 25 % de sempre (nada muda), e no telemóvel dá exatamente o ponto de partida — sem isto,
+  // quem aproximasse uma vez não conseguia voltar a ver a música inteira.
+  const zoomMinimo = Math.min(ZOOM_MINIMO, encaixe);
 
   const segundoDoEvento = (evento: { clientX: number }) => {
     const caixa = linha.current;
@@ -273,6 +326,18 @@ export const EditorDaGravacao: FC<{
     const fixa = faixa.id === pistaFixaId;
     const pan = daMesa?.pan ?? (Number(faixa.pan) || 0);
 
+    // ⚠️ NO TELEMÓVEL OS BOTÕES DIVIDEM A COLUNA, em vez de terem cada um a sua largura fixa.
+    // Quatro botões de 28 px com folgas somam 124 px dentro de uma coluna de 132 com recuo —
+    // o último saía pela borda e ia pousar EM CIMA da onda, onde além de ficar cortado roubava
+    // o toque a quem tentava arrastar a linha do tempo por ali.
+    //
+    // A conta acima só estava certa enquanto foram três botões; voltaria a partir-se no
+    // próximo que aparecesse. Repartida (`flex: 1 1 0`), a linha cabe seja qual for o número
+    // de botões e a largura da coluna, e é o botão que encolhe — não a coluna que estoura.
+    const repartido = noCelular
+      ? { flex: '1 1 0', minWidth: 0, padding: 0, height: 26 }
+      : null;
+
     return (
       <div
         key={faixa.id}
@@ -320,7 +385,7 @@ export const EditorDaGravacao: FC<{
             muda. A coluna `kind` fica no banco, com `audio` de padrão, à espera do dia em que
             os outros três signifiquem alguma coisa. */}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: noCelular ? 3 : 4 }}>
           <button
             type='button'
             onClick={() => acoes.aoMudarPista(faixa.id, { muted: !calada })}
@@ -329,7 +394,7 @@ export const EditorDaGravacao: FC<{
             title={calada ? 'Ouvir' : 'Silenciar'}
             // ⚠️ Mudo e solo têm CORES DIFERENTES: são as duas ações mais usadas de uma mesa e
             // são opostas. Pintadas iguais quando acesas, ninguém sabe qual carregou.
-            style={botaozinho(calada, DS.color.textoFraco)}
+            style={{ ...botaozinho(calada, DS.color.textoFraco), ...repartido }}
           >
             M
           </button>
@@ -339,7 +404,7 @@ export const EditorDaGravacao: FC<{
             aria-label={daMesa?.solo ? 'Ouvir tudo de novo' : `Ouvir só ${faixa.name}`}
             aria-pressed={Boolean(daMesa?.solo)}
             title={daMesa?.solo ? 'Ouvir tudo' : 'Ouvir só esta'}
-            style={botaozinho(Boolean(daMesa?.solo), '#f59e0b')}
+            style={{ ...botaozinho(Boolean(daMesa?.solo), '#f59e0b'), ...repartido }}
           >
             S
           </button>
@@ -359,6 +424,7 @@ export const EditorDaGravacao: FC<{
               : `Armar ${faixa.name} para gravar`}
             style={{
               ...botaozinho(false),
+              ...repartido,
               background: 'transparent',
               borderColor: armadas.includes(faixa.id) ? DS.color.gravar : DS.color.borda,
               color: DS.color.gravar,
@@ -378,7 +444,7 @@ export const EditorDaGravacao: FC<{
               onClick={() => escolherPara(faixa.id)}
               title={`Enviar um áudio para ${faixa.name}`}
               aria-label={`Enviar um áudio para ${faixa.name}`}
-              style={{ ...botaozinho(false), color: DS.color.textoApoio }}
+              style={{ ...botaozinho(false), ...repartido, color: DS.color.textoApoio }}
             >
               <IconeDeEnviar tamanho={14} />
             </button>
@@ -758,7 +824,7 @@ export const EditorDaGravacao: FC<{
             {aba === 'linha' && (<>
             <button
               type='button'
-              onClick={() => setZoom((z) => Math.max(ZOOM_MINIMO, z / 1.5))}
+              onClick={() => { zoomMexido.current = true; setZoom((z) => Math.max(zoomMinimo, z / 1.5)); }}
               title='Afastar'
               aria-label='Afastar a linha do tempo'
               style={{
@@ -774,7 +840,7 @@ export const EditorDaGravacao: FC<{
             </span>
             <button
               type='button'
-              onClick={() => setZoom((z) => Math.min(ZOOM_MAXIMO, z * 1.5))}
+              onClick={() => { zoomMexido.current = true; setZoom((z) => Math.min(ZOOM_MAXIMO, z * 1.5)); }}
               title='Aproximar'
               aria-label='Aproximar a linha do tempo'
               style={{
@@ -828,10 +894,36 @@ export const EditorDaGravacao: FC<{
             // Quem rola é este contentor. Lá dentro, a coluna dos controlos gruda à esquerda
             // (`sticky`) e a régua gruda em cima, cada uma no seu eixo, e o canto onde as duas
             // se cruzam gruda nos dois.
-            <div style={{
-              flex: 1, minHeight: 0, overflow: 'auto', position: 'relative',
-              background: DS.color.bgFundoDaLinha,
-            }}>
+            <div
+              ref={rolagem}
+              // ⚠️ A RODA VERTICAL ROLA DE LADO, no ecrã estreito. Numa linha do tempo o eixo
+              // que interessa é o horizontal, e alcançá-lo pedia `shift` + roda ou a barra de
+              // rolagem de baixo — dois gestos que quase ninguém conhece, e que no telemóvel
+              // nem existem. Quando não há nada para rolar na vertical (o caso normal: duas,
+              // três pistas cabem), a roda passa a andar no tempo; havendo, a vertical continua
+              // a ser dela. No desktop nada disto acontece: a roda faz o que sempre fez.
+              onWheel={(evento) => {
+                if (!noCelular) return;
+                const caixa = evento.currentTarget;
+                if (caixa.scrollHeight > caixa.clientHeight) return;
+                if (!evento.deltaY || Math.abs(evento.deltaX) > Math.abs(evento.deltaY)) return;
+                caixa.scrollLeft += evento.deltaY;
+              }}
+              style={{
+                flex: 1, minHeight: 0, overflow: 'auto', position: 'relative',
+                background: DS.color.bgFundoDaLinha,
+                // O dedo rola nos dois eixos, e o gesto morre aqui: sem `contain`, chegar ao
+                // fim da linha do tempo passa o arrasto à tela de trás (e no iOS ao "puxar para
+                // recarregar"), com o editor a saltar por baixo da mão.
+                touchAction: 'pan-x pan-y',
+                overscrollBehavior: 'contain',
+                // O navegador reposiciona sozinho a rolagem para "segurar" o que está à vista
+                // quando o conteúdo muda de tamanho. Aqui isso é um estorvo: mudar o zoom
+                // redimensiona a montagem inteira, e a linha do tempo saltava para o meio da
+                // música em vez de ficar onde estava no TEMPO.
+                overflowAnchor: 'none',
+              }}
+            >
             <div style={{ display: 'flex', minWidth: 'max-content', minHeight: '100%' }}>
               {/* Cabeçalhos das pistas */}
               <div style={{
@@ -927,12 +1019,17 @@ export const EditorDaGravacao: FC<{
                       {i * passo}s
                     </div>
                   ))}
-                  <span style={{
-                    position: 'absolute', right: 12, top: 0, lineHeight: `${ALTURA_DA_REGUA}px`,
-                    fontSize: 10, color: DS.color.textoInerte,
-                  }}>
-                    Clique duplo num clipe para remover
-                  </span>
+                  {/* ⚠️ A DICA É DE RATO, e por isso não vive no telemóvel: lá não há duplo
+                      clique, a edição de clipes está desligada (`semEdicao`), e a frase ainda
+                      por cima ia escrever-se por cima dos números da régua. */}
+                  {!noCelular && (
+                    <span style={{
+                      position: 'absolute', right: 12, top: 0, lineHeight: `${ALTURA_DA_REGUA}px`,
+                      fontSize: 10, color: DS.color.textoInerte,
+                    }}>
+                      Clique duplo num clipe para remover
+                    </span>
+                  )}
                 </div>
 
                 <div style={{ position: 'relative', width: largura }}>

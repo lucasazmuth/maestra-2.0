@@ -548,6 +548,67 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(corpo).toContain('ainda não está disponível');
   });
 
+  // ⚠️ OS BOTÕES DA PISTA REPARTEM A COLUNA, no telemóvel — não têm cada um a sua largura.
+  // Quatro botões de 28 px com folgas somam 124 dentro de uma coluna de 132 com recuo: o
+  // último saía pela borda e ia pousar EM CIMA da onda, cortado, roubando o toque a quem
+  // tentava arrastar a linha do tempo por ali. E a conta voltaria a partir-se no próximo botão
+  // que aparecesse.
+  it('no celular os botões da pista dividem a largura em vez de estourá-la', () => {
+    const corpo = semComentarios(editor);
+
+    expect(corpo).toContain("? { flex: '1 1 0', minWidth: 0, padding: 0, height: 26 }");
+
+    // Repartido em TODOS: um que ficasse de fora empurraria os outros na mesma.
+    const inicio = corpo.indexOf('const repartido = noCelular');
+    const fim = corpo.indexOf('VOLUME E PANORAMA', inicio) > 0
+      ? corpo.indexOf('{!noCelular && (<>', inicio)
+      : corpo.length;
+    const aPista = corpo.slice(inicio, fim);
+    expect(aPista.length).toBeGreaterThan(500);
+    expect(aPista.match(/\.\.\.repartido/g)).toHaveLength(4);
+  });
+
+  // ⚠️ O LADO TEM DE SER ALCANÇÁVEL. Num ecrã estreito a barra de rolagem horizontal ou é um
+  // polegar de 17 px ou não é desenhada de todo, e `shift` + roda não é gesto que se adivinhe.
+  it('no celular a roda anda no tempo, e o dedo rola sem arrastar a tela de trás', () => {
+    const corpo = semComentarios(editor);
+
+    // Só no celular: no desktop a roda faz o que sempre fez.
+    const aRoda = corpo.slice(corpo.indexOf('onWheel={(evento) => {'));
+    const corpoDaRoda = aRoda.slice(0, aRoda.indexOf('}}'));
+    expect(corpoDaRoda.length).toBeGreaterThan(80);
+    expect(corpoDaRoda).toContain('if (!noCelular) return;');
+    // Havendo o que rolar na vertical, a vertical continua a ser dela.
+    expect(corpoDaRoda).toContain('if (caixa.scrollHeight > caixa.clientHeight) return;');
+    expect(corpoDaRoda).toContain('caixa.scrollLeft += evento.deltaY;');
+
+    // O gesto morre no editor: sem isto, chegar ao fim da linha do tempo passa o arrasto à
+    // tela de trás e o editor salta por baixo da mão.
+    expect(corpo).toContain("overscrollBehavior: 'contain'");
+    expect(corpo).toContain("touchAction: 'pan-x pan-y'");
+    // Mudar o zoom redimensiona a montagem inteira; sem isto o navegador "segura" o que está à
+    // vista e a linha do tempo salta para o meio da música.
+    expect(corpo).toContain("overflowAnchor: 'none'");
+  });
+
+  // ⚠️ AFASTAR VAI SEMPRE ATÉ AO ENCAIXE. Sem isto, quem aproximasse uma vez no telemóvel não
+  // conseguia voltar a ver a música inteira: o botão parava nos 25 % e o encaixe era 3 %.
+  it('o afastamento chega ao zoom em que a montagem cabe', () => {
+    const corpo = semComentarios(editor);
+
+    expect(corpo).toContain('const zoomMinimo = Math.min(ZOOM_MINIMO, encaixe);');
+    expect(corpo).toContain('setZoom((z) => Math.max(zoomMinimo, z / 1.5))');
+    // Quem mexe no zoom manda: o encaixe automático não volta a mexer nele.
+    expect(corpo).toContain('zoomMexido.current = true;');
+    expect(corpo).toContain('if (noCelular && !zoomMexido.current) setZoom(alvo);');
+  });
+
+  // ⚠️ A DICA DO DUPLO CLIQUE É DE RATO. No telemóvel não há duplo clique, a edição de clipes
+  // está desligada, e a frase ainda por cima escrevia-se por cima dos números da régua.
+  it('a dica do duplo clique não aparece no celular', () => {
+    expect(semComentarios(editor)).toContain('{!noCelular && (\n                    <span');
+  });
+
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
   it('a tela de exportar oferece stems e guia, sem travessão na copy', () => {
     expect(exportar).toContain('Baixar stems (.zip)');
