@@ -253,6 +253,21 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(regra).not.toMatch(/\bwidth:/);
   });
 
+  // ⚠️ A ONDA COMEÇA NA BORDA DO CLIPE. O clipe está em `inicio * escala`, no instante exato
+  // em que o som entra; um recuo lateral aqui dentro desenha o ataque à direita de onde ele
+  // soa, e a 400 % de zoom isso vê-se a olho — justamente no zoom em que se alinham coisas.
+  it('a onda encosta nas laterais do clipe, e só respira em cima e em baixo', () => {
+    const envolucro = semComentarios(clipe)
+      .split('\n')
+      .find((l) => l.includes('<Onda') || l.includes('padding')) ?? '';
+    const recuo = semComentarios(clipe).match(/padding: '(\d+)px (\d+)(?:px)?'/);
+    expect(recuo).not.toBeNull();
+    // Vertical pode respirar; horizontal, não.
+    expect(Number(recuo![2])).toBe(0);
+    expect(Number(recuo![1])).toBeGreaterThan(0);
+    expect(envolucro).toBeTruthy();
+  });
+
   // ⚠️ UM SCROLL SÓ para as duas colunas. Com um `overflow` em cada uma, bastava rolar a
   // esquerda para o M, o S e o volume deixarem de ser os da onda ao lado — e a pessoa calava
   // ou baixava a pista errada sem perceber que estava a olhar para o cabeçalho de outra.

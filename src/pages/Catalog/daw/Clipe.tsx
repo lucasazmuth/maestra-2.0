@@ -82,7 +82,14 @@ export const Clipe: FC<{
         transition: 'border-color 150ms, box-shadow 150ms',
       }}
     >
-      <div style={{ position: 'absolute', inset: 0, padding: '6px 5px', overflow: 'hidden', borderRadius: 6 }}>
+      {/* ⚠️ SEM FOLGA NOS LADOS, e isto não é só estética: o clipe começa exatamente em
+          `inicio * escala` na linha do tempo, e cada pixel de recuo aqui dentro atrasa o
+          desenho em relação ao instante que ele representa. Com 5 px de cada lado, o ataque de
+          um bombo aparecia à direita da marca onde de facto soa — a 400 % de zoom, isso é
+          visível a olho, e é justamente aí que alguém está a alinhar as coisas.
+          Em cima e em baixo a folga fica: ali ela não mente sobre tempo nenhum, e é o que
+          impede a onda de encostar na borda. */}
+      <div style={{ position: 'absolute', inset: 0, padding: '6px 0', overflow: 'hidden', borderRadius: 6 }}>
         <Onda picos={picos} cor={cor} />
       </div>
 
