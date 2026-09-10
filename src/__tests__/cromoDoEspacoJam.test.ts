@@ -293,7 +293,9 @@ describe('cromo do editor do Espaço JAM', () => {
 
     // A coluna dos controlos não rola sozinha… (o recorte vai até ao fim do `style`, e não
     // até à primeira chaveta: há interpolações `${...}` pelo meio.)
-    const inicioDaColuna = corpo.indexOf('width: LARGURA_DAS_PISTAS');
+    // `larguraDasPistas` (a variável) e não a constante: a coluna encolhe no telemóvel, mas
+    // continua a ser a MESMA coluna — e é ela que tem de grudar em vez de rolar sozinha.
+    const inicioDaColuna = corpo.indexOf('width: larguraDasPistas');
     const coluna = corpo.slice(inicioDaColuna, corpo.indexOf('}}>', inicioDaColuna));
     expect(coluna).not.toContain('overflowY');
     expect(coluna).not.toContain('overflow:');
@@ -309,6 +311,50 @@ describe('cromo do editor do Espaço JAM', () => {
     const estiloDaLinha = daLinha.slice(abreEstilo, daLinha.indexOf('}}', abreEstilo));
     expect(estiloDaLinha.length).toBeGreaterThan(40);
     expect(estiloDaLinha).not.toContain('overflow');
+  });
+
+  // ⚠️ O TELEMÓVEL É OUTRA TELA, e o desktop não pode sentir nada disto. Em 375 px o editor
+  // era intocável: a biblioteca sozinha ocupava 256 px (68 %) e o X de sair ficava 269 px fora
+  // da janela — entrava-se e não se saía. Cada linha aqui guarda uma dessas correções.
+  describe('no telemóvel', () => {
+    const corpo = semComentarios(editor);
+
+    it('abre na Mesa, e não na linha do tempo', () => {
+      // Montar é trabalho de mouse; o que o dedo faz bem é ouvir e mexer nos níveis.
+      expect(corpo).toContain("window.innerWidth < 768 ? 'mesa' : 'linha'");
+    });
+
+    it('a biblioteca é gaveta, e não uma coluna de 256 px', () => {
+      expect(corpo).toContain('bibliotecaAberta');
+      expect(corpo).toContain('setBibliotecaAberta(true)');
+      expect(corpo).toContain("aria-label='Fechar a biblioteca'");
+      // Sobreposta, e não encaixada: é isso que devolve a largura toda à montagem.
+      expect(corpo).toContain("position: 'absolute', inset: 0, zIndex: 30");
+    });
+
+    it('as abas perdem o rótulo para o X caber', () => {
+      expect(corpo).toContain('{!noCelular && rotulo}');
+      // Sem texto, o nome tem de sobrar em algum lado — senão o botão fica mudo.
+      expect(corpo).toContain('title={rotulo}');
+      expect(corpo).toContain('aria-label={rotulo}');
+    });
+
+    it('o clipe não se arrasta nem se apaga com o dedo', () => {
+      expect(corpo).toContain('semEdicao={noCelular}');
+      expect(semComentarios(clipe)).toContain('const travado = fixo || semEdicao;');
+      // ⚠️ `semEdicao` NÃO é `fixo`: fixo é a pista da Mix, e troca o rótulo do clipe para
+      // "Mix". Um clipe normal num telemóvel continua a ser "Take N".
+      expect(semComentarios(clipe)).toContain("{fixo ? 'Mix' : `Take ${indice + 1}`}");
+    });
+
+    it('a coluna encolhe, e as faixas acompanham a mesma altura', () => {
+      expect(corpo).toContain('const larguraDasPistas = noCelular ? 132 : LARGURA_DAS_PISTAS;');
+      expect(corpo).toContain('const alturaDaPista = noCelular ? 96 : ALTURA_DA_PISTA;');
+      // ⚠️ A altura tem de ser a MESMA nos dois lados: cabeçalho e faixa desalinhados é o bug
+      // que o scroll único acabou de corrigir, e uma altura só para um dos lados traz de volta.
+      expect(corpo).not.toContain('height: ALTURA_DA_PISTA');
+      expect(corpo).not.toContain('altura={ALTURA_DA_PISTA}');
+    });
   });
 
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.

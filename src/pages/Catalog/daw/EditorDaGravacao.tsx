@@ -1,12 +1,13 @@
 import { FC, ReactNode, useRef, useState } from 'react';
 import {
-  FiAlertCircle, FiCheck, FiCircle, FiDownload, FiFileText, FiHeadphones, FiLoader, FiPause,
+  FiAlertCircle, FiCheck, FiCircle, FiDownload, FiFileText, FiFolder, FiHeadphones, FiLoader, FiPause,
   FiPlay, FiRepeat, FiSkipBack, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import type { CatalogTrack } from '@maestra/core/interfaces/maestra';
 
+import useIsMobile from '../../../utils/isMobile';
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
 import { IconeDaTimeline, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
@@ -105,7 +106,25 @@ export const EditorDaGravacao: FC<{
   titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
   estado, picos, transporte, ficha, numeros, fichaCompleta, exportar, letra, podeEditar, acoes,
 }) => {
-  const [aba, setAba] = useState<'linha' | 'mesa' | 'ficha' | 'exportar'>('linha');
+  // ⚠️ NO CELULAR O EDITOR ABRE NA MESA, e não na linha do tempo.
+  //
+  // Montar é trabalho de mouse e de largura: arrastar um clipe para o segundo certo com o dedo,
+  // num ecrã de 375 px, erra mais do que acerta. O que o telemóvel faz bem é a outra metade —
+  // ouvir o que está montado e mexer nos níveis —, e a mesa é exatamente essa metade: colunas
+  // estreitas que rolam de lado, como uma mesa de verdade.
+  const noCelular = useIsMobile();
+  /** A gaveta da biblioteca, só no celular: no desktop ela é coluna e está sempre lá. */
+  const [bibliotecaAberta, setBibliotecaAberta] = useState(false);
+
+  // ⚠️ A LINHA DO TEMPO ENCOLHE OS CONTROLOS, e não as ondas. A coluna de 256 px come 68 % de
+  // um ecrã de 375, e o que sobrava para o áudio — que é o assunto desta aba — era um terço.
+  // No telemóvel a coluna fica com o nome e o M/S; o volume e o panorama vivem na Mesa, que é
+  // onde a mão vai para mexer neles.
+  const larguraDasPistas = noCelular ? 132 : LARGURA_DAS_PISTAS;
+  const alturaDaPista = noCelular ? 96 : ALTURA_DA_PISTA;
+  const [aba, setAba] = useState<'linha' | 'mesa' | 'ficha' | 'exportar'>(
+    () => (window.innerWidth < 768 ? 'mesa' : 'linha'),
+  );
 
   // ─── O que o selo diz ─────────────────────────────────────────────────────
   //
@@ -208,8 +227,8 @@ export const EditorDaGravacao: FC<{
       <div
         key={faixa.id}
         style={{
-          height: ALTURA_DA_PISTA, flexShrink: 0,
-          padding: '10px 12px',
+          height: alturaDaPista, flexShrink: 0,
+          padding: noCelular ? '8px 10px' : '10px 12px',
           display: 'flex', flexDirection: 'column', gap: 8,
           background: DS.color.bgPista,
           borderBottom: `1px solid ${DS.color.borda}`,
@@ -284,6 +303,11 @@ export const EditorDaGravacao: FC<{
           </button>
         </div>
 
+        {/* ⚠️ VOLUME E PANORAMA SAEM DA COLUNA NO CELULAR. Eles moram na Mesa, que é a aba
+            onde o telemóvel abre e onde o fader tem curso para um dedo. Repetidos aqui, numa
+            coluna de 132 px, seriam duas linhas de 4 px de curso — controlos que a mão não
+            acerta, a comer a altura que a onda precisa. */}
+        {!noCelular && (<>
         <label style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <FiVolume2 size={13} color={DS.color.textoFraco} />
           <input
@@ -313,6 +337,7 @@ export const EditorDaGravacao: FC<{
             {Math.abs(pan) < 0.02 ? 'C' : `${pan < 0 ? 'E' : 'D'}${Math.round(Math.abs(pan) * 100)}`}
           </span>
         </label>
+        </>)}
       </div>
     );
   };
@@ -325,11 +350,17 @@ export const EditorDaGravacao: FC<{
       ══════════ */}
       <div style={{
         height: ALTURA_DO_TITULO, flexShrink: 0,
-        display: 'flex', alignItems: 'center', gap: 16, padding: '0 18px',
+        display: 'flex', alignItems: 'center',
+        gap: noCelular ? 8 : 16, padding: noCelular ? '0 10px' : '0 18px',
         background: DS.color.bgPainel, borderBottom: `1px solid ${DS.color.borda}`,
       }}>
-        {/* LADO ESQUERDO: Título e Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* LADO ESQUERDO: Título e Status.
+            ⚠️ `minWidth: 0` para o título poder ENCOLHER: sem isto um nome comprido empurra as
+            abas e o X para fora da tela, que é como o editor ficava intocável no telemóvel. */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: noCelular ? 6 : 12,
+          minWidth: 0, flex: noCelular ? '1 1 auto' : '0 1 auto',
+        }}>
           {editandoNome ? (
             <input
               autoFocus
@@ -359,14 +390,23 @@ export const EditorDaGravacao: FC<{
             </h1>
           )}
 
-          {/* Status dropdown minimalista sem borda */}
-          {ficha}
+          {/* Status dropdown minimalista sem borda.
+
+              ⚠️ NO CELULAR ELE SAI DAQUI, e a conta é simples: o seletor ocupa 116 px de um
+              cabeçalho de 375, e o que sobrava para o nome da música eram 45 — "Ra…". Saber QUE
+              música está aberta é o trabalho deste cabeçalho; o estado da obra é assunto da
+              Ficha, que fica a um toque, e no telemóvel a pessoa está a ouvir, não a gerir
+              fases de produção. */}
+          {!noCelular && ficha}
         </div>
 
-        <div style={{ flex: 1, minWidth: 0 }} />
+        {!noCelular && <div style={{ flex: 1, minWidth: 0 }} />}
 
-        {/* LADO DIREITO: Menu + X fechar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        {/* LADO DIREITO: Menu + X fechar. `flexShrink: 0` porque é aqui que está o único
+            caminho de saída da tela — se algo tem de ceder largura, não é isto. */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: noCelular ? 8 : 14, flexShrink: 0,
+        }}>
           {/* As três vistas da mesma música, no topo: é a primeira escolha de quem entra —
               estou a montar, a misturar, ou a preencher a ficha? — e ela decide o que a tela
               inteira mostra. O que fica em baixo são os controlos do que já está aberto. */}
@@ -380,8 +420,10 @@ export const EditorDaGravacao: FC<{
                 type='button'
                 onClick={() => setAba(chave)}
                 aria-pressed={aba === chave}
+                title={rotulo}
+                aria-label={rotulo}
                 style={{
-                  height: 28, padding: '0 14px',
+                  height: 28, padding: noCelular ? '0 10px' : '0 14px',
                   display: 'flex', alignItems: 'center', gap: 6,
                   background: aba === chave ? DS.color.bgHover : 'transparent',
                   border: 'none', borderRadius: DS.raio.medio,
@@ -393,7 +435,10 @@ export const EditorDaGravacao: FC<{
                   : chave === 'mesa' ? <IconeDoMixer />
                   : chave === 'ficha' ? <FiFileText size={14} />
                   : <FiDownload size={14} />}
-                {rotulo}
+                {/* ⚠️ SEM RÓTULO NO CELULAR. Os quatro nomes somam mais de 300 px, e o que era
+                    empurrado para fora da tela por eles era o X — a pessoa entrava no editor e
+                    não tinha como sair. O nome continua no `title` e no `aria-label`. */}
+                {!noCelular && rotulo}
               </button>
             ))}
           </div>
@@ -427,8 +472,33 @@ export const EditorDaGravacao: FC<{
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* A biblioteca serve as abas de ÁUDIO. Na ficha e no exportar não há o que arrastar
             para lugar nenhum, e uma coluna de 256 px encostada é só espaço a menos para o
-            conteúdo delas. */}
-        {aba !== 'ficha' && aba !== 'exportar' && (
+            conteúdo delas.
+
+            ⚠️ NO CELULAR ELA É UMA GAVETA, e não uma coluna: 256 px de coluna fixa são 68 % de
+            um ecrã de 375, sobrando um terço para a montagem inteira. Aqui ela dorme fora da
+            tela e entra por cima quando alguém a chama — a mesma biblioteca, sem ocupar o sítio
+            de quem trabalha. */}
+        {aba !== 'ficha' && aba !== 'exportar' && (!noCelular || bibliotecaAberta) && (
+        <div style={noCelular ? {
+          position: 'absolute', inset: 0, zIndex: 30,
+          background: DS.color.bgPainel, display: 'flex', flexDirection: 'column',
+        } : undefined}>
+        {noCelular && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '10px 12px', borderBottom: `1px solid ${DS.color.borda}`, flexShrink: 0,
+          }}>
+            <strong style={{ fontSize: 13, color: DS.color.texto }}>Biblioteca</strong>
+            <button
+              type='button'
+              onClick={() => setBibliotecaAberta(false)}
+              aria-label='Fechar a biblioteca'
+              style={{ ...redondo, width: 30, height: 30 }}
+            >
+              <FiX size={14} />
+            </button>
+          </div>
+        )}
         <Biblioteca
           itens={biblioteca}
           aoAbrirPasta={setBiblioteca}
@@ -438,6 +508,7 @@ export const EditorDaGravacao: FC<{
           podeEditar={podeEditar}
           aoMontar={aoMontar}
         />
+        </div>
         )}
 
         {/* ── Transporte + pistas ── */}
@@ -446,9 +517,28 @@ export const EditorDaGravacao: FC<{
           {aba !== 'ficha' && aba !== 'exportar' && (
           <div style={{
             height: ALTURA_DO_TRANSPORTE, flexShrink: 0,
-            display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px',
+            display: 'flex', alignItems: 'center',
+            gap: noCelular ? 4 : 10, padding: noCelular ? '0 8px' : '0 16px',
             background: DS.color.bgPainel, borderBottom: `1px solid ${DS.color.borda}`,
           }}>
+            {/* A chamada da gaveta, só no celular: no desktop a biblioteca é uma coluna e está
+                sempre à vista, sem precisar de porta. */}
+            {noCelular && podeEditar && (
+              <button
+                type='button'
+                onClick={() => setBibliotecaAberta(true)}
+                title='Biblioteca'
+                aria-label='Abrir a biblioteca'
+                style={{
+                  width: 32, height: 32, borderRadius: DS.raio.medio,
+                  background: 'transparent', border: 'none', color: DS.color.textoApoio,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <FiFolder size={16} />
+              </button>
+            )}
+
             <button
               type='button'
               onClick={() => transporte.irPara(0)}
@@ -529,6 +619,9 @@ export const EditorDaGravacao: FC<{
               {relogio(agulha)}
             </div>
 
+            {/* O zoom é da LINHA DO TEMPO: na mesa não há eixo nenhum para aproximar, e três
+                controlos que não fazem nada é o que enche uma barra estreita de ruído. */}
+            {aba === 'linha' && (<>
             <button
               type='button'
               onClick={() => setZoom((z) => Math.max(ZOOM_MINIMO, z / 1.5))}
@@ -558,6 +651,7 @@ export const EditorDaGravacao: FC<{
             >
               <FiZoomIn size={14} />
             </button>
+            </>)}
           </div>
           )}
 
@@ -589,6 +683,7 @@ export const EditorDaGravacao: FC<{
               podeEditar={podeEditar}
               pistaFixaId={pistaFixaId}
               acoes={acoes}
+              noCelular={noCelular}
             />
           ) : (
             // ⚠️ UM SCROLL SÓ para as duas colunas, e é isto que impede o pior erro que uma
@@ -606,7 +701,7 @@ export const EditorDaGravacao: FC<{
             <div style={{ display: 'flex', minWidth: 'max-content', minHeight: '100%' }}>
               {/* Cabeçalhos das pistas */}
               <div style={{
-                width: LARGURA_DAS_PISTAS, flexShrink: 0,
+                width: larguraDasPistas, flexShrink: 0,
                 background: DS.color.bgPainel, borderRight: `1px solid ${DS.color.borda}`,
                 position: 'sticky', left: 0, zIndex: 11,
               }}>
@@ -715,7 +810,7 @@ export const EditorDaGravacao: FC<{
                         onDragOver={(e) => { e.preventDefault(); setSobre(true); }}
                         onDrop={(e) => largarNaFaixa(e, faixa.id)}
                         style={{
-                          height: ALTURA_DA_PISTA,
+                          height: alturaDaPista,
                           borderBottom: `1px solid ${DS.color.borda}`,
                           position: 'relative',
                         }}
@@ -741,12 +836,13 @@ export const EditorDaGravacao: FC<{
                             picos={picos(clipe.id, Math.max(40, Math.min(900, Math.round(((Number(clipe.duration_seconds) || 0) * escala) / 3))))}
                             escala={escala}
                             agulha={agulha}
-                            altura={ALTURA_DA_PISTA}
+                            altura={alturaDaPista}
                             selecionado={selecionado === clipe.id}
                             fixo={faixa.id === pistaFixaId}
+                            semEdicao={noCelular}
                             aoSelecionar={() => setSelecionado((atual) => (atual === clipe.id ? null : clipe.id))}
                             aoArrastar={(evento) => {
-                              if (!podeEditar || faixa.id === pistaFixaId) return;
+                              if (!podeEditar || noCelular || faixa.id === pistaFixaId) return;
                               const caixa = linha.current;
                               if (!caixa) return;
                               const x = evento.clientX - caixa.getBoundingClientRect().left + caixa.scrollLeft;
@@ -780,7 +876,7 @@ export const EditorDaGravacao: FC<{
                     onMouseDown={() => { agulhaPresa.current = true; }}
                     style={{
                       position: 'absolute', left: agulha * escala, top: 0,
-                      height: Math.max(pistas.length, 1) * ALTURA_DA_PISTA,
+                      height: Math.max(pistas.length, 1) * alturaDaPista,
                       width: 2, background: DS.color.agulha, cursor: 'grab', zIndex: 100,
                     }}
                   >
@@ -807,26 +903,39 @@ export const EditorDaGravacao: FC<{
       */}
       <div style={{
         height: ALTURA_DO_RODAPE, flexShrink: 0,
-        display: 'flex', alignItems: 'center', gap: 14, padding: '0 18px',
+        display: 'flex', alignItems: 'center',
+        gap: noCelular ? 8 : 14, padding: noCelular ? '0 10px' : '0 18px',
         background: DS.color.bgPainel, borderTop: `1px solid ${DS.color.borda}`,
       }}>
         {numeros}
 
-        <span style={{ fontSize: 11, color: DS.color.textoFraco, fontFamily: DS.font.mono }}>
-          {pistas.length} {pistas.length === 1 ? 'pista' : 'pistas'}
-        </span>
+        {/* ⚠️ A CONTAGEM DE PISTAS SAI NO CELULAR. Ela quebrava em duas linhas dentro de uma
+            barra de 44 px ("0" numa, "pistas" noutra) e roubava a largura do Master, que é o
+            único controlo desta barra. Quantas pistas há vê-se na mesa, que está logo acima. */}
+        {!noCelular && (
+          <span style={{ fontSize: 11, color: DS.color.textoFraco, fontFamily: DS.font.mono }}>
+            {pistas.length} {pistas.length === 1 ? 'pista' : 'pistas'}
+          </span>
+        )}
 
         <div style={{ flex: 1, minWidth: 0 }} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <span style={{ fontSize: 12, color: DS.color.textoApoio }}>Master</span>
-          <FiVolume2 size={14} color={DS.color.textoFraco} />
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: noCelular ? 6 : 10,
+          flexShrink: noCelular ? 1 : 0, minWidth: 0,
+        }}>
+          {/* A palavra "Master" cede ao ícone: o altifalante diz a mesma coisa e ocupa 14 px. */}
+          {!noCelular && <span style={{ fontSize: 12, color: DS.color.textoApoio }}>Master</span>}
+          <FiVolume2 size={14} color={DS.color.textoFraco} style={{ flexShrink: 0 }} />
           <input
             type='range' min={0} max={100}
             value={Math.round(estado.mestre * 100)}
             onChange={(e) => acoes.aoMestre(Number(e.target.value) / 100)}
             aria-label='Volume geral'
-            style={{ width: 160, accentColor: DS.color.primaria, cursor: 'pointer' }}
+            style={{
+              width: noCelular ? '100%' : 160, minWidth: noCelular ? 80 : undefined,
+              accentColor: DS.color.primaria, cursor: 'pointer',
+            }}
           />
           <span style={{
             width: 38, textAlign: 'right', fontSize: 12,
@@ -895,10 +1004,12 @@ const MesaDeCanais: FC<{
   podeEditar: boolean;
   pistaFixaId?: string | null;
   acoes: AcoesDoEditor;
-}> = ({ pistas, estado, podeEditar, acoes }) => (
+  /** No telemóvel o fader estica: é o controlo principal da tela, e um dedo pede curso. */
+  noCelular?: boolean;
+}> = ({ pistas, estado, podeEditar, acoes, noCelular }) => (
   <div style={{
-    flex: 1, minHeight: 0, overflow: 'auto', padding: 20,
-    display: 'flex', gap: 14, alignItems: 'stretch',
+    flex: 1, minHeight: 0, overflow: 'auto', padding: noCelular ? 12 : 20,
+    display: 'flex', gap: noCelular ? 10 : 14, alignItems: 'stretch',
     background: DS.color.bgFundoDaLinha,
   }}>
     {pistas.map((faixa, indice) => {
@@ -912,6 +1023,9 @@ const MesaDeCanais: FC<{
           style={{
             width: 116, flexShrink: 0, padding: 12,
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+            // ⚠️ No telemóvel o canal não pode acabar a meio: o fader estica até onde a coluna
+            // vai, e o que sobrava era um retângulo vazio de meia tela por baixo dos botões.
+            justifyContent: noCelular ? 'flex-start' : undefined,
             background: DS.color.bgPista, border: `1px solid ${DS.color.borda}`,
             borderTop: `3px solid ${calada ? DS.color.textoInerte : cor}`,
             borderRadius: DS.raio.grande, opacity: calada ? 0.6 : 1,
@@ -949,7 +1063,12 @@ const MesaDeCanais: FC<{
             style={{
               // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               writingMode: 'vertical-lr' as React.CSSProperties['writingMode'],
-              direction: 'rtl', width: 28, height: 150,
+              direction: 'rtl', width: 28,
+              // Curso longo no telemóvel: é o dedo que ajusta, e 150 px dão saltos de 4 % por
+              // pixel. Esticado, o mesmo gesto fica fino.
+              height: noCelular ? undefined : 150,
+              flex: noCelular ? '1 1 auto' : undefined,
+              minHeight: noCelular ? 180 : undefined,
               accentColor: cor, cursor: 'pointer',
             }}
           />

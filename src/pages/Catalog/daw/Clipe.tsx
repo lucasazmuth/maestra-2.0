@@ -29,11 +29,23 @@ export const Clipe: FC<{
   altura: number;
   /** A mix de uma gravação por montar: toca e desenha-se, mas não se edita. */
   fixo?: boolean;
+  /**
+   * Sem edição por gesto: o clipe vê-se e ouve-se, mas não se arrasta, nem se corta, nem se
+   * apaga.
+   *
+   * ⚠️ NÃO É O MESMO QUE `fixo`. Fixo é a pista da Mix — uma pista que não se mexe por natureza,
+   * e que por isso se chama "Mix" em vez de "Take N". Isto aqui é o TELEMÓVEL: os clipes são
+   * normais, e o que muda é a mão. Arrastar um clipe para o segundo certo com o dedo num ecrã
+   * de 375 px erra mais do que acerta, e o duplo-toque que apaga é fácil de fazer sem querer.
+   */
+  semEdicao?: boolean;
   aoSelecionar: () => void;
   aoArrastar: (evento: React.MouseEvent) => void;
   aoCortar: () => void;
   aoApagar: () => void;
-}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, aoSelecionar, aoArrastar, aoCortar, aoApagar }) => {
+}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, semEdicao, aoSelecionar, aoArrastar, aoCortar, aoApagar }) => {
+  /** Travado para gestos: por ser a Mix, ou por estar num telemóvel. */
+  const travado = fixo || semEdicao;
   const caixa = useRef<HTMLDivElement>(null);
   const partiuDe = useRef(0);
   const arrastou = useRef(false);
@@ -51,14 +63,14 @@ export const Clipe: FC<{
 
   const inicio = Number(clipe.start_seconds) || 0;
   const duracao = Number(clipe.duration_seconds) || 0;
-  const podeCortar = !fixo && agulha > inicio + 0.05 && agulha < inicio + duracao - 0.05;
+  const podeCortar = !travado && agulha > inicio + 0.05 && agulha < inicio + duracao - 0.05;
 
   return (
     <div
       ref={caixa}
       onMouseDown={(evento) => { partiuDe.current = evento.clientX; arrastou.current = false; aoArrastar(evento); }}
       onMouseMove={(evento) => { if (Math.abs(evento.clientX - partiuDe.current) > 4) arrastou.current = true; }}
-      onDoubleClick={(evento) => { evento.stopPropagation(); if (!fixo) aoApagar(); }}
+      onDoubleClick={(evento) => { evento.stopPropagation(); if (!travado) aoApagar(); }}
       onClick={(evento) => {
         // Só alterna a seleção num clique LIMPO: sem isto, largar um arrasto selecionava ou
         // largava o clipe sem ninguém ter pedido.
@@ -77,7 +89,7 @@ export const Clipe: FC<{
         boxShadow: selecionado
           ? `0 0 0 2px ${cor}55, 0 4px 16px ${cor}44`
           : `0 4px 12px ${cor}22`,
-        cursor: fixo ? 'default' : 'grab',
+        cursor: travado ? 'default' : 'grab',
         overflow: 'visible',
         transition: 'border-color 150ms, box-shadow 150ms',
       }}
@@ -126,7 +138,7 @@ export const Clipe: FC<{
         {fixo ? 'Mix' : `Take ${indice + 1}`}
       </div>
 
-      {selecionado && !fixo && (
+      {selecionado && !travado && (
         <div
           onMouseDown={(evento) => evento.stopPropagation()}
           style={{
