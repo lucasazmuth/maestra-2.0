@@ -73,6 +73,7 @@ export const catalogProjectToItem = (project: CatalogProject, version?: CatalogV
   genre: version?.genre ?? project.genre,
   release_date: project.release_date,
   details: project.details,
+  last_edited_by: project.last_edited_by,
   bpm: version?.bpm ?? project.bpm,
   key: version?.key ?? project.key,
   duration: version?.duration,
@@ -200,6 +201,9 @@ export const saveCatalogProjectFromForm = async (
     cover_image_name: input.cover_image_name ?? null,
     assignee: input.assignee ?? null,
     details: input.details ?? null,
+    // Quem está a gravar AGORA é quem mexeu por último. Sai do mesmo `author` que já assina as
+    // gravações — nenhum chamador precisa de saber deste campo.
+    ...(author?.name ? { last_edited_by: author.name } : {}),
     release_date: input.release_date || null,
     updated_at: now,
   };
@@ -306,6 +310,26 @@ export const updateCatalogProject = async (id: string, patch: Partial<CatalogPro
 export const deleteCatalogProject = async (id: string): Promise<void> => {
   const { error } = await supabase.from('catalog_projects').delete().eq('id', id);
   if (error) throw error;
+};
+
+/**
+ * Apaga uma MÚSICA da lista, seja ela nova ou legada.
+ *
+ * ⚠️ A lista chamava `deleteCatalogItem`, que apaga de `catalog_items` — a tabela LEGADA. Como
+ * as músicas passaram a viver em `catalog_projects`, o delete não encontrava nada e não
+ * apagava nada; a linha sumia da tela porque a tela a tirava da sua própria lista, e voltava
+ * inteira no recarregamento seguinte. Nunca deu erro: apagar zero linhas não é um erro para o
+ * Postgres.
+ *
+ * Recebe o id da MÚSICA na lista (que é o da versão principal) e o do projeto, e limpa os dois
+ * lados — as músicas antigas ainda vivem na tabela velha, e as novas na nova.
+ */
+export const excluirMusica = async (
+  { itemId, projectId }: { itemId: string; projectId?: string | null },
+): Promise<void> => {
+  if (projectId) await deleteCatalogProject(projectId);
+  // O legado sai também: um id que não existe lá apaga zero linhas e não se queixa.
+  await supabase.from(TABLE).delete().eq('id', itemId);
 };
 
 export const createCatalogVersion = async (

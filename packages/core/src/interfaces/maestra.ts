@@ -451,6 +451,8 @@ export interface CatalogItem {
   lyrics?: string | null;
   /** Campo livre da ficha: observações sobre a MÚSICA (a letra, que é da gravação, é `lyrics`). */
   details?: string | null;
+  /** Quem mexeu por último. ⚠️ Não é `version_author_name`, que é quem CRIOU a gravação. */
+  last_edited_by?: string | null;
   cover_image?: string | null;
   cover_image_name?: string | null;
   audio_file?: string | null;
@@ -483,6 +485,8 @@ export interface CatalogProject {
   key?: string | null;
   /** Campo livre da ficha: observações sobre a música. */
   details?: string | null;
+  /** Quem mexeu por último. */
+  last_edited_by?: string | null;
   cover_image?: string | null;
   cover_image_name?: string | null;
   assignee?: { id: string; name: string } | null;
