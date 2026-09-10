@@ -116,8 +116,10 @@ export const EditorDaGravacao: FC<{
   // ouvir o que está montado e mexer nos níveis —, e a mesa é exatamente essa metade: colunas
   // estreitas que rolam de lado, como uma mesa de verdade.
   const noCelular = useIsMobile();
-  /** A gaveta da biblioteca, só no celular: no desktop ela é coluna e está sempre lá. */
-  const [bibliotecaAberta, setBibliotecaAberta] = useState(false);
+  // A BIBLIOTECA ABRE E FECHA NAS DUAS TELAS, e o padrão é o que cada uma pede: no desktop há
+  // largura para ela ficar à mostra enquanto se monta; no telemóvel, 256 px de coluna são 68 %
+  // do ecrã, e ela começa recolhida para a montagem ter onde acontecer.
+  const [bibliotecaAberta, setBibliotecaAberta] = useState(() => window.innerWidth >= 768);
   /** O REC armado. Armar não grava — marca a intenção e espera o play, como em qualquer mesa. */
   const [armado, setArmado] = useState(false);
 
@@ -487,7 +489,7 @@ export const EditorDaGravacao: FC<{
             um ecrã de 375, sobrando um terço para a montagem inteira. Aqui ela dorme fora da
             tela e entra por cima quando alguém a chama — a mesma biblioteca, sem ocupar o sítio
             de quem trabalha. */}
-        {aba !== 'ficha' && aba !== 'exportar' && (!noCelular || bibliotecaAberta) && (
+        {aba !== 'ficha' && aba !== 'exportar' && bibliotecaAberta && (
         <div style={noCelular ? {
           position: 'absolute', inset: 0, zIndex: 30,
           background: DS.color.bgPainel, display: 'flex', flexDirection: 'column',
@@ -516,6 +518,7 @@ export const EditorDaGravacao: FC<{
           aoEnviar={(arquivos) => escolherArquivos(arquivos, 0)}
           podeEditar={podeEditar}
           aoMontar={aoMontar}
+          emGaveta={noCelular}
         />
         </div>
         )}
@@ -530,24 +533,6 @@ export const EditorDaGravacao: FC<{
             gap: noCelular ? 4 : 10, padding: noCelular ? '0 8px' : '0 16px',
             background: DS.color.bgPainel, borderBottom: `1px solid ${DS.color.borda}`,
           }}>
-            {/* A chamada da gaveta, só no celular: no desktop a biblioteca é uma coluna e está
-                sempre à vista, sem precisar de porta. */}
-            {noCelular && podeEditar && (
-              <button
-                type='button'
-                onClick={() => setBibliotecaAberta(true)}
-                title='Biblioteca'
-                aria-label='Abrir a biblioteca'
-                style={{
-                  width: 32, height: 32, borderRadius: DS.raio.medio,
-                  background: 'transparent', border: 'none', color: DS.color.textoApoio,
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <FiFolder size={16} />
-              </button>
-            )}
-
             <button
               type='button'
               onClick={() => transporte.irPara(0)}
@@ -950,6 +935,30 @@ export const EditorDaGravacao: FC<{
         gap: noCelular ? 8 : 14, padding: noCelular ? '0 10px' : '0 18px',
         background: DS.color.bgPainel, borderTop: `1px solid ${DS.color.borda}`,
       }}>
+        {/* ⚠️ A PORTA DA BIBLIOTECA MORA NO RODAPÉ, com o resto do que governa a tela inteira
+            (o andamento, o tom, o volume geral). No transporte ela ficava entre o play e o
+            loop — controlos do que está a SOAR —, e abrir uma pasta não é um gesto de
+            transporte. */}
+        {podeEditar && (
+          <button
+            type='button'
+            onClick={() => setBibliotecaAberta((v) => !v)}
+            aria-pressed={bibliotecaAberta}
+            title={bibliotecaAberta ? 'Fechar a biblioteca' : 'Abrir a biblioteca'}
+            aria-label={bibliotecaAberta ? 'Fechar a biblioteca' : 'Abrir a biblioteca'}
+            style={{
+              width: 30, height: 30, borderRadius: DS.raio.medio, flexShrink: 0,
+              background: bibliotecaAberta ? DS.color.bgCampo : 'transparent',
+              border: 'none',
+              color: bibliotecaAberta ? DS.color.texto : DS.color.textoApoio,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'background .16s ease, color .16s ease',
+            }}
+          >
+            <FiFolder size={15} />
+          </button>
+        )}
+
         {numeros}
 
         {/* ⚠️ A CONTAGEM DE PISTAS SAI NO CELULAR. Ela quebrava em duas linhas dentro de uma

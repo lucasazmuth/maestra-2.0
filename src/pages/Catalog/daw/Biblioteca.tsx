@@ -38,7 +38,9 @@ export const Biblioteca: FC<{
   podeEditar: boolean;
   /** Aparece quando a gravação ainda não foi montada em pistas. */
   aoMontar?: () => void;
-}> = ({ itens, aoAbrirPasta, aoEnviar, podeEditar, aoMontar }) => {
+  /** Aberta como gaveta (telemóvel): estica, e o título vive no cabeçalho dela. */
+  emGaveta?: boolean;
+}> = ({ itens, aoAbrirPasta, aoEnviar, podeEditar, aoMontar , emGaveta }) => {
   const pasta = useRef<HTMLInputElement>(null);
   const soltos = useRef<HTMLInputElement>(null);
   const [arrastando, setArrastando] = useState<string | null>(null);
@@ -57,12 +59,22 @@ export const Biblioteca: FC<{
 
   return (
     <div style={{
-      width: LARGURA_DAS_FERRAMENTAS, flexShrink: 0,
-      background: DS.color.bgPainel, borderRight: `1px solid ${DS.color.borda}`,
+      // Como GAVETA (telemóvel) ela ocupa a largura toda e não tem parede à direita: a parede
+      // separava-a da montagem, e numa gaveta não há montagem ao lado — há por baixo.
+      width: emGaveta ? '100%' : LARGURA_DAS_FERRAMENTAS,
+      flex: emGaveta ? '1 1 auto' : undefined,
+      minHeight: 0,
+      flexShrink: 0,
+      background: DS.color.bgPainel,
+      borderRight: emGaveta ? 'none' : `1px solid ${DS.color.borda}`,
       padding: 16, overflowY: 'auto',
       display: 'flex', flexDirection: 'column', gap: 10,
     }}>
-      <h2 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: DS.color.texto }}>Biblioteca</h2>
+      {/* Na gaveta o título já está no cabeçalho dela, ao lado do X: repetido aqui ficavam dois
+          "Biblioteca" empilhados, um por cima do outro. */}
+      {!emGaveta && (
+        <h2 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: DS.color.texto }}>Biblioteca</h2>
+      )}
 
       <button
         type='button'

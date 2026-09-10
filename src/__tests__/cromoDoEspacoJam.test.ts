@@ -324,12 +324,17 @@ describe('cromo do editor do Espaço JAM', () => {
       expect(corpo).toContain("window.innerWidth < 768 ? 'mesa' : 'linha'");
     });
 
-    it('a biblioteca é gaveta, e não uma coluna de 256 px', () => {
-      expect(corpo).toContain('bibliotecaAberta');
-      expect(corpo).toContain('setBibliotecaAberta(true)');
-      expect(corpo).toContain("aria-label='Fechar a biblioteca'");
+    it('a biblioteca começa fechada, e sobreposta quando abre', () => {
+      // ⚠️ O PADRÃO É POR LARGURA, e não por tela: no desktop há espaço para ela ficar à
+      // mostra enquanto se monta; em 375 px são 68 % do ecrã, e a montagem fica sem onde
+      // acontecer. O mesmo botão serve as duas.
+      expect(corpo).toContain('useState(() => window.innerWidth >= 768)');
       // Sobreposta, e não encaixada: é isso que devolve a largura toda à montagem.
       expect(corpo).toContain("position: 'absolute', inset: 0, zIndex: 30");
+      expect(corpo).toContain("aria-label='Fechar a biblioteca'");
+      // E estica: uma gaveta de 256 px dentro de um ecrã de 375 é uma coluna com outro nome.
+      expect(corpo).toContain('emGaveta={noCelular}');
+      expect(semComentarios(biblioteca)).toContain("width: emGaveta ? '100%' : LARGURA_DAS_FERRAMENTAS");
     });
 
     it('as abas perdem o rótulo para o X caber', () => {
@@ -374,6 +379,27 @@ describe('cromo do editor do Espaço JAM', () => {
     const quadros = semComentarios(icones).match(/viewBox="[^"]+"/g) ?? [];
     expect(quadros).toHaveLength(2);
     quadros.forEach((q) => expect(q).not.toContain('0 0 41 41'));
+  });
+
+  // ⚠️ A PORTA DA BIBLIOTECA MORA NO RODAPÉ, com o resto do que governa a tela inteira (o
+  // andamento, o tom, o volume geral). No transporte ela ficava entre o play e o loop —
+  // controlos do que está a SOAR —, e abrir uma pasta não é um gesto de transporte.
+  it('a biblioteca abre e fecha pelo rodapé, nas duas telas', () => {
+    const corpo = semComentarios(editor);
+    const rodape = corpo.slice(corpo.indexOf('ALTURA_DO_RODAPE, flexShrink: 0'));
+
+    expect(rodape).toContain('setBibliotecaAberta((v) => !v)');
+    expect(rodape).toContain('aria-pressed={bibliotecaAberta}');
+    // Antes do BPM: o `numeros` (andamento e tom) vem depois dela na fila.
+    expect(rodape.indexOf('setBibliotecaAberta')).toBeLessThan(rodape.indexOf('{numeros}'));
+
+    // E não sobrou nenhuma porta no transporte. ⚠️ O fim do recorte é procurado A PARTIR do
+    // início dele: `ALTURA_DO_RODAPE` aparece primeiro no import, no topo do ficheiro, e sem
+    // isso o slice saía vazio — e um recorte vazio não contém nada, por isso passava sempre.
+    const inicioDoTransporte = corpo.indexOf('ALTURA_DO_TRANSPORTE, flexShrink: 0');
+    const transporte = corpo.slice(inicioDoTransporte, corpo.indexOf('ALTURA_DO_RODAPE, flexShrink: 0', inicioDoTransporte));
+    expect(transporte.length).toBeGreaterThan(500);
+    expect(transporte).not.toContain('setBibliotecaAberta');
   });
 
   // O TRANSPORTE: play e pause são o mesmo botão a alternar, e o REC arma antes de gravar.
