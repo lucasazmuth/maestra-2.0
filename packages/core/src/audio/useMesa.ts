@@ -146,6 +146,9 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
     void atual?.descartar();
   }, []);
 
+  /** Ver `Mesa.duracaoDoClipe`: a da Mix nasce como uma hora até o ficheiro chegar. */
+  const duracaoDoClipe = useCallback((id: string) => mesa.current?.duracaoDoClipe(id) ?? 0, []);
+
   const picos = useCallback((id: string, n: number) => {
     const chave = `${id}:${n}`;
     const pronto = guardados.current.get(chave);
@@ -159,6 +162,7 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
 
   return {
     estado, tocar, pausar, alternar, irPara, mudar, solar, ganho, panoramar, mestreEm, loopar,
+    duracaoDoClipe,
     renderizar, picos,
   };
 }

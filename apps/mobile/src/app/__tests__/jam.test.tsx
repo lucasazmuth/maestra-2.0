@@ -144,7 +144,7 @@ const montar = () => render(
  * (mutar, solar, o fader, a mix muda) passam por aqui primeiro — e é bom que passem, porque
  * cada um deles prova de caminho que a troca de aba funciona.
  */
-const abrirOMixer = async (tela: ReturnType<typeof montar>) => {
+const abrirOMixer = async (tela: Awaited<ReturnType<typeof montar>>) => {
   await tela.findByLabelText('Mixer');
   fireEvent.press(tela.getByLabelText('Mixer'));
 };

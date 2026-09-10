@@ -86,11 +86,19 @@ const OndaDoClipe = memo(({ picos, cor, largura, altura }: {
   );
 });
 
-export const LinhaDoTempo = ({ pistas, estado, picos, bpm, aoBuscar }: {
+export const LinhaDoTempo = ({ pistas, estado, picos, duracaoDoClipe, bpm, aoBuscar }: {
   pistas: Pista[];
   estado: EstadoDaMesa;
   /** Os picos que a mesa já tem: ela descodificou o áudio para tocar. */
   picos: (id: string, n: number) => number[];
+  /**
+   * Quanto o clipe dura de facto.
+   *
+   * ⚠️ NÃO SE USA O `clipe.duracao` AQUI. A pista da Mix nasce com uma hora — o marcador de
+   * "ainda não sei quanto dura" —, e desenhar por ele fazia a Mix ocupar dezoito vezes a
+   * largura da música, com a onda inteira espremida no primeiro pedaço visível.
+   */
+  duracaoDoClipe: (id: string) => number;
   /** O andamento da gravação, como está escrito no campo. Sem ele, a régua conta segundos. */
   bpm?: string | number | null;
   aoBuscar: (segundo: number) => void;
@@ -178,7 +186,8 @@ export const LinhaDoTempo = ({ pistas, estado, picos, bpm, aoBuscar }: {
                   />
                 ))}
                 {pista.clipes.map((clipe) => {
-                  const larguraDoClipe = Math.max(clipe.duracao * escala, 3);
+                  const dura = duracaoDoClipe(clipe.id) || clipe.duracao;
+                  const larguraDoClipe = Math.max(dura * escala, 3);
                   const cor = corDaPista(i);
                   return (
                     <View

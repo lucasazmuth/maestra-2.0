@@ -22,7 +22,7 @@ import {
   ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_RODAPE, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE,
   DS, DURACAO_MINIMA,
   LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO,
-  ZOOM_MAXIMO, ZOOM_MINIMO, ZOOM_MINIMO_ABSOLUTO, corDaPista,
+  ZOOM_MAXIMO, ZOOM_MINIMO, corDaPista,
 } from './tokens';
 
 /** A medida dos quatro ícones das abas. Uma só, para a fila parecer uma fila. */

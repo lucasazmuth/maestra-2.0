@@ -500,18 +500,28 @@ export class Mesa {
     return [];
   }
 
-  /** A duração do ficheiro inteiro por trás de um clipe — o limite de quanto se pode esticar. */
-  duracaoDoArquivo(url: string): number {
-    return this.buffers.get(url)?.duration ?? 0;
-  }
-
-  /** Quanto um clipe REALMENTE dura, já limitado pelo fim do ficheiro. */
+  /**
+   * Quanto um clipe DURA de facto, já com o ficheiro na mão.
+   *
+   * ⚠️ NÃO É O `clipe.duracao`. A pista da Mix nasce com `DURACAO_DESCONHECIDA` — uma hora —,
+   * porque no momento em que ela é montada ninguém sabe quanto o áudio dura, e chutar baixo
+   * cortaria a música no meio. Quem desenha a montagem tem de perguntar por aqui: a linha do
+   * tempo do aparelho desenhava a Mix com uma hora de comprimento, e o que se via era o
+   * primeiro minuto da onda esticado por um clipe dezoito vezes maior do que a música.
+   *
+   * Sem o ficheiro descodificado ainda, devolve o que foi declarado: é o melhor que se sabe.
+   */
   duracaoDoClipe(clipeId: string): number {
     for (const pista of this.pistas) {
       const clipe = pista.clipes.find((c) => c.id === clipeId);
       if (clipe) return this.duracaoEfetiva(clipe);
     }
     return 0;
+  }
+
+  /** A duração do ficheiro inteiro por trás de um clipe — o limite de quanto se pode esticar. */
+  duracaoDoArquivo(url: string): number {
+    return this.buffers.get(url)?.duration ?? 0;
   }
 
   /**

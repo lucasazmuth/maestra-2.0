@@ -638,6 +638,7 @@ export default function EspacoJam() {
                       pistas={pistas}
                       estado={mesa.estado}
                       picos={mesa.picos}
+                      duracaoDoClipe={mesa.duracaoDoClipe}
                       bpm={aberta.bpm}
                       aoBuscar={mesa.irPara}
                     />
