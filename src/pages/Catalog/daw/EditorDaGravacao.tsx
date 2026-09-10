@@ -118,6 +118,8 @@ export const EditorDaGravacao: FC<{
   const noCelular = useIsMobile();
   /** A gaveta da biblioteca, só no celular: no desktop ela é coluna e está sempre lá. */
   const [bibliotecaAberta, setBibliotecaAberta] = useState(false);
+  /** O REC armado. Armar não grava — marca a intenção e espera o play, como em qualquer mesa. */
+  const [armado, setArmado] = useState(false);
 
   // ⚠️ A LINHA DO TEMPO ENCOLHE OS CONTROLOS, e não as ondas. A coluna de 256 px come 68 % de
   // um ecrã de 375, e o que sobrava para o áudio — que é o assunto desta aba — era um terço.
@@ -568,11 +570,18 @@ export const EditorDaGravacao: FC<{
               aria-label={estado.carregando ? 'Preparando as pistas' : estado.tocando ? 'Pausar' : 'Tocar'}
               style={{
                 width: 42, height: 42, borderRadius: '50%',
+                // ⚠️ MESMO BOTÃO, MESMA COR, MESMO SÍTIO: play e pause são o mesmo gesto a
+                // alternar, e trocar a cor entre os dois faria a barra piscar de identidade a
+                // cada toque. O que muda é o BRILHO — aceso enquanto toca, apagado quando não.
+                // É o sinal de "está a andar" que se lê de relance, sem procurar o relógio.
                 background: estado.carregando ? DS.color.bgCampo : DS.color.primaria,
                 border: 'none', color: '#fff',
                 cursor: estado.carregando ? 'default' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: estado.carregando ? 'none' : `0 0 16px ${DS.color.primaria}55`,
+                boxShadow: estado.carregando ? 'none'
+                  : estado.tocando ? `0 0 0 4px ${DS.color.primaria}33, 0 0 22px ${DS.color.primaria}aa`
+                    : `0 0 16px ${DS.color.primaria}55`,
+                transition: 'box-shadow .18s ease',
               }}
             >
               {estado.tocando ? <FiPause size={18} /> : <FiPlay size={18} style={{ marginLeft: 2 }} />}
@@ -601,19 +610,37 @@ export const EditorDaGravacao: FC<{
               <FiRepeat size={15} />
             </button>
 
+            {/* O REC ARMA A GRAVAÇÃO, e armar não é gravar — é a distinção que toda mesa faz.
+                Desarmado, é um contorno; armado, enche de vermelho.
+
+                ⚠️ GRAVAR AINDA NÃO EXISTE, e o botão diz isso no `title` em vez de fingir: o
+                dia em que existir, dar play com ele armado começa a gravar na pista escolhida.
+                Até lá ele guarda a intenção, que é o que um botão armado faz mesmo numa mesa
+                de verdade — marca, e espera o play. */}
             <button
               type='button'
-              disabled
-              title='Gravar — ainda não disponível'
-              aria-label='Gravar — ainda não disponível'
+              onClick={() => setArmado((v) => !v)}
+              aria-pressed={armado}
+              title={armado
+                ? 'Armado para gravar. A gravação em si ainda não está disponível.'
+                : 'Armar para gravar (a gravação ainda não está disponível)'}
+              aria-label={armado ? 'Desarmar a gravação' : 'Armar para gravar'}
               style={{
+                // ⚠️ UM CÍRCULO, E NÃO UM ALVO. A borda do botão MAIS o círculo do ícone davam
+                // dois anéis concêntricos — o desenho de uma mira, não o do REC. Aqui o botão
+                // não tem borda nenhuma: quem desenha o círculo é o ícone, sozinho, como na
+                // referência (`Digital Audio WAVE`). Armado, o mesmo círculo enche.
                 width: 32, height: 32, borderRadius: '50%',
-                background: 'transparent', border: `2px solid ${DS.color.gravar}`,
-                color: DS.color.gravar, opacity: 0.4, cursor: 'not-allowed',
+                background: 'transparent', border: 'none',
+                color: DS.color.gravar,
+                opacity: armado ? 1 : 0.6,
+                cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                filter: armado ? `drop-shadow(0 0 6px ${DS.color.gravar}cc)` : 'none',
+                transition: 'opacity .16s ease, filter .16s ease',
               }}
             >
-              <FiCircle size={11} fill='currentColor' />
+              <FiCircle size={20} strokeWidth={2} fill={armado ? 'currentColor' : 'none'} />
             </button>
 
             <div style={{ flex: 1 }} />

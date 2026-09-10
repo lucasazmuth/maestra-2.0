@@ -376,6 +376,36 @@ describe('cromo do editor do Espaço JAM', () => {
     quadros.forEach((q) => expect(q).not.toContain('0 0 41 41'));
   });
 
+  // O TRANSPORTE: play e pause são o mesmo botão a alternar, e o REC arma antes de gravar.
+  it('play e pause são o mesmo botão, e o brilho diz quando está a andar', () => {
+    const corpo = semComentarios(editor);
+
+    // Um botão só, que troca de ícone: dois botões separados fariam a barra mudar de forma a
+    // cada toque, e o gesto é o mesmo.
+    expect(corpo).toContain('estado.tocando ? <FiPause size={18} /> : <FiPlay size={18}');
+    // A cor NÃO muda entre tocar e pausar — o que muda é o brilho.
+    expect(corpo).toContain('estado.tocando ? `0 0 0 4px ${DS.color.primaria}33');
+  });
+
+  // ⚠️ ARMAR NÃO É GRAVAR, e é a distinção que toda mesa faz. A gravação ainda não existe: o
+  // botão guarda a intenção e diz isso no `title`, em vez de acender e não fazer nada.
+  it('o REC arma e desarma, e é um círculo só', () => {
+    const corpo = semComentarios(editor);
+
+    expect(corpo).toContain('setArmado((v) => !v)');
+    expect(corpo).toContain('aria-pressed={armado}');
+    // Enche quando arma; vazio quando não.
+    expect(corpo).toContain("fill={armado ? 'currentColor' : 'none'}");
+    // ⚠️ SEM BORDA no botão: a borda mais o círculo do ícone davam dois anéis concêntricos —
+    // o desenho de uma mira, e não o do REC.
+    const oRec = corpo.slice(corpo.indexOf('setArmado((v) => !v)'));
+    const estilo = oRec.slice(oRec.indexOf('style={{'), oRec.indexOf('}}', oRec.indexOf('style={{')));
+    expect(estilo).toContain("border: 'none'");
+
+    // E continua a dizer que gravar ainda não existe, em vez de prometer.
+    expect(corpo).toContain('ainda não está disponível');
+  });
+
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
   it('a tela de exportar oferece stems e guia, sem travessão na copy', () => {
     expect(exportar).toContain('Baixar stems (.zip)');
