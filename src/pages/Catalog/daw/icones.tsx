@@ -2,12 +2,23 @@ import { FC } from 'react';
 
 // Os dois ícones das abas, desenhados pelo dono do produto (`timeline.svg` e `mixer.svg`).
 //
-// ⚠️ O traço foi trocado de `#898989` para `currentColor`, e é a única mudança: assim o ícone
-// acompanha o estado da aba (aceso quando escolhida, apagado quando não) em vez de ficar cinza
-// para sempre. O `viewBox` e os caminhos são os originais, à vírgula — o desenho é dele.
+// ⚠️ O traço foi trocado de `#898989` para `currentColor`: assim o ícone acompanha o estado da
+// aba (aceso quando escolhida, apagado quando não) em vez de ficar cinza para sempre. Os
+// caminhos são os originais, à vírgula — o desenho é dele.
+//
+// ─── Por que o `viewBox` não é o do ficheiro ─────────────────────────────────
+//
+// Os originais vêm num quadro de 41×41 com o desenho no miolo, ocupando 41 % e 46 % dele. Os
+// ícones vizinhos das outras abas (react-icons) enchem 75–83 % do seu quadro. Resultado, com
+// `size` quase igual: 6,2 px de tinta na Timeline e 7,0 px no Mixer, contra 11,7 px na Ficha —
+// quase o dobro. O `size` dizia 15 nos quatro e a tela mostrava dois tamanhos.
+//
+// O quadro aqui é recortado no DESENHO (mais a metade do traço, que o `getBBox` não conta) e
+// depois folgado para os mesmos ~80 % de ocupação dos vizinhos. Assim `tamanho` passa a querer
+// dizer a mesma coisa nas quatro abas, que é o que faz uma fila de ícones parecer uma fila.
 
 export const IconeDaTimeline: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
-  <svg width={tamanho} height={tamanho} viewBox="0 0 41 41" fill="none" aria-hidden>
+  <svg width={tamanho} height={tamanho} viewBox="8.2 8.2 24 24" fill="none" aria-hidden>
     <path
       d="M19.3636 11.7866H14.5929C13.043 11.7866 11.7866 13.043 11.7866 14.5929C11.7866 16.1428 13.043 17.3992 14.5929 17.3992H19.3636"
       stroke="currentColor" strokeWidth="2.3573" strokeLinecap="round"
@@ -28,7 +39,7 @@ export const IconeDaTimeline: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
 );
 
 export const IconeDoMixer: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
-  <svg width={tamanho} height={tamanho} viewBox="0 0 41 41" fill="none" aria-hidden>
+  <svg width={tamanho} height={tamanho} viewBox="7.2 7.1 26.3 26.3" fill="none" aria-hidden>
     <path
       d="M19.8269 13.0864H12.8269C11.7223 13.0864 10.8269 13.9819 10.8269 15.0864C10.8269 16.191 11.7223 17.0864 12.8269 17.0864H19.8269"
       stroke="currentColor" strokeWidth="2" strokeLinecap="round"

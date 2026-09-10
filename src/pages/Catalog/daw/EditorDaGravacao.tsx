@@ -19,6 +19,9 @@ import {
   ZOOM_MAXIMO, ZOOM_MINIMO, corDaPista,
 } from './tokens';
 
+/** A medida dos quatro ícones das abas. Uma só, para a fila parecer uma fila. */
+const TAMANHO_DO_ICONE_DA_ABA = 15;
+
 // O EDITOR: o Espaço JAM como um editor de música.
 //
 // O desenho é o da referência que o dono do produto mandou: a fila do título com as abas
@@ -431,10 +434,14 @@ export const EditorDaGravacao: FC<{
                   fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: DS.font.display,
                 }}
               >
-                {chave === 'linha' ? <IconeDaTimeline />
-                  : chave === 'mesa' ? <IconeDoMixer />
-                  : chave === 'ficha' ? <FiFileText size={14} />
-                  : <FiDownload size={14} />}
+                {/* Uma medida só para os quatro. Antes eram 15 nos desenhados e 14 nos do
+                    react-icons — números quase iguais que davam tamanhos bem diferentes na
+                    tela, porque os quadros deles não tinham a mesma ocupação. Com os quadros
+                    acertados (ver `icones.tsx`), o mesmo número passa a dar o mesmo tamanho. */}
+                {chave === 'linha' ? <IconeDaTimeline tamanho={TAMANHO_DO_ICONE_DA_ABA} />
+                  : chave === 'mesa' ? <IconeDoMixer tamanho={TAMANHO_DO_ICONE_DA_ABA} />
+                  : chave === 'ficha' ? <FiFileText size={TAMANHO_DO_ICONE_DA_ABA} />
+                  : <FiDownload size={TAMANHO_DO_ICONE_DA_ABA} />}
                 {/* ⚠️ SEM RÓTULO NO CELULAR. Os quatro nomes somam mais de 300 px, e o que era
                     empurrado para fora da tela por eles era o X — a pessoa entrava no editor e
                     não tinha como sair. O nome continua no `title` e no `aria-label`. */}

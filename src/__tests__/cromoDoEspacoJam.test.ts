@@ -357,6 +357,25 @@ describe('cromo do editor do Espaço JAM', () => {
     });
   });
 
+  // ⚠️ OS QUATRO ÍCONES DAS ABAS TÊM DE PARECER DO MESMO TAMANHO, e `size` igual não basta
+  // para isso. Os dois desenhados vinham num quadro de 41×41 com o traço no miolo (41 % e 46 %
+  // de ocupação); os dois do react-icons enchem 75–83 % do seu. Com `size` 15 e 14, a tela
+  // mostrava 6,2 px de tinta na Timeline contra 11,7 px na Ficha — quase o dobro, e a fila
+  // parecia dois pares de ícones diferentes.
+  it('os ícones das abas têm a mesma medida e o mesmo enquadramento', () => {
+    const corpo = semComentarios(editor);
+
+    // Uma medida só, e nomeada: quatro números soltos voltam a divergir no próximo ajuste.
+    expect(corpo).toContain('const TAMANHO_DO_ICONE_DA_ABA = 15;');
+    expect(corpo.match(/TAMANHO_DO_ICONE_DA_ABA/g)?.length).toBe(5); // a declaração + os quatro
+    expect(corpo).not.toMatch(/<FiFileText size=\{14\}[^>]*\/>\s*\n\s*:\s*<FiDownload/);
+
+    // E o quadro dos desenhados é recortado no traço, e não o 41×41 do ficheiro.
+    const quadros = semComentarios(icones).match(/viewBox="[^"]+"/g) ?? [];
+    expect(quadros).toHaveLength(2);
+    quadros.forEach((q) => expect(q).not.toContain('0 0 41 41'));
+  });
+
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
   it('a tela de exportar oferece stems e guia, sem travessão na copy', () => {
     expect(exportar).toContain('Baixar stems (.zip)');
