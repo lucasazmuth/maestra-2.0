@@ -10315,3 +10315,65 @@ body:has(.track-detail-backdrop) .local-player-bar {
 .nyta-surface .nyta-send--parar:hover {
   background: #33456d;
 }
+
+/* ══════════ O BOTÃO DE CRIAR, FLUTUANDO ══════════
+
+   Ele vivia no cabeçalho de cada lista, ao lado do título, e ali disputava a primeira leitura
+   com o próprio título. O que se cria numa lista costuma ser decidido DEPOIS de a percorrer, e
+   é no fim dela que a mão está.
+
+   `fixed` e não `absolute`: numa lista de vinte músicas, um botão preso ao fim do cartão só
+   aparece a quem rolar até lá — e é justamente quem já rolou tudo à procura de uma música que
+   não existe que quer criá-la. */
+.botao-flutuante {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  /* 56px é o alvo confortável para o dedo; abaixo disso erra-se num telemóvel a andar. */
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #3361ff;
+  color: #fff;
+  cursor: pointer;
+  /* Acima do conteúdo e do tocador, abaixo dos modais: ele não pode tapar a pergunta que um
+     modal está a fazer. A escada inteira está declarada no topo deste ficheiro. */
+  z-index: 90;
+  box-shadow: 0 10px 28px rgba(51, 97, 255, .34), 0 2px 8px rgba(48, 70, 108, .16);
+  transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.botao-flutuante:hover:not(:disabled) {
+  background: #2a52dd;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(51, 97, 255, .42), 0 3px 10px rgba(48, 70, 108, .2);
+}
+
+.botao-flutuante:active:not(:disabled) {
+  transform: translateY(0) scale(.95);
+}
+
+.botao-flutuante:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* O tocador ocupa a mesma faixa de baixo: o botão sobe para não ficar por cima dele. */
+body:has(.local-player-bar) .botao-flutuante {
+  bottom: 104px;
+}
+
+@media (max-width: 900px) {
+  /* No celular a barra de navegação mora no rodapé, e o botão passa a viver acima dela. */
+  .botao-flutuante {
+    right: 18px;
+    bottom: 88px;
+  }
+
+  body:has(.local-player-bar) .botao-flutuante {
+    bottom: 152px;
+  }
+}

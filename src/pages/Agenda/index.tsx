@@ -3,6 +3,8 @@ import { message } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { FiCheck, FiChevronLeft, FiChevronRight, FiPlus } from 'react-icons/fi';
 
+import { BotaoFlutuante } from '../../components/BotaoFlutuante';
+
 import { useArtist } from '@maestra/core/hooks/useArtist';
 import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
@@ -259,7 +261,6 @@ const Agenda: FC = () => {
             <span className="calendar-label-full">{calendarLabel}</span>
             <span className="calendar-label-compact">{calendarLabelCompact}</span>
           </strong>
-          {canEdit && <button type="button" className="calendar-add-task calendar-add-task-inline" aria-label="Adicionar compromisso" onClick={() => openCreate()}><FiPlus /> Compromisso</button>}
           <nav aria-label="Visualização da agenda">
             <button className={calendarView === 'day' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('day')}>Dia</button>
             <button className={calendarView === 'month' ? 'calendar-active' : ''} type="button" onClick={() => setCalendarView('month')}>Mês</button>
@@ -347,6 +348,10 @@ const Agenda: FC = () => {
           deleteConfirmTitle={editing && isTaskEvent(editing) ? 'Remover o prazo da tarefa e excluir o evento?' : 'Excluir evento?'}
         />
       )}
+
+      {/* O mesmo flutuante das Músicas e da Equipe: criar é o que se decide depois de olhar a
+          semana, e é no fim da tela que a mão está. */}
+      {canEdit && <BotaoFlutuante rotulo='Novo compromisso' aoClicar={() => openCreate()} />}
     </div>
   );
 };

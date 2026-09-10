@@ -1,8 +1,8 @@
-import { FC, FormEvent, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, FormEvent, MouseEvent, ReactNode, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Dropdown, Modal, message } from 'antd';
 import { FiArrowLeft, FiRefreshCw, FiLock, FiMoreVertical, FiSend, FiSettings, FiStar } from 'react-icons/fi';
-import { AddIcon, EspacoJamIcon } from '../../components/Icons/system';
+import { EspacoJamIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useCanAddTrack } from '@maestra/core/hooks/useCanAddTrack';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { UpsellModal } from '../../components/UpsellModal';
+import { BotaoFlutuante } from '../../components/BotaoFlutuante';
 import { Spinner } from '../../components/spinner/spinner';
 import { SpotifyEmbedPlayer } from '../../components/SpotifyEmbedPlayer';
 import type { LocalTrack } from '@maestra/core/stores/localPlayerStore';
@@ -193,8 +194,6 @@ const Catalog: FC = () => {
   const [editing, setEditing] = useState<CatalogItem | null>(null);
   // "Nova música" abre o seletor de arquivos ANTES da ficha: no dia a dia a música começa pelo
   // áudio, e o que estava no arquivo (nome, duração) não precisa ser redigitado.
-  const newTrackFileRef = useRef<HTMLInputElement>(null);
-  const [newTrackFile, setNewTrackFile] = useState<File | null>(null);
 
   // ⚠️ "NOVA MÚSICA" NÃO PERGUNTA NADA: cria e abre o editor.
   //
@@ -221,22 +220,9 @@ const Catalog: FC = () => {
     }
   };
 
-  const startNewTrack = useCallback((file: File | null) => {
-    setEditing(null);
-    setNewTrackFile(file);
-    setModalOpen(true);
-  }, []);
-
-  // Fechar o seletor sem escolher nada abre a ficha vazia — é o caminho de quem vai cadastrar a
-  // música antes de ter a gravação. Listener nativo: o evento `cancel` do input[type=file] não
-  // tem prop sintética no React.
-  useEffect(() => {
-    const el = newTrackFileRef.current;
-    if (!el) return;
-    const onCancel = () => startNewTrack(null);
-    el.addEventListener('cancel', onCancel);
-    return () => el.removeEventListener('cancel', onCancel);
-  });
+  // ⚠️ O SELETOR DE FICHEIROS E A FICHA-AO-CRIAR SAÍRAM DAQUI. "Nova música" passou a criar um
+  // rascunho e abrir o editor: os ficheiros entram lá, arrastados para as pistas, e a ficha é
+  // uma aba do mesmo sítio. O que ficou deste modal é a EDIÇÃO, aberta pela sala da faixa.
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   // Busca do topo — ver globalSearchStore. Antes era estado local, com o campo escondido
   // dentro do popover de "Filtros".
@@ -906,32 +892,9 @@ const Catalog: FC = () => {
         </div>
         {tab === 'manual' && canEditCatalog && (
           <div className='catalog-heading-actions'>
+            {/* O contador FICA no cabeçalho: ele não é uma ação, é um limite — pertence ao lado
+                do título, junto do que descreve a lista. Quem saiu daqui foi o botão. */}
             {maxTracks !== Infinity && <TrackCounter currentCount={currentCount} maxTracks={maxTracks} />}
-            <button
-              className='catalog-add-btn'
-              style={{ opacity: canAdd ? 1 : 0.5, cursor: canAdd ? 'pointer' : 'not-allowed' }}
-              disabled={criandoMusica}
-              onClick={() => {
-                if (!canAdd) {
-                  setUpsellOpen(true);
-                  return;
-                }
-                void criarRascunho();
-              }}
-            >
-              <AddIcon size={18} /> Nova música
-            </button>
-            <input
-              ref={newTrackFileRef}
-              type='file'
-              accept='audio/*'
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                e.target.value = '';
-                startNewTrack(file);
-              }}
-            />
           </div>
         )}
         {tab === 'spotify' && (
@@ -1224,11 +1187,24 @@ const Catalog: FC = () => {
           currentUserName={currentUserName}
           currentUserId={user?.id || null}
           currentUserAvatar={currentUserAvatar}
-          initialFile={newTrackFile}
-          onClose={() => { setModalOpen(false); setNewTrackFile(null); }}
+          onClose={() => setModalOpen(false)}
           onSaved={onSaved}
           onDelete={onDelete}
           onVersionsChanged={() => setCatalogReload((value) => value + 1)}
+        />
+      )}
+
+      {/* Criar uma música é o que se decide DEPOIS de percorrer a lista, e é no fim dela que a
+          mão está. O limite (5/10) fica no cabeçalho, junto do título que ele descreve. */}
+      {tab === 'manual' && canEditCatalog && (
+        <BotaoFlutuante
+          rotulo='Nova música'
+          desativado={criandoMusica}
+          noLimite={!canAdd}
+          aoClicar={() => {
+            if (!canAdd) { setUpsellOpen(true); return; }
+            void criarRascunho();
+          }}
         />
       )}
 

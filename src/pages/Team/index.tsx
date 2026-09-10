@@ -1,6 +1,8 @@
 import { FC, useEffect, useMemo, useState } from 'react';
 import { Button, Input, Modal, Popconfirm, message } from 'antd';
-import { FiMail, FiMoreHorizontal, FiPlus, FiTrash2, FiUser } from 'react-icons/fi';
+import { FiMail, FiMoreHorizontal, FiTrash2, FiUser } from 'react-icons/fi';
+
+import { BotaoFlutuante } from '../../components/BotaoFlutuante';
 
 import { useAppSelector } from '@maestra/core/store/store';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
@@ -220,12 +222,6 @@ const Team: FC = () => {
           <h1>Equipe</h1>
           <span>Gerencie quem participa da operação e o que cada pessoa pode acessar.</span>
         </div>
-        {canManageTeam && (
-          <button type="button" className={styles.inviteButton} onClick={() => setInviteOpen(true)}>
-            <FiPlus aria-hidden="true" />
-            Convidar membro
-          </button>
-        )}
       </div>
 
       <Spinner loading={loading && !members.length}>
@@ -417,6 +413,10 @@ const Team: FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* O mesmo flutuante das Músicas e da Agenda. Aqui ele não cria: convida — por isso o
+          rótulo diz "Convidar membro", e não um "novo" qualquer. */}
+      {canManageTeam && <BotaoFlutuante rotulo='Convidar membro' aoClicar={() => setInviteOpen(true)} />}
     </div>
   );
 };
