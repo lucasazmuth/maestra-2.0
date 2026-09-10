@@ -749,6 +749,7 @@ const ProjectSpace: FC = () => {
         }}
         podeEditar={podeEditar}
         acoes={acoes}
+        bpm={open?.bpm}
         numeros={(
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             {/* O andamento e o tom são da GRAVAÇÃO ABERTA, e não da obra — por isso descem

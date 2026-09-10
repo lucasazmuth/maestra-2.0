@@ -687,6 +687,27 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(semComentarios(editor)).toContain('{!noCelular && (\n                    <span');
   });
 
+  // ⚠️ O BPM NÃO FAZIA NADA NA TELA. Escrevia-se um número no rodapé, ele ia para o banco e
+  // para a ficha, e a montagem continuava marcada em segundos — com o clipe a encaixar de
+  // quarto em quarto de segundo, que não é unidade musical nenhuma.
+  it('a régua conta compassos quando há andamento, e o clipe encaixa no tempo', () => {
+    const corpo = semComentarios(editor);
+
+    // O andamento chega cru ao editor: quem decide se aquilo é um andamento é a grelha.
+    expect(semComentarios(tela)).toContain('bpm={open?.bpm}');
+    expect(corpo).toContain('const grade = useMemo(() => gradeDoCompasso(bpm, escala)');
+
+    // ⚠️ UMA LISTA SÓ para a régua e para as linhas das pistas: enquanto cada uma contava por
+    // sua conta, bastava mexer numa para o número deixar de assentar na linha que nomeia.
+    expect(corpo.match(/\{marcas\.map\(\(marca\) => \(/g)).toHaveLength(2);
+    expect(corpo).not.toContain('Math.floor(duracao / passo) + 1');
+
+    // E o encaixe deixou de ser o quarto de segundo fixo: segue a grelha e o zoom.
+    expect(corpo).toContain('const passoDoEncaixe = useMemo(() => encaixeDaGrade(grade, escala)');
+    expect(corpo.match(/passoDoEncaixe\) \* passoDoEncaixe/g)).toHaveLength(3);
+    expect(corpo).not.toContain('/ ENCAIXE) * ENCAIXE');
+  });
+
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
   it('a tela de exportar oferece stems e guia, sem travessão na copy', () => {
     expect(exportar).toContain('Baixar stems (.zip)');

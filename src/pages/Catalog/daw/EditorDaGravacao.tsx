@@ -1,4 +1,4 @@
-import { FC, ReactNode, useEffect, useRef, useState } from 'react';
+import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FiAlertCircle, FiCheck, FiCircle, FiDownload, FiFileText, FiFolder, FiHeadphones, FiLoader, FiPause,
   FiPlay, FiRepeat, FiSkipBack, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
@@ -11,13 +11,14 @@ import { message } from 'antd';
 
 import useIsMobile from '../../../utils/isMobile';
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
+import { encaixeDaGrade, gradeDoCompasso, marcasDaRegua } from './grade';
 import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
 import {
   ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_RODAPE, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE,
   DS, DURACAO_MINIMA,
-  ENCAIXE, LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO,
+  LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO,
   ZOOM_MAXIMO, ZOOM_MINIMO, ZOOM_MINIMO_ABSOLUTO, corDaPista,
 } from './tokens';
 
@@ -130,6 +131,14 @@ export const EditorDaGravacao: FC<{
   ficha: ReactNode;
   /** O andamento e o tom da gravação aberta, no rodapé, junto dos outros controlos. */
   numeros: ReactNode;
+  /**
+   * O andamento da gravação aberta, como está escrito no campo.
+   *
+   * ⚠️ CHEGA CRU, e é de propósito: o campo é de texto e pode estar vazio, a meio de uma
+   * digitação ("12"), ou com um engano. Quem decide se aquilo é um andamento é a grelha, num
+   * sítio só — e sem andamento a linha do tempo fica marcada em segundos, como sempre esteve.
+   */
+  bpm?: string | number | null;
   /** A ficha inteira — identidade, créditos —, para a aba do mesmo nome. */
   fichaCompleta: ReactNode;
   /** A tela de exportar: baixar os stems (ZIP) ou a guia (WAV/MP3), para a aba do mesmo nome. */
@@ -140,7 +149,7 @@ export const EditorDaGravacao: FC<{
   acoes: AcoesDoEditor;
 }> = ({
   titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
-  estado, picos, transporte, ficha, numeros, fichaCompleta, exportar, letra, podeEditar, acoes,
+  estado, picos, transporte, ficha, numeros, bpm, fichaCompleta, exportar, letra, podeEditar, acoes,
 }) => {
   // No telemóvel a montagem não se EDITA — arrastar um clipe para o segundo certo com o dedo,
   // num ecrã de 375 px, erra mais do que acerta, e por isso os clipes lá são só de ver
@@ -243,6 +252,21 @@ export const EditorDaGravacao: FC<{
           : escala >= 4 ? 30
             : 60;
 
+  // ⚠️ A GRELHA É O QUE FAZ O BPM EXISTIR NA TELA. Antes dela, escrever 128 no rodapé mudava um
+  // número no banco e mais nada: a régua continuava a contar segundos e o clipe encaixava de
+  // quarto em quarto de segundo, que não é unidade musical nenhuma. Agora a régua conta
+  // compassos e o clipe cai onde a música tem uma batida.
+  //
+  // Sem andamento escrito — que é a maioria dos projetos — tudo isto desliga e volta o que era.
+  const grade = useMemo(() => gradeDoCompasso(bpm, escala), [bpm, escala]);
+  const passoDoEncaixe = useMemo(() => encaixeDaGrade(grade, escala), [grade, escala]);
+  // Uma lista só para a régua e para as linhas das pistas: enquanto cada uma contava por sua
+  // conta, bastava mexer numa para o número deixar de assentar na linha que ele nomeia.
+  const marcas = useMemo(
+    () => marcasDaRegua(grade, duracao, escala, passo),
+    [grade, duracao, escala, passo],
+  );
+
   // ⚠️ NO TELEMÓVEL A MONTAGEM ABRE ENCAIXADA NO ECRÃ.
   //
   // A 100 % são 60 px por segundo: uma música de dois minutos mede 8 700 px, e num ecrã de 390
@@ -290,7 +314,7 @@ export const EditorDaGravacao: FC<{
     if (!puxado) return;
     arrasto.current = null;
     const bruto = segundoDoEvento(evento) - puxado.deslocamentoX / escala;
-    acoes.aoMoverClipe(puxado.clipeId, Math.max(0, Math.round(bruto / ENCAIXE) * ENCAIXE));
+    acoes.aoMoverClipe(puxado.clipeId, Math.max(0, Math.round(bruto / passoDoEncaixe) * passoDoEncaixe));
   };
 
   const escolherArquivos = (arquivos: File[], inicio: number, pistaAlvo?: string) => {
@@ -309,7 +333,7 @@ export const EditorDaGravacao: FC<{
     evento.stopPropagation();
     setSobre(false);
     if (!podeEditar) return;
-    const segundo = Math.round(segundoDoEvento(evento) / ENCAIXE) * ENCAIXE;
+    const segundo = Math.round(segundoDoEvento(evento) / passoDoEncaixe) * passoDoEncaixe;
 
     const daBiblioteca = evento.dataTransfer.getData(TIPO_DO_ARRASTO);
     if (daBiblioteca) {
@@ -989,7 +1013,7 @@ export const EditorDaGravacao: FC<{
                   if (!podeEditar) return;
                   // Fora de uma faixa: cada ficheiro vira uma PISTA nova, no segundo em que foi
                   // largado. É o gesto que quem vem de uma DAW já faz sem pensar.
-                  const inicio = Math.round(segundoDoEvento(e) / ENCAIXE) * ENCAIXE;
+                  const inicio = Math.round(segundoDoEvento(e) / passoDoEncaixe) * passoDoEncaixe;
                   const daBiblioteca = e.dataTransfer.getData(TIPO_DO_ARRASTO);
                   if (daBiblioteca) {
                     const item = biblioteca.find((i) => i.id === daBiblioteca);
@@ -1023,16 +1047,17 @@ export const EditorDaGravacao: FC<{
                     cursor: 'pointer', userSelect: 'none',
                   }}
                 >
-                  {Array.from({ length: Math.floor(duracao / passo) + 1 }, (_, i) => (
+                  {marcas.map((marca) => (
                     <div
-                      key={i}
+                      key={marca.segundo}
                       style={{
-                        position: 'absolute', left: i * passo * escala, top: 0, bottom: 0,
-                        paddingLeft: 6, borderLeft: `1px solid ${DS.color.grelhaForte}`,
+                        position: 'absolute', left: marca.segundo * escala, top: 0, bottom: 0,
+                        paddingLeft: 6,
+                        borderLeft: `1px solid ${marca.forte ? DS.color.grelhaForte : DS.color.grelhaFraca}`,
                         fontSize: 10, color: DS.color.textoFraco, lineHeight: `${ALTURA_DA_REGUA}px`,
                       }}
                     >
-                      {i * passo}s
+                      {marca.rotulo}
                     </div>
                   ))}
                   {/* ⚠️ A DICA É DE RATO, e por isso não vive no telemóvel: lá não há duplo
@@ -1062,12 +1087,16 @@ export const EditorDaGravacao: FC<{
                           position: 'relative',
                         }}
                       >
-                        {Array.from({ length: Math.floor(duracao / passo) + 1 }, (_, i) => (
+                        {marcas.map((marca) => (
                           <div
-                            key={i}
+                            key={marca.segundo}
                             style={{
-                              position: 'absolute', left: i * passo * escala, top: 0, bottom: 0,
-                              width: 1, background: DS.color.grelhaFraca,
+                              position: 'absolute', left: marca.segundo * escala, top: 0, bottom: 0,
+                              width: 1,
+                              // O compasso risca mais forte do que o tempo: é ele que se conta
+                              // de olho, e uma grelha toda igual não se conta.
+                              background: marca.forte ? DS.color.grelhaForte : DS.color.grelhaFraca,
+                              opacity: marca.forte ? 1 : 0.6,
                             }}
                           />
                         ))}
