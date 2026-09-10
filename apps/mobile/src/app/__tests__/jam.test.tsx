@@ -144,6 +144,23 @@ describe('espaço jam', () => {
     mockAtualizarVersao.mockImplementation((id, patch) => Promise.resolve(versao({ id, ...patch })));
   });
 
+  // ⚠️ VOLTAR AO INÍCIO E REPETIR CHEGARAM DA WEB. A mesa do núcleo já sabia fazer as duas desde
+  // que o transporte da web as ganhou; o app é que não as oferecia. Sem a primeira, recomeçar
+  // obriga a acertar o zero da régua com o dedo; sem a segunda, ouvir uma montagem em ciclo — que
+  // é o que se faz o dia inteiro ao misturar — pede um toque a cada volta.
+  it('o transporte tem voltar ao início e repetir, como o da web', async () => {
+    const tela = await montar();
+    expect(await tela.findByLabelText('Voltar ao início')).toBeTruthy();
+    expect(tela.getByLabelText('Repetir do início ao fim')).toBeTruthy();
+  });
+
+  // O vocabulário da tela é "faixa", como na web desde a renomeação do Espaço JAM.
+  it('fala em faixas, e não em pistas', async () => {
+    const tela = await montar();
+    await tela.findByLabelText('Voltar ao início');
+    expect(tela.queryByLabelText(/\bpistas?\b/i)).toBeNull();
+  });
+
   // A forma da tela: um editor. As gravações são uma fila de fichas (são ALTERNATIVAS, ouve-se
   // uma de cada vez), e as pistas empilhadas são as camadas da que está aberta.
   it('abre a gravação principal com um transporte e a pista da mix', async () => {

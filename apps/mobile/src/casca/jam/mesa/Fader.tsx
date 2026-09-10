@@ -51,7 +51,7 @@ export const Fader = ({ valor, aoMudar, apagado }: {
     <GestureDetector gesture={Gesture.Race(arrastar, toque)}>
       {/* O alvo é mais alto que o trilho: 6 pt de trilho seria impossível de acertar. */}
       <View style={estilos.alvo} onLayout={medir} accessibilityRole="adjustable"
-        accessibilityLabel="Volume da pista"
+        accessibilityLabel="Volume da faixa"
         accessibilityValue={{ min: 0, max: 100, now: Math.round(cheio * 100) }}>
         <View style={estilos.trilho}>
           <View style={[

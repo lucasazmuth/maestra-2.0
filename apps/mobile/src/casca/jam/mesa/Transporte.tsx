@@ -17,15 +17,23 @@ const relogio = (segundos: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
-export const Transporte = ({ tocando, posicao, duracao, carregando, prontas, aoAlternar, aoBuscar }: {
+export const Transporte = ({
+  tocando, posicao, duracao, carregando, prontas, emLoop,
+  aoAlternar, aoBuscar, aoVoltarAoInicio, aoLoopar,
+}: {
   tocando: boolean;
   posicao: number;
   duracao: number;
   carregando: boolean;
-  /** Quantas pistas conseguiram carregar. Zero = não há o que tocar. */
+  /** Quantas faixas conseguiram carregar. Zero = não há o que tocar. */
   prontas: number;
+  /** A repetição do início ao fim, ligada. */
+  emLoop?: boolean;
   aoAlternar: () => void;
   aoBuscar: (segundo: number) => void;
+  /** Sem isto, voltar ao começo obriga a acertar o zero da régua com o dedo. */
+  aoVoltarAoInicio?: () => void;
+  aoLoopar?: (v: boolean) => void;
 }) => {
   const [largura, setLargura] = useState(0);
   const medir = (e: LayoutChangeEvent) => setLargura(e.nativeEvent.layout.width);
@@ -48,14 +56,31 @@ export const Transporte = ({ tocando, posicao, duracao, carregando, prontas, aoA
 
   return (
     <View style={estilos.barra}>
+      {/* ⚠️ VOLTAR AO INÍCIO E REPETIR CHEGAM DA WEB, e não são enfeite. A mesa do núcleo já
+          sabia fazer as duas (`irPara` e `loopar`) desde que o transporte da web as ganhou; o
+          app é que não as oferecia. Sem o primeiro, recomeçar obriga a acertar o zero da régua
+          com o dedo; sem o segundo, ouvir uma montagem em ciclo — que é o que se faz o dia
+          inteiro ao misturar — pede um toque a cada volta. */}
+      {aoVoltarAoInicio && (
+        <Pressable
+          onPress={aoVoltarAoInicio}
+          disabled={inerte}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar ao início"
+        >
+          <Feather name="skip-back" size={20} color={inerte ? COR_JAM.estrela : COR_JAM.apoio} />
+        </Pressable>
+      )}
+
       <Pressable
         onPress={aoAlternar}
         disabled={inerte}
         hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel={carregando
-          ? 'Preparando as pistas'
-          : prontas === 0 ? 'Nenhuma pista para tocar' : tocando ? 'Pausar' : 'Tocar'}
+          ? 'Preparando as faixas'
+          : prontas === 0 ? 'Nenhuma faixa para tocar' : tocando ? 'Pausar' : 'Tocar'}
       >
         {carregando
           ? <ActivityIndicator size="small" color={COR.primaria} style={estilos.espera} />
@@ -80,6 +105,18 @@ export const Transporte = ({ tocando, posicao, duracao, carregando, prontas, aoA
       </GestureDetector>
 
       <Text style={[estilos.tempo, estilos.total]}>{relogio(duracao)}</Text>
+
+      {aoLoopar && (
+        <Pressable
+          onPress={() => aoLoopar(!emLoop)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: !!emLoop }}
+          accessibilityLabel={emLoop ? 'Parar de repetir' : 'Repetir do início ao fim'}
+        >
+          <Feather name="repeat" size={18} color={emLoop ? COR.primaria : COR_JAM.apoio} />
+        </Pressable>
+      )}
     </View>
   );
 };

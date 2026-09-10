@@ -96,7 +96,7 @@ export const Pista = ({ pista, indice, picos, progresso, haSolo, aoMudar, aoSola
 
         {falhou ? (
           <Text style={estilos.erro} numberOfLines={2}>
-            {pista.erro || 'Não consegui carregar esta pista.'}
+            {pista.erro || 'Não consegui carregar esta faixa.'}
           </Text>
         ) : (
           <View style={estilos.controlos}>

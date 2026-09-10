@@ -347,8 +347,8 @@ export default function EspacoJam() {
     if (acendendoAMix && haCamadasNoAr && !avisouDaMix.current) {
       avisouDaMix.current = true;
       Alert.alert(
-        'A mix e as pistas juntas',
-        'A mix já é a soma das pistas. Com as duas acesas você ouve cada instrumento duas vezes, '
+        'A mix e as faixas juntas',
+        'A mix já é a soma das faixas. Com as duas acesas você ouve cada instrumento duas vezes, '
         + 'e o volume dobra. Para comparar, use o S da mix.',
       );
     }
@@ -594,8 +594,11 @@ export default function EspacoJam() {
                     duracao={mesa.estado.duracao}
                     carregando={mesa.estado.carregando}
                     prontas={prontas}
+                    emLoop={mesa.estado.emLoop}
                     aoAlternar={mesa.alternar}
                     aoBuscar={mesa.irPara}
+                    aoVoltarAoInicio={() => mesa.irPara(0)}
+                    aoLoopar={mesa.loopar}
                   />
 
                   {/* O aviso de peso vem ANTES de descodificar, com a conta do tamanho dos
