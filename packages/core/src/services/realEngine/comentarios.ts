@@ -218,7 +218,10 @@ const GRUPOS: Record<DimKey, Grupo[]> = {
         { id: 'E1.b', quando: (c) => !!c.acesa.e },
         { id: 'E1.c', quando: (c) => !c.acesa.e && naFaixa(c.nota.e, EXIBICAO.pertoDe, EXIBICAO.pertoAte) },
         { id: 'E1.d', quando: (c) => !c.acesa.e && naFaixa(c.nota.e, 1, 49) },
-        { id: 'E1.e', quando: (c) => (c.resumo?.saldoAjustado ?? 0) <= 0 },
+        // §7.3 (v4.4): o gatilho é o SALDO REAL, e não o ajustado. O bônus de estrutura é
+        // pontuação; quem sustenta a música em vez de ser sustentado por ela é quem gastou
+        // mais do que recebeu, e isso se lê na conta, não na nota.
+        { id: 'E1.e', quando: (c) => (c.resumo?.saldo ?? 0) <= 0 },
       ],
     },
     {
@@ -321,10 +324,13 @@ const GRUPOS: Record<DimKey, Grupo[]> = {
     {
       nome: 'E8',
       soPdf: true,
-      quandoOGrupo: (c) => (c.resumo?.saldoAjustado ?? 0) > 0,
+      // §7.10 (v4.4): a referência do setor compara o SALDO REAL. Um salário é líquido, e o
+      // que se compara com ele é o que sobra depois de a carreira pagar o que custou — não um
+      // valor inflado por um bônus de pontuação que o artista nunca vê.
+      quandoOGrupo: (c) => (c.resumo?.saldo ?? 0) > 0,
       itens: [
-        { id: 'E8.a', quando: (c) => (c.resumo?.saldoAjustado ?? 0) >= SIIC_ANUAL },
-        { id: 'E8.b', quando: (c) => (c.resumo?.saldoAjustado ?? 0) < SIIC_ANUAL },
+        { id: 'E8.a', quando: (c) => (c.resumo?.saldo ?? 0) >= SIIC_ANUAL },
+        { id: 'E8.b', quando: (c) => (c.resumo?.saldo ?? 0) < SIIC_ANUAL },
       ],
     },
   ],
@@ -494,7 +500,7 @@ const NOME_DA_FRENTE: Record<string, string> = {
 /** As dimensões, como o BEG.2 as chama (§11, `{dimensao}`). */
 const NOME_DA_DIMENSAO: Record<DimKey, string> = {
   r: 'o alcance',
-  e: 'a sustentabilidade',
+  e: 'os ganhos',
   a: 'o público real',
   l: 'a legitimação',
 };
@@ -521,7 +527,7 @@ const variaveis = (c: Ctx, cm?: Record<string, any> | null): Record<string, stri
   const playlists = Number(c.bruto.editorialPlaylists ?? cm?.playlists?.count ?? 0);
   const nomesDasPlaylists = ((cm?.playlists?.top ?? []) as { name: string; editorial?: boolean }[])
     .filter((p) => p.editorial).map((p) => p.name);
-  const razaoSiic = (rev?.saldoAjustado ?? 0) / SIIC_ANUAL;
+  const razaoSiic = (rev?.saldo ?? 0) / SIIC_ANUAL;
   const faltante = [c.conversao, c.circulacao, c.pagante].find((x: any) => !x.high);
   const alta = [c.conversao, c.circulacao, c.pagante].find((x: any) => x.high);
 

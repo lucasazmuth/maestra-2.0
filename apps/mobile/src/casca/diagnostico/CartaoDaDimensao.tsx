@@ -363,11 +363,8 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
               [resumo ? 'Receita' : 'Faturamento', dinheiro(faturamento), false],
               [resumo ? 'Custos e investimento' : 'Investimento', dinheiro(investimento), false],
               ['Saldo', `${saldo >= 0 ? '+' : '−'}${dinheiro(saldo)}`, true],
-              ...(resumo && resumo.bonus > 1 ? [[
-                `Saldo ajustado (+${Math.round((resumo.bonus - 1) * 100)}%)`,
-                `${resumo.saldoAjustado >= 0 ? '+' : '−'}${dinheiro(resumo.saldoAjustado)}`,
-                true,
-              ]] as const : []),
+              // ⚠️ O saldo ajustado não aparece (v4.4, §12): é pontuação, não dinheiro, e o
+              // efeito dele vive na nota e no estado da dimensão.
               ...(resumo?.receitaLiquidaEstimada != null ? [[
                 `Líquida estimada (${resumo.aliquotaRotulo})`,
                 dinheiro(resumo.receitaLiquidaEstimada),

@@ -185,7 +185,14 @@ export const resumoDoE = (ri: Diagnostico | null | undefined) => {
     margemPorShow: rev.margemPorShow ?? null,
     pontoEquilibrioShows: rev.pontoEquilibrioShows ?? null,
     // Quantas vezes a média do setor cultural formal (§7.3). Só comparação, nunca cálculo.
-    vezesOSetor: SIIC_ANUAL > 0 ? (Number(rev.receitaAnual) || 0) / SIIC_ANUAL : 0,
+    // ⚠️ A COMPARAÇÃO É SOBRE O SALDO REAL, e não sobre a receita (v4.4, §7.10).
+    //
+    // Duas razões. A primeira é que o mesmo PDF trazia dois múltiplos diferentes do mesmo
+    // patamar: este card dividia a RECEITA pelo salário do setor, e o comentário E8, logo ao
+    // lado, dividia o saldo ajustado. Dois números para a mesma frase, na mesma página. A
+    // segunda é que a comparação só é honesta assim: um salário é líquido, e o que se compara
+    // com ele é o que sobra depois de a carreira pagar o que custou.
+    vezesOSetor: SIIC_ANUAL > 0 ? (Number(rev.saldo) || 0) / SIIC_ANUAL : 0,
     // §7.5 — quem não tem empresário recebe a recomendação, e é o mesmo dado que dá o bônus do E.
     recomendarEmpresariamento: ri.raw?.temEmpresario === false,
   };
@@ -225,14 +232,13 @@ export const linhasDaDimensao = (
       { rotulo: 'Custos e investimento (12 meses)', valor: fmtBRL(Number(rev.investimentoAnual) || 0), fonte: 'self' },
       { rotulo: 'Saldo', valor: fmtBRL(Number(rev.saldo) || 0), fonte: 'self' },
     ];
-    const bonus = Number(rev.bonus) || 1;
-    if (bonus > 1) {
-      linhas.push({
-        rotulo: 'Saldo ajustado',
-        valor: `${fmtBRL(Number(rev.saldoAjustado) || 0)} (bônus de ${Math.round((bonus - 1) * 100)}%)`,
-        fonte: 'self',
-      });
-    }
+    // ⚠️ O SALDO AJUSTADO NÃO É EXIBIDO EM LADO NENHUM (relatório v4.4, §1.3, §12 e §13 item 15).
+    //
+    // Ele existe, e continua a decidir a nota: ter CNPJ e ter empresário valem um bônus sobre o
+    // saldo positivo. Mas é PONTUAÇÃO, e estava a ser mostrado como DINHEIRO, com o percentual do
+    // bônus ao lado. Duas coisas erradas de uma vez: o artista via um valor que não existe na
+    // conta bancária dele, e via um número proprietário do método, que o relatório não expõe por
+    // princípio. O efeito do bônus aparece onde deve aparecer, na nota e no estado da dimensão.
     return linhas;
   }
 

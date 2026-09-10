@@ -523,11 +523,9 @@ export function montarDocumentoDoDiagnostico({
       <div class="contaGrade">
         ${numero('Receita', dinheiroRedondo(contaFecha.receitaAnual))}
         ${numero('Custos e investimento', dinheiroRedondo(contaFecha.investimentoAnual))}
+        <!-- ⚠️ O saldo ajustado não é exibido (v4.4, §12 e §13 item 15): é pontuação, não
+             dinheiro. O efeito dele vive na nota e no estado da dimensão. -->
         ${numero('Saldo', `${contaFecha.saldo >= 0 ? '+' : '−'}${dinheiroRedondo(contaFecha.saldo)}`)}
-        ${numero(
-          contaFecha.bonus > 1 ? `Saldo ajustado (+${Math.round((contaFecha.bonus - 1) * 100)}%)` : 'Saldo ajustado',
-          `${contaFecha.saldoAjustado >= 0 ? '+' : '−'}${dinheiroRedondo(contaFecha.saldoAjustado)}`,
-        )}
         ${contaFecha.receitaLiquidaEstimada != null
           ? numero(`Receita líquida estimada (${contaFecha.aliquotaRotulo ?? ''})`, dinheiroRedondo(contaFecha.receitaLiquidaEstimada))
           : ''}
@@ -537,7 +535,7 @@ export function montarDocumentoDoDiagnostico({
         <span class="pilula ${ri.raw?.temEmpresario === true ? 'pilulaOn' : ''}">${ri.raw?.temEmpresario === true ? 'Com empresário' : 'Sem empresário'}</span>
       </div>
       <div class="fonteNota" style="margin:0 0 14px">A média mensal do setor cultural formal é
-        ${escapar(fmtBRL(SIIC_MENSAL))} (SIIC/IBGE). Esta receita anual equivale a
+        ${escapar(fmtBRL(SIIC_MENSAL))} (SIIC/IBGE). Este saldo equivale a
         ${escapar(contaFecha.vezesOSetor.toFixed(1).replace('.', ','))}× esse patamar.</div>
 
       ${contaFecha.margemPorShow != null ? `

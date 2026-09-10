@@ -266,16 +266,15 @@ const DocContaPage: FC<{ n: number; total: number; ri: any; cm: Chartmetric | nu
       <div className={styles.docContaGrade}>
         {numero('Receita', money(conta.receitaAnual))}
         {numero('Custos e investimento', money(conta.investimentoAnual))}
+        {/* ⚠️ O SALDO AJUSTADO NÃO APARECE (v4.4, §12 e §13 item 15): ele é pontuação, não
+            dinheiro, e estava aqui como valor, com o percentual do bônus ao lado. O efeito dele
+            vive na nota e no estado da dimensão, que é onde ele significa alguma coisa. */}
         {numero('Saldo', `${conta.saldo >= 0 ? '+' : '−'}${money(conta.saldo)}`)}
-        {numero(
-          conta.bonus > 1 ? `Saldo ajustado (+${Math.round((conta.bonus - 1) * 100)}%)` : 'Saldo ajustado',
-          `${conta.saldoAjustado >= 0 ? '+' : '−'}${money(conta.saldoAjustado)}`,
-        )}
         {conta.receitaLiquidaEstimada != null
           && numero(`Receita líquida estimada (${conta.aliquotaRotulo ?? ''})`, money(conta.receitaLiquidaEstimada))}
       </div>
       <div className={styles.docFonteNota} style={{ marginTop: -10, marginBottom: 14 }}>
-        A média mensal do setor cultural formal é {fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). Esta receita anual
+        A média mensal do setor cultural formal é {fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). Este saldo
         equivale a {conta.vezesOSetor.toFixed(1).replace('.', ',')}× esse patamar.
       </div>
 

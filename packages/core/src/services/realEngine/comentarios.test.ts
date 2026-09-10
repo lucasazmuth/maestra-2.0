@@ -4,6 +4,7 @@ import {
   comentariosDaDimensao, estagioDoBeginner, retratoDoPerfil, statusDaBarra,
 } from './comentarios';
 import { COMENTARIOS, FIXOS, LEITURAS_CURTAS, RETRATOS } from '../../constants/realTextos';
+import { SIIC_ANUAL } from './relatorio';
 
 const base = (over: Partial<RealInputsV4> = {}): RealInputsV4 => ({
   spotifyConnected: true,
@@ -22,6 +23,43 @@ const base = (over: Partial<RealInputsV4> = {}): RealInputsV4 => ({
 const DIMS = ['r', 'e', 'a', 'l'] as const;
 const ids = (ri: any, dim: any, superficie: 'tela' | 'pdf' = 'pdf') =>
   comentariosDaDimensao(ri, dim, { superficie }).map((c) => c.id);
+
+// ⚠️ O BÔNUS DE ESTRUTURA É PONTUAÇÃO, E NÃO DINHEIRO (relatório v4.4, §1.3, §7.10, §12, §13).
+//
+// Ter CNPJ e ter empresário valem um bônus sobre o saldo positivo, e é assim que a dimensão E
+// acende. Mas o valor inflado por esse bônus não é o que existe na conta bancária de ninguém, e
+// o relatório não o exibe nem o usa em comparação exibida. A referência do setor cultural
+// compara o SALDO REAL — porque um salário é líquido, e o que se compara com ele é o que sobra
+// depois de a carreira pagar o que custou.
+describe('§7.10 a referência do setor compara o saldo real', () => {
+  /** Saldo real logo abaixo do salário anual do setor; com o bônus de 30%, acima dele. */
+  const noLimite = () => computeRealIndexV4(base({
+    showsPerYear: 15, cacheByType: { produtores: 3_200 },
+    custoPorShow: 0, custoFixoMensal: 0, investLancamentos12m: 0,
+    temCnpj: true, temEmpresario: true,
+  }));
+
+  it('o artista no limite recebe E8.b, e não E8.a', () => {
+    const ri = noLimite();
+    const rev: any = (ri as any).revenue;
+    // O caso só prova alguma coisa se o bônus de facto atravessar a fronteira.
+    expect(rev.saldo).toBeLessThan(SIIC_ANUAL);
+    expect(rev.saldoAjustado).toBeGreaterThanOrEqual(SIIC_ANUAL);
+
+    expect(ids(ri, 'e')).toContain('E8.b');
+    expect(ids(ri, 'e')).not.toContain('E8.a');
+  });
+
+  // O texto do E8 diz "rendeu, líquido, {x}". Com o ajustado, o número seria maior do que a
+  // conta do artista, e maior do que o card ao lado no mesmo PDF.
+  it('o múltiplo escrito no texto é o do saldo real', () => {
+    const ri = noLimite();
+    const rev: any = (ri as any).revenue;
+    const texto = comentariosDaDimensao(ri, 'e', { superficie: 'pdf' }).find((c) => c.id === 'E8.b')!.texto;
+    const doAjustado = (rev.saldoAjustado / SIIC_ANUAL).toFixed(1).replace('.', ',');
+    expect(texto).not.toContain(doAjustado);
+  });
+});
 
 describe('§4 as três regras da seleção', () => {
   it('sai no máximo um comentário por grupo', () => {

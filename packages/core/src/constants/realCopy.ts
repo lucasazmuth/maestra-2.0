@@ -109,7 +109,10 @@ export const PROFILE_BITS: Record<string, { r: boolean; e: boolean; a: boolean; 
 
 export const DIM_META: { key: DimKey; letter: string; name: string; full: string; sub: string }[] = [
   { key: 'r', letter: 'R', name: 'Reach · Alcance', full: 'Reach', sub: 'Alcance' },
-  { key: 'e', letter: 'E', name: 'Earnings · Sustentabilidade', full: 'Earnings', sub: 'Sustentabilidade' },
+  // ⚠️ "GANHOS", E NÃO "SUSTENTABILIDADE" (relatório v4.3, §2 e Apêndice B item 9). A palavra
+  // antiga descrevia uma consequência; o que a dimensão mede é o que a música rendeu depois de
+  // pagar o que custou. E "sustentabilidade" já significa outra coisa fora da música.
+  { key: 'e', letter: 'E', name: 'Earnings · Ganhos', full: 'Earnings', sub: 'Ganhos' },
   { key: 'a', letter: 'A', name: 'Audience · Público real', full: 'Audience', sub: 'Público real' },
   { key: 'l', letter: 'L', name: 'Legitimacy · Legitimação', full: 'Legitimacy', sub: 'Legitimação' },
 ];

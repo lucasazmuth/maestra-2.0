@@ -89,7 +89,7 @@ const DIM_PHRASE: Record<'r' | 'e' | 'a' | 'l', { high: string; low: string }> =
 
 const DIM_META: { key: 'r' | 'e' | 'a' | 'l'; letter: string; name: string }[] = [
   { key: 'r', letter: 'R', name: 'Reach · Alcance' },
-  { key: 'e', letter: 'E', name: 'Earnings · Receita' },
+  { key: 'e', letter: 'E', name: 'Earnings · Ganhos' },
   { key: 'a', letter: 'A', name: 'Audience · Público real' },
   { key: 'l', letter: 'L', name: 'Legitimacy · Legitimação' },
 ];
@@ -422,14 +422,11 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
                   {resumo.saldo >= 0 ? '+' : '−'}{money(resumo.saldo)}
                 </span>
               </div>
-              {resumo.bonus > 1 && (
-                <div className={styles.healthItem}>
-                  <span className={styles.healthLabel}>Saldo ajustado (+{Math.round((resumo.bonus - 1) * 100)}%)</span>
-                  <span className={`${styles.healthVal} ${resumo.saldoAjustado >= 0 ? styles.healthPos : styles.healthNeg}`}>
-                    {resumo.saldoAjustado >= 0 ? '+' : '−'}{money(resumo.saldoAjustado)}
-                  </span>
-                </div>
-              )}
+              {/* ⚠️ O SALDO AJUSTADO NÃO APARECE AQUI (v4.4, §1.3, §12 e §13 item 15).
+                  Ter CNPJ e ter empresário valem um bônus sobre o saldo positivo, e esse bônus
+                  decide a nota. Mas ele é PONTUAÇÃO, e estava a ser exibido como DINHEIRO, com o
+                  percentual ao lado: o artista via um valor que não existe na conta dele, e via
+                  um número proprietário do método, que este relatório não expõe por princípio. */}
               {resumo.receitaLiquidaEstimada != null && (
                 <div className={styles.healthItem}>
                   <span className={styles.healthLabel}>Receita líquida estimada ({resumo.aliquotaRotulo})</span>
