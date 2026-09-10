@@ -91,7 +91,7 @@ export const TelaDeExportar: FC<{
         onClick={aoBaixarStems}
         disabled={!temStems || !!emCurso}
         style={{ ...botao(!temStems || !!emCurso), marginTop: 14 }}
-        aria-label='Baixar todas as pistas num ZIP'
+        aria-label='Baixar todas as faixas num ZIP'
       >
         {emCurso === 'stems'
           ? <><FiLoader size={15} style={girando} /> Preparando o ZIP…</>

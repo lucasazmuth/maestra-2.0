@@ -152,7 +152,7 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(biblioteca).toContain('draggable');
     expect(biblioteca).toContain('Nada sobe para a nuvem enquanto você não');
     // E o lote continua a existir: um projeto de stems tem dez faixas, e uma a uma ninguém faz.
-    expect(biblioteca).toContain('Enviar todos como pistas');
+    expect(biblioteca).toContain('Enviar todos como faixas');
     expect(editor).toContain('largarNaFaixa');
   });
 
@@ -596,7 +596,7 @@ describe('cromo do editor do Espaço JAM', () => {
 
     // Armar o transporte sem pista é meia intenção: avisa em vez de armar.
     expect(corpo).toContain('if (!armado && !armadas.length)');
-    expect(corpo).toContain('Arme primeiro a pista onde quer gravar');
+    expect(corpo).toContain('Arme primeiro a faixa onde quer gravar');
 
     // ⚠️ E COM TUDO ARMADO, O PLAY NÃO TOCA. Deixar a montagem simplesmente andar seria o pior
     // desfecho: a pessoa armou tudo, ouviu correr, e só descobria que não gravou ao procurar o
@@ -845,6 +845,50 @@ describe('cromo do editor do Espaço JAM', () => {
 
     // ⚠️ E o atalho não rouba o Ctrl+Z de quem está a escrever num campo.
     expect(corpo).toContain('alvo?.closest(\'input, textarea, [contenteditable="true"]\')');
+  });
+
+  // ⚠️ AS SETAS SAÍRAM DO TRANSPORTE. Ali competiam com o play — o botão que se procura sem
+  // olhar — e empurravam o relógio num ecrã de 390. Foram para a coluna dos flutuantes, que é
+  // onde este editor já põe o que acompanha a montagem sem fazer parte dela.
+  it('as setas flutuam por cima do "?", com o desfazer mais perto da mão', () => {
+    const corpo = semComentarios(editor);
+
+    expect(corpo).toContain('className={casca.setas}');
+    expect(corpo).toContain('bottom: ALTURA_DO_RODAPE + 12 + 38');
+    // A coluna inverte o desenho, e não o HTML: a ordem que o teclado percorre continua a ser
+    // desfazer e depois refazer.
+    expect(casca).toContain('flex-direction: column-reverse');
+    const asSetas = corpo.slice(corpo.indexOf('className={casca.setas}'));
+    expect(asSetas.indexOf("'desfazer'")).toBeLessThan(asSetas.indexOf("'refazer'"));
+
+    // E já não estão na barra do transporte.
+    const oTransporte = corpo.slice(corpo.indexOf("aria-label='Voltar ao início'"));
+    const ateOPlay = oTransporte.slice(0, oTransporte.indexOf('transporte.alternar'));
+    expect(ateOPlay.length).toBeGreaterThan(100);
+    expect(ateOPlay).not.toContain('FiCornerUpLeft');
+  });
+
+  // ⚠️ O VOCABULÁRIO DA TELA É "FAIXA". "Pista" continua a ser o nome das coisas no código, mas
+  // quem monta uma música fala em faixas — e a biblioteca já dizia "arrastar um deles para uma
+  // faixa" enquanto a coluna ao lado dizia PISTAS.
+  it('a tela fala em faixas', () => {
+    const corpo = semComentarios(editor);
+
+    expect(corpo).toContain('FAIXAS');
+    expect(corpo).toContain('+ Adicionar faixa');
+    expect(corpo).toContain("aria-label='Adicionar faixa'");
+    expect(corpo).toContain("{pistas.length === 1 ? 'faixa' : 'faixas'}");
+    expect(corpo).toContain('`Apagar a faixa ${faixa.name}`');
+
+    // Nenhuma das frases antigas ficou para trás — nem as que só aparecem num aviso.
+    for (const antiga of [
+      '+ Adicionar pista', "aria-label='Adicionar pista'",
+      "'Preparando as pistas'", 'Apagar a pista', 'pelo botão da pista',
+    ]) {
+      expect(corpo).not.toContain(antiga);
+    }
+    expect(semComentarios(tela)).not.toContain('enviar as pistas');
+    expect(semComentarios(biblioteca)).not.toContain('como pista');
   });
 
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.

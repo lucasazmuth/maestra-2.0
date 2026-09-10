@@ -37,7 +37,7 @@ describe('a biblioteca como gaveta', () => {
   it('tocar num ficheiro envia esse ficheiro', () => {
     const aoEnviar = montar(true);
 
-    fireEvent.click(screen.getByRole('button', { name: /Enviar Bateria\.wav como pista/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Enviar Bateria\.wav como faixa/ }));
 
     expect(aoEnviar).toHaveBeenCalledTimes(1);
     // Só aquele, e não a lista toda: quem toca num nome está a escolher um.
@@ -47,7 +47,7 @@ describe('a biblioteca como gaveta', () => {
 
   it('o teclado faz o mesmo que o toque', () => {
     const aoEnviar = montar(true);
-    const item = screen.getByRole('button', { name: /Enviar Baixo\.wav como pista/ });
+    const item = screen.getByRole('button', { name: /Enviar Baixo\.wav como faixa/ });
 
     fireEvent.keyDown(item, { key: 'Enter' });
     expect(aoEnviar).toHaveBeenCalledTimes(1);
@@ -65,7 +65,7 @@ describe('a biblioteca como gaveta', () => {
   // 8 px de recuo davam 30 px de altura: abaixo de qualquer mínimo confortável para o dedo.
   it('o alvo do dedo tem pelo menos 44 px', () => {
     montar(true);
-    const item = screen.getByRole('button', { name: /Enviar Bateria\.wav como pista/ });
+    const item = screen.getByRole('button', { name: /Enviar Bateria\.wav como faixa/ });
     expect(item).toHaveStyle({ minHeight: '44px' });
   });
 });
@@ -76,7 +76,7 @@ describe('a biblioteca como coluna (desktop)', () => {
   it('o ficheiro é arrastável, e não um botão', () => {
     montar(false);
 
-    // O "Enviar todos como pistas" continua a existir aqui — o que NÃO existe é cada ficheiro
+    // O "Enviar todos como faixas" continua a existir aqui — o que NÃO existe é cada ficheiro
     // virar um botão de envio individual.
     expect(screen.queryByRole('button', { name: /Enviar Bateria\.wav/ })).not.toBeInTheDocument();
     const lista = screen.getByRole('list');

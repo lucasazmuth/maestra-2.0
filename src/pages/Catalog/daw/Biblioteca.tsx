@@ -146,7 +146,7 @@ export const Biblioteca: FC<{
                 as faixas não descreve gesto nenhum, e o dedo não arrasta entre janelas. Aqui o
                 toque é que envia, e é isso que a linha passa a dizer. */}
             {emGaveta
-              ? 'Toque num arquivo para enviá-lo como pista.'
+              ? 'Toque num arquivo para enviá-lo como faixa.'
               : 'Arraste para uma faixa. Só então o arquivo é enviado.'}
           </p>
 
@@ -172,10 +172,10 @@ export const Biblioteca: FC<{
                     setArrastando(item.id);
                   }}
                   onDragEnd={() => setArrastando(null)}
-                  title={emGaveta ? `Enviar ${item.nome} como pista` : item.nome}
+                  title={emGaveta ? `Enviar ${item.nome} como faixa` : item.nome}
                   // O rótulo é dito à mão: o conteúdo do item é o nome MAIS o tamanho, e um
                   // leitor de tela anunciaria "Bateria.wav 1.0 MB" — o tamanho não é a ação.
-                  aria-label={emGaveta && podeEditar ? `Enviar ${item.nome} como pista` : undefined}
+                  aria-label={emGaveta && podeEditar ? `Enviar ${item.nome} como faixa` : undefined}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8,
                     padding: '8px 10px', borderRadius: DS.raio.medio,
@@ -215,7 +215,7 @@ export const Biblioteca: FC<{
               fontFamily: DS.font.display,
             }}
           >
-            Enviar todos como pistas
+            Enviar todos como faixas
           </button>
         </>
       )}
@@ -224,7 +224,7 @@ export const Biblioteca: FC<{
         <button
           type='button'
           onClick={aoMontar}
-          title='Transforma esta gravação numa pista que se pode arrastar e cortar'
+          title='Transforma esta gravação numa faixa que se pode arrastar e cortar'
           style={{
             width: '100%', height: 34, marginTop: 6,
             background: 'transparent', border: `1px solid ${DS.color.bordaForte}`,

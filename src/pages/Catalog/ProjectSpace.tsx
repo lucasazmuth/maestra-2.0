@@ -619,7 +619,7 @@ const ProjectSpace: FC = () => {
         continue;
       }
       if (pistas.length + aceites.length >= MAXIMO_DE_PISTAS) {
-        recusados.push(`${arquivo.name}: o limite é ${MAXIMO_DE_PISTAS} pistas`);
+        recusados.push(`${arquivo.name}: o limite é ${MAXIMO_DE_PISTAS} faixas`);
         continue;
       }
       aceites.push(arquivo);
@@ -698,7 +698,7 @@ const ProjectSpace: FC = () => {
       setSaveState('salvo');
     } catch {
       setSaveState('erro');
-      message.error('Não consegui enviar as pistas');
+      message.error('Não consegui enviar as faixas');
     } finally {
       setEnvio(null);
     }
@@ -771,7 +771,7 @@ const ProjectSpace: FC = () => {
         if (!rendido) continue;
         stems.push({ nome: nomeDoArquivoDaPista(pista.name, 'wav'), dados: paraWav(rendido) });
       }
-      if (!stems.length) { message.warning('Nenhuma pista pôde ser exportada.'); return; }
+      if (!stems.length) { message.warning('Nenhuma faixa pôde ser exportada.'); return; }
       const zip = await paraZip(stems);
       baixarArquivo(zip, `${project?.title || 'stems'}.zip`);
     } catch {

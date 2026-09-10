@@ -111,6 +111,45 @@
    de cartão nenhum — flutuam por cima da tela inteira. */
 $camada-dos-flutuantes: 20;
 
+// A forma dos botões que flutuam sobre a montagem. Um placeholder e não uma classe: ele não
+// chega ao CSS servido, só empresta as linhas a quem o estende.
+%flutuante-redondo {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: #2f2f38;
+  border: 1px solid #44444f;
+  color: #a6a6b3;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* AS DUAS SETAS, numa coluna por cima do "?".
+   ⚠️ ELAS SAÍRAM DO TRANSPORTE. Ali competiam com o play — o botão que se procura sem olhar —
+   e empurravam o relógio num ecrã de 390. Aqui ficam na mesma fila dos outros flutuantes, que é
+   onde este editor já põe o que acompanha a montagem sem fazer parte dela.
+
+   `column-reverse` para o DESFAZER ficar EMBAIXO, mais perto da mão e dos outros botões: é ele
+   que se usa dez vezes por cada refazer. A ordem no HTML continua a ser desfazer e depois
+   refazer, que é como o teclado e o leitor de tela os encontram. */
+.setas {
+  position: absolute;
+  right: 18px;
+  z-index: $camada-dos-flutuantes;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+
+  button {
+    @extend %flutuante-redondo;
+
+    &:disabled { cursor: default; opacity: .35; }
+  }
+}
+
 .ajuda {
   // Flutua sobre a linha do tempo, ACIMA do rodapé — o `bottom` chega em linha, do mesmo token
   // que dá a altura ao rodapé, para os dois não poderem divergir.
@@ -119,18 +158,9 @@ $camada-dos-flutuantes: 20;
   z-index: $camada-dos-flutuantes;
 
   summary {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
+    @extend %flutuante-redondo;
+
     list-style: none;
-    cursor: pointer;
-    background: #2f2f38;
-    border: 1px solid #44444f;
-    color: #a6a6b3;
-    font-size: 14px;
-    font-weight: 700;
 
     &::-webkit-details-marker { display: none; }
   }

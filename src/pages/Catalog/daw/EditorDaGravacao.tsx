@@ -427,7 +427,7 @@ export const EditorDaGravacao: FC<{
             value={faixa.name}
             onChange={(e) => acoes.aoMudarPista(faixa.id, { name: e.target.value })}
             disabled={!podeEditar || fixa}
-            aria-label={`Nome da pista ${faixa.name}`}
+            aria-label={`Nome da faixa ${faixa.name}`}
             style={{
               flex: 1, minWidth: 0, padding: 0, background: 'transparent', border: 'none',
               outline: 'none', color: DS.color.texto, fontSize: 13, fontWeight: 600,
@@ -438,8 +438,8 @@ export const EditorDaGravacao: FC<{
             <button
               type='button'
               onClick={() => acoes.aoApagarPista(faixa.id)}
-              title='Apagar a pista'
-              aria-label={`Apagar a pista ${faixa.name}`}
+              title='Apagar a faixa'
+              aria-label={`Apagar a faixa ${faixa.name}`}
               style={{
                 background: 'transparent', border: 'none', color: DS.color.textoFraco,
                 cursor: 'pointer', display: 'flex', padding: 2,
@@ -784,39 +784,6 @@ export const EditorDaGravacao: FC<{
               <FiSkipBack size={16} />
             </button>
 
-            {/* ⚠️ AS SETAS FICAM NO TRANSPORTE, e não escondidas num menu. Elas não são um
-                atalho de quem já sabe: são o que autoriza a experimentar, e quem precisa delas
-                é justamente quem ainda não sabe onde procurar. Ficam também no telemóvel, onde
-                um toque errado é mais fácil e o teclado não existe para as chamar. */}
-            {historico && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-                {([
-                  ['desfazer', FiCornerUpLeft, historico.podeDesfazer, historico.rotuloDesfazer],
-                  ['refazer', FiCornerUpRight, historico.podeRefazer, historico.rotuloRefazer],
-                ] as const).map(([qual, Icone, pode, rotulo]) => (
-                  <button
-                    key={qual}
-                    type='button'
-                    onClick={qual === 'desfazer' ? historico.desfazer : historico.refazer}
-                    disabled={!pode || historico.ocupado}
-                    // Uma seta muda não se usa: o rótulo diz o que ela vai desmanchar.
-                    title={rotulo}
-                    aria-label={rotulo}
-                    style={{
-                      width: 30, height: 30, borderRadius: DS.raio.medio,
-                      background: 'transparent', border: 'none',
-                      color: DS.color.textoApoio,
-                      opacity: pode && !historico.ocupado ? 1 : 0.35,
-                      cursor: pode && !historico.ocupado ? 'pointer' : 'default',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    <Icone size={15} />
-                  </button>
-                ))}
-              </div>
-            )}
-
             <button
               type='button'
               onClick={() => {
@@ -826,14 +793,14 @@ export const EditorDaGravacao: FC<{
                 // play, ouviu tudo andar, e só ia descobrir que não gravou nada ao procurar o
                 // take. O aviso custa um toque; o take perdido custa a sessão.
                 if (armado && armadas.length && !estado.tocando) {
-                  message.warning('A gravação ainda não está disponível. Por agora, envie o áudio pelo botão da pista.');
+                  message.warning('A gravação ainda não está disponível. Por agora, envie o áudio pelo botão da faixa.');
                   return;
                 }
                 transporte.alternar();
               }}
               disabled={estado.carregando}
-              title={estado.carregando ? 'Preparando as pistas' : estado.tocando ? 'Pausar' : 'Tocar'}
-              aria-label={estado.carregando ? 'Preparando as pistas' : estado.tocando ? 'Pausar' : 'Tocar'}
+              title={estado.carregando ? 'Preparando as faixas' : estado.tocando ? 'Pausar' : 'Tocar'}
+              aria-label={estado.carregando ? 'Preparando as faixas' : estado.tocando ? 'Pausar' : 'Tocar'}
               style={{
                 width: 42, height: 42, borderRadius: '50%',
                 // ⚠️ MESMO BOTÃO, MESMA COR, MESMO SÍTIO: play e pause são o mesmo gesto a
@@ -892,7 +859,7 @@ export const EditorDaGravacao: FC<{
                 // Armar o transporte sem dizer em que pista é meia intenção: numa mesa, o REC
                 // global só sabe o que fazer se alguma pista estiver armada.
                 if (!armado && !armadas.length) {
-                  message.warning('Arme primeiro a pista onde quer gravar, no botão vermelho dela.');
+                  message.warning('Arme primeiro a faixa onde quer gravar, no botão vermelho dela.');
                   return;
                 }
                 setArmado((v) => !v);
@@ -1058,7 +1025,7 @@ export const EditorDaGravacao: FC<{
                   position: 'sticky', top: 0, zIndex: 12,
                   background: DS.color.bgPainel,
                 }}>
-                  PISTAS
+                  FAIXAS
                 </div>
 
                 {pistas.map(cabecalhoDaPista)}
@@ -1067,7 +1034,7 @@ export const EditorDaGravacao: FC<{
                   <button
                     type='button'
                     onClick={() => escolherPara(null)}
-                    aria-label='Adicionar pista'
+                    aria-label='Adicionar faixa'
                     style={{
                       width: '100%', height: 46,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -1077,7 +1044,7 @@ export const EditorDaGravacao: FC<{
                       fontFamily: DS.font.display,
                     }}
                   >
-                    + Adicionar pista
+                    + Adicionar faixa
                   </button>
                 )}
               </div>
@@ -1310,7 +1277,7 @@ export const EditorDaGravacao: FC<{
             único controlo desta barra. Quantas pistas há vê-se na mesa, que está logo acima. */}
         {!noCelular && (
           <span style={{ fontSize: 11, color: DS.color.textoFraco, fontFamily: DS.font.mono }}>
-            {pistas.length} {pistas.length === 1 ? 'pista' : 'pistas'}
+            {pistas.length} {pistas.length === 1 ? 'faixa' : 'faixas'}
           </span>
         )}
 
@@ -1387,6 +1354,33 @@ export const EditorDaGravacao: FC<{
         </div>
       )}
 
+      {/* AS DUAS SETAS, na coluna dos flutuantes, por cima do "?".
+          ⚠️ ELAS SAÍRAM DO TRANSPORTE, onde competiam com o play — o botão que se procura sem
+          olhar — e empurravam o relógio num ecrã de 390. Aqui ficam onde este editor já põe o
+          que acompanha a montagem sem fazer parte dela.
+          O desfazer fica EMBAIXO, mais perto da mão: é ele que se usa dez vezes por cada
+          refazer. No HTML a ordem é a normal, e é essa que o teclado percorre. */}
+      {historico && (
+        <div className={casca.setas} style={{ bottom: ALTURA_DO_RODAPE + 12 + 38 }}>
+          {([
+            ['desfazer', FiCornerUpLeft, historico.podeDesfazer, historico.rotuloDesfazer],
+            ['refazer', FiCornerUpRight, historico.podeRefazer, historico.rotuloRefazer],
+          ] as const).map(([qual, Icone, pode, rotulo]) => (
+            <button
+              key={qual}
+              type='button'
+              onClick={qual === 'desfazer' ? historico.desfazer : historico.refazer}
+              disabled={!pode || historico.ocupado}
+              // Uma seta muda não se usa: o rótulo diz o que ela vai desmanchar.
+              title={rotulo}
+              aria-label={rotulo}
+            >
+              <Icone size={15} />
+            </button>
+          ))}
+        </div>
+      )}
+
       <details className={`${casca.ajuda} ${casca.letra}`} style={{ bottom: ALTURA_DO_RODAPE + 12 }}>
         <summary title='Letra' aria-label='Letra'><FiFileText size={14} /></summary>
         <div>{letra}</div>
@@ -1400,7 +1394,7 @@ export const EditorDaGravacao: FC<{
             ficheiro vira uma pista; largado sobre uma faixa, vira um clipe nela.</p>
           <p>Arraste um clipe para o mover — ele encaixa de um quarto de segundo. Selecione-o e
             use <em>dividir</em> para o cortar onde a agulha está. Clique duplo remove.</p>
-          <p><strong>M</strong> cala a pista, <strong>S</strong> deixa só ela. O primeiro
+          <p><strong>M</strong> cala a faixa, <strong>S</strong> deixa só ela. O primeiro
             controlo é o volume; o segundo, o panorama entre os dois alto-falantes.</p>
         </div>
       </details>
