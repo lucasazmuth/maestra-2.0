@@ -728,6 +728,42 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(casca).toContain('isolation: isolate');
   });
 
+  // ⚠️ O DETECTOR VIVIA ESCONDIDO NA FICHA, atrás de um botão que era preciso descobrir. No
+  // Espaço JAM ele acontece por conta própria, porque o andamento é o que faz a régua contar
+  // compassos — e pedir que se digite um número que a máquina consegue ouvir é trabalho que
+  // não devia existir.
+  it('o andamento é ouvido sozinho, uma vez, e só enche campo vazio', () => {
+    const corpo = semComentarios(tela);
+
+    // As regras de QUANDO vivem no núcleo, e a tela só as consulta.
+    expect(corpo).toContain('podeOuvirSozinho({');
+    expect(corpo).toContain("void analiseDoJam.pedir('bpm_tom');");
+
+    // ⚠️ SÓ SE PREENCHE O QUE SE PEDIU. Sem esta memória, quem apagou o BPM de propósito
+    // reencontrava-o preenchido na recarga seguinte: a análise antiga continua no banco, e
+    // "campo vazio + análise existe" descreve tanto o primeiro envio como o gesto de o
+    // esvaziar.
+    expect(corpo).toContain('esperandoOAndamento.current = true;');
+    expect(corpo).toContain('if (!esperandoOAndamento.current || !openId) return;');
+    // Um que já estava a correr quando a tela abriu conta como pedido, e não pede outro.
+    expect(corpo).toContain("if (analiseDoJam.emCurso('bpm_tom')) { esperandoOAndamento.current = true; return; }");
+
+    // E mesmo com a análise na mão, o campo escrito à mão ganha: a análise demora minutos, e
+    // nesses minutos a pessoa pode ter escrito o andamento.
+    const oPreenchimento = corpo.slice(corpo.indexOf('esperandoOAndamento.current = false;'));
+    const ateOFim = oPreenchimento.slice(0, oPreenchimento.indexOf('mudarGravacao({ bpm: detectado })'));
+    expect(ateOFim.length).toBeGreaterThan(40);
+    expect(ateOFim).toContain('if (bpmLegivel(open?.bpm)) return;');
+
+    // A proveniência só é verdadeira enquanto o campo tiver exatamente o que a máquina ouviu:
+    // escrito por cima, o número passa a ser de quem o escreveu, e a marca sai.
+    expect(corpo).toContain('ouvido={ouvido !== null && Number(bpmLegivel(open?.bpm)) === ouvido}');
+
+    // A troca de oitava obedece à mesma condição.
+    expect(corpo).toContain('outroAndamento(ouvido)');
+    expect(corpo).toContain('aria-label={`Trocar para ${alternativa} BPM`}');
+  });
+
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
   it('a tela de exportar oferece stems e guia, sem travessão na copy', () => {
     expect(exportar).toContain('Baixar stems (.zip)');

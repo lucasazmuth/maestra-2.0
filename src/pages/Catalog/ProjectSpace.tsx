@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { ID_DA_MIX, NOME_DA_MIX, montagemDaVersao, pistasDaGravacao } from '@maestra/core/audio/pistasDaVersao';
 import { useMesa } from '@maestra/core/audio/useMesa';
+import { useAnaliseDaVersao } from '@maestra/core/hooks/useAnaliseDaVersao';
 import { useArtist } from '@maestra/core/hooks/useArtist';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS } from '@maestra/core/constants/maestra';
@@ -10,6 +11,9 @@ import { LIMITE_DA_PISTA_BYTES, MAXIMO_DE_PISTAS } from '@maestra/core/constants
 import type {
   ArtistMember, CatalogItem, CatalogProject, CatalogTrack, CatalogVersion, MusicGenre,
 } from '@maestra/core/interfaces/maestra';
+import {
+  bpmLegivel, outroAndamento, podeOuvirSozinho,
+} from '@maestra/core/services/db/audioJobs';
 import * as catalogDb from '@maestra/core/services/db/catalog';
 import * as genresDb from '@maestra/core/services/db/genres';
 import * as membersDb from '@maestra/core/services/db/members';
@@ -65,10 +69,24 @@ const relogioCurto = (segundos: number) => {
 const DEPENDENCIAS_DA_MESA = { criarContexto: criarContextoWeb, buscar: buscarWeb };
 
 /** Um campo do cabeçalho, vestido com a folha do editor. */
-const CampoDoTopo: FC<{
+/**
+ * Um campo do rodapé do editor: o andamento e o tom da gravação aberta.
+ *
+ * Exportado para o teste: é aqui que a proveniência do número aparece, e "aparece" é a única
+ * coisa que uma leitura do código-fonte não consegue provar.
+ */
+export const CampoDoTopo: FC<{
   rotulo: string; valor: string; largura: number;
   aoMudar: (v: string) => void; travado?: boolean; limite: number;
-}> = ({ rotulo, valor, largura, aoMudar, travado, limite }) => (
+  /**
+   * O que está ali foi OUVIDO do áudio, e não escrito por ninguém.
+   *
+   * ⚠️ A PROVENIÊNCIA TEM DE SER VISÍVEL. Um número que aparece sozinho num campo é
+   * indistinguível de um número que a pessoa escreveu e esqueceu — e é sobre esse que ela
+   * depois vai confiar para registar a obra. A borda muda de cor e o rótulo diz de onde veio.
+   */
+  ouvido?: boolean;
+}> = ({ rotulo, valor, largura, aoMudar, travado, limite, ouvido }) => (
   <label style={{
     display: 'inline-flex', alignItems: 'center', gap: 5,
     color: DS.color.textoFraco, fontSize: 10, fontWeight: 700, letterSpacing: '0.05em',
@@ -79,11 +97,12 @@ const CampoDoTopo: FC<{
       disabled={travado}
       maxLength={limite}
       placeholder='—'
-      aria-label={rotulo}
+      aria-label={ouvido ? `${rotulo} ouvido do áudio` : rotulo}
+      title={ouvido ? 'Ouvi este andamento no áudio. Escreva por cima se não for.' : undefined}
       style={{
         width: largura, height: 26, padding: '0 8px',
         background: DS.color.bgCampo,
-        border: `1px solid ${DS.color.borda}`,
+        border: `1px solid ${ouvido ? DS.color.primaria : DS.color.borda}`,
         borderRadius: DS.raio.medio,
         color: DS.color.texto,
         fontSize: 12, fontWeight: 700, textAlign: 'center',
@@ -283,6 +302,72 @@ const ProjectSpace: FC = () => {
     ...atual,
     versions: (atual.versions || []).map((v) => (v.id === openId ? { ...v, ...parte } : v)),
   } : atual));
+
+  // ─── O andamento, ouvido sozinho ──────────────────────────────────────────
+  //
+  // O detector de BPM existe desde sempre e vivia escondido na ficha, atrás de um botão que era
+  // preciso descobrir. Aqui ele acontece por conta própria na primeira gravação do projeto —
+  // porque o andamento é o que faz a régua contar compassos, e pedir a alguém que digite um
+  // número que a máquina consegue ouvir é trabalho que não devia existir.
+  //
+  // As regras de QUANDO (uma vez por gravação, só com o campo vazio, só para quem edita) vivem
+  // no núcleo, em `podeOuvirSozinho`: elas guardam cota e guardam trabalho de gente.
+  const analiseDoJam = useAnaliseDaVersao(openId);
+  /**
+   * Estamos à espera de um andamento que ainda vai chegar?
+   *
+   * ⚠️ É ELE QUE IMPEDE O CAMPO DE SE ENCHER SOZINHO OUTRA VEZ. Sem esta memória, quem apagou o
+   * BPM de propósito reencontrava-o preenchido na recarga seguinte — a análise antiga continua
+   * no banco, e "campo vazio + análise existe" descreve tanto o primeiro envio como o gesto
+   * deliberado de o esvaziar. Só se preenche o que se pediu, ou o que já estava a correr quando
+   * esta tela abriu.
+   */
+  const esperandoOAndamento = useRef(false);
+  const ouviuNestaVersao = useRef<string | null>(null);
+  const [ouvido, setOuvido] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!openId || analiseDoJam.carregando) return;
+    if (ouviuNestaVersao.current === openId) return;
+    ouviuNestaVersao.current = openId;
+    // Já havia um a correr quando esta tela abriu: não se pede outro, mas espera-se por ele.
+    if (analiseDoJam.emCurso('bpm_tom')) { esperandoOAndamento.current = true; return; }
+    if (!podeOuvirSozinho({
+      temAudio: Boolean(open?.audio_file),
+      bpmEscrito: open?.bpm,
+      analise: analiseDoJam.analise,
+      trabalhos: analiseDoJam.trabalhos,
+      podeEditar,
+    })) return;
+    esperandoOAndamento.current = true;
+    void analiseDoJam.pedir('bpm_tom');
+  }, [openId, open?.audio_file, open?.bpm, podeEditar, analiseDoJam]);
+
+  useEffect(() => {
+    if (!esperandoOAndamento.current || !openId) return;
+    const detectado = bpmLegivel(analiseDoJam.analise?.bpm);
+    if (!detectado) return;
+    esperandoOAndamento.current = false;
+    // ⚠️ E MESMO ASSIM, SÓ SE AINDA ESTIVER VAZIO. A análise demora minutos, e nesses minutos a
+    // pessoa pode ter escrito o andamento à mão — que é a resposta certa por definição, porque
+    // o andamento da obra é o que o autor diz que é.
+    if (bpmLegivel(open?.bpm)) return;
+    setOuvido(Number(detectado));
+    mudarGravacao({ bpm: detectado });
+    message.info(`Ouvi ${detectado} BPM neste áudio. Escreva por cima se não for.`);
+  }, [analiseDoJam.analise, openId, open?.bpm]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * O outro andamento possível, enquanto o que está no campo for o que a máquina ouviu.
+   *
+   * ⚠️ NÃO É "FALTA DE CONFIANÇA", é ambiguidade real: um trap a 140 e o mesmo trap contado em
+   * meio-tempo a 70 têm exatamente as mesmas batidas, e a máquina escolhe uma delas com toda a
+   * certeza do mundo. Por isso a troca aparece sempre que existe uma alternativa plausível, e
+   * não só quando o número vem inseguro.
+   */
+  const alternativa = ouvido !== null && Number(bpmLegivel(open?.bpm)) === ouvido
+    ? outroAndamento(ouvido)
+    : null;
 
   const mudarPistaLocal = (pistaId: string, parte: Partial<CatalogTrack>) => setProject((atual) => (atual ? {
     ...atual,
@@ -761,7 +846,32 @@ const ProjectSpace: FC = () => {
               limite={3}
               travado={!podeEditar || !open}
               aoMudar={(v) => mudarGravacao({ bpm: v })}
+              ouvido={ouvido !== null && Number(bpmLegivel(open?.bpm)) === ouvido}
             />
+            {/* A troca de oitava. Um toque, e volta com outro: é um interruptor entre as duas
+                leituras da mesma batida, não uma correção que se faz uma vez. */}
+            {alternativa !== null && (
+              <button
+                type='button'
+                onClick={() => {
+                  setOuvido(alternativa);
+                  mudarGravacao({ bpm: String(alternativa) });
+                }}
+                title={`Também pode ser ${alternativa} BPM: a mesma batida, contada em dobro ou em meio-tempo.`}
+                aria-label={`Trocar para ${alternativa} BPM`}
+                style={{
+                  height: 26, padding: '0 8px', marginLeft: -4,
+                  background: 'transparent',
+                  border: `1px dashed ${DS.color.borda}`,
+                  borderRadius: DS.raio.medio,
+                  color: DS.color.textoApoio,
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: DS.font.mono, whiteSpace: 'nowrap',
+                }}
+              >
+                ou {alternativa}?
+              </button>
+            )}
             <CampoDoTopo
               rotulo='TOM'
               valor={open?.key || ''}

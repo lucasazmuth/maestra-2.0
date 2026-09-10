@@ -101,6 +101,68 @@ export const tomLegivel = (tom?: string | null, escala?: string | null): string 
   return escala === 'minor' ? `${tom}m` : tom;
 };
 
+// ─── O ANDAMENTO OUVIDO SOZINHO ──────────────────────────────────────────────
+//
+// O detector existe desde sempre e vivia escondido na ficha, atrás de um botão que era preciso
+// descobrir. No Espaço JAM ele passa a acontecer por conta própria — e é aí que as regras
+// abaixo deixam de ser detalhe: análise custa CPU de verdade e tem cota, e um número que se
+// instala sozinho por cima do trabalho de alguém apaga trabalho sem avisar.
+
+/** O andamento que uma música humana quase sempre tem. */
+export const ANDAMENTO_COMUM = { minimo: 70, maximo: 180 };
+
+export interface OuvirSozinho {
+  /** A gravação já tem áudio? Sem ele a fila recusa o pedido. */
+  temAudio: boolean;
+  /** O que está escrito no campo, como está escrito. */
+  bpmEscrito?: string | number | null;
+  analise?: AnaliseDaVersao | null;
+  trabalhos: TrabalhoDeAudio[];
+  /** Quem só olha não gasta a cota de quem paga. */
+  podeEditar: boolean;
+}
+
+/**
+ * Esta gravação pede uma análise sozinha, sem ninguém carregar em nada?
+ *
+ * Uma vez por gravação, e a memória disso é o próprio banco: basta ter existido UM trabalho de
+ * `bpm_tom` — pronto, com erro, cancelado, o que for — para nunca mais haver pedido automático.
+ * Sem isso, cada recarga da página enfileiraria outro, e a cota de dez por mês evaporava numa
+ * tarde de trabalho.
+ *
+ * ⚠️ E SÓ COM O CAMPO VAZIO. Preencher um vazio não é sobrescrever: quem escreveu 92 à mão sabe
+ * o que fez, e um detector que discorda dele está errado por definição — o andamento da obra é
+ * o que o autor diz que é.
+ */
+export const podeOuvirSozinho = (entrada: OuvirSozinho): boolean => {
+  if (!entrada.podeEditar || !entrada.temAudio) return false;
+  if (bpmLegivel(entrada.bpmEscrito)) return false;
+  if (entrada.analise) return false;
+  return !entrada.trabalhos.some((t) => t.tipo === 'bpm_tom');
+};
+
+/**
+ * O outro andamento possível: o dobro ou a metade.
+ *
+ * ⚠️ ESTE É O ERRO CLÁSSICO DE QUALQUER DETECTOR, e não é falta de certeza — é ambiguidade
+ * real. Um trap a 140 e o mesmo trap contado em meio-tempo a 70 têm exatamente as mesmas
+ * batidas; a máquina escolhe uma e fica confiante nela. Por isso a alternativa não é oferecida
+ * "quando a confiança é baixa": é oferecida SEMPRE QUE EXISTE UMA PLAUSÍVEL, que é quando o
+ * dobro ou a metade cai na faixa em que a música humana vive.
+ *
+ * Nunca há duas: dentro daquela faixa, se o dobro cabe, a metade não cabe.
+ */
+export const outroAndamento = (bpm?: number | string | null): number | null => {
+  const n = Number(bpmLegivel(bpm));
+  if (!n) return null;
+  const cabe = (v: number) => v >= ANDAMENTO_COMUM.minimo && v <= ANDAMENTO_COMUM.maximo;
+  const metade = Math.round(n / 2);
+  const dobro = Math.round(n * 2);
+  if (cabe(metade)) return metade;
+  if (cabe(dobro)) return dobro;
+  return null;
+};
+
 /** O último trabalho de cada tipo numa versão. */
 export const trabalhosDaVersao = async (versionId: string): Promise<TrabalhoDeAudio[]> => {
   const { data, error } = await supabase
