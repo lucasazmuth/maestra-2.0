@@ -135,7 +135,9 @@ describe('diagnostico REAL em leitura', () => {
     expect(tela.getByText('SUA POSIÇÃO ENTRE OS 16 PERFIS')).toBeTruthy();
     expect(tela.getByText('Icon')).toBeTruthy();
     expect(tela.getByText('Beginner')).toBeTruthy();
-    expect(tela.getByText('4 altas')).toBeTruthy();
+    // "Acesas", e não "altas": a §1.7 da spec do relatório v4.2 fixou "acesa" e "apagada" como
+    // OS estados de dimensão, e a grade era a última superfície que ainda falava outra língua.
+    expect(tela.getByText('4 acesas')).toBeTruthy();
   });
 
   // A narrativa por dimensao vem do NUCLEO (`dimNarrative`), a mesma que a web e o PDF usam.

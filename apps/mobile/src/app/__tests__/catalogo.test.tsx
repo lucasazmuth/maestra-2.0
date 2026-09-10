@@ -252,8 +252,10 @@ describe('catalogo: as duas abas e a ficha', () => {
 
     await userEvent.setup().press(tela.getByLabelText('Nova música'));
 
-    // O cabeçalho da ficha mostra o NOME da faixa; sem título ainda, mostra o que ela é.
-    expect(tela.getByText(/A ficha da obra/)).toBeTruthy();
+    // A linha "A ficha da obra…" saiu com a padronização das folhas: descrição embaixo do título
+    // não existe mais em nenhum modal. Quem prova que a ficha abriu é o botão de fechar dela, que
+    // só existe com a folha na tela — o rótulo "Nova música" também é o do botão que a abre.
+    expect(tela.getByLabelText('Fechar')).toBeTruthy();
     expect(tela.getByLabelText('Título').props.value).toBe('');
   });
 
@@ -355,23 +357,42 @@ describe('catalogo: as abas da ficha e os splits', () => {
 
     await userEvent.setup().press(tela.getByText('Splits'));
 
-    expect(tela.getByText('Créditos autorais da obra')).toBeTruthy();
-    expect(tela.getByText('Créditos do fonograma')).toBeTruthy();
-    expect(tela.getAllByText('Nenhum participante adicionado.')).toHaveLength(2);
+    // Pelo botão de cada grupo, e não pelo rótulo: "Obra" e "Fonograma" são as palavras da
+    // UBC e do ECAD, e o rótulo do bloco divide o texto com o resto da folha.
+    expect(tela.getByLabelText('Adicionar titular em Obra')).toBeTruthy();
+    expect(tela.getByLabelText('Adicionar titular em Fonograma')).toBeTruthy();
+    expect(tela.getAllByText('Nenhum titular adicionado.')).toHaveLength(2);
   });
 
-  it('adicionar participante entra na lista e conta no total', async () => {
+  // Cada corpo oferece as SUAS classes: não há intérprete numa obra nem compositor num
+  // fonograma. Passar a mesma lista aos dois blocos mata este teste.
+  it('cada corpo oferece só as classes que lhe cabem', async () => {
     const tela = await montar();
     const usuario = userEvent.setup();
     await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
     await abrirFicha(tela);
     await usuario.press(tela.getByText('Splits'));
 
-    await usuario.press(tela.getByLabelText('Adicionar participante em Composição'));
-    await usuario.type(tela.getAllByLabelText('Percentual')[0], '60');
+    await usuario.press(tela.getByLabelText('Adicionar titular em Obra'));
+    expect(tela.getByText('Compositor/Autor')).toBeTruthy();
+    expect(tela.queryByText('Intérprete')).toBeNull();
 
-    // Um grupo ganhou participante; o outro continua vazio.
-    expect(tela.getAllByText('Nenhum participante adicionado.')).toHaveLength(1);
+    await usuario.press(tela.getByLabelText('Adicionar titular em Fonograma'));
+    expect(tela.getByText('Intérprete')).toBeTruthy();
+  });
+
+  it('adicionar titular entra na lista e conta no total', async () => {
+    const tela = await montar();
+    const usuario = userEvent.setup();
+    await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
+    await abrirFicha(tela);
+    await usuario.press(tela.getByText('Splits'));
+
+    await usuario.press(tela.getByLabelText('Adicionar titular em Obra'));
+    await usuario.type(tela.getAllByLabelText('Participação')[0], '60');
+
+    // Um corpo ganhou titular; o outro continua vazio.
+    expect(tela.getAllByText('Nenhum titular adicionado.')).toHaveLength(1);
     expect(tela.getByText('60%')).toBeTruthy();
   });
 
@@ -404,14 +425,30 @@ describe('catalogo: as abas da ficha e os splits', () => {
     await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
     await abrirFicha(tela);
     await usuario.press(tela.getByText('Splits'));
-    await usuario.press(tela.getByLabelText('Adicionar participante em Gravação'));
-    await usuario.type(tela.getByLabelText('Nome do participante'), 'Ana');
+    await usuario.press(tela.getByLabelText('Adicionar titular em Fonograma'));
+    await usuario.type(tela.getByLabelText('Nome do titular'), 'Ana');
     await usuario.press(tela.getByText('Salvar'));
 
     await waitFor(() => expect(mockSalvar).toHaveBeenCalled());
     expect(mockSalvar.mock.calls[0][0].recording_splits).toEqual([
-      expect.objectContaining({ name: 'Ana', role: 'Autor' }),
+      expect.objectContaining({ name: 'Ana', role: 'Intérprete' }),
     ]);
+  });
+
+  // O campo livre existe para o que não cabe em campo nenhum — e não serve de nada se ele
+  // ficar na tela e não chegar ao banco.
+  it('os detalhes vão junto ao salvar', async () => {
+    mockSalvar.mockResolvedValue(faixa({ id: 'f-1', project_id: 'p-1', title: 'Vento sul' }));
+    const tela = await montar();
+    const usuario = userEvent.setup();
+    await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
+    await abrirFicha(tela);
+
+    await usuario.type(tela.getByLabelText('Detalhes'), 'A editora confirma o split por e-mail');
+    await usuario.press(tela.getByText('Salvar'));
+
+    await waitFor(() => expect(mockSalvar).toHaveBeenCalled());
+    expect(mockSalvar.mock.calls[0][0].details).toBe('A editora confirma o split por e-mail');
   });
 });
 

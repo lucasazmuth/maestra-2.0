@@ -1,0 +1,91 @@
+/* O registro de autoria dentro do modal da versão.
+   As cores acompanham o `StandardModal.module.scss`, que é onde este bloco mora. */
+
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 18px 0;
+}
+
+/* Mesmo rótulo dos campos do modal: o bloco é mais um campo, não uma seção à parte. */
+.label {
+  color: #7f91af;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.record {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e3eaf3;
+  border-radius: 12px;
+  background: #f8fbff;
+}
+
+.seal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #2f60f6;
+  background: #eef4ff;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.body strong {
+  color: #2f4164;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.body small {
+  color: #7f92b6;
+  font-size: 11px;
+}
+
+/* Monoespaçada: um hash lê-se caractere a caractere, e é assim que ele bate com o do PDF. */
+.hash {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action {
+  align-self: flex-start;
+  padding-left: 0;
+  font-weight: 800;
+}
+
+.notice {
+  margin: 0;
+  color: #7f92b6;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.error {
+  margin: 0;
+  color: #d4380d;
+  font-size: 13px;
+  line-height: 1.45;
+}

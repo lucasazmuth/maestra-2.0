@@ -1,8 +1,8 @@
-import { FC, FormEvent, MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FC, FormEvent, MouseEvent, ReactNode, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { message } from 'antd';
+import { Dropdown, Modal, message } from 'antd';
 import { FiArrowLeft, FiRefreshCw, FiLock, FiMoreVertical, FiSend, FiSettings, FiStar } from 'react-icons/fi';
-import { AddIcon, EspacoJamIcon } from '../../components/Icons/system';
+import { EspacoJamIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ import { artistsActions } from '@maestra/core/store/slices/artists';
 import { useCanAddTrack } from '@maestra/core/hooks/useCanAddTrack';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { UpsellModal } from '../../components/UpsellModal';
+import { BotaoFlutuante } from '../../components/BotaoFlutuante';
 import { Spinner } from '../../components/spinner/spinner';
 import { SpotifyEmbedPlayer } from '../../components/SpotifyEmbedPlayer';
 import type { LocalTrack } from '@maestra/core/stores/localPlayerStore';
@@ -33,6 +34,7 @@ import * as genresDb from '@maestra/core/services/db/genres';
 import * as membersDb from '@maestra/core/services/db/members';
 import type { CatalogItem, CatalogProject, CatalogVersion, MusicGenre, ArtistMember } from '@maestra/core/interfaces/maestra';
 import { useGlobalSearch, normalizar } from '@maestra/core/stores/globalSearchStore';
+import { legendaDaMusica } from '@maestra/core/utils/legendaDaMusica';
 
 // Forma da linha das DUAS listas da tela — Músicas e Lançamentos. Antes Músicas era uma tabela
 // em grade, com cabeçalho e colunas fixas, e Lançamentos uma lista solta: duas caras para a
@@ -45,6 +47,16 @@ const linhaLista: CSSProperties = {
   borderRadius: 6,
   cursor: 'pointer',
 };
+/**
+ * O play de uma música SEM guia: apagado, como o das outras.
+ *
+ * São os mesmos valores que a folha antiga aplica por `button[title="Tocar"]` — repetidos aqui
+ * porque aquele seletor casa pelo TEXTO do title, e um title honesto ("Sem faixa guia ainda")
+ * nunca vai casar com ele.
+ */
+const CINZA_DO_PLAY = '#eef3fb';
+const ICONE_DO_PLAY_APAGADO = '#60749a';
+
 const linhaPlay: CSSProperties = {
   width: 36,
   height: 36,
@@ -143,17 +155,25 @@ const StatusBadge: FC<{ status: string }> = ({ status }) => {
   );
 };
 
+/**
+ * Quantas músicas cabem no plano, coladas ao rótulo da aba: "Músicas 3/10".
+ *
+ * Vivia solto no cabeçalho, como "3/10 músicas". Ali repetia a palavra que o título já dizia
+ * duas vezes ("Músicas" no h1, "músicas" no contador) e ficava longe da lista que conta — a
+ * pessoa lia um número no canto direito e tinha de o ligar sozinha ao que via à esquerda.
+ * Junto da aba ele não precisa de se nomear: o rótulo ao lado já o faz.
+ *
+ * ⚠️ VERMELHO NO LIMITE, e não só cinzento mais escuro: é o único aviso de que o próximo
+ * "Nova música" vai bater num muro, e chega ANTES de a pessoa tentar.
+ */
 const TrackCounter: FC<{ currentCount: number; maxTracks: number }> = ({ currentCount, maxTracks }) => {
   const atLimit = currentCount >= maxTracks;
   return (
     <span
-      style={{
-        color: atLimit ? '#e53e3e' : '#b3b3b3',
-        fontSize: 14,
-        fontWeight: 600,
-      }}
+      className='catalog-tab-counter'
+      style={{ color: atLimit ? '#e53e3e' : undefined }}
     >
-      {currentCount}/{maxTracks} músicas
+      {currentCount}/{maxTracks}
     </span>
   );
 };
@@ -182,25 +202,35 @@ const Catalog: FC = () => {
   const [editing, setEditing] = useState<CatalogItem | null>(null);
   // "Nova música" abre o seletor de arquivos ANTES da ficha: no dia a dia a música começa pelo
   // áudio, e o que estava no arquivo (nome, duração) não precisa ser redigitado.
-  const newTrackFileRef = useRef<HTMLInputElement>(null);
-  const [newTrackFile, setNewTrackFile] = useState<File | null>(null);
 
-  const startNewTrack = useCallback((file: File | null) => {
-    setEditing(null);
-    setNewTrackFile(file);
-    setModalOpen(true);
-  }, []);
+  // ⚠️ "NOVA MÚSICA" NÃO PERGUNTA NADA: cria e abre o editor.
+  //
+  // Antes o botão abria o seletor de ficheiros e depois uma ficha — dois formulários antes de
+  // se ver a música. Mas uma música nasce vazia e o trabalho é montá-la: quem carrega aqui quer
+  // chegar às pistas, não preencher gênero e ISRC de uma coisa que ainda não existe. O nome
+  // "Rascunho" é editável no próprio cabeçalho do editor, e a ficha continua a uma aba de
+  // distância para quando houver o que registar.
+  const [criandoMusica, setCriandoMusica] = useState(false);
+  /** A música que o menu mandou apagar, à espera do "sim". */
+  const [paraExcluir, setParaExcluir] = useState<CatalogItem | null>(null);
+  const criarRascunho = async () => {
+    if (!artistId || criandoMusica) return;
+    setCriandoMusica(true);
+    try {
+      const criada = await (catalogDb as any).saveCatalogProjectFromForm(
+        { artist_id: artistId, title: 'Rascunho', status: 'composition' },
+        { id: user?.id || null, name: currentUserName, avatar: null },
+      );
+      navigate(`/artists/${artistId}/catalog/projects/${criada.project_id || criada.id}`);
+    } catch {
+      message.error('Não consegui criar a música.');
+      setCriandoMusica(false);
+    }
+  };
 
-  // Fechar o seletor sem escolher nada abre a ficha vazia — é o caminho de quem vai cadastrar a
-  // música antes de ter a gravação. Listener nativo: o evento `cancel` do input[type=file] não
-  // tem prop sintética no React.
-  useEffect(() => {
-    const el = newTrackFileRef.current;
-    if (!el) return;
-    const onCancel = () => startNewTrack(null);
-    el.addEventListener('cancel', onCancel);
-    return () => el.removeEventListener('cancel', onCancel);
-  });
+  // ⚠️ O SELETOR DE FICHEIROS E A FICHA-AO-CRIAR SAÍRAM DAQUI. "Nova música" passou a criar um
+  // rascunho e abrir o editor: os ficheiros entram lá, arrastados para as pistas, e a ficha é
+  // uma aba do mesmo sítio. O que ficou deste modal é a EDIÇÃO, aberta pela sala da faixa.
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   // Busca do topo — ver globalSearchStore. Antes era estado local, com o campo escondido
   // dentro do popover de "Filtros".
@@ -727,7 +757,11 @@ const Catalog: FC = () => {
 
   const onDelete = async (id: string) => {
     try {
-      await catalogDb.deleteCatalogItem(id);
+      // ⚠️ PELO PROJETO, e não só pelo item legado: a música vive em `catalog_projects` desde
+      // que as versões existem. O `deleteCatalogItem` de antes apagava de `catalog_items`, não
+      // encontrava nada, e não se queixava — a linha sumia daqui e voltava no recarregamento.
+      const alvo = items.find((i) => i.id === id);
+      await (catalogDb as any).excluirMusica({ itemId: id, projectId: alvo?.project_id });
       setItems((prev) => prev.filter((i) => i.id !== id));
     } catch {
       message.error('Erro ao excluir');
@@ -738,14 +772,16 @@ const Catalog: FC = () => {
   // havia aqui era do tema escuro — a aba ativa ficava branca com texto preto e a inativa,
   // branco translúcido com texto BRANCO, invisível sobre o fundo claro. Como estilo inline
   // vence qualquer folha, nem o CSS certo conseguia aparecer.
-  const TabButton: FC<{ id: Tab; label: string; icon?: ReactNode }> = ({ id, label, icon }) => (
+  const TabButton: FC<{ id: Tab; label: string; icon?: ReactNode; sufixo?: ReactNode }> = ({
+    id, label, icon, sufixo,
+  }) => (
     <button
       type='button'
       className={tab === id ? 'active' : ''}
       aria-pressed={tab === id}
       onClick={() => setTab(id)}
     >
-      {icon}{label}
+      {icon}{label}{sufixo}
     </button>
   );
 
@@ -864,37 +900,7 @@ const Catalog: FC = () => {
           <h1>Músicas</h1>
           <span>Organize as músicas em preparação e acompanhe cada etapa antes do lançamento.</span>
         </div>
-        {tab === 'manual' && canEditCatalog && (
-          <div className='catalog-heading-actions'>
-            {maxTracks !== Infinity && <TrackCounter currentCount={currentCount} maxTracks={maxTracks} />}
-            <button
-              className='catalog-add-btn'
-              style={{ opacity: canAdd ? 1 : 0.5, cursor: canAdd ? 'pointer' : 'not-allowed' }}
-              onClick={() => {
-                if (!canAdd) {
-                  setUpsellOpen(true);
-                  return;
-                }
-                // O seletor de arquivos vem primeiro; a ficha abre no onChange (ou no cancel,
-                // vazia, para quem quer cadastrar a música antes de ter a gravação).
-                newTrackFileRef.current?.click();
-              }}
-            >
-              <AddIcon size={18} /> Nova música
-            </button>
-            <input
-              ref={newTrackFileRef}
-              type='file'
-              accept='audio/*'
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                e.target.value = '';
-                startNewTrack(file);
-              }}
-            />
-          </div>
-        )}
+
         {tab === 'spotify' && (
           <button className='catalog-refresh-btn' onClick={() => artistId && dispatch(artistsActions.refreshSpotifyProfile({ id: artistId, force: true }))} disabled={refreshing}>
             <FiRefreshCw /> {refreshing ? 'Atualizando…' : 'Atualizar do Spotify'}
@@ -909,7 +915,14 @@ const Catalog: FC = () => {
         </section>
       )}
       <div className='catalog-tabs'>
-        <TabButton id='manual' label='Músicas' />
+        <TabButton
+          id='manual'
+          label='Músicas'
+          // Sem plano pago não há limite para contar, e um "3/∞" não diz nada a ninguém.
+          sufixo={maxTracks !== Infinity && canEditCatalog
+            ? <TrackCounter currentCount={currentCount} maxTracks={maxTracks} />
+            : undefined}
+        />
         <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify />} />
         {tab === 'manual' && !!items.length && catalogFilterControls}
       </div>
@@ -1039,16 +1052,16 @@ const Catalog: FC = () => {
                 // O que era coluna vira uma linha só, como no álbum dos Lançamentos. Gênero e
                 // data não somem: entram aqui, e só aparecem quando existem — antes ocupavam
                 // uma coluna inteira só para exibir "—".
-                const legenda = [
-                  `V${it.version_number || 1} · versão principal`,
-                  it.genre,
-                  it.release_date
-                    ? new Date(`${it.release_date}T00:00:00`).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'short',
-                      })
-                    : null,
-                ].filter(Boolean).join(' · ');
+                // ⚠️ "V1 · versão principal" SAIU: era a mesma frase em todas as linhas, e por
+                // isso não distinguia nenhuma — falava de um modelo (versões alternativas, uma
+                // eleita) que o produto deixou de ter. O que fica é o que muda de linha para
+                // linha e ajuda a retomar: quem mexeu por último, e há quanto tempo.
+                const legenda = legendaDaMusica(it);
+
+                // A guia é o que a lista toca: a soma das pistas, gerada ao sair do editor.
+                // Sem ela não há o que tocar aqui — e é isso, e não "áudio pendente", que a
+                // pessoa precisa de ler.
+                const semGuia = !it.audio_file;
 
                 return (
                   <div
@@ -1066,11 +1079,23 @@ const Catalog: FC = () => {
                       }
                     }}
                   >
+                    {/* ⚠️ SEM GUIA, SEM DESTAQUE. A folha antiga acinzenta o play por
+                        `button[title="Tocar"]` — um seletor pelo TEXTO do title. A música sem
+                        áudio tinha outro title, escapava à regra e ficava com o azul cheio: a
+                        lista dava o botão mais aceso justamente a quem não tem o que tocar, e
+                        o olho ia primeiro para a linha que não responde.
+                        Aqui a cor é dita à mão, e não herdada de uma coincidência de texto. */}
                     <button
-                      style={linhaPlay}
-                      title={!it.audio_file ? 'Abrir player — áudio pendente' : isPlaying ? 'Pausar' : 'Tocar'}
+                      style={semGuia ? { ...linhaPlay, background: CINZA_DO_PLAY } : linhaPlay}
+                      title={semGuia ? 'Sem faixa guia ainda' : isPlaying ? 'Pausar' : 'Tocar'}
                       onClick={(e) => {
                         e.stopPropagation();
+                        // Abrir o player para uma música sem áudio dava uma barra que não toca
+                        // e não diz porquê. O aviso explica o que falta E onde se resolve.
+                        if (semGuia) {
+                          message.warning('Esta música ainda não tem faixa guia. Monte as pistas no Espaço Jam: ao sair, a guia é gerada.');
+                          return;
+                        }
                         if (isCurrent) togglePlayer?.(); // já no player → pausa/retoma
                         else openLocal(it.id); // começa esta faixa
                       }}
@@ -1080,7 +1105,7 @@ const Catalog: FC = () => {
                           <path d='M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z' />
                         </svg>
                       ) : (
-                        <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#fff' }}>
+                        <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: semGuia ? ICONE_DO_PLAY_APAGADO : '#fff' }}>
                           <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
                         </svg>
                       )}
@@ -1123,17 +1148,36 @@ const Catalog: FC = () => {
                       {!isMobile && ' Espaço Jam'}
                     </button>
                     {canEditTracks && (
-                      <button
-                        className='catalog-track-more'
-                        title='Editar'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditing(it);
-                          setModalOpen(true);
+                      // ⚠️ O "⋮" ABRIA A FICHA INTEIRA — um formulário de dezassete campos para
+                      // quem só queria apagar a música ou entrar nela. As duas coisas que se
+                      // fazem daqui cabem num menu de duas linhas; a ficha continua onde
+                      // pertence, dentro do editor.
+                      <Dropdown
+                        trigger={['click']}
+                        placement='bottomRight'
+                        menu={{
+                          items: [
+                            { key: 'jam', label: 'Abrir Espaço Jam' },
+                            { type: 'divider' },
+                            { key: 'excluir', label: 'Excluir música', danger: true },
+                          ],
+                          onClick: ({ key, domEvent }) => {
+                            domEvent.stopPropagation();
+                            if (key === 'jam') { abrirJam(); return; }
+                            // Apagar é irreversível: pergunta antes, como o resto do produto.
+                            setParaExcluir(it);
+                          },
                         }}
                       >
-                        <FiMoreVertical size={18} />
-                      </button>
+                        <button
+                          className='catalog-track-more'
+                          title='Opções'
+                          aria-label={`Opções de ${it.title}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <FiMoreVertical size={18} />
+                        </button>
+                      </Dropdown>
                     )}
                   </div>
                 );
@@ -1154,13 +1198,47 @@ const Catalog: FC = () => {
           currentUserName={currentUserName}
           currentUserId={user?.id || null}
           currentUserAvatar={currentUserAvatar}
-          initialFile={newTrackFile}
-          onClose={() => { setModalOpen(false); setNewTrackFile(null); }}
+          onClose={() => setModalOpen(false)}
           onSaved={onSaved}
           onDelete={onDelete}
           onVersionsChanged={() => setCatalogReload((value) => value + 1)}
         />
       )}
+
+      {/* Criar uma música é o que se decide DEPOIS de percorrer a lista, e é no fim dela que a
+          mão está. O limite (5/10) fica no cabeçalho, junto do título que ele descreve. */}
+      {tab === 'manual' && canEditCatalog && (
+        <BotaoFlutuante
+          rotulo='Nova música'
+          desativado={criandoMusica}
+          noLimite={!canAdd}
+          aoClicar={() => {
+            if (!canAdd) { setUpsellOpen(true); return; }
+            void criarRascunho();
+          }}
+        />
+      )}
+
+      {/* Apagar uma música leva as pistas e a guia com ela: pergunta antes, e diz o nome do que
+          vai desaparecer — "tem a certeza?" sem sujeito é onde se clica em sim por engano. */}
+      <Modal
+        open={!!paraExcluir}
+        title='Excluir música'
+        okText='Excluir'
+        okButtonProps={{ danger: true }}
+        cancelText='Cancelar'
+        onCancel={() => setParaExcluir(null)}
+        onOk={async () => {
+          if (!paraExcluir) return;
+          await onDelete(paraExcluir.id);
+          setParaExcluir(null);
+        }}
+      >
+        <p style={{ margin: 0 }}>
+          <strong>{paraExcluir?.title}</strong> e tudo o que está montada nela — pistas, clipes e
+          a faixa guia — saem do catálogo. Não dá para voltar atrás.
+        </p>
+      </Modal>
 
       {/* Edição da versão aberta na sala. É o mesmo modal do Espaço Jam — a sala não ganha uma
           segunda forma de editar a mesma coisa. */}

@@ -98,3 +98,53 @@ export const removerArquivo = async (balde: string, caminho: string): Promise<vo
  */
 export const tituloDoArquivo = (nome: string) =>
   nome.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+
+/**
+ * O caminho de um arquivo dentro do balde, a partir da URL pública.
+ *
+ * O banco guarda a URL (é ela que o tocador usa); o Storage apaga por CAMINHO. Sem esta
+ * conversão, apagar uma pista tira a linha do banco e deixa 40 MB órfãos no balde para sempre.
+ *
+ * A URL pública tem a forma `.../storage/v1/object/public/<balde>/<caminho>`. Devolve `null`
+ * quando a URL não é do balde pedido — um link externo colado à mão, por exemplo, que não deve
+ * mandar apagar nada.
+ */
+export const caminhoNoBalde = (url: string, balde: string): string | null => {
+  const marca = `/storage/v1/object/public/${balde}/`;
+  const corte = url.indexOf(marca);
+  if (corte < 0) return null;
+  return decodeURIComponent(url.slice(corte + marca.length).split('?')[0]);
+};
+
+/**
+ * Grava num caminho FIXO, por cima do que lá estiver.
+ *
+ * O `enviarArquivo` carimba a data no nome, e é o certo para o que a pessoa envia: dois
+ * ficheiros com o mesmo nome não se atropelam. Para o que o PRODUTO gera e regenera — a guia de
+ * uma música, que é sempre a mesma coisa recalculada — o carimbo é o erro: uma música editada
+ * trinta vezes guardaria trinta guias, e vinte e nove delas nunca mais seriam ouvidas por
+ * ninguém. Com mil músicas isso são centenas de gigabytes de lixo.
+ *
+ * Caminho fixo, `upsert`, armazenamento constante por música.
+ *
+ * ⚠️ `cacheControl` curto de propósito: o endereço não muda quando o conteúdo muda, e um cache
+ * longo entregaria a guia velha depois de a montagem já ter sido refeita.
+ */
+export const gravarEmCaminhoFixo = async (
+  balde: string,
+  caminho: string,
+  dados: Blob | ArrayBuffer,
+  tipo: string,
+): Promise<{ url: string; path: string }> => {
+  const { error } = await supabase.storage.from(balde).upload(caminho, dados, {
+    cacheControl: '60',
+    upsert: true,
+    contentType: tipo,
+  });
+  if (error) throw error;
+
+  const { data } = supabase.storage.from(balde).getPublicUrl(caminho);
+  // O sufixo obriga o navegador a buscar de novo depois de uma regravação — o endereço é o
+  // mesmo, e sem isto quem já ouviu continuaria a ouvir a guia antiga.
+  return { url: `${data.publicUrl}?v=${Date.now()}`, path: caminho };
+};

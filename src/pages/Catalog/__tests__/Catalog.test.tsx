@@ -46,11 +46,40 @@ jest.mock('@maestra/core/hooks/useEntitlements', () => ({
 let mockCatalogItems: CatalogItem[] = [];
 const mockListCatalogItems = jest.fn();
 const mockDeleteCatalogItem = jest.fn();
+const mockSalvarProjeto = jest.fn();
+const mockExcluirMusica = jest.fn().mockResolvedValue(undefined);
 jest.mock('@maestra/core/services/db/catalog', () => ({
   __esModule: true,
   listCatalogItems: (...args: any[]) => mockListCatalogItems(...args),
   deleteCatalogItem: (...args: any[]) => mockDeleteCatalogItem(...args),
+  saveCatalogProjectFromForm: (...args: any[]) => mockSalvarProjeto(...args),
+  excluirMusica: (...args: any[]) => mockExcluirMusica(...args),
 }));
+
+// Para onde a tela leva depois de criar: é metade do que "Nova música" faz agora.
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
+}));
+
+// O aviso padrão do produto e o store do player: é aqui que se vê se o clique numa música sem
+// guia avisou em vez de abrir uma barra que não toca.
+const mockWarning = jest.fn();
+jest.mock('antd', () => {
+  const real = jest.requireActual('antd');
+  return { ...real, message: { ...real.message, warning: (...args: any[]) => mockWarning(...args) } };
+});
+
+const mockSetPlayerOpen = jest.fn();
+jest.mock('@maestra/core/stores/localPlayerStore', () => {
+  const estado = {
+    open: false, currentId: null, tracks: [], playing: false,
+    setOpen: (...args: any[]) => mockSetPlayerOpen(...args),
+    setTracks: jest.fn(), setCurrentId: jest.fn(), toggle: jest.fn(),
+  };
+  return { useLocalPlayerStore: (seletor: any) => (seletor ? seletor(estado) : estado) };
+});
 
 // Mock genres DB service
 const mockListGenres = jest.fn();
@@ -136,18 +165,6 @@ function renderCatalog() {
   );
 }
 
-// "Nova musica" abre o seletor de arquivos ANTES da ficha: a ficha aparece no `change` (com
-// audio) ou no `cancel` (sem audio, para quem cadastra a musica antes de ter a gravacao).
-// Em jsdom o clique no input nao abre seletor nenhum e o `cancel` nativo nunca chega, entao
-// aqui ele e disparado a mao — sem isso a ficha nao abre e o teste parece quebrado.
-function abrirFichaSemAudio(container: HTMLElement) {
-  fireEvent.click(screen.getByRole('button', { name: /nova música/i }));
-  const seletor = container.querySelector('input[type="file"]') as HTMLInputElement;
-  act(() => {
-    seletor.dispatchEvent(new Event('cancel'));
-  });
-}
-
 // ─── Import component after mocks ────────────────────────────────────────────
 
 import Catalog from '../index';
@@ -158,6 +175,11 @@ describe('Catalog Page - Track Limit Integration', () => {
   beforeEach(() => {
     mockMaxCatalogTracks = 10;
     mockCatalogItems = [];
+    mockSalvarProjeto.mockReset();
+    mockSalvarProjeto.mockResolvedValue(
+      makeCatalogItem({ id: 'versao-nova', project_id: 'projeto-novo', title: 'Rascunho' }),
+    );
+    mockNavigate.mockClear();
     mockOnSaved = null;
     mockListCatalogItems.mockImplementation(() => Promise.resolve(mockCatalogItems));
     mockDeleteCatalogItem.mockImplementation(() => Promise.resolve());
@@ -174,13 +196,18 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       // Wait for items to load and the manual tab to become active
       // (component auto-switches to manual when no spotify tracks)
+      // ⚠️ O CONTADOR MUDOU DE SÍTIO: era "5/10 músicas" solto no cabeçalho, e passou a ser o
+      // sufixo do rótulo da aba — "Músicas 5/10". Perdeu a palavra porque o rótulo ao lado já
+      // a diz, e ganhou a proximidade da lista que conta.
       await waitFor(() => {
-        expect(screen.getByText('5/10 músicas')).toBeInTheDocument();
+        expect(screen.getByText('5/10')).toBeInTheDocument();
       });
 
-      // Counter should not be in red (not at limit)
-      const counter = screen.getByText('5/10 músicas');
-      expect(counter).toHaveStyle({ color: '#b3b3b3' });
+      // Longe do limite, sem cor de alarme: quem pinta é a aba.
+      const counter = screen.getByText('5/10');
+      expect(counter).not.toHaveStyle({ color: '#e53e3e' });
+      // E mora DENTRO da aba, e não ao lado do título.
+      expect(counter.closest('button')).toHaveAttribute('aria-pressed', 'true');
 
       // Nova música button should be enabled (full opacity, pointer cursor)
       const button = screen.getByRole('button', { name: /nova música/i });
@@ -198,11 +225,11 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       // Wait for counter to appear
       await waitFor(() => {
-        expect(screen.getByText('10/10 músicas')).toBeInTheDocument();
+        expect(screen.getByText('10/10')).toBeInTheDocument();
       });
 
-      // Counter should be red
-      const counter = screen.getByText('10/10 músicas');
+      // ⚠️ VERMELHO NO LIMITE: é o único aviso que chega ANTES de a pessoa tentar criar.
+      const counter = screen.getByText('10/10');
       expect(counter).toHaveStyle({ color: '#e53e3e' });
 
       // Button should have disabled style
@@ -227,7 +254,7 @@ describe('Catalog Page - Track Limit Integration', () => {
         makeCatalogItem({ id: `track-${i}`, title: `Track ${i}` })
       );
 
-      const { container } = renderCatalog();
+      renderCatalog();
 
       // Wait for content to load (manual tab auto-activates)
       await waitFor(() => {
@@ -235,18 +262,18 @@ describe('Catalog Page - Track Limit Integration', () => {
       });
 
       // Counter should NOT be visible (maxTracks === Infinity)
-      expect(screen.queryByText(/\d+\/\d+ músicas/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/\d+\/\d+/)).not.toBeInTheDocument();
 
       // Button should be fully enabled
       const button = screen.getByRole('button', { name: /nova música/i });
       expect(button).toHaveStyle({ opacity: 1, cursor: 'pointer' });
 
-      // Clicking should open TrackModal, not UpsellModal
-      abrirFichaSemAudio(container);
+      // ⚠️ NÃO ABRE FICHA NENHUMA: "Nova música" passou a criar um rascunho e a abrir o
+      // editor. O que este caso guarda é que quem tem plano não esbarra no muro do upsell.
+      fireEvent.click(button);
 
-      await waitFor(() => {
-        expect(screen.getByTestId('track-modal')).toBeInTheDocument();
-      });
+      await waitFor(() => expect(mockSalvarProjeto).toHaveBeenCalled());
+      expect(mockSalvarProjeto.mock.calls[0][0]).toMatchObject({ title: 'Rascunho' });
       expect(screen.queryByTestId('upsell-modal')).not.toBeInTheDocument();
       // Este caso monta 50 faixas e leva ~4s de trabalho real, contra os 5s padrao do jest —
       // margem estreita demais. Passava sozinho e caia quando a maquina tinha outra coisa
@@ -254,36 +281,41 @@ describe('Catalog Page - Track Limit Integration', () => {
     }, 20_000);
   });
 
-  describe('5.4: After creating a track (onSaved), counter updates to reflect new count', () => {
-    it('updates the counter from 5/10 to 6/10 after onSaved', async () => {
+  // ⚠️ ESTE CASO MUDOU DE ASSUNTO com o fluxo. Ele guardava "o contador sobe de 5/10 para
+  // 6/10 depois de gravar" — mas gravar deixou de acontecer aqui: "Nova música" cria um
+  // rascunho e SAI desta tela para o editor, e um contador que ninguém vai ver não é o que
+  // importa proteger. O que importa é que a música nasce com o nome certo e que a pessoa é
+  // levada para dentro dela.
+  describe('5.4: "Nova música" cria um rascunho e abre o Espaço Jam', () => {
+    it('cria com o título Rascunho e navega para o editor da música criada', async () => {
       mockCatalogItems = Array.from({ length: 5 }, (_, i) =>
         makeCatalogItem({ id: `track-${i}`, title: `Track ${i}` })
       );
+      mockSalvarProjeto.mockResolvedValue(
+        makeCatalogItem({ id: 'versao-nova', project_id: 'projeto-novo', title: 'Rascunho' }),
+      );
 
-      const { container } = renderCatalog();
-
-      // Wait for initial counter
-      await waitFor(() => {
-        expect(screen.getByText('5/10 músicas')).toBeInTheDocument();
-      });
-
-      // Open the TrackModal by clicking the button
-      abrirFichaSemAudio(container);
+      renderCatalog();
 
       await waitFor(() => {
-        expect(screen.getByTestId('track-modal')).toBeInTheDocument();
+        expect(screen.getByText('5/10')).toBeInTheDocument();
       });
 
-      // Simulate saving a new track via the onSaved callback
-      const newTrack = makeCatalogItem({ id: 'new-track', title: 'Brand New Track' });
-      act(() => {
-        mockOnSaved!(newTrack);
+      fireEvent.click(screen.getByRole('button', { name: /nova música/i }));
+
+      await waitFor(() => expect(mockSalvarProjeto).toHaveBeenCalled());
+      expect(mockSalvarProjeto.mock.calls[0][0]).toMatchObject({
+        artist_id: 'artist-1',
+        title: 'Rascunho',
       });
 
-      // Counter should update to 6/10
+      // Pelo PROJETO, e não pela versão: é o projeto que o editor abre.
       await waitFor(() => {
-        expect(screen.getByText('6/10 músicas')).toBeInTheDocument();
+        expect(mockNavigate).toHaveBeenCalledWith('/artists/artist-1/catalog/projects/projeto-novo');
       });
+
+      // E não passa por ficha nenhuma no caminho.
+      expect(screen.queryByTestId('track-modal')).not.toBeInTheDocument();
     });
   });
 
@@ -322,6 +354,54 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       expect(screen.getByText('Meu Samba')).toBeInTheDocument();
       expect(screen.getByText('Noite Rock')).toBeInTheDocument();
+    });
+  });
+
+  // ⚠️ O PLAY NÃO PODE DESTACAR QUEM NÃO TEM O QUE TOCAR. A folha antiga acinzenta o botão
+  // por `button[title="Tocar"]` — um seletor pelo TEXTO do title —, e a música sem guia, que
+  // tinha outro title, escapava e ficava com o azul cheio. A lista dava o botão mais aceso
+  // justamente à linha que não responde.
+  describe('o play de uma música sem faixa guia', () => {
+    beforeEach(() => {
+      mockWarning.mockClear();
+      mockSetPlayerOpen.mockClear();
+      mockCatalogItems = [
+        makeCatalogItem({ id: 'com-audio', title: 'Tem guia', audio_file: 'https://exemplo/guia.mp3' }),
+        makeCatalogItem({ id: 'sem-audio', title: 'Sem guia', audio_file: null }),
+      ];
+      mockListCatalogItems.mockResolvedValue(mockCatalogItems);
+    });
+
+    const playDe = async (titulo: string) => {
+      await waitFor(() => expect(screen.getByText(titulo)).toBeInTheDocument());
+      const linha = screen.getByText(titulo).closest('.catalog-track-row') as HTMLElement;
+      return within(linha).getAllByRole('button')[0];
+    };
+
+    it('não fica azul: apagado como o das músicas que tocam', async () => {
+      renderCatalog();
+      const play = await playDe('Sem guia');
+      // O jsdom normaliza para `rgb(...)`; o azul da marca é o que ele NÃO pode ter.
+      expect(play.style.background).not.toBe('rgb(51, 97, 255)');
+      expect(play.style.background).toBe('rgb(238, 243, 251)');
+    });
+
+    it('avisa o que falta, e não abre um player que não toca', async () => {
+      renderCatalog();
+      fireEvent.click(await playDe('Sem guia'));
+
+      expect(mockWarning).toHaveBeenCalledTimes(1);
+      expect(mockWarning.mock.calls[0][0]).toContain('faixa guia');
+      // Sem isto o aviso seria enfeite: a barra continuaria a abrir por baixo dele.
+      expect(mockSetPlayerOpen).not.toHaveBeenCalledWith(true);
+    });
+
+    it('quem tem guia continua a tocar, sem aviso nenhum', async () => {
+      renderCatalog();
+      fireEvent.click(await playDe('Tem guia'));
+
+      expect(mockWarning).not.toHaveBeenCalled();
+      expect(mockSetPlayerOpen).toHaveBeenCalledWith(true);
     });
   });
 });

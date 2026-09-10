@@ -449,6 +449,10 @@ export interface CatalogItem {
   key?: string | null;
   duration?: string | null;
   lyrics?: string | null;
+  /** Campo livre da ficha: observações sobre a MÚSICA (a letra, que é da gravação, é `lyrics`). */
+  details?: string | null;
+  /** Quem mexeu por último. ⚠️ Não é `version_author_name`, que é quem CRIOU a gravação. */
+  last_edited_by?: string | null;
   cover_image?: string | null;
   cover_image_name?: string | null;
   audio_file?: string | null;
@@ -479,6 +483,10 @@ export interface CatalogProject {
   genre?: string | null;
   bpm?: string | null;
   key?: string | null;
+  /** Campo livre da ficha: observações sobre a música. */
+  details?: string | null;
+  /** Quem mexeu por último. */
+  last_edited_by?: string | null;
   cover_image?: string | null;
   cover_image_name?: string | null;
   assignee?: { id: string; name: string } | null;
@@ -509,17 +517,105 @@ export interface CatalogVersion {
   created_at?: string;
   updated_at?: string;
   files?: CatalogVersionFile[];
+  /** A montagem: as faixas da linha do tempo, cada uma com os seus clipes. */
+  tracks?: CatalogTrack[];
+  /** O fader que fica depois de todos os outros. 0..1. */
+  master_gain?: number;
   comments?: CatalogVersionComment[];
 }
 
+/**
+ * Um arquivo de uma versão. `kind` diz o que ele é:
+ *
+ * - `stem`: uma PISTA da gravação (voz, bateria, baixo…), que toca junto com as outras na mesa
+ *   do Espaço JAM. `position`, `gain` e `size_bytes` só fazem sentido aqui.
+ * - `attachment`: um anexo qualquer (letra em PDF, referência), que não toca.
+ *
+ * O PAPEL do stem não é um campo: é o `name`, texto livre. Um enum obrigaria "808" e
+ * "Vox dobra" a caírem em "outros".
+ */
 export interface CatalogVersionFile {
   id: string;
   version_id: string;
   name: string;
   file_url: string;
   file_type?: string | null;
-  kind?: string | null;
+  kind?: 'attachment' | 'stem' | null;
+  /** A ordem da pista na mesa. Persiste: quem abre vê a mesma mesa que quem a montou. */
+  position?: number;
+  /** 0..1. O nível relativo é decisão de quem enviou, e persiste. Mutar e solo NÃO. */
+  gain?: number | null;
+  /** Para estimar memória e egress antes de descodificar. */
+  size_bytes?: number | null;
+  /** A duração do ficheiro inteiro, lida no envio: é o tamanho do clipe que nasce com ele. */
+  duration_seconds?: number | null;
   created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Uma PISTA da linha do tempo: uma faixa da mesa, com nome, cor, volume e mudo.
+ *
+ * A pista não tem áudio — ela é a faixa. O áudio vem dos CLIPES que moram nela.
+ */
+export interface CatalogTrack {
+  id: string;
+  version_id: string;
+  name: string;
+  /** A ordem na tela, de cima para baixo. */
+  position: number;
+  /** 0..1. O nível na mistura. Persiste: é decisão de quem montou. */
+  gain: number;
+  /** ⚠️ Persiste; o SOLO não. Mutar é decisão de arranjo, solar é gesto de escuta. */
+  muted: boolean;
+  /** O índice na paleta `CORES_DAS_PISTAS`. Guardado, para mover a pista não trocar a cor. */
+  color_index: number;
+  /** −1 esquerda, 0 centro, 1 direita. */
+  pan?: number;
+  /** Por agora só `audio` toca; os outros esperam o piano roll e o sequenciador. */
+  kind?: 'audio' | 'synth' | 'piano' | 'drums';
+  /**
+   * Marcado para apagar, à espera do fim da sessão.
+   *
+   * ⚠️ NÃO CHEGA AQUI COM VALOR: a leitura da montagem já filtra os marcados, e o que esta tela
+   * vê é sempre o que existe. O campo está no tipo porque a escrita passa por ele — apagar é
+   * pôr a data, desfazer é tirá-la.
+   */
+  deleted_at?: string | null;
+  clips?: CatalogClip[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Um CLIPE: um pedaço de um ficheiro, numa pista, num instante.
+ *
+ * Cortar ao meio não toca no ficheiro — nascem dois clipes que apontam para o mesmo áudio com
+ * recortes diferentes. É por isso que a edição é instantânea e não destrói nada.
+ */
+export interface CatalogClip {
+  id: string;
+  track_id: string;
+  file_id: string;
+  /** Em que segundo da linha do tempo o clipe começa a soar. */
+  start_seconds: number;
+  /** A partir de que segundo DO FICHEIRO. Aparar a ponta esquerda mexe aqui. */
+  offset_seconds: number;
+  /** Quanto do ficheiro entra. Aparar a ponta direita mexe aqui. */
+  duration_seconds: number;
+  /** A URL do ficheiro, trazida junto pela leitura. Não é coluna desta tabela. */
+  file_url?: string;
+  /**
+   * Marcado para apagar, à espera do fim da sessão.
+   *
+   * ⚠️ NÃO CHEGA AQUI COM VALOR: a leitura da montagem já filtra os marcados, e o que esta tela
+   * vê é sempre o que existe. O campo está no tipo porque a escrita passa por ele — apagar é
+   * pôr a data, desfazer é tirá-la.
+   */
+  deleted_at?: string | null;
+  file_name?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CatalogVersionComment {

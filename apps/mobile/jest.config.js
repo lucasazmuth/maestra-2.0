@@ -22,6 +22,14 @@ module.exports = {
   // juntos, que e o pior tipo de falha: parece regressao e nao e. O numero nao esconde teste
   // lento; ele reconhece que o custo aqui e de montagem, nao de logica.
   testTimeout: 20_000,
+  // O resolvedor que a própria `react-native-worklets` publica.
+  //
+  // Sem ele, importar o reanimated (que o gesture-handler usa nos gestos do fader e da régua)
+  // carrega `NativeWorklets.native.ts`, que pede o módulo nativo no import e estoura com
+  // "Cannot read properties of undefined (reading 'loadUnpackers')". O resolvedor tira a
+  // extensão `.native` da busca dentro daquele pacote, e o jest passa a ver a versão de
+  // JavaScript puro — que é o que um teste de tela precisa.
+  resolver: require.resolve('react-native-worklets/jest/resolver.js'),
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   // So arquivos .test: senao os fixtures viram 'suite sem teste' e quebram a rodada.
   testMatch: ['<rootDir>/src/**/*.test.{ts,tsx}'],

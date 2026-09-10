@@ -1,6 +1,7 @@
 import { FC, useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { message } from 'antd';
 import { FiLifeBuoy, FiMusic, FiShield } from 'react-icons/fi';
 
 import { useArtist } from '@maestra/core/hooks/useArtist';
@@ -104,6 +105,12 @@ const Dashboard: FC = () => {
   }));
 
   const playTrack = (id: string) => {
+    // Sem guia não há o que tocar: abrir o player daria uma barra parada e sem explicação.
+    // O aviso é o mesmo da lista de Músicas, e diz onde a guia nasce.
+    if (!catalogRows.find((t) => t.id === id)?.hasAudio) {
+      message.warning('Esta música ainda não tem faixa guia. Monte as pistas no Espaço Jam: ao sair, a guia é gerada.');
+      return;
+    }
     if (playerCurrentId === id) { togglePlayer?.(); return; } // já é a faixa atual: pausa/retoma
     setPlayerTracks(playerQueue);
     setPlayerCurrentId(id);
@@ -245,7 +252,7 @@ const Dashboard: FC = () => {
                 <button
                   className='catalog-track-play'
                   type='button'
-                  title={!track.hasAudio ? 'Abrir player — áudio pendente' : isPlaying ? 'Pausar' : 'Tocar'}
+                  title={!track.hasAudio ? 'Sem faixa guia ainda' : isPlaying ? 'Pausar' : 'Tocar'}
                   onClick={(e) => { e.stopPropagation(); playTrack(track.id); }}
                 >
                   {isPlaying ? (

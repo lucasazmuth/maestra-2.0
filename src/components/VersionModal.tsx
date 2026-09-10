@@ -8,6 +8,7 @@ import { uploadFile, CATALOG_BUCKET } from '../lib/storage';
 import * as catalogDb from '@maestra/core/services/db/catalog';
 import type { CatalogVersion } from '@maestra/core/interfaces/maestra';
 import modalStyles from './StandardModal.module.scss';
+import AuthorshipRecord from './AuthorshipRecord';
 
 // Modal da VERSÃO (a gravação), irmão do TrackModal — que cuida da MÚSICA.
 //
@@ -262,6 +263,12 @@ export const VersionModal: FC<Props> = ({
             onChange={(e) => { const f = e.target.files?.[0]; if (f) void pickFile(f); }}
           />
         </label>
+
+        {/* Só ao EDITAR: uma versão que ainda não nasceu não tem arquivo no Storage para o
+            servidor somar, e um botão de registrar antes do envio prometeria o impossível. */}
+        {editing && version && (
+          <AuthorshipRecord versionId={version.id} hasAudio={!!version.audio_file} />
+        )}
       </div>
     </Modal>
   );

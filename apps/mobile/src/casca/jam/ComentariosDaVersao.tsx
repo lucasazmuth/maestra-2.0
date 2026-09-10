@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_JAM, RAIO } from '@maestra/core/constants/design';
+import { COR, COR_JAM } from '@maestra/core/constants/design';
 import type { CatalogVersion, CatalogVersionComment } from '@maestra/core/interfaces/maestra';
 import * as catalogo from '@maestra/core/services/db/catalog';
+
+import { Folha } from '@/casca/Folha';
 
 // Os comentários de UMA versão.
 //
@@ -86,29 +87,15 @@ export const ComentariosDaVersao = ({ aberta, versao, autor, aoFechar, aoMudar }
   };
 
   return (
-    <Modal visible={aberta} animationType="slide" transparent onRequestClose={aoFechar}>
-      <KeyboardAvoidingView
-        style={estilos.fundo}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={estilos.folha}>
-          <View style={estilos.cabecalho}>
-            <View style={estilos.flex}>
-              <Text style={estilos.sobrenome}>
-                {versao ? `V${versao.version_number}` : 'VERSÃO'}
-              </Text>
-              <Text style={estilos.titulo}>
-                {comentarios.length} {comentarios.length === 1 ? 'comentário' : 'comentários'}
-              </Text>
-              <Text style={estilos.apoio}>
-                O que se fala sobre esta gravação. As decisões do projeto ficam no chat.
-              </Text>
-            </View>
-            <Pressable onPress={aoFechar} hitSlop={10} accessibilityRole="button" accessibilityLabel="Fechar">
-              <Feather name="x" size={20} color={COR_JAM.apoio} />
-            </Pressable>
-          </View>
-
+    <Folha
+      aberta={aberta}
+      // O número da versão entra no título: era o sobretítulo, e sem ele "3 comentários" não
+      // diria de qual gravação se está falando.
+      titulo={`${versao ? `V${versao.version_number} · ` : ''}${comentarios.length} ${comentarios.length === 1 ? 'comentário' : 'comentários'}`}
+      aoFechar={aoFechar}
+      semRolagem
+    >
+      <View style={estilos.miolo}>
           <ScrollView contentContainerStyle={estilos.lista} keyboardShouldPersistTaps="handled">
             {carregando ? (
               <ActivityIndicator color={COR.primaria} style={estilos.espera} />
@@ -180,29 +167,15 @@ export const ComentariosDaVersao = ({ aberta, versao, autor, aoFechar, aoMudar }
           </View>
 
           {!!erro && <Text style={estilos.erro}>{erro}</Text>}
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </View>
+    </Folha>
   );
 };
 
+// A casca mora na `Folha`. Aqui ficam a lista e o campo de escrever.
 const estilos = StyleSheet.create({
-  fundo: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(23, 35, 58, .45)' },
-  folha: {
-    height: '82%', backgroundColor: COR_JAM.papel,
-    borderTopLeftRadius: 26, borderTopRightRadius: 26,
-  },
+  miolo: { flex: 1, minHeight: 0 },
   flex: { flex: 1, minWidth: 0 },
-  cabecalho: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    padding: 22, borderBottomWidth: 1, borderBottomColor: COR_JAM.fio,
-  },
-  sobrenome: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 1.76,
-    textTransform: 'uppercase', color: COR_JAM.rotulo,
-  },
-  titulo: { fontSize: 20, fontWeight: '800', color: COR_JAM.titulo, marginTop: 6 },
-  apoio: { fontSize: 12, color: COR_JAM.apoio, lineHeight: 18, marginTop: 6 },
   lista: { padding: 22, gap: 16 },
   espera: { marginVertical: 30 },
   comentario: { flexDirection: 'row', gap: 10 },
@@ -221,7 +194,7 @@ const estilos = StyleSheet.create({
   },
   marcaTexto: { fontSize: 10, fontWeight: '800', color: COR.primaria },
   data: { fontSize: 10, color: COR_JAM.rotulo, marginTop: 2 },
-  texto: { fontSize: 13, lineHeight: 19, color: COR_JAM.legenda, marginTop: 6 },
+  texto: { fontSize: 13, lineHeight: 19, color: COR_JAM.apoio, marginTop: 6 },
   vazio: { alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 50 },
   iconeDoVazio: {
     width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
@@ -236,7 +209,7 @@ const estilos = StyleSheet.create({
   },
   entrada: {
     flex: 1, height: 42, paddingHorizontal: 11, borderRadius: 12,
-    borderWidth: 1, borderColor: COR_JAM.fio, backgroundColor: COR_JAM.entradaFundo,
+    borderWidth: 1, borderColor: COR_JAM.fio, backgroundColor: COR_JAM.cabecaDaVersao,
     fontSize: 14, color: COR_JAM.texto,
   },
   enviar: {

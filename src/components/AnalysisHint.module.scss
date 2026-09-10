@@ -1,0 +1,45 @@
+/* A sugestão da análise, logo abaixo da faixa de BPM/Tom/Gênero do Espaço JAM. */
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 2px;
+  color: #5d7198;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.body strong {
+  color: #2f4164;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.body small {
+  color: #7f92b6;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.muted {
+  flex: 1;
+  font-size: 13px;
+  color: #7f92b6;
+}
+
+.action {
+  align-self: flex-start;
+  padding-left: 0;
+  font-weight: 800;
+}
+
+.error {
+  color: #d4380d;
+}

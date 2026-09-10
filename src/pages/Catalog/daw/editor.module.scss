@@ -1,0 +1,375 @@
+// A CASCA do editor: o que tem de ser CSS de verdade, e não estilo em linha.
+//
+// O resto desta tela desenha-se em linha, como no projeto de referência — mas estas três coisas
+// não conseguem: regras sobre o `body` e sobre a moldura do app (que não é filha desta tela), e
+// a camada, que sai do mesmo token do resto do produto.
+//
+// ⚠️ QUEM FAZ O EDITOR COBRIR O APP É O `display: none` ABAIXO, e não o z-index. O Espaço JAM já
+// teve 2147483000 aqui — o teto do int32 — e o número nunca fez nada: os ancestrais
+// `position: fixed` prendem esta camada num contexto de empilhamento próprio, onde ela só
+// concorre com irmãs que não existem. No dia em que algo aparecer por cima, subir o número não
+// vai resolver.
+
+:global(body.jam-space-open) {
+  overflow: hidden !important;
+  background: #1a1a1e !important;
+}
+
+:global(body.jam-space-open .top-navigation),
+:global(body.jam-space-open .app-rail),
+:global(body.jam-space-open .profile-panel),
+// A barra de abas do celular também: ela é `fixed` e ficava POR CIMA da linha do tempo,
+// tapando a última pista. Um editor é uma tela cheia — nada do app fica em volta.
+:global(body.jam-space-open .mobile-nav),
+:global(body.jam-space-open #left) {
+  display: none !important;
+}
+
+:global(body.jam-space-open .task-app),
+:global(body.jam-space-open .app-layout),
+:global(body.jam-space-open #board),
+:global(body.jam-space-open #center),
+:global(body.jam-space-open .Main-section),
+:global(body.jam-space-open .board-shell),
+:global(body.jam-space-open .board-content) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.tela {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-tela-cheia);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// Os contadores (pistas · clipes · duração) somem antes dos controlos: eles são informação, e
+// o status, o BPM e o tom são coisas em que se mexe. Numa tela apertada, quem sai é o texto.
+.contadores {
+  @media (max-width: 1180px) {
+    display: none;
+  }
+}
+
+// A fila dos controlos.
+//
+// Em tela larga são três colunas com o transporte exatamente no meio, como na referência. Numa
+// tela estreita a grelha vira uma fila que rola: a alternativa era o grupo da direita passar
+// POR CIMA do transporte, que foi o que aconteceu na primeira tentativa — e um botão de play
+// escondido debaixo de um seletor de status é pior do que uma barra que rola.
+.controlos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+
+  @media (max-width: 1180px) {
+    display: flex;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
+// O canto de ajuda. É um `<details>` e não um modal de propósito: abre e fecha sem tirar a
+// pessoa do que está a fazer, funciona com teclado sem uma linha de JavaScript, e fechado é só
+// um círculo que não disputa atenção com nada.
+/* A ESCADA DE CAMADAS DENTRO DO EDITOR.
+   O Espaço JAM é uma tela cheia (`--z-tela-cheia`) e cria o seu próprio contexto de
+   empilhamento: aqui dentro os números só se comparam entre si, e não com o resto do app.
+   A ordem, de baixo para cima:
+
+     20  OS FLUTUANTES: o selo de estado, a letra e o "?"
+     30  a gaveta da biblioteca (tapa tudo enquanto está aberta, e é para isso que serve)
+
+   E DENTRO DA MONTAGEM, uma escada à parte — ela é uma camada isolada (`isolation: isolate`
+   em `EditorDaGravacao`), por isso estes números só se comparam uns com os outros:
+
+     10  a régua da linha do tempo (gruda no topo)
+     11  a coluna dos controlos das pistas (gruda à esquerda)
+     12  o canto onde as duas se cruzam
+    100  a agulha, por cima de tudo o que é montagem
+
+   ⚠️ A AGULHA FURAVA A GAVETA. Enquanto a montagem não era uma camada isolada, aqueles 100
+   subiam ao contexto da tela e ganhavam dos 30 da biblioteca: com a gaveta aberta no
+   telemóvel, a linha vermelha do tempo aparecia desenhada por cima do painel inteiro.
+
+   ⚠️ OS FLUTUANTES ESTAVAM EM `--z-cartao`, QUE VALE 2 — abaixo da coluna. O "Enviando 1 de
+   4…" nascia por trás dos controlos das pistas e saía cortado ao meio; no telemóvel, onde a
+   coluna e o selo disputam os mesmos 375 px, ficava ilegível. O token não estava errado por
+   ser token: é que ele descreve "detalhe DENTRO de um cartão", e estes três não estão dentro
+   de cartão nenhum — flutuam por cima da tela inteira. */
+$camada-dos-flutuantes: 20;
+
+// A forma dos botões que flutuam sobre a montagem. Um placeholder e não uma classe: ele não
+// chega ao CSS servido, só empresta as linhas a quem o estende.
+%flutuante-redondo {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: #2f2f38;
+  border: 1px solid #44444f;
+  color: #a6a6b3;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* AS DUAS SETAS, numa coluna por cima do "?".
+   ⚠️ ELAS SAÍRAM DO TRANSPORTE. Ali competiam com o play — o botão que se procura sem olhar —
+   e empurravam o relógio num ecrã de 390. Aqui ficam na mesma fila dos outros flutuantes, que é
+   onde este editor já põe o que acompanha a montagem sem fazer parte dela.
+
+   `column-reverse` para o DESFAZER ficar EMBAIXO, mais perto da mão e dos outros botões: é ele
+   que se usa dez vezes por cada refazer. A ordem no HTML continua a ser desfazer e depois
+   refazer, que é como o teclado e o leitor de tela os encontram. */
+.setas {
+  position: absolute;
+  right: 18px;
+  z-index: $camada-dos-flutuantes;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+
+  button {
+    @extend %flutuante-redondo;
+
+    &:disabled { cursor: default; opacity: .35; }
+  }
+}
+
+.ajuda {
+  // Flutua sobre a linha do tempo, ACIMA do rodapé — o `bottom` chega em linha, do mesmo token
+  // que dá a altura ao rodapé, para os dois não poderem divergir.
+  position: absolute;
+  right: 18px;
+  z-index: $camada-dos-flutuantes;
+
+  summary {
+    @extend %flutuante-redondo;
+
+    list-style: none;
+
+    &::-webkit-details-marker { display: none; }
+  }
+
+  > div {
+    position: absolute;
+    right: 0;
+    // Abre PARA CIMA: no rodapé, para baixo não há tela.
+    bottom: calc(100% + 10px);
+    width: 300px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #212127;
+    border: 1px solid #44444f;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+    color: #a6a6b3;
+    font-size: 12px;
+    line-height: 1.6;
+
+    strong { color: #e8e8ee; }
+    p { margin: 8px 0 0; }
+    em { color: #e8e8ee; font-style: normal; font-weight: 600; }
+  }
+}
+
+// O balão da letra: o mesmo gesto do "?", do outro lado do rodapé — e mais largo, porque um
+// verso quebrado a cada quatro palavras deixa de ser um verso.
+.letra {
+  right: 62px;
+
+  > div {
+    width: 420px;
+    padding: 12px;
+  }
+}
+
+// O SELO DE ESTADO: salvando, salvo, gerando a guia, enviando.
+//
+// ⚠️ Vivia no cabeçalho, encostado no X de sair — e encostava mesmo: em título comprido, o
+// "Salvando…" passava POR CIMA do botão de fechar, que é o único caminho de saída da tela.
+// Aqui em baixo ele mora com os outros flutuantes (a letra e o "?"), na mesma fila e com a
+// mesma altura. Só aparece quando há de facto algo a acontecer: um indicador que está sempre
+// lá deixa de ser lido, e este precisa de ser lido nas duas vezes em que importa — quando
+// está a gravar, e quando falhou.
+//
+// ⚠️ COM O TEXTO AO LADO DO ÍCONE, e não só o ícone. Redondo e mudo como os vizinhos, ele
+// passava despercebido: uma roda de 14 px a girar num canto não diz "estou a gravar o teu
+// trabalho" a ninguém que não esteja já a olhar para ela. A pílula CRESCE PARA A ESQUERDA
+// (está ancorada pela direita), por isso a letra e o "?" nunca saem do lugar quando o texto
+// muda de comprimento.
+.selo {
+  position: absolute;
+  right: 106px;
+  z-index: $camada-dos-flutuantes;
+
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #2f2f38;
+  border: 1px solid #44444f;
+  // A cor vem em linha, do estado; o que fica aqui é só a forma.
+  font-family: 'SF Mono', 'JetBrains Mono', 'Geist Mono', monospace;
+  font-size: 11px;
+  white-space: nowrap;
+
+  svg { display: block; flex-shrink: 0; }
+}
+
+// A volta do carregador. Fica aqui, e não em estilo em linha, porque `@keyframes` declarado
+// dentro de um componente nasce e morre a cada render.
+.girando {
+  animation: girar .9s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+// A FICHA, vestida com a folha do editor.
+//
+// ⚠️ Os campos são os MESMOS do modal claro (`components/ficha/campos.tsx`) — o que muda aqui é
+// só a pintura. Duplicar o formulário para o pintar de escuro seria criar dois formulários para
+// os mesmos dados, e dois formulários divergem no primeiro campo novo.
+//
+// O antd é temado por `ConfigProvider` no `ProjectSpace`; o que sobra para o CSS é o que não é
+// antd: os rótulos, os títulos de secção e as molduras tracejadas, que vinham do
+// `StandardModal.module.scss` com cores de cartão claro.
+.ficha {
+  // As cores que o campo de envio lê. Ele vive em estilo em linha (é um dropzone com estados),
+  // e nenhuma folha vence estilo em linha — então ele pergunta, e aqui se responde.
+  --ficha-fundo: #1c1c21;
+  --ficha-borda: #44444f;
+  --ficha-realce: #2a2a32;
+  --ficha-acao: #3b82f6;
+  --ficha-texto: #e8e8ee;
+  --ficha-apoio: #71717f;
+
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px;
+  border-radius: 12px;
+  background: #212127;
+  border: 1px solid #33333d;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+
+  // Os rótulos dos campos.
+  :global([class*='StandardModal_field'] > span) {
+    color: #71717f;
+  }
+
+  // Os títulos das secções de créditos.
+  :global([class*='StandardModal_splitSectionTitle'] strong) { color: #e8e8ee; }
+  :global([class*='StandardModal_splitSectionTitle'] span) { color: #71717f; }
+
+  // O vazio dos créditos e a moldura da capa: tracejados de cartão claro.
+  :global([class*='StandardModal_splitEmpty']),
+  :global([class*='StandardModal_uploadBox']) {
+    border-color: #44444f !important;
+    background: #1c1c21 !important;
+    color: #71717f;
+  }
+
+  :global([class*='StandardModal_uploadBox'] strong) { color: #e8e8ee; }
+  :global([class*='StandardModal_uploadBox'] small) { color: #71717f; }
+  :global([class*='StandardModal_uploadBox'] > i) {
+    background: #2a2a32;
+    color: #3b82f6;
+  }
+
+  :global([class*='StandardModal_splitRow']) {
+    background: #2a2a32;
+    border-color: #33333d;
+  }
+
+  :global([class*='StandardModal_splitTotal']),
+  :global([class*='StandardModal_splitFooter']) {
+    color: #a6a6b3;
+  }
+
+  // O botão de acrescentar participante é um fantasma: no escuro, ele precisa de contorno.
+  :global([class*='StandardModal_splitAdd']) {
+    border-color: #44444f;
+    color: #3b82f6;
+  }
+}
+
+/* ══════════ O CONTROLO DE PANORAMA ══════════
+
+   ⚠️ ELE PINTA A PARTIR DO CENTRO, e não da ponta esquerda.
+
+   O panorama não é uma quantidade — é um DESVIO com sinal: zero é o meio, e o que interessa
+   ver é para que lado e quanto. Com `accent-color`, o navegador pinta sempre do mínimo até ao
+   valor, e então uma pista centrada aparecia meio azul (do −100 até ao 0) e uma pista toda à
+   esquerda aparecia vazia. A barra crescia ao contrário do que o ouvido faz: mais tinta =
+   mais à direita, quando mais tinta devia ser = mais desviado.
+
+   O `accent-color` não sabe fazer isto, então o trilho é desenhado à mão. As duas pontas do
+   preenchimento chegam em variáveis, calculadas onde o valor é conhecido. */
+.pan {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 16px;
+  background: transparent;
+  cursor: pointer;
+
+  &:disabled { cursor: default; opacity: .5; }
+
+  // O trilho: cinzento inteiro, com a faixa do desvio pintada por cima.
+  &::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background:
+      linear-gradient(to right,
+        #3f3f4a 0%, #3f3f4a var(--pan-de),
+        #3b82f6 var(--pan-de), #3b82f6 var(--pan-ate),
+        #3f3f4a var(--pan-ate), #3f3f4a 100%);
+  }
+
+  &::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background:
+      linear-gradient(to right,
+        #3f3f4a 0%, #3f3f4a var(--pan-de),
+        #3b82f6 var(--pan-de), #3b82f6 var(--pan-ate),
+        #3f3f4a var(--pan-ate), #3f3f4a 100%);
+  }
+
+  // A marca do centro, para o zero ser um lugar e não uma adivinha.
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    margin-top: -4px;
+    border: 0;
+    border-radius: 50%;
+    background: #e8e8ee;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  }
+
+  &::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 0;
+    border-radius: 50%;
+    background: #e8e8ee;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  }
+}

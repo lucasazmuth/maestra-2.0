@@ -1,4 +1,16 @@
 import ReactDOM from 'react-dom/client';
+
+// ⚠️ AS MENSAGENS DO ANTD SÓ APARECEM COM ISTO, e a falta dele não dava erro nenhum.
+//
+// `message.warning(...)`, `notification.*` e `Modal.confirm` são funções ESTÁTICAS: montam a
+// própria árvore com `ReactDOM.render`, que o React 19 removeu. Sem o remendo oficial elas
+// passam a não fazer NADA — não lançam, não avisam, e a única pista é uma linha no console a
+// dizer que o antd v5 suporta React 16 a 18. O app inteiro ficou assim: cada "Não consegui
+// salvar" e cada "Aguarde para criar outro perfil" era escrito para ninguém.
+//
+// Tem de ser importado antes de qualquer tela que chame essas funções.
+import '@ant-design/v5-patch-for-react-19';
+
 import '@fontsource-variable/inter/wght.css';
 import '@fontsource-variable/jetbrains-mono/wght.css';
 import './index.css';

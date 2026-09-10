@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable,
-  ScrollView, StyleSheet, Text, TextInput, View,
+  Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
 import { COR, COR_PLANO, RAIO } from '@maestra/core/constants/design';
+
+import { Bloco, Folha, Linha } from '@/casca/Folha';
 import { TASK_TYPES } from '@maestra/core/constants/maestra';
 import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import type { ActionTask, TaskComment } from '@maestra/core/interfaces/maestra';
 
-import { Escolha, type Opcao } from '@/casca/plano/Escolha';
+import { Escolha, type Opcao } from '@/casca/Escolha';
 
 // A ficha da TAREFA — a mesma do "⋮" da web (`TaskDetailModal`).
 //
@@ -85,12 +86,11 @@ const Seletor = ({ texto, aoTocar, rotulo }: {
 );
 
 export const FichaDaTarefa = ({
-  aberta, tarefa, estrategia, responsaveis, autor,
+  aberta, tarefa, responsaveis, autor,
   aoFechar, aoSalvar, aoExcluir, aoComentar, aoEditarComentario, aoExcluirComentario,
 }: {
   aberta: boolean;
   tarefa: ActionTask | null;
-  estrategia?: string;
   responsaveis: Opcao[];
   autor: { id?: string | null; nome: string };
   aoFechar: () => void;
@@ -172,27 +172,16 @@ export const FichaDaTarefa = ({
   };
 
   return (
-    <Modal visible={aberta} animationType="slide" onRequestClose={aoFechar}>
-      <KeyboardAvoidingView
-        style={estilos.folha}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={estilos.cabecalho}>
-          <View style={estilos.flex}>
-            <Text style={estilos.sobrenome}>TAREFA</Text>
-            <View style={estilos.linhaDoTitulo}>
-              <View style={estilos.ponto} />
-              <Text style={estilos.titulo} numberOfLines={2}>
-                {tarefa?.description || 'Tarefa'}
-              </Text>
-            </View>
-            {!!estrategia && <Text style={estilos.apoio} numberOfLines={2}>{estrategia}</Text>}
-          </View>
-          <Pressable onPress={aoFechar} hitSlop={10} accessibilityRole="button" accessibilityLabel="Fechar">
-            <Feather name="x" size={20} color={COR_PLANO.rotulo} />
-          </Pressable>
-        </View>
-
+    <Folha
+      aberta={aberta}
+      titulo={tarefa?.description || 'Tarefa'}
+      aoFechar={aoFechar}
+      // Salvar só na aba Geral: na de comentários não há formulário para gravar.
+      acao={aba === 'geral' ? { rotulo: 'Salvar alterações', aoTocar: salvar, carregando: salvando } : undefined}
+      destrutiva={{ rotulo: 'Excluir', aoTocar: excluir }}
+      semRolagem
+    >
+      <View style={estilos.miolo}>
         <View style={estilos.abas}>
           {([['geral', 'Geral'], ['comentarios', `Comentários${comentarios.length ? ` (${comentarios.length})` : ''}`]] as const)
             .map(([chave, rotulo]) => (
@@ -212,6 +201,8 @@ export const FichaDaTarefa = ({
         <ScrollView contentContainerStyle={estilos.corpo} keyboardShouldPersistTaps="handled">
           {aba === 'geral' ? (
             <>
+              <Bloco>
+                <Linha primeira>
               <Campo rotulo="Descrição">
                 <TextInput
                   style={[estilos.entrada, estilos.entradaAlta]}
@@ -224,7 +215,9 @@ export const FichaDaTarefa = ({
                   accessibilityLabel="Descrição da tarefa"
                 />
               </Campo>
+                </Linha>
 
+                <Linha>
               <Campo rotulo="Status">
                 <Seletor
                   texto={rotuloDoEstado(estado)}
@@ -232,7 +225,9 @@ export const FichaDaTarefa = ({
                   rotulo={`Status: ${rotuloDoEstado(estado)}`}
                 />
               </Campo>
+                </Linha>
 
+                <Linha>
               <Campo rotulo="Prazo">
                 <TextInput
                   style={estilos.entrada}
@@ -249,7 +244,11 @@ export const FichaDaTarefa = ({
                   accessibilityLabel="Prazo"
                 />
               </Campo>
+                </Linha>
+              </Bloco>
 
+              <Bloco rotulo="Classificação">
+                <Linha primeira>
               <Campo rotulo="Categoria">
                 <Seletor
                   texto={rotuloDaCategoria(tipo)}
@@ -257,7 +256,9 @@ export const FichaDaTarefa = ({
                   rotulo={`Categoria: ${rotuloDaCategoria(tipo)}`}
                 />
               </Campo>
+                </Linha>
 
+                <Linha>
               <Campo rotulo="Responsável">
                 <Seletor
                   texto={responsaveis.find((r) => r.valor === responsavel)?.rotulo ?? 'Sem responsável'}
@@ -265,6 +266,8 @@ export const FichaDaTarefa = ({
                   rotulo="Responsável"
                 />
               </Campo>
+                </Linha>
+              </Bloco>
 
               {!!erro && <Text style={estilos.erro}>{erro}</Text>}
             </>
@@ -377,26 +380,7 @@ export const FichaDaTarefa = ({
             </>
           )}
         </ScrollView>
-
-        <View style={estilos.rodape}>
-          <Pressable onPress={excluir} accessibilityRole="button" accessibilityLabel="Excluir tarefa">
-            <Text style={estilos.excluir}>Excluir tarefa</Text>
-          </Pressable>
-          {aba === 'geral' && (
-            <Pressable
-              style={[estilos.salvar, salvando && estilos.salvarOcupado]}
-              onPress={salvar}
-              disabled={salvando}
-              accessibilityRole="button"
-              accessibilityLabel="Salvar alterações"
-            >
-              {salvando
-                ? <ActivityIndicator size="small" color={COR.superficie} />
-                : <Text style={estilos.salvarTexto}>Salvar alterações</Text>}
-            </Pressable>
-          )}
-        </View>
-      </KeyboardAvoidingView>
+      </View>
 
       <Escolha
         aberta={menu === 'estado'}
@@ -423,25 +407,14 @@ export const FichaDaTarefa = ({
         aoEscolher={setResponsavel}
         aoFechar={() => setMenu(null)}
       />
-    </Modal>
+    </Folha>
   );
 };
 
+// A casca mora na `Folha`. Aqui ficam as abas, a estratégia e os campos.
 const estilos = StyleSheet.create({
-  folha: { flex: 1, backgroundColor: COR.superficie },
+  miolo: { flex: 1, minHeight: 0 },
   flex: { flex: 1, minWidth: 0 },
-  cabecalho: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-    paddingTop: 60, paddingHorizontal: 22, paddingBottom: 18,
-  },
-  sobrenome: {
-    fontSize: 11, fontWeight: '800', letterSpacing: 1.6,
-    textTransform: 'uppercase', color: COR_PLANO.rotulo,
-  },
-  linhaDoTitulo: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
-  ponto: { width: 8, height: 8, borderRadius: 4, backgroundColor: COR.primaria },
-  titulo: { flex: 1, fontSize: 20, fontWeight: '800', color: COR_PLANO.titulo },
-  apoio: { fontSize: 13, color: COR_PLANO.legenda, lineHeight: 19, marginTop: 8 },
   abas: {
     flexDirection: 'row', gap: 22, paddingHorizontal: 22,
     borderBottomWidth: 1, borderBottomColor: COR_PLANO.fio,
@@ -450,20 +423,17 @@ const estilos = StyleSheet.create({
   abaAtiva: { borderBottomColor: COR.primaria },
   abaTexto: { fontSize: 15, color: COR_PLANO.legenda },
   abaTextoAtivo: { fontWeight: '700', color: COR.primaria },
-  corpo: { padding: 22, gap: 18 },
-  campo: { gap: 8 },
-  rotulo: { fontSize: 13, fontWeight: '700', color: COR_PLANO.rotulo },
-  entrada: {
-    minHeight: 46, paddingHorizontal: 14, paddingVertical: 12,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_PLANO.contorno,
-    backgroundColor: COR_PLANO.secaoFundo, fontSize: 15, color: COR_PLANO.titulo,
-  },
-  entradaAlta: { minHeight: 92, textAlignVertical: 'top' },
+  // O recuo e o intervalo do corpo saem da `Folha`; aqui fica o espaço ENTRE os blocos.
+  corpo: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 28, gap: 22 },
+  // Os campos seguem a folha de compromisso da Agenda, que é a referência: rótulo miúdo em caixa
+  // alta e o campo SEM moldura, porque o bloco branco já é o recipiente e a divisória já separa.
+  campo: { gap: 6 },
+  rotulo: { fontSize: 11, fontWeight: '800', color: COR_PLANO.rotulo, letterSpacing: 0.4 },
+  entrada: { paddingVertical: 2, fontSize: 15, color: COR_PLANO.titulo },
+  entradaAlta: { minHeight: 72, textAlignVertical: 'top' },
   seletor: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-    minHeight: 46, paddingHorizontal: 14,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR_PLANO.contorno,
-    backgroundColor: COR_PLANO.secaoFundo,
+    paddingVertical: 2,
   },
   seletorTexto: { flex: 1, fontSize: 15, color: COR_PLANO.titulo },
   erro: { fontSize: 13, color: COR.erro, lineHeight: 19 },
@@ -496,16 +466,4 @@ const estilos = StyleSheet.create({
   },
   enviarApagado: { opacity: 0.45 },
 
-  rodape: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 22, paddingTop: 14, paddingBottom: 34,
-    borderTopWidth: 1, borderTopColor: COR_PLANO.fio,
-  },
-  excluir: { fontSize: 14, fontWeight: '700', color: COR.erro },
-  salvar: {
-    minHeight: 46, minWidth: 170, paddingHorizontal: 22, borderRadius: RAIO.campo,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: COR.primaria,
-  },
-  salvarOcupado: { opacity: 0.7 },
-  salvarTexto: { fontSize: 15, fontWeight: '700', color: COR.superficie },
 });

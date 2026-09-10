@@ -123,3 +123,26 @@ export const duracaoDoAudio = async (uri: string): Promise<string | null> => {
     tocador.release();
   }
 };
+
+/**
+ * Vários áudios de uma vez: os stems de uma gravação chegam em lote.
+ *
+ * Só a lista muda em relação ao `escolherAudio`: o mesmo seletor, o mesmo `copyToCacheDirectory`
+ * (o iOS dá URIs de segurança que expiram; a cópia para a cache é o que faz a leitura dos bytes
+ * funcionar depois). Quem chama lê um ficheiro de cada vez — `File(uri).bytes()` carrega o
+ * ficheiro inteiro na memória, e 6 WAV de 40 MB ao mesmo tempo é o que derruba o app.
+ */
+export const escolherAudios = async (): Promise<ArquivoEscolhido[]> => {
+  const escolha = await DocumentPicker.getDocumentAsync({
+    type: 'audio/*',
+    multiple: true,
+    copyToCacheDirectory: true,
+  });
+  if (escolha.canceled || !escolha.assets?.length) return [];
+  return escolha.assets.map((arquivo) => ({
+    nome: arquivo.name,
+    tipo: arquivo.mimeType ?? undefined,
+    uri: arquivo.uri,
+    tamanho: arquivo.size ?? undefined,
+  }));
+};

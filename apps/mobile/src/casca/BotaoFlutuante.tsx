@@ -20,7 +20,7 @@ import { ALTURA_DA_ILHA, rodapeDaIlha } from '@/casca/BarraDeAbas';
 /** A folga entre a ilha e o botão. */
 const FOLGA = 14;
 
-export const BotaoFlutuante = ({ rotulo, aoTocar, acimaDe = 0 }: {
+export const BotaoFlutuante = ({ rotulo, aoTocar, acimaDe = 0, semIlha = false }: {
   rotulo: string;
   aoTocar: () => void;
   /**
@@ -32,9 +32,20 @@ export const BotaoFlutuante = ({ rotulo, aoTocar, acimaDe = 0 }: {
    * vez de este arquivo passar a conhecer o player.
    */
   acimaDe?: number;
+  /**
+   * A tela não tem a ilha de navegação embaixo.
+   *
+   * Só o Espaço JAM passa isto: ele mora fora das abas do artista (é uma tela da pilha da
+   * raiz, sem barra), e é a única tela fora das abas que CRIA coisas. Sem esta prop o botão
+   * reservaria os 78 pt de uma ilha que não está lá, e flutuaria a meio caminho do rodapé.
+   */
+  semIlha?: boolean;
 }) => {
   const margem = useSafeAreaInsets();
-  const debaixo = Math.max(rodapeDaIlha(margem.bottom) + ALTURA_DA_ILHA + FOLGA, acimaDe + FOLGA);
+  const chao = semIlha
+    ? Math.max(margem.bottom, 14)
+    : rodapeDaIlha(margem.bottom) + ALTURA_DA_ILHA;
+  const debaixo = Math.max(chao + FOLGA, acimaDe + FOLGA);
 
   return (
     <View style={[estilos.ancora, { bottom: debaixo }]} pointerEvents="box-none">

@@ -885,31 +885,61 @@ export const COR_ENTRADA = {
  * Os valores saem de `src/pages/Catalog/ProjectSpace.module.scss` (bloco `max-width: 760px`) e
  * do DOM computado a 375px; `src/__tests__/cromoDoEspacoJam.test.ts` os amarra lá.
  */
+// Três tokens saíram daqui em 09/09/2026 junto com o chat do projeto: `painelDoChat`,
+// `legenda` (o texto das mensagens) e `entradaFundo` (o campo de escrever). Eram cores que só a
+// casca do chat usava na web, e este objeto é a cópia da folha da web — o teste do cromo
+// reprova um token que a folha não tem. O que no app usava `legenda` passou para `apoio`, e o
+// que usava `entradaFundo` para `cabecaDaVersao`, que são os tons vizinhos que ficaram.
+/**
+ * A cor de cada pista da mesa, pela posição dela.
+ *
+ * Cor como SISTEMA, e não como enfeite: a mesma cor identifica a faixa na borda da linha, o
+ * ponto ao lado do nome e a onda. É o que faz uma mesa de seis pistas ler-se de relance.
+ *
+ * Sai da POSIÇÃO e não do instrumento, porque o nome da pista é texto livre — adivinhar
+ * "bateria" de "808" ou "Kick in" daria errado mais vezes do que certo, e uma cor errada é pior
+ * do que uma cor arbitrária.
+ *
+ * ⚠️ Estas NÃO entram no `COR_JAM`: aquele objeto é a cópia da folha da web, e o teste do cromo
+ * compara-o linha a linha com o SCSS. Estas são usadas em linha nas duas superfícies, a partir
+ * daqui — uma fonte só, sem cópia para divergir.
+ */
+export const CORES_DAS_PISTAS = [
+  '#2f60f6', // azul da marca
+  '#e0ad3c', // âmbar
+  '#5f9ea0', // verde-água
+  '#c4568f', // rosa
+  '#6f5fd8', // roxo
+  '#4f9d5b', // verde
+  '#d1743a', // laranja
+  '#5588c7', // azul claro
+] as const;
+
+/** A cor da pista na posição N. Dá a volta: a nona pista repete a primeira. */
+export const corDaPista = (indice: number): string =>
+  CORES_DAS_PISTAS[((indice % CORES_DAS_PISTAS.length) + CORES_DAS_PISTAS.length)
+    % CORES_DAS_PISTAS.length];
+
 export const COR_JAM = {
   fundoDe: '#f9fbff',
   fundoAte: '#eef4ff',
   mancha: 'rgba(47, 96, 246, .08)',
   painel: 'rgba(255, 255, 255, .86)',
-  painelDoChat: 'rgba(255, 255, 255, .9)',
   fio: '#dce6f7',
   texto: '#405985',
   titulo: '#2f4164',
   rotulo: '#8ca0c5',
   apoio: '#7f92b6',
-  legenda: '#5d7198',
   botaoRedondo: 'rgba(255, 255, 255, .92)',
+  /** O fundo dos blocos dentro das folhas e dos modais — vem do `StandardModal` da web. */
   cabecaDaVersao: '#f6f9ff',
-  semAudio: '#fbfcff',
   contornoDaVersao: '#dce6f7',
-  contornoDaPrincipal: 'rgba(47, 96, 246, .28)',
   cracha: '#5f76a3',
-  crachaContorno: '#d6e2f7',
   estrela: '#b7c4da',
   estrelaAcesa: '#e0ad3c',
   acaoFundo: '#eef4ff',
   acaoIcone: '#405985',
   vazioContorno: '#c8d7f0',
-  entradaFundo: '#f8fbff',
   avatarDe: '#9a4fd1',
   avatarAte: '#2f60f6',
   /** O status sem cor própria cai neste amarelo, e a pílula escolhe a tinta pela luminância. */

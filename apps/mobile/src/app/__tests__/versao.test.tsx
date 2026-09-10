@@ -49,12 +49,13 @@ jest.mock('@/nucleo/arquivos', () => ({
 const versao = (over: Partial<CatalogVersion> = {}): CatalogVersion => ({
   id: 'v-1', project_id: 'p-1', version_number: 2, title: 'mix v2', duration: '3:20',
   audio_file: 'https://exemplo.invalid/mix.mp3', author_name: 'Lucas',
+  bpm: '128', key: 'Am',
   created_at: '2026-08-01T12:00:00Z', ...over,
 } as CatalogVersion);
 
 const projeto = (over: Partial<CatalogProject> = {}): CatalogProject => ({
   id: 'p-1', artist_id: 'a-1', title: 'Noite Clara', status: 'mixing',
-  bpm: '128', key: 'Am', genre: 'Pop', primary_version_id: 'v-1',
+  genre: 'Pop', primary_version_id: 'v-1',
   versions: [versao()], ...over,
 } as CatalogProject);
 
@@ -75,13 +76,26 @@ describe('espaço da versão', () => {
     mockStatus = { playing: false, currentTime: 0, duration: 200, didJustFinish: false };
   });
 
-  it('abre a gravação, com a ficha técnica da música', async () => {
+  // ⚠️ O BPM e o tom são DESTA gravação, e não da música: esta tela é a versão, e um acústico
+  // não anda no mesmo andamento do original. O gênero continua da música, que é onde ele vive.
+  it('abre a gravação, com o BPM e o tom DELA e o gênero da música', async () => {
     const tela = await montar();
     expect(await tela.findByText('mix v2')).toBeTruthy();
     expect(tela.getByText('ESPAÇO DA VERSÃO · Mixagem')).toBeTruthy();
     expect(tela.getByText('128')).toBeTruthy();
     expect(tela.getByText('Am')).toBeTruthy();
     expect(tela.getByText('Pop')).toBeTruthy();
+  });
+
+  // Duas gravações da mesma música podem estar em andamentos diferentes, e é a que está aberta
+  // que manda. Ler do projeto mostraria o número da outra.
+  it('mostra o andamento desta versão, e não o de outra', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ bpm: '92', key: 'D' })],
+    }));
+    const tela = await montar();
+    expect(await tela.findByText('92')).toBeTruthy();
+    expect(tela.getByText('D')).toBeTruthy();
   });
 
   // O áudio entra no player assim que a tela abre: é a razão de a tela existir.

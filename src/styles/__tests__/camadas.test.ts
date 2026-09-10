@@ -71,7 +71,7 @@ describe('escada de camadas', () => {
       ['pages/ActionPlan/index.tsx', 'var(--z-overlay)'],
       ['components/SuccessConfetti.tsx', 'var(--z-confete)'],
       ['components/spinner/spinner.scss', 'var(--z-carregando)'],
-      ['pages/Catalog/ProjectSpace.module.scss', 'var(--z-tela-cheia)'],
+      ['pages/Catalog/daw/editor.module.scss', 'var(--z-tela-cheia)'],
     ];
     for (const [arquivo, token] of alvos) {
       expect(ler(arquivo)).toContain(token);
@@ -85,7 +85,7 @@ describe('escada de camadas', () => {
   // Este teste existe para o dia em que algo aparecer por cima do JAM e a reação for subir o
   // número de novo: não vai funcionar, e a resposta está no comentário daquele arquivo.
   it('o Espaço JAM não voltou a escalar número', () => {
-    const jam = ler('pages/Catalog/ProjectSpace.module.scss');
+    const jam = ler('pages/Catalog/daw/editor.module.scss');
     // `matchAll` espalhado exige um target mais novo que o do projeto; exec em laco resolve.
     const padrao = /z-index:\s*(\d+)/g;
     const numeros: number[] = [];

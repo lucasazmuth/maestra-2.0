@@ -127,16 +127,87 @@ export const ACTIVE_CATALOG_STATUSES: readonly CatalogStatus[] = [
 export const isActiveCatalogStatus = (status: string): boolean =>
   (ACTIVE_CATALOG_STATUSES as readonly string[]).includes(status);
 
-export const SPLIT_ROLES = [
-  'Autor',
-  'Compositor',
-  'Intérprete',
-  'Produtor',
-  'Músico',
+// ─── As pistas (stems) de uma gravação ──────────────────────────────────────
+
+/**
+ * O teto de pistas por gravação.
+ *
+ * É memória, não gosto: um stem de 4 minutos ocupa ~85 MB de PCM estéreo (~42 em mono) quando
+ * descodificado para tocar. Oito estéreo passam dos 600 MB, que é onde um iPhone antigo começa
+ * a ser morto pelo sistema.
+ */
+/**
+ * Quantas pistas cabem numa gravação.
+ *
+ * Eram 8, e 8 é pouco: um projeto de stems tem dez, doze, às vezes vinte faixas — bateria
+ * aberta em bombo, caixa, pratos e ambiências já gasta quatro. O teto existe pela memória (ver
+ * `MEMORIA_DE_AVISO_BYTES`), e no computador há folga para isto; quem passar do aviso de peso
+ * é avisado antes de descodificar.
+ */
+export const MAXIMO_DE_PISTAS = 24;
+
+/**
+ * O tamanho máximo de uma pista.
+ *
+ * 60 MB cabe um WAV 16-bit de 4 minutos com folga. O balde `catalog` aceita até 100 MB, então
+ * este número é o nosso, e não o dele — um WAV 24-bit de 5 minutos passaria no balde e daria
+ * 130 MB de PCM na memória por pista.
+ */
+export const LIMITE_DA_PISTA_BYTES = 60 * 1024 * 1024;
+
+/**
+ * A partir de quanto áudio a mesa avisa que pode ser demais.
+ *
+ * A conta: um WAV 16-bit estéreo gasta 4 bytes por quadro, e o PCM que a mesa guarda no
+ * telemóvel (mono, vírgula flutuante) gasta os MESMOS 4 bytes por quadro. Por isso o tamanho do
+ * ficheiro serve de estimativa direta da memória — para WAV. Para MP3 ele subestima por dez, e
+ * o aviso é o que há: o número exato só se sabe depois de descodificar, que é tarde demais.
+ *
+ * 400 MB é onde um iPhone antigo começa a matar aplicações.
+ */
+export const MEMORIA_DE_AVISO_BYTES = 400 * 1024 * 1024;
+
+/** Sugestões para o nome da pista. São ATALHOS, não uma lista fechada: o campo é livre. */
+export const PAPEIS_SUGERIDOS_DA_PISTA = [
+  'Voz', 'Guia', 'Bateria', 'Baixo', 'Guitarra', 'Teclas', 'Outros',
+] as const;
+
+// As CLASSES de titular, no vocabulário das associações autorais.
+//
+// ⚠️ São duas listas, e não uma, porque são dois direitos diferentes: a OBRA é o que foi
+// composto (letra e melodia), o FONOGRAMA é a gravação daquela obra. Um intérprete não tem
+// classe na obra; um compositor não tem classe no fonograma. Uma lista só faz aparecer
+// "Produtor fonográfico" no lugar onde se declara quem escreveu a canção — que é como se
+// preenche errado um cadastro que depois paga (ou não paga) direitos a alguém.
+//
+// Os nomes saem do que o ECAD e a UBC praticam nos formulários deles.
+
+/** Quem tem direito sobre a OBRA: quem a escreveu, e quem a edita. */
+export const CLASSES_DA_OBRA = [
+  'Compositor/Autor',
+  'Versionista',
+  'Adaptador',
   'Arranjador',
   'Editora',
+  'Subeditora',
+];
+
+/** Quem tem direito sobre o FONOGRAMA: quem gravou, quem tocou, quem produziu. */
+export const CLASSES_DO_FONOGRAMA = [
+  'Intérprete',
+  'Produtor fonográfico',
+  'Músico acompanhante',
+  'Músico',
   'Gravadora',
 ];
+
+/**
+ * As duas listas juntas.
+ *
+ * Fica para quem ainda não sabe separar os dois direitos — hoje, a ficha do app. Onde a
+ * distinção existe (a ficha da web), usam-se as listas específicas.
+ */
+export const SPLIT_ROLES = [...CLASSES_DA_OBRA, ...CLASSES_DO_FONOGRAMA];
 
 export const EVENT_TYPES: Record<EventType, { label: string; color: string }> = {
   release: { label: 'Lançamento', color: '#a855f7' },
