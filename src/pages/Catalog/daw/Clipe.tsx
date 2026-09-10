@@ -30,22 +30,27 @@ export const Clipe: FC<{
   /** A mix de uma gravação por montar: toca e desenha-se, mas não se edita. */
   fixo?: boolean;
   /**
-   * Sem edição por gesto: o clipe vê-se e ouve-se, mas não se arrasta, nem se corta, nem se
-   * apaga.
+   * Sem edição por GESTO: o clipe não se arrasta e não se apaga com duplo toque. Dividir e
+   * remover continuam a existir, pelos botões.
+   *
+   * ⚠️ ISTO JÁ TRAVOU O CLIPE INTEIRO, e era demais. Arrastar um clipe para o segundo certo
+   * com o dedo num ecrã de 375 px erra mais do que acerta, e um duplo-toque que apaga é fácil
+   * de dar sem querer — esses dois gestos merecem sair. A barra de ações não: um botão escrito
+   * REMOVER, atrás de um toque que seleciona, não se carrega por acidente. O que aconteceu foi
+   * a mão (que muda) ter levado à frente a intenção (que não muda), e no telemóvel um clipe
+   * mal enviado ficava sem forma de sair.
    *
    * ⚠️ NÃO É O MESMO QUE `fixo`. Fixo é a pista da Mix — uma pista que não se mexe por natureza,
-   * e que por isso se chama "Mix" em vez de "Take N". Isto aqui é o TELEMÓVEL: os clipes são
-   * normais, e o que muda é a mão. Arrastar um clipe para o segundo certo com o dedo num ecrã
-   * de 375 px erra mais do que acerta, e o duplo-toque que apaga é fácil de fazer sem querer.
+   * e que por isso se chama "Mix" em vez de "Take N". Essa não se edita de forma nenhuma.
    */
-  semEdicao?: boolean;
+  semArrasto?: boolean;
   aoSelecionar: () => void;
   aoArrastar: (evento: React.MouseEvent) => void;
   aoCortar: () => void;
   aoApagar: () => void;
-}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, semEdicao, aoSelecionar, aoArrastar, aoCortar, aoApagar }) => {
-  /** Travado para gestos: por ser a Mix, ou por estar num telemóvel. */
-  const travado = fixo || semEdicao;
+}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, semArrasto, aoSelecionar, aoArrastar, aoCortar, aoApagar }) => {
+  /** Nada de gestos: por ser a Mix, ou por estar num telemóvel. */
+  const semGesto = fixo || semArrasto;
   const caixa = useRef<HTMLDivElement>(null);
   const partiuDe = useRef(0);
   const arrastou = useRef(false);
@@ -54,23 +59,34 @@ export const Clipe: FC<{
   // trabalha noutro, e duas barras abertas ao mesmo tempo mentem sobre o que a tesoura corta.
   useEffect(() => {
     if (!selecionado) return undefined;
-    const fora = (evento: MouseEvent) => {
-      if (caixa.current && !caixa.current.contains(evento.target as Node)) aoSelecionar();
+    const fora = (evento: PointerEvent) => {
+      const alvo = evento.target as HTMLElement | null;
+      // ⚠️ MEXER NA AGULHA É PARTE DE DIVIDIR: é ela que diz onde o corte cai, e chegar lá
+      // pede um toque na régua. Largar a seleção nesse toque fechava a barra exatamente no
+      // gesto que a estava a preparar — escolhia-se o ponto e já não havia tesoura.
+      if (alvo?.closest('[data-agulha]')) return;
+      if (caixa.current && !caixa.current.contains(alvo as Node)) aoSelecionar();
     };
-    document.addEventListener('mousedown', fora);
-    return () => document.removeEventListener('mousedown', fora);
+    // `pointerdown`, e não `mousedown`: ao toque o rato só é imitado depois do dedo levantar,
+    // e até lá a barra de um clipe ficava aberta por cima do que se estava a fazer noutro.
+    document.addEventListener('pointerdown', fora);
+    return () => document.removeEventListener('pointerdown', fora);
   }, [selecionado, aoSelecionar]);
+
+  // O dedo pede mais do que o ponteiro: 24 px de altura acertam-se com o rato e falham-se com
+  // o polegar, e estes dois botões decidem se um clipe fica ou desaparece.
+  const alvo = semArrasto ? { height: 34, padding: '0 12px' } : { height: 24, padding: '0 8px' };
 
   const inicio = Number(clipe.start_seconds) || 0;
   const duracao = Number(clipe.duration_seconds) || 0;
-  const podeCortar = !travado && agulha > inicio + 0.05 && agulha < inicio + duracao - 0.05;
+  const podeCortar = !fixo && agulha > inicio + 0.05 && agulha < inicio + duracao - 0.05;
 
   return (
     <div
       ref={caixa}
       onMouseDown={(evento) => { partiuDe.current = evento.clientX; arrastou.current = false; aoArrastar(evento); }}
       onMouseMove={(evento) => { if (Math.abs(evento.clientX - partiuDe.current) > 4) arrastou.current = true; }}
-      onDoubleClick={(evento) => { evento.stopPropagation(); if (!travado) aoApagar(); }}
+      onDoubleClick={(evento) => { evento.stopPropagation(); if (!semGesto) aoApagar(); }}
       onClick={(evento) => {
         // Só alterna a seleção num clique LIMPO: sem isto, largar um arrasto selecionava ou
         // largava o clipe sem ninguém ter pedido.
@@ -89,7 +105,7 @@ export const Clipe: FC<{
         boxShadow: selecionado
           ? `0 0 0 2px ${cor}55, 0 4px 16px ${cor}44`
           : `0 4px 12px ${cor}22`,
-        cursor: travado ? 'default' : 'grab',
+        cursor: semGesto ? 'default' : 'grab',
         overflow: 'visible',
         transition: 'border-color 150ms, box-shadow 150ms',
       }}
@@ -138,11 +154,16 @@ export const Clipe: FC<{
         {fixo ? 'Mix' : `Take ${indice + 1}`}
       </div>
 
-      {selecionado && !travado && (
+      {selecionado && !fixo && (
         <div
           onMouseDown={(evento) => evento.stopPropagation()}
           style={{
-            position: 'absolute', top: -38, left: 0,
+            // ⚠️ NO TELEMÓVEL A BARRA VIVE DENTRO DO CLIPE. Por cima dele (que é onde ela fica
+            // no desktop, e onde não tapa a onda) a primeira pista atirava-a para fora do topo
+            // da área que rola: ficava cortada pela régua, ou invisível. Dentro cabe — uma
+            // faixa de 96 px dá 80 de clipe — e nunca sai do ecrã.
+            position: 'absolute',
+            ...(semArrasto ? { bottom: 6, left: 6 } : { top: -38, left: 0 }),
             display: 'flex', gap: 4,
             background: DS.color.bgPainel,
             border: `1px solid ${DS.color.bordaForte}`,
@@ -160,7 +181,7 @@ export const Clipe: FC<{
             aria-label='Dividir o clipe na agulha'
             style={{
               display: 'flex', alignItems: 'center', gap: 4,
-              height: 24, padding: '0 8px',
+              ...alvo,
               background: podeCortar ? `${DS.color.primaria}18` : 'transparent',
               border: `1px solid ${podeCortar ? `${DS.color.primaria}60` : DS.color.borda}`,
               borderRadius: 4,
@@ -178,7 +199,7 @@ export const Clipe: FC<{
             aria-label='Remover o clipe'
             style={{
               display: 'flex', alignItems: 'center', gap: 4,
-              height: 24, padding: '0 8px',
+              ...alvo,
               background: 'transparent',
               border: `1px solid ${DS.color.borda}`,
               borderRadius: 4,

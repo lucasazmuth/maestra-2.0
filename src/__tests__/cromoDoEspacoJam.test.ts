@@ -348,12 +348,52 @@ describe('cromo do editor do Espaço JAM', () => {
       expect(corpo).toContain('aria-label={rotulo}');
     });
 
-    it('o clipe não se arrasta nem se apaga com o dedo', () => {
-      expect(corpo).toContain('semEdicao={noCelular}');
-      expect(semComentarios(clipe)).toContain('const travado = fixo || semEdicao;');
-      // ⚠️ `semEdicao` NÃO é `fixo`: fixo é a pista da Mix, e troca o rótulo do clipe para
+    // ⚠️ O QUE SAI É O GESTO, NÃO A INTENÇÃO. Arrastar um clipe para o segundo certo com o
+    // dedo erra mais do que acerta, e um duplo-toque que apaga é fácil de dar sem querer —
+    // esses dois merecem sair. Dividir e remover, não: são botões escritos, atrás de um toque
+    // que seleciona, e travá-los deixava um clipe mal enviado sem forma de sair no telemóvel.
+    it('o clipe não se arrasta nem se apaga com o dedo, mas divide e remove pelos botões', () => {
+      const oClipe = semComentarios(clipe);
+
+      expect(corpo).toContain('semArrasto={noCelular}');
+      expect(oClipe).toContain('const semGesto = fixo || semArrasto;');
+      // Os dois gestos, e só eles, é que olham para o telemóvel.
+      expect(oClipe).toContain('if (!semGesto) aoApagar();');
+      expect(oClipe).toContain("cursor: semGesto ? 'default' : 'grab'");
+
+      // A barra e a tesoura olham para `fixo`: só a Mix é que não se edita de forma nenhuma.
+      expect(oClipe).toContain('{selecionado && !fixo && (');
+      expect(oClipe).toContain('const podeCortar = !fixo &&');
+
+      // ⚠️ `semArrasto` NÃO é `fixo`: fixo é a pista da Mix, e troca o rótulo do clipe para
       // "Mix". Um clipe normal num telemóvel continua a ser "Take N".
-      expect(semComentarios(clipe)).toContain("{fixo ? 'Mix' : `Take ${indice + 1}`}");
+      expect(oClipe).toContain("{fixo ? 'Mix' : `Take ${indice + 1}`}");
+    });
+
+    // ⚠️ ESCOLHER O PONTO DO CORTE NÃO PODE FECHAR A BARRA. Dividir é em dois tempos: leva-se
+    // a agulha para dentro do clipe e só depois se corta. Enquanto tocar na régua contava como
+    // "clicou fora", o primeiro tempo desfazia o segundo.
+    it('mexer na agulha não larga o clipe selecionado', () => {
+      const oClipe = semComentarios(clipe);
+
+      expect(oClipe).toContain("alvo?.closest('[data-agulha]')");
+      // Ao toque o rato só é imitado depois de o dedo levantar: até lá a barra ficava aberta.
+      expect(oClipe).toContain("document.addEventListener('pointerdown', fora)");
+      expect(oClipe).toContain("document.removeEventListener('pointerdown', fora)");
+
+      // E as duas coisas que movem a agulha estão marcadas: a régua e a própria agulha.
+      expect(corpo.match(/data-agulha=''/g)).toHaveLength(2);
+    });
+
+    // Por cima do clipe (onde ela fica no desktop) a barra da PRIMEIRA pista saía pelo topo da
+    // área que rola: ficava cortada pela régua, ou invisível.
+    it('a barra do clipe cabe dentro dele, com alvos de dedo', () => {
+      const oClipe = semComentarios(clipe);
+
+      expect(oClipe).toContain("...(semArrasto ? { bottom: 6, left: 6 } : { top: -38, left: 0 })");
+      expect(oClipe).toContain("semArrasto ? { height: 34, padding: '0 12px' }");
+      // Nos dois botões: um alvo de 24 px acerta-se com o rato e falha-se com o polegar.
+      expect(oClipe.match(/\.\.\.alvo,/g)).toHaveLength(2);
     });
 
     it('a coluna encolhe, e as faixas acompanham a mesma altura', () => {

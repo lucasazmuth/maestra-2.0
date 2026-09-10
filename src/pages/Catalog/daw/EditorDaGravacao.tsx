@@ -1002,6 +1002,9 @@ export const EditorDaGravacao: FC<{
               >
                 <div
                   onMouseDown={(evento) => { agulhaPresa.current = true; transporte.irPara(segundoDoEvento(evento)); }}
+                  // Marcada como agulha: tocar aqui move o ponto do corte, e é um gesto que
+                  // PREPARA a barra do clipe em vez de a fechar.
+                  data-agulha=''
                   style={{
                     height: ALTURA_DA_REGUA, width: largura,
                     position: 'sticky', top: 0, zIndex: 10,
@@ -1073,7 +1076,7 @@ export const EditorDaGravacao: FC<{
                             altura={alturaDaPista}
                             selecionado={selecionado === clipe.id}
                             fixo={faixa.id === pistaFixaId}
-                            semEdicao={noCelular}
+                            semArrasto={noCelular}
                             aoSelecionar={() => setSelecionado((atual) => (atual === clipe.id ? null : clipe.id))}
                             aoArrastar={(evento) => {
                               if (!podeEditar || noCelular || faixa.id === pistaFixaId) return;
@@ -1108,6 +1111,7 @@ export const EditorDaGravacao: FC<{
                   {/* A agulha. Fica por cima de tudo, e é ela que diz onde o corte cai. */}
                   <div
                     onMouseDown={() => { agulhaPresa.current = true; }}
+                    data-agulha=''
                     style={{
                       position: 'absolute', left: agulha * escala, top: 0,
                       height: Math.max(pistas.length, 1) * alturaDaPista,
