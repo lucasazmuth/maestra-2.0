@@ -442,6 +442,20 @@ const ProjectSpace: FC = () => {
     }, ESPERA);
   };
 
+  /**
+   * Esquece uma escrita adiada que já não faz sentido.
+   *
+   * ⚠️ APAGAR TEM DE CANCELAR O QUE ESTAVA A CAMINHO. Tocar num clipe agenda a gravação da
+   * posição dele; carregar em REMOVER logo a seguir apagava a linha e, meio segundo depois, a
+   * escrita adiada chegava a um `id` que já não existia. O clipe sumia (porque foi mesmo
+   * removido) e a tela dizia "Falha ao salvar" — um erro vermelho para a única operação da
+   * sequência que tinha corrido bem.
+   */
+  const esquecer = (chave: string) => {
+    window.clearTimeout(relogios.current[chave]);
+    delete relogios.current[chave];
+  };
+
   // ─── As ações do editor ───────────────────────────────────────────────────
 
   /**
@@ -769,6 +783,7 @@ const ProjectSpace: FC = () => {
 
     aoApagarClipe: (clipeId) => {
       sujo.current = true;
+      esquecer(`clipe:${clipeId}`);
       setSaveState('salvando');
       void catalogDb.deleteClip(clipeId)
         .then(refresh)
@@ -789,6 +804,10 @@ const ProjectSpace: FC = () => {
 
     aoApagarPista: (pistaId) => {
       sujo.current = true;
+      // A pista leva os clipes dela: as escritas adiadas de cada um também deixam de fazer
+      // sentido, e cada uma delas daria a mesma falha inventada.
+      esquecer(`pista:${pistaId}`);
+      (pistas.find((p) => p.id === pistaId)?.clips || []).forEach((c) => esquecer(`clipe:${c.id}`));
       setSaveState('salvando');
       // O FICHEIRO fica na biblioteca da gravação: apagar a pista é desfazer a montagem, não
       // deitar fora o que foi enviado.

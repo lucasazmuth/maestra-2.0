@@ -229,7 +229,8 @@ export const EditorDaGravacao: FC<{
 
   const linha = useRef<HTMLDivElement>(null);
   const rolagem = useRef<HTMLDivElement>(null);
-  const arrasto = useRef<{ clipeId: string; deslocamentoX: number } | null>(null);
+  /** O clipe que a mão tem agora, e onde ele estava quando a mão o pegou. */
+  const arrasto = useRef<{ clipeId: string; deslocamentoX: number; inicio: number } | null>(null);
   const agulhaPresa = useRef(false);
   /** Quem mexeu no zoom manda: o encaixe automático nunca volta a mexer nele. */
   const zoomMexido = useRef(false);
@@ -314,7 +315,14 @@ export const EditorDaGravacao: FC<{
     if (!puxado) return;
     arrasto.current = null;
     const bruto = segundoDoEvento(evento) - puxado.deslocamentoX / escala;
-    acoes.aoMoverClipe(puxado.clipeId, Math.max(0, Math.round(bruto / passoDoEncaixe) * passoDoEncaixe));
+    const destino = Math.max(0, Math.round(bruto / passoDoEncaixe) * passoDoEncaixe);
+    // ⚠️ UM TOQUE NÃO É UM ARRASTO, e mandava gravar na mesma. Duas consequências, as duas
+    // más: um clipe que estivesse fora da grelha (por ter sido posto antes de haver andamento)
+    // saltava para o tempo mais próximo só por ter sido SELECIONADO; e a escrita agendada por
+    // esse falso movimento chegava depois de quem carregasse em REMOVER, a um clipe que já não
+    // existia — daí o "Falha ao salvar" logo a seguir a apagar com sucesso.
+    if (Math.abs(destino - puxado.inicio) < 0.001) return;
+    acoes.aoMoverClipe(puxado.clipeId, destino);
   };
 
   const escolherArquivos = (arquivos: File[], inicio: number, pistaAlvo?: string) => {
@@ -1141,6 +1149,7 @@ export const EditorDaGravacao: FC<{
                               arrasto.current = {
                                 clipeId: clipe.id,
                                 deslocamentoX: x - (Number(clipe.start_seconds) || 0) * escala,
+                                inicio: Number(clipe.start_seconds) || 0,
                               };
                             }}
                             aoCortar={() => { acoes.aoCortarClipe(clipe.id, agulha); setSelecionado(null); }}

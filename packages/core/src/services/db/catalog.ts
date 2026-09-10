@@ -475,16 +475,17 @@ export const createTrack = async (
   return data as CatalogTrack;
 };
 
+/** Pelo mesmo motivo do `updateClip`: uma pista apagada com uma escrita adiada a caminho. */
 export const updateTrack = async (
   id: string,
   patch: Partial<Pick<CatalogTrack, 'name' | 'position' | 'gain' | 'muted' | 'color_index' | 'pan' | 'kind'>>,
-): Promise<CatalogTrack> => {
+): Promise<CatalogTrack | null> => {
   const { data, error } = await supabase
     .from('catalog_tracks')
     .update({ ...patch, updated_at: new Date().toISOString() })
-    .eq('id', id).select('*').single();
+    .eq('id', id).select('*').maybeSingle();
   if (error) throw error;
-  return data as CatalogTrack;
+  return (data as CatalogTrack) ?? null;
 };
 
 /** Apagar a pista leva os clipes junto (o banco cascateia). O FICHEIRO fica na biblioteca. */
@@ -519,16 +520,28 @@ export const createClip = async (
   return data as CatalogClip;
 };
 
+/**
+ * ⚠️ `maybeSingle`, E NÃO `single`: a linha pode já não existir, e isso não é uma falha.
+ *
+ * As escritas da montagem são adiadas — arrastar um clipe grava meio segundo depois de a mão
+ * parar. Nessa janela ele pode ser removido, aqui ou por outra pessoa na mesma gravação, e
+ * `single` trata "zero linhas" como erro: o pedido rebentava com PGRST116 e a tela dizia
+ * "Falha ao salvar" logo a seguir a apagar com sucesso — um erro vermelho para uma operação
+ * que tinha corrido bem.
+ *
+ * Quem chama não distingue os dois casos porque não precisa: `null` quer dizer "já não há o
+ * que atualizar", e é o mesmo desfecho que se queria.
+ */
 export const updateClip = async (
   id: string,
   patch: Partial<Pick<CatalogClip, 'start_seconds' | 'offset_seconds' | 'duration_seconds' | 'track_id'>>,
-): Promise<CatalogClip> => {
+): Promise<CatalogClip | null> => {
   const { data, error } = await supabase
     .from('catalog_clips')
     .update({ ...patch, updated_at: new Date().toISOString() })
-    .eq('id', id).select('*').single();
+    .eq('id', id).select('*').maybeSingle();
   if (error) throw error;
-  return data as CatalogClip;
+  return (data as CatalogClip) ?? null;
 };
 
 export const deleteClip = async (id: string): Promise<void> => {

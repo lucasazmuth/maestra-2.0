@@ -764,6 +764,36 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(corpo).toContain('aria-label={`Trocar para ${alternativa} BPM`}');
   });
 
+  // ⚠️ "FALHA AO SALVAR" LOGO A SEGUIR A APAGAR COM SUCESSO. Tocar num clipe agendava a
+  // gravação da posição dele; carregar em REMOVER apagava a linha, e meio segundo depois a
+  // escrita adiada chegava a um `id` que já não existia. O clipe sumia (porque foi mesmo
+  // removido) e a tela dizia que tinha falhado — um erro vermelho para a única operação da
+  // sequência que tinha corrido bem.
+  it('apagar cancela o que estava a caminho, e um toque não conta como arrasto', () => {
+    const corpo = semComentarios(editor);
+    const espaco = semComentarios(tela);
+
+    // A raiz: só se grava a posição de um clipe que MUDOU de sítio.
+    expect(corpo).toContain('if (Math.abs(destino - puxado.inicio) < 0.001) return;');
+    expect(corpo).toContain('inicio: Number(clipe.start_seconds) || 0,');
+
+    // E o que já estava agendado morre com a linha que ele ia atualizar.
+    expect(espaco).toContain('esquecer(`clipe:${clipeId}`);');
+    expect(espaco).toContain('esquecer(`pista:${pistaId}`);');
+    expect(espaco).toContain(
+      '(pistas.find((p) => p.id === pistaId)?.clips || []).forEach((c) => esquecer(`clipe:${c.id}`));',
+    );
+
+    // ⚠️ E a rede por baixo de tudo: uma linha que já não existe não é uma falha de escrita.
+    // Sem isto, a mesma corrida com outra pessoa na mesma gravação daria o mesmo erro inventado.
+    const banco = semComentarios(
+      fs.readFileSync(path.join(__dirname, '..', '..', 'packages', 'core', 'src', 'services', 'db', 'catalog.ts'), 'utf8'),
+    );
+    expect(banco).toContain("Promise<CatalogClip | null>");
+    expect(banco).toContain("Promise<CatalogTrack | null>");
+    expect(banco.match(/\.eq\('id', id\)\.select\('\*'\)\.maybeSingle\(\)/g)).toHaveLength(2);
+  });
+
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
   it('a tela de exportar oferece stems e guia, sem travessão na copy', () => {
     expect(exportar).toContain('Baixar stems (.zip)');
