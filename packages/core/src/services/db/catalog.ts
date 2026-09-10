@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { BALDE_DO_CATALOGO, caminhoNoBalde, removerArquivo } from '../armazenamento';
 import type {
   CatalogItem,
   CatalogProject,
@@ -283,8 +284,21 @@ export const listCatalogProjectItems = async (artistId: string): Promise<Catalog
   });
 };
 
+/**
+ * O projeto com a montagem inteira.
+ *
+ * ⚠️ OS MARCADOS PARA APAGAR SÃO FILTRADOS NO SERVIDOR, e não aqui. Filtrar depois de receber
+ * seria mais fácil de escrever e mandaria pela rede exatamente aquilo que se ia deitar fora —
+ * numa sessão longa de edição, o lixo viajaria em cada leitura. O filtro vai no `is` embutido,
+ * que o PostgREST aplica ao recurso encaixado sem transformar a junção em obrigatória: uma
+ * gravação sem pistas continua a voltar.
+ */
 export const getCatalogProject = async (projectId: string): Promise<CatalogProject> => {
-  const { data, error } = await supabase.from('catalog_projects').select(PROJECT_SELECT_COM_MONTAGEM).eq('id', projectId).single();
+  const { data, error } = await supabase.from('catalog_projects')
+    .select(PROJECT_SELECT_COM_MONTAGEM)
+    .is('versions.tracks.deleted_at', null)
+    .is('versions.tracks.clips.deleted_at', null)
+    .eq('id', projectId).single();
   if (!error) return data as CatalogProject;
   if (!isMissingTable(error) && error.code !== 'PGRST116') throw error;
   const { data: legacy, error: legacyError } = await supabase.from(TABLE).select('*').eq('id', projectId).single();
@@ -544,9 +558,164 @@ export const updateClip = async (
   return (data as CatalogClip) ?? null;
 };
 
+// ─── APAGAR É EM DOIS TEMPOS ────────────────────────────────────────────────
+//
+// Marcar agora, apagar de verdade ao fechar. É o que dá às duas setas alguma coisa para onde
+// voltar — e o que impede a linha do tempo de ser um sítio onde ninguém experimenta.
+//
+// ⚠️ A MARCA VAI PARA O BANCO, e não para a memória da tela. Guardada só em memória, a linha
+// continuaria a existir no banco e a próxima abertura do projeto traria de volta um clipe que
+// alguém tinha apagado. Marcada, ela some de todas as leituras e volta se o desfazer a chamar.
+
+/** Marca um clipe para apagar. Some da montagem na hora; ainda dá para o trazer de volta. */
+export const marcarClipeApagado = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('catalog_clips')
+    .update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+};
+
+/** O desfazer: tira a marca e o clipe volta ao sítio onde estava. */
+export const restaurarClipe = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('catalog_clips')
+    .update({ deleted_at: null }).eq('id', id);
+  if (error) throw error;
+};
+
+/** Marca uma pista para apagar. Os clipes dela vão juntos, pela leitura. */
+export const marcarPistaApagada = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('catalog_tracks')
+    .update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+};
+
+export const restaurarPista = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('catalog_tracks')
+    .update({ deleted_at: null }).eq('id', id);
+  if (error) throw error;
+};
+
 export const deleteClip = async (id: string): Promise<void> => {
   const { error } = await supabase.from('catalog_clips').delete().eq('id', id);
   if (error) throw error;
+};
+
+export interface Varridos {
+  pistas: number;
+  clipes: number;
+  /** Ficheiros que já não tinham clipe nenhum a apontar para eles. */
+  arquivos: number;
+}
+
+/**
+ * Apaga de verdade o que foi marcado, e leva o que ficou sem uso.
+ *
+ * Corre em dois momentos, e é a mesma função nos dois: ao FECHAR o editor, sem `antesDe`,
+ * levando tudo o que esta sessão marcou; e ao ABRIR, com `antesDe`, para varrer o que sobrou de
+ * uma sessão que morreu sem fechar (a aba fechada à bruta, o portátil que adormeceu).
+ *
+ * ⚠️ O `antesDe` NÃO É ENFEITE. Duas abas no mesmo projeto acontecem, e sem ele a que abre
+ * depois apagaria de vez aquilo que a outra ainda pode desfazer — o desfazer da primeira
+ * passaria a mentir. Com ele, a limpeza de abertura só toca no que está marcado há tempo
+ * demais para pertencer a alguém vivo.
+ *
+ * ⚠️ E LEVA OS FICHEIROS ÓRFÃOS. Até aqui, apagar uma pista guardava o áudio "na biblioteca da
+ * gravação" — só que biblioteca nenhuma existe na tela: o ficheiro ficava no balde para sempre,
+ * invisível, sem forma de o remover. Um ficheiro sem clipe nenhum a apontar para ele não é uma
+ * reserva, é resíduo. Sai daqui, do banco e do balde.
+ */
+export const purgarMontagem = async (
+  versionId: string,
+  opcoes: { antesDe?: string } = {},
+): Promise<Varridos> => {
+  // As pistas primeiro: os clipes delas descem em cascata pela chave estrangeira, e assim a
+  // varredura dos clipes a seguir já não os vê.
+  const dePistas = supabase.from('catalog_tracks').select('id')
+    .eq('version_id', versionId).not('deleted_at', 'is', null);
+  const { data: pistasMortas, error: erroPistas } = await (
+    opcoes.antesDe ? dePistas.lte('deleted_at', opcoes.antesDe) : dePistas
+  );
+  if (erroPistas) throw erroPistas;
+  const idsMortos = (pistasMortas || []).map((p) => (p as { id: string }).id);
+  if (idsMortos.length) {
+    const { error } = await supabase.from('catalog_tracks').delete().in('id', idsMortos);
+    if (error) throw error;
+  }
+
+  // As pistas que ficam. São no máximo `MAXIMO_DE_PISTAS`, por isso uma lista de ids serve
+  // melhor do que uma subconsulta: uma ida ao servidor a menos e nenhum SQL a manter.
+  const { data: pistasVivas, error: erroVivas } = await supabase
+    .from('catalog_tracks').select('id').eq('version_id', versionId).is('deleted_at', null);
+  if (erroVivas) throw erroVivas;
+  const idsVivos = (pistasVivas || []).map((p) => (p as { id: string }).id);
+
+  let clipes = 0;
+  if (idsVivos.length) {
+    const deClipes = supabase.from('catalog_clips').select('id')
+      .in('track_id', idsVivos).not('deleted_at', 'is', null);
+    const { data: mortos, error } = await (
+      opcoes.antesDe ? deClipes.lte('deleted_at', opcoes.antesDe) : deClipes
+    );
+    if (error) throw error;
+    const idsClipes = (mortos || []).map((c) => (c as { id: string }).id);
+    if (idsClipes.length) {
+      const { error: erroApagar } = await supabase.from('catalog_clips').delete().in('id', idsClipes);
+      if (erroApagar) throw erroApagar;
+      clipes = idsClipes.length;
+    }
+  }
+
+  const arquivos = await purgarArquivosOrfaos(versionId);
+  return { pistas: idsMortos.length, clipes, arquivos };
+};
+
+/**
+ * Os ficheiros da gravação que já não têm clipe nenhum a apontar para eles.
+ *
+ * ⚠️ A ORDEM É BANCO DEPOIS BALDE, e não o contrário. Apagar o objeto primeiro e falhar a linha
+ * deixaria um clipe a apontar para um endereço vazio — a montagem abriria com uma pista muda e
+ * sem explicação. Ao contrário, o pior caso é um objeto esquecido no balde, que não estraga
+ * nada e a varredura seguinte não repete (a linha já não existe para o denunciar).
+ */
+const purgarArquivosOrfaos = async (versionId: string): Promise<number> => {
+  const { data: arquivos, error } = await supabase
+    .from('catalog_version_files').select('id, file_url').eq('version_id', versionId);
+  if (error) throw error;
+  if (!arquivos?.length) return 0;
+
+  // ⚠️ CONTA TODO CLIPE QUE AINDA EXISTE, marcado ou não — e é aqui que estava o perigo. Um
+  // clipe apagado há pouco continua no banco à espera do desfazer; se ele não contasse, o
+  // ficheiro dele parecia órfão e saía do balde, e a seta traria de volta um clipe a apontar
+  // para um endereço vazio: uma pista muda, sem explicação e sem volta.
+  //
+  // As linhas marcadas que iam mesmo embora já foram apagadas acima. O que sobrou aqui, sobrou
+  // porque ainda pode voltar.
+  const { data: pistas, error: erroPistas } = await supabase
+    .from('catalog_tracks').select('id').eq('version_id', versionId);
+  if (erroPistas) throw erroPistas;
+  const idsDePistas = (pistas || []).map((p) => (p as { id: string }).id);
+
+  const usados = new Set<string>();
+  if (idsDePistas.length) {
+    const { data: clipes, error: erroClipes } = await supabase
+      .from('catalog_clips').select('file_id').in('track_id', idsDePistas);
+    if (erroClipes) throw erroClipes;
+    (clipes || []).forEach((c) => usados.add((c as { file_id: string }).file_id));
+  }
+
+  const orfaos = (arquivos as { id: string; file_url: string }[]).filter((a) => !usados.has(a.id));
+  if (!orfaos.length) return 0;
+
+  const { error: erroApagar } = await supabase
+    .from('catalog_version_files').delete().in('id', orfaos.map((a) => a.id));
+  if (erroApagar) throw erroApagar;
+
+  await Promise.all(orfaos.map(async (a) => {
+    const caminho = caminhoNoBalde(a.file_url, BALDE_DO_CATALOGO);
+    // Um ficheiro que não está no nosso balde (importado de fora, num projeto antigo) não é
+    // nosso para apagar: a linha sai, o objeto de outra pessoa fica.
+    if (caminho) await removerArquivo(BALDE_DO_CATALOGO, caminho).catch(() => undefined);
+  }));
+  return orfaos.length;
 };
 
 /**

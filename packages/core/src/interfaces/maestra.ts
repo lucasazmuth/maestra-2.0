@@ -574,6 +574,14 @@ export interface CatalogTrack {
   pan?: number;
   /** Por agora só `audio` toca; os outros esperam o piano roll e o sequenciador. */
   kind?: 'audio' | 'synth' | 'piano' | 'drums';
+  /**
+   * Marcado para apagar, à espera do fim da sessão.
+   *
+   * ⚠️ NÃO CHEGA AQUI COM VALOR: a leitura da montagem já filtra os marcados, e o que esta tela
+   * vê é sempre o que existe. O campo está no tipo porque a escrita passa por ele — apagar é
+   * pôr a data, desfazer é tirá-la.
+   */
+  deleted_at?: string | null;
   clips?: CatalogClip[];
   created_at?: string;
   updated_at?: string;
@@ -597,6 +605,14 @@ export interface CatalogClip {
   duration_seconds: number;
   /** A URL do ficheiro, trazida junto pela leitura. Não é coluna desta tabela. */
   file_url?: string;
+  /**
+   * Marcado para apagar, à espera do fim da sessão.
+   *
+   * ⚠️ NÃO CHEGA AQUI COM VALOR: a leitura da montagem já filtra os marcados, e o que esta tela
+   * vê é sempre o que existe. O campo está no tipo porque a escrita passa por ele — apagar é
+   * pôr a data, desfazer é tirá-la.
+   */
+  deleted_at?: string | null;
   file_name?: string;
   created_at?: string;
   updated_at?: string;

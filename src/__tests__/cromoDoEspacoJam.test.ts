@@ -794,6 +794,59 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(banco.match(/\.eq\('id', id\)\.select\('\*'\)\.maybeSingle\(\)/g)).toHaveLength(2);
   });
 
+  // ⚠️ APAGAR PASSOU A SER EM DOIS TEMPOS: marcar agora, apagar de verdade ao fechar. É o que
+  // dá às duas setas alguma coisa para onde voltar — e o que impede a linha do tempo de ser um
+  // sítio onde ninguém experimenta.
+  it('apagar marca em vez de apagar, e o fecho da sessão leva o resíduo', () => {
+    const espaco = semComentarios(tela);
+    const banco = semComentarios(
+      fs.readFileSync(path.join(__dirname, '..', '..', 'packages', 'core', 'src', 'services', 'db', 'catalog.ts'), 'utf8'),
+    );
+
+    // A tela marca; quem apaga de verdade é a purga.
+    expect(espaco).toContain('catalogDb.marcarClipeApagado(clipeId)');
+    expect(espaco).toContain('catalogDb.marcarPistaApagada(pistaId)');
+    expect(espaco).not.toContain('catalogDb.deleteClip(');
+    expect(espaco).not.toContain('catalogDb.deleteTrack(');
+
+    // ⚠️ E O MARCADO NÃO CHEGA À TELA: o filtro é no servidor, senão o lixo viaja pela rede em
+    // cada leitura de uma sessão longa de edição.
+    expect(banco).toContain(".is('versions.tracks.deleted_at', null)");
+    expect(banco).toContain(".is('versions.tracks.clips.deleted_at', null)");
+
+    // Os dois momentos da limpeza, com a mesma função.
+    expect(espaco).toContain('catalogDb.purgarMontagem(open.id)');
+    expect(espaco).toContain('antesDe: new Date(Date.now() - UMA_HORA).toISOString()');
+
+    // ⚠️ O ficheiro órfão sai junto: até aqui ele ficava no balde para sempre, invisível, sem
+    // tela que o listasse ou removesse.
+    expect(banco).toContain('purgarArquivosOrfaos');
+    expect(banco).toContain('removerArquivo(BALDE_DO_CATALOGO, caminho)');
+  });
+
+  // ⚠️ E A CORRIDA QUE O DESFAZER CRIARIA: a escrita adiada do arrasto ia gravar a posição nova
+  // meio segundo depois de a mão parar. Desfazer nessa janela escreveria a antiga e, logo a
+  // seguir, a adiada punha o clipe de volta — a seta parecia não funcionar.
+  it('as setas cancelam o que estava adiado, e uma de cada vez', () => {
+    const espaco = semComentarios(tela);
+    const corpo = semComentarios(editor);
+
+    expect(espaco).toContain("esquecer(`clipe:${passo.clipeId}`);");
+    expect(espaco).toContain('if (andandoNoTempo) return;');
+    // A pilha só anda se a escrita passou: movê-la antes deixaria o histórico a mentir.
+    const oAndar = espaco.slice(espaco.indexOf('const andarNoTempo'));
+    const ateOCatch = oAndar.slice(0, oAndar.indexOf('} catch {'));
+    expect(ateOCatch.length).toBeGreaterThan(80);
+    expect(ateOCatch.indexOf('await aplicarPasso')).toBeLessThan(ateOCatch.indexOf('setHistorico(saida.historico)'));
+
+    // Um passo por GESTO, e não por pixel: o `de` só chega quando a mão largou.
+    expect(corpo).toContain('acoes.aoMoverClipe(puxado.clipeId, destino, puxado.inicio);');
+    expect(espaco).toContain("if (de !== undefined) anotar({ tipo: 'mover', clipeId, de, para: inicio });");
+
+    // ⚠️ E o atalho não rouba o Ctrl+Z de quem está a escrever num campo.
+    expect(corpo).toContain('alvo?.closest(\'input, textarea, [contenteditable="true"]\')');
+  });
+
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
   it('a tela de exportar oferece stems e guia, sem travessão na copy', () => {
     expect(exportar).toContain('Baixar stems (.zip)');

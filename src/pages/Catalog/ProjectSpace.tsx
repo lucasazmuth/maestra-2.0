@@ -2,6 +2,11 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { ID_DA_MIX, NOME_DA_MIX, montagemDaVersao, pistasDaGravacao } from '@maestra/core/audio/pistasDaVersao';
+import {
+  HISTORICO_VAZIO, desfazer as desfazerPasso, podeDesfazer, podeRefazer,
+  refazer as refazerPasso, registar, rotuloDaSeta,
+  type Historico, type PassoDaMontagem,
+} from '@maestra/core/audio/historico';
 import { useMesa } from '@maestra/core/audio/useMesa';
 import { useAnaliseDaVersao } from '@maestra/core/hooks/useAnaliseDaVersao';
 import { useArtist } from '@maestra/core/hooks/useArtist';
@@ -369,6 +374,103 @@ const ProjectSpace: FC = () => {
     ? outroAndamento(ouvido)
     : null;
 
+  // ─── As duas setas ────────────────────────────────────────────────────────
+  //
+  // A pilha vive no núcleo e é pura; aqui ficam as MÃOS — quem fala com o banco e quem manda a
+  // tela recarregar. Um passo desfeito é sempre o inverso exato do que foi feito, e apagar é o
+  // caso interessante: a linha não some do banco, fica marcada, e desfazer é tirar a marca.
+  //
+  // ⚠️ O QUE FOI MARCADO NÃO FICA MARCADO PARA SEMPRE. Ao fechar o editor, tudo o que esta
+  // sessão apagou é apagado de verdade, com os ficheiros que já não tenham clipe nenhum a
+  // apontar para eles. Sem esse fecho, cada engano de montagem deixaria resíduo no banco e no
+  // balde — invisível, permanente, e a crescer.
+  const [historico, setHistorico] = useState<Historico>(HISTORICO_VAZIO);
+  const [andandoNoTempo, setAndandoNoTempo] = useState(false);
+  const anotar = (passo: PassoDaMontagem) => setHistorico((h) => registar(h, passo));
+
+  const aplicarPasso = async (passo: PassoDaMontagem, sentido: 'desfazer' | 'refazer') => {
+    const voltando = sentido === 'desfazer';
+    switch (passo.tipo) {
+      case 'mover':
+        // ⚠️ A ESCRITA ADIADA DO ARRASTO TEM DE MORRER PRIMEIRO. Ela ia gravar a posição NOVA
+        // meio segundo depois de a mão parar; desfazer nessa janela escreveria a antiga e, logo
+        // a seguir, a adiada punha o clipe de volta onde estava — a seta parecia não funcionar,
+        // e ninguém saberia porquê. Cancelá-la é seguro: o valor que ela levava é exatamente o
+        // que esta linha está a substituir.
+        esquecer(`clipe:${passo.clipeId}`);
+        await catalogDb.updateClip(passo.clipeId, { start_seconds: voltando ? passo.de : passo.para });
+        break;
+      case 'apagarClipe':
+        await (voltando ? catalogDb.restaurarClipe : catalogDb.marcarClipeApagado)(passo.clipeId);
+        break;
+      case 'apagarPista':
+        await (voltando ? catalogDb.restaurarPista : catalogDb.marcarPistaApagada)(passo.pistaId);
+        break;
+      case 'cortar':
+        // Desandar um corte é o clipe da esquerda voltar ao comprimento inteiro e o da direita
+        // desaparecer. Refazer é o contrário, e o pedaço da direita volta do sítio onde estava.
+        await catalogDb.updateClip(passo.clipeId, {
+          duration_seconds: voltando ? passo.duracaoAntes : passo.duracaoDepois,
+        });
+        await (voltando ? catalogDb.marcarClipeApagado : catalogDb.restaurarClipe)(passo.novoClipeId);
+        break;
+      case 'acrescentarPistas':
+        await Promise.all(passo.pistaIds.map(
+          (id) => (voltando ? catalogDb.marcarPistaApagada : catalogDb.restaurarPista)(id),
+        ));
+        break;
+      default:
+        break;
+    }
+  };
+
+  /**
+   * ⚠️ UMA SETA DE CADA VEZ. Sem a tranca, dois cliques seguidos disparam duas idas ao banco
+   * sobre a mesma montagem e a segunda parte de um estado que a primeira ainda está a mudar —
+   * a tela acaba num estado que não é nem o de antes nem o de depois.
+   */
+  const andarNoTempo = async (sentido: 'desfazer' | 'refazer') => {
+    if (andandoNoTempo) return;
+    const saida = sentido === 'desfazer' ? desfazerPasso(historico) : refazerPasso(historico);
+    if (!saida) return;
+    setAndandoNoTempo(true);
+    setSaveState('salvando');
+    try {
+      await aplicarPasso(saida.passo, sentido);
+      setHistorico(saida.historico);
+      sujo.current = true;
+      await refresh();
+      setSaveState('salvo');
+    } catch {
+      // A pilha não anda: se a escrita falhou, o passo continua onde estava e a seta pode ser
+      // tentada de novo. Mover a pilha aqui deixaria o histórico a mentir sobre o banco.
+      setSaveState('erro');
+    } finally {
+      setAndandoNoTempo(false);
+    }
+  };
+
+  // ─── A limpeza ────────────────────────────────────────────────────────────
+  //
+  // O que foi marcado tem de sair, senão o desfazer troca um resíduo por outro: o banco encheria
+  // de linhas invisíveis e o balde de áudios que nada aponta. Corre em dois momentos, com a
+  // mesma função.
+  //
+  // ⚠️ NA ABERTURA, SÓ O QUE ESTÁ MARCADO HÁ MUITO. Duas abas no mesmo projeto acontecem, e sem
+  // essa folga a aba que abre depois apagaria de vez o que a outra ainda pode desfazer — a seta
+  // da primeira passaria a mentir. Uma hora é tempo de sobra para separar "outra sessão viva"
+  // de "sessão que morreu sem fechar".
+  const UMA_HORA = 3600_000;
+  const varreuNaAbertura = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!openId || !podeEditar || varreuNaAbertura.current === openId) return;
+    varreuNaAbertura.current = openId;
+    void catalogDb.purgarMontagem(openId, {
+      antesDe: new Date(Date.now() - UMA_HORA).toISOString(),
+    }).catch(() => undefined);
+  }, [openId, podeEditar]);
+
   const mudarPistaLocal = (pistaId: string, parte: Partial<CatalogTrack>) => setProject((atual) => (atual ? {
     ...atual,
     versions: (atual.versions || []).map((v) => ({
@@ -533,6 +635,7 @@ const ProjectSpace: FC = () => {
     // conta, o selo dizia "Salvo" depois de não salvar nada: a gaveta fechava, o aviso passava,
     // e ficava um "Salvo" verde por cima de uma montagem que continuava vazia.
     let entraram = 0;
+    const nascidas: string[] = [];
     try {
       for (let i = 0; i < aceites.length; i += 1) {
         setEnvio({ feitos: i, total: aceites.length });
@@ -566,7 +669,7 @@ const ProjectSpace: FC = () => {
             duration_seconds: duracao,
           });
         } else {
-          await catalogDb.criarPistaComArquivo({
+          const nascida = await catalogDb.criarPistaComArquivo({
             versionId: open.id,
             arquivo: linha,
             nome: tituloDoArquivo(arquivo.name),
@@ -575,9 +678,13 @@ const ProjectSpace: FC = () => {
             duracao,
             inicio,
           });
+          nascidas.push(nascida.id);
         }
         entraram += 1;
       }
+      // Um passo só para o lote inteiro: quem larga quatro ficheiros de uma vez fez UM gesto, e
+      // desfazê-lo é tirar os quatro — não carregar na seta quatro vezes.
+      if (nascidas.length) anotar({ tipo: 'acrescentarPistas', pistaIds: nascidas });
 
       if (!entraram) {
         // Nada entrou: não há o que recarregar, e sobretudo não há o que comemorar.
@@ -739,14 +846,24 @@ const ProjectSpace: FC = () => {
     // falhou, em silêncio, sem gravar nada.
     aoSair: async () => {
       await gerarGuia(open);
+      // ⚠️ A SESSÃO FECHA E O QUE FOI APAGADO SAI DE VERDADE — do banco e do balde. É o outro
+      // lado do desfazer: enquanto a tela está aberta a linha fica marcada para poder voltar;
+      // fechada, não há mais quem a chame de volta, e guardá-la seria só resíduo a acumular.
+      //
+      // Falhar aqui não pode prender ninguém na tela: a montagem está salva, e a limpeza da
+      // próxima abertura apanha o que sobrar.
+      if (open && podeEditar) await catalogDb.purgarMontagem(open.id).catch(() => undefined);
       navigate(`/artists/${artistId}/catalog`);
     },
     aoRenomear: (nome) => setProject((atual) => (atual ? { ...atual, title: nome } : atual)),
     aoAdicionarArquivos: (arquivos, inicio, pistaAlvo) => { void enviarPistas(arquivos, inicio, pistaAlvo); },
 
-    aoMoverClipe: (clipeId, inicio) => {
+    // `de` só vem quando a mão LARGOU: durante o arrasto isto é chamado a cada pixel, e um
+    // passo por pixel encheria a pilha com cinquenta versões do mesmo gesto.
+    aoMoverClipe: (clipeId, inicio, de) => {
       sujo.current = true;
       mudarClipeLocal(clipeId, { start_seconds: inicio });
+      if (de !== undefined) anotar({ tipo: 'mover', clipeId, de, para: inicio });
       adiar(`clipe:${clipeId}`, () => catalogDb.updateClip(clipeId, { start_seconds: inicio }));
     },
 
@@ -768,12 +885,16 @@ const ProjectSpace: FC = () => {
       void (async () => {
         try {
           await catalogDb.updateClip(clipeId, { duration_seconds: dentro });
-          await catalogDb.createClip({
+          const nascido = await catalogDb.createClip({
             track_id: pista.id,
             file_id: clipe.file_id,
             start_seconds: emSegundo,
             offset_seconds: recorte + dentro,
             duration_seconds: duracao - dentro,
+          });
+          anotar({
+            tipo: 'cortar', clipeId, duracaoAntes: duracao, duracaoDepois: dentro,
+            novoClipeId: nascido.id,
           });
           await refresh();
           setSaveState('salvo');
@@ -781,11 +902,14 @@ const ProjectSpace: FC = () => {
       })();
     },
 
+    // ⚠️ MARCAR, E NÃO APAGAR. A linha fica no banco até a sessão fechar, que é o que dá à seta
+    // do desfazer alguma coisa para onde voltar. Ao fechar o editor ela é apagada de verdade.
     aoApagarClipe: (clipeId) => {
       sujo.current = true;
       esquecer(`clipe:${clipeId}`);
       setSaveState('salvando');
-      void catalogDb.deleteClip(clipeId)
+      void catalogDb.marcarClipeApagado(clipeId)
+        .then(() => { anotar({ tipo: 'apagarClipe', clipeId }); })
         .then(refresh)
         .then(() => setSaveState('salvo'))
         .catch(() => setSaveState('erro'));
@@ -809,9 +933,10 @@ const ProjectSpace: FC = () => {
       esquecer(`pista:${pistaId}`);
       (pistas.find((p) => p.id === pistaId)?.clips || []).forEach((c) => esquecer(`clipe:${c.id}`));
       setSaveState('salvando');
-      // O FICHEIRO fica na biblioteca da gravação: apagar a pista é desfazer a montagem, não
-      // deitar fora o que foi enviado.
-      void catalogDb.deleteTrack(pistaId)
+      // Marcada, e não apagada: o desfazer tem de a poder trazer de volta com os clipes dela.
+      // O ficheiro só sai no fecho da sessão, e só se nenhum clipe apontar mais para ele.
+      void catalogDb.marcarPistaApagada(pistaId)
+        .then(() => { anotar({ tipo: 'apagarPista', pistaId }); })
         .then(refresh)
         .then(() => setSaveState('salvo'))
         .catch(() => setSaveState('erro'));
@@ -854,6 +979,15 @@ const ProjectSpace: FC = () => {
         podeEditar={podeEditar}
         acoes={acoes}
         bpm={open?.bpm}
+        historico={podeEditar ? {
+          podeDesfazer: podeDesfazer(historico),
+          podeRefazer: podeRefazer(historico),
+          rotuloDesfazer: rotuloDaSeta('Desfazer', historico.passado[historico.passado.length - 1]),
+          rotuloRefazer: rotuloDaSeta('Refazer', historico.futuro[historico.futuro.length - 1]),
+          ocupado: andandoNoTempo,
+          desfazer: () => { void andarNoTempo('desfazer'); },
+          refazer: () => { void andarNoTempo('refazer'); },
+        } : undefined}
         numeros={(
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
             {/* O andamento e o tom são da GRAVAÇÃO ABERTA, e não da obra — por isso descem

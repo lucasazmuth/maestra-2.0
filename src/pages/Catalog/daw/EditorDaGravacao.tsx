@@ -1,6 +1,7 @@
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  FiAlertCircle, FiCheck, FiCircle, FiDownload, FiFileText, FiFolder, FiHeadphones, FiLoader, FiPause,
+  FiAlertCircle, FiCheck, FiCircle, FiCornerUpLeft, FiCornerUpRight, FiDownload, FiFileText,
+  FiFolder, FiHeadphones, FiLoader, FiPause,
   FiPlay, FiRepeat, FiSkipBack, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
@@ -105,7 +106,12 @@ export interface AcoesDoEditor {
   aoRenomear: (nome: string) => void;
   /** `pistaAlvo` vazio cria uma pista nova para cada ficheiro. */
   aoAdicionarArquivos: (arquivos: File[], inicio: number, pistaAlvo?: string) => void;
-  aoMoverClipe: (clipeId: string, inicio: number) => void;
+  /**
+   * `de` só chega quando a mão LARGOU, e é o que o desfazer precisa: durante o arrasto isto é
+   * chamado a cada pixel, e um passo por pixel encheria a pilha com dezenas de versões do
+   * mesmo gesto.
+   */
+  aoMoverClipe: (clipeId: string, inicio: number, de?: number) => void;
   aoCortarClipe: (clipeId: string, emSegundo: number) => void;
   aoApagarClipe: (clipeId: string) => void;
   aoMudarPista: (pistaId: string, parte: Partial<CatalogTrack>) => void;
@@ -132,6 +138,19 @@ export const EditorDaGravacao: FC<{
   /** O andamento e o tom da gravação aberta, no rodapé, junto dos outros controlos. */
   numeros: ReactNode;
   /**
+   * As duas setas. Ausente, elas não aparecem — é o que mantém o editor utilizável por quem só
+   * olha, sem lhe oferecer botões que não podem fazer nada.
+   */
+  historico?: {
+    podeDesfazer: boolean;
+    podeRefazer: boolean;
+    rotuloDesfazer: string;
+    rotuloRefazer: string;
+    ocupado: boolean;
+    desfazer: () => void;
+    refazer: () => void;
+  };
+  /**
    * O andamento da gravação aberta, como está escrito no campo.
    *
    * ⚠️ CHEGA CRU, e é de propósito: o campo é de texto e pode estar vazio, a meio de uma
@@ -149,7 +168,8 @@ export const EditorDaGravacao: FC<{
   acoes: AcoesDoEditor;
 }> = ({
   titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
-  estado, picos, transporte, ficha, numeros, bpm, fichaCompleta, exportar, letra, podeEditar, acoes,
+  estado, picos, transporte, ficha, numeros, bpm, historico, fichaCompleta, exportar, letra,
+  podeEditar, acoes,
 }) => {
   // No telemóvel a montagem não se EDITA — arrastar um clipe para o segundo certo com o dedo,
   // num ecrã de 375 px, erra mais do que acerta, e por isso os clipes lá são só de ver
@@ -268,6 +288,22 @@ export const EditorDaGravacao: FC<{
     [grade, duracao, escala, passo],
   );
 
+  // ⚠️ O ATALHO IGNORA QUEM ESTÁ A ESCREVER. Ctrl+Z dentro de um campo de texto é o desfazer
+  // DO CAMPO, e roubá-lo para a montagem apagaria uma letra de propósito e um clipe por engano
+  // — a pessoa a escrever o nome de uma pista veria a montagem inteira andar para trás.
+  useEffect(() => {
+    if (!historico) return undefined;
+    const naTecla = (evento: KeyboardEvent) => {
+      if (!(evento.metaKey || evento.ctrlKey) || evento.key.toLowerCase() !== 'z') return;
+      const alvo = evento.target as HTMLElement | null;
+      if (alvo?.closest('input, textarea, [contenteditable="true"]')) return;
+      evento.preventDefault();
+      if (evento.shiftKey) historico.refazer(); else historico.desfazer();
+    };
+    window.addEventListener('keydown', naTecla);
+    return () => window.removeEventListener('keydown', naTecla);
+  }, [historico]);
+
   // ⚠️ NO TELEMÓVEL A MONTAGEM ABRE ENCAIXADA NO ECRÃ.
   //
   // A 100 % são 60 px por segundo: uma música de dois minutos mede 8 700 px, e num ecrã de 390
@@ -322,7 +358,7 @@ export const EditorDaGravacao: FC<{
     // esse falso movimento chegava depois de quem carregasse em REMOVER, a um clipe que já não
     // existia — daí o "Falha ao salvar" logo a seguir a apagar com sucesso.
     if (Math.abs(destino - puxado.inicio) < 0.001) return;
-    acoes.aoMoverClipe(puxado.clipeId, destino);
+    acoes.aoMoverClipe(puxado.clipeId, destino, puxado.inicio);
   };
 
   const escolherArquivos = (arquivos: File[], inicio: number, pistaAlvo?: string) => {
@@ -747,6 +783,39 @@ export const EditorDaGravacao: FC<{
             >
               <FiSkipBack size={16} />
             </button>
+
+            {/* ⚠️ AS SETAS FICAM NO TRANSPORTE, e não escondidas num menu. Elas não são um
+                atalho de quem já sabe: são o que autoriza a experimentar, e quem precisa delas
+                é justamente quem ainda não sabe onde procurar. Ficam também no telemóvel, onde
+                um toque errado é mais fácil e o teclado não existe para as chamar. */}
+            {historico && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                {([
+                  ['desfazer', FiCornerUpLeft, historico.podeDesfazer, historico.rotuloDesfazer],
+                  ['refazer', FiCornerUpRight, historico.podeRefazer, historico.rotuloRefazer],
+                ] as const).map(([qual, Icone, pode, rotulo]) => (
+                  <button
+                    key={qual}
+                    type='button'
+                    onClick={qual === 'desfazer' ? historico.desfazer : historico.refazer}
+                    disabled={!pode || historico.ocupado}
+                    // Uma seta muda não se usa: o rótulo diz o que ela vai desmanchar.
+                    title={rotulo}
+                    aria-label={rotulo}
+                    style={{
+                      width: 30, height: 30, borderRadius: DS.raio.medio,
+                      background: 'transparent', border: 'none',
+                      color: DS.color.textoApoio,
+                      opacity: pode && !historico.ocupado ? 1 : 0.35,
+                      cursor: pode && !historico.ocupado ? 'pointer' : 'default',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <Icone size={15} />
+                  </button>
+                ))}
+              </div>
+            )}
 
             <button
               type='button'
