@@ -233,6 +233,26 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(editor).toContain("texto: 'Falha ao salvar'");
   });
 
+  // ⚠️ O TEXTO FICA NA TELA, ao lado do ícone — e não só no `title`. Redondo e mudo, o selo
+  // passava despercebido: uma roda de 14 px a girar num canto não diz a ninguém "estou a
+  // gravar o teu trabalho" se a pessoa não estiver já a olhar para ela.
+  it('o selo escreve o que está a acontecer, e não só o ícone', () => {
+    // ⚠️ FILHO do elemento, e não `title=`/`aria-label=` — que é onde o texto já estava e não
+    // se lia sem passar o rato por cima. Por isso a linha SOZINHA, e não `toContain`: a string
+    // aparece três vezes no arquivo, e duas delas são atributos.
+    const linhas = semComentarios(editor).split('\n').map((l) => l.trim());
+    expect(linhas).toContain('{atividade.texto}');
+
+    // E a forma acompanha: pílula com o texto ao lado, e não um círculo de ícone só.
+    const regra = casca.match(/\.selo\s*\{[^}]*\}/s)?.[0] ?? '';
+    expect(regra).not.toContain('border-radius: 50%');
+    expect(regra).toContain('gap:');
+    // Ancorada pela direita: cresce para a esquerda, e a letra e o "?" não saem do lugar
+    // quando o texto muda de comprimento.
+    expect(regra).toContain('right: 106px');
+    expect(regra).not.toMatch(/\bwidth:/);
+  });
+
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
   it('a tela de exportar oferece stems e guia, sem travessão na copy', () => {
     expect(exportar).toContain('Baixar stems (.zip)');

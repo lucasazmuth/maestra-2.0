@@ -830,6 +830,7 @@ export const EditorDaGravacao: FC<{
           {atividade.girando
             ? <FiLoader size={14} className={casca.girando} />
             : atividade.falhou ? <FiAlertCircle size={14} /> : <FiCheck size={14} />}
+          {atividade.texto}
         </div>
       )}
 

@@ -147,24 +147,35 @@
 //
 // ⚠️ Vivia no cabeçalho, encostado no X de sair — e encostava mesmo: em título comprido, o
 // "Salvando…" passava POR CIMA do botão de fechar, que é o único caminho de saída da tela.
-// Aqui em baixo ele mora com os outros flutuantes (a letra e o "?"), na mesma fila, com o
-// mesmo círculo de 30 px. Só aparece quando há de facto algo a acontecer: um indicador que
-// está sempre lá deixa de ser lido, e este precisa de ser lido nas duas vezes em que importa
-// — quando está a gravar, e quando falhou.
+// Aqui em baixo ele mora com os outros flutuantes (a letra e o "?"), na mesma fila e com a
+// mesma altura. Só aparece quando há de facto algo a acontecer: um indicador que está sempre
+// lá deixa de ser lido, e este precisa de ser lido nas duas vezes em que importa — quando
+// está a gravar, e quando falhou.
+//
+// ⚠️ COM O TEXTO AO LADO DO ÍCONE, e não só o ícone. Redondo e mudo como os vizinhos, ele
+// passava despercebido: uma roda de 14 px a girar num canto não diz "estou a gravar o teu
+// trabalho" a ninguém que não esteja já a olhar para ela. A pílula CRESCE PARA A ESQUERDA
+// (está ancorada pela direita), por isso a letra e o "?" nunca saem do lugar quando o texto
+// muda de comprimento.
 .selo {
   position: absolute;
   right: 106px;
   z-index: var(--z-cartao);
 
-  width: 30px;
   height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
+  padding: 0 12px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: #2f2f38;
   border: 1px solid #44444f;
+  // A cor vem em linha, do estado; o que fica aqui é só a forma.
+  font-family: 'SF Mono', 'JetBrains Mono', 'Geist Mono', monospace;
+  font-size: 11px;
+  white-space: nowrap;
 
-  svg { display: block; }
+  svg { display: block; flex-shrink: 0; }
 }
 
 // A volta do carregador. Fica aqui, e não em estilo em linha, porque `@keyframes` declarado
