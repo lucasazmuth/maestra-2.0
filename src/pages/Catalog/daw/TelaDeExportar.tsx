@@ -50,7 +50,7 @@ export const TelaDeExportar: FC<{
         Stems
       </h2>
       <p style={{ margin: '0 0 16px', fontSize: 12, color: DS.color.textoFraco, lineHeight: 1.5 }}>
-        Cada pista, sozinha, num ZIP — para levar a outro programa e continuar o trabalho lá.
+        Cada pista, sozinha, num ZIP para levar a outro programa e continuar o trabalho lá.
         Sai em WAV, sem perda, com o volume e o panorama que você já ajustou aqui.
       </p>
 
@@ -105,7 +105,7 @@ export const TelaDeExportar: FC<{
         Guia
       </h2>
       <p style={{ margin: '0 0 16px', fontSize: 12, color: DS.color.textoFraco, lineHeight: 1.5 }}>
-        A soma de todas as pistas num arquivo só — o mesmo que toca na lista de Músicas.
+        A soma de todas as pistas num arquivo só, o mesmo que toca na lista de Músicas.
         {!temGuia && ' Ela é gerada ao sair do editor; abra a Timeline e feche para gerar a primeira.'}
       </p>
 

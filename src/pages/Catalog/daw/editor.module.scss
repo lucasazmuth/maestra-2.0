@@ -143,6 +143,40 @@
   }
 }
 
+// O SELO DE ESTADO: salvando, salvo, gerando a guia, enviando.
+//
+// ⚠️ Vivia no cabeçalho, encostado no X de sair — e encostava mesmo: em título comprido, o
+// "Salvando…" passava POR CIMA do botão de fechar, que é o único caminho de saída da tela.
+// Aqui em baixo ele mora com os outros flutuantes (a letra e o "?"), na mesma fila, com o
+// mesmo círculo de 30 px. Só aparece quando há de facto algo a acontecer: um indicador que
+// está sempre lá deixa de ser lido, e este precisa de ser lido nas duas vezes em que importa
+// — quando está a gravar, e quando falhou.
+.selo {
+  position: absolute;
+  right: 106px;
+  z-index: var(--z-cartao);
+
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #2f2f38;
+  border: 1px solid #44444f;
+
+  svg { display: block; }
+}
+
+// A volta do carregador. Fica aqui, e não em estilo em linha, porque `@keyframes` declarado
+// dentro de um componente nasce e morre a cada render.
+.girando {
+  animation: girar .9s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
 // A FICHA, vestida com a folha do editor.
 //
 // ⚠️ Os campos são os MESMOS do modal claro (`components/ficha/campos.tsx`) — o que muda aqui é

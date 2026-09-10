@@ -28,6 +28,7 @@ const biblioteca = ler('pages', 'Catalog', 'daw', 'Biblioteca.tsx');
 const icones = ler('pages', 'Catalog', 'daw', 'icones.tsx');
 const tela = ler('pages', 'Catalog', 'ProjectSpace.tsx');
 const campos = ler('components', 'ficha', 'campos.tsx');
+const exportar = ler('pages', 'Catalog', 'daw', 'TelaDeExportar.tsx');
 
 /** Só o código: um comentário que NOMEIA o que saiu não é o que saiu. */
 const semComentarios = (valor: string) => valor.replace(/\/\/.*$/gm, '');
@@ -193,5 +194,54 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(clipe).toContain('agulha > inicio');
     expect(clipe).toContain('DIVIDIR');
     expect(clipe).toContain('onDoubleClick');
+  });
+
+  // ⚠️ O SELO DE ESTADO NÃO VOLTA PARA O CABEÇALHO. Lá ele encostava no X de sair — com um
+  // título comprido, "Salvando…" passava POR CIMA do único botão que fecha a tela.
+  it('o selo de estado flutua com a letra e o "?", e não no cabeçalho', () => {
+    expect(casca).toContain('.selo');
+    expect(editor).toContain('casca.selo');
+
+    // Na mesma fila dos outros dois flutuantes, e à esquerda deles.
+    const fila = (classe: string) =>
+      Number(casca.match(new RegExp(`\\.${classe}\\s*\\{[^}]*?right:\\s*(\\d+)px`, 's'))?.[1]);
+    expect(fila('ajuda')).toBe(18);
+    expect(fila('letra')).toBe(62);
+    expect(fila('selo')).toBe(106);
+
+    // E o JSX do cabeçalho não escreve mais nenhum dos três textos naquele canto. O que fica
+    // é o `title` do X ("Gerando a guia…"), que é a explicação de por que ele está travado —
+    // aparece no hover, não por cima do botão.
+    const cabecalho = semComentarios(editor.slice(
+      editor.indexOf('FILA DO TÍTULO'), editor.indexOf('CORPO'),
+    ));
+    expect(cabecalho).not.toContain('Salvando…');
+    expect(cabecalho).not.toContain('Enviando {envio');
+    // Nenhum texto ancorado à direita: era isso que passava por cima do X.
+    expect(cabecalho).not.toContain("position: 'absolute', right: 18");
+  });
+
+  // Um indicador que está sempre na tela deixa de ser lido — e este precisa de ser lido nas
+  // duas vezes em que importa: enquanto grava, e quando falha.
+  it('o selo só existe quando há algo a acontecer, e roda enquanto trabalha', () => {
+    expect(editor).toContain('{!!atividade && (');
+    expect(editor).toContain('casca.girando');
+    expect(casca).toContain('@keyframes girar');
+    // Os três sinais viram UM: são a mesma pergunta para quem olha ("posso fechar?").
+    expect(editor).toContain("texto: 'Salvando…'");
+    expect(editor).toContain("texto: 'Gerando a guia…'");
+    expect(editor).toContain("texto: 'Falha ao salvar'");
+  });
+
+  // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
+  it('a tela de exportar oferece stems e guia, sem travessão na copy', () => {
+    expect(exportar).toContain('Baixar stems (.zip)');
+    expect(exportar).toContain('Baixar guia (.mp3)');
+    expect(exportar).toContain('Baixar guia (.wav)');
+
+    // Só o que a pessoa LÊ NA TELA: os comentários do arquivo continuam livres para explicar
+    // as decisões — e explicam, com travessão e tudo.
+    const soCodigo = semComentarios(exportar).replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(soCodigo).not.toContain('—');
   });
 });

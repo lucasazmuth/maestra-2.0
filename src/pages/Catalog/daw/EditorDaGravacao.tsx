@@ -1,7 +1,7 @@
 import { FC, ReactNode, useRef, useState } from 'react';
 import {
-  FiCircle, FiDownload, FiFileText, FiHeadphones, FiPause, FiPlay, FiSkipBack, FiSquare, FiTrash2,
-  FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
+  FiAlertCircle, FiCheck, FiCircle, FiDownload, FiFileText, FiHeadphones, FiLoader, FiPause,
+  FiPlay, FiSkipBack, FiSquare, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
@@ -106,6 +106,24 @@ export const EditorDaGravacao: FC<{
   estado, picos, transporte, ficha, numeros, fichaCompleta, exportar, letra, podeEditar, acoes,
 }) => {
   const [aba, setAba] = useState<'linha' | 'mesa' | 'ficha' | 'exportar'>('linha');
+
+  // ─── O que o selo diz ─────────────────────────────────────────────────────
+  //
+  // Três coisas podiam estar a acontecer ao mesmo tempo — gravar a ficha, enviar ficheiros,
+  // gerar a guia — e antes cada uma tinha o seu próprio texto no cabeçalho, a disputar o mesmo
+  // canto. São todas a MESMA pergunta para quem olha ("posso fechar?"), por isso são um sinal
+  // só, e a ordem aqui é a da gravidade: o que prende a saída da tela aparece primeiro.
+  const atividade = gerando
+    ? { texto: 'Gerando a guia…', cor: DS.color.primaria, girando: true, falhou: false }
+    : envio
+      ? { texto: `Enviando ${envio.feitos + 1} de ${envio.total}…`, cor: DS.color.primaria, girando: true, falhou: false }
+      : selo === 'salvando'
+        ? { texto: 'Salvando…', cor: DS.color.textoApoio, girando: true, falhou: false }
+        : selo === 'erro'
+          ? { texto: 'Falha ao salvar', cor: DS.color.agulha, girando: false, falhou: true }
+          : selo === 'salvo'
+            ? { texto: 'Salvo', cor: '#22c55e', girando: false, falhou: false }
+            : null;
   const [zoom, setZoom] = useState(1);
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [editandoNome, setEditandoNome] = useState(false);
@@ -391,31 +409,6 @@ export const EditorDaGravacao: FC<{
             <FiX size={13} />
           </button>
         </div>
-
-        {gerando && (
-          <span style={{ fontSize: 11, color: DS.color.primaria, fontFamily: DS.font.mono, flexShrink: 0, position: 'absolute', right: 18 }}>
-            Gerando a guia…
-          </span>
-        )}
-
-        {!!envio && (
-          <span style={{ fontSize: 11, color: DS.color.primaria, fontFamily: DS.font.mono, flexShrink: 0, position: 'absolute', right: 18 }}>
-            Enviando {envio.feitos + 1} de {envio.total}…
-          </span>
-        )}
-
-        {!envio && selo !== 'parado' && (
-          <span
-            aria-live='polite'
-            style={{
-              fontSize: 11, fontFamily: DS.font.mono, flexShrink: 0,
-              position: 'absolute', right: 18,
-              color: selo === 'erro' ? DS.color.agulha : selo === 'salvando' ? DS.color.textoFraco : '#22c55e',
-            }}
-          >
-            {selo === 'salvando' ? 'Salvando…' : selo === 'erro' ? 'Falha ao salvar' : 'Salvo'}
-          </span>
-        )}
 
         {/* ⚠️ O SELETOR DE GRAVAÇÃO SAIU DA TELA, a pedido do dono do produto, enquanto ele
             decide como as versões se organizam. O que saiu foi só o CONTROLE: continua a haver
@@ -822,6 +815,24 @@ export const EditorDaGravacao: FC<{
           token da altura do rodapé, para os dois não poderem divergir. */}
       {/* A LETRA num balão, e não numa aba: escreve-se letra a olhar para a montagem, e uma aba
           faria trocar de tela para ler um verso. Mesmo gesto do "?", do outro lado. */}
+      {/* O selo de estado, na mesma fila dos outros flutuantes. Só existe no DOM quando há algo
+          a dizer: um indicador permanente deixa de ser lido, e este precisa de ser lido nas
+          duas vezes em que importa — a gravar, e quando falhou. */}
+      {!!atividade && (
+        <div
+          className={casca.selo}
+          style={{ bottom: ALTURA_DO_RODAPE + 12, color: atividade.cor }}
+          title={atividade.texto}
+          aria-label={atividade.texto}
+          aria-live='polite'
+          role='status'
+        >
+          {atividade.girando
+            ? <FiLoader size={14} className={casca.girando} />
+            : atividade.falhou ? <FiAlertCircle size={14} /> : <FiCheck size={14} />}
+        </div>
+      )}
+
       <details className={`${casca.ajuda} ${casca.letra}`} style={{ bottom: ALTURA_DO_RODAPE + 12 }}>
         <summary title='Letra' aria-label='Letra'><FiFileText size={14} /></summary>
         <div>{letra}</div>
