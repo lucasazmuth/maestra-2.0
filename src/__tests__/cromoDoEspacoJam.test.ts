@@ -486,8 +486,12 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(corpo).toContain('estado.tocando ? <FiPause size={18} /> : <FiPlay size={18}');
     // ⚠️ O RECORTE É DO BOTÃO, e não do ficheiro: `: 'none',` aparece em meia dúzia de
     // estilos por aqui, e uma asserção solta passava com a sombra de volta no repouso.
-    const doPlay = corpo.slice(corpo.indexOf('onClick={transporte.alternar}'));
-    const estiloDoPlay = doPlay.slice(doPlay.indexOf('style={{'), doPlay.indexOf('}}', doPlay.indexOf('style={{')));
+    // ⚠️ O RECORTE É O BOTÃO INTEIRO, do rótulo até ao fecho. Ancorá-lo no `onClick` quebrou
+    // quando o handler ganhou a guarda da gravação; ancorá-lo no `width: 42` apanhava o
+    // `style` do ÍCONE, que vem logo a seguir. Do rótulo ao `</button>` não há como enganar.
+    const inicioDoPlay = corpo.indexOf("aria-label={estado.carregando");
+    const estiloDoPlay = corpo.slice(inicioDoPlay, corpo.indexOf('</button>', inicioDoPlay));
+    expect(estiloDoPlay.length).toBeGreaterThan(300);
 
     // A cor NÃO muda entre tocar e pausar — o que muda é o brilho.
     expect(estiloDoPlay).toContain('`0 0 0 4px ${DS.color.primaria}33');
@@ -495,6 +499,34 @@ describe('cromo do editor do Espaço JAM', () => {
     // tudo à volta é chapado.
     expect(estiloDoPlay).toContain('estado.tocando && !estado.carregando');
     expect(estiloDoPlay).not.toContain('0 0 16px');
+  });
+
+  // ⚠️ O "AT" SAIU DA PISTA. Ele era automação, estava desligado desde sempre, e ocupava o
+  // lugar do controlo que uma pista realmente precisa numa mesa: dizer "é NESTA que se grava".
+  it('cada pista arma a gravação no lugar do antigo AT', () => {
+    const corpo = semComentarios(editor);
+
+    expect(corpo).not.toContain('Automação — ainda não disponível');
+    expect(corpo).toContain('alternarArmada(faixa.id)');
+    expect(corpo).toContain('aria-pressed={armadas.includes(faixa.id)}');
+  });
+
+  // ⚠️ SÃO DUAS ARMAÇÕES, e não uma: a pista diz ONDE se grava, o transporte diz QUANDO. É
+  // assim em qualquer mesa, e é por isso que são dois botões.
+  it('o REC do transporte exige uma pista armada, e o play não finge que gravou', () => {
+    const corpo = semComentarios(editor);
+
+    // Armar o transporte sem pista é meia intenção: avisa em vez de armar.
+    expect(corpo).toContain('if (!armado && !armadas.length)');
+    expect(corpo).toContain('Arme primeiro a pista onde quer gravar');
+
+    // ⚠️ E COM TUDO ARMADO, O PLAY NÃO TOCA. Deixar a montagem simplesmente andar seria o pior
+    // desfecho: a pessoa armou tudo, ouviu correr, e só descobria que não gravou ao procurar o
+    // take. O aviso custa um toque; o take perdido custa a sessão.
+    expect(corpo).toContain('if (armado && armadas.length && !estado.tocando)');
+    expect(corpo).toContain('A gravação ainda não está disponível');
+    const oPlay = corpo.slice(corpo.indexOf('if (armado && armadas.length'));
+    expect(oPlay.indexOf('return;')).toBeLessThan(oPlay.indexOf('transporte.alternar()'));
   });
 
   // ⚠️ ARMAR NÃO É GRAVAR, e é a distinção que toda mesa faz. A gravação ainda não existe: o

@@ -7,6 +7,8 @@ import {
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import type { CatalogTrack } from '@maestra/core/interfaces/maestra';
 
+import { message } from 'antd';
+
 import useIsMobile from '../../../utils/isMobile';
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
 import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
@@ -136,8 +138,18 @@ export const EditorDaGravacao: FC<{
   // largura para ela ficar à mostra enquanto se monta; no telemóvel, 256 px de coluna são 68 %
   // do ecrã, e ela começa recolhida para a montagem ter onde acontecer.
   const [bibliotecaAberta, setBibliotecaAberta] = useState(() => window.innerWidth >= 768);
-  /** O REC armado. Armar não grava — marca a intenção e espera o play, como em qualquer mesa. */
+  /** O REC do transporte, armado. Armar não grava — marca a intenção e espera o play. */
   const [armado, setArmado] = useState(false);
+  /**
+   * As pistas armadas para receber a gravação.
+   *
+   * Duas armações, como em qualquer mesa: a pista diz ONDE grava, o transporte diz QUANDO. Uma
+   * sozinha não faz nada, e é por isso que são dois botões e não um.
+   */
+  const [armadas, setArmadas] = useState<string[]>([]);
+  const alternarArmada = (id: string) => setArmadas((atuais) => (
+    atuais.includes(id) ? atuais.filter((a) => a !== id) : [...atuais, id]
+  ));
 
   // ⚠️ O EDITOR TEM O SEU PRÓPRIO SELETOR DE FICHEIROS, e isto conserta um botão que morria em
   // silêncio: o "Adicionar pista" procurava o botão da BIBLIOTECA pelo `aria-label` e clicava
@@ -331,13 +343,29 @@ export const EditorDaGravacao: FC<{
           >
             S
           </button>
+          {/* ⚠️ O "AT" SAIU DAQUI. Ele era automação, estava desligado desde sempre, e ocupava
+              o lugar do controlo que uma pista realmente precisa numa mesa: o de dizer "é
+              NESTA que se grava". Armar uma pista é meio caminho da gravação — a outra metade
+              é o REC do transporte, e é a soma dos dois que decide o que acontece no play. */}
           <button
             type='button'
-            disabled
-            title='Automação — ainda não disponível'
-            style={{ ...botaozinho(false), color: DS.color.textoInerte, cursor: 'not-allowed' }}
+            onClick={() => alternarArmada(faixa.id)}
+            aria-pressed={armadas.includes(faixa.id)}
+            title={armadas.includes(faixa.id)
+              ? `Desarmar ${faixa.name}`
+              : `Armar ${faixa.name} para gravar`}
+            aria-label={armadas.includes(faixa.id)
+              ? `Desarmar ${faixa.name}`
+              : `Armar ${faixa.name} para gravar`}
+            style={{
+              ...botaozinho(false),
+              background: 'transparent',
+              borderColor: armadas.includes(faixa.id) ? DS.color.gravar : DS.color.borda,
+              color: DS.color.gravar,
+              opacity: armadas.includes(faixa.id) ? 1 : 0.5,
+            }}
           >
-            AT
+            <FiCircle size={11} fill={armadas.includes(faixa.id) ? 'currentColor' : 'none'} />
           </button>
 
           {/* ⚠️ ENVIAR DIRETO PARA ESTA PISTA. Sem isto, uma pista que ficou sem áudio (o clipe
@@ -608,7 +636,18 @@ export const EditorDaGravacao: FC<{
 
             <button
               type='button'
-              onClick={transporte.alternar}
+              onClick={() => {
+                // ⚠️ COM TUDO ARMADO, O PLAY TERIA DE GRAVAR — e não grava, porque a gravação
+                // ainda não existe. Deixar a montagem simplesmente TOCAR aqui seria o pior
+                // desfecho possível: a pessoa armou a pista, armou o transporte, carregou no
+                // play, ouviu tudo andar, e só ia descobrir que não gravou nada ao procurar o
+                // take. O aviso custa um toque; o take perdido custa a sessão.
+                if (armado && armadas.length && !estado.tocando) {
+                  message.warning('A gravação ainda não está disponível. Por agora, envie o áudio pelo botão da pista.');
+                  return;
+                }
+                transporte.alternar();
+              }}
               disabled={estado.carregando}
               title={estado.carregando ? 'Preparando as pistas' : estado.tocando ? 'Pausar' : 'Tocar'}
               aria-label={estado.carregando ? 'Preparando as pistas' : estado.tocando ? 'Pausar' : 'Tocar'}
@@ -666,7 +705,15 @@ export const EditorDaGravacao: FC<{
                 de verdade — marca, e espera o play. */}
             <button
               type='button'
-              onClick={() => setArmado((v) => !v)}
+              onClick={() => {
+                // Armar o transporte sem dizer em que pista é meia intenção: numa mesa, o REC
+                // global só sabe o que fazer se alguma pista estiver armada.
+                if (!armado && !armadas.length) {
+                  message.warning('Arme primeiro a pista onde quer gravar, no botão vermelho dela.');
+                  return;
+                }
+                setArmado((v) => !v);
+              }}
               aria-pressed={armado}
               title={armado
                 ? 'Armado para gravar. A gravação em si ainda não está disponível.'
