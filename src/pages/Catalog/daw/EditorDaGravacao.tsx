@@ -704,7 +704,20 @@ export const EditorDaGravacao: FC<{
         )}
 
         {/* ── Transporte + pistas ── */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        <div style={{
+          flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column',
+          // ⚠️ A MONTAGEM É UMA CAMADA SÓ, e é isto que impede a agulha de furar a gaveta.
+          //
+          // A escada de dentro da montagem (régua 10, coluna 11, canto 12, agulha 100) foi
+          // escrita para os seus pedaços se ordenarem ENTRE SI. Sem isolamento, esses números
+          // subiam ao contexto da tela inteira e disputavam com a gaveta da biblioteca, que
+          // está em 30 — e 100 ganha de 30, por isso a agulha aparecia por cima do painel que
+          // devia estar a tapá-la.
+          //
+          // `isolation` em vez de um z-index: o que se quer não é pôr a montagem num degrau, é
+          // dizer que os degraus dela são assunto dela.
+          isolation: 'isolate',
+        }}>
           {/* O transporte também: não se toca uma ficha, nem se exporta com o play na mão. */}
           {aba !== 'ficha' && aba !== 'exportar' && (
           <div style={{

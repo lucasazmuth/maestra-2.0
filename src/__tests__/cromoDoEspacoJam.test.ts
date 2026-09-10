@@ -708,6 +708,26 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(corpo).not.toContain('/ ENCAIXE) * ENCAIXE');
   });
 
+  // ⚠️ A AGULHA FURAVA A GAVETA. A escada de dentro da montagem (régua 10, coluna 11, canto 12,
+  // agulha 100) foi escrita para os seus pedaços se ordenarem ENTRE SI — mas sem isolamento
+  // esses números subiam ao contexto da tela e disputavam com a biblioteca, que está em 30. E
+  // 100 ganha de 30: com a gaveta aberta no telemóvel, a linha vermelha do tempo aparecia
+  // desenhada por cima do painel inteiro.
+  it('a montagem é uma camada só, e a agulha não fura a biblioteca', () => {
+    const corpo = semComentarios(editor);
+
+    expect(corpo).toContain("isolation: 'isolate'");
+    // Isolamento, e não um número: o que se quer não é pôr a montagem num degrau, é dizer que
+    // os degraus dela são assunto dela. Subir a gaveta acima de 100 resolveria este caso e
+    // deixaria o próximo igual.
+    expect(corpo).toContain("position: 'absolute', inset: 0, zIndex: 30");
+    expect(corpo).toContain('zIndex: 100');
+
+    // E a escada continua escrita onde se procura por ela.
+    expect(casca).toContain('100  a agulha');
+    expect(casca).toContain('isolation: isolate');
+  });
+
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
   it('a tela de exportar oferece stems e guia, sem travessão na copy', () => {
     expect(exportar).toContain('Baixar stems (.zip)');

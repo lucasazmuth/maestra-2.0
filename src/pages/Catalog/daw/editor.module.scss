@@ -89,11 +89,20 @@
    empilhamento: aqui dentro os números só se comparam entre si, e não com o resto do app.
    A ordem, de baixo para cima:
 
+     20  OS FLUTUANTES: o selo de estado, a letra e o "?"
+     30  a gaveta da biblioteca (tapa tudo enquanto está aberta, e é para isso que serve)
+
+   E DENTRO DA MONTAGEM, uma escada à parte — ela é uma camada isolada (`isolation: isolate`
+   em `EditorDaGravacao`), por isso estes números só se comparam uns com os outros:
+
      10  a régua da linha do tempo (gruda no topo)
      11  a coluna dos controlos das pistas (gruda à esquerda)
      12  o canto onde as duas se cruzam
-     20  OS FLUTUANTES: o selo de estado, a letra e o "?"
-     30  a gaveta da biblioteca (tapa tudo enquanto está aberta, e é para isso que serve)
+    100  a agulha, por cima de tudo o que é montagem
+
+   ⚠️ A AGULHA FURAVA A GAVETA. Enquanto a montagem não era uma camada isolada, aqueles 100
+   subiam ao contexto da tela e ganhavam dos 30 da biblioteca: com a gaveta aberta no
+   telemóvel, a linha vermelha do tempo aparecia desenhada por cima do painel inteiro.
 
    ⚠️ OS FLUTUANTES ESTAVAM EM `--z-cartao`, QUE VALE 2 — abaixo da coluna. O "Enviando 1 de
    4…" nascia por trás dos controlos das pistas e saía cortado ao meio; no telemóvel, onde a
