@@ -383,6 +383,28 @@ describe('cromo do editor do Espaço JAM', () => {
     quadros.forEach((q) => expect(q).not.toContain('0 0 41 41'));
   });
 
+  // ⚠️ OS FLUTUANTES FICAM ACIMA DA COLUNA DAS PISTAS. Eles usavam `--z-cartao`, que vale 2 —
+  // abaixo dos 11 da coluna. O "Enviando 1 de 4…" nascia por trás dos controlos e saía cortado
+  // ao meio; no telemóvel, onde a coluna e o selo disputam os mesmos 375 px, ficava ilegível.
+  // O token não estava errado por ser token: ele descreve "detalhe DENTRO de um cartão", e
+  // estes três não estão dentro de cartão nenhum.
+  it('o selo, a letra e o "?" flutuam acima da coluna e da régua', () => {
+    const camada = Number(casca.match(/\$camada-dos-flutuantes:\s*(\d+)/)?.[1]);
+    expect(camada).toBeGreaterThan(12); // acima do canto onde a régua e a coluna se cruzam
+
+    const corpo = semComentarios(editor);
+    const daColuna = Number(corpo.match(/position: 'sticky', left: 0, zIndex: (\d+)/)?.[1]);
+    const daGaveta = Number(corpo.match(/position: 'absolute', inset: 0, zIndex: (\d+)/)?.[1]);
+    expect(camada).toBeGreaterThan(daColuna);
+    // E abaixo da gaveta: aberta, ela tapa tudo, e é para isso que serve.
+    expect(camada).toBeLessThan(daGaveta);
+
+    // Nenhum dos três volta ao token do cartão.
+    const regras = casca.match(/\.(selo|ajuda)\s*\{[^}]*\}/g) ?? [];
+    expect(regras.length).toBeGreaterThanOrEqual(2);
+    regras.forEach((regra) => expect(regra).not.toContain('--z-cartao'));
+  });
+
   // ⚠️ O EDITOR TEM O SEU PRÓPRIO SELETOR DE FICHEIROS. O "Adicionar pista" procurava o botão
   // da BIBLIOTECA pelo `aria-label` e clicava nele por baixo do pano. Enquanto ela estava
   // sempre aberta aquilo passou; desde que ela recolhe, o botão deixa de existir no DOM, o
