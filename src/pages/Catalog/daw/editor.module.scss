@@ -270,3 +270,67 @@ $camada-dos-flutuantes: 20;
     color: #3b82f6;
   }
 }
+
+/* ══════════ O CONTROLO DE PANORAMA ══════════
+
+   ⚠️ ELE PINTA A PARTIR DO CENTRO, e não da ponta esquerda.
+
+   O panorama não é uma quantidade — é um DESVIO com sinal: zero é o meio, e o que interessa
+   ver é para que lado e quanto. Com `accent-color`, o navegador pinta sempre do mínimo até ao
+   valor, e então uma pista centrada aparecia meio azul (do −100 até ao 0) e uma pista toda à
+   esquerda aparecia vazia. A barra crescia ao contrário do que o ouvido faz: mais tinta =
+   mais à direita, quando mais tinta devia ser = mais desviado.
+
+   O `accent-color` não sabe fazer isto, então o trilho é desenhado à mão. As duas pontas do
+   preenchimento chegam em variáveis, calculadas onde o valor é conhecido. */
+.pan {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 16px;
+  background: transparent;
+  cursor: pointer;
+
+  &:disabled { cursor: default; opacity: .5; }
+
+  // O trilho: cinzento inteiro, com a faixa do desvio pintada por cima.
+  &::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background:
+      linear-gradient(to right,
+        #3f3f4a 0%, #3f3f4a var(--pan-de),
+        #3b82f6 var(--pan-de), #3b82f6 var(--pan-ate),
+        #3f3f4a var(--pan-ate), #3f3f4a 100%);
+  }
+
+  &::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background:
+      linear-gradient(to right,
+        #3f3f4a 0%, #3f3f4a var(--pan-de),
+        #3b82f6 var(--pan-de), #3b82f6 var(--pan-ate),
+        #3f3f4a var(--pan-ate), #3f3f4a 100%);
+  }
+
+  // A marca do centro, para o zero ser um lugar e não uma adivinha.
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    margin-top: -4px;
+    border: 0;
+    border-radius: 50%;
+    background: #e8e8ee;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  }
+
+  &::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: 0;
+    border-radius: 50%;
+    background: #e8e8ee;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  }
+}

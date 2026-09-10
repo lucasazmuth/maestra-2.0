@@ -55,6 +55,22 @@ const redondo = {
   display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
 } as const;
 
+/**
+ * As duas pontas da faixa pintada num controlo de panorama, em percentagem do trilho.
+ *
+ * O panorama é um DESVIO com sinal: zero é o meio. A tinta sai sempre do centro (50 %) e vai
+ * até onde o valor mandar — para a esquerda com valor negativo, para a direita com positivo.
+ * Centrado, as duas pontas coincidem e não há faixa nenhuma, que é exatamente o que se quer
+ * ver quando não há desvio.
+ */
+export const faixaDoPan = (pan: number) => {
+  const meio = 50;
+  const desvio = Math.max(-1, Math.min(1, pan)) * 50;
+  return desvio >= 0
+    ? { de: `${meio}%`, ate: `${meio + desvio}%` }
+    : { de: `${meio + desvio}%`, ate: `${meio}%` };
+};
+
 const botaozinho = (ativo: boolean, corAtiva?: string) => ({
   height: 24, minWidth: 28, padding: '0 7px',
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 3,
@@ -366,7 +382,11 @@ export const EditorDaGravacao: FC<{
             onChange={(e) => acoes.aoMudarPista(faixa.id, { pan: Number(e.target.value) / 100 })}
             disabled={!podeEditar}
             aria-label={`Panorama de ${faixa.name}`}
-            style={{ flex: 1, minWidth: 0, accentColor: DS.color.primaria, cursor: 'pointer' }}
+            className={casca.pan}
+            style={{
+              flex: 1, minWidth: 0,
+              ...({ '--pan-de': faixaDoPan(pan).de, '--pan-ate': faixaDoPan(pan).ate } as React.CSSProperties),
+            }}
           />
           <span style={{
             width: 16, fontSize: 10, color: DS.color.textoFraco, fontFamily: DS.font.mono,
@@ -1156,7 +1176,11 @@ const MesaDeCanais: FC<{
               onChange={(e) => acoes.aoMudarPista(faixa.id, { pan: Number(e.target.value) / 100 })}
               disabled={!podeEditar}
               aria-label={`Panorama de ${faixa.name} na mesa`}
-              style={{ width: 84, accentColor: DS.color.primaria, cursor: 'pointer' }}
+              className={casca.pan}
+              style={{
+                width: 84,
+                ...({ '--pan-de': faixaDoPan(pan).de, '--pan-ate': faixaDoPan(pan).ate } as React.CSSProperties),
+              }}
             />
             <span style={{ fontSize: 10, color: DS.color.textoFraco, fontFamily: DS.font.mono }}>
               {Math.abs(pan) < 0.02 ? 'C' : `${pan < 0 ? 'E' : 'D'}${Math.round(Math.abs(pan) * 100)}`}
