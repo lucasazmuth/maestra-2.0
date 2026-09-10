@@ -648,10 +648,16 @@ export const EditorDaGravacao: FC<{
 
             <div style={{ flex: 1 }} />
 
+            {/* O relógio encolhe no telemóvel: em 375 px ele disputa a barra com cinco botões
+                e com o zoom, e sete caracteres a 14 px não precisam de tanto peso para se
+                lerem. O espaçamento entre letras também sai — ele existe para o número não
+                dançar quando os dígitos mudam, e a fonte já é monoespaçada. */}
             <div style={{
-              padding: '6px 14px', borderRadius: DS.raio.medio,
+              padding: noCelular ? '3px 8px' : '6px 14px', borderRadius: DS.raio.medio,
               background: DS.color.bgCampo, border: `1px solid ${DS.color.borda}`,
-              fontFamily: DS.font.mono, fontSize: 14, color: DS.color.texto, letterSpacing: '0.04em',
+              fontFamily: DS.font.mono, fontSize: noCelular ? 12 : 14, color: DS.color.texto,
+              letterSpacing: noCelular ? '0.01em' : '0.04em',
+              flexShrink: 0,
             }}>
               {relogio(agulha)}
             </div>
