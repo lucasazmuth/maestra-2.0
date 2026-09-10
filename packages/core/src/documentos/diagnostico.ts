@@ -2,6 +2,7 @@ import {
   DIM_META, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, VINCULO_LABELS,
   dinheiroDoRelatorio, fmtBRL, fmtNum,
 } from '../constants/realCopy';
+import { FIXOS } from '../constants/realTextos';
 import { ehLegado, linhasDaDimensao as linhasV4, resumoDoE } from '../services/realEngine/relatorio';
 
 // O DOCUMENTO do Diagnóstico REAL — a parte que não é desenho.
@@ -82,9 +83,23 @@ export const dinheiroRedondo = (n: number) => dinheiroDoRelatorio(Math.abs(Math.
 const declarado = (r: LinhaDoDocumento): LinhaDoDocumento => ({ ...r, declarado: true });
 
 /** O rodapé de autoria: curto, para caber numa linha entre o domínio e o número da página. */
+/**
+ * O rodapé de todas as páginas do PDF (F18).
+ *
+ * ⚠️ SEM O E-MAIL. Ele estava impresso em cada página de um documento feito para ser enviado a
+ * contratante, a produtor, a edital — e o endereço pessoal de quem gerou não tem nada a ver com
+ * a carreira que o documento descreve. Sai daqui e continua onde serve: a identificar quem é a
+ * pessoa quando ela não tem nome preenchido.
+ *
+ * O texto é o da spec, e as chaves são preenchidas aqui: assim ele muda no `realTextos` como
+ * qualquer outro texto do relatório, e não dentro de uma interpolação escondida no código.
+ */
 export const linhaDeAutoria = (a: Autoria, agora = new Date()) =>
-  `Gerado por ${a.nome} · ${a.email} · `
-  + `${agora.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · Doc ${a.docId}`;
+  FIXOS.F18
+    .replace('{nome_usuario}', a.nome)
+    .replace('{data}', agora.toLocaleDateString('pt-BR'))
+    .replace('{hora}', agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))
+    .replace('{id}', a.docId);
 
 /** As linhas da tabela de uma dimensão. Na v4 vêm do núcleo; o legado (v2/v3) tem as suas. */
 export function linhasDaDimensao(

@@ -1,4 +1,5 @@
 import type { ImprensaTipo, ImprensaPorte, TipoDeContratante, FonteDeReceita } from '../services/realEngine';
+import { FIXOS } from './realTextos';
 
 // O ROTEIRO do Diagnóstico REAL v4.2 — o questionário inteiro, sem uma linha de interface.
 //
@@ -74,10 +75,16 @@ const jaVeioDaApi = (campo: keyof ApiDisponivel) => (a: Record<string, any>): bo
   return v != null && Number(v) > 0;
 };
 
-/** Mensagem da tela de orientação, antes do quiz (§3.1, passo 3). */
-export const ORIENTACAO_SPOTIFY = 'Conecte suas redes sociais no Spotify for Artists. Isso ajuda as '
-  + 'plataformas de dados a reconhecerem seus perfis, e o diagnóstico passa a usar o dado automático '
-  + 'assim que ele existir.';
+/**
+ * Mensagem da tela de orientação, antes do quiz (§3.1, passo 3).
+ *
+ * ⚠️ É O F9, E NÃO UMA SEGUNDA REDAÇÃO DELE. Havia dois textos para a mesma tela: este, escrito
+ * no código, e o F9 do `realTextos`, escrito pela Anita. O que aparecia era este, e ele já tinha
+ * divergido — prometia "usar o dado automático assim que ele existir" onde a spec diz "ler os
+ * números sozinho", e perdia a frase que importa para quem está prestes a responder trinta
+ * perguntas: "enquanto isso, o que a gente não conseguir ler você informa".
+ */
+export const ORIENTACAO_SPOTIFY = FIXOS.F9;
 
 /** Os 6 tipos de contratante do cachê médio (§3.2), na ordem da spec. */
 export const TIPOS_DE_CONTRATANTE_QUIZ: { key: TipoDeContratante; label: string }[] = [

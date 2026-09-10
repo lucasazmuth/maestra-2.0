@@ -2,7 +2,9 @@ import fs from 'fs';
 import path from 'path';
 
 import { montarDocumentoDoDiagnostico } from '@maestra/core/documentos/diagnosticoHtml';
-import { autoriaDoDocumento, linhasDaDimensao } from '@maestra/core/documentos/diagnostico';
+import { autoriaDoDocumento, linhaDeAutoria, linhasDaDimensao } from '@maestra/core/documentos/diagnostico';
+import { ORIENTACAO_SPOTIFY } from '@maestra/core/constants/quizDoDiagnostico';
+import { FIXOS } from '@maestra/core/constants/realTextos';
 import { computeRealIndexV4 } from '@maestra/core/services/realEngine';
 import type { RealInputsV4 } from '@maestra/core/services/realEngine';
 
@@ -270,6 +272,30 @@ describe('os avisos obrigatórios da tela', () => {
       expect(fonte).toMatch(/[Ee]ste saldo\s*\n?\s*equivale/);
       expect(fonte).not.toMatch(/receita\s*\n?\s*anual equivale/);
     }
+  });
+
+  // ⚠️ O E-MAIL SAIU DO RODAPÉ DO PDF (§13 item 12, Apêndice B item 14). Ele estava impresso em
+  // TODAS as páginas de um documento feito para ser enviado a contratante, produtor e edital, e
+  // o endereço pessoal de quem gerou não tem nada a ver com a carreira que o documento descreve.
+  it('o rodapé do PDF é o F18, com nome e sem e-mail', () => {
+    const autoria = linhaDeAutoria(
+      { nome: 'Ana Ribeiro', email: 'ana@exemplo.com', docId: 'ABC12345-XYZ' },
+      new Date('2026-09-10T14:07:00'),
+    );
+    expect(autoria).toContain('Gerado por Ana Ribeiro');
+    expect(autoria).toContain('Documento ABC12345-XYZ');
+    expect(autoria).toContain(' às ');
+    expect(autoria).not.toContain('@');
+    // O texto sai do `realTextos`, e não de uma interpolação escondida no código.
+    expect(autoria).not.toContain('{');
+  });
+
+  // ⚠️ HAVIA DOIS TEXTOS PARA A MESMA TELA, e o que aparecia não era o da Anita: prometia "usar
+  // o dado automático assim que ele existir" onde o F9 diz "ler os números sozinho", e perdia a
+  // frase que importa a quem está prestes a responder trinta perguntas.
+  it('a orientação antes do quiz é o F9, e não uma cópia dele', () => {
+    expect(ORIENTACAO_SPOTIFY).toBe(FIXOS.F9);
+    expect(ORIENTACAO_SPOTIFY).toContain('o que a gente não conseguir ler você informa');
   });
 
   it('o bloco do topo passa a usar só o que não tem casa', () => {
