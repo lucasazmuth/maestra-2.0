@@ -27,6 +27,7 @@ import { ResumoDaFicha } from '@/casca/jam/ResumoDaFicha';
 import { BARRAS } from '@/casca/jam/mesa/MiniOnda';
 import { Pista } from '@/casca/jam/mesa/Pista';
 import { SeletorDeGravacoes } from '@/casca/jam/mesa/SeletorDeGravacoes';
+import { LinhaDoTempo } from '@/casca/jam/mesa/LinhaDoTempo';
 import { Transporte } from '@/casca/jam/mesa/Transporte';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { buscarNativo, criarContextoNativo } from '@/nucleo/audio/contextoNativo';
@@ -134,6 +135,14 @@ export default function EspacoJam() {
   const [carregando, setCarregando] = useState(true);
   const [selo, setSelo] = useState<'parado' | 'salvando' | 'salvo' | 'erro'>('parado');
   const [statusAberto, setStatusAberto] = useState(false);
+  /**
+   * Qual metade da gravação está à vista.
+   *
+   * ⚠️ ABRE NA LINHA DO TEMPO, como a web. Ela é a cara do editor: é onde se vê o que a música
+   * TEM. Chegar ao Espaço JAM por um ecrã de faders, sem uma onda à vista, é chegar a outro
+   * produto. Ver não é montar, e ver é o que a linha do tempo faz bem no aparelho.
+   */
+  const [aba, setAba] = useState<'linha' | 'mesa'>('linha');
 
   const [fichaAberta, setFichaAberta] = useState(false);
   const [folhaAberta, setFolhaAberta] = useState(false);
@@ -601,6 +610,39 @@ export default function EspacoJam() {
                     aoLoopar={mesa.loopar}
                   />
 
+                  {/* ⚠️ A LINHA DO TEMPO E A MESA SÃO A MESMA GRAVAÇÃO, VISTAS DE DOIS SÍTIOS.
+                      Uma diz ONDE cada som está no tempo, a outra diz QUANTO de cada um se
+                      ouve. Empilhadas na mesma rolagem, a pessoa perde as duas: chega à mesa
+                      depois de rolar uma linha do tempo inteira, e volta atrás para mexer num
+                      volume. Por isso são abas, como na web — e o editor abre na linha do
+                      tempo, que é a cara dele. */}
+                  <View style={estilos.abas}>
+                    {([['linha', 'Timeline'], ['mesa', 'Mixer']] as const).map(([chave, rotulo]) => (
+                      <Pressable
+                        key={chave}
+                        onPress={() => setAba(chave)}
+                        style={[estilos.aba, aba === chave && estilos.abaAcesa]}
+                        accessibilityRole="tab"
+                        accessibilityState={{ selected: aba === chave }}
+                        accessibilityLabel={rotulo}
+                      >
+                        <Text style={[estilos.rotuloDaAba, aba === chave && estilos.rotuloAceso]}>
+                          {rotulo}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  {aba === 'linha' && (
+                    <LinhaDoTempo
+                      pistas={pistas}
+                      estado={mesa.estado}
+                      picos={mesa.picos}
+                      bpm={aberta.bpm}
+                      aoBuscar={mesa.irPara}
+                    />
+                  )}
+
                   {/* O aviso de peso vem ANTES de descodificar, com a conta do tamanho dos
                       ficheiros: depois de descodificar já não há o que avisar. */}
                   {pesado && (
@@ -612,7 +654,7 @@ export default function EspacoJam() {
 
                   {/* A ordem das linhas é a das PISTAS (posição no banco), e não a da mesa —
                       para ela, que toca tudo ao mesmo tempo, ordem nenhuma significa nada. */}
-                  <View>
+                  <View style={aba === 'mesa' ? undefined : estilos.escondida}>
                     {pistas.map((pista, indice) => {
                       const estadoDaPista = mesa.estado.pistas.find((p) => p.id === pista.id);
                       if (!estadoDaPista) return null;
@@ -757,6 +799,20 @@ export default function EspacoJam() {
 const RECUO = 18;
 
 const estilos = StyleSheet.create({
+  // As abas do editor: a mesma escolha da web, com a forma do app.
+  abas: {
+    flexDirection: 'row', gap: 4, alignSelf: 'flex-start',
+    padding: 3, marginTop: 10, borderRadius: 999,
+    backgroundColor: COR_JAM.acaoFundo,
+  },
+  aba: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999 },
+  abaAcesa: { backgroundColor: COR_JAM.botaoRedondo },
+  rotuloDaAba: { fontSize: 12, fontWeight: '700', color: COR_JAM.apoio },
+  rotuloAceso: { color: COR_JAM.titulo },
+  // ⚠️ ESCONDIDA, e não desmontada: a mesa guarda gestos (o fader, o solo) e o estado da
+  // rolagem. Desmontá-la a cada troca de aba devolveria tudo isso ao princípio, e trocar de aba
+  // deixaria de ser olhar de outro sítio para ser recomeçar.
+  escondida: { display: 'none' },
   tela: { flex: 1 },
   flex: { flex: 1, minWidth: 0 },
   espera: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },

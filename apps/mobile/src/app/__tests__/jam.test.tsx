@@ -1,5 +1,5 @@
 import { Alert } from 'react-native';
-import { render, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
 import type { CatalogProject, CatalogTrack, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
@@ -136,6 +136,19 @@ const montar = () => render(
   <SafeAreaProvider initialMetrics={MEDIDAS}><EspacoJam /></SafeAreaProvider>,
 );
 
+/**
+ * Abre a aba do Mixer.
+ *
+ * ⚠️ O EDITOR PASSOU A ABRIR NA LINHA DO TEMPO, como a web: ela é a cara dele, e chegar ao
+ * Espaço JAM por um ecrã de faders é chegar a outro produto. Os casos que exercitam a MESA
+ * (mutar, solar, o fader, a mix muda) passam por aqui primeiro — e é bom que passem, porque
+ * cada um deles prova de caminho que a troca de aba funciona.
+ */
+const abrirOMixer = async (tela: ReturnType<typeof montar>) => {
+  await tela.findByLabelText('Mixer');
+  fireEvent.press(tela.getByLabelText('Mixer'));
+};
+
 describe('espaço jam', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -161,6 +174,51 @@ describe('espaço jam', () => {
     expect(tela.queryByLabelText(/\bpistas?\b/i)).toBeNull();
   });
 
+  // ⚠️ O EDITOR ABRE NA LINHA DO TEMPO, e não na mesa. Ela é a cara dele: é onde se vê o que a
+  // música TEM. Chegar ao Espaço JAM por um ecrã de faders, sem uma onda à vista, é chegar a
+  // outro produto. Ver não é montar, e ver é o que ela faz bem no aparelho.
+  it('abre na linha do tempo, com a régua e as faixas', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+
+    expect(await tela.findByText('FAIXAS')).toBeTruthy();
+    // O nome da faixa aparece na coluna, que fica FORA da rolagem horizontal — é ela que diz de
+    // quem é cada onda quando se rola para o lado.
+    expect(tela.getByText('Voz')).toBeTruthy();
+    // E a mesa não está à vista: é a outra aba.
+    expect(tela.queryByLabelText('Silenciar Voz')).toBeNull();
+  });
+
+  // As duas metades da mesma gravação: uma diz ONDE cada som está no tempo, a outra QUANTO de
+  // cada um se ouve. Trocar de aba é olhar de outro sítio, e não recomeçar.
+  it('a aba do Mixer traz a mesa de volta, e a linha do tempo sai de cena', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+
+    await abrirOMixer(tela);
+    expect(await tela.findByLabelText('Silenciar Voz')).toBeTruthy();
+    expect(tela.queryByText('FAIXAS')).toBeNull();
+
+    fireEvent.press(tela.getByLabelText('Timeline'));
+    expect(await tela.findByText('FAIXAS')).toBeTruthy();
+  });
+
+  // O zoom é da linha do tempo, e afastar tem de chegar ao ponto em que a música inteira cabe:
+  // sem isso, quem aproximasse uma vez não voltava a vê-la toda.
+  it('a linha do tempo tem zoom', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+
+    expect(await tela.findByLabelText('Aproximar a linha do tempo')).toBeTruthy();
+    expect(tela.getByLabelText('Afastar a linha do tempo')).toBeTruthy();
+  });
+
   // A forma da tela: um editor. As gravações são uma fila de fichas (são ALTERNATIVAS, ouve-se
   // uma de cada vez), e as pistas empilhadas são as camadas da que está aberta.
   it('abre a gravação principal com um transporte e a pista da mix', async () => {
@@ -170,6 +228,7 @@ describe('espaço jam', () => {
     expect(tela.getByText('V1')).toBeTruthy();
     // Sem stems, a mix entra sozinha e ACESA: a mesa com uma pista é o tocador da gravação, e é
     // o que toda versão que já existe hoje passa a ter sem ninguém enviar nada.
+    await abrirOMixer(tela);
     expect(await tela.findByLabelText('Silenciar Mix ★')).toBeTruthy();
     // Três minutos vindos do buffer, e um transporte só para a gravação inteira.
     await waitFor(() => expect(tela.getByLabelText('Tocar')).toBeTruthy());
@@ -190,6 +249,7 @@ describe('espaço jam', () => {
     }));
 
     const tela = await montar();
+    await abrirOMixer(tela);
     expect(await tela.findByLabelText('Silenciar Voz')).toBeTruthy();
     expect(tela.getByLabelText('Silenciar Bateria')).toBeTruthy();
     // Solo e mute são ações opostas e têm alvos próprios — não são o mesmo botão.
@@ -207,6 +267,7 @@ describe('espaço jam', () => {
     const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const usuario = userEvent.setup();
     const tela = await montar();
+    await abrirOMixer(tela);
 
     // Sem montagem, a mix entra sozinha e acesa: apagar e acender não dobra nada, e não avisa.
     await usuario.press(await tela.findByLabelText('Silenciar Mix ★'));
@@ -379,6 +440,7 @@ describe('espaço jam', () => {
     }));
     const tela = await montar();
 
+    await abrirOMixer(tela);
     await tela.findByLabelText('Silenciar Voz');
     expect(tela.queryByLabelText('Adicionar pistas do aparelho')).toBeNull();
     expect(tela.queryByLabelText('Opções de Voz')).toBeNull();

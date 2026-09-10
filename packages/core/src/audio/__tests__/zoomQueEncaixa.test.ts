@@ -1,5 +1,4 @@
-import { zoomQueEncaixa } from '../pages/Catalog/daw/EditorDaGravacao';
-import { PIXELS_POR_SEGUNDO, ZOOM_MINIMO_ABSOLUTO } from '../pages/Catalog/daw/tokens';
+import { PIXELS_POR_SEGUNDO, ZOOM_MINIMO_ABSOLUTO, zoomQueEncaixa } from '../grade';
 
 // A LINHA DO TEMPO ABRE ENCAIXADA NO ECRÃ, no telemóvel.
 //

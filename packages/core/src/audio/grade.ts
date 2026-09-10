@@ -1,4 +1,3 @@
-import { ENCAIXE } from './tokens';
 
 // A RÉGUA DA LINHA DO TEMPO, em compassos.
 //
@@ -11,6 +10,54 @@ import { ENCAIXE } from './tokens';
 // Sem BPM, tudo isto desliga e volta a régua de segundos. É o caso mais comum — a maior parte
 // dos projetos nunca chega a ter um andamento escrito —, e uma grelha inventada por omissão
 // seria pior do que grelha nenhuma: diria que a música está em 120 quando ninguém disse isso.
+
+/**
+ * O zoom de partida: 100 % são 60 pixels (ou pontos) por segundo.
+ *
+ * ⚠️ AS MEDIDAS DA ESCALA VIVEM AQUI, e não nos tokens da web, desde que a linha do tempo passou
+ * a existir nas duas superfícies. Elas não são estilo — são a conversão entre segundo e pixel, e
+ * é dela que saem a régua, o encaixe e o encaixe automático ao abrir. Duas cópias divergiriam no
+ * primeiro ajuste, e o sintoma seria a mesma música com dois comprimentos.
+ */
+export const PIXELS_POR_SEGUNDO = 60;
+
+/** O quanto os botões de zoom afastam, no caso normal. */
+export const ZOOM_MINIMO = 0.25;
+export const ZOOM_MAXIMO = 4;
+
+/**
+ * O chão de todos: nem o encaixe automático desce daqui.
+ *
+ * ⚠️ ELE EXISTE POR CAUSA DO ECRÃ PEQUENO. A 0,25 (15 px/s) uma música de dois minutos mede
+ * 2 000 px — cinco ecrãs de 390 —, e ali a única forma de a percorrer é arrastar sem fim. Para
+ * a montagem abrir inteira à vista, o zoom tem de poder descer até onde ela caiba; abaixo de
+ * 0,02 (1,2 px/s) a onda deixa de ter forma e passa a ser um risco.
+ */
+export const ZOOM_MINIMO_ABSOLUTO = 0.02;
+
+/**
+ * O zoom com que a montagem inteira cabe na largura que sobra para as ondas.
+ *
+ * Nunca passa de 100 %: uma música de dez segundos não deve abrir esticada a 400 % só porque
+ * cabia — a régua fica absurda e a onda vira um borrão largo. E nunca desce abaixo do
+ * `ZOOM_MINIMO_ABSOLUTO`, que é o ponto em que a onda deixa de ter forma.
+ *
+ * Sem largura ou sem duração não há encaixe possível, e o valor de partida (100 %) fica.
+ */
+export const zoomQueEncaixa = (duracao: number, larguraVisivel: number): number => {
+  if (duracao <= 0 || larguraVisivel <= 0) return 1;
+  return Math.max(ZOOM_MINIMO_ABSOLUTO, Math.min(1, larguraVisivel / (duracao * PIXELS_POR_SEGUNDO)));
+};
+
+/**
+ * O encaixe de quem NÃO tem andamento escrito, em segundos.
+ *
+ * ⚠️ VEIO DOS TOKENS DA WEB QUANDO A GRADE MUDOU-SE PARA O NÚCLEO. Ele é o passo do arrasto, e o
+ * arrasto agora existe nas duas superfícies: deixá-lo do lado da web obrigaria o app a importar
+ * de `src/`, que ele não alcança, ou a ter a sua própria cópia — e duas cópias de um encaixe
+ * divergem sem ninguém notar, porque o sintoma é um clipe meio segundo fora do sítio.
+ */
+export const ENCAIXE_SEM_ANDAMENTO = 0.25;
 
 /** Quatro tempos por compasso. Outras fórmulas ficam para o dia em que houver onde as dizer. */
 export const TEMPOS_POR_COMPASSO = 4;
@@ -81,7 +128,7 @@ export const gradeDoCompasso = (bpm: unknown, escala: number): Grade | null => {
  * Sem grelha, fica o quarto de segundo de sempre.
  */
 export const encaixeDaGrade = (grade: Grade | null, escala: number): number => {
-  if (!grade || !(escala > 0)) return ENCAIXE;
+  if (!grade || !(escala > 0)) return ENCAIXE_SEM_ANDAMENTO;
   const candidatos = [
     grade.segundosPorTempo / 4,
     grade.segundosPorTempo / 2,

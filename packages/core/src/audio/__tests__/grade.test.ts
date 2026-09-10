@@ -1,8 +1,7 @@
 import {
-  BPM_MAXIMO, BPM_MINIMO, TEMPOS_POR_COMPASSO,
+  BPM_MAXIMO, BPM_MINIMO, ENCAIXE_SEM_ANDAMENTO, TEMPOS_POR_COMPASSO,
   encaixeDaGrade, gradeDoCompasso, marcasDaRegua,
-} from '../pages/Catalog/daw/grade';
-import { ENCAIXE } from '../pages/Catalog/daw/tokens';
+} from '../grade';
 
 // O BPM NÃO FAZIA NADA NA TELA.
 //
@@ -71,8 +70,8 @@ describe('gradeDoCompasso', () => {
 describe('encaixeDaGrade', () => {
   // Sem grelha fica o que sempre foi: o quarto de segundo.
   it('sem grelha, o encaixe é o de sempre', () => {
-    expect(encaixeDaGrade(null, 60)).toBe(ENCAIXE);
-    expect(encaixeDaGrade(gradeDoCompasso(120, 60), 0)).toBe(ENCAIXE);
+    expect(encaixeDaGrade(null, 60)).toBe(ENCAIXE_SEM_ANDAMENTO);
+    expect(encaixeDaGrade(gradeDoCompasso(120, 60), 0)).toBe(ENCAIXE_SEM_ANDAMENTO);
   });
 
   // ⚠️ O ENCAIXE SEGUE O ZOOM. Afastado, meia batida são dois pixels: encaixar ali é

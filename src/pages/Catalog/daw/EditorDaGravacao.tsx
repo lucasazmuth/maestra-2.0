@@ -12,7 +12,9 @@ import { message } from 'antd';
 
 import useIsMobile from '../../../utils/isMobile';
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
-import { encaixeDaGrade, gradeDoCompasso, marcasDaRegua } from './grade';
+import {
+  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, zoomQueEncaixa,
+} from '@maestra/core/audio/grade';
 import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
@@ -73,21 +75,6 @@ export const faixaDoPan = (pan: number) => {
   return desvio >= 0
     ? { de: `${meio}%`, ate: `${meio + desvio}%` }
     : { de: `${meio + desvio}%`, ate: `${meio}%` };
-};
-
-/**
- * O zoom com que a montagem inteira cabe na largura que sobra para as ondas.
- *
- * Nunca passa de 100 %: uma música de dez segundos não deve abrir esticada a 400 % só porque
- * cabia — a régua fica absurda e a onda vira um borrão largo. E nunca desce abaixo do
- * `ZOOM_MINIMO_ABSOLUTO`, que é o ponto em que a onda deixa de ter forma; daí para baixo é
- * melhor sobrar linha do tempo para rolar do que uma mancha encaixada.
- *
- * Sem largura ou sem duração não há encaixe possível, e o valor de partida (100 %) fica.
- */
-export const zoomQueEncaixa = (duracao: number, larguraVisivel: number): number => {
-  if (duracao <= 0 || larguraVisivel <= 0) return 1;
-  return Math.max(ZOOM_MINIMO_ABSOLUTO, Math.min(1, larguraVisivel / (duracao * PIXELS_POR_SEGUNDO)));
 };
 
 const botaozinho = (ativo: boolean, corAtiva?: string) => ({
