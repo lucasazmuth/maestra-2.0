@@ -391,7 +391,8 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
           {!!resumo && (
             <Text style={estilos.observacao}>
               {`A média mensal do setor cultural formal é ${fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). `}
-              {`Sua receita anual equivale a ${resumo.vezesOSetor.toFixed(1).replace('.', ',')}× esse patamar.`}
+              {/* A frase fala do SALDO, e não da receita (v4.4, §7.10): é o que o número é. */}
+              {`Este saldo equivale a ${resumo.vezesOSetor.toFixed(1).replace('.', ',')}× esse patamar.`}
             </Text>
           )}
           {!!resumo?.recomendarEmpresariamento && (

@@ -444,10 +444,14 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
             {/*
               Comparação com o setor cultural formal (SIIC/IBGE), §7.3. É exibição: a régua do E vem
               da PNAD (P95 da renda individual), e trocar uma pela outra mudaria o método.
+
+              ⚠️ A FRASE FALA DO SALDO, e não da receita (v4.4, §7.10). O número já era o do saldo
+              desde que a comparação foi corrigida; a frase tinha ficado para trás e passava a
+              dizer uma coisa enquanto mostrava outra. É o mesmo texto do card do PDF.
             */}
             <div className={styles.healthNota}>
-              A média mensal do setor cultural formal é {fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). Sua receita
-              anual equivale a {resumo.vezesOSetor.toFixed(1).replace('.', ',')}× esse patamar.
+              A média mensal do setor cultural formal é {fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). Este saldo
+              equivale a {resumo.vezesOSetor.toFixed(1).replace('.', ',')}× esse patamar.
             </div>
             {resumo.recomendarEmpresariamento && (
               <div className={styles.healthNota}>

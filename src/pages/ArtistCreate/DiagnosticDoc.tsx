@@ -188,17 +188,25 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; nLeitura: number | 
           </div>
         </div>
       )}
-      {dk === 'a' && (['instagram', 'tiktok', 'youtube'] as const).some((k) => eng[k]) && (
+      {/* ⚠️ AS TRÊS REDES APARECEM SEMPRE, e a que não tem taxa diz "sem dado" (§8.5 e §12).
+          Antes o bloco inteiro sumia quando nenhuma tinha dado, e cada rede ausente sumia
+          dentro dele: o PDF mostrava duas redes e quem lia não sabia se a terceira tinha
+          engajamento zero, se não foi lida, ou se nem existia perfil. "0,0%" só aparece quando
+          a API devolveu zero, e aí é informação. */}
+      {dk === 'a' && (
         <div className={styles.docSubBlock2}>
           <div className={styles.docSubTitle2}>Engajamento por rede{legado ? '' : ` · ${AVISOS.informativo}`}</div>
           {(['instagram', 'tiktok', 'youtube'] as const).map((k) => {
             const e = eng[k];
             const label = k === 'instagram' ? 'Instagram' : k === 'tiktok' ? 'TikTok' : 'YouTube';
-            if (!e) return null;
             return (
               <div key={k} className={styles.docEngRow2}>
                 <span>{label}</span>
-                <strong>{legado ? `${fmtPct(e.value)} · ${e.above ? 'acima' : 'abaixo'} do corte de ${fmtPct(e.cut)}` : fmtPct(e.value)}</strong>
+                <strong>
+                  {!e ? 'sem dado'
+                    : legado ? `${fmtPct(e.value)} · ${e.above ? 'acima' : 'abaixo'} do corte de ${fmtPct(e.cut)}`
+                      : fmtPct(e.value)}
+                </strong>
               </div>
             );
           })}

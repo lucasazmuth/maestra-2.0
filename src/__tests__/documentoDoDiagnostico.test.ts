@@ -231,9 +231,18 @@ describe('os avisos obrigatórios da tela', () => {
     const doPdf = fs.readFileSync(
       path.join(raiz, 'packages', 'core', 'src', 'documentos', 'diagnosticoHtml.ts'), 'utf8',
     );
+    // ⚠️ SÃO QUATRO SUPERFÍCIES, e não três. A maquete do PDF (`DiagnosticDoc`) é a que vira o
+    // documento impresso, e tinha ficado de fora desta conta: enquanto as outras três já diziam
+    // "sem dado", ela continuava a fazer a rede ausente desaparecer da página.
+    const maqueteDoPdf = fs.readFileSync(
+      path.join(raiz, 'src', 'pages', 'ArtistCreate', 'DiagnosticDoc.tsx'), 'utf8',
+    );
     expect(telaDaWeb).toContain("{e ? fmtPct(e.value) : 'sem dado'}");
     expect(doPdf).toContain("${e ? fmtPct(e.value) : 'sem dado'}");
     expect(cartaoDoApp).toContain('>sem dado</Text>');
+    expect(maqueteDoPdf).toContain("{!e ? 'sem dado'");
+    // E o bloco não desaparece quando nenhuma rede tem dado.
+    expect(maqueteDoPdf).not.toContain("some((k) => eng[k])");
 
     // O corte deixou de ser IMPRESSO em qualquer uma delas. A frase que o explica continua nos
     // comentários, e é por isso que o teste procura a interpolação e não a palavra.
@@ -242,6 +251,25 @@ describe('os avisos obrigatórios da tela', () => {
     }
     // E a rede ausente continua na lista, em vez de desaparecer da página.
     expect(doPdf).not.toContain('if (!e) return \'\';');
+  });
+
+  // ⚠️ O NÚMERO E A FRASE TÊM DE FALAR DA MESMA COISA. A comparação com o setor cultural passou
+  // a dividir o SALDO pelo salário do setor (v4.4, §7.10), e em duas superfícies a frase ficou
+  // para trás dizendo "sua receita anual equivale a X×": o texto anunciava faturamento e o
+  // número mostrava saldo, lado a lado, sem nada que denunciasse.
+  it('a comparação com o setor fala do saldo, nas quatro superfícies', () => {
+    const ler = (...p: string[]) => fs.readFileSync(path.join(raiz, ...p), 'utf8');
+    const superficies = [
+      ler('src', 'pages', 'ArtistCreate', 'DiagnosticReport.tsx'),
+      ler('src', 'pages', 'ArtistCreate', 'DiagnosticDoc.tsx'),
+      ler('packages', 'core', 'src', 'documentos', 'diagnosticoHtml.ts'),
+      ler('apps', 'mobile', 'src', 'casca', 'diagnostico', 'CartaoDaDimensao.tsx'),
+    ];
+    for (const fonte of superficies) {
+      expect(fonte).toContain('esse patamar');
+      expect(fonte).toMatch(/[Ee]ste saldo\s*\n?\s*equivale/);
+      expect(fonte).not.toMatch(/receita\s*\n?\s*anual equivale/);
+    }
   });
 
   it('o bloco do topo passa a usar só o que não tem casa', () => {
