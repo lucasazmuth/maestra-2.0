@@ -6,7 +6,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { COR, COR_DIAGNOSTICO, RAIO } from '@maestra/core/constants/design';
 import {
   DIM_META, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3,
-  fmtBRL, fmtNum, fmtPct, type DimKey,
+  dinheiroDoRelatorio, fmtBRL, fmtNum, fmtPct, type DimKey,
 } from '@maestra/core/constants/realCopy';
 import { dimNarrative } from '@maestra/core/constants/realNarrative';
 import {
@@ -119,13 +119,13 @@ const Engajamento = ({ engagement, informativo }: {
           <View key={chave} style={estilos.linhaDeRede}>
             <Text style={estilos.rede}>{rotulo}</Text>
             {e ? (
-              // O "de" amarra o número ao corte: "0,4% abaixo do corte 2,8%" lia como se 0,4
-              // fosse a DISTÂNCIA até o corte, e é a taxa da artista.
-              <Text style={[estilos.taxa, e.above ? estilos.acima : estilos.abaixo]}>
-                {fmtPct(e.value)} · {e.above ? 'acima' : 'abaixo'} do corte de {fmtPct(e.cut)}
-              </Text>
+              // ⚠️ SAI A COMPARAÇÃO COM O CORTE (§13 item 6). O engajamento está SUSPENSO do
+              // índice: dizer "abaixo do corte de 2,8%" fazia a artista atribuir a nota dela a
+              // um número que não participou da conta. A web já tinha largado isso; aqui não.
+              <Text style={estilos.taxa}>{fmtPct(e.value)}</Text>
             ) : (
-              <Text style={estilos.taxa}>—</Text>
+              // Ausência nunca é zero (§8.5): "sem dado" diz que a API não entregou.
+              <Text style={estilos.taxa}>sem dado</Text>
             )}
           </View>
         );
@@ -207,7 +207,8 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
   const faturamento = resumo ? resumo.receitaAnual : Math.round(Number(receita.total ?? 0) * 12);
   const investimento = resumo ? resumo.investimentoAnual : Math.round(Number(entradas.investimento ?? 0));
   const saldo = resumo ? resumo.saldo : faturamento - investimento;
-  const dinheiro = (n: number) => `R$ ${fmtNum(Math.abs(n))}`;
+  // §11: abrevia só acima de dez mil. Pelo `fmtNum`, R$ 1.200 saía como "R$ 1 mil".
+  const dinheiro = (n: number) => dinheiroDoRelatorio(Math.abs(n));
 
   return (
     <View style={estilos.cartao}>

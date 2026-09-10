@@ -17,7 +17,7 @@ import { RealBadge } from '../../components/RealBadge';
 import {
   TIER_ACCENT, altasForPattern, tierForAltas, tierForPattern,
 } from '@maestra/core/constants/realBadge';
-import { CABECALHO_DA_ENTREGA, fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, PROFILE_BITS } from '@maestra/core/constants/realCopy';
+import { CABECALHO_DA_ENTREGA, dinheiroDoRelatorio, fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, PROFILE_BITS } from '@maestra/core/constants/realCopy';
 import { FIXOS, INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO, LEITURAS_CURTAS } from '@maestra/core/constants/realTextos';
 import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
@@ -224,9 +224,13 @@ const EngagementGrid: FC<{ engagement: any; deezerFans?: number | null; informat
               comparar com um corte que não move nota fazia o artista atribuir o resultado dele a
               um número que não participou da conta. Fica só a taxa.
             */}
-            {e
-              ? <span className={styles.engVal}>{fmtPct(e.value)}</span>
-              : <span className={styles.engVal}>—</span>}
+            {/*
+              ⚠️ AUSÊNCIA NUNCA É ZERO (§8.5 e §12). O travessão dizia "não há nada aqui" com a
+              mesma cara com que um "0,0%" diria "o vínculo é nulo", e as duas coisas são
+              diferentes: uma é a API que não entregou, a outra é a rede que de facto não
+              engaja. "0,0%" só aparece quando a API devolveu zero.
+            */}
+            <span className={styles.engVal}>{e ? fmtPct(e.value) : 'sem dado'}</span>
           </div>
         );
       })}
@@ -397,7 +401,8 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
           const fat = Math.round(Number(rev.total ?? 0) * 12);
           const inv = Math.round(Number(inputs.investimento ?? 0));
           const saldo = fat - inv;
-          const money = (n: number) => `R$ ${fmtNum(Math.abs(n))}`;
+          // §11: abrevia só acima de dez mil. Pelo `fmtNum`, R$ 1.200 saía como "R$ 1 mil".
+          const money = (n: number) => dinheiroDoRelatorio(Math.abs(n));
           return (
             <div className={styles.healthBlock}>
               <div className={styles.healthTitle}>Saúde financeira · 12 meses</div>
@@ -409,7 +414,8 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
             </div>
           );
         }
-        const money = (n: number) => `R$ ${fmtNum(Math.abs(n))}`;
+        // §11: abrevia só acima de dez mil. Pelo `fmtNum`, R$ 1.200 saía como "R$ 1 mil".
+        const money = (n: number) => dinheiroDoRelatorio(Math.abs(n));
         return (
           <div className={styles.healthBlock}>
             <div className={styles.healthTitle}>Saúde financeira · 12 meses</div>

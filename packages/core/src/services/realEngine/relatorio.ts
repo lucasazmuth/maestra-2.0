@@ -9,7 +9,7 @@
 // Referência: "Diagnóstico REAL v4", §11.3 (textos obrigatórios), §7.5 (exibição do E) e §13.2
 // (diagnósticos em versão anterior).
 
-import { fmtBRL, fmtNum, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
+import { dinheiroDoRelatorio, fmtNum, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
 import { FIXOS } from '../../constants/realTextos';
 import { ALIQUOTA_PCT, type Aliquota, type FonteDeReceita, type Proveniencia, type TipoDeContratante } from './index';
 
@@ -225,12 +225,12 @@ export const linhasDaDimensao = (
     // lançamento, e é essa distinção que muda a decisão.
     const linhas: LinhaDoRelatorio[] = [
       { rotulo: 'Shows (12 meses)', valor: String(Number(rev.showsPerYear) || 0), fonte: 'self' },
-      { rotulo: 'Receita (12 meses)', valor: fmtBRL(Number(rev.receitaAnual) || 0), fonte: 'self' },
-      { rotulo: 'Custo médio por show', valor: fmtBRL(Number(rev.custoPorShow) || 0), fonte: 'self' },
-      { rotulo: 'Custo fixo mensal', valor: fmtBRL(Number(rev.custoFixoMensal) || 0), fonte: 'self' },
-      { rotulo: 'Investimento em lançamentos', valor: fmtBRL(Number(rev.investLancamentos12m) || 0), fonte: 'self' },
-      { rotulo: 'Custos e investimento (12 meses)', valor: fmtBRL(Number(rev.investimentoAnual) || 0), fonte: 'self' },
-      { rotulo: 'Saldo', valor: fmtBRL(Number(rev.saldo) || 0), fonte: 'self' },
+      { rotulo: 'Receita (12 meses)', valor: dinheiroDoRelatorio(Number(rev.receitaAnual) || 0), fonte: 'self' },
+      { rotulo: 'Custo médio por show', valor: dinheiroDoRelatorio(Number(rev.custoPorShow) || 0), fonte: 'self' },
+      { rotulo: 'Custo fixo mensal', valor: dinheiroDoRelatorio(Number(rev.custoFixoMensal) || 0), fonte: 'self' },
+      { rotulo: 'Investimento em lançamentos', valor: dinheiroDoRelatorio(Number(rev.investLancamentos12m) || 0), fonte: 'self' },
+      { rotulo: 'Custos e investimento (12 meses)', valor: dinheiroDoRelatorio(Number(rev.investimentoAnual) || 0), fonte: 'self' },
+      { rotulo: 'Saldo', valor: dinheiroDoRelatorio(Number(rev.saldo) || 0), fonte: 'self' },
     ];
     // ⚠️ O SALDO AJUSTADO NÃO É EXIBIDO EM LADO NENHUM (relatório v4.4, §1.3, §12 e §13 item 15).
     //
@@ -294,6 +294,25 @@ export const linhasDaDimensao = (
       fonte: radio.present ? 'api' : 'absent',
     },
   ];
+};
+
+/**
+ * O que o card "shows pra cobrir o fixo do ano" mostra (§7.9).
+ *
+ * ⚠️ SEM CUSTO FIXO, A CONTA FECHA — e o card dizia o contrário. Ele lia o ponto de equilíbrio,
+ * que é nulo tanto para quem NÃO TEM fixo a cobrir (a conta mais simples que existe: cada show
+ * já entra como saldo) como para quem tem margem negativa (a conta que não fecha nunca). Os dois
+ * casos saíam como "não fecha", e o primeiro é exatamente o oposto disso.
+ *
+ * Mora aqui, e não nas telas, porque a web e o PDF mostram o mesmo card: escrita duas vezes, a
+ * regra divergia no primeiro ajuste.
+ */
+export const equilibrioExibido = (
+  conta: { margemPorShow: number | null; custoFixoAnual: number; pontoEquilibrioShows: number | null },
+): string => {
+  if (conta.pontoEquilibrioShows != null) return String(conta.pontoEquilibrioShows);
+  const margem = conta.margemPorShow ?? 0;
+  return margem > 0 && !conta.custoFixoAnual ? 'fecha' : 'não fecha';
 };
 
 /** O engajamento, quando a API entregou. [SUSPENSO] no cálculo, exibido com rótulo (§8.2, §11.3.5). */

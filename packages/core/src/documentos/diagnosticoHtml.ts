@@ -17,6 +17,7 @@ import {
 } from '../services/realEngine/comentarios';
 import {
   AVISOS, ehLegado, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
+  equilibrioExibido,
 } from '../services/realEngine/relatorio';
 
 // O DECK do Diagnóstico REAL em HTML — o mesmo documento que a web baixa, montado como texto.
@@ -373,12 +374,14 @@ const paginasDaDimensao = (
     ${dk === 'a' && (['instagram', 'tiktok', 'youtube'] as const).some((k) => eng[k])
       ? `<div class="bloco">
         <div class="blocoTitulo">Engajamento por rede${legado ? '' : ` <span class="blocoNota">${escapar(AVISOS.informativo)}</span>`}</div>
+        ${/* ⚠️ A rede ausente APARECE, e diz "sem dado" (§8.5 e §12). Sumir era pior do que
+              parece: o PDF mostrava duas redes e o artista não sabia se a terceira tinha
+              engajamento zero, se não foi lida, ou se ele nem tem perfil lá. */''}
         ${(['instagram', 'tiktok', 'youtube'] as const).map((k) => {
           const e = eng[k];
-          if (!e) return '';
           const nome = k === 'instagram' ? 'Instagram' : k === 'tiktok' ? 'TikTok' : 'YouTube';
           return `<div class="eng"><span>${nome}</span>
-            <b>${fmtPct(e.value)}</b></div>`;
+            <b>${e ? fmtPct(e.value) : 'sem dado'}</b></div>`;
         }).join('')}
       </div>` : ''}
 
@@ -544,7 +547,7 @@ export function montarDocumentoDoDiagnostico({
           ${numero('Cachê médio', dinheiroRedondo(contaFecha.cacheMedio))}
           ${numero('Custo médio por show', dinheiroRedondo(contaFecha.custoPorShow))}
           ${numero('Margem por show', dinheiroRedondo(contaFecha.margemPorShow))}
-          ${numero('Shows pra cobrir o fixo do ano', contaFecha.pontoEquilibrioShows == null ? 'não fecha' : String(contaFecha.pontoEquilibrioShows))}
+          ${numero('Shows pra cobrir o fixo do ano', equilibrioExibido(contaFecha))}
         </div>` : ''}
 
       ${contaFecha.cache.length ? `

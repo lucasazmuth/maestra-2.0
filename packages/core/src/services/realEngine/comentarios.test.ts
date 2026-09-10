@@ -61,6 +61,43 @@ describe('§7.10 a referência do setor compara o saldo real', () => {
   });
 });
 
+// ⚠️ SEM CUSTO FIXO, A CONTA FECHA — e ninguém dizia isso. O E7.a fala do ponto de equilíbrio, e
+// sem fixo não há equilíbrio a cobrir; o E7.b exige margem negativa. Quem não tem custo fixo e
+// tem margem caía no vazio entre os dois e não recebia texto nenhum, justamente tendo a conta
+// mais simples do diagnóstico (§7.9 da v4.3).
+describe('§7.9 o E7 com custo fixo zero', () => {
+  const semFixo = () => computeRealIndexV4(base({
+    showsPerYear: 20, cacheByType: { casasDeShow: 2_000 },
+    custoPorShow: 500, custoFixoMensal: 0,
+  }));
+
+  it('o artista sem custo fixo recebe E7.c, e não E7.a nem E7.b', () => {
+    const ri = semFixo();
+    expect((ri as any).revenue.custoFixoAnual).toBe(0);
+    expect((ri as any).revenue.margemPorShow).toBeGreaterThan(0);
+
+    const doE = ids(ri, 'e');
+    expect(doE).toContain('E7.c');
+    expect(doE).not.toContain('E7.a');
+    expect(doE).not.toContain('E7.b');
+  });
+
+  // Com custo fixo, nada muda: o E7.a continua a ser o texto do ponto de equilíbrio.
+  it('com custo fixo, continua o E7.a', () => {
+    const ri = computeRealIndexV4(base({
+      showsPerYear: 20, cacheByType: { casasDeShow: 2_000 },
+      custoPorShow: 500, custoFixoMensal: 1_000,
+    }));
+    expect(ids(ri, 'e')).toContain('E7.a');
+    expect(ids(ri, 'e')).not.toContain('E7.c');
+  });
+
+  // ⚠️ E O GRUPO É SÓ DO PDF: o E7 nunca aparece na tela, com fixo ou sem ele.
+  it('não vaza para a tela', () => {
+    expect(ids(semFixo(), 'e', 'tela')).not.toContain('E7.c');
+  });
+});
+
 describe('§4 as três regras da seleção', () => {
   it('sai no máximo um comentário por grupo', () => {
     const ri = computeRealIndexV4(base({

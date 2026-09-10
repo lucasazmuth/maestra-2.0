@@ -13,7 +13,9 @@ import { INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO } from '@maestra/core/constants/
 import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '@maestra/core/services/realEngine/comentarios';
-import { AVISOS, ehLegado, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL } from '@maestra/core/services/realEngine/relatorio';
+import {
+  AVISOS, ehLegado, equilibrioExibido, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
+} from '@maestra/core/services/realEngine/relatorio';
 import {
   CHAMADA_DA_DIMENSAO as DIM_TAGLINE, LEGENDA_DO_DECLARADO as LEGENDA_DECLARADO,
   TINTA_DO_DOCUMENTO as DOC, URL_DA_MAESTRA as MAESTRA_URL, composicaoDaReceita as revComposition,
@@ -290,7 +292,7 @@ const DocContaPage: FC<{ n: number; total: number; ri: any; cm: Chartmetric | nu
             {numero('Cachê médio', money(conta.cacheMedio))}
             {numero('Custo médio por show', money(conta.custoPorShow))}
             {numero('Margem por show', money(conta.margemPorShow))}
-            {numero('Shows pra cobrir o fixo do ano', conta.pontoEquilibrioShows == null ? 'não fecha' : String(conta.pontoEquilibrioShows))}
+            {numero('Shows pra cobrir o fixo do ano', equilibrioExibido(conta))}
           </div>
         </>
       )}

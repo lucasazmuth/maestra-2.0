@@ -17,7 +17,7 @@
 // e não no `CUTS` — são cortes de EXIBIÇÃO, e misturá-los com os do índice faria parecer que
 // mudar um texto muda uma nota.
 
-import { fmtPct, type DimKey } from '../../constants/realCopy';
+import { dinheiroDoRelatorio, fmtPct, type DimKey } from '../../constants/realCopy';
 import {
   COMENTARIOS, FIXOS, RETRATOS, RETRATOS_DO_BEGINNER, type EstagioDoBeginner,
 } from '../../constants/realTextos';
@@ -315,10 +315,16 @@ const GRUPOS: Record<DimKey, Grupo[]> = {
       nome: 'E7',
       soPdf: true,
       itens: [
-        // E7.a fala do ponto de equilíbrio; sem custo fixo não existe equilíbrio a cobrir, e a
-        // frase ficaria sem sentido. E7.b só depende da margem.
-        { id: 'E7.a', quando: (c) => (c.resumo?.margemPorShow ?? 0) > 0 && c.resumo?.pontoEquilibrioShows != null },
+        // ⚠️ A PRECEDÊNCIA É C, B, A (§7.9), e não a ordem alfabética.
+        //
+        // O E7.a fala do ponto de equilíbrio; sem custo fixo não existe equilíbrio a cobrir, e a
+        // frase ficaria sem sentido. Só que antes do E7.c esse artista não recebia texto nenhum:
+        // caía no vazio entre o A (que exige ponto de equilíbrio) e o B (que exige margem
+        // negativa). Quem não tem custo fixo e tem margem é justamente quem tem a conta mais
+        // simples do diagnóstico, e ficava sem a frase que a explica.
+        { id: 'E7.c', quando: (c) => (c.resumo?.margemPorShow ?? 0) > 0 && !(c.resumo?.custoFixoAnual) },
         { id: 'E7.b', quando: (c) => c.resumo?.margemPorShow != null && c.resumo.margemPorShow <= 0 },
+        { id: 'E7.a', quando: (c) => (c.resumo?.margemPorShow ?? 0) > 0 && c.resumo?.pontoEquilibrioShows != null },
       ],
     },
     {
@@ -444,19 +450,18 @@ const MAXIMO_NA_TELA = 3;
 // ─────────────────────────── Formatação das variáveis (§11) ───────────────────────────
 
 /**
- * Dinheiro dentro do texto corrido: "reais sem centavos; acima de 10 mil, abreviar".
+ * Dinheiro dentro do texto corrido (§11).
  *
- * O texto já traz o "R$" antes da chave ("rendeu R$ {receita_anual}"), então a variável sai SEM
- * o prefixo. A maquete abrevia 1.200 como "1,2 mil" num lugar e escreve 2.000 por extenso noutro;
- * seguimos a regra escrita do §11, que é a que se pode aplicar sem exceção.
+ * ⚠️ SAI DA MESMA REGRA DAS TABELAS, e não de uma cópia dela. Eram duas implementações do mesmo
+ * parágrafo, e bastava uma divergir para o mesmo valor aparecer como "R$ 25,2 mil" na frase e
+ * "R$ 25.200" na tabela logo abaixo, no mesmo card. Uma delas abreviava a partir de dez mil
+ * INCLUSIVE, e a regra é "somente acima".
+ *
+ * O texto já traz o "R$" antes da chave ("rendeu R$ {receita_anual}"), então a variável sai sem
+ * o prefixo.
  */
-const dinheiroDoTexto = (n: number): string => {
-  const v = Math.abs(Math.round(n));
-  const enxuto = (x: number) => x.toFixed(1).replace('.', ',').replace(/,0$/, '');
-  if (v >= 1_000_000) return `${enxuto(v / 1_000_000)} mi`;
-  if (v >= 10_000) return `${enxuto(v / 1_000)} mil`;
-  return v.toLocaleString('pt-BR');
-};
+const dinheiroDoTexto = (n: number): string =>
+  dinheiroDoRelatorio(Math.abs(n)).replace('R$ ', '');
 
 /** "A", "A e B", "A, B e C". */
 const listaNatural = (itens: string[]): string => {

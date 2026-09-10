@@ -2,7 +2,7 @@ import { computeRealIndexV4 } from './index';
 import type { RealInputsV4 } from './index';
 import {
   AVISOS, AVISO_LEGADO, avisosDoDiagnostico, avisosSemLugarProprio, ehLegado, engajamentoExibido,
-  linhasDaDimensao, resumoDoE, SIIC_ANUAL,
+  equilibrioExibido, linhasDaDimensao, resumoDoE, SIIC_ANUAL,
 } from './relatorio';
 
 const base = (over: Partial<RealInputsV4> = {}): RealInputsV4 => ({
@@ -99,6 +99,18 @@ describe('§7.5 resumo do E', () => {
     expect(r.saldo).toBe(150_000);
     expect(r.bonus).toBe(1.3);
     expect(r.saldoAjustado).toBe(195_000);
+  });
+
+  // ⚠️ SEM CUSTO FIXO, A CONTA FECHA (§7.9). O card lia o ponto de equilíbrio, que é nulo tanto
+  // para quem NÃO TEM fixo a cobrir como para quem tem margem negativa — e mostrava "não fecha"
+  // nos dois casos. O primeiro é o oposto disso: cada show já entra como saldo.
+  it('o card do equilíbrio distingue "fecha" de "não fecha"', () => {
+    expect(equilibrioExibido({ margemPorShow: 1_500, custoFixoAnual: 12_000, pontoEquilibrioShows: 8 })).toBe('8');
+    expect(equilibrioExibido({ margemPorShow: 1_500, custoFixoAnual: 0, pontoEquilibrioShows: null })).toBe('fecha');
+    expect(equilibrioExibido({ margemPorShow: -200, custoFixoAnual: 0, pontoEquilibrioShows: null })).toBe('não fecha');
+    expect(equilibrioExibido({ margemPorShow: -200, custoFixoAnual: 12_000, pontoEquilibrioShows: null })).toBe('não fecha');
+    // Sem cachê informado não há margem, e aí também não fecha.
+    expect(equilibrioExibido({ margemPorShow: null, custoFixoAnual: 0, pontoEquilibrioShows: null })).toBe('não fecha');
   });
 
   // ⚠️ O SALDO AJUSTADO SAI DE TODA SUPERFÍCIE (v4.4, §12 e §13 item 15). Ele estava na tabela

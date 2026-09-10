@@ -1,5 +1,6 @@
 import {
-  DIM_META, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, VINCULO_LABELS, fmtBRL, fmtNum,
+  DIM_META, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, VINCULO_LABELS,
+  dinheiroDoRelatorio, fmtBRL, fmtNum,
 } from '../constants/realCopy';
 import { ehLegado, linhasDaDimensao as linhasV4, resumoDoE } from '../services/realEngine/relatorio';
 
@@ -66,7 +67,9 @@ export const LEGENDA_DO_DECLARADO =
 /** O destino do botão clicável da última página. */
 export const URL_DA_MAESTRA = 'https://www.maestramanager.com';
 
-export const dinheiroRedondo = (n: number) => `R$ ${fmtNum(Math.abs(Math.round(n)))}`;
+// ⚠️ Abreviava a partir de MIL, pelo `fmtNum`, e escrevia "R$ 1 mil" onde a conta dizia
+// R$ 1.200 (§11). O valor absoluto fica: quem chama põe o sinal.
+export const dinheiroRedondo = (n: number) => dinheiroDoRelatorio(Math.abs(Math.round(n)));
 
 /**
  * PROCEDÊNCIA DO DADO.

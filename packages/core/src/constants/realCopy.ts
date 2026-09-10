@@ -20,6 +20,36 @@ export const fmtNum = (n: number): string => {
 export const fmtBRL = (n: number): string =>
   Number.isFinite(n) ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }) : '—';
 
+/**
+ * Acima de quanto um valor em reais passa a ser abreviado, no relatório REAL (§11).
+ *
+ * ⚠️ O CORTE É DEZ MIL, E NÃO MIL. Abreviando a partir de mil, "R$ 1.200" virava "R$ 1 mil": o
+ * relatório apagava R$ 200 de alguém para poupar dois caracteres, e num diagnóstico financeiro
+ * a precisão é a coisa. Acima de dez mil a casa decimal já basta para o número ser lido de
+ * relance, e o que se perde não muda decisão nenhuma.
+ */
+const ABREVIA_DINHEIRO_ACIMA_DE = 10_000;
+
+/**
+ * O dinheiro como o relatório REAL o escreve (§11): "R$ 1.200", "R$ 25,2 mil", "R$ 2,8 mi".
+ *
+ * ⚠️ NÃO É O `fmtBRL`, e isto é de propósito. Aquele serve o resto do produto — preço de plano,
+ * pagamento, painel do admin —, onde abreviar seria errado: ninguém quer ver a própria fatura
+ * como "R$ 25,2 mil". Esta regra é do relatório, e só dele.
+ *
+ * O sinal vem junto quando o valor é negativo. As casas decimais só aparecem quando dizem
+ * alguma coisa: "R$ 25 mil" e não "R$ 25,0 mil".
+ */
+export const dinheiroDoRelatorio = (n: number): string => {
+  if (!Number.isFinite(n)) return '—';
+  const sinal = n < 0 ? '−' : '';
+  const v = Math.abs(Math.round(n));
+  if (v <= ABREVIA_DINHEIRO_ACIMA_DE) return `${sinal}R$ ${v.toLocaleString('pt-BR')}`;
+  const [valor, unidade] = v >= 1_000_000 ? [v / 1_000_000, 'mi'] : [v / 1000, 'mil'];
+  const escrito = valor.toFixed(1).replace(/[.,]0$/, '').replace('.', ',');
+  return `${sinal}R$ ${escrito} ${unidade}`;
+};
+
 // Porcentagem BR (4.2 → "4,2%").
 export const fmtPct = (n: number): string => `${Number(n).toFixed(1).replace('.', ',')}%`;
 

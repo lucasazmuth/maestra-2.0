@@ -218,6 +218,32 @@ describe('os avisos obrigatórios da tela', () => {
     }
   });
 
+  // ⚠️ AUSÊNCIA NUNCA É ZERO, E O CORTE NÃO ENTRA (§8.5, §12 e §13 item 6).
+  //
+  // O engajamento está SUSPENSO do índice: a API o entrega em 21% a 35% dos casos, e a taxa não
+  // é autodeclarável. Duas consequências que as três superfícies têm de respeitar juntas. A
+  // primeira: comparar com um corte que não move nota fazia a artista atribuir o resultado dela
+  // a um número que não participou da conta — a web já tinha largado a comparação, o app não. A
+  // segunda: a rede sem dado dizia "—" na web e sumia no PDF, e nenhuma das duas coisas
+  // distingue "a API não entregou" de "o vínculo é zero". "0,0%" só aparece quando a API
+  // devolveu zero.
+  it('o engajamento ausente diz "sem dado", e ninguém compara com corte', () => {
+    const doPdf = fs.readFileSync(
+      path.join(raiz, 'packages', 'core', 'src', 'documentos', 'diagnosticoHtml.ts'), 'utf8',
+    );
+    expect(telaDaWeb).toContain("{e ? fmtPct(e.value) : 'sem dado'}");
+    expect(doPdf).toContain("${e ? fmtPct(e.value) : 'sem dado'}");
+    expect(cartaoDoApp).toContain('>sem dado</Text>');
+
+    // O corte deixou de ser IMPRESSO em qualquer uma delas. A frase que o explica continua nos
+    // comentários, e é por isso que o teste procura a interpolação e não a palavra.
+    for (const fonte of [telaDaWeb, cartaoDoApp, doPdf]) {
+      expect(fonte).not.toContain('fmtPct(e.cut)');
+    }
+    // E a rede ausente continua na lista, em vez de desaparecer da página.
+    expect(doPdf).not.toContain('if (!e) return \'\';');
+  });
+
   it('o bloco do topo passa a usar só o que não tem casa', () => {
     expect(telaDaWeb).toContain('avisosSemLugarProprio');
     expect(telaDaWeb).not.toContain('avisosDoDiagnostico(');
