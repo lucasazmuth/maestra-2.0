@@ -319,9 +319,13 @@ describe('cromo do editor do Espaço JAM', () => {
   describe('no telemóvel', () => {
     const corpo = semComentarios(editor);
 
-    it('abre na Mesa, e não na linha do tempo', () => {
-      // Montar é trabalho de mouse; o que o dedo faz bem é ouvir e mexer nos níveis.
-      expect(corpo).toContain("window.innerWidth < 768 ? 'mesa' : 'linha'");
+    // ⚠️ A LINHA DO TEMPO ABRE EM TODA A PARTE. Já abriu na Mesa aqui, com o argumento de que
+    // montar é trabalho de rato — verdadeiro, e ainda assim a escolha errada: a linha do tempo
+    // é a cara do editor, é onde se vê o que a música tem, e chegar ao Espaço JAM por um ecrã
+    // de faders sem ver uma onda é chegar a outro produto. Ver não é montar.
+    it('abre na linha do tempo, como no desktop', () => {
+      expect(corpo).toContain("useState<'linha' | 'mesa' | 'ficha' | 'exportar'>('linha')");
+      expect(corpo).not.toContain("'mesa' : 'linha'");
     });
 
     it('a biblioteca começa fechada, e sobreposta quando abre', () => {

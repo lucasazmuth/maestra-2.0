@@ -142,12 +142,10 @@ export const EditorDaGravacao: FC<{
   titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
   estado, picos, transporte, ficha, numeros, fichaCompleta, exportar, letra, podeEditar, acoes,
 }) => {
-  // ⚠️ NO CELULAR O EDITOR ABRE NA MESA, e não na linha do tempo.
-  //
-  // Montar é trabalho de mouse e de largura: arrastar um clipe para o segundo certo com o dedo,
-  // num ecrã de 375 px, erra mais do que acerta. O que o telemóvel faz bem é a outra metade —
-  // ouvir o que está montado e mexer nos níveis —, e a mesa é exatamente essa metade: colunas
-  // estreitas que rolam de lado, como uma mesa de verdade.
+  // No telemóvel a montagem não se EDITA — arrastar um clipe para o segundo certo com o dedo,
+  // num ecrã de 375 px, erra mais do que acerta, e por isso os clipes lá são só de ver
+  // (`semEdicao`). O que muda com a largura é a densidade: coluna estreita, controlos que
+  // repartem, biblioteca em gaveta, volume e panorama na Mesa.
   const noCelular = useIsMobile();
   // A BIBLIOTECA ABRE E FECHA NAS DUAS TELAS, e o padrão é o que cada uma pede: no desktop há
   // largura para ela ficar à mostra enquanto se monta; no telemóvel, 256 px de coluna são 68 %
@@ -187,9 +185,14 @@ export const EditorDaGravacao: FC<{
   // onde a mão vai para mexer neles.
   const larguraDasPistas = noCelular ? 132 : LARGURA_DAS_PISTAS;
   const alturaDaPista = noCelular ? 96 : ALTURA_DA_PISTA;
-  const [aba, setAba] = useState<'linha' | 'mesa' | 'ficha' | 'exportar'>(
-    () => (window.innerWidth < 768 ? 'mesa' : 'linha'),
-  );
+  // ⚠️ A LINHA DO TEMPO ABRE EM TODA A PARTE, incluindo no telemóvel.
+  //
+  // Ela já abriu na Mesa lá, com o argumento de que montar é trabalho de rato. O argumento
+  // continua verdadeiro e mesmo assim a escolha estava errada: a linha do tempo é a cara do
+  // editor, é onde se vê o que a música TEM, e chegar a um Espaço JAM por um ecrã de faders
+  // sem ver uma onda é chegar a outro produto. Ver não é montar — e agora que a montagem abre
+  // encaixada no ecrã, ver é exatamente o que ela faz bem no telemóvel.
+  const [aba, setAba] = useState<'linha' | 'mesa' | 'ficha' | 'exportar'>('linha');
 
   // ─── O que o selo diz ─────────────────────────────────────────────────────
   //
