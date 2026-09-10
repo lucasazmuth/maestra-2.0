@@ -515,7 +515,15 @@ export const EditorDaGravacao: FC<{
           aoAbrirPasta={setBiblioteca}
           // Em LOTE: um projeto de stems tem dez, doze faixas, e mandar uma a uma é o tipo de
           // trabalho que faz a pessoa desistir da tela.
-          aoEnviar={(arquivos) => escolherArquivos(arquivos, 0)}
+          aoEnviar={(arquivos) => {
+            escolherArquivos(arquivos, 0);
+            // ⚠️ A GAVETA FECHA AO ENVIAR, e isto não é enfeite: ela cobre a tela toda, por
+            // cima da montagem E do selo de progresso (que vive numa camada abaixo). Quem
+            // enviava ficava a olhar para a mesma lista de ficheiros, sem sinal de que algo
+            // estava a acontecer, e só descobria o resultado ao fechar à mão.
+            // Fechada, aparece o que interessa: as pistas a nascer e o "Enviando 2 de 4…".
+            if (noCelular) setBibliotecaAberta(false);
+          }}
           podeEditar={podeEditar}
           aoMontar={aoMontar}
           emGaveta={noCelular}

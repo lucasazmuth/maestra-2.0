@@ -429,6 +429,11 @@ const ProjectSpace: FC = () => {
     setSaveState('salvando');
     setEnvio({ feitos: 0, total: aceites.length });
     const pasta = `${artistId}/${project.id}/versions/${open.id}/stems`;
+    // ⚠️ CONTAR O QUE ENTROU DE FACTO. Um ficheiro pode ser aceite na triagem e ainda assim não
+    // chegar ao fim — o `continue` de baixo salta os que não têm duração legível. Sem esta
+    // conta, o selo dizia "Salvo" depois de não salvar nada: a gaveta fechava, o aviso passava,
+    // e ficava um "Salvo" verde por cima de uma montagem que continuava vazia.
+    let entraram = 0;
     try {
       for (let i = 0; i < aceites.length; i += 1) {
         setEnvio({ feitos: i, total: aceites.length });
@@ -472,7 +477,15 @@ const ProjectSpace: FC = () => {
             inicio,
           });
         }
+        entraram += 1;
       }
+
+      if (!entraram) {
+        // Nada entrou: não há o que recarregar, e sobretudo não há o que comemorar.
+        setSaveState('erro');
+        return;
+      }
+
       sujo.current = true;
       // Só aqui é que a montagem recarrega, e tem de recarregar: há áudio novo para descodificar.
       await refresh();

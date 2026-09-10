@@ -381,6 +381,23 @@ describe('cromo do editor do Espaço JAM', () => {
     quadros.forEach((q) => expect(q).not.toContain('0 0 41 41'));
   });
 
+  // ⚠️ "SALVO" SÓ QUANDO ALGO FOI SALVO. Um ficheiro pode passar a triagem (é WAV, cabe no
+  // limite) e ainda assim não chegar ao fim — o envio salta os que não têm duração legível.
+  // Sem contar o que entrou de facto, o selo pintava um "Salvo" verde por cima de uma
+  // montagem que continuava vazia, e o aviso do motivo passava despercebido ao lado dele.
+  it('o envio não diz "Salvo" quando nada entrou', () => {
+    const daTela = semComentarios(tela);
+    const oEnvio = daTela.slice(daTela.indexOf('const enviarPistas'));
+
+    expect(oEnvio).toContain('let entraram = 0;');
+    expect(oEnvio).toContain('entraram += 1;');
+    // A guarda vem ANTES do "salvo": é ela que impede o verde.
+    const guarda = oEnvio.indexOf('if (!entraram)');
+    const salvo = oEnvio.indexOf("setSaveState('salvo')");
+    expect(guarda).toBeGreaterThan(-1);
+    expect(guarda).toBeLessThan(salvo);
+  });
+
   // ⚠️ A PORTA DA BIBLIOTECA MORA NO RODAPÉ, com o resto do que governa a tela inteira (o
   // andamento, o tom, o volume geral). No transporte ela ficava entre o play e o loop —
   // controlos do que está a SOAR —, e abrir uma pasta não é um gesto de transporte.

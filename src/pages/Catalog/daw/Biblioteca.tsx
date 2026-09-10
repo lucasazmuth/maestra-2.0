@@ -142,27 +142,49 @@ export const Biblioteca: FC<{
       ) : (
         <>
           <p style={{ margin: '4px 0 0', fontSize: 11, color: DS.color.textoFraco }}>
-            Arraste para uma faixa. Só então o arquivo é enviado.
+            {/* ⚠️ NA GAVETA A FRASE ERA MENTIRA: "arraste para uma faixa" num painel que TAPA
+                as faixas não descreve gesto nenhum, e o dedo não arrasta entre janelas. Aqui o
+                toque é que envia, e é isso que a linha passa a dizer. */}
+            {emGaveta
+              ? 'Toque num arquivo para enviá-lo como pista.'
+              : 'Arraste para uma faixa. Só então o arquivo é enviado.'}
           </p>
 
           <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 6 }}>
             {itens.map((item) => (
               <li key={item.id}>
                 <div
-                  draggable={podeEditar}
+                  // Na gaveta o item é um BOTÃO: sem isto ele fica ali como enfeite — vê-se o
+                  // nome e o tamanho, toca-se, e não acontece nada.
+                  role={emGaveta && podeEditar ? 'button' : undefined}
+                  tabIndex={emGaveta && podeEditar ? 0 : undefined}
+                  onClick={emGaveta && podeEditar ? () => aoEnviar([item.arquivo]) : undefined}
+                  onKeyDown={emGaveta && podeEditar ? (evento) => {
+                    if (evento.key === 'Enter' || evento.key === ' ') {
+                      evento.preventDefault();
+                      aoEnviar([item.arquivo]);
+                    }
+                  } : undefined}
+                  draggable={podeEditar && !emGaveta}
                   onDragStart={(evento) => {
                     evento.dataTransfer.setData(TIPO_DO_ARRASTO, item.id);
                     evento.dataTransfer.effectAllowed = 'copy';
                     setArrastando(item.id);
                   }}
                   onDragEnd={() => setArrastando(null)}
-                  title={item.nome}
+                  title={emGaveta ? `Enviar ${item.nome} como pista` : item.nome}
+                  // O rótulo é dito à mão: o conteúdo do item é o nome MAIS o tamanho, e um
+                  // leitor de tela anunciaria "Bateria.wav 1.0 MB" — o tamanho não é a ação.
+                  aria-label={emGaveta && podeEditar ? `Enviar ${item.nome} como pista` : undefined}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8,
                     padding: '8px 10px', borderRadius: DS.raio.medio,
                     background: DS.color.bgPista,
                     border: `1px solid ${arrastando === item.id ? DS.color.primaria : DS.color.borda}`,
-                    cursor: podeEditar ? 'grab' : 'default',
+                    cursor: !podeEditar ? 'default' : emGaveta ? 'pointer' : 'grab',
+                    // Alvo de dedo: 8 px de recuo davam 30 px de altura, abaixo de qualquer
+                    // mínimo confortável para tocar numa lista.
+                    minHeight: emGaveta ? 44 : undefined,
                     opacity: arrastando === item.id ? 0.5 : 1,
                   }}
                 >
