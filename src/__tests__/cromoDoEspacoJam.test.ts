@@ -383,8 +383,17 @@ describe('cromo do editor do Espaço JAM', () => {
     // Um botão só, que troca de ícone: dois botões separados fariam a barra mudar de forma a
     // cada toque, e o gesto é o mesmo.
     expect(corpo).toContain('estado.tocando ? <FiPause size={18} /> : <FiPlay size={18}');
+    // ⚠️ O RECORTE É DO BOTÃO, e não do ficheiro: `: 'none',` aparece em meia dúzia de
+    // estilos por aqui, e uma asserção solta passava com a sombra de volta no repouso.
+    const doPlay = corpo.slice(corpo.indexOf('onClick={transporte.alternar}'));
+    const estiloDoPlay = doPlay.slice(doPlay.indexOf('style={{'), doPlay.indexOf('}}', doPlay.indexOf('style={{')));
+
     // A cor NÃO muda entre tocar e pausar — o que muda é o brilho.
-    expect(corpo).toContain('estado.tocando ? `0 0 0 4px ${DS.color.primaria}33');
+    expect(estiloDoPlay).toContain('`0 0 0 4px ${DS.color.primaria}33');
+    // E parado é SÓ o círculo: a auréola permanente não dizia nada, num transporte em que
+    // tudo à volta é chapado.
+    expect(estiloDoPlay).toContain('estado.tocando && !estado.carregando');
+    expect(estiloDoPlay).not.toContain('0 0 16px');
   });
 
   // ⚠️ ARMAR NÃO É GRAVAR, e é a distinção que toda mesa faz. A gravação ainda não existe: o

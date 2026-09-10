@@ -578,9 +578,12 @@ export const EditorDaGravacao: FC<{
                 border: 'none', color: '#fff',
                 cursor: estado.carregando ? 'default' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: estado.carregando ? 'none'
-                  : estado.tocando ? `0 0 0 4px ${DS.color.primaria}33, 0 0 22px ${DS.color.primaria}aa`
-                    : `0 0 16px ${DS.color.primaria}55`,
+                // Parado, é só o círculo azul: uma auréola permanente não diz nada, e a
+                // barra inteira à volta dele é chapada. O brilho fica reservado para o
+                // instante em que ele significa alguma coisa — enquanto o som anda.
+                boxShadow: estado.tocando && !estado.carregando
+                  ? `0 0 0 4px ${DS.color.primaria}33, 0 0 22px ${DS.color.primaria}aa`
+                  : 'none',
                 transition: 'box-shadow .18s ease',
               }}
             >
