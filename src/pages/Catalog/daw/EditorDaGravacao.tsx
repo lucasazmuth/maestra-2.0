@@ -1,7 +1,7 @@
 import { FC, ReactNode, useRef, useState } from 'react';
 import {
   FiAlertCircle, FiCheck, FiCircle, FiDownload, FiFileText, FiHeadphones, FiLoader, FiPause,
-  FiPlay, FiSkipBack, FiSquare, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
+  FiPlay, FiRepeat, FiSkipBack, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
@@ -88,7 +88,7 @@ export const EditorDaGravacao: FC<{
   aoMontar?: () => void;
   estado: EstadoDaMesa;
   picos: (clipeId: string, n: number) => number[];
-  transporte: { alternar: () => void; parar: () => void; irPara: (s: number) => void };
+  transporte: { alternar: () => void; loopar: (v: boolean) => void; irPara: (s: number) => void };
   /** O status da música, no topo: é o estado da OBRA, e anda com o nome dela. */
   ficha: ReactNode;
   /** O andamento e o tom da gravação aberta, no rodapé, junto dos outros controlos. */
@@ -481,18 +481,27 @@ export const EditorDaGravacao: FC<{
               {estado.tocando ? <FiPause size={18} /> : <FiPlay size={18} style={{ marginLeft: 2 }} />}
             </button>
 
+            {/* ⚠️ O LOOP OCUPA O LUGAR DO PARAR, a pedido do dono do produto. Parar era o
+                único dos três que não fazia nada de novo: é pausar (o botão grande) mais
+                voltar ao início (o |◀ ao lado), e ninguém precisa de um terceiro botão para
+                encadear dois que já estão ali. O loop, esse, não tinha como se fazer à mão —
+                e é o gesto de quem está a ajustar uma mistura: deixar a coisa a rodar e mexer
+                nos faders enquanto ouve. */}
             <button
               type='button'
-              onClick={transporte.parar}
-              title='Parar'
-              aria-label='Parar'
+              onClick={() => transporte.loopar(!estado.emLoop)}
+              title={estado.emLoop ? 'Desligar o loop' : 'Repetir do início ao fim'}
+              aria-label={estado.emLoop ? 'Desligar o loop' : 'Repetir do início ao fim'}
+              aria-pressed={estado.emLoop}
               style={{
                 width: 32, height: 32, borderRadius: DS.raio.medio,
-                background: 'transparent', border: 'none', color: DS.color.textoApoio,
+                background: estado.emLoop ? `${DS.color.primaria}22` : 'transparent',
+                border: 'none',
+                color: estado.emLoop ? DS.color.primaria : DS.color.textoApoio,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
-              <FiSquare size={15} />
+              <FiRepeat size={15} />
             </button>
 
             <button

@@ -253,6 +253,23 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(regra).not.toMatch(/\bwidth:/);
   });
 
+  // O transporte tem três botões, e o terceiro é o LOOP. Parar saiu porque não fazia nada de
+  // novo: é pausar (o botão grande) mais voltar ao início (o |◀ ao lado). O loop, esse, não
+  // se faz encadeando outros dois.
+  it('o transporte repete em vez de parar, e o botão diz quando está aceso', () => {
+    const corpo = semComentarios(editor);
+    expect(corpo).toContain('FiRepeat');
+    expect(corpo).toContain('transporte.loopar(!estado.emLoop)');
+    // Aceso é visível, e não só no `title`: quem volta à tela precisa de saber se aquilo está
+    // a repetir antes de carregar no play.
+    expect(corpo).toContain('aria-pressed={estado.emLoop}');
+    expect(corpo).toContain("estado.emLoop ? `${DS.color.primaria}22` : 'transparent'");
+
+    // E o quadrado do parar não fica por aí, nem o comando dele.
+    expect(corpo).not.toContain('FiSquare');
+    expect(corpo).not.toContain('transporte.parar');
+  });
+
   // ⚠️ A ONDA COMEÇA NA BORDA DO CLIPE. O clipe está em `inicio * escala`, no instante exato
   // em que o som entra; um recuo lateral aqui dentro desenha o ataque à direita de onde ele
   // soa, e a 400 % de zoom isso vê-se a olho — justamente no zoom em que se alinham coisas.

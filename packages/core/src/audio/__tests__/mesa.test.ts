@@ -222,6 +222,77 @@ describe('Mesa', () => {
     expect(mesa.posicao()).toBeCloseTo(4.95, 2);
   });
 
+  // ─── O LOOP ───────────────────────────────────────────────────────────────
+  //
+  // Sem loop, chegar ao fim é parar e voltar ao zero. Com loop, é voltar ao zero e SEGUIR.
+  // A diferença é uma só — se o som continua — e é toda ela que estes testes prendem.
+  it('sem loop, o fim pára a mesa e devolve a agulha ao zero', async () => {
+    const { ctx, mesa } = montar([]);
+    await mesa.carregar([pista({ clipes: [clipe({ duracao: 5 })] })]);
+    await mesa.tocar();
+
+    ctx.avancar(6);
+    mesa.verificarFim();
+
+    expect(mesa.estado().tocando).toBe(false);
+    expect(mesa.posicao()).toBe(0);
+  });
+
+  it('com loop, o fim volta ao zero e a mesa continua a tocar', async () => {
+    const { ctx, mesa } = montar([]);
+    await mesa.carregar([pista({ clipes: [clipe({ duracao: 5 })] })]);
+    mesa.loopar(true);
+    await mesa.tocar();
+
+    ctx.avancar(6);
+    mesa.verificarFim();
+
+    expect(mesa.estado().tocando).toBe(true);
+    // Volta ao princípio: a agulha não passa do fim, e a antecedência do arranque põe-na
+    // ligeiramente antes do zero até o som entrar.
+    expect(mesa.posicao()).toBeLessThan(1);
+  });
+
+  it('a volta do loop reagenda as fontes, e não deixa as velhas a tocar', async () => {
+    const { ctx, mesa } = montar([]);
+    await mesa.carregar([pista({ clipes: [clipe({ duracao: 5 })] })]);
+    mesa.loopar(true);
+    await mesa.tocar();
+    const antes = ctx.arrancadas.length;
+
+    ctx.avancar(6);
+    mesa.verificarFim();
+
+    // Fontes NOVAS: um `AudioBufferSourceNode` toca uma vez só, e sem isto a segunda volta
+    // seria silêncio.
+    expect(ctx.arrancadas.length).toBeGreaterThan(antes);
+    expect(ctx.fontes.filter((f) => f.parada).length).toBeGreaterThan(0);
+  });
+
+  it('desligar o loop devolve o fim ao comportamento de parar', async () => {
+    const { ctx, mesa } = montar([]);
+    await mesa.carregar([pista({ clipes: [clipe({ duracao: 5 })] })]);
+    mesa.loopar(true);
+    mesa.loopar(false);
+    await mesa.tocar();
+
+    ctx.avancar(6);
+    mesa.verificarFim();
+
+    expect(mesa.estado().tocando).toBe(false);
+  });
+
+  // O loop é gesto de ESCUTA, como o solo: quem abrir a música amanhã não a quer a repetir
+  // sozinha sem saber porquê.
+  it('o loop nasce desligado, e a tela consegue lê-lo', async () => {
+    const { mesa } = montar([]);
+    await mesa.carregar([pista({ clipes: [clipe()] })]);
+
+    expect(mesa.estado().emLoop).toBe(false);
+    mesa.loopar(true);
+    expect(mesa.estado().emLoop).toBe(true);
+  });
+
   it('o que é escuta sobrevive à edição', async () => {
     const { mesa } = montar([]);
     await mesa.carregar([pista({ clipes: [clipe()] })]);

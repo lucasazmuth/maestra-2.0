@@ -84,6 +84,8 @@ export interface EstadoDaMesa {
   /** Onde acaba o último clipe. */
   duracao: number;
   carregando: boolean;
+  /** Se a montagem recomeça sozinha ao chegar ao fim. */
+  emLoop: boolean;
 }
 
 /** Traz os bytes (web) ou o caminho local (app) de uma URL. */
@@ -199,6 +201,8 @@ export class Mesa {
   private deslocamento = 0;
   /** O `currentTime` do contexto no instante em que a reprodução arrancou. */
   private inicioNoContexto = 0;
+  /** Se a montagem recomeça sozinha ao chegar ao fim. Gesto de escuta: não persiste. */
+  private emLoop = false;
   private descartada = false;
 
   constructor(ctx: ContextoDeAudio, buscar: Buscar, opcoes: OpcoesDaMesa = {}) {
@@ -376,17 +380,42 @@ export class Mesa {
     return Math.max(0, Math.min(bruta, this.duracaoTotal()));
   }
 
-  /** Chamado pelo tique da tela: quando a música acaba, a mesa volta ao início e pára. */
+  /**
+   * Chamado pelo tique da tela: quando a música acaba, a mesa volta ao início.
+   *
+   * Em LOOP ela volta e segue a tocar; sem loop, volta e pára. É a mesma volta ao zero nos dois
+   * casos — o que muda é se o som continua.
+   */
   verificarFim(): void {
     if (!this.tocando) return;
     const total = this.duracaoTotal();
-    if (total > 0 && this.posicao() >= total) {
-      this.pararFontes();
-      this.tocando = false;
-      this.deslocamento = 0;
-      void this.ctx.suspend?.();
-      this.avisar();
+    if (total <= 0 || this.posicao() < total) return;
+
+    if (this.emLoop) {
+      // Pelo `irPara`, e não à mão: ele já sabe parar as fontes velhas (que são de uso único) e
+      // agendar as novas com a mesma antecedência do arranque normal — que é o que mantém as
+      // pistas em fase depois da volta.
+      this.irPara(0);
+      return;
     }
+
+    this.pararFontes();
+    this.tocando = false;
+    this.deslocamento = 0;
+    void this.ctx.suspend?.();
+    this.avisar();
+  }
+
+  /**
+   * Liga e desliga o loop da montagem inteira, do zero ao fim do último clipe.
+   *
+   * NÃO PERSISTE, pela mesma razão do solo: é um gesto de escuta ("deixa isto a rodar enquanto
+   * eu ajusto"), e não uma decisão de arranjo. Quem abrir a música amanhã não quer encontrá-la
+   * a repetir sozinha sem saber porquê.
+   */
+  loopar(v: boolean): void {
+    this.emLoop = v;
+    this.avisar();
   }
 
   // ─── Mistura ──────────────────────────────────────────────────────────────
@@ -445,6 +474,7 @@ export class Mesa {
       posicao: this.posicao(),
       duracao: this.duracaoTotal(),
       carregando: this.pistas.some((p) => p.carga === 'na-fila' || p.carga === 'carregando'),
+      emLoop: this.emLoop,
     };
   }
 

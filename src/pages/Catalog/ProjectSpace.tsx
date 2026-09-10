@@ -731,8 +731,7 @@ const ProjectSpace: FC = () => {
         picos={mesa.picos}
         transporte={{
           alternar: mesa.alternar,
-          // Parar é pausar E voltar ao início — é o que o quadrado faz em qualquer editor.
-          parar: () => { mesa.pausar(); mesa.irPara(0); },
+          loopar: mesa.loopar,
           irPara: mesa.irPara,
         }}
         podeEditar={podeEditar}

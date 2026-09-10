@@ -13,7 +13,7 @@ import { Mesa, type Buscar, type EstadoDaMesa, type Pista } from './mesa';
 const TIQUE = 50;
 
 const VAZIA: EstadoDaMesa = {
-  pistas: [], tocando: false, posicao: 0, duracao: 0, carregando: false, mestre: 1,
+  pistas: [], tocando: false, posicao: 0, duracao: 0, carregando: false, mestre: 1, emLoop: false,
 };
 
 export interface DependenciasDaMesa {
@@ -123,6 +123,7 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
   const ganho = useCallback((id: string, v: number) => { mesa.current?.ganho(id, v); }, []);
   const panoramar = useCallback((id: string, v: number) => { mesa.current?.panoramar(id, v); }, []);
   const mestreEm = useCallback((v: number) => { mesa.current?.mestreEm(v); }, []);
+  const loopar = useCallback((v: boolean) => { mesa.current?.loopar(v); }, []);
   /**
    * A montagem inteira num buffer só — a guia que a lista de Músicas toca. Com `apenasPistaId`,
    * renderiza SÓ essa pista — o STEM que se exporta para levar a outro programa.
@@ -157,7 +158,7 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
   }, []);
 
   return {
-    estado, tocar, pausar, alternar, irPara, mudar, solar, ganho, panoramar, mestreEm,
+    estado, tocar, pausar, alternar, irPara, mudar, solar, ganho, panoramar, mestreEm, loopar,
     renderizar, picos,
   };
 }
