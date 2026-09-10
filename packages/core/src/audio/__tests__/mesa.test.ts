@@ -25,6 +25,16 @@ const montar = (pistas: Pista[], duracoes: Record<string, number> = {}) => {
   return { ctx, mesa };
 };
 
+/** Duas pistas: p1 de 0 a 5s, p2 de 10 a 15s — usada pelos testes de renderização (guia e stem). */
+const comDuasPistas = async () => {
+  const { mesa } = montar([]);
+  await mesa.carregar([
+    pista({ id: 'p1', clipes: [clipe({ id: 'c1', url: 'a', inicio: 0, duracao: 5 })] }),
+    pista({ id: 'p2', clipes: [clipe({ id: 'c2', url: 'b', inicio: 10, duracao: 5 })] }),
+  ]);
+  return mesa;
+};
+
 describe('agendamentoDoClipe', () => {
   // A aritmética central do editor, e a que erra em silêncio: um sinal trocado põe o som no
   // lugar errado, e som no lugar errado é indistinguível de "o ficheiro está mau" para quem ouve.
@@ -308,15 +318,6 @@ describe('Mesa', () => {
 // implementações de "somar as pistas" divergem no primeiro ajuste, e ninguém descobre até
 // alguém reclamar que na lista está diferente.
 describe('renderizar a guia', () => {
-  const comDuasPistas = async () => {
-    const { mesa } = montar([]);
-    await mesa.carregar([
-      pista({ id: 'p1', clipes: [clipe({ id: 'c1', url: 'a', inicio: 0, duracao: 5 })] }),
-      pista({ id: 'p2', clipes: [clipe({ id: 'c2', url: 'b', inicio: 10, duracao: 5 })] }),
-    ]);
-    return mesa;
-  };
-
   it('o buffer tem o tamanho da montagem inteira', async () => {
     const mesa = await comDuasPistas();
     let offline: OfflineFalso | null = null;
@@ -386,6 +387,64 @@ describe('renderizar a guia', () => {
     const { mesa } = montar([]);
     await mesa.carregar([]);
     expect(await mesa.renderizar((c, q, t) => new OfflineFalso(c, q, t))).toBeNull();
+  });
+});
+
+// O STEM: a mesma renderização, mas de UMA pista só — para exportar e levar a outro programa.
+describe('renderizar um stem (apenasPistaId)', () => {
+  it('só a pista pedida entra, e a duração é a dela — não a da montagem inteira', async () => {
+    const mesa = await comDuasPistas();
+
+    let offline: OfflineFalso | null = null;
+    const rendido = await mesa.renderizar(
+      (c, q, t) => { offline = new OfflineFalso(c, q, t); return offline; },
+      'p1',
+    );
+
+    // p1 vai de 0 a 5s; p2 (fora do stem) ia até 15s — sem ela, o stem não carrega esse peso.
+    expect(rendido?.duration).toBeCloseTo(5, 3);
+    expect(offline!.arrancadas).toHaveLength(1);
+  });
+
+  // Sem isto, um stem exportado ficaria mais fraco que a pista ouvida no editor, sem motivo —
+  // o limitador existe para a SOMA, não para uma pista sozinha.
+  it('não passa pelo teto do mestre', async () => {
+    const mesa = await comDuasPistas();
+
+    let offline: OfflineFalso | null = null;
+    await mesa.renderizar((c, q, t) => { offline = new OfflineFalso(c, q, t); return offline; }, 'p1');
+
+    expect(offline!.tetos).toHaveLength(0);
+  });
+
+  // O stem sai como a pessoa está a ouvir esta pista NESTA música: com o volume e o pan que ela
+  // já ajustou. Zerá-los reabriria a pergunta "isto soa igual ao que eu tinha na mistura?".
+  it('mantém o ganho e o panorama que a pessoa ajustou', async () => {
+    const mesa = await comDuasPistas();
+    mesa.ganho('p1', 0.4);
+    mesa.panoramar('p1', -0.6);
+
+    let offline: OfflineFalso | null = null;
+    await mesa.renderizar((c, q, t) => { offline = new OfflineFalso(c, q, t); return offline; }, 'p1');
+
+    expect(offline!.ganhos.map((g) => g.gain.value)).toEqual([0.4]);
+    expect(offline!.panoramas.map((p) => p.pan.value)).toEqual([-0.6]);
+  });
+
+  it('uma pista muda ainda exporta — mutar é decisão de arranjo, não motivo para um stem vazio', async () => {
+    const mesa = await comDuasPistas();
+    mesa.mudar('p1', true);
+
+    let offline: OfflineFalso | null = null;
+    await mesa.renderizar((c, q, t) => { offline = new OfflineFalso(c, q, t); return offline; }, 'p1');
+
+    expect(offline!.arrancadas).toHaveLength(1);
+  });
+
+  it('pista inexistente não renderiza nada', async () => {
+    const mesa = await comDuasPistas();
+    const rendido = await mesa.renderizar((c, q, t) => new OfflineFalso(c, q, t), 'nao-existe');
+    expect(rendido).toBeNull();
   });
 });
 

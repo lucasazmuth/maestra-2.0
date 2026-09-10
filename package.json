@@ -27,6 +27,7 @@
     "i18next": "^23.15.1",
     "javascript-time-ago": "^2.6.4",
     "jspdf": "^4.2.1",
+    "jszip": "^3.10.2",
     "lodash": "^4.18.1",
     "lottie-web": "^5.13.0",
     "react": "^19.2.7",

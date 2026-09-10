@@ -1,6 +1,6 @@
 import { FC, ReactNode, useRef, useState } from 'react';
 import {
-  FiCircle, FiFileText, FiHeadphones, FiPause, FiPlay, FiSkipBack, FiSquare, FiTrash2,
+  FiCircle, FiDownload, FiFileText, FiHeadphones, FiPause, FiPlay, FiSkipBack, FiSquare, FiTrash2,
   FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
@@ -95,15 +95,17 @@ export const EditorDaGravacao: FC<{
   numeros: ReactNode;
   /** A ficha inteira — identidade, créditos —, para a aba do mesmo nome. */
   fichaCompleta: ReactNode;
+  /** A tela de exportar: baixar os stems (ZIP) ou a guia (WAV/MP3), para a aba do mesmo nome. */
+  exportar: ReactNode;
   /** A letra, que abre num balão flutuante em vez de ocupar uma aba. */
   letra: ReactNode;
   podeEditar: boolean;
   acoes: AcoesDoEditor;
 }> = ({
   titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
-  estado, picos, transporte, ficha, numeros, fichaCompleta, letra, podeEditar, acoes,
+  estado, picos, transporte, ficha, numeros, fichaCompleta, exportar, letra, podeEditar, acoes,
 }) => {
-  const [aba, setAba] = useState<'linha' | 'mesa' | 'ficha'>('linha');
+  const [aba, setAba] = useState<'linha' | 'mesa' | 'ficha' | 'exportar'>('linha');
   const [zoom, setZoom] = useState(1);
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [editandoNome, setEditandoNome] = useState(false);
@@ -354,7 +356,7 @@ export const EditorDaGravacao: FC<{
             display: 'flex', gap: 2, padding: 3,
             background: DS.color.bgCampo, borderRadius: DS.raio.grande, flexShrink: 0,
           }}>
-            {([['linha', 'Timeline'], ['mesa', 'Mixer'], ['ficha', 'Ficha']] as const).map(([chave, rotulo]) => (
+            {([['linha', 'Timeline'], ['mesa', 'Mixer'], ['ficha', 'Ficha'], ['exportar', 'Exportar']] as const).map(([chave, rotulo]) => (
               <button
                 key={chave}
                 type='button'
@@ -371,7 +373,8 @@ export const EditorDaGravacao: FC<{
               >
                 {chave === 'linha' ? <IconeDaTimeline />
                   : chave === 'mesa' ? <IconeDoMixer />
-                  : <FiFileText size={14} />}
+                  : chave === 'ficha' ? <FiFileText size={14} />
+                  : <FiDownload size={14} />}
                 {rotulo}
               </button>
             ))}
@@ -429,10 +432,10 @@ export const EditorDaGravacao: FC<{
 
       {/* ══════════ CORPO ══════════ */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {/* A biblioteca serve as abas de ÁUDIO. Na ficha não há o que arrastar para lugar
-            nenhum, e uma coluna de 256 px encostada num formulário é só uma coluna a menos
-            para o formulário. */}
-        {aba !== 'ficha' && (
+        {/* A biblioteca serve as abas de ÁUDIO. Na ficha e no exportar não há o que arrastar
+            para lugar nenhum, e uma coluna de 256 px encostada é só espaço a menos para o
+            conteúdo delas. */}
+        {aba !== 'ficha' && aba !== 'exportar' && (
         <Biblioteca
           itens={biblioteca}
           aoAbrirPasta={setBiblioteca}
@@ -446,8 +449,8 @@ export const EditorDaGravacao: FC<{
 
         {/* ── Transporte + pistas ── */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-          {/* O transporte também: não se toca uma ficha. */}
-          {aba !== 'ficha' && (
+          {/* O transporte também: não se toca uma ficha, nem se exporta com o play na mão. */}
+          {aba !== 'ficha' && aba !== 'exportar' && (
           <div style={{
             height: ALTURA_DO_TRANSPORTE, flexShrink: 0,
             display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px',
@@ -566,6 +569,15 @@ export const EditorDaGravacao: FC<{
                   aplicativo — e obriga o olho a reajustar cada vez que se troca de aba. */}
               <div className={casca.ficha}>
                 {fichaCompleta}
+              </div>
+            </div>
+          ) : aba === 'exportar' ? (
+            // Mesmo lugar, mesma folha da ficha: o exportar também não tem o que arrastar nem
+            // o que tocar — é uma lista de botões de baixar, e um formulário escuro ao lado de
+            // outro formulário escuro lê-se como a mesma tela, não como duas.
+            <div style={{ flex: 1, minHeight: 0, overflow: 'auto', background: DS.color.bgFundoDaLinha, padding: 24 }}>
+              <div className={casca.ficha}>
+                {exportar}
               </div>
             </div>
           ) : aba === 'mesa' ? (

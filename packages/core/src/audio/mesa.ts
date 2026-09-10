@@ -494,30 +494,44 @@ export class Mesa {
    *
    * O SOLO não entra: ele é um gesto de escuta ("deixa-me ouvir só esta"), e uma guia gravada
    * com um solo aceso sairia com uma pista só. O mudo entra, porque é decisão de arranjo.
+   *
+   * `apenasPistaId`: renderiza SÓ essa pista — é o STEM que alguém exporta para levar a outro
+   * programa. Sai com o volume e o pan que esta pessoa já ajustou (é o que ela ouve aqui), mas
+   * SEM o teto do mestre: o limitador existe para conter a SOMA de todas as pistas, e aplicado
+   * a uma pista sozinha só a deixaria mais fraca sem motivo.
    */
   async renderizar(
     criarOffline: (canais: number, quadros: number, taxa: number) => ContextoOffline,
+    apenasPistaId?: string,
   ): Promise<BufferDeAudio | null> {
-    const duracao = this.duracaoTotal();
+    const pistas = apenasPistaId ? this.pistas.filter((p) => p.id === apenasPistaId) : this.pistas;
+    const duracao = apenasPistaId
+      ? Math.max(0, ...pistas.flatMap((p) => p.clipes.map((c) => c.inicio + this.duracaoEfetiva(c))))
+      : this.duracaoTotal();
     if (!duracao || !this.buffers.size) return null;
 
     const taxa = this.ctx.sampleRate || 44100;
     const offline = criarOffline(2, Math.ceil(duracao * taxa), taxa);
 
-    const teto = offline.createWaveShaper();
-    teto.curve = curvaDoTeto(PONTOS_DA_CURVA);
-    teto.oversample = '2x';
-    teto.connect(offline.destination);
+    // O teto é do ARRANJO — só entra quando é a montagem inteira. Um stem isolado vai direto ao
+    // destino, sem o limitador nem o ganho do mestre.
+    const destino: NoDeGanho = apenasPistaId ? (offline.destination as unknown as NoDeGanho) : (() => {
+      const teto = offline.createWaveShaper();
+      teto.curve = curvaDoTeto(PONTOS_DA_CURVA);
+      teto.oversample = '2x';
+      teto.connect(offline.destination);
 
-    const mestre = offline.createGain();
-    mestre.gain.value = this.ganhoDoMestre;
-    mestre.connect(teto as unknown as NoDeGanho);
+      const mestre = offline.createGain();
+      mestre.gain.value = this.ganhoDoMestre;
+      mestre.connect(teto as unknown as NoDeGanho);
+      return mestre;
+    })();
 
-    for (const pista of this.pistas) {
+    for (const pista of pistas) {
       if (pista.carga === 'erro') continue;
       const panorama = offline.createStereoPanner();
       panorama.pan.value = pista.pan;
-      panorama.connect(mestre);
+      panorama.connect(destino);
 
       const ganho = offline.createGain();
       // `haSolo: false` de propósito — ver o comentário acima.

@@ -24,10 +24,15 @@ import { ConfigProvider, Input, message, theme } from 'antd';
 import { CamposDaFicha, CamposDosSplits } from '../../components/ficha/campos';
 import { Spinner } from '../../components/spinner/spinner';
 import { EditorDaGravacao, type AcoesDoEditor } from './daw/EditorDaGravacao';
+import { TelaDeExportar } from './daw/TelaDeExportar';
 import { buscarWeb, criarContextoWeb } from './daw/contextoWeb';
 import { duracaoDoArquivo } from './daw/duracao';
+import {
+  baixarArquivo, nomeDoArquivoDaPista, paraWav, paraZip, type StemExportado,
+} from './daw/exportar';
 import { caminhoDaGuia, criarOfflineWeb, paraMp3 } from './daw/guia';
 import { DS } from './daw/tokens';
+
 
 // O ESPAÇO JAM: a música aberta num editor.
 //
@@ -527,6 +532,66 @@ const ProjectSpace: FC = () => {
     }
   };
 
+  // ─── Exportar: stems (ZIP) e guia (WAV/MP3) ────────────────────────────────
+  //
+  // Sai daqui, e não da tela: é aqui que mora a mesa (os buffers já carregados) e a URL da guia
+  // já salva. A tela de Exportar é pura — só mostra o que há e dispara estes callbacks.
+  const [exportandoEm, setExportandoEm] = useState<'stems' | 'guia-wav' | 'guia-mp3' | null>(null);
+
+  const baixarStems = async () => {
+    if (exportandoEm || !pistas.length) return;
+    setExportandoEm('stems');
+    try {
+      const stems: StemExportado[] = [];
+      // Sequencial, e não `Promise.all`: cada `renderizar` já percorre todo o buffer decodificado
+      // — em paralelo, um projeto de dez pistas tentaria segurar dez montagens offline ao mesmo
+      // tempo, e é isso que trava a aba, não o tempo total de espera.
+      for (const pista of pistas) {
+        // eslint-disable-next-line no-await-in-loop
+        const rendido = await mesa.renderizar(criarOfflineWeb, pista.id);
+        if (!rendido) continue;
+        stems.push({ nome: nomeDoArquivoDaPista(pista.name, 'wav'), dados: paraWav(rendido) });
+      }
+      if (!stems.length) { message.warning('Nenhuma pista pôde ser exportada.'); return; }
+      const zip = await paraZip(stems);
+      baixarArquivo(zip, `${project?.title || 'stems'}.zip`);
+    } catch {
+      message.error('Não consegui preparar os stems.');
+    } finally {
+      setExportandoEm(null);
+    }
+  };
+
+  const baixarGuiaWav = async () => {
+    if (exportandoEm || !pistas.length) return;
+    setExportandoEm('guia-wav');
+    try {
+      const rendido = await mesa.renderizar(criarOfflineWeb);
+      if (!rendido) { message.warning('Espere o áudio carregar para exportar a guia.'); return; }
+      baixarArquivo(paraWav(rendido), `${project?.title || 'guia'}.wav`);
+    } catch {
+      message.error('Não consegui gerar a guia em WAV.');
+    } finally {
+      setExportandoEm(null);
+    }
+  };
+
+  const baixarGuiaMp3 = async () => {
+    if (exportandoEm || !open?.audio_file) return;
+    setExportandoEm('guia-mp3');
+    try {
+      // Busca o próprio arquivo em vez de um link direto: só assim o nome do download é o
+      // título da música, e não `guia.mp3` — o mesmo endereço fixo para toda gravação.
+      const resposta = await fetch(open.audio_file);
+      const blob = await resposta.blob();
+      baixarArquivo(blob, `${project?.title || 'guia'}.mp3`);
+    } catch {
+      message.error('Não consegui baixar a guia.');
+    } finally {
+      setExportandoEm(null);
+    }
+  };
+
   // O rascunho parte do que está no banco, e recarrega quando a gravação aberta muda.
   useEffect(() => {
     if (!project) return;
@@ -757,6 +822,17 @@ const ProjectSpace: FC = () => {
             <CamposDosSplits draft={rascunho} set={mexerNaFicha} />
           </div>
           </ConfigProvider>
+        )}
+        exportar={(
+          <TelaDeExportar
+            pistas={pistas.map((p) => ({ id: p.id, nome: p.name }))}
+            temStems={!porMontar && pistas.length > 0}
+            temGuia={!!open?.audio_file}
+            emCurso={exportandoEm}
+            aoBaixarStems={() => { void baixarStems(); }}
+            aoBaixarGuiaWav={() => { void baixarGuiaWav(); }}
+            aoBaixarGuiaMp3={() => { void baixarGuiaMp3(); }}
+          />
         )}
         letra={(
           <ConfigProvider theme={{ algorithm: theme.darkAlgorithm, token: {

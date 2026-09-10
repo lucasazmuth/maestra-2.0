@@ -123,10 +123,15 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
   const ganho = useCallback((id: string, v: number) => { mesa.current?.ganho(id, v); }, []);
   const panoramar = useCallback((id: string, v: number) => { mesa.current?.panoramar(id, v); }, []);
   const mestreEm = useCallback((v: number) => { mesa.current?.mestreEm(v); }, []);
-  /** A montagem inteira num buffer só — a guia que a lista de Músicas toca. */
+  /**
+   * A montagem inteira num buffer só — a guia que a lista de Músicas toca. Com `apenasPistaId`,
+   * renderiza SÓ essa pista — o STEM que se exporta para levar a outro programa.
+   */
   const renderizar = useCallback(
-    (criarOffline: (canais: number, quadros: number, taxa: number) => ContextoOffline) =>
-      mesa.current?.renderizar(criarOffline) ?? Promise.resolve(null),
+    (
+      criarOffline: (canais: number, quadros: number, taxa: number) => ContextoOffline,
+      apenasPistaId?: string,
+    ) => mesa.current?.renderizar(criarOffline, apenasPistaId) ?? Promise.resolve(null),
     [],
   );
   // O descarte é do DESMONTAR, e só dele. Antes vivia na limpeza do efeito da montagem, e
