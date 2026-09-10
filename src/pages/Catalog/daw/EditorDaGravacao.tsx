@@ -9,7 +9,7 @@ import type { CatalogTrack } from '@maestra/core/interfaces/maestra';
 
 import useIsMobile from '../../../utils/isMobile';
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
-import { IconeDaTimeline, IconeDoMixer } from './icones';
+import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
 import {
@@ -122,6 +122,21 @@ export const EditorDaGravacao: FC<{
   const [bibliotecaAberta, setBibliotecaAberta] = useState(() => window.innerWidth >= 768);
   /** O REC armado. Armar não grava — marca a intenção e espera o play, como em qualquer mesa. */
   const [armado, setArmado] = useState(false);
+
+  // ⚠️ O EDITOR TEM O SEU PRÓPRIO SELETOR DE FICHEIROS, e isto conserta um botão que morria em
+  // silêncio: o "Adicionar pista" procurava o botão da BIBLIOTECA pelo `aria-label` e clicava
+  // nele por baixo do pano. Enquanto a biblioteca estava sempre aberta aquilo passou; desde que
+  // ela fecha, o botão deixa de existir no DOM, o `?.` engole a chamada, e carregar em
+  // "Adicionar pista" não fazia absolutamente nada.
+  //
+  // Um componente não deve alcançar dentro de outro por texto de rótulo. Aqui o seletor é
+  // nosso, e serve os dois gestos: pista NOVA (alvo nulo) e ficheiro numa pista que já existe.
+  const seletor = useRef<HTMLInputElement>(null);
+  const pistaDoEnvio = useRef<string | null>(null);
+  const escolherPara = (pistaId: string | null) => {
+    pistaDoEnvio.current = pistaId;
+    seletor.current?.click();
+  };
 
   // ⚠️ A LINHA DO TEMPO ENCOLHE OS CONTROLOS, e não as ondas. A coluna de 256 px come 68 % de
   // um ecrã de 375, e o que sobrava para o áudio — que é o assunto desta aba — era um terço.
@@ -308,6 +323,22 @@ export const EditorDaGravacao: FC<{
           >
             AT
           </button>
+
+          {/* ⚠️ ENVIAR DIRETO PARA ESTA PISTA. Sem isto, uma pista que ficou sem áudio (o clipe
+              foi apagado) virava um beco: a única entrada era a biblioteca, e de lá o ficheiro
+              só chega por ARRASTO — que não existe no telemóvel, onde a biblioteca é uma gaveta
+              que tapa as faixas. A pista ficava lá, vazia, sem forma de a encher. */}
+          {podeEditar && !fixa && (
+            <button
+              type='button'
+              onClick={() => escolherPara(faixa.id)}
+              title={`Enviar um áudio para ${faixa.name}`}
+              aria-label={`Enviar um áudio para ${faixa.name}`}
+              style={{ ...botaozinho(false), color: DS.color.textoApoio }}
+            >
+              <IconeDeEnviar tamanho={14} />
+            </button>
+          )}
         </div>
 
         {/* ⚠️ VOLUME E PANORAMA SAEM DA COLUNA NO CELULAR. Eles moram na Mesa, que é a aba
@@ -759,7 +790,7 @@ export const EditorDaGravacao: FC<{
                 {podeEditar && (
                   <button
                     type='button'
-                    onClick={() => document.querySelector<HTMLButtonElement>('[aria-label="Escolher arquivos"]')?.click()}
+                    onClick={() => escolherPara(null)}
                     aria-label='Adicionar pista'
                     style={{
                       width: '100%', height: 46,
@@ -1012,6 +1043,26 @@ export const EditorDaGravacao: FC<{
           token da altura do rodapé, para os dois não poderem divergir. */}
       {/* A LETRA num balão, e não numa aba: escreve-se letra a olhar para a montagem, e uma aba
           faria trocar de tela para ler um verso. Mesmo gesto do "?", do outro lado. */}
+      {/* O seletor do editor. Fica aqui, fora de qualquer painel que possa fechar — foi
+          justamente por viver dentro da biblioteca que o "Adicionar pista" parou de funcionar
+          no dia em que ela passou a recolher. */}
+      <input
+        ref={seletor}
+        type='file'
+        accept='.mp3,.wav,audio/mpeg,audio/wav'
+        multiple
+        style={{ display: 'none' }}
+        onChange={(evento) => {
+          const arquivos = Array.from(evento.target.files || []);
+          // Limpa ANTES de usar: escolher o mesmo ficheiro duas vezes seguidas não dispara
+          // `change` se o valor não mudar, e o segundo envio nunca aconteceria.
+          evento.target.value = '';
+          if (!arquivos.length) return;
+          escolherArquivos(arquivos, 0, pistaDoEnvio.current ?? undefined);
+          pistaDoEnvio.current = null;
+        }}
+      />
+
       {/* O selo de estado, na mesma fila dos outros flutuantes. Só existe no DOM quando há algo
           a dizer: um indicador permanente deixa de ser lido, e este precisa de ser lido nas
           duas vezes em que importa — a gravar, e quando falhou. */}

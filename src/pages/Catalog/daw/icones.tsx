@@ -59,3 +59,19 @@ export const IconeDoMixer: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
     />
   </svg>
 );
+
+/**
+ * O ícone de enviar um ficheiro para uma pista — desenho do dono do produto (`export.svg`).
+ *
+ * O quadro é recortado no desenho pela mesma razão dos outros dois: o original vem num 41×41
+ * com o círculo no miolo, e a essa escala ele sairia com metade da tinta dos vizinhos.
+ */
+export const IconeDeEnviar: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
+  <svg width={tamanho} height={tamanho} viewBox="7.6 7.6 25.3 25.3" fill="none" aria-hidden>
+    <path
+      d="M20.2054 15.1538V25.016M16.8379 21.6484L20.2054 25.016L23.573 21.6484"
+      stroke="currentColor" strokeWidth="2.02054" strokeLinecap="round" strokeLinejoin="round"
+    />
+    <circle cx="20.2055" cy="20.2052" r="9.26081" stroke="currentColor" strokeWidth="1.68378" />
+  </svg>
+);

@@ -375,10 +375,46 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(corpo.match(/TAMANHO_DO_ICONE_DA_ABA/g)?.length).toBe(5); // a declaração + os quatro
     expect(corpo).not.toMatch(/<FiFileText size=\{14\}[^>]*\/>\s*\n\s*:\s*<FiDownload/);
 
-    // E o quadro dos desenhados é recortado no traço, e não o 41×41 do ficheiro.
+    // E o quadro dos desenhados é recortado no traço, e não o 41×41 do ficheiro. Vale para
+    // TODOS os ícones do arquivo, e não para uma contagem fixa: prender o número fazia o teste
+    // quebrar a cada ícone novo sem que nada estivesse errado.
     const quadros = semComentarios(icones).match(/viewBox="[^"]+"/g) ?? [];
-    expect(quadros).toHaveLength(2);
+    expect(quadros.length).toBeGreaterThanOrEqual(2);
     quadros.forEach((q) => expect(q).not.toContain('0 0 41 41'));
+  });
+
+  // ⚠️ O EDITOR TEM O SEU PRÓPRIO SELETOR DE FICHEIROS. O "Adicionar pista" procurava o botão
+  // da BIBLIOTECA pelo `aria-label` e clicava nele por baixo do pano. Enquanto ela estava
+  // sempre aberta aquilo passou; desde que ela recolhe, o botão deixa de existir no DOM, o
+  // `?.` engole a chamada, e carregar em "Adicionar pista" não fazia absolutamente nada.
+  it('adicionar pista abre o seletor do próprio editor', () => {
+    const corpo = semComentarios(editor);
+
+    // Nada de alcançar dentro de outro componente por texto de rótulo.
+    expect(corpo).not.toContain('[aria-label="Escolher arquivos"]');
+    expect(corpo).toContain("onClick={() => escolherPara(null)}");
+    // O input vive FORA de qualquer painel que possa fechar.
+    expect(corpo).toContain('ref={seletor}');
+    expect(corpo).toContain("accept='.mp3,.wav,audio/mpeg,audio/wav'");
+    // ⚠️ Limpar o valor ANTES de usar: escolher o mesmo ficheiro duas vezes seguidas não
+    // dispara `change` se o valor não mudar, e o segundo envio nunca aconteceria.
+    const aoMudar = corpo.slice(corpo.indexOf('ref={seletor}'));
+    expect(aoMudar.indexOf("evento.target.value = ''")).toBeLessThan(aoMudar.indexOf('escolherArquivos('));
+  });
+
+  // Uma pista que ficou sem áudio era um beco: a única entrada era a biblioteca, e de lá o
+  // ficheiro só chega por ARRASTO — que não existe no telemóvel, onde ela é uma gaveta que tapa
+  // as faixas. A pista ficava lá, vazia, sem forma de a encher.
+  it('cada pista tem por onde receber um áudio', () => {
+    const corpo = semComentarios(editor);
+
+    expect(corpo).toContain('escolherPara(faixa.id)');
+    expect(corpo).toContain('IconeDeEnviar');
+    // Na fila do M e do S, que é onde a mão já está.
+    const aFila = corpo.slice(corpo.indexOf("aria-label={calada ?"), corpo.indexOf('</div>', corpo.indexOf('escolherPara(faixa.id)')));
+    expect(aFila).toContain('escolherPara(faixa.id)');
+    // A pista da Mix não recebe: ela é o áudio da gravação, e não uma faixa de montagem.
+    expect(corpo).toContain('{podeEditar && !fixa && (');
   });
 
   // ⚠️ "SALVO" SÓ QUANDO ALGO FOI SALVO. Um ficheiro pode passar a triagem (é WAV, cabe no
