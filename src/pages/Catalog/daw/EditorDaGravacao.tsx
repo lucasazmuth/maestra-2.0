@@ -582,18 +582,34 @@ export const EditorDaGravacao: FC<{
               acoes={acoes}
             />
           ) : (
-            <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+            // ⚠️ UM SCROLL SÓ para as duas colunas, e é isto que impede o pior erro que uma
+            // tela destas pode ter: o cabeçalho de uma pista alinhado com a faixa de OUTRA.
+            // Antes cada coluna tinha o seu `overflow`, e bastava rolar uma para o M, o S e o
+            // volume deixarem de ser os da onda ao lado — a pessoa calava a pista errada.
+            //
+            // Quem rola é este contentor. Lá dentro, a coluna dos controlos gruda à esquerda
+            // (`sticky`) e a régua gruda em cima, cada uma no seu eixo, e o canto onde as duas
+            // se cruzam gruda nos dois.
+            <div style={{
+              flex: 1, minHeight: 0, overflow: 'auto', position: 'relative',
+              background: DS.color.bgFundoDaLinha,
+            }}>
+            <div style={{ display: 'flex', minWidth: 'max-content', minHeight: '100%' }}>
               {/* Cabeçalhos das pistas */}
               <div style={{
                 width: LARGURA_DAS_PISTAS, flexShrink: 0,
                 background: DS.color.bgPainel, borderRight: `1px solid ${DS.color.borda}`,
-                overflowY: 'auto',
+                position: 'sticky', left: 0, zIndex: 11,
               }}>
                 <div style={{
                   height: ALTURA_DA_REGUA,
                   borderBottom: `1px solid ${DS.color.borda}`,
                   display: 'flex', alignItems: 'center', padding: '0 12px',
                   fontSize: 10, letterSpacing: '0.08em', color: DS.color.textoFraco, fontWeight: 600,
+                  // O canto: gruda nos DOIS eixos, e por cima da régua — senão a régua passa-lhe
+                  // por baixo e o "PISTAS" fica a meio de "0s".
+                  position: 'sticky', top: 0, zIndex: 12,
+                  background: DS.color.bgPainel,
                 }}>
                   PISTAS
                 </div>
@@ -643,8 +659,10 @@ export const EditorDaGravacao: FC<{
                   escolherArquivos(Array.from(e.dataTransfer.files), inicio);
                 }}
                 style={{
-                  flex: 1, minWidth: 0, overflow: 'auto', position: 'relative',
-                  background: DS.color.bgFundoDaLinha,
+                  // Sem `overflow` nenhum: quem rola é o contentor acima, para os controlos e
+                  // as ondas andarem juntos. `flexShrink: 0` porque a largura aqui é a da
+                  // MONTAGEM (duração × zoom) e não o que sobra da tela.
+                  flexShrink: 0, position: 'relative',
                   outline: sobre ? `2px dashed ${DS.color.primaria}` : 'none',
                   outlineOffset: -2,
                 }}
@@ -765,6 +783,7 @@ export const EditorDaGravacao: FC<{
                   </div>
                 </div>
               </div>
+            </div>
             </div>
           )}
         </div>

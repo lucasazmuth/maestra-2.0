@@ -204,7 +204,7 @@ describe('cromo do editor do Espaço JAM', () => {
 
     // Na mesma fila dos outros dois flutuantes, e à esquerda deles.
     const fila = (classe: string) =>
-      Number(casca.match(new RegExp(`\\.${classe}\\s*\\{[^}]*?right:\\s*(\\d+)px`, 's'))?.[1]);
+      Number(casca.match(new RegExp(`\\.${classe}\\s*\\{[^}]*?right:\\s*(\\d+)px`))?.[1]);
     expect(fila('ajuda')).toBe(18);
     expect(fila('letra')).toBe(62);
     expect(fila('selo')).toBe(106);
@@ -244,13 +244,39 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(linhas).toContain('{atividade.texto}');
 
     // E a forma acompanha: pílula com o texto ao lado, e não um círculo de ícone só.
-    const regra = casca.match(/\.selo\s*\{[^}]*\}/s)?.[0] ?? '';
+    const regra = casca.match(/\.selo\s*\{[^}]*\}/)?.[0] ?? '';
     expect(regra).not.toContain('border-radius: 50%');
     expect(regra).toContain('gap:');
     // Ancorada pela direita: cresce para a esquerda, e a letra e o "?" não saem do lugar
     // quando o texto muda de comprimento.
     expect(regra).toContain('right: 106px');
     expect(regra).not.toMatch(/\bwidth:/);
+  });
+
+  // ⚠️ UM SCROLL SÓ para as duas colunas. Com um `overflow` em cada uma, bastava rolar a
+  // esquerda para o M, o S e o volume deixarem de ser os da onda ao lado — e a pessoa calava
+  // ou baixava a pista errada sem perceber que estava a olhar para o cabeçalho de outra.
+  it('os controlos e as ondas rolam juntos, num scroll só', () => {
+    const corpo = semComentarios(editor);
+
+    // A coluna dos controlos não rola sozinha… (o recorte vai até ao fim do `style`, e não
+    // até à primeira chaveta: há interpolações `${...}` pelo meio.)
+    const inicioDaColuna = corpo.indexOf('width: LARGURA_DAS_PISTAS');
+    const coluna = corpo.slice(inicioDaColuna, corpo.indexOf('}}>', inicioDaColuna));
+    expect(coluna).not.toContain('overflowY');
+    expect(coluna).not.toContain('overflow:');
+    // …ela GRUDA à esquerda enquanto o contentor rola por baixo.
+    expect(coluna).toContain("position: 'sticky'");
+    expect(coluna).toContain('left: 0');
+
+    // E a linha do tempo também não: quem tem o `overflow` é o contentor das duas. O `}}` tem
+    // de ser procurado A PARTIR do `style={{` — antes dele há os `onDrop={(e) => {…}}`, e o
+    // recorte saía vazio (e um recorte vazio não contém nada, por isso passava sempre).
+    const daLinha = corpo.slice(corpo.indexOf('ref={linha}'));
+    const abreEstilo = daLinha.indexOf('style={{');
+    const estiloDaLinha = daLinha.slice(abreEstilo, daLinha.indexOf('}}', abreEstilo));
+    expect(estiloDaLinha.length).toBeGreaterThan(40);
+    expect(estiloDaLinha).not.toContain('overflow');
   });
 
   // A voz da marca não usa travessão: onde ele aparecia, a frase foi reescrita.
