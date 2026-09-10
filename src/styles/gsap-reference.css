@@ -10377,3 +10377,20 @@ body:has(.local-player-bar) .botao-flutuante {
     bottom: 152px;
   }
 }
+
+/* O contador de músicas, colado ao rótulo da aba: "Músicas 3/10".
+   Ele vivia solto no cabeçalho, como "3/10 músicas" — repetia a palavra que o título já dizia e
+   ficava longe da lista que conta. Aqui não precisa de se nomear: o rótulo ao lado já o faz.
+
+   Herda a cor da aba (`currentColor`) e apaga-se um pouco: é um número de apoio, não deve
+   competir com o nome. O vermelho do limite chega por estilo em linha e vence esta opacidade. */
+.catalog-tab-counter {
+  margin-left: 2px;
+  opacity: .62;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.catalog-tabs button.active .catalog-tab-counter {
+  opacity: .72;
+}

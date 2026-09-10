@@ -155,17 +155,25 @@ const StatusBadge: FC<{ status: string }> = ({ status }) => {
   );
 };
 
+/**
+ * Quantas músicas cabem no plano, coladas ao rótulo da aba: "Músicas 3/10".
+ *
+ * Vivia solto no cabeçalho, como "3/10 músicas". Ali repetia a palavra que o título já dizia
+ * duas vezes ("Músicas" no h1, "músicas" no contador) e ficava longe da lista que conta — a
+ * pessoa lia um número no canto direito e tinha de o ligar sozinha ao que via à esquerda.
+ * Junto da aba ele não precisa de se nomear: o rótulo ao lado já o faz.
+ *
+ * ⚠️ VERMELHO NO LIMITE, e não só cinzento mais escuro: é o único aviso de que o próximo
+ * "Nova música" vai bater num muro, e chega ANTES de a pessoa tentar.
+ */
 const TrackCounter: FC<{ currentCount: number; maxTracks: number }> = ({ currentCount, maxTracks }) => {
   const atLimit = currentCount >= maxTracks;
   return (
     <span
-      style={{
-        color: atLimit ? '#e53e3e' : '#b3b3b3',
-        fontSize: 14,
-        fontWeight: 600,
-      }}
+      className='catalog-tab-counter'
+      style={{ color: atLimit ? '#e53e3e' : undefined }}
     >
-      {currentCount}/{maxTracks} músicas
+      {currentCount}/{maxTracks}
     </span>
   );
 };
@@ -764,14 +772,16 @@ const Catalog: FC = () => {
   // havia aqui era do tema escuro — a aba ativa ficava branca com texto preto e a inativa,
   // branco translúcido com texto BRANCO, invisível sobre o fundo claro. Como estilo inline
   // vence qualquer folha, nem o CSS certo conseguia aparecer.
-  const TabButton: FC<{ id: Tab; label: string; icon?: ReactNode }> = ({ id, label, icon }) => (
+  const TabButton: FC<{ id: Tab; label: string; icon?: ReactNode; sufixo?: ReactNode }> = ({
+    id, label, icon, sufixo,
+  }) => (
     <button
       type='button'
       className={tab === id ? 'active' : ''}
       aria-pressed={tab === id}
       onClick={() => setTab(id)}
     >
-      {icon}{label}
+      {icon}{label}{sufixo}
     </button>
   );
 
@@ -890,13 +900,7 @@ const Catalog: FC = () => {
           <h1>Músicas</h1>
           <span>Organize as músicas em preparação e acompanhe cada etapa antes do lançamento.</span>
         </div>
-        {tab === 'manual' && canEditCatalog && (
-          <div className='catalog-heading-actions'>
-            {/* O contador FICA no cabeçalho: ele não é uma ação, é um limite — pertence ao lado
-                do título, junto do que descreve a lista. Quem saiu daqui foi o botão. */}
-            {maxTracks !== Infinity && <TrackCounter currentCount={currentCount} maxTracks={maxTracks} />}
-          </div>
-        )}
+
         {tab === 'spotify' && (
           <button className='catalog-refresh-btn' onClick={() => artistId && dispatch(artistsActions.refreshSpotifyProfile({ id: artistId, force: true }))} disabled={refreshing}>
             <FiRefreshCw /> {refreshing ? 'Atualizando…' : 'Atualizar do Spotify'}
@@ -911,7 +915,14 @@ const Catalog: FC = () => {
         </section>
       )}
       <div className='catalog-tabs'>
-        <TabButton id='manual' label='Músicas' />
+        <TabButton
+          id='manual'
+          label='Músicas'
+          // Sem plano pago não há limite para contar, e um "3/∞" não diz nada a ninguém.
+          sufixo={maxTracks !== Infinity && canEditCatalog
+            ? <TrackCounter currentCount={currentCount} maxTracks={maxTracks} />
+            : undefined}
+        />
         <TabButton id='spotify' label='Lançamentos' icon={<FaSpotify />} />
         {tab === 'manual' && !!items.length && catalogFilterControls}
       </div>

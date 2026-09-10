@@ -196,13 +196,18 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       // Wait for items to load and the manual tab to become active
       // (component auto-switches to manual when no spotify tracks)
+      // ⚠️ O CONTADOR MUDOU DE SÍTIO: era "5/10 músicas" solto no cabeçalho, e passou a ser o
+      // sufixo do rótulo da aba — "Músicas 5/10". Perdeu a palavra porque o rótulo ao lado já
+      // a diz, e ganhou a proximidade da lista que conta.
       await waitFor(() => {
-        expect(screen.getByText('5/10 músicas')).toBeInTheDocument();
+        expect(screen.getByText('5/10')).toBeInTheDocument();
       });
 
-      // Counter should not be in red (not at limit)
-      const counter = screen.getByText('5/10 músicas');
-      expect(counter).toHaveStyle({ color: '#b3b3b3' });
+      // Longe do limite, sem cor de alarme: quem pinta é a aba.
+      const counter = screen.getByText('5/10');
+      expect(counter).not.toHaveStyle({ color: '#e53e3e' });
+      // E mora DENTRO da aba, e não ao lado do título.
+      expect(counter.closest('button')).toHaveAttribute('aria-pressed', 'true');
 
       // Nova música button should be enabled (full opacity, pointer cursor)
       const button = screen.getByRole('button', { name: /nova música/i });
@@ -220,11 +225,11 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       // Wait for counter to appear
       await waitFor(() => {
-        expect(screen.getByText('10/10 músicas')).toBeInTheDocument();
+        expect(screen.getByText('10/10')).toBeInTheDocument();
       });
 
-      // Counter should be red
-      const counter = screen.getByText('10/10 músicas');
+      // ⚠️ VERMELHO NO LIMITE: é o único aviso que chega ANTES de a pessoa tentar criar.
+      const counter = screen.getByText('10/10');
       expect(counter).toHaveStyle({ color: '#e53e3e' });
 
       // Button should have disabled style
@@ -257,7 +262,7 @@ describe('Catalog Page - Track Limit Integration', () => {
       });
 
       // Counter should NOT be visible (maxTracks === Infinity)
-      expect(screen.queryByText(/\d+\/\d+ músicas/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/\d+\/\d+/)).not.toBeInTheDocument();
 
       // Button should be fully enabled
       const button = screen.getByRole('button', { name: /nova música/i });
@@ -293,7 +298,7 @@ describe('Catalog Page - Track Limit Integration', () => {
       renderCatalog();
 
       await waitFor(() => {
-        expect(screen.getByText('5/10 músicas')).toBeInTheDocument();
+        expect(screen.getByText('5/10')).toBeInTheDocument();
       });
 
       fireEvent.click(screen.getByRole('button', { name: /nova música/i }));
