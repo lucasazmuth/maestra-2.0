@@ -348,26 +348,60 @@ describe('cromo do editor do Espaço JAM', () => {
       expect(corpo).toContain('aria-label={rotulo}');
     });
 
-    // ⚠️ O QUE SAI É O GESTO, NÃO A INTENÇÃO. Arrastar um clipe para o segundo certo com o
-    // dedo erra mais do que acerta, e um duplo-toque que apaga é fácil de dar sem querer —
-    // esses dois merecem sair. Dividir e remover, não: são botões escritos, atrás de um toque
-    // que seleciona, e travá-los deixava um clipe mal enviado sem forma de sair no telemóvel.
-    it('o clipe não se arrasta nem se apaga com o dedo, mas divide e remove pelos botões', () => {
+    // ⚠️ O QUE MUDA É A MÃO, NÃO O QUE SE PODE FAZER. Isto já travou o clipe inteiro no
+    // telemóvel: primeiro levou à frente a barra de ações (dividir e remover são botões, não
+    // se carregam por acidente), depois ficou a travar o arrasto mesmo depois de escolhido.
+    // Só o duplo-toque que apaga continua de fora, por um motivo que não muda com a tela.
+    it('com o dedo o clipe arrasta depois de escolhido, e divide e remove pelos botões', () => {
       const oClipe = semComentarios(clipe);
 
-      expect(corpo).toContain('semArrasto={noCelular}');
-      expect(oClipe).toContain('const semGesto = fixo || semArrasto;');
-      // Os dois gestos, e só eles, é que olham para o telemóvel.
+      expect(corpo).toContain('noDedo={noCelular}');
+      // Escolher primeiro: no mesmo ecrã o arrasto horizontal já é o gesto de rolar, e sem um
+      // sinal de intenção cada tentativa de percorrer a música mexia num clipe pelo caminho.
+      expect(oClipe).toContain('const podeArrastar = !fixo && (!noDedo || selecionado);');
+      expect(oClipe).toContain('if (podeArrastar) aoArrastar(evento);');
+      // Enquanto não arrasta, o dedo em cima do clipe tem de continuar a rolar a montagem.
+      expect(oClipe).toContain("touchAction: podeArrastar ? 'none' : 'auto'");
+
+      // O duplo-toque que apaga é o único gesto que o dedo não tem.
+      expect(oClipe).toContain('const semGesto = fixo || noDedo;');
       expect(oClipe).toContain('if (!semGesto) aoApagar();');
-      expect(oClipe).toContain("cursor: semGesto ? 'default' : 'grab'");
 
       // A barra e a tesoura olham para `fixo`: só a Mix é que não se edita de forma nenhuma.
       expect(oClipe).toContain('{selecionado && !fixo && (');
       expect(oClipe).toContain('const podeCortar = !fixo &&');
 
-      // ⚠️ `semArrasto` NÃO é `fixo`: fixo é a pista da Mix, e troca o rótulo do clipe para
+      // ⚠️ `noDedo` NÃO é `fixo`: fixo é a pista da Mix, e troca o rótulo do clipe para
       // "Mix". Um clipe normal num telemóvel continua a ser "Take N".
       expect(oClipe).toContain("{fixo ? 'Mix' : `Take ${indice + 1}`}");
+    });
+
+    // ⚠️ O ARRASTO NUNCA CHEGAVA A ACONTECER, e não era por regra nenhuma: num ecrã de toque o
+    // rato só é imitado DEPOIS de o dedo levantar, e nunca em série. Entre pousar e levantar
+    // não havia um único `mousemove` — nem para mexer o clipe, nem para arrastar a agulha.
+    it('os gestos da montagem são de ponteiro, e não de rato', () => {
+      const oClipe = semComentarios(clipe);
+
+      expect(oClipe).toContain('onPointerDown={(evento) => {');
+      expect(oClipe).toContain('onPointerMove={(evento) =>');
+      expect(oClipe).not.toContain('onMouseDown');
+      expect(oClipe).not.toContain('onMouseMove');
+
+      expect(corpo).toContain('onPointerMove={aoMover}');
+      expect(corpo).toContain('onPointerUp={aoLargar}');
+      // O sistema pode levar o gesto (uma chamada, o gesto de voltar): sem isto o clipe ficava
+      // colado a um dedo que já não existe.
+      expect(corpo).toContain('onPointerCancel={aoLargar}');
+      expect(corpo).toContain('const aoMover = (evento: React.PointerEvent)');
+      expect(corpo).toContain('const aoLargar = (evento: React.PointerEvent)');
+
+      // A régua e a agulha também: levar a agulha é o primeiro tempo de dividir.
+      expect(corpo).toContain('onPointerDown={(evento) => { agulhaPresa.current = true;');
+      expect(corpo).toContain('onPointerDown={() => { agulhaPresa.current = true; }}');
+      expect(corpo.match(/touchAction: 'none'/g)).toHaveLength(2);
+
+      // E a permissão de arrastar deixou de olhar para o tamanho do ecrã: isso é do clipe.
+      expect(corpo).toContain('if (!podeEditar || faixa.id === pistaFixaId) return;');
     });
 
     // ⚠️ ESCOLHER O PONTO DO CORTE NÃO PODE FECHAR A BARRA. Dividir é em dois tempos: leva-se
@@ -390,8 +424,8 @@ describe('cromo do editor do Espaço JAM', () => {
     it('a barra do clipe cabe dentro dele, com alvos de dedo', () => {
       const oClipe = semComentarios(clipe);
 
-      expect(oClipe).toContain("...(semArrasto ? { bottom: 6, left: 6 } : { top: -38, left: 0 })");
-      expect(oClipe).toContain("semArrasto ? { height: 34, padding: '0 12px' }");
+      expect(oClipe).toContain("...(noDedo ? { bottom: 6, left: 6 } : { top: -38, left: 0 })");
+      expect(oClipe).toContain("noDedo ? { height: 34, padding: '0 12px' }");
       // Nos dois botões: um alvo de 24 px acerta-se com o rato e falha-se com o polegar.
       expect(oClipe.match(/\.\.\.alvo,/g)).toHaveLength(2);
     });

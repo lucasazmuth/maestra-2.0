@@ -275,7 +275,7 @@ export const EditorDaGravacao: FC<{
     return Math.max(0, Math.min(x / escala, duracao));
   };
 
-  const aoMover = (evento: React.MouseEvent) => {
+  const aoMover = (evento: React.PointerEvent) => {
     if (agulhaPresa.current) { transporte.irPara(segundoDoEvento(evento)); return; }
     const puxado = arrasto.current;
     if (!puxado) return;
@@ -284,7 +284,7 @@ export const EditorDaGravacao: FC<{
     acoes.aoMoverClipe(puxado.clipeId, Math.max(0, segundoDoEvento(evento) - puxado.deslocamentoX / escala));
   };
 
-  const aoLargar = (evento: React.MouseEvent) => {
+  const aoLargar = (evento: React.PointerEvent) => {
     if (agulhaPresa.current) { agulhaPresa.current = false; return; }
     const puxado = arrasto.current;
     if (!puxado) return;
@@ -971,9 +971,16 @@ export const EditorDaGravacao: FC<{
               {/* Linha do tempo */}
               <div
                 ref={linha}
-                onMouseMove={aoMover}
-                onMouseUp={aoLargar}
-                onMouseLeave={aoLargar}
+                // ⚠️ PONTEIRO, E NÃO RATO. Num ecrã de toque o rato só é imitado depois de o
+                // dedo levantar — e nunca em série —, por isso não havia um único `mousemove`
+                // entre pousar e levantar: o arrasto de um clipe e o da agulha não estavam
+                // travados por regra nenhuma, simplesmente nunca chegavam a acontecer.
+                // `pointercancel` fecha o arrasto quando o sistema leva o gesto (uma chamada,
+                // o gesto de voltar), senão o clipe ficava colado ao dedo que já não existe.
+                onPointerMove={aoMover}
+                onPointerUp={aoLargar}
+                onPointerCancel={aoLargar}
+                onPointerLeave={aoLargar}
                 onDragOver={(e) => { e.preventDefault(); setSobre(true); }}
                 onDragLeave={() => setSobre(false)}
                 onDrop={(e) => {
@@ -1001,12 +1008,15 @@ export const EditorDaGravacao: FC<{
                 }}
               >
                 <div
-                  onMouseDown={(evento) => { agulhaPresa.current = true; transporte.irPara(segundoDoEvento(evento)); }}
+                  onPointerDown={(evento) => { agulhaPresa.current = true; transporte.irPara(segundoDoEvento(evento)); }}
                   // Marcada como agulha: tocar aqui move o ponto do corte, e é um gesto que
                   // PREPARA a barra do clipe em vez de a fechar.
                   data-agulha=''
                   style={{
                     height: ALTURA_DA_REGUA, width: largura,
+                    // A régua é para levar a agulha, e o dedo tem de a poder arrastar: aqui o
+                    // gesto é nosso. Rolar continua a ser em qualquer outro sítio da montagem.
+                    touchAction: 'none',
                     position: 'sticky', top: 0, zIndex: 10,
                     background: DS.color.bgPainel,
                     borderBottom: `1px solid ${DS.color.borda}`,
@@ -1076,10 +1086,13 @@ export const EditorDaGravacao: FC<{
                             altura={alturaDaPista}
                             selecionado={selecionado === clipe.id}
                             fixo={faixa.id === pistaFixaId}
-                            semArrasto={noCelular}
+                            noDedo={noCelular}
                             aoSelecionar={() => setSelecionado((atual) => (atual === clipe.id ? null : clipe.id))}
+                            // ⚠️ O `noCelular` SAIU DAQUI. Ele travava o arrasto por tamanho de
+                            // ecrã, e a decisão de quando o dedo pode arrastar é do clipe (só
+                            // depois de escolhido) — não desta guarda, que é sobre permissão.
                             aoArrastar={(evento) => {
-                              if (!podeEditar || noCelular || faixa.id === pistaFixaId) return;
+                              if (!podeEditar || faixa.id === pistaFixaId) return;
                               const caixa = linha.current;
                               if (!caixa) return;
                               const x = evento.clientX - caixa.getBoundingClientRect().left + caixa.scrollLeft;
@@ -1110,9 +1123,10 @@ export const EditorDaGravacao: FC<{
 
                   {/* A agulha. Fica por cima de tudo, e é ela que diz onde o corte cai. */}
                   <div
-                    onMouseDown={() => { agulhaPresa.current = true; }}
+                    onPointerDown={() => { agulhaPresa.current = true; }}
                     data-agulha=''
                     style={{
+                      touchAction: 'none',
                       position: 'absolute', left: agulha * escala, top: 0,
                       height: Math.max(pistas.length, 1) * alturaDaPista,
                       width: 2, background: DS.color.agulha, cursor: 'grab', zIndex: 100,

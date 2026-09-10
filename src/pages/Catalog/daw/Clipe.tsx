@@ -30,27 +30,37 @@ export const Clipe: FC<{
   /** A mix de uma gravação por montar: toca e desenha-se, mas não se edita. */
   fixo?: boolean;
   /**
-   * Sem edição por GESTO: o clipe não se arrasta e não se apaga com duplo toque. Dividir e
-   * remover continuam a existir, pelos botões.
+   * Quem mexe aqui é um DEDO, e não um ponteiro. Muda o gesto, não o que se pode fazer.
    *
-   * ⚠️ ISTO JÁ TRAVOU O CLIPE INTEIRO, e era demais. Arrastar um clipe para o segundo certo
-   * com o dedo num ecrã de 375 px erra mais do que acerta, e um duplo-toque que apaga é fácil
-   * de dar sem querer — esses dois gestos merecem sair. A barra de ações não: um botão escrito
-   * REMOVER, atrás de um toque que seleciona, não se carrega por acidente. O que aconteceu foi
-   * a mão (que muda) ter levado à frente a intenção (que não muda), e no telemóvel um clipe
-   * mal enviado ficava sem forma de sair.
+   * Com dedo, arrastar exige o clipe SELECIONADO primeiro. Não é cerimónia: no mesmo ecrã, o
+   * arrasto horizontal já é o gesto de rolar a linha do tempo, e sem um sinal de intenção cada
+   * tentativa de percorrer a música mexia no clipe por onde o dedo passasse. Um toque escolhe,
+   * e a partir daí o clipe é a coisa que se está a mexer.
+   *
+   * ⚠️ ISTO JÁ TRAVOU O CLIPE INTEIRO, e era demais. Primeiro levou à frente a barra de ações
+   * (dividir e remover, que são botões e não se carregam por acidente); depois ficou a travar
+   * o arrasto mesmo depois de escolhido. O duplo-toque que apaga é o único gesto que continua
+   * de fora, e por um motivo que não muda: dá-se sem querer.
    *
    * ⚠️ NÃO É O MESMO QUE `fixo`. Fixo é a pista da Mix — uma pista que não se mexe por natureza,
    * e que por isso se chama "Mix" em vez de "Take N". Essa não se edita de forma nenhuma.
    */
-  semArrasto?: boolean;
+  noDedo?: boolean;
   aoSelecionar: () => void;
-  aoArrastar: (evento: React.MouseEvent) => void;
+  aoArrastar: (evento: React.PointerEvent) => void;
   aoCortar: () => void;
   aoApagar: () => void;
-}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, semArrasto, aoSelecionar, aoArrastar, aoCortar, aoApagar }) => {
-  /** Nada de gestos: por ser a Mix, ou por estar num telemóvel. */
-  const semGesto = fixo || semArrasto;
+}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, noDedo, aoSelecionar, aoArrastar, aoCortar, aoApagar }) => {
+  /**
+   * Mexer o clipe no tempo. A Mix nunca; com dedo, só depois de escolhido.
+   *
+   * ⚠️ E É ISTO QUE DECIDE O `touchAction`: enquanto o clipe não pode ser arrastado, o dedo em
+   * cima dele tem de continuar a rolar a linha do tempo. Trocar as voltas aqui tira à pessoa
+   * ou o arrasto, ou a única forma de percorrer a música.
+   */
+  const podeArrastar = !fixo && (!noDedo || selecionado);
+  /** O duplo-toque que apaga fica de fora do dedo: dá-se sem querer. */
+  const semGesto = fixo || noDedo;
   const caixa = useRef<HTMLDivElement>(null);
   const partiuDe = useRef(0);
   const arrastou = useRef(false);
@@ -75,7 +85,7 @@ export const Clipe: FC<{
 
   // O dedo pede mais do que o ponteiro: 24 px de altura acertam-se com o rato e falham-se com
   // o polegar, e estes dois botões decidem se um clipe fica ou desaparece.
-  const alvo = semArrasto ? { height: 34, padding: '0 12px' } : { height: 24, padding: '0 8px' };
+  const alvo = noDedo ? { height: 34, padding: '0 12px' } : { height: 24, padding: '0 8px' };
 
   const inicio = Number(clipe.start_seconds) || 0;
   const duracao = Number(clipe.duration_seconds) || 0;
@@ -84,8 +94,18 @@ export const Clipe: FC<{
   return (
     <div
       ref={caixa}
-      onMouseDown={(evento) => { partiuDe.current = evento.clientX; arrastou.current = false; aoArrastar(evento); }}
-      onMouseMove={(evento) => { if (Math.abs(evento.clientX - partiuDe.current) > 4) arrastou.current = true; }}
+      // ⚠️ PONTEIRO, E NÃO RATO. `mousedown`/`mousemove` num ecrã de toque só são imitados
+      // DEPOIS de o dedo levantar, e nunca em série: o arrasto do clipe não é que estivesse
+      // travado por regra nenhuma no telemóvel — ele simplesmente nunca chegava a acontecer,
+      // porque não havia um único `mousemove` entre pousar e levantar o dedo.
+      onPointerDown={(evento) => {
+        partiuDe.current = evento.clientX;
+        arrastou.current = false;
+        // Só arma o arrasto se ele for possível AGORA: armado à toa, o primeiro dedo que
+        // passasse a rolar levava o clipe com ele.
+        if (podeArrastar) aoArrastar(evento);
+      }}
+      onPointerMove={(evento) => { if (Math.abs(evento.clientX - partiuDe.current) > 4) arrastou.current = true; }}
       onDoubleClick={(evento) => { evento.stopPropagation(); if (!semGesto) aoApagar(); }}
       onClick={(evento) => {
         // Só alterna a seleção num clique LIMPO: sem isto, largar um arrasto selecionava ou
@@ -105,7 +125,10 @@ export const Clipe: FC<{
         boxShadow: selecionado
           ? `0 0 0 2px ${cor}55, 0 4px 16px ${cor}44`
           : `0 4px 12px ${cor}22`,
-        cursor: semGesto ? 'default' : 'grab',
+        cursor: podeArrastar ? 'grab' : 'default',
+        // Enquanto não se arrasta, o dedo em cima do clipe rola a linha do tempo; a arrastar,
+        // o gesto é nosso e o navegador não o pode roubar para rolar.
+        touchAction: podeArrastar ? 'none' : 'auto',
         overflow: 'visible',
         transition: 'border-color 150ms, box-shadow 150ms',
       }}
@@ -156,14 +179,14 @@ export const Clipe: FC<{
 
       {selecionado && !fixo && (
         <div
-          onMouseDown={(evento) => evento.stopPropagation()}
+          onPointerDown={(evento) => evento.stopPropagation()}
           style={{
             // ⚠️ NO TELEMÓVEL A BARRA VIVE DENTRO DO CLIPE. Por cima dele (que é onde ela fica
             // no desktop, e onde não tapa a onda) a primeira pista atirava-a para fora do topo
             // da área que rola: ficava cortada pela régua, ou invisível. Dentro cabe — uma
             // faixa de 96 px dá 80 de clipe — e nunca sai do ecrã.
             position: 'absolute',
-            ...(semArrasto ? { bottom: 6, left: 6 } : { top: -38, left: 0 }),
+            ...(noDedo ? { bottom: 6, left: 6 } : { top: -38, left: 0 }),
             display: 'flex', gap: 4,
             background: DS.color.bgPainel,
             border: `1px solid ${DS.color.bordaForte}`,
