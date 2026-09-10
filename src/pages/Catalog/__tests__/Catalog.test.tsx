@@ -52,6 +52,24 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   deleteCatalogItem: (...args: any[]) => mockDeleteCatalogItem(...args),
 }));
 
+// O aviso padrão do produto e o store do player: é aqui que se vê se o clique numa música sem
+// guia avisou em vez de abrir uma barra que não toca.
+const mockWarning = jest.fn();
+jest.mock('antd', () => {
+  const real = jest.requireActual('antd');
+  return { ...real, message: { ...real.message, warning: (...args: any[]) => mockWarning(...args) } };
+});
+
+const mockSetPlayerOpen = jest.fn();
+jest.mock('@maestra/core/stores/localPlayerStore', () => {
+  const estado = {
+    open: false, currentId: null, tracks: [], playing: false,
+    setOpen: (...args: any[]) => mockSetPlayerOpen(...args),
+    setTracks: jest.fn(), setCurrentId: jest.fn(), toggle: jest.fn(),
+  };
+  return { useLocalPlayerStore: (seletor: any) => (seletor ? seletor(estado) : estado) };
+});
+
 // Mock genres DB service
 const mockListGenres = jest.fn();
 jest.mock('@maestra/core/services/db/genres', () => ({
@@ -322,6 +340,54 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       expect(screen.getByText('Meu Samba')).toBeInTheDocument();
       expect(screen.getByText('Noite Rock')).toBeInTheDocument();
+    });
+  });
+
+  // ⚠️ O PLAY NÃO PODE DESTACAR QUEM NÃO TEM O QUE TOCAR. A folha antiga acinzenta o botão
+  // por `button[title="Tocar"]` — um seletor pelo TEXTO do title —, e a música sem guia, que
+  // tinha outro title, escapava e ficava com o azul cheio. A lista dava o botão mais aceso
+  // justamente à linha que não responde.
+  describe('o play de uma música sem faixa guia', () => {
+    beforeEach(() => {
+      mockWarning.mockClear();
+      mockSetPlayerOpen.mockClear();
+      mockCatalogItems = [
+        makeCatalogItem({ id: 'com-audio', title: 'Tem guia', audio_file: 'https://exemplo/guia.mp3' }),
+        makeCatalogItem({ id: 'sem-audio', title: 'Sem guia', audio_file: null }),
+      ];
+      mockListCatalogItems.mockResolvedValue(mockCatalogItems);
+    });
+
+    const playDe = async (titulo: string) => {
+      await waitFor(() => expect(screen.getByText(titulo)).toBeInTheDocument());
+      const linha = screen.getByText(titulo).closest('.catalog-track-row') as HTMLElement;
+      return within(linha).getAllByRole('button')[0];
+    };
+
+    it('não fica azul: apagado como o das músicas que tocam', async () => {
+      renderCatalog();
+      const play = await playDe('Sem guia');
+      // O jsdom normaliza para `rgb(...)`; o azul da marca é o que ele NÃO pode ter.
+      expect(play.style.background).not.toBe('rgb(51, 97, 255)');
+      expect(play.style.background).toBe('rgb(238, 243, 251)');
+    });
+
+    it('avisa o que falta, e não abre um player que não toca', async () => {
+      renderCatalog();
+      fireEvent.click(await playDe('Sem guia'));
+
+      expect(mockWarning).toHaveBeenCalledTimes(1);
+      expect(mockWarning.mock.calls[0][0]).toContain('faixa guia');
+      // Sem isto o aviso seria enfeite: a barra continuaria a abrir por baixo dele.
+      expect(mockSetPlayerOpen).not.toHaveBeenCalledWith(true);
+    });
+
+    it('quem tem guia continua a tocar, sem aviso nenhum', async () => {
+      renderCatalog();
+      fireEvent.click(await playDe('Tem guia'));
+
+      expect(mockWarning).not.toHaveBeenCalled();
+      expect(mockSetPlayerOpen).toHaveBeenCalledWith(true);
     });
   });
 });

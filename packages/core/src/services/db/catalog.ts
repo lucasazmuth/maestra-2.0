@@ -142,6 +142,39 @@ export const deleteCatalogItem = async (id: string): Promise<void> => {
  * Aqui a ordem é a correta: grava o projeto, cria/atualiza a versão, e só então aponta a versão
  * principal. É esta função que o modal usa, tanto pra criar quanto pra editar.
  */
+/**
+ * Os campos da GRAVAÇÃO que uma gravação da ficha escreve.
+ *
+ * ⚠️ O ÁUDIO SÓ ENTRA SE O CHAMADOR FALAR DELE, e esta distinção não é preciosismo: é a
+ * diferença entre "não mexi nisso" e "quero isto vazio".
+ *
+ * Era `audio_file: input.audio_file ?? null` como todo o resto — e então QUALQUER gravação que
+ * não repetisse o campo apagava a guia da música. Enquanto a ficha só salvava por botão isso
+ * quase não aparecia; com a ficha a salvar sozinha, cada tecla numa observação destruía em
+ * silêncio o áudio que a lista de Músicas toca.
+ *
+ * Os outros campos ficam com `?? null` porque são todos editáveis no MESMO formulário: quem
+ * grava a ficha viu todos eles, e um vazio ali é uma decisão. O áudio não está lá — nasce do
+ * editor, e a ficha não tem como ter opinião sobre ele.
+ */
+export const payloadDaGravacao = (
+  input: Partial<CatalogItem>,
+  now: string,
+): Record<string, unknown> => {
+  const payload: Record<string, unknown> = {
+    status: input.status || 'composition',
+    duration: input.duration ?? null,
+    bpm: input.bpm ?? null,
+    key: input.key ?? null,
+    genre: input.genre ?? null,
+    lyrics: input.lyrics ?? null,
+    updated_at: now,
+  };
+  if ('audio_file' in input) payload.audio_file = input.audio_file ?? null;
+  if ('audio_file_name' in input) payload.audio_file_name = input.audio_file_name ?? null;
+  return payload;
+};
+
 export const saveCatalogProjectFromForm = async (
   input: {
     id?: string;              // projeto existente (edição)
@@ -185,17 +218,7 @@ export const saveCatalogProjectFromForm = async (
   }
 
   // Campos da FAIXA (a versão): áudio, duração e letra pertencem à gravação, não à música.
-  const versionPayload = {
-    status: input.status || 'composition',
-    audio_file: input.audio_file ?? null,
-    audio_file_name: input.audio_file_name ?? null,
-    duration: input.duration ?? null,
-    bpm: input.bpm ?? null,
-    key: input.key ?? null,
-    genre: input.genre ?? null,
-    lyrics: input.lyrics ?? null,
-    updated_at: now,
-  };
+  const versionPayload = payloadDaGravacao(input, now);
 
   let version: CatalogVersion;
   const targetVersionId = input.versionId || project.primary_version_id;

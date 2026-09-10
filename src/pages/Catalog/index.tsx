@@ -45,6 +45,16 @@ const linhaLista: CSSProperties = {
   borderRadius: 6,
   cursor: 'pointer',
 };
+/**
+ * O play de uma música SEM guia: apagado, como o das outras.
+ *
+ * São os mesmos valores que a folha antiga aplica por `button[title="Tocar"]` — repetidos aqui
+ * porque aquele seletor casa pelo TEXTO do title, e um title honesto ("Sem faixa guia ainda")
+ * nunca vai casar com ele.
+ */
+const CINZA_DO_PLAY = '#eef3fb';
+const ICONE_DO_PLAY_APAGADO = '#60749a';
+
 const linhaPlay: CSSProperties = {
   width: 36,
   height: 36,
@@ -1050,6 +1060,11 @@ const Catalog: FC = () => {
                     : null,
                 ].filter(Boolean).join(' · ');
 
+                // A guia é o que a lista toca: a soma das pistas, gerada ao sair do editor.
+                // Sem ela não há o que tocar aqui — e é isso, e não "áudio pendente", que a
+                // pessoa precisa de ler.
+                const semGuia = !it.audio_file;
+
                 return (
                   <div
                     key={it.id}
@@ -1066,11 +1081,23 @@ const Catalog: FC = () => {
                       }
                     }}
                   >
+                    {/* ⚠️ SEM GUIA, SEM DESTAQUE. A folha antiga acinzenta o play por
+                        `button[title="Tocar"]` — um seletor pelo TEXTO do title. A música sem
+                        áudio tinha outro title, escapava à regra e ficava com o azul cheio: a
+                        lista dava o botão mais aceso justamente a quem não tem o que tocar, e
+                        o olho ia primeiro para a linha que não responde.
+                        Aqui a cor é dita à mão, e não herdada de uma coincidência de texto. */}
                     <button
-                      style={linhaPlay}
-                      title={!it.audio_file ? 'Abrir player — áudio pendente' : isPlaying ? 'Pausar' : 'Tocar'}
+                      style={semGuia ? { ...linhaPlay, background: CINZA_DO_PLAY } : linhaPlay}
+                      title={semGuia ? 'Sem faixa guia ainda' : isPlaying ? 'Pausar' : 'Tocar'}
                       onClick={(e) => {
                         e.stopPropagation();
+                        // Abrir o player para uma música sem áudio dava uma barra que não toca
+                        // e não diz porquê. O aviso explica o que falta E onde se resolve.
+                        if (semGuia) {
+                          message.warning('Esta música ainda não tem faixa guia. Monte as pistas no Espaço Jam: ao sair, a guia é gerada.');
+                          return;
+                        }
                         if (isCurrent) togglePlayer?.(); // já no player → pausa/retoma
                         else openLocal(it.id); // começa esta faixa
                       }}
@@ -1080,7 +1107,7 @@ const Catalog: FC = () => {
                           <path d='M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z' />
                         </svg>
                       ) : (
-                        <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: '#fff' }}>
+                        <svg viewBox='0 0 16 16' style={{ width: 16, height: 16, fill: semGuia ? ICONE_DO_PLAY_APAGADO : '#fff' }}>
                           <path d='M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z' />
                         </svg>
                       )}
