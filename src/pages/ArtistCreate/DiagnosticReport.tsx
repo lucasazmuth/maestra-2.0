@@ -17,7 +17,7 @@ import { RealBadge } from '../../components/RealBadge';
 import {
   TIER_ACCENT, altasForPattern, tierForAltas, tierForPattern,
 } from '@maestra/core/constants/realBadge';
-import { CABECALHO_DA_ENTREGA, fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, PROFILE_BITS } from '@maestra/core/constants/realCopy';
+import { CABECALHO_DA_ENTREGA, dinheiroDoRelatorio, fmtBRL, fmtPct, PREMIOS_LABELS_V3, PAGANTE_LABELS, FREQ_LABELS, PROFILE_BITS } from '@maestra/core/constants/realCopy';
 import { FIXOS, INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO, LEITURAS_CURTAS } from '@maestra/core/constants/realTextos';
 import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
@@ -89,7 +89,7 @@ const DIM_PHRASE: Record<'r' | 'e' | 'a' | 'l', { high: string; low: string }> =
 
 const DIM_META: { key: 'r' | 'e' | 'a' | 'l'; letter: string; name: string }[] = [
   { key: 'r', letter: 'R', name: 'Reach · Alcance' },
-  { key: 'e', letter: 'E', name: 'Earnings · Receita' },
+  { key: 'e', letter: 'E', name: 'Earnings · Ganhos' },
   { key: 'a', letter: 'A', name: 'Audience · Público real' },
   { key: 'l', letter: 'L', name: 'Legitimacy · Legitimação' },
 ];
@@ -224,9 +224,13 @@ const EngagementGrid: FC<{ engagement: any; deezerFans?: number | null; informat
               comparar com um corte que não move nota fazia o artista atribuir o resultado dele a
               um número que não participou da conta. Fica só a taxa.
             */}
-            {e
-              ? <span className={styles.engVal}>{fmtPct(e.value)}</span>
-              : <span className={styles.engVal}>—</span>}
+            {/*
+              ⚠️ AUSÊNCIA NUNCA É ZERO (§8.5 e §12). O travessão dizia "não há nada aqui" com a
+              mesma cara com que um "0,0%" diria "o vínculo é nulo", e as duas coisas são
+              diferentes: uma é a API que não entregou, a outra é a rede que de facto não
+              engaja. "0,0%" só aparece quando a API devolveu zero.
+            */}
+            <span className={styles.engVal}>{e ? fmtPct(e.value) : 'sem dado'}</span>
           </div>
         );
       })}
@@ -397,7 +401,8 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
           const fat = Math.round(Number(rev.total ?? 0) * 12);
           const inv = Math.round(Number(inputs.investimento ?? 0));
           const saldo = fat - inv;
-          const money = (n: number) => `R$ ${fmtNum(Math.abs(n))}`;
+          // §11: abrevia só acima de dez mil. Pelo `fmtNum`, R$ 1.200 saía como "R$ 1 mil".
+          const money = (n: number) => dinheiroDoRelatorio(Math.abs(n));
           return (
             <div className={styles.healthBlock}>
               <div className={styles.healthTitle}>Saúde financeira · 12 meses</div>
@@ -409,7 +414,8 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
             </div>
           );
         }
-        const money = (n: number) => `R$ ${fmtNum(Math.abs(n))}`;
+        // §11: abrevia só acima de dez mil. Pelo `fmtNum`, R$ 1.200 saía como "R$ 1 mil".
+        const money = (n: number) => dinheiroDoRelatorio(Math.abs(n));
         return (
           <div className={styles.healthBlock}>
             <div className={styles.healthTitle}>Saúde financeira · 12 meses</div>
@@ -422,14 +428,11 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
                   {resumo.saldo >= 0 ? '+' : '−'}{money(resumo.saldo)}
                 </span>
               </div>
-              {resumo.bonus > 1 && (
-                <div className={styles.healthItem}>
-                  <span className={styles.healthLabel}>Saldo ajustado (+{Math.round((resumo.bonus - 1) * 100)}%)</span>
-                  <span className={`${styles.healthVal} ${resumo.saldoAjustado >= 0 ? styles.healthPos : styles.healthNeg}`}>
-                    {resumo.saldoAjustado >= 0 ? '+' : '−'}{money(resumo.saldoAjustado)}
-                  </span>
-                </div>
-              )}
+              {/* ⚠️ O SALDO AJUSTADO NÃO APARECE AQUI (v4.4, §1.3, §12 e §13 item 15).
+                  Ter CNPJ e ter empresário valem um bônus sobre o saldo positivo, e esse bônus
+                  decide a nota. Mas ele é PONTUAÇÃO, e estava a ser exibido como DINHEIRO, com o
+                  percentual ao lado: o artista via um valor que não existe na conta dele, e via
+                  um número proprietário do método, que este relatório não expõe por princípio. */}
               {resumo.receitaLiquidaEstimada != null && (
                 <div className={styles.healthItem}>
                   <span className={styles.healthLabel}>Receita líquida estimada ({resumo.aliquotaRotulo})</span>
@@ -441,10 +444,14 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
             {/*
               Comparação com o setor cultural formal (SIIC/IBGE), §7.3. É exibição: a régua do E vem
               da PNAD (P95 da renda individual), e trocar uma pela outra mudaria o método.
+
+              ⚠️ A FRASE FALA DO SALDO, e não da receita (v4.4, §7.10). O número já era o do saldo
+              desde que a comparação foi corrigida; a frase tinha ficado para trás e passava a
+              dizer uma coisa enquanto mostrava outra. É o mesmo texto do card do PDF.
             */}
             <div className={styles.healthNota}>
-              A média mensal do setor cultural formal é {fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). Sua receita
-              anual equivale a {resumo.vezesOSetor.toFixed(1).replace('.', ',')}× esse patamar.
+              A média mensal do setor cultural formal é {fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). Este saldo
+              equivale a {resumo.vezesOSetor.toFixed(1).replace('.', ',')}× esse patamar.
             </div>
             {resumo.recomendarEmpresariamento && (
               <div className={styles.healthNota}>

@@ -2,7 +2,7 @@ import { computeRealIndexV4 } from './index';
 import type { RealInputsV4 } from './index';
 import {
   AVISOS, AVISO_LEGADO, avisosDoDiagnostico, avisosSemLugarProprio, ehLegado, engajamentoExibido,
-  linhasDaDimensao, resumoDoE, SIIC_ANUAL,
+  equilibrioExibido, linhasDaDimensao, resumoDoE, SIIC_ANUAL,
 } from './relatorio';
 
 const base = (over: Partial<RealInputsV4> = {}): RealInputsV4 => ({
@@ -101,6 +101,31 @@ describe('§7.5 resumo do E', () => {
     expect(r.saldoAjustado).toBe(195_000);
   });
 
+  // ⚠️ SEM CUSTO FIXO, A CONTA FECHA (§7.9). O card lia o ponto de equilíbrio, que é nulo tanto
+  // para quem NÃO TEM fixo a cobrir como para quem tem margem negativa — e mostrava "não fecha"
+  // nos dois casos. O primeiro é o oposto disso: cada show já entra como saldo.
+  it('o card do equilíbrio distingue "fecha" de "não fecha"', () => {
+    expect(equilibrioExibido({ margemPorShow: 1_500, custoFixoAnual: 12_000, pontoEquilibrioShows: 8 })).toBe('8');
+    expect(equilibrioExibido({ margemPorShow: 1_500, custoFixoAnual: 0, pontoEquilibrioShows: null })).toBe('fecha');
+    expect(equilibrioExibido({ margemPorShow: -200, custoFixoAnual: 0, pontoEquilibrioShows: null })).toBe('não fecha');
+    expect(equilibrioExibido({ margemPorShow: -200, custoFixoAnual: 12_000, pontoEquilibrioShows: null })).toBe('não fecha');
+    // Sem cachê informado não há margem, e aí também não fecha.
+    expect(equilibrioExibido({ margemPorShow: null, custoFixoAnual: 0, pontoEquilibrioShows: null })).toBe('não fecha');
+  });
+
+  // ⚠️ O SALDO AJUSTADO SAI DE TODA SUPERFÍCIE (v4.4, §12 e §13 item 15). Ele estava na tabela
+  // do E como um valor em reais, com o percentual do bônus ao lado: um número que não existe na
+  // conta do artista, e um número proprietário do método, que o relatório não expõe.
+  it('a tabela do E não mostra o saldo ajustado nem o bônus', () => {
+    const rotulos = linhasDaDimensao(ri, 'e').map((l) => l.rotulo);
+    expect(rotulos).toContain('Saldo');
+    expect(rotulos).not.toContain('Saldo ajustado');
+    const tudo = linhasDaDimensao(ri, 'e').map((l) => `${l.rotulo} ${l.valor}`).join(' ');
+    expect(tudo).not.toMatch(/bônus/i);
+    // E o bônus continua a existir onde ele significa alguma coisa: na nota.
+    expect(resumoDoE(ri)!.bonus).toBeGreaterThan(1);
+  });
+
   it('lista só os tipos de contratante atendidos, para o gráfico', () => {
     expect(resumoDoE(ri)!.cache.map((c) => c.tipo)).toEqual(['corporativos', 'produtores']);
   });
@@ -114,11 +139,21 @@ describe('§7.5 resumo do E', () => {
     expect(fontes.map((f) => f.fonte)).toEqual(['distribuidora', 'editora', 'aulas']);
   });
 
-  it('estima a receita líquida pelo ponto médio da faixa, e compara com o SIIC', () => {
+  // ⚠️ A REFERÊNCIA DO SETOR COMPARA O SALDO REAL, e não a receita (relatório v4.4, §7.10).
+  //
+  // Comparava a receita, e o mesmo PDF trazia dois múltiplos diferentes do mesmo patamar: este
+  // card dividia o FATURAMENTO pelo salário do setor, e o comentário E8, na página ao lado,
+  // dividia o saldo. Dois números para a mesma frase. Além disso a comparação só é honesta
+  // assim: um salário é líquido, e o que se compara com ele é o que sobra depois de a carreira
+  // pagar o que custou.
+  it('estima a receita líquida pelo ponto médio da faixa, e compara o SALDO com o SIIC', () => {
     const r = resumoDoE(ri)!;
     expect(r.receitaLiquidaEstimada).toBe(Math.round(180_000 * 0.92));
     expect(r.aliquotaRotulo).toBe('De 6% a 10%');
-    expect(r.vezesOSetor).toBeCloseTo(180_000 / SIIC_ANUAL, 6);
+    expect(r.vezesOSetor).toBeCloseTo(r.saldo / SIIC_ANUAL, 6);
+    // E o saldo é o real: sem o bônus de estrutura, que é pontuação e não dinheiro.
+    expect(r.vezesOSetor).not.toBeCloseTo(r.saldoAjustado / SIIC_ANUAL, 6);
+    expect(r.vezesOSetor).not.toBeCloseTo(180_000 / SIIC_ANUAL, 6);
   });
 
   it('omite a receita líquida quando a alíquota é "não sei"', () => {

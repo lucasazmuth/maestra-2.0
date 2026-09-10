@@ -13,7 +13,9 @@ import { INTRO_DA_DIMENSAO, LEITURA_DA_DIMENSAO } from '@maestra/core/constants/
 import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '@maestra/core/services/realEngine/comentarios';
-import { AVISOS, ehLegado, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL } from '@maestra/core/services/realEngine/relatorio';
+import {
+  AVISOS, ehLegado, equilibrioExibido, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
+} from '@maestra/core/services/realEngine/relatorio';
 import {
   CHAMADA_DA_DIMENSAO as DIM_TAGLINE, LEGENDA_DO_DECLARADO as LEGENDA_DECLARADO,
   TINTA_DO_DOCUMENTO as DOC, URL_DA_MAESTRA as MAESTRA_URL, composicaoDaReceita as revComposition,
@@ -186,17 +188,25 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; nLeitura: number | 
           </div>
         </div>
       )}
-      {dk === 'a' && (['instagram', 'tiktok', 'youtube'] as const).some((k) => eng[k]) && (
+      {/* ⚠️ AS TRÊS REDES APARECEM SEMPRE, e a que não tem taxa diz "sem dado" (§8.5 e §12).
+          Antes o bloco inteiro sumia quando nenhuma tinha dado, e cada rede ausente sumia
+          dentro dele: o PDF mostrava duas redes e quem lia não sabia se a terceira tinha
+          engajamento zero, se não foi lida, ou se nem existia perfil. "0,0%" só aparece quando
+          a API devolveu zero, e aí é informação. */}
+      {dk === 'a' && (
         <div className={styles.docSubBlock2}>
           <div className={styles.docSubTitle2}>Engajamento por rede{legado ? '' : ` · ${AVISOS.informativo}`}</div>
           {(['instagram', 'tiktok', 'youtube'] as const).map((k) => {
             const e = eng[k];
             const label = k === 'instagram' ? 'Instagram' : k === 'tiktok' ? 'TikTok' : 'YouTube';
-            if (!e) return null;
             return (
               <div key={k} className={styles.docEngRow2}>
                 <span>{label}</span>
-                <strong>{legado ? `${fmtPct(e.value)} · ${e.above ? 'acima' : 'abaixo'} do corte de ${fmtPct(e.cut)}` : fmtPct(e.value)}</strong>
+                <strong>
+                  {!e ? 'sem dado'
+                    : legado ? `${fmtPct(e.value)} · ${e.above ? 'acima' : 'abaixo'} do corte de ${fmtPct(e.cut)}`
+                      : fmtPct(e.value)}
+                </strong>
               </div>
             );
           })}
@@ -266,16 +276,15 @@ const DocContaPage: FC<{ n: number; total: number; ri: any; cm: Chartmetric | nu
       <div className={styles.docContaGrade}>
         {numero('Receita', money(conta.receitaAnual))}
         {numero('Custos e investimento', money(conta.investimentoAnual))}
+        {/* ⚠️ O SALDO AJUSTADO NÃO APARECE (v4.4, §12 e §13 item 15): ele é pontuação, não
+            dinheiro, e estava aqui como valor, com o percentual do bônus ao lado. O efeito dele
+            vive na nota e no estado da dimensão, que é onde ele significa alguma coisa. */}
         {numero('Saldo', `${conta.saldo >= 0 ? '+' : '−'}${money(conta.saldo)}`)}
-        {numero(
-          conta.bonus > 1 ? `Saldo ajustado (+${Math.round((conta.bonus - 1) * 100)}%)` : 'Saldo ajustado',
-          `${conta.saldoAjustado >= 0 ? '+' : '−'}${money(conta.saldoAjustado)}`,
-        )}
         {conta.receitaLiquidaEstimada != null
           && numero(`Receita líquida estimada (${conta.aliquotaRotulo ?? ''})`, money(conta.receitaLiquidaEstimada))}
       </div>
       <div className={styles.docFonteNota} style={{ marginTop: -10, marginBottom: 14 }}>
-        A média mensal do setor cultural formal é {fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). Esta receita anual
+        A média mensal do setor cultural formal é {fmtBRL(SIIC_MENSAL)} (SIIC/IBGE). Este saldo
         equivale a {conta.vezesOSetor.toFixed(1).replace('.', ',')}× esse patamar.
       </div>
 
@@ -291,7 +300,7 @@ const DocContaPage: FC<{ n: number; total: number; ri: any; cm: Chartmetric | nu
             {numero('Cachê médio', money(conta.cacheMedio))}
             {numero('Custo médio por show', money(conta.custoPorShow))}
             {numero('Margem por show', money(conta.margemPorShow))}
-            {numero('Shows pra cobrir o fixo do ano', conta.pontoEquilibrioShows == null ? 'não fecha' : String(conta.pontoEquilibrioShows))}
+            {numero('Shows pra cobrir o fixo do ano', equilibrioExibido(conta))}
           </div>
         </>
       )}

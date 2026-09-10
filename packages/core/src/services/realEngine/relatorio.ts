@@ -9,7 +9,7 @@
 // Referência: "Diagnóstico REAL v4", §11.3 (textos obrigatórios), §7.5 (exibição do E) e §13.2
 // (diagnósticos em versão anterior).
 
-import { fmtBRL, fmtNum, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
+import { dinheiroDoRelatorio, fmtNum, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
 import { FIXOS } from '../../constants/realTextos';
 import { ALIQUOTA_PCT, type Aliquota, type FonteDeReceita, type Proveniencia, type TipoDeContratante } from './index';
 
@@ -185,7 +185,14 @@ export const resumoDoE = (ri: Diagnostico | null | undefined) => {
     margemPorShow: rev.margemPorShow ?? null,
     pontoEquilibrioShows: rev.pontoEquilibrioShows ?? null,
     // Quantas vezes a média do setor cultural formal (§7.3). Só comparação, nunca cálculo.
-    vezesOSetor: SIIC_ANUAL > 0 ? (Number(rev.receitaAnual) || 0) / SIIC_ANUAL : 0,
+    // ⚠️ A COMPARAÇÃO É SOBRE O SALDO REAL, e não sobre a receita (v4.4, §7.10).
+    //
+    // Duas razões. A primeira é que o mesmo PDF trazia dois múltiplos diferentes do mesmo
+    // patamar: este card dividia a RECEITA pelo salário do setor, e o comentário E8, logo ao
+    // lado, dividia o saldo ajustado. Dois números para a mesma frase, na mesma página. A
+    // segunda é que a comparação só é honesta assim: um salário é líquido, e o que se compara
+    // com ele é o que sobra depois de a carreira pagar o que custou.
+    vezesOSetor: SIIC_ANUAL > 0 ? (Number(rev.saldo) || 0) / SIIC_ANUAL : 0,
     // §7.5 — quem não tem empresário recebe a recomendação, e é o mesmo dado que dá o bônus do E.
     recomendarEmpresariamento: ri.raw?.temEmpresario === false,
   };
@@ -218,21 +225,20 @@ export const linhasDaDimensao = (
     // lançamento, e é essa distinção que muda a decisão.
     const linhas: LinhaDoRelatorio[] = [
       { rotulo: 'Shows (12 meses)', valor: String(Number(rev.showsPerYear) || 0), fonte: 'self' },
-      { rotulo: 'Receita (12 meses)', valor: fmtBRL(Number(rev.receitaAnual) || 0), fonte: 'self' },
-      { rotulo: 'Custo médio por show', valor: fmtBRL(Number(rev.custoPorShow) || 0), fonte: 'self' },
-      { rotulo: 'Custo fixo mensal', valor: fmtBRL(Number(rev.custoFixoMensal) || 0), fonte: 'self' },
-      { rotulo: 'Investimento em lançamentos', valor: fmtBRL(Number(rev.investLancamentos12m) || 0), fonte: 'self' },
-      { rotulo: 'Custos e investimento (12 meses)', valor: fmtBRL(Number(rev.investimentoAnual) || 0), fonte: 'self' },
-      { rotulo: 'Saldo', valor: fmtBRL(Number(rev.saldo) || 0), fonte: 'self' },
+      { rotulo: 'Receita (12 meses)', valor: dinheiroDoRelatorio(Number(rev.receitaAnual) || 0), fonte: 'self' },
+      { rotulo: 'Custo médio por show', valor: dinheiroDoRelatorio(Number(rev.custoPorShow) || 0), fonte: 'self' },
+      { rotulo: 'Custo fixo mensal', valor: dinheiroDoRelatorio(Number(rev.custoFixoMensal) || 0), fonte: 'self' },
+      { rotulo: 'Investimento em lançamentos', valor: dinheiroDoRelatorio(Number(rev.investLancamentos12m) || 0), fonte: 'self' },
+      { rotulo: 'Custos e investimento (12 meses)', valor: dinheiroDoRelatorio(Number(rev.investimentoAnual) || 0), fonte: 'self' },
+      { rotulo: 'Saldo', valor: dinheiroDoRelatorio(Number(rev.saldo) || 0), fonte: 'self' },
     ];
-    const bonus = Number(rev.bonus) || 1;
-    if (bonus > 1) {
-      linhas.push({
-        rotulo: 'Saldo ajustado',
-        valor: `${fmtBRL(Number(rev.saldoAjustado) || 0)} (bônus de ${Math.round((bonus - 1) * 100)}%)`,
-        fonte: 'self',
-      });
-    }
+    // ⚠️ O SALDO AJUSTADO NÃO É EXIBIDO EM LADO NENHUM (relatório v4.4, §1.3, §12 e §13 item 15).
+    //
+    // Ele existe, e continua a decidir a nota: ter CNPJ e ter empresário valem um bônus sobre o
+    // saldo positivo. Mas é PONTUAÇÃO, e estava a ser mostrado como DINHEIRO, com o percentual do
+    // bônus ao lado. Duas coisas erradas de uma vez: o artista via um valor que não existe na
+    // conta bancária dele, e via um número proprietário do método, que o relatório não expõe por
+    // princípio. O efeito do bônus aparece onde deve aparecer, na nota e no estado da dimensão.
     return linhas;
   }
 
@@ -288,6 +294,25 @@ export const linhasDaDimensao = (
       fonte: radio.present ? 'api' : 'absent',
     },
   ];
+};
+
+/**
+ * O que o card "shows pra cobrir o fixo do ano" mostra (§7.9).
+ *
+ * ⚠️ SEM CUSTO FIXO, A CONTA FECHA — e o card dizia o contrário. Ele lia o ponto de equilíbrio,
+ * que é nulo tanto para quem NÃO TEM fixo a cobrir (a conta mais simples que existe: cada show
+ * já entra como saldo) como para quem tem margem negativa (a conta que não fecha nunca). Os dois
+ * casos saíam como "não fecha", e o primeiro é exatamente o oposto disso.
+ *
+ * Mora aqui, e não nas telas, porque a web e o PDF mostram o mesmo card: escrita duas vezes, a
+ * regra divergia no primeiro ajuste.
+ */
+export const equilibrioExibido = (
+  conta: { margemPorShow: number | null; custoFixoAnual: number; pontoEquilibrioShows: number | null },
+): string => {
+  if (conta.pontoEquilibrioShows != null) return String(conta.pontoEquilibrioShows);
+  const margem = conta.margemPorShow ?? 0;
+  return margem > 0 && !conta.custoFixoAnual ? 'fecha' : 'não fecha';
 };
 
 /** O engajamento, quando a API entregou. [SUSPENSO] no cálculo, exibido com rótulo (§8.2, §11.3.5). */

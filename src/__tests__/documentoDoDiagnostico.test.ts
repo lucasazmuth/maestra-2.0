@@ -2,7 +2,9 @@ import fs from 'fs';
 import path from 'path';
 
 import { montarDocumentoDoDiagnostico } from '@maestra/core/documentos/diagnosticoHtml';
-import { autoriaDoDocumento, linhasDaDimensao } from '@maestra/core/documentos/diagnostico';
+import { autoriaDoDocumento, linhaDeAutoria, linhasDaDimensao } from '@maestra/core/documentos/diagnostico';
+import { ORIENTACAO_SPOTIFY } from '@maestra/core/constants/quizDoDiagnostico';
+import { FIXOS } from '@maestra/core/constants/realTextos';
 import { computeRealIndexV4 } from '@maestra/core/services/realEngine';
 import type { RealInputsV4 } from '@maestra/core/services/realEngine';
 
@@ -216,6 +218,84 @@ describe('os avisos obrigatórios da tela', () => {
       expect(fonte).toContain('AVISOS.saldoNegativo');
       expect(fonte).toContain('AVISOS.naoSei');
     }
+  });
+
+  // ⚠️ AUSÊNCIA NUNCA É ZERO, E O CORTE NÃO ENTRA (§8.5, §12 e §13 item 6).
+  //
+  // O engajamento está SUSPENSO do índice: a API o entrega em 21% a 35% dos casos, e a taxa não
+  // é autodeclarável. Duas consequências que as três superfícies têm de respeitar juntas. A
+  // primeira: comparar com um corte que não move nota fazia a artista atribuir o resultado dela
+  // a um número que não participou da conta — a web já tinha largado a comparação, o app não. A
+  // segunda: a rede sem dado dizia "—" na web e sumia no PDF, e nenhuma das duas coisas
+  // distingue "a API não entregou" de "o vínculo é zero". "0,0%" só aparece quando a API
+  // devolveu zero.
+  it('o engajamento ausente diz "sem dado", e ninguém compara com corte', () => {
+    const doPdf = fs.readFileSync(
+      path.join(raiz, 'packages', 'core', 'src', 'documentos', 'diagnosticoHtml.ts'), 'utf8',
+    );
+    // ⚠️ SÃO QUATRO SUPERFÍCIES, e não três. A maquete do PDF (`DiagnosticDoc`) é a que vira o
+    // documento impresso, e tinha ficado de fora desta conta: enquanto as outras três já diziam
+    // "sem dado", ela continuava a fazer a rede ausente desaparecer da página.
+    const maqueteDoPdf = fs.readFileSync(
+      path.join(raiz, 'src', 'pages', 'ArtistCreate', 'DiagnosticDoc.tsx'), 'utf8',
+    );
+    expect(telaDaWeb).toContain("{e ? fmtPct(e.value) : 'sem dado'}");
+    expect(doPdf).toContain("${e ? fmtPct(e.value) : 'sem dado'}");
+    expect(cartaoDoApp).toContain('>sem dado</Text>');
+    expect(maqueteDoPdf).toContain("{!e ? 'sem dado'");
+    // E o bloco não desaparece quando nenhuma rede tem dado.
+    expect(maqueteDoPdf).not.toContain("some((k) => eng[k])");
+
+    // O corte deixou de ser IMPRESSO em qualquer uma delas. A frase que o explica continua nos
+    // comentários, e é por isso que o teste procura a interpolação e não a palavra.
+    for (const fonte of [telaDaWeb, cartaoDoApp, doPdf]) {
+      expect(fonte).not.toContain('fmtPct(e.cut)');
+    }
+    // E a rede ausente continua na lista, em vez de desaparecer da página.
+    expect(doPdf).not.toContain('if (!e) return \'\';');
+  });
+
+  // ⚠️ O NÚMERO E A FRASE TÊM DE FALAR DA MESMA COISA. A comparação com o setor cultural passou
+  // a dividir o SALDO pelo salário do setor (v4.4, §7.10), e em duas superfícies a frase ficou
+  // para trás dizendo "sua receita anual equivale a X×": o texto anunciava faturamento e o
+  // número mostrava saldo, lado a lado, sem nada que denunciasse.
+  it('a comparação com o setor fala do saldo, nas quatro superfícies', () => {
+    const ler = (...p: string[]) => fs.readFileSync(path.join(raiz, ...p), 'utf8');
+    const superficies = [
+      ler('src', 'pages', 'ArtistCreate', 'DiagnosticReport.tsx'),
+      ler('src', 'pages', 'ArtistCreate', 'DiagnosticDoc.tsx'),
+      ler('packages', 'core', 'src', 'documentos', 'diagnosticoHtml.ts'),
+      ler('apps', 'mobile', 'src', 'casca', 'diagnostico', 'CartaoDaDimensao.tsx'),
+    ];
+    for (const fonte of superficies) {
+      expect(fonte).toContain('esse patamar');
+      expect(fonte).toMatch(/[Ee]ste saldo\s*\n?\s*equivale/);
+      expect(fonte).not.toMatch(/receita\s*\n?\s*anual equivale/);
+    }
+  });
+
+  // ⚠️ O E-MAIL SAIU DO RODAPÉ DO PDF (§13 item 12, Apêndice B item 14). Ele estava impresso em
+  // TODAS as páginas de um documento feito para ser enviado a contratante, produtor e edital, e
+  // o endereço pessoal de quem gerou não tem nada a ver com a carreira que o documento descreve.
+  it('o rodapé do PDF é o F18, com nome e sem e-mail', () => {
+    const autoria = linhaDeAutoria(
+      { nome: 'Ana Ribeiro', email: 'ana@exemplo.com', docId: 'ABC12345-XYZ' },
+      new Date('2026-09-10T14:07:00'),
+    );
+    expect(autoria).toContain('Gerado por Ana Ribeiro');
+    expect(autoria).toContain('Documento ABC12345-XYZ');
+    expect(autoria).toContain(' às ');
+    expect(autoria).not.toContain('@');
+    // O texto sai do `realTextos`, e não de uma interpolação escondida no código.
+    expect(autoria).not.toContain('{');
+  });
+
+  // ⚠️ HAVIA DOIS TEXTOS PARA A MESMA TELA, e o que aparecia não era o da Anita: prometia "usar
+  // o dado automático assim que ele existir" onde o F9 diz "ler os números sozinho", e perdia a
+  // frase que importa a quem está prestes a responder trinta perguntas.
+  it('a orientação antes do quiz é o F9, e não uma cópia dele', () => {
+    expect(ORIENTACAO_SPOTIFY).toBe(FIXOS.F9);
+    expect(ORIENTACAO_SPOTIFY).toContain('o que a gente não conseguir ler você informa');
   });
 
   it('o bloco do topo passa a usar só o que não tem casa', () => {

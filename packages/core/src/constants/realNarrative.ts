@@ -220,7 +220,9 @@ export const METODOLOGIA = {
   ],
   dims: [
     { l: 'R', t: 'Reach · Alcance', d: 'O quanto a música alcança gente no digital: streaming, redes e vídeo. É o tamanho da presença online, a porta de entrada de quem ainda não conhece o trabalho.' },
-    { l: 'E', t: 'Earnings · Receita', d: 'O quanto a carreira fatura com música. Não é sobre riqueza, é sobre sustentabilidade: uma carreira que se paga é uma carreira que pode durar.' },
+    // "Ganhos", como o resto do produto desde a v4.3. E o que o E lê não é o faturamento: é o
+    // que sobra depois de a carreira pagar o que custou.
+    { l: 'E', t: 'Earnings · Ganhos', d: 'O quanto sobra depois de a carreira pagar o que custou. Não é sobre riqueza, é sobre uma carreira que se paga, porque carreira que se paga é carreira que pode durar.' },
     { l: 'A', t: 'Audience · Público real', d: 'O público que aparece, que paga ingresso, que se conecta de verdade. É diferente de alcance: alcance é quanta gente vê, audiência é quanta gente fica.' },
     { l: 'L', t: 'Legitimacy · Legitimação', d: 'O reconhecimento do setor: imprensa, prêmios, presença nas plataformas e no rádio. É a validação que abre portas que números sozinhos não abrem.' },
   ],

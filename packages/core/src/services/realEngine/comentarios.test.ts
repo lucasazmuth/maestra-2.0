@@ -4,6 +4,7 @@ import {
   comentariosDaDimensao, estagioDoBeginner, retratoDoPerfil, statusDaBarra,
 } from './comentarios';
 import { COMENTARIOS, FIXOS, LEITURAS_CURTAS, RETRATOS } from '../../constants/realTextos';
+import { SIIC_ANUAL } from './relatorio';
 
 const base = (over: Partial<RealInputsV4> = {}): RealInputsV4 => ({
   spotifyConnected: true,
@@ -22,6 +23,80 @@ const base = (over: Partial<RealInputsV4> = {}): RealInputsV4 => ({
 const DIMS = ['r', 'e', 'a', 'l'] as const;
 const ids = (ri: any, dim: any, superficie: 'tela' | 'pdf' = 'pdf') =>
   comentariosDaDimensao(ri, dim, { superficie }).map((c) => c.id);
+
+// ⚠️ O BÔNUS DE ESTRUTURA É PONTUAÇÃO, E NÃO DINHEIRO (relatório v4.4, §1.3, §7.10, §12, §13).
+//
+// Ter CNPJ e ter empresário valem um bônus sobre o saldo positivo, e é assim que a dimensão E
+// acende. Mas o valor inflado por esse bônus não é o que existe na conta bancária de ninguém, e
+// o relatório não o exibe nem o usa em comparação exibida. A referência do setor cultural
+// compara o SALDO REAL — porque um salário é líquido, e o que se compara com ele é o que sobra
+// depois de a carreira pagar o que custou.
+describe('§7.10 a referência do setor compara o saldo real', () => {
+  /** Saldo real logo abaixo do salário anual do setor; com o bônus de 30%, acima dele. */
+  const noLimite = () => computeRealIndexV4(base({
+    showsPerYear: 15, cacheByType: { produtores: 3_200 },
+    custoPorShow: 0, custoFixoMensal: 0, investLancamentos12m: 0,
+    temCnpj: true, temEmpresario: true,
+  }));
+
+  it('o artista no limite recebe E8.b, e não E8.a', () => {
+    const ri = noLimite();
+    const rev: any = (ri as any).revenue;
+    // O caso só prova alguma coisa se o bônus de facto atravessar a fronteira.
+    expect(rev.saldo).toBeLessThan(SIIC_ANUAL);
+    expect(rev.saldoAjustado).toBeGreaterThanOrEqual(SIIC_ANUAL);
+
+    expect(ids(ri, 'e')).toContain('E8.b');
+    expect(ids(ri, 'e')).not.toContain('E8.a');
+  });
+
+  // O texto do E8 diz "rendeu, líquido, {x}". Com o ajustado, o número seria maior do que a
+  // conta do artista, e maior do que o card ao lado no mesmo PDF.
+  it('o múltiplo escrito no texto é o do saldo real', () => {
+    const ri = noLimite();
+    const rev: any = (ri as any).revenue;
+    const texto = comentariosDaDimensao(ri, 'e', { superficie: 'pdf' }).find((c) => c.id === 'E8.b')!.texto;
+    const doAjustado = (rev.saldoAjustado / SIIC_ANUAL).toFixed(1).replace('.', ',');
+    expect(texto).not.toContain(doAjustado);
+  });
+});
+
+// ⚠️ SEM CUSTO FIXO, A CONTA FECHA — e ninguém dizia isso. O E7.a fala do ponto de equilíbrio, e
+// sem fixo não há equilíbrio a cobrir; o E7.b exige margem negativa. Quem não tem custo fixo e
+// tem margem caía no vazio entre os dois e não recebia texto nenhum, justamente tendo a conta
+// mais simples do diagnóstico (§7.9 da v4.3).
+describe('§7.9 o E7 com custo fixo zero', () => {
+  const semFixo = () => computeRealIndexV4(base({
+    showsPerYear: 20, cacheByType: { casasDeShow: 2_000 },
+    custoPorShow: 500, custoFixoMensal: 0,
+  }));
+
+  it('o artista sem custo fixo recebe E7.c, e não E7.a nem E7.b', () => {
+    const ri = semFixo();
+    expect((ri as any).revenue.custoFixoAnual).toBe(0);
+    expect((ri as any).revenue.margemPorShow).toBeGreaterThan(0);
+
+    const doE = ids(ri, 'e');
+    expect(doE).toContain('E7.c');
+    expect(doE).not.toContain('E7.a');
+    expect(doE).not.toContain('E7.b');
+  });
+
+  // Com custo fixo, nada muda: o E7.a continua a ser o texto do ponto de equilíbrio.
+  it('com custo fixo, continua o E7.a', () => {
+    const ri = computeRealIndexV4(base({
+      showsPerYear: 20, cacheByType: { casasDeShow: 2_000 },
+      custoPorShow: 500, custoFixoMensal: 1_000,
+    }));
+    expect(ids(ri, 'e')).toContain('E7.a');
+    expect(ids(ri, 'e')).not.toContain('E7.c');
+  });
+
+  // ⚠️ E O GRUPO É SÓ DO PDF: o E7 nunca aparece na tela, com fixo ou sem ele.
+  it('não vaza para a tela', () => {
+    expect(ids(semFixo(), 'e', 'tela')).not.toContain('E7.c');
+  });
+});
 
 describe('§4 as três regras da seleção', () => {
   it('sai no máximo um comentário por grupo', () => {

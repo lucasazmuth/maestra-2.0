@@ -209,7 +209,11 @@ describe('diagnostico REAL na v4', () => {
   it('mostra a receita ANUAL, e não uma base mensal', async () => {
     const tela = await montar();
     // 60 shows × média de 4.000 + 20.000 da distribuidora = 260.000
-    expect(tela.getByText('R$ 260 mil')).toBeTruthy();
+    //
+    // ⚠️ APARECE DUAS VEZES, e é isso que se quer (§11): o card da saúde financeira e a linha da
+    // tabela agora escrevem o mesmo valor da mesma forma. Antes o card dizia "R$ 260 mil" e a
+    // tabela "R$ 260.000" — o mesmo número com duas caras, no mesmo cartão.
+    expect(tela.getAllByText('R$ 260 mil').length).toBeGreaterThanOrEqual(2);
     // O rótulo do autorrelato carrega a adaga da procedência, então casa por prefixo.
     expect(tela.getByText(/^Receita \(12 meses\)/)).toBeTruthy();
   });
