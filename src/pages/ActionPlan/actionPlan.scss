@@ -943,7 +943,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 14px;
+  // Sem recuo: ele existia para afastar as linhas da moldura do cartão, e o cartão saiu. O que
+  // sobrava era margem a comer largura de títulos que já quebram em quatro linhas.
+  padding: 0;
 }
 
 .ap-plan-row {

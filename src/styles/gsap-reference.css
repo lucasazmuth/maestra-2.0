@@ -4924,13 +4924,16 @@
 }
 
 /* Action plan strategy workspace. */
+/* ⚠️ SEM MOLDURA À VOLTA DA LISTA, e isto não é só gosto: cada estratégia JÁ tem a sua borda
+   (`.ap-plan-row`), e um cartão por fora fazia duas molduras encaixadas — a de dentro a repetir
+   a de fora a 14 px de distância. Duas linhas paralelas a dizer a mesma coisa não separam nada;
+   só apertam o texto, que aqui são títulos de estratégia com quatro linhas.
+
+   O cabeçalho fica: ele nomeia a secção e conta quantas são. O que saiu foi a caixa. */
 .action-strategy-overview {
   display: block;
   margin-top: 24px;
-  border: 1px solid #e1e7f0;
-  border-radius: 8px;
-  background: var(--canvas);
-  overflow: hidden;
+  background: transparent;
 }
 
 .action-strategy-overview > header {
@@ -4939,8 +4942,9 @@
   justify-content: space-between;
   gap: 18px;
   min-height: 70px;
-  padding: 0 18px;
-  border-bottom: 1px solid #e1e7f0;
+  /* Sem recuo lateral: o cabeçalho passa a alinhar com as estratégias, e não com a parede de
+     uma caixa que já não existe. */
+  padding: 0;
 }
 
 .action-strategy-overview > header p {
