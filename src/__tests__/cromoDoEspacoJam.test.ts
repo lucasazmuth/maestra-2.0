@@ -27,6 +27,10 @@ const casca = ler('pages', 'Catalog', 'daw', 'editor.module.scss');
 const biblioteca = ler('pages', 'Catalog', 'daw', 'Biblioteca.tsx');
 const icones = ler('pages', 'Catalog', 'daw', 'icones.tsx');
 const tela = ler('pages', 'Catalog', 'ProjectSpace.tsx');
+const iconesNoApp = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'icones.tsx'),
+  'utf8',
+);
 const fechar = ler('pages', 'Catalog', 'daw', 'FecharComGuia.tsx');
 const fecharNoApp = fs.readFileSync(
   path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'FecharComGuia.tsx'),
@@ -685,6 +689,33 @@ describe('cromo do editor do Espaço JAM', () => {
     const quadros = semComentarios(icones).match(/viewBox="[^"]+"/g) ?? [];
     expect(quadros.length).toBeGreaterThanOrEqual(2);
     quadros.forEach((q) => expect(q).not.toContain('0 0 41 41'));
+  });
+
+  // ⚠️ OS DESENHOS SÃO OS MESMOS NAS DUAS SUPERFÍCIES, À VÍRGULA. O arquivo do app já dizia
+  // isto num comentário, e um comentário não segura nada: o ícone de pôr áudio na pista foi
+  // trocado e nada obrigava a segunda tela a ser trocada também. O editor é A MESMA tela nos
+  // dois sítios; dois desenhos parecidos mas não iguais são lidos como dois produtos.
+  //
+  // Compara o que o traço DESENHA — os caminhos e os quadros —, e não o ficheiro: um usa
+  // `stroke="currentColor"` e o outro uma cor recebida, um escreve `<path>` e o outro `<Path>`.
+  it('os ícones do editor são os mesmos desenhos nas duas telas', () => {
+    // ⚠️ COMPARA A FIGURA INTEIRA, e não só os `d=`. A primeira versão deste teste olhava para
+    // os caminhos, e o cartão do ícone de áudio é um `<rect>`: dava para deixar o app com o
+    // retângulo noutro sítio sem que nada se queixasse.
+    const desenho = (fonte: string) => (semComentarios(fonte)
+      // `x={1}` na web é `x="1"` no app — a chave é do JSX, e não do desenho. E `<Path>` do
+      // `react-native-svg` é o `<path>` do navegador.
+      .replace(/=\{([^}]*)\}/g, '="$1"')
+      .toLowerCase()
+      .match(/<(?:svg|path|rect|circle|line|polygon|polyline|ellipse)[^>]*>/g) ?? [])
+      // A cor é a única coisa que muda de propósito: a web herda-a do CSS, o app recebe-a.
+      .map((figura) => figura
+        .replace(/stroke="[^"]*"/g, '').replace(/fill="[^"]*"/g, '')
+        .replace(/aria-hidden/g, '').replace(/\s+/g, ' '))
+      .sort();
+
+    expect(desenho(icones).length).toBeGreaterThanOrEqual(8);
+    expect(desenho(iconesNoApp)).toEqual(desenho(icones));
   });
 
   // ⚠️ OS FLUTUANTES FICAM ACIMA DA COLUNA DAS PISTAS. Eles usavam `--z-cartao`, que vale 2 —

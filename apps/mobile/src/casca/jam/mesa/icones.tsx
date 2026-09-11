@@ -1,4 +1,4 @@
-import { Circle, Path, Rect, Svg } from 'react-native-svg';
+import { Path, Rect, Svg } from 'react-native-svg';
 
 // Os dois ícones das abas do editor, desenhados pelo dono do produto (`timeline.svg` e
 // `mixer.svg`).
@@ -52,13 +52,34 @@ export const IconeDoMixer = ({ tamanho = 15, cor }: { tamanho?: number; cor: str
   </Svg>
 );
 
-/** O ícone de enviar um ficheiro para uma pista — `export.svg`, o mesmo da web. */
+/**
+ * O ícone de pôr um áudio na pista — desenho do dono do produto (`Group 33.svg`).
+ *
+ * ⚠️ ERA UMA SETA PARA BAIXO DENTRO DE UM CÍRCULO, e ao lado do M e do S lia-se "descarregar":
+ * o gesto contrário do que o botão faz. Um ficheiro de música diz o que a pista vai RECEBER.
+ *
+ * O quadro é alargado para quadrado (o desenho vem 22 × 25) porque o botão é quadrado: esticar
+ * os 22 até 25 de largura engorda a nota e entorta o cartão.
+ *
+ * O retângulo do ficheiro vinha espelhado por um `matrix(1 0 0 -1 1 23.75)`, que num retângulo
+ * de cantos redondos é o mesmo que o pousar em (1; 3,75). Escrito assim, as duas telas dizem a
+ * mesma coisa e nenhuma depende de como o seu motor lê uma matriz.
+ *
+ * O mesmo da web.
+ */
 export const IconeDeEnviar = ({ tamanho = 15, cor }: { tamanho?: number; cor: string }) => (
-  <Svg width={tamanho} height={tamanho} viewBox="7.6 7.6 25.3 25.3" fill="none">
-    <Path
-      d="M20.2054 15.1538V25.016M16.8379 21.6484L20.2054 25.016L23.573 21.6484"
-      stroke={cor} strokeWidth={2.02054} strokeLinecap="round" strokeLinejoin="round"
+  <Svg width={tamanho} height={tamanho} viewBox="-1.5 0 25 25" fill="none">
+    <Rect
+      x={1} y={3.75} width={20} height={20} rx={3}
+      stroke={cor} strokeWidth={2} strokeLinejoin="round"
     />
-    <Circle cx={20.2055} cy={20.2052} r={9.26081} stroke={cor} strokeWidth={1.68378} />
+    <Path
+      d="M3 3.75H19C19 2.09315 17.6569 0.75 16 0.75H6C4.34315 0.75 3 2.09315 3 3.75Z"
+      stroke={cor} strokeWidth={1.5} strokeLinejoin="round"
+    />
+    <Path
+      d="M11.5125 14.7059V9.375C11.5125 9.02982 11.7923 8.75 12.1375 8.75H14.2539M11.5125 14.7059V17.7229C11.5125 18.2777 11.1186 18.7612 10.5639 18.7489C9.60192 18.7275 8.25391 18.3937 8.25391 16.6912C8.25391 14.0441 11.5125 14.7059 11.5125 14.7059Z"
+      stroke={cor} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
+    />
   </Svg>
 );
