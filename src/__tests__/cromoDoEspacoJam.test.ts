@@ -353,6 +353,28 @@ describe('cromo do editor do Espaço JAM', () => {
     [corpo, oApp].forEach((fonte) => expect(fonte).toContain('iniciais(pessoa.nome)'));
   });
 
+  // ⚠️ COM DUAS PESSOAS, DUAS COISAS DEIXAM DE SER INOFENSIVAS. A pilha do desfazer é de cada
+  // um — só entra nela o que EU fiz —, e o perigo nunca foi desfazer o passo do outro: é
+  // desfazer o MEU por cima do que ele fez a seguir. E a limpeza da saída apagava de vez tudo o
+  // que estivesse marcado nesta gravação, incluindo o que ele ainda pode trazer de volta.
+  it('a seta não vai por cima do outro, e a saída leva só o que é meu', () => {
+    const espaco = semComentarios(tela);
+    const oApp = semComentarios(app);
+
+    [espaco, oApp].forEach((fonte) => {
+      // A seta confere o mundo ANTES de escrever, e contra o que se vê — que com o canal ao
+      // vivo ligado é o banco a menos de um segundo.
+      expect(fonte).toContain('conferirOPasso(saida.passo, {');
+      // O passo caduco sai da pilha: repeti-lo dava exatamente o mesmo.
+      expect(fonte).toContain('setHistorico(saida.historico);');
+      // E a saída leva a lista desta sessão, em vez de tudo o que está marcado.
+      expect(fonte).toContain('marcadosPorMim.current');
+      expect(fonte).toContain('apenas:');
+      // Desfazer um "apagar" tira-o da lista: ele já não é resíduo meu.
+      expect(fonte).toContain('(voltando ? desmarquei : marquei)(passo.clipeId);');
+    });
+  });
+
   // ⚠️ A GUIA É REGRAVADA NO MESMO CAMINHO A CADA SAÍDA, e é o que a lista de Músicas toca. Uma
   // montagem que renderize mudo — todas as pistas caladas, um áudio que não chegou a
   // descodificar — apagaria a guia boa e deixaria a música sem nada para tocar, sem erro nenhum
@@ -1035,7 +1057,9 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(banco).toContain(".is('versions.tracks.clips.deleted_at', null)");
 
     // Os dois momentos da limpeza, com a mesma função.
-    expect(espaco).toContain('catalogDb.purgarMontagem(open.id)');
+    // A saída leva o que ESTA sessão marcou, e não tudo o que está marcado na gravação: o que
+    // é do outro continua lá enquanto ele ainda o pode desfazer.
+    expect(espaco).toContain('catalogDb.purgarMontagem(open.id, { apenas: meus })');
     expect(espaco).toContain('antesDe: new Date(Date.now() - UMA_HORA).toISOString()');
 
     // ⚠️ O ficheiro órfão sai junto: até aqui ele ficava no balde para sempre, invisível, sem
@@ -1054,7 +1078,11 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(espaco).toContain("esquecer(`clipe:${passo.clipeId}`);");
     expect(espaco).toContain('if (andandoNoTempo) return;');
     // A pilha só anda se a escrita passou: movê-la antes deixaria o histórico a mentir.
-    const oAndar = espaco.slice(espaco.indexOf('const andarNoTempo'));
+    // ⚠️ A PARTIR DA TRANCA, e não do princípio da função: desde que a seta confere o mundo
+    // antes de escrever, há um `setHistorico` ANTES do `try` — o do passo que caducou, que sai
+    // da pilha sem nada ter ido ao banco. Medido do princípio, o teste encontrava esse e dizia
+    // que a ordem estava trocada quando ela não estava.
+    const oAndar = espaco.slice(espaco.indexOf('setAndandoNoTempo(true);'));
     const ateOCatch = oAndar.slice(0, oAndar.indexOf('} catch {'));
     expect(ateOCatch.length).toBeGreaterThan(80);
     expect(ateOCatch.indexOf('await aplicarPasso')).toBeLessThan(ateOCatch.indexOf('setHistorico(saida.historico)'));

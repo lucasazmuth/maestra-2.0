@@ -6,7 +6,7 @@ import {
   proximaPosicaoDaPista,
 } from '@maestra/core/audio/pistasDaVersao';
 import {
-  HISTORICO_VAZIO, desfazer as desfazerPasso, podeDesfazer, podeRefazer,
+  HISTORICO_VAZIO, conferirOPasso, desfazer as desfazerPasso, podeDesfazer, podeRefazer,
   refazer as refazerPasso, registar, rotuloDaSeta,
   type Historico, type PassoDaMontagem,
 } from '@maestra/core/audio/historico';
@@ -393,6 +393,16 @@ const ProjectSpace: FC = () => {
   // balde — invisível, permanente, e a crescer.
   const [historico, setHistorico] = useState<Historico>(HISTORICO_VAZIO);
   const [andandoNoTempo, setAndandoNoTempo] = useState(false);
+  /**
+   * O que ESTA sessão marcou para apagar e ainda não desmarcou.
+   *
+   * ⚠️ É ISTO QUE A SAÍDA LEVA, e mais nada. Sem a lista, fechar a tela apagava de vez tudo o
+   * que estivesse marcado nesta gravação — incluindo o que a outra pessoa acabou de remover e
+   * ainda pode trazer de volta com a seta.
+   */
+  const marcadosPorMim = useRef(new Set<string>());
+  const marquei = (id: string) => marcadosPorMim.current.add(id);
+  const desmarquei = (id: string) => marcadosPorMim.current.delete(id);
   const anotar = (passo: PassoDaMontagem) => setHistorico((h) => registar(h, passo));
 
   const aplicarPasso = async (passo: PassoDaMontagem, sentido: 'desfazer' | 'refazer') => {
@@ -416,9 +426,11 @@ const ProjectSpace: FC = () => {
         break;
       case 'apagarClipe':
         await (voltando ? catalogDb.restaurarClipe : catalogDb.marcarClipeApagado)(passo.clipeId);
+        (voltando ? desmarquei : marquei)(passo.clipeId);
         break;
       case 'apagarPista':
         await (voltando ? catalogDb.restaurarPista : catalogDb.marcarPistaApagada)(passo.pistaId);
+        (voltando ? desmarquei : marquei)(passo.pistaId);
         break;
       case 'cortar':
         // Desandar um corte é o clipe da esquerda voltar ao comprimento inteiro e o da direita
@@ -427,11 +439,13 @@ const ProjectSpace: FC = () => {
           duration_seconds: voltando ? passo.duracaoAntes : passo.duracaoDepois,
         });
         await (voltando ? catalogDb.marcarClipeApagado : catalogDb.restaurarClipe)(passo.novoClipeId);
+        (voltando ? marquei : desmarquei)(passo.novoClipeId);
         break;
       case 'acrescentarPistas':
         await Promise.all(passo.pistaIds.map(
           (id) => (voltando ? catalogDb.marcarPistaApagada : catalogDb.restaurarPista)(id),
         ));
+        passo.pistaIds.forEach(voltando ? marquei : desmarquei);
         break;
       default:
         break;
@@ -447,6 +461,26 @@ const ProjectSpace: FC = () => {
     if (andandoNoTempo) return;
     const saida = sentido === 'desfazer' ? desfazerPasso(historico) : refazerPasso(historico);
     if (!saida) return;
+
+    // ⚠️ A SETA SÓ ANDA SE O MUNDO AINDA ESTIVER COMO O MEU PASSO O DEIXOU. Com outra pessoa na
+    // mesma música, desfazer um gesto meu por cima do que ela fez a seguir apagava o trabalho
+    // dela sem aviso — e a pilha dela nunca soube que aquilo aconteceu. O passo caducou: sai da
+    // pilha (repeti-lo dava o mesmo) e a tela diz porquê.
+    const caduco = conferirOPasso(saida.passo, {
+      pistas: pistas.map((p) => ({ id: p.id, clips: p.clips })),
+      clipes: pistas.flatMap((p) => (p.clips || []).map((c) => ({
+        id: c.id,
+        track_id: c.track_id,
+        start_seconds: Number(c.start_seconds) || 0,
+        duration_seconds: Number(c.duration_seconds) || 0,
+      }))),
+    }, sentido);
+    if (caduco) {
+      setHistorico(saida.historico);
+      message.warning(caduco);
+      return;
+    }
+
     setAndandoNoTempo(true);
     setSaveState('salvando');
     try {
@@ -948,7 +982,13 @@ const ProjectSpace: FC = () => {
       //
       // Falhar aqui não pode prender ninguém na tela: a montagem está salva, e a limpeza da
       // próxima abertura apanha o que sobrar.
-      if (open && podeEditar) await catalogDb.purgarMontagem(open.id).catch(() => undefined);
+      if (open && podeEditar) {
+        // `Array.from` e não `[...]`: o alvo do TypeScript da web é anterior ao ES2015 e
+        // recusa espalhar um `Set` sem `downlevelIteration`. É o mesmo motivo do `forEach` nos
+        // mapas da mesa.
+        const meus = Array.from(marcadosPorMim.current);
+        await catalogDb.purgarMontagem(open.id, { apenas: meus }).catch(() => undefined);
+      }
       navigate(`/artists/${artistId}/catalog`);
     },
     aoRenomear: (nome) => setProject((atual) => (atual ? { ...atual, title: nome } : atual)),
@@ -1048,6 +1088,7 @@ const ProjectSpace: FC = () => {
       sujo.current = true;
       esquecer(`clipe:${clipeId}`);
       setSaveState('salvando');
+      marquei(clipeId);
       void catalogDb.marcarClipeApagado(clipeId)
         .then(() => { anotar({ tipo: 'apagarClipe', clipeId }); })
         .then(refresh)
@@ -1076,6 +1117,7 @@ const ProjectSpace: FC = () => {
       setSaveState('salvando');
       // Marcada, e não apagada: o desfazer tem de a poder trazer de volta com os clipes dela.
       // O ficheiro só sai no fecho da sessão, e só se nenhum clipe apontar mais para ele.
+      marquei(pistaId);
       void catalogDb.marcarPistaApagada(pistaId)
         .then(() => { anotar({ tipo: 'apagarPista', pistaId }); })
         .then(refresh)

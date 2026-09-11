@@ -662,12 +662,25 @@ export interface Varridos {
  */
 export const purgarMontagem = async (
   versionId: string,
-  opcoes: { antesDe?: string } = {},
+  opcoes: { antesDe?: string; apenas?: string[] } = {},
 ): Promise<Varridos> => {
+  // ⚠️ SAIR LEVA O QUE É MEU, E MAIS NADA. Sem `apenas`, quem fechasse a tela apagava de vez
+  // tudo o que estivesse marcado nesta gravação — incluindo o que a OUTRA pessoa acabou de
+  // remover e ainda pode trazer de volta com a seta. O desfazer dela passava a mentir por causa
+  // de um gesto meu noutra máquina.
+  //
+  // A sessão sabe exatamente o que marcou, e é essa lista que chega aqui. O que ficar de outra
+  // pessoa é problema dela enquanto ela estiver viva, e da varredura por tempo (`antesDe`) na
+  // abertura seguinte quando não estiver.
+  //
+  // Lista VAZIA é uma resposta legítima — "não marquei nada" — e nesse caso não há o que varrer.
+  if (opcoes.apenas && !opcoes.apenas.length) return { pistas: 0, clipes: 0, arquivos: 0 };
+  const minhas = opcoes.apenas;
   // As pistas primeiro: os clipes delas descem em cascata pela chave estrangeira, e assim a
   // varredura dos clipes a seguir já não os vê.
-  const dePistas = supabase.from('catalog_tracks').select('id')
+  const todasAsPistas = supabase.from('catalog_tracks').select('id')
     .eq('version_id', versionId).not('deleted_at', 'is', null);
+  const dePistas = minhas ? todasAsPistas.in('id', minhas) : todasAsPistas;
   const { data: pistasMortas, error: erroPistas } = await (
     opcoes.antesDe ? dePistas.lte('deleted_at', opcoes.antesDe) : dePistas
   );
@@ -687,8 +700,9 @@ export const purgarMontagem = async (
 
   let clipes = 0;
   if (idsVivos.length) {
-    const deClipes = supabase.from('catalog_clips').select('id')
+    const todosOsClipes = supabase.from('catalog_clips').select('id')
       .in('track_id', idsVivos).not('deleted_at', 'is', null);
+    const deClipes = minhas ? todosOsClipes.in('id', minhas) : todosOsClipes;
     const { data: mortos, error } = await (
       opcoes.antesDe ? deClipes.lte('deleted_at', opcoes.antesDe) : deClipes
     );

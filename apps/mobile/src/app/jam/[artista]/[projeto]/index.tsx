@@ -10,7 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import {
-  HISTORICO_VAZIO, desfazer as desfazerPasso, podeDesfazer, podeRefazer,
+  HISTORICO_VAZIO, conferirOPasso, desfazer as desfazerPasso, podeDesfazer, podeRefazer,
   refazer as refazerPasso, registar, rotuloDaSeta,
   type Historico, type PassoDaMontagem,
 } from '@maestra/core/audio/historico';
@@ -505,6 +505,17 @@ export default function EspacoJam() {
   const [andandoNoTempo, setAndandoNoTempo] = useState(false);
   const anotar = (passo: PassoDaMontagem) => setHistorico((h) => registar(h, passo));
 
+  /**
+   * O que ESTA sessão marcou para apagar e ainda não desmarcou.
+   *
+   * ⚠️ É ISTO QUE A SAÍDA LEVA, e mais nada. Sem a lista, fechar a tela apagava de vez tudo o
+   * que estivesse marcado nesta gravação — incluindo o que a outra pessoa acabou de remover e
+   * ainda pode trazer de volta com a seta dela.
+   */
+  const marcadosPorMim = useRef(new Set<string>());
+  const marquei = (id: string) => marcadosPorMim.current.add(id);
+  const desmarquei = (id: string) => marcadosPorMim.current.delete(id);
+
   const aplicarPasso = async (passo: PassoDaMontagem, sentido: 'desfazer' | 'refazer') => {
     const voltando = sentido === 'desfazer';
     switch (passo.tipo) {
@@ -523,6 +534,7 @@ export default function EspacoJam() {
         break;
       case 'apagarClipe':
         await (voltando ? catalogo.restaurarClipe : catalogo.marcarClipeApagado)(passo.clipeId);
+        (voltando ? desmarquei : marquei)(passo.clipeId);
         break;
       // ⚠️ ESTES DOIS NÃO EXISTIAM AQUI, e a seta mentia: apagar uma faixa era anotado e o
       // desfazer não fazia nada — o botão acendia, dizia "Desfazer: apagar a faixa" e o clique
@@ -530,17 +542,20 @@ export default function EspacoJam() {
       // precisa do mesmo caminho de volta.
       case 'apagarPista':
         await (voltando ? catalogo.restaurarPista : catalogo.marcarPistaApagada)(passo.pistaId);
+        (voltando ? desmarquei : marquei)(passo.pistaId);
         break;
       case 'acrescentarPistas':
         await Promise.all(passo.pistaIds.map(
           (id) => (voltando ? catalogo.marcarPistaApagada : catalogo.restaurarPista)(id),
         ));
+        passo.pistaIds.forEach(voltando ? marquei : desmarquei);
         break;
       case 'cortar':
         await catalogo.updateClip(passo.clipeId, {
           duration_seconds: voltando ? passo.duracaoAntes : passo.duracaoDepois,
         });
         await (voltando ? catalogo.marcarClipeApagado : catalogo.restaurarClipe)(passo.novoClipeId);
+        (voltando ? marquei : desmarquei)(passo.novoClipeId);
         break;
       default:
         break;
@@ -553,6 +568,26 @@ export default function EspacoJam() {
     if (andandoNoTempo) return;
     const saida = sentido === 'desfazer' ? desfazerPasso(historico) : refazerPasso(historico);
     if (!saida) return;
+
+    // ⚠️ A SETA SÓ ANDA SE O MUNDO AINDA ESTIVER COMO O MEU PASSO O DEIXOU. Com outra pessoa na
+    // mesma música, desfazer um gesto meu por cima do que ela fez a seguir apagava o trabalho
+    // dela sem aviso — e a pilha dela nunca soube que aquilo aconteceu. O passo caducou: sai da
+    // pilha (repeti-lo dava o mesmo) e a tela diz porquê.
+    const caduco = conferirOPasso(saida.passo, {
+      pistas: (aberta?.tracks ?? []).map((t) => ({ id: t.id, clips: t.clips })),
+      clipes: (aberta?.tracks ?? []).flatMap((t) => (t.clips ?? []).map((c) => ({
+        id: c.id,
+        track_id: c.track_id,
+        start_seconds: Number(c.start_seconds) || 0,
+        duration_seconds: Number(c.duration_seconds) || 0,
+      }))),
+    }, sentido);
+    if (caduco) {
+      setHistorico(saida.historico);
+      Alert.alert('A seta não vai por cima', caduco);
+      return;
+    }
+
     setAndandoNoTempo(true);
     setSelo('salvando');
     try {
@@ -660,6 +695,7 @@ export default function EspacoJam() {
     esquecerClipe(clipeId);
     setSelo('salvando');
     try {
+      marquei(clipeId);
       await catalogo.marcarClipeApagado(clipeId);
       anotar({ tipo: 'apagarClipe', clipeId });
       await buscar();
@@ -694,6 +730,7 @@ export default function EspacoJam() {
     sujo.current = true;
     setSelo('salvando');
     try {
+      marquei(id);
       await catalogo.marcarPistaApagada(id);
       anotar({ tipo: 'apagarPista', pistaId: id });
       await buscar();
@@ -1244,7 +1281,10 @@ export default function EspacoJam() {
     //
     // Sem esperar: prender a saída da tela numa ida ao servidor é o pior momento para o fazer, e
     // a limpeza da próxima abertura apanha o que sobrar.
-    if (abertaId) void catalogo.purgarMontagem(abertaId).catch(() => undefined);
+    if (abertaId) {
+      void catalogo.purgarMontagem(abertaId, { apenas: Array.from(marcadosPorMim.current) })
+        .catch(() => undefined);
+    }
     if (router.canGoBack()) router.back();
     else router.replace(`/artista/${artistaId}/catalogo`);
   };

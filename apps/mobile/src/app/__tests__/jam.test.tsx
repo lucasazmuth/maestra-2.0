@@ -450,9 +450,26 @@ describe('espaço jam', () => {
   });
 
   it('remover um clipe marca, e o desfazer devolve', async () => {
-    mockBuscar.mockResolvedValue(projeto({
-      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
-    }));
+    const comClipe = projeto({ versions: [versao({ files: [arquivo()], tracks: [pista()] })] });
+    const semClipe = projeto({
+      versions: [versao({ files: [arquivo()], tracks: [{ ...pista(), clips: [] }] })],
+    });
+    mockBuscar.mockResolvedValue(comClipe);
+
+    // ⚠️ OS DUPLOS TÊM DE APAGAR DE VERDADE. Marcar um clipe tira-o da leitura seguinte, e é
+    // isso que a seta confere antes de andar: ela só desfaz se o mundo ainda estiver como o
+    // passo o deixou. Com o duplo a devolver sempre a montagem completa, a tela via o clipe
+    // ainda lá, concluía que outra pessoa o tinha trazido de volta, e recusava-se a desfazer —
+    // um teste a medir o duplo, e não o produto.
+    mockMarcarApagado.mockImplementation(() => {
+      mockBuscar.mockResolvedValue(semClipe);
+      return Promise.resolve();
+    });
+    mockRestaurar.mockImplementation(() => {
+      mockBuscar.mockResolvedValue(comClipe);
+      return Promise.resolve();
+    });
+
     const tela = await montar();
     await tela.findByText('FAIXAS');
 
@@ -461,8 +478,11 @@ describe('espaço jam', () => {
     fireEvent.press(await tela.findByLabelText('Remover o clipe'));
 
     await waitFor(() => expect(mockMarcarApagado).toHaveBeenCalledWith('c-t-1'));
-    // E nunca o apagar de verdade: esse é do fim da sessão.
-    expect(mockPurgar).not.toHaveBeenCalledWith('v-1');
+    // E nunca o apagar de verdade: esse é do fim da sessão, e reconhece-se pelo `apenas` — a
+    // varredura da ABERTURA também chama esta função, com `antesDe`, e não conta.
+    expect(mockPurgar).not.toHaveBeenCalledWith(
+      'v-1', expect.objectContaining({ apenas: expect.anything() }),
+    );
 
     // A seta acorda e diz o que vai desmanchar.
     const seta = await tela.findByLabelText('Desfazer: remover o clipe');
@@ -479,7 +499,10 @@ describe('espaço jam', () => {
     fireEvent.press(tela.getAllByLabelText('Voltar para Músicas')[0]);
     // ⚠️ A SAÍDA ESPERA PELA GUIA. Ela é gerada no mesmo instante, e a purga acontece depois —
     // por isso a asserção passou a ser assíncrona: seca, ela media o estado de meio caminho.
-    await waitFor(() => expect(mockPurgar).toHaveBeenCalledWith('v-1'));
+    //
+    // ⚠️ E LEVA SÓ O QUE ESTA SESSÃO MARCOU. Nada marcado aqui: a lista vai vazia, e a purga
+    // não toca no que a outra pessoa ainda pode desfazer.
+    await waitFor(() => expect(mockPurgar).toHaveBeenCalledWith('v-1', { apenas: [] }));
   });
 
   // ⚠️ A MIX NÃO SE MEXE: ela é o áudio da própria gravação, e renomeá-la ou apagá-la é mexer na
