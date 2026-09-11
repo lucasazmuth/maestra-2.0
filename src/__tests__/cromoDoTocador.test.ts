@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
-// O tocador local: os ícones dele, e o que ele não pode tapar.
+// O tocador local e o que ele não pode tapar.
 //
-// Duas coisas que o olho apanha num instante e que nenhum teste de comportamento apanha nunca,
-// porque as duas são geometria e pintura — a tela funciona igual com as duas erradas.
+// Coisas que o olho apanha num instante e que nenhum teste de comportamento apanha nunca, porque
+// são geometria e pintura — a tela funciona igual com todas erradas.
 
 const ler = (...p: string[]) => fs.readFileSync(path.join(__dirname, '..', ...p), 'utf8');
 const folha = ler('styles', 'local-player-unified.scss');
@@ -17,6 +17,24 @@ const regra = (css: string, seletor: string): string => {
   const abre = css.indexOf('{', em);
   return css.slice(abre, css.indexOf('}', abre));
 };
+
+/**
+ * A largura do `@media` que envolve uma regra.
+ *
+ * ⚠️ O ÚLTIMO ANTES DELA, e não "algum mais acima". A primeira versão disto aceitava o `@media`
+ * de uma ilha como prova do da regra do botão, e sobrevivia à troca que devia apanhar. Estas
+ * folhas não aninham consultas, então a que abre por último é a que manda.
+ */
+const alcanceDe = (css: string, seletor: string): number => {
+  const onde = css.indexOf(seletor);
+  if (onde === -1) throw new Error(`Não achei "${seletor}".`);
+  const abre = css.lastIndexOf('@media (max-width:', onde);
+  if (abre === -1) throw new Error(`"${seletor}" não está dentro de um @media de largura.`);
+  return Number(css.slice(abre).match(/@media \(max-width:\s*(\d+)px\)/)![1]);
+};
+
+/** A folga que o botão guarda de quem estiver por baixo. É a `FOLGA` do `BotaoFlutuante`. */
+const FOLGA = 14;
 
 describe('cromo do tocador', () => {
   // ⚠️ ELES SÃO DESENHOS CHEIOS, e um desenho cheio pinta-se pelo `fill`. Os ícones trazem um
@@ -41,54 +59,64 @@ describe('cromo do tocador', () => {
     expect(regra(folha, '.local-player-bar .lpb-volume button:focus-visible svg'))
       .toContain('fill: #294c83 !important');
   });
+});
 
-  // ⚠️ O "+" FICAVA POR BAIXO DO TOCADOR, cortado pelo canto redondo dele. A folha da referência
-  // levanta-o para 152px quando há tocador, e esse número veio da BARRA colada ao rodapé; a ilha
-  // do celular não está colada. Com `z-index` 119 contra os 90 dele, quem ficava por cima era
-  // ela. Vale para todos os módulos: o botão é o mesmo em Músicas, Agenda e Equipe.
-  it('o botão flutuante fica acima da ilha do tocador, e não atrás dela', () => {
-    const ilha = regra(folha, '.local-player-bar--over-nav,');
-    const base = Number(ilha.match(/bottom:\s*calc\((\d+)px/)?.[1]);
-    const altura = Number(ilha.match(/min-height:\s*(\d+)px/)?.[1]);
+// ⚠️ O "+" FICAVA POR CIMA DAS DUAS ILHAS DO CELULAR — e, como as duas têm `z-index` acima do 90
+// dele (120 a navegação, 119 o tocador), na prática ficava por BAIXO: cortado pelo canto redondo
+// de uma ou da outra. Os números de antes vinham de um desenho em que a navegação era uma barra
+// colada ao rodapé, que já não é o que se desenha.
+//
+// Vale para todos os módulos: o botão é o mesmo em Músicas, Agenda e Equipe.
+describe('o botão flutuante e as ilhas do celular', () => {
+  const daSuaVez = 'body:has(.local-player-bar--over-nav) .botao-flutuante';
+  const DA_NAVEGACAO = '.task-app.has-mobile-nav .mobile-nav {';
+  const DO_TOCADOR = '.local-player-bar--over-nav,';
 
-    const botao = regra(folha, 'body:has(.local-player-bar--over-nav) .botao-flutuante');
-    const subiu = Number(botao.match(/bottom:\s*calc\((\d+)px/)?.[1]);
+  // O bloco do celular, achado pela regra do tocador (que só existe lá dentro) e lido de trás
+  // para a frente até à consulta que o abre.
+  const bloco = referencia.slice(
+    referencia.lastIndexOf('@media (max-width:', referencia.indexOf(daSuaVez)),
+  );
+
+  const alturaDe = (corpo: string) => Number(corpo.match(/bottom:\s*(?:calc\()?(\d+)px/)![1]);
+
+  it('sem tocador, ele fica acima da ilha da navegação', () => {
+    const ilha = regra(referencia, DA_NAVEGACAO);
+    const base = Number(ilha.match(/bottom:\s*(\d+)px/)![1]);
+    const altura = Number(ilha.match(/min-height:\s*(\d+)px/)![1]);
+
+    expect(base).toBe(18);
+    expect(altura).toBe(78);
+    // Derivado, e não um número escrito à mão: mexer na ilha sem mexer no botão volta a tapá-lo.
+    // É a mesma conta do aplicativo — `rodapeDaIlha` e `ALTURA_DA_ILHA`, na `BarraDeAbas`.
+    expect(alturaDe(regra(bloco, '.botao-flutuante {'))).toBe(base + altura + FOLGA);
+  });
+
+  it('com o tocador, ele fica acima da ilha DELE, que nasce mais alta', () => {
+    const ilha = regra(folha, DO_TOCADOR);
+    const base = Number(ilha.match(/bottom:\s*calc\((\d+)px/)![1]);
+    const altura = Number(ilha.match(/min-height:\s*(\d+)px/)![1]);
 
     expect(base).toBe(106);
     expect(altura).toBe(64);
-    // Derivado, e não um número escrito à mão: mexer na ilha sem mexer no botão volta a tapá-lo.
-    expect(subiu).toBeGreaterThanOrEqual(base + altura);
-    // E é a MESMA conta do aplicativo, onde ela já estava certa: `PLAYER_DEBAIXO` (106) mais
-    // `ALTURA_DO_PLAYER` (64) mais a `FOLGA` (14) do `BotaoFlutuante`. A web é que tinha ficado
-    // para trás, com um número herdado de um desenho que ela já não usa.
-    expect(subiu).toBe(base + altura + 14);
 
-    // ⚠️ E SOBE COM A MARGEM SEGURA. A ilha sobe com ela; um botão que não subisse junto traria
-    // o defeito de volta, menor e só nos aparelhos com entalhe — que são todos os recentes.
-    expect(botao).toContain('env(safe-area-inset-bottom, 0px)');
+    const comTocador = regra(bloco, daSuaVez);
+    expect(alturaDe(comTocador)).toBe(base + altura + FOLGA);
+
+    // ⚠️ E SOBE COM A MARGEM SEGURA, que a ilha do tocador declara e a da navegação não. Um botão
+    // que não subisse junto traria o defeito de volta, menor e só nos aparelhos com entalhe —
+    // que são todos os recentes.
+    expect(comTocador).toContain('env(safe-area-inset-bottom, 0px)');
   });
 
-  // ⚠️ O ALCANCE É O DA ILHA. A folha da referência muda o botão de sítio aos 900px e a ilha
-  // nasce aos 960: entre uma medida e a outra a ilha já existia e o botão ainda estava na
-  // posição de computador, que é mais baixa. Era a mesma sobreposição, numa faixa de sessenta
-  // píxeis de largura de janela que ninguém repara em testar.
-  it('a correção vale desde onde a ilha começa, e não sessenta píxeis depois', () => {
-    // A largura do `@media` que ENVOLVE a regra — ancorado no fim do que vem antes dela, e não
-    // "algum 960 mais acima": a primeira versão deste caso aceitava o `@media` da ilha como
-    // prova do botão, e sobrevivia à troca que ele devia apanhar.
-    const alcanceDe = (seletor: string): number => {
-      const antes = folha.slice(0, folha.indexOf(seletor));
-      const abre = antes.match(/@media \(max-width:\s*(\d+)px\)\s*\{\s*$/);
-      if (!abre) throw new Error(`"${seletor}" não está dentro de um @media de largura.`);
-      return Number(abre[1]);
-    };
+  // ⚠️ O ALCANCE É O DAS ILHAS. Este bloco começava aos 900px e as ilhas nascem aos 960: entre
+  // uma medida e a outra elas já existiam e o botão ainda estava na posição de computador, que é
+  // mais baixa. Era a mesma sobreposição, numa faixa de sessenta píxeis de largura de janela que
+  // ninguém repara em testar.
+  it('a correção vale desde onde as ilhas começam, e não sessenta píxeis depois', () => {
+    const doBotao = alcanceDe(referencia, daSuaVez);
 
-    // Derivado da ilha, e não escrito à mão: os dois têm de mudar de sítio ao mesmo tempo.
-    expect(alcanceDe('body:has(.local-player-bar--over-nav) .botao-flutuante'))
-      .toBe(alcanceDe('.local-player-bar--over-nav,'));
-
-    // E a folha da referência continua a ser a referência: o que se corrige mora ao lado da
-    // geometria que o obriga, e não reescrito lá dentro.
-    expect(referencia).toContain('body:has(.local-player-bar) .botao-flutuante');
+    expect(doBotao).toBe(alcanceDe(referencia, DA_NAVEGACAO));
+    expect(doBotao).toBe(alcanceDe(folha, DO_TOCADOR));
   });
 });

@@ -189,32 +189,3 @@ body.jam-project-space .local-player-bar {
   }
 }
 
-/*
- * O botão flutuante sobe acima da ILHA, e não acima da barra.
- *
- * ⚠️ O "+" ESTAVA POR BAIXO DO TOCADOR, cortado pelo canto redondo dele. A folha da referência
- * levanta-o para `bottom: 152px` quando há tocador, e esse número veio da BARRA colada ao
- * rodapé, que já não é o que se desenha no celular. A ilha não está colada: ela começa a 106px
- * e tem 64 de altura, portanto o topo dela fica a 170 — dezoito píxeis ACIMA do botão. E como
- * ela tem `z-index` 119 contra os 90 dele, quem ficava por cima era ela.
- *
- * 184px = 106 (base da ilha) + 64 (altura dela) + 14 (a folga). Os três números são os mesmos do
- * aplicativo, onde esta conta já estava certa: `PLAYER_DEBAIXO`, `ALTURA_DO_PLAYER` e a `FOLGA`
- * do `BotaoFlutuante`. Foi a web que ficou para trás, com um número herdado de um desenho que
- * ela já não usa.
- *
- * A margem segura entra aqui também: a ilha sobe com ela e o botão tem de subir junto, senão o
- * defeito volta — menor, e só nos aparelhos com entalhe.
- *
- * ⚠️ E O ALCANCE É 960px, o da ilha, e não os 900px em que a folha da referência muda o botão
- * de sítio. Entre uma medida e a outra a ilha já existia e o botão ainda estava na posição de
- * computador, que é mais baixa: era a mesma sobreposição, numa faixa de sessenta píxeis de
- * largura de janela que ninguém repara em testar.
- *
- * Vale para TODOS os módulos: o botão é o mesmo em Músicas, Agenda e no resto.
- */
-@media (max-width: 960px) {
-  body:has(.local-player-bar--over-nav) .botao-flutuante {
-    bottom: calc(184px + env(safe-area-inset-bottom, 0px)) !important;
-  }
-}

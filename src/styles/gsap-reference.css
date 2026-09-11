@@ -10370,15 +10370,37 @@ body:has(.local-player-bar) .botao-flutuante {
   bottom: 104px;
 }
 
-@media (max-width: 900px) {
-  /* No celular a barra de navegação mora no rodapé, e o botão passa a viver acima dela. */
+/* No celular o botão tem DUAS ilhas pela frente, e a altura dele sai da conta delas.
+ *
+ * ⚠️ ELE ESTAVA POR CIMA DAS DUAS, e os dois números de antes explicam porquê: vinham de um
+ * desenho em que a navegação era uma BARRA colada ao rodapé e o tocador outra. Hoje as duas são
+ * ilhas flutuantes, cada uma com a sua base e a sua altura, e ambas com `z-index` acima do 90
+ * dele — 120 a navegação, 119 o tocador. O botão não ficava só encavalitado: ficava por baixo.
+ *
+ * As três medidas são as mesmas do aplicativo, onde esta conta já estava certa: `ALTURA_DA_ILHA`
+ * e `rodapeDaIlha` na `BarraDeAbas`, e a `FOLGA` do `BotaoFlutuante`.
+ *
+ * ⚠️ E O ALCANCE É 960px, o das ilhas, e não os 900 em que este bloco começava. Entre uma medida
+ * e a outra as ilhas já existiam e o botão ainda estava na posição de computador, que é mais
+ * baixa — a mesma sobreposição, numa faixa de sessenta píxeis de largura de janela que ninguém
+ * repara em testar.
+ *
+ * Vale para todos os módulos: o botão é o mesmo em Músicas, Agenda e Equipe. */
+@media (max-width: 960px) {
   .botao-flutuante {
     right: 18px;
-    bottom: 88px;
+    /* 110px = 18 (base da ilha da navegação) + 78 (altura dela) + 14 (a folga). */
+    bottom: 110px;
   }
 
-  body:has(.local-player-bar) .botao-flutuante {
-    bottom: 152px;
+  /* Com o tocador no ar é a ilha DELE que o botão tem de vencer: ela nasce acima da navegação.
+     184px = 106 (base) + 64 (altura) + 14 (a mesma folga).
+
+     A margem segura entra aqui e não na de cima porque é a ilha do tocador que sobe com ela; a
+     da navegação está declarada com um 18 seco. Um botão que não subisse junto traria o defeito
+     de volta, menor e só nos aparelhos com entalhe. */
+  body:has(.local-player-bar--over-nav) .botao-flutuante {
+    bottom: calc(184px + env(safe-area-inset-bottom, 0px));
   }
 }
 
