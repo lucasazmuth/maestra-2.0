@@ -294,9 +294,10 @@ export const EditorDaGravacao: FC<{
   // canto. São todas a MESMA pergunta para quem olha ("posso fechar?"), por isso são um sinal
   // só, e a ordem aqui é a da gravidade: o que prende a saída da tela aparece primeiro.
   const aGerar = gerando != null;
-  const atividade = aGerar
-    ? { texto: rotuloDaGuia(gerando), cor: DS.color.primaria, girando: true, falhou: false }
-    : envio
+  // ⚠️ A GUIA SAIU DAQUI. Ela passou a ter uma tela inteira só para si — a mão a tocar e a
+  // percentagem —, e o selo a repetir a mesma frase num canto era o mesmo aviso duas vezes: a
+  // pessoa lia um e procurava o outro à espera de que dissessem coisas diferentes.
+  const atividade = envio
       ? { texto: `Enviando ${envio.feitos + 1} de ${envio.total}…`, cor: DS.color.primaria, girando: true, falhou: false }
       : selo === 'salvando'
         ? { texto: 'Salvando…', cor: DS.color.textoApoio, girando: true, falhou: false }

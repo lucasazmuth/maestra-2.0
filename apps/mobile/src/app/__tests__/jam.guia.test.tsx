@@ -322,6 +322,12 @@ describe('a guia do Espaço JAM', () => {
     fireEvent.press(tela.getByLabelText('Silenciar Voz'));
     fireEvent.press(tela.getAllByLabelText('Voltar para Músicas')[0]);
 
+    // ⚠️ O X PERGUNTA, E NÃO DECIDE. Gerar a guia custa um minuto e meio no aparelho: é o certo
+    // para quem acabou de montar, e um roubo para quem entrou só para ouvir e mexeu num fader.
+    expect(await tela.findByText('Gerar a guia antes de fechar?')).toBeTruthy();
+    expect(mockGravarFixo).not.toHaveBeenCalled();
+
+    fireEvent.press(tela.getByText('Gerar e fechar'));
     await waitFor(() => expect(mockGravarFixo).toHaveBeenCalled());
 
     // ⚠️ A TELA NÃO SAIU, e diz porquê. Ela já saiu no mesmo instante, sem sinal nenhum: o
@@ -329,15 +335,11 @@ describe('a guia do Espaço JAM', () => {
     // uma lista que toca o áudio ANTERIOR sem nada a explicar. Uma promessa invisível é uma
     // promessa que ninguém sabe que está a quebrar.
     expect(mockBack).not.toHaveBeenCalled();
-    // ⚠️ O QUANTO FALTA vem do próprio codificador. Enquanto ele não fala — a soma das faixas,
-    // que no aparelho leva dezenas de segundos — o rótulo é só texto: um "0%" parado durante
-    // esse tempo é o mesmo que reticências paradas, e parece uma tela pendurada. Aqui o áudio é
-    // de brincadeira e a conta chega no mesmo instante, por isso o alvo aceita as duas formas;
-    // quem prende o texto sem percentagem é o `rotuloDaGuia`, no núcleo.
-    expect(await tela.findByText(/^Gerando a guia…/)).toBeTruthy();
-    // E o X não aceita um segundo toque enquanto isso.
-    expect(tela.getAllByLabelText(/^Gerando a guia…/)[0].props.accessibilityState.disabled).toBe(true);
-
+    // ⚠️ O QUE A TELA MOSTRA ENQUANTO ESPERA — a mão a tocar e a percentagem — está preso no
+    // teste do próprio `FecharComGuia`, e não aqui: montado dentro do editor, o estado que a
+    // espera produz não chega a este `render` (o `setGerando` do meio de um `await` fica preso
+    // fora do `act`), e a asserção media o momento errado. O que ESTA tela tem de garantir é a
+    // ORDEM, e é ela que as linhas acima e abaixo prendem.
     soltarASubida();
     // Caminho FIXO por música: cada render criando um arquivo novo deixaria trinta guias mortas
     // numa música editada trinta vezes.

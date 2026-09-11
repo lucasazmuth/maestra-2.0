@@ -41,6 +41,7 @@ import * as catalogo from '@maestra/core/services/db/catalog';
 
 import { CampoDoCabecalho } from '@/casca/jam/CampoDoCabecalho';
 import { ConversaDoJam } from '@/casca/jam/ConversaDoJam';
+import { FecharComGuia } from '@/casca/jam/FecharComGuia';
 import { FolhaDaVersao } from '@/casca/jam/FolhaDaVersao';
 import { PALETA_ESCURA, PaletaDaFolhaProvider } from '@/casca/paleta';
 import { Fader } from '@/casca/jam/mesa/Fader';
@@ -386,6 +387,7 @@ export default function EspacoJam() {
   const sujo = useRef(false);
   /** 0..1 enquanto a guia corre; `null` fora disso. Ver `rotuloDaGuia`, no núcleo. */
   const [gerando, setGerando] = useState<number | null>(null);
+  const [perguntandoDaGuia, setPerguntandoDaGuia] = useState(false);
 
   const gerarAGuia = async (): Promise<void> => {
     if (!sujo.current || !aberta || !projeto || !podeEditar) return;
@@ -1277,9 +1279,8 @@ export default function EspacoJam() {
    *
    * Falhar não prende: o `catch` do `gerarAGuia` engole, e a saída continua.
    */
-  const voltar = async () => {
-    await gerarAGuia();
-
+  const sair = () => {
+    setPerguntandoDaGuia(false);
     // ⚠️ A SESSÃO FECHA E O QUE FOI APAGADO SAI DE VERDADE, do banco e do balde. É o outro lado
     // do desfazer: enquanto a tela está aberta a linha fica marcada para poder voltar; fechada,
     // não há mais quem a chame de volta, e guardá-la seria só resíduo a acumular.
@@ -1294,6 +1295,22 @@ export default function EspacoJam() {
     else router.replace(`/artista/${artistaId}/catalogo`);
   };
 
+  /**
+   * O X: pergunta, e não decide.
+   *
+   * ⚠️ ELE ESPERAVA PELA GUIA SEMPRE, e isso custa um minuto e meio no aparelho. Esperar é o
+   * certo para quem acabou de montar — é o que faz a lista de Músicas tocar o que se fez — e é
+   * um roubo para quem entrou só para ouvir e mexeu num fader. Quem sabe qual dos dois é, é
+   * quem está lá.
+   *
+   * Sem nada por gravar não há pergunta: perguntar "gerar a guia?" quando não há nada de novo
+   * para somar é uma porta a mais no caminho de sair.
+   */
+  const voltar = () => {
+    if (sujo.current && podeEditar && aberta) setPerguntandoDaGuia(true);
+    else sair();
+  };
+
   if (carregando) {
     return (
       <LinearGradient colors={[COR_EDITOR.fundoDe, COR_EDITOR.fundoAte]} style={estilos.espera}>
@@ -1306,7 +1323,7 @@ export default function EspacoJam() {
     return (
       <LinearGradient colors={[COR_EDITOR.fundoDe, COR_EDITOR.fundoAte]} style={estilos.espera}>
         <Text style={estilos.vazioTexto}>Espaço JAM não encontrado.</Text>
-        <Pressable onPress={() => { void voltar(); }} accessibilityRole="button" accessibilityLabel="Voltar para Músicas">
+        <Pressable onPress={voltar} accessibilityRole="button" accessibilityLabel="Voltar para Músicas">
           <Text style={estilos.voltarTexto}>Voltar para Músicas</Text>
         </Pressable>
       </LinearGradient>
@@ -1412,7 +1429,7 @@ export default function EspacoJam() {
 
         <Pressable
           style={[estilos.redondo, gerando != null && estilos.inerte]}
-          onPress={() => { void voltar(); }}
+          onPress={voltar}
           disabled={gerando != null}
           hitSlop={6}
           accessibilityRole="button"
@@ -1487,7 +1504,7 @@ export default function EspacoJam() {
               // ⚠️ SEM GUIA: a música foi apagada, e fazer-lhe a mistura agora seria gastar um
               // minuto e meio a renderizar um áudio para uma gravação que já não existe — e a
               // escrevê-lo por cima de uma linha que o banco acabou de levar.
-              aoExcluir={() => { sujo.current = false; void voltar(); }}
+              aoExcluir={() => { sujo.current = false; voltar(); }}
             />
           </PaletaDaFolhaProvider>
         ) : aba === 'exportar' ? (
@@ -1741,13 +1758,26 @@ export default function EspacoJam() {
         </Text>
       </BalaoFlutuante>
 
+      {/* A pergunta do X, e a espera de quem escolheu gerar. Uma tela por cima de tudo, porque
+          é a única coisa que está a acontecer enquanto acontece. */}
+      <FecharComGuia
+        gerando={gerando}
+        perguntando={perguntandoDaGuia}
+        aoGerar={() => { void (async () => { await gerarAGuia(); sair(); })(); }}
+        aoSair={sair}
+        aoFicar={() => setPerguntandoDaGuia(false)}
+      />
+
       {/* O selo de estado. Só existe quando há algo a dizer: um indicador permanente deixa de
           ser lido, e este precisa de ser lido nas duas vezes em que importa — a gravar, e
           quando falhou. */}
       {/* ⚠️ O SELO FICA EM TODAS AS ABAS, ao contrário das setas e do balão: ele não fala da
           montagem, fala de GRAVAR — e a ficha, que não tem botão de Salvar, é justamente onde
           ele mais precisa de ser lido. */}
-      {(selo !== 'parado' || gerando != null) && (
+      {/* ⚠️ A GUIA SAIU DAQUI. Ela passou a ter uma tela inteira só para si — a mão a tocar e a
+          percentagem —, e o selo a repetir a mesma frase num canto era o mesmo aviso duas vezes:
+          a pessoa lia um e procurava o outro à espera de que dissessem coisas diferentes. */}
+      {selo !== 'parado' && (
         <View style={[estilos.selo, { bottom: margem.bottom + ALTURA_DO_RODAPE + 12 }]}>
           <Text
             style={[estilos.seloTexto, selo === 'erro' && estilos.seloDeErro]}
@@ -1755,8 +1785,7 @@ export default function EspacoJam() {
           >
             {/* Dez stems levam um minuto, e um minuto sem sinal é um bug aos olhos de quem
                 espera. A ordem é a da gravidade: o que prende a tela aparece primeiro. */}
-            {gerando != null ? rotuloDaGuia(gerando)
-              : envio ? `Enviando ${envio.feitos + 1} de ${envio.total}…`
+            {envio ? `Enviando ${envio.feitos + 1} de ${envio.total}…`
                 : selo === 'salvando' ? 'Salvando…'
                   : selo === 'erro' ? 'Falha ao salvar' : 'Salvo'}
           </Text>

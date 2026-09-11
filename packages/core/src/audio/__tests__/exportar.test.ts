@@ -1,6 +1,7 @@
 import type { BufferDeAudio } from '../contexto';
+import { ANIMACAO_DA_GUIA } from '../animacaoDaGuia';
 import {
-  bytesDoWav, higienizar, nomeDoArquivoDaPista, rotuloDaGuia, temSom,
+  bytesDoWav, higienizar, nomeDoArquivoDaPista, pintarALottie, rotuloDaGuia, temSom,
 } from '../exportar';
 
 const buffer = (canais: number[][], taxa = 44100): BufferDeAudio => ({
@@ -147,5 +148,58 @@ describe('temSom', () => {
     const quase = new Array(4096).fill(0);
     quase[1] = 1;
     expect(temSom(comAmostras([quase]))).toBe(false);
+  });
+});
+
+// A animação da espera vem do autor com um roxo que não é a cor da marca e um preto que, sobre
+// o painel escuro do editor, some — o braço da guitarra desaparecia e ficava uma mão a tocar no
+// nada.
+describe('pintarALottie', () => {
+  const cor = (k: number[]) => ({ ty: 'fl', c: { a: 0, k } });
+
+  it('troca a cor que está no mapa', () => {
+    const pintada = pintarALottie({ shapes: [cor([1, 0, 0])] }, { '#ff0000': '#3b82f6' }) as
+      { shapes: { c: { k: number[] } }[] };
+    const [r, g, b] = pintada.shapes[0].c.k;
+    expect([Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)]).toEqual([59, 130, 246]);
+  });
+
+  it('deixa em paz a cor que não está no mapa', () => {
+    const pintada = pintarALottie({ shapes: [cor([0, 1, 0])] }, { '#ff0000': '#3b82f6' }) as
+      { shapes: { c: { k: number[] } }[] };
+    expect(pintada.shapes[0].c.k).toEqual([0, 1, 0]);
+  });
+
+  // As chaves de cor estão espalhadas por dezenas de níveis — traços, preenchimentos, dentro da
+  // pré-composição. Uma varredura que só olhasse o topo pintava metade do desenho.
+  it('desce até ao fundo, incluindo as pré-composições', () => {
+    const fundo = { assets: [{ id: 'c0', layers: [{ shapes: [{ it: [cor([1, 0, 0])] }] }] }] };
+    const pintada = pintarALottie(fundo, { '#ff0000': '#000000' }) as typeof fundo;
+    expect(pintada.assets[0].layers[0].shapes[0].it[0].c.k).toEqual([0, 0, 0]);
+  });
+
+  // A opacidade é do desenho, e não da paleta: trocar a cor não pode acender o que estava
+  // meio transparente.
+  it('mantém o quarto canal, que é a opacidade', () => {
+    const pintada = pintarALottie({ shapes: [cor([1, 0, 0, 0.5])] }, { '#ff0000': '#ffffff' }) as
+      { shapes: { c: { k: number[] } }[] };
+    expect(pintada.shapes[0].c.k[3]).toBe(0.5);
+  });
+
+  // ⚠️ O LOTTIE MUTA O OBJETO QUE RECEBE enquanto anima: devolver o mesmo desenho a duas telas
+  // fazia a segunda herdar o estado da primeira.
+  it('não mexe no original', () => {
+    const original = { shapes: [cor([1, 0, 0])] };
+    pintarALottie(original, { '#ff0000': '#3b82f6' });
+    expect(original.shapes[0].c.k).toEqual([1, 0, 0]);
+  });
+
+  it('atravessa a animação de verdade sem deixar roxo nenhum', () => {
+    const pintada = JSON.stringify(pintarALottie(ANIMACAO_DA_GUIA, {
+      '#6f61ef': '#3b82f6', '#000000': '#44444f',
+    }));
+    // O roxo do autor sai por inteiro; o azul do sistema entra.
+    expect(pintada).not.toContain('0.435294');
+    expect(pintada).toContain('0.231372');
   });
 });

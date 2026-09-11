@@ -6,6 +6,7 @@ import type { CatalogProject, CatalogTrack, CatalogVersion, CatalogVersionFile }
 
 import { partilharStems } from '@/casca/jam/mesa/exportarNativo';
 import { enviarParaOCatalogo, escolherAudio, escolherAudios } from '@/nucleo/arquivos';
+import { criarOfflineNativo } from '@/nucleo/audio/contextoNativo';
 
 import EspacoJam from '../jam/[artista]/[projeto]';
 
@@ -175,7 +176,7 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
     // ⚠️ O CONTEXTO OFFLINE PRECISA DE RENDER DE VERDADE. Como objeto vazio, `renderizar`
     // estourava dentro do `try` da guia e o teste media um silêncio: a guia "não era gerada"
     // porque o duplo não sabia renderizar, e não porque a tela decidiu não a gerar.
-    criarOfflineNativo: () => ({
+    criarOfflineNativo: jest.fn(() => ({
       sampleRate: 44100,
       currentTime: 0,
       destination: {},
@@ -190,9 +191,16 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
         duration: 0.5, length: 22050, numberOfChannels: 1, sampleRate: 44100,
         getChannelData: () => new Float32Array(22050),
       }),
-    }),
+    })),
   };
 });
+
+// ⚠️ O RENDER É O QUE SE ESPIA, e não a gravação no balde. O duplo acima rende meio segundo de
+// SILÊNCIO, e silêncio a tela recusa-se a gravar por cima da guia boa (ver `temSom`): espiar o
+// `gravarEmCaminhoFixo` para provar que "só fechar" não gera a guia é medir o duplo, não a
+// tela — passava na mesma com a tela a gerar. Pedir o contexto offline é o primeiro gesto de
+// quem vai render, e acontece antes de qualquer decisão sobre o som.
+const mockOffline = criarOfflineNativo as jest.Mock;
 
 // O motor de exportação é nativo de ponta a ponta (ficheiros, ZIP, folha de partilha do
 // sistema) e tem a sua própria suíte, que prova o que entra no ZIP. Aqui o que se prova é a
@@ -1194,4 +1202,34 @@ describe('espaço jam', () => {
     expect(tela.queryByText('Biblioteca')).toBeNull();
   });
 
+  // ⚠️ NO FIM DO FICHEIRO, e não no meio: esta é a única que abre a pergunta do X, e o `Modal`
+  // dela sobrevive à limpeza entre casos — montado depois dele, o editor do caso seguinte ficava
+  // por baixo de uma tela que ainda estava lá, e a suíte inteira caía a seguir. Desmontar à mão
+  // não bastou; a ordem bastou.
+  //
+  // ⚠️ "SÓ FECHAR" FECHA MESMO, e é metade do ponto da pergunta: quem entrou para ouvir, mexeu
+  // num fader e quer sair não pode ser cobrado um minuto e meio de renderização por isso. O
+  // preço está escrito na própria pergunta — a lista continua com o áudio anterior.
+  it('o X pergunta, e "só fechar" sai sem gerar a guia', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    // Mexer no volume muda a SOMA: é montagem, e é o que dá motivo à pergunta.
+    fireEvent.press(tela.getByLabelText('Silenciar Voz'));
+    fireEvent.press(tela.getAllByLabelText('Voltar para Músicas')[0]);
+
+    expect(await tela.findByText('Gerar a guia antes de fechar?')).toBeTruthy();
+    fireEvent.press(tela.getByText('Só fechar'));
+
+    await waitFor(() => expect(mockBack).toHaveBeenCalled());
+    expect(mockOffline).not.toHaveBeenCalled();
+    expect(mockGravarFixo).not.toHaveBeenCalled();
+
+    // ⚠️ DESMONTADO À MÃO. O `Modal` da pergunta sobrevive à limpeza entre casos, e o caso
+    // seguinte montava o editor por baixo de uma tela que ainda estava lá.
+    tela.unmount();
+  });
 });

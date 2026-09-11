@@ -44,6 +44,7 @@ import {
   baixarArquivo, nomeDoArquivoDaPista, paraWav, paraZip, type StemExportado,
 } from './daw/exportar';
 import { caminhoDaGuia, criarOfflineWeb, paraMp3 } from './daw/guia';
+import { FecharComGuia } from './daw/FecharComGuia';
 import { MONTAGEM_MUDA, temSom } from '@maestra/core/audio/exportar';
 import { assinaturaDaPista, assinaturaDoClipe } from '@maestra/core/audio/aoVivo';
 import { useJamAoVivo } from '@maestra/core/hooks/useJamAoVivo';
@@ -848,6 +849,32 @@ const ProjectSpace: FC = () => {
   /** 0..1 enquanto a guia corre; `null` fora disso. Ver `rotuloDaGuia`, no núcleo. */
   const [gerando, setGerando] = useState<number | null>(null);
 
+  const [perguntandoDaGuia, setPerguntandoDaGuia] = useState(false);
+
+  /**
+   * Fechar de verdade: a limpeza desta sessão, e fora.
+   *
+   * ⚠️ A GUIA NÃO ENTRA AQUI. Quem a quer passa por `gerarGuia` antes; quem não a quer sai na
+   * mesma, e é isso que a pergunta oferece.
+   */
+  const sair = async () => {
+    setPerguntandoDaGuia(false);
+    // ⚠️ A SESSÃO FECHA E O QUE FOI APAGADO SAI DE VERDADE — do banco e do balde. É o outro
+    // lado do desfazer: enquanto a tela está aberta a linha fica marcada para poder voltar;
+    // fechada, não há mais quem a chame de volta, e guardá-la seria só resíduo a acumular.
+    //
+    // Falhar aqui não pode prender ninguém na tela: a montagem está salva, e a limpeza da
+    // próxima abertura apanha o que sobrar.
+    if (open && podeEditar) {
+      // `Array.from` e não `[...]`: o alvo do TypeScript da web é anterior ao ES2015 e
+      // recusa espalhar um `Set` sem `downlevelIteration`. É o mesmo motivo do `forEach` nos
+      // mapas da mesa.
+      const meus = Array.from(marcadosPorMim.current);
+      await catalogDb.purgarMontagem(open.id, { apenas: meus }).catch(() => undefined);
+    }
+    navigate(`/artists/${artistId}/catalog`);
+  };
+
   const gerarGuia = async (gravacao: CatalogVersion | null) => {
     if (!sujo.current || !gravacao || !artistId || !projectId) return;
 
@@ -979,23 +1006,13 @@ const ProjectSpace: FC = () => {
     // tarde: o `useMesa` descarta a mesa primeiro — é ele quem está declarado antes — e a
     // renderização encontraria a gaveta de buffers já vazia. Foi assim que a primeira versão
     // falhou, em silêncio, sem gravar nada.
-    aoSair: async () => {
-      await gerarGuia(open);
-      // ⚠️ A SESSÃO FECHA E O QUE FOI APAGADO SAI DE VERDADE — do banco e do balde. É o outro
-      // lado do desfazer: enquanto a tela está aberta a linha fica marcada para poder voltar;
-      // fechada, não há mais quem a chame de volta, e guardá-la seria só resíduo a acumular.
-      //
-      // Falhar aqui não pode prender ninguém na tela: a montagem está salva, e a limpeza da
-      // próxima abertura apanha o que sobrar.
-      if (open && podeEditar) {
-        // `Array.from` e não `[...]`: o alvo do TypeScript da web é anterior ao ES2015 e
-        // recusa espalhar um `Set` sem `downlevelIteration`. É o mesmo motivo do `forEach` nos
-        // mapas da mesa.
-        const meus = Array.from(marcadosPorMim.current);
-        await catalogDb.purgarMontagem(open.id, { apenas: meus }).catch(() => undefined);
-      }
-      navigate(`/artists/${artistId}/catalog`);
-    },
+    // ⚠️ O X PERGUNTA, E NÃO DECIDE. Gerar a guia é o certo para quem acabou de montar — é o
+    // que faz a lista de Músicas tocar o que se fez — e é um roubo de um minuto e meio para
+    // quem entrou só para ouvir e mexeu num fader. Quem sabe qual dos dois é, é quem está lá.
+    //
+    // Sem nada por gravar não há pergunta: perguntar "gerar a guia?" quando não há nada de novo
+    // para somar é uma porta a mais no caminho de sair.
+    aoSair: () => { if (sujo.current && podeEditar) setPerguntandoDaGuia(true); else void sair(); },
     aoRenomear: (nome) => setProject((atual) => (atual ? { ...atual, title: nome } : atual)),
     aoAdicionarArquivos: (arquivos, inicio, pistaAlvo) => { void enviarPistas(arquivos, inicio, pistaAlvo); },
 
@@ -1351,6 +1368,15 @@ const ProjectSpace: FC = () => {
         )}
       />
 
+      {/* A pergunta do X, e a espera de quem escolheu gerar. Uma tela por cima de tudo, porque
+          é a única coisa que está a acontecer enquanto acontece. */}
+      <FecharComGuia
+        gerando={gerando}
+        perguntando={perguntandoDaGuia}
+        aoGerar={() => { void (async () => { await gerarGuia(open); await sair(); })(); }}
+        aoSair={() => { void sair(); }}
+        aoFicar={() => setPerguntandoDaGuia(false)}
+      />
     </>
   );
 };

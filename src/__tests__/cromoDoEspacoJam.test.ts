@@ -27,6 +27,11 @@ const casca = ler('pages', 'Catalog', 'daw', 'editor.module.scss');
 const biblioteca = ler('pages', 'Catalog', 'daw', 'Biblioteca.tsx');
 const icones = ler('pages', 'Catalog', 'daw', 'icones.tsx');
 const tela = ler('pages', 'Catalog', 'ProjectSpace.tsx');
+const fechar = ler('pages', 'Catalog', 'daw', 'FecharComGuia.tsx');
+const fecharNoApp = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'FecharComGuia.tsx'),
+  'utf8',
+);
 // O editor do aparelho: o que é regra de produto tem de valer nos dois.
 const app = fs.readFileSync(
   path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'app', 'jam', '[artista]', '[projeto]', 'index.tsx'),
@@ -287,8 +292,11 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(casca).toContain('@keyframes girar');
     // Os três sinais viram UM: são a mesma pergunta para quem olha ("posso fechar?").
     expect(editor).toContain("texto: 'Salvando…'");
-    expect(editor).toContain('texto: rotuloDaGuia(gerando)');
     expect(editor).toContain("texto: 'Falha ao salvar'");
+    // ⚠️ A GUIA SAIU DO SELO: ela tem uma tela inteira só para si, e a mesma frase num canto
+    // era o mesmo aviso duas vezes — a pessoa lia um e procurava o outro à espera de que
+    // dissessem coisas diferentes.
+    expect(semComentarios(editor)).not.toContain('texto: rotuloDaGuia(gerando)');
   });
 
   // ⚠️ A GUIA DIZ QUANTO JÁ ANDOU. Codificar MP3 é JavaScript sobre cada amostra: aqui são
@@ -299,7 +307,6 @@ describe('cromo do editor do Espaço JAM', () => {
     const corpo = semComentarios(editor);
     const espaco = semComentarios(tela);
 
-    expect(corpo).toContain("import { rotuloDaGuia } from '@maestra/core/audio/exportar';");
     expect(corpo).toContain('const aGerar = gerando != null;');
     // O X trava enquanto isso, e explica-se: é a única coisa que responde "por que não fechou".
     expect(corpo).toContain('disabled={aGerar}');
@@ -373,6 +380,41 @@ describe('cromo do editor do Espaço JAM', () => {
       // Desfazer um "apagar" tira-o da lista: ele já não é resíduo meu.
       expect(fonte).toContain('(voltando ? desmarquei : marquei)(passo.clipeId);');
     });
+  });
+
+  // ⚠️ O X PERGUNTA, E NÃO DECIDE. Gerar a guia é o certo para quem acabou de montar — é o que
+  // faz a lista de Músicas tocar o que se fez — e custa um minuto e meio no aparelho a quem
+  // entrou só para ouvir e mexeu num fader. Quem sabe qual dos dois é, é quem está lá.
+  it('fechar pergunta pela guia, com as mesmas palavras nas duas telas', () => {
+    const espaco = semComentarios(tela);
+    const oApp = semComentarios(app);
+    const aTelaDaWeb = semComentarios(fechar);
+    const aTelaDoApp = semComentarios(fecharNoApp);
+
+    // Sem nada por gravar não há pergunta: ela seria uma porta a mais no caminho de sair.
+    expect(espaco).toContain('if (sujo.current && podeEditar) setPerguntandoDaGuia(true); else void sair();');
+    expect(oApp).toContain('if (sujo.current && podeEditar && aberta) setPerguntandoDaGuia(true);');
+
+    // ⚠️ AS PALAVRAS SÃO DO NÚCLEO. Uma pergunta que muda de texto conforme o aparelho é duas
+    // perguntas diferentes — e a que fica sem o preço de "só fechar" engana quem a lê.
+    [aTelaDaWeb, aTelaDoApp].forEach((fonte) => {
+      expect(fonte).toContain('PERGUNTA_DA_GUIA.titulo');
+      expect(fonte).toContain('PERGUNTA_DA_GUIA.gerar');
+      expect(fonte).toContain('PERGUNTA_DA_GUIA.sair');
+      expect(fonte).toContain('PERGUNTA_DA_GUIA.ficar');
+      // A espera ganha da pergunta: quem já escolheu gerar não vê a pergunta por baixo.
+      expect(fonte).toContain('if (gerando != null)');
+      expect(fonte).toContain('rotuloDaGuia(gerando)');
+      // A mão vem do núcleo, repintada com as cores do sistema — e uma vez só.
+      expect(fonte).toContain('pintarALottie(ANIMACAO_DA_GUIA, CORES_DA_ANIMACAO)');
+    });
+
+    // ⚠️ NA WEB, O `lottie-web` ENTRA TARDE — dentro do efeito, e não no topo do ficheiro. Ele
+    // desenha num canvas assim que é carregado, e debaixo do jsdom isso rebenta: com o import no
+    // topo, QUALQUER teste da web que importasse o editor morria antes de correr um caso. De
+    // lambuja, são 250 kB fora do pacote inicial de quem nunca fecha o Espaço JAM.
+    expect(aTelaDaWeb).toContain("import('lottie-web')");
+    expect(aTelaDaWeb).not.toContain("import lottie");
   });
 
   // ⚠️ A GUIA É REGRAVADA NO MESMO CAMINHO A CADA SAÍDA, e é o que a lista de Músicas toca. Uma

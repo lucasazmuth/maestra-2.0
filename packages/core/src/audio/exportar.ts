@@ -1,5 +1,6 @@
 import { Mp3Encoder } from '@breezystack/lamejs';
 
+import { AZUL_DO_EDITOR, COR_EDITOR } from '../constants/design';
 import type { BufferDeAudio } from './contexto';
 
 // EXPORTAR: tirar o que está montado no editor para fora dele.
@@ -216,6 +217,94 @@ export const rotuloDaGuia = (parte?: number | null): string => (
     ? 'Gerando a guia…'
     : `Gerando a guia… ${Math.min(100, Math.max(0, Math.round(parte * 100)))}%`
 );
+
+// ─── FECHAR O EDITOR ─────────────────────────────────────────────────────────
+//
+// ⚠️ A GUIA DEIXOU DE SER OBRIGATÓRIA NA SAÍDA, e a razão é o relógio: no telemóvel foram
+// medidos 101 segundos para 227 de áudio. Esperar por ela é o certo quando se acabou de montar
+// — é o que faz a lista de Músicas tocar o que se fez —, e é um roubo quando se entrou só para
+// ouvir, mexeu num fader e quer sair. Quem sabe qual dos dois é, é quem está lá: a tela
+// pergunta, em vez de decidir por ela.
+//
+// As frases moram aqui porque as duas telas as escrevem. Uma pergunta que muda de palavras
+// conforme o aparelho é duas perguntas diferentes.
+
+export const PERGUNTA_DA_GUIA = {
+  titulo: 'Gerar a guia antes de fechar?',
+  /** ⚠️ DIZ O PREÇO DAS DUAS ESCOLHAS. Sem isto, "só fechar" parece o botão rápido e inofensivo. */
+  texto: 'A guia é a soma da montagem, e é ela que a lista de Músicas toca. '
+    + 'Sem gerar, a lista continua com o áudio anterior até a próxima vez.',
+  gerar: 'Gerar e fechar',
+  sair: 'Só fechar',
+  ficar: 'Cancelar',
+};
+
+/**
+ * As cores do desenho, trocadas pelas do sistema.
+ *
+ * ⚠️ AS CHAVES SÃO AS CORES DO AUTOR, e é por isso que elas moram aqui e não nas telas: são a
+ * paleta de um ficheiro de arte, e não uma decisão de design. Escritas nas duas superfícies,
+ * seriam dois lugares a conhecer um detalhe da animação — e o dia em que o desenho mudasse de
+ * roxo, uma das duas continuava a pintar o que já não existe.
+ *
+ * O roxo do autor não é a cor da marca; o preto, sobre o painel escuro do editor, some — o
+ * braço da guitarra desaparecia e ficava uma mão a tocar no nada.
+ */
+export const CORES_DA_ANIMACAO: Record<string, string> = {
+  '#6f61ef': AZUL_DO_EDITOR,
+  '#000000': COR_EDITOR.vazioContorno,
+};
+
+/**
+ * O mesmo desenho, com as cores do sistema.
+ *
+ * A animação vem do autor com um roxo e um preto. O roxo não é a cor da marca, e o preto sobre
+ * o painel escuro do editor some — o braço da guitarra desaparecia e ficava uma mão a tocar no
+ * nada.
+ *
+ * ⚠️ PURA, E COM CÓPIA. O Lottie MUTA o objeto que recebe enquanto anima; devolver o mesmo
+ * `ANIMACAO_DA_GUIA` a duas telas fazia a segunda herdar o estado da primeira. E as chaves de
+ * cor estão espalhadas por dezenas de níveis (traços, preenchimentos, dentro da pré-composição),
+ * por isso a varredura é recursiva em vez de uma lista de caminhos que envelhece com o desenho.
+ */
+export const pintarALottie = (
+  dados: Record<string, unknown>,
+  mapa: Record<string, string>,
+): Record<string, unknown> => {
+  const emHex = (canal: number) => Math.round(canal * 255).toString(16).padStart(2, '0');
+  const paraLottie = (hex: string) => [
+    parseInt(hex.slice(1, 3), 16) / 255,
+    parseInt(hex.slice(3, 5), 16) / 255,
+    parseInt(hex.slice(5, 7), 16) / 255,
+  ];
+
+  const andar = (no: unknown): unknown => {
+    if (Array.isArray(no)) return no.map(andar);
+    if (!no || typeof no !== 'object') return no;
+    const entrada = no as Record<string, unknown>;
+    const saida: Record<string, unknown> = {};
+    Object.keys(entrada).forEach((chave) => {
+      const valor = entrada[chave];
+      const cor = chave === 'c' && valor && typeof valor === 'object'
+        ? (valor as { k?: unknown }).k
+        : null;
+      if (Array.isArray(cor) && (cor.length === 3 || cor.length === 4)
+        && cor.every((x) => typeof x === 'number')) {
+        const hex = `#${(cor as number[]).slice(0, 3).map(emHex).join('')}`;
+        const nova = mapa[hex];
+        saida[chave] = nova
+          // A opacidade (o quarto canal) é do desenho e não da paleta: fica como estava.
+          ? { ...(valor as object), k: [...paraLottie(nova), ...(cor.length === 4 ? [cor[3]] : [])] }
+          : andar(valor);
+        return;
+      }
+      saida[chave] = andar(valor);
+    });
+    return saida;
+  };
+
+  return andar(dados) as Record<string, unknown>;
+};
 
 /** O caminho da guia de uma música. FIXO: uma música tem uma guia, e ela é regravada por cima. */
 export const caminhoDaGuia = (artistaId: string, projetoId: string): string =>
