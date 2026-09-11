@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View,
+  ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,9 +34,10 @@ import { FolhaDaVersao } from '@/casca/jam/FolhaDaVersao';
 import { PALETA_ESCURA, PaletaDaFolhaProvider } from '@/casca/paleta';
 import { BARRAS } from '@/casca/jam/mesa/MiniOnda';
 import { Fader } from '@/casca/jam/mesa/Fader';
-import { Pista } from '@/casca/jam/mesa/Pista';
+import { MesaDeCanais } from '@/casca/jam/mesa/MesaDeCanais';
 import { LinhaDoTempo } from '@/casca/jam/mesa/LinhaDoTempo';
 import { IconeDaTimeline, IconeDoMixer } from '@/casca/jam/mesa/icones';
+import { BalaoFlutuante } from '@/casca/jam/mesa/BalaoFlutuante';
 import { Biblioteca } from '@/casca/jam/mesa/Biblioteca';
 import { TelaDeExportar, type EmCurso } from '@/casca/jam/mesa/TelaDeExportar';
 import {
@@ -737,11 +738,49 @@ export default function EspacoJam() {
    *
    * ⚠️ GRAVAR AINDA NÃO EXISTE, e os botões dizem isso em vez de fingir.
    */
+  /**
+   * O nome da música, em edição.
+   *
+   * Fecha ao sair do campo e ao confirmar. Nome vazio não grava: o título é o que identifica a
+   * música no catálogo inteiro, e uma música sem nome some da lista de quem a procura.
+   */
+  const [renomeando, setRenomeando] = useState(false);
+  const [rascunhoDoNome, setRascunhoDoNome] = useState('');
+
+  const fecharONome = () => {
+    setRenomeando(false);
+    const nome = rascunhoDoNome.trim();
+    if (!projeto || !nome || nome === projeto.title) return;
+    patcharProjeto({ title: nome });
+    setSelo('salvando');
+    catalogo.updateCatalogProject(projeto.id, { title: nome })
+      .then(() => setSelo('salvo'))
+      .catch(() => setSelo('erro'));
+  };
+
   const [armado, setArmado] = useState(false);
   const [armadas, setArmadas] = useState<string[]>([]);
   const alternarArmada = (id: string) => setArmadas((atuais) => (
     atuais.includes(id) ? atuais.filter((a) => a !== id) : [...atuais, id]
   ));
+  /**
+   * ⚠️ COM TUDO ARMADO, O PLAY TERIA DE GRAVAR — e não grava, porque a gravação ainda não
+   * existe. Deixar a montagem simplesmente TOCAR aqui seria o pior desfecho possível: a pessoa
+   * armou a faixa, armou o transporte, carregou no play, ouviu tudo andar, e só ia descobrir
+   * que não gravou nada ao procurar o take. O aviso custa um toque; o take perdido custa a
+   * sessão.
+   */
+  const tocarOuAvisar = () => {
+    if (armado && armadas.length && !mesa.estado.tocando) {
+      Alert.alert(
+        'A gravação ainda não está disponível',
+        'Por agora, envie o áudio pelo botão da faixa.',
+      );
+      return;
+    }
+    mesa.alternar();
+  };
+
   const armarOTransporte = () => {
     // Armar o transporte sem dizer em que pista é meia intenção: numa mesa, o REC global só
     // sabe o que fazer se alguma pista estiver armada.
@@ -758,9 +797,11 @@ export default function EspacoJam() {
   // dezenas de escritas para um gesto só. Um relógio por pista — arrastar duas seguidas não
   // pode fazer a segunda cancelar a gravação da primeira.
   const relogiosDoGanho = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const relogiosDoPan = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => () => {
     Object.values(relogiosDoGanho.current).forEach(clearTimeout);
+    Object.values(relogiosDoPan.current).forEach(clearTimeout);
   }, []);
 
   /** Já avisei nesta abertura de tela? O aviso ensina uma vez; repetido, vira obstáculo. */
@@ -787,6 +828,47 @@ export default function EspacoJam() {
         + 'e o volume dobra. Para comparar, use o S da mix.',
       );
     }
+  };
+
+  /**
+   * O panorama de uma pista — onde ela fica entre os dois alto-falantes.
+   *
+   * Grava como o ganho: o som muda AGORA, o banco recebe depois. Ele não existia no app; existia
+   * na mesa do núcleo e na web, e era a única coisa de um canal que aqui não se podia mexer.
+   */
+  /**
+   * A letra — da GRAVAÇÃO aberta, e não da música.
+   *
+   * ⚠️ A MESMA COLUNA QUE A FICHA GRAVA. Por isso o remendo local acontece aqui e a escrita vai
+   * para a versão: dois donos da mesma coluna, cada um com o seu relógio, acabariam por gravar
+   * um por cima do outro — quem parasse de escrever por último ganhava.
+   */
+  const relogioDaLetra = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const escreverLetra = (texto: string) => {
+    if (!aberta) return;
+    patcharVersao(aberta.id, { lyrics: texto });
+    if (relogioDaLetra.current) clearTimeout(relogioDaLetra.current);
+    relogioDaLetra.current = setTimeout(() => {
+      setSelo('salvando');
+      catalogo.updateCatalogVersion(aberta.id, { lyrics: texto })
+        .then(() => setSelo('salvo'))
+        .catch(() => setSelo('erro'));
+    }, ESPERA);
+  };
+
+  const mexerNoPan = (id: string, valor: number) => {
+    mesa.panoramar(id, valor);
+    // A Mix não tem linha no banco: ela é o `audio_file` da gravação, e o panorama dela é só
+    // desta sessão de escuta.
+    if (ehPistaDaMix(id)) return;
+    clearTimeout(relogiosDoPan.current[id]);
+    relogiosDoPan.current[id] = setTimeout(() => {
+      const arredondado = Number(valor.toFixed(3));
+      catalogo.updateTrack(id, { pan: arredondado })
+        .then(() => patcharPista(id, { pan: arredondado }))
+        .catch(() => { /* o valor real volta no próximo carregamento */ });
+    }, ESPERA);
   };
 
   const mexerNoGanho = (id: string, valor: number) => {
@@ -895,8 +977,30 @@ export default function EspacoJam() {
           comprido empurra as abas e o X para fora do ecrã, que é como o editor ficava
           intocável no telemóvel. */}
       <View style={estilos.filaDoTitulo}>
+        {/* ⚠️ O NOME DA MÚSICA RENOMEIA-SE AQUI, como na web: tocar nele abre o campo. Renomear
+            era o único caminho que passava obrigatoriamente pela Ficha — e o nome está à vista,
+            no topo, que é onde a mão vai. */}
         <View style={estilos.ladoDoTitulo}>
-          <Text style={estilos.nomeDaMusica} numberOfLines={1}>{projeto.title}</Text>
+          {renomeando ? (
+            <TextInput
+              style={[estilos.nomeDaMusica, estilos.nomeEmEdicao]}
+              value={rascunhoDoNome}
+              onChangeText={setRascunhoDoNome}
+              onBlur={fecharONome}
+              onSubmitEditing={fecharONome}
+              autoFocus
+              returnKeyType="done"
+              accessibilityLabel="Nome da música"
+            />
+          ) : (
+            <Pressable
+              onPress={() => { if (podeEditar) { setRascunhoDoNome(projeto.title); setRenomeando(true); } }}
+              accessibilityRole={podeEditar ? 'button' : 'header'}
+              accessibilityLabel={podeEditar ? `${projeto.title}. Toque para renomear.` : projeto.title}
+            >
+              <Text style={estilos.nomeDaMusica} numberOfLines={1}>{projeto.title}</Text>
+            </Pressable>
+          )}
         </View>
 
         {/* AS QUATRO VISTAS DA MESMA MÚSICA — é a primeira escolha de quem entra (estou a
@@ -999,7 +1103,7 @@ export default function EspacoJam() {
               prontas={prontas}
               emLoop={mesa.estado.emLoop}
               armado={armado}
-              aoAlternar={mesa.alternar}
+              aoAlternar={tocarOuAvisar}
               aoVoltarAoInicio={() => mesa.irPara(0)}
               aoLoopar={mesa.loopar}
               aoArmar={armarOTransporte}
@@ -1009,6 +1113,16 @@ export default function EspacoJam() {
                 aproximar: () => mexerNoZoom(Math.min(ZOOM_MAXIMO, zoom * 1.5)),
               } : undefined}
             />
+
+            {/* O aviso de peso vem ANTES de descodificar, com a conta do tamanho dos ficheiros:
+                depois de descodificar já não há o que avisar. Fica logo abaixo do transporte, e
+                não dentro de uma das abas — ele é da GRAVAÇÃO, e vale nas duas. */}
+            {pesado && (
+              <Text style={estilos.avisoDePeso}>
+                São muitas pistas grandes para um celular. Se o app fechar sozinho, deixe menos
+                pistas nesta gravação.
+              </Text>
+            )}
 
             {versoes.length === 0 ? (
               <View style={estilos.semVersoes}>
@@ -1040,37 +1154,15 @@ export default function EspacoJam() {
                 aoApagar={(id) => { void apagarClipe(id); }}
               />
             ) : (
-              // A MESA: as mesmas pistas, vistas como canais. A linha do tempo responde "o que
-              // toca quando"; a mesa responde "como isto soa junto".
-              <ScrollView style={estilos.mesa} contentContainerStyle={estilos.mesaDentro}>
-                {pistas.map((pista, indice) => {
-                  const estadoDaPista = mesa.estado.pistas.find((p) => p.id === pista.id);
-                  if (!estadoDaPista) return null;
-                  return (
-                    <Pista
-                      key={pista.id}
-                      pista={estadoDaPista}
-                      indice={indice}
-                      // Os picos são POR CLIPE: a linha da mesa mostra o primeiro.
-                      picos={mesa.picos(pista.clipes[0]?.id ?? '', BARRAS)}
-                      progresso={mesa.estado.duracao
-                        ? Math.min(mesa.estado.posicao / mesa.estado.duracao, 1)
-                        : 0}
-                      haSolo={haSolo}
-                      aoMudar={() => mexerNoMudo(pista.id, !estadoDaPista.muda)}
-                      aoSolar={() => mesa.solar(pista.id, !estadoDaPista.solo)}
-                      aoGanho={(v) => mexerNoGanho(pista.id, v)}
-                      aoAbrirOpcoes={undefined}
-                    />
-                  );
-                })}
-                {pesado && (
-                  <Text style={estilos.avisoDePeso}>
-                    São muitas pistas grandes para um celular. Se o app fechar sozinho, deixe
-                    menos pistas nesta gravação.
-                  </Text>
-                )}
-              </ScrollView>
+              <MesaDeCanais
+                pistas={pistas}
+                estado={mesa.estado}
+                podeEditar={podeEditar}
+                aoMudar={mexerNoMudo}
+                aoSolar={(id, solo) => mesa.solar(id, solo)}
+                aoGanho={mexerNoGanho}
+                aoPanoramar={mexerNoPan}
+              />
             )}
           </>
         )}
@@ -1178,6 +1270,51 @@ export default function EspacoJam() {
         </View>
       )}
 
+      {/* A LETRA e a AJUDA, na mesma fila dos outros flutuantes — como na web, que as põe em
+          `right: 62` e `right: 18`. São balões, e não abas: escreve-se letra a olhar para a
+          montagem, e uma aba faria trocar de tela para ler um verso. */}
+      <BalaoFlutuante
+        icone="file-text"
+        rotulo="Letra"
+        largura={300}
+        bottom={margem.bottom + ALTURA_DO_RODAPE + 12}
+        right={56}
+      >
+        <TextInput
+          style={estilos.letra}
+          value={aberta?.lyrics ?? ''}
+          onChangeText={escreverLetra}
+          editable={podeEditar}
+          multiline
+          placeholder="Letra da música…"
+          placeholderTextColor={COR_EDITOR.estrela}
+          accessibilityLabel="Letra da música"
+        />
+      </BalaoFlutuante>
+
+      <BalaoFlutuante
+        icone="?"
+        rotulo="Ajuda"
+        largura={300}
+        bottom={margem.bottom + ALTURA_DO_RODAPE + 12}
+        right={12}
+      >
+        <Text style={estilos.ajudaTitulo}>Como se monta</Text>
+        <Text style={estilos.ajuda}>
+          Use a pasta, no rodapé, para escolher os áudios. Cada arquivo vira uma faixa; pelo
+          botão da própria faixa, ele entra nela como mais um trecho.
+        </Text>
+        <Text style={estilos.ajuda}>
+          Toque num trecho para escolhê-lo; escolhido, ele se arrasta. A tesoura corta onde a
+          agulha está, e a lixeira remove — as setas desfazem.
+        </Text>
+        <Text style={estilos.ajuda}>
+          <Text style={estilos.ajudaForte}>M</Text> cala a faixa,
+          {' '}<Text style={estilos.ajudaForte}>S</Text> deixa só ela. Na Mesa ficam o volume e o
+          panorama entre os dois alto-falantes.
+        </Text>
+      </BalaoFlutuante>
+
       {/* O selo de estado. Só existe quando há algo a dizer: um indicador permanente deixa de
           ser lido, e este precisa de ser lido nas duas vezes em que importa — a gravar, e
           quando falhou. */}
@@ -1206,9 +1343,10 @@ export default function EspacoJam() {
       {!!aberta && ehDeAudio && (
         <Pressable
           onPress={() => setComentando(aberta)}
-          style={[estilos.balao, {
-            bottom: margem.bottom + ALTURA_DO_RODAPE + 12 + (selo === 'parado' ? 0 : 40),
-          }]}
+          // ⚠️ NA FILA DA DIREITA, com os outros flutuantes. À esquerda ele ficava por cima do
+          // botão de silenciar do primeiro canal da Mesa — um flutuante que tapa um controlo é
+          // pior do que um flutuante a mais.
+          style={[estilos.balao, { bottom: margem.bottom + ALTURA_DO_RODAPE + 12 }]}
           accessibilityRole="button"
           accessibilityLabel={
             `Abrir ${contagens[aberta.id] ?? 0} comentários de V${aberta.version_number}`
@@ -1308,6 +1446,11 @@ const estilos = StyleSheet.create({
   },
   ladoDoTitulo: { flex: 1, minWidth: 0 },
   nomeDaMusica: { fontSize: 17, fontWeight: '700', letterSpacing: -0.2, color: COR_EDITOR.texto },
+  nomeEmEdicao: {
+    padding: 0, paddingHorizontal: 8, height: 30, borderRadius: 6,
+    backgroundColor: COR_EDITOR.botaoRedondo,
+    borderWidth: 1, borderColor: AZUL_DO_EDITOR,
+  },
   redondo: {
     width: 30, height: 30, borderRadius: 15, flexShrink: 0,
     alignItems: 'center', justifyContent: 'center',
@@ -1336,8 +1479,9 @@ const estilos = StyleSheet.create({
   semVersoesApoio: { fontSize: 13, color: COR_EDITOR.rotulo, textAlign: 'center', lineHeight: 19 },
 
   avisoDePeso: {
-    padding: 10, borderRadius: 8, marginTop: 6,
+    paddingVertical: 8, paddingHorizontal: 12,
     backgroundColor: COR_EDITOR.botaoRedondo,
+    borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
     fontSize: 12, lineHeight: 17, color: COR_EDITOR.apoio,
   },
 
@@ -1376,10 +1520,17 @@ const estilos = StyleSheet.create({
     borderWidth: 1, borderColor: COR_EDITOR.fio,
   },
   seloTexto: { fontSize: 12, fontWeight: '700', color: COR_EDITOR.apoio },
+  letra: {
+    minHeight: 220, maxHeight: 320, textAlignVertical: 'top',
+    fontSize: 13, lineHeight: 20, color: COR_EDITOR.texto,
+  },
+  ajudaTitulo: { fontSize: 12, fontWeight: '700', color: COR_EDITOR.titulo, marginBottom: 6 },
+  ajuda: { fontSize: 12, lineHeight: 19, color: COR_EDITOR.apoio, marginBottom: 8 },
+  ajudaForte: { fontWeight: '800', color: COR_EDITOR.titulo },
   seloDeErro: { color: COR.erro },
   // O balão sobe quando o selo aparece: os dois vivem na coluna da esquerda e nunca se tapam.
   balao: {
-    position: 'absolute', left: 12,
+    position: 'absolute', right: 100,
     flexDirection: 'row', alignItems: 'center', gap: 5,
     height: 34, paddingHorizontal: 11, borderRadius: 17,
     backgroundColor: COR_EDITOR.cabecaDaVersao,

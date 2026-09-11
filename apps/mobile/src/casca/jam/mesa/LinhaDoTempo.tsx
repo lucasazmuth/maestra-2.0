@@ -427,6 +427,14 @@ export const LinhaDoTempo = ({
               ))}
             </Pressable>
 
+            {!pistas.length && (
+              <View style={estilos.semPistas} pointerEvents="none">
+                <Text style={estilos.semPistasTexto}>
+                  Nenhuma faixa nesta gravação ainda.
+                </Text>
+              </View>
+            )}
+
             {pistas.map((pista, i) => (
               <View key={pista.id} style={[estilos.faixa, { width: largura }]}>
                 {marcas.map((marca) => (
@@ -468,7 +476,8 @@ export const LinhaDoTempo = ({
               </View>
             ))}
 
-            {/* A agulha, por cima de tudo o que é montagem. */}
+            {/* A agulha, por cima de tudo o que é montagem. A bolinha do topo é o que a torna
+                um objeto e não um risco — é onde o olho a encontra ao percorrer a régua. */}
             <View
               pointerEvents="none"
               style={[
@@ -478,7 +487,9 @@ export const LinhaDoTempo = ({
                   height: ALTURA_DA_REGUA + pistas.length * ALTURA_DA_FAIXA,
                 },
               ]}
-            />
+            >
+              <View style={estilos.cabecaDaAgulha} />
+            </View>
           </View>
         </ScrollView>
       </View>
@@ -541,6 +552,8 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
   },
   numeroDaRegua: { fontSize: 9, color: COR_EDITOR.rotulo },
+  semPistas: { paddingTop: 60, alignItems: 'center' },
+  semPistasTexto: { fontSize: 13, color: COR_EDITOR.rotulo },
   faixa: {
     height: ALTURA_DA_FAIXA,
     borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
@@ -565,6 +578,13 @@ const estilos = StyleSheet.create({
   // A agulha é VERMELHA nas duas superfícies: é a cor que toda mesa usa para 'aqui'.
   agulha: {
     position: 'absolute', top: 0, width: 2, backgroundColor: VERMELHO_DO_EDITOR,
+    alignItems: 'center',
+  },
+  cabecaDaAgulha: {
+    position: 'absolute', top: 0, width: 11, height: 11, borderRadius: 6,
+    backgroundColor: VERMELHO_DO_EDITOR,
+    shadowColor: VERMELHO_DO_EDITOR, shadowOpacity: 0.9, shadowRadius: 5,
+    shadowOffset: { width: 0, height: 0 },
   },
   // A barra fica DENTRO do clipe: por cima, a da primeira faixa saía pelo topo da área visível.
   acoesDoClipe: {

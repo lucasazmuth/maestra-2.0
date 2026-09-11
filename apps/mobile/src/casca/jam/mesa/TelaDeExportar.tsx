@@ -94,7 +94,11 @@ export const TelaDeExportar = ({
       <Text style={estilos.titulo}>Guia</Text>
       <Text style={estilos.apoio}>
         A soma de todas as pistas num arquivo só, o mesmo que toca na lista de Músicas.
-        {!temGuia && ' Ela é gerada ao sair do editor; abra a Timeline e feche para gerar a primeira.'}
+        {/* ⚠️ A FRASE DA WEB NÃO SERVE AQUI. Lá a guia é RENDERIZADA e enviada ao sair do
+            editor; o app ainda não faz isso, e dizer "ela é gerada ao sair" mandaria a pessoa
+            fechar a tela e voltar à espera de um arquivo que não ia aparecer. O que ele tem é
+            o áudio da própria gravação — e o WAV, que sai daqui na hora. */}
+        {!temGuia && ' Esta gravação ainda não tem áudio para ouvir; envie um, ou leve o WAV daqui.'}
       </Text>
 
       <View style={estilos.dupla}>

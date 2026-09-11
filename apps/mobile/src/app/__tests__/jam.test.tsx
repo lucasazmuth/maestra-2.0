@@ -395,14 +395,20 @@ describe('espaço jam', () => {
 
     const tela = await montar();
     await abrirOMixer(tela);
-    expect(await tela.findByLabelText('Silenciar Voz')).toBeTruthy();
-    expect(tela.getByLabelText('Silenciar Bateria')).toBeTruthy();
+    // ⚠️ OS RÓTULOS DA MESA DIZEM "NA MESA", e os da coluna da linha do tempo não: são dois
+    // botões diferentes para a mesma pista, em duas vistas, e um leitor de tela que os
+    // chamasse igual não diria em qual se está a carregar. É a distinção que a web faz.
+    expect(await tela.findByLabelText('Silenciar Voz na mesa')).toBeTruthy();
+    expect(tela.getByLabelText('Silenciar Bateria na mesa')).toBeTruthy();
     // Solo e mute são ações opostas e têm alvos próprios — não são o mesmo botão.
-    expect(tela.getByLabelText('Ouvir só Voz')).toBeTruthy();
+    expect(tela.getByLabelText('Ouvir só Voz na mesa')).toBeTruthy();
+    // E o canal é uma coluna EM PÉ: nome, panorama, fader e os dois botões.
+    expect(tela.getByLabelText('Panorama de Voz na mesa')).toBeTruthy();
+    expect(tela.getByLabelText('Volume de Voz na mesa')).toBeTruthy();
     // ⚠️ Com a montagem feita, a MIX SAI DE CENA: ela é a soma das camadas, e tocá-la junto
     // faria cada instrumento soar duas vezes.
-    expect(tela.queryByLabelText('Silenciar Mix ★')).toBeNull();
-    expect(tela.queryByLabelText('Ouvir Mix ★')).toBeNull();
+    expect(tela.queryByLabelText('Silenciar Mix ★ na mesa')).toBeNull();
+    expect(tela.queryByLabelText('Ouvir Mix ★ na mesa')).toBeNull();
   });
 
   // ⚠️ A mix já é a SOMA das pistas. Acesa junto com elas, cada instrumento soa duas vezes e o
@@ -433,8 +439,8 @@ describe('espaço jam', () => {
     }));
 
     const tela = await montar();
-    // Ele mora na MESA: é lá que se veem as faixas uma a uma, e é lá que se tira uma.
-    await abrirOMixer(tela);
+    // Ele é da GRAVAÇÃO, e por isso fica logo abaixo do transporte — vale nas duas abas de
+    // áudio, e não só na que estiver aberta.
     expect(await tela.findByText(/São muitas pistas grandes/)).toBeTruthy();
   });
 
@@ -762,6 +768,89 @@ describe('espaço jam', () => {
     // E o selo diz que pegou: numa aba sem botão de Salvar, gravar em silêncio deixa quem
     // escreveu sem saber.
     expect(await tela.findByText('Salvo')).toBeTruthy();
+  });
+
+  // ⚠️ A LETRA E A AJUDA SÃO BALÕES, e não abas: escreve-se letra a olhar para a montagem, e uma
+  // aba faria trocar de tela para ler um verso. É o que a web faz com dois flutuantes.
+  it('a letra abre num balão e grava na gravação aberta', async () => {
+    mockAtualizarVersao.mockResolvedValue(versao({ id: 'v-1' }));
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await usuario.press(await tela.findByLabelText('Letra'));
+    const campo = await tela.findByLabelText('Letra da música');
+    fireEvent.changeText(campo, 'primeiro verso');
+
+    await waitFor(() => expect(mockAtualizarVersao).toHaveBeenCalledWith('v-1', { lyrics: 'primeiro verso' }));
+    // E a montagem continua por baixo: o balão não é uma tela, é um balão.
+    expect(tela.getByLabelText('Timeline').props.accessibilityState.selected).toBe(true);
+  });
+
+  it('a ajuda explica como se monta, sem sair da montagem', async () => {
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await usuario.press(await tela.findByLabelText('Ajuda'));
+    expect(await tela.findByText('Como se monta')).toBeTruthy();
+  });
+
+  // ⚠️ RENOMEAR ERA O ÚNICO CAMINHO QUE PASSAVA PELA FICHA. O nome está à vista, no topo, que é
+  // onde a mão vai — é onde a web o deixa editar.
+  it('o nome da música se renomeia no topo', async () => {
+    mockAtualizar.mockResolvedValue(projeto({ title: 'Noite Clara II' }));
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await usuario.press(await tela.findByLabelText('Noite Clara. Toque para renomear.'));
+    const campo = await tela.findByLabelText('Nome da música');
+    fireEvent.changeText(campo, 'Noite Clara II');
+    await waitFor(() => expect(tela.getByDisplayValue('Noite Clara II')).toBeTruthy());
+    fireEvent(tela.getByDisplayValue('Noite Clara II'), 'submitEditing');
+
+    await waitFor(() => expect(mockAtualizar).toHaveBeenCalledWith('p-1', { title: 'Noite Clara II' }));
+  });
+
+  it('um nome apagado não vira uma música sem nome', async () => {
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await usuario.press(await tela.findByLabelText('Noite Clara. Toque para renomear.'));
+    // ⚠️ RE-CONSULTAR ANTES DE DISPARAR. O nó encontrado antes da mudança fica para trás
+    // quando o campo re-renderiza, e o evento cai num elemento que já não está na árvore — o
+    // teste passava a medir o silêncio de um clique que nunca aconteceu.
+    fireEvent.changeText(await tela.findByLabelText('Nome da música'), '   ');
+    await waitFor(() => expect(tela.getByDisplayValue('   ')).toBeTruthy());
+    fireEvent(tela.getByDisplayValue('   '), 'submitEditing');
+
+    // O título é o que identifica a música no catálogo inteiro: sem nome, ela some da lista de
+    // quem a procura.
+    expect(mockAtualizar).not.toHaveBeenCalled();
+    expect(await tela.findByText('Noite Clara')).toBeTruthy();
+  });
+
+  // Armar a faixa e o transporte e carregar no play TERIA de gravar — e não grava, porque a
+  // gravação ainda não existe. Tocar em silêncio seria o pior desfecho: a pessoa só descobria
+  // ao procurar o take.
+  it('play com tudo armado avisa em vez de fingir que gravou', async () => {
+    const aviso = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+    await tela.findByDisplayValue('Voz');
+
+    // Duas armações, como em qualquer mesa: a faixa diz ONDE, o transporte diz QUANDO.
+    fireEvent.press(tela.getByLabelText('Armar Voz para gravar'));
+    await waitFor(() => expect(tela.getByLabelText('Desarmar Voz')).toBeTruthy());
+    fireEvent.press(tela.getByLabelText('Armar para gravar'));
+    await waitFor(() => expect(tela.getByLabelText('Desarmar a gravação')).toBeTruthy());
+
+    fireEvent.press(tela.getByLabelText('Tocar'));
+    expect(aviso).toHaveBeenCalledWith(
+      'A gravação ainda não está disponível',
+      expect.stringContaining('botão da faixa'),
+    );
+    aviso.mockRestore();
   });
 
   // ─── A biblioteca ──────────────────────────────────────────────────────────
