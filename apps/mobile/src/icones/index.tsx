@@ -11,7 +11,6 @@ import CatalogoSvg from '@/assets/icons/catalogo.svg';
 import ConfigSvg from '@/assets/icons/config.svg';
 import DiagnosticoSvg from '@/assets/icons/diagnostico.svg';
 import EquipeSvg from '@/assets/icons/equipe.svg';
-import EspacoJamSvg from '@/assets/icons/espaco-jam.svg';
 import MoreSvg from '@/assets/icons/more.svg';
 import NotificationSvg from '@/assets/icons/notification.svg';
 import PerfisSvg from '@/assets/icons/perfis.svg';
@@ -43,7 +42,6 @@ export const PerfisIcon = recortar(PerfisSvg, '9 8 22 23');
 export const NotificationIcon = recortar(NotificationSvg);
 export const ConfigIcon = recortar(ConfigSvg, '6 6 30 30');
 // Traço ocupa ~16..34 num box de 50 — o recorte é o mesmo que a web calibrou.
-export const EspacoJamIcon = recortar(EspacoJamSvg, '13 15 24 21');
 
 /**
  * O logotipo — a marca, e não um ícone de sistema.

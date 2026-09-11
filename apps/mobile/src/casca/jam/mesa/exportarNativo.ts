@@ -2,7 +2,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import JSZip from 'jszip';
 
-import { bytesDoWav, nomeDoArquivoDaPista } from '@maestra/core/audio/exportar';
+import { bytesDoWav, nomeDaGuia, nomeDoArquivoDaPista } from '@maestra/core/audio/exportar';
 import type { BufferDeAudio, ContextoOffline } from '@maestra/core/audio/contexto';
 
 // EXPORTAR NO TELEMÓVEL: o mesmo que a web faz, entregue de outro jeito.
@@ -100,9 +100,13 @@ export const partilharGuiaWav = async (
  *
  * Busca o ficheiro em vez de partilhar o endereço: só assim ele chega ao destino com o nome da
  * música, e não `guia.mp3` — o mesmo endereço fixo que toda gravação tem.
+ *
+ * ⚠️ O NOME VEM DO NÚCLEO (`nomeDaGuia`), e é o mesmo que a web escreve ao baixar. Aqui estava
+ * `nomeDoArquivoDaPista`, que dá `Musica.mp3`: o mesmo ficheiro chegava ao computador com dois
+ * nomes conforme o aparelho de onde saiu, e quem recebe os dois não sabe que são a mesma coisa.
  */
 export const partilharGuiaMp3 = async (url: string, titulo: string): Promise<void> => {
-  const destino = new File(pastaDeSaida(), nomeDoArquivoDaPista(titulo, 'mp3'));
+  const destino = new File(pastaDeSaida(), nomeDaGuia(titulo));
   if (destino.exists) destino.delete();
   const baixado = await File.downloadFileAsync(url, destino);
 

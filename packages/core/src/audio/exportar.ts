@@ -306,6 +306,28 @@ export const pintarALottie = (
   return andar(dados) as Record<string, unknown>;
 };
 
+/**
+ * O nome com que a guia sai do produto — para a pasta de transferências, ou para a folha de
+ * partilha do telemóvel.
+ *
+ * ⚠️ É O TÍTULO DA MÚSICA, e não `guia.mp3`. Dentro do balde o caminho é fixo (ver
+ * `caminhoDaGuia`), o que é certo lá: uma música, uma guia, regravada por cima. Mas o ficheiro
+ * que cai no computador de alguém vai parar ao pé de outros vinte, e vinte ficheiros chamados
+ * `guia.mp3` na mesma pasta são vinte perguntas de qual é qual — e o navegador ainda lhes junta
+ * `guia (3).mp3` por cima.
+ */
+export const nomeDaGuia = (tituloDaMusica: string): string =>
+  `${higienizar(tituloDaMusica)} - guia.mp3`;
+
+/**
+ * O que se diz a quem pediu a guia de uma música que ainda não tem nenhuma.
+ *
+ * A guia não se envia: ela NASCE da montagem, ao sair do editor. Quem nunca montou nada não tem
+ * um botão em falta para procurar — tem um caminho por andar, e a frase diz qual é.
+ */
+export const SEM_GUIA_AINDA = 'Esta música ainda não tem faixa guia. '
+  + 'Monte as pistas no Espaço Jam: ao sair, a guia é gerada.';
+
 /** O caminho da guia de uma música. FIXO: uma música tem uma guia, e ela é regravada por cima. */
 export const caminhoDaGuia = (artistaId: string, projetoId: string): string =>
   `${artistaId}/${projetoId}/guia.mp3`;

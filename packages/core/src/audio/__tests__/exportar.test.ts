@@ -1,7 +1,7 @@
 import type { BufferDeAudio } from '../contexto';
 import { ANIMACAO_DA_GUIA } from '../animacaoDaGuia';
 import {
-  bytesDoWav, higienizar, nomeDoArquivoDaPista, pintarALottie, rotuloDaGuia, temSom,
+  bytesDoWav, higienizar, nomeDaGuia, nomeDoArquivoDaPista, pintarALottie, rotuloDaGuia, temSom,
 } from '../exportar';
 
 const buffer = (canais: number[][], taxa = 44100): BufferDeAudio => ({
@@ -75,6 +75,26 @@ describe('nomeDoArquivoDaPista', () => {
 
   it('mantém espaço, traço e sublinhado — são nomes de pista legítimos', () => {
     expect(nomeDoArquivoDaPista('Bateria_2 - take 3', 'wav')).toBe('Bateria_2 - take 3.wav');
+  });
+});
+
+// ⚠️ DENTRO DO BALDE A GUIA CHAMA-SE `guia.mp3`, E ESTÁ CERTO: uma música, uma guia, regravada
+// por cima (ver `caminhoDaGuia`). Fora dele não: o ficheiro que cai no computador de alguém vai
+// parar ao pé de outros vinte, e vinte `guia.mp3` na mesma pasta são vinte perguntas de qual é
+// qual — com o navegador a juntar-lhes `guia (3).mp3` por cima.
+describe('nomeDaGuia', () => {
+  it('é o título da música, e diz que é a guia', () => {
+    expect(nomeDaGuia('Vento sul')).toBe('Vento sul - guia.mp3');
+  });
+
+  // O mesmo tratamento dos nomes de pista: o título é escrito por quem quer, e vai virar um
+  // ficheiro num sistema que não aceita tudo.
+  it('tira o acento e o que o sistema de ficheiros não gosta', () => {
+    expect(nomeDaGuia('Canção/nº 2')).toBe('Cancao_n_ 2 - guia.mp3');
+  });
+
+  it('um título que só tinha símbolos ainda dá um ficheiro com nome', () => {
+    expect(nomeDaGuia('///')).toBe('pista - guia.mp3');
   });
 });
 

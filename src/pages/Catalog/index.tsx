@@ -2,7 +2,6 @@ import { FC, FormEvent, MouseEvent, ReactNode, useEffect, useMemo, useState } fr
 import type { CSSProperties } from 'react';
 import { Dropdown, Modal, message } from 'antd';
 import { FiArrowLeft, FiRefreshCw, FiLock, FiMoreVertical, FiSend, FiSettings, FiStar } from 'react-icons/fi';
-import { EspacoJamIcon } from '../../components/Icons/system';
 import { FaSpotify } from 'react-icons/fa6';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -29,6 +28,8 @@ import {
   FilterToolbar,
 } from '../../components/FilterToolbar';
 import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS, formatMs, isActiveCatalogStatus } from '@maestra/core/constants/maestra';
+import { SEM_GUIA_AINDA, nomeDaGuia } from '@maestra/core/audio/exportar';
+import { baixarArquivo } from './daw/exportar';
 import * as catalogDb from '@maestra/core/services/db/catalog';
 import * as genresDb from '@maestra/core/services/db/genres';
 import * as membersDb from '@maestra/core/services/db/members';
@@ -755,6 +756,24 @@ const Catalog: FC = () => {
     });
   };
 
+  /**
+   * A guia da música, para fora do produto.
+   *
+   * ⚠️ PASSA POR UM `blob`, e não é um `<a download>` apontado ao balde. O ficheiro está noutra
+   * origem (o Storage do Supabase), e nessa situação o `download` é ignorado pelo navegador: ele
+   * ABRE o MP3 numa aba em vez de o gravar, e o nome que escolhemos vai ao lixo com ele.
+   */
+  const baixarGuia = async (faixa: CatalogItem) => {
+    if (!faixa.audio_file) { message.warning(SEM_GUIA_AINDA); return; }
+    try {
+      const resposta = await fetch(faixa.audio_file);
+      if (!resposta.ok) throw new Error(String(resposta.status));
+      baixarArquivo(await resposta.blob(), nomeDaGuia(faixa.title));
+    } catch {
+      message.error('Não consegui baixar a guia.');
+    }
+  };
+
   const onDelete = async (id: string) => {
     try {
       // ⚠️ PELO PROJETO, e não só pelo item legado: a música vive em `catalog_projects` desde
@@ -1093,7 +1112,7 @@ const Catalog: FC = () => {
                         // Abrir o player para uma música sem áudio dava uma barra que não toca
                         // e não diz porquê. O aviso explica o que falta E onde se resolve.
                         if (semGuia) {
-                          message.warning('Esta música ainda não tem faixa guia. Monte as pistas no Espaço Jam: ao sair, a guia é gerada.');
+                          message.warning(SEM_GUIA_AINDA);
                           return;
                         }
                         if (isCurrent) togglePlayer?.(); // já no player → pausa/retoma
@@ -1129,24 +1148,11 @@ const Catalog: FC = () => {
                       <div style={linhaSub}>{legenda}</div>
                     </div>
                     <StatusBadge status={it.status} />
-                    {/* A linha inteira já abre o Espaço Jam, mas isso não se descobre olhando —
-                        o botão nomeia o destino. `stopPropagation` porque o clique dele e o da
-                        linha levariam ao mesmo lugar e disparariam duas navegações. */}
-                    <button
-                      className='catalog-track-jam'
-                      type='button'
-                      title='Abrir o Espaço Jam desta música'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        abrirJam();
-                      }}
-                    >
-                      <EspacoJamIcon size={15} />
-                      {/* O rótulo sai no celular, onde custava 107px dos 319 da linha — um terço
-                          dela para nomear um destino que tocar a linha já alcança. O ícone fica,
-                          senão o atalho desaparece: `title` não se revela no toque. */}
-                      {!isMobile && ' Espaço Jam'}
-                    </button>
+                    {/* ⚠️ A PÍLULA DO ESPAÇO JAM SAIU DAQUI. Ela nomeava um destino que a linha
+                        inteira já alcança — o mesmo gesto, duas vezes na mesma linha, e a
+                        segunda a comer 107 px dos 319 do celular. Quem precisa do nome do
+                        destino continua a lê-lo no "⋮", que é onde moram as coisas que se
+                        escolhem em vez de se tropeçar nelas. */}
                     {canEditTracks && (
                       // ⚠️ O "⋮" ABRIA A FICHA INTEIRA — um formulário de dezassete campos para
                       // quem só queria apagar a música ou entrar nela. As duas coisas que se
@@ -1158,12 +1164,17 @@ const Catalog: FC = () => {
                         menu={{
                           items: [
                             { key: 'jam', label: 'Abrir Espaço Jam' },
+                            // A guia é o que a lista toca, e até agora só se conseguia ouvir
+                            // aqui dentro: para a mandar a alguém, ou para a levar ao programa
+                            // onde se mistura, era preciso entrar no editor e exportar.
+                            { key: 'guia', label: 'Baixar guia' },
                             { type: 'divider' },
                             { key: 'excluir', label: 'Excluir música', danger: true },
                           ],
                           onClick: ({ key, domEvent }) => {
                             domEvent.stopPropagation();
                             if (key === 'jam') { abrirJam(); return; }
+                            if (key === 'guia') { void baixarGuia(it); return; }
                             // Apagar é irreversível: pergunta antes, como o resto do produto.
                             setParaExcluir(it);
                           },
