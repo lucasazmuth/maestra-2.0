@@ -77,4 +77,4 @@ const Contexto = createContext<PaletaDaFolha>(PALETA_CLARA);
 export const PaletaDaFolhaProvider = Contexto.Provider;
 
 /** A paleta em vigor. Fora de qualquer editor, a clara — que é o app inteiro. */
-export const usarPaleta = (): PaletaDaFolha => useContext(Contexto);
+export const usePaleta = (): PaletaDaFolha => useContext(Contexto);

@@ -424,10 +424,29 @@ describe('cromo do editor do Espaço JAM', () => {
     it('a barra do clipe cabe dentro dele, com alvos de dedo', () => {
       const oClipe = semComentarios(clipe);
 
-      expect(oClipe).toContain("...(noDedo ? { bottom: 6, left: 6 } : { top: -38, left: 0 })");
-      expect(oClipe).toContain("noDedo ? { height: 34, padding: '0 12px' }");
-      // Nos dois botões: um alvo de 24 px acerta-se com o rato e falha-se com o polegar.
+      // ⚠️ SEMPRE DENTRO, EM BAIXO À ESQUERDA. Por cima do clipe, a barra da primeira pista
+      // saía pelo topo da área que rola. É onde o app a pôs, e ali serve aos dois.
+      expect(oClipe).toContain('bottom: 6, left: 6,');
+      expect(oClipe).not.toContain('top: -38');
+      expect(oClipe).toContain('noDedo ? { width: 34, height: 34 }');
+      // Nos dois botões: um alvo de 26 px acerta-se com o rato e falha-se com o polegar.
       expect(oClipe.match(/\.\.\.alvo,/g)).toHaveLength(2);
+    });
+
+    // ⚠️ SÓ OS ÍCONES. "DIVIDIR" e "REMOVER" somavam 190 px de barra por cima de um clipe que
+    // muitas vezes mede menos do que isso — e num clipe estreito ela saía pelos dois lados, a
+    // tapar os vizinhos. O nome continua no `title` e no `aria-label`.
+    it('os botões do clipe são ícones, e não palavras', () => {
+      const oClipe = semComentarios(clipe);
+
+      // O texto do botão, e não a palavra em qualquer sítio: ela continua a aparecer no
+      // comentário que explica por que ela saiu.
+      expect(oClipe).not.toMatch(/\/>\s*DIVIDIR/);
+      expect(oClipe).not.toMatch(/\/>\s*REMOVER/);
+      expect(oClipe).toContain('<FiScissors size={13} />');
+      expect(oClipe).toContain('<FiTrash2 size={13} />');
+      expect(oClipe).toContain("aria-label='Dividir o clipe na agulha'");
+      expect(oClipe).toContain("aria-label='Remover o clipe'");
     });
 
     it('a coluna encolhe, e as faixas acompanham a mesma altura', () => {

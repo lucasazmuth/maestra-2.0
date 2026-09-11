@@ -1,7 +1,7 @@
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FiAlertCircle, FiCheck, FiCircle, FiCornerUpLeft, FiCornerUpRight, FiDownload, FiFileText,
-  FiFolder, FiHeadphones, FiLoader, FiPause,
+  FiFolder, FiHeadphones, FiLoader, FiMessageCircle, FiPause,
   FiPlay, FiRepeat, FiSkipBack, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
@@ -151,11 +151,14 @@ export const EditorDaGravacao: FC<{
   exportar: ReactNode;
   /** A letra, que abre num balão flutuante em vez de ocupar uma aba. */
   letra: ReactNode;
+  /** A conversa da equipa sobre a música — o terceiro balão da fila. */
+  conversa: ReactNode;
   podeEditar: boolean;
   acoes: AcoesDoEditor;
 }> = ({
   titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
   estado, picos, transporte, ficha, numeros, bpm, historico, fichaCompleta, exportar, letra,
+  conversa,
   podeEditar, acoes,
 }) => {
   // No telemóvel a montagem não se EDITA — arrastar um clipe para o segundo certo com o dedo,
@@ -1367,6 +1370,16 @@ export const EditorDaGravacao: FC<{
           ))}
         </div>
       )}
+
+      {/* ⚠️ A CONVERSA É DO PROJETO, e não da gravação aberta: um comentário preso a uma versão
+          responde "o que muda NESTA" e morre com ela; isto é o fio do trabalho da equipa sobre a
+          música, e fica num sítio só. */}
+      <details className={`${casca.ajuda} ${casca.conversa}`} style={{ bottom: ALTURA_DO_RODAPE + 12 }}>
+        <summary title='Conversa da equipe' aria-label='Conversa da equipe'>
+          <FiMessageCircle size={14} />
+        </summary>
+        <div>{conversa}</div>
+      </details>
 
       <details className={`${casca.ajuda} ${casca.letra}`} style={{ bottom: ALTURA_DO_RODAPE + 12 }}>
         <summary title='Letra' aria-label='Letra'><FiFileText size={14} /></summary>

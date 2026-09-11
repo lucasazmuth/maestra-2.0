@@ -31,6 +31,8 @@ const mockNovoArquivo = jest.fn();
 const mockCriarPista = jest.fn();
 const mockMarcarPista = jest.fn();
 const mockAtualizarFaixa = jest.fn();
+const mockConversa = jest.fn((..._a: unknown[]): Promise<unknown[]> => Promise.resolve([]));
+const mockFalar = jest.fn();
 const mockComentarios = jest.fn();
 const mockComentar = jest.fn();
 jest.mock('@maestra/core/services/db/catalog', () => ({
@@ -51,6 +53,9 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   reorderVersionFiles: jest.fn(),
   deleteVersionFile: jest.fn(),
   listVersionComments: (...a: unknown[]) => mockComentarios(...a),
+  // A conversa do projeto: a tabela, a RLS e o realtime nunca saíram do ar.
+  listCatalogProjectMessages: (...a: unknown[]) => mockConversa(...a),
+  createCatalogProjectMessage: (...a: unknown[]) => mockFalar(...a),
   createVersionComment: (...a: unknown[]) => mockComentar(...a),
   // ⚠️ O DUPLO LÊ OS ARGUMENTOS, e não devolve uma constante. Como constante, ele engolia um
   // `projeto` NULO que a função de verdade não engole — e a tela estourava no aparelho com
@@ -272,6 +277,7 @@ describe('espaço jam', () => {
     jest.clearAllMocks();
     mockBuscar.mockResolvedValue(projeto());
     mockComentarios.mockResolvedValue([]);
+    mockConversa.mockResolvedValue([]);
     mockAtualizarVersao.mockImplementation((id, patch) => Promise.resolve(versao({ id, ...patch })));
     mockPurgar.mockResolvedValue({ pistas: 0, clipes: 0, arquivos: 0 });
     mockMoverClipe.mockResolvedValue(null);
@@ -396,14 +402,14 @@ describe('espaço jam', () => {
     const tela = await montar();
     await tela.findByText('FAIXAS');
 
-    expect(tela.queryByLabelText('Apagar a faixa Mix ★')).toBeNull();
-    expect(tela.queryByLabelText('Enviar um áudio para Mix ★')).toBeNull();
-    expect(tela.queryByLabelText('Armar Mix ★ para gravar')).toBeNull();
+    expect(tela.queryByLabelText('Apagar a faixa Mix')).toBeNull();
+    expect(tela.queryByLabelText('Enviar um áudio para Mix')).toBeNull();
+    expect(tela.queryByLabelText('Armar Mix para gravar')).toBeNull();
     // O campo do nome existe, mas travado.
-    expect(tela.getByDisplayValue('Mix ★').props.editable).toBe(false);
+    expect(tela.getByDisplayValue('Mix').props.editable).toBe(false);
     // E o que é de escuta continua lá.
-    expect(tela.getByLabelText('Silenciar Mix ★')).toBeTruthy();
-    expect(tela.getByLabelText('Ouvir só Mix ★')).toBeTruthy();
+    expect(tela.getByLabelText('Silenciar Mix')).toBeTruthy();
+    expect(tela.getByLabelText('Ouvir só Mix')).toBeTruthy();
   });
   // ⚠️ SEM PERMISSÃO, A MONTAGEM SÓ SE VÊ. Um convidado de leitura veria clipes que se escolhem,
   // setas que prometem desfazer e botões de remover que o banco ia recusar — e a recusa chegaria
@@ -443,7 +449,7 @@ describe('espaço jam', () => {
     // Sem stems, a mix entra sozinha e ACESA: a mesa com uma pista é o tocador da gravação, e é
     // o que toda versão que já existe hoje passa a ter sem ninguém enviar nada.
     await abrirOMixer(tela);
-    expect(await tela.findByLabelText('Silenciar Mix ★')).toBeTruthy();
+    expect(await tela.findByLabelText('Silenciar Mix')).toBeTruthy();
     // Um transporte só para a gravação inteira, com o relógio no zero.
     await waitFor(() => expect(tela.getByLabelText('Tocar')).toBeTruthy());
     expect(tela.getByText('0:00')).toBeTruthy();
@@ -476,8 +482,8 @@ describe('espaço jam', () => {
     expect(tela.getByLabelText('Volume de Voz na mesa')).toBeTruthy();
     // ⚠️ Com a montagem feita, a MIX SAI DE CENA: ela é a soma das camadas, e tocá-la junto
     // faria cada instrumento soar duas vezes.
-    expect(tela.queryByLabelText('Silenciar Mix ★ na mesa')).toBeNull();
-    expect(tela.queryByLabelText('Ouvir Mix ★ na mesa')).toBeNull();
+    expect(tela.queryByLabelText('Silenciar Mix na mesa')).toBeNull();
+    expect(tela.queryByLabelText('Ouvir Mix na mesa')).toBeNull();
   });
 
   // ⚠️ A mix já é a SOMA das pistas. Acesa junto com elas, cada instrumento soa duas vezes e o
@@ -490,8 +496,8 @@ describe('espaço jam', () => {
 
     // Pela COLUNA da linha do tempo, que é onde o editor abre: o M e o S estão lá, como na web.
     // Sem montagem, a mix entra sozinha e acesa: apagar e acender não dobra nada, e não avisa.
-    await usuario.press(await tela.findByLabelText('Silenciar Mix ★'));
-    await usuario.press(await tela.findByLabelText('Ouvir Mix ★'));
+    await usuario.press(await tela.findByLabelText('Silenciar Mix'));
+    await usuario.press(await tela.findByLabelText('Ouvir Mix'));
     expect(alerta).not.toHaveBeenCalled();
     alerta.mockRestore();
   });
@@ -577,21 +583,40 @@ describe('espaço jam', () => {
     }
   });
 
-  // O balão mostra QUANTOS comentários a gravação tem: um balão sem número não diz se vale
-  // abrir, que é a única coisa que ele precisa dizer.
-  it('o balão traz a contagem de comentários da gravação, e abre a lista', async () => {
-    mockComentarios.mockResolvedValue([
-      { id: 'c-1', version_id: 'v-1', author_name: 'Bia', text: 'sobe o vocal', time_seconds: 42 },
-      { id: 'c-2', version_id: 'v-1', author_name: 'Lucas', text: 'fechado' },
+  // ⚠️ A CONVERSA, E NÃO OS COMENTÁRIOS DA GRAVAÇÃO. Um comentário preso a uma versão responde
+  // "o que muda NESTA" e morre com ela; a conversa é o fio do trabalho da equipa sobre a música.
+  // Presa a uma versão, ela ficava espalhada por V1, V2 e V3, e quem chegava tinha de abrir três
+  // sítios para saber o que se passou.
+  it('o balão abre a conversa da equipe, que é do projeto e não da gravação', async () => {
+    mockConversa.mockResolvedValue([
+      {
+        id: 'm-1', project_id: 'p-1', author_name: 'Bia', text: 'consegue gravar quinta?',
+        created_at: '2026-09-10T12:00:00Z',
+      },
     ]);
     const usuario = userEvent.setup();
     const tela = await montar();
 
-    await usuario.press(await tela.findByLabelText('Abrir 2 comentários de V1'));
+    await usuario.press(await tela.findByLabelText('Abrir a conversa da equipe'));
 
-    expect(await tela.findByText('sobe o vocal')).toBeTruthy();
-    // O comentário preso a um ponto do áudio mostra o ponto; o solto não inventa um.
-    expect(tela.getByText('0:42')).toBeTruthy();
+    expect(await tela.findByText('consegue gravar quinta?')).toBeTruthy();
+    // Pelo PROJETO, e não pela versão aberta.
+    expect(mockConversa).toHaveBeenCalledWith('p-1');
+  });
+
+  it('quem só olha o catálogo lê a conversa, mas não escreve nela', async () => {
+    mockPodeEditar = false;
+    try {
+      mockConversa.mockResolvedValue([]);
+      const usuario = userEvent.setup();
+      const tela = await montar();
+
+      await usuario.press(await tela.findByLabelText('Abrir a conversa da equipe'));
+      expect(await tela.findByText('Ninguém falou ainda')).toBeTruthy();
+      expect(tela.queryByLabelText('Mensagem para a equipe')).toBeNull();
+    } finally {
+      mockPodeEditar = true;
+    }
   });
 
   // ─── A aba de Exportar ─────────────────────────────────────────────────────

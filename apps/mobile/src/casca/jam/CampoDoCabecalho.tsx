@@ -38,9 +38,14 @@ export const CampoDoCabecalho = ({
    */
   ouvido?: boolean;
 }) => (
-  <View style={[estilos.chip, travado && estilos.chipTravado, ouvido && estilos.chipOuvido]}>
+  <View style={estilos.chip}>
     <TextInput
-      style={[estilos.campo, { width: largura }]}
+      style={[
+        estilos.campo,
+        { width: largura },
+        travado && estilos.campoTravado,
+        ouvido && estilos.campoOuvido,
+      ]}
       value={valor}
       onChangeText={aoMudar}
       editable={!travado}
@@ -55,34 +60,33 @@ export const CampoDoCabecalho = ({
       // é o que fecha um campo que não submete nada.
       returnKeyType="done"
     />
-    <Text style={estilos.sufixo}>{sufixo}</Text>
+    <Text style={estilos.sufixo}>{sufixo.toUpperCase()}</Text>
   </View>
 );
 
+// ⚠️ AS MEDIDAS SÃO AS DA WEB, à letra: campo de 26 de altura com canto de 6, o rótulo FORA
+// dele em 10 pt maiúsculo, 5 de folga entre os dois. A pílula arredondada que estava aqui vinha
+// do app claro, onde ela é da família do chip de status — e o status saiu desta tela. Redonda e
+// larga no meio de uma barra de 44, ela era a única coisa do editor que não parecia do editor.
 const estilos = StyleSheet.create({
-  // Vestido de chip para ficar da mesma família do status ao lado — mas com contorno e fundo
-  // claro, porque este ACEITA texto e aquele abre uma lista. Um campo pintado como o status
-  // prometeria um menu.
   chip: {
-    height: 28, paddingHorizontal: 10, borderRadius: 999,
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    // ⚠️ O FUNDO É O DO CAMPO, e não o `papel`. As duas coisas coincidem no app claro — um
-    // campo branco numa tela branca — e separam-se no editor: ali `papel` é a tinta que se
-    // escreve por cima de uma cor cheia, e continua branca. Usá-lo aqui punha duas pílulas
-    // brancas a gritar no meio de uma tela quase preta.
-    borderWidth: 1, borderColor: COR_EDITOR.fio, backgroundColor: COR_EDITOR.botaoRedondo,
+    flexDirection: 'row', alignItems: 'center', gap: 5,
   },
-  chipOuvido: { borderColor: AZUL_DO_EDITOR },
-  chipTravado: { backgroundColor: COR_EDITOR.acaoFundo, borderColor: COR_EDITOR.acaoFundo },
   campo: {
-    // Zero de padding e altura cheia: o `TextInput` do Android traz recuo próprio e, com ele,
-    // o texto assenta abaixo do centro do chip.
-    padding: 0, height: 28,
-    fontSize: 13, fontWeight: '800', color: COR_EDITOR.titulo,
-    // Tabular para o chip não mudar de largura entre 98 e 128 BPM.
+    height: 26, paddingHorizontal: 8, borderRadius: 6,
+    // Zero de recuo vertical: o `TextInput` do Android traz o seu, e com ele o texto assenta
+    // abaixo do centro do campo.
+    paddingVertical: 0,
+    borderWidth: 1, borderColor: COR_EDITOR.fio, backgroundColor: COR_EDITOR.acaoFundo,
+    fontSize: 12, fontWeight: '700', textAlign: 'center', color: COR_EDITOR.titulo,
+    // Tabular para o campo não mudar de largura entre 98 e 128 BPM.
     fontVariant: ['tabular-nums'],
   },
-  sufixo: { fontSize: 11, fontWeight: '700', color: COR_EDITOR.rotulo },
+  campoOuvido: { borderColor: AZUL_DO_EDITOR },
+  campoTravado: { opacity: 0.5 },
+  sufixo: {
+    fontSize: 10, fontWeight: '700', letterSpacing: 0.5, color: COR_EDITOR.rotulo,
+  },
 });
 
 /** O rótulo que diz de quem são os números. Uma linha para o par, e não uma por chip. */

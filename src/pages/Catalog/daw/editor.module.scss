@@ -197,6 +197,21 @@ $camada-dos-flutuantes: 20;
   }
 }
 
+// A CONVERSA da equipa: o terceiro balão da fila, ao lado da letra e do "?".
+//
+// ⚠️ ELA NÃO É COMENTÁRIO DE FAIXA. Um comentário preso a uma gravação responde "o que muda
+// NESTA versão" e morre com ela; a conversa é o fio do trabalho — combinar uma gravação, dizer
+// o que mudar, mandar um recado. Presa a uma versão, ficava espalhada por V1, V2 e V3.
+.conversa {
+  right: 106px;
+
+  > div {
+    width: 380px;
+    padding: 0;
+    overflow: hidden;
+  }
+}
+
 // O SELO DE ESTADO: salvando, salvo, gerando a guia, enviando.
 //
 // ⚠️ Vivia no cabeçalho, encostado no X de sair — e encostava mesmo: em título comprido, o

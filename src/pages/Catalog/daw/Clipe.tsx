@@ -83,9 +83,9 @@ export const Clipe: FC<{
     return () => document.removeEventListener('pointerdown', fora);
   }, [selecionado, aoSelecionar]);
 
-  // O dedo pede mais do que o ponteiro: 24 px de altura acertam-se com o rato e falham-se com
-  // o polegar, e estes dois botões decidem se um clipe fica ou desaparece.
-  const alvo = noDedo ? { height: 34, padding: '0 12px' } : { height: 24, padding: '0 8px' };
+  // O dedo pede mais do que o ponteiro: 26 px acertam-se com o rato e falham-se com o polegar,
+  // e estes dois botões decidem se um clipe fica ou desaparece.
+  const alvo = noDedo ? { width: 34, height: 34 } : { width: 26, height: 26 };
 
   const inicio = Number(clipe.start_seconds) || 0;
   const duracao = Number(clipe.duration_seconds) || 0;
@@ -177,6 +177,10 @@ export const Clipe: FC<{
         {fixo ? 'Mix' : `Take ${indice + 1}`}
       </div>
 
+      {/* ⚠️ SÓ OS ÍCONES, sem as palavras. "DIVIDIR" e "REMOVER" somavam 190 px de barra por
+          cima de um clipe que muitas vezes mede menos do que isso — e num clipe estreito a
+          barra saía pelos dois lados dele, a tapar os vizinhos. A tesoura e a lixeira dizem o
+          mesmo; o nome continua no `title` e no `aria-label`. É como o app ficou. */}
       {selecionado && !fixo && (
         <div
           onPointerDown={(evento) => evento.stopPropagation()}
@@ -185,8 +189,12 @@ export const Clipe: FC<{
             // no desktop, e onde não tapa a onda) a primeira pista atirava-a para fora do topo
             // da área que rola: ficava cortada pela régua, ou invisível. Dentro cabe — uma
             // faixa de 96 px dá 80 de clipe — e nunca sai do ecrã.
+            // ⚠️ SEMPRE DENTRO DO CLIPE, EM BAIXO À ESQUERDA. Por cima dele — que era onde ela
+            // ficava com o rato — a barra da primeira pista saía pelo topo da área que rola e
+            // ficava cortada pela régua. Dentro cabe (uma faixa de 96 dá 80 de clipe) e nunca
+            // sai do ecrã. É onde o app a pôs, e ali ela funciona nos dois.
             position: 'absolute',
-            ...(noDedo ? { bottom: 6, left: 6 } : { top: -38, left: 0 }),
+            bottom: 6, left: 6,
             display: 'flex', gap: 4,
             background: DS.color.bgPainel,
             border: `1px solid ${DS.color.bordaForte}`,
@@ -203,17 +211,16 @@ export const Clipe: FC<{
             title={podeCortar ? 'Dividir na agulha' : 'Leve a agulha para dentro do clipe'}
             aria-label='Dividir o clipe na agulha'
             style={{
-              display: 'flex', alignItems: 'center', gap: 4,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               ...alvo,
               background: podeCortar ? `${DS.color.primaria}18` : 'transparent',
               border: `1px solid ${podeCortar ? `${DS.color.primaria}60` : DS.color.borda}`,
               borderRadius: 4,
               color: podeCortar ? DS.color.primaria : DS.color.textoInerte,
               cursor: podeCortar ? 'pointer' : 'default',
-              fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
             }}
           >
-            <FiScissors size={10} /> DIVIDIR
+            <FiScissors size={13} />
           </button>
           <button
             type='button'
@@ -221,17 +228,16 @@ export const Clipe: FC<{
             title='Remover o clipe'
             aria-label='Remover o clipe'
             style={{
-              display: 'flex', alignItems: 'center', gap: 4,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               ...alvo,
               background: 'transparent',
               border: `1px solid ${DS.color.borda}`,
               borderRadius: 4,
               color: DS.color.agulha,
               cursor: 'pointer',
-              fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
             }}
           >
-            <FiTrash2 size={10} /> REMOVER
+            <FiTrash2 size={13} />
           </button>
         </div>
       )}

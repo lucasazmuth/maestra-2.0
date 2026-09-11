@@ -271,7 +271,7 @@ describe('a guia do Espaço JAM', () => {
     await tela.findByText('FAIXAS');
 
     // Mexer no volume da Mix suja a montagem — e mesmo assim não há o que renderizar.
-    fireEvent.press(tela.getByLabelText('Silenciar Mix ★'));
+    fireEvent.press(tela.getByLabelText('Silenciar Mix'));
     fireEvent.press(tela.getAllByLabelText('Voltar para Músicas')[0]);
 
     await waitFor(() => expect(mockPurgar).toHaveBeenCalled());

@@ -8,8 +8,15 @@ import type { Clipe, Pista } from './mesa';
 // saber de pistas e clipes com URL, início, recorte e duração — esta camada faz a ponte, e é
 // aqui que se resolve a única junção que o banco não traz pronta: clipe → ficheiro → URL.
 
-/** O nome da pista da mix, quando a gravação ainda não foi montada em pistas. */
-export const NOME_DA_MIX = 'Mix ★';
+/**
+ * O nome da pista da mix, quando a gravação ainda não foi montada em pistas.
+ *
+ * ⚠️ A ESTRELA SAIU. Ela queria dizer "esta é a gravação PRINCIPAL", e essa ideia deixou de
+ * existir: o que a lista de Músicas toca passou a ser a GUIA — a soma da montagem, gerada ao
+ * fechar o editor —, e não uma gravação eleita entre as outras. Uma estrela a apontar para um
+ * conceito que já não há é pior do que nenhuma: ela promete uma escolha que não se pode fazer.
+ */
+export const NOME_DA_MIX = 'Mix';
 /** O id da pista que a mix ocupa. Não existe no banco: é montada na hora. */
 export const ID_DA_MIX = 'mix';
 

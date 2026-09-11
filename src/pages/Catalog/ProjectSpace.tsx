@@ -33,6 +33,7 @@ import { ConfigProvider, Input, message, theme } from 'antd';
 import { CamposDaFicha, CamposDosSplits } from '../../components/ficha/campos';
 import { Spinner } from '../../components/spinner/spinner';
 import { EditorDaGravacao, type AcoesDoEditor } from './daw/EditorDaGravacao';
+import { Conversa } from './daw/Conversa';
 import { TelaDeExportar } from './daw/TelaDeExportar';
 import { buscarWeb, criarContextoWeb } from './daw/contextoWeb';
 import { duracaoDoArquivo } from './daw/duracao';
@@ -1108,6 +1109,13 @@ const ProjectSpace: FC = () => {
             aoBaixarStems={() => { void baixarStems(); }}
             aoBaixarGuiaWav={() => { void baixarGuiaWav(); }}
             aoBaixarGuiaMp3={() => { void baixarGuiaMp3(); }}
+          />
+        )}
+        conversa={(
+          <Conversa
+            projetoId={project.id}
+            autor={{ id: user?.id, nome: currentUserName, foto: userMeta.avatar_url || null }}
+            podeFalar={podeEditar}
           />
         )}
         letra={(

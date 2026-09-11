@@ -34,10 +34,9 @@ import {
 import * as catalogo from '@maestra/core/services/db/catalog';
 
 import { CampoDoCabecalho } from '@/casca/jam/CampoDoCabecalho';
-import { ComentariosDaVersao } from '@/casca/jam/ComentariosDaVersao';
+import { ConversaDoJam } from '@/casca/jam/ConversaDoJam';
 import { FolhaDaVersao } from '@/casca/jam/FolhaDaVersao';
 import { PALETA_ESCURA, PaletaDaFolhaProvider } from '@/casca/paleta';
-import { BARRAS } from '@/casca/jam/mesa/MiniOnda';
 import { Fader } from '@/casca/jam/mesa/Fader';
 import { MesaDeCanais } from '@/casca/jam/mesa/MesaDeCanais';
 import { LinhaDoTempo } from '@/casca/jam/mesa/LinhaDoTempo';
@@ -176,8 +175,7 @@ export default function EspacoJam() {
   const [arquivoInicial, setArquivoInicial] = useState<ArquivoEscolhido | null>(null);
   const [emEdicao, setEmEdicao] = useState<CatalogVersion | null>(null);
 
-  const [comentando, setComentando] = useState<CatalogVersion | null>(null);
-  const [contagens, setContagens] = useState<Record<string, number>>({});
+  const [conversaAberta, setConversaAberta] = useState(false);
 
   /** Qual gravação está aberta no editor. É ela que a mesa carrega e que o cabeçalho edita. */
   const [abertaId, setAbertaId] = useState<string | null>(null);
@@ -334,20 +332,6 @@ export default function EspacoJam() {
     const conta = setTimeout(() => setSelo('parado'), DURACAO_DO_SELO);
     return () => clearTimeout(conta);
   }, [selo]);
-
-  // O número no balão de cada gravação. O `getCatalogProject` não traz os comentários junto, e
-  // um balão sem número não diz se vale abrir — que é a única coisa que ele precisa dizer.
-  const contar = useCallback(async (lista: CatalogVersion[]) => {
-    const pares = await Promise.all(lista.map(async (v) => {
-      try { return [v.id, (await catalogo.listVersionComments(v.id)).length] as const; }
-      catch { return [v.id, 0] as const; }
-    }));
-    setContagens(Object.fromEntries(pares));
-  }, []);
-
-  useEffect(() => {
-    if (projeto?.versions?.length) void contar(projeto.versions);
-  }, [projeto, contar]);
 
   // ─── Mexer no estado sem recarregar a tela ────────────────────────────────
   //
@@ -727,6 +711,13 @@ export default function EspacoJam() {
     } finally {
       setEnvio(null);
     }
+  };
+
+  /** O "+ Adicionar faixa" da coluna: um ficheiro, uma faixa nova. */
+  const adicionarFaixa = async () => {
+    if (!podeEditar) return;
+    const escolhido = await escolherAudio();
+    if (escolhido) await enviarArquivos([escolhido]);
   };
 
   /** O botão de enviar da FAIXA: um ficheiro só, direto para ela. */
@@ -1114,7 +1105,6 @@ export default function EspacoJam() {
 
   /** As abas que mostram a montagem. As outras duas não se tocam nem se arrastam. */
   const ehDeAudio = aba === 'linha' || aba === 'mesa';
-  const haSolo = mesa.estado.pistas.some((p) => p.solo);
   const prontas = mesa.estado.pistas.filter((p) => p.carga === 'pronta').length;
 
   return (
@@ -1304,6 +1294,7 @@ export default function EspacoJam() {
                 aoMudarPista={(id, muda) => mexerNoMudo(id, muda)}
                 aoSolarPista={(id, solo) => mesa.solar(id, solo)}
                 aoEnviarPara={(id) => { void enviarPara(id); }}
+                aoAdicionarFaixa={() => { void adicionarFaixa(); }}
                 aoBuscar={mesa.irPara}
                 aoMover={moverClipe}
                 aoCortar={(id, seg) => { void cortarClipe(id, seg); }}
@@ -1361,7 +1352,7 @@ export default function EspacoJam() {
           valor={bpm}
           aoMudar={setBpm}
           sufixo="BPM"
-          largura={34}
+          largura={48}
           numerico
           limite={3}
           travado={!aberta || !podeEditar}
@@ -1385,7 +1376,7 @@ export default function EspacoJam() {
           valor={tom}
           aoMudar={setTom}
           sufixo="Tom"
-          largura={40}
+          largura={52}
           maiusculas
           limite={6}
           travado={!aberta || !podeEditar}
@@ -1396,10 +1387,12 @@ export default function EspacoJam() {
 
         {/* A palavra "Master" cede ao ícone: o altifalante diz a mesma coisa e ocupa 14 pt. */}
         <Feather name="volume-2" size={14} color={COR_EDITOR.rotulo} />
+        {/* ⚠️ SEM O NÚMERO AO LADO. O que se ajusta num volume geral é o que se OUVE, e o
+            fader já mostra onde está — a percentagem era um dado que ninguém lê e 38 pontos a
+            menos para o único controlo desta barra. O leitor de tela continua a dizê-la. */}
         <View style={estilos.mestre}>
           <Fader valor={mesa.estado.mestre} aoMudar={mesa.mestreEm} rotulo="Volume geral" />
         </View>
-        <Text style={estilos.numeroDoMestre}>{Math.round(mesa.estado.mestre * 100)}%</Text>
       </View>
 
       {/* ── Os flutuantes, na coluna acima do rodapé ── */}
@@ -1448,7 +1441,7 @@ export default function EspacoJam() {
         rotulo="Letra"
         largura={300}
         bottom={margem.bottom + ALTURA_DO_RODAPE + 12}
-        right={56}
+        right={62}
       >
         <TextInput
           style={estilos.letra}
@@ -1467,7 +1460,7 @@ export default function EspacoJam() {
         rotulo="Ajuda"
         largura={300}
         bottom={margem.bottom + ALTURA_DO_RODAPE + 12}
-        right={12}
+        right={18}
       >
         <Text style={estilos.ajudaTitulo}>Como se monta</Text>
         <Text style={estilos.ajuda}>
@@ -1507,24 +1500,21 @@ export default function EspacoJam() {
         </View>
       )}
 
-      {/* ⚠️ O BALÃO DOS COMENTÁRIOS FICA, e é a única coisa que este editor tem a mais que o da
-          web. Lá os comentários de uma gravação moram no Espaço da Versão, alcançável pela
-          lista de Músicas; aqui essa tela só se alcança DAQUI, e tirar o botão deixava-a órfã —
-          os comentários presos a um ponto do áudio deixavam de existir no app. */}
-      {!!aberta && ehDeAudio && (
+      {/* ⚠️ A CONVERSA, E NÃO OS COMENTÁRIOS DA GRAVAÇÃO. Um comentário preso a uma versão
+          responde "o que muda NESTA" e morre com ela; a conversa é o fio do trabalho da equipa
+          sobre a música, e num sítio só. Ver `ConversaDoJam`.
+
+          ⚠️ NA FILA DA DIREITA, com os outros flutuantes. À esquerda ela ficava por cima do
+          botão de silenciar do primeiro canal da Mesa — um flutuante que tapa um controlo é
+          pior do que um flutuante a mais. */}
+      {ehDeAudio && (
         <Pressable
-          onPress={() => setComentando(aberta)}
-          // ⚠️ NA FILA DA DIREITA, com os outros flutuantes. À esquerda ele ficava por cima do
-          // botão de silenciar do primeiro canal da Mesa — um flutuante que tapa um controlo é
-          // pior do que um flutuante a mais.
+          onPress={() => setConversaAberta(true)}
           style={[estilos.balao, { bottom: margem.bottom + ALTURA_DO_RODAPE + 12 }]}
           accessibilityRole="button"
-          accessibilityLabel={
-            `Abrir ${contagens[aberta.id] ?? 0} comentários de V${aberta.version_number}`
-          }
+          accessibilityLabel="Abrir a conversa da equipe"
         >
           <Feather name="message-circle" size={15} color={COR_EDITOR.acaoIcone} />
-          <Text style={estilos.contagem}>{contagens[aberta.id] ?? 0}</Text>
         </Pressable>
       )}
 
@@ -1551,12 +1541,12 @@ export default function EspacoJam() {
         aoExcluir={aoExcluirVersao}
       />
 
-      <ComentariosDaVersao
-        aberta={Boolean(comentando)}
-        versao={comentando}
+      <ConversaDoJam
+        aberta={conversaAberta}
+        projetoId={projeto.id}
         autor={{ id: usuario?.id, nome: meuNome, foto: minhaFoto }}
-        aoFechar={() => setComentando(null)}
-        aoMudar={() => { if (projeto.versions?.length) void contar(projeto.versions); }}
+        podeFalar={podeEditar}
+        aoFechar={() => setConversaAberta(false)}
       />
     </View>
   );
@@ -1683,21 +1673,23 @@ const estilos = StyleSheet.create({
   },
 
   // O Master é o único controlo desta barra, e por isso é ele que fica com o que sobra.
-  mestre: { flex: 1, minWidth: 60, maxWidth: 160 },
-  numeroDoMestre: {
-    width: 38, textAlign: 'right', fontSize: 12, color: COR_EDITOR.apoio,
-    fontVariant: ['tabular-nums'],
-  },
+  // ⚠️ FOLGA À DIREITA DO TAMANHO DE MEIO BOTÃO. O botão do fader centra-se no valor, e no
+  // máximo isso põe metade dele para lá do fim do trilho — encostado à borda da tela, ele saía
+  // cortado ao meio. Onze pontos é exatamente essa metade.
+  mestre: { flex: 1, minWidth: 80, maxWidth: 170, marginRight: 11 },
 
   // ── Os flutuantes ──
   // Eles moram ACIMA do rodapé, e não dentro: um círculo de 34 pt numa barra de 48 encostava
   // nas bordas e empurrava o Master para dentro. É o que a web faz com o "?" e a letra.
-  setas: { position: 'absolute', right: 12, gap: 6 },
+  // ⚠️ AS MEDIDAS SÃO AS DA WEB, à letra: 30 de diâmetro, 8 de folga entre eles, 18 da borda.
+  // Eu tinha posto 34 e 6, e o resultado era uma coluna com um respiro na vertical diferente do
+  // da horizontal — a fila deixava de parecer uma fila.
+  setas: { position: 'absolute', right: 18, gap: 8 },
   flutuante: {
-    width: 34, height: 34, borderRadius: 17,
+    width: 30, height: 30, borderRadius: 15,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COR_EDITOR.cabecaDaVersao,
-    borderWidth: 1, borderColor: COR_EDITOR.fio,
+    backgroundColor: COR_EDITOR.botaoRedondo,
+    borderWidth: 1, borderColor: COR_EDITOR.vazioContorno,
   },
   selo: {
     position: 'absolute', left: 12,
@@ -1718,9 +1710,9 @@ const estilos = StyleSheet.create({
   balao: {
     position: 'absolute', right: 100,
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    height: 34, paddingHorizontal: 11, borderRadius: 17,
-    backgroundColor: COR_EDITOR.cabecaDaVersao,
-    borderWidth: 1, borderColor: COR_EDITOR.fio,
+    height: 30, paddingHorizontal: 10, borderRadius: 15,
+    backgroundColor: COR_EDITOR.botaoRedondo,
+    borderWidth: 1, borderColor: COR_EDITOR.vazioContorno,
   },
   contagem: { fontSize: 12, color: COR_EDITOR.apoio },
 

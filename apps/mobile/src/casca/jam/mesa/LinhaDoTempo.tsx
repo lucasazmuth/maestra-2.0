@@ -222,6 +222,7 @@ const Clipe = ({
 export const LinhaDoTempo = ({
   pistas, estado, picos, duracaoDoClipe, bpm, podeEditar, zoom, aoEncaixar,
   armadas, aoArmar, aoRenomearPista, aoApagarPista, aoMudarPista, aoSolarPista, aoEnviarPara,
+  aoAdicionarFaixa,
   aoBuscar, aoMover, aoCortar, aoApagar,
 }: {
   pistas: Pista[];
@@ -252,6 +253,8 @@ export const LinhaDoTempo = ({
   aoMudarPista?: (pistaId: string, muda: boolean) => void;
   aoSolarPista?: (pistaId: string, solo: boolean) => void;
   aoEnviarPara?: (pistaId: string) => void;
+  /** Cria uma faixa nova com um áudio do aparelho. */
+  aoAdicionarFaixa?: () => void;
   aoBuscar: (segundo: number) => void;
   /** `de` só vai preenchido quando o dedo largou: é o que o desfazer precisa. */
   aoMover?: (clipeId: string, inicio: number, de?: number) => void;
@@ -400,6 +403,21 @@ export const LinhaDoTempo = ({
               </View>
             );
           })}
+
+          {/* ⚠️ A PORTA DA FAIXA NOVA MORA NA COLUNA, no fim da lista — é onde a web a põe, e é
+              onde o olho a procura: a seguir à última faixa, no sítio onde a próxima vai
+              nascer. A pasta do rodapé abre a biblioteca, que é outro gesto (escolher entre o
+              que já está do lado de cá); esta cria uma faixa de uma vez. */}
+          {podeEditar && (
+            <Pressable
+              onPress={aoAdicionarFaixa}
+              style={estilos.adicionarFaixa}
+              accessibilityRole="button"
+              accessibilityLabel="Adicionar faixa"
+            >
+              <Text style={estilos.adicionarFaixaTexto}>+ Adicionar faixa</Text>
+            </Pressable>
+          )}
         </View>
 
         <ScrollView
@@ -552,6 +570,11 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
   },
   numeroDaRegua: { fontSize: 9, color: COR_EDITOR.rotulo },
+  adicionarFaixa: {
+    height: 46, alignItems: 'center', justifyContent: 'center',
+    borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
+  },
+  adicionarFaixaTexto: { fontSize: 13, color: COR_EDITOR.apoio },
   semPistas: { paddingTop: 60, alignItems: 'center' },
   semPistasTexto: { fontSize: 13, color: COR_EDITOR.rotulo },
   faixa: {

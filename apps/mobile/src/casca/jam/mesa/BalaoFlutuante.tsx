@@ -44,7 +44,7 @@ export const BalaoFlutuante = ({ icone, rotulo, largura, bottom, right, children
             seria um X que ocuparia o lugar do conteúdo. */}
         <Pressable style={estilos.fundo} onPress={() => setAberto(false)}>
           <Pressable
-            style={[estilos.balao, { width: largura, bottom: bottom + 44, right: Math.max(12, right - largura / 2) }]}
+            style={[estilos.balao, { width: largura, bottom: bottom + 40, right: Math.max(12, right - largura / 2) }]}
             // Um toque DENTRO do balão não o fecha.
             onPress={() => {}}
           >
@@ -57,12 +57,13 @@ export const BalaoFlutuante = ({ icone, rotulo, largura, bottom, right, children
 };
 
 const estilos = StyleSheet.create({
+  // As medidas da web: 30 de diâmetro, o mesmo fundo e o mesmo fio dos outros flutuantes.
   redondo: {
     position: 'absolute',
-    width: 34, height: 34, borderRadius: 17,
+    width: 30, height: 30, borderRadius: 15,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COR_EDITOR.cabecaDaVersao,
-    borderWidth: 1, borderColor: COR_EDITOR.fio,
+    backgroundColor: COR_EDITOR.botaoRedondo,
+    borderWidth: 1, borderColor: COR_EDITOR.vazioContorno,
   },
   interrogacao: { fontSize: 15, fontWeight: '700', color: COR_EDITOR.acaoIcone },
 

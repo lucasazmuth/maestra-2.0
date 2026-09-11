@@ -12,7 +12,7 @@ import type { CatalogItem, Split } from '@maestra/core/interfaces/maestra';
 import { deleteCatalogProject, saveCatalogProjectFromForm } from '@maestra/core/services/db/catalog';
 
 import { Bloco, Folha, Linha } from '@/casca/Folha';
-import { usarPaleta, type PaletaDaFolha } from '@/casca/paleta';
+import { usePaleta, type PaletaDaFolha } from '@/casca/paleta';
 import { SugestaoDaAnalise } from '@/casca/jam/SugestaoDaAnalise';
 import { Versoes } from '@/casca/musicas/Versoes';
 import { enviarParaOCatalogo, escolherImagem } from '@/nucleo/arquivos';
@@ -55,7 +55,7 @@ const paraISO = (br: string): string | null | undefined => {
  * referência nova a cada render, o React remonta a subárvore e o teclado fecha a cada tecla.
  */
 const Campo = ({ rotulo, children }: { rotulo: string; children: React.ReactNode }) => {
-  const paleta = usarPaleta();
+  const paleta = usePaleta();
   const estilos = useMemo(() => criarEstilos(paleta), [paleta]);
   return (
     <View style={estilos.campo}>
@@ -106,7 +106,7 @@ const LinhaDeSplit = ({ split, classes, primeira, aoMudar, aoRemover }: {
   aoMudar: (parte: Partial<Split>) => void;
   aoRemover: () => void;
 }) => {
-  const paleta = usarPaleta();
+  const paleta = usePaleta();
   const estilos = useMemo(() => criarEstilos(paleta), [paleta]);
   return (
   <Linha primeira={primeira}>
@@ -199,7 +199,7 @@ export const FichaDaFaixa = ({
   aoExcluir: (id: string) => void;
   aoMudarVersoes: () => void;
 }) => {
-  const paleta = usarPaleta();
+  const paleta = usePaleta();
   const estilos = useMemo(() => criarEstilos(paleta), [paleta]);
   const [rascunho, setRascunho] = useState<Partial<CatalogItem>>({});
   const [dataEscrita, setDataEscrita] = useState('');
