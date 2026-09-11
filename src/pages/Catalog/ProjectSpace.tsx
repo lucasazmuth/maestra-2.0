@@ -554,6 +554,11 @@ const ProjectSpace: FC = () => {
         const clipe = (v.tracks || [])
           .flatMap((t) => t.clips || []).find((c) => c.id === clipeId);
         if (!clipe || clipe.track_id === pistaId) return v;
+        // ⚠️ E SE A FAIXA DE DESTINO NÃO EXISTIR AQUI, NÃO SE MEXE. Sem esta guarda, o clipe
+        // saía de onde estava e não entrava em lado nenhum — desaparecia da montagem. A
+        // decisão do núcleo já manda recarregar nesse caso; isto é o cinto, para o dia em que
+        // alguém chamar esta função de outro sítio.
+        if (!(v.tracks || []).some((t) => t.id === pistaId)) return v;
         return {
           ...v,
           tracks: (v.tracks || []).map((t) => ({

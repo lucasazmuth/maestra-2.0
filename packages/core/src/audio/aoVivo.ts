@@ -178,6 +178,12 @@ export const decidirOEvento = (
   if (evento.tipo !== 'UPDATE' || !conhecidos.clipes.includes(id)) return { faca: 'recarregar' };
   if (eco.ehMeu(`clipe:${id}`, assinaturaDoClipe(evento.linha))) return { faca: 'nada' };
   if (evento.linha.deleted_at) return { faca: 'recarregar' };
+  // ⚠️ E A FAIXA DE DESTINO TEM DE EXISTIR AQUI. Apanhado no simulador: alguém arrastou o clipe
+  // para uma faixa criada depois de esta tela ter lido a montagem, o remendo tirou-o de onde
+  // estava e não o pôs em lado nenhum — o clipe DESAPARECEU do editor, e só voltava a
+  // recarregar. Uma faixa que eu não conheço quer dizer que a minha montagem está velha, e o
+  // que se faz com uma montagem velha é reler.
+  if (!conhecidos.pistas.includes(String(evento.linha.track_id ?? ''))) return { faca: 'recarregar' };
   return {
     faca: 'remendarClipe',
     id,

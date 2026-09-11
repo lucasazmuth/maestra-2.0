@@ -131,7 +131,7 @@ describe('decidirOEvento', () => {
   it('o arrasto de outra pessoa remenda o clipe, com a faixa de destino', () => {
     const d = decidirOEvento(
       ev({ tabela: 'catalog_clips', tipo: 'UPDATE', linha: clipe({ start_seconds: 12, track_id: 't2' }) }),
-      nunca, conhecidos,
+      nunca, { pistas: ['t1', 't2'], clipes: ['c1'] },
     );
     expect(d).toEqual({
       faca: 'remendarClipe',
@@ -158,6 +158,17 @@ describe('decidirOEvento', () => {
     )).toEqual({ faca: 'recarregar' });
     expect(decidirOEvento(
       ev({ tabela: 'catalog_tracks', tipo: 'INSERT', linha: pista({ id: 't9' }) }),
+      nunca, conhecidos,
+    )).toEqual({ faca: 'recarregar' });
+  });
+
+  // ⚠️ APANHADO NO SIMULADOR, e é o pior defeito que este ficheiro já teve: alguém arrastou o
+  // clipe para uma faixa criada DEPOIS de esta tela ter lido a montagem. O remendo tirou-o de
+  // onde estava e não o pôs em lado nenhum, porque a faixa de destino não existia aqui — o
+  // clipe desapareceu do editor e só voltava a recarregar a página.
+  it('um clipe que foi para uma faixa desconhecida manda recarregar', () => {
+    expect(decidirOEvento(
+      ev({ tabela: 'catalog_clips', tipo: 'UPDATE', linha: clipe({ track_id: 't9' }) }),
       nunca, conhecidos,
     )).toEqual({ faca: 'recarregar' });
   });
