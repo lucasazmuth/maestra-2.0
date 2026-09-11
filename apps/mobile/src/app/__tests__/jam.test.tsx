@@ -25,6 +25,7 @@ const mockCriarClipe = jest.fn();
 const mockMarcarApagado = jest.fn();
 const mockRestaurar = jest.fn();
 const mockPurgar = jest.fn();
+const mockGravarFicha = jest.fn();
 const mockNovoArquivo = jest.fn();
 const mockCriarPista = jest.fn();
 const mockMarcarPista = jest.fn();
@@ -50,7 +51,19 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   deleteVersionFile: jest.fn(),
   listVersionComments: (...a: unknown[]) => mockComentarios(...a),
   createVersionComment: (...a: unknown[]) => mockComentar(...a),
-  catalogProjectToItem: () => ({ id: 'v-1', artist_id: 'a-1', title: 'Noite Clara', status: 'mixing' }),
+  // ⚠️ O DUPLO LÊ OS ARGUMENTOS, e não devolve uma constante. Como constante, ele engolia um
+  // `projeto` NULO que a função de verdade não engole — e a tela estourava no aparelho com
+  // "Cannot read property 'id' of null" enquanto os testes passavam todos.
+  catalogProjectToItem: (projeto: { id: string; artist_id: string; title: string; status: string },
+    versao?: { id: string }) => ({
+    id: versao?.id || projeto.id,
+    project_id: projeto.id,
+    artist_id: projeto.artist_id,
+    title: projeto.title,
+    status: projeto.status,
+  }),
+  saveCatalogProjectFromForm: (...a: unknown[]) => mockGravarFicha(...a),
+  deleteCatalogProject: jest.fn(),
   // A montagem: mover, dividir e apagar (que MARCA, não apaga), e a limpeza do fim da sessão.
   updateClip: (...a: unknown[]) => mockMoverClipe(...a),
   createClip: (...a: unknown[]) => mockCriarClipe(...a),
@@ -589,10 +602,12 @@ describe('espaço jam', () => {
     // rascunho esperava por isso: a ficha aparecia com o título vazio, pronta a gravar por cima
     // do que estava lá.
     expect(await tela.findByDisplayValue('Noite Clara')).toBeTruthy();
-    // As três abas do próprio formulário, e o Salvar — o mesmo da folha.
+    // As três abas do próprio formulário.
     expect(tela.getByText('Splits')).toBeTruthy();
     expect(tela.getByText('Letras')).toBeTruthy();
-    expect(tela.getByLabelText('Salvar')).toBeTruthy();
+    // ⚠️ E NENHUM BOTÃO DE SALVAR: ali a ficha grava sozinha, como tudo o mais nesta tela. Um
+    // Salvar no meio dela ensinaria que o resto talvez não esteja salvo.
+    expect(tela.queryByLabelText('Salvar')).toBeNull();
     // E a montagem saiu de cena, com o transporte: não se toca uma ficha.
     expect(tela.queryByText('FAIXAS')).toBeNull();
     // Nem a biblioteca: uma gaveta por cima de um formulário é só uma tela a tapar outra.
@@ -706,6 +721,47 @@ describe('espaço jam', () => {
 
     fireEvent.press(tela.getByLabelText('Apagar a faixa Voz'));
     await waitFor(() => expect(mockMarcarPista).toHaveBeenCalledWith('t-1'));
+  });
+
+  // ⚠️ A FICHA DO EDITOR GRAVA SOZINHA, como tudo o mais nesta tela — e como na web. O caso que
+  // interessa não é o que ela grava: é o que ela NÃO grava.
+  it('a ficha na aba grava sozinha, e não grava o que ninguém mexeu', async () => {
+    // ⚠️ COM TEMPORIZADORES DE VERDADE. Com os falsos, o próprio React agenda o trabalho de
+    // renderizar num `setTimeout`, e o campo mudava sem que nada re-renderizasse: o teste
+    // media o debounce de um efeito que nunca corria. Um segundo de espera real é o preço de
+    // medir a coisa certa.
+    mockGravarFicha.mockResolvedValue({ id: 'p-1', title: 'Noite Clara II' });
+    const tela = await montar();
+    fireEvent.press(await tela.findByLabelText('Ficha'));
+    await tela.findByDisplayValue('Noite Clara');
+
+    // ⚠️ ABRIR NÃO É EDITAR. Sem a assinatura, o primeiro render gravava de volta exatamente o
+    // que acabara de chegar do servidor — e carimbava como edição de agora uma ficha em que
+    // ninguém tocou.
+    await new Promise((pronto) => { setTimeout(pronto, 900); });
+    expect(mockGravarFicha).not.toHaveBeenCalled();
+
+    fireEvent.changeText(tela.getByDisplayValue('Noite Clara'), 'Noite Clara II');
+    await waitFor(() => expect(tela.getByDisplayValue('Noite Clara II')).toBeTruthy());
+
+    // ⚠️ E O QUE ESTÁ A SER ESCRITO SOBREVIVE A UM RENDER DA TELA DE FORA. A ficha recarrega o
+    // rascunho quando a música que recebe muda de IDENTIDADE — e montá-la com um objeto novo a
+    // cada render fazia isso o tempo todo: com a mesa a bater o relógio vinte vezes por segundo
+    // enquanto toca, o que a pessoa digitava era apagado e reposto pelo valor do servidor.
+    // Mexer no andamento, no rodapé, é um render da tela de fora.
+    fireEvent.changeText(tela.getByLabelText('Andamento da gravação, em BPM'), '96');
+    await waitFor(() => expect(tela.getByDisplayValue('96')).toBeTruthy());
+    expect(tela.getByDisplayValue('Noite Clara II')).toBeTruthy();
+    // O campo já mostra; o banco ainda não recebeu — ele recebe uma vez, quando a mão para.
+    expect(mockGravarFicha).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(mockGravarFicha).toHaveBeenCalledTimes(1));
+    expect(mockGravarFicha.mock.calls[0][0]).toMatchObject({
+      id: 'p-1', versionId: 'v-1', title: 'Noite Clara II',
+    });
+    // E o selo diz que pegou: numa aba sem botão de Salvar, gravar em silêncio deixa quem
+    // escreveu sem saber.
+    expect(await tela.findByText('Salvo')).toBeTruthy();
   });
 
   // ─── A biblioteca ──────────────────────────────────────────────────────────

@@ -23,7 +23,7 @@ import {
 } from '@maestra/core/constants/maestra';
 import { AZUL_DO_EDITOR, COR, COR_EDITOR } from '@maestra/core/constants/design';
 import type {
-  CatalogClip, CatalogProject, CatalogTrack, CatalogVersion, CatalogVersionFile,
+  CatalogClip, CatalogProject, CatalogTrack, CatalogVersion,
 } from '@maestra/core/interfaces/maestra';
 import { tipoDoCatalogo, tituloDoArquivo } from '@maestra/core/services/armazenamento';
 import * as catalogo from '@maestra/core/services/db/catalog';
@@ -213,6 +213,24 @@ export default function EspacoJam() {
     [versoes, abertaId],
   );
 
+  /**
+   * A música no formato que a ficha entende.
+   *
+   * ⚠️ MEMOIZADA, e isso não é economia: a ficha recarrega o rascunho sempre que este objeto
+   * MUDA DE IDENTIDADE, e construí-lo no JSX fazia um novo a cada render do editor. Com a mesa a
+   * bater o relógio vinte vezes por segundo enquanto toca, o que a pessoa estava a escrever era
+   * apagado e reposto pelo valor do servidor a cada tique.
+   */
+  //
+  // ⚠️ E TOLERA `projeto` NULO. Os hooks correm ANTES da guarda que devolve o ecrã de espera —
+  // na primeira volta ainda não há música nenhuma. Um `as CatalogProject` calava o compilador e
+  // estourava no aparelho, que é o pior par possível: tipo que mente e erro que só aparece em
+  // execução.
+  const itemDaFicha = useMemo(
+    () => (projeto ? catalogo.catalogProjectToItem(projeto, aberta ?? undefined) : null),
+    [projeto, aberta],
+  );
+
   // A montagem da gravação aberta: as pistas e os clipes de cada uma. É o MESMO modelo e a
   // MESMA função da web — aqui não há "a versão do app" de coisa nenhuma.
   const pistas = useMemo(() => montagemDaVersao(aberta), [aberta]);
@@ -319,6 +337,10 @@ export default function EspacoJam() {
   // Renomear uma pista ou mudar um volume não pode chamar `buscar()`: a resposta vinha com um
   // objeto novo, a mesa via pistas "diferentes" e descarregava 400 MB de áudio para mostrar um
   // nome trocado. Estas duas costuras remendam só o que mudou.
+  /** Remenda a MÚSICA na tela, sem recarregar a montagem por baixo de quem está a escrever. */
+  const patcharProjeto = (parte: Partial<CatalogProject>) =>
+    setProjeto((atual) => (atual ? { ...atual, ...parte } : atual));
+
   const patcharVersao = (id: string, parte: Partial<CatalogVersion>) => setProjeto((atual) => (
     atual ? {
       ...atual,
@@ -941,12 +963,16 @@ export default function EspacoJam() {
               emLinha
               aberta
               artistaId={String(artistaId)}
-              faixa={catalogo.catalogProjectToItem(projeto, aberta ?? undefined)}
+              faixa={itemDaFicha}
               generos={projeto.genre ? [projeto.genre] : []}
               autor={{ id: usuario?.id, nome: meuNome }}
               aoFechar={() => setAba('linha')}
-              aoSalvar={() => { void buscar(); }}
-              // Excluir a música daqui deixa a tela sem assunto: volta para a lista.
+              // ⚠️ NÃO RECARREGA A MONTAGEM a cada gravação automática. O que a ficha grava é a
+              // MÚSICA (título, status, gênero, créditos), e um `buscar()` a cada meio segundo
+              // de escrita derrubaria e recarregaria os buffers de áudio por baixo do teclado.
+              // O que a tela precisa saber é só o título, para o cabeçalho.
+              aoSalvar={(salva) => patcharProjeto({ title: salva.title ?? projeto.title })}
+              aoEstado={setSelo}
               aoExcluir={voltar}
               aoMudarVersoes={buscar}
             />
@@ -1155,7 +1181,10 @@ export default function EspacoJam() {
       {/* O selo de estado. Só existe quando há algo a dizer: um indicador permanente deixa de
           ser lido, e este precisa de ser lido nas duas vezes em que importa — a gravar, e
           quando falhou. */}
-      {selo !== 'parado' && ehDeAudio && (
+      {/* ⚠️ O SELO FICA EM TODAS AS ABAS, ao contrário das setas e do balão: ele não fala da
+          montagem, fala de GRAVAR — e a ficha, que não tem botão de Salvar, é justamente onde
+          ele mais precisa de ser lido. */}
+      {selo !== 'parado' && (
         <View style={[estilos.selo, { bottom: margem.bottom + ALTURA_DO_RODAPE + 12 }]}>
           <Text
             style={[estilos.seloTexto, selo === 'erro' && estilos.seloDeErro]}

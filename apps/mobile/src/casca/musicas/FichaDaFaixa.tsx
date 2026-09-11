@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
@@ -66,6 +66,30 @@ const Campo = ({ rotulo, children }: { rotulo: string; children: React.ReactNode
 };
 
 type Aba = 'informacoes' | 'letras' | 'splits';
+
+/** O mesmo meio segundo largo de todo autosave do Espaço JAM. */
+const ESPERA_DA_FICHA = 650;
+
+/**
+ * O que, nesta ficha, conta como MUDANÇA.
+ *
+ * Só os campos que se gravam — e a data como ela está ESCRITA, e não como fica depois de
+ * convertida: é no que a pessoa digita que se percebe se ela mexeu.
+ */
+const assinaturaDaFicha = (r: Partial<CatalogItem>, dataEscrita: string) => JSON.stringify({
+  title: r.title?.trim() || '',
+  status: r.status || 'composition',
+  genre: r.genre || null,
+  data: dataEscrita,
+  isrc: r.isrc || null,
+  upc: r.upc || null,
+  bpm: r.bpm || null,
+  key: r.key || null,
+  lyrics: r.lyrics || null,
+  details: r.details || null,
+  composition_splits: r.composition_splits || [],
+  recording_splits: r.recording_splits || [],
+});
 
 /**
  * Um titular dos créditos: quem é, em que classe entra e quanto leva.
@@ -144,7 +168,7 @@ const LinhaDeSplit = ({ split, classes, primeira, aoMudar, aoRemover }: {
 
 export const FichaDaFaixa = ({
   aberta, artistaId, faixa, generos, autor, aoFechar, aoSalvar, aoExcluir, aoMudarVersoes,
-  emLinha,
+  emLinha, aoEstado,
 }: {
   aberta: boolean;
   /**
@@ -158,6 +182,14 @@ export const FichaDaFaixa = ({
    * monta em linha passa as duas, e a ficha nasce preenchida.
    */
   emLinha?: boolean;
+  /**
+   * Como vai o salvamento automático — para quem mostra o selo.
+   *
+   * ⚠️ A WEB NÃO AVISA, e isso é um defeito dela que não vale copiar: numa aba sem botão de
+   * Salvar, uma gravação silenciosa deixa quem escreveu sem saber se pegou. O selo já existe no
+   * editor; é só dizer-lhe o que está a acontecer.
+   */
+  aoEstado?: (estado: 'salvando' | 'salvo' | 'erro') => void;
   artistaId: string;
   faixa: CatalogItem | null;
   generos: string[];
@@ -210,13 +242,44 @@ export const FichaDaFaixa = ({
     }
   };
 
+  /**
+   * O que vai para o banco, montado do rascunho — uma verdade só.
+   *
+   * `null` quando o formulário ainda não está gravável: sem título, ou com uma data que não é
+   * data. É o mesmo portão para o botão e para o salvamento automático.
+   */
+  const paraGravar = () => {
+    if (!rascunho.title?.trim()) return null;
+    const lancamento = paraISO(dataEscrita);
+    if (lancamento === undefined) return null;
+    return {
+      // `project_id` e não `id`: o `id` do item é o da VERSÃO, e mandar ele como projeto
+      // criaria uma faixa nova a cada edição.
+      id: faixa?.project_id ?? undefined,
+      versionId: faixa?.id,
+      artist_id: artistaId,
+      title: rascunho.title.trim(),
+      status: rascunho.status || 'composition',
+      genre: rascunho.genre || null,
+      release_date: lancamento,
+      isrc: rascunho.isrc || null,
+      upc: rascunho.upc || null,
+      bpm: rascunho.bpm || null,
+      key: rascunho.key || null,
+      lyrics: rascunho.lyrics || null,
+      details: rascunho.details || null,
+      composition_splits: autorais,
+      recording_splits: fonograma,
+    };
+  };
+
   const salvar = async () => {
     if (!rascunho.title?.trim()) {
       setErro('Informe o título.');
       return;
     }
-    const lancamento = paraISO(dataEscrita);
-    if (lancamento === undefined) {
+    const campos = paraGravar();
+    if (!campos) {
       setErro('A data de lançamento precisa estar no formato 28/08/2026.');
       return;
     }
@@ -224,25 +287,7 @@ export const FichaDaFaixa = ({
     setErro(null);
     setGravando(true);
     try {
-      const salva = await saveCatalogProjectFromForm({
-        // `project_id` e não `id`: o `id` do item é o da VERSÃO, e mandar ele como projeto
-        // criaria uma faixa nova a cada edição.
-        id: faixa?.project_id ?? undefined,
-        versionId: faixa?.id,
-        artist_id: artistaId,
-        title: rascunho.title.trim(),
-        status: rascunho.status || 'composition',
-        genre: rascunho.genre || null,
-        release_date: lancamento,
-        isrc: rascunho.isrc || null,
-        upc: rascunho.upc || null,
-        bpm: rascunho.bpm || null,
-        key: rascunho.key || null,
-        lyrics: rascunho.lyrics || null,
-        details: rascunho.details || null,
-        composition_splits: autorais,
-        recording_splits: fonograma,
-      });
+      const salva = await saveCatalogProjectFromForm(campos);
       aoSalvar(salva);
       aoFechar();
     } catch (e) {
@@ -251,6 +296,48 @@ export const FichaDaFaixa = ({
       setGravando(false);
     }
   };
+
+  // ─── Salvamento automático (só montada em linha) ───────────────────────────
+  //
+  // ⚠️ NA ABA NÃO HÁ BOTÃO DE SALVAR, e é assim na web: a ficha do editor grava sozinha, como
+  // tudo o mais naquela tela — o nome da música, o andamento, o volume de uma faixa. Um botão
+  // de Salvar no meio de uma tela onde nada mais precisa dele ensina que o resto talvez não
+  // esteja salvo.
+  //
+  // ⚠️ A ASSINATURA COMPARA COM O QUE JÁ ESTÁ GRAVADO, e é ela que impede o pior caso: gravar,
+  // no primeiro render, exatamente o que acabou de chegar do servidor — e, com isso, carimbar
+  // como edição de agora uma ficha em que ninguém tocou.
+  const gravado = useRef('');
+  const contaDaFicha = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // A marca é posta quando a ficha CHEGA, e não num efeito à parte: separados, a ordem decidia
+    // — o autosave corria primeiro, via a assinatura da anterior, e agendava uma escrita.
+    gravado.current = assinaturaDaFicha(faixa ?? {}, paraBR(faixa?.release_date));
+  }, [faixa]);
+
+  useEffect(() => {
+    if (!emLinha) return undefined;
+    const campos = paraGravar();
+    if (!campos) return undefined;
+    const assinatura = assinaturaDaFicha(rascunho, dataEscrita);
+    if (assinatura === gravado.current) return undefined;
+
+    if (contaDaFicha.current) clearTimeout(contaDaFicha.current);
+    contaDaFicha.current = setTimeout(() => {
+      aoEstado?.('salvando');
+      saveCatalogProjectFromForm(campos)
+        .then((salva) => {
+          gravado.current = assinatura;
+          aoEstado?.('salvo');
+          aoSalvar(salva);
+        })
+        .catch(() => aoEstado?.('erro'));
+    }, ESPERA_DA_FICHA);
+    return () => { if (contaDaFicha.current) clearTimeout(contaDaFicha.current); };
+    // `paraGravar` e `aoSalvar` mudam a cada render; o que decide é a assinatura, lá dentro.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rascunho, dataEscrita, emLinha]);
 
   const confirmarExclusao = () => {
     if (!faixa?.project_id) return;
@@ -621,39 +708,13 @@ export const FichaDaFaixa = ({
       </View>
   );
 
-  // Montada na aba, o casco da folha não existe — e o Salvar tem de existir na mesma. É a mesma
-  // ação, na mesma ordem, sem a moldura que ali não faz sentido.
-  if (emLinha) {
-    return (
-      <View style={estilos.emLinha}>
-        {miolo}
-        <View style={estilos.rodapeEmLinha}>
-          {!!faixa && (
-            <Pressable
-              onPress={confirmarExclusao}
-              style={estilos.excluirEmLinha}
-              accessibilityRole="button"
-              accessibilityLabel="Excluir música"
-            >
-              <Text style={estilos.excluirTexto}>Excluir</Text>
-            </Pressable>
-          )}
-          <Pressable
-            onPress={salvar}
-            disabled={gravando}
-            style={[estilos.salvarEmLinha, gravando && estilos.inerte]}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: gravando, busy: gravando }}
-            accessibilityLabel="Salvar"
-          >
-            {gravando
-              ? <ActivityIndicator size="small" color={paleta.sobrePrimaria} />
-              : <Text style={estilos.salvarTexto}>Salvar</Text>}
-          </Pressable>
-        </View>
-      </View>
-    );
-  }
+  // Montada na aba, o casco da folha não existe — e nem o rodapé.
+  //
+  // ⚠️ SEM SALVAR E SEM EXCLUIR. O salvamento é automático ali, como é na web e como é em todo o
+  // resto daquela tela; um botão de Salvar no meio dela ensinaria que o resto talvez não esteja
+  // salvo. E excluir a música não é um gesto de EDITAR a ficha dela: ele vive na lista de
+  // Músicas, que é de onde se gere o catálogo — é o mesmo sítio da web.
+  if (emLinha) return <View style={estilos.emLinha}>{miolo}</View>;
 
   return (
     <Folha
