@@ -20,7 +20,18 @@
  * não sabe voltar, e um `cortar` sem o id do pedaço novo não sabe o que remover.
  */
 export type PassoDaMontagem =
-  | { tipo: 'mover'; clipeId: string; de: number; para: number }
+  // ⚠️ MOVER É NO TEMPO **E** ENTRE PISTAS, e o desfazer precisa dos dois. Arrastar um clipe
+  // da voz para a bateria e carregar na seta punha-o de volta no segundo certo — na pista
+  // errada, que é onde ele nunca esteve.
+  | {
+    tipo: 'mover';
+    clipeId: string;
+    de: number;
+    para: number;
+    /** Só quando o arrasto mudou de pista. Ausente, o clipe ficou onde estava. */
+    dePista?: string;
+    paraPista?: string;
+  }
   | { tipo: 'apagarClipe'; clipeId: string }
   | { tipo: 'apagarPista'; pistaId: string }
   | { tipo: 'cortar'; clipeId: string; duracaoAntes: number; duracaoDepois: number; novoClipeId: string }

@@ -13,7 +13,7 @@ import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import {
   PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, marcasDaRegua, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
-import { NOME_DA_MIX, ehPistaDaMix } from '@maestra/core/audio/pistasDaVersao';
+import { NOME_DA_MIX, ehPistaDaMix, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import {
   AZUL_DO_EDITOR, COR, COR_EDITOR, VERMELHO_DO_EDITOR, corDaPista,
 } from '@maestra/core/constants/design';
@@ -110,6 +110,7 @@ const OndaDoClipe = memo(({ picos, cor, largura, altura }: {
  */
 const Clipe = ({
   clipe, rotulo, nome, cor, escala, largura, picos: osPicos, escolhido, podeEditar, agulha, duracao,
+  degrauPossivel,
   passoDoEncaixe, aoEscolher, aoLargar, aoMoverEnquantoArrasta, aoCortar, aoApagar,
 }: {
   clipe: { id: string; inicio: number };
@@ -131,33 +132,63 @@ const Clipe = ({
   agulha: number;
   duracao: number;
   passoDoEncaixe: number;
+  /**
+   * Até onde este clipe pode mesmo ir, `degrau` linhas abaixo — 0 quando não pode sair daqui.
+   *
+   * ⚠️ VEM DE FORA, e é a MESMA conta que decide a gravação: quem sabe a pilha de faixas é a
+   * tela, e o clipe não pode ter uma segunda opinião sobre onde ele cabe. Sem isto, o desenho
+   * dizia uma coisa (o clipe a deslizar para uma linha que não existe) e a gravação outra.
+   */
+  degrauPossivel: (degrau: number) => number;
   aoEscolher: () => void;
-  aoLargar: (inicio: number, de: number) => void;
+  aoLargar: (inicio: number, de: number, degrau: number) => void;
   aoMoverEnquantoArrasta: (inicio: number) => void;
   aoCortar: () => void;
   aoApagar: () => void;
 }) => {
   const partiuDe = useRef(clipe.inicio);
+  /**
+   * Quantas linhas o clipe está a flutuar enquanto o dedo o segura.
+   *
+   * ⚠️ ELE DESLIZA, E NÃO MUDA DE PAI. Tirar o clipe de uma faixa e pô-lo noutra a meio do
+   * gesto desmonta e remonta este componente — e com ele o `Pan` que estava a correr: o dedo
+   * continuava no ecrã, o arrasto tinha morrido, e o `onEnd` que grava a faixa nova nunca
+   * chegava a acontecer. O que a mudança de pai fazia bem era o DESENHO; é só isso que ficou
+   * aqui, e a mudança de verdade acontece quando a mão larga.
+   */
+  const [flutuando, setFlutuando] = useState(0);
+  const flutuarAte = (degrau: number) => setFlutuando(degrauPossivel(degrau));
 
   const arrastar = Gesture.Pan()
     .enabled(escolhido && podeEditar)
     // Declarar o eixo: sem isto o `ScrollView` e o clipe disputam o mesmo dedo, e quem ganha
     // depende do ângulo do primeiro pixel.
+    //
+    // ⚠️ E O EIXO VERTICAL DEIXOU DE FALHAR O GESTO. O `failOffsetY` cancelava o arrasto assim
+    // que o dedo subia 14 pontos — mexer um clipe da voz para a bateria era impossível, e o
+    // gesto morria sem dizer porquê. Roubar a rolagem vertical aqui é barato: só o clipe
+    // ESCOLHIDO arrasta, e escolher é um toque que se dá de propósito.
     .activeOffsetX([-8, 8])
-    .failOffsetY([-14, 14])
+    .activeOffsetY([-8, 8])
     .onBegin(() => { partiuDe.current = clipe.inicio; })
     .onUpdate((e) => {
       const bruto = partiuDe.current + e.translationX / escala;
       runOnJS(aoMoverEnquantoArrasta)(Math.max(0, bruto));
+      // O degrau vai CRU para o `degrauPossivel`, que é a MESMA conta que decide a gravação.
+      runOnJS(flutuarAte)(e.translationY / ALTURA_DA_FAIXA);
     })
     .onEnd((e) => {
       const bruto = partiuDe.current + e.translationX / escala;
       const destino = Math.max(0, Math.round(bruto / passoDoEncaixe) * passoDoEncaixe);
+      const degrau = e.translationY / ALTURA_DA_FAIXA;
+      runOnJS(setFlutuando)(0);
       // Um toque não é um arrasto: sem esta guarda, escolher um clipe fora da grelha o faria
       // saltar para o tempo mais próximo sem ninguém pedir.
-      if (Math.abs(destino - partiuDe.current) < 0.001) return;
-      runOnJS(aoLargar)(destino, partiuDe.current);
-    });
+      if (Math.abs(degrau) < 0.5 && Math.abs(destino - partiuDe.current) < 0.001) return;
+      runOnJS(aoLargar)(destino, partiuDe.current, degrau);
+    })
+    // O dedo pode ser-lhe tirado (uma chamada, o gesto de voltar): o clipe tem de aterrar.
+    .onFinalize(() => { runOnJS(setFlutuando)(0); });
 
 
   // O corte é na AGULHA, e só quando ela está dentro deste clipe: é ela que diz onde cai.
@@ -183,6 +214,10 @@ const Clipe = ({
             borderColor: cor,
             backgroundColor: `${cor}1f`,
             borderWidth: escolhido ? 2 : 1,
+            // A flutuação é DESENHO: o clipe sai da sua linha para mostrar onde vai cair, e
+            // por cima das vizinhas enquanto o faz. Quem muda de faixa é o `onEnd`.
+            transform: [{ translateY: flutuando * ALTURA_DA_FAIXA }],
+            zIndex: flutuando ? 6 : undefined,
           },
         ]}
       >
@@ -267,8 +302,14 @@ export const LinhaDoTempo = ({
   /** Cria uma faixa nova com um áudio do aparelho. */
   aoAdicionarFaixa?: () => void;
   aoBuscar: (segundo: number) => void;
-  /** `de` só vai preenchido quando o dedo largou: é o que o desfazer precisa. */
-  aoMover?: (clipeId: string, inicio: number, de?: number) => void;
+  /**
+   * `de` só vai preenchido quando o dedo largou: é o que o desfazer precisa.
+   *
+   * `pista` vai quando o dedo saiu da faixa onde o arrasto começou.
+   */
+  aoMover?: (
+    clipeId: string, inicio: number, de?: number, pista?: { para: string; de?: string },
+  ) => void;
   aoCortar?: (clipeId: string, emSegundo: number) => void;
   aoApagar?: (clipeId: string) => void;
 }) => {
@@ -294,6 +335,26 @@ export const LinhaDoTempo = ({
   }, [encaixe, larguraVisivel, aoEncaixar]);
 
   const medir = (e: LayoutChangeEvent) => setLarguraVisivel(e.nativeEvent.layout.width);
+
+  /**
+   * A faixa para onde o clipe vai, `degrau` linhas abaixo da `i` — `undefined` se ficar na dela.
+   *
+   * `comOrigem` só no fim do gesto: é ele que diz à seta do desfazer de onde o clipe veio.
+   */
+  const faixaDoDegrau = (i: number, degrau: number, opcoes?: { comOrigem: boolean }) => {
+    const para = pistaAlvoDoArrasto(pistas, i, i + degrau);
+    if (!para) return undefined;
+    return { para, ...(opcoes?.comOrigem ? { de: pistas[i].id } : {}) };
+  };
+
+  /**
+   * Quantas linhas o clipe da faixa `i` pode mesmo descer — a MESMA conta que decide a
+   * gravação, para o desenho não prometer uma linha onde ele não cabe.
+   */
+  const degrauPossivelDa = (i: number) => (degrau: number) => {
+    const para = pistaAlvoDoArrasto(pistas, i, i + degrau);
+    return para ? pistas.findIndex((p) => p.id === para) - i : 0;
+  };
 
   const grade = useMemo(() => gradeDoCompasso(bpm, escala), [bpm, escala]);
   const passoDoEncaixe = useMemo(() => encaixeDaGrade(grade, escala), [grade, escala]);
@@ -497,7 +558,10 @@ export const LinhaDoTempo = ({
                       agulha={estado.posicao}
                       duracao={dura}
                       aoEscolher={() => setEscolhido((atual) => (atual === clipe.id ? null : clipe.id))}
-                      aoLargar={(inicio, de) => aoMover?.(clipe.id, inicio, de)}
+                      degrauPossivel={degrauPossivelDa(i)}
+                      aoLargar={(inicio, de, degrau) => aoMover?.(
+                        clipe.id, inicio, de, faixaDoDegrau(i, degrau, { comOrigem: true }),
+                      )}
                       aoMoverEnquantoArrasta={(inicio) => aoMover?.(clipe.id, inicio)}
                       passoDoEncaixe={passoDoEncaixe}
                       aoCortar={() => { aoCortar?.(clipe.id, estado.posicao); setEscolhido(null); }}

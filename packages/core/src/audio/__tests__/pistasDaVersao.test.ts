@@ -1,6 +1,7 @@
 import type { CatalogVersion } from '../../interfaces/maestra';
 import {
-  DURACAO_DESCONHECIDA, ID_DA_MIX, NOME_DA_MIX, ehPistaDaMix, montagemDaVersao, pistasDaGravacao,
+  DURACAO_DESCONHECIDA, ID_DA_MIX, NOME_DA_MIX, ehPistaDaMix, montagemDaVersao,
+  nomeDaPistaNova, pistaAlvoDoArrasto, pistasDaGravacao, proximaPosicaoDaPista,
 } from '../pistasDaVersao';
 
 // A ponte entre o banco e a mesa: três tabelas de um lado (ficheiros, pistas, clipes), uma
@@ -148,6 +149,92 @@ describe('pistasDaGravacao', () => {
     }));
     // Sem o desempate, duas pistas com a mesma posição trocariam de lugar a cada leitura.
     expect(faixas.map((f) => f.id)).toEqual(['a1', 'a2', 'b']);
+  });
+});
+
+// ⚠️ ARRASTAR UM CLIPE ENTRE FAIXAS NÃO EXISTIA: na web o arrasto só olhava para o eixo do
+// tempo, e no app o gesto era cancelado assim que o dedo subia 14 pontos. Mover a voz da faixa
+// errada para a certa obrigava a apagar o clipe e enviar o ficheiro outra vez.
+//
+// A regra mora aqui porque o GESTO é diferente nas duas telas e a DECISÃO é a mesma: na web o
+// índice sai do `y` do ponteiro sobre a pilha, no app sai de quantas alturas de faixa o dedo
+// percorreu.
+describe('pistaAlvoDoArrasto', () => {
+  const pilha = [{ id: 't1' }, { id: 't2' }, { id: 't3' }];
+
+  it('devolve a faixa apontada', () => {
+    expect(pistaAlvoDoArrasto(pilha, 0, 2)).toBe('t3');
+    expect(pistaAlvoDoArrasto(pilha, 2, 0)).toBe('t1');
+  });
+
+  // Meio caminho entre duas linhas é a linha mais perto — e não a de cima, sempre.
+  it('arredonda para a linha mais perto', () => {
+    expect(pistaAlvoDoArrasto(pilha, 0, 0.6)).toBe('t2');
+    expect(pistaAlvoDoArrasto(pilha, 0, 0.4)).toBeUndefined();
+  });
+
+  // ⚠️ Sem o travão, arrastar para baixo da última faixa dava um índice que não existe, e o
+  // clipe desaparecia da montagem até ao recarregamento seguinte.
+  it('trava no que existe, acima e abaixo', () => {
+    expect(pistaAlvoDoArrasto(pilha, 0, 9)).toBe('t3');
+    expect(pistaAlvoDoArrasto(pilha, 2, -9)).toBe('t1');
+  });
+
+  // "Não mudou de faixa" tem de ser distinguível de "mudou", e é essa distinção que impede um
+  // toque de contar como arrasto.
+  it('ficar na mesma faixa não é mudar de faixa', () => {
+    expect(pistaAlvoDoArrasto(pilha, 1, 1)).toBeUndefined();
+  });
+
+  // A Mix é a SOMA das camadas, montada na hora, e não tem linha no banco: mover um clipe para
+  // dentro dela — ou tirar um de lá — seria escrever numa pista que não existe.
+  it('a Mix não sai de casa nem recebe visitas', () => {
+    const comMix = [{ id: ID_DA_MIX }, { id: 't2' }];
+    expect(pistaAlvoDoArrasto(comMix, 0, 1)).toBeUndefined();
+    expect(pistaAlvoDoArrasto(comMix, 1, 0)).toBeUndefined();
+  });
+
+  it('uma pilha vazia não manda o clipe para lado nenhum', () => {
+    expect(pistaAlvoDoArrasto([], 0, 0)).toBeUndefined();
+  });
+});
+
+// A faixa que nasce vazia precisa de um nome, e ele tem de ser ÚNICO: duas faixas com o mesmo
+// nome na coluna são a forma mais barata de alguém calar a errada.
+describe('nomeDaPistaNova', () => {
+  it('começa no um', () => {
+    expect(nomeDaPistaNova([])).toBe('Faixa 1');
+  });
+
+  // ⚠️ O PRIMEIRO LIVRE, e não o total mais um: com quatro faixas e a segunda apagada, "total
+  // + 1" dava `Faixa 4` — que já existia.
+  it('usa o primeiro número livre, e não o total mais um', () => {
+    expect(nomeDaPistaNova(['Faixa 1', 'Faixa 3', 'Faixa 4'])).toBe('Faixa 2');
+  });
+
+  // Quem baptizou uma faixa de "Voz" não fica a dever um número.
+  it('ignora os nomes que ninguém pôs assim', () => {
+    expect(nomeDaPistaNova(['Voz', 'Bateria', 'Faixa dobrada', 'Faixa 10 b'])).toBe('Faixa 1');
+  });
+});
+
+// ⚠️ APANHADO NO PRODUTO, com a primeira faixa criada por este botão: a música de teste tinha
+// uma faixa em `position: 1`, e "a contagem das faixas" deu 1 outra vez. Duas faixas empatadas,
+// e a ordem da coluna a ser decidida pelo desempate da data de criação.
+describe('proximaPosicaoDaPista', () => {
+  it('a primeira faixa entra no zero', () => {
+    expect(proximaPosicaoDaPista([])).toBe(0);
+  });
+
+  it('vai depois da última, e não no número de faixas', () => {
+    // Uma faixa só, em 1: a contagem daria 1 — empatada com a que já existe.
+    expect(proximaPosicaoDaPista([1])).toBe(2);
+    // Um buraco no meio não puxa a faixa nova para trás.
+    expect(proximaPosicaoDaPista([0, 1, 5])).toBe(6);
+  });
+
+  it('uma posição que veio do banco como texto continua a ser um número', () => {
+    expect(proximaPosicaoDaPista(['2' as unknown as number])).toBe(3);
   });
 });
 

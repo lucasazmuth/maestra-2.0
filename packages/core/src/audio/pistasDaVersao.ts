@@ -23,6 +23,69 @@ export const ID_DA_MIX = 'mix';
 
 export const ehPistaDaMix = (id: string): boolean => id === ID_DA_MIX;
 
+/**
+ * Para que faixa vai um clipe arrastado — `undefined` quando fica onde está.
+ *
+ * `paraIndice` é onde a mão aponta, e pode vir de qualquer lado: na web sai do `y` do ponteiro
+ * sobre a pilha de faixas, no app sai de quantas alturas de faixa o dedo percorreu. É por isso
+ * que a regra mora aqui e não em nenhuma das duas — o gesto é diferente, a decisão é a mesma.
+ *
+ * Três coisas que ela decide, e cada uma existe por um motivo:
+ *
+ *  • ARREDONDA E TRAVA no que existe. Sem o limite, arrastar para baixo da última faixa dava um
+ *    índice que não existe e o clipe desaparecia da montagem até ao recarregamento seguinte.
+ *  • A MIX NÃO SAI NEM RECEBE. Ela é a SOMA das camadas, montada na hora, e não tem linha no
+ *    banco: mover um clipe para dentro dela seria escrever numa pista que não existe.
+ *  • MESMA FAIXA É `undefined`, e não o id dela. Quem chama distingue "não mudou de faixa" de
+ *    "mudou" sem ter de comparar nada — e é essa distinção que impede um toque de contar como
+ *    arrasto.
+ */
+export const pistaAlvoDoArrasto = (
+  pistas: { id: string }[],
+  deIndice: number,
+  paraIndice: number,
+): string | undefined => {
+  const origem = pistas[deIndice];
+  if (!origem || ehPistaDaMix(origem.id)) return undefined;
+  const alvo = pistas[Math.max(0, Math.min(Math.round(paraIndice), pistas.length - 1))];
+  if (!alvo || alvo.id === origem.id || ehPistaDaMix(alvo.id)) return undefined;
+  return alvo.id;
+};
+
+/**
+ * Em que lugar entra uma faixa nova: depois da última.
+ *
+ * ⚠️ A PRÓXIMA POSIÇÃO, e não a CONTAGEM das faixas. As duas dão o mesmo número enquanto as
+ * posições forem 0, 1, 2… — e deixam de dar assim que uma gravação antiga tem a primeira faixa
+ * em 1, ou assim que alguém apaga uma do meio. Aí a faixa nova nasce empatada com uma que já
+ * existe, e a ordem da coluna passa a ser decidida pelo desempate da data de criação: duas
+ * telas, dois momentos, duas ordens possíveis para a mesma montagem.
+ */
+export const proximaPosicaoDaPista = (posicoes: number[]): number =>
+  posicoes.reduce((maior, p) => Math.max(maior, Number(p) || 0), -1) + 1;
+
+/** Como se chama uma faixa que nasce vazia, antes de alguém lhe pôr um nome. */
+export const PREFIXO_DA_PISTA = 'Faixa';
+
+/**
+ * O nome de uma faixa nova: o primeiro `Faixa N` que ainda não está em uso.
+ *
+ * ⚠️ O PRIMEIRO LIVRE, e não o total mais um. Com quatro faixas e a segunda apagada, "total +
+ * 1" dava `Faixa 4` — que já existia — e a coluna ficava com duas faixas do mesmo nome, que é
+ * a forma mais barata de alguém calar a errada.
+ *
+ * Só conta os nomes automáticos: quem baptizou uma faixa de "Voz" não fica a dever um número.
+ */
+export const nomeDaPistaNova = (nomes: string[]): string => {
+  const usados = new Set(nomes
+    .map((nome) => new RegExp(`^${PREFIXO_DA_PISTA} (\\d+)$`).exec(nome.trim())?.[1])
+    .filter((n): n is string => !!n)
+    .map(Number));
+  let n = 1;
+  while (usados.has(n)) n += 1;
+  return `${PREFIXO_DA_PISTA} ${n}`;
+};
+
 const porPosicao = <T extends { position?: number; created_at?: string }>(a: T, b: T) =>
   (a.position ?? 0) - (b.position ?? 0)
   || String(a.created_at ?? '').localeCompare(String(b.created_at ?? ''));

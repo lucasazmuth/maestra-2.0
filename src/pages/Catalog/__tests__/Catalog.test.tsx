@@ -12,6 +12,14 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import type { CatalogItem } from '@maestra/core/interfaces/maestra';
 
+// ⚠️ ESTE FICHEIRO PRECISA DE MAIS DO QUE OS 5 s DE OMISSÃO, e não é lentidão a esconder um
+// defeito: cada caso monta a página do catálogo inteira com dez músicas, e o mais pesado leva
+// 4,3 s SOZINHO nesta máquina. Com a suíte toda a correr em paralelo, o que sobra desse
+// orçamento é ruído — e a partir de certo ponto um caso falhava por um segundo de diferença na
+// carga da máquina, sem nada ter mudado no produto. Um teste que muda de resultado conforme o
+// que corre ao lado não diz nada sobre o código.
+jest.setTimeout(20000);
+
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
 // Mock useArtist hook

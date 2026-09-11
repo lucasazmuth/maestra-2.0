@@ -29,6 +29,7 @@ const mockGravarFicha = jest.fn();
 const mockGravarFixo = jest.fn();
 const mockNovoArquivo = jest.fn();
 const mockCriarPista = jest.fn();
+const mockCriarFaixa = jest.fn();
 const mockMarcarPista = jest.fn();
 const mockAtualizarFaixa = jest.fn();
 const mockConversa = jest.fn((..._a: unknown[]): Promise<unknown[]> => Promise.resolve([]));
@@ -49,7 +50,7 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   updateVersionFile: jest.fn(),
   // ⚠️ A PISTA DA MONTAGEM É UMA FAIXA: renomear e o volume escrevem em `catalog_tracks`.
   updateTrack: (...a: unknown[]) => mockAtualizarFaixa(...a),
-  createTrack: jest.fn(),
+  createTrack: (...a: unknown[]) => mockCriarFaixa(...a),
   reorderVersionFiles: jest.fn(),
   deleteVersionFile: jest.fn(),
   listVersionComments: (...a: unknown[]) => mockComentarios(...a),
@@ -394,6 +395,30 @@ describe('espaço jam', () => {
   // linha fica no banco até a sessão fechar, e é isso que dá à seta do desfazer alguma coisa
   // para onde voltar. Sem isto, remover um clipe no aparelho seria definitivo enquanto na web é
   // reversível — a mesma ação com dois significados, conforme o aparelho.
+  // ⚠️ "+ ADICIONAR FAIXA" PEDIA UM FICHEIRO, e era a coisa errada: não havia como preparar a
+  // montagem — voz, guitarra, bateria — antes de ter o áudio de cada uma, e quem só queria mais
+  // uma linha para largar um clipe tinha de arranjar um ficheiro primeiro.
+  it('adicionar faixa cria a faixa vazia, sem pedir áudio nenhum', async () => {
+    mockCriarFaixa.mockResolvedValue({ id: 't-2', version_id: 'v-1', name: 'Faixa 1' });
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    fireEvent.press(tela.getByLabelText('Adicionar faixa'));
+
+    await waitFor(() => expect(mockCriarFaixa).toHaveBeenCalledTimes(1));
+    // `Faixa 1`, e não `Faixa 2`: a que já lá está chama-se "Voz", e quem baptizou uma faixa
+    // não fica a dever um número.
+    expect(mockCriarFaixa.mock.calls[0][0]).toMatchObject({
+      version_id: 'v-1', name: 'Faixa 1', position: 1, gain: 1, muted: false,
+    });
+    // ⚠️ E NENHUM SELETOR DE FICHEIROS SE ABRE. Encher a faixa é o outro botão, o da própria
+    // faixa — e é ele que continua a pedir o áudio.
+    expect(escolherAudio).not.toHaveBeenCalled();
+  });
+
   // ⚠️ O CLIPE DIZ QUE FICHEIRO TOCA, escrito no canto — é o rótulo que a web sempre teve e
   // que aqui não existia: o canto ficava vazio, e a diferença era uma daquelas que ninguém vê
   // até precisar de distinguir a voz da dobra por cima de duas ondas parecidas.

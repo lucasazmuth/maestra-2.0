@@ -1,7 +1,10 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { ID_DA_MIX, NOME_DA_MIX, montagemDaVersao, pistasDaGravacao } from '@maestra/core/audio/pistasDaVersao';
+import {
+  ID_DA_MIX, NOME_DA_MIX, montagemDaVersao, nomeDaPistaNova, pistasDaGravacao,
+  proximaPosicaoDaPista,
+} from '@maestra/core/audio/pistasDaVersao';
 import {
   HISTORICO_VAZIO, desfazer as desfazerPasso, podeDesfazer, podeRefazer,
   refazer as refazerPasso, registar, rotuloDaSeta,
@@ -399,7 +402,14 @@ const ProjectSpace: FC = () => {
         // e ninguém saberia porquê. Cancelá-la é seguro: o valor que ela levava é exatamente o
         // que esta linha está a substituir.
         esquecer(`clipe:${passo.clipeId}`);
-        await catalogDb.updateClip(passo.clipeId, { start_seconds: voltando ? passo.de : passo.para });
+        await catalogDb.updateClip(passo.clipeId, {
+          start_seconds: voltando ? passo.de : passo.para,
+          // A pista só entra quando o arrasto trocou de faixa. Sem isto, desfazer punha o clipe
+          // no segundo certo da faixa errada — onde ele nunca esteve.
+          ...(passo.dePista && passo.paraPista
+            ? { track_id: voltando ? passo.dePista : passo.paraPista }
+            : {}),
+        });
         break;
       case 'apagarClipe':
         await (voltando ? catalogDb.restaurarClipe : catalogDb.marcarClipeApagado)(passo.clipeId);
@@ -490,6 +500,33 @@ const ProjectSpace: FC = () => {
           clips: (t.clips || []).map((c) => (c.id === clipeId ? { ...c, ...parte } : c)),
         })),
       })),
+    } : atual));
+
+  /**
+   * Tira o clipe da faixa onde está e põe-no noutra, sem ir ao banco.
+   *
+   * ⚠️ É UMA MUDANÇA e não duas: procurar o clipe, tirá-lo e acrescentá-lo na mesma passagem.
+   * Feito em dois `setProject`, o render do meio via uma montagem sem o clipe em lado nenhum —
+   * e a mesa, que carrega o que vê, descartava o buffer e voltava a descodificá-lo a cada
+   * linha que a mão atravessasse.
+   */
+  const moverClipeDePista = (clipeId: string, pistaId: string) =>
+    setProject((atual) => (atual ? {
+      ...atual,
+      versions: (atual.versions || []).map((v) => {
+        const clipe = (v.tracks || [])
+          .flatMap((t) => t.clips || []).find((c) => c.id === clipeId);
+        if (!clipe || clipe.track_id === pistaId) return v;
+        return {
+          ...v,
+          tracks: (v.tracks || []).map((t) => ({
+            ...t,
+            clips: t.id === pistaId
+              ? [...(t.clips || []).filter((c) => c.id !== clipeId), { ...clipe, track_id: pistaId }]
+              : (t.clips || []).filter((c) => c.id !== clipeId),
+          })),
+        };
+      }),
     } : atual));
 
   /** Um relógio por alvo: mexer em dois clipes seguidos não pode cancelar a gravação do primeiro. */
@@ -866,11 +903,54 @@ const ProjectSpace: FC = () => {
 
     // `de` só vem quando a mão LARGOU: durante o arrasto isto é chamado a cada pixel, e um
     // passo por pixel encheria a pilha com cinquenta versões do mesmo gesto.
-    aoMoverClipe: (clipeId, inicio, de) => {
+    aoMoverClipe: (clipeId, inicio, de, pista) => {
       sujo.current = true;
       mudarClipeLocal(clipeId, { start_seconds: inicio });
-      if (de !== undefined) anotar({ tipo: 'mover', clipeId, de, para: inicio });
-      adiar(`clipe:${clipeId}`, () => catalogDb.updateClip(clipeId, { start_seconds: inicio }));
+      if (pista) moverClipeDePista(clipeId, pista.para);
+      if (de !== undefined) {
+        anotar({
+          tipo: 'mover', clipeId, de, para: inicio,
+          ...(pista?.de ? { dePista: pista.de, paraPista: pista.para } : {}),
+        });
+      }
+      adiar(`clipe:${clipeId}`, () => catalogDb.updateClip(clipeId, {
+        start_seconds: inicio,
+        ...(pista ? { track_id: pista.para } : {}),
+      }));
+    },
+
+    // ⚠️ NASCE VAZIA, e é esse o ponto: preparar a montagem — voz, guitarra, bateria — antes de
+    // ter o áudio de cada uma. O ficheiro entra depois, pelo botão de enviar da própria faixa.
+    aoCriarPista: () => {
+      if (!open || !podeEditar) return;
+      if (pistas.length >= MAXIMO_DE_PISTAS) {
+        message.warning(`Uma gravação leva no máximo ${MAXIMO_DE_PISTAS} faixas.`);
+        return;
+      }
+      sujo.current = true;
+      setSaveState('salvando');
+      void (async () => {
+        try {
+          // ⚠️ A MIX PRIMEIRO, se a gravação nunca foi montada. Sem isto, a primeira faixa
+          // criada à mão fazia a Mix sintetizada sair de cena — ela só existe enquanto não há
+          // pistas nenhumas — e o áudio da gravação desaparecia da linha do tempo.
+          if (porMontar) await montarAMix();
+          const nascida = await catalogDb.createTrack({
+            version_id: open.id,
+            name: nomeDaPistaNova(pistas.map((p) => p.name)),
+            position: proximaPosicaoDaPista(pistas.map((p) => p.position)),
+            gain: 1,
+            muted: false,
+            color_index: pistas.length % 6,
+          });
+          anotar({ tipo: 'acrescentarPistas', pistaIds: [nascida.id] });
+          await refresh();
+          setSaveState('salvo');
+        } catch {
+          setSaveState('erro');
+          message.error('Não consegui criar a faixa');
+        }
+      })();
     },
 
     // ⚠️ Cortar não toca no ficheiro: o clipe da esquerda encolhe, e nasce um da direita sobre

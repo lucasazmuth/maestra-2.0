@@ -16,6 +16,7 @@ import { FaderEmPe } from './FaderEmPe';
 import {
   encaixeDaGrade, gradeDoCompasso, marcasDaRegua, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
+import { pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
@@ -95,11 +96,26 @@ export interface AcoesDoEditor {
   /** `pistaAlvo` vazio cria uma pista nova para cada ficheiro. */
   aoAdicionarArquivos: (arquivos: File[], inicio: number, pistaAlvo?: string) => void;
   /**
+   * Uma faixa VAZIA, sem áudio nenhum.
+   *
+   * ⚠️ ELA NÃO PEDE UM FICHEIRO, e é essa a diferença. "+ Adicionar faixa" abria o seletor de
+   * ficheiros: não havia como preparar a montagem — voz, guitarra, bateria — antes de ter o
+   * áudio de cada uma, e quem queria só mais uma linha para largar um clipe tinha de arranjar
+   * um ficheiro primeiro. Encher a faixa é o outro botão, o da própria faixa.
+   */
+  aoCriarPista: () => void;
+  /**
    * `de` só chega quando a mão LARGOU, e é o que o desfazer precisa: durante o arrasto isto é
    * chamado a cada pixel, e um passo por pixel encheria a pilha com dezenas de versões do
    * mesmo gesto.
+   *
+   * `pista` chega quando o arrasto saiu da faixa onde começou — `para` durante o gesto (é o
+   * que faz o clipe seguir a mão de linha em linha) e `de` também no fim, para a seta saber
+   * de onde ele veio.
    */
-  aoMoverClipe: (clipeId: string, inicio: number, de?: number) => void;
+  aoMoverClipe: (
+    clipeId: string, inicio: number, de?: number, pista?: { para: string; de?: string },
+  ) => void;
   aoCortarClipe: (clipeId: string, emSegundo: number) => void;
   aoApagarClipe: (clipeId: string) => void;
   aoMudarPista: (pistaId: string, parte: Partial<CatalogTrack>) => void;
@@ -191,10 +207,11 @@ export const EditorDaGravacao: FC<{
   // "Adicionar pista" não fazia absolutamente nada.
   //
   // Um componente não deve alcançar dentro de outro por texto de rótulo. Aqui o seletor é
-  // nosso, e serve os dois gestos: pista NOVA (alvo nulo) e ficheiro numa pista que já existe.
+  // nosso, e serve o gesto que sobrou: pôr um ficheiro numa faixa que já existe. Criar a faixa
+  // deixou de passar por aqui — ela nasce vazia, e o ficheiro vem depois.
   const seletor = useRef<HTMLInputElement>(null);
   const pistaDoEnvio = useRef<string | null>(null);
-  const escolherPara = (pistaId: string | null) => {
+  const escolherPara = (pistaId: string) => {
     pistaDoEnvio.current = pistaId;
     seletor.current?.click();
   };
@@ -240,8 +257,12 @@ export const EditorDaGravacao: FC<{
 
   const linha = useRef<HTMLDivElement>(null);
   const rolagem = useRef<HTMLDivElement>(null);
-  /** O clipe que a mão tem agora, e onde ele estava quando a mão o pegou. */
-  const arrasto = useRef<{ clipeId: string; deslocamentoX: number; inicio: number } | null>(null);
+  /** O clipe que a mão tem agora, e onde ele estava quando a mão o pegou — tempo e pista. */
+  const arrasto = useRef<
+    { clipeId: string; deslocamentoX: number; inicio: number; pistaId: string } | null
+  >(null);
+  /** A pilha de faixas, para saber sobre qual delas a mão está. */
+  const pilhaDasPistas = useRef<HTMLDivElement>(null);
   const agulhaPresa = useRef(false);
   /** Quem mexeu no zoom manda: o encaixe automático nunca volta a mexer nele. */
   const zoomMexido = useRef(false);
@@ -327,13 +348,37 @@ export const EditorDaGravacao: FC<{
     return Math.max(0, Math.min(x / escala, duracao));
   };
 
+  /**
+   * A faixa para onde o clipe arrastado vai — `undefined` se ficar na dele.
+   *
+   * ⚠️ O ÍNDICE É MEDIDO NA PILHA, e não contado pela posição do rato na página: a montagem
+   * rola, o cabeçalho é `sticky` e a altura da faixa muda com o tamanho do ecrã. O `y` relativo
+   * à pilha dividido pela altura de uma faixa é a linha, e nada disso precisa de saber onde a
+   * janela está. O resto da decisão — travar no que existe, deixar a Mix de fora — é do núcleo,
+   * e é a mesma no app, onde o gesto é outro.
+   */
+  const pistaSobAMao = (evento: React.PointerEvent, deId: string): string | undefined => {
+    const pilha = pilhaDasPistas.current;
+    if (!pilha) return undefined;
+    const linhaSobAMao = (evento.clientY - pilha.getBoundingClientRect().top) / alturaDaPista;
+    return pistaAlvoDoArrasto(
+      pistas,
+      pistas.findIndex((p) => p.id === deId),
+      Math.floor(linhaSobAMao),
+    );
+  };
+
   const aoMover = (evento: React.PointerEvent) => {
     if (agulhaPresa.current) { transporte.irPara(segundoDoEvento(evento)); return; }
     const puxado = arrasto.current;
     if (!puxado) return;
     // O encaixe é ao LARGAR, não durante: encaixar a cada pixel faz o clipe saltar debaixo do
     // dedo, e a pessoa deixa de saber onde ele vai cair.
-    acoes.aoMoverClipe(puxado.clipeId, Math.max(0, segundoDoEvento(evento) - puxado.deslocamentoX / escala));
+    const inicio = Math.max(0, segundoDoEvento(evento) - puxado.deslocamentoX / escala);
+    // A faixa, essa, muda DURANTE: é o que faz o clipe seguir a mão de linha em linha, e sem
+    // isso arrastar para cima ou para baixo não mostrava nada até largar.
+    const alvo = pistaSobAMao(evento, puxado.pistaId);
+    acoes.aoMoverClipe(puxado.clipeId, inicio, undefined, alvo ? { para: alvo } : undefined);
   };
 
   const aoLargar = (evento: React.PointerEvent) => {
@@ -343,13 +388,18 @@ export const EditorDaGravacao: FC<{
     arrasto.current = null;
     const bruto = segundoDoEvento(evento) - puxado.deslocamentoX / escala;
     const destino = Math.max(0, Math.round(bruto / passoDoEncaixe) * passoDoEncaixe);
+    const alvo = pistaSobAMao(evento, puxado.pistaId);
+    const trocouDePista = !!alvo;
     // ⚠️ UM TOQUE NÃO É UM ARRASTO, e mandava gravar na mesma. Duas consequências, as duas
     // más: um clipe que estivesse fora da grelha (por ter sido posto antes de haver andamento)
     // saltava para o tempo mais próximo só por ter sido SELECIONADO; e a escrita agendada por
     // esse falso movimento chegava depois de quem carregasse em REMOVER, a um clipe que já não
     // existia — daí o "Falha ao salvar" logo a seguir a apagar com sucesso.
-    if (Math.abs(destino - puxado.inicio) < 0.001) return;
-    acoes.aoMoverClipe(puxado.clipeId, destino, puxado.inicio);
+    if (!trocouDePista && Math.abs(destino - puxado.inicio) < 0.001) return;
+    acoes.aoMoverClipe(
+      puxado.clipeId, destino, puxado.inicio,
+      alvo ? { para: alvo, de: puxado.pistaId } : undefined,
+    );
   };
 
   const escolherArquivos = (arquivos: File[], inicio: number, pistaAlvo?: string) => {
@@ -1021,10 +1071,14 @@ export const EditorDaGravacao: FC<{
 
                 {pistas.map(cabecalhoDaPista)}
 
+                {/* ⚠️ CRIA A FAIXA, E NÃO PEDE UM FICHEIRO. Este botão abria o seletor de
+                    ficheiros, e com isso não havia como preparar a montagem — voz, guitarra,
+                    bateria — antes de ter o áudio de cada uma. Encher a faixa é o outro botão,
+                    o de enviar, que vive na própria faixa. */}
                 {podeEditar && (
                   <button
                     type='button'
-                    onClick={() => escolherPara(null)}
+                    onClick={() => acoes.aoCriarPista()}
                     aria-label='Adicionar faixa'
                     style={{
                       width: '100%', height: 46,
@@ -1121,7 +1175,7 @@ export const EditorDaGravacao: FC<{
                   )}
                 </div>
 
-                <div style={{ position: 'relative', width: largura }}>
+                <div ref={pilhaDasPistas} style={{ position: 'relative', width: largura }}>
                   {pistas.map((faixa, indice) => {
                     const cor = corDaPista(faixa.color_index ?? indice);
                     return (
@@ -1177,6 +1231,7 @@ export const EditorDaGravacao: FC<{
                                 clipeId: clipe.id,
                                 deslocamentoX: x - (Number(clipe.start_seconds) || 0) * escala,
                                 inicio: Number(clipe.start_seconds) || 0,
+                                pistaId: faixa.id,
                               };
                             }}
                             aoCortar={() => { acoes.aoCortarClipe(clipe.id, agulha); setSelecionado(null); }}

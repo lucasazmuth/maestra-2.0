@@ -14,7 +14,9 @@ import {
   refazer as refazerPasso, registar, rotuloDaSeta,
   type Historico, type PassoDaMontagem,
 } from '@maestra/core/audio/historico';
-import { ehPistaDaMix, montagemDaVersao } from '@maestra/core/audio/pistasDaVersao';
+import {
+  ehPistaDaMix, montagemDaVersao, nomeDaPistaNova, proximaPosicaoDaPista,
+} from '@maestra/core/audio/pistasDaVersao';
 import { ZOOM_MAXIMO, ZOOM_MINIMO } from '@maestra/core/audio/grade';
 import { bytesDoMp3, caminhoDaGuia } from '@maestra/core/audio/exportar';
 import { useMesa } from '@maestra/core/audio/useMesa';
@@ -454,10 +456,29 @@ export default function EspacoJam() {
         // A escrita adiada do arrasto ia gravar a posição NOVA; cancelá-la é seguro, porque o
         // valor que ela levava é exatamente o que esta linha está a substituir.
         esquecerClipe(passo.clipeId);
-        await catalogo.updateClip(passo.clipeId, { start_seconds: voltando ? passo.de : passo.para });
+        await catalogo.updateClip(passo.clipeId, {
+          start_seconds: voltando ? passo.de : passo.para,
+          // A pista só entra quando o arrasto trocou de faixa: sem isto, desfazer punha o clipe
+          // no segundo certo da faixa errada — onde ele nunca esteve.
+          ...(passo.dePista && passo.paraPista
+            ? { track_id: voltando ? passo.dePista : passo.paraPista }
+            : {}),
+        });
         break;
       case 'apagarClipe':
         await (voltando ? catalogo.restaurarClipe : catalogo.marcarClipeApagado)(passo.clipeId);
+        break;
+      // ⚠️ ESTES DOIS NÃO EXISTIAM AQUI, e a seta mentia: apagar uma faixa era anotado e o
+      // desfazer não fazia nada — o botão acendia, dizia "Desfazer: apagar a faixa" e o clique
+      // não devolvia coisa nenhuma. Criar uma faixa vazia passou a ser anotado também, e
+      // precisa do mesmo caminho de volta.
+      case 'apagarPista':
+        await (voltando ? catalogo.restaurarPista : catalogo.marcarPistaApagada)(passo.pistaId);
+        break;
+      case 'acrescentarPistas':
+        await Promise.all(passo.pistaIds.map(
+          (id) => (voltando ? catalogo.marcarPistaApagada : catalogo.restaurarPista)(id),
+        ));
         break;
       case 'cortar':
         await catalogo.updateClip(passo.clipeId, {
@@ -491,14 +512,58 @@ export default function EspacoJam() {
     }
   };
 
-  /** `de` só vem quando a mão largou: durante o arrasto isto é chamado a cada pixel. */
-  const moverClipe = (clipeId: string, inicio: number, de?: number) => {
+  /**
+   * Tira o clipe da faixa onde está e põe-no noutra, sem ir ao banco.
+   *
+   * ⚠️ UMA MUDANÇA E NÃO DUAS: tirar e pôr na mesma passagem. Em dois `setProjeto`, o render do
+   * meio via uma montagem sem o clipe em lado nenhum — e a mesa, que carrega o que vê,
+   * descartava o buffer e voltava a descodificá-lo a cada linha que o dedo atravessasse.
+   */
+  const moverClipeDePista = (clipeId: string, pistaId: string) => setProjeto((atual) => (
+    atual ? {
+      ...atual,
+      versions: (atual.versions ?? []).map((v) => {
+        const clipe = (v.tracks ?? []).flatMap((t) => t.clips ?? [])
+          .find((c) => c.id === clipeId);
+        if (!clipe || clipe.track_id === pistaId) return v;
+        return {
+          ...v,
+          tracks: (v.tracks ?? []).map((t) => ({
+            ...t,
+            clips: t.id === pistaId
+              ? [...(t.clips ?? []).filter((c) => c.id !== clipeId), { ...clipe, track_id: pistaId }]
+              : (t.clips ?? []).filter((c) => c.id !== clipeId),
+          })),
+        };
+      }),
+    } : atual
+  ));
+
+  /**
+   * `de` só vem quando a mão largou: durante o arrasto isto é chamado a cada pixel.
+   *
+   * `pista` chega quando o dedo saiu da faixa onde o arrasto começou — `para` durante o gesto,
+   * que é o que faz o clipe seguir a mão de linha em linha, e `de` também no fim, para a seta
+   * saber de onde ele veio.
+   */
+  const moverClipe = (
+    clipeId: string, inicio: number, de?: number, pista?: { para: string; de?: string },
+  ) => {
     sujo.current = true;
     patcharClipe(clipeId, { start_seconds: inicio });
-    if (de !== undefined) anotar({ tipo: 'mover', clipeId, de, para: inicio });
+    if (pista) moverClipeDePista(clipeId, pista.para);
+    if (de !== undefined) {
+      anotar({
+        tipo: 'mover', clipeId, de, para: inicio,
+        ...(pista?.de ? { dePista: pista.de, paraPista: pista.para } : {}),
+      });
+    }
     clearTimeout(relogiosDoClipe.current[clipeId]);
     relogiosDoClipe.current[clipeId] = setTimeout(() => {
-      catalogo.updateClip(clipeId, { start_seconds: inicio }).catch(() => setSelo('erro'));
+      catalogo.updateClip(clipeId, {
+        start_seconds: inicio,
+        ...(pista ? { track_id: pista.para } : {}),
+      }).catch(() => setSelo('erro'));
     }, ESPERA);
   };
 
@@ -713,11 +778,39 @@ export default function EspacoJam() {
     }
   };
 
-  /** O "+ Adicionar faixa" da coluna: um ficheiro, uma faixa nova. */
+  /**
+   * O "+ Adicionar faixa" da coluna: uma faixa VAZIA, sem áudio nenhum.
+   *
+   * ⚠️ ELE PEDIA UM FICHEIRO, e era essa a coisa errada. Não havia como preparar a montagem —
+   * voz, guitarra, bateria — antes de ter o áudio de cada uma, e quem só queria mais uma linha
+   * para largar um clipe tinha de arranjar um ficheiro primeiro. Encher a faixa é o outro
+   * botão, o de enviar, que vive na própria faixa.
+   */
   const adicionarFaixa = async () => {
-    if (!podeEditar) return;
-    const escolhido = await escolherAudio();
-    if (escolhido) await enviarArquivos([escolhido]);
+    if (!aberta || !podeEditar) return;
+    if (pistas.length >= MAXIMO_DE_PISTAS) {
+      Alert.alert('Faixas a mais', `Uma gravação leva no máximo ${MAXIMO_DE_PISTAS} faixas.`);
+      return;
+    }
+    sujo.current = true;
+    setSelo('salvando');
+    try {
+      // ⚠️ A MIX PRIMEIRO, se a gravação nunca foi montada. Ela só existe enquanto não há
+      // pistas nenhumas — e a primeira faixa criada à mão fá-la-ia sair de cena, levando o
+      // áudio da gravação com ela.
+      if (porMontar) await montarAMix();
+      const nascida = await catalogo.createTrack({
+        version_id: aberta.id,
+        name: nomeDaPistaNova(pistas.map((p) => p.nome)),
+        position: proximaPosicaoDaPista((aberta.tracks ?? []).map((t) => t.position)),
+        gain: 1,
+        muted: false,
+        color_index: pistas.length % 6,
+      });
+      anotar({ tipo: 'acrescentarPistas', pistaIds: [nascida.id] });
+      await buscar();
+      setSelo('salvo');
+    } catch { setSelo('erro'); }
   };
 
   /** O botão de enviar da FAIXA: um ficheiro só, direto para ela. */

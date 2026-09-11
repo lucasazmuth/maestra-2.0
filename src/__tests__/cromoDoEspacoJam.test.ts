@@ -555,16 +555,72 @@ describe('cromo do editor do Espaço JAM', () => {
     regras.forEach((regra) => expect(regra).not.toContain('--z-cartao'));
   });
 
-  // ⚠️ O EDITOR TEM O SEU PRÓPRIO SELETOR DE FICHEIROS. O "Adicionar pista" procurava o botão
-  // da BIBLIOTECA pelo `aria-label` e clicava nele por baixo do pano. Enquanto ela estava
+  // ⚠️ "+ ADICIONAR FAIXA" CRIA A FAIXA, E NÃO PEDE UM FICHEIRO. Ele abria o seletor, e com
+  // isso não havia como preparar a montagem — voz, guitarra, bateria — antes de ter o áudio de
+  // cada uma. Encher a faixa é o outro botão, o de enviar, que vive na própria faixa.
+  it('adicionar faixa cria a faixa vazia, e o ficheiro vem pelo botão da faixa', () => {
+    const corpo = semComentarios(editor);
+    const espaco = semComentarios(tela);
+
+    expect(corpo).toContain('onClick={() => acoes.aoCriarPista()}');
+    expect(corpo).not.toContain('escolherPara(null)');
+    // O seletor sobrou para o outro gesto: um ficheiro NUMA faixa que já existe.
+    expect(corpo).toContain('onClick={() => escolherPara(faixa.id)}');
+
+    // E a faixa nasce mesmo vazia: uma linha em `catalog_tracks` e nenhum clipe.
+    // ⚠️ LIDO DENTRO DA AÇÃO, e não no ficheiro inteiro: "montar a mix primeiro" também existe
+    // no ENVIO de ficheiros, e procurá-lo no ficheiro todo dava um teste que passava com a
+    // linha apagada daqui.
+    const aCriacao = espaco.slice(espaco.indexOf('aoCriarPista: () => {'));
+    const ateOFim = aCriacao.slice(0, aCriacao.indexOf('} catch {'));
+
+    expect(espaco).toContain('aoCriarPista: () => {');
+    expect(ateOFim).toContain('await catalogDb.createTrack({');
+    expect(ateOFim).toContain('name: nomeDaPistaNova(pistas.map((p) => p.name)),');
+    // ⚠️ A PRÓXIMA POSIÇÃO, e não a contagem: apanhado no produto, numa gravação cuja única
+    // faixa estava em `position: 1`. A faixa nova nasceu empatada com ela.
+    expect(ateOFim).toContain('position: proximaPosicaoDaPista(pistas.map((p) => p.position)),');
+    // ⚠️ A Mix primeiro, se a gravação nunca foi montada: ela só existe enquanto não há pistas
+    // nenhumas, e a primeira faixa à mão fá-la-ia sair de cena com o áudio dentro.
+    expect(ateOFim).toContain('if (porMontar) await montarAMix();');
+    expect(ateOFim.indexOf('montarAMix()')).toBeLessThan(ateOFim.indexOf('createTrack('));
+    // E o desfazer tem para onde voltar.
+    expect(ateOFim).toContain("anotar({ tipo: 'acrescentarPistas', pistaIds: [nascida.id] });");
+  });
+
+  // ⚠️ ARRASTAR UM CLIPE ENTRE FAIXAS NÃO EXISTIA: o arrasto só olhava para o eixo do tempo, e
+  // mover a voz da faixa errada para a certa obrigava a apagar o clipe e a enviar o ficheiro
+  // outra vez.
+  it('o clipe arrasta também para cima e para baixo, e a escrita leva a faixa', () => {
+    const corpo = semComentarios(editor);
+    const espaco = semComentarios(tela);
+
+    // O índice sai da PILHA, e não da posição do rato na página: a montagem rola e o cabeçalho
+    // é `sticky`. A decisão do resto é do núcleo, que é a mesma no app.
+    expect(corpo).toContain('const pilha = pilhaDasPistas.current;');
+    expect(corpo).toContain('pistaAlvoDoArrasto(');
+    // A faixa muda DURANTE o gesto: é o que faz o clipe seguir a mão de linha em linha.
+    expect(corpo).toContain('acoes.aoMoverClipe(puxado.clipeId, inicio, undefined, alvo ? { para: alvo } : undefined);');
+    // E quem o pegou lembra-se da faixa de onde ele saiu.
+    expect(corpo).toContain('pistaId: faixa.id,');
+
+    // A tela tira o clipe de uma faixa e põe-no noutra numa passagem só: em dois `setProject`,
+    // o render do meio via uma montagem sem o clipe, e a mesa descartava o buffer.
+    expect(espaco).toContain('const moverClipeDePista = (clipeId: string, pistaId: string) =>');
+    expect(espaco).toContain('...(pista ? { track_id: pista.para } : {}),');
+    // E o desfazer devolve o clipe à faixa de onde veio, e não só ao segundo.
+    expect(espaco).toContain('? { track_id: voltando ? passo.dePista : passo.paraPista }');
+  });
+
+  // ⚠️ O EDITOR TEM O SEU PRÓPRIO SELETOR DE FICHEIROS. O envio para uma faixa procurava o
+  // botão da BIBLIOTECA pelo `aria-label` e clicava nele por baixo do pano. Enquanto ela estava
   // sempre aberta aquilo passou; desde que ela recolhe, o botão deixa de existir no DOM, o
-  // `?.` engole a chamada, e carregar em "Adicionar pista" não fazia absolutamente nada.
-  it('adicionar pista abre o seletor do próprio editor', () => {
+  // `?.` engole a chamada, e carregar nele não fazia absolutamente nada.
+  it('enviar para uma faixa abre o seletor do próprio editor', () => {
     const corpo = semComentarios(editor);
 
     // Nada de alcançar dentro de outro componente por texto de rótulo.
     expect(corpo).not.toContain('[aria-label="Escolher arquivos"]');
-    expect(corpo).toContain("onClick={() => escolherPara(null)}");
     // O input vive FORA de qualquer painel que possa fechar.
     expect(corpo).toContain('ref={seletor}');
     expect(corpo).toContain("accept='.mp3,.wav,audio/mpeg,audio/wav'");
@@ -846,7 +902,9 @@ describe('cromo do editor do Espaço JAM', () => {
     const espaco = semComentarios(tela);
 
     // A raiz: só se grava a posição de um clipe que MUDOU de sítio.
-    expect(corpo).toContain('if (Math.abs(destino - puxado.inicio) < 0.001) return;');
+    expect(corpo).toContain(
+      'if (!trocouDePista && Math.abs(destino - puxado.inicio) < 0.001) return;',
+    );
     expect(corpo).toContain('inicio: Number(clipe.start_seconds) || 0,');
 
     // E o que já estava agendado morre com a linha que ele ia atualizar.
@@ -912,8 +970,8 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(ateOCatch.indexOf('await aplicarPasso')).toBeLessThan(ateOCatch.indexOf('setHistorico(saida.historico)'));
 
     // Um passo por GESTO, e não por pixel: o `de` só chega quando a mão largou.
-    expect(corpo).toContain('acoes.aoMoverClipe(puxado.clipeId, destino, puxado.inicio);');
-    expect(espaco).toContain("if (de !== undefined) anotar({ tipo: 'mover', clipeId, de, para: inicio });");
+    expect(corpo).toContain('acoes.aoMoverClipe(\n      puxado.clipeId, destino, puxado.inicio,');
+    expect(espaco).toContain("tipo: 'mover', clipeId, de, para: inicio,");
 
     // ⚠️ E o atalho não rouba o Ctrl+Z de quem está a escrever num campo.
     expect(corpo).toContain('alvo?.closest(\'input, textarea, [contenteditable="true"]\')');
