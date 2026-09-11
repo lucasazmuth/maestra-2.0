@@ -12,6 +12,7 @@ import { message } from 'antd';
 
 import useIsMobile from '../../../utils/isMobile';
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
+import { FaderEmPe } from './FaderEmPe';
 import {
   encaixeDaGrade, gradeDoCompasso, marcasDaRegua, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
@@ -1467,24 +1468,14 @@ const MesaDeCanais: FC<{
           </label>
 
           {/* O fader vertical: é a forma de uma mesa, e é o que deixa comparar seis níveis de
-              relance — deitados, seis linhas empilhadas não se comparam. */}
-          <input
-            type='range' min={0} max={100}
-            value={Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
-            onChange={(e) => acoes.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
-            disabled={!podeEditar}
-            aria-label={`Volume de ${faixa.name} na mesa`}
-            style={{
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              writingMode: 'vertical-lr' as React.CSSProperties['writingMode'],
-              direction: 'rtl', width: 28,
-              // Curso longo no telemóvel: é o dedo que ajusta, e 150 px dão saltos de 4 % por
-              // pixel. Esticado, o mesmo gesto fica fino.
-              height: noCelular ? undefined : 150,
-              flex: noCelular ? '1 1 auto' : undefined,
-              minHeight: noCelular ? 180 : undefined,
-              accentColor: cor, cursor: 'pointer',
-            }}
+              relance — deitados, seis linhas empilhadas não se comparam. O desenho é o do app;
+              ver `FaderEmPe`. */}
+          <FaderEmPe
+            valor={daMesa?.ganho ?? Number(faixa.gain ?? 1)}
+            cor={cor}
+            rotulo={`Volume de ${faixa.name} na mesa`}
+            travado={!podeEditar}
+            aoMudar={(v) => acoes.aoMudarPista(faixa.id, { gain: v })}
           />
 
           <span style={{ fontSize: 11, color: DS.color.textoApoio, fontFamily: DS.font.mono }}>

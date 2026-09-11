@@ -185,14 +185,20 @@ describe('cromo do editor do Espaço JAM', () => {
     // pintar. (É a segunda vez que este teste tropeça nisso.)
     expect(semComentarios(icones)).not.toContain('#898989');
     expect(editor).toContain('MesaDeCanais');
-    expect(editor).toContain("writingMode: 'vertical-lr'");
+    // ⚠️ O FADER EM PÉ É DESENHADO AQUI, e não um `<input type=range>` deitado de lado. O
+    // trilho nativo vem creme-claro no meio de uma tela quase preta, com a espessura e o botão
+    // que cada navegador decide — num canal de 116 px era uma barra pálida a atravessar o
+    // cartão de cima a baixo. O desenho é o do app: trilho escuro de 6, preenchido de baixo
+    // para cima na cor da faixa.
+    expect(editor).toContain('<FaderEmPe');
+    expect(editor).not.toContain("writingMode: 'vertical-lr'");
   });
 
   // O clipe é o que separa um editor de uma mesa: ele mora num INSTANTE.
   it('o clipe é posicionado no tempo, corta na agulha e some com clique duplo', () => {
     expect(clipe).toContain('inicio * escala');
     expect(clipe).toContain('agulha > inicio');
-    expect(clipe).toContain('DIVIDIR');
+    expect(clipe).toContain("aria-label='Dividir o clipe na agulha'");
     expect(clipe).toContain('onDoubleClick');
   });
 

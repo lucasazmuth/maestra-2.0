@@ -1700,13 +1700,17 @@ const estilos = StyleSheet.create({
     backgroundColor: COR_EDITOR.botaoRedondo,
     borderWidth: 1, borderColor: COR_EDITOR.vazioContorno,
   },
+  // ⚠️ NA MESMA FILA DOS OUTROS, e à esquerda deles — o quarto lugar do passo. Estava no canto
+  // oposto: quem carrega em algo olha para o sítio onde acabou de carregar, e o "Salvando…"
+  // aparecia do outro lado da tela, longe do gesto que o provocou. É onde a web o põe.
   selo: {
-    position: 'absolute', left: 12,
-    paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999,
-    backgroundColor: COR_EDITOR.cabecaDaVersao,
-    borderWidth: 1, borderColor: COR_EDITOR.fio,
+    position: 'absolute', right: PASSO_DOS_FLUTUANTES * 3 + 18,
+    height: 30, justifyContent: 'center',
+    paddingHorizontal: 12, borderRadius: 15,
+    backgroundColor: COR_EDITOR.botaoRedondo,
+    borderWidth: 1, borderColor: COR_EDITOR.vazioContorno,
   },
-  seloTexto: { fontSize: 12, fontWeight: '700', color: COR_EDITOR.apoio },
+  seloTexto: { fontSize: 11, fontWeight: '700', color: COR_EDITOR.apoio },
   letra: {
     minHeight: 220, maxHeight: 320, textAlignVertical: 'top',
     fontSize: 13, lineHeight: 20, color: COR_EDITOR.texto,
