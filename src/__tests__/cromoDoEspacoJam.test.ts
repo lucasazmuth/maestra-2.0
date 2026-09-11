@@ -202,12 +202,15 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(casca).toContain('.selo');
     expect(editor).toContain('casca.selo');
 
-    // Na mesma fila dos outros dois flutuantes, e à esquerda deles.
+    // ⚠️ A FILA TEM UM PASSO SÓ: 30 de círculo mais 8 de folga — a mesma folga que separa as
+    // duas setas na vertical. Com as posições escolhidas uma a uma (18, 62, 106) os intervalos
+    // saíam 14 e 14 entre uns e 8 entre outros, e o olho vê o desencontro antes de o medir.
     const fila = (classe: string) =>
       Number(casca.match(new RegExp(`\\.${classe}\\s*\\{[^}]*?right:\\s*(\\d+)px`))?.[1]);
     expect(fila('ajuda')).toBe(18);
-    expect(fila('letra')).toBe(62);
-    expect(fila('selo')).toBe(106);
+    expect(fila('letra')).toBe(56);
+    expect(fila('conversa')).toBe(94);
+    expect(fila('selo')).toBe(132);
 
     // E o JSX do cabeçalho não escreve mais nenhum dos três textos naquele canto. O que fica
     // é o `title` do X ("Gerando a guia…"), que é a explicação de por que ele está travado —
@@ -249,7 +252,7 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(regra).toContain('gap:');
     // Ancorada pela direita: cresce para a esquerda, e a letra e o "?" não saem do lugar
     // quando o texto muda de comprimento.
-    expect(regra).toContain('right: 106px');
+    expect(regra).toContain('right: 132px');
     expect(regra).not.toMatch(/\bwidth:/);
   });
 

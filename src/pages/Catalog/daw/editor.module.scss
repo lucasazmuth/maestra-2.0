@@ -184,12 +184,33 @@ $camada-dos-flutuantes: 20;
     p { margin: 8px 0 0; }
     em { color: #e8e8ee; font-style: normal; font-weight: 600; }
   }
+
+  // ⚠️ NO TELEMÓVEL O BALÃO PRENDE-SE À TELA, e não ao botão que o abriu.
+  //
+  // Ancorado no botão, ele abre da direita para a esquerda — e o da conversa, que é o terceiro
+  // da fila e o mais largo, começava 124 px dentro da borda direita: num ecrã de 390 o lado
+  // esquerdo dele ficava 107 px FORA da tela, com o nome de quem escreveu cortado ao meio. Aqui
+  // ele encosta nas duas margens e a largura vem do que sobra.
+  @media (max-width: 767px) {
+    > div {
+      position: fixed;
+      right: 12px;
+      left: 12px;
+      width: auto;
+      // ⚠️ E O `bottom` TEM DE SER UM NÚMERO AQUI. Ancorado ao botão ele é `100% + 10`, que com
+      // `fixed` passa a contar a partir da JANELA — o balão saía dez pixéis acima do topo do
+      // ecrã, aberto e invisível. São 44 de rodapé, 12 de folga, 30 do botão e 10 de respiro.
+      bottom: 96px;
+    }
+  }
 }
 
 // O balão da letra: o mesmo gesto do "?", do outro lado do rodapé — e mais largo, porque um
 // verso quebrado a cada quatro palavras deixa de ser um verso.
 .letra {
-  right: 62px;
+  // ⚠️ O PASSO É 38: 30 de círculo mais 8 de folga, a MESMA que separa as duas setas na
+  // vertical. Estava em 62 (folga de 14), e a fila não parecia uma fila.
+  right: 56px;
 
   > div {
     width: 420px;
@@ -203,7 +224,7 @@ $camada-dos-flutuantes: 20;
 // NESTA versão" e morre com ela; a conversa é o fio do trabalho — combinar uma gravação, dizer
 // o que mudar, mandar um recado. Presa a uma versão, ficava espalhada por V1, V2 e V3.
 .conversa {
-  right: 106px;
+  right: 94px;
 
   > div {
     width: 380px;
@@ -228,7 +249,8 @@ $camada-dos-flutuantes: 20;
 // muda de comprimento.
 .selo {
   position: absolute;
-  right: 106px;
+  // O último da fila: 18 + 38 + 38 + 38. Ver o passo em `.letra`.
+  right: 132px;
   z-index: $camada-dos-flutuantes;
 
   height: 30px;

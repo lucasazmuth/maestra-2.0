@@ -1,5 +1,5 @@
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { FiMessageCircle, FiSend } from 'react-icons/fi';
+import { FiArrowUp } from 'react-icons/fi';
 
 import type { CatalogProjectMessage } from '@maestra/core/interfaces/maestra';
 import { supabase } from '@maestra/core/lib/supabase';
@@ -104,7 +104,9 @@ export const Conversa: FC<{
           <p style={{ margin: 0, fontSize: 12, color: DS.color.textoFraco }}>Carregando…</p>
         ) : mensagens.length === 0 ? (
           <div style={{ display: 'grid', justifyItems: 'center', gap: 6, padding: '20px 0' }}>
-            <FiMessageCircle size={22} color={DS.color.primaria} />
+            {/* ⚠️ SEM ÍCONE NO VAZIO: um balão de fala desenhado dentro de um balão de fala diz
+                outra vez o que o título já diz, e um pictograma no meio de um estado vazio é a
+                assinatura de tela gerada. */}
             <strong style={{ fontSize: 13, color: DS.color.texto }}>Ninguém falou ainda</strong>
             <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: DS.color.textoFraco, textAlign: 'center' }}>
               Aqui é a conversa da equipe sobre esta música — combinar uma gravação, dizer o que
@@ -149,7 +151,7 @@ export const Conversa: FC<{
 
       {podeFalar && (
         <div style={{
-          display: 'flex', alignItems: 'flex-end', gap: 8, padding: 10,
+          display: 'flex', alignItems: 'flex-end', gap: 8, padding: 16, paddingTop: 10,
           borderTop: `1px solid ${DS.color.borda}`, background: DS.color.bgPainel,
         }}>
           <textarea
@@ -163,11 +165,14 @@ export const Conversa: FC<{
             rows={1}
             placeholder='Escreva para a equipe…'
             aria-label='Mensagem para a equipe'
+            // ⚠️ AS MEDIDAS SÃO AS DA CONVERSA DA NYTA: pílula de 44 com recuo de 16, e o
+            // botão redondo do mesmo tamanho com a seta para cima. Um segundo desenho para o
+            // mesmo gesto faz quem usa os dois sentir a troca sem saber dizer o quê.
             style={{
-              flex: 1, minHeight: 36, maxHeight: 110, resize: 'none',
-              padding: '9px 10px', borderRadius: DS.raio.medio,
+              flex: 1, minHeight: 44, maxHeight: 120, resize: 'none',
+              padding: '11px 16px', borderRadius: 22,
               background: DS.color.bgCampo, border: `1px solid ${DS.color.borda}`,
-              color: DS.color.texto, fontSize: 13, outline: 'none',
+              color: DS.color.texto, fontSize: 14, outline: 'none',
               fontFamily: DS.font.display,
             }}
           />
@@ -177,14 +182,14 @@ export const Conversa: FC<{
             disabled={!texto.trim() || enviando}
             aria-label='Enviar mensagem'
             style={{
-              width: 36, height: 36, borderRadius: DS.raio.medio, flexShrink: 0,
+              width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
               display: 'grid', placeItems: 'center',
-              background: DS.color.primaria, border: 'none', color: '#fff',
-              opacity: !texto.trim() || enviando ? 0.4 : 1,
+              background: !texto.trim() || enviando ? DS.color.bordaForte : DS.color.primaria,
+              border: 'none', color: '#fff',
               cursor: !texto.trim() || enviando ? 'default' : 'pointer',
             }}
           >
-            <FiSend size={15} />
+            <FiArrowUp size={18} />
           </button>
         </div>
       )}

@@ -1441,7 +1441,7 @@ export default function EspacoJam() {
         rotulo="Letra"
         largura={300}
         bottom={margem.bottom + ALTURA_DO_RODAPE + 12}
-        right={62}
+        right={PASSO_DOS_FLUTUANTES + 18}
       >
         <TextInput
           style={estilos.letra}
@@ -1586,6 +1586,15 @@ const relogioCurto = (segundos: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
+/**
+ * De quanto em quanto os flutuantes do canto se repetem.
+ *
+ * ⚠️ UM PASSO SÓ, e daqui: são 30 pontos de círculo mais 8 de folga — a MESMA folga que separa
+ * as duas setas na vertical. Com as posições escritas à mão (18, 62, 100) os intervalos saíam
+ * 14 e 8, e a fila não parecia uma fila: o olho vê o desencontro antes de saber medi-lo.
+ */
+const PASSO_DOS_FLUTUANTES = 38;
+
 /** A altura do rodapé, de onde sai a posição dos flutuantes — para os dois não divergirem. */
 const ALTURA_DO_RODAPE = 48;
 const ALTURA_DO_TITULO = 56;
@@ -1706,15 +1715,17 @@ const estilos = StyleSheet.create({
   ajuda: { fontSize: 12, lineHeight: 19, color: COR_EDITOR.apoio, marginBottom: 8 },
   ajudaForte: { fontWeight: '800', color: COR_EDITOR.titulo },
   seloDeErro: { color: COR.erro },
-  // O balão sobe quando o selo aparece: os dois vivem na coluna da esquerda e nunca se tapam.
+  // ⚠️ UM CÍRCULO, COMO OS OUTROS DOIS. Ele nasceu pílula porque trazia a contagem de
+  // comentários ao lado do ícone; a contagem saiu com eles, e ficou uma cápsula mais larga no
+  // meio de uma fila de círculos. Os três são agora o mesmo botão, com o mesmo passo entre
+  // eles — ver `PASSO_DOS_FLUTUANTES`.
   balao: {
-    position: 'absolute', right: 100,
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    height: 30, paddingHorizontal: 10, borderRadius: 15,
+    position: 'absolute', right: PASSO_DOS_FLUTUANTES * 2 + 18,
+    width: 30, height: 30, borderRadius: 15,
+    alignItems: 'center', justifyContent: 'center',
     backgroundColor: COR_EDITOR.botaoRedondo,
     borderWidth: 1, borderColor: COR_EDITOR.vazioContorno,
   },
-  contagem: { fontSize: 12, color: COR_EDITOR.apoio },
 
   avatarFoto: { resizeMode: 'cover' },
   avatarVazio: { alignItems: 'center', justifyContent: 'center' },

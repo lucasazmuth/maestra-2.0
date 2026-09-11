@@ -116,10 +116,10 @@ export const ConversaDoJam = ({ aberta, projetoId, autor, podeFalar, aoFechar }:
             {carregando ? (
               <ActivityIndicator color={AZUL_DO_EDITOR} style={estilos.espera} />
             ) : mensagens.length === 0 ? (
+              // ⚠️ SEM ÍCONE NO VAZIO. Um balão de fala desenhado dentro de um balão de fala não
+              // acrescenta nada — diz outra vez o que o título já diz, e um círculo com um
+              // pictograma no meio de um estado vazio é a assinatura de tela gerada.
               <View style={estilos.vazio}>
-                <View style={estilos.iconeDoVazio}>
-                  <Feather name="message-circle" size={22} color={AZUL_DO_EDITOR} />
-                </View>
                 <Text style={estilos.vazioTitulo}>Ninguém falou ainda</Text>
                 <Text style={estilos.vazioApoio}>
                   Aqui é a conversa da equipa sobre esta música — combinar uma gravação, dizer o
@@ -169,7 +169,7 @@ export const ConversaDoJam = ({ aberta, projetoId, autor, podeFalar, aoFechar }:
               >
                 {enviando
                   ? <ActivityIndicator size="small" color={COR_EDITOR.papel} />
-                  : <Feather name="send" size={16} color={COR_EDITOR.papel} />}
+                  : <Feather name="arrow-up" size={18} color={COR_EDITOR.papel} />}
               </Pressable>
             </View>
           )}
@@ -186,10 +186,6 @@ const estilos = StyleSheet.create({
   espera: { marginTop: 40 },
 
   vazio: { alignItems: 'center', gap: 8, paddingVertical: 40, paddingHorizontal: 20 },
-  iconeDoVazio: {
-    width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COR_EDITOR.cabecaDaVersao,
-  },
   vazioTitulo: { fontSize: 15, fontWeight: '700', color: COR_EDITOR.titulo },
   vazioApoio: { fontSize: 13, lineHeight: 19, color: COR_EDITOR.rotulo, textAlign: 'center' },
 
@@ -207,22 +203,26 @@ const estilos = StyleSheet.create({
 
   erro: { paddingHorizontal: 16, paddingBottom: 6, fontSize: 13, color: COR.erro },
 
+  // ⚠️ AS MEDIDAS SÃO AS DA CONVERSA DA NYTA, que é o campo de escrever do app: pílula de 44
+  // com recuo de 16, e o botão redondo do mesmo tamanho com a seta para cima. Eu tinha feito um
+  // retângulo de 40 com um avião de papel — um segundo desenho para o mesmo gesto, e quem usa
+  // os dois sente a troca sem saber dizer o quê.
   barra: {
     flexDirection: 'row', alignItems: 'flex-end', gap: 8,
-    padding: 12,
+    padding: 16, paddingTop: 10,
     borderTopWidth: 1, borderTopColor: COR_EDITOR.fio,
     backgroundColor: COR_EDITOR.painel,
   },
   campo: {
-    flex: 1, minHeight: 40, maxHeight: 120,
-    paddingHorizontal: 12, paddingVertical: 10, borderRadius: 8,
+    flex: 1, minHeight: 44, maxHeight: 120,
+    paddingVertical: 11, paddingHorizontal: 16, borderRadius: 22,
     borderWidth: 1, borderColor: COR_EDITOR.fio, backgroundColor: COR_EDITOR.acaoFundo,
     fontSize: 14, color: COR_EDITOR.texto,
   },
   enviar: {
-    width: 40, height: 40, borderRadius: 8,
+    width: 44, height: 44, borderRadius: 22,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: AZUL_DO_EDITOR,
   },
-  enviarInerte: { opacity: 0.4 },
+  enviarInerte: { backgroundColor: COR_EDITOR.vazioContorno },
 });
