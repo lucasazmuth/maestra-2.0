@@ -5,6 +5,7 @@ import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import type { CatalogProject, CatalogTrack, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
 
 import { partilharStems } from '@/casca/jam/mesa/exportarNativo';
+import { enviarParaOCatalogo, escolherAudio } from '@/nucleo/arquivos';
 
 import EspacoJam from '../jam/[artista]/[projeto]';
 
@@ -24,6 +25,10 @@ const mockCriarClipe = jest.fn();
 const mockMarcarApagado = jest.fn();
 const mockRestaurar = jest.fn();
 const mockPurgar = jest.fn();
+const mockNovoArquivo = jest.fn();
+const mockCriarPista = jest.fn();
+const mockMarcarPista = jest.fn();
+const mockAtualizarFaixa = jest.fn();
 const mockComentarios = jest.fn();
 const mockComentar = jest.fn();
 jest.mock('@maestra/core/services/db/catalog', () => ({
@@ -33,8 +38,14 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   setPrimaryVersion: (...a: unknown[]) => mockPrincipal(...a),
   createCatalogVersion: jest.fn(),
   deleteCatalogVersion: jest.fn(),
-  addVersionFile: jest.fn(),
+  addVersionFile: (...a: unknown[]) => mockNovoArquivo(...a),
+  criarPistaComArquivo: (...a: unknown[]) => mockCriarPista(...a),
+  marcarPistaApagada: (...a: unknown[]) => mockMarcarPista(...a),
+  restaurarPista: jest.fn(),
   updateVersionFile: jest.fn(),
+  // ⚠️ A PISTA DA MONTAGEM É UMA FAIXA: renomear e o volume escrevem em `catalog_tracks`.
+  updateTrack: (...a: unknown[]) => mockAtualizarFaixa(...a),
+  createTrack: jest.fn(),
   reorderVersionFiles: jest.fn(),
   deleteVersionFile: jest.fn(),
   listVersionComments: (...a: unknown[]) => mockComentarios(...a),
@@ -119,8 +130,11 @@ jest.mock('@/casca/jam/mesa/exportarNativo', () => ({
 
 jest.mock('@/nucleo/arquivos', () => ({
   escolherAudio: jest.fn(),
+  escolherAudios: jest.fn(() => Promise.resolve([])),
   escolherImagem: jest.fn(),
   enviarParaOCatalogo: jest.fn(),
+  // A duração é lida do próprio ficheiro, ANTES de subir: é o tamanho do clipe que vai nascer.
+  segundosDoAudio: jest.fn(() => Promise.resolve(90)),
 }));
 
 const arquivo = (over: Partial<CatalogVersionFile> = {}): CatalogVersionFile => ({
@@ -233,10 +247,17 @@ describe('espaço jam', () => {
 
     expect(await tela.findByText('FAIXAS')).toBeTruthy();
     // O nome da faixa aparece na coluna, que fica FORA da rolagem horizontal — é ela que diz de
-    // quem é cada onda quando se rola para o lado.
-    expect(tela.getByText('Voz')).toBeTruthy();
+    // quem é cada onda quando se rola para o lado. É um CAMPO, como na web: renomear a faixa
+    // faz-se onde ela está, e não num menu.
+    expect(tela.getByDisplayValue('Voz')).toBeTruthy();
+    // E os quatro botões da faixa: calar, ouvir só ela, armar para gravar, e enviar um áudio
+    // direto para ela — sem o último, uma faixa que ficou sem áudio virava um beco.
+    expect(tela.getByLabelText('Silenciar Voz')).toBeTruthy();
+    expect(tela.getByLabelText('Ouvir só Voz')).toBeTruthy();
+    expect(tela.getByLabelText('Armar Voz para gravar')).toBeTruthy();
+    expect(tela.getByLabelText('Enviar um áudio para Voz')).toBeTruthy();
     // E a mesa não está à vista: é a outra aba.
-    expect(tela.queryByLabelText('Silenciar Voz')).toBeNull();
+    expect(tela.queryByLabelText('Volume de Voz')).toBeNull();
   });
 
   // As duas metades da mesma gravação: uma diz ONDE cada som está no tempo, a outra QUANTO de
@@ -332,16 +353,18 @@ describe('espaço jam', () => {
   // uma de cada vez), e as pistas empilhadas são as camadas da que está aberta.
   it('abre a gravação principal com um transporte e a pista da mix', async () => {
     const tela = await montar();
+    // O cabeçalho é a IDENTIDADE e a navegação, e mais nada: o nome da música, as quatro vistas
+    // e a saída. É a fila da web.
     expect(await tela.findByText('Noite Clara')).toBeTruthy();
-    expect(tela.getByText('Gravações desta música')).toBeTruthy();
-    expect(tela.getByText('V1')).toBeTruthy();
+    expect(tela.getByLabelText('Timeline')).toBeTruthy();
+    expect(tela.getByLabelText('Voltar para Músicas')).toBeTruthy();
     // Sem stems, a mix entra sozinha e ACESA: a mesa com uma pista é o tocador da gravação, e é
     // o que toda versão que já existe hoje passa a ter sem ninguém enviar nada.
     await abrirOMixer(tela);
     expect(await tela.findByLabelText('Silenciar Mix ★')).toBeTruthy();
-    // Três minutos vindos do buffer, e um transporte só para a gravação inteira.
+    // Um transporte só para a gravação inteira, com o relógio no zero.
     await waitFor(() => expect(tela.getByLabelText('Tocar')).toBeTruthy());
-    expect(tela.getByText('3:00')).toBeTruthy();
+    expect(tela.getByText('0:00')).toBeTruthy();
   });
 
   // ⚠️ A decisão menos óbvia da mesa: com stems, a MIX ENTRA MUDA. Ela já é a soma das camadas,
@@ -376,8 +399,8 @@ describe('espaço jam', () => {
     const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const usuario = userEvent.setup();
     const tela = await montar();
-    await abrirOMixer(tela);
 
+    // Pela COLUNA da linha do tempo, que é onde o editor abre: o M e o S estão lá, como na web.
     // Sem montagem, a mix entra sozinha e acesa: apagar e acender não dobra nada, e não avisa.
     await usuario.press(await tela.findByLabelText('Silenciar Mix ★'));
     await usuario.press(await tela.findByLabelText('Ouvir Mix ★'));
@@ -397,6 +420,8 @@ describe('espaço jam', () => {
     }));
 
     const tela = await montar();
+    // Ele mora na MESA: é lá que se veem as faixas uma a uma, e é lá que se tira uma.
+    await abrirOMixer(tela);
     expect(await tela.findByText(/São muitas pistas grandes/)).toBeTruthy();
   });
 
@@ -438,121 +463,30 @@ describe('espaço jam', () => {
     jest.useRealTimers();
   });
 
-  // ⚠️ Trocar de gravação não é uma EDIÇÃO. Sem o cuidado de marcar os números da nova como já
-  // gravados, o salvamento automático acharia que o valor que acabou de ser lido é uma
-  // digitação e o regravaria por cima — uma escrita à toa a cada troca de ficha, que atropelaria
-  // quem estivesse a editar a mesma gravação noutro lugar. (A web tinha exatamente este bug, e
-  // foi um teste igual a este que o apanhou.)
-  it('trocar de gravação não regrava o que acabou de ler', async () => {
-    mockBuscar.mockResolvedValue(projeto({
-      versions: [
-        versao({ id: 'v-1', version_number: 1 }),
-        versao({ id: 'v-2', version_number: 2, title: 'acústico', bpm: '92', key: 'D' }),
-      ],
-    }));
-    const usuario = userEvent.setup();
-    const tela = await montar();
-
-    await usuario.press(await tela.findByLabelText('Abrir V2, acústico'));
-    await tela.findByText('de V2 · acústico');
-
-    await new Promise((pronto) => { setTimeout(pronto, 900); });
-    expect(mockAtualizarVersao).not.toHaveBeenCalled();
-  });
-
-  // Trocar de ficha é ABRIR outra gravação: o cabeçalho passa a falar dela, e o rótulo diz qual.
-  it('escolher outra gravação troca os números do cabeçalho', async () => {
-    mockBuscar.mockResolvedValue(projeto({
-      versions: [
-        versao({ id: 'v-1', version_number: 1, bpm: '128', key: 'Am' }),
-        versao({ id: 'v-2', version_number: 2, title: 'acústico', bpm: '92', key: 'D' }),
-      ],
-    }));
-    const usuario = userEvent.setup();
-    const tela = await montar();
-
-    // Abre na principal (v-1), e o rótulo diz de quem são os números.
-    expect(await tela.findByText('de V1 · guia vocal ★')).toBeTruthy();
-
-    await usuario.press(tela.getByLabelText('Abrir V2, acústico'));
-    expect(await tela.findByText('de V2 · acústico')).toBeTruthy();
-    expect(tela.getByLabelText('Andamento da gravação, em BPM').props.value).toBe('92');
-    expect(tela.getByLabelText('Tom da gravação').props.value).toBe('D');
-  });
-
-  // O que sobra na linha da ficha é o que é da MÚSICA e não muda de gravação para gravação.
-  it('a linha da música mostra gênero e data, e abre a ficha', async () => {
-    const usuario = userEvent.setup();
-    const tela = await montar();
-
-    expect(await tela.findByText('Pop')).toBeTruthy();
-    await usuario.press(tela.getByLabelText('Editar as informações da música'));
-    // O campo BPM da FICHA, e não o do cabeçalho: é a prova de que abriu a ficha.
-    expect(await tela.findByLabelText('BPM')).toBeTruthy();
-  });
-
-  // O status saiu da fila do título (onde a pílula de até 132 pt lhe roubava a largura) e
-  // virou um chip que abre a Escolha por cima — a lista antiga abria NO FLUXO e empurrava a
-  // tela inteira 217 pt para baixo.
-  it('o chip de status abre a escolha por cima, e trocar grava', async () => {
-    jest.useFakeTimers();
-    const usuario = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    mockAtualizar.mockResolvedValue(projeto({ status: 'composition' }));
-
-    const tela = await montar();
-    await usuario.press(await tela.findByLabelText('Status: Mixagem. Toque para trocar.'));
-    expect(tela.getByText('Status da música')).toBeTruthy();
-
-    await usuario.press(tela.getByLabelText('Composição'));
-    expect(mockAtualizar).not.toHaveBeenCalled();
-    jest.advanceTimersByTime(700);
-    await waitFor(() => expect(mockAtualizar).toHaveBeenCalledTimes(1));
-    expect(mockAtualizar.mock.calls[0][1]).toEqual({ status: 'composition' });
-    jest.useRealTimers();
-  });
-
   // ⚠️ O "Salvo" vai embora sozinho. Antes ficava para sempre: `setSelo` nunca voltava a
   // 'parado', e a linha empurrava a tela 25 pt para baixo desde a primeira edição até sair.
   it('o selo de salvo some sozinho', async () => {
     jest.useFakeTimers();
     const usuario = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    mockAtualizar.mockResolvedValue(projeto({ status: 'composition' }));
 
-    const tela = await montar();
-    await usuario.press(await tela.findByLabelText('Status: Mixagem. Toque para trocar.'));
-    await usuario.press(tela.getByLabelText('Composição'));
-    jest.advanceTimersByTime(700);
-    expect(await tela.findByText('Salvo')).toBeTruthy();
+    try {
+      const tela = await montar();
+      // ⚠️ O STATUS SAIU DESTA TELA, como na web no telemóvel — ele é assunto da Ficha. Quem
+      // grava daqui agora é o andamento, no rodapé, junto do que ele governa.
+      const campo = await tela.findByLabelText('Andamento da gravação, em BPM');
+      await usuario.clear(campo);
+      await usuario.type(campo, '96');
+      jest.advanceTimersByTime(700);
+      expect(await tela.findByText('Salvo')).toBeTruthy();
 
-    jest.advanceTimersByTime(2100);
-    await waitFor(() => expect(tela.queryByText('Salvo')).toBeNull());
-    jest.useRealTimers();
-  });
-
-  // A estrela alterna nos DOIS sentidos: tocar na acesa desmarca, e a música fica sem principal
-  // até outra ser escolhida. Marcar sempre-para-frente foi o desenho que a web recusou.
-  it('a estrela desmarca a gravação principal', async () => {
-    mockPrincipal.mockResolvedValue(undefined);
-    const usuario = userEvent.setup();
-    const tela = await montar();
-
-    await usuario.press(await tela.findByLabelText('Desmarcar V1 como gravação principal'));
-    await waitFor(() => expect(mockPrincipal).toHaveBeenCalledWith('p-1', null));
-  });
-
-  // ⚠️ ENVIAR E MONTAR STEMS SAIU DO APP, por agora. A linha do tempo — clipes que se arrastam,
-  // tesoura, régua — entrou primeiro na web; mexer aqui numa montagem que a tela não mostra
-  // seria editar às cegas. O que fica é ouvir, comentar e mandar gravação nova.
-  it('não há como montar pistas por aqui: isso é da linha do tempo', async () => {
-    mockBuscar.mockResolvedValue(projeto({
-      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
-    }));
-    const tela = await montar();
-
-    await abrirOMixer(tela);
-    await tela.findByLabelText('Silenciar Voz');
-    expect(tela.queryByLabelText('Adicionar pistas do aparelho')).toBeNull();
-    expect(tela.queryByLabelText('Opções de Voz')).toBeNull();
+      jest.advanceTimersByTime(2100);
+      await waitFor(() => expect(tela.queryByText('Salvo')).toBeNull());
+    } finally {
+      // ⚠️ NUM `finally`: sem isto, este teste a falhar deixava os temporizadores FALSOS para
+      // todos os que vêm depois — e eles falhavam em cascata, cada um com uma mensagem que não
+      // tinha nada a ver com o que estava partido. Uma hora à procura do erro errado.
+      jest.useRealTimers();
+    }
   });
 
   // O balão mostra QUANTOS comentários a gravação tem: um balão sem número não diz se vale
@@ -572,14 +506,6 @@ describe('espaço jam', () => {
     expect(tela.getByText('0:42')).toBeTruthy();
   });
 
-  it('o botão de expandir abre o Espaço da versão', async () => {
-    const usuario = userEvent.setup();
-    const tela = await montar();
-
-    await usuario.press(await tela.findByLabelText('Abrir a visualização completa de V1'));
-    expect(mockPush).toHaveBeenCalledWith('/jam/a-1/p-1/v-1');
-  });
-
   // ─── A aba de Exportar ─────────────────────────────────────────────────────
   //
   // ⚠️ EXPORTAR É COMO O TRABALHO SAI DAQUI. Sem ela, uma montagem feita no telemóvel fica
@@ -594,7 +520,7 @@ describe('espaço jam', () => {
     // ⚠️ ESPERAR A MONTAGEM CHEGAR. Antes de a gravação carregar, a única pista é a Mix
     // sintetizada a partir do áudio da versão — e a lista sairia com uma linha só. O teste
     // passava a dizer que a aba funciona enquanto mostrava a montagem errada.
-    await tela.findByText('Voz');
+    await tela.findByDisplayValue('Voz');
     fireEvent.press(tela.getByLabelText('Exportar'));
 
     expect(await tela.findByText('Stems')).toBeTruthy();
@@ -607,7 +533,7 @@ describe('espaço jam', () => {
       versions: [versao({ files: [arquivo()], tracks: [pista()] })],
     }));
     const tela = await montar();
-    await tela.findByText('Voz');
+    await tela.findByDisplayValue('Voz');
     fireEvent.press(tela.getByLabelText('Exportar'));
     fireEvent.press(await tela.findByLabelText('Compartilhar todas as faixas num ZIP'));
 
@@ -638,7 +564,7 @@ describe('espaço jam', () => {
       versions: [versao({ files: [arquivo()], tracks: [pista()] })],
     }));
     const tela = await montar();
-    await tela.findByText('Voz');
+    await tela.findByDisplayValue('Voz');
     await tela.findByLabelText('Tocar');
 
     fireEvent.press(tela.getByLabelText('Exportar'));
@@ -666,6 +592,123 @@ describe('espaço jam', () => {
   it('sem versões, convida a mandar a primeira', async () => {
     mockBuscar.mockResolvedValue(projeto({ versions: [], primary_version_id: null }));
     const tela = await montar();
-    expect(await tela.findByText('Este Espaço JAM ainda não tem uploads.')).toBeTruthy();
+    expect(await tela.findByText('Este Espaço JAM ainda não tem áudio.')).toBeTruthy();
+    // E o convite aponta para o botão que existe: a pasta, no rodapé.
+    expect(tela.getByLabelText('Enviar a primeira gravação')).toBeTruthy();
+  });
+
+  // ─── O casco do editor ─────────────────────────────────────────────────────
+  //
+  // ⚠️ ESTA TELA DEIXOU DE SER UMA PÁGINA e passou a ser o editor da web, com a estrutura dele:
+  // cabeçalho fixo (nome + as quatro vistas + a saída), a montagem no meio, e um rodapé com o
+  // que vale para a montagem INTEIRA. O que rolava a página para cima levava o play e o relógio
+  // junto — no telemóvel, bastava olhar a terceira faixa para perder o transporte.
+
+  it('o que vale para a montagem inteira mora no rodapé, e não no cabeçalho', async () => {
+    const tela = await montar();
+    await tela.findByLabelText('Timeline');
+
+    // O andamento e o tom são DA GRAVAÇÃO, e estão junto do que governam.
+    expect(tela.getByLabelText('Andamento da gravação, em BPM')).toBeTruthy();
+    expect(tela.getByLabelText('Tom da gravação')).toBeTruthy();
+    // O volume geral, que é da montagem toda.
+    expect(tela.getByLabelText('Volume geral')).toBeTruthy();
+    // E a porta dos ficheiros, que na web é a biblioteca.
+    expect(tela.getByLabelText('Adicionar faixas do aparelho')).toBeTruthy();
+  });
+
+  // Armar a gravação sem dizer em que faixa é meia intenção: numa mesa, o REC global só sabe o
+  // que fazer se alguma faixa estiver armada. Sem o aviso, o botão acendia e não significava
+  // nada.
+  it('armar a gravação sem faixa armada explica o que falta', async () => {
+    const aviso = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const tela = await montar();
+
+    fireEvent.press(await tela.findByLabelText('Armar para gravar'));
+
+    expect(aviso).toHaveBeenCalledWith('Arme a faixa primeiro', expect.stringContaining('círculo vermelho'));
+    // E não ficou armado: o estado só muda quando o gesto faz sentido.
+    expect(tela.getByLabelText('Armar para gravar')).toBeTruthy();
+    aviso.mockRestore();
+  });
+
+  // ⚠️ ENVIAR DIRETO PARA UMA FAIXA. Sem isto, uma faixa que ficou sem áudio (o clipe foi
+  // apagado) vira um beco sem saída: não há arrasto de ficheiro num telemóvel, e ela ficava
+  // lá, vazia, sem forma de a encher.
+  it('enviar um áudio para uma faixa põe um clipe NELA, e não uma faixa nova', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    (escolherAudio as jest.Mock).mockResolvedValue({
+      nome: 'take 2.wav', uri: 'file:///take2.wav', tipo: 'audio/wav', tamanho: 1024,
+    });
+    (enviarParaOCatalogo as jest.Mock).mockResolvedValue({
+      url: 'https://exemplo.invalid/take2.wav', name: 'take 2.wav',
+    });
+    mockNovoArquivo.mockResolvedValue({ id: 'f-2' });
+
+    const tela = await montar();
+    await tela.findByDisplayValue('Voz');
+    fireEvent.press(tela.getByLabelText('Enviar um áudio para Voz'));
+
+    await waitFor(() => expect(mockCriarClipe).toHaveBeenCalled());
+    expect(mockCriarClipe.mock.calls[0][0]).toMatchObject({
+      track_id: 't-1', file_id: 'f-2', duration_seconds: 90,
+    });
+    // A faixa nova é o outro gesto, o da pasta do rodapé.
+    expect(mockCriarPista).not.toHaveBeenCalled();
+  });
+
+  it('renomear a faixa escreve na hora e grava depois', async () => {
+    jest.useFakeTimers();
+    const usuario = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    try {
+      mockBuscar.mockResolvedValue(projeto({
+        versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+      }));
+      mockAtualizarFaixa.mockResolvedValue({});
+      const tela = await montar();
+
+      const campo = await tela.findByDisplayValue('Voz');
+      await usuario.clear(campo);
+      await usuario.type(campo, 'Voz dobra');
+
+      // O campo mostra já; o banco só depois — senão cada letra seria uma escrita.
+      expect(mockAtualizarFaixa).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(700);
+      await waitFor(() => expect(mockAtualizarFaixa).toHaveBeenCalledWith('t-1', { name: 'Voz dobra' }));
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('apagar a faixa inteira MARCA, e nunca a Mix', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    mockMarcarPista.mockResolvedValue(undefined);
+    const tela = await montar();
+    await tela.findByDisplayValue('Voz');
+
+    fireEvent.press(tela.getByLabelText('Apagar a faixa Voz'));
+    await waitFor(() => expect(mockMarcarPista).toHaveBeenCalledWith('t-1'));
+  });
+
+  // ⚠️ A MIX NÃO SE MEXE: ela é o áudio da própria gravação, e renomeá-la ou apagá-la é mexer na
+  // gravação. O M e o S ficam — ouvir só a mistura, ou calá-la para ouvir as camadas, é
+  // exatamente o que se faz com ela.
+  it('a faixa da Mix não se renomeia, não se apaga e não recebe áudio', async () => {
+    // Sem faixas, a montagem é só a Mix sintetizada a partir do áudio da gravação.
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    expect(tela.queryByLabelText('Apagar a faixa Mix ★')).toBeNull();
+    expect(tela.queryByLabelText('Enviar um áudio para Mix ★')).toBeNull();
+    expect(tela.queryByLabelText('Armar Mix ★ para gravar')).toBeNull();
+    // O campo do nome existe, mas travado.
+    expect(tela.getByDisplayValue('Mix ★').props.editable).toBe(false);
+    // E o que é de escuta continua lá.
+    expect(tela.getByLabelText('Silenciar Mix ★')).toBeTruthy();
+    expect(tela.getByLabelText('Ouvir só Mix ★')).toBeTruthy();
   });
 });

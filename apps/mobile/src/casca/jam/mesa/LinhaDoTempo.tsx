@@ -1,6 +1,6 @@
-import { memo, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent,
+  Pressable, ScrollView, StyleSheet, Text, TextInput, View, type LayoutChangeEvent,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
@@ -11,11 +11,14 @@ import Feather from '@expo/vector-icons/Feather';
 import type { Pista } from '@maestra/core/audio/mesa';
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import {
-  PIXELS_POR_SEGUNDO, ZOOM_MAXIMO, ZOOM_MINIMO, encaixeDaGrade, gradeDoCompasso,
-  marcasDaRegua, zoomQueEncaixa,
+  PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, marcasDaRegua, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
 import { ehPistaDaMix } from '@maestra/core/audio/pistasDaVersao';
-import { AZUL_DO_EDITOR, COR, COR_EDITOR, corDaPista } from '@maestra/core/constants/design';
+import {
+  AZUL_DO_EDITOR, COR, COR_EDITOR, VERMELHO_DO_EDITOR, corDaPista,
+} from '@maestra/core/constants/design';
+
+import { IconeDeEnviar } from './icones';
 
 // A LINHA DO TEMPO, no aparelho.
 //
@@ -37,10 +40,15 @@ import { AZUL_DO_EDITOR, COR, COR_EDITOR, corDaPista } from '@maestra/core/const
 // eixo vertical é o da própria tela, que já rola — assim as duas colunas não podem divergir,
 // porque não há duas rolagens.
 
-/** A largura da coluna dos nomes. O resto do ecrã é a música. */
-const COLUNA = 104;
-const ALTURA_DA_REGUA = 26;
-const ALTURA_DA_FAIXA = 76;
+// As medidas do editor da web no telemóvel, à letra: a coluna de 132 e a faixa de 96.
+//
+// ⚠️ A COLUNA ENCOLHE, E NÃO AS ONDAS. Os 256 da web em desktop comem 68 % de um ecrã de 390, e
+// o que sobrava para o áudio — que é o assunto desta aba — era um terço. Aqui a coluna fica com
+// o nome e os quatro botões; o volume e o panorama vivem na Mesa, que é a aba ao lado e onde o
+// fader tem curso para um dedo.
+const COLUNA = 132;
+const ALTURA_DA_REGUA = 30;
+const ALTURA_DA_FAIXA = 96;
 /** A folga do clipe dentro da faixa, em cima e em baixo. */
 const FOLGA = 6;
 
@@ -212,7 +220,8 @@ const Clipe = ({
 };
 
 export const LinhaDoTempo = ({
-  pistas, estado, picos, duracaoDoClipe, bpm, podeEditar, historico,
+  pistas, estado, picos, duracaoDoClipe, bpm, podeEditar, zoom, aoEncaixar,
+  armadas, aoArmar, aoRenomearPista, aoApagarPista, aoMudarPista, aoSolarPista, aoEnviarPara,
   aoBuscar, aoMover, aoCortar, aoApagar,
 }: {
   pistas: Pista[];
@@ -229,17 +238,20 @@ export const LinhaDoTempo = ({
   duracaoDoClipe: (id: string) => number;
   /** O andamento da gravação, como está escrito no campo. Sem ele, a régua conta segundos. */
   bpm?: string | number | null;
-  /** Sem permissão, a montagem só se vê: nenhum clipe se escolhe, nenhuma seta aparece. */
+  /** Sem permissão, a montagem só se vê: nenhum clipe se escolhe, nenhum botão aparece. */
   podeEditar?: boolean;
-  historico?: {
-    podeDesfazer: boolean;
-    podeRefazer: boolean;
-    rotuloDesfazer: string;
-    rotuloRefazer: string;
-    ocupado: boolean;
-    desfazer: () => void;
-    refazer: () => void;
-  };
+  /** O zoom vive na barra do transporte, como na web. Aqui ele só se lê. */
+  zoom: number;
+  /** O encaixe da montagem no ecrã, medido aqui e guardado lá fora. */
+  aoEncaixar?: (minimo: number) => void;
+  /** As pistas armadas para gravar. Armar não grava — marca ONDE, e o REC marca QUANDO. */
+  armadas?: string[];
+  aoArmar?: (pistaId: string) => void;
+  aoRenomearPista?: (pistaId: string, nome: string) => void;
+  aoApagarPista?: (pistaId: string) => void;
+  aoMudarPista?: (pistaId: string, muda: boolean) => void;
+  aoSolarPista?: (pistaId: string, solo: boolean) => void;
+  aoEnviarPara?: (pistaId: string) => void;
   aoBuscar: (segundo: number) => void;
   /** `de` só vai preenchido quando o dedo largou: é o que o desfazer precisa. */
   aoMover?: (clipeId: string, inicio: number, de?: number) => void;
@@ -247,10 +259,7 @@ export const LinhaDoTempo = ({
   aoApagar?: (clipeId: string) => void;
 }) => {
   const [escolhido, setEscolhido] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(1);
   const [larguraVisivel, setLarguraVisivel] = useState(0);
-  /** Quem mexeu no zoom manda: o encaixe automático não volta a mexer nele. */
-  const zoomMexido = useRef(false);
 
   const escala = PIXELS_POR_SEGUNDO * zoom;
   const duracao = Math.max(estado.duracao, 1);
@@ -259,17 +268,18 @@ export const LinhaDoTempo = ({
   // ⚠️ A MONTAGEM ABRE ENCAIXADA NO ECRÃ, como na web. A 100 % são 60 pt por segundo: uma
   // música de dois minutos mede 7 200 pt, e num ecrã de 390 isso são dezanove ecrãs em fila.
   // Encaixada, a música inteira está à vista de partida.
+  //
+  // Quem GUARDA o zoom é a tela, porque os botões dele vivem na barra do transporte — como na
+  // web. O que se faz aqui é medir a largura e dizer lá para fora qual é o encaixe.
   const encaixe = useMemo(
     () => zoomQueEncaixa(duracao, larguraVisivel - COLUNA),
     [duracao, larguraVisivel],
   );
-  if (!zoomMexido.current && larguraVisivel > 0 && zoom !== encaixe) setZoom(encaixe);
+  useEffect(() => {
+    if (larguraVisivel > 0) aoEncaixar?.(encaixe);
+  }, [encaixe, larguraVisivel, aoEncaixar]);
 
   const medir = (e: LayoutChangeEvent) => setLarguraVisivel(e.nativeEvent.layout.width);
-  const mexerNoZoom = (novo: number) => { zoomMexido.current = true; setZoom(novo); };
-  // Afastar vai sempre ATÉ ao encaixe: sem isto, quem aproximasse uma vez não conseguia voltar
-  // a ver a música inteira.
-  const zoomMinimo = Math.min(ZOOM_MINIMO, encaixe);
 
   const grade = useMemo(() => gradeDoCompasso(bpm, escala), [bpm, escala]);
   const passoDoEncaixe = useMemo(() => encaixeDaGrade(grade, escala), [grade, escala]);
@@ -280,18 +290,116 @@ export const LinhaDoTempo = ({
   );
 
   return (
-    <View style={estilos.bloco} onLayout={medir}>
+    // Uma ROLAGEM VERTICAL só, para as duas colunas — é o mesmo que a web faz, e impede o pior
+    // erro que uma tela destas pode ter: o cabeçalho de uma pista alinhado com a faixa de
+    // OUTRA. Com um scroll por coluna, bastava rolar uma para o M e o S deixarem de ser os da
+    // onda ao lado, e a pessoa calava a pista errada.
+    <ScrollView
+      style={estilos.bloco}
+      contentContainerStyle={estilos.conteudo}
+      onLayout={medir}
+    >
       <View style={estilos.corpo}>
         <View style={estilos.coluna}>
           <View style={estilos.cantoDaColuna}>
             <Text style={estilos.rotuloDaColuna}>FAIXAS</Text>
           </View>
-          {pistas.map((pista, i) => (
-            <View key={pista.id} style={estilos.cabecalhoDaFaixa}>
-              <View style={[estilos.fitaDaCor, { backgroundColor: corDaPista(i) }]} />
-              <Text style={estilos.nomeDaFaixa} numberOfLines={2}>{pista.nome}</Text>
-            </View>
-          ))}
+          {pistas.map((pista, i) => {
+            const daMesa = estado.pistas.find((p) => p.id === pista.id);
+            const calada = daMesa?.muda ?? false;
+            const fixa = ehPistaDaMix(pista.id);
+            const mexivel = !!podeEditar && !fixa;
+            return (
+              <View
+                key={pista.id}
+                style={[
+                  estilos.cabecalhoDaFaixa,
+                  { borderLeftColor: calada ? COR_EDITOR.estrela : corDaPista(i) },
+                  calada && estilos.faixaCalada,
+                ]}
+              >
+                <View style={estilos.linhaDoNome}>
+                  <TextInput
+                    style={estilos.nomeDaFaixa}
+                    value={pista.nome}
+                    editable={mexivel}
+                    onChangeText={(t) => aoRenomearPista?.(pista.id, t)}
+                    accessibilityLabel={`Nome da faixa ${pista.nome}`}
+                  />
+                  {mexivel && (
+                    <Pressable
+                      onPress={() => aoApagarPista?.(pista.id)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Apagar a faixa ${pista.nome}`}
+                    >
+                      <Feather name="trash-2" size={13} color={COR_EDITOR.rotulo} />
+                    </Pressable>
+                  )}
+                </View>
+
+                {/* Os quatro repartem a largura em partes iguais: é o que os faz caber numa
+                    coluna de 132 seja qual for o ecrã, em vez de o último sair para fora. */}
+                <View style={estilos.botoesDaFaixa}>
+                  <Pressable
+                    onPress={() => aoMudarPista?.(pista.id, !calada)}
+                    style={[estilos.botaozinho, calada && estilos.mudoAceso]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: calada }}
+                    accessibilityLabel={calada ? `Ouvir ${pista.nome}` : `Silenciar ${pista.nome}`}
+                  >
+                    {/* ⚠️ Mudo e solo têm CORES DIFERENTES: são as duas ações mais usadas de uma
+                        mesa e são opostas. Pintadas iguais quando acesas, ninguém sabe qual
+                        carregou. */}
+                    <Text style={[estilos.letraDoBotao, calada && estilos.letraMuda]}>M</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => aoSolarPista?.(pista.id, !daMesa?.solo)}
+                    style={[estilos.botaozinho, daMesa?.solo && estilos.soloAceso]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: Boolean(daMesa?.solo) }}
+                    accessibilityLabel={daMesa?.solo ? 'Ouvir tudo de novo' : `Ouvir só ${pista.nome}`}
+                  >
+                    <Text style={[estilos.letraDoBotao, daMesa?.solo && estilos.letraSolo]}>S</Text>
+                  </Pressable>
+                  {mexivel && (
+                    <Pressable
+                      onPress={() => aoArmar?.(pista.id)}
+                      style={[
+                        estilos.botaozinho,
+                        { borderColor: armadas?.includes(pista.id) ? VERMELHO_DO_EDITOR : COR_EDITOR.fio },
+                        !armadas?.includes(pista.id) && estilos.armadoApagado,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: Boolean(armadas?.includes(pista.id)) }}
+                      accessibilityLabel={armadas?.includes(pista.id)
+                        ? `Desarmar ${pista.nome}`
+                        : `Armar ${pista.nome} para gravar`}
+                    >
+                      <Feather
+                        name={armadas?.includes(pista.id) ? 'disc' : 'circle'}
+                        size={11}
+                        color={VERMELHO_DO_EDITOR}
+                      />
+                    </Pressable>
+                  )}
+                  {/* ⚠️ ENVIAR DIRETO PARA ESTA PISTA. Sem isto, uma pista que ficou sem áudio
+                      (o clipe foi apagado) vira um beco sem saída: não há arrasto de ficheiro
+                      num telemóvel, e a pista ficava lá, vazia, sem forma de a encher. */}
+                  {mexivel && (
+                    <Pressable
+                      onPress={() => aoEnviarPara?.(pista.id)}
+                      style={estilos.botaozinho}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Enviar um áudio para ${pista.nome}`}
+                    >
+                      <IconeDeEnviar tamanho={13} cor={COR_EDITOR.apoio} />
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            );
+          })}
         </View>
 
         <ScrollView
@@ -375,81 +483,53 @@ export const LinhaDoTempo = ({
         </ScrollView>
       </View>
 
-      <View style={estilos.rodapeDaLinha}>
-        {/* ⚠️ AS SETAS FICAM AQUI, e não no transporte. Ali competiriam com o play — o botão que
-            se procura sem olhar — e empurrariam o relógio num ecrã de 402 pontos. Esta fila é a
-            dos controlos da MONTAGEM, que é sobre o que elas agem. */}
-        {historico ? (
-          <View style={estilos.setas}>
-            {([
-              ['desfazer', 'corner-up-left', historico.podeDesfazer, historico.rotuloDesfazer],
-              ['refazer', 'corner-up-right', historico.podeRefazer, historico.rotuloRefazer],
-            ] as const).map(([qual, icone, pode, rotulo]) => {
-              const inerte = !pode || historico.ocupado;
-              return (
-                <Pressable
-                  key={qual}
-                  onPress={qual === 'desfazer' ? historico.desfazer : historico.refazer}
-                  disabled={inerte}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  // Uma seta muda não se usa: o rótulo diz o que ela vai desmanchar.
-                  accessibilityLabel={rotulo}
-                >
-                  <Feather
-                    name={icone}
-                    size={16}
-                    color={inerte ? COR_EDITOR.estrela : COR_EDITOR.acaoIcone}
-                  />
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : <View />}
-
-        <View style={estilos.zoom}>
-        <Pressable
-          onPress={() => mexerNoZoom(Math.max(zoomMinimo, zoom / 1.5))}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Afastar a linha do tempo"
-        >
-          <Feather name="zoom-out" size={16} color={COR_EDITOR.apoio} />
-        </Pressable>
-        <Text style={estilos.numeroDoZoom}>{Math.round(zoom * 100)}%</Text>
-        <Pressable
-          onPress={() => mexerNoZoom(Math.min(ZOOM_MAXIMO, zoom * 1.5))}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Aproximar a linha do tempo"
-        >
-          <Feather name="zoom-in" size={16} color={COR_EDITOR.apoio} />
-        </Pressable>
-        </View>
-      </View>
-    </View>
+    </ScrollView>
   );
 };
 
 const estilos = StyleSheet.create({
-  bloco: { borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio },
-  corpo: { flexDirection: 'row' },
+  bloco: { flex: 1, backgroundColor: COR_EDITOR.fundoDe },
+  // `minHeight` para a montagem encher o ecrã mesmo com uma faixa só: sem isto, o fundo da
+  // linha do tempo acabava a meio da tela e o resto era o fundo da página.
+  conteudo: { minHeight: '100%' },
+  corpo: { flexDirection: 'row', flex: 1 },
   coluna: {
     width: COLUNA,
     borderRightWidth: 1, borderRightColor: COR_EDITOR.fio,
-    backgroundColor: COR_EDITOR.cabecaDaVersao,
+    // ⚠️ SEM FUNDO PRÓPRIO: quem pinta é cada linha. Com o fundo na coluna, o vazio abaixo da
+    // última faixa saía mais claro do que o vazio ao lado dele — dois tons a dividir a tela ao
+    // meio numa linha vertical que não significava nada.
   },
   cantoDaColuna: {
     height: ALTURA_DA_REGUA, justifyContent: 'center', paddingHorizontal: 10,
     borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
   },
   rotuloDaColuna: { fontSize: 9, fontWeight: '700', letterSpacing: 1, color: COR_EDITOR.rotulo },
+  // A cor da pista é a BORDA ESQUERDA do cabeçalho, como na web — e não uma fita solta.
   cabecalhoDaFaixa: {
-    height: ALTURA_DA_FAIXA, flexDirection: 'row', alignItems: 'center', gap: 7,
-    paddingRight: 8, borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
+    height: ALTURA_DA_FAIXA, justifyContent: 'center', gap: 8,
+    paddingVertical: 8, paddingHorizontal: 10,
+    borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
+    borderLeftWidth: 3,
+    backgroundColor: COR_EDITOR.cabecaDaVersao,
   },
-  fitaDaCor: { width: 3, alignSelf: 'stretch' },
-  nomeDaFaixa: { flex: 1, fontSize: 12, fontWeight: '600', color: COR_EDITOR.titulo },
+  faixaCalada: { opacity: 0.6 },
+  linhaDoNome: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  nomeDaFaixa: {
+    flex: 1, minWidth: 0, padding: 0, fontSize: 13, fontWeight: '600', color: COR_EDITOR.titulo,
+  },
+  botoesDaFaixa: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  botaozinho: {
+    flex: 1, minWidth: 0, height: 26, borderRadius: 5,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: COR_EDITOR.fio,
+  },
+  mudoAceso: { backgroundColor: COR_EDITOR.rotulo, borderColor: COR_EDITOR.rotulo },
+  soloAceso: { backgroundColor: COR_EDITOR.estrelaAcesa, borderColor: COR_EDITOR.estrelaAcesa },
+  letraDoBotao: { fontSize: 11, fontWeight: '800', color: COR_EDITOR.apoio },
+  letraMuda: { color: COR_EDITOR.papel },
+  letraSolo: { color: COR_EDITOR.tintaEscura },
+  armadoApagado: { opacity: 0.5 },
   regua: {
     height: ALTURA_DA_REGUA,
     borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
@@ -482,8 +562,9 @@ const estilos = StyleSheet.create({
     position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,
     overflow: 'hidden', borderRadius: 4, justifyContent: 'center',
   },
+  // A agulha é VERMELHA nas duas superfícies: é a cor que toda mesa usa para 'aqui'.
   agulha: {
-    position: 'absolute', top: 0, width: 2, backgroundColor: AZUL_DO_EDITOR,
+    position: 'absolute', top: 0, width: 2, backgroundColor: VERMELHO_DO_EDITOR,
   },
   // A barra fica DENTRO do clipe: por cima, a da primeira faixa saía pelo topo da área visível.
   acoesDoClipe: {
@@ -496,14 +577,4 @@ const estilos = StyleSheet.create({
     borderWidth: 1, borderColor: COR_EDITOR.fio,
   },
   acaoInerte: { opacity: 0.4 },
-  rodapeDaLinha: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 8, paddingHorizontal: 12,
-  },
-  setas: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  zoom: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  numeroDoZoom: {
-    fontSize: 11, fontWeight: '700', color: COR_EDITOR.apoio, minWidth: 38, textAlign: 'center',
-    fontVariant: ['tabular-nums'],
-  },
 });

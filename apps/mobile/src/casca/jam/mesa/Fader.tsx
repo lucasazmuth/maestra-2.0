@@ -17,11 +17,13 @@ import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
 const ALTURA_DO_TRILHO = 6;
 const BOTAO = 22;
 
-export const Fader = ({ valor, aoMudar, apagado }: {
+export const Fader = ({ valor, aoMudar, apagado, rotulo }: {
   /** 0..1 */
   valor: number;
   aoMudar: (v: number) => void;
   apagado?: boolean;
+  /** O que este fader governa. O mestre não é "a faixa", e um leitor de tela dizia que era. */
+  rotulo?: string;
 }) => {
   const [largura, setLargura] = useState(0);
 
@@ -51,7 +53,7 @@ export const Fader = ({ valor, aoMudar, apagado }: {
     <GestureDetector gesture={Gesture.Race(arrastar, toque)}>
       {/* O alvo é mais alto que o trilho: 6 pt de trilho seria impossível de acertar. */}
       <View style={estilos.alvo} onLayout={medir} accessibilityRole="adjustable"
-        accessibilityLabel="Volume da faixa"
+        accessibilityLabel={rotulo ?? 'Volume da faixa'}
         accessibilityValue={{ min: 0, max: 100, now: Math.round(cheio * 100) }}>
         <View style={estilos.trilho}>
           <View style={[

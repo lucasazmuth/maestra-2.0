@@ -102,18 +102,14 @@ export const enviarParaOCatalogo = (pasta: string, arquivo: ArquivoEscolhido) =>
  *
  * Formato que o aparelho não decodifica não impede o envio: a versão só fica sem duração.
  */
-export const duracaoDoAudio = async (uri: string): Promise<string | null> => {
+export const segundosDoAudio = async (uri: string): Promise<number | null> => {
   const tocador = createAudioPlayer({ uri });
   try {
     // O `duration` só existe depois que os metadados chegam; em arquivo local isso é imediato,
     // mas "imediato" ainda é o próximo ciclo.
     for (let tentativa = 0; tentativa < 20; tentativa += 1) {
       const segundos = tocador.duration;
-      if (Number.isFinite(segundos) && segundos > 0) {
-        const m = Math.floor(segundos / 60);
-        const s = String(Math.floor(segundos % 60)).padStart(2, '0');
-        return `${m}:${s}`;
-      }
+      if (Number.isFinite(segundos) && segundos > 0) return segundos;
       await new Promise((pronto) => setTimeout(pronto, 100));
     }
     return null;
@@ -122,6 +118,13 @@ export const duracaoDoAudio = async (uri: string): Promise<string | null> => {
   } finally {
     tocador.release();
   }
+};
+
+/** A mesma leitura, escrita como o catálogo mostra: `3:46`. */
+export const duracaoDoAudio = async (uri: string): Promise<string | null> => {
+  const segundos = await segundosDoAudio(uri);
+  if (segundos === null) return null;
+  return `${Math.floor(segundos / 60)}:${String(Math.floor(segundos % 60)).padStart(2, '0')}`;
 };
 
 /**
