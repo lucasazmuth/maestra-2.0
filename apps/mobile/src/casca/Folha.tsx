@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { COR, RAIO, SOMBRA_DO_BOTAO } from '@maestra/core/constants/design';
 
+import { usarPaleta } from '@/casca/paleta';
+
 import { useAlturaDoTeclado } from '@/nucleo/teclado';
 
 import { BotaoRedondo } from './marca/MenuDoSistema';
@@ -132,12 +134,19 @@ export const Folha = ({
  * É o cartão da referência: o conteúdo não flutua solto sobre o cinza, ele mora em blocos, e o
  * rótulo diz do que aquele grupo trata. Sem isso a folha vira uma lista longa sem hierarquia.
  */
-export const Bloco = ({ rotulo, children }: { rotulo?: string; children: ReactNode }) => (
-  <View style={estilos.grupo}>
-    {!!rotulo && <Text style={estilos.rotuloDoGrupo}>{rotulo}</Text>}
-    <View style={estilos.bloco}>{children}</View>
-  </View>
-);
+// ⚠️ O BLOCO E A LINHA TIRAM TRÊS CORES DA PALETA EM VIGOR, e não a folha inteira: o casco da
+// `Folha` (o topo, o rodapé, os botões) só existe quando ela é uma folha que sobe de baixo, e
+// essa é sempre clara. Escuros são apenas os blocos, quando os mesmos campos são montados dentro
+// do editor — ver `casca/paleta.ts`.
+export const Bloco = ({ rotulo, children }: { rotulo?: string; children: ReactNode }) => {
+  const dentro = usarPaleta();
+  return (
+    <View style={estilos.grupo}>
+      {!!rotulo && <Text style={[estilos.rotuloDoGrupo, { color: dentro.rotulo }]}>{rotulo}</Text>}
+      <View style={[estilos.bloco, { backgroundColor: dentro.papel }]}>{children}</View>
+    </View>
+  );
+};
 
 /**
  * Uma linha dentro do bloco.
@@ -145,9 +154,18 @@ export const Bloco = ({ rotulo, children }: { rotulo?: string; children: ReactNo
  * A divisória é RECUADA e desenhada pela linha DE BAIXO, não pela de cima: assim a última não
  * precisa saber que é a última, e o bloco não precisa clonar os filhos para dizer a ela.
  */
-export const Linha = ({ children, primeira }: { children: ReactNode; primeira?: boolean }) => (
-  <View style={[estilos.linha, !primeira && estilos.linhaComFio]}>{children}</View>
-);
+export const Linha = ({ children, primeira }: { children: ReactNode; primeira?: boolean }) => {
+  const dentro = usarPaleta();
+  return (
+    <View style={[
+      estilos.linha,
+      !primeira && estilos.linhaComFio,
+      !primeira && { borderTopColor: dentro.divisoria },
+    ]}>
+      {children}
+    </View>
+  );
+};
 
 const estilos = StyleSheet.create({
   folha: { flex: 1, backgroundColor: COR.fundo },

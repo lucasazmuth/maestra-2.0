@@ -5,7 +5,7 @@ import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import type { CatalogProject, CatalogTrack, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
 
 import { partilharStems } from '@/casca/jam/mesa/exportarNativo';
-import { enviarParaOCatalogo, escolherAudio } from '@/nucleo/arquivos';
+import { enviarParaOCatalogo, escolherAudio, escolherAudios } from '@/nucleo/arquivos';
 
 import EspacoJam from '../jam/[artista]/[projeto]';
 
@@ -576,17 +576,29 @@ describe('espaço jam', () => {
     expect(await tela.findByLabelText('Tocar')).toBeTruthy();
   });
 
-  // ⚠️ A FICHA É A ÚNICA DAS QUATRO QUE NÃO TROCA A VISTA: ela abre a folha do catálogo, que é
-  // um formulário só, partilhado com a lista de Músicas. Ver `index.tsx`.
-  it('a aba da ficha abre o formulário da música por cima do editor', async () => {
+  // A ficha ocupa o lugar da montagem, como as outras três — e são os MESMOS campos do
+  // formulário do catálogo, tingidos pela paleta do editor. Um segundo formulário seriam duas
+  // verdades sobre a mesma música.
+  it('a aba da ficha põe os campos da música no lugar da montagem', async () => {
     const usuario = userEvent.setup();
     const tela = await montar();
 
     await usuario.press(await tela.findByLabelText('Ficha'));
 
-    expect(await tela.findByText('Splits')).toBeTruthy();
-    // E o editor continua onde estava, por baixo: fechar a folha devolve a linha do tempo.
-    expect(tela.getByLabelText('Timeline').props.accessibilityState.selected).toBe(true);
+    // ⚠️ E OS CAMPOS VÊM PREENCHIDOS. Montada em linha não há "abrir", e o efeito que enche o
+    // rascunho esperava por isso: a ficha aparecia com o título vazio, pronta a gravar por cima
+    // do que estava lá.
+    expect(await tela.findByDisplayValue('Noite Clara')).toBeTruthy();
+    // As três abas do próprio formulário, e o Salvar — o mesmo da folha.
+    expect(tela.getByText('Splits')).toBeTruthy();
+    expect(tela.getByText('Letras')).toBeTruthy();
+    expect(tela.getByLabelText('Salvar')).toBeTruthy();
+    // E a montagem saiu de cena, com o transporte: não se toca uma ficha.
+    expect(tela.queryByText('FAIXAS')).toBeNull();
+    // Nem a biblioteca: uma gaveta por cima de um formulário é só uma tela a tapar outra.
+    expect(tela.queryByText('Biblioteca')).toBeNull();
+    expect(tela.queryByLabelText('Tocar')).toBeNull();
+    expect(tela.getByLabelText('Ficha').props.accessibilityState.selected).toBe(true);
   });
 
   it('sem versões, convida a mandar a primeira', async () => {
@@ -613,8 +625,10 @@ describe('espaço jam', () => {
     expect(tela.getByLabelText('Tom da gravação')).toBeTruthy();
     // O volume geral, que é da montagem toda.
     expect(tela.getByLabelText('Volume geral')).toBeTruthy();
-    // E a porta dos ficheiros, que na web é a biblioteca.
-    expect(tela.getByLabelText('Adicionar faixas do aparelho')).toBeTruthy();
+    // E a porta da BIBLIOTECA, que é onde a web a põe — com o resto do que governa a tela
+    // inteira. No transporte ela ficava entre o play e o loop, e abrir uma pasta não é gesto de
+    // transporte.
+    expect(tela.getByLabelText('Abrir a biblioteca')).toBeTruthy();
   });
 
   // Armar a gravação sem dizer em que faixa é meia intenção: numa mesa, o REC global só sabe o
@@ -692,6 +706,40 @@ describe('espaço jam', () => {
 
     fireEvent.press(tela.getByLabelText('Apagar a faixa Voz'));
     await waitFor(() => expect(mockMarcarPista).toHaveBeenCalledWith('t-1'));
+  });
+
+  // ─── A biblioteca ──────────────────────────────────────────────────────────
+  //
+  // ⚠️ NO TELEMÓVEL ELA É UMA GAVETA, e não uma coluna: 256 pt de coluna fixa são 68 % de um
+  // ecrã de 402, sobrando um terço para a montagem inteira. É o que a web faz abaixo de 768 px.
+
+  it('a pasta do rodapé abre a gaveta por cima da montagem, e o toque é que envia', async () => {
+    (escolherAudios as jest.Mock).mockResolvedValue([
+      { nome: 'bateria.wav', uri: 'file:///bateria.wav', tipo: 'audio/wav', tamanho: 2 * 1024 * 1024 },
+    ]);
+    (enviarParaOCatalogo as jest.Mock).mockResolvedValue({
+      url: 'https://exemplo.invalid/bateria.wav', name: 'bateria.wav',
+    });
+    mockNovoArquivo.mockResolvedValue({ id: 'f-9' });
+    mockCriarPista.mockResolvedValue({ id: 't-9' });
+
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await usuario.press(await tela.findByLabelText('Abrir a biblioteca'));
+    expect(await tela.findByText('Biblioteca')).toBeTruthy();
+
+    // ⚠️ ESCOLHER NÃO ENVIA: o ficheiro fica do lado de cá até alguém o mandar para a montagem.
+    // Enviar tudo o que se escolheu paga armazenamento e egress pelo que nem vai ser usado.
+    await usuario.press(tela.getByLabelText('Escolher arquivos do aparelho'));
+    expect(await tela.findByText('bateria.wav')).toBeTruthy();
+    expect(enviarParaOCatalogo).not.toHaveBeenCalled();
+
+    // O toque é que envia — na gaveta não há arrasto para faixa nenhuma, porque ela as tapa.
+    await usuario.press(tela.getByLabelText('Enviar bateria.wav como faixa'));
+    await waitFor(() => expect(mockCriarPista).toHaveBeenCalled());
+    // E a gaveta fecha: ela cobre a montagem E o selo, e quem enviava ficava sem sinal nenhum.
+    expect(tela.queryByText('Biblioteca')).toBeNull();
   });
 
   // ⚠️ A MIX NÃO SE MEXE: ela é o áudio da própria gravação, e renomeá-la ou apagá-la é mexer na

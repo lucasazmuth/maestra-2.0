@@ -31,11 +31,13 @@ import * as catalogo from '@maestra/core/services/db/catalog';
 import { CampoDoCabecalho } from '@/casca/jam/CampoDoCabecalho';
 import { ComentariosDaVersao } from '@/casca/jam/ComentariosDaVersao';
 import { FolhaDaVersao } from '@/casca/jam/FolhaDaVersao';
+import { PALETA_ESCURA, PaletaDaFolhaProvider } from '@/casca/paleta';
 import { BARRAS } from '@/casca/jam/mesa/MiniOnda';
 import { Fader } from '@/casca/jam/mesa/Fader';
 import { Pista } from '@/casca/jam/mesa/Pista';
 import { LinhaDoTempo } from '@/casca/jam/mesa/LinhaDoTempo';
 import { IconeDaTimeline, IconeDoMixer } from '@/casca/jam/mesa/icones';
+import { Biblioteca } from '@/casca/jam/mesa/Biblioteca';
 import { TelaDeExportar, type EmCurso } from '@/casca/jam/mesa/TelaDeExportar';
 import {
   partilharGuiaMp3, partilharGuiaWav, partilharStems,
@@ -125,7 +127,6 @@ export default function EspacoJam() {
    */
   const [aba, setAba] = useState<Aba>('linha');
 
-  const [fichaAberta, setFichaAberta] = useState(false);
 
   // ─── Exportar: os stems (ZIP) e a guia (WAV/MP3) ─────────────────────────
   //
@@ -514,14 +515,31 @@ export default function EspacoJam() {
    */
   const [envio, setEnvio] = useState<{ feitos: number; total: number } | null>(null);
 
-  const enviarPara = async (pistaId: string | null) => {
-    if (!aberta || !projeto || !podeEditar) return;
-    const escolhidos = pistaId
-      // Para uma faixa que já existe é UM ficheiro: são takes da mesma faixa, e escolher cinco
-      // de uma vez empilharia cinco clipes no segundo zero, uns por cima dos outros.
-      ? ([await escolherAudio()].filter(Boolean) as ArquivoEscolhido[])
-      : await escolherAudios();
-    if (!escolhidos.length) return;
+  /**
+   * A gaveta da biblioteca e os ficheiros que estão nela.
+   *
+   * ⚠️ ELES NÃO SUBIRAM AINDA. Ficam do lado de cá, escolhidos mas parados, e só sobem quando
+   * alguém os manda para a montagem — é o desenho da web, e a razão é de conta: escolher doze
+   * stems e ver os doze subirem paga armazenamento e egress por tudo o que entrou, inclusive o
+   * que a pessoa nem ia usar.
+   */
+  const [bibliotecaAberta, setBibliotecaAberta] = useState(false);
+  const [naBiblioteca, setNaBiblioteca] = useState<ArquivoEscolhido[]>([]);
+
+  const escolherParaABiblioteca = async () => {
+    const escolhidos = await escolherAudios();
+    if (escolhidos.length) setNaBiblioteca(escolhidos);
+  };
+
+  /**
+   * Sobe os ficheiros e põe-nos na montagem.
+   *
+   * Com `pistaId`, cada um vira mais um CLIPE naquela faixa — é assim que se junta um take novo
+   * à mesma faixa em vez de encher a montagem de faixas de uma linha só. Sem ele, cada ficheiro
+   * vira uma faixa.
+   */
+  const enviarArquivos = async (escolhidos: ArquivoEscolhido[], pistaId?: string) => {
+    if (!aberta || !projeto || !podeEditar || !escolhidos.length) return;
 
     // A triagem é a da web, com as mesmas três razões para recusar. O aviso é um só: uma caixa
     // por ficheiro recusado seria uma fila de caixas para fechar.
@@ -542,6 +560,11 @@ export default function EspacoJam() {
     if (recusados.length) Alert.alert('Alguns arquivos ficaram de fora', recusados.join('\n'));
     if (!aceites.length) return;
 
+    // ⚠️ A GAVETA FECHA AO ENVIAR, e isto não é enfeite: ela cobre a tela toda, por cima da
+    // montagem E do selo de progresso. Quem enviava ficava a olhar para a mesma lista de
+    // ficheiros, sem sinal de que algo estava a acontecer, e só descobria o resultado ao fechar
+    // à mão. Fechada, aparece o que interessa: as faixas a nascer e o "Enviando 2 de 4…".
+    setBibliotecaAberta(false);
     setSelo('salvando');
     setEnvio({ feitos: 0, total: aceites.length });
     // ⚠️ CONTAR O QUE ENTROU DE FACTO: um ficheiro pode passar na triagem e mesmo assim não
@@ -576,8 +599,6 @@ export default function EspacoJam() {
         });
 
         if (pistaId) {
-          // Com pista de destino, o ficheiro vira mais um CLIPE nela — é assim que se junta um
-          // take novo à mesma faixa em vez de encher a montagem de pistas de uma linha só.
           // eslint-disable-next-line no-await-in-loop
           await catalogo.createClip({
             track_id: pistaId,
@@ -606,6 +627,9 @@ export default function EspacoJam() {
       if (nascidas.length) anotar({ tipo: 'acrescentarPistas', pistaIds: nascidas });
       if (!entraram) { setSelo('erro'); return; }
 
+      // Só o que entrou sai da biblioteca: o que foi recusado continua lá, para a pessoa ver
+      // o que ficou por enviar.
+      setNaBiblioteca((atuais) => atuais.filter((a) => !aceites.includes(a)));
       await buscar();
       setSelo('salvo');
     } catch {
@@ -614,6 +638,53 @@ export default function EspacoJam() {
       setEnvio(null);
     }
   };
+
+  /** O botão de enviar da FAIXA: um ficheiro só, direto para ela. */
+  const enviarPara = async (pistaId: string) => {
+    if (!podeEditar) return;
+    const escolhido = await escolherAudio();
+    if (escolhido) await enviarArquivos([escolhido], pistaId);
+  };
+
+  /**
+   * Transforma esta gravação numa FAIXA — a primeira, com o áudio que ela já tem.
+   *
+   * Sem isto, uma gravação que nunca foi montada só tem a Mix sintetizada, que não se arrasta
+   * nem se corta: a linha do tempo mostrava a música e não deixava mexer em nada, sem dizer
+   * porquê.
+   */
+  const montarAMix = async () => {
+    if (!aberta?.audio_file || !podeEditar) return;
+    const duracao = mesa.estado.duracao;
+    if (!duracao) { Alert.alert('Ainda não', 'Espere o áudio carregar para montar.'); return; }
+
+    setBibliotecaAberta(false);
+    setSelo('salvando');
+    try {
+      const linha = await catalogo.addVersionFile({
+        version_id: aberta.id,
+        name: aberta.title || 'Mix',
+        file_url: aberta.audio_file,
+        file_type: null,
+        kind: 'stem',
+        position: 0,
+        duration_seconds: duracao,
+      });
+      await catalogo.criarPistaComArquivo({
+        versionId: aberta.id,
+        arquivo: linha,
+        nome: aberta.title || 'Mix',
+        position: 0,
+        colorIndex: 0,
+        duracao,
+      });
+      await buscar();
+      setSelo('salvo');
+    } catch { setSelo('erro'); }
+  };
+
+  /** A gravação ainda não tem faixas de verdade: o que se vê é a Mix sintetizada. */
+  const porMontar = pistas.length === 1 && ehPistaDaMix(pistas[0].id);
 
   // ─── O transporte e o zoom ────────────────────────────────────────────────
   //
@@ -783,6 +854,8 @@ export default function EspacoJam() {
     );
   }
 
+  /** As abas que mostram a montagem. As outras duas não se tocam nem se arrastam. */
+  const ehDeAudio = aba === 'linha' || aba === 'mesa';
   const haSolo = mesa.estado.pistas.some((p) => p.solo);
   const prontas = mesa.estado.pistas.filter((p) => p.carga === 'pronta').length;
 
@@ -813,17 +886,11 @@ export default function EspacoJam() {
             que a web faz abaixo de 760 px. */}
         <View style={estilos.abas}>
           {ABAS.map(({ chave, rotulo, icone: Icone }) => {
-            // ⚠️ A FICHA É A ÚNICA QUE NÃO TROCA A VISTA: ela ABRE A FOLHA, que é o mesmo
-            // formulário do catálogo. Na web ela é uma aba como as outras, e aqui não é por uma
-            // razão concreta: esse formulário é partilhado com a lista de Músicas, que é uma
-            // tela clara. Vesti-lo de escuro vestiria também a tela de lá; e um segundo
-            // formulário, escuro, com os mesmos campos, seria duas verdades sobre a mesma
-            // música. Fica um formulário só, por cima do editor.
             const acesa = aba === chave;
             return (
               <Pressable
                 key={chave}
-                onPress={() => (chave === 'ficha' ? setFichaAberta(true) : setAba(chave))}
+                onPress={() => setAba(chave)}
                 style={[estilos.aba, acesa && estilos.abaAcesa]}
                 hitSlop={{ top: 8, bottom: 8 }}
                 accessibilityRole="tab"
@@ -849,7 +916,42 @@ export default function EspacoJam() {
 
       {/* ══════════ CORPO ══════════ */}
       <View style={estilos.corpo}>
-        {aba === 'exportar' ? (
+        {/* A biblioteca serve as abas de ÁUDIO. Na ficha e no exportar não há o que mandar para
+            lugar nenhum — e uma gaveta por cima de um formulário é só uma tela a tapar outra. */}
+        {bibliotecaAberta && aba !== 'exportar' && aba !== 'ficha' && !!aberta && (
+          <Biblioteca
+            itens={naBiblioteca}
+            podeEditar={podeEditar}
+            aoEscolher={() => { void escolherParaABiblioteca(); }}
+            aoEnviar={(arquivo) => { void enviarArquivos([arquivo]); }}
+            aoEnviarTodos={() => { void enviarArquivos(naBiblioteca); }}
+            aoMontar={porMontar ? () => { void montarAMix(); } : undefined}
+            aoFechar={() => setBibliotecaAberta(false)}
+          />
+        )}
+
+        {aba === 'ficha' ? (
+          // A ficha ocupa o lugar da montagem, e é ESCURA: são os MESMOS campos do formulário do
+          // catálogo, tingidos pela paleta do editor. Um cartão branco no meio de um editor
+          // escuro é uma janela de outro aplicativo, e obriga o olho a reajustar a cada troca de
+          // aba. E um segundo formulário seriam duas verdades sobre a mesma música — por isso é
+          // o mesmo componente, com outra paleta. Ver `casca/paleta.ts`.
+          <PaletaDaFolhaProvider value={PALETA_ESCURA}>
+            <FichaDaFaixa
+              emLinha
+              aberta
+              artistaId={String(artistaId)}
+              faixa={catalogo.catalogProjectToItem(projeto, aberta ?? undefined)}
+              generos={projeto.genre ? [projeto.genre] : []}
+              autor={{ id: usuario?.id, nome: meuNome }}
+              aoFechar={() => setAba('linha')}
+              aoSalvar={() => { void buscar(); }}
+              // Excluir a música daqui deixa a tela sem assunto: volta para a lista.
+              aoExcluir={voltar}
+              aoMudarVersoes={buscar}
+            />
+          </PaletaDaFolhaProvider>
+        ) : aba === 'exportar' ? (
           <ScrollView contentContainerStyle={estilos.folhaDaAba}>
             <TelaDeExportar
               pistas={pistas.map((pista) => ({ id: pista.id, nome: pista.nome }))}
@@ -965,12 +1067,18 @@ export default function EspacoJam() {
             convite do ecrã vazio mandava para um beco. */}
         {podeEditar && (
           <Pressable
-            onPress={() => { void (aberta ? enviarPara(null) : subir()); }}
-            style={estilos.botaoDoRodape}
+            onPress={() => (aberta ? setBibliotecaAberta((v) => !v) : void subir())}
+            style={[estilos.botaoDoRodape, bibliotecaAberta && estilos.botaoAceso]}
             accessibilityRole="button"
-            accessibilityLabel={aberta ? 'Adicionar faixas do aparelho' : 'Enviar a primeira gravação'}
+            accessibilityState={{ selected: bibliotecaAberta }}
+            accessibilityLabel={!aberta ? 'Enviar a primeira gravação'
+              : bibliotecaAberta ? 'Fechar a biblioteca' : 'Abrir a biblioteca'}
           >
-            <Feather name="folder" size={15} color={COR_EDITOR.apoio} />
+            <Feather
+              name="folder"
+              size={15}
+              color={bibliotecaAberta ? COR_EDITOR.texto : COR_EDITOR.apoio}
+            />
           </Pressable>
         )}
 
@@ -1012,7 +1120,10 @@ export default function EspacoJam() {
           ⚠️ ELAS SAÍRAM DO TRANSPORTE, onde competiam com o play — o botão que se procura sem
           olhar — e empurravam o relógio num ecrã de 402 pontos.
           O desfazer fica EMBAIXO, mais perto da mão: é ele que se usa dez vezes por refazer. */}
-      {podeEditar && (
+      {/* ⚠️ OS FLUTUANTES SÃO DA MONTAGEM, e por isso só existem onde ela está. Na ficha e no
+          exportar eles não teriam sobre o que agir — e as setas por cima do Salvar do
+          formulário eram um alvo de dedo em cima do outro. */}
+      {podeEditar && ehDeAudio && (
         <View style={[estilos.setas, { bottom: margem.bottom + ALTURA_DO_RODAPE + 12 + 38 }]}>
           {([
             ['refazer', 'corner-up-right', podeRefazer(historico), rotuloDaSeta('Refazer', historico.futuro[historico.futuro.length - 1])],
@@ -1044,7 +1155,7 @@ export default function EspacoJam() {
       {/* O selo de estado. Só existe quando há algo a dizer: um indicador permanente deixa de
           ser lido, e este precisa de ser lido nas duas vezes em que importa — a gravar, e
           quando falhou. */}
-      {selo !== 'parado' && (
+      {selo !== 'parado' && ehDeAudio && (
         <View style={[estilos.selo, { bottom: margem.bottom + ALTURA_DO_RODAPE + 12 }]}>
           <Text
             style={[estilos.seloTexto, selo === 'erro' && estilos.seloDeErro]}
@@ -1063,7 +1174,7 @@ export default function EspacoJam() {
           web. Lá os comentários de uma gravação moram no Espaço da Versão, alcançável pela
           lista de Músicas; aqui essa tela só se alcança DAQUI, e tirar o botão deixava-a órfã —
           os comentários presos a um ponto do áudio deixavam de existir no app. */}
-      {!!aberta && (
+      {!!aberta && ehDeAudio && (
         <Pressable
           onPress={() => setComentando(aberta)}
           style={[estilos.balao, {
@@ -1100,19 +1211,6 @@ export default function EspacoJam() {
         aoFechar={() => { setFolhaAberta(false); setEmEdicao(null); setArquivoInicial(null); }}
         aoSalvar={buscar}
         aoExcluir={aoExcluirVersao}
-      />
-
-      <FichaDaFaixa
-        aberta={fichaAberta}
-        artistaId={String(artistaId)}
-        faixa={catalogo.catalogProjectToItem(projeto, aberta ?? undefined)}
-        generos={projeto.genre ? [projeto.genre] : []}
-        autor={{ id: usuario?.id, nome: meuNome }}
-        aoFechar={() => setFichaAberta(false)}
-        aoSalvar={() => { setFichaAberta(false); void buscar(); }}
-        // Excluir a música daqui deixa a tela sem assunto: volta para a lista.
-        aoExcluir={() => { setFichaAberta(false); voltar(); }}
-        aoMudarVersoes={buscar}
       />
 
       <ComentariosDaVersao
@@ -1224,6 +1322,7 @@ const estilos = StyleSheet.create({
     width: 30, height: 30, borderRadius: 6, flexShrink: 0,
     alignItems: 'center', justifyContent: 'center',
   },
+  botaoAceso: { backgroundColor: COR_EDITOR.botaoRedondo },
   // O Master é o único controlo desta barra, e por isso é ele que fica com o que sobra.
   mestre: { flex: 1, minWidth: 60, maxWidth: 160 },
   numeroDoMestre: {

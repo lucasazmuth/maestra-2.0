@@ -1,17 +1,18 @@
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_CATALOGO, RAIO } from '@maestra/core/constants/design';
+import { RAIO } from '@maestra/core/constants/design';
 import { CATALOG_STATUS_OPTIONS, CLASSES_DA_OBRA, CLASSES_DO_FONOGRAMA } from '@maestra/core/constants/maestra';
 import type { CatalogItem, Split } from '@maestra/core/interfaces/maestra';
 import { deleteCatalogProject, saveCatalogProjectFromForm } from '@maestra/core/services/db/catalog';
 
 import { Bloco, Folha, Linha } from '@/casca/Folha';
+import { usarPaleta, type PaletaDaFolha } from '@/casca/paleta';
 import { SugestaoDaAnalise } from '@/casca/jam/SugestaoDaAnalise';
 import { Versoes } from '@/casca/musicas/Versoes';
 import { enviarParaOCatalogo, escolherImagem } from '@/nucleo/arquivos';
@@ -53,12 +54,16 @@ const paraISO = (br: string): string | null | undefined => {
  * No escopo do MÓDULO, e não dentro do formulário: componente declarado dentro de outro é uma
  * referência nova a cada render, o React remonta a subárvore e o teclado fecha a cada tecla.
  */
-const Campo = ({ rotulo, children }: { rotulo: string; children: React.ReactNode }) => (
-  <View style={estilos.campo}>
-    <Text style={estilos.rotulo}>{rotulo}</Text>
-    {children}
-  </View>
-);
+const Campo = ({ rotulo, children }: { rotulo: string; children: React.ReactNode }) => {
+  const paleta = usarPaleta();
+  const estilos = useMemo(() => criarEstilos(paleta), [paleta]);
+  return (
+    <View style={estilos.campo}>
+      <Text style={estilos.rotulo}>{rotulo}</Text>
+      {children}
+    </View>
+  );
+};
 
 type Aba = 'informacoes' | 'letras' | 'splits';
 
@@ -76,7 +81,10 @@ const LinhaDeSplit = ({ split, classes, primeira, aoMudar, aoRemover }: {
   primeira?: boolean;
   aoMudar: (parte: Partial<Split>) => void;
   aoRemover: () => void;
-}) => (
+}) => {
+  const paleta = usarPaleta();
+  const estilos = useMemo(() => criarEstilos(paleta), [paleta]);
+  return (
   <Linha primeira={primeira}>
     <View style={estilos.split}>
       <View style={estilos.splitTopo}>
@@ -85,7 +93,7 @@ const LinhaDeSplit = ({ split, classes, primeira, aoMudar, aoRemover }: {
           value={split.name}
           onChangeText={(t) => aoMudar({ name: t })}
           placeholder="Nome do titular"
-          placeholderTextColor={COR.espaçoReservado}
+          placeholderTextColor={paleta.espacoReservado}
           accessibilityLabel="Nome do titular"
         />
         <Pressable
@@ -94,7 +102,7 @@ const LinhaDeSplit = ({ split, classes, primeira, aoMudar, aoRemover }: {
           accessibilityRole="button"
           accessibilityLabel={`Remover ${split.name || 'titular'}`}
         >
-          <Feather name="x" size={18} color={COR_CATALOGO.legenda} />
+          <Feather name="x" size={18} color={paleta.legenda} />
         </Pressable>
       </View>
 
@@ -123,7 +131,7 @@ const LinhaDeSplit = ({ split, classes, primeira, aoMudar, aoRemover }: {
           value={String(split.percentage ?? '')}
           onChangeText={(t) => aoMudar({ percentage: Number(t.replace(/[^\d]/g, '')) || 0 })}
           placeholder="0"
-          placeholderTextColor={COR.espaçoReservado}
+          placeholderTextColor={paleta.espacoReservado}
           keyboardType="number-pad"
           accessibilityLabel="Participação"
         />
@@ -131,12 +139,25 @@ const LinhaDeSplit = ({ split, classes, primeira, aoMudar, aoRemover }: {
       </View>
     </View>
   </Linha>
-);
+  );
+};
 
 export const FichaDaFaixa = ({
   aberta, artistaId, faixa, generos, autor, aoFechar, aoSalvar, aoExcluir, aoMudarVersoes,
+  emLinha,
 }: {
   aberta: boolean;
+  /**
+   * Montada DENTRO de outra tela, e não como folha que sobe de baixo.
+   *
+   * É o que a aba Ficha do editor usa: os mesmos campos, sem o casco da folha, com um rodapé
+   * próprio de Salvar. Na web é a mesma decisão — a aba mostra `fichaCompleta`, que são os
+   * mesmos campos do modal.
+   *
+   * ⚠️ `aberta` CONTINUA A VALER aqui: é ela que enche o rascunho com o que veio do banco. Quem
+   * monta em linha passa as duas, e a ficha nasce preenchida.
+   */
+  emLinha?: boolean;
   artistaId: string;
   faixa: CatalogItem | null;
   generos: string[];
@@ -146,6 +167,8 @@ export const FichaDaFaixa = ({
   aoExcluir: (id: string) => void;
   aoMudarVersoes: () => void;
 }) => {
+  const paleta = usarPaleta();
+  const estilos = useMemo(() => criarEstilos(paleta), [paleta]);
   const [rascunho, setRascunho] = useState<Partial<CatalogItem>>({});
   const [dataEscrita, setDataEscrita] = useState('');
   const [gravando, setGravando] = useState(false);
@@ -253,17 +276,7 @@ export const FichaDaFaixa = ({
     );
   };
 
-  return (
-    <Folha
-      aberta={aberta}
-      titulo={rascunho.title?.trim() || (faixa ? 'Editar música' : 'Nova música')}
-      aoFechar={aoFechar}
-      acao={{ rotulo: 'Salvar', aoTocar: salvar, carregando: gravando }}
-      // Só editando: uma música que ainda não nasceu não tem o que excluir.
-      destrutiva={faixa ? { rotulo: 'Excluir', aoTocar: confirmarExclusao } : undefined}
-      // Esta ficha tem abas e rolagem por aba, então a `Folha` não põe a dela por cima.
-      semRolagem
-    >
+  const miolo = (
       <View style={estilos.miolo}>
         <View style={estilos.abas}>
           {([['informacoes', 'Informações'], ['letras', 'Letras'], ['splits', 'Splits']] as const)
@@ -294,7 +307,7 @@ export const FichaDaFaixa = ({
                       value={rascunho.title ?? ''}
                       onChangeText={(t) => mudar({ title: t })}
                       placeholder="Título da música"
-                      placeholderTextColor={COR.espaçoReservado}
+                      placeholderTextColor={paleta.espacoReservado}
                       autoFocus={!faixa}
                       accessibilityLabel="Título"
                     />
@@ -334,7 +347,7 @@ export const FichaDaFaixa = ({
                       value={rascunho.genre ?? ''}
                       onChangeText={(t) => mudar({ genre: t })}
                       placeholder="Gênero"
-                      placeholderTextColor={COR.espaçoReservado}
+                      placeholderTextColor={paleta.espacoReservado}
                       accessibilityLabel="Gênero"
                     />
                     {generos.length > 0 && (
@@ -363,7 +376,7 @@ export const FichaDaFaixa = ({
                       value={dataEscrita}
                       onChangeText={setDataEscrita}
                       placeholder="28/08/2026"
-                      placeholderTextColor={COR.espaçoReservado}
+                      placeholderTextColor={paleta.espacoReservado}
                       keyboardType="numbers-and-punctuation"
                       accessibilityLabel="Data de lançamento"
                     />
@@ -381,7 +394,7 @@ export const FichaDaFaixa = ({
                           value={rascunho.isrc ?? ''}
                           onChangeText={(t) => mudar({ isrc: t })}
                           placeholder="ISRC"
-                          placeholderTextColor={COR.espaçoReservado}
+                          placeholderTextColor={paleta.espacoReservado}
                           autoCapitalize="characters"
                           accessibilityLabel="ISRC"
                         />
@@ -394,7 +407,7 @@ export const FichaDaFaixa = ({
                           value={rascunho.upc ?? ''}
                           onChangeText={(t) => mudar({ upc: t })}
                           placeholder="UPC"
-                          placeholderTextColor={COR.espaçoReservado}
+                          placeholderTextColor={paleta.espacoReservado}
                           keyboardType="number-pad"
                           accessibilityLabel="UPC"
                         />
@@ -412,7 +425,7 @@ export const FichaDaFaixa = ({
                           value={rascunho.bpm ?? ''}
                           onChangeText={(t) => mudar({ bpm: t })}
                           placeholder="BPM"
-                          placeholderTextColor={COR.espaçoReservado}
+                          placeholderTextColor={paleta.espacoReservado}
                           keyboardType="number-pad"
                           accessibilityLabel="BPM"
                         />
@@ -425,7 +438,7 @@ export const FichaDaFaixa = ({
                           value={rascunho.key ?? ''}
                           onChangeText={(t) => mudar({ key: t })}
                           placeholder="Tom"
-                          placeholderTextColor={COR.espaçoReservado}
+                          placeholderTextColor={paleta.espacoReservado}
                           accessibilityLabel="Tom"
                         />
                       </Campo>
@@ -459,7 +472,7 @@ export const FichaDaFaixa = ({
                       accessibilityLabel={rascunho.cover_image ? 'Trocar a capa' : 'Escolher a capa'}
                     >
                       {enviandoCapa ? (
-                        <ActivityIndicator color={COR.primaria} />
+                        <ActivityIndicator color={paleta.primaria} />
                       ) : rascunho.cover_image ? (
                         <>
                           <Image source={{ uri: rascunho.cover_image }} style={estilos.capaImagem} />
@@ -475,13 +488,13 @@ export const FichaDaFaixa = ({
                             accessibilityRole="button"
                             accessibilityLabel="Remover a capa"
                           >
-                            <Feather name="x" size={18} color={COR_CATALOGO.legenda} />
+                            <Feather name="x" size={18} color={paleta.legenda} />
                           </Pressable>
                         </>
                       ) : (
                         <>
                           <View style={estilos.capaVazia}>
-                            <Feather name="image" size={18} color={COR_CATALOGO.legenda} />
+                            <Feather name="image" size={18} color={paleta.legenda} />
                           </View>
                           <View style={estilos.flex}>
                             <Text style={estilos.capaNome}>Escolher a capa</Text>
@@ -504,7 +517,7 @@ export const FichaDaFaixa = ({
                       value={rascunho.details ?? ''}
                       onChangeText={(t) => mudar({ details: t })}
                       placeholder="Combinados, pendências, o que ainda vai mudar"
-                      placeholderTextColor={COR.espaçoReservado}
+                      placeholderTextColor={paleta.espacoReservado}
                       multiline
                       accessibilityLabel="Detalhes"
                     />
@@ -533,7 +546,7 @@ export const FichaDaFaixa = ({
                   value={rascunho.lyrics ?? ''}
                   onChangeText={(t) => mudar({ lyrics: t })}
                   placeholder="Letra da música…"
-                  placeholderTextColor={COR.espaçoReservado}
+                  placeholderTextColor={paleta.espacoReservado}
                   multiline
                   accessibilityLabel="Letra"
                 />
@@ -584,7 +597,7 @@ export const FichaDaFaixa = ({
                       accessibilityRole="button"
                       accessibilityLabel={`Adicionar titular em ${nome}`}
                     >
-                      <Feather name="plus" size={14} color={COR.primaria} />
+                      <Feather name="plus" size={14} color={paleta.primaria} />
                       <Text style={estilos.adicionarTexto}>Adicionar titular</Text>
                     </Pressable>
                   </Linha>
@@ -606,54 +619,127 @@ export const FichaDaFaixa = ({
           {!!erro && <Text style={estilos.erro}>{erro}</Text>}
         </ScrollView>
       </View>
+  );
+
+  // Montada na aba, o casco da folha não existe — e o Salvar tem de existir na mesma. É a mesma
+  // ação, na mesma ordem, sem a moldura que ali não faz sentido.
+  if (emLinha) {
+    return (
+      <View style={estilos.emLinha}>
+        {miolo}
+        <View style={estilos.rodapeEmLinha}>
+          {!!faixa && (
+            <Pressable
+              onPress={confirmarExclusao}
+              style={estilos.excluirEmLinha}
+              accessibilityRole="button"
+              accessibilityLabel="Excluir música"
+            >
+              <Text style={estilos.excluirTexto}>Excluir</Text>
+            </Pressable>
+          )}
+          <Pressable
+            onPress={salvar}
+            disabled={gravando}
+            style={[estilos.salvarEmLinha, gravando && estilos.inerte]}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: gravando, busy: gravando }}
+            accessibilityLabel="Salvar"
+          >
+            {gravando
+              ? <ActivityIndicator size="small" color={paleta.sobrePrimaria} />
+              : <Text style={estilos.salvarTexto}>Salvar</Text>}
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <Folha
+      aberta={aberta}
+      titulo={rascunho.title?.trim() || (faixa ? 'Editar música' : 'Nova música')}
+      aoFechar={aoFechar}
+      acao={{ rotulo: 'Salvar', aoTocar: salvar, carregando: gravando }}
+      // Só editando: uma música que ainda não nasceu não tem o que excluir.
+      destrutiva={faixa ? { rotulo: 'Excluir', aoTocar: confirmarExclusao } : undefined}
+      // Esta ficha tem abas e rolagem por aba, então a `Folha` não põe a dela por cima.
+      semRolagem
+    >
+      {miolo}
     </Folha>
   );
 };
 
 // A casca (fundo, cabeçalho, teclado e rodapé) mora na `Folha`. Aqui ficam as abas e os campos.
-const estilos = StyleSheet.create({
+/**
+ * A folha, tingida pela paleta em vigor.
+ *
+ * ⚠️ UMA FUNÇÃO, e não um objeto: este formulário é o MESMO na lista de Músicas (clara) e na aba
+ * Ficha do editor (escura). Duas cópias do formulário seriam duas verdades sobre a mesma música;
+ * duas folhas de estilo são a mesma verdade, pintada de dois modos. Ver `casca/paleta.ts`.
+ */
+const criarEstilos = (p: PaletaDaFolha) => StyleSheet.create({
+  emLinha: { flex: 1, minHeight: 0, backgroundColor: p.fundo },
+  rodapeEmLinha: {
+    flexDirection: 'row', gap: 10, alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: p.divisoria,
+  },
+  salvarEmLinha: {
+    flex: 1, height: 42, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 6, backgroundColor: p.primaria,
+  },
+  salvarTexto: { fontSize: 14, fontWeight: '700', color: p.sobrePrimaria },
+  inerte: { opacity: 0.55 },
+  excluirEmLinha: {
+    height: 42, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 6, borderWidth: 1, borderColor: p.contorno,
+  },
+  excluirTexto: { fontSize: 14, fontWeight: '700', color: p.erro },
+
   miolo: { flex: 1, minHeight: 0 },
   flex: { flex: 1 },
 
   // As tres abas com o sublinhado azul na ativa, como na web.
   abas: {
     flexDirection: 'row', gap: 22, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: COR.divisoria,
+    borderBottomWidth: 1, borderBottomColor: p.divisoria,
   },
   aba: { paddingVertical: 13, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  abaAcesa: { borderBottomColor: COR.primaria },
-  abaTexto: { fontSize: 14, fontWeight: '700', color: COR_CATALOGO.legenda },
-  abaTextoAceso: { color: COR.primaria },
+  abaAcesa: { borderBottomColor: p.primaria },
+  abaTexto: { fontSize: 14, fontWeight: '700', color: p.legenda },
+  abaTextoAceso: { color: p.primaria },
 
   // Splits: um bloco por grupo, com os participantes e o total embaixo. Cada participante é uma
   // LINHA do bloco, então a moldura que separava um do outro saiu: quem separa é a divisória.
-  semParticipante: { fontSize: 13, color: COR_CATALOGO.legenda },
+  semParticipante: { fontSize: 13, color: p.legenda },
   split: { gap: 8 },
   splitTopo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   splitBaixo: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   entradaCurta: { width: 88 },
-  porcento: { fontSize: 14, fontWeight: '700', color: COR_CATALOGO.legenda },
+  porcento: { fontSize: 14, fontWeight: '700', color: p.legenda },
   papeis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   papel: {
     paddingVertical: 7, paddingHorizontal: 10,
-    borderRadius: RAIO.pilula, borderWidth: 1, borderColor: COR.contorno,
+    borderRadius: RAIO.pilula, borderWidth: 1, borderColor: p.contorno,
   },
-  papelEscolhido: { borderColor: COR.primaria, backgroundColor: COR.destaque },
-  papelTexto: { fontSize: 11, fontWeight: '700', color: COR.secundario },
-  papelTextoEscolhido: { color: COR.primaria },
+  papelEscolhido: { borderColor: p.primaria, backgroundColor: p.destaque },
+  papelTexto: { fontSize: 11, fontWeight: '700', color: p.texto },
+  papelTextoEscolhido: { color: p.primaria },
   adicionar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10 },
-  adicionarTexto: { fontSize: 13, fontWeight: '800', color: COR.primaria },
+  adicionarTexto: { fontSize: 13, fontWeight: '800', color: p.primaria },
   total: { flexDirection: 'row', justifyContent: 'space-between' },
-  totalRotulo: { fontSize: 12, fontWeight: '700', color: COR_CATALOGO.legenda },
-  totalValor: { fontSize: 12, fontWeight: '800', color: COR_CATALOGO.titulo },
+  totalRotulo: { fontSize: 12, fontWeight: '700', color: p.legenda },
+  totalValor: { fontSize: 12, fontWeight: '800', color: p.titulo },
   // Passar de 100% divide direito que nao existe.
-  totalExcedido: { color: COR.erro },
+  totalExcedido: { color: p.erro },
   // Daqui para baixo é o molde da folha de compromisso da Agenda, que é a referência do app:
   // rótulo miúdo em cima, campo sem moldura embaixo. A moldura de cada campo virou a do bloco.
   conteudo: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 28, gap: 22 },
   campo: { gap: 6 },
-  rotulo: { fontSize: 11, fontWeight: '800', color: COR_CATALOGO.rotulo, letterSpacing: 0.4 },
-  entrada: { paddingVertical: 2, fontSize: 15, color: COR_CATALOGO.titulo },
+  rotulo: { fontSize: 11, fontWeight: '800', color: p.rotulo, letterSpacing: 0.4 },
+  entrada: { paddingVertical: 2, fontSize: 15, color: p.titulo },
   entradaAlta: { minHeight: 220, textAlignVertical: 'top' },
   entradaMedia: { minHeight: 96, textAlignVertical: 'top' },
   lado: { flexDirection: 'row', gap: 12 },
@@ -661,29 +747,29 @@ const estilos = StyleSheet.create({
   opcao: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     paddingVertical: 9, paddingHorizontal: 12,
-    borderRadius: RAIO.pilula, borderWidth: 1, borderColor: COR.contorno,
+    borderRadius: RAIO.pilula, borderWidth: 1, borderColor: p.contorno,
   },
-  opcaoEscolhida: { borderColor: COR.primaria, backgroundColor: COR.destaque },
-  opcaoTexto: { fontSize: 13, fontWeight: '700', color: COR.secundario },
-  opcaoTextoEscolhido: { color: COR.primaria },
+  opcaoEscolhida: { borderColor: p.primaria, backgroundColor: p.destaque },
+  opcaoTexto: { fontSize: 13, fontWeight: '700', color: p.texto },
+  opcaoTextoEscolhido: { color: p.primaria },
   pontoDoStatus: { width: 7, height: 7, borderRadius: 4 },
   capa: {
     flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 62, padding: 10,
-    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: COR.contorno,
+    borderRadius: RAIO.campoDeEntrada, borderWidth: 1, borderColor: p.contorno,
     borderStyle: 'dashed',
   },
   capaImagem: { width: 42, height: 42, borderRadius: 8 },
   capaVazia: {
     width: 42, height: 42, borderRadius: 8, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COR_CATALOGO.tocarFundo,
+    backgroundColor: p.realce,
   },
-  capaNome: { fontSize: 13, fontWeight: '700', color: COR_CATALOGO.titulo },
-  capaApoio: { fontSize: 11, color: COR_CATALOGO.legenda, marginTop: 2 },
+  capaNome: { fontSize: 13, fontWeight: '700', color: p.titulo },
+  capaApoio: { fontSize: 11, color: p.legenda, marginTop: 2 },
   sugestoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   sugestao: {
     paddingVertical: 6, paddingHorizontal: 10,
-    borderRadius: RAIO.pilula, backgroundColor: COR_CATALOGO.tocarFundo,
+    borderRadius: RAIO.pilula, backgroundColor: p.realce,
   },
-  sugestaoTexto: { fontSize: 11, fontWeight: '700', color: COR_CATALOGO.tocarIcone },
-  erro: { fontSize: 13, color: COR.erro, lineHeight: 19 },
+  sugestaoTexto: { fontSize: 11, fontWeight: '700', color: p.realceTinta },
+  erro: { fontSize: 13, color: p.erro, lineHeight: 19 },
 });
