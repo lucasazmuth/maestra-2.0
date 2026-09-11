@@ -66,6 +66,11 @@ module.exports = {
       ]),
     ),
     // Mesma resolucao que o Metro faz: o nucleo entra pela FONTE, sem passo de build.
+    // A mesma escolha do `metro.config.js`, e pela mesma razao: o `require` deste pacote entrega
+    // um objeto vazio. Ver o comentario de la.
+    '^@breezystack/lamejs$': path.resolve(
+      __dirname, 'node_modules/@breezystack/lamejs/dist/lamejs.js',
+    ),
     '^@maestra/core$': path.resolve(__dirname, '../../packages/core/src/index.ts'),
     '^@maestra/core/(.*)$': path.resolve(__dirname, '../../packages/core/src/$1'),
   },
@@ -76,7 +81,7 @@ module.exports = {
   // as outras duas na primeira atualizacao de SDK. Aqui so injetamos nomes na excecao dele.
   transformIgnorePatterns: (() => {
     const doPreset = require('jest-expo/jest-preset').transformIgnorePatterns;
-    const nossos = ['react-native-mmkv', 'react-native-nitro-modules', 'react-redux',
+    const nossos = ['@breezystack', 'react-native-mmkv', 'react-native-nitro-modules', 'react-redux',
                     '@reduxjs/toolkit', 'redux-persist',
                     // transitivas do RTK que tambem publicam ESM
                     'immer', 'reselect'];

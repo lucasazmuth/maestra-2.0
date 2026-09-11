@@ -26,6 +26,7 @@ const mockMarcarApagado = jest.fn();
 const mockRestaurar = jest.fn();
 const mockPurgar = jest.fn();
 const mockGravarFicha = jest.fn();
+const mockGravarFixo = jest.fn();
 const mockNovoArquivo = jest.fn();
 const mockCriarPista = jest.fn();
 const mockMarcarPista = jest.fn();
@@ -75,6 +76,19 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
 const mockCanal = { on: jest.fn(), subscribe: jest.fn() };
 mockCanal.on.mockReturnValue(mockCanal);
 mockCanal.subscribe.mockReturnValue(mockCanal);
+// O balde: a guia sobe para um caminho fixo, e o teste lê qual foi.
+//
+// ⚠️ SEM `requireActual`. Aquele módulo importa o cliente do banco no topo, e trazê-lo por aqui
+// criava uma SEGUNDA instância dele dentro da fábrica do mock — a partir da primeira gravação
+// da guia, toda montagem seguinte nesta suíte parava de renderizar, e a mensagem era sempre
+// sobre outra coisa. As três funções que a tela usa ficam ditas à mão.
+jest.mock('@maestra/core/services/armazenamento', () => ({
+  BALDE_DO_CATALOGO: 'catalog',
+  tipoDoCatalogo: (nome: string) => (/\.(mp3|wav)$/i.test(nome) ? 'audio/wav' : null),
+  tituloDoArquivo: (nome: string) => nome.replace(/\.[^.]+$/, ''),
+  gravarEmCaminhoFixo: (...a: unknown[]) => mockGravarFixo(...a),
+}));
+
 jest.mock('@maestra/core/lib/supabase', () => ({
   supabase: {
     channel: () => mockCanal,
@@ -127,8 +141,25 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
       close: () => Promise.resolve(),
     }),
     buscarNativo: () => Promise.resolve('/cache/pistas/falsa.wav'),
-    // O render offline não é exercitado aqui: quem o prova é a suíte do `exportarNativo`.
-    criarOfflineNativo: () => ({}),
+    // ⚠️ O CONTEXTO OFFLINE PRECISA DE RENDER DE VERDADE. Como objeto vazio, `renderizar`
+    // estourava dentro do `try` da guia e o teste media um silêncio: a guia "não era gerada"
+    // porque o duplo não sabia renderizar, e não porque a tela decidiu não a gerar.
+    criarOfflineNativo: () => ({
+      sampleRate: 44100,
+      currentTime: 0,
+      destination: {},
+      createGain: ganho,
+      createWaveShaper: teto,
+      createStereoPanner: () => ({ pan: parametro(), connect: jest.fn(), disconnect: jest.fn() }),
+      createBufferSource: () => ({
+        buffer: null, connect: jest.fn(), disconnect: jest.fn(), start: jest.fn(), stop: jest.fn(),
+      }),
+      // Meio segundo de silêncio: o que interessa é o caminho, não o som.
+      startRendering: () => Promise.resolve({
+        duration: 0.5, length: 22050, numberOfChannels: 1, sampleRate: 44100,
+        getChannelData: () => new Float32Array(22050),
+      }),
+    }),
   };
 });
 
@@ -139,6 +170,22 @@ jest.mock('@/casca/jam/mesa/exportarNativo', () => ({
   partilharStems: jest.fn(() => Promise.resolve(2)),
   partilharGuiaWav: jest.fn(() => Promise.resolve(true)),
   partilharGuiaMp3: jest.fn(() => Promise.resolve()),
+}));
+
+// O detector de andamento. O duplo é mutável: cada teste diz o que a máquina "ouviu", e se já
+// havia uma análise a correr quando a tela abriu — que é o caminho por onde o resultado chega
+// sem que esta tela tenha pedido nada.
+let mockAnalise: { bpm?: number } | null = null;
+let mockEmCurso = false;
+const mockPedir = jest.fn(() => Promise.resolve());
+jest.mock('@maestra/core/hooks/useAnaliseDaVersao', () => ({
+  useAnaliseDaVersao: () => ({
+    analise: mockAnalise,
+    trabalhos: [],
+    carregando: false,
+    emCurso: () => mockEmCurso,
+    pedir: mockPedir,
+  }),
 }));
 
 jest.mock('@/nucleo/arquivos', () => ({
@@ -229,6 +276,9 @@ describe('espaço jam', () => {
     mockPurgar.mockResolvedValue({ pistas: 0, clipes: 0, arquivos: 0 });
     mockMoverClipe.mockResolvedValue(null);
     mockMarcarApagado.mockResolvedValue(undefined);
+    mockAnalise = null;
+    mockEmCurso = false;
+    mockGravarFixo.mockResolvedValue({ url: 'https://exemplo.invalid/guia.mp3?v=1', path: 'a-1/p-1/guia.mp3' });
     mockRestaurar.mockResolvedValue(undefined);
   });
 
@@ -333,9 +383,28 @@ describe('espaço jam', () => {
     await tela.findByText('FAIXAS');
 
     fireEvent.press(tela.getAllByLabelText('Voltar para Músicas')[0]);
-    expect(mockPurgar).toHaveBeenCalledWith('v-1');
+    // ⚠️ A SAÍDA ESPERA PELA GUIA. Ela é gerada no mesmo instante, e a purga acontece depois —
+    // por isso a asserção passou a ser assíncrona: seca, ela media o estado de meio caminho.
+    await waitFor(() => expect(mockPurgar).toHaveBeenCalledWith('v-1'));
   });
 
+  // ⚠️ A MIX NÃO SE MEXE: ela é o áudio da própria gravação, e renomeá-la ou apagá-la é mexer na
+  // gravação. O M e o S ficam — ouvir só a mistura, ou calá-la para ouvir as camadas, é
+  // exatamente o que se faz com ela.
+  it('a faixa da Mix não se renomeia, não se apaga e não recebe áudio', async () => {
+    // Sem faixas, a montagem é só a Mix sintetizada a partir do áudio da gravação.
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    expect(tela.queryByLabelText('Apagar a faixa Mix ★')).toBeNull();
+    expect(tela.queryByLabelText('Enviar um áudio para Mix ★')).toBeNull();
+    expect(tela.queryByLabelText('Armar Mix ★ para gravar')).toBeNull();
+    // O campo do nome existe, mas travado.
+    expect(tela.getByDisplayValue('Mix ★').props.editable).toBe(false);
+    // E o que é de escuta continua lá.
+    expect(tela.getByLabelText('Silenciar Mix ★')).toBeTruthy();
+    expect(tela.getByLabelText('Ouvir só Mix ★')).toBeTruthy();
+  });
   // ⚠️ SEM PERMISSÃO, A MONTAGEM SÓ SE VÊ. Um convidado de leitura veria clipes que se escolhem,
   // setas que prometem desfazer e botões de remover que o banco ia recusar — e a recusa chegaria
   // como "Falha ao salvar", que não explica nada a quem nunca teve permissão.
@@ -853,6 +922,68 @@ describe('espaço jam', () => {
     aviso.mockRestore();
   });
 
+  // ─── O andamento, ouvido sozinho ───────────────────────────────────────────
+  //
+  // Pedir a alguém que digite um número que a máquina consegue ouvir é trabalho que não devia
+  // existir — e o andamento não é enfeite: é o que faz a régua contar COMPASSOS em vez de
+  // segundos.
+
+  it('o andamento ouvido entra no campo e se identifica como ouvido', async () => {
+    // A gravação abriu sem andamento escrito e com uma análise já a correr: é assim que o
+    // número chega sem que esta tela tenha pedido nada.
+    mockBuscar.mockResolvedValue(projeto({ versions: [versao({ bpm: null })] }));
+    mockEmCurso = true;
+    mockAnalise = { bpm: 128 };
+    const tela = await montar();
+
+    const campo = await tela.findByLabelText('Andamento da gravação, em BPM, ouvido do áudio');
+    expect(campo.props.value).toBe('128');
+    // ⚠️ E DIZ DE ONDE VEIO. Um palpite da máquina sem marca é indistinguível de um número que a
+    // pessoa escreveu e esqueceu — e é sobre esse que ela depois vai confiar para registar a obra.
+  });
+
+  // ⚠️ NÃO É "FALTA DE CONFIANÇA", é ambiguidade real: um trap a 140 e o mesmo trap contado em
+  // meio-tempo a 70 têm exatamente as mesmas batidas, e a máquina escolhe uma delas com toda a
+  // certeza do mundo.
+  it('oferece a outra leitura da mesma batida, e trocar é um interruptor', async () => {
+    mockBuscar.mockResolvedValue(projeto({ versions: [versao({ bpm: null })] }));
+    mockEmCurso = true;
+    mockAnalise = { bpm: 140 };
+    const tela = await montar();
+    await tela.findByLabelText('Andamento da gravação, em BPM, ouvido do áudio');
+
+    fireEvent.press(tela.getByLabelText(
+      'Trocar para 70 BPM: a mesma batida, contada em dobro ou em meio-tempo',
+    ));
+    await waitFor(() => expect(tela.getByDisplayValue('70')).toBeTruthy());
+    // Volta com outro toque: é um interruptor entre as duas leituras, não uma correção única.
+    expect(tela.getByLabelText(
+      'Trocar para 140 BPM: a mesma batida, contada em dobro ou em meio-tempo',
+    )).toBeTruthy();
+  });
+
+  it('escrever por cima do que a máquina ouviu tira a marca e a oferta', async () => {
+    mockBuscar.mockResolvedValue(projeto({ versions: [versao({ bpm: null })] }));
+    mockEmCurso = true;
+    // 160 e não 128: a metade de 128 cai fora da faixa comum e não haveria oferta nenhuma para
+    // desaparecer — o teste passaria sem testar nada.
+    mockAnalise = { bpm: 160 };
+    const tela = await montar();
+    const campo = await tela.findByLabelText('Andamento da gravação, em BPM, ouvido do áudio');
+    expect(tela.getByLabelText(
+      'Trocar para 80 BPM: a mesma batida, contada em dobro ou em meio-tempo',
+    )).toBeTruthy();
+
+    fireEvent.changeText(campo, '92');
+
+    // O andamento da obra é o que o autor diz que é — a partir daqui o número é dele, e a
+    // máquina cala-se: nem a marca, nem a oferta da outra leitura.
+    await waitFor(() => expect(tela.getByLabelText('Andamento da gravação, em BPM')).toBeTruthy());
+    expect(tela.queryByLabelText(
+      'Trocar para 80 BPM: a mesma batida, contada em dobro ou em meio-tempo',
+    )).toBeNull();
+  });
+
   // ─── A biblioteca ──────────────────────────────────────────────────────────
   //
   // ⚠️ NO TELEMÓVEL ELA É UMA GAVETA, e não uma coluna: 256 pt de coluna fixa são 68 % de um
@@ -887,21 +1018,4 @@ describe('espaço jam', () => {
     expect(tela.queryByText('Biblioteca')).toBeNull();
   });
 
-  // ⚠️ A MIX NÃO SE MEXE: ela é o áudio da própria gravação, e renomeá-la ou apagá-la é mexer na
-  // gravação. O M e o S ficam — ouvir só a mistura, ou calá-la para ouvir as camadas, é
-  // exatamente o que se faz com ela.
-  it('a faixa da Mix não se renomeia, não se apaga e não recebe áudio', async () => {
-    // Sem faixas, a montagem é só a Mix sintetizada a partir do áudio da gravação.
-    const tela = await montar();
-    await tela.findByText('FAIXAS');
-
-    expect(tela.queryByLabelText('Apagar a faixa Mix ★')).toBeNull();
-    expect(tela.queryByLabelText('Enviar um áudio para Mix ★')).toBeNull();
-    expect(tela.queryByLabelText('Armar Mix ★ para gravar')).toBeNull();
-    // O campo do nome existe, mas travado.
-    expect(tela.getByDisplayValue('Mix ★').props.editable).toBe(false);
-    // E o que é de escuta continua lá.
-    expect(tela.getByLabelText('Silenciar Mix ★')).toBeTruthy();
-    expect(tela.getByLabelText('Ouvir só Mix ★')).toBeTruthy();
-  });
 });

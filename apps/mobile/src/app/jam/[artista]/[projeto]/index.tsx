@@ -16,7 +16,10 @@ import {
 } from '@maestra/core/audio/historico';
 import { ehPistaDaMix, montagemDaVersao } from '@maestra/core/audio/pistasDaVersao';
 import { ZOOM_MAXIMO, ZOOM_MINIMO } from '@maestra/core/audio/grade';
+import { bytesDoMp3, caminhoDaGuia } from '@maestra/core/audio/exportar';
 import { useMesa } from '@maestra/core/audio/useMesa';
+import { useAnaliseDaVersao } from '@maestra/core/hooks/useAnaliseDaVersao';
+import { bpmLegivel, outroAndamento, podeOuvirSozinho } from '@maestra/core/services/db/audioJobs';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import {
   LIMITE_DA_PISTA_BYTES, MAXIMO_DE_PISTAS, MEMORIA_DE_AVISO_BYTES,
@@ -25,7 +28,9 @@ import { AZUL_DO_EDITOR, COR, COR_EDITOR } from '@maestra/core/constants/design'
 import type {
   CatalogClip, CatalogProject, CatalogTrack, CatalogVersion,
 } from '@maestra/core/interfaces/maestra';
-import { tipoDoCatalogo, tituloDoArquivo } from '@maestra/core/services/armazenamento';
+import {
+  BALDE_DO_CATALOGO, gravarEmCaminhoFixo, tipoDoCatalogo, tituloDoArquivo,
+} from '@maestra/core/services/armazenamento';
 import * as catalogo from '@maestra/core/services/db/catalog';
 
 import { CampoDoCabecalho } from '@/casca/jam/CampoDoCabecalho';
@@ -180,15 +185,26 @@ export default function EspacoJam() {
   const [tom, setTom] = useState('');
 
 
+  /**
+   * Esta tela ainda está no ar?
+   *
+   * ⚠️ SAIR DAQUI NÃO CANCELA O QUE JÁ ESTAVA A CORRER. Gerar a guia, subir uma faixa e
+   * recarregar a montagem são idas ao servidor que duram segundos; quem carrega no X no meio
+   * delas leva a tela embora, e a resposta chega a um componente que já não existe. O React
+   * avisa, e o aviso é merecido: é estado escrito no vazio.
+   */
+  const noAr = useRef(true);
+  useEffect(() => () => { noAr.current = false; }, []);
+
   const buscar = useCallback(async () => {
     if (!projetoId) return;
     try {
       const proximo = await catalogo.getCatalogProject(String(projetoId));
-      setProjeto(proximo);
+      if (noAr.current) setProjeto(proximo);
     } catch {
-      setProjeto(null);
+      if (noAr.current) setProjeto(null);
     } finally {
-      setCarregando(false);
+      if (noAr.current) setCarregando(false);
     }
   }, [projetoId]);
 
@@ -365,6 +381,51 @@ export default function EspacoJam() {
     } : atual
   ));
 
+  // ─── A guia ───────────────────────────────────────────────────────────────
+  //
+  // A lista de Músicas toca UMA coisa por música, e essa coisa é a SOMA da montagem. Sem isto, a
+  // pessoa montava quatro camadas no telemóvel, voltava para a lista, e ouvia o áudio antigo —
+  // sem nada que explicasse porquê.
+  //
+  // ⚠️ QUANDO: ao SAIR, e só se a montagem mudou. Renderizar a cada edição daria o mesmo
+  // resultado final depois de trinta renders e trinta envios de 4 MB — o mesmo arquivo, trinta
+  // vezes, para ninguém ouvir vinte e nove deles.
+  //
+  // ⚠️ ONDE: num caminho FIXO por música, regravado por cima. Se cada render criasse um arquivo
+  // novo, uma música editada trinta vezes guardaria trinta guias mortas.
+  const sujo = useRef(false);
+  const [gerando, setGerando] = useState(false);
+
+  const gerarAGuia = async (): Promise<void> => {
+    if (!sujo.current || !aberta || !projeto || !podeEditar) return;
+    setGerando(true);
+    try {
+      const rendido = await mesa.renderizar(criarOfflineNativo);
+      if (!rendido) return;
+      const bytes = await bytesDoMp3(rendido);
+      const gravado = await gravarEmCaminhoFixo(
+        BALDE_DO_CATALOGO, caminhoDaGuia(String(artistaId), projeto.id), bytes.buffer, 'audio/mpeg',
+      );
+
+      // ⚠️ A GUIA TEM CAMINHO PRÓPRIO, e o que muda é para onde a gravação aponta. Escrever por
+      // cima do ficheiro original seria um laço: a pista da Mix aponta para esse mesmo endereço,
+      // e a guia seguinte teria a guia anterior dentro dela, cada vez mais dobrada. E o áudio
+      // que a pessoa enviou um dia desapareceria sem forma de voltar atrás.
+      await catalogo.updateCatalogVersion(aberta.id, {
+        audio_file: gravado.url,
+        audio_file_name: 'guia.mp3',
+        duration: relogioCurto(rendido.duration),
+      });
+      sujo.current = false;
+      if (!noAr.current) return;
+    } catch {
+      // Falhar a guia não pode prender a pessoa na tela: a montagem está salva, e a próxima
+      // saída tenta de novo.
+    } finally {
+      if (noAr.current) setGerando(false);
+    }
+  };
+
   // ─── A montagem: mover, dividir, remover ──────────────────────────────────
   //
   // Chega ao aparelho a mesma camada que a web tem, e com as mesmas regras, porque elas não são
@@ -427,6 +488,7 @@ export default function EspacoJam() {
 
   /** ⚠️ Uma seta de cada vez: dois toques seguidos partem de estados que se atropelam. */
   const andarNoTempo = async (sentido: 'desfazer' | 'refazer') => {
+    sujo.current = true;
     if (andandoNoTempo) return;
     const saida = sentido === 'desfazer' ? desfazerPasso(historico) : refazerPasso(historico);
     if (!saida) return;
@@ -447,6 +509,7 @@ export default function EspacoJam() {
 
   /** `de` só vem quando a mão largou: durante o arrasto isto é chamado a cada pixel. */
   const moverClipe = (clipeId: string, inicio: number, de?: number) => {
+    sujo.current = true;
     patcharClipe(clipeId, { start_seconds: inicio });
     if (de !== undefined) anotar({ tipo: 'mover', clipeId, de, para: inicio });
     clearTimeout(relogiosDoClipe.current[clipeId]);
@@ -456,6 +519,7 @@ export default function EspacoJam() {
   };
 
   const cortarClipe = async (clipeId: string, emSegundo: number) => {
+    sujo.current = true;
     const faixa = (aberta?.tracks ?? []).find((t) => (t.clips ?? []).some((c) => c.id === clipeId));
     const clipe = (faixa?.clips ?? []).find((c) => c.id === clipeId);
     if (!faixa || !clipe) return;
@@ -486,6 +550,7 @@ export default function EspacoJam() {
   };
 
   const apagarClipe = async (clipeId: string) => {
+    sujo.current = true;
     esquecerClipe(clipeId);
     setSelo('salvando');
     try {
@@ -519,6 +584,7 @@ export default function EspacoJam() {
    */
   const apagarPista = async (id: string) => {
     if (ehPistaDaMix(id)) return;
+    sujo.current = true;
     setSelo('salvando');
     try {
       await catalogo.marcarPistaApagada(id);
@@ -587,6 +653,7 @@ export default function EspacoJam() {
     // montagem E do selo de progresso. Quem enviava ficava a olhar para a mesma lista de
     // ficheiros, sem sinal de que algo estava a acontecer, e só descobria o resultado ao fechar
     // à mão. Fechada, aparece o que interessa: as faixas a nascer e o "Enviando 2 de 4…".
+    sujo.current = true;
     setBibliotecaAberta(false);
     setSelo('salvando');
     setEnvio({ feitos: 0, total: aceites.length });
@@ -681,6 +748,7 @@ export default function EspacoJam() {
     const duracao = mesa.estado.duracao;
     if (!duracao) { Alert.alert('Ainda não', 'Espere o áudio carregar para montar.'); return; }
 
+    sujo.current = true;
     setBibliotecaAberta(false);
     setSelo('salvando');
     try {
@@ -708,6 +776,77 @@ export default function EspacoJam() {
 
   /** A gravação ainda não tem faixas de verdade: o que se vê é a Mix sintetizada. */
   const porMontar = pistas.length === 1 && ehPistaDaMix(pistas[0].id);
+
+  // ─── O andamento, ouvido sozinho ──────────────────────────────────────────
+  //
+  // O detector de BPM existe desde sempre e vivia escondido na ficha, atrás de um botão que era
+  // preciso descobrir. Aqui ele acontece por conta própria na gravação aberta — porque o
+  // andamento é o que faz a régua contar COMPASSOS, e pedir a alguém que digite um número que a
+  // máquina consegue ouvir é trabalho que não devia existir.
+  //
+  // As regras de QUANDO (uma vez por gravação, só com o campo vazio, só para quem edita) vivem
+  // no núcleo, em `podeOuvirSozinho`: elas guardam cota e guardam trabalho de gente.
+  const analiseDoJam = useAnaliseDaVersao(abertaId ?? undefined);
+  /**
+   * Estamos à espera de um andamento que ainda vai chegar?
+   *
+   * ⚠️ É ELE QUE IMPEDE O CAMPO DE SE ENCHER SOZINHO OUTRA VEZ. Sem esta memória, quem apagou o
+   * BPM de propósito reencontrava-o preenchido na abertura seguinte — a análise antiga continua
+   * no banco, e "campo vazio + análise existe" descreve tanto o primeiro envio como o gesto
+   * deliberado de o esvaziar.
+   */
+  const esperandoOAndamento = useRef(false);
+  const ouviuNestaVersao = useRef<string | null>(null);
+  const [ouvido, setOuvido] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!abertaId || analiseDoJam.carregando) return;
+    if (ouviuNestaVersao.current === abertaId) return;
+    ouviuNestaVersao.current = abertaId;
+    // Já havia um a correr quando esta tela abriu: não se pede outro, mas espera-se por ele.
+    if (analiseDoJam.emCurso('bpm_tom')) { esperandoOAndamento.current = true; return; }
+    if (!podeOuvirSozinho({
+      temAudio: Boolean(aberta?.audio_file),
+      bpmEscrito: aberta?.bpm,
+      analise: analiseDoJam.analise,
+      trabalhos: analiseDoJam.trabalhos,
+      podeEditar,
+    })) return;
+    esperandoOAndamento.current = true;
+    void analiseDoJam.pedir('bpm_tom');
+  }, [abertaId, aberta?.audio_file, aberta?.bpm, podeEditar, analiseDoJam]);
+
+  useEffect(() => {
+    if (!esperandoOAndamento.current || !abertaId) return;
+    const detectado = bpmLegivel(analiseDoJam.analise?.bpm);
+    if (!detectado) return;
+    esperandoOAndamento.current = false;
+    // ⚠️ E MESMO ASSIM, SÓ SE AINDA ESTIVER VAZIO. A análise demora minutos, e nesses minutos a
+    // pessoa pode ter escrito o andamento à mão — que é a resposta certa por definição, porque
+    // o andamento da obra é o que o autor diz que é.
+    //
+    // ⚠️ ESTA LINHA NÃO TEM TESTE NESTA SUÍTE, e é bom que se saiba: o duplo do detector entrega
+    // a análise de uma vez, e não consegui fazê-la CHEGAR no meio de uma digitação — que é
+    // exatamente o instante que esta guarda protege. Um teste que não exercita a linha passa
+    // com ela e sem ela, e um desses é pior do que nenhum. A regra é a mesma da web, palavra
+    // por palavra, e lá ela tem a cobertura que aqui falta.
+    if (bpmLegivel(bpm)) return;
+    setOuvido(Number(detectado));
+    setBpm(detectado);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analiseDoJam.analise, abertaId]);
+
+  /**
+   * O outro andamento possível, enquanto o que está no campo for o que a máquina ouviu.
+   *
+   * ⚠️ NÃO É "FALTA DE CONFIANÇA", é ambiguidade real: um trap a 140 e o mesmo trap contado em
+   * meio-tempo a 70 têm exatamente as mesmas batidas, e a máquina escolhe uma delas com toda a
+   * certeza do mundo. Por isso a troca aparece sempre que existe uma alternativa plausível, e
+   * não só quando o número vem inseguro.
+   */
+  const alternativa = ouvido !== null && Number(bpmLegivel(bpm)) === ouvido
+    ? outroAndamento(ouvido)
+    : null;
 
   // ─── O transporte e o zoom ────────────────────────────────────────────────
   //
@@ -817,6 +956,7 @@ export default function EspacoJam() {
    * frase.
    */
   const mexerNoMudo = (id: string, muda: boolean) => {
+    sujo.current = true;
     mesa.mudar(id, muda);
     const acendendoAMix = !muda && ehPistaDaMix(id);
     const haCamadasNoAr = mesa.estado.pistas.some((p) => !ehPistaDaMix(p.id) && !p.muda);
@@ -858,6 +998,7 @@ export default function EspacoJam() {
   };
 
   const mexerNoPan = (id: string, valor: number) => {
+    sujo.current = true;
     mesa.panoramar(id, valor);
     // A Mix não tem linha no banco: ela é o `audio_file` da gravação, e o panorama dela é só
     // desta sessão de escuta.
@@ -872,6 +1013,7 @@ export default function EspacoJam() {
   };
 
   const mexerNoGanho = (id: string, valor: number) => {
+    sujo.current = true;
     mesa.ganho(id, valor);
     // A Mix não tem linha no banco: ela é o `audio_file` da gravação, e o volume dela é só
     // desta sessão de escuta.
@@ -928,6 +1070,18 @@ export default function EspacoJam() {
   }, [abertaId]);
 
   const voltar = () => {
+    // ⚠️ A GUIA FICA A CORRER, E A TELA SAI NA MESMA.
+    //
+    // A web espera por ela, e ali isso custa dois segundos. Aqui foi medido: 101 segundos para
+    // 227 de áudio, num iPhone 17 Pro — quase metade do tempo real da música. Prender alguém por
+    // um minuto e meio num ecrã que ela pediu para fechar, para fazer um ficheiro que ela não
+    // pediu, é o pior negócio possível. O trabalho não morre com a tela: é uma promessa, e
+    // acaba de subir sozinho.
+    //
+    // O preço, dito: fechar o app no meio deixa a guia por fazer, e a lista continua a tocar o
+    // áudio anterior até alguém mexer na montagem outra vez.
+    void gerarAGuia();
+
     // ⚠️ A SESSÃO FECHA E O QUE FOI APAGADO SAI DE VERDADE, do banco e do balde. É o outro lado
     // do desfazer: enquanto a tela está aberta a linha fica marcada para poder voltar; fechada,
     // não há mais quem a chame de volta, e guardá-la seria só resíduo a acumular.
@@ -1030,11 +1184,13 @@ export default function EspacoJam() {
         </View>
 
         <Pressable
-          style={estilos.redondo}
+          style={[estilos.redondo, gerando && estilos.inerte]}
           onPress={voltar}
+          disabled={gerando}
           hitSlop={6}
           accessibilityRole="button"
-          accessibilityLabel="Voltar para Músicas"
+          accessibilityState={{ disabled: gerando, busy: gerando }}
+          accessibilityLabel={gerando ? 'Gerando a guia…' : 'Voltar para Músicas'}
         >
           <Feather name="x" size={14} color={COR_EDITOR.texto} />
         </Pressable>
@@ -1210,7 +1366,21 @@ export default function EspacoJam() {
           limite={3}
           travado={!aberta || !podeEditar}
           rotulo="Andamento da gravação, em BPM"
+          ouvido={ouvido !== null && Number(bpmLegivel(bpm)) === ouvido}
         />
+
+        {/* A troca de oitava. Um toque, e volta com outro: é um interruptor entre as duas
+            leituras da mesma batida, não uma correção que se faz uma vez. */}
+        {alternativa !== null && (
+          <Pressable
+            onPress={() => { setOuvido(alternativa); setBpm(String(alternativa)); }}
+            style={estilos.outroAndamento}
+            accessibilityRole="button"
+            accessibilityLabel={`Trocar para ${alternativa} BPM: a mesma batida, contada em dobro ou em meio-tempo`}
+          >
+            <Text style={estilos.outroAndamentoTexto}>ou {alternativa}?</Text>
+          </Pressable>
+        )}
         <CampoDoCabecalho
           valor={tom}
           aoMudar={setTom}
@@ -1321,7 +1491,7 @@ export default function EspacoJam() {
       {/* ⚠️ O SELO FICA EM TODAS AS ABAS, ao contrário das setas e do balão: ele não fala da
           montagem, fala de GRAVAR — e a ficha, que não tem botão de Salvar, é justamente onde
           ele mais precisa de ser lido. */}
-      {selo !== 'parado' && (
+      {(selo !== 'parado' || gerando) && (
         <View style={[estilos.selo, { bottom: margem.bottom + ALTURA_DO_RODAPE + 12 }]}>
           <Text
             style={[estilos.seloTexto, selo === 'erro' && estilos.seloDeErro]}
@@ -1329,9 +1499,10 @@ export default function EspacoJam() {
           >
             {/* Dez stems levam um minuto, e um minuto sem sinal é um bug aos olhos de quem
                 espera. A ordem é a da gravidade: o que prende a tela aparece primeiro. */}
-            {envio ? `Enviando ${envio.feitos + 1} de ${envio.total}…`
-              : selo === 'salvando' ? 'Salvando…'
-                : selo === 'erro' ? 'Falha ao salvar' : 'Salvo'}
+            {gerando ? 'Gerando a guia…'
+              : envio ? `Enviando ${envio.feitos + 1} de ${envio.total}…`
+                : selo === 'salvando' ? 'Salvando…'
+                  : selo === 'erro' ? 'Falha ao salvar' : 'Salvo'}
           </Text>
         </View>
       )}
@@ -1419,6 +1590,12 @@ const ABAS: {
   },
 ];
 
+/** `3:46` — o formato que a lista de Músicas mostra. */
+const relogioCurto = (segundos: number) => {
+  const s = Math.max(0, Math.round(segundos));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
+
 /** A altura do rodapé, de onde sai a posição dos flutuantes — para os dois não divergirem. */
 const ALTURA_DO_RODAPE = 48;
 const ALTURA_DO_TITULO = 56;
@@ -1467,6 +1644,7 @@ const estilos = StyleSheet.create({
   },
   aba: { width: 34, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   abaAcesa: { backgroundColor: COR_EDITOR.cabecaDaVersao },
+  inerte: { opacity: 0.4 },
 
   corpo: { flex: 1, minHeight: 0 },
   // A ficha e o exportar não têm o que arrastar nem o que tocar: ocupam o lugar da montagem.
@@ -1496,6 +1674,14 @@ const estilos = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   botaoAceso: { backgroundColor: COR_EDITOR.botaoRedondo },
+  outroAndamento: {
+    height: 26, paddingHorizontal: 8, justifyContent: 'center',
+    borderRadius: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: COR_EDITOR.fio,
+  },
+  outroAndamentoTexto: {
+    fontSize: 11, fontWeight: '700', color: COR_EDITOR.apoio, fontVariant: ['tabular-nums'],
+  },
+
   // O Master é o único controlo desta barra, e por isso é ele que fica com o que sobra.
   mestre: { flex: 1, minWidth: 60, maxWidth: 160 },
   numeroDoMestre: {

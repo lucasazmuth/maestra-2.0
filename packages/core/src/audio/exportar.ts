@@ -1,3 +1,5 @@
+import { Mp3Encoder } from '@breezystack/lamejs';
+
 import type { BufferDeAudio } from './contexto';
 
 // EXPORTAR: tirar o que está montado no editor para fora dele.
@@ -80,3 +82,82 @@ export const bytesDoWav = (buffer: BufferDeAudio): Uint8Array<ArrayBuffer> => {
 
   return new Uint8Array(arrayBuffer);
 };
+
+// ─── A GUIA, em MP3 ─────────────────────────────────────────────────────────
+//
+// A lista de Músicas toca UMA coisa por música. Antes essa coisa era a "gravação principal" —
+// fazia sentido quando uma música era várias gravações alternativas e uma delas era a boa. Com
+// o editor, uma música passou a ser uma MONTAGEM: bateria, piano, voz, tocando juntas. Eleger
+// uma principal entre elas seria eleger a bateria como a música. Então o produto gera a soma.
+
+/**
+ * A qualidade da guia.
+ *
+ * 128 kbps estéreo: ~1 MB por minuto. Ela é uma REFERÊNCIA para ouvir na lista, não um master —
+ * e cada quilobit a mais é armazenamento por música e, sobretudo, download de quem for ouvir.
+ */
+const KBPS = 128;
+/** Quantas amostras por bloco entregue ao codificador. 1152 é o quadro do MP3. */
+const QUADRO = 1152;
+
+const paraInteiros = (canal: Float32Array): Int16Array => {
+  const saida = new Int16Array(canal.length);
+  for (let i = 0; i < canal.length; i += 1) {
+    // Preso entre −1 e 1 antes de escalar: uma amostra fora do intervalo daria a volta e viraria
+    // um estalo no lado oposto da onda.
+    const amostra = Math.max(-1, Math.min(1, canal[i]));
+    saida[i] = amostra < 0 ? amostra * 0x8000 : amostra * 0x7fff;
+  }
+  return saida;
+};
+
+/**
+ * O buffer renderizado, em MP3.
+ *
+ * Feito em blocos porque o codificador quer blocos, e porque assim a tela respira entre eles —
+ * um laço de dez milhões de amostras sem pausa congela a interface, e congelar a tela de alguém
+ * para gerar um ficheiro que ela nem pediu é o pior tipo de custo. No telemóvel isto pesa mais
+ * do que no computador: é a mesma conta num processador que é uma fração do outro.
+ *
+ * `aoAndar` recebe 0..1 — é o que deixa a tela dizer quanto falta em vez de fingir que travou.
+ */
+export const bytesDoMp3 = async (
+  buffer: BufferDeAudio,
+  aoAndar?: (parte: number) => void,
+): Promise<Uint8Array<ArrayBuffer>> => {
+  const canais = Math.min(2, buffer.numberOfChannels);
+  const esquerdo = paraInteiros(buffer.getChannelData(0));
+  const direito = canais > 1 ? paraInteiros(buffer.getChannelData(1)) : esquerdo;
+
+  const codificador = new Mp3Encoder(canais, buffer.sampleRate, KBPS);
+  const partes: Uint8Array[] = [];
+  let total = 0;
+
+  for (let i = 0; i < esquerdo.length; i += QUADRO) {
+    const pedaco = codificador.encodeBuffer(
+      esquerdo.subarray(i, i + QUADRO),
+      canais > 1 ? direito.subarray(i, i + QUADRO) : undefined,
+    );
+    if (pedaco.length) { partes.push(pedaco); total += pedaco.length; }
+    // A cada ~5 segundos de áudio, devolve a vez a quem está a desenhar a tela.
+    if ((i / QUADRO) % 200 === 0) {
+      aoAndar?.(i / esquerdo.length);
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((segue) => { setTimeout(segue, 0); });
+    }
+  }
+
+  const fim = codificador.flush();
+  if (fim.length) { partes.push(fim); total += fim.length; }
+  aoAndar?.(1);
+
+  // Uma cópia só no fim: concatenar a cada bloco seria copiar o ficheiro inteiro mil vezes.
+  const tudo = new Uint8Array(new ArrayBuffer(total));
+  let em = 0;
+  for (const parte of partes) { tudo.set(parte, em); em += parte.length; }
+  return tudo;
+};
+
+/** O caminho da guia de uma música. FIXO: uma música tem uma guia, e ela é regravada por cima. */
+export const caminhoDaGuia = (artistaId: string, projetoId: string): string =>
+  `${artistaId}/${projetoId}/guia.mp3`;

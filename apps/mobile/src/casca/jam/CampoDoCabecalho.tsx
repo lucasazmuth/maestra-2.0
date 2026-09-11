@@ -15,7 +15,9 @@ import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
 // Sem gravação principal marcada, os campos ficam TRANCADOS em vez de sumirem: um BPM digitado
 // sem saber onde ia parar era exatamente o problema antigo. O rótulo passa a dizer o que fazer.
 
-export const CampoDoCabecalho = ({ valor, aoMudar, sufixo, largura, numerico, maiusculas, limite, travado, rotulo }: {
+export const CampoDoCabecalho = ({
+  valor, aoMudar, sufixo, largura, numerico, maiusculas, limite, travado, rotulo, ouvido,
+}: {
   valor: string;
   aoMudar: (v: string) => void;
   /** O que vem depois do campo: "BPM", "Tom". */
@@ -27,8 +29,16 @@ export const CampoDoCabecalho = ({ valor, aoMudar, sufixo, largura, numerico, ma
   travado?: boolean;
   /** O que o leitor de ecrã anuncia. O sufixo sozinho não diz o que se está a editar. */
   rotulo: string;
+  /**
+   * Este número foi OUVIDO do áudio, e não escrito por alguém.
+   *
+   * ⚠️ A DIFERENÇA IMPORTA: um palpite da máquina, sem marca, é indistinguível de um número que
+   * a pessoa escreveu e esqueceu — e é sobre esse que ela depois vai confiar para registar a
+   * obra. A borda muda de cor e o leitor de tela diz de onde veio.
+   */
+  ouvido?: boolean;
 }) => (
-  <View style={[estilos.chip, travado && estilos.chipTravado]}>
+  <View style={[estilos.chip, travado && estilos.chipTravado, ouvido && estilos.chipOuvido]}>
     <TextInput
       style={[estilos.campo, { width: largura }]}
       value={valor}
@@ -40,7 +50,7 @@ export const CampoDoCabecalho = ({ valor, aoMudar, sufixo, largura, numerico, ma
       autoCapitalize={maiusculas ? 'characters' : 'none'}
       autoCorrect={false}
       maxLength={limite}
-      accessibilityLabel={rotulo}
+      accessibilityLabel={ouvido ? `${rotulo}, ouvido do áudio` : rotulo}
       // Sem `returnKeyType` o teclado numérico do iOS não traz tecla de fechar; "concluído"
       // é o que fecha um campo que não submete nada.
       returnKeyType="done"
@@ -62,6 +72,7 @@ const estilos = StyleSheet.create({
     // brancas a gritar no meio de uma tela quase preta.
     borderWidth: 1, borderColor: COR_EDITOR.fio, backgroundColor: COR_EDITOR.botaoRedondo,
   },
+  chipOuvido: { borderColor: AZUL_DO_EDITOR },
   chipTravado: { backgroundColor: COR_EDITOR.acaoFundo, borderColor: COR_EDITOR.acaoFundo },
   campo: {
     // Zero de padding e altura cheia: o `TextInput` do Android traz recuo próprio e, com ele,

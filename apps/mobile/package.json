@@ -3,6 +3,7 @@
   "main": "index.js",
   "version": "1.0.0",
   "dependencies": {
+    "@breezystack/lamejs": "^1.2.7",
     "@expo/ui": "~57.0.14",
     "@expo/vector-icons": "^15.0.2",
     "@reduxjs/toolkit": "^2.12.0",
