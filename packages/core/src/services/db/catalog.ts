@@ -42,6 +42,7 @@ const legacyItemToProject = (item: CatalogItem): CatalogProject => ({
   cover_image: item.cover_image,
   cover_image_name: item.cover_image_name,
   assignee: item.assignee,
+  upc: item.upc,
   details: item.details,
   release_date: item.release_date,
   created_at: item.created_at,
@@ -58,6 +59,7 @@ const legacyItemToProject = (item: CatalogItem): CatalogProject => ({
     duration: item.duration,
     bpm: item.bpm,
     key: item.key,
+    isrc: item.isrc,
     genre: item.genre,
     lyrics: item.lyrics,
     created_at: item.created_at,
@@ -77,6 +79,9 @@ export const catalogProjectToItem = (project: CatalogProject, version?: CatalogV
   last_edited_by: project.last_edited_by,
   bpm: version?.bpm ?? project.bpm,
   key: version?.key ?? project.key,
+  // O ISRC é da gravação, o UPC é do lançamento. Ver a migration `isrc_e_upc`.
+  isrc: version?.isrc,
+  upc: project.upc,
   duration: version?.duration,
   lyrics: version?.lyrics,
   cover_image: project.cover_image,
@@ -168,6 +173,7 @@ export const payloadDaGravacao = (
     duration: input.duration ?? null,
     bpm: input.bpm ?? null,
     key: input.key ?? null,
+    isrc: input.isrc ?? null,
     genre: input.genre ?? null,
     lyrics: input.lyrics ?? null,
     updated_at: now,
@@ -201,6 +207,7 @@ export const saveCatalogProjectFromForm = async (
     cover_image: input.cover_image ?? null,
     cover_image_name: input.cover_image_name ?? null,
     assignee: input.assignee ?? null,
+    upc: input.upc ?? null,
     details: input.details ?? null,
     // Quem está a gravar AGORA é quem mexeu por último. Sai do mesmo `author` que já assina as
     // gravações — nenhum chamador precisa de saber deste campo.
@@ -293,13 +300,43 @@ export const listCatalogProjectItems = async (artistId: string): Promise<Catalog
  * que o PostgREST aplica ao recurso encaixado sem transformar a junção em obrigatória: uma
  * gravação sem pistas continua a voltar.
  */
+/**
+ * Carimba em cada clipe o NOME do ficheiro que ele toca.
+ *
+ * `catalog_clips` guarda só o `file_id`; o nome vive em `catalog_version_files`. As duas
+ * tabelas voltam na mesma leitura, mas em ramos diferentes da resposta — e sem esta costura o
+ * `file_name` do tipo era um campo que nunca ninguém preenchia, e a linha do tempo escrevia
+ * "Take 1" por cima de uma onda que se chama "voz dobra".
+ *
+ * Pura de propósito: a junção é a regra, e regra que se testa não vive dentro de uma chamada
+ * de rede.
+ */
+export const comNomesDosClipes = (projeto: CatalogProject): CatalogProject => ({
+  ...projeto,
+  versions: (projeto.versions ?? []).map((versao) => {
+    const porId = new Map((versao.files ?? []).map((f) => [f.id, f]));
+    return {
+      ...versao,
+      tracks: (versao.tracks ?? []).map((pista) => ({
+        ...pista,
+        clips: (pista.clips ?? []).map((clipe) => ({
+          ...clipe,
+          // O que já vier com nome fica: quem acabou de criar o clipe sabe o nome melhor do
+          // que esta junção, e reescrevê-lo com um `undefined` seria apagar informação boa.
+          file_name: clipe.file_name ?? porId.get(clipe.file_id)?.name ?? undefined,
+        })),
+      })),
+    };
+  }),
+});
+
 export const getCatalogProject = async (projectId: string): Promise<CatalogProject> => {
   const { data, error } = await supabase.from('catalog_projects')
     .select(PROJECT_SELECT_COM_MONTAGEM)
     .is('versions.tracks.deleted_at', null)
     .is('versions.tracks.clips.deleted_at', null)
     .eq('id', projectId).single();
-  if (!error) return data as CatalogProject;
+  if (!error) return comNomesDosClipes(data as CatalogProject);
   if (!isMissingTable(error) && error.code !== 'PGRST116') throw error;
   const { data: legacy, error: legacyError } = await supabase.from(TABLE).select('*').eq('id', projectId).single();
   if (legacyError) throw legacyError;
@@ -750,5 +787,5 @@ export const criarPistaComArquivo = async (p: {
     offset_seconds: 0,
     duration_seconds: p.duracao,
   });
-  return { ...pista, clips: [{ ...clipe, file_url: p.arquivo.file_url }] };
+  return { ...pista, clips: [{ ...clipe, file_url: p.arquivo.file_url, file_name: p.arquivo.name }] };
 };

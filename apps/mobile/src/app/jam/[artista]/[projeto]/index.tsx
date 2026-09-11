@@ -742,10 +742,15 @@ export default function EspacoJam() {
     sujo.current = true;
     setBibliotecaAberta(false);
     setSelo('salvando');
+      // ⚠️ O NOME SAI DO FICHEIRO, e não do título da música. A primeira pista de uma gravação
+      // por montar é o áudio que alguém anexou, e chamar-lhe "Test" porque a música se chama
+      // Test é dizer duas vezes a mesma coisa e nenhuma vez o que ali está. O título fica como
+      // recurso, para o caso raro de uma gravação com áudio e sem nome de ficheiro.
+    const nomeDoAnexo = tituloDoArquivo(aberta.audio_file_name || '') || aberta.title || 'Mix';
     try {
       const linha = await catalogo.addVersionFile({
         version_id: aberta.id,
-        name: aberta.title || 'Mix',
+        name: nomeDoAnexo,
         file_url: aberta.audio_file,
         file_type: null,
         kind: 'stem',
@@ -755,7 +760,7 @@ export default function EspacoJam() {
       await catalogo.criarPistaComArquivo({
         versionId: aberta.id,
         arquivo: linha,
-        nome: aberta.title || 'Mix',
+        nome: nomeDoAnexo,
         position: 0,
         colorIndex: 0,
         duracao,

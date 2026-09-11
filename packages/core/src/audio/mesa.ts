@@ -46,6 +46,18 @@ export interface Clipe {
   recorte: number;
   /** Quanto do ficheiro entra. Aparar a ponta direita mexe aqui. */
   duracao: number;
+  /**
+   * O nome do FICHEIRO que este clipe toca, sem a extensão.
+   *
+   * ⚠️ É O QUE A TELA ESCREVE NO CANTO DO CLIPE, no lugar de "Take N". A numeração dizia
+   * apenas a ordem em que os clipes entraram — e quem larga voz, baixo e bateria numa faixa
+   * fica com "Take 1", "Take 2" e "Take 3" a olhar para três ondas que já se parecem. O nome
+   * do ficheiro é a única coisa que quem montou reconhece de longe.
+   *
+   * Vazio quando o clipe não tem ficheiro com nome (a mix montada na hora, por exemplo): aí a
+   * tela volta ao número, que é melhor do que um canto vazio.
+   */
+  nome?: string;
 }
 
 /** Uma faixa da mesa: um nome, um volume, um mudo, e os clipes que moram nela. */

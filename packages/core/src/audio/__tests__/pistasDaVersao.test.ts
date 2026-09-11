@@ -58,6 +58,39 @@ describe('montagemDaVersao', () => {
     expect(montagem[0].clipes[0].url).toBe('https://x/voz.wav');
   });
 
+  // O NOME do clipe é o do ficheiro, sem a extensão — é ele que a linha do tempo escreve no
+  // canto, no lugar de "Take N". Sai do ficheiro e não do clipe porque cortar um clipe em dois
+  // faz duas linhas novas que continuam a tocar o mesmo ficheiro: as duas metades têm de
+  // continuar a dizer de onde vieram.
+  it('o clipe leva o nome do ficheiro, sem a extensão', () => {
+    const montagem = montagemDaVersao(versao({
+      files: [{ id: 'f1', version_id: 'v1', name: 'voz_dobra.wav', file_url: 'https://x/voz.wav' }],
+      tracks: [{
+        id: 't1', version_id: 'v1', name: 'Voz', position: 0, gain: 1, muted: false, color_index: 0,
+        clips: [
+          { id: 'c1', track_id: 't1', file_id: 'f1', start_seconds: 0, offset_seconds: 0, duration_seconds: 5 },
+          { id: 'c2', track_id: 't1', file_id: 'f1', start_seconds: 5, offset_seconds: 5, duration_seconds: 5 },
+        ],
+      }],
+    }));
+
+    expect(montagem[0].clipes.map((c) => c.nome)).toEqual(['voz dobra', 'voz dobra']);
+  });
+
+  // Sem ficheiro com nome não há rótulo nenhum, e a tela volta ao número do take. Um `''` aqui
+  // seria pior do que `undefined`: a tela veria um nome e escreveria um canto vazio.
+  it('sem nome de ficheiro, o clipe fica sem nome', () => {
+    const montagem = montagemDaVersao(versao({
+      files: [{ id: 'f1', version_id: 'v1', name: '', file_url: 'https://x/voz.wav' }],
+      tracks: [{
+        id: 't1', version_id: 'v1', name: 'Voz', position: 0, gain: 1, muted: false, color_index: 0,
+        clips: [{ id: 'c1', track_id: 't1', file_id: 'f1', start_seconds: 0, offset_seconds: 0, duration_seconds: 5 }],
+      }],
+    }));
+
+    expect(montagem[0].clipes[0].nome).toBeUndefined();
+  });
+
   // Um clipe cujo ficheiro sumiu é uma linha órfã: some da mesa em vez de a derrubar com uma
   // URL indefinida.
   it('um clipe sem ficheiro não entra', () => {

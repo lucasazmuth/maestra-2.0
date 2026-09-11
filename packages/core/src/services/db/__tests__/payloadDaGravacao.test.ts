@@ -1,4 +1,4 @@
-import { payloadDaGravacao } from '../catalog';
+import { catalogProjectToItem, payloadDaGravacao } from '../catalog';
 
 // ⚠️ ESTE TESTE EXISTE POR CAUSA DE UM ESTRAGO REAL.
 //
@@ -54,5 +54,41 @@ describe('payloadDaGravacao', () => {
   it('sem status, a gravação nasce em composição', () => {
     expect(payloadDaGravacao({}, AGORA).status).toBe('composition');
     expect(payloadDaGravacao({ status: 'mixing' }, AGORA).status).toBe('mixing');
+  });
+});
+
+// ISRC e UPC existiam na ficha e não existiam no banco: entravam no payload e o PostgREST
+// ignorava-os, sem erro e sem aviso. Quem digitasse um ISRC via-o desaparecer no recarregamento
+// seguinte. Agora têm coluna — e cada um na tabela certa, que é o que estes casos prendem.
+describe('ISRC e UPC', () => {
+  // O ISRC identifica uma GRAVAÇÃO: o acústico não partilha o código do original. Por isso vai
+  // no payload da versão, ao lado do BPM e do tom, que estão lá pela mesma razão.
+  it('o ISRC vai na gravação', () => {
+    expect(payloadDaGravacao({ isrc: 'BRABC2600001' }, AGORA).isrc).toBe('BRABC2600001');
+  });
+
+  it('o ISRC vazio limpa a coluna, como todo campo que a ficha mostra', () => {
+    expect('isrc' in payloadDaGravacao({ title: 'x' }, AGORA)).toBe(true);
+    expect(payloadDaGravacao({ title: 'x' }, AGORA).isrc).toBeNull();
+  });
+
+  // ⚠️ E O UPC NÃO VAI. Ele identifica o LANÇAMENTO, e é da música: mandá-lo para cá daria a
+  // cada gravação o seu, que é o contrário do que o código significa.
+  it('o UPC não é da gravação', () => {
+    expect('upc' in payloadDaGravacao({ upc: '7891234567890' }, AGORA)).toBe(false);
+  });
+
+  // A volta: o item que a ficha lê junta os dois, cada um da sua tabela.
+  it('o item lido traz o ISRC da gravação e o UPC da música', () => {
+    const item = catalogProjectToItem(
+      { id: 'p1', artist_id: 'a1', title: 'Uma', status: 'composition', upc: '7891234567890' },
+      {
+        id: 'v1', project_id: 'p1', version_number: 1, stage: 'guia', status: 'composition',
+        isrc: 'BRABC2600001',
+      },
+    );
+
+    expect(item.isrc).toBe('BRABC2600001');
+    expect(item.upc).toBe('7891234567890');
   });
 });

@@ -1291,12 +1291,10 @@ export const EditorDaGravacao: FC<{
               accentColor: DS.color.primaria, cursor: 'pointer',
             }}
           />
-          <span style={{
-            width: 38, textAlign: 'right', fontSize: 12,
-            color: DS.color.textoApoio, fontFamily: DS.font.mono,
-          }}>
-            {Math.round(estado.mestre * 100)}%
-          </span>
+          {/* ⚠️ SEM A PERCENTAGEM AO LADO. O número não diz nada que o fader já não mostre —
+              a posição do cursor É o volume — e custava 38 px numa barra que no telemóvel
+              não os tem. Saiu primeiro do app; sai agora daqui, para as duas serem a mesma
+              barra. O valor continua no `aria-label` do campo, para quem não vê o cursor. */}
         </div>
 
       </div>

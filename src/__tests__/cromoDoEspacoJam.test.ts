@@ -27,6 +27,11 @@ const casca = ler('pages', 'Catalog', 'daw', 'editor.module.scss');
 const biblioteca = ler('pages', 'Catalog', 'daw', 'Biblioteca.tsx');
 const icones = ler('pages', 'Catalog', 'daw', 'icones.tsx');
 const tela = ler('pages', 'Catalog', 'ProjectSpace.tsx');
+// A leitura do projeto mora no núcleo: é lá que o nome do ficheiro chega ao clipe.
+const nucleo = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'packages', 'core', 'src', 'services', 'db', 'catalog.ts'),
+  'utf8',
+);
 const campos = ler('components', 'ficha', 'campos.tsx');
 const exportar = ler('pages', 'Catalog', 'daw', 'TelaDeExportar.tsx');
 
@@ -164,6 +169,45 @@ describe('cromo do editor do Espaço JAM', () => {
     // opostas. Pintadas iguais quando acesas, ninguém sabe qual carregou.
     expect(editor).toContain("botaozinho(calada, DS.color.textoFraco)");
     expect(editor).toContain("botaozinho(Boolean(daMesa?.solo), '#f59e0b')");
+  });
+
+  // ⚠️ E O MASTER NÃO TEM PERCENTAGEM AO LADO. O número não diz nada que o cursor já não
+  // mostre, e custava 38 px numa barra que no telemóvel não os tem. Saiu primeiro do app; sai
+  // daqui para as duas serem a mesma barra.
+  it('o volume geral não escreve a percentagem', () => {
+    expect(editor).not.toContain('{Math.round(estado.mestre * 100)}%');
+    // O campo continua lá — é ele que anuncia o valor a quem não vê o cursor.
+    expect(editor).toContain("aria-label='Volume geral'");
+  });
+
+  // ⚠️ O CLIPE DIZ QUE FICHEIRO TOCA, e não em que ordem entrou. "Take 1/2/3" numa faixa com
+  // voz, dobra e ad-lib são três rótulos iguais por cima de três ondas parecidas — o número
+  // é a única coisa ali que quem montou NÃO reconhece. O número fica como recurso, para o
+  // clipe sem ficheiro com nome.
+  it('o clipe é rotulado pelo nome do ficheiro, e o take é o recurso', () => {
+    const oClipe = semComentarios(clipe);
+
+    expect(oClipe).toContain("tituloDoArquivo(clipe.file_name || '') || `Take ${indice + 1}`");
+    // Um nome de ficheiro é tão comprido quanto quem o gravou quis; o clipe não é.
+    expect(oClipe).toContain("textOverflow: 'ellipsis'");
+    expect(oClipe).toContain("whiteSpace: 'nowrap'");
+  });
+
+  // ⚠️ E O NOME CHEGA LÁ, que é a outra metade. `catalog_clips` guarda um `file_id`; o nome
+  // vive em `catalog_version_files`, e sem a costura da leitura o `file_name` era um campo do
+  // tipo que ninguém preenchia — o rótulo cairia para "Take N" para sempre.
+  it('a leitura do projeto costura o nome do ficheiro em cada clipe', () => {
+    expect(nucleo).toContain('export const comNomesDosClipes');
+    expect(nucleo).toContain('return comNomesDosClipes(data as CatalogProject);');
+  });
+
+  // A primeira pista de uma gravação por montar é o áudio que alguém anexou. Chamar-lhe
+  // "Test" porque a música se chama Test é dizer duas vezes a mesma coisa e nenhuma vez o
+  // que ali está.
+  it('montar a mix nomeia a pista pelo ficheiro, e não pelo título da música', () => {
+    expect(tela).toContain("tituloDoArquivo(open.audio_file_name || '') || open.title || 'Mix'");
+    expect(tela).toContain('name: nomeDoAnexo,');
+    expect(tela).toContain('nome: nomeDoAnexo,');
   });
 
   // As duas vistas da mesma montagem: a linha do tempo responde "o que toca quando", a mesa
@@ -381,8 +425,8 @@ describe('cromo do editor do Espaço JAM', () => {
       expect(oClipe).toContain('const podeCortar = !fixo &&');
 
       // ⚠️ `noDedo` NÃO é `fixo`: fixo é a pista da Mix, e troca o rótulo do clipe para
-      // "Mix". Um clipe normal num telemóvel continua a ser "Take N".
-      expect(oClipe).toContain("{fixo ? 'Mix' : `Take ${indice + 1}`}");
+      // "Mix".
+      expect(oClipe).toContain("{fixo ? 'Mix' :");
     });
 
     // ⚠️ O ARRASTO NUNCA CHEGAVA A ACONTECER, e não era por regra nenhuma: num ecrã de toque o

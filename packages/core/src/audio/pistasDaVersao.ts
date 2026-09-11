@@ -1,3 +1,4 @@
+import { tituloDoArquivo } from '../services/armazenamento';
 import type { CatalogTrack, CatalogVersion, CatalogVersionFile } from '../interfaces/maestra';
 import type { Clipe, Pista } from './mesa';
 
@@ -53,11 +54,17 @@ export const montagemDaVersao = (versao?: CatalogVersion | null): Pista[] => {
       panInicial: Number(faixa.pan) || 0,
       clipes: (faixa.clips ?? [])
         .map((clipe): Clipe | null => {
-          const url = clipe.file_url ?? porId.get(clipe.file_id)?.file_url;
+          const arquivo = porId.get(clipe.file_id);
+          const url = clipe.file_url ?? arquivo?.file_url;
           if (!url) return null;
+          // O nome sai do FICHEIRO, e não do clipe: cortar um clipe em dois faz duas linhas
+          // novas em `catalog_clips` que continuam a tocar o mesmo ficheiro, e as duas metades
+          // têm de continuar a dizer de onde vieram.
+          const bruto = clipe.file_name ?? arquivo?.name ?? '';
           return {
             id: clipe.id,
             url,
+            nome: bruto ? tituloDoArquivo(bruto) : undefined,
             inicio: Number(clipe.start_seconds) || 0,
             recorte: Number(clipe.offset_seconds) || 0,
             duracao: Number(clipe.duration_seconds) || 0,

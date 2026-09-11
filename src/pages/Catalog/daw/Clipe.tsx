@@ -2,6 +2,7 @@ import { FC, useEffect, useRef } from 'react';
 import { FiScissors, FiTrash2 } from 'react-icons/fi';
 
 import type { CatalogClip } from '@maestra/core/interfaces/maestra';
+import { tituloDoArquivo } from '@maestra/core/services/armazenamento';
 
 import { Onda } from './Onda';
 import { DS } from './tokens';
@@ -18,6 +19,7 @@ import { DS } from './tokens';
 
 export const Clipe: FC<{
   clipe: CatalogClip;
+  /** Só para o rótulo de recurso: "Take N" quando o ficheiro não tem nome. */
   indice: number;
   cor: string;
   picos: number[];
@@ -173,8 +175,15 @@ export const Clipe: FC<{
         pointerEvents: 'none', zIndex: 2,
         textShadow: `0 0 6px ${cor}88, 0 1px 2px rgba(0,0,0,0.7)`,
         letterSpacing: '0.04em', textTransform: 'uppercase',
+        // Um nome de ficheiro é tão comprido quanto quem o gravou quis; o clipe não é. Corta
+        // com reticências em vez de transbordar por cima do clipe vizinho.
+        maxWidth: 'calc(100% - 14px)',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
-        {fixo ? 'Mix' : `Take ${indice + 1}`}
+        {/* ⚠️ O NOME DO FICHEIRO, e não o número do take. "Take 1/2/3" dizia só a ordem de
+            entrada — e numa faixa com voz, dobra e ad-lib são três rótulos iguais por cima de
+            três ondas parecidas. O número volta quando o clipe não tem ficheiro com nome. */}
+        {fixo ? 'Mix' : (tituloDoArquivo(clipe.file_name || '') || `Take ${indice + 1}`)}
       </div>
 
       {/* ⚠️ SÓ OS ÍCONES, sem as palavras. "DIVIDIR" e "REMOVER" somavam 190 px de barra por

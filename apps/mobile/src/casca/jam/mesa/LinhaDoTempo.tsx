@@ -13,7 +13,7 @@ import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import {
   PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, marcasDaRegua, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
-import { ehPistaDaMix } from '@maestra/core/audio/pistasDaVersao';
+import { NOME_DA_MIX, ehPistaDaMix } from '@maestra/core/audio/pistasDaVersao';
 import {
   AZUL_DO_EDITOR, COR, COR_EDITOR, VERMELHO_DO_EDITOR, corDaPista,
 } from '@maestra/core/constants/design';
@@ -109,12 +109,19 @@ const OndaDoClipe = memo(({ picos, cor, largura, altura }: {
  * pelo topo da área visível.
  */
 const Clipe = ({
-  clipe, rotulo, cor, escala, largura, picos: osPicos, escolhido, podeEditar, agulha, duracao,
+  clipe, rotulo, nome, cor, escala, largura, picos: osPicos, escolhido, podeEditar, agulha, duracao,
   passoDoEncaixe, aoEscolher, aoLargar, aoMoverEnquantoArrasta, aoCortar, aoApagar,
 }: {
   clipe: { id: string; inicio: number };
   /** O que o leitor de tela lê, e o que os testes procuram. Um alvo mudo não se alcança. */
   rotulo: string;
+  /**
+   * O nome do ficheiro, escrito no canto do clipe — o mesmo rótulo da web.
+   *
+   * ⚠️ AQUI NÃO HAVIA NENHUM, e o canto vazio era uma diferença a menos que ninguém via: na
+   * web o clipe sempre se identificou. Sem ficheiro com nome, volta o número do trecho.
+   */
+  nome: string;
   cor: string;
   escala: number;
   largura: number;
@@ -188,6 +195,10 @@ const Clipe = ({
             altura={ALTURA_DA_FAIXA - FOLGA * 2 - 2}
           />
         </View>
+
+        <Text style={[estilos.nomeDoClipe, { color: cor }]} numberOfLines={1}>
+          {nome}
+        </Text>
 
         {escolhido && podeEditar && (
           <View style={estilos.acoesDoClipe}>
@@ -474,6 +485,9 @@ export const LinhaDoTempo = ({
                       key={clipe.id}
                       clipe={clipe}
                       rotulo={`Trecho ${n + 1} de ${pista.nome}`}
+                      nome={ehPistaDaMix(pista.id)
+                        ? NOME_DA_MIX
+                        : (clipe.nome || `Take ${n + 1}`)}
                       cor={cor}
                       escala={escala}
                       largura={larguraDoClipe}
@@ -593,6 +607,12 @@ const estilos = StyleSheet.create({
     // cortada ao meio — o clipe ficava selecionado e sem forma de agir sobre ele. A onda
     // continua cortada, pela View de dentro.
     overflow: 'visible',
+  },
+  // O canto do clipe: miúdo, em caixa alta e de uma linha só — um nome de ficheiro é tão
+  // comprido quanto quem o gravou quis, e o clipe não é.
+  nomeDoClipe: {
+    position: 'absolute', top: 3, left: 6, right: 6,
+    fontSize: 9, fontWeight: '700', letterSpacing: 0.4, textTransform: 'uppercase',
   },
   dentroDoClipe: {
     position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,

@@ -394,6 +394,36 @@ describe('espaço jam', () => {
   // linha fica no banco até a sessão fechar, e é isso que dá à seta do desfazer alguma coisa
   // para onde voltar. Sem isto, remover um clipe no aparelho seria definitivo enquanto na web é
   // reversível — a mesma ação com dois significados, conforme o aparelho.
+  // ⚠️ O CLIPE DIZ QUE FICHEIRO TOCA, escrito no canto — é o rótulo que a web sempre teve e
+  // que aqui não existia: o canto ficava vazio, e a diferença era uma daquelas que ninguém vê
+  // até precisar de distinguir a voz da dobra por cima de duas ondas parecidas.
+  it('o clipe mostra o nome do ficheiro, e volta ao take quando não há nome', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({
+        files: [arquivo({ name: 'voz dobra.wav' })],
+        tracks: [pista()],
+      })],
+    }));
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    expect(tela.getByText('voz dobra')).toBeTruthy();
+    // E não a numeração, que era o que estava aqui na web e nada aqui.
+    expect(tela.queryByText('Take 1')).toBeNull();
+  });
+
+  // Sem ficheiro com nome não há o que escrever, e o número do trecho é melhor do que um canto
+  // vazio: ele continua a distinguir dois clipes da mesma faixa.
+  it('sem nome de ficheiro, o clipe volta ao número do take', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo({ name: '' })], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    expect(tela.getByText('Take 1')).toBeTruthy();
+  });
+
   it('remover um clipe marca, e o desfazer devolve', async () => {
     mockBuscar.mockResolvedValue(projeto({
       versions: [versao({ files: [arquivo()], tracks: [pista()] })],

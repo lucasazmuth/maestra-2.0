@@ -575,10 +575,15 @@ const ProjectSpace: FC = () => {
     if (!duracao) { message.warning('Espere o áudio carregar para montar.'); return; }
 
     setSaveState('salvando');
+      // ⚠️ O NOME SAI DO FICHEIRO, e não do título da música. A primeira pista de uma gravação
+      // por montar é o áudio que alguém anexou, e chamar-lhe "Test" porque a música se chama
+      // Test é dizer duas vezes a mesma coisa e nenhuma vez o que ali está. O título fica como
+      // recurso, para o caso raro de uma gravação com áudio e sem nome de ficheiro.
+    const nomeDoAnexo = tituloDoArquivo(open.audio_file_name || '') || open.title || 'Mix';
     try {
       const linha = await catalogDb.addVersionFile({
         version_id: open.id,
-        name: open.title || 'Mix',
+        name: nomeDoAnexo,
         file_url: open.audio_file,
         file_type: null,
         kind: 'stem',
@@ -588,7 +593,7 @@ const ProjectSpace: FC = () => {
       await catalogDb.criarPistaComArquivo({
         versionId: open.id,
         arquivo: linha,
-        nome: open.title || 'Mix',
+        nome: nomeDoAnexo,
         position: 0,
         colorIndex: 0,
         duracao,
