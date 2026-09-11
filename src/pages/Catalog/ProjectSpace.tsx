@@ -762,16 +762,21 @@ const ProjectSpace: FC = () => {
   // novo, uma música editada trinta vezes guardaria trinta guias mortas; com mil músicas, isso
   // são centenas de gigabytes que ninguém volta a abrir.
   const sujo = useRef(false);
-  const [gerando, setGerando] = useState(false);
+  /** 0..1 enquanto a guia corre; `null` fora disso. Ver `rotuloDaGuia`, no núcleo. */
+  const [gerando, setGerando] = useState<number | null>(null);
 
   const gerarGuia = async (gravacao: CatalogVersion | null) => {
     if (!sujo.current || !gravacao || !artistId || !projectId) return;
 
-    setGerando(true);
+    // ⚠️ COMEÇA SEM CONTA, e não em 0%. Antes do codificador vem a SOMA das faixas, que não
+    // sabe dizer quanto falta — e um "0%" parado durante ela é o mesmo que reticências paradas:
+    // parece uma tela pendurada. `NaN` faz o rótulo voltar ao texto simples até haver um número
+    // de verdade para mostrar. Ver `rotuloDaGuia`, no núcleo.
+    setGerando(Number.NaN);
     try {
       const rendido = await mesa.renderizar(criarOfflineWeb);
       if (!rendido) return;
-      const mp3 = await paraMp3(rendido);
+      const mp3 = await paraMp3(rendido, setGerando);
       const gravado = await gravarEmCaminhoFixo(
         BALDE_DO_CATALOGO, caminhoDaGuia(artistId, projectId), mp3, 'audio/mpeg',
       );
@@ -790,7 +795,7 @@ const ProjectSpace: FC = () => {
       // Falhar a guia não pode prender a pessoa na tela: a montagem está salva, e a próxima
       // saída tenta de novo.
     } finally {
-      setGerando(false);
+      setGerando(null);
     }
   };
 

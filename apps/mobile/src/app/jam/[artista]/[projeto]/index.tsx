@@ -18,7 +18,7 @@ import {
   ehPistaDaMix, montagemDaVersao, nomeDaPistaNova, proximaPosicaoDaPista,
 } from '@maestra/core/audio/pistasDaVersao';
 import { ZOOM_MAXIMO, ZOOM_MINIMO } from '@maestra/core/audio/grade';
-import { bytesDoMp3, caminhoDaGuia } from '@maestra/core/audio/exportar';
+import { bytesDoMp3, caminhoDaGuia, rotuloDaGuia } from '@maestra/core/audio/exportar';
 import { useMesa } from '@maestra/core/audio/useMesa';
 import { useAnaliseDaVersao } from '@maestra/core/hooks/useAnaliseDaVersao';
 import { bpmLegivel, outroAndamento, podeOuvirSozinho } from '@maestra/core/services/db/audioJobs';
@@ -380,15 +380,23 @@ export default function EspacoJam() {
   // ⚠️ ONDE: num caminho FIXO por música, regravado por cima. Se cada render criasse um arquivo
   // novo, uma música editada trinta vezes guardaria trinta guias mortas.
   const sujo = useRef(false);
-  const [gerando, setGerando] = useState(false);
+  /** 0..1 enquanto a guia corre; `null` fora disso. Ver `rotuloDaGuia`, no núcleo. */
+  const [gerando, setGerando] = useState<number | null>(null);
 
   const gerarAGuia = async (): Promise<void> => {
     if (!sujo.current || !aberta || !projeto || !podeEditar) return;
-    setGerando(true);
+    // ⚠️ COMEÇA SEM CONTA, e não em 0%. Antes do codificador vem a SOMA das faixas, que não
+    // sabe dizer quanto falta — e no aparelho ela sozinha leva dezenas de segundos. Um "0%"
+    // parado durante esse tempo é o mesmo que reticências paradas: parece uma tela pendurada,
+    // que é o que faz alguém fechar o aplicativo a meio. `NaN` faz o rótulo voltar ao texto
+    // simples até haver um número de verdade. Ver `rotuloDaGuia`, no núcleo.
+    setGerando(Number.NaN);
     try {
       const rendido = await mesa.renderizar(criarOfflineNativo);
       if (!rendido) return;
-      const bytes = await bytesDoMp3(rendido);
+      const bytes = await bytesDoMp3(rendido, (parte) => {
+        if (noAr.current) setGerando(parte);
+      });
       const gravado = await gravarEmCaminhoFixo(
         BALDE_DO_CATALOGO, caminhoDaGuia(String(artistaId), projeto.id), bytes.buffer, 'audio/mpeg',
       );
@@ -408,7 +416,7 @@ export default function EspacoJam() {
       // Falhar a guia não pode prender a pessoa na tela: a montagem está salva, e a próxima
       // saída tenta de novo.
     } finally {
-      if (noAr.current) setGerando(false);
+      if (noAr.current) setGerando(null);
     }
   };
 
@@ -1158,18 +1166,25 @@ export default function EspacoJam() {
     }).catch(() => undefined);
   }, [abertaId]);
 
-  const voltar = () => {
-    // ⚠️ A GUIA FICA A CORRER, E A TELA SAI NA MESMA.
-    //
-    // A web espera por ela, e ali isso custa dois segundos. Aqui foi medido: 101 segundos para
-    // 227 de áudio, num iPhone 17 Pro — quase metade do tempo real da música. Prender alguém por
-    // um minuto e meio num ecrã que ela pediu para fechar, para fazer um ficheiro que ela não
-    // pediu, é o pior negócio possível. O trabalho não morre com a tela: é uma promessa, e
-    // acaba de subir sozinho.
-    //
-    // O preço, dito: fechar o app no meio deixa a guia por fazer, e a lista continua a tocar o
-    // áudio anterior até alguém mexer na montagem outra vez.
-    void gerarAGuia();
+  /**
+   * Fechar o editor: a guia é feita ANTES de a tela sair, e a tela diz que está a fazê-la.
+   *
+   * ⚠️ ELA JÁ FICOU A CORRER SOZINHA, e o argumento era de peso: foram medidos 101 segundos
+   * para 227 de áudio num iPhone 17 Pro, e prender alguém por um minuto e meio num ecrã que
+   * pediu para fechar é um mau negócio. Só que a alternativa era pior, e isso só se vê com o
+   * aparelho na mão: a tela saía no mesmo instante, sem sinal nenhum, e o trabalho passava a
+   * depender de o aplicativo continuar aberto — quem fechasse voltava a uma lista que toca o
+   * áudio ANTERIOR, sem nada a explicar porquê. Uma promessa invisível é uma promessa que
+   * ninguém sabe que está a quebrar.
+   *
+   * Com a espera à vista — e com a percentagem a andar, que é o que a distingue de uma tela
+   * pendurada — a pessoa sabe o que está a acontecer e porque é que ainda não saiu. É o que a
+   * web faz, e é a mesma promessa nos dois sítios.
+   *
+   * Falhar não prende: o `catch` do `gerarAGuia` engole, e a saída continua.
+   */
+  const voltar = async () => {
+    await gerarAGuia();
 
     // ⚠️ A SESSÃO FECHA E O QUE FOI APAGADO SAI DE VERDADE, do banco e do balde. É o outro lado
     // do desfazer: enquanto a tela está aberta a linha fica marcada para poder voltar; fechada,
@@ -1194,7 +1209,7 @@ export default function EspacoJam() {
     return (
       <LinearGradient colors={[COR_EDITOR.fundoDe, COR_EDITOR.fundoAte]} style={estilos.espera}>
         <Text style={estilos.vazioTexto}>Espaço JAM não encontrado.</Text>
-        <Pressable onPress={voltar} accessibilityRole="button" accessibilityLabel="Voltar para Músicas">
+        <Pressable onPress={() => { void voltar(); }} accessibilityRole="button" accessibilityLabel="Voltar para Músicas">
           <Text style={estilos.voltarTexto}>Voltar para Músicas</Text>
         </Pressable>
       </LinearGradient>
@@ -1272,13 +1287,13 @@ export default function EspacoJam() {
         </View>
 
         <Pressable
-          style={[estilos.redondo, gerando && estilos.inerte]}
-          onPress={voltar}
-          disabled={gerando}
+          style={[estilos.redondo, gerando != null && estilos.inerte]}
+          onPress={() => { void voltar(); }}
+          disabled={gerando != null}
           hitSlop={6}
           accessibilityRole="button"
-          accessibilityState={{ disabled: gerando, busy: gerando }}
-          accessibilityLabel={gerando ? 'Gerando a guia…' : 'Voltar para Músicas'}
+          accessibilityState={{ disabled: gerando != null, busy: gerando != null }}
+          accessibilityLabel={gerando != null ? rotuloDaGuia(gerando) : 'Voltar para Músicas'}
         >
           <Feather name="x" size={14} color={COR_EDITOR.texto} />
         </Pressable>
@@ -1345,7 +1360,10 @@ export default function EspacoJam() {
                 }
               }}
               aoEstado={setSelo}
-              aoExcluir={voltar}
+              // ⚠️ SEM GUIA: a música foi apagada, e fazer-lhe a mistura agora seria gastar um
+              // minuto e meio a renderizar um áudio para uma gravação que já não existe — e a
+              // escrevê-lo por cima de uma linha que o banco acabou de levar.
+              aoExcluir={() => { sujo.current = false; void voltar(); }}
             />
           </PaletaDaFolhaProvider>
         ) : aba === 'exportar' ? (
@@ -1605,7 +1623,7 @@ export default function EspacoJam() {
       {/* ⚠️ O SELO FICA EM TODAS AS ABAS, ao contrário das setas e do balão: ele não fala da
           montagem, fala de GRAVAR — e a ficha, que não tem botão de Salvar, é justamente onde
           ele mais precisa de ser lido. */}
-      {(selo !== 'parado' || gerando) && (
+      {(selo !== 'parado' || gerando != null) && (
         <View style={[estilos.selo, { bottom: margem.bottom + ALTURA_DO_RODAPE + 12 }]}>
           <Text
             style={[estilos.seloTexto, selo === 'erro' && estilos.seloDeErro]}
@@ -1613,7 +1631,7 @@ export default function EspacoJam() {
           >
             {/* Dez stems levam um minuto, e um minuto sem sinal é um bug aos olhos de quem
                 espera. A ordem é a da gravidade: o que prende a tela aparece primeiro. */}
-            {gerando ? 'Gerando a guia…'
+            {gerando != null ? rotuloDaGuia(gerando)
               : envio ? `Enviando ${envio.feitos + 1} de ${envio.total}…`
                 : selo === 'salvando' ? 'Salvando…'
                   : selo === 'erro' ? 'Falha ao salvar' : 'Salvo'}

@@ -158,6 +158,24 @@ export const bytesDoMp3 = async (
   return tudo;
 };
 
+/**
+ * O que a tela escreve enquanto a guia está a ser feita.
+ *
+ * ⚠️ COM A PERCENTAGEM, e não só as reticências. Codificar MP3 é JavaScript a correr sobre cada
+ * amostra, e o preço disso muda de máquina para máquina: no computador são segundos, no
+ * telemóvel foram medidos 101 segundos para 227 de áudio — quase metade do tempo real da
+ * música. Reticências que não se mexem durante um minuto e meio são indistinguíveis de uma tela
+ * pendurada, e quem espera fecha o aplicativo — que é exatamente o gesto que perde o trabalho.
+ *
+ * O texto mora aqui porque as duas telas o escrevem, e um sinal de espera que diz coisas
+ * diferentes em cada uma é duas explicações para a mesma pausa.
+ */
+export const rotuloDaGuia = (parte?: number | null): string => (
+  parte == null || !Number.isFinite(parte)
+    ? 'Gerando a guia…'
+    : `Gerando a guia… ${Math.min(100, Math.max(0, Math.round(parte * 100)))}%`
+);
+
 /** O caminho da guia de uma música. FIXO: uma música tem uma guia, e ela é regravada por cima. */
 export const caminhoDaGuia = (artistaId: string, projetoId: string): string =>
   `${artistaId}/${projetoId}/guia.mp3`;

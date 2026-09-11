@@ -282,8 +282,30 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(casca).toContain('@keyframes girar');
     // Os três sinais viram UM: são a mesma pergunta para quem olha ("posso fechar?").
     expect(editor).toContain("texto: 'Salvando…'");
-    expect(editor).toContain("texto: 'Gerando a guia…'");
+    expect(editor).toContain('texto: rotuloDaGuia(gerando)');
     expect(editor).toContain("texto: 'Falha ao salvar'");
+  });
+
+  // ⚠️ A GUIA DIZ QUANTO JÁ ANDOU. Codificar MP3 é JavaScript sobre cada amostra: aqui são
+  // segundos, no telemóvel foram medidos 101 para 227 de áudio. Reticências paradas durante um
+  // minuto e meio são indistinguíveis de uma tela pendurada — e quem espera fecha o aplicativo,
+  // que é o gesto que perde o trabalho. O texto mora no núcleo porque as duas telas o escrevem.
+  it('a guia diz a percentagem, e o X espera por ela', () => {
+    const corpo = semComentarios(editor);
+    const espaco = semComentarios(tela);
+
+    expect(corpo).toContain("import { rotuloDaGuia } from '@maestra/core/audio/exportar';");
+    expect(corpo).toContain('const aGerar = gerando != null;');
+    // O X trava enquanto isso, e explica-se: é a única coisa que responde "por que não fechou".
+    expect(corpo).toContain('disabled={aGerar}');
+    expect(corpo).toContain("title={aGerar ? rotuloDaGuia(gerando) : 'Voltar para Músicas'}");
+    // E a percentagem vem do próprio codificador, e não de um relógio a fingir progresso.
+    expect(espaco).toContain('await paraMp3(rendido, setGerando)');
+    // ⚠️ Antes do codificador vem a SOMA das faixas, que não sabe dizer quanto falta: até
+    // haver um número de verdade, o rótulo é só texto. Um "0%" parado é uma tela pendurada.
+    expect(espaco).toContain('setGerando(Number.NaN);');
+    // Sair espera pela guia: é o que faz a lista de Músicas tocar a soma da montagem.
+    expect(espaco).toContain('await gerarGuia(open);');
   });
 
   // ⚠️ O TEXTO FICA NA TELA, ao lado do ícone — e não só no `title`. Redondo e mudo, o selo

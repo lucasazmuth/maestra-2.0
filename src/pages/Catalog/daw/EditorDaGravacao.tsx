@@ -17,6 +17,7 @@ import {
   encaixeDaGrade, gradeDoCompasso, marcasDaRegua, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
 import { pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
+import { rotuloDaGuia } from '@maestra/core/audio/exportar';
 import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
@@ -129,8 +130,14 @@ export const EditorDaGravacao: FC<{
   selo: 'parado' | 'salvando' | 'salvo' | 'erro';
   /** O lote em curso, se houver: dez stems levam um minuto, e um minuto sem sinal é um bug. */
   envio?: { feitos: number; total: number } | null;
-  /** A guia a ser gerada na saída: a tela precisa de dizer por que não fechou ainda. */
-  gerando?: boolean;
+/**
+   * A guia a ser gerada na saída: a tela precisa de dizer por que não fechou ainda.
+   *
+   * 0..1 enquanto corre, `null` quando não há nada a correr. ⚠️ E não um `boolean`: no telemóvel
+   * isto leva um minuto e meio, e reticências paradas durante um minuto e meio são
+   * indistinguíveis de uma tela pendurada.
+   */
+  gerando?: number | null;
   pistas: CatalogTrack[];
   pistaFixaId?: string | null;
   aoMontar?: () => void;
@@ -237,8 +244,9 @@ export const EditorDaGravacao: FC<{
   // gerar a guia — e antes cada uma tinha o seu próprio texto no cabeçalho, a disputar o mesmo
   // canto. São todas a MESMA pergunta para quem olha ("posso fechar?"), por isso são um sinal
   // só, e a ordem aqui é a da gravidade: o que prende a saída da tela aparece primeiro.
-  const atividade = gerando
-    ? { texto: 'Gerando a guia…', cor: DS.color.primaria, girando: true, falhou: false }
+  const aGerar = gerando != null;
+  const atividade = aGerar
+    ? { texto: rotuloDaGuia(gerando), cor: DS.color.primaria, girando: true, falhou: false }
     : envio
       ? { texto: `Enviando ${envio.feitos + 1} de ${envio.total}…`, cor: DS.color.primaria, girando: true, falhou: false }
       : selo === 'salvando'
@@ -714,10 +722,10 @@ export const EditorDaGravacao: FC<{
           <button
             type='button'
             onClick={acoes.aoSair}
-            disabled={gerando}
-            title={gerando ? 'Gerando a guia…' : 'Voltar para Músicas'}
+            disabled={aGerar}
+            title={aGerar ? rotuloDaGuia(gerando) : 'Voltar para Músicas'}
             aria-label='Voltar para Músicas'
-            style={{ ...redondo, opacity: gerando ? 0.4 : 1, cursor: gerando ? 'wait' : 'pointer' }}
+            style={{ ...redondo, opacity: aGerar ? 0.4 : 1, cursor: aGerar ? 'wait' : 'pointer' }}
           >
             <FiX size={13} />
           </button>

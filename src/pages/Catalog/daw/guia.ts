@@ -26,7 +26,10 @@ export const criarOfflineWeb = (canais: number, quadros: number, taxa: number): 
 // dos lados e só depois de alguém reparar que a guia de um soa diferente da do outro.
 export { caminhoDaGuia } from '@maestra/core/audio/exportar';
 
-/** O buffer renderizado, em MP3, pronto para subir. */
-export const paraMp3 = async (buffer: BufferDeAudio): Promise<Blob> =>
-  new Blob([await bytesDoMp3(buffer)], { type: 'audio/mpeg' });
+/** O buffer renderizado, em MP3, pronto para subir. `aoAndar` recebe 0..1 pelo caminho. */
+export const paraMp3 = async (
+  buffer: BufferDeAudio,
+  aoAndar?: (parte: number) => void,
+): Promise<Blob> =>
+  new Blob([await bytesDoMp3(buffer, aoAndar)], { type: 'audio/mpeg' });
 

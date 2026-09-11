@@ -9,10 +9,9 @@
 // Um ficheiro é um ambiente: aqui a cadeia acaba com a suíte, e ninguém herda o estrago. Se um
 // dia alguém juntar isto ao `jam.test.tsx`, o preço aparece três testes abaixo.
 //
-// ⚠️ E SÃO DOIS TESTES, NÃO TRÊS. A regra de que SAIR NÃO ESPERA pela guia (ver o `voltar` da
-// tela) ficou sem teste: qualquer terceiro caso montado depois destes não renderiza, e eu não
-// consegui isolar porquê dentro de um tempo razoável. Preferi dizer isto aqui a deixar um teste
-// que passa por acidente.
+// ⚠️ E SÃO DOIS TESTES, NÃO TRÊS: qualquer terceiro caso montado depois destes não renderiza, e
+// eu não consegui isolar porquê dentro de um tempo razoável. O que é da SAÍDA — que ela espera
+// pela guia, e que a tela diz porquê — vive dentro do segundo caso, e não num terceiro.
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
@@ -294,11 +293,36 @@ describe('a guia do Espaço JAM', () => {
     const tela = await montar();
     await tela.findByDisplayValue('Voz');
 
+    // ⚠️ A SUBIDA FICA PRESA até este teste a soltar. É assim que se vê a diferença entre
+    // esperar e não esperar: com o mock a resolver sozinho, as duas versões da tela passariam.
+    let soltarASubida = () => {};
+    mockGravarFixo.mockImplementation(() => new Promise((pronto) => {
+      soltarASubida = () => pronto({
+        url: 'https://exemplo.invalid/guia.mp3?v=1', path: 'a-1/p-1/guia.mp3',
+      });
+    }));
+
     // Mexer no volume de uma faixa muda a SOMA: é montagem, e não só escuta.
     fireEvent.press(tela.getByLabelText('Silenciar Voz'));
     fireEvent.press(tela.getAllByLabelText('Voltar para Músicas')[0]);
 
     await waitFor(() => expect(mockGravarFixo).toHaveBeenCalled());
+
+    // ⚠️ A TELA NÃO SAIU, e diz porquê. Ela já saiu no mesmo instante, sem sinal nenhum: o
+    // trabalho passava a depender de o aplicativo continuar aberto, e quem fechasse voltava a
+    // uma lista que toca o áudio ANTERIOR sem nada a explicar. Uma promessa invisível é uma
+    // promessa que ninguém sabe que está a quebrar.
+    expect(mockBack).not.toHaveBeenCalled();
+    // ⚠️ O QUANTO FALTA vem do próprio codificador. Enquanto ele não fala — a soma das faixas,
+    // que no aparelho leva dezenas de segundos — o rótulo é só texto: um "0%" parado durante
+    // esse tempo é o mesmo que reticências paradas, e parece uma tela pendurada. Aqui o áudio é
+    // de brincadeira e a conta chega no mesmo instante, por isso o alvo aceita as duas formas;
+    // quem prende o texto sem percentagem é o `rotuloDaGuia`, no núcleo.
+    expect(await tela.findByText(/^Gerando a guia…/)).toBeTruthy();
+    // E o X não aceita um segundo toque enquanto isso.
+    expect(tela.getAllByLabelText(/^Gerando a guia…/)[0].props.accessibilityState.disabled).toBe(true);
+
+    soltarASubida();
     // Caminho FIXO por música: cada render criando um arquivo novo deixaria trinta guias mortas
     // numa música editada trinta vezes.
     expect(mockGravarFixo.mock.calls[0][1]).toBe('a-1/p-1/guia.mp3');
@@ -307,6 +331,8 @@ describe('a guia do Espaço JAM', () => {
       audio_file_name: 'guia.mp3',
     })));
     await waitFor(() => expect(mockPurgar).toHaveBeenCalled());
+    // E só então a tela sai.
+    await waitFor(() => expect(mockBack).toHaveBeenCalled());
     tela.unmount();
   });
 });

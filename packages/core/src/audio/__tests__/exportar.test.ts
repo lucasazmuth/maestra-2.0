@@ -1,5 +1,5 @@
 import type { BufferDeAudio } from '../contexto';
-import { bytesDoWav, higienizar, nomeDoArquivoDaPista } from '../exportar';
+import { bytesDoWav, higienizar, nomeDoArquivoDaPista, rotuloDaGuia } from '../exportar';
 
 const buffer = (canais: number[][], taxa = 44100): BufferDeAudio => ({
   duration: canais[0].length / taxa,
@@ -72,5 +72,33 @@ describe('nomeDoArquivoDaPista', () => {
 
   it('mantém espaço, traço e sublinhado — são nomes de pista legítimos', () => {
     expect(nomeDoArquivoDaPista('Bateria_2 - take 3', 'wav')).toBe('Bateria_2 - take 3.wav');
+  });
+});
+
+// ⚠️ A PERCENTAGEM NÃO É ENFEITE. Codificar MP3 é JavaScript sobre cada amostra: no computador
+// são segundos, no telemóvel foram medidos 101 segundos para 227 de áudio. Reticências que não
+// se mexem durante um minuto e meio são indistinguíveis de uma tela pendurada — e quem espera
+// fecha o aplicativo, que é exatamente o gesto que perde o trabalho.
+describe('rotuloDaGuia', () => {
+  it('sem número, diz só que está a fazer', () => {
+    expect(rotuloDaGuia()).toBe('Gerando a guia…');
+    expect(rotuloDaGuia(null)).toBe('Gerando a guia…');
+  });
+
+  it('com número, diz quanto já andou', () => {
+    expect(rotuloDaGuia(0)).toBe('Gerando a guia… 0%');
+    expect(rotuloDaGuia(0.456)).toBe('Gerando a guia… 46%');
+    expect(rotuloDaGuia(1)).toBe('Gerando a guia… 100%');
+  });
+
+  // O codificador anda por blocos e o último pedaço pode passar de 1; um "103%" fazia a tela
+  // dizer uma coisa que não existe mesmo quando tudo correu bem.
+  it('nunca sai de 0 a 100', () => {
+    expect(rotuloDaGuia(1.03)).toBe('Gerando a guia… 100%');
+    expect(rotuloDaGuia(-0.2)).toBe('Gerando a guia… 0%');
+  });
+
+  it('um número que não é número volta ao texto sem percentagem', () => {
+    expect(rotuloDaGuia(NaN)).toBe('Gerando a guia…');
   });
 });
