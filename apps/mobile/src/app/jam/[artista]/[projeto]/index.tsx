@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -17,6 +17,8 @@ import {
 import {
   ehPistaDaMix, montagemDaVersao, nomeDaPistaNova, proximaPosicaoDaPista,
 } from '@maestra/core/audio/pistasDaVersao';
+import { assinaturaDaPista, assinaturaDoClipe, iniciais } from '@maestra/core/audio/aoVivo';
+import { useJamAoVivo } from '@maestra/core/hooks/useJamAoVivo';
 import { ZOOM_MAXIMO, ZOOM_MINIMO } from '@maestra/core/audio/grade';
 import {
   MONTAGEM_MUDA, bytesDoMp3, caminhoDaGuia, rotuloDaGuia, temSom,
@@ -446,6 +448,46 @@ export default function EspacoJam() {
     } : atual
   ));
 
+  // ─── O Espaço JAM ao vivo ─────────────────────────────────────────────────
+  //
+  // Quem está aqui (os avatares do topo) e o que muda enquanto estamos. O canal é do NÚCLEO, o
+  // mesmo que a web usa; o que fica aqui é só o que ESTA tela sabe fazer com cada decisão.
+  const conhecidos = useMemo(() => ({
+    pistas: (aberta?.tracks ?? []).map((t) => t.id),
+    clipes: (aberta?.tracks ?? []).flatMap((t) => (t.clips ?? []).map((c) => c.id)),
+  }), [aberta]);
+
+  const aoVivo = useJamAoVivo(
+    projeto?.id,
+    usuario ? { id: usuario.id, nome: meuNome, foto: minhaFoto } : null,
+    aberta?.id,
+    conhecidos,
+    (decisao) => {
+      if (decisao.faca === 'recarregar') { void buscar(); return; }
+      if (decisao.faca === 'remendarPista') { patcharPista(decisao.id, decisao.parte); return; }
+      if (decisao.faca !== 'remendarClipe') return;
+      const { track_id: paraPista, ...tempos } = decisao.parte as { track_id?: string };
+      patcharClipe(decisao.id, tempos);
+      if (paraPista) moverClipeDePista(decisao.id, paraPista);
+    },
+  );
+
+  /**
+   * Marca uma linha como ESCRITA MINHA, antes de a escrever.
+   *
+   * ⚠️ COM O VALOR DEPOIS DA MUDANÇA, e por isso a fusão: o que volta do Postgres é a linha
+   * inteira, e é com ela que a assinatura tem de bater. Sem isto, o meu próprio arrasto voltava
+   * meio segundo depois e punha o clipe onde ele já não estava.
+   */
+  const minhaPista = (pistaId: string, parte: Record<string, unknown>) => {
+    const atual = (aberta?.tracks ?? []).find((t) => t.id === pistaId);
+    aoVivo.minha(`pista:${pistaId}`, assinaturaDaPista({ ...(atual ?? {}), ...parte }));
+  };
+  const minhoClipe = (clipeId: string, parte: Record<string, unknown>) => {
+    const atual = (aberta?.tracks ?? []).flatMap((t) => t.clips ?? []).find((c) => c.id === clipeId);
+    aoVivo.minha(`clipe:${clipeId}`, assinaturaDoClipe({ ...(atual ?? {}), ...parte }));
+  };
+
   const relogiosDoClipe = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   /**
    * Esquece uma escrita adiada que já não faz sentido.
@@ -564,6 +606,7 @@ export default function EspacoJam() {
     clipeId: string, inicio: number, de?: number, pista?: { para: string; de?: string },
   ) => {
     sujo.current = true;
+    minhoClipe(clipeId, { start_seconds: inicio, ...(pista ? { track_id: pista.para } : {}) });
     patcharClipe(clipeId, { start_seconds: inicio });
     if (pista) moverClipeDePista(clipeId, pista.para);
     if (de !== undefined) {
@@ -630,6 +673,7 @@ export default function EspacoJam() {
   const relogiosDoNome = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const renomearPista = (id: string, nome: string) => {
+    minhaPista(id, { name: nome });
     patcharPista(id, { name: nome });
     clearTimeout(relogiosDoNome.current[id]);
     relogiosDoNome.current[id] = setTimeout(() => {
@@ -1109,6 +1153,7 @@ export default function EspacoJam() {
     clearTimeout(relogiosDoPan.current[id]);
     relogiosDoPan.current[id] = setTimeout(() => {
       const arredondado = Number(valor.toFixed(3));
+      minhaPista(id, { pan: arredondado });
       catalogo.updateTrack(id, { pan: arredondado })
         .then(() => patcharPista(id, { pan: arredondado }))
         .catch(() => { /* o valor real volta no próximo carregamento */ });
@@ -1124,6 +1169,7 @@ export default function EspacoJam() {
     clearTimeout(relogiosDoGanho.current[id]);
     relogiosDoGanho.current[id] = setTimeout(() => {
       const arredondado = Number(valor.toFixed(3));
+      minhaPista(id, { gain: arredondado });
       catalogo.updateTrack(id, { gain: arredondado })
         .then(() => patcharPista(id, { gain: arredondado }))
         .catch(() => { /* o valor real volta no próximo carregamento */ });
@@ -1265,6 +1311,33 @@ export default function EspacoJam() {
             </Pressable>
           )}
         </View>
+
+        {/* ⚠️ AO LADO DO TÍTULO, e só a partir de DOIS. A pergunta que estes círculos respondem
+            — "estou sozinho nesta música?" — é sobre a MÚSICA, e lê-se junto do nome dela.
+            Sozinho, o meu próprio avatar é ruído permanente para informar o caso em que não há
+            informação. O nome vai no rótulo de acessibilidade; a tela é pequena de mais para
+            três nomes escritos. */}
+        {aoVivo.presentes.length > 1 && (
+          <View
+            style={estilos.filaDePresentes}
+            accessibilityLabel={`Na música agora: ${aoVivo.presentes.map((p) => p.nome).join(', ')}`}
+          >
+            {aoVivo.presentes.slice(0, AVATARES_A_MOSTRAR).map((pessoa) => (
+              <View key={pessoa.id} style={estilos.avatarPresente}>
+                {pessoa.foto
+                  ? <Image source={{ uri: pessoa.foto }} style={estilos.fotoDoPresente} />
+                  : <Text style={estilos.letraDoPresente}>{iniciais(pessoa.nome)}</Text>}
+              </View>
+            ))}
+            {aoVivo.presentes.length > AVATARES_A_MOSTRAR && (
+              <View style={[estilos.avatarPresente, estilos.avatarDeSobra]}>
+                <Text style={estilos.letraDoPresente}>
+                  {`+${aoVivo.presentes.length - AVATARES_A_MOSTRAR}`}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* AS QUATRO VISTAS DA MESMA MÚSICA — é a primeira escolha de quem entra (estou a
             montar, a misturar, a preencher a ficha, ou a levar isto embora?) e ela decide o que
@@ -1743,6 +1816,8 @@ const PASSO_DOS_FLUTUANTES = 38;
 /** A altura do rodapé, de onde sai a posição dos flutuantes — para os dois não divergirem. */
 const ALTURA_DO_RODAPE = 48;
 const ALTURA_DO_TITULO = 56;
+/** Quantos avatares cabem no topo antes de virarem um bolo de círculos. O resto vira "+N". */
+const AVATARES_A_MOSTRAR = 3;
 
 const estilos = StyleSheet.create({
   // ⚠️ ESTA TELA É ESCURA, e é a única do app que é. O Maestra é claro, azul-marca e
@@ -1758,6 +1833,19 @@ const estilos = StyleSheet.create({
   espera: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
   vazioTexto: { fontSize: 15, color: COR_EDITOR.apoio },
   voltarTexto: { fontSize: 14, fontWeight: '800', color: AZUL_DO_EDITOR },
+
+  // Sobrepostos e pequenos: o que eles respondem é "estou sozinho?", e para isso 24 pontos
+  // chegam. Maiores, competiriam com os controlos por atenção que não merecem.
+  filaDePresentes: { flexDirection: 'row', alignItems: 'center', paddingLeft: 8 },
+  avatarPresente: {
+    width: 24, height: 24, borderRadius: 12, marginLeft: -8, overflow: 'hidden',
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COR_EDITOR.botaoRedondo,
+    borderWidth: 2, borderColor: COR_EDITOR.painel,
+  },
+  avatarDeSobra: { backgroundColor: COR_EDITOR.cracha },
+  fotoDoPresente: { width: '100%', height: '100%' },
+  letraDoPresente: { fontSize: 10, fontWeight: '800', color: COR_EDITOR.texto },
 
   filaDoTitulo: {
     height: ALTURA_DO_TITULO, flexDirection: 'row', alignItems: 'center',

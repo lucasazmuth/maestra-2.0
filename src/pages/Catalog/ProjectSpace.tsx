@@ -45,6 +45,8 @@ import {
 } from './daw/exportar';
 import { caminhoDaGuia, criarOfflineWeb, paraMp3 } from './daw/guia';
 import { MONTAGEM_MUDA, temSom } from '@maestra/core/audio/exportar';
+import { assinaturaDaPista, assinaturaDoClipe } from '@maestra/core/audio/aoVivo';
+import { useJamAoVivo } from '@maestra/core/hooks/useJamAoVivo';
 import { DS } from './daw/tokens';
 
 
@@ -530,6 +532,47 @@ const ProjectSpace: FC = () => {
       }),
     } : atual));
 
+  // ─── O Espaço JAM ao vivo ─────────────────────────────────────────────────
+  //
+  // Quem está aqui (os avatares do topo) e o que muda enquanto estamos. O canal é do NÚCLEO,
+  // porque o aparelho precisa exatamente do mesmo; o que fica aqui é só o que esta tela sabe
+  // fazer com cada decisão — remendar uma pista, remendar um clipe, ou reler a montagem.
+  const conhecidos = useMemo(() => ({
+    pistas: pistas.map((p) => p.id),
+    clipes: pistas.flatMap((p) => (p.clips || []).map((c) => c.id)),
+  }), [pistas]);
+
+  const aoVivo = useJamAoVivo(
+    projectId,
+    user ? { id: user.id, nome: currentUserName, foto: userMeta.avatar_url || null } : null,
+    open?.id,
+    conhecidos,
+    (decisao) => {
+      if (decisao.faca === 'recarregar') { void refresh(); return; }
+      if (decisao.faca === 'remendarPista') { mudarPistaLocal(decisao.id, decisao.parte); return; }
+      if (decisao.faca !== 'remendarClipe') return;
+      const { track_id: paraPista, ...tempos } = decisao.parte as { track_id?: string };
+      mudarClipeLocal(decisao.id, tempos as never);
+      if (paraPista) moverClipeDePista(decisao.id, paraPista);
+    },
+  );
+
+  /**
+   * Marca uma linha como ESCRITA MINHA, antes de a escrever.
+   *
+   * ⚠️ COM O VALOR DEPOIS DA MUDANÇA, e por isso a fusão: o que volta do Postgres é a linha
+   * inteira, e é com ela que a assinatura tem de bater. Sem isto, o meu próprio arrasto voltava
+   * meio segundo depois e punha o clipe onde ele já não estava.
+   */
+  const minhaPista = (pistaId: string, parte: Partial<CatalogTrack>) => {
+    const atual = pistas.find((p) => p.id === pistaId);
+    aoVivo.minha(`pista:${pistaId}`, assinaturaDaPista({ ...(atual || {}), ...parte } as Record<string, unknown>));
+  };
+  const minhoClipe = (clipeId: string, parte: Record<string, unknown>) => {
+    const atual = pistas.flatMap((p) => p.clips || []).find((c) => c.id === clipeId);
+    aoVivo.minha(`clipe:${clipeId}`, assinaturaDoClipe({ ...(atual || {}), ...parte }));
+  };
+
   /** Um relógio por alvo: mexer em dois clipes seguidos não pode cancelar a gravação do primeiro. */
   const relogios = useRef<Record<string, number>>({});
   useEffect(() => () => { Object.values(relogios.current).forEach(window.clearTimeout); }, []);
@@ -915,6 +958,7 @@ const ProjectSpace: FC = () => {
     // passo por pixel encheria a pilha com cinquenta versões do mesmo gesto.
     aoMoverClipe: (clipeId, inicio, de, pista) => {
       sujo.current = true;
+      minhoClipe(clipeId, { start_seconds: inicio, ...(pista ? { track_id: pista.para } : {}) });
       mudarClipeLocal(clipeId, { start_seconds: inicio });
       if (pista) moverClipeDePista(clipeId, pista.para);
       if (de !== undefined) {
@@ -1013,6 +1057,7 @@ const ProjectSpace: FC = () => {
 
     aoMudarPista: (pistaId, parte) => {
       sujo.current = true;
+      minhaPista(pistaId, parte);
       mudarPistaLocal(pistaId, parte);
       // O som muda AGORA; o banco recebe depois. O contrário faria o fader responder com meio
       // segundo de atraso, e ninguém mistura assim.
@@ -1062,6 +1107,7 @@ const ProjectSpace: FC = () => {
         selo={saveState}
         envio={envio}
         gerando={gerando}
+        presentes={aoVivo.presentes}
         pistas={pistas}
         pistaFixaId={porMontar ? ID_DA_MIX : null}
         aoMontar={porMontar && podeEditar ? () => { void montarAMix(); } : undefined}

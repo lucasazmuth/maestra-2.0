@@ -313,6 +313,46 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(espaco).toContain('await gerarGuia(open);');
   });
 
+  // ⚠️ DUAS PESSOAS NA MESMA MÚSICA. O canal é do NÚCLEO e é UM SÓ para as duas coisas —
+  // presença e mudanças da montagem —, porque quem quer ver os avatares é exatamente quem quer
+  // ver a montagem mexer-se. Dois canais seriam dois sockets e duas reconexões por nada.
+  it('as duas telas assinam o mesmo canal, e marcam as próprias escritas', () => {
+    const espaco = semComentarios(tela);
+    const oApp = semComentarios(app);
+
+    [espaco, oApp].forEach((fonte) => {
+      expect(fonte).toContain("from '@maestra/core/hooks/useJamAoVivo'");
+      expect(fonte).toContain('useJamAoVivo(');
+      // ⚠️ MARCAR ANTES DE ESCREVER: é isto que impede o clipe de saltar para trás debaixo do
+      // dedo quando o meu próprio arrasto volta do Postgres meio segundo depois.
+      expect(fonte).toContain('assinaturaDoClipe(');
+      expect(fonte).toContain('assinaturaDaPista(');
+      // Um UPDATE remenda sem ir ao servidor; o que é novo recarrega.
+      expect(fonte).toContain("if (decisao.faca === 'remendarPista')");
+      expect(fonte).toContain("if (decisao.faca !== 'remendarClipe') return;");
+    });
+
+    // E o arrasto marca-se com a faixa de destino, senão mudar de faixa parecia coisa de outra
+    // pessoa e voltava atrás.
+    expect(espaco).toContain("minhoClipe(clipeId, { start_seconds: inicio, ...(pista ? { track_id: pista.para } : {}) });");
+    expect(oApp).toContain("minhoClipe(clipeId, { start_seconds: inicio, ...(pista ? { track_id: pista.para } : {}) });");
+  });
+
+  // Os avatares respondem uma pergunta só — "estou sozinho nesta música?" — e por isso não
+  // existem quando a resposta é sim: o meu próprio avatar sozinho é ruído permanente.
+  it('os avatares de quem está aqui só aparecem a partir de dois, nas duas telas', () => {
+    const corpo = semComentarios(editor);
+    const oApp = semComentarios(app);
+
+    expect(corpo).toContain('if (presentes.length < 2) return null;');
+    expect(oApp).toContain('{aoVivo.presentes.length > 1 && (');
+    // O mesmo número de círculos e a mesma sobra, porque é o mesmo desenho.
+    expect(corpo).toContain('const AVATARES_A_MOSTRAR = 3;');
+    expect(oApp).toContain('const AVATARES_A_MOSTRAR = 3;');
+    // E a inicial vem do núcleo: um nome só com espaços não pode dar um círculo vazio.
+    [corpo, oApp].forEach((fonte) => expect(fonte).toContain('iniciais(pessoa.nome)'));
+  });
+
   // ⚠️ A GUIA É REGRAVADA NO MESMO CAMINHO A CADA SAÍDA, e é o que a lista de Músicas toca. Uma
   // montagem que renderize mudo — todas as pistas caladas, um áudio que não chegou a
   // descodificar — apagaria a guia boa e deixaria a música sem nada para tocar, sem erro nenhum

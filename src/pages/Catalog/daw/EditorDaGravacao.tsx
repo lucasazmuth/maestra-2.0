@@ -1,4 +1,4 @@
-import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FiAlertCircle, FiCheck, FiCircle, FiCornerUpLeft, FiCornerUpRight, FiDownload, FiFileText,
   FiFolder, FiHeadphones, FiLoader, FiMessageCircle, FiPause,
@@ -18,6 +18,7 @@ import {
 } from '@maestra/core/audio/grade';
 import { pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import { rotuloDaGuia } from '@maestra/core/audio/exportar';
+import { iniciais, type Presente } from '@maestra/core/audio/aoVivo';
 import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
@@ -91,6 +92,52 @@ const botaozinho = (ativo: boolean, corAtiva?: string) => ({
   fontFamily: DS.font.display,
 });
 
+/** Quantos avatares cabem antes de virarem um bolo de círculos. O resto vira "+N". */
+const AVATARES_A_MOSTRAR = 3;
+
+/**
+ * Quem está com esta música aberta AGORA.
+ *
+ * ⚠️ SOBREPOSTOS E PEQUENOS, ao lado do título. Um editor de música é uma tela cheia, e uma
+ * fila de avatares do tamanho de botões competiria por atenção com os controlos: o que isto
+ * responde é "estou sozinho?", e para isso três círculos de vinte e quatro pixels chegam. O
+ * nome vai no `title` — quem precisa de saber QUEM, passa o rato.
+ *
+ * ⚠️ E SÓ APARECE A PARTIR DE DOIS. Sozinho, o meu próprio avatar no cabeçalho não diz nada a
+ * ninguém; é ruído permanente para informar o caso em que não há informação.
+ */
+const FilaDePresentes: FC<{ presentes: Presente[] }> = ({ presentes }) => {
+  if (presentes.length < 2) return null;
+  const mostrados = presentes.slice(0, AVATARES_A_MOSTRAR);
+  const sobram = presentes.length - mostrados.length;
+  const circulo: CSSProperties = {
+    width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    border: `2px solid ${DS.color.bgPainel}`, marginLeft: -8,
+    fontSize: 10, fontWeight: 800, color: DS.color.texto, overflow: 'hidden',
+  };
+
+  return (
+    <div
+      style={{ display: 'flex', alignItems: 'center', paddingLeft: 8, flexShrink: 0 }}
+      aria-label={`Na música agora: ${presentes.map((p) => p.nome).join(', ')}`}
+    >
+      {mostrados.map((pessoa) => (
+        <div key={pessoa.id} title={pessoa.nome} style={{ ...circulo, background: DS.color.bgPista }}>
+          {pessoa.foto
+            ? <img src={pessoa.foto} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : iniciais(pessoa.nome)}
+        </div>
+      ))}
+      {sobram > 0 && (
+        <div style={{ ...circulo, background: DS.color.bgCampo, color: DS.color.textoApoio }}>
+          {`+${sobram}`}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export interface AcoesDoEditor {
   aoSair: () => void;
   aoRenomear: (nome: string) => void;
@@ -138,6 +185,8 @@ export const EditorDaGravacao: FC<{
    * indistinguíveis de uma tela pendurada.
    */
   gerando?: number | null;
+  /** Quem está com esta música aberta agora — eu incluído, e à frente. */
+  presentes?: Presente[];
   pistas: CatalogTrack[];
   pistaFixaId?: string | null;
   aoMontar?: () => void;
@@ -180,7 +229,7 @@ export const EditorDaGravacao: FC<{
   podeEditar: boolean;
   acoes: AcoesDoEditor;
 }> = ({
-  titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
+  titulo, selo, envio, gerando, presentes, pistas, pistaFixaId, aoMontar,
   estado, picos, transporte, ficha, numeros, bpm, historico, fichaCompleta, exportar, letra,
   conversa,
   podeEditar, acoes,
@@ -670,6 +719,11 @@ export const EditorDaGravacao: FC<{
               Ficha, que fica a um toque, e no telemóvel a pessoa está a ouvir, não a gerir
               fases de produção. */}
           {!noCelular && ficha}
+
+          {/* ⚠️ AO LADO DO TÍTULO, e não no canto oposto: a pergunta que estes círculos
+              respondem — "estou sozinho nesta música?" — é sobre a MÚSICA, e lê-se junto do
+              nome dela. No canto das abas seriam confundidos com mais um controlo. */}
+          <FilaDePresentes presentes={presentes ?? []} />
         </div>
 
         {!noCelular && <div style={{ flex: 1, minWidth: 0 }} />}
