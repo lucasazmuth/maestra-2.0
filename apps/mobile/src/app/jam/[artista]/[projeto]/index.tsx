@@ -8,13 +8,21 @@ import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 
+import {
+  HISTORICO_VAZIO, desfazer as desfazerPasso, podeDesfazer, podeRefazer,
+  refazer as refazerPasso, registar, rotuloDaSeta,
+  type Historico, type PassoDaMontagem,
+} from '@maestra/core/audio/historico';
 import { ehPistaDaMix, montagemDaVersao, pistasDaGravacao } from '@maestra/core/audio/pistasDaVersao';
 import { useMesa } from '@maestra/core/audio/useMesa';
+import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import {
   CATALOG_STATUS, CATALOG_STATUS_OPTIONS, MEMORIA_DE_AVISO_BYTES,
 } from '@maestra/core/constants/maestra';
 import { COR, COR_JAM } from '@maestra/core/constants/design';
-import type { CatalogProject, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
+import type {
+  CatalogClip, CatalogProject, CatalogVersion, CatalogVersionFile,
+} from '@maestra/core/interfaces/maestra';
 import { BALDE_DO_CATALOGO, caminhoNoBalde, removerArquivo } from '@maestra/core/services/armazenamento';
 import * as catalogo from '@maestra/core/services/db/catalog';
 
@@ -33,6 +41,7 @@ import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { buscarNativo, criarContextoNativo } from '@/nucleo/audio/contextoNativo';
 import { useInterrupcoesDeAudio } from '@/nucleo/audio/interrupcoes';
 import { escolherAudio, type ArquivoEscolhido } from '@/nucleo/arquivos';
+import { useArtistaDaRota } from '@/nucleo/artista';
 import { useSessao } from '@/nucleo/sessao';
 
 // O Espaço JAM: a MÚSICA, aberta como um editor.
@@ -125,6 +134,17 @@ export default function EspacoJam() {
   }>();
   const margem = useSafeAreaInsets();
   const { sessao } = useSessao();
+  /**
+   * Quem pode mexer na montagem.
+   *
+   * ⚠️ A MESMA REGRA DA WEB, e não uma nova: colaborar no JAM ou editar o catálogo. Sem ela,
+   * um convidado só de leitura veria clipes que se escolhem, setas que prometem desfazer e
+   * botões de remover que o banco ia recusar — e a recusa chegaria como "Falha ao salvar", que
+   * não explica nada a quem nunca teve permissão.
+   */
+  const artista = useArtistaDaRota(String(artistaId));
+  const { canCollaborateJam, canEditCatalog } = useArtistCapabilities(artista);
+  const podeEditar = canCollaborateJam || canEditCatalog;
 
   const usuario = sessao?.user;
   const dados = (usuario?.user_metadata ?? {}) as Record<string, unknown>;
@@ -326,6 +346,137 @@ export default function EspacoJam() {
   const mudar = (parte: Partial<CatalogProject>) =>
     setProjeto((atual) => (atual ? { ...atual, ...parte } : atual));
 
+  // ─── A montagem: mover, dividir, remover ──────────────────────────────────
+  //
+  // Chega ao aparelho a mesma camada que a web tem, e com as mesmas regras, porque elas não são
+  // da tela: apagar é MARCAR (a linha fica no banco até a sessão fechar, e é isso que dá às
+  // setas alguma coisa para onde voltar), e a pilha do desfazer vive no núcleo.
+
+  /** O remendo local do clipe: arrastar não pode recarregar o projeto a cada pixel. */
+  const patcharClipe = (id: string, parte: Partial<CatalogClip>) => setProjeto((atual) => (
+    atual ? {
+      ...atual,
+      versions: (atual.versions ?? []).map((v) => ({
+        ...v,
+        tracks: (v.tracks ?? []).map((t) => ({
+          ...t,
+          clips: (t.clips ?? []).map((c) => (c.id === id ? { ...c, ...parte } : c)),
+        })),
+      })),
+    } : atual
+  ));
+
+  const relogiosDoClipe = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  /**
+   * Esquece uma escrita adiada que já não faz sentido.
+   *
+   * ⚠️ APAGAR TEM DE CANCELAR O QUE ESTAVA A CAMINHO. Largar um clipe agenda a gravação da
+   * posição dele; removê-lo logo a seguir apagava a linha e, meio segundo depois, a escrita
+   * adiada chegava a um `id` que já não existia. É o mesmo erro que a web já levou.
+   */
+  const esquecerClipe = (id: string) => {
+    clearTimeout(relogiosDoClipe.current[id]);
+    delete relogiosDoClipe.current[id];
+  };
+
+  const [historico, setHistorico] = useState<Historico>(HISTORICO_VAZIO);
+  const [andandoNoTempo, setAndandoNoTempo] = useState(false);
+  const anotar = (passo: PassoDaMontagem) => setHistorico((h) => registar(h, passo));
+
+  const aplicarPasso = async (passo: PassoDaMontagem, sentido: 'desfazer' | 'refazer') => {
+    const voltando = sentido === 'desfazer';
+    switch (passo.tipo) {
+      case 'mover':
+        // A escrita adiada do arrasto ia gravar a posição NOVA; cancelá-la é seguro, porque o
+        // valor que ela levava é exatamente o que esta linha está a substituir.
+        esquecerClipe(passo.clipeId);
+        await catalogo.updateClip(passo.clipeId, { start_seconds: voltando ? passo.de : passo.para });
+        break;
+      case 'apagarClipe':
+        await (voltando ? catalogo.restaurarClipe : catalogo.marcarClipeApagado)(passo.clipeId);
+        break;
+      case 'cortar':
+        await catalogo.updateClip(passo.clipeId, {
+          duration_seconds: voltando ? passo.duracaoAntes : passo.duracaoDepois,
+        });
+        await (voltando ? catalogo.marcarClipeApagado : catalogo.restaurarClipe)(passo.novoClipeId);
+        break;
+      default:
+        break;
+    }
+  };
+
+  /** ⚠️ Uma seta de cada vez: dois toques seguidos partem de estados que se atropelam. */
+  const andarNoTempo = async (sentido: 'desfazer' | 'refazer') => {
+    if (andandoNoTempo) return;
+    const saida = sentido === 'desfazer' ? desfazerPasso(historico) : refazerPasso(historico);
+    if (!saida) return;
+    setAndandoNoTempo(true);
+    setSelo('salvando');
+    try {
+      await aplicarPasso(saida.passo, sentido);
+      setHistorico(saida.historico);
+      await buscar();
+      setSelo('salvo');
+    } catch {
+      // A pilha não anda se a escrita falhou: movê-la aqui deixaria o histórico a mentir.
+      setSelo('erro');
+    } finally {
+      setAndandoNoTempo(false);
+    }
+  };
+
+  /** `de` só vem quando a mão largou: durante o arrasto isto é chamado a cada pixel. */
+  const moverClipe = (clipeId: string, inicio: number, de?: number) => {
+    patcharClipe(clipeId, { start_seconds: inicio });
+    if (de !== undefined) anotar({ tipo: 'mover', clipeId, de, para: inicio });
+    clearTimeout(relogiosDoClipe.current[clipeId]);
+    relogiosDoClipe.current[clipeId] = setTimeout(() => {
+      catalogo.updateClip(clipeId, { start_seconds: inicio }).catch(() => setSelo('erro'));
+    }, ESPERA);
+  };
+
+  const cortarClipe = async (clipeId: string, emSegundo: number) => {
+    const faixa = (aberta?.tracks ?? []).find((t) => (t.clips ?? []).some((c) => c.id === clipeId));
+    const clipe = (faixa?.clips ?? []).find((c) => c.id === clipeId);
+    if (!faixa || !clipe) return;
+
+    const inicio = Number(clipe.start_seconds) || 0;
+    const duracao = Number(clipe.duration_seconds) || 0;
+    const recorte = Number(clipe.offset_seconds) || 0;
+    const dentro = emSegundo - inicio;
+    if (dentro <= 0.05 || dentro >= duracao - 0.05) return;
+
+    setSelo('salvando');
+    try {
+      await catalogo.updateClip(clipeId, { duration_seconds: dentro });
+      const nascido = await catalogo.createClip({
+        track_id: faixa.id,
+        file_id: clipe.file_id,
+        start_seconds: emSegundo,
+        offset_seconds: recorte + dentro,
+        duration_seconds: duracao - dentro,
+      });
+      anotar({
+        tipo: 'cortar', clipeId, duracaoAntes: duracao, duracaoDepois: dentro,
+        novoClipeId: nascido.id,
+      });
+      await buscar();
+      setSelo('salvo');
+    } catch { setSelo('erro'); }
+  };
+
+  const apagarClipe = async (clipeId: string) => {
+    esquecerClipe(clipeId);
+    setSelo('salvando');
+    try {
+      await catalogo.marcarClipeApagado(clipeId);
+      anotar({ tipo: 'apagarClipe', clipeId });
+      await buscar();
+      setSelo('salvo');
+    } catch { setSelo('erro'); }
+  };
+
   // ─── A mesa ───────────────────────────────────────────────────────────────
 
   // O fader mexe no som na hora e no banco depois: gravar a cada pixel do arrasto seriam
@@ -412,7 +563,30 @@ export default function EspacoJam() {
     await buscar();
   };
 
+  // ─── A limpeza ────────────────────────────────────────────────────────────
+  //
+  // ⚠️ NA ABERTURA, SÓ O QUE ESTÁ MARCADO HÁ MUITO. O mesmo projeto pode estar aberto na web ao
+  // mesmo tempo, e sem essa folga esta tela apagaria de vez o que a outra ainda pode desfazer —
+  // a seta de lá passaria a mentir. Uma hora separa "outra sessão viva" de "sessão que morreu".
+  const UMA_HORA = 3600_000;
+  const varreuNaAbertura = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!abertaId || varreuNaAbertura.current === abertaId) return;
+    varreuNaAbertura.current = abertaId;
+    void catalogo.purgarMontagem(abertaId, {
+      antesDe: new Date(Date.now() - UMA_HORA).toISOString(),
+    }).catch(() => undefined);
+  }, [abertaId]);
+
   const voltar = () => {
+    // ⚠️ A SESSÃO FECHA E O QUE FOI APAGADO SAI DE VERDADE, do banco e do balde. É o outro lado
+    // do desfazer: enquanto a tela está aberta a linha fica marcada para poder voltar; fechada,
+    // não há mais quem a chame de volta, e guardá-la seria só resíduo a acumular.
+    //
+    // Sem esperar: prender a saída da tela numa ida ao servidor é o pior momento para o fazer, e
+    // a limpeza da próxima abertura apanha o que sobrar.
+    if (abertaId) void catalogo.purgarMontagem(abertaId).catch(() => undefined);
     if (router.canGoBack()) router.back();
     else router.replace(`/artista/${artistaId}/catalogo`);
   };
@@ -640,7 +814,20 @@ export default function EspacoJam() {
                       picos={mesa.picos}
                       duracaoDoClipe={mesa.duracaoDoClipe}
                       bpm={aberta.bpm}
+                      podeEditar={podeEditar}
                       aoBuscar={mesa.irPara}
+                      aoMover={moverClipe}
+                      aoCortar={(id, seg) => { void cortarClipe(id, seg); }}
+                      aoApagar={(id) => { void apagarClipe(id); }}
+                      historico={podeEditar ? {
+                        podeDesfazer: podeDesfazer(historico),
+                        podeRefazer: podeRefazer(historico),
+                        rotuloDesfazer: rotuloDaSeta('Desfazer', historico.passado[historico.passado.length - 1]),
+                        rotuloRefazer: rotuloDaSeta('Refazer', historico.futuro[historico.futuro.length - 1]),
+                        ocupado: andandoNoTempo,
+                        desfazer: () => { void andarNoTempo('desfazer'); },
+                        refazer: () => { void andarNoTempo('refazer'); },
+                      } : undefined}
                     />
                   )}
 

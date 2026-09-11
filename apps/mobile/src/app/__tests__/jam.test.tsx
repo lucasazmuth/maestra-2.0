@@ -17,6 +17,11 @@ const mockBuscar = jest.fn();
 const mockAtualizar = jest.fn();
 const mockAtualizarVersao = jest.fn();
 const mockPrincipal = jest.fn();
+const mockMoverClipe = jest.fn();
+const mockCriarClipe = jest.fn();
+const mockMarcarApagado = jest.fn();
+const mockRestaurar = jest.fn();
+const mockPurgar = jest.fn();
 const mockComentarios = jest.fn();
 const mockComentar = jest.fn();
 jest.mock('@maestra/core/services/db/catalog', () => ({
@@ -33,6 +38,12 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   listVersionComments: (...a: unknown[]) => mockComentarios(...a),
   createVersionComment: (...a: unknown[]) => mockComentar(...a),
   catalogProjectToItem: () => ({ id: 'v-1', artist_id: 'a-1', title: 'Noite Clara', status: 'mixing' }),
+  // A montagem: mover, dividir e apagar (que MARCA, não apaga), e a limpeza do fim da sessão.
+  updateClip: (...a: unknown[]) => mockMoverClipe(...a),
+  createClip: (...a: unknown[]) => mockCriarClipe(...a),
+  marcarClipeApagado: (...a: unknown[]) => mockMarcarApagado(...a),
+  restaurarClipe: (...a: unknown[]) => mockRestaurar(...a),
+  purgarMontagem: (...a: unknown[]) => mockPurgar(...a),
 }));
 
 const mockCanal = { on: jest.fn(), subscribe: jest.fn() };
@@ -127,6 +138,26 @@ const projeto = (over: Partial<CatalogProject> = {}): CatalogProject => ({
   primary_version_id: 'v-1', versions: [versao({})], ...over,
 } as CatalogProject);
 
+// A montagem só se edita com permissão, e a permissão vem do artista da rota. Aqui ele é o do
+// fixture: montar meio slice de redux para trocar um booleano não prova nada sobre o editor.
+// `requireActual` dentro da fábrica porque o `jest.mock` é içado para antes dos imports.
+jest.mock('@/nucleo/artista', () => ({
+  useArtistaDaRota: () => jest.requireActual('./fixtures').comDiagnostico,
+}));
+
+/**
+ * A permissão, sem montar meio slice de redux.
+ *
+ * ⚠️ É UM BOOLEANO QUE MUDA A TELA INTEIRA: sem ele, um convidado só de leitura veria clipes que
+ * se escolhem, setas que prometem desfazer e botões de remover que o banco ia recusar. Por isso
+ * ele é uma variável aqui, e não uma constante: os casos da montagem correm com permissão, e há
+ * um que corre sem.
+ */
+let mockPodeEditar = true;
+jest.mock('@maestra/core/hooks/useArtistCapabilities', () => ({
+  useArtistCapabilities: () => ({ canCollaborateJam: mockPodeEditar, canEditCatalog: false }),
+}));
+
 const MEDIDAS: Metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 47, left: 0, right: 0, bottom: 34 },
@@ -155,6 +186,10 @@ describe('espaço jam', () => {
     mockBuscar.mockResolvedValue(projeto());
     mockComentarios.mockResolvedValue([]);
     mockAtualizarVersao.mockImplementation((id, patch) => Promise.resolve(versao({ id, ...patch })));
+    mockPurgar.mockResolvedValue({ pistas: 0, clipes: 0, arquivos: 0 });
+    mockMoverClipe.mockResolvedValue(null);
+    mockMarcarApagado.mockResolvedValue(undefined);
+    mockRestaurar.mockResolvedValue(undefined);
   });
 
   // ⚠️ VOLTAR AO INÍCIO E REPETIR CHEGARAM DA WEB. A mesa do núcleo já sabia fazer as duas desde
@@ -217,6 +252,67 @@ describe('espaço jam', () => {
 
     expect(await tela.findByLabelText('Aproximar a linha do tempo')).toBeTruthy();
     expect(tela.getByLabelText('Afastar a linha do tempo')).toBeTruthy();
+  });
+
+  // ⚠️ APAGAR MARCA, E NÃO APAGA (mesma regra da web, e ela não é da tela: vive no núcleo). A
+  // linha fica no banco até a sessão fechar, e é isso que dá à seta do desfazer alguma coisa
+  // para onde voltar. Sem isto, remover um clipe no aparelho seria definitivo enquanto na web é
+  // reversível — a mesma ação com dois significados, conforme o aparelho.
+  it('remover um clipe marca, e o desfazer devolve', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    // Escolher o clipe é o que revela as ações: no aparelho, sem escolher não há o que tocar.
+    fireEvent.press(await tela.findByLabelText('Trecho 1 de Voz'));
+    fireEvent.press(await tela.findByLabelText('Remover o clipe'));
+
+    await waitFor(() => expect(mockMarcarApagado).toHaveBeenCalledWith('c-t-1'));
+    // E nunca o apagar de verdade: esse é do fim da sessão.
+    expect(mockPurgar).not.toHaveBeenCalledWith('v-1');
+
+    // A seta acorda e diz o que vai desmanchar.
+    const seta = await tela.findByLabelText('Desfazer: remover o clipe');
+    fireEvent.press(seta);
+    await waitFor(() => expect(mockRestaurar).toHaveBeenCalledWith('c-t-1'));
+  });
+
+  // ⚠️ A SESSÃO FECHA E O QUE FOI APAGADO SAI DE VERDADE. É o outro lado do desfazer: fechada a
+  // tela, não há mais quem chame a linha de volta, e guardá-la seria resíduo a acumular.
+  it('sair do editor apaga de verdade o que foi marcado', async () => {
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    fireEvent.press(tela.getAllByLabelText('Voltar para Músicas')[0]);
+    expect(mockPurgar).toHaveBeenCalledWith('v-1');
+  });
+
+  // ⚠️ SEM PERMISSÃO, A MONTAGEM SÓ SE VÊ. Um convidado de leitura veria clipes que se escolhem,
+  // setas que prometem desfazer e botões de remover que o banco ia recusar — e a recusa chegaria
+  // como "Falha ao salvar", que não explica nada a quem nunca teve permissão.
+  it('quem não pode editar não vê as setas nem as ações do clipe', async () => {
+    mockPodeEditar = false;
+    try {
+      mockBuscar.mockResolvedValue(projeto({
+        versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+      }));
+      const tela = await montar();
+      await tela.findByText('FAIXAS');
+
+      // ⚠️ ESPERAR O TOQUE PEGAR ANTES DE AFIRMAR A AUSÊNCIA. Sem isto o teste passava pelo
+      // motivo errado: a consulta corria antes do render seguinte, e não achava a barra porque
+      // ela ainda não tinha tido chance de aparecer — passaria na mesma com a permissão ligada.
+      const clipe = await tela.findByLabelText('Trecho 1 de Voz');
+      fireEvent.press(clipe);
+      await waitFor(() => expect(clipe.props.accessibilityState.selected).toBe(true));
+
+      expect(tela.queryByLabelText('Remover o clipe')).toBeNull();
+      expect(tela.queryByLabelText(/^Desfazer/)).toBeNull();
+    } finally {
+      mockPodeEditar = true;
+    }
   });
 
   // A forma da tela: um editor. As gravações são uma fila de fichas (são ALTERNATIVAS, ouve-se

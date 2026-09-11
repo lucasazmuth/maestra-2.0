@@ -2,6 +2,8 @@ import { memo, useMemo, useRef, useState } from 'react';
 import {
   Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 import Svg, { Rect } from 'react-native-svg';
 
 import Feather from '@expo/vector-icons/Feather';
@@ -9,9 +11,10 @@ import Feather from '@expo/vector-icons/Feather';
 import type { Pista } from '@maestra/core/audio/mesa';
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import {
-  PIXELS_POR_SEGUNDO, ZOOM_MAXIMO, ZOOM_MINIMO, gradeDoCompasso, marcasDaRegua,
-  zoomQueEncaixa,
+  PIXELS_POR_SEGUNDO, ZOOM_MAXIMO, ZOOM_MINIMO, encaixeDaGrade, gradeDoCompasso,
+  marcasDaRegua, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
+import { ehPistaDaMix } from '@maestra/core/audio/pistasDaVersao';
 import { COR, COR_JAM, corDaPista } from '@maestra/core/constants/design';
 
 // A LINHA DO TEMPO, no aparelho.
@@ -86,7 +89,132 @@ const OndaDoClipe = memo(({ picos, cor, largura, altura }: {
   );
 });
 
-export const LinhaDoTempo = ({ pistas, estado, picos, duracaoDoClipe, bpm, aoBuscar }: {
+/**
+ * Um clipe na linha do tempo, com a edição que o dedo permite.
+ *
+ * ⚠️ ARRASTAR EXIGE O CLIPE ESCOLHIDO PRIMEIRO, e é a mesma regra da web. No mesmo ecrã, o
+ * arrasto horizontal já é o gesto de rolar a montagem: sem um sinal de intenção, cada tentativa
+ * de percorrer a música mexeria no clipe por onde o dedo passasse. Um toque escolhe, e a partir
+ * daí o `Pan` deste clipe ganha do `ScrollView` que o contém.
+ *
+ * A barra de ações vive DENTRO do clipe, e não por cima: por cima, a da primeira faixa saía
+ * pelo topo da área visível.
+ */
+const Clipe = ({
+  clipe, rotulo, cor, escala, largura, picos: osPicos, escolhido, podeEditar, agulha, duracao,
+  passoDoEncaixe, aoEscolher, aoLargar, aoMoverEnquantoArrasta, aoCortar, aoApagar,
+}: {
+  clipe: { id: string; inicio: number };
+  /** O que o leitor de tela lê, e o que os testes procuram. Um alvo mudo não se alcança. */
+  rotulo: string;
+  cor: string;
+  escala: number;
+  largura: number;
+  picos: number[];
+  escolhido: boolean;
+  podeEditar: boolean;
+  agulha: number;
+  duracao: number;
+  passoDoEncaixe: number;
+  aoEscolher: () => void;
+  aoLargar: (inicio: number, de: number) => void;
+  aoMoverEnquantoArrasta: (inicio: number) => void;
+  aoCortar: () => void;
+  aoApagar: () => void;
+}) => {
+  const partiuDe = useRef(clipe.inicio);
+
+  const arrastar = Gesture.Pan()
+    .enabled(escolhido && podeEditar)
+    // Declarar o eixo: sem isto o `ScrollView` e o clipe disputam o mesmo dedo, e quem ganha
+    // depende do ângulo do primeiro pixel.
+    .activeOffsetX([-8, 8])
+    .failOffsetY([-14, 14])
+    .onBegin(() => { partiuDe.current = clipe.inicio; })
+    .onUpdate((e) => {
+      const bruto = partiuDe.current + e.translationX / escala;
+      runOnJS(aoMoverEnquantoArrasta)(Math.max(0, bruto));
+    })
+    .onEnd((e) => {
+      const bruto = partiuDe.current + e.translationX / escala;
+      const destino = Math.max(0, Math.round(bruto / passoDoEncaixe) * passoDoEncaixe);
+      // Um toque não é um arrasto: sem esta guarda, escolher um clipe fora da grelha o faria
+      // saltar para o tempo mais próximo sem ninguém pedir.
+      if (Math.abs(destino - partiuDe.current) < 0.001) return;
+      runOnJS(aoLargar)(destino, partiuDe.current);
+    });
+
+
+  // O corte é na AGULHA, e só quando ela está dentro deste clipe: é ela que diz onde cai.
+  const podeCortar = agulha > clipe.inicio + 0.05 && agulha < clipe.inicio + duracao - 0.05;
+
+  return (
+    // ⚠️ O TOQUE É UM `Pressable`, e não um `Gesture.Tap`. Dois motivos, e o segundo é o que
+    // decide: o `Pressable` dá o retorno de toque e a acessibilidade de graça, e um gesto de
+    // toque dentro do `GestureDetector` é invisível para quem testa a tela — o alvo existiria
+    // para o dedo e não para o teste, que é como um botão deixa de funcionar sem ninguém ver.
+    // O `Pan` fica por fora e só ganha depois de 8 pontos: um toque nunca lhe chega.
+    <GestureDetector gesture={arrastar}>
+      <Pressable
+        onPress={aoEscolher}
+        accessibilityRole="button"
+        accessibilityLabel={rotulo}
+        accessibilityState={{ selected: escolhido }}
+        style={[
+          estilos.clipe,
+          {
+            left: clipe.inicio * escala,
+            width: largura,
+            borderColor: cor,
+            backgroundColor: `${cor}1f`,
+            borderWidth: escolhido ? 2 : 1,
+          },
+        ]}
+      >
+        {/* A onda é cortada pela borda do clipe; a BARRA não. Ver o `overflow` dos estilos. */}
+        <View style={estilos.dentroDoClipe}>
+          <OndaDoClipe
+            picos={osPicos}
+            cor={cor}
+            largura={largura - 2}
+            altura={ALTURA_DA_FAIXA - FOLGA * 2 - 2}
+          />
+        </View>
+
+        {escolhido && podeEditar && (
+          <View style={estilos.acoesDoClipe}>
+            <Pressable
+              onPress={aoCortar}
+              disabled={!podeCortar}
+              hitSlop={6}
+              style={[estilos.acaoDoClipe, !podeCortar && estilos.acaoInerte]}
+              accessibilityRole="button"
+              accessibilityLabel={podeCortar
+                ? 'Dividir o clipe na agulha'
+                : 'Leve a agulha para dentro do clipe'}
+            >
+              <Feather name="scissors" size={12} color={podeCortar ? COR.primaria : COR_JAM.estrela} />
+            </Pressable>
+            <Pressable
+              onPress={aoApagar}
+              hitSlop={6}
+              style={estilos.acaoDoClipe}
+              accessibilityRole="button"
+              accessibilityLabel="Remover o clipe"
+            >
+              <Feather name="trash-2" size={12} color={COR.erro} />
+            </Pressable>
+          </View>
+        )}
+      </Pressable>
+    </GestureDetector>
+  );
+};
+
+export const LinhaDoTempo = ({
+  pistas, estado, picos, duracaoDoClipe, bpm, podeEditar, historico,
+  aoBuscar, aoMover, aoCortar, aoApagar,
+}: {
   pistas: Pista[];
   estado: EstadoDaMesa;
   /** Os picos que a mesa já tem: ela descodificou o áudio para tocar. */
@@ -101,8 +229,24 @@ export const LinhaDoTempo = ({ pistas, estado, picos, duracaoDoClipe, bpm, aoBus
   duracaoDoClipe: (id: string) => number;
   /** O andamento da gravação, como está escrito no campo. Sem ele, a régua conta segundos. */
   bpm?: string | number | null;
+  /** Sem permissão, a montagem só se vê: nenhum clipe se escolhe, nenhuma seta aparece. */
+  podeEditar?: boolean;
+  historico?: {
+    podeDesfazer: boolean;
+    podeRefazer: boolean;
+    rotuloDesfazer: string;
+    rotuloRefazer: string;
+    ocupado: boolean;
+    desfazer: () => void;
+    refazer: () => void;
+  };
   aoBuscar: (segundo: number) => void;
+  /** `de` só vai preenchido quando o dedo largou: é o que o desfazer precisa. */
+  aoMover?: (clipeId: string, inicio: number, de?: number) => void;
+  aoCortar?: (clipeId: string, emSegundo: number) => void;
+  aoApagar?: (clipeId: string) => void;
 }) => {
+  const [escolhido, setEscolhido] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [larguraVisivel, setLarguraVisivel] = useState(0);
   /** Quem mexeu no zoom manda: o encaixe automático não volta a mexer nele. */
@@ -128,6 +272,7 @@ export const LinhaDoTempo = ({ pistas, estado, picos, duracaoDoClipe, bpm, aoBus
   const zoomMinimo = Math.min(ZOOM_MINIMO, encaixe);
 
   const grade = useMemo(() => gradeDoCompasso(bpm, escala), [bpm, escala]);
+  const passoDoEncaixe = useMemo(() => encaixeDaGrade(grade, escala), [grade, escala]);
   const passo = escala >= 40 ? 5 : escala >= 8 ? 15 : 60;
   const marcas = useMemo(
     () => marcasDaRegua(grade, duracao, escala, passo),
@@ -185,30 +330,31 @@ export const LinhaDoTempo = ({ pistas, estado, picos, duracaoDoClipe, bpm, aoBus
                     ]}
                   />
                 ))}
-                {pista.clipes.map((clipe) => {
+                {pista.clipes.map((clipe, n) => {
                   const dura = duracaoDoClipe(clipe.id) || clipe.duracao;
                   const larguraDoClipe = Math.max(dura * escala, 3);
                   const cor = corDaPista(i);
+                  const meu = escolhido === clipe.id;
                   return (
-                    <View
+                    <Clipe
                       key={clipe.id}
-                      style={[
-                        estilos.clipe,
-                        {
-                          left: clipe.inicio * escala,
-                          width: larguraDoClipe,
-                          borderColor: cor,
-                          backgroundColor: `${cor}1f`,
-                        },
-                      ]}
-                    >
-                      <OndaDoClipe
-                        picos={picos(clipe.id, RESOLUCAO)}
-                        cor={cor}
-                        largura={larguraDoClipe - 2}
-                        altura={ALTURA_DA_FAIXA - FOLGA * 2 - 2}
-                      />
-                    </View>
+                      clipe={clipe}
+                      rotulo={`Trecho ${n + 1} de ${pista.nome}`}
+                      cor={cor}
+                      escala={escala}
+                      largura={larguraDoClipe}
+                      picos={picos(clipe.id, RESOLUCAO)}
+                      escolhido={meu}
+                      podeEditar={!!podeEditar && !ehPistaDaMix(pista.id)}
+                      agulha={estado.posicao}
+                      duracao={dura}
+                      aoEscolher={() => setEscolhido((atual) => (atual === clipe.id ? null : clipe.id))}
+                      aoLargar={(inicio, de) => aoMover?.(clipe.id, inicio, de)}
+                      aoMoverEnquantoArrasta={(inicio) => aoMover?.(clipe.id, inicio)}
+                      passoDoEncaixe={passoDoEncaixe}
+                      aoCortar={() => { aoCortar?.(clipe.id, estado.posicao); setEscolhido(null); }}
+                      aoApagar={() => { aoApagar?.(clipe.id); setEscolhido(null); }}
+                    />
                   );
                 })}
               </View>
@@ -229,7 +375,39 @@ export const LinhaDoTempo = ({ pistas, estado, picos, duracaoDoClipe, bpm, aoBus
         </ScrollView>
       </View>
 
-      <View style={estilos.zoom}>
+      <View style={estilos.rodapeDaLinha}>
+        {/* ⚠️ AS SETAS FICAM AQUI, e não no transporte. Ali competiriam com o play — o botão que
+            se procura sem olhar — e empurrariam o relógio num ecrã de 402 pontos. Esta fila é a
+            dos controlos da MONTAGEM, que é sobre o que elas agem. */}
+        {historico ? (
+          <View style={estilos.setas}>
+            {([
+              ['desfazer', 'corner-up-left', historico.podeDesfazer, historico.rotuloDesfazer],
+              ['refazer', 'corner-up-right', historico.podeRefazer, historico.rotuloRefazer],
+            ] as const).map(([qual, icone, pode, rotulo]) => {
+              const inerte = !pode || historico.ocupado;
+              return (
+                <Pressable
+                  key={qual}
+                  onPress={qual === 'desfazer' ? historico.desfazer : historico.refazer}
+                  disabled={inerte}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  // Uma seta muda não se usa: o rótulo diz o que ela vai desmanchar.
+                  accessibilityLabel={rotulo}
+                >
+                  <Feather
+                    name={icone}
+                    size={16}
+                    color={inerte ? COR_JAM.estrela : COR_JAM.acaoIcone}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : <View />}
+
+        <View style={estilos.zoom}>
         <Pressable
           onPress={() => mexerNoZoom(Math.max(zoomMinimo, zoom / 1.5))}
           hitSlop={8}
@@ -247,6 +425,7 @@ export const LinhaDoTempo = ({ pistas, estado, picos, duracaoDoClipe, bpm, aoBus
         >
           <Feather name="zoom-in" size={16} color={COR_JAM.apoio} />
         </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -291,16 +470,38 @@ const estilos = StyleSheet.create({
   },
   clipe: {
     position: 'absolute', top: FOLGA, bottom: FOLGA,
-    borderWidth: 1, borderRadius: 5, overflow: 'hidden',
+    borderWidth: 1, borderRadius: 5,
     justifyContent: 'center',
+    // ⚠️ VISÍVEL, e não escondido: um clipe de dez segundos numa música de quatro minutos mede
+    // doze pontos ao abrir. Com o corte na borda, escolhê-lo mostrava uma barra de ações
+    // cortada ao meio — o clipe ficava selecionado e sem forma de agir sobre ele. A onda
+    // continua cortada, pela View de dentro.
+    overflow: 'visible',
+  },
+  dentroDoClipe: {
+    position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,
+    overflow: 'hidden', borderRadius: 4, justifyContent: 'center',
   },
   agulha: {
     position: 'absolute', top: 0, width: 2, backgroundColor: COR.primaria,
   },
-  zoom: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 10,
+  // A barra fica DENTRO do clipe: por cima, a da primeira faixa saía pelo topo da área visível.
+  acoesDoClipe: {
+    position: 'absolute', bottom: 4, left: 4, flexDirection: 'row', gap: 4,
+  },
+  acaoDoClipe: {
+    width: 26, height: 26, borderRadius: 6,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COR_JAM.botaoRedondo,
+    borderWidth: 1, borderColor: COR_JAM.fio,
+  },
+  acaoInerte: { opacity: 0.4 },
+  rodapeDaLinha: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingVertical: 8, paddingHorizontal: 12,
   },
+  setas: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  zoom: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   numeroDoZoom: {
     fontSize: 11, fontWeight: '700', color: COR_JAM.apoio, minWidth: 38, textAlign: 'center',
     fontVariant: ['tabular-nums'],
