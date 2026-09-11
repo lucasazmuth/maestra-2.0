@@ -2,7 +2,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_JAM } from '@maestra/core/constants/design';
+import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
 import type { CatalogVersion } from '@maestra/core/interfaces/maestra';
 
 // Qual gravação está aberta no editor.
@@ -47,7 +47,7 @@ export const SeletorDeGravacoes = ({ versoes, abertaId, principalId, aoAbrir }: 
               V{versao.version_number}
             </Text>
             {principal && (
-              <Feather name="star" size={12} color={aberta ? COR_JAM.papel : COR_JAM.estrelaAcesa} />
+              <Feather name="star" size={12} color={aberta ? COR_EDITOR.papel : COR_EDITOR.estrelaAcesa} />
             )}
             <Text
               style={[estilos.nome, aberta && estilos.nomeAberto]}
@@ -64,18 +64,19 @@ export const SeletorDeGravacoes = ({ versoes, abertaId, principalId, aoAbrir }: 
 
 const estilos = StyleSheet.create({
   bloco: { gap: 8 },
-  rotulo: { fontSize: 12, fontWeight: '700', color: COR_JAM.rotulo },
+  rotulo: { fontSize: 12, fontWeight: '700', color: COR_EDITOR.rotulo },
   // O recuo à direita é o que impede a última ficha de colar na borda quando a fila chega ao fim.
   fila: { gap: 8, paddingRight: 4 },
   ficha: {
     maxWidth: 210,
     flexDirection: 'row', alignItems: 'center', gap: 6,
     height: 36, paddingHorizontal: 12, borderRadius: 999,
-    borderWidth: 1, borderColor: COR_JAM.contornoDaVersao, backgroundColor: COR_JAM.papel,
+    // O fundo do chip fechado é a superfície, e não o `papel` — ver o `CampoDoCabecalho`.
+    borderWidth: 1, borderColor: COR_EDITOR.contornoDaVersao, backgroundColor: COR_EDITOR.cabecaDaVersao,
   },
-  fichaAberta: { borderColor: COR.primaria, backgroundColor: COR.primaria },
-  numero: { fontSize: 12, fontWeight: '800', color: COR_JAM.cracha },
-  numeroAberto: { color: COR_JAM.papel },
-  nome: { flexShrink: 1, fontSize: 13, fontWeight: '600', color: COR_JAM.texto },
-  nomeAberto: { color: COR_JAM.papel },
+  fichaAberta: { borderColor: AZUL_DO_EDITOR, backgroundColor: AZUL_DO_EDITOR },
+  numero: { fontSize: 12, fontWeight: '800', color: COR_EDITOR.cracha },
+  numeroAberto: { color: COR_EDITOR.papel },
+  nome: { flexShrink: 1, fontSize: 13, fontWeight: '600', color: COR_EDITOR.texto },
+  nomeAberto: { color: COR_EDITOR.papel },
 });

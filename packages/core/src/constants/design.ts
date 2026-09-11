@@ -920,6 +920,62 @@ export const corDaPista = (indice: number): string =>
   CORES_DAS_PISTAS[((indice % CORES_DAS_PISTAS.length) + CORES_DAS_PISTAS.length)
     % CORES_DAS_PISTAS.length];
 
+/**
+ * A PELE DO EDITOR — o Espaço JAM, nas duas superfícies.
+ *
+ * ⚠️ ESTA TELA NÃO USA O DESIGN SYSTEM DO RESTO DO PRODUTO, e é de propósito. O Maestra é claro,
+ * azul-marca e arredondado; um editor de música é escuro, denso e de contraste alto — é o que
+ * Ableton, Logic e Pro Tools são, e é o que o olho de quem trabalha com áudio espera. Misturar
+ * os dois daria uma tela que não é nem uma coisa nem outra. Os valores são os da referência que
+ * o dono do produto mandou, e são os mesmos do `DS` da web (`src/pages/Catalog/daw/tokens.ts`).
+ *
+ * ⚠️ AS CHAVES SÃO AS DO `COR_JAM`, uma a uma, e não é coincidência: o app foi desenhado claro
+ * primeiro, e o que muda quando ele veste o editor é a TINTA, não o papel de cada cor. Com o
+ * mesmo conjunto de chaves, a troca é de import — e uma cor que exista num e não no outro passa
+ * a ser um erro de compilação em vez de um buraco na tela.
+ */
+/**
+ * O AZUL DA AÇÃO no editor: o play, os controlos deslizantes, o botão de enviar.
+ *
+ * Não entra no `COR_EDITOR` porque não tem par no `COR_JAM` — o app claro usa a primária da
+ * marca para isto, e o editor usa a do `DS` da web. São dois azuis parecidos e diferentes, e a
+ * diferença é de propósito: o azul da marca ao lado de um cinza quase preto puxa para o roxo.
+ */
+export const AZUL_DO_EDITOR = '#3b82f6';
+
+/** A agulha e o botão de gravar, no editor. */
+export const VERMELHO_DO_EDITOR = '#ef4444';
+
+export const COR_EDITOR: Record<keyof typeof COR_JAM, string> = {
+  // O fundo é chapado, como na web: um gradiente num fundo quase preto é banda, não profundidade.
+  fundoDe: '#1a1a1e',
+  fundoAte: '#1a1a1e',
+  mancha: 'rgba(59, 130, 246, .10)',
+  painel: '#212127',
+  fio: '#33333d',
+  texto: '#e8e8ee',
+  titulo: '#e8e8ee',
+  rotulo: '#71717f',
+  apoio: '#a6a6b3',
+  botaoRedondo: '#2f2f38',
+  cabecaDaVersao: '#2a2a32',
+  contornoDaVersao: '#33333d',
+  cracha: '#a6a6b3',
+  /** Apagada é a mais fraca que ainda se lê; acesa é o âmbar, o mesmo dos dois lados. */
+  estrela: '#4a4a56',
+  estrelaAcesa: '#f59e0b',
+  acaoFundo: '#2f2f38',
+  acaoIcone: '#e8e8ee',
+  vazioContorno: '#44444f',
+  avatarDe: '#a855f7',
+  avatarAte: '#3b82f6',
+  statusPadrao: '#edc663',
+  tintaEscura: '#181818',
+  apoioDoVazio: '#71717f',
+  /** No escuro, "papel" é a tinta que se escreve POR CIMA de uma cor cheia — continua branca. */
+  papel: '#ffffff',
+};
+
 export const COR_JAM = {
   fundoDe: '#f9fbff',
   fundoAte: '#eef4ff',

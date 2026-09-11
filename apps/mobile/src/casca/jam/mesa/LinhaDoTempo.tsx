@@ -15,7 +15,7 @@ import {
   marcasDaRegua, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
 import { ehPistaDaMix } from '@maestra/core/audio/pistasDaVersao';
-import { COR, COR_JAM, corDaPista } from '@maestra/core/constants/design';
+import { AZUL_DO_EDITOR, COR, COR_EDITOR, corDaPista } from '@maestra/core/constants/design';
 
 // A LINHA DO TEMPO, no aparelho.
 //
@@ -193,7 +193,7 @@ const Clipe = ({
                 ? 'Dividir o clipe na agulha'
                 : 'Leve a agulha para dentro do clipe'}
             >
-              <Feather name="scissors" size={12} color={podeCortar ? COR.primaria : COR_JAM.estrela} />
+              <Feather name="scissors" size={12} color={podeCortar ? AZUL_DO_EDITOR : COR_EDITOR.estrela} />
             </Pressable>
             <Pressable
               onPress={aoApagar}
@@ -399,7 +399,7 @@ export const LinhaDoTempo = ({
                   <Feather
                     name={icone}
                     size={16}
-                    color={inerte ? COR_JAM.estrela : COR_JAM.acaoIcone}
+                    color={inerte ? COR_EDITOR.estrela : COR_EDITOR.acaoIcone}
                   />
                 </Pressable>
               );
@@ -414,7 +414,7 @@ export const LinhaDoTempo = ({
           accessibilityRole="button"
           accessibilityLabel="Afastar a linha do tempo"
         >
-          <Feather name="zoom-out" size={16} color={COR_JAM.apoio} />
+          <Feather name="zoom-out" size={16} color={COR_EDITOR.apoio} />
         </Pressable>
         <Text style={estilos.numeroDoZoom}>{Math.round(zoom * 100)}%</Text>
         <Pressable
@@ -423,7 +423,7 @@ export const LinhaDoTempo = ({
           accessibilityRole="button"
           accessibilityLabel="Aproximar a linha do tempo"
         >
-          <Feather name="zoom-in" size={16} color={COR_JAM.apoio} />
+          <Feather name="zoom-in" size={16} color={COR_EDITOR.apoio} />
         </Pressable>
         </View>
       </View>
@@ -432,41 +432,41 @@ export const LinhaDoTempo = ({
 };
 
 const estilos = StyleSheet.create({
-  bloco: { borderBottomWidth: 1, borderBottomColor: COR_JAM.fio },
+  bloco: { borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio },
   corpo: { flexDirection: 'row' },
   coluna: {
     width: COLUNA,
-    borderRightWidth: 1, borderRightColor: COR_JAM.fio,
-    backgroundColor: COR_JAM.cabecaDaVersao,
+    borderRightWidth: 1, borderRightColor: COR_EDITOR.fio,
+    backgroundColor: COR_EDITOR.cabecaDaVersao,
   },
   cantoDaColuna: {
     height: ALTURA_DA_REGUA, justifyContent: 'center', paddingHorizontal: 10,
-    borderBottomWidth: 1, borderBottomColor: COR_JAM.fio,
+    borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
   },
-  rotuloDaColuna: { fontSize: 9, fontWeight: '700', letterSpacing: 1, color: COR_JAM.rotulo },
+  rotuloDaColuna: { fontSize: 9, fontWeight: '700', letterSpacing: 1, color: COR_EDITOR.rotulo },
   cabecalhoDaFaixa: {
     height: ALTURA_DA_FAIXA, flexDirection: 'row', alignItems: 'center', gap: 7,
-    paddingRight: 8, borderBottomWidth: 1, borderBottomColor: COR_JAM.fio,
+    paddingRight: 8, borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
   },
   fitaDaCor: { width: 3, alignSelf: 'stretch' },
-  nomeDaFaixa: { flex: 1, fontSize: 12, fontWeight: '600', color: COR_JAM.titulo },
+  nomeDaFaixa: { flex: 1, fontSize: 12, fontWeight: '600', color: COR_EDITOR.titulo },
   regua: {
     height: ALTURA_DA_REGUA,
-    borderBottomWidth: 1, borderBottomColor: COR_JAM.fio,
-    backgroundColor: COR_JAM.cabecaDaVersao,
+    borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
+    backgroundColor: COR_EDITOR.cabecaDaVersao,
   },
   marcaDaRegua: {
     position: 'absolute', top: 0, bottom: 0,
-    borderLeftWidth: 1, borderLeftColor: COR_JAM.fio, paddingLeft: 4,
+    borderLeftWidth: 1, borderLeftColor: COR_EDITOR.fio, paddingLeft: 4,
     justifyContent: 'center',
   },
-  numeroDaRegua: { fontSize: 9, color: COR_JAM.rotulo },
+  numeroDaRegua: { fontSize: 9, color: COR_EDITOR.rotulo },
   faixa: {
     height: ALTURA_DA_FAIXA,
-    borderBottomWidth: 1, borderBottomColor: COR_JAM.fio,
+    borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
   },
   grelha: {
-    position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: COR_JAM.fio,
+    position: 'absolute', top: 0, bottom: 0, width: 1, backgroundColor: COR_EDITOR.fio,
   },
   clipe: {
     position: 'absolute', top: FOLGA, bottom: FOLGA,
@@ -483,7 +483,7 @@ const estilos = StyleSheet.create({
     overflow: 'hidden', borderRadius: 4, justifyContent: 'center',
   },
   agulha: {
-    position: 'absolute', top: 0, width: 2, backgroundColor: COR.primaria,
+    position: 'absolute', top: 0, width: 2, backgroundColor: AZUL_DO_EDITOR,
   },
   // A barra fica DENTRO do clipe: por cima, a da primeira faixa saía pelo topo da área visível.
   acoesDoClipe: {
@@ -492,8 +492,8 @@ const estilos = StyleSheet.create({
   acaoDoClipe: {
     width: 26, height: 26, borderRadius: 6,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COR_JAM.botaoRedondo,
-    borderWidth: 1, borderColor: COR_JAM.fio,
+    backgroundColor: COR_EDITOR.botaoRedondo,
+    borderWidth: 1, borderColor: COR_EDITOR.fio,
   },
   acaoInerte: { opacity: 0.4 },
   rodapeDaLinha: {
@@ -503,7 +503,7 @@ const estilos = StyleSheet.create({
   setas: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   zoom: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   numeroDoZoom: {
-    fontSize: 11, fontWeight: '700', color: COR_JAM.apoio, minWidth: 38, textAlign: 'center',
+    fontSize: 11, fontWeight: '700', color: COR_EDITOR.apoio, minWidth: 38, textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },
 });

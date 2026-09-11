@@ -4,6 +4,8 @@ import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
 import type { CatalogProject, CatalogTrack, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
 
+import { partilharStems } from '@/casca/jam/mesa/exportarNativo';
+
 import EspacoJam from '../jam/[artista]/[projeto]';
 
 const mockPush = jest.fn();
@@ -101,8 +103,19 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
       close: () => Promise.resolve(),
     }),
     buscarNativo: () => Promise.resolve('/cache/pistas/falsa.wav'),
+    // O render offline não é exercitado aqui: quem o prova é a suíte do `exportarNativo`.
+    criarOfflineNativo: () => ({}),
   };
 });
+
+// O motor de exportação é nativo de ponta a ponta (ficheiros, ZIP, folha de partilha do
+// sistema) e tem a sua própria suíte, que prova o que entra no ZIP. Aqui o que se prova é a
+// LIGAÇÃO: que a aba mostra as pistas certas e que o botão chama o que deve, com o que deve.
+jest.mock('@/casca/jam/mesa/exportarNativo', () => ({
+  partilharStems: jest.fn(() => Promise.resolve(2)),
+  partilharGuiaWav: jest.fn(() => Promise.resolve(true)),
+  partilharGuiaMp3: jest.fn(() => Promise.resolve()),
+}));
 
 jest.mock('@/nucleo/arquivos', () => ({
   escolherAudio: jest.fn(),
@@ -565,6 +578,89 @@ describe('espaço jam', () => {
 
     await usuario.press(await tela.findByLabelText('Abrir a visualização completa de V1'));
     expect(mockPush).toHaveBeenCalledWith('/jam/a-1/p-1/v-1');
+  });
+
+  // ─── A aba de Exportar ─────────────────────────────────────────────────────
+  //
+  // ⚠️ EXPORTAR É COMO O TRABALHO SAI DAQUI. Sem ela, uma montagem feita no telemóvel fica
+  // presa no telemóvel: não há como abri-la no Ableton nem mandar a mix para quem vai ouvir.
+  // Era a última coisa que o editor do app não sabia fazer e o da web já sabia.
+
+  it('a aba de exportar lista as pistas que vão para o ZIP, com a extensão que elas vão ter', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+    // ⚠️ ESPERAR A MONTAGEM CHEGAR. Antes de a gravação carregar, a única pista é a Mix
+    // sintetizada a partir do áudio da versão — e a lista sairia com uma linha só. O teste
+    // passava a dizer que a aba funciona enquanto mostrava a montagem errada.
+    await tela.findByText('Voz');
+    fireEvent.press(tela.getByLabelText('Exportar'));
+
+    expect(await tela.findByText('Stems')).toBeTruthy();
+    expect(tela.getByText('Voz')).toBeTruthy();
+    expect(tela.getAllByText('.wav').length).toBeGreaterThan(0);
+  });
+
+  it('o botão dos stems chama a partilha com as pistas da gravação e o nome da música', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+    await tela.findByText('Voz');
+    fireEvent.press(tela.getByLabelText('Exportar'));
+    fireEvent.press(await tela.findByLabelText('Compartilhar todas as faixas num ZIP'));
+
+    await waitFor(() => expect(partilharStems).toHaveBeenCalled());
+    const [, , pistasEnviadas, titulo] = (partilharStems as jest.Mock).mock.calls[0];
+    expect(titulo).toBe('Noite Clara');
+    expect((pistasEnviadas as { nome: string }[]).map((p) => p.nome)).toContain('Voz');
+  });
+
+  // Falhar em silêncio aqui é o pior desfecho possível: a pessoa toca, nada acontece, e ela não
+  // sabe se está a preparar ou se não funcionou.
+  it('quando a exportação falha, a tela diz porquê', async () => {
+    (partilharStems as jest.Mock).mockRejectedValueOnce(new Error('Sem espaço no aparelho.'));
+    const aviso = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const tela = await montar();
+
+    fireEvent.press(await tela.findByLabelText('Exportar'));
+    fireEvent.press(await tela.findByLabelText('Compartilhar todas as faixas num ZIP'));
+
+    await waitFor(() => expect(aviso).toHaveBeenCalledWith(
+      'Não consegui exportar', 'Sem espaço no aparelho.',
+    ));
+  });
+
+  // Não se toca uma ficha, nem se exporta com o play na mão — é o mesmo corte da web.
+  it('a aba de exportar não tem transporte', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const tela = await montar();
+    await tela.findByText('Voz');
+    await tela.findByLabelText('Tocar');
+
+    fireEvent.press(tela.getByLabelText('Exportar'));
+    // `waitFor`, e não uma asserção seca: o `expect(...).toBeNull()` logo a seguir ao toque
+    // passa antes de a troca de aba chegar à tela — e passaria também se ela nunca chegasse.
+    await waitFor(() => expect(tela.queryByLabelText('Tocar')).toBeNull());
+
+    fireEvent.press(tela.getByLabelText('Timeline'));
+    expect(await tela.findByLabelText('Tocar')).toBeTruthy();
+  });
+
+  // ⚠️ A FICHA É A ÚNICA DAS QUATRO QUE NÃO TROCA A VISTA: ela abre a folha do catálogo, que é
+  // um formulário só, partilhado com a lista de Músicas. Ver `index.tsx`.
+  it('a aba da ficha abre o formulário da música por cima do editor', async () => {
+    const usuario = userEvent.setup();
+    const tela = await montar();
+
+    await usuario.press(await tela.findByLabelText('Ficha'));
+
+    expect(await tela.findByText('Splits')).toBeTruthy();
+    // E o editor continua onde estava, por baixo: fechar a folha devolve a linha do tempo.
+    expect(tela.getByLabelText('Timeline').props.accessibilityState.selected).toBe(true);
   });
 
   it('sem versões, convida a mandar a primeira', async () => {

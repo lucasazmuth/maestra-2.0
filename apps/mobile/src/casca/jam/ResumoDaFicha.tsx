@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_JAM } from '@maestra/core/constants/design';
+import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
 import {
   CONVITE_DO_PROJETO, projetoVazio, resumoDoProjeto, type DadosDoProjeto,
 } from '@maestra/core/utils/resumoDaFicha';
@@ -30,7 +30,7 @@ export const ResumoDaFicha = ({ dados, aoTocar }: { dados: DadosDoProjeto; aoToc
       <Text style={[estilos.texto, vazia && estilos.convite]} numberOfLines={1}>
         {resumoDoProjeto(dados)}
       </Text>
-      <Feather name="chevron-right" size={16} color={vazia ? COR.primaria : COR_JAM.rotulo} />
+      <Feather name="chevron-right" size={16} color={vazia ? AZUL_DO_EDITOR : COR_EDITOR.rotulo} />
     </Pressable>
   );
 };
@@ -40,7 +40,7 @@ const estilos = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 10,
   },
-  texto: { flex: 1, fontSize: 14, fontWeight: '600', color: COR_JAM.texto },
+  texto: { flex: 1, fontSize: 14, fontWeight: '600', color: COR_EDITOR.texto },
   // O convite é uma ação, e veste-se como uma: a cor primária, que é a dos links do app.
-  convite: { fontWeight: '700', color: COR.primaria },
+  convite: { fontWeight: '700', color: AZUL_DO_EDITOR },
 });

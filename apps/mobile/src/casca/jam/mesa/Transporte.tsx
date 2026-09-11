@@ -5,7 +5,7 @@ import { runOnJS } from 'react-native-reanimated';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_JAM } from '@maestra/core/constants/design';
+import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
 
 // O transporte da mesa: um play, um relógio, uma régua.
 //
@@ -69,7 +69,7 @@ export const Transporte = ({
           accessibilityRole="button"
           accessibilityLabel="Voltar ao início"
         >
-          <Feather name="skip-back" size={20} color={inerte ? COR_JAM.estrela : COR_JAM.apoio} />
+          <Feather name="skip-back" size={20} color={inerte ? COR_EDITOR.estrela : COR_EDITOR.apoio} />
         </Pressable>
       )}
 
@@ -83,12 +83,12 @@ export const Transporte = ({
           : prontas === 0 ? 'Nenhuma faixa para tocar' : tocando ? 'Pausar' : 'Tocar'}
       >
         {carregando
-          ? <ActivityIndicator size="small" color={COR.primaria} style={estilos.espera} />
+          ? <ActivityIndicator size="small" color={AZUL_DO_EDITOR} style={estilos.espera} />
           : (
             <Feather
               name={tocando ? 'pause' : 'play'}
               size={34}
-              color={inerte ? COR_JAM.estrela : COR.primaria}
+              color={inerte ? COR_EDITOR.estrela : AZUL_DO_EDITOR}
             />
           )}
       </Pressable>
@@ -114,7 +114,7 @@ export const Transporte = ({
           accessibilityState={{ selected: !!emLoop }}
           accessibilityLabel={emLoop ? 'Parar de repetir' : 'Repetir do início ao fim'}
         >
-          <Feather name="repeat" size={18} color={emLoop ? COR.primaria : COR_JAM.apoio} />
+          <Feather name="repeat" size={18} color={emLoop ? AZUL_DO_EDITOR : COR_EDITOR.apoio} />
         </Pressable>
       )}
     </View>
@@ -125,22 +125,22 @@ const estilos = StyleSheet.create({
   barra: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COR_JAM.fio,
+    borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
   },
   // O mesmo tamanho do ícone: sem isto a barra encolhe 34 pt enquanto carrega e o resto salta.
   espera: { width: 34, height: 34 },
   tempo: {
     // Tabular à mão: sem largura fixa, `0:09` → `0:10` empurra a régua um pixel a cada segundo.
-    minWidth: 40, fontSize: 13, fontWeight: '700', color: COR_JAM.texto,
+    minWidth: 40, fontSize: 13, fontWeight: '700', color: COR_EDITOR.texto,
     fontVariant: ['tabular-nums'],
   },
-  total: { textAlign: 'right', color: COR_JAM.apoio },
+  total: { textAlign: 'right', color: COR_EDITOR.apoio },
   alvoDaRegua: { flex: 1, height: 30, justifyContent: 'center' },
-  regua: { height: 4, borderRadius: 2, backgroundColor: COR_JAM.acaoFundo, overflow: 'hidden' },
-  andado: { height: '100%', backgroundColor: COR.primaria },
+  regua: { height: 4, borderRadius: 2, backgroundColor: COR_EDITOR.acaoFundo, overflow: 'hidden' },
+  andado: { height: '100%', backgroundColor: AZUL_DO_EDITOR },
   agulha: {
     position: 'absolute', width: 12, height: 12, borderRadius: 6, marginLeft: -6,
-    backgroundColor: COR.primaria,
-    borderWidth: 2, borderColor: COR_JAM.papel,
+    backgroundColor: AZUL_DO_EDITOR,
+    borderWidth: 2, borderColor: COR_EDITOR.papel,
   },
 });

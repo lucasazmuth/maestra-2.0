@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 
-import { COR, COR_JAM } from '@maestra/core/constants/design';
+import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
 
 // A onda de uma pista, em miniatura.
 //
@@ -50,7 +50,7 @@ export const MiniOnda = memo(({ picos, progresso, apagada }: {
             width={LARGURA}
             height={alta}
             rx={1}
-            fill={apagada ? COR_JAM.estrela : i < ate ? COR.primaria : COR_JAM.contornoDaVersao}
+            fill={apagada ? COR_EDITOR.estrela : i < ate ? AZUL_DO_EDITOR : COR_EDITOR.contornoDaVersao}
           />
         );
       })}

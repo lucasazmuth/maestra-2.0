@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import {
@@ -13,17 +14,16 @@ import {
   refazer as refazerPasso, registar, rotuloDaSeta,
   type Historico, type PassoDaMontagem,
 } from '@maestra/core/audio/historico';
-import { ehPistaDaMix, montagemDaVersao, pistasDaGravacao } from '@maestra/core/audio/pistasDaVersao';
+import { ehPistaDaMix, montagemDaVersao } from '@maestra/core/audio/pistasDaVersao';
 import { useMesa } from '@maestra/core/audio/useMesa';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import {
   CATALOG_STATUS, CATALOG_STATUS_OPTIONS, MEMORIA_DE_AVISO_BYTES,
 } from '@maestra/core/constants/maestra';
-import { COR, COR_JAM } from '@maestra/core/constants/design';
+import { COR, COR_EDITOR } from '@maestra/core/constants/design';
 import type {
   CatalogClip, CatalogProject, CatalogVersion, CatalogVersionFile,
 } from '@maestra/core/interfaces/maestra';
-import { BALDE_DO_CATALOGO, caminhoNoBalde, removerArquivo } from '@maestra/core/services/armazenamento';
 import * as catalogo from '@maestra/core/services/db/catalog';
 
 import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
@@ -36,9 +36,14 @@ import { BARRAS } from '@/casca/jam/mesa/MiniOnda';
 import { Pista } from '@/casca/jam/mesa/Pista';
 import { SeletorDeGravacoes } from '@/casca/jam/mesa/SeletorDeGravacoes';
 import { LinhaDoTempo } from '@/casca/jam/mesa/LinhaDoTempo';
+import { IconeDaTimeline, IconeDoMixer } from '@/casca/jam/mesa/icones';
+import { TelaDeExportar, type EmCurso } from '@/casca/jam/mesa/TelaDeExportar';
+import {
+  partilharGuiaMp3, partilharGuiaWav, partilharStems,
+} from '@/casca/jam/mesa/exportarNativo';
 import { Transporte } from '@/casca/jam/mesa/Transporte';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
-import { buscarNativo, criarContextoNativo } from '@/nucleo/audio/contextoNativo';
+import { buscarNativo, criarContextoNativo, criarOfflineNativo } from '@/nucleo/audio/contextoNativo';
 import { useInterrupcoesDeAudio } from '@/nucleo/audio/interrupcoes';
 import { escolherAudio, type ArquivoEscolhido } from '@/nucleo/arquivos';
 import { useArtistaDaRota } from '@/nucleo/artista';
@@ -87,10 +92,10 @@ const paraRgb = (hex: string) => {
 };
 
 const coresDoStatus = (status?: string | null) => {
-  const cor = CATALOG_STATUS[status as keyof typeof CATALOG_STATUS]?.color || COR_JAM.statusPadrao;
+  const cor = CATALOG_STATUS[status as keyof typeof CATALOG_STATUS]?.color || COR_EDITOR.statusPadrao;
   const [r, g, b] = paraRgb(cor);
   const clara = (r * 299 + g * 587 + b * 114) / 1000 > 165;
-  return { fundo: cor, texto: clara ? COR_JAM.tintaEscura : COR_JAM.papel };
+  return { fundo: cor, texto: clara ? COR_EDITOR.tintaEscura : COR_EDITOR.papel };
 };
 
 /** Quanto tempo o "Salvo" fica na tela. Depois disso ele saía do nada; antes disto não saía nunca. */
@@ -111,14 +116,14 @@ const Avatar = ({ nome, foto, tamanho }: { nome?: string | null; foto?: string |
   // engrossa junto com o círculo (3px no de 44, 2px no de 34, como na folha).
   const forma = {
     width: tamanho, height: tamanho, borderRadius: tamanho / 2,
-    borderWidth: tamanho >= 44 ? 3 : 2, borderColor: COR_JAM.papel,
+    borderWidth: tamanho >= 44 ? 3 : 2, borderColor: COR_EDITOR.papel,
   } as const;
   if (foto) return <Image source={{ uri: foto }} style={[forma, estilos.avatarFoto]} />;
   // Sem foto entra o degradê roxo→azul da web, e não um roxo chapado: ele é a passagem entre a
   // cor da marca e a cor de ação, e é o que dá ao avatar vazio o mesmo peso do que tem foto.
   return (
     <LinearGradient
-      colors={[COR_JAM.avatarDe, COR_JAM.avatarAte]}
+      colors={[COR_EDITOR.avatarDe, COR_EDITOR.avatarAte]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[forma, estilos.avatarVazio]}
@@ -162,9 +167,48 @@ export default function EspacoJam() {
    * TEM. Chegar ao Espaço JAM por um ecrã de faders, sem uma onda à vista, é chegar a outro
    * produto. Ver não é montar, e ver é o que a linha do tempo faz bem no aparelho.
    */
-  const [aba, setAba] = useState<'linha' | 'mesa'>('linha');
+  const [aba, setAba] = useState<Aba>('linha');
 
   const [fichaAberta, setFichaAberta] = useState(false);
+
+  // ─── Exportar: os stems (ZIP) e a guia (WAV/MP3) ─────────────────────────
+  //
+  // Mora aqui, e não na tela de exportar: é aqui que a mesa vive, com os buffers já
+  // descodificados, e é aqui que se sabe o endereço da guia já gravada. A tela de lá é pura.
+  //
+  // ⚠️ NO TELEMÓVEL ISTO É PARTILHAR, e não baixar: não há pasta de transferências que se abra
+  // noutro programa. O ficheiro é escrito na cache e entregue à folha do sistema, de onde a
+  // pessoa escolhe o destino — AirDrop para o computador onde está o Ableton, Ficheiros,
+  // WhatsApp. É o mesmo gesto da web com a forma daqui.
+  const [exportandoEm, setExportandoEm] = useState<EmCurso>(null);
+
+  /** Todos falham igual: um alerta com o motivo, e o botão volta ao que era. */
+  const exportar = async (qual: Exclude<EmCurso, null>, fazer: () => Promise<void>) => {
+    if (exportandoEm) return;
+    setExportandoEm(qual);
+    try {
+      await fazer();
+    } catch (e) {
+      Alert.alert('Não consegui exportar', e instanceof Error ? e.message : 'Tente de novo.');
+    } finally {
+      setExportandoEm(null);
+    }
+  };
+
+  const enviarStems = () => exportar('stems', async () => {
+    const quantas = await partilharStems(mesa, criarOfflineNativo, pistas, projeto?.title || 'stems');
+    if (!quantas) Alert.alert('Nada para exportar', 'Nenhuma faixa pôde ser renderizada.');
+  });
+
+  const enviarGuiaWav = () => exportar('guia-wav', async () => {
+    const saiu = await partilharGuiaWav(mesa, criarOfflineNativo, projeto?.title || 'guia');
+    if (!saiu) Alert.alert('Ainda não', 'Espere o áudio carregar para exportar a guia.');
+  });
+
+  const enviarGuiaMp3 = () => exportar('guia-mp3', async () => {
+    if (!aberta?.audio_file) return;
+    await partilharGuiaMp3(aberta.audio_file, projeto?.title || 'guia');
+  });
   const [folhaAberta, setFolhaAberta] = useState(false);
   const [arquivoInicial, setArquivoInicial] = useState<ArquivoEscolhido | null>(null);
   const [emEdicao, setEmEdicao] = useState<CatalogVersion | null>(null);
@@ -212,16 +256,8 @@ export default function EspacoJam() {
     [versoes, abertaId],
   );
 
-  // ⚠️ O APP AINDA É A MESA, e não o editor. A linha do tempo — clipes que se arrastam, tesoura,
-  // régua — entrou primeiro na web, por decisão do dono do produto: a referência é de desktop
-  // (220px de lateral e 2400px de linha do tempo) e num telemóvel de 390pt ela precisa de um
-  // desenho próprio, com zoom e arrasto de dedo. Até lá, o app lê o MESMO modelo (pistas e
-  // clipes) e toca-o empilhado, com mutar, solo e volume.
-  //
-  // O que saiu daqui foi só a EDIÇÃO dos stems (enviar, renomear, mover, remover): mexer numa
-  // montagem que a tela não mostra seria editar às cegas. Envia-se e monta-se na web; aqui
-  // ouve-se, comenta-se e manda-se gravação nova.
-  const stems = useMemo(() => pistasDaGravacao(aberta), [aberta]);
+  // A montagem da gravação aberta: as pistas e os clipes de cada uma. É o MESMO modelo e a
+  // MESMA função da web — aqui não há "a versão do app" de coisa nenhuma.
   const pistas = useMemo(() => montagemDaVersao(aberta), [aberta]);
   const mesa = useMesa(pistas, DEPENDENCIAS_DA_MESA);
   // Uma chamada tira a sessão de áudio sem avisar; sem isto a mesa fica a achar que toca.
@@ -593,7 +629,7 @@ export default function EspacoJam() {
 
   if (carregando) {
     return (
-      <LinearGradient colors={[COR_JAM.fundoDe, COR_JAM.fundoAte]} style={estilos.espera}>
+      <LinearGradient colors={[COR_EDITOR.fundoDe, COR_EDITOR.fundoAte]} style={estilos.espera}>
         <ActivityIndicator color={COR.primaria} />
       </LinearGradient>
     );
@@ -601,7 +637,7 @@ export default function EspacoJam() {
 
   if (!projeto) {
     return (
-      <LinearGradient colors={[COR_JAM.fundoDe, COR_JAM.fundoAte]} style={estilos.espera}>
+      <LinearGradient colors={[COR_EDITOR.fundoDe, COR_EDITOR.fundoAte]} style={estilos.espera}>
         <Text style={estilos.vazioTexto}>Espaço JAM não encontrado.</Text>
         <Pressable onPress={voltar} accessibilityRole="button" accessibilityLabel="Voltar para Músicas">
           <Text style={estilos.voltarTexto}>Voltar para Músicas</Text>
@@ -619,7 +655,13 @@ export default function EspacoJam() {
   const prontas = mesa.estado.pistas.filter((p) => p.carga === 'pronta').length;
 
   return (
-    <LinearGradient colors={[COR_JAM.fundoDe, COR_JAM.fundoAte]} style={estilos.tela}>
+    <LinearGradient colors={[COR_EDITOR.fundoDe, COR_EDITOR.fundoAte]} style={estilos.tela}>
+      {/* O relógio e a bateria são pretos no resto do app, que é claro. Aqui o fundo é quase
+          preto: sem esta linha, a barra do sistema some por cima da tela. */}
+      {/* eslint-disable-next-line react/style-prop-object -- o `style` da barra do sistema é
+          'light' ou 'dark', e não uma folha de estilo. */}
+      <StatusBar style="light" />
+
       <ScrollView
         contentContainerStyle={[
           estilos.rolagem,
@@ -638,24 +680,49 @@ export default function EspacoJam() {
             accessibilityRole="button"
             accessibilityLabel="Voltar para Músicas"
           >
-            <Feather name="arrow-left" size={18} color={COR_JAM.texto} />
+            <Feather name="arrow-left" size={18} color={COR_EDITOR.texto} />
           </Pressable>
 
           <View style={estilos.flex}>
             <Text style={estilos.nomeDaMusica} numberOfLines={2}>{projeto.title}</Text>
           </View>
 
-          {/* Editar daqui é editar a MÚSICA — o Espaço Jam É o projeto. É a mesma ficha do
-              catálogo, e não um formulário próprio: um segundo formulário com um subconjunto
-              dos campos faria parecer outra entidade. */}
-          <Pressable
-            style={estilos.redondo}
-            onPress={() => setFichaAberta(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Editar informações da música"
-          >
-            <Feather name="edit-2" size={16} color={COR_JAM.texto} />
-          </Pressable>
+          {/* AS QUATRO VISTAS DA MESMA MÚSICA, no topo — é a primeira escolha de quem entra
+              (estou a montar, a misturar, a preencher a ficha, ou a levar isto embora?) e ela
+              decide o que a tela inteira mostra. É onde a web as põe, e pela mesma razão.
+
+              ⚠️ SÓ O ÍCONE, sem rótulo: os quatro nomes somam mais de 300 pt, e o que eles
+              empurravam para fora da tela era o botão de voltar — a pessoa entrava no editor e
+              não tinha como sair. O nome continua no leitor de tela. É o mesmo corte que a web
+              faz abaixo de 760 px.
+
+              ⚠️ O LÁPIS SAIU DAQUI: a ficha virou uma das quatro abas. Dois caminhos para o
+              mesmo formulário, um deles escondido num ícone, é um a mais. */}
+          <View style={estilos.abas}>
+            {ABAS.map(({ chave, rotulo, icone: Icone }) => {
+              // ⚠️ A FICHA É A ÚNICA QUE NÃO TROCA A VISTA: ela ABRE A FOLHA, que é o mesmo
+              // formulário do catálogo. Na web ela é uma aba como as outras, e aqui não é por
+              // uma razão concreta: esse formulário é partilhado com a lista de Músicas, que é
+              // uma tela clara. Vesti-lo de escuro para caber nesta aba vestiria também a tela
+              // de lá; e um segundo formulário, escuro, com os mesmos campos, seria duas
+              // verdades sobre a mesma música. Fica um formulário só, por cima do editor.
+              // Enquanto ela está aberta a aba de baixo continua acesa — é para lá que se volta.
+              const acesa = aba === chave;
+              return (
+                <Pressable
+                  key={chave}
+                  onPress={() => (chave === 'ficha' ? setFichaAberta(true) : setAba(chave))}
+                  style={[estilos.aba, acesa && estilos.abaAcesa]}
+                  hitSlop={{ top: 8, bottom: 8 }}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: acesa }}
+                  accessibilityLabel={rotulo}
+                >
+                  <Icone tamanho={16} cor={acesa ? COR_EDITOR.titulo : COR_EDITOR.apoio} />
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
 
         {/* A segunda linha: o status da música e, ao lado, o andamento e o tom da gravação
@@ -764,14 +831,17 @@ export default function EspacoJam() {
                       <Feather
                         name="star"
                         size={19}
-                        color={principalAberta ? COR_JAM.estrelaAcesa : COR_JAM.estrela}
+                        color={principalAberta ? COR_EDITOR.estrelaAcesa : COR_EDITOR.estrela}
                       />
                     </Pressable>
                   </View>
 
                   {/* UM transporte para a gravação inteira. É ele que diz, sem uma palavra, que
-                      as pistas abaixo tocam JUNTAS. */}
-                  <Transporte
+                      as pistas abaixo tocam JUNTAS.
+
+                      ⚠️ SÓ NAS ABAS DE ÁUDIO: não se toca uma ficha, nem se exporta com o play
+                      na mão. É o mesmo corte que a web faz. */}
+                  {aba !== 'exportar' && <Transporte
                     tocando={mesa.estado.tocando}
                     posicao={mesa.estado.posicao}
                     duracao={mesa.estado.duracao}
@@ -782,30 +852,7 @@ export default function EspacoJam() {
                     aoBuscar={mesa.irPara}
                     aoVoltarAoInicio={() => mesa.irPara(0)}
                     aoLoopar={mesa.loopar}
-                  />
-
-                  {/* ⚠️ A LINHA DO TEMPO E A MESA SÃO A MESMA GRAVAÇÃO, VISTAS DE DOIS SÍTIOS.
-                      Uma diz ONDE cada som está no tempo, a outra diz QUANTO de cada um se
-                      ouve. Empilhadas na mesma rolagem, a pessoa perde as duas: chega à mesa
-                      depois de rolar uma linha do tempo inteira, e volta atrás para mexer num
-                      volume. Por isso são abas, como na web — e o editor abre na linha do
-                      tempo, que é a cara dele. */}
-                  <View style={estilos.abas}>
-                    {([['linha', 'Timeline'], ['mesa', 'Mixer']] as const).map(([chave, rotulo]) => (
-                      <Pressable
-                        key={chave}
-                        onPress={() => setAba(chave)}
-                        style={[estilos.aba, aba === chave && estilos.abaAcesa]}
-                        accessibilityRole="tab"
-                        accessibilityState={{ selected: aba === chave }}
-                        accessibilityLabel={rotulo}
-                      >
-                        <Text style={[estilos.rotuloDaAba, aba === chave && estilos.rotuloAceso]}>
-                          {rotulo}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
+                  />}
 
                   {aba === 'linha' && (
                     <LinhaDoTempo
@@ -831,9 +878,21 @@ export default function EspacoJam() {
                     />
                   )}
 
+                  {aba === 'exportar' && (
+                    <TelaDeExportar
+                      pistas={pistas.map((pista) => ({ id: pista.id, nome: pista.nome }))}
+                      temStems={prontas > 0}
+                      temGuia={Boolean(aberta.audio_file)}
+                      emCurso={exportandoEm}
+                      aoEnviarStems={() => { void enviarStems(); }}
+                      aoEnviarGuiaWav={() => { void enviarGuiaWav(); }}
+                      aoEnviarGuiaMp3={() => { void enviarGuiaMp3(); }}
+                    />
+                  )}
+
                   {/* O aviso de peso vem ANTES de descodificar, com a conta do tamanho dos
                       ficheiros: depois de descodificar já não há o que avisar. */}
-                  {pesado && (
+                  {pesado && aba !== 'exportar' && (
                     <Text style={estilos.avisoDePeso}>
                       São muitas pistas grandes para um celular. Se o app fechar sozinho, deixe
                       menos pistas nesta gravação.
@@ -884,7 +943,7 @@ export default function EspacoJam() {
                         accessibilityRole="button"
                         accessibilityLabel={`Baixar ou compartilhar V${aberta.version_number}`}
                       >
-                        <Feather name="download" size={15} color={COR_JAM.acaoIcone} />
+                        <Feather name="download" size={15} color={COR_EDITOR.acaoIcone} />
                       </Pressable>
                     )}
                     <Pressable
@@ -895,7 +954,7 @@ export default function EspacoJam() {
                         `Abrir ${contagens[aberta.id] ?? 0} comentários de V${aberta.version_number}`
                       }
                     >
-                      <Feather name="message-circle" size={15} color={COR_JAM.acaoIcone} />
+                      <Feather name="message-circle" size={15} color={COR_EDITOR.acaoIcone} />
                       <Text style={estilos.acaoTexto}>{contagens[aberta.id] ?? 0}</Text>
                     </Pressable>
                     <Pressable
@@ -904,7 +963,7 @@ export default function EspacoJam() {
                       accessibilityRole="button"
                       accessibilityLabel={`Abrir a visualização completa de V${aberta.version_number}`}
                     >
-                      <Feather name="maximize-2" size={15} color={COR_JAM.acaoIcone} />
+                      <Feather name="maximize-2" size={15} color={COR_EDITOR.acaoIcone} />
                     </Pressable>
                     <Pressable
                       style={estilos.acao}
@@ -912,7 +971,7 @@ export default function EspacoJam() {
                       accessibilityRole="button"
                       accessibilityLabel={`Mais ações para V${aberta.version_number}`}
                     >
-                      <Feather name="more-vertical" size={15} color={COR_JAM.acaoIcone} />
+                      <Feather name="more-vertical" size={15} color={COR_EDITOR.acaoIcone} />
                     </Pressable>
                   </View>
                 </>
@@ -986,17 +1045,42 @@ export default function EspacoJam() {
 // 16, 18 e 22 conforme o bloco, e o olho notava sem saber dizer o quê.
 const RECUO = 18;
 
+/**
+ * As quatro vistas do editor, na ordem em que a web as põe.
+ *
+ * ⚠️ A ORDEM É UMA ESCOLHA, e não a de sempre: primeiro montar, depois misturar, depois
+ * descrever, e por último levar embora — é a ordem em que o trabalho acontece. E a primeira é a
+ * Timeline porque é a cara do editor: quem abre quer ver a música, não um formulário.
+ */
+type Aba = 'linha' | 'mesa' | 'ficha' | 'exportar';
+
+const ABAS: { chave: Aba; rotulo: string; icone: (p: { tamanho?: number; cor: string }) => React.ReactElement }[] = [
+  { chave: 'linha', rotulo: 'Timeline', icone: IconeDaTimeline },
+  { chave: 'mesa', rotulo: 'Mixer', icone: IconeDoMixer },
+  { chave: 'ficha', rotulo: 'Ficha', icone: ({ tamanho = 15, cor }) => <Feather name="file-text" size={tamanho} color={cor} /> },
+  { chave: 'exportar', rotulo: 'Exportar', icone: ({ tamanho = 15, cor }) => <Feather name="download" size={tamanho} color={cor} /> },
+];
+
+// ⚠️ ESTA TELA É ESCURA, e é a única do app que é. O Maestra é claro, azul-marca e arredondado;
+// um editor de música é escuro, denso e de contraste alto — é o que Ableton, Logic e Pro Tools
+// são, e é o que o olho de quem trabalha com áudio espera. A web mudou primeiro, e o app segue:
+// é a MESMA tela, e duas peles fariam duas telas. As cores vêm do `COR_EDITOR` do núcleo, com
+// as mesmas chaves do `COR_JAM` claro — o que muda é a tinta, não o papel de cada cor.
 const estilos = StyleSheet.create({
   // As abas do editor: a mesma escolha da web, com a forma do app.
+  // A fila é a da web: as quatro num sulco só, a acesa com o fundo mais claro. As medidas são
+  // as de lá (28 de altura, 3 de folga em volta, 2 entre elas), com o alvo do dedo por cima —
+  // 28 pt é pequeno para tocar, e o `hitSlop` dá os 44 sem alargar o desenho.
   abas: {
-    flexDirection: 'row', gap: 4, alignSelf: 'flex-start',
-    padding: 3, marginTop: 10, borderRadius: 999,
-    backgroundColor: COR_JAM.acaoFundo,
+    flexDirection: 'row', gap: 2, alignSelf: 'flex-start', flexShrink: 0,
+    padding: 3, borderRadius: 8,
+    backgroundColor: COR_EDITOR.acaoFundo,
   },
-  aba: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 999 },
-  abaAcesa: { backgroundColor: COR_JAM.botaoRedondo },
-  rotuloDaAba: { fontSize: 12, fontWeight: '700', color: COR_JAM.apoio },
-  rotuloAceso: { color: COR_JAM.titulo },
+  aba: {
+    width: 34, height: 28, borderRadius: 6,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  abaAcesa: { backgroundColor: COR_EDITOR.cabecaDaVersao },
   // ⚠️ ESCONDIDA, e não desmontada: a mesa guarda gestos (o fader, o solo) e o estado da
   // rolagem. Desmontá-la a cada troca de aba devolveria tudo isso ao princípio, e trocar de aba
   // deixaria de ser olhar de outro sítio para ser recomeçar.
@@ -1004,17 +1088,17 @@ const estilos = StyleSheet.create({
   tela: { flex: 1 },
   flex: { flex: 1, minWidth: 0 },
   espera: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
-  vazioTexto: { fontSize: 15, color: COR_JAM.apoio },
+  vazioTexto: { fontSize: 15, color: COR_EDITOR.apoio },
   voltarTexto: { fontSize: 14, fontWeight: '800', color: COR.primaria },
 
   rolagem: { paddingHorizontal: RECUO },
   cabecalho: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   redondo: {
     width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: COR_JAM.fio, backgroundColor: COR_JAM.botaoRedondo,
+    borderWidth: 1, borderColor: COR_EDITOR.fio, backgroundColor: COR_EDITOR.botaoRedondo,
   },
   nomeDaMusica: {
-    fontSize: 22, lineHeight: 27, fontWeight: '800', letterSpacing: -0.55, color: COR_JAM.texto,
+    fontSize: 22, lineHeight: 27, fontWeight: '800', letterSpacing: -0.55, color: COR_EDITOR.texto,
   },
 
   // Alinhada com o título, e não com o botão de voltar: 44 do botão + 10 de folga.
@@ -1027,40 +1111,40 @@ const estilos = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 5,
   },
   chipTexto: { flexShrink: 1, fontSize: 12, fontWeight: '800' },
-  selo: { fontSize: 12, fontWeight: '700', color: COR_JAM.apoio },
+  selo: { fontSize: 12, fontWeight: '700', color: COR_EDITOR.apoio },
   seloDeErro: { color: COR.erro },
 
   painel: {
     marginTop: 14, marginHorizontal: -RECUO, paddingHorizontal: RECUO, paddingVertical: 22,
-    borderTopWidth: 1, borderBottomWidth: 1, borderColor: COR_JAM.fio,
-    backgroundColor: COR_JAM.painel,
+    borderTopWidth: 1, borderBottomWidth: 1, borderColor: COR_EDITOR.fio,
+    backgroundColor: COR_EDITOR.painel,
   },
 
   semVersoes: {
     minHeight: 170, padding: 34, borderRadius: 18, borderWidth: 1, borderStyle: 'dashed',
-    borderColor: COR_JAM.vazioContorno, alignItems: 'center', justifyContent: 'center', gap: 7,
+    borderColor: COR_EDITOR.vazioContorno, alignItems: 'center', justifyContent: 'center', gap: 7,
   },
-  semVersoesTitulo: { fontSize: 17, fontWeight: '700', color: COR_JAM.texto, textAlign: 'center' },
-  semVersoesApoio: { fontSize: 14, color: COR_JAM.apoioDoVazio, textAlign: 'center', lineHeight: 20 },
+  semVersoesTitulo: { fontSize: 17, fontWeight: '700', color: COR_EDITOR.texto, textAlign: 'center' },
+  semVersoesApoio: { fontSize: 14, color: COR_EDITOR.apoioDoVazio, textAlign: 'center', lineHeight: 20 },
 
   editor: { gap: 14 },
   identidade: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatarFoto: { resizeMode: 'cover' },
   avatarVazio: { alignItems: 'center', justifyContent: 'center' },
-  avatarTexto: { fontWeight: '800', color: COR_JAM.papel },
-  tituloDaVersao: { fontSize: 19, fontWeight: '800', color: COR_JAM.titulo },
-  autoria: { fontSize: 12, color: COR_JAM.apoio },
+  avatarTexto: { fontWeight: '800', color: COR_EDITOR.papel },
+  tituloDaVersao: { fontSize: 19, fontWeight: '800', color: COR_EDITOR.titulo },
+  autoria: { fontSize: 12, color: COR_EDITOR.apoio },
 
   avisoDePeso: {
     padding: 10, borderRadius: 10,
-    backgroundColor: COR_JAM.acaoFundo,
-    fontSize: 12, lineHeight: 17, color: COR_JAM.texto,
+    backgroundColor: COR_EDITOR.acaoFundo,
+    fontSize: 12, lineHeight: 17, color: COR_EDITOR.texto,
   },
   acoes: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 5 },
   acao: {
     height: 36, minWidth: 36, paddingHorizontal: 9, borderRadius: 999,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
-    backgroundColor: COR_JAM.acaoFundo,
+    backgroundColor: COR_EDITOR.acaoFundo,
   },
-  acaoTexto: { fontSize: 12, color: COR_JAM.acaoIcone },
+  acaoTexto: { fontSize: 12, color: COR_EDITOR.acaoIcone },
 });

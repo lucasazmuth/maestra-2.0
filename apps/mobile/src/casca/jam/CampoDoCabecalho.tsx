@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { COR, COR_JAM } from '@maestra/core/constants/design';
+import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
 
 // Um valor da gravação, editável ali mesmo no cabeçalho: o BPM, o tom.
 //
@@ -35,7 +35,7 @@ export const CampoDoCabecalho = ({ valor, aoMudar, sufixo, largura, numerico, ma
       onChangeText={aoMudar}
       editable={!travado}
       placeholder="—"
-      placeholderTextColor={COR_JAM.estrela}
+      placeholderTextColor={COR_EDITOR.estrela}
       keyboardType={numerico ? 'number-pad' : 'default'}
       autoCapitalize={maiusculas ? 'characters' : 'none'}
       autoCorrect={false}
@@ -56,18 +56,22 @@ const estilos = StyleSheet.create({
   chip: {
     height: 28, paddingHorizontal: 10, borderRadius: 999,
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    borderWidth: 1, borderColor: COR_JAM.fio, backgroundColor: COR_JAM.papel,
+    // ⚠️ O FUNDO É O DO CAMPO, e não o `papel`. As duas coisas coincidem no app claro — um
+    // campo branco numa tela branca — e separam-se no editor: ali `papel` é a tinta que se
+    // escreve por cima de uma cor cheia, e continua branca. Usá-lo aqui punha duas pílulas
+    // brancas a gritar no meio de uma tela quase preta.
+    borderWidth: 1, borderColor: COR_EDITOR.fio, backgroundColor: COR_EDITOR.botaoRedondo,
   },
-  chipTravado: { backgroundColor: COR_JAM.acaoFundo, borderColor: COR_JAM.acaoFundo },
+  chipTravado: { backgroundColor: COR_EDITOR.acaoFundo, borderColor: COR_EDITOR.acaoFundo },
   campo: {
     // Zero de padding e altura cheia: o `TextInput` do Android traz recuo próprio e, com ele,
     // o texto assenta abaixo do centro do chip.
     padding: 0, height: 28,
-    fontSize: 13, fontWeight: '800', color: COR_JAM.titulo,
+    fontSize: 13, fontWeight: '800', color: COR_EDITOR.titulo,
     // Tabular para o chip não mudar de largura entre 98 e 128 BPM.
     fontVariant: ['tabular-nums'],
   },
-  sufixo: { fontSize: 11, fontWeight: '700', color: COR_JAM.rotulo },
+  sufixo: { fontSize: 11, fontWeight: '700', color: COR_EDITOR.rotulo },
 });
 
 /** O rótulo que diz de quem são os números. Uma linha para o par, e não uma por chip. */
@@ -76,6 +80,6 @@ export const DonoDosCampos = ({ texto, alerta }: { texto: string; alerta?: boole
 );
 
 const estilos2 = StyleSheet.create({
-  dono: { marginTop: 4, paddingLeft: 54, fontSize: 11, fontWeight: '600', color: COR_JAM.rotulo },
-  alerta: { color: COR.primaria },
+  dono: { marginTop: 4, paddingLeft: 54, fontSize: 11, fontWeight: '600', color: COR_EDITOR.rotulo },
+  alerta: { color: AZUL_DO_EDITOR },
 });

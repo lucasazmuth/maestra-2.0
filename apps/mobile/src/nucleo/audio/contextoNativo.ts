@@ -1,7 +1,7 @@
-import { AudioContext, AudioManager } from 'react-native-audio-api';
+import { AudioContext, AudioManager, OfflineAudioContext } from 'react-native-audio-api';
 import { Directory, File, Paths } from 'expo-file-system';
 
-import type { ContextoDeAudio } from '@maestra/core/audio/contexto';
+import type { ContextoDeAudio, ContextoOffline } from '@maestra/core/audio/contexto';
 import type { Buscar } from '@maestra/core/audio/mesa';
 
 // O motor de áudio do app, para a mesa de stems.
@@ -118,3 +118,19 @@ const aparar = (pasta: Directory): void => {
     /* a cache continua grande; o sistema limpa quando precisar */
   }
 };
+
+/**
+ * Um contexto OFFLINE — o que renderiza a montagem sem tocar, para exportar.
+ *
+ * É o mesmo `OfflineAudioContext` da web, e é de propósito: a `Mesa.renderizar` monta o mesmo
+ * grafo que toca (fontes → ganho → panorama → mestre → teto) e só troca o destino. Um render
+ * escrito à parte para o telemóvel soaria diferente do que a pessoa acabou de ouvir, e a
+ * diferença só apareceria no ficheiro exportado.
+ *
+ * ⚠️ Sem `setAudioSessionActivity` aqui: render offline não passa pela saída do aparelho, e
+ * mexer na sessão calaria a mesa que está a tocar ao lado.
+ */
+export const criarOfflineNativo = (
+  canais: number, quadros: number, taxa: number,
+): ContextoOffline =>
+  new OfflineAudioContext({ numberOfChannels: canais, length: quadros, sampleRate: taxa }) as unknown as ContextoOffline;

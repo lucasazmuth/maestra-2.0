@@ -3,7 +3,7 @@ import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 
-import { COR, COR_JAM } from '@maestra/core/constants/design';
+import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
 
 // O volume de uma pista.
 //
@@ -70,17 +70,17 @@ const estilos = StyleSheet.create({
   alvo: { height: 34, justifyContent: 'center' },
   trilho: {
     height: ALTURA_DO_TRILHO, borderRadius: ALTURA_DO_TRILHO / 2,
-    backgroundColor: COR_JAM.acaoFundo, overflow: 'hidden',
+    backgroundColor: COR_EDITOR.acaoFundo, overflow: 'hidden',
   },
-  cheio: { height: '100%', backgroundColor: COR.primaria },
-  cheioApagado: { backgroundColor: COR_JAM.estrela },
+  cheio: { height: '100%', backgroundColor: AZUL_DO_EDITOR },
+  cheioApagado: { backgroundColor: COR_EDITOR.estrela },
   botao: {
     position: 'absolute', width: BOTAO, height: BOTAO, borderRadius: BOTAO / 2,
     // Metade da largura para a esquerda: o `left` posiciona a borda, e o que tem de ficar sobre
     // o valor é o CENTRO do botão.
     marginLeft: -BOTAO / 2,
-    backgroundColor: COR_JAM.papel,
-    borderWidth: 1, borderColor: COR_JAM.contornoDaVersao,
+    backgroundColor: COR_EDITOR.papel,
+    borderWidth: 1, borderColor: COR_EDITOR.contornoDaVersao,
     shadowColor: 'rgba(74, 99, 145, .25)', shadowOpacity: 1,
     shadowOffset: { width: 0, height: 2 }, shadowRadius: 6, elevation: 3,
   },

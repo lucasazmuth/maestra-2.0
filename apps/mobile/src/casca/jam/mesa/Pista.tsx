@@ -2,7 +2,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_JAM, corDaPista } from '@maestra/core/constants/design';
+import { COR, COR_EDITOR, corDaPista } from '@maestra/core/constants/design';
 import type { EstadoDaPista } from '@maestra/core/audio/mesa';
 
 import { MiniOnda } from './MiniOnda';
@@ -49,14 +49,14 @@ export const Pista = ({ pista, indice, picos, progresso, haSolo, aoMudar, aoSola
   return (
     <View style={[estilos.linha, calada && estilos.linhaCalada]}>
       {/* A faixa de cor: o sinal de estado mais forte da linha, e o que dá identidade à pista. */}
-      <View style={[estilos.faixa, { backgroundColor: calada ? COR_JAM.estrela : cor }]} />
+      <View style={[estilos.faixa, { backgroundColor: calada ? COR_EDITOR.estrela : cor }]} />
 
       <View style={estilos.miolo}>
         <View style={estilos.cabeca}>
-          <View style={[estilos.ponto, { backgroundColor: calada ? COR_JAM.estrela : cor }]} />
+          <View style={[estilos.ponto, { backgroundColor: calada ? COR_EDITOR.estrela : cor }]} />
           <Text style={estilos.nome} numberOfLines={1}>{pista.nome}</Text>
 
-          {carregando && <ActivityIndicator size="small" color={COR_JAM.rotulo} />}
+          {carregando && <ActivityIndicator size="small" color={COR_EDITOR.rotulo} />}
 
           {!carregando && !falhou && (
             <>
@@ -89,7 +89,7 @@ export const Pista = ({ pista, indice, picos, progresso, haSolo, aoMudar, aoSola
               accessibilityRole="button"
               accessibilityLabel={`Opções de ${pista.nome}`}
             >
-              <Feather name="more-vertical" size={16} color={COR_JAM.acaoIcone} />
+              <Feather name="more-vertical" size={16} color={COR_EDITOR.acaoIcone} />
             </Pressable>
           )}
         </View>
@@ -116,7 +116,7 @@ export const Pista = ({ pista, indice, picos, progresso, haSolo, aoMudar, aoSola
 const estilos = StyleSheet.create({
   linha: {
     flexDirection: 'row',
-    borderBottomWidth: 1, borderBottomColor: COR_JAM.fio,
+    borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
   },
   // Não `display: none` nem cinzento chapado: a linha continua legível, só recuada. Uma pista
   // calada ainda precisa de se poder renomear e desmutar.
@@ -127,20 +127,20 @@ const estilos = StyleSheet.create({
   miolo: { flex: 1, paddingVertical: 10, paddingHorizontal: 12, gap: 4 },
   cabeca: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   ponto: { width: 8, height: 8, borderRadius: 4 },
-  nome: { flex: 1, fontSize: 14, fontWeight: '700', color: COR_JAM.titulo },
+  nome: { flex: 1, fontSize: 14, fontWeight: '700', color: COR_EDITOR.titulo },
   botao: {
     width: ALVO, height: ALVO, borderRadius: 8,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COR_JAM.acaoFundo,
+    backgroundColor: COR_EDITOR.acaoFundo,
   },
-  botaoTexto: { fontSize: 13, fontWeight: '800', color: COR_JAM.acaoIcone },
+  botaoTexto: { fontSize: 13, fontWeight: '800', color: COR_EDITOR.acaoIcone },
   // Mutar: cinzento cheio — a cor de estar apagado.
-  botaoMudo: { backgroundColor: COR_JAM.estrela },
-  botaoTextoMudo: { color: COR_JAM.papel },
+  botaoMudo: { backgroundColor: COR_EDITOR.estrela },
+  botaoTextoMudo: { color: COR_EDITOR.papel },
   // Solar: âmbar cheio — a mesma cor da estrela da gravação principal, que já quer dizer
   // "é esta que interessa".
-  botaoSolo: { backgroundColor: COR_JAM.estrelaAcesa },
-  botaoTextoSolo: { color: COR_JAM.papel },
+  botaoSolo: { backgroundColor: COR_EDITOR.estrelaAcesa },
+  botaoTextoSolo: { color: COR_EDITOR.papel },
   controlos: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   onda: { flex: 1, minWidth: 0 },
   // 110 pt é o mínimo em que um dedo consegue pousar num valor e não só nos extremos.
