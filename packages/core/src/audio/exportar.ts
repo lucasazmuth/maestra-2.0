@@ -159,6 +159,47 @@ export const bytesDoMp3 = async (
 };
 
 /**
+ * Acima de que amostra é que já se chama som. −80 dBFS: abaixo disto não há gravação, há ruído
+ * de arredondamento do codificador.
+ */
+export const LIMIAR_DO_SILENCIO = 1e-4;
+
+/**
+ * De quantas em quantas amostras se espreita o buffer.
+ *
+ * ⚠️ AMOSTRADO, e não amostra a amostra: uma guia de dois minutos são 5,8 milhões de amostras
+ * por canal, e percorrê-las todas só para responder "tem som?" seria pagar de novo o preço da
+ * renderização. Uma a cada 64 é uma espreitadela a cada 1,5 ms — nenhuma gravação de verdade
+ * se esconde nesse intervalo, e uma que se escondesse seria silêncio na prática.
+ */
+const PASSO_DA_ESPREITA = 64;
+
+/**
+ * O buffer tem som, ou é silêncio?
+ *
+ * ⚠️ ISTO EXISTE PARA NÃO GRAVAR SILÊNCIO POR CIMA DA GUIA BOA. A guia é a soma da montagem, e
+ * é o que a lista de Músicas toca; ela é regravada no MESMO caminho a cada saída do editor. Uma
+ * montagem que por algum motivo renderiza mudo — todas as pistas caladas, um áudio que não
+ * chegou a descodificar, uma pista vazia a ser a única que resta — apagaria a guia anterior e
+ * deixaria a música sem nada para tocar, sem erro nenhum a explicar porquê.
+ *
+ * Entre gravar silêncio e não gravar, não gravar é sempre melhor: a montagem continua salva, a
+ * guia anterior continua a tocar, e a saída seguinte tenta de novo.
+ */
+export const temSom = (buffer: BufferDeAudio, limiar = LIMIAR_DO_SILENCIO): boolean => {
+  for (let canal = 0; canal < buffer.numberOfChannels; canal += 1) {
+    const dados = buffer.getChannelData(canal);
+    for (let i = 0; i < dados.length; i += PASSO_DA_ESPREITA) {
+      if (Math.abs(dados[i]) > limiar) return true;
+    }
+  }
+  return false;
+};
+
+/** O que se diz a quem acabou de sair de uma montagem que não soa. */
+export const MONTAGEM_MUDA = 'A montagem está em silêncio: a guia anterior continua no lugar.';
+
+/**
  * O que a tela escreve enquanto a guia está a ser feita.
  *
  * ⚠️ COM A PERCENTAGEM, e não só as reticências. Codificar MP3 é JavaScript a correr sobre cada

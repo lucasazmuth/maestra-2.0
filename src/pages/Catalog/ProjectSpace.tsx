@@ -44,6 +44,7 @@ import {
   baixarArquivo, nomeDoArquivoDaPista, paraWav, paraZip, type StemExportado,
 } from './daw/exportar';
 import { caminhoDaGuia, criarOfflineWeb, paraMp3 } from './daw/guia';
+import { MONTAGEM_MUDA, temSom } from '@maestra/core/audio/exportar';
 import { DS } from './daw/tokens';
 
 
@@ -776,6 +777,10 @@ const ProjectSpace: FC = () => {
     try {
       const rendido = await mesa.renderizar(criarOfflineWeb);
       if (!rendido) return;
+      // ⚠️ SILÊNCIO NÃO SE GRAVA POR CIMA DA GUIA BOA. Ver `temSom`, no núcleo: entre gravar
+      // mudo e não gravar, não gravar é sempre melhor — a montagem continua salva, a guia
+      // anterior continua a tocar na lista, e a saída seguinte tenta de novo.
+      if (!temSom(rendido)) { message.warning(MONTAGEM_MUDA); return; }
       const mp3 = await paraMp3(rendido, setGerando);
       const gravado = await gravarEmCaminhoFixo(
         BALDE_DO_CATALOGO, caminhoDaGuia(artistId, projectId), mp3, 'audio/mpeg',

@@ -27,6 +27,11 @@ const casca = ler('pages', 'Catalog', 'daw', 'editor.module.scss');
 const biblioteca = ler('pages', 'Catalog', 'daw', 'Biblioteca.tsx');
 const icones = ler('pages', 'Catalog', 'daw', 'icones.tsx');
 const tela = ler('pages', 'Catalog', 'ProjectSpace.tsx');
+// O editor do aparelho: o que é regra de produto tem de valer nos dois.
+const app = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'app', 'jam', '[artista]', '[projeto]', 'index.tsx'),
+  'utf8',
+);
 // A leitura do projeto mora no núcleo: é lá que o nome do ficheiro chega ao clipe.
 const nucleo = fs.readFileSync(
   path.join(__dirname, '..', '..', 'packages', 'core', 'src', 'services', 'db', 'catalog.ts'),
@@ -306,6 +311,29 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(espaco).toContain('setGerando(Number.NaN);');
     // Sair espera pela guia: é o que faz a lista de Músicas tocar a soma da montagem.
     expect(espaco).toContain('await gerarGuia(open);');
+  });
+
+  // ⚠️ A GUIA É REGRAVADA NO MESMO CAMINHO A CADA SAÍDA, e é o que a lista de Músicas toca. Uma
+  // montagem que renderize mudo — todas as pistas caladas, um áudio que não chegou a
+  // descodificar — apagaria a guia boa e deixaria a música sem nada para tocar, sem erro nenhum
+  // a explicar porquê. Entre gravar silêncio e não gravar, não gravar é sempre melhor.
+  it('uma montagem muda não grava por cima da guia que estava lá', () => {
+    const espaco = semComentarios(tela);
+    const oApp = semComentarios(app);
+
+    // A trava vem ANTES do codificador: nem vale a pena gastar o MP3 de uma coisa que não soa.
+    const aGuia = espaco.slice(espaco.indexOf('const gerarGuia'));
+    const ateOCatch = aGuia.slice(0, aGuia.indexOf('} catch {'));
+    expect(ateOCatch).toContain('if (!temSom(rendido)) { message.warning(MONTAGEM_MUDA); return; }');
+    expect(ateOCatch.indexOf('temSom(')).toBeLessThan(ateOCatch.indexOf('paraMp3('));
+
+    // E o mesmo no aparelho, com a mesma frase — o núcleo é que a escreve — e também antes do
+    // codificador, que lá custa um minuto e meio.
+    const aGuiaDoApp = oApp.slice(oApp.indexOf('const gerarAGuia'));
+    const ateOCatchDoApp = aGuiaDoApp.slice(0, aGuiaDoApp.indexOf('} catch {'));
+    expect(ateOCatchDoApp).toContain('if (!temSom(rendido)) { Alert.alert(');
+    expect(ateOCatchDoApp).toContain('MONTAGEM_MUDA');
+    expect(ateOCatchDoApp.indexOf('temSom(')).toBeLessThan(ateOCatchDoApp.indexOf('bytesDoMp3('));
   });
 
   // ⚠️ O TEXTO FICA NA TELA, ao lado do ícone — e não só no `title`. Redondo e mudo, o selo

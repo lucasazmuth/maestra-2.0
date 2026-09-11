@@ -18,7 +18,9 @@ import {
   ehPistaDaMix, montagemDaVersao, nomeDaPistaNova, proximaPosicaoDaPista,
 } from '@maestra/core/audio/pistasDaVersao';
 import { ZOOM_MAXIMO, ZOOM_MINIMO } from '@maestra/core/audio/grade';
-import { bytesDoMp3, caminhoDaGuia, rotuloDaGuia } from '@maestra/core/audio/exportar';
+import {
+  MONTAGEM_MUDA, bytesDoMp3, caminhoDaGuia, rotuloDaGuia, temSom,
+} from '@maestra/core/audio/exportar';
 import { useMesa } from '@maestra/core/audio/useMesa';
 import { useAnaliseDaVersao } from '@maestra/core/hooks/useAnaliseDaVersao';
 import { bpmLegivel, outroAndamento, podeOuvirSozinho } from '@maestra/core/services/db/audioJobs';
@@ -394,6 +396,10 @@ export default function EspacoJam() {
     try {
       const rendido = await mesa.renderizar(criarOfflineNativo);
       if (!rendido) return;
+      // ⚠️ SILÊNCIO NÃO SE GRAVA POR CIMA DA GUIA BOA. Ver `temSom`, no núcleo: entre gravar
+      // mudo e não gravar, não gravar é sempre melhor — a montagem continua salva, a guia
+      // anterior continua a tocar na lista, e a saída seguinte tenta de novo.
+      if (!temSom(rendido)) { Alert.alert('Guia não gravada', MONTAGEM_MUDA); return; }
       const bytes = await bytesDoMp3(rendido, (parte) => {
         if (noAr.current) setGerando(parte);
       });

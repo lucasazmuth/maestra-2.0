@@ -9,9 +9,17 @@
 // Um ficheiro é um ambiente: aqui a cadeia acaba com a suíte, e ninguém herda o estrago. Se um
 // dia alguém juntar isto ao `jam.test.tsx`, o preço aparece três testes abaixo.
 //
-// ⚠️ E SÃO DOIS TESTES, NÃO TRÊS: qualquer terceiro caso montado depois destes não renderiza, e
-// eu não consegui isolar porquê dentro de um tempo razoável. O que é da SAÍDA — que ela espera
-// pela guia, e que a tela diz porquê — vive dentro do segundo caso, e não num terceiro.
+// ⚠️ E SÃO DOIS TESTES, NÃO TRÊS. Um terceiro montado neste ficheiro passa e falha conforme a
+// corrida — tentei um, para a trava do silêncio, e ele derrubava os outros dois em metade das
+// execuções. Um teste que muda de resultado sem o código mudar é pior do que não ter teste, e
+// eu não consegui isolar a causa dentro de um tempo razoável.
+//
+// O que ficou de fora não ficou sem guarda: que a montagem muda não grava por cima da guia boa
+// é regra do NÚCLEO (`temSom`, com os seus casos), e que as duas telas a chamam ANTES de
+// codificar está preso no cromo do Espaço JAM, que lê os dois ficheiros.
+//
+// O que é da SAÍDA — que ela espera pela guia, e que a tela diz porquê — vive dentro do segundo
+// caso, e não num terceiro, pela mesma razão.
 
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
@@ -123,6 +131,8 @@ jest.mock('expo-audio', () => ({
 // (quantas pistas, qual entra muda, quando o transporte deixa de estar "preparando"). O que se
 // troca é só a torneira: um contexto de áudio que devolve um buffer de três minutos sem tocar
 // nada, e uma busca que não vai à rede. Mockar a mesa em vez disto testaria o mock.
+// O duplo do render: cada teste diz se a montagem soa a alguma coisa. Ver a trava do silêncio.
+let mockRenderSilencioso = false;
 jest.mock('@/nucleo/audio/contextoNativo', () => {
   const buffer = {
     duration: 180, length: 180 * 44100, numberOfChannels: 1, sampleRate: 44100,
@@ -166,10 +176,15 @@ jest.mock('@/nucleo/audio/contextoNativo', () => {
       createBufferSource: () => ({
         buffer: null, connect: jest.fn(), disconnect: jest.fn(), start: jest.fn(), stop: jest.fn(),
       }),
-      // Meio segundo de silêncio: o que interessa é o caminho, não o som.
+      // ⚠️ MEIO SEGUNDO COM SOM, e não de silêncio. Era silêncio, e não podia ser: a tela
+      // recusa-se a gravar uma guia muda por cima da que estava lá (ver `temSom`, no núcleo), e
+      // com o duplo a devolver zeros o caminho feliz deixava de existir — o teste passava a
+      // medir a trava, e a gravação da guia ficava sem ninguém a olhar por ela.
       startRendering: () => Promise.resolve({
         duration: 0.5, length: 22050, numberOfChannels: 1, sampleRate: 44100,
-        getChannelData: () => new Float32Array(22050),
+        getChannelData: () => (mockRenderSilencioso
+          ? new Float32Array(22050)
+          : Float32Array.from({ length: 22050 }, (_, i) => Math.sin(i / 8) * 0.5)),
       }),
     }),
   };
@@ -253,6 +268,7 @@ const montar = () => render(
 describe('a guia do Espaço JAM', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRenderSilencioso = false;
     mockBuscar.mockResolvedValue(projeto());
     mockComentarios.mockResolvedValue([]);
     mockAtualizarVersao.mockImplementation((id, patch) => Promise.resolve(versao({ id, ...patch })));

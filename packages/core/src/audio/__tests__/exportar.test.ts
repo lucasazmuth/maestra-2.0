@@ -1,5 +1,7 @@
 import type { BufferDeAudio } from '../contexto';
-import { bytesDoWav, higienizar, nomeDoArquivoDaPista, rotuloDaGuia } from '../exportar';
+import {
+  bytesDoWav, higienizar, nomeDoArquivoDaPista, rotuloDaGuia, temSom,
+} from '../exportar';
 
 const buffer = (canais: number[][], taxa = 44100): BufferDeAudio => ({
   duration: canais[0].length / taxa,
@@ -100,5 +102,50 @@ describe('rotuloDaGuia', () => {
 
   it('um número que não é número volta ao texto sem percentagem', () => {
     expect(rotuloDaGuia(NaN)).toBe('Gerando a guia…');
+  });
+});
+
+// ⚠️ A GUIA É REGRAVADA NO MESMO CAMINHO A CADA SAÍDA DO EDITOR, e é o que a lista de Músicas
+// toca. Uma montagem que renderize mudo — todas as pistas caladas, um áudio que não chegou a
+// descodificar, uma pista vazia a ser a única que sobrou — apagaria a guia boa e deixaria a
+// música sem nada para tocar, sem erro nenhum a explicar porquê.
+//
+// Entre gravar silêncio e não gravar, não gravar é sempre melhor: a montagem continua salva, a
+// guia anterior continua a tocar, e a saída seguinte tenta de novo.
+describe('temSom', () => {
+  const comAmostras = (canais: number[][]): BufferDeAudio => buffer(canais);
+
+  it('um buffer com áudio tem som', () => {
+    // Áudio de verdade é contínuo: uma onda, e não uma amostra solta.
+    expect(temSom(comAmostras([new Array(4096).fill(0).map((_, i) => Math.sin(i / 8) * 0.5)]))).toBe(true);
+  });
+
+  it('um buffer todo a zero não tem', () => {
+    expect(temSom(comAmostras([new Array(4096).fill(0)]))).toBe(false);
+  });
+
+  // ⚠️ E O RUÍDO DE ARREDONDAMENTO NÃO CONTA. Somar e voltar a converter deixa amostras na casa
+  // dos 1e-7; se elas contassem, "tem som" passaria a ser sempre verdade e a trava não travava
+  // nada — que é a pior espécie de proteção, a que parece existir.
+  it('poeira abaixo de −80 dBFS continua a ser silêncio', () => {
+    expect(temSom(comAmostras([[1e-7, -2e-7, 5e-8]]))).toBe(false);
+  });
+
+  // Um som que só existe num dos canais é som — e é o caso de uma pista panoramizada a fundo.
+  it('basta um canal ter som', () => {
+    const mudo = new Array(4096).fill(0);
+    const comVoz = new Array(4096).fill(0);
+    comVoz[2048] = 0.8;
+    expect(temSom(comAmostras([mudo, comVoz]))).toBe(true);
+  });
+
+  // ⚠️ A ESPREITA É AMOSTRADA (uma a cada 64), e isso tem um preço que é preciso conhecer: um
+  // estalo de uma amostra só, no sítio errado, passa despercebido. É a troca certa — percorrer
+  // 5,8 milhões de amostras para responder "tem som?" seria pagar de novo a renderização — e
+  // uma gravação que se esconda em 1,5 ms é silêncio na prática.
+  it('um estalo de uma amostra só, fora da espreita, não conta como som', () => {
+    const quase = new Array(4096).fill(0);
+    quase[1] = 1;
+    expect(temSom(comAmostras([quase]))).toBe(false);
   });
 });
