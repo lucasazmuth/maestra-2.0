@@ -1215,16 +1215,39 @@ export default function EspacoJam() {
               artistaId={String(artistaId)}
               faixa={itemDaFicha}
               generos={projeto.genre ? [projeto.genre] : []}
-              autor={{ id: usuario?.id, nome: meuNome }}
               aoFechar={() => setAba('linha')}
               // ⚠️ NÃO RECARREGA A MONTAGEM a cada gravação automática. O que a ficha grava é a
               // MÚSICA (título, status, gênero, créditos), e um `buscar()` a cada meio segundo
               // de escrita derrubaria e recarregaria os buffers de áudio por baixo do teclado.
-              // O que a tela precisa saber é só o título, para o cabeçalho.
-              aoSalvar={(salva) => patcharProjeto({ title: salva.title ?? projeto.title })}
+              //
+              // ⚠️ MAS REMENDA TUDO O QUE FOI GRAVADO, e não só o título. A ficha recarrega o
+              // rascunho quando a música que recebe muda de identidade — e remendar só o título
+              // fazia exatamente isso com os OUTROS campos velhos: o gênero escolhido, o
+              // responsável, os detalhes voltavam ao valor que o servidor tinha mandado na
+              // abertura, enquanto o banco já guardava o novo. Gravado e visível deixavam de ser
+              // a mesma coisa, e quem escreveu via a escolha desfazer-se sozinha.
+              aoSalvar={(salva) => {
+                patcharProjeto({
+                  title: salva.title ?? projeto.title,
+                  status: salva.status,
+                  assignee: salva.assignee ?? null,
+                  details: salva.details ?? null,
+                  release_date: salva.release_date ?? null,
+                  cover_image: salva.cover_image ?? null,
+                  cover_image_name: salva.cover_image_name ?? null,
+                });
+                // Gênero, andamento, tom e letra são da GRAVAÇÃO — é de lá que a ficha os lê.
+                if (salva.version_id) {
+                  patcharVersao(salva.version_id, {
+                    genre: salva.genre ?? null,
+                    bpm: salva.bpm ?? null,
+                    key: salva.key ?? null,
+                    lyrics: salva.lyrics ?? null,
+                  });
+                }
+              }}
               aoEstado={setSelo}
               aoExcluir={voltar}
-              aoMudarVersoes={buscar}
             />
           </PaletaDaFolhaProvider>
         ) : aba === 'exportar' ? (

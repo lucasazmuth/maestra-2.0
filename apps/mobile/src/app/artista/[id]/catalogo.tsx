@@ -21,7 +21,6 @@ import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoMo
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { EspacoJamIcon } from '@/icones';
 import { useArtistaDaRota } from '@/nucleo/artista';
-import { useSessao } from '@/nucleo/sessao';
 
 type Aba = 'musicas' | 'lancamentos';
 
@@ -86,7 +85,6 @@ export default function Catalogo() {
   const [editando, setEditando] = useState<CatalogItem | null>(null);
 
   const margem = useSafeAreaInsets();
-  const { sessao } = useSessao();
   const player = useAudioPlayer();
   const status = useAudioPlayerStatus(player);
 
@@ -368,13 +366,9 @@ export default function Catalogo() {
           artistaId={artista.id}
           faixa={editando}
           generos={generos}
-          autor={{ id: sessao?.user.id, nome: sessao?.user.user_metadata?.full_name }}
           aoFechar={() => setFichaAberta(false)}
           aoSalvar={guardar}
           aoExcluir={remover}
-          // Anexar versão muda o áudio principal da faixa: a lista precisa reler para o play
-          // apontar para o arquivo novo.
-          aoMudarVersoes={buscar}
         />
       )}
 

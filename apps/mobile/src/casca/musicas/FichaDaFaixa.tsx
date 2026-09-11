@@ -10,24 +10,36 @@ import { RAIO } from '@maestra/core/constants/design';
 import { CATALOG_STATUS_OPTIONS, CLASSES_DA_OBRA, CLASSES_DO_FONOGRAMA } from '@maestra/core/constants/maestra';
 import type { CatalogItem, Split } from '@maestra/core/interfaces/maestra';
 import { deleteCatalogProject, saveCatalogProjectFromForm } from '@maestra/core/services/db/catalog';
+import { listMembers } from '@maestra/core/services/db/members';
 
 import { Bloco, Folha, Linha } from '@/casca/Folha';
 import { usePaleta, type PaletaDaFolha } from '@/casca/paleta';
 import { SugestaoDaAnalise } from '@/casca/jam/SugestaoDaAnalise';
-import { Versoes } from '@/casca/musicas/Versoes';
 import { enviarParaOCatalogo, escolherImagem } from '@/nucleo/arquivos';
+import { useSessao } from '@/nucleo/sessao';
 
 // A ficha da música — a porta do `TrackModal` da web.
 //
 // Grava pelo MESMO `saveCatalogProjectFromForm` do núcleo, que cuida de projeto e versão de uma
 // vez. Não há caminho de escrita próprio do app: se a regra mudar, muda nos dois.
 //
-// A estrutura é a da web: três abas — Informações, Letras e Splits —, o cabeçalho com o ponto do
-// status ao lado do título da faixa, e o rodapé fixo com "Excluir música" e "Salvar".
+// A estrutura é a da web, e ela é DIFERENTE nas duas casas — porque na web também é:
 //
-// A capa vem da galeria e as versões do seletor de arquivos do sistema; as duas sobem pelo MESMO
-// caminho da web (`enviarArquivo`, no núcleo), para o arquivo cair no mesmo lugar e com o mesmo
-// nome, venha de onde vier.
+//  • na lista de Músicas (a folha), três abas — Informações, Letras e Splits —, como o
+//    `TrackModal`; a letra tem uma aba só para ela porque ali se escreve a letra inteira;
+//  • na aba Ficha do editor (`emLinha`), UMA ROLAGEM CONTÍNUA com os campos e, a seguir, os
+//    créditos — como o `ProjectSpace` monta `CamposDaFicha` + `CamposDosSplits` empilhados.
+//    Sem letra: no editor ela vive no balão da letra, ao lado da montagem, onde se canta.
+//
+// A ordem dos campos é a mesma nas duas: título, status, gênero, responsável, lançamento, os
+// códigos, o que a máquina ouviu, capa e detalhes.
+//
+// ⚠️ NÃO HÁ BLOCO DE VERSÕES. Ele saiu da ficha da web quando o modelo mudou — uma música
+// deixou de ser "várias gravações alternativas, uma delas a boa" e passou a ser uma montagem de
+// pistas que soam juntas. Anexar gravações é gesto do Espaço JAM, não da ficha.
+//
+// A capa vem da galeria e sobe pelo MESMO caminho da web (`enviarArquivo`, no núcleo), para o
+// arquivo cair no mesmo lugar e com o mesmo nome, venha de onde vier.
 
 /** `2026-08-29` → `29/08/2026`. */
 const paraBR = (iso?: string | null) => (iso ? dayjs(iso).format('DD/MM/YYYY') : '');
@@ -80,6 +92,7 @@ const assinaturaDaFicha = (r: Partial<CatalogItem>, dataEscrita: string) => JSON
   title: r.title?.trim() || '',
   status: r.status || 'composition',
   genre: r.genre || null,
+  assignee: r.assignee?.id || null,
   data: dataEscrita,
   isrc: r.isrc || null,
   upc: r.upc || null,
@@ -98,18 +111,17 @@ const assinaturaDaFicha = (r: Partial<CatalogItem>, dataEscrita: string) => JSON
  * vai preencher o mesmo cadastro lá, e reencontrar as mesmas palavras poupa uma tradução
  * mental — e os enganos que ela produz.
  */
-const LinhaDeSplit = ({ split, classes, primeira, aoMudar, aoRemover }: {
+const LinhaDeSplit = ({ split, classes, aoMudar, aoRemover }: {
   split: Split;
   /** As classes que este corpo aceita — as da obra ou as do fonograma. */
   classes: readonly string[];
-  primeira?: boolean;
   aoMudar: (parte: Partial<Split>) => void;
   aoRemover: () => void;
 }) => {
   const paleta = usePaleta();
   const estilos = useMemo(() => criarEstilos(paleta), [paleta]);
   return (
-  <Linha primeira={primeira}>
+  <Linha>
     <View style={estilos.split}>
       <View style={estilos.splitTopo}>
         <TextInput
@@ -167,8 +179,7 @@ const LinhaDeSplit = ({ split, classes, primeira, aoMudar, aoRemover }: {
 };
 
 export const FichaDaFaixa = ({
-  aberta, artistaId, faixa, generos, autor, aoFechar, aoSalvar, aoExcluir, aoMudarVersoes,
-  emLinha, aoEstado,
+  aberta, artistaId, faixa, generos, aoFechar, aoSalvar, aoExcluir, emLinha, aoEstado,
 }: {
   aberta: boolean;
   /**
@@ -193,11 +204,9 @@ export const FichaDaFaixa = ({
   artistaId: string;
   faixa: CatalogItem | null;
   generos: string[];
-  autor: { id?: string | null; nome?: string | null };
   aoFechar: () => void;
   aoSalvar: (f: CatalogItem) => void;
   aoExcluir: (id: string) => void;
-  aoMudarVersoes: () => void;
 }) => {
   const paleta = usePaleta();
   const estilos = useMemo(() => criarEstilos(paleta), [paleta]);
@@ -207,6 +216,41 @@ export const FichaDaFaixa = ({
   const [erro, setErro] = useState<string | null>(null);
   const [aba, setAba] = useState<Aba>('informacoes');
   const [enviandoCapa, setEnviandoCapa] = useState(false);
+  const [membros, setMembros] = useState<{ id: string; nome: string }[]>([]);
+
+  // Quem pode ficar responsável: a equipe ATIVA do artista. Um convite pendente ainda não é
+  // ninguém — atribuir a música a quem nunca entrou é perder o rastro dela.
+  //
+  // ⚠️ A BUSCA É DAQUI, e não de quem monta a ficha. Na web a lista vem de fora porque as duas
+  // telas que a hospedam já tinham os membros carregados por outro motivo; aqui nenhuma tem, e
+  // passar a lista por duas telas só para a ficha a usar seria espalhar a mesma consulta.
+  useEffect(() => {
+    if (!aberta) return undefined;
+    let vivo = true;
+    listMembers(artistaId)
+      .then((lista) => {
+        if (!vivo) return;
+        setMembros(lista
+          .filter((m) => m.status === 'active')
+          .map((m) => ({ id: (m.user_id || m.id), nome: m.name || m.email })));
+      })
+      .catch(() => {});
+    return () => { vivo = false; };
+  }, [aberta, artistaId]);
+
+  // ⚠️ E QUEM ESTÁ A OLHAR ENTRA PRIMEIRO, como na web. O dono do artista não é membro da
+  // própria equipe: sem esta linha, a pessoa mais provável de ficar responsável pela música era
+  // a única que não aparecia na lista. Sem repetir, para quem é as duas coisas.
+  const { sessao } = useSessao();
+  const eu = sessao?.user;
+  const equipe = useMemo(() => {
+    const dados = (eu?.user_metadata ?? {}) as Record<string, unknown>;
+    const meuNome = (dados.full_name || dados.name || eu?.email || 'Você') as string;
+    return [
+      ...(eu ? [{ id: eu.id, nome: `${meuNome} (você)` }] : []),
+      ...membros.filter((m) => m.id !== eu?.id),
+    ];
+  }, [eu, membros]);
 
   useEffect(() => {
     if (!aberta) return;
@@ -261,6 +305,7 @@ export const FichaDaFaixa = ({
       title: rascunho.title.trim(),
       status: rascunho.status || 'composition',
       genre: rascunho.genre || null,
+      assignee: rascunho.assignee ?? null,
       release_date: lancamento,
       isrc: rascunho.isrc || null,
       upc: rascunho.upc || null,
@@ -363,349 +408,404 @@ export const FichaDaFaixa = ({
     );
   };
 
-  const miolo = (
-      <View style={estilos.miolo}>
-        <View style={estilos.abas}>
-          {([['informacoes', 'Informações'], ['letras', 'Letras'], ['splits', 'Splits']] as const)
-            .map(([chave, texto]) => {
-              const acesa = aba === chave;
-              return (
-                <Pressable
-                  key={chave}
-                  style={[estilos.aba, acesa && estilos.abaAcesa]}
-                  onPress={() => setAba(chave)}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: acesa }}
-                >
-                  <Text style={[estilos.abaTexto, acesa && estilos.abaTextoAceso]}>{texto}</Text>
-                </Pressable>
-              );
-            })}
-        </View>
+  // ─── Os campos, na ordem da web ─────────────────────────────────────────────
+  //
+  // Título · Status · Gênero · Responsável, o lançamento com os códigos, e a capa com os
+  // detalhes. É a ordem do `CamposDaFicha`, campo a campo.
+  const informacoes = (
+    <>
+      <Bloco>
+        <Linha primeira>
+          <Campo rotulo="Título">
+            <TextInput
+              style={estilos.entrada}
+              value={rascunho.title ?? ''}
+              onChangeText={(t) => mudar({ title: t })}
+              placeholder="Título da música"
+              placeholderTextColor={paleta.espacoReservado}
+              autoFocus={!faixa}
+              accessibilityLabel="Título"
+            />
+          </Campo>
+        </Linha>
 
-        <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
-          {aba === 'informacoes' && (
-            <>
-              <Bloco>
-                <Linha primeira>
-                  <Campo rotulo="Título">
-                    <TextInput
-                      style={estilos.entrada}
-                      value={rascunho.title ?? ''}
-                      onChangeText={(t) => mudar({ title: t })}
-                      placeholder="Título da música"
-                      placeholderTextColor={paleta.espacoReservado}
-                      autoFocus={!faixa}
-                      accessibilityLabel="Título"
-                    />
-                  </Campo>
-                </Linha>
+        <Linha>
+          <Campo rotulo="Status">
+            <View style={estilos.opcoes}>
+              {CATALOG_STATUS_OPTIONS.map((opcao) => {
+                const escolhido = (rascunho.status ?? 'composition') === opcao.id;
+                return (
+                  <Pressable
+                    key={opcao.id}
+                    style={[estilos.opcao, escolhido && estilos.opcaoEscolhida]}
+                    onPress={() => mudar({ status: opcao.id })}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: escolhido }}
+                  >
+                    <View style={[estilos.pontoDoStatus, { backgroundColor: opcao.color }]} />
+                    <Text style={[estilos.opcaoTexto, escolhido && estilos.opcaoTextoEscolhido]}>
+                      {opcao.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Campo>
+        </Linha>
 
-                <Linha>
-                  <Campo rotulo="Status">
-                    <View style={estilos.opcoes}>
-                      {CATALOG_STATUS_OPTIONS.map((opcao) => {
-                        const escolhido = (rascunho.status ?? 'composition') === opcao.id;
-                        return (
-                          <Pressable
-                            key={opcao.id}
-                            style={[estilos.opcao, escolhido && estilos.opcaoEscolhida]}
-                            onPress={() => mudar({ status: opcao.id })}
-                            accessibilityRole="radio"
-                            accessibilityState={{ selected: escolhido }}
-                          >
-                            <View style={[estilos.pontoDoStatus, { backgroundColor: opcao.color }]} />
-                            <Text
-                              style={[estilos.opcaoTexto, escolhido && estilos.opcaoTextoEscolhido]}
-                            >
-                              {opcao.label}
-                            </Text>
-                          </Pressable>
-                        );
+        <Linha>
+          <Campo rotulo="Gênero">
+            <TextInput
+              style={estilos.entrada}
+              value={rascunho.genre ?? ''}
+              onChangeText={(t) => mudar({ genre: t })}
+              placeholder="Gênero"
+              placeholderTextColor={paleta.espacoReservado}
+              accessibilityLabel="Gênero"
+            />
+            {generos.length > 0 && (
+              <View style={estilos.sugestoes}>
+                {generos.slice(0, 6).map((genero) => (
+                  <Pressable
+                    key={genero}
+                    style={estilos.sugestao}
+                    onPress={() => mudar({ genre: genero })}
+                    accessibilityRole="button"
+                  >
+                    <Text style={estilos.sugestaoTexto}>{genero}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </Campo>
+        </Linha>
+
+        {/* Responsável: quem toca a música para a frente.
+            Na web é um `Select`; aqui são pílulas, como o status e o gênero logo acima — e
+            pela mesma razão que o status virou pílula: a lista é curta, e uma folha que sobe
+            de baixo para escolher entre três nomes é um gesto a mais do que a resposta vale.
+            Tocar na pílula acesa desmarca — é o `allowClear` de lá. */}
+        <Linha>
+          <Campo rotulo="Responsável">
+            {equipe.length === 0 ? (
+              <Text style={estilos.semParticipante}>
+                Convide a equipe para poder atribuir a música a alguém.
+              </Text>
+            ) : (
+              <View style={estilos.opcoes}>
+                {equipe.map((pessoa) => {
+                  const escolhido = rascunho.assignee?.id === pessoa.id;
+                  return (
+                    <Pressable
+                      key={pessoa.id}
+                      style={[estilos.opcao, escolhido && estilos.opcaoEscolhida]}
+                      onPress={() => mudar({
+                        assignee: escolhido ? null : { id: pessoa.id, name: pessoa.nome },
                       })}
-                    </View>
-                  </Campo>
-                </Linha>
-
-                <Linha>
-                  <Campo rotulo="Gênero">
-                    <TextInput
-                      style={estilos.entrada}
-                      value={rascunho.genre ?? ''}
-                      onChangeText={(t) => mudar({ genre: t })}
-                      placeholder="Gênero"
-                      placeholderTextColor={paleta.espacoReservado}
-                      accessibilityLabel="Gênero"
-                    />
-                    {generos.length > 0 && (
-                      <View style={estilos.sugestoes}>
-                        {generos.slice(0, 6).map((genero) => (
-                          <Pressable
-                            key={genero}
-                            style={estilos.sugestao}
-                            onPress={() => mudar({ genre: genero })}
-                            accessibilityRole="button"
-                          >
-                            <Text style={estilos.sugestaoTexto}>{genero}</Text>
-                          </Pressable>
-                        ))}
-                      </View>
-                    )}
-                  </Campo>
-                </Linha>
-              </Bloco>
-
-              <Bloco rotulo="Lançamento">
-                <Linha primeira>
-                  <Campo rotulo="Data de lançamento">
-                    <TextInput
-                      style={estilos.entrada}
-                      value={dataEscrita}
-                      onChangeText={setDataEscrita}
-                      placeholder="28/08/2026"
-                      placeholderTextColor={paleta.espacoReservado}
-                      keyboardType="numbers-and-punctuation"
-                      accessibilityLabel="Data de lançamento"
-                    />
-                  </Campo>
-                </Linha>
-
-                {/* Dois a dois na mesma linha: são códigos curtos, e um por linha esticaria a
-                    aba de informações sem nenhum ganho de leitura. */}
-                <Linha>
-                  <View style={estilos.lado}>
-                    <View style={estilos.flex}>
-                      <Campo rotulo="ISRC">
-                        <TextInput
-                          style={estilos.entrada}
-                          value={rascunho.isrc ?? ''}
-                          onChangeText={(t) => mudar({ isrc: t })}
-                          placeholder="ISRC"
-                          placeholderTextColor={paleta.espacoReservado}
-                          autoCapitalize="characters"
-                          accessibilityLabel="ISRC"
-                        />
-                      </Campo>
-                    </View>
-                    <View style={estilos.flex}>
-                      <Campo rotulo="UPC">
-                        <TextInput
-                          style={estilos.entrada}
-                          value={rascunho.upc ?? ''}
-                          onChangeText={(t) => mudar({ upc: t })}
-                          placeholder="UPC"
-                          placeholderTextColor={paleta.espacoReservado}
-                          keyboardType="number-pad"
-                          accessibilityLabel="UPC"
-                        />
-                      </Campo>
-                    </View>
-                  </View>
-                </Linha>
-
-                <Linha>
-                  <View style={estilos.lado}>
-                    <View style={estilos.flex}>
-                      <Campo rotulo="BPM">
-                        <TextInput
-                          style={estilos.entrada}
-                          value={rascunho.bpm ?? ''}
-                          onChangeText={(t) => mudar({ bpm: t })}
-                          placeholder="BPM"
-                          placeholderTextColor={paleta.espacoReservado}
-                          keyboardType="number-pad"
-                          accessibilityLabel="BPM"
-                        />
-                      </Campo>
-                    </View>
-                    <View style={estilos.flex}>
-                      <Campo rotulo="Tom">
-                        <TextInput
-                          style={estilos.entrada}
-                          value={rascunho.key ?? ''}
-                          onChangeText={(t) => mudar({ key: t })}
-                          placeholder="Tom"
-                          placeholderTextColor={paleta.espacoReservado}
-                          accessibilityLabel="Tom"
-                        />
-                      </Campo>
-                    </View>
-                  </View>
-                </Linha>
-
-                {/* O que a máquina ouviu, ao lado dos campos que ela preenche — e nunca por
-                    cima deles: "usar" escreve no rascunho, e é a pessoa quem salva. Vivia na
-                    tela do Espaço JAM; saiu de lá porque é uma ação ocasional e a tela
-                    principal tinha coisas demais. Só existe quando a faixa tem uma versão com
-                    áudio para ouvir. */}
-                {!!faixa?.version_id && (
-                  <Linha>
-                    <SugestaoDaAnalise
-                      versaoId={faixa.version_id}
-                      aoUsar={({ bpm, tom }) => mudar({ bpm, key: tom })}
-                    />
-                  </Linha>
-                )}
-              </Bloco>
-
-              <Bloco rotulo="Capa e versões">
-                <Linha primeira>
-                  <Campo rotulo="Capa">
-                    <Pressable
-                      style={estilos.capa}
-                      onPress={trocarCapa}
-                      disabled={enviandoCapa}
-                      accessibilityRole="button"
-                      accessibilityLabel={rascunho.cover_image ? 'Trocar a capa' : 'Escolher a capa'}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: escolhido }}
+                      accessibilityLabel={escolhido
+                        ? `Remover ${pessoa.nome} como responsável`
+                        : `Responsável: ${pessoa.nome}`}
                     >
-                      {enviandoCapa ? (
-                        <ActivityIndicator color={paleta.primaria} />
-                      ) : rascunho.cover_image ? (
-                        <>
-                          <Image source={{ uri: rascunho.cover_image }} style={estilos.capaImagem} />
-                          <View style={estilos.flex}>
-                            <Text style={estilos.capaNome} numberOfLines={1}>
-                              {rascunho.cover_image_name || 'Capa da música'}
-                            </Text>
-                            <Text style={estilos.capaApoio}>Toque para trocar</Text>
-                          </View>
-                          <Pressable
-                            onPress={() => mudar({ cover_image: null, cover_image_name: null })}
-                            hitSlop={10}
-                            accessibilityRole="button"
-                            accessibilityLabel="Remover a capa"
-                          >
-                            <Feather name="x" size={18} color={paleta.legenda} />
-                          </Pressable>
-                        </>
-                      ) : (
-                        <>
-                          <View style={estilos.capaVazia}>
-                            <Feather name="image" size={18} color={paleta.legenda} />
-                          </View>
-                          <View style={estilos.flex}>
-                            <Text style={estilos.capaNome}>Escolher a capa</Text>
-                            <Text style={estilos.capaApoio}>PNG ou JPG</Text>
-                          </View>
-                        </>
-                      )}
-                    </Pressable>
-                  </Campo>
-                </Linha>
-
-                {/* Detalhes: o único campo da ficha que não tem forma. Todo o resto pergunta
-                    uma coisa e aceita uma resposta; o que sobra ("a segunda estrofe ainda vai
-                    mudar", "a editora confirma o split por e-mail") não cabia em campo nenhum
-                    e acabava no título da música ou numa conversa que ninguém reencontra. */}
-                <Linha>
-                  <Campo rotulo="Detalhes">
-                    <TextInput
-                      style={[estilos.entrada, estilos.entradaMedia]}
-                      value={rascunho.details ?? ''}
-                      onChangeText={(t) => mudar({ details: t })}
-                      placeholder="Combinados, pendências, o que ainda vai mudar"
-                      placeholderTextColor={paleta.espacoReservado}
-                      multiline
-                      accessibilityLabel="Detalhes"
-                    />
-                  </Campo>
-                </Linha>
-
-                <Linha>
-                  <Campo rotulo="Versões">
-                    <Versoes
-                      artistaId={artistaId}
-                      projetoId={faixa?.project_id}
-                      autor={autor}
-                      aoMudar={aoMudarVersoes}
-                    />
-                  </Campo>
-                </Linha>
-              </Bloco>
-            </>
-          )}
-
-          {aba === 'letras' && (
-            <Bloco>
-              <Linha primeira>
-                <TextInput
-                  style={[estilos.entrada, estilos.entradaAlta]}
-                  value={rascunho.lyrics ?? ''}
-                  onChangeText={(t) => mudar({ lyrics: t })}
-                  placeholder="Letra da música…"
-                  placeholderTextColor={paleta.espacoReservado}
-                  multiline
-                  accessibilityLabel="Letra"
-                />
-              </Linha>
-            </Bloco>
-          )}
-
-          {aba === 'splits' && (
-            <>
-              {/* ⚠️ DOIS corpos, e não um: a OBRA é o que foi composto, o FONOGRAMA é a
-                  gravação dela. São direitos diferentes, com titulares e percentagens que
-                  raramente coincidem — e cada um aceita as suas classes: não há "Intérprete"
-                  na obra nem "Compositor" no fonograma. É assim que a UBC e o ECAD pedem. */}
-              {([
-                ['Obra', 'composition_splits', autorais, CLASSES_DA_OBRA],
-                ['Fonograma', 'recording_splits', fonograma, CLASSES_DO_FONOGRAMA],
-              ] as const).map(([nome, chave, lista, classes]) => (
-                <Bloco key={chave} rotulo={nome}>
-                  {lista.length === 0
-                    ? (
-                      <Linha primeira>
-                        <Text style={estilos.semParticipante}>Nenhum titular adicionado.</Text>
-                      </Linha>
-                    )
-                    : lista.map((split, i) => (
-                      <LinhaDeSplit
-                        key={split.id}
-                        split={split}
-                        classes={classes}
-                        primeira={i === 0}
-                        aoMudar={(parte) => mudarSplits(
-                          chave,
-                          lista.map((s, j) => (i === j ? { ...s, ...parte } : s)),
-                        )}
-                        aoRemover={() => mudarSplits(chave, lista.filter((_, j) => j !== i))}
-                      />
-                    ))}
-
-                  <Linha>
-                    <Pressable
-                      style={estilos.adicionar}
-                      onPress={() => mudarSplits(chave, [
-                        ...lista,
-                        // O id é só para a lista se manter estável enquanto se edita; quem grava
-                        // é o `saveCatalogProjectFromForm`, com o array inteiro.
-                        { id: `s-${Date.now()}`, name: '', role: classes[0], percentage: 0 },
-                      ])}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Adicionar titular em ${nome}`}
-                    >
-                      <Feather name="plus" size={14} color={paleta.primaria} />
-                      <Text style={estilos.adicionarTexto}>Adicionar titular</Text>
-                    </Pressable>
-                  </Linha>
-
-                  {/* O total precisa fechar em 100%: passar disso divide direito que não existe. */}
-                  <Linha>
-                    <View style={estilos.total}>
-                      <Text style={estilos.totalRotulo}>Total</Text>
-                      <Text style={[estilos.totalValor, somar(lista) > 100 && estilos.totalExcedido]}>
-                        {somar(lista)}%
+                      <Text style={[estilos.opcaoTexto, escolhido && estilos.opcaoTextoEscolhido]}>
+                        {pessoa.nome}
                       </Text>
-                    </View>
-                  </Linha>
-                </Bloco>
-              ))}
-            </>
-          )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+          </Campo>
+        </Linha>
+      </Bloco>
 
-          {!!erro && <Text style={estilos.erro}>{erro}</Text>}
-        </ScrollView>
+      <Bloco rotulo="Lançamento">
+        <Linha primeira>
+          <Campo rotulo="Data de lançamento">
+            <TextInput
+              style={estilos.entrada}
+              value={dataEscrita}
+              onChangeText={setDataEscrita}
+              placeholder="28/08/2026"
+              placeholderTextColor={paleta.espacoReservado}
+              keyboardType="numbers-and-punctuation"
+              accessibilityLabel="Data de lançamento"
+            />
+          </Campo>
+        </Linha>
+
+        {/* Dois a dois na mesma linha. Na web são QUATRO numa grade (`fieldGridFour`), que numa
+            tela de 390 pt daria campos de oitenta pixels: a mesma fila, dobrada. */}
+        <Linha>
+          <View style={estilos.lado}>
+            <View style={estilos.flex}>
+              <Campo rotulo="ISRC">
+                <TextInput
+                  style={estilos.entrada}
+                  value={rascunho.isrc ?? ''}
+                  onChangeText={(t) => mudar({ isrc: t })}
+                  placeholder="ISRC"
+                  placeholderTextColor={paleta.espacoReservado}
+                  autoCapitalize="characters"
+                  accessibilityLabel="ISRC"
+                />
+              </Campo>
+            </View>
+            <View style={estilos.flex}>
+              <Campo rotulo="UPC">
+                <TextInput
+                  style={estilos.entrada}
+                  value={rascunho.upc ?? ''}
+                  onChangeText={(t) => mudar({ upc: t })}
+                  placeholder="UPC"
+                  placeholderTextColor={paleta.espacoReservado}
+                  keyboardType="number-pad"
+                  accessibilityLabel="UPC"
+                />
+              </Campo>
+            </View>
+          </View>
+        </Linha>
+
+        <Linha>
+          <View style={estilos.lado}>
+            <View style={estilos.flex}>
+              <Campo rotulo="BPM">
+                <TextInput
+                  style={estilos.entrada}
+                  value={rascunho.bpm ?? ''}
+                  onChangeText={(t) => mudar({ bpm: t })}
+                  placeholder="BPM"
+                  placeholderTextColor={paleta.espacoReservado}
+                  keyboardType="number-pad"
+                  accessibilityLabel="BPM"
+                />
+              </Campo>
+            </View>
+            <View style={estilos.flex}>
+              <Campo rotulo="Tom">
+                <TextInput
+                  style={estilos.entrada}
+                  value={rascunho.key ?? ''}
+                  onChangeText={(t) => mudar({ key: t })}
+                  placeholder="Tom"
+                  placeholderTextColor={paleta.espacoReservado}
+                  accessibilityLabel="Tom"
+                />
+              </Campo>
+            </View>
+          </View>
+        </Linha>
+
+        {/* O que a máquina ouviu, ao lado dos campos que ela preenche — e nunca por cima
+            deles: "usar" escreve no rascunho, e é a pessoa quem salva. Vivia na tela do
+            Espaço JAM; saiu de lá porque é uma ação ocasional e a tela principal tinha coisas
+            demais. Só existe quando a faixa tem uma versão com áudio para ouvir. */}
+        {!!faixa?.version_id && (
+          <Linha>
+            <SugestaoDaAnalise
+              versaoId={faixa.version_id}
+              aoUsar={({ bpm, tom }) => mudar({ bpm, key: tom })}
+            />
+          </Linha>
+        )}
+      </Bloco>
+
+      <Bloco rotulo="Capa e detalhes">
+        <Linha primeira>
+          <Campo rotulo="Capa">
+            <Pressable
+              style={estilos.capa}
+              onPress={trocarCapa}
+              disabled={enviandoCapa}
+              accessibilityRole="button"
+              accessibilityLabel={rascunho.cover_image ? 'Trocar a capa' : 'Escolher a capa'}
+            >
+              {enviandoCapa ? (
+                <ActivityIndicator color={paleta.primaria} />
+              ) : rascunho.cover_image ? (
+                <>
+                  <Image source={{ uri: rascunho.cover_image }} style={estilos.capaImagem} />
+                  <View style={estilos.flex}>
+                    <Text style={estilos.capaNome} numberOfLines={1}>
+                      {rascunho.cover_image_name || 'Capa da música'}
+                    </Text>
+                    <Text style={estilos.capaApoio}>Toque para trocar</Text>
+                  </View>
+                  <Pressable
+                    onPress={() => mudar({ cover_image: null, cover_image_name: null })}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="Remover a capa"
+                  >
+                    <Feather name="x" size={18} color={paleta.legenda} />
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <View style={estilos.capaVazia}>
+                    <Feather name="image" size={18} color={paleta.legenda} />
+                  </View>
+                  <View style={estilos.flex}>
+                    <Text style={estilos.capaNome}>Escolher a capa</Text>
+                    <Text style={estilos.capaApoio}>PNG ou JPG</Text>
+                  </View>
+                </>
+              )}
+            </Pressable>
+          </Campo>
+        </Linha>
+
+        {/* Detalhes: o único campo da ficha que não tem forma. Todo o resto pergunta uma coisa
+            e aceita uma resposta; o que sobra ("a segunda estrofe ainda vai mudar", "a editora
+            confirma o split por e-mail") não cabia em campo nenhum e acabava no título da
+            música ou numa conversa que ninguém reencontra. */}
+        <Linha>
+          <Campo rotulo="Detalhes">
+            <TextInput
+              style={[estilos.entrada, estilos.entradaMedia]}
+              value={rascunho.details ?? ''}
+              onChangeText={(t) => mudar({ details: t })}
+              placeholder="Combinados, pendências, o que ainda vai mudar"
+              placeholderTextColor={paleta.espacoReservado}
+              multiline
+              accessibilityLabel="Detalhes"
+            />
+          </Campo>
+        </Linha>
+      </Bloco>
+    </>
+  );
+
+  const letras = (
+    <Bloco>
+      <Linha primeira>
+        <TextInput
+          style={[estilos.entrada, estilos.entradaAlta]}
+          value={rascunho.lyrics ?? ''}
+          onChangeText={(t) => mudar({ lyrics: t })}
+          placeholder="Letra da música…"
+          placeholderTextColor={paleta.espacoReservado}
+          multiline
+          accessibilityLabel="Letra"
+        />
+      </Linha>
+    </Bloco>
+  );
+
+  const creditos = (
+    <>
+      {/* ⚠️ DOIS corpos, e não um: a OBRA é o que foi composto, o FONOGRAMA é a gravação dela.
+          São direitos diferentes, com titulares e percentagens que raramente coincidem — e cada
+          um aceita as suas classes: não há "Intérprete" na obra nem "Compositor" no fonograma.
+          É assim que a UBC e o ECAD pedem. */}
+      {([
+        ['Obra', 'composition_splits', autorais, CLASSES_DA_OBRA,
+          'Quem escreveu e quem edita — o direito autoral da composição'],
+        ['Fonograma', 'recording_splits', fonograma, CLASSES_DO_FONOGRAMA,
+          'Quem gravou, tocou e produziu — os direitos conexos desta gravação'],
+      ] as const).map(([nome, chave, lista, classes, apoio]) => (
+        <Bloco key={chave} rotulo={nome}>
+          <Linha primeira>
+            <Text style={estilos.apoioDoBloco}>{apoio}</Text>
+          </Linha>
+
+          {lista.length === 0
+            ? (
+              <Linha>
+                <Text style={estilos.semParticipante}>Nenhum titular adicionado.</Text>
+              </Linha>
+            )
+            : lista.map((split, i) => (
+              <LinhaDeSplit
+                key={split.id}
+                split={split}
+                classes={classes}
+                aoMudar={(parte) => mudarSplits(
+                  chave,
+                  lista.map((s, j) => (i === j ? { ...s, ...parte } : s)),
+                )}
+                aoRemover={() => mudarSplits(chave, lista.filter((_, j) => j !== i))}
+              />
+            ))}
+
+          <Linha>
+            <Pressable
+              style={estilos.adicionar}
+              onPress={() => mudarSplits(chave, [
+                ...lista,
+                // O id é só para a lista se manter estável enquanto se edita; quem grava
+                // é o `saveCatalogProjectFromForm`, com o array inteiro.
+                { id: `s-${Date.now()}`, name: '', role: classes[0], percentage: 0 },
+              ])}
+              accessibilityRole="button"
+              accessibilityLabel={`Adicionar titular em ${nome}`}
+            >
+              <Feather name="plus" size={14} color={paleta.primaria} />
+              <Text style={estilos.adicionarTexto}>Adicionar titular</Text>
+            </Pressable>
+          </Linha>
+
+          {/* O total precisa fechar em 100%: passar disso divide direito que não existe. */}
+          <Linha>
+            <View style={estilos.total}>
+              <Text style={estilos.totalRotulo}>Total</Text>
+              <Text style={[estilos.totalValor, somar(lista) > 100 && estilos.totalExcedido]}>
+                {somar(lista)}%
+              </Text>
+            </View>
+          </Linha>
+        </Bloco>
+      ))}
+    </>
+  );
+
+  const aviso = !!erro && <Text style={estilos.erro}>{erro}</Text>;
+
+  // ⚠️ DUAS MONTAGENS, porque a web tem duas.
+  //
+  // Na aba do editor é UMA ROLAGEM SÓ: os campos e, logo abaixo, os créditos — é o que o
+  // `ProjectSpace` desenha. Abas dentro de uma aba esconderiam metade da ficha atrás de um
+  // toque que ninguém dá, e quem preenche uma ficha preenche-a de cima a baixo.
+  //
+  // Na folha do catálogo são as três abas do `TrackModal`. A letra só existe aqui: no editor
+  // ela vive no balão da letra, encostada à montagem, que é onde se canta.
+  const miolo = emLinha ? (
+    <View style={estilos.miolo}>
+      <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
+        {informacoes}
+        {creditos}
+        {aviso}
+      </ScrollView>
+    </View>
+  ) : (
+    <View style={estilos.miolo}>
+      <View style={estilos.abas}>
+        {([['informacoes', 'Informações'], ['letras', 'Letras'], ['splits', 'Splits']] as const)
+          .map(([chave, texto]) => {
+            const acesa = aba === chave;
+            return (
+              <Pressable
+                key={chave}
+                style={[estilos.aba, acesa && estilos.abaAcesa]}
+                onPress={() => setAba(chave)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: acesa }}
+              >
+                <Text style={[estilos.abaTexto, acesa && estilos.abaTextoAceso]}>{texto}</Text>
+              </Pressable>
+            );
+          })}
       </View>
+
+      <ScrollView contentContainerStyle={estilos.conteudo} keyboardShouldPersistTaps="handled">
+        {aba === 'informacoes' && informacoes}
+        {aba === 'letras' && letras}
+        {aba === 'splits' && creditos}
+        {aviso}
+      </ScrollView>
+    </View>
   );
 
   // Montada na aba, o casco da folha não existe — e nem o rodapé.
@@ -774,7 +874,10 @@ const criarEstilos = (p: PaletaDaFolha) => StyleSheet.create({
 
   // Splits: um bloco por grupo, com os participantes e o total embaixo. Cada participante é uma
   // LINHA do bloco, então a moldura que separava um do outro saiu: quem separa é a divisória.
-  semParticipante: { fontSize: 13, color: p.legenda },
+  semParticipante: { fontSize: 13, color: p.legenda, lineHeight: 19 },
+  // A frase que diz o que cada corpo de créditos é — a mesma da web, debaixo de "Obra" e de
+  // "Fonograma". Sem ela, "obra" e "fonograma" são duas caixas iguais com nomes de cartório.
+  apoioDoBloco: { fontSize: 12, color: p.legenda, lineHeight: 18 },
   split: { gap: 8 },
   splitTopo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   splitBaixo: { flexDirection: 'row', alignItems: 'center', gap: 8 },

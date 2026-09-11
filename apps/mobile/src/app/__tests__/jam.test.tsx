@@ -60,13 +60,30 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   // ⚠️ O DUPLO LÊ OS ARGUMENTOS, e não devolve uma constante. Como constante, ele engolia um
   // `projeto` NULO que a função de verdade não engole — e a tela estourava no aparelho com
   // "Cannot read property 'id' of null" enquanto os testes passavam todos.
-  catalogProjectToItem: (projeto: { id: string; artist_id: string; title: string; status: string },
-    versao?: { id: string }) => ({
+  //
+  // ⚠️ E CARREGA OS CAMPOS DA FICHA, e não só a identidade. Enquanto devolvia quatro campos, a
+  // ficha do editor recebia uma música sem responsável, sem gênero e sem detalhes a cada
+  // remendo da tela — e um teste que gravasse um deles via a escolha apagar-se sozinha sem que
+  // houvesse defeito nenhum no produto.
+  catalogProjectToItem: (
+    projeto: Record<string, unknown> & { id: string },
+    versao?: Record<string, unknown> & { id: string },
+  ) => ({
     id: versao?.id || projeto.id,
     project_id: projeto.id,
+    version_id: versao?.id,
     artist_id: projeto.artist_id,
     title: projeto.title,
     status: projeto.status,
+    assignee: projeto.assignee,
+    details: projeto.details,
+    release_date: projeto.release_date,
+    cover_image: projeto.cover_image,
+    cover_image_name: projeto.cover_image_name,
+    genre: versao?.genre ?? projeto.genre,
+    bpm: versao?.bpm ?? projeto.bpm,
+    key: versao?.key ?? projeto.key,
+    lyrics: versao?.lyrics,
   }),
   saveCatalogProjectFromForm: (...a: unknown[]) => mockGravarFicha(...a),
   deleteCatalogProject: jest.fn(),
@@ -87,6 +104,14 @@ mockCanal.subscribe.mockReturnValue(mockCanal);
 // criava uma SEGUNDA instância dele dentro da fábrica do mock — a partir da primeira gravação
 // da guia, toda montagem seguinte nesta suíte parava de renderizar, e a mensagem era sempre
 // sobre outra coisa. As três funções que a tela usa ficam ditas à mão.
+// A equipe do artista, para o campo Responsável da ficha.
+jest.mock('@maestra/core/services/db/members', () => ({
+  listMembers: () => Promise.resolve([
+    { id: 'm-1', user_id: 'u-2', name: 'Bia', email: 'bia@x.com', status: 'active' },
+    { id: 'm-2', user_id: 'u-3', name: 'Convidado', email: 'c@x.com', status: 'pending' },
+  ]),
+}));
+
 jest.mock('@maestra/core/services/armazenamento', () => ({
   BALDE_DO_CATALOGO: 'catalog',
   tipoDoCatalogo: (nome: string) => (/\.(mp3|wav)$/i.test(nome) ? 'audio/wav' : null),
@@ -189,6 +214,14 @@ jest.mock('@maestra/core/hooks/useAnaliseDaVersao', () => ({
     trabalhos: [],
     carregando: false,
     emCurso: () => mockEmCurso,
+    // A oferta "Detectar BPM e tom" vive na ficha, e ela pergunta pelo último erro antes de se
+    // desenhar: sem este, a aba da ficha estourava assim que passou a receber a gravação.
+    ultimoErro: () => null,
+    pedindo: null,
+    erro: null,
+    podeCancelar: () => false,
+    cancelar: jest.fn(),
+    recarregar: jest.fn(),
     pedir: mockPedir,
   }),
 }));
@@ -702,9 +735,17 @@ describe('espaço jam', () => {
     // rascunho esperava por isso: a ficha aparecia com o título vazio, pronta a gravar por cima
     // do que estava lá.
     expect(await tela.findByDisplayValue('Noite Clara')).toBeTruthy();
-    // As três abas do próprio formulário.
-    expect(tela.getByText('Splits')).toBeTruthy();
-    expect(tela.getByText('Letras')).toBeTruthy();
+    // ⚠️ UMA ROLAGEM SÓ, e não abas dentro da aba — é o que a web monta aqui: os campos e, logo
+    // abaixo, os créditos. Estavam atrás de "Splits", e ninguém tocava.
+    expect(tela.getByText('Obra')).toBeTruthy();
+    expect(tela.getByText('Fonograma')).toBeTruthy();
+    expect(tela.queryByText('Splits')).toBeNull();
+    // E sem Letras: no editor a letra vive no balão, encostada à montagem, onde se canta.
+    expect(tela.queryByText('Letras')).toBeNull();
+    expect(tela.queryByLabelText('Letra da música')).toBeNull();
+    // O responsável é a equipe ATIVA — um convite pendente ainda não é ninguém.
+    expect(await tela.findByLabelText('Responsável: Bia')).toBeTruthy();
+    expect(tela.queryByLabelText('Responsável: Convidado')).toBeNull();
     // ⚠️ E NENHUM BOTÃO DE SALVAR: ali a ficha grava sozinha, como tudo o mais nesta tela. Um
     // Salvar no meio dela ensinaria que o resto talvez não esteja salvo.
     expect(tela.queryByLabelText('Salvar')).toBeNull();
@@ -862,6 +903,38 @@ describe('espaço jam', () => {
     // E o selo diz que pegou: numa aba sem botão de Salvar, gravar em silêncio deixa quem
     // escreveu sem saber.
     expect(await tela.findByText('Salvo')).toBeTruthy();
+  });
+
+  // O responsável é campo da MÚSICA, e a web grava-o daqui — o app tem de gravar também. Sem o
+  // `assignee` no payload, escolher alguém pintava a pílula e não saía do aparelho; sem ele na
+  // assinatura, nem a escolha chegava a agendar uma gravação.
+  it('escolher o responsável grava, e escolher de novo desatribui', async () => {
+    // ⚠️ O DUPLO DEVOLVE O QUE RECEBEU, como o banco devolve a linha gravada. Com uma resposta
+    // fixa, a tela remendava a música com um responsável vazio e a pílula apagava-se sozinha —
+    // que é exatamente o defeito que o remendo de `aoSalvar` foi lá corrigir.
+    mockGravarFicha.mockImplementation((entrada: Record<string, unknown>) => Promise.resolve({
+      ...entrada, id: 'v-1', project_id: 'p-1', version_id: 'v-1',
+    }));
+    const tela = await montar();
+    fireEvent.press(await tela.findByLabelText('Ficha'));
+
+    fireEvent.press(await tela.findByLabelText('Responsável: Bia'));
+    await waitFor(() => expect(mockGravarFicha).toHaveBeenCalledTimes(1));
+    expect(mockGravarFicha.mock.calls[0][0]).toMatchObject({
+      assignee: { id: 'u-2', name: 'Bia' },
+    });
+
+    // ⚠️ ESPERAR O SELO antes do segundo toque não é frescura: a gravação volta e a tela remenda
+    // a música, e esse remendo recarrega o rascunho. Tocar no meio disso era ver a escolha ser
+    // desfeita pelo remendo em vez de pela pessoa.
+    expect(await tela.findByText('Salvo')).toBeTruthy();
+
+    // A pílula acesa é o `allowClear` da web: tocar nela outra vez tira o responsável.
+    fireEvent.press(tela.getByLabelText('Remover Bia como responsável'));
+    await waitFor(() => expect(mockGravarFicha).toHaveBeenCalledTimes(2));
+    expect(mockGravarFicha.mock.calls[1][0].assignee).toBeNull();
+
+    tela.unmount();
   });
 
   // ⚠️ A LETRA E A AJUDA SÃO BALÕES, e não abas: escreve-se letra a olhar para a montagem, e uma
