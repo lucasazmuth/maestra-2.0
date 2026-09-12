@@ -16,18 +16,18 @@ jest.mock('expo-router', () => ({
   useSegments: () => mockSegmentos,
 }));
 
-let mockSessao: { sessao: unknown } = { sessao: { user: { id: 'u-1', email: 'a@b.c' } } };
-jest.mock('@/nucleo/sessao', () => ({ useSessao: () => mockSessao }));
-
+// ⚠️ O PORTÃO LÊ O `useConsent`, e não consulta por conta própria.
+//
+// Consultava, e a tela de coleta consultava outra vez: duas verdades sobre a mesma pessoa. Ver
+// "um estado só" em `umEstadoDoConsentimento.test.tsx`, que é onde essa regra mora.
 let mockEstado: { satisfied: boolean } | null = null;
 jest.mock('@maestra/core/hooks/useConsent', () => ({
-  useEstadoDoConsentimento: () => ({ state: mockEstado }),
+  useConsent: () => ({ state: mockEstado }),
 }));
 
 beforeEach(() => {
   mockReplace.mockClear();
   mockSegmentos = ['perfis'];
-  mockSessao = { sessao: { user: { id: 'u-1', email: 'a@b.c' } } };
   mockEstado = null;
 });
 
@@ -56,13 +56,8 @@ describe('portão do consentimento', () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
-  it('sem sessão, não há o que cobrar', async () => {
-    mockSessao = { sessao: null };
-    mockEstado = { satisfied: false };
-    await render(<PortaoDoConsentimento />);
-
-    expect(mockReplace).not.toHaveBeenCalled();
-  });
+  // Sem sessão o provedor não consulta nada e o estado vem nulo — é o mesmo caminho do de cima,
+  // e o portão não tem como distinguir os dois. Não há o que cobrar a quem não entrou.
 
   // Empurrar quem já está na tela para a mesma tela é um laço.
   it('não expulsa quem já está no consentimento', async () => {

@@ -1,9 +1,8 @@
 import { router, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 
-import { useEstadoDoConsentimento } from '@maestra/core/hooks/useConsent';
+import { useConsent } from '@maestra/core/hooks/useConsent';
 
-import { useSessao } from '@/nucleo/sessao';
 
 /**
  * As telas que o portão NÃO tranca.
@@ -58,11 +57,16 @@ const LIVRES = [
 // decisão que o `RequireConsent` da web tomou.
 
 export const PortaoDoConsentimento = () => {
-  const { sessao } = useSessao();
-  const usuario = sessao?.user;
-  const { state } = useEstadoDoConsentimento(
-    usuario ? { id: usuario.id, email: usuario.email } : null,
-  );
+  // ⚠️ LÊ O ESTADO DO PROVEDOR, e não o consulta por conta própria.
+  //
+  // Consultava: `useEstadoDoConsentimento` aqui e outro igual na tela de coleta, duas verdades
+  // sobre a mesma pessoa. Quem acabava de aceitar seguia para as boas-vindas e era devolvido ao
+  // consentimento por esta cópia, que ainda dizia `satisfied: false` — o `apply` da tela nunca
+  // chegava aqui. Ver `nucleo/ConsentimentoDaConta`.
+  //
+  // Sem sessão o provedor devolve estado nulo, e o efeito abaixo não age: não há o que cobrar a
+  // quem não entrou.
+  const { state } = useConsent();
   // ⚠️ O ROUTER É O SINGLETON, E NÃO O `useRouter()` GUARDADO NUM `ref`.
   //
   // `useSegments` devolve um ARRAY novo e o `useRouter` um OBJETO novo a cada render. Com os
@@ -84,10 +88,10 @@ export const PortaoDoConsentimento = () => {
   const primeiroSegmento = useSegments()[0];
 
   useEffect(() => {
-    if (!usuario || !state || state.satisfied) return;
+    if (!state || state.satisfied) return;
     if (LIVRES.includes(primeiroSegmento)) return;
     router.replace('/consentimento');
-  }, [usuario, state, primeiroSegmento]);
+  }, [state, primeiroSegmento]);
 
   return null;
 };

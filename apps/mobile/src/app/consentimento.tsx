@@ -10,7 +10,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { COR, COR_ENTRADA, RAIO } from '@maestra/core/constants/design';
-import { useEstadoDoConsentimento, type ConsentState } from '@maestra/core/hooks/useConsent';
+import { useConsent, type ConsentState } from '@maestra/core/hooks/useConsent';
 import { supabase } from '@maestra/core/lib/supabase';
 import { IDADE_MINIMA, idadeEmAnos } from '@maestra/core/utils/age';
 
@@ -49,10 +49,9 @@ const paraISO = (visivel: string) => {
 export default function Consentimento() {
   const router = useRouter();
   const { sessao, carregando: carregandoSessao } = useSessao();
-  const usuario = sessao?.user;
-  const { state, loading, apply } = useEstadoDoConsentimento(
-    usuario ? { id: usuario.id, email: usuario.email } : null,
-  );
+  // O MESMO estado que o portão lê — ver `nucleo/ConsentimentoDaConta`. O `apply` abaixo é o que
+  // faz o portão saber, no instante do envio, que já pode destrancar.
+  const { state, loading, apply } = useConsent();
 
   const [nascimento, setNascimento] = useState('');
   const [maioridade, setMaioridade] = useState(false);
