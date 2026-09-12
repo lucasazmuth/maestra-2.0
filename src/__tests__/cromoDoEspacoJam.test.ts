@@ -344,6 +344,12 @@ describe('cromo do editor do Espaço JAM', () => {
     const oExportar = semComentarios(fs.readFileSync(
       path.join(__dirname, '..', 'pages', 'Catalog', 'daw', 'TelaDeExportar.tsx'), 'utf8',
     ));
+    const oExportarDoApp = semComentarios(fs.readFileSync(
+      path.join(
+        __dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'TelaDeExportar.tsx',
+      ), 'utf8',
+    ));
+
     expect(oExportar.match(/<IconeDeBaixar \/>/g)).toHaveLength(2);
     expect(oExportar).not.toContain('FiDownload');
 
@@ -354,11 +360,19 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(oExportar).toContain('<IconeDeAudio tamanho={14} />');
     expect(oExportar).not.toContain('FiFileText');
 
-    const oExportarDoApp = semComentarios(fs.readFileSync(
-      path.join(
-        __dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'TelaDeExportar.tsx',
-      ), 'utf8',
-    ));
+    // ⚠️ E O BOTÃO DOS STEMS NÃO TEM ÍCONE PARADO, nas duas telas. A caixa de arquivo não dizia
+    // nada que o rótulo já não dissesse — "(.zip)" está escrito ali ao lado — e acrescentava uma
+    // terceira forma à fila dos três botões azuis.
+    //
+    // ⚠️ MAS A RODA DA ESPERA FICA. Ela não é enfeite: é o único sinal de que o ZIP está a ser
+    // preparado, e sem ela o botão dizia "Preparando…" com a tela parada. Tirar o ícone e levar
+    // a roda à frente é o engano fácil aqui, e é o que este par de linhas impede.
+    expect(oExportar).not.toContain('FiArchive');
+    expect(oExportar).toContain('<FiLoader size={15} style={girando} /> Preparando o ZIP…');
+
+    expect(oExportarDoApp).not.toContain('icone="archive"');
+    expect(oExportarDoApp).toContain('<ActivityIndicator size="small"');
+
     expect(oExportarDoApp).toContain('<IconeDeAudio tamanho={14} cor={COR_EDITOR.rotulo} />');
     expect(oExportarDoApp).not.toContain('name="file-text"');
 
@@ -1419,8 +1433,9 @@ describe('cromo do editor do Espaço JAM', () => {
     };
 
     const doFeather = 2 / 24;
-    // ⚠️ E O DE BAIXAR TAMBÉM, embora não seja de aba: ele fica ao lado do `FiArchive` dos
-    // stems, no mesmo par de botões azuis. A regra é a mesma — o que está lado a lado pesa igual.
+    // ⚠️ E O DE BAIXAR TAMBÉM, embora não seja de aba: ele fica nos botões azuis do Exportar,
+    // ao lado das outras coisas que o editor desenha. A regra é a mesma — o que está lado a
+    // lado pesa igual.
     ['IconeDaTimeline', 'IconeDoMixer', 'IconeDaFicha', 'IconeDeExportar', 'IconeDeBaixar']
       .forEach((nome) => {
         const { lado, traco } = doIcone(nome);

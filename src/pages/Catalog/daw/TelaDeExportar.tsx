@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { FiArchive, FiLoader } from 'react-icons/fi';
+import { FiLoader } from 'react-icons/fi';
 
 import { IconeDeAudio, IconeDeBaixar } from './icones';
 
@@ -100,9 +100,14 @@ export const TelaDeExportar: FC<{
         style={{ ...botao(!temStems || !!emCurso), marginTop: 14 }}
         aria-label='Baixar todas as faixas num ZIP'
       >
+        {/* ⚠️ SEM ÍCONE PARADO, e com a roda a girar na espera. A caixa de arquivo não dizia nada
+            que o rótulo já não dissesse — "(.zip)" está escrito ali ao lado —, e ao lado dos
+            dois botões da guia, que trazem a seta de baixar, ela só acrescentava uma terceira
+            forma à mesma fila. A roda fica: ela não é enfeite, é o único sinal de que o ZIP
+            está a ser preparado, e sem ela o botão dizia "Preparando…" sem nada a acontecer. */}
         {emCurso === 'stems'
           ? <><FiLoader size={15} style={girando} /> Preparando o ZIP…</>
-          : <><FiArchive size={15} /> Baixar stems (.zip)</>}
+          : 'Baixar stems (.zip)'}
       </button>
     </section>
 

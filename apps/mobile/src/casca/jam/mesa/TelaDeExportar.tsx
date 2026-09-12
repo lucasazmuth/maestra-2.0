@@ -26,7 +26,14 @@ export type EmCurso = 'stems' | 'guia-wav' | 'guia-mp3' | null;
 
 const Botao = ({ rotulo, icone, carregando, desabilitado, aoTocar, etiqueta }: {
   rotulo: string;
-  icone: keyof typeof Feather.glyphMap;
+  /**
+   * Ausente, o botão fica só com o rótulo.
+   *
+   * ⚠️ O DOS STEMS NÃO TEM. A caixa de arquivo não dizia nada que o rótulo já não dissesse —
+   * "(.zip)" está escrito ali ao lado —, e ao lado dos dois da guia só acrescentava uma terceira
+   * forma à mesma fila.
+   */
+  icone?: keyof typeof Feather.glyphMap;
   carregando?: boolean;
   desabilitado: boolean;
   aoTocar: () => void;
@@ -40,9 +47,13 @@ const Botao = ({ rotulo, icone, carregando, desabilitado, aoTocar, etiqueta }: {
     accessibilityState={{ disabled: desabilitado, busy: Boolean(carregando) }}
     accessibilityLabel={etiqueta}
   >
+    {/* A roda fica mesmo sem ícone: ela não é enfeite, é o único sinal de que algo está a
+        acontecer — sem ela o botão dizia "Preparando…" com a tela parada. */}
     {carregando
       ? <ActivityIndicator size="small" color={COR_EDITOR.rotulo} />
-      : <Feather name={icone} size={15} color={desabilitado ? COR_EDITOR.estrela : COR_EDITOR.papel} />}
+      : !!icone && (
+        <Feather name={icone} size={15} color={desabilitado ? COR_EDITOR.estrela : COR_EDITOR.papel} />
+      )}
     <Text style={[estilos.botaoTexto, desabilitado && estilos.botaoTextoInerte]}>{rotulo}</Text>
   </Pressable>
 );
@@ -87,7 +98,6 @@ export const TelaDeExportar = ({
 
       <Botao
         rotulo={emCurso === 'stems' ? 'Preparando o ZIP…' : 'Enviar stems (.zip)'}
-        icone="archive"
         carregando={emCurso === 'stems'}
         desabilitado={!temStems || Boolean(emCurso)}
         aoTocar={aoEnviarStems}
