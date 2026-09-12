@@ -13,7 +13,6 @@ import { DiamanteAnimado } from '@/casca/marca/DiamanteAnimado';
 import { PerfisIcon } from '@/icones';
 import { useOfertaDoPro } from '@/nucleo/assinatura';
 import { sair } from '@/nucleo/entrar';
-import { irParaOCheckout } from '@/nucleo/loja';
 
 const SITE = 'https://www.maestramanager.com';
 
@@ -201,7 +200,7 @@ export const BotaoDoMenuDoSistema = ({ aqui, artista }: {
             configuracoes: () => router.push('/conta'),
             suporte: () => { void Linking.openURL(`${SITE}/suporte`); },
             sair: () => { void sair(); },
-            pro: () => { void irParaOCheckout({ destino: 'assinatura' }); },
+            pro: () => router.push('/planos'),
           },
           { aqui, artista, oferecerPro },
         )}

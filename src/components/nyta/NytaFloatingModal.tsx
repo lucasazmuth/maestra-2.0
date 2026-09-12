@@ -224,7 +224,7 @@ export const NytaFloatingModal: FC = () => {
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
   const handleNavigateToPlans = useCallback(() => {
-    navigate('/assinatura');
+    navigate('/planos');
     close();
   }, [navigate, close]);
 

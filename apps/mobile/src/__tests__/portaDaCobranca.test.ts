@@ -36,7 +36,14 @@ describe('a porta da cobrança', () => {
     (_nome, caminho) => {
       const fonte = fs.readFileSync(caminho, 'utf8');
       const aberturas = fonte.match(/Linking\.openURL\([^)]*\)/g) ?? [];
-      const paraPagamento = aberturas.filter((a) => /assinatura|desbloquear|checkout/i.test(a));
+      // ⚠️ `planos` ENTROU NESTA LISTA NO DIA EM QUE A ROTA MUDOU DE NOME.
+      //
+      // A regra procurava `assinatura`, e a rota da web passou a chamar-se `/planos`. Sem esta
+      // palavra, o endereço que a regra existe para barrar deixava de casar com ela: um
+      // `Linking.openURL('…/planos')` numa tela qualquer passaria limpo, e a regra continuaria
+      // verde a guardar um nome que já ninguém usa. Uma lista de palavras envelhece com o
+      // vocabulário do produto, e este foi o primeiro dia em que isso aconteceu.
+      const paraPagamento = aberturas.filter((a) => /assinatura|planos|desbloquear|checkout/i.test(a));
       expect(paraPagamento).toEqual([]);
     },
   );
@@ -47,12 +54,88 @@ describe('a porta da cobrança', () => {
     expect(porta).toMatch(/'link-externo' \| 'nenhuma'/);
   });
 
-  // O preço no rótulo do botão é o sinal mais visível de anti-steering. Ele mora no checkout.
+  // O preço no rótulo do BOTÃO continua a ser o sinal mais visível de anti-steering: um botão que
+  // diz "Assine por R$ 39,90" é, ele próprio, a oferta. Na tela de planos o preço é o produto a
+  // ser descrito, e não um rótulo de ação — é a distinção que o Spotify também faz.
   it('nenhum botão de bloqueio carrega preço', () => {
     const bloqueio = fs.readFileSync(
       path.join(raiz, 'casca', 'nyta', 'RecursoBloqueado.tsx'), 'utf8',
     );
     expect(bloqueio).not.toMatch(/usePlanPrices|monthlyFmt|onceFmt|\/mês/);
+  });
+});
+
+// A TELA QUE MOSTRA E NÃO VENDE.
+//
+// O app deixou de levar ninguém a pagar a assinatura: `/planos` mostra os planos e diz, em texto,
+// onde se assina. A pessoa digita o endereço no navegador — e é por isso que a rota da web deixou
+// de ser `/assinatura` e passou a `/planos`, que cabe numa frase.
+//
+// A regressão aqui é de uma linha e parece uma melhoria: alguém "ajuda" quem lê, embrulha o
+// endereço num toque que abre o navegador, e a tela volta a ser exatamente o que a 3.1.3 alcança.
+// Por fora nada muda.
+describe('a tela de planos', () => {
+  const tela = fs.readFileSync(path.join(raiz, 'app', 'planos.tsx'), 'utf8');
+
+  /**
+   * O ficheiro sem o que é prosa.
+   *
+   * ⚠️ A REGRA É SOBRE CÓDIGO, e a primeira versão dela não sabia disso: o cabeçalho da tela
+   * EXPLICA que ali não entra `Linking` nem `WebBrowser`, e a regra leu a explicação como se
+   * fosse a infração. Um caso que proíbe falar do assunto empurra quem vier a seguir a apagar o
+   * comentário que diz por que a tela existe.
+   */
+  const soOCodigo = tela.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+
+  it('não abre nada, por nenhum caminho', () => {
+    expect(soOCodigo).not.toMatch(/Linking/);
+    expect(soOCodigo).not.toMatch(/WebBrowser/);
+    expect(soOCodigo).not.toMatch(/irParaOCheckout/);
+    // E não é vácuo: a tela existe e fala do assunto.
+    expect(soOCodigo).toMatch(/ONDE_SE_ASSINA/);
+  });
+
+  // ⚠️ E O ENDEREÇO É PARA LER. Ele aparece dentro de um `<Text>`, e nunca como alvo de toque.
+  it('o endereço é para ler, não para tocar', () => {
+    const { ONDE_SE_ASSINA } = jest.requireActual('@maestra/core/constants/planos');
+    expect(ONDE_SE_ASSINA.titulo).toContain(ONDE_SE_ASSINA.endereco);
+
+    const linhas = soOCodigo.split('\n').filter((l) => l.includes('ONDE_SE_ASSINA.endereco'));
+    expect(linhas.length).toBeGreaterThan(0);
+    linhas.forEach((l) => expect(l).not.toMatch(/onPress|Pressable|href/));
+  });
+});
+
+// AS QUATRO SAÍDAS QUE ABRIAM O NAVEGADOR.
+//
+// "Seja PRO" no menu, "Ver planos" na conta e os dois avisos de recurso bloqueado chamavam
+// `irParaOCheckout({ destino: 'assinatura' })` e saíam do app. Hoje vão para `/planos`.
+//
+// O desbloqueio de perfil NÃO entra nesta regra: é pagamento único, continua cobrado dentro do
+// app por decisão do produto, e as duas telas de bloqueio ainda o encaminham.
+describe('a assinatura não sai mais do app', () => {
+  const AS_QUATRO: readonly (readonly [string, string])[] = [
+    ['casca/marca/MenuDoSistema.tsx', path.join('casca', 'marca', 'MenuDoSistema.tsx')],
+    ['app/conta.tsx', path.join('app', 'conta.tsx')],
+    ['casca/nyta/RecursoBloqueado.tsx', path.join('casca', 'nyta', 'RecursoBloqueado.tsx')],
+    ['casca/AvisoDoPro.tsx', path.join('casca', 'AvisoDoPro.tsx')],
+  ];
+
+  it.each(AS_QUATRO)('%s não manda assinar pela loja', (_nome, relativo) => {
+    const fonte = fs.readFileSync(path.join(raiz, relativo), 'utf8');
+    expect(fonte).not.toMatch(/destino:\s*'assinatura'/);
+    // E leva mesmo a alguém: sem isto, apagar o botão faria o caso passar.
+    expect(fonte).toMatch(/'\/planos'/);
+  });
+
+  // ⚠️ A CHAVE TEM DE DESLIGAR DE VERDADE. Ela era uma promessa escrita no comentário do
+  // `loja.ts`: nenhuma linha de código a lia antes de abrir o navegador. Quem contasse com ela
+  // para desligar a venda depois de uma recusa da revisão descobriria no ciclo seguinte.
+  it('a chave em "nenhuma" impede a saída, e não só a documenta', () => {
+    const porta = fs.readFileSync(path.join(raiz, PORTA), 'utf8');
+    expect(porta).toMatch(/if \(alvo\.destino === 'assinatura' && MODO_DE_VENDA === 'nenhuma'\) return;/);
+    // A guarda vem ANTES de qualquer abertura — depois dela, não desliga nada.
+    expect(porta.indexOf("MODO_DE_VENDA === 'nenhuma'")).toBeLessThan(porta.indexOf('Linking.openURL'));
   });
 });
 

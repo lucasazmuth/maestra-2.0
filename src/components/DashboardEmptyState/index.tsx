@@ -15,7 +15,7 @@ export const DashboardEmptyState: FC<DashboardEmptyStateProps> = ({
   title,
   description,
   ctaLabel = 'Assinar Pro',
-  ctaTo = '/assinatura',
+  ctaTo = '/planos',
 }) => {
   const navigate = useNavigate();
 

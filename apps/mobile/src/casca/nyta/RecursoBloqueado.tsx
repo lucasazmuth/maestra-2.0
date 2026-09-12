@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
+import { useRouter } from 'expo-router';
 
 import { COR, RAIO } from '@maestra/core/constants/design';
 import { LOCKED_FEATURE_CONFIG, type LockedFeatureKey } from '@maestra/core/constants/bloqueios';
@@ -24,6 +25,7 @@ import { irParaOCheckout } from '@/nucleo/loja';
 export const RecursoBloqueado = ({
   recurso, artistId,
 }: { recurso: LockedFeatureKey; artistId?: string }) => {
+  const router = useRouter();
   const config = LOCKED_FEATURE_CONFIG[recurso];
   const rotulo = config.cta.label;
 
@@ -46,11 +48,15 @@ export const RecursoBloqueado = ({
 
         <Pressable
           style={estilos.botao}
-          onPress={() => void irParaOCheckout(
-            config.cta.kind === 'unlock-profile' && artistId
-              ? { destino: 'desbloqueio', artistId }
-              : { destino: 'assinatura' },
-          )}
+          onPress={() => {
+            // ⚠️ A ASSINATURA VAI PARA `/planos`, dentro do app — ela deixou de abrir o
+            // navegador. O desbloqueio, que é pagamento único, continua como estava.
+            if (config.cta.kind === 'unlock-profile' && artistId) {
+              void irParaOCheckout({ destino: 'desbloqueio', artistId });
+              return;
+            }
+            router.push('/planos');
+          }}
           accessibilityRole="button"
           accessibilityLabel={rotulo}
         >

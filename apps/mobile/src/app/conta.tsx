@@ -18,7 +18,6 @@ import { useAppDispatch, useAppSelector } from '@maestra/core/store/store';
 import { FolhaDaAvaliacao } from '@/casca/conta/FolhaDaAvaliacao';
 import { enviarEscolhido, escolherImagem } from '@/nucleo/arquivos';
 import { sair } from '@/nucleo/entrar';
-import { irParaOCheckout } from '@/nucleo/loja';
 import { useSessao } from '@/nucleo/sessao';
 
 import { CabecalhoDeVolta } from '@/casca/CabecalhoDeVolta';
@@ -292,10 +291,13 @@ export default function Conta() {
               ? 'Sua assinatura Maestra Pro está ativa. A gestão do plano é feita na web.'
               : 'Você está no plano gratuito. Assine o Pro para desbloquear todo o potencial da plataforma.'}
           </Text>
+          {/* ⚠️ OS DOIS CAMINHOS VÃO PARA DENTRO DO APP, para `/planos`.
+              Eles abriam o navegador, e é isso que a 3.1.3 alcança. A tela de lá sabe quem está
+              a lê-la: a quem já assina ela diz que assina, e não uma lista de preços. */}
           <Pressable
             style={({ pressed }) => [estilos.linha, pressed && estilos.tocada]}
-            onPress={() => void irParaOCheckout({ destino: 'assinatura' })}
-            accessibilityRole="link"
+            onPress={() => router.push('/planos')}
+            accessibilityRole="button"
           >
             <Text style={estilos.linhaTexto}>
               {temAssinatura ? 'Gerenciar assinatura' : 'Ver planos'}

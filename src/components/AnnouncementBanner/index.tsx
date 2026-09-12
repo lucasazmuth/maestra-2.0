@@ -73,7 +73,7 @@ export function deriveStatusBanner(input: DeriveStatusBannerInput): StatusBanner
 
   if (paywallDisabled) return null;
   if (!initialized) return null;
-  if (pathname.startsWith('/assinatura') || pathname.startsWith('/pagamento')) return null;
+  if (pathname.startsWith('/planos') || pathname.startsWith('/pagamento')) return null;
 
   // 'pending' SEM subscription_id é fantasma (a linha é só o customer do pagamento único) → 'none'.
   // Só sobrescreve o caso pending — active/overdue/cancelled passam intactos (não esconder ativa).
@@ -159,7 +159,7 @@ export const StatusBanner: FC<{ kind: StatusBannerKind }> = ({ kind }) => {
       title='Assine o Maestra Pro'
       description='Chat com a Nyta IA, acompanhamento do plano de ação, notificações, músicas ilimitadas e muito mais.'
       ctaLabel='Assinar agora'
-      onCta={() => navigate('/assinatura')}
+      onCta={() => navigate('/planos')}
     />
   );
 };

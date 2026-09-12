@@ -68,9 +68,15 @@ describe('Feature: maestra-pro-banner-and-benefits, Property 1: Banner PRO nunca
       fc.property(
         // Generate arbitrary "now" timestamps
         fc.integer({ min: 0, max: 2000000000000 }),
-        // Generate pathnames that are NOT /assinatura or /pagamento
+        // ⚠️ AS ROTAS EXCLUÍDAS SÃO AS QUE O BANNER ESCONDE, e a da assinatura mudou de nome:
+        // `/assinatura` virou `/planos` no dia em que o app nativo deixou de vender.
+        //
+        // Excluir o nome velho não faz o caso FALHAR — ele afirma um resultado nulo, e nulo é o
+        // que sai também em `/planos`. Faz coisa pior: o gerador passa a sortear a própria rota
+        // onde o banner é escondido por outra razão, e o caso deixa de exercitar o que diz
+        // exercitar. Um teste que continua verde a medir outra coisa é o que não se descobre.
         fc.stringMatching(/^\/[a-z0-9\-/]{0,50}$/).filter(
-          (p) => !p.startsWith('/assinatura') && !p.startsWith('/pagamento')
+          (p) => !p.startsWith('/planos') && !p.startsWith('/pagamento')
         ),
         // Generate gracePeriodEndsAt as ISO strings or null
         fc.oneof(
@@ -111,7 +117,7 @@ describe('Regressão: pending sem asaas_subscription_id não vira banner pending
     fc.assert(
       fc.property(
         fc.stringMatching(/^\/[a-z0-9\-/]{0,40}$/).filter(
-          (p) => !p.startsWith('/assinatura') && !p.startsWith('/pagamento')
+          (p) => !p.startsWith('/planos') && !p.startsWith('/pagamento')
         ),
         (pathname) => {
           const result = deriveStatusBanner({

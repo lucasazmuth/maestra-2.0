@@ -239,7 +239,7 @@ const SubscriptionManagement: FC = () => {
             ))}
           </div>
 
-          <button className='settings-upsell-cta' onClick={() => navigate('/assinatura')}>
+          <button className='settings-upsell-cta' onClick={() => navigate('/planos')}>
             {status === 'cancelled' ? 'Assinar novamente' : 'Ver planos do Maestra Pro'}
             <FiArrowRight size={16} />
           </button>

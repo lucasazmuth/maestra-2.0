@@ -20,16 +20,27 @@ import { supabase } from '@maestra/core/lib/supabase';
 // link para outro meio de pagamento). Essa permissão mudou várias vezes entre 2024 e 2026 e
 // varia por país; antes de cada submissão, o texto vigente precisa ser conferido.
 //
-// As duas saídas, se a revisão recusar:
+// ─── O QUE MUDOU NA SUBMISSÃO À APP STORE ────────────────────────────────────
 //
-// · o desbloqueio: `VENDE_DESBLOQUEIO_NO_APP = false` devolve a compra para o navegador. A tela
-//   já sabe fazer as duas coisas, nada precisa ser reescrito;
-// · a assinatura: `MODO_DE_VENDA = 'nenhuma'` faz os botões virarem informação, sem link e sem
-//   preço, que é o desenho que o Spotify usa.
+// A assinatura JÁ NÃO SAI DO APP: `MODO_DE_VENDA` é `'nenhuma'`, e os quatro botões que abriam o
+// navegador ("Seja PRO" no menu, "Ver planos" na conta, e os dois avisos de recurso bloqueado)
+// levam agora à tela `/planos`, que mostra os planos e diz — em TEXTO, sem link — onde se assina.
+// É o desenho do Spotify.
+//
+// ⚠️ E O PREÇO APARECE, ao contrário do que esta nota dizia antes. Foi decisão do produto, com o
+// desenho do Spotify à frente: ele mostra "R$ 23,90/mês" e só recusa a COMPRA. Mostrar o produto
+// não é o que a 3.1.3 alcança; o botão e o link são.
+//
+// O desbloqueio de perfil NÃO acompanhou: continua cobrado aqui dentro, e o risco da 3.1.1
+// abaixo continua de pé, assumido.
+//
+// A saída que resta, se a revisão recusar o desbloqueio: `VENDE_DESBLOQUEIO_NO_APP = false`
+// devolve a compra para o navegador. A tela já sabe fazer as duas coisas, nada precisa ser
+// reescrito.
 
 export type ModoDeVenda = 'link-externo' | 'nenhuma';
 
-export const MODO_DE_VENDA: ModoDeVenda = 'link-externo';
+export const MODO_DE_VENDA: ModoDeVenda = 'nenhuma';
 
 /**
  * O desbloqueio de perfil é cobrado DENTRO do app?
@@ -54,7 +65,7 @@ export type DestinoDeCompra =
 const enderecoNu = (alvo: DestinoDeCompra) =>
   (alvo.destino === 'desbloqueio'
     ? `${SITE}/artists/${alvo.artistId}/desbloquear`
-    : `${SITE}/assinatura`);
+    : `${SITE}/planos`);
 
 /**
  * Leva para o checkout da web já com a sessão pronta.
@@ -66,6 +77,15 @@ const enderecoNu = (alvo: DestinoDeCompra) =>
  * menos é melhor que um botão que não faz nada.
  */
 export const irParaOCheckout = async (alvo: DestinoDeCompra): Promise<void> => {
+  // ⚠️ A CHAVE DESLIGA MESMO — e até aqui ela não desligava.
+  //
+  // `MODO_DE_VENDA` era uma promessa escrita no comentário deste ficheiro: nenhuma linha de código
+  // a lia antes de abrir o navegador. As quatro telas que vendiam a assinatura chamavam esta
+  // função direto, e com a chave em `'nenhuma'` continuariam a abrir o navegador na mesma. Quem
+  // confiasse na nota de cima para desligar a venda numa recusa da revisão descobriria isso no
+  // ciclo seguinte.
+  if (alvo.destino === 'assinatura' && MODO_DE_VENDA === 'nenhuma') return;
+
   let url = enderecoNu(alvo);
   try {
     const { data } = await supabase.functions.invoke('checkout-handoff', { body: alvo });

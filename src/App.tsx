@@ -323,7 +323,9 @@ const AppRoutes: FC = () => {
         <Route path='/artists/:id/desbloquear' element={<ProfileUnlock />} />
         {/* Sucesso da assinatura: tela cheia, centralizada (sem sidebar nem banner) — todo o
             destaque pra confirmação do pagamento. */}
-        <Route path='/assinatura/sucesso' element={<SubscriptionSuccessPage />} />
+        <Route path='/planos/sucesso' element={<SubscriptionSuccessPage />} />
+        {/* ⚠️ O ENDEREÇO ANTIGO NÃO PODE MORRER. Ver o par dele, mais abaixo. */}
+        <Route path='/assinatura/sucesso' element={<Navigate to='/planos/sucesso' replace />} />
 
         {/* Refazer diagnóstico (PRO): é o MESMO quiz de /criar-artista em modo "redo", e
             portanto tela cheia. Estava dentro do AppLayout e aparecia espremido no container
@@ -363,7 +365,19 @@ const AppRoutes: FC = () => {
           <Route path='/artists/:id/profile' element={<Navigate to='..' relative='path' replace />} />
 
           {/* ── Rotas sem gate (infra) ── */}
-          <Route path='/assinatura' element={<SubscriptionPage />} />
+          {/* ⚠️ ERA `/assinatura`, E O NOME MUDOU PARA SER DIGITÁVEL.
+              O app nativo deixou de vender: ele mostra os planos e diz, em texto, onde se
+              assina — e quem lê tem de conseguir escrever o endereço na barra do navegador.
+              "maestramanager.com/planos" cabe numa frase; "/assinatura" era mais uma palavra
+              para soletrar ao telefone. */}
+          <Route path='/planos' element={<SubscriptionPage />} />
+          {/* ⚠️ E O ENDEREÇO ANTIGO FICA, PARA SEMPRE — isto não é zelo.
+              Dois emissores continuam a apontar para ele depois desta linha: a edge function
+              `checkout-handoff`, que é deployada à parte deste bundle e passa uma janela
+              dessincronizada a cada deploy; e os builds do app JÁ PUBLICADOS, que têm
+              `${SITE}/assinatura` compilado lá dentro e vão abri-lo enquanto existirem
+              telemóveis com eles instalados. Cortar isto transforma os dois num 404. */}
+          <Route path='/assinatura' element={<Navigate to='/planos' replace />} />
           <Route path='/pagamento' element={<PaymentPage />} />
           <Route path='/notifications' element={<Notifications />} />
           <Route path='/settings' element={<Settings />} />

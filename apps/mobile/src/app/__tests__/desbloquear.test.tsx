@@ -214,11 +214,16 @@ describe('desbloqueio do perfil', () => {
 
   // Duas compras, dois caminhos. Trocar qualquer um dos dois é decisão de produto com a
   // diretriz relida na mão — nunca efeito colateral de outra mudança.
-  it('o pagamento único é cobrado no app; a assinatura sai para a web', () => {
+  //
+  // ⚠️ E OS DOIS DEIXARAM DE ANDAR JUNTOS na submissão à App Store: a assinatura parou de sair do
+  // app (`'nenhuma'`, e as telas que a vendiam vão para `/planos`), e o pagamento único continua
+  // cobrado aqui dentro, com a exposição à 3.1.1 escrita em `nucleo/loja.ts` e assumida. Este
+  // caso existe para que nenhuma das duas se mexa por acidente.
+  it('o pagamento único é cobrado no app; a assinatura não é vendida aqui', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
     const { VENDE_DESBLOQUEIO_NO_APP, MODO_DE_VENDA } = jest.requireActual('@/nucleo/loja');
 
     expect(VENDE_DESBLOQUEIO_NO_APP).toBe(true);
-    expect(MODO_DE_VENDA).toBe('link-externo');
+    expect(MODO_DE_VENDA).toBe('nenhuma');
   });
 });

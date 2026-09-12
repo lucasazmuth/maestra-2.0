@@ -1028,7 +1028,7 @@ const Catalog: FC = () => {
                 </div>
               </div>
               <button
-                onClick={() => navigate('/assinatura')}
+                onClick={() => navigate('/planos')}
                 style={{
                   background: '#9A4FD1',
                   border: 'none',
