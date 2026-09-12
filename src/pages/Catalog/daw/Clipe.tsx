@@ -1,6 +1,7 @@
 import { FC, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { FiCopy, FiScissors, FiTrash2 } from 'react-icons/fi';
 
+import { lugarDaBarra } from '@maestra/core/audio/grade';
 import { CORES_DAS_PISTAS, NOMES_DAS_CORES } from '@maestra/core/constants/design';
 import type { CatalogClip } from '@maestra/core/interfaces/maestra';
 import { tituloDoArquivo } from '@maestra/core/services/armazenamento';
@@ -62,6 +63,13 @@ export const Clipe: FC<{
    * faixa VAZIA não tem clipe para escolher, e por isso não se pinta até receber áudio.
    */
   indiceDaCor: number;
+  /**
+   * Quanto da esquerda da janela está TAPADO pela coluna das faixas.
+   *
+   * Ela fica colada por cima da montagem, e uma barra debaixo dela não está à vista. É o único
+   * pedaço da janela que o clipe não consegue descobrir sozinho.
+   */
+  recuoDaJanela: number;
   aoSelecionar: () => void;
   aoArrastar: (evento: React.PointerEvent) => void;
   aoCortar: () => void;
@@ -77,7 +85,7 @@ export const Clipe: FC<{
   aoDuplicar?: () => void;
   aoApagar: () => void;
   aoPintar?: (cor: number) => void;
-}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, noDedo, indiceDaCor, aoSelecionar, aoArrastar, aoCortar, aoDuplicar, aoApagar, aoPintar }) => {
+}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, noDedo, indiceDaCor, recuoDaJanela, aoSelecionar, aoArrastar, aoCortar, aoDuplicar, aoApagar, aoPintar }) => {
   /** A paleta deste clipe, aberta ou não. Só existe com o clipe escolhido, como a barra. */
   const [paletaAberta, setPaletaAberta] = useState(false);
   /**
@@ -121,39 +129,48 @@ export const Clipe: FC<{
   const podeCortar = !fixo && agulha > inicio + 0.05 && agulha < inicio + duracao - 0.05;
 
   /**
-   * A LARGURA DA BARRA, MEDIDA — porque o número de botões muda.
-   *
-   * A Mix não tem barra; uma gravação que só se pode ver perde o pintar; e amanhã entra outro
-   * botão. Um número escrito à mão aqui ficava errado no primeiro deles, e o erro aparece onde
-   * menos se vê: a barra encostada ao fim de um clipe comprido, meia fora dele.
+   * ⚠️ A LARGURA DA BARRA É MEDIDA, porque o número de botões muda: a Mix não tem barra, uma
+   * gravação que só se pode ver perde o pintar e o duplicar, e amanhã entra outro. Um número
+   * escrito à mão ficava errado no primeiro deles, e o erro aparece onde menos se vê.
    */
   const barra = useRef<HTMLDivElement>(null);
-  const [larguraDaBarra, setLarguraDaBarra] = useState(0);
-  useLayoutEffect(() => {
-    setLarguraDaBarra(barra.current?.offsetWidth ?? 0);
-  }, [selecionado, noDedo, aoPintar, aoDuplicar]);
+
+  const larguraDoClipe = Math.max(duracao * escala, 8);
 
   /**
-   * ONDE A BARRA FICA: ao pé da agulha.
+   * ONDE A BARRA FICA: ao pé da agulha, e sempre dentro do que se vê.
    *
-   * ⚠️ ELA VIVIA NA PONTA ESQUERDA DO CLIPE, e isso funcionava enquanto os clipes cabiam no
-   * ecrã. Num clipe de dois minutos a 150 % — que é onde se corta de verdade — a ponta esquerda
-   * está a milhares de pixels de distância: escolhia-se o clipe, a barra aparecia num sítio que
-   * ninguém estava a ver, e as quatro ações ficavam inalcançáveis sem rolar para trás.
+   * ⚠️ A CONTA É DO NÚCLEO, e a JANELA é o que esta tela tem de descobrir. A barra encostada à
+   * direita da agulha saía pela borda do ecrã sempre que a agulha se aproximava dela — e isso
+   * acontece em cada volta da reprodução, antes de a linha travar no meio. Foi assim que ela
+   * apareceu cortada ao meio no telemóvel, com metade dos botões de fora.
    *
-   * Ao pé da linha vermelha ela está sempre à vista, porque é a linha que a vista persegue. E é
-   * o sítio com sentido: a tesoura corta NA AGULHA, e a barra passa a estar onde o corte cai.
-   *
-   * ⚠️ E PRESA DENTRO DO CLIPE. Com a agulha antes ou depois dele, a barra encosta à ponta mais
-   * próxima em vez de sair a boiar por cima dos vizinhos — e num clipe mais estreito do que ela
-   * fica no princípio, que é o menos mau dos dois.
+   * ⚠️ E A JANELA LÊ-SE À MÃO, sem passar pelo React. Ela muda a cada rolagem: posta em estado,
+   * seriam dezenas de redesenhos da montagem por segundo enquanto o dedo arrasta — o mesmo
+   * engasgo que o resto deste editor levou uma noite a tirar. Aqui só se escreve um `left`.
    */
-  const daAgulha = (agulha - inicio) * escala;
-  const larguraDoClipe = Math.max(duracao * escala, 8);
-  const esquerdaDaBarra = Math.max(
-    6,
-    Math.min(daAgulha + 8, larguraDoClipe - larguraDaBarra - 6),
-  );
+  useLayoutEffect(() => {
+    const barraAgora = barra.current;
+    if (!barraAgora || !selecionado) return undefined;
+    const caixa = barraAgora.closest('[data-rolagem]') as HTMLElement | null;
+    if (!caixa) return undefined;
+
+    const porNoSitio = () => {
+      barraAgora.style.left = `${lugarDaBarra({
+        agulha: agulha * escala,
+        inicioDoClipe: inicio * escala,
+        larguraDoClipe,
+        larguraDaBarra: barraAgora.offsetWidth,
+        // ⚠️ A ÁREA DAS ONDAS, e não a caixa toda: a coluna das faixas fica colada à esquerda
+        // por cima da montagem, e uma barra debaixo dela não está à vista.
+        janelaDe: caixa.scrollLeft + recuoDaJanela,
+        janelaAte: caixa.scrollLeft + caixa.clientWidth,
+      })}px`;
+    };
+    porNoSitio();
+    caixa.addEventListener('scroll', porNoSitio, { passive: true });
+    return () => caixa.removeEventListener('scroll', porNoSitio);
+  }, [selecionado, agulha, escala, inicio, larguraDoClipe, recuoDaJanela, noDedo, aoPintar, aoDuplicar]);
 
   return (
     <div
@@ -273,7 +290,9 @@ export const Clipe: FC<{
             //
             // O que mudou foi o eixo horizontal: já não é a ponta do clipe, é a agulha.
             position: 'absolute',
-            bottom: 6, left: esquerdaDaBarra,
+            bottom: 6,
+            // O `left` é escrito à mão pelo efeito de cima: ele segue a agulha e a janela.
+            left: 6,
             display: 'flex', gap: 4,
             background: DS.color.bgPainel,
             border: `1px solid ${DS.color.bordaForte}`,

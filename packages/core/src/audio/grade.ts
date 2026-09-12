@@ -193,6 +193,58 @@ export const passoDaVista = (vista: {
   return { rolagem: centrada, seguindo: !saltou };
 };
 
+/** A folga entre a barra do clipe e a borda de que ela se aproxima. */
+export const FOLGA_DA_BARRA = 6;
+
+/**
+ * ONDE A BARRA DE AÇÕES DO CLIPE FICA, em pixels a contar do princípio DELE.
+ *
+ * ⚠️ AO PÉ DA AGULHA, e não na ponta do clipe. Na ponta ela funcionava enquanto os clipes
+ * coubessem no ecrã; num clipe de dois minutos aproximado — que é onde se corta de verdade — a
+ * ponta esquerda está a milhares de pixels de distância, e as ações ficavam inalcançáveis sem
+ * rolar para trás à procura delas. Ao pé da linha vermelha ela está sempre à vista, porque é a
+ * linha que a vista persegue; e é o sítio com sentido, porque a tesoura corta NA AGULHA.
+ *
+ * ⚠️ MAS A AGULHA NÃO CHEGA: É PRECISO SABER O QUE SE VÊ. Encostada à direita da agulha, a barra
+ * saía pela borda do ecrã sempre que a agulha se aproximava dela — e isso acontece em cada volta
+ * da reprodução, antes de a linha travar no meio. Encostada à esquerda, saía pela outra. Num
+ * telemóvel as duas metades mal dão para a barra, por isso não há lado seguro: o que decide é a
+ * JANELA, e é por isso que ela entra aqui.
+ *
+ * A ordem das três travas importa. Primeiro o sítio que se quer (ao pé da agulha); depois o que
+ * se vê (nunca fora da janela); e por fim o clipe (nunca fora dele), porque uma barra a boiar
+ * por cima dos vizinhos mente sobre a quem pertence. Num clipe mais estreito do que a barra, ou
+ * fora da janela, a última trava ganha e ela fica no princípio dele — o menos mau dos dois.
+ *
+ * Tudo em pixels do conteúdo, que é a única régua que os dois lados partilham.
+ */
+export const lugarDaBarra = (medidas: {
+  /** Onde a agulha está, no conteúdo. */
+  agulha: number;
+  /** Onde o clipe começa, no conteúdo. */
+  inicioDoClipe: number;
+  larguraDoClipe: number;
+  larguraDaBarra: number;
+  /** O que se vê, no conteúdo: do princípio ao fim da área das ondas. */
+  janelaDe: number;
+  janelaAte: number;
+}): number => {
+  const {
+    agulha, inicioDoClipe, larguraDoClipe, larguraDaBarra, janelaDe, janelaAte,
+  } = medidas;
+
+  const queria = agulha + 8;
+  const naJanela = Math.max(
+    janelaDe + FOLGA_DA_BARRA,
+    Math.min(queria, janelaAte - larguraDaBarra - FOLGA_DA_BARRA),
+  );
+  const noClipe = Math.max(
+    inicioDoClipe + FOLGA_DA_BARRA,
+    Math.min(naJanela, inicioDoClipe + larguraDoClipe - larguraDaBarra - FOLGA_DA_BARRA),
+  );
+  return noClipe - inicioDoClipe;
+};
+
 /**
  * O encaixe de quem NÃO tem andamento escrito, em segundos.
  *

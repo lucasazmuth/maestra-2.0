@@ -38,6 +38,7 @@ const montar = (over: Partial<React.ComponentProps<typeof Clipe>> = {}) => {
       selecionado
       altura={96}
       indiceDaCor={1}
+      recuoDaJanela={132}
       aoSelecionar={aoSelecionar}
       aoArrastar={() => {}}
       aoCortar={() => {}}

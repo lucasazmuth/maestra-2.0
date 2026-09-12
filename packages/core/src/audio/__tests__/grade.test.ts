@@ -1,7 +1,7 @@
 import {
   BPM_MAXIMO, BPM_MINIMO, ENCAIXE_SEM_ANDAMENTO, TEMPOS_POR_COMPASSO,
-  FOLGA_DA_AGULHA,
-  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, passoDaVista, rolagemQueCentra,
+  FOLGA_DA_AGULHA, FOLGA_DA_BARRA,
+  encaixeDaGrade, gradeDoCompasso, lugarDaBarra, marcasDaRegua, passoDaVista, rolagemQueCentra,
 } from '../grade';
 
 // O BPM NÃO FAZIA NADA NA TELA.
@@ -297,5 +297,56 @@ describe('passoDaVista — quem leva a agulha à mão sai do segundo modo', () =
       segundo: 20.05 + FOLGA_DA_AGULHA / 2, anterior: 20, desdeAnterior: 0.05,
       rolagemAtual: 800, seguindo: true,
     }).seguindo).toBe(true);
+  });
+});
+
+// ONDE A BARRA DE AÇÕES DO CLIPE FICA.
+//
+// Na ponta esquerda do clipe ela funcionava enquanto os clipes coubessem no ecrã. Num clipe de
+// dois minutos aproximado — que é onde se corta de verdade — a ponta está a milhares de pixels de
+// distância, e as quatro ações ficavam inalcançáveis sem rolar para trás à procura delas.
+describe('lugarDaBarra', () => {
+  // Um clipe que começa no 1000 e mede 5000; a barra mede 130; vê-se do 900 ao 1400.
+  const clipe = {
+    inicioDoClipe: 1000, larguraDoClipe: 5000, larguraDaBarra: 130,
+    janelaDe: 900, janelaAte: 1400,
+  };
+
+  it('fica ao pé da agulha, e devolve o lugar dentro do clipe', () => {
+    // Agulha no 1100: 1108 no conteúdo, 108 a contar do princípio do clipe.
+    expect(lugarDaBarra({ ...clipe, agulha: 1100 })).toBe(108);
+  });
+
+  // ⚠️ E NUNCA FORA DO QUE SE VÊ. Encostada à direita da agulha, a barra saía pela borda do ecrã
+  // sempre que a agulha se aproximava dela — e isso acontece em cada volta da reprodução, antes
+  // de a linha travar no meio. Foi assim que ela apareceu cortada ao meio no telemóvel.
+  it('não sai pela direita do que se vê', () => {
+    // Agulha no 1380, quase no fim da janela: a barra recua para caber.
+    const onde = lugarDaBarra({ ...clipe, agulha: 1380 });
+    expect(onde + clipe.inicioDoClipe + clipe.larguraDaBarra)
+      .toBe(clipe.janelaAte - FOLGA_DA_BARRA);
+  });
+
+  // E o mesmo do outro lado. ⚠️ ESTE CASO COMEÇOU ERRADO: eu tinha posto a janela a começar
+  // ANTES do clipe, e aí quem manda é o clipe — o caso acusava a conta por estar certa. Para
+  // provar a trava da esquerda, a janela tem de começar DEPOIS do princípio do clipe, que é o
+  // que acontece de verdade quando se rolou para o meio de um clipe comprido.
+  it('não sai pela esquerda do que se vê', () => {
+    const rolado = { ...clipe, janelaDe: 2000, janelaAte: 2500 };
+    expect(lugarDaBarra({ ...rolado, agulha: 1500 }) + rolado.inicioDoClipe)
+      .toBe(rolado.janelaDe + FOLGA_DA_BARRA);
+  });
+
+  // ⚠️ E NUNCA FORA DO CLIPE, que é a última a decidir: uma barra a boiar por cima dos vizinhos
+  // mente sobre a quem pertence.
+  it('não sai do clipe, mesmo que a janela deixasse', () => {
+    const curto = { ...clipe, larguraDoClipe: 200, janelaAte: 3000 };
+    expect(lugarDaBarra({ ...curto, agulha: 2000 }))
+      .toBe(curto.larguraDoClipe - curto.larguraDaBarra - FOLGA_DA_BARRA);
+  });
+
+  // Num clipe mais estreito do que a barra não há sítio bom: ela fica no princípio dele.
+  it('num clipe mais estreito do que ela, fica no princípio', () => {
+    expect(lugarDaBarra({ ...clipe, larguraDoClipe: 40, agulha: 1200 })).toBe(FOLGA_DA_BARRA);
   });
 });

@@ -1389,6 +1389,9 @@ export const EditorDaGravacao: FC<{
             // se cruzam gruda nos dois.
             <div
               ref={rolagem}
+              // A barra do clipe escolhido precisa de saber o que se vê para não sair pela
+              // borda; é por esta marca que ela encontra quem rola.
+              data-rolagem=''
               // ⚠️ A RODA VERTICAL ROLA DE LADO, no ecrã estreito. Numa linha do tempo o eixo
               // que interessa é o horizontal, e alcançá-lo pedia `shift` + roda ou a barra de
               // rolagem de baixo — dois gestos que quase ninguém conhece, e que no telemóvel
@@ -1563,6 +1566,7 @@ export const EditorDaGravacao: FC<{
                             fixo={faixa.id === pistaFixaId}
                             noDedo={noCelular}
                             indiceDaCor={faixa.color_index ?? indice}
+                            recuoDaJanela={larguraDasPistas}
                             aoPintar={podeEditar && faixa.id !== pistaFixaId
                               ? (tinta) => acoes.aoMudarPista(faixa.id, { color_index: tinta })
                               : undefined}

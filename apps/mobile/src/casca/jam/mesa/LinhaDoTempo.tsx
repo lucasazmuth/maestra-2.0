@@ -13,7 +13,7 @@ import Feather from '@expo/vector-icons/Feather';
 import type { Pista } from '@maestra/core/audio/mesa';
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import {
-  PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, marcasDaRegua, passoDaVista, rolagemQueCentra, zoomQueEncaixa,
+  PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, lugarDaBarra, marcasDaRegua, passoDaVista, rolagemQueCentra, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
 import { NOME_DA_MIX, ehPistaDaMix, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import {
@@ -115,7 +115,7 @@ const Clipe = ({
   clipe, rotulo, nome, cor, escala, largura, picos: osPicos, escolhido, podeEditar, agulha, duracao,
   degrauPossivel,
   passoDoEncaixe, aoEscolher, aoLargar, aoMoverEnquantoArrasta, aoCortar, aoDuplicar, aoApagar,
-  aoPintar,
+  aoPintar, rolagemDaVista, larguraDaVista,
 }: {
   clipe: { id: string; inicio: number };
   /** O que o leitor de tela lê, e o que os testes procuram. Um alvo mudo não se alcança. */
@@ -170,6 +170,18 @@ const Clipe = ({
    * faixa VAZIA não tem clipe para escolher, e por isso não se pinta até receber áudio.
    */
   aoPintar?: () => void;
+  /**
+   * Onde a montagem está rolada agora.
+   *
+   * ⚠️ UM NÚMERO, E NÃO UM VALOR PARTILHADO. A primeira versão disto punha a conta num
+   * `useAnimatedStyle` para a barra acompanhar o dedo sem passar pelo React — e rebentou no
+   * aparelho com "Tried to synchronously call a Remote Function": o corpo de um estilo animado é
+   * um WORKLET, corre noutro motor de JavaScript, e a conta do núcleo não existe lá. É o mesmo
+   * defeito que o `gestosNaLinhaDaInterface` apanha nos gestos, numa porta que ele não vigiava.
+   */
+  rolagemDaVista: number;
+  /** A largura da janela, com a coluna das faixas incluída. */
+  larguraDaVista: number;
 }) => {
   const partiuDe = useRef(clipe.inicio);
   /**
@@ -220,25 +232,34 @@ const Clipe = ({
   const podeCortar = agulha > clipe.inicio + 0.05 && agulha < clipe.inicio + duracao - 0.05;
 
   /**
-   * ONDE A BARRA FICA: ao pé da agulha.
+   * ONDE A BARRA FICA: ao pé da agulha, e sempre dentro do que se vê.
    *
-   * ⚠️ ELA VIVIA NA PONTA ESQUERDA DO CLIPE, e isso funcionava enquanto os clipes cabiam no
-   * ecrã. Num clipe de dois minutos aproximado — que é onde se corta de verdade — a ponta
-   * esquerda está a milhares de pontos de distância: escolhia-se o clipe, a barra aparecia num
-   * sítio que ninguém estava a ver, e as ações ficavam inalcançáveis sem rolar para trás.
+   * ⚠️ A CONTA É DO NÚCLEO, e o que esta tela traz é a JANELA. A barra encostada à direita da
+   * agulha saía pela borda do ecrã sempre que a agulha se aproximava dela — e isso acontece em
+   * cada volta da reprodução, antes de a linha travar no meio. Foi aqui, no telemóvel, que ela
+   * apareceu cortada ao meio com metade dos botões de fora.
    *
-   * Ao pé da linha vermelha ela está sempre à vista, porque é a linha que a vista persegue. E é
-   * o sítio com sentido: a tesoura corta NA AGULHA, e a barra passa a estar onde o corte cai.
+   * ⚠️ E A CONTA CORRE NA LINHA DA INTERFACE, porque a rolagem vive lá. Posta em estado, cada
+   * pixel de arrasto redesenhava a montagem inteira — o mesmo engasgo que este editor levou uma
+   * noite a tirar. Aqui é um estilo animado: o `left` acompanha o dedo sem passar pelo React.
    *
-   * ⚠️ E PRESA DENTRO DO CLIPE, encostando à ponta mais próxima quando a agulha está fora dele.
    * A largura é MEDIDA porque o número de botões muda — a Mix não tem barra, quem só vê perde o
    * duplicar e o pintar, e amanhã entra outro. Um número à mão ficava errado no primeiro deles.
    */
   const [larguraDaBarra, setLarguraDaBarra] = useState(0);
-  const esquerdaDaBarra = Math.max(
-    4,
-    Math.min((agulha - clipe.inicio) * escala + 8, largura - larguraDaBarra - 4),
-  );
+  const esquerdaDaBarra = lugarDaBarra({
+    agulha: agulha * escala,
+    inicioDoClipe: clipe.inicio * escala,
+    larguraDoClipe: largura,
+    larguraDaBarra,
+    // ⚠️ AQUI A COLUNA FICA FORA DA ROLAGEM, ao contrário da web — ela é IRMÃ do scroll, não
+    // filha (ver o comentário no topo deste ficheiro). O conteúdo começa no zero da área das
+    // ondas, e por isso a coluna desconta-se do FIM da janela, e não soma ao princípio. Posta do
+    // lado errado, a barra aparecia uma coluna à direita do sítio — foi o que o telemóvel
+    // mostrou, com ela encostada à borda enquanto a agulha estava no zero.
+    janelaDe: rolagemDaVista,
+    janelaAte: rolagemDaVista + larguraDaVista - COLUNA,
+  });
 
   return (
     // ⚠️ O TOQUE É UM `Pressable`, e não um `Gesture.Tap`. Dois motivos, e o segundo é o que
@@ -453,6 +474,14 @@ export const LinhaDoTempo = ({
    * rolagem acontece. É ele que diz à conta se a agulha ainda está à vista.
    */
   const onde = useScrollViewOffset(rolagem);
+  /**
+   * A rolagem em ESTADO, para a barra do clipe escolhido saber o que se vê.
+   *
+   * ⚠️ E SÓ ENQUANTO HÁ UM CLIPE ESCOLHIDO. Sem essa guarda, cada pixel de arrasto redesenhava a
+   * montagem inteira — o mesmo engasgo que este editor levou uma noite a tirar. Escolhido um
+   * clipe, o preço é de dez redesenhos por segundo durante o gesto, e só durante ele.
+   */
+  const [rolagemVista, setRolagemVista] = useState(0);
 
   /** Leva a rolagem a um ponto, do lado que desenha. */
   const rolarAte = (x: number) => {
@@ -760,9 +789,15 @@ export const LinhaDoTempo = ({
 
         <Animated.ScrollView
           ref={rolagem}
-          // Por aqui a tela sabe onde a rolagem está — e é por aqui que o teste lho diz.
           testID="ondas"
           horizontal
+          // ⚠️ SÓ COM UM CLIPE ESCOLHIDO, e devagar. É a barra dele que precisa de saber o que
+          // se vê; sem a guarda, cada pixel de arrasto redesenhava a montagem inteira. A dez por
+          // segundo a barra acompanha o dedo sem o editor ficar a tremer.
+          scrollEventThrottle={escolhido ? 100 : 0}
+          onScroll={escolhido
+            ? (e) => setRolagemVista(e.nativeEvent.contentOffset.x)
+            : undefined}
           showsHorizontalScrollIndicator
           contentContainerStyle={{ width: largura }}
         >
@@ -812,7 +847,12 @@ export const LinhaDoTempo = ({
                       podeEditar={!!podeEditar && !ehPistaDaMix(pista.id)}
                       agulha={estado.posicao}
                       duracao={dura}
-                      aoEscolher={() => setEscolhido((atual) => (atual === clipe.id ? null : clipe.id))}
+                      aoEscolher={() => {
+                        // A barra nasce a saber o que se vê: sem isto, ela aparecia no sítio da
+                        // última rolagem guardada até o dedo mexer na montagem.
+                        setRolagemVista(onde.value);
+                        setEscolhido((atual) => (atual === clipe.id ? null : clipe.id));
+                      }}
                       degrauPossivel={degrauPossivelDa(i)}
                       aoLargar={(inicio, de, degrau) => aoMover?.(
                         clipe.id, inicio, de, faixaDoDegrau(i, degrau, { comOrigem: true }),
@@ -824,6 +864,8 @@ export const LinhaDoTempo = ({
                         ? () => { aoDuplicar(clipe.id); setEscolhido(null); }
                         : undefined}
                       aoApagar={() => { aoApagar?.(clipe.id); setEscolhido(null); }}
+                      rolagemDaVista={rolagemVista}
+                      larguraDaVista={larguraVisivel}
                       aoPintar={aoPintarPista && !ehPistaDaMix(pista.id)
                         ? () => setPaletaDe(pista.id)
                         : undefined}

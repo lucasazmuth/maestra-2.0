@@ -547,46 +547,65 @@ describe('cromo do editor do Espaço JAM', () => {
     });
   });
 
-  // ⚠️ A BARRA DO CLIPE SEGUE A AGULHA, NAS DUAS — e não a ponta esquerda do clipe.
+  // ⚠️ A BARRA DO CLIPE SEGUE A AGULHA, NAS DUAS — e nunca sai do que se vê.
   //
-  // Na ponta ela funcionava enquanto os clipes coubessem no ecrã. Num clipe de dois minutos
-  // aproximado — que é justamente onde se corta de verdade — a ponta esquerda está a milhares de
-  // pixels de distância: escolhia-se o clipe, a barra aparecia num sítio que ninguém estava a
-  // ver, e as quatro ações ficavam inalcançáveis sem rolar para trás.
+  // Na ponta esquerda do clipe ela funcionava enquanto os clipes coubessem no ecrã. Num clipe de
+  // dois minutos aproximado — que é onde se corta de verdade — a ponta está a milhares de pixels
+  // de distância, e as quatro ações ficavam inalcançáveis sem rolar para trás à procura delas.
   //
-  // Ao pé da linha vermelha ela está sempre à vista, porque é a linha que a vista persegue. E é
-  // o sítio com sentido: a tesoura corta NA AGULHA, e a barra está onde o corte cai.
-  it('a barra do clipe fica ao pé da agulha, presa dentro do clipe', () => {
+  // ⚠️ MAS A AGULHA SOZINHA NÃO CHEGA. Encostada à direita dela, a barra saía pela borda do ecrã
+  // sempre que a agulha se aproximava — e isso acontece em cada volta da reprodução, antes de a
+  // linha travar no meio. Apareceu cortada ao meio no telemóvel, com metade dos botões de fora.
+  // Num ecrã estreito as duas metades mal dão para a barra, por isso não há lado seguro: o que
+  // decide é a JANELA, e é por isso que ela entra na conta.
+  it('a barra do clipe fica ao pé da agulha, e dentro do que se vê', () => {
     const naWeb = semComentarios(clipe);
     const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
 
+    // A conta é do núcleo — escrita à mão em cada tela, divergiria no primeiro ajuste.
     [naWeb, aLinhaDoTempo].forEach((fonte) => {
-      // Sai da agulha, e não de uma ponta fixa.
-      expect(fonte).toMatch(/const esquerdaDaBarra = Math\.max\(/);
-      expect(fonte).toContain('agulha - ');
-      // ⚠️ E PRESA DENTRO DO CLIPE, pelas duas pontas. Sem o `min`, a barra de um clipe curto
-      // com a agulha depois dele ia boiar por cima dos vizinhos; sem o `max`, a de um clipe que
-      // começa antes do zero da vista saía pela esquerda — os dois sem nada se queixar.
-      expect(fonte).toContain('Math.min(');
-      expect(fonte).toContain('larguraDaBarra');
-
-      // ⚠️ E A LARGURA É MEDIDA, não escrita à mão. O número de botões muda — a Mix não tem
-      // barra, quem só vê perde o duplicar e o pintar, e amanhã entra outro. Um número fixo
-      // ficava errado no primeiro deles, e o erro aparece onde menos se vê: a barra encostada ao
-      // fim de um clipe comprido, meia fora dele.
-      expect(fonte).toMatch(/setLarguraDaBarra\(/);
+      expect(fonte).toContain('lugarDaBarra({');
+      expect(fonte).toContain('agulha: agulha * escala');
+      expect(fonte).toContain('janelaDe:');
+      expect(fonte).toContain('janelaAte:');
+      // ⚠️ E A JANELA DESCONTA A COLUNA DAS FAIXAS — de lados diferentes, porque as duas telas a
+      // montam de maneiras diferentes. Na web ela é FILHA do scroll (fica colada por cima da
+      // montagem) e soma ao princípio da janela; no aparelho é IRMÃ dele, e por isso desconta-se
+      // do fim. Trocar os lados põe a barra uma coluna fora do sítio, e foi o que o telemóvel
+      // mostrou: ela encostada à borda com a agulha no zero.
+      expect(fonte).toMatch(/(recuoDaJanela|COLUNA)/);
+      // A largura é medida, porque o número de botões muda.
+      expect(fonte).toMatch(/(offsetWidth|setLarguraDaBarra)/);
     });
 
-    // Na web mede-se antes da pintura, para a barra não nascer no sítio errado e saltar.
-    expect(naWeb).toContain('useLayoutEffect(() => {\n    setLarguraDaBarra(');
-    // E no aparelho, pelo `onLayout`, que é como lá se medem as coisas.
-    expect(aLinhaDoTempo).toContain('onLayout={(e) => setLarguraDaBarra(e.nativeEvent.layout.width)}');
+    // ⚠️ E EM NENHUMA DELAS ISTO PASSA PELO REACT. A janela muda a cada rolagem: posta em
+    // estado, seriam dezenas de redesenhos da montagem por segundo enquanto o dedo arrasta — o
+    // mesmo engasgo que este editor levou uma noite a tirar.
+    //
+    // Na web escreve-se um `left` à mão, a ouvir quem rola; no aparelho é um estilo animado, que
+    // corre na linha da interface onde a rolagem vive.
+    expect(naWeb).toContain("caixa.addEventListener('scroll', porNoSitio");
+    expect(naWeb).toContain('barraAgora.style.left =');
 
-    // ⚠️ E AS DUAS TÊM DE USAR A CONTA, e não só de a ter. Este caso deixou passar a mutação que
-    // punha o `left` de volta num número fixo no aparelho: a conta continuava lá em cima, certa
-    // e ignorada, e nada se queixava.
-    expect(aLinhaDoTempo).toContain('{ left: esquerdaDaBarra }');
-    expect(naWeb).toContain('left: esquerdaDaBarra,');
+    // ⚠️ E NO APARELHO A CONTA NÃO PODE CORRER NUM WORKLET. A primeira versão punha-a num
+    // `useAnimatedStyle`, para a barra acompanhar o dedo sem passar pelo React — e rebentou no
+    // telemóvel com "Tried to synchronously call a Remote Function": o corpo de um estilo
+    // animado corre noutro motor de JavaScript, onde a conta do núcleo não existe. Ver o
+    // `gestosNaLinhaDaInterface`, que passou a vigiar também esta porta.
+    //
+    // O preço é ouvir a rolagem pelo JavaScript, e SÓ com um clipe escolhido: sem essa guarda,
+    // cada pixel de arrasto redesenhava a montagem inteira.
+    expect(aLinhaDoTempo).not.toMatch(/useAnimatedStyle\(\(\) => \(\{\s*left: lugarDaBarra/);
+    expect(aLinhaDoTempo).toContain('scrollEventThrottle={escolhido ? 100 : 0}');
+    expect(aLinhaDoTempo).toContain('onScroll={escolhido');
+
+    // E quem rola está marcado, para a barra o encontrar sem lhe passarem uma referência.
+    expect(semComentarios(editor)).toContain("data-rolagem=''");
+    expect(semComentarios(editor)).toContain('recuoDaJanela={larguraDasPistas}');
+
+    // Cada uma no seu lado: a web soma ao princípio, o aparelho desconta do fim.
+    expect(naWeb).toContain('janelaDe: caixa.scrollLeft + recuoDaJanela');
+    expect(aLinhaDoTempo).toContain('janelaAte: rolagemDaVista + larguraDaVista - COLUNA');
   });
 
   // ⚠️ A COLUNA DAS FAIXAS TAMBÉM SE DESENHA UMA VEZ — e é o que sobrava do engasgo do play.
@@ -774,7 +793,10 @@ describe('cromo do editor do Espaço JAM', () => {
     // rolagem acontece.
     expect(aLinhaDoTempo).toContain('useScrollViewOffset(rolagem)');
     expect(aLinhaDoTempo).toContain('rolagemAtual: onde.value');
-    expect(aLinhaDoTempo).not.toContain('onScroll={');
+    // ⚠️ E A CONTA DE SEGUIR NÃO VOLTA A LER O `onScroll`. Ele existe outra vez no ficheiro, mas
+    // para a BARRA do clipe escolhido, que precisa da rolagem em estado — e só enquanto há um
+    // escolhido. Quem decide onde a vista fica continua a ler o valor da linha da interface.
+    expect(aLinhaDoTempo).not.toContain('rolagemAtual: rolagemVista');
     // ⚠️ E NADA SE ANIMA, NEM O SALTO DE ENTRADA. Uma rolagem animada continua a correr depois
     // de pedida e engole as dos vigésimos de segundo seguintes: a linha descolava-se do meio, ia
     // derivando para a direita, e voltava de repente quando a animação acabava. Foi visto de
@@ -872,11 +894,11 @@ describe('cromo do editor do Espaço JAM', () => {
   // foi assim que "duplicar" chegou quebrado a seguir.
   it('a barra de ações do clipe para o clique num sítio só, na web', () => {
     const naWeb = semComentarios(clipe);
-    const daBarra = naWeb.slice(naWeb.indexOf('bottom: 6, left: esquerdaDaBarra,'));
+    const daBarra = naWeb.slice(naWeb.indexOf('bottom: 6,\n'));
     const acoes = daBarra.slice(0, daBarra.indexOf("role='group'"));
 
     // O contentor para-o; nenhum botão da fila precisa de o repetir.
-    const abertura = naWeb.slice(naWeb.indexOf('{selecionado && !fixo && ('), naWeb.indexOf('bottom: 6, left: esquerdaDaBarra,'));
+    const abertura = naWeb.slice(naWeb.indexOf('{selecionado && !fixo && ('), naWeb.indexOf('bottom: 6,\n'));
     expect(abertura).toContain('onClick={(evento) => evento.stopPropagation()}');
     expect(acoes).not.toContain('evento.stopPropagation(); ');
   });
@@ -1271,7 +1293,8 @@ describe('cromo do editor do Espaço JAM', () => {
 
       // ⚠️ SEMPRE DENTRO, EM BAIXO À ESQUERDA. Por cima do clipe, a barra da primeira pista
       // saía pelo topo da área que rola. É onde o app a pôs, e ali serve aos dois.
-      expect(oClipe).toContain('bottom: 6, left: esquerdaDaBarra,');
+      // ⚠️ O `left` JÁ NÃO ESTÁ AQUI: ele é escrito à mão, porque segue a agulha E a janela.
+      expect(oClipe).toContain('bottom: 6,');
       expect(oClipe).not.toContain('top: -38');
       expect(oClipe).toContain('noDedo ? { width: 34, height: 34 }');
 
@@ -1282,7 +1305,7 @@ describe('cromo do editor do Espaço JAM', () => {
       //
       // ⚠️ A FATIA ACABA NA PALETA. As seis bolinhas também são `<button>` e não levam `alvo`:
       // são redondas, de 20 px, e ficam separadas umas das outras — não são as AÇÕES da barra.
-      const daBarra = oClipe.slice(oClipe.indexOf('bottom: 6, left: esquerdaDaBarra,'));
+      const daBarra = oClipe.slice(oClipe.indexOf('bottom: 6,\n'));
       const acoes = daBarra.slice(0, daBarra.indexOf("role='group'"));
       const botoes = acoes.split('<button').slice(1);
       expect(botoes.length).toBeGreaterThanOrEqual(3);
