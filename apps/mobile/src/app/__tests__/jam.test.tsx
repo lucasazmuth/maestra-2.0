@@ -732,7 +732,12 @@ describe('espaço jam', () => {
     const tela = await montar();
     await tela.findByText('FAIXAS');
 
-    await usuario.press(tela.getByLabelText('Cor de Voz'));
+    // ⚠️ O SELETOR VIVE NA BARRA DO CLIPE ESCOLHIDO, ao lado de cortar e apagar — e não na
+    // coluna da faixa, que foi onde ele nasceu. Ali era o quinto alvo de uma fila espremida
+    // numa coluna estreita; aqui está junto das outras ações do mesmo gesto e em cima da
+    // própria cor. Por isso o caminho começa por ESCOLHER o clipe.
+    await usuario.press(tela.getByLabelText('Trecho 1 de Voz'));
+    await usuario.press(tela.getByLabelText('Cor da faixa'));
     // Os nomes vêm do núcleo: seis bolinhas sem nome são seis alvos idênticos para quem usa
     // leitor de tela, e a cor é justamente o que distingue as faixas.
     await usuario.press(tela.getByLabelText('Turquesa'));

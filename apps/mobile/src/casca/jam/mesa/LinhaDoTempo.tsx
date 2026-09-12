@@ -112,7 +112,7 @@ const OndaDoClipe = memo(({ picos, cor, largura, altura }: {
 const Clipe = ({
   clipe, rotulo, nome, cor, escala, largura, picos: osPicos, escolhido, podeEditar, agulha, duracao,
   degrauPossivel,
-  passoDoEncaixe, aoEscolher, aoLargar, aoMoverEnquantoArrasta, aoCortar, aoApagar,
+  passoDoEncaixe, aoEscolher, aoLargar, aoMoverEnquantoArrasta, aoCortar, aoApagar, aoPintar,
 }: {
   clipe: { id: string; inicio: number };
   /** O que o leitor de tela lê, e o que os testes procuram. Um alvo mudo não se alcança. */
@@ -146,6 +146,19 @@ const Clipe = ({
   aoMoverEnquantoArrasta: (inicio: number) => void;
   aoCortar: () => void;
   aoApagar: () => void;
+  /**
+   * Abre a paleta da FAIXA onde este clipe está.
+   *
+   * ⚠️ O SELETOR DE COR MORA AQUI, na barra do clipe escolhido, e não na coluna da faixa. Ali
+   * ele era o quinto alvo de uma fila espremida numa coluna estreita. Aqui está ao lado das
+   * outras duas ações do mesmo gesto — escolher a coisa e depois fazer algo com ela — e em
+   * cima da própria cor, que é o que se está a trocar. É onde a web o pôs.
+   *
+   * ⚠️ E A COR É DA FAIXA, e não do clipe: pintar daqui pinta a faixa inteira. É o que se quer
+   * (a cor é o que distingue uma faixa da outra de relance), mas tem uma consequência — uma
+   * faixa VAZIA não tem clipe para escolher, e por isso não se pinta até receber áudio.
+   */
+  aoPintar?: () => void;
 }) => {
   const partiuDe = useRef(clipe.inicio);
   /**
@@ -259,6 +272,21 @@ const Clipe = ({
             >
               <Feather name="trash-2" size={12} color={COR.erro} />
             </Pressable>
+            {/* ⚠️ A COR É ESCOLHIDA, e não sorteada. Ela é o que distingue uma faixa da outra
+                de relance — na coluna, no clipe e na mesa — e até aqui era o que calhasse na
+                ordem de criação. O alvo é a própria cor: uma bolinha cheia é o que se
+                reconhece como "a cor desta faixa". */}
+            {aoPintar && (
+              <Pressable
+                onPress={aoPintar}
+                hitSlop={6}
+                style={estilos.acaoDoClipe}
+                accessibilityRole="button"
+                accessibilityLabel="Cor da faixa"
+              >
+                <View style={[estilos.bolinhaDaCor, { backgroundColor: cor }]} />
+              </Pressable>
+            )}
           </View>
         )}
       </Pressable>
@@ -466,20 +494,6 @@ export const LinhaDoTempo = ({
                       />
                     </Pressable>
                   )}
-                  {/* ⚠️ A COR É ESCOLHIDA, e não sorteada. Ela é o que distingue uma faixa da
-                      outra de relance — na coluna, no clipe e na mesa — e até aqui era o que
-                      calhasse na ordem de criação. O alvo é a própria cor: uma bolinha cheia é
-                      o que se reconhece como "a cor desta faixa". */}
-                  {mexivel && (
-                    <Pressable
-                      onPress={() => setPaletaDe(pista.id)}
-                      style={estilos.botaozinho}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Cor de ${pista.nome}`}
-                    >
-                      <View style={[estilos.bolinhaDaCor, { backgroundColor: cor }]} />
-                    </Pressable>
-                  )}
                   {/* ⚠️ ENVIAR DIRETO PARA ESTA PISTA. Sem isto, uma pista que ficou sem áudio
                       (o clipe foi apagado) vira um beco sem saída: não há arrasto de ficheiro
                       num telemóvel, e a pista ficava lá, vazia, sem forma de a encher. */}
@@ -592,6 +606,9 @@ export const LinhaDoTempo = ({
                       passoDoEncaixe={passoDoEncaixe}
                       aoCortar={() => { aoCortar?.(clipe.id, estado.posicao); setEscolhido(null); }}
                       aoApagar={() => { aoApagar?.(clipe.id); setEscolhido(null); }}
+                      aoPintar={aoPintarPista && !ehPistaDaMix(pista.id)
+                        ? () => setPaletaDe(pista.id)
+                        : undefined}
                     />
                   );
                 })}
@@ -655,7 +672,8 @@ export const LinhaDoTempo = ({
 };
 
 const estilos = StyleSheet.create({
-  bolinhaDaCor: { width: 11, height: 11, borderRadius: 6 },
+  // Do tamanho dos ícones ao lado (12): a bolinha é o ícone deste botão, e não um enfeite.
+  bolinhaDaCor: { width: 12, height: 12, borderRadius: 6 },
   /* ⚠️ UMA FOLHA, E NÃO UM DIÁLOGO. Trocar a cor é um gesto de um toque; uma caixa no meio da
      tela tapa justamente a montagem que se está a tentar distinguir. */
   veuDaPaleta: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(10, 10, 12, .55)' },

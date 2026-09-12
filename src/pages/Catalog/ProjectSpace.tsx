@@ -1139,6 +1139,23 @@ const ProjectSpace: FC = () => {
       if (parte.muted !== undefined) mesa.mudar(pistaId, parte.muted);
       if (parte.gain !== undefined) mesa.ganho(pistaId, parte.gain);
       if (parte.pan !== undefined) mesa.panoramar(pistaId, parte.pan);
+
+      // ⚠️ A COR GRAVA NA HORA, e é a única parte da pista que o faz. As outras chegam aqui de
+      // uma RÉGUA a ser arrastada — o fader, o pan — e cada pixel do gesto pediria uma escrita:
+      // é por isso que elas esperam. Escolher uma cor é um toque único e deliberado, e adiá-lo
+      // só abre a janela em que fechar a tela logo a seguir perde a escolha.
+      //
+      // ⚠️ E É O QUE O APP JÁ FAZIA. Ele grava a cor sem adiar, com este mesmo argumento
+      // escrito ao lado; a web adiava-a por apanhar boleia do caminho do fader. A mesma escolha
+      // com duas durações nas duas telas é a diferença que ninguém vê até perder uma.
+      if (parte.color_index !== undefined) {
+        esquecer(`pista:${pistaId}`);
+        setSaveState('salvando');
+        void catalogDb.updateTrack(pistaId, parte)
+          .then(() => setSaveState('salvo'))
+          .catch(() => setSaveState('erro'));
+        return;
+      }
       adiar(`pista:${pistaId}`, () => catalogDb.updateTrack(pistaId, parte));
     },
 

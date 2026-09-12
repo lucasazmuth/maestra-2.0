@@ -1,6 +1,7 @@
-import { FC, useEffect, useRef } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { FiScissors, FiTrash2 } from 'react-icons/fi';
 
+import { CORES_DAS_PISTAS, NOMES_DAS_CORES } from '@maestra/core/constants/design';
 import type { CatalogClip } from '@maestra/core/interfaces/maestra';
 import { tituloDoArquivo } from '@maestra/core/services/armazenamento';
 
@@ -48,11 +49,27 @@ export const Clipe: FC<{
    * e que por isso se chama "Mix" em vez de "Take N". Essa não se edita de forma nenhuma.
    */
   noDedo?: boolean;
+  /**
+   * A cor da FAIXA onde este clipe está, como índice da paleta.
+   *
+   * ⚠️ O SELETOR DE COR MORA AQUI, na barra do clipe escolhido, e não na coluna da faixa. Ali
+   * ele era o quinto botão de uma fila que já espremia quatro numa coluna de 132 px. Aqui está
+   * ao lado das outras duas ações do mesmo gesto — escolher a coisa e depois fazer algo com ela
+   * — e em cima da própria cor, que é o que se está a trocar.
+   *
+   * ⚠️ E A COR É DA FAIXA, e não do clipe: pintar daqui pinta a faixa inteira. É o que se quer
+   * (a cor é o que distingue uma faixa da outra de relance), mas tem uma consequência — uma
+   * faixa VAZIA não tem clipe para escolher, e por isso não se pinta até receber áudio.
+   */
+  indiceDaCor: number;
   aoSelecionar: () => void;
   aoArrastar: (evento: React.PointerEvent) => void;
   aoCortar: () => void;
   aoApagar: () => void;
-}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, noDedo, aoSelecionar, aoArrastar, aoCortar, aoApagar }) => {
+  aoPintar?: (cor: number) => void;
+}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, noDedo, indiceDaCor, aoSelecionar, aoArrastar, aoCortar, aoApagar, aoPintar }) => {
+  /** A paleta deste clipe, aberta ou não. Só existe com o clipe escolhido, como a barra. */
+  const [paletaAberta, setPaletaAberta] = useState(false);
   /**
    * Mexer o clipe no tempo. A Mix nunca; com dedo, só depois de escolhido.
    *
@@ -248,6 +265,68 @@ export const Clipe: FC<{
           >
             <FiTrash2 size={13} />
           </button>
+          {aoPintar && (
+            <button
+              type='button'
+              // ⚠️ O CLIQUE NÃO PODE SUBIR. O clipe inteiro tem um `onClick` que ALTERNA a
+              // seleção, e a barra vive dentro dele: sem parar aqui, abrir a paleta desmarcava
+              // o clipe no mesmo gesto e a barra — com a paleta dentro — desaparecia. O painel
+              // abria e fechava no mesmo instante, e parecia que o botão não fazia nada.
+              onClick={(evento) => { evento.stopPropagation(); setPaletaAberta((v) => !v); }}
+              aria-haspopup='true'
+              aria-expanded={paletaAberta}
+              title='Cor da faixa'
+              aria-label='Cor da faixa'
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                ...alvo,
+                background: 'transparent',
+                border: `1px solid ${DS.color.borda}`,
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ width: 13, height: 13, borderRadius: '50%', background: cor }} />
+            </button>
+          )}
+
+          {/* As seis, ao lado das outras ações. ⚠️ EM CIMA DA BARRA e não por baixo: a barra já
+              está no fundo do clipe, e um painel abaixo dela cairia na faixa seguinte — ou fora
+              da área que rola, na última. */}
+          {paletaAberta && aoPintar && (
+            <div
+              role='group'
+              aria-label='Cores da faixa'
+              style={{
+                position: 'absolute', bottom: '100%', left: 0, marginBottom: 6,
+                display: 'flex', gap: 6, padding: 7,
+                background: DS.color.bgPainel,
+                border: `1px solid ${DS.color.bordaForte}`,
+                borderRadius: DS.raio.medio,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+              }}
+            >
+              {CORES_DAS_PISTAS.map((tinta, i) => (
+                <button
+                  key={tinta}
+                  type='button'
+                  onClick={(evento) => { evento.stopPropagation(); aoPintar(i); setPaletaAberta(false); }}
+                  aria-label={NOMES_DAS_CORES[i]}
+                  aria-pressed={indiceDaCor % CORES_DAS_PISTAS.length === i}
+                  title={NOMES_DAS_CORES[i]}
+                  style={{
+                    width: 20, height: 20, borderRadius: '50%', background: tinta,
+                    cursor: 'pointer',
+                    // A escolhida traz um anel: sem ele, seis bolinhas iguais não dizem qual é a
+                    // desta faixa, e a pessoa carrega na que já estava.
+                    border: indiceDaCor % CORES_DAS_PISTAS.length === i
+                      ? `2px solid ${DS.color.texto}`
+                      : '2px solid transparent',
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

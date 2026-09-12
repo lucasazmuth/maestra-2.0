@@ -26,6 +26,9 @@ const ler = (...partes: string[]) => fs.readFileSync(path.join(__dirname, '..', 
 
 const editor = ler('pages', 'Catalog', 'daw', 'EditorDaGravacao.tsx');
 const clipe = ler('pages', 'Catalog', 'daw', 'Clipe.tsx');
+const daLinhaDoTempo = fs.readFileSync(path.join(
+  __dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'LinhaDoTempo.tsx',
+), 'utf8');
 const casca = ler('pages', 'Catalog', 'daw', 'editor.module.scss');
 const biblioteca = ler('pages', 'Catalog', 'daw', 'Biblioteca.tsx');
 const icones = ler('pages', 'Catalog', 'daw', 'icones.tsx');
@@ -439,36 +442,83 @@ describe('cromo do editor do Espaço JAM', () => {
   // era o que calhasse na ordem de criação: quem monta sabe que a voz é verde e a bateria é
   // azul, e o produto não sabia.
   it('as duas telas oferecem as MESMAS seis cores, com os mesmos nomes', () => {
-    const naWeb = semComentarios(editor);
-    const aLinhaDoTempo = semComentarios(fs.readFileSync(
-      path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'LinhaDoTempo.tsx'),
-      'utf8',
-    ));
+    const naWeb = semComentarios(clipe);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
 
     [naWeb, aLinhaDoTempo].forEach((fonte) => {
       // A paleta e os nomes vêm do núcleo: seis bolinhas iguais sem nome são seis alvos
       // idênticos para quem usa leitor de tela, e a cor é justamente o que distingue as faixas.
       expect(fonte).toContain('CORES_DAS_PISTAS.map(');
       expect(fonte).toContain('NOMES_DAS_CORES[i]');
-      // Uma paleta aberta de cada vez: duas seriam duas perguntas ao mesmo tempo.
-      expect(fonte).toContain('paletaDe');
     });
 
     // E as duas gravam no MESMO sítio — a coluna que as duas já leem para pintar.
-    expect(naWeb).toContain('{ color_index: i }');
+    expect(semComentarios(editor)).toContain('{ color_index: tinta }');
     expect(aLinhaDoTempo).toContain('aoPintarPista?.(paletaDe, i)');
+  });
+
+  // ⚠️ O SELETOR MORA NA BARRA DO CLIPE, ao lado da tesoura e da lixeira — e não na coluna da
+  // faixa, que foi onde ele nasceu. Ali era o quinto alvo de uma fila espremida numa coluna de
+  // 132 px; aqui está junto das outras duas ações do mesmo gesto (escolher a coisa, depois
+  // fazer algo com ela) e em cima da própria cor, que é o que se está a trocar.
+  //
+  // Este caso existe porque a mudança é FÁCIL DE DESFAZER SEM QUERER: repor uma bolinha na
+  // coluna é uma linha, e a paleta continuaria a funcionar — nada se queixava, e as duas telas
+  // voltavam a divergir no sítio em que se carrega.
+  it('o botão da cor está ao lado de cortar e apagar, e não no cabeçalho da faixa', () => {
+    const naWeb = semComentarios(clipe);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    // Na barra: o pedaço entre a lixeira e o fecho da barra é onde o botão tem de estar.
+    const barraDaWeb = naWeb.slice(naWeb.indexOf("aria-label='Remover o clipe'"));
+    expect(barraDaWeb).toContain("aria-label='Cor da faixa'");
+
+    const barraDoApp = aLinhaDoTempo.slice(aLinhaDoTempo.indexOf('accessibilityLabel="Remover o clipe"'));
+    expect(barraDoApp.slice(0, barraDoApp.indexOf('estilos.acoesDoClipe') + 1 || undefined))
+      .toContain('accessibilityLabel="Cor da faixa"');
+
+    // E em lado nenhum ele volta ao cabeçalho, onde o alvo era a faixa e não o clipe.
+    expect(semComentarios(editor)).not.toContain('CORES_DAS_PISTAS');
+    expect(aLinhaDoTempo).not.toContain('Cor de ${pista.nome}');
+  });
+
+  // ⚠️ A COR GRAVA NA HORA, nas duas — e é a única parte da pista que o faz.
+  //
+  // As outras chegam de uma RÉGUA a ser arrastada (o fader, o pan) e por isso esperam: cada
+  // pixel do gesto pediria uma escrita. Escolher uma cor é um toque único e deliberado, e adiá-lo
+  // só abre a janela em que fechar a tela logo a seguir perde a escolha.
+  //
+  // ⚠️ ESTE CASO EXISTE PORQUE A WEB JÁ DIVERGIU AQUI. Ela mandava a cor pelo mesmo caminho do
+  // fader e herdava o adiamento dele — a mesma escolha com duas durações nas duas telas, que é
+  // a diferença que ninguém vê até perder uma.
+  it('a cor grava sem adiar, nas duas telas', () => {
+    const naTela = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', 'pages', 'Catalog', 'ProjectSpace.tsx'), 'utf8',
+    ));
+
+    // Na web: a cor sai ANTES do `adiar`, e cancela o que estivesse a caminho para esta pista.
+    const mudarPista = naTela.slice(naTela.indexOf('aoMudarPista:'));
+    const corpo = mudarPista.slice(0, mudarPista.indexOf('aoApagarPista:'));
+    const ondeACor = corpo.indexOf('parte.color_index !== undefined');
+    expect(ondeACor).toBeGreaterThan(-1);
+    expect(ondeACor).toBeLessThan(corpo.indexOf('adiar(`pista:'));
+    expect(corpo.slice(ondeACor)).toContain('esquecer(`pista:${pistaId}`)');
+
+    // E no aparelho a mesma coisa: `updateTrack` direto, sem passar por um relógio.
+    const oApp = semComentarios(app);
+    const pintar = oApp.slice(oApp.indexOf('const pintarPista ='));
+    expect(pintar.slice(0, pintar.indexOf('};'))).not.toContain('setTimeout');
   });
 
   // ⚠️ A COR ESCOLHIDA TRAZ UM ANEL. Seis bolinhas iguais não dizem qual é a desta faixa, e sem
   // isso a pessoa carrega na que já estava e nada acontece — o seletor parece quebrado.
   it('a cor em uso aparece marcada na paleta, nas duas', () => {
-    const naWeb = semComentarios(editor);
-    const aLinhaDoTempo = semComentarios(fs.readFileSync(
-      path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'LinhaDoTempo.tsx'),
-      'utf8',
-    ));
+    const naWeb = semComentarios(clipe);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
 
-    expect(naWeb).toMatch(/aria-pressed=\{\(faixa\.color_index \?\? indice\)/);
+    expect(naWeb).toMatch(/aria-pressed=\{indiceDaCor % CORES_DAS_PISTAS\.length === i\}/);
+    // E o índice que chega ao clipe é o da FAIXA, não a posição dele na pilha.
+    expect(semComentarios(editor)).toContain('indiceDaCor={faixa.color_index ?? indice}');
     expect(aLinhaDoTempo).toContain('accessibilityState={{ selected: atual }}');
     expect(aLinhaDoTempo).toContain('borderColor: atual ?');
   });
@@ -795,8 +845,19 @@ describe('cromo do editor do Espaço JAM', () => {
       expect(oClipe).toContain('bottom: 6, left: 6,');
       expect(oClipe).not.toContain('top: -38');
       expect(oClipe).toContain('noDedo ? { width: 34, height: 34 }');
-      // Nos dois botões: um alvo de 26 px acerta-se com o rato e falha-se com o polegar.
-      expect(oClipe.match(/\.\.\.alvo,/g)).toHaveLength(2);
+
+      // ⚠️ EM TODOS OS BOTÕES DA BARRA, e não num número fixo deles. Este caso já se partiu uma
+      // vez, quando o seletor de cor veio para cá: dizia `toHaveLength(2)` e acusou a chegada do
+      // terceiro botão em vez de conferir se ele tinha o alvo certo. Um alvo de 26 px acerta-se
+      // com o rato e falha-se com o polegar — a regra é de todos, e não de dois.
+      //
+      // ⚠️ A FATIA ACABA NA PALETA. As seis bolinhas também são `<button>` e não levam `alvo`:
+      // são redondas, de 20 px, e ficam separadas umas das outras — não são as AÇÕES da barra.
+      const daBarra = oClipe.slice(oClipe.indexOf('bottom: 6, left: 6,'));
+      const acoes = daBarra.slice(0, daBarra.indexOf("role='group'"));
+      const botoes = acoes.split('<button').slice(1);
+      expect(botoes.length).toBeGreaterThanOrEqual(3);
+      botoes.forEach((botao) => expect(botao.slice(0, botao.indexOf('</button>'))).toContain('...alvo,'));
     });
 
     // ⚠️ SÓ OS ÍCONES. "DIVIDIR" e "REMOVER" somavam 190 px de barra por cima de um clipe que
