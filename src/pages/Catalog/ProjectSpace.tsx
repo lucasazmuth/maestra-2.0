@@ -2,7 +2,7 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import {
-  ID_DA_MIX, NOME_DA_MIX, montagemDaVersao, nomeDaPistaNova, pistasDaGravacao,
+  ID_DA_MIX, NOME_DA_MIX, copiaDoClipe, montagemDaVersao, nomeDaPistaNova, pistasDaGravacao,
   proximaCorDaPista, proximaPosicaoDaPista,
 } from '@maestra/core/audio/pistasDaVersao';
 import {
@@ -454,6 +454,12 @@ const ProjectSpace: FC = () => {
         await (voltando ? catalogDb.marcarClipeApagado : catalogDb.restaurarClipe)(passo.novoClipeId);
         (voltando ? marquei : desmarquei)(passo.novoClipeId);
         break;
+      case 'duplicar':
+        // O espelho de apagar: desfazer tira a cópia de cena, refazer traz-na de volta. O clipe
+        // de origem nunca foi tocado, e por isso não aparece aqui.
+        await (voltando ? catalogDb.marcarClipeApagado : catalogDb.restaurarClipe)(passo.novoClipeId);
+        (voltando ? marquei : desmarquei)(passo.novoClipeId);
+        break;
       case 'acrescentarPistas':
         await Promise.all(passo.pistaIds.map(
           (id) => (voltando ? catalogDb.marcarPistaApagada : catalogDb.restaurarPista)(id),
@@ -775,6 +781,11 @@ const ProjectSpace: FC = () => {
     // e ficava um "Salvo" verde por cima de uma montagem que continuava vazia.
     let entraram = 0;
     const nascidas: string[] = [];
+    // ⚠️ E CADA UM A SEGUIR AO ANTERIOR, quando vão todos para a MESMA faixa. Sem este
+    // acumulador, quatro ficheiros largados de uma vez nasciam todos no mesmo segundo — o lote
+    // deixava de se sobrepor ao que já lá estava e passava a sobrepor-se a si próprio, que é o
+    // mesmo defeito com outro nome.
+    let proximo = inicio;
     try {
       for (let i = 0; i < aceites.length; i += 1) {
         setEnvio({ feitos: i, total: aceites.length });
@@ -803,10 +814,11 @@ const ProjectSpace: FC = () => {
           await catalogDb.createClip({
             track_id: pistaAlvo,
             file_id: linha.id,
-            start_seconds: inicio,
+            start_seconds: proximo,
             offset_seconds: 0,
             duration_seconds: duracao,
           });
+          proximo += duracao;
         } else {
           const nascida = await catalogDb.criarPistaComArquivo({
             versionId: open.id,
@@ -1110,6 +1122,29 @@ const ProjectSpace: FC = () => {
             tipo: 'cortar', clipeId, duracaoAntes: duracao, duracaoDepois: dentro,
             novoClipeId: nascido.id,
           });
+          await refresh();
+          setSaveState('salvo');
+        } catch { setSaveState('erro'); }
+      })();
+    },
+
+    // ⚠️ DUPLICAR TAMBÉM NÃO TOCA NO FICHEIRO, e nem sequer no clipe de origem: nasce uma linha
+    // nova sobre o MESMO áudio, com o mesmo recorte, encostada ao fim da primeira. Onde ela
+    // entra é conta do núcleo, para as duas telas repetirem o clipe no mesmo segundo.
+    aoDuplicarClipe: (clipeId) => {
+      const pista = pistas.find((p) => (p.clips || []).some((c) => c.id === clipeId));
+      const clipe = (pista?.clips || []).find((c) => c.id === clipeId);
+      // A Mix não é uma pista do banco: não há linha onde pendurar a cópia.
+      if (!pista || !clipe || pista.id === ID_DA_MIX) return;
+
+      sujo.current = true;
+      setSaveState('salvando');
+      void (async () => {
+        try {
+          const nascido = await catalogDb.createClip(copiaDoClipe({
+            ...clipe, track_id: pista.id,
+          }));
+          anotar({ tipo: 'duplicar', clipeId, novoClipeId: nascido.id });
           await refresh();
           setSaveState('salvo');
         } catch { setSaveState('erro'); }

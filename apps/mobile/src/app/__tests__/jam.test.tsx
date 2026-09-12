@@ -1004,6 +1004,82 @@ describe('espaço jam', () => {
     expect(mockCriarPista).not.toHaveBeenCalled();
   });
 
+  // ⚠️ E ELE ENTRA NO FIM DA FAIXA, E NÃO NO ZERO. Mandado para uma faixa que já tem áudio, o
+  // take novo nascia EM CIMA do que lá estava: dois clipes no mesmo segundo tocam juntos e
+  // desenham-se um por cima do outro — quem enviava via a montagem engolir o ficheiro e ouvia
+  // uma mistura que nunca pediu. Sobrepor continua a poder fazer-se, arrastando depois; o que
+  // muda é deixar de ser o que acontece sem ninguém pedir.
+  it('o áudio mandado para uma faixa cheia entra depois do que já lá está', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      // O clipe da base começa em 0 e dura 30.
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    (escolherAudio as jest.Mock).mockResolvedValue({
+      nome: 'take 2.wav', uri: 'file:///take2.wav', tipo: 'audio/wav', tamanho: 1024,
+    });
+    (enviarParaOCatalogo as jest.Mock).mockResolvedValue({
+      url: 'https://exemplo.invalid/take2.wav', name: 'take 2.wav',
+    });
+    mockNovoArquivo.mockResolvedValue({ id: 'f-2' });
+
+    const tela = await montar();
+    await tela.findByDisplayValue('Voz');
+    fireEvent.press(tela.getByLabelText('Enviar um áudio para Voz'));
+
+    await waitFor(() => expect(mockCriarClipe).toHaveBeenCalled());
+    expect(mockCriarClipe.mock.calls[0][0]).toMatchObject({ start_seconds: 30 });
+  });
+
+  // O primeiro áudio de uma faixa VAZIA continua a nascer no zero: encostá-lo ao "fim" de uma
+  // faixa sem clipes teria de dar 0, e um `undefined` a escorregar para o banco punha o clipe
+  // num sítio que o Postgres decide.
+  it('numa faixa vazia o primeiro áudio nasce no zero', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista({ clips: [] })] })],
+    }));
+    (escolherAudio as jest.Mock).mockResolvedValue({
+      nome: 'take 1.wav', uri: 'file:///take1.wav', tipo: 'audio/wav', tamanho: 1024,
+    });
+    (enviarParaOCatalogo as jest.Mock).mockResolvedValue({
+      url: 'https://exemplo.invalid/take1.wav', name: 'take 1.wav',
+    });
+    mockNovoArquivo.mockResolvedValue({ id: 'f-2' });
+
+    const tela = await montar();
+    await tela.findByDisplayValue('Voz');
+    fireEvent.press(tela.getByLabelText('Enviar um áudio para Voz'));
+
+    await waitFor(() => expect(mockCriarClipe).toHaveBeenCalled());
+    expect(mockCriarClipe.mock.calls[0][0]).toMatchObject({ start_seconds: 0 });
+  });
+
+  // ⚠️ DUPLICAR É O GESTO DE QUEM MONTA UMA ESTRUTURA: o refrão outra vez, a base a repetir. E
+  // não copia áudio nenhum — a cópia aponta para o MESMO ficheiro, com o mesmo recorte, e o que
+  // muda é só o segundo em que ela entra. É a mesma economia que faz o corte ser instantâneo.
+  it('duplicar o clipe repete-o encostado ao fim dele, sem enviar áudio', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    mockCriarClipe.mockResolvedValue({ id: 'c-2' });
+    const usuario = userEvent.setup();
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    // A barra de ações só existe com o clipe escolhido — como a da web.
+    await usuario.press(tela.getByLabelText('Trecho 1 de Voz'));
+    await usuario.press(tela.getByLabelText('Duplicar o clipe'));
+
+    // O clipe da base começa em 0 e dura 30: a cópia entra no 30, com o mesmo recorte, o mesmo
+    // comprimento e o mesmo ficheiro. Somar a duração ao recorte — o engano por simetria — daria
+    // uma cópia a tocar a parte SEGUINTE do áudio, que soa diferente do que se duplicou.
+    await waitFor(() => expect(mockCriarClipe).toHaveBeenCalledWith({
+      track_id: 't-1', file_id: 'f-1',
+      start_seconds: 30, offset_seconds: 0, duration_seconds: 30,
+    }));
+    // Nada foi enviado: duplicar não passa pelo balde.
+    expect(enviarParaOCatalogo).not.toHaveBeenCalled();
+  });
+
   it('renomear a faixa escreve na hora e grava depois', async () => {
     jest.useFakeTimers();
     const usuario = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });

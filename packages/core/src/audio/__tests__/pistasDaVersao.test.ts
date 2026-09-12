@@ -1,6 +1,6 @@
 import type { CatalogVersion } from '../../interfaces/maestra';
 import {
-  DURACAO_DESCONHECIDA, ID_DA_MIX, NOME_DA_MIX, ehPistaDaMix, montagemDaVersao, nomeDaPistaNova, pistaAlvoDoArrasto, pistasDaGravacao, proximaCorDaPista, proximaPosicaoDaPista,
+  DURACAO_DESCONHECIDA, ID_DA_MIX, NOME_DA_MIX, copiaDoClipe, ehPistaDaMix, fimDaPista, montagemDaVersao, nomeDaPistaNova, pistaAlvoDoArrasto, pistasDaGravacao, proximaCorDaPista, proximaPosicaoDaPista,
 } from '../pistasDaVersao';
 
 // A ponte entre o banco e a mesa: três tabelas de um lado (ficheiros, pistas, clipes), uma
@@ -305,5 +305,87 @@ describe('proximaCorDaPista', () => {
   // livre aos olhos desta conta e duas faixas ficavam iguais.
   it('um índice além da paleta conta pela cor que ele pinta', () => {
     expect(proximaCorDaPista([0, 7])).toBe(2);
+  });
+});
+
+// DUPLICAR UM CLIPE: a cópia encostada ao fim do original.
+//
+// É o gesto de quem monta uma estrutura — o refrão outra vez, a base a repetir — e não copia
+// áudio nenhum: a cópia aponta para o mesmo ficheiro, com o mesmo recorte. O que ela decide é
+// UM número, o segundo em que entra, e é esse número que este bloco prende.
+describe('copiaDoClipe', () => {
+  const original = {
+    track_id: 't1', file_id: 'f1',
+    start_seconds: 12, offset_seconds: 3, duration_seconds: 8,
+  };
+
+  // ⚠️ ONDE O ORIGINAL ACABA, e não onde ele começa. Duas cópias no mesmo segundo soariam como
+  // um clipe só, mais alto, e leriam-se como defeito — a pessoa carregou uma vez e vê uma coisa.
+  it('entra no segundo em que o original termina', () => {
+    expect(copiaDoClipe(original).start_seconds).toBe(20);
+  });
+
+  // O recorte dentro do ficheiro é o MESMO: a cópia é o mesmo pedaço de áudio, noutro lugar da
+  // linha do tempo. Somar a duração aqui — o engano natural, por simetria com o início — daria
+  // uma cópia que toca a parte SEGUINTE do ficheiro, e que soa diferente do que se duplicou.
+  it('leva o mesmo recorte, o mesmo comprimento e o mesmo ficheiro', () => {
+    expect(copiaDoClipe(original)).toEqual({
+      track_id: 't1', file_id: 'f1',
+      start_seconds: 20, offset_seconds: 3, duration_seconds: 8,
+    });
+  });
+
+  // ⚠️ E FICA NA MESMA FAIXA. Duplicar é repetir aqui; mandar a cópia para outra pista seria
+  // um gesto diferente, que ninguém pediu e que o arrasto já faz.
+  it('a cópia nasce na faixa do original', () => {
+    expect(copiaDoClipe({ ...original, track_id: 't9' }).track_id).toBe('t9');
+  });
+
+  // Os números chegam do Postgres como TEXTO (`numeric`). Sem o `Number`, `'12' + '8'` punha a
+  // cópia a começar no segundo 128 — dez minutos de silêncio à frente dela, numa montagem que
+  // parecia vazia.
+  it('os segundos que chegam como texto somam-se como números', () => {
+    expect(copiaDoClipe({
+      track_id: 't1', file_id: 'f1',
+      start_seconds: '12', offset_seconds: '3', duration_seconds: '8',
+    }).start_seconds).toBe(20);
+  });
+});
+
+// ONDE ENTRA O ÁUDIO NOVO DE UMA FAIXA QUE JÁ TEM ÁUDIO.
+//
+// Antes: no segundo zero, em cima do que já lá estava — dois clipes no mesmo sítio, a tocar ao
+// mesmo tempo e desenhados um por cima do outro. Agora encosta ao fim, e sobrepor passa a ser
+// uma escolha de quem arrasta.
+describe('fimDaPista', () => {
+  it('uma faixa vazia acaba no zero, que é onde o primeiro clipe nasce', () => {
+    expect(fimDaPista([])).toBe(0);
+    expect(fimDaPista(null)).toBe(0);
+    expect(fimDaPista(undefined)).toBe(0);
+  });
+
+  it('acaba onde o clipe termina, e não onde ele começa', () => {
+    expect(fimDaPista([{ start_seconds: 10, duration_seconds: 5 }])).toBe(15);
+  });
+
+  // ⚠️ O FIM DE CADA UM, e não o do que começa mais tarde. Um clipe de dois segundos largado no
+  // minuto 3 acaba ANTES de um de quatro minutos que começou no zero: escolher pelo início mais
+  // alto punha o take novo por cima do comprido, que é exatamente o defeito que isto resolve.
+  it('escolhe o que termina mais tarde, mesmo que comece mais cedo', () => {
+    expect(fimDaPista([
+      { start_seconds: 0, duration_seconds: 240 },
+      { start_seconds: 180, duration_seconds: 2 },
+    ])).toBe(240);
+  });
+
+  // ⚠️ OS SEGUNDOS CHEGAM DO POSTGRES COMO TEXTO (`numeric`), e sem o `Number` o `+` CONCATENA:
+  // '10' e '5' dão '105' em vez de 15, e o take novo nasce um minuto e meio à frente, num sítio
+  // que parece um engano do produto.
+  //
+  // ⚠️ E O CASO PRECISA DE NÚMEROS EM QUE CONCATENAR DÊ OUTRA COISA. O meu primeiro era
+  // '0'+'240' contra '0'+'9', e passava com o defeito lá dentro: o `Math.max` numera os textos
+  // outra vez, e '0240' volta a ser 240. A mutação sobreviveu, e foi ela que apanhou o caso.
+  it('os segundos que chegam como texto somam-se como números', () => {
+    expect(fimDaPista([{ start_seconds: '10', duration_seconds: '5' }])).toBe(15);
   });
 });

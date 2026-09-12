@@ -16,7 +16,7 @@ import { FaderEmPe } from './FaderEmPe';
 import {
   encaixeDaGrade, gradeDoCompasso, marcasDaRegua, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
-import { pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
+import { fimDaPista, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import { rotuloDaGuia } from '@maestra/core/audio/exportar';
 import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
 import { iniciais, type Presente } from '@maestra/core/audio/aoVivo';
@@ -166,6 +166,14 @@ export interface AcoesDoEditor {
     clipeId: string, inicio: number, de?: number, pista?: { para: string; de?: string },
   ) => void;
   aoCortarClipe: (clipeId: string, emSegundo: number) => void;
+  /**
+   * Repetir o clipe, encostado ao fim dele próprio.
+   *
+   * ⚠️ NÃO COPIA ÁUDIO. A cópia aponta para o MESMO ficheiro, com o mesmo recorte — é a mesma
+   * economia que faz o corte ser instantâneo. Onde ela entra é conta do núcleo (`copiaDoClipe`),
+   * para as duas telas repetirem o clipe no mesmo sítio.
+   */
+  aoDuplicarClipe: (clipeId: string) => void;
   aoApagarClipe: (clipeId: string) => void;
   aoMudarPista: (pistaId: string, parte: Partial<CatalogTrack>) => void;
   aoApagarPista: (pistaId: string) => void;
@@ -1309,6 +1317,9 @@ export const EditorDaGravacao: FC<{
                               };
                             }}
                             aoCortar={() => { acoes.aoCortarClipe(clipe.id, agulha); setSelecionado(null); }}
+                            aoDuplicar={faixa.id === pistaFixaId
+                              ? undefined
+                              : () => { acoes.aoDuplicarClipe(clipe.id); setSelecionado(null); }}
                             aoApagar={() => { acoes.aoApagarClipe(clipe.id); setSelecionado(null); }}
                           />
                         ))}
@@ -1458,7 +1469,13 @@ export const EditorDaGravacao: FC<{
           // `change` se o valor não mudar, e o segundo envio nunca aconteceria.
           evento.target.value = '';
           if (!arquivos.length) return;
-          escolherArquivos(arquivos, 0, pistaDoEnvio.current ?? undefined);
+          // ⚠️ NO FIM DA FAIXA, E NÃO NO ZERO. Um take mandado para uma faixa que já tem áudio
+          // nascia em cima do que lá estava: dois clipes no mesmo segundo tocam juntos e
+          // desenham-se um por cima do outro, e quem enviava via a montagem engolir o ficheiro.
+          // Encostado ao fim, ele aparece a seguir — e sobrepor passa a ser o gesto de arrastar,
+          // que é uma escolha, em vez de ser o que acontece sem ninguém pedir.
+          const alvo = pistas.find((p) => p.id === pistaDoEnvio.current);
+          escolherArquivos(arquivos, fimDaPista(alvo?.clips), pistaDoEnvio.current ?? undefined);
           pistaDoEnvio.current = null;
         }}
       />

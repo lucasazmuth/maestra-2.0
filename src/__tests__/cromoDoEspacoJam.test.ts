@@ -482,6 +482,91 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(aLinhaDoTempo).not.toContain('Cor de ${pista.nome}');
   });
 
+  // ⚠️ DUPLICAR EXISTE NAS DUAS, AO LADO DA TESOURA, E NÃO COPIA ÁUDIO.
+  //
+  // Cortar e duplicar são o mesmo par de gestos de estrutura — partir uma coisa em duas, repetir
+  // uma coisa duas vezes — e quem monta um arranjo alterna entre eles. A lixeira é a única da
+  // fila que destrói, e por isso não se mete entre as duas.
+  //
+  // ⚠️ E ONDE A CÓPIA ENTRA É CONTA DO NÚCLEO. Escrita à mão em cada tela, ela divergiria no
+  // primeiro ajuste: a web a encostar ao fim e o aparelho a deixar um segundo de folga, ou o
+  // contrário — a mesma montagem com dois desenhos, e ninguém a saber qual é o certo.
+  it('duplicar o clipe existe nas duas, ao lado de cortar, e sai do núcleo', () => {
+    const naWeb = semComentarios(clipe);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    // O botão vem DEPOIS da tesoura e ANTES da lixeira, nas duas.
+    const barraDaWeb = naWeb.slice(naWeb.indexOf("aria-label='Dividir o clipe na agulha'"));
+    expect(barraDaWeb.indexOf("aria-label='Duplicar o clipe'"))
+      .toBeLessThan(barraDaWeb.indexOf("aria-label='Remover o clipe'"));
+
+    const barraDoApp = aLinhaDoTempo.slice(aLinhaDoTempo.indexOf("accessibilityLabel={podeCortar"));
+    expect(barraDoApp.indexOf('accessibilityLabel="Duplicar o clipe"'))
+      .toBeLessThan(barraDoApp.indexOf('accessibilityLabel="Remover o clipe"'));
+
+    // E as duas telas pedem ao núcleo onde a cópia entra, em vez de fazerem a conta.
+    const naTela = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', 'pages', 'Catalog', 'ProjectSpace.tsx'), 'utf8',
+    ));
+    const oApp = semComentarios(app);
+    [naTela, oApp].forEach((fonte) => {
+      expect(fonte).toContain('copiaDoClipe(');
+      expect(fonte).toContain("tipo: 'duplicar'");
+    });
+  });
+
+  // ⚠️ O ÁUDIO NOVO ENTRA NO FIM DA FAIXA, NAS DUAS — e não no segundo zero.
+  //
+  // Mandado para uma faixa que já tem áudio, o take novo nascia EM CIMA do que lá estava: dois
+  // clipes no mesmo segundo tocam juntos e desenham-se um por cima do outro, e quem enviava via
+  // a montagem engolir o ficheiro. Sobrepor continua a poder fazer-se, arrastando depois — o
+  // que muda é deixar de ser o que acontece sem ninguém pedir.
+  //
+  // ⚠️ E O SÍTIO É CONTA DO NÚCLEO, pelo mesmo motivo da cópia: escrita à mão em cada tela, ela
+  // divergiria no primeiro ajuste, e a mesma montagem teria dois desenhos.
+  it('o áudio mandado para uma faixa cheia entra no fim dela, nas duas', () => {
+    const naTela = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', 'pages', 'Catalog', 'ProjectSpace.tsx'), 'utf8',
+    ));
+    const oEditor = semComentarios(editor);
+    const oApp = semComentarios(app);
+
+    // Na web quem escolhe o segundo é o botão da faixa, que lê o fim dela.
+    expect(oEditor).toContain('fimDaPista(alvo?.clips)');
+    expect(oApp).toContain('fimDaPista(');
+
+    // ⚠️ E O LOTE EMPILHA-SE A SI PRÓPRIO. Sem o acumulador, quatro ficheiros de uma vez
+    // deixavam de se sobrepor ao que já lá estava e passavam a sobrepor-se uns aos outros — o
+    // mesmo defeito com outro nome, e o mais fácil de deixar passar.
+    [naTela, oApp].forEach((fonte) => {
+      const posto = fonte.slice(fonte.indexOf('track_id: pistaAlvo') >= 0
+        ? fonte.indexOf('track_id: pistaAlvo')
+        : fonte.indexOf('track_id: pistaId'));
+      const corpo = posto.slice(0, posto.indexOf('} else'));
+      expect(corpo).toContain('start_seconds: proximo');
+      expect(corpo).toContain('proximo += duracao');
+      // E nunca de volta ao zero fixo.
+      expect(corpo).not.toContain('start_seconds: 0');
+    });
+  });
+
+  // ⚠️ O CLIQUE DA BARRA NÃO SOBE — e a regra é da BARRA, não de cada botão.
+  //
+  // O clipe inteiro ALTERNA a seleção ao clique, e a barra vive dentro dele. Com um
+  // `stopPropagation` por botão, cada ação nova nasce sem ele: foi assim que o seletor de cor
+  // chegou quebrado (a paleta abria e fechava no mesmo instante) e, depois de corrigido nele,
+  // foi assim que "duplicar" chegou quebrado a seguir.
+  it('a barra de ações do clipe para o clique num sítio só, na web', () => {
+    const naWeb = semComentarios(clipe);
+    const daBarra = naWeb.slice(naWeb.indexOf('bottom: 6, left: 6,'));
+    const acoes = daBarra.slice(0, daBarra.indexOf("role='group'"));
+
+    // O contentor para-o; nenhum botão da fila precisa de o repetir.
+    const abertura = naWeb.slice(naWeb.indexOf('{selecionado && !fixo && ('), naWeb.indexOf('bottom: 6, left: 6,'));
+    expect(abertura).toContain('onClick={(evento) => evento.stopPropagation()}');
+    expect(acoes).not.toContain('evento.stopPropagation(); ');
+  });
+
   // ⚠️ A COR MORA NA MONTAGEM, e não na coluna das faixas.
   //
   // O cabeçalho tinha uma fita de 3 px da cor da pista na borda esquerda, nas duas telas. Saiu
@@ -901,6 +986,7 @@ describe('cromo do editor do Espaço JAM', () => {
       expect(oClipe).not.toMatch(/\/>\s*DIVIDIR/);
       expect(oClipe).not.toMatch(/\/>\s*REMOVER/);
       expect(oClipe).toContain('<FiScissors size={13} />');
+      expect(oClipe).toContain('<FiCopy size={13} />');
       expect(oClipe).toContain('<FiTrash2 size={13} />');
       expect(oClipe).toContain("aria-label='Dividir o clipe na agulha'");
       expect(oClipe).toContain("aria-label='Remover o clipe'");

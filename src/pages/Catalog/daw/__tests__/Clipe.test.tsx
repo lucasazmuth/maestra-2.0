@@ -26,6 +26,7 @@ const umClipe = (over: Partial<CatalogClip> = {}): CatalogClip => ({
 const montar = (over: Partial<React.ComponentProps<typeof Clipe>> = {}) => {
   const aoSelecionar = jest.fn();
   const aoPintar = jest.fn();
+  const aoDuplicar = jest.fn();
   render(
     <Clipe
       clipe={umClipe()}
@@ -40,12 +41,13 @@ const montar = (over: Partial<React.ComponentProps<typeof Clipe>> = {}) => {
       aoSelecionar={aoSelecionar}
       aoArrastar={() => {}}
       aoCortar={() => {}}
+      aoDuplicar={aoDuplicar}
       aoApagar={() => {}}
       aoPintar={aoPintar}
       {...over}
     />,
   );
-  return { aoSelecionar, aoPintar };
+  return { aoSelecionar, aoPintar, aoDuplicar };
 };
 
 describe('a barra de ações do clipe', () => {
@@ -87,12 +89,33 @@ describe('a barra de ações do clipe', () => {
     expect(screen.getByLabelText('Azul')).toHaveAttribute('aria-pressed', 'false');
   });
 
+  // ⚠️ DUPLICAR FICA AO LADO DA TESOURA, e não no fim da fila. Cortar e duplicar são o mesmo
+  // par de gestos de estrutura — partir uma coisa em duas, repetir uma coisa duas vezes — e quem
+  // monta um arranjo alterna entre eles. A lixeira é a única da fila que destrói, e o vizinho
+  // dela decide-se com mais cuidado do que a ordem de escrita do JSX.
+  it('duplicar fica entre cortar e apagar, e chama quem repete', async () => {
+    const usuario = userEvent.setup();
+    const { aoDuplicar, aoSelecionar } = montar();
+
+    const barra = screen.getByLabelText('Duplicar o clipe').parentElement!;
+    expect(Array.from(barra.children, (b) => b.getAttribute('aria-label'))).toEqual([
+      'Dividir o clipe na agulha', 'Duplicar o clipe', 'Remover o clipe', 'Cor da faixa',
+    ]);
+
+    await usuario.click(screen.getByLabelText('Duplicar o clipe'));
+    expect(aoDuplicar).toHaveBeenCalledTimes(1);
+    // ⚠️ E O CLIQUE NÃO SOBE — a regra é da BARRA, e não de cada botão. Este caso apanhou-a a
+    // faltar: o `stopPropagation` vivia no botão da cor, e "duplicar" nasceu sem ele.
+    expect(aoSelecionar).not.toHaveBeenCalled();
+  });
+
   // ⚠️ A MIX NÃO SE PINTA, e não é arbitrário: ela não é uma faixa da montagem, é a gravação
   // inteira por montar. A barra toda não existe nela — nem tesoura, nem lixeira, nem cor.
   it('a Mix não oferece ações nenhumas', () => {
     montar({ fixo: true });
 
     expect(screen.queryByLabelText('Cor da faixa')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Duplicar o clipe')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Remover o clipe')).not.toBeInTheDocument();
   });
 

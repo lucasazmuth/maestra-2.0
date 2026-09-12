@@ -1,5 +1,5 @@
 import { FC, useEffect, useRef, useState } from 'react';
-import { FiScissors, FiTrash2 } from 'react-icons/fi';
+import { FiCopy, FiScissors, FiTrash2 } from 'react-icons/fi';
 
 import { CORES_DAS_PISTAS, NOMES_DAS_CORES } from '@maestra/core/constants/design';
 import type { CatalogClip } from '@maestra/core/interfaces/maestra';
@@ -65,9 +65,19 @@ export const Clipe: FC<{
   aoSelecionar: () => void;
   aoArrastar: (evento: React.PointerEvent) => void;
   aoCortar: () => void;
+  /**
+   * Repetir este clipe, encostado ao fim dele próprio.
+   *
+   * ⚠️ AO LADO DA TESOURA, e não no fim da fila. Cortar e duplicar são o mesmo par de gestos
+   * de estrutura — partir uma coisa em duas, repetir uma coisa duas vezes — e quem monta um
+   * arranjo alterna entre eles. A lixeira fica onde estava: é a única da fila que destrói.
+   *
+   * Ausente na Mix, que não é uma pista da montagem e não tem onde guardar a cópia.
+   */
+  aoDuplicar?: () => void;
   aoApagar: () => void;
   aoPintar?: (cor: number) => void;
-}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, noDedo, indiceDaCor, aoSelecionar, aoArrastar, aoCortar, aoApagar, aoPintar }) => {
+}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, noDedo, indiceDaCor, aoSelecionar, aoArrastar, aoCortar, aoDuplicar, aoApagar, aoPintar }) => {
   /** A paleta deste clipe, aberta ou não. Só existe com o clipe escolhido, como a barra. */
   const [paletaAberta, setPaletaAberta] = useState(false);
   /**
@@ -210,6 +220,16 @@ export const Clipe: FC<{
       {selecionado && !fixo && (
         <div
           onPointerDown={(evento) => evento.stopPropagation()}
+          // ⚠️ O CLIQUE NÃO PODE SUBIR — E A REGRA É DA BARRA, NÃO DE CADA BOTÃO. O clipe
+          // inteiro tem um `onClick` que ALTERNA a seleção, e a barra vive dentro dele: sem
+          // isto, cada botão daqui desmarcava o clipe no mesmo gesto em que agia.
+          //
+          // Com a tesoura e a lixeira ninguém notou, porque as duas já largam a seleção de
+          // propósito e o efeito coincidia. O botão da cor foi onde apareceu: a paleta abria e
+          // fechava no mesmo instante, e parecia que ele não fazia nada. Pôr um `stopPropagation`
+          // em cada botão resolvia um de cada vez e deixava o próximo por resolver — foi
+          // exatamente o que aconteceu quando "duplicar" chegou. Aqui, resolve-se a classe.
+          onClick={(evento) => evento.stopPropagation()}
           style={{
             // ⚠️ NO TELEMÓVEL A BARRA VIVE DENTRO DO CLIPE. Por cima dele (que é onde ela fica
             // no desktop, e onde não tapa a onda) a primeira pista atirava-a para fora do topo
@@ -248,6 +268,25 @@ export const Clipe: FC<{
           >
             <FiScissors size={13} />
           </button>
+          {aoDuplicar && (
+            <button
+              type='button'
+              onClick={aoDuplicar}
+              title='Duplicar o clipe'
+              aria-label='Duplicar o clipe'
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                ...alvo,
+                background: 'transparent',
+                border: `1px solid ${DS.color.borda}`,
+                borderRadius: 4,
+                color: DS.color.texto,
+                cursor: 'pointer',
+              }}
+            >
+              <FiCopy size={13} />
+            </button>
+          )}
           <button
             type='button'
             onClick={aoApagar}
@@ -268,11 +307,7 @@ export const Clipe: FC<{
           {aoPintar && (
             <button
               type='button'
-              // ⚠️ O CLIQUE NÃO PODE SUBIR. O clipe inteiro tem um `onClick` que ALTERNA a
-              // seleção, e a barra vive dentro dele: sem parar aqui, abrir a paleta desmarcava
-              // o clipe no mesmo gesto e a barra — com a paleta dentro — desaparecia. O painel
-              // abria e fechava no mesmo instante, e parecia que o botão não fazia nada.
-              onClick={(evento) => { evento.stopPropagation(); setPaletaAberta((v) => !v); }}
+              onClick={() => setPaletaAberta((v) => !v)}
               aria-haspopup='true'
               aria-expanded={paletaAberta}
               title='Cor da faixa'
@@ -310,7 +345,7 @@ export const Clipe: FC<{
                 <button
                   key={tinta}
                   type='button'
-                  onClick={(evento) => { evento.stopPropagation(); aoPintar(i); setPaletaAberta(false); }}
+                  onClick={() => { aoPintar(i); setPaletaAberta(false); }}
                   aria-label={NOMES_DAS_CORES[i]}
                   aria-pressed={indiceDaCor % CORES_DAS_PISTAS.length === i}
                   title={NOMES_DAS_CORES[i]}

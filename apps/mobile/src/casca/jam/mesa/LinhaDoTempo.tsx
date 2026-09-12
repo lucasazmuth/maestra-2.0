@@ -112,7 +112,8 @@ const OndaDoClipe = memo(({ picos, cor, largura, altura }: {
 const Clipe = ({
   clipe, rotulo, nome, cor, escala, largura, picos: osPicos, escolhido, podeEditar, agulha, duracao,
   degrauPossivel,
-  passoDoEncaixe, aoEscolher, aoLargar, aoMoverEnquantoArrasta, aoCortar, aoApagar, aoPintar,
+  passoDoEncaixe, aoEscolher, aoLargar, aoMoverEnquantoArrasta, aoCortar, aoDuplicar, aoApagar,
+  aoPintar,
 }: {
   clipe: { id: string; inicio: number };
   /** O que o leitor de tela lê, e o que os testes procuram. Um alvo mudo não se alcança. */
@@ -145,6 +146,14 @@ const Clipe = ({
   aoLargar: (inicio: number, de: number, degrau: number) => void;
   aoMoverEnquantoArrasta: (inicio: number) => void;
   aoCortar: () => void;
+  /**
+   * Repetir este clipe, encostado ao fim dele próprio.
+   *
+   * ⚠️ AO LADO DA TESOURA, e não no fim da fila. Cortar e duplicar são o mesmo par de gestos de
+   * estrutura — partir uma coisa em duas, repetir uma coisa duas vezes — e quem monta um arranjo
+   * alterna entre eles. A lixeira fica onde estava: é a única da fila que destrói.
+   */
+  aoDuplicar?: () => void;
   aoApagar: () => void;
   /**
    * Abre a paleta da FAIXA onde este clipe está.
@@ -263,6 +272,17 @@ const Clipe = ({
             >
               <Feather name="scissors" size={12} color={podeCortar ? AZUL_DO_EDITOR : COR_EDITOR.estrela} />
             </Pressable>
+            {aoDuplicar && (
+              <Pressable
+                onPress={aoDuplicar}
+                hitSlop={6}
+                style={estilos.acaoDoClipe}
+                accessibilityRole="button"
+                accessibilityLabel="Duplicar o clipe"
+              >
+                <Feather name="copy" size={12} color={COR_EDITOR.titulo} />
+              </Pressable>
+            )}
             <Pressable
               onPress={aoApagar}
               hitSlop={6}
@@ -297,6 +317,7 @@ const Clipe = ({
 export const LinhaDoTempo = ({
   pistas, estado, picos, duracaoDoClipe, bpm, podeEditar, zoom, aoEncaixar,
   armadas, aoArmar, aoRenomearPista, aoApagarPista, aoMudarPista, aoSolarPista, aoPintarPista,
+  aoDuplicar,
   aoEnviarPara,
   aoAdicionarFaixa,
   aoBuscar, aoMover, aoCortar, aoApagar,
@@ -328,6 +349,8 @@ export const LinhaDoTempo = ({
   aoApagarPista?: (pistaId: string) => void;
   aoMudarPista?: (pistaId: string, muda: boolean) => void;
   aoSolarPista?: (pistaId: string, solo: boolean) => void;
+  /** Repete o clipe, encostado ao fim dele próprio. */
+  aoDuplicar?: (clipeId: string) => void;
   /** Pinta a faixa com uma das seis cores da paleta. */
   aoPintarPista?: (pistaId: string, cor: number) => void;
   aoEnviarPara?: (pistaId: string) => void;
@@ -600,6 +623,9 @@ export const LinhaDoTempo = ({
                       aoMoverEnquantoArrasta={(inicio) => aoMover?.(clipe.id, inicio)}
                       passoDoEncaixe={passoDoEncaixe}
                       aoCortar={() => { aoCortar?.(clipe.id, estado.posicao); setEscolhido(null); }}
+                      aoDuplicar={aoDuplicar && !ehPistaDaMix(pista.id)
+                        ? () => { aoDuplicar(clipe.id); setEscolhido(null); }
+                        : undefined}
                       aoApagar={() => { aoApagar?.(clipe.id); setEscolhido(null); }}
                       aoPintar={aoPintarPista && !ehPistaDaMix(pista.id)
                         ? () => setPaletaDe(pista.id)

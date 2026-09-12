@@ -113,6 +113,28 @@ describe('conferirOPasso — cortar', () => {
   });
 });
 
+// ⚠️ DUPLICAR É O ESPELHO DE APAGAR, e é por isso que tem os seus próprios casos: a cópia tem
+// de EXISTIR para eu poder desfazer, e tem de estar FORA para eu poder refazer. Tratá-la como
+// um `cortar` — o engano natural, por serem os dois "nasce um clipe novo" — faria a conferência
+// exigir uma duração do original que duplicar nunca mexeu.
+describe('conferirOPasso — duplicar', () => {
+  const duplicar: PassoDaMontagem = { tipo: 'duplicar', clipeId: 'c1', novoClipeId: 'c2' };
+  const comACopia = mundo({ clipes: [clipe(), clipe({ id: 'c2', start_seconds: 17 })] });
+
+  it('desfazer exige que a cópia ainda esteja lá', () => {
+    expect(conferirOPasso(duplicar, comACopia, 'desfazer')).toBeNull();
+  });
+
+  it('não anda se alguém já removeu a cópia', () => {
+    expect(conferirOPasso(duplicar, mundo(), 'desfazer')).toBe('Alguém mexeu nisto depois de você.');
+  });
+
+  it('refazer exige o contrário: que ela tenha saído', () => {
+    expect(conferirOPasso(duplicar, mundo(), 'refazer')).toBeNull();
+    expect(conferirOPasso(duplicar, comACopia, 'refazer')).toBe('Alguém mexeu nisto depois de você.');
+  });
+});
+
 describe('conferirOPasso — acrescentar faixas', () => {
   const criar: PassoDaMontagem = { tipo: 'acrescentarPistas', pistaIds: ['t1'] };
 

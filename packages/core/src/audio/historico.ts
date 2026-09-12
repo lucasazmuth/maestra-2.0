@@ -35,6 +35,11 @@ export type PassoDaMontagem =
   | { tipo: 'apagarClipe'; clipeId: string }
   | { tipo: 'apagarPista'; pistaId: string }
   | { tipo: 'cortar'; clipeId: string; duracaoAntes: number; duracaoDepois: number; novoClipeId: string }
+  // ⚠️ DUPLICAR É O CONTRÁRIO DE APAGAR, e não um caso do `cortar`. O corte MEXE no clipe de
+  // origem (encolhe-o) e por isso carrega as duas durações; duplicar não lhe toca em nada — só
+  // nasce uma cópia ao lado. Guardar o id do original mesmo assim não é enfeite: é o que
+  // permite dizer "duplicar o clipe" e, um dia, encontrar de quem a cópia veio.
+  | { tipo: 'duplicar'; clipeId: string; novoClipeId: string }
   | { tipo: 'acrescentarPistas'; pistaIds: string[] };
 
 export interface Historico {
@@ -175,6 +180,9 @@ export const conferirOPasso = (
       const direito = !!clipe(passo.novoClipeId);
       return (voltando ? direito : !direito) ? null : MEXERAM;
     }
+    case 'duplicar':
+      // A cópia existe depois do gesto e não existe antes dele — o espelho exato do `apagarClipe`.
+      return (voltando ? !!clipe(passo.novoClipeId) : !clipe(passo.novoClipeId)) ? null : MEXERAM;
     case 'acrescentarPistas': {
       if (!voltando) {
         // Refazer traz as pistas de volta: elas têm de estar fora de cena.
@@ -208,6 +216,7 @@ export const descreverPasso = (passo?: PassoDaMontagem | null): string | null =>
     case 'apagarClipe': return 'remover o clipe';
     case 'apagarPista': return 'apagar a pista';
     case 'cortar': return 'dividir o clipe';
+    case 'duplicar': return 'duplicar o clipe';
     case 'acrescentarPistas':
       return passo.pistaIds.length > 1
         ? `acrescentar ${passo.pistaIds.length} pistas`

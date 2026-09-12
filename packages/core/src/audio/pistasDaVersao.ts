@@ -53,6 +53,69 @@ export const pistaAlvoDoArrasto = (
 };
 
 /**
+ * Em que segundo a faixa acaba: onde o último clipe dela termina.
+ *
+ * ⚠️ É AQUI QUE ENTRA O ÁUDIO NOVO DE UMA FAIXA QUE JÁ TEM ÁUDIO. Antes, um take mandado para
+ * uma faixa cheia nascia no segundo ZERO — em cima do que já lá estava. Dois clipes no mesmo
+ * sítio tocam ao mesmo tempo e desenham-se um por cima do outro: quem enviava via a montagem
+ * "engolir" o ficheiro e ouvia uma mistura que nunca pediu. Encostado ao fim, o take novo
+ * aparece a seguir e pode ser arrastado para cima do outro DEPOIS, se for isso que se quer —
+ * sobrepor passa a ser uma escolha, e deixa de ser o que acontece por omissão.
+ *
+ * ⚠️ O FIM DE CADA CLIPE, e não o do que começa mais tarde. O último a começar pode ser o mais
+ * curto: um clipe de dois segundos largado no minuto 3 acaba antes de um de quatro minutos que
+ * começou no zero, e usar o início mais alto punha o take novo por cima do comprido.
+ *
+ * Vazia, devolve 0 — que é onde o primeiro clipe de uma faixa tem de nascer.
+ */
+export const fimDaPista = (
+  clipes: { start_seconds: number | string; duration_seconds: number | string }[] | null | undefined,
+): number => (clipes ?? []).reduce((maior, c) => Math.max(
+  maior,
+  (Number(c.start_seconds) || 0) + (Number(c.duration_seconds) || 0),
+), 0);
+
+/**
+ * A cópia de um clipe, encostada ao fim do original.
+ *
+ * ⚠️ COPIAR UM CLIPE NÃO COPIA ÁUDIO. Ela aponta para o MESMO ficheiro, com o mesmo recorte
+ * (`offset_seconds`) e o mesmo comprimento: o que muda é só onde ela entra na linha do tempo.
+ * É a mesma economia que faz o corte ser instantâneo — não há nada para enviar nem decodificar,
+ * e duplicar um refrão de dois minutos custa uma linha no banco.
+ *
+ * ⚠️ E ELA ENTRA ONDE O ORIGINAL ACABA, colada a ele. Este é o gesto de quem está a montar uma
+ * estrutura — o refrão outra vez, a base a repetir — e quem faz isso quer os dois seguidos, não
+ * um por cima do outro nem um segundo à frente. Dois clipes sobrepostos no mesmo sítio soariam
+ * como um só, mais alto, e pareceriam um defeito.
+ *
+ * Os números chegam do banco como TEXTO (`numeric` em Postgres) e por isso passam pelo `Number`:
+ * sem isso, `'12' + '3'` dava um clipe a começar no segundo 123.
+ */
+export const copiaDoClipe = (clipe: {
+  track_id: string;
+  file_id: string;
+  start_seconds: number | string;
+  offset_seconds: number | string;
+  duration_seconds: number | string;
+}): {
+  track_id: string;
+  file_id: string;
+  start_seconds: number;
+  offset_seconds: number;
+  duration_seconds: number;
+} => {
+  const inicio = Number(clipe.start_seconds) || 0;
+  const duracao = Number(clipe.duration_seconds) || 0;
+  return {
+    track_id: clipe.track_id,
+    file_id: clipe.file_id,
+    start_seconds: inicio + duracao,
+    offset_seconds: Number(clipe.offset_seconds) || 0,
+    duration_seconds: duracao,
+  };
+};
+
+/**
  * Em que lugar entra uma faixa nova: depois da última.
  *
  * ⚠️ A PRÓXIMA POSIÇÃO, e não a CONTAGEM das faixas. As duas dão o mesmo número enquanto as

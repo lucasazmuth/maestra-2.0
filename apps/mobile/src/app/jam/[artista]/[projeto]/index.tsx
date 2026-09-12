@@ -15,7 +15,8 @@ import {
   type Historico, type PassoDaMontagem,
 } from '@maestra/core/audio/historico';
 import {
-  ehPistaDaMix, montagemDaVersao, nomeDaPistaNova, proximaCorDaPista, proximaPosicaoDaPista,
+  copiaDoClipe, ehPistaDaMix, fimDaPista, montagemDaVersao, nomeDaPistaNova,
+  proximaCorDaPista, proximaPosicaoDaPista,
 } from '@maestra/core/audio/pistasDaVersao';
 import { assinaturaDaPista, assinaturaDoClipe, iniciais } from '@maestra/core/audio/aoVivo';
 import { useJamAoVivo } from '@maestra/core/hooks/useJamAoVivo';
@@ -576,6 +577,12 @@ export default function EspacoJam() {
         await (voltando ? catalogo.marcarClipeApagado : catalogo.restaurarClipe)(passo.novoClipeId);
         (voltando ? marquei : desmarquei)(passo.novoClipeId);
         break;
+      case 'duplicar':
+        // O espelho de apagar: desfazer tira a cópia de cena, refazer traz-na de volta. O clipe
+        // de origem nunca foi tocado, e por isso não aparece aqui.
+        await (voltando ? catalogo.marcarClipeApagado : catalogo.restaurarClipe)(passo.novoClipeId);
+        (voltando ? marquei : desmarquei)(passo.novoClipeId);
+        break;
       default:
         break;
     }
@@ -714,6 +721,29 @@ export default function EspacoJam() {
     } catch { setSelo('erro'); }
   };
 
+  /**
+   * Repetir o clipe, encostado ao fim dele próprio.
+   *
+   * ⚠️ NÃO COPIA ÁUDIO, e nem toca no clipe de origem: nasce uma linha nova sobre o MESMO
+   * ficheiro, com o mesmo recorte. Onde ela entra é conta do núcleo, para as duas telas
+   * repetirem o clipe no mesmo segundo.
+   */
+  const duplicarClipe = async (clipeId: string) => {
+    const faixa = (aberta?.tracks ?? []).find((t) => (t.clips ?? []).some((c) => c.id === clipeId));
+    const clipe = (faixa?.clips ?? []).find((c) => c.id === clipeId);
+    // A Mix não é uma pista do banco: não há linha onde pendurar a cópia.
+    if (!faixa || !clipe || ehPistaDaMix(faixa.id)) return;
+
+    sujo.current = true;
+    setSelo('salvando');
+    try {
+      const nascido = await catalogo.createClip(copiaDoClipe({ ...clipe, track_id: faixa.id }));
+      anotar({ tipo: 'duplicar', clipeId, novoClipeId: nascido.id });
+      await buscar();
+      setSelo('salvo');
+    } catch { setSelo('erro'); }
+  };
+
   const apagarClipe = async (clipeId: string) => {
     sujo.current = true;
     esquecerClipe(clipeId);
@@ -846,6 +876,16 @@ export default function EspacoJam() {
     // salvar nada.
     let entraram = 0;
     const nascidas: string[] = [];
+    // ⚠️ NO FIM DA FAIXA, E NÃO NO ZERO. Um take mandado para uma faixa que já tem áudio nascia
+    // em cima do que lá estava: dois clipes no mesmo segundo tocam juntos e desenham-se um por
+    // cima do outro, e quem enviava via a montagem engolir o ficheiro. Encostado ao fim, ele
+    // aparece a seguir — e sobrepor passa a ser o gesto de arrastar, que é uma escolha.
+    //
+    // E cada um a seguir ao ANTERIOR: sem o acumulador, quatro ficheiros escolhidos de uma vez
+    // deixavam de se sobrepor ao que já lá estava e passavam a sobrepor-se a si próprios.
+    let proximo = fimDaPista(
+      pistaId ? (aberta.tracks ?? []).find((p) => p.id === pistaId)?.clips : undefined,
+    );
     try {
       for (let i = 0; i < aceites.length; i += 1) {
         setEnvio({ feitos: i, total: aceites.length });
@@ -877,10 +917,11 @@ export default function EspacoJam() {
           await catalogo.createClip({
             track_id: pistaId,
             file_id: linha.id,
-            start_seconds: 0,
+            start_seconds: proximo,
             offset_seconds: 0,
             duration_seconds: duracao,
           });
+          proximo += duracao;
         } else {
           // eslint-disable-next-line no-await-in-loop
           const nascida = await catalogo.criarPistaComArquivo({
@@ -1612,6 +1653,7 @@ export default function EspacoJam() {
                 aoBuscar={mesa.irPara}
                 aoMover={moverClipe}
                 aoCortar={(id, seg) => { void cortarClipe(id, seg); }}
+                aoDuplicar={(id) => { void duplicarClipe(id); }}
                 aoApagar={(id) => { void apagarClipe(id); }}
               />
             ) : (
