@@ -200,7 +200,23 @@ export default function EspacoJam() {
    * avisa, e o aviso é merecido: é estado escrito no vazio.
    */
   const noAr = useRef(true);
-  useEffect(() => () => { noAr.current = false; }, []);
+  /**
+   * A tela ainda está montada?
+   *
+   * ⚠️ O `true` TEM DE SER POSTO AQUI DENTRO, e não só no `useRef`. O React reexecuta efeitos
+   * sem desmontar o componente — o Fast Refresh do Metro faz isso a cada gravação, e o
+   * `StrictMode` fá-lo no próprio arranque. Nesses casos a limpeza corre, põe `false`, e o
+   * efeito volta a correr sem pôr `true` de novo: a partir daí TODA leitura do banco é feita e
+   * deitada fora, e a tela congela na montagem que tinha.
+   *
+   * Foi assim que o editor passou uma sessão inteira a mostrar duas faixas com três no banco, e
+   * o desfazer pareceu não funcionar — ele funcionava, gravava certo, e o `buscar()` que vinha
+   * a seguir era descartado. O mesmo `noAr` guarda a percentagem da guia, que congelaria igual.
+   */
+  useEffect(() => {
+    noAr.current = true;
+    return () => { noAr.current = false; };
+  }, []);
 
   const buscar = useCallback(async () => {
     if (!projetoId) return;

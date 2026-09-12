@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { Alert } from 'react-native';
 import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
@@ -303,6 +304,18 @@ const montar = () => render(
 );
 
 /**
+ * A mesma tela, com os efeitos a correr DUAS vezes.
+ *
+ * É o que o `StrictMode` faz de propósito, e é também o que o Fast Refresh do Metro faz a cada
+ * gravação de um ficheiro: monta, limpa, monta outra vez, sem desmontar o componente.
+ */
+const montarEmDobro = () => render(
+  <StrictMode>
+    <SafeAreaProvider initialMetrics={MEDIDAS}><EspacoJam /></SafeAreaProvider>
+  </StrictMode>,
+);
+
+/**
  * Abre a aba do Mixer.
  *
  * ⚠️ O EDITOR PASSOU A ABRIR NA LINHA DO TEMPO, como a web: ela é a cara dele, e chegar ao
@@ -330,6 +343,25 @@ describe('espaço jam', () => {
     mockGravarFixo.mockResolvedValue({ url: 'https://exemplo.invalid/guia.mp3?v=1', path: 'a-1/p-1/guia.mp3' });
     mockRestaurar.mockResolvedValue(undefined);
   });
+
+  // ⚠️ A GUARDA DE "AINDA ESTOU MONTADA" TEM DE SE REARMAR. O React reexecuta efeitos sem
+  // desmontar o componente: o `StrictMode` fá-lo no arranque e o Fast Refresh do Metro a cada
+  // gravação de um ficheiro. Com a guarda posta só no `useRef` e limpa só na limpeza, a segunda
+  // passagem deixava-a em `false` para sempre — e a partir daí TODA leitura do banco era feita
+  // e deitada fora.
+  //
+  // O sintoma não era um erro: era a tela a CONGELAR na montagem que já tinha. O editor passou
+  // uma sessão inteira a mostrar duas faixas com três no banco, e o desfazer pareceu não
+  // funcionar — ele gravava certo, e o `buscar()` que vinha a seguir não chegava à tela.
+  //
+  // Aqui isso aparece já na primeira leitura: sem a rearmação, o editor nunca sai da espera.
+  it('sobrevive aos efeitos correrem duas vezes, como no Fast Refresh', async () => {
+    const tela = await montarEmDobro();
+
+    expect(await tela.findByText('FAIXAS')).toBeTruthy();
+    tela.unmount();
+  });
+
 
   // ⚠️ VOLTAR AO INÍCIO E REPETIR CHEGARAM DA WEB. A mesa do núcleo já sabia fazer as duas desde
   // que o transporte da web as ganhou; o app é que não as oferecia. Sem a primeira, recomeçar
