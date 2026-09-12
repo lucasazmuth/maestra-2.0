@@ -1,6 +1,6 @@
 import {
   BPM_MAXIMO, BPM_MINIMO, ENCAIXE_SEM_ANDAMENTO, TEMPOS_POR_COMPASSO,
-  encaixeDaGrade, gradeDoCompasso, marcasDaRegua,
+  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra,
 } from '../grade';
 
 // O BPM NÃO FAZIA NADA NA TELA.
@@ -147,5 +147,44 @@ describe('marcasDaRegua', () => {
   it('tem teto', () => {
     const grade = gradeDoCompasso(400, 600)!;
     expect(marcasDaRegua(grade, 3600, 600, 1).length).toBeLessThanOrEqual(900);
+  });
+});
+
+// O ZOOM QUE NÃO PERDE A AGULHA.
+//
+// Quem aproxima a linha do tempo está quase sempre a preparar um corte: quer ver a agulha de
+// perto para acertar no sítio. Mas aproximar multiplica a distância de tudo ao zero, e a mesma
+// rolagem passa a apontar para outro segundo — a agulha saltava para fora do ecrã, e o gesto
+// seguinte era sempre rolar à procura dela. Aproximar custava dois gestos, e o segundo não
+// tinha nada a ver com o que se queria fazer.
+describe('rolagemQueCentra', () => {
+  // 60 s × 60 px/s = 3600 px até à agulha; metade de 800 são 400.
+  it('põe o segundo no meio do que se vê', () => {
+    expect(rolagemQueCentra(60, 60, 800, 100000)).toBe(3200);
+  });
+
+  // ⚠️ E ESCALA COM O ZOOM. É este o ponto todo: a 200 % a agulha está ao DOBRO da distância do
+  // zero, e uma rolagem que não a acompanhe aponta para metade do tempo.
+  it('acompanha a escala, que é o que o zoom muda', () => {
+    expect(rolagemQueCentra(60, 120, 800, 100000)).toBe(6800);
+  });
+
+  // Perto do princípio não há montagem à esquerda para encher metade da tela: centrar à força
+  // pedia uma rolagem negativa, e o navegador punha-a a zero de qualquer forma — aqui fica dito.
+  it('no princípio encosta ao zero, em vez de pedir rolagem negativa', () => {
+    expect(rolagemQueCentra(2, 60, 800, 100000)).toBe(0);
+  });
+
+  // ⚠️ E NO FIM PÁRA NO FIM. Sem o teto, centrar a agulha do último segundo deixava meia tela
+  // de vazio depois do fim da música — e a montagem parecia ter acabado antes do que acabou.
+  it('no fim pára onde a rolagem acaba, sem deixar vazio à direita', () => {
+    expect(rolagemQueCentra(1000, 60, 800, 5000)).toBe(5000);
+  });
+
+  // Uma montagem que cabe inteira na tela não tem para onde rolar: o máximo é 0 ou negativo, e
+  // o resultado tem de ser 0 — nunca um número negativo a escorregar para o `scrollLeft`.
+  it('sem nada para rolar, fica no zero', () => {
+    expect(rolagemQueCentra(60, 60, 800, 0)).toBe(0);
+    expect(rolagemQueCentra(60, 60, 800, -200)).toBe(0);
   });
 });

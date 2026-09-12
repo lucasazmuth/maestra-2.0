@@ -50,6 +50,37 @@ export const zoomQueEncaixa = (duracao: number, larguraVisivel: number): number 
 };
 
 /**
+ * Onde a rolagem tem de ficar para um dado segundo aparecer NO MEIO do que se vê.
+ *
+ * ⚠️ ISTO É O QUE FAZ O ZOOM SERVIR PARA ALGUMA COISA. Quem aproxima a linha do tempo está
+ * quase sempre a preparar um corte: quer ver a agulha de perto para acertar no sítio exato.
+ * Mas aproximar multiplica a distância de tudo ao zero — a mesma rolagem passa a apontar para
+ * um segundo completamente diferente — e a agulha saltava para fora do ecrã. O gesto seguinte
+ * era sempre o mesmo: rolar à procura dela. Aproximar custava dois gestos, e o segundo não
+ * tinha nada a ver com o que se queria fazer.
+ *
+ * Centrada, ela está onde o olho já estava, e sobra metade da largura de cada lado — que é
+ * exatamente o que se quer ver ao decidir onde cortar.
+ *
+ * ⚠️ E A CONTA É COM A LARGURA DAS ONDAS, não com a da tela. A coluna das faixas fica colada à
+ * esquerda por cima da montagem: descontá-la é o que impede a agulha de ficar centrada numa
+ * área que está metade tapada.
+ *
+ * `maximo` é o fim da rolagem possível (o conteúdo menos o que se vê). O resultado nunca sai
+ * dele: perto das pontas a agulha não pode ficar no meio — não há montagem que chegue de um
+ * dos lados — e forçá-la deixaria uma faixa vazia à vista.
+ */
+export const rolagemQueCentra = (
+  segundo: number,
+  escala: number,
+  larguraVisivel: number,
+  maximo: number,
+): number => Math.max(0, Math.min(
+  maximo > 0 ? maximo : 0,
+  segundo * escala - larguraVisivel / 2,
+));
+
+/**
  * O encaixe de quem NÃO tem andamento escrito, em segundos.
  *
  * ⚠️ VEIO DOS TOKENS DA WEB QUANDO A GRADE MUDOU-SE PARA O NÚCLEO. Ele é o passo do arrasto, e o

@@ -14,7 +14,7 @@ import useIsMobile from '../../../utils/isMobile';
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
 import { FaderEmPe } from './FaderEmPe';
 import {
-  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, zoomQueEncaixa,
+  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
 import { fimDaPista, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import { rotuloDaGuia } from '@maestra/core/audio/exportar';
@@ -407,6 +407,40 @@ export const EditorDaGravacao: FC<{
   // 25 % de sempre (nada muda), e no telemóvel dá exatamente o ponto de partida — sem isto,
   // quem aproximasse uma vez não conseguia voltar a ver a música inteira.
   const zoomMinimo = Math.min(ZOOM_MINIMO, encaixe);
+
+  /**
+   * Mudar o zoom SEM perder a agulha de vista.
+   *
+   * ⚠️ QUEM APROXIMA ESTÁ A PREPARAR UM CORTE. Quer ver a agulha de perto para acertar no sítio
+   * exato — e era justamente ela que desaparecia: aproximar multiplica a distância de tudo ao
+   * zero, a mesma rolagem passa a apontar para outro segundo, e a montagem saltava para um
+   * ponto qualquer da música. O gesto seguinte era sempre rolar à procura da linha vermelha.
+   * Aproximar custava dois gestos, e o segundo não tinha nada a ver com o que se queria fazer.
+   *
+   * ⚠️ E A ROLAGEM É DEPOIS DO DESENHO. O `scrollLeft` novo só existe depois de o conteúdo ter
+   * a largura nova: escrito no mesmo instante em que o zoom muda, ele é medido contra a largura
+   * ANTIGA e o navegador trava-o no fim da rolagem de antes. É o `requestAnimationFrame` que o
+   * põe do outro lado da pintura.
+   */
+  const mudarZoom = (para: (z: number) => number) => {
+    zoomMexido.current = true;
+    setZoom((z) => {
+      const novo = Math.max(zoomMinimo, Math.min(ZOOM_MAXIMO, para(z)));
+      requestAnimationFrame(() => {
+        const caixa = rolagem.current;
+        if (!caixa) return;
+        caixa.scrollLeft = rolagemQueCentra(
+          agulha,
+          PIXELS_POR_SEGUNDO * novo,
+          // A largura das ONDAS, e não a da tela: a coluna das faixas fica colada à esquerda
+          // por cima da montagem, e centrar na tela inteira punha a agulha em cima dela.
+          caixa.clientWidth - larguraDasPistas,
+          caixa.scrollWidth - caixa.clientWidth,
+        );
+      });
+      return novo;
+    });
+  };
 
   const segundoDoEvento = (evento: { clientX: number }) => {
     const caixa = linha.current;
@@ -1027,7 +1061,7 @@ export const EditorDaGravacao: FC<{
             {aba === 'linha' && (<>
             <button
               type='button'
-              onClick={() => { zoomMexido.current = true; setZoom((z) => Math.max(zoomMinimo, z / 1.5)); }}
+              onClick={() => mudarZoom((z) => z / 1.5)}
               title='Afastar'
               aria-label='Afastar a linha do tempo'
               style={{
@@ -1043,7 +1077,7 @@ export const EditorDaGravacao: FC<{
             </span>
             <button
               type='button'
-              onClick={() => { zoomMexido.current = true; setZoom((z) => Math.min(ZOOM_MAXIMO, z * 1.5)); }}
+              onClick={() => mudarZoom((z) => z * 1.5)}
               title='Aproximar'
               aria-label='Aproximar a linha do tempo'
               style={{

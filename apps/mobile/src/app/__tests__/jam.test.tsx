@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import { Alert } from 'react-native';
+import { Alert, ScrollView } from 'react-native';
 import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
@@ -430,6 +430,42 @@ describe('espaço jam', () => {
 
     expect(await tela.findByLabelText('Aproximar a linha do tempo')).toBeTruthy();
     expect(tela.getByLabelText('Afastar a linha do tempo')).toBeTruthy();
+  });
+
+  // ⚠️ E APROXIMAR NÃO PODE PERDER A AGULHA DE VISTA.
+  //
+  // Quem aproxima a linha do tempo está quase sempre a preparar um corte: quer ver a agulha de
+  // perto para acertar no sítio exato. Mas aproximar multiplica a distância de tudo ao zero — a
+  // mesma rolagem passa a apontar para outro segundo — e a montagem saltava para um ponto
+  // qualquer da música. O gesto seguinte era sempre rolar à procura da linha vermelha.
+  it('aproximar leva a rolagem para onde a agulha está', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    const rolou = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
+    const usuario = userEvent.setup();
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    // A linha do tempo mede-se sozinha; sem uma largura, não há meio onde centrar.
+    fireEvent(tela.getByTestId('montagem'), 'layout', {
+      nativeEvent: { layout: { width: 400, height: 600 } },
+    });
+
+    rolou.mockClear();
+    await usuario.press(tela.getByLabelText('Aproximar a linha do tempo'));
+
+    // ⚠️ O QUE IMPORTA É QUE ELA ROLA COM O ZOOM. O número exato depende da escala que a
+    // montagem escolheu ao abrir (ela encaixa-se na largura medida), e prendê-lo aqui seria
+    // prender o encaixe — outra regra, com o seu próprio caso. O que este prova é a ligação:
+    // mexer no zoom mexe na rolagem, em vez de a deixar a apontar para o segundo de antes.
+    await waitFor(() => expect(rolou).toHaveBeenCalled());
+    const [{ x, animated }] = rolou.mock.calls[rolou.mock.calls.length - 1] as [
+      { x: number; animated: boolean },
+    ];
+    expect(animated).toBe(true);
+    expect(x).toBeGreaterThanOrEqual(0);
+    rolou.mockRestore();
   });
 
   // ⚠️ APAGAR MARCA, E NÃO APAGA (mesma regra da web, e ela não é da tela: vive no núcleo). A

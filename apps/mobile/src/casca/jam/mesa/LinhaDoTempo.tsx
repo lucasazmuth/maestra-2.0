@@ -11,7 +11,7 @@ import Feather from '@expo/vector-icons/Feather';
 import type { Pista } from '@maestra/core/audio/mesa';
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import {
-  PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, marcasDaRegua, zoomQueEncaixa,
+  PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
 import { NOME_DA_MIX, ehPistaDaMix, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import {
@@ -392,6 +392,33 @@ export const LinhaDoTempo = ({
   const medir = (e: LayoutChangeEvent) => setLarguraVisivel(e.nativeEvent.layout.width);
 
   /**
+   * Mudar o zoom SEM perder a agulha de vista.
+   *
+   * ⚠️ QUEM APROXIMA ESTÁ A PREPARAR UM CORTE. Quer ver a agulha de perto para acertar no sítio
+   * exato — e era justamente ela que desaparecia: aproximar multiplica a distância de tudo ao
+   * zero, a mesma rolagem passa a apontar para outro segundo, e a montagem saltava para um
+   * ponto qualquer da música. O gesto seguinte era sempre rolar à procura da linha vermelha.
+   *
+   * ⚠️ O EFEITO OUVE A ESCALA, E NÃO A POSIÇÃO. A agulha anda sozinha durante a reprodução: com
+   * `estado.posicao` nas dependências, cada décimo de segundo arrastava a montagem de volta
+   * para o meio e era impossível olhar para outro sítio enquanto a música toca. Por isso a
+   * posição entra por uma referência — ela é lida no instante do zoom, e não o dispara.
+   */
+  const ondeEstaAAgulha = useRef(estado.posicao);
+  ondeEstaAAgulha.current = estado.posicao;
+  const rolagem = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (larguraVisivel <= 0) return;
+    // A coluna das faixas é IRMÃ do scroll, não filha: o que se vê da montagem é o que sobra.
+    const vista = larguraVisivel - COLUNA;
+    rolagem.current?.scrollTo({
+      x: rolagemQueCentra(ondeEstaAAgulha.current, escala, vista, largura - vista),
+      animated: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [escala]);
+
+  /**
    * A faixa para onde o clipe vai, `degrau` linhas abaixo da `i` — `undefined` se ficar na dela.
    *
    * `comOrigem` só no fim do gesto: é ele que diz à seta do desfazer de onde o clipe veio.
@@ -430,6 +457,9 @@ export const LinhaDoTempo = ({
     <ScrollView
       style={estilos.bloco}
       contentContainerStyle={estilos.conteudo}
+      // É por aqui que a montagem sabe a largura que tem — e sem largura não há meio onde
+      // centrar a agulha. O `testID` existe para o teste poder dar-lhe uma.
+      testID="montagem"
       onLayout={medir}
     >
       <View style={estilos.corpo}>
@@ -547,6 +577,7 @@ export const LinhaDoTempo = ({
         </View>
 
         <ScrollView
+          ref={rolagem}
           horizontal
           showsHorizontalScrollIndicator
           contentContainerStyle={{ width: largura }}

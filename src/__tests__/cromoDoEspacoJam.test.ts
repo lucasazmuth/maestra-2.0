@@ -515,6 +515,41 @@ describe('cromo do editor do Espaço JAM', () => {
     });
   });
 
+  // ⚠️ O ZOOM NÃO PERDE A AGULHA DE VISTA, NAS DUAS.
+  //
+  // Quem aproxima a linha do tempo está quase sempre a preparar um corte: quer ver a agulha de
+  // perto para acertar no sítio exato. Mas aproximar multiplica a distância de tudo ao zero — a
+  // mesma rolagem passa a apontar para outro segundo — e a montagem saltava para um ponto
+  // qualquer da música. O gesto seguinte era sempre rolar à procura da linha vermelha:
+  // aproximar custava dois gestos, e o segundo não tinha nada a ver com o que se queria fazer.
+  it('mudar o zoom centra a agulha, nas duas telas', () => {
+    const oEditor = semComentarios(editor);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    [oEditor, aLinhaDoTempo].forEach((fonte) => {
+      expect(fonte).toContain('rolagemQueCentra(');
+      // ⚠️ E A CONTA É COM A LARGURA DAS ONDAS. A coluna das faixas fica colada por cima da
+      // montagem numa, e é irmã do scroll na outra: nos dois casos ela não é área de onda, e
+      // centrar na largura da tela punha a agulha atrás dela.
+      expect(fonte).toMatch(/(clientWidth - larguraDasPistas|larguraVisivel - COLUNA)/);
+    });
+
+    // ⚠️ NA WEB, DEPOIS DA PINTURA. O `scrollLeft` novo só existe depois de o conteúdo ter a
+    // largura nova: escrito no mesmo instante em que o zoom muda, ele é medido contra a largura
+    // ANTIGA e o navegador trava-o no fim da rolagem de antes.
+    const oMudar = oEditor.slice(oEditor.indexOf('const mudarZoom ='));
+    expect(oMudar.slice(0, oMudar.indexOf('\n  };'))).toContain('requestAnimationFrame(');
+
+    // ⚠️ E NO APARELHO, SÓ QUANDO A ESCALA MUDA. A agulha anda sozinha a tocar: com a posição
+    // nas dependências, cada décimo de segundo arrastava a montagem de volta para o meio e era
+    // impossível olhar para outro sítio enquanto a música toca.
+    const oEfeito = aLinhaDoTempo.slice(aLinhaDoTempo.indexOf('const ondeEstaAAgulha ='));
+    const ate = oEfeito.slice(0, oEfeito.indexOf('}, [escala]);') + '}, [escala]);'.length);
+    expect(ate).toContain('}, [escala]);');
+    expect(ate).toContain('ondeEstaAAgulha.current');
+    expect(ate).not.toContain('estado.posicao,');
+  });
+
   // ⚠️ O ÁUDIO NOVO ENTRA NO FIM DA FAIXA, NAS DUAS — e não no segundo zero.
   //
   // Mandado para uma faixa que já tem áudio, o take novo nascia EM CIMA do que lá estava: dois
@@ -1345,7 +1380,17 @@ describe('cromo do editor do Espaço JAM', () => {
     const corpo = semComentarios(editor);
 
     expect(corpo).toContain('const zoomMinimo = Math.min(ZOOM_MINIMO, encaixe);');
-    expect(corpo).toContain('setZoom((z) => Math.max(zoomMinimo, z / 1.5))');
+
+    // ⚠️ O CHÃO E O TETO NUM SÍTIO SÓ, e os dois botões a passarem por ele. Isto estava preso
+    // à expressão que vivia DENTRO de cada botão (`setZoom((z) => Math.max(zoomMinimo, …))`) e
+    // partiu-se quando o zoom passou a centrar a agulha — não porque a regra tivesse deixado de
+    // valer, mas porque ela mudou de sítio. Amarrada ao limite e à passagem, ela sobrevive à
+    // próxima mudança de sítio e continua a apanhar um botão que salte a trava.
+    expect(corpo).toContain('Math.max(zoomMinimo, Math.min(ZOOM_MAXIMO, para(z)))');
+    expect(corpo).toContain('onClick={() => mudarZoom((z) => z / 1.5)}');
+    expect(corpo).toContain('onClick={() => mudarZoom((z) => z * 1.5)}');
+    expect(corpo).not.toMatch(/onClick=\{\(\) => \{[^}]*setZoom\(/);
+
     // Quem mexe no zoom manda: o encaixe automático não volta a mexer nele.
     expect(corpo).toContain('zoomMexido.current = true;');
     expect(corpo).toContain('if (noCelular && !zoomMexido.current) setZoom(alvo);');
