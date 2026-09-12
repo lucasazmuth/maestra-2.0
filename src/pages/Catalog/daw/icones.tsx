@@ -1,62 +1,72 @@
 import { FC } from 'react';
 
-// Os dois ícones das abas, desenhados pelo dono do produto (`timeline.svg` e `mixer.svg`).
+// Os três ícones das abas do editor, desenhados pelo dono do produto (`time line.svg`,
+// `mix.svg` e `ficha.svg`).
 //
 // ⚠️ O traço foi trocado de `#898989` para `currentColor`: assim o ícone acompanha o estado da
 // aba (aceso quando escolhida, apagado quando não) em vez de ficar cinza para sempre. Os
 // caminhos são os originais, à vírgula — o desenho é dele.
 //
-// ─── Por que o `viewBox` não é o do ficheiro ─────────────────────────────────
+// ─── Por que o `viewBox` não é o do ficheiro, nem o traço é o do ficheiro ─────
 //
-// Os originais vêm num quadro de 41×41 com o desenho no miolo, ocupando 41 % e 46 % dele. Os
-// ícones vizinhos das outras abas (react-icons) enchem 75–83 % do seu quadro. Resultado, com
-// `size` quase igual: 6,2 px de tinta na Timeline e 7,0 px no Mixer, contra 11,7 px na Ficha —
-// quase o dobro. O `size` dizia 15 nos quatro e a tela mostrava dois tamanhos.
+// Os originais vêm em quadros diferentes (41×41 dois deles, 28×25 o outro) com o desenho a
+// ocupar uma fatia diferente de cada um. Pedir 15 px aos três dava três tamanhos na tela, que é
+// exatamente o que faz uma fila de ícones deixar de parecer uma fila.
 //
 // O quadro aqui é recortado no DESENHO (mais a metade do traço, que o `getBBox` não conta) e
-// depois folgado para os mesmos ~80 % de ocupação dos vizinhos. Assim `tamanho` passa a querer
-// dizer a mesma coisa nas quatro abas, que é o que faz uma fila de ícones parecer uma fila.
+// depois folgado para os mesmos 80 % de ocupação. E o TRAÇO é reescrito na mesma proporção do
+// quadro — 2 para 24, que é a do Feather —, senão o mesmo tamanho continuava a dar pesos
+// diferentes: medido a 15 px, o microfone vinha com 0,89 px de tinta e o fader com 1,25, e ao
+// lado um do outro isso lê-se como um desenho por acabar. A geometria é a dele; a espessura é
+// a única coisa que se acerta, e acerta-se pela fila.
 
 export const IconeDaTimeline: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
-  <svg width={tamanho} height={tamanho} viewBox="8.2 8.2 24 24" fill="none" aria-hidden>
+  <svg width={tamanho} height={tamanho} viewBox="-3.4 -4.88 34.02 34.02" fill="none" aria-hidden>
     <path
-      d="M19.3636 11.7866H14.5929C13.043 11.7866 11.7866 13.043 11.7866 14.5929C11.7866 16.1428 13.043 17.3992 14.5929 17.3992H19.3636"
-      stroke="currentColor" strokeWidth="2.3573" strokeLinecap="round"
+      d="M13.3608 5.45512V11.3846C13.3608 13.8406 15.3519 15.8316 17.8079 15.8316C20.264 15.8316 22.255 13.8406 22.255 11.3846V10.3963V5.45513C22.255 2.99908 20.264 1.00806 17.8079 1.00806C15.3519 1.00806 13.3608 2.99907 13.3608 5.45512Z"
+      stroke="currentColor" strokeWidth="2.835" strokeLinecap="round"
     />
     <path
-      d="M11.7866 23.0117L28.6245 23.0117"
-      stroke="currentColor" strokeWidth="2.3573" strokeLinecap="round" strokeLinejoin="round"
+      d="M9.40771 11.8784C9.40771 11.8784 10.396 19.7843 17.8077 19.7843M17.8077 19.7843C25.2195 19.7843 26.2078 11.8784 26.2078 11.8784M17.8077 19.7843V23.2432"
+      stroke="currentColor" strokeWidth="2.835" strokeLinecap="round"
     />
-    <path
-      d="M11.7866 28.624L28.6245 28.624"
-      stroke="currentColor" strokeWidth="2.3573" strokeLinecap="round" strokeLinejoin="round"
-    />
-    <path
-      d="M23.573 14.3123H26.0987M28.6244 14.3123H26.0987M26.0987 14.3123V11.7866M26.0987 14.3123V16.838"
-      stroke="currentColor" strokeWidth="2.02054" strokeLinecap="round" strokeLinejoin="round"
-    />
+    <path d="M1.00781 6.0481H6.88783" stroke="currentColor" strokeWidth="2.835" strokeLinecap="round" />
+    <path d="M1.00781 12.7681H5.20782" stroke="currentColor" strokeWidth="2.835" strokeLinecap="round" />
+    <path d="M1.00781 19.488H6.88783" stroke="currentColor" strokeWidth="2.835" strokeLinecap="round" />
   </svg>
 );
 
 export const IconeDoMixer: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
-  <svg width={tamanho} height={tamanho} viewBox="7.2 7.1 26.3 26.3" fill="none" aria-hidden>
-    <path
-      d="M19.8269 13.0864H12.8269C11.7223 13.0864 10.8269 13.9819 10.8269 15.0864C10.8269 16.191 11.7223 17.0864 12.8269 17.0864H19.8269"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-    />
+  <svg width={tamanho} height={tamanho} viewBox="7.87 7.87 24.68 24.68" fill="none" aria-hidden>
     <rect
-      x="23.5961" y="12.0864" width="6.23077" height="6.23077" rx="3.11538"
-      stroke="currentColor" strokeWidth="2"
+      x="17.2588" y="11.3655" width="11.7865" height="17.6797" rx="2.94662"
+      stroke="currentColor" strokeWidth="2.06263"
     />
+    <circle cx="23.1522" cy="23.1522" r="2.94662" fill="currentColor" />
+    <circle cx="23.152" cy="15.7856" r="1.47331" fill="currentColor" />
+    <circle cx="12.839" cy="27.5722" r="1.47331" fill="currentColor" />
     <path
-      d="M20.8269 27.3174L27.8269 27.3174C28.9315 27.3174 29.8269 26.422 29.8269 25.3174C29.8269 24.2128 28.9315 23.3174 27.8269 23.3174L20.8269 23.3174"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+      d="M13.5757 22.4155H12.839C12.0253 22.4155 11.3657 21.7558 11.3657 20.9422V15.7856C11.3657 14.9719 12.0253 14.3123 12.839 14.3123H13.5757"
+      stroke="currentColor" strokeWidth="2.06263" strokeLinecap="round" strokeLinejoin="round"
     />
-    <rect
-      x="17.0577" y="28.3174" width="6.23077" height="6.23077" rx="3.11538"
-      transform="rotate(-180 17.0577 28.3174)"
-      stroke="currentColor" strokeWidth="2"
+  </svg>
+);
+
+/**
+ * A ficha da gravação: a roda dentada do dono do produto (`ficha.svg`).
+ *
+ * ⚠️ O CÍRCULO DO MEIO VINHA ESPELHADO por um `matrix(1 0 0 -1 16.9766 23.1748)`. Num círculo,
+ * espelhar é o mesmo que o pousar noutro sítio — e escrito assim as duas telas dizem a mesma
+ * coisa, sem nenhuma depender de como o seu motor lê uma matriz. É a mesma correção que o
+ * `IconeDeEnviar` levou, pelo mesmo motivo.
+ */
+export const IconeDaFicha: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
+  <svg width={tamanho} height={tamanho} viewBox="5.3 4.8 30.1 30.1" fill="none" aria-hidden>
+    <path
+      d="M22.4406 8.82703H18.2078C17.9257 8.82703 17.6811 8.91869 17.4742 9.10203C17.2672 9.28536 17.145 9.51453 17.1073 9.78953L16.7687 12.347C16.5242 12.4387 16.2939 12.5487 16.0779 12.677C15.8612 12.8054 15.6494 12.9429 15.4425 13.0895L12.9875 12.0995C12.7241 12.0079 12.4607 11.9987 12.1974 12.072C11.934 12.1454 11.727 12.3012 11.5766 12.5395L9.4884 16.087C9.3379 16.3254 9.29087 16.582 9.34731 16.857C9.40374 17.132 9.54483 17.352 9.77058 17.517L11.887 19.0845C11.8681 19.2129 11.8587 19.3368 11.8587 19.4563V20.1988C11.8587 20.3176 11.8681 20.4412 11.887 20.5695L9.77058 22.137C9.54483 22.302 9.40374 22.522 9.34731 22.797C9.29087 23.072 9.3379 23.3287 9.4884 23.567L11.5766 27.1145C11.7082 27.3712 11.9103 27.5318 12.1827 27.5963C12.4558 27.6601 12.7241 27.6462 12.9875 27.5545L15.4425 26.5645C15.6494 26.7112 15.8657 26.8487 16.0915 26.977C16.3172 27.1054 16.543 27.2154 16.7687 27.307L17.1073 29.8645C17.145 30.1395 17.2672 30.3687 17.4742 30.552C17.6811 30.7354 17.9257 30.827 18.2078 30.827H22.4406C22.7228 30.827 22.9673 30.7354 23.1743 30.552C23.3812 30.3687 23.5035 30.1395 23.5411 29.8645L23.8797 27.307C24.1243 27.2154 24.3549 27.1054 24.5716 26.977C24.7876 26.8487 24.999 26.7112 25.206 26.5645L27.661 27.5545C27.9243 27.6462 28.1877 27.6554 28.4511 27.582C28.7145 27.5087 28.9214 27.3529 29.0719 27.1145L31.16 23.567C31.3105 23.3287 31.3576 23.072 31.3011 22.797C31.2447 22.522 31.1036 22.302 30.8779 22.137L28.7615 20.5695C28.7803 20.4412 28.7897 20.3176 28.7897 20.1988V19.4563C28.7897 19.3368 28.7709 19.2129 28.7333 19.0845L30.8496 17.517C31.0754 17.352 31.2165 17.132 31.2729 16.857C31.3294 16.582 31.2823 16.3254 31.1318 16.087L29.0437 12.567C28.8932 12.3287 28.6817 12.1681 28.4093 12.0852C28.1362 12.0031 27.8679 12.0079 27.6045 12.0995L25.206 13.0895C24.999 12.9429 24.7827 12.8054 24.557 12.677C24.3312 12.5487 24.1055 12.4387 23.8797 12.347L23.5411 9.78953C23.5035 9.51453 23.3812 9.28536 23.1743 9.10203C22.9673 8.91869 22.7228 8.82703 22.4406 8.82703Z"
+      stroke="currentColor" strokeWidth="2.51"
     />
+    <circle cx="20.3244" cy="19.827" r="3.34783" stroke="currentColor" strokeWidth="2.51" />
   </svg>
 );
 

@@ -1373,6 +1373,41 @@ describe('cromo do editor do Espaço JAM', () => {
     quadros.forEach((q) => expect(q).not.toContain('0 0 41 41'));
   });
 
+  // ⚠️ OS TRÊS ÍCONES DESENHADOS TÊM O MESMO TAMANHO E O MESMO PESO NA FILA DAS ABAS.
+  //
+  // Os originais vêm em quadros diferentes, com o desenho a ocupar uma fatia diferente de cada
+  // um: pedir 15 px aos três dava três tamanhos na tela. E o tamanho não chega — o TRAÇO também
+  // conta. Medido a 15 px com os valores que vinham dos ficheiros, o microfone desenhava 0,89 px
+  // de tinta e o fader 1,25: ao lado um do outro, o primeiro lê-se como um desenho por acabar.
+  //
+  // A proporção de referência é a do Feather (2 para 24), porque a quarta aba — Exportar — é
+  // dele e não se pode reescrever. É ela que as outras três seguem.
+  it('os ícones das abas têm o mesmo peso de traço, na proporção do Feather', () => {
+    const fonte = semComentarios(icones);
+    const doIcone = (nome: string) => {
+      const daqui = fonte.slice(fonte.indexOf(`export const ${nome}`));
+      const corpo = daqui.slice(0, daqui.indexOf('</svg>'));
+      const quadro = corpo.match(/viewBox="[-\d.]+ [-\d.]+ ([\d.]+) [\d.]+"/);
+      const tracos = (corpo.match(/strokeWidth="([\d.]+)"/g) ?? [])
+        .map((s) => Number(s.replace(/\D*([\d.]+)"/, '$1')));
+      return { lado: Number(quadro![1]), traco: Math.max(...tracos) };
+    };
+
+    const doFeather = 2 / 24;
+    ['IconeDaTimeline', 'IconeDoMixer', 'IconeDaFicha'].forEach((nome) => {
+      const { lado, traco } = doIcone(nome);
+      // Meio milésimo de folga: os números são arredondados à segunda casa no ficheiro.
+      expect(Math.abs(traco / lado - doFeather)).toBeLessThan(0.002);
+    });
+
+    // E a quarta aba continua a ser a do Feather, que é de onde a proporção vem.
+    expect(semComentarios(editor)).toContain('<FiDownload size={TAMANHO_DO_ICONE_DA_ABA} />');
+    // ⚠️ E A FICHA DEIXOU DE SER UMA FOLHA DO FEATHER. Ela era o único desenho emprestado no
+    // meio dos do dono do produto, e destoava por isso — não por tamanho, por traço.
+    expect(semComentarios(editor)).toContain('<IconeDaFicha tamanho={TAMANHO_DO_ICONE_DA_ABA} />');
+    expect(semComentarios(app)).toContain("{ chave: 'ficha', rotulo: 'Ficha', icone: IconeDaFicha }");
+  });
+
   // ⚠️ OS DESENHOS SÃO OS MESMOS NAS DUAS SUPERFÍCIES, À VÍRGULA. O arquivo do app já dizia
   // isto num comentário, e um comentário não segura nada: o ícone de pôr áudio na pista foi
   // trocado e nada obrigava a segunda tela a ser trocada também. O editor é A MESMA tela nos

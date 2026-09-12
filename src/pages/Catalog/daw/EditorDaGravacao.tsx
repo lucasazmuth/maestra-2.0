@@ -24,7 +24,7 @@ import { fimDaPista, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVers
 import { rotuloDaGuia } from '@maestra/core/audio/exportar';
 import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
 import { iniciais, type Presente } from '@maestra/core/audio/aoVivo';
-import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
+import { IconeDaFicha, IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
 import {
@@ -1069,7 +1069,7 @@ export const EditorDaGravacao: FC<{
                     acertados (ver `icones.tsx`), o mesmo número passa a dar o mesmo tamanho. */}
                 {chave === 'linha' ? <IconeDaTimeline tamanho={TAMANHO_DO_ICONE_DA_ABA} />
                   : chave === 'mesa' ? <IconeDoMixer tamanho={TAMANHO_DO_ICONE_DA_ABA} />
-                  : chave === 'ficha' ? <FiFileText size={TAMANHO_DO_ICONE_DA_ABA} />
+                  : chave === 'ficha' ? <IconeDaFicha tamanho={TAMANHO_DO_ICONE_DA_ABA} />
                   : <FiDownload size={TAMANHO_DO_ICONE_DA_ABA} />}
                 {/* ⚠️ SEM RÓTULO NO CELULAR. Os quatro nomes somam mais de 300 px, e o que era
                     empurrado para fora da tela por eles era o X — a pessoa entrava no editor e

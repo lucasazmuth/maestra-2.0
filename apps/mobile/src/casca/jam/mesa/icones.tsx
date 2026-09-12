@@ -1,54 +1,62 @@
-import { Path, Rect, Svg } from 'react-native-svg';
+import { Circle, Path, Rect, Svg } from 'react-native-svg';
 
-// Os dois ícones das abas do editor, desenhados pelo dono do produto (`timeline.svg` e
-// `mixer.svg`).
+// Os três ícones das abas do editor, desenhados pelo dono do produto (`time line.svg`,
+// `mix.svg` e `ficha.svg`).
 //
 // ⚠️ SÃO OS MESMOS CAMINHOS DA WEB, à vírgula — `src/pages/Catalog/daw/icones.tsx`. O editor é
 // a mesma tela nas duas superfícies, e a fila de abas é a primeira coisa que a pessoa vê: dois
-// desenhos parecidos mas não iguais seriam lidos como dois produtos. O `viewBox` recortado
-// também vem de lá, e é o que faz `tamanho` querer dizer a mesma coisa nos quatro ícones da
-// fila (os outros dois são do Feather, que enche 75–83 % do seu quadro).
+// desenhos parecidos mas não iguais seriam lidos como dois produtos. O `viewBox` recortado e a
+// espessura reescrita também vêm de lá, e são o que faz `tamanho` querer dizer a mesma coisa
+// nos quatro ícones da fila — o quarto é do Feather, e é dele que sai a proporção de 2 para 24
+// a que os outros três foram acertados.
 
 export const IconeDaTimeline = ({ tamanho = 15, cor }: { tamanho?: number; cor: string }) => (
-  <Svg width={tamanho} height={tamanho} viewBox="8.2 8.2 24 24" fill="none">
+  <Svg width={tamanho} height={tamanho} viewBox="-3.4 -4.88 34.02 34.02" fill="none">
     <Path
-      d="M19.3636 11.7866H14.5929C13.043 11.7866 11.7866 13.043 11.7866 14.5929C11.7866 16.1428 13.043 17.3992 14.5929 17.3992H19.3636"
-      stroke={cor} strokeWidth={2.3573} strokeLinecap="round"
+      d="M13.3608 5.45512V11.3846C13.3608 13.8406 15.3519 15.8316 17.8079 15.8316C20.264 15.8316 22.255 13.8406 22.255 11.3846V10.3963V5.45513C22.255 2.99908 20.264 1.00806 17.8079 1.00806C15.3519 1.00806 13.3608 2.99907 13.3608 5.45512Z"
+      stroke={cor} strokeWidth={2.835} strokeLinecap="round"
     />
     <Path
-      d="M11.7866 23.0117L28.6245 23.0117"
-      stroke={cor} strokeWidth={2.3573} strokeLinecap="round" strokeLinejoin="round"
+      d="M9.40771 11.8784C9.40771 11.8784 10.396 19.7843 17.8077 19.7843M17.8077 19.7843C25.2195 19.7843 26.2078 11.8784 26.2078 11.8784M17.8077 19.7843V23.2432"
+      stroke={cor} strokeWidth={2.835} strokeLinecap="round"
     />
-    <Path
-      d="M11.7866 28.624L28.6245 28.624"
-      stroke={cor} strokeWidth={2.3573} strokeLinecap="round" strokeLinejoin="round"
-    />
-    <Path
-      d="M23.573 14.3123H26.0987M28.6244 14.3123H26.0987M26.0987 14.3123V11.7866M26.0987 14.3123V16.838"
-      stroke={cor} strokeWidth={2.02054} strokeLinecap="round" strokeLinejoin="round"
-    />
+    <Path d="M1.00781 6.0481H6.88783" stroke={cor} strokeWidth={2.835} strokeLinecap="round" />
+    <Path d="M1.00781 12.7681H5.20782" stroke={cor} strokeWidth={2.835} strokeLinecap="round" />
+    <Path d="M1.00781 19.488H6.88783" stroke={cor} strokeWidth={2.835} strokeLinecap="round" />
   </Svg>
 );
 
 export const IconeDoMixer = ({ tamanho = 15, cor }: { tamanho?: number; cor: string }) => (
-  <Svg width={tamanho} height={tamanho} viewBox="7.2 7.1 26.3 26.3" fill="none">
-    <Path
-      d="M19.8269 13.0864H12.8269C11.7223 13.0864 10.8269 13.9819 10.8269 15.0864C10.8269 16.191 11.7223 17.0864 12.8269 17.0864H19.8269"
-      stroke={cor} strokeWidth={2} strokeLinecap="round"
-    />
+  <Svg width={tamanho} height={tamanho} viewBox="7.87 7.87 24.68 24.68" fill="none">
     <Rect
-      x={23.5961} y={12.0864} width={6.23077} height={6.23077} rx={3.11538}
-      stroke={cor} strokeWidth={2}
+      x={17.2588} y={11.3655} width={11.7865} height={17.6797} rx={2.94662}
+      stroke={cor} strokeWidth={2.06263}
     />
+    <Circle cx={23.1522} cy={23.1522} r={2.94662} fill={cor} />
+    <Circle cx={23.152} cy={15.7856} r={1.47331} fill={cor} />
+    <Circle cx={12.839} cy={27.5722} r={1.47331} fill={cor} />
     <Path
-      d="M20.8269 27.3174L27.8269 27.3174C28.9315 27.3174 29.8269 26.422 29.8269 25.3174C29.8269 24.2128 28.9315 23.3174 27.8269 23.3174L20.8269 23.3174"
-      stroke={cor} strokeWidth={2} strokeLinecap="round"
+      d="M13.5757 22.4155H12.839C12.0253 22.4155 11.3657 21.7558 11.3657 20.9422V15.7856C11.3657 14.9719 12.0253 14.3123 12.839 14.3123H13.5757"
+      stroke={cor} strokeWidth={2.06263} strokeLinecap="round" strokeLinejoin="round"
     />
-    <Rect
-      x={17.0577} y={28.3174} width={6.23077} height={6.23077} rx={3.11538}
-      transform="rotate(-180 17.0577 28.3174)"
-      stroke={cor} strokeWidth={2}
+  </Svg>
+);
+
+/**
+ * A ficha da gravação: a roda dentada do dono do produto (`ficha.svg`).
+ *
+ * ⚠️ O CÍRCULO DO MEIO VINHA ESPELHADO por um `matrix(1 0 0 -1 16.9766 23.1748)`. Num círculo,
+ * espelhar é o mesmo que o pousar noutro sítio — e escrito assim as duas telas dizem a mesma
+ * coisa, sem nenhuma depender de como o seu motor lê uma matriz. É a mesma correção que o
+ * `IconeDeEnviar` levou, pelo mesmo motivo.
+ */
+export const IconeDaFicha = ({ tamanho = 15, cor }: { tamanho?: number; cor: string }) => (
+  <Svg width={tamanho} height={tamanho} viewBox="5.3 4.8 30.1 30.1" fill="none">
+    <Path
+      d="M22.4406 8.82703H18.2078C17.9257 8.82703 17.6811 8.91869 17.4742 9.10203C17.2672 9.28536 17.145 9.51453 17.1073 9.78953L16.7687 12.347C16.5242 12.4387 16.2939 12.5487 16.0779 12.677C15.8612 12.8054 15.6494 12.9429 15.4425 13.0895L12.9875 12.0995C12.7241 12.0079 12.4607 11.9987 12.1974 12.072C11.934 12.1454 11.727 12.3012 11.5766 12.5395L9.4884 16.087C9.3379 16.3254 9.29087 16.582 9.34731 16.857C9.40374 17.132 9.54483 17.352 9.77058 17.517L11.887 19.0845C11.8681 19.2129 11.8587 19.3368 11.8587 19.4563V20.1988C11.8587 20.3176 11.8681 20.4412 11.887 20.5695L9.77058 22.137C9.54483 22.302 9.40374 22.522 9.34731 22.797C9.29087 23.072 9.3379 23.3287 9.4884 23.567L11.5766 27.1145C11.7082 27.3712 11.9103 27.5318 12.1827 27.5963C12.4558 27.6601 12.7241 27.6462 12.9875 27.5545L15.4425 26.5645C15.6494 26.7112 15.8657 26.8487 16.0915 26.977C16.3172 27.1054 16.543 27.2154 16.7687 27.307L17.1073 29.8645C17.145 30.1395 17.2672 30.3687 17.4742 30.552C17.6811 30.7354 17.9257 30.827 18.2078 30.827H22.4406C22.7228 30.827 22.9673 30.7354 23.1743 30.552C23.3812 30.3687 23.5035 30.1395 23.5411 29.8645L23.8797 27.307C24.1243 27.2154 24.3549 27.1054 24.5716 26.977C24.7876 26.8487 24.999 26.7112 25.206 26.5645L27.661 27.5545C27.9243 27.6462 28.1877 27.6554 28.4511 27.582C28.7145 27.5087 28.9214 27.3529 29.0719 27.1145L31.16 23.567C31.3105 23.3287 31.3576 23.072 31.3011 22.797C31.2447 22.522 31.1036 22.302 30.8779 22.137L28.7615 20.5695C28.7803 20.4412 28.7897 20.3176 28.7897 20.1988V19.4563C28.7897 19.3368 28.7709 19.2129 28.7333 19.0845L30.8496 17.517C31.0754 17.352 31.2165 17.132 31.2729 16.857C31.3294 16.582 31.2823 16.3254 31.1318 16.087L29.0437 12.567C28.8932 12.3287 28.6817 12.1681 28.4093 12.0852C28.1362 12.0031 27.8679 12.0079 27.6045 12.0995L25.206 13.0895C24.999 12.9429 24.7827 12.8054 24.557 12.677C24.3312 12.5487 24.1055 12.4387 23.8797 12.347L23.5411 9.78953C23.5035 9.51453 23.3812 9.28536 23.1743 9.10203C22.9673 8.91869 22.7228 8.82703 22.4406 8.82703Z"
+      stroke={cor} strokeWidth={2.51}
     />
+    <Circle cx={20.3244} cy={19.827} r={3.34783} stroke={cor} strokeWidth={2.51} />
   </Svg>
 );
 
