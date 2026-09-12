@@ -1,6 +1,7 @@
 import {
   BPM_MAXIMO, BPM_MINIMO, ENCAIXE_SEM_ANDAMENTO, TEMPOS_POR_COMPASSO,
   FOLGA_DA_AGULHA, FOLGA_DA_BARRA,
+  LADO_DA_AGULHA,
   encaixeDaGrade, gradeDoCompasso, lugarDaBarra, marcasDaRegua, passoDaVista, rolagemQueCentra,
 } from '../grade';
 
@@ -314,17 +315,28 @@ describe('lugarDaBarra', () => {
 
   it('fica ao pé da agulha, e devolve o lugar dentro do clipe', () => {
     // Agulha no 1100: 1108 no conteúdo, 108 a contar do princípio do clipe.
-    expect(lugarDaBarra({ ...clipe, agulha: 1100 })).toBe(108);
+    expect(lugarDaBarra({ ...clipe, agulha: 1100 })).toBe(100 + LADO_DA_AGULHA);
   });
 
-  // ⚠️ E NUNCA FORA DO QUE SE VÊ. Encostada à direita da agulha, a barra saía pela borda do ecrã
-  // sempre que a agulha se aproximava dela — e isso acontece em cada volta da reprodução, antes
-  // de a linha travar no meio. Foi assim que ela apareceu cortada ao meio no telemóvel.
-  it('não sai pela direita do que se vê', () => {
-    // Agulha no 1380, quase no fim da janela: a barra recua para caber.
+  // ⚠️ SEM ESPAÇO À DIREITA, ELA INVERTE O LADO — e não desliza até à borda.
+  //
+  // Encostada à direita da agulha, a barra saía pela borda do ecrã sempre que a agulha se
+  // aproximava dela, e isso acontece em cada volta da reprodução. A primeira correção limitou-se
+  // a empurrá-la para dentro da janela, e o resultado era pior do que parecia: ela ficava a uma
+  // distância qualquer da linha vermelha, às vezes muito longe. Deixava de ser "a barra DESTA
+  // agulha" para ser "uma barra ali algures".
+  //
+  // Invertida, continua colada à linha — do outro lado, mas colada.
+  it('sem espaço à direita, passa para a esquerda da agulha', () => {
+    // Agulha no 1380, com a janela a acabar no 1400: 130 de barra não cabem à direita.
     const onde = lugarDaBarra({ ...clipe, agulha: 1380 });
-    expect(onde + clipe.inicioDoClipe + clipe.larguraDaBarra)
-      .toBe(clipe.janelaAte - FOLGA_DA_BARRA);
+    expect(onde + clipe.inicioDoClipe + clipe.larguraDaBarra).toBe(1380 - LADO_DA_AGULHA);
+  });
+
+  // E enquanto couber, fica à direita: é o lado que não tapa o que a agulha acabou de passar.
+  it('com espaço à direita, fica à direita', () => {
+    expect(lugarDaBarra({ ...clipe, agulha: 1100 }) + clipe.inicioDoClipe)
+      .toBe(1100 + LADO_DA_AGULHA);
   });
 
   // E o mesmo do outro lado. ⚠️ ESTE CASO COMEÇOU ERRADO: eu tinha posto a janela a começar

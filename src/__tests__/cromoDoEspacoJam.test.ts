@@ -558,13 +558,18 @@ describe('cromo do editor do Espaço JAM', () => {
   // linha travar no meio. Apareceu cortada ao meio no telemóvel, com metade dos botões de fora.
   // Num ecrã estreito as duas metades mal dão para a barra, por isso não há lado seguro: o que
   // decide é a JANELA, e é por isso que ela entra na conta.
-  it('a barra do clipe fica ao pé da agulha, e dentro do que se vê', () => {
+  it('a barra do clipe fica ao pé da agulha, e inverte o lado quando não cabe', () => {
     const naWeb = semComentarios(clipe);
     const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
 
     // A conta é do núcleo — escrita à mão em cada tela, divergiria no primeiro ajuste.
     [naWeb, aLinhaDoTempo].forEach((fonte) => {
       expect(fonte).toContain('lugarDaBarra({');
+      // ⚠️ E A ESCOLHA DO LADO É DO NÚCLEO, não de cada tela: à direita da agulha enquanto
+      // couber, e do outro lado dela quando não. Empurrá-la só para dentro da janela — que foi a
+      // primeira correção — deixava-a a uma distância qualquer da linha vermelha, às vezes muito
+      // longe: deixava de ser "a barra DESTA agulha" para ser "uma barra ali algures".
+      expect(fonte).not.toContain('cabeADireita');
       expect(fonte).toContain('agulha: agulha * escala');
       expect(fonte).toContain('janelaDe:');
       expect(fonte).toContain('janelaAte:');
@@ -603,6 +608,13 @@ describe('cromo do editor do Espaço JAM', () => {
     // E quem rola está marcado, para a barra o encontrar sem lhe passarem uma referência.
     expect(semComentarios(editor)).toContain("data-rolagem=''");
     expect(semComentarios(editor)).toContain('recuoDaJanela={larguraDasPistas}');
+
+    // A decisão do lado mora num sítio só.
+    const nucleo = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', '..', 'packages', 'core', 'src', 'audio', 'grade.ts'), 'utf8',
+    ));
+    expect(nucleo).toContain('const cabeADireita = aDireita + larguraDaBarra <= janelaAte - FOLGA_DA_BARRA;');
+    expect(nucleo).toContain('const queria = cabeADireita ? aDireita : agulha - LADO_DA_AGULHA - larguraDaBarra;');
 
     // A mesma conta nas duas, depois de convertida para a régua do clipe.
     expect(naWeb).toContain('janelaAte: caixa.scrollLeft + caixa.clientWidth - recuoDaJanela');

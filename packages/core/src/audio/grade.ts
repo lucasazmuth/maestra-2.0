@@ -196,6 +196,9 @@ export const passoDaVista = (vista: {
 /** A folga entre a barra do clipe e a borda de que ela se aproxima. */
 export const FOLGA_DA_BARRA = 6;
 
+/** O espaço entre a barra e a linha vermelha, de qualquer um dos lados. */
+export const LADO_DA_AGULHA = 8;
+
 /**
  * ONDE A BARRA DE AÇÕES DO CLIPE FICA, em pixels a contar do princípio DELE.
  *
@@ -233,7 +236,20 @@ export const lugarDaBarra = (medidas: {
     agulha, inicioDoClipe, larguraDoClipe, larguraDaBarra, janelaDe, janelaAte,
   } = medidas;
 
-  const queria = agulha + 8;
+  // ⚠️ À DIREITA DA AGULHA ENQUANTO COUBER; SENÃO, DO OUTRO LADO DELA.
+  //
+  // A primeira versão só empurrava a barra para dentro da janela quando ela não cabia à direita
+  // — e o resultado era pior do que parecia: ela deslizava até encostar à borda e ficava a uma
+  // distância qualquer da linha vermelha, às vezes muito longe dela. Deixava de ser "a barra
+  // DESTA agulha" para ser "uma barra ali algures", que é justamente o que mudar-lhe o sítio
+  // vinha resolver.
+  //
+  // Invertida, ela continua colada à linha: do outro lado, mas colada. O olho não a perde, e a
+  // distância até ao ponto onde o corte cai é sempre a mesma.
+  const aDireita = agulha + LADO_DA_AGULHA;
+  const cabeADireita = aDireita + larguraDaBarra <= janelaAte - FOLGA_DA_BARRA;
+  const queria = cabeADireita ? aDireita : agulha - LADO_DA_AGULHA - larguraDaBarra;
+
   const naJanela = Math.max(
     janelaDe + FOLGA_DA_BARRA,
     Math.min(queria, janelaAte - larguraDaBarra - FOLGA_DA_BARRA),
