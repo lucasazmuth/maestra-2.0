@@ -568,12 +568,13 @@ describe('cromo do editor do Espaço JAM', () => {
       expect(fonte).toContain('agulha: agulha * escala');
       expect(fonte).toContain('janelaDe:');
       expect(fonte).toContain('janelaAte:');
-      // ⚠️ E A JANELA DESCONTA A COLUNA DAS FAIXAS — de lados diferentes, porque as duas telas a
-      // montam de maneiras diferentes. Na web ela é FILHA do scroll (fica colada por cima da
-      // montagem) e soma ao princípio da janela; no aparelho é IRMÃ dele, e por isso desconta-se
-      // do fim. Trocar os lados põe a barra uma coluna fora do sítio, e foi o que o telemóvel
-      // mostrou: ela encostada à borda com a agulha no zero.
-      expect(fonte).toMatch(/(recuoDaJanela|COLUNA)/);
+      // ⚠️ E A JANELA É NA RÉGUA DA LINHA DO TEMPO, nas duas: começa onde a rolagem está e acaba
+      // uma coluna antes do fim do que se vê. O clipe conta a partir do segundo zero da
+      // montagem; somar a coluna ao PRINCÍPIO da janela mistura duas réguas, e com a agulha no
+      // zero a barra ia parar ao meio do ecrã — sempre à mesma distância, o que a fazia parecer
+      // um enfeite e não um erro de conta. Foi assim que ela saiu daqui na primeira vez.
+      expect(fonte).toMatch(/janelaDe: (caixa\.scrollLeft|rolagemDaVista),/);
+      expect(fonte).toMatch(/janelaAte:.*- (recuoDaJanela|COLUNA)/);
       // A largura é medida, porque o número de botões muda.
       expect(fonte).toMatch(/(offsetWidth|setLarguraDaBarra)/);
     });
@@ -603,8 +604,8 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(semComentarios(editor)).toContain("data-rolagem=''");
     expect(semComentarios(editor)).toContain('recuoDaJanela={larguraDasPistas}');
 
-    // Cada uma no seu lado: a web soma ao princípio, o aparelho desconta do fim.
-    expect(naWeb).toContain('janelaDe: caixa.scrollLeft + recuoDaJanela');
+    // A mesma conta nas duas, depois de convertida para a régua do clipe.
+    expect(naWeb).toContain('janelaAte: caixa.scrollLeft + caixa.clientWidth - recuoDaJanela');
     expect(aLinhaDoTempo).toContain('janelaAte: rolagemDaVista + larguraDaVista - COLUNA');
   });
 

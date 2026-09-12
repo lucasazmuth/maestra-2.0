@@ -161,10 +161,17 @@ export const Clipe: FC<{
         inicioDoClipe: inicio * escala,
         larguraDoClipe,
         larguraDaBarra: barraAgora.offsetWidth,
-        // ⚠️ A ÁREA DAS ONDAS, e não a caixa toda: a coluna das faixas fica colada à esquerda
-        // por cima da montagem, e uma barra debaixo dela não está à vista.
-        janelaDe: caixa.scrollLeft + recuoDaJanela,
-        janelaAte: caixa.scrollLeft + caixa.clientWidth,
+        // ⚠️ TUDO NA RÉGUA DA LINHA DO TEMPO, e não na do conteúdo que rola. O clipe conta a
+        // partir do segundo zero da montagem; a caixa conta a partir da coluna das faixas, que
+        // vive DENTRO dela e ocupa os primeiros `recuoDaJanela` pixels. Misturar as duas foi o
+        // defeito: com a agulha no zero a barra ia parar ao meio do ecrã, uma coluna à frente do
+        // sítio — e a distância era sempre a mesma, o que a fazia parecer um enfeite e não um
+        // erro de conta.
+        //
+        // Convertida, a janela é simples: começa onde a rolagem está, e acaba uma coluna antes
+        // do fim do que se vê, porque essa coluna está por cima da montagem e tapa-a.
+        janelaDe: caixa.scrollLeft,
+        janelaAte: caixa.scrollLeft + caixa.clientWidth - recuoDaJanela,
       })}px`;
     };
     porNoSitio();

@@ -252,11 +252,9 @@ const Clipe = ({
     inicioDoClipe: clipe.inicio * escala,
     larguraDoClipe: largura,
     larguraDaBarra,
-    // ⚠️ AQUI A COLUNA FICA FORA DA ROLAGEM, ao contrário da web — ela é IRMÃ do scroll, não
-    // filha (ver o comentário no topo deste ficheiro). O conteúdo começa no zero da área das
-    // ondas, e por isso a coluna desconta-se do FIM da janela, e não soma ao princípio. Posta do
-    // lado errado, a barra aparecia uma coluna à direita do sítio — foi o que o telemóvel
-    // mostrou, com ela encostada à borda enquanto a agulha estava no zero.
+    // ⚠️ TUDO NA RÉGUA DA LINHA DO TEMPO: começa onde a rolagem está, e acaba uma coluna antes
+    // do fim do que se vê. É a mesma conta da web — lá a coluna vive dentro da caixa que rola e
+    // aqui é irmã dela, mas depois de converter para a régua do clipe as duas dizem o mesmo.
     janelaDe: rolagemDaVista,
     janelaAte: rolagemDaVista + larguraDaVista - COLUNA,
   });
