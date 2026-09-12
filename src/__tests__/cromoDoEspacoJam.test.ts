@@ -433,6 +433,46 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(quantas).toBe(CORES_DA_PALETA);
   });
 
+  // ⚠️ A COR É ESCOLHIDA, e não sorteada — e a escolha é a MESMA nos dois aparelhos.
+  //
+  // Ela é o que distingue uma faixa da outra de relance, na coluna, no clipe e na mesa. Até aqui
+  // era o que calhasse na ordem de criação: quem monta sabe que a voz é verde e a bateria é
+  // azul, e o produto não sabia.
+  it('as duas telas oferecem as MESMAS seis cores, com os mesmos nomes', () => {
+    const naWeb = semComentarios(editor);
+    const aLinhaDoTempo = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'LinhaDoTempo.tsx'),
+      'utf8',
+    ));
+
+    [naWeb, aLinhaDoTempo].forEach((fonte) => {
+      // A paleta e os nomes vêm do núcleo: seis bolinhas iguais sem nome são seis alvos
+      // idênticos para quem usa leitor de tela, e a cor é justamente o que distingue as faixas.
+      expect(fonte).toContain('CORES_DAS_PISTAS.map(');
+      expect(fonte).toContain('NOMES_DAS_CORES[i]');
+      // Uma paleta aberta de cada vez: duas seriam duas perguntas ao mesmo tempo.
+      expect(fonte).toContain('paletaDe');
+    });
+
+    // E as duas gravam no MESMO sítio — a coluna que as duas já leem para pintar.
+    expect(naWeb).toContain('{ color_index: i }');
+    expect(aLinhaDoTempo).toContain('aoPintarPista?.(paletaDe, i)');
+  });
+
+  // ⚠️ A COR ESCOLHIDA TRAZ UM ANEL. Seis bolinhas iguais não dizem qual é a desta faixa, e sem
+  // isso a pessoa carrega na que já estava e nada acontece — o seletor parece quebrado.
+  it('a cor em uso aparece marcada na paleta, nas duas', () => {
+    const naWeb = semComentarios(editor);
+    const aLinhaDoTempo = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'LinhaDoTempo.tsx'),
+      'utf8',
+    ));
+
+    expect(naWeb).toMatch(/aria-pressed=\{\(faixa\.color_index \?\? indice\)/);
+    expect(aLinhaDoTempo).toContain('accessibilityState={{ selected: atual }}');
+    expect(aLinhaDoTempo).toContain('borderColor: atual ?');
+  });
+
   // ⚠️ A AGULHA COMEÇA NA RÉGUA, nas duas telas — e é a BOLINHA que decide isto.
   //
   // Ela é onde o olho encontra a agulha ao percorrer a régua: é o que a faz um objeto que se
@@ -1074,14 +1114,29 @@ describe('cromo do editor do Espaço JAM', () => {
 
     expect(corpo).toContain("? { flex: '1 1 0', minWidth: 0, padding: 0, height: 26 }");
 
-    // Repartido em TODOS: um que ficasse de fora empurraria os outros na mesma.
+    // ⚠️ REPARTIDO EM TODOS, e a regra é essa — não um NÚMERO de botões. Este caso prendia
+    // "quatro", e o comentário acima já avisava que a conta se partiria no próximo botão que
+    // aparecesse: partiu-se no seletor de cor, que é o quinto. Um teste que falha por haver um
+    // botão a mais não está a guardar o desenho, está a guardar o inventário.
     const inicio = corpo.indexOf('const repartido = noCelular');
     const fim = corpo.indexOf('VOLUME E PANORAMA', inicio) > 0
       ? corpo.indexOf('{!noCelular && (<>', inicio)
       : corpo.length;
     const aPista = corpo.slice(inicio, fim);
     expect(aPista.length).toBeGreaterThan(500);
-    expect(aPista.match(/\.\.\.repartido/g)).toHaveLength(4);
+
+    // Cada `<button` da fila leva o `...repartido`. Um que ficasse de fora empurraria os outros
+    // na mesma, e é isso — e só isso — que este caso existe para apanhar.
+    // ⚠️ A FILA ACABA ONDE A PALETA COMEÇA. As seis bolinhas dela também são `<button`, e sem
+    // este limite elas entravam na contagem — botões que NÃO repartem a coluna, porque vivem
+    // num painel à parte.
+    const daFila = aPista.slice(
+      aPista.indexOf('gap: noCelular ? 3 : 4'),
+      aPista.indexOf("role='group'"),
+    );
+    const botoes = (daFila.match(/<button/g) ?? []).length;
+    expect(botoes).toBeGreaterThanOrEqual(4);
+    expect(daFila.match(/\.\.\.repartido/g) ?? []).toHaveLength(botoes);
   });
 
   // ⚠️ O LADO TEM DE SER ALCANÇÁVEL. Num ecrã estreito a barra de rolagem horizontal ou é um

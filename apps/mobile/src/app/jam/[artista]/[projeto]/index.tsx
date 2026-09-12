@@ -745,6 +745,22 @@ export default function EspacoJam() {
   };
 
   /**
+   * Pintar a faixa.
+   *
+   * ⚠️ GRAVA NA HORA, e sem adiar: escolher uma cor é um gesto único e deliberado — não uma
+   * régua a ser arrastada — e adiá-lo só abriria a janela em que fechar a tela perde a escolha.
+   */
+  const pintarPista = (id: string, cor: number) => {
+    sujo.current = true;
+    minhaPista(id, { color_index: cor });
+    patcharPista(id, { color_index: cor });
+    setSelo('salvando');
+    catalogo.updateTrack(id, { color_index: cor })
+      .then(() => setSelo('salvo'))
+      .catch(() => setSelo('erro'));
+  };
+
+  /**
    * Apagar a faixa inteira — marcada, como o clipe, para o desfazer a poder devolver.
    *
    * ⚠️ NUNCA A MIX: ela é o áudio da própria gravação, e apagá-la é apagar a gravação.
@@ -1589,6 +1605,7 @@ export default function EspacoJam() {
                 aoRenomearPista={(id, nome) => renomearPista(id, nome)}
                 aoApagarPista={(id) => { void apagarPista(id); }}
                 aoMudarPista={(id, muda) => mexerNoMudo(id, muda)}
+                aoPintarPista={pintarPista}
                 aoSolarPista={(id, solo) => mesa.solar(id, solo)}
                 aoEnviarPara={(id) => { void enviarPara(id); }}
                 aoAdicionarFaixa={() => { void adicionarFaixa(); }}

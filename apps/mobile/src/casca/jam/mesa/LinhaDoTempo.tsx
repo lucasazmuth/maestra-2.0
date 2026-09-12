@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Pressable, ScrollView, StyleSheet, Text, TextInput, View, type LayoutChangeEvent,
+  Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type LayoutChangeEvent,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
@@ -15,7 +15,8 @@ import {
 } from '@maestra/core/audio/grade';
 import { NOME_DA_MIX, ehPistaDaMix, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import {
-  AZUL_DO_EDITOR, COR, COR_EDITOR, VERMELHO_DO_EDITOR, corDaPista,
+  AZUL_DO_EDITOR, COR, CORES_DAS_PISTAS, COR_EDITOR, NOMES_DAS_CORES, VERMELHO_DO_EDITOR,
+  corDaPista,
 } from '@maestra/core/constants/design';
 
 import { IconeDeEnviar } from './icones';
@@ -267,7 +268,8 @@ const Clipe = ({
 
 export const LinhaDoTempo = ({
   pistas, estado, picos, duracaoDoClipe, bpm, podeEditar, zoom, aoEncaixar,
-  armadas, aoArmar, aoRenomearPista, aoApagarPista, aoMudarPista, aoSolarPista, aoEnviarPara,
+  armadas, aoArmar, aoRenomearPista, aoApagarPista, aoMudarPista, aoSolarPista, aoPintarPista,
+  aoEnviarPara,
   aoAdicionarFaixa,
   aoBuscar, aoMover, aoCortar, aoApagar,
 }: {
@@ -298,6 +300,8 @@ export const LinhaDoTempo = ({
   aoApagarPista?: (pistaId: string) => void;
   aoMudarPista?: (pistaId: string, muda: boolean) => void;
   aoSolarPista?: (pistaId: string, solo: boolean) => void;
+  /** Pinta a faixa com uma das seis cores da paleta. */
+  aoPintarPista?: (pistaId: string, cor: number) => void;
   aoEnviarPara?: (pistaId: string) => void;
   /** Cria uma faixa nova com um áudio do aparelho. */
   aoAdicionarFaixa?: () => void;
@@ -356,6 +360,9 @@ export const LinhaDoTempo = ({
     return para ? pistas.findIndex((p) => p.id === para) - i : 0;
   };
 
+  /** A faixa cuja paleta está aberta. Uma de cada vez: duas abertas seriam duas perguntas. */
+  const [paletaDe, setPaletaDe] = useState<string | null>(null);
+
   const grade = useMemo(() => gradeDoCompasso(bpm, escala), [bpm, escala]);
   const passoDoEncaixe = useMemo(() => encaixeDaGrade(grade, escala), [grade, escala]);
   const passo = escala >= 40 ? 5 : escala >= 8 ? 15 : 60;
@@ -384,12 +391,13 @@ export const LinhaDoTempo = ({
             const calada = daMesa?.muda ?? false;
             const fixa = ehPistaDaMix(pista.id);
             const mexivel = !!podeEditar && !fixa;
+            const cor = corDaPista(pista.cor ?? i);
             return (
               <View
                 key={pista.id}
                 style={[
                   estilos.cabecalhoDaFaixa,
-                  { borderLeftColor: calada ? COR_EDITOR.estrela : corDaPista(pista.cor ?? i) },
+                  { borderLeftColor: calada ? COR_EDITOR.estrela : cor },
                   calada && estilos.faixaCalada,
                 ]}
               >
@@ -456,6 +464,20 @@ export const LinhaDoTempo = ({
                         size={11}
                         color={VERMELHO_DO_EDITOR}
                       />
+                    </Pressable>
+                  )}
+                  {/* ⚠️ A COR É ESCOLHIDA, e não sorteada. Ela é o que distingue uma faixa da
+                      outra de relance — na coluna, no clipe e na mesa — e até aqui era o que
+                      calhasse na ordem de criação. O alvo é a própria cor: uma bolinha cheia é
+                      o que se reconhece como "a cor desta faixa". */}
+                  {mexivel && (
+                    <Pressable
+                      onPress={() => setPaletaDe(pista.id)}
+                      style={estilos.botaozinho}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Cor de ${pista.nome}`}
+                    >
+                      <View style={[estilos.bolinhaDaCor, { backgroundColor: cor }]} />
                     </Pressable>
                   )}
                   {/* ⚠️ ENVIAR DIRETO PARA ESTA PISTA. Sem isto, uma pista que ficou sem áudio
@@ -594,11 +616,58 @@ export const LinhaDoTempo = ({
         </ScrollView>
       </View>
 
+      {/* As seis, à escolha. A folha sobe de baixo e ocupa só o que precisa: trocar a cor é um
+          gesto de um toque, e uma caixa no meio da tela tapa justamente a montagem que se está
+          a tentar distinguir. */}
+      <Modal visible={!!paletaDe} transparent animationType="slide" onRequestClose={() => setPaletaDe(null)}>
+        <Pressable style={estilos.veuDaPaleta} onPress={() => setPaletaDe(null)} accessibilityLabel="Fechar">
+          <Pressable
+            style={estilos.folhaDaPaleta}
+            onPress={() => {}}
+            accessibilityRole="radiogroup"
+            accessibilityLabel="Cores da faixa"
+          >
+            {CORES_DAS_PISTAS.map((tinta, i) => {
+              const daFaixa = pistas.find((p) => p.id === paletaDe);
+              const atual = (daFaixa?.cor ?? pistas.indexOf(daFaixa!)) % CORES_DAS_PISTAS.length === i;
+              return (
+                <Pressable
+                  key={tinta}
+                  onPress={() => { if (paletaDe) aoPintarPista?.(paletaDe, i); setPaletaDe(null); }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: atual }}
+                  accessibilityLabel={NOMES_DAS_CORES[i]}
+                  // A escolhida traz um anel: sem ele, seis bolinhas iguais não dizem qual é a
+                  // desta faixa, e a pessoa carrega na que já estava.
+                  style={[
+                    estilos.tintaDaPaleta,
+                    { backgroundColor: tinta, borderColor: atual ? COR_EDITOR.titulo : 'transparent' },
+                  ]}
+                />
+              );
+            })}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
     </ScrollView>
   );
 };
 
 const estilos = StyleSheet.create({
+  bolinhaDaCor: { width: 11, height: 11, borderRadius: 6 },
+  /* ⚠️ UMA FOLHA, E NÃO UM DIÁLOGO. Trocar a cor é um gesto de um toque; uma caixa no meio da
+     tela tapa justamente a montagem que se está a tentar distinguir. */
+  veuDaPaleta: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(10, 10, 12, .55)' },
+  folhaDaPaleta: {
+    flexDirection: 'row', justifyContent: 'center', gap: 14,
+    paddingVertical: 26, paddingHorizontal: 18,
+    backgroundColor: COR_EDITOR.painel,
+    borderTopWidth: 1, borderTopColor: COR_EDITOR.fio,
+    borderTopLeftRadius: 22, borderTopRightRadius: 22,
+  },
+  tintaDaPaleta: { width: 38, height: 38, borderRadius: 19, borderWidth: 3 },
+
   bloco: { flex: 1, backgroundColor: COR_EDITOR.fundoDe },
   // `minHeight` para a montagem encher o ecrã mesmo com uma faixa só: sem isto, o fundo da
   // linha do tempo acabava a meio da tela e o resto era o fundo da página.

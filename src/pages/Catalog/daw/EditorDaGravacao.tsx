@@ -19,6 +19,7 @@ import {
 import { pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import { rotuloDaGuia } from '@maestra/core/audio/exportar';
 import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
+import { CORES_DAS_PISTAS, NOMES_DAS_CORES } from '@maestra/core/constants/design';
 import { iniciais, type Presente } from '@maestra/core/audio/aoVivo';
 import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
@@ -322,6 +323,8 @@ export const EditorDaGravacao: FC<{
   >(null);
   /** A pilha de faixas, para saber sobre qual delas a mão está. */
   const pilhaDasPistas = useRef<HTMLDivElement>(null);
+  /** A faixa cuja paleta está aberta. Uma de cada vez: duas abertas seriam duas perguntas. */
+  const [paletaDe, setPaletaDe] = useState<string | null>(null);
   const agulhaPresa = useRef(false);
   /** Quem mexeu no zoom manda: o encaixe automático nunca volta a mexer nele. */
   const zoomMexido = useRef(false);
@@ -605,6 +608,29 @@ export const EditorDaGravacao: FC<{
             <FiCircle size={11} fill={armadas.includes(faixa.id) ? 'currentColor' : 'none'} />
           </button>
 
+          {/* ⚠️ A COR É ESCOLHIDA, e não sorteada. Ela é o que distingue uma faixa da outra de
+              relance — na coluna, no clipe e na mesa — e até aqui era o que calhasse na ordem
+              de criação. Quem monta sabe que a voz é verde e a bateria é azul; o produto tinha
+              de saber também.
+
+              O alvo é a própria cor: uma bolinha cheia é o que se reconhece como "a cor desta
+              faixa", e é onde a mão já procura. */}
+          {podeEditar && !fixa && (
+            <button
+              type='button'
+              onClick={() => setPaletaDe((atual) => (atual === faixa.id ? null : faixa.id))}
+              aria-haspopup='true'
+              aria-expanded={paletaDe === faixa.id}
+              title={`Cor de ${faixa.name}`}
+              aria-label={`Cor de ${faixa.name}`}
+              style={{ ...botaozinho(false), ...repartido, borderColor: DS.color.borda }}
+            >
+              <span style={{
+                width: 11, height: 11, borderRadius: '50%', background: cor, display: 'block',
+              }} />
+            </button>
+          )}
+
           {/* ⚠️ ENVIAR DIRETO PARA ESTA PISTA. Sem isto, uma pista que ficou sem áudio (o clipe
               foi apagado) virava um beco: a única entrada era a biblioteca, e de lá o ficheiro
               só chega por ARRASTO — que não existe no telemóvel, onde a biblioteca é uma gaveta
@@ -621,6 +647,46 @@ export const EditorDaGravacao: FC<{
             </button>
           )}
         </div>
+
+        {/* As seis, à escolha. ⚠️ `position: absolute` e não um modal: trocar a cor de uma
+            faixa é um gesto de um toque, e uma caixa que tapa a montagem para isso faz perder
+            de vista justamente o que se está a tentar distinguir. */}
+        {paletaDe === faixa.id && (
+          <div
+            role='group'
+            aria-label={`Cores para ${faixa.name}`}
+            style={{
+              position: 'absolute', zIndex: 30, marginTop: 34,
+              display: 'flex', gap: 6, padding: 7,
+              background: DS.color.bgPainel,
+              border: `1px solid ${DS.color.borda}`,
+              borderRadius: DS.raio.medio,
+              boxShadow: '0 8px 24px rgba(0, 0, 0, .6)',
+            }}
+          >
+            {CORES_DAS_PISTAS.map((tinta, i) => (
+              <button
+                key={tinta}
+                type='button'
+                onClick={() => {
+                  acoes.aoMudarPista(faixa.id, { color_index: i });
+                  setPaletaDe(null);
+                }}
+                aria-label={NOMES_DAS_CORES[i]}
+                aria-pressed={(faixa.color_index ?? indice) % CORES_DAS_PISTAS.length === i}
+                title={NOMES_DAS_CORES[i]}
+                style={{
+                  width: 20, height: 20, borderRadius: '50%', background: tinta, cursor: 'pointer',
+                  // A escolhida traz um anel: sem ele, seis bolinhas iguais não dizem qual é a
+                  // desta faixa, e a pessoa carrega na que já estava.
+                  border: (faixa.color_index ?? indice) % CORES_DAS_PISTAS.length === i
+                    ? `2px solid ${DS.color.texto}`
+                    : '2px solid transparent',
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         {/* ⚠️ VOLUME E PANORAMA SAEM DA COLUNA NO CELULAR. Eles moram na Mesa, que é a aba
             onde o telemóvel abre e onde o fader tem curso para um dedo. Repetidos aqui, numa

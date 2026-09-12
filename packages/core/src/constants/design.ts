@@ -913,6 +913,19 @@ export const CORES_DAS_PISTAS = [
   '#14b8a6', // turquesa
 ] as const;
 
+/**
+ * O nome de cada cor, na ordem da paleta.
+ *
+ * ⚠️ QUEM NÃO VÊ A COR PRECISA DE A OUVIR. Seis bolinhas coloridas são seis alvos idênticos
+ * para um leitor de tela; sem nome, escolher a cor de uma faixa passa a ser impossível — e a
+ * cor é justamente o que distingue uma faixa da outra de relance.
+ *
+ * Moram no núcleo porque as duas telas anunciam as mesmas seis.
+ */
+export const NOMES_DAS_CORES = [
+  'Azul', 'Roxo', 'Verde', 'Âmbar', 'Rosa', 'Turquesa',
+] as const;
+
 /** A cor da pista na posição N. Dá a volta: a sétima pista repete a primeira. */
 export const corDaPista = (indice: number): string =>
   CORES_DAS_PISTAS[((indice % CORES_DAS_PISTAS.length) + CORES_DAS_PISTAS.length)

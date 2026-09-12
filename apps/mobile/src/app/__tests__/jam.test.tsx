@@ -720,6 +720,29 @@ describe('espaço jam', () => {
     expect(tela.queryByText('TOM')).toBeNull();
   });
 
+  // ⚠️ A COR É ESCOLHIDA, e não sorteada. Ela é o que distingue uma faixa da outra de relance —
+  // na coluna, no clipe e na mesa — e era o que calhasse na ordem de criação. Quem monta sabe
+  // que a voz é verde e a bateria é azul; o produto passa a saber também.
+  it('escolher a cor da faixa grava na faixa, e não noutro sítio', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ files: [arquivo()], tracks: [pista()] })],
+    }));
+    mockAtualizarFaixa.mockResolvedValue(undefined);
+    const usuario = userEvent.setup();
+    const tela = await montar();
+    await tela.findByText('FAIXAS');
+
+    await usuario.press(tela.getByLabelText('Cor de Voz'));
+    // Os nomes vêm do núcleo: seis bolinhas sem nome são seis alvos idênticos para quem usa
+    // leitor de tela, e a cor é justamente o que distingue as faixas.
+    await usuario.press(tela.getByLabelText('Turquesa'));
+
+    await waitFor(() => expect(mockAtualizarFaixa).toHaveBeenCalledWith('t-1', { color_index: 5 }));
+    // ⚠️ E GRAVA NA HORA. Escolher uma cor é um gesto único e deliberado, não uma régua a ser
+    // arrastada: adiá-lo só abriria a janela em que fechar a tela perde a escolha.
+    expect(tela.queryByLabelText('Turquesa')).toBeNull();
+  });
+
   // Um BPM de quatro dígitos é engano de digitação, não uma escolha. Vai para o banco como
   // "sem BPM" em vez de sujar a ficha da gravação.
   it('um BPM fora da faixa não é gravado como número', async () => {
