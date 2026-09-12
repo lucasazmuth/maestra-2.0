@@ -392,6 +392,43 @@ describe('cromo do editor do Espaço JAM', () => {
     });
   });
 
+  // ⚠️ A AGULHA COMEÇA NA RÉGUA, nas duas telas — e é a BOLINHA que decide isto.
+  //
+  // Ela é onde o olho encontra a agulha ao percorrer a régua: é o que a faz um objeto que se
+  // pega, e não um risco a atravessar a montagem. Na web ela nascia uma régua abaixo, escondida
+  // entre os números e a primeira faixa — a mesma montagem com a pega em dois sítios diferentes.
+  //
+  // O `top` da web é NEGATIVO porque a agulha mora na pilha das faixas, que começa depois da
+  // régua: subir por ali é o que a deixa atravessá-la sem mudar de pai — e mudar de pai
+  // custava-lhe a coordenada horizontal, que é a da pilha.
+  it('a agulha atravessa a régua, e a bolinha fica no topo dela', () => {
+    const naWeb = semComentarios(editor);
+    const noApp = semComentarios(app || '');
+    const aLinhaDoTempo = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'LinhaDoTempo.tsx'),
+      'utf8',
+    ));
+
+    // A altura cobre a régua MAIS as faixas, nas duas.
+    expect(naWeb).toContain('top: -ALTURA_DA_REGUA');
+    expect(naWeb).toContain('height: ALTURA_DA_REGUA + Math.max(pistas.length, 1) * alturaDaPista');
+    expect(aLinhaDoTempo).toContain('height: ALTURA_DA_REGUA + pistas.length * ALTURA_DA_FAIXA');
+
+    // E a bolinha senta no topo da agulha, que é agora o topo da régua.
+    // ⚠️ ANCORADO NO `top` NEGATIVO, que só a agulha tem. `data-agulha` está em DUAS coisas — a
+    // régua também o leva, porque tocar nela move a agulha — e a primeira versão disto cortava
+    // a partir da régua e media uma fatia vazia.
+    const aBolinhaDaWeb = naWeb.slice(naWeb.indexOf('top: -ALTURA_DA_REGUA'), naWeb.indexOf('top: -ALTURA_DA_REGUA') + 600);
+    expect(aBolinhaDaWeb).toContain("top: 0, left: '50%'");
+    expect(aLinhaDoTempo).toContain('cabecaDaAgulha');
+
+    // A régua mede o mesmo nas duas: sem isso, "uma régua acima" é duas distâncias diferentes.
+    expect(naWeb.includes('ALTURA_DA_REGUA') && aLinhaDoTempo.includes('ALTURA_DA_REGUA')).toBe(true);
+    const daWeb = fs.readFileSync(path.join(__dirname, '..', 'pages', 'Catalog', 'daw', 'tokens.ts'), 'utf8');
+    const medida = (fonte: string) => Number(fonte.match(/ALTURA_DA_REGUA = (\d+)/)![1]);
+    expect(medida(aLinhaDoTempo)).toBe(medida(daWeb));
+  });
+
   // ⚠️ O ANDAMENTO E O TOM: O RÓTULO MUDOU-SE PARA DENTRO DO CAMPO, e o que o campo aceita é uma
   // decisão só, escrita uma vez.
   //

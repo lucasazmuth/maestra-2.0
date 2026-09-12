@@ -1318,14 +1318,24 @@ export const EditorDaGravacao: FC<{
                     </div>
                   )}
 
-                  {/* A agulha. Fica por cima de tudo, e é ela que diz onde o corte cai. */}
+                  {/* A agulha. Fica por cima de tudo, e é ela que diz onde o corte cai.
+                      ⚠️ ELA COMEÇA NA RÉGUA, e não no topo das faixas. A bolinha é onde o olho a
+                      encontra ao percorrer a régua — é ela que faz a agulha ser um objeto que se
+                      pega, e não um risco. Nascendo uma régua abaixo, ela ficava escondida entre
+                      os números e a primeira faixa, e a web e o aplicativo desenhavam a mesma
+                      montagem com a pega em sítios diferentes.
+
+                      O `top` é negativo porque a agulha mora na pilha das FAIXAS, que começa
+                      depois da régua; subir por aqui é o que a deixa atravessá-la sem mudar de
+                      pai — e mudar de pai custava-lhe a coordenada horizontal, que é a da
+                      pilha. */}
                   <div
                     onPointerDown={() => { agulhaPresa.current = true; }}
                     data-agulha=''
                     style={{
                       touchAction: 'none',
-                      position: 'absolute', left: agulha * escala, top: 0,
-                      height: Math.max(pistas.length, 1) * alturaDaPista,
+                      position: 'absolute', left: agulha * escala, top: -ALTURA_DA_REGUA,
+                      height: ALTURA_DA_REGUA + Math.max(pistas.length, 1) * alturaDaPista,
                       width: 2, background: DS.color.agulha, cursor: 'grab', zIndex: 100,
                     }}
                   >
