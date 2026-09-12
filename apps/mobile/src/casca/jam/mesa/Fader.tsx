@@ -40,12 +40,19 @@ export const Fader = ({ valor, aoMudar, apagado, rotulo }: {
   // ele, o Pan ganhava no toque e um dedo que começasse sobre o fader para rolar a página
   // arrastava o volume junto. Seis pixels horizontais é o gesto declarado; menos que isso é um
   // toque, e o toque abaixo trata dele.
+  const aplicar = (x: number) => aoMudar(paraValor(x));
+
+  // ⚠️ SÓ `runOnJS` ATRAVESSA A FRONTEIRA. O corpo de um gesto é um *worklet*: corre na linha da
+  // interface, noutro motor de JavaScript, onde as funções deste ficheiro não existem. Chamar
+  // `paraValor(e.x)` lá dentro rebentava com "Tried to synchronously call a Remote Function" —
+  // e rebentava só no aparelho, porque nos testes o `reanimated` é um duplo em que tudo corre na
+  // mesma linha. Por isso o gesto manda a COORDENADA CRUA, e a conta fica deste lado.
   const arrastar = Gesture.Pan()
     .activeOffsetX([-6, 6])
     .failOffsetY([-12, 12])
-    .onUpdate((e) => { runOnJS(aoMudar)(paraValor(e.x)); });
+    .onUpdate((e) => { runOnJS(aplicar)(e.x); });
 
-  const toque = Gesture.Tap().onEnd((e) => { runOnJS(aoMudar)(paraValor(e.x)); });
+  const toque = Gesture.Tap().onEnd((e) => { runOnJS(aplicar)(e.x); });
 
   const cheio = Math.max(0, Math.min(valor, 1));
 

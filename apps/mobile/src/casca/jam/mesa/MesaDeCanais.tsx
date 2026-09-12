@@ -55,11 +55,18 @@ const FaderEmPe = ({ valor, cor, rotulo, aoMudar }: {
   // ⚠️ `activeOffsetY` separa "quero mexer no volume" de "quero rolar de lado". Sem ele, o Pan
   // ganhava no toque e um dedo que começasse sobre o canal para percorrer a mesa arrastava o
   // volume junto.
+  const aplicar = (y: number) => aoMudar(paraValor(y));
+
+  // ⚠️ SÓ `runOnJS` ATRAVESSA A FRONTEIRA. O corpo de um gesto é um *worklet*: corre na linha da
+  // interface, noutro motor de JavaScript, onde as funções deste ficheiro não existem. Chamar
+  // `paraValor(e.y)` lá dentro rebentava com "Tried to synchronously call a Remote Function" —
+  // e rebentava só no aparelho, porque nos testes o `reanimated` é um duplo em que tudo corre na
+  // mesma linha. Por isso o gesto manda a COORDENADA CRUA, e a conta fica deste lado.
   const arrastar = Gesture.Pan()
     .activeOffsetY([-6, 6])
     .failOffsetX([-12, 12])
-    .onUpdate((e) => { runOnJS(aoMudar)(paraValor(e.y)); });
-  const toque = Gesture.Tap().onEnd((e) => { runOnJS(aoMudar)(paraValor(e.y)); });
+    .onUpdate((e) => { runOnJS(aplicar)(e.y); });
+  const toque = Gesture.Tap().onEnd((e) => { runOnJS(aplicar)(e.y); });
 
   const cheio = Math.max(0, Math.min(valor, 1));
 
@@ -97,11 +104,18 @@ const Panorama = ({ valor, rotulo, aoMudar }: {
   };
   const medir = (e: LayoutChangeEvent) => setLargura(e.nativeEvent.layout.width);
 
+  const aplicar = (x: number) => aoMudar(paraValor(x));
+
+  // ⚠️ SÓ `runOnJS` ATRAVESSA A FRONTEIRA. O corpo de um gesto é um *worklet*: corre na linha da
+  // interface, noutro motor de JavaScript, onde as funções deste ficheiro não existem. Chamar
+  // `paraValor(e.x)` lá dentro rebentava com "Tried to synchronously call a Remote Function" —
+  // e rebentava só no aparelho, porque nos testes o `reanimated` é um duplo em que tudo corre na
+  // mesma linha. Por isso o gesto manda a COORDENADA CRUA, e a conta fica deste lado.
   const arrastar = Gesture.Pan()
     .activeOffsetX([-6, 6])
     .failOffsetY([-12, 12])
-    .onUpdate((e) => { runOnJS(aoMudar)(paraValor(e.x)); });
-  const toque = Gesture.Tap().onEnd((e) => { runOnJS(aoMudar)(paraValor(e.x)); });
+    .onUpdate((e) => { runOnJS(aplicar)(e.x); });
+  const toque = Gesture.Tap().onEnd((e) => { runOnJS(aplicar)(e.x); });
 
   const preso = Math.max(-1, Math.min(valor, 1));
   const meio = 50;
