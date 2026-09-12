@@ -81,6 +81,54 @@ export const rolagemQueCentra = (
 ));
 
 /**
+ * Quanto da largura visível fica ATRÁS da agulha quando a vista vai buscá-la.
+ *
+ * Ela não pode aterrar colada à borda esquerda: encostada ali, não se vê nada do que acabou de
+ * passar, e o que se está a ouvir perde o contexto no mesmo instante em que a vista salta. Um
+ * décimo dá um respiro sem gastar a largura que interessa, que é a do que vem a seguir.
+ */
+export const MARGEM_DE_SEGUIR = 0.1;
+
+/**
+ * A rolagem nova quando a agulha SAI do que se vê — e `null` enquanto ela lá estiver.
+ *
+ * ⚠️ ESTE É O `null` QUE FAZ A REGRA. Enquanto a agulha está à vista, a montagem NÃO SE MEXE:
+ * ela atravessa o ecrã como hoje, e quem está a olhar para um compasso continua a olhar para
+ * ele. Uma vista que persegue a agulha a cada décimo de segundo é muito pior do que uma que não
+ * a segue — a onda desliza sem parar debaixo do olho, e fica impossível ler o que quer que seja
+ * ou apontar para uma coisa parada.
+ *
+ * Quando ela sai, a vista vira a página: a agulha reaparece perto da esquerda e à frente dela
+ * fica uma tela inteira de música por tocar. Sem isto, carregar em tocar era ficar a rolar
+ * atrás da linha vermelha com a mão, que é o contrário de ouvir.
+ *
+ * ⚠️ E SERVE OS DOIS SENTIDOS. Voltar ao início, o fim de um ciclo do loop e um salto para trás
+ * deixam a agulha ATRÁS do que se vê, e o problema é exatamente o mesmo: a mesma conta vai
+ * buscá-la, porque o que se pergunta não é "andou para a frente?" mas "ainda está à vista?".
+ */
+export const rolagemQueSegue = (
+  segundo: number,
+  escala: number,
+  rolagemAtual: number,
+  larguraVisivel: number,
+  maximo: number,
+): number | null => {
+  if (larguraVisivel <= 0) return null;
+  const onde = segundo * escala;
+  // À vista? Então nada se mexe. É a metade silenciosa desta função, e a mais importante.
+  if (onde >= rolagemAtual && onde <= rolagemAtual + larguraVisivel) return null;
+
+  const nova = Math.max(0, Math.min(
+    maximo > 0 ? maximo : 0,
+    onde - larguraVisivel * MARGEM_DE_SEGUIR,
+  ));
+  // ⚠️ E SE A ROLAGEM NÃO PUDER MUDAR, NÃO MUDA. Perto do fim, a agulha pode sair do ecrã com a
+  // rolagem já no máximo: devolver o mesmo número faria a tela pedir uma rolagem por décimo de
+  // segundo para ficar onde já está — e no aparelho isso é uma animação a lutar com o dedo.
+  return nova === rolagemAtual ? null : nova;
+};
+
+/**
  * O encaixe de quem NÃO tem andamento escrito, em segundos.
  *
  * ⚠️ VEIO DOS TOKENS DA WEB QUANDO A GRADE MUDOU-SE PARA O NÚCLEO. Ele é o passo do arrasto, e o

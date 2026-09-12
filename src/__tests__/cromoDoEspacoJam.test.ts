@@ -515,6 +515,39 @@ describe('cromo do editor do Espaço JAM', () => {
     });
   });
 
+  // ⚠️ A VISTA SEGUE A AGULHA QUANDO ELA FOGE, NAS DUAS — e fica quieta enquanto ela se vê.
+  //
+  // Carregar em tocar era ficar a rolar atrás da linha vermelha com a mão: ela atravessava o
+  // ecrã, saía pela direita e continuava a andar sozinha.
+  //
+  // ⚠️ E A METADE QUE SE PERDE PRIMEIRO É A SEGUNDA. Uma vista que centra a agulha a cada décimo
+  // de segundo é PIOR do que uma que não a segue: a onda desliza sem parar debaixo do olho, e
+  // fica impossível ler o que quer que seja ou apontar para uma coisa parada. Quem decide é o
+  // `null` do núcleo, e é por isso que as duas telas têm de o respeitar em vez de rolarem sempre.
+  it('a vista segue a agulha só quando ela sai do ecrã, nas duas', () => {
+    const oEditor = semComentarios(editor);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    [oEditor, aLinhaDoTempo].forEach((fonte) => {
+      expect(fonte).toContain('rolagemQueSegue(');
+      // O `null` é a regra: rolar sem o conferir é perseguir a agulha a cada décimo de segundo.
+      expect(fonte).toMatch(/nova !== null/);
+    });
+
+    // ⚠️ E A AGULHA PRESA NA MÃO NÃO SE SEGUE, na web. Arrastá-la para fora do que se vê é um
+    // gesto de quem a está a LEVAR a um sítio: rolar por baixo da mão move o alvo enquanto ela
+    // o persegue, e a agulha foge do dedo.
+    const oSeguir = oEditor.slice(oEditor.indexOf('const nova = rolagemQueSegue('));
+    expect(oEditor.slice(oEditor.lastIndexOf('useEffect', oEditor.indexOf('rolagemQueSegue(')),
+      oEditor.indexOf('rolagemQueSegue('))).toContain('agulhaPresa.current');
+    expect(oSeguir).toBeTruthy();
+
+    // ⚠️ E NO APARELHO A ROLAGEM OUVE-SE, não se pergunta: num `ScrollView` não há `scrollLeft`
+    // para ler, e sem o `onScroll` a conta compara a agulha com uma rolagem que ficou no zero.
+    expect(aLinhaDoTempo).toContain('onScroll={');
+    expect(aLinhaDoTempo).toContain('contentOffset.x');
+  });
+
   // ⚠️ O ZOOM NÃO PERDE A AGULHA DE VISTA, NAS DUAS.
   //
   // Quem aproxima a linha do tempo está quase sempre a preparar um corte: quer ver a agulha de

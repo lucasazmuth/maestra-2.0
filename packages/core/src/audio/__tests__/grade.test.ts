@@ -1,6 +1,7 @@
 import {
   BPM_MAXIMO, BPM_MINIMO, ENCAIXE_SEM_ANDAMENTO, TEMPOS_POR_COMPASSO,
-  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra,
+  MARGEM_DE_SEGUIR,
+  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra, rolagemQueSegue,
 } from '../grade';
 
 // O BPM NÃO FAZIA NADA NA TELA.
@@ -186,5 +187,53 @@ describe('rolagemQueCentra', () => {
   it('sem nada para rolar, fica no zero', () => {
     expect(rolagemQueCentra(60, 60, 800, 0)).toBe(0);
     expect(rolagemQueCentra(60, 60, 800, -200)).toBe(0);
+  });
+});
+
+// A VISTA QUE SEGUE A AGULHA — mas só quando ela foge.
+//
+// Hoje, carregar em tocar era ficar a rolar atrás da linha vermelha com a mão. E a correção
+// fácil — centrar a agulha a cada décimo de segundo — é PIOR do que o defeito: a onda desliza
+// sem parar debaixo do olho e fica impossível ler o que quer que seja.
+describe('rolagemQueSegue', () => {
+  // 800 de largura, rolagem em 0: a agulha a 60 px está à vista.
+  it('não mexe em nada enquanto a agulha está à vista', () => {
+    expect(rolagemQueSegue(1, 60, 0, 800, 100000)).toBeNull();
+    // Nem colada às bordas do que se vê: ali ela ainda se vê.
+    expect(rolagemQueSegue(0, 60, 0, 800, 100000)).toBeNull();
+    expect(rolagemQueSegue(800 / 60, 60, 0, 800, 100000)).toBeNull();
+  });
+
+  // Passou a borda direita: a vista vira a página e ela reaparece perto da esquerda, com uma
+  // tela inteira de música por tocar à frente.
+  it('quando ela passa a borda, a vista vai buscá-la', () => {
+    // 20 s × 60 = 1200 px, menos 10 % de 800 = 80 → 1120.
+    expect(rolagemQueSegue(20, 60, 0, 800, 100000)).toBe(1120);
+  });
+
+  // ⚠️ E NÃO COLADA À BORDA. Aterrar em cima da esquerda deixa a pessoa sem ver nada do que
+  // acabou de passar, no instante exato em que a vista saltou.
+  it('deixa um respiro atrás dela, e não a encosta à borda', () => {
+    const nova = rolagemQueSegue(20, 60, 0, 800, 100000)!;
+    expect(20 * 60 - nova).toBe(800 * MARGEM_DE_SEGUIR);
+  });
+
+  // ⚠️ NOS DOIS SENTIDOS. Voltar ao início e o fim de um ciclo do loop deixam a agulha ATRÁS do
+  // que se vê, e o problema é o mesmo: a pergunta não é "andou para a frente?" mas "ainda está
+  // à vista?". Sem isto, repetir do início deixava a tela parada no fim da música.
+  it('vai buscá-la também quando ela salta para trás', () => {
+    expect(rolagemQueSegue(0, 60, 5000, 800, 100000)).toBe(0);
+  });
+
+  // ⚠️ E NÃO PEDE UMA ROLAGEM QUE JÁ ESTÁ FEITA. Perto do fim a agulha sai do ecrã com a rolagem
+  // já no máximo: devolver o mesmo número faria a tela pedir uma rolagem por décimo de segundo
+  // para ficar onde já está — no aparelho, uma animação a lutar com o dedo.
+  it('no fim, com a rolagem no máximo, não pede nada', () => {
+    expect(rolagemQueSegue(1000, 60, 5000, 800, 5000)).toBeNull();
+  });
+
+  // Sem largura medida ainda não há "à vista" nenhum para comparar.
+  it('sem largura, não decide nada', () => {
+    expect(rolagemQueSegue(20, 60, 0, 0, 100000)).toBeNull();
   });
 });

@@ -14,7 +14,8 @@ import useIsMobile from '../../../utils/isMobile';
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
 import { FaderEmPe } from './FaderEmPe';
 import {
-  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra, zoomQueEncaixa,
+  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra, rolagemQueSegue,
+  zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
 import { fimDaPista, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import { rotuloDaGuia } from '@maestra/core/audio/exportar';
@@ -441,6 +442,33 @@ export const EditorDaGravacao: FC<{
       return novo;
     });
   };
+
+  /**
+   * A vista vai buscar a agulha quando ela SAI do que se vê.
+   *
+   * ⚠️ E NÃO A PERSEGUE ENQUANTO ELA LÁ ESTÁ. É o `null` do núcleo que decide, e essa metade é
+   * a mais importante: uma vista que centra a agulha a cada décimo de segundo é PIOR do que uma
+   * que não a segue — a onda desliza sem parar debaixo do olho, e fica impossível ler o que quer
+   * que seja ou apontar para uma coisa parada. À vista, a montagem não se mexe.
+   *
+   * ⚠️ E A AGULHA PRESA NA MÃO NÃO SE SEGUE. Arrastá-la para fora do que se vê é um gesto de
+   * quem está a levar a linha a um sítio, não de quem a está a ver passar: rolar por baixo da
+   * mão movia o alvo enquanto ela o perseguia, e a agulha fugia do dedo.
+   */
+  useEffect(() => {
+    const caixa = rolagem.current;
+    if (!caixa || agulhaPresa.current) return;
+    const nova = rolagemQueSegue(
+      agulha,
+      escala,
+      caixa.scrollLeft,
+      // A largura das ONDAS: a coluna das faixas fica colada à esquerda por cima da montagem, e
+      // o que está debaixo dela não está à vista.
+      caixa.clientWidth - larguraDasPistas,
+      caixa.scrollWidth - caixa.clientWidth,
+    );
+    if (nova !== null) caixa.scrollLeft = nova;
+  }, [agulha, escala, larguraDasPistas]);
 
   const segundoDoEvento = (evento: { clientX: number }) => {
     const caixa = linha.current;

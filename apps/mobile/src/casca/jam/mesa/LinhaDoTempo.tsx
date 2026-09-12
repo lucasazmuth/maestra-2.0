@@ -11,7 +11,7 @@ import Feather from '@expo/vector-icons/Feather';
 import type { Pista } from '@maestra/core/audio/mesa';
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import {
-  PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra, zoomQueEncaixa,
+  PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra, rolagemQueSegue, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
 import { NOME_DA_MIX, ehPistaDaMix, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import {
@@ -407,6 +407,15 @@ export const LinhaDoTempo = ({
   const ondeEstaAAgulha = useRef(estado.posicao);
   ondeEstaAAgulha.current = estado.posicao;
   const rolagem = useRef<ScrollView>(null);
+  /**
+   * Onde a rolagem está agora.
+   *
+   * ⚠️ NUM `ScrollView` ISTO NÃO SE PERGUNTA, só se ouve: não há `scrollLeft` para ler, e a
+   * única forma de o saber é guardar o que o `onScroll` diz. Numa referência, e não em estado —
+   * rolar com o dedo dispara isto dezenas de vezes por segundo, e um `setState` por evento
+   * redesenhava a montagem inteira a cada pixel de arrasto.
+   */
+  const onde = useRef(0);
   useEffect(() => {
     if (larguraVisivel <= 0) return;
     // A coluna das faixas é IRMÃ do scroll, não filha: o que se vê da montagem é o que sobra.
@@ -417,6 +426,22 @@ export const LinhaDoTempo = ({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escala]);
+
+  /**
+   * A vista vai buscar a agulha quando ela SAI do que se vê.
+   *
+   * ⚠️ E NÃO A PERSEGUE ENQUANTO ELA LÁ ESTÁ. É o `null` do núcleo que decide, e essa metade é a
+   * mais importante: uma vista que centra a agulha a cada décimo de segundo é PIOR do que uma
+   * que não a segue — a onda desliza sem parar debaixo do olho, e fica impossível ler o que quer
+   * que seja. À vista, a montagem não se mexe; é só quando ela foge que a página vira.
+   */
+  useEffect(() => {
+    if (larguraVisivel <= 0) return;
+    const vista = larguraVisivel - COLUNA;
+    const nova = rolagemQueSegue(estado.posicao, escala, onde.current, vista, largura - vista);
+    if (nova !== null) rolagem.current?.scrollTo({ x: nova, animated: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estado.posicao]);
 
   /**
    * A faixa para onde o clipe vai, `degrau` linhas abaixo da `i` — `undefined` se ficar na dela.
@@ -578,8 +603,14 @@ export const LinhaDoTempo = ({
 
         <ScrollView
           ref={rolagem}
+          // Por aqui a tela sabe onde a rolagem está — e é por aqui que o teste lho diz.
+          testID="ondas"
           horizontal
           showsHorizontalScrollIndicator
+          // 16 ms: a conta de seguir precisa de saber onde a rolagem está, e um valor velho meio
+          // segundo faria a vista saltar a partir de um sítio onde já não estava.
+          scrollEventThrottle={16}
+          onScroll={(e) => { onde.current = e.nativeEvent.contentOffset.x; }}
           contentContainerStyle={{ width: largura }}
         >
           <View style={{ width: largura }}>
