@@ -1067,3 +1067,40 @@ export const ONDA_DA_VERSAO = {
   dragToSeek: true,
   hideScrollbar: true,
 } as const;
+
+/**
+ * A ESPERA: a marca da Maestra a respirar.
+ *
+ * ⚠️ NÃO É UMA RODA. Uma roda a girar é o sinal de espera de toda a gente, e por isso não é de
+ * ninguém — a tela podia ser de qualquer aplicativo. A marca a respirar diz de quem é a espera,
+ * e a web já o fazia (`src/components/spinner/spinner.scss`); o aplicativo é que tinha ficado
+ * com o círculo do sistema.
+ *
+ * ⚠️ OS NÚMEROS MORAM AQUI porque as duas superfícies os escrevem em linguagens diferentes — a
+ * web em `@keyframes`, o aplicativo em `reanimated` — e duas cópias de uma curva divergem sem
+ * que ninguém repare: uma respiração meio segundo mais lenta num dos lados não quebra nada, só
+ * faz os dois parecerem dois produtos.
+ *
+ * A roda pequena CONTINUA onde sempre esteve: dentro de um botão a gravar, ao pé de um campo, no
+ * rodapé de uma lista que busca mais. Ali ela não é a espera da tela — é o estado de um controlo,
+ * e a marca a respirar dentro de um botão de 44 seria um logotipo a piscar numa caixa.
+ */
+export const ESPERA_DA_MARCA = {
+  /** O cinza-azulado da marca em repouso. */
+  cor: '#526B96',
+  /** O desenho, em pontos. A caixa é maior: a respiração cresce até 1.0 e precisa de folga. */
+  marca: 48,
+  caixa: 72,
+  /** Uma respiração inteira, em milissegundos. */
+  ciclo: 1550,
+  /**
+   * Os quadros da respiração, em fração do ciclo. São os mesmos `@keyframes` da web, lidos como
+   * dados: `em` é onde o quadro cai (0..1), e os dois valores são o que se vê nele.
+   */
+  quadros: [
+    { em: 0, opacidade: 0.55, escala: 0.88 },
+    { em: 0.45, opacidade: 1, escala: 1 },
+    { em: 0.65, opacidade: 0.78, escala: 0.95 },
+    { em: 1, opacidade: 0.55, escala: 0.88 },
+  ],
+} as const;

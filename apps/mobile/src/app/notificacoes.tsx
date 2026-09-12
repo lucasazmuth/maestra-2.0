@@ -17,6 +17,7 @@ import {
 import { useSessao } from '@/nucleo/sessao';
 
 import { CabecalhoDeVolta } from '@/casca/CabecalhoDeVolta';
+import { Carregando } from '@/casca/Carregando';
 
 // A caixa de entrada do artista.
 //
@@ -139,7 +140,7 @@ export default function Notificacoes() {
       </View>
 
       {carregando ? (
-        <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
+        <Carregando estilo={estilos.espera} />
       ) : vazia || erro ? (
         <View style={estilos.conteudo}>
           <View style={estilos.aviso}>

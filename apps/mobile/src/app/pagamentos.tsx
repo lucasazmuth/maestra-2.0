@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import {
-  ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View,
+  Pressable, ScrollView, StyleSheet, Text, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -14,6 +14,7 @@ import {
 
 import { useVoltar } from '@/nucleo/navegar';
 import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
 // O histórico de pagamentos: assinatura e perfis avulsos, na mesma lista, do mais recente ao
 // mais antigo.
@@ -60,7 +61,7 @@ export default function Pagamentos() {
         </Text>
 
         {loading ? (
-          <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
+          <Carregando estilo={estilos.espera} />
         ) : items.length === 0 ? (
           <View style={estilos.vazio}>
             <Text style={estilos.vazioTitulo}>Nenhum pagamento ainda</Text>

@@ -1,7 +1,7 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, Image, Linking, Pressable, RefreshControl,
+  FlatList, Image, Linking, Pressable, RefreshControl,
   StyleSheet, Text, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +19,7 @@ import { BotaoDoMenuDoSistema, BotaoRedondo } from '@/casca/marca/MenuDoSistema'
 import { SeloDoPlano } from '@/casca/marca/SeloDoPlano';
 import { MaestraMarca, NotificationIcon } from '@/icones';
 import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
 /** Assinatura, desbloqueio e suporte continuam na web: pagamento no app exige StoreKit. */
 const SITE = 'https://www.maestramanager.com';
@@ -208,7 +209,7 @@ export default function Perfis() {
         }
         ListEmptyComponent={
           loading && !loaded
-            ? <ActivityIndicator color={COR.primaria} style={estilos.espera} />
+            ? <Carregando estilo={estilos.espera} />
             : <Text style={estilos.vazio}>Nenhum perfil ainda.</Text>
         }
         renderItem={({ item }) => (

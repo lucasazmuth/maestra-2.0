@@ -2,7 +2,7 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, FlatList, Image, Linking, Pressable, RefreshControl,
+  Alert, FlatList, Image, Linking, Pressable, RefreshControl,
   StyleSheet, Text, View,
 } from 'react-native';
 
@@ -23,6 +23,7 @@ import { Escolha } from '@/casca/Escolha';
 import { partilharGuiaMp3 } from '@/casca/jam/mesa/exportarNativo';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
 import { useArtistaDaRota } from '@/nucleo/artista';
+import { Carregando } from '@/casca/Carregando';
 
 type Aba = 'musicas' | 'lancamentos';
 
@@ -305,7 +306,7 @@ export default function Catalogo() {
           )}
         />
       ) : carregando ? (
-        <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
+        <Carregando estilo={estilos.espera} />
       ) : vazio || erro ? (
         <View style={estilos.conteudo}>
           <View style={estilos.aviso}>

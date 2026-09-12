@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -64,6 +64,7 @@ import {
 } from '@/nucleo/arquivos';
 import { useArtistaDaRota } from '@/nucleo/artista';
 import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
 // O Espaço JAM: a MÚSICA, aberta como um editor.
 //
@@ -1314,7 +1315,7 @@ export default function EspacoJam() {
   if (carregando) {
     return (
       <LinearGradient colors={[COR_EDITOR.fundoDe, COR_EDITOR.fundoAte]} style={estilos.espera}>
-        <ActivityIndicator color={COR.primaria} />
+        <Carregando cor={COR_EDITOR.rotulo} />
       </LinearGradient>
     );
   }

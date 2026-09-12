@@ -63,6 +63,16 @@ export const MaestraLogo = ({ size = 22, color }: Props) => (
  * As proporções são as da folha da web: a palavra tem 620/121 de razão e ocupa 0,68 da altura
  * do símbolo, com 0,28em de vão entre os dois.
  */
+/**
+ * O SÍMBOLO sozinho, sem a palavra.
+ *
+ * É a mesma peça que a `MaestraMarca` usa à esquerda, exportada porque a espera das telas a
+ * mostra sozinha, a respirar (ver `casca/Carregando.tsx`) — ali a palavra não cabe nem serve.
+ */
+export const MaestraSimbolo = ({ size = 24, color }: Props) => (
+  <MaestraSimboloSvg width={size} height={size} color={color} />
+);
+
 export const MaestraMarca = ({ size = 24, color }: Props) => {
   const alturaDaPalavra = size * 0.68;
   return (

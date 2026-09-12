@@ -12,6 +12,7 @@ import * as catalogo from '@maestra/core/services/db/catalog';
 
 import { Folha } from '@/casca/Folha';
 import { PALETA_ESCURA, PaletaDaFolhaProvider } from '@/casca/paleta';
+import { Carregando } from '@/casca/Carregando';
 
 // A CONVERSA do Espaço JAM: a equipa a falar sobre a música.
 //
@@ -114,7 +115,7 @@ export const ConversaDoJam = ({ aberta, projetoId, autor, podeFalar, aoFechar }:
             onContentSizeChange={() => fim.current?.scrollToEnd({ animated: false })}
           >
             {carregando ? (
-              <ActivityIndicator color={AZUL_DO_EDITOR} style={estilos.espera} />
+              <Carregando estilo={estilos.espera} cor={COR_EDITOR.rotulo} />
             ) : mensagens.length === 0 ? (
               // ⚠️ SEM ÍCONE NO VAZIO. Um balão de fala desenhado dentro de um balão de fala não
               // acrescenta nada — diz outra vez o que o título já diz, e um círculo com um

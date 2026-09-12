@@ -18,6 +18,7 @@ import { CaixaDeAceite } from '@/casca/CaixaDeAceite';
 import { MaestraMarca } from '@/icones';
 import { sair } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
 /** Os documentos legais vivem na web. */
 const SITE = 'https://www.maestramanager.com';
@@ -121,7 +122,7 @@ export default function Consentimento() {
               </View>
 
               {loading && !state ? (
-                <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
+                <Carregando estilo={estilos.espera} />
               ) : bloqueada ? (
                 <>
                   <Text style={estilos.titulo}>Conta em análise</Text>

@@ -2,7 +2,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View,
+  Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View,
 } from 'react-native';
 
 import { COR, COR_CATALOGO, COR_EQUIPE, RAIO } from '@maestra/core/constants/design';
@@ -16,6 +16,7 @@ import { FolhaDeConvite } from '@/casca/equipe/FolhaDeConvite';
 import { FolhaDoMembro, SeloDeEstado } from '@/casca/equipe/FolhaDoMembro';
 import { useArtistaDaRota } from '@/nucleo/artista';
 import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
 // A equipe do perfil.
 //
@@ -86,7 +87,7 @@ export default function Equipe() {
         />
 
         {carregando ? (
-          <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
+          <Carregando estilo={estilos.espera} />
         ) : erro ? (
           <View style={estilos.aviso}>
             <Text style={estilos.avisoTitulo}>Equipe indisponível</Text>
