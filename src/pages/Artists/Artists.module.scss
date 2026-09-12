@@ -15,7 +15,15 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 276px));
+  // ⚠️ O MÁXIMO É `1fr`, E NÃO UMA LARGURA. Com as colunas travadas em 276px, o que sobrava da
+  // divisão ficava MORTO à direita — e sobrava quase sempre, porque a janela não é múltipla de
+  // 302 (276 + o vão). Numa lateral encolhida cabiam duas colunas e ficava um terço da tela em
+  // branco ao lado dos cartões.
+  //
+  // `auto-fill` conta as colunas pelo MÍNIMO (220), e o `1fr` reparte entre elas tudo o que
+  // resta: a fila fecha sempre na borda, e os cartões crescem um pouco em vez de deixarem um
+  // vão. O mínimo é que continua a mandar em quantos cabem.
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 26px;
   max-width: none;
 }

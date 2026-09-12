@@ -64,4 +64,21 @@ describe('cromo da lista de perfis', () => {
     expect(semEspacos).toContain('width:140px');
     expect(semEspacos).toContain('text-align:center');
   });
+
+  // ⚠️ A FILA FECHA NA BORDA. As colunas estavam travadas numa largura (`minmax(220px, 276px)`),
+  // e o que sobrava da divisão ficava MORTO à direita — sobrava quase sempre, porque a janela não
+  // é múltipla de 302. Numa lateral encolhida cabiam duas colunas e ficava um terço da tela em
+  // branco ao lado dos cartões.
+  //
+  // O `auto-fill` continua a contar as colunas pelo MÍNIMO, que é quem manda em quantas cabem; o
+  // que muda é o máximo, que passa a ser o que resta repartido entre elas.
+  it('as colunas repartem o que sobra, em vez de deixarem um vão', () => {
+    const grade = scss.slice(scss.indexOf('.grid {'));
+    const colunas = grade.slice(0, grade.indexOf('}')).match(/grid-template-columns:([^;]+);/)![1];
+
+    expect(colunas).toContain('auto-fill');
+    expect(colunas).toContain('minmax(220px, 1fr)');
+    // O máximo não pode voltar a ser uma largura: é aí que o vão nasce.
+    expect(colunas).not.toMatch(/minmax\(\s*\d+px\s*,\s*\d+px\s*\)/);
+  });
 });
