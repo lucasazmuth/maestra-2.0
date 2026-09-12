@@ -5,25 +5,21 @@ import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 
 import { LinhaDoTempo } from '../LinhaDoTempo';
 
-// A VISTA QUE SEGUE A AGULHA — mas só quando ela foge.
+// O QUE A VISTA FAZ ENQUANTO A MÚSICA TOCA — e são dois modos, não um.
 //
-// Carregar em tocar era ficar a rolar atrás da linha vermelha com a mão: ela atravessava o ecrã,
-// saía pela direita e continuava a andar sozinha, e ver o que estava a soar passava a ser um
-// trabalho de scroll.
+// Primeiro a agulha anda e a montagem está quieta, como sempre esteve: quem está a olhar para um
+// compasso continua a olhar para ele. No instante em que ela ia desaparecer pela direita, trocam
+// de papel — a linha trava no MEIO e passa a ser a música a deslizar por baixo, como num
+// gravador de fita. Antes disto, carregar em tocar era ficar a rolar atrás da linha com a mão.
 //
-// ⚠️ E A CORREÇÃO FÁCIL É PIOR DO QUE O DEFEITO. Uma vista que centra a agulha a cada décimo de
-// segundo faz a onda deslizar sem parar debaixo do olho: fica impossível ler o que quer que seja
-// ou apontar para uma coisa parada. Por isso as DUAS metades são a regra, e a segunda — a
-// montagem quieta enquanto a agulha está à vista — é a que se perde primeiro.
-//
-// A conta é do núcleo (`rolagemQueSegue`, com os seus próprios casos); o que se prova aqui é a
-// ligação: a tela mede-se, ouve a rolagem e pede a certa.
+// A decisão é do núcleo (`passoDaVista`, com os seus próprios casos, incluindo o que guarda o
+// modo). O que se prova aqui é a ligação: a tela mede-se, ouve a rolagem, e pede a certa.
 //
 // ⚠️ UM CASO SÓ, E É DE PROPÓSITO. Neste ficheiro a SEGUNDA montagem devolve uma árvore vazia —
 // `getByTestId` não acha sequer a raiz —, que é a mesma armadilha do `Modal` a sobreviver à
 // limpeza entre casos (ver `FecharComGuia.test.tsx` e `Carregando.test.tsx`). Partir isto em
-// três `it` dava dois testes a falhar por arrumação, e não por regra. Como percurso também se lê
-// melhor: a agulha anda, foge, e é ela que manda a vista atrás dela.
+// vários `it` dava testes a falhar por arrumação, e não por regra. Como percurso também se lê
+// melhor: a agulha anda, chega à borda, e a partir dali é a música que se mexe.
 
 const COLUNA = 132;
 const VISTA = 400;
@@ -46,12 +42,11 @@ const montagem = (posicao: number) => (
 );
 
 describe('a vista e a agulha', () => {
-  it('fica quieta enquanto a agulha se vê, e vai buscá-la quando ela foge', async () => {
+  it('a agulha anda até à borda, e a partir dali é a música que desliza', async () => {
     const rolou = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
     const { rerender, unmount } = await render(montagem(0));
-    const xPedido = () => (
-      rolou.mock.calls[rolou.mock.calls.length - 1][0] as { x: number }
-    ).x;
+    const ultimo = () => rolou.mock.calls[rolou.mock.calls.length - 1][0] as
+      { x: number; animated: boolean };
 
     // Sem largura medida não há "à vista" nenhum para comparar.
     await fireEvent(screen.getByTestId('montagem'), 'layout', {
@@ -63,25 +58,36 @@ describe('a vista e a agulha', () => {
     await fireEvent.scroll(ondas, { nativeEvent: { contentOffset: { x: 0, y: 0 } } });
     rolou.mockClear();
 
-    // ⚠️ A METADE QUE SE PERDE PRIMEIRO: com a agulha à vista a montagem NÃO SE MEXE. O segundo
-    // 3 está a 180 pt, dentro dos 400 visíveis — ela atravessa o ecrã como sempre atravessou, e
-    // quem está a olhar para um compasso continua a olhar para ele.
-    await rerender(montagem(3));
+    // ⚠️ MODO 1, e é a metade que se perde primeiro: com a agulha à vista a montagem NÃO SE
+    // MEXE. 0,25 s são 15 pt, dentro dos 400 visíveis.
+    //
+    // ⚠️ E OS PASSOS SÃO DO TAMANHO DA REPRODUÇÃO. Saltar de 3 para 10 de uma vez não é a música
+    // a tocar, é alguém a LEVAR a agulha — e a regra trata as duas coisas de forma diferente, de
+    // propósito. A primeira versão deste caso andava aos segundos e provava o modo errado.
+    await rerender(montagem(0.25));
     expect(rolou).not.toHaveBeenCalled();
 
-    // Passou a borda direita (10 s × 60 = 600 pt): a página vira, e à frente dela fica uma tela
-    // inteira por tocar. Com um respiro de 10 % atrás — colada à borda, não se veria nada do que
-    // acabou de passar, no instante exato em que a vista saltou.
-    await rerender(montagem(10));
-    expect(rolou).toHaveBeenCalled();
-    expect(xPedido()).toBe(10 * PONTOS_POR_SEGUNDO - VISTA * 0.1);
+    // Um salto que aterra DENTRO do que se vê também não mexe na montagem: a pessoa tocou na
+    // régua dentro do ecrã, e arrastar-lhe o desenho por baixo do dedo seria mexer no que ela
+    // estava a apontar. 6,5 s são 390 pt, ainda dentro dos 400.
+    await rerender(montagem(6.5));
+    expect(rolou).not.toHaveBeenCalled();
 
-    // ⚠️ E NOS DOIS SENTIDOS. Voltar ao início e o fim de um ciclo do loop deixam a agulha ATRÁS
-    // do que se vê, e o problema é o mesmo: sem isto, repetir do início deixava a tela parada no
-    // fim da música. A rolagem está agora onde o salto anterior a pôs.
-    await fireEvent.scroll(ondas, { nativeEvent: { contentOffset: { x: xPedido(), y: 0 } } });
-    await rerender(montagem(0));
-    expect(xPedido()).toBe(0);
+    // Agora ela ia desaparecer pela direita (6,75 s = 405 pt): a linha trava no MEIO e a rolagem
+    // salta uma vez, a animar, para a pôr lá.
+    await rerender(montagem(6.75));
+    expect(ultimo()).toEqual({ x: 6.75 * PONTOS_POR_SEGUNDO - VISTA / 2, animated: true });
+
+    // ⚠️ E DAQUI PARA A FRENTE É A MÚSICA QUE SE MEXE. A agulha está à vista (é o meio do ecrã)
+    // e mesmo assim a rolagem continua a andar com ela — uma regra que só perguntasse "está à
+    // vista?" respondia que não havia nada a fazer, e a vista virava páginas em vez de deslizar.
+    await fireEvent.scroll(ondas, {
+      nativeEvent: { contentOffset: { x: ultimo().x, y: 0 } },
+    });
+    await rerender(montagem(7));
+    // Sem animação: o deslize chega vinte vezes por segundo, e animar cada passo põe vinte
+    // animações a disputar a mesma rolagem.
+    expect(ultimo()).toEqual({ x: 7 * PONTOS_POR_SEGUNDO - VISTA / 2, animated: false });
 
     unmount();
     rolou.mockRestore();

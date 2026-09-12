@@ -1,7 +1,7 @@
 import {
   BPM_MAXIMO, BPM_MINIMO, ENCAIXE_SEM_ANDAMENTO, TEMPOS_POR_COMPASSO,
-  MARGEM_DE_SEGUIR,
-  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra, rolagemQueSegue,
+  SALTO_DA_AGULHA,
+  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, passoDaVista, rolagemQueCentra,
 } from '../grade';
 
 // O BPM NÃO FAZIA NADA NA TELA.
@@ -190,50 +190,97 @@ describe('rolagemQueCentra', () => {
   });
 });
 
-// A VISTA QUE SEGUE A AGULHA — mas só quando ela foge.
+// O QUE A VISTA FAZ ENQUANTO A MÚSICA TOCA — e são dois modos, não um.
 //
-// Hoje, carregar em tocar era ficar a rolar atrás da linha vermelha com a mão. E a correção
-// fácil — centrar a agulha a cada décimo de segundo — é PIOR do que o defeito: a onda desliza
-// sem parar debaixo do olho e fica impossível ler o que quer que seja.
-describe('rolagemQueSegue', () => {
-  // 800 de largura, rolagem em 0: a agulha a 60 px está à vista.
-  it('não mexe em nada enquanto a agulha está à vista', () => {
-    expect(rolagemQueSegue(1, 60, 0, 800, 100000)).toBeNull();
+// Primeiro a agulha anda e a montagem está quieta, como sempre esteve. No instante em que ela
+// ia desaparecer pela direita, trocam de papel: a linha trava no MEIO e passa a ser a música a
+// deslizar por baixo, como num gravador de fita.
+//
+// ⚠️ E O MODO GUARDA-SE, não se adivinha. Perguntar só "está à vista?" dá o CONTRÁRIO do que se
+// pede: centrada, ela está à vista, e no passo seguinte a regra mandaria não mexer — ela voltava
+// a derivar até à borda, saltava outra vez para o meio, e a vista virava páginas em vez de
+// deslizar. É o `seguindo` que separa os dois modos, e é a parte que se perde primeiro.
+
+/** 800 de largura, 60 px por segundo: vê-se do segundo 0 ao 13,33 com a rolagem no zero. */
+const vista = (over: Partial<Parameters<typeof passoDaVista>[0]> = {}) => passoDaVista({
+  segundo: 0, anterior: 0, escala: 60, rolagemAtual: 0,
+  larguraVisivel: 800, maximo: 100000, seguindo: false, ...over,
+});
+
+describe('passoDaVista — a agulha anda, a montagem fica', () => {
+  it('não mexe em nada enquanto ela está à vista', () => {
+    expect(vista({ segundo: 1, anterior: 0.95 })).toEqual({
+      rolagem: null, seguindo: false, suave: false,
+    });
     // Nem colada às bordas do que se vê: ali ela ainda se vê.
-    expect(rolagemQueSegue(0, 60, 0, 800, 100000)).toBeNull();
-    expect(rolagemQueSegue(800 / 60, 60, 0, 800, 100000)).toBeNull();
+    expect(vista({ segundo: 800 / 60, anterior: 800 / 60 - 0.05 }).rolagem).toBeNull();
   });
 
-  // Passou a borda direita: a vista vira a página e ela reaparece perto da esquerda, com uma
-  // tela inteira de música por tocar à frente.
-  it('quando ela passa a borda, a vista vai buscá-la', () => {
-    // 20 s × 60 = 1200 px, menos 10 % de 800 = 80 → 1120.
-    expect(rolagemQueSegue(20, 60, 0, 800, 100000)).toBe(1120);
-  });
-
-  // ⚠️ E NÃO COLADA À BORDA. Aterrar em cima da esquerda deixa a pessoa sem ver nada do que
-  // acabou de passar, no instante exato em que a vista saltou.
-  it('deixa um respiro atrás dela, e não a encosta à borda', () => {
-    const nova = rolagemQueSegue(20, 60, 0, 800, 100000)!;
-    expect(20 * 60 - nova).toBe(800 * MARGEM_DE_SEGUIR);
-  });
-
-  // ⚠️ NOS DOIS SENTIDOS. Voltar ao início e o fim de um ciclo do loop deixam a agulha ATRÁS do
-  // que se vê, e o problema é o mesmo: a pergunta não é "andou para a frente?" mas "ainda está
-  // à vista?". Sem isto, repetir do início deixava a tela parada no fim da música.
-  it('vai buscá-la também quando ela salta para trás', () => {
-    expect(rolagemQueSegue(0, 60, 5000, 800, 100000)).toBe(0);
-  });
-
-  // ⚠️ E NÃO PEDE UMA ROLAGEM QUE JÁ ESTÁ FEITA. Perto do fim a agulha sai do ecrã com a rolagem
-  // já no máximo: devolver o mesmo número faria a tela pedir uma rolagem por décimo de segundo
-  // para ficar onde já está — no aparelho, uma animação a lutar com o dedo.
-  it('no fim, com a rolagem no máximo, não pede nada', () => {
-    expect(rolagemQueSegue(1000, 60, 5000, 800, 5000)).toBeNull();
-  });
-
-  // Sem largura medida ainda não há "à vista" nenhum para comparar.
+  // ⚠️ E ISTO É O QUE DISTINGUE OS DOIS MODOS. Sem largura medida não há "à vista" nenhum.
   it('sem largura, não decide nada', () => {
-    expect(rolagemQueSegue(20, 60, 0, 0, 100000)).toBeNull();
+    expect(vista({ segundo: 20, larguraVisivel: 0 }).rolagem).toBeNull();
+  });
+});
+
+describe('passoDaVista — a linha trava e a música desliza', () => {
+  // Ia desaparecer pela direita: a vista trava-a no meio (20 × 60 = 1200, menos 400) e passa a
+  // ser a montagem a mexer-se.
+  it('ao sair pela direita, trava a agulha no meio', () => {
+    expect(vista({ segundo: 20, anterior: 19.95 })).toEqual({
+      rolagem: 800, seguindo: true, suave: true,
+    });
+  });
+
+  // ⚠️ O CASO QUE DEFINE O SEGUNDO MODO. Já a seguir, a agulha está à vista (é o meio do ecrã) —
+  // e mesmo assim a rolagem TEM de continuar a andar. Uma regra que só olhasse para "está à
+  // vista?" respondia `null` aqui, e a vista voltava a virar páginas em vez de deslizar.
+  it('já a seguir, continua a deslizar mesmo com ela à vista', () => {
+    expect(vista({ segundo: 20.05, anterior: 20, rolagemAtual: 800, seguindo: true })).toEqual({
+      rolagem: 803, seguindo: true, suave: false,
+    });
+  });
+
+  // A entrada no modo anima-se uma vez; o deslize de cada passo, não — animar vinte vezes por
+  // segundo é pôr vinte animações a disputar a mesma rolagem.
+  it('o salto de entrada é suave, e o deslize não', () => {
+    expect(vista({ segundo: 20, anterior: 19.95 }).suave).toBe(true);
+    expect(vista({ segundo: 20.05, anterior: 20, rolagemAtual: 800, seguindo: true }).suave)
+      .toBe(false);
+  });
+
+  // ⚠️ E NÃO PEDE UMA ROLAGEM QUE JÁ ESTÁ FEITA. Perto do fim a rolagem chega ao máximo e fica
+  // lá: sem isto, a tela pedia uma rolagem por vigésimo de segundo para ficar onde já estava.
+  it('no fim, com a rolagem no máximo, não pede nada', () => {
+    expect(vista({
+      segundo: 1000, anterior: 999.95, rolagemAtual: 5000, maximo: 5000, seguindo: true,
+    })).toEqual({ rolagem: null, seguindo: true, suave: false });
+  });
+});
+
+describe('passoDaVista — quem leva a agulha à mão sai do segundo modo', () => {
+  // ⚠️ VOLTAR AO INÍCIO, TOCAR NA RÉGUA, FECHAR UM CICLO DO LOOP. Aí a pessoa escolheu um sítio,
+  // e o que ela quer é ver esse sítio e a linha a andar outra vez a partir dele — não a montagem
+  // a deslizar por baixo de uma linha presa.
+  it('um salto larga o modo de seguir', () => {
+    const passo = vista({ segundo: 0, anterior: 40, rolagemAtual: 2000, seguindo: true });
+    expect(passo.seguindo).toBe(false);
+    // E leva a vista ao sítio novo, porque de onde ela estava não se via.
+    expect(passo.rolagem).toBe(0);
+    expect(passo.suave).toBe(true);
+  });
+
+  // Um salto para um sítio que JÁ se vê não mexe na montagem: a pessoa tocou na régua dentro do
+  // ecrã, e arrastar-lhe o desenho por baixo do dedo seria mexer no que ela estava a apontar.
+  it('um salto para dentro do que se vê não mexe na montagem', () => {
+    expect(vista({ segundo: 5, anterior: 40, seguindo: true })).toEqual({
+      rolagem: null, seguindo: false, suave: false,
+    });
+  });
+
+  // A fronteira entre andar e ser levada: a reprodução avança de vinte em vinte avos de segundo.
+  it('o passo da reprodução não conta como salto', () => {
+    expect(vista({
+      segundo: 20 + SALTO_DA_AGULHA / 2, anterior: 20, rolagemAtual: 800, seguindo: true,
+    }).seguindo).toBe(true);
   });
 });

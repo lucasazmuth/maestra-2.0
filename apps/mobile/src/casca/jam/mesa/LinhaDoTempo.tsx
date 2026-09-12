@@ -11,7 +11,7 @@ import Feather from '@expo/vector-icons/Feather';
 import type { Pista } from '@maestra/core/audio/mesa';
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 import {
-  PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra, rolagemQueSegue, zoomQueEncaixa,
+  PIXELS_POR_SEGUNDO, encaixeDaGrade, gradeDoCompasso, marcasDaRegua, passoDaVista, rolagemQueCentra, zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
 import { NOME_DA_MIX, ehPistaDaMix, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import {
@@ -435,11 +435,30 @@ export const LinhaDoTempo = ({
    * que não a segue — a onda desliza sem parar debaixo do olho, e fica impossível ler o que quer
    * que seja. À vista, a montagem não se mexe; é só quando ela foge que a página vira.
    */
+  const seguindoAAgulha = useRef(false);
+  const agulhaAntes = useRef(estado.posicao);
   useEffect(() => {
+    const antes = agulhaAntes.current;
+    agulhaAntes.current = estado.posicao;
     if (larguraVisivel <= 0) return;
+
     const vista = larguraVisivel - COLUNA;
-    const nova = rolagemQueSegue(estado.posicao, escala, onde.current, vista, largura - vista);
-    if (nova !== null) rolagem.current?.scrollTo({ x: nova, animated: true });
+    const passo = passoDaVista({
+      segundo: estado.posicao,
+      anterior: antes,
+      escala,
+      rolagemAtual: onde.current,
+      larguraVisivel: vista,
+      maximo: largura - vista,
+      seguindo: seguindoAAgulha.current,
+    });
+    seguindoAAgulha.current = passo.seguindo;
+    // ⚠️ O DESLIZE NÃO SE ANIMA. Ele chega vinte vezes por segundo: animar cada passo põe vinte
+    // animações a disputar a mesma rolagem, e nenhuma chega ao fim antes de a seguinte começar.
+    // Só o salto de entrada no modo (e os saltos da agulha) é que se animam.
+    if (passo.rolagem !== null) {
+      rolagem.current?.scrollTo({ x: passo.rolagem, animated: passo.suave });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estado.posicao]);
 

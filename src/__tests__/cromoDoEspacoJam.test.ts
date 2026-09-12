@@ -515,37 +515,51 @@ describe('cromo do editor do Espaço JAM', () => {
     });
   });
 
-  // ⚠️ A VISTA SEGUE A AGULHA QUANDO ELA FOGE, NAS DUAS — e fica quieta enquanto ela se vê.
+  // ⚠️ DOIS MODOS DE ROLAGEM, NAS DUAS TELAS — e não um.
   //
-  // Carregar em tocar era ficar a rolar atrás da linha vermelha com a mão: ela atravessava o
-  // ecrã, saía pela direita e continuava a andar sozinha.
+  // Primeiro a agulha anda e a montagem está quieta, como sempre esteve. No instante em que ela
+  // ia desaparecer pela direita, trocam de papel: a linha trava no MEIO e passa a ser a música a
+  // deslizar por baixo, como num gravador de fita. Antes disto, carregar em tocar era ficar a
+  // rolar atrás da linha vermelha com a mão.
   //
-  // ⚠️ E A METADE QUE SE PERDE PRIMEIRO É A SEGUNDA. Uma vista que centra a agulha a cada décimo
-  // de segundo é PIOR do que uma que não a segue: a onda desliza sem parar debaixo do olho, e
-  // fica impossível ler o que quer que seja ou apontar para uma coisa parada. Quem decide é o
-  // `null` do núcleo, e é por isso que as duas telas têm de o respeitar em vez de rolarem sempre.
-  it('a vista segue a agulha só quando ela sai do ecrã, nas duas', () => {
+  // ⚠️ E O MODO GUARDA-SE, não se adivinha a cada passo. Perguntar só "está à vista?" dá o
+  // CONTRÁRIO do que se pede: centrada, ela está à vista, e no passo seguinte a regra mandaria
+  // não mexer — ela voltava a derivar até à borda, saltava outra vez para o meio, e a vista
+  // virava páginas em vez de deslizar. É por isso que as duas telas GUARDAM o `seguindo` e o
+  // devolvem ao núcleo, em vez de o recalcularem.
+  it('as duas telas guardam o modo da rolagem, e a agulha anterior', () => {
     const oEditor = semComentarios(editor);
     const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
 
     [oEditor, aLinhaDoTempo].forEach((fonte) => {
-      expect(fonte).toContain('rolagemQueSegue(');
-      // O `null` é a regra: rolar sem o conferir é perseguir a agulha a cada décimo de segundo.
-      expect(fonte).toMatch(/nova !== null/);
+      expect(fonte).toContain('passoDaVista({');
+      // O modo vai e volta: sem isto, o núcleo decidiria sempre a partir do princípio.
+      expect(fonte).toContain('seguindo: seguindoAAgulha.current');
+      expect(fonte).toContain('seguindoAAgulha.current = passo.seguindo');
+      // ⚠️ E A AGULHA ANTERIOR TAMBÉM. É ela que distingue a música a tocar de alguém a LEVAR a
+      // agulha — e as duas pedem vistas diferentes. Sem ela, voltar ao início prendia a linha.
+      expect(fonte).toContain('anterior: antes');
+      expect(fonte).toContain('agulhaAntes.current = ');
+      // Rolar sem conferir o `null` é perseguir a agulha mesmo no primeiro modo.
+      expect(fonte).toContain('passo.rolagem !== null');
     });
 
     // ⚠️ E A AGULHA PRESA NA MÃO NÃO SE SEGUE, na web. Arrastá-la para fora do que se vê é um
     // gesto de quem a está a LEVAR a um sítio: rolar por baixo da mão move o alvo enquanto ela
     // o persegue, e a agulha foge do dedo.
-    const oSeguir = oEditor.slice(oEditor.indexOf('const nova = rolagemQueSegue('));
-    expect(oEditor.slice(oEditor.lastIndexOf('useEffect', oEditor.indexOf('rolagemQueSegue(')),
-      oEditor.indexOf('rolagemQueSegue('))).toContain('agulhaPresa.current');
-    expect(oSeguir).toBeTruthy();
+    const antesDoPasso = oEditor.slice(
+      oEditor.lastIndexOf('useEffect', oEditor.indexOf('passoDaVista({')),
+      oEditor.indexOf('passoDaVista({'),
+    );
+    expect(antesDoPasso).toContain('agulhaPresa.current');
 
     // ⚠️ E NO APARELHO A ROLAGEM OUVE-SE, não se pergunta: num `ScrollView` não há `scrollLeft`
     // para ler, e sem o `onScroll` a conta compara a agulha com uma rolagem que ficou no zero.
     expect(aLinhaDoTempo).toContain('onScroll={');
     expect(aLinhaDoTempo).toContain('contentOffset.x');
+    // O deslize não se anima: ele chega vinte vezes por segundo, e animar cada passo põe vinte
+    // animações a disputar a mesma rolagem.
+    expect(aLinhaDoTempo).toContain('animated: passo.suave');
   });
 
   // ⚠️ O ZOOM NÃO PERDE A AGULHA DE VISTA, NAS DUAS.

@@ -81,51 +81,87 @@ export const rolagemQueCentra = (
 ));
 
 /**
- * Quanto da largura visível fica ATRÁS da agulha quando a vista vai buscá-la.
+ * O que separa a agulha a ANDAR da agulha a ser LEVADA, em segundos.
  *
- * Ela não pode aterrar colada à borda esquerda: encostada ali, não se vê nada do que acabou de
- * passar, e o que se está a ouvir perde o contexto no mesmo instante em que a vista salta. Um
- * décimo dá um respiro sem gastar a largura que interessa, que é a do que vem a seguir.
+ * A reprodução avança de vinte em vinte avos de segundo; qualquer passo maior do que isto foi
+ * alguém a pôr a agulha noutro sítio — o botão de voltar ao início, um toque na régua, o fim de
+ * um ciclo do loop. A diferença importa porque as duas coisas pedem vistas diferentes.
  */
-export const MARGEM_DE_SEGUIR = 0.1;
+export const SALTO_DA_AGULHA = 0.5;
+
+/** O que a vista faz a seguir. */
+export interface PassoDaVista {
+  /** A rolagem nova, ou `null` para não mexer em nada. */
+  rolagem: number | null;
+  /** A vista passa a andar COM a agulha? Quem chama guarda isto e devolve no passo seguinte. */
+  seguindo: boolean;
+  /** Um salto de uma vez (a animar), em vez do deslize contínuo de quem já está a seguir. */
+  suave: boolean;
+}
 
 /**
- * A rolagem nova quando a agulha SAI do que se vê — e `null` enquanto ela lá estiver.
+ * O QUE A VISTA FAZ ENQUANTO A MÚSICA TOCA — e são dois modos, não um.
  *
- * ⚠️ ESTE É O `null` QUE FAZ A REGRA. Enquanto a agulha está à vista, a montagem NÃO SE MEXE:
- * ela atravessa o ecrã como hoje, e quem está a olhar para um compasso continua a olhar para
- * ele. Uma vista que persegue a agulha a cada décimo de segundo é muito pior do que uma que não
- * a segue — a onda desliza sem parar debaixo do olho, e fica impossível ler o que quer que seja
- * ou apontar para uma coisa parada.
+ * ⚠️ PRIMEIRO A AGULHA ANDA E A MONTAGEM ESTÁ QUIETA. É o que sempre aconteceu, e é o que se
+ * quer enquanto ela está à vista: quem está a olhar para um compasso continua a olhar para ele,
+ * e a linha vermelha atravessa o ecrã por cima de uma montagem parada.
  *
- * Quando ela sai, a vista vira a página: a agulha reaparece perto da esquerda e à frente dela
- * fica uma tela inteira de música por tocar. Sem isto, carregar em tocar era ficar a rolar
- * atrás da linha vermelha com a mão, que é o contrário de ouvir.
+ * ⚠️ DEPOIS TROCAM DE PAPEL. No instante em que ela ia desaparecer pela direita, a vista trava-a
+ * no MEIO e passa a ser a montagem a deslizar por baixo — como num gravador de fita. Daí para a
+ * frente a linha fica parada no ecrã e o que se mexe é a música, que é o que se quer ver quando
+ * já não há mais ecrã para ela percorrer.
  *
- * ⚠️ E SERVE OS DOIS SENTIDOS. Voltar ao início, o fim de um ciclo do loop e um salto para trás
- * deixam a agulha ATRÁS do que se vê, e o problema é exatamente o mesmo: a mesma conta vai
- * buscá-la, porque o que se pergunta não é "andou para a frente?" mas "ainda está à vista?".
+ * A troca custa um salto de meia tela, uma vez só: a agulha vem da borda direita para o meio. É
+ * o preço de a travar no meio em vez de a travar na borda, e é onde ela serve — com metade da
+ * largura de cada lado, vê-se ao mesmo tempo o que acabou de soar e o que vem a seguir.
+ *
+ * ⚠️ E O MODO NÃO SE ADIVINHA A CADA PASSO: ele GUARDA-SE. Perguntar só "está à vista?" dava o
+ * contrário do que se pede — centrada, ela está à vista, e no passo seguinte a regra mandaria
+ * não mexer; ela voltava a derivar até à borda, saltava outra vez para o meio, e a vista virava
+ * páginas em vez de deslizar. É o `seguindo` que distingue os dois modos.
+ *
+ * ⚠️ E QUEM LEVA A AGULHA À MÃO SAI DO SEGUNDO MODO. Voltar ao início, tocar na régua, fechar um
+ * ciclo do loop: aí a pessoa escolheu um sítio, e o que ela quer é ver esse sítio e a linha a
+ * andar outra vez a partir dele — não a montagem a deslizar por baixo de uma linha presa.
  */
-export const rolagemQueSegue = (
-  segundo: number,
-  escala: number,
-  rolagemAtual: number,
-  larguraVisivel: number,
-  maximo: number,
-): number | null => {
-  if (larguraVisivel <= 0) return null;
-  const onde = segundo * escala;
-  // À vista? Então nada se mexe. É a metade silenciosa desta função, e a mais importante.
-  if (onde >= rolagemAtual && onde <= rolagemAtual + larguraVisivel) return null;
+export const passoDaVista = (vista: {
+  segundo: number;
+  /** Onde a agulha estava no passo anterior, para distinguir andar de ser levada. */
+  anterior: number;
+  escala: number;
+  rolagemAtual: number;
+  larguraVisivel: number;
+  maximo: number;
+  seguindo: boolean;
+}): PassoDaVista => {
+  const {
+    segundo, anterior, escala, rolagemAtual, larguraVisivel, maximo,
+  } = vista;
+  if (larguraVisivel <= 0) return { rolagem: null, seguindo: vista.seguindo, suave: false };
 
-  const nova = Math.max(0, Math.min(
-    maximo > 0 ? maximo : 0,
-    onde - larguraVisivel * MARGEM_DE_SEGUIR,
-  ));
-  // ⚠️ E SE A ROLAGEM NÃO PUDER MUDAR, NÃO MUDA. Perto do fim, a agulha pode sair do ecrã com a
-  // rolagem já no máximo: devolver o mesmo número faria a tela pedir uma rolagem por décimo de
-  // segundo para ficar onde já está — e no aparelho isso é uma animação a lutar com o dedo.
-  return nova === rolagemAtual ? null : nova;
+  const saltou = Math.abs(segundo - anterior) > SALTO_DA_AGULHA;
+  const seguindo = saltou ? false : vista.seguindo;
+  const onde = segundo * escala;
+  const aVista = onde >= rolagemAtual && onde <= rolagemAtual + larguraVisivel;
+
+  // Modo 1: a agulha anda, a montagem fica. Vale enquanto ela se vir.
+  if (!seguindo && aVista) return { rolagem: null, seguindo: false, suave: false };
+
+  const centrada = rolagemQueCentra(segundo, escala, larguraVisivel, maximo);
+  // ⚠️ E NÃO PEDE UMA ROLAGEM QUE JÁ ESTÁ FEITA. Perto do fim a rolagem chega ao máximo e fica
+  // lá: sem isto, a tela pedia uma rolagem por vigésimo de segundo para ficar onde já estava —
+  // no aparelho, uma animação a lutar com o dedo.
+  //
+  // ⚠️ E UM SALTO NÃO ENTRA NO MODO 2. Levar a agulha para fora do que se vê leva a vista com
+  // ela — mas para a MOSTRAR, e não para a prender: a partir dali ela anda outra vez e a
+  // montagem fica quieta, que é o que quem escolheu o sítio está à espera de ver. A primeira
+  // versão disto devolvia `seguindo: true` aqui, e tocar na régua longe do ecrã punha a música a
+  // deslizar por baixo de uma linha presa.
+  if (centrada === rolagemAtual) return { rolagem: null, seguindo: !saltou, suave: false };
+
+  // A entrada no modo 2 (e qualquer salto) anima-se; o deslize de cada passo, não — animar
+  // vinte vezes por segundo é pôr vinte animações a disputar a mesma rolagem.
+  return { rolagem: centrada, seguindo: !saltou, suave: !vista.seguindo || saltou };
 };
 
 /**

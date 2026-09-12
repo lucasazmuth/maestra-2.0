@@ -14,7 +14,7 @@ import useIsMobile from '../../../utils/isMobile';
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
 import { FaderEmPe } from './FaderEmPe';
 import {
-  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, rolagemQueCentra, rolagemQueSegue,
+  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, passoDaVista, rolagemQueCentra,
   zoomQueEncaixa,
 } from '@maestra/core/audio/grade';
 import { fimDaPista, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
@@ -455,19 +455,30 @@ export const EditorDaGravacao: FC<{
    * quem está a levar a linha a um sítio, não de quem a está a ver passar: rolar por baixo da
    * mão movia o alvo enquanto ela o perseguia, e a agulha fugia do dedo.
    */
+  const seguindoAAgulha = useRef(false);
+  const agulhaAntes = useRef(agulha);
   useEffect(() => {
     const caixa = rolagem.current;
+    const antes = agulhaAntes.current;
+    agulhaAntes.current = agulha;
     if (!caixa || agulhaPresa.current) return;
-    const nova = rolagemQueSegue(
-      agulha,
+
+    const passo = passoDaVista({
+      segundo: agulha,
+      anterior: antes,
       escala,
-      caixa.scrollLeft,
+      rolagemAtual: caixa.scrollLeft,
       // A largura das ONDAS: a coluna das faixas fica colada à esquerda por cima da montagem, e
       // o que está debaixo dela não está à vista.
-      caixa.clientWidth - larguraDasPistas,
-      caixa.scrollWidth - caixa.clientWidth,
-    );
-    if (nova !== null) caixa.scrollLeft = nova;
+      larguraVisivel: caixa.clientWidth - larguraDasPistas,
+      maximo: caixa.scrollWidth - caixa.clientWidth,
+      seguindo: seguindoAAgulha.current,
+    });
+    seguindoAAgulha.current = passo.seguindo;
+    // ⚠️ SEM `scroll-behavior`, nem no salto de entrada. Aqui a rolagem escreve-se vinte vezes
+    // por segundo enquanto a linha está travada: uma rolagem suave a cada passo nunca chegaria
+    // ao destino antes do passo seguinte, e a montagem ficava sempre meia tela atrasada.
+    if (passo.rolagem !== null) caixa.scrollLeft = passo.rolagem;
   }, [agulha, escala, larguraDasPistas]);
 
   const segundoDoEvento = (evento: { clientX: number }) => {
