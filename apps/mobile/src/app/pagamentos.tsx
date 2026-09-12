@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
-import {
-  Pressable, ScrollView, StyleSheet, Text, View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
@@ -12,8 +10,8 @@ import {
   billingLabel, fmtBRL, fmtDate, STATUS_META, usePaymentHistory,
 } from '@maestra/core/hooks/usePaymentHistory';
 
-import { useVoltar } from '@/nucleo/navegar';
 import { useSessao } from '@/nucleo/sessao';
+import { CabecalhoDaPagina } from '@/casca/CabecalhoDaPagina';
 import { Carregando } from '@/casca/Carregando';
 
 // O histórico de pagamentos: assinatura e perfis avulsos, na mesma lista, do mais recente ao
@@ -37,7 +35,6 @@ const TOM: Record<string, { texto: string; fundo: string }> = {
 
 export default function Pagamentos() {
   const { sessao, carregando: carregandoSessao } = useSessao();
-  const voltar = useVoltar('/conta');
   const { items, loading } = usePaymentHistory(sessao?.user?.id);
 
   const total = useMemo(
@@ -48,18 +45,14 @@ export default function Pagamentos() {
   if (!carregandoSessao && !sessao) return <Redirect href="/entrar" />;
 
   return (
-    <SafeAreaView style={estilos.tela}>
+    <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
+      <CabecalhoDaPagina
+        sobretitulo="SUA CONTA"
+        titulo="Histórico de pagamentos"
+        apoio="Tudo o que você já pagou na Maestra: a assinatura e os perfis avulsos."
+        para="/conta"
+      />
       <ScrollView contentContainerStyle={estilos.conteudo}>
-        <Pressable onPress={voltar} accessibilityRole="button" accessibilityLabel="Voltar para a conta">
-          <Text style={estilos.voltar}>‹  Conta</Text>
-        </Pressable>
-
-        <Text style={estilos.sobretitulo}>SUA CONTA</Text>
-        <Text style={estilos.titulo}>Histórico de pagamentos</Text>
-        <Text style={estilos.apoio}>
-          Tudo o que você já pagou na Maestra: a assinatura e os perfis avulsos.
-        </Text>
-
         {loading ? (
           <Carregando estilo={estilos.espera} />
         ) : items.length === 0 ? (
@@ -127,10 +120,6 @@ const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
   conteudo: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 40 },
-  voltar: { fontSize: 15, color: COR.primaria, paddingVertical: 10, marginBottom: 8 },
-  sobretitulo: { fontSize: 9, fontWeight: '800', color: COR_CONTA.rotulo, marginBottom: 8 },
-  titulo: { fontSize: 27, fontWeight: '800', color: COR_CONTA.titulo },
-  apoio: { fontSize: 13, lineHeight: 20, color: COR_CONTA.apoio, marginTop: 9 },
   espera: { marginTop: 48 },
   resumo: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

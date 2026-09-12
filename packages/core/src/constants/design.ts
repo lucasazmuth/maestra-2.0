@@ -1163,3 +1163,23 @@ export const COR_LEGAL = {
   texto: '#52668d',
   apoio: '#52668d',
 } as const;
+
+/**
+ * O CABEÇALHO DAS PÁGINAS DE APOIO — Notificações, Histórico, Suporte, Termos, Política.
+ *
+ * São as telas FOLHA do usuário: entra-se nelas por um caminho, lê-se, e volta-se. O desenho é
+ * o mesmo em todas — botão redondo de voltar, um sobretítulo que diz de onde a página é, o
+ * título grande, e às vezes uma linha de apoio.
+ *
+ * ⚠️ ELE ESTEVE ESCRITO À MÃO EM CADA TELA, e foi assim que o `CabecalhoDoModulo` nasceu do lado
+ * dos módulos do artista: "título 27 num, 30 noutro; espaçamento de letra só num deles... todas
+ * juntas dão a impressão de telas escritas por gente diferente — que é exatamente o que eram".
+ * Aqui o mesmo estava a começar: o Histórico tinha o sobretítulo a 9 e as Notificações a 10.
+ *
+ * Os valores são os das Notificações, que é a tela que o dono apontou como o padrão.
+ */
+export const COR_CABECALHO_DE_APOIO = {
+  sobretitulo: '#9aa9c2',
+  titulo: '#5b6f94',
+  apoio: '#98a6bd',
+} as const;

@@ -9,8 +9,8 @@ import {
   SUPPORT_EMAIL, SUPPORT_WHATSAPP, SUPPORT_WHATSAPP_DISPLAY,
 } from '@maestra/core/constants/legal';
 
+import { CabecalhoDaPagina } from '@/casca/CabecalhoDaPagina';
 import { GmailIcon, WhatsappIcon } from '@/icones';
-import { useVoltar } from '@/nucleo/navegar';
 
 // SUPORTE: os dois canais, como na web (`src/pages/Support`).
 //
@@ -26,7 +26,6 @@ const ASSUNTO_DO_EMAIL = 'Suporte Maestra';
 const PRIMEIRA_MENSAGEM = 'Olá! Preciso de ajuda com a Maestra.';
 
 export default function Suporte() {
-  const voltar = useVoltar('/conta');
   const [copiado, setCopiado] = useState<string | null>(null);
 
   /**
@@ -76,18 +75,14 @@ export default function Suporte() {
   ];
 
   return (
-    <SafeAreaView style={estilos.tela}>
+    <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
+      <CabecalhoDaPagina
+        sobretitulo="AJUDA"
+        titulo="Suporte"
+        apoio="Fale com a gente pelo canal que preferir. Respondemos em horário comercial."
+        para="/conta"
+      />
       <ScrollView contentContainerStyle={estilos.conteudo}>
-        <Pressable onPress={voltar} accessibilityRole="button" accessibilityLabel="Voltar">
-          <Text style={estilos.voltar}>‹  Voltar</Text>
-        </Pressable>
-
-        <Text style={estilos.sobretitulo}>AJUDA</Text>
-        <Text style={estilos.titulo}>Suporte</Text>
-        <Text style={estilos.apoio}>
-          Fale com a gente pelo canal que preferir. Respondemos em horário comercial.
-        </Text>
-
         {canais.map((canal) => (
           <Pressable
             key={canal.chave}
@@ -119,13 +114,6 @@ const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: COR.fundo },
   conteudo: { padding: 20, paddingBottom: 40, gap: 10 },
 
-  voltar: { fontSize: 15, fontWeight: '700', color: COR.primaria, marginBottom: 6 },
-  sobretitulo: {
-    fontSize: 10, letterSpacing: 1, textTransform: 'uppercase',
-    color: COR_SUPORTE.apoio, fontWeight: '800',
-  },
-  titulo: { fontSize: 26, fontWeight: '800', color: COR.titulo },
-  apoio: { fontSize: 13.5, color: COR_SUPORTE.apoio, lineHeight: 20, marginBottom: 8 },
 
   cartao: {
     padding: 22, gap: 0,

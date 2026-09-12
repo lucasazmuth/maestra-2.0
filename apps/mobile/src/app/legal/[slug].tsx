@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Redirect, useLocalSearchParams } from 'expo-router';
@@ -7,7 +7,7 @@ import { COR, COR_LEGAL } from '@maestra/core/constants/design';
 import { LEGAL_DOCS, type LegalSlug } from '@maestra/core/constants/legal';
 import { markdownDaNyta } from '@maestra/core/nucleo/markdownDaNyta';
 
-import { useVoltar } from '@/nucleo/navegar';
+import { CabecalhoDaPagina } from '@/casca/CabecalhoDaPagina';
 
 // OS TERMOS E A POLÍTICA DE PRIVACIDADE, dentro do app.
 //
@@ -29,7 +29,6 @@ const ehSlug = (v: unknown): v is LegalSlug => v === 'termos' || v === 'privacid
 
 export default function Legal() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const voltar = useVoltar('/conta');
 
   if (!ehSlug(slug)) return <Redirect href="/conta" />;
 
@@ -41,15 +40,14 @@ export default function Legal() {
   });
 
   return (
-    <SafeAreaView style={estilos.tela}>
+    <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
+      <CabecalhoDaPagina
+        sobretitulo="DOCUMENTOS"
+        titulo={doc.title}
+        apoio={`Última atualização: ${atualizado}`}
+        para="/conta"
+      />
       <ScrollView contentContainerStyle={estilos.conteudo}>
-        <Pressable onPress={voltar} accessibilityRole="button" accessibilityLabel="Voltar">
-          <Text style={estilos.voltar}>‹  Voltar</Text>
-        </Pressable>
-
-        <Text style={estilos.titulo}>{doc.title}</Text>
-        <Text style={estilos.atualizado}>{`Última atualização: ${atualizado}`}</Text>
-
         {markdownDaNyta(doc.content).map((bloco, i) => {
           const conteudo = bloco.trechos.map((trecho, j) => (
             <Text
@@ -90,9 +88,6 @@ const estilos = StyleSheet.create({
   conteudo: { padding: 20, paddingBottom: 48, gap: 12 },
   flex: { flex: 1 },
 
-  voltar: { fontSize: 15, fontWeight: '700', color: COR.primaria },
-  titulo: { fontSize: 28, fontWeight: '800', color: COR_LEGAL.titulo, marginTop: 10 },
-  atualizado: { fontSize: 13, color: COR_LEGAL.apoio, marginBottom: 8 },
 
   // Entrelinha de 1.75, a da web: são milhares de palavras percorridas à procura de uma cláusula.
   texto: { fontSize: 15, lineHeight: 26, color: COR_LEGAL.texto },

@@ -16,7 +16,7 @@ import {
 } from '@maestra/core/services/db/notifications';
 import { useSessao } from '@/nucleo/sessao';
 
-import { CabecalhoDeVolta } from '@/casca/CabecalhoDeVolta';
+import { CabecalhoDaPagina } from '@/casca/CabecalhoDaPagina';
 import { Carregando } from '@/casca/Carregando';
 
 // A caixa de entrada do artista.
@@ -126,18 +126,15 @@ export default function Notificacoes() {
 
   return (
     <SafeAreaView style={estilos.tela} edges={['top', 'left', 'right']}>
-      <CabecalhoDeVolta />
-      <View style={estilos.cabecalho}>
-        <Text style={estilos.sobretitulo}>CENTRAL DO USUÁRIO</Text>
-        <View style={estilos.linhaTitulo}>
-          <Text style={estilos.titulao}>Notificações</Text>
-          {naoLidas > 0 && (
-            <Pressable onPress={lerTudo} hitSlop={12}>
-              <Text style={estilos.lerTudo}>Marcar todas como lidas</Text>
-            </Pressable>
-          )}
-        </View>
-      </View>
+      <CabecalhoDaPagina
+        sobretitulo="CENTRAL DO USUÁRIO"
+        titulo="Notificações"
+        acao={naoLidas > 0 && (
+          <Pressable onPress={lerTudo} hitSlop={12}>
+            <Text style={estilos.lerTudo}>Marcar todas como lidas</Text>
+          </Pressable>
+        )}
+      />
 
       {carregando ? (
         <Carregando estilo={estilos.espera} />
@@ -216,13 +213,6 @@ const estilos = StyleSheet.create({
   // sao os de `.notifications-list` na web (ver `COR_NOTIFICACOES`).
   tela: { flex: 1, backgroundColor: COR.fundo },
   flex: { flex: 1, minWidth: 0 },
-  cabecalho: { paddingHorizontal: 18, paddingTop: 8, gap: 2 },
-  linhaTitulo: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
-  sobretitulo: {
-    fontSize: 10, fontWeight: '800', color: COR_NOTIFICACOES.hora,
-    letterSpacing: 1, marginBottom: 9,
-  },
-  titulao: { fontSize: 27, fontWeight: '800', color: COR_NOTIFICACOES.titulo },
   lerTudo: { fontSize: 13, fontWeight: '800', color: COR.primaria },
   espera: { marginTop: 48 },
   conteudo: { paddingHorizontal: 18, paddingTop: 34, paddingBottom: 48, gap: 12 },
