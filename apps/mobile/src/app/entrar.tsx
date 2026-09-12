@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView,
@@ -14,7 +14,6 @@ import { COR, COR_ENTRADA, RAIO } from '@maestra/core/constants/design';
 import { BotoesSociais } from '@/casca/BotoesSociais';
 import { MaestraMarca } from '@/icones';
 import { appleDisponivel, entrarComApple, entrarComEmail, entrarComGoogle } from '@/nucleo/entrar';
-import { useSessao } from '@/nucleo/sessao';
 
 /** Recuperar senha e criar conta ainda so existem na web. */
 const SITE = 'https://www.maestramanager.com';
@@ -22,7 +21,8 @@ const SITE = 'https://www.maestramanager.com';
 type EmCurso = 'email' | 'apple' | 'google' | null;
 
 export default function Entrar() {
-  // A saída da tela é REATIVA à sessão, e não uma navegação no fim de cada handler.
+  // A saída da tela é REATIVA à sessão, e não uma navegação no fim de cada handler — mas quem
+  // reage não é esta tela, e sim o `PortaoDaSessao`.
   //
   // Esta tela já ficou sem nenhuma navegação: o login dava certo, a sessão era criada, e a tela
   // simplesmente não saía do lugar — sem erro, sem carregando, sem nada. Só entrava quem
@@ -31,7 +31,6 @@ export default function Entrar() {
   // Reagir à sessão cobre os três caminhos de uma vez: e-mail, Apple (que troca o token por
   // sessão) e Google (que volta do navegador e chama `setSession`). Um `router.replace` no fim
   // de cada um deles precisaria ser lembrado três vezes, e o do Google voltaria de outra tela.
-  const { sessao } = useSessao();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -59,7 +58,16 @@ export default function Entrar() {
 
   const ocupado = emCurso !== null;
 
-  if (sessao) return <Redirect href="/perfis" />;
+  // ⚠️ ESTA TELA NÃO DECIDE MAIS PARA ONDE SE VAI DEPOIS DO LOGIN, e a ausência é a correção.
+  //
+  // Ela tinha `<Redirect href="/perfis" />` assim que houvesse sessão, e duas coisas estavam
+  // erradas nisso:
+  //
+  // · o destino ignorava o consentimento, então discutia a rota com o `PortaoDoConsentimento`;
+  // · e um `<Redirect>` VALE OUTRA VEZ A CADA RENDER da tela que o contém, enquanto ela não é
+  //   desmontada. Apontado para a rota em que já se está, é um laço fechado.
+  //
+  // Quem manda agora é o `PortaoDaSessao`, num efeito — que corre uma vez por mudança.
 
   return (
     // O formulario vive num CARTAO branco no meio de um fundo com degrade — nao solto sobre

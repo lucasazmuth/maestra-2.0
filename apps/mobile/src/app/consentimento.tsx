@@ -48,7 +48,7 @@ const paraISO = (visivel: string) => {
 
 export default function Consentimento() {
   const router = useRouter();
-  const { sessao } = useSessao();
+  const { sessao, carregando: carregandoSessao } = useSessao();
   const usuario = sessao?.user;
   const { state, loading, apply } = useEstadoDoConsentimento(
     usuario ? { id: usuario.id, email: usuario.email } : null,
@@ -102,7 +102,20 @@ export default function Consentimento() {
   };
 
   // Sem sessão não há o que consentir; o portão da sessão cuida do resto.
-  if (!sessao) return <Redirect href="/entrar" />;
+  //
+  // ⚠️ O `carregandoSessao` NÃO É ZELO, é a última peça do app travado pelo login da Apple.
+  //
+  // Cada tela tem a sua própria leitura da sessão, e toda leitura começa em "ainda não sei":
+  // nasce com `sessao` nula por um render, até o disco responder. Sem esperar por isso, esta
+  // tela mandava para `/entrar` no instante em que era montada — e de `/entrar` o portão da
+  // sessão trazia de volta para `/perfis`, de onde o portão do consentimento devolvia para cá,
+  // que mandava outra vez para `/entrar`. Três peças a andar em roda, e o que se via era a tela
+  // desenhada com todos os toques engolidos, até o React derrubar tudo com "Maximum update
+  // depth exceeded".
+  //
+  // É a mesma guarda que `/perfis`, `/conta`, `/notificacoes` e as outras cinco já faziam. Esta
+  // era a única tela sem ela, e era justamente a tela onde o login por provedor social cai.
+  if (!carregandoSessao && !sessao) return <Redirect href="/entrar" />;
 
   const bloqueada = state?.blocked;
 
@@ -119,7 +132,10 @@ export default function Consentimento() {
                 <MaestraMarca size={26} color={COR_ENTRADA.marca} />
               </View>
 
-              {loading && !state ? (
+              {/* Enquanto a sessão não chega, o estado do consentimento nem foi pedido: sem
+                  esta espera a tela desenhava o formulário por um instante e trocava de cara
+                  logo a seguir — um pisca num aceite legal. */}
+              {(carregandoSessao || loading) && !state ? (
                 <Carregando estilo={estilos.espera} />
               ) : bloqueada ? (
                 <>

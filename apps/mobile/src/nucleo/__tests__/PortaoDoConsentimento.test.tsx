@@ -11,7 +11,8 @@ import { PortaoDoConsentimento } from '@/nucleo/PortaoDoConsentimento';
 const mockReplace = jest.fn();
 let mockSegmentos: string[] = ['perfis'];
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ replace: mockReplace }),
+  // O portão importa o `router` do módulo, e não o `useRouter()`: ver o comentário dele.
+  router: { replace: (...a: unknown[]) => mockReplace(...a) },
   useSegments: () => mockSegmentos,
 }));
 
@@ -86,6 +87,33 @@ describe('portão do consentimento', () => {
 
     expect(mockReplace).not.toHaveBeenCalled();
   });
+
+  // ⚠️ E NAS TELAS PÚBLICAS ELE NÃO AGE, QUE É A CORREÇÃO DO APP TRAVADO.
+  //
+  // Quem está em `entrar`, `intro` ou `cadastro` ainda não entrou: quem manda ali é o
+  // `PortaoDaSessao`, que leva a `/perfis` assim que a sessão nasce. Sem esta regra os dois
+  // portões agarravam o volante no mesmo instante — um a levar para os perfis, o outro para o
+  // aceite — e cada um desfazia o do outro.
+  //
+  // Foi assim que o login pela Apple travou o app, e não por acaso: quem entra por provedor
+  // social é exatamente quem ainda não declarou idade nem aceitou os documentos. Uma sonda
+  // mostrou-o em números: 52 pedidos de `replace('/consentimento')` vindos do segmento
+  // `entrar`. O que se via era a tela desenhada com todos os toques a serem engolidos — e a
+  // conta ficava SEM consentimento registado, que é a coisa que este portão existe para
+  // garantir.
+  //
+  // Agora são dois movimentos EM SEQUÊNCIA: a sessão leva de `entrar` a `perfis`, e só então o
+  // consentimento leva de `perfis` ao aceite.
+  it.each([['entrar'], ['intro'], ['cadastro']])(
+    'não disputa a rota com o portão da sessão em /%s',
+    async (segmento) => {
+      mockEstado = { satisfied: false };
+      mockSegmentos = [segmento];
+      await render(<PortaoDoConsentimento />);
+
+      expect(mockReplace).not.toHaveBeenCalled();
+    },
+  );
 
   // E o resto continua trancado: uma lista de livres que crescesse sozinha esvaziaria o portão.
   it('o resto do app continua trancado', async () => {

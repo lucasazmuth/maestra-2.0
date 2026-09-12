@@ -40,13 +40,23 @@ describe('tela de entrada', () => {
     expect(mockRedirect).not.toHaveBeenCalled();
   });
 
-  // O bug que motivou este teste: a tela NÃO tinha navegação nenhuma. O login dava certo, a
-  // sessão era criada, e a tela ficava parada — sem erro e sem carregando. Só entrava quem
-  // reiniciava o app.
-  it('com sessão, sai da tela em vez de ficar parada', async () => {
+  // ⚠️ ESTA TELA NÃO DECIDE PARA ONDE SE VAI DEPOIS DO LOGIN, E A ASSERÇÃO É AO CONTRÁRIO.
+  //
+  // O bug de origem era a tela NÃO ter navegação nenhuma: o login dava certo, a sessão era
+  // criada, e a tela ficava parada — sem erro e sem carregando. Só entrava quem reiniciava o
+  // app. A correção de então foi um `<Redirect href="/perfis" />` aqui, e ela trouxe um bug
+  // pior: um `<Redirect>` vale outra vez A CADA RENDER da tela que o contém, e este afirmava
+  // `/perfis` enquanto o `PortaoDoConsentimento` afirmava `/consentimento` para quem ainda não
+  // declarou idade. Um desfazia o outro, e o app inteiro travava — a tela desenhada com todos
+  // os toques engolidos. Era o que acontecia a quem entrava pela Apple.
+  //
+  // A saída continua a ser obrigatória, e continua a ter teste: mudou de dono. Quem leva daqui
+  // aos perfis é o `PortaoDaSessao`, num efeito que corre uma vez por mudança de rota — ver
+  // "com sessão, tira de /entrar e leva aos perfis" em `nucleo/__tests__/PortaoDaSessao`.
+  it('com sessão, não tenta navegar por conta própria', async () => {
     mockSessao = { user: { id: 'u-1', email: 'a@b.c' } };
     await montar();
-    expect(mockRedirect).toHaveBeenCalledWith('/perfis');
+    expect(mockRedirect).not.toHaveBeenCalled();
   });
 
   it('credencial errada mostra o motivo, e não silêncio', async () => {
