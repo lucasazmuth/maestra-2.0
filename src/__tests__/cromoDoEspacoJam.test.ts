@@ -547,6 +547,88 @@ describe('cromo do editor do Espaço JAM', () => {
     });
   });
 
+  // ⚠️ A COLUNA DAS FAIXAS TAMBÉM SE DESENHA UMA VEZ — e é o que sobrava do engasgo do play.
+  //
+  // Ela não depende da agulha, que é a única coisa que o tique muda. Com uma dúzia de faixas são
+  // mais de cem elementos — um campo de texto e cinco botões por linha — reconstruídos e
+  // comparados vinte vezes por segundo para dar sempre o mesmo resultado.
+  //
+  // ⚠️ E ESTE CASO EXISTE POR CAUSA DOS DOIS RISCOS QUE A ECONOMIA TRAZ, que são calados:
+  //
+  //  • UM CAMPO A FALTAR NA ASSINATURA é um botão que deixa de responder — o M que não acende,
+  //    o nome que não muda. O valor fica certo no banco e errado no ecrã, e nada se queixa.
+  //  • UMA AÇÃO VELHA. O desenho guardado fecha sobre o `acoes` do momento em que nasceu, e
+  //    esse fecha sobre a montagem daquele momento: carregar em apagar meio minuto depois
+  //    escreveria a partir de uma lista de faixas que já não existe. Daí a gaveta.
+  it('a coluna das faixas é guardada, com tudo o que ela lê na assinatura', () => {
+    const oEditor = semComentarios(editor);
+
+    expect(oEditor).toContain('const coluna = useMemo(');
+    expect(oEditor).toContain('[assinaturaDaColuna],');
+    expect(oEditor).toContain('{coluna}');
+    expect(oEditor).not.toContain('{pistas.map(cabecalhoDaPista)}');
+
+    const cabecalho = oEditor.slice(
+      oEditor.indexOf('const cabecalhoDaPista = ('),
+      oEditor.indexOf('const assinaturaDaColuna ='),
+    );
+    const assinatura = oEditor.slice(
+      oEditor.indexOf('const assinaturaDaColuna ='),
+      oEditor.indexOf('const coluna = useMemo('),
+    );
+
+    // ⚠️ TUDO O QUE O CABEÇALHO LÊ DA MESA TEM DE ESTAR NA ASSINATURA. Lido da própria fonte, em
+    // vez de escrito à mão aqui: uma lista escrita à mão envelhece no dia em que o cabeçalho
+    // passar a ler mais uma coisa, e é exatamente esse o dia em que ela devia acusar.
+    const daMesa = Array.from(new Set(
+      (cabecalho.match(/daMesa\?\.([a-zA-Z]+)/g) ?? []).map((m) => m.replace('daMesa?.', '')),
+    ));
+    expect(daMesa.length).toBeGreaterThanOrEqual(4);
+    daMesa.forEach((campo) => expect(assinatura).toContain(`daMesa?.${campo}`));
+
+    // E o mesmo para o que ele lê da FAIXA: o nome e os valores guardados.
+    ['p.name', 'p.gain', 'p.pan'].forEach((campo) => expect(assinatura).toContain(campo));
+    // E para o que vem de fora e muda o desenho.
+    ['armadas.includes(p.id)', 'podeEditar', 'noCelular', 'alturaDaPista', 'pistaFixaId']
+      .forEach((campo) => expect(assinatura).toContain(campo));
+
+    // ⚠️ E OS BOTÕES CHAMAM A AÇÃO DE AGORA, e não a que existia quando o desenho nasceu.
+    expect(cabecalho).toContain('acoesDeAgora.current.');
+    expect(cabecalho).not.toMatch(/[^.]\bacoes\.[a-z]/);
+    expect(oEditor).toContain('acoesDeAgora.current = acoes;');
+  });
+
+  // E no aparelho a mesma economia, com os mesmos dois riscos calados.
+  it('a coluna das faixas também é guardada no aparelho', () => {
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    expect(aLinhaDoTempo).toContain('const coluna = useMemo(');
+    expect(aLinhaDoTempo).toContain('[assinaturaDaColuna],');
+    expect(aLinhaDoTempo).toContain('{coluna}');
+    expect(aLinhaDoTempo).not.toContain('{pistas.map((pista, i) => {');
+
+    const daColuna = aLinhaDoTempo.slice(aLinhaDoTempo.indexOf('const coluna = useMemo('));
+    const desenho = daColuna.slice(0, daColuna.indexOf('[assinaturaDaColuna],'));
+    const assinatura = aLinhaDoTempo.slice(
+      aLinhaDoTempo.indexOf('const assinaturaDaColuna ='),
+      aLinhaDoTempo.indexOf('const coluna = useMemo('),
+    );
+
+    // Tudo o que o desenho lê da mesa entra na assinatura, lido da própria fonte.
+    const daMesa = Array.from(new Set(
+      (desenho.match(/daMesa\?\.([a-zA-Z]+)/g) ?? []).map((m) => m.replace('daMesa?.', '')),
+    ));
+    expect(daMesa.length).toBeGreaterThanOrEqual(2);
+    daMesa.forEach((campo) => expect(assinatura).toContain(`daMesa?.${campo}`));
+    ['p.nome', 'armadas?.includes(p.id)', 'podeEditar']
+      .forEach((campo) => expect(assinatura).toContain(campo));
+
+    // E as mãos vêm da gaveta, e não das que existiam quando o desenho nasceu.
+    expect(desenho).toContain('maos.current.');
+    expect(desenho).not.toMatch(/[^.]\bao[A-Z][a-zA-Z]*\?\.\(/);
+    expect(aLinhaDoTempo).toContain('maos.current = {');
+  });
+
   // ⚠️ A LINHA E A ROLAGEM DESLIZAM FORA DO REACT, na web.
   //
   // O tique da mesa é de 50 ms e tem de continuar a ser — com uma dúzia de faixas, cada

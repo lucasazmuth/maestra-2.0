@@ -738,6 +738,20 @@ export const EditorDaGravacao: FC<{
   //
   // A faixa calada continua a dizer-se: a coluna inteira esmorece (`opacity`), e o M fica
   // carregado. Era isso que a fita cinzenta fazia, e não se perdeu nada com ela.
+  /**
+   * As ações de AGORA, para o cabeçalho guardado nunca chamar as de antes.
+   *
+   * ⚠️ SEM ISTO, GUARDAR O CABEÇALHO SERIA UM DEFEITO E NÃO UMA OTIMIZAÇÃO. Ele é desenhado uma
+   * vez e reaproveitado enquanto o que se VÊ não muda — e os botões lá dentro ficam a apontar
+   * para o `acoes` daquele momento. Esse fecha sobre a montagem daquele momento: carregar em
+   * apagar meio minuto depois escreveria a partir de uma lista de faixas que já não existe.
+   *
+   * Uma gaveta atualizada a cada render resolve-o sem desfazer a economia: o desenho é velho, a
+   * mão que ele chama é sempre a nova.
+   */
+  const acoesDeAgora = useRef(acoes);
+  acoesDeAgora.current = acoes;
+
   const cabecalhoDaPista = (faixa: CatalogTrack, indice: number) => {
     const daMesa = estado.pistas.find((p) => p.id === faixa.id);
     const calada = Boolean(daMesa?.muda);
@@ -771,7 +785,7 @@ export const EditorDaGravacao: FC<{
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input
             value={faixa.name}
-            onChange={(e) => acoes.aoMudarPista(faixa.id, { name: e.target.value })}
+            onChange={(e) => acoesDeAgora.current.aoMudarPista(faixa.id, { name: e.target.value })}
             disabled={!podeEditar || fixa}
             aria-label={`Nome da faixa ${faixa.name}`}
             style={{
@@ -783,7 +797,7 @@ export const EditorDaGravacao: FC<{
           {podeEditar && !fixa && (
             <button
               type='button'
-              onClick={() => acoes.aoApagarPista(faixa.id)}
+              onClick={() => acoesDeAgora.current.aoApagarPista(faixa.id)}
               title='Apagar a faixa'
               aria-label={`Apagar a faixa ${faixa.name}`}
               style={{
@@ -805,7 +819,7 @@ export const EditorDaGravacao: FC<{
         <div style={{ display: 'flex', alignItems: 'center', gap: noCelular ? 3 : 4 }}>
           <button
             type='button'
-            onClick={() => acoes.aoMudarPista(faixa.id, { muted: !calada })}
+            onClick={() => acoesDeAgora.current.aoMudarPista(faixa.id, { muted: !calada })}
             aria-label={calada ? `Ouvir ${faixa.name}` : `Silenciar ${faixa.name}`}
             aria-pressed={calada}
             title={calada ? 'Ouvir' : 'Silenciar'}
@@ -817,7 +831,7 @@ export const EditorDaGravacao: FC<{
           </button>
           <button
             type='button'
-            onClick={() => acoes.aoSolar(faixa.id, !daMesa?.solo)}
+            onClick={() => acoesDeAgora.current.aoSolar(faixa.id, !daMesa?.solo)}
             aria-label={daMesa?.solo ? 'Ouvir tudo de novo' : `Ouvir só ${faixa.name}`}
             aria-pressed={Boolean(daMesa?.solo)}
             title={daMesa?.solo ? 'Ouvir tudo' : 'Ouvir só esta'}
@@ -878,7 +892,7 @@ export const EditorDaGravacao: FC<{
           <input
             type='range' min={0} max={100}
             value={Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
-            onChange={(e) => acoes.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
+            onChange={(e) => acoesDeAgora.current.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
             disabled={!podeEditar}
             aria-label={`Volume de ${faixa.name}`}
             style={{ flex: 1, minWidth: 0, accentColor: DS.color.primaria, cursor: 'pointer' }}
@@ -890,7 +904,7 @@ export const EditorDaGravacao: FC<{
           <input
             type='range' min={-100} max={100}
             value={Math.round(pan * 100)}
-            onChange={(e) => acoes.aoMudarPista(faixa.id, { pan: Number(e.target.value) / 100 })}
+            onChange={(e) => acoesDeAgora.current.aoMudarPista(faixa.id, { pan: Number(e.target.value) / 100 })}
             disabled={!podeEditar}
             aria-label={`Panorama de ${faixa.name}`}
             className={casca.pan}
@@ -910,6 +924,40 @@ export const EditorDaGravacao: FC<{
       </div>
     );
   };
+
+  /**
+   * A COLUNA DAS FAIXAS, DESENHADA UMA VEZ — e não a cada tique.
+   *
+   * ⚠️ ELA NÃO DEPENDE DA AGULHA, que é a única coisa que o tique muda. Com uma dúzia de faixas
+   * são mais de cem elementos — um campo de texto e cinco botões por linha — reconstruídos e
+   * comparados vinte vezes por segundo, para dar sempre o mesmo resultado. É o que sobrava do
+   * engasgo do play depois de a grelha deixar de se desenhar faixa a faixa.
+   *
+   * ⚠️ E A DEPENDÊNCIA É UMA ASSINATURA, e não as coisas de que ela é feita. `estado.pistas` é
+   * um objeto NOVO a cada tique — a mesa constrói-o de raiz — e `acoes` também; postos como
+   * dependências, o guardado refazia-se sempre e não guardava nada. A assinatura é o que se VÊ:
+   * o que a coluna desenha, letra a letra. Se ela não mudar, o desenho não pode ter mudado.
+   *
+   * ⚠️ CADA COISA QUE O CABEÇALHO LÊ TEM DE ESTAR AQUI. Esquecer uma é um botão que deixa de
+   * responder — o M que não acende, o nome que não muda — e é um defeito calado, porque o valor
+   * está certo no banco e errado no ecrã. A lista é: o nome e o panorama da faixa, o que a mesa
+   * diz dela (calada, solada, ganho, panorama), quem está armado, e as medidas da coluna.
+   */
+  const assinaturaDaColuna = pistas.map((p) => {
+    const daMesa = estado.pistas.find((m) => m.id === p.id);
+    return [
+      p.id, p.name, p.gain, p.pan,
+      daMesa?.muda, daMesa?.solo, daMesa?.ganho, daMesa?.pan,
+      armadas.includes(p.id),
+    ].join(':');
+  }).join('|')
+    + `#${podeEditar}:${noCelular}:${alturaDaPista}:${pistaFixaId}`;
+
+  const coluna = useMemo(
+    () => pistas.map(cabecalhoDaPista),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [assinaturaDaColuna],
+  );
 
   return (
     <div className={casca.tela} style={{ background: DS.color.bgBase, color: DS.color.texto, fontFamily: DS.font.display }}>
@@ -1379,7 +1427,7 @@ export const EditorDaGravacao: FC<{
                   FAIXAS
                 </div>
 
-                {pistas.map(cabecalhoDaPista)}
+                {coluna}
 
                 {/* ⚠️ CRIA A FAIXA, E NÃO PEDE UM FICHEIRO. Este botão abria o seletor de
                     ficheiros, e com isso não havia como preparar a montagem — voz, guitarra,

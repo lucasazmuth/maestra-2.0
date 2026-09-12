@@ -535,25 +535,41 @@ export const LinhaDoTempo = ({
     />
   )), [marcas, escala]);
 
-  return (
-    // Uma ROLAGEM VERTICAL só, para as duas colunas — é o mesmo que a web faz, e impede o pior
-    // erro que uma tela destas pode ter: o cabeçalho de uma pista alinhado com a faixa de
-    // OUTRA. Com um scroll por coluna, bastava rolar uma para o M e o S deixarem de ser os da
-    // onda ao lado, e a pessoa calava a pista errada.
-    <ScrollView
-      style={estilos.bloco}
-      contentContainerStyle={estilos.conteudo}
-      // É por aqui que a montagem sabe a largura que tem — e sem largura não há meio onde
-      // centrar a agulha. O `testID` existe para o teste poder dar-lhe uma.
-      testID="montagem"
-      onLayout={medir}
-    >
-      <View style={estilos.corpo}>
-        <View style={estilos.coluna}>
-          <View style={estilos.cantoDaColuna}>
-            <Text style={estilos.rotuloDaColuna}>FAIXAS</Text>
-          </View>
-          {pistas.map((pista, i) => {
+  /**
+   * As mãos de AGORA, para a coluna guardada nunca chamar as de antes.
+   *
+   * ⚠️ SEM ISTO, GUARDAR A COLUNA SERIA UM DEFEITO E NÃO UMA ECONOMIA. Ela é desenhada uma vez e
+   * reaproveitada enquanto o que se VÊ não muda — e os botões lá dentro ficam a apontar para as
+   * funções daquele momento, que fecham sobre a montagem daquele momento. Carregar em apagar
+   * meio minuto depois escreveria a partir de uma lista de faixas que já não existe.
+   */
+  const maos = useRef({
+    aoRenomearPista, aoApagarPista, aoMudarPista, aoSolarPista, aoArmar, aoEnviarPara,
+  });
+  maos.current = {
+    aoRenomearPista, aoApagarPista, aoMudarPista, aoSolarPista, aoArmar, aoEnviarPara,
+  };
+
+  /**
+   * A COLUNA DAS FAIXAS, DESENHADA UMA VEZ — e não a cada tique. O mesmo que a web faz, e pelo
+   * mesmo motivo: ela não depende da agulha, que é a única coisa que o tique muda.
+   *
+   * ⚠️ E A DEPENDÊNCIA É UMA ASSINATURA, e não as coisas de que ela é feita. `estado.pistas` é
+   * um objeto NOVO a cada tique — a mesa constrói-o de raiz — e as funções vêm de fora, também
+   * novas a cada render da tela; postas como dependências, o guardado refazia-se sempre.
+   *
+   * ⚠️ CADA COISA QUE A COLUNA LÊ TEM DE ESTAR AQUI. Esquecer uma é um botão que deixa de
+   * responder — o M que não acende, o nome que não muda — e é um defeito calado, porque o valor
+   * fica certo por dentro e errado no ecrã.
+   */
+  const assinaturaDaColuna = pistas.map((p) => {
+    const daMesa = estado.pistas.find((m) => m.id === p.id);
+    return [p.id, p.nome, daMesa?.muda, daMesa?.solo, armadas?.includes(p.id)].join(':');
+  }).join('|') + `#${podeEditar}`;
+
+  const coluna = useMemo(
+    () => (
+      pistas.map((pista, i) => {
             const daMesa = estado.pistas.find((p) => p.id === pista.id);
             const calada = daMesa?.muda ?? false;
             const fixa = ehPistaDaMix(pista.id);
@@ -568,12 +584,12 @@ export const LinhaDoTempo = ({
                     style={estilos.nomeDaFaixa}
                     value={pista.nome}
                     editable={mexivel}
-                    onChangeText={(t) => aoRenomearPista?.(pista.id, t)}
+                    onChangeText={(t) => maos.current.aoRenomearPista?.(pista.id, t)}
                     accessibilityLabel={`Nome da faixa ${pista.nome}`}
                   />
                   {mexivel && (
                     <Pressable
-                      onPress={() => aoApagarPista?.(pista.id)}
+                      onPress={() => maos.current.aoApagarPista?.(pista.id)}
                       hitSlop={8}
                       accessibilityRole="button"
                       accessibilityLabel={`Apagar a faixa ${pista.nome}`}
@@ -587,7 +603,7 @@ export const LinhaDoTempo = ({
                     coluna de 132 seja qual for o ecrã, em vez de o último sair para fora. */}
                 <View style={estilos.botoesDaFaixa}>
                   <Pressable
-                    onPress={() => aoMudarPista?.(pista.id, !calada)}
+                    onPress={() => maos.current.aoMudarPista?.(pista.id, !calada)}
                     style={[estilos.botaozinho, calada && estilos.mudoAceso]}
                     accessibilityRole="button"
                     accessibilityState={{ selected: calada }}
@@ -599,7 +615,7 @@ export const LinhaDoTempo = ({
                     <Text style={[estilos.letraDoBotao, calada && estilos.letraMuda]}>M</Text>
                   </Pressable>
                   <Pressable
-                    onPress={() => aoSolarPista?.(pista.id, !daMesa?.solo)}
+                    onPress={() => maos.current.aoSolarPista?.(pista.id, !daMesa?.solo)}
                     style={[estilos.botaozinho, daMesa?.solo && estilos.soloAceso]}
                     accessibilityRole="button"
                     accessibilityState={{ selected: Boolean(daMesa?.solo) }}
@@ -609,7 +625,7 @@ export const LinhaDoTempo = ({
                   </Pressable>
                   {mexivel && (
                     <Pressable
-                      onPress={() => aoArmar?.(pista.id)}
+                      onPress={() => maos.current.aoArmar?.(pista.id)}
                       style={[
                         estilos.botaozinho,
                         { borderColor: armadas?.includes(pista.id) ? VERMELHO_DO_EDITOR : COR_EDITOR.fio },
@@ -633,7 +649,7 @@ export const LinhaDoTempo = ({
                       num telemóvel, e a pista ficava lá, vazia, sem forma de a encher. */}
                   {mexivel && (
                     <Pressable
-                      onPress={() => aoEnviarPara?.(pista.id)}
+                      onPress={() => maos.current.aoEnviarPara?.(pista.id)}
                       style={estilos.botaozinho}
                       accessibilityRole="button"
                       accessibilityLabel={`Enviar um áudio para ${pista.nome}`}
@@ -644,7 +660,31 @@ export const LinhaDoTempo = ({
                 </View>
               </View>
             );
-          })}
+          })
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [assinaturaDaColuna],
+  );
+
+  return (
+    // Uma ROLAGEM VERTICAL só, para as duas colunas — é o mesmo que a web faz, e impede o pior
+    // erro que uma tela destas pode ter: o cabeçalho de uma pista alinhado com a faixa de
+    // OUTRA. Com um scroll por coluna, bastava rolar uma para o M e o S deixarem de ser os da
+    // onda ao lado, e a pessoa calava a pista errada.
+    <ScrollView
+      style={estilos.bloco}
+      contentContainerStyle={estilos.conteudo}
+      // É por aqui que a montagem sabe a largura que tem — e sem largura não há meio onde
+      // centrar a agulha. O `testID` existe para o teste poder dar-lhe uma.
+      testID="montagem"
+      onLayout={medir}
+    >
+      <View style={estilos.corpo}>
+        <View style={estilos.coluna}>
+          <View style={estilos.cantoDaColuna}>
+            <Text style={estilos.rotuloDaColuna}>FAIXAS</Text>
+          </View>
+          {coluna}
 
           {/* ⚠️ A PORTA DA FAIXA NOVA MORA NA COLUNA, no fim da lista — é onde a web a põe, e é
               onde o olho a procura: a seguir à última faixa, no sítio onde a próxima vai
