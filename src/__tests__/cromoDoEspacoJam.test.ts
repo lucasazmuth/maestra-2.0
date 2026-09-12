@@ -725,10 +725,14 @@ describe('cromo do editor do Espaço JAM', () => {
     );
     expect(antesDoPasso).toContain('agulhaPresa.current');
 
-    // ⚠️ E NO APARELHO A ROLAGEM OUVE-SE, não se pergunta: num `ScrollView` não há `scrollLeft`
-    // para ler, e sem o `onScroll` a conta compara a agulha com uma rolagem que ficou no zero.
-    expect(aLinhaDoTempo).toContain('onScroll={');
-    expect(aLinhaDoTempo).toContain('contentOffset.x');
+    // ⚠️ E NO APARELHO A ROLAGEM LÊ-SE NA LINHA DA INTERFACE, e não pelo `onScroll`. Num
+    // `ScrollView` não há `scrollLeft` para perguntar; e uma rolagem PEDIDA do lado de lá pode
+    // nunca chegar a disparar o evento do JavaScript — a conta ficava a comparar a agulha com
+    // uma rolagem parada no zero. O `useScrollViewOffset` é o valor real, atualizado onde a
+    // rolagem acontece.
+    expect(aLinhaDoTempo).toContain('useScrollViewOffset(rolagem)');
+    expect(aLinhaDoTempo).toContain('rolagemAtual: onde.value');
+    expect(aLinhaDoTempo).not.toContain('onScroll={');
     // ⚠️ E NADA SE ANIMA, NEM O SALTO DE ENTRADA. Uma rolagem animada continua a correr depois
     // de pedida e engole as dos vigésimos de segundo seguintes: a linha descolava-se do meio, ia
     // derivando para a direita, e voltava de repente quando a animação acabava. Foi visto de

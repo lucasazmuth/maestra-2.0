@@ -41,6 +41,16 @@ const estado = (posicao: number): EstadoDaMesa => ({
 const relogio = { agora: 1_000_000 };
 const andarOTempo = (segundos: number) => { relogio.agora += segundos * 1000; };
 
+/**
+ * Onde a rolagem está, na mão.
+ *
+ * ⚠️ ELA NÃO SE OUVE PELO `onScroll` — quem a sabe é a LINHA DA INTERFACE. Uma rolagem pedida do
+ * outro lado pode nunca chegar a disparar o evento do JavaScript, e foi por isso que a conta
+ * passou a ler o `useScrollViewOffset`. Aqui ele é este objeto: o teste diz onde a montagem
+ * ficou depois de cada pedido, como o aparelho diria.
+ */
+const deslocamento = { value: 0 };
+
 const montagem = (posicao: number) => (
   <LinhaDoTempo
     pistas={[]}
@@ -55,6 +65,7 @@ const montagem = (posicao: number) => (
 describe('a vista e a agulha', () => {
   it('a agulha anda até à borda, e a partir dali é a música que desliza', async () => {
     jest.spyOn(Date, 'now').mockImplementation(() => relogio.agora);
+    jest.spyOn(reanimated, 'useScrollViewOffset').mockReturnValue(deslocamento as never);
     // ⚠️ O `scrollTo` ESPIADO É O DO REANIMATED, e não o do `ScrollView`. A rolagem do deslize
     // corre na linha da interface: o do JavaScript é um pedido que atravessa a ponte, e a vinte
     // por segundo o outro lado não os aplica todos — no aparelho a montagem andava a 83 % do
@@ -71,10 +82,7 @@ describe('a vista e a agulha', () => {
     await fireEvent(screen.getByTestId('montagem'), 'layout', {
       nativeEvent: { layout: { width: VISTA + COLUNA, height: 600 } },
     });
-    // E a tela só sabe onde a rolagem está porque o `onScroll` lho disse: num `ScrollView` não
-    // há `scrollLeft` para ler.
-    const ondas = screen.getByTestId('ondas');
-    await fireEvent.scroll(ondas, { nativeEvent: { contentOffset: { x: 0, y: 0 } } });
+    deslocamento.value = 0;
     rolou.mockClear();
 
     // ⚠️ MODO 1, e é a metade que se perde primeiro: com a agulha à vista a montagem NÃO SE
@@ -107,9 +115,8 @@ describe('a vista e a agulha', () => {
     // ⚠️ E DAQUI PARA A FRENTE É A MÚSICA QUE SE MEXE. A agulha está à vista (é o meio do ecrã)
     // e mesmo assim a rolagem continua a andar com ela — uma regra que só perguntasse "está à
     // vista?" respondia que não havia nada a fazer, e a vista virava páginas em vez de deslizar.
-    await fireEvent.scroll(ondas, {
-      nativeEvent: { contentOffset: { x: ultimo().x, y: 0 } },
-    });
+    // A montagem ficou onde o pedido a pôs, como ficaria no aparelho.
+    deslocamento.value = ultimo().x;
     andarOTempo(0.25);
     await rerender(montagem(7));
     // Sem animação: o deslize chega vinte vezes por segundo, e animar cada passo põe vinte
@@ -117,7 +124,6 @@ describe('a vista e a agulha', () => {
     expect(ultimo()).toEqual({ x: 7 * PONTOS_POR_SEGUNDO - VISTA / 2, animated: false });
 
     unmount();
-    rolou.mockRestore();
-    (Date.now as jest.Mock).mockRestore();
+    jest.restoreAllMocks();
   });
 });

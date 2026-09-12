@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  runOnJS, runOnUI, scrollTo as rolarNaInterface, useAnimatedRef,
+  runOnJS, runOnUI, scrollTo as rolarNaInterface, useAnimatedRef, useScrollViewOffset,
 } from 'react-native-reanimated';
 import Svg, { Rect } from 'react-native-svg';
 
@@ -423,12 +423,12 @@ export const LinhaDoTempo = ({
   /**
    * Onde a rolagem está agora.
    *
-   * ⚠️ NUM `ScrollView` ISTO NÃO SE PERGUNTA, só se ouve: não há `scrollLeft` para ler, e a
-   * única forma de o saber é guardar o que o `onScroll` diz. Numa referência, e não em estado —
-   * rolar com o dedo dispara isto dezenas de vezes por segundo, e um `setState` por evento
-   * redesenhava a montagem inteira a cada pixel de arrasto.
+   * ⚠️ NUM `ScrollView` ISTO NÃO SE PERGUNTA, só se ouve — e quem ouve melhor é a linha da
+   * interface. O `onScroll` do JavaScript chega atrasado e, para uma rolagem pedida do outro
+   * lado, pode não chegar de todo; o `useScrollViewOffset` é o valor real, atualizado lá onde a
+   * rolagem acontece. É ele que diz à conta se a agulha ainda está à vista.
    */
-  const onde = useRef(0);
+  const onde = useScrollViewOffset(rolagem);
 
   /** Leva a rolagem a um ponto, do lado que desenha. */
   const rolarAte = (x: number) => {
@@ -484,7 +484,7 @@ export const LinhaDoTempo = ({
       anterior: antes,
       desdeAnterior,
       escala,
-      rolagemAtual: onde.current,
+      rolagemAtual: onde.value,
       larguraVisivel: vista,
       maximo: largura - vista,
       seguindo: seguindoAAgulha.current,
@@ -740,10 +740,6 @@ export const LinhaDoTempo = ({
           testID="ondas"
           horizontal
           showsHorizontalScrollIndicator
-          // 16 ms: a conta de seguir precisa de saber onde a rolagem está, e um valor velho meio
-          // segundo faria a vista saltar a partir de um sítio onde já não estava.
-          scrollEventThrottle={16}
-          onScroll={(e) => { onde.current = e.nativeEvent.contentOffset.x; }}
           contentContainerStyle={{ width: largura }}
         >
           <View style={{ width: largura }}>
