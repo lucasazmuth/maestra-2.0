@@ -647,16 +647,44 @@ describe('espaço jam', () => {
 
     const campo = await tela.findByLabelText('Andamento da gravação, em BPM');
     await usuario.clear(campo);
-    await usuario.type(campo, '96');
+    // ⚠️ "9b6", E NÃO "96": o `b` do meio prova que o campo FILTRA NA TECLA. O `keyboardType` é
+    // só uma sugestão ao aparelho — há teclados com símbolos ao lado dos números, e colar de
+    // outro sítio passa por cima de qualquer teclado. Quem decide é o campo, com a regra do
+    // núcleo que a web também usa.
+    //
+    // O tom não se mede aqui: escrever nele dispara uma segunda gravação, e entre uma e outra a
+    // tela relê a gravação do banco e repõe os campos — o que se mediria era essa releitura, e
+    // não o filtro. Ele está preso no núcleo (`camposDaGravacao`), na tela da web de ponta a
+    // ponta, e no cromo, que obriga as duas superfícies a chamar a mesma função.
+    await usuario.type(campo, '9b6');
 
     expect(mockAtualizarVersao).not.toHaveBeenCalled();
     jest.advanceTimersByTime(700);
     await waitFor(() => expect(mockAtualizarVersao).toHaveBeenCalledTimes(1));
     expect(mockAtualizarVersao.mock.calls[0][0]).toBe('v-1');
     expect(mockAtualizarVersao.mock.calls[0][1]).toEqual({ bpm: '96', key: 'Am' });
+
     // A música não foi tocada: o andamento nunca foi dela.
     expect(mockAtualizar).not.toHaveBeenCalled();
     jest.useRealTimers();
+  });
+
+  // ⚠️ O RÓTULO MUDOU-SE PARA DENTRO DO CAMPO, nas duas superfícies. Ele vivia ao lado, e o
+  // campo vazio mostrava um traço: um retângulo com um traço, ao lado da palavra "BPM", não se
+  // lia como campo — via-se a palavra e não se percebia que havia ali onde escrever.
+  it('os campos vazios mostram o que são, em vez de um traço ao lado', async () => {
+    mockBuscar.mockResolvedValue(projeto({
+      versions: [versao({ bpm: null, key: null, files: [arquivo()] })],
+    }));
+    const tela = await montar();
+
+    const andamento = await tela.findByLabelText('Andamento da gravação, em BPM');
+    expect(andamento.props.placeholder).toBe('BPM');
+    expect(tela.getByLabelText('Tom da gravação').props.placeholder).toBe('TOM');
+
+    // E o rótulo não ficou também de fora, a dizer a mesma coisa duas vezes.
+    expect(tela.queryByText('BPM')).toBeNull();
+    expect(tela.queryByText('TOM')).toBeNull();
   });
 
   // Um BPM de quatro dígitos é engano de digitação, não uma escolha. Vai para o banco como

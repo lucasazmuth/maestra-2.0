@@ -10,6 +10,8 @@ import {
   refazer as refazerPasso, registar, rotuloDaSeta,
   type Historico, type PassoDaMontagem,
 } from '@maestra/core/audio/historico';
+import { soOAndamento, soOTom } from '@maestra/core/utils/camposDaGravacao';
+import casca from './daw/editor.module.scss';
 import { useMesa } from '@maestra/core/audio/useMesa';
 import { useAnaliseDaVersao } from '@maestra/core/hooks/useAnaliseDaVersao';
 import { useArtist } from '@maestra/core/hooks/useArtist';
@@ -92,6 +94,15 @@ export const CampoDoTopo: FC<{
   rotulo: string; valor: string; largura: number;
   aoMudar: (v: string) => void; travado?: boolean; limite: number;
   /**
+   * O que o campo aceita enquanto se escreve.
+   *
+   * ⚠️ FILTRA NA TECLA, e não valida no fim. Um campo que aceita tudo e recusa ao gravar deixa
+   * escrever "128bpm", sair da tela e descobrir mais tarde que nada foi salvo.
+   */
+  apenas: 'numero' | 'texto';
+  /** O que o campo mostra vazio. É o rótulo: ele saiu de fora do campo e veio para dentro. */
+  vazio: string;
+  /**
    * O que está ali foi OUVIDO do áudio, e não escrito por ninguém.
    *
    * ⚠️ A PROVENIÊNCIA TEM DE SER VISÍVEL. Um número que aparece sozinho num campo é
@@ -99,31 +110,32 @@ export const CampoDoTopo: FC<{
    * depois vai confiar para registar a obra. A borda muda de cor e o rótulo diz de onde veio.
    */
   ouvido?: boolean;
-}> = ({ rotulo, valor, largura, aoMudar, travado, limite, ouvido }) => (
-  <label style={{
-    display: 'inline-flex', alignItems: 'center', gap: 5,
-    color: DS.color.textoFraco, fontSize: 10, fontWeight: 700, letterSpacing: '0.05em',
-  }}>
-    <input
-      value={valor}
-      onChange={(e) => aoMudar(e.target.value)}
-      disabled={travado}
-      maxLength={limite}
-      placeholder='—'
-      aria-label={ouvido ? `${rotulo} ouvido do áudio` : rotulo}
-      title={ouvido ? 'Ouvi este andamento no áudio. Escreva por cima se não for.' : undefined}
-      style={{
-        width: largura, height: 26, padding: '0 8px',
-        background: DS.color.bgCampo,
-        border: `1px solid ${ouvido ? DS.color.primaria : DS.color.borda}`,
-        borderRadius: DS.raio.medio,
-        color: DS.color.texto,
-        fontSize: 12, fontWeight: 700, textAlign: 'center',
-        fontFamily: DS.font.mono, outline: 'none',
-      }}
-    />
-    {rotulo}
-  </label>
+}> = ({ rotulo, valor, largura, aoMudar, travado, limite, ouvido, apenas, vazio }) => (
+  // ⚠️ O RÓTULO MUDOU-SE PARA DENTRO DO CAMPO. Ele vivia ao lado, e um campo vazio ao lado da
+  // palavra "BPM" era um traço solto num retângulo que não se lia como campo — a pessoa via a
+  // palavra e não percebia que havia ali onde escrever. Como vazio, ele diz as duas coisas de
+  // uma vez: o que é, e que está por preencher.
+  <input
+    value={valor}
+    onChange={(e) => aoMudar(apenas === 'numero' ? soOAndamento(e.target.value) : soOTom(e.target.value))}
+    disabled={travado}
+    maxLength={limite}
+    placeholder={vazio}
+    // O teclado do telemóvel no navegador segue isto; quem decide o que entra é o filtro acima.
+    inputMode={apenas === 'numero' ? 'numeric' : 'text'}
+    aria-label={ouvido ? `${rotulo} ouvido do áudio` : rotulo}
+    title={ouvido ? 'Ouvi este andamento no áudio. Escreva por cima se não for.' : undefined}
+    className={casca.campoDoTopo}
+    style={{
+      width: largura, height: 26, padding: '0 8px',
+      background: DS.color.bgCampo,
+      border: `1px solid ${ouvido ? DS.color.primaria : DS.color.borda}`,
+      borderRadius: DS.raio.medio,
+      color: DS.color.texto,
+      fontSize: 12, fontWeight: 700, textAlign: 'center',
+      fontFamily: DS.font.mono, outline: 'none',
+    }}
+  />
 );
 
 const ProjectSpace: FC = () => {
@@ -1200,6 +1212,8 @@ const ProjectSpace: FC = () => {
                 para a barra dos controlos, junto do que governa o som. */}
             <CampoDoTopo
               rotulo='BPM'
+              vazio='BPM'
+              apenas='numero'
               valor={open?.bpm || ''}
               largura={48}
               limite={3}
@@ -1233,6 +1247,8 @@ const ProjectSpace: FC = () => {
             )}
             <CampoDoTopo
               rotulo='TOM'
+              vazio='TOM'
+              apenas='texto'
               valor={open?.key || ''}
               largura={52}
               limite={6}

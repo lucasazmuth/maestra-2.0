@@ -31,6 +31,10 @@ const iconesNoApp = fs.readFileSync(
   path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'icones.tsx'),
   'utf8',
 );
+const campoNoApp = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'CampoDoCabecalho.tsx'),
+  'utf8',
+);
 const fechar = ler('pages', 'Catalog', 'daw', 'FecharComGuia.tsx');
 const fecharNoApp = fs.readFileSync(
   path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'FecharComGuia.tsx'),
@@ -383,6 +387,37 @@ describe('cromo do editor do Espaço JAM', () => {
       expect(fonte).toContain('apenas:');
       // Desfazer um "apagar" tira-o da lista: ele já não é resíduo meu.
       expect(fonte).toContain('(voltando ? desmarquei : marquei)(passo.clipeId);');
+    });
+  });
+
+  // ⚠️ O ANDAMENTO E O TOM: O RÓTULO MUDOU-SE PARA DENTRO DO CAMPO, e o que o campo aceita é uma
+  // decisão só, escrita uma vez.
+  //
+  // O rótulo vivia ao lado, e o campo vazio mostrava um traço: um retângulo com um traço, ao lado
+  // da palavra "BPM", não se lia como campo — via-se a palavra e não se percebia que havia ali
+  // onde escrever. Como vazio, ele diz as duas coisas de uma vez.
+  it('o andamento e o tom dizem o que são por dentro, e filtram na tecla', () => {
+    const naWeb = semComentarios(tela);
+    const noApp = semComentarios(campoNoApp);
+
+    // O vazio É o rótulo, nas duas.
+    expect(naWeb).toContain('placeholder={vazio}');
+    expect(naWeb).toContain("vazio='BPM'");
+    expect(naWeb).toContain("vazio='TOM'");
+    expect(noApp).toContain('placeholder={sufixo.toUpperCase()}');
+
+    // ⚠️ E NENHUMA DAS DUAS O REPETE POR FORA. Era esse texto solto ao lado que fazia o campo
+    // vazio desaparecer; deixá-lo numa das telas seria voltar a ter duas telas diferentes.
+    expect(noApp).not.toContain('estilos.sufixo');
+
+    // ⚠️ O FILTRO VEM DO NÚCLEO, e é o mesmo nos dois: o `keyboardType`/`inputMode` é só uma
+    // sugestão ao aparelho — há teclados com símbolos ao lado dos números, e colar de outro
+    // sítio passa por cima de qualquer teclado. Duas cópias da mesma expressão regular divergem
+    // no primeiro ajuste.
+    [naWeb, noApp].forEach((fonte) => {
+      expect(fonte).toContain("from '@maestra/core/utils/camposDaGravacao'");
+      expect(fonte).toContain('soOAndamento(');
+      expect(fonte).toContain('soOTom(');
     });
   });
 

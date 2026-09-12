@@ -1,6 +1,7 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput } from 'react-native';
 
 import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
+import { soOAndamento, soOTom } from '@maestra/core/utils/camposDaGravacao';
 
 // Um valor da gravação, editável ali mesmo no cabeçalho: o BPM, o tom.
 //
@@ -20,9 +21,17 @@ export const CampoDoCabecalho = ({
 }: {
   valor: string;
   aoMudar: (v: string) => void;
-  /** O que vem depois do campo: "BPM", "Tom". */
+  /**
+   * O que o campo mostra vazio: "BPM", "TOM".
+   *
+   * ⚠️ ERA UM RÓTULO AO LADO, e um traço dentro. Um campo vazio ao lado da palavra "BPM" é um
+   * retângulo com um traço que não se lê como campo — a pessoa via a palavra e não percebia que
+   * havia ali onde escrever. Como vazio, ele diz as duas coisas de uma vez: o que é, e que está
+   * por preencher.
+   */
   sufixo: string;
   largura: number;
+  /** Só algarismos. Sem isto, o campo aceita o que o teclado do aparelho resolver oferecer. */
   numerico?: boolean;
   maiusculas?: boolean;
   limite: number;
@@ -38,40 +47,39 @@ export const CampoDoCabecalho = ({
    */
   ouvido?: boolean;
 }) => (
-  <View style={estilos.chip}>
-    <TextInput
-      style={[
-        estilos.campo,
-        { width: largura },
-        travado && estilos.campoTravado,
-        ouvido && estilos.campoOuvido,
-      ]}
-      value={valor}
-      onChangeText={aoMudar}
-      editable={!travado}
-      placeholder="—"
-      placeholderTextColor={COR_EDITOR.estrela}
-      keyboardType={numerico ? 'number-pad' : 'default'}
-      autoCapitalize={maiusculas ? 'characters' : 'none'}
-      autoCorrect={false}
-      maxLength={limite}
-      accessibilityLabel={ouvido ? `${rotulo}, ouvido do áudio` : rotulo}
-      // Sem `returnKeyType` o teclado numérico do iOS não traz tecla de fechar; "concluído"
-      // é o que fecha um campo que não submete nada.
-      returnKeyType="done"
-    />
-    <Text style={estilos.sufixo}>{sufixo.toUpperCase()}</Text>
-  </View>
+  <TextInput
+    style={[
+      estilos.campo,
+      { width: largura },
+      travado && estilos.campoTravado,
+      ouvido && estilos.campoOuvido,
+    ]}
+    value={valor}
+    // ⚠️ O FILTRO É AQUI, e não no teclado. O `keyboardType` é uma sugestão: há teclados que
+    // trazem símbolos ao lado dos números, e colar de outro sítio passa por cima de qualquer
+    // teclado. As duas regras vêm do núcleo, as mesmas que a web usa.
+    onChangeText={(v) => aoMudar(numerico ? soOAndamento(v) : soOTom(v))}
+    editable={!travado}
+    placeholder={sufixo.toUpperCase()}
+    placeholderTextColor={COR_EDITOR.rotulo}
+    keyboardType={numerico ? 'number-pad' : 'default'}
+    autoCapitalize={maiusculas ? 'characters' : 'none'}
+    autoCorrect={false}
+    maxLength={limite}
+    accessibilityLabel={ouvido ? `${rotulo}, ouvido do áudio` : rotulo}
+    // Sem `returnKeyType` o teclado numérico do iOS não traz tecla de fechar; "concluído"
+    // é o que fecha um campo que não submete nada.
+    returnKeyType="done"
+  />
 );
 
-// ⚠️ AS MEDIDAS SÃO AS DA WEB, à letra: campo de 26 de altura com canto de 6, o rótulo FORA
-// dele em 10 pt maiúsculo, 5 de folga entre os dois. A pílula arredondada que estava aqui vinha
-// do app claro, onde ela é da família do chip de status — e o status saiu desta tela. Redonda e
-// larga no meio de uma barra de 44, ela era a única coisa do editor que não parecia do editor.
+// ⚠️ AS MEDIDAS SÃO AS DA WEB, à letra: campo de 26 de altura com canto de 6. A pílula
+// arredondada que estava aqui vinha do app claro, onde ela é da família do chip de status — e o
+// status saiu desta tela. Redonda e larga no meio de uma barra de 44, ela era a única coisa do
+// editor que não parecia do editor.
+//
+// O rótulo que ficava FORA do campo mudou-se para dentro, como vazio, nas duas superfícies.
 const estilos = StyleSheet.create({
-  chip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-  },
   campo: {
     height: 26, paddingHorizontal: 8, borderRadius: 6,
     // Zero de recuo vertical: o `TextInput` do Android traz o seu, e com ele o texto assenta
@@ -84,9 +92,6 @@ const estilos = StyleSheet.create({
   },
   campoOuvido: { borderColor: AZUL_DO_EDITOR },
   campoTravado: { opacity: 0.5 },
-  sufixo: {
-    fontSize: 10, fontWeight: '700', letterSpacing: 0.5, color: COR_EDITOR.rotulo,
-  },
 });
 
 /** O rótulo que diz de quem são os números. Uma linha para o par, e não uma por chip. */

@@ -416,3 +416,16 @@ $camada-dos-flutuantes: 20;
     box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
   }
 }
+
+// O andamento e o tom, na barra de controlos.
+//
+// ⚠️ O VAZIO É O RÓTULO, e por isso precisa de ser legível. O `::placeholder` de omissão do
+// navegador é um cinzento pensado para fundo claro: sobre o campo escuro do editor ele quase
+// some, e um campo que parece vazio é um campo que ninguém tenta preencher. Este é o mesmo
+// cinzento dos rótulos da tela, que é o papel que ele faz agora.
+.campoDoTopo::placeholder {
+  color: var(--jam-texto-fraco, #71717f);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  opacity: 1; // o Firefox apaga o placeholder a 0.54 por omissão
+}
