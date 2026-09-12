@@ -3,7 +3,7 @@ import {
   useState,
 } from 'react';
 import {
-  FiAlertCircle, FiCheck, FiCircle, FiCornerUpLeft, FiCornerUpRight, FiDownload, FiFileText,
+  FiAlertCircle, FiCheck, FiCircle, FiCornerUpLeft, FiCornerUpRight, FiFileText,
   FiFolder, FiHeadphones, FiLoader, FiMessageCircle, FiPause,
   FiPlay, FiRepeat, FiSkipBack, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
@@ -24,7 +24,9 @@ import { fimDaPista, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVers
 import { rotuloDaGuia } from '@maestra/core/audio/exportar';
 import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
 import { iniciais, type Presente } from '@maestra/core/audio/aoVivo';
-import { IconeDaFicha, IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
+import {
+  IconeDaFicha, IconeDaTimeline, IconeDeEnviar, IconeDeExportar, IconeDoMixer,
+} from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
 import {
@@ -1070,7 +1072,7 @@ export const EditorDaGravacao: FC<{
                 {chave === 'linha' ? <IconeDaTimeline tamanho={TAMANHO_DO_ICONE_DA_ABA} />
                   : chave === 'mesa' ? <IconeDoMixer tamanho={TAMANHO_DO_ICONE_DA_ABA} />
                   : chave === 'ficha' ? <IconeDaFicha tamanho={TAMANHO_DO_ICONE_DA_ABA} />
-                  : <FiDownload size={TAMANHO_DO_ICONE_DA_ABA} />}
+                  : <IconeDeExportar tamanho={TAMANHO_DO_ICONE_DA_ABA} />}
                 {/* ⚠️ SEM RÓTULO NO CELULAR. Os quatro nomes somam mais de 300 px, e o que era
                     empurrado para fora da tela por eles era o X — a pessoa entrava no editor e
                     não tinha como sair. O nome continua no `title` e no `aria-label`. */}

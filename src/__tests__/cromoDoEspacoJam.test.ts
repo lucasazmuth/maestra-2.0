@@ -1380,8 +1380,10 @@ describe('cromo do editor do Espaço JAM', () => {
   // conta. Medido a 15 px com os valores que vinham dos ficheiros, o microfone desenhava 0,89 px
   // de tinta e o fader 1,25: ao lado um do outro, o primeiro lê-se como um desenho por acabar.
   //
-  // A proporção de referência é a do Feather (2 para 24), porque a quarta aba — Exportar — é
-  // dele e não se pode reescrever. É ela que as outras três seguem.
+  // ⚠️ E A PROPORÇÃO DE REFERÊNCIA É A DO FEATHER (2 para 24) mesmo agora que nenhuma das quatro
+  // abas é dele: é o Feather que desenha todo o resto do editor — o X do canto, a lixeira da
+  // faixa, a tesoura do clipe. A fila das abas fica por cima dele, e um peso próprio ali faria a
+  // barra de cima parecer de outro programa.
   it('os ícones das abas têm o mesmo peso de traço, na proporção do Feather', () => {
     const fonte = semComentarios(icones);
     const doIcone = (nome: string) => {
@@ -1394,18 +1396,26 @@ describe('cromo do editor do Espaço JAM', () => {
     };
 
     const doFeather = 2 / 24;
-    ['IconeDaTimeline', 'IconeDoMixer', 'IconeDaFicha'].forEach((nome) => {
+    ['IconeDaTimeline', 'IconeDoMixer', 'IconeDaFicha', 'IconeDeExportar'].forEach((nome) => {
       const { lado, traco } = doIcone(nome);
       // Meio milésimo de folga: os números são arredondados à segunda casa no ficheiro.
       expect(Math.abs(traco / lado - doFeather)).toBeLessThan(0.002);
     });
 
-    // E a quarta aba continua a ser a do Feather, que é de onde a proporção vem.
-    expect(semComentarios(editor)).toContain('<FiDownload size={TAMANHO_DO_ICONE_DA_ABA} />');
-    // ⚠️ E A FICHA DEIXOU DE SER UMA FOLHA DO FEATHER. Ela era o único desenho emprestado no
-    // meio dos do dono do produto, e destoava por isso — não por tamanho, por traço.
-    expect(semComentarios(editor)).toContain('<IconeDaFicha tamanho={TAMANHO_DO_ICONE_DA_ABA} />');
-    expect(semComentarios(app)).toContain("{ chave: 'ficha', rotulo: 'Ficha', icone: IconeDaFicha }");
+    // ⚠️ E NENHUMA DAS QUATRO É EMPRESTADA. A Ficha e o Exportar foram os últimos a sair do
+    // Feather; enquanto lá estiveram, eram os únicos desenhos de outra mão no meio dos do dono
+    // do produto, e destoavam por isso — não por tamanho, por traço.
+    const naWeb = semComentarios(editor);
+    expect(naWeb).toContain('<IconeDaFicha tamanho={TAMANHO_DO_ICONE_DA_ABA} />');
+    expect(naWeb).toContain('<IconeDeExportar tamanho={TAMANHO_DO_ICONE_DA_ABA} />');
+    expect(naWeb).not.toMatch(/<Fi[A-Za-z]+ size=\{TAMANHO_DO_ICONE_DA_ABA\}/);
+
+    const oApp = semComentarios(app);
+    expect(oApp).toContain("{ chave: 'ficha', rotulo: 'Ficha', icone: IconeDaFicha }");
+    expect(oApp).toContain("{ chave: 'exportar', rotulo: 'Exportar', icone: IconeDeExportar }");
+    // E no aparelho o mesmo: nenhuma aba desenhada pelo Feather.
+    const asAbas = oApp.slice(oApp.indexOf('const ABAS'), oApp.indexOf('];', oApp.indexOf('const ABAS')));
+    expect(asAbas).not.toContain('<Feather');
   });
 
   // ⚠️ OS DESENHOS SÃO OS MESMOS NAS DUAS SUPERFÍCIES, À VÍRGULA. O arquivo do app já dizia

@@ -1,14 +1,15 @@
 import { Circle, Path, Rect, Svg } from 'react-native-svg';
 
-// Os três ícones das abas do editor, desenhados pelo dono do produto (`time line.svg`,
-// `mix.svg` e `ficha.svg`).
+// Os quatro ícones das abas do editor, desenhados pelo dono do produto (`time line.svg`,
+// `mix.svg`, `ficha.svg` e `send.svg`).
 //
 // ⚠️ SÃO OS MESMOS CAMINHOS DA WEB, à vírgula — `src/pages/Catalog/daw/icones.tsx`. O editor é
 // a mesma tela nas duas superfícies, e a fila de abas é a primeira coisa que a pessoa vê: dois
 // desenhos parecidos mas não iguais seriam lidos como dois produtos. O `viewBox` recortado e a
 // espessura reescrita também vêm de lá, e são o que faz `tamanho` querer dizer a mesma coisa
-// nos quatro ícones da fila — o quarto é do Feather, e é dele que sai a proporção de 2 para 24
-// a que os outros três foram acertados.
+// nos quatro ícones da fila. A proporção de 2 para 24 é a do Feather, que desenha todo o resto
+// do editor: a fila das abas fica por cima dele, e um peso próprio ali faria a barra de cima
+// parecer de outro programa.
 
 export const IconeDaTimeline = ({ tamanho = 15, cor }: { tamanho?: number; cor: string }) => (
   <Svg width={tamanho} height={tamanho} viewBox="-3.4 -4.88 34.02 34.02" fill="none">
@@ -57,6 +58,23 @@ export const IconeDaFicha = ({ tamanho = 15, cor }: { tamanho?: number; cor: str
       stroke={cor} strokeWidth={2.51}
     />
     <Circle cx={20.3244} cy={19.827} r={3.34783} stroke={cor} strokeWidth={2.51} />
+  </Svg>
+);
+
+/**
+ * Exportar: a seta a sair da bandeja, do dono do produto (`send.svg`).
+ *
+ * ⚠️ ERA A SETA DO FEATHER A APONTAR PARA BAIXO — a de DESCARREGAR. E a aba faz as duas coisas
+ * (leva os stems para outro programa, traz a guia para o computador), por isso nenhuma das duas
+ * setas é exata; mas com as outras três abas desenhadas à mão, a única emprestada passava a ser
+ * esta, e uma fila com três desenhos de um traço e um de outro lê-se como um remendo.
+ */
+export const IconeDeExportar = ({ tamanho = 15, cor }: { tamanho?: number; cor: string }) => (
+  <Svg width={tamanho} height={tamanho} viewBox="8.86 7.36 23.67 23.67" fill="none">
+    <Path
+      d="M20.6897 22.0167V10.7406M25.3328 15.3837L20.6897 10.7406L16.0466 15.3837M28.981 20.3585V25.0016C28.981 26.4669 27.7931 27.6548 26.3278 27.6548L15.0516 27.6548C13.5863 27.6548 12.3984 26.4669 12.3984 25.0016V20.3585"
+      stroke={cor} strokeWidth={1.97} strokeLinecap="round" strokeLinejoin="round"
+    />
   </Svg>
 );
 

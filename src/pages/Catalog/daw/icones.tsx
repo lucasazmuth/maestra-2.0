@@ -1,7 +1,7 @@
 import { FC } from 'react';
 
-// Os três ícones das abas do editor, desenhados pelo dono do produto (`time line.svg`,
-// `mix.svg` e `ficha.svg`).
+// Os quatro ícones das abas do editor, desenhados pelo dono do produto (`time line.svg`,
+// `mix.svg`, `ficha.svg` e `send.svg`).
 //
 // ⚠️ O traço foi trocado de `#898989` para `currentColor`: assim o ícone acompanha o estado da
 // aba (aceso quando escolhida, apagado quando não) em vez de ficar cinza para sempre. Os
@@ -9,16 +9,20 @@ import { FC } from 'react';
 //
 // ─── Por que o `viewBox` não é o do ficheiro, nem o traço é o do ficheiro ─────
 //
-// Os originais vêm em quadros diferentes (41×41 dois deles, 28×25 o outro) com o desenho a
-// ocupar uma fatia diferente de cada um. Pedir 15 px aos três dava três tamanhos na tela, que é
-// exatamente o que faz uma fila de ícones deixar de parecer uma fila.
+// Os originais vêm em quadros diferentes (41×41 três deles, 28×25 o outro) com o desenho a
+// ocupar uma fatia diferente de cada um. Pedir 15 px aos quatro dava quatro tamanhos na tela, que
+// é exatamente o que faz uma fila de ícones deixar de parecer uma fila.
 //
 // O quadro aqui é recortado no DESENHO (mais a metade do traço, que o `getBBox` não conta) e
 // depois folgado para os mesmos 80 % de ocupação. E o TRAÇO é reescrito na mesma proporção do
-// quadro — 2 para 24, que é a do Feather —, senão o mesmo tamanho continuava a dar pesos
-// diferentes: medido a 15 px, o microfone vinha com 0,89 px de tinta e o fader com 1,25, e ao
-// lado um do outro isso lê-se como um desenho por acabar. A geometria é a dele; a espessura é
-// a única coisa que se acerta, e acerta-se pela fila.
+// quadro — 2 para 24 —, senão o mesmo tamanho continuava a dar pesos diferentes: medido a
+// 15 px, o microfone vinha com 0,89 px de tinta e o fader com 1,25, e ao lado um do outro isso
+// lê-se como um desenho por acabar. A geometria é a dele; a espessura é a única coisa que se
+// acerta, e acerta-se pela fila.
+//
+// ⚠️ E OS 2 PARA 24 NÃO SÃO ARBITRÁRIOS: é a proporção do Feather, que desenha todo o resto do
+// editor — o X do canto, a lixeira da faixa, a tesoura do clipe. A fila das abas fica por cima
+// deles, e um peso próprio ali faria a barra de cima parecer de outro programa.
 
 export const IconeDaTimeline: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
   <svg width={tamanho} height={tamanho} viewBox="-3.4 -4.88 34.02 34.02" fill="none" aria-hidden>
@@ -67,6 +71,23 @@ export const IconeDaFicha: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
       stroke="currentColor" strokeWidth="2.51"
     />
     <circle cx="20.3244" cy="19.827" r="3.34783" stroke="currentColor" strokeWidth="2.51" />
+  </svg>
+);
+
+/**
+ * Exportar: a seta a sair da bandeja, do dono do produto (`send.svg`).
+ *
+ * ⚠️ ERA A SETA DO FEATHER A APONTAR PARA BAIXO — a de DESCARREGAR. E a aba faz as duas coisas
+ * (leva os stems para outro programa, traz a guia para o computador), por isso nenhuma das duas
+ * setas é exata; mas com as outras três abas desenhadas à mão, a única emprestada passava a ser
+ * esta, e uma fila com três desenhos de um traço e um de outro lê-se como um remendo.
+ */
+export const IconeDeExportar: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
+  <svg width={tamanho} height={tamanho} viewBox="8.86 7.36 23.67 23.67" fill="none" aria-hidden>
+    <path
+      d="M20.6897 22.0167V10.7406M25.3328 15.3837L20.6897 10.7406L16.0466 15.3837M28.981 20.3585V25.0016C28.981 26.4669 27.7931 27.6548 26.3278 27.6548L15.0516 27.6548C13.5863 27.6548 12.3984 26.4669 12.3984 25.0016V20.3585"
+      stroke="currentColor" strokeWidth="1.97" strokeLinecap="round" strokeLinejoin="round"
+    />
   </svg>
 );
 

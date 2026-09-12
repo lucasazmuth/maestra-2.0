@@ -48,7 +48,9 @@ import { PALETA_ESCURA, PaletaDaFolhaProvider } from '@/casca/paleta';
 import { Fader } from '@/casca/jam/mesa/Fader';
 import { MesaDeCanais } from '@/casca/jam/mesa/MesaDeCanais';
 import { LinhaDoTempo } from '@/casca/jam/mesa/LinhaDoTempo';
-import { IconeDaFicha, IconeDaTimeline, IconeDoMixer } from '@/casca/jam/mesa/icones';
+import {
+  IconeDaFicha, IconeDaTimeline, IconeDeExportar, IconeDoMixer,
+} from '@/casca/jam/mesa/icones';
 import { BalaoFlutuante } from '@/casca/jam/mesa/BalaoFlutuante';
 import { Biblioteca } from '@/casca/jam/mesa/Biblioteca';
 import { TelaDeExportar, type EmCurso } from '@/casca/jam/mesa/TelaDeExportar';
@@ -1937,11 +1939,7 @@ const ABAS: {
   { chave: 'linha', rotulo: 'Timeline', icone: IconeDaTimeline },
   { chave: 'mesa', rotulo: 'Mixer', icone: IconeDoMixer },
   { chave: 'ficha', rotulo: 'Ficha', icone: IconeDaFicha },
-  {
-    chave: 'exportar',
-    rotulo: 'Exportar',
-    icone: ({ tamanho = 15, cor }) => <Feather name="download" size={tamanho} color={cor} />,
-  },
+  { chave: 'exportar', rotulo: 'Exportar', icone: IconeDeExportar },
 ];
 
 /** `3:46` — o formato que a lista de Músicas mostra. */
