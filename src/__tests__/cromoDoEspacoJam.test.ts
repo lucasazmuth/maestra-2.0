@@ -542,6 +542,18 @@ describe('cromo do editor do Espaço JAM', () => {
       expect(fonte).toContain('agulhaAntes.current = ');
       // Rolar sem conferir o `null` é perseguir a agulha mesmo no primeiro modo.
       expect(fonte).toContain('passo.rolagem !== null');
+
+      // ⚠️ E É UM EFEITO DE LAYOUT, NAS DUAS — a diferença entre uma linha parada e uma linha a
+      // tremer. A agulha e a rolagem dizem a MESMA coisa por dois caminhos: o `left` que o React
+      // desenha e a rolagem que se escreve aqui. Num efeito normal eles caem em quadros
+      // DIFERENTES — a agulha aparece no sítio novo com a rolagem antiga (e salta para a frente),
+      // e só a seguir a rolagem a apanha (e ela volta). Vinte vezes por segundo, é um tremor.
+      //
+      // Medido no navegador: com o efeito de layout a agulha fica a meio pixel do centro ao
+      // longo de 120 quadros. Sem ele, ela salta o passo inteiro de cada tique.
+      const daVista = fonte.slice(0, fonte.indexOf('passoDaVista({'));
+      expect(daVista.slice(daVista.lastIndexOf('useLayoutEffect'))).toContain('=> {');
+      expect(daVista.lastIndexOf('useLayoutEffect')).toBeGreaterThan(daVista.lastIndexOf('useEffect('));
     });
 
     // ⚠️ E A AGULHA PRESA NA MÃO NÃO SE SEGUE, na web. Arrastá-la para fora do que se vê é um

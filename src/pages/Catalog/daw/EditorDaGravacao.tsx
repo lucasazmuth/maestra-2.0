@@ -1,4 +1,6 @@
-import { CSSProperties, FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  CSSProperties, FC, ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState,
+} from 'react';
 import {
   FiAlertCircle, FiCheck, FiCircle, FiCornerUpLeft, FiCornerUpRight, FiDownload, FiFileText,
   FiFolder, FiHeadphones, FiLoader, FiMessageCircle, FiPause,
@@ -457,7 +459,20 @@ export const EditorDaGravacao: FC<{
    */
   const seguindoAAgulha = useRef(false);
   const agulhaAntes = useRef(agulha);
-  useEffect(() => {
+  /**
+   * ⚠️ `useLayoutEffect`, E ISTO É A DIFERENÇA ENTRE PARADA E AOS SALTOS.
+   *
+   * A agulha e a rolagem dizem a MESMA coisa por dois caminhos: a posição dela dentro da
+   * montagem é um `left` que o React pinta, e o sítio da montagem que se vê é o `scrollLeft` que
+   * se escreve aqui. Com um `useEffect`, os dois caminhos caem em quadros DIFERENTES — o
+   * navegador pinta a agulha no sítio novo com a rolagem ANTIGA (e ela salta para a frente), e
+   * só no quadro seguinte a rolagem a apanha (e ela volta para trás). Vinte vezes por segundo,
+   * é uma linha a tremer em vez de uma linha parada.
+   *
+   * O efeito de layout corre ANTES da pintura: os dois números chegam ao ecrã no mesmo quadro, e
+   * a agulha fica onde deve ficar — quieta, com a música a deslizar por baixo.
+   */
+  useLayoutEffect(() => {
     const caixa = rolagem.current;
     const antes = agulhaAntes.current;
     agulhaAntes.current = agulha;

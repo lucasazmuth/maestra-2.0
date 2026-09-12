@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type LayoutChangeEvent,
 } from 'react-native';
@@ -437,7 +437,16 @@ export const LinhaDoTempo = ({
    */
   const seguindoAAgulha = useRef(false);
   const agulhaAntes = useRef(estado.posicao);
-  useEffect(() => {
+  /**
+   * ⚠️ EFEITO DE LAYOUT, E ISTO É A DIFERENÇA ENTRE PARADA E AOS SALTOS.
+   *
+   * A agulha e a rolagem dizem a MESMA coisa por dois caminhos: a posição dela dentro da
+   * montagem é um `left` que o React desenha, e o sítio da montagem que se vê é a rolagem que se
+   * pede aqui. Num efeito normal, os dois caminhos caem em quadros DIFERENTES — a agulha aparece
+   * no sítio novo com a rolagem ANTIGA (e salta para a frente), e só a seguir a rolagem a apanha
+   * (e ela volta para trás). Vinte vezes por segundo, é uma linha a tremer em vez de parada.
+   */
+  useLayoutEffect(() => {
     const antes = agulhaAntes.current;
     agulhaAntes.current = estado.posicao;
     if (larguraVisivel <= 0) return;
