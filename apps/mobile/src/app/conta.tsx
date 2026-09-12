@@ -21,6 +21,7 @@ import { sair } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 
 import { CabecalhoDeVolta } from '@/casca/CabecalhoDeVolta';
+import { DiamanteAnimado } from '@/casca/marca/DiamanteAnimado';
 
 // A conta.
 //
@@ -143,7 +144,7 @@ export default function Conta() {
         try {
           await dispatch(cancelSubscription()).unwrap();
         } catch {
-          setErro('Não consegui cancelar sua assinatura. Cancele a assinatura antes de excluir a conta.');
+          setErro('Não consegui cancelar seu plano. Cancele o plano antes de excluir a conta.');
           return;
         }
       }
@@ -170,7 +171,7 @@ export default function Conta() {
     Alert.alert(
       'Excluir sua conta?',
       temAssinatura
-        ? 'Sua assinatura será cancelada e a conta e todos os perfis serão apagados em 30 dias. Não dá para desfazer depois desse prazo.'
+        ? 'Seu plano será cancelado e a conta e todos os perfis serão apagados em 30 dias. Não dá para desfazer depois desse prazo.'
         : 'Sua conta e todos os perfis serão apagados em 30 dias. Não dá para desfazer depois desse prazo.',
       [
         { text: 'Cancelar', style: 'cancel' },
@@ -186,7 +187,7 @@ export default function Conta() {
       <CabecalhoDeVolta aqui="configuracoes" />
       <ScrollView contentContainerStyle={estilos.conteudo}>
 
-        {/* As secoes sao as da web, na ordem dela: Perfil, Notificacoes, Assinatura, Historico
+        {/* As secoes sao as da web, na ordem dela: Perfil, Notificacoes, Seu plano, Historico
             de pagamentos, Suporte e termos, Seus dados e Conta. */}
         <View style={estilos.cartao}>
           <View style={estilos.linhaDoCartao}>
@@ -284,24 +285,45 @@ export default function Conta() {
           </View>
         </View>
 
+        {/* ── SEU PLANO ──
+            ⚠️ O CARTÃO CHAMAVA-SE "ASSINATURA", e o nome mudou por decisão do produto, com a
+            tela de conta do Spotify à frente: lá a secção é "Seu plano", mostra QUAL é o plano
+            de hoje, e só depois oferece os outros. O nome que o app usa para a coisa é "plano";
+            "assinar" continua a ser o verbo, na tela de planos, como o Spotify também faz.
+
+            A forma acompanha o nome: primeiro o que a pessoa TEM, depois para onde ir. Antes era
+            uma explicação e um botão — a pessoa lia uma frase para descobrir o próprio plano. */}
         <View style={estilos.cartao}>
-          <Text style={estilos.tituloDoCartao}>Assinatura</Text>
-          <Text style={estilos.explicacao}>
-            {temAssinatura
-              ? 'Sua assinatura Maestra Pro está ativa. A gestão do plano é feita na web.'
-              : 'Você está no plano gratuito. Assine o Pro para desbloquear todo o potencial da plataforma.'}
-          </Text>
-          {/* ⚠️ OS DOIS CAMINHOS VÃO PARA DENTRO DO APP, para `/planos`.
-              Eles abriam o navegador, e é isso que a 3.1.3 alcança. A tela de lá sabe quem está
-              a lê-la: a quem já assina ela diz que assina, e não uma lista de preços. */}
+          <Text style={estilos.tituloDoCartao}>Seu plano</Text>
+
+          <View style={estilos.planoDeAgora}>
+            <View style={estilos.discoDoPlano}>
+              <DiamanteAnimado tom={temAssinatura ? 'pro' : 'free'} tamanho={20} />
+            </View>
+            <Text style={estilos.nomeDoPlano}>
+              {temAssinatura ? 'Maestra PRO' : 'Maestra Free'}
+            </Text>
+          </View>
+
+          {/* ⚠️ O CAMINHO VAI PARA DENTRO DO APP, para `/planos`.
+              Ele abria o navegador, e é isso que a 3.1.3 alcança. A tela de lá sabe quem está a
+              lê-la: a quem já tem o PRO ela diz isso, e não uma lista de preços. */}
           <Pressable
             style={({ pressed }) => [estilos.linha, pressed && estilos.tocada]}
             onPress={() => router.push('/planos')}
             accessibilityRole="button"
           >
-            <Text style={estilos.linhaTexto}>
-              {temAssinatura ? 'Gerenciar assinatura' : 'Ver planos'}
-            </Text>
+            <View style={estilos.flex}>
+              <Text style={estilos.linhaTexto}>
+                {temAssinatura ? 'Gerenciar o plano' : 'Planos PRO'}
+              </Text>
+              <Text style={estilos.explicacao}>
+                {temAssinatura
+                  ? 'Veja o que está ativo e onde alterar o seu plano.'
+                  : 'Edição completa e a Nyta Assistente em todos os seus perfis.'}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={COR_CONTA.rotulo} />
           </Pressable>
         </View>
 
@@ -381,7 +403,7 @@ export default function Conta() {
 
         <Text style={estilos.secao}>Conta</Text>
         <Text style={estilos.explicacao}>
-          Ao confirmar, {temAssinatura ? 'sua assinatura é cancelada e ' : ''}sua conta e todos os
+          Ao confirmar, {temAssinatura ? 'seu plano é cancelado e ' : ''}sua conta e todos os
           perfis entram na fila de exclusão. Eles são apagados definitivamente em 30 dias — prazo
           que existe para você poder desistir e para proteger contas invadidas.
         </Text>
@@ -460,6 +482,14 @@ const estilos = StyleSheet.create({
     padding: 14, borderRadius: RAIO.campoDeEntrada, backgroundColor: COR_CONTA.avisoFundo,
   },
   avisoTexto: { fontSize: 12, lineHeight: 19, color: COR_CONTA.aviso },
+
+  // O plano de hoje, antes da oferta: é o que a pessoa veio saber.
+  planoDeAgora: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 2 },
+  discoDoPlano: {
+    width: 40, height: 40, borderRadius: 8, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COR_CONTA.disco,
+  },
+  nomeDoPlano: { flex: 1, fontSize: 15, fontWeight: '700', color: COR_CONTA.titulo },
 
   linha: {
     flexDirection: 'row', alignItems: 'center', gap: 12,

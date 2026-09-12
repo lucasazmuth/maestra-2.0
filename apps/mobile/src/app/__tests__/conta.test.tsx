@@ -176,7 +176,7 @@ describe('conta', () => {
     await userEvent.setup().press(tela.getByLabelText('Excluir minha conta'));
     await confirmarNoAlerta();
 
-    await waitFor(() => expect(tela.getByText(/Cancele a assinatura/)).toBeTruthy());
+    await waitFor(() => expect(tela.getByText(/Cancele o plano/)).toBeTruthy());
     expect(mockInsert).not.toHaveBeenCalled();
     expect(mockSair).not.toHaveBeenCalled();
   });

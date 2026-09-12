@@ -106,6 +106,31 @@ describe('a tela de planos', () => {
   });
 });
 
+// O NOME DA COISA É "PLANO", E NÃO "ASSINATURA".
+//
+// Decisão de produto, com a tela de conta do Spotify à frente: a secção chama-se "Seu plano",
+// diz QUAL é o plano de hoje, e só depois oferece os outros. "Assinar" continua a ser o verbo,
+// na tela de planos — é o que o Spotify também faz.
+//
+// A regra olha para o RÓTULO desenhado, e não para a palavra no ficheiro: `temAssinatura` é o
+// nome de uma variável e pode ficar. Uma regra que proibisse a palavra inteira obrigaria a
+// renomear código que ninguém lê na tela.
+describe('o vocabulário do plano, na conta', () => {
+  const conta = fs.readFileSync(path.join(raiz, 'app', 'conta.tsx'), 'utf8');
+  const tituloDe = (rotulo: string) => `tituloDoCartao}>${rotulo}<`;
+
+  it('a secção chama-se "Seu plano"', () => {
+    expect(conta).toContain(tituloDe('Seu plano'));
+    expect(conta).not.toContain(tituloDe('Assinatura'));
+  });
+
+  // E ela diz qual é o plano ANTES de oferecer outro: era uma frase que a pessoa tinha de ler
+  // até ao fim para descobrir o próprio plano.
+  it('mostra o plano de hoje', () => {
+    expect(conta).toContain("temAssinatura ? 'Maestra PRO' : 'Maestra Free'");
+  });
+});
+
 // AS QUATRO SAÍDAS QUE ABRIAM O NAVEGADOR.
 //
 // "Seja PRO" no menu, "Ver planos" na conta e os dois avisos de recurso bloqueado chamavam
