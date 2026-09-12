@@ -339,6 +339,14 @@ describe('cromo do editor do Espaço JAM', () => {
   // ver a montagem mexer-se. Dois canais seriam dois sockets e duas reconexões por nada.
   it('as duas telas assinam o mesmo canal, e marcam as próprias escritas', () => {
     const espaco = semComentarios(tela);
+    // ⚠️ E OS BOTÕES DA GUIA DEIXARAM DE USAR A SETA DO FEATHER. Eles ficam ao lado do botão dos
+    // stems, que é do Feather: se o peso não batesse, os três azuis em fila diriam duas mãos.
+    const oExportar = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', 'pages', 'Catalog', 'daw', 'TelaDeExportar.tsx'), 'utf8',
+    ));
+    expect(oExportar.match(/<IconeDeBaixar \/>/g)).toHaveLength(2);
+    expect(oExportar).not.toContain('FiDownload');
+
     const oApp = semComentarios(app);
 
     [espaco, oApp].forEach((fonte) => {
@@ -1392,15 +1400,26 @@ describe('cromo do editor do Espaço JAM', () => {
       const quadro = corpo.match(/viewBox="[-\d.]+ [-\d.]+ ([\d.]+) [\d.]+"/);
       const tracos = (corpo.match(/strokeWidth="([\d.]+)"/g) ?? [])
         .map((s) => Number(s.replace(/\D*([\d.]+)"/, '$1')));
-      return { lado: Number(quadro![1]), traco: Math.max(...tracos) };
+      return { lado: Number(quadro![1]), traco: Math.max(...tracos), tracos };
     };
 
     const doFeather = 2 / 24;
-    ['IconeDaTimeline', 'IconeDoMixer', 'IconeDaFicha', 'IconeDeExportar'].forEach((nome) => {
-      const { lado, traco } = doIcone(nome);
-      // Meio milésimo de folga: os números são arredondados à segunda casa no ficheiro.
-      expect(Math.abs(traco / lado - doFeather)).toBeLessThan(0.002);
-    });
+    // ⚠️ E O DE BAIXAR TAMBÉM, embora não seja de aba: ele fica ao lado do `FiArchive` dos
+    // stems, no mesmo par de botões azuis. A regra é a mesma — o que está lado a lado pesa igual.
+    ['IconeDaTimeline', 'IconeDoMixer', 'IconeDaFicha', 'IconeDeExportar', 'IconeDeBaixar']
+      .forEach((nome) => {
+        const { lado, traco } = doIcone(nome);
+        // Meio milésimo de folga: os números são arredondados à segunda casa no ficheiro.
+        expect(Math.abs(traco / lado - doFeather)).toBeLessThan(0.002);
+      });
+
+    // ⚠️ E QUANDO UM DESENHO TEM DOIS TRAÇOS, A RELAÇÃO ENTRE ELES FICA DE PÉ. O de baixar vem
+    // com a seta mais grossa do que o círculo (1,2 para 1): acertar a espessura à fila é
+    // multiplicar os DOIS pelo mesmo fator, e não igualar o menor ao maior — isso achataria o
+    // desenho, e o teste que só olhasse para o maior deixava passar.
+    const doBaixar = doIcone('IconeDeBaixar').tracos.slice().sort((a, b) => b - a);
+    expect(doBaixar).toHaveLength(2);
+    expect(Math.abs(doBaixar[0] / doBaixar[1] - 2.02054 / 1.68378)).toBeLessThan(0.01);
 
     // ⚠️ E NENHUMA DAS QUATRO É EMPRESTADA. A Ficha e o Exportar foram os últimos a sair do
     // Feather; enquanto lá estiveram, eram os únicos desenhos de outra mão no meio dos do dono
@@ -1441,8 +1460,32 @@ describe('cromo do editor do Espaço JAM', () => {
         .replace(/aria-hidden/g, '').replace(/\s+/g, ' '))
       .sort();
 
-    expect(desenho(icones).length).toBeGreaterThanOrEqual(8);
-    expect(desenho(iconesNoApp)).toEqual(desenho(icones));
+    // ⚠️ COMPARA ÍCONE A ÍCONE, e não os ficheiros inteiros. A web tem um desenho que o
+    // aparelho não tem — o de BAIXAR, porque lá os mesmos botões partilham em vez de
+    // descarregar — e comparar os ficheiros de uma vez dizia que as duas telas tinham
+    // divergido. O que importa não é o número de desenhos: é que nenhum desenho com o MESMO
+    // nome seja diferente nos dois sítios, e que o aparelho não tenha nenhum que a web não
+    // tenha (esse teria vindo de outra mão).
+    const porNome = (fonte: string) => {
+      const limpa = semComentarios(fonte);
+      const nomes = Array.from(limpa.matchAll(/export const (Icone[A-Za-z]+)/g), (m) => m[1]);
+      return new Map(nomes.map((nome, i) => {
+        const daqui = limpa.slice(limpa.indexOf(`export const ${nome}`));
+        const ate = i + 1 < nomes.length ? daqui.indexOf(`export const ${nomes[i + 1]}`) : daqui.length;
+        return [nome, desenho(daqui.slice(0, ate))];
+      }));
+    };
+
+    const daWeb = porNome(icones);
+    const doApp = porNome(iconesNoApp);
+    expect(daWeb.size).toBeGreaterThanOrEqual(5);
+    expect(doApp.size).toBeGreaterThanOrEqual(4);
+
+    doApp.forEach((figuras, nome) => {
+      // Um desenho que só existe no aparelho é tão suspeito quanto um divergente.
+      expect(daWeb.has(nome)).toBe(true);
+      expect(figuras).toEqual(daWeb.get(nome));
+    });
   });
 
   // ⚠️ OS FLUTUANTES FICAM ACIMA DA COLUNA DAS PISTAS. Eles usavam `--z-cartao`, que vale 2 —

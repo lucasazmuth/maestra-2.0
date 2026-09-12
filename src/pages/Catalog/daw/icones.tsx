@@ -92,6 +92,27 @@ export const IconeDeExportar: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
 );
 
 /**
+ * Baixar: a seta para dentro do círculo, do dono do produto (`Exportar.svg`).
+ *
+ * ⚠️ ESTE É O ÚNICO QUE NÃO TEM PAR NO APARELHO, e de propósito. Lá os mesmos botões dizem
+ * "Enviar" e abrem a folha de partilha do sistema: num telemóvel não há pasta de transferências
+ * para onde apontar. Uma seta a descer num botão que partilha seria uma promessa errada.
+ *
+ * ⚠️ E OS DOIS TRAÇOS DELE SÃO DIFERENTES DE PROPÓSITO — a seta mais grossa do que o círculo, no
+ * desenho original. Ao acertar a espessura à fila, os dois foram multiplicados pelo MESMO fator,
+ * para a relação entre eles ficar de pé: normalizar só o maior achataria o desenho.
+ */
+export const IconeDeBaixar: FC<{ tamanho?: number }> = ({ tamanho = 15 }) => (
+  <svg width={tamanho} height={tamanho} viewBox="7.58 7.58 25.26 25.26" fill="none" aria-hidden>
+    <path
+      d="M20.2047 15.1539V25.0161M16.8371 21.6485L20.2047 25.0161L23.5723 21.6485"
+      stroke="currentColor" strokeWidth="2.105" strokeLinecap="round" strokeLinejoin="round"
+    />
+    <circle cx="20.2052" cy="20.2055" r="9.26081" stroke="currentColor" strokeWidth="1.754" />
+  </svg>
+);
+
+/**
  * O ícone de pôr um áudio na pista — desenho do dono do produto (`Group 33.svg`).
  *
  * ⚠️ ERA UMA SETA PARA BAIXO DENTRO DE UM CÍRCULO, e ao lado do M e do S lia-se "descarregar":

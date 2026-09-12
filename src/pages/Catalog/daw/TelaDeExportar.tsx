@@ -1,5 +1,7 @@
 import { FC } from 'react';
-import { FiArchive, FiDownload, FiFileText, FiLoader } from 'react-icons/fi';
+import { FiArchive, FiFileText, FiLoader } from 'react-icons/fi';
+
+import { IconeDeBaixar } from './icones';
 
 import { DS } from './tokens';
 
@@ -117,7 +119,7 @@ export const TelaDeExportar: FC<{
           style={botao(!temGuia || !!emCurso)}
           aria-label='Baixar a guia em MP3'
         >
-          <FiDownload size={15} /> Baixar guia (.mp3)
+          <IconeDeBaixar /> Baixar guia (.mp3)
         </button>
 
         <button
@@ -129,7 +131,7 @@ export const TelaDeExportar: FC<{
         >
           {emCurso === 'guia-wav'
             ? <><FiLoader size={15} style={girando} /> Renderizando…</>
-            : <><FiDownload size={15} /> Baixar guia (.wav)</>}
+            : <><IconeDeBaixar /> Baixar guia (.wav)</>}
         </button>
       </div>
     </section>
