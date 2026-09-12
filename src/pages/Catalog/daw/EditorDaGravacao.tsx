@@ -4,7 +4,7 @@ import {
 } from 'react';
 import {
   FiAlertCircle, FiCheck, FiCircle, FiCornerUpLeft, FiCornerUpRight, FiFileText,
-  FiFolder, FiHeadphones, FiLoader, FiMessageCircle, FiPause,
+  FiFolder, FiLoader, FiMessageCircle, FiPause,
   FiPlay, FiRepeat, FiSkipBack, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
@@ -768,7 +768,6 @@ export const EditorDaGravacao: FC<{
     const daMesa = estado.pistas.find((p) => p.id === faixa.id);
     const calada = Boolean(daMesa?.muda);
     const fixa = faixa.id === pistaFixaId;
-    const pan = daMesa?.pan ?? (Number(faixa.pan) || 0);
 
     // ⚠️ NO TELEMÓVEL OS BOTÕES DIVIDEM A COLUNA, em vez de terem cada um a sua largura fixa.
     // Quatro botões de 28 px com folgas somam 124 px dentro de uma coluna de 132 com recuo —
@@ -894,45 +893,29 @@ export const EditorDaGravacao: FC<{
           )}
         </div>
 
-        {/* ⚠️ VOLUME E PANORAMA SAEM DA COLUNA NO CELULAR. Eles moram na Mesa, que é a aba
-            onde o telemóvel abre e onde o fader tem curso para um dedo. Repetidos aqui, numa
-            coluna de 132 px, seriam duas linhas de 4 px de curso — controlos que a mão não
-            acerta, a comer a altura que a onda precisa. */}
-        {!noCelular && (<>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <FiVolume2 size={13} color={DS.color.textoFraco} />
-          <input
-            type='range' min={0} max={100}
-            value={Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
-            onChange={(e) => acoesDeAgora.current.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
-            disabled={!podeEditar}
-            aria-label={`Volume de ${faixa.name}`}
-            style={{ flex: 1, minWidth: 0, accentColor: DS.color.primaria, cursor: 'pointer' }}
-          />
-        </label>
+        {/* ⚠️ O PANORAMA NÃO ESTÁ AQUI — ele é da MESA, e só de lá.
+            Numa coluna de 132 px ele sobrava duas vezes. É um controlo de MISTURA, e mistura-se
+            comparando: o que diz se a guitarra está larga demais é vê-la ao lado do baixo e da
+            voz, em canais lado a lado, e não uma faixa de cada vez entre a forma de onda e o
+            nome. E aqui ele custava uma segunda linha de 4 px de curso mais o rótulo "C/E/D" —
+            altura tirada à onda, que é o que esta coluna existe para acompanhar.
+            O app nunca o teve nesta coluna; a web é que passa a ser igual.
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <FiHeadphones size={13} color={DS.color.textoFraco} />
-          <input
-            type='range' min={-100} max={100}
-            value={Math.round(pan * 100)}
-            onChange={(e) => acoesDeAgora.current.aoMudarPista(faixa.id, { pan: Number(e.target.value) / 100 })}
-            disabled={!podeEditar}
-            aria-label={`Panorama de ${faixa.name}`}
-            className={casca.pan}
-            style={{
-              flex: 1, minWidth: 0,
-              ...({ '--pan-de': faixaDoPan(pan).de, '--pan-ate': faixaDoPan(pan).ate } as React.CSSProperties),
-            }}
-          />
-          <span style={{
-            width: 16, fontSize: 10, color: DS.color.textoFraco, fontFamily: DS.font.mono,
-          }}>
-            {/* C de centro; senão, o lado e quanto. */}
-            {Math.abs(pan) < 0.02 ? 'C' : `${pan < 0 ? 'E' : 'D'}${Math.round(Math.abs(pan) * 100)}`}
-          </span>
-        </label>
-        </>)}
+            ⚠️ E O VOLUME SAI NO CELULAR, que é outro corte: ali ele também não tem curso para
+            um dedo, e a Mesa é a aba onde o telemóvel abre. */}
+        {!noCelular && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <FiVolume2 size={13} color={DS.color.textoFraco} />
+            <input
+              type='range' min={0} max={100}
+              value={Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
+              onChange={(e) => acoesDeAgora.current.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
+              disabled={!podeEditar}
+              aria-label={`Volume de ${faixa.name}`}
+              style={{ flex: 1, minWidth: 0, accentColor: DS.color.primaria, cursor: 'pointer' }}
+            />
+          </label>
+        )}
       </div>
     );
   };
@@ -952,14 +935,19 @@ export const EditorDaGravacao: FC<{
    *
    * ⚠️ CADA COISA QUE O CABEÇALHO LÊ TEM DE ESTAR AQUI. Esquecer uma é um botão que deixa de
    * responder — o M que não acende, o nome que não muda — e é um defeito calado, porque o valor
-   * está certo no banco e errado no ecrã. A lista é: o nome e o panorama da faixa, o que a mesa
-   * diz dela (calada, solada, ganho, panorama), quem está armado, e as medidas da coluna.
+   * está certo no banco e errado no ecrã. A lista é: o nome e o volume da faixa, o que a mesa
+   * diz dela (calada, solada, ganho), quem está armado, e as medidas da coluna.
+   *
+   * ⚠️ E O CONTRÁRIO TAMBÉM CUSTA: o panorama esteve aqui enquanto o cabeçalho o desenhava, e
+   * ficou depois de ele sair para o Mixer. Cada arrasto no panorama de um canal redesenhava a
+   * coluna INTEIRA — uma dúzia de cabeçalhos — para dar exatamente o mesmo desenho. O que não
+   * se vê não entra.
    */
   const assinaturaDaColuna = pistas.map((p) => {
     const daMesa = estado.pistas.find((m) => m.id === p.id);
     return [
-      p.id, p.name, p.gain, p.pan,
-      daMesa?.muda, daMesa?.solo, daMesa?.ganho, daMesa?.pan,
+      p.id, p.name, p.gain,
+      daMesa?.muda, daMesa?.solo, daMesa?.ganho,
       armadas.includes(p.id),
     ].join(':');
   }).join('|')
@@ -1822,8 +1810,9 @@ export const EditorDaGravacao: FC<{
             ficheiro vira uma pista; largado sobre uma faixa, vira um clipe nela.</p>
           <p>Arraste um clipe para o mover — ele encaixa de um quarto de segundo. Selecione-o e
             use <em>dividir</em> para o cortar onde a agulha está. Clique duplo remove.</p>
-          <p><strong>M</strong> cala a faixa, <strong>S</strong> deixa só ela. O primeiro
-            controlo é o volume; o segundo, o panorama entre os dois alto-falantes.</p>
+          <p><strong>M</strong> cala a faixa, <strong>S</strong> deixa só ela; o controlo ao
+            lado é o volume. O panorama — onde a faixa se ouve entre os dois alto-falantes —
+            fica no <em>Mixer</em>, que é onde os canais aparecem lado a lado para comparar.</p>
         </div>
       </details>
     </div>

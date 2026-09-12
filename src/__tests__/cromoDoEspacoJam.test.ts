@@ -37,6 +37,10 @@ const iconesNoApp = fs.readFileSync(
   path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'icones.tsx'),
   'utf8',
 );
+const mesaNoApp = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'MesaDeCanais.tsx'),
+  'utf8',
+);
 const campoNoApp = fs.readFileSync(
   path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'CampoDoCabecalho.tsx'),
   'utf8',
@@ -188,6 +192,37 @@ describe('cromo do editor do Espaço JAM', () => {
     // E o lote continua a existir: um projeto de stems tem dez faixas, e uma a uma ninguém faz.
     expect(biblioteca).toContain('Enviar todos como faixas');
     expect(editor).toContain('largarNaFaixa');
+  });
+
+  // ⚠️ O PANORAMA É DA MESA, E SÓ DE LÁ — nas duas superfícies.
+  //
+  // Ele vivia também no cabeçalho de cada faixa da Timeline, numa coluna de 132 px: uma segunda
+  // linha de 4 px de curso mais o rótulo "C/E/D", a comer a altura que a onda precisa. E não é
+  // repetição inocente — panorama é um controlo de MISTURA, e mistura-se comparando: o que diz
+  // se a guitarra está larga demais é vê-la ao lado do baixo e da voz, em canais lado a lado.
+  // O app nunca o teve na coluna; foi a web que se alinhou com ele.
+  it('o panorama mora na Mesa, e não na coluna da Timeline', () => {
+    const corpo = semComentarios(editor);
+    const cabecalho = corpo.slice(
+      corpo.indexOf('const cabecalhoDaPista ='),
+      corpo.indexOf('const assinaturaDaColuna ='),
+    );
+    expect(cabecalho.length).toBeGreaterThan(1000);
+
+    // Na coluna não há panorama nenhum: nem o controlo, nem o valor que o alimenta.
+    expect(cabecalho).not.toContain('Panorama de');
+    expect(cabecalho).not.toContain('faixa.pan');
+    expect(cabecalho).not.toContain('daMesa?.pan');
+
+    // ⚠️ MAS NA MESA CONTINUA, inteiro. Tirar um controlo de uma aba não é tirá-lo do produto,
+    // e um panorama que ninguém consegue mexer deixa a faixa presa no centro para sempre.
+    const mesa = corpo.slice(corpo.indexOf('const MesaDeCanais'));
+    expect(mesa).toContain('Panorama de ${faixa.name} na mesa');
+    expect(mesa).toContain('faixaDoPan(pan)');
+
+    // E o app, que nunca o teve na coluna, continua a tê-lo só na Mesa.
+    expect(daLinhaDoTempo).not.toContain('Panorama');
+    expect(mesaNoApp).toContain('Panorama de ${pista.nome} na mesa');
   });
 
   // Os controlos que a referência mostra em cada pista, e o Master no topo.
@@ -699,11 +734,26 @@ describe('cromo do editor do Espaço JAM', () => {
     const daMesa = Array.from(new Set(
       (cabecalho.match(/daMesa\?\.([a-zA-Z]+)/g) ?? []).map((m) => m.replace('daMesa?.', '')),
     ));
-    expect(daMesa.length).toBeGreaterThanOrEqual(4);
+    // O piso é contra a vacuidade: se o regexp deixasse de casar, o `forEach` abaixo passaria
+    // sem conferir nada. Três é o que o cabeçalho lê hoje — calada, solada e ganho.
+    expect(daMesa.length).toBeGreaterThanOrEqual(3);
     daMesa.forEach((campo) => expect(assinatura).toContain(`daMesa?.${campo}`));
 
-    // E o mesmo para o que ele lê da FAIXA: o nome e os valores guardados.
-    ['p.name', 'p.gain', 'p.pan'].forEach((campo) => expect(assinatura).toContain(campo));
+    // E o mesmo para o que ele lê da FAIXA, lido da fonte pela mesma razão: uma lista escrita
+    // à mão aqui envelhece nos dois sentidos. Quando o panorama saiu do cabeçalho para o Mixer,
+    // um `'p.pan'` escrito aqui EXIGIRIA que a assinatura continuasse a vigiar um valor que o
+    // cabeçalho já não desenha — e cada arrasto num canal redesenharia a coluna inteira.
+    const daFaixa = Array.from(new Set(
+      (cabecalho.match(/faixa\.([a-zA-Z_]+)/g) ?? []).map((m) => m.replace('faixa.', '')),
+    ));
+    expect(daFaixa).toContain('name');
+    daFaixa.forEach((campo) => expect(assinatura).toContain(`p.${campo}`));
+    // ⚠️ E NADA ALÉM DISSO: o que a coluna não desenha não entra. `pistas` e `estado.pistas`
+    // são objetos novos a cada tique, e vigiar um campo a mais custa a coluna toda por nada.
+    const vigiados = Array.from(new Set(
+      (assinatura.match(/\bp\.([a-zA-Z_]+)/g) ?? []).map((m) => m.replace('p.', '')),
+    ));
+    expect(vigiados.sort()).toEqual(daFaixa.sort());
     // E para o que vem de fora e muda o desenho.
     ['armadas.includes(p.id)', 'podeEditar', 'noCelular', 'alturaDaPista', 'pistaFixaId']
       .forEach((campo) => expect(assinatura).toContain(campo));
@@ -1768,10 +1818,14 @@ describe('cromo do editor do Espaço JAM', () => {
     // "quatro", e o comentário acima já avisava que a conta se partiria no próximo botão que
     // aparecesse: partiu-se no seletor de cor, que é o quinto. Um teste que falha por haver um
     // botão a mais não está a guardar o desenho, está a guardar o inventário.
+    // ⚠️ O FIM MARCA-SE POR CÓDIGO, e não por uma frase de comentário. Ele apontava para as
+    // palavras "VOLUME E PANORAMA" de um comentário ali em cima; no dia em que o panorama saiu
+    // da coluna e o comentário foi reescrito, o marcador deixou de casar, a fatia passou a ser
+    // o ficheiro inteiro e o caso contou dezoito botões de toda a tela. O rótulo do volume é o
+    // primeiro código depois da fila, e muda-se muito menos do que uma explicação.
     const inicio = corpo.indexOf('const repartido = noCelular');
-    const fim = corpo.indexOf('VOLUME E PANORAMA', inicio) > 0
-      ? corpo.indexOf('{!noCelular && (<>', inicio)
-      : corpo.length;
+    const fim = corpo.indexOf('aria-label={`Volume de ', inicio);
+    expect(fim).toBeGreaterThan(inicio);
     const aPista = corpo.slice(inicio, fim);
     expect(aPista.length).toBeGreaterThan(500);
 
