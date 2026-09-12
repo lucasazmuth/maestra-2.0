@@ -214,30 +214,6 @@ jest.mock('@/casca/jam/mesa/exportarNativo', () => ({
   partilharGuiaMp3: jest.fn(() => Promise.resolve()),
 }));
 
-// O detector de andamento. O duplo é mutável: cada teste diz o que a máquina "ouviu", e se já
-// havia uma análise a correr quando a tela abriu — que é o caminho por onde o resultado chega
-// sem que esta tela tenha pedido nada.
-let mockAnalise: { bpm?: number } | null = null;
-let mockEmCurso = false;
-const mockPedir = jest.fn(() => Promise.resolve());
-jest.mock('@maestra/core/hooks/useAnaliseDaVersao', () => ({
-  useAnaliseDaVersao: () => ({
-    analise: mockAnalise,
-    trabalhos: [],
-    carregando: false,
-    emCurso: () => mockEmCurso,
-    // A oferta "Detectar BPM e tom" vive na ficha, e ela pergunta pelo último erro antes de se
-    // desenhar: sem este, a aba da ficha estourava assim que passou a receber a gravação.
-    ultimoErro: () => null,
-    pedindo: null,
-    erro: null,
-    podeCancelar: () => false,
-    cancelar: jest.fn(),
-    recarregar: jest.fn(),
-    pedir: mockPedir,
-  }),
-}));
-
 jest.mock('@/nucleo/arquivos', () => ({
   escolherAudio: jest.fn(),
   escolherAudios: jest.fn(() => Promise.resolve([])),
@@ -339,8 +315,6 @@ describe('espaço jam', () => {
     mockPurgar.mockResolvedValue({ pistas: 0, clipes: 0, arquivos: 0 });
     mockMoverClipe.mockResolvedValue(null);
     mockMarcarApagado.mockResolvedValue(undefined);
-    mockAnalise = null;
-    mockEmCurso = false;
     mockGravarFixo.mockResolvedValue({ url: 'https://exemplo.invalid/guia.mp3?v=1', path: 'a-1/p-1/guia.mp3' });
     mockRestaurar.mockResolvedValue(undefined);
   });
@@ -1307,68 +1281,6 @@ describe('espaço jam', () => {
       expect.stringContaining('botão da faixa'),
     );
     aviso.mockRestore();
-  });
-
-  // ─── O andamento, ouvido sozinho ───────────────────────────────────────────
-  //
-  // Pedir a alguém que digite um número que a máquina consegue ouvir é trabalho que não devia
-  // existir — e o andamento não é enfeite: é o que faz a régua contar COMPASSOS em vez de
-  // segundos.
-
-  it('o andamento ouvido entra no campo e se identifica como ouvido', async () => {
-    // A gravação abriu sem andamento escrito e com uma análise já a correr: é assim que o
-    // número chega sem que esta tela tenha pedido nada.
-    mockBuscar.mockResolvedValue(projeto({ versions: [versao({ bpm: null })] }));
-    mockEmCurso = true;
-    mockAnalise = { bpm: 128 };
-    const tela = await montar();
-
-    const campo = await tela.findByLabelText('Andamento da gravação, em BPM, ouvido do áudio');
-    expect(campo.props.value).toBe('128');
-    // ⚠️ E DIZ DE ONDE VEIO. Um palpite da máquina sem marca é indistinguível de um número que a
-    // pessoa escreveu e esqueceu — e é sobre esse que ela depois vai confiar para registar a obra.
-  });
-
-  // ⚠️ NÃO É "FALTA DE CONFIANÇA", é ambiguidade real: um trap a 140 e o mesmo trap contado em
-  // meio-tempo a 70 têm exatamente as mesmas batidas, e a máquina escolhe uma delas com toda a
-  // certeza do mundo.
-  it('oferece a outra leitura da mesma batida, e trocar é um interruptor', async () => {
-    mockBuscar.mockResolvedValue(projeto({ versions: [versao({ bpm: null })] }));
-    mockEmCurso = true;
-    mockAnalise = { bpm: 140 };
-    const tela = await montar();
-    await tela.findByLabelText('Andamento da gravação, em BPM, ouvido do áudio');
-
-    fireEvent.press(tela.getByLabelText(
-      'Trocar para 70 BPM: a mesma batida, contada em dobro ou em meio-tempo',
-    ));
-    await waitFor(() => expect(tela.getByDisplayValue('70')).toBeTruthy());
-    // Volta com outro toque: é um interruptor entre as duas leituras, não uma correção única.
-    expect(tela.getByLabelText(
-      'Trocar para 140 BPM: a mesma batida, contada em dobro ou em meio-tempo',
-    )).toBeTruthy();
-  });
-
-  it('escrever por cima do que a máquina ouviu tira a marca e a oferta', async () => {
-    mockBuscar.mockResolvedValue(projeto({ versions: [versao({ bpm: null })] }));
-    mockEmCurso = true;
-    // 160 e não 128: a metade de 128 cai fora da faixa comum e não haveria oferta nenhuma para
-    // desaparecer — o teste passaria sem testar nada.
-    mockAnalise = { bpm: 160 };
-    const tela = await montar();
-    const campo = await tela.findByLabelText('Andamento da gravação, em BPM, ouvido do áudio');
-    expect(tela.getByLabelText(
-      'Trocar para 80 BPM: a mesma batida, contada em dobro ou em meio-tempo',
-    )).toBeTruthy();
-
-    fireEvent.changeText(campo, '92');
-
-    // O andamento da obra é o que o autor diz que é — a partir daqui o número é dele, e a
-    // máquina cala-se: nem a marca, nem a oferta da outra leitura.
-    await waitFor(() => expect(tela.getByLabelText('Andamento da gravação, em BPM')).toBeTruthy());
-    expect(tela.queryByLabelText(
-      'Trocar para 80 BPM: a mesma batida, contada em dobro ou em meio-tempo',
-    )).toBeNull();
   });
 
   // ─── A biblioteca ──────────────────────────────────────────────────────────

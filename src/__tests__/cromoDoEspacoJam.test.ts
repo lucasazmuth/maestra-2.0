@@ -57,6 +57,11 @@ const nucleo = fs.readFileSync(
   'utf8',
 );
 const campos = ler('components', 'ficha', 'campos.tsx');
+const modalDaFicha = ler('components', 'TrackModal.tsx');
+const fichaNoApp = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'musicas', 'FichaDaFaixa.tsx'),
+  'utf8',
+);
 const exportar = ler('pages', 'Catalog', 'daw', 'TelaDeExportar.tsx');
 
 /** Só o código: um comentário que NOMEIA o que saiu não é o que saiu. */
@@ -1880,40 +1885,70 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(casca).toContain('isolation: isolate');
   });
 
-  // ⚠️ O DETECTOR VIVIA ESCONDIDO NA FICHA, atrás de um botão que era preciso descobrir. No
-  // Espaço JAM ele acontece por conta própria, porque o andamento é o que faz a régua contar
-  // compassos — e pedir que se digite um número que a máquina consegue ouvir é trabalho que
-  // não devia existir.
-  it('o andamento é ouvido sozinho, uma vez, e só enche campo vazio', () => {
-    const corpo = semComentarios(tela);
+  // ⚠️ O ANDAMENTO E O TOM MORAM NUM SÍTIO SÓ, e este caso existe por causa do estrago que os
+  // dois sítios faziam.
+  //
+  // Eles estavam no rodapé do editor E na aba da Ficha — e as duas caixas escreviam a MESMA
+  // coluna (`catalog_versions.bpm`). Como o rascunho da ficha só recarrega quando se troca de
+  // gravação, escrever 96 no rodapé e depois tocar em qualquer campo da ficha mandava o valor
+  // velho por cima: o número que a pessoa acabou de escrever desfazia-se sozinho, sem erro e
+  // sem aviso. É o mesmo estrago de `payloadDaGravacao`, um andar acima.
+  //
+  // O rodapé fica, porque é onde se ouve o som. A ficha larga o campo E larga a escrita.
+  it('o andamento e o tom são do rodapé do editor, e a ficha não escreve neles', () => {
+    const daFicha = semComentarios(campos);
+    const daFichaNoApp = semComentarios(fichaNoApp);
 
-    // As regras de QUANDO vivem no núcleo, e a tela só as consulta.
-    expect(corpo).toContain('podeOuvirSozinho({');
-    expect(corpo).toContain("void analiseDoJam.pedir('bpm_tom');");
+    // ── A ficha não os mostra mais, em nenhuma das duas superfícies ──
+    expect(daFicha).not.toContain("<span>BPM</span>");
+    expect(daFicha).not.toContain("<span>Tom</span>");
+    expect(daFichaNoApp).not.toContain('rotulo="BPM"');
+    expect(daFichaNoApp).not.toContain('rotulo="Tom"');
 
-    // ⚠️ SÓ SE PREENCHE O QUE SE PEDIU. Sem esta memória, quem apagou o BPM de propósito
-    // reencontrava-o preenchido na recarga seguinte: a análise antiga continua no banco, e
-    // "campo vazio + análise existe" descreve tanto o primeiro envio como o gesto de o
-    // esvaziar.
-    expect(corpo).toContain('esperandoOAndamento.current = true;');
-    expect(corpo).toContain('if (!esperandoOAndamento.current || !openId) return;');
-    // Um que já estava a correr quando a tela abriu conta como pedido, e não pede outro.
-    expect(corpo).toContain("if (analiseDoJam.emCurso('bpm_tom')) { esperandoOAndamento.current = true; return; }");
+    // ── E, o que importa mais, não os GRAVA: um campo escondido que continua a escrever faz
+    //    o mesmo estrago sem nada na tela a denunciá-lo ──
+    expect(semComentarios(tela)).not.toContain('bpm: rascunho.bpm');
+    expect(semComentarios(tela)).not.toContain('key: rascunho.key');
+    expect(daFichaNoApp).not.toContain('bpm: rascunho.bpm');
+    expect(daFichaNoApp).not.toContain('key: rascunho.key');
+    expect(semComentarios(modalDaFicha)).not.toContain('bpm: draft.bpm');
+    expect(semComentarios(modalDaFicha)).not.toContain('key: draft.key');
 
-    // E mesmo com a análise na mão, o campo escrito à mão ganha: a análise demora minutos, e
-    // nesses minutos a pessoa pode ter escrito o andamento.
-    const oPreenchimento = corpo.slice(corpo.indexOf('esperandoOAndamento.current = false;'));
-    const ateOFim = oPreenchimento.slice(0, oPreenchimento.indexOf('mudarGravacao({ bpm: detectado })'));
-    expect(ateOFim.length).toBeGreaterThan(40);
-    expect(ateOFim).toContain('if (bpmLegivel(open?.bpm)) return;');
+    // ── O núcleo é a última tranca: mesmo que uma tela volte a mencioná-los por engano, o
+    //    payload só toca na coluna quando o chamador FALA dela ──
+    expect(semComentarios(nucleo)).toContain("if ('bpm' in input) payload.bpm = input.bpm ?? null;");
+    expect(semComentarios(nucleo)).toContain("if ('key' in input) payload.key = input.key ?? null;");
 
-    // A proveniência só é verdadeira enquanto o campo tiver exatamente o que a máquina ouviu:
-    // escrito por cima, o número passa a ser de quem o escreveu, e a marca sai.
-    expect(corpo).toContain('ouvido={ouvido !== null && Number(bpmLegivel(open?.bpm)) === ouvido}');
+    // ── E o rodapé continua lá, com os dois campos editáveis. Tirar o número de uma tela não
+    //    pode querer dizer tirá-lo do produto ──
+    expect(semComentarios(tela)).toContain("aoMudar={(v) => mudarGravacao({ bpm: v })}");
+    expect(semComentarios(tela)).toContain("aoMudar={(v) => mudarGravacao({ key: v })}");
+    expect(semComentarios(app)).toContain('rotulo="Andamento da gravação, em BPM"');
+    expect(semComentarios(app)).toContain('rotulo="Tom da gravação"');
+  });
 
-    // A troca de oitava obedece à mesma condição.
-    expect(corpo).toContain('outroAndamento(ouvido)');
-    expect(corpo).toContain('aria-label={`Trocar para ${alternativa} BPM`}');
+  // ⚠️ O DETETOR DE BPM SAIU DO PRODUTO — o dono pediu-o porque não funcionava, e o que ele
+  // deixava para trás era pior do que a ausência: um "Ouvindo o áudio… isso leva alguns
+  // minutos." que não terminava quando o worker estava fora do ar, e um número que se instalava
+  // sozinho num campo que depois se usa para registar a obra.
+  //
+  // Este caso não é decorativo: metade da fila vivia no NÚCLEO, e código que ninguém importa
+  // volta a ser chamado por engano no primeiro ajuste vizinho.
+  it('não sobrou detetor de andamento em nenhuma das duas superfícies', () => {
+    const daRaiz = (...partes: string[]) => path.join(__dirname, '..', '..', ...partes);
+
+    // Os ficheiros da funcionalidade deixaram de existir — os das telas e os do núcleo.
+    expect(fs.existsSync(daRaiz('src', 'components', 'AnalysisHint.tsx'))).toBe(false);
+    expect(fs.existsSync(daRaiz('apps', 'mobile', 'src', 'casca', 'jam', 'SugestaoDaAnalise.tsx'))).toBe(false);
+    expect(fs.existsSync(daRaiz('packages', 'core', 'src', 'hooks', 'useAnaliseDaVersao.ts'))).toBe(false);
+    expect(fs.existsSync(daRaiz('packages', 'core', 'src', 'services', 'db', 'audioJobs.ts'))).toBe(false);
+
+    // E ninguém ficou a pedir por eles.
+    [tela, app, campos, fichaNoApp, modalDaFicha].forEach((fonte) => {
+      expect(fonte).not.toContain('useAnaliseDaVersao');
+      expect(fonte).not.toContain('audioJobs');
+      expect(fonte).not.toContain("'bpm_tom'");
+    });
   });
 
   // ⚠️ "FALHA AO SALVAR" LOGO A SEGUIR A APAGAR COM SUCESSO. Tocar num clipe agendava a

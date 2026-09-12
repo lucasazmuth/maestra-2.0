@@ -25,8 +25,6 @@ import {
   MONTAGEM_MUDA, bytesDoMp3, caminhoDaGuia, rotuloDaGuia, temSom,
 } from '@maestra/core/audio/exportar';
 import { useMesa } from '@maestra/core/audio/useMesa';
-import { useAnaliseDaVersao } from '@maestra/core/hooks/useAnaliseDaVersao';
-import { bpmLegivel, outroAndamento, podeOuvirSozinho } from '@maestra/core/services/db/audioJobs';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import {
   AVISO_DE_ARMAR, LIMITE_DA_PISTA_BYTES, MAXIMO_DE_PISTAS, MEMORIA_DE_AVISO_BYTES,
@@ -1044,77 +1042,6 @@ export default function EspacoJam() {
   /** A gravação ainda não tem faixas de verdade: o que se vê é a Mix sintetizada. */
   const porMontar = pistas.length === 1 && ehPistaDaMix(pistas[0].id);
 
-  // ─── O andamento, ouvido sozinho ──────────────────────────────────────────
-  //
-  // O detector de BPM existe desde sempre e vivia escondido na ficha, atrás de um botão que era
-  // preciso descobrir. Aqui ele acontece por conta própria na gravação aberta — porque o
-  // andamento é o que faz a régua contar COMPASSOS, e pedir a alguém que digite um número que a
-  // máquina consegue ouvir é trabalho que não devia existir.
-  //
-  // As regras de QUANDO (uma vez por gravação, só com o campo vazio, só para quem edita) vivem
-  // no núcleo, em `podeOuvirSozinho`: elas guardam cota e guardam trabalho de gente.
-  const analiseDoJam = useAnaliseDaVersao(abertaId ?? undefined);
-  /**
-   * Estamos à espera de um andamento que ainda vai chegar?
-   *
-   * ⚠️ É ELE QUE IMPEDE O CAMPO DE SE ENCHER SOZINHO OUTRA VEZ. Sem esta memória, quem apagou o
-   * BPM de propósito reencontrava-o preenchido na abertura seguinte — a análise antiga continua
-   * no banco, e "campo vazio + análise existe" descreve tanto o primeiro envio como o gesto
-   * deliberado de o esvaziar.
-   */
-  const esperandoOAndamento = useRef(false);
-  const ouviuNestaVersao = useRef<string | null>(null);
-  const [ouvido, setOuvido] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!abertaId || analiseDoJam.carregando) return;
-    if (ouviuNestaVersao.current === abertaId) return;
-    ouviuNestaVersao.current = abertaId;
-    // Já havia um a correr quando esta tela abriu: não se pede outro, mas espera-se por ele.
-    if (analiseDoJam.emCurso('bpm_tom')) { esperandoOAndamento.current = true; return; }
-    if (!podeOuvirSozinho({
-      temAudio: Boolean(aberta?.audio_file),
-      bpmEscrito: aberta?.bpm,
-      analise: analiseDoJam.analise,
-      trabalhos: analiseDoJam.trabalhos,
-      podeEditar,
-    })) return;
-    esperandoOAndamento.current = true;
-    void analiseDoJam.pedir('bpm_tom');
-  }, [abertaId, aberta?.audio_file, aberta?.bpm, podeEditar, analiseDoJam]);
-
-  useEffect(() => {
-    if (!esperandoOAndamento.current || !abertaId) return;
-    const detectado = bpmLegivel(analiseDoJam.analise?.bpm);
-    if (!detectado) return;
-    esperandoOAndamento.current = false;
-    // ⚠️ E MESMO ASSIM, SÓ SE AINDA ESTIVER VAZIO. A análise demora minutos, e nesses minutos a
-    // pessoa pode ter escrito o andamento à mão — que é a resposta certa por definição, porque
-    // o andamento da obra é o que o autor diz que é.
-    //
-    // ⚠️ ESTA LINHA NÃO TEM TESTE NESTA SUÍTE, e é bom que se saiba: o duplo do detector entrega
-    // a análise de uma vez, e não consegui fazê-la CHEGAR no meio de uma digitação — que é
-    // exatamente o instante que esta guarda protege. Um teste que não exercita a linha passa
-    // com ela e sem ela, e um desses é pior do que nenhum. A regra é a mesma da web, palavra
-    // por palavra, e lá ela tem a cobertura que aqui falta.
-    if (bpmLegivel(bpm)) return;
-    setOuvido(Number(detectado));
-    setBpm(detectado);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analiseDoJam.analise, abertaId]);
-
-  /**
-   * O outro andamento possível, enquanto o que está no campo for o que a máquina ouviu.
-   *
-   * ⚠️ NÃO É "FALTA DE CONFIANÇA", é ambiguidade real: um trap a 140 e o mesmo trap contado em
-   * meio-tempo a 70 têm exatamente as mesmas batidas, e a máquina escolhe uma delas com toda a
-   * certeza do mundo. Por isso a troca aparece sempre que existe uma alternativa plausível, e
-   * não só quando o número vem inseguro.
-   */
-  const alternativa = ouvido !== null && Number(bpmLegivel(bpm)) === ouvido
-    ? outroAndamento(ouvido)
-    : null;
-
   // ─── O transporte e o zoom ────────────────────────────────────────────────
   //
   // ⚠️ O ZOOM MORA AQUI, e não na linha do tempo: os botões dele vivem na barra do transporte,
@@ -1566,12 +1493,14 @@ export default function EspacoJam() {
                   cover_image: salva.cover_image ?? null,
                   cover_image_name: salva.cover_image_name ?? null,
                 });
-                // Gênero, andamento, tom e letra são da GRAVAÇÃO — é de lá que a ficha os lê.
+                // Gênero e letra são da GRAVAÇÃO — é de lá que a ficha os lê.
+                //
+                // ⚠️ ANDAMENTO E TOM NÃO ENTRAM NESTE REMENDO. A ficha deixou de os mostrar e
+                // de os gravar; quem manda neles é o rodapé, e copiar aqui o que voltou do
+                // servidor apagaria da tela o número que a pessoa acabou de escrever lá.
                 if (salva.version_id) {
                   patcharVersao(salva.version_id, {
                     genre: salva.genre ?? null,
-                    bpm: salva.bpm ?? null,
-                    key: salva.key ?? null,
                     lyrics: salva.lyrics ?? null,
                   });
                 }
@@ -1715,21 +1644,7 @@ export default function EspacoJam() {
           limite={3}
           travado={!aberta || !podeEditar}
           rotulo="Andamento da gravação, em BPM"
-          ouvido={ouvido !== null && Number(bpmLegivel(bpm)) === ouvido}
         />
-
-        {/* A troca de oitava. Um toque, e volta com outro: é um interruptor entre as duas
-            leituras da mesma batida, não uma correção que se faz uma vez. */}
-        {alternativa !== null && (
-          <Pressable
-            onPress={() => { setOuvido(alternativa); setBpm(String(alternativa)); }}
-            style={estilos.outroAndamento}
-            accessibilityRole="button"
-            accessibilityLabel={`Trocar para ${alternativa} BPM: a mesma batida, contada em dobro ou em meio-tempo`}
-          >
-            <Text style={estilos.outroAndamentoTexto}>ou {alternativa}?</Text>
-          </Pressable>
-        )}
         <CampoDoCabecalho
           valor={tom}
           aoMudar={setTom}
@@ -2050,13 +1965,6 @@ const estilos = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   botaoAceso: { backgroundColor: COR_EDITOR.botaoRedondo },
-  outroAndamento: {
-    height: 26, paddingHorizontal: 8, justifyContent: 'center',
-    borderRadius: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: COR_EDITOR.fio,
-  },
-  outroAndamentoTexto: {
-    fontSize: 11, fontWeight: '700', color: COR_EDITOR.apoio, fontVariant: ['tabular-nums'],
-  },
 
   // O Master é o único controlo desta barra, e por isso é ele que fica com o que sobra.
   // ⚠️ FOLGA À DIREITA DO TAMANHO DE MEIO BOTÃO. O botão do fader centra-se no valor, e no

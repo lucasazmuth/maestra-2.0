@@ -390,8 +390,7 @@
 }
 
 .fieldGrid,
-.fieldGridThree,
-.fieldGridFour {
+.fieldGridThree {
   display: grid;
   gap: 15px 18px;
 }
@@ -402,10 +401,6 @@
 
 .fieldGridThree {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.fieldGridFour {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .footer {
@@ -838,8 +833,7 @@
   }
 
   .fieldGrid,
-  .fieldGridThree,
-  .fieldGridFour {
+  .fieldGridThree {
     grid-template-columns: 1fr;
     gap: 14px;
   }

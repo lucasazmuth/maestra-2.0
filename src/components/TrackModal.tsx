@@ -446,8 +446,9 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
         release_date: draft.release_date || null,
         isrc: draft.isrc || null,
         upc: draft.upc || null,
-        bpm: draft.bpm || null,
-        key: draft.key || null,
+        // ⚠️ SEM BPM E SEM TOM. Eles saíram da ficha e vivem na barra do editor, que escreve na
+        // mesma coluna: repeti-los aqui mandaria o valor velho do rascunho por cima do que a
+        // barra gravou. Ver `payloadDaGravacao`, que agora só toca no que o chamador menciona.
         duration: draft.duration || null,
         lyrics: draft.lyrics || null,
         details: draft.details || null,
@@ -547,7 +548,6 @@ export const TrackModal: FC<Props> = ({ open, artistId, item, genres, assigneeOp
                 assigneeOptions={assigneeOptions}
                 uploading={uploading}
                 aoEnviarCapa={(f) => handleUpload('cover', f)}
-                versionId={item?.version_id}
               />
             ),
           },

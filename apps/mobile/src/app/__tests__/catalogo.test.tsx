@@ -295,7 +295,7 @@ describe('catalogo: as duas abas e a ficha', () => {
   // linha, e o nome do destino mudou-se para cá.
   it('o "⋮" abre a lista, e a ficha é uma das escolhas', async () => {
     mockListar.mockResolvedValue([
-      faixa({ id: 'f-2', title: 'Vento sul', genre: 'MPB', bpm: '96' }),
+      faixa({ id: 'f-2', title: 'Vento sul', genre: 'MPB' }),
     ]);
     const tela = await montar();
     await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
@@ -313,7 +313,10 @@ describe('catalogo: as duas abas e a ficha', () => {
     // O cabeçalho da ficha é o NOME da faixa, como na web — não um rótulo genérico.
     expect(tela.getAllByText('Vento sul').length).toBeGreaterThan(1);
     expect(tela.getByLabelText('Título').props.value).toBe('Vento sul');
-    expect(tela.getByLabelText('BPM').props.value).toBe('96');
+    // E veio preenchida com o que estava na música. O andamento servia aqui como prova disso;
+    // ele saiu da ficha — vive no rodapé do editor, que é quem o grava — e o gênero, que vem
+    // da mesma leitura, faz o mesmo trabalho.
+    expect(tela.getByLabelText('Gênero').props.value).toBe('MPB');
   });
 
   // ⚠️ A GUIA SÓ SAÍA PELO EDITOR, pela aba de exportar. Para a mandar a alguém — ou para a levar

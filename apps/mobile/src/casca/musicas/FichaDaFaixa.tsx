@@ -14,7 +14,6 @@ import { listMembers } from '@maestra/core/services/db/members';
 
 import { Bloco, Folha, Linha } from '@/casca/Folha';
 import { usePaleta, type PaletaDaFolha } from '@/casca/paleta';
-import { SugestaoDaAnalise } from '@/casca/jam/SugestaoDaAnalise';
 import { enviarParaOCatalogo, escolherImagem } from '@/nucleo/arquivos';
 import { useSessao } from '@/nucleo/sessao';
 
@@ -96,8 +95,6 @@ const assinaturaDaFicha = (r: Partial<CatalogItem>, dataEscrita: string) => JSON
   data: dataEscrita,
   isrc: r.isrc || null,
   upc: r.upc || null,
-  bpm: r.bpm || null,
-  key: r.key || null,
   lyrics: r.lyrics || null,
   details: r.details || null,
   composition_splits: r.composition_splits || [],
@@ -309,8 +306,9 @@ export const FichaDaFaixa = ({
       release_date: lancamento,
       isrc: rascunho.isrc || null,
       upc: rascunho.upc || null,
-      bpm: rascunho.bpm || null,
-      key: rascunho.key || null,
+      // ⚠️ SEM ANDAMENTO E SEM TOM. Quem os grava é o rodapé do editor, e é a MESMA coluna:
+      // mandá-los daqui punha o valor velho do rascunho por cima do que o rodapé acabou de
+      // gravar. Ver `payloadDaGravacao`, que agora só toca no que o chamador menciona.
       lyrics: rascunho.lyrics || null,
       details: rascunho.details || null,
       composition_splits: autorais,
@@ -568,48 +566,13 @@ export const FichaDaFaixa = ({
           </View>
         </Linha>
 
-        <Linha>
-          <View style={estilos.lado}>
-            <View style={estilos.flex}>
-              <Campo rotulo="BPM">
-                <TextInput
-                  style={estilos.entrada}
-                  value={rascunho.bpm ?? ''}
-                  onChangeText={(t) => mudar({ bpm: t })}
-                  placeholder="BPM"
-                  placeholderTextColor={paleta.espacoReservado}
-                  keyboardType="number-pad"
-                  accessibilityLabel="BPM"
-                />
-              </Campo>
-            </View>
-            <View style={estilos.flex}>
-              <Campo rotulo="Tom">
-                <TextInput
-                  style={estilos.entrada}
-                  value={rascunho.key ?? ''}
-                  onChangeText={(t) => mudar({ key: t })}
-                  placeholder="Tom"
-                  placeholderTextColor={paleta.espacoReservado}
-                  accessibilityLabel="Tom"
-                />
-              </Campo>
-            </View>
-          </View>
-        </Linha>
-
-        {/* O que a máquina ouviu, ao lado dos campos que ela preenche — e nunca por cima
-            deles: "usar" escreve no rascunho, e é a pessoa quem salva. Vivia na tela do
-            Espaço JAM; saiu de lá porque é uma ação ocasional e a tela principal tinha coisas
-            demais. Só existe quando a faixa tem uma versão com áudio para ouvir. */}
-        {!!faixa?.version_id && (
-          <Linha>
-            <SugestaoDaAnalise
-              versaoId={faixa.version_id}
-              aoUsar={({ bpm, tom }) => mudar({ bpm, key: tom })}
-            />
-          </Linha>
-        )}
+        {/* ⚠️ BPM E TOM NÃO ESTÃO AQUI, e a ausência é a correção.
+            Eles são da GRAVAÇÃO, e o rodapé do editor já os mostra e os grava — na mesma
+            coluna do banco. Duas caixas para o mesmo número não eram só repetição: o rascunho
+            desta ficha só recarrega quando a música que ela recebe muda de identidade, então
+            escrever o BPM no rodapé e depois tocar em QUALQUER campo daqui mandava o valor
+            velho por cima do novo. Quem edita o andamento edita-o onde se ouve o som.
+            Ver `payloadDaGravacao`, que agora só escreve o que o chamador menciona. */}
       </Bloco>
 
       <Bloco rotulo="Capa e detalhes">

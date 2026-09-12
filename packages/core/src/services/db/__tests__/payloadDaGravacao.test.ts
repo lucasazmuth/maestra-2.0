@@ -40,15 +40,44 @@ describe('payloadDaGravacao', () => {
   });
 
   // Os outros campos são todos editáveis no mesmo formulário: quem grava a ficha viu-os, e um
-  // vazio ali é uma decisão dela. Só o áudio é que nasce noutro sítio.
+  // vazio ali é uma decisão dela. Áudio, andamento e tom é que nascem noutro sítio.
   it('os campos da ficha continuam a ser apagáveis por omissão', () => {
     const payload = payloadDaGravacao({ title: 'Só o título' }, AGORA);
 
     expect(payload.lyrics).toBeNull();
-    expect(payload.bpm).toBeNull();
-    expect(payload.key).toBeNull();
     expect(payload.duration).toBeNull();
     expect(payload.genre).toBeNull();
+  });
+
+  // ⚠️ O ANDAMENTO E O TOM SAÍRAM DA FICHA, e entraram na regra do áudio no mesmo dia.
+  //
+  // Eles são editáveis num sítio só — a barra do editor —, e essa barra escreve nesta MESMA
+  // coluna por outro caminho. Enquanto o payload da ficha os repetia por omissão, escrever o
+  // título mandava o BPM velho do rascunho (ou vazio) por cima do que a barra tinha acabado de
+  // gravar: a ficha deixou de os MOSTRAR, e um vazio ali deixou de ser uma decisão de ninguém.
+  it('não menciona o andamento nem o tom quando o chamador não os mencionou', () => {
+    const payload = payloadDaGravacao({ title: 'Uma música', lyrics: 'la la' }, AGORA);
+
+    // Nem como `null`: a chave tem de estar AUSENTE, senão o update escreve vazio por cima.
+    expect('bpm' in payload).toBe(false);
+    expect('key' in payload).toBe(false);
+  });
+
+  it('escreve o andamento e o tom quando eles são dados', () => {
+    const payload = payloadDaGravacao({ bpm: '128', key: 'Am' }, AGORA);
+
+    expect(payload.bpm).toBe('128');
+    expect(payload.key).toBe('Am');
+  });
+
+  // O outro lado da mesma regra: a barra do editor apaga o BPM mandando-o vazio, e isso tem de
+  // continuar a chegar ao banco.
+  it('limpa o andamento e o tom quando eles são dados como nulos', () => {
+    const payload = payloadDaGravacao({ bpm: null, key: null }, AGORA);
+
+    expect('bpm' in payload).toBe(true);
+    expect(payload.bpm).toBeNull();
+    expect(payload.key).toBeNull();
   });
 
   it('sem status, a gravação nasce em composição', () => {
@@ -62,7 +91,7 @@ describe('payloadDaGravacao', () => {
 // seguinte. Agora têm coluna — e cada um na tabela certa, que é o que estes casos prendem.
 describe('ISRC e UPC', () => {
   // O ISRC identifica uma GRAVAÇÃO: o acústico não partilha o código do original. Por isso vai
-  // no payload da versão, ao lado do BPM e do tom, que estão lá pela mesma razão.
+  // no payload da versão, pela mesma razão que o andamento e o tom vão.
   it('o ISRC vai na gravação', () => {
     expect(payloadDaGravacao({ isrc: 'BRABC2600001' }, AGORA).isrc).toBe('BRABC2600001');
   });

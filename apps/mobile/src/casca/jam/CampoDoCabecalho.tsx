@@ -17,7 +17,7 @@ import { soOAndamento, soOTom } from '@maestra/core/utils/camposDaGravacao';
 // sem saber onde ia parar era exatamente o problema antigo. O rótulo passa a dizer o que fazer.
 
 export const CampoDoCabecalho = ({
-  valor, aoMudar, sufixo, largura, numerico, maiusculas, limite, travado, rotulo, ouvido,
+  valor, aoMudar, sufixo, largura, numerico, maiusculas, limite, travado, rotulo,
 }: {
   valor: string;
   aoMudar: (v: string) => void;
@@ -38,21 +38,12 @@ export const CampoDoCabecalho = ({
   travado?: boolean;
   /** O que o leitor de ecrã anuncia. O sufixo sozinho não diz o que se está a editar. */
   rotulo: string;
-  /**
-   * Este número foi OUVIDO do áudio, e não escrito por alguém.
-   *
-   * ⚠️ A DIFERENÇA IMPORTA: um palpite da máquina, sem marca, é indistinguível de um número que
-   * a pessoa escreveu e esqueceu — e é sobre esse que ela depois vai confiar para registar a
-   * obra. A borda muda de cor e o leitor de tela diz de onde veio.
-   */
-  ouvido?: boolean;
 }) => (
   <TextInput
     style={[
       estilos.campo,
       { width: largura },
       travado && estilos.campoTravado,
-      ouvido && estilos.campoOuvido,
     ]}
     value={valor}
     // ⚠️ O FILTRO É AQUI, e não no teclado. O `keyboardType` é uma sugestão: há teclados que
@@ -66,7 +57,7 @@ export const CampoDoCabecalho = ({
     autoCapitalize={maiusculas ? 'characters' : 'none'}
     autoCorrect={false}
     maxLength={limite}
-    accessibilityLabel={ouvido ? `${rotulo}, ouvido do áudio` : rotulo}
+    accessibilityLabel={rotulo}
     // Sem `returnKeyType` o teclado numérico do iOS não traz tecla de fechar; "concluído"
     // é o que fecha um campo que não submete nada.
     returnKeyType="done"
@@ -90,7 +81,6 @@ const estilos = StyleSheet.create({
     // Tabular para o campo não mudar de largura entre 98 e 128 BPM.
     fontVariant: ['tabular-nums'],
   },
-  campoOuvido: { borderColor: AZUL_DO_EDITOR },
   campoTravado: { opacity: 0.5 },
 });
 

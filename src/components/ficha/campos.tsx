@@ -7,7 +7,6 @@ import dayjs from 'dayjs';
 import type { CatalogItem, MusicGenre, Split } from '@maestra/core/interfaces/maestra';
 import { CATALOG_STATUS_OPTIONS, CLASSES_DA_OBRA, CLASSES_DO_FONOGRAMA } from '@maestra/core/constants/maestra';
 
-import AnalysisHint from '../AnalysisHint';
 import modalStyles from '../StandardModal.module.scss';
 
 // OS CAMPOS DA FICHA, num lugar só.
@@ -222,12 +221,10 @@ export interface DadosDaFicha {
   /** Qual envio está em curso, para o campo da capa mostrar que está a trabalhar. */
   uploading: 'cover' | 'audio' | null;
   aoEnviarCapa: (arquivo: File) => void;
-  /** A gravação de onde a deteção de BPM e tom lê o resultado. */
-  versionId?: string | null;
 }
 
 export const CamposDaFicha: FC<DadosDaFicha> = ({
-  draft, set, genres, assigneeOptions, uploading, aoEnviarCapa, versionId,
+  draft, set, genres, assigneeOptions, uploading, aoEnviarCapa,
 }) => (
         <div className={modalStyles.form} style={{ paddingTop: 0 }}>
           <label className={modalStyles.field}>
@@ -261,30 +258,42 @@ export const CamposDaFicha: FC<DadosDaFicha> = ({
               />
             </label>
           </div>
-          <label className={modalStyles.field}>
-            <span>Responsável</span>
-            <Select
-              placeholder='Selecione o responsável'
-              allowClear
-              value={draft.assignee?.id}
-              options={assigneeOptions.map((o) => ({ value: o.id, label: o.name }))}
-              onChange={(v) => {
-                const o = assigneeOptions.find((x) => x.id === v);
-                set({ assignee: o ? { id: o.id, name: o.name } : null });
-              }}
-            />
-          </label>
-          {/* Duração saiu daqui: pertence à gravação, e cada versão tem a sua. Está no
+          {/* Responsável e data emparelhados, como o status e o gênero: são os dois campos
+              curtos que sobraram entre blocos largos, e um `Select` de 710 px para escolher
+              entre dois nomes é um campo a gritar por um formulário que não existe.
+              Duração não está aqui: pertence à gravação, e cada versão tem a sua. Está no
               modal de Versão (VersionModal). */}
-          <label className={modalStyles.field}>
-            <span>Data de lançamento</span>
-            <DatePicker
-              placeholder='Selecione a data'
-              value={draft.release_date ? dayjs(draft.release_date) : null}
-              onChange={(d) => set({ release_date: d ? d.format('YYYY-MM-DD') : null })}
-            />
-          </label>
-          <div className={modalStyles.fieldGridFour}>
+          <div className={modalStyles.fieldGrid}>
+            <label className={modalStyles.field}>
+              <span>Responsável</span>
+              <Select
+                placeholder='Selecione o responsável'
+                allowClear
+                value={draft.assignee?.id}
+                options={assigneeOptions.map((o) => ({ value: o.id, label: o.name }))}
+                onChange={(v) => {
+                  const o = assigneeOptions.find((x) => x.id === v);
+                  set({ assignee: o ? { id: o.id, name: o.name } : null });
+                }}
+              />
+            </label>
+            <label className={modalStyles.field}>
+              <span>Data de lançamento</span>
+              <DatePicker
+                placeholder='Selecione a data'
+                value={draft.release_date ? dayjs(draft.release_date) : null}
+                onChange={(d) => set({ release_date: d ? d.format('YYYY-MM-DD') : null })}
+              />
+            </label>
+          </div>
+          {/* ⚠️ BPM E TOM NÃO ESTÃO AQUI, e a ausência é a correção.
+              Eles são da GRAVAÇÃO, e a barra do editor já os mostra e os grava — na mesma
+              coluna do banco. Duas caixas para o mesmo número, na mesma tela, não era só
+              repetição: o rascunho da ficha só recarrega quando se troca de gravação, então
+              escrever o BPM na barra e depois tocar em QUALQUER campo daqui mandava o valor
+              velho por cima do novo. Quem edita o andamento edita-o onde se ouve o som.
+              Ver `payloadDaGravacao`, que agora só escreve o que o chamador menciona. */}
+          <div className={modalStyles.fieldGrid}>
             <label className={modalStyles.field}>
               <span>ISRC</span>
               <Input placeholder='ISRC' value={draft.isrc || ''} onChange={(e) => set({ isrc: e.target.value })} />
@@ -293,22 +302,7 @@ export const CamposDaFicha: FC<DadosDaFicha> = ({
               <span>UPC</span>
               <Input placeholder='UPC' value={draft.upc || ''} onChange={(e) => set({ upc: e.target.value })} />
             </label>
-            <label className={modalStyles.field}>
-              <span>BPM</span>
-              <Input placeholder='BPM' value={draft.bpm || ''} onChange={(e) => set({ bpm: e.target.value })} />
-            </label>
-            <label className={modalStyles.field}>
-              <span>Tom</span>
-              <Input placeholder='Tom' value={draft.key || ''} onChange={(e) => set({ key: e.target.value })} />
-            </label>
           </div>
-          {/* O que a máquina ouviu, ao lado dos campos que ela preenche — e nunca por cima
-              deles: "usar" escreve no rascunho, e é a pessoa quem salva. Vivia no Espaço
-              JAM; saiu de lá porque é uma ação ocasional e a tela principal tinha coisas
-              demais. Só existe quando a faixa tem uma versão com áudio para ouvir. */}
-          {!!versionId && (
-            <AnalysisHint versionId={versionId} onUse={({ bpm, tom }) => set({ bpm, key: tom })} />
-          )}
           <label className={modalStyles.field}>
             <span>Capa</span>
             <UploadField

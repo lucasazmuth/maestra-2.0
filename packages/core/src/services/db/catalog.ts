@@ -160,9 +160,15 @@ export const deleteCatalogItem = async (id: string): Promise<void> => {
  * quase não aparecia; com a ficha a salvar sozinha, cada tecla numa observação destruía em
  * silêncio o áudio que a lista de Músicas toca.
  *
+ * ⚠️ E O ANDAMENTO E O TOM ENTRARAM NA MESMA REGRA, pelo mesmo motivo, no dia em que saíram da
+ * ficha. Eles moram agora só na barra do editor, que escreve nesta MESMA coluna — e enquanto o
+ * payload da ficha os repetia com `?? null`, escrever o título gravava por cima do BPM da barra
+ * o valor velho do rascunho (ou vazio). Duas telas a escrever uma coluna, e só uma delas a
+ * mostrá-la, é a receita do estrago de cima outra vez.
+ *
  * Os outros campos ficam com `?? null` porque são todos editáveis no MESMO formulário: quem
- * grava a ficha viu todos eles, e um vazio ali é uma decisão. O áudio não está lá — nasce do
- * editor, e a ficha não tem como ter opinião sobre ele.
+ * grava a ficha viu todos eles, e um vazio ali é uma decisão. Áudio, andamento e tom não estão
+ * lá — nascem do editor, e a ficha não tem como ter opinião sobre eles.
  */
 export const payloadDaGravacao = (
   input: Partial<CatalogItem>,
@@ -171,13 +177,13 @@ export const payloadDaGravacao = (
   const payload: Record<string, unknown> = {
     status: input.status || 'composition',
     duration: input.duration ?? null,
-    bpm: input.bpm ?? null,
-    key: input.key ?? null,
     isrc: input.isrc ?? null,
     genre: input.genre ?? null,
     lyrics: input.lyrics ?? null,
     updated_at: now,
   };
+  if ('bpm' in input) payload.bpm = input.bpm ?? null;
+  if ('key' in input) payload.key = input.key ?? null;
   if ('audio_file' in input) payload.audio_file = input.audio_file ?? null;
   if ('audio_file_name' in input) payload.audio_file_name = input.audio_file_name ?? null;
   return payload;

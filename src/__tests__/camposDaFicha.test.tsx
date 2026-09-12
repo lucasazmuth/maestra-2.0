@@ -103,3 +103,62 @@ describe('detalhes: o campo que não tem forma', () => {
     expect(set).toHaveBeenCalledWith({ details: 'A editora confirma o split por e-mail' });
   });
 });
+
+// ─── O DESENHO DO FORMULÁRIO ──────────────────────────────────────────────────
+
+/** A ficha inteira, com o mínimo que ela precisa para se desenhar. */
+const montarFicha = () => render(
+  <CamposDaFicha
+    draft={{ title: 'Vento sul' }}
+    set={semNada}
+    genres={[]}
+    assigneeOptions={[{ id: 'u1', name: 'Ana' }]}
+    uploading={null}
+    aoEnviarCapa={semNada}
+  />,
+);
+
+/**
+ * O campo cujo rótulo é este — a etiqueta inteira, e não só o texto do rótulo.
+ *
+ * ⚠️ PELO RÓTULO DO CAMPO, e não por qualquer texto igual: o `Select` do status repete a
+ * palavra "Status" dentro dele como texto de vazio, e uma busca solta encontrava os dois.
+ */
+const campoChamado = (rotulo: string) => {
+  const etiqueta = screen.getAllByText(rotulo)
+    .map((no) => no.closest('label'))
+    .find((no) => no?.firstElementChild?.textContent === rotulo);
+  if (!etiqueta) throw new Error(`Não há campo rotulado "${rotulo}".`);
+  return etiqueta;
+};
+
+describe('o desenho do formulário', () => {
+  // Sozinhos, os dois ocupavam 710 px cada um para guardar um nome curto e uma data — duas
+  // faixas largas e quase vazias entre blocos que usam a largura toda. Emparelhados, leem-se
+  // como o par que já estava logo acima: status e gênero.
+  it('responsável e data de lançamento dividem a mesma linha, como status e gênero', () => {
+    montarFicha();
+
+    const par = campoChamado('Responsável').parentElement;
+    expect(par).toBe(campoChamado('Data de lançamento').parentElement);
+    // ⚠️ E É A GRADE, e não um `div` qualquer: dois irmãos dentro de um bloco empilhado
+    // continuariam um debaixo do outro, e o teste passaria a dizer que estão lado a lado.
+    expect(par).toHaveClass('fieldGrid');
+    // O par de cima é o mesmo desenho — é dele que este veio.
+    expect(campoChamado('Status').parentElement).toHaveClass('fieldGrid');
+  });
+
+  // ⚠️ BPM E TOM NÃO SÃO DA FICHA. Eles são da GRAVAÇÃO, e o rodapé do editor já os mostra e os
+  // grava — na mesma coluna do banco. Duas caixas para o mesmo número não eram só repetição:
+  // o rascunho da ficha só recarrega ao trocar de gravação, e escrever no rodapé e depois
+  // tocar em qualquer campo daqui mandava o valor velho por cima do novo.
+  it('não oferece andamento nem tom', () => {
+    montarFicha();
+
+    expect(screen.queryByText('BPM')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tom')).not.toBeInTheDocument();
+    // Os vizinhos de linha continuam lá: o que saiu foi o par, e não a fila inteira.
+    expect(campoChamado('ISRC')).toBeInTheDocument();
+    expect(campoChamado('UPC')).toBeInTheDocument();
+  });
+});
