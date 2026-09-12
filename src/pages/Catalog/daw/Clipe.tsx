@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { FiCopy, FiScissors, FiTrash2 } from 'react-icons/fi';
 
 import { CORES_DAS_PISTAS, NOMES_DAS_CORES } from '@maestra/core/constants/design';
@@ -120,6 +120,41 @@ export const Clipe: FC<{
   const duracao = Number(clipe.duration_seconds) || 0;
   const podeCortar = !fixo && agulha > inicio + 0.05 && agulha < inicio + duracao - 0.05;
 
+  /**
+   * A LARGURA DA BARRA, MEDIDA — porque o número de botões muda.
+   *
+   * A Mix não tem barra; uma gravação que só se pode ver perde o pintar; e amanhã entra outro
+   * botão. Um número escrito à mão aqui ficava errado no primeiro deles, e o erro aparece onde
+   * menos se vê: a barra encostada ao fim de um clipe comprido, meia fora dele.
+   */
+  const barra = useRef<HTMLDivElement>(null);
+  const [larguraDaBarra, setLarguraDaBarra] = useState(0);
+  useLayoutEffect(() => {
+    setLarguraDaBarra(barra.current?.offsetWidth ?? 0);
+  }, [selecionado, noDedo, aoPintar, aoDuplicar]);
+
+  /**
+   * ONDE A BARRA FICA: ao pé da agulha.
+   *
+   * ⚠️ ELA VIVIA NA PONTA ESQUERDA DO CLIPE, e isso funcionava enquanto os clipes cabiam no
+   * ecrã. Num clipe de dois minutos a 150 % — que é onde se corta de verdade — a ponta esquerda
+   * está a milhares de pixels de distância: escolhia-se o clipe, a barra aparecia num sítio que
+   * ninguém estava a ver, e as quatro ações ficavam inalcançáveis sem rolar para trás.
+   *
+   * Ao pé da linha vermelha ela está sempre à vista, porque é a linha que a vista persegue. E é
+   * o sítio com sentido: a tesoura corta NA AGULHA, e a barra passa a estar onde o corte cai.
+   *
+   * ⚠️ E PRESA DENTRO DO CLIPE. Com a agulha antes ou depois dele, a barra encosta à ponta mais
+   * próxima em vez de sair a boiar por cima dos vizinhos — e num clipe mais estreito do que ela
+   * fica no princípio, que é o menos mau dos dois.
+   */
+  const daAgulha = (agulha - inicio) * escala;
+  const larguraDoClipe = Math.max(duracao * escala, 8);
+  const esquerdaDaBarra = Math.max(
+    6,
+    Math.min(daAgulha + 8, larguraDoClipe - larguraDaBarra - 6),
+  );
+
   return (
     <div
       ref={caixa}
@@ -230,17 +265,15 @@ export const Clipe: FC<{
           // em cada botão resolvia um de cada vez e deixava o próximo por resolver — foi
           // exatamente o que aconteceu quando "duplicar" chegou. Aqui, resolve-se a classe.
           onClick={(evento) => evento.stopPropagation()}
+          ref={barra}
           style={{
-            // ⚠️ NO TELEMÓVEL A BARRA VIVE DENTRO DO CLIPE. Por cima dele (que é onde ela fica
-            // no desktop, e onde não tapa a onda) a primeira pista atirava-a para fora do topo
-            // da área que rola: ficava cortada pela régua, ou invisível. Dentro cabe — uma
-            // faixa de 96 px dá 80 de clipe — e nunca sai do ecrã.
-            // ⚠️ SEMPRE DENTRO DO CLIPE, EM BAIXO À ESQUERDA. Por cima dele — que era onde ela
-            // ficava com o rato — a barra da primeira pista saía pelo topo da área que rola e
-            // ficava cortada pela régua. Dentro cabe (uma faixa de 96 dá 80 de clipe) e nunca
-            // sai do ecrã. É onde o app a pôs, e ali ela funciona nos dois.
+            // ⚠️ SEMPRE DENTRO DO CLIPE, EM BAIXO. Por cima dele — que era onde ela ficava com o
+            // rato — a barra da primeira pista saía pelo topo da área que rola e ficava cortada
+            // pela régua. Dentro cabe (uma faixa de 96 dá 80 de clipe) e nunca sai do ecrã.
+            //
+            // O que mudou foi o eixo horizontal: já não é a ponta do clipe, é a agulha.
             position: 'absolute',
-            bottom: 6, left: 6,
+            bottom: 6, left: esquerdaDaBarra,
             display: 'flex', gap: 4,
             background: DS.color.bgPainel,
             border: `1px solid ${DS.color.bordaForte}`,

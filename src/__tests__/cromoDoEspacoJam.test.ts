@@ -547,6 +547,48 @@ describe('cromo do editor do Espaço JAM', () => {
     });
   });
 
+  // ⚠️ A BARRA DO CLIPE SEGUE A AGULHA, NAS DUAS — e não a ponta esquerda do clipe.
+  //
+  // Na ponta ela funcionava enquanto os clipes coubessem no ecrã. Num clipe de dois minutos
+  // aproximado — que é justamente onde se corta de verdade — a ponta esquerda está a milhares de
+  // pixels de distância: escolhia-se o clipe, a barra aparecia num sítio que ninguém estava a
+  // ver, e as quatro ações ficavam inalcançáveis sem rolar para trás.
+  //
+  // Ao pé da linha vermelha ela está sempre à vista, porque é a linha que a vista persegue. E é
+  // o sítio com sentido: a tesoura corta NA AGULHA, e a barra está onde o corte cai.
+  it('a barra do clipe fica ao pé da agulha, presa dentro do clipe', () => {
+    const naWeb = semComentarios(clipe);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    [naWeb, aLinhaDoTempo].forEach((fonte) => {
+      // Sai da agulha, e não de uma ponta fixa.
+      expect(fonte).toMatch(/const esquerdaDaBarra = Math\.max\(/);
+      expect(fonte).toContain('agulha - ');
+      // ⚠️ E PRESA DENTRO DO CLIPE, pelas duas pontas. Sem o `min`, a barra de um clipe curto
+      // com a agulha depois dele ia boiar por cima dos vizinhos; sem o `max`, a de um clipe que
+      // começa antes do zero da vista saía pela esquerda — os dois sem nada se queixar.
+      expect(fonte).toContain('Math.min(');
+      expect(fonte).toContain('larguraDaBarra');
+
+      // ⚠️ E A LARGURA É MEDIDA, não escrita à mão. O número de botões muda — a Mix não tem
+      // barra, quem só vê perde o duplicar e o pintar, e amanhã entra outro. Um número fixo
+      // ficava errado no primeiro deles, e o erro aparece onde menos se vê: a barra encostada ao
+      // fim de um clipe comprido, meia fora dele.
+      expect(fonte).toMatch(/setLarguraDaBarra\(/);
+    });
+
+    // Na web mede-se antes da pintura, para a barra não nascer no sítio errado e saltar.
+    expect(naWeb).toContain('useLayoutEffect(() => {\n    setLarguraDaBarra(');
+    // E no aparelho, pelo `onLayout`, que é como lá se medem as coisas.
+    expect(aLinhaDoTempo).toContain('onLayout={(e) => setLarguraDaBarra(e.nativeEvent.layout.width)}');
+
+    // ⚠️ E AS DUAS TÊM DE USAR A CONTA, e não só de a ter. Este caso deixou passar a mutação que
+    // punha o `left` de volta num número fixo no aparelho: a conta continuava lá em cima, certa
+    // e ignorada, e nada se queixava.
+    expect(aLinhaDoTempo).toContain('{ left: esquerdaDaBarra }');
+    expect(naWeb).toContain('left: esquerdaDaBarra,');
+  });
+
   // ⚠️ A COLUNA DAS FAIXAS TAMBÉM SE DESENHA UMA VEZ — e é o que sobrava do engasgo do play.
   //
   // Ela não depende da agulha, que é a única coisa que o tique muda. Com uma dúzia de faixas são
@@ -830,11 +872,11 @@ describe('cromo do editor do Espaço JAM', () => {
   // foi assim que "duplicar" chegou quebrado a seguir.
   it('a barra de ações do clipe para o clique num sítio só, na web', () => {
     const naWeb = semComentarios(clipe);
-    const daBarra = naWeb.slice(naWeb.indexOf('bottom: 6, left: 6,'));
+    const daBarra = naWeb.slice(naWeb.indexOf('bottom: 6, left: esquerdaDaBarra,'));
     const acoes = daBarra.slice(0, daBarra.indexOf("role='group'"));
 
     // O contentor para-o; nenhum botão da fila precisa de o repetir.
-    const abertura = naWeb.slice(naWeb.indexOf('{selecionado && !fixo && ('), naWeb.indexOf('bottom: 6, left: 6,'));
+    const abertura = naWeb.slice(naWeb.indexOf('{selecionado && !fixo && ('), naWeb.indexOf('bottom: 6, left: esquerdaDaBarra,'));
     expect(abertura).toContain('onClick={(evento) => evento.stopPropagation()}');
     expect(acoes).not.toContain('evento.stopPropagation(); ');
   });
@@ -1229,7 +1271,7 @@ describe('cromo do editor do Espaço JAM', () => {
 
       // ⚠️ SEMPRE DENTRO, EM BAIXO À ESQUERDA. Por cima do clipe, a barra da primeira pista
       // saía pelo topo da área que rola. É onde o app a pôs, e ali serve aos dois.
-      expect(oClipe).toContain('bottom: 6, left: 6,');
+      expect(oClipe).toContain('bottom: 6, left: esquerdaDaBarra,');
       expect(oClipe).not.toContain('top: -38');
       expect(oClipe).toContain('noDedo ? { width: 34, height: 34 }');
 
@@ -1240,7 +1282,7 @@ describe('cromo do editor do Espaço JAM', () => {
       //
       // ⚠️ A FATIA ACABA NA PALETA. As seis bolinhas também são `<button>` e não levam `alvo`:
       // são redondas, de 20 px, e ficam separadas umas das outras — não são as AÇÕES da barra.
-      const daBarra = oClipe.slice(oClipe.indexOf('bottom: 6, left: 6,'));
+      const daBarra = oClipe.slice(oClipe.indexOf('bottom: 6, left: esquerdaDaBarra,'));
       const acoes = daBarra.slice(0, daBarra.indexOf("role='group'"));
       const botoes = acoes.split('<button').slice(1);
       expect(botoes.length).toBeGreaterThanOrEqual(3);

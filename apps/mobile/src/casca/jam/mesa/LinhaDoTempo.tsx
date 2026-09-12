@@ -219,6 +219,27 @@ const Clipe = ({
   // O corte é na AGULHA, e só quando ela está dentro deste clipe: é ela que diz onde cai.
   const podeCortar = agulha > clipe.inicio + 0.05 && agulha < clipe.inicio + duracao - 0.05;
 
+  /**
+   * ONDE A BARRA FICA: ao pé da agulha.
+   *
+   * ⚠️ ELA VIVIA NA PONTA ESQUERDA DO CLIPE, e isso funcionava enquanto os clipes cabiam no
+   * ecrã. Num clipe de dois minutos aproximado — que é onde se corta de verdade — a ponta
+   * esquerda está a milhares de pontos de distância: escolhia-se o clipe, a barra aparecia num
+   * sítio que ninguém estava a ver, e as ações ficavam inalcançáveis sem rolar para trás.
+   *
+   * Ao pé da linha vermelha ela está sempre à vista, porque é a linha que a vista persegue. E é
+   * o sítio com sentido: a tesoura corta NA AGULHA, e a barra passa a estar onde o corte cai.
+   *
+   * ⚠️ E PRESA DENTRO DO CLIPE, encostando à ponta mais próxima quando a agulha está fora dele.
+   * A largura é MEDIDA porque o número de botões muda — a Mix não tem barra, quem só vê perde o
+   * duplicar e o pintar, e amanhã entra outro. Um número à mão ficava errado no primeiro deles.
+   */
+  const [larguraDaBarra, setLarguraDaBarra] = useState(0);
+  const esquerdaDaBarra = Math.max(
+    4,
+    Math.min((agulha - clipe.inicio) * escala + 8, largura - larguraDaBarra - 4),
+  );
+
   return (
     // ⚠️ O TOQUE É UM `Pressable`, e não um `Gesture.Tap`. Dois motivos, e o segundo é o que
     // decide: o `Pressable` dá o retorno de toque e a acessibilidade de graça, e um gesto de
@@ -261,7 +282,10 @@ const Clipe = ({
         </Text>
 
         {escolhido && podeEditar && (
-          <View style={estilos.acoesDoClipe}>
+          <View
+            style={[estilos.acoesDoClipe, { left: esquerdaDaBarra }]}
+            onLayout={(e) => setLarguraDaBarra(e.nativeEvent.layout.width)}
+          >
             <Pressable
               onPress={aoCortar}
               disabled={!podeCortar}
@@ -983,8 +1007,9 @@ const estilos = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
   },
   // A barra fica DENTRO do clipe: por cima, a da primeira faixa saía pelo topo da área visível.
+  // O `left` vem de fora — ela segue a agulha, e não a ponta do clipe.
   acoesDoClipe: {
-    position: 'absolute', bottom: 4, left: 4, flexDirection: 'row', gap: 4,
+    position: 'absolute', bottom: 4, flexDirection: 'row', gap: 4,
   },
   acaoDoClipe: {
     width: 26, height: 26, borderRadius: 6,
