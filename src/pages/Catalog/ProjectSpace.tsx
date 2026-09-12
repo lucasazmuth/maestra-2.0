@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import {
   ID_DA_MIX, NOME_DA_MIX, montagemDaVersao, nomeDaPistaNova, pistasDaGravacao,
-  proximaPosicaoDaPista,
+  proximaCorDaPista, proximaPosicaoDaPista,
 } from '@maestra/core/audio/pistasDaVersao';
 import {
   HISTORICO_VAZIO, conferirOPasso, desfazer as desfazerPasso, podeDesfazer, podeRefazer,
@@ -1069,7 +1069,7 @@ const ProjectSpace: FC = () => {
             position: proximaPosicaoDaPista(pistas.map((p) => p.position)),
             gain: 1,
             muted: false,
-            color_index: pistas.length % 6,
+            color_index: proximaCorDaPista(pistas.map((p) => p.color_index)),
           });
           anotar({ tipo: 'acrescentarPistas', pistaIds: [nascida.id] });
           await refresh();

@@ -61,6 +61,33 @@ export const pistaAlvoDoArrasto = (
  * existe, e a ordem da coluna passa a ser decidida pelo desempate da data de criação: duas
  * telas, dois momentos, duas ordens possíveis para a mesma montagem.
  */
+/**
+ * Quantas cores a paleta das faixas tem. É o tamanho de `CORES_DAS_PISTAS`, no design.
+ *
+ * Está aqui como número porque este módulo não desenha nada e não deve importar a paleta — o
+ * teste é que amarra os dois.
+ */
+export const CORES_DA_PALETA = 6;
+
+/**
+ * A cor da próxima faixa: a primeira da paleta que ninguém está a usar.
+ *
+ * ⚠️ ERA `pistas.length % 6`, e isso repetia. Basta apagar uma faixa do meio para o contador
+ * voltar a um número já ocupado — foi assim que duas faixas da mesma gravação ficaram as duas
+ * roxas. Contar quantas há não diz nada sobre QUAIS cores estão em uso.
+ *
+ * Esgotadas as seis, volta a repetir — mas pela contagem, para as repetições ficarem espalhadas
+ * em vez de caírem todas na primeira cor.
+ */
+export const proximaCorDaPista = (usadas: (number | null | undefined)[]): number => {
+  const ocupadas = new Set(
+    usadas.filter((c): c is number => typeof c === 'number')
+      .map((c) => ((c % CORES_DA_PALETA) + CORES_DA_PALETA) % CORES_DA_PALETA),
+  );
+  for (let i = 0; i < CORES_DA_PALETA; i += 1) if (!ocupadas.has(i)) return i;
+  return usadas.length % CORES_DA_PALETA;
+};
+
 export const proximaPosicaoDaPista = (posicoes: number[]): number =>
   posicoes.reduce((maior, p) => Math.max(maior, Number(p) || 0), -1) + 1;
 
@@ -115,6 +142,9 @@ export const montagemDaVersao = (versao?: CatalogVersion | null): Pista[] => {
       ganhoInicial: faixa.gain ?? 1,
       mudaInicial: faixa.muted ?? false,
       panInicial: Number(faixa.pan) || 0,
+      // A cor guardada. `?? undefined` e não `?? indice`: quem desenha é que sabe qual é a
+      // posição dela na lista, e é lá que o recurso da falta faz sentido.
+      cor: faixa.color_index ?? undefined,
       clipes: (faixa.clips ?? [])
         .map((clipe): Clipe | null => {
           const arquivo = porId.get(clipe.file_id);

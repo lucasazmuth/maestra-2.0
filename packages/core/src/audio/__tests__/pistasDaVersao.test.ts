@@ -1,7 +1,6 @@
 import type { CatalogVersion } from '../../interfaces/maestra';
 import {
-  DURACAO_DESCONHECIDA, ID_DA_MIX, NOME_DA_MIX, ehPistaDaMix, montagemDaVersao,
-  nomeDaPistaNova, pistaAlvoDoArrasto, pistasDaGravacao, proximaPosicaoDaPista,
+  DURACAO_DESCONHECIDA, ID_DA_MIX, NOME_DA_MIX, ehPistaDaMix, montagemDaVersao, nomeDaPistaNova, pistaAlvoDoArrasto, pistasDaGravacao, proximaCorDaPista, proximaPosicaoDaPista,
 } from '../pistasDaVersao';
 
 // A ponte entre o banco e a mesa: três tabelas de um lado (ficheiros, pistas, clipes), uma
@@ -242,5 +241,69 @@ describe('ehPistaDaMix', () => {
   it('reconhece só a pista montada na hora', () => {
     expect(ehPistaDaMix(ID_DA_MIX)).toBe(true);
     expect(ehPistaDaMix('t1')).toBe(false);
+  });
+});
+
+// ⚠️ A COR DA FAIXA É UM FACTO GUARDADO, e não uma conta da tela.
+//
+// Cada superfície derivava-a da POSIÇÃO na lista, e a mesma faixa saía roxa no computador e
+// amarela no telemóvel — a mesma montagem lida como dois produtos. Pior: a cor mudava sozinha ao
+// apagar outra faixa, porque as de baixo subiam um lugar.
+describe('a cor da faixa na montagem', () => {
+  const comCor = (cor: number | null) => ({
+    id: 't1', name: 'Voz', position: 0, gain: 1, muted: false, pan: 0, color_index: cor,
+    clips: [{ id: 'c1', file_id: 'f1', start_seconds: 0, offset_seconds: 0, duration_seconds: 5 }],
+  });
+  const gravacao = (faixa: unknown) => ({
+    id: 'v1', version_number: 1, tracks: [faixa],
+    files: [{ id: 'f1', name: 'voz.wav', file_url: 'u', kind: 'stem' }],
+  });
+
+  it('viaja com a montagem, para as duas telas lerem a mesma', () => {
+    expect(montagemDaVersao(gravacao(comCor(4)) as never)[0].cor).toBe(4);
+  });
+
+  // Uma montagem antiga pode não ter cor guardada; aí quem desenha usa a posição, e é por isso
+  // que a falta vem como `undefined` e não como um número inventado aqui.
+  it('sem cor guardada, não inventa uma', () => {
+    expect(montagemDaVersao(gravacao(comCor(null)) as never)[0].cor).toBeUndefined();
+  });
+
+  // ⚠️ E O ZERO É UMA COR. `?? undefined` sobre um `0` guardado devolveria `0`; um `||` teria
+  // devolvido `undefined` e pintado a faixa com a posição dela.
+  it('a cor zero é uma cor, e não a ausência de uma', () => {
+    expect(montagemDaVersao(gravacao(comCor(0)) as never)[0].cor).toBe(0);
+  });
+});
+
+// ⚠️ ERA `pistas.length % 6`, E ISSO REPETIA. Contar quantas faixas há não diz nada sobre QUAIS
+// cores estão em uso: basta apagar uma do meio para o contador voltar a um número ocupado. Foi
+// assim que duas faixas da mesma gravação ficaram as duas roxas.
+describe('proximaCorDaPista', () => {
+  it('escolhe a primeira cor que ninguém está a usar', () => {
+    expect(proximaCorDaPista([0, 1])).toBe(2);
+    expect(proximaCorDaPista([])).toBe(0);
+  });
+
+  // O caso que o contador errava: um buraco no meio volta a ser preenchido.
+  it('preenche o buraco de uma faixa apagada, em vez de repetir', () => {
+    expect(proximaCorDaPista([0, 2, 3])).toBe(1);
+  });
+
+  it('atravessa faixas antigas sem cor guardada', () => {
+    expect(proximaCorDaPista([0, null, undefined, 1])).toBe(2);
+  });
+
+  // Esgotadas as seis, repete — mas pela contagem, para as repetições ficarem espalhadas em vez
+  // de caírem todas na primeira cor.
+  it('com a paleta cheia, reparte as repetições', () => {
+    expect(proximaCorDaPista([0, 1, 2, 3, 4, 5])).toBe(0);
+    expect(proximaCorDaPista([0, 1, 2, 3, 4, 5, 0])).toBe(1);
+  });
+
+  // Um índice fora da paleta é o mesmo lugar dela: sem isto, um `7` guardado deixava a cor 1
+  // livre aos olhos desta conta e duas faixas ficavam iguais.
+  it('um índice além da paleta conta pela cor que ele pinta', () => {
+    expect(proximaCorDaPista([0, 7])).toBe(2);
   });
 });

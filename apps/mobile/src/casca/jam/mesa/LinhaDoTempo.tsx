@@ -389,7 +389,7 @@ export const LinhaDoTempo = ({
                 key={pista.id}
                 style={[
                   estilos.cabecalhoDaFaixa,
-                  { borderLeftColor: calada ? COR_EDITOR.estrela : corDaPista(i) },
+                  { borderLeftColor: calada ? COR_EDITOR.estrela : corDaPista(pista.cor ?? i) },
                   calada && estilos.faixaCalada,
                 ]}
               >
@@ -539,7 +539,11 @@ export const LinhaDoTempo = ({
                 {pista.clipes.map((clipe, n) => {
                   const dura = duracaoDoClipe(clipe.id) || clipe.duracao;
                   const larguraDoClipe = Math.max(dura * escala, 3);
-                  const cor = corDaPista(i);
+                  // ⚠️ A COR É A GUARDADA, e não a posição na lista. Derivada da posição, a
+                  // mesma faixa saía roxa no computador e amarela no telemóvel — e mudava
+                  // sozinha ao apagar outra. O recurso da falta é a posição, para as montagens
+                  // antigas que nasceram sem cor.
+                  const cor = corDaPista(pista.cor ?? i);
                   const meu = escolhido === clipe.id;
                   return (
                     <Clipe

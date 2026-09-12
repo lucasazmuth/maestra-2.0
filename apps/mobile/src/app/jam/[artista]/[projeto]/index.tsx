@@ -15,7 +15,7 @@ import {
   type Historico, type PassoDaMontagem,
 } from '@maestra/core/audio/historico';
 import {
-  ehPistaDaMix, montagemDaVersao, nomeDaPistaNova, proximaPosicaoDaPista,
+  ehPistaDaMix, montagemDaVersao, nomeDaPistaNova, proximaCorDaPista, proximaPosicaoDaPista,
 } from '@maestra/core/audio/pistasDaVersao';
 import { assinaturaDaPista, assinaturaDoClipe, iniciais } from '@maestra/core/audio/aoVivo';
 import { useJamAoVivo } from '@maestra/core/hooks/useJamAoVivo';
@@ -924,7 +924,7 @@ export default function EspacoJam() {
         position: proximaPosicaoDaPista((aberta.tracks ?? []).map((t) => t.position)),
         gain: 1,
         muted: false,
-        color_index: pistas.length % 6,
+        color_index: proximaCorDaPista((aberta.tracks ?? []).map((p) => p.color_index)),
       });
       anotar({ tipo: 'acrescentarPistas', pistaIds: [nascida.id] });
       await buscar();

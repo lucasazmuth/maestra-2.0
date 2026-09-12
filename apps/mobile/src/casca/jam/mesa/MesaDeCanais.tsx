@@ -171,7 +171,10 @@ export const MesaDeCanais = ({
     >
       {pistas.map((pista, indice) => {
         const daMesa = estado.pistas.find((p) => p.id === pista.id);
-        const cor = corDaPista(indice);
+        // ⚠️ A COR É A GUARDADA da faixa, e não a posição dela nesta lista: o canal e a
+        // linha do tempo mostram a MESMA faixa, e a web também — as três têm de pintar
+        // igual. Ver `Pista.cor`, no núcleo.
+        const cor = corDaPista(pista.cor ?? indice);
         const calada = Boolean(daMesa?.muda);
         const ganho = daMesa?.ganho ?? 1;
         const pan = daMesa?.pan ?? 0;

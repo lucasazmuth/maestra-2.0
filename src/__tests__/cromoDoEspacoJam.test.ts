@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
+import { CORES_DA_PALETA } from '@maestra/core/audio/pistasDaVersao';
 
 import {
   ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE, CORES_DAS_PISTAS,
@@ -390,6 +391,46 @@ describe('cromo do editor do Espaço JAM', () => {
       // Desfazer um "apagar" tira-o da lista: ele já não é resíduo meu.
       expect(fonte).toContain('(voltando ? desmarquei : marquei)(passo.clipeId);');
     });
+  });
+
+  // ⚠️ A COR DA FAIXA É A MESMA NOS DOIS APARELHOS, e isso só se consegue lendo o que está
+  // GUARDADO. Cada superfície derivava-a da posição na lista, e a mesma faixa saía roxa no
+  // computador e amarela no telemóvel — a mesma montagem lida como dois produtos. E mudava
+  // sozinha ao apagar outra faixa, porque as de baixo subiam um lugar.
+  it('a cor da faixa vem do banco, e não da posição na lista', () => {
+    const naWeb = semComentarios(editor);
+    const aLinhaDoTempo = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'LinhaDoTempo.tsx'),
+      'utf8',
+    ));
+    const aMesa = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'MesaDeCanais.tsx'),
+      'utf8',
+    ));
+
+    // A web lê a coluna; o aplicativo lê a `cor` que a montagem carrega — o mesmo valor.
+    expect(naWeb).toContain('corDaPista(faixa.color_index ?? indice)');
+    expect(aLinhaDoTempo).toContain('corDaPista(pista.cor ?? i)');
+    expect(aMesa).toContain('corDaPista(pista.cor ?? indice)');
+
+    // ⚠️ E NENHUMA DELAS PINTA SÓ PELA POSIÇÃO. É essa a forma que causou o defeito, e é ela
+    // que não pode voltar — em nenhum dos três sítios.
+    [naWeb, aLinhaDoTempo, aMesa].forEach((fonte) => {
+      expect(fonte).not.toMatch(/corDaPista\((?:i|indice)\)/);
+    });
+  });
+
+  // ⚠️ E A PALETA TEM O TAMANHO QUE O NÚCLEO DIZ TER. `proximaCorDaPista` escolhe a primeira
+  // cor livre contando até `CORES_DA_PALETA`; se a paleta crescer e esse número não, as cores
+  // novas nunca seriam escolhidas — e se encolher, a conta apontaria para cores que não existem.
+  it('a conta da próxima cor conhece o tamanho da paleta', () => {
+    const design = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'packages', 'core', 'src', 'constants', 'design.ts'), 'utf8',
+    );
+    const paleta = design.slice(design.indexOf('CORES_DAS_PISTAS'));
+    const quantas = (paleta.slice(0, paleta.indexOf(']')).match(/'#[0-9a-f]{6}'/gi) ?? []).length;
+
+    expect(quantas).toBe(CORES_DA_PALETA);
   });
 
   // ⚠️ A AGULHA COMEÇA NA RÉGUA, nas duas telas — e é a BOLINHA que decide isto.

@@ -70,6 +70,15 @@ export interface Pista {
   mudaInicial?: boolean;
   /** −1 esquerda, 0 centro, 1 direita. */
   panInicial?: number;
+  /**
+   * A cor da faixa, como ÍNDICE guardado no banco (`color_index`).
+   *
+   * ⚠️ ELA VIAJA COM A MONTAGEM, e não se calcula na tela. Quando cada superfície a derivava da
+   * posição na lista, a mesma faixa saía roxa no computador e amarela no telemóvel — e a ordem
+   * da lista muda com qualquer coisa (uma faixa apagada, duas com a mesma `position`). A cor é
+   * um facto guardado da faixa, como o nome; quem desenha só a lê.
+   */
+  cor?: number;
 }
 
 export type CargaDaPista = 'na-fila' | 'carregando' | 'pronta' | 'erro';

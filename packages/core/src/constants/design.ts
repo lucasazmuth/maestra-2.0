@@ -893,18 +893,27 @@ export const COR_ENTRADA = {
  * compara-o linha a linha com o SCSS. Estas são usadas em linha nas duas superfícies, a partir
  * daqui — uma fonte só, sem cópia para divergir.
  */
+/**
+ * As cores das faixas do editor.
+ *
+ * ⚠️ SÃO AS DA WEB, À LETRA — `src/pages/Catalog/daw/tokens.ts`, e o `peleDoEditor` prende as
+ * duas listas. Aqui viveu durante um tempo uma paleta PRÓPRIA, de oito cores mais apagadas, e o
+ * resultado era a mesma faixa roxa no computador e amarela no telemóvel: quem punha os dois
+ * lado a lado via duas montagens diferentes da mesma música.
+ *
+ * Seis, e não oito: é o que a folha do editor define, e o `proximaCorDaPista` conta até esse
+ * número para escolher a próxima livre.
+ */
 export const CORES_DAS_PISTAS = [
-  '#2f60f6', // azul da marca
-  '#e0ad3c', // âmbar
-  '#5f9ea0', // verde-água
-  '#c4568f', // rosa
-  '#6f5fd8', // roxo
-  '#4f9d5b', // verde
-  '#d1743a', // laranja
-  '#5588c7', // azul claro
+  '#3b82f6', // azul
+  '#a855f7', // roxo
+  '#22c55e', // verde
+  '#f59e0b', // âmbar
+  '#ec4899', // rosa
+  '#14b8a6', // turquesa
 ] as const;
 
-/** A cor da pista na posição N. Dá a volta: a nona pista repete a primeira. */
+/** A cor da pista na posição N. Dá a volta: a sétima pista repete a primeira. */
 export const corDaPista = (indice: number): string =>
   CORES_DAS_PISTAS[((indice % CORES_DAS_PISTAS.length) + CORES_DAS_PISTAS.length)
     % CORES_DAS_PISTAS.length];

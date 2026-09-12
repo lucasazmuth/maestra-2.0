@@ -1,6 +1,8 @@
-import { AZUL_DO_EDITOR, COR_EDITOR, VERMELHO_DO_EDITOR } from '@maestra/core/constants/design';
+import {
+  AZUL_DO_EDITOR, CORES_DAS_PISTAS as CORES_NO_NUCLEO, COR_EDITOR, VERMELHO_DO_EDITOR,
+} from '@maestra/core/constants/design';
 
-import { DS } from '../daw/tokens';
+import { CORES_DAS_PISTAS, DS } from '../daw/tokens';
 
 // O CROMO DO EDITOR: as duas superfícies pintam a mesma tela, e este teste é o que as prende.
 //
@@ -47,5 +49,15 @@ describe('a pele do editor é a mesma na web e no app', () => {
 
   it('o fundo do editor é chapado — um gradiente num quase-preto é banda, não profundidade', () => {
     expect(COR_EDITOR.fundoDe).toBe(COR_EDITOR.fundoAte);
+  });
+
+  // ⚠️ AS CORES DAS FAIXAS TAMBÉM, e estas eram as que faltavam: o núcleo tinha uma paleta
+  // PRÓPRIA, de oito cores mais apagadas, e a mesma faixa saía roxa no computador e amarela no
+  // telemóvel. Quem punha os dois lado a lado via duas montagens diferentes da mesma música.
+  //
+  // Este é exatamente o defeito que o comentário do topo deste ficheiro descreve — e que ele
+  // não apanhava, porque a paleta das faixas nunca tinha sido presa.
+  it('as cores das faixas são a mesma paleta, na mesma ordem', () => {
+    expect([...CORES_NO_NUCLEO]).toEqual([...CORES_DAS_PISTAS]);
   });
 });
