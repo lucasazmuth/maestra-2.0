@@ -242,3 +242,44 @@ describe('as telas de termos, privacidade e suporte', () => {
     expect(suporte).toContain('Copiado para a área de transferência');
   });
 });
+
+// O APP NÃO MANDA NINGUÉM À WEB PELO QUE ELE JÁ TEM.
+//
+// ⚠️ ESTA REGRA EXISTE POR UM ERRO MEU, E É O ERRO TÍPICO DESTE TIPO DE MUDANÇA. Converti os
+// termos, a política e o suporte em telas do app, liguei as três linhas da conta e os dois links
+// do consentimento — e ESQUECI o "Suporte" do menu do sistema, os dois links do cadastro e os
+// dois do checkout do desbloqueio. Cinco pontos, todos a abrir o navegador para uma página que o
+// app já desenhava. Quem tocasse saía do app sem razão nenhuma, e no cadastro saía no meio de um
+// formulário por preencher.
+//
+// A conversão foi feita ponto a ponto, e por isso falhou ponto a ponto. Esta regra não é uma
+// lista de sítios: ela LÊ as rotas que o app tem e proíbe abrir o navegador em qualquer uma
+// delas. A próxima tela nativa fica coberta sem ninguém se lembrar de a acrescentar aqui.
+describe('o navegador não é usado para o que o app tem', () => {
+  /** As rotas de topo do Expo Router — os ficheiros de `src/app`. */
+  const rotasNativas = fs.readdirSync(path.join(raiz, 'app'), { withFileTypes: true })
+    .filter((e) => (e.isDirectory() ? !e.name.startsWith('[') : /\.tsx$/.test(e.name)))
+    .map((e) => e.name.replace(/\.tsx$/, ''))
+    // `_layout` não é destino, e `index` é a raiz — ninguém abre `${SITE}/index`.
+    .filter((n) => n !== '_layout' && n !== 'index');
+
+  it('há rotas para conferir, e as novas estão entre elas', () => {
+    expect(rotasNativas).toEqual(expect.arrayContaining(['suporte', 'legal', 'planos', 'conta']));
+  });
+
+  it.each(arquivos.map((a) => [path.relative(raiz, a), a]))(
+    '%s não abre no navegador uma tela que o app tem',
+    (_nome, caminho) => {
+      const fonte = fs.readFileSync(caminho, 'utf8');
+      const aberturas = fonte.match(/Linking\.openURL\([^)]*\)/g) ?? [];
+
+      // Só o que é ENDEREÇO ESCRITO conta. `${SITE}${destino}`, com o caminho numa variável, é o
+      // encaminhamento genérico da lista de perfis — ele existe justamente para as rotas que o
+      // app NÃO tem, e adivinhar o valor dele daqui seria adivinhar.
+      const paraCasa = aberturas.filter((a) => rotasNativas.some(
+        (rota) => new RegExp(`/${rota.replace(/[[\]]/g, '\\$&')}(/|\`|'|"|\\?)`).test(a),
+      ));
+      expect(paraCasa).toEqual([]);
+    },
+  );
+});

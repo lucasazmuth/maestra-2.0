@@ -1,7 +1,7 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView,
+  ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,8 +21,6 @@ import { MaestraMarca } from '@/icones';
 import { appleDisponivel, entrarComApple, entrarComGoogle } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 
-/** Os documentos legais vivem na web. */
-const SITE = 'https://www.maestramanager.com';
 
 // O CADASTRO, DENTRO DO APP.
 //
@@ -307,14 +305,14 @@ export default function Cadastro() {
                         Li e aceito os{' '}
                         <Text
                           style={estilos.link}
-                          onPress={() => { void Linking.openURL(`${SITE}/legal/termos`); }}
+                          onPress={() => router.push('/legal/termos')}
                         >
                           Termos de uso
                         </Text>
                         {' '}e a{' '}
                         <Text
                           style={estilos.link}
-                          onPress={() => { void Linking.openURL(`${SITE}/legal/privacidade`); }}
+                          onPress={() => router.push('/legal/privacidade')}
                         >
                           Política de privacidade
                         </Text>.
