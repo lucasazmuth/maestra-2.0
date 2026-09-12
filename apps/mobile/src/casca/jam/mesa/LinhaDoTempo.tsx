@@ -419,15 +419,10 @@ export const LinhaDoTempo = ({
             const calada = daMesa?.muda ?? false;
             const fixa = ehPistaDaMix(pista.id);
             const mexivel = !!podeEditar && !fixa;
-            const cor = corDaPista(pista.cor ?? i);
             return (
               <View
                 key={pista.id}
-                style={[
-                  estilos.cabecalhoDaFaixa,
-                  { borderLeftColor: calada ? COR_EDITOR.estrela : cor },
-                  calada && estilos.faixaCalada,
-                ]}
+                style={[estilos.cabecalhoDaFaixa, calada && estilos.faixaCalada]}
               >
                 <View style={estilos.linhaDoNome}>
                   <TextInput
@@ -703,12 +698,16 @@ const estilos = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
   },
   rotuloDaColuna: { fontSize: 9, fontWeight: '700', letterSpacing: 1, color: COR_EDITOR.rotulo },
-  // A cor da pista é a BORDA ESQUERDA do cabeçalho, como na web — e não uma fita solta.
+  // ⚠️ O CABEÇALHO NÃO TEM COR, e é assim nas duas telas. A fita de 3 px na borda esquerda
+  // saiu por pedido do dono do produto: a cor existe para distinguir uma faixa da outra na
+  // MONTAGEM — no clipe, que é o objeto que se olha, se arrasta e se corta. Repetida numa fita
+  // encostada à borda do ecrã, ela competia com a coisa que devia marcar.
+  //
+  // A faixa calada continua a dizer-se pela opacidade e pelo M carregado.
   cabecalhoDaFaixa: {
     height: ALTURA_DA_FAIXA, justifyContent: 'center', gap: 8,
     paddingVertical: 8, paddingHorizontal: 10,
     borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
-    borderLeftWidth: 3,
     backgroundColor: COR_EDITOR.cabecaDaVersao,
   },
   faixaCalada: { opacity: 0.6 },

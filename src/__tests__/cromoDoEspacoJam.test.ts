@@ -482,6 +482,36 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(aLinhaDoTempo).not.toContain('Cor de ${pista.nome}');
   });
 
+  // ⚠️ A COR MORA NA MONTAGEM, e não na coluna das faixas.
+  //
+  // O cabeçalho tinha uma fita de 3 px da cor da pista na borda esquerda, nas duas telas. Saiu
+  // por pedido do dono do produto, e o argumento é de leitura: a cor existe para distinguir uma
+  // faixa da outra no CLIPE — o objeto que se olha, se arrasta e se corta. Repetida numa fita
+  // encostada à borda do ecrã, ela competia com a coisa que devia marcar, e três fitas puxavam
+  // o olho para uma coluna onde não há nada para ver.
+  //
+  // ⚠️ E A FITA VOLTA FÁCIL. É uma linha de estilo em cada tela, e repô-la não parte nada: as
+  // cores continuariam certas, a paleta continuaria a gravar, e a única coisa errada seria o
+  // sítio para onde o olho vai. É exatamente o tipo de mudança que se desfaz sem ninguém notar.
+  it('o cabeçalho da faixa não é pintado com a cor dela, em nenhuma das duas', () => {
+    const cabecalhoNaWeb = semComentarios(editor);
+    const daPista = cabecalhoNaWeb.slice(cabecalhoNaWeb.indexOf('const cabecalhoDaPista ='));
+    const corpo = daPista.slice(0, daPista.indexOf('const cabecalhoDaMesa') + 1 || 4000);
+    expect(corpo).not.toMatch(/borderLeft:.*cor/);
+
+    // No aparelho o estilo é de uma folha só, e a borda nem largura tem.
+    const estilo = daLinhaDoTempo.slice(daLinhaDoTempo.indexOf('cabecalhoDaFaixa: {'));
+    expect(estilo.slice(0, estilo.indexOf('},'))).not.toContain('borderLeftWidth');
+    expect(semComentarios(daLinhaDoTempo)).not.toContain('borderLeftColor: calada');
+
+    // ⚠️ MAS A FAIXA CALADA CONTINUA A DIZER-SE. Era a fita que ficava cinzenta; sem ela, o que
+    // resta é a coluna a esmorecer. Sem esta linha, apagar a fita apagava também o único sinal
+    // de que aquela faixa não vai soar — e o M carregado, sozinho, é pequeno de mais.
+    expect(corpo).toContain('opacity: calada ? 0.6 : 1');
+    expect(daLinhaDoTempo).toContain('calada && estilos.faixaCalada');
+    expect(daLinhaDoTempo).toContain('faixaCalada: { opacity: 0.6 }');
+  });
+
   // ⚠️ A COR GRAVA NA HORA, nas duas — e é a única parte da pista que o faz.
   //
   // As outras chegam de uma RÉGUA a ser arrastada (o fader, o pan) e por isso esperam: cada

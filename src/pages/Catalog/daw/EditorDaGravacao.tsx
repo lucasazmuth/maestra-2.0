@@ -490,8 +490,15 @@ export const EditorDaGravacao: FC<{
 
   // ─── As peças ─────────────────────────────────────────────────────────────
 
+  // ⚠️ O CABEÇALHO NÃO TEM COR. A fita de 3 px na borda esquerda saiu por pedido do dono do
+  // produto, e o argumento é de leitura: a cor existe para distinguir uma faixa da outra na
+  // MONTAGEM — no clipe, que é o objeto que se olha, se arrasta e se corta. Repetida numa fita
+  // encostada à borda do ecrã, ela competia com a coisa que devia marcar; três fitas coloridas
+  // à esquerda puxavam o olho para uma coluna onde não há nada para ver.
+  //
+  // A faixa calada continua a dizer-se: a coluna inteira esmorece (`opacity`), e o M fica
+  // carregado. Era isso que a fita cinzenta fazia, e não se perdeu nada com ela.
   const cabecalhoDaPista = (faixa: CatalogTrack, indice: number) => {
-    const cor = corDaPista(faixa.color_index ?? indice);
     const daMesa = estado.pistas.find((p) => p.id === faixa.id);
     const calada = Boolean(daMesa?.muda);
     const fixa = faixa.id === pistaFixaId;
@@ -518,7 +525,6 @@ export const EditorDaGravacao: FC<{
           display: 'flex', flexDirection: 'column', gap: 8,
           background: DS.color.bgPista,
           borderBottom: `1px solid ${DS.color.borda}`,
-          borderLeft: `3px solid ${calada ? DS.color.textoInerte : cor}`,
           opacity: calada ? 0.6 : 1,
         }}
       >
