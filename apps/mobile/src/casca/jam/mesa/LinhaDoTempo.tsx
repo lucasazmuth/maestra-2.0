@@ -21,7 +21,7 @@ import {
   corDaPista,
 } from '@maestra/core/constants/design';
 
-import { IconeDeEnviar } from './icones';
+import { IconeDeAudio } from './icones';
 
 // A LINHA DO TEMPO, no aparelho.
 //
@@ -737,7 +737,7 @@ export const LinhaDoTempo = ({
                       accessibilityRole="button"
                       accessibilityLabel={`Enviar um áudio para ${pista.nome}`}
                     >
-                      <IconeDeEnviar tamanho={13} cor={COR_EDITOR.apoio} />
+                      <IconeDeAudio tamanho={13} cor={COR_EDITOR.apoio} />
                     </Pressable>
                   )}
                 </View>

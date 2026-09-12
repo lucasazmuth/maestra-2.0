@@ -49,7 +49,7 @@ export const IconeDoMixer = ({ tamanho = 15, cor }: { tamanho?: number; cor: str
  * ⚠️ O CÍRCULO DO MEIO VINHA ESPELHADO por um `matrix(1 0 0 -1 16.9766 23.1748)`. Num círculo,
  * espelhar é o mesmo que o pousar noutro sítio — e escrito assim as duas telas dizem a mesma
  * coisa, sem nenhuma depender de como o seu motor lê uma matriz. É a mesma correção que o
- * `IconeDeEnviar` levou, pelo mesmo motivo.
+ * `IconeDeAudio` levou, pelo mesmo motivo.
  */
 export const IconeDaFicha = ({ tamanho = 15, cor }: { tamanho?: number; cor: string }) => (
   <Svg width={tamanho} height={tamanho} viewBox="5.3 4.8 30.1 30.1" fill="none">
@@ -79,7 +79,12 @@ export const IconeDeExportar = ({ tamanho = 15, cor }: { tamanho?: number; cor: 
 );
 
 /**
- * O ícone de pôr um áudio na pista — desenho do dono do produto (`Group 33.svg`).
+ * UM FICHEIRO DE MÚSICA — desenho do dono do produto (`Group 33.svg`).
+ *
+ * ⚠️ ELE CHAMAVA-SE `IconeDeEnviar`, pela AÇÃO do único botão que o usava. Passou a servir
+ * também a lista de stems do Exportar, onde não se envia nada: ali ele é o que a linha É, e não
+ * o que o botão faz. Um nome de ação num desenho que aparece em dois gestos diferentes obriga a
+ * ler o código para saber o que está na tela; o nome do desenho não.
  *
  * ⚠️ ERA UMA SETA PARA BAIXO DENTRO DE UM CÍRCULO, e ao lado do M e do S lia-se "descarregar":
  * o gesto contrário do que o botão faz. Um ficheiro de música diz o que a pista vai RECEBER.
@@ -93,7 +98,7 @@ export const IconeDeExportar = ({ tamanho = 15, cor }: { tamanho?: number; cor: 
  *
  * O mesmo da web.
  */
-export const IconeDeEnviar = ({ tamanho = 15, cor }: { tamanho?: number; cor: string }) => (
+export const IconeDeAudio = ({ tamanho = 15, cor }: { tamanho?: number; cor: string }) => (
   <Svg width={tamanho} height={tamanho} viewBox="-1.5 0 25 25" fill="none">
     <Rect
       x={1} y={3.75} width={20} height={20} rx={3}

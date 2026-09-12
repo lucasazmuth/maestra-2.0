@@ -25,7 +25,7 @@ import { rotuloDaGuia } from '@maestra/core/audio/exportar';
 import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
 import { iniciais, type Presente } from '@maestra/core/audio/aoVivo';
 import {
-  IconeDaFicha, IconeDaTimeline, IconeDeEnviar, IconeDeExportar, IconeDoMixer,
+  IconeDaFicha, IconeDaTimeline, IconeDeAudio, IconeDeExportar, IconeDoMixer,
 } from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
@@ -889,7 +889,7 @@ export const EditorDaGravacao: FC<{
               aria-label={`Enviar um áudio para ${faixa.name}`}
               style={{ ...botaozinho(false), ...repartido, color: DS.color.textoApoio }}
             >
-              <IconeDeEnviar tamanho={14} />
+              <IconeDeAudio tamanho={14} />
             </button>
           )}
         </div>

@@ -1,6 +1,8 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 
+import { IconeDeAudio } from './icones';
+
 import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
 
 // EXPORTAR: tirar da tela o que está montado, para levar a outro lugar.
@@ -73,7 +75,10 @@ export const TelaDeExportar = ({
           <Text style={estilos.vazio}>Nenhuma pista para exportar ainda.</Text>
         ) : pistas.map((pista, i) => (
           <View key={pista.id} style={[estilos.linha, i > 0 && estilos.linhaSeguinte]}>
-            <Feather name="file-text" size={14} color={COR_EDITOR.rotulo} />
+            {/* ⚠️ UM FICHEIRO DE MÚSICA, e não a folha de texto do Feather. Cada linha desta
+                lista É uma pista de áudio que vai dentro do ZIP; uma folha com linhas escritas
+                dizia "documento", que é a única coisa que estes ficheiros não são. */}
+            <IconeDeAudio tamanho={14} cor={COR_EDITOR.rotulo} />
             <Text style={estilos.nome} numberOfLines={1}>{pista.nome}</Text>
             <Text style={estilos.extensao}>.wav</Text>
           </View>

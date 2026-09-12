@@ -347,6 +347,21 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(oExportar.match(/<IconeDeBaixar \/>/g)).toHaveLength(2);
     expect(oExportar).not.toContain('FiDownload');
 
+    // ⚠️ E A LISTA DE STEMS MOSTRA UM FICHEIRO DE MÚSICA, nas duas telas. A folha de texto do
+    // Feather dizia "documento" — a única coisa que estes ficheiros não são. Aqui as duas telas
+    // fazem o MESMO gesto (listar o que vai no ZIP), ao contrário dos botões de levar o
+    // ficheiro: lá a web baixa e o aparelho partilha, e por isso só a web mudou de ícone.
+    expect(oExportar).toContain('<IconeDeAudio tamanho={14} />');
+    expect(oExportar).not.toContain('FiFileText');
+
+    const oExportarDoApp = semComentarios(fs.readFileSync(
+      path.join(
+        __dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'TelaDeExportar.tsx',
+      ), 'utf8',
+    ));
+    expect(oExportarDoApp).toContain('<IconeDeAudio tamanho={14} cor={COR_EDITOR.rotulo} />');
+    expect(oExportarDoApp).not.toContain('name="file-text"');
+
     const oApp = semComentarios(app);
 
     [espaco, oApp].forEach((fonte) => {
@@ -1592,7 +1607,7 @@ describe('cromo do editor do Espaço JAM', () => {
     const corpo = semComentarios(editor);
 
     expect(corpo).toContain('escolherPara(faixa.id)');
-    expect(corpo).toContain('IconeDeEnviar');
+    expect(corpo).toContain('IconeDeAudio');
     // Na fila do M e do S, que é onde a mão já está.
     const aFila = corpo.slice(corpo.indexOf("aria-label={calada ?"), corpo.indexOf('</div>', corpo.indexOf('escolherPara(faixa.id)')));
     expect(aFila).toContain('escolherPara(faixa.id)');

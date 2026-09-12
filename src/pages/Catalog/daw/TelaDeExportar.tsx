@@ -1,7 +1,7 @@
 import { FC } from 'react';
-import { FiArchive, FiFileText, FiLoader } from 'react-icons/fi';
+import { FiArchive, FiLoader } from 'react-icons/fi';
 
-import { IconeDeBaixar } from './icones';
+import { IconeDeAudio, IconeDeBaixar } from './icones';
 
 import { DS } from './tokens';
 
@@ -73,7 +73,12 @@ export const TelaDeExportar: FC<{
                 borderTop: i === 0 ? 'none' : `1px solid ${DS.color.borda}`,
               }}
             >
-              <FiFileText size={14} color={DS.color.textoFraco} />
+              {/* ⚠️ UM FICHEIRO DE MÚSICA, e não a folha de texto do Feather. Cada linha desta
+                  lista É uma pista de áudio que vai dentro do ZIP; uma folha com linhas escritas
+                  dizia "documento", que é a única coisa que estes ficheiros não são. */}
+              <span style={{ display: 'flex', color: DS.color.textoFraco }}>
+                <IconeDeAudio tamanho={14} />
+              </span>
               <span style={{
                 flex: 1, minWidth: 0, fontSize: 13, color: DS.color.texto,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
