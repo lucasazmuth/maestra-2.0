@@ -9499,9 +9499,46 @@ body:has(.track-detail-backdrop) .local-player-bar {
     display: none;
   }
 
+  /* ⚠️ O DESENHO DE TELEMÓVEL INTEIRO, e não só a barra escondida.
+   *
+   * Esconder o rail e o painel sem desfazer o que eles deixaram para trás — o recuo de 364px que
+   * a folha dá ao quadro, e a caixa `fixed` com `overflow: hidden` que os acompanha — deixava um
+   * VÃO VAZIO de 364px à esquerda de toda a tela, com o conteúdo espremido no que sobrava.
+   *
+   * Só se via entre 901 e 960px, porque abaixo de 900 há um bloco (`min-width: 701px and
+   * max-width: 900px`) que já refaz tudo isto. São as mesmas declarações dele: o que muda é a
+   * medida em que entram. A dele não pode subir para 960 porque vale para telas SEM navegação
+   * de baixo, onde o rail continua lá até aos 960 — e é por isso que estas moram aqui, presas
+   * ao `.has-mobile-nav`, que é exatamente a condição em que o rail sai.
+   *
+   * É a terceira vez esta semana que um defeito nasce de duas medidas que deviam ser a mesma e
+   * são 900 e 960. */
   .task-app.has-mobile-nav .app-layout {
+    position: static;
     display: block;
+    height: auto;
     min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+
+  /* E o cabeçalho deixa de flutuar, como faz abaixo de 900. Sem isto a caixa do conteúdo, que
+     acabou de perder o recuo de 93px que a compensava, nascia POR BAIXO dele: o rótulo "Músicas
+     do artista" e metade do título ficavam escondidos atrás da busca. */
+  .task-app.has-mobile-nav > .top-navigation {
+    position: static;
+  }
+
+  .task-app.has-mobile-nav .board-shell {
+    height: auto;
+    min-height: 0;
+    margin-right: 0;
+    margin-left: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
   }
 
   .task-app.has-mobile-nav .mobile-nav {
