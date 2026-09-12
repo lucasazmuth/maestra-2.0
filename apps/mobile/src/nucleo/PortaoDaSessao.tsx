@@ -1,5 +1,5 @@
 import { useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useSessao } from '@/nucleo/sessao';
 
@@ -22,16 +22,22 @@ const PUBLICAS = ['entrar', 'intro', 'cadastro'];
 
 export const PortaoDaSessao = () => {
   const { sessao, carregando } = useSessao();
-  const segmentos = useSegments();
   const router = useRouter();
+
+  // O primeiro segmento como TEXTO, e o router numa referência: ver o comentário gêmeo no
+  // `PortaoDoConsentimento`. Um array e um objeto novos a cada render punham este efeito a
+  // rodar sempre, e um `replace` repetido para a mesma rota é um laço de renders.
+  const primeiroSegmento = useSegments()[0];
+  const rota = useRef(router);
+  rota.current = router;
 
   useEffect(() => {
     // `carregando` é o que evita o piscar clássico: sem ele, o app mandaria todo mundo para o
     // login por meio segundo até a sessão do disco chegar.
     if (carregando || sessao) return;
-    if (PUBLICAS.includes(segmentos[0] as string)) return;
-    router.replace('/entrar');
-  }, [carregando, sessao, segmentos, router]);
+    if (PUBLICAS.includes(primeiroSegmento)) return;
+    rota.current.replace('/entrar');
+  }, [carregando, sessao, primeiroSegmento]);
 
   return null;
 };

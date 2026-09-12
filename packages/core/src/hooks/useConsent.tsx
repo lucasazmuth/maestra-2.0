@@ -81,6 +81,19 @@ const limparConsentimentoPendente = (): void => {
  * lado seria reescrever a regra que decide quem entra sem ter declarado idade.
  */
 export const useEstadoDoConsentimento = (user: { id: string; email?: string } | null) => {
+  // ⚠️ AS DEPENDÊNCIAS SÃO O `id` E O `email`, NUNCA O OBJETO `user`.
+  //
+  // O provider da web passa a referência do store, que é estável. O app nativo não tem store
+  // para isto — a sessão vem do Supabase — e monta `{ id, email }` na chamada, um objeto NOVO a
+  // cada render. Com o objeto na lista do `useCallback`, o `refresh` nascia diferente a cada
+  // render, o `useEffect` abaixo disparava outra vez, a resposta trocava o estado, e o estado
+  // trazia outro render: o portão e a tela de consentimento ficavam a consultar a edge em
+  // círculo até o React desistir com "Maximum update depth exceeded".
+  //
+  // Escalares cortam o laço na raiz, e sem exigir que cada chamador se lembre de memoizar.
+  const id = user?.id ?? null;
+  const email = user?.email;
+
   const [state, setState] = useState<ConsentState | null>(null);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
@@ -92,13 +105,13 @@ export const useEstadoDoConsentimento = (user: { id: string; email?: string } | 
   const idAtendido = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!user) {
+    if (!id) {
       idAtendido.current = null;
       setState(null);
       setLoading(false);
       return;
     }
-    if (idAtendido.current !== user.id) setLoading(true);
+    if (idAtendido.current !== id) setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('account-consent', {
         body: { action: 'state' },
@@ -113,7 +126,7 @@ export const useEstadoDoConsentimento = (user: { id: string; email?: string } | 
       const pendente = lerConsentimentoPendente();
       if (
         pendente && pendente.aceita && !estado.satisfied && !estado.blocked &&
-        user.email && pendente.email.toLowerCase() === user.email.toLowerCase()
+        email && pendente.email.toLowerCase() === email.toLowerCase()
       ) {
         limparConsentimentoPendente();
         const { data: enviado } = await supabase.functions.invoke('account-consent', {
@@ -140,10 +153,10 @@ export const useEstadoDoConsentimento = (user: { id: string; email?: string } | 
       setUnavailable(true);
       setState(null);
     } finally {
-      idAtendido.current = user.id;
+      idAtendido.current = id;
       setLoading(false);
     }
-  }, [user]);
+  }, [id, email]);
 
   useEffect(() => { refresh(); }, [refresh]);
 

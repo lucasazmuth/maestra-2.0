@@ -1,5 +1,5 @@
 import { useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useEstadoDoConsentimento } from '@maestra/core/hooks/useConsent';
 
@@ -43,14 +43,28 @@ export const PortaoDoConsentimento = () => {
   const { state } = useEstadoDoConsentimento(
     usuario ? { id: usuario.id, email: usuario.email } : null,
   );
-  const segmentos = useSegments();
   const router = useRouter();
+
+  // ⚠️ O EFEITO DEPENDE DA ROTA COMO TEXTO, E O ROUTER NÃO ENTRA NA LISTA.
+  //
+  // `useSegments` devolve um ARRAY novo e o `useRouter` um OBJETO novo a cada render (ver o
+  // mesmo cuidado em `app/bem-vindo.tsx`). Com os dois na lista, o efeito rodava a cada render:
+  // enquanto a tela de origem não terminasse de sair, cada render pedia outro `replace` para a
+  // MESMA rota, e cada `replace` provocava outro render. O laço fechava, e o React derrubava a
+  // tela com "Maximum update depth exceeded" — foi o que apareceu depois do login pela Apple,
+  // que é justamente quem cai neste portão.
+  //
+  // O primeiro segmento é uma string: ele só muda quando a rota muda de verdade, e então o
+  // portão age UMA vez por chegada.
+  const primeiroSegmento = useSegments()[0];
+  const rota = useRef(router);
+  rota.current = router;
 
   useEffect(() => {
     if (!usuario || !state || state.satisfied) return;
-    if (LIVRES.includes(segmentos[0])) return;
-    router.replace('/consentimento');
-  }, [usuario, state, segmentos, router]);
+    if (LIVRES.includes(primeiroSegmento)) return;
+    rota.current.replace('/consentimento');
+  }, [usuario, state, primeiroSegmento]);
 
   return null;
 };
