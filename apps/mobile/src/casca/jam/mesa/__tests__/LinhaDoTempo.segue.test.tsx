@@ -1,5 +1,5 @@
-import { ScrollView } from 'react-native';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import * as reanimated from 'react-native-reanimated';
 
 import type { EstadoDaMesa } from '@maestra/core/audio/mesa';
 
@@ -30,6 +30,17 @@ const estado = (posicao: number): EstadoDaMesa => ({
   tocando: true, posicao, duracao: 600, emLoop: false, pistas: [], carga: 'pronto',
 } as unknown as EstadoDaMesa);
 
+/**
+ * O relógio de parede, na mão.
+ *
+ * ⚠️ SEM ISTO O CASO PROVAVA O CONTRÁRIO. A regra distingue a música a tocar de alguém a mover a
+ * agulha comparando o passo com o TEMPO QUE PASSOU — e num teste os `rerender` acontecem em
+ * milissegundos, com a música a avançar segundos. Sem mexer no relógio, cada passo parecia um
+ * salto e o modo travado largava-se, que é exatamente o defeito que a regra existe para evitar.
+ */
+const relogio = { agora: 1_000_000 };
+const andarOTempo = (segundos: number) => { relogio.agora += segundos * 1000; };
+
 const montagem = (posicao: number) => (
   <LinhaDoTempo
     pistas={[]}
@@ -43,10 +54,18 @@ const montagem = (posicao: number) => (
 
 describe('a vista e a agulha', () => {
   it('a agulha anda até à borda, e a partir dali é a música que desliza', async () => {
-    const rolou = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
+    jest.spyOn(Date, 'now').mockImplementation(() => relogio.agora);
+    // ⚠️ O `scrollTo` ESPIADO É O DO REANIMATED, e não o do `ScrollView`. A rolagem do deslize
+    // corre na linha da interface: o do JavaScript é um pedido que atravessa a ponte, e a vinte
+    // por segundo o outro lado não os aplica todos — no aparelho a montagem andava a 83 % do
+    // ritmo da música e a linha ia-se descolando do meio.
+    const rolou = jest.spyOn(reanimated, 'scrollTo').mockImplementation(() => {});
     const { rerender, unmount } = await render(montagem(0));
-    const ultimo = () => rolou.mock.calls[rolou.mock.calls.length - 1][0] as
-      { x: number; animated: boolean };
+    // `scrollTo(ref, x, y, animated)`: o que interessa é o x e a ausência de animação.
+    const ultimo = () => {
+      const [, x, , animated] = rolou.mock.calls[rolou.mock.calls.length - 1];
+      return { x, animated };
+    };
 
     // Sem largura medida não há "à vista" nenhum para comparar.
     await fireEvent(screen.getByTestId('montagem'), 'layout', {
@@ -64,19 +83,26 @@ describe('a vista e a agulha', () => {
     // ⚠️ E OS PASSOS SÃO DO TAMANHO DA REPRODUÇÃO. Saltar de 3 para 10 de uma vez não é a música
     // a tocar, é alguém a LEVAR a agulha — e a regra trata as duas coisas de forma diferente, de
     // propósito. A primeira versão deste caso andava aos segundos e provava o modo errado.
+    andarOTempo(0.25);
     await rerender(montagem(0.25));
     expect(rolou).not.toHaveBeenCalled();
 
     // Um salto que aterra DENTRO do que se vê também não mexe na montagem: a pessoa tocou na
     // régua dentro do ecrã, e arrastar-lhe o desenho por baixo do dedo seria mexer no que ela
     // estava a apontar. 6,5 s são 390 pt, ainda dentro dos 400.
+    // Este É um salto: seis segundos de música sem o relógio andar.
     await rerender(montagem(6.5));
     expect(rolou).not.toHaveBeenCalled();
 
     // Agora ela ia desaparecer pela direita (6,75 s = 405 pt): a linha trava no MEIO e a rolagem
     // salta uma vez, a animar, para a pôr lá.
+    andarOTempo(0.25);
     await rerender(montagem(6.75));
-    expect(ultimo()).toEqual({ x: 6.75 * PONTOS_POR_SEGUNDO - VISTA / 2, animated: true });
+    // ⚠️ SEM ANIMAÇÃO, NEM AQUI. Uma rolagem animada continua a correr depois de pedida e engole
+    // as seguintes: no aparelho a linha descolava-se do meio e voltava de repente quando a
+    // animação acabava. Este caso não o apanhava — o `scrollTo` daqui é um duplo que responde na
+    // hora —, e por isso o que ele prende agora é a AUSÊNCIA da animação.
+    expect(ultimo()).toEqual({ x: 6.75 * PONTOS_POR_SEGUNDO - VISTA / 2, animated: false });
 
     // ⚠️ E DAQUI PARA A FRENTE É A MÚSICA QUE SE MEXE. A agulha está à vista (é o meio do ecrã)
     // e mesmo assim a rolagem continua a andar com ela — uma regra que só perguntasse "está à
@@ -84,6 +110,7 @@ describe('a vista e a agulha', () => {
     await fireEvent.scroll(ondas, {
       nativeEvent: { contentOffset: { x: ultimo().x, y: 0 } },
     });
+    andarOTempo(0.25);
     await rerender(montagem(7));
     // Sem animação: o deslize chega vinte vezes por segundo, e animar cada passo põe vinte
     // animações a disputar a mesma rolagem.
@@ -91,5 +118,6 @@ describe('a vista e a agulha', () => {
 
     unmount();
     rolou.mockRestore();
+    (Date.now as jest.Mock).mockRestore();
   });
 });

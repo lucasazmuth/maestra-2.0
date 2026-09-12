@@ -81,13 +81,20 @@ export const rolagemQueCentra = (
 ));
 
 /**
- * O que separa a agulha a ANDAR da agulha a ser LEVADA, em segundos.
+ * A folga com que se mede a agulha, em segundos.
  *
- * A reprodução avança de vinte em vinte avos de segundo; qualquer passo maior do que isto foi
- * alguém a pôr a agulha noutro sítio — o botão de voltar ao início, um toque na régua, o fim de
- * um ciclo do loop. A diferença importa porque as duas coisas pedem vistas diferentes.
+ * ⚠️ O QUE SEPARA A AGULHA A ANDAR DA AGULHA A SER LEVADA NÃO É O TAMANHO DO PASSO — é o passo
+ * comparado com o TEMPO QUE PASSOU. A primeira versão disto tinha um limite fixo de meio
+ * segundo, e funcionava até ao dia em que a tela engasgava: um quadro lento entregava um passo
+ * de 600 ms de música, a regra lia-o como alguém a mover a agulha, e a linha largava o modo
+ * travado. No aparelho isso via-se de olho — ela descolava-se do meio e ia derivando para a
+ * direita até sair, travava outra vez, e recomeçava.
+ *
+ * A música só anda ao ritmo do relógio. Um passo maior do que o tempo de parede que passou é,
+ * por construção, alguém a pôr a agulha noutro sítio. A folga cobre o arredondamento dos dois
+ * relógios, e nada mais.
  */
-export const SALTO_DA_AGULHA = 0.5;
+export const FOLGA_DA_AGULHA = 0.05;
 
 /** O que a vista faz a seguir. */
 export interface PassoDaVista {
@@ -95,9 +102,21 @@ export interface PassoDaVista {
   rolagem: number | null;
   /** A vista passa a andar COM a agulha? Quem chama guarda isto e devolve no passo seguinte. */
   seguindo: boolean;
-  /** Um salto de uma vez (a animar), em vez do deslize contínuo de quem já está a seguir. */
-  suave: boolean;
 }
+
+/**
+ * ⚠️ NADA DISTO SE ANIMA, NEM O SALTO DE ENTRADA — e isto custou uma sessão a perceber.
+ *
+ * A primeira versão devolvia também um `suave`, para o salto de meia tela entrar a deslizar. No
+ * telemóvel isso partia o modo travado: uma rolagem ANIMADA continua a correr depois de pedida,
+ * e as rolagens dos vigésimos de segundo seguintes — instantâneas — eram engolidas por ela. A
+ * linha descolava-se do meio, ia derivando para a direita, e quando a animação acabava voltava
+ * para trás de repente. No aparelho via-se de olho; nenhum teste apanhava, porque em teste o
+ * `scrollTo` é um duplo que responde na hora.
+ *
+ * Sem animação nenhuma, cada pedido chega inteiro. O salto de entrada fica seco, o que é o preço
+ * certo: ele acontece uma vez, e uma linha travada que treme acontece o tempo todo.
+ */
 
 /**
  * O QUE A VISTA FAZ ENQUANTO A MÚSICA TOCA — e são dois modos, não um.
@@ -128,6 +147,14 @@ export const passoDaVista = (vista: {
   segundo: number;
   /** Onde a agulha estava no passo anterior, para distinguir andar de ser levada. */
   anterior: number;
+  /**
+   * Quanto tempo de PAREDE passou desde esse passo, em segundos.
+   *
+   * É ele que distingue as duas coisas: a música só anda ao ritmo do relógio, e um passo maior
+   * do que o tempo que passou é alguém a mover a agulha. Sem isto, um quadro lento parecia um
+   * salto e a linha largava o modo travado.
+   */
+  desdeAnterior: number;
   escala: number;
   rolagemAtual: number;
   larguraVisivel: number;
@@ -135,17 +162,21 @@ export const passoDaVista = (vista: {
   seguindo: boolean;
 }): PassoDaVista => {
   const {
-    segundo, anterior, escala, rolagemAtual, larguraVisivel, maximo,
+    segundo, anterior, desdeAnterior, escala, rolagemAtual, larguraVisivel, maximo,
   } = vista;
-  if (larguraVisivel <= 0) return { rolagem: null, seguindo: vista.seguindo, suave: false };
+  if (larguraVisivel <= 0) return { rolagem: null, seguindo: vista.seguindo };
 
-  const saltou = Math.abs(segundo - anterior) > SALTO_DA_AGULHA;
+  const andou = segundo - anterior;
+  // Para trás nunca é a música: é voltar ao início, o fim de um ciclo do loop, um toque na
+  // régua. Para a frente, é a música enquanto couber no tempo que passou.
+  const saltou = andou < -FOLGA_DA_AGULHA
+    || andou > Math.max(0, desdeAnterior) + FOLGA_DA_AGULHA;
   const seguindo = saltou ? false : vista.seguindo;
   const onde = segundo * escala;
   const aVista = onde >= rolagemAtual && onde <= rolagemAtual + larguraVisivel;
 
   // Modo 1: a agulha anda, a montagem fica. Vale enquanto ela se vir.
-  if (!seguindo && aVista) return { rolagem: null, seguindo: false, suave: false };
+  if (!seguindo && aVista) return { rolagem: null, seguindo: false };
 
   const centrada = rolagemQueCentra(segundo, escala, larguraVisivel, maximo);
   // ⚠️ E NÃO PEDE UMA ROLAGEM QUE JÁ ESTÁ FEITA. Perto do fim a rolagem chega ao máximo e fica
@@ -157,11 +188,9 @@ export const passoDaVista = (vista: {
   // montagem fica quieta, que é o que quem escolheu o sítio está à espera de ver. A primeira
   // versão disto devolvia `seguindo: true` aqui, e tocar na régua longe do ecrã punha a música a
   // deslizar por baixo de uma linha presa.
-  if (centrada === rolagemAtual) return { rolagem: null, seguindo: !saltou, suave: false };
+  if (centrada === rolagemAtual) return { rolagem: null, seguindo: !saltou };
 
-  // A entrada no modo 2 (e qualquer salto) anima-se; o deslize de cada passo, não — animar
-  // vinte vezes por segundo é pôr vinte animações a disputar a mesma rolagem.
-  return { rolagem: centrada, seguindo: !saltou, suave: !vista.seguindo || saltou };
+  return { rolagem: centrada, seguindo: !saltou };
 };
 
 /**

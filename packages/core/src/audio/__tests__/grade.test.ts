@@ -1,6 +1,6 @@
 import {
   BPM_MAXIMO, BPM_MINIMO, ENCAIXE_SEM_ANDAMENTO, TEMPOS_POR_COMPASSO,
-  SALTO_DA_AGULHA,
+  FOLGA_DA_AGULHA,
   encaixeDaGrade, gradeDoCompasso, marcasDaRegua, passoDaVista, rolagemQueCentra,
 } from '../grade';
 
@@ -203,14 +203,15 @@ describe('rolagemQueCentra', () => {
 
 /** 800 de largura, 60 px por segundo: vê-se do segundo 0 ao 13,33 com a rolagem no zero. */
 const vista = (over: Partial<Parameters<typeof passoDaVista>[0]> = {}) => passoDaVista({
-  segundo: 0, anterior: 0, escala: 60, rolagemAtual: 0,
+  // Um passo da reprodução: 50 ms de música em 50 ms de relógio.
+  segundo: 0, anterior: 0, desdeAnterior: 0.05, escala: 60, rolagemAtual: 0,
   larguraVisivel: 800, maximo: 100000, seguindo: false, ...over,
 });
 
 describe('passoDaVista — a agulha anda, a montagem fica', () => {
   it('não mexe em nada enquanto ela está à vista', () => {
     expect(vista({ segundo: 1, anterior: 0.95 })).toEqual({
-      rolagem: null, seguindo: false, suave: false,
+      rolagem: null, seguindo: false,
     });
     // Nem colada às bordas do que se vê: ali ela ainda se vê.
     expect(vista({ segundo: 800 / 60, anterior: 800 / 60 - 0.05 }).rolagem).toBeNull();
@@ -227,7 +228,7 @@ describe('passoDaVista — a linha trava e a música desliza', () => {
   // ser a montagem a mexer-se.
   it('ao sair pela direita, trava a agulha no meio', () => {
     expect(vista({ segundo: 20, anterior: 19.95 })).toEqual({
-      rolagem: 800, seguindo: true, suave: true,
+      rolagem: 800, seguindo: true,
     });
   });
 
@@ -236,16 +237,8 @@ describe('passoDaVista — a linha trava e a música desliza', () => {
   // vista?" respondia `null` aqui, e a vista voltava a virar páginas em vez de deslizar.
   it('já a seguir, continua a deslizar mesmo com ela à vista', () => {
     expect(vista({ segundo: 20.05, anterior: 20, rolagemAtual: 800, seguindo: true })).toEqual({
-      rolagem: 803, seguindo: true, suave: false,
+      rolagem: 803, seguindo: true,
     });
-  });
-
-  // A entrada no modo anima-se uma vez; o deslize de cada passo, não — animar vinte vezes por
-  // segundo é pôr vinte animações a disputar a mesma rolagem.
-  it('o salto de entrada é suave, e o deslize não', () => {
-    expect(vista({ segundo: 20, anterior: 19.95 }).suave).toBe(true);
-    expect(vista({ segundo: 20.05, anterior: 20, rolagemAtual: 800, seguindo: true }).suave)
-      .toBe(false);
   });
 
   // ⚠️ E NÃO PEDE UMA ROLAGEM QUE JÁ ESTÁ FEITA. Perto do fim a rolagem chega ao máximo e fica
@@ -253,7 +246,7 @@ describe('passoDaVista — a linha trava e a música desliza', () => {
   it('no fim, com a rolagem no máximo, não pede nada', () => {
     expect(vista({
       segundo: 1000, anterior: 999.95, rolagemAtual: 5000, maximo: 5000, seguindo: true,
-    })).toEqual({ rolagem: null, seguindo: true, suave: false });
+    })).toEqual({ rolagem: null, seguindo: true });
   });
 });
 
@@ -262,25 +255,47 @@ describe('passoDaVista — quem leva a agulha à mão sai do segundo modo', () =
   // e o que ela quer é ver esse sítio e a linha a andar outra vez a partir dele — não a montagem
   // a deslizar por baixo de uma linha presa.
   it('um salto larga o modo de seguir', () => {
-    const passo = vista({ segundo: 0, anterior: 40, rolagemAtual: 2000, seguindo: true });
+    const passo = vista({
+      segundo: 0, anterior: 40, desdeAnterior: 0.05, rolagemAtual: 2000, seguindo: true,
+    });
     expect(passo.seguindo).toBe(false);
     // E leva a vista ao sítio novo, porque de onde ela estava não se via.
     expect(passo.rolagem).toBe(0);
-    expect(passo.suave).toBe(true);
   });
 
   // Um salto para um sítio que JÁ se vê não mexe na montagem: a pessoa tocou na régua dentro do
   // ecrã, e arrastar-lhe o desenho por baixo do dedo seria mexer no que ela estava a apontar.
   it('um salto para dentro do que se vê não mexe na montagem', () => {
-    expect(vista({ segundo: 5, anterior: 40, seguindo: true })).toEqual({
-      rolagem: null, seguindo: false, suave: false,
+    expect(vista({ segundo: 5, anterior: 40, desdeAnterior: 0.05, seguindo: true })).toEqual({
+      rolagem: null, seguindo: false,
     });
   });
 
-  // A fronteira entre andar e ser levada: a reprodução avança de vinte em vinte avos de segundo.
-  it('o passo da reprodução não conta como salto', () => {
+  // ⚠️ E A FRONTEIRA É O TEMPO QUE PASSOU, e não o tamanho do passo.
+  //
+  // Isto começou com um limite fixo de meio segundo, e funcionou até ao dia em que a tela
+  // engasgou: com treze faixas no aparelho, um quadro lento entrega 600 ms de música de uma vez.
+  // A regra lia-o como alguém a mover a agulha, largava o modo travado, e a linha descolava-se
+  // do meio e ia derivando para a direita até sair — travava outra vez, e recomeçava. Via-se de
+  // olho no telemóvel, e nenhum caso apanhava porque todos andavam a 50 ms.
+  it('um quadro lento é a música a andar, e não alguém a mover a agulha', () => {
     expect(vista({
-      segundo: 20 + SALTO_DA_AGULHA / 2, anterior: 20, rolagemAtual: 800, seguindo: true,
+      segundo: 20.6, anterior: 20, desdeAnterior: 0.6, rolagemAtual: 800, seguindo: true,
+    }).seguindo).toBe(true);
+  });
+
+  // E o contrário continua a valer: andar mais do que o relógio deixa é alguém.
+  it('andar mais do que o tempo que passou é alguém a mover a agulha', () => {
+    expect(vista({
+      segundo: 40, anterior: 20, desdeAnterior: 0.05, rolagemAtual: 800, seguindo: true,
+    }).seguindo).toBe(false);
+  });
+
+  // A folga cobre o arredondamento dos dois relógios, e nada mais.
+  it('a folga não deixa o arredondamento parecer um salto', () => {
+    expect(vista({
+      segundo: 20.05 + FOLGA_DA_AGULHA / 2, anterior: 20, desdeAnterior: 0.05,
+      rolagemAtual: 800, seguindo: true,
     }).seguindo).toBe(true);
   });
 });

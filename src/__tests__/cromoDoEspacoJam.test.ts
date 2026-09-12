@@ -687,6 +687,16 @@ describe('cromo do editor do Espaço JAM', () => {
       // agulha — e as duas pedem vistas diferentes. Sem ela, voltar ao início prendia a linha.
       expect(fonte).toContain('anterior: antes');
       expect(fonte).toContain('agulhaAntes.current = ');
+      // ⚠️ E O TEMPO DE PAREDE COM ELA. É ele que distingue a música a andar de alguém a mover a
+      // agulha: com um limite fixo de passo, um quadro lento entregava 600 ms de música de uma
+      // vez, a regra lia-o como um salto, e a linha largava o modo travado — descolava-se do
+      // meio e ia derivando até sair. Viu-se de olho no aparelho.
+      expect(fonte).toContain('desdeAnterior');
+      // ⚠️ E MEDIDO, e não um número escrito à mão. Com um `0.05` fixo ali, a regra volta a ter
+      // um limite de passo com outro nome — e o quadro lento volta a largar o modo. Este caso
+      // deixou passar exatamente essa mutação enquanto só exigia a palavra.
+      expect(fonte).not.toMatch(/desdeAnterior: [\d.]/);
+      expect(fonte).toMatch(/(performance|Date)\.now\(\)/);
       // Rolar sem conferir o `null` é perseguir a agulha mesmo no primeiro modo.
       expect(fonte).toContain('passo.rolagem !== null');
 
@@ -719,9 +729,23 @@ describe('cromo do editor do Espaço JAM', () => {
     // para ler, e sem o `onScroll` a conta compara a agulha com uma rolagem que ficou no zero.
     expect(aLinhaDoTempo).toContain('onScroll={');
     expect(aLinhaDoTempo).toContain('contentOffset.x');
-    // O deslize não se anima: ele chega vinte vezes por segundo, e animar cada passo põe vinte
-    // animações a disputar a mesma rolagem.
-    expect(aLinhaDoTempo).toContain('animated: passo.suave');
+    // ⚠️ E NADA SE ANIMA, NEM O SALTO DE ENTRADA. Uma rolagem animada continua a correr depois
+    // de pedida e engole as dos vigésimos de segundo seguintes: a linha descolava-se do meio, ia
+    // derivando para a direita, e voltava de repente quando a animação acabava. Foi visto de
+    // olho no aparelho; nenhum teste o apanhava, porque em teste o `scrollTo` responde na hora.
+    expect(aLinhaDoTempo).not.toContain('animated: true');
+
+    // ⚠️ E A ROLAGEM DO APARELHO CORRE NA LINHA DA INTERFACE. O `scrollTo` de um `ScrollView`
+    // normal é um pedido que atravessa a ponte, e a vinte por segundo o outro lado não os aplica
+    // todos: medido no aparelho, a montagem andava a 83 % do ritmo da música e a linha ia-se
+    // descolando do meio uns pontos por segundo até encostar à borda e voltar de repente.
+    //
+    // O do reanimated corre do lado que desenha, e cada pedido chega inteiro.
+    expect(aLinhaDoTempo).toContain('useAnimatedRef<Animated.ScrollView>()');
+    expect(aLinhaDoTempo).toContain('rolarNaInterface(rolagem, ate, 0, false)');
+    expect(aLinhaDoTempo).toContain('runOnUI(');
+    // E nunca de volta ao pedido que atravessa a ponte.
+    expect(aLinhaDoTempo).not.toContain('rolagem.current?.scrollTo(');
   });
 
   // ⚠️ O ZOOM NÃO PERDE A AGULHA DE VISTA, NAS DUAS.

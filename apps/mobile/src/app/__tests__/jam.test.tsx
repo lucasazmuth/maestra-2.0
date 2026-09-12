@@ -1,7 +1,8 @@
 import { StrictMode } from 'react';
-import { Alert, ScrollView } from 'react-native';
+import { Alert } from 'react-native';
 import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
+import * as reanimated from 'react-native-reanimated';
 
 import type { CatalogProject, CatalogTrack, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
 import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
@@ -442,7 +443,9 @@ describe('espaço jam', () => {
     mockBuscar.mockResolvedValue(projeto({
       versions: [versao({ files: [arquivo()], tracks: [pista()] })],
     }));
-    const rolou = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(() => {});
+    // O `scrollTo` do reanimated: a rolagem do deslize corre na linha da interface, porque a do
+    // JavaScript perde pedidos a vinte por segundo.
+    const rolou = jest.spyOn(reanimated, 'scrollTo').mockImplementation(() => {});
     const usuario = userEvent.setup();
     const tela = await montar();
     await tela.findByText('FAIXAS');
@@ -460,10 +463,9 @@ describe('espaço jam', () => {
     // prender o encaixe — outra regra, com o seu próprio caso. O que este prova é a ligação:
     // mexer no zoom mexe na rolagem, em vez de a deixar a apontar para o segundo de antes.
     await waitFor(() => expect(rolou).toHaveBeenCalled());
-    const [{ x, animated }] = rolou.mock.calls[rolou.mock.calls.length - 1] as [
-      { x: number; animated: boolean },
-    ];
-    expect(animated).toBe(true);
+    const [, x, , animated] = rolou.mock.calls[rolou.mock.calls.length - 1];
+    // Sem animação: uma rolagem animada engole as seguintes, e o deslize da agulha fica preso.
+    expect(animated).toBe(false);
     expect(x).toBeGreaterThanOrEqual(0);
     rolou.mockRestore();
   });

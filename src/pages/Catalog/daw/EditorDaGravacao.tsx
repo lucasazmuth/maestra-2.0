@@ -473,6 +473,8 @@ export const EditorDaGravacao: FC<{
    */
   const seguindoAAgulha = useRef(false);
   const agulhaAntes = useRef(agulha);
+  /** Quando a agulha foi lida pela última vez, para saber quanto tempo de PAREDE passou. */
+  const quandoAAgulha = useRef(performance.now());
   const linhaDaAgulha = useRef<HTMLDivElement>(null);
   /**
    * As medidas da janela da montagem, guardadas.
@@ -527,6 +529,7 @@ export const EditorDaGravacao: FC<{
     if (!estado.tocando || !agora) return undefined;
     let vivo = true;
     let antes = agora();
+    let quando = performance.now();
     const quadro = () => {
       if (!vivo) return;
       requestAnimationFrame(quadro);
@@ -538,9 +541,11 @@ export const EditorDaGravacao: FC<{
       // modo travado chegava até 50 ms atrasada: a agulha passava a borda e só depois saltava
       // para o meio. O tique continua a decidir quando a música está PARADA — um toque na régua,
       // as setas —, que é onde ele é o único caminho.
+      const instante = performance.now();
       const passo = passoDaVista({
         segundo,
         anterior: antes,
+        desdeAnterior: (instante - quando) / 1000,
         escala,
         rolagemAtual: caixa.scrollLeft,
         larguraVisivel: medidas.current.vista,
@@ -548,6 +553,7 @@ export const EditorDaGravacao: FC<{
         seguindo: seguindoAAgulha.current,
       });
       antes = segundo;
+      quando = instante;
       agulhaAntes.current = segundo;
       seguindoAAgulha.current = passo.seguindo;
       if (passo.rolagem !== null) caixa.scrollLeft = passo.rolagem;
@@ -581,9 +587,13 @@ export const EditorDaGravacao: FC<{
     // relógio de agora, e 50 ms depois este punha-a no sítio do tique, meio passo atrás.
     if (estado.tocando) return;
 
+    const instante = performance.now();
+    const desdeAnterior = (instante - quandoAAgulha.current) / 1000;
+    quandoAAgulha.current = instante;
     const passo = passoDaVista({
       segundo: agulha,
       anterior: antes,
+      desdeAnterior,
       escala,
       rolagemAtual: caixa.scrollLeft,
       // A largura das ONDAS: a coluna das faixas fica colada à esquerda por cima da montagem, e

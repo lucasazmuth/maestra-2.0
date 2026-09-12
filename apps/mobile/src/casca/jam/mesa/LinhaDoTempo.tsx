@@ -3,7 +3,9 @@ import {
   Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type LayoutChangeEvent,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
+import Animated, {
+  runOnJS, runOnUI, scrollTo as rolarNaInterface, useAnimatedRef,
+} from 'react-native-reanimated';
 import Svg, { Rect } from 'react-native-svg';
 
 import Feather from '@expo/vector-icons/Feather';
@@ -405,8 +407,19 @@ export const LinhaDoTempo = ({
    * posição entra por uma referência — ela é lida no instante do zoom, e não o dispara.
    */
   const ondeEstaAAgulha = useRef(estado.posicao);
-  ondeEstaAAgulha.current = estado.posicao;
-  const rolagem = useRef<ScrollView>(null);
+  useEffect(() => { ondeEstaAAgulha.current = estado.posicao; });
+  /**
+   * ⚠️ A ROLAGEM DO DESLIZE É DA LINHA DA INTERFACE, e não do JavaScript.
+   *
+   * O `scrollTo` de um `ScrollView` normal é um pedido que atravessa a ponte, e a vinte pedidos
+   * por segundo o outro lado não os aplica todos: medido no aparelho, a montagem andava a 83 %
+   * do ritmo da música — a linha ia-se descolando do meio uns pontos por segundo, encostava à
+   * borda e voltava de repente. Era um defeito lento, do género que se vê e não se explica.
+   *
+   * O `scrollTo` do reanimated corre DO LADO DE LÁ, na linha que desenha: cada pedido chega
+   * inteiro e a rolagem acompanha a agulha ponto por ponto.
+   */
+  const rolagem = useAnimatedRef<Animated.ScrollView>();
   /**
    * Onde a rolagem está agora.
    *
@@ -416,14 +429,23 @@ export const LinhaDoTempo = ({
    * redesenhava a montagem inteira a cada pixel de arrasto.
    */
   const onde = useRef(0);
+
+  /** Leva a rolagem a um ponto, do lado que desenha. */
+  const rolarAte = (x: number) => {
+    runOnUI((ate: number) => {
+      'worklet';
+
+      rolarNaInterface(rolagem, ate, 0, false);
+    })(x);
+  };
   useEffect(() => {
     if (larguraVisivel <= 0) return;
     // A coluna das faixas é IRMÃ do scroll, não filha: o que se vê da montagem é o que sobra.
     const vista = larguraVisivel - COLUNA;
-    rolagem.current?.scrollTo({
-      x: rolagemQueCentra(ondeEstaAAgulha.current, escala, vista, largura - vista),
-      animated: true,
-    });
+    // ⚠️ SEM ANIMAÇÃO, COMO A DE SEGUIR. Aproximar a tocar deixava uma rolagem animada a correr
+    // por cima do deslize, e ela engolia as rolagens dos vigésimos de segundo seguintes — a
+    // linha descolava-se do meio até a animação acabar.
+    rolarAte(rolagemQueCentra(ondeEstaAAgulha.current, escala, vista, largura - vista));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escala]);
 
@@ -437,6 +459,8 @@ export const LinhaDoTempo = ({
    */
   const seguindoAAgulha = useRef(false);
   const agulhaAntes = useRef(estado.posicao);
+  /** Quando a agulha foi lida pela última vez, para saber quanto tempo de PAREDE passou. */
+  const quandoAAgulha = useRef(Date.now());
   /**
    * ⚠️ EFEITO DE LAYOUT, E ISTO É A DIFERENÇA ENTRE PARADA E AOS SALTOS.
    *
@@ -449,12 +473,16 @@ export const LinhaDoTempo = ({
   useLayoutEffect(() => {
     const antes = agulhaAntes.current;
     agulhaAntes.current = estado.posicao;
+    const instante = Date.now();
+    const desdeAnterior = (instante - quandoAAgulha.current) / 1000;
+    quandoAAgulha.current = instante;
     if (larguraVisivel <= 0) return;
 
     const vista = larguraVisivel - COLUNA;
     const passo = passoDaVista({
       segundo: estado.posicao,
       anterior: antes,
+      desdeAnterior,
       escala,
       rolagemAtual: onde.current,
       larguraVisivel: vista,
@@ -462,12 +490,11 @@ export const LinhaDoTempo = ({
       seguindo: seguindoAAgulha.current,
     });
     seguindoAAgulha.current = passo.seguindo;
-    // ⚠️ O DESLIZE NÃO SE ANIMA. Ele chega vinte vezes por segundo: animar cada passo põe vinte
-    // animações a disputar a mesma rolagem, e nenhuma chega ao fim antes de a seguinte começar.
-    // Só o salto de entrada no modo (e os saltos da agulha) é que se animam.
-    if (passo.rolagem !== null) {
-      rolagem.current?.scrollTo({ x: passo.rolagem, animated: passo.suave });
-    }
+    // ⚠️ SEM ANIMAÇÃO, NEM NO SALTO DE ENTRADA. Uma rolagem animada continua a correr depois de
+    // pedida, e engole as dos vigésimos de segundo seguintes: a linha descolava-se do meio, ia
+    // derivando para a direita, e voltava de repente quando a animação acabava. Via-se de olho
+    // no aparelho, e nenhum teste apanhava — em teste o `scrollTo` responde na hora.
+    if (passo.rolagem !== null) rolarAte(passo.rolagem);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estado.posicao]);
 
@@ -546,9 +573,14 @@ export const LinhaDoTempo = ({
   const maos = useRef({
     aoRenomearPista, aoApagarPista, aoMudarPista, aoSolarPista, aoArmar, aoEnviarPara,
   });
-  maos.current = {
-    aoRenomearPista, aoApagarPista, aoMudarPista, aoSolarPista, aoArmar, aoEnviarPara,
-  };
+  // ⚠️ A GAVETA ENCHE-SE DEPOIS DO DESENHO, e não durante. Escrever numa referência a meio do
+  // render é o que o `react-hooks/refs` acusa, e com razão: o React pode desenhar duas vezes e
+  // deitar um dos desenhos fora, e a escrita do desenho deitado fora fica lá na mesma.
+  useEffect(() => {
+    maos.current = {
+      aoRenomearPista, aoApagarPista, aoMudarPista, aoSolarPista, aoArmar, aoEnviarPara,
+    };
+  });
 
   /**
    * A COLUNA DAS FAIXAS, DESENHADA UMA VEZ — e não a cada tique. O mesmo que a web faz, e pelo
@@ -702,7 +734,7 @@ export const LinhaDoTempo = ({
           )}
         </View>
 
-        <ScrollView
+        <Animated.ScrollView
           ref={rolagem}
           // Por aqui a tela sabe onde a rolagem está — e é por aqui que o teste lho diz.
           testID="ondas"
@@ -796,7 +828,7 @@ export const LinhaDoTempo = ({
               <View style={estilos.cabecaDaAgulha} />
             </View>
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
       </View>
 
       {/* As seis, à escolha. A folha sobe de baixo e ocupa só o que precisa: trocar a cor é um
