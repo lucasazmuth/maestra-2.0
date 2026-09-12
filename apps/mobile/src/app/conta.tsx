@@ -3,7 +3,7 @@ import { Redirect, router as rota, useRouter } from 'expo-router';
 import { File, Paths } from 'expo-file-system';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Image, Linking, Pressable, ScrollView, Share,
+  ActivityIndicator, Alert, Image, Pressable, ScrollView, Share,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,8 +37,9 @@ import { DiamanteAnimado } from '@/casca/marca/DiamanteAnimado';
 
 const COBRAVEL = ['active', 'overdue', 'pending'];
 
-/** Planos, termos, suporte e exportacao de dados vivem na web. */
-const SITE = 'https://www.maestramanager.com';
+// ⚠️ O `SITE` SAIU DAQUI, e a ausência conta a história: planos, termos, política e suporte
+// viviam na web e esta tela era a porta para lá. Hoje os quatro são telas do app, e não sobrou
+// nada nesta para abrir o navegador. A exportação de dados sai por partilha, não por link.
 
 export default function Conta() {
   const { sessao, carregando: carregandoSessao } = useSessao();
@@ -354,18 +355,23 @@ export default function Conta() {
             <Feather name="chevron-right" size={16} color={COR_CONTA.rotulo} />
           </Pressable>
 
+          {/* ⚠️ OS TRÊS DEIXARAM DE ABRIR O NAVEGADOR. Eram `external-link` para o site, e num
+              app que vai para a loja isso é o contrário do que se quer: os termos e a política
+              são o que a pessoa precisa de ler ANTES de aceitar, e o suporte é onde ela chega
+              já com um problema. Mandá-la para fora — para uma aba que pode nem abrir — é
+              perder as três no pior momento. Agora são telas daqui. */}
           {([
-            ['Termos de uso', '/termos'],
-            ['Política de privacidade', '/privacidade'],
-            ['Falar com o suporte', '/suporte'],
-          ] as const).map(([rotulo, caminho]) => (
+            ['Termos de uso', 'file-text', '/legal/termos'],
+            ['Política de privacidade', 'shield', '/legal/privacidade'],
+            ['Falar com o suporte', 'life-buoy', '/suporte'],
+          ] as const).map(([rotulo, icone, caminho]) => (
             <Pressable
               key={caminho}
               style={({ pressed }) => [estilos.linha, pressed && estilos.tocada]}
-              onPress={() => Linking.openURL(`${SITE}${caminho}`)}
-              accessibilityRole="link"
+              onPress={() => rota.push(caminho)}
+              accessibilityRole="button"
             >
-              <Feather name="external-link" size={16} color={COR_CONTA.rotulo} />
+              <Feather name={icone} size={16} color={COR_CONTA.rotulo} />
               <Text style={estilos.linhaTexto}>{rotulo}</Text>
               <Feather name="chevron-right" size={16} color={COR_CONTA.rotulo} />
             </Pressable>

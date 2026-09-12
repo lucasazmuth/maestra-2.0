@@ -71,4 +71,28 @@ describe('portão do consentimento', () => {
 
     expect(mockReplace).not.toHaveBeenCalled();
   });
+
+  // ⚠️ O PORTÃO NÃO PODE TRANCAR O QUE ELE PEDE PARA ACEITAR.
+  //
+  // A tela do consentimento liga para os Termos e para a Política, e tem um botão de falar com o
+  // suporte para quem errou a data de nascimento. Enquanto esses três destinos abriam o
+  // navegador, o portão nem os via. No dia em que viraram telas do app, sem a lista de livres ele
+  // devolvia a pessoa ao consentimento no instante em que ela tocasse em "Termos de uso" — pedir
+  // o aceite de um documento e trancar a porta do documento.
+  it.each([['legal'], ['suporte']])('deixa ler o que pede para aceitar: /%s', async (segmento) => {
+    mockEstado = { satisfied: false };
+    mockSegmentos = [segmento];
+    await render(<PortaoDoConsentimento />);
+
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  // E o resto continua trancado: uma lista de livres que crescesse sozinha esvaziaria o portão.
+  it('o resto do app continua trancado', async () => {
+    mockEstado = { satisfied: false };
+    mockSegmentos = ['artista'];
+    await render(<PortaoDoConsentimento />);
+
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/consentimento'));
+  });
 });

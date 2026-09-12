@@ -1126,3 +1126,40 @@ export const ESPERA_DA_MARCA = {
     { em: 1, opacidade: 0.55, escala: 0.88 },
   ],
 } as const;
+
+/**
+ * A TELA DE SUPORTE: os dois canais, em cartão.
+ *
+ * Os valores saem de `src/pages/Support/Support.module.scss`, e o app desenha os mesmos dois
+ * cartões empilhados — que é o que a web já faz abaixo de 700px.
+ *
+ * ⚠️ O VERDE DO WHATSAPP NÃO É DECORAÇÃO: o canal reconhece-se pela cor antes de se ler o
+ * título, e é o que separa os dois cartões à primeira vista. Por isso ele é um token, e não o
+ * azul do sistema com outro nome.
+ */
+export const COR_SUPORTE = {
+  contorno: '#edf1f7',
+  titulo: '#52668d',
+  apoio: '#98a6bd',
+  valor: '#5b6f94',
+  /** O quadrado do ícone: azul pálido no e-mail, verde no WhatsApp. */
+  disco: '#edf2ff',
+  discoWhatsapp: '#e7f8ee',
+} as const;
+
+/**
+ * AS PÁGINAS LEGAIS (termos e privacidade).
+ *
+ * Os valores saem de `src/pages/Legal/legal.scss`. O texto é o MESMO markdown de
+ * `constants/legal.ts`, desenhado nas duas superfícies: `react-markdown` na web, e no app o
+ * parser do núcleo (`nucleo/markdownDaNyta`) — o mesmo que a Nyta usa.
+ *
+ * ⚠️ CORPO DE LEITURA LONGA, e daí a entrelinha de 1.75 que a web usa: são documentos de
+ * milhares de palavras que alguém percorre à procura de uma cláusula, e não um aviso de duas
+ * linhas.
+ */
+export const COR_LEGAL = {
+  titulo: '#2c3f63',
+  texto: '#52668d',
+  apoio: '#52668d',
+} as const;

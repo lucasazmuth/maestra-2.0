@@ -5,8 +5,21 @@ import { useEstadoDoConsentimento } from '@maestra/core/hooks/useConsent';
 
 import { useSessao } from '@/nucleo/sessao';
 
-/** A tela do próprio consentimento, que não pode expulsar quem está nela. */
-const CONSENTIMENTO = 'consentimento';
+/**
+ * As telas que o portão NÃO tranca.
+ *
+ * A do próprio consentimento, obviamente — ela não pode expulsar quem está nela.
+ *
+ * ⚠️ E AS OUTRAS DUAS SÃO O QUE SE PEDE PARA ACEITAR. A tela do consentimento liga para os
+ * Termos e para a Política, e tem um botão de falar com o suporte para quem errou a data de
+ * nascimento. Enquanto esses três destinos viviam no navegador, o portão nem os via; no dia em
+ * que passaram a ser telas daqui, sem esta lista ele devolvia a pessoa ao consentimento no
+ * instante em que ela tocava em "Termos de uso".
+ *
+ * Ou seja: pedir o aceite de um documento e trancar a porta do documento. O portão existe para
+ * garantir a coleta, e não para a impossibilitar.
+ */
+const LIVRES = ['consentimento', 'legal', 'suporte'];
 
 // O PORTÃO DO CONSENTIMENTO (LGPD).
 //
@@ -35,7 +48,7 @@ export const PortaoDoConsentimento = () => {
 
   useEffect(() => {
     if (!usuario || !state || state.satisfied) return;
-    if (segmentos[0] === CONSENTIMENTO) return;
+    if (LIVRES.includes(segmentos[0])) return;
     router.replace('/consentimento');
   }, [usuario, state, segmentos, router]);
 

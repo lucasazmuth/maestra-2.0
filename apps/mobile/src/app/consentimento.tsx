@@ -1,7 +1,7 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
-  ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView,
+  ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,8 +20,6 @@ import { sair } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
 import { Carregando } from '@/casca/Carregando';
 
-/** Os documentos legais vivem na web. */
-const SITE = 'https://www.maestramanager.com';
 
 // O CONSENTIMENTO (LGPD) — a coleta de maioridade e o aceite dos documentos.
 //
@@ -133,7 +131,7 @@ export default function Consentimento() {
                   </Text>
                   <Pressable
                     style={({ pressed }) => [estilos.botao, pressed && estilos.pressionado]}
-                    onPress={() => { void Linking.openURL(`${SITE}/suporte`); }}
+                    onPress={() => router.push('/suporte')}
                     accessibilityRole="button"
                     accessibilityLabel="Falar com o suporte"
                   >
@@ -180,7 +178,7 @@ export default function Consentimento() {
                         Li e aceito os{' '}
                         <Text
                           style={estilos.link}
-                          onPress={() => { void Linking.openURL(`${SITE}/legal/termos`); }}
+                          onPress={() => router.push('/legal/termos')}
                         >
                           Termos de uso
                         </Text>.
@@ -196,7 +194,7 @@ export default function Consentimento() {
                         Li e aceito a{' '}
                         <Text
                           style={estilos.link}
-                          onPress={() => { void Linking.openURL(`${SITE}/legal/privacidade`); }}
+                          onPress={() => router.push('/legal/privacidade')}
                         >
                           Política de privacidade
                         </Text>.

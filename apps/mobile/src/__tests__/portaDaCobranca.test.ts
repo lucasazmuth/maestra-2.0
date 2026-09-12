@@ -181,3 +181,64 @@ describe('o cadastro', () => {
     },
   );
 });
+
+// OS DOCUMENTOS E O SUPORTE, DENTRO DO APP.
+//
+// Os três abriam o navegador. Num app que vai para a loja isso é o contrário do que se quer: os
+// termos e a política são o que a pessoa precisa de ler ANTES de aceitar, e o suporte é onde ela
+// chega já com um problema. Mandá-la para fora — para uma aba que pode nem abrir — é perder as
+// três no pior momento.
+describe('as telas de termos, privacidade e suporte', () => {
+  const legal = fs.readFileSync(path.join(raiz, 'app', 'legal', '[slug].tsx'), 'utf8');
+  const suporte = fs.readFileSync(path.join(raiz, 'app', 'suporte.tsx'), 'utf8');
+  const conta = fs.readFileSync(path.join(raiz, 'app', 'conta.tsx'), 'utf8');
+  const consentimento = fs.readFileSync(path.join(raiz, 'app', 'consentimento.tsx'), 'utf8');
+
+  it('a conta leva às telas, e não ao site', () => {
+    ['/legal/termos', '/legal/privacidade', '/suporte'].forEach((rota) => {
+      expect(conta).toContain(`'${rota}'`);
+    });
+    // E o `SITE` deixou de ser aberto nestas linhas: o que sobrar dele na tela é outro assunto.
+    expect(conta).not.toMatch(/openURL\(`\$\{SITE\}\/(termos|privacidade|suporte)`\)/);
+  });
+
+  // ⚠️ A TELA DO CONSENTIMENTO É O CASO QUE IMPORTA: é ali que se pede o aceite, e o link para o
+  // documento tem de abrir o documento.
+  it('o consentimento liga para as telas do app', () => {
+    expect(consentimento).toContain("router.push('/legal/termos')");
+    expect(consentimento).toContain("router.push('/legal/privacidade')");
+    expect(consentimento).toContain("router.push('/suporte')");
+  });
+
+  // ⚠️ O TEXTO LEGAL NÃO É COPIADO. Ele vive em `constants/legal.ts` e as duas superfícies
+  // desenham-no; um segundo texto seriam dois contratos diferentes com o mesmo nome, e o que
+  // vale é o que a pessoa leu.
+  it('o documento vem do núcleo, e o parse é o partilhado', () => {
+    expect(legal).toContain("from '@maestra/core/constants/legal'");
+    expect(legal).toContain('LEGAL_DOCS[slug]');
+    expect(legal).toContain("from '@maestra/core/nucleo/markdownDaNyta'");
+    // Nem um pedaço de contrato escrito aqui: o ficheiro é curto porque só desenha.
+    expect(legal.length).toBeLessThan(6000);
+  });
+
+  it('os canais do suporte vêm do núcleo', () => {
+    expect(suporte).toContain("from '@maestra/core/constants/legal'");
+    ['SUPPORT_EMAIL', 'SUPPORT_WHATSAPP', 'SUPPORT_WHATSAPP_DISPLAY'].forEach((nome) => {
+      expect(suporte).toContain(nome);
+    });
+    // O endereço e o número NÃO escritos à mão: eles já estiveram copiados em três telas da web,
+    // e um errado num dos lugares só aparecia em produção.
+    expect(suporte).not.toMatch(/maestra@|\+55 21/);
+  });
+
+  // ⚠️ UM TOQUE QUE NÃO FAZ NADA É PIOR DO QUE UM BOTÃO AUSENTE, e este é o caso conhecido: o
+  // comentário da tela da web diz que o `mailto:` "só servia para quem tem cliente de e-mail
+  // configurado — no celular costuma abrir nada". Quem toca e não vê reação conclui que o
+  // suporte não funciona, e é justamente quem já está com um problema.
+  it('o canal que o aparelho não abre deixa o endereço copiado', () => {
+    expect(suporte).toContain('Linking.canOpenURL');
+    expect(suporte).toContain('Clipboard.setStringAsync');
+    // E a pessoa fica a saber: uma cópia silenciosa é igual a não acontecer nada.
+    expect(suporte).toContain('Copiado para a área de transferência');
+  });
+});
