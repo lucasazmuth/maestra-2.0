@@ -18,6 +18,7 @@ import {
 } from '@maestra/core/audio/grade';
 import { pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
 import { rotuloDaGuia } from '@maestra/core/audio/exportar';
+import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
 import { iniciais, type Presente } from '@maestra/core/audio/aoVivo';
 import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
 import { Clipe } from './Clipe';
@@ -963,7 +964,7 @@ export const EditorDaGravacao: FC<{
                 // Armar o transporte sem dizer em que pista é meia intenção: numa mesa, o REC
                 // global só sabe o que fazer se alguma pista estiver armada.
                 if (!armado && !armadas.length) {
-                  message.warning('Arme primeiro a faixa onde quer gravar, no botão vermelho dela.');
+                  message.warning(AVISO_DE_ARMAR.texto);
                   return;
                 }
                 setArmado((v) => !v);

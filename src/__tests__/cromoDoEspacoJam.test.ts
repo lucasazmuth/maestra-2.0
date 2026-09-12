@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
+
 import {
   ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE, CORES_DAS_PISTAS,
   ALTURA_DO_RODAPE, DS, ENCAIXE, LARGURA_DAS_FERRAMENTAS, LARGURA_DAS_PISTAS,
@@ -944,7 +946,17 @@ describe('cromo do editor do Espaço JAM', () => {
 
     // Armar o transporte sem pista é meia intenção: avisa em vez de armar.
     expect(corpo).toContain('if (!armado && !armadas.length)');
-    expect(corpo).toContain('Arme primeiro a faixa onde quer gravar');
+
+    // ⚠️ E AS PALAVRAS SÃO AS MESMAS NOS DOIS, porque vêm do núcleo. Elas já tinham divergido: a
+    // web dizia "no botão vermelho dela" e o aplicativo "toque no círculo vermelho da faixa" —
+    // o mesmo aviso, escrito duas vezes, a envelhecer em dois sítios.
+    expect(corpo).toContain('message.warning(AVISO_DE_ARMAR.texto)');
+    expect(semComentarios(app)).toContain('Alert.alert(AVISO_DE_ARMAR.titulo, AVISO_DE_ARMAR.texto)');
+
+    // ⚠️ O TEXTO APONTA PARA O BOTÃO, e não para o verbo: "arme a faixa" pede um gesto que não
+    // está escrito em lado nenhum da tela. Ninguém procura "armar" — procura onde carregar.
+    expect(AVISO_DE_ARMAR.texto).toContain('vermelho');
+    expect(AVISO_DE_ARMAR.texto).not.toMatch(/\bArme\b/i);
 
     // ⚠️ E COM TUDO ARMADO, O PLAY NÃO TOCA. Deixar a montagem simplesmente andar seria o pior
     // desfecho: a pessoa armou tudo, ouviu correr, e só descobria que não gravou ao procurar o

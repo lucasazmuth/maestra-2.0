@@ -28,7 +28,7 @@ import { useAnaliseDaVersao } from '@maestra/core/hooks/useAnaliseDaVersao';
 import { bpmLegivel, outroAndamento, podeOuvirSozinho } from '@maestra/core/services/db/audioJobs';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import {
-  LIMITE_DA_PISTA_BYTES, MAXIMO_DE_PISTAS, MEMORIA_DE_AVISO_BYTES,
+  AVISO_DE_ARMAR, LIMITE_DA_PISTA_BYTES, MAXIMO_DE_PISTAS, MEMORIA_DE_AVISO_BYTES,
 } from '@maestra/core/constants/maestra';
 import { AZUL_DO_EDITOR, COR, COR_EDITOR } from '@maestra/core/constants/design';
 import type {
@@ -1116,7 +1116,7 @@ export default function EspacoJam() {
     // Armar o transporte sem dizer em que pista é meia intenção: numa mesa, o REC global só
     // sabe o que fazer se alguma pista estiver armada.
     if (!armado && !armadas.length) {
-      Alert.alert('Arme a faixa primeiro', 'Toque no círculo vermelho da faixa onde quer gravar.');
+      Alert.alert(AVISO_DE_ARMAR.titulo, AVISO_DE_ARMAR.texto);
       return;
     }
     setArmado((v) => !v);

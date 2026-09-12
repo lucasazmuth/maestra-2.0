@@ -3,6 +3,7 @@ import { fireEvent, render, userEvent, waitFor } from '@testing-library/react-na
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
 import type { CatalogProject, CatalogTrack, CatalogVersion, CatalogVersionFile } from '@maestra/core/interfaces/maestra';
+import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
 
 import { partilharStems } from '@/casca/jam/mesa/exportarNativo';
 import { enviarParaOCatalogo, escolherAudio, escolherAudios } from '@/nucleo/arquivos';
@@ -910,7 +911,7 @@ describe('espaço jam', () => {
 
     fireEvent.press(await tela.findByLabelText('Armar para gravar'));
 
-    expect(aviso).toHaveBeenCalledWith('Arme a faixa primeiro', expect.stringContaining('círculo vermelho'));
+    expect(aviso).toHaveBeenCalledWith(AVISO_DE_ARMAR.titulo, AVISO_DE_ARMAR.texto);
     // E não ficou armado: o estado só muda quando o gesto faz sentido.
     expect(tela.getByLabelText('Armar para gravar')).toBeTruthy();
     aviso.mockRestore();
