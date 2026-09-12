@@ -1245,6 +1245,7 @@ const ProjectSpace: FC = () => {
           alternar: mesa.alternar,
           loopar: mesa.loopar,
           irPara: mesa.irPara,
+          posicaoAgora: mesa.posicaoAgora,
         }}
         podeEditar={podeEditar}
         acoes={acoes}

@@ -502,6 +502,39 @@ export const LinhaDoTempo = ({
     [grade, duracao, escala, passo],
   );
 
+  /**
+   * A RÉGUA E A GRELHA, DESENHADAS UMA VEZ — e não a cada tique.
+   *
+   * ⚠️ ESTA É A CONTA QUE ENGASGA O PLAY, e é a mesma na web. A grelha é desenhada DENTRO de
+   * cada faixa: com andamento escrito, uma música de dois minutos tem centenas de marcas, e uma
+   * dúzia de faixas multiplica-as por doze. São milhares de vistas reconstruídas vinte vezes por
+   * segundo — e nenhuma delas depende da agulha, que é a única coisa que o tique muda.
+   *
+   * Medido na web, na mesma montagem: com elas por guardar, 82 de 150 quadros passavam dos
+   * 32 ms, com picos de 486 ms; guardadas, 10 de 150 e um pico de 53.
+   */
+  const daRegua = useMemo(() => marcas.map((marca) => (
+    <View
+      key={marca.segundo}
+      style={[
+        estilos.marcaDaRegua,
+        { left: marca.segundo * escala, opacity: marca.forte ? 1 : 0.45 },
+      ]}
+    >
+      {!!marca.rotulo && <Text style={estilos.numeroDaRegua}>{marca.rotulo}</Text>}
+    </View>
+  )), [marcas, escala]);
+
+  const daGrelha = useMemo(() => marcas.map((marca) => (
+    <View
+      key={marca.segundo}
+      style={[
+        estilos.grelha,
+        { left: marca.segundo * escala, opacity: marca.forte ? 0.9 : 0.35 },
+      ]}
+    />
+  )), [marcas, escala]);
+
   return (
     // Uma ROLAGEM VERTICAL só, para as duas colunas — é o mesmo que a web faz, e impede o pior
     // erro que uma tela destas pode ter: o cabeçalho de uma pista alinhado com a faixa de
@@ -648,17 +681,7 @@ export const LinhaDoTempo = ({
               accessibilityRole="adjustable"
               accessibilityLabel="Levar a agulha"
             >
-              {marcas.map((marca) => (
-                <View
-                  key={marca.segundo}
-                  style={[
-                    estilos.marcaDaRegua,
-                    { left: marca.segundo * escala, opacity: marca.forte ? 1 : 0.45 },
-                  ]}
-                >
-                  {!!marca.rotulo && <Text style={estilos.numeroDaRegua}>{marca.rotulo}</Text>}
-                </View>
-              ))}
+              {daRegua}
             </Pressable>
 
             {!pistas.length && (
@@ -671,15 +694,7 @@ export const LinhaDoTempo = ({
 
             {pistas.map((pista, i) => (
               <View key={pista.id} style={[estilos.faixa, { width: largura }]}>
-                {marcas.map((marca) => (
-                  <View
-                    key={marca.segundo}
-                    style={[
-                      estilos.grelha,
-                      { left: marca.segundo * escala, opacity: marca.forte ? 0.9 : 0.35 },
-                    ]}
-                  />
-                ))}
+                {daGrelha}
                 {pista.clipes.map((clipe, n) => {
                   const dura = duracaoDoClipe(clipe.id) || clipe.duracao;
                   const larguraDoClipe = Math.max(dura * escala, 3);

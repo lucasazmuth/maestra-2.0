@@ -1,5 +1,6 @@
 import {
-  CSSProperties, FC, ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState,
+  CSSProperties, FC, ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef,
+  useState,
 } from 'react';
 import {
   FiAlertCircle, FiCheck, FiCircle, FiCornerUpLeft, FiCornerUpRight, FiDownload, FiFileText,
@@ -204,7 +205,19 @@ export const EditorDaGravacao: FC<{
   aoMontar?: () => void;
   estado: EstadoDaMesa;
   picos: (clipeId: string, n: number) => number[];
-  transporte: { alternar: () => void; loopar: (v: boolean) => void; irPara: (s: number) => void };
+  transporte: {
+    alternar: () => void;
+    loopar: (v: boolean) => void;
+    irPara: (s: number) => void;
+    /**
+     * Onde a agulha está AGORA, sem esperar pelo tique de 50 ms.
+     *
+     * É só para DESENHAR o que desliza — a rolagem e a linha vermelha — a sessenta quadros por
+     * segundo, sem redesenhar a montagem inteira sessenta vezes. Sai do mesmo relógio de
+     * amostras que alimenta o `estado`, e por isso os dois caminhos nunca discordam.
+     */
+    posicaoAgora?: () => number;
+  };
   /** O status da música, no topo: é o estado da OBRA, e anda com o nome dela. */
   ficha: ReactNode;
   /** O andamento e o tom da gravação aberta, no rodapé, junto dos outros controlos. */
@@ -432,13 +445,14 @@ export const EditorDaGravacao: FC<{
       requestAnimationFrame(() => {
         const caixa = rolagem.current;
         if (!caixa) return;
+        // Aqui mede-se de propósito: é o zoom que acabou de mudar o tamanho da montagem, e as
+        // medidas guardadas ainda são as de antes dele.
+        medirAVista();
         caixa.scrollLeft = rolagemQueCentra(
           agulha,
           PIXELS_POR_SEGUNDO * novo,
-          // A largura das ONDAS, e não a da tela: a coluna das faixas fica colada à esquerda
-          // por cima da montagem, e centrar na tela inteira punha a agulha em cima dela.
-          caixa.clientWidth - larguraDasPistas,
-          caixa.scrollWidth - caixa.clientWidth,
+          medidas.current.vista,
+          medidas.current.maximo,
         );
       });
       return novo;
@@ -459,6 +473,91 @@ export const EditorDaGravacao: FC<{
    */
   const seguindoAAgulha = useRef(false);
   const agulhaAntes = useRef(agulha);
+  const linhaDaAgulha = useRef<HTMLDivElement>(null);
+  /**
+   * As medidas da janela da montagem, guardadas.
+   *
+   * ⚠️ NÃO SE MEDEM A CADA QUADRO. Ler `scrollWidth` obriga o navegador a recalcular a posição
+   * de TUDO o que está na montagem antes de responder — e o laço de baixo escreve a rolagem no
+   * quadro anterior, o que deixa sempre alguma coisa por recalcular. Medido aqui a tocar, com o
+   * `scrollWidth` lido a cada quadro: 54 de 100 quadros passavam dos 32 ms, com picos de 349 ms.
+   * Era a própria correção da fluidez a criar o engasgo que ela vinha resolver.
+   *
+   * Elas só mudam quando a montagem muda de tamanho — o zoom, a duração, a janela — e é aí que
+   * se voltam a medir.
+   */
+  const medidas = useRef({ vista: 0, maximo: 0 });
+  const medirAVista = useCallback(() => {
+    const caixa = rolagem.current;
+    if (!caixa) return;
+    medidas.current = {
+      vista: caixa.clientWidth - larguraDasPistas,
+      maximo: caixa.scrollWidth - caixa.clientWidth,
+    };
+  }, [larguraDasPistas]);
+  useLayoutEffect(() => {
+    medirAVista();
+    window.addEventListener('resize', medirAVista);
+    return () => window.removeEventListener('resize', medirAVista);
+  }, [medirAVista, escala, largura, pistas.length]);
+
+  /**
+   * O DESLIZE, A SESSENTA QUADROS POR SEGUNDO — e fora do React.
+   *
+   * ⚠️ O TIQUE DA MESA É DE 50 ms, e tem de continuar a ser. Com uma dúzia de faixas, cada
+   * redesenho da montagem é caro: medido neste editor a tocar, 34 de 150 quadros passavam dos
+   * 32 ms. Subir o tique para sessenta redesenhos por segundo tornaria isso três vezes pior.
+   *
+   * Só que o que se MEXE precisa dos sessenta. Com a agulha travada no meio e a montagem a
+   * deslizar por baixo, vinte passos por segundo veem-se um a um — é a "travadinha" de quem
+   * está a olhar para a música a passar.
+   *
+   * A saída é separar as duas coisas: o React continua a redesenhar vinte vezes por segundo (o
+   * relógio, os botões, os clipes), e o que desliza — a rolagem e a linha vermelha — escreve-se
+   * à mão a cada quadro, lido do relógio do ÁUDIO. São dois caminhos para o mesmo número, e por
+   * isso nunca discordam: `posicaoAgora()` sai do mesmo relógio de amostras que alimenta o
+   * `estado`.
+   *
+   * ⚠️ E SÓ ENQUANTO ELA ESTÁ TRAVADA. No primeiro modo é a agulha que anda sobre uma montagem
+   * parada, e aí os 50 ms do tique bastam — mexer na rolagem ali seria mexer no que a pessoa
+   * está a olhar. O laço também não corre com a agulha na mão nem com a música parada.
+   */
+  useEffect(() => {
+    const agora = transporte.posicaoAgora;
+    if (!estado.tocando || !agora) return undefined;
+    let vivo = true;
+    let antes = agora();
+    const quadro = () => {
+      if (!vivo) return;
+      requestAnimationFrame(quadro);
+      const caixa = rolagem.current;
+      if (!caixa || agulhaPresa.current) return;
+
+      const segundo = agora();
+      // ⚠️ A DECISÃO TAMBÉM É DAQUI, e não do tique. Deixada no caminho do React, a troca para o
+      // modo travado chegava até 50 ms atrasada: a agulha passava a borda e só depois saltava
+      // para o meio. O tique continua a decidir quando a música está PARADA — um toque na régua,
+      // as setas —, que é onde ele é o único caminho.
+      const passo = passoDaVista({
+        segundo,
+        anterior: antes,
+        escala,
+        rolagemAtual: caixa.scrollLeft,
+        larguraVisivel: medidas.current.vista,
+        maximo: medidas.current.maximo,
+        seguindo: seguindoAAgulha.current,
+      });
+      antes = segundo;
+      agulhaAntes.current = segundo;
+      seguindoAAgulha.current = passo.seguindo;
+      if (passo.rolagem !== null) caixa.scrollLeft = passo.rolagem;
+      // A linha anda com a rolagem NO MESMO QUADRO: escrita só uma delas, a agulha voltava a
+      // tremer — é a mesma dessincronia que o efeito de layout resolve no caminho do React.
+      if (linhaDaAgulha.current) linhaDaAgulha.current.style.left = `${segundo * escala}px`;
+    };
+    requestAnimationFrame(quadro);
+    return () => { vivo = false; };
+  }, [estado.tocando, transporte.posicaoAgora, escala, larguraDasPistas]);
   /**
    * ⚠️ `useLayoutEffect`, E ISTO É A DIFERENÇA ENTRE PARADA E AOS SALTOS.
    *
@@ -477,6 +576,10 @@ export const EditorDaGravacao: FC<{
     const antes = agulhaAntes.current;
     agulhaAntes.current = agulha;
     if (!caixa || agulhaPresa.current) return;
+    // ⚠️ A TOCAR, QUEM MANDA É O LAÇO DE QUADRO. Os dois a escreverem a mesma rolagem davam
+    // exatamente o tremor que este caminho existe para evitar: o laço põe-na no sítio do
+    // relógio de agora, e 50 ms depois este punha-a no sítio do tique, meio passo atrás.
+    if (estado.tocando) return;
 
     const passo = passoDaVista({
       segundo: agulha,
@@ -485,8 +588,8 @@ export const EditorDaGravacao: FC<{
       rolagemAtual: caixa.scrollLeft,
       // A largura das ONDAS: a coluna das faixas fica colada à esquerda por cima da montagem, e
       // o que está debaixo dela não está à vista.
-      larguraVisivel: caixa.clientWidth - larguraDasPistas,
-      maximo: caixa.scrollWidth - caixa.clientWidth,
+      larguraVisivel: medidas.current.vista,
+      maximo: medidas.current.maximo,
       seguindo: seguindoAAgulha.current,
     });
     seguindoAAgulha.current = passo.seguindo;
@@ -494,7 +597,48 @@ export const EditorDaGravacao: FC<{
     // por segundo enquanto a linha está travada: uma rolagem suave a cada passo nunca chegaria
     // ao destino antes do passo seguinte, e a montagem ficava sempre meia tela atrasada.
     if (passo.rolagem !== null) caixa.scrollLeft = passo.rolagem;
-  }, [agulha, escala, larguraDasPistas]);
+  }, [agulha, escala, larguraDasPistas, estado.tocando]);
+
+  /**
+   * A RÉGUA E A GRELHA, DESENHADAS UMA VEZ — e não a cada tique.
+   *
+   * ⚠️ ESTA ERA A CONTA QUE ENGASGAVA O PLAY. A grelha é desenhada DENTRO de cada faixa: com
+   * 150 de andamento, uma música de dois minutos tem umas centenas de marcas, e treze faixas
+   * multiplicam-nas por treze. Eram milhares de elementos reconstruídos vinte vezes por segundo
+   * — e nenhum deles depende da agulha, que é a única coisa que o tique muda.
+   *
+   * Medido aqui, a 173 %: 82 de 150 quadros passavam dos 32 ms, com picos de 486 ms. Parada, a
+   * mesma tela não tinha um único quadro lento.
+   *
+   * Guardados, os dois voltam ao React como o MESMO elemento, e ele salta o ramo inteiro.
+   */
+  const daRegua = useMemo(() => marcas.map((marca) => (
+    <div
+      key={marca.segundo}
+      style={{
+        position: 'absolute', left: marca.segundo * escala, top: 0, bottom: 0,
+        paddingLeft: 6,
+        borderLeft: `1px solid ${marca.forte ? DS.color.grelhaForte : DS.color.grelhaFraca}`,
+        fontSize: 10, color: DS.color.textoFraco, lineHeight: `${ALTURA_DA_REGUA}px`,
+      }}
+    >
+      {marca.rotulo}
+    </div>
+  )), [marcas, escala]);
+
+  const daGrelha = useMemo(() => marcas.map((marca) => (
+    <div
+      key={marca.segundo}
+      style={{
+        position: 'absolute', left: marca.segundo * escala, top: 0, bottom: 0,
+        width: 1,
+        // O compasso risca mais forte do que o tempo: é ele que se conta de olho, e uma grelha
+        // toda igual não se conta.
+        background: marca.forte ? DS.color.grelhaForte : DS.color.grelhaFraca,
+        opacity: marca.forte ? 1 : 0.6,
+      }}
+    />
+  )), [marcas, escala]);
 
   const segundoDoEvento = (evento: { clientX: number }) => {
     const caixa = linha.current;
@@ -1315,19 +1459,7 @@ export const EditorDaGravacao: FC<{
                     cursor: 'pointer', userSelect: 'none',
                   }}
                 >
-                  {marcas.map((marca) => (
-                    <div
-                      key={marca.segundo}
-                      style={{
-                        position: 'absolute', left: marca.segundo * escala, top: 0, bottom: 0,
-                        paddingLeft: 6,
-                        borderLeft: `1px solid ${marca.forte ? DS.color.grelhaForte : DS.color.grelhaFraca}`,
-                        fontSize: 10, color: DS.color.textoFraco, lineHeight: `${ALTURA_DA_REGUA}px`,
-                      }}
-                    >
-                      {marca.rotulo}
-                    </div>
-                  ))}
+                  {daRegua}
                   {/* ⚠️ A DICA É DE RATO, e por isso não vive no telemóvel: lá não há duplo
                       clique, a edição de clipes está desligada (`semEdicao`), e a frase ainda
                       por cima ia escrever-se por cima dos números da régua. */}
@@ -1355,19 +1487,7 @@ export const EditorDaGravacao: FC<{
                           position: 'relative',
                         }}
                       >
-                        {marcas.map((marca) => (
-                          <div
-                            key={marca.segundo}
-                            style={{
-                              position: 'absolute', left: marca.segundo * escala, top: 0, bottom: 0,
-                              width: 1,
-                              // O compasso risca mais forte do que o tempo: é ele que se conta
-                              // de olho, e uma grelha toda igual não se conta.
-                              background: marca.forte ? DS.color.grelhaForte : DS.color.grelhaFraca,
-                              opacity: marca.forte ? 1 : 0.6,
-                            }}
-                          />
-                        ))}
+                        {daGrelha}
 
                         {(faixa.clips ?? []).map((clipe, ordem) => (
                           <Clipe
@@ -1439,6 +1559,7 @@ export const EditorDaGravacao: FC<{
                       pai — e mudar de pai custava-lhe a coordenada horizontal, que é a da
                       pilha. */}
                   <div
+                    ref={linhaDaAgulha}
                     onPointerDown={() => { agulhaPresa.current = true; }}
                     data-agulha=''
                     style={{

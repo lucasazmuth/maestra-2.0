@@ -515,6 +515,71 @@ describe('cromo do editor do Espaço JAM', () => {
     });
   });
 
+  // ⚠️ A RÉGUA E A GRELHA DESENHAM-SE UMA VEZ, NAS DUAS — e não a cada tique.
+  //
+  // A grelha é desenhada DENTRO de cada faixa: com andamento escrito, uma música de dois minutos
+  // tem centenas de marcas, e uma dúzia de faixas multiplica-as por doze. Eram milhares de
+  // elementos reconstruídos vinte vezes por segundo, e nenhum deles depende da agulha — que é a
+  // única coisa que o tique muda. Era isso que fazia o play engasgar.
+  //
+  // Medido no navegador, na mesma montagem e no mesmo zoom: por guardar, 82 de 150 quadros
+  // passavam dos 32 ms com picos de 486; guardadas, 10 de 150 com um pico de 53.
+  it('a régua e a grelha não se reconstroem a cada tique, nas duas', () => {
+    const oEditor = semComentarios(editor);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    [oEditor, aLinhaDoTempo].forEach((fonte) => {
+      // Guardadas, com as medidas de que dependem — e SÓ com elas: a agulha aqui dentro punha-as
+      // a refazer-se vinte vezes por segundo outra vez.
+      expect(fonte).toContain('const daRegua = useMemo(');
+      expect(fonte).toContain('const daGrelha = useMemo(');
+      // ⚠️ AS DUAS, E COM ESTAS DEPENDÊNCIAS. Escrito com um `toContain`, este caso deixava
+      // passar a agulha nas dependências de UMA delas — a outra bastava para o satisfazer, e a
+      // mutação que a punha lá sobrevivia. Com a agulha ali dentro, o desenho volta a refazer-se
+      // vinte vezes por segundo e o engasgo volta com ele.
+      expect(fonte.match(/\), \[marcas, escala\]\);/g)).toHaveLength(2);
+      // E desenhadas pelo que está guardado, em vez de mapeadas no sítio.
+      expect(fonte).toContain('{daRegua}');
+      expect(fonte).toContain('{daGrelha}');
+      // ⚠️ E DUAS VEZES, E NÃO MAIS: as duas que estão DENTRO dos guardados. Uma terceira é um
+      // mapa desenhado no sítio outra vez, que é o defeito a voltar.
+      expect(fonte.match(/marcas\.map\(/g)).toHaveLength(2);
+    });
+  });
+
+  // ⚠️ A LINHA E A ROLAGEM DESLIZAM FORA DO REACT, na web.
+  //
+  // O tique da mesa é de 50 ms e tem de continuar a ser — com uma dúzia de faixas, cada
+  // redesenho é caro. Mas o que se MEXE precisa dos sessenta quadros: com a agulha travada no
+  // meio, vinte passos por segundo veem-se um a um. Por isso a rolagem e a linha escrevem-se à
+  // mão a cada quadro, lidas do relógio do ÁUDIO — o mesmo de que sai o `estado`, e por isso os
+  // dois caminhos nunca discordam sobre onde a música está.
+  it('a web desliza a sessenta quadros, lendo o relógio do áudio', () => {
+    const oEditor = semComentarios(editor);
+    const aTela = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', 'pages', 'Catalog', 'ProjectSpace.tsx'), 'utf8',
+    ));
+
+    expect(oEditor).toContain('requestAnimationFrame(quadro)');
+    expect(oEditor).toContain('const segundo = agora();');
+    expect(aTela).toContain('posicaoAgora: mesa.posicaoAgora');
+
+    // ⚠️ E AS MEDIDAS NÃO SE LEEM A CADA QUADRO. Pedir `scrollWidth` obriga o navegador a
+    // recalcular a posição de tudo antes de responder, e o laço já escreveu a rolagem no quadro
+    // anterior: era a própria correção da fluidez a criar o engasgo que vinha resolver.
+    const oLaco = oEditor.slice(oEditor.indexOf('const quadro = ()'));
+    const corpo = oLaco.slice(0, oLaco.indexOf('requestAnimationFrame(quadro);\n    return'));
+    expect(corpo).toContain('medidas.current.vista');
+    expect(corpo).not.toContain('scrollWidth');
+    expect(corpo).not.toContain('clientWidth');
+
+    // ⚠️ E UM DONO DE CADA VEZ. A tocar manda o laço; o caminho do React só decide com a música
+    // parada — os dois a escreverem a mesma rolagem davam meio passo de diferença, que é o
+    // tremor que tudo isto existe para evitar.
+    const oDeLayout = oEditor.slice(oEditor.indexOf('useLayoutEffect(() => {\n    const caixa'));
+    expect(oDeLayout.slice(0, oDeLayout.indexOf('passoDaVista('))).toContain('if (estado.tocando) return;');
+  });
+
   // ⚠️ DOIS MODOS DE ROLAGEM, NAS DUAS TELAS — e não um.
   //
   // Primeiro a agulha anda e a montagem está quieta, como sempre esteve. No instante em que ela
@@ -551,9 +616,12 @@ describe('cromo do editor do Espaço JAM', () => {
       //
       // Medido no navegador: com o efeito de layout a agulha fica a meio pixel do centro ao
       // longo de 120 quadros. Sem ele, ela salta o passo inteiro de cada tique.
-      const daVista = fonte.slice(0, fonte.indexOf('passoDaVista({'));
-      expect(daVista.slice(daVista.lastIndexOf('useLayoutEffect'))).toContain('=> {');
-      expect(daVista.lastIndexOf('useLayoutEffect')).toBeGreaterThan(daVista.lastIndexOf('useEffect('));
+      //
+      // Na web o dono a tocar é o laço de quadro; o que tem de ser de LAYOUT é o caminho do
+      // React, que decide com a música parada. No aparelho é o único caminho, e por isso é ele.
+      const oDaVista = fonte.slice(0, fonte.lastIndexOf('passoDaVista({'));
+      expect(oDaVista.lastIndexOf('useLayoutEffect'))
+        .toBeGreaterThan(oDaVista.lastIndexOf('useEffect('));
     });
 
     // ⚠️ E A AGULHA PRESA NA MÃO NÃO SE SEGUE, na web. Arrastá-la para fora do que se vê é um
@@ -1473,7 +1541,11 @@ describe('cromo do editor do Espaço JAM', () => {
 
     // ⚠️ UMA LISTA SÓ para a régua e para as linhas das pistas: enquanto cada uma contava por
     // sua conta, bastava mexer numa para o número deixar de assentar na linha que nomeia.
-    expect(corpo.match(/\{marcas\.map\(\(marca\) => \(/g)).toHaveLength(2);
+    //
+    // Os dois desenhos que saem dela estão GUARDADOS, e é lá dentro que ela se percorre agora —
+    // este caso lia o mapa no sítio onde ele era desenhado, e mudou de sítio quando o desenho
+    // passou a ser feito uma vez só.
+    expect(corpo.match(/marcas\.map\(\(marca\) => \(/g)).toHaveLength(2);
     expect(corpo).not.toContain('Math.floor(duracao / passo) + 1');
 
     // E o encaixe deixou de ser o quarto de segundo fixo: segue a grelha e o zoom.
