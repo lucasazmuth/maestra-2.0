@@ -1381,6 +1381,11 @@
     box-shadow: 0 6px 14px rgba(46, 72, 117, .04);
   }
   .matrixTypeName { color: #52668d; font-size: 13px; }
+  .matrixTypeToggle { background: #fff; border-color: #dfe6f1; &:hover { background: #f4f7ff; border-color: #c3d3ee; } }
+  .matrixTypeValor { color: #1a8f45; }
+  .matrixTypeVazio { color: #8ea0bf; }
+  .escapeBotao { border-color: rgba(26, 143, 69, .5); color: #1a8f45; &:hover { background: rgba(26, 143, 69, .07); } }
+  .escapeLink { color: #7c8da8; &:hover { color: #1a8f45; } }
   .porteChips { gap: 7px; }
   .porteChip {
     min-width: 62px;
@@ -2453,7 +2458,11 @@ $docLow: #8b9ab4;
 
   &:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.14); }
 }
+// ⚠️ O VAZIO NÃO PODE PARECER RESPOSTA. A linha fechada mostra a faixa escolhida — e quando não
+// há escolha, mostra "Não atendo". Com as duas no mesmo verde, seis linhas intocadas liam-se
+// como seis respostas afirmativas, e a que a pessoa de facto deu não se distinguia das outras.
 .matrixTypeValor { font-size: 13px; font-weight: 700; color: #1db954; flex-shrink: 0; }
+.matrixTypeVazio { color: #8a8a93; font-weight: 600; }
 
 // O escape (QE.2b e QD.2b): abre um desvio EM VEZ DE responder, e por isso não se parece com
 // uma opção. O de QE.2 é um botão de contorno; o de QD.2b é um link, porque é um "se quiser".

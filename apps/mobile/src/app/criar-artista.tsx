@@ -735,7 +735,10 @@ export default function CriarArtista() {
                                   accessibilityLabel={linha.label}
                                 >
                                   <Text style={estilos.nomeDoTipo}>{linha.label}</Text>
-                                  <Text style={estilos.valorDaLinha}>
+                                  <Text style={[
+                                    estilos.valorDaLinha, !escolhida && estilos.valorVazio,
+                                  ]}
+                                  >
                                     {escolhida ? escolhida.label : 'Não atendo'}
                                   </Text>
                                 </Pressable>
@@ -1039,7 +1042,11 @@ const estilos = StyleSheet.create({
   linhaExpansivel: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12,
   },
+  // ⚠️ O VAZIO NÃO PODE PARECER RESPOSTA. A linha fechada mostra a faixa escolhida, e "Não
+  // atendo" quando não há escolha. Com as duas no mesmo verde, seis linhas intocadas liam-se como
+  // seis respostas afirmativas, e a que a pessoa deu não se distinguia das outras.
   valorDaLinha: { fontSize: 13, fontWeight: '700', color: COR_DIAGNOSTICO.acima },
+  valorVazio: { fontWeight: '600', color: COR_DIAGNOSTICO.fonte },
 
   receita: { gap: 14 },
   linhaDeReceita: { gap: 8 },

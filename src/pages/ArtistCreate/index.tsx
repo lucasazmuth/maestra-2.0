@@ -718,7 +718,7 @@ const ArtistCreate: FC = () => {
                                 onClick={() => setLinhaAberta(aberta ? null : linha.key)}
                               >
                                 <span className={styles.matrixTypeName}>{linha.label}</span>
-                                <span className={styles.matrixTypeValor}>
+                                <span className={`${styles.matrixTypeValor} ${escolhida ? '' : styles.matrixTypeVazio}`}>
                                   {escolhida ? escolhida.label : 'Não atendo'}
                                 </span>
                               </button>
