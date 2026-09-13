@@ -73,6 +73,11 @@ const montar = () => render(
 );
 
 describe('a Nyta', () => {
+  // O `mockPush` é partilhado entre os casos, e há um que afirma que ele NÃO foi chamado. Sem
+  // limpar, o primeiro teste que navegue faz o vizinho falhar — e a falha aponta para o teste
+  // errado, que é o pior tipo.
+  beforeEach(() => { mockPush.mockClear(); });
+
   it('sem PRO, explica o bloqueio em vez de deixar perguntar', async () => {
     mockPro = false;
     const tela = await montar();
@@ -81,6 +86,31 @@ describe('a Nyta', () => {
     expect(tela.getByText(/Assine o PRO/)).toBeTruthy();
     // O ponto todo: não existe campo pra escrever numa pergunta que o servidor vai recusar.
     expect(tela.queryByLabelText('Pergunte algo à Nyta')).toBeNull();
+  });
+
+  // ⚠️ E DÁ PARA SAIR DELA, que é o que faltava.
+  //
+  // Esta tela substituía o ecrã inteiro: sem seta, sem barra de abas, sem nada. Quem tocava na
+  // estrela da Nyta sem ser PRO ficava preso numa tela de venda e só saía fechando o app. A web
+  // nunca teve o problema porque o `LockedFeature` desenha dentro do `Layout`, com a lateral e o
+  // cabeçalho sempre presentes; aqui não há casca nenhuma à volta.
+  it('sem PRO, dá para voltar ao perfil', async () => {
+    mockPro = false;
+    const tela = await montar();
+    const usuario = userEvent.setup();
+
+    await usuario.press(tela.getByLabelText('Sair da conversa'));
+
+    expect(mockPush).toHaveBeenCalledWith('/artista/a-1');
+  });
+
+  // O botão das conversas não entra no bloqueio: sem PRO não há conversa nenhuma para listar, e
+  // ele seria uma porta para uma sala vazia.
+  it('sem PRO, o cabeçalho não oferece as conversas', async () => {
+    mockPro = false;
+    const tela = await montar();
+
+    expect(tela.queryByLabelText('Ver as conversas')).toBeNull();
   });
 
   // A conversa em branco abre com UMA LINHA, e não com a apresentação de sete que a Nyta
