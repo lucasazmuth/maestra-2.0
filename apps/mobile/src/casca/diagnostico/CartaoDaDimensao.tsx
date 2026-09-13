@@ -243,13 +243,17 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
       </View>
 
       <View style={estilos.regua}>
-        {/* TOP ICON enche a régua em dourado: uma barra pela metade contradiria o selo. */}
+        {/* ⚠️ A régua mostra a NOTA, sempre — ver a nota longa em DiagnosticReport.tsx. O Top Tier
+            muda a cor, não o comprimento: o L pode ser Top Tier com 74. */}
         <View
           style={[
             estilos.preenchimento,
-            topo
-              ? { width: '100%', backgroundColor: COR_DIAGNOSTICO.topoAte }
-              : { width: `${nota}%`, backgroundColor: alta ? COR.primaria : COR_DIAGNOSTICO.bolinhaApagada },
+            { width: `${nota}%` },
+            {
+              backgroundColor: topo
+                ? COR_DIAGNOSTICO.topoAte
+                : (alta ? COR.primaria : COR_DIAGNOSTICO.bolinhaApagada),
+            },
           ]}
         />
         {/* As duas marcas: 70 acende, 100 é TOP ICON. Sem elas a nota não diz se passou. */}

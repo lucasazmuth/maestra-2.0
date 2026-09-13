@@ -900,7 +900,20 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
     profile: { key, name: def.name, description: def.description, insights: def.insights },
     pattern,
     boletim: {
-      r: boletimR(rSuficiente ? rPresentes : rComps, rHigh),
+      // ⚠️ SEMPRE SOBRE OS PRESENTES, e nunca sobre os três (§11.2).
+      //
+      // O `rSuficiente` decide se a dimensão PODE ACENDER (§6.4: menos de dois componentes é
+      // sinal raso demais). Ele não autoriza trocar o divisor da nota — e trocava: com um só
+      // componente presente, os outros dois entravam na média a valer progresso zero.
+      //
+      // O efeito era uma inversão de monotonicidade. Um artista com 2 milhões de views/mês no
+      // YouTube e mais nada lia 23. O MESMO artista, depois de declarar mil seguidores no
+      // Instagram — o pior valor que a tabela admite —, passava a ler 40: a nota subia 17 pontos
+      // por ele ter acrescentado a rede mais fraca possível, porque o divisor caía de 3 para 2.
+      // E ligar o Spotify baixava a nota de 35 para 23, pela mesma conta ao contrário.
+      //
+      // `boletimR` já devolve 0 para lista vazia, então "nenhum componente presente" continua 0.
+      r: boletimR(rPresentes, rHigh),
       e: boletimE,
       a: boletimA(aComps, aHigh),
       l: boletimL,

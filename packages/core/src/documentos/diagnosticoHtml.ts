@@ -319,7 +319,9 @@ const paginasDaDimensao = (
     </div>
 
     <div class="regua">
-      <div class="reguaCheia" style="width:${topo ? 100 : nota}%;background:${cor}"></div>
+      ${/* ⚠️ A régua mostra a NOTA, sempre — ver a nota longa em DiagnosticReport.tsx. O Top Tier
+           muda a cor, não o comprimento: o L pode ser Top Tier com 74. */ ''}
+      <div class="reguaCheia" style="width:${nota}%;background:${cor}"></div>
     </div>
     <div class="dimEstado">${escapar(statusDaBarra(ri, dk))}</div>
 

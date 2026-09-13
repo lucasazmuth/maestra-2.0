@@ -127,8 +127,12 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; nLeitura: number | 
       </div>
 
       <div className={styles.docRuler2}>
-        {/* Top Tier: a barra enche até o selo, coerente com o selo do motor. */}
-        <div className={styles.docRulerFill2} style={top ? { width: '100%', background: 'linear-gradient(90deg,#2c3f63,#7c8da8)' } : { width: `${score}%`, background: color }} />
+        {/* ⚠️ A régua mostra a NOTA, sempre — ver a nota longa em DiagnosticReport.tsx. O Top Tier
+            muda a cor, não o comprimento: o L pode ser Top Tier com 74. */}
+        <div
+          className={styles.docRulerFill2}
+          style={{ width: `${score}%`, background: top ? 'linear-gradient(90deg,#2c3f63,#7c8da8)' : color }}
+        />
         <span className={styles.docRulerMark2} style={{ left: '70%' }} data-label="acende" />
         <span className={styles.docRulerMark2} style={{ left: '100%' }} data-label="Top Tier" />
       </div>

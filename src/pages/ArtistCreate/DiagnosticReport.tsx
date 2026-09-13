@@ -310,8 +310,19 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
         </div>
       </div>
       <div className={styles.ruler}>
-        {/* TOP ICON (flag do motor): a barra enche até o selo em dourado, pra não contradizer o selo. */}
-        <div className={styles.rulerFill} style={top ? { width: '100%', background: 'linear-gradient(90deg,#f5c451,#e0a13c)' } : { width: `${score}%` }} />
+        {/*
+          ⚠️ A RÉGUA MOSTRA A NOTA, SEMPRE. O dourado é do selo; o comprimento é do número.
+
+          O L é a única dimensão em que o patamar de elite não implica nota 100 (§9 e §11.2): quem
+          tem prémio internacional e nota_L de 0,74 é Top Tier com 74. A régua enchia até ao fim
+          nesse caso "para não contradizer o selo" — e passava a contradizer o NÚMERO, impresso ao
+          lado dela. O cartão dizia TOP TIER · 74/100 com a barra cheia, e o cartão de cima dizia
+          ACESA · 90/100 · faltam 10 pontos para o Top Tier.
+        */}
+        <div
+          className={styles.rulerFill}
+          style={{ width: `${score}%`, ...(top ? { background: 'linear-gradient(90deg,#f5c451,#e0a13c)' } : {}) }}
+        />
         <span className={styles.rulerMark} style={{ left: '70%' }} data-label="acende" />
         <span className={styles.rulerMark} style={{ left: '100%' }} data-label="TOP ICON" />
       </div>

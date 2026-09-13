@@ -299,6 +299,68 @@ describe('§7 E · Earnings', () => {
   });
 });
 
+// ⚠️ A NOTA DO R É SEMPRE SOBRE OS COMPONENTES PRESENTES (§11.2), mesmo quando são menos de dois.
+//
+// O `rSuficiente` do §6.4 decide se a dimensão PODE ACENDER; não decide o divisor da nota. Enquanto
+// decidiu, havia uma inversão de monotonicidade que este bloco existe para tornar impossível:
+// acrescentar a rede MAIS FRACA que a tabela admite fazia a nota SUBIR, porque o divisor caía de
+// três para dois. Um artista com 2 milhões de views no YouTube lia 23; depois de declarar mil
+// seguidores no Instagram, lia 40.
+describe('§11.2 a nota do R divide pelos presentes', () => {
+  const soVideo = { youtubeMonthlyViews: 2_000_000 };
+
+  it('um componente sozinho no topo vale a nota cheia da metade apagada', () => {
+    const ri = computeRealIndexV4(base(soVideo));
+
+    expect(ri.components.r.filter((c) => c.present)).toHaveLength(1);
+    expect(ri.pattern.r).toBe(false);          // §6.4 — com um só, não acende
+    expect(ri.flags.rComponentesInsuficientes).toBe(true);
+    // O progresso do único presente é 1, e a invariante do §11.1 trava a metade apagada em 69.
+    expect(ri.boletim.r).toBe(69);
+  });
+
+  // A inversão, dita como propriedade: nenhuma rede acrescentada pode AUMENTAR a nota quando ela
+  // entra abaixo do corte. A média sobre os presentes garante isto sozinha.
+  it.each([
+    ['Instagram com mil seguidores', { igFollowersSelf: 1_000 }],
+    ['TikTok com mil seguidores', { tiktokFollowersSelf: 1_000 }],
+    ['as duas redes fracas de uma vez', { igFollowersSelf: 1_000, tiktokFollowersSelf: 1_000 }],
+  ])('declarar %s nunca faz a nota subir', (_nome, fraca) => {
+    const antes = computeRealIndexV4(base(soVideo)).boletim.r;
+    const depois = computeRealIndexV4(base({ ...soVideo, ...fraca })).boletim.r;
+
+    expect(depois).toBeLessThanOrEqual(antes);
+  });
+
+  // E o Spotify pela mesma conta ao contrário: sem ele, os ouvintes entram presentes no piso da
+  // tabela (§4), o que é UM componente fraco a mais. Ligá-lo não pode piorar a leitura.
+  it('ligar o Spotify não baixa a nota de quem não tem ouvintes', () => {
+    const semSpotify = computeRealIndexV4(base({ ...soVideo, spotifyConnected: false })).boletim.r;
+    const comSpotify = computeRealIndexV4(base(soVideo)).boletim.r;
+
+    expect(comSpotify).toBeGreaterThanOrEqual(semSpotify);
+  });
+
+  it('sem componente nenhum presente, a nota é zero', () => {
+    const ri = computeRealIndexV4(base({ spotifyConnected: true }));
+
+    expect(ri.components.r.filter((c) => c.present)).toHaveLength(0);
+    expect(ri.boletim.r).toBe(0);
+  });
+
+  // A média sobre os presentes continua a valer onde já valia. E repare no número: mil seguidores
+  // NÃO valem progresso zero — dão z = −1,2 contra um piso de tabela de −1,5, ou seja 15% do
+  // caminho até o corte. Por isso a nota cai para 40 e não para metade de 69: é a média de 1,00 e
+  // 0,15. O valor antigo deste mesmo caso também era 40, e era aí que a inversão se via — o caso
+  // de cima valia 23.
+  it('com dois presentes, a nota é a média deles e não a dos três', () => {
+    const ri = computeRealIndexV4(base({ ...soVideo, igFollowersSelf: 1_000 }));
+
+    expect(ri.components.r.filter((c) => c.present)).toHaveLength(2);
+    expect(ri.boletim.r).toBe(40);
+  });
+});
+
 describe('§8 A · Audience', () => {
   it('acende com os três componentes altos', () => {
     expect(computeRealIndexV4(base(A_ON)).pattern.a).toBe(true);
