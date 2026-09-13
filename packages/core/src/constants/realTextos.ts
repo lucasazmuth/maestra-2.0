@@ -129,6 +129,15 @@ export const FIXOS = {
   F19: 'Executou o plano e cresceu? Refaça o REAL pra ver sua fase subir.',
   F20: 'Baixar diagnóstico (PDF)',
   F21: 'O que é esta frente',
+  F22: 'Você respondeu o saldo em faixa, e isso basta pro diagnóstico. Quando refizer, detalhe receitas e custos: aí o relatório mostra de onde vem o seu dinheiro, quanto custa cada show e quantos shows cobrem o seu ano.',
+  /**
+   * O rótulo dos valores do caminho detalhado (§10).
+   *
+   * ⚠️ Só vale quando o detalhamento veio de FAIXAS. Um build antigo da loja manda os mesmos
+   * campos em reais DIGITADOS, e chamar de "cerca de" um número que a pessoa escreveu seria uma
+   * mentira pequena, mas uma mentira. Quem decide é `emFaixas`, e a grafia sai de `cercaDe`.
+   */
+  F23: 'cerca de',
 } as const;
 
 /** Títulos que acompanham os fixos, quando a spec os traz junto (§10). */
@@ -173,6 +182,14 @@ export const COMENTARIOS: Record<string, string> = {
   'E2.a': 'Quase tudo vem de uma fonte só. {fonte_dominante} responde por {pct} da sua receita. Uma fonte concentrando quase tudo deixa a carreira exposta: se ela esfria, a receita inteira sente. A música pode gerar renda por muitos caminhos.',
   'E2.c': 'Sua receita é bem distribuída. O dinheiro vem de várias frentes, sem depender de nenhuma sozinha. É a configuração mais estável que uma carreira pode ter, e é a que menos artista tem.',
   'E2.b': 'Sua receita tem mais de uma perna. {fonte1} e {fonte2} dividem o faturamento. Isso dá estabilidade: quando uma oscila, a outra segura. É uma base melhor do que a de muita carreira maior que a sua.',
+  // ── E3-F · a saúde do saldo no caminho direto (§7.5) ──
+  //
+  // Os mesmos três estados do E3, SEM NÚMERO NENHUM: quem respondeu a faixa não informou receita
+  // nem custo, então "rendeu R$ X e custou R$ Y" não existe para ele. Falar em reais aqui seria
+  // imprimir o ponto médio da faixa como se fosse a conta dele.
+  'E3-F.neg': 'Você está investindo mais do que a música devolve. Isso não é necessariamente erro: toda carreira tem fase de investimento. Mas precisa ser conta intencional, não acidental. Se foi planejado, ótimo. Se você só descobriu agora, essa resposta vale mais que qualquer conselho.',
+  'E3-F.zero': 'A música se paga, e só. O que entrou cobriu o que saiu, sem sobra. A carreira está de pé, mas sem gordura pra reinvestir, e nessa configuração um mês ruim vira problema. É o momento de olhar os custos com o mesmo cuidado que se olha o cachê.',
+  'E3-F.pos': 'A música se paga, e sobra: {faixa_saldo}. Você sabe quanto fica, e a maioria não sabe. Quando quiser ver de onde vem e pra onde vai esse dinheiro, detalhe as receitas e os custos na próxima vez que refizer o diagnóstico.',
   'E3.b': 'Você está investindo mais do que a música devolve. No último ano ela rendeu R$ {receita_anual} e custou R$ {investimento_anual}, um saldo negativo de R$ {saldo_abs}. Isso não é necessariamente erro: toda carreira tem fase de investimento. Mas precisa ser conta intencional, não acidental. Se foi planejado, ótimo. Se você só descobriu agora, esse número vale mais que qualquer conselho.',
   'E3.a': 'A música se paga, e sobra. No último ano ela rendeu R$ {receita_anual} e custou R$ {investimento_anual}. O saldo é positivo com folga: a carreira devolve mais do que consome. Nem todo artista tem essa margem, e margem é o que permite investir no próximo patamar sem apertar o presente.',
   'E3.c': 'A música se paga, no limite. Rendeu R$ {receita_anual}, custou R$ {investimento_anual}, e sobrou pouco. A carreira está de pé, mas sem gordura pra reinvestir. Nessa configuração, um mês ruim vira problema. É o momento de olhar os custos com o mesmo cuidado que se olha o cachê.',

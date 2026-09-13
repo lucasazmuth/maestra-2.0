@@ -11,7 +11,7 @@
 
 import { dinheiroDoRelatorio, fmtNum, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
 import { FIXOS } from '../../constants/realTextos';
-import { ALIQUOTA_PCT, type Aliquota, type FonteDeReceita, type Proveniencia, type TipoDeContratante } from './index';
+import { ALIQUOTA_PCT, faixaDe, FAIXAS_DE_SALDO, type Aliquota, type Faixa, type FonteDeReceita, type Proveniencia, type TipoDeContratante } from './index';
 
 /** Uma linha de dado no cartão da dimensão. `num` é formatado pelo consumidor; `valor` já vem pronto. */
 export interface LinhaDoRelatorio {
@@ -148,6 +148,19 @@ export const ROTULO_DA_ALIQUOTA: Record<Aliquota, string> = {
 export const SIIC_MENSAL = 4_658;
 export const SIIC_ANUAL = SIIC_MENSAL * 12;
 
+/**
+ * O F23 sobre um valor: "cerca de R$ 96 mil".
+ *
+ * ⚠️ EXISTE PARA AS QUATRO SUPERFÍCIES NÃO INVENTAREM QUATRO GRAFIAS. Tela, PDF da web, PDF do
+ * núcleo e app imprimem os mesmos números, e o rótulo é parte do número — separá-lo faria a mesma
+ * receita sair "cerca de R$ 96 mil" num documento e "~R$ 96.000" no outro.
+ *
+ * `emFaixas` é o portão, e não é zelo: as compilações da loja ainda mandam reais DIGITADOS pelas
+ * mesmas chaves, e esses não são aproximação de nada.
+ */
+export const cercaDe = (valor: number, emFaixas: boolean): string =>
+  (emFaixas ? `${FIXOS.F23} ${dinheiroDoRelatorio(valor)}` : dinheiroDoRelatorio(valor));
+
 /** O resumo financeiro da entrega (§7.5). Devolve `null` fora da v4. */
 export const resumoDoE = (ri: Diagnostico | null | undefined) => {
   if (!ri || ehLegado(ri)) return null;
@@ -159,7 +172,25 @@ export const resumoDoE = (ri: Diagnostico | null | undefined) => {
     .filter(([, v]) => Number(v?.valor) > 0 || v?.naoSei)
     .map(([fonte, v]) => ({ fonte, rotulo: ROTULO_DA_FONTE[fonte] ?? fonte, valor: Number(v.valor) || 0, naoSei: !!v.naoSei }));
   const aliquota: Aliquota | null = rev.aliquota ?? null;
+  // ⚠️ DIAGNÓSTICO ANTERIOR À v4.5 NÃO TEM `caminho`, e o padrão tem de ser 'detalhado'.
+  //
+  // Os 12 diagnósticos v4 gravados em produção têm receita, custos e saldo somados das parcelas —
+  // que é exatamente o caminho detalhado. Assumir 'direto' fecharia a saúde financeira deles e
+  // trocaria o relatório por um convite a detalhar o que eles já detalharam.
+  const caminho: 'direto' | 'detalhado' = rev.caminho === 'direto' ? 'direto' : 'detalhado';
+  const faixaDoSaldo: Faixa | null = caminho === 'direto' ? faixaDe(FAIXAS_DE_SALDO, rev.saldoFaixa) : null;
   return {
+    /** §13.1 — 'direto' é quem respondeu só a faixa de saldo; 'detalhado' é quem abriu as parcelas. */
+    caminho,
+    /**
+     * Os valores são pontos médios de faixa, e por isso levam o "cerca de" (F23).
+     *
+     * Falso num build antigo da loja, que manda as mesmas contas em reais digitados — e também no
+     * diagnóstico gravado antes da v4.5, que não tem o campo.
+     */
+    emFaixas: rev.emFaixas === true,
+    /** A faixa escolhida, com os três rótulos. `null` no caminho detalhado. */
+    faixaDoSaldo,
     showsPerYear: Number(rev.showsPerYear) || 0,
     cache,
     cacheMedio: Number(rev.cacheMedio) || 0,
@@ -218,19 +249,42 @@ export const linhasDaDimensao = (
   }
 
   if (dim === 'e') {
+    const shows: LinhaDoRelatorio = { rotulo: 'Shows (12 meses)', valor: String(Number(rev.showsPerYear) || 0), fonte: 'self' };
+
+    // ⚠️ NO CAMINHO DIRETO NÃO HÁ RECEITA, CUSTO NEM MARGEM — e não é que estejam a zero: elas
+    // NUNCA FORAM PERGUNTADAS (§12). Imprimi-las daria "Receita R$ 0 · Custos R$ 0 · Saldo
+    // R$ 96.000", três linhas de que só a última é verdade, e as duas primeiras a acusar de
+    // não faturar nada quem acabou de dizer que ganha dez mil por mês.
+    //
+    // Saem duas linhas: os shows, que ele respondeu, e a faixa, que é a resposta dele — o rótulo
+    // mensal, que é como ele a escolheu, e o anual, que é a base em que o método lê.
+    const faixa = resumoDoE(ri)?.faixaDoSaldo ?? null;
+    if (rev.caminho === 'direto' && faixa) {
+      return [
+        shows,
+        { rotulo: 'Saldo (12 meses)', valor: faixa.rotulo, fonte: 'self' },
+        { rotulo: 'No ano', valor: faixa.noAno ?? faixa.rotulo, fonte: 'self' },
+      ];
+    }
+
     // A v4 lê SALDO, não receita: mostrar só o faturamento contaria a metade que agrada e
     // esconderia a que decide a dimensão.
     // §12 — a tabela do E mostra as PARCELAS do custo, não só o total. É o que permite ao artista
     // conferir a própria conta: o total sozinho não diz se o peso está no show, no fixo ou no
     // lançamento, e é essa distinção que muda a decisão.
+    //
+    // Os valores são pontos médios de faixa desde a v4.5, e levam o "cerca de" por isso (F23). Um
+    // build antigo da loja manda as mesmas chaves em reais digitados, e esses saem sem o rótulo.
+    const emFaixas = rev.emFaixas === true;
+    const dinheiro = (v: unknown) => cercaDe(Number(v) || 0, emFaixas);
     const linhas: LinhaDoRelatorio[] = [
-      { rotulo: 'Shows (12 meses)', valor: String(Number(rev.showsPerYear) || 0), fonte: 'self' },
-      { rotulo: 'Receita (12 meses)', valor: dinheiroDoRelatorio(Number(rev.receitaAnual) || 0), fonte: 'self' },
-      { rotulo: 'Custo médio por show', valor: dinheiroDoRelatorio(Number(rev.custoPorShow) || 0), fonte: 'self' },
-      { rotulo: 'Custo fixo mensal', valor: dinheiroDoRelatorio(Number(rev.custoFixoMensal) || 0), fonte: 'self' },
-      { rotulo: 'Investimento em lançamentos', valor: dinheiroDoRelatorio(Number(rev.investLancamentos12m) || 0), fonte: 'self' },
-      { rotulo: 'Custos e investimento (12 meses)', valor: dinheiroDoRelatorio(Number(rev.investimentoAnual) || 0), fonte: 'self' },
-      { rotulo: 'Saldo', valor: dinheiroDoRelatorio(Number(rev.saldo) || 0), fonte: 'self' },
+      shows,
+      { rotulo: 'Receita (12 meses)', valor: dinheiro(rev.receitaAnual), fonte: 'self' },
+      { rotulo: 'Custo médio por show', valor: dinheiro(rev.custoPorShow), fonte: 'self' },
+      { rotulo: 'Custo fixo mensal', valor: dinheiro(rev.custoFixoMensal), fonte: 'self' },
+      { rotulo: 'Investimento em lançamentos', valor: dinheiro(rev.investLancamentos12m), fonte: 'self' },
+      { rotulo: 'Custos e investimento (12 meses)', valor: dinheiro(rev.investimentoAnual), fonte: 'self' },
+      { rotulo: 'Saldo', valor: dinheiro(rev.saldo), fonte: 'self' },
     ];
     // ⚠️ O SALDO AJUSTADO NÃO É EXIBIDO EM LADO NENHUM (relatório v4.4, §1.3, §12 e §13 item 15).
     //

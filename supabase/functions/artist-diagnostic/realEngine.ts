@@ -304,6 +304,14 @@ export interface Faixa {
   rotulo: string;
   /** O mesmo dentro de uma frase, para o `{faixa_saldo}` do relatório (§11). */
   naFrase: string;
+  /**
+   * O intervalo em base ANUAL, para a linha do caminho direto (§12: "rótulo mensal e anual").
+   *
+   * Só a escala de saldo tem: as outras não são exibidas como faixa em lado nenhum. E é escrito à
+   * mão em vez de derivado do topo da faixa seguinte — a derivação funcionaria para as faixas 2 a
+   * 7 e mentiria nas três das pontas, caladamente.
+   */
+  noAno?: string;
   /** Anual. ⚠️ −1 é SENTINELA de saldo negativo, não dinheiro: a nota é 0 e a dimensão não acende. */
   piso: number;
   medio: number;
@@ -317,15 +325,15 @@ export interface Faixa {
  * É isso que faz a decisão não ter arredondamento. Há teste a prender os dois.
  */
 export const FAIXAS_DE_SALDO: readonly Faixa[] = [
-  { rotulo: 'Gastei mais do que ganhei', naFrase: 'gastando mais do que ganha', piso: -1, medio: -1 },
-  { rotulo: 'Não sobrou nada, empatou', naFrase: 'empatando', piso: 0, medio: 0 },
-  { rotulo: 'Até R$ 1 mil por mês', naFrase: 'até R$ 1 mil por mês', piso: 0, medio: 6_000 },
-  { rotulo: 'De R$ 1 mil a R$ 3 mil por mês', naFrase: 'entre R$ 1 mil e R$ 3 mil por mês', piso: 12_000, medio: 24_000 },
-  { rotulo: 'De R$ 3 mil a R$ 6 mil por mês', naFrase: 'entre R$ 3 mil e R$ 6 mil por mês', piso: 36_000, medio: 54_000 },
-  { rotulo: 'De R$ 6 mil a R$ 10 mil por mês', naFrase: 'entre R$ 6 mil e R$ 10 mil por mês', piso: 72_000, medio: 96_000 },
-  { rotulo: 'De R$ 10 mil a R$ 25 mil por mês', naFrase: 'entre R$ 10 mil e R$ 25 mil por mês', piso: 120_000, medio: 210_000 },
-  { rotulo: 'De R$ 25 mil a R$ 100 mil por mês', naFrase: 'entre R$ 25 mil e R$ 100 mil por mês', piso: 300_000, medio: 750_000 },
-  { rotulo: 'Acima de R$ 100 mil por mês', naFrase: 'acima de R$ 100 mil por mês', piso: 1_200_000, medio: 1_800_000 },
+  { rotulo: 'Gastei mais do que ganhei', naFrase: 'gastando mais do que ganha', noAno: 'no vermelho nos últimos 12 meses', piso: -1, medio: -1 },
+  { rotulo: 'Não sobrou nada, empatou', naFrase: 'empatando', noAno: 'empatado nos últimos 12 meses', piso: 0, medio: 0 },
+  { rotulo: 'Até R$ 1 mil por mês', naFrase: 'até R$ 1 mil por mês', noAno: 'até R$ 12 mil por ano', piso: 0, medio: 6_000 },
+  { rotulo: 'De R$ 1 mil a R$ 3 mil por mês', naFrase: 'entre R$ 1 mil e R$ 3 mil por mês', noAno: 'de R$ 12 mil a R$ 36 mil por ano', piso: 12_000, medio: 24_000 },
+  { rotulo: 'De R$ 3 mil a R$ 6 mil por mês', naFrase: 'entre R$ 3 mil e R$ 6 mil por mês', noAno: 'de R$ 36 mil a R$ 72 mil por ano', piso: 36_000, medio: 54_000 },
+  { rotulo: 'De R$ 6 mil a R$ 10 mil por mês', naFrase: 'entre R$ 6 mil e R$ 10 mil por mês', noAno: 'de R$ 72 mil a R$ 120 mil por ano', piso: 72_000, medio: 96_000 },
+  { rotulo: 'De R$ 10 mil a R$ 25 mil por mês', naFrase: 'entre R$ 10 mil e R$ 25 mil por mês', noAno: 'de R$ 120 mil a R$ 300 mil por ano', piso: 120_000, medio: 210_000 },
+  { rotulo: 'De R$ 25 mil a R$ 100 mil por mês', naFrase: 'entre R$ 25 mil e R$ 100 mil por mês', noAno: 'de R$ 300 mil a R$ 1,2 milhão por ano', piso: 300_000, medio: 750_000 },
+  { rotulo: 'Acima de R$ 100 mil por mês', naFrase: 'acima de R$ 100 mil por mês', noAno: 'acima de R$ 1,2 milhão por ano', piso: 1_200_000, medio: 1_800_000 },
 ];
 
 /** QD.1 (cachê) e QD.3 (custo por show). Por show, não por ano. */

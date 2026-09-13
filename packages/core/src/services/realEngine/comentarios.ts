@@ -123,6 +123,21 @@ const ler = (ri: Diagnostico) => {
 
 type Ctx = ReturnType<typeof ler>;
 
+/**
+ * O artista respondeu o saldo numa faixa e não detalhou nada (§7.5).
+ *
+ * ⚠️ É O PORTÃO DE NOVE GRUPOS DO E, e sem ele três deles disparariam A SÉRIO com números que
+ * ninguém informou: o E3.b casaria `saldo < 0` com o −1 que é SENTINELA da primeira faixa; o
+ * E3.d dispararia sempre, porque o investimento em lançamentos fica em zero por não ter sido
+ * perguntado, e imprimiria "a carreira rendeu R$ 0"; e o E8 construiria uma razão com o salário
+ * do setor cultural em cima de um ponto médio de faixa.
+ *
+ * Um diagnóstico gravado antes da v4.5 não tem `caminho`, e o `resumoDoE` o assume detalhado —
+ * que é o que ele de facto é. Nenhum dos nove muda de comportamento para os que já existem.
+ */
+const noDireto = (c: Ctx) => c.resumo?.caminho === 'direto';
+const detalhou = (c: Ctx) => !noDireto(c);
+
 /** A participação de cada fonte na receita anual, shows incluídos como fonte (§7.4). */
 const composicao = (c: Ctx) => {
   const total = c.resumo?.receitaAnual ?? 0;
@@ -235,7 +250,8 @@ const GRUPOS: Record<DimKey, Grupo[]> = {
       // ausência de receita, o outro reconhecia ausência de informação.
       //
       // Com o zero vindo de "não sei", o grupo inteiro se cala e o E6 responde sozinho.
-      quandoOGrupo: (c) => !(c.resumo?.receitaOutrasTotal === 0 && (c.flags.naoSeiFontes?.length ?? 0) > 0),
+      quandoOGrupo: (c) => detalhou(c)
+        && !(c.resumo?.receitaOutrasTotal === 0 && (c.flags.naoSeiFontes?.length ?? 0) > 0),
       itens: [
         // Sem receita nenhuma não há composição a comentar: "toda a sua receita vem do palco"
         // seria falso para quem não faturou nada.
@@ -247,19 +263,46 @@ const GRUPOS: Record<DimKey, Grupo[]> = {
     },
     {
       nome: 'E3',
+      quandoOGrupo: detalhou,
       itens: [
         { id: 'E3.b', quando: (c) => (c.resumo?.saldo ?? 0) < 0 },
         { id: 'E3.a', quando: (c) => (c.resumo?.saldo ?? 0) > 0 && (sobra(c) ?? 0) >= EXIBICAO.sobraComFolga },
         { id: 'E3.c', quando: (c) => (c.resumo?.saldo ?? 0) > 0 && (sobra(c) ?? 1) < EXIBICAO.sobraNoLimite },
       ],
     },
+    // ⚠️ O MESMO NOME 'E3' DE PROPÓSITO, e não 'E3F'.
+    //
+    // A prioridade na tela é uma lista de NOMES DE GRUPO — ['E1', 'E3', 'E4'] —, então um nome
+    // novo teria de ser acrescentado lá e a lista passaria a ter quatro entradas para um teto de
+    // três. Como os dois grupos são mutuamente exclusivos pelo caminho, partilhar o nome mantém
+    // uma entrada só, que é a verdade: é o lugar do E3, com o texto que aquele caminho comporta.
+    //
+    // O `quandoOGrupo` daqui é REDUNDANTE, e fica de propósito. Tirá-lo não muda saída nenhuma —
+    // é a única mutação do passo que sobreviveu, e sobreviveu por ser equivalente: os três itens
+    // leem `faixaDoSaldo`, que só existe quando o caminho é direto, por duas vias independentes
+    // (o motor grava `saldoFaixa: null` fora do direto, e o `resumoDoE` só resolve a faixa no
+    // direto). Não é teste em falta: é o portão a dizer a regra em voz alta, para que ela
+    // sobreviva ao dia em que uma das duas vias mudar.
+    {
+      nome: 'E3',
+      quandoOGrupo: noDireto,
+      itens: [
+        { id: 'E3-F.neg', quando: (c) => (c.resumo?.faixaDoSaldo?.medio ?? 0) < 0 },
+        { id: 'E3-F.zero', quando: (c) => c.resumo?.faixaDoSaldo?.medio === 0 },
+        { id: 'E3-F.pos', quando: (c) => (c.resumo?.faixaDoSaldo?.medio ?? 0) > 0 },
+      ],
+    },
     // Os alertas de custo são grupos SEPARADOS de propósito: a spec diz que "cada um dispara de
     // forma independente" e que podem coexistir. Se fossem um grupo só, a regra do "um por grupo"
     // esconderia dois dos três.
-    { nome: 'E3.custoLancamento', soPdf: true, itens: [{ id: 'E3.d', quando: (c) => !!c.resumo && c.resumo.investLancamentos12m === 0 }] },
+    // O E3.d é o mais perigoso dos três: ele dispara pela AUSÊNCIA de investimento, e no caminho
+    // direto o investimento está ausente porque nunca foi perguntado. Sem o portão, todo artista
+    // que respondeu só a faixa leria "você não investiu em gravar nem em lançar".
+    { nome: 'E3.custoLancamento', soPdf: true, quandoOGrupo: detalhou, itens: [{ id: 'E3.d', quando: (c) => !!c.resumo && c.resumo.investLancamentos12m === 0 }] },
     {
       nome: 'E3.custoFixo',
       soPdf: true,
+      quandoOGrupo: detalhou,
       itens: [{
         id: 'E3.e',
         quando: (c) => !!c.resumo && c.resumo.receitaAnual > 0
@@ -269,6 +312,7 @@ const GRUPOS: Record<DimKey, Grupo[]> = {
     {
       nome: 'E3.custoShow',
       soPdf: true,
+      quandoOGrupo: detalhou,
       itens: [{
         id: 'E3.f',
         quando: (c) => !!c.resumo && c.resumo.custoPorShow > 0 && c.resumo.cacheMedio > 0
@@ -287,7 +331,7 @@ const GRUPOS: Record<DimKey, Grupo[]> = {
     {
       nome: 'E5',
       soPdf: true,
-      quandoOGrupo: (c) => (c.resumo?.cache.length ?? 0) >= 2,
+      quandoOGrupo: (c) => detalhou(c) && (c.resumo?.cache.length ?? 0) >= 2,
       itens: [
         {
           id: 'E5.a',
@@ -310,10 +354,14 @@ const GRUPOS: Record<DimKey, Grupo[]> = {
         },
       ],
     },
-    { nome: 'E6', itens: [{ id: 'E6', quando: (c) => (c.flags.naoSeiFontes?.length ?? 0) > 0 }] },
+    // O E6 e o E7 já se calariam sozinhos no caminho direto — não há fonte marcada "não sei" nem
+    // margem por show. O portão é por intenção: a regra da spec é "só com detalhamento", e deixá-la
+    // implícita numa consequência aritmética é deixá-la à mercê do próximo refactor.
+    { nome: 'E6', quandoOGrupo: detalhou, itens: [{ id: 'E6', quando: (c) => (c.flags.naoSeiFontes?.length ?? 0) > 0 }] },
     {
       nome: 'E7',
       soPdf: true,
+      quandoOGrupo: detalhou,
       itens: [
         // ⚠️ A PRECEDÊNCIA É C, B, A (§7.9), e não a ordem alfabética.
         //
@@ -333,7 +381,7 @@ const GRUPOS: Record<DimKey, Grupo[]> = {
       // §7.10 (v4.4): a referência do setor compara o SALDO REAL. Um salário é líquido, e o
       // que se compara com ele é o que sobra depois de a carreira pagar o que custou — não um
       // valor inflado por um bônus de pontuação que o artista nunca vê.
-      quandoOGrupo: (c) => (c.resumo?.saldo ?? 0) > 0,
+      quandoOGrupo: (c) => detalhou(c) && (c.resumo?.saldo ?? 0) > 0,
       itens: [
         { id: 'E8.a', quando: (c) => (c.resumo?.saldo ?? 0) >= SIIC_ANUAL },
         { id: 'E8.b', quando: (c) => (c.resumo?.saldo ?? 0) < SIIC_ANUAL },
@@ -543,6 +591,9 @@ const variaveis = (c: Ctx, cm?: Record<string, any> | null): Record<string, stri
     receita_anual: dinheiroDoTexto(rev?.receitaAnual ?? 0),
     investimento_anual: dinheiroDoTexto(rev?.investimentoAnual ?? 0),
     saldo_abs: dinheiroDoTexto(Math.abs(rev?.saldo ?? 0)),
+    // §11 — o rótulo da faixa DENTRO DA FRASE ("entre R$ 6 mil e R$ 10 mil por mês"), que é outra
+    // grafia da do botão do quiz ("De R$ 6 mil a R$ 10 mil por mês"). As duas moram na faixa.
+    faixa_saldo: rev?.faixaDoSaldo?.naFrase ?? '',
     fonte_dominante: comp[0]?.rotulo ?? '',
     pct: `${Math.round((comp[0]?.pct ?? 0) * 100)}%`,
     fonte1: comp[0]?.rotulo ?? '',

@@ -1,9 +1,10 @@
 import { computeRealIndexV4 } from './index';
 import type { RealInputsV4 } from './index';
 import {
-  AVISOS, AVISO_LEGADO, avisosDoDiagnostico, avisosSemLugarProprio, ehLegado, engajamentoExibido,
-  equilibrioExibido, linhasDaDimensao, resumoDoE, SIIC_ANUAL,
+  AVISOS, AVISO_LEGADO, avisosDoDiagnostico, avisosSemLugarProprio, cercaDe, ehLegado,
+  engajamentoExibido, equilibrioExibido, linhasDaDimensao, resumoDoE, SIIC_ANUAL,
 } from './relatorio';
+import { FIXOS } from '../../constants/realTextos';
 
 const base = (over: Partial<RealInputsV4> = {}): RealInputsV4 => ({
   spotifyConnected: true,
@@ -338,5 +339,84 @@ describe('compatibilidade com o quiz da v3', () => {
     expect(traduzido.revenue.saldoAjustado).toBe(nativo.revenue.saldoAjustado);
     expect(traduzido.pattern).toEqual(nativo.pattern);
     expect(traduzido.boletim).toEqual(nativo.boletim);
+  });
+});
+
+// ════════ §12 · a tabela do E conforme o caminho ════════
+describe('§12 a tabela do E sabe de que caminho veio', () => {
+  const direto = (i: number, over: Partial<RealInputsV4> = {}) =>
+    computeRealIndexV4(base({ saldoFaixa: i, showsPerYear: 20, ...over }));
+
+  // ⚠️ NO CAMINHO DIRETO NÃO HÁ RECEITA NEM CUSTO, e não é que estejam em zero: nunca foram
+  // perguntados. "Receita R$ 0 · Custos R$ 0 · Saldo R$ 96.000" acusaria de não faturar nada
+  // quem acabou de dizer que ganha dez mil por mês.
+  it('no direto saem três linhas, e nenhuma delas é dinheiro que ninguém informou', () => {
+    const linhas = linhasDaDimensao(direto(5), 'e');
+    expect(linhas.map((l) => l.rotulo)).toEqual(['Shows (12 meses)', 'Saldo (12 meses)', 'No ano']);
+    expect(linhas.map((l) => l.valor)).toEqual([
+      '20', 'De R$ 6 mil a R$ 10 mil por mês', 'de R$ 72 mil a R$ 120 mil por ano',
+    ]);
+  });
+
+  it('nem sequer um R$ sobra numa linha do direto', () => {
+    for (const i of [0, 1, 2, 5, 8]) {
+      const linhas = linhasDaDimensao(direto(i), 'e');
+      expect(linhas).toHaveLength(3);
+      expect(linhas.some((l) => /Receita|Custo|Investimento/.test(l.rotulo))).toBe(false);
+    }
+  });
+
+  // O detalhamento que venha junto de uma faixa não pode reabrir a tabela: a faixa manda.
+  it('o detalhamento junto de uma faixa não reabre a tabela', () => {
+    const linhas = linhasDaDimensao(direto(5, {
+      cacheByType: { produtores: 5_000 }, custoFixoMensal: 2_000, investLancamentos12m: 30_000,
+    }), 'e');
+    expect(linhas).toHaveLength(3);
+  });
+
+  it('no detalhado a tabela é a de sempre, com as sete linhas', () => {
+    const linhas = linhasDaDimensao(computeRealIndexV4(base({
+      showsPerYear: 20, cacheByType: { produtores: 5_000 },
+    })), 'e');
+    expect(linhas).toHaveLength(7);
+    expect(linhas.map((l) => l.rotulo)).toContain('Saldo');
+  });
+});
+
+// ════════ §10 · o "cerca de" (F23) ════════
+//
+// ⚠️ O ROTULO SÓ VALE SOBRE PONTO MÉDIO DE FAIXA. As compilações da loja já publicadas mandam as
+// mesmas contas em reais DIGITADOS, e chamar de "cerca de" um número que a pessoa escreveu seria
+// uma mentira pequena, mas uma mentira.
+describe('§10 o rótulo "cerca de"', () => {
+  it('a grafia é uma só, e sai do texto fixo', () => {
+    expect(cercaDe(96_000, true)).toBe(`${FIXOS.F23} R$ 96 mil`);
+    expect(cercaDe(96_000, false)).toBe('R$ 96 mil');
+  });
+
+  it('o detalhamento em faixas leva o rótulo em toda linha de dinheiro', () => {
+    const linhas = linhasDaDimensao(computeRealIndexV4(base({
+      showsPerYear: 20, cacheFaixa: 5, custoShowFaixa: 3, fixoFaixa: 3, lancFaixa: 4,
+    })), 'e');
+    const dinheiro = linhas.filter((l) => l.valor?.includes('R$'));
+    expect(dinheiro).toHaveLength(6);
+    for (const l of dinheiro) expect(l.valor).toContain('cerca de');
+  });
+
+  it('e o build antigo da loja, que manda reais digitados, não leva', () => {
+    const linhas = linhasDaDimensao(computeRealIndexV4(base({
+      showsPerYear: 20, cacheByType: { produtores: 5_000 }, custoPorShow: 1_000,
+    })), 'e');
+    for (const l of linhas) expect(l.valor).not.toContain('cerca de');
+  });
+
+  // Os 12 diagnósticos v4 gravados em produção não têm `emFaixas` nem `caminho`. Assumir faixa
+  // punha "cerca de" em números digitados; assumir direto fechava a saúde financeira deles.
+  it('o diagnóstico gravado antes da v4.5 é detalhado e sem rótulo', () => {
+    const antigo = { version: 4, revenue: { showsPerYear: 12, receitaAnual: 60_000, saldo: 20_000 } };
+    expect(resumoDoE(antigo)!.caminho).toBe('detalhado');
+    expect(resumoDoE(antigo)!.emFaixas).toBe(false);
+    expect(linhasDaDimensao(antigo, 'e')).toHaveLength(7);
+    for (const l of linhasDaDimensao(antigo, 'e')) expect(l.valor).not.toContain('cerca de');
   });
 });
