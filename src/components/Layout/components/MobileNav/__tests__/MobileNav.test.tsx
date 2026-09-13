@@ -77,11 +77,15 @@ describe('o "Mais" da tab bar', () => {
     }
   });
 
-  // Consequência da mudança, e a que se veria primeiro no aparelho: em Configurações o "Mais"
+  // Consequência da mudança, e a que se veria primeiro no aparelho: numa tela da conta o "Mais"
   // ficava aceso, porque um dos itens dele era aquela tela. Não é mais.
+  //
+  // ⚠️ A ROTA DE EXEMPLO ERA `/settings`, e mudou porque a barra deixou de aparecer LÁ: o teste
+  // passou a montar um componente que não desenha nada, e falhava a dizer que não encontrava o
+  // "Mais". `/notifications` é a tela global que ainda tem barra, e serve ao mesmo propósito.
   it('não fica aceso numa tela que ele não abre mais', () => {
     // Sem abrir: o painel aberto acende o "Mais" de propósito, para dizer quem está em foco.
-    montar('/settings');
+    montar('/notifications');
 
     expect(screen.getByText('Mais').closest('button'))
       .not.toHaveClass('mobile-nav-item--active');
@@ -100,6 +104,9 @@ describe('onde a tab bar não entra', () => {
   it.each([
     ['/planos'],
     ['/planos/sucesso'],
+    ['/settings'],
+    // Ainda não existe, e é de propósito: quando existir, já está decidido que é tela da conta.
+    ['/settings/conta'],
     ['/artists'],
     ['/admin/usuarios'],
     ['/artists/madha/nyta'],
@@ -110,7 +117,7 @@ describe('onde a tab bar não entra', () => {
   // E o resto continua com ela: uma lista de exclusões que crescesse sozinha esvaziaria a barra.
   it.each([
     ['/artists/madha/perfil'],
-    ['/settings'],
+    ['/artists/madha/catalogo'],
     ['/notifications'],
   ])('%s continua com a barra', (rota) => {
     expect(isNavExcludedRoute(rota)).toBe(false);
