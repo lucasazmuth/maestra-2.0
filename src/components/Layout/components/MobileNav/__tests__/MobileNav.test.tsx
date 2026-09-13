@@ -1,9 +1,12 @@
+import fs from 'fs';
+import path from 'path';
+
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 
-import { MobileNav, isNavExcludedRoute } from '..';
+import { MobileNav, temTabBar } from '..';
 
 // O que o "Mais" da tab bar guarda — e, sobretudo, o que ele NÃO guarda.
 //
@@ -80,51 +83,86 @@ describe('o "Mais" da tab bar', () => {
   // Consequência da mudança, e a que se veria primeiro no aparelho: numa tela da conta o "Mais"
   // ficava aceso, porque um dos itens dele era aquela tela. Não é mais.
   //
-  // ⚠️ A ROTA DE EXEMPLO ERA `/settings`, e mudou porque a barra deixou de aparecer LÁ: o teste
-  // passou a montar um componente que não desenha nada, e falhava a dizer que não encontrava o
-  // "Mais". `/notifications` é a tela global que ainda tem barra, e serve ao mesmo propósito.
+  // ⚠️ A ROTA DE EXEMPLO JÁ MUDOU DUAS VEZES, e a segunda explica a inversão da regra: era
+  // `/settings`, passou a `/notifications`, e as duas deixaram de ter barra. Nenhuma tela da
+  // conta serve mais de exemplo — o "Mais" só existe dentro de um perfil. A pergunta continua a
+  // valer ali dentro: numa tela do perfil que ele NÃO abre, ele não pode ficar aceso.
   it('não fica aceso numa tela que ele não abre mais', () => {
     // Sem abrir: o painel aberto acende o "Mais" de propósito, para dizer quem está em foco.
-    montar('/notifications');
+    montar('/artists/madha/agenda');
 
     expect(screen.getByText('Mais').closest('button'))
       .not.toHaveClass('mobile-nav-item--active');
   });
 });
 
-// ONDE A TAB BAR NÃO ENTRA.
+// ONDE A TAB BAR ENTRA, E ONDE NÃO.
 //
-// A regra é UMA só, e o `Layout` lê a mesma função para reservar (ou não) os 56px do rodapé. Se
-// as duas discordassem, o app guardaria espaço para uma barra que ninguém desenha, ou desenharia
-// uma barra por cima do conteúdo. O comentário no componente já avisava disso; faltava o teste.
-describe('onde a tab bar não entra', () => {
-  // ⚠️ /planos TEM contexto de artista e mesmo assim não a quer: a página fala da CONTA, não do
-  // perfil. A barra oferecia Plano, Músicas e Agenda por cima dos cartões de preço, tapando o
-  // seletor de mensal e anual, e convidava a sair no meio de uma decisão.
+// ⚠️ A REGRA ERA UMA LISTA DE EXCEÇÕES E ESTAVA DO AVESSO. Dizia "aparece sempre que houver um
+// artista atual no store, MENOS em…", e a lista cresceu uma tela de cada vez: a lista de perfis,
+// o admin, os planos, as configurações. Cada tela global nova nascia com uma barra que não lhe
+// servia, e só se descobria olhando para o telemóvel.
+//
+// Invertida, ela diz o que a barra É: navega entre os módulos de UM PERFIL, então só existe onde
+// há um perfil na ROTA. As telas da conta ficam de fora sem precisar de ser lembradas, e a
+// próxima nasce certa.
+//
+// O `Layout` lê a MESMA função para reservar (ou não) os 56px do rodapé. Se as duas
+// discordassem, o app guardaria espaço para uma barra que ninguém desenha.
+describe('onde a tab bar entra', () => {
+  it.each([
+    ['/artists/madha'],
+    ['/artists/madha/perfil'],
+    ['/artists/madha/catalog'],
+    ['/artists/madha/catalog/projects/p-1'],
+    ['/artists/madha/agenda'],
+    ['/artists/madha/action-plan'],
+  ])('%s tem barra: é módulo de um perfil', (rota) => {
+    expect(temTabBar(rota)).toBe(true);
+  });
+
+  // As telas da CONTA. Nenhuma delas precisou de entrar numa lista: elas não têm perfil na rota.
+  // As três últimas nunca chegaram a ser pedidas — saíram de graça com a inversão.
   it.each([
     ['/planos'],
     ['/planos/sucesso'],
     ['/settings'],
-    // Ainda não existe, e é de propósito: quando existir, já está decidido que é tela da conta.
     ['/settings/conta'],
+    ['/notifications'],
+    ['/suporte'],
+    ['/pagamentos'],
+    ['/pagamento'],
     ['/artists'],
     ['/admin/usuarios'],
-    ['/artists/madha/nyta'],
-  ])('%s fica sem a barra', (rota) => {
-    expect(isNavExcludedRoute(rota)).toBe(true);
+  ])('%s não tem barra: fala da conta, não do perfil', (rota) => {
+    expect(temTabBar(rota)).toBe(false);
   });
 
-  // E o resto continua com ela: uma lista de exclusões que crescesse sozinha esvaziaria a barra.
-  it.each([
-    ['/artists/madha/perfil'],
-    ['/artists/madha/catalogo'],
-    ['/notifications'],
-  ])('%s continua com a barra', (rota) => {
-    expect(isNavExcludedRoute(rota)).toBe(false);
+  // O chat da Nyta fica de fora por outro motivo, que é dele: é uma conversa que se lê e se
+  // escreve, e as duas barras roubavam a altura do que importa ali.
+  it('o chat da Nyta não tem barra, mesmo tendo perfil na rota', () => {
+    expect(temTabBar('/artists/madha/nyta')).toBe(false);
   });
 
-  it('em /planos o componente não desenha nada', () => {
-    montar('/planos');
-    expect(screen.queryByText('Mais')).toBeNull();
+  it.each([['/planos'], ['/settings'], ['/notifications']])(
+    'em %s o componente não desenha nada',
+    (rota) => {
+      montar(rota);
+      expect(screen.queryByText('Mais')).toBeNull();
+    },
+  );
+
+  // ⚠️ E O LAYOUT LÊ A MESMA FUNÇÃO, que é o que o comentário do componente promete e nada
+  // garantia. Ele reserva 56px no rodapé para a barra; se calculasse por conta própria, bastava
+  // uma das duas regras mudar para o app guardar espaço para uma barra que ninguém desenha — ou
+  // desenhar uma barra por cima do conteúdo. Isto lê o ficheiro porque a discordância não falha
+  // teste de render nenhum: aparece só no telemóvel, como um vão no fim da página.
+  it('o Layout reserva o rodapé pela MESMA regra', () => {
+    const layout = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', 'index.tsx'), 'utf8',
+    );
+
+    expect(layout).toMatch(/import\s*\{[^}]*temTabBar[^}]*\}\s*from\s*'\.\/components\/MobileNav'/);
+    expect(layout).toMatch(/const\s+hasMobileNav\s*=\s*temTabBar\(/);
   });
 });

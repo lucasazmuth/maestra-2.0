@@ -2,7 +2,7 @@ import { lazy, memo, Suspense, useEffect, useRef, useState, type FC, type ReactN
 
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { MobileNav, isImmersiveRoute, isNavExcludedRoute } from './components/MobileNav';
+import { MobileNav, isImmersiveRoute, temTabBar } from './components/MobileNav';
 import { SystemMenu } from './components/SystemMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
@@ -211,8 +211,7 @@ export const AppLayout: FC = memo(() => {
   // A MESMA funcao que o MobileNav usa para decidir se renderiza. Antes a regra estava escrita
   // duas vezes, e o comentario acima ja avisava que elas precisam concordar; agora ha uma fonte
   // so, entao incluir uma rota nova nao tem como sair do sincronismo.
-  const navExcluded = isNavExcludedRoute(location.pathname);
-  const hasMobileNav = !!(routeArtistId ?? currentArtistId) && !navExcluded;
+  const hasMobileNav = temTabBar(location.pathname);
   // A Nyta só entra em cena depois do planejamento concluído. Sem plano ela não tem sobre o que
   // conversar — a própria edge function desliga todas as ferramentas nesse caso e a resposta
   // vira "faça o planejamento primeiro". Mostrar a porta de entrada aqui só levava a pessoa a

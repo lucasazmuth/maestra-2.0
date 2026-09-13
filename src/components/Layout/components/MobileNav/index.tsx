@@ -28,33 +28,33 @@ const matchArtistId = (pathname: string): string | undefined => {
   return m ? m[1] : undefined;
 };
 
-// Rotas onde a tab bar não entra, por dois motivos diferentes.
-//
-// Sem contexto de artista: a lista "Seus artistas" (o seletor) e a área admin. Nelas não há
-// módulo de perfil para navegar, mesmo havendo um artista atual no store.
-//
-// ⚠️ E AS TELAS DA CONTA, que têm contexto de artista e ainda assim não a querem.
-//
-// A barra navega entre os MÓDULOS DE UM PERFIL: Plano, Músicas, Agenda. Em `/planos` e em
-// `/settings` nada disso é o assunto — ali fala-se da conta, que não pertence a perfil nenhum.
-// Nos planos ela ainda tapava o seletor de mensal e anual e convidava a sair no meio de uma
-// decisão de compra.
-//
-// `startsWith` nos dois: o sucesso do pagamento vive em `/planos/sucesso`, e uma sub-página de
-// configurações que venha a existir continua a ser tela da conta. A decisão fica tomada antes de
-// a rota nascer, em vez de ser um esquecimento à espera.
-//
-// O wizard NÃO precisa mais estar nesta lista: a rota dele saiu de dentro do AppLayout (ver
-// App.tsx), então nem este componente nem a reserva de rodapé do Layout chegam até lá.
-//
-// Espelhado em `navExcluded` no Layout: os dois PRECISAM concordar, senão o app reserva no rodapé
-// um espaço para uma barra que não é renderizada.
-export const isNavExcludedRoute = (pathname: string): boolean =>
-  pathname === '/artists'
-  || pathname.startsWith('/admin')
-  || pathname.startsWith('/planos')
-  || pathname.startsWith('/settings')
-  || isImmersiveRoute(pathname);
+/**
+ * A TAB BAR EXISTE DENTRO DE UM PERFIL, E SÓ AÍ.
+ *
+ * ⚠️ A REGRA ERA UMA LISTA DE EXCEÇÕES, E ESTAVA DO AVESSO. Ela dizia "aparece sempre que houver
+ * um artista atual no store, MENOS em…", e a lista foi crescendo uma tela de cada vez: primeiro
+ * a lista de perfis e o admin, depois os planos, depois as configurações. Cada tela global nova
+ * nascia com uma barra que não lhe servia, e só se descobria quando alguém olhava para o
+ * telemóvel. Ainda faltavam três — `/suporte`, `/pagamentos` e `/pagamento`.
+ *
+ * Invertida, a regra diz o que a barra É: ela navega entre os MÓDULOS DE UM PERFIL, então só faz
+ * sentido onde há um perfil na ROTA. Onde se fala da conta — planos, configurações, suporte,
+ * notificações, pagamentos — não há módulo para navegar, e a barra some sem precisar de ser
+ * lembrada. A próxima tela global nasce certa.
+ *
+ * O artista tem de vir da rota, e não do store: era o `?? currentArtistId` que fazia a barra
+ * seguir a pessoa para fora do perfil.
+ *
+ * É a mesma divisão do app nativo, onde as abas vivem dentro de `artista/[id]` e as telas da
+ * conta são empurradas por cima, com um cabeçalho de voltar e sem abas.
+ *
+ * O chat da Nyta fica de fora por outro motivo, que é dele: ver `isImmersiveRoute`.
+ *
+ * Lida pelo `MobileNav` e pelo `Layout`: os dois PRECISAM concordar, senão o app reserva no
+ * rodapé um espaço para uma barra que não é renderizada.
+ */
+export const temTabBar = (pathname: string): boolean =>
+  !!matchArtistId(pathname) && !isImmersiveRoute(pathname);
 
 /**
  * Telas que tomam a tela inteira: sem a barra da Maestra em cima e sem a tab bar embaixo.
@@ -63,8 +63,8 @@ export const isNavExcludedRoute = (pathname: string): boolean =>
  * roubavam a altura justamente do que importa ali. Sair é pelo botão de voltar da própria faixa
  * do chat — que passa a ser a única do topo.
  *
- * Separado do `isNavExcludedRoute` acima porque as duas regras dizem coisas diferentes: aquela
- * é "não há artista no contexto", esta é "há, e é só disto que a tela trata".
+ * Separado do `temTabBar` acima porque as duas regras dizem coisas diferentes: aquela é "há um
+ * perfil na rota", esta é "há, e é só disto que a tela trata".
  */
 export const isImmersiveRoute = (pathname: string): boolean =>
   /^\/artists\/[^/]+\/nyta$/.test(pathname);
@@ -75,15 +75,13 @@ export const MobileNav: FC = () => {
   const location = useLocation();
   const [t] = useTranslation(['navigation']);
   const [moreOpen, setMoreOpen] = useState(false);
-  // Artista pela rota; senão o atual (setado ao visitar qualquer módulo do artista) — assim a
-  // navbar segue visível em /notifications. Em /planos e /settings não: ver `isNavExcludedRoute`.
-  const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
-  const artistId = matchArtistId(location.pathname) ?? currentArtistId;
+  // O artista sai da ROTA. O `?? currentArtistId` que havia aqui era o que fazia a barra seguir a
+  // pessoa para fora do perfil, até às telas da conta — ver `temTabBar`.
+  const artistId = matchArtistId(location.pathname);
   const artists = useAppSelector((s) => s.artists.items);
   const artist = artists.find((a) => a.id === artistId);
 
-  // Sem artista no contexto, ou numa rota excluída (lista/admin), não há o que navegar por módulo.
-  if (!artistId || isNavExcludedRoute(location.pathname)) return null;
+  if (!temTabBar(location.pathname)) return null;
 
   // Atalhos do dia a dia. A primeira célula (a home do artista) é renderizada à parte: ela é a
   // foto do perfil, não um ícone.
