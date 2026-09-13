@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 
-import { MobileNav, temBotaoDeVoltar, temTabBar } from '..';
+import { MobileNav, apoioComMenu, ehTelaDeApoio, temBotaoDeVoltar, temTabBar } from '..';
 
 // O que o "Mais" da tab bar guarda — e, sobretudo, o que ele NÃO guarda.
 //
@@ -187,6 +187,39 @@ describe('onde a tab bar entra', () => {
     (rota) => { expect(temBotaoDeVoltar(rota)).toBe(false); },
   );
 
+  // ⚠️ E NAS TELAS DE APOIO O CABEÇALHO FICA SÓ COM O VOLTAR.
+  //
+  // Marca, selo do plano e sino saem. É o desenho do `CabecalhoDeVolta` do app nativo, e o
+  // argumento é o dele: "quem chegou aqui veio de um lugar e quer voltar para ele. O sino numa
+  // tela DE notificações é ruído."
+  it.each([['/planos'], ['/settings'], ['/notifications'], ['/suporte'], ['/pagamentos']])(
+    '%s é tela de apoio',
+    (rota) => { expect(ehTelaDeApoio(rota)).toBe(true); },
+  );
+
+  // ⚠️ O ADMIN TAMBÉM GANHA O VOLTAR, MAS NÃO É TELA DE APOIO: ali o menu do sistema é como se
+  // anda entre as secções, e sem ele quem entra numa fica lá. E o admin não existe no app
+  // nativo, então não há desenho de lá para copiar.
+  it('o admin ganha o voltar, mas mantém o cabeçalho', () => {
+    expect(temBotaoDeVoltar('/admin/usuarios')).toBe(true);
+    expect(ehTelaDeApoio('/admin/usuarios')).toBe(false);
+  });
+
+  it.each([['/artists'], ['/artists/madha/agenda']])(
+    '%s não é tela de apoio',
+    (rota) => { expect(ehTelaDeApoio(rota)).toBe(false); },
+  );
+
+  // A exceção é DO APP, não invenção daqui: o `CabecalhoDeVolta` recebe `aqui="configuracoes"`
+  // só nessa tela, e o comentário dele diz porquê — ali o menu é o que dá a volta para outro
+  // perfil sem passar pela lista.
+  it('só as Configurações guardam o menu do sistema', () => {
+    expect(apoioComMenu('/settings')).toBe(true);
+    for (const outra of ['/planos', '/notifications', '/suporte', '/pagamentos']) {
+      expect(apoioComMenu(outra)).toBe(false);
+    }
+  });
+
   it('o Layout reserva o rodapé pela MESMA regra', () => {
     const layout = fs.readFileSync(
       path.join(__dirname, '..', '..', '..', 'index.tsx'), 'utf8',
@@ -197,6 +230,17 @@ describe('onde a tab bar entra', () => {
   });
 
   // E desenha o voltar pela regra daqui, em vez de uma condição escrita à mão no meio do JSX.
+  // E marca o cabeçalho das telas de apoio pela regra daqui — sem a classe, o CSS não tem em que
+  // se agarrar e a marca, o selo e o sino voltam todos.
+  it('o Layout marca as telas de apoio pela regra daqui', () => {
+    const layout = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', 'index.tsx'), 'utf8',
+    );
+
+    expect(layout).toMatch(/ehTelaDeApoio\(location\.pathname\)[^:]*\?\s*' top-navigation--apoio'/);
+    expect(layout).toMatch(/apoioComMenu\(location\.pathname\)[^:]*\?\s*' top-navigation--com-menu'/);
+  });
+
   it('o Layout desenha o voltar pela regra daqui', () => {
     const layout = fs.readFileSync(
       path.join(__dirname, '..', '..', '..', 'index.tsx'), 'utf8',
@@ -225,5 +269,17 @@ describe('onde a tab bar entra', () => {
     expect(folha).toMatch(dentroDaQuebra);
     // E escondido por omissão: sem isto ele apareceria no desktop, ao lado do rail.
     expect(folha).toMatch(/\.top-navigation-back\s*\{\s*display:\s*none/);
+
+    // ⚠️ E O SELETOR DO APOIO CARREGA O PESO PARA GANHAR DO SINO.
+    //
+    // A folha de referência traz `.task-app:not(.public-app) > .top-navigation .notification {
+    // display: grid }`, que pesa 0,4,0. Um `.top-navigation--apoio .notification` pesa 0,2,0 e
+    // PERDE: o sino ficava aceso, e isso não falha teste de render nenhum — só se vê na página.
+    // O regex tem de apanhar a regra QUE ESCONDE O SINO, e não uma vizinha que por acaso começa
+    // igual: a do menu do sistema abre com o mesmo prefixo, e a primeira versão deste teste
+    // passava com o peso já removido por causa disso.
+    expect(folha).toMatch(
+      /\.task-app:not\(\.public-app\)\s*>\s*\.top-navigation\.top-navigation--apoio\s*\{[^}]*\.notification/,
+    );
   });
 });

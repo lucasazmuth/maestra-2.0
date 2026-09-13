@@ -1915,10 +1915,49 @@ a {
   display: none;
 }
 
+// Os invólucros não mexem no arranjo: existem só para o CSS ter o que esconder.
+.top-navigation-brand,
+.top-navigation-system {
+  display: contents;
+}
+
 @media (max-width: 700px) {
   .top-navigation-back {
     display: grid;
     // A marca ganha respiro à direita (42px do `.constructor`); o voltar não precisa de tanto.
     margin-right: 14px;
+  }
+
+  // AS TELAS DE APOIO FICAM SÓ COM O VOLTAR — Planos, Configurações, Notificações, Suporte,
+  // Pagamentos. É o desenho do `CabecalhoDeVolta` do app nativo, e o argumento é o dele: quem
+  // chegou aqui veio de um lugar e quer voltar para ele; o sino numa tela DE notificações é
+  // ruído, e a marca não leva a lado nenhum que o voltar não leve melhor.
+  //
+  // Sem a marca, o voltar deixa de precisar do respiro à direita dela.
+  // ⚠️ O SELETOR É LONGO DE PROPÓSITO, e a razão é o sino.
+  //
+  // A folha de referência traz `.task-app:not(.public-app) > .top-navigation .notification {
+  // display: grid }`, que pesa 0,4,0. Um `.top-navigation--apoio .notification` pesa 0,2,0 e
+  // PERDE — o sino ficava aceso e eu só vi olhando para a página. Repetir a forma daquela regra
+  // e somar a classe do apoio põe isto em 0,5,0, que ganha sem depender da ordem de carga das
+  // folhas.
+  .task-app:not(.public-app) > .top-navigation.top-navigation--apoio {
+    .top-navigation-brand,
+    .notification {
+      display: none;
+    }
+
+    // Sem a marca, o voltar deixa de precisar do respiro à direita dela.
+    .top-navigation-back {
+      margin-right: 0;
+    }
+  }
+
+  // ⚠️ A EXCEÇÃO É DO APP, NÃO INVENÇÃO DAQUI: em Configurações o menu do sistema fica. O
+  // `CabecalhoDeVolta` recebe `aqui="configuracoes"` só nessa tela, e o comentário dele diz
+  // porquê — ali o menu é o que dá a volta para outro perfil sem passar pela lista.
+  .task-app:not(.public-app) > .top-navigation.top-navigation--apoio:not(.top-navigation--com-menu)
+    .top-navigation-system {
+    display: none;
   }
 }

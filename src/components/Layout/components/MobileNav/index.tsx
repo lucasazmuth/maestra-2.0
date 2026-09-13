@@ -78,6 +78,32 @@ export const temBotaoDeVoltar = (pathname: string): boolean =>
   && !isImmersiveRoute(pathname);
 
 /**
+ * AS TELAS FOLHA DA CONTA: entra-se por um caminho, lê-se, e volta-se.
+ *
+ * Planos, Configurações, Notificações, Suporte, Pagamentos. No telemóvel elas ficam com o
+ * cabeçalho reduzido ao botão de voltar: a marca, o selo do plano e o sino saem. É o desenho do
+ * app nativo (`casca/CabecalhoDeVolta`), e o argumento está lá escrito: "quem chegou aqui veio
+ * de um lugar e quer voltar para ele. O sino numa tela DE notificações é ruído."
+ *
+ * ⚠️ O ADMIN FICA DE FORA. Ele também não tem tab bar e também ganha o voltar, mas ali o menu do
+ * sistema é como se anda entre as secções — sem ele, quem entra numa fica lá. E o admin não
+ * existe no app nativo, então não há desenho de lá para copiar.
+ */
+export const ehTelaDeApoio = (pathname: string): boolean =>
+  temBotaoDeVoltar(pathname) && !pathname.startsWith('/admin');
+
+/**
+ * E a exceção, que é do app e não invenção daqui: em Configurações o menu do sistema FICA.
+ *
+ * O `CabecalhoDeVolta` do app recebe `aqui="configuracoes"` só nessa tela, e o comentário dele
+ * diz porquê: o argumento de que repetir o menu é ruído "vale para Notificações, não para
+ * Configurações — em Configurações ele é o que dá a volta para outro perfil sem passar pela
+ * lista".
+ */
+export const apoioComMenu = (pathname: string): boolean =>
+  ehTelaDeApoio(pathname) && pathname.startsWith('/settings');
+
+/**
  * Telas que tomam a tela inteira: sem a barra da Maestra em cima e sem a tab bar embaixo.
  *
  * Só o chat da Nyta, por ora. Ele é uma conversa que se lê e se escreve, e as duas barras

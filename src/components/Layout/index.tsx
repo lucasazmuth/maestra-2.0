@@ -2,7 +2,9 @@ import { lazy, memo, Suspense, useEffect, useRef, useState, type FC, type ReactN
 
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { MobileNav, isImmersiveRoute, temBotaoDeVoltar, temTabBar } from './components/MobileNav';
+import {
+  MobileNav, apoioComMenu, ehTelaDeApoio, isImmersiveRoute, temBotaoDeVoltar, temTabBar,
+} from './components/MobileNav';
 import { SystemMenu } from './components/SystemMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
@@ -300,7 +302,11 @@ export const AppLayout: FC = memo(() => {
   })();
 
   const topNavigation = () => (
-    <header className='top-navigation'>
+    // ⚠️ NO TELEMÓVEL, AS TELAS DE APOIO FICAM SÓ COM O VOLTAR. A marca, o selo do plano e o
+    // sino saem — é o desenho do app nativo, e o argumento está no `CabecalhoDeVolta` dele:
+    // "quem chegou aqui veio de um lugar e quer voltar para ele. O sino numa tela DE
+    // notificações é ruído." Quem esconde é o CSS, na mesma quebra de 700px do voltar.
+    <header className={`top-navigation${ehTelaDeApoio(location.pathname) ? ' top-navigation--apoio' : ''}${apoioComMenu(location.pathname) ? ' top-navigation--com-menu' : ''}`}>
       <div className='top-navigation-left'>
         {/* ⚠️ O VOLTAR DAS TELAS DA CONTA, e ele só se vê no telemóvel.
             Tirada a tab bar destas telas, elas ficaram sem nenhum controlo de navegação à vista
@@ -325,6 +331,9 @@ export const AppLayout: FC = memo(() => {
             <FiChevronLeft size={22} />
           </button>
         )}
+        {/* O invólucro existe para o CSS ter o que esconder: a marca e o selo saem JUNTOS nas
+            telas de apoio, e o selo vem de um módulo cujo nome de classe é gerado. */}
+        <div className='top-navigation-brand'>
         {/* O mesmo wordmark vetorial da landing e do login. Aqui a marca era o símbolo em
             máscara + a palavra "Maestra" em texto peso 800 — parecida, mas mais pesada que o
             logotipo oficial, então a marca mudava de forma entre o site e o app. */}
@@ -337,6 +346,7 @@ export const AppLayout: FC = memo(() => {
         {/* O plano da conta vira um selo aqui: o banner de rodapé dizia a mesma coisa ocupando
             uma faixa inteira da tela em toda navegação. */}
         <PlanTag />
+        </div>
         {/* "Baixar App" e "Planos" apontavam para #board (não iam a lugar nenhum) e Suporte já
             está no rodapé do dashboard. O menu volta quando os destinos existirem. */}
       </div>
@@ -396,7 +406,9 @@ export const AppLayout: FC = memo(() => {
             "Mais" dela) — mas em telas sem tab bar, como /artists e /admin, é o único jeito de
             chegar em Configurações/Suporte/Sair, então continua aparecendo (com o visual do
             "Mais", não o dropdown de desktop). */}
-        <SystemMenu />
+        {/* `display: contents` por omissão: o invólucro não mexe no arranjo, e existe só para o
+            CSS poder esconder o menu nas telas de apoio que não são as Configurações. */}
+        <span className='top-navigation-system'><SystemMenu /></span>
       </div>
     </header>
   );
