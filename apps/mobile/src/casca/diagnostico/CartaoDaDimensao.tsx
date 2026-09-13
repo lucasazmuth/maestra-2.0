@@ -16,7 +16,7 @@ import {
   comentariosDaDimensao, seloDaDimensao, statusDaBarra,
 } from '@maestra/core/services/realEngine/comentarios';
 import {
-  AVISOS, ehLegado, linhasDaDimensao, resumoDoE, SIIC_MENSAL,
+  AVISOS, conviteADetalhar, detalhouOE, ehLegado, linhasDaDimensao, resumoDoE, SIIC_MENSAL,
 } from '@maestra/core/services/realEngine/relatorio';
 
 // O cartão de UMA dimensão do boletim — o §9 do documento, e a maior peça da entrega.
@@ -327,10 +327,10 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
         <Text style={estilos.aviso}>{AVISOS.travaL}</Text>
       )}
 
-      {chave === 'e' && <Receita real={real} />}
+      {chave === 'e' && detalhouOE(real) && <Receita real={real} />}
       {/* Cachê médio por tipo de contratante (§7.5): a receita de shows assume distribuição igual
           entre os tipos informados, e ver quais são deixa a aproximação à vista de quem lê. */}
-      {chave === 'e' && !!resumo?.cache.length && (
+      {chave === 'e' && detalhouOE(real) && !!resumo?.cache.length && (
         <View style={estilos.bloco}>
           <Rotulo>Cachê médio por tipo de contratante</Rotulo>
           {resumo.cache.map((c) => (
@@ -341,22 +341,41 @@ export const CartaoDaDimensao = ({ chave, real, chartmetric }: {
           ))}
         </View>
       )}
+      {/*
+        ⚠️ OS DOIS CHIPS APARECEM SEMPRE, positivo ou negativo (§3), como na web.
+        O app mostrava só a AUSÊNCIA, e escondia o bloco inteiro quando o artista tinha os dois:
+        quem tem CNPJ e empresário via um cartão sem chip nenhum e não ficava sabendo que eles
+        contam a favor — são o bônus de estrutura que faz a dimensão acender. E quem não tinha
+        lia duas etiquetas âmbar soltas, o que transforma um dado neutro em repreensão.
+      */}
       {chave === 'e' && (() => {
-        const semCnpj = resumo ? real.raw?.temCnpj === false : !entradas.temCnpj;
-        const semEmpresario = resumo ? real.raw?.temEmpresario === false : !entradas.temEmpresario;
-        if (!semCnpj && !semEmpresario) return null;
+        const comCnpj = resumo ? real.raw?.temCnpj === true : !!entradas.temCnpj;
+        const comEmpresario = resumo ? real.raw?.temEmpresario === true : !!entradas.temEmpresario;
+        const chip = (ligado: boolean, sim: string, nao: string) => (
+          <View style={[estilos.seloAmbar, ligado && estilos.seloVerde]}>
+            <Text style={[estilos.seloAmbarTexto, ligado && estilos.seloVerdeTexto]}>
+              {ligado ? sim : nao}
+            </Text>
+          </View>
+        );
         return (
           <View style={estilos.selos}>
-            {semCnpj && (
-              <View style={estilos.seloAmbar}><Text style={estilos.seloAmbarTexto}>Sem CNPJ</Text></View>
-            )}
-            {semEmpresario && (
-              <View style={estilos.seloAmbar}><Text style={estilos.seloAmbarTexto}>Sem empresário</Text></View>
-            )}
+            {chip(comCnpj, 'Com CNPJ', 'Sem CNPJ')}
+            {chip(comEmpresario, 'Com empresário', 'Sem empresário')}
           </View>
         );
       })()}
-      {chave === 'e' && (
+      {/*
+        §12 — quem respondeu o saldo numa faixa não vê composição, cachê por tipo nem saúde
+        financeira: nunca informou receita, custo nem fonte. Vê a razão de não os ver.
+      */}
+      {chave === 'e' && !!conviteADetalhar(real) && (
+        <View style={estilos.bloco}>
+          <Rotulo>De onde vem e pra onde vai</Rotulo>
+          <Text style={estilos.observacao}>{conviteADetalhar(real)}</Text>
+        </View>
+      )}
+      {chave === 'e' && detalhouOE(real) && (
         <View style={estilos.bloco}>
           <Rotulo>Saúde financeira · 12 meses</Rotulo>
           <View style={estilos.grade}>
@@ -515,6 +534,13 @@ const estilos = StyleSheet.create({
     backgroundColor: COR_DIAGNOSTICO.seloFundo,
   },
   seloAmbarTexto: { fontSize: 11, fontWeight: '700', color: COR_DIAGNOSTICO.selo },
+  // O mesmo selo em verde, para a resposta positiva. Os valores são os da folha da web, e há
+  // teste de cromo a prendê-los aos dois lados.
+  seloVerde: {
+    borderColor: COR_DIAGNOSTICO.seloOkContorno,
+    backgroundColor: COR_DIAGNOSTICO.seloOkFundo,
+  },
+  seloVerdeTexto: { color: COR_DIAGNOSTICO.seloOk },
 
   // A grade nasceu com TRÊS colunas (receita, investimento, saldo) e a v4 acrescentou mais duas:
   // o saldo ajustado pelo bônus de estrutura e a receita líquida estimada. Em cinco colunas os

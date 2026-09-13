@@ -14,7 +14,8 @@ import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '@maestra/core/services/realEngine/comentarios';
 import {
-  AVISOS, ehLegado, equilibrioExibido, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
+  AVISOS, conviteADetalhar, detalhouOE, ehLegado, equilibrioExibido, GRUPOS_DA_CONTA,
+  resumoDoE, SIIC_MENSAL,
 } from '@maestra/core/services/realEngine/relatorio';
 import {
   CHAMADA_DA_DIMENSAO as DIM_TAGLINE, LEGENDA_DO_DECLARADO as LEGENDA_DECLARADO,
@@ -188,6 +189,21 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; nLeitura: number | 
           </div>
         </div>
       )}
+      {/*
+        §12 — no caminho direto não há página "Onde a conta fecha", e é lá que os chips de
+        estrutura moram no v4. Sem este bloco eles desapareciam junto com ela, e a spec manda-os
+        aparecer NOS DOIS CAMINHOS: CNPJ e empresário são o que o artista respondeu, e continuam a
+        valer bônus na nota. Vêm com o convite a detalhar, que é a razão de a página não existir.
+      */}
+      {dk === 'e' && !!resumo && !detalhouOE(ri) && (
+        <div className={styles.docSubBlock2}>
+          <div className={styles.docPills2}>
+            <span className={temCnpj ? styles.docPillOn2 : styles.docPillOff2}>{temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
+            <span className={temEmpresario ? styles.docPillOn2 : styles.docPillOff2}>{temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
+          </div>
+          <div className={styles.docFonteAviso}>{conviteADetalhar(ri)}</div>
+        </div>
+      )}
       {/* ⚠️ AS TRÊS REDES APARECEM SEMPRE, e a que não tem taxa diz "sem dado" (§8.5 e §12).
           Antes o bloco inteiro sumia quando nenhuma tinha dado, e cada rede ausente sumia
           dentro dele: o PDF mostrava duas redes e quem lia não sabia se a terceira tinha
@@ -344,7 +360,11 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autor
   const hasPlatform = !!(playlists?.top?.length || similar?.length);
   // A página "Onde a conta fecha" só existe quando há um resumo do E para aprofundar — ou seja,
   // no diagnóstico v4. No legado o E não tem custo decomposto nem cachê por contratante.
-  const temContaFecha = !!resumoDoE(ri);
+  //
+  // E, desde a v4.5, também não existe no caminho direto: a página inteira é margem por show,
+  // ponto de equilíbrio e cachê por contratante, e nenhuma dessas três coisas foi perguntada a
+  // quem respondeu o saldo numa faixa. Ela sairia com zeros de ponta a ponta.
+  const temContaFecha = !!resumoDoE(ri) && detalhouOE(ri);
   const legado = ehLegado(ri);
   // 10 fixas + a segunda página de cada dimensão (só fora do legado) + as condicionais.
   const total = 10 + (legado ? 0 : 4)

@@ -16,7 +16,7 @@ import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '../services/realEngine/comentarios';
 import {
-  AVISOS, ehLegado, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
+  AVISOS, conviteADetalhar, detalhouOE, ehLegado, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
   equilibrioExibido,
 } from '../services/realEngine/relatorio';
 
@@ -346,6 +346,17 @@ const paginasDaDimensao = (
     ${dk === 'l' && !legado && ri.flags?.travaL
       ? `<div class="aviso">${escapar(AVISOS.travaL)}</div>` : ''}
 
+    ${/* §12 — no caminho direto não existe a página "Onde a conta fecha", e é lá que os chips de
+         estrutura moram no v4. Sem este bloco eles sumiam com ela, e a spec manda-os aparecer NOS
+         DOIS CAMINHOS. Vêm com o convite a detalhar, que é a razão de a página não existir. */ ''}
+    ${dk === 'e' && resumo && !detalhouOE(ri) ? `<div class="bloco">
+      <div class="pilulas">
+        <span class="pilula ${temCnpj ? 'pilulaOn' : ''}">${temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
+        <span class="pilula ${temEmpresario ? 'pilulaOn' : ''}">${temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
+      </div>
+      <div class="aviso">${escapar(conviteADetalhar(ri) ?? '')}</div>
+    </div>` : ''}
+
     ${/* Cachê, composição e saúde financeira saíram daqui na v4: são o corpo da página "Onde a
          conta fecha", e repetir os mesmos números duas vezes estourava esta página. O legado, que
          não tem aquela página, continua imprimindo os dois blocos que sempre teve. */ ''}
@@ -442,7 +453,10 @@ export function montarDocumentoDoDiagnostico({
   const temPlataformas = !!(playlists?.top?.length || similares?.length);
   // A página "Onde a conta fecha" só existe quando há um resumo do E para aprofundar — ou seja,
   // não existe no legado, que não tem os custos decompostos.
-  const temContaFecha = !!resumoDoE(ri);
+  //
+  // Nem no caminho direto (v4.5): a página é margem por show, ponto de equilíbrio e cachê por
+  // contratante, e nada disso foi perguntado a quem respondeu o saldo numa faixa.
+  const temContaFecha = !!resumoDoE(ri) && detalhouOE(ri);
   // 10 fixas + a segunda página de cada dimensão (só fora do legado) + as condicionais.
   const total = 10 + (ehLegado(ri) ? 0 : 4)
     + (temCidades ? 1 : 0) + (temPlataformas ? 1 : 0) + (temContaFecha ? 1 : 0);

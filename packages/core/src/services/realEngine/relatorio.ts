@@ -229,6 +229,30 @@ export const resumoDoE = (ri: Diagnostico | null | undefined) => {
   };
 };
 
+/**
+ * O artista abriu as parcelas do E, e portanto há conta a mostrar (§12).
+ *
+ * ⚠️ AS QUATRO SUPERFÍCIES PERGUNTAM ISTO, E NÃO O CAMINHO. Tela, PDF da web, PDF do núcleo e app
+ * mostram os mesmos três blocos — composição da receita, cachê por tipo e saúde financeira — e
+ * cada um lia o `revenue` por conta própria. Com a pergunta escrita quatro vezes, bastava uma
+ * ficar para trás para o mesmo diagnóstico mostrar "Receita R$ 0" num documento e a faixa no
+ * outro, sem erro nenhum e sem nada no log.
+ *
+ * O legado (v2/v3) responde `true`: ele tem faturamento e investimento gravados, e cada superfície
+ * já tem o ramo próprio que os lê. Fechá-lo aqui apagaria a conta de 72 diagnósticos.
+ */
+export const detalhouOE = (ri: Diagnostico | null | undefined): boolean =>
+  resumoDoE(ri)?.caminho !== 'direto';
+
+/**
+ * O convite a detalhar (F22), ou `null` quando não há o que convidar.
+ *
+ * Vai onde a conta estaria: quem respondeu a faixa não vê três blocos vazios, vê a razão de não
+ * os ver e o que fazer para os ter da próxima vez.
+ */
+export const conviteADetalhar = (ri: Diagnostico | null | undefined): string | null =>
+  (detalhouOE(ri) ? null : FIXOS.F22);
+
 /** As linhas de dado do cartão de uma dimensão (v4). Fora da v4, devolve lista vazia. */
 export const linhasDaDimensao = (
   ri: Diagnostico | null | undefined,

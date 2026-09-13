@@ -350,3 +350,57 @@ describe('o cabeçalho da entrega', () => {
     }
   });
 });
+
+// ════════ v4.5 · o caminho direto ════════
+//
+// A página "Onde a conta fecha" é margem por show, ponto de equilíbrio e cachê por contratante.
+// Nada disso foi perguntado a quem respondeu o saldo numa faixa: ela sairia com zeros de ponta
+// a ponta, e a numeração das páginas do documento mentiria junto.
+describe('o documento do diagnóstico na v4.5, pelo caminho direto', () => {
+  const direto = computeRealIndexV4({
+    spotifyConnected: true,
+    spotifyListeners: 1_914_986, igFollowers: 80_000, tiktokFollowers: null,
+    youtubeMonthlyViews: null, spotifyFollowers: 500_000, deezerFans: 6_000,
+    igEngagement: 4.35, tiktokEngagement: null, youtubeEngagement: null,
+    editorialPlaylists: 3, radioAirplay180d: 120,
+    igFollowersSelf: null, tiktokFollowersSelf: 40_000, youtubeViews28dSelf: null,
+    showsPerYear: 40,
+    saldoFaixa: 6,
+    // Detalhe por cima da faixa, para o teste não ficar verde por falta de dado.
+    cacheByType: { corporativos: 6_000, produtores: 2_000 },
+    revenueSources: { distribuidora: 12_000 },
+    custoPorShow: 800, custoFixoMensal: 1_500, investLancamentos12m: 20_000,
+    temCnpj: true, aliquota: null, temEmpresario: false,
+    fazBilheteria: false, pagantePct: null,
+    premios: 4, imprensaRepercussao: true,
+    imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }], imprensaFrequencia: 'perene',
+  });
+  const htmlDireto = montarDocumentoDoDiagnostico({
+    realIndex: direto as never,
+    chartmetric,
+    artistName: 'AZMUTH BEATS',
+    agora: new Date('2026-09-13T12:00:00.000Z'),
+  });
+
+  // ⚠️ A ASSERÇÃO É SOBRE O TÍTULO MARCADO, e não sobre a frase solta. A folha de estilo viaja
+  // dentro do próprio HTML e traz um comentário de CSS que diz "Onde a conta fecha": procurar a
+  // frase crua falhava com o portão a funcionar, e passaria a mentir no dia em que o comentário
+  // saísse. O título marcado é o que o leitor vê.
+  it('não imprime a página "Onde a conta fecha"', () => {
+    expect(htmlDireto).not.toContain('<div class="tituloDaSecao">Onde a conta fecha</div>');
+    expect(htmlDireto).not.toContain('<div class="blocoTitulo">Cachê médio por tipo de contratante</div>');
+    expect(htmlDireto).not.toContain('<div class="blocoTitulo">Composição da receita anual</div>');
+  });
+
+  it('mas mantém os chips de estrutura e o convite a detalhar', () => {
+    expect(htmlDireto).toContain('Com CNPJ');
+    expect(htmlDireto).toContain('Sem empresário');
+    expect(htmlDireto).toContain('detalhe receitas e custos');
+  });
+
+  it('e a tabela do E mostra a faixa, e não uma receita que ninguém informou', () => {
+    expect(htmlDireto).toContain('De R$ 10 mil a R$ 25 mil por mês');
+    expect(htmlDireto).toContain('de R$ 120 mil a R$ 300 mil por ano');
+    expect(htmlDireto).not.toContain('Custo médio por show');
+  });
+});

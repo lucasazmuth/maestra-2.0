@@ -539,6 +539,15 @@ export const COR_DIAGNOSTICO = {
   selo: '#e0a13c',
   seloFundo: 'rgba(224, 161, 60, 0.12)',
   seloContorno: 'rgba(224, 161, 60, 0.32)',
+  /**
+   * O mesmo selo quando a resposta é SIM ("Com CNPJ", "Com empresário"), em verde suave.
+   *
+   * §3 manda os dois chips aparecerem sempre, positivo ou negativo — e o app só mostrava a
+   * ausência. Quem tinha os dois não via chip nenhum, e não ficava sabendo que eles contam a favor.
+   */
+  seloOk: '#1db954',
+  seloOkFundo: 'rgba(29, 185, 84, 0.12)',
+  seloOkContorno: 'rgba(29, 185, 84, 0.32)',
   /** O mapa dos 16 perfis: a etiqueta comum e a do perfil da pessoa. */
   etiquetaFundo: '#f7f9fd',
   etiquetaContorno: '#d8e1ee',

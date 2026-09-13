@@ -87,6 +87,43 @@ const v4 = computeRealIndexV4({
   imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }], imprensaFrequencia: 'perene',
 });
 
+/**
+ * Um diagnóstico da v4.5 pelo CAMINHO DIRETO: o artista respondeu o saldo numa faixa e não
+ * detalhou nada. Pelo motor, como o outro — a forma do `revenue` muda (ganha `caminho`,
+ * `emFaixas` e `saldoFaixa`), e um fixture à mão fixaria a que eu imaginei.
+ */
+const v45direto = computeRealIndexV4({
+  spotifyConnected: true,
+  spotifyListeners: 200_000, igFollowers: 80_000, tiktokFollowers: null, youtubeMonthlyViews: null,
+  spotifyFollowers: 60_000, deezerFans: 6_000,
+  igEngagement: 5.2, tiktokEngagement: null, youtubeEngagement: null,
+  editorialPlaylists: 4, radioAirplay180d: 3,
+  igFollowersSelf: null, tiktokFollowersSelf: 40_000, youtubeViews28dSelf: null,
+  showsPerYear: 60,
+  saldoFaixa: 5,
+  // ⚠️ COM DETALHE POR CIMA DA FAIXA, de propósito. Sem ele o fixture não provava nada: os
+  // blocos do cachê e da composição não apareceriam de qualquer forma, por falta de dado, e o
+  // teste ficava verde mesmo com os portões todos removidos. Com detalhe, só o portão os cala.
+  cacheByType: { corporativos: 6_000, produtores: 2_000 },
+  revenueSources: { distribuidora: 20_000 },
+  custoPorShow: 500, custoFixoMensal: 1_000, investLancamentos12m: 20_000,
+  // Os dois positivos de propósito: é a configuração em que o app não mostrava chip nenhum.
+  temCnpj: true, aliquota: null, temEmpresario: true,
+  fazBilheteria: false, pagantePct: null,
+  premios: 4, imprensaRepercussao: true,
+  imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }], imprensaFrequencia: 'perene',
+});
+
+export const comDiagnosticoV45Direto: Artist = {
+  id: 'a-5',
+  user_id: 'u-1',
+  name: 'Bia Moraes',
+  content: {
+    identity: { genre: 'MPB' },
+    realIndex: v45direto as never,
+  },
+};
+
 export const comDiagnosticoV4: Artist = {
   id: 'a-3',
   user_id: 'u-1',

@@ -10,7 +10,9 @@ import { CABECALHO_DA_REVISITA } from '@maestra/core/constants/realCopy';
 import { CHAMADA_DO_PLANEJAMENTO, METODOLOGIA } from '@maestra/core/constants/realNarrative';
 import { store } from '@maestra/core/store/store';
 import Perfil from '../artista/[id]/diagnostico';
-import { comDiagnostico, comDiagnosticoV4, semDiagnostico } from './fixtures';
+import {
+  comDiagnostico, comDiagnosticoV4, comDiagnosticoV45Direto, semDiagnostico,
+} from './fixtures';
 
 // O prefixo  nao e estilo: o jest recusa a fabrica de  que referencia
 // variavel de fora do escopo, e abre excecao so para nomes que comecam assim.
@@ -37,7 +39,7 @@ jest.mock('expo-router', () => ({
 const semear = () =>
   store.dispatch({
     type: 'artists/fetchArtists/fulfilled',
-    payload: [comDiagnostico, comDiagnosticoV4, semDiagnostico],
+    payload: [comDiagnostico, comDiagnosticoV4, comDiagnosticoV45Direto, semDiagnostico],
   });
 
 const montar = () => render(<Provider store={store}><Perfil /></Provider>);
@@ -353,5 +355,54 @@ describe('refazer o diagnóstico', () => {
     await usuario.press(tela.getByLabelText(LOCKED_FEATURE_CONFIG.refazer.cta.label));
     expect(mockCheckout).not.toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledWith('/planos');
+  });
+});
+
+// ════════ v4.5 · o cartão do E nos dois caminhos ════════
+describe('diagnostico REAL na v4.5', () => {
+  beforeEach(() => { semear(); });
+
+  // ⚠️ O DEFEITO QUE ESTE BLOCO EXISTE PARA PRENDER: o app mostrava só a AUSÊNCIA de estrutura, e
+  // escondia o bloco inteiro quando o artista tinha as duas. Quem tem CNPJ e empresário via um
+  // cartão sem chip nenhum — e são eles o bônus que faz a dimensão acender. A web sempre mostrou
+  // os dois; era o app que estava fora de paridade.
+  it('os dois chips de estrutura aparecem, mesmo com as duas respostas positivas', async () => {
+    mockIdNaRota = comDiagnosticoV45Direto.id;
+    const tela = await montar();
+    expect(tela.getByText('Com CNPJ')).toBeTruthy();
+    expect(tela.getByText('Com empresário')).toBeTruthy();
+  });
+
+  it('e a resposta negativa continua a aparecer, do outro lado', async () => {
+    mockIdNaRota = comDiagnosticoV4.id;
+    const tela = await montar();
+    expect(tela.getByText('Com CNPJ')).toBeTruthy();
+    expect(tela.getByText('Sem empresário')).toBeTruthy();
+  });
+
+  // §12 — no caminho direto não há composição, cachê por tipo nem saúde financeira: nada disso
+  // foi perguntado. No lugar, a razão de não estarem lá.
+  it('o caminho direto não mostra a conta que ninguém informou', async () => {
+    mockIdNaRota = comDiagnosticoV45Direto.id;
+    const tela = await montar();
+    expect(tela.queryByText('Saúde financeira · 12 meses')).toBeNull();
+    expect(tela.queryByText('Cachê médio por tipo de contratante')).toBeNull();
+    expect(tela.queryByText('Composição da receita')).toBeNull();
+    expect(tela.getByText(/detalhe receitas e custos/)).toBeTruthy();
+  });
+
+  it('mas mostra a faixa que ele escolheu, mensal e anual', async () => {
+    mockIdNaRota = comDiagnosticoV45Direto.id;
+    const tela = await montar();
+    expect(tela.getByText('De R$ 6 mil a R$ 10 mil por mês')).toBeTruthy();
+    expect(tela.getByText('de R$ 72 mil a R$ 120 mil por ano')).toBeTruthy();
+  });
+
+  it('e o caminho detalhado continua a mostrar a conta inteira', async () => {
+    mockIdNaRota = comDiagnosticoV4.id;
+    const tela = await montar();
+    expect(tela.getByText('Saúde financeira · 12 meses')).toBeTruthy();
+    expect(tela.getByText('Cachê médio por tipo de contratante')).toBeTruthy();
+    expect(tela.queryByText(/detalhe receitas e custos/)).toBeNull();
   });
 });

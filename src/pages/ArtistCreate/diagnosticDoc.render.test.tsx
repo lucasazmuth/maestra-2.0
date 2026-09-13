@@ -173,3 +173,63 @@ describe('DiagnosticDoc v4 (deck do PDF)', () => {
     expect(html).not.toContain('O que o seu diagnóstico revela');
   });
 });
+
+// ════════ v4.5 · o PDF no caminho direto ════════
+//
+// Quem respondeu o saldo numa faixa nunca informou receita, custo por show nem cachê por
+// contratante. A página "Onde a conta fecha" é feita dessas três coisas: ela sairia com zeros de
+// ponta a ponta, e o número de páginas do documento não pode mentir sobre isso.
+describe('DiagnosticDoc v4.5 · o caminho direto', () => {
+  const direto: RealInputsV4 = {
+    spotifyConnected: true,
+    spotifyListeners: 2_900_000, igFollowers: 2_000_000, tiktokFollowers: 290_000,
+    youtubeMonthlyViews: 900_000, spotifyFollowers: 678_000, deezerFans: 6_000,
+    igEngagement: 2.4, tiktokEngagement: 1.2, youtubeEngagement: 0.4,
+    editorialPlaylists: 15, radioAirplay180d: 259,
+    igFollowersSelf: null, tiktokFollowersSelf: null, youtubeViews28dSelf: null,
+    showsPerYear: 60,
+    saldoFaixa: 6,
+    // Com detalhe por cima da faixa: sem ele, os blocos que este teste diz não existirem já não
+    // existiriam por falta de dado, e as asserções ficavam vazias.
+    cacheByType: { corporativos: 15_000, produtores: 8_000 },
+    revenueSources: { distribuidora: 80_000 },
+    custoPorShow: 4_000, custoFixoMensal: 6_000, investLancamentos12m: 150_000,
+    temCnpj: true, aliquota: null, temEmpresario: false,
+    fazBilheteria: true, pagantePct: '70-94',
+    premios: 4, imprensaRepercussao: true,
+    imprensaMatrix: [{ tipo: 'imprensa', porte: 'grande' }], imprensaFrequencia: 'perene',
+  };
+  const html = renderToStaticMarkup(
+    <DiagnosticDoc
+      realIndex={computeRealIndexV4(direto) as never}
+      chartmetric={cm} artistName="Marília Tavares" avatarSrc="data:,"
+    />,
+  );
+
+  it('a página "Onde a conta fecha" não existe, e a contagem acompanha', () => {
+    expect(html).not.toContain('Onde a conta fecha');
+    // Uma página a menos do que o detalhado, e a numeração impressa tem de dizer o mesmo.
+    expect((html.match(/data-docpage/g) || []).length).toBe(16);
+    expect(html).toContain('15 / 16');
+  });
+
+  it('nem a margem por show, nem o ponto de equilíbrio, nem o cachê por contratante', () => {
+    expect(html).not.toContain('Margem por show');
+    expect(html).not.toContain('Cachê médio por tipo de contratante');
+    expect(html).not.toContain('Composição da receita');
+  });
+
+  // ⚠️ OS CHIPS MORAVAM NAQUELA PÁGINA, e tinham sumido com ela. O §3 manda-os aparecer nos dois
+  // caminhos: são o que o artista respondeu, e o que dá o bônus de estrutura que decide a nota.
+  it('mas os chips de estrutura continuam, com o convite a detalhar', () => {
+    expect(html).toContain('Com CNPJ');
+    expect(html).toContain('Sem empresário');
+    expect(html).toContain('detalhe receitas e custos');
+  });
+
+  it('a tabela do E mostra a faixa, mensal e anual, e nenhum valor inventado', () => {
+    expect(html).toContain('De R$ 10 mil a R$ 25 mil por mês');
+    expect(html).toContain('de R$ 120 mil a R$ 300 mil por ano');
+    expect(html).not.toContain('Custo médio por show');
+  });
+});

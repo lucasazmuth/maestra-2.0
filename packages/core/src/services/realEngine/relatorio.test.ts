@@ -1,8 +1,9 @@
 import { computeRealIndexV4 } from './index';
 import type { RealInputsV4 } from './index';
 import {
-  AVISOS, AVISO_LEGADO, avisosDoDiagnostico, avisosSemLugarProprio, cercaDe, ehLegado,
-  engajamentoExibido, equilibrioExibido, linhasDaDimensao, resumoDoE, SIIC_ANUAL,
+  AVISOS, AVISO_LEGADO, avisosDoDiagnostico, avisosSemLugarProprio, cercaDe, conviteADetalhar,
+  detalhouOE, ehLegado, engajamentoExibido, equilibrioExibido, linhasDaDimensao, resumoDoE,
+  SIIC_ANUAL,
 } from './relatorio';
 import { FIXOS } from '../../constants/realTextos';
 
@@ -418,5 +419,29 @@ describe('§10 o rótulo "cerca de"', () => {
     expect(resumoDoE(antigo)!.emFaixas).toBe(false);
     expect(linhasDaDimensao(antigo, 'e')).toHaveLength(7);
     for (const l of linhasDaDimensao(antigo, 'e')) expect(l.valor).not.toContain('cerca de');
+  });
+});
+
+// ════════ §12 · o corte que as quatro superfícies partilham ════════
+describe('§12 detalhouOE e o convite a detalhar', () => {
+  const direto = computeRealIndexV4(base({ saldoFaixa: 5, showsPerYear: 20 }));
+  const detalhado = computeRealIndexV4(base({ showsPerYear: 20, cacheByType: { produtores: 5_000 } }));
+
+  it('quem abriu as parcelas tem conta a mostrar; quem respondeu a faixa não', () => {
+    expect(detalhouOE(detalhado)).toBe(true);
+    expect(detalhouOE(direto)).toBe(false);
+  });
+
+  // ⚠️ O LEGADO RESPONDE QUE SIM, e tem de responder: os 72 diagnósticos v2/v3 têm faturamento e
+  // investimento gravados, e cada superfície tem o ramo próprio que os lê. Fechá-los aqui apagaria
+  // a conta deles — e eles não têm caminho novo a que recorrer.
+  it.each([[{ version: 3 }], [{ version: 2 }], [{}], [null]])('o legado %p continua a mostrar a conta', (ri) => {
+    expect(detalhouOE(ri as never)).toBe(true);
+    expect(conviteADetalhar(ri as never)).toBeNull();
+  });
+
+  it('o convite só existe no caminho direto, e é o texto da spec', () => {
+    expect(conviteADetalhar(detalhado)).toBeNull();
+    expect(conviteADetalhar(direto)).toBe(FIXOS.F22);
   });
 });

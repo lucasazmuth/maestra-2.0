@@ -23,7 +23,8 @@ import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '@maestra/core/services/realEngine/comentarios';
 import {
-  AVISOS, avisosSemLugarProprio, ehLegado, linhasDaDimensao, resumoDoE, SIIC_MENSAL,
+  AVISOS, avisosSemLugarProprio, conviteADetalhar, detalhouOE, ehLegado, linhasDaDimensao,
+  resumoDoE, SIIC_MENSAL,
 } from '@maestra/core/services/realEngine/relatorio';
 import {
   CHAMADA_DO_PLANEJAMENTO, dimNarrative, LEVAR_O_DIAGNOSTICO, METODOLOGIA, QUEM_ASSINA,
@@ -349,7 +350,17 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
       {rows.some((l) => l.declarado) && (
         <div className={styles.statFonteNota}>† Informado por quem preencheu o diagnóstico. A Maestra não verifica estes dados.</div>
       )}
-      {dk === 'e' && <RevenuePie ri={ri} />}
+      {dk === 'e' && detalhouOE(ri) && <RevenuePie ri={ri} />}
+      {/*
+        §12 — quem respondeu o saldo numa faixa não vê composição, cachê por tipo nem saúde
+        financeira: ele nunca informou receita, custo nem fonte. Vê a razão de não os ver.
+      */}
+      {dk === 'e' && !!conviteADetalhar(ri) && (
+        <div className={styles.healthBlock}>
+          <div className={styles.healthTitle}>De onde vem e pra onde vai</div>
+          <p className={styles.healthNota}>{conviteADetalhar(ri)}</p>
+        </div>
+      )}
       {/*
         §3 — os chips de estrutura aparecem SEMPRE os dois, positivo ou negativo. Mostrar só a
         ausência transformava um dado neutro em repreensão, e escondia de quem tem os dois que
@@ -375,7 +386,7 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
         assume distribuição igual entre os tipos informados, e ver quais são deixa a aproximação à
         vista de quem lê, em vez de escondida na conta.
       */}
-      {dk === 'e' && (() => {
+      {dk === 'e' && detalhouOE(ri) && (() => {
         const resumo = resumoDoE(ri);
         if (!resumo?.cache.length) return null;
         const teto = Math.max(...resumo.cache.map((c) => c.valor));
@@ -394,7 +405,7 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
           </div>
         );
       })()}
-      {dk === 'e' && (() => {
+      {dk === 'e' && detalhouOE(ri) && (() => {
         const resumo = resumoDoE(ri);
         // Legado (v2/v3): base mensal, sem saldo ajustado nem alíquota.
         if (!resumo) {
