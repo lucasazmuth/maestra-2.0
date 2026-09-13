@@ -16,7 +16,7 @@
         "NSMicrophoneUsageDescription": "A Maestra não grava áudio; esta permissão é exigida por uma biblioteca de reprodução de som usada no app.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "3"
+      "buildNumber": "4"
     },
     "android": {
       "adaptiveIcon": {
