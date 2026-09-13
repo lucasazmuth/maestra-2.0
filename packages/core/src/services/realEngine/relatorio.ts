@@ -9,7 +9,7 @@
 // Referência: "Diagnóstico REAL v4", §11.3 (textos obrigatórios), §7.5 (exibição do E) e §13.2
 // (diagnósticos em versão anterior).
 
-import { dinheiroDoRelatorio, fmtNum, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
+import { dinheiroDoRelatorio, fmtNum, fmtPct, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
 import { FIXOS } from '../../constants/realTextos';
 import { ALIQUOTA_PCT, faixaDe, FAIXAS_DE_SALDO, type Aliquota, type Faixa, type FonteDeReceita, type Proveniencia, type TipoDeContratante } from './index';
 
@@ -36,6 +36,21 @@ type Diagnostico = Record<string, any>;
  * parte que dá não produziria um perfil interpretável, produziria uma mistura de duas metodologias.
  */
 export const ehLegado = (ri: Diagnostico | null | undefined): boolean => Number(ri?.version ?? 0) < 4;
+
+/**
+ * O diagnóstico foi feito numa versão ANTERIOR do método, qualquer que seja ela (§13.2).
+ *
+ * ⚠️ SÃO DOIS PREDICADOS, E SEPARÁ-LOS É O PONTO. O `ehLegado` decide o RAMO DE RENDERIZAÇÃO:
+ * um v2/v3 não tem `raw`, nem `flags`, nem proveniência por campo, e cada superfície tem um ramo
+ * próprio que lê o formato antigo. Este aqui decide só o AVISO e o convite a refazer.
+ *
+ * Marcar os 12 diagnósticos v4 gravados em produção com o `ehLegado` atirava-os para o ramo
+ * v2/v3, que procura campos que um v4 não tem: sairiam `R$ 0` e `NaN` num relatório que hoje
+ * está correto. Eles renderizam como o que são — v4 —, e só ganham o aviso de que o método
+ * mudou desde então.
+ */
+export const ehVersaoAnterior = (ri: Diagnostico | null | undefined): boolean =>
+  !!ri && (ehLegado(ri) || !ri.revenue?.caminho);
 
 /** F17 (§10) — o texto é da autora, e vive com os outros em `constants/realTextos`. */
 export const AVISO_LEGADO = FIXOS.F17;
@@ -66,7 +81,12 @@ export const avisosDoDiagnostico = (ri: Diagnostico | null | undefined): AvisoDo
   if (!ri) return [];
   if (ehLegado(ri)) return [{ chave: 'legado', texto: AVISO_LEGADO }];
   const f = ri.flags ?? {};
-  const avisos: AvisoDoRelatorio[] = [];
+  // Um v4 de antes da v4.5 recebe o aviso E os avisos dele. Diferente do legado, que recebe só
+  // o aviso: ali as flags da v4 nem existem, e misturá-las afirmaria coisas sobre dados que
+  // aquele diagnóstico nunca coletou. Aqui elas existem e continuam verdadeiras.
+  const avisos: AvisoDoRelatorio[] = ehVersaoAnterior(ri)
+    ? [{ chave: 'legado', texto: AVISO_LEGADO }]
+    : [];
   if (f.travaL) avisos.push({ chave: 'travaL', texto: AVISOS.travaL });
   if (f.saldoNegativo) avisos.push({ chave: 'saldoNegativo', texto: AVISOS.saldoNegativo });
   if (f.aSemBilheteria) avisos.push({ chave: 'semBilheteria', texto: AVISOS.semBilheteria });
@@ -394,6 +414,68 @@ export const equilibrioExibido = (
 };
 
 /** O engajamento, quando a API entregou. [SUSPENSO] no cálculo, exibido com rótulo (§8.2, §11.3.5). */
+/** Uma linha da secção "Sua presença nas plataformas" (§12, secção 9). */
+export interface LinhaDaPlataforma {
+  rotulo: string;
+  valor: string;
+  /** Sai com o rótulo do §8.5: "informativo, não entra no diagnóstico". */
+  informativo?: boolean;
+}
+
+const NOME_DA_REDE: Record<string, string> = {
+  instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube',
+};
+
+/**
+ * O conteúdo da secção "Sua presença nas plataformas" (§12, secção 9).
+ *
+ * ⚠️ ELA CONTRADIZIA O L, E É POR ISSO QUE MUDA. O bloco "Imprensa em detalhe" que vivia aqui
+ * escrevia, para quem respondeu "não" à repercussão, que "a imprensa ainda não repercutiu o seu
+ * trabalho" — um parágrafo escrito à mão, num documento onde a dimensão L já diz o que a matriz
+ * de veículos apurou, com os textos da autora. Dois donos da mesma afirmação, e o segundo era o
+ * que não olhava a matriz: bastava marcar um veículo e responder "não" à pergunta anterior para
+ * o PDF negar, em prosa, o que a página do L tinha acabado de reconhecer.
+ *
+ * No lugar entram os SINAIS DE PLATAFORMA, que é o que a secção se propõe a mostrar: playlists
+ * editoriais e rádio, que entram no índice, e engajamento e Deezer, que não entram e vão
+ * rotulados como tal.
+ *
+ * Mora no núcleo porque são dois renderizadores — o PDF da web e o do núcleo — e a secção é a
+ * mesma nos dois.
+ */
+export const plataformasExibidas = (
+  ri: Diagnostico | null | undefined,
+  cm?: Record<string, any> | null,
+): LinhaDaPlataforma[] => {
+  if (!ri || ehLegado(ri)) return [];
+  const l = ri.components?.l ?? {};
+  const playlists = l.playlists ?? {};
+  const radio = l.radio ?? {};
+  const execucoes = ri.raw?.radioAirplay180d;
+  const quantasPlaylists = ri.raw?.editorialPlaylists ?? cm?.playlists?.count ?? null;
+  const deezer = ri.deezerFans ?? null;
+  return [
+    {
+      rotulo: 'Playlists editoriais',
+      // Consulta vazia ≠ consulta que não aconteceu (§4). Dizer "0" nas duas apagava a diferença.
+      valor: playlists.present ? String(quantasPlaylists ?? 0) : 'Sem dado',
+    },
+    {
+      rotulo: 'Execução em rádio · 180 dias',
+      // Abaixo de 6 execuções o componente é AUSENTE, não zero (§9.5).
+      valor: radio.present && execucoes != null
+        ? `${fmtNum(Math.round(Number(execucoes)))} execuções`
+        : 'Sem dado',
+    },
+    ...engajamentoExibido(ri).map((e) => ({
+      rotulo: `Engajamento no ${NOME_DA_REDE[e.rede] ?? e.rede}`,
+      valor: fmtPct(e.value),
+      informativo: true,
+    })),
+    { rotulo: 'Fãs no Deezer', valor: deezer == null ? 'Sem dado' : fmtNum(deezer), informativo: true },
+  ];
+};
+
 export const engajamentoExibido = (ri: Diagnostico | null | undefined) => {
   const e = ri?.engagement ?? {};
   return (['instagram', 'tiktok', 'youtube'] as const)

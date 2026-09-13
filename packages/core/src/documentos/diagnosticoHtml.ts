@@ -16,7 +16,8 @@ import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '../services/realEngine/comentarios';
 import {
-  AVISOS, conviteADetalhar, detalhouOE, ehLegado, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
+  AVISOS, conviteADetalhar, detalhouOE, ehLegado, GRUPOS_DA_CONTA, plataformasExibidas,
+  resumoDoE, SIIC_MENSAL,
   equilibrioExibido,
 } from '../services/realEngine/relatorio';
 
@@ -446,11 +447,12 @@ export function montarDocumentoDoDiagnostico({
   const cidades = chartmetric?.top_cities as { name: string; country: string; listeners: number }[] | undefined;
   const playlists = chartmetric?.playlists as { count?: number; top?: { name: string; followers?: number; editorial?: boolean }[] } | undefined;
   const similares = chartmetric?.similar as unknown[] | undefined;
-  const inp = ri.inputs || {};
   const hoje = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 
   const temCidades = !!cidades?.length;
   const temPlataformas = !!(playlists?.top?.length || similares?.length);
+  // Os sinais de plataforma da secção 9. Vêm do núcleo: são dois PDFs, e a secção é a mesma.
+  const plataformasDoPdf = plataformasExibidas(ri, chartmetric as Record<string, unknown>);
   // A página "Onde a conta fecha" só existe quando há um resumo do E para aprofundar — ou seja,
   // não existe no legado, que não tem os custos decompostos.
   //
@@ -605,19 +607,19 @@ export function montarDocumentoDoDiagnostico({
           ${p.followers != null ? `<span class="listaVal">${fmtNum(p.followers)}</span>` : ''}
         </div>`).join('')}
       </div>` : ''}
-      <div class="bloco">
-        <div class="blocoTitulo">Imprensa em detalhe</div>
-        ${inp.imprensaRepercussao
-          ? `<p class="revelaPara"><b>Você já apareceu na imprensa.</b> Esse tipo de cobertura é
-              difícil de conseguir e pesa muito na legitimação: mostra que a sua história interessa
-              além do nicho.</p>
-             <p class="revelaPara">${inp.imprensaFrequencia === 'perene'
-               ? '<b>Sua presença na mídia é constante.</b> Você aparece de forma perene, não só em lançamentos. Consistência é o que transforma imprensa em legitimação sustentada.'
-               : '<b>Sua imprensa ainda é pontual.</b> Concentrada em lançamentos, ela vira legitimação sustentada quando ganha constância ao longo do ano.'}</p>`
-          : `<p class="revelaPara"><b>A imprensa ainda não repercutiu o seu trabalho.</b> Presença em
-              veículos é um capital que abre portas que números sozinhos não abrem, e costuma vir
-              com estratégia de posicionamento.</p>`}
-      </div>`, autoria, agora));
+      ${/* ⚠️ O "IMPRENSA EM DETALHE" SAIU DAQUI, e saiu porque CONTRADIZIA O L (§12, secção 9).
+           Ele escrevia à mão, para quem respondeu "não" à pergunta da repercussão, que "a imprensa
+           ainda não repercutiu o seu trabalho" — no mesmo documento em que a página do L diz o que
+           a matriz de veículos apurou, com os textos da autora. Dois donos da mesma afirmação, e o
+           segundo não olhava a matriz. No lugar, os sinais de plataforma. */ ''}
+      ${plataformasDoPdf.length ? `<div class="bloco">
+        <div class="blocoTitulo">Sinais de plataforma</div>
+        ${plataformasDoPdf.map((linha) => `<div class="lista">
+          <span class="listaNome">${escapar(linha.rotulo)}${linha.informativo
+            ? ` <span class="listaEditorial">${escapar(AVISOS.informativo)}</span>` : ''}</span>
+          <span class="listaVal">${escapar(linha.valor)}</span>
+        </div>`).join('')}
+      </div>` : ''}`, autoria, agora));
   }
 
   // OS 16 PERFIS

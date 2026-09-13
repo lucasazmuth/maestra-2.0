@@ -164,6 +164,30 @@ describe('DiagnosticDoc v4 (deck do PDF)', () => {
 
   // O mesmo parágrafo nas duas páginas é o tipo de erro que ninguém vê revisando o código e todo
   // mundo vê no PDF pronto: a página do E e a do aprofundamento, uma depois da outra.
+  // ⚠️ A PÁGINA DAS PLATAFORMAS PAROU DE CONTRADIZER O L (§12, secção 9). O bloco "Imprensa em
+  // detalhe" escrevia um veredito sobre a imprensa sem olhar a matriz de veículos, no mesmo
+  // documento em que a página do L diz o que a matriz apurou. Este deck é o da WEB, e tinha a
+  // mesma prosa que o do núcleo — duas cópias do mesmo erro.
+  it('a página das plataformas mostra os sinais, e não um veredito sobre a imprensa', () => {
+    expect(html).toContain('Sinais de plataforma');
+    expect(html).toContain('Playlists editoriais');
+    expect(html).toContain('Execução em rádio · 180 dias');
+    expect(html).not.toContain('Imprensa em detalhe');
+    expect(html).not.toContain('A imprensa ainda não repercutiu o seu trabalho');
+  });
+
+  // §8.5 — o que não entra no índice tem de o dizer. Sem o rótulo, engajamento e Deezer ficavam
+  // no mesmo peso de playlist e rádio, que entram.
+  // ⚠️ O RÓTULO TEM DE ESTAR NA LINHA, e não em qualquer lugar do documento. A primeira versão
+  // desta asserção procurava a frase solta — e ela já existe noutra página, a do engajamento por
+  // rede. Tirar o rótulo das linhas desta secção não fazia o teste falhar.
+  it('e rotula o engajamento e o Deezer como informativos, na própria linha', () => {
+    expect(html).toMatch(/Engajamento no Instagram[\s\S]{0,240}informativo, não entra no diagnóstico/);
+    expect(html).toMatch(/Fãs no Deezer[\s\S]{0,240}informativo, não entra no diagnóstico/);
+    // E o que ENTRA no índice não leva rótulo nenhum.
+    expect(html).not.toMatch(/Playlists editoriais[\s\S]{0,120}informativo, não entra/);
+  });
+
   it('não repete o comentário da conta na página do E', () => {
     const lead = 'Cada show seu deixa';
     expect(html.split(lead).length - 1).toBe(1);

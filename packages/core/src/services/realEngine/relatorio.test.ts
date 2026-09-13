@@ -2,8 +2,8 @@ import { computeRealIndexV4 } from './index';
 import type { RealInputsV4 } from './index';
 import {
   AVISOS, AVISO_LEGADO, avisosDoDiagnostico, avisosSemLugarProprio, cercaDe, conviteADetalhar,
-  detalhouOE, ehLegado, engajamentoExibido, equilibrioExibido, linhasDaDimensao, resumoDoE,
-  SIIC_ANUAL,
+  detalhouOE, ehLegado, ehVersaoAnterior, engajamentoExibido, equilibrioExibido, linhasDaDimensao,
+  resumoDoE, SIIC_ANUAL,
 } from './relatorio';
 import { FIXOS } from '../../constants/realTextos';
 
@@ -443,5 +443,61 @@ describe('§12 detalhouOE e o convite a detalhar', () => {
   it('o convite só existe no caminho direto, e é o texto da spec', () => {
     expect(conviteADetalhar(detalhado)).toBeNull();
     expect(conviteADetalhar(direto)).toBe(FIXOS.F22);
+  });
+});
+
+// ════════ §13.2 · os diagnósticos anteriores à v4.5 ════════
+//
+// ⚠️ SÃO DOIS PREDICADOS, E SEPARÁ-LOS É O PONTO DESTE PASSO.
+//
+// Há 12 diagnósticos v4 gravados em produção, feitos antes de o E ganhar os dois caminhos. Eles
+// precisam do aviso de que o método mudou — mas marcá-los com o `ehLegado` atirava-os para o ramo
+// de renderização v2/v3, que procura campos que um v4 não tem: `inputs.investimento`,
+// `revenue.total`, `revenue.sources`. Sairiam `R$ 0` e `NaN` num relatório que hoje está correto.
+//
+// `ehLegado` decide o RAMO e não muda. `ehVersaoAnterior` decide o AVISO.
+describe('§13.2 o aviso de versão anterior', () => {
+  const v45 = computeRealIndexV4(base({ showsPerYear: 20, cacheByType: { produtores: 5_000 } }));
+  // Um v4 de produção: tem `version: 4`, tem `flags`, e não tem `revenue.caminho`.
+  const v4Antigo = {
+    version: 4,
+    revenue: { showsPerYear: 12, receitaAnual: 60_000, saldo: 20_000 },
+    flags: { travaL: true, autodeclarados: ['igFollowers'] },
+  };
+
+  it('o legado e o v4 antigo são versão anterior; o v4.5 não é', () => {
+    expect(ehVersaoAnterior({ version: 3 })).toBe(true);
+    expect(ehVersaoAnterior(v4Antigo)).toBe(true);
+    expect(ehVersaoAnterior(v45)).toBe(false);
+  });
+
+  // ⚠️ O QUE DISTINGUE OS DOIS PREDICADOS, dito sozinho: o v4 antigo NÃO é legado, e por isso
+  // continua a renderizar pelo ramo da v4. Unificá-los é a mutação que enche o relatório de NaN.
+  it('mas o v4 antigo NÃO é legado, e continua a renderizar como v4', () => {
+    expect(ehLegado(v4Antigo)).toBe(false);
+    expect(resumoDoE(v4Antigo)).not.toBeNull();
+    expect(linhasDaDimensao(v4Antigo, 'e')).toHaveLength(7);
+  });
+
+  it('os 12 recebem o aviso, e o bloco do topo mostra-o', () => {
+    expect(avisosSemLugarProprio(v4Antigo)).toEqual([{ chave: 'legado', texto: AVISO_LEGADO }]);
+    expect(avisosSemLugarProprio(v45)).toEqual([]);
+  });
+
+  // E recebem TAMBÉM os avisos deles, ao contrário do legado. Ali as flags da v4 nem existem;
+  // aqui existem e continuam verdadeiras — calá-las esconderia a trava do L de quem a tem.
+  it('e continuam a receber os próprios avisos, que o legado não tem', () => {
+    const chaves = avisosDoDiagnostico(v4Antigo).map((a) => a.chave);
+
+    expect(chaves).toContain('legado');
+    expect(chaves).toContain('travaL');
+    expect(chaves).toContain('autodeclarado');
+    // O legado recebe SÓ o aviso de versão: não há flags sobre que falar.
+    expect(avisosDoDiagnostico({ version: 3, flags: { travaL: true } }).map((a) => a.chave))
+      .toEqual(['legado']);
+  });
+
+  it('e o diagnóstico da v4.5 não recebe aviso de versão nenhum', () => {
+    expect(avisosDoDiagnostico(v45).map((a) => a.chave)).not.toContain('legado');
   });
 });

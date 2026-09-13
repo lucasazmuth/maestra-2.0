@@ -5,6 +5,7 @@ import { montarDocumentoDoDiagnostico } from '@maestra/core/documentos/diagnosti
 import { autoriaDoDocumento, linhaDeAutoria, linhasDaDimensao } from '@maestra/core/documentos/diagnostico';
 import { ORIENTACAO_SPOTIFY } from '@maestra/core/constants/quizDoDiagnostico';
 import { FIXOS } from '@maestra/core/constants/realTextos';
+import { AVISOS, plataformasExibidas } from '@maestra/core/services/realEngine/relatorio';
 import { computeRealIndexV4 } from '@maestra/core/services/realEngine';
 import type { RealInputsV4 } from '@maestra/core/services/realEngine';
 
@@ -69,7 +70,6 @@ describe('o documento do diagnóstico', () => {
     ['o que o diagnóstico revela', 'O que o seu diagnóstico revela'],
     ['as cidades', 'Onde seus ouvintes estão'],
     ['as plataformas', 'Sua presença nas plataformas'],
-    ['a imprensa', 'Imprensa em detalhe'],
     ['os 16 perfis', 'Sua posição entre os 16 perfis'],
     ['o TOP ICON', 'TOP ICON'],
     ['quem assina', 'Anita Carvalho'],
@@ -402,5 +402,90 @@ describe('o documento do diagnóstico na v4.5, pelo caminho direto', () => {
     expect(htmlDireto).toContain('De R$ 10 mil a R$ 25 mil por mês');
     expect(htmlDireto).toContain('de R$ 120 mil a R$ 300 mil por ano');
     expect(htmlDireto).not.toContain('Custo médio por show');
+  });
+});
+
+// ════════ §12 secção 9 · a presença nas plataformas para de contradizer o L ════════
+//
+// ⚠️ O BLOCO "IMPRENSA EM DETALHE" AFIRMAVA COISAS SOBRE A IMPRENSA, num documento onde a página
+// do L já diz o que a matriz de veículos apurou, com os textos da autora. E afirmava-as sem olhar
+// a matriz: quem marcasse um veículo e respondesse "não" à pergunta anterior lia, no mesmo PDF,
+// que "a imprensa ainda não repercutiu o seu trabalho" — logo depois de a página do L reconhecer
+// a cobertura. Dois donos da mesma afirmação, e o segundo era o que não tinha os dados.
+describe('§12 a secção das plataformas', () => {
+  const comMatriz = computeRealIndexV4({
+    spotifyConnected: true,
+    spotifyListeners: 1_914_986, igFollowers: 80_000, tiktokFollowers: null,
+    youtubeMonthlyViews: null, spotifyFollowers: 500_000, deezerFans: 6_000,
+    igEngagement: 4.35, tiktokEngagement: null, youtubeEngagement: null,
+    editorialPlaylists: 3, radioAirplay180d: 120,
+    igFollowersSelf: null, tiktokFollowersSelf: null, youtubeViews28dSelf: null,
+    showsPerYear: 40, saldoFaixa: 5,
+    cacheByType: {}, revenueSources: {},
+    custoPorShow: 0, custoFixoMensal: 0, investLancamentos12m: 0,
+    temCnpj: true, aliquota: null, temEmpresario: false,
+    fazBilheteria: false, pagantePct: null,
+    // A contradição em estado puro: veículo marcado, e a pergunta anterior respondida com "não".
+    premios: 4, imprensaRepercussao: false,
+    imprensaMatrix: [{ tipo: 'tv', porte: 'grande' }], imprensaFrequencia: 'perene',
+  });
+  const doc = montarDocumentoDoDiagnostico({
+    realIndex: comMatriz as never,
+    chartmetric,
+    artistName: 'AZMUTH BEATS',
+    agora: new Date('2026-09-13T12:00:00.000Z'),
+  });
+
+  it('não escreve mais um veredito sobre a imprensa', () => {
+    expect(doc).not.toContain('A imprensa ainda não repercutiu o seu trabalho');
+    expect(doc).not.toContain('Você já apareceu na imprensa');
+    expect(doc).not.toContain('Imprensa em detalhe');
+  });
+
+  it('e mostra os sinais de plataforma no lugar', () => {
+    expect(doc).toContain('Sinais de plataforma');
+    expect(doc).toContain('Playlists editoriais');
+    expect(doc).toContain('Execução em rádio · 180 dias');
+  });
+
+  // §8.5 — engajamento e Deezer não entram no diagnóstico, e a secção tem de o dizer. Mostrá-los
+  // ao lado de playlists e rádio, sem rótulo, punha os quatro no mesmo peso.
+  it('rotula o que é informativo, e não rotula o que entra no índice', () => {
+    const linhas = plataformasExibidas(comMatriz as never, chartmetric as never);
+
+    expect(linhas.filter((l) => !l.informativo).map((l) => l.rotulo))
+      .toEqual(['Playlists editoriais', 'Execução em rádio · 180 dias']);
+    expect(linhas.filter((l) => l.informativo).map((l) => l.rotulo))
+      .toEqual(['Engajamento no Instagram', 'Fãs no Deezer']);
+    expect(doc).toContain(AVISOS.informativo);
+  });
+
+  // Consulta vazia ≠ consulta que não aconteceu (§4), e abaixo de 6 execuções o rádio é AUSENTE
+  // e não zero (§9.5). Dizer "0" nos dois apagava a diferença.
+  it('distingue o dado ausente do dado que veio zero', () => {
+    const semDados = computeRealIndexV4({
+      ...(comMatriz.raw as RealInputsV4),
+      spotifyConnected: false,
+      editorialPlaylists: null,
+      // Três execuções: abaixo do corte de seis, o componente é AUSENTE e não zero (§9.5).
+      radioAirplay180d: 3,
+      deezerFans: null,
+      igEngagement: null, tiktokEngagement: null, youtubeEngagement: null,
+    });
+    const linhas = plataformasExibidas(semDados as never);
+
+    expect(linhas.map((l) => l.valor)).toEqual(['Sem dado', 'Sem dado', 'Sem dado']);
+  });
+
+  // ⚠️ O LEGADO FICA SEM OS SINAIS, e isso é deliberado. Aquele cálculo não produzia
+  // `components.l` nem proveniência por campo, e reconstruí-los dos `inputs` antigos seria
+  // afirmar presença de plataforma a partir de dados que nunca foram lidos assim. A página
+  // continua a existir, com a lista de playlists; e o bloco da imprensa sai de lá também, porque
+  // a contradição com o L era a mesma.
+  it('o legado fica sem os sinais, e sem o veredito de imprensa que tinha', () => {
+    expect(plataformasExibidas({ version: 3 } as never)).toEqual([]);
+    expect(html).toContain('Sua presença nas plataformas');
+    expect(html).not.toContain('Imprensa em detalhe');
+    expect(html).not.toContain('Você já apareceu na imprensa');
   });
 });

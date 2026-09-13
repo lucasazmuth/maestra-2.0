@@ -15,7 +15,7 @@ import {
 } from '@maestra/core/services/realEngine/comentarios';
 import {
   AVISOS, conviteADetalhar, detalhouOE, ehLegado, equilibrioExibido, GRUPOS_DA_CONTA,
-  resumoDoE, SIIC_MENSAL,
+  plataformasExibidas, resumoDoE, SIIC_MENSAL,
 } from '@maestra/core/services/realEngine/relatorio';
 import {
   CHAMADA_DA_DIMENSAO as DIM_TAGLINE, LEGENDA_DO_DECLARADO as LEGENDA_DECLARADO,
@@ -353,11 +353,12 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autor
   const cities = chartmetric?.top_cities;
   const playlists = chartmetric?.playlists;
   const similar = chartmetric?.similar;
-  const inp = ri.inputs || {};
   const today = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 
   const hasCities = !!cities?.length;
   const hasPlatform = !!(playlists?.top?.length || similar?.length);
+  // Os sinais de plataforma que a secção mostra (§12, secção 9). Vêm do núcleo: são dois PDFs.
+  const plataformas = plataformasExibidas(ri, chartmetric);
   // A página "Onde a conta fecha" só existe quando há um resumo do E para aprofundar — ou seja,
   // no diagnóstico v4. No legado o E não tem custo decomposto nem cachê por contratante.
   //
@@ -472,21 +473,30 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autor
               ))}
             </div>
           )}
-          <div>
-            <div className={styles.docSubTitle2} style={{ marginBottom: 10 }}>Imprensa em detalhe</div>
-            {inp.imprensaRepercussao ? (
-              <>
-                <p className={styles.docRevealPara2}><strong>Você já apareceu na imprensa.</strong> Esse tipo de cobertura é difícil de conseguir e pesa muito na legitimação: mostra que a sua história interessa além do nicho.</p>
-                <p className={styles.docRevealPara2}>
-                  {inp.imprensaFrequencia === 'perene'
-                    ? <><strong>Sua presença na mídia é constante.</strong> Você aparece de forma perene, não só em lançamentos. Consistência é o que transforma imprensa em legitimação sustentada.</>
-                    : <><strong>Sua imprensa ainda é pontual.</strong> Concentrada em lançamentos, ela vira legitimação sustentada quando ganha constância ao longo do ano.</>}
-                </p>
-              </>
-            ) : (
-              <p className={styles.docRevealPara2}><strong>A imprensa ainda não repercutiu o seu trabalho.</strong> Presença em veículos é um capital que abre portas que números sozinhos não abrem, e costuma vir com estratégia de posicionamento.</p>
-            )}
-          </div>
+          {/*
+            ⚠️ O "IMPRENSA EM DETALHE" SAIU DAQUI, e saiu porque CONTRADIZIA O L (§12, secção 9).
+            Ele escrevia à mão, para quem respondeu "não" à pergunta da repercussão, que "a
+            imprensa ainda não repercutiu o seu trabalho" — no mesmo documento em que a página do
+            L diz o que a matriz de veículos apurou, com os textos da autora. Dois donos da mesma
+            afirmação, e o segundo não olhava a matriz.
+
+            No lugar, os sinais de plataforma, que é o que a secção se propõe a mostrar. A leitura
+            vem do núcleo: são dois PDFs, e a secção é a mesma nos dois.
+          */}
+          {!!plataformas.length && (
+            <div>
+              <div className={styles.docSubTitle2} style={{ marginBottom: 10 }}>Sinais de plataforma</div>
+              {plataformas.map((linha, i) => (
+                <div key={linha.rotulo} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '8px 0', borderTop: i ? `1px solid ${DOC.line}` : 'none' }}>
+                  <span style={{ color: DOC.ink, flex: 1, fontSize: 15, fontWeight: 600 }}>
+                    {linha.rotulo}
+                    {linha.informativo && <span style={{ color: DOC.dim, fontSize: 12, fontWeight: 600 }}> · {AVISOS.informativo}</span>}
+                  </span>
+                  <span style={{ color: DOC.dim, fontSize: 15, fontWeight: 700 }}>{linha.valor}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </Page>
       )}
 
