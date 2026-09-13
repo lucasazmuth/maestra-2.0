@@ -27,11 +27,17 @@ body.jam-project-space .local-player-bar {
   border-radius: 8px;
 }
 
+/* ⚠️ É O `fill` QUE PINTA ESTES ÍCONES, E NÃO O `stroke`. Eles são desenhos CHEIOS — silhuetas
+ * sólidas, sem traço nenhum — e trazem um `fill: #bababa` no atributo `style` do próprio
+ * elemento, que nenhuma folha vence sem `!important`. Daqui saiu a tentativa de os recolorir
+ * pelo `stroke`, e o que ela desenhou foi um CONTORNO azul-marinho de 1 px à volta de uma
+ * silhueta que continuava cinza: cada seta ficou com dois tons e uma borda que o desenho nunca
+ * teve, e o volume ficou com o miolo de uma cor e a moldura de outra. */
 .local-player-bar .lpb-controls button:not(.lpb-play) svg,
 .local-player-bar .lpb-close svg,
 .local-player-bar .lpb-volume button svg {
   color: #49638f !important;
-  stroke: currentColor;
+  fill: #49638f !important;
 }
 
 .local-player-bar .lpb-controls button:not(.lpb-play):hover:not(:disabled),
@@ -53,6 +59,7 @@ body.jam-project-space .local-player-bar {
 .local-player-bar .lpb-volume button:hover svg,
 .local-player-bar .lpb-volume button:focus-visible svg {
   color: #294c83 !important;
+  fill: #294c83 !important;
 }
 
 .local-player-bar .lpb-play {
@@ -63,7 +70,7 @@ body.jam-project-space .local-player-bar {
 
 .local-player-bar .lpb-play svg {
   color: #ffffff !important;
-  stroke: currentColor;
+  fill: #ffffff !important;
 }
 
 .local-player-bar .lpb-play:hover:not(:disabled),
@@ -181,3 +188,4 @@ body.jam-project-space .local-player-bar {
     bottom: calc(18px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
+

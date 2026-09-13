@@ -25,6 +25,13 @@ export interface Opcao {
   rotulo: string;
   /** Aparece antes do rótulo; usada pelo responsável, que na web mostra a foto. */
   foto?: string | null;
+  /**
+   * Pinta a linha de vermelho: o que apaga não se lê igual ao que abre.
+   *
+   * A folha já tinha esta cor na linha de LIMPAR, que é a mesma ideia — a diferença é que aquela
+   * é sempre a última e esta é uma opção como as outras.
+   */
+  perigo?: boolean;
 }
 
 export const Escolha = ({ aberta, titulo, opcoes, valor, limpar, aoEscolher, aoFechar }: {
@@ -59,7 +66,11 @@ export const Escolha = ({ aberta, titulo, opcoes, valor, limpar, aoEscolher, aoF
               accessibilityState={{ selected: escolhida }}
               accessibilityLabel={opcao.rotulo}
             >
-              <Text style={[estilos.opcaoTexto, escolhida && estilos.opcaoEscolhida]}>
+              <Text style={[
+                estilos.opcaoTexto,
+                escolhida && estilos.opcaoEscolhida,
+                opcao.perigo && estilos.opcaoDePerigo,
+              ]}>
                 {opcao.rotulo}
               </Text>
               {escolhida && <Feather name="check" size={17} color={COR.primaria} />}
@@ -100,6 +111,7 @@ const estilos = StyleSheet.create({
   },
   opcaoTexto: { flex: 1, fontSize: 15, color: COR.titulo },
   opcaoEscolhida: { fontWeight: '800', color: COR.primaria },
+  opcaoDePerigo: { fontWeight: '700', color: COR.erro },
   opcaoDeLimpar: { borderTopWidth: 1, borderTopColor: COR.divisoria, marginTop: 8 },
   limparTexto: { fontSize: 15, fontWeight: '700', color: COR.erro },
 });

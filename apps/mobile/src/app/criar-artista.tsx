@@ -31,6 +31,7 @@ import { FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
 import { Relatorio } from '@/casca/diagnostico/Relatorio';
 import { MaestraMarca } from '@/icones';
 import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
 // CRIAR PERFIL — o fluxo que termina no Diagnóstico REAL.
 //
@@ -429,7 +430,7 @@ export default function CriarArtista() {
               {/* ── 1. O artista ───────────────────────────────────────────── */}
               {passo === 'perfil' && (
                 <>
-                  {verificando && <ActivityIndicator color={COR.primaria} style={estilos.espera} />}
+                  {verificando && <Carregando estilo={estilos.espera} />}
 
                   {!verificando && !pode && motivo === 'pending_limit' && aviso(
                     `Você tem ${pendentes} perfis pendentes. Pague ou exclua antes de criar outro.`,

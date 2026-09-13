@@ -51,10 +51,10 @@ const ArtistCreate: FC = () => {
   const subInitialized = useAppSelector((s) => s.subscription.initialized);
 
   // Refazer diagnóstico é recurso PRO — o edge também valida (403). Aqui evitamos o beco sem saída
-  // de rodar o quiz todo pra só barrar no fim: não-PRO é mandado pra /assinatura na entrada. Só
+  // de rodar o quiz todo pra só barrar no fim: não-PRO é mandado pra /planos na entrada. Só
   // age após o status carregar (`initialized`), senão um PRO seria expulso no load inicial.
   useEffect(() => {
-    if (redo && subInitialized && !isPro) navigate('/assinatura', { replace: true });
+    if (redo && subInitialized && !isPro) navigate('/planos', { replace: true });
   }, [redo, subInitialized, isPro, navigate]);
 
   // Mesma ideia para quem NÃO é dono do perfil. O botão já não aparece para colaborador, mas a

@@ -47,7 +47,7 @@ export const PlanTag: FC = () => {
       className={`${styles.tag} ${styles[plano]}`}
       title={titulo}
       aria-label={titulo}
-      onClick={() => navigate('/assinatura')}
+      onClick={() => navigate('/planos')}
     >
       <ShineOverlay tone={plano} />
       <Diamond tone={plano} size={12} />

@@ -7,6 +7,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { persistor, store } from '@maestra/core/store/store';
 import { AssinaturaDaConta } from '@/nucleo/AssinaturaDaConta';
+import { ConsentimentoDaConta } from '@/nucleo/ConsentimentoDaConta';
 import { PortaoDaSessao } from '@/nucleo/PortaoDaSessao';
 import { PortaoDoConsentimento } from '@/nucleo/PortaoDoConsentimento';
 import { ligarRotaDoApp } from '@/nucleo/rotaApp';
@@ -37,15 +38,21 @@ export default function LayoutRaiz() {
       <Provider store={store}>
         <PersistGate persistor={persistor} loading={null}>
           <StatusBar style="dark" />
-          {/* O portão fica DENTRO do roteador: ele lê a rota atual para não expulsar quem já
-              está na tela de entrar. */}
-          <PortaoDaSessao />
-          {/* Depois do da sessão: sem sessão não há consentimento a cobrar. */}
-          <PortaoDoConsentimento />
-          {/* O estado da assinatura chega aqui, e não na pílula do cabeçalho: quem lê o
-              `useEntitlements` numa tela sem pílula lia o padrão `none` como resposta. */}
-          <AssinaturaDaConta />
-          <Stack screenOptions={{ headerShown: false }} />
+          {/* ⚠️ O PROVEDOR ENVOLVE O PORTÃO E AS TELAS, e é isso que faz o aceite valer.
+              O portão e a tela de coleta liam cada um a sua cópia do estado, e a do portão
+              mandava na rota: quem acabava de aceitar era devolvido ao consentimento. Ver
+              `nucleo/ConsentimentoDaConta`. */}
+          <ConsentimentoDaConta>
+            {/* O portão fica DENTRO do roteador: ele lê a rota atual para não expulsar quem já
+                está na tela de entrar. */}
+            <PortaoDaSessao />
+            {/* Depois do da sessão: sem sessão não há consentimento a cobrar. */}
+            <PortaoDoConsentimento />
+            {/* O estado da assinatura chega aqui, e não na pílula do cabeçalho: quem lê o
+                `useEntitlements` numa tela sem pílula lia o padrão `none` como resposta. */}
+            <AssinaturaDaConta />
+            <Stack screenOptions={{ headerShown: false }} />
+          </ConsentimentoDaConta>
         </PersistGate>
       </Provider>
     </GestureHandlerRootView>

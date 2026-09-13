@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView,
+  ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,7 +57,6 @@ import { useSessao } from '@/nucleo/sessao';
 
 type Etapa = 'diagnostico' | 'pagamento' | 'pix' | 'pronto';
 
-const SITE = 'https://www.maestramanager.com';
 
 export default function Desbloquear() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -616,14 +615,14 @@ export default function Desbloquear() {
                     {CHAMADA_DO_DESBLOQUEIO.legal} Ao continuar, você concorda com os{' '}
                     <Text
                       style={estilos.legalLink}
-                      onPress={() => Linking.openURL(`${SITE}/legal/termos`)}
+                      onPress={() => router.push('/legal/termos')}
                     >
                       Termos de uso
                     </Text>
                     {' '}e a{' '}
                     <Text
                       style={estilos.legalLink}
-                      onPress={() => Linking.openURL(`${SITE}/legal/privacidade`)}
+                      onPress={() => router.push('/legal/privacidade')}
                     >
                       Política de privacidade
                     </Text>.

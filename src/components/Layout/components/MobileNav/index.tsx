@@ -59,7 +59,7 @@ export const MobileNav: FC = () => {
   const [t] = useTranslation(['navigation']);
   const [moreOpen, setMoreOpen] = useState(false);
   // Artista pela rota; senão o atual (setado ao visitar qualquer módulo do artista) — assim a
-  // navbar segue visível em /settings, /notifications, /assinatura etc.
+  // navbar segue visível em /settings, /notifications, /planos etc.
   const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
   const artistId = matchArtistId(location.pathname) ?? currentArtistId;
   const artists = useAppSelector((s) => s.artists.items);

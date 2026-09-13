@@ -12,6 +12,14 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import type { CatalogItem } from '@maestra/core/interfaces/maestra';
 
+// ⚠️ ESTE FICHEIRO PRECISA DE MAIS DO QUE OS 5 s DE OMISSÃO, e não é lentidão a esconder um
+// defeito: cada caso monta a página do catálogo inteira com dez músicas, e o mais pesado leva
+// 4,3 s SOZINHO nesta máquina. Com a suíte toda a correr em paralelo, o que sobra desse
+// orçamento é ruído — e a partir de certo ponto um caso falhava por um segundo de diferença na
+// carga da máquina, sem nada ter mudado no produto. Um teste que muda de resultado conforme o
+// que corre ao lado não diz nada sobre o código.
+jest.setTimeout(20000);
+
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
 // Mock useArtist hook
@@ -54,6 +62,15 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   deleteCatalogItem: (...args: any[]) => mockDeleteCatalogItem(...args),
   saveCatalogProjectFromForm: (...args: any[]) => mockSalvarProjeto(...args),
   excluirMusica: (...args: any[]) => mockExcluirMusica(...args),
+}));
+
+// A entrega do ficheiro ao navegador é do navegador: o que se prova aqui é O QUE a tela manda
+// entregar — os bytes da guia, e com que nome.
+const mockBaixarArquivo = jest.fn();
+jest.mock('../daw/exportar', () => ({
+  __esModule: true,
+  ...jest.requireActual('../daw/exportar'),
+  baixarArquivo: (...args: any[]) => mockBaixarArquivo(...args),
 }));
 
 // Para onde a tela leva depois de criar: é metade do que "Nova música" faz agora.
@@ -402,6 +419,60 @@ describe('Catalog Page - Track Limit Integration', () => {
 
       expect(mockWarning).not.toHaveBeenCalled();
       expect(mockSetPlayerOpen).toHaveBeenCalledWith(true);
+    });
+  });
+
+  // ⚠️ A PÍLULA DO ESPAÇO JAM SAIU DA LINHA. Ela nomeava um destino que a linha inteira já
+  // alcança — o mesmo gesto, duas vezes na mesma linha, e a segunda a comer 107 px dos 319 do
+  // celular. O nome do destino mudou-se para o "⋮", que é onde moram as coisas que se escolhem
+  // em vez de se tropeçar nelas.
+  describe('o "⋮" da linha', () => {
+    beforeEach(() => {
+      mockCatalogItems = [
+        { id: 't-1', artist_id: 'artist-1', project_id: 'p-1', title: 'Tem guia', status: 'mixing', audio_file: 'https://exemplo.invalid/guia.mp3' },
+        { id: 't-2', artist_id: 'artist-1', project_id: 'p-2', title: 'Sem guia', status: 'mixing', audio_file: null },
+      ] as unknown as CatalogItem[];
+      mockListCatalogItems.mockResolvedValue(mockCatalogItems);
+      mockBaixarArquivo.mockClear();
+    });
+
+    const abrirMenuDe = async (titulo: string) => {
+      await waitFor(() => expect(screen.getByText(titulo)).toBeInTheDocument());
+      fireEvent.click(screen.getByLabelText(`Opções de ${titulo}`));
+      await waitFor(() => expect(screen.getByText('Baixar guia')).toBeInTheDocument());
+    };
+
+    it('não há mais uma pílula a repetir o que a linha já faz', async () => {
+      renderCatalog();
+      await waitFor(() => expect(screen.getByText('Tem guia')).toBeInTheDocument());
+      expect(document.querySelector('.catalog-track-jam')).toBeNull();
+    });
+
+    // A guia é o que a lista toca, e até agora só se conseguia ouvir aqui dentro: para a mandar
+    // a alguém, ou para a levar ao programa onde se mistura, era preciso entrar no editor.
+    it('"Baixar guia" busca a guia e entrega-a com o nome da música', async () => {
+      const pedaco = new Blob(['mp3'], { type: 'audio/mpeg' });
+      const buscar = jest.fn().mockResolvedValue({ ok: true, blob: async () => pedaco });
+      (global as any).fetch = buscar;
+
+      renderCatalog();
+      await abrirMenuDe('Tem guia');
+      await act(async () => { fireEvent.click(screen.getByText('Baixar guia')); });
+
+      expect(buscar).toHaveBeenCalledWith('https://exemplo.invalid/guia.mp3');
+      // ⚠️ O NOME É O DA MÚSICA. No balde o caminho é fixo (`guia.mp3`), o que é certo lá; mas
+      // vinte ficheiros `guia.mp3` na mesma pasta de transferências são vinte perguntas.
+      expect(mockBaixarArquivo).toHaveBeenCalledWith(pedaco, 'Tem guia - guia.mp3');
+    });
+
+    // Sem guia não é "falhou", é "ainda não": ela nasce da montagem, ao sair do editor.
+    it('sem guia, diz de onde ela vem em vez de baixar nada', async () => {
+      renderCatalog();
+      await abrirMenuDe('Sem guia');
+      await act(async () => { fireEvent.click(screen.getByText('Baixar guia')); });
+
+      expect(mockBaixarArquivo).not.toHaveBeenCalled();
+      expect(mockWarning.mock.calls.at(-1)?.[0]).toContain('faixa guia');
     });
   });
 });

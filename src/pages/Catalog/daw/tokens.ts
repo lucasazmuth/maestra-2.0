@@ -64,21 +64,13 @@ export const corDaPista = (indice: number): string =>
 
 // ─── Dimensões ───────────────────────────────────────────────────────────────
 
-/** O zoom de partida: 100% são 60 pixels por segundo. */
-export const PIXELS_POR_SEGUNDO = 60;
-/** O quanto os botões de zoom afastam, no caso normal. */
-export const ZOOM_MINIMO = 0.25;
-/**
- * O chão de todos: nem o encaixe automático desce daqui.
- *
- * ⚠️ ELE EXISTE POR CAUSA DO TELEMÓVEL. A 0,25 (15 px/s) uma música de dois minutos mede
- * 2 000 px — cinco ecrãs de 390 —, e num ecrã desses a única forma de a percorrer era um
- * polegar de barra de rolagem com 17 px, que aliás nem chega a ser desenhado ao toque. Para o
- * editor abrir com a montagem inteira à vista, o zoom tem de poder descer até onde ela caiba;
- * abaixo de 0,02 (1,2 px/s) a onda deixa de ter forma e passa a ser um risco.
- */
-export const ZOOM_MINIMO_ABSOLUTO = 0.02;
-export const ZOOM_MAXIMO = 4;
+// ⚠️ AS MEDIDAS DA ESCALA MUDARAM-SE PARA O NÚCLEO quando a linha do tempo passou a existir no
+// app também. Elas não são estilo: são a conversão entre segundo e pixel, e é dela que saem a
+// régua, o encaixe e o encaixe automático ao abrir. Aqui ficam os nomes pelos quais esta tela
+// sempre as chamou.
+export {
+  PIXELS_POR_SEGUNDO, ZOOM_MAXIMO, ZOOM_MINIMO, ZOOM_MINIMO_ABSOLUTO,
+} from '@maestra/core/audio/grade';
 
 export const ALTURA_DA_PISTA = 160;
 export const ALTURA_DA_REGUA = 30;
@@ -93,4 +85,7 @@ export const ALTURA_DO_RODAPE = 44;
 export const DURACAO_MINIMA = 30;
 
 /** O passo do encaixe ao arrastar um clipe. */
-export const ENCAIXE = 0.25;
+// ⚠️ O DONO DO VALOR É O NÚCLEO desde que a grade se mudou para lá: o arrasto existe nas duas
+// superfícies, e duas cópias de um encaixe divergem sem ninguém notar — o sintoma é um clipe
+// meio segundo fora do sítio. Aqui fica só o nome pelo qual esta tela sempre o chamou.
+export { ENCAIXE_SEM_ANDAMENTO as ENCAIXE } from '@maestra/core/audio/grade';

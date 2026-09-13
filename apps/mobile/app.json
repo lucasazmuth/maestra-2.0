@@ -13,9 +13,10 @@
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "A Maestra abre suas fotos para você escolher a capa da música.",
+        "NSMicrophoneUsageDescription": "A Maestra não grava áudio; esta permissão é exigida por uma biblioteca de reprodução de som usada no app.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "2"
+      "buildNumber": "3"
     },
     "android": {
       "adaptiveIcon": {

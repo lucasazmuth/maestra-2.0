@@ -94,6 +94,8 @@ describe('o que a seta diz', () => {
       .toBe('Desfazer: apagar a pista');
     expect(rotuloDaSeta('Refazer', { tipo: 'cortar', clipeId: 'c', duracaoAntes: 4, duracaoDepois: 1, novoClipeId: 'd' }))
       .toBe('Refazer: dividir o clipe');
+    expect(rotuloDaSeta('Desfazer', { tipo: 'duplicar', clipeId: 'c', novoClipeId: 'd' }))
+      .toBe('Desfazer: duplicar o clipe');
     expect(rotuloDaSeta('Desfazer', { tipo: 'acrescentarPistas', pistaIds: ['a', 'b'] }))
       .toBe('Desfazer: acrescentar 2 pistas');
     expect(rotuloDaSeta('Desfazer', { tipo: 'acrescentarPistas', pistaIds: ['a'] }))

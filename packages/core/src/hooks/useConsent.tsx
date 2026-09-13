@@ -75,12 +75,30 @@ const limparConsentimentoPendente = (): void => {
 /**
  * O estado do consentimento de UM usuário, e o envio do que ficou pendente do cadastro.
  *
- * Extraído do provider para o app nativo poder usar a MESMA lógica: lá não há `ConsentProvider`
- * envolvendo a árvore, e a sessão não vem do slice de auth (o login social chama o Supabase
- * direto), então um provider keyed em `s.auth.user` nunca dispararia. Reescrever isto do outro
- * lado seria reescrever a regra que decide quem entra sem ter declarado idade.
+ * ⚠️ CHAME-O UMA VEZ POR ÁRVORE, pelo provider, e leia-o pelo `useConsent`. Cada chamada é uma
+ * consulta e um estado SEPARADOS: duas delas na mesma árvore são duas verdades sobre a mesma
+ * pessoa, e o `apply` de uma não chega à outra. O app nativo já se partiu assim (ver o
+ * `ProvedorDoConsentimento`, logo abaixo).
+ *
+ * Está extraído do provider porque os dois lados descobrem o usuário de maneiras diferentes: a
+ * web tem o slice de auth, e o app nativo tem a sessão do Supabase — o login social nunca passa
+ * pelo slice. Reescrever a lógica do outro lado seria reescrever a regra que decide quem entra
+ * sem ter declarado idade.
  */
 export const useEstadoDoConsentimento = (user: { id: string; email?: string } | null) => {
+  // ⚠️ AS DEPENDÊNCIAS SÃO O `id` E O `email`, NUNCA O OBJETO `user`.
+  //
+  // O provider da web passa a referência do store, que é estável. O app nativo não tem store
+  // para isto — a sessão vem do Supabase — e monta `{ id, email }` na chamada, um objeto NOVO a
+  // cada render. Com o objeto na lista do `useCallback`, o `refresh` nascia diferente a cada
+  // render, o `useEffect` abaixo disparava outra vez, a resposta trocava o estado, e o estado
+  // trazia outro render: o portão e a tela de consentimento ficavam a consultar a edge em
+  // círculo até o React desistir com "Maximum update depth exceeded".
+  //
+  // Escalares cortam o laço na raiz, e sem exigir que cada chamador se lembre de memoizar.
+  const id = user?.id ?? null;
+  const email = user?.email;
+
   const [state, setState] = useState<ConsentState | null>(null);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
@@ -92,13 +110,13 @@ export const useEstadoDoConsentimento = (user: { id: string; email?: string } | 
   const idAtendido = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!user) {
+    if (!id) {
       idAtendido.current = null;
       setState(null);
       setLoading(false);
       return;
     }
-    if (idAtendido.current !== user.id) setLoading(true);
+    if (idAtendido.current !== id) setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('account-consent', {
         body: { action: 'state' },
@@ -113,7 +131,7 @@ export const useEstadoDoConsentimento = (user: { id: string; email?: string } | 
       const pendente = lerConsentimentoPendente();
       if (
         pendente && pendente.aceita && !estado.satisfied && !estado.blocked &&
-        user.email && pendente.email.toLowerCase() === user.email.toLowerCase()
+        email && pendente.email.toLowerCase() === email.toLowerCase()
       ) {
         limparConsentimentoPendente();
         const { data: enviado } = await supabase.functions.invoke('account-consent', {
@@ -140,10 +158,10 @@ export const useEstadoDoConsentimento = (user: { id: string; email?: string } | 
       setUnavailable(true);
       setState(null);
     } finally {
-      idAtendido.current = user.id;
+      idAtendido.current = id;
       setLoading(false);
     }
-  }, [user]);
+  }, [id, email]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -159,11 +177,39 @@ export const useEstadoDoConsentimento = (user: { id: string; email?: string } | 
   );
 };
 
-export const ConsentProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const user = useAppSelector((s) => s.auth.user);
-  const value = useEstadoDoConsentimento(user ?? null);
+/**
+ * O provider que recebe o usuário de QUEM O CHAMA — e é o que o app nativo usa.
+ *
+ * ⚠️ UM ESTADO SÓ, E É A REGRA INTEIRA. O gate e a tela de coleta precisam do MESMO objeto:
+ * quem envia o aceite chama `apply`, e é por `apply` que o gate fica sabendo que já pode
+ * destrancar. Duas cópias do hook são duas verdades, e a mais velha ganha — ela é quem manda na
+ * rota.
+ *
+ * O app nativo já pagou por isso: o gate e a tela chamavam `useEstadoDoConsentimento` cada um
+ * por si. Quem entrava por Google ou Apple preenchia a data, marcava os aceites, tocava em
+ * Continuar — o servidor registrava tudo e devolvia `satisfied: true` — e a tela seguia para as
+ * boas-vindas. Só que a cópia do gate continuava a dizer `satisfied: false`, e na primeira
+ * mudança de rota ele devolvia a pessoa ao consentimento. A segunda tela vinha sem o campo de
+ * data (o servidor já a tinha guardado) e com as caixas outra vez vazias: parecia que o aceite
+ * não fora registrado, e tinha sido.
+ *
+ * O provider da web não serve ao app: ele lê `s.auth.user`, e a sessão do app vem do Supabase
+ * direto — o login social nunca passa pelo slice de auth, então um provider keyed ali nunca
+ * dispararia.
+ */
+export const ProvedorDoConsentimento: FC<{
+  usuario: { id: string; email?: string } | null;
+  children: ReactNode;
+}> = ({ usuario, children }) => {
+  const value = useEstadoDoConsentimento(usuario);
 
   return <ConsentContext.Provider value={value}>{children}</ConsentContext.Provider>;
+};
+
+export const ConsentProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const user = useAppSelector((s) => s.auth.user);
+
+  return <ProvedorDoConsentimento usuario={user ?? null}>{children}</ProvedorDoConsentimento>;
 };
 
 export const useConsent = (): ConsentContextValue => {

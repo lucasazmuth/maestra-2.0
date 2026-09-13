@@ -448,17 +448,6 @@ export const COR_CATALOGO = {
   tocarFundo: '#eef3fb',
   tocarIcone: '#60749a',
   contornoDoTopo: '#e1e7f0',
-  /**
-   * O atalho do Espaço Jam na linha da música: pílula BRANCA com contorno, texto azul-escuro.
-   *
-   * ⚠️ A folha tem um `.catalog-track-jam { background: #edf2ff; border-color: transparent }`
-   * que descreve uma pílula azul-clara sem contorno. Ele NÃO vale aqui: mora dentro de
-   * `.catalog-reference-page .catalog-track-table article`, que é outra lista. O que a lista de
-   * Músicas usa é a regra base — e é o DOM computado a 375px que resolve isso, não a leitura.
-   */
-  jam: '#4267b9',
-  jamFundo: '#ffffff',
-  jamContorno: '#dbe4f3',
 } as const;
 
 /**
@@ -904,21 +893,99 @@ export const COR_ENTRADA = {
  * compara-o linha a linha com o SCSS. Estas são usadas em linha nas duas superfícies, a partir
  * daqui — uma fonte só, sem cópia para divergir.
  */
+/**
+ * As cores das faixas do editor.
+ *
+ * ⚠️ SÃO AS DA WEB, À LETRA — `src/pages/Catalog/daw/tokens.ts`, e o `peleDoEditor` prende as
+ * duas listas. Aqui viveu durante um tempo uma paleta PRÓPRIA, de oito cores mais apagadas, e o
+ * resultado era a mesma faixa roxa no computador e amarela no telemóvel: quem punha os dois
+ * lado a lado via duas montagens diferentes da mesma música.
+ *
+ * Seis, e não oito: é o que a folha do editor define, e o `proximaCorDaPista` conta até esse
+ * número para escolher a próxima livre.
+ */
 export const CORES_DAS_PISTAS = [
-  '#2f60f6', // azul da marca
-  '#e0ad3c', // âmbar
-  '#5f9ea0', // verde-água
-  '#c4568f', // rosa
-  '#6f5fd8', // roxo
-  '#4f9d5b', // verde
-  '#d1743a', // laranja
-  '#5588c7', // azul claro
+  '#3b82f6', // azul
+  '#a855f7', // roxo
+  '#22c55e', // verde
+  '#f59e0b', // âmbar
+  '#ec4899', // rosa
+  '#14b8a6', // turquesa
 ] as const;
 
-/** A cor da pista na posição N. Dá a volta: a nona pista repete a primeira. */
+/**
+ * O nome de cada cor, na ordem da paleta.
+ *
+ * ⚠️ QUEM NÃO VÊ A COR PRECISA DE A OUVIR. Seis bolinhas coloridas são seis alvos idênticos
+ * para um leitor de tela; sem nome, escolher a cor de uma faixa passa a ser impossível — e a
+ * cor é justamente o que distingue uma faixa da outra de relance.
+ *
+ * Moram no núcleo porque as duas telas anunciam as mesmas seis.
+ */
+export const NOMES_DAS_CORES = [
+  'Azul', 'Roxo', 'Verde', 'Âmbar', 'Rosa', 'Turquesa',
+] as const;
+
+/** A cor da pista na posição N. Dá a volta: a sétima pista repete a primeira. */
 export const corDaPista = (indice: number): string =>
   CORES_DAS_PISTAS[((indice % CORES_DAS_PISTAS.length) + CORES_DAS_PISTAS.length)
     % CORES_DAS_PISTAS.length];
+
+/**
+ * A PELE DO EDITOR — o Espaço JAM, nas duas superfícies.
+ *
+ * ⚠️ ESTA TELA NÃO USA O DESIGN SYSTEM DO RESTO DO PRODUTO, e é de propósito. O Maestra é claro,
+ * azul-marca e arredondado; um editor de música é escuro, denso e de contraste alto — é o que
+ * Ableton, Logic e Pro Tools são, e é o que o olho de quem trabalha com áudio espera. Misturar
+ * os dois daria uma tela que não é nem uma coisa nem outra. Os valores são os da referência que
+ * o dono do produto mandou, e são os mesmos do `DS` da web (`src/pages/Catalog/daw/tokens.ts`).
+ *
+ * ⚠️ AS CHAVES SÃO AS DO `COR_JAM`, uma a uma, e não é coincidência: o app foi desenhado claro
+ * primeiro, e o que muda quando ele veste o editor é a TINTA, não o papel de cada cor. Com o
+ * mesmo conjunto de chaves, a troca é de import — e uma cor que exista num e não no outro passa
+ * a ser um erro de compilação em vez de um buraco na tela.
+ */
+/**
+ * O AZUL DA AÇÃO no editor: o play, os controlos deslizantes, o botão de enviar.
+ *
+ * Não entra no `COR_EDITOR` porque não tem par no `COR_JAM` — o app claro usa a primária da
+ * marca para isto, e o editor usa a do `DS` da web. São dois azuis parecidos e diferentes, e a
+ * diferença é de propósito: o azul da marca ao lado de um cinza quase preto puxa para o roxo.
+ */
+export const AZUL_DO_EDITOR = '#3b82f6';
+
+/** A agulha e o botão de gravar, no editor. */
+export const VERMELHO_DO_EDITOR = '#ef4444';
+
+export const COR_EDITOR: Record<keyof typeof COR_JAM, string> = {
+  // O fundo é chapado, como na web: um gradiente num fundo quase preto é banda, não profundidade.
+  fundoDe: '#1a1a1e',
+  fundoAte: '#1a1a1e',
+  mancha: 'rgba(59, 130, 246, .10)',
+  painel: '#212127',
+  fio: '#33333d',
+  texto: '#e8e8ee',
+  titulo: '#e8e8ee',
+  rotulo: '#71717f',
+  apoio: '#a6a6b3',
+  botaoRedondo: '#2f2f38',
+  cabecaDaVersao: '#2a2a32',
+  contornoDaVersao: '#33333d',
+  cracha: '#a6a6b3',
+  /** Apagada é a mais fraca que ainda se lê; acesa é o âmbar, o mesmo dos dois lados. */
+  estrela: '#4a4a56',
+  estrelaAcesa: '#f59e0b',
+  acaoFundo: '#2f2f38',
+  acaoIcone: '#e8e8ee',
+  vazioContorno: '#44444f',
+  avatarDe: '#a855f7',
+  avatarAte: '#3b82f6',
+  statusPadrao: '#edc663',
+  tintaEscura: '#181818',
+  apoioDoVazio: '#71717f',
+  /** No escuro, "papel" é a tinta que se escreve POR CIMA de uma cor cheia — continua branca. */
+  papel: '#ffffff',
+};
 
 export const COR_JAM = {
   fundoDe: '#f9fbff',
@@ -1021,4 +1088,98 @@ export const ONDA_DA_VERSAO = {
   interact: true,
   dragToSeek: true,
   hideScrollbar: true,
+} as const;
+
+/**
+ * A ESPERA: a marca da Maestra a respirar.
+ *
+ * ⚠️ NÃO É UMA RODA. Uma roda a girar é o sinal de espera de toda a gente, e por isso não é de
+ * ninguém — a tela podia ser de qualquer aplicativo. A marca a respirar diz de quem é a espera,
+ * e a web já o fazia (`src/components/spinner/spinner.scss`); o aplicativo é que tinha ficado
+ * com o círculo do sistema.
+ *
+ * ⚠️ OS NÚMEROS MORAM AQUI porque as duas superfícies os escrevem em linguagens diferentes — a
+ * web em `@keyframes`, o aplicativo em `reanimated` — e duas cópias de uma curva divergem sem
+ * que ninguém repare: uma respiração meio segundo mais lenta num dos lados não quebra nada, só
+ * faz os dois parecerem dois produtos.
+ *
+ * A roda pequena CONTINUA onde sempre esteve: dentro de um botão a gravar, ao pé de um campo, no
+ * rodapé de uma lista que busca mais. Ali ela não é a espera da tela — é o estado de um controlo,
+ * e a marca a respirar dentro de um botão de 44 seria um logotipo a piscar numa caixa.
+ */
+export const ESPERA_DA_MARCA = {
+  /** O cinza-azulado da marca em repouso. */
+  cor: '#526B96',
+  /** O desenho, em pontos. A caixa é maior: a respiração cresce até 1.0 e precisa de folga. */
+  marca: 48,
+  caixa: 72,
+  /** Uma respiração inteira, em milissegundos. */
+  ciclo: 1550,
+  /**
+   * Os quadros da respiração, em fração do ciclo. São os mesmos `@keyframes` da web, lidos como
+   * dados: `em` é onde o quadro cai (0..1), e os dois valores são o que se vê nele.
+   */
+  quadros: [
+    { em: 0, opacidade: 0.55, escala: 0.88 },
+    { em: 0.45, opacidade: 1, escala: 1 },
+    { em: 0.65, opacidade: 0.78, escala: 0.95 },
+    { em: 1, opacidade: 0.55, escala: 0.88 },
+  ],
+} as const;
+
+/**
+ * A TELA DE SUPORTE: os dois canais, em cartão.
+ *
+ * Os valores saem de `src/pages/Support/Support.module.scss`, e o app desenha os mesmos dois
+ * cartões empilhados — que é o que a web já faz abaixo de 700px.
+ *
+ * ⚠️ O VERDE DO WHATSAPP NÃO É DECORAÇÃO: o canal reconhece-se pela cor antes de se ler o
+ * título, e é o que separa os dois cartões à primeira vista. Por isso ele é um token, e não o
+ * azul do sistema com outro nome.
+ */
+export const COR_SUPORTE = {
+  contorno: '#edf1f7',
+  titulo: '#52668d',
+  apoio: '#98a6bd',
+  valor: '#5b6f94',
+  /** O quadrado do ícone: azul pálido no e-mail, verde no WhatsApp. */
+  disco: '#edf2ff',
+  discoWhatsapp: '#e7f8ee',
+} as const;
+
+/**
+ * AS PÁGINAS LEGAIS (termos e privacidade).
+ *
+ * Os valores saem de `src/pages/Legal/legal.scss`. O texto é o MESMO markdown de
+ * `constants/legal.ts`, desenhado nas duas superfícies: `react-markdown` na web, e no app o
+ * parser do núcleo (`nucleo/markdownDaNyta`) — o mesmo que a Nyta usa.
+ *
+ * ⚠️ CORPO DE LEITURA LONGA, e daí a entrelinha de 1.75 que a web usa: são documentos de
+ * milhares de palavras que alguém percorre à procura de uma cláusula, e não um aviso de duas
+ * linhas.
+ */
+export const COR_LEGAL = {
+  titulo: '#2c3f63',
+  texto: '#52668d',
+  apoio: '#52668d',
+} as const;
+
+/**
+ * O CABEÇALHO DAS PÁGINAS DE APOIO — Notificações, Histórico, Suporte, Termos, Política.
+ *
+ * São as telas FOLHA do usuário: entra-se nelas por um caminho, lê-se, e volta-se. O desenho é
+ * o mesmo em todas — botão redondo de voltar, um sobretítulo que diz de onde a página é, o
+ * título grande, e às vezes uma linha de apoio.
+ *
+ * ⚠️ ELE ESTEVE ESCRITO À MÃO EM CADA TELA, e foi assim que o `CabecalhoDoModulo` nasceu do lado
+ * dos módulos do artista: "título 27 num, 30 noutro; espaçamento de letra só num deles... todas
+ * juntas dão a impressão de telas escritas por gente diferente — que é exatamente o que eram".
+ * Aqui o mesmo estava a começar: o Histórico tinha o sobretítulo a 9 e as Notificações a 10.
+ *
+ * Os valores são os das Notificações, que é a tela que o dono apontou como o padrão.
+ */
+export const COR_CABECALHO_DE_APOIO = {
+  sobretitulo: '#9aa9c2',
+  titulo: '#5b6f94',
+  apoio: '#98a6bd',
 } as const;

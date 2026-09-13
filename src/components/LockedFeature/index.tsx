@@ -26,7 +26,7 @@ export const LockedFeature: FC<LockedFeatureProps> = ({ feature }) => {
     if (config.cta.kind === 'unlock-profile') {
       navigate('/criar-artista');
     } else {
-      navigate('/assinatura');
+      navigate('/planos');
     }
   };
 

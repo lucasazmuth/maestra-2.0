@@ -1,35 +1,24 @@
 import { FC, memo } from 'react';
 
-// A onda de um clipe: dois envelopes espelhados no eixo do meio.
+// A onda de um clipe: uma barra por pico, no eixo do meio.
 //
-// É o desenho da referência — um polígono para cima e outro para baixo, ancorados na linha
-// central, com um degradê que apaga nas pontas. Não é o mesmo que barras: uma onda contínua lê
-// como som gravado, e barras leem como equalizador.
+// ⚠️ ERAM DOIS ENVELOPES PREENCHIDOS, e o argumento escrito aqui era que "uma onda contínua lê
+// como som gravado, e barras leem como equalizador". O dono do produto viu as duas telas lado a
+// lado e escolheu as barras — e a razão vence a minha: o app já desenhava assim, e o mesmo
+// clipe com dois desenhos diferentes é o tipo de diferença que faz a pessoa duvidar de que está
+// a olhar para a mesma coisa. Um desenho só, nas duas superfícies.
 //
 // Os números vêm da MESA, que descodificou o áudio para tocar e já os tem na mão. Pedir a um
 // wavesurfer que desenhasse cada clipe descodificaria o mesmo ficheiro outra vez — e com seis
 // pistas seria o PCM inteiro duas vezes na memória.
 
 const LARGURA = 1000;
-const ALTURA = 52;
+const ALTURA = 100;
 
 export const Onda: FC<{ picos: number[]; cor: string }> = memo(({ picos, cor }) => {
   if (!picos.length) return null;
 
-  const meio = ALTURA / 2;
-  const n = picos.length;
-  const acima: string[] = [];
-  const abaixo: string[] = [];
-
-  for (let i = 0; i < n; i += 1) {
-    const x = (i / Math.max(1, n - 1)) * LARGURA;
-    // O mínimo de 0.04 é o que faz o silêncio ser uma linha e não um buraco no desenho.
-    const amplitude = Math.max(picos[i], 0.04) * (meio * 0.88);
-    acima.push(`${x.toFixed(1)},${(meio - amplitude).toFixed(1)}`);
-    abaixo.push(`${x.toFixed(1)},${(meio + amplitude).toFixed(1)}`);
-  }
-
-  const id = `onda-${cor.replace(/#/g, '')}`;
+  const passo = LARGURA / picos.length;
 
   return (
     <svg
@@ -40,15 +29,24 @@ export const Onda: FC<{ picos: number[]; cor: string }> = memo(({ picos, cor }) 
       style={{ display: 'block' }}
       aria-hidden
     >
-      <defs>
-        <linearGradient id={id} x1='0' y1='0' x2='0' y2='1'>
-          <stop offset='0%' stopColor={cor} stopOpacity='0.95' />
-          <stop offset='50%' stopColor={cor} stopOpacity='0.55' />
-          <stop offset='100%' stopColor={cor} stopOpacity='0.95' />
-        </linearGradient>
-      </defs>
-      <polygon points={[`0,${meio}`, ...acima, `${LARGURA},${meio}`].join(' ')} fill={`url(#${id})`} />
-      <polygon points={[`0,${meio}`, ...abaixo, `${LARGURA},${meio}`].join(' ')} fill={`url(#${id})`} />
+      {picos.map((pico, i) => {
+        // Uma barra sempre visível: silêncio absoluto é uma linha, não um buraco no desenho.
+        const alta = Math.max(2, pico * ALTURA);
+        return (
+          <rect
+            // eslint-disable-next-line react/no-array-index-key
+            key={i}
+            x={i * passo}
+            y={(ALTURA - alta) / 2}
+            // 70 % do passo: a folga entre as barras é o que as faz ler como barras. Cheias,
+            // voltavam a ser um bloco.
+            width={Math.max(passo * 0.7, 0.4)}
+            height={alta}
+            fill={cor}
+            opacity={0.85}
+          />
+        );
+      })}
     </svg>
   );
 });

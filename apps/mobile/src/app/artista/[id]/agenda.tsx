@@ -2,7 +2,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View,
+  Pressable, RefreshControl, ScrollView, StyleSheet, Text, View,
 } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
@@ -16,6 +16,7 @@ import { listEvents } from '@maestra/core/services/db/events';
 import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
 import { FolhaDeCompromisso } from '@/casca/agenda/FolhaDeCompromisso';
 import { useArtistaDaRota } from '@/nucleo/artista';
+import { Carregando } from '@/casca/Carregando';
 
 // A Agenda — a porta de `src/pages/Agenda/index.tsx`.
 //
@@ -185,7 +186,7 @@ export default function Agenda() {
       </View>
 
       {carregando ? (
-        <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
+        <Carregando estilo={estilos.espera} />
       ) : erro ? (
         <View style={estilos.conteudo}>
           <View style={estilos.aviso}>

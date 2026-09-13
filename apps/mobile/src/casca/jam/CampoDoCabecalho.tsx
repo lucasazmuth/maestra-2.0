@@ -1,6 +1,7 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput } from 'react-native';
 
-import { COR, COR_JAM } from '@maestra/core/constants/design';
+import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
+import { soOAndamento, soOTom } from '@maestra/core/utils/camposDaGravacao';
 
 // Um valor da gravação, editável ali mesmo no cabeçalho: o BPM, o tom.
 //
@@ -15,12 +16,22 @@ import { COR, COR_JAM } from '@maestra/core/constants/design';
 // Sem gravação principal marcada, os campos ficam TRANCADOS em vez de sumirem: um BPM digitado
 // sem saber onde ia parar era exatamente o problema antigo. O rótulo passa a dizer o que fazer.
 
-export const CampoDoCabecalho = ({ valor, aoMudar, sufixo, largura, numerico, maiusculas, limite, travado, rotulo }: {
+export const CampoDoCabecalho = ({
+  valor, aoMudar, sufixo, largura, numerico, maiusculas, limite, travado, rotulo,
+}: {
   valor: string;
   aoMudar: (v: string) => void;
-  /** O que vem depois do campo: "BPM", "Tom". */
+  /**
+   * O que o campo mostra vazio: "BPM", "TOM".
+   *
+   * ⚠️ ERA UM RÓTULO AO LADO, e um traço dentro. Um campo vazio ao lado da palavra "BPM" é um
+   * retângulo com um traço que não se lê como campo — a pessoa via a palavra e não percebia que
+   * havia ali onde escrever. Como vazio, ele diz as duas coisas de uma vez: o que é, e que está
+   * por preencher.
+   */
   sufixo: string;
   largura: number;
+  /** Só algarismos. Sem isto, o campo aceita o que o teclado do aparelho resolver oferecer. */
   numerico?: boolean;
   maiusculas?: boolean;
   limite: number;
@@ -28,46 +39,49 @@ export const CampoDoCabecalho = ({ valor, aoMudar, sufixo, largura, numerico, ma
   /** O que o leitor de ecrã anuncia. O sufixo sozinho não diz o que se está a editar. */
   rotulo: string;
 }) => (
-  <View style={[estilos.chip, travado && estilos.chipTravado]}>
-    <TextInput
-      style={[estilos.campo, { width: largura }]}
-      value={valor}
-      onChangeText={aoMudar}
-      editable={!travado}
-      placeholder="—"
-      placeholderTextColor={COR_JAM.estrela}
-      keyboardType={numerico ? 'number-pad' : 'default'}
-      autoCapitalize={maiusculas ? 'characters' : 'none'}
-      autoCorrect={false}
-      maxLength={limite}
-      accessibilityLabel={rotulo}
-      // Sem `returnKeyType` o teclado numérico do iOS não traz tecla de fechar; "concluído"
-      // é o que fecha um campo que não submete nada.
-      returnKeyType="done"
-    />
-    <Text style={estilos.sufixo}>{sufixo}</Text>
-  </View>
+  <TextInput
+    style={[
+      estilos.campo,
+      { width: largura },
+      travado && estilos.campoTravado,
+    ]}
+    value={valor}
+    // ⚠️ O FILTRO É AQUI, e não no teclado. O `keyboardType` é uma sugestão: há teclados que
+    // trazem símbolos ao lado dos números, e colar de outro sítio passa por cima de qualquer
+    // teclado. As duas regras vêm do núcleo, as mesmas que a web usa.
+    onChangeText={(v) => aoMudar(numerico ? soOAndamento(v) : soOTom(v))}
+    editable={!travado}
+    placeholder={sufixo.toUpperCase()}
+    placeholderTextColor={COR_EDITOR.rotulo}
+    keyboardType={numerico ? 'number-pad' : 'default'}
+    autoCapitalize={maiusculas ? 'characters' : 'none'}
+    autoCorrect={false}
+    maxLength={limite}
+    accessibilityLabel={rotulo}
+    // Sem `returnKeyType` o teclado numérico do iOS não traz tecla de fechar; "concluído"
+    // é o que fecha um campo que não submete nada.
+    returnKeyType="done"
+  />
 );
 
+// ⚠️ AS MEDIDAS SÃO AS DA WEB, à letra: campo de 26 de altura com canto de 6. A pílula
+// arredondada que estava aqui vinha do app claro, onde ela é da família do chip de status — e o
+// status saiu desta tela. Redonda e larga no meio de uma barra de 44, ela era a única coisa do
+// editor que não parecia do editor.
+//
+// O rótulo que ficava FORA do campo mudou-se para dentro, como vazio, nas duas superfícies.
 const estilos = StyleSheet.create({
-  // Vestido de chip para ficar da mesma família do status ao lado — mas com contorno e fundo
-  // claro, porque este ACEITA texto e aquele abre uma lista. Um campo pintado como o status
-  // prometeria um menu.
-  chip: {
-    height: 28, paddingHorizontal: 10, borderRadius: 999,
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    borderWidth: 1, borderColor: COR_JAM.fio, backgroundColor: COR_JAM.papel,
-  },
-  chipTravado: { backgroundColor: COR_JAM.acaoFundo, borderColor: COR_JAM.acaoFundo },
   campo: {
-    // Zero de padding e altura cheia: o `TextInput` do Android traz recuo próprio e, com ele,
-    // o texto assenta abaixo do centro do chip.
-    padding: 0, height: 28,
-    fontSize: 13, fontWeight: '800', color: COR_JAM.titulo,
-    // Tabular para o chip não mudar de largura entre 98 e 128 BPM.
+    height: 26, paddingHorizontal: 8, borderRadius: 6,
+    // Zero de recuo vertical: o `TextInput` do Android traz o seu, e com ele o texto assenta
+    // abaixo do centro do campo.
+    paddingVertical: 0,
+    borderWidth: 1, borderColor: COR_EDITOR.fio, backgroundColor: COR_EDITOR.acaoFundo,
+    fontSize: 12, fontWeight: '700', textAlign: 'center', color: COR_EDITOR.titulo,
+    // Tabular para o campo não mudar de largura entre 98 e 128 BPM.
     fontVariant: ['tabular-nums'],
   },
-  sufixo: { fontSize: 11, fontWeight: '700', color: COR_JAM.rotulo },
+  campoTravado: { opacity: 0.5 },
 });
 
 /** O rótulo que diz de quem são os números. Uma linha para o par, e não uma por chip. */
@@ -76,6 +90,6 @@ export const DonoDosCampos = ({ texto, alerta }: { texto: string; alerta?: boole
 );
 
 const estilos2 = StyleSheet.create({
-  dono: { marginTop: 4, paddingLeft: 54, fontSize: 11, fontWeight: '600', color: COR_JAM.rotulo },
-  alerta: { color: COR.primaria },
+  dono: { marginTop: 4, paddingLeft: 54, fontSize: 11, fontWeight: '600', color: COR_EDITOR.rotulo },
+  alerta: { color: AZUL_DO_EDITOR },
 });

@@ -49,7 +49,7 @@ const SubscriptionGuardWrapper: FC = () => {
         Você precisa de uma assinatura ativa para acessar este módulo.
       </p>
       <Link
-        to='/assinatura'
+        to='/planos'
         style={{
           color: '#9A4FD1',
           textDecoration: 'none',

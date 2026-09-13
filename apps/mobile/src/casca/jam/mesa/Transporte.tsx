@@ -1,109 +1,180 @@
-import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_JAM } from '@maestra/core/constants/design';
+import { AZUL_DO_EDITOR, COR_EDITOR, VERMELHO_DO_EDITOR } from '@maestra/core/constants/design';
 
-// O transporte da mesa: um play, um relógio, uma régua.
+// A BARRA DO TRANSPORTE — a mesma da web, botão a botão.
 //
-// UM para toda a gravação, e não um por pista — é isso que diz, sem uma palavra, que as pistas
-// tocam juntas. Um play por linha prometeria o contrário.
+// |◀ voltar ao início · ▶/❚❚ tocar · ⟲ repetir · ● armar · o relógio · o zoom da linha do tempo.
+//
+// ⚠️ NÃO HÁ RÉGUA DE PROCURA AQUI, e é de propósito: quem leva a agulha é a régua da própria
+// linha do tempo, onde se vê PARA ONDE se está a ir. Uma segunda régua, cega, a disputar a
+// mesma barra com cinco botões e o zoom, era o que fazia o relógio sair do ecrã.
+//
+// ⚠️ O PARAR NÃO EXISTE, a pedido do dono do produto: parar é pausar (o botão grande) mais
+// voltar ao início (o |◀ ao lado), e ninguém precisa de um terceiro botão para encadear dois
+// que já estão ali. O loop, esse, não tinha como se fazer à mão.
 
 const relogio = (segundos: number) => {
   const s = Math.max(0, Math.floor(segundos));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
-export const Transporte = ({ tocando, posicao, duracao, carregando, prontas, aoAlternar, aoBuscar }: {
+export const Transporte = ({
+  tocando, posicao, carregando, prontas, emLoop, armado,
+  aoAlternar, aoVoltarAoInicio, aoLoopar, aoArmar, zoom,
+}: {
   tocando: boolean;
   posicao: number;
-  duracao: number;
   carregando: boolean;
-  /** Quantas pistas conseguiram carregar. Zero = não há o que tocar. */
+  /** Quantas faixas conseguiram carregar. Zero = não há o que tocar. */
   prontas: number;
+  emLoop?: boolean;
+  /** O REC armado. Armar não grava — marca a intenção e espera o play. */
+  armado?: boolean;
   aoAlternar: () => void;
-  aoBuscar: (segundo: number) => void;
+  aoVoltarAoInicio: () => void;
+  aoLoopar: (v: boolean) => void;
+  aoArmar: () => void;
+  /** O zoom só aparece na linha do tempo: na mesa não há eixo nenhum para aproximar. */
+  zoom?: { valor: number; afastar: () => void; aproximar: () => void };
 }) => {
-  const [largura, setLargura] = useState(0);
-  const medir = (e: LayoutChangeEvent) => setLargura(e.nativeEvent.layout.width);
-
-  const paraSegundo = (x: number) => {
-    if (largura <= 0 || duracao <= 0) return 0;
-    return Math.max(0, Math.min(x / largura, 1)) * duracao;
-  };
-
-  // Como no fader: só um gesto horizontal declarado move a agulha. Sem isto, rolar a tela com o
-  // dedo pousado na régua saltaria a música de lugar.
-  const arrastar = Gesture.Pan()
-    .activeOffsetX([-6, 6])
-    .failOffsetY([-12, 12])
-    .onUpdate((e) => { runOnJS(aoBuscar)(paraSegundo(e.x)); });
-  const toque = Gesture.Tap().onEnd((e) => { runOnJS(aoBuscar)(paraSegundo(e.x)); });
-
-  const andado = duracao > 0 ? Math.min(posicao / duracao, 1) : 0;
   const inerte = carregando || prontas === 0;
 
   return (
     <View style={estilos.barra}>
       <Pressable
-        onPress={aoAlternar}
-        disabled={inerte}
-        hitSlop={8}
+        onPress={aoVoltarAoInicio}
+        style={estilos.botaozinho}
         accessibilityRole="button"
-        accessibilityLabel={carregando
-          ? 'Preparando as pistas'
-          : prontas === 0 ? 'Nenhuma pista para tocar' : tocando ? 'Pausar' : 'Tocar'}
+        accessibilityLabel="Voltar ao início"
       >
-        {carregando
-          ? <ActivityIndicator size="small" color={COR.primaria} style={estilos.espera} />
-          : (
-            <Feather
-              name={tocando ? 'pause' : 'play'}
-              size={34}
-              color={inerte ? COR_JAM.estrela : COR.primaria}
-            />
-          )}
+        <Feather name="skip-back" size={16} color={COR_EDITOR.apoio} />
       </Pressable>
 
-      <Text style={estilos.tempo}>{relogio(posicao)}</Text>
+      {/* ⚠️ MESMO BOTÃO, MESMA COR, MESMO SÍTIO: tocar e pausar são o mesmo gesto a alternar, e
+          trocar a cor entre os dois faria a barra piscar de identidade a cada toque. O que muda
+          é o BRILHO — aceso enquanto toca. É o sinal de "está a andar" que se lê de relance. */}
+      <Pressable
+        onPress={aoAlternar}
+        disabled={inerte}
+        style={[
+          estilos.tocar,
+          inerte && estilos.tocarInerte,
+          tocando && !inerte && estilos.tocarAceso,
+        ]}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: inerte }}
+        accessibilityLabel={carregando ? 'Preparando as faixas' : tocando ? 'Pausar' : 'Tocar'}
+      >
+        <Feather
+          name={tocando ? 'pause' : 'play'}
+          size={18}
+          color={COR_EDITOR.papel}
+          style={tocando ? undefined : estilos.biscoDoPlay}
+        />
+      </Pressable>
 
-      <GestureDetector gesture={Gesture.Race(arrastar, toque)}>
-        <View style={estilos.alvoDaRegua} onLayout={medir}>
-          <View style={estilos.regua}>
-            <View style={[estilos.andado, { width: `${andado * 100}%` }]} />
-          </View>
-          <View style={[estilos.agulha, { left: `${andado * 100}%` }]} />
-        </View>
-      </GestureDetector>
+      <Pressable
+        onPress={() => aoLoopar(!emLoop)}
+        style={[estilos.botaozinho, emLoop && estilos.loopAceso]}
+        accessibilityRole="button"
+        accessibilityState={{ selected: Boolean(emLoop) }}
+        accessibilityLabel={emLoop ? 'Desligar o loop' : 'Repetir do início ao fim'}
+      >
+        <Feather name="repeat" size={15} color={emLoop ? AZUL_DO_EDITOR : COR_EDITOR.apoio} />
+      </Pressable>
 
-      <Text style={[estilos.tempo, estilos.total]}>{relogio(duracao)}</Text>
+      {/* O REC ARMA A GRAVAÇÃO, e armar não é gravar — é a distinção que toda mesa faz.
+          ⚠️ GRAVAR AINDA NÃO EXISTE, e o botão diz isso em vez de fingir. Até lá ele guarda a
+          intenção, que é o que um botão armado faz mesmo numa mesa de verdade. */}
+      <Pressable
+        onPress={aoArmar}
+        style={[estilos.botaozinho, !armado && estilos.armadoApagado]}
+        accessibilityRole="button"
+        accessibilityState={{ selected: Boolean(armado) }}
+        accessibilityLabel={armado ? 'Desarmar a gravação' : 'Armar para gravar'}
+      >
+        <Feather
+          name={armado ? 'disc' : 'circle'}
+          size={20}
+          color={VERMELHO_DO_EDITOR}
+        />
+      </Pressable>
+
+      <View style={estilos.folga} />
+
+      <Text style={estilos.relogio} accessibilityLabel={`Posição: ${relogio(posicao)}`}>
+        {relogio(posicao)}
+      </Text>
+
+      {!!zoom && (
+        <>
+          <Pressable
+            onPress={zoom.afastar}
+            style={estilos.botaozinho}
+            accessibilityRole="button"
+            accessibilityLabel="Afastar a linha do tempo"
+          >
+            <Feather name="zoom-out" size={14} color={COR_EDITOR.apoio} />
+          </Pressable>
+          <Text style={estilos.numeroDoZoom}>{Math.round(zoom.valor * 100)}%</Text>
+          <Pressable
+            onPress={zoom.aproximar}
+            style={estilos.botaozinho}
+            accessibilityRole="button"
+            accessibilityLabel="Aproximar a linha do tempo"
+          >
+            <Feather name="zoom-in" size={14} color={COR_EDITOR.apoio} />
+          </Pressable>
+        </>
+      )}
     </View>
   );
 };
 
+/** A altura da barra, como na web. */
+export const ALTURA_DO_TRANSPORTE = 62;
+
 const estilos = StyleSheet.create({
   barra: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: COR_JAM.fio,
+    height: ALTURA_DO_TRANSPORTE, flexDirection: 'row', alignItems: 'center',
+    gap: 4, paddingHorizontal: 8,
+    backgroundColor: COR_EDITOR.painel,
+    borderBottomWidth: 1, borderBottomColor: COR_EDITOR.fio,
   },
-  // O mesmo tamanho do ícone: sem isto a barra encolhe 34 pt enquanto carrega e o resto salta.
-  espera: { width: 34, height: 34 },
-  tempo: {
-    // Tabular à mão: sem largura fixa, `0:09` → `0:10` empurra a régua um pixel a cada segundo.
-    minWidth: 40, fontSize: 13, fontWeight: '700', color: COR_JAM.texto,
+  botaozinho: {
+    width: 32, height: 32, borderRadius: 6,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  loopAceso: { backgroundColor: `${AZUL_DO_EDITOR}22` },
+  armadoApagado: { opacity: 0.6 },
+
+  tocar: {
+    width: 42, height: 42, borderRadius: 21,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: AZUL_DO_EDITOR,
+  },
+  tocarInerte: { backgroundColor: COR_EDITOR.botaoRedondo },
+  // Parado, é só o círculo azul: uma auréola permanente não diz nada. O brilho fica reservado
+  // para o instante em que ele significa alguma coisa — enquanto o som anda.
+  tocarAceso: {
+    shadowColor: AZUL_DO_EDITOR, shadowOpacity: 0.75, shadowRadius: 11,
+    shadowOffset: { width: 0, height: 0 }, elevation: 8,
+  },
+  // O triângulo do play tem o peso todo à esquerda; centrado pelo quadro, parece fora do sítio.
+  biscoDoPlay: { marginLeft: 2 },
+
+  folga: { flex: 1 },
+  relogio: {
+    paddingVertical: 3, paddingHorizontal: 8, borderRadius: 6,
+    backgroundColor: COR_EDITOR.botaoRedondo,
+    borderWidth: 1, borderColor: COR_EDITOR.fio,
+    fontSize: 12, color: COR_EDITOR.texto, fontVariant: ['tabular-nums'],
+  },
+  numeroDoZoom: {
+    width: 42, textAlign: 'center', fontSize: 12, color: COR_EDITOR.apoio,
     fontVariant: ['tabular-nums'],
-  },
-  total: { textAlign: 'right', color: COR_JAM.apoio },
-  alvoDaRegua: { flex: 1, height: 30, justifyContent: 'center' },
-  regua: { height: 4, borderRadius: 2, backgroundColor: COR_JAM.acaoFundo, overflow: 'hidden' },
-  andado: { height: '100%', backgroundColor: COR.primaria },
-  agulha: {
-    position: 'absolute', width: 12, height: 12, borderRadius: 6, marginLeft: -6,
-    backgroundColor: COR.primaria,
-    borderWidth: 2, borderColor: COR_JAM.papel,
   },
 });

@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
+import { useRouter } from 'expo-router';
 
 import { COR, COR_DIAGNOSTICO } from '@maestra/core/constants/design';
 import { LOCKED_FEATURE_CONFIG, type LockedFeatureKey } from '@maestra/core/constants/bloqueios';
@@ -30,15 +31,19 @@ export const AvisoDoPro = ({
   aoFechar: () => void;
   artistId?: string;
 }) => {
+  const router = useRouter();
   const config = LOCKED_FEATURE_CONFIG[recurso];
 
+  // ⚠️ A ASSINATURA NÃO SAI MAIS DO APP. Ela vai para `/planos`, que MOSTRA e não vende — ver o
+  // cabeçalho daquela tela. O desbloqueio de perfil não acompanha: é pagamento único e continua
+  // pelo caminho de sempre, por decisão do produto (`nucleo/loja.ts`).
   const seguir = () => {
     aoFechar();
-    void irParaOCheckout(
-      config.cta.kind === 'unlock-profile' && artistId
-        ? { destino: 'desbloqueio', artistId }
-        : { destino: 'assinatura' },
-    );
+    if (config.cta.kind === 'unlock-profile' && artistId) {
+      void irParaOCheckout({ destino: 'desbloqueio', artistId });
+      return;
+    }
+    router.push('/planos');
   };
 
   return (

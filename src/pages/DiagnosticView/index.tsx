@@ -20,11 +20,11 @@ const DiagnosticView: FC = () => {
   const loaded = useAppSelector((state) => state.artists.loaded);
 
   // Loop de crescimento: executou o plano e cresceu? Refaz o REAL pra fase subir. É recurso PRO —
-  // quem não é vai pra /assinatura. Esta é a ÚNICA entrada para /diagnostico/refazer; sem ela a
+  // quem não é vai pra /planos. Esta é a ÚNICA entrada para /diagnostico/refazer; sem ela a
   // rota fica registrada e inalcançável.
   const onRedo = () => {
     if (capacidades.manageTasks) navigate(`/artists/${id}/diagnostico/refazer`);
-    else navigate('/assinatura');
+    else navigate('/planos');
   };
 
   // Quem pode refazer é quem o MODELO diz: `manageTasks` — "edições avançadas (adicionar

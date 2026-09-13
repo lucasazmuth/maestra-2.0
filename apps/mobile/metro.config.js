@@ -21,6 +21,16 @@ config.watchFolders = [nucleo];
 // o mesmo caminho que o jest e o tsc ja usam.
 config.resolver.extraNodeModules = {
   '@maestra/core': path.resolve(nucleo, 'src'),
+  // ⚠️ O CODIFICADOR DE MP3 APONTA PARA O ESM DELE, a dedo.
+  //
+  // O `@breezystack/lamejs` publica dois arquivos: um ESM, que exporta o `Mp3Encoder`, e um
+  // IIFE para quem usa `require` — e o IIFE devolve um objeto VAZIO, porque ele monta tudo
+  // numa funcao anonima e nunca atribui nada ao `module.exports`. O Metro escolhe o de
+  // `require`, e a guia estourava com "Mp3Encoder is not a constructor" no momento de sair do
+  // editor, que e o pior sitio possivel para um erro.
+  '@breezystack/lamejs': path.resolve(
+    projeto, 'node_modules/@breezystack/lamejs/dist/lamejs.js',
+  ),
 };
 
 // A busca fica restrita ao node_modules do app. E isto que garante instancia UNICA de `react`,

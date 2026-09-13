@@ -1,7 +1,10 @@
-import { FC, useEffect, useRef } from 'react';
-import { FiScissors, FiTrash2 } from 'react-icons/fi';
+import { FC, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { FiCopy, FiScissors, FiTrash2 } from 'react-icons/fi';
 
+import { lugarDaBarra } from '@maestra/core/audio/grade';
+import { CORES_DAS_PISTAS, NOMES_DAS_CORES } from '@maestra/core/constants/design';
 import type { CatalogClip } from '@maestra/core/interfaces/maestra';
+import { tituloDoArquivo } from '@maestra/core/services/armazenamento';
 
 import { Onda } from './Onda';
 import { DS } from './tokens';
@@ -18,6 +21,7 @@ import { DS } from './tokens';
 
 export const Clipe: FC<{
   clipe: CatalogClip;
+  /** Só para o rótulo de recurso: "Take N" quando o ficheiro não tem nome. */
   indice: number;
   cor: string;
   picos: number[];
@@ -46,11 +50,44 @@ export const Clipe: FC<{
    * e que por isso se chama "Mix" em vez de "Take N". Essa não se edita de forma nenhuma.
    */
   noDedo?: boolean;
+  /**
+   * A cor da FAIXA onde este clipe está, como índice da paleta.
+   *
+   * ⚠️ O SELETOR DE COR MORA AQUI, na barra do clipe escolhido, e não na coluna da faixa. Ali
+   * ele era o quinto botão de uma fila que já espremia quatro numa coluna de 132 px. Aqui está
+   * ao lado das outras duas ações do mesmo gesto — escolher a coisa e depois fazer algo com ela
+   * — e em cima da própria cor, que é o que se está a trocar.
+   *
+   * ⚠️ E A COR É DA FAIXA, e não do clipe: pintar daqui pinta a faixa inteira. É o que se quer
+   * (a cor é o que distingue uma faixa da outra de relance), mas tem uma consequência — uma
+   * faixa VAZIA não tem clipe para escolher, e por isso não se pinta até receber áudio.
+   */
+  indiceDaCor: number;
+  /**
+   * Quanto da esquerda da janela está TAPADO pela coluna das faixas.
+   *
+   * Ela fica colada por cima da montagem, e uma barra debaixo dela não está à vista. É o único
+   * pedaço da janela que o clipe não consegue descobrir sozinho.
+   */
+  recuoDaJanela: number;
   aoSelecionar: () => void;
   aoArrastar: (evento: React.PointerEvent) => void;
   aoCortar: () => void;
+  /**
+   * Repetir este clipe, encostado ao fim dele próprio.
+   *
+   * ⚠️ AO LADO DA TESOURA, e não no fim da fila. Cortar e duplicar são o mesmo par de gestos
+   * de estrutura — partir uma coisa em duas, repetir uma coisa duas vezes — e quem monta um
+   * arranjo alterna entre eles. A lixeira fica onde estava: é a única da fila que destrói.
+   *
+   * Ausente na Mix, que não é uma pista da montagem e não tem onde guardar a cópia.
+   */
+  aoDuplicar?: () => void;
   aoApagar: () => void;
-}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, noDedo, aoSelecionar, aoArrastar, aoCortar, aoApagar }) => {
+  aoPintar?: (cor: number) => void;
+}> = ({ clipe, indice, cor, picos, escala, agulha, altura, selecionado, fixo, noDedo, indiceDaCor, recuoDaJanela, aoSelecionar, aoArrastar, aoCortar, aoDuplicar, aoApagar, aoPintar }) => {
+  /** A paleta deste clipe, aberta ou não. Só existe com o clipe escolhido, como a barra. */
+  const [paletaAberta, setPaletaAberta] = useState(false);
   /**
    * Mexer o clipe no tempo. A Mix nunca; com dedo, só depois de escolhido.
    *
@@ -83,13 +120,64 @@ export const Clipe: FC<{
     return () => document.removeEventListener('pointerdown', fora);
   }, [selecionado, aoSelecionar]);
 
-  // O dedo pede mais do que o ponteiro: 24 px de altura acertam-se com o rato e falham-se com
-  // o polegar, e estes dois botões decidem se um clipe fica ou desaparece.
-  const alvo = noDedo ? { height: 34, padding: '0 12px' } : { height: 24, padding: '0 8px' };
+  // O dedo pede mais do que o ponteiro: 26 px acertam-se com o rato e falham-se com o polegar,
+  // e estes dois botões decidem se um clipe fica ou desaparece.
+  const alvo = noDedo ? { width: 34, height: 34 } : { width: 26, height: 26 };
 
   const inicio = Number(clipe.start_seconds) || 0;
   const duracao = Number(clipe.duration_seconds) || 0;
   const podeCortar = !fixo && agulha > inicio + 0.05 && agulha < inicio + duracao - 0.05;
+
+  /**
+   * ⚠️ A LARGURA DA BARRA É MEDIDA, porque o número de botões muda: a Mix não tem barra, uma
+   * gravação que só se pode ver perde o pintar e o duplicar, e amanhã entra outro. Um número
+   * escrito à mão ficava errado no primeiro deles, e o erro aparece onde menos se vê.
+   */
+  const barra = useRef<HTMLDivElement>(null);
+
+  const larguraDoClipe = Math.max(duracao * escala, 8);
+
+  /**
+   * ONDE A BARRA FICA: ao pé da agulha, e sempre dentro do que se vê.
+   *
+   * ⚠️ A CONTA É DO NÚCLEO, e a JANELA é o que esta tela tem de descobrir. A barra encostada à
+   * direita da agulha saía pela borda do ecrã sempre que a agulha se aproximava dela — e isso
+   * acontece em cada volta da reprodução, antes de a linha travar no meio. Foi assim que ela
+   * apareceu cortada ao meio no telemóvel, com metade dos botões de fora.
+   *
+   * ⚠️ E A JANELA LÊ-SE À MÃO, sem passar pelo React. Ela muda a cada rolagem: posta em estado,
+   * seriam dezenas de redesenhos da montagem por segundo enquanto o dedo arrasta — o mesmo
+   * engasgo que o resto deste editor levou uma noite a tirar. Aqui só se escreve um `left`.
+   */
+  useLayoutEffect(() => {
+    const barraAgora = barra.current;
+    if (!barraAgora || !selecionado) return undefined;
+    const caixa = barraAgora.closest('[data-rolagem]') as HTMLElement | null;
+    if (!caixa) return undefined;
+
+    const porNoSitio = () => {
+      barraAgora.style.left = `${lugarDaBarra({
+        agulha: agulha * escala,
+        inicioDoClipe: inicio * escala,
+        larguraDoClipe,
+        larguraDaBarra: barraAgora.offsetWidth,
+        // ⚠️ TUDO NA RÉGUA DA LINHA DO TEMPO, e não na do conteúdo que rola. O clipe conta a
+        // partir do segundo zero da montagem; a caixa conta a partir da coluna das faixas, que
+        // vive DENTRO dela e ocupa os primeiros `recuoDaJanela` pixels. Misturar as duas foi o
+        // defeito: com a agulha no zero a barra ia parar ao meio do ecrã, uma coluna à frente do
+        // sítio — e a distância era sempre a mesma, o que a fazia parecer um enfeite e não um
+        // erro de conta.
+        //
+        // Convertida, a janela é simples: começa onde a rolagem está, e acaba uma coluna antes
+        // do fim do que se vê, porque essa coluna está por cima da montagem e tapa-a.
+        janelaDe: caixa.scrollLeft,
+        janelaAte: caixa.scrollLeft + caixa.clientWidth - recuoDaJanela,
+      })}px`;
+    };
+    porNoSitio();
+    caixa.addEventListener('scroll', porNoSitio, { passive: true });
+    return () => caixa.removeEventListener('scroll', porNoSitio);
+  }, [selecionado, agulha, escala, inicio, larguraDoClipe, recuoDaJanela, noDedo, aoPintar, aoDuplicar]);
 
   return (
     <div
@@ -173,20 +261,45 @@ export const Clipe: FC<{
         pointerEvents: 'none', zIndex: 2,
         textShadow: `0 0 6px ${cor}88, 0 1px 2px rgba(0,0,0,0.7)`,
         letterSpacing: '0.04em', textTransform: 'uppercase',
+        // Um nome de ficheiro é tão comprido quanto quem o gravou quis; o clipe não é. Corta
+        // com reticências em vez de transbordar por cima do clipe vizinho.
+        maxWidth: 'calc(100% - 14px)',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
-        {fixo ? 'Mix' : `Take ${indice + 1}`}
+        {/* ⚠️ O NOME DO FICHEIRO, e não o número do take. "Take 1/2/3" dizia só a ordem de
+            entrada — e numa faixa com voz, dobra e ad-lib são três rótulos iguais por cima de
+            três ondas parecidas. O número volta quando o clipe não tem ficheiro com nome. */}
+        {fixo ? 'Mix' : (tituloDoArquivo(clipe.file_name || '') || `Take ${indice + 1}`)}
       </div>
 
+      {/* ⚠️ SÓ OS ÍCONES, sem as palavras. "DIVIDIR" e "REMOVER" somavam 190 px de barra por
+          cima de um clipe que muitas vezes mede menos do que isso — e num clipe estreito a
+          barra saía pelos dois lados dele, a tapar os vizinhos. A tesoura e a lixeira dizem o
+          mesmo; o nome continua no `title` e no `aria-label`. É como o app ficou. */}
       {selecionado && !fixo && (
         <div
           onPointerDown={(evento) => evento.stopPropagation()}
+          // ⚠️ O CLIQUE NÃO PODE SUBIR — E A REGRA É DA BARRA, NÃO DE CADA BOTÃO. O clipe
+          // inteiro tem um `onClick` que ALTERNA a seleção, e a barra vive dentro dele: sem
+          // isto, cada botão daqui desmarcava o clipe no mesmo gesto em que agia.
+          //
+          // Com a tesoura e a lixeira ninguém notou, porque as duas já largam a seleção de
+          // propósito e o efeito coincidia. O botão da cor foi onde apareceu: a paleta abria e
+          // fechava no mesmo instante, e parecia que ele não fazia nada. Pôr um `stopPropagation`
+          // em cada botão resolvia um de cada vez e deixava o próximo por resolver — foi
+          // exatamente o que aconteceu quando "duplicar" chegou. Aqui, resolve-se a classe.
+          onClick={(evento) => evento.stopPropagation()}
+          ref={barra}
           style={{
-            // ⚠️ NO TELEMÓVEL A BARRA VIVE DENTRO DO CLIPE. Por cima dele (que é onde ela fica
-            // no desktop, e onde não tapa a onda) a primeira pista atirava-a para fora do topo
-            // da área que rola: ficava cortada pela régua, ou invisível. Dentro cabe — uma
-            // faixa de 96 px dá 80 de clipe — e nunca sai do ecrã.
+            // ⚠️ SEMPRE DENTRO DO CLIPE, EM BAIXO. Por cima dele — que era onde ela ficava com o
+            // rato — a barra da primeira pista saía pelo topo da área que rola e ficava cortada
+            // pela régua. Dentro cabe (uma faixa de 96 dá 80 de clipe) e nunca sai do ecrã.
+            //
+            // O que mudou foi o eixo horizontal: já não é a ponta do clipe, é a agulha.
             position: 'absolute',
-            ...(noDedo ? { bottom: 6, left: 6 } : { top: -38, left: 0 }),
+            bottom: 6,
+            // O `left` é escrito à mão pelo efeito de cima: ele segue a agulha e a janela.
+            left: 6,
             display: 'flex', gap: 4,
             background: DS.color.bgPainel,
             border: `1px solid ${DS.color.bordaForte}`,
@@ -203,36 +316,111 @@ export const Clipe: FC<{
             title={podeCortar ? 'Dividir na agulha' : 'Leve a agulha para dentro do clipe'}
             aria-label='Dividir o clipe na agulha'
             style={{
-              display: 'flex', alignItems: 'center', gap: 4,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               ...alvo,
               background: podeCortar ? `${DS.color.primaria}18` : 'transparent',
               border: `1px solid ${podeCortar ? `${DS.color.primaria}60` : DS.color.borda}`,
               borderRadius: 4,
               color: podeCortar ? DS.color.primaria : DS.color.textoInerte,
               cursor: podeCortar ? 'pointer' : 'default',
-              fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
             }}
           >
-            <FiScissors size={10} /> DIVIDIR
+            <FiScissors size={13} />
           </button>
+          {aoDuplicar && (
+            <button
+              type='button'
+              onClick={aoDuplicar}
+              title='Duplicar o clipe'
+              aria-label='Duplicar o clipe'
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                ...alvo,
+                background: 'transparent',
+                border: `1px solid ${DS.color.borda}`,
+                borderRadius: 4,
+                color: DS.color.texto,
+                cursor: 'pointer',
+              }}
+            >
+              <FiCopy size={13} />
+            </button>
+          )}
           <button
             type='button'
             onClick={aoApagar}
             title='Remover o clipe'
             aria-label='Remover o clipe'
             style={{
-              display: 'flex', alignItems: 'center', gap: 4,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               ...alvo,
               background: 'transparent',
               border: `1px solid ${DS.color.borda}`,
               borderRadius: 4,
               color: DS.color.agulha,
               cursor: 'pointer',
-              fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
             }}
           >
-            <FiTrash2 size={10} /> REMOVER
+            <FiTrash2 size={13} />
           </button>
+          {aoPintar && (
+            <button
+              type='button'
+              onClick={() => setPaletaAberta((v) => !v)}
+              aria-haspopup='true'
+              aria-expanded={paletaAberta}
+              title='Cor da faixa'
+              aria-label='Cor da faixa'
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                ...alvo,
+                background: 'transparent',
+                border: `1px solid ${DS.color.borda}`,
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ width: 13, height: 13, borderRadius: '50%', background: cor }} />
+            </button>
+          )}
+
+          {/* As seis, ao lado das outras ações. ⚠️ EM CIMA DA BARRA e não por baixo: a barra já
+              está no fundo do clipe, e um painel abaixo dela cairia na faixa seguinte — ou fora
+              da área que rola, na última. */}
+          {paletaAberta && aoPintar && (
+            <div
+              role='group'
+              aria-label='Cores da faixa'
+              style={{
+                position: 'absolute', bottom: '100%', left: 0, marginBottom: 6,
+                display: 'flex', gap: 6, padding: 7,
+                background: DS.color.bgPainel,
+                border: `1px solid ${DS.color.bordaForte}`,
+                borderRadius: DS.raio.medio,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+              }}
+            >
+              {CORES_DAS_PISTAS.map((tinta, i) => (
+                <button
+                  key={tinta}
+                  type='button'
+                  onClick={() => { aoPintar(i); setPaletaAberta(false); }}
+                  aria-label={NOMES_DAS_CORES[i]}
+                  aria-pressed={indiceDaCor % CORES_DAS_PISTAS.length === i}
+                  title={NOMES_DAS_CORES[i]}
+                  style={{
+                    width: 20, height: 20, borderRadius: '50%', background: tinta,
+                    cursor: 'pointer',
+                    // A escolhida traz um anel: sem ele, seis bolinhas iguais não dizem qual é a
+                    // desta faixa, e a pessoa carrega na que já estava.
+                    border: indiceDaCor % CORES_DAS_PISTAS.length === i
+                      ? `2px solid ${DS.color.texto}`
+                      : '2px solid transparent',
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

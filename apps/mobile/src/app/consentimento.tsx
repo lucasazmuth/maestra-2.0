@@ -1,7 +1,7 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
-  ActivityIndicator, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView,
+  ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,7 +10,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { COR, COR_ENTRADA, RAIO } from '@maestra/core/constants/design';
-import { useEstadoDoConsentimento, type ConsentState } from '@maestra/core/hooks/useConsent';
+import { useConsent, type ConsentState } from '@maestra/core/hooks/useConsent';
 import { supabase } from '@maestra/core/lib/supabase';
 import { IDADE_MINIMA, idadeEmAnos } from '@maestra/core/utils/age';
 
@@ -18,9 +18,8 @@ import { CaixaDeAceite } from '@/casca/CaixaDeAceite';
 import { MaestraMarca } from '@/icones';
 import { sair } from '@/nucleo/entrar';
 import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
-/** Os documentos legais vivem na web. */
-const SITE = 'https://www.maestramanager.com';
 
 // O CONSENTIMENTO (LGPD) — a coleta de maioridade e o aceite dos documentos.
 //
@@ -49,11 +48,10 @@ const paraISO = (visivel: string) => {
 
 export default function Consentimento() {
   const router = useRouter();
-  const { sessao } = useSessao();
-  const usuario = sessao?.user;
-  const { state, loading, apply } = useEstadoDoConsentimento(
-    usuario ? { id: usuario.id, email: usuario.email } : null,
-  );
+  const { sessao, carregando: carregandoSessao } = useSessao();
+  // O MESMO estado que o portão lê — ver `nucleo/ConsentimentoDaConta`. O `apply` abaixo é o que
+  // faz o portão saber, no instante do envio, que já pode destrancar.
+  const { state, loading, apply } = useConsent();
 
   const [nascimento, setNascimento] = useState('');
   const [maioridade, setMaioridade] = useState(false);
@@ -103,7 +101,20 @@ export default function Consentimento() {
   };
 
   // Sem sessão não há o que consentir; o portão da sessão cuida do resto.
-  if (!sessao) return <Redirect href="/entrar" />;
+  //
+  // ⚠️ O `carregandoSessao` NÃO É ZELO, é a última peça do app travado pelo login da Apple.
+  //
+  // Cada tela tem a sua própria leitura da sessão, e toda leitura começa em "ainda não sei":
+  // nasce com `sessao` nula por um render, até o disco responder. Sem esperar por isso, esta
+  // tela mandava para `/entrar` no instante em que era montada — e de `/entrar` o portão da
+  // sessão trazia de volta para `/perfis`, de onde o portão do consentimento devolvia para cá,
+  // que mandava outra vez para `/entrar`. Três peças a andar em roda, e o que se via era a tela
+  // desenhada com todos os toques engolidos, até o React derrubar tudo com "Maximum update
+  // depth exceeded".
+  //
+  // É a mesma guarda que `/perfis`, `/conta`, `/notificacoes` e as outras cinco já faziam. Esta
+  // era a única tela sem ela, e era justamente a tela onde o login por provedor social cai.
+  if (!carregandoSessao && !sessao) return <Redirect href="/entrar" />;
 
   const bloqueada = state?.blocked;
 
@@ -120,8 +131,11 @@ export default function Consentimento() {
                 <MaestraMarca size={26} color={COR_ENTRADA.marca} />
               </View>
 
-              {loading && !state ? (
-                <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
+              {/* Enquanto a sessão não chega, o estado do consentimento nem foi pedido: sem
+                  esta espera a tela desenhava o formulário por um instante e trocava de cara
+                  logo a seguir — um pisca num aceite legal. */}
+              {(carregandoSessao || loading) && !state ? (
+                <Carregando estilo={estilos.espera} />
               ) : bloqueada ? (
                 <>
                   <Text style={estilos.titulo}>Conta em análise</Text>
@@ -132,7 +146,7 @@ export default function Consentimento() {
                   </Text>
                   <Pressable
                     style={({ pressed }) => [estilos.botao, pressed && estilos.pressionado]}
-                    onPress={() => { void Linking.openURL(`${SITE}/suporte`); }}
+                    onPress={() => router.push('/suporte')}
                     accessibilityRole="button"
                     accessibilityLabel="Falar com o suporte"
                   >
@@ -179,7 +193,7 @@ export default function Consentimento() {
                         Li e aceito os{' '}
                         <Text
                           style={estilos.link}
-                          onPress={() => { void Linking.openURL(`${SITE}/legal/termos`); }}
+                          onPress={() => router.push('/legal/termos')}
                         >
                           Termos de uso
                         </Text>.
@@ -195,7 +209,7 @@ export default function Consentimento() {
                         Li e aceito a{' '}
                         <Text
                           style={estilos.link}
-                          onPress={() => { void Linking.openURL(`${SITE}/legal/privacidade`); }}
+                          onPress={() => router.push('/legal/privacidade')}
                         >
                           Política de privacidade
                         </Text>.

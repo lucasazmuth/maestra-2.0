@@ -348,7 +348,10 @@ describe('refazer o diagnóstico', () => {
     expect(mockPush).not.toHaveBeenCalled();
     expect(tela.getByText(LOCKED_FEATURE_CONFIG.refazer.title)).toBeTruthy();
 
+    // ⚠️ E O QUE ELE ABRE É UMA TELA, NÃO O NAVEGADOR. A assinatura deixou de ser vendida pelo
+    // app: o aviso leva a `/planos`, que mostra os planos e diz, em texto, onde se assina.
     await usuario.press(tela.getByLabelText(LOCKED_FEATURE_CONFIG.refazer.cta.label));
-    expect(mockCheckout).toHaveBeenCalledWith({ destino: 'assinatura' });
+    expect(mockCheckout).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith('/planos');
   });
 });

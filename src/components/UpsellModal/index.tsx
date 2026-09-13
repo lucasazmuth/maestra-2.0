@@ -34,7 +34,7 @@ export const UpsellModal: FC<UpsellModalProps> = ({
 
   const handlePrimary = () => {
     onClose();
-    navigate('/assinatura');
+    navigate('/planos');
   };
 
   return (

@@ -490,6 +490,8 @@ export interface CatalogProject {
   cover_image?: string | null;
   cover_image_name?: string | null;
   assignee?: { id: string; name: string } | null;
+  /** UPC/EAN do LANÇAMENTO. É da música; o ISRC é da gravação e vive em `CatalogVersion`. */
+  upc?: string | null;
   release_date?: string | null;
   primary_version_id?: string | null;
   created_at?: string;
@@ -509,6 +511,8 @@ export interface CatalogVersion {
   duration?: string | null;
   bpm?: string | null;
   key?: string | null;
+  /** ISRC desta GRAVAÇÃO. Cada versão tem o seu: o acústico não partilha o do original. */
+  isrc?: string | null;
   genre?: string | null;
   lyrics?: string | null;
   author_id?: string | null;

@@ -287,7 +287,7 @@ const PaymentPage: FC = () => {
   // ─── Sem pixData → tenta RETOMAR antes de redirecionar ──────────────────────
   // Cobre o caso "gerou o QR, fechou e voltou depois": o pixData não persiste, então buscamos
   // o QR atual da cobrança em aberto no Asaas (sem criar assinatura nova). Só manda pra
-  // /assinatura se não houver nada pra retomar.
+  // /planos se não houver nada pra retomar.
   useEffect(() => {
     // `status === 'active'` NÃO barra mais a consulta. Na renovação a assinatura segue `active`
     // com a cobrança do ciclo novo em aberto, e sair aqui era o que fazia a tela mostrar sucesso
@@ -309,7 +309,7 @@ const PaymentPage: FC = () => {
         // `active` junto de `pendingRenewal`, mas essa combinação é justamente a que produziu
         // a tela de "pagamento confirmado" sem pagamento — não vale confiar só na convenção.
         if (res.status === 'active' && !res.pendingRenewal) { setPaymentConfirmed(true); return; }
-        if (res.status === 'none') { navigate('/assinatura', { replace: true }); return; }
+        if (res.status === 'none') { navigate('/planos', { replace: true }); return; }
         // Cartão em análise: não existe QR — mostra o estado de análise (não é erro).
         if (res.billingType === 'CREDIT_CARD') { setCardAnalysis(true); return; }
         // Renovação: a assinatura continua ativa, mas há QR a pagar. Marcar antes de renderizar,
@@ -321,7 +321,7 @@ const PaymentPage: FC = () => {
       })
       .catch(() => {
         setResuming(false);
-        navigate('/assinatura', { replace: true });
+        navigate('/planos', { replace: true });
       });
   }, [pixData, paymentConfirmed, status, dispatch, navigate]);
 
@@ -388,7 +388,7 @@ const PaymentPage: FC = () => {
     if (!paymentConfirmed) return;
 
     const timeout = setTimeout(() => {
-      navigate('/assinatura/sucesso', { replace: true });
+      navigate('/planos/sucesso', { replace: true });
     }, 1500);
 
     return () => clearTimeout(timeout);
@@ -468,7 +468,7 @@ const PaymentPage: FC = () => {
 
   // ── Não foi possível recuperar o QR (cobrança expirada/indisponível) ──
   //
-  // Mandar de volta para /assinatura sem mais nada fechava um LOOP: lá o gate vê a assinatura
+  // Mandar de volta para /planos sem mais nada fechava um LOOP: lá o gate vê a assinatura
   // ainda `pending` e oferece "Retomar pagamento", que traz para cá, onde a retomada falha de
   // novo. E mesmo pulando o gate, o asaas-create-subscription responde `resume: true` pela
   // trava anti-duplicidade. Sem encerrar a assinatura pendente não havia saída pelo app.
@@ -484,7 +484,7 @@ const PaymentPage: FC = () => {
           message.error('Não foi possível encerrar a cobrança anterior. Fale com o suporte para liberar um novo pagamento.');
           return;
         }
-        navigate('/assinatura', { replace: true });
+        navigate('/planos', { replace: true });
       } finally {
         setRenewing(false);
       }

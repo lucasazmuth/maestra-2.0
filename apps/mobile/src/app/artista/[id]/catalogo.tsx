@@ -2,7 +2,7 @@ import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator, FlatList, Image, Linking, Pressable, RefreshControl,
+  Alert, FlatList, Image, Linking, Pressable, RefreshControl,
   StyleSheet, Text, View,
 } from 'react-native';
 
@@ -11,17 +11,19 @@ import Feather from '@expo/vector-icons/Feather';
 import { COR, COR_BARRA, COR_CATALOGO, RAIO, SOMBRA } from '@maestra/core/constants/design';
 import { CATALOG_STATUS } from '@maestra/core/constants/maestra';
 import type { CatalogItem } from '@maestra/core/interfaces/maestra';
-import { listCatalogProjectItems } from '@maestra/core/services/db/catalog';
+import { SEM_GUIA_AINDA } from '@maestra/core/audio/exportar';
+import { deleteCatalogProject, listCatalogProjectItems } from '@maestra/core/services/db/catalog';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { BotaoFlutuante } from '@/casca/BotaoFlutuante';
 import { CabecalhoDoModulo, FOLGA_APOS_O_CABECALHO } from '@/casca/CabecalhoDoModulo';
+import { Escolha } from '@/casca/Escolha';
+import { partilharGuiaMp3 } from '@/casca/jam/mesa/exportarNativo';
 import { FichaDaFaixa } from '@/casca/musicas/FichaDaFaixa';
-import { EspacoJamIcon } from '@/icones';
 import { useArtistaDaRota } from '@/nucleo/artista';
-import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
 type Aba = 'musicas' | 'lancamentos';
 
@@ -82,11 +84,12 @@ export default function Catalogo() {
   const [erro, setErro] = useState<string | null>(null);
   const [tocandoId, setTocandoId] = useState<string | null>(null);
   const [aba, setAba] = useState<Aba>('musicas');
+  /** A música cujo "⋮" está aberto. `null` = nenhum menu no ar. */
+  const [menuDa, setMenuDa] = useState<CatalogItem | null>(null);
   const [fichaAberta, setFichaAberta] = useState(false);
   const [editando, setEditando] = useState<CatalogItem | null>(null);
 
   const margem = useSafeAreaInsets();
-  const { sessao } = useSessao();
   const player = useAudioPlayer();
   const status = useAudioPlayerStatus(player);
 
@@ -163,6 +166,54 @@ export default function Catalogo() {
 
   const remover = (removidaId: string) =>
     setFaixas((antes) => antes.filter((f) => f.id !== removidaId));
+
+  /**
+   * A guia de uma música, para fora do aplicativo.
+   *
+   * ⚠️ "ENVIAR", E NÃO "BAIXAR" — é a palavra que a tela de exportar do editor já usa. Um
+   * telemóvel não tem pasta de transferências que se abra noutro programa: o que ele tem é a
+   * FOLHA DE PARTILHA, onde se escolhe o destino (AirDrop para o computador onde está o Ableton,
+   * Ficheiros, WhatsApp). É o mesmo gesto da web com outra forma, e prometer "baixar" num sítio
+   * onde nada cai numa pasta é prometer o que o sistema não faz.
+   */
+  const enviarGuia = async (faixa: CatalogItem) => {
+    if (!faixa.audio_file) { Alert.alert('Sem guia ainda', SEM_GUIA_AINDA); return; }
+    try {
+      await partilharGuiaMp3(faixa.audio_file, faixa.title);
+    } catch (e) {
+      Alert.alert('Não consegui enviar a guia', e instanceof Error ? e.message : 'Tente de novo.');
+    }
+  };
+
+  /**
+   * Apagar, com a pergunta antes.
+   *
+   * ⚠️ ELE MUDOU DE SÍTIO, e o comentário da ficha já o dizia: apagar a música não é um gesto de
+   * EDITAR a ficha dela — vive na lista, que é de onde se gere o catálogo, como na web.
+   */
+  const confirmarExclusao = (faixa: CatalogItem) => {
+    if (!faixa.project_id) return;
+    Alert.alert(
+      'Excluir música?',
+      `${faixa.title} e tudo o que está montado nela — pistas, clipes e a faixa guia — saem do `
+        + 'catálogo. Não dá para voltar atrás.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteCatalogProject(faixa.project_id!);
+              remover(faixa.id);
+            } catch (e) {
+              Alert.alert('Erro ao excluir', e instanceof Error ? e.message : 'Tente de novo.');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   const abrirFicha = (faixa: CatalogItem | null) => {
     setEditando(faixa);
@@ -255,7 +306,7 @@ export default function Catalogo() {
           )}
         />
       ) : carregando ? (
-        <ActivityIndicator color={COR.primaria} style={estilos.espera} size="large" />
+        <Carregando estilo={estilos.espera} />
       ) : vazio || erro ? (
         <View style={estilos.conteudo}>
           <View style={estilos.aviso}>
@@ -329,29 +380,20 @@ export default function Catalogo() {
                     <Text style={[estilos.statusTexto, { color: rotulo.color }]}>{rotulo.label}</Text>
                   </View>
                 )}
-                {/* A linha inteira já abre o Espaço Jam, mas isso não se descobre olhando —
-                    o botão nomeia o destino. O rótulo "Espaço Jam" que a web mostra no desktop
-                    sai no celular (custava 107px dos 319 da linha); o ícone fica, senão o
-                    atalho desaparece: não há `title` que se revele no toque. */}
-                <Pressable
-                  style={estilos.jam}
-                  onPress={() => router.push(`/jam/${id}/${item.project_id || item.id}`)}
-                  hitSlop={6}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Abrir o Espaço Jam de ${item.title}`}
-                >
-                  <EspacoJamIcon size={15} color={COR_CATALOGO.jam} />
-                </Pressable>
+                {/* ⚠️ A PÍLULA DO ESPAÇO JAM SAIU DAQUI, como saiu da web. Ela nomeava um
+                    destino que a linha inteira já alcança — o mesmo gesto, duas vezes na mesma
+                    linha, e a segunda a comer 107 px dos 319 do celular. */}
 
-                {/* O "⋮" abre a ficha para editar, como na web. Ele fica fora do toque da linha:
-                    tocar na linha toca a música, e editar é outra intenção. */}
+                {/* O "⋮" abre a lista do que se faz com a música, a mesma da web. Ele fica fora
+                    do toque da linha: tocar na linha entra no Espaço Jam, e escolher é outra
+                    intenção. */}
                 {direitos.canEditCatalog && (
                   <Pressable
                     style={estilos.mais}
-                    onPress={() => abrirFicha(item)}
+                    onPress={() => setMenuDa(item)}
                     hitSlop={8}
                     accessibilityRole="button"
-                    accessibilityLabel={`Editar ${item.title}`}
+                    accessibilityLabel={`Opções de ${item.title}`}
                   >
                     <Feather name="more-vertical" size={18} color={COR_CATALOGO.legenda} />
                   </Pressable>
@@ -362,19 +404,47 @@ export default function Catalogo() {
         />
       )}
 
+      {/* ⚠️ É A `Escolha`, e não um menu novo. O "⋮" da web é um `Dropdown` do antd ancorado no
+          botão; isso não existe no React Native, e ancorar um popover num item de lista rolável
+          é o tipo de coisa que funciona no simulador e falha no aparelho de alguém. A folha que
+          sobe de baixo já é a resposta do app a essa forma — e escrevê-la de novo aqui seria a
+          terceira cópia da mesma decisão, que é o defeito que a própria `Escolha` foi criada
+          para fechar. */}
+      <Escolha
+        aberta={!!menuDa}
+        titulo={menuDa?.title ?? ''}
+        opcoes={[
+          { valor: 'jam', rotulo: 'Abrir Espaço Jam' },
+          // A guia é o que a lista toca, e até agora só se conseguia ouvir aqui dentro: para a
+          // mandar a alguém era preciso entrar no editor e ir à aba de exportar.
+          { valor: 'guia', rotulo: 'Enviar guia' },
+          // ⚠️ A WEB NÃO TEM ESTA LINHA, e a diferença é de propósito. Lá a ficha mudou-se
+          // inteira para dentro do editor, e o "⋮" ficou com duas escolhas. Aqui ela continua a
+          // abrir-se da lista, e tirá-la para igualar as duas telas seria apagar o único
+          // caminho do aplicativo para as abas de Letras e Splits.
+          { valor: 'ficha', rotulo: 'Editar ficha' },
+          { valor: 'excluir', rotulo: 'Excluir música', perigo: true },
+        ]}
+        aoEscolher={(escolhido) => {
+          const faixa = menuDa;
+          if (!faixa) return;
+          if (escolhido === 'jam') { router.push(`/jam/${id}/${faixa.project_id || faixa.id}`); return; }
+          if (escolhido === 'guia') { void enviarGuia(faixa); return; }
+          if (escolhido === 'ficha') { abrirFicha(faixa); return; }
+          if (escolhido === 'excluir') confirmarExclusao(faixa);
+        }}
+        aoFechar={() => setMenuDa(null)}
+      />
+
       {!!artista && (
         <FichaDaFaixa
           aberta={fichaAberta}
           artistaId={artista.id}
           faixa={editando}
           generos={generos}
-          autor={{ id: sessao?.user.id, nome: sessao?.user.user_metadata?.full_name }}
           aoFechar={() => setFichaAberta(false)}
           aoSalvar={guardar}
           aoExcluir={remover}
-          // Anexar versão muda o áudio principal da faixa: a lista precisa reler para o play
-          // apontar para o arquivo novo.
-          aoMudarVersoes={buscar}
         />
       )}
 
@@ -483,14 +553,6 @@ const estilos = StyleSheet.create({
   // ser lido depois dele e não competir com ele.
   abaLimite: { fontWeight: '700', color: COR_CATALOGO.legenda },
   abaLimiteAceso: { color: COR.sobrePrimaria, opacity: 0.75 },
-  // A pílula do Espaço Jam, medida no DOM a 375px: 31px de altura, raio 20, contorno de 1px e
-  // fundo branco. O rótulo sai no celular — ele custava um terço da linha.
-  jam: {
-    paddingVertical: 7, paddingHorizontal: 12, borderRadius: 20,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: COR_CATALOGO.jamContorno,
-    backgroundColor: COR_CATALOGO.jamFundo,
-  },
   mais: { width: 28, alignItems: 'center', justifyContent: 'center' },
   espera: { marginTop: 48 },
   // 196 = a ilha (34 de reserva + 78) mais o botão flutuante (14 de folga + 56) e mais 14. Eram

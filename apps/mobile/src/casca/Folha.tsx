@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { COR, RAIO, SOMBRA_DO_BOTAO } from '@maestra/core/constants/design';
 
+import { PALETA_CLARA, usePaleta } from '@/casca/paleta';
+
 import { useAlturaDoTeclado } from '@/nucleo/teclado';
 
 import { BotaoRedondo } from './marca/MenuDoSistema';
@@ -53,6 +55,12 @@ export const Folha = ({
 }) => {
   const margem = useSafeAreaInsets();
   const teclado = useAlturaDoTeclado();
+  // ⚠️ O CASCO TAMBÉM SE TINGE. Eu tinha deixado o topo e o rodapé sempre claros, com o
+  // argumento de que uma folha que sobe de baixo é do app claro — e no editor o resultado foi
+  // uma barra branca de cabeçalho por cima de um corpo quase preto, com o título em azul-marinho
+  // no meio. Tinge-se o que É a folha (fundo, topo, título, fio); o que continua igual nos dois
+  // é a AÇÃO do rodapé, que é a primária da marca em ambos.
+  const paleta = usePaleta();
 
   const corpo = semRolagem
     ? <View style={estilos.corpoSemRolagem}>{children}</View>
@@ -77,15 +85,28 @@ export const Folha = ({
           `KeyboardAvoidingView`. Ver `useAlturaDoTeclado`: dentro de um `pageSheet` o KAV calcula
           o empurrão a partir da janela, erra por conta do recuo do topo da folha, e o rodapé
           termina atrás das teclas. */}
-      <View style={[estilos.folha, { paddingBottom: teclado }]}>
+      <View style={[estilos.folha, { backgroundColor: paleta.fundo, paddingBottom: teclado }]}>
         <View style={estilos.topo}>
-          <BotaoRedondo rotulo="Fechar" aoTocar={aoFechar}>
-            <Feather name="x" size={20} color={COR.secundario} />
-          </BotaoRedondo>
+          {/* O círculo do `BotaoRedondo` traz o fundo claro do menu do sistema; na paleta
+              escura ele seria uma bolha branca. Quando a folha está tingida, o botão é daqui. */}
+          {paleta === PALETA_CLARA ? (
+            <BotaoRedondo rotulo="Fechar" aoTocar={aoFechar}>
+              <Feather name="x" size={20} color={paleta.texto} />
+            </BotaoRedondo>
+          ) : (
+            <Pressable
+              style={[estilos.fecharTingido, { backgroundColor: paleta.destaque }]}
+              onPress={aoFechar}
+              accessibilityRole="button"
+              accessibilityLabel="Fechar"
+            >
+              <Feather name="x" size={18} color={paleta.texto} />
+            </Pressable>
+          )}
 
           {/* O título ocupa o meio e é o único elemento que pode crescer: os dois círculos têm
               largura fixa, então ele fica centrado na tela mesmo sem o da direita existir. */}
-          <Text style={estilos.titulo} numberOfLines={1}>{titulo}</Text>
+          <Text style={[estilos.titulo, { color: paleta.titulo }]} numberOfLines={1}>{titulo}</Text>
 
           <View style={estilos.direita}>{direita}</View>
         </View>
@@ -96,7 +117,11 @@ export const Folha = ({
             mostra. Com o teclado aberto quem ocupa aquele lugar é o próprio teclado, e manter a
             margem empurrava a ação para debaixo das teclas. Mesma regra do campo do chat da Nyta. */}
         {!!acao && (
-          <View style={[estilos.rodape, { paddingBottom: teclado ? 12 : Math.max(margem.bottom, 14) }]}>
+          <View style={[
+            estilos.rodape,
+            { backgroundColor: paleta.papel, borderTopColor: paleta.divisoria },
+            { paddingBottom: teclado ? 12 : Math.max(margem.bottom, 14) },
+          ]}>
             {!!destrutiva && (
               <Pressable
                 style={estilos.destrutiva}
@@ -132,12 +157,19 @@ export const Folha = ({
  * É o cartão da referência: o conteúdo não flutua solto sobre o cinza, ele mora em blocos, e o
  * rótulo diz do que aquele grupo trata. Sem isso a folha vira uma lista longa sem hierarquia.
  */
-export const Bloco = ({ rotulo, children }: { rotulo?: string; children: ReactNode }) => (
-  <View style={estilos.grupo}>
-    {!!rotulo && <Text style={estilos.rotuloDoGrupo}>{rotulo}</Text>}
-    <View style={estilos.bloco}>{children}</View>
-  </View>
-);
+// ⚠️ O BLOCO E A LINHA TIRAM TRÊS CORES DA PALETA EM VIGOR, e não a folha inteira: o casco da
+// `Folha` (o topo, o rodapé, os botões) só existe quando ela é uma folha que sobe de baixo, e
+// essa é sempre clara. Escuros são apenas os blocos, quando os mesmos campos são montados dentro
+// do editor — ver `casca/paleta.ts`.
+export const Bloco = ({ rotulo, children }: { rotulo?: string; children: ReactNode }) => {
+  const dentro = usePaleta();
+  return (
+    <View style={estilos.grupo}>
+      {!!rotulo && <Text style={[estilos.rotuloDoGrupo, { color: dentro.rotulo }]}>{rotulo}</Text>}
+      <View style={[estilos.bloco, { backgroundColor: dentro.papel }]}>{children}</View>
+    </View>
+  );
+};
 
 /**
  * Uma linha dentro do bloco.
@@ -145,9 +177,18 @@ export const Bloco = ({ rotulo, children }: { rotulo?: string; children: ReactNo
  * A divisória é RECUADA e desenhada pela linha DE BAIXO, não pela de cima: assim a última não
  * precisa saber que é a última, e o bloco não precisa clonar os filhos para dizer a ela.
  */
-export const Linha = ({ children, primeira }: { children: ReactNode; primeira?: boolean }) => (
-  <View style={[estilos.linha, !primeira && estilos.linhaComFio]}>{children}</View>
-);
+export const Linha = ({ children, primeira }: { children: ReactNode; primeira?: boolean }) => {
+  const dentro = usePaleta();
+  return (
+    <View style={[
+      estilos.linha,
+      !primeira && estilos.linhaComFio,
+      !primeira && { borderTopColor: dentro.divisoria },
+    ]}>
+      {children}
+    </View>
+  );
+};
 
 const estilos = StyleSheet.create({
   folha: { flex: 1, backgroundColor: COR.fundo },
@@ -159,6 +200,9 @@ const estilos = StyleSheet.create({
   titulo: {
     flex: 1, textAlign: 'center',
     fontSize: 18, fontWeight: '800', color: COR.titulo,
+  },
+  fecharTingido: {
+    width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center',
   },
   // Reserva a mesma largura do botão da esquerda mesmo quando não há nada à direita. Sem ela o
   // título centraria no espaço que sobra, e não na tela.

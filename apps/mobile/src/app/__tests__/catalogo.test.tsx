@@ -1,7 +1,8 @@
-import { render, userEvent, waitFor } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { act, render, userEvent, waitFor } from '@testing-library/react-native';
+import { Alert, StyleSheet } from 'react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
+import { SEM_GUIA_AINDA } from '@maestra/core/audio/exportar';
 import { COR } from '@maestra/core/constants/design';
 import { Provider } from 'react-redux';
 
@@ -25,6 +26,13 @@ jest.mock('@maestra/core/services/db/catalog', () => ({
   deleteCatalogProject: (...args: unknown[]) => mockExcluir(...args),
 }));
 
+// A folha de partilha do sistema, de mentira: o que precisa ficar provado é QUE ficheiro o app
+// manda para ela e com que nome, não que o iOS sabe partilhar.
+const mockPartilharGuia = jest.fn();
+jest.mock('@/casca/jam/mesa/exportarNativo', () => ({
+  partilharGuiaMp3: (...args: unknown[]) => mockPartilharGuia(...args),
+}));
+
 // Um player de mentira, com a mesma superficie do expo-audio. O que precisa ficar provado nao e
 // que o audio sai — isso e do sistema — e sim QUAL fonte o app manda tocar, e que ele nunca
 // deixa duas faixas no ar.
@@ -34,6 +42,21 @@ jest.mock('expo-audio', () => ({
   useAudioPlayer: () => mockPlayer,
   useAudioPlayerStatus: () => mockStatus,
 }));
+
+// O `Alert` do sistema não desenha nada que a árvore do teste veja: é o iOS que o mostra. O que
+// se prova aqui é o que o app PEDE a ele — o título, a frase, e qual botão faz o quê.
+const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+/** O título e a mensagem do último aviso pedido. */
+const avisado = () => alerta.mock.calls.at(-1)?.slice(0, 2) ?? [];
+
+/** Toca no botão do último alerta, como quem responde à pergunta. */
+const confirmar = async (rotulo: string) => {
+  const botoes = alerta.mock.calls.at(-1)?.[2] ?? [];
+  const botao = botoes.find((b) => b.text === rotulo);
+  if (!botao?.onPress) throw new Error(`O alerta não oferece "${rotulo}".`);
+  await act(async () => { await botao.onPress?.(); });
+};
 
 const faixa = (over: Partial<CatalogItem>): CatalogItem => ({
   id: 'f-0', artist_id: 'a-1', title: 'Faixa', status: 'mixing',
@@ -73,6 +96,8 @@ describe('catalogo', () => {
     mockListar.mockReset();
     mockSalvar.mockReset();
     mockExcluir.mockReset();
+    mockPartilharGuia.mockClear();
+    alerta.mockClear();
     mockPlayer.play.mockClear();
     mockPlayer.pause.mockClear();
     mockPlayer.replace.mockClear();
@@ -232,6 +257,12 @@ describe('catalogo: as duas abas e a ficha', () => {
     store.dispatch({ type: 'artists/fetchArtists/fulfilled', payload: [comDiagnostico] });
     mockListar.mockReset();
     mockSalvar.mockReset();
+    mockExcluir.mockReset();
+    // ⚠️ ESTES DOIS TAMBÉM. O `describe` de cima limpa-os e este não limpava: a chamada de um
+    // caso ficava contada para o seguinte, e o caso que prova que SEM guia nada é enviado via
+    // o envio do caso anterior — a acusar a tela de um defeito que era do teste.
+    mockPartilharGuia.mockClear();
+    alerta.mockClear();
     mockListar.mockResolvedValue([faixa({ id: 'f-1', title: 'Chuva de fevereiro' })]);
   });
 
@@ -259,19 +290,92 @@ describe('catalogo: as duas abas e a ficha', () => {
     expect(tela.getByLabelText('Título').props.value).toBe('');
   });
 
-  it('o "⋮" abre a ficha da faixa, com os dados dela', async () => {
+  // ⚠️ O "⋮" DEIXOU DE ABRIR A FICHA DIRETO. Ele abre a LISTA do que se faz com a música — a
+  // mesma da web —, e a ficha é uma das escolhas dela. O atalho da pílula do Espaço Jam saiu da
+  // linha, e o nome do destino mudou-se para cá.
+  it('o "⋮" abre a lista, e a ficha é uma das escolhas', async () => {
     mockListar.mockResolvedValue([
-      faixa({ id: 'f-2', title: 'Vento sul', genre: 'MPB', bpm: '96' }),
+      faixa({ id: 'f-2', title: 'Vento sul', genre: 'MPB' }),
     ]);
     const tela = await montar();
     await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
 
-    await userEvent.setup().press(tela.getByLabelText('Editar Vento sul'));
+    const usuario = userEvent.setup();
+    await usuario.press(tela.getByLabelText('Opções de Vento sul'));
+
+    // As mesmas quatro escolhas, e nesta ordem: entrar, levar a guia, editar, apagar.
+    expect(tela.getByText('Abrir Espaço Jam')).toBeTruthy();
+    expect(tela.getByText('Enviar guia')).toBeTruthy();
+    expect(tela.getByText('Excluir música')).toBeTruthy();
+
+    await usuario.press(tela.getByText('Editar ficha'));
 
     // O cabeçalho da ficha é o NOME da faixa, como na web — não um rótulo genérico.
     expect(tela.getAllByText('Vento sul').length).toBeGreaterThan(1);
     expect(tela.getByLabelText('Título').props.value).toBe('Vento sul');
-    expect(tela.getByLabelText('BPM').props.value).toBe('96');
+    // E veio preenchida com o que estava na música. O andamento servia aqui como prova disso;
+    // ele saiu da ficha — vive no rodapé do editor, que é quem o grava — e o gênero, que vem
+    // da mesma leitura, faz o mesmo trabalho.
+    expect(tela.getByLabelText('Gênero').props.value).toBe('MPB');
+  });
+
+  // ⚠️ A GUIA SÓ SAÍA PELO EDITOR, pela aba de exportar. Para a mandar a alguém — ou para a levar
+  // ao programa onde se mistura — era preciso entrar na música, trocar de aba e voltar. Ela é o
+  // que a lista toca; tirá-la da lista é o gesto curto.
+  it('"Enviar guia" manda a guia da música para a folha de partilha', async () => {
+    mockListar.mockResolvedValue([
+      faixa({ id: 'f-3', title: 'Vento sul', audio_file: 'https://exemplo.invalid/guia.mp3' }),
+    ]);
+    const tela = await montar();
+    await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
+
+    const usuario = userEvent.setup();
+    await usuario.press(tela.getByLabelText('Opções de Vento sul'));
+    await usuario.press(tela.getByText('Enviar guia'));
+
+    // A URL da guia e o TÍTULO: é o título que dá o nome ao ficheiro que chega ao destino, e
+    // não o `guia.mp3` do balde, que é igual em todas as músicas.
+    await waitFor(() => expect(mockPartilharGuia)
+      .toHaveBeenCalledWith('https://exemplo.invalid/guia.mp3', 'Vento sul'));
+  });
+
+  // ⚠️ SEM GUIA NÃO É "FALHOU", É "AINDA NÃO". A guia não se envia: ela nasce da montagem, ao
+  // sair do editor. Quem nunca montou nada não tem um botão em falta para procurar — tem um
+  // caminho por andar, e o aviso diz qual é.
+  it('sem guia, "Enviar guia" explica de onde ela vem, em vez de falhar', async () => {
+    mockListar.mockResolvedValue([faixa({ id: 'f-4', title: 'Vento sul', audio_file: null })]);
+    const tela = await montar();
+    await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
+
+    const usuario = userEvent.setup();
+    await usuario.press(tela.getByLabelText('Opções de Vento sul'));
+    await usuario.press(tela.getByText('Enviar guia'));
+
+    expect(mockPartilharGuia).not.toHaveBeenCalled();
+    expect(avisado()).toEqual(['Sem guia ainda', SEM_GUIA_AINDA]);
+  });
+
+  // Apagar é irreversível: pergunta antes, como o resto do produto — e pelo PROJETO, que é onde
+  // a música vive desde que as versões existem.
+  it('"Excluir música" pergunta antes, e apaga o projeto', async () => {
+    mockListar.mockResolvedValue([
+      faixa({ id: 'v-7', project_id: 'p-7', title: 'Vento sul' }),
+    ]);
+    mockExcluir.mockResolvedValue(undefined);
+    const tela = await montar();
+    await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
+
+    const usuario = userEvent.setup();
+    await usuario.press(tela.getByLabelText('Opções de Vento sul'));
+    await usuario.press(tela.getByText('Excluir música'));
+
+    expect(mockExcluir).not.toHaveBeenCalled();
+    expect(avisado()[0]).toBe('Excluir música?');
+
+    await confirmar('Excluir');
+    await waitFor(() => expect(mockExcluir).toHaveBeenCalledWith('p-7'));
+    // E a linha sai da lista sem esperar por uma nova leitura do banco.
+    await waitFor(() => expect(tela.queryByText('Vento sul')).toBeNull());
   });
 
   // Grava pelo MESMO caminho da web (`saveCatalogProjectFromForm`), e manda o `project_id` como
@@ -285,7 +389,8 @@ describe('catalogo: as duas abas e a ficha', () => {
     const usuario = userEvent.setup();
     await waitFor(() => expect(tela.getByText('Vento sul')).toBeTruthy());
 
-    await usuario.press(tela.getByLabelText('Editar Vento sul'));
+    await usuario.press(tela.getByLabelText('Opções de Vento sul'));
+    await usuario.press(tela.getByText('Editar ficha'));
     await usuario.type(tela.getByLabelText('Título'), ' norte');
     await usuario.press(tela.getByText('Salvar'));
 
@@ -335,7 +440,9 @@ describe('catalogo: as abas da ficha e os splits', () => {
   });
 
   const abrirFicha = async (tela: ReturnType<typeof montar> extends Promise<infer T> ? T : never) => {
-    await userEvent.setup().press(tela.getByLabelText('Editar Vento sul'));
+    const usuario = userEvent.setup();
+    await usuario.press(tela.getByLabelText('Opções de Vento sul'));
+    await usuario.press(tela.getByText('Editar ficha'));
   };
 
   it('a letra vive na aba Letras, e não no meio das informações', async () => {

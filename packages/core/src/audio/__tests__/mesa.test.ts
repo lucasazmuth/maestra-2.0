@@ -1,4 +1,5 @@
 import { ContextoFalso, OfflineFalso, buscarFalso } from '../duplos/contextoFalso';
+import { DURACAO_DESCONHECIDA } from '../pistasDaVersao';
 import { Mesa, agendamentoDoClipe, ganhoEfetivo, type Pista } from '../mesa';
 
 // A mesa, sem tocar um som.
@@ -34,6 +35,44 @@ const comDuasPistas = async () => {
   ]);
   return mesa;
 };
+
+// ⚠️ A PISTA DA MIX NASCE COM UMA HORA. No momento em que ela é montada ninguém sabe quanto o
+// áudio dura, e chutar baixo cortaria a música no meio — por isso `DURACAO_DESCONHECIDA`. Só
+// que esse número é um MARCADOR, não uma duração, e quem desenha a montagem tem de perguntar à
+// mesa: a linha do tempo do aparelho desenhou a Mix com uma hora de comprimento, e o que se via
+// era o primeiro minuto da onda esticado por um clipe dezoito vezes maior do que a música.
+describe('duracaoDoClipe', () => {
+  it('corta a duração declarada no fim do ficheiro', async () => {
+    const { mesa } = montar([]);
+    await mesa.carregar([
+      pista({ clipes: [clipe({ id: 'c1', url: 'a', duracao: DURACAO_DESCONHECIDA })] }),
+    ]);
+    // O ficheiro tem 60 s; o clipe dizia 3600.
+    expect(mesa.duracaoDoClipe('c1')).toBe(60);
+  });
+
+  // O recorte anda com o limite: um clipe que começa a meio do ficheiro tem menos por diante.
+  it('desconta o recorte', async () => {
+    const { mesa } = montar([]);
+    await mesa.carregar([
+      pista({ clipes: [clipe({ id: 'c1', url: 'a', recorte: 20, duracao: DURACAO_DESCONHECIDA })] }),
+    ]);
+    expect(mesa.duracaoDoClipe('c1')).toBe(40);
+  });
+
+  // Uma duração menor que o ficheiro é respeitada: quem cortou, cortou.
+  it('não estica o que foi cortado', async () => {
+    const { mesa } = montar([]);
+    await mesa.carregar([pista({ clipes: [clipe({ id: 'c1', url: 'a', duracao: 8 })] })]);
+    expect(mesa.duracaoDoClipe('c1')).toBe(8);
+  });
+
+  // Sem o ficheiro ainda, devolve o declarado: é o melhor que se sabe.
+  it('antes de carregar, devolve o que foi declarado', () => {
+    const { mesa } = montar([]);
+    expect(mesa.duracaoDoClipe('c1')).toBe(0);
+  });
+});
 
 describe('agendamentoDoClipe', () => {
   // A aritmética central do editor, e a que erra em silêncio: um sinal trocado põe o som no

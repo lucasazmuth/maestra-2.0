@@ -1,7 +1,10 @@
-import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  FiAlertCircle, FiCheck, FiCircle, FiCornerUpLeft, FiCornerUpRight, FiDownload, FiFileText,
-  FiFolder, FiHeadphones, FiLoader, FiPause,
+  CSSProperties, FC, ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef,
+  useState,
+} from 'react';
+import {
+  FiAlertCircle, FiCheck, FiCircle, FiCornerUpLeft, FiCornerUpRight, FiFileText,
+  FiFolder, FiLoader, FiMessageCircle, FiPause,
   FiPlay, FiRepeat, FiSkipBack, FiTrash2, FiVolume2, FiVolumeX, FiX, FiZoomIn, FiZoomOut,
 } from 'react-icons/fi';
 
@@ -12,15 +15,25 @@ import { message } from 'antd';
 
 import useIsMobile from '../../../utils/isMobile';
 import { Biblioteca, TIPO_DO_ARRASTO, type ItemDaBiblioteca } from './Biblioteca';
-import { encaixeDaGrade, gradeDoCompasso, marcasDaRegua } from './grade';
-import { IconeDaTimeline, IconeDeEnviar, IconeDoMixer } from './icones';
+import { FaderEmPe } from './FaderEmPe';
+import {
+  encaixeDaGrade, gradeDoCompasso, marcasDaRegua, passoDaVista, rolagemQueCentra,
+  zoomQueEncaixa,
+} from '@maestra/core/audio/grade';
+import { fimDaPista, pistaAlvoDoArrasto } from '@maestra/core/audio/pistasDaVersao';
+import { rotuloDaGuia } from '@maestra/core/audio/exportar';
+import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
+import { iniciais, type Presente } from '@maestra/core/audio/aoVivo';
+import {
+  IconeDaFicha, IconeDaTimeline, IconeDeAudio, IconeDeExportar, IconeDoMixer,
+} from './icones';
 import { Clipe } from './Clipe';
 import casca from './editor.module.scss';
 import {
   ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_RODAPE, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE,
   DS, DURACAO_MINIMA,
   LARGURA_DAS_PISTAS, PIXELS_POR_SEGUNDO,
-  ZOOM_MAXIMO, ZOOM_MINIMO, ZOOM_MINIMO_ABSOLUTO, corDaPista,
+  ZOOM_MAXIMO, ZOOM_MINIMO, corDaPista,
 } from './tokens';
 
 /** A medida dos quatro ícones das abas. Uma só, para a fila parecer uma fila. */
@@ -75,21 +88,6 @@ export const faixaDoPan = (pan: number) => {
     : { de: `${meio + desvio}%`, ate: `${meio}%` };
 };
 
-/**
- * O zoom com que a montagem inteira cabe na largura que sobra para as ondas.
- *
- * Nunca passa de 100 %: uma música de dez segundos não deve abrir esticada a 400 % só porque
- * cabia — a régua fica absurda e a onda vira um borrão largo. E nunca desce abaixo do
- * `ZOOM_MINIMO_ABSOLUTO`, que é o ponto em que a onda deixa de ter forma; daí para baixo é
- * melhor sobrar linha do tempo para rolar do que uma mancha encaixada.
- *
- * Sem largura ou sem duração não há encaixe possível, e o valor de partida (100 %) fica.
- */
-export const zoomQueEncaixa = (duracao: number, larguraVisivel: number): number => {
-  if (duracao <= 0 || larguraVisivel <= 0) return 1;
-  return Math.max(ZOOM_MINIMO_ABSOLUTO, Math.min(1, larguraVisivel / (duracao * PIXELS_POR_SEGUNDO)));
-};
-
 const botaozinho = (ativo: boolean, corAtiva?: string) => ({
   height: 24, minWidth: 28, padding: '0 7px',
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 3,
@@ -101,18 +99,87 @@ const botaozinho = (ativo: boolean, corAtiva?: string) => ({
   fontFamily: DS.font.display,
 });
 
+/** Quantos avatares cabem antes de virarem um bolo de círculos. O resto vira "+N". */
+const AVATARES_A_MOSTRAR = 3;
+
+/**
+ * Quem está com esta música aberta AGORA.
+ *
+ * ⚠️ SOBREPOSTOS E PEQUENOS, ao lado do título. Um editor de música é uma tela cheia, e uma
+ * fila de avatares do tamanho de botões competiria por atenção com os controlos: o que isto
+ * responde é "estou sozinho?", e para isso três círculos de vinte e quatro pixels chegam. O
+ * nome vai no `title` — quem precisa de saber QUEM, passa o rato.
+ *
+ * ⚠️ E SÓ APARECE A PARTIR DE DOIS. Sozinho, o meu próprio avatar no cabeçalho não diz nada a
+ * ninguém; é ruído permanente para informar o caso em que não há informação.
+ */
+const FilaDePresentes: FC<{ presentes: Presente[] }> = ({ presentes }) => {
+  if (presentes.length < 2) return null;
+  const mostrados = presentes.slice(0, AVATARES_A_MOSTRAR);
+  const sobram = presentes.length - mostrados.length;
+  const circulo: CSSProperties = {
+    width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    border: `2px solid ${DS.color.bgPainel}`, marginLeft: -8,
+    fontSize: 10, fontWeight: 800, color: DS.color.texto, overflow: 'hidden',
+  };
+
+  return (
+    <div
+      style={{ display: 'flex', alignItems: 'center', paddingLeft: 8, flexShrink: 0 }}
+      aria-label={`Na música agora: ${presentes.map((p) => p.nome).join(', ')}`}
+    >
+      {mostrados.map((pessoa) => (
+        <div key={pessoa.id} title={pessoa.nome} style={{ ...circulo, background: DS.color.bgPista }}>
+          {pessoa.foto
+            ? <img src={pessoa.foto} alt='' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : iniciais(pessoa.nome)}
+        </div>
+      ))}
+      {sobram > 0 && (
+        <div style={{ ...circulo, background: DS.color.bgCampo, color: DS.color.textoApoio }}>
+          {`+${sobram}`}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export interface AcoesDoEditor {
   aoSair: () => void;
   aoRenomear: (nome: string) => void;
   /** `pistaAlvo` vazio cria uma pista nova para cada ficheiro. */
   aoAdicionarArquivos: (arquivos: File[], inicio: number, pistaAlvo?: string) => void;
   /**
+   * Uma faixa VAZIA, sem áudio nenhum.
+   *
+   * ⚠️ ELA NÃO PEDE UM FICHEIRO, e é essa a diferença. "+ Adicionar faixa" abria o seletor de
+   * ficheiros: não havia como preparar a montagem — voz, guitarra, bateria — antes de ter o
+   * áudio de cada uma, e quem queria só mais uma linha para largar um clipe tinha de arranjar
+   * um ficheiro primeiro. Encher a faixa é o outro botão, o da própria faixa.
+   */
+  aoCriarPista: () => void;
+  /**
    * `de` só chega quando a mão LARGOU, e é o que o desfazer precisa: durante o arrasto isto é
    * chamado a cada pixel, e um passo por pixel encheria a pilha com dezenas de versões do
    * mesmo gesto.
+   *
+   * `pista` chega quando o arrasto saiu da faixa onde começou — `para` durante o gesto (é o
+   * que faz o clipe seguir a mão de linha em linha) e `de` também no fim, para a seta saber
+   * de onde ele veio.
    */
-  aoMoverClipe: (clipeId: string, inicio: number, de?: number) => void;
+  aoMoverClipe: (
+    clipeId: string, inicio: number, de?: number, pista?: { para: string; de?: string },
+  ) => void;
   aoCortarClipe: (clipeId: string, emSegundo: number) => void;
+  /**
+   * Repetir o clipe, encostado ao fim dele próprio.
+   *
+   * ⚠️ NÃO COPIA ÁUDIO. A cópia aponta para o MESMO ficheiro, com o mesmo recorte — é a mesma
+   * economia que faz o corte ser instantâneo. Onde ela entra é conta do núcleo (`copiaDoClipe`),
+   * para as duas telas repetirem o clipe no mesmo sítio.
+   */
+  aoDuplicarClipe: (clipeId: string) => void;
   aoApagarClipe: (clipeId: string) => void;
   aoMudarPista: (pistaId: string, parte: Partial<CatalogTrack>) => void;
   aoApagarPista: (pistaId: string) => void;
@@ -125,14 +192,34 @@ export const EditorDaGravacao: FC<{
   selo: 'parado' | 'salvando' | 'salvo' | 'erro';
   /** O lote em curso, se houver: dez stems levam um minuto, e um minuto sem sinal é um bug. */
   envio?: { feitos: number; total: number } | null;
-  /** A guia a ser gerada na saída: a tela precisa de dizer por que não fechou ainda. */
-  gerando?: boolean;
+/**
+   * A guia a ser gerada na saída: a tela precisa de dizer por que não fechou ainda.
+   *
+   * 0..1 enquanto corre, `null` quando não há nada a correr. ⚠️ E não um `boolean`: no telemóvel
+   * isto leva um minuto e meio, e reticências paradas durante um minuto e meio são
+   * indistinguíveis de uma tela pendurada.
+   */
+  gerando?: number | null;
+  /** Quem está com esta música aberta agora — eu incluído, e à frente. */
+  presentes?: Presente[];
   pistas: CatalogTrack[];
   pistaFixaId?: string | null;
   aoMontar?: () => void;
   estado: EstadoDaMesa;
   picos: (clipeId: string, n: number) => number[];
-  transporte: { alternar: () => void; loopar: (v: boolean) => void; irPara: (s: number) => void };
+  transporte: {
+    alternar: () => void;
+    loopar: (v: boolean) => void;
+    irPara: (s: number) => void;
+    /**
+     * Onde a agulha está AGORA, sem esperar pelo tique de 50 ms.
+     *
+     * É só para DESENHAR o que desliza — a rolagem e a linha vermelha — a sessenta quadros por
+     * segundo, sem redesenhar a montagem inteira sessenta vezes. Sai do mesmo relógio de
+     * amostras que alimenta o `estado`, e por isso os dois caminhos nunca discordam.
+     */
+    posicaoAgora?: () => number;
+  };
   /** O status da música, no topo: é o estado da OBRA, e anda com o nome dela. */
   ficha: ReactNode;
   /** O andamento e o tom da gravação aberta, no rodapé, junto dos outros controlos. */
@@ -164,11 +251,14 @@ export const EditorDaGravacao: FC<{
   exportar: ReactNode;
   /** A letra, que abre num balão flutuante em vez de ocupar uma aba. */
   letra: ReactNode;
+  /** A conversa da equipa sobre a música — o terceiro balão da fila. */
+  conversa: ReactNode;
   podeEditar: boolean;
   acoes: AcoesDoEditor;
 }> = ({
-  titulo, selo, envio, gerando, pistas, pistaFixaId, aoMontar,
+  titulo, selo, envio, gerando, presentes, pistas, pistaFixaId, aoMontar,
   estado, picos, transporte, ficha, numeros, bpm, historico, fichaCompleta, exportar, letra,
+  conversa,
   podeEditar, acoes,
 }) => {
   // No telemóvel a montagem não se EDITA — arrastar um clipe para o segundo certo com o dedo,
@@ -200,10 +290,11 @@ export const EditorDaGravacao: FC<{
   // "Adicionar pista" não fazia absolutamente nada.
   //
   // Um componente não deve alcançar dentro de outro por texto de rótulo. Aqui o seletor é
-  // nosso, e serve os dois gestos: pista NOVA (alvo nulo) e ficheiro numa pista que já existe.
+  // nosso, e serve o gesto que sobrou: pôr um ficheiro numa faixa que já existe. Criar a faixa
+  // deixou de passar por aqui — ela nasce vazia, e o ficheiro vem depois.
   const seletor = useRef<HTMLInputElement>(null);
   const pistaDoEnvio = useRef<string | null>(null);
-  const escolherPara = (pistaId: string | null) => {
+  const escolherPara = (pistaId: string) => {
     pistaDoEnvio.current = pistaId;
     seletor.current?.click();
   };
@@ -229,9 +320,11 @@ export const EditorDaGravacao: FC<{
   // gerar a guia — e antes cada uma tinha o seu próprio texto no cabeçalho, a disputar o mesmo
   // canto. São todas a MESMA pergunta para quem olha ("posso fechar?"), por isso são um sinal
   // só, e a ordem aqui é a da gravidade: o que prende a saída da tela aparece primeiro.
-  const atividade = gerando
-    ? { texto: 'Gerando a guia…', cor: DS.color.primaria, girando: true, falhou: false }
-    : envio
+  const aGerar = gerando != null;
+  // ⚠️ A GUIA SAIU DAQUI. Ela passou a ter uma tela inteira só para si — a mão a tocar e a
+  // percentagem —, e o selo a repetir a mesma frase num canto era o mesmo aviso duas vezes: a
+  // pessoa lia um e procurava o outro à espera de que dissessem coisas diferentes.
+  const atividade = envio
       ? { texto: `Enviando ${envio.feitos + 1} de ${envio.total}…`, cor: DS.color.primaria, girando: true, falhou: false }
       : selo === 'salvando'
         ? { texto: 'Salvando…', cor: DS.color.textoApoio, girando: true, falhou: false }
@@ -249,8 +342,12 @@ export const EditorDaGravacao: FC<{
 
   const linha = useRef<HTMLDivElement>(null);
   const rolagem = useRef<HTMLDivElement>(null);
-  /** O clipe que a mão tem agora, e onde ele estava quando a mão o pegou. */
-  const arrasto = useRef<{ clipeId: string; deslocamentoX: number; inicio: number } | null>(null);
+  /** O clipe que a mão tem agora, e onde ele estava quando a mão o pegou — tempo e pista. */
+  const arrasto = useRef<
+    { clipeId: string; deslocamentoX: number; inicio: number; pistaId: string } | null
+  >(null);
+  /** A pilha de faixas, para saber sobre qual delas a mão está. */
+  const pilhaDasPistas = useRef<HTMLDivElement>(null);
   const agulhaPresa = useRef(false);
   /** Quem mexeu no zoom manda: o encaixe automático nunca volta a mexer nele. */
   const zoomMexido = useRef(false);
@@ -329,11 +426,257 @@ export const EditorDaGravacao: FC<{
   // quem aproximasse uma vez não conseguia voltar a ver a música inteira.
   const zoomMinimo = Math.min(ZOOM_MINIMO, encaixe);
 
+  /**
+   * Mudar o zoom SEM perder a agulha de vista.
+   *
+   * ⚠️ QUEM APROXIMA ESTÁ A PREPARAR UM CORTE. Quer ver a agulha de perto para acertar no sítio
+   * exato — e era justamente ela que desaparecia: aproximar multiplica a distância de tudo ao
+   * zero, a mesma rolagem passa a apontar para outro segundo, e a montagem saltava para um
+   * ponto qualquer da música. O gesto seguinte era sempre rolar à procura da linha vermelha.
+   * Aproximar custava dois gestos, e o segundo não tinha nada a ver com o que se queria fazer.
+   *
+   * ⚠️ E A ROLAGEM É DEPOIS DO DESENHO. O `scrollLeft` novo só existe depois de o conteúdo ter
+   * a largura nova: escrito no mesmo instante em que o zoom muda, ele é medido contra a largura
+   * ANTIGA e o navegador trava-o no fim da rolagem de antes. É o `requestAnimationFrame` que o
+   * põe do outro lado da pintura.
+   */
+  const mudarZoom = (para: (z: number) => number) => {
+    zoomMexido.current = true;
+    setZoom((z) => {
+      const novo = Math.max(zoomMinimo, Math.min(ZOOM_MAXIMO, para(z)));
+      requestAnimationFrame(() => {
+        const caixa = rolagem.current;
+        if (!caixa) return;
+        // Aqui mede-se de propósito: é o zoom que acabou de mudar o tamanho da montagem, e as
+        // medidas guardadas ainda são as de antes dele.
+        medirAVista();
+        caixa.scrollLeft = rolagemQueCentra(
+          agulha,
+          PIXELS_POR_SEGUNDO * novo,
+          medidas.current.vista,
+          medidas.current.maximo,
+        );
+      });
+      return novo;
+    });
+  };
+
+  /**
+   * A vista vai buscar a agulha quando ela SAI do que se vê.
+   *
+   * ⚠️ E NÃO A PERSEGUE ENQUANTO ELA LÁ ESTÁ. É o `null` do núcleo que decide, e essa metade é
+   * a mais importante: uma vista que centra a agulha a cada décimo de segundo é PIOR do que uma
+   * que não a segue — a onda desliza sem parar debaixo do olho, e fica impossível ler o que quer
+   * que seja ou apontar para uma coisa parada. À vista, a montagem não se mexe.
+   *
+   * ⚠️ E A AGULHA PRESA NA MÃO NÃO SE SEGUE. Arrastá-la para fora do que se vê é um gesto de
+   * quem está a levar a linha a um sítio, não de quem a está a ver passar: rolar por baixo da
+   * mão movia o alvo enquanto ela o perseguia, e a agulha fugia do dedo.
+   */
+  const seguindoAAgulha = useRef(false);
+  const agulhaAntes = useRef(agulha);
+  /** Quando a agulha foi lida pela última vez, para saber quanto tempo de PAREDE passou. */
+  const quandoAAgulha = useRef(performance.now());
+  const linhaDaAgulha = useRef<HTMLDivElement>(null);
+  /**
+   * As medidas da janela da montagem, guardadas.
+   *
+   * ⚠️ NÃO SE MEDEM A CADA QUADRO. Ler `scrollWidth` obriga o navegador a recalcular a posição
+   * de TUDO o que está na montagem antes de responder — e o laço de baixo escreve a rolagem no
+   * quadro anterior, o que deixa sempre alguma coisa por recalcular. Medido aqui a tocar, com o
+   * `scrollWidth` lido a cada quadro: 54 de 100 quadros passavam dos 32 ms, com picos de 349 ms.
+   * Era a própria correção da fluidez a criar o engasgo que ela vinha resolver.
+   *
+   * Elas só mudam quando a montagem muda de tamanho — o zoom, a duração, a janela — e é aí que
+   * se voltam a medir.
+   */
+  const medidas = useRef({ vista: 0, maximo: 0 });
+  const medirAVista = useCallback(() => {
+    const caixa = rolagem.current;
+    if (!caixa) return;
+    medidas.current = {
+      vista: caixa.clientWidth - larguraDasPistas,
+      maximo: caixa.scrollWidth - caixa.clientWidth,
+    };
+  }, [larguraDasPistas]);
+  useLayoutEffect(() => {
+    medirAVista();
+    window.addEventListener('resize', medirAVista);
+    return () => window.removeEventListener('resize', medirAVista);
+  }, [medirAVista, escala, largura, pistas.length]);
+
+  /**
+   * O DESLIZE, A SESSENTA QUADROS POR SEGUNDO — e fora do React.
+   *
+   * ⚠️ O TIQUE DA MESA É DE 50 ms, e tem de continuar a ser. Com uma dúzia de faixas, cada
+   * redesenho da montagem é caro: medido neste editor a tocar, 34 de 150 quadros passavam dos
+   * 32 ms. Subir o tique para sessenta redesenhos por segundo tornaria isso três vezes pior.
+   *
+   * Só que o que se MEXE precisa dos sessenta. Com a agulha travada no meio e a montagem a
+   * deslizar por baixo, vinte passos por segundo veem-se um a um — é a "travadinha" de quem
+   * está a olhar para a música a passar.
+   *
+   * A saída é separar as duas coisas: o React continua a redesenhar vinte vezes por segundo (o
+   * relógio, os botões, os clipes), e o que desliza — a rolagem e a linha vermelha — escreve-se
+   * à mão a cada quadro, lido do relógio do ÁUDIO. São dois caminhos para o mesmo número, e por
+   * isso nunca discordam: `posicaoAgora()` sai do mesmo relógio de amostras que alimenta o
+   * `estado`.
+   *
+   * ⚠️ E SÓ ENQUANTO ELA ESTÁ TRAVADA. No primeiro modo é a agulha que anda sobre uma montagem
+   * parada, e aí os 50 ms do tique bastam — mexer na rolagem ali seria mexer no que a pessoa
+   * está a olhar. O laço também não corre com a agulha na mão nem com a música parada.
+   */
+  useEffect(() => {
+    const agora = transporte.posicaoAgora;
+    if (!estado.tocando || !agora) return undefined;
+    let vivo = true;
+    let antes = agora();
+    let quando = performance.now();
+    const quadro = () => {
+      if (!vivo) return;
+      requestAnimationFrame(quadro);
+      const caixa = rolagem.current;
+      if (!caixa || agulhaPresa.current) return;
+
+      const segundo = agora();
+      // ⚠️ A DECISÃO TAMBÉM É DAQUI, e não do tique. Deixada no caminho do React, a troca para o
+      // modo travado chegava até 50 ms atrasada: a agulha passava a borda e só depois saltava
+      // para o meio. O tique continua a decidir quando a música está PARADA — um toque na régua,
+      // as setas —, que é onde ele é o único caminho.
+      const instante = performance.now();
+      const passo = passoDaVista({
+        segundo,
+        anterior: antes,
+        desdeAnterior: (instante - quando) / 1000,
+        escala,
+        rolagemAtual: caixa.scrollLeft,
+        larguraVisivel: medidas.current.vista,
+        maximo: medidas.current.maximo,
+        seguindo: seguindoAAgulha.current,
+      });
+      antes = segundo;
+      quando = instante;
+      agulhaAntes.current = segundo;
+      seguindoAAgulha.current = passo.seguindo;
+      if (passo.rolagem !== null) caixa.scrollLeft = passo.rolagem;
+      // A linha anda com a rolagem NO MESMO QUADRO: escrita só uma delas, a agulha voltava a
+      // tremer — é a mesma dessincronia que o efeito de layout resolve no caminho do React.
+      if (linhaDaAgulha.current) linhaDaAgulha.current.style.left = `${segundo * escala}px`;
+    };
+    requestAnimationFrame(quadro);
+    return () => { vivo = false; };
+  }, [estado.tocando, transporte.posicaoAgora, escala, larguraDasPistas]);
+  /**
+   * ⚠️ `useLayoutEffect`, E ISTO É A DIFERENÇA ENTRE PARADA E AOS SALTOS.
+   *
+   * A agulha e a rolagem dizem a MESMA coisa por dois caminhos: a posição dela dentro da
+   * montagem é um `left` que o React pinta, e o sítio da montagem que se vê é o `scrollLeft` que
+   * se escreve aqui. Com um `useEffect`, os dois caminhos caem em quadros DIFERENTES — o
+   * navegador pinta a agulha no sítio novo com a rolagem ANTIGA (e ela salta para a frente), e
+   * só no quadro seguinte a rolagem a apanha (e ela volta para trás). Vinte vezes por segundo,
+   * é uma linha a tremer em vez de uma linha parada.
+   *
+   * O efeito de layout corre ANTES da pintura: os dois números chegam ao ecrã no mesmo quadro, e
+   * a agulha fica onde deve ficar — quieta, com a música a deslizar por baixo.
+   */
+  useLayoutEffect(() => {
+    const caixa = rolagem.current;
+    const antes = agulhaAntes.current;
+    agulhaAntes.current = agulha;
+    if (!caixa || agulhaPresa.current) return;
+    // ⚠️ A TOCAR, QUEM MANDA É O LAÇO DE QUADRO. Os dois a escreverem a mesma rolagem davam
+    // exatamente o tremor que este caminho existe para evitar: o laço põe-na no sítio do
+    // relógio de agora, e 50 ms depois este punha-a no sítio do tique, meio passo atrás.
+    if (estado.tocando) return;
+
+    const instante = performance.now();
+    const desdeAnterior = (instante - quandoAAgulha.current) / 1000;
+    quandoAAgulha.current = instante;
+    const passo = passoDaVista({
+      segundo: agulha,
+      anterior: antes,
+      desdeAnterior,
+      escala,
+      rolagemAtual: caixa.scrollLeft,
+      // A largura das ONDAS: a coluna das faixas fica colada à esquerda por cima da montagem, e
+      // o que está debaixo dela não está à vista.
+      larguraVisivel: medidas.current.vista,
+      maximo: medidas.current.maximo,
+      seguindo: seguindoAAgulha.current,
+    });
+    seguindoAAgulha.current = passo.seguindo;
+    // ⚠️ SEM `scroll-behavior`, nem no salto de entrada. Aqui a rolagem escreve-se vinte vezes
+    // por segundo enquanto a linha está travada: uma rolagem suave a cada passo nunca chegaria
+    // ao destino antes do passo seguinte, e a montagem ficava sempre meia tela atrasada.
+    if (passo.rolagem !== null) caixa.scrollLeft = passo.rolagem;
+  }, [agulha, escala, larguraDasPistas, estado.tocando]);
+
+  /**
+   * A RÉGUA E A GRELHA, DESENHADAS UMA VEZ — e não a cada tique.
+   *
+   * ⚠️ ESTA ERA A CONTA QUE ENGASGAVA O PLAY. A grelha é desenhada DENTRO de cada faixa: com
+   * 150 de andamento, uma música de dois minutos tem umas centenas de marcas, e treze faixas
+   * multiplicam-nas por treze. Eram milhares de elementos reconstruídos vinte vezes por segundo
+   * — e nenhum deles depende da agulha, que é a única coisa que o tique muda.
+   *
+   * Medido aqui, a 173 %: 82 de 150 quadros passavam dos 32 ms, com picos de 486 ms. Parada, a
+   * mesma tela não tinha um único quadro lento.
+   *
+   * Guardados, os dois voltam ao React como o MESMO elemento, e ele salta o ramo inteiro.
+   */
+  const daRegua = useMemo(() => marcas.map((marca) => (
+    <div
+      key={marca.segundo}
+      style={{
+        position: 'absolute', left: marca.segundo * escala, top: 0, bottom: 0,
+        paddingLeft: 6,
+        borderLeft: `1px solid ${marca.forte ? DS.color.grelhaForte : DS.color.grelhaFraca}`,
+        fontSize: 10, color: DS.color.textoFraco, lineHeight: `${ALTURA_DA_REGUA}px`,
+      }}
+    >
+      {marca.rotulo}
+    </div>
+  )), [marcas, escala]);
+
+  const daGrelha = useMemo(() => marcas.map((marca) => (
+    <div
+      key={marca.segundo}
+      style={{
+        position: 'absolute', left: marca.segundo * escala, top: 0, bottom: 0,
+        width: 1,
+        // O compasso risca mais forte do que o tempo: é ele que se conta de olho, e uma grelha
+        // toda igual não se conta.
+        background: marca.forte ? DS.color.grelhaForte : DS.color.grelhaFraca,
+        opacity: marca.forte ? 1 : 0.6,
+      }}
+    />
+  )), [marcas, escala]);
+
   const segundoDoEvento = (evento: { clientX: number }) => {
     const caixa = linha.current;
     if (!caixa) return 0;
     const x = evento.clientX - caixa.getBoundingClientRect().left + caixa.scrollLeft;
     return Math.max(0, Math.min(x / escala, duracao));
+  };
+
+  /**
+   * A faixa para onde o clipe arrastado vai — `undefined` se ficar na dele.
+   *
+   * ⚠️ O ÍNDICE É MEDIDO NA PILHA, e não contado pela posição do rato na página: a montagem
+   * rola, o cabeçalho é `sticky` e a altura da faixa muda com o tamanho do ecrã. O `y` relativo
+   * à pilha dividido pela altura de uma faixa é a linha, e nada disso precisa de saber onde a
+   * janela está. O resto da decisão — travar no que existe, deixar a Mix de fora — é do núcleo,
+   * e é a mesma no app, onde o gesto é outro.
+   */
+  const pistaSobAMao = (evento: React.PointerEvent, deId: string): string | undefined => {
+    const pilha = pilhaDasPistas.current;
+    if (!pilha) return undefined;
+    const linhaSobAMao = (evento.clientY - pilha.getBoundingClientRect().top) / alturaDaPista;
+    return pistaAlvoDoArrasto(
+      pistas,
+      pistas.findIndex((p) => p.id === deId),
+      Math.floor(linhaSobAMao),
+    );
   };
 
   const aoMover = (evento: React.PointerEvent) => {
@@ -342,7 +685,11 @@ export const EditorDaGravacao: FC<{
     if (!puxado) return;
     // O encaixe é ao LARGAR, não durante: encaixar a cada pixel faz o clipe saltar debaixo do
     // dedo, e a pessoa deixa de saber onde ele vai cair.
-    acoes.aoMoverClipe(puxado.clipeId, Math.max(0, segundoDoEvento(evento) - puxado.deslocamentoX / escala));
+    const inicio = Math.max(0, segundoDoEvento(evento) - puxado.deslocamentoX / escala);
+    // A faixa, essa, muda DURANTE: é o que faz o clipe seguir a mão de linha em linha, e sem
+    // isso arrastar para cima ou para baixo não mostrava nada até largar.
+    const alvo = pistaSobAMao(evento, puxado.pistaId);
+    acoes.aoMoverClipe(puxado.clipeId, inicio, undefined, alvo ? { para: alvo } : undefined);
   };
 
   const aoLargar = (evento: React.PointerEvent) => {
@@ -352,13 +699,18 @@ export const EditorDaGravacao: FC<{
     arrasto.current = null;
     const bruto = segundoDoEvento(evento) - puxado.deslocamentoX / escala;
     const destino = Math.max(0, Math.round(bruto / passoDoEncaixe) * passoDoEncaixe);
+    const alvo = pistaSobAMao(evento, puxado.pistaId);
+    const trocouDePista = !!alvo;
     // ⚠️ UM TOQUE NÃO É UM ARRASTO, e mandava gravar na mesma. Duas consequências, as duas
     // más: um clipe que estivesse fora da grelha (por ter sido posto antes de haver andamento)
     // saltava para o tempo mais próximo só por ter sido SELECIONADO; e a escrita agendada por
     // esse falso movimento chegava depois de quem carregasse em REMOVER, a um clipe que já não
     // existia — daí o "Falha ao salvar" logo a seguir a apagar com sucesso.
-    if (Math.abs(destino - puxado.inicio) < 0.001) return;
-    acoes.aoMoverClipe(puxado.clipeId, destino, puxado.inicio);
+    if (!trocouDePista && Math.abs(destino - puxado.inicio) < 0.001) return;
+    acoes.aoMoverClipe(
+      puxado.clipeId, destino, puxado.inicio,
+      alvo ? { para: alvo, de: puxado.pistaId } : undefined,
+    );
   };
 
   const escolherArquivos = (arquivos: File[], inicio: number, pistaAlvo?: string) => {
@@ -390,12 +742,32 @@ export const EditorDaGravacao: FC<{
 
   // ─── As peças ─────────────────────────────────────────────────────────────
 
+  // ⚠️ O CABEÇALHO NÃO TEM COR. A fita de 3 px na borda esquerda saiu por pedido do dono do
+  // produto, e o argumento é de leitura: a cor existe para distinguir uma faixa da outra na
+  // MONTAGEM — no clipe, que é o objeto que se olha, se arrasta e se corta. Repetida numa fita
+  // encostada à borda do ecrã, ela competia com a coisa que devia marcar; três fitas coloridas
+  // à esquerda puxavam o olho para uma coluna onde não há nada para ver.
+  //
+  // A faixa calada continua a dizer-se: a coluna inteira esmorece (`opacity`), e o M fica
+  // carregado. Era isso que a fita cinzenta fazia, e não se perdeu nada com ela.
+  /**
+   * As ações de AGORA, para o cabeçalho guardado nunca chamar as de antes.
+   *
+   * ⚠️ SEM ISTO, GUARDAR O CABEÇALHO SERIA UM DEFEITO E NÃO UMA OTIMIZAÇÃO. Ele é desenhado uma
+   * vez e reaproveitado enquanto o que se VÊ não muda — e os botões lá dentro ficam a apontar
+   * para o `acoes` daquele momento. Esse fecha sobre a montagem daquele momento: carregar em
+   * apagar meio minuto depois escreveria a partir de uma lista de faixas que já não existe.
+   *
+   * Uma gaveta atualizada a cada render resolve-o sem desfazer a economia: o desenho é velho, a
+   * mão que ele chama é sempre a nova.
+   */
+  const acoesDeAgora = useRef(acoes);
+  acoesDeAgora.current = acoes;
+
   const cabecalhoDaPista = (faixa: CatalogTrack, indice: number) => {
-    const cor = corDaPista(faixa.color_index ?? indice);
     const daMesa = estado.pistas.find((p) => p.id === faixa.id);
     const calada = Boolean(daMesa?.muda);
     const fixa = faixa.id === pistaFixaId;
-    const pan = daMesa?.pan ?? (Number(faixa.pan) || 0);
 
     // ⚠️ NO TELEMÓVEL OS BOTÕES DIVIDEM A COLUNA, em vez de terem cada um a sua largura fixa.
     // Quatro botões de 28 px com folgas somam 124 px dentro de uma coluna de 132 com recuo —
@@ -418,14 +790,13 @@ export const EditorDaGravacao: FC<{
           display: 'flex', flexDirection: 'column', gap: 8,
           background: DS.color.bgPista,
           borderBottom: `1px solid ${DS.color.borda}`,
-          borderLeft: `3px solid ${calada ? DS.color.textoInerte : cor}`,
           opacity: calada ? 0.6 : 1,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input
             value={faixa.name}
-            onChange={(e) => acoes.aoMudarPista(faixa.id, { name: e.target.value })}
+            onChange={(e) => acoesDeAgora.current.aoMudarPista(faixa.id, { name: e.target.value })}
             disabled={!podeEditar || fixa}
             aria-label={`Nome da faixa ${faixa.name}`}
             style={{
@@ -437,7 +808,7 @@ export const EditorDaGravacao: FC<{
           {podeEditar && !fixa && (
             <button
               type='button'
-              onClick={() => acoes.aoApagarPista(faixa.id)}
+              onClick={() => acoesDeAgora.current.aoApagarPista(faixa.id)}
               title='Apagar a faixa'
               aria-label={`Apagar a faixa ${faixa.name}`}
               style={{
@@ -459,7 +830,7 @@ export const EditorDaGravacao: FC<{
         <div style={{ display: 'flex', alignItems: 'center', gap: noCelular ? 3 : 4 }}>
           <button
             type='button'
-            onClick={() => acoes.aoMudarPista(faixa.id, { muted: !calada })}
+            onClick={() => acoesDeAgora.current.aoMudarPista(faixa.id, { muted: !calada })}
             aria-label={calada ? `Ouvir ${faixa.name}` : `Silenciar ${faixa.name}`}
             aria-pressed={calada}
             title={calada ? 'Ouvir' : 'Silenciar'}
@@ -471,7 +842,7 @@ export const EditorDaGravacao: FC<{
           </button>
           <button
             type='button'
-            onClick={() => acoes.aoSolar(faixa.id, !daMesa?.solo)}
+            onClick={() => acoesDeAgora.current.aoSolar(faixa.id, !daMesa?.solo)}
             aria-label={daMesa?.solo ? 'Ouvir tudo de novo' : `Ouvir só ${faixa.name}`}
             aria-pressed={Boolean(daMesa?.solo)}
             title={daMesa?.solo ? 'Ouvir tudo' : 'Ouvir só esta'}
@@ -517,53 +888,76 @@ export const EditorDaGravacao: FC<{
               aria-label={`Enviar um áudio para ${faixa.name}`}
               style={{ ...botaozinho(false), ...repartido, color: DS.color.textoApoio }}
             >
-              <IconeDeEnviar tamanho={14} />
+              <IconeDeAudio tamanho={14} />
             </button>
           )}
         </div>
 
-        {/* ⚠️ VOLUME E PANORAMA SAEM DA COLUNA NO CELULAR. Eles moram na Mesa, que é a aba
-            onde o telemóvel abre e onde o fader tem curso para um dedo. Repetidos aqui, numa
-            coluna de 132 px, seriam duas linhas de 4 px de curso — controlos que a mão não
-            acerta, a comer a altura que a onda precisa. */}
-        {!noCelular && (<>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <FiVolume2 size={13} color={DS.color.textoFraco} />
-          <input
-            type='range' min={0} max={100}
-            value={Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
-            onChange={(e) => acoes.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
-            disabled={!podeEditar}
-            aria-label={`Volume de ${faixa.name}`}
-            style={{ flex: 1, minWidth: 0, accentColor: DS.color.primaria, cursor: 'pointer' }}
-          />
-        </label>
+        {/* ⚠️ O PANORAMA NÃO ESTÁ AQUI — ele é da MESA, e só de lá.
+            Numa coluna de 132 px ele sobrava duas vezes. É um controlo de MISTURA, e mistura-se
+            comparando: o que diz se a guitarra está larga demais é vê-la ao lado do baixo e da
+            voz, em canais lado a lado, e não uma faixa de cada vez entre a forma de onda e o
+            nome. E aqui ele custava uma segunda linha de 4 px de curso mais o rótulo "C/E/D" —
+            altura tirada à onda, que é o que esta coluna existe para acompanhar.
+            O app nunca o teve nesta coluna; a web é que passa a ser igual.
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <FiHeadphones size={13} color={DS.color.textoFraco} />
-          <input
-            type='range' min={-100} max={100}
-            value={Math.round(pan * 100)}
-            onChange={(e) => acoes.aoMudarPista(faixa.id, { pan: Number(e.target.value) / 100 })}
-            disabled={!podeEditar}
-            aria-label={`Panorama de ${faixa.name}`}
-            className={casca.pan}
-            style={{
-              flex: 1, minWidth: 0,
-              ...({ '--pan-de': faixaDoPan(pan).de, '--pan-ate': faixaDoPan(pan).ate } as React.CSSProperties),
-            }}
-          />
-          <span style={{
-            width: 16, fontSize: 10, color: DS.color.textoFraco, fontFamily: DS.font.mono,
-          }}>
-            {/* C de centro; senão, o lado e quanto. */}
-            {Math.abs(pan) < 0.02 ? 'C' : `${pan < 0 ? 'E' : 'D'}${Math.round(Math.abs(pan) * 100)}`}
-          </span>
-        </label>
-        </>)}
+            ⚠️ E O VOLUME SAI NO CELULAR, que é outro corte: ali ele também não tem curso para
+            um dedo, e a Mesa é a aba onde o telemóvel abre. */}
+        {!noCelular && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <FiVolume2 size={13} color={DS.color.textoFraco} />
+            <input
+              type='range' min={0} max={100}
+              value={Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
+              onChange={(e) => acoesDeAgora.current.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
+              disabled={!podeEditar}
+              aria-label={`Volume de ${faixa.name}`}
+              style={{ flex: 1, minWidth: 0, accentColor: DS.color.primaria, cursor: 'pointer' }}
+            />
+          </label>
+        )}
       </div>
     );
   };
+
+  /**
+   * A COLUNA DAS FAIXAS, DESENHADA UMA VEZ — e não a cada tique.
+   *
+   * ⚠️ ELA NÃO DEPENDE DA AGULHA, que é a única coisa que o tique muda. Com uma dúzia de faixas
+   * são mais de cem elementos — um campo de texto e cinco botões por linha — reconstruídos e
+   * comparados vinte vezes por segundo, para dar sempre o mesmo resultado. É o que sobrava do
+   * engasgo do play depois de a grelha deixar de se desenhar faixa a faixa.
+   *
+   * ⚠️ E A DEPENDÊNCIA É UMA ASSINATURA, e não as coisas de que ela é feita. `estado.pistas` é
+   * um objeto NOVO a cada tique — a mesa constrói-o de raiz — e `acoes` também; postos como
+   * dependências, o guardado refazia-se sempre e não guardava nada. A assinatura é o que se VÊ:
+   * o que a coluna desenha, letra a letra. Se ela não mudar, o desenho não pode ter mudado.
+   *
+   * ⚠️ CADA COISA QUE O CABEÇALHO LÊ TEM DE ESTAR AQUI. Esquecer uma é um botão que deixa de
+   * responder — o M que não acende, o nome que não muda — e é um defeito calado, porque o valor
+   * está certo no banco e errado no ecrã. A lista é: o nome e o volume da faixa, o que a mesa
+   * diz dela (calada, solada, ganho), quem está armado, e as medidas da coluna.
+   *
+   * ⚠️ E O CONTRÁRIO TAMBÉM CUSTA: o panorama esteve aqui enquanto o cabeçalho o desenhava, e
+   * ficou depois de ele sair para o Mixer. Cada arrasto no panorama de um canal redesenhava a
+   * coluna INTEIRA — uma dúzia de cabeçalhos — para dar exatamente o mesmo desenho. O que não
+   * se vê não entra.
+   */
+  const assinaturaDaColuna = pistas.map((p) => {
+    const daMesa = estado.pistas.find((m) => m.id === p.id);
+    return [
+      p.id, p.name, p.gain,
+      daMesa?.muda, daMesa?.solo, daMesa?.ganho,
+      armadas.includes(p.id),
+    ].join(':');
+  }).join('|')
+    + `#${podeEditar}:${noCelular}:${alturaDaPista}:${pistaFixaId}`;
+
+  const coluna = useMemo(
+    () => pistas.map(cabecalhoDaPista),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [assinaturaDaColuna],
+  );
 
   return (
     <div className={casca.tela} style={{ background: DS.color.bgBase, color: DS.color.texto, fontFamily: DS.font.display }}>
@@ -621,6 +1015,11 @@ export const EditorDaGravacao: FC<{
               Ficha, que fica a um toque, e no telemóvel a pessoa está a ouvir, não a gerir
               fases de produção. */}
           {!noCelular && ficha}
+
+          {/* ⚠️ AO LADO DO TÍTULO, e não no canto oposto: a pergunta que estes círculos
+              respondem — "estou sozinho nesta música?" — é sobre a MÚSICA, e lê-se junto do
+              nome dela. No canto das abas seriam confundidos com mais um controlo. */}
+          <FilaDePresentes presentes={presentes ?? []} />
         </div>
 
         {!noCelular && <div style={{ flex: 1, minWidth: 0 }} />}
@@ -660,8 +1059,8 @@ export const EditorDaGravacao: FC<{
                     acertados (ver `icones.tsx`), o mesmo número passa a dar o mesmo tamanho. */}
                 {chave === 'linha' ? <IconeDaTimeline tamanho={TAMANHO_DO_ICONE_DA_ABA} />
                   : chave === 'mesa' ? <IconeDoMixer tamanho={TAMANHO_DO_ICONE_DA_ABA} />
-                  : chave === 'ficha' ? <FiFileText size={TAMANHO_DO_ICONE_DA_ABA} />
-                  : <FiDownload size={TAMANHO_DO_ICONE_DA_ABA} />}
+                  : chave === 'ficha' ? <IconeDaFicha tamanho={TAMANHO_DO_ICONE_DA_ABA} />
+                  : <IconeDeExportar tamanho={TAMANHO_DO_ICONE_DA_ABA} />}
                 {/* ⚠️ SEM RÓTULO NO CELULAR. Os quatro nomes somam mais de 300 px, e o que era
                     empurrado para fora da tela por eles era o X — a pessoa entrava no editor e
                     não tinha como sair. O nome continua no `title` e no `aria-label`. */}
@@ -673,10 +1072,10 @@ export const EditorDaGravacao: FC<{
           <button
             type='button'
             onClick={acoes.aoSair}
-            disabled={gerando}
-            title={gerando ? 'Gerando a guia…' : 'Voltar para Músicas'}
+            disabled={aGerar}
+            title={aGerar ? rotuloDaGuia(gerando) : 'Voltar para Músicas'}
             aria-label='Voltar para Músicas'
-            style={{ ...redondo, opacity: gerando ? 0.4 : 1, cursor: gerando ? 'wait' : 'pointer' }}
+            style={{ ...redondo, opacity: aGerar ? 0.4 : 1, cursor: aGerar ? 'wait' : 'pointer' }}
           >
             <FiX size={13} />
           </button>
@@ -859,7 +1258,7 @@ export const EditorDaGravacao: FC<{
                 // Armar o transporte sem dizer em que pista é meia intenção: numa mesa, o REC
                 // global só sabe o que fazer se alguma pista estiver armada.
                 if (!armado && !armadas.length) {
-                  message.warning('Arme primeiro a faixa onde quer gravar, no botão vermelho dela.');
+                  message.warning(AVISO_DE_ARMAR.texto);
                   return;
                 }
                 setArmado((v) => !v);
@@ -908,7 +1307,7 @@ export const EditorDaGravacao: FC<{
             {aba === 'linha' && (<>
             <button
               type='button'
-              onClick={() => { zoomMexido.current = true; setZoom((z) => Math.max(zoomMinimo, z / 1.5)); }}
+              onClick={() => mudarZoom((z) => z / 1.5)}
               title='Afastar'
               aria-label='Afastar a linha do tempo'
               style={{
@@ -924,7 +1323,7 @@ export const EditorDaGravacao: FC<{
             </span>
             <button
               type='button'
-              onClick={() => { zoomMexido.current = true; setZoom((z) => Math.min(ZOOM_MAXIMO, z * 1.5)); }}
+              onClick={() => mudarZoom((z) => z * 1.5)}
               title='Aproximar'
               aria-label='Aproximar a linha do tempo'
               style={{
@@ -980,6 +1379,9 @@ export const EditorDaGravacao: FC<{
             // se cruzam gruda nos dois.
             <div
               ref={rolagem}
+              // A barra do clipe escolhido precisa de saber o que se vê para não sair pela
+              // borda; é por esta marca que ela encontra quem rola.
+              data-rolagem=''
               // ⚠️ A RODA VERTICAL ROLA DE LADO, no ecrã estreito. Numa linha do tempo o eixo
               // que interessa é o horizontal, e alcançá-lo pedia `shift` + roda ou a barra de
               // rolagem de baixo — dois gestos que quase ninguém conhece, e que no telemóvel
@@ -1028,12 +1430,16 @@ export const EditorDaGravacao: FC<{
                   FAIXAS
                 </div>
 
-                {pistas.map(cabecalhoDaPista)}
+                {coluna}
 
+                {/* ⚠️ CRIA A FAIXA, E NÃO PEDE UM FICHEIRO. Este botão abria o seletor de
+                    ficheiros, e com isso não havia como preparar a montagem — voz, guitarra,
+                    bateria — antes de ter o áudio de cada uma. Encher a faixa é o outro botão,
+                    o de enviar, que vive na própria faixa. */}
                 {podeEditar && (
                   <button
                     type='button'
-                    onClick={() => escolherPara(null)}
+                    onClick={() => acoes.aoCriarPista()}
                     aria-label='Adicionar faixa'
                     style={{
                       width: '100%', height: 46,
@@ -1104,19 +1510,7 @@ export const EditorDaGravacao: FC<{
                     cursor: 'pointer', userSelect: 'none',
                   }}
                 >
-                  {marcas.map((marca) => (
-                    <div
-                      key={marca.segundo}
-                      style={{
-                        position: 'absolute', left: marca.segundo * escala, top: 0, bottom: 0,
-                        paddingLeft: 6,
-                        borderLeft: `1px solid ${marca.forte ? DS.color.grelhaForte : DS.color.grelhaFraca}`,
-                        fontSize: 10, color: DS.color.textoFraco, lineHeight: `${ALTURA_DA_REGUA}px`,
-                      }}
-                    >
-                      {marca.rotulo}
-                    </div>
-                  ))}
+                  {daRegua}
                   {/* ⚠️ A DICA É DE RATO, e por isso não vive no telemóvel: lá não há duplo
                       clique, a edição de clipes está desligada (`semEdicao`), e a frase ainda
                       por cima ia escrever-se por cima dos números da régua. */}
@@ -1130,7 +1524,7 @@ export const EditorDaGravacao: FC<{
                   )}
                 </div>
 
-                <div style={{ position: 'relative', width: largura }}>
+                <div ref={pilhaDasPistas} style={{ position: 'relative', width: largura }}>
                   {pistas.map((faixa, indice) => {
                     const cor = corDaPista(faixa.color_index ?? indice);
                     return (
@@ -1144,19 +1538,7 @@ export const EditorDaGravacao: FC<{
                           position: 'relative',
                         }}
                       >
-                        {marcas.map((marca) => (
-                          <div
-                            key={marca.segundo}
-                            style={{
-                              position: 'absolute', left: marca.segundo * escala, top: 0, bottom: 0,
-                              width: 1,
-                              // O compasso risca mais forte do que o tempo: é ele que se conta
-                              // de olho, e uma grelha toda igual não se conta.
-                              background: marca.forte ? DS.color.grelhaForte : DS.color.grelhaFraca,
-                              opacity: marca.forte ? 1 : 0.6,
-                            }}
-                          />
-                        ))}
+                        {daGrelha}
 
                         {(faixa.clips ?? []).map((clipe, ordem) => (
                           <Clipe
@@ -1173,6 +1555,11 @@ export const EditorDaGravacao: FC<{
                             selecionado={selecionado === clipe.id}
                             fixo={faixa.id === pistaFixaId}
                             noDedo={noCelular}
+                            indiceDaCor={faixa.color_index ?? indice}
+                            recuoDaJanela={larguraDasPistas}
+                            aoPintar={podeEditar && faixa.id !== pistaFixaId
+                              ? (tinta) => acoes.aoMudarPista(faixa.id, { color_index: tinta })
+                              : undefined}
                             aoSelecionar={() => setSelecionado((atual) => (atual === clipe.id ? null : clipe.id))}
                             // ⚠️ O `noCelular` SAIU DAQUI. Ele travava o arrasto por tamanho de
                             // ecrã, e a decisão de quando o dedo pode arrastar é do clipe (só
@@ -1186,9 +1573,13 @@ export const EditorDaGravacao: FC<{
                                 clipeId: clipe.id,
                                 deslocamentoX: x - (Number(clipe.start_seconds) || 0) * escala,
                                 inicio: Number(clipe.start_seconds) || 0,
+                                pistaId: faixa.id,
                               };
                             }}
                             aoCortar={() => { acoes.aoCortarClipe(clipe.id, agulha); setSelecionado(null); }}
+                            aoDuplicar={faixa.id === pistaFixaId
+                              ? undefined
+                              : () => { acoes.aoDuplicarClipe(clipe.id); setSelecionado(null); }}
                             aoApagar={() => { acoes.aoApagarClipe(clipe.id); setSelecionado(null); }}
                           />
                         ))}
@@ -1208,14 +1599,25 @@ export const EditorDaGravacao: FC<{
                     </div>
                   )}
 
-                  {/* A agulha. Fica por cima de tudo, e é ela que diz onde o corte cai. */}
+                  {/* A agulha. Fica por cima de tudo, e é ela que diz onde o corte cai.
+                      ⚠️ ELA COMEÇA NA RÉGUA, e não no topo das faixas. A bolinha é onde o olho a
+                      encontra ao percorrer a régua — é ela que faz a agulha ser um objeto que se
+                      pega, e não um risco. Nascendo uma régua abaixo, ela ficava escondida entre
+                      os números e a primeira faixa, e a web e o aplicativo desenhavam a mesma
+                      montagem com a pega em sítios diferentes.
+
+                      O `top` é negativo porque a agulha mora na pilha das FAIXAS, que começa
+                      depois da régua; subir por aqui é o que a deixa atravessá-la sem mudar de
+                      pai — e mudar de pai custava-lhe a coordenada horizontal, que é a da
+                      pilha. */}
                   <div
+                    ref={linhaDaAgulha}
                     onPointerDown={() => { agulhaPresa.current = true; }}
                     data-agulha=''
                     style={{
                       touchAction: 'none',
-                      position: 'absolute', left: agulha * escala, top: 0,
-                      height: Math.max(pistas.length, 1) * alturaDaPista,
+                      position: 'absolute', left: agulha * escala, top: -ALTURA_DA_REGUA,
+                      height: ALTURA_DA_REGUA + Math.max(pistas.length, 1) * alturaDaPista,
                       width: 2, background: DS.color.agulha, cursor: 'grab', zIndex: 100,
                     }}
                   >
@@ -1300,12 +1702,10 @@ export const EditorDaGravacao: FC<{
               accentColor: DS.color.primaria, cursor: 'pointer',
             }}
           />
-          <span style={{
-            width: 38, textAlign: 'right', fontSize: 12,
-            color: DS.color.textoApoio, fontFamily: DS.font.mono,
-          }}>
-            {Math.round(estado.mestre * 100)}%
-          </span>
+          {/* ⚠️ SEM A PERCENTAGEM AO LADO. O número não diz nada que o fader já não mostre —
+              a posição do cursor É o volume — e custava 38 px numa barra que no telemóvel
+              não os tem. Saiu primeiro do app; sai agora daqui, para as duas serem a mesma
+              barra. O valor continua no `aria-label` do campo, para quem não vê o cursor. */}
         </div>
 
       </div>
@@ -1330,7 +1730,13 @@ export const EditorDaGravacao: FC<{
           // `change` se o valor não mudar, e o segundo envio nunca aconteceria.
           evento.target.value = '';
           if (!arquivos.length) return;
-          escolherArquivos(arquivos, 0, pistaDoEnvio.current ?? undefined);
+          // ⚠️ NO FIM DA FAIXA, E NÃO NO ZERO. Um take mandado para uma faixa que já tem áudio
+          // nascia em cima do que lá estava: dois clipes no mesmo segundo tocam juntos e
+          // desenham-se um por cima do outro, e quem enviava via a montagem engolir o ficheiro.
+          // Encostado ao fim, ele aparece a seguir — e sobrepor passa a ser o gesto de arrastar,
+          // que é uma escolha, em vez de ser o que acontece sem ninguém pedir.
+          const alvo = pistas.find((p) => p.id === pistaDoEnvio.current);
+          escolherArquivos(arquivos, fimDaPista(alvo?.clips), pistaDoEnvio.current ?? undefined);
           pistaDoEnvio.current = null;
         }}
       />
@@ -1381,6 +1787,16 @@ export const EditorDaGravacao: FC<{
         </div>
       )}
 
+      {/* ⚠️ A CONVERSA É DO PROJETO, e não da gravação aberta: um comentário preso a uma versão
+          responde "o que muda NESTA" e morre com ela; isto é o fio do trabalho da equipa sobre a
+          música, e fica num sítio só. */}
+      <details className={`${casca.ajuda} ${casca.conversa}`} style={{ bottom: ALTURA_DO_RODAPE + 12 }}>
+        <summary title='Conversa da equipe' aria-label='Conversa da equipe'>
+          <FiMessageCircle size={14} />
+        </summary>
+        <div>{conversa}</div>
+      </details>
+
       <details className={`${casca.ajuda} ${casca.letra}`} style={{ bottom: ALTURA_DO_RODAPE + 12 }}>
         <summary title='Letra' aria-label='Letra'><FiFileText size={14} /></summary>
         <div>{letra}</div>
@@ -1394,8 +1810,9 @@ export const EditorDaGravacao: FC<{
             ficheiro vira uma pista; largado sobre uma faixa, vira um clipe nela.</p>
           <p>Arraste um clipe para o mover — ele encaixa de um quarto de segundo. Selecione-o e
             use <em>dividir</em> para o cortar onde a agulha está. Clique duplo remove.</p>
-          <p><strong>M</strong> cala a faixa, <strong>S</strong> deixa só ela. O primeiro
-            controlo é o volume; o segundo, o panorama entre os dois alto-falantes.</p>
+          <p><strong>M</strong> cala a faixa, <strong>S</strong> deixa só ela; o controlo ao
+            lado é o volume. O panorama — onde a faixa se ouve entre os dois alto-falantes —
+            fica no <em>Mixer</em>, que é onde os canais aparecem lado a lado para comparar.</p>
         </div>
       </details>
     </div>
@@ -1467,24 +1884,14 @@ const MesaDeCanais: FC<{
           </label>
 
           {/* O fader vertical: é a forma de uma mesa, e é o que deixa comparar seis níveis de
-              relance — deitados, seis linhas empilhadas não se comparam. */}
-          <input
-            type='range' min={0} max={100}
-            value={Math.round((daMesa?.ganho ?? faixa.gain ?? 1) * 100)}
-            onChange={(e) => acoes.aoMudarPista(faixa.id, { gain: Number(e.target.value) / 100 })}
-            disabled={!podeEditar}
-            aria-label={`Volume de ${faixa.name} na mesa`}
-            style={{
-              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-              writingMode: 'vertical-lr' as React.CSSProperties['writingMode'],
-              direction: 'rtl', width: 28,
-              // Curso longo no telemóvel: é o dedo que ajusta, e 150 px dão saltos de 4 % por
-              // pixel. Esticado, o mesmo gesto fica fino.
-              height: noCelular ? undefined : 150,
-              flex: noCelular ? '1 1 auto' : undefined,
-              minHeight: noCelular ? 180 : undefined,
-              accentColor: cor, cursor: 'pointer',
-            }}
+              relance — deitados, seis linhas empilhadas não se comparam. O desenho é o do app;
+              ver `FaderEmPe`. */}
+          <FaderEmPe
+            valor={daMesa?.ganho ?? Number(faixa.gain ?? 1)}
+            cor={cor}
+            rotulo={`Volume de ${faixa.name} na mesa`}
+            travado={!podeEditar}
+            aoMudar={(v) => acoes.aoMudarPista(faixa.id, { gain: v })}
           />
 
           <span style={{ fontSize: 11, color: DS.color.textoApoio, fontFamily: DS.font.mono }}>

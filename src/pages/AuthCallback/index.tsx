@@ -37,7 +37,7 @@ const AuthCallback: FC = () => {
     const refresh_token = hashParams.get('refresh_token');
     const code = query.get('code');
 
-    // Para onde ir depois. O repasse do app manda `?next=/assinatura` — quem sai do aplicativo
+    // Para onde ir depois. O repasse do app manda `?next=/planos` — quem sai do aplicativo
     // para pagar precisa cair NO CHECKOUT, não na lista de perfis.
     //
     // Só caminho relativo, e nunca `//`: `next=https://outro.site` ou `next=//outro.site` faria

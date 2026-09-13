@@ -14,7 +14,7 @@ import type { Pista } from '../mesa';
 const clipe = (id: string, url: string, inicio = 0) => ({ id, url, inicio, recorte: 0, duracao: 10 });
 
 const PISTAS: Pista[] = [
-  { id: 'mix', nome: 'Mix ★', clipes: [clipe('cm', 'https://x/mix.wav')] },
+  { id: 'mix', nome: 'Mix', clipes: [clipe('cm', 'https://x/mix.wav')] },
   { id: 's1', nome: 'Voz', clipes: [clipe('cv', 'https://x/voz.wav')] },
 ];
 
@@ -65,7 +65,7 @@ describe('useMesa', () => {
     expect(criados).toBe(1);
 
     // Trocar de gravação também reaproveita o contexto — o que sai são os buffers antigos.
-    rerender({ pistas: [{ id: 'mix2', nome: 'Mix ★', clipes: [clipe('c2', 'https://x/outra.wav')] }] });
+    rerender({ pistas: [{ id: 'mix2', nome: 'Mix', clipes: [clipe('c2', 'https://x/outra.wav')] }] });
     await waitFor(() => expect(result.current.estado.pistas[0].id).toBe('mix2'));
     expect(criados).toBe(1);
   });

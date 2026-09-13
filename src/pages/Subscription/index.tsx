@@ -1,6 +1,11 @@
-import { FC, useEffect, useState, type CSSProperties } from 'react';
+import { FC, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiArrowRight, FiTarget, FiGrid, FiAward } from 'react-icons/fi';
+
+import {
+  BENEFICIOS_DO_GRATIS, BENEFICIOS_DO_PRO, CHAMADA_DO_PRO,
+  type ChaveDoBeneficio, type GrupoDeBeneficios,
+} from '@maestra/core/constants/planos';
 
 import { NytaAvatar } from '../Wizard/chat/nytaPersona';
 
@@ -18,31 +23,26 @@ import { Diamond } from '../../components/PlanTag/Diamond';
 const FALLBACK_MONTHLY = 39.9;
 const fmtBRL = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// Benefícios do PRO agrupados (coluna direita da comparação).
-const PRO_GROUPS: BenefitGroup[] = [
-  {
-    icon: <FiTarget />, title: 'Execute o seu plano',
-    items: ['Gestão de tarefas do plano de ação', 'Edição em todos os perfis que você acessa'],
-  },
-  {
-    icon: <NytaAvatar size={20} />, title: 'Assistente de IA ao seu lado',
-    // 100/dia por perfil, não "ilimitado": o limite vem de nyta_plan_limits (pro = 100) e o
-    // contador é por (usuário, artista, dia UTC) em nyta_daily_usage. O próprio chat mostra
-    // "X/100" no cabeçalho — prometer ilimitado aqui contradizia a tela seguinte.
-    items: ['Nyta Assistente — até 100 interações por dia em cada perfil', 'Recomendações sob o contexto da sua carreira'],
-  },
-  {
-    icon: <FiGrid />, title: 'Gestão completa',
-    items: ['Músicas ilimitadas', 'Acesso a todos os perfis da conta'],
-  },
-];
+// ⚠️ OS TEXTOS VÊM DO NÚCLEO, e só os ÍCONES moram aqui.
+//
+// Eles viviam escritos nesta página. O app nativo passou a ter a sua própria tela de planos, e
+// copiar a lista para lá faria duas promessas sobre a mesma assinatura — que divergiriam no
+// primeiro ajuste, sem ninguém dar por isso até um cliente comparar as duas telas.
+//
+// O núcleo não conhece DOM, então ele guarda o texto e uma `chave`; cada superfície desenha o
+// seu ícone a partir dela. Ver `packages/core/src/constants/planos.ts`.
+const ICONE_DO_GRUPO: Record<ChaveDoBeneficio, ReactNode> = {
+  executar: <FiTarget />,
+  nyta: <NytaAvatar size={20} />,
+  gestao: <FiGrid />,
+  acompanhar: <FiAward />,
+};
 
-const FREE_GROUPS: BenefitGroup[] = [
-  {
-    icon: <FiAward />, title: 'Acompanhe a carreira',
-    items: ['Veja o diagnóstico e o plano de ação', 'Visualize músicas, agenda e equipe', 'Apenas leitura, sem edição'],
-  },
-];
+const comIcone = (grupos: readonly GrupoDeBeneficios[]): BenefitGroup[] =>
+  grupos.map((g) => ({ icon: ICONE_DO_GRUPO[g.chave], title: g.titulo, items: [...g.itens] }));
+
+const PRO_GROUPS = comIcone(BENEFICIOS_DO_PRO);
+const FREE_GROUPS = comIcone(BENEFICIOS_DO_GRATIS);
 
 const addMonths = (n: number) => {
   const d = new Date();
@@ -174,7 +174,7 @@ const SubscriptionPage: FC = () => {
       if (p.resume) { navigate('/pagamento'); return; }
 
       // Débito já confirmado pela operadora → sucesso direto.
-      if (p.status === 'active') { navigate('/assinatura/sucesso'); return; }
+      if (p.status === 'active') { navigate('/planos/sucesso'); return; }
 
       // Cartão em análise (PENDING na Asaas): espera a confirmação real antes de
       // liberar o Pro — o webhook ativa quando o débito cai e o polling detecta.
@@ -182,7 +182,7 @@ const SubscriptionPage: FC = () => {
       const poll = await dispatch(pollPaymentStatus());
       setConfirmingCard(false);
       if (pollPaymentStatus.fulfilled.match(poll)) {
-        navigate('/assinatura/sucesso');
+        navigate('/planos/sucesso');
         return;
       }
       // Não confirmou no tempo limite: segue em análise. O acesso libera sozinho
@@ -252,7 +252,9 @@ const SubscriptionPage: FC = () => {
     return (
       <div style={{ padding: 24 }}>
         <BenefitsCompare
-          headline="Faça mais com o Maestra PRO"
+          headline={CHAMADA_DO_PRO.titulo}
+          // O apoio fica escrito aqui, e não no núcleo, por causa do <b>: o núcleo guarda texto,
+          // não marcação. O mesmo apoio, sem o negrito, está lá para o app desenhar.
           sub={<>Edição completa e a <b>Nyta Assistente</b> em todos os seus perfis.</>}
           free={{ name: 'Grátis', desc: 'O essencial para acompanhar o plano e a carreira.', price: 'R$ 0', groups: FREE_GROUPS }}
           pro={{

@@ -28,9 +28,17 @@ const json = (body: unknown, status = 200) =>
 
 const SITE = Deno.env.get('SITE_URL') ?? 'https://www.maestramanager.com'
 
-/** Os destinos permitidos, resolvidos AQUI. O cliente escolhe o nome, nunca a URL. */
+/**
+ * Os destinos permitidos, resolvidos AQUI. O cliente escolhe o nome, nunca a URL.
+ *
+ * ⚠️ `assinatura` APONTA PARA `/planos` DESDE QUE O APP DEIXOU DE VENDER. A rota da web foi
+ * renomeada para caber numa frase que alguém digita no navegador, e `/assinatura` ficou lá como
+ * redirecionamento permanente — o que dá folga a esta função, que é deployada à parte do bundle
+ * da web e passa uma janela dessincronizada a cada deploy. A folga não é desculpa para não
+ * atualizar: um salto a menos é um carregamento a menos para quem está a pagar.
+ */
 const destinos = {
-  assinatura: () => '/assinatura',
+  assinatura: () => '/planos',
   desbloqueio: (artistId: string) => `/artists/${artistId}/desbloquear`,
 } as const
 

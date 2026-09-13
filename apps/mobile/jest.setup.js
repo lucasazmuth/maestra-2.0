@@ -50,7 +50,13 @@ jest.mock('react-native-audio-api', () => {
   api.AudioManager.observeAudioInterruptions ??= () => {};
   return api;
 });
-jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
+// ⚠️ O `useReducedMotion` NÃO VEM NO DUPLO. O próprio arquivo do reanimated o deixa comentado
+// com um "ADD ME IF NEEDED", e sem ele qualquer tela que o use estoura no teste. `false` é a
+// preferência de quem não mexeu em nada; a tela que precisa do `true` troca-o no seu ficheiro.
+jest.mock('react-native-reanimated', () => ({
+  ...require('react-native-reanimated/mock'),
+  useReducedMotion: () => false,
+}));
 require('react-native-gesture-handler/jestSetup');
 
 const { configurarAmbiente } = require('@maestra/core/nucleo/ambiente');

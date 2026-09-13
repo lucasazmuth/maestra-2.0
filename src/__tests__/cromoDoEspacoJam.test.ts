@@ -1,6 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 
+import { AVISO_DE_ARMAR } from '@maestra/core/constants/maestra';
+import { CORES_DA_PALETA } from '@maestra/core/audio/pistasDaVersao';
+
 import {
   ALTURA_DA_PISTA, ALTURA_DA_REGUA, ALTURA_DO_TITULO, ALTURA_DO_TRANSPORTE, CORES_DAS_PISTAS,
   ALTURA_DO_RODAPE, DS, ENCAIXE, LARGURA_DAS_FERRAMENTAS, LARGURA_DAS_PISTAS,
@@ -23,11 +26,46 @@ const ler = (...partes: string[]) => fs.readFileSync(path.join(__dirname, '..', 
 
 const editor = ler('pages', 'Catalog', 'daw', 'EditorDaGravacao.tsx');
 const clipe = ler('pages', 'Catalog', 'daw', 'Clipe.tsx');
+const daLinhaDoTempo = fs.readFileSync(path.join(
+  __dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'LinhaDoTempo.tsx',
+), 'utf8');
 const casca = ler('pages', 'Catalog', 'daw', 'editor.module.scss');
 const biblioteca = ler('pages', 'Catalog', 'daw', 'Biblioteca.tsx');
 const icones = ler('pages', 'Catalog', 'daw', 'icones.tsx');
 const tela = ler('pages', 'Catalog', 'ProjectSpace.tsx');
+const iconesNoApp = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'icones.tsx'),
+  'utf8',
+);
+const mesaNoApp = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'MesaDeCanais.tsx'),
+  'utf8',
+);
+const campoNoApp = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'CampoDoCabecalho.tsx'),
+  'utf8',
+);
+const fechar = ler('pages', 'Catalog', 'daw', 'FecharComGuia.tsx');
+const fecharNoApp = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'FecharComGuia.tsx'),
+  'utf8',
+);
+// O editor do aparelho: o que é regra de produto tem de valer nos dois.
+const app = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'app', 'jam', '[artista]', '[projeto]', 'index.tsx'),
+  'utf8',
+);
+// A leitura do projeto mora no núcleo: é lá que o nome do ficheiro chega ao clipe.
+const nucleo = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'packages', 'core', 'src', 'services', 'db', 'catalog.ts'),
+  'utf8',
+);
 const campos = ler('components', 'ficha', 'campos.tsx');
+const modalDaFicha = ler('components', 'TrackModal.tsx');
+const fichaNoApp = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'musicas', 'FichaDaFaixa.tsx'),
+  'utf8',
+);
 const exportar = ler('pages', 'Catalog', 'daw', 'TelaDeExportar.tsx');
 
 /** Só o código: um comentário que NOMEIA o que saiu não é o que saiu. */
@@ -156,6 +194,37 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(editor).toContain('largarNaFaixa');
   });
 
+  // ⚠️ O PANORAMA É DA MESA, E SÓ DE LÁ — nas duas superfícies.
+  //
+  // Ele vivia também no cabeçalho de cada faixa da Timeline, numa coluna de 132 px: uma segunda
+  // linha de 4 px de curso mais o rótulo "C/E/D", a comer a altura que a onda precisa. E não é
+  // repetição inocente — panorama é um controlo de MISTURA, e mistura-se comparando: o que diz
+  // se a guitarra está larga demais é vê-la ao lado do baixo e da voz, em canais lado a lado.
+  // O app nunca o teve na coluna; foi a web que se alinhou com ele.
+  it('o panorama mora na Mesa, e não na coluna da Timeline', () => {
+    const corpo = semComentarios(editor);
+    const cabecalho = corpo.slice(
+      corpo.indexOf('const cabecalhoDaPista ='),
+      corpo.indexOf('const assinaturaDaColuna ='),
+    );
+    expect(cabecalho.length).toBeGreaterThan(1000);
+
+    // Na coluna não há panorama nenhum: nem o controlo, nem o valor que o alimenta.
+    expect(cabecalho).not.toContain('Panorama de');
+    expect(cabecalho).not.toContain('faixa.pan');
+    expect(cabecalho).not.toContain('daMesa?.pan');
+
+    // ⚠️ MAS NA MESA CONTINUA, inteiro. Tirar um controlo de uma aba não é tirá-lo do produto,
+    // e um panorama que ninguém consegue mexer deixa a faixa presa no centro para sempre.
+    const mesa = corpo.slice(corpo.indexOf('const MesaDeCanais'));
+    expect(mesa).toContain('Panorama de ${faixa.name} na mesa');
+    expect(mesa).toContain('faixaDoPan(pan)');
+
+    // E o app, que nunca o teve na coluna, continua a tê-lo só na Mesa.
+    expect(daLinhaDoTempo).not.toContain('Panorama');
+    expect(mesaNoApp).toContain('Panorama de ${pista.nome} na mesa');
+  });
+
   // Os controlos que a referência mostra em cada pista, e o Master no topo.
   it('cada pista tem tipo, mudo, solo, volume e panorama; e há um Master', () => {
     expect(editor).toContain('Panorama de');
@@ -164,6 +233,45 @@ describe('cromo do editor do Espaço JAM', () => {
     // opostas. Pintadas iguais quando acesas, ninguém sabe qual carregou.
     expect(editor).toContain("botaozinho(calada, DS.color.textoFraco)");
     expect(editor).toContain("botaozinho(Boolean(daMesa?.solo), '#f59e0b')");
+  });
+
+  // ⚠️ E O MASTER NÃO TEM PERCENTAGEM AO LADO. O número não diz nada que o cursor já não
+  // mostre, e custava 38 px numa barra que no telemóvel não os tem. Saiu primeiro do app; sai
+  // daqui para as duas serem a mesma barra.
+  it('o volume geral não escreve a percentagem', () => {
+    expect(editor).not.toContain('{Math.round(estado.mestre * 100)}%');
+    // O campo continua lá — é ele que anuncia o valor a quem não vê o cursor.
+    expect(editor).toContain("aria-label='Volume geral'");
+  });
+
+  // ⚠️ O CLIPE DIZ QUE FICHEIRO TOCA, e não em que ordem entrou. "Take 1/2/3" numa faixa com
+  // voz, dobra e ad-lib são três rótulos iguais por cima de três ondas parecidas — o número
+  // é a única coisa ali que quem montou NÃO reconhece. O número fica como recurso, para o
+  // clipe sem ficheiro com nome.
+  it('o clipe é rotulado pelo nome do ficheiro, e o take é o recurso', () => {
+    const oClipe = semComentarios(clipe);
+
+    expect(oClipe).toContain("tituloDoArquivo(clipe.file_name || '') || `Take ${indice + 1}`");
+    // Um nome de ficheiro é tão comprido quanto quem o gravou quis; o clipe não é.
+    expect(oClipe).toContain("textOverflow: 'ellipsis'");
+    expect(oClipe).toContain("whiteSpace: 'nowrap'");
+  });
+
+  // ⚠️ E O NOME CHEGA LÁ, que é a outra metade. `catalog_clips` guarda um `file_id`; o nome
+  // vive em `catalog_version_files`, e sem a costura da leitura o `file_name` era um campo do
+  // tipo que ninguém preenchia — o rótulo cairia para "Take N" para sempre.
+  it('a leitura do projeto costura o nome do ficheiro em cada clipe', () => {
+    expect(nucleo).toContain('export const comNomesDosClipes');
+    expect(nucleo).toContain('return comNomesDosClipes(data as CatalogProject);');
+  });
+
+  // A primeira pista de uma gravação por montar é o áudio que alguém anexou. Chamar-lhe
+  // "Test" porque a música se chama Test é dizer duas vezes a mesma coisa e nenhuma vez o
+  // que ali está.
+  it('montar a mix nomeia a pista pelo ficheiro, e não pelo título da música', () => {
+    expect(tela).toContain("tituloDoArquivo(open.audio_file_name || '') || open.title || 'Mix'");
+    expect(tela).toContain('name: nomeDoAnexo,');
+    expect(tela).toContain('nome: nomeDoAnexo,');
   });
 
   // As duas vistas da mesma montagem: a linha do tempo responde "o que toca quando", a mesa
@@ -185,14 +293,20 @@ describe('cromo do editor do Espaço JAM', () => {
     // pintar. (É a segunda vez que este teste tropeça nisso.)
     expect(semComentarios(icones)).not.toContain('#898989');
     expect(editor).toContain('MesaDeCanais');
-    expect(editor).toContain("writingMode: 'vertical-lr'");
+    // ⚠️ O FADER EM PÉ É DESENHADO AQUI, e não um `<input type=range>` deitado de lado. O
+    // trilho nativo vem creme-claro no meio de uma tela quase preta, com a espessura e o botão
+    // que cada navegador decide — num canal de 116 px era uma barra pálida a atravessar o
+    // cartão de cima a baixo. O desenho é o do app: trilho escuro de 6, preenchido de baixo
+    // para cima na cor da faixa.
+    expect(editor).toContain('<FaderEmPe');
+    expect(editor).not.toContain("writingMode: 'vertical-lr'");
   });
 
   // O clipe é o que separa um editor de uma mesa: ele mora num INSTANTE.
   it('o clipe é posicionado no tempo, corta na agulha e some com clique duplo', () => {
     expect(clipe).toContain('inicio * escala');
     expect(clipe).toContain('agulha > inicio');
-    expect(clipe).toContain('DIVIDIR');
+    expect(clipe).toContain("aria-label='Dividir o clipe na agulha'");
     expect(clipe).toContain('onDoubleClick');
   });
 
@@ -202,12 +316,15 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(casca).toContain('.selo');
     expect(editor).toContain('casca.selo');
 
-    // Na mesma fila dos outros dois flutuantes, e à esquerda deles.
+    // ⚠️ A FILA TEM UM PASSO SÓ: 30 de círculo mais 8 de folga — a mesma folga que separa as
+    // duas setas na vertical. Com as posições escolhidas uma a uma (18, 62, 106) os intervalos
+    // saíam 14 e 14 entre uns e 8 entre outros, e o olho vê o desencontro antes de o medir.
     const fila = (classe: string) =>
       Number(casca.match(new RegExp(`\\.${classe}\\s*\\{[^}]*?right:\\s*(\\d+)px`))?.[1]);
     expect(fila('ajuda')).toBe(18);
-    expect(fila('letra')).toBe(62);
-    expect(fila('selo')).toBe(106);
+    expect(fila('letra')).toBe(56);
+    expect(fila('conversa')).toBe(94);
+    expect(fila('selo')).toBe(132);
 
     // E o JSX do cabeçalho não escreve mais nenhum dos três textos naquele canto. O que fica
     // é o `title` do X ("Gerando a guia…"), que é a explicação de por que ele está travado —
@@ -229,8 +346,863 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(casca).toContain('@keyframes girar');
     // Os três sinais viram UM: são a mesma pergunta para quem olha ("posso fechar?").
     expect(editor).toContain("texto: 'Salvando…'");
-    expect(editor).toContain("texto: 'Gerando a guia…'");
     expect(editor).toContain("texto: 'Falha ao salvar'");
+    // ⚠️ A GUIA SAIU DO SELO: ela tem uma tela inteira só para si, e a mesma frase num canto
+    // era o mesmo aviso duas vezes — a pessoa lia um e procurava o outro à espera de que
+    // dissessem coisas diferentes.
+    expect(semComentarios(editor)).not.toContain('texto: rotuloDaGuia(gerando)');
+  });
+
+  // ⚠️ A GUIA DIZ QUANTO JÁ ANDOU. Codificar MP3 é JavaScript sobre cada amostra: aqui são
+  // segundos, no telemóvel foram medidos 101 para 227 de áudio. Reticências paradas durante um
+  // minuto e meio são indistinguíveis de uma tela pendurada — e quem espera fecha o aplicativo,
+  // que é o gesto que perde o trabalho. O texto mora no núcleo porque as duas telas o escrevem.
+  it('a guia diz a percentagem, e o X espera por ela', () => {
+    const corpo = semComentarios(editor);
+    const espaco = semComentarios(tela);
+
+    expect(corpo).toContain('const aGerar = gerando != null;');
+    // O X trava enquanto isso, e explica-se: é a única coisa que responde "por que não fechou".
+    expect(corpo).toContain('disabled={aGerar}');
+    expect(corpo).toContain("title={aGerar ? rotuloDaGuia(gerando) : 'Voltar para Músicas'}");
+    // E a percentagem vem do próprio codificador, e não de um relógio a fingir progresso.
+    expect(espaco).toContain('await paraMp3(rendido, setGerando)');
+    // ⚠️ Antes do codificador vem a SOMA das faixas, que não sabe dizer quanto falta: até
+    // haver um número de verdade, o rótulo é só texto. Um "0%" parado é uma tela pendurada.
+    expect(espaco).toContain('setGerando(Number.NaN);');
+    // Sair espera pela guia: é o que faz a lista de Músicas tocar a soma da montagem.
+    expect(espaco).toContain('await gerarGuia(open);');
+  });
+
+  // ⚠️ DUAS PESSOAS NA MESMA MÚSICA. O canal é do NÚCLEO e é UM SÓ para as duas coisas —
+  // presença e mudanças da montagem —, porque quem quer ver os avatares é exatamente quem quer
+  // ver a montagem mexer-se. Dois canais seriam dois sockets e duas reconexões por nada.
+  it('as duas telas assinam o mesmo canal, e marcam as próprias escritas', () => {
+    const espaco = semComentarios(tela);
+    // ⚠️ E OS BOTÕES DA GUIA DEIXARAM DE USAR A SETA DO FEATHER. Eles ficam ao lado do botão dos
+    // stems, que é do Feather: se o peso não batesse, os três azuis em fila diriam duas mãos.
+    const oExportar = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', 'pages', 'Catalog', 'daw', 'TelaDeExportar.tsx'), 'utf8',
+    ));
+    const oExportarDoApp = semComentarios(fs.readFileSync(
+      path.join(
+        __dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'TelaDeExportar.tsx',
+      ), 'utf8',
+    ));
+
+    expect(oExportar.match(/<IconeDeBaixar \/>/g)).toHaveLength(2);
+    expect(oExportar).not.toContain('FiDownload');
+
+    // ⚠️ E A LISTA DE STEMS MOSTRA UM FICHEIRO DE MÚSICA, nas duas telas. A folha de texto do
+    // Feather dizia "documento" — a única coisa que estes ficheiros não são. Aqui as duas telas
+    // fazem o MESMO gesto (listar o que vai no ZIP), ao contrário dos botões de levar o
+    // ficheiro: lá a web baixa e o aparelho partilha, e por isso só a web mudou de ícone.
+    expect(oExportar).toContain('<IconeDeAudio tamanho={14} />');
+    expect(oExportar).not.toContain('FiFileText');
+
+    // ⚠️ E O BOTÃO DOS STEMS NÃO TEM ÍCONE PARADO, nas duas telas. A caixa de arquivo não dizia
+    // nada que o rótulo já não dissesse — "(.zip)" está escrito ali ao lado — e acrescentava uma
+    // terceira forma à fila dos três botões azuis.
+    //
+    // ⚠️ MAS A RODA DA ESPERA FICA. Ela não é enfeite: é o único sinal de que o ZIP está a ser
+    // preparado, e sem ela o botão dizia "Preparando…" com a tela parada. Tirar o ícone e levar
+    // a roda à frente é o engano fácil aqui, e é o que este par de linhas impede.
+    expect(oExportar).not.toContain('FiArchive');
+    expect(oExportar).toContain('<FiLoader size={15} style={girando} /> Preparando o ZIP…');
+
+    expect(oExportarDoApp).not.toContain('icone="archive"');
+    expect(oExportarDoApp).toContain('<ActivityIndicator size="small"');
+
+    expect(oExportarDoApp).toContain('<IconeDeAudio tamanho={14} cor={COR_EDITOR.rotulo} />');
+    expect(oExportarDoApp).not.toContain('name="file-text"');
+
+    const oApp = semComentarios(app);
+
+    [espaco, oApp].forEach((fonte) => {
+      expect(fonte).toContain("from '@maestra/core/hooks/useJamAoVivo'");
+      expect(fonte).toContain('useJamAoVivo(');
+      // ⚠️ MARCAR ANTES DE ESCREVER: é isto que impede o clipe de saltar para trás debaixo do
+      // dedo quando o meu próprio arrasto volta do Postgres meio segundo depois.
+      expect(fonte).toContain('assinaturaDoClipe(');
+      expect(fonte).toContain('assinaturaDaPista(');
+      // Um UPDATE remenda sem ir ao servidor; o que é novo recarrega.
+      expect(fonte).toContain("if (decisao.faca === 'remendarPista')");
+      expect(fonte).toContain("if (decisao.faca !== 'remendarClipe') return;");
+    });
+
+    // E o arrasto marca-se com a faixa de destino, senão mudar de faixa parecia coisa de outra
+    // pessoa e voltava atrás.
+    expect(espaco).toContain("minhoClipe(clipeId, { start_seconds: inicio, ...(pista ? { track_id: pista.para } : {}) });");
+    expect(oApp).toContain("minhoClipe(clipeId, { start_seconds: inicio, ...(pista ? { track_id: pista.para } : {}) });");
+  });
+
+  // Os avatares respondem uma pergunta só — "estou sozinho nesta música?" — e por isso não
+  // existem quando a resposta é sim: o meu próprio avatar sozinho é ruído permanente.
+  it('os avatares de quem está aqui só aparecem a partir de dois, nas duas telas', () => {
+    const corpo = semComentarios(editor);
+    const oApp = semComentarios(app);
+
+    expect(corpo).toContain('if (presentes.length < 2) return null;');
+    expect(oApp).toContain('{aoVivo.presentes.length > 1 && (');
+    // O mesmo número de círculos e a mesma sobra, porque é o mesmo desenho.
+    expect(corpo).toContain('const AVATARES_A_MOSTRAR = 3;');
+    expect(oApp).toContain('const AVATARES_A_MOSTRAR = 3;');
+    // E a inicial vem do núcleo: um nome só com espaços não pode dar um círculo vazio.
+    [corpo, oApp].forEach((fonte) => expect(fonte).toContain('iniciais(pessoa.nome)'));
+  });
+
+  // ⚠️ COM DUAS PESSOAS, DUAS COISAS DEIXAM DE SER INOFENSIVAS. A pilha do desfazer é de cada
+  // um — só entra nela o que EU fiz —, e o perigo nunca foi desfazer o passo do outro: é
+  // desfazer o MEU por cima do que ele fez a seguir. E a limpeza da saída apagava de vez tudo o
+  // que estivesse marcado nesta gravação, incluindo o que ele ainda pode trazer de volta.
+  it('a seta não vai por cima do outro, e a saída leva só o que é meu', () => {
+    const espaco = semComentarios(tela);
+    const oApp = semComentarios(app);
+
+    [espaco, oApp].forEach((fonte) => {
+      // A seta confere o mundo ANTES de escrever, e contra o que se vê — que com o canal ao
+      // vivo ligado é o banco a menos de um segundo.
+      expect(fonte).toContain('conferirOPasso(saida.passo, {');
+      // O passo caduco sai da pilha: repeti-lo dava exatamente o mesmo.
+      expect(fonte).toContain('setHistorico(saida.historico);');
+      // E a saída leva a lista desta sessão, em vez de tudo o que está marcado.
+      expect(fonte).toContain('marcadosPorMim.current');
+      expect(fonte).toContain('apenas:');
+      // Desfazer um "apagar" tira-o da lista: ele já não é resíduo meu.
+      expect(fonte).toContain('(voltando ? desmarquei : marquei)(passo.clipeId);');
+    });
+  });
+
+  // ⚠️ A COR DA FAIXA É A MESMA NOS DOIS APARELHOS, e isso só se consegue lendo o que está
+  // GUARDADO. Cada superfície derivava-a da posição na lista, e a mesma faixa saía roxa no
+  // computador e amarela no telemóvel — a mesma montagem lida como dois produtos. E mudava
+  // sozinha ao apagar outra faixa, porque as de baixo subiam um lugar.
+  it('a cor da faixa vem do banco, e não da posição na lista', () => {
+    const naWeb = semComentarios(editor);
+    const aLinhaDoTempo = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'LinhaDoTempo.tsx'),
+      'utf8',
+    ));
+    const aMesa = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'MesaDeCanais.tsx'),
+      'utf8',
+    ));
+
+    // A web lê a coluna; o aplicativo lê a `cor` que a montagem carrega — o mesmo valor.
+    expect(naWeb).toContain('corDaPista(faixa.color_index ?? indice)');
+    expect(aLinhaDoTempo).toContain('corDaPista(pista.cor ?? i)');
+    expect(aMesa).toContain('corDaPista(pista.cor ?? indice)');
+
+    // ⚠️ E NENHUMA DELAS PINTA SÓ PELA POSIÇÃO. É essa a forma que causou o defeito, e é ela
+    // que não pode voltar — em nenhum dos três sítios.
+    [naWeb, aLinhaDoTempo, aMesa].forEach((fonte) => {
+      expect(fonte).not.toMatch(/corDaPista\((?:i|indice)\)/);
+    });
+  });
+
+  // ⚠️ E A PALETA TEM O TAMANHO QUE O NÚCLEO DIZ TER. `proximaCorDaPista` escolhe a primeira
+  // cor livre contando até `CORES_DA_PALETA`; se a paleta crescer e esse número não, as cores
+  // novas nunca seriam escolhidas — e se encolher, a conta apontaria para cores que não existem.
+  it('a conta da próxima cor conhece o tamanho da paleta', () => {
+    const design = fs.readFileSync(
+      path.join(__dirname, '..', '..', 'packages', 'core', 'src', 'constants', 'design.ts'), 'utf8',
+    );
+    const paleta = design.slice(design.indexOf('CORES_DAS_PISTAS'));
+    const quantas = (paleta.slice(0, paleta.indexOf(']')).match(/'#[0-9a-f]{6}'/gi) ?? []).length;
+
+    expect(quantas).toBe(CORES_DA_PALETA);
+  });
+
+  // ⚠️ A COR É ESCOLHIDA, e não sorteada — e a escolha é a MESMA nos dois aparelhos.
+  //
+  // Ela é o que distingue uma faixa da outra de relance, na coluna, no clipe e na mesa. Até aqui
+  // era o que calhasse na ordem de criação: quem monta sabe que a voz é verde e a bateria é
+  // azul, e o produto não sabia.
+  it('as duas telas oferecem as MESMAS seis cores, com os mesmos nomes', () => {
+    const naWeb = semComentarios(clipe);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    [naWeb, aLinhaDoTempo].forEach((fonte) => {
+      // A paleta e os nomes vêm do núcleo: seis bolinhas iguais sem nome são seis alvos
+      // idênticos para quem usa leitor de tela, e a cor é justamente o que distingue as faixas.
+      expect(fonte).toContain('CORES_DAS_PISTAS.map(');
+      expect(fonte).toContain('NOMES_DAS_CORES[i]');
+    });
+
+    // E as duas gravam no MESMO sítio — a coluna que as duas já leem para pintar.
+    expect(semComentarios(editor)).toContain('{ color_index: tinta }');
+    expect(aLinhaDoTempo).toContain('aoPintarPista?.(paletaDe, i)');
+  });
+
+  // ⚠️ O SELETOR MORA NA BARRA DO CLIPE, ao lado da tesoura e da lixeira — e não na coluna da
+  // faixa, que foi onde ele nasceu. Ali era o quinto alvo de uma fila espremida numa coluna de
+  // 132 px; aqui está junto das outras duas ações do mesmo gesto (escolher a coisa, depois
+  // fazer algo com ela) e em cima da própria cor, que é o que se está a trocar.
+  //
+  // Este caso existe porque a mudança é FÁCIL DE DESFAZER SEM QUERER: repor uma bolinha na
+  // coluna é uma linha, e a paleta continuaria a funcionar — nada se queixava, e as duas telas
+  // voltavam a divergir no sítio em que se carrega.
+  it('o botão da cor está ao lado de cortar e apagar, e não no cabeçalho da faixa', () => {
+    const naWeb = semComentarios(clipe);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    // Na barra: o pedaço entre a lixeira e o fecho da barra é onde o botão tem de estar.
+    const barraDaWeb = naWeb.slice(naWeb.indexOf("aria-label='Remover o clipe'"));
+    expect(barraDaWeb).toContain("aria-label='Cor da faixa'");
+
+    const barraDoApp = aLinhaDoTempo.slice(aLinhaDoTempo.indexOf('accessibilityLabel="Remover o clipe"'));
+    expect(barraDoApp.slice(0, barraDoApp.indexOf('estilos.acoesDoClipe') + 1 || undefined))
+      .toContain('accessibilityLabel="Cor da faixa"');
+
+    // E em lado nenhum ele volta ao cabeçalho, onde o alvo era a faixa e não o clipe.
+    expect(semComentarios(editor)).not.toContain('CORES_DAS_PISTAS');
+    expect(aLinhaDoTempo).not.toContain('Cor de ${pista.nome}');
+  });
+
+  // ⚠️ DUPLICAR EXISTE NAS DUAS, AO LADO DA TESOURA, E NÃO COPIA ÁUDIO.
+  //
+  // Cortar e duplicar são o mesmo par de gestos de estrutura — partir uma coisa em duas, repetir
+  // uma coisa duas vezes — e quem monta um arranjo alterna entre eles. A lixeira é a única da
+  // fila que destrói, e por isso não se mete entre as duas.
+  //
+  // ⚠️ E ONDE A CÓPIA ENTRA É CONTA DO NÚCLEO. Escrita à mão em cada tela, ela divergiria no
+  // primeiro ajuste: a web a encostar ao fim e o aparelho a deixar um segundo de folga, ou o
+  // contrário — a mesma montagem com dois desenhos, e ninguém a saber qual é o certo.
+  it('duplicar o clipe existe nas duas, ao lado de cortar, e sai do núcleo', () => {
+    const naWeb = semComentarios(clipe);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    // O botão vem DEPOIS da tesoura e ANTES da lixeira, nas duas.
+    const barraDaWeb = naWeb.slice(naWeb.indexOf("aria-label='Dividir o clipe na agulha'"));
+    expect(barraDaWeb.indexOf("aria-label='Duplicar o clipe'"))
+      .toBeLessThan(barraDaWeb.indexOf("aria-label='Remover o clipe'"));
+
+    const barraDoApp = aLinhaDoTempo.slice(aLinhaDoTempo.indexOf("accessibilityLabel={podeCortar"));
+    expect(barraDoApp.indexOf('accessibilityLabel="Duplicar o clipe"'))
+      .toBeLessThan(barraDoApp.indexOf('accessibilityLabel="Remover o clipe"'));
+
+    // E as duas telas pedem ao núcleo onde a cópia entra, em vez de fazerem a conta.
+    const naTela = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', 'pages', 'Catalog', 'ProjectSpace.tsx'), 'utf8',
+    ));
+    const oApp = semComentarios(app);
+    [naTela, oApp].forEach((fonte) => {
+      expect(fonte).toContain('copiaDoClipe(');
+      expect(fonte).toContain("tipo: 'duplicar'");
+    });
+  });
+
+  // ⚠️ A RÉGUA E A GRELHA DESENHAM-SE UMA VEZ, NAS DUAS — e não a cada tique.
+  //
+  // A grelha é desenhada DENTRO de cada faixa: com andamento escrito, uma música de dois minutos
+  // tem centenas de marcas, e uma dúzia de faixas multiplica-as por doze. Eram milhares de
+  // elementos reconstruídos vinte vezes por segundo, e nenhum deles depende da agulha — que é a
+  // única coisa que o tique muda. Era isso que fazia o play engasgar.
+  //
+  // Medido no navegador, na mesma montagem e no mesmo zoom: por guardar, 82 de 150 quadros
+  // passavam dos 32 ms com picos de 486; guardadas, 10 de 150 com um pico de 53.
+  it('a régua e a grelha não se reconstroem a cada tique, nas duas', () => {
+    const oEditor = semComentarios(editor);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    [oEditor, aLinhaDoTempo].forEach((fonte) => {
+      // Guardadas, com as medidas de que dependem — e SÓ com elas: a agulha aqui dentro punha-as
+      // a refazer-se vinte vezes por segundo outra vez.
+      expect(fonte).toContain('const daRegua = useMemo(');
+      expect(fonte).toContain('const daGrelha = useMemo(');
+      // ⚠️ AS DUAS, E COM ESTAS DEPENDÊNCIAS. Escrito com um `toContain`, este caso deixava
+      // passar a agulha nas dependências de UMA delas — a outra bastava para o satisfazer, e a
+      // mutação que a punha lá sobrevivia. Com a agulha ali dentro, o desenho volta a refazer-se
+      // vinte vezes por segundo e o engasgo volta com ele.
+      expect(fonte.match(/\), \[marcas, escala\]\);/g)).toHaveLength(2);
+      // E desenhadas pelo que está guardado, em vez de mapeadas no sítio.
+      expect(fonte).toContain('{daRegua}');
+      expect(fonte).toContain('{daGrelha}');
+      // ⚠️ E DUAS VEZES, E NÃO MAIS: as duas que estão DENTRO dos guardados. Uma terceira é um
+      // mapa desenhado no sítio outra vez, que é o defeito a voltar.
+      expect(fonte.match(/marcas\.map\(/g)).toHaveLength(2);
+    });
+  });
+
+  // ⚠️ A BARRA DO CLIPE SEGUE A AGULHA, NAS DUAS — e nunca sai do que se vê.
+  //
+  // Na ponta esquerda do clipe ela funcionava enquanto os clipes coubessem no ecrã. Num clipe de
+  // dois minutos aproximado — que é onde se corta de verdade — a ponta está a milhares de pixels
+  // de distância, e as quatro ações ficavam inalcançáveis sem rolar para trás à procura delas.
+  //
+  // ⚠️ MAS A AGULHA SOZINHA NÃO CHEGA. Encostada à direita dela, a barra saía pela borda do ecrã
+  // sempre que a agulha se aproximava — e isso acontece em cada volta da reprodução, antes de a
+  // linha travar no meio. Apareceu cortada ao meio no telemóvel, com metade dos botões de fora.
+  // Num ecrã estreito as duas metades mal dão para a barra, por isso não há lado seguro: o que
+  // decide é a JANELA, e é por isso que ela entra na conta.
+  it('a barra do clipe fica ao pé da agulha, e inverte o lado quando não cabe', () => {
+    const naWeb = semComentarios(clipe);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    // A conta é do núcleo — escrita à mão em cada tela, divergiria no primeiro ajuste.
+    [naWeb, aLinhaDoTempo].forEach((fonte) => {
+      expect(fonte).toContain('lugarDaBarra({');
+      // ⚠️ E A ESCOLHA DO LADO É DO NÚCLEO, não de cada tela: à direita da agulha enquanto
+      // couber, e do outro lado dela quando não. Empurrá-la só para dentro da janela — que foi a
+      // primeira correção — deixava-a a uma distância qualquer da linha vermelha, às vezes muito
+      // longe: deixava de ser "a barra DESTA agulha" para ser "uma barra ali algures".
+      expect(fonte).not.toContain('cabeADireita');
+      expect(fonte).toContain('agulha: agulha * escala');
+      expect(fonte).toContain('janelaDe:');
+      expect(fonte).toContain('janelaAte:');
+      // ⚠️ E A JANELA É NA RÉGUA DA LINHA DO TEMPO, nas duas: começa onde a rolagem está e acaba
+      // uma coluna antes do fim do que se vê. O clipe conta a partir do segundo zero da
+      // montagem; somar a coluna ao PRINCÍPIO da janela mistura duas réguas, e com a agulha no
+      // zero a barra ia parar ao meio do ecrã — sempre à mesma distância, o que a fazia parecer
+      // um enfeite e não um erro de conta. Foi assim que ela saiu daqui na primeira vez.
+      expect(fonte).toMatch(/janelaDe: (caixa\.scrollLeft|rolagemDaVista),/);
+      expect(fonte).toMatch(/janelaAte:.*- (recuoDaJanela|COLUNA)/);
+      // A largura é medida, porque o número de botões muda.
+      expect(fonte).toMatch(/(offsetWidth|setLarguraDaBarra)/);
+    });
+
+    // ⚠️ E EM NENHUMA DELAS ISTO PASSA PELO REACT. A janela muda a cada rolagem: posta em
+    // estado, seriam dezenas de redesenhos da montagem por segundo enquanto o dedo arrasta — o
+    // mesmo engasgo que este editor levou uma noite a tirar.
+    //
+    // Na web escreve-se um `left` à mão, a ouvir quem rola; no aparelho é um estilo animado, que
+    // corre na linha da interface onde a rolagem vive.
+    expect(naWeb).toContain("caixa.addEventListener('scroll', porNoSitio");
+    expect(naWeb).toContain('barraAgora.style.left =');
+
+    // ⚠️ E NO APARELHO A CONTA NÃO PODE CORRER NUM WORKLET. A primeira versão punha-a num
+    // `useAnimatedStyle`, para a barra acompanhar o dedo sem passar pelo React — e rebentou no
+    // telemóvel com "Tried to synchronously call a Remote Function": o corpo de um estilo
+    // animado corre noutro motor de JavaScript, onde a conta do núcleo não existe. Ver o
+    // `gestosNaLinhaDaInterface`, que passou a vigiar também esta porta.
+    //
+    // O preço é ouvir a rolagem pelo JavaScript, e SÓ com um clipe escolhido: sem essa guarda,
+    // cada pixel de arrasto redesenhava a montagem inteira.
+    expect(aLinhaDoTempo).not.toMatch(/useAnimatedStyle\(\(\) => \(\{\s*left: lugarDaBarra/);
+    expect(aLinhaDoTempo).toContain('scrollEventThrottle={escolhido ? 100 : 0}');
+    expect(aLinhaDoTempo).toContain('onScroll={escolhido');
+
+    // E quem rola está marcado, para a barra o encontrar sem lhe passarem uma referência.
+    expect(semComentarios(editor)).toContain("data-rolagem=''");
+    expect(semComentarios(editor)).toContain('recuoDaJanela={larguraDasPistas}');
+
+    // A decisão do lado mora num sítio só.
+    const nucleo = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', '..', 'packages', 'core', 'src', 'audio', 'grade.ts'), 'utf8',
+    ));
+    expect(nucleo).toContain('const cabeADireita = aDireita + larguraDaBarra <= janelaAte - FOLGA_DA_BARRA;');
+    expect(nucleo).toContain('const queria = cabeADireita ? aDireita : agulha - LADO_DA_AGULHA - larguraDaBarra;');
+
+    // A mesma conta nas duas, depois de convertida para a régua do clipe.
+    expect(naWeb).toContain('janelaAte: caixa.scrollLeft + caixa.clientWidth - recuoDaJanela');
+    expect(aLinhaDoTempo).toContain('janelaAte: rolagemDaVista + larguraDaVista - COLUNA');
+  });
+
+  // ⚠️ A COLUNA DAS FAIXAS TAMBÉM SE DESENHA UMA VEZ — e é o que sobrava do engasgo do play.
+  //
+  // Ela não depende da agulha, que é a única coisa que o tique muda. Com uma dúzia de faixas são
+  // mais de cem elementos — um campo de texto e cinco botões por linha — reconstruídos e
+  // comparados vinte vezes por segundo para dar sempre o mesmo resultado.
+  //
+  // ⚠️ E ESTE CASO EXISTE POR CAUSA DOS DOIS RISCOS QUE A ECONOMIA TRAZ, que são calados:
+  //
+  //  • UM CAMPO A FALTAR NA ASSINATURA é um botão que deixa de responder — o M que não acende,
+  //    o nome que não muda. O valor fica certo no banco e errado no ecrã, e nada se queixa.
+  //  • UMA AÇÃO VELHA. O desenho guardado fecha sobre o `acoes` do momento em que nasceu, e
+  //    esse fecha sobre a montagem daquele momento: carregar em apagar meio minuto depois
+  //    escreveria a partir de uma lista de faixas que já não existe. Daí a gaveta.
+  it('a coluna das faixas é guardada, com tudo o que ela lê na assinatura', () => {
+    const oEditor = semComentarios(editor);
+
+    expect(oEditor).toContain('const coluna = useMemo(');
+    expect(oEditor).toContain('[assinaturaDaColuna],');
+    expect(oEditor).toContain('{coluna}');
+    expect(oEditor).not.toContain('{pistas.map(cabecalhoDaPista)}');
+
+    const cabecalho = oEditor.slice(
+      oEditor.indexOf('const cabecalhoDaPista = ('),
+      oEditor.indexOf('const assinaturaDaColuna ='),
+    );
+    const assinatura = oEditor.slice(
+      oEditor.indexOf('const assinaturaDaColuna ='),
+      oEditor.indexOf('const coluna = useMemo('),
+    );
+
+    // ⚠️ TUDO O QUE O CABEÇALHO LÊ DA MESA TEM DE ESTAR NA ASSINATURA. Lido da própria fonte, em
+    // vez de escrito à mão aqui: uma lista escrita à mão envelhece no dia em que o cabeçalho
+    // passar a ler mais uma coisa, e é exatamente esse o dia em que ela devia acusar.
+    const daMesa = Array.from(new Set(
+      (cabecalho.match(/daMesa\?\.([a-zA-Z]+)/g) ?? []).map((m) => m.replace('daMesa?.', '')),
+    ));
+    // O piso é contra a vacuidade: se o regexp deixasse de casar, o `forEach` abaixo passaria
+    // sem conferir nada. Três é o que o cabeçalho lê hoje — calada, solada e ganho.
+    expect(daMesa.length).toBeGreaterThanOrEqual(3);
+    daMesa.forEach((campo) => expect(assinatura).toContain(`daMesa?.${campo}`));
+
+    // E o mesmo para o que ele lê da FAIXA, lido da fonte pela mesma razão: uma lista escrita
+    // à mão aqui envelhece nos dois sentidos. Quando o panorama saiu do cabeçalho para o Mixer,
+    // um `'p.pan'` escrito aqui EXIGIRIA que a assinatura continuasse a vigiar um valor que o
+    // cabeçalho já não desenha — e cada arrasto num canal redesenharia a coluna inteira.
+    const daFaixa = Array.from(new Set(
+      (cabecalho.match(/faixa\.([a-zA-Z_]+)/g) ?? []).map((m) => m.replace('faixa.', '')),
+    ));
+    expect(daFaixa).toContain('name');
+    daFaixa.forEach((campo) => expect(assinatura).toContain(`p.${campo}`));
+    // ⚠️ E NADA ALÉM DISSO: o que a coluna não desenha não entra. `pistas` e `estado.pistas`
+    // são objetos novos a cada tique, e vigiar um campo a mais custa a coluna toda por nada.
+    const vigiados = Array.from(new Set(
+      (assinatura.match(/\bp\.([a-zA-Z_]+)/g) ?? []).map((m) => m.replace('p.', '')),
+    ));
+    expect(vigiados.sort()).toEqual(daFaixa.sort());
+    // E para o que vem de fora e muda o desenho.
+    ['armadas.includes(p.id)', 'podeEditar', 'noCelular', 'alturaDaPista', 'pistaFixaId']
+      .forEach((campo) => expect(assinatura).toContain(campo));
+
+    // ⚠️ E OS BOTÕES CHAMAM A AÇÃO DE AGORA, e não a que existia quando o desenho nasceu.
+    expect(cabecalho).toContain('acoesDeAgora.current.');
+    expect(cabecalho).not.toMatch(/[^.]\bacoes\.[a-z]/);
+    expect(oEditor).toContain('acoesDeAgora.current = acoes;');
+  });
+
+  // E no aparelho a mesma economia, com os mesmos dois riscos calados.
+  it('a coluna das faixas também é guardada no aparelho', () => {
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    expect(aLinhaDoTempo).toContain('const coluna = useMemo(');
+    expect(aLinhaDoTempo).toContain('[assinaturaDaColuna],');
+    expect(aLinhaDoTempo).toContain('{coluna}');
+    expect(aLinhaDoTempo).not.toContain('{pistas.map((pista, i) => {');
+
+    const daColuna = aLinhaDoTempo.slice(aLinhaDoTempo.indexOf('const coluna = useMemo('));
+    const desenho = daColuna.slice(0, daColuna.indexOf('[assinaturaDaColuna],'));
+    const assinatura = aLinhaDoTempo.slice(
+      aLinhaDoTempo.indexOf('const assinaturaDaColuna ='),
+      aLinhaDoTempo.indexOf('const coluna = useMemo('),
+    );
+
+    // Tudo o que o desenho lê da mesa entra na assinatura, lido da própria fonte.
+    const daMesa = Array.from(new Set(
+      (desenho.match(/daMesa\?\.([a-zA-Z]+)/g) ?? []).map((m) => m.replace('daMesa?.', '')),
+    ));
+    expect(daMesa.length).toBeGreaterThanOrEqual(2);
+    daMesa.forEach((campo) => expect(assinatura).toContain(`daMesa?.${campo}`));
+    ['p.nome', 'armadas?.includes(p.id)', 'podeEditar']
+      .forEach((campo) => expect(assinatura).toContain(campo));
+
+    // E as mãos vêm da gaveta, e não das que existiam quando o desenho nasceu.
+    expect(desenho).toContain('maos.current.');
+    expect(desenho).not.toMatch(/[^.]\bao[A-Z][a-zA-Z]*\?\.\(/);
+    expect(aLinhaDoTempo).toContain('maos.current = {');
+  });
+
+  // ⚠️ A LINHA E A ROLAGEM DESLIZAM FORA DO REACT, na web.
+  //
+  // O tique da mesa é de 50 ms e tem de continuar a ser — com uma dúzia de faixas, cada
+  // redesenho é caro. Mas o que se MEXE precisa dos sessenta quadros: com a agulha travada no
+  // meio, vinte passos por segundo veem-se um a um. Por isso a rolagem e a linha escrevem-se à
+  // mão a cada quadro, lidas do relógio do ÁUDIO — o mesmo de que sai o `estado`, e por isso os
+  // dois caminhos nunca discordam sobre onde a música está.
+  it('a web desliza a sessenta quadros, lendo o relógio do áudio', () => {
+    const oEditor = semComentarios(editor);
+    const aTela = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', 'pages', 'Catalog', 'ProjectSpace.tsx'), 'utf8',
+    ));
+
+    expect(oEditor).toContain('requestAnimationFrame(quadro)');
+    expect(oEditor).toContain('const segundo = agora();');
+    expect(aTela).toContain('posicaoAgora: mesa.posicaoAgora');
+
+    // ⚠️ E AS MEDIDAS NÃO SE LEEM A CADA QUADRO. Pedir `scrollWidth` obriga o navegador a
+    // recalcular a posição de tudo antes de responder, e o laço já escreveu a rolagem no quadro
+    // anterior: era a própria correção da fluidez a criar o engasgo que vinha resolver.
+    const oLaco = oEditor.slice(oEditor.indexOf('const quadro = ()'));
+    const corpo = oLaco.slice(0, oLaco.indexOf('requestAnimationFrame(quadro);\n    return'));
+    expect(corpo).toContain('medidas.current.vista');
+    expect(corpo).not.toContain('scrollWidth');
+    expect(corpo).not.toContain('clientWidth');
+
+    // ⚠️ E UM DONO DE CADA VEZ. A tocar manda o laço; o caminho do React só decide com a música
+    // parada — os dois a escreverem a mesma rolagem davam meio passo de diferença, que é o
+    // tremor que tudo isto existe para evitar.
+    const oDeLayout = oEditor.slice(oEditor.indexOf('useLayoutEffect(() => {\n    const caixa'));
+    expect(oDeLayout.slice(0, oDeLayout.indexOf('passoDaVista('))).toContain('if (estado.tocando) return;');
+  });
+
+  // ⚠️ DOIS MODOS DE ROLAGEM, NAS DUAS TELAS — e não um.
+  //
+  // Primeiro a agulha anda e a montagem está quieta, como sempre esteve. No instante em que ela
+  // ia desaparecer pela direita, trocam de papel: a linha trava no MEIO e passa a ser a música a
+  // deslizar por baixo, como num gravador de fita. Antes disto, carregar em tocar era ficar a
+  // rolar atrás da linha vermelha com a mão.
+  //
+  // ⚠️ E O MODO GUARDA-SE, não se adivinha a cada passo. Perguntar só "está à vista?" dá o
+  // CONTRÁRIO do que se pede: centrada, ela está à vista, e no passo seguinte a regra mandaria
+  // não mexer — ela voltava a derivar até à borda, saltava outra vez para o meio, e a vista
+  // virava páginas em vez de deslizar. É por isso que as duas telas GUARDAM o `seguindo` e o
+  // devolvem ao núcleo, em vez de o recalcularem.
+  it('as duas telas guardam o modo da rolagem, e a agulha anterior', () => {
+    const oEditor = semComentarios(editor);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    [oEditor, aLinhaDoTempo].forEach((fonte) => {
+      expect(fonte).toContain('passoDaVista({');
+      // O modo vai e volta: sem isto, o núcleo decidiria sempre a partir do princípio.
+      expect(fonte).toContain('seguindo: seguindoAAgulha.current');
+      expect(fonte).toContain('seguindoAAgulha.current = passo.seguindo');
+      // ⚠️ E A AGULHA ANTERIOR TAMBÉM. É ela que distingue a música a tocar de alguém a LEVAR a
+      // agulha — e as duas pedem vistas diferentes. Sem ela, voltar ao início prendia a linha.
+      expect(fonte).toContain('anterior: antes');
+      expect(fonte).toContain('agulhaAntes.current = ');
+      // ⚠️ E O TEMPO DE PAREDE COM ELA. É ele que distingue a música a andar de alguém a mover a
+      // agulha: com um limite fixo de passo, um quadro lento entregava 600 ms de música de uma
+      // vez, a regra lia-o como um salto, e a linha largava o modo travado — descolava-se do
+      // meio e ia derivando até sair. Viu-se de olho no aparelho.
+      expect(fonte).toContain('desdeAnterior');
+      // ⚠️ E MEDIDO, e não um número escrito à mão. Com um `0.05` fixo ali, a regra volta a ter
+      // um limite de passo com outro nome — e o quadro lento volta a largar o modo. Este caso
+      // deixou passar exatamente essa mutação enquanto só exigia a palavra.
+      expect(fonte).not.toMatch(/desdeAnterior: [\d.]/);
+      expect(fonte).toMatch(/(performance|Date)\.now\(\)/);
+      // Rolar sem conferir o `null` é perseguir a agulha mesmo no primeiro modo.
+      expect(fonte).toContain('passo.rolagem !== null');
+
+      // ⚠️ E É UM EFEITO DE LAYOUT, NAS DUAS — a diferença entre uma linha parada e uma linha a
+      // tremer. A agulha e a rolagem dizem a MESMA coisa por dois caminhos: o `left` que o React
+      // desenha e a rolagem que se escreve aqui. Num efeito normal eles caem em quadros
+      // DIFERENTES — a agulha aparece no sítio novo com a rolagem antiga (e salta para a frente),
+      // e só a seguir a rolagem a apanha (e ela volta). Vinte vezes por segundo, é um tremor.
+      //
+      // Medido no navegador: com o efeito de layout a agulha fica a meio pixel do centro ao
+      // longo de 120 quadros. Sem ele, ela salta o passo inteiro de cada tique.
+      //
+      // Na web o dono a tocar é o laço de quadro; o que tem de ser de LAYOUT é o caminho do
+      // React, que decide com a música parada. No aparelho é o único caminho, e por isso é ele.
+      const oDaVista = fonte.slice(0, fonte.lastIndexOf('passoDaVista({'));
+      expect(oDaVista.lastIndexOf('useLayoutEffect'))
+        .toBeGreaterThan(oDaVista.lastIndexOf('useEffect('));
+    });
+
+    // ⚠️ E A AGULHA PRESA NA MÃO NÃO SE SEGUE, na web. Arrastá-la para fora do que se vê é um
+    // gesto de quem a está a LEVAR a um sítio: rolar por baixo da mão move o alvo enquanto ela
+    // o persegue, e a agulha foge do dedo.
+    const antesDoPasso = oEditor.slice(
+      oEditor.lastIndexOf('useEffect', oEditor.indexOf('passoDaVista({')),
+      oEditor.indexOf('passoDaVista({'),
+    );
+    expect(antesDoPasso).toContain('agulhaPresa.current');
+
+    // ⚠️ E NO APARELHO A ROLAGEM LÊ-SE NA LINHA DA INTERFACE, e não pelo `onScroll`. Num
+    // `ScrollView` não há `scrollLeft` para perguntar; e uma rolagem PEDIDA do lado de lá pode
+    // nunca chegar a disparar o evento do JavaScript — a conta ficava a comparar a agulha com
+    // uma rolagem parada no zero. O `useScrollViewOffset` é o valor real, atualizado onde a
+    // rolagem acontece.
+    expect(aLinhaDoTempo).toContain('useScrollViewOffset(rolagem)');
+    expect(aLinhaDoTempo).toContain('rolagemAtual: onde.value');
+    // ⚠️ E A CONTA DE SEGUIR NÃO VOLTA A LER O `onScroll`. Ele existe outra vez no ficheiro, mas
+    // para a BARRA do clipe escolhido, que precisa da rolagem em estado — e só enquanto há um
+    // escolhido. Quem decide onde a vista fica continua a ler o valor da linha da interface.
+    expect(aLinhaDoTempo).not.toContain('rolagemAtual: rolagemVista');
+    // ⚠️ E NADA SE ANIMA, NEM O SALTO DE ENTRADA. Uma rolagem animada continua a correr depois
+    // de pedida e engole as dos vigésimos de segundo seguintes: a linha descolava-se do meio, ia
+    // derivando para a direita, e voltava de repente quando a animação acabava. Foi visto de
+    // olho no aparelho; nenhum teste o apanhava, porque em teste o `scrollTo` responde na hora.
+    expect(aLinhaDoTempo).not.toContain('animated: true');
+
+    // ⚠️ E A ROLAGEM DO APARELHO CORRE NA LINHA DA INTERFACE. O `scrollTo` de um `ScrollView`
+    // normal é um pedido que atravessa a ponte, e a vinte por segundo o outro lado não os aplica
+    // todos: medido no aparelho, a montagem andava a 83 % do ritmo da música e a linha ia-se
+    // descolando do meio uns pontos por segundo até encostar à borda e voltar de repente.
+    //
+    // O do reanimated corre do lado que desenha, e cada pedido chega inteiro.
+    expect(aLinhaDoTempo).toContain('useAnimatedRef<Animated.ScrollView>()');
+    expect(aLinhaDoTempo).toContain('rolarNaInterface(rolagem, ate, 0, false)');
+    expect(aLinhaDoTempo).toContain('runOnUI(');
+    // E nunca de volta ao pedido que atravessa a ponte.
+    expect(aLinhaDoTempo).not.toContain('rolagem.current?.scrollTo(');
+  });
+
+  // ⚠️ O ZOOM NÃO PERDE A AGULHA DE VISTA, NAS DUAS.
+  //
+  // Quem aproxima a linha do tempo está quase sempre a preparar um corte: quer ver a agulha de
+  // perto para acertar no sítio exato. Mas aproximar multiplica a distância de tudo ao zero — a
+  // mesma rolagem passa a apontar para outro segundo — e a montagem saltava para um ponto
+  // qualquer da música. O gesto seguinte era sempre rolar à procura da linha vermelha:
+  // aproximar custava dois gestos, e o segundo não tinha nada a ver com o que se queria fazer.
+  it('mudar o zoom centra a agulha, nas duas telas', () => {
+    const oEditor = semComentarios(editor);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    [oEditor, aLinhaDoTempo].forEach((fonte) => {
+      expect(fonte).toContain('rolagemQueCentra(');
+      // ⚠️ E A CONTA É COM A LARGURA DAS ONDAS. A coluna das faixas fica colada por cima da
+      // montagem numa, e é irmã do scroll na outra: nos dois casos ela não é área de onda, e
+      // centrar na largura da tela punha a agulha atrás dela.
+      expect(fonte).toMatch(/(clientWidth - larguraDasPistas|larguraVisivel - COLUNA)/);
+    });
+
+    // ⚠️ NA WEB, DEPOIS DA PINTURA. O `scrollLeft` novo só existe depois de o conteúdo ter a
+    // largura nova: escrito no mesmo instante em que o zoom muda, ele é medido contra a largura
+    // ANTIGA e o navegador trava-o no fim da rolagem de antes.
+    const oMudar = oEditor.slice(oEditor.indexOf('const mudarZoom ='));
+    expect(oMudar.slice(0, oMudar.indexOf('\n  };'))).toContain('requestAnimationFrame(');
+
+    // ⚠️ E NO APARELHO, SÓ QUANDO A ESCALA MUDA. A agulha anda sozinha a tocar: com a posição
+    // nas dependências, cada décimo de segundo arrastava a montagem de volta para o meio e era
+    // impossível olhar para outro sítio enquanto a música toca.
+    const oEfeito = aLinhaDoTempo.slice(aLinhaDoTempo.indexOf('const ondeEstaAAgulha ='));
+    const ate = oEfeito.slice(0, oEfeito.indexOf('}, [escala]);') + '}, [escala]);'.length);
+    expect(ate).toContain('}, [escala]);');
+    expect(ate).toContain('ondeEstaAAgulha.current');
+    expect(ate).not.toContain('estado.posicao,');
+  });
+
+  // ⚠️ O ÁUDIO NOVO ENTRA NO FIM DA FAIXA, NAS DUAS — e não no segundo zero.
+  //
+  // Mandado para uma faixa que já tem áudio, o take novo nascia EM CIMA do que lá estava: dois
+  // clipes no mesmo segundo tocam juntos e desenham-se um por cima do outro, e quem enviava via
+  // a montagem engolir o ficheiro. Sobrepor continua a poder fazer-se, arrastando depois — o
+  // que muda é deixar de ser o que acontece sem ninguém pedir.
+  //
+  // ⚠️ E O SÍTIO É CONTA DO NÚCLEO, pelo mesmo motivo da cópia: escrita à mão em cada tela, ela
+  // divergiria no primeiro ajuste, e a mesma montagem teria dois desenhos.
+  it('o áudio mandado para uma faixa cheia entra no fim dela, nas duas', () => {
+    const naTela = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', 'pages', 'Catalog', 'ProjectSpace.tsx'), 'utf8',
+    ));
+    const oEditor = semComentarios(editor);
+    const oApp = semComentarios(app);
+
+    // Na web quem escolhe o segundo é o botão da faixa, que lê o fim dela.
+    expect(oEditor).toContain('fimDaPista(alvo?.clips)');
+    expect(oApp).toContain('fimDaPista(');
+
+    // ⚠️ E O LOTE EMPILHA-SE A SI PRÓPRIO. Sem o acumulador, quatro ficheiros de uma vez
+    // deixavam de se sobrepor ao que já lá estava e passavam a sobrepor-se uns aos outros — o
+    // mesmo defeito com outro nome, e o mais fácil de deixar passar.
+    [naTela, oApp].forEach((fonte) => {
+      const posto = fonte.slice(fonte.indexOf('track_id: pistaAlvo') >= 0
+        ? fonte.indexOf('track_id: pistaAlvo')
+        : fonte.indexOf('track_id: pistaId'));
+      const corpo = posto.slice(0, posto.indexOf('} else'));
+      expect(corpo).toContain('start_seconds: proximo');
+      expect(corpo).toContain('proximo += duracao');
+      // E nunca de volta ao zero fixo.
+      expect(corpo).not.toContain('start_seconds: 0');
+    });
+  });
+
+  // ⚠️ O CLIQUE DA BARRA NÃO SOBE — e a regra é da BARRA, não de cada botão.
+  //
+  // O clipe inteiro ALTERNA a seleção ao clique, e a barra vive dentro dele. Com um
+  // `stopPropagation` por botão, cada ação nova nasce sem ele: foi assim que o seletor de cor
+  // chegou quebrado (a paleta abria e fechava no mesmo instante) e, depois de corrigido nele,
+  // foi assim que "duplicar" chegou quebrado a seguir.
+  it('a barra de ações do clipe para o clique num sítio só, na web', () => {
+    const naWeb = semComentarios(clipe);
+    const daBarra = naWeb.slice(naWeb.indexOf('bottom: 6,\n'));
+    const acoes = daBarra.slice(0, daBarra.indexOf("role='group'"));
+
+    // O contentor para-o; nenhum botão da fila precisa de o repetir.
+    const abertura = naWeb.slice(naWeb.indexOf('{selecionado && !fixo && ('), naWeb.indexOf('bottom: 6,\n'));
+    expect(abertura).toContain('onClick={(evento) => evento.stopPropagation()}');
+    expect(acoes).not.toContain('evento.stopPropagation(); ');
+  });
+
+  // ⚠️ A COR MORA NA MONTAGEM, e não na coluna das faixas.
+  //
+  // O cabeçalho tinha uma fita de 3 px da cor da pista na borda esquerda, nas duas telas. Saiu
+  // por pedido do dono do produto, e o argumento é de leitura: a cor existe para distinguir uma
+  // faixa da outra no CLIPE — o objeto que se olha, se arrasta e se corta. Repetida numa fita
+  // encostada à borda do ecrã, ela competia com a coisa que devia marcar, e três fitas puxavam
+  // o olho para uma coluna onde não há nada para ver.
+  //
+  // ⚠️ E A FITA VOLTA FÁCIL. É uma linha de estilo em cada tela, e repô-la não parte nada: as
+  // cores continuariam certas, a paleta continuaria a gravar, e a única coisa errada seria o
+  // sítio para onde o olho vai. É exatamente o tipo de mudança que se desfaz sem ninguém notar.
+  it('o cabeçalho da faixa não é pintado com a cor dela, em nenhuma das duas', () => {
+    const cabecalhoNaWeb = semComentarios(editor);
+    const daPista = cabecalhoNaWeb.slice(cabecalhoNaWeb.indexOf('const cabecalhoDaPista ='));
+    const corpo = daPista.slice(0, daPista.indexOf('const cabecalhoDaMesa') + 1 || 4000);
+    expect(corpo).not.toMatch(/borderLeft:.*cor/);
+
+    // No aparelho o estilo é de uma folha só, e a borda nem largura tem.
+    const estilo = daLinhaDoTempo.slice(daLinhaDoTempo.indexOf('cabecalhoDaFaixa: {'));
+    expect(estilo.slice(0, estilo.indexOf('},'))).not.toContain('borderLeftWidth');
+    expect(semComentarios(daLinhaDoTempo)).not.toContain('borderLeftColor: calada');
+
+    // ⚠️ MAS A FAIXA CALADA CONTINUA A DIZER-SE. Era a fita que ficava cinzenta; sem ela, o que
+    // resta é a coluna a esmorecer. Sem esta linha, apagar a fita apagava também o único sinal
+    // de que aquela faixa não vai soar — e o M carregado, sozinho, é pequeno de mais.
+    expect(corpo).toContain('opacity: calada ? 0.6 : 1');
+    expect(daLinhaDoTempo).toContain('calada && estilos.faixaCalada');
+    expect(daLinhaDoTempo).toContain('faixaCalada: { opacity: 0.6 }');
+  });
+
+  // ⚠️ A COR GRAVA NA HORA, nas duas — e é a única parte da pista que o faz.
+  //
+  // As outras chegam de uma RÉGUA a ser arrastada (o fader, o pan) e por isso esperam: cada
+  // pixel do gesto pediria uma escrita. Escolher uma cor é um toque único e deliberado, e adiá-lo
+  // só abre a janela em que fechar a tela logo a seguir perde a escolha.
+  //
+  // ⚠️ ESTE CASO EXISTE PORQUE A WEB JÁ DIVERGIU AQUI. Ela mandava a cor pelo mesmo caminho do
+  // fader e herdava o adiamento dele — a mesma escolha com duas durações nas duas telas, que é
+  // a diferença que ninguém vê até perder uma.
+  it('a cor grava sem adiar, nas duas telas', () => {
+    const naTela = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', 'pages', 'Catalog', 'ProjectSpace.tsx'), 'utf8',
+    ));
+
+    // Na web: a cor sai ANTES do `adiar`, e cancela o que estivesse a caminho para esta pista.
+    const mudarPista = naTela.slice(naTela.indexOf('aoMudarPista:'));
+    const corpo = mudarPista.slice(0, mudarPista.indexOf('aoApagarPista:'));
+    const ondeACor = corpo.indexOf('parte.color_index !== undefined');
+    expect(ondeACor).toBeGreaterThan(-1);
+    expect(ondeACor).toBeLessThan(corpo.indexOf('adiar(`pista:'));
+    expect(corpo.slice(ondeACor)).toContain('esquecer(`pista:${pistaId}`)');
+
+    // E no aparelho a mesma coisa: `updateTrack` direto, sem passar por um relógio.
+    const oApp = semComentarios(app);
+    const pintar = oApp.slice(oApp.indexOf('const pintarPista ='));
+    expect(pintar.slice(0, pintar.indexOf('};'))).not.toContain('setTimeout');
+  });
+
+  // ⚠️ A COR ESCOLHIDA TRAZ UM ANEL. Seis bolinhas iguais não dizem qual é a desta faixa, e sem
+  // isso a pessoa carrega na que já estava e nada acontece — o seletor parece quebrado.
+  it('a cor em uso aparece marcada na paleta, nas duas', () => {
+    const naWeb = semComentarios(clipe);
+    const aLinhaDoTempo = semComentarios(daLinhaDoTempo);
+
+    expect(naWeb).toMatch(/aria-pressed=\{indiceDaCor % CORES_DAS_PISTAS\.length === i\}/);
+    // E o índice que chega ao clipe é o da FAIXA, não a posição dele na pilha.
+    expect(semComentarios(editor)).toContain('indiceDaCor={faixa.color_index ?? indice}');
+    expect(aLinhaDoTempo).toContain('accessibilityState={{ selected: atual }}');
+    expect(aLinhaDoTempo).toContain('borderColor: atual ?');
+  });
+
+  // ⚠️ A AGULHA COMEÇA NA RÉGUA, nas duas telas — e é a BOLINHA que decide isto.
+  //
+  // Ela é onde o olho encontra a agulha ao percorrer a régua: é o que a faz um objeto que se
+  // pega, e não um risco a atravessar a montagem. Na web ela nascia uma régua abaixo, escondida
+  // entre os números e a primeira faixa — a mesma montagem com a pega em dois sítios diferentes.
+  //
+  // O `top` da web é NEGATIVO porque a agulha mora na pilha das faixas, que começa depois da
+  // régua: subir por ali é o que a deixa atravessá-la sem mudar de pai — e mudar de pai
+  // custava-lhe a coordenada horizontal, que é a da pilha.
+  it('a agulha atravessa a régua, e a bolinha fica no topo dela', () => {
+    const naWeb = semComentarios(editor);
+    const noApp = semComentarios(app || '');
+    const aLinhaDoTempo = semComentarios(fs.readFileSync(
+      path.join(__dirname, '..', '..', 'apps', 'mobile', 'src', 'casca', 'jam', 'mesa', 'LinhaDoTempo.tsx'),
+      'utf8',
+    ));
+
+    // A altura cobre a régua MAIS as faixas, nas duas.
+    expect(naWeb).toContain('top: -ALTURA_DA_REGUA');
+    expect(naWeb).toContain('height: ALTURA_DA_REGUA + Math.max(pistas.length, 1) * alturaDaPista');
+    expect(aLinhaDoTempo).toContain('height: ALTURA_DA_REGUA + pistas.length * ALTURA_DA_FAIXA');
+
+    // E a bolinha senta no topo da agulha, que é agora o topo da régua.
+    // ⚠️ ANCORADO NO `top` NEGATIVO, que só a agulha tem. `data-agulha` está em DUAS coisas — a
+    // régua também o leva, porque tocar nela move a agulha — e a primeira versão disto cortava
+    // a partir da régua e media uma fatia vazia.
+    const aBolinhaDaWeb = naWeb.slice(naWeb.indexOf('top: -ALTURA_DA_REGUA'), naWeb.indexOf('top: -ALTURA_DA_REGUA') + 600);
+    expect(aBolinhaDaWeb).toContain("top: 0, left: '50%'");
+    expect(aLinhaDoTempo).toContain('cabecaDaAgulha');
+
+    // A régua mede o mesmo nas duas: sem isso, "uma régua acima" é duas distâncias diferentes.
+    expect(naWeb.includes('ALTURA_DA_REGUA') && aLinhaDoTempo.includes('ALTURA_DA_REGUA')).toBe(true);
+    const daWeb = fs.readFileSync(path.join(__dirname, '..', 'pages', 'Catalog', 'daw', 'tokens.ts'), 'utf8');
+    const medida = (fonte: string) => Number(fonte.match(/ALTURA_DA_REGUA = (\d+)/)![1]);
+    expect(medida(aLinhaDoTempo)).toBe(medida(daWeb));
+  });
+
+  // ⚠️ O ANDAMENTO E O TOM: O RÓTULO MUDOU-SE PARA DENTRO DO CAMPO, e o que o campo aceita é uma
+  // decisão só, escrita uma vez.
+  //
+  // O rótulo vivia ao lado, e o campo vazio mostrava um traço: um retângulo com um traço, ao lado
+  // da palavra "BPM", não se lia como campo — via-se a palavra e não se percebia que havia ali
+  // onde escrever. Como vazio, ele diz as duas coisas de uma vez.
+  it('o andamento e o tom dizem o que são por dentro, e filtram na tecla', () => {
+    const naWeb = semComentarios(tela);
+    const noApp = semComentarios(campoNoApp);
+
+    // O vazio É o rótulo, nas duas.
+    expect(naWeb).toContain('placeholder={vazio}');
+    expect(naWeb).toContain("vazio='BPM'");
+    expect(naWeb).toContain("vazio='TOM'");
+    expect(noApp).toContain('placeholder={sufixo.toUpperCase()}');
+
+    // ⚠️ E NENHUMA DAS DUAS O REPETE POR FORA. Era esse texto solto ao lado que fazia o campo
+    // vazio desaparecer; deixá-lo numa das telas seria voltar a ter duas telas diferentes.
+    expect(noApp).not.toContain('estilos.sufixo');
+
+    // ⚠️ O FILTRO VEM DO NÚCLEO, e é o mesmo nos dois: o `keyboardType`/`inputMode` é só uma
+    // sugestão ao aparelho — há teclados com símbolos ao lado dos números, e colar de outro
+    // sítio passa por cima de qualquer teclado. Duas cópias da mesma expressão regular divergem
+    // no primeiro ajuste.
+    [naWeb, noApp].forEach((fonte) => {
+      expect(fonte).toContain("from '@maestra/core/utils/camposDaGravacao'");
+      expect(fonte).toContain('soOAndamento(');
+      expect(fonte).toContain('soOTom(');
+    });
+  });
+
+  // ⚠️ O X PERGUNTA, E NÃO DECIDE. Gerar a guia é o certo para quem acabou de montar — é o que
+  // faz a lista de Músicas tocar o que se fez — e custa um minuto e meio no aparelho a quem
+  // entrou só para ouvir e mexeu num fader. Quem sabe qual dos dois é, é quem está lá.
+  it('fechar pergunta pela guia, com as mesmas palavras nas duas telas', () => {
+    const espaco = semComentarios(tela);
+    const oApp = semComentarios(app);
+    const aTelaDaWeb = semComentarios(fechar);
+    const aTelaDoApp = semComentarios(fecharNoApp);
+
+    // Sem nada por gravar não há pergunta: ela seria uma porta a mais no caminho de sair.
+    expect(espaco).toContain('if (sujo.current && podeEditar) setPerguntandoDaGuia(true); else void sair();');
+    expect(oApp).toContain('if (sujo.current && podeEditar && aberta) setPerguntandoDaGuia(true);');
+
+    // ⚠️ AS PALAVRAS SÃO DO NÚCLEO. Uma pergunta que muda de texto conforme o aparelho é duas
+    // perguntas diferentes — e a que fica sem o preço de "só fechar" engana quem a lê.
+    [aTelaDaWeb, aTelaDoApp].forEach((fonte) => {
+      expect(fonte).toContain('PERGUNTA_DA_GUIA.titulo');
+      expect(fonte).toContain('PERGUNTA_DA_GUIA.gerar');
+      expect(fonte).toContain('PERGUNTA_DA_GUIA.sair');
+      expect(fonte).toContain('PERGUNTA_DA_GUIA.ficar');
+      // A espera ganha da pergunta: quem já escolheu gerar não vê a pergunta por baixo.
+      expect(fonte).toContain('if (gerando != null)');
+      expect(fonte).toContain('rotuloDaGuia(gerando)');
+      // A mão vem do núcleo, repintada com as cores do sistema — e uma vez só.
+      expect(fonte).toContain('pintarALottie(ANIMACAO_DA_GUIA, CORES_DA_ANIMACAO)');
+    });
+
+    // ⚠️ NA WEB, O `lottie-web` ENTRA TARDE — dentro do efeito, e não no topo do ficheiro. Ele
+    // desenha num canvas assim que é carregado, e debaixo do jsdom isso rebenta: com o import no
+    // topo, QUALQUER teste da web que importasse o editor morria antes de correr um caso. De
+    // lambuja, são 250 kB fora do pacote inicial de quem nunca fecha o Espaço JAM.
+    expect(aTelaDaWeb).toContain("import('lottie-web')");
+    expect(aTelaDaWeb).not.toContain("import lottie");
+  });
+
+  // ⚠️ A GUIA É REGRAVADA NO MESMO CAMINHO A CADA SAÍDA, e é o que a lista de Músicas toca. Uma
+  // montagem que renderize mudo — todas as pistas caladas, um áudio que não chegou a
+  // descodificar — apagaria a guia boa e deixaria a música sem nada para tocar, sem erro nenhum
+  // a explicar porquê. Entre gravar silêncio e não gravar, não gravar é sempre melhor.
+  it('uma montagem muda não grava por cima da guia que estava lá', () => {
+    const espaco = semComentarios(tela);
+    const oApp = semComentarios(app);
+
+    // A trava vem ANTES do codificador: nem vale a pena gastar o MP3 de uma coisa que não soa.
+    const aGuia = espaco.slice(espaco.indexOf('const gerarGuia'));
+    const ateOCatch = aGuia.slice(0, aGuia.indexOf('} catch {'));
+    expect(ateOCatch).toContain('if (!temSom(rendido)) { message.warning(MONTAGEM_MUDA); return; }');
+    expect(ateOCatch.indexOf('temSom(')).toBeLessThan(ateOCatch.indexOf('paraMp3('));
+
+    // E o mesmo no aparelho, com a mesma frase — o núcleo é que a escreve — e também antes do
+    // codificador, que lá custa um minuto e meio.
+    const aGuiaDoApp = oApp.slice(oApp.indexOf('const gerarAGuia'));
+    const ateOCatchDoApp = aGuiaDoApp.slice(0, aGuiaDoApp.indexOf('} catch {'));
+    expect(ateOCatchDoApp).toContain('if (!temSom(rendido)) { Alert.alert(');
+    expect(ateOCatchDoApp).toContain('MONTAGEM_MUDA');
+    expect(ateOCatchDoApp.indexOf('temSom(')).toBeLessThan(ateOCatchDoApp.indexOf('bytesDoMp3('));
   });
 
   // ⚠️ O TEXTO FICA NA TELA, ao lado do ícone — e não só no `title`. Redondo e mudo, o selo
@@ -249,7 +1221,7 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(regra).toContain('gap:');
     // Ancorada pela direita: cresce para a esquerda, e a letra e o "?" não saem do lugar
     // quando o texto muda de comprimento.
-    expect(regra).toContain('right: 106px');
+    expect(regra).toContain('right: 132px');
     expect(regra).not.toMatch(/\bwidth:/);
   });
 
@@ -372,8 +1344,8 @@ describe('cromo do editor do Espaço JAM', () => {
       expect(oClipe).toContain('const podeCortar = !fixo &&');
 
       // ⚠️ `noDedo` NÃO é `fixo`: fixo é a pista da Mix, e troca o rótulo do clipe para
-      // "Mix". Um clipe normal num telemóvel continua a ser "Take N".
-      expect(oClipe).toContain("{fixo ? 'Mix' : `Take ${indice + 1}`}");
+      // "Mix".
+      expect(oClipe).toContain("{fixo ? 'Mix' :");
     });
 
     // ⚠️ O ARRASTO NUNCA CHEGAVA A ACONTECER, e não era por regra nenhuma: num ecrã de toque o
@@ -424,10 +1396,42 @@ describe('cromo do editor do Espaço JAM', () => {
     it('a barra do clipe cabe dentro dele, com alvos de dedo', () => {
       const oClipe = semComentarios(clipe);
 
-      expect(oClipe).toContain("...(noDedo ? { bottom: 6, left: 6 } : { top: -38, left: 0 })");
-      expect(oClipe).toContain("noDedo ? { height: 34, padding: '0 12px' }");
-      // Nos dois botões: um alvo de 24 px acerta-se com o rato e falha-se com o polegar.
-      expect(oClipe.match(/\.\.\.alvo,/g)).toHaveLength(2);
+      // ⚠️ SEMPRE DENTRO, EM BAIXO À ESQUERDA. Por cima do clipe, a barra da primeira pista
+      // saía pelo topo da área que rola. É onde o app a pôs, e ali serve aos dois.
+      // ⚠️ O `left` JÁ NÃO ESTÁ AQUI: ele é escrito à mão, porque segue a agulha E a janela.
+      expect(oClipe).toContain('bottom: 6,');
+      expect(oClipe).not.toContain('top: -38');
+      expect(oClipe).toContain('noDedo ? { width: 34, height: 34 }');
+
+      // ⚠️ EM TODOS OS BOTÕES DA BARRA, e não num número fixo deles. Este caso já se partiu uma
+      // vez, quando o seletor de cor veio para cá: dizia `toHaveLength(2)` e acusou a chegada do
+      // terceiro botão em vez de conferir se ele tinha o alvo certo. Um alvo de 26 px acerta-se
+      // com o rato e falha-se com o polegar — a regra é de todos, e não de dois.
+      //
+      // ⚠️ A FATIA ACABA NA PALETA. As seis bolinhas também são `<button>` e não levam `alvo`:
+      // são redondas, de 20 px, e ficam separadas umas das outras — não são as AÇÕES da barra.
+      const daBarra = oClipe.slice(oClipe.indexOf('bottom: 6,\n'));
+      const acoes = daBarra.slice(0, daBarra.indexOf("role='group'"));
+      const botoes = acoes.split('<button').slice(1);
+      expect(botoes.length).toBeGreaterThanOrEqual(3);
+      botoes.forEach((botao) => expect(botao.slice(0, botao.indexOf('</button>'))).toContain('...alvo,'));
+    });
+
+    // ⚠️ SÓ OS ÍCONES. "DIVIDIR" e "REMOVER" somavam 190 px de barra por cima de um clipe que
+    // muitas vezes mede menos do que isso — e num clipe estreito ela saía pelos dois lados, a
+    // tapar os vizinhos. O nome continua no `title` e no `aria-label`.
+    it('os botões do clipe são ícones, e não palavras', () => {
+      const oClipe = semComentarios(clipe);
+
+      // O texto do botão, e não a palavra em qualquer sítio: ela continua a aparecer no
+      // comentário que explica por que ela saiu.
+      expect(oClipe).not.toMatch(/\/>\s*DIVIDIR/);
+      expect(oClipe).not.toMatch(/\/>\s*REMOVER/);
+      expect(oClipe).toContain('<FiScissors size={13} />');
+      expect(oClipe).toContain('<FiCopy size={13} />');
+      expect(oClipe).toContain('<FiTrash2 size={13} />');
+      expect(oClipe).toContain("aria-label='Dividir o clipe na agulha'");
+      expect(oClipe).toContain("aria-label='Remover o clipe'");
     });
 
     it('a coluna encolhe, e as faixas acompanham a mesma altura', () => {
@@ -461,6 +1465,114 @@ describe('cromo do editor do Espaço JAM', () => {
     quadros.forEach((q) => expect(q).not.toContain('0 0 41 41'));
   });
 
+  // ⚠️ OS TRÊS ÍCONES DESENHADOS TÊM O MESMO TAMANHO E O MESMO PESO NA FILA DAS ABAS.
+  //
+  // Os originais vêm em quadros diferentes, com o desenho a ocupar uma fatia diferente de cada
+  // um: pedir 15 px aos três dava três tamanhos na tela. E o tamanho não chega — o TRAÇO também
+  // conta. Medido a 15 px com os valores que vinham dos ficheiros, o microfone desenhava 0,89 px
+  // de tinta e o fader 1,25: ao lado um do outro, o primeiro lê-se como um desenho por acabar.
+  //
+  // ⚠️ E A PROPORÇÃO DE REFERÊNCIA É A DO FEATHER (2 para 24) mesmo agora que nenhuma das quatro
+  // abas é dele: é o Feather que desenha todo o resto do editor — o X do canto, a lixeira da
+  // faixa, a tesoura do clipe. A fila das abas fica por cima dele, e um peso próprio ali faria a
+  // barra de cima parecer de outro programa.
+  it('os ícones das abas têm o mesmo peso de traço, na proporção do Feather', () => {
+    const fonte = semComentarios(icones);
+    const doIcone = (nome: string) => {
+      const daqui = fonte.slice(fonte.indexOf(`export const ${nome}`));
+      const corpo = daqui.slice(0, daqui.indexOf('</svg>'));
+      const quadro = corpo.match(/viewBox="[-\d.]+ [-\d.]+ ([\d.]+) [\d.]+"/);
+      const tracos = (corpo.match(/strokeWidth="([\d.]+)"/g) ?? [])
+        .map((s) => Number(s.replace(/\D*([\d.]+)"/, '$1')));
+      return { lado: Number(quadro![1]), traco: Math.max(...tracos), tracos };
+    };
+
+    const doFeather = 2 / 24;
+    // ⚠️ E O DE BAIXAR TAMBÉM, embora não seja de aba: ele fica nos botões azuis do Exportar,
+    // ao lado das outras coisas que o editor desenha. A regra é a mesma — o que está lado a
+    // lado pesa igual.
+    ['IconeDaTimeline', 'IconeDoMixer', 'IconeDaFicha', 'IconeDeExportar', 'IconeDeBaixar']
+      .forEach((nome) => {
+        const { lado, traco } = doIcone(nome);
+        // Meio milésimo de folga: os números são arredondados à segunda casa no ficheiro.
+        expect(Math.abs(traco / lado - doFeather)).toBeLessThan(0.002);
+      });
+
+    // ⚠️ E QUANDO UM DESENHO TEM DOIS TRAÇOS, A RELAÇÃO ENTRE ELES FICA DE PÉ. O de baixar vem
+    // com a seta mais grossa do que o círculo (1,2 para 1): acertar a espessura à fila é
+    // multiplicar os DOIS pelo mesmo fator, e não igualar o menor ao maior — isso achataria o
+    // desenho, e o teste que só olhasse para o maior deixava passar.
+    const doBaixar = doIcone('IconeDeBaixar').tracos.slice().sort((a, b) => b - a);
+    expect(doBaixar).toHaveLength(2);
+    expect(Math.abs(doBaixar[0] / doBaixar[1] - 2.02054 / 1.68378)).toBeLessThan(0.01);
+
+    // ⚠️ E NENHUMA DAS QUATRO É EMPRESTADA. A Ficha e o Exportar foram os últimos a sair do
+    // Feather; enquanto lá estiveram, eram os únicos desenhos de outra mão no meio dos do dono
+    // do produto, e destoavam por isso — não por tamanho, por traço.
+    const naWeb = semComentarios(editor);
+    expect(naWeb).toContain('<IconeDaFicha tamanho={TAMANHO_DO_ICONE_DA_ABA} />');
+    expect(naWeb).toContain('<IconeDeExportar tamanho={TAMANHO_DO_ICONE_DA_ABA} />');
+    expect(naWeb).not.toMatch(/<Fi[A-Za-z]+ size=\{TAMANHO_DO_ICONE_DA_ABA\}/);
+
+    const oApp = semComentarios(app);
+    expect(oApp).toContain("{ chave: 'ficha', rotulo: 'Ficha', icone: IconeDaFicha }");
+    expect(oApp).toContain("{ chave: 'exportar', rotulo: 'Exportar', icone: IconeDeExportar }");
+    // E no aparelho o mesmo: nenhuma aba desenhada pelo Feather.
+    const asAbas = oApp.slice(oApp.indexOf('const ABAS'), oApp.indexOf('];', oApp.indexOf('const ABAS')));
+    expect(asAbas).not.toContain('<Feather');
+  });
+
+  // ⚠️ OS DESENHOS SÃO OS MESMOS NAS DUAS SUPERFÍCIES, À VÍRGULA. O arquivo do app já dizia
+  // isto num comentário, e um comentário não segura nada: o ícone de pôr áudio na pista foi
+  // trocado e nada obrigava a segunda tela a ser trocada também. O editor é A MESMA tela nos
+  // dois sítios; dois desenhos parecidos mas não iguais são lidos como dois produtos.
+  //
+  // Compara o que o traço DESENHA — os caminhos e os quadros —, e não o ficheiro: um usa
+  // `stroke="currentColor"` e o outro uma cor recebida, um escreve `<path>` e o outro `<Path>`.
+  it('os ícones do editor são os mesmos desenhos nas duas telas', () => {
+    // ⚠️ COMPARA A FIGURA INTEIRA, e não só os `d=`. A primeira versão deste teste olhava para
+    // os caminhos, e o cartão do ícone de áudio é um `<rect>`: dava para deixar o app com o
+    // retângulo noutro sítio sem que nada se queixasse.
+    const desenho = (fonte: string) => (semComentarios(fonte)
+      // `x={1}` na web é `x="1"` no app — a chave é do JSX, e não do desenho. E `<Path>` do
+      // `react-native-svg` é o `<path>` do navegador.
+      .replace(/=\{([^}]*)\}/g, '="$1"')
+      .toLowerCase()
+      .match(/<(?:svg|path|rect|circle|line|polygon|polyline|ellipse)[^>]*>/g) ?? [])
+      // A cor é a única coisa que muda de propósito: a web herda-a do CSS, o app recebe-a.
+      .map((figura) => figura
+        .replace(/stroke="[^"]*"/g, '').replace(/fill="[^"]*"/g, '')
+        .replace(/aria-hidden/g, '').replace(/\s+/g, ' '))
+      .sort();
+
+    // ⚠️ COMPARA ÍCONE A ÍCONE, e não os ficheiros inteiros. A web tem um desenho que o
+    // aparelho não tem — o de BAIXAR, porque lá os mesmos botões partilham em vez de
+    // descarregar — e comparar os ficheiros de uma vez dizia que as duas telas tinham
+    // divergido. O que importa não é o número de desenhos: é que nenhum desenho com o MESMO
+    // nome seja diferente nos dois sítios, e que o aparelho não tenha nenhum que a web não
+    // tenha (esse teria vindo de outra mão).
+    const porNome = (fonte: string) => {
+      const limpa = semComentarios(fonte);
+      const nomes = Array.from(limpa.matchAll(/export const (Icone[A-Za-z]+)/g), (m) => m[1]);
+      return new Map(nomes.map((nome, i) => {
+        const daqui = limpa.slice(limpa.indexOf(`export const ${nome}`));
+        const ate = i + 1 < nomes.length ? daqui.indexOf(`export const ${nomes[i + 1]}`) : daqui.length;
+        return [nome, desenho(daqui.slice(0, ate))];
+      }));
+    };
+
+    const daWeb = porNome(icones);
+    const doApp = porNome(iconesNoApp);
+    expect(daWeb.size).toBeGreaterThanOrEqual(5);
+    expect(doApp.size).toBeGreaterThanOrEqual(4);
+
+    doApp.forEach((figuras, nome) => {
+      // Um desenho que só existe no aparelho é tão suspeito quanto um divergente.
+      expect(daWeb.has(nome)).toBe(true);
+      expect(figuras).toEqual(daWeb.get(nome));
+    });
+  });
+
   // ⚠️ OS FLUTUANTES FICAM ACIMA DA COLUNA DAS PISTAS. Eles usavam `--z-cartao`, que vale 2 —
   // abaixo dos 11 da coluna. O "Enviando 1 de 4…" nascia por trás dos controlos e saía cortado
   // ao meio; no telemóvel, onde a coluna e o selo disputam os mesmos 375 px, ficava ilegível.
@@ -483,16 +1595,72 @@ describe('cromo do editor do Espaço JAM', () => {
     regras.forEach((regra) => expect(regra).not.toContain('--z-cartao'));
   });
 
-  // ⚠️ O EDITOR TEM O SEU PRÓPRIO SELETOR DE FICHEIROS. O "Adicionar pista" procurava o botão
-  // da BIBLIOTECA pelo `aria-label` e clicava nele por baixo do pano. Enquanto ela estava
+  // ⚠️ "+ ADICIONAR FAIXA" CRIA A FAIXA, E NÃO PEDE UM FICHEIRO. Ele abria o seletor, e com
+  // isso não havia como preparar a montagem — voz, guitarra, bateria — antes de ter o áudio de
+  // cada uma. Encher a faixa é o outro botão, o de enviar, que vive na própria faixa.
+  it('adicionar faixa cria a faixa vazia, e o ficheiro vem pelo botão da faixa', () => {
+    const corpo = semComentarios(editor);
+    const espaco = semComentarios(tela);
+
+    expect(corpo).toContain('onClick={() => acoes.aoCriarPista()}');
+    expect(corpo).not.toContain('escolherPara(null)');
+    // O seletor sobrou para o outro gesto: um ficheiro NUMA faixa que já existe.
+    expect(corpo).toContain('onClick={() => escolherPara(faixa.id)}');
+
+    // E a faixa nasce mesmo vazia: uma linha em `catalog_tracks` e nenhum clipe.
+    // ⚠️ LIDO DENTRO DA AÇÃO, e não no ficheiro inteiro: "montar a mix primeiro" também existe
+    // no ENVIO de ficheiros, e procurá-lo no ficheiro todo dava um teste que passava com a
+    // linha apagada daqui.
+    const aCriacao = espaco.slice(espaco.indexOf('aoCriarPista: () => {'));
+    const ateOFim = aCriacao.slice(0, aCriacao.indexOf('} catch {'));
+
+    expect(espaco).toContain('aoCriarPista: () => {');
+    expect(ateOFim).toContain('await catalogDb.createTrack({');
+    expect(ateOFim).toContain('name: nomeDaPistaNova(pistas.map((p) => p.name)),');
+    // ⚠️ A PRÓXIMA POSIÇÃO, e não a contagem: apanhado no produto, numa gravação cuja única
+    // faixa estava em `position: 1`. A faixa nova nasceu empatada com ela.
+    expect(ateOFim).toContain('position: proximaPosicaoDaPista(pistas.map((p) => p.position)),');
+    // ⚠️ A Mix primeiro, se a gravação nunca foi montada: ela só existe enquanto não há pistas
+    // nenhumas, e a primeira faixa à mão fá-la-ia sair de cena com o áudio dentro.
+    expect(ateOFim).toContain('if (porMontar) await montarAMix();');
+    expect(ateOFim.indexOf('montarAMix()')).toBeLessThan(ateOFim.indexOf('createTrack('));
+    // E o desfazer tem para onde voltar.
+    expect(ateOFim).toContain("anotar({ tipo: 'acrescentarPistas', pistaIds: [nascida.id] });");
+  });
+
+  // ⚠️ ARRASTAR UM CLIPE ENTRE FAIXAS NÃO EXISTIA: o arrasto só olhava para o eixo do tempo, e
+  // mover a voz da faixa errada para a certa obrigava a apagar o clipe e a enviar o ficheiro
+  // outra vez.
+  it('o clipe arrasta também para cima e para baixo, e a escrita leva a faixa', () => {
+    const corpo = semComentarios(editor);
+    const espaco = semComentarios(tela);
+
+    // O índice sai da PILHA, e não da posição do rato na página: a montagem rola e o cabeçalho
+    // é `sticky`. A decisão do resto é do núcleo, que é a mesma no app.
+    expect(corpo).toContain('const pilha = pilhaDasPistas.current;');
+    expect(corpo).toContain('pistaAlvoDoArrasto(');
+    // A faixa muda DURANTE o gesto: é o que faz o clipe seguir a mão de linha em linha.
+    expect(corpo).toContain('acoes.aoMoverClipe(puxado.clipeId, inicio, undefined, alvo ? { para: alvo } : undefined);');
+    // E quem o pegou lembra-se da faixa de onde ele saiu.
+    expect(corpo).toContain('pistaId: faixa.id,');
+
+    // A tela tira o clipe de uma faixa e põe-no noutra numa passagem só: em dois `setProject`,
+    // o render do meio via uma montagem sem o clipe, e a mesa descartava o buffer.
+    expect(espaco).toContain('const moverClipeDePista = (clipeId: string, pistaId: string) =>');
+    expect(espaco).toContain('...(pista ? { track_id: pista.para } : {}),');
+    // E o desfazer devolve o clipe à faixa de onde veio, e não só ao segundo.
+    expect(espaco).toContain('? { track_id: voltando ? passo.dePista : passo.paraPista }');
+  });
+
+  // ⚠️ O EDITOR TEM O SEU PRÓPRIO SELETOR DE FICHEIROS. O envio para uma faixa procurava o
+  // botão da BIBLIOTECA pelo `aria-label` e clicava nele por baixo do pano. Enquanto ela estava
   // sempre aberta aquilo passou; desde que ela recolhe, o botão deixa de existir no DOM, o
-  // `?.` engole a chamada, e carregar em "Adicionar pista" não fazia absolutamente nada.
-  it('adicionar pista abre o seletor do próprio editor', () => {
+  // `?.` engole a chamada, e carregar nele não fazia absolutamente nada.
+  it('enviar para uma faixa abre o seletor do próprio editor', () => {
     const corpo = semComentarios(editor);
 
     // Nada de alcançar dentro de outro componente por texto de rótulo.
     expect(corpo).not.toContain('[aria-label="Escolher arquivos"]');
-    expect(corpo).toContain("onClick={() => escolherPara(null)}");
     // O input vive FORA de qualquer painel que possa fechar.
     expect(corpo).toContain('ref={seletor}');
     expect(corpo).toContain("accept='.mp3,.wav,audio/mpeg,audio/wav'");
@@ -509,7 +1677,7 @@ describe('cromo do editor do Espaço JAM', () => {
     const corpo = semComentarios(editor);
 
     expect(corpo).toContain('escolherPara(faixa.id)');
-    expect(corpo).toContain('IconeDeEnviar');
+    expect(corpo).toContain('IconeDeAudio');
     // Na fila do M e do S, que é onde a mão já está.
     const aFila = corpo.slice(corpo.indexOf("aria-label={calada ?"), corpo.indexOf('</div>', corpo.indexOf('escolherPara(faixa.id)')));
     expect(aFila).toContain('escolherPara(faixa.id)');
@@ -596,7 +1764,17 @@ describe('cromo do editor do Espaço JAM', () => {
 
     // Armar o transporte sem pista é meia intenção: avisa em vez de armar.
     expect(corpo).toContain('if (!armado && !armadas.length)');
-    expect(corpo).toContain('Arme primeiro a faixa onde quer gravar');
+
+    // ⚠️ E AS PALAVRAS SÃO AS MESMAS NOS DOIS, porque vêm do núcleo. Elas já tinham divergido: a
+    // web dizia "no botão vermelho dela" e o aplicativo "toque no círculo vermelho da faixa" —
+    // o mesmo aviso, escrito duas vezes, a envelhecer em dois sítios.
+    expect(corpo).toContain('message.warning(AVISO_DE_ARMAR.texto)');
+    expect(semComentarios(app)).toContain('Alert.alert(AVISO_DE_ARMAR.titulo, AVISO_DE_ARMAR.texto)');
+
+    // ⚠️ O TEXTO APONTA PARA O BOTÃO, e não para o verbo: "arme a faixa" pede um gesto que não
+    // está escrito em lado nenhum da tela. Ninguém procura "armar" — procura onde carregar.
+    expect(AVISO_DE_ARMAR.texto).toContain('vermelho');
+    expect(AVISO_DE_ARMAR.texto).not.toMatch(/\bArme\b/i);
 
     // ⚠️ E COM TUDO ARMADO, O PLAY NÃO TOCA. Deixar a montagem simplesmente andar seria o pior
     // desfecho: a pessoa armou tudo, ouviu correr, e só descobria que não gravou ao procurar o
@@ -636,14 +1814,33 @@ describe('cromo do editor do Espaço JAM', () => {
 
     expect(corpo).toContain("? { flex: '1 1 0', minWidth: 0, padding: 0, height: 26 }");
 
-    // Repartido em TODOS: um que ficasse de fora empurraria os outros na mesma.
+    // ⚠️ REPARTIDO EM TODOS, e a regra é essa — não um NÚMERO de botões. Este caso prendia
+    // "quatro", e o comentário acima já avisava que a conta se partiria no próximo botão que
+    // aparecesse: partiu-se no seletor de cor, que é o quinto. Um teste que falha por haver um
+    // botão a mais não está a guardar o desenho, está a guardar o inventário.
+    // ⚠️ O FIM MARCA-SE POR CÓDIGO, e não por uma frase de comentário. Ele apontava para as
+    // palavras "VOLUME E PANORAMA" de um comentário ali em cima; no dia em que o panorama saiu
+    // da coluna e o comentário foi reescrito, o marcador deixou de casar, a fatia passou a ser
+    // o ficheiro inteiro e o caso contou dezoito botões de toda a tela. O rótulo do volume é o
+    // primeiro código depois da fila, e muda-se muito menos do que uma explicação.
     const inicio = corpo.indexOf('const repartido = noCelular');
-    const fim = corpo.indexOf('VOLUME E PANORAMA', inicio) > 0
-      ? corpo.indexOf('{!noCelular && (<>', inicio)
-      : corpo.length;
+    const fim = corpo.indexOf('aria-label={`Volume de ', inicio);
+    expect(fim).toBeGreaterThan(inicio);
     const aPista = corpo.slice(inicio, fim);
     expect(aPista.length).toBeGreaterThan(500);
-    expect(aPista.match(/\.\.\.repartido/g)).toHaveLength(4);
+
+    // Cada `<button` da fila leva o `...repartido`. Um que ficasse de fora empurraria os outros
+    // na mesma, e é isso — e só isso — que este caso existe para apanhar.
+    // ⚠️ A FILA ACABA ONDE A PALETA COMEÇA. As seis bolinhas dela também são `<button`, e sem
+    // este limite elas entravam na contagem — botões que NÃO repartem a coluna, porque vivem
+    // num painel à parte.
+    const daFila = aPista.slice(
+      aPista.indexOf('gap: noCelular ? 3 : 4'),
+      aPista.indexOf("role='group'"),
+    );
+    const botoes = (daFila.match(/<button/g) ?? []).length;
+    expect(botoes).toBeGreaterThanOrEqual(4);
+    expect(daFila.match(/\.\.\.repartido/g) ?? []).toHaveLength(botoes);
   });
 
   // ⚠️ O LADO TEM DE SER ALCANÇÁVEL. Num ecrã estreito a barra de rolagem horizontal ou é um
@@ -675,7 +1872,17 @@ describe('cromo do editor do Espaço JAM', () => {
     const corpo = semComentarios(editor);
 
     expect(corpo).toContain('const zoomMinimo = Math.min(ZOOM_MINIMO, encaixe);');
-    expect(corpo).toContain('setZoom((z) => Math.max(zoomMinimo, z / 1.5))');
+
+    // ⚠️ O CHÃO E O TETO NUM SÍTIO SÓ, e os dois botões a passarem por ele. Isto estava preso
+    // à expressão que vivia DENTRO de cada botão (`setZoom((z) => Math.max(zoomMinimo, …))`) e
+    // partiu-se quando o zoom passou a centrar a agulha — não porque a regra tivesse deixado de
+    // valer, mas porque ela mudou de sítio. Amarrada ao limite e à passagem, ela sobrevive à
+    // próxima mudança de sítio e continua a apanhar um botão que salte a trava.
+    expect(corpo).toContain('Math.max(zoomMinimo, Math.min(ZOOM_MAXIMO, para(z)))');
+    expect(corpo).toContain('onClick={() => mudarZoom((z) => z / 1.5)}');
+    expect(corpo).toContain('onClick={() => mudarZoom((z) => z * 1.5)}');
+    expect(corpo).not.toMatch(/onClick=\{\(\) => \{[^}]*setZoom\(/);
+
     // Quem mexe no zoom manda: o encaixe automático não volta a mexer nele.
     expect(corpo).toContain('zoomMexido.current = true;');
     expect(corpo).toContain('if (noCelular && !zoomMexido.current) setZoom(alvo);');
@@ -699,7 +1906,11 @@ describe('cromo do editor do Espaço JAM', () => {
 
     // ⚠️ UMA LISTA SÓ para a régua e para as linhas das pistas: enquanto cada uma contava por
     // sua conta, bastava mexer numa para o número deixar de assentar na linha que nomeia.
-    expect(corpo.match(/\{marcas\.map\(\(marca\) => \(/g)).toHaveLength(2);
+    //
+    // Os dois desenhos que saem dela estão GUARDADOS, e é lá dentro que ela se percorre agora —
+    // este caso lia o mapa no sítio onde ele era desenhado, e mudou de sítio quando o desenho
+    // passou a ser feito uma vez só.
+    expect(corpo.match(/marcas\.map\(\(marca\) => \(/g)).toHaveLength(2);
     expect(corpo).not.toContain('Math.floor(duracao / passo) + 1');
 
     // E o encaixe deixou de ser o quarto de segundo fixo: segue a grelha e o zoom.
@@ -728,40 +1939,70 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(casca).toContain('isolation: isolate');
   });
 
-  // ⚠️ O DETECTOR VIVIA ESCONDIDO NA FICHA, atrás de um botão que era preciso descobrir. No
-  // Espaço JAM ele acontece por conta própria, porque o andamento é o que faz a régua contar
-  // compassos — e pedir que se digite um número que a máquina consegue ouvir é trabalho que
-  // não devia existir.
-  it('o andamento é ouvido sozinho, uma vez, e só enche campo vazio', () => {
-    const corpo = semComentarios(tela);
+  // ⚠️ O ANDAMENTO E O TOM MORAM NUM SÍTIO SÓ, e este caso existe por causa do estrago que os
+  // dois sítios faziam.
+  //
+  // Eles estavam no rodapé do editor E na aba da Ficha — e as duas caixas escreviam a MESMA
+  // coluna (`catalog_versions.bpm`). Como o rascunho da ficha só recarrega quando se troca de
+  // gravação, escrever 96 no rodapé e depois tocar em qualquer campo da ficha mandava o valor
+  // velho por cima: o número que a pessoa acabou de escrever desfazia-se sozinho, sem erro e
+  // sem aviso. É o mesmo estrago de `payloadDaGravacao`, um andar acima.
+  //
+  // O rodapé fica, porque é onde se ouve o som. A ficha larga o campo E larga a escrita.
+  it('o andamento e o tom são do rodapé do editor, e a ficha não escreve neles', () => {
+    const daFicha = semComentarios(campos);
+    const daFichaNoApp = semComentarios(fichaNoApp);
 
-    // As regras de QUANDO vivem no núcleo, e a tela só as consulta.
-    expect(corpo).toContain('podeOuvirSozinho({');
-    expect(corpo).toContain("void analiseDoJam.pedir('bpm_tom');");
+    // ── A ficha não os mostra mais, em nenhuma das duas superfícies ──
+    expect(daFicha).not.toContain("<span>BPM</span>");
+    expect(daFicha).not.toContain("<span>Tom</span>");
+    expect(daFichaNoApp).not.toContain('rotulo="BPM"');
+    expect(daFichaNoApp).not.toContain('rotulo="Tom"');
 
-    // ⚠️ SÓ SE PREENCHE O QUE SE PEDIU. Sem esta memória, quem apagou o BPM de propósito
-    // reencontrava-o preenchido na recarga seguinte: a análise antiga continua no banco, e
-    // "campo vazio + análise existe" descreve tanto o primeiro envio como o gesto de o
-    // esvaziar.
-    expect(corpo).toContain('esperandoOAndamento.current = true;');
-    expect(corpo).toContain('if (!esperandoOAndamento.current || !openId) return;');
-    // Um que já estava a correr quando a tela abriu conta como pedido, e não pede outro.
-    expect(corpo).toContain("if (analiseDoJam.emCurso('bpm_tom')) { esperandoOAndamento.current = true; return; }");
+    // ── E, o que importa mais, não os GRAVA: um campo escondido que continua a escrever faz
+    //    o mesmo estrago sem nada na tela a denunciá-lo ──
+    expect(semComentarios(tela)).not.toContain('bpm: rascunho.bpm');
+    expect(semComentarios(tela)).not.toContain('key: rascunho.key');
+    expect(daFichaNoApp).not.toContain('bpm: rascunho.bpm');
+    expect(daFichaNoApp).not.toContain('key: rascunho.key');
+    expect(semComentarios(modalDaFicha)).not.toContain('bpm: draft.bpm');
+    expect(semComentarios(modalDaFicha)).not.toContain('key: draft.key');
 
-    // E mesmo com a análise na mão, o campo escrito à mão ganha: a análise demora minutos, e
-    // nesses minutos a pessoa pode ter escrito o andamento.
-    const oPreenchimento = corpo.slice(corpo.indexOf('esperandoOAndamento.current = false;'));
-    const ateOFim = oPreenchimento.slice(0, oPreenchimento.indexOf('mudarGravacao({ bpm: detectado })'));
-    expect(ateOFim.length).toBeGreaterThan(40);
-    expect(ateOFim).toContain('if (bpmLegivel(open?.bpm)) return;');
+    // ── O núcleo é a última tranca: mesmo que uma tela volte a mencioná-los por engano, o
+    //    payload só toca na coluna quando o chamador FALA dela ──
+    expect(semComentarios(nucleo)).toContain("if ('bpm' in input) payload.bpm = input.bpm ?? null;");
+    expect(semComentarios(nucleo)).toContain("if ('key' in input) payload.key = input.key ?? null;");
 
-    // A proveniência só é verdadeira enquanto o campo tiver exatamente o que a máquina ouviu:
-    // escrito por cima, o número passa a ser de quem o escreveu, e a marca sai.
-    expect(corpo).toContain('ouvido={ouvido !== null && Number(bpmLegivel(open?.bpm)) === ouvido}');
+    // ── E o rodapé continua lá, com os dois campos editáveis. Tirar o número de uma tela não
+    //    pode querer dizer tirá-lo do produto ──
+    expect(semComentarios(tela)).toContain("aoMudar={(v) => mudarGravacao({ bpm: v })}");
+    expect(semComentarios(tela)).toContain("aoMudar={(v) => mudarGravacao({ key: v })}");
+    expect(semComentarios(app)).toContain('rotulo="Andamento da gravação, em BPM"');
+    expect(semComentarios(app)).toContain('rotulo="Tom da gravação"');
+  });
 
-    // A troca de oitava obedece à mesma condição.
-    expect(corpo).toContain('outroAndamento(ouvido)');
-    expect(corpo).toContain('aria-label={`Trocar para ${alternativa} BPM`}');
+  // ⚠️ O DETETOR DE BPM SAIU DO PRODUTO — o dono pediu-o porque não funcionava, e o que ele
+  // deixava para trás era pior do que a ausência: um "Ouvindo o áudio… isso leva alguns
+  // minutos." que não terminava quando o worker estava fora do ar, e um número que se instalava
+  // sozinho num campo que depois se usa para registar a obra.
+  //
+  // Este caso não é decorativo: metade da fila vivia no NÚCLEO, e código que ninguém importa
+  // volta a ser chamado por engano no primeiro ajuste vizinho.
+  it('não sobrou detetor de andamento em nenhuma das duas superfícies', () => {
+    const daRaiz = (...partes: string[]) => path.join(__dirname, '..', '..', ...partes);
+
+    // Os ficheiros da funcionalidade deixaram de existir — os das telas e os do núcleo.
+    expect(fs.existsSync(daRaiz('src', 'components', 'AnalysisHint.tsx'))).toBe(false);
+    expect(fs.existsSync(daRaiz('apps', 'mobile', 'src', 'casca', 'jam', 'SugestaoDaAnalise.tsx'))).toBe(false);
+    expect(fs.existsSync(daRaiz('packages', 'core', 'src', 'hooks', 'useAnaliseDaVersao.ts'))).toBe(false);
+    expect(fs.existsSync(daRaiz('packages', 'core', 'src', 'services', 'db', 'audioJobs.ts'))).toBe(false);
+
+    // E ninguém ficou a pedir por eles.
+    [tela, app, campos, fichaNoApp, modalDaFicha].forEach((fonte) => {
+      expect(fonte).not.toContain('useAnaliseDaVersao');
+      expect(fonte).not.toContain('audioJobs');
+      expect(fonte).not.toContain("'bpm_tom'");
+    });
   });
 
   // ⚠️ "FALHA AO SALVAR" LOGO A SEGUIR A APAGAR COM SUCESSO. Tocar num clipe agendava a
@@ -774,7 +2015,9 @@ describe('cromo do editor do Espaço JAM', () => {
     const espaco = semComentarios(tela);
 
     // A raiz: só se grava a posição de um clipe que MUDOU de sítio.
-    expect(corpo).toContain('if (Math.abs(destino - puxado.inicio) < 0.001) return;');
+    expect(corpo).toContain(
+      'if (!trocouDePista && Math.abs(destino - puxado.inicio) < 0.001) return;',
+    );
     expect(corpo).toContain('inicio: Number(clipe.start_seconds) || 0,');
 
     // E o que já estava agendado morre com a linha que ele ia atualizar.
@@ -815,7 +2058,9 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(banco).toContain(".is('versions.tracks.clips.deleted_at', null)");
 
     // Os dois momentos da limpeza, com a mesma função.
-    expect(espaco).toContain('catalogDb.purgarMontagem(open.id)');
+    // A saída leva o que ESTA sessão marcou, e não tudo o que está marcado na gravação: o que
+    // é do outro continua lá enquanto ele ainda o pode desfazer.
+    expect(espaco).toContain('catalogDb.purgarMontagem(open.id, { apenas: meus })');
     expect(espaco).toContain('antesDe: new Date(Date.now() - UMA_HORA).toISOString()');
 
     // ⚠️ O ficheiro órfão sai junto: até aqui ele ficava no balde para sempre, invisível, sem
@@ -834,14 +2079,18 @@ describe('cromo do editor do Espaço JAM', () => {
     expect(espaco).toContain("esquecer(`clipe:${passo.clipeId}`);");
     expect(espaco).toContain('if (andandoNoTempo) return;');
     // A pilha só anda se a escrita passou: movê-la antes deixaria o histórico a mentir.
-    const oAndar = espaco.slice(espaco.indexOf('const andarNoTempo'));
+    // ⚠️ A PARTIR DA TRANCA, e não do princípio da função: desde que a seta confere o mundo
+    // antes de escrever, há um `setHistorico` ANTES do `try` — o do passo que caducou, que sai
+    // da pilha sem nada ter ido ao banco. Medido do princípio, o teste encontrava esse e dizia
+    // que a ordem estava trocada quando ela não estava.
+    const oAndar = espaco.slice(espaco.indexOf('setAndandoNoTempo(true);'));
     const ateOCatch = oAndar.slice(0, oAndar.indexOf('} catch {'));
     expect(ateOCatch.length).toBeGreaterThan(80);
     expect(ateOCatch.indexOf('await aplicarPasso')).toBeLessThan(ateOCatch.indexOf('setHistorico(saida.historico)'));
 
     // Um passo por GESTO, e não por pixel: o `de` só chega quando a mão largou.
-    expect(corpo).toContain('acoes.aoMoverClipe(puxado.clipeId, destino, puxado.inicio);');
-    expect(espaco).toContain("if (de !== undefined) anotar({ tipo: 'mover', clipeId, de, para: inicio });");
+    expect(corpo).toContain('acoes.aoMoverClipe(\n      puxado.clipeId, destino, puxado.inicio,');
+    expect(espaco).toContain("tipo: 'mover', clipeId, de, para: inicio,");
 
     // ⚠️ E o atalho não rouba o Ctrl+Z de quem está a escrever num campo.
     expect(corpo).toContain('alvo?.closest(\'input, textarea, [contenteditable="true"]\')');

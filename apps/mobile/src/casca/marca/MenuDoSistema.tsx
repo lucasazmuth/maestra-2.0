@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
@@ -13,9 +13,7 @@ import { DiamanteAnimado } from '@/casca/marca/DiamanteAnimado';
 import { PerfisIcon } from '@/icones';
 import { useOfertaDoPro } from '@/nucleo/assinatura';
 import { sair } from '@/nucleo/entrar';
-import { irParaOCheckout } from '@/nucleo/loja';
 
-const SITE = 'https://www.maestramanager.com';
 
 // O menu do sistema — o painel que o botão de grade abre no topo da web.
 //
@@ -199,9 +197,9 @@ export const BotaoDoMenuDoSistema = ({ aqui, artista }: {
           {
             perfis: () => router.push('/perfis'),
             configuracoes: () => router.push('/conta'),
-            suporte: () => { void Linking.openURL(`${SITE}/suporte`); },
+            suporte: () => router.push('/suporte'),
             sair: () => { void sair(); },
-            pro: () => { void irParaOCheckout({ destino: 'assinatura' }); },
+            pro: () => router.push('/planos'),
           },
           { aqui, artista, oferecerPro },
         )}

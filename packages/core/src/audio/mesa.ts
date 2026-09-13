@@ -46,6 +46,18 @@ export interface Clipe {
   recorte: number;
   /** Quanto do ficheiro entra. Aparar a ponta direita mexe aqui. */
   duracao: number;
+  /**
+   * O nome do FICHEIRO que este clipe toca, sem a extensão.
+   *
+   * ⚠️ É O QUE A TELA ESCREVE NO CANTO DO CLIPE, no lugar de "Take N". A numeração dizia
+   * apenas a ordem em que os clipes entraram — e quem larga voz, baixo e bateria numa faixa
+   * fica com "Take 1", "Take 2" e "Take 3" a olhar para três ondas que já se parecem. O nome
+   * do ficheiro é a única coisa que quem montou reconhece de longe.
+   *
+   * Vazio quando o clipe não tem ficheiro com nome (a mix montada na hora, por exemplo): aí a
+   * tela volta ao número, que é melhor do que um canto vazio.
+   */
+  nome?: string;
 }
 
 /** Uma faixa da mesa: um nome, um volume, um mudo, e os clipes que moram nela. */
@@ -58,6 +70,15 @@ export interface Pista {
   mudaInicial?: boolean;
   /** −1 esquerda, 0 centro, 1 direita. */
   panInicial?: number;
+  /**
+   * A cor da faixa, como ÍNDICE guardado no banco (`color_index`).
+   *
+   * ⚠️ ELA VIAJA COM A MONTAGEM, e não se calcula na tela. Quando cada superfície a derivava da
+   * posição na lista, a mesma faixa saía roxa no computador e amarela no telemóvel — e a ordem
+   * da lista muda com qualquer coisa (uma faixa apagada, duas com a mesma `position`). A cor é
+   * um facto guardado da faixa, como o nome; quem desenha só a lê.
+   */
+  cor?: number;
 }
 
 export type CargaDaPista = 'na-fila' | 'carregando' | 'pronta' | 'erro';
@@ -500,18 +521,28 @@ export class Mesa {
     return [];
   }
 
-  /** A duração do ficheiro inteiro por trás de um clipe — o limite de quanto se pode esticar. */
-  duracaoDoArquivo(url: string): number {
-    return this.buffers.get(url)?.duration ?? 0;
-  }
-
-  /** Quanto um clipe REALMENTE dura, já limitado pelo fim do ficheiro. */
+  /**
+   * Quanto um clipe DURA de facto, já com o ficheiro na mão.
+   *
+   * ⚠️ NÃO É O `clipe.duracao`. A pista da Mix nasce com `DURACAO_DESCONHECIDA` — uma hora —,
+   * porque no momento em que ela é montada ninguém sabe quanto o áudio dura, e chutar baixo
+   * cortaria a música no meio. Quem desenha a montagem tem de perguntar por aqui: a linha do
+   * tempo do aparelho desenhava a Mix com uma hora de comprimento, e o que se via era o
+   * primeiro minuto da onda esticado por um clipe dezoito vezes maior do que a música.
+   *
+   * Sem o ficheiro descodificado ainda, devolve o que foi declarado: é o melhor que se sabe.
+   */
   duracaoDoClipe(clipeId: string): number {
     for (const pista of this.pistas) {
       const clipe = pista.clipes.find((c) => c.id === clipeId);
       if (clipe) return this.duracaoEfetiva(clipe);
     }
     return 0;
+  }
+
+  /** A duração do ficheiro inteiro por trás de um clipe — o limite de quanto se pode esticar. */
+  duracaoDoArquivo(url: string): number {
+    return this.buffers.get(url)?.duration ?? 0;
   }
 
   /**

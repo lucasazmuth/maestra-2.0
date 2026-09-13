@@ -1,7 +1,7 @@
 /**
  * Unit tests for Payment page redirect guard.
  *
- * Requirement 9.6: Redirect to /assinatura within 1 second when pixData is missing qrCode or expiresAt
+ * Requirement 9.6: Redirect to /planos within 1 second when pixData is missing qrCode or expiresAt
  * Requirement 4.2: pixData must contain required fields (qrCodeImage, expiresAt)
  *
  * Validates: Requirements 9.6, 4.2
@@ -22,7 +22,7 @@ import subscriptionReducer, {
 // The mock returns 'pending' status which keeps polling running without
 // resolving (useful for testing redirect behavior independently of polling).
 const mockInvoke = jest.fn().mockImplementation((fnName: string) => {
-  // Retomar pagamento: sem nada pra retomar → dispara o redirect pra /assinatura.
+  // Retomar pagamento: sem nada pra retomar → dispara o redirect pra /planos.
   if (fnName === 'asaas-resume-payment') {
     return Promise.resolve({ data: { status: 'none' }, error: null });
   }
@@ -94,7 +94,7 @@ function renderPaymentPage(subscriptionState: Partial<SubscriptionState>) {
       <MemoryRouter initialEntries={['/pagamento']}>
         <Routes>
           <Route path="/pagamento" element={<PaymentPage />} />
-          <Route path="/assinatura" element={<LocationDisplay />} />
+          <Route path="/planos" element={<LocationDisplay />} />
         </Routes>
       </MemoryRouter>
     </Provider>
@@ -123,7 +123,7 @@ describe('Payment page redirect guard', () => {
     jest.useRealTimers();
   });
 
-  describe('Redirects to /assinatura when pixData is invalid', () => {
+  describe('Redirects to /planos when pixData is invalid', () => {
     it('redirects when pixData is null', async () => {
       renderPaymentPage({ pixData: null, status: 'pending' });
 
@@ -131,7 +131,7 @@ describe('Payment page redirect guard', () => {
         jest.advanceTimersByTime(1000);
       });
 
-      expect(currentPath).toBe('/assinatura');
+      expect(currentPath).toBe('/planos');
     });
 
     it('redirects when pixData.qrCode is null', async () => {
@@ -144,7 +144,7 @@ describe('Payment page redirect guard', () => {
         jest.advanceTimersByTime(1000);
       });
 
-      expect(currentPath).toBe('/assinatura');
+      expect(currentPath).toBe('/planos');
     });
 
     it('redirects when pixData.qrCode is empty string', async () => {
@@ -157,7 +157,7 @@ describe('Payment page redirect guard', () => {
         jest.advanceTimersByTime(1000);
       });
 
-      expect(currentPath).toBe('/assinatura');
+      expect(currentPath).toBe('/planos');
     });
 
     it('redirects when pixData.expiresAt is null', async () => {
@@ -170,7 +170,7 @@ describe('Payment page redirect guard', () => {
         jest.advanceTimersByTime(1000);
       });
 
-      expect(currentPath).toBe('/assinatura');
+      expect(currentPath).toBe('/planos');
     });
 
     it('redirects when pixData.expiresAt is empty string', async () => {
@@ -183,7 +183,7 @@ describe('Payment page redirect guard', () => {
         jest.advanceTimersByTime(1000);
       });
 
-      expect(currentPath).toBe('/assinatura');
+      expect(currentPath).toBe('/planos');
     });
 
     it('redirects after resume finds nothing to resume', async () => {
@@ -194,7 +194,7 @@ describe('Payment page redirect guard', () => {
         jest.advanceTimersByTime(1000);
       });
 
-      expect(currentPath).toBe('/assinatura');
+      expect(currentPath).toBe('/planos');
     });
   });
 
@@ -233,7 +233,7 @@ describe('Payment page redirect guard', () => {
     it('NAO declara pagamento confirmado quando ha renovacao em aberto', async () => {
       // Regressao do bug mais grave da serie: o poll de status resolvia com `status === "active"`,
       // e numa renovacao a assinatura JA esta ativa (o ciclo anterior foi pago). O poll fechava na
-      // primeira volta e a tela mandava o usuario pro /assinatura/sucesso sem ninguem ter pago.
+      // primeira volta e a tela mandava o usuario pro /planos/sucesso sem ninguem ter pago.
       mockInvoke.mockImplementation((fnName: string) => {
         if (fnName === 'asaas-subscription-status') {
           return Promise.resolve({ data: { status: 'active', pendingRenewal: true }, error: null });
@@ -254,7 +254,7 @@ describe('Payment page redirect guard', () => {
         jest.advanceTimersByTime(30000);
       });
 
-      expect(currentPath).not.toBe('/assinatura/sucesso');
+      expect(currentPath).not.toBe('/planos/sucesso');
       expect(currentPath).toBe('/pagamento');
     });
 
@@ -272,7 +272,7 @@ describe('Payment page redirect guard', () => {
         jest.advanceTimersByTime(2000);
       });
 
-      // Nao pode mandar pra /assinatura nem tratar como pago: fica na tela para pagar.
+      // Nao pode mandar pra /planos nem tratar como pago: fica na tela para pagar.
       expect(currentPath).toBe('/pagamento');
     });
 

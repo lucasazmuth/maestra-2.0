@@ -1,5 +1,7 @@
 import { FC } from 'react';
-import { FiArchive, FiDownload, FiFileText, FiLoader } from 'react-icons/fi';
+import { FiLoader } from 'react-icons/fi';
+
+import { IconeDeAudio, IconeDeBaixar } from './icones';
 
 import { DS } from './tokens';
 
@@ -71,7 +73,12 @@ export const TelaDeExportar: FC<{
                 borderTop: i === 0 ? 'none' : `1px solid ${DS.color.borda}`,
               }}
             >
-              <FiFileText size={14} color={DS.color.textoFraco} />
+              {/* ⚠️ UM FICHEIRO DE MÚSICA, e não a folha de texto do Feather. Cada linha desta
+                  lista É uma pista de áudio que vai dentro do ZIP; uma folha com linhas escritas
+                  dizia "documento", que é a única coisa que estes ficheiros não são. */}
+              <span style={{ display: 'flex', color: DS.color.textoFraco }}>
+                <IconeDeAudio tamanho={14} />
+              </span>
               <span style={{
                 flex: 1, minWidth: 0, fontSize: 13, color: DS.color.texto,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -93,9 +100,14 @@ export const TelaDeExportar: FC<{
         style={{ ...botao(!temStems || !!emCurso), marginTop: 14 }}
         aria-label='Baixar todas as faixas num ZIP'
       >
+        {/* ⚠️ SEM ÍCONE PARADO, e com a roda a girar na espera. A caixa de arquivo não dizia nada
+            que o rótulo já não dissesse — "(.zip)" está escrito ali ao lado —, e ao lado dos
+            dois botões da guia, que trazem a seta de baixar, ela só acrescentava uma terceira
+            forma à mesma fila. A roda fica: ela não é enfeite, é o único sinal de que o ZIP
+            está a ser preparado, e sem ela o botão dizia "Preparando…" sem nada a acontecer. */}
         {emCurso === 'stems'
           ? <><FiLoader size={15} style={girando} /> Preparando o ZIP…</>
-          : <><FiArchive size={15} /> Baixar stems (.zip)</>}
+          : 'Baixar stems (.zip)'}
       </button>
     </section>
 
@@ -117,7 +129,7 @@ export const TelaDeExportar: FC<{
           style={botao(!temGuia || !!emCurso)}
           aria-label='Baixar a guia em MP3'
         >
-          <FiDownload size={15} /> Baixar guia (.mp3)
+          <IconeDeBaixar /> Baixar guia (.mp3)
         </button>
 
         <button
@@ -129,7 +141,7 @@ export const TelaDeExportar: FC<{
         >
           {emCurso === 'guia-wav'
             ? <><FiLoader size={15} style={girando} /> Renderizando…</>
-            : <><FiDownload size={15} /> Baixar guia (.wav)</>}
+            : <><IconeDeBaixar /> Baixar guia (.wav)</>}
         </button>
       </div>
     </section>

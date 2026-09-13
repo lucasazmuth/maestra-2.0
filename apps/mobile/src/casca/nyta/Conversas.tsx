@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import {
-  ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View,
+  Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Feather from '@expo/vector-icons/Feather';
 
-import { COR, COR_CONVERSAS, COR_NYTA, RAIO } from '@maestra/core/constants/design';
+import { COR_CONVERSAS, COR_NYTA, RAIO } from '@maestra/core/constants/design';
 import type { NytaConversationSummary } from '@maestra/core/hooks/useNytaConversations';
 import { dataDaConversa } from '@maestra/core/nucleo/dataDaConversa';
 
 import { BotaoRedondo } from '@/casca/marca/MenuDoSistema';
+import { Carregando } from '@/casca/Carregando';
 
 // O histórico de conversas — a porta de `ConversationSidebar`.
 //
@@ -163,7 +164,7 @@ export const Conversas = ({
       {ativa === null && <Text style={estilos.rascunho}>Nova conversa</Text>}
 
       {carregando && conversas.length === 0 ? (
-        <ActivityIndicator style={estilos.carregando} color={COR.primaria} />
+        <Carregando estilo={estilos.carregando} />
       ) : conversas.length === 0 ? (
         <Text style={estilos.vazio}>Suas conversas com a Nyta aparecem aqui.</Text>
       ) : (

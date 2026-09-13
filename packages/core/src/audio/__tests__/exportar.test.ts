@@ -1,0 +1,225 @@
+import type { BufferDeAudio } from '../contexto';
+import { ANIMACAO_DA_GUIA } from '../animacaoDaGuia';
+import {
+  bytesDoWav, higienizar, nomeDaGuia, nomeDoArquivoDaPista, pintarALottie, rotuloDaGuia, temSom,
+} from '../exportar';
+
+const buffer = (canais: number[][], taxa = 44100): BufferDeAudio => ({
+  duration: canais[0].length / taxa,
+  length: canais[0].length,
+  numberOfChannels: canais.length,
+  sampleRate: taxa,
+  getChannelData: (i: number) => Float32Array.from(canais[i]),
+} as unknown as BufferDeAudio);
+
+const texto = (v: DataView, em: number, n: number) =>
+  Array.from({ length: n }, (_, i) => String.fromCharCode(v.getUint8(em + i))).join('');
+
+describe('bytesDoWav', () => {
+  it('escreve o cabeçalho RIFF/WAVE que um leitor de WAV procura', () => {
+    const v = new DataView(bytesDoWav(buffer([[0], [0]])).buffer);
+    expect(texto(v, 0, 4)).toBe('RIFF');
+    expect(texto(v, 8, 4)).toBe('WAVE');
+    expect(texto(v, 12, 4)).toBe('fmt ');
+    expect(texto(v, 36, 4)).toBe('data');
+    expect(v.getUint16(20, true)).toBe(1); // PCM
+    expect(v.getUint16(34, true)).toBe(16); // bits por amostra
+  });
+
+  it('declara os tamanhos que o formato manda, e eles batem com os bytes de verdade', () => {
+    // 3 quadros × 2 canais × 2 bytes = 12 de áudio, 44 de cabeçalho.
+    const bytes = bytesDoWav(buffer([[0, 0, 0], [0, 0, 0]]));
+    const v = new DataView(bytes.buffer);
+    expect(bytes.length).toBe(44 + 12);
+    expect(v.getUint32(40, true)).toBe(12); // tamanho do bloco de dados
+    expect(v.getUint32(4, true)).toBe(36 + 12); // tamanho do RIFF
+    expect(v.getUint16(22, true)).toBe(2); // canais
+    expect(v.getUint32(24, true)).toBe(44100); // taxa
+    expect(v.getUint32(28, true)).toBe(44100 * 2 * 2); // bytes por segundo
+    expect(v.getUint16(32, true)).toBe(4); // bytes por quadro
+  });
+
+  it('entrelaça os canais: L, R, L, R — e não um canal inteiro depois do outro', () => {
+    // Um WAV com os canais em blocos toca a música inteira à esquerda e depois à direita.
+    const v = new DataView(bytesDoWav(buffer([[1, 1], [-1, -1]])).buffer);
+    expect(v.getInt16(44, true)).toBe(0x7fff); // quadro 0, esquerda
+    expect(v.getInt16(46, true)).toBe(-0x8000); // quadro 0, direita
+    expect(v.getInt16(48, true)).toBe(0x7fff); // quadro 1, esquerda
+  });
+
+  it('prende a amostra entre −1 e 1 antes de escalar', () => {
+    // Sem o limite, 1,5 × 0x7fff transborda os 16 bits e dá a volta: o pico mais alto da
+    // música vira um estalo NEGATIVO, e ninguém descobre até ouvir o ficheiro exportado.
+    const v = new DataView(bytesDoWav(buffer([[1.5, -1.5]])).buffer);
+    expect(v.getInt16(44, true)).toBe(0x7fff);
+    expect(v.getInt16(46, true)).toBe(-0x8000);
+  });
+
+  it('escala o negativo por 0x8000 e o positivo por 0x7fff', () => {
+    // Os dois lados do 16-bit com sinal não são simétricos: −32768 existe, +32768 não.
+    const v = new DataView(bytesDoWav(buffer([[0.5, -0.5]])).buffer);
+    expect(v.getInt16(44, true)).toBe(Math.trunc(0.5 * 0x7fff));
+    expect(v.getInt16(46, true)).toBe(-0x4000);
+  });
+});
+
+describe('nomeDoArquivoDaPista', () => {
+  it('tira o acento e troca o que o sistema de ficheiros não gosta', () => {
+    expect(nomeDoArquivoDaPista('Guia · voz/ção', 'wav')).toBe('Guia _ voz_cao.wav');
+  });
+
+  it('um nome que só tinha símbolos não vira um ficheiro sem nome', () => {
+    expect(higienizar('///')).toBe('pista');
+    expect(nomeDoArquivoDaPista('///', 'mp3')).toBe('pista.mp3');
+  });
+
+  it('mantém espaço, traço e sublinhado — são nomes de pista legítimos', () => {
+    expect(nomeDoArquivoDaPista('Bateria_2 - take 3', 'wav')).toBe('Bateria_2 - take 3.wav');
+  });
+});
+
+// ⚠️ DENTRO DO BALDE A GUIA CHAMA-SE `guia.mp3`, E ESTÁ CERTO: uma música, uma guia, regravada
+// por cima (ver `caminhoDaGuia`). Fora dele não: o ficheiro que cai no computador de alguém vai
+// parar ao pé de outros vinte, e vinte `guia.mp3` na mesma pasta são vinte perguntas de qual é
+// qual — com o navegador a juntar-lhes `guia (3).mp3` por cima.
+describe('nomeDaGuia', () => {
+  it('é o título da música, e diz que é a guia', () => {
+    expect(nomeDaGuia('Vento sul')).toBe('Vento sul - guia.mp3');
+  });
+
+  // O mesmo tratamento dos nomes de pista: o título é escrito por quem quer, e vai virar um
+  // ficheiro num sistema que não aceita tudo.
+  it('tira o acento e o que o sistema de ficheiros não gosta', () => {
+    expect(nomeDaGuia('Canção/nº 2')).toBe('Cancao_n_ 2 - guia.mp3');
+  });
+
+  it('um título que só tinha símbolos ainda dá um ficheiro com nome', () => {
+    expect(nomeDaGuia('///')).toBe('pista - guia.mp3');
+  });
+});
+
+// ⚠️ A PERCENTAGEM NÃO É ENFEITE. Codificar MP3 é JavaScript sobre cada amostra: no computador
+// são segundos, no telemóvel foram medidos 101 segundos para 227 de áudio. Reticências que não
+// se mexem durante um minuto e meio são indistinguíveis de uma tela pendurada — e quem espera
+// fecha o aplicativo, que é exatamente o gesto que perde o trabalho.
+describe('rotuloDaGuia', () => {
+  it('sem número, diz só que está a fazer', () => {
+    expect(rotuloDaGuia()).toBe('Gerando a guia…');
+    expect(rotuloDaGuia(null)).toBe('Gerando a guia…');
+  });
+
+  it('com número, diz quanto já andou', () => {
+    expect(rotuloDaGuia(0)).toBe('Gerando a guia… 0%');
+    expect(rotuloDaGuia(0.456)).toBe('Gerando a guia… 46%');
+    expect(rotuloDaGuia(1)).toBe('Gerando a guia… 100%');
+  });
+
+  // O codificador anda por blocos e o último pedaço pode passar de 1; um "103%" fazia a tela
+  // dizer uma coisa que não existe mesmo quando tudo correu bem.
+  it('nunca sai de 0 a 100', () => {
+    expect(rotuloDaGuia(1.03)).toBe('Gerando a guia… 100%');
+    expect(rotuloDaGuia(-0.2)).toBe('Gerando a guia… 0%');
+  });
+
+  it('um número que não é número volta ao texto sem percentagem', () => {
+    expect(rotuloDaGuia(NaN)).toBe('Gerando a guia…');
+  });
+});
+
+// ⚠️ A GUIA É REGRAVADA NO MESMO CAMINHO A CADA SAÍDA DO EDITOR, e é o que a lista de Músicas
+// toca. Uma montagem que renderize mudo — todas as pistas caladas, um áudio que não chegou a
+// descodificar, uma pista vazia a ser a única que sobrou — apagaria a guia boa e deixaria a
+// música sem nada para tocar, sem erro nenhum a explicar porquê.
+//
+// Entre gravar silêncio e não gravar, não gravar é sempre melhor: a montagem continua salva, a
+// guia anterior continua a tocar, e a saída seguinte tenta de novo.
+describe('temSom', () => {
+  const comAmostras = (canais: number[][]): BufferDeAudio => buffer(canais);
+
+  it('um buffer com áudio tem som', () => {
+    // Áudio de verdade é contínuo: uma onda, e não uma amostra solta.
+    expect(temSom(comAmostras([new Array(4096).fill(0).map((_, i) => Math.sin(i / 8) * 0.5)]))).toBe(true);
+  });
+
+  it('um buffer todo a zero não tem', () => {
+    expect(temSom(comAmostras([new Array(4096).fill(0)]))).toBe(false);
+  });
+
+  // ⚠️ E O RUÍDO DE ARREDONDAMENTO NÃO CONTA. Somar e voltar a converter deixa amostras na casa
+  // dos 1e-7; se elas contassem, "tem som" passaria a ser sempre verdade e a trava não travava
+  // nada — que é a pior espécie de proteção, a que parece existir.
+  it('poeira abaixo de −80 dBFS continua a ser silêncio', () => {
+    expect(temSom(comAmostras([[1e-7, -2e-7, 5e-8]]))).toBe(false);
+  });
+
+  // Um som que só existe num dos canais é som — e é o caso de uma pista panoramizada a fundo.
+  it('basta um canal ter som', () => {
+    const mudo = new Array(4096).fill(0);
+    const comVoz = new Array(4096).fill(0);
+    comVoz[2048] = 0.8;
+    expect(temSom(comAmostras([mudo, comVoz]))).toBe(true);
+  });
+
+  // ⚠️ A ESPREITA É AMOSTRADA (uma a cada 64), e isso tem um preço que é preciso conhecer: um
+  // estalo de uma amostra só, no sítio errado, passa despercebido. É a troca certa — percorrer
+  // 5,8 milhões de amostras para responder "tem som?" seria pagar de novo a renderização — e
+  // uma gravação que se esconda em 1,5 ms é silêncio na prática.
+  it('um estalo de uma amostra só, fora da espreita, não conta como som', () => {
+    const quase = new Array(4096).fill(0);
+    quase[1] = 1;
+    expect(temSom(comAmostras([quase]))).toBe(false);
+  });
+});
+
+// A animação da espera vem do autor com um roxo que não é a cor da marca e um preto que, sobre
+// o painel escuro do editor, some — o braço da guitarra desaparecia e ficava uma mão a tocar no
+// nada.
+describe('pintarALottie', () => {
+  const cor = (k: number[]) => ({ ty: 'fl', c: { a: 0, k } });
+
+  it('troca a cor que está no mapa', () => {
+    const pintada = pintarALottie({ shapes: [cor([1, 0, 0])] }, { '#ff0000': '#3b82f6' }) as
+      { shapes: { c: { k: number[] } }[] };
+    const [r, g, b] = pintada.shapes[0].c.k;
+    expect([Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)]).toEqual([59, 130, 246]);
+  });
+
+  it('deixa em paz a cor que não está no mapa', () => {
+    const pintada = pintarALottie({ shapes: [cor([0, 1, 0])] }, { '#ff0000': '#3b82f6' }) as
+      { shapes: { c: { k: number[] } }[] };
+    expect(pintada.shapes[0].c.k).toEqual([0, 1, 0]);
+  });
+
+  // As chaves de cor estão espalhadas por dezenas de níveis — traços, preenchimentos, dentro da
+  // pré-composição. Uma varredura que só olhasse o topo pintava metade do desenho.
+  it('desce até ao fundo, incluindo as pré-composições', () => {
+    const fundo = { assets: [{ id: 'c0', layers: [{ shapes: [{ it: [cor([1, 0, 0])] }] }] }] };
+    const pintada = pintarALottie(fundo, { '#ff0000': '#000000' }) as typeof fundo;
+    expect(pintada.assets[0].layers[0].shapes[0].it[0].c.k).toEqual([0, 0, 0]);
+  });
+
+  // A opacidade é do desenho, e não da paleta: trocar a cor não pode acender o que estava
+  // meio transparente.
+  it('mantém o quarto canal, que é a opacidade', () => {
+    const pintada = pintarALottie({ shapes: [cor([1, 0, 0, 0.5])] }, { '#ff0000': '#ffffff' }) as
+      { shapes: { c: { k: number[] } }[] };
+    expect(pintada.shapes[0].c.k[3]).toBe(0.5);
+  });
+
+  // ⚠️ O LOTTIE MUTA O OBJETO QUE RECEBE enquanto anima: devolver o mesmo desenho a duas telas
+  // fazia a segunda herdar o estado da primeira.
+  it('não mexe no original', () => {
+    const original = { shapes: [cor([1, 0, 0])] };
+    pintarALottie(original, { '#ff0000': '#3b82f6' });
+    expect(original.shapes[0].c.k).toEqual([1, 0, 0]);
+  });
+
+  it('atravessa a animação de verdade sem deixar roxo nenhum', () => {
+    const pintada = JSON.stringify(pintarALottie(ANIMACAO_DA_GUIA, {
+      '#6f61ef': '#3b82f6', '#000000': '#44444f',
+    }));
+    // O roxo do autor sai por inteiro; o azul do sistema entra.
+    expect(pintada).not.toContain('0.435294');
+    expect(pintada).toContain('0.231372');
+  });
+});

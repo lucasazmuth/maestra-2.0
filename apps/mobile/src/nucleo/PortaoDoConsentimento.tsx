@@ -1,12 +1,44 @@
-import { useRouter, useSegments } from 'expo-router';
+import { router, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 
-import { useEstadoDoConsentimento } from '@maestra/core/hooks/useConsent';
+import { useConsent } from '@maestra/core/hooks/useConsent';
 
-import { useSessao } from '@/nucleo/sessao';
 
-/** A tela do próprio consentimento, que não pode expulsar quem está nela. */
-const CONSENTIMENTO = 'consentimento';
+/**
+ * As telas que o portão NÃO tranca.
+ *
+ * A do próprio consentimento, obviamente — ela não pode expulsar quem está nela.
+ *
+ * ⚠️ E AS OUTRAS DUAS SÃO O QUE SE PEDE PARA ACEITAR. A tela do consentimento liga para os
+ * Termos e para a Política, e tem um botão de falar com o suporte para quem errou a data de
+ * nascimento. Enquanto esses três destinos viviam no navegador, o portão nem os via; no dia em
+ * que passaram a ser telas daqui, sem esta lista ele devolvia a pessoa ao consentimento no
+ * instante em que ela tocava em "Termos de uso".
+ *
+ * Ou seja: pedir o aceite de um documento e trancar a porta do documento. O portão existe para
+ * garantir a coleta, e não para a impossibilitar.
+ */
+const LIVRES = [
+  'consentimento', 'legal', 'suporte',
+  // ⚠️ E AS TELAS PÚBLICAS, QUE É A CORREÇÃO DO APP TRAVADO.
+  //
+  // Quem está em `entrar`, `intro` ou `cadastro` ainda não entrou: quem manda nessas telas é o
+  // `PortaoDaSessao`, que leva para `/perfis` assim que a sessão nasce. Sem esta linha, os dois
+  // portões agarravam o volante ao mesmo tempo no instante do login — um a levar para os perfis,
+  // o outro para o aceite — e cada um desfazia o do outro.
+  //
+  // O sintoma era a lista de perfis desenhada na tela com TODOS os toques a serem engolidos, e
+  // foi assim que o login pela Apple travou o app: quem entra por provedor social é exatamente
+  // quem ainda não declarou idade nem aceitou os documentos. Uma sonda no portão mostrou-o em
+  // números: 52 pedidos de `replace('/consentimento')` vindos do segmento `entrar`.
+  //
+  // Pior do que o travamento: a conta ficava SEM consentimento nenhum registado — que é a coisa
+  // que este portão existe para garantir.
+  //
+  // Agora são dois movimentos EM SEQUÊNCIA: a sessão leva de `entrar` a `perfis`, e só então o
+  // consentimento leva de `perfis` ao aceite.
+  'entrar', 'intro', 'cadastro',
+];
 
 // O PORTÃO DO CONSENTIMENTO (LGPD).
 //
@@ -25,19 +57,41 @@ const CONSENTIMENTO = 'consentimento';
 // decisão que o `RequireConsent` da web tomou.
 
 export const PortaoDoConsentimento = () => {
-  const { sessao } = useSessao();
-  const usuario = sessao?.user;
-  const { state } = useEstadoDoConsentimento(
-    usuario ? { id: usuario.id, email: usuario.email } : null,
-  );
-  const segmentos = useSegments();
-  const router = useRouter();
+  // ⚠️ LÊ O ESTADO DO PROVEDOR, e não o consulta por conta própria.
+  //
+  // Consultava: `useEstadoDoConsentimento` aqui e outro igual na tela de coleta, duas verdades
+  // sobre a mesma pessoa. Quem acabava de aceitar seguia para as boas-vindas e era devolvido ao
+  // consentimento por esta cópia, que ainda dizia `satisfied: false` — o `apply` da tela nunca
+  // chegava aqui. Ver `nucleo/ConsentimentoDaConta`.
+  //
+  // Sem sessão o provedor devolve estado nulo, e o efeito abaixo não age: não há o que cobrar a
+  // quem não entrou.
+  const { state } = useConsent();
+  // ⚠️ O ROUTER É O SINGLETON, E NÃO O `useRouter()` GUARDADO NUM `ref`.
+  //
+  // `useSegments` devolve um ARRAY novo e o `useRouter` um OBJETO novo a cada render. Com os
+  // dois na lista de dependências, o efeito corria a cada render: enquanto a tela de origem não
+  // terminasse de sair, cada render pedia outro `replace` para a MESMA rota, e cada `replace`
+  // provocava outro render. O laço fechava, e o React derrubava tudo com "Maximum update depth
+  // exceeded" — foi o que apareceu depois do login pela Apple.
+  //
+  // A primeira saída foi guardar o router num `ref` e escrevê-lo durante a renderização. Só que
+  // este app compila com o React Compiler ligado (`reactCompiler` em `app.json`), e escrever num
+  // `ref` durante a renderização é exatamente o que ele avisa que não se faz: se ele memoizar o
+  // componente, a atribuição não corre e o portão fica com um router velho na mão. Trocar um
+  // laço de renders por um volante que não responde é um mau negócio.
+  //
+  // O `router` importado do `expo-router` é o mesmo objeto sempre. Não precisa de `ref`, não
+  // entra na lista de dependências, e o primeiro segmento é uma string: só muda quando a rota
+  // muda de verdade, e então o portão age UMA vez por chegada. (O `app/conta.tsx` já o importa
+  // assim.)
+  const primeiroSegmento = useSegments()[0];
 
   useEffect(() => {
-    if (!usuario || !state || state.satisfied) return;
-    if (segmentos[0] === CONSENTIMENTO) return;
+    if (!state || state.satisfied) return;
+    if (LIVRES.includes(primeiroSegmento)) return;
     router.replace('/consentimento');
-  }, [usuario, state, segmentos, router]);
+  }, [state, primeiroSegmento]);
 
   return null;
 };

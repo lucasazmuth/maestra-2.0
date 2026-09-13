@@ -20,6 +20,7 @@ import * as catalogo from '@maestra/core/services/db/catalog';
 
 import { FolhaDaVersao } from '@/casca/jam/FolhaDaVersao';
 import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
 // O ESPAÇO DA VERSÃO: uma gravação em tela cheia.
 //
@@ -212,7 +213,7 @@ export default function EspacoDaVersao() {
   if (carregando) {
     return (
       <View style={estilos.espera}>
-        <ActivityIndicator color={COR.primaria} />
+        <Carregando />
       </View>
     );
   }

@@ -3,7 +3,7 @@ import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 
-import { COR, COR_JAM } from '@maestra/core/constants/design';
+import { AZUL_DO_EDITOR, COR_EDITOR } from '@maestra/core/constants/design';
 
 // O volume de uma pista.
 //
@@ -17,11 +17,13 @@ import { COR, COR_JAM } from '@maestra/core/constants/design';
 const ALTURA_DO_TRILHO = 6;
 const BOTAO = 22;
 
-export const Fader = ({ valor, aoMudar, apagado }: {
+export const Fader = ({ valor, aoMudar, apagado, rotulo }: {
   /** 0..1 */
   valor: number;
   aoMudar: (v: number) => void;
   apagado?: boolean;
+  /** O que este fader governa. O mestre não é "a faixa", e um leitor de tela dizia que era. */
+  rotulo?: string;
 }) => {
   const [largura, setLargura] = useState(0);
 
@@ -38,12 +40,19 @@ export const Fader = ({ valor, aoMudar, apagado }: {
   // ele, o Pan ganhava no toque e um dedo que começasse sobre o fader para rolar a página
   // arrastava o volume junto. Seis pixels horizontais é o gesto declarado; menos que isso é um
   // toque, e o toque abaixo trata dele.
+  const aplicar = (x: number) => aoMudar(paraValor(x));
+
+  // ⚠️ SÓ `runOnJS` ATRAVESSA A FRONTEIRA. O corpo de um gesto é um *worklet*: corre na linha da
+  // interface, noutro motor de JavaScript, onde as funções deste ficheiro não existem. Chamar
+  // `paraValor(e.x)` lá dentro rebentava com "Tried to synchronously call a Remote Function" —
+  // e rebentava só no aparelho, porque nos testes o `reanimated` é um duplo em que tudo corre na
+  // mesma linha. Por isso o gesto manda a COORDENADA CRUA, e a conta fica deste lado.
   const arrastar = Gesture.Pan()
     .activeOffsetX([-6, 6])
     .failOffsetY([-12, 12])
-    .onUpdate((e) => { runOnJS(aoMudar)(paraValor(e.x)); });
+    .onUpdate((e) => { runOnJS(aplicar)(e.x); });
 
-  const toque = Gesture.Tap().onEnd((e) => { runOnJS(aoMudar)(paraValor(e.x)); });
+  const toque = Gesture.Tap().onEnd((e) => { runOnJS(aplicar)(e.x); });
 
   const cheio = Math.max(0, Math.min(valor, 1));
 
@@ -51,7 +60,7 @@ export const Fader = ({ valor, aoMudar, apagado }: {
     <GestureDetector gesture={Gesture.Race(arrastar, toque)}>
       {/* O alvo é mais alto que o trilho: 6 pt de trilho seria impossível de acertar. */}
       <View style={estilos.alvo} onLayout={medir} accessibilityRole="adjustable"
-        accessibilityLabel="Volume da pista"
+        accessibilityLabel={rotulo ?? 'Volume da faixa'}
         accessibilityValue={{ min: 0, max: 100, now: Math.round(cheio * 100) }}>
         <View style={estilos.trilho}>
           <View style={[
@@ -70,17 +79,17 @@ const estilos = StyleSheet.create({
   alvo: { height: 34, justifyContent: 'center' },
   trilho: {
     height: ALTURA_DO_TRILHO, borderRadius: ALTURA_DO_TRILHO / 2,
-    backgroundColor: COR_JAM.acaoFundo, overflow: 'hidden',
+    backgroundColor: COR_EDITOR.acaoFundo, overflow: 'hidden',
   },
-  cheio: { height: '100%', backgroundColor: COR.primaria },
-  cheioApagado: { backgroundColor: COR_JAM.estrela },
+  cheio: { height: '100%', backgroundColor: AZUL_DO_EDITOR },
+  cheioApagado: { backgroundColor: COR_EDITOR.estrela },
   botao: {
     position: 'absolute', width: BOTAO, height: BOTAO, borderRadius: BOTAO / 2,
     // Metade da largura para a esquerda: o `left` posiciona a borda, e o que tem de ficar sobre
     // o valor é o CENTRO do botão.
     marginLeft: -BOTAO / 2,
-    backgroundColor: COR_JAM.papel,
-    borderWidth: 1, borderColor: COR_JAM.contornoDaVersao,
+    backgroundColor: COR_EDITOR.papel,
+    borderWidth: 1, borderColor: COR_EDITOR.contornoDaVersao,
     shadowColor: 'rgba(74, 99, 145, .25)', shadowOpacity: 1,
     shadowOffset: { width: 0, height: 2 }, shadowRadius: 6, elevation: 3,
   },

@@ -172,6 +172,26 @@ export const PAPEIS_SUGERIDOS_DA_PISTA = [
   'Voz', 'Guia', 'Bateria', 'Baixo', 'Guitarra', 'Teclas', 'Outros',
 ] as const;
 
+/**
+ * O que se diz a quem carregou em gravar sem ter escolhido onde.
+ *
+ * ⚠️ NUMA MESA, O REC GLOBAL SÓ SABE O QUE FAZER SE ALGUMA FAIXA ESTIVER ARMADA. Armar o
+ * transporte sem dizer em que faixa é meia intenção, e gravar por cima do que a pessoa não
+ * escolheu é o tipo de engano que não se desfaz.
+ *
+ * ⚠️ O TEXTO APONTA PARA O BOTÃO, e não para o verbo. "Arme a faixa" pede um gesto que não está
+ * escrito em lado nenhum da tela — ninguém procura "armar", procura onde carregar. O que a
+ * pessoa vê é um círculo vermelho na linha da faixa, e é por aí que a frase começa.
+ *
+ * As palavras moram aqui porque as duas telas as escrevem, e elas já tinham divergido: a web
+ * dizia "no botão vermelho dela" e o aplicativo "toque no círculo vermelho da faixa".
+ */
+export const AVISO_DE_ARMAR = {
+  /** Só o aplicativo o mostra: o aviso dele é um `Alert`, que pede título. */
+  titulo: 'Falta escolher a faixa',
+  texto: 'Selecione o botão vermelho na faixa em que quer gravar.',
+};
+
 // As CLASSES de titular, no vocabulário das associações autorais.
 //
 // ⚠️ São duas listas, e não uma, porque são dois direitos diferentes: a OBRA é o que foi

@@ -1,8 +1,9 @@
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { COR, RAIO } from '@maestra/core/constants/design';
 import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
 // Porta de entrada: decide entre a apresentacao, o login e o app.
 //
@@ -21,7 +22,7 @@ export default function Porta() {
   if (carregando) {
     return (
       <View style={estilos.espera}>
-        <ActivityIndicator color={COR.primaria} size="large" />
+        <Carregando />
       </View>
     );
   }

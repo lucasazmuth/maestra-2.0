@@ -118,6 +118,19 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
     if (atual.estado().tocando) atual.pausar(); else void atual.tocar();
   }, []);
   const irPara = useCallback((s: number) => { mesa.current?.irPara(s); }, []);
+  /**
+   * Onde a agulha está AGORA, sem esperar pelo tique.
+   *
+   * ⚠️ ELA É PARA DESENHAR, NÃO PARA DECIDIR. O tique de 50 ms existe para não redesenhar a tela
+   * sessenta vezes por segundo — e com uma dúzia de faixas, cada redesenho é caro. Mas o que se
+   * MEXE precisa dos sessenta: a agulha travada no meio com a montagem a deslizar por baixo
+   * avança aos degraus de 50 ms, e o olho vê os degraus.
+   *
+   * Com isto, a tela lê o relógio do áudio a cada quadro e escreve só o que se mexe, sem passar
+   * pelo React. É o relógio das amostras — o mesmo de que sai o `estado` —, e por isso os dois
+   * caminhos nunca discordam sobre onde a música está.
+   */
+  const posicaoAgora = useCallback(() => mesa.current?.posicao() ?? 0, []);
   const mudar = useCallback((id: string, v: boolean) => { mesa.current?.mudar(id, v); }, []);
   const solar = useCallback((id: string, v: boolean) => { mesa.current?.solar(id, v); }, []);
   const ganho = useCallback((id: string, v: number) => { mesa.current?.ganho(id, v); }, []);
@@ -146,6 +159,9 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
     void atual?.descartar();
   }, []);
 
+  /** Ver `Mesa.duracaoDoClipe`: a da Mix nasce como uma hora até o ficheiro chegar. */
+  const duracaoDoClipe = useCallback((id: string) => mesa.current?.duracaoDoClipe(id) ?? 0, []);
+
   const picos = useCallback((id: string, n: number) => {
     const chave = `${id}:${n}`;
     const pronto = guardados.current.get(chave);
@@ -158,7 +174,9 @@ export function useMesa(pistas: Pista[], deps: DependenciasDaMesa) {
   }, []);
 
   return {
-    estado, tocar, pausar, alternar, irPara, mudar, solar, ganho, panoramar, mestreEm, loopar,
+    estado, tocar, pausar, alternar, irPara, posicaoAgora,
+    mudar, solar, ganho, panoramar, mestreEm, loopar,
+    duracaoDoClipe,
     renderizar, picos,
   };
 }

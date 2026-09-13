@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView,
+  Alert, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,6 +47,7 @@ import { Acoes, BotaoPrincipal, Cartao } from '@/casca/wizard/widgets/kit';
 import { Marcacao } from '@/casca/wizard/Marcacao';
 import { useArtistaDaRota } from '@/nucleo/artista';
 import { useSessao } from '@/nucleo/sessao';
+import { Carregando } from '@/casca/Carregando';
 
 // O PLANEJAMENTO ESTRATÉGICO, no nativo.
 //
@@ -228,7 +229,7 @@ export default function Wizard() {
     if (carregado) return <Redirect href="/perfis" />;
     return (
       <SafeAreaView style={estilos.tela}>
-        <ActivityIndicator style={estilos.espera} color={WZ.blue} />
+        <Carregando estilo={estilos.espera} cor={WZ.blue} />
       </SafeAreaView>
     );
   }

@@ -1,14 +1,18 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { ID_DA_MIX, NOME_DA_MIX, montagemDaVersao, pistasDaGravacao } from '@maestra/core/audio/pistasDaVersao';
 import {
-  HISTORICO_VAZIO, desfazer as desfazerPasso, podeDesfazer, podeRefazer,
+  ID_DA_MIX, NOME_DA_MIX, copiaDoClipe, montagemDaVersao, nomeDaPistaNova, pistasDaGravacao,
+  proximaCorDaPista, proximaPosicaoDaPista,
+} from '@maestra/core/audio/pistasDaVersao';
+import {
+  HISTORICO_VAZIO, conferirOPasso, desfazer as desfazerPasso, podeDesfazer, podeRefazer,
   refazer as refazerPasso, registar, rotuloDaSeta,
   type Historico, type PassoDaMontagem,
 } from '@maestra/core/audio/historico';
+import { soOAndamento, soOTom } from '@maestra/core/utils/camposDaGravacao';
+import casca from './daw/editor.module.scss';
 import { useMesa } from '@maestra/core/audio/useMesa';
-import { useAnaliseDaVersao } from '@maestra/core/hooks/useAnaliseDaVersao';
 import { useArtist } from '@maestra/core/hooks/useArtist';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
 import { CATALOG_STATUS, CATALOG_STATUS_OPTIONS } from '@maestra/core/constants/maestra';
@@ -16,9 +20,6 @@ import { LIMITE_DA_PISTA_BYTES, MAXIMO_DE_PISTAS } from '@maestra/core/constants
 import type {
   ArtistMember, CatalogItem, CatalogProject, CatalogTrack, CatalogVersion, MusicGenre,
 } from '@maestra/core/interfaces/maestra';
-import {
-  bpmLegivel, outroAndamento, podeOuvirSozinho,
-} from '@maestra/core/services/db/audioJobs';
 import * as catalogDb from '@maestra/core/services/db/catalog';
 import * as genresDb from '@maestra/core/services/db/genres';
 import * as membersDb from '@maestra/core/services/db/members';
@@ -33,6 +34,7 @@ import { ConfigProvider, Input, message, theme } from 'antd';
 import { CamposDaFicha, CamposDosSplits } from '../../components/ficha/campos';
 import { Spinner } from '../../components/spinner/spinner';
 import { EditorDaGravacao, type AcoesDoEditor } from './daw/EditorDaGravacao';
+import { Conversa } from './daw/Conversa';
 import { TelaDeExportar } from './daw/TelaDeExportar';
 import { buscarWeb, criarContextoWeb } from './daw/contextoWeb';
 import { duracaoDoArquivo } from './daw/duracao';
@@ -40,6 +42,10 @@ import {
   baixarArquivo, nomeDoArquivoDaPista, paraWav, paraZip, type StemExportado,
 } from './daw/exportar';
 import { caminhoDaGuia, criarOfflineWeb, paraMp3 } from './daw/guia';
+import { FecharComGuia } from './daw/FecharComGuia';
+import { MONTAGEM_MUDA, temSom } from '@maestra/core/audio/exportar';
+import { assinaturaDaPista, assinaturaDoClipe } from '@maestra/core/audio/aoVivo';
+import { useJamAoVivo } from '@maestra/core/hooks/useJamAoVivo';
 import { DS } from './daw/tokens';
 
 
@@ -84,38 +90,39 @@ export const CampoDoTopo: FC<{
   rotulo: string; valor: string; largura: number;
   aoMudar: (v: string) => void; travado?: boolean; limite: number;
   /**
-   * O que está ali foi OUVIDO do áudio, e não escrito por ninguém.
+   * O que o campo aceita enquanto se escreve.
    *
-   * ⚠️ A PROVENIÊNCIA TEM DE SER VISÍVEL. Um número que aparece sozinho num campo é
-   * indistinguível de um número que a pessoa escreveu e esqueceu — e é sobre esse que ela
-   * depois vai confiar para registar a obra. A borda muda de cor e o rótulo diz de onde veio.
+   * ⚠️ FILTRA NA TECLA, e não valida no fim. Um campo que aceita tudo e recusa ao gravar deixa
+   * escrever "128bpm", sair da tela e descobrir mais tarde que nada foi salvo.
    */
-  ouvido?: boolean;
-}> = ({ rotulo, valor, largura, aoMudar, travado, limite, ouvido }) => (
-  <label style={{
-    display: 'inline-flex', alignItems: 'center', gap: 5,
-    color: DS.color.textoFraco, fontSize: 10, fontWeight: 700, letterSpacing: '0.05em',
-  }}>
-    <input
-      value={valor}
-      onChange={(e) => aoMudar(e.target.value)}
-      disabled={travado}
-      maxLength={limite}
-      placeholder='—'
-      aria-label={ouvido ? `${rotulo} ouvido do áudio` : rotulo}
-      title={ouvido ? 'Ouvi este andamento no áudio. Escreva por cima se não for.' : undefined}
-      style={{
-        width: largura, height: 26, padding: '0 8px',
-        background: DS.color.bgCampo,
-        border: `1px solid ${ouvido ? DS.color.primaria : DS.color.borda}`,
-        borderRadius: DS.raio.medio,
-        color: DS.color.texto,
-        fontSize: 12, fontWeight: 700, textAlign: 'center',
-        fontFamily: DS.font.mono, outline: 'none',
-      }}
-    />
-    {rotulo}
-  </label>
+  apenas: 'numero' | 'texto';
+  /** O que o campo mostra vazio. É o rótulo: ele saiu de fora do campo e veio para dentro. */
+  vazio: string;
+}> = ({ rotulo, valor, largura, aoMudar, travado, limite, apenas, vazio }) => (
+  // ⚠️ O RÓTULO MUDOU-SE PARA DENTRO DO CAMPO. Ele vivia ao lado, e um campo vazio ao lado da
+  // palavra "BPM" era um traço solto num retângulo que não se lia como campo — a pessoa via a
+  // palavra e não percebia que havia ali onde escrever. Como vazio, ele diz as duas coisas de
+  // uma vez: o que é, e que está por preencher.
+  <input
+    value={valor}
+    onChange={(e) => aoMudar(apenas === 'numero' ? soOAndamento(e.target.value) : soOTom(e.target.value))}
+    disabled={travado}
+    maxLength={limite}
+    placeholder={vazio}
+    // O teclado do telemóvel no navegador segue isto; quem decide o que entra é o filtro acima.
+    inputMode={apenas === 'numero' ? 'numeric' : 'text'}
+    aria-label={rotulo}
+    className={casca.campoDoTopo}
+    style={{
+      width: largura, height: 26, padding: '0 8px',
+      background: DS.color.bgCampo,
+      border: `1px solid ${DS.color.borda}`,
+      borderRadius: DS.raio.medio,
+      color: DS.color.texto,
+      fontSize: 12, fontWeight: 700, textAlign: 'center',
+      fontFamily: DS.font.mono, outline: 'none',
+    }}
+  />
 );
 
 const ProjectSpace: FC = () => {
@@ -247,7 +254,7 @@ const ProjectSpace: FC = () => {
   const daGravacao = (v?: CatalogVersion | null) => JSON.stringify({ id: v?.id || '', bpm: v?.bpm || '', key: v?.key || '' });
   const daBanco = useCallback((r: Partial<CatalogItem>) => JSON.stringify({
     title: r.title, status: r.status, genre: r.genre, release_date: r.release_date, isrc: r.isrc,
-    upc: r.upc, bpm: r.bpm, key: r.key, duration: r.duration, lyrics: r.lyrics, details: r.details,
+    upc: r.upc, duration: r.duration, lyrics: r.lyrics, details: r.details,
     cover_image: r.cover_image, cover_image_name: r.cover_image_name,
     composition_splits: r.composition_splits, recording_splits: r.recording_splits, assignee: r.assignee,
   }), []);
@@ -308,72 +315,6 @@ const ProjectSpace: FC = () => {
     versions: (atual.versions || []).map((v) => (v.id === openId ? { ...v, ...parte } : v)),
   } : atual));
 
-  // ─── O andamento, ouvido sozinho ──────────────────────────────────────────
-  //
-  // O detector de BPM existe desde sempre e vivia escondido na ficha, atrás de um botão que era
-  // preciso descobrir. Aqui ele acontece por conta própria na primeira gravação do projeto —
-  // porque o andamento é o que faz a régua contar compassos, e pedir a alguém que digite um
-  // número que a máquina consegue ouvir é trabalho que não devia existir.
-  //
-  // As regras de QUANDO (uma vez por gravação, só com o campo vazio, só para quem edita) vivem
-  // no núcleo, em `podeOuvirSozinho`: elas guardam cota e guardam trabalho de gente.
-  const analiseDoJam = useAnaliseDaVersao(openId);
-  /**
-   * Estamos à espera de um andamento que ainda vai chegar?
-   *
-   * ⚠️ É ELE QUE IMPEDE O CAMPO DE SE ENCHER SOZINHO OUTRA VEZ. Sem esta memória, quem apagou o
-   * BPM de propósito reencontrava-o preenchido na recarga seguinte — a análise antiga continua
-   * no banco, e "campo vazio + análise existe" descreve tanto o primeiro envio como o gesto
-   * deliberado de o esvaziar. Só se preenche o que se pediu, ou o que já estava a correr quando
-   * esta tela abriu.
-   */
-  const esperandoOAndamento = useRef(false);
-  const ouviuNestaVersao = useRef<string | null>(null);
-  const [ouvido, setOuvido] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!openId || analiseDoJam.carregando) return;
-    if (ouviuNestaVersao.current === openId) return;
-    ouviuNestaVersao.current = openId;
-    // Já havia um a correr quando esta tela abriu: não se pede outro, mas espera-se por ele.
-    if (analiseDoJam.emCurso('bpm_tom')) { esperandoOAndamento.current = true; return; }
-    if (!podeOuvirSozinho({
-      temAudio: Boolean(open?.audio_file),
-      bpmEscrito: open?.bpm,
-      analise: analiseDoJam.analise,
-      trabalhos: analiseDoJam.trabalhos,
-      podeEditar,
-    })) return;
-    esperandoOAndamento.current = true;
-    void analiseDoJam.pedir('bpm_tom');
-  }, [openId, open?.audio_file, open?.bpm, podeEditar, analiseDoJam]);
-
-  useEffect(() => {
-    if (!esperandoOAndamento.current || !openId) return;
-    const detectado = bpmLegivel(analiseDoJam.analise?.bpm);
-    if (!detectado) return;
-    esperandoOAndamento.current = false;
-    // ⚠️ E MESMO ASSIM, SÓ SE AINDA ESTIVER VAZIO. A análise demora minutos, e nesses minutos a
-    // pessoa pode ter escrito o andamento à mão — que é a resposta certa por definição, porque
-    // o andamento da obra é o que o autor diz que é.
-    if (bpmLegivel(open?.bpm)) return;
-    setOuvido(Number(detectado));
-    mudarGravacao({ bpm: detectado });
-    message.info(`Ouvi ${detectado} BPM neste áudio. Escreva por cima se não for.`);
-  }, [analiseDoJam.analise, openId, open?.bpm]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /**
-   * O outro andamento possível, enquanto o que está no campo for o que a máquina ouviu.
-   *
-   * ⚠️ NÃO É "FALTA DE CONFIANÇA", é ambiguidade real: um trap a 140 e o mesmo trap contado em
-   * meio-tempo a 70 têm exatamente as mesmas batidas, e a máquina escolhe uma delas com toda a
-   * certeza do mundo. Por isso a troca aparece sempre que existe uma alternativa plausível, e
-   * não só quando o número vem inseguro.
-   */
-  const alternativa = ouvido !== null && Number(bpmLegivel(open?.bpm)) === ouvido
-    ? outroAndamento(ouvido)
-    : null;
-
   // ─── As duas setas ────────────────────────────────────────────────────────
   //
   // A pilha vive no núcleo e é pura; aqui ficam as MÃOS — quem fala com o banco e quem manda a
@@ -386,6 +327,16 @@ const ProjectSpace: FC = () => {
   // balde — invisível, permanente, e a crescer.
   const [historico, setHistorico] = useState<Historico>(HISTORICO_VAZIO);
   const [andandoNoTempo, setAndandoNoTempo] = useState(false);
+  /**
+   * O que ESTA sessão marcou para apagar e ainda não desmarcou.
+   *
+   * ⚠️ É ISTO QUE A SAÍDA LEVA, e mais nada. Sem a lista, fechar a tela apagava de vez tudo o
+   * que estivesse marcado nesta gravação — incluindo o que a outra pessoa acabou de remover e
+   * ainda pode trazer de volta com a seta.
+   */
+  const marcadosPorMim = useRef(new Set<string>());
+  const marquei = (id: string) => marcadosPorMim.current.add(id);
+  const desmarquei = (id: string) => marcadosPorMim.current.delete(id);
   const anotar = (passo: PassoDaMontagem) => setHistorico((h) => registar(h, passo));
 
   const aplicarPasso = async (passo: PassoDaMontagem, sentido: 'desfazer' | 'refazer') => {
@@ -398,13 +349,22 @@ const ProjectSpace: FC = () => {
         // e ninguém saberia porquê. Cancelá-la é seguro: o valor que ela levava é exatamente o
         // que esta linha está a substituir.
         esquecer(`clipe:${passo.clipeId}`);
-        await catalogDb.updateClip(passo.clipeId, { start_seconds: voltando ? passo.de : passo.para });
+        await catalogDb.updateClip(passo.clipeId, {
+          start_seconds: voltando ? passo.de : passo.para,
+          // A pista só entra quando o arrasto trocou de faixa. Sem isto, desfazer punha o clipe
+          // no segundo certo da faixa errada — onde ele nunca esteve.
+          ...(passo.dePista && passo.paraPista
+            ? { track_id: voltando ? passo.dePista : passo.paraPista }
+            : {}),
+        });
         break;
       case 'apagarClipe':
         await (voltando ? catalogDb.restaurarClipe : catalogDb.marcarClipeApagado)(passo.clipeId);
+        (voltando ? desmarquei : marquei)(passo.clipeId);
         break;
       case 'apagarPista':
         await (voltando ? catalogDb.restaurarPista : catalogDb.marcarPistaApagada)(passo.pistaId);
+        (voltando ? desmarquei : marquei)(passo.pistaId);
         break;
       case 'cortar':
         // Desandar um corte é o clipe da esquerda voltar ao comprimento inteiro e o da direita
@@ -413,11 +373,19 @@ const ProjectSpace: FC = () => {
           duration_seconds: voltando ? passo.duracaoAntes : passo.duracaoDepois,
         });
         await (voltando ? catalogDb.marcarClipeApagado : catalogDb.restaurarClipe)(passo.novoClipeId);
+        (voltando ? marquei : desmarquei)(passo.novoClipeId);
+        break;
+      case 'duplicar':
+        // O espelho de apagar: desfazer tira a cópia de cena, refazer traz-na de volta. O clipe
+        // de origem nunca foi tocado, e por isso não aparece aqui.
+        await (voltando ? catalogDb.marcarClipeApagado : catalogDb.restaurarClipe)(passo.novoClipeId);
+        (voltando ? marquei : desmarquei)(passo.novoClipeId);
         break;
       case 'acrescentarPistas':
         await Promise.all(passo.pistaIds.map(
           (id) => (voltando ? catalogDb.marcarPistaApagada : catalogDb.restaurarPista)(id),
         ));
+        passo.pistaIds.forEach(voltando ? marquei : desmarquei);
         break;
       default:
         break;
@@ -433,6 +401,26 @@ const ProjectSpace: FC = () => {
     if (andandoNoTempo) return;
     const saida = sentido === 'desfazer' ? desfazerPasso(historico) : refazerPasso(historico);
     if (!saida) return;
+
+    // ⚠️ A SETA SÓ ANDA SE O MUNDO AINDA ESTIVER COMO O MEU PASSO O DEIXOU. Com outra pessoa na
+    // mesma música, desfazer um gesto meu por cima do que ela fez a seguir apagava o trabalho
+    // dela sem aviso — e a pilha dela nunca soube que aquilo aconteceu. O passo caducou: sai da
+    // pilha (repeti-lo dava o mesmo) e a tela diz porquê.
+    const caduco = conferirOPasso(saida.passo, {
+      pistas: pistas.map((p) => ({ id: p.id, clips: p.clips })),
+      clipes: pistas.flatMap((p) => (p.clips || []).map((c) => ({
+        id: c.id,
+        track_id: c.track_id,
+        start_seconds: Number(c.start_seconds) || 0,
+        duration_seconds: Number(c.duration_seconds) || 0,
+      }))),
+    }, sentido);
+    if (caduco) {
+      setHistorico(saida.historico);
+      message.warning(caduco);
+      return;
+    }
+
     setAndandoNoTempo(true);
     setSaveState('salvando');
     try {
@@ -491,6 +479,79 @@ const ProjectSpace: FC = () => {
       })),
     } : atual));
 
+  /**
+   * Tira o clipe da faixa onde está e põe-no noutra, sem ir ao banco.
+   *
+   * ⚠️ É UMA MUDANÇA e não duas: procurar o clipe, tirá-lo e acrescentá-lo na mesma passagem.
+   * Feito em dois `setProject`, o render do meio via uma montagem sem o clipe em lado nenhum —
+   * e a mesa, que carrega o que vê, descartava o buffer e voltava a descodificá-lo a cada
+   * linha que a mão atravessasse.
+   */
+  const moverClipeDePista = (clipeId: string, pistaId: string) =>
+    setProject((atual) => (atual ? {
+      ...atual,
+      versions: (atual.versions || []).map((v) => {
+        const clipe = (v.tracks || [])
+          .flatMap((t) => t.clips || []).find((c) => c.id === clipeId);
+        if (!clipe || clipe.track_id === pistaId) return v;
+        // ⚠️ E SE A FAIXA DE DESTINO NÃO EXISTIR AQUI, NÃO SE MEXE. Sem esta guarda, o clipe
+        // saía de onde estava e não entrava em lado nenhum — desaparecia da montagem. A
+        // decisão do núcleo já manda recarregar nesse caso; isto é o cinto, para o dia em que
+        // alguém chamar esta função de outro sítio.
+        if (!(v.tracks || []).some((t) => t.id === pistaId)) return v;
+        return {
+          ...v,
+          tracks: (v.tracks || []).map((t) => ({
+            ...t,
+            clips: t.id === pistaId
+              ? [...(t.clips || []).filter((c) => c.id !== clipeId), { ...clipe, track_id: pistaId }]
+              : (t.clips || []).filter((c) => c.id !== clipeId),
+          })),
+        };
+      }),
+    } : atual));
+
+  // ─── O Espaço JAM ao vivo ─────────────────────────────────────────────────
+  //
+  // Quem está aqui (os avatares do topo) e o que muda enquanto estamos. O canal é do NÚCLEO,
+  // porque o aparelho precisa exatamente do mesmo; o que fica aqui é só o que esta tela sabe
+  // fazer com cada decisão — remendar uma pista, remendar um clipe, ou reler a montagem.
+  const conhecidos = useMemo(() => ({
+    pistas: pistas.map((p) => p.id),
+    clipes: pistas.flatMap((p) => (p.clips || []).map((c) => c.id)),
+  }), [pistas]);
+
+  const aoVivo = useJamAoVivo(
+    projectId,
+    user ? { id: user.id, nome: currentUserName, foto: userMeta.avatar_url || null } : null,
+    open?.id,
+    conhecidos,
+    (decisao) => {
+      if (decisao.faca === 'recarregar') { void refresh(); return; }
+      if (decisao.faca === 'remendarPista') { mudarPistaLocal(decisao.id, decisao.parte); return; }
+      if (decisao.faca !== 'remendarClipe') return;
+      const { track_id: paraPista, ...tempos } = decisao.parte as { track_id?: string };
+      mudarClipeLocal(decisao.id, tempos as never);
+      if (paraPista) moverClipeDePista(decisao.id, paraPista);
+    },
+  );
+
+  /**
+   * Marca uma linha como ESCRITA MINHA, antes de a escrever.
+   *
+   * ⚠️ COM O VALOR DEPOIS DA MUDANÇA, e por isso a fusão: o que volta do Postgres é a linha
+   * inteira, e é com ela que a assinatura tem de bater. Sem isto, o meu próprio arrasto voltava
+   * meio segundo depois e punha o clipe onde ele já não estava.
+   */
+  const minhaPista = (pistaId: string, parte: Partial<CatalogTrack>) => {
+    const atual = pistas.find((p) => p.id === pistaId);
+    aoVivo.minha(`pista:${pistaId}`, assinaturaDaPista({ ...(atual || {}), ...parte } as Record<string, unknown>));
+  };
+  const minhoClipe = (clipeId: string, parte: Record<string, unknown>) => {
+    const atual = pistas.flatMap((p) => p.clips || []).find((c) => c.id === clipeId);
+    aoVivo.minha(`clipe:${clipeId}`, assinaturaDoClipe({ ...(atual || {}), ...parte }));
+  };
+
   /** Um relógio por alvo: mexer em dois clipes seguidos não pode cancelar a gravação do primeiro. */
   const relogios = useRef<Record<string, number>>({});
   useEffect(() => () => { Object.values(relogios.current).forEach(window.clearTimeout); }, []);
@@ -514,8 +575,10 @@ const ProjectSpace: FC = () => {
             release_date: rascunho.release_date || null,
             isrc: rascunho.isrc || null,
             upc: rascunho.upc || null,
-            bpm: rascunho.bpm || null,
-            key: rascunho.key || null,
+            // ⚠️ O ANDAMENTO E O TOM NÃO VÃO DAQUI. Quem os grava é a barra do editor, logo
+            // acima, e é a MESMA coluna: este rascunho só recarrega ao trocar de gravação, e
+            // repeti-los aqui mandava o valor velho por cima do que a barra acabou de gravar
+            // — bastava escrever uma letra no título. Ver `payloadDaGravacao`.
             duration: rascunho.duration || null,
             lyrics: rascunho.lyrics || null,
             details: rascunho.details || null,
@@ -574,10 +637,15 @@ const ProjectSpace: FC = () => {
     if (!duracao) { message.warning('Espere o áudio carregar para montar.'); return; }
 
     setSaveState('salvando');
+      // ⚠️ O NOME SAI DO FICHEIRO, e não do título da música. A primeira pista de uma gravação
+      // por montar é o áudio que alguém anexou, e chamar-lhe "Test" porque a música se chama
+      // Test é dizer duas vezes a mesma coisa e nenhuma vez o que ali está. O título fica como
+      // recurso, para o caso raro de uma gravação com áudio e sem nome de ficheiro.
+    const nomeDoAnexo = tituloDoArquivo(open.audio_file_name || '') || open.title || 'Mix';
     try {
       const linha = await catalogDb.addVersionFile({
         version_id: open.id,
-        name: open.title || 'Mix',
+        name: nomeDoAnexo,
         file_url: open.audio_file,
         file_type: null,
         kind: 'stem',
@@ -587,7 +655,7 @@ const ProjectSpace: FC = () => {
       await catalogDb.criarPistaComArquivo({
         versionId: open.id,
         arquivo: linha,
-        nome: open.title || 'Mix',
+        nome: nomeDoAnexo,
         position: 0,
         colorIndex: 0,
         duracao,
@@ -636,6 +704,11 @@ const ProjectSpace: FC = () => {
     // e ficava um "Salvo" verde por cima de uma montagem que continuava vazia.
     let entraram = 0;
     const nascidas: string[] = [];
+    // ⚠️ E CADA UM A SEGUIR AO ANTERIOR, quando vão todos para a MESMA faixa. Sem este
+    // acumulador, quatro ficheiros largados de uma vez nasciam todos no mesmo segundo — o lote
+    // deixava de se sobrepor ao que já lá estava e passava a sobrepor-se a si próprio, que é o
+    // mesmo defeito com outro nome.
+    let proximo = inicio;
     try {
       for (let i = 0; i < aceites.length; i += 1) {
         setEnvio({ feitos: i, total: aceites.length });
@@ -664,10 +737,11 @@ const ProjectSpace: FC = () => {
           await catalogDb.createClip({
             track_id: pistaAlvo,
             file_id: linha.id,
-            start_seconds: inicio,
+            start_seconds: proximo,
             offset_seconds: 0,
             duration_seconds: duracao,
           });
+          proximo += duracao;
         } else {
           const nascida = await catalogDb.criarPistaComArquivo({
             versionId: open.id,
@@ -719,16 +793,51 @@ const ProjectSpace: FC = () => {
   // novo, uma música editada trinta vezes guardaria trinta guias mortas; com mil músicas, isso
   // são centenas de gigabytes que ninguém volta a abrir.
   const sujo = useRef(false);
-  const [gerando, setGerando] = useState(false);
+  /** 0..1 enquanto a guia corre; `null` fora disso. Ver `rotuloDaGuia`, no núcleo. */
+  const [gerando, setGerando] = useState<number | null>(null);
+
+  const [perguntandoDaGuia, setPerguntandoDaGuia] = useState(false);
+
+  /**
+   * Fechar de verdade: a limpeza desta sessão, e fora.
+   *
+   * ⚠️ A GUIA NÃO ENTRA AQUI. Quem a quer passa por `gerarGuia` antes; quem não a quer sai na
+   * mesma, e é isso que a pergunta oferece.
+   */
+  const sair = async () => {
+    setPerguntandoDaGuia(false);
+    // ⚠️ A SESSÃO FECHA E O QUE FOI APAGADO SAI DE VERDADE — do banco e do balde. É o outro
+    // lado do desfazer: enquanto a tela está aberta a linha fica marcada para poder voltar;
+    // fechada, não há mais quem a chame de volta, e guardá-la seria só resíduo a acumular.
+    //
+    // Falhar aqui não pode prender ninguém na tela: a montagem está salva, e a limpeza da
+    // próxima abertura apanha o que sobrar.
+    if (open && podeEditar) {
+      // `Array.from` e não `[...]`: o alvo do TypeScript da web é anterior ao ES2015 e
+      // recusa espalhar um `Set` sem `downlevelIteration`. É o mesmo motivo do `forEach` nos
+      // mapas da mesa.
+      const meus = Array.from(marcadosPorMim.current);
+      await catalogDb.purgarMontagem(open.id, { apenas: meus }).catch(() => undefined);
+    }
+    navigate(`/artists/${artistId}/catalog`);
+  };
 
   const gerarGuia = async (gravacao: CatalogVersion | null) => {
     if (!sujo.current || !gravacao || !artistId || !projectId) return;
 
-    setGerando(true);
+    // ⚠️ COMEÇA SEM CONTA, e não em 0%. Antes do codificador vem a SOMA das faixas, que não
+    // sabe dizer quanto falta — e um "0%" parado durante ela é o mesmo que reticências paradas:
+    // parece uma tela pendurada. `NaN` faz o rótulo voltar ao texto simples até haver um número
+    // de verdade para mostrar. Ver `rotuloDaGuia`, no núcleo.
+    setGerando(Number.NaN);
     try {
       const rendido = await mesa.renderizar(criarOfflineWeb);
       if (!rendido) return;
-      const mp3 = await paraMp3(rendido);
+      // ⚠️ SILÊNCIO NÃO SE GRAVA POR CIMA DA GUIA BOA. Ver `temSom`, no núcleo: entre gravar
+      // mudo e não gravar, não gravar é sempre melhor — a montagem continua salva, a guia
+      // anterior continua a tocar na lista, e a saída seguinte tenta de novo.
+      if (!temSom(rendido)) { message.warning(MONTAGEM_MUDA); return; }
+      const mp3 = await paraMp3(rendido, setGerando);
       const gravado = await gravarEmCaminhoFixo(
         BALDE_DO_CATALOGO, caminhoDaGuia(artistId, projectId), mp3, 'audio/mpeg',
       );
@@ -747,7 +856,7 @@ const ProjectSpace: FC = () => {
       // Falhar a guia não pode prender a pessoa na tela: a montagem está salva, e a próxima
       // saída tenta de novo.
     } finally {
-      setGerando(false);
+      setGerando(null);
     }
   };
 
@@ -844,27 +953,67 @@ const ProjectSpace: FC = () => {
     // tarde: o `useMesa` descarta a mesa primeiro — é ele quem está declarado antes — e a
     // renderização encontraria a gaveta de buffers já vazia. Foi assim que a primeira versão
     // falhou, em silêncio, sem gravar nada.
-    aoSair: async () => {
-      await gerarGuia(open);
-      // ⚠️ A SESSÃO FECHA E O QUE FOI APAGADO SAI DE VERDADE — do banco e do balde. É o outro
-      // lado do desfazer: enquanto a tela está aberta a linha fica marcada para poder voltar;
-      // fechada, não há mais quem a chame de volta, e guardá-la seria só resíduo a acumular.
-      //
-      // Falhar aqui não pode prender ninguém na tela: a montagem está salva, e a limpeza da
-      // próxima abertura apanha o que sobrar.
-      if (open && podeEditar) await catalogDb.purgarMontagem(open.id).catch(() => undefined);
-      navigate(`/artists/${artistId}/catalog`);
-    },
+    // ⚠️ O X PERGUNTA, E NÃO DECIDE. Gerar a guia é o certo para quem acabou de montar — é o
+    // que faz a lista de Músicas tocar o que se fez — e é um roubo de um minuto e meio para
+    // quem entrou só para ouvir e mexeu num fader. Quem sabe qual dos dois é, é quem está lá.
+    //
+    // Sem nada por gravar não há pergunta: perguntar "gerar a guia?" quando não há nada de novo
+    // para somar é uma porta a mais no caminho de sair.
+    aoSair: () => { if (sujo.current && podeEditar) setPerguntandoDaGuia(true); else void sair(); },
     aoRenomear: (nome) => setProject((atual) => (atual ? { ...atual, title: nome } : atual)),
     aoAdicionarArquivos: (arquivos, inicio, pistaAlvo) => { void enviarPistas(arquivos, inicio, pistaAlvo); },
 
     // `de` só vem quando a mão LARGOU: durante o arrasto isto é chamado a cada pixel, e um
     // passo por pixel encheria a pilha com cinquenta versões do mesmo gesto.
-    aoMoverClipe: (clipeId, inicio, de) => {
+    aoMoverClipe: (clipeId, inicio, de, pista) => {
       sujo.current = true;
+      minhoClipe(clipeId, { start_seconds: inicio, ...(pista ? { track_id: pista.para } : {}) });
       mudarClipeLocal(clipeId, { start_seconds: inicio });
-      if (de !== undefined) anotar({ tipo: 'mover', clipeId, de, para: inicio });
-      adiar(`clipe:${clipeId}`, () => catalogDb.updateClip(clipeId, { start_seconds: inicio }));
+      if (pista) moverClipeDePista(clipeId, pista.para);
+      if (de !== undefined) {
+        anotar({
+          tipo: 'mover', clipeId, de, para: inicio,
+          ...(pista?.de ? { dePista: pista.de, paraPista: pista.para } : {}),
+        });
+      }
+      adiar(`clipe:${clipeId}`, () => catalogDb.updateClip(clipeId, {
+        start_seconds: inicio,
+        ...(pista ? { track_id: pista.para } : {}),
+      }));
+    },
+
+    // ⚠️ NASCE VAZIA, e é esse o ponto: preparar a montagem — voz, guitarra, bateria — antes de
+    // ter o áudio de cada uma. O ficheiro entra depois, pelo botão de enviar da própria faixa.
+    aoCriarPista: () => {
+      if (!open || !podeEditar) return;
+      if (pistas.length >= MAXIMO_DE_PISTAS) {
+        message.warning(`Uma gravação leva no máximo ${MAXIMO_DE_PISTAS} faixas.`);
+        return;
+      }
+      sujo.current = true;
+      setSaveState('salvando');
+      void (async () => {
+        try {
+          // ⚠️ A MIX PRIMEIRO, se a gravação nunca foi montada. Sem isto, a primeira faixa
+          // criada à mão fazia a Mix sintetizada sair de cena — ela só existe enquanto não há
+          // pistas nenhumas — e o áudio da gravação desaparecia da linha do tempo.
+          if (porMontar) await montarAMix();
+          const nascida = await catalogDb.createTrack({
+            version_id: open.id,
+            name: nomeDaPistaNova(pistas.map((p) => p.name)),
+            position: proximaPosicaoDaPista(pistas.map((p) => p.position)),
+            gain: 1,
+            muted: false,
+            color_index: proximaCorDaPista(pistas.map((p) => p.color_index)),
+          });
+          anotar({ tipo: 'acrescentarPistas', pistaIds: [nascida.id] });
+          await refresh();
+          setSaveState('salvo');
+        } catch {
+          setSaveState('erro');
+          message.error('Não consegui criar a faixa');
+        }
+      })();
     },
 
     // ⚠️ Cortar não toca no ficheiro: o clipe da esquerda encolhe, e nasce um da direita sobre
@@ -902,12 +1051,36 @@ const ProjectSpace: FC = () => {
       })();
     },
 
+    // ⚠️ DUPLICAR TAMBÉM NÃO TOCA NO FICHEIRO, e nem sequer no clipe de origem: nasce uma linha
+    // nova sobre o MESMO áudio, com o mesmo recorte, encostada ao fim da primeira. Onde ela
+    // entra é conta do núcleo, para as duas telas repetirem o clipe no mesmo segundo.
+    aoDuplicarClipe: (clipeId) => {
+      const pista = pistas.find((p) => (p.clips || []).some((c) => c.id === clipeId));
+      const clipe = (pista?.clips || []).find((c) => c.id === clipeId);
+      // A Mix não é uma pista do banco: não há linha onde pendurar a cópia.
+      if (!pista || !clipe || pista.id === ID_DA_MIX) return;
+
+      sujo.current = true;
+      setSaveState('salvando');
+      void (async () => {
+        try {
+          const nascido = await catalogDb.createClip(copiaDoClipe({
+            ...clipe, track_id: pista.id,
+          }));
+          anotar({ tipo: 'duplicar', clipeId, novoClipeId: nascido.id });
+          await refresh();
+          setSaveState('salvo');
+        } catch { setSaveState('erro'); }
+      })();
+    },
+
     // ⚠️ MARCAR, E NÃO APAGAR. A linha fica no banco até a sessão fechar, que é o que dá à seta
     // do desfazer alguma coisa para onde voltar. Ao fechar o editor ela é apagada de verdade.
     aoApagarClipe: (clipeId) => {
       sujo.current = true;
       esquecer(`clipe:${clipeId}`);
       setSaveState('salvando');
+      marquei(clipeId);
       void catalogDb.marcarClipeApagado(clipeId)
         .then(() => { anotar({ tipo: 'apagarClipe', clipeId }); })
         .then(refresh)
@@ -917,12 +1090,30 @@ const ProjectSpace: FC = () => {
 
     aoMudarPista: (pistaId, parte) => {
       sujo.current = true;
+      minhaPista(pistaId, parte);
       mudarPistaLocal(pistaId, parte);
       // O som muda AGORA; o banco recebe depois. O contrário faria o fader responder com meio
       // segundo de atraso, e ninguém mistura assim.
       if (parte.muted !== undefined) mesa.mudar(pistaId, parte.muted);
       if (parte.gain !== undefined) mesa.ganho(pistaId, parte.gain);
       if (parte.pan !== undefined) mesa.panoramar(pistaId, parte.pan);
+
+      // ⚠️ A COR GRAVA NA HORA, e é a única parte da pista que o faz. As outras chegam aqui de
+      // uma RÉGUA a ser arrastada — o fader, o pan — e cada pixel do gesto pediria uma escrita:
+      // é por isso que elas esperam. Escolher uma cor é um toque único e deliberado, e adiá-lo
+      // só abre a janela em que fechar a tela logo a seguir perde a escolha.
+      //
+      // ⚠️ E É O QUE O APP JÁ FAZIA. Ele grava a cor sem adiar, com este mesmo argumento
+      // escrito ao lado; a web adiava-a por apanhar boleia do caminho do fader. A mesma escolha
+      // com duas durações nas duas telas é a diferença que ninguém vê até perder uma.
+      if (parte.color_index !== undefined) {
+        esquecer(`pista:${pistaId}`);
+        setSaveState('salvando');
+        void catalogDb.updateTrack(pistaId, parte)
+          .then(() => setSaveState('salvo'))
+          .catch(() => setSaveState('erro'));
+        return;
+      }
       adiar(`pista:${pistaId}`, () => catalogDb.updateTrack(pistaId, parte));
     },
 
@@ -935,6 +1126,7 @@ const ProjectSpace: FC = () => {
       setSaveState('salvando');
       // Marcada, e não apagada: o desfazer tem de a poder trazer de volta com os clipes dela.
       // O ficheiro só sai no fecho da sessão, e só se nenhum clipe apontar mais para ele.
+      marquei(pistaId);
       void catalogDb.marcarPistaApagada(pistaId)
         .then(() => { anotar({ tipo: 'apagarPista', pistaId }); })
         .then(refresh)
@@ -966,6 +1158,7 @@ const ProjectSpace: FC = () => {
         selo={saveState}
         envio={envio}
         gerando={gerando}
+        presentes={aoVivo.presentes}
         pistas={pistas}
         pistaFixaId={porMontar ? ID_DA_MIX : null}
         aoMontar={porMontar && podeEditar ? () => { void montarAMix(); } : undefined}
@@ -975,6 +1168,7 @@ const ProjectSpace: FC = () => {
           alternar: mesa.alternar,
           loopar: mesa.loopar,
           irPara: mesa.irPara,
+          posicaoAgora: mesa.posicaoAgora,
         }}
         podeEditar={podeEditar}
         acoes={acoes}
@@ -994,39 +1188,18 @@ const ProjectSpace: FC = () => {
                 para a barra dos controlos, junto do que governa o som. */}
             <CampoDoTopo
               rotulo='BPM'
+              vazio='BPM'
+              apenas='numero'
               valor={open?.bpm || ''}
               largura={48}
               limite={3}
               travado={!podeEditar || !open}
               aoMudar={(v) => mudarGravacao({ bpm: v })}
-              ouvido={ouvido !== null && Number(bpmLegivel(open?.bpm)) === ouvido}
             />
-            {/* A troca de oitava. Um toque, e volta com outro: é um interruptor entre as duas
-                leituras da mesma batida, não uma correção que se faz uma vez. */}
-            {alternativa !== null && (
-              <button
-                type='button'
-                onClick={() => {
-                  setOuvido(alternativa);
-                  mudarGravacao({ bpm: String(alternativa) });
-                }}
-                title={`Também pode ser ${alternativa} BPM: a mesma batida, contada em dobro ou em meio-tempo.`}
-                aria-label={`Trocar para ${alternativa} BPM`}
-                style={{
-                  height: 26, padding: '0 8px', marginLeft: -4,
-                  background: 'transparent',
-                  border: `1px dashed ${DS.color.borda}`,
-                  borderRadius: DS.raio.medio,
-                  color: DS.color.textoApoio,
-                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                  fontFamily: DS.font.mono, whiteSpace: 'nowrap',
-                }}
-              >
-                ou {alternativa}?
-              </button>
-            )}
             <CampoDoTopo
               rotulo='TOM'
+              vazio='TOM'
+              apenas='texto'
               valor={open?.key || ''}
               largura={52}
               limite={6}
@@ -1093,7 +1266,6 @@ const ProjectSpace: FC = () => {
               ]}
               uploading={enviandoCapa}
               aoEnviarCapa={(arquivo) => { void enviarCapa(arquivo); }}
-              versionId={open?.id}
             />
             <CamposDosSplits draft={rascunho} set={mexerNaFicha} />
           </div>
@@ -1108,6 +1280,13 @@ const ProjectSpace: FC = () => {
             aoBaixarStems={() => { void baixarStems(); }}
             aoBaixarGuiaWav={() => { void baixarGuiaWav(); }}
             aoBaixarGuiaMp3={() => { void baixarGuiaMp3(); }}
+          />
+        )}
+        conversa={(
+          <Conversa
+            projetoId={project.id}
+            autor={{ id: user?.id, nome: currentUserName, foto: userMeta.avatar_url || null }}
+            podeFalar={podeEditar}
           />
         )}
         letra={(
@@ -1155,6 +1334,15 @@ const ProjectSpace: FC = () => {
         )}
       />
 
+      {/* A pergunta do X, e a espera de quem escolheu gerar. Uma tela por cima de tudo, porque
+          é a única coisa que está a acontecer enquanto acontece. */}
+      <FecharComGuia
+        gerando={gerando}
+        perguntando={perguntandoDaGuia}
+        aoGerar={() => { void (async () => { await gerarGuia(open); await sair(); })(); }}
+        aoSair={() => { void sair(); }}
+        aoFicar={() => setPerguntandoDaGuia(false)}
+      />
     </>
   );
 };
