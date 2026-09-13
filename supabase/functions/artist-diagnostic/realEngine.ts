@@ -238,6 +238,98 @@ export function daQuizV3(qz: Record<string, any> | null | undefined): Record<str
   };
 }
 
+// ════════════════════ FAIXAS DE VALOR (§3.2) ════════════════════
+//
+// A v4.5 parou de pedir dinheiro digitado. O artista escolhe uma FAIXA, e o motor lê dois números
+// dela: o PISO decide se a dimensão acende, o PONTO MÉDIO dá a nota (§7.2). A regra existe para o
+// arredondamento da faixa nunca acender o que o artista não alcançou.
+//
+// ⚠️ O RÓTULO MORA JUNTO DOS NÚMEROS, e isso é deliberado. Separá-los em dois arrays casados por
+// índice reintroduz o desvio silencioso: um rótulo apontando para o piso da faixa vizinha não
+// quebra nada, não falha teste nenhum, e muda a nota de quem responder aquela faixa.
+//
+// Como este ficheiro é copiado inteiro para a edge, ter texto aqui não custa nada — e o `PROFILES`
+// logo abaixo já carrega nome e descrição pelo mesmo motivo.
+
+export interface Faixa {
+  /** O que sai no botão do quiz: "De R$ 6 mil a R$ 10 mil por mês". */
+  rotulo: string;
+  /** O mesmo dentro de uma frase, para o `{faixa_saldo}` do relatório (§11). */
+  naFrase: string;
+  /** Anual. ⚠️ −1 é SENTINELA de saldo negativo, não dinheiro: a nota é 0 e a dimensão não acende. */
+  piso: number;
+  medio: number;
+}
+
+/**
+ * QE.2 — o saldo do ano, em nove faixas.
+ *
+ * ⚠️ OS PISOS DAS FAIXAS 6 E 8 SÃO OS PRÓPRIOS CORTES DO E, por desenho (§3.2): R$ 10 mil por mês
+ * é R$ 120 mil no ano, que é o acender, e R$ 100 mil por mês é R$ 1,2 milhão, que é o Top Tier.
+ * É isso que faz a decisão não ter arredondamento. Há teste a prender os dois.
+ */
+export const FAIXAS_DE_SALDO: readonly Faixa[] = [
+  { rotulo: 'Gastei mais do que ganhei', naFrase: 'gastando mais do que ganha', piso: -1, medio: -1 },
+  { rotulo: 'Não sobrou nada, empatou', naFrase: 'empatando', piso: 0, medio: 0 },
+  { rotulo: 'Até R$ 1 mil por mês', naFrase: 'até R$ 1 mil por mês', piso: 0, medio: 6_000 },
+  { rotulo: 'De R$ 1 mil a R$ 3 mil por mês', naFrase: 'entre R$ 1 mil e R$ 3 mil por mês', piso: 12_000, medio: 24_000 },
+  { rotulo: 'De R$ 3 mil a R$ 6 mil por mês', naFrase: 'entre R$ 3 mil e R$ 6 mil por mês', piso: 36_000, medio: 54_000 },
+  { rotulo: 'De R$ 6 mil a R$ 10 mil por mês', naFrase: 'entre R$ 6 mil e R$ 10 mil por mês', piso: 72_000, medio: 96_000 },
+  { rotulo: 'De R$ 10 mil a R$ 25 mil por mês', naFrase: 'entre R$ 10 mil e R$ 25 mil por mês', piso: 120_000, medio: 210_000 },
+  { rotulo: 'De R$ 25 mil a R$ 100 mil por mês', naFrase: 'entre R$ 25 mil e R$ 100 mil por mês', piso: 300_000, medio: 750_000 },
+  { rotulo: 'Acima de R$ 100 mil por mês', naFrase: 'acima de R$ 100 mil por mês', piso: 1_200_000, medio: 1_800_000 },
+];
+
+/** QD.1 (cachê) e QD.3 (custo por show). Por show, não por ano. */
+export const FAIXAS_POR_SHOW: readonly Faixa[] = [
+  { rotulo: 'Nada', naFrase: 'nada', piso: 0, medio: 0 },
+  { rotulo: 'Até R$ 500', naFrase: 'até R$ 500', piso: 0, medio: 250 },
+  { rotulo: 'De R$ 500 a R$ 1 mil', naFrase: 'entre R$ 500 e R$ 1 mil', piso: 500, medio: 750 },
+  { rotulo: 'De R$ 1 mil a R$ 2 mil', naFrase: 'entre R$ 1 mil e R$ 2 mil', piso: 1_000, medio: 1_500 },
+  { rotulo: 'De R$ 2 mil a R$ 5 mil', naFrase: 'entre R$ 2 mil e R$ 5 mil', piso: 2_000, medio: 3_500 },
+  { rotulo: 'De R$ 5 mil a R$ 10 mil', naFrase: 'entre R$ 5 mil e R$ 10 mil', piso: 5_000, medio: 7_500 },
+  { rotulo: 'De R$ 10 mil a R$ 25 mil', naFrase: 'entre R$ 10 mil e R$ 25 mil', piso: 10_000, medio: 17_500 },
+  { rotulo: 'De R$ 25 mil a R$ 50 mil', naFrase: 'entre R$ 25 mil e R$ 50 mil', piso: 25_000, medio: 37_500 },
+  { rotulo: 'Acima de R$ 50 mil', naFrase: 'acima de R$ 50 mil', piso: 50_000, medio: 75_000 },
+];
+
+/** QD.2 (receita fora dos shows) e QD.5 (investimento em lançamentos). Anuais. */
+export const FAIXAS_ANUAIS: readonly Faixa[] = [
+  { rotulo: 'Nada', naFrase: 'nada', piso: 0, medio: 0 },
+  { rotulo: 'Até R$ 1 mil', naFrase: 'até R$ 1 mil', piso: 0, medio: 500 },
+  { rotulo: 'De R$ 1 mil a R$ 5 mil', naFrase: 'entre R$ 1 mil e R$ 5 mil', piso: 1_000, medio: 3_000 },
+  { rotulo: 'De R$ 5 mil a R$ 20 mil', naFrase: 'entre R$ 5 mil e R$ 20 mil', piso: 5_000, medio: 12_500 },
+  { rotulo: 'De R$ 20 mil a R$ 50 mil', naFrase: 'entre R$ 20 mil e R$ 50 mil', piso: 20_000, medio: 35_000 },
+  { rotulo: 'De R$ 50 mil a R$ 150 mil', naFrase: 'entre R$ 50 mil e R$ 150 mil', piso: 50_000, medio: 100_000 },
+  { rotulo: 'De R$ 150 mil a R$ 500 mil', naFrase: 'entre R$ 150 mil e R$ 500 mil', piso: 150_000, medio: 325_000 },
+  { rotulo: 'Acima de R$ 500 mil', naFrase: 'acima de R$ 500 mil', piso: 500_000, medio: 750_000 },
+];
+
+/** QD.4 — o custo fixo. ⚠️ MENSAL: quem consome multiplica por 12. */
+export const FAIXAS_DE_FIXO: readonly Faixa[] = [
+  { rotulo: 'Nada', naFrase: 'nada', piso: 0, medio: 0 },
+  { rotulo: 'Até R$ 500 por mês', naFrase: 'até R$ 500 por mês', piso: 0, medio: 250 },
+  { rotulo: 'De R$ 500 a R$ 1 mil por mês', naFrase: 'entre R$ 500 e R$ 1 mil por mês', piso: 500, medio: 750 },
+  { rotulo: 'De R$ 1 mil a R$ 3 mil por mês', naFrase: 'entre R$ 1 mil e R$ 3 mil por mês', piso: 1_000, medio: 2_000 },
+  { rotulo: 'De R$ 3 mil a R$ 10 mil por mês', naFrase: 'entre R$ 3 mil e R$ 10 mil por mês', piso: 3_000, medio: 6_500 },
+  { rotulo: 'De R$ 10 mil a R$ 30 mil por mês', naFrase: 'entre R$ 10 mil e R$ 30 mil por mês', piso: 10_000, medio: 20_000 },
+  { rotulo: 'Acima de R$ 30 mil por mês', naFrase: 'acima de R$ 30 mil por mês', piso: 30_000, medio: 45_000 },
+];
+
+/** A faixa de um índice, ou `null` quando o índice não é de faixa nenhuma. */
+export const faixaDe = (tabela: readonly Faixa[], i: unknown): Faixa | null =>
+  (Number.isInteger(i) && (i as number) >= 0 && (i as number) < tabela.length) ? tabela[i as number] : null;
+
+/**
+ * O ponto médio de uma faixa, ou `null`.
+ *
+ * ⚠️ `null` E NÃO ZERO, e a diferença é a compatibilidade inteira. Quem chama isto encadeia com o
+ * valor em reais que as compilações já publicadas na loja continuam a mandar (`?? os reais`). Se
+ * devolvesse 0, o `??` deixava de disparar e todo build antigo passava a calcular saldo zero.
+ */
+export const medioDaFaixa = (tabela: readonly Faixa[], i: unknown): number | null =>
+  faixaDe(tabela, i)?.medio ?? null;
+
 // ════════════════════ CORTES — parâmetros de calibração (§12.1) ════════════════════
 // Toda alteração aqui incrementa `calibrationVersion` (AAAA.MM) e fica gravada no diagnóstico.
 export const CUTS = {

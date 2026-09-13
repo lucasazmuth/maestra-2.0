@@ -1,4 +1,8 @@
-import { boletimDoE, computeRealIndexV4, escala, CUTS, FONTES_DE_RECEITA } from './index';
+import {
+  boletimDoE, computeRealIndexV4, escala, faixaDe, medioDaFaixa, CUTS, FONTES_DE_RECEITA,
+  FAIXAS_DE_SALDO, FAIXAS_POR_SHOW, FAIXAS_ANUAIS, FAIXAS_DE_FIXO,
+} from './index';
+import type { Faixa } from './index';
 import type { RealInputsV4, PaganteFaixa } from './index';
 
 // Base "zerada": nada acende. Cada teste liga só o que quer medir.
@@ -484,3 +488,82 @@ describe('§11.1 invariante do boletim (teste de propriedade obrigatório §13.3
 });
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// ════════ §3.2 · as faixas de valor ════════
+//
+// A v4.5 parou de pedir dinheiro digitado: o artista escolhe uma faixa, e o motor lê dois números
+// dela. O piso decide se acende, o ponto médio dá a nota (§7.2).
+describe('§3.2 faixas de valor', () => {
+  const TABELAS: [string, readonly Faixa[], number][] = [
+    ['saldo', FAIXAS_DE_SALDO, 9],
+    ['por show', FAIXAS_POR_SHOW, 9],
+    ['anuais', FAIXAS_ANUAIS, 8],
+    ['fixo', FAIXAS_DE_FIXO, 7],
+  ];
+
+  it.each(TABELAS)('a escala de %s tem as faixas que a spec manda', (_nome, tabela, quantas) => {
+    expect(tabela).toHaveLength(quantas);
+  });
+
+  // ⚠️ ESTA É A PROMESSA DO §3.2, E É O MOTIVO DE AS FAIXAS TEREM ESTAS BORDAS.
+  //
+  // "Os cortes do E (120 mil e 1,2 milhão) são bordas de faixa por desenho: acender e Top Tier
+  // ficam exatos." Se alguém recalibrar um corte sem mexer na faixa correspondente, a decisão
+  // passa a ter arredondamento e a frase acima vira mentira. Este teste é o que impede.
+  it('os pisos das faixas 6 e 8 do saldo SÃO os cortes do E', () => {
+    expect(FAIXAS_DE_SALDO[6].piso).toBe(CUTS.e.saldoAcende);
+    expect(FAIXAS_DE_SALDO[8].piso).toBe(CUTS.e.saldoTopIcon);
+  });
+
+  it.each(TABELAS)('a escala de %s não anda para trás', (_nome, tabela) => {
+    for (let i = 1; i < tabela.length; i += 1) {
+      expect(tabela[i].piso).toBeGreaterThanOrEqual(tabela[i - 1].piso);
+      expect(tabela[i].medio).toBeGreaterThan(tabela[i - 1].medio);
+    }
+  });
+
+  it.each(TABELAS)('na escala de %s, o ponto médio nunca fica abaixo do piso', (_nome, tabela) => {
+    for (const f of tabela) expect(f.medio).toBeGreaterThanOrEqual(f.piso);
+  });
+
+  it.each(TABELAS)('toda faixa de %s tem rótulo e frase, e são diferentes de vazio', (_nome, tabela) => {
+    for (const f of tabela) {
+      expect(f.rotulo.trim().length).toBeGreaterThan(0);
+      expect(f.naFrase.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  // O −1 é marcador, não dinheiro: é o que distingue "gastei mais do que ganhei" de "empatou",
+  // que decidem igual (nenhum acende) e pontuam igual (nota 0), mas dizem coisas diferentes.
+  it('só a primeira faixa do saldo é negativa, e a segunda é o zero', () => {
+    expect(FAIXAS_DE_SALDO[0].piso).toBe(-1);
+    expect(FAIXAS_DE_SALDO[0].medio).toBe(-1);
+    expect(FAIXAS_DE_SALDO[1].piso).toBe(0);
+    expect(FAIXAS_DE_SALDO[1].medio).toBe(0);
+  });
+
+  // ⚠️ `null` E NÃO ZERO: quem chama encadeia com os reais que os builds já publicados mandam.
+  // Um zero aqui desligava o `??` e zerava o saldo de toda compilação antiga da loja.
+  describe('índice fora da tabela', () => {
+    it.each([[-1], [99], [1.5], [null], [undefined], ['3'], [NaN]])(
+      'o índice %p não é faixa nenhuma',
+      (i) => {
+        expect(faixaDe(FAIXAS_DE_SALDO, i)).toBeNull();
+        expect(medioDaFaixa(FAIXAS_DE_SALDO, i)).toBeNull();
+      },
+    );
+
+    it('e um índice válido devolve o ponto médio', () => {
+      expect(medioDaFaixa(FAIXAS_DE_SALDO, 6)).toBe(210_000);
+      expect(medioDaFaixa(FAIXAS_POR_SHOW, 4)).toBe(3_500);
+      expect(medioDaFaixa(FAIXAS_ANUAIS, 3)).toBe(12_500);
+      expect(medioDaFaixa(FAIXAS_DE_FIXO, 5)).toBe(20_000);
+    });
+
+    // O zero é faixa legítima, e distingue-se da ausência.
+    it('a faixa "nada" devolve zero, que não é a mesma coisa que null', () => {
+      expect(medioDaFaixa(FAIXAS_POR_SHOW, 0)).toBe(0);
+      expect(medioDaFaixa(FAIXAS_POR_SHOW, 0)).not.toBeNull();
+    });
+  });
+});
