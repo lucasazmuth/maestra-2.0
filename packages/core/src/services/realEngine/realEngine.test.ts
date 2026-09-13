@@ -1,4 +1,4 @@
-import { computeRealIndexV4, escala, CUTS, FONTES_DE_RECEITA } from './index';
+import { boletimDoE, computeRealIndexV4, escala, CUTS, FONTES_DE_RECEITA } from './index';
 import type { RealInputsV4, PaganteFaixa } from './index';
 
 // Base "zerada": nada acende. Cada teste liga só o que quer medir.
@@ -259,6 +259,39 @@ describe('§7 E · Earnings', () => {
     expect(com.revenue.saldoAjustado).toBe(sem.revenue.saldoAjustado);
     expect(com.revenue.receitaLiquidaEstimada).toBe(138_000);
     expect(sem.revenue.receitaLiquidaEstimada).toBeNull();
+  });
+
+  // ⚠️ A NOTA NUNCA CONTRADIZ O ACESO, MESMO QUANDO O NÚMERO DELA DIZ O CONTRÁRIO.
+  //
+  // A v4.5 separa as duas leituras do saldo: a decisão de acender olha o PISO da faixa e a nota
+  // olha o PONTO MÉDIO (§7.2). Isso abre um caso que hoje ainda não se alcança pelo quiz, e que
+  // é real: faixa de R$ 6 a 10 mil por mês, com CNPJ e empresário. O piso dá 72.000 × 1,3 =
+  // 93.600, que não acende; o ponto médio dá 96.000 × 1,3 = 124.800, que sozinho valeria 71.
+  //
+  // Apagada com 71 quebra a invariante do §11.1 e derruba o teste de propriedade lá embaixo. Quem
+  // cede é a nota. Por isso `boletimDoE` recebe o aceso em vez de o deduzir do valor — e por isso
+  // este teste chama a função direto: é a única forma de exercitar a divergência antes de as
+  // faixas existirem.
+  describe('§11.1 · a nota do E cede à leitura binária', () => {
+    it('apagada trava em 69, mesmo com o ponto médio acima do corte', () => {
+      expect(boletimDoE(124_800, false)).toBe(69);
+    });
+
+    it('acesa nunca cai abaixo de 70, mesmo com o ponto médio abaixo do corte', () => {
+      expect(boletimDoE(93_600, true)).toBe(70);
+    });
+
+    // E onde os dois concordam, a curva do §7.4 continua exatamente a mesma.
+    it.each([
+      [0, false, 0],
+      [60_000, false, 35],
+      [119_999, false, 69],
+      [120_000, true, 70],
+      [1_200_000, true, 100],
+      [12_000_000, true, 100],
+    ])('saldo %s aceso=%s dá nota %s', (saldo, aceso, nota) => {
+      expect(boletimDoE(saldo as number, aceso as boolean)).toBe(nota);
+    });
   });
 });
 

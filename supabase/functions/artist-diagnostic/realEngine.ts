@@ -363,6 +363,28 @@ function zComp(key: string, label: string, z: number | null, zPiso: number, sour
 // jamais pode contradizer a leitura binária.
 const belowCut = (x: number) => clamp(Math.round(x), 0, 69);
 
+/**
+ * A nota do E (§7.4), a partir do saldo ajustado do PONTO MÉDIO e do estado da dimensão.
+ *
+ * ⚠️ O `aceso` É PARÂMETRO, E NÃO SE DEDUZ DO VALOR. A v4.5 separou as duas coisas: a decisão de
+ * acender olha o PISO da faixa e a nota olha o PONTO MÉDIO (§7.2), e os dois caem em lados
+ * opostos do corte num caso real — faixa de R$ 6 a 10 mil por mês, com CNPJ e empresário, dá piso
+ * 93.600 (apagada) e médio 124.800, que sozinho valeria nota 71.
+ *
+ * Apagada com nota 71 quebra a invariante do §11.1, que manda a nota nunca contradizer a leitura
+ * binária. Quem cede é a nota. É a mesma solução que o `boletimL` já usa para a trava de
+ * plataforma, e por isto as duas ficam parecidas de propósito.
+ */
+export const boletimDoE = (saldoMedioAjustado: number, aceso: boolean): number => {
+  const x = saldoMedioAjustado;
+  const bruto = x <= 0 ? 0
+    : x < CUTS.e.saldoAcende ? (x / CUTS.e.saldoAcende) * 70
+      : x < CUTS.e.saldoTopIcon
+        ? 70 + 30 * (Math.log10(x / CUTS.e.saldoAcende) / Math.log10(CUTS.e.saldoTopIcon / CUTS.e.saldoAcende))
+        : 100;
+  return aceso ? Math.max(70, Math.round(bruto)) : belowCut(bruto);
+};
+
 /** Progresso do componente entre o piso da TABELA DELE e a linha de acender: 0 no piso, 1 no corte. */
 function progressoAteOCorte(z: number | null, zPiso: number): number {
   if (z == null) return 0;
@@ -631,12 +653,7 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   const def = PROFILES[key];
 
   // ════════ §11 · Boletim 0–100 ════════
-  const boletimE = (() => {
-    if (saldoAjustado <= 0) return 0;
-    if (saldoAjustado < CUTS.e.saldoAcende) return belowCut((saldoAjustado / CUTS.e.saldoAcende) * 70);
-    if (saldoAjustado < CUTS.e.saldoTopIcon) return Math.round(70 + 30 * (Math.log10(saldoAjustado / CUTS.e.saldoAcende) / Math.log10(CUTS.e.saldoTopIcon / CUTS.e.saldoAcende)));
-    return 100;
-  })();
+  const boletimE = boletimDoE(saldoAjustado, eHigh);
   // Usa lHigh (não só notaL): com a trava, nota_L pode passar de 0,70 SEM acender — belowCut
   // trava em 69 e preserva a invariante (§9.7, §11.1).
   const boletimL = lHigh
