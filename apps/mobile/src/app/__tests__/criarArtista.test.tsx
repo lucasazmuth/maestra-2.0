@@ -106,8 +106,9 @@ const responderAPergunta = async (
     await usuario.press(tela.getByLabelText(pergunta.options![0].label));
     return;
   }
-  if (pergunta.type === 'matrix') {
-    // Uma escolha por tipo: as pílulas são radio, e a primeira de cada linha é "Nunca".
+  if (pergunta.type === 'tabela') {
+    // Uma escolha por linha: as pílulas são radio, e a primeira de cada linha é a que limpa
+    // ("Nunca", na imprensa). O índice 1 é a segunda coluna da primeira linha.
     await usuario.press(tela.getAllByRole('radio')[1]);
   } else if (pergunta.type === 'revenue') {
     await usuario.type(tela.getByLabelText(REVENUE_SOURCES[0].label), '10');
@@ -238,7 +239,7 @@ describe('criar perfil', () => {
     chaves.forEach((chave) => expect(QUIZ.map((p) => p.key)).toContain(chave));
 
     // A imprensa vai em objetos, não em "tipo:porte" — é o formato que o motor lê.
-    const imprensa = body.quizV4[QUIZ.find((p) => p.type === 'matrix')!.key];
+    const imprensa = body.quizV4[QUIZ.find((p) => p.type === 'tabela')!.key];
     if (imprensa) {
       expect(Array.isArray(imprensa)).toBe(true);
       expect(imprensa[0]).toEqual(expect.objectContaining({ tipo: expect.any(String), porte: expect.any(String) }));

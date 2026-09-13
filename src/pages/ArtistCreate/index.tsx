@@ -15,7 +15,8 @@ import type { RealIndex } from '@maestra/core/interfaces/maestra';
 // O roteiro do quiz mora no núcleo: o app nativo faz as MESMAS perguntas, na mesma ordem, com
 // as mesmas chaves — é o que a edge `artist-diagnostic` lê dos dois lados.
 import {
-  IMPRENSA_PORTES, IMPRENSA_TIPOS, IMPRENSA_NUNCA, QUIZ, REVENUE_SOURCES, CHAVES_DO_BLOCO_R,
+  colunaMarcada, LINHA_SEM_ESCOLHA, mapaDaTabela, respostaDaTabela, QUIZ, REVENUE_SOURCES,
+  CHAVES_DO_BLOCO_R,
   TIPOS_DE_CONTRATANTE_QUIZ, NAO_SEI, CTX_API, ORIENTACAO_SPOTIFY, totalDaTrilha,
   perguntaAnterior, proximaPergunta, transicaoDoBloco, enunciado, FALAS,
 } from '@maestra/core/constants/quizDoDiagnostico';
@@ -115,18 +116,19 @@ const ArtistCreate: FC = () => {
       setRevenueVal(prev && typeof prev === 'object' && !Array.isArray(prev) ? { ...prev } : {});
     } else if (cur.type === 'cache') {
       setCacheVal(prev && typeof prev === 'object' && !Array.isArray(prev) ? { ...prev } : {});
-    } else if (cur.type === 'matrix') {
-      setMatrixVal(Array.isArray(prev)
-        ? Object.fromEntries(prev.map((c: any) => [c.tipo, c.porte]))
-        : {});
+    } else if (cur.type === 'tabela') {
+      setMatrixVal(mapaDaTabela(cur, prev));
     } else {
       setFieldVal(null);
     }
   }, [quizIndex, step]);
 
-  // Escolha única por tipo: marcar um porte substitui o anterior. Reclicar o mesmo desmarca.
-  const marcarPorte = (tipo: string, porte: string) =>
-    setMatrixVal((prev) => ({ ...prev, [tipo]: prev[tipo] === porte ? '' : porte }));
+  // Escolha única por LINHA: marcar uma coluna substitui a anterior. Reclicar a mesma desmarca.
+  const marcarNaTabela = (linha: string, coluna: string) =>
+    setMatrixVal((prev) => ({
+      ...prev,
+      [linha]: prev[linha] === coluna ? LINHA_SEM_ESCOLHA : coluna,
+    }));
 
   // Refazer diagnóstico: semeia os dados salvos do artista + as respostas anteriores e começa no
   // quiz (pula o "perfil"). Só age enquanto está no perfil; ao achar o artista, troca pra quiz.
@@ -745,35 +747,37 @@ const ArtistCreate: FC = () => {
                 );
               }
 
-              // Imprensa: uma escolha por tipo de veículo, o MAIOR porte (§9.3).
+              // Tabela de escolha única por linha. As linhas, as colunas e a coluna que limpa
+              // vêm da DEFINIÇÃO DA PERGUNTA — este bloco não sabe de imprensa nem de porte.
               //
-              // A v3 deixava marcar vários portes no mesmo tipo, o que não significava nada: o
-              // motor agrega pelo máximo, porque a matriz mede o TETO de legitimação alcançado.
-              // Marcar "pequeno" além de "grande" nunca mudou a nota e só confundia. Agora a
-              // pergunta é a que a metodologia faz, com "Nunca" explícito em vez de deixar em branco.
-              if (cur.type === 'matrix') {
-                const opcoes = [{ key: IMPRENSA_NUNCA, label: 'Nunca' }, ...IMPRENSA_PORTES];
+              // A imprensa é a primeira a usá-lo (§9.3): uma escolha por tipo de veículo, o MAIOR
+              // porte. A v3 deixava marcar vários portes no mesmo tipo, o que não significava
+              // nada — o motor agrega pelo máximo, porque a matriz mede o TETO de legitimação
+              // alcançado. Marcar "pequeno" além de "grande" nunca mudou a nota e só confundia.
+              if (cur.type === 'tabela' && cur.tabela) {
+                const { linhas, colunas, vazio } = cur.tabela;
+                const opcoes = vazio
+                  ? [{ key: LINHA_SEM_ESCOLHA, label: vazio }, ...colunas]
+                  : colunas;
                 return (
                   <div className={styles.matrixWrap}>
                     {ajuda}
                     <div className={styles.matrixList}>
-                      {IMPRENSA_TIPOS.map((t) => (
-                        <div key={t.key} className={styles.matrixTypeRow}>
-                          <span className={styles.matrixTypeName}>{t.label}</span>
+                      {linhas.map((linha) => (
+                        <div key={linha.key} className={styles.matrixTypeRow}>
+                          <span className={styles.matrixTypeName}>{linha.label}</span>
                           <div className={styles.porteChips}>
-                            {opcoes.map((p) => {
-                              const marcado = p.key === IMPRENSA_NUNCA
-                                ? !matrixVal[t.key]
-                                : matrixVal[t.key] === p.key;
+                            {opcoes.map((coluna) => {
+                              const marcado = colunaMarcada(matrixVal, linha.key, coluna.key);
                               return (
                                 <button
-                                  key={p.key}
+                                  key={coluna.key || '_vazio'}
                                   type='button'
                                   aria-pressed={marcado}
                                   className={`${styles.porteChip} ${marcado ? styles.porteChipOn : ''}`}
-                                  onClick={() => marcarPorte(t.key, p.key === IMPRENSA_NUNCA ? '' : p.key)}
+                                  onClick={() => marcarNaTabela(linha.key, coluna.key)}
                                 >
-                                  {p.label}
+                                  {coluna.label}
                                 </button>
                               );
                             })}
@@ -784,11 +788,7 @@ const ArtistCreate: FC = () => {
                     <button
                       className={styles.cta}
                       style={{ marginTop: 16, width: '100%' }}
-                      onClick={() => answerQuiz(
-                        Object.entries(matrixVal)
-                          .filter(([, porte]) => !!porte)
-                          .map(([tipo, porte]) => ({ tipo, porte })),
-                      )}
+                      onClick={() => answerQuiz(respostaDaTabela(cur, matrixVal) as never)}
                     >
                       Continuar
                     </button>

@@ -23,7 +23,7 @@ import { FIXOS } from './realTextos';
 // tipo, o maior, porque é o teto de legitimação que o método mede.
 
 export type QuizValue = string | number | boolean;
-export type QuizFieldType = 'int' | 'currency' | 'select' | 'revenue' | 'cache' | 'matrix';
+export type QuizFieldType = 'int' | 'currency' | 'select' | 'revenue' | 'cache' | 'tabela';
 export type QuizKey =
   | 'vinculo'
   | 'igFollowersSelf' | 'tiktokFollowersSelf' | 'youtubeViews28dSelf'
@@ -42,6 +42,79 @@ export type QuizKey =
  */
 export type QuizBloco = 'vinculo' | 'shows' | 'digital' | 'reconhecimento' | 'estrutura' | 'numeros';
 
+/** Uma linha ou uma coluna da tabela de escolha única. */
+export interface OpcaoDaTabela { key: string; label: string }
+
+/**
+ * Uma tabela de ESCOLHA ÚNICA POR LINHA (`type: 'tabela'`).
+ *
+ * ⚠️ ERA A MATRIZ DE IMPRENSA, E SÓ ELA. Os dois renderizadores — web e app — liam as constantes
+ * `IMPRENSA_TIPOS` e `IMPRENSA_PORTES` direto do módulo e ignoravam a definição da pergunta: o
+ * `type: 'matrix'` não descrevia uma forma, nomeava UMA pergunta. A segunda pergunta com esta
+ * forma obrigaria a copiar os dois renderizadores inteiros, e a partir daí as duas cópias
+ * divergiriam em silêncio de um lado só.
+ *
+ * Agora a forma está aqui e os dados vêm da pergunta.
+ */
+export interface TabelaDeEscolhaUnica {
+  linhas: readonly OpcaoDaTabela[];
+  colunas: readonly OpcaoDaTabela[];
+  /**
+   * O rótulo da coluna que LIMPA a linha, desenhada antes das outras ("Nunca").
+   *
+   * Opcional porque nem toda tabela precisa dela: numa escala de faixas, "Nada" é a faixa 0, uma
+   * resposta legítima — e não a ausência de resposta.
+   */
+  vazio?: string;
+  /**
+   * Como o mapa `{ linha: coluna }` vira o valor gravado, e como ele volta.
+   *
+   * Andam em par e existem por causa da imprensa, que grava um array de `{ tipo, porte }` desde a
+   * v3. Sem eles a migração mudaria a forma do payload de uma pergunta já em produção, o que não
+   * é generalizar coisa nenhuma — é aproveitar a boleia para mexer noutra coisa. Uma tabela nova
+   * omite os dois e grava o mapa como ele é.
+   */
+  saida?: (marcado: Record<string, string>) => unknown;
+  entrada?: (gravado: unknown) => Record<string, string>;
+}
+
+/** O valor de uma linha sem escolha. */
+export const LINHA_SEM_ESCOLHA = '';
+
+/** O mapa `{ linha: coluna }` a partir do que estava gravado na resposta. */
+export const mapaDaTabela = (def: QuizDef, gravado: unknown): Record<string, string> => {
+  if (def.tabela?.entrada) return def.tabela.entrada(gravado);
+  return gravado && typeof gravado === 'object' && !Array.isArray(gravado)
+    ? { ...(gravado as Record<string, string>) }
+    : {};
+};
+
+/**
+ * A coluna está marcada nesta linha?
+ *
+ * ⚠️ O `??` É O QUE FAZ A COLUNA QUE LIMPA ACENDER NUMA LINHA INTOCADA. A linha que o artista
+ * ainda não tocou não tem valor nenhum no mapa, e a coluna que limpa tem a chave vazia: comparar
+ * `undefined` com `''` dá falso, e a tabela abre com as seis linhas sem nada marcado — como se
+ * "Nunca" fosse uma resposta que ele ainda tivesse de dar, quando é o estado inicial dela.
+ *
+ * Mora aqui porque é a MESMA regra nas duas superfícies, e é do tipo que se reescreve à mão sem
+ * pensar: cada lado tinha a sua, e bastava uma perder o `??` para a tabela abrir diferente na web
+ * e no app.
+ */
+export const colunaMarcada = (
+  marcado: Record<string, string>,
+  linha: string,
+  coluna: string,
+): boolean => (marcado[linha] ?? LINHA_SEM_ESCOLHA) === coluna;
+
+/** O valor a gravar a partir do mapa `{ linha: coluna }`. */
+export const respostaDaTabela = (def: QuizDef, marcado: Record<string, string>): unknown => {
+  if (def.tabela?.saida) return def.tabela.saida(marcado);
+  return Object.fromEntries(
+    Object.entries(marcado).filter(([, v]) => v !== LINHA_SEM_ESCOLHA),
+  );
+};
+
 export interface QuizDef {
   key: QuizKey;
   bloco: QuizBloco;
@@ -53,6 +126,8 @@ export interface QuizDef {
   options?: { label: string; value: QuizValue }[];
   /** Pula a pergunta quando a condição é verdadeira (ex.: alíquota só para quem tem CNPJ). */
   skipIf?: (a: Record<string, any>) => boolean;
+  /** Obrigatório em `type: 'tabela'`, e sem sentido nos outros. */
+  tabela?: TabelaDeEscolhaUnica;
 }
 /**
  * O que a consulta prévia à Chartmetric trouxe (§3.1, passo 2). As telas depositam este objeto na
@@ -131,9 +206,6 @@ export const IMPRENSA_PORTES: { key: ImprensaPorte; label: string }[] = [
   { key: 'medio', label: 'Médio' },
   { key: 'grande', label: 'Grande' },
 ];
-/** A opção que zera a linha na matriz de imprensa. Fica antes dos portes. */
-export const IMPRENSA_NUNCA = 'nunca';
-
 export const SIM_NAO: { label: string; value: QuizValue }[] = [{ label: 'Sim', value: true }, { label: 'Não', value: false }];
 
 // Declaração de vínculo com o artista. Primeira pergunta de propósito: enquadra o resto do
@@ -213,7 +285,29 @@ export const QUIZ: QuizDef[] = [
 
   // ── Bloco 3 · Seu reconhecimento (L) ──
   { key: 'imprensaRepercussao', bloco: 'reconhecimento', type: 'select', q: 'Você já teve repercussão de mídia (imprensa, blogs, TV, influenciadores, podcasts) com seu trabalho musical?', options: SIM_NAO },
-  { key: 'imprensaMatrix', bloco: 'reconhecimento', type: 'matrix', q: 'Para cada tipo de veículo, marque o maior porte em que seu trabalho já apareceu.', ajuda: 'Só o maior conta.', skipIf: (a) => !a.imprensaRepercussao },
+  {
+    key: 'imprensaMatrix',
+    bloco: 'reconhecimento',
+    type: 'tabela',
+    q: 'Para cada tipo de veículo, marque o maior porte em que seu trabalho já apareceu.',
+    ajuda: 'Só o maior conta.',
+    skipIf: (a) => !a.imprensaRepercussao,
+    tabela: {
+      linhas: IMPRENSA_TIPOS,
+      colunas: IMPRENSA_PORTES,
+      vazio: 'Nunca',
+      // A forma gravada é a da v3, e continua a ser: um array de `{ tipo, porte }`, só com as
+      // linhas marcadas. O motor e o saneador da edge leem isso há meses.
+      saida: (m) => Object.entries(m)
+        .filter(([, porte]) => !!porte)
+        .map(([tipo, porte]) => ({ tipo, porte })),
+      entrada: (g) => Object.fromEntries(
+        (Array.isArray(g) ? g : [])
+          .filter((c: unknown): c is { tipo: string; porte: string } => !!c && typeof c === 'object')
+          .map((c) => [c.tipo, c.porte]),
+      ),
+    },
+  },
   { key: 'imprensaFrequencia', bloco: 'reconhecimento', type: 'select', q: 'Com que frequência seu trabalho aparece na mídia?', skipIf: (a) => !a.imprensaRepercussao, options: [
     { label: 'Esporadicamente', value: 'esporadico' },
     { label: 'Nos períodos de lançamento', value: 'lancamento' },

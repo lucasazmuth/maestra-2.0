@@ -1,5 +1,6 @@
 import {
   QUIZ, TRANSICOES, CTX_API, transicaoDoBloco, enunciado, proximaPergunta, perguntaAnterior,
+  colunaMarcada, LINHA_SEM_ESCOLHA, mapaDaTabela, respostaDaTabela, type QuizDef,
 } from './quizDoDiagnostico';
 
 // O ROTEIRO v4.2 — a ordem das perguntas e as transições de bloco.
@@ -172,4 +173,104 @@ it('a opção zero de prêmios não é um veredito', () => {
   const premios = QUIZ[indiceDe('premios')];
 
   expect(premios.options![0]).toEqual({ label: 'Ainda não participei de premiações', value: 0 });
+});
+
+// ════════ A tabela de escolha única ════════
+//
+// ⚠️ ELA ERA A MATRIZ DE IMPRENSA, E SÓ ELA. Os dois renderizadores liam `IMPRENSA_TIPOS` e
+// `IMPRENSA_PORTES` direto do módulo e ignoravam a definição da pergunta: `type: 'matrix'` não
+// descrevia uma forma, nomeava UMA pergunta. A segunda pergunta com esta forma obrigaria a copiar
+// os dois renderizadores inteiros — e a partir daí as cópias divergiriam num lado só, calado.
+describe('a tabela de escolha única', () => {
+  const imprensa = QUIZ.find((p) => p.key === 'imprensaMatrix')!;
+
+  it('a imprensa é uma tabela, e traz as linhas e as colunas consigo', () => {
+    expect(imprensa.type).toBe('tabela');
+    expect(imprensa.tabela!.linhas.map((l) => l.key)).toEqual(
+      ['imprensa', 'tv', 'influenciadores', 'youtube', 'podcasts', 'blogs'],
+    );
+    expect(imprensa.tabela!.colunas.map((c) => c.key)).toEqual(['pequeno', 'medio', 'grande']);
+    expect(imprensa.tabela!.vazio).toBe('Nunca');
+  });
+
+  it('toda tabela declara linhas e colunas, e só uma tabela as declara', () => {
+    for (const p of QUIZ) {
+      if (p.type === 'tabela') {
+        expect(p.tabela?.linhas.length).toBeGreaterThan(0);
+        expect(p.tabela?.colunas.length).toBeGreaterThan(0);
+      } else {
+        expect(p.tabela).toBeUndefined();
+      }
+    }
+  });
+
+  // ⚠️ A FORMA GRAVADA DA IMPRENSA NÃO PODE MUDAR. Ela está em produção desde a v3, o motor e o
+  // saneador da edge leem o array de `{ tipo, porte }`, e há 84 diagnósticos guardados com ele.
+  // Generalizar o renderizador não é licença para mexer no payload de uma pergunta já publicada.
+  it('a imprensa continua a gravar o array de { tipo, porte }, só com as linhas marcadas', () => {
+    expect(respostaDaTabela(imprensa, { imprensa: 'grande', tv: LINHA_SEM_ESCOLHA, podcasts: 'medio' }))
+      .toEqual([{ tipo: 'imprensa', porte: 'grande' }, { tipo: 'podcasts', porte: 'medio' }]);
+  });
+
+  it('e volta a ser o mesmo mapa quando o artista clica em "Voltar"', () => {
+    const marcado = { imprensa: 'grande', podcasts: 'medio' };
+    expect(mapaDaTabela(imprensa, respostaDaTabela(imprensa, marcado))).toEqual(marcado);
+  });
+
+  it.each([[null], [undefined], ['lixo'], [{}], [[{ nada: 1 }]]])(
+    'e um valor gravado inútil (%p) devolve um mapa vazio, em vez de rebentar',
+    (gravado) => {
+      expect(mapaDaTabela(imprensa, gravado)).toEqual({});
+    },
+  );
+
+  // Uma tabela sem `saida`/`entrada` — o formato das que vêm a seguir, em faixas — grava o mapa
+  // como ele é, e a linha sem escolha simplesmente não entra.
+  it('uma tabela nova grava o mapa, sem as linhas em branco', () => {
+    const nova = { key: 'x', bloco: 'numeros', type: 'tabela', q: '', tabela: {
+      linhas: [{ key: 'a', label: 'A' }, { key: 'b', label: 'B' }],
+      colunas: [{ key: '0', label: 'Nada' }, { key: '1', label: 'Até R$ 500' }],
+    } } as unknown as QuizDef;
+    expect(respostaDaTabela(nova, { a: '1', b: LINHA_SEM_ESCOLHA })).toEqual({ a: '1' });
+    expect(mapaDaTabela(nova, { a: '1' })).toEqual({ a: '1' });
+  });
+
+  it('e um array gravado numa tabela sem conversor não vira mapa de índices', () => {
+    const nova = { key: 'x', bloco: 'numeros', type: 'tabela', q: '', tabela: {
+      linhas: [{ key: 'a', label: 'A' }], colunas: [{ key: '0', label: 'Nada' }],
+    } } as unknown as QuizDef;
+    // Sem a guarda, `['x','y']` viraria `{ 0: 'x', 1: 'y' }`: chaves que não são linha nenhuma,
+    // e a tabela abriria com marcas em linhas que não existem.
+    expect(mapaDaTabela(nova, ['x', 'y'])).toEqual({});
+  });
+
+  // ⚠️ A COLUNA QUE LIMPA TEM DE ACENDER NUMA LINHA INTOCADA. A linha que ninguém tocou não tem
+  // valor no mapa, e a coluna que limpa tem chave vazia: sem o `??`, a tabela abre com as seis
+  // linhas sem nada marcado, como se "Nunca" fosse resposta por dar em vez do estado inicial.
+  describe('a marca de cada coluna', () => {
+    it('a linha intocada abre com a coluna que limpa acesa', () => {
+      expect(colunaMarcada({}, 'imprensa', LINHA_SEM_ESCOLHA)).toBe(true);
+      expect(colunaMarcada({}, 'imprensa', 'grande')).toBe(false);
+    });
+
+    it('marcar uma coluna apaga a que limpa', () => {
+      expect(colunaMarcada({ imprensa: 'grande' }, 'imprensa', 'grande')).toBe(true);
+      expect(colunaMarcada({ imprensa: 'grande' }, 'imprensa', LINHA_SEM_ESCOLHA)).toBe(false);
+      expect(colunaMarcada({ imprensa: 'grande' }, 'imprensa', 'medio')).toBe(false);
+    });
+
+    it('e a escolha de uma linha não marca a linha vizinha', () => {
+      expect(colunaMarcada({ imprensa: 'grande' }, 'tv', 'grande')).toBe(false);
+      expect(colunaMarcada({ imprensa: 'grande' }, 'tv', LINHA_SEM_ESCOLHA)).toBe(true);
+    });
+  });
+
+  // A faixa "Nada" é resposta legítima, e não ausência de resposta: por isso `vazio` é opcional.
+  it('a coluna que limpa é opcional', () => {
+    const semVazio = { key: 'x', bloco: 'numeros', type: 'tabela', q: '', tabela: {
+      linhas: [{ key: 'a', label: 'A' }], colunas: [{ key: '0', label: 'Nada' }],
+    } } as unknown as QuizDef;
+    expect(semVazio.tabela!.vazio).toBeUndefined();
+    expect(respostaDaTabela(semVazio, { a: '0' })).toEqual({ a: '0' });
+  });
 });

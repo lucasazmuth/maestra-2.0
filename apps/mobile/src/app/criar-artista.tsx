@@ -10,7 +10,8 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 
 import { COR, COR_DIAGNOSTICO, RAIO } from '@maestra/core/constants/design';
 import {
-  FALAS, IMPRENSA_PORTES, IMPRENSA_TIPOS, IMPRENSA_NUNCA, QUIZ, REVENUE_SOURCES,
+  colunaMarcada, FALAS, LINHA_SEM_ESCOLHA, mapaDaTabela, respostaDaTabela, QUIZ,
+  REVENUE_SOURCES,
   TIPOS_DE_CONTRATANTE_QUIZ, NAO_SEI, CTX_API, ORIENTACAO_SPOTIFY, CHAVES_DO_BLOCO_R, totalDaTrilha,
   perguntaAnterior, proximaPergunta, transicaoDoBloco, enunciado,
 } from '@maestra/core/constants/quizDoDiagnostico';
@@ -143,9 +144,8 @@ export default function CriarArtista() {
       setReceita((anterior as Record<string, number | typeof NAO_SEI>) ?? {});
     } else if (pergunta.type === 'cache') {
       setCachePorTipo((anterior as Record<string, number>) ?? {});
-    } else if (pergunta.type === 'matrix') {
-      const guardado = (anterior as { tipo: string; porte: string }[]) ?? [];
-      setMatriz(Object.fromEntries(guardado.map((c) => [c.tipo, c.porte])));
+    } else if (pergunta.type === 'tabela') {
+      setMatriz(mapaDaTabela(pergunta, anterior));
     }
   }, [pergunta]);
 
@@ -779,41 +779,47 @@ export default function CriarArtista() {
                   )}
 
                   {/*
-                    Imprensa: uma escolha por tipo de veículo, o MAIOR porte (§9.3).
+                    Tabela de escolha única por linha. As linhas, as colunas e a coluna que limpa
+                    vêm da DEFINIÇÃO DA PERGUNTA — este bloco não sabe de imprensa nem de porte,
+                    e é o mesmo desenho que a web renderiza a partir da mesma definição.
 
-                    A v3 deixava marcar vários portes no mesmo tipo, o que não significava nada: o
-                    motor agrega pelo máximo, porque a matriz mede o TETO de legitimação alcançado.
-                    Marcar "pequeno" além de "grande" nunca mudou a nota e só confundia. Agora a
-                    pergunta é a que a metodologia faz, com "Nunca" explícito em vez de deixar em branco.
+                    A imprensa é a primeira a usá-lo (§9.3): uma escolha por tipo de veículo, o
+                    MAIOR porte. A v3 deixava marcar vários portes no mesmo tipo, o que não
+                    significava nada — o motor agrega pelo máximo, porque a matriz mede o TETO de
+                    legitimação alcançado.
                   */}
-                  {pergunta.type === 'matrix' && (
+                  {pergunta.type === 'tabela' && !!pergunta.tabela && (
                     <>
                       <View style={estilos.matriz}>
-                        {IMPRENSA_TIPOS.map((tipo) => (
-                          <View key={tipo.key} style={estilos.linhaDaMatriz}>
-                            <Text style={estilos.nomeDoTipo}>{tipo.label}</Text>
+                        {pergunta.tabela.linhas.map((linha) => (
+                          <View key={linha.key} style={estilos.linhaDaMatriz}>
+                            <Text style={estilos.nomeDoTipo}>{linha.label}</Text>
                             <View style={estilos.portes}>
-                              {[{ key: IMPRENSA_NUNCA, label: 'Nunca' }, ...IMPRENSA_PORTES].map((porte) => {
-                                const ehNunca = porte.key === IMPRENSA_NUNCA;
-                                const marcada = ehNunca ? !matriz[tipo.key] : matriz[tipo.key] === porte.key;
+                              {(pergunta.tabela!.vazio
+                                ? [{ key: LINHA_SEM_ESCOLHA, label: pergunta.tabela!.vazio }, ...pergunta.tabela!.colunas]
+                                : pergunta.tabela!.colunas
+                              ).map((coluna) => {
+                                const marcada = colunaMarcada(matriz, linha.key, coluna.key);
                                 return (
                                   <Pressable
-                                    key={porte.key}
+                                    key={coluna.key || '_vazio'}
                                     style={[estilos.porte, marcada && estilos.porteMarcado]}
                                     onPress={() => setMatriz((atual) => ({
                                       ...atual,
-                                      [tipo.key]: ehNunca || atual[tipo.key] === porte.key ? '' : porte.key,
+                                      [linha.key]: atual[linha.key] === coluna.key
+                                        ? LINHA_SEM_ESCOLHA
+                                        : coluna.key,
                                     }))}
                                     accessibilityRole="radio"
                                     accessibilityState={{ checked: marcada }}
-                                    accessibilityLabel={`${tipo.label}, ${porte.label}`}
+                                    accessibilityLabel={`${linha.label}, ${coluna.label}`}
                                   >
                                     <Text
                                       style={[
                                         estilos.porteTexto, marcada && estilos.porteTextoMarcado,
                                       ]}
                                     >
-                                      {porte.label}
+                                      {coluna.label}
                                     </Text>
                                   </Pressable>
                                 );
@@ -824,11 +830,7 @@ export default function CriarArtista() {
                       </View>
                       <Pressable
                         style={[estilos.principal, estilos.principalDaMatriz]}
-                        onPress={() => responder(
-                          Object.entries(matriz)
-                            .filter(([, porte]) => !!porte)
-                            .map(([tipo, porte]) => ({ tipo, porte })),
-                        )}
+                        onPress={() => responder(respostaDaTabela(pergunta, matriz) as never)}
                         accessibilityRole="button"
                         accessibilityLabel="Continuar"
                       >
