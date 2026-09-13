@@ -63,10 +63,20 @@ describe('cromo do wizard', () => {
     expect(escrito.slice(1, -1).toLowerCase()).toEqual(valor.toLowerCase());
   });
 
-  it('o recuo e o avatar do celular são os da folha', () => {
+  it('o recuo do celular é o da folha', () => {
     expect(token('wiz-gutter-m')).toBe('14px');
-    expect(token('wiz-avatar')).toBe('26px');
     expect(app).toContain('recuo: 14');
-    expect(app).toContain('avatar: 26');
+  });
+
+  // ⚠️ O AVATAR SAIU DOS DOIS LADOS, e este teste é o que impede que volte só num deles.
+  //
+  // O fio da conversa do wizard deixou de ter recipiente: a fala da Nyta é texto na coluna, e a
+  // resposta de quem preenche é o único recipiente da tela. Sem retrato, portanto — e o token
+  // `--wiz-avatar`, que existia para o widget do beat alinhar com os balões, deixou de ter o que
+  // alinhar. Um dos lados a redesenhá-lo de volta é a tela a divergir sem ninguém reparar.
+  it('e o avatar do fio da conversa não existe em nenhum dos dois', () => {
+    expect(folha).not.toContain('--wiz-avatar');
+    expect(folha).not.toContain('.nyta-avatar');
+    expect(app).not.toContain('avatar:');
   });
 });

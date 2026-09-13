@@ -1062,20 +1062,22 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
             item.role === 'user' ? (
               <UserBubble key={item.id}>{item.text}</UserBubble>
             ) : item.hero ? (
-              <NytaBubble key={item.id}>
-                <div className='nyta-hero-mini'>
-                  <img src={sp?.image || ARTISTS_DEFAULT_IMAGE} alt={artist.name} />
-                  <div>
-                    <h3>{artist.name}</h3>
-                    {!!sp?.spotify_artist_id && (
-                      <p>
-                        Dados reais do Spotify
-                        {sp?.track_count ? ` · ${sp.track_count} músicas` : ''}
-                      </p>
-                    )}
+              <NytaCardRow key={item.id}>
+                <div className='nyta-card nyta-hero-card'>
+                  <div className='nyta-hero-mini'>
+                    <img src={sp?.image || ARTISTS_DEFAULT_IMAGE} alt={artist.name} />
+                    <div>
+                      <h3>{artist.name}</h3>
+                      {!!sp?.spotify_artist_id && (
+                        <p>
+                          Dados reais do Spotify
+                          {sp?.track_count ? ` · ${sp.track_count} músicas` : ''}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </NytaBubble>
+              </NytaCardRow>
             ) : item.video ? (
               <NytaCardRow key={item.id} className='nyta-row--video'>
                 <div className='nyta-card nyta-video-card'>
@@ -1108,22 +1110,27 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
       {/* Só libera o input quando a Nyta TERMINOU de falar (não está na fila nem digitando). */}
       {inputOn && !speaking && !typing && (
         <div className='nyta-input-bar'>
-          <Input.TextArea
-            ref={inputRef}
-            autoSize={{ minRows: 1, maxRows: 4 }}
-            placeholder={placeholderDoCampo}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                onSend();
-              }
-            }}
-          />
-          <button className='nyta-send' onClick={onSend} disabled={!input.trim()} aria-label='Enviar'>
-            <FiArrowUp size={18} />
-          </button>
+          <div className='nyta-input-bar__row'>
+            <Input.TextArea
+              ref={inputRef}
+              className='nyta-input-bar__textarea'
+              autoSize={{ minRows: 1, maxRows: 4 }}
+              placeholder={placeholderDoCampo}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  onSend();
+                }
+              }}
+            />
+            <div className='nyta-input-bar__acoes'>
+              <button className='nyta-send' onClick={onSend} disabled={!input.trim()} aria-label='Enviar'>
+                <FiArrowUp size={18} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
