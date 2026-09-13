@@ -28,8 +28,15 @@ const matchArtistId = (pathname: string): string | undefined => {
   return m ? m[1] : undefined;
 };
 
-// Rotas sem contexto de artista: a lista "Seus artistas" (o seletor) e a área admin.
-// Nelas a tab bar não faz sentido, mesmo havendo um artista atual no store.
+// Rotas onde a tab bar não entra, por dois motivos diferentes.
+//
+// Sem contexto de artista: a lista "Seus artistas" (o seletor) e a área admin. Nelas não há
+// módulo de perfil para navegar, mesmo havendo um artista atual no store.
+//
+// ⚠️ E OS PLANOS, que têm contexto de artista e ainda assim não a querem. Aquela página fala da
+// CONTA, não do perfil: a barra oferecia Plano, Músicas e Agenda por cima dos cartões de preço,
+// tapando justamente o seletor de mensal e anual, e convidava a sair no meio de uma decisão.
+// `startsWith` porque o sucesso do pagamento vive em `/planos/sucesso` e vale o mesmo.
 //
 // O wizard NÃO precisa mais estar nesta lista: a rota dele saiu de dentro do AppLayout (ver
 // App.tsx), então nem este componente nem a reserva de rodapé do Layout chegam até lá.
@@ -37,7 +44,10 @@ const matchArtistId = (pathname: string): string | undefined => {
 // Espelhado em `navExcluded` no Layout: os dois PRECISAM concordar, senão o app reserva no rodapé
 // um espaço para uma barra que não é renderizada.
 export const isNavExcludedRoute = (pathname: string): boolean =>
-  pathname === '/artists' || pathname.startsWith('/admin') || isImmersiveRoute(pathname);
+  pathname === '/artists'
+  || pathname.startsWith('/admin')
+  || pathname.startsWith('/planos')
+  || isImmersiveRoute(pathname);
 
 /**
  * Telas que tomam a tela inteira: sem a barra da Maestra em cima e sem a tab bar embaixo.
@@ -59,7 +69,7 @@ export const MobileNav: FC = () => {
   const [t] = useTranslation(['navigation']);
   const [moreOpen, setMoreOpen] = useState(false);
   // Artista pela rota; senão o atual (setado ao visitar qualquer módulo do artista) — assim a
-  // navbar segue visível em /settings, /notifications, /planos etc.
+  // navbar segue visível em /settings e /notifications. Em /planos não: ver `isNavExcludedRoute`.
   const currentArtistId = useAppSelector((s) => s.artists.currentArtistId);
   const artistId = matchArtistId(location.pathname) ?? currentArtistId;
   const artists = useAppSelector((s) => s.artists.items);

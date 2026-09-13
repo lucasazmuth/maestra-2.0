@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 
-import { MobileNav } from '..';
+import { MobileNav, isNavExcludedRoute } from '..';
 
 // O que o "Mais" da tab bar guarda — e, sobretudo, o que ele NÃO guarda.
 //
@@ -85,5 +85,39 @@ describe('o "Mais" da tab bar', () => {
 
     expect(screen.getByText('Mais').closest('button'))
       .not.toHaveClass('mobile-nav-item--active');
+  });
+});
+
+// ONDE A TAB BAR NÃO ENTRA.
+//
+// A regra é UMA só, e o `Layout` lê a mesma função para reservar (ou não) os 56px do rodapé. Se
+// as duas discordassem, o app guardaria espaço para uma barra que ninguém desenha, ou desenharia
+// uma barra por cima do conteúdo. O comentário no componente já avisava disso; faltava o teste.
+describe('onde a tab bar não entra', () => {
+  // ⚠️ /planos TEM contexto de artista e mesmo assim não a quer: a página fala da CONTA, não do
+  // perfil. A barra oferecia Plano, Músicas e Agenda por cima dos cartões de preço, tapando o
+  // seletor de mensal e anual, e convidava a sair no meio de uma decisão.
+  it.each([
+    ['/planos'],
+    ['/planos/sucesso'],
+    ['/artists'],
+    ['/admin/usuarios'],
+    ['/artists/madha/nyta'],
+  ])('%s fica sem a barra', (rota) => {
+    expect(isNavExcludedRoute(rota)).toBe(true);
+  });
+
+  // E o resto continua com ela: uma lista de exclusões que crescesse sozinha esvaziaria a barra.
+  it.each([
+    ['/artists/madha/perfil'],
+    ['/settings'],
+    ['/notifications'],
+  ])('%s continua com a barra', (rota) => {
+    expect(isNavExcludedRoute(rota)).toBe(false);
+  });
+
+  it('em /planos o componente não desenha nada', () => {
+    montar('/planos');
+    expect(screen.queryByText('Mais')).toBeNull();
   });
 });
