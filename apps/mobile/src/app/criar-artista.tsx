@@ -11,9 +11,9 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { COR, COR_DIAGNOSTICO, RAIO } from '@maestra/core/constants/design';
 import {
   colunaMarcada, FALAS, LINHA_SEM_ESCOLHA, mapaDaTabela, respostaDaTabela, QUIZ,
-  REVENUE_SOURCES,
-  TIPOS_DE_CONTRATANTE_QUIZ, NAO_SEI, CTX_API, ORIENTACAO_SPOTIFY, CHAVES_DO_BLOCO_R, totalDaTrilha,
-  perguntaAnterior, proximaPergunta, transicaoDoBloco, enunciado,
+  CTX_API, ORIENTACAO_SPOTIFY, totalDaTrilha,
+  perguntaAnterior, proximaPergunta, transicaoDoBloco, gravarEscape, gravarResposta,
+  posicaoNaTrilha, respostaGravada,
 } from '@maestra/core/constants/quizDoDiagnostico';
 import { useCanCreateArtist } from '@maestra/core/hooks/useCanCreateArtist';
 import type { RealIndex } from '@maestra/core/interfaces/maestra';
@@ -57,7 +57,6 @@ const SITE = 'https://www.maestramanager.com';
 
 /** Só dígitos, e com os pontos de milhar da web ("1.500"). */
 const soDigitos = (texto: string) => texto.replace(/\D/g, '');
-const comMilhar = (texto: string) => texto.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
 export default function CriarArtista() {
   const { sessao, carregando: carregandoSessao } = useSessao();
@@ -103,12 +102,9 @@ export default function CriarArtista() {
   const [indice, setIndice] = useState(0);
   const respostas = useRef<Record<string, unknown>>({});
   const [valor, setValor] = useState('');
-  // Receita: R$ por fonte, ou a string "não sei" (§4 — conta zero e sinaliza no relatório).
-  const [receita, setReceita] = useState<Record<string, number | typeof NAO_SEI>>({});
-  // Cachê médio por tipo de contratante (§3.2) — seis linhas de R$, zero é resposta válida.
-  const [cachePorTipo, setCachePorTipo] = useState<Record<string, number>>({});
-  // Imprensa: UM porte por tipo, o maior (§9.3). Chave vazia = "nunca apareceu nesse veículo".
   const [matriz, setMatriz] = useState<Record<string, string>>({});
+  // Qual linha da tabela está aberta, quando ela é expansível: nove faixas não cabem a 375px.
+  const [linhaAberta, setLinhaAberta] = useState<string | null>(null);
 
   // Diagnóstico
   const [real, setReal] = useState<RealIndex | null>(null);
@@ -137,13 +133,10 @@ export default function CriarArtista() {
   // Ao trocar de pergunta, o campo do tipo certo volta ao que já tinha sido respondido.
   useEffect(() => {
     if (!pergunta) return;
-    const anterior = respostas.current[pergunta.key];
-    if (pergunta.type === 'int' || pergunta.type === 'currency') {
+    const anterior = respostaGravada(respostas.current, pergunta);
+    setLinhaAberta(null);
+    if (pergunta.type === 'int') {
       setValor(typeof anterior === 'number' ? String(anterior) : '');
-    } else if (pergunta.type === 'revenue') {
-      setReceita((anterior as Record<string, number | typeof NAO_SEI>) ?? {});
-    } else if (pergunta.type === 'cache') {
-      setCachePorTipo((anterior as Record<string, number>) ?? {});
     } else if (pergunta.type === 'tabela') {
       setMatriz(mapaDaTabela(pergunta, anterior));
     }
@@ -194,7 +187,7 @@ export default function CriarArtista() {
     respostas.current = { ...(conteudo?.quizDiagnostic?.answers || {}) };
     setIndice(0);
     setPasso('quiz');
-    dizer(enunciado(QUIZ[0], respostas.current));
+    dizer(QUIZ[0].q);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refazendo, artistaDoRefazer, passo]);
 
@@ -300,23 +293,33 @@ export default function CriarArtista() {
     dizer(FALAS.semSpotify);
   };
 
-  const responder = useCallback((resposta: unknown) => {
-    respostas.current[QUIZ[indice].key] = resposta;
+  const seguir = useCallback(() => {
     const proxima = proximaPergunta(indice + 1, respostas.current);
     if (proxima < QUIZ.length) {
       setIndice(proxima);
-      dizer(enunciado(QUIZ[proxima], respostas.current));
+      dizer(QUIZ[proxima].q);
     } else {
       setPasso('analisando');
       dizer(FALAS.analisando);
     }
   }, [indice, dizer]);
 
+  const responder = useCallback((resposta: unknown) => {
+    gravarResposta(respostas.current, QUIZ[indice], resposta);
+    seguir();
+  }, [indice, seguir]);
+
+  // O escape grava o desvio e avança SEM responder: é a ausência da resposta que o motor lê.
+  const escapar = useCallback(() => {
+    gravarEscape(respostas.current, QUIZ[indice]);
+    seguir();
+  }, [indice, seguir]);
+
   const voltarUmaPergunta = () => {
     const anterior = perguntaAnterior(indice - 1, respostas.current);
     if (anterior < 0) return;
     setIndice(anterior);
-    dizer(enunciado(QUIZ[anterior], respostas.current));
+    dizer(QUIZ[anterior].q);
   };
 
   const desbloquear = () => {
@@ -332,10 +335,10 @@ export default function CriarArtista() {
   // O progresso vem da posição ABSOLUTA na trilha, e não da contagem de perguntas visíveis: essa
   // muda conforme as respostas abrem e fecham desvios, e a barra chegava a recuar. A única exceção
   // é o bloco R, que a consulta prévia resolve ANTES do quiz começar e por isso é estável.
-  const naTrilha = (p: typeof QUIZ[number]) =>
-    !(CHAVES_DO_BLOCO_R.includes(p.key) && p.skipIf?.(respostas.current));
+  // A posição e o total saem do núcleo, e os dois deixam o detalhamento de fora: é isso que faz
+  // a barra CONGELAR enquanto se detalha, em vez de recuar.
   const progresso = passo === 'quiz'
-    ? (QUIZ.filter((p, i) => i <= indice && naTrilha(p)).length / totalDaTrilha(respostas.current)) * 100
+    ? (posicaoNaTrilha(indice, respostas.current) / totalDaTrilha(respostas.current)) * 100
     : 0;
   const mostrarInteracao = falou || passo === 'diagnostico';
   // A transição do bloco (v4.2, §2): a frase que explica por que o próximo assunto está sendo
@@ -613,7 +616,7 @@ export default function CriarArtista() {
                       // Espera o preview para não abrir o quiz com perguntas que já sabemos que
                       // vão sumir. Quase sempre já terminou enquanto esta tela era lida.
                       if (preview.current) { setPreparando(true); await preview.current; setPreparando(false); }
-                      setIndice(0); setPasso('quiz'); dizer(enunciado(QUIZ[0], respostas.current));
+                      setIndice(0); setPasso('quiz'); dizer(QUIZ[0].q);
                     }}
                     accessibilityRole="button"
                     accessibilityState={{ disabled: preparando }}
@@ -636,6 +639,12 @@ export default function CriarArtista() {
                   */}
                   {!!pergunta.ajuda && <Text style={estilos.ajuda}>{pergunta.ajuda}</Text>}
 
+                  {/*
+                    ⚠️ O ESCAPE NÃO É UMA OPÇÃO A MAIS, e por isso não entra na lista. Ele abre um
+                    desvio EM VEZ DE responder, e é a ausência da resposta que o motor lê depois:
+                    quem pede ajuda para calcular o saldo não responde QE.2. Sai como botão
+                    (QE.2b) ou como link discreto (QD.2b), como na web.
+                  */}
                   {pergunta.type === 'select' && (
                     <View style={estilos.opcoes}>
                       {pergunta.options?.map((opcao) => (
@@ -649,23 +658,37 @@ export default function CriarArtista() {
                           <Text style={estilos.opcaoTexto}>{opcao.label}</Text>
                         </Pressable>
                       ))}
+                      {!!pergunta.escape && (
+                        <Pressable
+                          style={pergunta.escape.comoLink ? estilos.escapeLink : estilos.escapeBotao}
+                          onPress={escapar}
+                          accessibilityRole="button"
+                          accessibilityLabel={pergunta.escape.rotulo}
+                        >
+                          <Text style={pergunta.escape.comoLink
+                            ? estilos.escapeLinkTexto
+                            : estilos.escapeBotaoTexto}
+                          >
+                            {pergunta.escape.rotulo}
+                          </Text>
+                        </Pressable>
+                      )}
                     </View>
                   )}
 
-                  {(pergunta.type === 'int' || pergunta.type === 'currency') && (
+                  {/* A v4.5 não tem mais campo de dinheiro: tudo o que é valor é faixa, e a
+                      única contagem que sobrou é a de shows. */}
+                  {pergunta.type === 'int' && (
                     <>
                       <View style={estilos.campoNumerico}>
-                        {pergunta.type === 'currency' && (
-                          <Text style={estilos.prefixo}>R$</Text>
-                        )}
                         <TextInput
                           style={estilos.entrada}
-                          value={pergunta.type === 'currency' ? comMilhar(valor) : valor}
+                          value={valor}
                           onChangeText={(t) => setValor(soDigitos(t))}
                           placeholder={pergunta.placeholder ?? '0'}
                           placeholderTextColor={COR_DIAGNOSTICO.criarEspacoReservado}
                           keyboardType="number-pad"
-                          accessibilityLabel={enunciado(pergunta, respostas.current)}
+                          accessibilityLabel={pergunta.q}
                         />
                       </View>
                       <Pressable
@@ -681,104 +704,6 @@ export default function CriarArtista() {
                   )}
 
                   {/*
-                    Receita fora dos shows: nove fontes, cada uma em R$ ou "não sei" (§3.2).
-
-                    O "não sei" é resposta de verdade, não campo vazio: conta zero no saldo e vira
-                    sinalização no relatório (§4, §11.3.4). Quem não sabe quanto a própria
-                    distribuidora paga está dizendo algo sobre a gestão da carreira, e é isso que o
-                    diagnóstico devolve. Por isso a linha marcada trava o campo em vez de escondê-lo.
-                  */}
-                  {pergunta.type === 'revenue' && (
-                    <View style={estilos.receita}>
-                      <Text style={estilos.prefixoDaReceita}>
-                        Quanto você recebeu nos últimos 12 meses...
-                      </Text>
-                      {REVENUE_SOURCES.map((fonte) => {
-                        const naoSei = receita[fonte.key] === NAO_SEI;
-                        return (
-                          <View key={fonte.key} style={estilos.linhaDeReceita}>
-                            <Text style={estilos.rotuloDaReceita}>{fonte.label}</Text>
-                            <View style={estilos.controlesDaReceita}>
-                              <View style={[estilos.campoNumerico, estilos.campoDaReceita, naoSei && estilos.campoApagado]}>
-                                <Text style={estilos.prefixo}>R$</Text>
-                                <TextInput
-                                  style={estilos.entrada}
-                                  editable={!naoSei}
-                                  value={!naoSei && receita[fonte.key] ? comMilhar(String(receita[fonte.key])) : ''}
-                                  onChangeText={(t) => setReceita((atual) => ({
-                                    ...atual, [fonte.key]: Number(soDigitos(t)) || 0,
-                                  }))}
-                                  placeholder={naoSei ? 'Não sei' : '0'}
-                                  placeholderTextColor={COR_DIAGNOSTICO.criarEspacoReservado}
-                                  keyboardType="number-pad"
-                                  accessibilityLabel={fonte.label}
-                                />
-                              </View>
-                              <Pressable
-                                style={[estilos.naoSei, naoSei && estilos.naoSeiMarcado]}
-                                onPress={() => setReceita((atual) => ({
-                                  ...atual, [fonte.key]: naoSei ? 0 : NAO_SEI,
-                                }))}
-                                accessibilityRole="checkbox"
-                                accessibilityState={{ checked: naoSei }}
-                                accessibilityLabel={`Não sei: ${fonte.label}`}
-                              >
-                                <Text style={[estilos.naoSeiTexto, naoSei && estilos.naoSeiTextoMarcado]}>
-                                  Não sei
-                                </Text>
-                              </Pressable>
-                            </View>
-                          </View>
-                        );
-                      })}
-                      <Pressable
-                        style={[estilos.principal, estilos.principalDaReceita]}
-                        onPress={() => responder({ ...receita })}
-                        accessibilityRole="button"
-                        accessibilityLabel="Continuar"
-                      >
-                        <Text style={estilos.principalTexto}>Continuar</Text>
-                      </Pressable>
-                    </View>
-                  )}
-
-                  {/*
-                    Cachê médio por tipo de contratante (§3.2). Zero é resposta válida e significa
-                    "não atendi esse tipo": o motor tira os zeros antes de tirar a média.
-                  */}
-                  {pergunta.type === 'cache' && (
-                    <View style={estilos.receita}>
-                      {TIPOS_DE_CONTRATANTE_QUIZ.map((tipo) => (
-                        <View key={tipo.key} style={estilos.linhaDeReceita}>
-                          <Text style={estilos.rotuloDaReceita}>{tipo.label}</Text>
-                          <View style={estilos.campoNumerico}>
-                            <Text style={estilos.prefixo}>R$</Text>
-                            <TextInput
-                              style={estilos.entrada}
-                              value={cachePorTipo[tipo.key] ? comMilhar(String(cachePorTipo[tipo.key])) : ''}
-                              onChangeText={(t) => setCachePorTipo((atual) => ({
-                                ...atual, [tipo.key]: Number(soDigitos(t)) || 0,
-                              }))}
-                              placeholder="0"
-                              placeholderTextColor={COR_DIAGNOSTICO.criarEspacoReservado}
-                              keyboardType="number-pad"
-                              accessibilityLabel={tipo.label}
-                            />
-                          </View>
-                        </View>
-                      ))}
-                      <Pressable
-                        style={[estilos.principal, estilos.principalDaReceita]}
-                        onPress={() => responder({ ...cachePorTipo })}
-                        accessibilityRole="button"
-                        accessibilityLabel="Continuar"
-                      >
-                        <Text style={estilos.principalTexto}>Continuar</Text>
-                      </Pressable>
-                    </View>
-                  )}
-
-                  {/*
                     Tabela de escolha única por linha. As linhas, as colunas e a coluna que limpa
                     vêm da DEFINIÇÃO DA PERGUNTA — este bloco não sabe de imprensa nem de porte,
                     e é o mesmo desenho que a web renderiza a partir da mesma definição.
@@ -791,42 +716,71 @@ export default function CriarArtista() {
                   {pergunta.type === 'tabela' && !!pergunta.tabela && (
                     <>
                       <View style={estilos.matriz}>
-                        {pergunta.tabela.linhas.map((linha) => (
-                          <View key={linha.key} style={estilos.linhaDaMatriz}>
-                            <Text style={estilos.nomeDoTipo}>{linha.label}</Text>
-                            <View style={estilos.portes}>
-                              {(pergunta.tabela!.vazio
-                                ? [{ key: LINHA_SEM_ESCOLHA, label: pergunta.tabela!.vazio }, ...pergunta.tabela!.colunas]
-                                : pergunta.tabela!.colunas
-                              ).map((coluna) => {
-                                const marcada = colunaMarcada(matriz, linha.key, coluna.key);
-                                return (
-                                  <Pressable
-                                    key={coluna.key || '_vazio'}
-                                    style={[estilos.porte, marcada && estilos.porteMarcado]}
-                                    onPress={() => setMatriz((atual) => ({
-                                      ...atual,
-                                      [linha.key]: atual[linha.key] === coluna.key
-                                        ? LINHA_SEM_ESCOLHA
-                                        : coluna.key,
-                                    }))}
-                                    accessibilityRole="radio"
-                                    accessibilityState={{ checked: marcada }}
-                                    accessibilityLabel={`${linha.label}, ${coluna.label}`}
-                                  >
-                                    <Text
-                                      style={[
-                                        estilos.porteTexto, marcada && estilos.porteTextoMarcado,
-                                      ]}
-                                    >
-                                      {coluna.label}
-                                    </Text>
-                                  </Pressable>
-                                );
-                              })}
+                        {pergunta.tabela.linhas.map((linha) => {
+                          // ⚠️ TRÊS CHIPS DE PORTE CABEM A 375px; NOVE FAIXAS NÃO CABEM EM LADO
+                          // NENHUM. Na tabela expansível a linha abre a escala inteira, uma de
+                          // cada vez, e o que fica à vista é o rótulo da faixa escolhida.
+                          const expansivel = !!pergunta.tabela!.expansivel;
+                          const aberta = !expansivel || linhaAberta === linha.key;
+                          const escolhida = pergunta.tabela!.colunas
+                            .find((c) => colunaMarcada(matriz, linha.key, c.key));
+                          return (
+                            <View key={linha.key} style={estilos.linhaDaMatriz}>
+                              {expansivel ? (
+                                <Pressable
+                                  style={estilos.linhaExpansivel}
+                                  onPress={() => setLinhaAberta(aberta ? null : linha.key)}
+                                  accessibilityRole="button"
+                                  accessibilityState={{ expanded: aberta }}
+                                  accessibilityLabel={linha.label}
+                                >
+                                  <Text style={estilos.nomeDoTipo}>{linha.label}</Text>
+                                  <Text style={estilos.valorDaLinha}>
+                                    {escolhida ? escolhida.label : 'Não atendo'}
+                                  </Text>
+                                </Pressable>
+                              ) : (
+                                <Text style={estilos.nomeDoTipo}>{linha.label}</Text>
+                              )}
+                              {aberta && (
+                                <View style={estilos.portes}>
+                                  {(pergunta.tabela!.vazio
+                                    ? [{ key: LINHA_SEM_ESCOLHA, label: pergunta.tabela!.vazio }, ...pergunta.tabela!.colunas]
+                                    : pergunta.tabela!.colunas
+                                  ).map((coluna) => {
+                                    const marcada = colunaMarcada(matriz, linha.key, coluna.key);
+                                    return (
+                                      <Pressable
+                                        key={coluna.key || '_vazio'}
+                                        style={[estilos.porte, marcada && estilos.porteMarcado]}
+                                        onPress={() => {
+                                          setMatriz((atual) => ({
+                                            ...atual,
+                                            [linha.key]: atual[linha.key] === coluna.key
+                                              ? LINHA_SEM_ESCOLHA
+                                              : coluna.key,
+                                          }));
+                                          if (expansivel) setLinhaAberta(null);
+                                        }}
+                                        accessibilityRole="radio"
+                                        accessibilityState={{ checked: marcada }}
+                                        accessibilityLabel={`${linha.label}, ${coluna.label}`}
+                                      >
+                                        <Text
+                                          style={[
+                                            estilos.porteTexto, marcada && estilos.porteTextoMarcado,
+                                          ]}
+                                        >
+                                          {coluna.label}
+                                        </Text>
+                                      </Pressable>
+                                    );
+                                  })}
+                                </View>
+                              )}
                             </View>
-                          </View>
-                        ))}
+                          );
+                        })}
                       </View>
                       <Pressable
                         style={[estilos.principal, estilos.principalDaMatriz]}
@@ -1065,6 +1019,27 @@ const estilos = StyleSheet.create({
     ...sombra(8, 18, 0.05),
   },
   opcaoTexto: { fontSize: 16, fontWeight: '600', color: COR_DIAGNOSTICO.titulo },
+
+  // O escape (QE.2b e QD.2b): abre um desvio EM VEZ DE responder, e por isso não se parece com
+  // uma opção. O de QE.2 é um botão de contorno tracejado; o de QD.2b é um link, porque é um
+  // "se quiser". Os mesmos dois desenhos da web.
+  escapeBotao: {
+    marginTop: 6, paddingVertical: 15, paddingHorizontal: 22, borderRadius: RAIO.cartao,
+    alignItems: 'center', borderWidth: 1, borderStyle: 'dashed',
+    borderColor: COR_DIAGNOSTICO.acima, backgroundColor: 'transparent',
+  },
+  escapeBotaoTexto: { fontSize: 15, fontWeight: '700', color: COR_DIAGNOSTICO.acima },
+  escapeLink: { marginTop: 4, paddingVertical: 10, alignItems: 'flex-start' },
+  escapeLinkTexto: {
+    fontSize: 14, fontWeight: '600', color: COR_DIAGNOSTICO.fonte, textDecorationLine: 'underline',
+  },
+
+  // A linha da tabela EXPANSÍVEL, que abre a escala inteira uma de cada vez e mostra o rótulo da
+  // faixa escolhida enquanto está fechada.
+  linhaExpansivel: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+  },
+  valorDaLinha: { fontSize: 13, fontWeight: '700', color: COR_DIAGNOSTICO.acima },
 
   receita: { gap: 14 },
   linhaDeReceita: { gap: 8 },

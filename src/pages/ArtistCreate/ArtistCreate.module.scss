@@ -2433,6 +2433,59 @@ $docLow: #8b9ab4;
   flex-wrap: wrap;
 }
 .matrixTypeName { font-size: 14px; color: #e6e6ea; font-weight: 600; flex: 1; min-width: 150px; }
+
+// A linha da tabela EXPANSÍVEL: três chips de porte cabem a 375px, nove faixas de cachê não
+// cabem em lado nenhum. A linha vira um botão que abre a escala inteira, uma de cada vez, e
+// mostra o rótulo da faixa escolhida enquanto está fechada.
+.matrixTypeToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.18s ease, border-color 0.18s ease;
+
+  &:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.14); }
+}
+.matrixTypeValor { font-size: 13px; font-weight: 700; color: #1db954; flex-shrink: 0; }
+
+// O escape (QE.2b e QD.2b): abre um desvio EM VEZ DE responder, e por isso não se parece com
+// uma opção. O de QE.2 é um botão de contorno; o de QD.2b é um link, porque é um "se quiser".
+.escapeBotao {
+  margin-top: 6px;
+  padding: 15px 22px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px dashed rgba(29, 185, 84, 0.45);
+  color: #1db954;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+
+  &:hover { background: rgba(29, 185, 84, 0.08); border-color: rgba(29, 185, 84, 0.7); }
+}
+.escapeLink {
+  margin-top: 4px;
+  padding: 10px 4px;
+  background: none;
+  border: 0;
+  color: #9b9ba3;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  align-self: flex-start;
+
+  &:hover { color: #1db954; }
+}
 .porteChips { display: inline-flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
 .porteChip {
   min-width: 78px;

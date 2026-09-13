@@ -1,4 +1,7 @@
-import type { ImprensaTipo, ImprensaPorte, TipoDeContratante, FonteDeReceita } from '../services/realEngine';
+import {
+  FAIXAS_ANUAIS, FAIXAS_DE_FIXO, FAIXAS_DE_SALDO, FAIXAS_POR_SHOW,
+  type ImprensaTipo, type ImprensaPorte, type TipoDeContratante, type FonteDeReceita,
+} from '../services/realEngine';
 import { FIXOS } from './realTextos';
 
 // O ROTEIRO do Diagnóstico REAL v4.2 — o questionário inteiro, sem uma linha de interface.
@@ -23,15 +26,25 @@ import { FIXOS } from './realTextos';
 // tipo, o maior, porque é o teto de legitimação que o método mede.
 
 export type QuizValue = string | number | boolean;
-export type QuizFieldType = 'int' | 'currency' | 'select' | 'revenue' | 'cache' | 'tabela';
+export type QuizFieldType = 'int' | 'select' | 'tabela';
+/**
+ * As chaves de CONTROLE, que não são resposta nenhuma (§3.2).
+ *
+ * Elas guardam um desvio que o artista pediu — "me ajude a calcular", "separa fonte por fonte" —
+ * e por isso começam com `_`: a edge ignora o que não reconhece, e o prefixo faz a distinção
+ * saltar à vista de quem lê o payload gravado.
+ */
+export type ChaveDeControle = '_detalhar' | '_cachePorTipo' | '_fontes';
 export type QuizKey =
   | 'vinculo'
   | 'igFollowersSelf' | 'tiktokFollowersSelf' | 'youtubeViews28dSelf'
-  | 'showsPerYear' | 'cacheByType' | 'revenueSources'
-  | 'custoPorShow' | 'custoFixoMensal' | 'investLancamentos12m'
-  | 'temCnpj' | 'aliquota' | 'temEmpresario'
+  | 'showsPerYear' | 'saldoFaixa'
+  | 'cacheFaixa' | 'cacheByTypeFaixa' | 'outrasFaixa' | 'outrasPorFonteFaixa'
+  | 'custoShowFaixa' | 'fixoFaixa' | 'lancFaixa'
+  | 'temCnpj' | 'temEmpresario'
   | 'fazBilheteria' | 'pagantePct'
-  | 'premios' | 'imprensaRepercussao' | 'imprensaMatrix' | 'imprensaFrequencia';
+  | 'premios' | 'imprensaRepercussao' | 'imprensaMatrix' | 'imprensaFrequencia'
+  | ChaveDeControle;
 
 /**
  * O bloco a que a pergunta pertence (v4.2, §2).
@@ -40,7 +53,7 @@ export type QuizKey =
  * cada bloco quebraria no bloco digital, onde a primeira pergunta é justamente a que mais some
  * (quem tem Instagram encontrado pela API pula ela e cai na do TikTok).
  */
-export type QuizBloco = 'vinculo' | 'shows' | 'digital' | 'reconhecimento' | 'estrutura' | 'numeros';
+export type QuizBloco = 'vinculo' | 'shows' | 'digital' | 'reconhecimento' | 'numeros' | 'detalhe';
 
 /** Uma linha ou uma coluna da tabela de escolha única. */
 export interface OpcaoDaTabela { key: string; label: string }
@@ -66,6 +79,14 @@ export interface TabelaDeEscolhaUnica {
    * resposta legítima — e não a ausência de resposta.
    */
   vazio?: string;
+  /**
+   * A linha abre a lista de colunas, uma de cada vez, em vez de as mostrar todas.
+   *
+   * ⚠️ É ESCOLHA DE PRODUTO, E NÃO DE ESTILO. Três chips de porte cabem numa linha a 375px; nove
+   * faixas de cachê não cabem em lado nenhum. Com a linha a expandir, a escala aparece inteira,
+   * uma linha de cada vez, e a tabela continua a caber no telemóvel.
+   */
+  expansivel?: boolean;
   /**
    * Como o mapa `{ linha: coluna }` vira o valor gravado, e como ele volta.
    *
@@ -124,10 +145,42 @@ export interface QuizDef {
   ajuda?: string;
   placeholder?: string;
   options?: { label: string; value: QuizValue }[];
-  /** Pula a pergunta quando a condição é verdadeira (ex.: alíquota só para quem tem CNPJ). */
+  /** Pula a pergunta quando a condição é verdadeira (ex.: o cachê de quem não fez show). */
   skipIf?: (a: Record<string, any>) => boolean;
   /** Obrigatório em `type: 'tabela'`, e sem sentido nos outros. */
   tabela?: TabelaDeEscolhaUnica;
+  /**
+   * A resposta é gravada DENTRO da chave, nesta sub-chave.
+   *
+   * É o que permite as nove perguntas por fonte de receita gravarem todas em
+   * `outrasPorFonteFaixa`, cada uma na sua fonte. Nove chaves de topo, uma por fonte, obrigariam
+   * a edge a remontar o objeto — e a edge já está publicada.
+   */
+  sub?: string;
+  /**
+   * O botão sob as opções que abre um desvio EM VEZ DE responder a pergunta (§3.2).
+   *
+   * ⚠️ NÃO É UMA OPÇÃO A MAIS. Ele grava uma chave de controlo e avança sem responder, e é
+   * justamente a ausência da resposta que o motor lê depois: quem pede ajuda para calcular o
+   * saldo não responde QE.2, e é essa ausência que escolhe o caminho detalhado.
+   */
+  escape?: QuizEscape;
+  /**
+   * Uma fala que SUBSTITUI a transição do bloco quando a condição bate (§3.2).
+   *
+   * Duas coisas dependem dela: o QD.z, que explica a falta das perguntas de palco a quem não fez
+   * show nenhum, e o QD.9, que fecha o detalhamento antes de voltar ao CNPJ. As duas são falas de
+   * transição que não pertencem a um bloco inteiro, e sim a um caminho dentro dele.
+   */
+  transicaoSe?: { quando: (a: Record<string, any>) => boolean; texto: string }[];
+}
+
+/** O botão de desvio sob as opções de uma pergunta. */
+export interface QuizEscape {
+  rotulo: string;
+  chave: ChaveDeControle;
+  /** Sai como link discreto em vez de botão — o convite do QD.2b é um "se quiser". */
+  comoLink?: boolean;
 }
 /**
  * O que a consulta prévia à Chartmetric trouxe (§3.1, passo 2). As telas depositam este objeto na
@@ -243,27 +296,83 @@ export const TRANSICOES: Partial<Record<QuizBloco, string>> = {
   reconhecimento:
     'Agora me conta o que o mercado já reconheceu no seu trabalho: mídia e prêmios. Não é prova, '
     + 'é mapa. Se ainda não aconteceu, é só onde a gente vai trabalhar.',
-  estrutura:
-    'Duas perguntas rápidas sobre a estrutura por trás do artista. Elas ajudam a entender como o '
-    + 'seu dinheiro circula, e é o assunto do próximo bloco.',
+  // QE.0 (v4.5). O bloco da estrutura deixou de existir: o CNPJ e o empresário mudaram-se para
+  // cá, porque são perguntas de dinheiro e a fala que os anunciava dizia isso mesmo ("é o assunto
+  // do próximo bloco"). O texto novo é da Anita, e o que ele promete é o desvio: "onde você não
+  // souber, eu te ajudo a calcular".
   numeros:
-    'Agora a parte que ninguém gosta de responder, e que é exatamente a que mais muda o '
-    + 'diagnóstico: dinheiro. Ninguém vê esses números além de você. Estimativa vale, não precisa '
-    + 'ser exato. Se não souber alguma coisa, marca "não sei" ou deixa em zero e segue.',
+    'Agora vamos falar de dinheiro, e eu vou te acompanhar nisso. Não precisa de planilha nem de '
+    + 'contabilidade: a gente só quer entender se a música está te pagando. Onde você não souber, '
+    + 'eu te ajudo a calcular.',
+  // QD.0 — só quem pediu ajuda vê.
+  detalhe:
+    'Combinado, vamos fazer essa conta juntos, uma parte de cada vez. Em cada pergunta, escolhe a '
+    + 'faixa que parece mais perto. Não precisa ser exato: o que importa é a ordem de grandeza.',
 };
+
+/** QD.z — quem não fez show nenhum não responde sobre palco, e precisa de saber por quê. */
+const QD_Z = 'Como você não fez shows no último ano, o palco fica de fora dessa conta. Vamos pro '
+  + 'que a música rendeu fora dele.';
+
+/** QD.9 — o fecho do detalhamento, antes de voltar às duas últimas do bloco. */
+const QD_9 = 'Pronto, a conta está feita. Eu somo tudo por aqui e te mostro no diagnóstico o que '
+  + 'entra, o que sai e o que sobra.';
 
 /** Pula o cachê e o custo por show de quem não fez show nenhum nos últimos 12 meses. */
 const semShows = (a: Record<string, any>): boolean => !(Number(a?.showsPerYear) > 0);
 
+/**
+ * O artista está no desvio do detalhamento (§3.2).
+ *
+ * ⚠️ A SEGUNDA METADE É O QUE FAZ O "VOLTAR" FUNCIONAR SEM LIMPAR NADA. Quem pediu ajuda, voltou
+ * a QE.2 e escolheu uma faixa tem as duas coisas gravadas: o pedido e a faixa. Se o desvio olhasse
+ * só o pedido, ele continuaria a responder as sete perguntas do detalhe que já não valem para
+ * nada — o motor ignora o detalhamento inteiro quando há faixa de saldo. Com a faixa presente as
+ * perguntas desaparecem sozinhas, sem ninguém ter de apagar o pedido.
+ */
+const detalhando = (a: Record<string, any>): boolean => !!a?._detalhar && a?.saldoFaixa == null;
+
+/** As opções de uma escala de faixas: o índice é o valor, o rótulo é o que a pessoa lê. */
+const opcoesDaFaixa = (tabela: readonly { rotulo: string }[]) =>
+  tabela.map((f, i) => ({ label: f.rotulo, value: i as QuizValue }));
+
+/** As colunas de uma tabela de faixas — a mesma escala, em forma de coluna. */
+const colunasDaFaixa = (tabela: readonly { rotulo: string }[]): OpcaoDaTabela[] =>
+  tabela.map((f, i) => ({ key: String(i), label: f.rotulo }));
+
+/**
+ * QD.2b — uma pergunta por fonte de receita, geradas da MESMA lista que o motor consome.
+ *
+ * ⚠️ NÃO É UMA TABELA, E A RAZÃO É DE PRODUTO: nove colunas de chips não cabem em 375px. Cada
+ * fonte vira um `select`, que é o renderizador que já existe e é nativo no telemóvel. O custo é
+ * mais nove ecrãs para quem optou por detalhar fonte a fonte, e quem optou por isso escolheu-o.
+ *
+ * As nove gravam na MESMA chave, cada uma na sua `sub`: é `outrasPorFonteFaixa` que a edge lê, e
+ * a edge já está publicada.
+ */
+const PERGUNTAS_POR_FONTE: QuizDef[] = REVENUE_SOURCES.map((f) => ({
+  key: 'outrasPorFonteFaixa' as QuizKey,
+  sub: f.key,
+  bloco: 'detalhe' as QuizBloco,
+  type: 'select' as QuizFieldType,
+  q: `Nos últimos 12 meses, quanto entrou ${f.label}`,
+  options: [
+    ...opcoesDaFaixa(FAIXAS_ANUAIS),
+    // QD.ns — "não sei" é resposta, e o relatório devolve-a como gestão a fazer (§4).
+    { label: 'Não sei essa', value: NAO_SEI },
+  ],
+  skipIf: (a: Record<string, any>) => !detalhando(a) || !a._fontes,
+}));
+
 export const QUIZ: QuizDef[] = [
   { key: 'vinculo', bloco: 'vinculo', type: 'select', q: 'Antes de começar: qual a sua relação com esse artista?', options: VINCULO_OPCOES },
 
-  // ── Bloco 1 · Seus shows e seu público (A + a contagem de shows) ──
+  // ── Bloco 1 · Seus shows e seu público (A) ──
   //
-  // `showsPerYear` é do E, e mesmo assim abre o quiz: é contagem de ATIVIDADE, não dinheiro, e
-  // continua alimentando o E igual. Abrir por aqui evita que a primeira resposta substantiva de
-  // quem está começando seja um "não".
-  { key: 'showsPerYear', bloco: 'shows', type: 'int', q: 'Quantos shows você fez nos últimos 12 meses, no total?', placeholder: '0' },
+  // ⚠️ O `showsPerYear` SAIU DAQUI NA v4.5. Ele é do E, e o bloco do dinheiro agora abre com ele:
+  // os textos da Anita para o bloco E pressupõem-no ali ("Pra começar: quantos shows você fez"),
+  // e o enunciado do cachê retoma o número na pergunta seguinte. Com o bloco partido, a retomada
+  // atravessava três blocos e dezassete perguntas.
   { key: 'fazBilheteria', bloco: 'shows', type: 'select', q: 'Você faz shows de bilheteria em que seja a atração principal?', options: SIM_NAO },
   { key: 'pagantePct', bloco: 'shows', type: 'select', q: 'Em média, qual porcentagem do público dos seus shows de bilheteria é pagante?', skipIf: (a) => !a.fazBilheteria, options: [
     { label: 'Até 50%', value: 'ate50' },
@@ -325,36 +434,97 @@ export const QUIZ: QuizDef[] = [
     { label: 'Prêmio internacional', value: 6 },
   ] },
 
-  // ── Bloco 4 · Sua estrutura ──
-  { key: 'temCnpj', bloco: 'estrutura', type: 'select', q: 'Você tem CNPJ para as suas atividades musicais?', options: SIM_NAO },
-  { key: 'aliquota', bloco: 'estrutura', type: 'select', q: 'Qual é a alíquota atual de impostos do seu CNPJ?', ajuda: 'Isso não entra no cálculo do diagnóstico. Serve para estimar a sua receita líquida no relatório.', skipIf: (a) => !a.temCnpj, options: [
-    { label: 'Até 6%', value: 'ate6' },
-    { label: 'De 6% a 10%', value: '6-10' },
-    { label: 'De 10% a 15%', value: '10-15' },
-    { label: 'Acima de 15%', value: 'acima15' },
-    { label: 'Não sei', value: 'nao_sei' },
-  ] },
-  { key: 'temEmpresario', bloco: 'estrutura', type: 'select', q: 'Você tem empresário ou empresária?', options: SIM_NAO },
+  // ══════════ Bloco 4 · Seus números (E) · o bloco do dinheiro, contíguo ══════════
+  //
+  // A v4.5 inverteu a pergunta. O que o índice precisa é o SALDO, e o artista raramente sabe as
+  // partes — mas consegue estimar o todo, se lhe derem uma faixa. Então o núcleo são quatro
+  // perguntas, e o detalhamento é um desvio opcional. Nada é digitado: tudo é faixa.
+  //
+  // O CNPJ e o empresário mudaram-se para cá com o bloco da estrutura, que deixou de existir. São
+  // perguntas de dinheiro, e a fala que as anunciava já dizia isso.
+  { key: 'showsPerYear', bloco: 'numeros', type: 'int', q: 'Pra começar: quantos shows você fez nos últimos 12 meses?', ajuda: 'Se não tiver certeza, estime. E lembre-se de que se você quer viver de música, esse é um número importante pra guardar.', placeholder: '0' },
+  {
+    key: 'saldoFaixa',
+    bloco: 'numeros',
+    type: 'select',
+    q: 'Agora pensa no último ano inteiro. Tudo o que a música te pagou, menos tudo o que você gastou pra ela acontecer: banda, equipe, gravação, divulgação, contador, assessorias. Quanto sobrou pra você, por mês?',
+    ajuda: 'Escolhe a faixa mais perto. Se essa conta não estiver clara na sua cabeça, eu te ajudo com algumas perguntas.',
+    options: opcoesDaFaixa(FAIXAS_DE_SALDO),
+    // QE.2b — o desvio. Grava o pedido e avança SEM responder, e é a ausência da resposta que o
+    // motor lê como "somar as parcelas" (§3.2).
+    escape: { rotulo: 'Me ajude a calcular', chave: '_detalhar' },
+  },
 
-  // ── Bloco 5 · Seus números (E) · por último ──
+  // ── O detalhamento (QD.1 a QD.5) · só para quem pediu ajuda ──
   //
-  // A primeira pergunta retoma o número de shows que a pessoa deu no bloco 1. É o que faz o
-  // pedido de cachê parecer continuação de uma conversa, e não interrogatório.
-  //
-  // O "se não souber com precisão, coloque sua melhor estimativa" saiu dos três `ajuda`: a
-  // transição do bloco já diz isso uma vez, e repetir a ressalva a cada campo transformava a
-  // instrução em ruído.
-  { key: 'cacheByType', bloco: 'numeros', type: 'cache', q: 'Você me disse que fez {showsPerYear} no último ano. Agora, o cachê médio por tipo de contratante.', ajuda: 'Preencha os tipos que você atendeu e deixe em zero os que não se aplicam.', skipIf: semShows },
-  { key: 'revenueSources', bloco: 'numeros', type: 'revenue', q: 'Fora os shows, quanto a música te rendeu nos últimos 12 meses em cada fonte?', ajuda: 'Se não souber alguma, marque "não sei".' },
-  // O investimento decomposto (v4.1, §3.2). Antes era uma pergunta só, e a resposta não permitia
-  // dizer nada: com o custo POR SHOW separado do fixo mensal e do que foi para lançamento, saem a
-  // margem por show e o ponto de equilíbrio, que são as contas que decidem cachê.
-  //
-  // Os três textos delimitam o que NÃO entra, porque é aí que o artista erra: o que o contratante
-  // paga não é custo dele, e comissão de empresário e imposto não entram no fixo.
-  { key: 'custoPorShow', bloco: 'numeros', type: 'currency', q: 'Quanto custa, em média, produzir um show seu?', ajuda: 'Conte banda, equipe técnica e o que sai do seu bolso. Não conte o que o contratante paga, como transporte, hospedagem, alimentação e estrutura.', placeholder: '0', skipIf: semShows },
-  { key: 'custoFixoMensal', bloco: 'numeros', type: 'currency', q: 'Quanto você gasta por mês com a carreira, mesmo nos meses sem show?', ajuda: 'Contador, assessoria de imprensa, gestão de redes, estúdio fixo, o que for recorrente. Não inclua comissão de empresário nem impostos.', placeholder: '0' },
-  { key: 'investLancamentos12m', bloco: 'numeros', type: 'currency', q: 'Nos últimos 12 meses, quanto você investiu em gravação de músicas, clipes e campanhas de lançamento?', ajuda: 'Inclua assessoria e mídia paga dos lançamentos.', placeholder: '0' },
+  // O bloco inteiro desaparece quando há faixa de saldo, e é assim que o "Voltar" funciona sem
+  // limpar nada: voltar a QE.2 e escolher uma faixa apaga estas sete perguntas sozinho.
+  {
+    key: 'cacheFaixa', bloco: 'detalhe', type: 'select',
+    q: 'Primeiro, o que entra pelo palco. Quanto você costuma receber de cachê por show, em média?',
+    options: opcoesDaFaixa(FAIXAS_POR_SHOW),
+    skipIf: (a) => !detalhando(a) || semShows(a),
+  },
+  {
+    key: '_cachePorTipo', bloco: 'detalhe', type: 'select',
+    q: 'Em uma operação saudável, o cachê muda muito conforme quem contrata. Vamos separar por tipo de contratante?',
+    options: [{ label: 'Vamos', value: true }, { label: 'Agora não', value: false }],
+    skipIf: (a) => !detalhando(a) || semShows(a),
+  },
+  {
+    key: 'cacheByTypeFaixa', bloco: 'detalhe', type: 'tabela',
+    q: 'Quanto você costuma receber de cada tipo de contratante?',
+    ajuda: 'Tipo que você não atende fica em branco.',
+    skipIf: (a) => !detalhando(a) || semShows(a) || !a._cachePorTipo,
+    tabela: {
+      linhas: TIPOS_DE_CONTRATANTE_QUIZ,
+      colunas: colunasDaFaixa(FAIXAS_POR_SHOW),
+      // Sem coluna que limpa: a faixa "Nada" é a coluna 0, e é resposta legítima. O que fica em
+      // branco é o tipo que ele não atende, e isso é a ausência de linha.
+      expansivel: true,
+    },
+  },
+  {
+    key: 'outrasFaixa', bloco: 'detalhe', type: 'select',
+    q: 'Agora o que entra fora do palco. Nos últimos 12 meses, quanto a música te rendeu com distribuidora, editora, associação, marcas, patrocínios e editais, aulas, produtos e financiamento coletivo, tudo somado?',
+    options: opcoesDaFaixa(FAIXAS_ANUAIS),
+    // QD.2b — o segundo desvio, e este é um convite discreto: "se quiser".
+    escape: { rotulo: 'Se quiser, a gente separa fonte por fonte.', chave: '_fontes', comoLink: true },
+    skipIf: (a) => !detalhando(a),
+    // QD.z substitui a abertura do bloco para quem não fez show: sem palco, esta é a primeira
+    // pergunta do detalhamento, e a ausência das duas anteriores precisa de explicação.
+    transicaoSe: [{ quando: (a) => detalhando(a) && semShows(a), texto: QD_Z }],
+  },
+  ...PERGUNTAS_POR_FONTE,
+  {
+    key: 'custoShowFaixa', bloco: 'detalhe', type: 'select',
+    q: 'Agora o que sai. Quanto custa, em média, produzir um show seu?',
+    ajuda: 'Banda, equipe técnica, o que sai do seu bolso. O que o contratante paga, como transporte, hospedagem, alimentação e estrutura, não entra.',
+    options: opcoesDaFaixa(FAIXAS_POR_SHOW),
+    skipIf: (a) => !detalhando(a) || semShows(a),
+  },
+  {
+    key: 'fixoFaixa', bloco: 'detalhe', type: 'select',
+    q: 'E o que sai todo mês, mesmo quando não tem show: contador, assessoria de imprensa, gestão de redes, estúdio fixo. Quanto dá por mês?',
+    ajuda: 'Comissão de empresário e impostos ficam de fora.',
+    options: opcoesDaFaixa(FAIXAS_DE_FIXO),
+    skipIf: (a) => !detalhando(a),
+  },
+  {
+    key: 'lancFaixa', bloco: 'detalhe', type: 'select',
+    q: 'Por último, o que você investiu em fazer música nova nos últimos 12 meses: gravação, clipes e campanhas de lançamento.',
+    options: opcoesDaFaixa(FAIXAS_ANUAIS),
+    skipIf: (a) => !detalhando(a),
+  },
+
+  // ── As duas últimas do bloco do dinheiro. Quem detalhou chega aqui pelo QD.9. ──
+  {
+    key: 'temCnpj', bloco: 'numeros', type: 'select',
+    q: 'Duas últimas, rápidas. Você tem CNPJ para as suas atividades musicais?',
+    options: SIM_NAO,
+    transicaoSe: [{ quando: detalhando, texto: QD_9 }],
+  },
+  { key: 'temEmpresario', bloco: 'numeros', type: 'select', q: 'E você tem empresário ou empresária?', options: SIM_NAO },
 ];
 
 /**
@@ -366,24 +536,65 @@ export const QUIZ: QuizDef[] = [
  */
 export const transicaoDoBloco = (indice: number, respostas: Record<string, any>): string | undefined => {
   const pergunta = QUIZ[indice];
-  const texto = pergunta && TRANSICOES[pergunta.bloco];
+  if (!pergunta) return undefined;
+
+  // A fala do caminho vence a do bloco: é ela que explica por que ESTA pergunta está aqui, e a
+  // do bloco já foi dita lá atrás (QD.9) ou não descreve o que a pessoa está a ver (QD.z).
+  const doCaminho = pergunta.transicaoSe?.find((t) => t.quando(respostas));
+  if (doCaminho) return doCaminho.texto;
+
+  const texto = TRANSICOES[pergunta.bloco];
   if (!texto) return undefined;
-  for (let i = indice - 1; i >= 0 && QUIZ[i].bloco === pergunta.bloco; i -= 1) {
-    if (!QUIZ[i].skipIf?.(respostas)) return undefined;
+  // ⚠️ O ARRAY INTEIRO, E NÃO ENQUANTO O BLOCO FOR O MESMO.
+  //
+  // O recuo contíguo bastava enquanto cada bloco era um trecho seguido do array. O bloco do
+  // dinheiro deixou de o ser: o detalhamento parte-o ao meio, e o `temCnpj` do outro lado tem o
+  // `lancFaixa` por vizinho. Com o recuo contíguo, o laço parava na primeira pergunta de outro
+  // bloco e a transição QE.0 saía OUTRA VEZ, a meio do bloco, para quem detalhou.
+  for (let i = 0; i < indice; i += 1) {
+    if (QUIZ[i].bloco === pergunta.bloco && !QUIZ[i].skipIf?.(respostas)) return undefined;
   }
   return texto;
 };
 
 /**
- * O enunciado como a pessoa lê, com o que for interpolado já no lugar.
+ * Grava a resposta de uma pergunta.
  *
- * Hoje é só `{showsPerYear}` no cachê. O marcador carrega o substantivo junto do número porque a
- * concordância é parte da interpolação: "fez 1 show" e "fez 12 shows" não saem do mesmo molde.
+ * Mora aqui por causa da `sub`: as nove perguntas por fonte gravam todas em
+ * `outrasPorFonteFaixa`, cada uma na sua chave, e as duas superfícies escreviam
+ * `respostas[key] = valor` direto. Uma delas a esquecer a `sub` gravaria a última fonte por cima
+ * de todas as outras, e o artista perderia oito respostas sem ver nada acontecer.
  */
-export const enunciado = (pergunta: QuizDef, respostas: Record<string, any>): string => {
-  if (!pergunta.q.includes('{showsPerYear}')) return pergunta.q;
-  const shows = Math.max(0, Math.trunc(Number(respostas?.showsPerYear) || 0));
-  return pergunta.q.replace('{showsPerYear}', shows === 1 ? '1 show' : `${shows} shows`);
+export const gravarResposta = (
+  respostas: Record<string, any>,
+  pergunta: QuizDef,
+  valor: unknown,
+): void => {
+  if (!pergunta.sub) { respostas[pergunta.key] = valor; return; }
+  const atual = respostas[pergunta.key];
+  respostas[pergunta.key] = {
+    ...(atual && typeof atual === 'object' && !Array.isArray(atual) ? atual : {}),
+    [pergunta.sub]: valor,
+  };
+};
+
+/** O valor já gravado desta pergunta, respeitando a `sub`. */
+export const respostaGravada = (respostas: Record<string, any>, pergunta: QuizDef): unknown => {
+  const valor = respostas?.[pergunta.key];
+  if (!pergunta.sub) return valor;
+  return valor && typeof valor === 'object' ? valor[pergunta.sub] : undefined;
+};
+
+/**
+ * Grava o desvio de um botão de escape, SEM responder a pergunta (§3.2).
+ *
+ * ⚠️ NÃO RESPONDER É O PONTO. Quem pede ajuda para calcular o saldo não responde QE.2, e é a
+ * ausência dessa resposta que o motor lê como "somar as parcelas". Gravar um valor qualquer aqui
+ * — zero, nulo explícito, uma faixa sentinela — mandava o artista pelo caminho direto com um
+ * saldo que ele nunca informou.
+ */
+export const gravarEscape = (respostas: Record<string, any>, pergunta: QuizDef): void => {
+  if (pergunta.escape) respostas[pergunta.escape.chave] = true;
 };
 
 /** O índice SEGUINTE, pulando as perguntas que não se aplicam às respostas dadas até aqui. */
@@ -412,8 +623,25 @@ export const CHAVES_DO_BLOCO_R: QuizKey[] = ['igFollowersSelf', 'tiktokFollowers
  * faria o total mudar no meio do caminho e a barra recuar, que é exatamente o defeito que a
  * régua absoluta existe para evitar.
  */
+export const naTrilha = (pergunta: QuizDef, respostas: Record<string, any>): boolean => {
+  // ⚠️ O DETALHAMENTO SAI DO NUMERADOR **E** DO DENOMINADOR, e é por isso que a barra CONGELA
+  // enquanto se detalha, em vez de recuar.
+  //
+  // Ele é um desvio que a pessoa escolhe a meio do quiz, e pode ter de 4 a 16 perguntas conforme
+  // ela abra ou não o cachê por tipo e as nove fontes. Contá-lo no denominador fazia o total
+  // saltar no instante em que ela tocasse "Me ajude a calcular", e a barra recuava — que é o
+  // defeito que a régua absoluta existe para evitar. Congelar é honesto: o desvio não é progresso
+  // na trilha principal, é trabalho a mais que ela pediu.
+  if (pergunta.bloco === 'detalhe') return false;
+  return !(CHAVES_DO_BLOCO_R.includes(pergunta.key) && pergunta.skipIf?.(respostas));
+};
+
 export const totalDaTrilha = (respostas: Record<string, any>): number =>
-  QUIZ.filter((p) => !(CHAVES_DO_BLOCO_R.includes(p.key) && p.skipIf?.(respostas))).length;
+  QUIZ.filter((p) => naTrilha(p, respostas)).length;
+
+/** Quantas perguntas da trilha já ficaram para trás, incluindo a atual. */
+export const posicaoNaTrilha = (indice: number, respostas: Record<string, any>): number =>
+  QUIZ.filter((p, i) => i <= indice && naTrilha(p, respostas)).length;
 
 /**
  * Os passos que a tela mostra enquanto o motor roda.
