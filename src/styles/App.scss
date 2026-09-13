@@ -1896,3 +1896,29 @@ a {
     background: #2a54e0 !important;
   }
 }
+
+// O VOLTAR DAS TELAS DA CONTA — Planos, Configurações, Notificações, Suporte, Pagamentos.
+//
+// Ele existe só no telemóvel, e o motivo é o que o rodeia: acima de 700px o rail com a lista de
+// perfis está à esquerda, e com ele não há como ficar sem saída. Abaixo, o rail some, e desde
+// que a tab bar deixou de aparecer nestas telas (ver `temTabBar`) elas ficavam sem nenhum
+// controlo de navegação à vista.
+//
+// ⚠️ A QUEBRA É 700px E VEM DA FOLHA, não do `useIsMobile`. Aquele hook quebra a 768, e a
+// divergência entre o JS e o CSS já deixou o banner do rodapé visível numa faixa de largura —
+// o comentário do player no Layout conta esse episódio. Aqui a barra que este botão substitui
+// vive em `@media (max-width: 700px)`, e o botão tem de nascer e morrer com ela.
+//
+// O desenho vem do `.round-control` da folha de referência: é o mesmo círculo branco do sino.
+// Aqui mora só a regra de quando ele se vê.
+.top-navigation-back {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .top-navigation-back {
+    display: grid;
+    // A marca ganha respiro à direita (42px do `.constructor`); o voltar não precisa de tanto.
+    margin-right: 14px;
+  }
+}

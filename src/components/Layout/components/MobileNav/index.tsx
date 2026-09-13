@@ -57,6 +57,27 @@ export const temTabBar = (pathname: string): boolean =>
   !!matchArtistId(pathname) && !isImmersiveRoute(pathname);
 
 /**
+ * ONDE O CABEÇALHO PRECISA DE UM BOTÃO DE VOLTAR.
+ *
+ * ⚠️ É O OUTRO LADO DA MOEDA DO `temTabBar`, e nasceu de o ter invertido. Tirada a tab bar das
+ * telas da conta, elas ficaram no telemóvel sem nenhum controlo de navegação à vista: o menu do
+ * sistema ainda é uma saída — e é por isso que ninguém fica preso —, mas "Trocar perfil" dentro
+ * de um menu não é "voltar". Quem chega a `/planos` por um botão "Seja PRO" quer regressar ao
+ * sítio de onde veio.
+ *
+ * O app nativo já resolve isto assim: Notificações, Configurações, Suporte, Pagamentos e os
+ * documentos legais têm todos o mesmo círculo branco com a seta (ver `casca/CabecalhoDaPagina`).
+ * A web é que estava atrás.
+ *
+ * A lista de perfis fica de fora: ela é a raiz, não há para onde voltar. E o chat da Nyta
+ * também: ele tem a sua própria faixa com uma seta, e o cabeçalho nem chega a ser desenhado lá.
+ */
+export const temBotaoDeVoltar = (pathname: string): boolean =>
+  !temTabBar(pathname)
+  && pathname !== '/artists'
+  && !isImmersiveRoute(pathname);
+
+/**
  * Telas que tomam a tela inteira: sem a barra da Maestra em cima e sem a tab bar embaixo.
  *
  * Só o chat da Nyta, por ora. Ele é uma conversa que se lê e se escreve, e as duas barras

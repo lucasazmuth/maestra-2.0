@@ -2,7 +2,7 @@ import { lazy, memo, Suspense, useEffect, useRef, useState, type FC, type ReactN
 
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { MobileNav, isImmersiveRoute, temTabBar } from './components/MobileNav';
+import { MobileNav, isImmersiveRoute, temBotaoDeVoltar, temTabBar } from './components/MobileNav';
 import { SystemMenu } from './components/SystemMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
@@ -23,7 +23,7 @@ import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import { countUnread } from '@maestra/core/services/db/notifications';
 import { supabase } from '@maestra/core/lib/supabase';
 import { SearchIcon } from '../Icons';
-import { FiArrowRight, FiX } from 'react-icons/fi';
+import { FiArrowRight, FiChevronLeft, FiX } from 'react-icons/fi';
 import {
   AgendaIcon,
   CatalogoIcon,
@@ -302,6 +302,29 @@ export const AppLayout: FC = memo(() => {
   const topNavigation = () => (
     <header className='top-navigation'>
       <div className='top-navigation-left'>
+        {/* ⚠️ O VOLTAR DAS TELAS DA CONTA, e ele só se vê no telemóvel.
+            Tirada a tab bar destas telas, elas ficaram sem nenhum controlo de navegação à vista
+            no telemóvel. O menu do sistema ainda é uma saída, e por isso ninguém fica preso —
+            mas "Trocar perfil" dentro de um menu não é "voltar". É o mesmo círculo branco do
+            sino, que é o controlo que a plataforma já tem, e é o desenho que o app nativo já
+            usa nestas mesmas telas (ver `casca/CabecalhoDaPagina`).
+            Quem decide se aparece é o CSS, a 700px: o `useIsMobile` quebra a 768 e essa
+            divergência entre o JS e a folha já deixou o banner visível numa faixa de largura. */}
+        {temBotaoDeVoltar(location.pathname) && (
+          <button
+            type='button'
+            className='round-control top-navigation-back'
+            aria-label='Voltar'
+            onClick={() => {
+              // `key` é 'default' na PRIMEIRA entrada do histórico: quem abriu a tela por link
+              // direto ou por uma notificação não tem para onde recuar, e cairia fora do app.
+              if (location.key !== 'default') navigate(-1);
+              else navigate('/artists');
+            }}
+          >
+            <FiChevronLeft size={22} />
+          </button>
+        )}
         {/* O mesmo wordmark vetorial da landing e do login. Aqui a marca era o símbolo em
             máscara + a palavra "Maestra" em texto peso 800 — parecida, mas mais pesada que o
             logotipo oficial, então a marca mudava de forma entre o site e o app. */}

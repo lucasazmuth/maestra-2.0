@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 
-import { MobileNav, temTabBar } from '..';
+import { MobileNav, temBotaoDeVoltar, temTabBar } from '..';
 
 // O que o "Mais" da tab bar guarda — e, sobretudo, o que ele NÃO guarda.
 //
@@ -157,6 +157,36 @@ describe('onde a tab bar entra', () => {
   // uma das duas regras mudar para o app guardar espaço para uma barra que ninguém desenha — ou
   // desenhar uma barra por cima do conteúdo. Isto lê o ficheiro porque a discordância não falha
   // teste de render nenhum: aparece só no telemóvel, como um vão no fim da página.
+  // ⚠️ O OUTRO LADO DA MOEDA: tirada a barra, as telas da conta ficaram sem controlo de
+  // navegação à vista no telemóvel. O menu do sistema ainda é uma saída — ninguém fica preso —,
+  // mas "Trocar perfil" dentro de um menu não é "voltar". O app nativo já põe o mesmo círculo
+  // branco com a seta nestas mesmas telas.
+  it.each([
+    ['/planos'],
+    ['/planos/sucesso'],
+    ['/settings'],
+    ['/notifications'],
+    ['/suporte'],
+    ['/pagamentos'],
+    ['/pagamento'],
+    ['/admin/usuarios'],
+  ])('%s ganha o botão de voltar', (rota) => {
+    expect(temBotaoDeVoltar(rota)).toBe(true);
+  });
+
+  // Onde a barra está, ela É a navegação: um voltar ao lado seria um segundo dono do volante.
+  it.each([['/artists/madha'], ['/artists/madha/agenda']])(
+    '%s não ganha: a barra já navega',
+    (rota) => { expect(temBotaoDeVoltar(rota)).toBe(false); },
+  );
+
+  // A lista de perfis é a RAIZ: não há para onde voltar. E o chat da Nyta tem a sua própria
+  // faixa com uma seta — o cabeçalho nem chega a ser desenhado lá.
+  it.each([['/artists'], ['/artists/madha/nyta']])(
+    '%s não ganha, e por motivos próprios',
+    (rota) => { expect(temBotaoDeVoltar(rota)).toBe(false); },
+  );
+
   it('o Layout reserva o rodapé pela MESMA regra', () => {
     const layout = fs.readFileSync(
       path.join(__dirname, '..', '..', '..', 'index.tsx'), 'utf8',
@@ -164,5 +194,36 @@ describe('onde a tab bar entra', () => {
 
     expect(layout).toMatch(/import\s*\{[^}]*temTabBar[^}]*\}\s*from\s*'\.\/components\/MobileNav'/);
     expect(layout).toMatch(/const\s+hasMobileNav\s*=\s*temTabBar\(/);
+  });
+
+  // E desenha o voltar pela regra daqui, em vez de uma condição escrita à mão no meio do JSX.
+  it('o Layout desenha o voltar pela regra daqui', () => {
+    const layout = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', 'index.tsx'), 'utf8',
+    );
+
+    expect(layout).toMatch(/import\s*\{[^}]*temBotaoDeVoltar[^}]*\}\s*from\s*'\.\/components\/MobileNav'/);
+    expect(layout).toMatch(/temBotaoDeVoltar\(location\.pathname\)\s*&&/);
+    // ⚠️ E O CSS DECIDE QUANDO ELE SE VÊ: o `useIsMobile` quebra a 768 e a barra que este botão
+    // substitui vive a 700. Essa divergência já deixou o banner visível numa faixa de largura.
+    expect(layout).not.toMatch(/isMobile\s*&&\s*temBotaoDeVoltar|temBotaoDeVoltar\([^)]*\)\s*&&\s*isMobile/);
+  });
+
+  // ⚠️ E O BOTÃO NASCE E MORRE COM A BARRA QUE SUBSTITUI, na MESMA largura.
+  //
+  // Acima da quebra o rail com a lista de perfis está à esquerda e não há como ficar sem saída;
+  // abaixo, o rail some e a barra também, e o voltar é o que resta. Se as duas quebras
+  // divergissem, haveria uma faixa de largura sem rail, sem barra e sem voltar — ou com barra e
+  // voltar ao mesmo tempo. É a quebra da folha de referência, 700px, e não a do `useIsMobile`,
+  // que é 768.
+  it('o voltar aparece na mesma largura em que a barra desaparece', () => {
+    const folha = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', '..', '..', 'styles', 'App.scss'), 'utf8',
+    );
+
+    const dentroDaQuebra = /@media\s*\(max-width:\s*700px\)\s*\{[^@]*\.top-navigation-back\s*\{[^}]*display:\s*grid/;
+    expect(folha).toMatch(dentroDaQuebra);
+    // E escondido por omissão: sem isto ele apareceria no desktop, ao lado do rail.
+    expect(folha).toMatch(/\.top-navigation-back\s*\{\s*display:\s*none/);
   });
 });
