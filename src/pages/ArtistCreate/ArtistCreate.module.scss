@@ -487,11 +487,20 @@
 // Ela é deliberadamente MENOR que a pergunta. As duas são a mesma voz, e no mesmo corpo a tela
 // passaria a ter dois títulos brigando — quem chega precisa saber, de relance, qual das duas
 // linhas é a que se responde. Por isso o contraste é de tamanho e de peso, e não de cor.
+//
+// ⚠️ A COR ERA BRANCA, E A FRASE NÃO SE LIA. Ela foi escrita para a base escura do topo deste
+// ficheiro (`#121212`), e essa base MORREU: a regra de `.pageReal` mais abaixo repinta o quiz de
+// `#f7f8fb`. Branco a 72% sobre esse claro dá 1,04:1 de contraste, que é invisível — e o
+// comentário logo acima, que promete contraste "de tamanho e de peso, e não de cor", estava a
+// descrever uma tela que já não existia.
+//
+// O valor é o MESMO `criarAjuda` que o app usa nesta mesma frase (`design.ts`). Não é coincidência
+// nem gosto: as duas superfícies desenham a mesma transição, e foi a web que derivou.
 .transicao {
   font-size: 15px;
   line-height: 1.55;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.72);
+  color: #788bad;
   max-width: 560px;
   margin: 26px 0 0;
 
