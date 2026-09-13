@@ -567,3 +567,169 @@ describe('§3.2 faixas de valor', () => {
     });
   });
 });
+
+// ════════ §3.2 + §7.2 · os dois caminhos do E ════════
+//
+// A v4.5 pergunta o saldo em faixa. Quem sabe o número responde e acabou (caminho DIRETO); quem
+// não sabe pede ajuda e detalha parcela a parcela (caminho DETALHADO). O motor não recebe bandeira
+// nenhuma: é a PRESENÇA da faixa de saldo que decide, porque quem detalha não responde QE.2.
+describe('§3.2 os dois caminhos do E', () => {
+  const direto = (i: number, over: Partial<RealInputsV4> = {}) =>
+    computeRealIndexV4(base({ saldoFaixa: i, ...over }));
+
+  it('sem faixa de saldo o caminho é detalhado, e o saldo é a soma das parcelas', () => {
+    const ri = computeRealIndexV4(base(E_ON));
+    expect(ri.revenue.caminho).toBe('detalhado');
+    expect(ri.revenue.saldoMedio).toBe(150_000);
+    // No detalhado não há faixa, então piso e ponto médio são o mesmo número: não há intervalo.
+    expect(ri.revenue.saldoPiso).toBe(ri.revenue.saldoMedio);
+    expect(ri.revenue.saldoFaixa).toBeNull();
+  });
+
+  it('com faixa de saldo o caminho é direto, e lê piso e ponto médio DELA', () => {
+    const ri = direto(6);
+    expect(ri.revenue.caminho).toBe('direto');
+    expect(ri.revenue.saldoFaixa).toBe(6);
+    expect(ri.revenue.saldoPiso).toBe(120_000);
+    expect(ri.revenue.saldoMedio).toBe(210_000);
+  });
+
+  // ⚠️ A FAIXA DE SALDO MANDA NO DETALHAMENTO INTEIRO, e não se soma a ele.
+  // Quem respondeu QE.2 nunca viu as perguntas D. Se as duas coisas chegassem juntas — um payload
+  // remontado, um "voltar" mal implementado —, somá-las dobrava o saldo de alguém.
+  it('a faixa de saldo ignora o detalhamento que venha junto', () => {
+    const so = direto(4);
+    const comLixo = direto(4, { ...E_ON, custoFixoMensal: 90_000, investLancamentos12m: 400_000 });
+    expect(comLixo.revenue.saldoMedio).toBe(so.revenue.saldoMedio);
+    expect(comLixo.boletim.e).toBe(so.boletim.e);
+    expect(comLixo.pattern.e).toBe(so.pattern.e);
+  });
+
+  // ⚠️ A DECISÃO É DO PISO E A NOTA É DO PONTO MÉDIO (§7.2), e este é o caso em que os dois
+  // discordam: faixa 5 (R$ 6 a 10 mil/mês) com CNPJ e empresário. Piso 72.000 × 1,3 = 93.600, que
+  // não acende; ponto médio 96.000 × 1,3 = 124.800, que sozinho valeria 71. Quem cede é a nota.
+  it('a faixa 5 com estrutura NÃO acende, e a nota trava em 69', () => {
+    const ri = direto(5, { temCnpj: true, temEmpresario: true });
+    expect(ri.revenue.saldoPisoAjustado).toBe(93_600);
+    expect(ri.revenue.saldoMedioAjustado).toBe(124_800);
+    expect(ri.pattern.e).toBe(false);
+    expect(ri.boletim.e).toBe(69);
+  });
+
+  // E a borda é exata justamente porque o piso da faixa 6 É o corte (§3.2).
+  it('a faixa 6 acende no osso, sem estrutura nenhuma', () => {
+    const ri = direto(6);
+    expect(ri.revenue.saldoPisoAjustado).toBe(CUTS.e.saldoAcende);
+    expect(ri.pattern.e).toBe(true);
+    // E a nota já sai acima de 70, porque é do ponto médio (210 mil) e não do piso.
+    expect(ri.boletim.e).toBe(77);
+  });
+
+  it('a faixa 8 é Top Tier no osso, pelo mesmo desenho', () => {
+    const ri = direto(8);
+    expect(ri.dimTopIcon.e).toBe(true);
+    expect(ri.boletim.e).toBe(100);
+  });
+
+  // O −1 da faixa 0 é sentinela, não dinheiro: o bónus não pode multiplicá-lo para lugar nenhum,
+  // e a nota é a mesma do empate. O que os separa é o que o relatório diz, não o índice.
+  it.each([[0], [1]])('a faixa %i não acende e vale zero', (i) => {
+    const ri = direto(i as number, { temCnpj: true, temEmpresario: true });
+    expect(ri.pattern.e).toBe(false);
+    expect(ri.boletim.e).toBe(0);
+    expect(ri.revenue.saldoMedioAjustado).toBe(i === 0 ? -1 : 0);
+  });
+});
+
+// ════════ §3.2 · a costura da compatibilidade ════════
+//
+// ⚠️ ISTO NÃO É ZELO: as compilações iOS já publicadas mandam o E em REAIS e vão continuar a
+// mandá-lo durante meses, porque não há como as atualizar à força. A edge é partilhada, então no
+// instante do deploy elas passam todas a correr este motor. Não há tradutor de payload de
+// propósito — inventar um índice de faixa a partir de um valor digitado mudaria o diagnóstico de
+// quem escreveu o número exato. A costura é POR PARCELA: faixa quando existe, reais quando não.
+describe('§3.2 o motor continua a ler reais', () => {
+  // Um payload v4.2 inteiro, sem uma única faixa. É o que a loja manda hoje.
+  const V42: Partial<RealInputsV4> = {
+    showsPerYear: 50,
+    cacheByType: { corporativos: 5_000, particulares: 3_000 },
+    revenueSources: { distribuidora: 8_000, outras: 2_000 },
+    custoPorShow: 1_000, custoFixoMensal: 2_000, investLancamentos12m: 30_000,
+  };
+
+  // Este teste morre se `medioDaFaixa` devolver 0 em vez de `null`: o `??` do `ouOsReais` deixa
+  // de disparar, toda parcela vira zero e o saldo de todo build publicado desaba para −24.000.
+  it('um payload v4.2 puro dá os mesmos números de sempre', () => {
+    const ri = computeRealIndexV4(base(V42));
+    expect(ri.revenue.receitaShows).toBe(200_000);       // 50 × (5.000 + 3.000) / 2
+    expect(ri.revenue.receitaOutrasTotal).toBe(10_000);
+    expect(ri.revenue.custoShowsAnual).toBe(50_000);
+    expect(ri.revenue.custoFixoAnual).toBe(24_000);
+    expect(ri.revenue.saldoMedio).toBe(106_000);
+    expect(ri.revenue.caminho).toBe('detalhado');
+    expect(ri.revenue.emFaixas).toBe(false);
+  });
+
+  // A costura é por parcela, e não por payload: nada obriga as sete a chegarem juntas.
+  it.each([
+    ['custoShowFaixa', { custoShowFaixa: 3 }, 'custoShowsAnual', 75_000],
+    ['fixoFaixa', { fixoFaixa: 4 }, 'custoFixoAnual', 78_000],
+    ['lancFaixa', { lancFaixa: 4 }, 'investLancamentos12m', 35_000],
+    ['outrasFaixa', { outrasFaixa: 3 }, 'receitaOutrasTotal', 12_500],
+  ])('a faixa de %s ganha dos reais, e as outras parcelas seguem em reais', (_nome, faixa, campo, esperado) => {
+    const ri = computeRealIndexV4(base({ ...V42, ...(faixa as Partial<RealInputsV4>) }));
+    expect((ri.revenue as unknown as Record<string, number>)[campo as string]).toBe(esperado);
+    expect(ri.revenue.receitaShows).toBe(200_000);       // esta não mudou em nenhum dos casos
+    expect(ri.revenue.emFaixas).toBe(true);
+  });
+
+  // A faixa única de cachê (QD.1) é a média que o artista estimou de cabeça, e o §7.2 manda o
+  // detalhe por tipo valer mais. Então ela só entra quando não há tipo nenhum informado.
+  it('a faixa única de cachê entra quando nenhum tipo foi informado', () => {
+    const ri = computeRealIndexV4(base({ ...V42, cacheByType: {}, cacheFaixa: 4 }));
+    expect(ri.revenue.receitaShows).toBe(175_000);
+    expect(ri.revenue.emFaixas).toBe(true);
+  });
+
+  it('e perde para o detalhe por tipo, que é mais específico', () => {
+    const ri = computeRealIndexV4(base({ ...V42, cacheFaixa: 4 }));
+    expect(ri.revenue.receitaShows).toBe(200_000);
+  });
+
+  it('o cachê por tipo em faixa ganha do cachê por tipo em reais', () => {
+    const ri = computeRealIndexV4(base({ ...V42, cacheByTypeFaixa: { corporativos: 6 } }));
+    expect(ri.revenue.receitaShows).toBe((17_500 + 3_000) / 2 * 50);
+  });
+
+  it('a fonte em faixa ganha da fonte em reais, e "não sei" sobrevive à travessia', () => {
+    const ri = computeRealIndexV4(base({
+      ...V42,
+      outrasPorFonteFaixa: { distribuidora: 4, editora: 'nao_sei' },
+    }));
+    expect(ri.revenue.receitaOutrasTotal).toBe(35_000);
+    expect(ri.flags.naoSeiFontes).toEqual(['editora']);
+  });
+
+  // `emFaixas` é o que decide o rótulo "cerca de" no relatório (F23). Chamar de "cerca de" um
+  // número que a pessoa digitou é uma mentira pequena, mas é uma mentira.
+  it('o caminho direto é sempre em faixas, por definição', () => {
+    expect(computeRealIndexV4(base({ saldoFaixa: 3 })).revenue.emFaixas).toBe(true);
+  });
+
+  // E um índice de lixo numa fonte não pode abrir o caminho por fonte: abriria-o zerando as
+  // outras oito em silêncio, e o artista perdia a receita que tinha declarado.
+  it('um índice de lixo numa fonte não abre o caminho por fonte', () => {
+    const ri = computeRealIndexV4(base({
+      ...V42,
+      outrasPorFonteFaixa: { distribuidora: 99 },
+    }));
+    expect(ri.revenue.receitaOutrasTotal).toBe(10_000);
+    expect(ri.revenue.emFaixas).toBe(false);
+  });
+
+  it('um índice de faixa inválido não conta como faixa, e cai nos reais', () => {
+    const ri = computeRealIndexV4(base({ ...V42, cacheFaixa: 99 }));
+    expect(ri.revenue.receitaShows).toBe(200_000);
+    expect(ri.revenue.emFaixas).toBe(false);
+  });
+});

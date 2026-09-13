@@ -80,6 +80,37 @@ export interface RealInputsV4 {
 
   // ── E · base anual, últimos 12 meses (§7) ──
   showsPerYear: number;
+
+  /**
+   * QE.2 — a faixa de saldo do ano, em índice de `FAIXAS_DE_SALDO` (v4.5, §3.2).
+   *
+   * ⚠️ A PRESENÇA DELA É QUE DECIDE O CAMINHO, e não uma bandeira do cliente. Quem pede ajuda para
+   * calcular NÃO responde esta pergunta (§3.2), então a ausência é a resposta: sem faixa, o motor
+   * soma o detalhamento; com faixa, lê o piso e o ponto médio dela e ignora o resto.
+   */
+  saldoFaixa?: number | null;
+
+  // ── E · o detalhamento opcional, QD.1 a QD.5 · tudo índice de faixa ──
+  // Todas OPCIONAIS de propósito: um payload de build antigo não tem nenhuma delas, e ausência
+  // tem de ser uma resposta válida, não um erro de tipo.
+
+  cacheFaixa?: number | null;                                                 // QD.1
+  cacheByTypeFaixa?: Partial<Record<TipoDeContratante, number | null>>;       // QD.1b
+  outrasFaixa?: number | null;                                                // QD.2
+  outrasPorFonteFaixa?: Partial<Record<FonteDeReceita, ValorDeFonte | null>>; // QD.2b + QD.ns
+  custoShowFaixa?: number | null;                                             // QD.3
+  fixoFaixa?: number | null;                                                  // QD.4
+  lancFaixa?: number | null;                                                  // QD.5
+
+  /**
+   * ── E · em reais. @deprecated pela v4.5, e vivo por anos.
+   *
+   * As compilações da App Store já publicadas continuam a mandar estas chaves, e não há como as
+   * atualizar à força. O motor lê as duas formas: para cada parcela, a faixa quando ela existe e
+   * os reais quando não (`ouOsReais`). Não há tradutor de payload de propósito — inventar um
+   * índice de faixa a partir de um valor digitado mudaria o diagnóstico de quem escreveu o número
+   * exato, e uma migração não pode reescrever o retrato de ninguém.
+   */
   cacheByType: CacheByType;             // cachê médio por tipo de contratante; 0 = não atendeu
   revenueSources: RevenueSources;       // 9 fontes fora shows; 'nao_sei' conta 0 e sinaliza
   /**
@@ -147,6 +178,23 @@ export interface RealIndexV4 {
   };
   /** Tudo que o §13.1 manda gravar do E, para o relatório e para reconstituir a conta. */
   revenue: {
+    /** §13.1 — por onde o saldo veio. Sem faixa de saldo, veio da soma das parcelas. */
+    caminho: 'direto' | 'detalhado';
+    /**
+     * O detalhamento veio de FAIXAS (v4.5) ou de valores digitados (build antigo da loja).
+     *
+     * ⚠️ É o que decide o rótulo "cerca de" no relatório (F23). Chamar de "cerca de" um número que
+     * a pessoa digitou é uma mentira pequena, mas é uma mentira.
+     */
+    emFaixas: boolean;
+    /** Índice em `FAIXAS_DE_SALDO`, ou `null` no caminho detalhado. */
+    saldoFaixa: number | null;
+    /** O mínimo garantido da faixa. É o que DECIDE se a dimensão acende (§7.2). */
+    saldoPiso: number;
+    /** Onde o artista provavelmente está. É o que dá a NOTA, e o que se mostra. */
+    saldoMedio: number;
+    saldoPisoAjustado: number;
+    saldoMedioAjustado: number;
     showsPerYear: number;
     cacheByType: CacheByType;
     cacheMedio: number;
@@ -329,6 +377,16 @@ export const faixaDe = (tabela: readonly Faixa[], i: unknown): Faixa | null =>
  */
 export const medioDaFaixa = (tabela: readonly Faixa[], i: unknown): number | null =>
   faixaDe(tabela, i)?.medio ?? null;
+
+/**
+ * O ponto médio da faixa, ou o valor em reais que o build antigo mandou.
+ *
+ * É a costura da compatibilidade, e ela é POR PARCELA e não por payload: cada campo do E cai no
+ * caminho novo se tiver faixa, e no antigo se não tiver. Um artista a meio de uma atualização de
+ * app nunca mistura, porque o quiz manda ou um conjunto ou o outro.
+ */
+const ouOsReais = (tabela: readonly Faixa[], i: unknown, reais: unknown): number =>
+  medioDaFaixa(tabela, i) ?? Math.max(0, Number(reais) || 0);
 
 // ════════════════════ CORTES — parâmetros de calibração (§12.1) ════════════════════
 // Toda alteração aqui incrementa `calibrationVersion` (AAAA.MM) e fica gravada no diagnóstico.
@@ -582,24 +640,73 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   const rTopIcon = rSuficiente && rPresentes.every((c) => c.topicon);
 
   // ════════ E · Earnings (§7) — base ANUAL, saldo, não receita ════════
+  //
+  // A v4.5 abriu DOIS CAMINHOS (§7.2). O direto pergunta o saldo do ano numa faixa e acabou: é o
+  // que o índice precisa, e é o que o artista sabe responder. O detalhado é opcional, aberto pelo
+  // "Me ajude a calcular", e soma as parcelas — também em faixas.
+  //
+  // ⚠️ QUEM DECIDE O CAMINHO É A FAIXA DE SALDO, e não uma bandeira. Quem detalha não responde
+  // QE.2, então a ausência dela É a resposta. Uma bandeira separada podia discordar da resposta,
+  // e aí haveria dois donos da mesma decisão.
   const showsPerYear = Math.max(0, Math.round(Number(input.showsPerYear) || 0));
+  const faixaDoSaldo = faixaDe(FAIXAS_DE_SALDO, input.saldoFaixa);
+  const caminho: 'direto' | 'detalhado' = faixaDoSaldo ? 'direto' : 'detalhado';
+  // Veio de faixa em ALGUMA parcela? É o que separa a v4.5 de um build antigo da loja, que manda
+  // as mesmas contas em reais digitados. O caminho direto é sempre de faixa, por definição.
+  //
+  // ⚠️ VALIDADE, E NÃO PRESENÇA. Um índice fora da tabela não é resposta nenhuma: a parcela cai
+  // nos reais, e dizer `emFaixas` aqui punha o "cerca de" do F23 em cima de um número digitado.
+  const ehFaixa = (tabela: readonly Faixa[], v: unknown) => faixaDe(tabela, v) != null;
+  const emFaixas = caminho === 'direto' || [
+    ehFaixa(FAIXAS_POR_SHOW, input.cacheFaixa),
+    ehFaixa(FAIXAS_ANUAIS, input.outrasFaixa),
+    ehFaixa(FAIXAS_POR_SHOW, input.custoShowFaixa),
+    ehFaixa(FAIXAS_DE_FIXO, input.fixoFaixa),
+    ehFaixa(FAIXAS_ANUAIS, input.lancFaixa),
+    ...TIPOS_DE_CONTRATANTE.map((t) => ehFaixa(FAIXAS_POR_SHOW, input.cacheByTypeFaixa?.[t])),
+    // "Não sei essa" é resposta, e é resposta da v4.5.
+    ...FONTES_DE_RECEITA.map((f) => input.outrasPorFonteFaixa?.[f] === 'nao_sei'
+      || ehFaixa(FAIXAS_ANUAIS, input.outrasPorFonteFaixa?.[f])),
+  ].some(Boolean);
+
   const cacheByType: CacheByType = {};
   const cachesInformados: number[] = [];
   for (const tipo of TIPOS_DE_CONTRATANTE) {
-    const v = Math.max(0, Number(input.cacheByType?.[tipo]) || 0);
+    // A faixa quando o artista detalhou por tipo; os reais quando veio de um build antigo.
+    // A faixa "nada" dá ponto médio 0, que é a mesma leitura do zero de sempre: não atende.
+    const v = ouOsReais(FAIXAS_POR_SHOW, input.cacheByTypeFaixa?.[tipo], input.cacheByType?.[tipo]);
     cacheByType[tipo] = v;
     if (v > 0) cachesInformados.push(v);
   }
   // Limitação declarada (§7.2): assume distribuição igual dos shows entre os tipos informados.
   // É a aproximação aceita em troca de não perguntar a quantidade de shows por tipo.
-  const cacheMedio = cachesInformados.length ? cachesInformados.reduce((s, v) => s + v, 0) / cachesInformados.length : 0;
+  // Sem nenhum tipo informado, cai na faixa única de cachê (QD.1). A precedência é a do §7.2: o
+  // detalhe por tipo, quando existe, vale mais do que a média que o artista estimou de cabeça.
+  const cacheMedio = cachesInformados.length
+    ? cachesInformados.reduce((s, v) => s + v, 0) / cachesInformados.length
+    : (medioDaFaixa(FAIXAS_POR_SHOW, input.cacheFaixa) ?? 0);
   const receitaShows = showsPerYear * cacheMedio;
 
   const receitaOutras: Partial<Record<FonteDeReceita, { valor: number; naoSei: boolean }>> = {};
   const naoSeiFontes: FonteDeReceita[] = [];
   let receitaOutrasTotal = 0;
+  // Por fonte quando o artista abriu QD.2b; senão a faixa única de QD.2, lançada em "outras"; e,
+  // na falta das duas, as nove chaves em reais do build antigo.
+  // Pela mesma razão: só uma resposta VÁLIDA abre o caminho por fonte. Um índice de lixo abrindo-o
+  // zerava as outras oito fontes em silêncio.
+  const detalhouFontes = FONTES_DE_RECEITA.some((f) => input.outrasPorFonteFaixa?.[f] === 'nao_sei'
+    || ehFaixa(FAIXAS_ANUAIS, input.outrasPorFonteFaixa?.[f]));
+  const outrasEmFaixa = medioDaFaixa(FAIXAS_ANUAIS, input.outrasFaixa);
   for (const fonte of FONTES_DE_RECEITA) {
-    const bruto = input.revenueSources?.[fonte];
+    const bruto = detalhouFontes
+      ? (() => {
+        const v = input.outrasPorFonteFaixa?.[fonte];
+        if (v === 'nao_sei') return 'nao_sei' as const;
+        return medioDaFaixa(FAIXAS_ANUAIS, v) ?? 0;
+      })()
+      : outrasEmFaixa != null
+        ? (fonte === 'outras' ? outrasEmFaixa : 0)
+        : input.revenueSources?.[fonte];
     const naoSei = bruto === 'nao_sei';
     // "Não sei" conta ZERO na soma e vira sinalização no relatório (§4). Contar zero subestima o
     // E de quem não controla as próprias receitas — e é exatamente isso que o texto do §11.3.4
@@ -614,13 +721,25 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   // §7.2 (v4.1) — o investimento anual é a soma de três parcelas. O custo por show multiplica os
   // MESMOS `showsPerYear` que o cachê: é isso que torna a margem por show e o ponto de equilíbrio
   // comparáveis, em vez de dois números que não se falam.
-  const custoPorShow = Math.max(0, Number(input.custoPorShow) || 0);
-  const custoFixoMensal = Math.max(0, Number(input.custoFixoMensal) || 0);
-  const investLancamentos12m = Math.max(0, Number(input.investLancamentos12m) || 0);
+  const custoPorShow = ouOsReais(FAIXAS_POR_SHOW, input.custoShowFaixa, input.custoPorShow);
+  const custoFixoMensal = ouOsReais(FAIXAS_DE_FIXO, input.fixoFaixa, input.custoFixoMensal);
+  const investLancamentos12m = ouOsReais(FAIXAS_ANUAIS, input.lancFaixa, input.investLancamentos12m);
   const custoShowsAnual = custoPorShow * showsPerYear;
   const custoFixoAnual = custoFixoMensal * 12;
   const investimentoAnual = custoShowsAnual + custoFixoAnual + investLancamentos12m;
-  const saldo = receitaAnual - investimentoAnual;
+  // ⚠️ DOIS SALDOS, E A DIFERENÇA ENTRE ELES É A REGRA INTEIRA DO §7.2.
+  //
+  // No caminho direto, a faixa dá um intervalo: o PISO é o mínimo que o artista garantidamente
+  // tem, e o PONTO MÉDIO é onde ele provavelmente está. A decisão de acender olha o piso, para o
+  // arredondamento da faixa e o bônus nunca acenderem o que ele não alcançou; a nota olha o ponto
+  // médio, para o posicionar dentro da faixa.
+  //
+  // No detalhado não há intervalo a defender: a combinação de cinco faixas dilui o erro de cada
+  // uma, e a spec manda os dois serem o mesmo número.
+  const saldoMedio = faixaDoSaldo ? faixaDoSaldo.medio : receitaAnual - investimentoAnual;
+  const saldoPiso = faixaDoSaldo ? faixaDoSaldo.piso : saldoMedio;
+  /** O saldo que o relatório mostra. É o do ponto médio; o piso é só critério. */
+  const saldo = saldoMedio;
   // Estrutura é BÔNUS na v4 (a v3 descontava de quem não tinha). Premiar a formalização em vez de
   // punir a ausência dela mantém o índice do lado de quem está começando.
   const bonus = 1 + (input.temEmpresario ? CUTS.e.bonusEmpresario : 0) + (input.temCnpj ? CUTS.e.bonusCnpj : 0);
@@ -634,9 +753,15 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   // a implementação inteira sem ninguém tropeçar nele: o índice estava certo e só a exibição
   // mentia. O bônus existe para reconhecer quem já se sustenta, e quem não se sustenta não tem o
   // que reconhecer.
-  const saldoAjustado = saldo > 0 ? saldo * bonus : saldo;
-  const eHigh = saldoAjustado >= CUTS.e.saldoAcende;
-  const eTopIcon = saldoAjustado >= CUTS.e.saldoTopIcon;
+  const ajusta = (x: number) => (x > 0 ? x * bonus : x);
+  const saldoPisoAjustado = ajusta(saldoPiso);
+  const saldoMedioAjustado = ajusta(saldoMedio);
+  /** Mantido para quem já lia este nome. É o do ponto médio, que é o saldo que se mostra. */
+  const saldoAjustado = saldoMedioAjustado;
+  // A decisão é do PISO (§7.2). A nota, lá embaixo, é do ponto médio — e cede a esta leitura
+  // quando as duas discordam, porque a invariante do §11.1 não admite contradição.
+  const eHigh = saldoPisoAjustado >= CUTS.e.saldoAcende;
+  const eTopIcon = saldoPisoAjustado >= CUTS.e.saldoTopIcon;
 
   // Impostos e comissão de empresário NÃO entram no índice (§7.2): descontá-los penalizaria a
   // formalização e o empresariamento, que o método premia com bônus. A alíquota alimenta só esta
@@ -745,7 +870,7 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   const def = PROFILES[key];
 
   // ════════ §11 · Boletim 0–100 ════════
-  const boletimE = boletimDoE(saldoAjustado, eHigh);
+  const boletimE = boletimDoE(saldoMedioAjustado, eHigh);
   // Usa lHigh (não só notaL): com a trava, nota_L pode passar de 0,70 SEM acender — belowCut
   // trava em 69 e preserva a invariante (§9.7, §11.1).
   const boletimL = lHigh
@@ -789,6 +914,13 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
       e: { saldoAjustado: Math.round(saldoAjustado), high: eHigh, topicon: eTopIcon, present: true },
     },
     revenue: {
+      caminho,
+      emFaixas,
+      saldoFaixa: faixaDoSaldo ? Number(input.saldoFaixa) : null,
+      saldoPiso: Math.round(saldoPiso),
+      saldoMedio: Math.round(saldoMedio),
+      saldoPisoAjustado: Math.round(saldoPisoAjustado),
+      saldoMedioAjustado: Math.round(saldoMedioAjustado),
       showsPerYear,
       cacheByType,
       cacheMedio: Math.round(cacheMedio),

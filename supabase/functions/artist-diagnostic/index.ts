@@ -3,8 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { logChartmetricCall } from "./chartmetric-log.ts";
 import {
   computeRealIndexV4, daQuizV3, FONTES_DE_RECEITA, TIPOS_DE_CONTRATANTE,
+  FAIXAS_DE_SALDO, FAIXAS_POR_SHOW, FAIXAS_ANUAIS, FAIXAS_DE_FIXO,
   type RealInputsV4, type ImprensaCell, type Frequencia, type PaganteFaixa,
   type RevenueSources, type CacheByType, type Aliquota, type FonteDeReceita, type TipoDeContratante,
+  type ValorDeFonte,
 } from "./realEngine.ts";
 
 const corsHeaders = {
@@ -63,6 +65,22 @@ function buildRealInputsV4(qz: any, cm: any, spotifyConnected: boolean): RealInp
     revenueSources[fonte as FonteDeReceita] = v === "nao_sei" ? "nao_sei" : Math.max(0, num0(v));
   }
 
+  // ── v4.5: as faixas. O quiz manda ÍNDICE, nunca dinheiro (§3.2) ──
+  // Índice inválido vira `null`, e `null` é o que faz o motor cair nos reais do build antigo da
+  // loja. Saneá-lo para 0 seria dizer "Nada" por conta própria: uma resposta inventada.
+  const faixa = (v: any, tamanho: number): number | null =>
+    (Number.isInteger(Number(v)) && Number(v) >= 0 && Number(v) < tamanho) ? Number(v) : null;
+  const cacheByTypeFaixa: Partial<Record<TipoDeContratante, number | null>> = {};
+  for (const tipo of TIPOS_DE_CONTRATANTE) {
+    cacheByTypeFaixa[tipo as TipoDeContratante] = faixa(qz?.cacheByTypeFaixa?.[tipo], FAIXAS_POR_SHOW.length);
+  }
+  // "Não sei essa" sobrevive aqui também: o motor conta zero e o relatório sinaliza (QD.ns).
+  const outrasPorFonteFaixa: Partial<Record<FonteDeReceita, ValorDeFonte | null>> = {};
+  for (const fonte of FONTES_DE_RECEITA) {
+    const v = qz?.outrasPorFonteFaixa?.[fonte];
+    outrasPorFonteFaixa[fonte as FonteDeReceita] = v === "nao_sei" ? "nao_sei" : faixa(v, FAIXAS_ANUAIS.length);
+  }
+
   // Imprensa: um porte por tipo, o MAIOR (§9.3). Aceita o objeto {tipo,porte}, a forma achatada
   // "tipo:porte" e o mapa { tipo: porte } que a matriz de escolha única produz.
   const matrix: ImprensaCell[] = (() => {
@@ -105,6 +123,15 @@ function buildRealInputsV4(qz: any, cm: any, spotifyConnected: boolean): RealInp
     youtubeViews28dSelf: n(qz?.youtubeViews28dSelf),
     // ── E (base anual) ──
     showsPerYear: int0(qz?.showsPerYear),
+    // A faixa do saldo é o que decide o caminho: com ela, o motor ignora o detalhamento inteiro.
+    saldoFaixa: faixa(qz?.saldoFaixa, FAIXAS_DE_SALDO.length),
+    cacheFaixa: faixa(qz?.cacheFaixa, FAIXAS_POR_SHOW.length),
+    cacheByTypeFaixa,
+    outrasFaixa: faixa(qz?.outrasFaixa, FAIXAS_ANUAIS.length),
+    outrasPorFonteFaixa,
+    custoShowFaixa: faixa(qz?.custoShowFaixa, FAIXAS_POR_SHOW.length),
+    fixoFaixa: faixa(qz?.fixoFaixa, FAIXAS_DE_FIXO.length),
+    lancFaixa: faixa(qz?.lancFaixa, FAIXAS_ANUAIS.length),
     cacheByType,
     revenueSources,
     // O investimento decomposto (v4.1, §3.2). Nenhum dos três aceita "não sei": zero ou estimativa.
