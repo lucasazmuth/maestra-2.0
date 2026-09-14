@@ -1,7 +1,5 @@
 # Maestra 2.0
 
-Plataforma de gestão estratégica para artistas musicais independentes.
-
 ## Stack
 
 - React + TypeScript
