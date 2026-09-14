@@ -29,7 +29,14 @@ export const CabecalhoDoChat = ({ artista, aoSair, aoAbrirConversas }: {
   artista?: Artist;
   /** Sai do chat e volta ao perfil. */
   aoSair: () => void;
-  aoAbrirConversas: () => void;
+  /**
+   * Abre a lista de conversas. OPCIONAL, e a ausência tem um caso real.
+   *
+   * Quem não tem PRO vê a tela de recurso bloqueado no lugar do chat, e ali não há conversa
+   * nenhuma para listar: o botão seria uma porta para uma sala vazia. O cabeçalho fica com a
+   * seta de voltar e o nome, e o lugar do botão vira espaço — sem isso o nome saía do centro.
+   */
+  aoAbrirConversas?: () => void;
 }) => {
   const margem = useSafeAreaInsets();
 
@@ -41,9 +48,13 @@ export const CabecalhoDoChat = ({ artista, aoSair, aoAbrirConversas }: {
 
       <Text style={estilos.escopo} numberOfLines={1}>{artista?.name ?? ''}</Text>
 
-      <BotaoRedondo rotulo="Ver as conversas" aoTocar={aoAbrirConversas}>
-        <Feather name="message-square" size={19} color={COR_CONVERSAS.botao} />
-      </BotaoRedondo>
+      {aoAbrirConversas ? (
+        <BotaoRedondo rotulo="Ver as conversas" aoTocar={aoAbrirConversas}>
+          <Feather name="message-square" size={19} color={COR_CONVERSAS.botao} />
+        </BotaoRedondo>
+      ) : (
+        <View style={estilos.lugarDoBotao} />
+      )}
     </View>
   );
 };
@@ -57,4 +68,6 @@ const estilos = StyleSheet.create({
     flex: 1, color: COR_CONVERSAS.botao, fontSize: 14, fontWeight: '700',
     textAlign: 'center',
   },
+  /** O mesmo tamanho do `BotaoRedondo`: é o que mantém o nome no centro sem ele. */
+  lugarDoBotao: { width: 42, height: 42 },
 });

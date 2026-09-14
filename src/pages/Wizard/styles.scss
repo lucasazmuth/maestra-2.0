@@ -170,11 +170,6 @@
   // campo é a continuação da mesma coluna), e enquanto o valor estava escrito solto nos dois
   // lugares eles se separaram: as mensagens recuavam 14px e o campo ficava colado nas bordas.
   --wiz-gutter-m: 14px;
-  // Avatar da Nyta no fio da conversa. O widget do beat alinha com os balões somando isto ao
-  // `gap` de 10px da `.nyta-row` — os dois PRECISAM concordar, então o número vive aqui e o
-  // recuo do widget é calculado, nunca redigitado. O valor em pixels do componente está em
-  // `chat/ChatMessage.tsx` (é prop de JS, não dá para ler o token daqui).
-  --wiz-avatar: 26px;
   --wz-danger: #f13131;
   // Âmbar escurecido o bastante pra carregar texto branco quando vira preenchimento (SWOT).
   --wz-warn: #b0720f;
@@ -1318,52 +1313,28 @@
   padding-bottom: 16px;
 }
 
-.nyta-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #9a4fd1, #509bf5);
-  color: #fff;
-  font-family: var(--font-display);
-  font-weight: 800;
-  user-select: none;
-}
-
-.nyta-row {
+.nyta-row--user {
   display: flex;
+  justify-content: flex-end;
   align-items: flex-end;
   gap: 10px;
   animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
-
-  &--user {
-    justify-content: flex-end;
-  }
 }
 
-// Bolhas na referência GSAP: Nyta em card branco com contorno, usuário em azul claro.
-.nyta-bubble {
-  background: var(--wz-surface, #fff);
-  border: 1px solid #e3eaf3;
+// AS FALAS — mesmo desenho do chat livre da Nyta (NytaChat/components/Mensagem.tsx).
+//
+// A resposta da Nyta não tem recipiente: nem balão, nem contorno, nem avatar. É texto na
+// própria coluna, largura cheia. Um balão por turno espremia a resposta em 78% da largura e a
+// fazia ler como mensagem de robô; sem ele, ela lê como o texto de um formulário conduzido.
+.nyta-fala--nyta {
+  width: 100%;
   color: var(--wz-text, #61749a);
-  border-radius: 14px 14px 14px 4px;
-  padding: 13px 16px;
-  font-size: 14px;
-  line-height: 1.55;
-  max-width: min(78%, 460px);
-  box-shadow: 0 4px 12px rgba(105, 122, 159, 0.06);
-
-  &--user {
-    background: var(--wz-blue-soft, #eaf0ff);
-    border-color: transparent;
-    color: var(--wz-blue-ink, #4267b9);
-    font-weight: 600;
-    border-radius: 14px 14px 4px 14px;
-    box-shadow: none;
-  }
+  font-size: 15px;
+  line-height: 1.62;
+  animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
 
   // Cursor piscando enquanto a fala é "digitada" (efeito streaming, tipo ChatGPT).
-  &--streaming .nyta-md > :last-child::after {
+  &.nyta-fala--streaming .nyta-md > :last-child::after {
     content: '';
     display: inline-block;
     width: 2px;
@@ -1380,42 +1351,56 @@
   50.01%, 100% { opacity: 0; }
 }
 
-// Markdown renderizado dentro das bolhas/cards: remove margens externas e mantém
+// A pergunta de quem responde é o ÚNICO recipiente da tela — o que deixa achar, rolando, onde
+// se respondeu o quê. Em cinza neutro, e não no azul de ação: ela não é um botão.
+.nyta-fala--voce {
+  max-width: min(84%, 460px);
+  padding: 11px 16px;
+  border-radius: 18px;
+  background: var(--wz-surface-2, #eceff5);
+  color: var(--wz-ink, #40506e);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+// Markdown renderizado dentro das falas/cards: remove margens externas e mantém
 // o espaçamento natural entre parágrafos, títulos e listas das falas e do resumo.
 .nyta-md {
   > :first-child { margin-top: 0; }
   > :last-child { margin-bottom: 0; }
 
-  p { margin: 0 0 8px; }
+  p { margin: 0 0 10px; }
   p:last-child { margin-bottom: 0; }
   strong { font-weight: 800; color: var(--wz-ink, #52668d); }
 
   h1, h2, h3, h4 {
     font-size: 15px;
     font-weight: 800;
-    margin: 14px 0 6px;
+    margin: 16px 0 6px;
     color: var(--wz-ink, #52668d);
   }
   h1:first-child, h2:first-child, h3:first-child { margin-top: 0; }
 
-  ul, ol { margin: 0 0 8px; padding-left: 20px; }
+  ul, ol { margin: 0 0 10px; padding-left: 20px; }
   li { margin: 2px 0; }
 
   a { color: var(--wz-blue, #3361ff); }
 }
 
-// Na bolha do usuário (fundo azul claro) o negrito não pode virar cinza-escuro.
-.nyta-bubble--user .nyta-md strong { color: inherit; }
-
-.nyta-typing {
+// A espera: três pontos onde a resposta vai nascer, sem moldura nem avatar — para o texto
+// começar no mesmo lugar em que eles estavam.
+.nyta-fala--pensando {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 13px 16px;
+  padding: 6px 0;
+  animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
 
   span {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--wz-faint, #aebbd0);
     animation: nytaDot 1.2s ease-in-out infinite;
@@ -1430,70 +1415,80 @@
   30% { transform: translateY(-4px); opacity: 1; }
 }
 
-// Widget interativo do beat atual: alinhado à coluna da Nyta (depois do avatar)
-// Alinhado com os balões: largura do avatar + o `gap` de 10px da `.nyta-row`. Calculado a partir
-// do token para não descolar do avatar quando ele mudar de tamanho.
+// Widget interativo do beat atual: sem avatar para alinhar, ocupa a coluna inteira — mesma
+// largura das falas da Nyta.
 .nyta-widget-slot {
-  --wiz-slot-indent: calc(var(--wiz-avatar, 26px) + 10px);
-
-  margin-left: var(--wiz-slot-indent);
+  width: 100%;
   animation: wizFadeSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
-  max-width: calc(100% - var(--wiz-slot-indent));
 }
 
 // Input fixo no rodapé do chat (fora da área de scroll — só a conversa rola).
 // Escopado em .nyta-chat: a página do chat livre da Nyta usa as mesmas classes
 // com outra estrutura (NytaChat/styles.scss) — sem o escopo, estes estilos vazam.
-// Campo claro da referência: pill branca com contorno e sombra suave.
+// Campo claro da referência: cartão branco com contorno e sombra suave.
 .nyta-chat .nyta-input-bar {
   flex: none;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
+  // A base global (NytaChat/components/nytaChatUI.scss) nasce escura — `#121212`, borda no topo —
+  // porque é o rodapé do chat livre, sempre em tela cheia sobre o próprio fundo dela. Aqui o rodapé
+  // divide a mesma tela clara do wizard, então cai fora: o cartão do campo (`__row`, abaixo) já é
+  // quem desenha a moldura.
+  padding: 0;
+  background: transparent;
+  border-top: none;
   // Mesma coluna das mensagens: o `.nyta-scroll` não tem mais recuo lateral próprio, então o
-  // campo ocupa a largura toda e bate com os avatares/balões.
+  // campo ocupa a largura toda e bate com as falas.
   width: 100%;
   max-width: var(--wiz-col);
   // Folga igual em cima e embaixo — o campo fica equilibrado no rodapé do chat.
   margin: 10px auto 10px;
 
   // Mobile: mesmo recuo lateral das mensagens, do mesmo token — o `width: 100%` que havia aqui
-  // deixava o campo colado nas duas bordas enquanto os balões logo acima recuavam 14px. As
+  // deixava o campo colado nas duas bordas enquanto as falas logo acima recuavam 14px. As
   // margens `auto` acima centralizam, então as folgas saem iguais dos dois lados.
   @media (max-width: 768px) {
     width: calc(100% - var(--wiz-gutter-m) * 2);
   }
-  background: var(--wz-surface);
+}
+
+.nyta-chat .nyta-input-bar__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 9px 9px 9px 18px;
   border: 1px solid var(--wz-line-2);
-  border-radius: 14px;
-  padding: 6px 6px 6px 18px;
-  box-shadow: 0 6px 14px rgba(98, 112, 143, 0.06);
+  border-radius: 22px;
+  background: var(--wz-surface);
+  box-shadow: 0 6px 20px rgba(105, 122, 159, 0.07);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
   &:focus-within {
     border-color: var(--wz-blue);
     box-shadow: 0 0 0 3px rgba(51, 97, 255, 0.14);
   }
+}
 
-  textarea {
-    flex: 1;
-    resize: none;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    color: var(--wz-ink);
-    font-size: 14px;
-    line-height: 20px;
-    padding: 9px 0;
-    box-shadow: none;
-    outline: none;
+.nyta-chat textarea.nyta-input-bar__textarea {
+  flex: 1;
+  resize: none;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--wz-ink);
+  font-size: 15px;
+  line-height: 22px;
+  padding: 9px 0;
+  box-shadow: none;
+  outline: none;
 
-    &::placeholder { color: var(--wz-faint); }
-    &:hover,
-    &:focus,
-    &.ant-input-focused { border: none; box-shadow: none; }
-  }
+  &::placeholder { color: var(--wz-faint); }
+  &:hover,
+  &:focus,
+  &.ant-input-focused { border: none; box-shadow: none; }
+}
+
+.nyta-chat .nyta-input-bar__acoes {
+  display: flex;
+  align-items: center;
 }
 
 .nyta-chat .nyta-send {
@@ -1501,10 +1496,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
   border: none;
   background: var(--wz-blue);
   color: #fff;
@@ -1567,7 +1562,13 @@
   margin-top: 14px;
 }
 
-// Hero compacto do artista dentro do chat
+// Hero compacto do artista dentro do chat. Ao contrário dos cards de widget (que ganham com a
+// largura da coluna — grade de gêneros, quadro SWOT), este é só um avatar + nome: sem teto, ele
+// esparramava por 1100px numa tela larga e lia como um card vazio.
+.nyta-hero-card {
+  max-width: 460px;
+}
+
 .nyta-hero-mini {
   display: flex;
   align-items: center;
@@ -2507,8 +2508,7 @@
     }
   }
 
-  .nyta-bubble { max-width: 88%; }
-  .nyta-widget-slot { margin-left: 0; max-width: 100%; }
+  .nyta-fala--voce { max-width: 88%; }
   .nyta-card { padding: 14px; }
 }
 
@@ -2531,7 +2531,7 @@
     padding-right: 10px;
   }
 
-  .nyta-bubble {
+  .nyta-fala--voce {
     max-width: 92%;
     padding: 11px 13px;
   }
@@ -2677,19 +2677,11 @@
   }
 }
 
-// Card enviado pela Nyta (hoje o vídeo da etapa): a mesma linha e o mesmo avatar de um balão
-// dela, mas o conteúdo traz a própria moldura. `align-items: flex-start` porque o card é alto —
-// com o `flex-end` herdado do `.nyta-row`, o avatar descia até o rodapé do vídeo, longe do topo
-// onde a mensagem começa.
-.nyta-row--card {
-  align-items: flex-start;
-}
-
+// Card enviado pela Nyta (hero do artista, vídeo da etapa): mesma coluna de uma fala dela, sem
+// avatar — a moldura vem do próprio `.nyta-card` dentro.
 .nyta-row-card {
+  width: 100%;
   min-width: 0;
-  // Mesmo teto de largura das bolhas: o card não pode ficar mais largo que a fala que o antecede.
-  max-width: 460px;
-  flex: 1;
 }
 
 // Marco de etapa: divisória com o nome no meio. Numa conversa contínua não havia nada dizendo

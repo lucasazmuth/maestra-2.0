@@ -15,9 +15,10 @@ import type { RealIndex } from '@maestra/core/interfaces/maestra';
 // O roteiro do quiz mora no núcleo: o app nativo faz as MESMAS perguntas, na mesma ordem, com
 // as mesmas chaves — é o que a edge `artist-diagnostic` lê dos dois lados.
 import {
-  IMPRENSA_PORTES, IMPRENSA_TIPOS, IMPRENSA_NUNCA, QUIZ, REVENUE_SOURCES, CHAVES_DO_BLOCO_R,
-  TIPOS_DE_CONTRATANTE_QUIZ, NAO_SEI, CTX_API, ORIENTACAO_SPOTIFY, totalDaTrilha,
-  perguntaAnterior, proximaPergunta, transicaoDoBloco, enunciado, FALAS,
+  colunaMarcada, LINHA_SEM_ESCOLHA, mapaDaTabela, respostaDaTabela, QUIZ,
+  CTX_API, ORIENTACAO_SPOTIFY, totalDaTrilha,
+  perguntaAnterior, proximaPergunta, transicaoDoBloco, gravarEscape, gravarResposta,
+  posicaoNaTrilha, respostaGravada, FALAS,
 } from '@maestra/core/constants/quizDoDiagnostico';
 import { useCanCreateArtist } from '@maestra/core/hooks/useCanCreateArtist';
 import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
@@ -96,37 +97,33 @@ const ArtistCreate: FC = () => {
   // Quiz
   const [quizIndex, setQuizIndex] = useState(0);
   const answers = useRef<Record<string, any>>({});
-  const [fieldVal, setFieldVal] = useState<number | null>(null);        // campo aberto (int/currency)
-  // Receita: R$ por fonte, ou a string "não sei" (§4 — conta zero e sinaliza no relatório).
-  const [revenueVal, setRevenueVal] = useState<Record<string, number | typeof NAO_SEI>>({});
-  // Cachê médio por tipo de contratante (§3.2) — seis linhas de R$, zero é resposta válida.
-  const [cacheVal, setCacheVal] = useState<Record<string, number>>({});
-  // Imprensa: UM porte por tipo, o maior (§9.3). `undefined` na chave = ainda não respondeu.
+  const [fieldVal, setFieldVal] = useState<number | null>(null);        // campo aberto (int)
+  // Tabela de escolha única: `undefined` na chave = a linha ainda não foi respondida.
   const [matrixVal, setMatrixVal] = useState<Record<string, string>>({});
+  // Qual linha da tabela está aberta, quando ela é expansível (nove faixas não cabem em 375px).
+  const [linhaAberta, setLinhaAberta] = useState<string | null>(null);
 
   // Ao trocar de pergunta: pré-carrega a resposta anterior (modo redo) ou zera (criação).
   useEffect(() => {
     const cur = step === 'quiz' ? QUIZ[quizIndex] : null;
     if (!cur) { setFieldVal(null); return; }
-    const prev = answers.current[cur.key];
-    if (cur.type === 'int' || cur.type === 'currency') {
+    const prev = respostaGravada(answers.current, cur);
+    setLinhaAberta(null);
+    if (cur.type === 'int') {
       setFieldVal(typeof prev === 'number' ? prev : null);
-    } else if (cur.type === 'revenue') {
-      setRevenueVal(prev && typeof prev === 'object' && !Array.isArray(prev) ? { ...prev } : {});
-    } else if (cur.type === 'cache') {
-      setCacheVal(prev && typeof prev === 'object' && !Array.isArray(prev) ? { ...prev } : {});
-    } else if (cur.type === 'matrix') {
-      setMatrixVal(Array.isArray(prev)
-        ? Object.fromEntries(prev.map((c: any) => [c.tipo, c.porte]))
-        : {});
+    } else if (cur.type === 'tabela') {
+      setMatrixVal(mapaDaTabela(cur, prev));
     } else {
       setFieldVal(null);
     }
   }, [quizIndex, step]);
 
-  // Escolha única por tipo: marcar um porte substitui o anterior. Reclicar o mesmo desmarca.
-  const marcarPorte = (tipo: string, porte: string) =>
-    setMatrixVal((prev) => ({ ...prev, [tipo]: prev[tipo] === porte ? '' : porte }));
+  // Escolha única por LINHA: marcar uma coluna substitui a anterior. Reclicar a mesma desmarca.
+  const marcarNaTabela = (linha: string, coluna: string) =>
+    setMatrixVal((prev) => ({
+      ...prev,
+      [linha]: prev[linha] === coluna ? LINHA_SEM_ESCOLHA : coluna,
+    }));
 
   // Refazer diagnóstico: semeia os dados salvos do artista + as respostas anteriores e começa no
   // quiz (pula o "perfil"). Só age enquanto está no perfil; ao achar o artista, troca pra quiz.
@@ -143,7 +140,7 @@ const ArtistCreate: FC = () => {
     answers.current = { ...(redoArtist.content?.quizDiagnostic?.answers || {}) };
     setQuizIndex(0);
     setStep('quiz');
-    say(enunciado(QUIZ[0], answers.current));
+    say(QUIZ[0].q);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [redo, redoArtist, step]);
 
@@ -306,7 +303,7 @@ const ArtistCreate: FC = () => {
     if (previewRef.current) { setPreparando(true); await previewRef.current; setPreparando(false); }
     setQuizIndex(0);
     setStep('quiz');
-    say(enunciado(QUIZ[0], answers.current));
+    say(QUIZ[0].q);
   };
 
   const handleSelectSpotify = async (r: SpotifyArtistSearchResult) => {
@@ -357,16 +354,27 @@ const ArtistCreate: FC = () => {
   // Próximo índice pulando perguntas condicionais (ex.: cachê quando shows = 0).
   const nextQuizIndex = (from: number) => proximaPergunta(from, answers.current);
 
-  const answerQuiz = (value: unknown) => {
-    answers.current[QUIZ[quizIndex].key] = value;
+  // Avança para a pergunta seguinte que se aplica, ou fecha o quiz.
+  const seguirQuiz = () => {
     const next = nextQuizIndex(quizIndex + 1);
     if (next < QUIZ.length) {
       setQuizIndex(next);
-      say(enunciado(QUIZ[next], answers.current));
+      say(QUIZ[next].q);
     } else {
       setStep('analisando');
       say(FALAS.analisando);
     }
+  };
+
+  const answerQuiz = (value: unknown) => {
+    gravarResposta(answers.current, QUIZ[quizIndex], value);
+    seguirQuiz();
+  };
+
+  // O escape grava o desvio e avança SEM responder: é a ausência da resposta que o motor lê.
+  const escapeQuiz = () => {
+    gravarEscape(answers.current, QUIZ[quizIndex]);
+    seguirQuiz();
   };
 
   // Índice ANTERIOR pulando as perguntas condicionais que não se aplicam (espelha o nextQuizIndex).
@@ -376,7 +384,7 @@ const ArtistCreate: FC = () => {
     const prev = prevQuizIndex(quizIndex - 1);
     if (prev < 0) return;
     setQuizIndex(prev);
-    say(enunciado(QUIZ[prev], answers.current));
+    say(QUIZ[prev].q);
   };
 
   const goToUnlock = () => {
@@ -404,7 +412,9 @@ const ArtistCreate: FC = () => {
   // O denominador desconta o bloco R que a consulta prévia já respondeu: sem isso a barra pararia
   // em 82% num quiz que terminou, porque três perguntas nunca apareceram.
   const trilha = totalDaTrilha(answers.current);
-  const posicao = QUIZ.filter((p, i) => i <= quizIndex && !(CHAVES_DO_BLOCO_R.includes(p.key) && p.skipIf?.(answers.current))).length;
+  // A posição sai do núcleo, como o total: o detalhamento fica de fora dos dois, e é isso que
+  // faz a barra CONGELAR enquanto se detalha em vez de recuar.
+  const posicao = posicaoNaTrilha(quizIndex, answers.current);
   const quizPct = step === 'quiz'
     ? (isLastQuiz ? 100 : Math.round((posicao / trilha) * 100))
     : 0;
@@ -645,18 +655,17 @@ const ArtistCreate: FC = () => {
                 if (e.key.length === 1 && !/[0-9]/.test(e.key) && !e.ctrlKey && !e.metaKey) e.preventDefault();
               };
               const numProps = { inputMode: 'numeric' as const, parser: stripNonDigits, onKeyDown: blockNonNumericKey };
-              const currencyProps = {
-                ...numProps,
-                prefix: 'R$',
-                formatter: (val?: string | number) => `${val ?? ''}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
-              };
-
               // Várias perguntas da v4 trazem instrução própria ("deixe em zero o que não se
               // aplica", "esse número aparece no YouTube Studio"). Sem ela o artista responde outra
               // coisa, e o que entra no índice deixa de ser o que a metodologia pediu.
               const ajuda = cur.ajuda ? <p className={styles.quizAjuda}>{cur.ajuda}</p> : null;
 
-              // Sim/Não e selects (níveis/enums): botões de opção.
+              // Sim/Não, níveis, enums e as escalas de faixa: botões de opção.
+              //
+              // ⚠️ O ESCAPE NÃO É UMA OPÇÃO A MAIS, e por isso não entra na lista. Ele abre um
+              // desvio EM VEZ DE responder, e é a ausência da resposta que o motor lê depois:
+              // quem pede ajuda para calcular o saldo não responde QE.2. Sai como botão (QE.2b)
+              // ou como link discreto (QD.2b), conforme a pergunta pede.
               if (cur.type === 'select') {
                 return (
                   <div className={styles.options}>
@@ -664,131 +673,87 @@ const ArtistCreate: FC = () => {
                     {cur.options!.map((o) => (
                       <button key={String(o.value)} className={styles.option} onClick={() => answerQuiz(o.value)}>{o.label}</button>
                     ))}
+                    {!!cur.escape && (
+                      <button
+                        type='button'
+                        className={cur.escape.comoLink ? styles.escapeLink : styles.escapeBotao}
+                        onClick={escapeQuiz}
+                      >
+                        {cur.escape.rotulo}
+                      </button>
+                    )}
                   </div>
                 );
               }
 
-              // Receita fora dos shows: nove fontes, cada uma em R$ ou "não sei" (§3.2).
+              // Tabela de escolha única por linha. As linhas, as colunas e a coluna que limpa
+              // vêm da DEFINIÇÃO DA PERGUNTA — este bloco não sabe de imprensa nem de porte.
               //
-              // O "não sei" é uma resposta de verdade, não um campo vazio: conta zero no saldo e
-              // vira sinalização no relatório (§4, §11.3.4). Quem não sabe quanto a própria
-              // distribuidora paga está dizendo algo sobre a gestão da carreira, e é isso que o
-              // diagnóstico devolve. Por isso a linha marcada trava o campo, em vez de escondê-lo.
-              if (cur.type === 'revenue') {
-                return (
-                  <div className={styles.revenueForm}>
-                    {ajuda}
-                    <p className={styles.revenuePrefixo}>Quanto você recebeu nos últimos 12 meses...</p>
-                    {REVENUE_SOURCES.map((s) => {
-                      const naoSei = revenueVal[s.key] === NAO_SEI;
-                      return (
-                        <div key={s.key} className={styles.revenueRow}>
-                          <span className={styles.revenueLabel}>{s.label}</span>
-                          <div className={styles.revenueControls}>
-                            <InputNumber
-                              size='large'
-                              min={0}
-                              precision={0}
-                              controls={false}
-                              disabled={naoSei}
-                              className={styles.revenueInput}
-                              value={naoSei ? null : ((revenueVal[s.key] as number) ?? null)}
-                              onChange={(v) => setRevenueVal((p) => ({ ...p, [s.key]: Math.max(0, Number(v) || 0) }))}
-                              placeholder={naoSei ? 'Não sei' : '0'}
-                              {...currencyProps}
-                            />
-                            <button
-                              type='button'
-                              aria-pressed={naoSei}
-                              className={`${styles.naoSeiChip} ${naoSei ? styles.naoSeiChipOn : ''}`}
-                              onClick={() => setRevenueVal((p) => ({ ...p, [s.key]: naoSei ? 0 : NAO_SEI }))}
-                            >
-                              Não sei
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <button className={styles.cta} style={{ marginTop: 14, width: '100%' }} onClick={() => answerQuiz({ ...revenueVal })}>
-                      Continuar
-                    </button>
-                  </div>
-                );
-              }
-
-              // Cachê médio por tipo de contratante (§3.2). Seis linhas de R$; zero é resposta
-              // válida e significa "não atendi esse tipo" — o motor tira os zeros da média.
-              if (cur.type === 'cache') {
-                return (
-                  <div className={styles.revenueForm}>
-                    {ajuda}
-                    {TIPOS_DE_CONTRATANTE_QUIZ.map((t) => (
-                      <div key={t.key} className={styles.revenueRow}>
-                        <span className={styles.revenueLabel}>{t.label}</span>
-                        <InputNumber
-                          size='large'
-                          min={0}
-                          precision={0}
-                          controls={false}
-                          className={styles.revenueInput}
-                          value={cacheVal[t.key] ?? null}
-                          onChange={(v) => setCacheVal((p) => ({ ...p, [t.key]: Math.max(0, Number(v) || 0) }))}
-                          placeholder='0'
-                          {...currencyProps}
-                        />
-                      </div>
-                    ))}
-                    <button className={styles.cta} style={{ marginTop: 14, width: '100%' }} onClick={() => answerQuiz({ ...cacheVal })}>
-                      Continuar
-                    </button>
-                  </div>
-                );
-              }
-
-              // Imprensa: uma escolha por tipo de veículo, o MAIOR porte (§9.3).
-              //
-              // A v3 deixava marcar vários portes no mesmo tipo, o que não significava nada: o
-              // motor agrega pelo máximo, porque a matriz mede o TETO de legitimação alcançado.
-              // Marcar "pequeno" além de "grande" nunca mudou a nota e só confundia. Agora a
-              // pergunta é a que a metodologia faz, com "Nunca" explícito em vez de deixar em branco.
-              if (cur.type === 'matrix') {
-                const opcoes = [{ key: IMPRENSA_NUNCA, label: 'Nunca' }, ...IMPRENSA_PORTES];
+              // A imprensa é a primeira a usá-lo (§9.3): uma escolha por tipo de veículo, o MAIOR
+              // porte. A v3 deixava marcar vários portes no mesmo tipo, o que não significava
+              // nada — o motor agrega pelo máximo, porque a matriz mede o TETO de legitimação
+              // alcançado. Marcar "pequeno" além de "grande" nunca mudou a nota e só confundia.
+              if (cur.type === 'tabela' && cur.tabela) {
+                const { linhas, colunas, vazio, expansivel } = cur.tabela;
+                const opcoes = vazio
+                  ? [{ key: LINHA_SEM_ESCOLHA, label: vazio }, ...colunas]
+                  : colunas;
                 return (
                   <div className={styles.matrixWrap}>
                     {ajuda}
                     <div className={styles.matrixList}>
-                      {IMPRENSA_TIPOS.map((t) => (
-                        <div key={t.key} className={styles.matrixTypeRow}>
-                          <span className={styles.matrixTypeName}>{t.label}</span>
-                          <div className={styles.porteChips}>
-                            {opcoes.map((p) => {
-                              const marcado = p.key === IMPRENSA_NUNCA
-                                ? !matrixVal[t.key]
-                                : matrixVal[t.key] === p.key;
-                              return (
-                                <button
-                                  key={p.key}
-                                  type='button'
-                                  aria-pressed={marcado}
-                                  className={`${styles.porteChip} ${marcado ? styles.porteChipOn : ''}`}
-                                  onClick={() => marcarPorte(t.key, p.key === IMPRENSA_NUNCA ? '' : p.key)}
-                                >
-                                  {p.label}
-                                </button>
-                              );
-                            })}
+                      {linhas.map((linha) => {
+                        // ⚠️ TRÊS CHIPS DE PORTE CABEM NUMA LINHA A 375px; NOVE FAIXAS NÃO CABEM
+                        // EM LADO NENHUM. Na tabela expansível a linha abre a escala inteira, uma
+                        // de cada vez, e o que fica à vista é o rótulo da faixa escolhida.
+                        const aberta = !expansivel || linhaAberta === linha.key;
+                        const escolhida = colunas.find((c) => colunaMarcada(matrixVal, linha.key, c.key));
+                        return (
+                          <div key={linha.key} className={styles.matrixTypeRow}>
+                            {expansivel ? (
+                              <button
+                                type='button'
+                                aria-expanded={aberta}
+                                className={styles.matrixTypeToggle}
+                                onClick={() => setLinhaAberta(aberta ? null : linha.key)}
+                              >
+                                <span className={styles.matrixTypeName}>{linha.label}</span>
+                                <span className={`${styles.matrixTypeValor} ${escolhida ? '' : styles.matrixTypeVazio}`}>
+                                  {escolhida ? escolhida.label : 'Não atendo'}
+                                </span>
+                              </button>
+                            ) : (
+                              <span className={styles.matrixTypeName}>{linha.label}</span>
+                            )}
+                            {aberta && (
+                              <div className={styles.porteChips}>
+                                {opcoes.map((coluna) => {
+                                  const marcado = colunaMarcada(matrixVal, linha.key, coluna.key);
+                                  return (
+                                    <button
+                                      key={coluna.key || '_vazio'}
+                                      type='button'
+                                      aria-pressed={marcado}
+                                      className={`${styles.porteChip} ${marcado ? styles.porteChipOn : ''}`}
+                                      onClick={() => {
+                                        marcarNaTabela(linha.key, coluna.key);
+                                        if (expansivel) setLinhaAberta(null);
+                                      }}
+                                    >
+                                      {coluna.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <button
                       className={styles.cta}
                       style={{ marginTop: 16, width: '100%' }}
-                      onClick={() => answerQuiz(
-                        Object.entries(matrixVal)
-                          .filter(([, porte]) => !!porte)
-                          .map(([tipo, porte]) => ({ tipo, porte })),
-                      )}
+                      onClick={() => answerQuiz(respostaDaTabela(cur, matrixVal) as never)}
                     >
                       Continuar
                     </button>
@@ -796,7 +761,8 @@ const ArtistCreate: FC = () => {
                 );
               }
 
-              // int / currency: campo numérico aberto.
+              // int: campo numérico aberto. A v4.5 não tem mais campo de dinheiro — tudo o
+              // que é valor é faixa, e a única contagem que sobrou é a de shows.
               return (
                 <div>
                   {ajuda}
@@ -811,7 +777,7 @@ const ArtistCreate: FC = () => {
                     onChange={(v) => setFieldVal((v as number | null) ?? null)}
                     placeholder={cur.placeholder}
                     onPressEnter={() => { if (fieldVal != null) answerQuiz(fieldVal); }}
-                    {...(cur.type === 'currency' ? currencyProps : numProps)}
+                    {...numProps}
                   />
                   <button
                     disabled={fieldVal == null}

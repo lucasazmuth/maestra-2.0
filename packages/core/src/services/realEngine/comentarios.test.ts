@@ -200,6 +200,11 @@ describe('integridade entre texto e gatilho', () => {
     { premios: 4, editorialPlaylists: 3 },
     // L5.a: imprensa esporádica.
     { imprensaRepercussao: true, imprensaMatrix: [{ tipo: 'podcasts', porte: 'pequeno' }], imprensaFrequencia: 'esporadico' },
+    // E3-F: os três estados do caminho direto. O detalhamento vai junto de propósito, para
+    // provar que a faixa manda nele — se mandasse o contrário, sairiam os E3 numéricos.
+    { saldoFaixa: 0, showsPerYear: 20, cacheByType: { produtores: 5_000 }, custoFixoMensal: 900 },
+    { saldoFaixa: 1, showsPerYear: 20 },
+    { saldoFaixa: 5, showsPerYear: 20 },
   ];
   const diagnosticos = casos.map((c) => computeRealIndexV4(base(c)));
   for (const ri of diagnosticos) {
@@ -418,5 +423,106 @@ describe('§7.4 zero por ignorância não é zero por ausência', () => {
 
     expect(ids(ri, 'e').some((id) => id.startsWith('E2.'))).toBe(true);
     expect(ids(ri, 'e')).toContain('E6');
+  });
+});
+
+// ════════ §7.5 · o E fala conforme o caminho ════════
+//
+// Quem respondeu o saldo numa faixa não informou receita, custo nem investimento. Nove grupos do
+// E falam desses números, e três deles disparariam A SÉRIO sobre zeros que ninguém digitou.
+describe('§7.5 os grupos do E que só falam com detalhamento', () => {
+  const direto = (i: number, over: Partial<RealInputsV4> = {}) =>
+    computeRealIndexV4(base({ saldoFaixa: i, showsPerYear: 20, ...over }));
+  const detalhado = (over: Partial<RealInputsV4> = {}) =>
+    computeRealIndexV4(base({ showsPerYear: 20, cacheByType: { produtores: 5_000 }, ...over }));
+
+  it('no caminho direto sai o E3-F, e nenhum E3 numérico', () => {
+    const saiu = ids(direto(5), 'e');
+    expect(saiu).toContain('E3-F.pos');
+    expect(saiu.filter((id) => /^E3\.[abc]$/.test(id))).toEqual([]);
+  });
+
+  it('e no detalhado é ao contrário: o E3 numérico, e nenhum E3-F', () => {
+    const saiu = ids(detalhado(), 'e');
+    expect(saiu.some((id) => /^E3\.[abc]$/.test(id))).toBe(true);
+    expect(saiu.filter((id) => id.startsWith('E3-F'))).toEqual([]);
+  });
+
+  // ⚠️ ESTE É O QUE MAIS IMPORTA DOS TRÊS. O E3.d dispara pela AUSÊNCIA de investimento em
+  // lançamentos, e no caminho direto o investimento está em zero por nunca ter sido perguntado.
+  // Sem portão, todo artista que respondeu só a faixa leria "você não investiu em gravar nem em
+  // lançar nos últimos 12 meses. A carreira rendeu R$ 0".
+  it('o alerta de lançamento não acusa quem nunca foi perguntado', () => {
+    expect(ids(direto(5), 'e')).not.toContain('E3.d');
+    expect(ids(detalhado(), 'e')).toContain('E3.d');
+  });
+
+  // O −1 da primeira faixa é SENTINELA, e o E3.b casaria com ele como se fosse dinheiro — e
+  // imprimiria "um saldo negativo de R$ 1".
+  it('a sentinela da faixa negativa não vira prejuízo de um real', () => {
+    const saiu = ids(direto(0), 'e');
+    expect(saiu).toContain('E3-F.neg');
+    expect(saiu).not.toContain('E3.b');
+  });
+
+  // O E8 divide o saldo pelo salário do setor cultural. No direto esse saldo é um ponto médio de
+  // faixa, e a razão sairia com uma casa decimal de precisão que não existe.
+  it('a referência do setor cultural não se constrói sobre um ponto médio', () => {
+    expect(ids(direto(7), 'e')).not.toContain('E8.a');
+    expect(ids(detalhado({ cacheByType: { produtores: 20_000 } }), 'e')).toContain('E8.a');
+  });
+
+  // ⚠️ CADA CASO TEM DE DISPARAR DE FACTO NO DETALHADO, senão o teste não prova nada.
+  //
+  // A primeira versão disto passava um payload só com `showsPerYear` e afirmava que nenhum dos
+  // nove saía. Saía mesmo — mas por falta de cachê, de fonte e de custo, e não pelo portão.
+  // Tirar os portões todos deixava o teste verde. Agora cada linha traz o payload que ACENDE
+  // aquele grupo, e o teste afirma as duas metades: que acende no detalhado, e que se cala
+  // quando a mesma conta chega com uma faixa de saldo por cima.
+  const ACENDERIAM: [string, Partial<RealInputsV4>][] = [
+    ['E2.a', { cacheByType: { produtores: 5_000 }, revenueSources: { distribuidora: 500_000 } }],
+    ['E5.a', { cacheByType: { corporativos: 9_000, casasDeShow: 1_000 } }],
+    ['E5.b', { cacheByType: { corporativos: 1_000, casasDeShow: 950 } }],
+    ['E6', { revenueSources: { editora: 'nao_sei' } }],
+    ['E7.a', { cacheByType: { produtores: 5_000 }, custoPorShow: 1_000, custoFixoMensal: 800 }],
+    ['E7.b', { cacheByType: { produtores: 500 }, custoPorShow: 900 }],
+    ['E7.c', { cacheByType: { produtores: 5_000 }, custoPorShow: 1_000 }],
+    ['E3.e', { cacheByType: { produtores: 500 }, custoFixoMensal: 5_000 }],
+    ['E3.f', { cacheByType: { produtores: 500 }, custoPorShow: 900 }],
+  ];
+
+  it.each(ACENDERIAM)('o %s acende no detalhado', (id, payload) => {
+    expect(ids(detalhado({ cacheByType: {}, ...(payload as Partial<RealInputsV4>) }), 'e')).toContain(id as string);
+  });
+
+  it.each(ACENDERIAM)('e a mesma conta com faixa de saldo por cima cala o %s', (id, payload) => {
+    expect(ids(direto(5, payload as Partial<RealInputsV4>), 'e')).not.toContain(id as string);
+  });
+
+  // E1 e E4 NÃO recebem portão, de propósito: leem a nota e a estrutura, que existem nos dois
+  // caminhos. Calá-los deixaria o cartão do E com um comentário só.
+  it('o E1 e o E4 continuam a falar, porque não dependem das parcelas', () => {
+    const saiu = ids(direto(5), 'e');
+    expect(saiu.some((id) => id.startsWith('E1.'))).toBe(true);
+    expect(saiu.some((id) => id.startsWith('E4.'))).toBe(true);
+  });
+
+  it.each([[0, 'E3-F.neg'], [1, 'E3-F.zero'], [2, 'E3-F.pos'], [8, 'E3-F.pos']])(
+    'a faixa %i dá o %s',
+    (i, id) => { expect(ids(direto(i as number), 'e')).toContain(id); },
+  );
+
+  it('o E3-F.pos diz a faixa por extenso, e não um valor', () => {
+    const texto = comentariosDaDimensao(direto(5), 'e', { superficie: 'pdf' })
+      .find((c) => c.id === 'E3-F.pos')!.texto;
+    expect(texto).toContain('entre R$ 6 mil e R$ 10 mil por mês');
+    expect(texto).not.toContain('{');
+  });
+
+  // O grupo partilha o nome 'E3' com o numérico para a prioridade de tela continuar a ser uma
+  // lista de três. Se ganhasse nome próprio, sumia da tela sem ninguém reparar.
+  it('o E3-F ocupa o lugar do E3 na tela', () => {
+    const naTela = comentariosDaDimensao(direto(5), 'e', { superficie: 'tela' });
+    expect(naTela.map((c) => c.grupo)).toEqual(['E1', 'E3', 'E4']);
   });
 });

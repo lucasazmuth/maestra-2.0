@@ -23,7 +23,8 @@ import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '@maestra/core/services/realEngine/comentarios';
 import {
-  AVISOS, avisosSemLugarProprio, ehLegado, linhasDaDimensao, resumoDoE, SIIC_MENSAL,
+  AVISOS, avisosSemLugarProprio, conviteADetalhar, detalhouOE, ehLegado, linhasDaDimensao,
+  resumoDoE, SIIC_MENSAL,
 } from '@maestra/core/services/realEngine/relatorio';
 import {
   CHAMADA_DO_PLANEJAMENTO, dimNarrative, LEVAR_O_DIAGNOSTICO, METODOLOGIA, QUEM_ASSINA,
@@ -309,8 +310,19 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
         </div>
       </div>
       <div className={styles.ruler}>
-        {/* TOP ICON (flag do motor): a barra enche até o selo em dourado, pra não contradizer o selo. */}
-        <div className={styles.rulerFill} style={top ? { width: '100%', background: 'linear-gradient(90deg,#f5c451,#e0a13c)' } : { width: `${score}%` }} />
+        {/*
+          ⚠️ A RÉGUA MOSTRA A NOTA, SEMPRE. O dourado é do selo; o comprimento é do número.
+
+          O L é a única dimensão em que o patamar de elite não implica nota 100 (§9 e §11.2): quem
+          tem prémio internacional e nota_L de 0,74 é Top Tier com 74. A régua enchia até ao fim
+          nesse caso "para não contradizer o selo" — e passava a contradizer o NÚMERO, impresso ao
+          lado dela. O cartão dizia TOP TIER · 74/100 com a barra cheia, e o cartão de cima dizia
+          ACESA · 90/100 · faltam 10 pontos para o Top Tier.
+        */}
+        <div
+          className={styles.rulerFill}
+          style={{ width: `${score}%`, ...(top ? { background: 'linear-gradient(90deg,#f5c451,#e0a13c)' } : {}) }}
+        />
         <span className={styles.rulerMark} style={{ left: '70%' }} data-label="acende" />
         <span className={styles.rulerMark} style={{ left: '100%' }} data-label="TOP ICON" />
       </div>
@@ -349,7 +361,17 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
       {rows.some((l) => l.declarado) && (
         <div className={styles.statFonteNota}>† Informado por quem preencheu o diagnóstico. A Maestra não verifica estes dados.</div>
       )}
-      {dk === 'e' && <RevenuePie ri={ri} />}
+      {dk === 'e' && detalhouOE(ri) && <RevenuePie ri={ri} />}
+      {/*
+        §12 — quem respondeu o saldo numa faixa não vê composição, cachê por tipo nem saúde
+        financeira: ele nunca informou receita, custo nem fonte. Vê a razão de não os ver.
+      */}
+      {dk === 'e' && !!conviteADetalhar(ri) && (
+        <div className={styles.healthBlock}>
+          <div className={styles.healthTitle}>De onde vem e pra onde vai</div>
+          <p className={styles.healthNota}>{conviteADetalhar(ri)}</p>
+        </div>
+      )}
       {/*
         §3 — os chips de estrutura aparecem SEMPRE os dois, positivo ou negativo. Mostrar só a
         ausência transformava um dado neutro em repreensão, e escondia de quem tem os dois que
@@ -375,7 +397,7 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
         assume distribuição igual entre os tipos informados, e ver quais são deixa a aproximação à
         vista de quem lê, em vez de escondida na conta.
       */}
-      {dk === 'e' && (() => {
+      {dk === 'e' && detalhouOE(ri) && (() => {
         const resumo = resumoDoE(ri);
         if (!resumo?.cache.length) return null;
         const teto = Math.max(...resumo.cache.map((c) => c.valor));
@@ -394,7 +416,7 @@ const DimCardV3: FC<{ dk: DimK; ri: any; cm: Chartmetric | null }> = ({ dk, ri, 
           </div>
         );
       })()}
-      {dk === 'e' && (() => {
+      {dk === 'e' && detalhouOE(ri) && (() => {
         const resumo = resumoDoE(ri);
         // Legado (v2/v3): base mensal, sem saldo ajustado nem alíquota.
         if (!resumo) {

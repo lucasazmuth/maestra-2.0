@@ -4,7 +4,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import { QUIZ, TRANSICOES } from '@maestra/core/constants/quizDoDiagnostico';
 
-// As transições de bloco do Quiz v4.2, na WEB.
+// As transições de bloco do Quiz v4.5, na WEB.
 //
 // O roteiro é do núcleo e tem teste próprio (`quizDoDiagnostico.test.ts`); este arquivo é o
 // outro lado: provar que a tela DESENHA a transição, e no lugar certo. Sem ele, apagar o
@@ -101,18 +101,36 @@ const responder = async (chave: string, valor = '10') => {
   fireEvent.click(screen.getByText('Continuar'));
 };
 
+/** Percorre o quiz respondendo a primeira opção de cada pergunta, até chegar à chave pedida. */
+const andarAte = async (chave: string) => {
+  for (const p of QUIZ) {
+    if (p.key === chave) return;
+    if (p.skipIf?.({ fazBilheteria: true, imprensaRepercussao: true })) continue;
+    // eslint-disable-next-line no-await-in-loop
+    await waitFor(() => expect(screen.getByText(p.q)).toBeInTheDocument());
+    if (p.type === 'tabela') {
+      // A tabela não tem "próxima" por clique: só o Continuar, com a resposta vazia, que é uma
+      // resposta válida (nenhum veículo marcado).
+      fireEvent.click(screen.getByText('Continuar'));
+    } else {
+      // eslint-disable-next-line no-await-in-loop
+      await responder(p.key);
+    }
+  }
+};
+
 describe('as transições de bloco na web', () => {
   it('abre o quiz com a transição dos shows acima da primeira pergunta', async () => {
     montar();
 
     expect(await screen.findByText(perguntaDe('vinculo').q)).toBeInTheDocument();
-    // O vínculo abre o quiz e não tem transição: nenhuma das cinco pode estar na tela.
+    // O vínculo abre o quiz e não tem transição: nenhuma pode estar na tela.
     Object.values(TRANSICOES).forEach((t) => expect(screen.queryByText(t!)).not.toBeInTheDocument());
 
     await responder('vinculo');
 
     expect(await screen.findByText(TRANSICOES.shows!)).toBeInTheDocument();
-    expect(screen.getByText(perguntaDe('showsPerYear').q)).toBeInTheDocument();
+    expect(screen.getByText(perguntaDe('fazBilheteria').q)).toBeInTheDocument();
   });
 
   // A transição é a abertura do bloco, não um rodapé que acompanha as perguntas dele.
@@ -122,45 +140,50 @@ describe('as transições de bloco na web', () => {
     await responder('vinculo');
     await screen.findByText(TRANSICOES.shows!);
 
-    await responder('showsPerYear', '12');
+    await responder('fazBilheteria');
 
-    expect(await screen.findByText(perguntaDe('fazBilheteria').q)).toBeInTheDocument();
+    expect(await screen.findByText(perguntaDe('pagantePct').q)).toBeInTheDocument();
     expect(screen.queryByText(TRANSICOES.shows!)).not.toBeInTheDocument();
   });
 
-  // O pedido de dinheiro é o momento mais sensível do quiz, e a transição é o que o antecede.
-  // A pergunta seguinte retoma o número de shows que a pessoa deu lá no primeiro bloco.
-  it('a do dinheiro chega junto com o cachê, que retoma o número de shows', async () => {
+  // O pedido de dinheiro é o momento mais sensível do quiz, e a v4.5 abre-o prometendo ajuda.
+  it('a do dinheiro abre o bloco, na contagem de shows', async () => {
     montar();
     await screen.findByText(perguntaDe('vinculo').q);
-    await responder('vinculo');
-    await screen.findByText(TRANSICOES.shows!);
-    await responder('showsPerYear', '12');
-    await screen.findByText(perguntaDe('fazBilheteria').q);
-
-    // Daqui até o cachê: bilheteria (sim) e pagante, as três redes, o bloco do reconhecimento e
-    // o da estrutura. O caminho é o de quem responde tudo.
-    for (const chave of [
-      'fazBilheteria', 'pagantePct',
-      'igFollowersSelf', 'tiktokFollowersSelf', 'youtubeViews28dSelf',
-      'imprensaRepercussao', 'imprensaMatrix', 'imprensaFrequencia', 'premios',
-      'temCnpj', 'aliquota', 'temEmpresario',
-    ]) {
-      if (chave === 'imprensaMatrix') {
-        // A matriz não tem "próxima" por clique: só o Continuar, com a resposta vazia (nenhum
-        // veículo marcado), que é uma resposta válida.
-        // eslint-disable-next-line no-await-in-loop
-        await waitFor(() => expect(screen.getByText('Continuar')).toBeInTheDocument());
-        fireEvent.click(screen.getByText('Continuar'));
-      } else {
-        // eslint-disable-next-line no-await-in-loop
-        await waitFor(() => expect(screen.getByText(perguntaDe(chave).q)).toBeInTheDocument());
-        // eslint-disable-next-line no-await-in-loop
-        await responder(chave);
-      }
-    }
+    await andarAte('showsPerYear');
 
     expect(await screen.findByText(TRANSICOES.numeros!)).toBeInTheDocument();
-    expect(screen.getByText(/fez 12 shows no último ano/)).toBeInTheDocument();
+    expect(screen.getByText(perguntaDe('showsPerYear').q)).toBeInTheDocument();
+  });
+
+  // ⚠️ O DESVIO, NA WEB. O passeio normal responde a primeira opção de cada pergunta, e a
+  // primeira opção da faixa de saldo é uma resposta — o caminho direto. O detalhamento inteiro só
+  // existe para quem toca num botão que não é opção nenhuma, e é por isso que ele precisa de
+  // teste próprio nas DUAS superfícies.
+  it('o botão de escape abre o detalhamento, e a faixa de saldo fica por responder', async () => {
+    montar();
+    await screen.findByText(perguntaDe('vinculo').q);
+    await andarAte('saldoFaixa');
+    await waitFor(() => expect(screen.getByText(perguntaDe('saldoFaixa').q)).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Me ajude a calcular'));
+
+    expect(await screen.findByText(TRANSICOES.detalhe!)).toBeInTheDocument();
+    expect(screen.getByText(perguntaDe('cacheFaixa').q)).toBeInTheDocument();
+  });
+
+  // E quem responde a faixa não vê o detalhamento: vai direto para as duas últimas.
+  it('responder a faixa salta o detalhamento inteiro', async () => {
+    montar();
+    await screen.findByText(perguntaDe('vinculo').q);
+    await andarAte('saldoFaixa');
+    await waitFor(() => expect(screen.getByText(perguntaDe('saldoFaixa').q)).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText(perguntaDe('saldoFaixa').options![5].label));
+
+    expect(await screen.findByText(perguntaDe('temCnpj').q)).toBeInTheDocument();
+    // ⚠️ E A ABERTURA DO BLOCO NÃO SAI OUTRA VEZ. O detalhamento parte o bloco ao meio, e antes
+    // desta rodada o recuo contíguo fazia a QE.0 reaparecer aqui, a meio do bloco.
+    expect(screen.queryByText(TRANSICOES.numeros!)).not.toBeInTheDocument();
   });
 });

@@ -14,7 +14,8 @@ import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '@maestra/core/services/realEngine/comentarios';
 import {
-  AVISOS, ehLegado, equilibrioExibido, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
+  AVISOS, conviteADetalhar, detalhouOE, ehLegado, equilibrioExibido, GRUPOS_DA_CONTA,
+  plataformasExibidas, resumoDoE, SIIC_MENSAL,
 } from '@maestra/core/services/realEngine/relatorio';
 import {
   CHAMADA_DA_DIMENSAO as DIM_TAGLINE, LEGENDA_DO_DECLARADO as LEGENDA_DECLARADO,
@@ -126,8 +127,12 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; nLeitura: number | 
       </div>
 
       <div className={styles.docRuler2}>
-        {/* Top Tier: a barra enche até o selo, coerente com o selo do motor. */}
-        <div className={styles.docRulerFill2} style={top ? { width: '100%', background: 'linear-gradient(90deg,#2c3f63,#7c8da8)' } : { width: `${score}%`, background: color }} />
+        {/* ⚠️ A régua mostra a NOTA, sempre — ver a nota longa em DiagnosticReport.tsx. O Top Tier
+            muda a cor, não o comprimento: o L pode ser Top Tier com 74. */}
+        <div
+          className={styles.docRulerFill2}
+          style={{ width: `${score}%`, background: top ? 'linear-gradient(90deg,#2c3f63,#7c8da8)' : color }}
+        />
         <span className={styles.docRulerMark2} style={{ left: '70%' }} data-label="acende" />
         <span className={styles.docRulerMark2} style={{ left: '100%' }} data-label="Top Tier" />
       </div>
@@ -186,6 +191,21 @@ const DocDimPage: FC<{ dk: 'r' | 'e' | 'a' | 'l'; n: number; nLeitura: number | 
             <span className={temCnpj ? styles.docPillOn2 : styles.docPillOff2}>{temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
             <span className={temEmpresario ? styles.docPillOn2 : styles.docPillOff2}>{temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
           </div>
+        </div>
+      )}
+      {/*
+        §12 — no caminho direto não há página "Onde a conta fecha", e é lá que os chips de
+        estrutura moram no v4. Sem este bloco eles desapareciam junto com ela, e a spec manda-os
+        aparecer NOS DOIS CAMINHOS: CNPJ e empresário são o que o artista respondeu, e continuam a
+        valer bônus na nota. Vêm com o convite a detalhar, que é a razão de a página não existir.
+      */}
+      {dk === 'e' && !!resumo && !detalhouOE(ri) && (
+        <div className={styles.docSubBlock2}>
+          <div className={styles.docPills2}>
+            <span className={temCnpj ? styles.docPillOn2 : styles.docPillOff2}>{temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
+            <span className={temEmpresario ? styles.docPillOn2 : styles.docPillOff2}>{temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
+          </div>
+          <div className={styles.docFonteAviso}>{conviteADetalhar(ri)}</div>
         </div>
       )}
       {/* ⚠️ AS TRÊS REDES APARECEM SEMPRE, e a que não tem taxa diz "sem dado" (§8.5 e §12).
@@ -337,14 +357,19 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autor
   const cities = chartmetric?.top_cities;
   const playlists = chartmetric?.playlists;
   const similar = chartmetric?.similar;
-  const inp = ri.inputs || {};
   const today = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 
   const hasCities = !!cities?.length;
   const hasPlatform = !!(playlists?.top?.length || similar?.length);
+  // Os sinais de plataforma que a secção mostra (§12, secção 9). Vêm do núcleo: são dois PDFs.
+  const plataformas = plataformasExibidas(ri, chartmetric);
   // A página "Onde a conta fecha" só existe quando há um resumo do E para aprofundar — ou seja,
   // no diagnóstico v4. No legado o E não tem custo decomposto nem cachê por contratante.
-  const temContaFecha = !!resumoDoE(ri);
+  //
+  // E, desde a v4.5, também não existe no caminho direto: a página inteira é margem por show,
+  // ponto de equilíbrio e cachê por contratante, e nenhuma dessas três coisas foi perguntada a
+  // quem respondeu o saldo numa faixa. Ela sairia com zeros de ponta a ponta.
+  const temContaFecha = !!resumoDoE(ri) && detalhouOE(ri);
   const legado = ehLegado(ri);
   // 10 fixas + a segunda página de cada dimensão (só fora do legado) + as condicionais.
   const total = 10 + (legado ? 0 : 4)
@@ -452,21 +477,30 @@ const V3Doc: FC<Props> = ({ realIndex, chartmetric, artistName, avatarSrc, autor
               ))}
             </div>
           )}
-          <div>
-            <div className={styles.docSubTitle2} style={{ marginBottom: 10 }}>Imprensa em detalhe</div>
-            {inp.imprensaRepercussao ? (
-              <>
-                <p className={styles.docRevealPara2}><strong>Você já apareceu na imprensa.</strong> Esse tipo de cobertura é difícil de conseguir e pesa muito na legitimação: mostra que a sua história interessa além do nicho.</p>
-                <p className={styles.docRevealPara2}>
-                  {inp.imprensaFrequencia === 'perene'
-                    ? <><strong>Sua presença na mídia é constante.</strong> Você aparece de forma perene, não só em lançamentos. Consistência é o que transforma imprensa em legitimação sustentada.</>
-                    : <><strong>Sua imprensa ainda é pontual.</strong> Concentrada em lançamentos, ela vira legitimação sustentada quando ganha constância ao longo do ano.</>}
-                </p>
-              </>
-            ) : (
-              <p className={styles.docRevealPara2}><strong>A imprensa ainda não repercutiu o seu trabalho.</strong> Presença em veículos é um capital que abre portas que números sozinhos não abrem, e costuma vir com estratégia de posicionamento.</p>
-            )}
-          </div>
+          {/*
+            ⚠️ O "IMPRENSA EM DETALHE" SAIU DAQUI, e saiu porque CONTRADIZIA O L (§12, secção 9).
+            Ele escrevia à mão, para quem respondeu "não" à pergunta da repercussão, que "a
+            imprensa ainda não repercutiu o seu trabalho" — no mesmo documento em que a página do
+            L diz o que a matriz de veículos apurou, com os textos da autora. Dois donos da mesma
+            afirmação, e o segundo não olhava a matriz.
+
+            No lugar, os sinais de plataforma, que é o que a secção se propõe a mostrar. A leitura
+            vem do núcleo: são dois PDFs, e a secção é a mesma nos dois.
+          */}
+          {!!plataformas.length && (
+            <div>
+              <div className={styles.docSubTitle2} style={{ marginBottom: 10 }}>Sinais de plataforma</div>
+              {plataformas.map((linha, i) => (
+                <div key={linha.rotulo} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '8px 0', borderTop: i ? `1px solid ${DOC.line}` : 'none' }}>
+                  <span style={{ color: DOC.ink, flex: 1, fontSize: 15, fontWeight: 600 }}>
+                    {linha.rotulo}
+                    {linha.informativo && <span style={{ color: DOC.dim, fontSize: 12, fontWeight: 600 }}> · {AVISOS.informativo}</span>}
+                  </span>
+                  <span style={{ color: DOC.dim, fontSize: 15, fontWeight: 700 }}>{linha.valor}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </Page>
       )}
 

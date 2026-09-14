@@ -1,4 +1,8 @@
-import { computeRealIndexV4, escala, CUTS, FONTES_DE_RECEITA } from './index';
+import {
+  boletimDoE, computeRealIndexV4, escala, faixaDe, medioDaFaixa, CUTS, FONTES_DE_RECEITA,
+  FAIXAS_DE_SALDO, FAIXAS_POR_SHOW, FAIXAS_ANUAIS, FAIXAS_DE_FIXO,
+} from './index';
+import type { Faixa } from './index';
 import type { RealInputsV4, PaganteFaixa } from './index';
 
 // Base "zerada": nada acende. Cada teste liga só o que quer medir.
@@ -260,6 +264,101 @@ describe('§7 E · Earnings', () => {
     expect(com.revenue.receitaLiquidaEstimada).toBe(138_000);
     expect(sem.revenue.receitaLiquidaEstimada).toBeNull();
   });
+
+  // ⚠️ A NOTA NUNCA CONTRADIZ O ACESO, MESMO QUANDO O NÚMERO DELA DIZ O CONTRÁRIO.
+  //
+  // A v4.5 separa as duas leituras do saldo: a decisão de acender olha o PISO da faixa e a nota
+  // olha o PONTO MÉDIO (§7.2). Isso abre um caso que hoje ainda não se alcança pelo quiz, e que
+  // é real: faixa de R$ 6 a 10 mil por mês, com CNPJ e empresário. O piso dá 72.000 × 1,3 =
+  // 93.600, que não acende; o ponto médio dá 96.000 × 1,3 = 124.800, que sozinho valeria 71.
+  //
+  // Apagada com 71 quebra a invariante do §11.1 e derruba o teste de propriedade lá embaixo. Quem
+  // cede é a nota. Por isso `boletimDoE` recebe o aceso em vez de o deduzir do valor — e por isso
+  // este teste chama a função direto: é a única forma de exercitar a divergência antes de as
+  // faixas existirem.
+  describe('§11.1 · a nota do E cede à leitura binária', () => {
+    it('apagada trava em 69, mesmo com o ponto médio acima do corte', () => {
+      expect(boletimDoE(124_800, false)).toBe(69);
+    });
+
+    it('acesa nunca cai abaixo de 70, mesmo com o ponto médio abaixo do corte', () => {
+      expect(boletimDoE(93_600, true)).toBe(70);
+    });
+
+    // E onde os dois concordam, a curva do §7.4 continua exatamente a mesma.
+    it.each([
+      [0, false, 0],
+      [60_000, false, 35],
+      [119_999, false, 69],
+      [120_000, true, 70],
+      [1_200_000, true, 100],
+      [12_000_000, true, 100],
+    ])('saldo %s aceso=%s dá nota %s', (saldo, aceso, nota) => {
+      expect(boletimDoE(saldo as number, aceso as boolean)).toBe(nota);
+    });
+  });
+});
+
+// ⚠️ A NOTA DO R É SEMPRE SOBRE OS COMPONENTES PRESENTES (§11.2), mesmo quando são menos de dois.
+//
+// O `rSuficiente` do §6.4 decide se a dimensão PODE ACENDER; não decide o divisor da nota. Enquanto
+// decidiu, havia uma inversão de monotonicidade que este bloco existe para tornar impossível:
+// acrescentar a rede MAIS FRACA que a tabela admite fazia a nota SUBIR, porque o divisor caía de
+// três para dois. Um artista com 2 milhões de views no YouTube lia 23; depois de declarar mil
+// seguidores no Instagram, lia 40.
+describe('§11.2 a nota do R divide pelos presentes', () => {
+  const soVideo = { youtubeMonthlyViews: 2_000_000 };
+
+  it('um componente sozinho no topo vale a nota cheia da metade apagada', () => {
+    const ri = computeRealIndexV4(base(soVideo));
+
+    expect(ri.components.r.filter((c) => c.present)).toHaveLength(1);
+    expect(ri.pattern.r).toBe(false);          // §6.4 — com um só, não acende
+    expect(ri.flags.rComponentesInsuficientes).toBe(true);
+    // O progresso do único presente é 1, e a invariante do §11.1 trava a metade apagada em 69.
+    expect(ri.boletim.r).toBe(69);
+  });
+
+  // A inversão, dita como propriedade: nenhuma rede acrescentada pode AUMENTAR a nota quando ela
+  // entra abaixo do corte. A média sobre os presentes garante isto sozinha.
+  it.each([
+    ['Instagram com mil seguidores', { igFollowersSelf: 1_000 }],
+    ['TikTok com mil seguidores', { tiktokFollowersSelf: 1_000 }],
+    ['as duas redes fracas de uma vez', { igFollowersSelf: 1_000, tiktokFollowersSelf: 1_000 }],
+  ])('declarar %s nunca faz a nota subir', (_nome, fraca) => {
+    const antes = computeRealIndexV4(base(soVideo)).boletim.r;
+    const depois = computeRealIndexV4(base({ ...soVideo, ...fraca })).boletim.r;
+
+    expect(depois).toBeLessThanOrEqual(antes);
+  });
+
+  // E o Spotify pela mesma conta ao contrário: sem ele, os ouvintes entram presentes no piso da
+  // tabela (§4), o que é UM componente fraco a mais. Ligá-lo não pode piorar a leitura.
+  it('ligar o Spotify não baixa a nota de quem não tem ouvintes', () => {
+    const semSpotify = computeRealIndexV4(base({ ...soVideo, spotifyConnected: false })).boletim.r;
+    const comSpotify = computeRealIndexV4(base(soVideo)).boletim.r;
+
+    expect(comSpotify).toBeGreaterThanOrEqual(semSpotify);
+  });
+
+  it('sem componente nenhum presente, a nota é zero', () => {
+    const ri = computeRealIndexV4(base({ spotifyConnected: true }));
+
+    expect(ri.components.r.filter((c) => c.present)).toHaveLength(0);
+    expect(ri.boletim.r).toBe(0);
+  });
+
+  // A média sobre os presentes continua a valer onde já valia. E repare no número: mil seguidores
+  // NÃO valem progresso zero — dão z = −1,2 contra um piso de tabela de −1,5, ou seja 15% do
+  // caminho até o corte. Por isso a nota cai para 40 e não para metade de 69: é a média de 1,00 e
+  // 0,15. O valor antigo deste mesmo caso também era 40, e era aí que a inversão se via — o caso
+  // de cima valia 23.
+  it('com dois presentes, a nota é a média deles e não a dos três', () => {
+    const ri = computeRealIndexV4(base({ ...soVideo, igFollowersSelf: 1_000 }));
+
+    expect(ri.components.r.filter((c) => c.present)).toHaveLength(2);
+    expect(ri.boletim.r).toBe(40);
+  });
 });
 
 describe('§8 A · Audience', () => {
@@ -451,3 +550,248 @@ describe('§11.1 invariante do boletim (teste de propriedade obrigatório §13.3
 });
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// ════════ §3.2 · as faixas de valor ════════
+//
+// A v4.5 parou de pedir dinheiro digitado: o artista escolhe uma faixa, e o motor lê dois números
+// dela. O piso decide se acende, o ponto médio dá a nota (§7.2).
+describe('§3.2 faixas de valor', () => {
+  const TABELAS: [string, readonly Faixa[], number][] = [
+    ['saldo', FAIXAS_DE_SALDO, 9],
+    ['por show', FAIXAS_POR_SHOW, 9],
+    ['anuais', FAIXAS_ANUAIS, 8],
+    ['fixo', FAIXAS_DE_FIXO, 7],
+  ];
+
+  it.each(TABELAS)('a escala de %s tem as faixas que a spec manda', (_nome, tabela, quantas) => {
+    expect(tabela).toHaveLength(quantas);
+  });
+
+  // ⚠️ ESTA É A PROMESSA DO §3.2, E É O MOTIVO DE AS FAIXAS TEREM ESTAS BORDAS.
+  //
+  // "Os cortes do E (120 mil e 1,2 milhão) são bordas de faixa por desenho: acender e Top Tier
+  // ficam exatos." Se alguém recalibrar um corte sem mexer na faixa correspondente, a decisão
+  // passa a ter arredondamento e a frase acima vira mentira. Este teste é o que impede.
+  it('os pisos das faixas 6 e 8 do saldo SÃO os cortes do E', () => {
+    expect(FAIXAS_DE_SALDO[6].piso).toBe(CUTS.e.saldoAcende);
+    expect(FAIXAS_DE_SALDO[8].piso).toBe(CUTS.e.saldoTopIcon);
+  });
+
+  it.each(TABELAS)('a escala de %s não anda para trás', (_nome, tabela) => {
+    for (let i = 1; i < tabela.length; i += 1) {
+      expect(tabela[i].piso).toBeGreaterThanOrEqual(tabela[i - 1].piso);
+      expect(tabela[i].medio).toBeGreaterThan(tabela[i - 1].medio);
+    }
+  });
+
+  it.each(TABELAS)('na escala de %s, o ponto médio nunca fica abaixo do piso', (_nome, tabela) => {
+    for (const f of tabela) expect(f.medio).toBeGreaterThanOrEqual(f.piso);
+  });
+
+  it.each(TABELAS)('toda faixa de %s tem rótulo e frase, e são diferentes de vazio', (_nome, tabela) => {
+    for (const f of tabela) {
+      expect(f.rotulo.trim().length).toBeGreaterThan(0);
+      expect(f.naFrase.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  // O −1 é marcador, não dinheiro: é o que distingue "gastei mais do que ganhei" de "empatou",
+  // que decidem igual (nenhum acende) e pontuam igual (nota 0), mas dizem coisas diferentes.
+  it('só a primeira faixa do saldo é negativa, e a segunda é o zero', () => {
+    expect(FAIXAS_DE_SALDO[0].piso).toBe(-1);
+    expect(FAIXAS_DE_SALDO[0].medio).toBe(-1);
+    expect(FAIXAS_DE_SALDO[1].piso).toBe(0);
+    expect(FAIXAS_DE_SALDO[1].medio).toBe(0);
+  });
+
+  // ⚠️ `null` E NÃO ZERO: quem chama encadeia com os reais que os builds já publicados mandam.
+  // Um zero aqui desligava o `??` e zerava o saldo de toda compilação antiga da loja.
+  describe('índice fora da tabela', () => {
+    it.each([[-1], [99], [1.5], [null], [undefined], ['3'], [NaN]])(
+      'o índice %p não é faixa nenhuma',
+      (i) => {
+        expect(faixaDe(FAIXAS_DE_SALDO, i)).toBeNull();
+        expect(medioDaFaixa(FAIXAS_DE_SALDO, i)).toBeNull();
+      },
+    );
+
+    it('e um índice válido devolve o ponto médio', () => {
+      expect(medioDaFaixa(FAIXAS_DE_SALDO, 6)).toBe(210_000);
+      expect(medioDaFaixa(FAIXAS_POR_SHOW, 4)).toBe(3_500);
+      expect(medioDaFaixa(FAIXAS_ANUAIS, 3)).toBe(12_500);
+      expect(medioDaFaixa(FAIXAS_DE_FIXO, 5)).toBe(20_000);
+    });
+
+    // O zero é faixa legítima, e distingue-se da ausência.
+    it('a faixa "nada" devolve zero, que não é a mesma coisa que null', () => {
+      expect(medioDaFaixa(FAIXAS_POR_SHOW, 0)).toBe(0);
+      expect(medioDaFaixa(FAIXAS_POR_SHOW, 0)).not.toBeNull();
+    });
+  });
+});
+
+// ════════ §3.2 + §7.2 · os dois caminhos do E ════════
+//
+// A v4.5 pergunta o saldo em faixa. Quem sabe o número responde e acabou (caminho DIRETO); quem
+// não sabe pede ajuda e detalha parcela a parcela (caminho DETALHADO). O motor não recebe bandeira
+// nenhuma: é a PRESENÇA da faixa de saldo que decide, porque quem detalha não responde QE.2.
+describe('§3.2 os dois caminhos do E', () => {
+  const direto = (i: number, over: Partial<RealInputsV4> = {}) =>
+    computeRealIndexV4(base({ saldoFaixa: i, ...over }));
+
+  it('sem faixa de saldo o caminho é detalhado, e o saldo é a soma das parcelas', () => {
+    const ri = computeRealIndexV4(base(E_ON));
+    expect(ri.revenue.caminho).toBe('detalhado');
+    expect(ri.revenue.saldoMedio).toBe(150_000);
+    // No detalhado não há faixa, então piso e ponto médio são o mesmo número: não há intervalo.
+    expect(ri.revenue.saldoPiso).toBe(ri.revenue.saldoMedio);
+    expect(ri.revenue.saldoFaixa).toBeNull();
+  });
+
+  it('com faixa de saldo o caminho é direto, e lê piso e ponto médio DELA', () => {
+    const ri = direto(6);
+    expect(ri.revenue.caminho).toBe('direto');
+    expect(ri.revenue.saldoFaixa).toBe(6);
+    expect(ri.revenue.saldoPiso).toBe(120_000);
+    expect(ri.revenue.saldoMedio).toBe(210_000);
+  });
+
+  // ⚠️ A FAIXA DE SALDO MANDA NO DETALHAMENTO INTEIRO, e não se soma a ele.
+  // Quem respondeu QE.2 nunca viu as perguntas D. Se as duas coisas chegassem juntas — um payload
+  // remontado, um "voltar" mal implementado —, somá-las dobrava o saldo de alguém.
+  it('a faixa de saldo ignora o detalhamento que venha junto', () => {
+    const so = direto(4);
+    const comLixo = direto(4, { ...E_ON, custoFixoMensal: 90_000, investLancamentos12m: 400_000 });
+    expect(comLixo.revenue.saldoMedio).toBe(so.revenue.saldoMedio);
+    expect(comLixo.boletim.e).toBe(so.boletim.e);
+    expect(comLixo.pattern.e).toBe(so.pattern.e);
+  });
+
+  // ⚠️ A DECISÃO É DO PISO E A NOTA É DO PONTO MÉDIO (§7.2), e este é o caso em que os dois
+  // discordam: faixa 5 (R$ 6 a 10 mil/mês) com CNPJ e empresário. Piso 72.000 × 1,3 = 93.600, que
+  // não acende; ponto médio 96.000 × 1,3 = 124.800, que sozinho valeria 71. Quem cede é a nota.
+  it('a faixa 5 com estrutura NÃO acende, e a nota trava em 69', () => {
+    const ri = direto(5, { temCnpj: true, temEmpresario: true });
+    expect(ri.revenue.saldoPisoAjustado).toBe(93_600);
+    expect(ri.revenue.saldoMedioAjustado).toBe(124_800);
+    expect(ri.pattern.e).toBe(false);
+    expect(ri.boletim.e).toBe(69);
+  });
+
+  // E a borda é exata justamente porque o piso da faixa 6 É o corte (§3.2).
+  it('a faixa 6 acende no osso, sem estrutura nenhuma', () => {
+    const ri = direto(6);
+    expect(ri.revenue.saldoPisoAjustado).toBe(CUTS.e.saldoAcende);
+    expect(ri.pattern.e).toBe(true);
+    // E a nota já sai acima de 70, porque é do ponto médio (210 mil) e não do piso.
+    expect(ri.boletim.e).toBe(77);
+  });
+
+  it('a faixa 8 é Top Tier no osso, pelo mesmo desenho', () => {
+    const ri = direto(8);
+    expect(ri.dimTopIcon.e).toBe(true);
+    expect(ri.boletim.e).toBe(100);
+  });
+
+  // O −1 da faixa 0 é sentinela, não dinheiro: o bónus não pode multiplicá-lo para lugar nenhum,
+  // e a nota é a mesma do empate. O que os separa é o que o relatório diz, não o índice.
+  it.each([[0], [1]])('a faixa %i não acende e vale zero', (i) => {
+    const ri = direto(i as number, { temCnpj: true, temEmpresario: true });
+    expect(ri.pattern.e).toBe(false);
+    expect(ri.boletim.e).toBe(0);
+    expect(ri.revenue.saldoMedioAjustado).toBe(i === 0 ? -1 : 0);
+  });
+});
+
+// ════════ §3.2 · a costura da compatibilidade ════════
+//
+// ⚠️ ISTO NÃO É ZELO: as compilações iOS já publicadas mandam o E em REAIS e vão continuar a
+// mandá-lo durante meses, porque não há como as atualizar à força. A edge é partilhada, então no
+// instante do deploy elas passam todas a correr este motor. Não há tradutor de payload de
+// propósito — inventar um índice de faixa a partir de um valor digitado mudaria o diagnóstico de
+// quem escreveu o número exato. A costura é POR PARCELA: faixa quando existe, reais quando não.
+describe('§3.2 o motor continua a ler reais', () => {
+  // Um payload v4.2 inteiro, sem uma única faixa. É o que a loja manda hoje.
+  const V42: Partial<RealInputsV4> = {
+    showsPerYear: 50,
+    cacheByType: { corporativos: 5_000, particulares: 3_000 },
+    revenueSources: { distribuidora: 8_000, outras: 2_000 },
+    custoPorShow: 1_000, custoFixoMensal: 2_000, investLancamentos12m: 30_000,
+  };
+
+  // Este teste morre se `medioDaFaixa` devolver 0 em vez de `null`: o `??` do `ouOsReais` deixa
+  // de disparar, toda parcela vira zero e o saldo de todo build publicado desaba para −24.000.
+  it('um payload v4.2 puro dá os mesmos números de sempre', () => {
+    const ri = computeRealIndexV4(base(V42));
+    expect(ri.revenue.receitaShows).toBe(200_000);       // 50 × (5.000 + 3.000) / 2
+    expect(ri.revenue.receitaOutrasTotal).toBe(10_000);
+    expect(ri.revenue.custoShowsAnual).toBe(50_000);
+    expect(ri.revenue.custoFixoAnual).toBe(24_000);
+    expect(ri.revenue.saldoMedio).toBe(106_000);
+    expect(ri.revenue.caminho).toBe('detalhado');
+    expect(ri.revenue.emFaixas).toBe(false);
+  });
+
+  // A costura é por parcela, e não por payload: nada obriga as sete a chegarem juntas.
+  it.each([
+    ['custoShowFaixa', { custoShowFaixa: 3 }, 'custoShowsAnual', 75_000],
+    ['fixoFaixa', { fixoFaixa: 4 }, 'custoFixoAnual', 78_000],
+    ['lancFaixa', { lancFaixa: 4 }, 'investLancamentos12m', 35_000],
+    ['outrasFaixa', { outrasFaixa: 3 }, 'receitaOutrasTotal', 12_500],
+  ])('a faixa de %s ganha dos reais, e as outras parcelas seguem em reais', (_nome, faixa, campo, esperado) => {
+    const ri = computeRealIndexV4(base({ ...V42, ...(faixa as Partial<RealInputsV4>) }));
+    expect((ri.revenue as unknown as Record<string, number>)[campo as string]).toBe(esperado);
+    expect(ri.revenue.receitaShows).toBe(200_000);       // esta não mudou em nenhum dos casos
+    expect(ri.revenue.emFaixas).toBe(true);
+  });
+
+  // A faixa única de cachê (QD.1) é a média que o artista estimou de cabeça, e o §7.2 manda o
+  // detalhe por tipo valer mais. Então ela só entra quando não há tipo nenhum informado.
+  it('a faixa única de cachê entra quando nenhum tipo foi informado', () => {
+    const ri = computeRealIndexV4(base({ ...V42, cacheByType: {}, cacheFaixa: 4 }));
+    expect(ri.revenue.receitaShows).toBe(175_000);
+    expect(ri.revenue.emFaixas).toBe(true);
+  });
+
+  it('e perde para o detalhe por tipo, que é mais específico', () => {
+    const ri = computeRealIndexV4(base({ ...V42, cacheFaixa: 4 }));
+    expect(ri.revenue.receitaShows).toBe(200_000);
+  });
+
+  it('o cachê por tipo em faixa ganha do cachê por tipo em reais', () => {
+    const ri = computeRealIndexV4(base({ ...V42, cacheByTypeFaixa: { corporativos: 6 } }));
+    expect(ri.revenue.receitaShows).toBe((17_500 + 3_000) / 2 * 50);
+  });
+
+  it('a fonte em faixa ganha da fonte em reais, e "não sei" sobrevive à travessia', () => {
+    const ri = computeRealIndexV4(base({
+      ...V42,
+      outrasPorFonteFaixa: { distribuidora: 4, editora: 'nao_sei' },
+    }));
+    expect(ri.revenue.receitaOutrasTotal).toBe(35_000);
+    expect(ri.flags.naoSeiFontes).toEqual(['editora']);
+  });
+
+  // `emFaixas` é o que decide o rótulo "cerca de" no relatório (F23). Chamar de "cerca de" um
+  // número que a pessoa digitou é uma mentira pequena, mas é uma mentira.
+  it('o caminho direto é sempre em faixas, por definição', () => {
+    expect(computeRealIndexV4(base({ saldoFaixa: 3 })).revenue.emFaixas).toBe(true);
+  });
+
+  // E um índice de lixo numa fonte não pode abrir o caminho por fonte: abriria-o zerando as
+  // outras oito em silêncio, e o artista perdia a receita que tinha declarado.
+  it('um índice de lixo numa fonte não abre o caminho por fonte', () => {
+    const ri = computeRealIndexV4(base({
+      ...V42,
+      outrasPorFonteFaixa: { distribuidora: 99 },
+    }));
+    expect(ri.revenue.receitaOutrasTotal).toBe(10_000);
+    expect(ri.revenue.emFaixas).toBe(false);
+  });
+
+  it('um índice de faixa inválido não conta como faixa, e cai nos reais', () => {
+    const ri = computeRealIndexV4(base({ ...V42, cacheFaixa: 99 }));
+    expect(ri.revenue.receitaShows).toBe(200_000);
+    expect(ri.revenue.emFaixas).toBe(false);
+  });
+});

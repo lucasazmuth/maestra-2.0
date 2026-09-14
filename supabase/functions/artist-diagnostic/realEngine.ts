@@ -80,6 +80,37 @@ export interface RealInputsV4 {
 
   // ── E · base anual, últimos 12 meses (§7) ──
   showsPerYear: number;
+
+  /**
+   * QE.2 — a faixa de saldo do ano, em índice de `FAIXAS_DE_SALDO` (v4.5, §3.2).
+   *
+   * ⚠️ A PRESENÇA DELA É QUE DECIDE O CAMINHO, e não uma bandeira do cliente. Quem pede ajuda para
+   * calcular NÃO responde esta pergunta (§3.2), então a ausência é a resposta: sem faixa, o motor
+   * soma o detalhamento; com faixa, lê o piso e o ponto médio dela e ignora o resto.
+   */
+  saldoFaixa?: number | null;
+
+  // ── E · o detalhamento opcional, QD.1 a QD.5 · tudo índice de faixa ──
+  // Todas OPCIONAIS de propósito: um payload de build antigo não tem nenhuma delas, e ausência
+  // tem de ser uma resposta válida, não um erro de tipo.
+
+  cacheFaixa?: number | null;                                                 // QD.1
+  cacheByTypeFaixa?: Partial<Record<TipoDeContratante, number | null>>;       // QD.1b
+  outrasFaixa?: number | null;                                                // QD.2
+  outrasPorFonteFaixa?: Partial<Record<FonteDeReceita, ValorDeFonte | null>>; // QD.2b + QD.ns
+  custoShowFaixa?: number | null;                                             // QD.3
+  fixoFaixa?: number | null;                                                  // QD.4
+  lancFaixa?: number | null;                                                  // QD.5
+
+  /**
+   * ── E · em reais. @deprecated pela v4.5, e vivo por anos.
+   *
+   * As compilações da App Store já publicadas continuam a mandar estas chaves, e não há como as
+   * atualizar à força. O motor lê as duas formas: para cada parcela, a faixa quando ela existe e
+   * os reais quando não (`ouOsReais`). Não há tradutor de payload de propósito — inventar um
+   * índice de faixa a partir de um valor digitado mudaria o diagnóstico de quem escreveu o número
+   * exato, e uma migração não pode reescrever o retrato de ninguém.
+   */
   cacheByType: CacheByType;             // cachê médio por tipo de contratante; 0 = não atendeu
   revenueSources: RevenueSources;       // 9 fontes fora shows; 'nao_sei' conta 0 e sinaliza
   /**
@@ -147,6 +178,23 @@ export interface RealIndexV4 {
   };
   /** Tudo que o §13.1 manda gravar do E, para o relatório e para reconstituir a conta. */
   revenue: {
+    /** §13.1 — por onde o saldo veio. Sem faixa de saldo, veio da soma das parcelas. */
+    caminho: 'direto' | 'detalhado';
+    /**
+     * O detalhamento veio de FAIXAS (v4.5) ou de valores digitados (build antigo da loja).
+     *
+     * ⚠️ É o que decide o rótulo "cerca de" no relatório (F23). Chamar de "cerca de" um número que
+     * a pessoa digitou é uma mentira pequena, mas é uma mentira.
+     */
+    emFaixas: boolean;
+    /** Índice em `FAIXAS_DE_SALDO`, ou `null` no caminho detalhado. */
+    saldoFaixa: number | null;
+    /** O mínimo garantido da faixa. É o que DECIDE se a dimensão acende (§7.2). */
+    saldoPiso: number;
+    /** Onde o artista provavelmente está. É o que dá a NOTA, e o que se mostra. */
+    saldoMedio: number;
+    saldoPisoAjustado: number;
+    saldoMedioAjustado: number;
     showsPerYear: number;
     cacheByType: CacheByType;
     cacheMedio: number;
@@ -237,6 +285,116 @@ export function daQuizV3(qz: Record<string, any> | null | undefined): Record<str
     aliquota: null,
   };
 }
+
+// ════════════════════ FAIXAS DE VALOR (§3.2) ════════════════════
+//
+// A v4.5 parou de pedir dinheiro digitado. O artista escolhe uma FAIXA, e o motor lê dois números
+// dela: o PISO decide se a dimensão acende, o PONTO MÉDIO dá a nota (§7.2). A regra existe para o
+// arredondamento da faixa nunca acender o que o artista não alcançou.
+//
+// ⚠️ O RÓTULO MORA JUNTO DOS NÚMEROS, e isso é deliberado. Separá-los em dois arrays casados por
+// índice reintroduz o desvio silencioso: um rótulo apontando para o piso da faixa vizinha não
+// quebra nada, não falha teste nenhum, e muda a nota de quem responder aquela faixa.
+//
+// Como este ficheiro é copiado inteiro para a edge, ter texto aqui não custa nada — e o `PROFILES`
+// logo abaixo já carrega nome e descrição pelo mesmo motivo.
+
+export interface Faixa {
+  /** O que sai no botão do quiz: "De R$ 6 mil a R$ 10 mil por mês". */
+  rotulo: string;
+  /** O mesmo dentro de uma frase, para o `{faixa_saldo}` do relatório (§11). */
+  naFrase: string;
+  /**
+   * O intervalo em base ANUAL, para a linha do caminho direto (§12: "rótulo mensal e anual").
+   *
+   * Só a escala de saldo tem: as outras não são exibidas como faixa em lado nenhum. E é escrito à
+   * mão em vez de derivado do topo da faixa seguinte — a derivação funcionaria para as faixas 2 a
+   * 7 e mentiria nas três das pontas, caladamente.
+   */
+  noAno?: string;
+  /** Anual. ⚠️ −1 é SENTINELA de saldo negativo, não dinheiro: a nota é 0 e a dimensão não acende. */
+  piso: number;
+  medio: number;
+}
+
+/**
+ * QE.2 — o saldo do ano, em nove faixas.
+ *
+ * ⚠️ OS PISOS DAS FAIXAS 6 E 8 SÃO OS PRÓPRIOS CORTES DO E, por desenho (§3.2): R$ 10 mil por mês
+ * é R$ 120 mil no ano, que é o acender, e R$ 100 mil por mês é R$ 1,2 milhão, que é o Top Tier.
+ * É isso que faz a decisão não ter arredondamento. Há teste a prender os dois.
+ */
+export const FAIXAS_DE_SALDO: readonly Faixa[] = [
+  { rotulo: 'Gastei mais do que ganhei', naFrase: 'gastando mais do que ganha', noAno: 'no vermelho nos últimos 12 meses', piso: -1, medio: -1 },
+  { rotulo: 'Não sobrou nada, empatou', naFrase: 'empatando', noAno: 'empatado nos últimos 12 meses', piso: 0, medio: 0 },
+  { rotulo: 'Até R$ 1 mil por mês', naFrase: 'até R$ 1 mil por mês', noAno: 'até R$ 12 mil por ano', piso: 0, medio: 6_000 },
+  { rotulo: 'De R$ 1 mil a R$ 3 mil por mês', naFrase: 'entre R$ 1 mil e R$ 3 mil por mês', noAno: 'de R$ 12 mil a R$ 36 mil por ano', piso: 12_000, medio: 24_000 },
+  { rotulo: 'De R$ 3 mil a R$ 6 mil por mês', naFrase: 'entre R$ 3 mil e R$ 6 mil por mês', noAno: 'de R$ 36 mil a R$ 72 mil por ano', piso: 36_000, medio: 54_000 },
+  { rotulo: 'De R$ 6 mil a R$ 10 mil por mês', naFrase: 'entre R$ 6 mil e R$ 10 mil por mês', noAno: 'de R$ 72 mil a R$ 120 mil por ano', piso: 72_000, medio: 96_000 },
+  { rotulo: 'De R$ 10 mil a R$ 25 mil por mês', naFrase: 'entre R$ 10 mil e R$ 25 mil por mês', noAno: 'de R$ 120 mil a R$ 300 mil por ano', piso: 120_000, medio: 210_000 },
+  { rotulo: 'De R$ 25 mil a R$ 100 mil por mês', naFrase: 'entre R$ 25 mil e R$ 100 mil por mês', noAno: 'de R$ 300 mil a R$ 1,2 milhão por ano', piso: 300_000, medio: 750_000 },
+  { rotulo: 'Acima de R$ 100 mil por mês', naFrase: 'acima de R$ 100 mil por mês', noAno: 'acima de R$ 1,2 milhão por ano', piso: 1_200_000, medio: 1_800_000 },
+];
+
+/** QD.1 (cachê) e QD.3 (custo por show). Por show, não por ano. */
+export const FAIXAS_POR_SHOW: readonly Faixa[] = [
+  { rotulo: 'Nada', naFrase: 'nada', piso: 0, medio: 0 },
+  { rotulo: 'Até R$ 500', naFrase: 'até R$ 500', piso: 0, medio: 250 },
+  { rotulo: 'De R$ 500 a R$ 1 mil', naFrase: 'entre R$ 500 e R$ 1 mil', piso: 500, medio: 750 },
+  { rotulo: 'De R$ 1 mil a R$ 2 mil', naFrase: 'entre R$ 1 mil e R$ 2 mil', piso: 1_000, medio: 1_500 },
+  { rotulo: 'De R$ 2 mil a R$ 5 mil', naFrase: 'entre R$ 2 mil e R$ 5 mil', piso: 2_000, medio: 3_500 },
+  { rotulo: 'De R$ 5 mil a R$ 10 mil', naFrase: 'entre R$ 5 mil e R$ 10 mil', piso: 5_000, medio: 7_500 },
+  { rotulo: 'De R$ 10 mil a R$ 25 mil', naFrase: 'entre R$ 10 mil e R$ 25 mil', piso: 10_000, medio: 17_500 },
+  { rotulo: 'De R$ 25 mil a R$ 50 mil', naFrase: 'entre R$ 25 mil e R$ 50 mil', piso: 25_000, medio: 37_500 },
+  { rotulo: 'Acima de R$ 50 mil', naFrase: 'acima de R$ 50 mil', piso: 50_000, medio: 75_000 },
+];
+
+/** QD.2 (receita fora dos shows) e QD.5 (investimento em lançamentos). Anuais. */
+export const FAIXAS_ANUAIS: readonly Faixa[] = [
+  { rotulo: 'Nada', naFrase: 'nada', piso: 0, medio: 0 },
+  { rotulo: 'Até R$ 1 mil', naFrase: 'até R$ 1 mil', piso: 0, medio: 500 },
+  { rotulo: 'De R$ 1 mil a R$ 5 mil', naFrase: 'entre R$ 1 mil e R$ 5 mil', piso: 1_000, medio: 3_000 },
+  { rotulo: 'De R$ 5 mil a R$ 20 mil', naFrase: 'entre R$ 5 mil e R$ 20 mil', piso: 5_000, medio: 12_500 },
+  { rotulo: 'De R$ 20 mil a R$ 50 mil', naFrase: 'entre R$ 20 mil e R$ 50 mil', piso: 20_000, medio: 35_000 },
+  { rotulo: 'De R$ 50 mil a R$ 150 mil', naFrase: 'entre R$ 50 mil e R$ 150 mil', piso: 50_000, medio: 100_000 },
+  { rotulo: 'De R$ 150 mil a R$ 500 mil', naFrase: 'entre R$ 150 mil e R$ 500 mil', piso: 150_000, medio: 325_000 },
+  { rotulo: 'Acima de R$ 500 mil', naFrase: 'acima de R$ 500 mil', piso: 500_000, medio: 750_000 },
+];
+
+/** QD.4 — o custo fixo. ⚠️ MENSAL: quem consome multiplica por 12. */
+export const FAIXAS_DE_FIXO: readonly Faixa[] = [
+  { rotulo: 'Nada', naFrase: 'nada', piso: 0, medio: 0 },
+  { rotulo: 'Até R$ 500 por mês', naFrase: 'até R$ 500 por mês', piso: 0, medio: 250 },
+  { rotulo: 'De R$ 500 a R$ 1 mil por mês', naFrase: 'entre R$ 500 e R$ 1 mil por mês', piso: 500, medio: 750 },
+  { rotulo: 'De R$ 1 mil a R$ 3 mil por mês', naFrase: 'entre R$ 1 mil e R$ 3 mil por mês', piso: 1_000, medio: 2_000 },
+  { rotulo: 'De R$ 3 mil a R$ 10 mil por mês', naFrase: 'entre R$ 3 mil e R$ 10 mil por mês', piso: 3_000, medio: 6_500 },
+  { rotulo: 'De R$ 10 mil a R$ 30 mil por mês', naFrase: 'entre R$ 10 mil e R$ 30 mil por mês', piso: 10_000, medio: 20_000 },
+  { rotulo: 'Acima de R$ 30 mil por mês', naFrase: 'acima de R$ 30 mil por mês', piso: 30_000, medio: 45_000 },
+];
+
+/** A faixa de um índice, ou `null` quando o índice não é de faixa nenhuma. */
+export const faixaDe = (tabela: readonly Faixa[], i: unknown): Faixa | null =>
+  (Number.isInteger(i) && (i as number) >= 0 && (i as number) < tabela.length) ? tabela[i as number] : null;
+
+/**
+ * O ponto médio de uma faixa, ou `null`.
+ *
+ * ⚠️ `null` E NÃO ZERO, e a diferença é a compatibilidade inteira. Quem chama isto encadeia com o
+ * valor em reais que as compilações já publicadas na loja continuam a mandar (`?? os reais`). Se
+ * devolvesse 0, o `??` deixava de disparar e todo build antigo passava a calcular saldo zero.
+ */
+export const medioDaFaixa = (tabela: readonly Faixa[], i: unknown): number | null =>
+  faixaDe(tabela, i)?.medio ?? null;
+
+/**
+ * O ponto médio da faixa, ou o valor em reais que o build antigo mandou.
+ *
+ * É a costura da compatibilidade, e ela é POR PARCELA e não por payload: cada campo do E cai no
+ * caminho novo se tiver faixa, e no antigo se não tiver. Um artista a meio de uma atualização de
+ * app nunca mistura, porque o quiz manda ou um conjunto ou o outro.
+ */
+const ouOsReais = (tabela: readonly Faixa[], i: unknown, reais: unknown): number =>
+  medioDaFaixa(tabela, i) ?? Math.max(0, Number(reais) || 0);
 
 // ════════════════════ CORTES — parâmetros de calibração (§12.1) ════════════════════
 // Toda alteração aqui incrementa `calibrationVersion` (AAAA.MM) e fica gravada no diagnóstico.
@@ -363,6 +521,28 @@ function zComp(key: string, label: string, z: number | null, zPiso: number, sour
 // jamais pode contradizer a leitura binária.
 const belowCut = (x: number) => clamp(Math.round(x), 0, 69);
 
+/**
+ * A nota do E (§7.4), a partir do saldo ajustado do PONTO MÉDIO e do estado da dimensão.
+ *
+ * ⚠️ O `aceso` É PARÂMETRO, E NÃO SE DEDUZ DO VALOR. A v4.5 separou as duas coisas: a decisão de
+ * acender olha o PISO da faixa e a nota olha o PONTO MÉDIO (§7.2), e os dois caem em lados
+ * opostos do corte num caso real — faixa de R$ 6 a 10 mil por mês, com CNPJ e empresário, dá piso
+ * 93.600 (apagada) e médio 124.800, que sozinho valeria nota 71.
+ *
+ * Apagada com nota 71 quebra a invariante do §11.1, que manda a nota nunca contradizer a leitura
+ * binária. Quem cede é a nota. É a mesma solução que o `boletimL` já usa para a trava de
+ * plataforma, e por isto as duas ficam parecidas de propósito.
+ */
+export const boletimDoE = (saldoMedioAjustado: number, aceso: boolean): number => {
+  const x = saldoMedioAjustado;
+  const bruto = x <= 0 ? 0
+    : x < CUTS.e.saldoAcende ? (x / CUTS.e.saldoAcende) * 70
+      : x < CUTS.e.saldoTopIcon
+        ? 70 + 30 * (Math.log10(x / CUTS.e.saldoAcende) / Math.log10(CUTS.e.saldoTopIcon / CUTS.e.saldoAcende))
+        : 100;
+  return aceso ? Math.max(70, Math.round(bruto)) : belowCut(bruto);
+};
+
 /** Progresso do componente entre o piso da TABELA DELE e a linha de acender: 0 no piso, 1 no corte. */
 function progressoAteOCorte(z: number | null, zPiso: number): number {
   if (z == null) return 0;
@@ -468,24 +648,73 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   const rTopIcon = rSuficiente && rPresentes.every((c) => c.topicon);
 
   // ════════ E · Earnings (§7) — base ANUAL, saldo, não receita ════════
+  //
+  // A v4.5 abriu DOIS CAMINHOS (§7.2). O direto pergunta o saldo do ano numa faixa e acabou: é o
+  // que o índice precisa, e é o que o artista sabe responder. O detalhado é opcional, aberto pelo
+  // "Me ajude a calcular", e soma as parcelas — também em faixas.
+  //
+  // ⚠️ QUEM DECIDE O CAMINHO É A FAIXA DE SALDO, e não uma bandeira. Quem detalha não responde
+  // QE.2, então a ausência dela É a resposta. Uma bandeira separada podia discordar da resposta,
+  // e aí haveria dois donos da mesma decisão.
   const showsPerYear = Math.max(0, Math.round(Number(input.showsPerYear) || 0));
+  const faixaDoSaldo = faixaDe(FAIXAS_DE_SALDO, input.saldoFaixa);
+  const caminho: 'direto' | 'detalhado' = faixaDoSaldo ? 'direto' : 'detalhado';
+  // Veio de faixa em ALGUMA parcela? É o que separa a v4.5 de um build antigo da loja, que manda
+  // as mesmas contas em reais digitados. O caminho direto é sempre de faixa, por definição.
+  //
+  // ⚠️ VALIDADE, E NÃO PRESENÇA. Um índice fora da tabela não é resposta nenhuma: a parcela cai
+  // nos reais, e dizer `emFaixas` aqui punha o "cerca de" do F23 em cima de um número digitado.
+  const ehFaixa = (tabela: readonly Faixa[], v: unknown) => faixaDe(tabela, v) != null;
+  const emFaixas = caminho === 'direto' || [
+    ehFaixa(FAIXAS_POR_SHOW, input.cacheFaixa),
+    ehFaixa(FAIXAS_ANUAIS, input.outrasFaixa),
+    ehFaixa(FAIXAS_POR_SHOW, input.custoShowFaixa),
+    ehFaixa(FAIXAS_DE_FIXO, input.fixoFaixa),
+    ehFaixa(FAIXAS_ANUAIS, input.lancFaixa),
+    ...TIPOS_DE_CONTRATANTE.map((t) => ehFaixa(FAIXAS_POR_SHOW, input.cacheByTypeFaixa?.[t])),
+    // "Não sei essa" é resposta, e é resposta da v4.5.
+    ...FONTES_DE_RECEITA.map((f) => input.outrasPorFonteFaixa?.[f] === 'nao_sei'
+      || ehFaixa(FAIXAS_ANUAIS, input.outrasPorFonteFaixa?.[f])),
+  ].some(Boolean);
+
   const cacheByType: CacheByType = {};
   const cachesInformados: number[] = [];
   for (const tipo of TIPOS_DE_CONTRATANTE) {
-    const v = Math.max(0, Number(input.cacheByType?.[tipo]) || 0);
+    // A faixa quando o artista detalhou por tipo; os reais quando veio de um build antigo.
+    // A faixa "nada" dá ponto médio 0, que é a mesma leitura do zero de sempre: não atende.
+    const v = ouOsReais(FAIXAS_POR_SHOW, input.cacheByTypeFaixa?.[tipo], input.cacheByType?.[tipo]);
     cacheByType[tipo] = v;
     if (v > 0) cachesInformados.push(v);
   }
   // Limitação declarada (§7.2): assume distribuição igual dos shows entre os tipos informados.
   // É a aproximação aceita em troca de não perguntar a quantidade de shows por tipo.
-  const cacheMedio = cachesInformados.length ? cachesInformados.reduce((s, v) => s + v, 0) / cachesInformados.length : 0;
+  // Sem nenhum tipo informado, cai na faixa única de cachê (QD.1). A precedência é a do §7.2: o
+  // detalhe por tipo, quando existe, vale mais do que a média que o artista estimou de cabeça.
+  const cacheMedio = cachesInformados.length
+    ? cachesInformados.reduce((s, v) => s + v, 0) / cachesInformados.length
+    : (medioDaFaixa(FAIXAS_POR_SHOW, input.cacheFaixa) ?? 0);
   const receitaShows = showsPerYear * cacheMedio;
 
   const receitaOutras: Partial<Record<FonteDeReceita, { valor: number; naoSei: boolean }>> = {};
   const naoSeiFontes: FonteDeReceita[] = [];
   let receitaOutrasTotal = 0;
+  // Por fonte quando o artista abriu QD.2b; senão a faixa única de QD.2, lançada em "outras"; e,
+  // na falta das duas, as nove chaves em reais do build antigo.
+  // Pela mesma razão: só uma resposta VÁLIDA abre o caminho por fonte. Um índice de lixo abrindo-o
+  // zerava as outras oito fontes em silêncio.
+  const detalhouFontes = FONTES_DE_RECEITA.some((f) => input.outrasPorFonteFaixa?.[f] === 'nao_sei'
+    || ehFaixa(FAIXAS_ANUAIS, input.outrasPorFonteFaixa?.[f]));
+  const outrasEmFaixa = medioDaFaixa(FAIXAS_ANUAIS, input.outrasFaixa);
   for (const fonte of FONTES_DE_RECEITA) {
-    const bruto = input.revenueSources?.[fonte];
+    const bruto = detalhouFontes
+      ? (() => {
+        const v = input.outrasPorFonteFaixa?.[fonte];
+        if (v === 'nao_sei') return 'nao_sei' as const;
+        return medioDaFaixa(FAIXAS_ANUAIS, v) ?? 0;
+      })()
+      : outrasEmFaixa != null
+        ? (fonte === 'outras' ? outrasEmFaixa : 0)
+        : input.revenueSources?.[fonte];
     const naoSei = bruto === 'nao_sei';
     // "Não sei" conta ZERO na soma e vira sinalização no relatório (§4). Contar zero subestima o
     // E de quem não controla as próprias receitas — e é exatamente isso que o texto do §11.3.4
@@ -500,13 +729,25 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   // §7.2 (v4.1) — o investimento anual é a soma de três parcelas. O custo por show multiplica os
   // MESMOS `showsPerYear` que o cachê: é isso que torna a margem por show e o ponto de equilíbrio
   // comparáveis, em vez de dois números que não se falam.
-  const custoPorShow = Math.max(0, Number(input.custoPorShow) || 0);
-  const custoFixoMensal = Math.max(0, Number(input.custoFixoMensal) || 0);
-  const investLancamentos12m = Math.max(0, Number(input.investLancamentos12m) || 0);
+  const custoPorShow = ouOsReais(FAIXAS_POR_SHOW, input.custoShowFaixa, input.custoPorShow);
+  const custoFixoMensal = ouOsReais(FAIXAS_DE_FIXO, input.fixoFaixa, input.custoFixoMensal);
+  const investLancamentos12m = ouOsReais(FAIXAS_ANUAIS, input.lancFaixa, input.investLancamentos12m);
   const custoShowsAnual = custoPorShow * showsPerYear;
   const custoFixoAnual = custoFixoMensal * 12;
   const investimentoAnual = custoShowsAnual + custoFixoAnual + investLancamentos12m;
-  const saldo = receitaAnual - investimentoAnual;
+  // ⚠️ DOIS SALDOS, E A DIFERENÇA ENTRE ELES É A REGRA INTEIRA DO §7.2.
+  //
+  // No caminho direto, a faixa dá um intervalo: o PISO é o mínimo que o artista garantidamente
+  // tem, e o PONTO MÉDIO é onde ele provavelmente está. A decisão de acender olha o piso, para o
+  // arredondamento da faixa e o bônus nunca acenderem o que ele não alcançou; a nota olha o ponto
+  // médio, para o posicionar dentro da faixa.
+  //
+  // No detalhado não há intervalo a defender: a combinação de cinco faixas dilui o erro de cada
+  // uma, e a spec manda os dois serem o mesmo número.
+  const saldoMedio = faixaDoSaldo ? faixaDoSaldo.medio : receitaAnual - investimentoAnual;
+  const saldoPiso = faixaDoSaldo ? faixaDoSaldo.piso : saldoMedio;
+  /** O saldo que o relatório mostra. É o do ponto médio; o piso é só critério. */
+  const saldo = saldoMedio;
   // Estrutura é BÔNUS na v4 (a v3 descontava de quem não tinha). Premiar a formalização em vez de
   // punir a ausência dela mantém o índice do lado de quem está começando.
   const bonus = 1 + (input.temEmpresario ? CUTS.e.bonusEmpresario : 0) + (input.temCnpj ? CUTS.e.bonusCnpj : 0);
@@ -520,9 +761,15 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   // a implementação inteira sem ninguém tropeçar nele: o índice estava certo e só a exibição
   // mentia. O bônus existe para reconhecer quem já se sustenta, e quem não se sustenta não tem o
   // que reconhecer.
-  const saldoAjustado = saldo > 0 ? saldo * bonus : saldo;
-  const eHigh = saldoAjustado >= CUTS.e.saldoAcende;
-  const eTopIcon = saldoAjustado >= CUTS.e.saldoTopIcon;
+  const ajusta = (x: number) => (x > 0 ? x * bonus : x);
+  const saldoPisoAjustado = ajusta(saldoPiso);
+  const saldoMedioAjustado = ajusta(saldoMedio);
+  /** Mantido para quem já lia este nome. É o do ponto médio, que é o saldo que se mostra. */
+  const saldoAjustado = saldoMedioAjustado;
+  // A decisão é do PISO (§7.2). A nota, lá embaixo, é do ponto médio — e cede a esta leitura
+  // quando as duas discordam, porque a invariante do §11.1 não admite contradição.
+  const eHigh = saldoPisoAjustado >= CUTS.e.saldoAcende;
+  const eTopIcon = saldoPisoAjustado >= CUTS.e.saldoTopIcon;
 
   // Impostos e comissão de empresário NÃO entram no índice (§7.2): descontá-los penalizaria a
   // formalização e o empresariamento, que o método premia com bônus. A alíquota alimenta só esta
@@ -631,12 +878,7 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
   const def = PROFILES[key];
 
   // ════════ §11 · Boletim 0–100 ════════
-  const boletimE = (() => {
-    if (saldoAjustado <= 0) return 0;
-    if (saldoAjustado < CUTS.e.saldoAcende) return belowCut((saldoAjustado / CUTS.e.saldoAcende) * 70);
-    if (saldoAjustado < CUTS.e.saldoTopIcon) return Math.round(70 + 30 * (Math.log10(saldoAjustado / CUTS.e.saldoAcende) / Math.log10(CUTS.e.saldoTopIcon / CUTS.e.saldoAcende)));
-    return 100;
-  })();
+  const boletimE = boletimDoE(saldoMedioAjustado, eHigh);
   // Usa lHigh (não só notaL): com a trava, nota_L pode passar de 0,70 SEM acender — belowCut
   // trava em 69 e preserva a invariante (§9.7, §11.1).
   const boletimL = lHigh
@@ -658,7 +900,20 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
     profile: { key, name: def.name, description: def.description, insights: def.insights },
     pattern,
     boletim: {
-      r: boletimR(rSuficiente ? rPresentes : rComps, rHigh),
+      // ⚠️ SEMPRE SOBRE OS PRESENTES, e nunca sobre os três (§11.2).
+      //
+      // O `rSuficiente` decide se a dimensão PODE ACENDER (§6.4: menos de dois componentes é
+      // sinal raso demais). Ele não autoriza trocar o divisor da nota — e trocava: com um só
+      // componente presente, os outros dois entravam na média a valer progresso zero.
+      //
+      // O efeito era uma inversão de monotonicidade. Um artista com 2 milhões de views/mês no
+      // YouTube e mais nada lia 23. O MESMO artista, depois de declarar mil seguidores no
+      // Instagram — o pior valor que a tabela admite —, passava a ler 40: a nota subia 17 pontos
+      // por ele ter acrescentado a rede mais fraca possível, porque o divisor caía de 3 para 2.
+      // E ligar o Spotify baixava a nota de 35 para 23, pela mesma conta ao contrário.
+      //
+      // `boletimR` já devolve 0 para lista vazia, então "nenhum componente presente" continua 0.
+      r: boletimR(rPresentes, rHigh),
       e: boletimE,
       a: boletimA(aComps, aHigh),
       l: boletimL,
@@ -680,6 +935,13 @@ export function computeRealIndexV4(input: RealInputsV4): RealIndexV4 {
       e: { saldoAjustado: Math.round(saldoAjustado), high: eHigh, topicon: eTopIcon, present: true },
     },
     revenue: {
+      caminho,
+      emFaixas,
+      saldoFaixa: faixaDoSaldo ? Number(input.saldoFaixa) : null,
+      saldoPiso: Math.round(saldoPiso),
+      saldoMedio: Math.round(saldoMedio),
+      saldoPisoAjustado: Math.round(saldoPisoAjustado),
+      saldoMedioAjustado: Math.round(saldoMedioAjustado),
       showsPerYear,
       cacheByType,
       cacheMedio: Math.round(cacheMedio),

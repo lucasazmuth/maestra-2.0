@@ -1,9 +1,12 @@
+import fs from 'fs';
+import path from 'path';
+
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 
-import { MobileNav } from '..';
+import { MobileNav, apoioComMenu, ehTelaDeApoio, temBotaoDeVoltar, temTabBar } from '..';
 
 // O que o "Mais" da tab bar guarda — e, sobretudo, o que ele NÃO guarda.
 //
@@ -77,13 +80,206 @@ describe('o "Mais" da tab bar', () => {
     }
   });
 
-  // Consequência da mudança, e a que se veria primeiro no aparelho: em Configurações o "Mais"
+  // Consequência da mudança, e a que se veria primeiro no aparelho: numa tela da conta o "Mais"
   // ficava aceso, porque um dos itens dele era aquela tela. Não é mais.
+  //
+  // ⚠️ A ROTA DE EXEMPLO JÁ MUDOU DUAS VEZES, e a segunda explica a inversão da regra: era
+  // `/settings`, passou a `/notifications`, e as duas deixaram de ter barra. Nenhuma tela da
+  // conta serve mais de exemplo — o "Mais" só existe dentro de um perfil. A pergunta continua a
+  // valer ali dentro: numa tela do perfil que ele NÃO abre, ele não pode ficar aceso.
   it('não fica aceso numa tela que ele não abre mais', () => {
     // Sem abrir: o painel aberto acende o "Mais" de propósito, para dizer quem está em foco.
-    montar('/settings');
+    montar('/artists/madha/agenda');
 
     expect(screen.getByText('Mais').closest('button'))
       .not.toHaveClass('mobile-nav-item--active');
+  });
+});
+
+// ONDE A TAB BAR ENTRA, E ONDE NÃO.
+//
+// ⚠️ A REGRA ERA UMA LISTA DE EXCEÇÕES E ESTAVA DO AVESSO. Dizia "aparece sempre que houver um
+// artista atual no store, MENOS em…", e a lista cresceu uma tela de cada vez: a lista de perfis,
+// o admin, os planos, as configurações. Cada tela global nova nascia com uma barra que não lhe
+// servia, e só se descobria olhando para o telemóvel.
+//
+// Invertida, ela diz o que a barra É: navega entre os módulos de UM PERFIL, então só existe onde
+// há um perfil na ROTA. As telas da conta ficam de fora sem precisar de ser lembradas, e a
+// próxima nasce certa.
+//
+// O `Layout` lê a MESMA função para reservar (ou não) os 56px do rodapé. Se as duas
+// discordassem, o app guardaria espaço para uma barra que ninguém desenha.
+describe('onde a tab bar entra', () => {
+  it.each([
+    ['/artists/madha'],
+    ['/artists/madha/perfil'],
+    ['/artists/madha/catalog'],
+    ['/artists/madha/catalog/projects/p-1'],
+    ['/artists/madha/agenda'],
+    ['/artists/madha/action-plan'],
+  ])('%s tem barra: é módulo de um perfil', (rota) => {
+    expect(temTabBar(rota)).toBe(true);
+  });
+
+  // As telas da CONTA. Nenhuma delas precisou de entrar numa lista: elas não têm perfil na rota.
+  // As três últimas nunca chegaram a ser pedidas — saíram de graça com a inversão.
+  it.each([
+    ['/planos'],
+    ['/planos/sucesso'],
+    ['/settings'],
+    ['/settings/conta'],
+    ['/notifications'],
+    ['/suporte'],
+    ['/pagamentos'],
+    ['/pagamento'],
+    ['/artists'],
+    ['/admin/usuarios'],
+  ])('%s não tem barra: fala da conta, não do perfil', (rota) => {
+    expect(temTabBar(rota)).toBe(false);
+  });
+
+  // O chat da Nyta fica de fora por outro motivo, que é dele: é uma conversa que se lê e se
+  // escreve, e as duas barras roubavam a altura do que importa ali.
+  it('o chat da Nyta não tem barra, mesmo tendo perfil na rota', () => {
+    expect(temTabBar('/artists/madha/nyta')).toBe(false);
+  });
+
+  it.each([['/planos'], ['/settings'], ['/notifications']])(
+    'em %s o componente não desenha nada',
+    (rota) => {
+      montar(rota);
+      expect(screen.queryByText('Mais')).toBeNull();
+    },
+  );
+
+  // ⚠️ E O LAYOUT LÊ A MESMA FUNÇÃO, que é o que o comentário do componente promete e nada
+  // garantia. Ele reserva 56px no rodapé para a barra; se calculasse por conta própria, bastava
+  // uma das duas regras mudar para o app guardar espaço para uma barra que ninguém desenha — ou
+  // desenhar uma barra por cima do conteúdo. Isto lê o ficheiro porque a discordância não falha
+  // teste de render nenhum: aparece só no telemóvel, como um vão no fim da página.
+  // ⚠️ O OUTRO LADO DA MOEDA: tirada a barra, as telas da conta ficaram sem controlo de
+  // navegação à vista no telemóvel. O menu do sistema ainda é uma saída — ninguém fica preso —,
+  // mas "Trocar perfil" dentro de um menu não é "voltar". O app nativo já põe o mesmo círculo
+  // branco com a seta nestas mesmas telas.
+  it.each([
+    ['/planos'],
+    ['/planos/sucesso'],
+    ['/settings'],
+    ['/notifications'],
+    ['/suporte'],
+    ['/pagamentos'],
+    ['/pagamento'],
+    ['/admin/usuarios'],
+  ])('%s ganha o botão de voltar', (rota) => {
+    expect(temBotaoDeVoltar(rota)).toBe(true);
+  });
+
+  // Onde a barra está, ela É a navegação: um voltar ao lado seria um segundo dono do volante.
+  it.each([['/artists/madha'], ['/artists/madha/agenda']])(
+    '%s não ganha: a barra já navega',
+    (rota) => { expect(temBotaoDeVoltar(rota)).toBe(false); },
+  );
+
+  // A lista de perfis é a RAIZ: não há para onde voltar. E o chat da Nyta tem a sua própria
+  // faixa com uma seta — o cabeçalho nem chega a ser desenhado lá.
+  it.each([['/artists'], ['/artists/madha/nyta']])(
+    '%s não ganha, e por motivos próprios',
+    (rota) => { expect(temBotaoDeVoltar(rota)).toBe(false); },
+  );
+
+  // ⚠️ E NAS TELAS DE APOIO O CABEÇALHO FICA SÓ COM O VOLTAR.
+  //
+  // Marca, selo do plano e sino saem. É o desenho do `CabecalhoDeVolta` do app nativo, e o
+  // argumento é o dele: "quem chegou aqui veio de um lugar e quer voltar para ele. O sino numa
+  // tela DE notificações é ruído."
+  it.each([['/planos'], ['/settings'], ['/notifications'], ['/suporte'], ['/pagamentos']])(
+    '%s é tela de apoio',
+    (rota) => { expect(ehTelaDeApoio(rota)).toBe(true); },
+  );
+
+  // ⚠️ O ADMIN TAMBÉM GANHA O VOLTAR, MAS NÃO É TELA DE APOIO: ali o menu do sistema é como se
+  // anda entre as secções, e sem ele quem entra numa fica lá. E o admin não existe no app
+  // nativo, então não há desenho de lá para copiar.
+  it('o admin ganha o voltar, mas mantém o cabeçalho', () => {
+    expect(temBotaoDeVoltar('/admin/usuarios')).toBe(true);
+    expect(ehTelaDeApoio('/admin/usuarios')).toBe(false);
+  });
+
+  it.each([['/artists'], ['/artists/madha/agenda']])(
+    '%s não é tela de apoio',
+    (rota) => { expect(ehTelaDeApoio(rota)).toBe(false); },
+  );
+
+  // A exceção é DO APP, não invenção daqui: o `CabecalhoDeVolta` recebe `aqui="configuracoes"`
+  // só nessa tela, e o comentário dele diz porquê — ali o menu é o que dá a volta para outro
+  // perfil sem passar pela lista.
+  it('só as Configurações guardam o menu do sistema', () => {
+    expect(apoioComMenu('/settings')).toBe(true);
+    for (const outra of ['/planos', '/notifications', '/suporte', '/pagamentos']) {
+      expect(apoioComMenu(outra)).toBe(false);
+    }
+  });
+
+  it('o Layout reserva o rodapé pela MESMA regra', () => {
+    const layout = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', 'index.tsx'), 'utf8',
+    );
+
+    expect(layout).toMatch(/import\s*\{[^}]*temTabBar[^}]*\}\s*from\s*'\.\/components\/MobileNav'/);
+    expect(layout).toMatch(/const\s+hasMobileNav\s*=\s*temTabBar\(/);
+  });
+
+  // E desenha o voltar pela regra daqui, em vez de uma condição escrita à mão no meio do JSX.
+  // E marca o cabeçalho das telas de apoio pela regra daqui — sem a classe, o CSS não tem em que
+  // se agarrar e a marca, o selo e o sino voltam todos.
+  it('o Layout marca as telas de apoio pela regra daqui', () => {
+    const layout = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', 'index.tsx'), 'utf8',
+    );
+
+    expect(layout).toMatch(/ehTelaDeApoio\(location\.pathname\)[^:]*\?\s*' top-navigation--apoio'/);
+    expect(layout).toMatch(/apoioComMenu\(location\.pathname\)[^:]*\?\s*' top-navigation--com-menu'/);
+  });
+
+  it('o Layout desenha o voltar pela regra daqui', () => {
+    const layout = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', 'index.tsx'), 'utf8',
+    );
+
+    expect(layout).toMatch(/import\s*\{[^}]*temBotaoDeVoltar[^}]*\}\s*from\s*'\.\/components\/MobileNav'/);
+    expect(layout).toMatch(/temBotaoDeVoltar\(location\.pathname\)\s*&&/);
+    // ⚠️ E O CSS DECIDE QUANDO ELE SE VÊ: o `useIsMobile` quebra a 768 e a barra que este botão
+    // substitui vive a 700. Essa divergência já deixou o banner visível numa faixa de largura.
+    expect(layout).not.toMatch(/isMobile\s*&&\s*temBotaoDeVoltar|temBotaoDeVoltar\([^)]*\)\s*&&\s*isMobile/);
+  });
+
+  // ⚠️ E O BOTÃO NASCE E MORRE COM A BARRA QUE SUBSTITUI, na MESMA largura.
+  //
+  // Acima da quebra o rail com a lista de perfis está à esquerda e não há como ficar sem saída;
+  // abaixo, o rail some e a barra também, e o voltar é o que resta. Se as duas quebras
+  // divergissem, haveria uma faixa de largura sem rail, sem barra e sem voltar — ou com barra e
+  // voltar ao mesmo tempo. É a quebra da folha de referência, 700px, e não a do `useIsMobile`,
+  // que é 768.
+  it('o voltar aparece na mesma largura em que a barra desaparece', () => {
+    const folha = fs.readFileSync(
+      path.join(__dirname, '..', '..', '..', '..', '..', 'styles', 'App.scss'), 'utf8',
+    );
+
+    const dentroDaQuebra = /@media\s*\(max-width:\s*700px\)\s*\{[^@]*\.top-navigation-back\s*\{[^}]*display:\s*grid/;
+    expect(folha).toMatch(dentroDaQuebra);
+    // E escondido por omissão: sem isto ele apareceria no desktop, ao lado do rail.
+    expect(folha).toMatch(/\.top-navigation-back\s*\{\s*display:\s*none/);
+
+    // ⚠️ E O SELETOR DO APOIO CARREGA O PESO PARA GANHAR DO SINO.
+    //
+    // A folha de referência traz `.task-app:not(.public-app) > .top-navigation .notification {
+    // display: grid }`, que pesa 0,4,0. Um `.top-navigation--apoio .notification` pesa 0,2,0 e
+    // PERDE: o sino ficava aceso, e isso não falha teste de render nenhum — só se vê na página.
+    // O regex tem de apanhar a regra QUE ESCONDE O SINO, e não uma vizinha que por acaso começa
+    // igual: a do menu do sistema abre com o mesmo prefixo, e a primeira versão deste teste
+    // passava com o peso já removido por causa disso.
+    expect(folha).toMatch(
+      /\.task-app:not\(\.public-app\)\s*>\s*\.top-navigation\.top-navigation--apoio\s*\{[^}]*\.notification/,
+    );
   });
 });

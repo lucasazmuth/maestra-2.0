@@ -1,9 +1,11 @@
 import { computeRealIndexV4 } from './index';
 import type { RealInputsV4 } from './index';
 import {
-  AVISOS, AVISO_LEGADO, avisosDoDiagnostico, avisosSemLugarProprio, ehLegado, engajamentoExibido,
-  equilibrioExibido, linhasDaDimensao, resumoDoE, SIIC_ANUAL,
+  AVISOS, AVISO_LEGADO, avisosDoDiagnostico, avisosSemLugarProprio, cercaDe, conviteADetalhar,
+  detalhouOE, ehLegado, ehVersaoAnterior, engajamentoExibido, equilibrioExibido, linhasDaDimensao,
+  resumoDoE, SIIC_ANUAL,
 } from './relatorio';
+import { FIXOS } from '../../constants/realTextos';
 
 const base = (over: Partial<RealInputsV4> = {}): RealInputsV4 => ({
   spotifyConnected: true,
@@ -338,5 +340,164 @@ describe('compatibilidade com o quiz da v3', () => {
     expect(traduzido.revenue.saldoAjustado).toBe(nativo.revenue.saldoAjustado);
     expect(traduzido.pattern).toEqual(nativo.pattern);
     expect(traduzido.boletim).toEqual(nativo.boletim);
+  });
+});
+
+// ════════ §12 · a tabela do E conforme o caminho ════════
+describe('§12 a tabela do E sabe de que caminho veio', () => {
+  const direto = (i: number, over: Partial<RealInputsV4> = {}) =>
+    computeRealIndexV4(base({ saldoFaixa: i, showsPerYear: 20, ...over }));
+
+  // ⚠️ NO CAMINHO DIRETO NÃO HÁ RECEITA NEM CUSTO, e não é que estejam em zero: nunca foram
+  // perguntados. "Receita R$ 0 · Custos R$ 0 · Saldo R$ 96.000" acusaria de não faturar nada
+  // quem acabou de dizer que ganha dez mil por mês.
+  it('no direto saem três linhas, e nenhuma delas é dinheiro que ninguém informou', () => {
+    const linhas = linhasDaDimensao(direto(5), 'e');
+    expect(linhas.map((l) => l.rotulo)).toEqual(['Shows (12 meses)', 'Saldo (12 meses)', 'No ano']);
+    expect(linhas.map((l) => l.valor)).toEqual([
+      '20', 'De R$ 6 mil a R$ 10 mil por mês', 'de R$ 72 mil a R$ 120 mil por ano',
+    ]);
+  });
+
+  it('nem sequer um R$ sobra numa linha do direto', () => {
+    for (const i of [0, 1, 2, 5, 8]) {
+      const linhas = linhasDaDimensao(direto(i), 'e');
+      expect(linhas).toHaveLength(3);
+      expect(linhas.some((l) => /Receita|Custo|Investimento/.test(l.rotulo))).toBe(false);
+    }
+  });
+
+  // O detalhamento que venha junto de uma faixa não pode reabrir a tabela: a faixa manda.
+  it('o detalhamento junto de uma faixa não reabre a tabela', () => {
+    const linhas = linhasDaDimensao(direto(5, {
+      cacheByType: { produtores: 5_000 }, custoFixoMensal: 2_000, investLancamentos12m: 30_000,
+    }), 'e');
+    expect(linhas).toHaveLength(3);
+  });
+
+  it('no detalhado a tabela é a de sempre, com as sete linhas', () => {
+    const linhas = linhasDaDimensao(computeRealIndexV4(base({
+      showsPerYear: 20, cacheByType: { produtores: 5_000 },
+    })), 'e');
+    expect(linhas).toHaveLength(7);
+    expect(linhas.map((l) => l.rotulo)).toContain('Saldo');
+  });
+});
+
+// ════════ §10 · o "cerca de" (F23) ════════
+//
+// ⚠️ O ROTULO SÓ VALE SOBRE PONTO MÉDIO DE FAIXA. As compilações da loja já publicadas mandam as
+// mesmas contas em reais DIGITADOS, e chamar de "cerca de" um número que a pessoa escreveu seria
+// uma mentira pequena, mas uma mentira.
+describe('§10 o rótulo "cerca de"', () => {
+  it('a grafia é uma só, e sai do texto fixo', () => {
+    expect(cercaDe(96_000, true)).toBe(`${FIXOS.F23} R$ 96 mil`);
+    expect(cercaDe(96_000, false)).toBe('R$ 96 mil');
+  });
+
+  it('o detalhamento em faixas leva o rótulo em toda linha de dinheiro', () => {
+    const linhas = linhasDaDimensao(computeRealIndexV4(base({
+      showsPerYear: 20, cacheFaixa: 5, custoShowFaixa: 3, fixoFaixa: 3, lancFaixa: 4,
+    })), 'e');
+    const dinheiro = linhas.filter((l) => l.valor?.includes('R$'));
+    expect(dinheiro).toHaveLength(6);
+    for (const l of dinheiro) expect(l.valor).toContain('cerca de');
+  });
+
+  it('e o build antigo da loja, que manda reais digitados, não leva', () => {
+    const linhas = linhasDaDimensao(computeRealIndexV4(base({
+      showsPerYear: 20, cacheByType: { produtores: 5_000 }, custoPorShow: 1_000,
+    })), 'e');
+    for (const l of linhas) expect(l.valor).not.toContain('cerca de');
+  });
+
+  // Os 12 diagnósticos v4 gravados em produção não têm `emFaixas` nem `caminho`. Assumir faixa
+  // punha "cerca de" em números digitados; assumir direto fechava a saúde financeira deles.
+  it('o diagnóstico gravado antes da v4.5 é detalhado e sem rótulo', () => {
+    const antigo = { version: 4, revenue: { showsPerYear: 12, receitaAnual: 60_000, saldo: 20_000 } };
+    expect(resumoDoE(antigo)!.caminho).toBe('detalhado');
+    expect(resumoDoE(antigo)!.emFaixas).toBe(false);
+    expect(linhasDaDimensao(antigo, 'e')).toHaveLength(7);
+    for (const l of linhasDaDimensao(antigo, 'e')) expect(l.valor).not.toContain('cerca de');
+  });
+});
+
+// ════════ §12 · o corte que as quatro superfícies partilham ════════
+describe('§12 detalhouOE e o convite a detalhar', () => {
+  const direto = computeRealIndexV4(base({ saldoFaixa: 5, showsPerYear: 20 }));
+  const detalhado = computeRealIndexV4(base({ showsPerYear: 20, cacheByType: { produtores: 5_000 } }));
+
+  it('quem abriu as parcelas tem conta a mostrar; quem respondeu a faixa não', () => {
+    expect(detalhouOE(detalhado)).toBe(true);
+    expect(detalhouOE(direto)).toBe(false);
+  });
+
+  // ⚠️ O LEGADO RESPONDE QUE SIM, e tem de responder: os 72 diagnósticos v2/v3 têm faturamento e
+  // investimento gravados, e cada superfície tem o ramo próprio que os lê. Fechá-los aqui apagaria
+  // a conta deles — e eles não têm caminho novo a que recorrer.
+  it.each([[{ version: 3 }], [{ version: 2 }], [{}], [null]])('o legado %p continua a mostrar a conta', (ri) => {
+    expect(detalhouOE(ri as never)).toBe(true);
+    expect(conviteADetalhar(ri as never)).toBeNull();
+  });
+
+  it('o convite só existe no caminho direto, e é o texto da spec', () => {
+    expect(conviteADetalhar(detalhado)).toBeNull();
+    expect(conviteADetalhar(direto)).toBe(FIXOS.F22);
+  });
+});
+
+// ════════ §13.2 · os diagnósticos anteriores à v4.5 ════════
+//
+// ⚠️ SÃO DOIS PREDICADOS, E SEPARÁ-LOS É O PONTO DESTE PASSO.
+//
+// Há 12 diagnósticos v4 gravados em produção, feitos antes de o E ganhar os dois caminhos. Eles
+// precisam do aviso de que o método mudou — mas marcá-los com o `ehLegado` atirava-os para o ramo
+// de renderização v2/v3, que procura campos que um v4 não tem: `inputs.investimento`,
+// `revenue.total`, `revenue.sources`. Sairiam `R$ 0` e `NaN` num relatório que hoje está correto.
+//
+// `ehLegado` decide o RAMO e não muda. `ehVersaoAnterior` decide o AVISO.
+describe('§13.2 o aviso de versão anterior', () => {
+  const v45 = computeRealIndexV4(base({ showsPerYear: 20, cacheByType: { produtores: 5_000 } }));
+  // Um v4 de produção: tem `version: 4`, tem `flags`, e não tem `revenue.caminho`.
+  const v4Antigo = {
+    version: 4,
+    revenue: { showsPerYear: 12, receitaAnual: 60_000, saldo: 20_000 },
+    flags: { travaL: true, autodeclarados: ['igFollowers'] },
+  };
+
+  it('o legado e o v4 antigo são versão anterior; o v4.5 não é', () => {
+    expect(ehVersaoAnterior({ version: 3 })).toBe(true);
+    expect(ehVersaoAnterior(v4Antigo)).toBe(true);
+    expect(ehVersaoAnterior(v45)).toBe(false);
+  });
+
+  // ⚠️ O QUE DISTINGUE OS DOIS PREDICADOS, dito sozinho: o v4 antigo NÃO é legado, e por isso
+  // continua a renderizar pelo ramo da v4. Unificá-los é a mutação que enche o relatório de NaN.
+  it('mas o v4 antigo NÃO é legado, e continua a renderizar como v4', () => {
+    expect(ehLegado(v4Antigo)).toBe(false);
+    expect(resumoDoE(v4Antigo)).not.toBeNull();
+    expect(linhasDaDimensao(v4Antigo, 'e')).toHaveLength(7);
+  });
+
+  it('os 12 recebem o aviso, e o bloco do topo mostra-o', () => {
+    expect(avisosSemLugarProprio(v4Antigo)).toEqual([{ chave: 'legado', texto: AVISO_LEGADO }]);
+    expect(avisosSemLugarProprio(v45)).toEqual([]);
+  });
+
+  // E recebem TAMBÉM os avisos deles, ao contrário do legado. Ali as flags da v4 nem existem;
+  // aqui existem e continuam verdadeiras — calá-las esconderia a trava do L de quem a tem.
+  it('e continuam a receber os próprios avisos, que o legado não tem', () => {
+    const chaves = avisosDoDiagnostico(v4Antigo).map((a) => a.chave);
+
+    expect(chaves).toContain('legado');
+    expect(chaves).toContain('travaL');
+    expect(chaves).toContain('autodeclarado');
+    // O legado recebe SÓ o aviso de versão: não há flags sobre que falar.
+    expect(avisosDoDiagnostico({ version: 3, flags: { travaL: true } }).map((a) => a.chave))
+      .toEqual(['legado']);
+  });
+
+  it('e o diagnóstico da v4.5 não recebe aviso de versão nenhum', () => {
+    expect(avisosDoDiagnostico(v45).map((a) => a.chave)).not.toContain('legado');
   });
 });

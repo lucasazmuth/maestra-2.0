@@ -44,6 +44,6 @@ export const WZ = {
 export const WZ_MEDIDA = {
   /** Recuo lateral do chat no celular (`--wiz-gutter-m`). */
   recuo: 14,
-  /** Avatar da Nyta no fio da conversa (`--wiz-avatar`). */
-  avatar: 26,
+  // O `avatar` saiu com o `--wiz-avatar`: o fio da conversa deixou de ter retrato, nos dois
+  // lados. Quem falou já está dito pela posição e pelo recipiente.
 } as const;

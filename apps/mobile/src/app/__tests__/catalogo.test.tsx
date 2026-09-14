@@ -143,6 +143,32 @@ describe('catalogo', () => {
     expect(tela.getByText('Masterização')).toBeTruthy();
   });
 
+  // ⚠️ A LEGENDA DIZ QUEM MEXEU POR ÚLTIMO, e não "V1 · versão principal".
+  //
+  // Aquela frase era igual em todas as linhas, e por isso não distinguia nenhuma: falava de um
+  // modelo — versões alternativas, uma eleita — que o produto deixou de ter. A web trocou pelo
+  // `legendaDaMusica` do núcleo e o app ficou para trás, a mostrar o texto aposentado durante
+  // meses. Ninguém reparou porque nenhum teste lia esta linha.
+  it('a legenda da faixa diz quem mexeu por último, e há quanto tempo', async () => {
+    const ontem = new Date(Date.now() - 26 * 3_600_000).toISOString();
+    mockListar.mockResolvedValue([
+      faixa({ id: 'f-1', title: 'Chuva de Março', last_edited_by: 'Ana', updated_at: ontem }),
+    ]);
+    const tela = await montar();
+
+    expect(await tela.findByText('Editado por Ana · ontem')).toBeTruthy();
+    expect(tela.queryByText(/versão principal/)).toBeNull();
+  });
+
+  // Sem nome nem data não se inventa legenda: a linha fica só com o título.
+  it('sem nada para dizer, a legenda não inventa', async () => {
+    mockListar.mockResolvedValue([faixa({ id: 'f-1', title: 'Chuva de Março' })]);
+    const tela = await montar();
+
+    expect(await tela.findByText('Chuva de Março')).toBeTruthy();
+    expect(tela.queryByText(/versão principal|Editado/)).toBeNull();
+  });
+
   it('tocar uma faixa manda o player para a fonte dela', async () => {
     mockListar.mockResolvedValue([faixa({ id: 'f-1', title: 'Chuva de Março' })]);
     const tela = await montar();

@@ -3,9 +3,7 @@ import { AccessibilityInfo } from 'react-native';
 import { Provider } from 'react-redux';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 
-import {
-  CTX_API, QUIZ, REVENUE_SOURCES, TIPOS_DE_CONTRATANTE_QUIZ, TRANSICOES,
-} from '@maestra/core/constants/quizDoDiagnostico';
+import { CTX_API, QUIZ, TRANSICOES } from '@maestra/core/constants/quizDoDiagnostico';
 import { store } from '@maestra/core/store/store';
 
 import CriarArtista from '../criar-artista';
@@ -85,14 +83,9 @@ const escolherOArtista = async (usuario: ReturnType<typeof userEvent.setup>, tel
   await usuario.press(tela.getByLabelText('AZMUTH BEATS'));
 };
 
-/**
- * A pergunta está na tela?
- *
- * O enunciado do cachê é interpolado ("Você me disse que fez 10 shows..."), então comparar com
- * `p.q` cru não acha nada. A busca é pelo trecho FIXO, antes do marcador.
- */
+/** A pergunta está na tela? */
 const estaNaTela = (tela: Tela, p: (typeof QUIZ)[number]) => {
-  const fixo = p.q.split('{')[0].trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const fixo = p.q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return !!tela.queryByText(new RegExp(`^${fixo}`));
 };
 
@@ -106,15 +99,13 @@ const responderAPergunta = async (
     await usuario.press(tela.getByLabelText(pergunta.options![0].label));
     return;
   }
-  if (pergunta.type === 'matrix') {
-    // Uma escolha por tipo: as pílulas são radio, e a primeira de cada linha é "Nunca".
+  if (pergunta.type === 'tabela') {
+    // Uma escolha por linha. Na tabela expansível a linha abre primeiro; na outra as pílulas já
+    // estão à vista. O índice 1 é a segunda coluna da primeira linha aberta.
+    if (pergunta.tabela?.expansivel) {
+      await usuario.press(tela.getByLabelText(pergunta.tabela.linhas[0].label));
+    }
     await usuario.press(tela.getAllByRole('radio')[1]);
-  } else if (pergunta.type === 'revenue') {
-    await usuario.type(tela.getByLabelText(REVENUE_SOURCES[0].label), '10');
-    // Uma fonte marcada "não sei": é o caminho que o motor conta como zero e sinaliza (§4).
-    await usuario.press(tela.getByLabelText(`Não sei: ${REVENUE_SOURCES[1].label}`));
-  } else if (pergunta.type === 'cache') {
-    await usuario.type(tela.getByLabelText(TIPOS_DE_CONTRATANTE_QUIZ[0].label), '3000');
   } else {
     await usuario.type(tela.getByLabelText(pergunta.q), '10');
   }
@@ -238,17 +229,22 @@ describe('criar perfil', () => {
     chaves.forEach((chave) => expect(QUIZ.map((p) => p.key)).toContain(chave));
 
     // A imprensa vai em objetos, não em "tipo:porte" — é o formato que o motor lê.
-    const imprensa = body.quizV4[QUIZ.find((p) => p.type === 'matrix')!.key];
+    const imprensa = body.quizV4.imprensaMatrix;
     if (imprensa) {
       expect(Array.isArray(imprensa)).toBe(true);
       expect(imprensa[0]).toEqual(expect.objectContaining({ tipo: expect.any(String), porte: expect.any(String) }));
     }
 
-    // A receita carrega o "não sei" até o motor: virar zero aqui apagaria a diferença entre
-    // "não recebi" e "não sei quanto recebi", que é justamente o que o relatório devolve.
-    expect(body.quizV4.revenueSources[REVENUE_SOURCES[1].key]).toBe('nao_sei');
-    // Base ANUAL: o cachê vem por tipo de contratante, não mais um número só.
-    expect(body.quizV4.cacheByType[TIPOS_DE_CONTRATANTE_QUIZ[0].key]).toBe(3000);
+    // ⚠️ O SALDO VAI EM ÍNDICE DE FAIXA, e não em reais (v4.5, §3.2). Quem responde a faixa não
+    // manda parcela nenhuma: o caminho direto é o saldo e mais nada.
+    expect(body.quizV4.saldoFaixa).toBe(0);
+    expect(body.quizV4).not.toHaveProperty('cacheFaixa');
+    expect(body.quizV4).not.toHaveProperty('outrasFaixa');
+    // E nada de dinheiro digitado chega à edge.
+    expect(body.quizV4).not.toHaveProperty('cacheByType');
+    expect(body.quizV4).not.toHaveProperty('revenueSources');
+    expect(body.quizV4).not.toHaveProperty('custoPorShow');
+    expect(body.quizV4).not.toHaveProperty('aliquota');
   });
 
   // Um perfil que já existe e já foi pago não repete o diagnóstico: entra direto.
@@ -359,6 +355,93 @@ describe('criar perfil · as transições de bloco', () => {
     }
   };
 
+  // ════════ O desvio do detalhamento (v4.5, §3.2) ════════
+  //
+  // ⚠️ ESTE É O CAMINHO QUE NINGUÉM PERCORRE POR ACIDENTE. O passeio normal do quiz responde a
+  // primeira opção de cada pergunta, e a primeira opção da faixa de saldo é uma resposta — ou
+  // seja, o caminho direto. O detalhamento inteiro, sete a dezasseis perguntas, só existe para
+  // quem toca num botão que não é opção nenhuma.
+  describe('o desvio do detalhamento', () => {
+    it('o botão abre a conta, e a faixa de saldo não é respondida', async () => {
+      const usuario = userEvent.setup();
+      const tela = await montar();
+      await abrirOQuiz(usuario, tela);
+      await andarAte(usuario, tela, 'saldoFaixa');
+
+      await usuario.press(tela.getByLabelText('Me ajude a calcular'));
+
+      // QD.0 abre o detalhamento, e a primeira pergunta é a do palco.
+      expect(await tela.findByText(TRANSICOES.detalhe!)).toBeTruthy();
+      expect(tela.getByText(QUIZ.find((q) => q.key === 'cacheFaixa')!.q)).toBeTruthy();
+    });
+
+    it('e o quiz chega à edge com as parcelas em faixa, e sem faixa de saldo', async () => {
+      const usuario = userEvent.setup();
+      const tela = await montar();
+      await abrirOQuiz(usuario, tela);
+      await andarAte(usuario, tela, 'saldoFaixa');
+      await usuario.press(tela.getByLabelText('Me ajude a calcular'));
+      await tela.findByText(TRANSICOES.detalhe!);
+      await responderOQuiz(usuario, tela);
+
+      await waitFor(() => expect(mockInvocar).toHaveBeenCalledTimes(2));
+      const [, { body }] = mockInvocar.mock.calls[1] as [string, { body: any }];
+
+      // ⚠️ A AUSÊNCIA DA FAIXA DE SALDO É A RESPOSTA. É ela que manda o motor somar as parcelas.
+      expect(body.quizV4).not.toHaveProperty('saldoFaixa');
+      expect(body.quizV4._detalhar).toBe(true);
+      // As parcelas vão em ÍNDICE de faixa, nunca em reais.
+      expect(typeof body.quizV4.cacheFaixa).toBe('number');
+      expect(typeof body.quizV4.outrasFaixa).toBe('number');
+      expect(typeof body.quizV4.fixoFaixa).toBe('number');
+      expect(typeof body.quizV4.lancFaixa).toBe('number');
+    });
+
+    // ⚠️ AS NOVE FONTES GRAVAM NA MESMA CHAVE, cada uma na sua. Nenhum outro teste as percorre:
+    // elas só existem para quem detalhou E tocou num link, e uma superfície a escrever
+    // `respostas[key] = valor` em vez de respeitar a `sub` gravaria a última por cima das outras
+    // oito — o artista perderia oito respostas sem ver nada acontecer na tela.
+    it('o link separa fonte por fonte, e cada uma grava na sua chave', async () => {
+      const usuario = userEvent.setup();
+      const tela = await montar();
+      await abrirOQuiz(usuario, tela);
+      await andarAte(usuario, tela, 'saldoFaixa');
+      await usuario.press(tela.getByLabelText('Me ajude a calcular'));
+      await andarAte(usuario, tela, 'outrasFaixa');
+
+      await usuario.press(tela.getByLabelText('Se quiser, a gente separa fonte por fonte.'));
+      await responderOQuiz(usuario, tela);
+
+      await waitFor(() => expect(mockInvocar).toHaveBeenCalledTimes(2));
+      const [, { body }] = mockInvocar.mock.calls[1] as [string, { body: any }];
+      const porFonte = body.quizV4.outrasPorFonteFaixa;
+
+      expect(Object.keys(porFonte)).toHaveLength(9);
+      expect(porFonte).toHaveProperty('distribuidora');
+      expect(porFonte).toHaveProperty('outras');
+      // E a faixa única de QD.2 não foi respondida: quem separou fonte por fonte saltou-a.
+      expect(body.quizV4).not.toHaveProperty('outrasFaixa');
+    });
+
+    // O "Voltar" não limpa nada: é a presença da faixa que apaga o detalhamento.
+    it('voltar e escolher uma faixa fecha o detalhamento', async () => {
+      const usuario = userEvent.setup();
+      const tela = await montar();
+      await abrirOQuiz(usuario, tela);
+      await andarAte(usuario, tela, 'saldoFaixa');
+      await usuario.press(tela.getByLabelText('Me ajude a calcular'));
+      await tela.findByText(QUIZ.find((q) => q.key === 'cacheFaixa')!.q);
+
+      await usuario.press(tela.getByLabelText('Voltar para a pergunta anterior'));
+      const saldo = QUIZ.find((q) => q.key === 'saldoFaixa')!;
+      await tela.findByText(saldo.q);
+      await usuario.press(tela.getByLabelText(saldo.options![5].label));
+
+      // A pergunta seguinte é a do CNPJ, e não a do cachê: o detalhamento desapareceu sozinho.
+      expect(await tela.findByText(QUIZ.find((q) => q.key === 'temCnpj')!.q)).toBeTruthy();
+    });
+  });
+
   it('o vínculo abre o quiz sem transição, e os shows chegam com a dela', async () => {
     const usuario = userEvent.setup();
     const tela = await montar();
@@ -379,23 +462,34 @@ describe('criar perfil · as transições de bloco', () => {
     await responderAPergunta(usuario, tela, QUIZ[0]);
     await tela.findByText(TRANSICOES.shows!);
 
-    await andarAte(usuario, tela, 'fazBilheteria');
+    await andarAte(usuario, tela, 'pagantePct');
 
     expect(tela.queryByText(TRANSICOES.shows!)).toBeNull();
   });
 
-  // O pedido de dinheiro é o momento mais sensível do quiz. A transição é o que o antecede, e a
-  // pergunta seguinte retoma o número de shows que a pessoa deu lá no primeiro bloco.
-  it('a do dinheiro chega junto com o cachê, que retoma o número de shows', async () => {
+  // O pedido de dinheiro é o momento mais sensível do quiz, e a v4.5 abre-o prometendo ajuda:
+  // "onde você não souber, eu te ajudo a calcular". A promessa é o botão da pergunta seguinte.
+  it('a do dinheiro abre o bloco, na contagem de shows', async () => {
     const usuario = userEvent.setup();
     const tela = await montar();
     await abrirOQuiz(usuario, tela);
 
-    await andarAte(usuario, tela, 'cacheByType');
+    await andarAte(usuario, tela, 'showsPerYear');
 
     expect(await tela.findByText(TRANSICOES.numeros!)).toBeTruthy();
-    // `responderAPergunta` digita 10 nos campos de número, e os shows são um deles.
-    expect(tela.getByText(/fez 10 shows no último ano/)).toBeTruthy();
+  });
+
+  // ⚠️ E NÃO SAI DUAS VEZES. O detalhamento parte o bloco do dinheiro ao meio, e o `temCnpj` do
+  // outro lado tem o `lancFaixa` por vizinho — outro bloco. Com o recuo contíguo que a v4.2
+  // usava, a abertura QE.0 saía outra vez ali, a meio do bloco.
+  it('e não volta a sair no fim do bloco, depois do detalhamento', async () => {
+    const usuario = userEvent.setup();
+    const tela = await montar();
+    await abrirOQuiz(usuario, tela);
+
+    await andarAte(usuario, tela, 'temCnpj');
+
+    expect(tela.queryByText(TRANSICOES.numeros!)).toBeNull();
   });
 
   // A razão de a transição ser do BLOCO e não da primeira pergunta: no bloco digital some

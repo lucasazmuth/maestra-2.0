@@ -2,7 +2,9 @@ import { lazy, memo, Suspense, useEffect, useRef, useState, type FC, type ReactN
 
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { MobileNav, isImmersiveRoute, isNavExcludedRoute } from './components/MobileNav';
+import {
+  MobileNav, apoioComMenu, ehTelaDeApoio, isImmersiveRoute, temBotaoDeVoltar, temTabBar,
+} from './components/MobileNav';
 import { SystemMenu } from './components/SystemMenu';
 import { LanguageModal } from '../Modals/LanguageModal';
 import { NytaFloatingModal } from '../nyta/NytaFloatingModal';
@@ -23,7 +25,7 @@ import { ARTISTS_DEFAULT_IMAGE } from '@maestra/core/constants/spotify';
 import { countUnread } from '@maestra/core/services/db/notifications';
 import { supabase } from '@maestra/core/lib/supabase';
 import { SearchIcon } from '../Icons';
-import { FiArrowRight, FiX } from 'react-icons/fi';
+import { FiArrowRight, FiChevronLeft, FiX } from 'react-icons/fi';
 import {
   AgendaIcon,
   CatalogoIcon,
@@ -211,8 +213,7 @@ export const AppLayout: FC = memo(() => {
   // A MESMA funcao que o MobileNav usa para decidir se renderiza. Antes a regra estava escrita
   // duas vezes, e o comentario acima ja avisava que elas precisam concordar; agora ha uma fonte
   // so, entao incluir uma rota nova nao tem como sair do sincronismo.
-  const navExcluded = isNavExcludedRoute(location.pathname);
-  const hasMobileNav = !!(routeArtistId ?? currentArtistId) && !navExcluded;
+  const hasMobileNav = temTabBar(location.pathname);
   // A Nyta só entra em cena depois do planejamento concluído. Sem plano ela não tem sobre o que
   // conversar — a própria edge function desliga todas as ferramentas nesse caso e a resposta
   // vira "faça o planejamento primeiro". Mostrar a porta de entrada aqui só levava a pessoa a
@@ -301,8 +302,38 @@ export const AppLayout: FC = memo(() => {
   })();
 
   const topNavigation = () => (
-    <header className='top-navigation'>
+    // ⚠️ NO TELEMÓVEL, AS TELAS DE APOIO FICAM SÓ COM O VOLTAR. A marca, o selo do plano e o
+    // sino saem — é o desenho do app nativo, e o argumento está no `CabecalhoDeVolta` dele:
+    // "quem chegou aqui veio de um lugar e quer voltar para ele. O sino numa tela DE
+    // notificações é ruído." Quem esconde é o CSS, na mesma quebra de 700px do voltar.
+    <header className={`top-navigation${ehTelaDeApoio(location.pathname) ? ' top-navigation--apoio' : ''}${apoioComMenu(location.pathname) ? ' top-navigation--com-menu' : ''}`}>
       <div className='top-navigation-left'>
+        {/* ⚠️ O VOLTAR DAS TELAS DA CONTA, e ele só se vê no telemóvel.
+            Tirada a tab bar destas telas, elas ficaram sem nenhum controlo de navegação à vista
+            no telemóvel. O menu do sistema ainda é uma saída, e por isso ninguém fica preso —
+            mas "Trocar perfil" dentro de um menu não é "voltar". É o mesmo círculo branco do
+            sino, que é o controlo que a plataforma já tem, e é o desenho que o app nativo já
+            usa nestas mesmas telas (ver `casca/CabecalhoDaPagina`).
+            Quem decide se aparece é o CSS, a 700px: o `useIsMobile` quebra a 768 e essa
+            divergência entre o JS e a folha já deixou o banner visível numa faixa de largura. */}
+        {temBotaoDeVoltar(location.pathname) && (
+          <button
+            type='button'
+            className='round-control top-navigation-back'
+            aria-label='Voltar'
+            onClick={() => {
+              // `key` é 'default' na PRIMEIRA entrada do histórico: quem abriu a tela por link
+              // direto ou por uma notificação não tem para onde recuar, e cairia fora do app.
+              if (location.key !== 'default') navigate(-1);
+              else navigate('/artists');
+            }}
+          >
+            <FiChevronLeft size={22} />
+          </button>
+        )}
+        {/* O invólucro existe para o CSS ter o que esconder: a marca e o selo saem JUNTOS nas
+            telas de apoio, e o selo vem de um módulo cujo nome de classe é gerado. */}
+        <div className='top-navigation-brand'>
         {/* O mesmo wordmark vetorial da landing e do login. Aqui a marca era o símbolo em
             máscara + a palavra "Maestra" em texto peso 800 — parecida, mas mais pesada que o
             logotipo oficial, então a marca mudava de forma entre o site e o app. */}
@@ -315,6 +346,7 @@ export const AppLayout: FC = memo(() => {
         {/* O plano da conta vira um selo aqui: o banner de rodapé dizia a mesma coisa ocupando
             uma faixa inteira da tela em toda navegação. */}
         <PlanTag />
+        </div>
         {/* "Baixar App" e "Planos" apontavam para #board (não iam a lugar nenhum) e Suporte já
             está no rodapé do dashboard. O menu volta quando os destinos existirem. */}
       </div>
@@ -374,7 +406,9 @@ export const AppLayout: FC = memo(() => {
             "Mais" dela) — mas em telas sem tab bar, como /artists e /admin, é o único jeito de
             chegar em Configurações/Suporte/Sair, então continua aparecendo (com o visual do
             "Mais", não o dropdown de desktop). */}
-        <SystemMenu />
+        {/* `display: contents` por omissão: o invólucro não mexe no arranjo, e existe só para o
+            CSS poder esconder o menu nas telas de apoio que não são as Configurações. */}
+        <span className='top-navigation-system'><SystemMenu /></span>
       </div>
     </header>
   );

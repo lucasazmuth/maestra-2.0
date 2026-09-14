@@ -1,36 +1,34 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
-import { EmblemaNyta } from '@/casca/EmblemaNyta';
 import { Marcacao } from '@/casca/wizard/Marcacao';
-import { WZ, WZ_MEDIDA } from '@/casca/wizard/cores';
+import { WZ } from '@/casca/wizard/cores';
 
-// As bolhas do fio da conversa.
+// As falas do fio da conversa do wizard.
 //
-// A da Nyta entra pela esquerda, com o emblema ao lado e o canto de baixo à esquerda quadrado; a
-// de quem responde entra pela direita, azul-clara, com o canto de baixo à direita quadrado — é o
-// rabinho que diz quem falou, sem precisar de rótulo.
-
-export const BolhaDaNyta = ({ children }: { children: ReactNode }) => (
-  <View style={estilos.linha}>
-    <EmblemaNyta size={WZ_MEDIDA.avatar} />
-    <View style={estilos.bolha}>{children}</View>
-  </View>
-);
+// ⚠️ NÃO SÃO MAIS BOLHAS, e a assimetria abaixo é a decisão de desenho inteira — a mesma do chat
+// livre da Nyta, aqui e na web:
+//
+//  • A fala da Nyta NÃO tem recipiente. Nem balão, nem contorno, nem avatar: é texto na própria
+//    coluna, na largura toda. Um balão por turno espremia a resposta em 78% da largura e a fazia
+//    ler como mensagem de robô; sem ele, ela lê como o texto de um formulário conduzido.
+//  • A resposta de quem preenche TEM recipiente, e é o único da tela. É o que deixa achar,
+//    rolando, onde se respondeu o quê. Em cinza neutro, e não no azul de ação: não é um botão.
+//
+// Nenhuma das duas leva avatar. Quem falou já está dito pela posição e pelo recipiente, e um
+// retrato repetido a cada turno é a marca registrada de interface de chatbot.
 
 export const FalaDaNyta = ({ texto }: { texto: string }) => (
-  <BolhaDaNyta><Marcacao texto={texto} estilo={estilos.textoDaNyta} /></BolhaDaNyta>
+  <View style={estilos.falaDaNyta}><Marcacao texto={texto} estilo={estilos.textoDaNyta} /></View>
 );
 
 export const FalaDeQuemResponde = ({ texto }: { texto: string }) => (
-  <View style={[estilos.linha, estilos.linhaDoUsuario]}>
-    <View style={[estilos.bolha, estilos.bolhaDoUsuario]}>
-      <Text style={estilos.textoDoUsuario}>{texto}</Text>
-    </View>
+  <View style={estilos.linhaDaResposta}>
+    <Text style={estilos.resposta}>{texto}</Text>
   </View>
 );
 
-/** Os três pontinhos enquanto a Nyta "pensa". */
+/** Os três pontinhos enquanto a Nyta "pensa" — sem moldura, onde o texto vai nascer. */
 export const Pensando = () => {
   const pontos = [useRef(new Animated.Value(0.3)).current,
     useRef(new Animated.Value(0.3)).current,
@@ -49,58 +47,47 @@ export const Pensando = () => {
   }, []);
 
   return (
-    <View style={estilos.linha}>
-      <EmblemaNyta size={WZ_MEDIDA.avatar} pensando />
-      <View style={[estilos.bolha, estilos.pensando]} accessibilityLabel="Nyta está digitando">
-        {pontos.map((valor, i) => (
-          <Animated.View key={i} style={[estilos.ponto, { opacity: valor }]} />
-        ))}
-      </View>
+    <View style={estilos.pensando} accessibilityLabel="Nyta está digitando">
+      {pontos.map((valor, i) => (
+        <Animated.View key={i} style={[estilos.ponto, { opacity: valor }]} />
+      ))}
     </View>
   );
 };
 
-/**
- * Um cartão que a Nyta "envia": mesma linha e mesmo emblema de uma fala dela, sem a casca da
- * bolha — o conteúdo traz a própria moldura. Sem o emblema, o cartão parecia aparecer sozinho na
- * conversa, sem autor.
- */
+/** Um cartão que a Nyta "envia": a coluna inteira, e a moldura vem do próprio conteúdo. */
 export const CartaoDaNyta = ({ children }: { children: ReactNode }) => (
-  <View style={[estilos.linha, estilos.linhaDeCartao]}>
-    <EmblemaNyta size={WZ_MEDIDA.avatar} />
-    <View style={estilos.cartao}>{children}</View>
-  </View>
+  <View style={estilos.cartao}>{children}</View>
 );
 
-/**
- * Onde o widget do beat atual é desenhado. Recuado para alinhar com as bolhas: o emblema mais o
- * vão da linha, que é a mesma conta da folha (`--wiz-avatar` + o gap de 10px).
- */
+/** Onde o widget do beat atual é desenhado: sem avatar para alinhar, ocupa a coluna inteira. */
 export const LugarDoWidget = ({ children }: { children: ReactNode }) => (
   <View style={estilos.widget}>{children}</View>
 );
 
+/**
+ * Mantida para quem ainda envolve conteúdo numa fala da Nyta. É a coluna inteira, sem casca —
+ * o mesmo que o cartão, e o nome fica porque é assim que as chamadas leem.
+ */
+export const BolhaDaNyta = ({ children }: { children: ReactNode }) => (
+  <View style={estilos.falaDaNyta}>{children}</View>
+);
+
 const estilos = StyleSheet.create({
-  linha: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
-  linhaDoUsuario: { justifyContent: 'flex-end' },
-  linhaDeCartao: { alignItems: 'flex-start' },
-  bolha: {
-    maxWidth: '78%',
-    paddingVertical: 13, paddingHorizontal: 16,
-    borderRadius: 14, borderBottomLeftRadius: 4,
-    borderWidth: 1, borderColor: WZ.bolhaContorno, backgroundColor: WZ.surface,
-    shadowColor: 'rgb(105, 122, 159)', shadowOpacity: 0.06, shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 }, elevation: 1,
+  falaDaNyta: { width: '100%' },
+  textoDaNyta: { fontSize: 15, lineHeight: 24.3, color: WZ.text },
+  linhaDaResposta: { alignItems: 'flex-end' },
+  resposta: {
+    maxWidth: '84%',
+    paddingVertical: 11, paddingHorizontal: 16,
+    borderRadius: 18,
+    backgroundColor: WZ.surface2,
+    color: WZ.ink,
+    fontWeight: '600',
+    fontSize: 15, lineHeight: 22.5,
   },
-  textoDaNyta: { fontSize: 14, lineHeight: 21.7, color: WZ.text },
-  bolhaDoUsuario: {
-    borderBottomLeftRadius: 14, borderBottomRightRadius: 4,
-    borderColor: 'transparent', backgroundColor: WZ.blueSoft,
-    shadowOpacity: 0, elevation: 0,
-  },
-  textoDoUsuario: { fontSize: 14, lineHeight: 21.7, fontWeight: '600', color: WZ.blueInk },
-  pensando: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  ponto: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: WZ.faint },
-  cartao: { flex: 1, minWidth: 0 },
-  widget: { paddingLeft: WZ_MEDIDA.avatar + 10 },
+  pensando: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 6 },
+  ponto: { width: 6, height: 6, borderRadius: 3, backgroundColor: WZ.faint },
+  cartao: { width: '100%' },
+  widget: { width: '100%' },
 });

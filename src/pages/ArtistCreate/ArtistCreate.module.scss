@@ -487,11 +487,20 @@
 // Ela é deliberadamente MENOR que a pergunta. As duas são a mesma voz, e no mesmo corpo a tela
 // passaria a ter dois títulos brigando — quem chega precisa saber, de relance, qual das duas
 // linhas é a que se responde. Por isso o contraste é de tamanho e de peso, e não de cor.
+//
+// ⚠️ A COR ERA BRANCA, E A FRASE NÃO SE LIA. Ela foi escrita para a base escura do topo deste
+// ficheiro (`#121212`), e essa base MORREU: a regra de `.pageReal` mais abaixo repinta o quiz de
+// `#f7f8fb`. Branco a 72% sobre esse claro dá 1,04:1 de contraste, que é invisível — e o
+// comentário logo acima, que promete contraste "de tamanho e de peso, e não de cor", estava a
+// descrever uma tela que já não existia.
+//
+// O valor é o MESMO `criarAjuda` que o app usa nesta mesma frase (`design.ts`). Não é coincidência
+// nem gosto: as duas superfícies desenham a mesma transição, e foi a web que derivou.
 .transicao {
   font-size: 15px;
   line-height: 1.55;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.72);
+  color: #788bad;
   max-width: 560px;
   margin: 26px 0 0;
 
@@ -1372,6 +1381,11 @@
     box-shadow: 0 6px 14px rgba(46, 72, 117, .04);
   }
   .matrixTypeName { color: #52668d; font-size: 13px; }
+  .matrixTypeToggle { background: #fff; border-color: #dfe6f1; &:hover { background: #f4f7ff; border-color: #c3d3ee; } }
+  .matrixTypeValor { color: #1a8f45; }
+  .matrixTypeVazio { color: #8ea0bf; }
+  .escapeBotao { border-color: rgba(26, 143, 69, .5); color: #1a8f45; &:hover { background: rgba(26, 143, 69, .07); } }
+  .escapeLink { color: #7c8da8; &:hover { color: #1a8f45; } }
   .porteChips { gap: 7px; }
   .porteChip {
     min-width: 62px;
@@ -2424,6 +2438,63 @@ $docLow: #8b9ab4;
   flex-wrap: wrap;
 }
 .matrixTypeName { font-size: 14px; color: #e6e6ea; font-weight: 600; flex: 1; min-width: 150px; }
+
+// A linha da tabela EXPANSÍVEL: três chips de porte cabem a 375px, nove faixas de cachê não
+// cabem em lado nenhum. A linha vira um botão que abre a escala inteira, uma de cada vez, e
+// mostra o rótulo da faixa escolhida enquanto está fechada.
+.matrixTypeToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.18s ease, border-color 0.18s ease;
+
+  &:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.14); }
+}
+// ⚠️ O VAZIO NÃO PODE PARECER RESPOSTA. A linha fechada mostra a faixa escolhida — e quando não
+// há escolha, mostra "Não atendo". Com as duas no mesmo verde, seis linhas intocadas liam-se
+// como seis respostas afirmativas, e a que a pessoa de facto deu não se distinguia das outras.
+.matrixTypeValor { font-size: 13px; font-weight: 700; color: #1db954; flex-shrink: 0; }
+.matrixTypeVazio { color: #8a8a93; font-weight: 600; }
+
+// O escape (QE.2b e QD.2b): abre um desvio EM VEZ DE responder, e por isso não se parece com
+// uma opção. O de QE.2 é um botão de contorno; o de QD.2b é um link, porque é um "se quiser".
+.escapeBotao {
+  margin-top: 6px;
+  padding: 15px 22px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px dashed rgba(29, 185, 84, 0.45);
+  color: #1db954;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+
+  &:hover { background: rgba(29, 185, 84, 0.08); border-color: rgba(29, 185, 84, 0.7); }
+}
+.escapeLink {
+  margin-top: 4px;
+  padding: 10px 4px;
+  background: none;
+  border: 0;
+  color: #9b9ba3;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  align-self: flex-start;
+
+  &:hover { color: #1db954; }
+}
 .porteChips { display: inline-flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
 .porteChip {
   min-width: 78px;

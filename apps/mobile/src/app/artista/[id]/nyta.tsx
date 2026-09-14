@@ -135,7 +135,20 @@ export default function Nyta() {
   // Duas portas para o mesmo lugar, como na web: a checagem local do direito, e o 403 que o
   // servidor devolve (o que cobre a assinatura vencer com a tela aberta).
   if ((!PAYWALL_DISABLED && !direitos.isPro) || error === 'subscription_required') {
-    return <RecursoBloqueado recurso="nyta" artistId={String(id)} />;
+    // ⚠️ COM O CABEÇALHO, e a falta dele era uma armadilha.
+    //
+    // Esta tela substituía o ecrã inteiro, sem seta, sem barra de abas, sem nada: quem tocasse
+    // na estrela da Nyta sem ser PRO ficava preso numa tela de venda e só saía fechando o app.
+    // A web não tem o problema porque o `LockedFeature` desenha dentro do `Layout`, com a
+    // lateral e o cabeçalho sempre presentes — aqui não há casca nenhuma à volta.
+    //
+    // O botão das conversas não entra: sem PRO não há conversa para listar.
+    return (
+      <View style={estilos.tela}>
+        <CabecalhoDoChat artista={artista} aoSair={() => router.push(`/artista/${id}` as never)} />
+        <RecursoBloqueado recurso="nyta" artistId={String(id)} />
+      </View>
+    );
   }
 
   const Mensagem = ({ item }: { item: NytaChatMessage }) => {

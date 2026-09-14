@@ -16,7 +16,8 @@ import {
   comentariosDaDimensao, retratoDoPerfil, seloDaDimensao, statusDaBarra,
 } from '../services/realEngine/comentarios';
 import {
-  AVISOS, ehLegado, GRUPOS_DA_CONTA, resumoDoE, SIIC_MENSAL,
+  AVISOS, conviteADetalhar, detalhouOE, ehLegado, GRUPOS_DA_CONTA, plataformasExibidas,
+  resumoDoE, SIIC_MENSAL,
   equilibrioExibido,
 } from '../services/realEngine/relatorio';
 
@@ -318,7 +319,9 @@ const paginasDaDimensao = (
     </div>
 
     <div class="regua">
-      <div class="reguaCheia" style="width:${topo ? 100 : nota}%;background:${cor}"></div>
+      ${/* ⚠️ A régua mostra a NOTA, sempre — ver a nota longa em DiagnosticReport.tsx. O Top Tier
+           muda a cor, não o comprimento: o L pode ser Top Tier com 74. */ ''}
+      <div class="reguaCheia" style="width:${nota}%;background:${cor}"></div>
     </div>
     <div class="dimEstado">${escapar(statusDaBarra(ri, dk))}</div>
 
@@ -345,6 +348,17 @@ const paginasDaDimensao = (
       ? `<div class="aviso">${escapar(AVISOS.semBilheteria)}</div>` : ''}
     ${dk === 'l' && !legado && ri.flags?.travaL
       ? `<div class="aviso">${escapar(AVISOS.travaL)}</div>` : ''}
+
+    ${/* §12 — no caminho direto não existe a página "Onde a conta fecha", e é lá que os chips de
+         estrutura moram no v4. Sem este bloco eles sumiam com ela, e a spec manda-os aparecer NOS
+         DOIS CAMINHOS. Vêm com o convite a detalhar, que é a razão de a página não existir. */ ''}
+    ${dk === 'e' && resumo && !detalhouOE(ri) ? `<div class="bloco">
+      <div class="pilulas">
+        <span class="pilula ${temCnpj ? 'pilulaOn' : ''}">${temCnpj ? 'Com CNPJ' : 'Sem CNPJ'}</span>
+        <span class="pilula ${temEmpresario ? 'pilulaOn' : ''}">${temEmpresario ? 'Com empresário' : 'Sem empresário'}</span>
+      </div>
+      <div class="aviso">${escapar(conviteADetalhar(ri) ?? '')}</div>
+    </div>` : ''}
 
     ${/* Cachê, composição e saúde financeira saíram daqui na v4: são o corpo da página "Onde a
          conta fecha", e repetir os mesmos números duas vezes estourava esta página. O legado, que
@@ -435,14 +449,18 @@ export function montarDocumentoDoDiagnostico({
   const cidades = chartmetric?.top_cities as { name: string; country: string; listeners: number }[] | undefined;
   const playlists = chartmetric?.playlists as { count?: number; top?: { name: string; followers?: number; editorial?: boolean }[] } | undefined;
   const similares = chartmetric?.similar as unknown[] | undefined;
-  const inp = ri.inputs || {};
   const hoje = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 
   const temCidades = !!cidades?.length;
   const temPlataformas = !!(playlists?.top?.length || similares?.length);
+  // Os sinais de plataforma da secção 9. Vêm do núcleo: são dois PDFs, e a secção é a mesma.
+  const plataformasDoPdf = plataformasExibidas(ri, chartmetric as Record<string, unknown>);
   // A página "Onde a conta fecha" só existe quando há um resumo do E para aprofundar — ou seja,
   // não existe no legado, que não tem os custos decompostos.
-  const temContaFecha = !!resumoDoE(ri);
+  //
+  // Nem no caminho direto (v4.5): a página é margem por show, ponto de equilíbrio e cachê por
+  // contratante, e nada disso foi perguntado a quem respondeu o saldo numa faixa.
+  const temContaFecha = !!resumoDoE(ri) && detalhouOE(ri);
   // 10 fixas + a segunda página de cada dimensão (só fora do legado) + as condicionais.
   const total = 10 + (ehLegado(ri) ? 0 : 4)
     + (temCidades ? 1 : 0) + (temPlataformas ? 1 : 0) + (temContaFecha ? 1 : 0);
@@ -591,19 +609,19 @@ export function montarDocumentoDoDiagnostico({
           ${p.followers != null ? `<span class="listaVal">${fmtNum(p.followers)}</span>` : ''}
         </div>`).join('')}
       </div>` : ''}
-      <div class="bloco">
-        <div class="blocoTitulo">Imprensa em detalhe</div>
-        ${inp.imprensaRepercussao
-          ? `<p class="revelaPara"><b>Você já apareceu na imprensa.</b> Esse tipo de cobertura é
-              difícil de conseguir e pesa muito na legitimação: mostra que a sua história interessa
-              além do nicho.</p>
-             <p class="revelaPara">${inp.imprensaFrequencia === 'perene'
-               ? '<b>Sua presença na mídia é constante.</b> Você aparece de forma perene, não só em lançamentos. Consistência é o que transforma imprensa em legitimação sustentada.'
-               : '<b>Sua imprensa ainda é pontual.</b> Concentrada em lançamentos, ela vira legitimação sustentada quando ganha constância ao longo do ano.'}</p>`
-          : `<p class="revelaPara"><b>A imprensa ainda não repercutiu o seu trabalho.</b> Presença em
-              veículos é um capital que abre portas que números sozinhos não abrem, e costuma vir
-              com estratégia de posicionamento.</p>`}
-      </div>`, autoria, agora));
+      ${/* ⚠️ O "IMPRENSA EM DETALHE" SAIU DAQUI, e saiu porque CONTRADIZIA O L (§12, secção 9).
+           Ele escrevia à mão, para quem respondeu "não" à pergunta da repercussão, que "a imprensa
+           ainda não repercutiu o seu trabalho" — no mesmo documento em que a página do L diz o que
+           a matriz de veículos apurou, com os textos da autora. Dois donos da mesma afirmação, e o
+           segundo não olhava a matriz. No lugar, os sinais de plataforma. */ ''}
+      ${plataformasDoPdf.length ? `<div class="bloco">
+        <div class="blocoTitulo">Sinais de plataforma</div>
+        ${plataformasDoPdf.map((linha) => `<div class="lista">
+          <span class="listaNome">${escapar(linha.rotulo)}${linha.informativo
+            ? ` <span class="listaEditorial">${escapar(AVISOS.informativo)}</span>` : ''}</span>
+          <span class="listaVal">${escapar(linha.valor)}</span>
+        </div>`).join('')}
+      </div>` : ''}`, autoria, agora));
   }
 
   // OS 16 PERFIS

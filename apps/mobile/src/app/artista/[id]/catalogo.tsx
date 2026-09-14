@@ -13,6 +13,7 @@ import { CATALOG_STATUS } from '@maestra/core/constants/maestra';
 import type { CatalogItem } from '@maestra/core/interfaces/maestra';
 import { SEM_GUIA_AINDA } from '@maestra/core/audio/exportar';
 import { deleteCatalogProject, listCatalogProjectItems } from '@maestra/core/services/db/catalog';
+import { legendaDaMusica } from '@maestra/core/utils/legendaDaMusica';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -363,16 +364,15 @@ export default function Catalogo() {
                 </Pressable>
                 <View style={estilos.flex}>
                   <Text style={estilos.titulo} numberOfLines={1}>{item.title}</Text>
-                  {/* A legenda junta versão, gênero e lançamento numa linha só, como na web. */}
+                  {/* ⚠️ "V1 · versão principal" SAIU, e a legenda vem do núcleo.
+                      Era a mesma frase em todas as linhas, e por isso não distinguia nenhuma:
+                      falava de um modelo — versões alternativas, uma eleita — que o produto
+                      deixou de ter. O que fica é o que muda de linha para linha e ajuda a
+                      retomar o trabalho, quem mexeu por último e há quanto tempo.
+                      A web já lia daqui (`Catalog/index.tsx`); o app montava a frase à mão e
+                      ficou para trás. Uma legenda só, nas duas superfícies. */}
                   <Text style={estilos.versao} numberOfLines={1}>
-                    {[
-                      `V${item.version_number || 1}${item.audio_file ? ' · versão principal' : ' · áudio pendente'}`,
-                      item.genre,
-                      item.release_date
-                        ? new Date(`${item.release_date}T00:00:00`)
-                          .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-                        : null,
-                    ].filter(Boolean).join(' · ')}
+                    {legendaDaMusica(item)}
                   </Text>
                 </View>
                 {!!rotulo && (

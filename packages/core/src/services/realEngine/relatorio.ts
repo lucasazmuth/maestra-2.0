@@ -9,9 +9,9 @@
 // Referência: "Diagnóstico REAL v4", §11.3 (textos obrigatórios), §7.5 (exibição do E) e §13.2
 // (diagnósticos em versão anterior).
 
-import { dinheiroDoRelatorio, fmtNum, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
+import { dinheiroDoRelatorio, fmtNum, fmtPct, FREQ_LABELS, PAGANTE_LABELS, PREMIOS_LABELS_V3, type DimKey } from '../../constants/realCopy';
 import { FIXOS } from '../../constants/realTextos';
-import { ALIQUOTA_PCT, type Aliquota, type FonteDeReceita, type Proveniencia, type TipoDeContratante } from './index';
+import { ALIQUOTA_PCT, faixaDe, FAIXAS_DE_SALDO, type Aliquota, type Faixa, type FonteDeReceita, type Proveniencia, type TipoDeContratante } from './index';
 
 /** Uma linha de dado no cartão da dimensão. `num` é formatado pelo consumidor; `valor` já vem pronto. */
 export interface LinhaDoRelatorio {
@@ -36,6 +36,21 @@ type Diagnostico = Record<string, any>;
  * parte que dá não produziria um perfil interpretável, produziria uma mistura de duas metodologias.
  */
 export const ehLegado = (ri: Diagnostico | null | undefined): boolean => Number(ri?.version ?? 0) < 4;
+
+/**
+ * O diagnóstico foi feito numa versão ANTERIOR do método, qualquer que seja ela (§13.2).
+ *
+ * ⚠️ SÃO DOIS PREDICADOS, E SEPARÁ-LOS É O PONTO. O `ehLegado` decide o RAMO DE RENDERIZAÇÃO:
+ * um v2/v3 não tem `raw`, nem `flags`, nem proveniência por campo, e cada superfície tem um ramo
+ * próprio que lê o formato antigo. Este aqui decide só o AVISO e o convite a refazer.
+ *
+ * Marcar os 12 diagnósticos v4 gravados em produção com o `ehLegado` atirava-os para o ramo
+ * v2/v3, que procura campos que um v4 não tem: sairiam `R$ 0` e `NaN` num relatório que hoje
+ * está correto. Eles renderizam como o que são — v4 —, e só ganham o aviso de que o método
+ * mudou desde então.
+ */
+export const ehVersaoAnterior = (ri: Diagnostico | null | undefined): boolean =>
+  !!ri && (ehLegado(ri) || !ri.revenue?.caminho);
 
 /** F17 (§10) — o texto é da autora, e vive com os outros em `constants/realTextos`. */
 export const AVISO_LEGADO = FIXOS.F17;
@@ -66,7 +81,12 @@ export const avisosDoDiagnostico = (ri: Diagnostico | null | undefined): AvisoDo
   if (!ri) return [];
   if (ehLegado(ri)) return [{ chave: 'legado', texto: AVISO_LEGADO }];
   const f = ri.flags ?? {};
-  const avisos: AvisoDoRelatorio[] = [];
+  // Um v4 de antes da v4.5 recebe o aviso E os avisos dele. Diferente do legado, que recebe só
+  // o aviso: ali as flags da v4 nem existem, e misturá-las afirmaria coisas sobre dados que
+  // aquele diagnóstico nunca coletou. Aqui elas existem e continuam verdadeiras.
+  const avisos: AvisoDoRelatorio[] = ehVersaoAnterior(ri)
+    ? [{ chave: 'legado', texto: AVISO_LEGADO }]
+    : [];
   if (f.travaL) avisos.push({ chave: 'travaL', texto: AVISOS.travaL });
   if (f.saldoNegativo) avisos.push({ chave: 'saldoNegativo', texto: AVISOS.saldoNegativo });
   if (f.aSemBilheteria) avisos.push({ chave: 'semBilheteria', texto: AVISOS.semBilheteria });
@@ -148,6 +168,19 @@ export const ROTULO_DA_ALIQUOTA: Record<Aliquota, string> = {
 export const SIIC_MENSAL = 4_658;
 export const SIIC_ANUAL = SIIC_MENSAL * 12;
 
+/**
+ * O F23 sobre um valor: "cerca de R$ 96 mil".
+ *
+ * ⚠️ EXISTE PARA AS QUATRO SUPERFÍCIES NÃO INVENTAREM QUATRO GRAFIAS. Tela, PDF da web, PDF do
+ * núcleo e app imprimem os mesmos números, e o rótulo é parte do número — separá-lo faria a mesma
+ * receita sair "cerca de R$ 96 mil" num documento e "~R$ 96.000" no outro.
+ *
+ * `emFaixas` é o portão, e não é zelo: as compilações da loja ainda mandam reais DIGITADOS pelas
+ * mesmas chaves, e esses não são aproximação de nada.
+ */
+export const cercaDe = (valor: number, emFaixas: boolean): string =>
+  (emFaixas ? `${FIXOS.F23} ${dinheiroDoRelatorio(valor)}` : dinheiroDoRelatorio(valor));
+
 /** O resumo financeiro da entrega (§7.5). Devolve `null` fora da v4. */
 export const resumoDoE = (ri: Diagnostico | null | undefined) => {
   if (!ri || ehLegado(ri)) return null;
@@ -159,7 +192,25 @@ export const resumoDoE = (ri: Diagnostico | null | undefined) => {
     .filter(([, v]) => Number(v?.valor) > 0 || v?.naoSei)
     .map(([fonte, v]) => ({ fonte, rotulo: ROTULO_DA_FONTE[fonte] ?? fonte, valor: Number(v.valor) || 0, naoSei: !!v.naoSei }));
   const aliquota: Aliquota | null = rev.aliquota ?? null;
+  // ⚠️ DIAGNÓSTICO ANTERIOR À v4.5 NÃO TEM `caminho`, e o padrão tem de ser 'detalhado'.
+  //
+  // Os 12 diagnósticos v4 gravados em produção têm receita, custos e saldo somados das parcelas —
+  // que é exatamente o caminho detalhado. Assumir 'direto' fecharia a saúde financeira deles e
+  // trocaria o relatório por um convite a detalhar o que eles já detalharam.
+  const caminho: 'direto' | 'detalhado' = rev.caminho === 'direto' ? 'direto' : 'detalhado';
+  const faixaDoSaldo: Faixa | null = caminho === 'direto' ? faixaDe(FAIXAS_DE_SALDO, rev.saldoFaixa) : null;
   return {
+    /** §13.1 — 'direto' é quem respondeu só a faixa de saldo; 'detalhado' é quem abriu as parcelas. */
+    caminho,
+    /**
+     * Os valores são pontos médios de faixa, e por isso levam o "cerca de" (F23).
+     *
+     * Falso num build antigo da loja, que manda as mesmas contas em reais digitados — e também no
+     * diagnóstico gravado antes da v4.5, que não tem o campo.
+     */
+    emFaixas: rev.emFaixas === true,
+    /** A faixa escolhida, com os três rótulos. `null` no caminho detalhado. */
+    faixaDoSaldo,
     showsPerYear: Number(rev.showsPerYear) || 0,
     cache,
     cacheMedio: Number(rev.cacheMedio) || 0,
@@ -198,6 +249,30 @@ export const resumoDoE = (ri: Diagnostico | null | undefined) => {
   };
 };
 
+/**
+ * O artista abriu as parcelas do E, e portanto há conta a mostrar (§12).
+ *
+ * ⚠️ AS QUATRO SUPERFÍCIES PERGUNTAM ISTO, E NÃO O CAMINHO. Tela, PDF da web, PDF do núcleo e app
+ * mostram os mesmos três blocos — composição da receita, cachê por tipo e saúde financeira — e
+ * cada um lia o `revenue` por conta própria. Com a pergunta escrita quatro vezes, bastava uma
+ * ficar para trás para o mesmo diagnóstico mostrar "Receita R$ 0" num documento e a faixa no
+ * outro, sem erro nenhum e sem nada no log.
+ *
+ * O legado (v2/v3) responde `true`: ele tem faturamento e investimento gravados, e cada superfície
+ * já tem o ramo próprio que os lê. Fechá-lo aqui apagaria a conta de 72 diagnósticos.
+ */
+export const detalhouOE = (ri: Diagnostico | null | undefined): boolean =>
+  resumoDoE(ri)?.caminho !== 'direto';
+
+/**
+ * O convite a detalhar (F22), ou `null` quando não há o que convidar.
+ *
+ * Vai onde a conta estaria: quem respondeu a faixa não vê três blocos vazios, vê a razão de não
+ * os ver e o que fazer para os ter da próxima vez.
+ */
+export const conviteADetalhar = (ri: Diagnostico | null | undefined): string | null =>
+  (detalhouOE(ri) ? null : FIXOS.F22);
+
 /** As linhas de dado do cartão de uma dimensão (v4). Fora da v4, devolve lista vazia. */
 export const linhasDaDimensao = (
   ri: Diagnostico | null | undefined,
@@ -218,19 +293,42 @@ export const linhasDaDimensao = (
   }
 
   if (dim === 'e') {
+    const shows: LinhaDoRelatorio = { rotulo: 'Shows (12 meses)', valor: String(Number(rev.showsPerYear) || 0), fonte: 'self' };
+
+    // ⚠️ NO CAMINHO DIRETO NÃO HÁ RECEITA, CUSTO NEM MARGEM — e não é que estejam a zero: elas
+    // NUNCA FORAM PERGUNTADAS (§12). Imprimi-las daria "Receita R$ 0 · Custos R$ 0 · Saldo
+    // R$ 96.000", três linhas de que só a última é verdade, e as duas primeiras a acusar de
+    // não faturar nada quem acabou de dizer que ganha dez mil por mês.
+    //
+    // Saem duas linhas: os shows, que ele respondeu, e a faixa, que é a resposta dele — o rótulo
+    // mensal, que é como ele a escolheu, e o anual, que é a base em que o método lê.
+    const faixa = resumoDoE(ri)?.faixaDoSaldo ?? null;
+    if (rev.caminho === 'direto' && faixa) {
+      return [
+        shows,
+        { rotulo: 'Saldo (12 meses)', valor: faixa.rotulo, fonte: 'self' },
+        { rotulo: 'No ano', valor: faixa.noAno ?? faixa.rotulo, fonte: 'self' },
+      ];
+    }
+
     // A v4 lê SALDO, não receita: mostrar só o faturamento contaria a metade que agrada e
     // esconderia a que decide a dimensão.
     // §12 — a tabela do E mostra as PARCELAS do custo, não só o total. É o que permite ao artista
     // conferir a própria conta: o total sozinho não diz se o peso está no show, no fixo ou no
     // lançamento, e é essa distinção que muda a decisão.
+    //
+    // Os valores são pontos médios de faixa desde a v4.5, e levam o "cerca de" por isso (F23). Um
+    // build antigo da loja manda as mesmas chaves em reais digitados, e esses saem sem o rótulo.
+    const emFaixas = rev.emFaixas === true;
+    const dinheiro = (v: unknown) => cercaDe(Number(v) || 0, emFaixas);
     const linhas: LinhaDoRelatorio[] = [
-      { rotulo: 'Shows (12 meses)', valor: String(Number(rev.showsPerYear) || 0), fonte: 'self' },
-      { rotulo: 'Receita (12 meses)', valor: dinheiroDoRelatorio(Number(rev.receitaAnual) || 0), fonte: 'self' },
-      { rotulo: 'Custo médio por show', valor: dinheiroDoRelatorio(Number(rev.custoPorShow) || 0), fonte: 'self' },
-      { rotulo: 'Custo fixo mensal', valor: dinheiroDoRelatorio(Number(rev.custoFixoMensal) || 0), fonte: 'self' },
-      { rotulo: 'Investimento em lançamentos', valor: dinheiroDoRelatorio(Number(rev.investLancamentos12m) || 0), fonte: 'self' },
-      { rotulo: 'Custos e investimento (12 meses)', valor: dinheiroDoRelatorio(Number(rev.investimentoAnual) || 0), fonte: 'self' },
-      { rotulo: 'Saldo', valor: dinheiroDoRelatorio(Number(rev.saldo) || 0), fonte: 'self' },
+      shows,
+      { rotulo: 'Receita (12 meses)', valor: dinheiro(rev.receitaAnual), fonte: 'self' },
+      { rotulo: 'Custo médio por show', valor: dinheiro(rev.custoPorShow), fonte: 'self' },
+      { rotulo: 'Custo fixo mensal', valor: dinheiro(rev.custoFixoMensal), fonte: 'self' },
+      { rotulo: 'Investimento em lançamentos', valor: dinheiro(rev.investLancamentos12m), fonte: 'self' },
+      { rotulo: 'Custos e investimento (12 meses)', valor: dinheiro(rev.investimentoAnual), fonte: 'self' },
+      { rotulo: 'Saldo', valor: dinheiro(rev.saldo), fonte: 'self' },
     ];
     // ⚠️ O SALDO AJUSTADO NÃO É EXIBIDO EM LADO NENHUM (relatório v4.4, §1.3, §12 e §13 item 15).
     //
@@ -316,6 +414,68 @@ export const equilibrioExibido = (
 };
 
 /** O engajamento, quando a API entregou. [SUSPENSO] no cálculo, exibido com rótulo (§8.2, §11.3.5). */
+/** Uma linha da secção "Sua presença nas plataformas" (§12, secção 9). */
+export interface LinhaDaPlataforma {
+  rotulo: string;
+  valor: string;
+  /** Sai com o rótulo do §8.5: "informativo, não entra no diagnóstico". */
+  informativo?: boolean;
+}
+
+const NOME_DA_REDE: Record<string, string> = {
+  instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube',
+};
+
+/**
+ * O conteúdo da secção "Sua presença nas plataformas" (§12, secção 9).
+ *
+ * ⚠️ ELA CONTRADIZIA O L, E É POR ISSO QUE MUDA. O bloco "Imprensa em detalhe" que vivia aqui
+ * escrevia, para quem respondeu "não" à repercussão, que "a imprensa ainda não repercutiu o seu
+ * trabalho" — um parágrafo escrito à mão, num documento onde a dimensão L já diz o que a matriz
+ * de veículos apurou, com os textos da autora. Dois donos da mesma afirmação, e o segundo era o
+ * que não olhava a matriz: bastava marcar um veículo e responder "não" à pergunta anterior para
+ * o PDF negar, em prosa, o que a página do L tinha acabado de reconhecer.
+ *
+ * No lugar entram os SINAIS DE PLATAFORMA, que é o que a secção se propõe a mostrar: playlists
+ * editoriais e rádio, que entram no índice, e engajamento e Deezer, que não entram e vão
+ * rotulados como tal.
+ *
+ * Mora no núcleo porque são dois renderizadores — o PDF da web e o do núcleo — e a secção é a
+ * mesma nos dois.
+ */
+export const plataformasExibidas = (
+  ri: Diagnostico | null | undefined,
+  cm?: Record<string, any> | null,
+): LinhaDaPlataforma[] => {
+  if (!ri || ehLegado(ri)) return [];
+  const l = ri.components?.l ?? {};
+  const playlists = l.playlists ?? {};
+  const radio = l.radio ?? {};
+  const execucoes = ri.raw?.radioAirplay180d;
+  const quantasPlaylists = ri.raw?.editorialPlaylists ?? cm?.playlists?.count ?? null;
+  const deezer = ri.deezerFans ?? null;
+  return [
+    {
+      rotulo: 'Playlists editoriais',
+      // Consulta vazia ≠ consulta que não aconteceu (§4). Dizer "0" nas duas apagava a diferença.
+      valor: playlists.present ? String(quantasPlaylists ?? 0) : 'Sem dado',
+    },
+    {
+      rotulo: 'Execução em rádio · 180 dias',
+      // Abaixo de 6 execuções o componente é AUSENTE, não zero (§9.5).
+      valor: radio.present && execucoes != null
+        ? `${fmtNum(Math.round(Number(execucoes)))} execuções`
+        : 'Sem dado',
+    },
+    ...engajamentoExibido(ri).map((e) => ({
+      rotulo: `Engajamento no ${NOME_DA_REDE[e.rede] ?? e.rede}`,
+      valor: fmtPct(e.value),
+      informativo: true,
+    })),
+    { rotulo: 'Fãs no Deezer', valor: deezer == null ? 'Sem dado' : fmtNum(deezer), informativo: true },
+  ];
+};
+
 export const engajamentoExibido = (ri: Diagnostico | null | undefined) => {
   const e = ri?.engagement ?? {};
   return (['instagram', 'tiktok', 'youtube'] as const)
