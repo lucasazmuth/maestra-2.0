@@ -120,7 +120,8 @@ serve(async (req) => {
     // sempre davam erro (similar 404, stat/spotify 400, social-audience-stats 400) foram removidos.
     const DEEP_ENDPOINTS: Record<string, string> = {
       wpl: `/api/artist/${cmId}/where-people-listen?since=${since}&until=${today}`,
-      playlists: `/api/artist/${cmId}/spotify/current/playlists?limit=50`,
+      playlistsEditorial: `/api/artist/${cmId}/spotify/current/playlists?limit=100&editorial=true`,
+      playlistsNonEditorial: `/api/artist/${cmId}/spotify/current/playlists?limit=100&editorial=false`,
       neighboring: `/api/artist/${cmId}/neighboring-artists?limit=12`,
     };
 
@@ -144,7 +145,7 @@ serve(async (req) => {
       .filter((k) => r[k] != null)
       .map((k) => ({
         artist_id: artistId, cm_artist_id: cmId,
-        endpoint: DEEP_ENDPOINTS[k].split("?")[0].replace(String(cmId), ":id"),
+        endpoint: DEEP_ENDPOINTS[k].replace(String(cmId), ":id"),
         payload: r[k], source: "enrich", fetched_at: new Date().toISOString(),
       }));
     if (rawRows.length) {
@@ -173,13 +174,13 @@ serve(async (req) => {
       }
     } catch (e) { console.error("parse audience:", (e as Error)?.message); }
 
-    // Playlists: obj = [{ playlist:{name,followers,curator_name,editorial,...}, track }]. Dedup + top 10.
+    // Playlists: unimos os dois filtros explicitos exigidos pela especificacao antes de deduplicar.
     let playlistsSummary: any = null;
     try {
-      const arr = asArray(r.playlists);
+      const arr = [...asArray(r.playlistsNonEditorial), ...asArray(r.playlistsEditorial)];
       const byId = new Map<any, any>();
       for (const item of arr) {
-        const pl = item?.playlist;
+        const pl = item?.playlist ?? item;
         if (!pl?.name) continue;
         const id = pl.id ?? pl.playlist_id ?? pl.name;
         if (!byId.has(id)) {
