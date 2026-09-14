@@ -218,7 +218,7 @@ async function chartmetricSummary(
         const r = await fetch(`https://api.chartmetric.com${path}`, auth);
         log(tmpl(path.split("?")[0]), r.ok, r.status, t);
         const body = r.ok ? await r.json() : null;
-        if (body != null) rawSink?.push({ endpoint: tmpl(path.split("?")[0]), payload: body });
+        if (body != null) rawSink?.push({ endpoint: tmpl(path), payload: body });
         return body;
       } catch { log(tmpl(path.split("?")[0]), false, null, t); return null; }
     };
@@ -242,31 +242,44 @@ async function chartmetricSummary(
     await sleep(200); const ig_engagement = await engRate("instagram-audience-stats");
     await sleep(200); const yt_engagement = await engRate("youtube-audience-stats");
     await sleep(200); const tt_engagement = await engRate("tiktok-audience-stats");
-    // Playlists editoriais (mesmo endpoint do enrich) → conta as com editorial=true (dedup por id).
+    // A especificacao exige filtros explicitos: sem flags a API pode devolver uma lista vazia.
+    // Buscamos os dois recortes e os unimos para a secao de presenca; a contagem editorial vem
+    // somente da consulta editorial=true, sem inferir editorial pelo nome ou pelo curador.
     await sleep(200);
-    const plData = await getJson(`/api/artist/${cmId}/spotify/current/playlists?limit=50`);
+    const editorialPlData = await getJson(`/api/artist/${cmId}/spotify/current/playlists?limit=100&editorial=true`);
+    await sleep(200);
+    const nonEditorialPlData = await getJson(`/api/artist/${cmId}/spotify/current/playlists?limit=100&editorial=false`);
+    const playlistEntries = (data: any): any[] =>
+      Array.isArray(data?.obj) ? data.obj : Array.isArray(data) ? data : [];
+    const playlistId = (item: any) => {
+      const pl = item?.playlist ?? item;
+      return pl?.id ?? pl?.playlist_id ?? pl?.name;
+    };
+    const combinedPlaylistEntries = (() => {
+      const byId = new Map<any, any>();
+      for (const item of [...playlistEntries(nonEditorialPlData), ...playlistEntries(editorialPlData)]) {
+        const id = playlistId(item);
+        if (id != null) byId.set(id, item);
+      }
+      return [...byId.values()];
+    })();
     const editorial_playlists = (() => {
       try {
-        // Shape real: obj = [{ playlist: {id,name,editorial,...}, track }]. O editorial fica em
-        // item.playlist.editorial (aninhado), não no item.
-        const arr = Array.isArray(plData?.obj) ? plData.obj : Array.isArray(plData) ? plData : [];
         const ids = new Set<any>();
-        for (const item of (Array.isArray(arr) ? arr : [])) {
-          const pl = item?.playlist ?? item;
-          if (pl?.editorial) ids.add(pl.id ?? pl.playlist_id ?? pl.name);
+        for (const item of playlistEntries(editorialPlData)) {
+          const id = playlistId(item);
+          if (id != null) ids.add(id);
         }
         return ids.size;
       } catch { return null; }
     })();
-    // Resumo de playlists (top 10 por seguidores) — MESMO parser do enrich, a partir do plData que
-    // já buscamos (sem chamada extra). Assim a seção "Sua presença nas plataformas" já aparece na
-    // entrega do diagnóstico grátis; o enrich (pós-pago) refresca + soma similar/países.
+    // Resumo de playlists (top 10 por seguidores). Assim a secao "Sua presenca nas plataformas"
+    // ja aparece no diagnostico gratis; o enrich pos-pago atualiza cidades e similares.
     const playlists = (() => {
       try {
-        const arr = Array.isArray(plData?.obj) ? plData.obj : Array.isArray(plData) ? plData : [];
         const byId = new Map<any, any>();
-        for (const item of (Array.isArray(arr) ? arr : [])) {
-          const pl = item?.playlist;
+        for (const item of combinedPlaylistEntries) {
+          const pl = item?.playlist ?? item;
           if (!pl?.name) continue;
           const id = pl.id ?? pl.playlist_id ?? pl.name;
           if (!byId.has(id)) byId.set(id, { name: pl.name, followers: Number(pl.followers) || 0, curator: pl.curator_name ?? pl.owner_name ?? null, editorial: !!pl.editorial });
