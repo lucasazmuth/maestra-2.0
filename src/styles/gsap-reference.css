@@ -7542,7 +7542,10 @@
 .method-view-report [class*="realPatternHeadLabel"],
 .method-view-report [class*="mapTier"],
 .method-view-report [class*="profileMapHint"] { color: #8292ae; }
-.method-view-report [class*="realPatternLetterLow"] { color: #aab6c9; }
+.method-view-report [class*="realPatternItemHigh"] [class*="realPatternLetter"],
+.method-view-report [class*="realPatternItemHigh"] [class*="realPatternWord"] { color: #3361ff !important; }
+.method-view-report [class*="realPatternItemLow"] [class*="realPatternLetter"] { color: #aab6c9 !important; }
+.method-view-report [class*="realPatternItemLow"] [class*="realPatternWord"] { color: #8292ae !important; }
 .method-view-report [class*="dimMono"] { color: #52668d; background: #f1f5fb; border-color: #d8e1ee; }
 .method-view-report [class*="dimLevel"] { background: #e8edf5; }
 .method-view-report [class*="mapChip"] { color: #61749a !important; background: #f7f9fd !important; border-color: #d8e1ee !important; }
