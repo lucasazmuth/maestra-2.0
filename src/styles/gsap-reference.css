@@ -7456,7 +7456,120 @@
 }
 
 .music-dashboard > .music-stat-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-bottom: 24px;
+}
+
+.music-dashboard > .music-stat-grid strong {
+  letter-spacing: 0;
+}
+
+/* Dashboard do artista: uma superfície, com o método navegável por abas. */
+.method-view { min-height: 560px; color: #53688f; }
+.method-view-header { display: flex; min-height: 170px; align-items: flex-end; justify-content: space-between; gap: 36px; padding: 34px 38px; border-radius: 8px 8px 0 0; background: #111a2e; color: #fff; }
+.method-view-diagnostico .method-view-header { background: url('../../design-ref/Dark Gradient 04.svg') center/cover; }
+.method-view-execucao .method-view-header { background: url('../../design-ref/Dark Gradient 12.svg') center/cover; }
+.method-view-planejamento .method-view-header { background: url('../../design-ref/Dark Gradient 05.svg') center/cover; }
+.method-view-header > div { max-width: 680px; }
+.method-view-header span { color: rgba(255,255,255,.68); font-size: 10px; font-weight: 800; }
+.method-view-header h1 { margin: 8px 0 6px; font-size: 30px; line-height: 1.15; letter-spacing: 0; }
+.method-view-header p { margin: 0; color: rgba(255,255,255,.72); font-size: 14px; line-height: 1.5; }
+.method-view-header button { display: inline-flex; min-height: 40px; flex: 0 0 auto; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,.32); border-radius: 5px; padding: 0 15px; background: rgba(0,0,0,.16); color: #fff; cursor: pointer; font-size: 11px; font-weight: 800; }
+.method-view-header button:hover { background: rgba(255,255,255,.12); }
+.method-diagnostic-grid, .method-execution-grid, .method-planning-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border: 1px solid #e2e8f1; border-top: 0; background: #e2e8f1; }
+.method-planning-grid { grid-template-columns: 1.15fr .85fr; }
+.method-planning-grid .method-primary-card { grid-row: span 2; }
+.method-primary-card, .method-real-card, .method-progress-card, .method-list-card { min-height: 220px; padding: 28px; background: #fff; }
+.method-primary-card > span, .method-real-card > span, .method-progress-card > span, .method-list-card header span { color: #92a1ba; font-size: 9px; font-weight: 800; }
+.method-primary-card > strong { display: block; max-width: 600px; margin-top: 26px; color: #344b73; font-size: 23px; line-height: 1.35; }
+.method-primary-card > p { max-width: 620px; margin: 14px 0 0; color: #8292ae; font-size: 12px; line-height: 1.65; }
+.method-real-card > div { display: flex; gap: 10px; margin-top: 28px; }
+.method-real-card i { display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid #d9e0eb; border-radius: 50%; color: #b5c0d2; font-style: normal; font-weight: 800; }
+.method-real-card i.acesa { border-color: #3361ff; background: #3361ff; color: #fff; }
+.method-real-card p { margin-top: 22px; color: #7184a7; font-size: 12px; }
+.method-progress-card > strong { display: block; margin-top: 24px; color: #3361ff; font-size: 46px; letter-spacing: 0; }
+.method-progress-card > div { height: 5px; margin-top: 18px; overflow: hidden; background: #e8edf5; }
+.method-progress-card > div i { display: block; height: 100%; background: #3361ff; }
+.method-progress-card p { margin: 18px 0 0; color: #8292ae; font-size: 12px; line-height: 1.55; }
+.method-list-card { padding: 0; }
+.method-list-card header { display: flex; min-height: 60px; align-items: center; justify-content: space-between; padding: 0 22px; border-bottom: 1px solid #e9edf4; }
+.method-list-card header b { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: #eef3ff; color: #3361ff; font-size: 10px; }
+.method-list-card > div { display: grid; min-height: 49px; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 0 22px; border-bottom: 1px solid #edf1f6; }
+.method-list-card > div:last-child { border-bottom: 0; }
+.method-list-card > div i { color: #9aabc5; font-size: 9px; font-style: normal; font-weight: 800; }
+.method-list-card > div span { color: #5b7097; font-size: 11px; font-weight: 700; line-height: 1.35; }
+.method-list-card > div small { color: #a4b1c5; font-size: 9px; }
+
+/* O relatório REAL vive também dentro do dashboard. Aqui ele herda a mesma superfície clara
+   do método, sem alterar a composição que continua sendo usada no fluxo de diagnóstico. */
+.method-view-report { min-height: 0; background: #f7f9fc; }
+.method-view-report [class*="realWrap"] { max-width: none; padding: 24px 0 36px; color: #53688f; }
+.method-view-report [class*="realProfileCard"],
+.method-view-report [class*="dimCard"],
+.method-view-report [class*="insightsBlock"],
+.method-view-report [class*="cityChart"],
+.method-view-report [class*="platformPresence"],
+.method-view-report [class*="profileMap"],
+.method-view-report [class*="methodBlock"] {
+  border-color: #dfe6f1;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(46, 72, 117, .04);
+}
+.method-view-report [class*="realProfileCard"] { border-radius: 8px; }
+.method-view-report [class*="realProfileName"],
+.method-view-report [class*="dimTitle"],
+.method-view-report [class*="dimStatValue"],
+.method-view-report [class*="insightsTitle"],
+.method-view-report [class*="profileMapTitle"],
+.method-view-report [class*="methodDimName"],
+.method-view-report [class*="cityChartLabel"],
+.method-view-report [class*="platformSectionTitle"] { color: #344b73; }
+.method-view-report [class*="realProfileDesc"],
+.method-view-report [class*="dimSub"],
+.method-view-report [class*="dimStatLabel"],
+.method-view-report [class*="dimPhrase"],
+.method-view-report [class*="insightsList"],
+.method-view-report [class*="methodBody"],
+.method-view-report [class*="cityName"],
+.method-view-report [class*="cityVal"],
+.method-view-report [class*="platformSection"],
+.method-view-report [class*="platformList"] { color: #61749a; }
+.method-view-report [class*="realPatternRow"],
+.method-view-report [class*="dimStatRow"],
+.method-view-report [class*="mapRow"] { border-color: #e7ecf4; }
+.method-view-report [class*="realPatternWord"],
+.method-view-report [class*="realProfileKicker"],
+.method-view-report [class*="realPatternHeadLabel"],
+.method-view-report [class*="mapTier"],
+.method-view-report [class*="profileMapHint"] { color: #8292ae; }
+.method-view-report [class*="realPatternItemHigh"] [class*="realPatternLetter"],
+.method-view-report [class*="realPatternItemHigh"] [class*="realPatternWord"] { color: #3361ff !important; }
+.method-view-report [class*="realPatternItemLow"] [class*="realPatternLetter"] { color: #aab6c9 !important; }
+.method-view-report [class*="realPatternItemLow"] [class*="realPatternWord"] { color: #8292ae !important; }
+.method-view-report [class*="dimMono"] { color: #52668d; background: #f1f5fb; border-color: #d8e1ee; }
+.method-view-report [class*="dimLevel"] { background: #e8edf5; }
+.method-view-report [class*="mapChip"] { color: #61749a !important; background: #f7f9fd !important; border-color: #d8e1ee !important; }
+.method-view-report [class*="mapChipOn"] { color: #244ce0 !important; background: #eaf0ff !important; border-color: #9db7ff !important; }
+.method-view-report [class*="mapChipName"] { color: #344b73 !important; }
+.method-view-report [class*="mapChipLeitura"] { color: #7184a5 !important; }
+.method-view-report [class*="mapDot"] { color: #7184a5 !important; background: #e3eaf5 !important; border-color: #d8e1ee !important; }
+.method-view-report [class*="mapDotOn"] { color: #fff !important; background: #52668d !important; border-color: #52668d !important; }
+.method-view-report [class*="insightsList"] li { color: #61749a !important; }
+.method-view-report [class*="ctaTitle"] { color: #344b73 !important; }
+.method-view-report [class*="ctaParagraph"],
+.method-view-report [class*="ctaMicrocopy"] { color: #7184a5 !important; }
+.method-view-report [class*="shareBtn"] { color: #3361ff !important; background: #fff !important; border-color: #cbd9ff !important; }
+.method-view-report [class*="shareBtn"]:hover:not(:disabled) { color: #244ce0 !important; background: #edf2ff !important; border-color: #9db6ff !important; }
+
+@media (max-width: 700px) {
+  .method-view-header { min-height: 210px; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 20px; padding: 26px 22px; }
+  .method-view-header h1 { font-size: 25px; }
+  .method-view-header button { width: 100%; justify-content: center; }
+  .method-diagnostic-grid, .method-execution-grid, .method-planning-grid { grid-template-columns: 1fr; }
+  .method-planning-grid .method-primary-card { grid-row: auto; }
+  .method-primary-card, .method-real-card, .method-progress-card, .method-list-card { min-height: 0; }
+  .method-primary-card, .method-real-card, .method-progress-card { padding: 24px 20px; }
+  .method-view-report [class*="realWrap"] { padding: 20px 0 28px; }
 }
 
 /* Long real-world task data must stay contained inside the reference hero. */

@@ -106,8 +106,8 @@ const pilarDoDiagnostico = (artista: Artist | null | undefined, jornada: Journey
     detalhe: data ? `Leitura de ${data}` : undefined,
     progresso: null,
     marcas: [real.pattern.r, real.pattern.e, real.pattern.a, real.pattern.l],
-    cta: 'Ver diagnóstico',
-    destino: 'diagnostico',
+    cta: capacidades.manageTasks ? 'Refazer diagnóstico REAL' : 'Conhecer o PRO',
+    destino: capacidades.manageTasks ? 'refazerDiagnostico' : 'assinatura',
   };
 };
 

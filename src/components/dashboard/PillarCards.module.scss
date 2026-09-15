@@ -1,65 +1,65 @@
-.pilares { display: grid; gap: 10px; margin-bottom: 24px; }
-.card {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) 20px;
+.menu {
+  display: flex;
+  align-items: stretch;
+  gap: 30px;
+  min-height: 58px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  border-bottom: 1px solid #dfe5ef;
+  scrollbar-width: none;
+}
+
+.menu::-webkit-scrollbar { display: none; }
+
+.menu button {
+  position: relative;
+  display: inline-flex;
+  min-width: max-content;
   align-items: center;
-  gap: 18px;
-  min-height: 120px;
-  padding: 24px;
-  border-radius: 8px;
-  background: var(--pilarBackground, #000);
-  background-size: cover;
-  background-position: center;
-  color: #fff;
+  gap: 8px;
+  padding: 0 2px 15px;
+  border: 0;
+  background: transparent;
+  color: #8796b1;
   cursor: pointer;
-  &:hover .seta { transform: translateX(3px); }
-  &:focus-visible { outline: 2px solid #7fb0ff; outline-offset: 3px; }
-}
-.diagnostico {
-  // Dark Gradient 04
-  --pilarBackground: url('../../../design-ref/Dark Gradient 04.svg');
-}
-.execucao {
-  // Dark Gradient 12
-  --pilarBackground: url('../../../design-ref/Dark Gradient 12.svg');
-}
-.planejamento {
-  // Dark Gradient 05
-  --pilarBackground: url('../../../design-ref/Dark Gradient 05.svg');
-}
-.marca { display: flex; align-items: center; color: rgba(255,255,255,.7); }
-.diagnostico:hover .marca { color: #2ec47a; }
-.execucao:hover .marca { color: #3361ff; }
-.planejamento:hover .marca { color: #9a4fd1; }
-.corpo { min-width: 0; }
-.titulo {
-  margin: 0;
-  color: #ffffff;
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.3;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
   letter-spacing: 0;
-  overflow-wrap: anywhere;
 }
-.linha {
-  margin: 6px 0 0;
-  color: rgba(255,255,255,.68);
-  font-size: 14px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
+
+.menu button::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  background: #3361ff;
+  content: '';
+  opacity: 0;
+  transform: scaleX(.45);
+  transition: opacity .16s ease, transform .16s ease;
 }
-.regua { width: min(180px, 100%); height: 3px; margin-top: 12px; background: rgba(255,255,255,.14); overflow: hidden; }
-.reguaCheia { height: 100%; background: #7fb0ff; }
-.acao { display: block; margin-top: 10px; font-size: 13px; font-weight: 600; }
-.seta { color: rgba(255,255,255,.65); transition: transform .15s ease; }
-.travado .marca { color: rgba(255,255,255,.24); }
+
+.menu button:hover { color: #53688f; }
+.menu button:focus-visible { outline: 2px solid #7fb0ff; outline-offset: -2px; }
+.menu button.ativo { color: #263b63; }
+.menu button.ativo::after { opacity: 1; transform: scaleX(1); }
+
+.menu small {
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: #eef3ff;
+  color: #3361ff;
+  font-size: 9px;
+  font-weight: 700;
+}
+
 @media (max-width: 700px) {
-  .card { gap: 14px; padding: 20px 18px; min-height: 112px; }
-  .titulo { font-size: 18px; }
-  .linha { font-size: 13px; }
+  .menu { gap: 22px; min-height: 52px; margin: -2px -14px 20px; padding: 0 14px; }
+  .menu button { padding-bottom: 13px; font-size: 12px; }
 }
+
 @media (prefers-reduced-motion: reduce) {
-  .seta { transition: none; }
+  .menu button::after { transition: none; }
 }
