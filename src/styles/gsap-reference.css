@@ -7500,6 +7500,52 @@
 .method-list-card > div span { color: #5b7097; font-size: 11px; font-weight: 700; line-height: 1.35; }
 .method-list-card > div small { color: #a4b1c5; font-size: 9px; }
 
+/* O relatório REAL vive também dentro do dashboard. Aqui ele herda a mesma superfície clara
+   do método, sem alterar a composição que continua sendo usada no fluxo de diagnóstico. */
+.method-view-report { min-height: 0; background: #f7f9fc; }
+.method-view-report [class*="realWrap"] { max-width: none; padding: 28px 30px 36px; color: #53688f; }
+.method-view-report [class*="realProfileCard"],
+.method-view-report [class*="dimCard"],
+.method-view-report [class*="insightsBlock"],
+.method-view-report [class*="cityChart"],
+.method-view-report [class*="platformPresence"],
+.method-view-report [class*="profileMap"],
+.method-view-report [class*="methodBlock"] {
+  border-color: #dfe6f1;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(46, 72, 117, .04);
+}
+.method-view-report [class*="realProfileCard"] { border-radius: 8px; }
+.method-view-report [class*="realProfileName"],
+.method-view-report [class*="dimTitle"],
+.method-view-report [class*="dimStatValue"],
+.method-view-report [class*="insightsTitle"],
+.method-view-report [class*="profileMapTitle"],
+.method-view-report [class*="methodDimName"],
+.method-view-report [class*="cityChartLabel"],
+.method-view-report [class*="platformSectionTitle"] { color: #344b73; }
+.method-view-report [class*="realProfileDesc"],
+.method-view-report [class*="dimSub"],
+.method-view-report [class*="dimStatLabel"],
+.method-view-report [class*="dimPhrase"],
+.method-view-report [class*="insightsList"],
+.method-view-report [class*="methodBody"],
+.method-view-report [class*="cityName"],
+.method-view-report [class*="cityVal"],
+.method-view-report [class*="platformSection"],
+.method-view-report [class*="platformList"] { color: #61749a; }
+.method-view-report [class*="realPatternRow"],
+.method-view-report [class*="dimStatRow"],
+.method-view-report [class*="mapRow"] { border-color: #e7ecf4; }
+.method-view-report [class*="realPatternWord"],
+.method-view-report [class*="realProfileKicker"],
+.method-view-report [class*="realPatternHeadLabel"],
+.method-view-report [class*="mapTier"],
+.method-view-report [class*="profileMapHint"] { color: #8292ae; }
+.method-view-report [class*="realPatternLetterLow"] { color: #aab6c9; }
+.method-view-report [class*="dimMono"] { color: #52668d; background: #f1f5fb; border-color: #d8e1ee; }
+.method-view-report [class*="dimLevel"] { background: #e8edf5; }
+
 @media (max-width: 700px) {
   .method-view-header { min-height: 210px; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 20px; padding: 26px 22px; }
   .method-view-header h1 { font-size: 25px; }
@@ -7508,6 +7554,7 @@
   .method-planning-grid .method-primary-card { grid-row: auto; }
   .method-primary-card, .method-real-card, .method-progress-card, .method-list-card { min-height: 0; }
   .method-primary-card, .method-real-card, .method-progress-card { padding: 24px 20px; }
+  .method-view-report [class*="realWrap"] { padding: 22px 16px 28px; }
 }
 
 /* Long real-world task data must stay contained inside the reference hero. */

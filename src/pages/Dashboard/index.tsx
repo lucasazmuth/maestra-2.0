@@ -50,6 +50,17 @@ const Atalho: FC<{ icone: ReactNode; titulo: string; texto: string; aoAbrir: () 
   </article>
 );
 
+const CabecalhoDoMetodo: FC<{ pilar: Pilar; aoAbrir: () => void }> = ({ pilar, aoAbrir }) => (
+  <header className='method-view-header'>
+    <div>
+      <span>{pilar.rotulo}</span>
+      <h1 id={`method-${pilar.chave}`}>{pilar.titulo}</h1>
+      <p>{pilar.linha}</p>
+    </div>
+    <button type='button' onClick={aoAbrir}>{pilar.cta}<FiArrowRight aria-hidden /></button>
+  </header>
+);
+
 const PainelDoMetodo: FC<{
   pilar: Pilar;
   artist: Artist;
@@ -65,7 +76,8 @@ const PainelDoMetodo: FC<{
 
   if (pilar.chave === 'diagnostico' && real) {
     return (
-      <section className='method-view method-view-diagnostico method-view-report' aria-label='Relatório completo do Diagnóstico REAL'>
+      <section className='method-view method-view-diagnostico method-view-report' aria-labelledby='method-diagnostico'>
+        <CabecalhoDoMetodo pilar={pilar} aoAbrir={aoAbrir} />
         <DiagnosticReport
           realIndex={real}
           chartmetric={content.chartmetricProfile as Chartmetric | null}
@@ -76,7 +88,7 @@ const PainelDoMetodo: FC<{
           noSpotify={!content.spotifyProfile?.spotify_artist_id}
           enableStickyCta={false}
           showPlanningCta={false}
-          hideHero={false}
+          hideHero
           onRedo={aoAbrir}
           redoLocked={!podeRefazer}
         />
@@ -86,14 +98,7 @@ const PainelDoMetodo: FC<{
 
   return (
     <section className={`method-view method-view-${pilar.chave}`} aria-labelledby={`method-${pilar.chave}`}>
-      <header className='method-view-header'>
-        <div>
-          <span>{pilar.rotulo}</span>
-          <h1 id={`method-${pilar.chave}`}>{pilar.titulo}</h1>
-          <p>{pilar.linha}</p>
-        </div>
-        <button type='button' onClick={aoAbrir}>{pilar.cta}<FiArrowRight aria-hidden /></button>
-      </header>
+      <CabecalhoDoMetodo pilar={pilar} aoAbrir={aoAbrir} />
 
       {pilar.chave === 'diagnostico' && (
         <div className='method-diagnostic-grid'>

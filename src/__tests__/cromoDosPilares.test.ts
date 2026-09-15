@@ -49,7 +49,7 @@ describe('menu do método no painel', () => {
 
   it('tem o relatório completo e painéis internos para execução e planejamento', () => {
     expect(dashboardTsx).toContain("<DiagnosticReport");
-    expect(dashboardTsx).toContain("hideHero={false}");
+    expect(dashboardTsx).toContain('hideHero');
     expect(dashboardTsx).toContain("pilar.chave === 'execucao'");
     expect(dashboardTsx).toContain("pilar.chave === 'planejamento'");
   });
