@@ -395,6 +395,7 @@ const ActionPlan: FC = () => {
                   <span className="ap-plan-row-main">
                     <em>ESTRATÉGIA #{String(idx + 1).padStart(2, '0')}</em>
                     <strong>{p.s.title}</strong>
+                    {p.s.description && <span style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.5 }}>{p.s.description}</span>}
                   </span>
                   {/* Sem a barra: só o "1/10" já diz a mesma coisa, e num cabeçalho que agora
                       pode ter várias linhas de título (título não trunca mais), a barra virava

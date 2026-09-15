@@ -952,7 +952,7 @@ export const NytaChat: FC<NytaChatProps> = ({ artist, draft, setDraft, identity,
               // ficam salvas sem tarefas. Avança direto pro Resumo (passo 8) — não há mais cronograma.
               const sel = new Set(selectedIds);
               const withTasks = scored.map((s) =>
-                sel.has(s.id) ? { ...s, tasks: engine.buildActionPlan(s) } : { ...s, tasks: [] }
+                sel.has(s.id) ? { ...s, tasks: engine.buildActionPlan(s) } : s
               );
               persist({ strategies: withTasks }, 8);
             }}

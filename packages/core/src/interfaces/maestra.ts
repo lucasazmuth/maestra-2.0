@@ -113,6 +113,12 @@ export interface Strategy {
   // Metodologia v2: chave canônica do banco de 53 estratégias (ex.: '1', '26', '41a', 'N3').
   // É a chave para a matriz de priorização (53×8) e o passo a passo canônico do plano de ação.
   bankId?: string;
+  bankVersion?: string;
+  artistScores?: Record<number, number>;
+  canonicalPercent?: number;
+  priorityVersion?: string;
+  priorityMode?: 'manual' | 'canonical';
+  priorityReviewed?: boolean;
   // Itens da SWOT que esta estratégia responde (rótulos), exibidos no tooltip "responde a…".
   swotRefs?: { strengths?: string[]; weaknesses?: string[]; opportunities?: string[] };
   tasks: ActionTask[];

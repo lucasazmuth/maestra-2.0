@@ -30,23 +30,32 @@ export const YouTubeEmbed: FC<{
   emptyLabel?: string;
 }> = memo(({ src, title, className, emptyLabel = 'Vídeo em breve' }) => {
   const id = extractYouTubeId(src);
+  const origin = typeof window === 'undefined' ? '' : window.location.origin;
+  const isLocal = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  const watchUrl = id ? `https://www.youtube.com/watch?v=${id}` : null;
 
   return (
     <div className={`yt-embed${className ? ` ${className}` : ''}`}>
-      {id ? (
-        <iframe
-          className='yt-embed-player'
-          src={`https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`}
-          title={title}
-          allow='accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
-          allowFullScreen
-          loading='lazy'
-        />
-      ) : (
+      {!id ? (
         <div className='yt-embed-empty'>
           <span className='yt-embed-play' aria-hidden><FiPlay size={20} /></span>
           <p>{emptyLabel}</p>
         </div>
+      ) : isLocal ? (
+        <a className='yt-embed-local' href={watchUrl!} target='_blank' rel='noreferrer'>
+          <span className='yt-embed-play' aria-hidden><FiPlay size={20} /></span>
+          <span>Assistir no YouTube</span>
+        </a>
+      ) : (
+        <iframe
+          className='yt-embed-player'
+          src={`https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&origin=${encodeURIComponent(origin)}`}
+          title={title}
+          allow='accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+          allowFullScreen
+          loading='lazy'
+          referrerPolicy='strict-origin-when-cross-origin'
+        />
       )}
     </div>
   );
