@@ -15,12 +15,22 @@
     box-shadow: 0 8px 18px rgba(123, 77, 255, .22);
     &:hover { background: #6840df !important; }
   }
+  &__nyta-action, &__manual-action {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+  }
+  &__nyta-action span, &__manual-action span { font-weight: 800; }
+  &__nyta-action small, &__manual-action small { font-size: 12px; font-weight: 500; }
+  &__nyta-action small { opacity: .82; }
   &__manual-action {
     border-color: transparent !important;
     background: transparent !important;
     color: var(--wz-muted) !important;
     box-shadow: none !important;
     &:hover { color: var(--wz-ink) !important; text-decoration: underline; }
+    small { color: var(--wz-muted); }
   }
   &__rating { display: grid; gap: 10px; margin: 24px 0; }
   &__progress { display: flex; justify-content: space-between; color: var(--wz-muted); font-size: 12px; font-weight: 700; }
