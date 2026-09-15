@@ -1,4 +1,5 @@
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import { App, DatePicker, Input, Select } from 'antd';
 import dayjs from 'dayjs';
@@ -58,6 +59,7 @@ export const ScheduleApprovalCard: FC<{
   const [schedule, setSchedule] = useState<ActionPlanSchedule>(initial);
   const [activeIndex, setActiveIndex] = useState(0);
   const [view, setView] = useState<'timeline' | 'list'>('timeline');
+  const [editorOpen, setEditorOpen] = useState(false);
   const calculated = useMemo(() => strategies.map((strategy) => scheduleStrategy(strategy, schedule, today)), [strategies, schedule, today]);
   const update = (patch: Partial<ActionPlanSchedule>) => setSchedule((current) => ({ ...current, ...patch,
     strategies: Object.fromEntries(Object.entries(current.strategies).map(([id, state]) => {
@@ -132,9 +134,12 @@ export const ScheduleApprovalCard: FC<{
               <small style={{ color: '#71809e', fontWeight: 400 }}>{texts.caminho_apoio}</small>
             </label>}
             {ready && <div className='schedule-studio__overview'><div><span>Primeira tarefa</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0] ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort()[0]).format('DD MMM') : 'A definir'}</strong></div><div className='schedule-studio__overview-line' aria-hidden='true'>{strategy.tasks.map((task, index) => task.deadline && <i key={index} style={{ left: `${gantt.position(task.deadline)}%` }} />)}</div><div><span>Último início</span><strong>{strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1) ? dayjs(strategy.tasks.filter(task => task.deadline).map(task => task.deadline!).sort().at(-1)).format('DD MMM') : 'A definir'}</strong></div></div>}
-            <details className='schedule-studio__task-details'>
-            <summary>Revisar {strategy.tasks.length} tarefas e ajustar datas</summary>
-            <div className='schedule-studio__toolbar'><span>Início das tarefas</span><div role='group' aria-label='Visualização'><button type='button' aria-pressed={view === 'timeline'} onClick={() => setView('timeline')}>Gantt</button><button type='button' aria-pressed={view === 'list'} onClick={() => setView('list')}>Lista</button></div></div>
+            <button type='button' className='schedule-studio__open-editor' onClick={() => setEditorOpen(true)}>Ver e ajustar cronograma <span>{strategy.tasks.length} tarefas</span></button>
+            {editorOpen && createPortal(<div className='schedule-editor' role='dialog' aria-modal='true' aria-labelledby='scheduleEditorTitle'>
+            <section className='schedule-editor__panel'>
+            <header className='schedule-editor__header'><div><small>Estratégia {activeIndex + 1} de {calculated.length}</small><h2 id='scheduleEditorTitle'>{strategy.title}</h2><p>Confira quando cada tarefa começa. Clique em uma data para ajustar.</p></div><button type='button' onClick={() => setEditorOpen(false)} aria-label='Fechar cronograma' title='Fechar'><FiX size={20} /></button></header>
+            <div className='schedule-editor__body'>
+            <div className='schedule-studio__toolbar'><span>{strategy.tasks.length} tarefas · {definition.ancora === 'lancamento' ? 'Organizadas pelo lançamento' : definition.ancora === 'inicio' ? 'Organizadas pelo início do plano' : 'Organizadas pela data escolhida'}</span><div role='group' aria-label='Visualização'><button type='button' aria-pressed={view === 'timeline'} onClick={() => setView('timeline')}>Gantt</button><button type='button' aria-pressed={view === 'list'} onClick={() => setView('list')}>Lista</button></div></div>
             {view === 'timeline' ? <div className='schedule-gantt' aria-label='Cronograma em Gantt'>
               <div className='schedule-gantt__content' style={{ width: 300 + gantt.width }}>
                 <div className='schedule-gantt__corner'>Tarefas</div>
@@ -150,7 +155,10 @@ export const ScheduleApprovalCard: FC<{
               </div>
             </div> : <div className='schedule-list'>{strategy.tasks.map((task, index) => <label key={task.id}><span><small>{String(index + 1).padStart(2, '0')}</small>{task.description}</span><DatePicker allowClear={false} aria-label={`Início: ${task.description}`} size='small' value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD/MM' /></label>)}</div>}
             <p className='schedule-studio__note'>{texts.aceite}</p>
-            </details>
+            </div>
+            <footer className='schedule-editor__footer'><span>{tight ? `${tight} tarefa${tight === 1 ? '' : 's'} apertada${tight === 1 ? '' : 's'}` : 'Datas prontas para aprovação'}</span><button type='button' onClick={() => setEditorOpen(false)}>Concluir revisão</button></footer>
+            </section>
+            </div>, document.body)}
             {tight > 0 && <p style={{ color: '#9a6400', margin: '12px 0 0', fontSize: 13 }}>{texts.apertadas.replace('{n}', String(tight))}</p>}
             <footer className='schedule-studio__footer'><button type='button' disabled={activeIndex === 0} onClick={() => setActiveIndex(value => value - 1)}>Anterior</button><button type='button' className='schedule-studio__approve' disabled={!ready} onClick={() => { updateState(strategy.id, { accepted: true }); if (activeIndex + 1 < calculated.length) setActiveIndex(value => value + 1); }}>{state.accepted ? 'Aprovada' : 'Aprovar estratégia'}{activeIndex + 1 < calculated.length ? ' e continuar' : ''}</button></footer>
           </section>;
