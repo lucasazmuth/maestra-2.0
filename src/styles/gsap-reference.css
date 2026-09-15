@@ -7545,6 +7545,18 @@
 .method-view-report [class*="realPatternLetterLow"] { color: #aab6c9; }
 .method-view-report [class*="dimMono"] { color: #52668d; background: #f1f5fb; border-color: #d8e1ee; }
 .method-view-report [class*="dimLevel"] { background: #e8edf5; }
+.method-view-report [class*="mapChip"] { color: #61749a !important; background: #f7f9fd !important; border-color: #d8e1ee !important; }
+.method-view-report [class*="mapChipOn"] { color: #244ce0 !important; background: #eaf0ff !important; border-color: #9db7ff !important; }
+.method-view-report [class*="mapChipName"] { color: #344b73 !important; }
+.method-view-report [class*="mapChipLeitura"] { color: #7184a5 !important; }
+.method-view-report [class*="mapDot"] { color: #7184a5 !important; background: #e3eaf5 !important; border-color: #d8e1ee !important; }
+.method-view-report [class*="mapDotOn"] { color: #fff !important; background: #52668d !important; border-color: #52668d !important; }
+.method-view-report [class*="insightsList"] li { color: #61749a !important; }
+.method-view-report [class*="ctaTitle"] { color: #344b73 !important; }
+.method-view-report [class*="ctaParagraph"],
+.method-view-report [class*="ctaMicrocopy"] { color: #7184a5 !important; }
+.method-view-report [class*="shareBtn"] { color: #3361ff !important; background: #fff !important; border-color: #cbd9ff !important; }
+.method-view-report [class*="shareBtn"]:hover:not(:disabled) { color: #244ce0 !important; background: #edf2ff !important; border-color: #9db6ff !important; }
 
 @media (max-width: 700px) {
   .method-view-header { min-height: 210px; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 20px; padding: 26px 22px; }
