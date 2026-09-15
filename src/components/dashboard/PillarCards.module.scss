@@ -4,7 +4,8 @@
   grid-template-columns: 24px minmax(0, 1fr) 20px;
   align-items: center;
   gap: 18px;
-  min-height: 120px;
+  height: 138px;
+  box-sizing: border-box;
   padding: 24px;
   border-radius: 8px;
   background: var(--pilarBackground, #000);
@@ -65,7 +66,7 @@
 .seta { color: rgba(255,255,255,.65); transition: transform .15s ease; }
 .travado .marca { color: rgba(255,255,255,.24); }
 @media (max-width: 700px) {
-  .card { gap: 14px; padding: 20px 18px; min-height: 112px; }
+  .card { gap: 14px; padding: 20px 18px; height: 132px; }
   .titulo { font-size: 18px; }
   .linha { font-size: 13px; }
 }
