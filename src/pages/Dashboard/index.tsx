@@ -6,6 +6,7 @@ import { FiArrowRight, FiCheck, FiFileText, FiLifeBuoy, FiStar } from 'react-ico
 import { useArtist } from '@maestra/core/hooks/useArtist';
 import { useJourneyState } from '@maestra/core/hooks/useJourneyState';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
+import { useIsPlatformAdmin } from '@maestra/core/hooks/useIsPlatformAdmin';
 import { pilaresDoPainel, type Pilar } from '@maestra/core/nucleo/pilaresDoPainel';
 import type { Artist } from '@maestra/core/interfaces/maestra';
 import { Spinner } from '../../components/spinner/spinner';
@@ -89,6 +90,7 @@ const PainelDoMetodo: FC<{
           enableStickyCta={false}
           showPlanningCta={false}
           hideHero
+          hideLegacyNotice
           onRedo={aoAbrir}
           redoLocked={!podeRefazer}
         />
@@ -163,6 +165,8 @@ const Dashboard: FC = () => {
   const { artist, loading } = useArtist();
   const journey = useJourneyState(artist);
   const capabilities = useArtistCapabilities(artist);
+  const isPlatformAdmin = useIsPlatformAdmin();
+  const canRedoDiagnostic = capabilities.manageTasks || isPlatformAdmin;
   // A avaliação abre daqui, com estado próprio: o `reviewOpen` do Layout é privado dele.
   const [avaliando, setAvaliando] = useState(false);
   const [secao, setSecao] = useState<SecaoDoPainel>(() => secaoDaUrl(location.search));
@@ -186,7 +190,7 @@ const Dashboard: FC = () => {
     album_image: album.image,
     spotify_url: album.spotify_url,
   }));
-  const pilares = pilaresDoPainel(artist, journey, capabilities);
+  const pilares = pilaresDoPainel(artist, journey, { ...capabilities, manageTasks: canRedoDiagnostic });
   const pilarAtivo = pilares.find((pilar) => pilar.chave === secao);
 
   return (
@@ -197,10 +201,12 @@ const Dashboard: FC = () => {
         <PainelDoMetodo
           pilar={pilarAtivo}
           artist={artist}
-          podeRefazer={capabilities.manageTasks}
+          podeRefazer={canRedoDiagnostic}
           aoAbrir={() => {
-            const rota = pilarAtivo.chave === 'diagnostico'
-              ? capabilities.manageTasks ? `/artists/${artist.id}/diagnostico/refazer` : '/planos'
+            const rota = pilarAtivo.destino === 'refazerDiagnostico'
+              ? `/artists/${artist.id}/diagnostico/refazer`
+              : pilarAtivo.destino === 'assinatura'
+                ? '/planos'
               : pilarAtivo.chave === 'execucao'
                 ? `/artists/${artist.id}/action-plan`
                 : `/artists/${artist.id}/perfil`;

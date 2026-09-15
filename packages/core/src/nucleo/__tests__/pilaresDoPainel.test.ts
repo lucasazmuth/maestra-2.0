@@ -44,7 +44,8 @@ describe('pilares do painel', () => {
       const [pilar] = pilaresDoPainel(artista(comDiagnostico), jornada(), TUDO);
       expect(pilar.linha).toBe('Você está em Rising, com 2 de 4 dimensões acesas.');
       expect(pilar.marcas).toEqual([true, false, true, false]);
-      expect(pilar.destino).toBe('diagnostico');
+      expect(pilar.cta).toBe('Refazer diagnóstico REAL');
+      expect(pilar.destino).toBe('refazerDiagnostico');
     });
 
     it('mostra a data da leitura, que é o que diz se o espelho está velho', () => {
