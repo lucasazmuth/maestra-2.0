@@ -59,6 +59,7 @@ const Cartao: FC<{ pilar: Pilar; onAbrir: () => void }> = ({ pilar, onAbrir }) =
     >
       <span className={styles.marca} aria-hidden><Icone size={24} /></span>
       <div className={styles.corpo}>
+        <span className={styles.rotulo}>{pilar.rotulo}</span>
         <h2 className={styles.titulo}>{pilar.titulo}</h2>
         <p className={styles.linha}>{resumo}</p>
           {pilar.progresso && (
