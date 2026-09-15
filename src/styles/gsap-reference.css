@@ -1410,6 +1410,12 @@
 
 /* Profile asset and current diagnosis phase progress. */
 .portrait-wrap { --stage-progress: 0%; position: relative; display: grid; width: 128px; height: 128px; place-items: center; margin-top: 18px; }
+/* O retrato É o botão da home: o item "Dashboard" saiu do menu quando os três módulos do método
+   passaram a viver nos cartões da própria home. Sem a mão do cursor e sem o anel de foco, o único
+   caminho de volta no computador seria invisível e inalcançável pelo teclado. */
+.portrait-wrap[role='button'] { cursor: pointer; border-radius: 50%; transition: transform .2s cubic-bezier(.4, 0, .2, 1); }
+.portrait-wrap[role='button']:hover { transform: translateY(-2px); }
+.portrait-wrap[role='button']:focus-visible { outline: 2px solid var(--blue); outline-offset: 6px; }
 .portrait-stage-ring { position: relative; isolation: isolate; display: grid; width: 128px; height: 128px; place-items: center; border-radius: 50%; background: conic-gradient(var(--blue) 0 var(--stage-progress), #e3eaf5 var(--stage-progress) 100%); box-shadow: 0 14px 28px rgba(51, 97, 255, .08); }
 .portrait-stage-ring::before { position: absolute; z-index: 0; inset: 4px; border-radius: inherit; background: #fafbfc; content: ''; }
 .portrait-stage-ring::after { display: none; }
@@ -7447,6 +7453,10 @@
   .task-app:not(.public-app) .music-stat-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.music-dashboard > .music-stat-grid {
+  margin-bottom: 24px;
 }
 
 /* Long real-world task data must stay contained inside the reference hero. */

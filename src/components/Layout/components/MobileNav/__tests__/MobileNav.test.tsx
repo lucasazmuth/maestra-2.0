@@ -61,12 +61,22 @@ describe('o "Mais" da tab bar', () => {
   it('guarda os módulos do perfil que não couberam na barra', () => {
     abrirOMais();
 
-    expect(itensDoMais()).toEqual([
-      'Diagnóstico REAL',
-      'Plano estratégico',
-      'Equipe',
-      'Marketing',
-    ]);
+    expect(itensDoMais()).toEqual(['Marketing']);
+  });
+
+  // ⚠️ A BARRA É SÓ DE FERRAMENTAS, e é fácil desfazer isso sem querer: basta alguém "devolver" um
+  // atalho para o Diagnóstico ou para o Plano por achar que faltou. Eles não faltam — eles são o
+  // método, e o método mora nos três cartões da home, onde cada um diz em que pé está. Repetidos
+  // aqui, devolvem a dúvida que os cartões existem para resolver.
+  it('não leva aos módulos do método: eles moram nos cartões da home', () => {
+    abrirOMais();
+
+    const naBarra = Array.from(document.querySelectorAll('.mobile-nav-item'))
+      .map((b) => b.textContent || '');
+    for (const doMetodo of ['Diagnóstico REAL', 'Plano estratégico', 'Plano']) {
+      expect(itensDoMais()).not.toContain(doMetodo);
+      expect(naBarra.some((rotulo) => rotulo.includes(doMetodo))).toBe(false);
+    }
   });
 
   // A regra, dita pelo nome: o painel é dos MÓDULOS deste perfil. Atalhos da conta — que não

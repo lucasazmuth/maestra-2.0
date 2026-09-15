@@ -23,6 +23,8 @@ export interface JourneyState {
   paid: boolean;
   hasDiagnostic: boolean;
   hasPlan: boolean;
+  /** Começou o planejamento e não concluiu: o convite é "continuar", não "criar". */
+  resumingPlan: boolean;
   tasksTotal: number;
   tasksDone: number;
   tasksPending: number;
@@ -96,7 +98,7 @@ export function useJourneyState(artist?: Artist | null): JourneyState {
       };
     }
 
-    return { paid, hasDiagnostic, hasPlan, tasksTotal, tasksDone, tasksPending, pct, stage: next.stage, next };
+    return { paid, hasDiagnostic, hasPlan, resumingPlan, tasksTotal, tasksDone, tasksPending, pct, stage: next.stage, next };
   }, [artist, isPaid, viewPlanning]);
 }
 
