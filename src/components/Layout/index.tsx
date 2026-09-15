@@ -30,17 +30,14 @@ import {
   AgendaIcon,
   CatalogoIcon,
   DashboardIcon,
-  DiagnosticoIcon,
   EquipeIcon,
   MarketingIcon,
   NotificationIcon,
-  PlanejamentoIcon,
   PlanoAcaoIcon,
   SystemHomeIcon,
 } from '../Icons/system';
 import { NytaAvatar } from '../../pages/Wizard/chat/nytaPersona';
 import { useArtistCapabilities } from '@maestra/core/hooks/useArtistCapabilities';
-import { useJourneyState } from '@maestra/core/hooks/useJourneyState';
 
 export interface LayoutContext {
   container: RefObject<HTMLDivElement | null>;
@@ -173,7 +170,6 @@ export const AppLayout: FC = memo(() => {
   const isNotificationsPage = location.pathname === '/notifications';
   const openNytaPage = () => routeArtistId ? navigate(`/artists/${routeArtistId}/nyta`) : openNyta();
   const { viewPlanning } = useArtistCapabilities(currentArtist);
-  const journey = useJourneyState(currentArtist);
   const currentArtistImage = currentArtist?.content?.spotifyProfile?.image || ARTISTS_DEFAULT_IMAGE;
   const realStage = currentArtist?.content?.realIndex?.profile?.name;
   // O REAL usa índice zero-based: Beginner = 0 e Icon = 15, como na referência visual.
@@ -269,8 +265,6 @@ export const AppLayout: FC = memo(() => {
     navigate(`/artists/${routeArtistId}${suffix ? `/${suffix}` : ''}`);
   };
 
-  const planningTo = journey.hasPlan ? 'perfil' : 'wizard';
-  const actionUnlocked = viewPlanning && journey.hasPlan;
   const userMetadata = (user?.user_metadata || {}) as Record<string, any>;
   const displayName = userMetadata.full_name || userMetadata.name || user?.email || 'Usuário';
   const userAvatar = userMetadata.avatar_url || userMetadata.picture || ARTISTS_DEFAULT_IMAGE;
@@ -509,8 +503,15 @@ export const AppLayout: FC = memo(() => {
 
           {currentArtist && !isNytaPage && !isNotificationsPage && (
             <aside className='profile-panel' aria-label='Detalhes do artista'>
+              {/* O retrato também oferece acesso ao início do artista. */}
               <div
                 className='portrait-wrap'
+                role='button'
+                tabIndex={0}
+                aria-label={`Início de ${currentArtist.name}`}
+                aria-current={isActive('') ? 'page' : undefined}
+                onClick={() => goArtist('')}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goArtist(''); } }}
                 style={{ '--stage-progress': realStageProgress } as CSSProperties}
               >
                 <div
@@ -528,9 +529,7 @@ export const AppLayout: FC = memo(() => {
 
               <div className='profile-menu'>
                 <ProfileMenuButton active={isActive('')} icon={<DashboardIcon size={22} />} label='Dashboard' onClick={() => goArtist('')} />
-                <ProfileMenuButton active={isActive('diagnostico')} icon={<DiagnosticoIcon size={22} />} label='Diagnóstico Real' onClick={() => goArtist('diagnostico')} />
-                <ProfileMenuButton active={isActive('perfil') || isActive('wizard')} icon={<PlanejamentoIcon size={22} />} label='Planejamento' locked={!viewPlanning} onClick={() => goArtist(planningTo)} />
-                <ProfileMenuButton active={isActive('action-plan')} icon={<PlanoAcaoIcon size={22} />} label='Plano de Ação' locked={!actionUnlocked} onClick={() => goArtist(actionUnlocked ? 'action-plan' : 'wizard')} />
+                <ProfileMenuButton active={isActive('action-plan')} icon={<PlanoAcaoIcon size={22} />} label='Plano de Ação' locked={!viewPlanning} onClick={() => goArtist('action-plan')} />
                 <ProfileMenuButton active={isActive('catalog')} icon={<CatalogoIcon size={22} />} label='Músicas' onClick={() => goArtist('catalog')} />
                 <ProfileMenuButton active={isActive('agenda')} icon={<AgendaIcon size={22} />} label='Agenda' onClick={() => goArtist('agenda')} />
                 <ProfileMenuButton active={isActive('team')} icon={<EquipeIcon size={22} />} label='Equipe' locked={!viewPlanning} onClick={() => goArtist('team')} />
