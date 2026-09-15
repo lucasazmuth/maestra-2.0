@@ -70,7 +70,7 @@ export const buildScheduledTasks = (
   if (!base) return strategy.tasks;
 
   let previous = base;
-  return includedTasks(definition, state.path).map((task, index) => {
+  const scheduled = includedTasks(definition, state.path).map((task, index) => {
     const raw = task.continua ? previous : definition.ancora === 'inicio'
       ? addDays(base, task.dia || 0)
       : addDays(base, -(task.dia || 0));
@@ -95,13 +95,29 @@ export const buildScheduledTasks = (
       schedule: {
         anchor: definition.ancora,
         order: task.n || index + 1,
-        tight: tight || undefined,
-        continuous: task.continua || undefined,
-        recurrence: task.continua ? 'weekly' : undefined,
+        tight: tight ? true : undefined,
+        continuous: task.continua ? true : undefined,
+        recurrence: task.continua ? 'weekly' as const : undefined,
         strategyId: strategy.id,
       },
     };
   });
+  for (const [orderValue, manualDate] of Object.entries(state.manualDates || {})) {
+    const order = Number(orderValue);
+    const index = scheduled.findIndex((task) => task.schedule?.order === order);
+    if (index < 0 || !scheduled[index].deadline) continue;
+    const delta = Math.round((parse(manualDate).getTime() - parse(scheduled[index].deadline!).getTime()) / DAY);
+    for (let offset = index; offset < scheduled.length; offset += 1) {
+      const task = scheduled[offset];
+      if (!task.deadline) continue;
+      let deadline = maxDate(addDays(task.deadline, delta), today);
+      if (definition.ancora !== 'inicio' && !task.schedule?.continuous && (definition.tarefas.find((item) => item.n === task.schedule?.order)?.dia || 0) >= 0) {
+        deadline = minDate(deadline, base);
+      }
+      scheduled[offset] = { ...task, deadline, schedule: { ...task.schedule!, tight: deadline === today || deadline === base } };
+    }
+  }
+  return scheduled;
 };
 
 export const scheduleStrategy = (strategy: Strategy, schedule: ActionPlanSchedule, today: string): Strategy => ({

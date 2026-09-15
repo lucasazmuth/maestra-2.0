@@ -60,12 +60,18 @@ export const ScheduleApprovalCard: FC<{
 }> = ({ strategies, schedule: initial, texts, onConfirm }) => {
   const today = dayjs().format('YYYY-MM-DD');
   const [schedule, setSchedule] = useState<ActionPlanSchedule>(initial);
+  const [dragged, setDragged] = useState<{ strategyId: string; order: number } | null>(null);
   const calculated = useMemo(() => strategies.map((strategy) => scheduleStrategy(strategy, schedule, today)), [strategies, schedule, today]);
   const update = (patch: Partial<ActionPlanSchedule>) => setSchedule((current) => ({ ...current, ...patch }));
   const updateState = (strategyId: string, patch: Record<string, unknown>) => setSchedule((current) => ({
     ...current,
     strategies: { ...current.strategies, [strategyId]: { ...current.strategies[strategyId], ...patch } },
   }));
+  const moveTask = (strategyId: string, order: number, date?: string) => {
+    if (!date) return;
+    const previous = schedule.strategies[strategyId]?.manualDates || {};
+    updateState(strategyId, { manualDates: { ...previous, [order]: date }, adjusted: true, accepted: false });
+  };
   const accepted = calculated.every((strategy) => schedule.strategies[strategy.id]?.accepted);
 
   return (
@@ -98,9 +104,12 @@ export const ScheduleApprovalCard: FC<{
               <small style={{ color: '#71809e', fontWeight: 400 }}>{texts.caminho_apoio}</small>
             </label>}
             <div style={{ display: 'grid', gap: 5, marginTop: 14 }}>
-              {strategy.tasks.map((task) => <div key={task.id} draggable aria-label={`Tarefa ${task.description}`} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13, padding: '7px 0', borderTop: '1px solid #f0f3f8' }}>
+              {strategy.tasks.map((task) => <div key={task.id} draggable aria-label={`Tarefa ${task.description}`} onDragStart={() => setDragged({ strategyId: strategy.id, order: task.schedule?.order || 0 })} onDragOver={(event) => event.preventDefault()} onDrop={() => {
+                if (dragged?.strategyId === strategy.id) moveTask(strategy.id, dragged.order, task.deadline);
+                setDragged(null);
+              }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, fontSize: 13, padding: '7px 0', borderTop: '1px solid #f0f3f8', cursor: 'grab' }}>
                 <span>{task.description}{task.schedule?.continuous ? ' · contínua' : ''}</span>
-                <strong style={{ whiteSpace: 'nowrap', color: task.schedule?.tight ? '#c26b00' : '#48618e' }}>{dayjs(task.deadline).format('DD/MM')}</strong>
+                <DatePicker size='small' value={task.deadline ? dayjs(task.deadline) : null} onChange={(value) => moveTask(strategy.id, task.schedule?.order || 0, value?.format('YYYY-MM-DD'))} format='DD/MM' />
               </div>)}
             </div>
             {tight > 0 && <p style={{ color: '#9a6400', margin: '12px 0 0', fontSize: 13 }}>{texts.apertadas.replace('{n}', String(tight))}</p>}
