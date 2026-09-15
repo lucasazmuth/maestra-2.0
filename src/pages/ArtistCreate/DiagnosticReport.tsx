@@ -558,6 +558,8 @@ interface Props {
   heroSub?: string;
   // Esconde o hero interno (avatar + título + refazer) — a /diagnostico usa o PageHeader padrão.
   hideHero?: boolean;
+  // O dashboard já oferece a ação de refazer no cabeçalho do método; não repete o aviso legado.
+  hideLegacyNotice?: boolean;
   // Conteúdo opcional renderizado logo ABAIXO do card "Seu perfil de carreira" (ex.: banner de refazer).
   belowProfile?: ReactNode;
   // Só para compor o identificador do documento exportado (ver `docId`). Sem ele o id cai no
@@ -569,7 +571,7 @@ interface Props {
 
 // Página de diagnóstico REAL (free tier) — entregue ao artista antes do pagamento.
 // Determinística: consome o realIndex calculado no backend (sem IA). Suporta v1 (antigo) e v2.
-export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, belowProfile, artistId, vinculo }) => {
+export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName, artistImage, noSpotify = false, onContinue, enableStickyCta = true, showPlanningCta = true, onRedo, redoLocked = false, heroTitle, heroSub, hideHero = false, hideLegacyNotice = false, belowProfile, artistId, vinculo }) => {
   const authUser = useAppSelector((s) => s.auth.user);
   const [methodOpen, setMethodOpen] = useState(false);
   // v2 (motor REAL Consolidado) tem `version: 2` + `boletim`; v1 mantém o shape antigo.
@@ -580,7 +582,7 @@ export const DiagnosticReport: FC<Props> = ({ realIndex, chartmetric, artistName
   // Só o que não tem cartão para chamar de seu — hoje, o aviso de versão. Os outros quatro do
   // §11.3 são impressos dentro da dimensão a que pertencem, onde dizem de qual fonte ou de qual
   // campo se trata; aqui em cima eles eram a mesma frase sem a informação que a torna útil.
-  const avisos = avisosSemLugarProprio(riAny);
+  const avisos = avisosSemLugarProprio(riAny).filter((aviso) => !hideLegacyNotice || aviso.chave !== 'legado');
   const { profile, pattern } = realIndex;
   // Acento da página segue a fase REAL (tier da placa) — coerente com a identidade de gamificação.
   const realTier = tierForPattern(pattern);

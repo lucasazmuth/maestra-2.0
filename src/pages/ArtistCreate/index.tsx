@@ -22,6 +22,7 @@ import {
 } from '@maestra/core/constants/quizDoDiagnostico';
 import { useCanCreateArtist } from '@maestra/core/hooks/useCanCreateArtist';
 import { useEntitlements } from '@maestra/core/hooks/useEntitlements';
+import { useIsPlatformAdmin } from '@maestra/core/hooks/useIsPlatformAdmin';
 import { formatRemainingTime } from '@maestra/core/utils/rateLimitCalc';
 import { DiagnosticReport, type Chartmetric } from './DiagnosticReport';
 import { FlowHeader } from './FlowHeader';
@@ -49,14 +50,15 @@ const ArtistCreate: FC = () => {
   const redo = !!redoArtistId;
   const redoArtist = redoArtistId ? artists.find((a) => a.id === redoArtistId) : undefined;
   const { isPro } = useEntitlements();
+  const isPlatformAdmin = useIsPlatformAdmin();
   const subInitialized = useAppSelector((s) => s.subscription.initialized);
 
   // Refazer diagnóstico é recurso PRO — o edge também valida (403). Aqui evitamos o beco sem saída
   // de rodar o quiz todo pra só barrar no fim: não-PRO é mandado pra /planos na entrada. Só
   // age após o status carregar (`initialized`), senão um PRO seria expulso no load inicial.
   useEffect(() => {
-    if (redo && subInitialized && !isPro) navigate('/planos', { replace: true });
-  }, [redo, subInitialized, isPro, navigate]);
+    if (redo && subInitialized && !isPro && !isPlatformAdmin) navigate('/planos', { replace: true });
+  }, [redo, subInitialized, isPro, isPlatformAdmin, navigate]);
 
   // Mesma ideia para quem NÃO é dono do perfil. O botão já não aparece para colaborador, mas a
   // rota continua alcançável por URL (link salvo, histórico) — e ali o quiz rodava inteiro para
