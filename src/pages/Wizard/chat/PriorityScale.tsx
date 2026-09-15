@@ -18,6 +18,10 @@ const percent = (scores: Record<number, number>, count: number) => count
   ? Math.round(Array.from({ length: count }, (_, i) => scores[i] || 0).reduce((a, b) => a + b, 0) / count * 10)
   : 0;
 
+const SCALE = Array.from({ length: 11 }, (_, index) => index);
+const scoreColor = (score: number) => score <= 3 ? '#d94c4c' : score <= 6 ? '#c78316' : '#3361ff';
+const scoreWord = (score?: number) => score == null ? 'Escolha uma nota' : score === 0 ? 'Não ajuda em nada' : score <= 3 ? 'Ajuda pouco' : score <= 6 ? 'Ajuda' : score <= 9 ? 'Ajuda bastante' : 'Ajuda muito';
+
 export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, onProgress }) => {
   const canonical = suggestScores(strategies, objectives);
   const [list, setList] = useState(strategies);
@@ -28,6 +32,9 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
     resumed ? manual && firstPending !== -1 ? 'manual' : 'rank' : 'choose'
   );
   const [index, setIndex] = useState(Math.max(0, firstPending));
+  const [objectiveIndex, setObjectiveIndex] = useState(0);
+  const [hoverScore, setHoverScore] = useState<number | null>(null);
+  const [advancing, setAdvancing] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const progressRef = useRef(onProgress);
   progressRef.current = onProgress;
@@ -84,34 +91,40 @@ export const PriorityScale: FC<Props> = ({ strategies, objectives, onConfirm, on
         <button type="button" className="priority-v3__nyta-action" onClick={() => start(false)}>Priorizar com a Nyta</button>
         <button type="button" className="priority-v3__manual-action" onClick={() => start(true)}>Priorizar por conta própria</button>
       </div>
-    </> : mode === 'manual' ? <>
-      <p>Estratégia {index + 1} de {list.length}</p>
-      <h3>{list[index].title}</h3>
-      {list[index].description && <p>{list[index].description}</p>}
-      {objectives.map((objective, i) => {
-        const strategy = list[index];
-        const suggestion = canonical[strategy.id]?.byObjective[i] ?? 5;
-        const value = strategy.objectiveScores?.[i] ?? suggestion;
-        return <label className="priority-v3__rating" key={i}>
-          <span>{objective} <strong>{value}/10</strong></span>
-          <input type="range" min="1" max="10" step="1" value={value}
-            aria-label={objective}
-            onChange={e => {
-              const scores = { ...strategy.objectiveScores, [i]: Number(e.target.value) };
-              update(list.map(s => s.id === strategy.id ? { ...s, objectiveScores: scores, artistScores: scores } : s));
-            }} />
-          <small>Sugestão da Nyta: {suggestion}/10. {explanationFor(strategy.bankId || '', objective)}</small>
-        </label>;
-      })}
-      <p>Você: {scored[index].finalScore}% · Nyta: {scored[index].canonicalPercent}%</p>
-      <div className="priority-v3__actions">
-        <button type="button" disabled={!index} onClick={() => setIndex(index - 1)}>Anterior</button>
-        <button type="button" onClick={() => {
-          update(list.map((s, i) => i === index ? { ...s, priorityReviewed: true, artistScores: { ...s.objectiveScores } } : s));
-          index + 1 < list.length ? setIndex(index + 1) : setMode('rank');
-        }}>{index + 1 < list.length ? 'Concordo, próxima' : 'Escolher estratégias'}</button>
-      </div>
-    </> : <>
+    </> : mode === 'manual' ? (() => {
+      const strategy = list[index];
+      const currentScore = strategy.objectiveScores?.[objectiveIndex];
+      const shownScore = hoverScore ?? currentScore;
+      const answered = index * objectives.length + objectiveIndex;
+      const pick = (score: number) => {
+        if (advancing) return;
+        const scores = { ...strategy.objectiveScores, [objectiveIndex]: score };
+        const completedStrategy = objectiveIndex + 1 === objectives.length;
+        update(list.map((item) => item.id === strategy.id ? { ...item, objectiveScores: scores, artistScores: scores, priorityReviewed: completedStrategy || item.priorityReviewed } : item));
+        setHoverScore(null);
+        setAdvancing(true);
+        window.setTimeout(() => {
+          setAdvancing(false);
+          if (objectiveIndex + 1 < objectives.length) setObjectiveIndex((value) => value + 1);
+          else if (index + 1 < list.length) { setIndex((value) => value + 1); setObjectiveIndex(0); }
+          else setMode('rank');
+        }, 360);
+      };
+      return <>
+        <div className="priority-v3__progress"><span>Estratégia {index + 1} de {list.length}</span><span>{answered + 1} de {list.length * objectives.length}</span></div>
+        <div className="priority-v3__progress-line"><i style={{ width: `${(answered / Math.max(list.length * objectives.length, 1)) * 100}%` }} /></div>
+        <section className="priority-v3__question">
+          <h3>{strategy.title}</h3>
+          <span className="priority-v3__eyebrow">Objetivo {objectiveIndex + 1} de {objectives.length}</span>
+          <p>Ajuda a conquistar <strong>{objectives[objectiveIndex]}</strong>?</p>
+          <div className="priority-v3__scale" onMouseLeave={() => setHoverScore(null)}>
+            {SCALE.map((score) => <button key={score} type="button" disabled={advancing} aria-label={`Nota ${score}`} onMouseEnter={() => setHoverScore(score)} onClick={() => pick(score)} style={{ height: 22 + score * 4, background: shownScore != null && score <= shownScore ? scoreColor(shownScore) : undefined }}>{score}</button>)}
+          </div>
+          <div className="priority-v3__scale-legend"><span>0 · não ajuda</span><span>10 · ajuda muito</span></div>
+          <div className="priority-v3__score-readout" style={{ color: shownScore == null ? undefined : scoreColor(shownScore) }}><strong>{shownScore ?? '–'}</strong><span>{scoreWord(shownScore)}</span></div>
+        </section>
+      </>;
+    })() : <>
       <h3>Escolha até {limit} estratégias</h3>
       <p aria-live="polite">{selected.length} de {limit} escolhidas</p>
       {ranked.map(s => {
