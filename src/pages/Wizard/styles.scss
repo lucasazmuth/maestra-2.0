@@ -2652,6 +2652,23 @@
   p { margin: 0; }
 }
 
+// Os vídeos da Maestra só autorizam o embed em produção. No localhost, abrir no YouTube deixa
+// explícito que o vídeo existe e evita o "Erro 153" do player sem origem autorizada.
+.yt-embed-local {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #101a31;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .yt-embed-play {
   display: grid;
   width: 42px;
